@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.12 2005/03/07 16:44:50 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.13 2005/03/23 17:15:44 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -351,7 +351,7 @@ p9000_ioctl(void *v, u_long cmd, caddr_t data, int flags, struct proc *p)
 		case WSDISPLAYIO_PARAM_BACKLIGHT:
 			dp->min = 0;
 			dp->max = 1;
-			dp->curval = tadpole_get_video() & TV_ON;
+			dp->curval = tadpole_get_video() & TV_ON ? 1 : 0;
 			break;
 		default:
 			return (-1);
@@ -519,27 +519,35 @@ p9000_intr(void *v)
  * Accelerated text console code
  */
 
-static __inline__ void p9000_drain(struct p9000_softc *);
+static int p9000_drain(struct p9000_softc *);
 
-static __inline__ void
+static int
 p9000_drain(struct p9000_softc *sc)
 {
-	while (P9000_READ_CMD(sc, P9000_PE_STATUS) &
-	    (STATUS_QUAD_BUSY | STATUS_BLIT_BUSY));
+	u_int i;
+
+	for (i = 10000; i != 0; i--) {
+		if ((P9000_READ_CMD(sc, P9000_PE_STATUS) &
+		    (STATUS_QUAD_BUSY | STATUS_BLIT_BUSY)) == 0)
+			break;
+	}
+
+	return (i);
 }
 
 void
 p9000_ras_init(struct p9000_softc *sc)
 {
+
+	if (p9000_drain(sc) == 0)
+		return;
+
 	sc->sc_sunfb.sf_ro.ri_ops.copycols = p9000_ras_copycols;
 	sc->sc_sunfb.sf_ro.ri_ops.copyrows = p9000_ras_copyrows;
-#if NTCTRL > 0
-	if (tadpole_get_video() & TV_ACCEL) {
-		sc->sc_sunfb.sf_ro.ri_ops.erasecols = p9000_ras_erasecols;
-		sc->sc_sunfb.sf_ro.ri_ops.eraserows = p9000_ras_eraserows;
-		sc->sc_sunfb.sf_ro.ri_do_cursor = p9000_ras_do_cursor;
-	}
-#endif
+	sc->sc_sunfb.sf_ro.ri_ops.erasecols = p9000_ras_erasecols;
+	sc->sc_sunfb.sf_ro.ri_ops.eraserows = p9000_ras_eraserows;
+	sc->sc_sunfb.sf_ro.ri_do_cursor = p9000_ras_do_cursor;
+
 	/*
 	 * Setup safe defaults for the parameter and drawing engines, in
 	 * order to minimize the operations to do for ri_ops.
