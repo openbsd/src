@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.16 1999/06/05 22:17:55 aaron Exp $
+.\" $OpenBSD: pppd.8,v 1.17 1999/07/03 19:04:21 millert Exp $
 .\" manual page [] for pppd 2.3
 .\" Id: pppd.8,v 1.27 1998/03/31 04:31:08 paulus Exp $
 .\" SH section heading
@@ -423,7 +423,9 @@ control, as for the \fIcrtscts\fR option.
 Use the modem control lines during the chat script.  The default is
 to ignore the state of the CD (Carrier Detect) signal from the modem
 during the chat script.  If you are using a cua device (as opposed to
-a tty device) you should set this option.
+a tty device) you should set this option.  You should not use
+this option with a dialback setup as it will cause the chat script
+to exit when carrier drops.
 .TP
 .B ms-dns \fI<addr>
 If pppd is acting as a server for Microsoft Windows clients, this
