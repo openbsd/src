@@ -1,4 +1,4 @@
-/*	$NetBSD: brk.S,v 1.6 2003/08/07 16:42:04 agc Exp $	*/
+/*	$NetBSD: brk.S,v 1.7 2003/12/26 11:23:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -69,7 +69,7 @@ SYSENTRY(_brk)
 	 * if the address is below minbrk.
 	 */
 	cmp	r0, r1
-	movlt	r0, r1
+	movcc	r0, r1
 	mov	r2, r0
 	SYSTRAP(break)
 	bcs	PIC_SYM(CERROR, PLT)
