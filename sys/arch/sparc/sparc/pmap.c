@@ -176,7 +176,7 @@ vm_offset_t	vm_first_phys, vm_num_phys;
 struct pvlist {
 	struct	pvlist *pv_next;	/* next pvlist, if any */
 	struct	pmap *pv_pmap;		/* pmap of this va */
-	int	pv_va;			/* virtual address */
+	vm_offset_t	pv_va;		/* virtual address */
 	int	pv_flags;		/* flags (below) */
 };
 
@@ -871,7 +871,7 @@ void
 mmu_reservemon4_4c(nrp, nsp)
 	register int *nrp, *nsp;
 {
-	register u_int va = 0, eva = 0;
+	register vm_offset_t va = 0, eva = 0;
 	register int mmuseg, i, nr, ns, vr, lastvr;
 #ifdef MMU_3L
 	register int mmureg;
@@ -1649,7 +1649,7 @@ region_free(pm, smeg)
 int
 mmu_pagein(pm, va, prot)
 	register struct pmap *pm;
-	register int va;
+	register vm_offset_t va;
 	vm_prot_t prot;
 {
 	register int *pte;
@@ -1729,7 +1729,8 @@ printf("mmu_pagein: kernel wants map at va %x, vr %d, vs %d\n", va, vr, vs);
 int
 mmu_pagein4m(pm, va, prot)
 	register struct pmap *pm;
-	register int va, prot;
+	register vm_offset_t va;
+	register int prot;
 {
 	register int pte;
 	register int bits;
@@ -2018,7 +2019,8 @@ pv_changepte4_4c(pv0, bis, bic)
 	register int *pte;
 	register struct pvlist *pv;
 	register struct pmap *pm;
-	register int va, vr, vs, flags;
+	register vm_offset_t va;
+	register int vr, vs, flags;
 	int ctx, s;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -2187,8 +2189,10 @@ pv_unlink4_4c(pv, pm, va)
 	register struct pvlist *npv;
 
 #ifdef DIAGNOSTIC
+	if (pv == NULL)
+		panic("pv_unlink: pv==NULL");
 	if (pv->pv_pmap == NULL)
-		panic("pv_unlink0");
+		panic("pv_unlink: pv->pv_pmap==NULL");
 #endif
 	/*
 	 * First entry is special (sigh).
@@ -2201,15 +2205,18 @@ pv_unlink4_4c(pv, pm, va)
 			pv->pv_pmap = npv->pv_pmap;
 			pv->pv_va = npv->pv_va;
 			free(npv, M_VMPVENT);
-		} else
+		} else {
 			pv->pv_pmap = NULL;
+			pv->pv_va == NULL;
+			return;
+		}
 	} else {
 		register struct pvlist *prev;
 
 		for (prev = pv;; prev = npv, npv = npv->pv_next) {
 			pmap_stats.ps_unlink_pvsearch++;
 			if (npv == NULL)
-				panic("pv_unlink");
+				panic("pv_unlink: npv==NULL");
 			if (npv->pv_pmap == pm && npv->pv_va == va)
 				break;
 		}
@@ -2308,7 +2315,8 @@ pv_changepte4m(pv0, bis, bic)
 {
 	register struct pvlist *pv;
 	register struct pmap *pm;
-	register int va, vr, flags;
+	register vm_offset_t va;
+	register int vr, flags;
 	int ctx, s;
 	struct regmap *rp;
 
@@ -2445,8 +2453,10 @@ pv_unlink4m(pv, pm, va)
 	register struct pvlist *npv;
 
 #ifdef DIAGNOSTIC
+	if (pv == NULL)
+		panic("pv_unlink: pv==NULL");
 	if (pv->pv_pmap == NULL)
-		panic("pv_unlink0");
+		panic("pv_unlink: pv->pv_pmap==NULL");
 #endif
 	/*
 	 * First entry is special (sigh).
@@ -2459,15 +2469,18 @@ pv_unlink4m(pv, pm, va)
 			pv->pv_pmap = npv->pv_pmap;
 			pv->pv_va = npv->pv_va;
 			free(npv, M_VMPVENT);
-		} else
+		} else {
 			pv->pv_pmap = NULL;
+			pv->pv_va == NULL;
+			return;
+		}
 	} else {
 		register struct pvlist *prev;
 
 		for (prev = pv;; prev = npv, npv = npv->pv_next) {
 			pmap_stats.ps_unlink_pvsearch++;
 			if (npv == NULL)
-				panic("pv_unlink");
+				panic("pv_unlink: npv==NULL");
 			if (npv->pv_pmap == pm && npv->pv_va == va)
 				break;
 		}
@@ -4378,7 +4391,8 @@ pmap_page_protect4_4c(pa, prot)
 {
 	register struct pvlist *pv, *pv0, *npv;
 	register struct pmap *pm;
-	register int va, vr, vs, pteva, tpte;
+	register vm_offset_t va;
+	register int vr, vs, pteva, tpte;
 	register int flags, nleft, i, s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -4562,7 +4576,8 @@ pmap_protect4_4c(pm, sva, eva, prot)
 	vm_offset_t sva, eva;
 	vm_prot_t prot;
 {
-	register int va, nva, vr, vs;
+	register vm_offset_t va, nva;
+	register int vr, vs;
 	register int s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -4782,7 +4797,8 @@ pmap_page_protect4m(pa, prot)
 {
 	register struct pvlist *pv, *pv0, *npv;
 	register struct pmap *pm;
-	register int va, vr, vs, tpte;
+	register vm_offset_t va;
+	register int vr, vs, tpte;
 	register int flags, nleft, s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -4910,7 +4926,8 @@ pmap_protect4m(pm, sva, eva, prot)
 	vm_offset_t sva, eva;
 	vm_prot_t prot;
 {
-	register int va, nva, vr, vs;
+	register vm_offset_t va, nva;
+	register int vr, vs;
 	register int s, ctx;
 	struct regmap *rp;
 	struct segmap *sp;
@@ -6651,7 +6668,7 @@ pmap_dumpmmu(dump, blkno)
 	 * Go through the pmegs and dump each one.
 	 */
 	for (pmeg = 0; pmeg <= seginval; ++pmeg) {
-		register int va = 0;
+		register vm_offset_t va = 0;
 
 		setsegmap(va, pmeg);
 		i = NPTESG;
