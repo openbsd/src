@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.5 2000/10/12 18:06:03 aaron Exp $
+.\"	$OpenBSD: spl.9,v 1.6 2000/10/25 16:23:26 aaron Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -41,7 +41,7 @@
 .Ft int
 .Fn splhigh void
 .Ft int
-.Fn spltty void
+.Fn splserial void
 .Ft int
 .Fn splsched void
 .Ft int
@@ -95,7 +95,7 @@ It is used for code that cannot
 tolerate any interrupts, like hardware context switching code and the
 .Xr ddb 4
 in-kernel debugger.
-.It Fn spltty
+.It Fn splserial
 blocks hard interrupts from serial interfaces.
 Code running at this level may not access the tty subsystem.
 .It Fn splsched
