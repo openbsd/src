@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbd.c,v 1.14 2005/02/22 21:53:03 uwe Exp $ */
+/* $OpenBSD: zaurus_kbd.c,v 1.15 2005/02/22 22:12:10 deraadt Exp $ */
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
  *
@@ -239,6 +239,8 @@ zkbd_attach(struct device *parent, struct device *self, void *aux)
 	a.accesscookie = sc;
 
 	printf("\n");
+
+	zkbd_hinge(sc);		/* to initialize sc_hinge */
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 
