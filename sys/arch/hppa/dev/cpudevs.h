@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.5 1998/11/30 21:12:35 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.6 1998/12/04 01:56:14 mickey Exp 
  */
 
 #define	HPPA_TYPE_CPU	0
