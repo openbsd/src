@@ -12,7 +12,7 @@
  *
  * Main client header
  *
- * $OpenBSD: skey.h,v 1.10 1997/07/27 21:36:05 millert Exp $
+ * $OpenBSD: skey.h,v 1.11 1998/07/03 01:08:11 angelos Exp $
  */
 
 /* Server-side data structure for reading keys file during login */
@@ -63,6 +63,9 @@ struct mc {
 
 /* Size of a binary key (not NULL-terminated) */
 #define SKEY_BINKEY_SIZE	8
+
+/* Location of random file for bogus challenges */
+#define _SKEY_RAND_FILE_PATH_	"/etc/skey.random"
 
 /* Prototypes */
 void f __P((char *x));

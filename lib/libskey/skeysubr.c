@@ -11,7 +11,7 @@
  *
  * S/KEY misc routines.
  *
- * $OpenBSD: skeysubr.c,v 1.17 1997/07/27 21:36:06 millert Exp $
+ * $OpenBSD: skeysubr.c,v 1.18 1998/07/03 01:08:14 angelos Exp $
  */
 
 #include <stdio.h>
@@ -448,7 +448,7 @@ skipspace(cp)
 		return(cp);
 }
 
-/* Remove backspaced over charaters from the string */
+/* Remove backspaced over characters from the string */
 void
 backspace(buf)
 	char *buf;

@@ -8,10 +8,11 @@
  *
  * Modifications:
  *          Todd C. Miller <Todd.Miller@courtesan.com>
+ *	    Angelos D. Keromytis <adk@adk.gr>
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.23 1998/02/24 20:52:48 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.24 1998/07/03 01:08:13 angelos Exp $
  */
 
 #include <sys/param.h>
@@ -34,6 +35,7 @@
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <sha1.h>
 
 #include "skey.h"
 
@@ -395,6 +397,30 @@ skey_passcheck(username, passwd)
 	return(-1);
 }
 
+#define ROUND(x)   (((x)[0] << 24) + (((x)[1]) << 16) + (((x)[2]) << 8) + \
+		    ((x)[3]))
+
+/*
+ * hash_collapse()
+ */
+static u_int32_t
+hash_collapse(s)
+        u_char *s;
+{
+        int len, target;
+	u_int32_t i;
+	
+	if ((strlen(s) % sizeof(u_int32_t)) == 0)
+  	        target = strlen(s);    /* Multiple of 4 */
+	else
+	        target = strlen(s) - (strlen(s) % sizeof(u_int32_t));
+  
+	for (i = 0, len = 0; len < target; len += 4)
+	  i ^= ROUND(s + len);
+
+	return i;
+}
+
 /*
  * skey_authenticate()
  *
@@ -408,10 +434,13 @@ int
 skey_authenticate(username)
 	char *username;
 {
-	int i;
+	int i, fd, ptr;
+	u_char hseed[SKEY_MAX_SEED_LEN], flg = 1, *up;
 	char pbuf[SKEY_MAX_PW_LEN+1], skeyprompt[SKEY_MAX_CHALLENGE+1];
 	struct skey skey;
-
+	struct stat sb;
+	SHA1_CTX ctx;
+	
 	/* Attempt an S/Key challenge */
 	i = skeychallenge(&skey, username, skeyprompt);
 
@@ -434,24 +463,84 @@ skey_authenticate(username)
 		p = &pbuf[4];
 		*p = '\0';
 
-		/* Base last 8 chars of seed on username */
-		u = username;
-		i = 8;
-		do {
-			if (*u == 0) {
-				/* Pad remainder with zeros */
-				while (--i >= 0)
-					*p++ = '0';
-				break;
-			}
+		/* See if the random file's there */
+		if ((fd = open(_SKEY_RAND_FILE_PATH_, O_RDONLY)) != -1) {
+		    	if ((fstat(fd, &sb) != -1) &&
+			    ((up = SHA1Data(username, strlen(username), NULL))
+			     != NULL)) {
+			        /* Collapse the hash */
+			        ptr = hash_collapse(up);
 
-			*p++ = (*u++ % 10) + '0';
-		} while (--i != 0);
-		pbuf[12] = '\0';
+			        if ((lseek(fd, ptr % (sb.st_size - SKEY_MAX_SEED_LEN), SEEK_SET) != -1) && (read(fd, hseed, SKEY_MAX_SEED_LEN) == SKEY_MAX_SEED_LEN)) {
+					memset(up, 0, strlen(up));
+					
+					/* Hash secret value with username */
+					SHA1Init(&ctx);
+					SHA1Update(&ctx, hseed,
+						   SKEY_MAX_SEED_LEN);
+					SHA1Update(&ctx, username,
+						   strlen(username));
+					SHA1Final(up, &ctx);
+					
+					/* Zero out */
+					memset(hseed, 0, SKEY_MAX_SEED_LEN);
 
-		(void)sprintf(skeyprompt, "otp-%.*s %d %.*s",
-			      SKEY_MAX_HASHNAME_LEN, skey_get_algorithm(),
-			      99, SKEY_MAX_SEED_LEN, pbuf);
+					/* Now hash the hash */
+					SHA1Init(&ctx);
+					SHA1Update(&ctx, up, strlen(up));
+					SHA1Final(up, &ctx);
+					
+					ptr = hash_collapse(up + 4);
+
+					for (i = 0;
+					     i < SKEY_MAX_SEED_LEN;
+					     i++) {
+					    p[i] = (ptr % 10) + '0';
+					    ptr /= 10;
+					}
+
+					/* Sequence number */
+					ptr = ((up[2] + up[3]) % 99) + 1;
+
+					memset(up, 0, 20); /* SHA1 specific */
+					free(up);
+					flg = 0;
+
+					(void)sprintf(skeyprompt,
+						      "otp-%.*s %d %.*s",
+			      			      SKEY_MAX_HASHNAME_LEN,
+						      skey_get_algorithm(),
+						      ptr, SKEY_MAX_SEED_LEN,
+						      pbuf);
+					/* Done */
+				} else
+				        free(up);
+		    	}
+
+		    	close(fd);
+		}
+
+		if (flg)
+		{
+		    /* Base last 8 chars of seed on username */
+		    u = username;
+		    i = 8;
+		    do {
+			    if (*u == 0) {
+				    /* Pad remainder with zeros */
+				    while (--i >= 0)
+					    *p++ = '0';
+				    break;
+			    }
+
+			    *p++ = (*u++ % 10) + '0';
+		    } while (--i != 0);
+		    pbuf[12] = '\0';
+
+		    (void)sprintf(skeyprompt, "otp-%.*s %d %.*s",
+			          SKEY_MAX_HASHNAME_LEN, skey_get_algorithm(),
+			          99, SKEY_MAX_SEED_LEN, pbuf);
+	    }
 	}
 
 	(void)fprintf(stderr, "%s\n", skeyprompt);
