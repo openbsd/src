@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.50 2003/08/20 21:44:03 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.51 2003/08/20 23:33:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -65,6 +65,9 @@ struct cfattach mainbus_ca = {
 struct cfdriver mainbus_cd = {
 	NULL, "mainbus", DV_DULL
 };
+
+struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
+struct pdc_power_info pdc_power_info PDC_ALIGNMENT;
 
 /* from machdep.c */
 extern struct extent *hppa_ex;
@@ -981,7 +984,6 @@ mbattach(parent, self, aux)
 	void *aux;
 {
 	struct mainbus_softc *sc = (struct mainbus_softc *)self;
-	struct pdc_hpa pdc_hpa PDC_ALIGNMENT;
 	struct confargs nca;
 	bus_space_handle_t ioh;
 
@@ -1013,7 +1015,15 @@ mbattach(parent, self, aux)
 
 #if NPOWER > 0
 	/* get some power */
+	bzero (&nca, sizeof(nca));
 	nca.ca_name = "power";
+	nca.ca_irq = -1;
+	if (!pdc_call((iodcio_t)pdc, 0, PDC_SOFT_POWER,
+	    PDC_SOFT_POWER_INFO, &pdc_power_info, 0)) {
+		nca.ca_iot = &hppa_bustag;
+		nca.ca_hpa = pdc_power_info.addr;
+		nca.ca_hpamask = HPPA_IOSPACE;
+	}
 	config_found(self, &nca, mbprint);
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: power.c,v 1.2 2003/08/20 22:51:07 mickey Exp $	*/
+/*	$OpenBSD: power.c,v 1.3 2003/08/20 23:33:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -41,12 +41,14 @@
 
 struct power_softc {
 	struct device sc_dev;
+	void *sc_ih;
 
 	struct proc *sc_thread;
 	void (*sc_kicker)(void *);
 
 	int sc_dr_cnt;
 	paddr_t sc_pwr_reg;
+	volatile int sc_interrupted;
 };
 
 int	powermatch(struct device *, void *, void *);
@@ -64,8 +66,7 @@ void power_thread_create(void *v);
 void power_thread_dr(void *v);
 void power_thread_reg(void *v);
 void power_cold_hook_reg(int);
-
-struct pdc_power_info pdc_power_info PDC_ALIGNMENT;
+int power_intr(void *);
 
 int
 powermatch(struct device *parent, void *cfdata, void *aux)
@@ -83,7 +84,7 @@ void
 powerattach(struct device *parent, struct device *self, void *aux)
 {
 	struct power_softc *sc = (struct power_softc *)self;
-	int error;
+	struct confargs *ca = aux;
 
 	switch (cpu_hvers) {
 	case HPPA_BOARD_HP712_60:
@@ -95,22 +96,34 @@ powerattach(struct device *parent, struct device *self, void *aux)
 		break;
 
 	default:
-		if ((error = pdc_call((iodcio_t)pdc, 0, PDC_SOFT_POWER,
-		    PDC_SOFT_POWER_INFO, &pdc_power_info, 0)))
-			printf(": no power control, disabled\n");
-		else {
+		if (ca->ca_hpa) {
 			extern void (*cold_hook)(int);
 
-			sc->sc_pwr_reg = pdc_power_info.addr;
-			printf(" offset %x\n", sc->sc_pwr_reg - 0xf0000000);
+			sc->sc_pwr_reg = ca->ca_hpa;
 			cold_hook = power_cold_hook_reg;
 			sc->sc_kicker = power_thread_reg;
-		}
+			printf("\n");
+		} else
+			printf(": not available\n");
 		break;
 	}
 
+	if (ca->ca_irq >= 0)
+		sc->sc_ih = cpu_intr_establish(IPL_CLOCK, ca->ca_irq,
+		    power_intr, sc, sc->sc_dev.dv_xname);
+
 	if (sc->sc_kicker)
 		kthread_create_deferred(power_thread_create, sc);
+}
+
+int
+power_intr(void *v)
+{
+	struct power_softc *sc = v;
+
+	sc->sc_interrupted = 1;
+
+	return (1);
 }
 
 void
@@ -167,6 +180,7 @@ power_thread_reg(void *v)
 void
 power_cold_hook_reg(int on)
 {
+	extern struct pdc_power_info pdc_power_info;	/* machdep.c */
 	int error;
 
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_SOFT_POWER,
