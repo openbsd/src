@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_proto.c,v 1.43 2003/10/31 09:00:32 mcbride Exp $	*/
+/*	$OpenBSD: in6_proto.c,v 1.44 2004/04/25 02:48:04 itojun Exp $	*/
 /*	$KAME: in6_proto.c,v 1.66 2000/10/10 15:35:47 itojun Exp $	*/
 
 /*
@@ -70,6 +70,9 @@
 
 #include <net/if.h>
 #include <net/radix.h>
+#ifndef SMALL_KERNEL
+#include <net/radix_mpath.h>
+#endif
 #include <net/route.h>
 
 #include <netinet/in.h>
@@ -234,7 +237,11 @@ struct domain inet6domain =
     { AF_INET6, "internet6", 0, 0, 0,
       (struct protosw *)inet6sw,
       (struct protosw *)&inet6sw[sizeof(inet6sw)/sizeof(inet6sw[0])], 0,
+#ifndef SMALL_KERNEL
+      rn_mpath_inithead,
+#else
       rn_inithead,
+#endif
       offsetof(struct sockaddr_in6, sin6_addr) << 3,
       sizeof(struct sockaddr_in6),
       in6_domifattach, in6_domifdetach, };

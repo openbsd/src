@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.19 2004/01/15 10:47:55 markus Exp $	*/
+/*	$OpenBSD: route.h,v 1.20 2004/04/25 02:48:04 itojun Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ struct rt_metrics {
  */
 #ifndef RNF_NORMAL
 #include <net/radix.h>
+#include <net/radix_mpath.h>
 #endif
 struct rtentry {
 	struct	radix_node rt_nodes[2];	/* tree glue, and other values */

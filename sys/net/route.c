@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.39 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.40 2004/04/25 02:48:04 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -672,7 +672,22 @@ rtrequest1(req, info, ret_nrt)
 		netmask = 0;
 	switch (req) {
 	case RTM_DELETE:
-		if ((rn = rnh->rnh_deladdr(dst, netmask, rnh)) == NULL)
+		if ((rn = rnh->rnh_lookup(dst, netmask, rnh)) == NULL)
+			senderr(ESRCH);
+		rt = (struct rtentry *)rn;
+#ifndef SMALL_KERNEL
+		/*
+		 * if we got multipath routes, we require users to specify
+		 * a matching RTAX_GATEWAY.
+		 */
+		if (rn_mpath_capable(rnh)) {
+			rt = rt_mpath_matchgate(rt, gateway);
+			rn = (struct radix_node *)rt;
+			if (!rt)
+				senderr(ESRCH);
+		}
+#endif
+		if ((rn = rnh->rnh_deladdr(dst, netmask, rnh, rn)) == NULL)
 			senderr(ESRCH);
 		rt = (struct rtentry *)rn;
 		if ((rt->rt_flags & RTF_CLONING) != 0) {
@@ -735,6 +750,17 @@ rtrequest1(req, info, ret_nrt)
 			rt_maskedcopy(dst, ndst, netmask);
 		} else
 			Bcopy(dst, ndst, dst->sa_len);
+#ifndef SMALL_KERNEL
+		/* do not permit exactly the same dst/mask/gw pair */
+		if (rn_mpath_capable(rnh) &&
+		    rt_mpath_conflict(rnh, rt, netmask)) {
+			if (rt->rt_gwroute)
+				rtfree(rt->rt_gwroute);
+			Free(rt_key(rt));
+			Free(rt);
+			senderr(EEXIST);
+		}
+#endif
 		ifa->ifa_refcnt++;
 		rt->rt_ifa = ifa;
 		rt->rt_ifp = ifa->ifa_ifp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_proto.c,v 1.38 2003/12/15 07:11:30 mcbride Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.39 2004/04/25 02:48:04 itojun Exp $	*/
 /*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
@@ -105,6 +105,10 @@
 
 #include <net/if.h>
 #include <net/route.h>
+#include <net/radix.h>
+#ifndef SMALL_KERNEL
+#include <net/radix_mpath.h>
+#endif
 
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
@@ -335,7 +339,12 @@ struct protosw inetsw[] = {
 struct domain inetdomain =
     { AF_INET, "internet", 0, 0, 0,
       inetsw, &inetsw[sizeof(inetsw)/sizeof(inetsw[0])], 0,
-      rn_inithead, 32, sizeof(struct sockaddr_in) };
+#ifndef SMALL_KERNEL
+      rn_mpath_inithead,
+#else
+      rn_inithead,
+#endif
+      32, sizeof(struct sockaddr_in) };
 
 #ifdef notyet /* XXXX */
 #include "hy.h"

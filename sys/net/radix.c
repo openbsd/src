@@ -1,4 +1,4 @@
-/*	$OpenBSD: radix.c,v 1.16 2004/04/25 01:38:10 brad Exp $	*/
+/*	$OpenBSD: radix.c,v 1.17 2004/04/25 02:48:03 itojun Exp $	*/
 /*	$NetBSD: radix.c,v 1.20 2003/08/07 16:32:56 agc Exp $	*/
 
 /*
@@ -48,6 +48,10 @@
 #endif
 #include <sys/syslog.h>
 #include <net/radix.h>
+#endif
+
+#ifndef SMALL_KERNEL
+#include <net/radix_mpath.h>
 #endif
 
 int	max_keylen;
@@ -554,6 +558,21 @@ rn_addroute(v_arg, n_arg, head, treenodes)
 	saved_tt = tt = rn_insert(v, head, &keyduplicated, treenodes);
 	if (keyduplicated) {
 		for (t = tt; tt; t = tt, tt = tt->rn_dupedkey) {
+#ifndef SMALL_KERNEL
+			/* permit multipath, if enabled for the family */
+			if (rn_mpath_capable(head) && netmask == tt->rn_mask) {
+				/*
+				 * go down to the end of multipaths, so that
+				 * new entry goes into the end of rn_dupedkey
+				 * chain.
+				 */
+				do {
+					t = tt;
+					tt = tt->rn_dupedkey;
+				} while (tt && t->rn_mask == tt->rn_mask);
+				break;
+			}
+#endif
 			if (tt->rn_mask == netmask)
 				return (0);
 			if (netmask == 0 ||
@@ -684,20 +703,39 @@ on2:
 }
 
 struct radix_node *
-rn_delete(v_arg, netmask_arg, head)
+rn_delete(v_arg, netmask_arg, head, rn)
 	void *v_arg, *netmask_arg;
 	struct radix_node_head *head;
+	struct radix_node *rn;
 {
 	struct radix_node *t, *p, *x, *tt;
 	struct radix_mask *m, *saved_m, **mp;
 	struct radix_node *dupedkey, *saved_tt, *top;
 	caddr_t v, netmask;
 	int b, head_off, vlen;
+#ifndef SMALL_KERNEL
+	int mpath_enable = 0;
+#endif
 
 	v = v_arg;
 	netmask = netmask_arg;
 	x = head->rnh_treetop;
+#ifndef SMALL_KERNEL
+	if (rn && (rn->rn_mask != rn_zeros)) {
+		tt = rn;
+		/* 
+		 * Is this route(rn) a rn->dupedkey chain? 
+		 * Only default route is an exception. (rn_mask)
+		 */
+		if (rn_mpath_next(tt->rn_p))
+			mpath_enable = 1;
+		else
+			tt = rn_search(v, x);
+	} else
+		tt = rn_search(v, x);
+#else
 	tt = rn_search(v, x);
+#endif
 	head_off = x->rn_off;
 	vlen =  *(u_char *)v;
 	saved_tt = tt;
@@ -806,6 +844,16 @@ on1:
 		}
 		goto out;
 	}
+#ifndef SMALL_KERNEL
+	if (mpath_enable) {
+		/*
+		 * my parent dupedkey is NULL
+		 * end of mpath route.
+		 */
+		t->rn_dupedkey = NULL;
+		goto out;
+	}
+#endif
 	if (t->rn_l == tt)
 		x = t->rn_r;
 	else
