@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKBIG,v 1.8 2001/04/14 18:44:41 mjacob Exp $
+#	$OpenBSD: RAMDISKBIG,v 1.9 2001/04/15 02:25:37 art Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -309,3 +309,4 @@ wsmouse*	at	pms?
 #ubsec*	at pci? dev ? function ?	# Bluesteel Networks 5xxx crypto card
 
 #pseudo-device	raid		4	# RAIDframe disk driver
+pseudo-device	rd		1
