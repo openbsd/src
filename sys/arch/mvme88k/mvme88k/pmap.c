@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.96 2003/12/19 21:25:03 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.97 2003/12/19 22:30:18 miod Exp $	*/
 /*
  * Copyright (c) 2001, 2002, 2003 Miodrag Vallat
  * Copyright (c) 1998-2001 Steve Murphree, Jr.
@@ -1444,7 +1444,7 @@ pmap_remove_pte(pmap_t pmap, vaddr_t va, pt_entry_t *pte)
 	}
 	if (cur == PV_ENTRY_NULL) {
 		panic("pmap_remove_pte: mapping for va "
-		    "0x%x (pa 0x%x) not in pv list at 0x%p",
+		    "0x%lx (pa 0x%lx) not in pv list at 0x%p",
 		    va, pa, pvl);
 	}
 
@@ -1958,6 +1958,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 	PMAP_LOCK(pmap, spl);
 	users = pmap->pm_cpus;
 
+	if (pmap == kernel_pmap) {
+		kflush = TRUE;
+	} else {
+		kflush = FALSE;
+	}
+
 	/*
 	 * Expand pmap to include this pte.
 	 */
@@ -1982,12 +1988,6 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		printf("(pmap_enter) old_pa %x pte %x\n", old_pa, *pte);
 #endif
 	if (old_pa == pa) {
-		if (pmap == kernel_pmap) {
-			kflush = TRUE;
-		} else {
-			kflush = FALSE;
-		}
-
 		/*
 		 * May be changing its wired attributes or protection
 		 */
@@ -1997,6 +1997,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, int flags)
 		else if (!wired && pmap_pte_w(pte))
 			pmap->pm_stats.wired_count--;
 
+		pg = NULL;
 	} else { /* if (pa == old_pa) */
 
 		/*
@@ -2565,7 +2566,7 @@ changebit_Retry:
 		}
 #ifdef DIAGNOSTIC
 		if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
-			panic("pmap_changebit: pte %x in pmap %x %d doesn't point to page %x %x",
+			panic("pmap_changebit: pte %x in pmap %p %d doesn't point to page %p %lx",
 			    *pte, pmap, kflush, pg, VM_PAGE_TO_PHYS(pg));
 #endif
 
@@ -2665,7 +2666,7 @@ testbit_Retry:
 
 #ifdef DIAGNOSTIC
 		if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
-			panic("pmap_testbit: pte %x in pmap %x %d doesn't point to page %x %x",
+			panic("pmap_testbit: pte %x in pmap %p %d doesn't point to page %p %lx",
 			    *pte, pvep->pv_pmap, pvep->pv_pmap == kernel_pmap ? 1 : 0, pg, VM_PAGE_TO_PHYS(pg));
 #endif
 
@@ -2754,7 +2755,7 @@ unsetbit_Retry:
 		}
 #ifdef DIAGNOSTIC
 		if (ptoa(PG_PFNUM(*pte)) != VM_PAGE_TO_PHYS(pg))
-			panic("pmap_unsetbit: pte %x in pmap %x %d doesn't point to page %x %x",
+			panic("pmap_unsetbit: pte %x in pmap %p %d doesn't point to page %p %lx",
 			    *pte, pmap, kflush, pg, VM_PAGE_TO_PHYS(pg));
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.31 2003/11/07 10:16:45 jmc Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.32 2003/12/19 22:30:17 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -214,7 +214,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 
 	if (badwordaddr((vaddr_t)s) ||
 	    badwordaddr((vaddr_t)(&((db_regs_t*)s)->mode))) {
-		db_printf("frame at 0x%08x is unreadable\n", s);
+		db_printf("frame at %8p is unreadable\n", s);
 		return;
 	}
 
@@ -279,7 +279,7 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 			  s->isap, s->iuap, s->isr, s->ilar, s->ipar);
 	}
 
-	db_printf("epsr: 0x%08x                current process: 0x%x\n",
+	db_printf("epsr: 0x%08x                current process: %p\n",
 		  s->epsr, curproc);
 	db_printf("vector: 0x%02x                    interrupt mask: 0x%08x\n",
 		  s->vector, s->mask);
@@ -510,7 +510,7 @@ ddb_error_trap(error, eframe)
 	char *error;
 	db_regs_t *eframe;
 {
-	db_printf("KERNEL:  terminal error [%s]\n",(int)error);
+	db_printf("KERNEL:  terminal error [%s]\n", error);
 	db_printf("KERNEL:  Exiting debugger will cause abort to rom\n");
 	db_printf("at 0x%x ", eframe->sxip & ~3);
 	db_printf("dmt0 0x%x dma0 0x%x", eframe->dmt0, eframe->dma0);
@@ -584,18 +584,18 @@ m88k_db_where(addr, have_addr, count, modif)
 {
 	struct m88100_saved_state *s;
 	char *name;
-	int *offset;
-	int l;
+	db_expr_t offset;
+	db_addr_t l;
 
 	s = DDB_REGS;
 
 	l = PC_REGS(s); /* clear low bits */
 
-	db_find_xtrn_sym_and_offset((db_addr_t) l,&name, (db_expr_t*)&offset);
+	db_find_xtrn_sym_and_offset(l, &name, &offset);
 	if (name && (unsigned)offset <= db_maxoff)
-		db_printf("stopped at 0x%x  (%s+0x%x)\n", l, name, offset);
+		db_printf("stopped at 0x%lx  (%s+0x%x)\n", l, name, offset);
 	else
-		db_printf("stopped at 0x%x\n", l);
+		db_printf("stopped at 0x%lx\n", l);
 }
 
 /*
@@ -892,7 +892,7 @@ db_task_name()
 		db_printf("bad name at line %d\n", __LINE__);
 		return "<couldn't find 2>";
 	} else if (i != 1) {
-		db_printf("bad name read of %x at line %d\n", ptr, __LINE__);
+		db_printf("bad name read of %lx at line %d\n", ptr, __LINE__);
 		return "<bad read 2>";
 	}
 

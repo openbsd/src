@@ -1,4 +1,4 @@
-/*	$OpenBSD: bussw.c,v 1.8 2003/10/06 06:31:26 miod Exp $ */
+/*	$OpenBSD: bussw.c,v 1.9 2003/12/19 22:30:18 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
@@ -107,7 +107,7 @@ bussw_attach(parent, self, args)
 	busswintr_establish(BS_ABORTIRQ, &sc->sc_abih);
 	bs->bs_intr1 |= BS_INTR1_ABORT_IEN;
 
-	printf(": rev %d\n", BS_CHIPREV(bs));
+	printf(": rev %ld\n", BS_CHIPREV(bs));
 	config_search(bussw_scan, self, args);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.23 2003/10/08 22:36:11 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.24 2003/12/19 22:30:18 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -129,7 +129,10 @@ vmepmap(sc, vmeaddr, len, bustype)
 	case BUS_SYSCON:
 		switch (bustype) {
 		case BUS_VMES:		/* D16 VME Transfers */
-			/*printf("base 0x%8x/0x%8x len 0x%x\n", vmeaddr, base, len);*/
+#ifdef DEBUG
+			printf("base 0x%8llx/0x%8x len 0x%x\n",
+			    vmeaddr, base, len);
+#endif
 			base = vme2chip_map(base, len, 16);
 			if (base == NULL){
 				printf("%s: cannot map pa 0x%x len 0x%x\n",
@@ -138,8 +141,10 @@ vmepmap(sc, vmeaddr, len, bustype)
 			}
 			break;
 		case BUS_VMEL:		/* D32 VME Transfers */
-			printf("base 0x%8x/0x%8x len 0x%x\n",
-				vmeaddr, base, len);
+#ifdef DEBUG
+			printf("base 0x%8llx/0x%8x len 0x%x\n",
+			    vmeaddr, base, len);
+#endif
 			base = vme2chip_map(base, len, 32);
 			if (base == NULL){
 				printf("%s: cannot map pa 0x%x len 0x%x\n",
@@ -227,8 +232,7 @@ vmeprint(args, bus)
 {
 	struct confargs *ca = args;
 
-	printf(" addr 0x%x", ca->ca_offset);
-	printf(" vaddr 0x%x", ca->ca_vaddr);
+	printf(" addr 0x%x vaddr %p", ca->ca_offset, ca->ca_vaddr);
 	if (ca->ca_vec > 0)
 		printf(" vec 0x%x", ca->ca_vec);
 	if (ca->ca_ipl > 0)
@@ -411,25 +415,25 @@ vme2chip_init(sc)
 	ctl = vme2->vme2_masterctl;
 	printf("%s: using BUG parameters\n", sc->sc_dev.dv_xname);
 	/* setup a A32D16 space */
-	printf("%s: 1phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
+	printf("%s: 1phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
 	       sc->sc_dev.dv_xname,
 	       vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000,
 	       vme2->vme2_master1 << 16, vme2->vme2_master1 & 0xffff0000);
 
 	/* setup a A32D32 space */
-	printf("%s: 2phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
+	printf("%s: 2phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
 	       sc->sc_dev.dv_xname,
 	       vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000,
 	       vme2->vme2_master2 << 16, vme2->vme2_master2 & 0xffff0000);
 
 	/* setup a A24D16 space */
-	printf("%s: 3phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
+	printf("%s: 3phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
 	       sc->sc_dev.dv_xname,
 	       vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000,
 	       vme2->vme2_master3 << 16, vme2->vme2_master3 & 0xffff0000);
 
 	/* setup a XXXXXX space */
-	printf("%s: 4phys 0x%08x-0x%08x to VME 0x%08x-0x%08x\n",
+	printf("%s: 4phys 0x%08lx-0x%08lx to VME 0x%08lx-0x%08lx\n",
 	       sc->sc_dev.dv_xname,
 	       vme2->vme2_master4 << 16, vme2->vme2_master4 & 0xffff0000,
 	       (vme2->vme2_master4 << 16) + (vme2->vme2_master4mod << 16),

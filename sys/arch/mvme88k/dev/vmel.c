@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.11 2003/06/04 04:11:37 deraadt Exp $ */
+/*	$OpenBSD: vmel.c,v 1.12 2003/12/19 22:30:18 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -165,7 +165,9 @@ vmelmmap(dev, off, prot)
 	void * pa;
 
 	pa = vmepmap(sc->sc_vme, off, NBPG, BUS_VMEL);
-	printf("vmel %x pa %x\n", off, pa);
+#ifdef DEBUG
+	printf("vmel %llx pa %p\n", off, pa);
+#endif
 	if (pa == NULL)
 		return (-1);
 	return (atop(pa));

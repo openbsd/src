@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.23 2003/10/11 22:46:25 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.24 2003/12/19 22:30:18 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -655,10 +655,10 @@ m8820x_cmmu_dump_config()
 	db_printf("Current CPU/CMMU configuration:\n");
 	pcnfa = (unsigned long *volatile)MVME188_PCNFA;
 	pcnfb = (unsigned long *volatile)MVME188_PCNFB;
-	db_printf("VME188 address decoder: PCNFA = 0x%1x, PCNFB = 0x%1x\n\n",
+	db_printf("VME188 address decoder: PCNFA = 0x%1lx, PCNFB = 0x%1lx\n\n",
 	    *pcnfa & 0xf, *pcnfb & 0xf);
 	for (cmmu_num = 0; cmmu_num < max_cmmus; cmmu_num++) {
-		db_printf("CMMU #%d: %s CMMU for CPU %d:\n Strategy: %s\n %s access addr 0x%08x mask 0x%08x match %s\n",
+		db_printf("CMMU #%d: %s CMMU for CPU %d:\n Strategy: %s\n %s access addr 0x%08lx mask 0x%08lx match %s\n",
 		  cmmu_num,
 		  (m8820x_cmmu[cmmu_num].which == INST_CMMU) ? "inst" : "data",
 		  m8820x_cmmu[cmmu_num].cmmu_cpu,

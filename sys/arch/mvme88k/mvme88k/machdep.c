@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.121 2003/12/11 18:12:19 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.122 2003/12/19 22:30:18 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -511,7 +511,7 @@ cpu_startup()
 	      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 	        UVM_ADV_NORMAL, 0));
 	if (uarea_pages != UADDR)
-		panic("uarea_pages %x: UADDR not free", uarea_pages);
+		panic("uarea_pages %lx: UADDR not free", uarea_pages);
 
 	/*
 	 * Grab machine dependent memory spaces
@@ -528,7 +528,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (sramva != SRAM_START)
-			panic("sramva %x: SRAM not free", sramva);
+			panic("sramva %lx: SRAM not free", sramva);
 
 		/*
 		 * Grab the BUGROM space that we hardwired in pmap_bootstrap
@@ -539,7 +539,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (bugromva != BUG187_START)
-			panic("bugromva %x: BUGROM not free", bugromva);
+			panic("bugromva %lx: BUGROM not free", bugromva);
 
 		/*
 		 * Grab the OBIO space that we hardwired in pmap_bootstrap
@@ -550,7 +550,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (obiova != OBIO_START)
-			panic("obiova %x: OBIO not free", obiova);
+			panic("obiova %lx: OBIO not free", obiova);
 		break;
 #endif
 #ifdef MVME197
@@ -564,7 +564,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (flashva != FLASH_START)
-			panic("flashva %x: FLASH not free", flashva);
+			panic("flashva %lx: FLASH not free", flashva);
 
 		/*
 		 * Grab the OBIO space that we hardwired in pmap_bootstrap
@@ -575,7 +575,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (obiova != OBIO_START)
-			panic("obiova %x: OBIO not free", obiova);
+			panic("obiova %lx: OBIO not free", obiova);
 		break;
 #endif
 #ifdef MVME188
@@ -589,7 +589,7 @@ cpu_startup()
 		      UVM_MAPFLAG(UVM_PROT_NONE, UVM_PROT_NONE, UVM_INH_NONE,
 		        UVM_ADV_NORMAL, 0));
 		if (utilva != MVME188_UTILITY)
-			panic("utilva %x: UTILITY area not free", utilva);
+			panic("utilva %lx: UTILITY area not free", utilva);
 		break;
 #endif
 	}
@@ -663,7 +663,7 @@ cpu_startup()
 	if (iomap_extent == NULL)
 		panic("unable to allocate extent for iomap");
 
-	printf("avail mem = %ld (%ld pages)\n", ptoa(uvmexp.free), uvmexp.free);
+	printf("avail mem = %ld (%d pages)\n", ptoa(uvmexp.free), uvmexp.free);
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
 	    bufpages * PAGE_SIZE);
 
@@ -1486,10 +1486,10 @@ intr_findvec(start, end)
 {
 	int vec;
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	/* Sanity check! */
 	if (start < 0 || end > 255 || start > end)
-		panic("intr_findvec(): bad parameters");
+		panic("intr_findvec(%d,%d): bad parameters", start, end);
 #endif
 
 	for (vec = start; vec < end; vec++){
@@ -1497,7 +1497,7 @@ intr_findvec(start, end)
 			return (vec);
 	}
 #ifdef DIAGNOSTIC
-	printf("intr_findvec(): uh oh....\n", vec);
+	printf("intr_findvec(%d,%d): no vector available\n", start, end);
 #endif
 	return (-1);
 }
@@ -2093,7 +2093,7 @@ setrunqueue(p)
 	int which = p->p_priority >> 2;
 
 	if (p->p_back != NULL)
-		panic("setrunqueue %x", p);
+		panic("setrunqueue %p", p);
 	q = &qs[which];
 	whichqs |= 1 << which;
 	p->p_forw = (struct proc *)q;
@@ -2115,7 +2115,7 @@ remrunqueue(vp)
 	struct prochd *q;
 
 	if ((whichqs & (1 << which)) == 0)
-		panic("remrq %x", p);
+		panic("remrq %p", p);
 	p->p_forw->p_back = p->p_back;
 	p->p_back->p_forw = p->p_forw;
 	p->p_back = NULL;

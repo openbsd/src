@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.58 2003/11/14 19:05:34 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.59 2003/12/19 22:30:18 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -167,16 +167,16 @@ panictrap(int type, struct m88100_saved_state *frame)
 	if (panicing++ == 0) {
 		if (type == 2 && cputyp == CPU_88100) {
 			/* instruction exception */
-			db_printf("\nInstr access fault (%s) v = %x, frame %x\n",
+			db_printf("\nInstr access fault (%s) v = %x, frame %p\n",
 				  pbus_exception_type[(frame->ipfsr >> 16) & 0x7],
 				  frame->sxip & XIP_ADDR, frame);
 		} else if (type == 3 && cputyp == CPU_88100) {
 			/* data access exception */
-			db_printf("\nData access fault (%s) v = %x, frame %x\n",
+			db_printf("\nData access fault (%s) v = %x, frame %p\n",
 				  pbus_exception_type[(frame->dpfsr >> 16) & 0x7],
 				  frame->sxip & XIP_ADDR, frame);
 		} else
-			db_printf("\ntrap type %d, v = %x, frame %x\n", type, frame->sxip & XIP_ADDR, frame);
+			db_printf("\ntrap type %d, v = %x, frame %p\n", type, frame->sxip & XIP_ADDR, frame);
 		regdump(frame);
 	}
 #endif
@@ -1126,12 +1126,12 @@ error_fatal(struct m88100_saved_state *frame)
 #ifdef DDB
 	switch (frame->vector) {
 	case 0:
-		db_printf("\n[RESET EXCEPTION (Really Bad News[tm]) frame 0x%08x]\n", frame);
+		db_printf("\n[RESET EXCEPTION (Really Bad News[tm]) frame %8p]\n", frame);
 		db_printf("This is usually caused by a branch to a NULL function pointer.\n");
 		db_printf("e.g. jump to address 0.  Use the debugger trace command to track it down.\n");
 		break;
 	default:
-		db_printf("\n[ERROR EXCEPTION (Bad News[tm]) frame 0x%08x]\n", frame);
+		db_printf("\n[ERROR EXCEPTION (Bad News[tm]) frame %p]\n", frame);
 		db_printf("This is usually an exception within an exception.  The trap\n");
 		db_printf("frame shadow registers you are about to see are invalid.\n");
 		db_printf("(read totaly useless)  But R1 to R31 might be interesting.\n");

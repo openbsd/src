@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.19 2003/10/05 20:23:52 miod Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.20 2003/12/19 22:30:17 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -284,7 +284,7 @@ frame_is_sane(db_regs_t *regs)
 {
 	/* no good if we can't read the whole frame */
 	if (badwordaddr((vaddr_t)regs) || badwordaddr((vaddr_t)&regs->mode)) {
-		db_printf("[WARNING: frame at 0x%x : unreadable]\n", regs);
+		db_printf("[WARNING: frame at %p : unreadable]\n", regs);
 		return 0;
 	}
 
@@ -292,14 +292,14 @@ frame_is_sane(db_regs_t *regs)
 	/* disabled for now  -- see fpu_enable in luna88k/eh.s */
 	/* r0 must be 0 (obviously) */
 	if (regs->r[0] != 0) {
-		db_printf("[WARNING: frame at 0x%x : r[0] != 0]\n", regs);
+		db_printf("[WARNING: frame at %p : r[0] != 0]\n", regs);
 		return 0;
 	}
 #endif
 
 	/* stack sanity ... r31 must be nonzero, but must be word aligned */
 	if (regs->r[31] == 0 || (regs->r[31] & 3) != 0) {
-		db_printf("[WARNING: frame at 0x%x : r[31] == 0 or not word aligned]\n", regs);
+		db_printf("[WARNING: frame at %p : r[31] == 0 or not word aligned]\n", regs);
 		return 0;
 	}
 
@@ -320,13 +320,13 @@ frame_is_sane(db_regs_t *regs)
 	/* epsr sanity */
 	if ((regs->epsr & PSR_MODE)) { /* kernel mode */
 		if (regs->epsr & PSR_BO)
-			db_printf("[WARNING: byte order in kernel frame at %x "
+			db_printf("[WARNING: byte order in kernel frame at %p "
 				  "is little-endian!]\n", regs);
 		return 1;
 	}
 	if (!(regs->epsr & PSR_MODE)) {	/* user mode */
 		if (regs->epsr & PSR_BO)
-			db_printf("[WARNING: byte order in user frame at %x "
+			db_printf("[WARNING: byte order in user frame at %p "
 				  "is little-endian!]\n", regs);
 		return 2;
 	}
@@ -1012,13 +1012,12 @@ db_stack_trace_print(db_regs_t *addr,
 		   int (*pr)(const char *, ...))
 {
 	enum {
-		Default, Stack, Proc, Frame
+		Default, Stack, Frame
 	} style = Default;
 	db_regs_t frame; /* a m88100_saved_state */
 	db_regs_t *regs;
 	union {
 		db_regs_t *frame;
-		struct proc *proc;
 		unsigned num;
 	} arg;
 	arg.frame = addr;
@@ -1064,7 +1063,7 @@ db_stack_trace_print(db_regs_t *addr,
 		return;
 	}
 	if (have_addr && style == Default)
-		style = Proc;
+		style = Frame;
 
 	switch (style) {
 	case Default:
@@ -1072,8 +1071,6 @@ db_stack_trace_print(db_regs_t *addr,
 		break;
 	case Frame:
 		regs = arg.frame;
-		break;
-	case Proc:
 		break;
 	case Stack:
 		{

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.10 2003/10/05 20:35:26 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.11 2003/12/19 22:30:18 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -660,8 +660,8 @@ m88110_cmmu_show_translation(unsigned address,
 		if (result & CMMU_DSR_PH) DEBUG_MSG(", PATC");
 		if (result & CMMU_DSR_BH) DEBUG_MSG(", BATC");
 	} else {
-		DEBUG_MSG("probe of 0x%08x missed the ATCs");
-}
+		DEBUG_MSG("probe of 0x%08x missed the ATCs", address);
+	}
 	DEBUG_MSG(".\n");
 
 	/******* INTERPRET AREA DESCRIPTOR *********/

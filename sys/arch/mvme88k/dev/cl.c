@@ -1,4 +1,4 @@
-/*	$OpenBSD: cl.c,v 1.32 2003/10/05 20:27:47 miod Exp $ */
+/*	$OpenBSD: cl.c,v 1.33 2003/12/19 22:30:18 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn. All rights reserved.
@@ -1553,7 +1553,7 @@ cl_txintr(arg)
 				pbuffer = sc->sc_cl[channel].tx[nbuf];
 				resid = tp->t_outq.c_cc;
 				cnt = min (CL_BUFSIZE,resid);
-				log(LOG_WARNING, "cl_txintr: resid %x cnt %x pbuf %x\n",
+				log(LOG_WARNING, "cl_txintr: resid %x cnt %x pbuf %p\n",
 				    resid, cnt, pbuffer);
 				if (cnt != 0) {
 					cnt = q_to_b(&tp->t_outq, pbuffer, cnt);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssh.c,v 1.18 2003/11/18 23:23:31 miod Exp $	*/
+/*	$OpenBSD: ssh.c,v 1.19 2003/12/19 22:30:18 miod Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -1078,7 +1078,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			    *((long *)&rp->ssh_dcmd));
 #endif
 		if ((rp->ssh_sbcl & SSH_REQ) == 0) {
-			printf ("Phase mismatch: REQ not asserted! %02x dsp %x\n",
+			printf ("Phase mismatch: REQ not asserted! %02x dsp %lx\n",
 			    rp->ssh_sbcl, rp->ssh_dsp);
 #ifdef DEBUG
 			Debugger();
@@ -1178,7 +1178,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			int n = rp->ssh_temp - sc->sc_scriptspa;
 
 			if (acb->iob_curlen && acb->iob_curlen != acb->ds.chain[0].datalen)
-				printf("%s: iob_curbuf/len already set? n %x iob %x/%x chain[0] %x/%x\n",
+				printf("%s: iob_curbuf/len already set? n %x iob %lx/%lx chain[0] %p/%lx\n",
 				    sc->sc_dev.dv_xname, n, acb->iob_curbuf, acb->iob_curlen,
 				    acb->ds.chain[0].databuf, acb->ds.chain[0].datalen);
 			if (n < Ent_datain)
@@ -1318,7 +1318,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 			break;
 		}
 		if (acb == NULL) {
-			printf("%s: target ID %02x reselect nexus_list %x\n",
+			printf("%s: target ID %02x reselect nexus_list %p\n",
 			    sc->sc_dev.dv_xname, reselid,
 			    sc->nexus_list.tqh_first);
 			panic("unable to find reselecting device");
@@ -1398,7 +1398,7 @@ ssh_checkintr(sc, istat, dstat, sstat0, status)
 		printf ("SSH: Parity Error\n");
 
 	if (dstat & SSH_DSTAT_IID) {
-		printf ("SSH: Illegal instruction detected (dsp %x dcmd %x dsps %x)\n",
+		printf ("SSH: Illegal instruction detected (dsp %lx dcmd %lx dsps %lx)\n",
 	    		rp->ssh_dsp, *((long *)&rp->ssh_dcmd),
 			rp->ssh_dsps);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ve.c,v 1.22 2003/10/13 13:17:23 miod Exp $ */
+/*	$OpenBSD: if_ve.c,v 1.23 2003/12/19 22:30:18 miod Exp $ */
 /*-
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1982, 1992, 1993
@@ -392,7 +392,7 @@ ve_config(sc)
 		sc->sc_ntbuf = 32;
 		break;
 	default:
-		panic("ve_config: weird memory size %d", sc->sc_memsize);
+		panic("ve_config: weird memory size %ld", sc->sc_memsize);
 	}
 
 	printf("\n%s: address %s\n", sc->sc_dev.dv_xname,
