@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.39 2004/06/22 21:12:00 otto Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.40 2004/07/16 00:11:10 henning Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -58,10 +58,6 @@ static char rcsid[] = "$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl 
 #include <rpc/pmap_clnt.h>
 #include <rpc/pmap_prot.h>
 
-#ifdef ISO
-#include <netiso/iso.h>
-#endif
-
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
 #define _KERNEL
@@ -114,9 +110,6 @@ const struct mntopt mopts[] = {
 	{ "rdirplus", ALTF_RDIRPLUS, 0 },
 	{ "mntudp", ALTF_MNTUDP, 0 },
 	{ "resvport", ALTF_RESVPORT, 0 },
-#ifdef ISO
-	{ "seqpacket", ALTF_SEQPACKET, 0 },
-#endif
 	{ "soft", ALTF_SOFT, 0 },
 	{ "tcp", ALTF_TCP, 0 },
 	{ "port", ALTF_PORT, MFLAG_INTVAL },
@@ -173,9 +166,6 @@ int force2 = 0;
 int force3 = 0;
 
 int	getnfsargs(char *, struct nfs_args *);
-#ifdef ISO
-struct	iso_addr *iso_addr(const char *);
-#endif
 void	set_rpc_maxgrouplist(int);
 __dead	void usage(void);
 int	xdr_dir(XDR *, char *);
@@ -269,11 +259,6 @@ main(int argc, char *argv[])
 		case 'P':
 			nfsargsp->flags |= NFSMNT_RESVPORT;
 			break;
-#ifdef ISO
-		case 'p':
-			nfsargsp->sotype = SOCK_SEQPACKET;
-			break;
-#endif
 		case 'R':
 			num = strtol(optarg, &p, 10);
 			if (*p || num <= 0)
@@ -365,11 +350,6 @@ main(int argc, char *argv[])
 		case ALTF_RESVPORT:
 			nfsargsp->flags |= NFSMNT_RESVPORT;
 			break;
-#ifdef ISO
-		case ALTF_SEQPACKET:
-			nfsargsp->sotype = SOCK_SEQPACKET;
-			break;
-#endif
 		case ALTF_SOFT:
 			nfsargsp->flags |= NFSMNT_SOFT;
 			break;
@@ -429,11 +409,6 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 	CLIENT *clp;
 	struct hostent *hp;
 	static struct sockaddr_in saddr;
-#ifdef ISO
-	static struct sockaddr_iso isoaddr;
-	struct iso_addr *isop;
-	int isoflag = 0;
-#endif
 	struct timeval pertry, try;
 	enum clnt_stat clnt_stat;
 	int so = RPC_ANYSOCK, i, nfsvers, mntvers, orgcnt;
@@ -456,35 +431,6 @@ getnfsargs(char *spec, struct nfs_args *nfsargsp)
 		return (0);
 	}
 	*delimp = '\0';
-	/*
-	 * DUMB!! Until the mount protocol works on iso transport, we must
-	 * supply both an iso and an inet address for the host.
-	 */
-#ifdef ISO
-	if (!strncmp(hostp, "iso=", 4)) {
-		u_short isoport;
-
-		hostp += 4;
-		isoflag++;
-		if ((delimp = strchr(hostp, '+')) == NULL) {
-			warnx("no iso+inet address");
-			return (0);
-		}
-		*delimp = '\0';
-		if ((isop = iso_addr(hostp)) == NULL) {
-			warnx("bad ISO address");
-			return (0);
-		}
-		memset(&isoaddr, 0, sizeof (isoaddr));
-		memcpy(&isoaddr.siso_addr, isop, sizeof (struct iso_addr));
-		isoaddr.siso_len = sizeof (isoaddr);
-		isoaddr.siso_family = AF_ISO;
-		isoaddr.siso_tlen = 2;
-		isoport = htons(NFS_PORT);
-		memcpy(TSEL(&isoaddr), &isoport, isoaddr.siso_tlen);
-		hostp = delimp + 1;
-	}
-#endif /* ISO */
 
 	/*
 	 * Handle an internet host address
@@ -589,16 +535,8 @@ tryagain:
 		return (0);
 	}
 	saddr.sin_port = htons(tport);
-#ifdef ISO
-	if (isoflag) {
-		nfsargsp->addr = (struct sockaddr *) &isoaddr;
-		nfsargsp->addrlen = sizeof (isoaddr);
-	} else
-#endif /* ISO */
-	{
-		nfsargsp->addr = (struct sockaddr *) &saddr;
-		nfsargsp->addrlen = sizeof (saddr);
-	}
+	nfsargsp->addr = (struct sockaddr *) &saddr;
+	nfsargsp->addrlen = sizeof (saddr);
 	nfsargsp->fh = nfhret.nfh;
 	nfsargsp->fhsize = nfhret.fhsize;
 	nfsargsp->hostname = nam;
