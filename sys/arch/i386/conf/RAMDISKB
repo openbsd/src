@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISKB,v 1.45 2001/10/10 23:43:43 millert Exp $
+#	$OpenBSD: RAMDISKB,v 1.46 2001/12/05 23:46:20 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -155,9 +155,9 @@ uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
 scsibus* at uha?
-wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
+#wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
 #wds1	at isa? port 0x358 irq 11 drq 5
-scsibus* at wds?
+#scsibus* at wds?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -190,34 +190,34 @@ scsibus* at atapiscsi?
 
 #wt0	at isa? port 0x308 irq 5 drq 1		# Archive/Wangtek QIC tapes
 
-we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
-we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
-we*	at isapnp?
-ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet card
-ne0	at isa? port 0x240 irq 9		# NE[12]000 ethernet card
-ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet card
-ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet
-ne*	at isapnp?				# NE[12]000 PnP ethernet cards
+#we0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC 80x3 ethernet series
+#we1	at isa? port 0x300 iomem 0xcc000 irq 10	#
+#we*	at isapnp?
+#ec0	at isa? port 0x250 iomem 0xd8000 irq 9	# 3C503 ethernet card
+#ne0	at isa? port 0x240 irq 9		# NE[12]000 ethernet card
+#ne1	at isa? port 0x300 irq 10		# NE[12]000 ethernet card
+#ne2	at isa? port 0x280 irq 9		# NE[12]000 ethernet
+#ne*	at isapnp?				# NE[12]000 PnP ethernet cards
 #eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet cards
 #el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
-ep0	at isa? port ? irq ?			# 3C509 ethernet cards
-ep*	at isa? port ? irq ?			# 3C509 ethernet cards
-ef*	at isapnp?				# 3C515 PnP ethernet
-ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
+#ep0	at isa? port ? irq ?			# 3C509 ethernet cards
+#ep*	at isa? port ? irq ?			# 3C509 ethernet cards
+#ef*	at isapnp?				# 3C515 PnP ethernet
+#ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN and 3C507
 #ie1	at isa? port 0x300 irq 10		# EtherExpress
-le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
-ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
-ep0	at eisa? slot ?
-ep*	at eisa? slot ?				# 3C579 ethernet cards
+#le0	at isa? port 0x360 irq 15 drq 6		# IsoLan, NE2100, and DEPCA
+#ex0	at isa? port 0x320 irq 5		# Intel EtherExpress PRO/10
+#ep0	at eisa? slot ?
+#ep*	at eisa? slot ?				# 3C579 ethernet cards
 #fea*	at eisa? slot ?				# DEC DEFEA FDDI cards
-le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
-ep*	at isapnp?				# 3C509 PnP ethernet cards
-le*	at isapnp?
+#le*	at pci? dev ? function ?		# PCnet-PCI based ethernet cards
+#ep*	at isapnp?				# 3C509 PnP ethernet cards
+#le*	at isapnp?
 de*	at pci? dev ? function ?		# DC21X4X-based ethernet cards
 fxp*	at pci? dev ? function ?		# EtherExpress 10/100B ethernet cards
-ep0	at pci? dev ? function ?		# 3C59x ethernet cards
-ep*	at pci? dev ? function ?		# 3C59x ethernet cards
-ne*	at pci? dev ? function ?		# NE2000-compat ethernet cards
+#ep0	at pci? dev ? function ?		# 3C59x ethernet cards
+#ep*	at pci? dev ? function ?		# 3C59x ethernet cards
+#ne*	at pci? dev ? function ?		# NE2000-compat ethernet cards
 #ne*	at pcmcia? function ?			# PCMCIA based NE2000 cards
 #ep*	at pcmcia? function ?			# PCMCIA based 3c5xx cards
 #sm*	at pcmcia? function ?			# PCMCIA based sm cards
