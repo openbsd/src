@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.28 2004/03/02 15:52:40 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.29 2004/03/02 15:58:41 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -2008,33 +2008,17 @@ void
 go_daemon(void)
 {
 	static int state = 0;
-	int pid;
 
-	/* Don't become a daemon if the user requested otherwise. */
-	if (no_daemon)
+	if (no_daemon || state)
 		return;
 
-	/* Only do it once. */
-	if (state)
-		return;
 	state = 1;
 
 	/* Stop logging to stderr... */
 	log_perror = 0;
 
-	/* Become a daemon... */
-	if ((pid = fork()) < 0)
-		error("Can't fork daemon: %m");
-	else if (pid)
-		exit(0);
-	/* Become session leader and get pid... */
-	pid = setsid();
-
-	/* Close standard I/O descriptors. */
-	close(0);
-	close(1);
-	close(2);
-
+	if (daemon(1, 0) == -1)
+		error("daemon");
 }
 
 int
