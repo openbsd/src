@@ -20,7 +20,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.13 2000/03/07 16:50:42 chris Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.14 2000/03/07 18:16:37 chris Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -185,7 +185,7 @@ recurse:
 		aarp_print(p, length);
 		return (1);
 
-	case ETHERTYPE_VLAN:
+	case ETHERTYPE_8021Q:
 		printf("802.1Q vid %d pri %d%s",
 		       ntohs(*(unsigned short*)p)&0xFFF,
 		       ntohs(*(unsigned short*)p)>>13,
