@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.vax,v 1.7 1997/09/15 02:40:37 deraadt Exp $
+#	$OpenBSD: Makefile.vax,v 1.8 1997/10/02 19:56:06 niklas Exp $
 #	$NetBSD: Makefile.vax,v 1.32 1997/03/14 23:27:35 mycroft Exp $
 
 # Makefile for NetBSD
@@ -155,11 +155,6 @@ uipc_proto.o vfs_conf.o: Makefile
 
 # depend on maxusers
 machdep.o: Makefile
-
-# depend on CPU configuration 
-tmscp.o ts.o uba.o uda.o autoconf.o clock.o conf.o emulate.o intvec.o: Makefile
-machdep.o sbi.o subr.o uvaxII.o: Makefile
-
 
 intvec.o: ${VAX}/vax/intvec.s
 	${NORMAL_S}
