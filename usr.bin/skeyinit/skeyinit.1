@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.21 2002/05/16 03:50:42 millert Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.22 2002/05/16 17:54:21 millert Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -62,7 +62,6 @@ database to a new-style database where user records are stored in the
 directory.
 If an entry already exists in the new-style database it will not
 be overwritten.
-.Pa 
 .It Fl D
 Disables access to the S/Key database.
 Only the superuser may use the
@@ -142,6 +141,7 @@ flag.
 directory containing user entries for S/Key
 .El
 .Sh SEE ALSO
-.Xr skey 1
+.Xr skey 1 ,
+.Xr skeyinfo 1
 .Sh AUTHORS
 Phil Karn, Neil M. Haller, John S. Walden, Scott Chasin, Todd Miller
