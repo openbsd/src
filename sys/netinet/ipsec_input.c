@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.5 2000/01/02 11:12:03 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.6 2000/01/03 12:58:13 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -101,8 +101,10 @@ static int
 ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto)
 {
 #define IPSEC_ISTAT(y,z) (sproto == IPPROTO_ESP ? (y)++ : (z)++)
-#define IPSEC_NAME (sproto == IPPROTO_ESP ? "esp_input()" : "ah_input()")
-
+#define IPSEC_NAME (sproto == IPPROTO_ESP ? (af == AF_INET ? "esp_input()" :\
+					                     "esp6_input()") :\
+                                            (af == AF_INET ? "ah_input()" :\
+                                                             "ah6_input()"))
     union sockaddr_union sunion;
     struct tdb *tdbp;
     u_int32_t spi;
@@ -574,22 +576,43 @@ int
 ah6_input(struct mbuf **mp, int *offp, int proto)
 {
     struct mbuf *m = *mp;
-    u_int8_t nxt;
+    u_int8_t nxt = 0;
     int protoff;
 
-    /*
-     * XXX assuming that it is first hdr, i.e.
-     * offp == sizeof(struct ip6_hdr)
-     */
-    if (*offp != sizeof(struct ip6_hdr))
+    if (*offp == sizeof(struct ip6_hdr))
+      protoff = offsetof(struct ip6_hdr, ip6_nxt);
+    else
     {
-	m_freem(m);
-	return IPPROTO_DONE;	/* not quite */
+	/* Chase the header chain... */
+
+	protoff = sizeof(struct ip6_hdr);
+
+	do
+	{
+	    protoff += nxt;
+	    m_copydata(m, protoff + offsetof(struct ip6_ext, ip6e_len),
+		       sizeof(u_int8_t), (caddr_t) &nxt);
+	    nxt = (nxt + 1) * 8;
+	} while (protoff + nxt < *offp);
+
+	/* Malformed packet check */
+	if (protoff + nxt != *offp)
+	{
+	    DPRINTF(("ah6_input(): bad packet header chain\n"));
+	    ahstat.ahs_hdrops++;
+	    m_freem(m);
+	    *mp = NULL;
+	    return IPPROTO_DONE;
+	}
+
+	protoff += offsetof(struct ip6_ext, ip6e_nxt);
     }
 
-    protoff = offsetof(struct ip6_hdr, ip6_nxt);
     if (ipsec_common_input(m, *offp, protoff, AF_INET6, proto) != 0)
-      return IPPROTO_DONE;
+    {
+	*mp = NULL;
+	return IPPROTO_DONE;
+    }
 
     /* Retrieve new protocol */
     m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &nxt);
@@ -601,22 +624,44 @@ int
 esp6_input(struct mbuf **mp, int *offp, int proto)
 {
     struct mbuf *m = *mp;
-    u_int8_t nxt;
+    u_int8_t nxt = 0;
     int protoff;
 
-    /*
-     * XXX assuming that it is first hdr, i.e.
-     * offp == sizeof(struct ip6_hdr)
-     */
-    if (*offp != sizeof(struct ip6_hdr))
+    if (*offp == sizeof(struct ip6_hdr))
+      protoff = offsetof(struct ip6_hdr, ip6_nxt);
+    else
     {
-	m_freem(m);
-	return IPPROTO_DONE;	/* not quite */
+	/* Chase the header chain... */
+
+	protoff = sizeof(struct ip6_hdr);
+
+	do
+	{
+	    protoff += nxt;
+	    m_copydata(m, protoff + offsetof(struct ip6_ext, ip6e_len),
+		       sizeof(u_int8_t), (caddr_t) &nxt);
+	    nxt = (nxt + 1) * 8;
+	} while (protoff + nxt < *offp);
+
+	/* Malformed packet check */
+	if (protoff + nxt != *offp)
+	{
+	    DPRINTF(("esp6_input(): bad packet header chain\n"));
+	    espstat.esps_hdrops++;
+	    m_freem(m);
+	    *mp = NULL;
+	    return IPPROTO_DONE;
+	}
+
+	protoff += offsetof(struct ip6_ext, ip6e_nxt);
     }
 
     protoff = offsetof(struct ip6_hdr, ip6_nxt);
     if (ipsec_common_input(m, *offp, protoff, AF_INET6, proto) != 0)
-      return IPPROTO_DONE;
+    {
+	*mp = NULL;
+	return IPPROTO_DONE;
+    }
 
     /* Retrieve new protocol */
     m_copydata(m, protoff, sizeof(u_int8_t), (caddr_t) &nxt);
