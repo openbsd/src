@@ -1,4 +1,4 @@
-/* $OpenBSD: if_bgereg.h,v 1.14 2004/12/12 05:03:05 brad Exp $ */
+/* $OpenBSD: if_bgereg.h,v 1.15 2004/12/12 19:11:26 brad Exp $ */
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2243,8 +2243,6 @@ struct bge_softc {
 	u_int8_t		bge_rx_alignment_bug;
 	bus_dma_tag_t		bge_dmatag;
 	u_int32_t		bge_chipid;
-	u_int8_t		bge_asicrev;
-	u_int8_t		bge_chiprev;
 	u_int32_t		bge_quirks;
 	u_int8_t		bge_no_3_led;
 	u_int8_t		bge_pcie;
