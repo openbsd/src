@@ -1,3 +1,5 @@
+/*	$OpenBSD: copy.c,v 1.2 1997/02/24 14:44:28 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -39,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)copy.c	8.1 (Berkeley) 6/11/93";*/
-static char rcsid[] = "$NetBSD: copy.c,v 1.5 1994/06/29 06:43:28 cgd Exp $";
+static char rcsid[] = "$OpenBSD: copy.c,v 1.2 1997/02/24 14:44:28 niklas Exp $";
 #endif /* not lint */
 
 #define	BSIZE	10240
