@@ -1,4 +1,4 @@
-/*	$OpenBSD: update.c,v 1.2 2004/07/29 17:39:12 jfb Exp $	*/
+/*	$OpenBSD: update.c,v 1.3 2004/07/29 18:32:46 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -38,10 +38,6 @@
 #include "cvs.h"
 #include "rcs.h"
 #include "log.h"
-
-extern char *__progname;
-
-extern struct cvsroot *cvs_root;
 
 
 int  cvs_update_file  (CVSFILE *, void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: checkout.c,v 1.3 2004/07/28 02:01:29 jfb Exp $	*/
+/*	$OpenBSD: checkout.c,v 1.4 2004/07/29 18:32:45 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -35,10 +35,6 @@
 
 #include "cvs.h"
 #include "log.h"
-
-
-
-extern struct cvsroot *cvs_root;
 
 
 
