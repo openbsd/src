@@ -1,12 +1,48 @@
+/*
+ * Changes Copyright (c) 1998 steve Murphree, Jr.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Paul Kranenburg.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
+#include <sys/param.h>
+#include <sys/reboot.h>
 #include <machine/prom.h>
 
-#define RB_NOSYM 0x400
+#include "stand.h"
+#include "libsa.h"
 
-void parse_args __P((struct mvmeprom_args *pbugargs));
+#ifndef RB_NOSYM
+#define RB_NOSYM 0x400
+#endif
+
+void parse_bugargs __P((struct mvmeprom_args *pbugargs));
 int load_kern();
 int read_tape_block __P((short ctrl, short dev, short *status,
     void *addr, int *cnt, int blk_num, u_char *flags, int verbose));
@@ -25,24 +61,53 @@ struct kernel {
 
 typedef(*kernel_entry) __P((struct mvmeprom_args *, struct kernel *));
 
+struct mvmeprom_brdid2 {
+	u_long	eye_catcher;
+	u_char	rev;
+	u_char	month;
+	u_char	day;
+	u_char	year;
+	u_short	size;
+	u_short	rsv1;
+	u_short	model;
+	u_short	suffix;
+	u_long	options:24;
+	u_char	family:4;
+	u_char	cpu:4;
+	u_short	ctrlun;
+	u_short	devlun;
+	u_short	devtype;
+	u_short	devnum;
+	u_long	bug;
+	u_char	xx1[16];
+	u_char	xx2[4];
+	u_char	longname[12];
+	u_char	xx3[16];
+	u_char	speed[4];
+	u_char	xx4[12];
+};
+extern 	char *version;
+
 int
-main(pbugargs)
-	struct mvmeprom_args *pbugargs;
+main()
 {
 	kernel_entry addr;
-
-	/*
-	print_bugargs(pbugargs);
-	print_time();
-	print_brdid();
-	print_memory();
-	*/
-	parse_args(pbugargs);
-	if (load_kern(pbugargs) == 1) {
+	struct mvmeprom_brdid2 *brdid;
+	brdid = (struct mvmeprom_brdid2 *) mvmeprom_brdid();
+	printf(">> OpenBSD stboot [%s]\n\n", version);
+	printf("   MVME%x%xs\n", brdid->model, brdid->suffix);
+	printf("   Booting from Controler %x, Drive %x\n", brdid->ctrlun, brdid->devlun);
+	printf("   Speed %s\n", brdid->speed);
+	if (bugargs.arg_start != bugargs.arg_end)
+	    printf("   Args %s\n", bugargs.arg_start);
+        printf("\n");
+	
+	parse_bugargs(&bugargs);
+	if (load_kern(bugargs) == 1) {
 		printf("unsuccessful in loading kernel\n");
 	} else {
 		addr = kernel.entry;
-
+		if(kernel.esym == 0) kernel.esym = (int*)kernel.end_loaded;
 		printf("kernel loaded at %x\n", addr);
 		printf("kernel.entry %x\n", kernel.entry);
 		printf("kernel.symtab %x\n", kernel.symtab);
@@ -56,7 +121,7 @@ main(pbugargs)
 		printf("kernel.end_loaded %x\n", kernel.end_loaded);
 
 		if (kernel.bflags & RB_MINIROOT)
-			loadmini(kernel.end_loaded, pbugargs);
+			loadmini(kernel.end_loaded, bugargs);
 
 		printf("kernel.smini %x\n", kernel.smini);
 		printf("kernel.emini %x\n", kernel.emini);
@@ -64,16 +129,14 @@ main(pbugargs)
 		if (kernel.bflags & RB_HALT)
 			mvmeprom_return();
 		if (((u_long)addr &0xf) == 0x2) {
-			(addr)(pbugargs, &kernel);
+			(addr)(&bugargs, &kernel);
 		} else {
 			/* is type fixing anything like price fixing? */
 			typedef (* kernel_start) __P((int, int, void *,void *, void *));
 			kernel_start addr1;
 			addr1 = (void *)addr;
-			(addr1)(kernel.bflags, 0, kernel.esym, kernel.smini, kernel.emini
-	);
+			(addr1)(kernel.bflags, bugargs.ctrl_addr, kernel.esym, kernel.smini, kernel.emini);
 		}
-
 	}
 	return (0);
 }
@@ -104,7 +167,7 @@ read_tape_block(ctrl, dev, status, addr, cnt, blk_num, flags, verbose)
 	dio.addr_mod = 0;
 
 	if (verbose)
-		printf("saddr %x eaddr %x", dio.pbuffer,
+		printf("saddr %x eaddr %x ", dio.pbuffer,
 		    (int) dio.pbuffer + (dio.blk_cnt * MVMEPROM_BLOCK_SIZE));
 	ret = mvmeprom_diskrd(&dio);
 
@@ -117,6 +180,7 @@ read_tape_block(ctrl, dev, status, addr, cnt, blk_num, flags, verbose)
 	}
 	return (ret);
 }
+
 #ifdef DEBUG
 int     verbose = 1;
 #else
@@ -133,27 +197,33 @@ load_kern(pbugargs)
 	short   status = 0;
 	int     blk_num;
 	struct exec *pexec;
+	int     len2;
 	int     magic;
 	int    *esym;
 	int    *symtab;
-	int     cnt, len;
+	int     cnt, len, endsym;
 	char    buf[512];
+	int mid = 0;
 
 	blk_num = 2;
-	/* flags = IGNORE_FILENUM; */
+	/*flags = IGNORE_FILENUM;*/
 	flags = 0;
 	cnt = 512;
-printf("ctrl %x dev %x\n",pbugargs->ctrl_lun, pbugargs->dev_lun);
+	
+/*	printf("ctrl %x dev %x\n",pbugargs->ctrl_lun, pbugargs->dev_lun);*/
+
 	ret = read_tape_block(pbugargs->ctrl_lun, pbugargs->dev_lun, &status,
-	    buf, &cnt, blk_num, &flags, verbose);
-	if (ret != 0) {
+        buf, &cnt, blk_num, &flags, verbose);
+	
+	if (ret != 0 && status != 0x300) {
 		printf("unable to load kernel 1 status %x\n", status);
 		return (1);
 	}
 	pexec = (struct exec *) buf;
-	if (N_GETMID(*pexec) != MID_M68K &&
-	    N_GETMID(*pexec) != MID_M68K4K) {
-		printf("invalid mid on kernel\n");
+
+	mid = N_GETMID(*pexec);
+	if ( mid != MID_M88K ) {
+		printf("invalid mid %d on kernel\n", mid);
 		return (1);
 	}
 
@@ -164,7 +234,9 @@ printf("ctrl %x dev %x\n",pbugargs->ctrl_lun, pbugargs->dev_lun);
 	case NMAGIC:
 		printf("NMAGIC not yet supported");
 	case OMAGIC:
+		printf("OMAGIC file\n");
 	case QMAGIC:
+		printf("QMAGIC file\n");
 	default:
 		printf("Unknown or unsupported magic type <%x>\n", magic);
 		return (1);
@@ -195,7 +267,7 @@ printf("ctrl %x dev %x\n",pbugargs->ctrl_lun, pbugargs->dev_lun);
 		ret = read_tape_block(pbugargs->ctrl_lun, pbugargs->dev_lun,
 		    &status, addr, &cnt, blk_num, &flags, verbose);
 		if (ret != 0 || cnt != len) {
-			printf("unable to load kernel 2 status %x\n", status);
+			printf("\nunable to load kernel 2 status %x\n", status);
 			return 1;
 		}
 		addr += len;
@@ -220,18 +292,16 @@ printf("ctrl %x dev %x\n",pbugargs->ctrl_lun, pbugargs->dev_lun);
 			    pbugargs->dev_lun, &status, addr,
 			    &cnt, blk_num, &flags, verbose);
 			if (ret != 0 || cnt != ((len + (512 - 1)) / 512) * 512) {
-				printf("unable to load kernel 3\n");
+				printf("\nunable to load kernel 3\n");
 				return 1;
 			}
 			/* this value should have already been loaded XXX */
 			esym = (void *) ((u_int) addr + pexec->a_syms);
 			if ((int) addr + cnt <= (int) esym) {
-				printf("missed loading count of symbols\n");
+				printf("\nmissed loading count of symbols\n");
 				return 1;
 			}
 			addr += cnt;
-
-
 			len = *esym;
 #if 0
 			printf("start load %x end load %x %x\n", addr,
@@ -243,14 +313,14 @@ printf("ctrl %x dev %x\n",pbugargs->ctrl_lun, pbugargs->dev_lun);
 
 			if (len > 0) {
 				printf(" + %x", *esym);
-				esym = (void *) (addr + len);
+				esym = (int*) (addr + len);
 				cnt = ((len + (512 - 1)) / 512) * 512;
 				flags = IGNORE_FILENUM;
 				ret = read_tape_block(pbugargs->ctrl_lun,
 				    pbugargs->dev_lun, &status, addr,
 				    &cnt, blk_num, &flags, verbose);
 				if (ret != 0 || cnt != ((len + (512-1)) / 512)*512) {
-					printf("unable to load kernel 4\n");
+					printf("\nunable to load kernel 4\n");
 					return (1);
 				}
 				addr += len;
@@ -258,7 +328,7 @@ printf("ctrl %x dev %x\n",pbugargs->ctrl_lun, pbugargs->dev_lun);
 			} else {
 				printf("+ %x ]", *esym);
 			}
-			esym = (int *) (((int) esym) + *esym);
+			esym = (int*)addr;
 
 			kernel.symtab = symtab;
 			kernel.esym = esym;
@@ -266,14 +336,15 @@ printf("ctrl %x dev %x\n",pbugargs->ctrl_lun, pbugargs->dev_lun);
 			kernel.symtab = 0;
 			kernel.esym = 0;
 		}
+		printf(" removing pad [");
+
 		kernel.end_loaded = (int) addr;
 		flags = IGNORE_FILENUM | END_OF_FILE;
 		cnt = 8192;
-		printf("removing pad [");
 		ret = read_tape_block(pbugargs->ctrl_lun, pbugargs->dev_lun,
 		    &status, addr, &cnt, blk_num, &flags, verbose);
 		if (ret != 0) {
-			printf("unable to load kernel 5\n");
+			printf("\nunable to load kernel 5\n");
 			return (1);
 		}
 		printf(" %d ]", cnt);
@@ -303,7 +374,7 @@ loadmini(addr, pbugargs)
 	ret = read_tape_block(pbugargs->ctrl_lun, pbugargs->dev_lun,
 	    &status, (void *) addr, &cnt, blk_num, &flags, verbose);
 	if (ret != 0) {
-		printf("unable to load miniroot\n");
+		printf("\nunable to load miniroot\n");
 		return (1);
 	}
 	kernel.smini = (void *)addr;
@@ -314,11 +385,11 @@ loadmini(addr, pbugargs)
 }
 
 void
-parse_args(pargs)
+parse_bugargs(pargs)
 	struct mvmeprom_args *pargs;
 {
 	char *ptr = pargs->arg_start;
-	char c, *name = NULL;
+	char c, *name = "bsd";
 	int howto = 0;
 
 	if (pargs->arg_start != pargs->arg_end) {
