@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_mutex.c,v 1.13 2001/11/12 21:13:34 fgsch Exp $	*/
+/*	$OpenBSD: uthread_mutex.c,v 1.14 2002/01/23 23:11:57 fgsch Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -76,11 +76,15 @@ static inline void	mutex_queue_enq(pthread_mutex_t, pthread_t);
 
 static spinlock_t static_init_lock = _SPINLOCK_INITIALIZER;
 
+static struct pthread_mutex_attr	static_mutex_attr =
+    PTHREAD_MUTEXATTR_STATIC_INITIALIZER;
+static pthread_mutexattr_t		static_mattr = &static_mutex_attr;
+
 /* Reinitialize a mutex to defaults. */
 int
 _mutex_reinit(pthread_mutex_t * mutex)
 {
-	int ret = 0;
+	int	ret = 0;
 
 	if (mutex == NULL)
 		ret = EINVAL;
@@ -95,7 +99,8 @@ _mutex_reinit(pthread_mutex_t * mutex)
 		TAILQ_INIT(&(*mutex)->m_queue);
 		(*mutex)->m_owner = NULL;
 		(*mutex)->m_data.m_count = 0;
-		(*mutex)->m_flags = MUTEX_FLAGS_INITED;
+		(*mutex)->m_flags &= MUTEX_FLAGS_PRIVATE;
+		(*mutex)->m_flags |= MUTEX_FLAGS_INITED;
 		(*mutex)->m_refcount = 0;
 		(*mutex)->m_prio = 0;
 		(*mutex)->m_saved_prio = 0;
@@ -112,8 +117,9 @@ pthread_mutex_init(pthread_mutex_t * mutex,
 	enum pthread_mutextype	type;
 	int		protocol;
 	int		ceiling;
+	int		flags;
 	pthread_mutex_t	pmutex;
-	int             ret = 0;
+	int		ret = 0;
 
 	if (mutex == NULL)
 		ret = EINVAL;
@@ -124,6 +130,7 @@ pthread_mutex_init(pthread_mutex_t * mutex,
 		type = PTHREAD_MUTEX_ERRORCHECK;
 		protocol = PTHREAD_PRIO_NONE;
 		ceiling = PTHREAD_MAX_PRIORITY;
+		flags = 0;
 	}
 
 	/* Check mutex type: */
@@ -134,7 +141,7 @@ pthread_mutex_init(pthread_mutex_t * mutex,
 
 	/* Check mutex protocol: */
 	else if (((*mutex_attr)->m_protocol < PTHREAD_PRIO_NONE) ||
-		 ((*mutex_attr)->m_protocol > PTHREAD_PRIO_PROTECT))
+	    ((*mutex_attr)->m_protocol > PTHREAD_PRIO_PROTECT))
 		/* Return an invalid argument error: */
 		ret = EINVAL;
 
@@ -143,6 +150,7 @@ pthread_mutex_init(pthread_mutex_t * mutex,
 		type = (*mutex_attr)->m_type;
 		protocol = (*mutex_attr)->m_protocol;
 		ceiling = (*mutex_attr)->m_ceiling;
+		flags = (*mutex_attr)->m_flags;
 	}
 
 	/* Check no errors so far: */
@@ -151,8 +159,8 @@ pthread_mutex_init(pthread_mutex_t * mutex,
 		    malloc(sizeof(struct pthread_mutex))) == NULL)
 			ret = ENOMEM;
 		else {
-			/* Reset the mutex flags: */
-			pmutex->m_flags = 0;
+			/* Set the mutex flags: */
+			pmutex->m_flags = flags;
 
 			/* Process according to mutex type: */
 			switch (type) {
@@ -203,7 +211,7 @@ pthread_mutex_init(pthread_mutex_t * mutex,
 int
 pthread_mutex_destroy(pthread_mutex_t * mutex)
 {
-	int ret = 0;
+	int	ret = 0;
 
 	if (mutex == NULL || *mutex == NULL)
 		ret = EINVAL;
@@ -243,9 +251,9 @@ pthread_mutex_destroy(pthread_mutex_t * mutex)
 }
 
 static int
-init_static (pthread_mutex_t *mutex)
+init_static(pthread_mutex_t *mutex)
 {
-	int ret;
+	int	ret;
 
 	_SPINLOCK(&static_init_lock);
 
@@ -259,149 +267,160 @@ init_static (pthread_mutex_t *mutex)
 	return(ret);
 }
 
-int
-pthread_mutex_trylock(pthread_mutex_t * mutex)
+static int
+init_static_private(pthread_mutex_t *mutex)
 {
-	int             ret = 0;
+	int	ret;
 
-	if (mutex == NULL)
-		ret = EINVAL;
+	_SPINLOCK(&static_init_lock);
+
+	if (*mutex == NULL)
+		ret = pthread_mutex_init(mutex, &static_mattr);
+	else
+		ret = 0;
+
+	_SPINUNLOCK(&static_init_lock);
+
+	return(ret);
+}
+
+static int
+mutex_trylock_common(pthread_mutex_t *mutex)
+{
+	struct pthread	*curthread = _get_curthread();
+	int	ret = 0;
+
+	PTHREAD_ASSERT((mutex != NULL) && (*mutex != NULL),
+	    "Uninitialized mutex in mutex_trylock_common");
 
 	/*
-	 * If the mutex is statically initialized, perform the dynamic
-	 * initialization:
+	 * Defer signals to protect the scheduling queues from
+	 * access by the signal handler:
 	 */
-	else if (*mutex != NULL || (ret = init_static(mutex)) == 0) {
-		/*
-		 * Defer signals to protect the scheduling queues from
-		 * access by the signal handler:
-		 */
-		_thread_kern_sig_defer();
+	_thread_kern_sig_defer();
 
-		/* Lock the mutex structure: */
-		_SPINLOCK(&(*mutex)->lock);
+	/* Lock the mutex structure: */
+	_SPINLOCK(&(*mutex)->lock);
 
-		/*
-		 * If the mutex was statically allocated, properly
-		 * initialize the tail queue.
-		 */
-		if (((*mutex)->m_flags & MUTEX_FLAGS_INITED) == 0) {
-			TAILQ_INIT(&(*mutex)->m_queue);
-			_MUTEX_INIT_LINK(*mutex);
-			(*mutex)->m_flags |= MUTEX_FLAGS_INITED;
-		}
-
-		/* Process according to mutex type: */
-		switch ((*mutex)->m_protocol) {
-		/* Default POSIX mutex: */
-		case PTHREAD_PRIO_NONE:	
-			/* Check if this mutex is not locked: */
-			if ((*mutex)->m_owner == NULL) {
-				/* Lock the mutex for the running thread: */
-				(*mutex)->m_owner = _thread_run;
-
-				/* Add to the list of owned mutexes: */
-				_MUTEX_ASSERT_NOT_OWNED(*mutex);
-				TAILQ_INSERT_TAIL(&_thread_run->mutexq,
-				    (*mutex), m_qe);
-
-			} else if ((*mutex)->m_owner == _thread_run)
-				ret = mutex_self_trylock(*mutex);
-			else
-				/* Return a busy error: */
-				ret = EBUSY;
-			break;
-
-		/* POSIX priority inheritence mutex: */
-		case PTHREAD_PRIO_INHERIT:
-			/* Check if this mutex is not locked: */
-			if ((*mutex)->m_owner == NULL) {
-				/* Lock the mutex for the running thread: */
-				(*mutex)->m_owner = _thread_run;
-
-				/* Track number of priority mutexes owned: */
-				_thread_run->priority_mutex_count++;
-
-				/*
-				 * The mutex takes on the attributes of the
-				 * running thread when there are no waiters.
-				 */
-				(*mutex)->m_prio = _thread_run->active_priority;
-				(*mutex)->m_saved_prio =
-				    _thread_run->inherited_priority;
-
-				/* Add to the list of owned mutexes: */
-				_MUTEX_ASSERT_NOT_OWNED(*mutex);
-				TAILQ_INSERT_TAIL(&_thread_run->mutexq,
-				    (*mutex), m_qe);
-			} else if ((*mutex)->m_owner == _thread_run)
-				ret = mutex_self_trylock(*mutex);
-			else
-				/* Return a busy error: */
-				ret = EBUSY;
-			break;
-
-		/* POSIX priority protection mutex: */
-		case PTHREAD_PRIO_PROTECT:
-			/* Check for a priority ceiling violation: */
-			if (_thread_run->active_priority > (*mutex)->m_prio)
-				ret = EINVAL;
-
-			/* Check if this mutex is not locked: */
-			else if ((*mutex)->m_owner == NULL) {
-				/* Lock the mutex for the running thread: */
-				(*mutex)->m_owner = _thread_run;
-
-				/* Track number of priority mutexes owned: */
-				_thread_run->priority_mutex_count++;
-
-				/*
-				 * The running thread inherits the ceiling
-				 * priority of the mutex and executes at that
-				 * priority.
-				 */
-				_thread_run->active_priority = (*mutex)->m_prio;
-				(*mutex)->m_saved_prio =
-				    _thread_run->inherited_priority;
-				_thread_run->inherited_priority =
-				    (*mutex)->m_prio;
-
-				/* Add to the list of owned mutexes: */
-				_MUTEX_ASSERT_NOT_OWNED(*mutex);
-				TAILQ_INSERT_TAIL(&_thread_run->mutexq,
-				    (*mutex), m_qe);
-			} else if ((*mutex)->m_owner == _thread_run)
-				ret = mutex_self_trylock(*mutex);
-			else
-				/* Return a busy error: */
-				ret = EBUSY;
-			break;
-
-		/* Trap invalid mutex types: */
-		default:
-			/* Return an invalid argument error: */
-			ret = EINVAL;
-			break;
-		}
-
-		/* Unlock the mutex structure: */
-		_SPINUNLOCK(&(*mutex)->lock);
-
-		/*
-		 * Undefer and handle pending signals, yielding if
-		 * necessary:
-		 */
-		_thread_kern_sig_undefer();
+	/*
+	 * If the mutex was statically allocated, properly
+	 * initialize the tail queue.
+	 */
+	if (((*mutex)->m_flags & MUTEX_FLAGS_INITED) == 0) {
+		TAILQ_INIT(&(*mutex)->m_queue);
+		_MUTEX_INIT_LINK(*mutex);
+		(*mutex)->m_flags |= MUTEX_FLAGS_INITED;
 	}
+
+	/* Process according to mutex type: */
+	switch ((*mutex)->m_protocol) {
+	/* Default POSIX mutex: */
+	case PTHREAD_PRIO_NONE:	
+		/* Check if this mutex is not locked: */
+		if ((*mutex)->m_owner == NULL) {
+			/* Lock the mutex for the running thread: */
+			(*mutex)->m_owner = curthread;
+
+			/* Add to the list of owned mutexes: */
+			_MUTEX_ASSERT_NOT_OWNED(*mutex);
+			TAILQ_INSERT_TAIL(&curthread->mutexq,
+			    (*mutex), m_qe);
+		} else if ((*mutex)->m_owner == curthread)
+			ret = mutex_self_trylock(*mutex);
+		else
+			/* Return a busy error: */
+			ret = EBUSY;
+		break;
+
+	/* POSIX priority inheritence mutex: */
+	case PTHREAD_PRIO_INHERIT:
+		/* Check if this mutex is not locked: */
+		if ((*mutex)->m_owner == NULL) {
+			/* Lock the mutex for the running thread: */
+			(*mutex)->m_owner = curthread;
+
+			/* Track number of priority mutexes owned: */
+			curthread->priority_mutex_count++;
+
+			/*
+			 * The mutex takes on the attributes of the
+			 * running thread when there are no waiters.
+			 */
+			(*mutex)->m_prio = curthread->active_priority;
+			(*mutex)->m_saved_prio =
+			    curthread->inherited_priority;
+
+			/* Add to the list of owned mutexes: */
+			_MUTEX_ASSERT_NOT_OWNED(*mutex);
+			TAILQ_INSERT_TAIL(&curthread->mutexq,
+			    (*mutex), m_qe);
+		} else if ((*mutex)->m_owner == curthread)
+			ret = mutex_self_trylock(*mutex);
+		else
+			/* Return a busy error: */
+			ret = EBUSY;
+		break;
+
+	/* POSIX priority protection mutex: */
+	case PTHREAD_PRIO_PROTECT:
+		/* Check for a priority ceiling violation: */
+		if (curthread->active_priority > (*mutex)->m_prio)
+			ret = EINVAL;
+
+		/* Check if this mutex is not locked: */
+		else if ((*mutex)->m_owner == NULL) {
+			/* Lock the mutex for the running thread: */
+			(*mutex)->m_owner = curthread;
+
+			/* Track number of priority mutexes owned: */
+			curthread->priority_mutex_count++;
+
+			/*
+			 * The running thread inherits the ceiling
+			 * priority of the mutex and executes at that
+			 * priority.
+			 */
+			curthread->active_priority = (*mutex)->m_prio;
+			(*mutex)->m_saved_prio =
+			    curthread->inherited_priority;
+			curthread->inherited_priority =
+			    (*mutex)->m_prio;
+
+			/* Add to the list of owned mutexes: */
+			_MUTEX_ASSERT_NOT_OWNED(*mutex);
+			TAILQ_INSERT_TAIL(&curthread->mutexq,
+			    (*mutex), m_qe);
+		} else if ((*mutex)->m_owner == curthread)
+			ret = mutex_self_trylock(*mutex);
+		else
+			/* Return a busy error: */
+			ret = EBUSY;
+		break;
+
+	/* Trap invalid mutex types: */
+	default:
+		/* Return an invalid argument error: */
+		ret = EINVAL;
+		break;
+	}
+
+	/* Unlock the mutex structure: */
+	_SPINUNLOCK(&(*mutex)->lock);
+
+	/*
+	 * Undefer and handle pending signals, yielding if
+	 * necessary:
+	 */
+	_thread_kern_sig_undefer();
 
 	/* Return the completion status: */
 	return (ret);
 }
 
 int
-pthread_mutex_lock(pthread_mutex_t * mutex)
+pthread_mutex_trylock(pthread_mutex_t *mutex)
 {
-	int             ret = 0;
+	int	ret = 0;
 
 	if (mutex == NULL)
 		ret = EINVAL;
@@ -410,7 +429,51 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 	 * If the mutex is statically initialized, perform the dynamic
 	 * initialization:
 	 */
-	else if (*mutex != NULL || (ret = init_static(mutex)) == 0) {
+	else if ((*mutex != NULL) || (ret = init_static(mutex)) == 0)
+		ret = mutex_trylock_common(mutex);
+
+	return (ret);
+}
+
+int
+_pthread_mutex_trylock(pthread_mutex_t *mutex)
+{
+	int	ret = 0;
+
+	if (mutex == NULL)
+		ret = EINVAL;
+
+	/*
+	 * If the mutex is statically initialized, perform the dynamic
+	 * initialization marking the mutex private (delete safe):
+	 */
+	else if ((*mutex != NULL) || (ret = init_static_private(mutex)) == 0)
+		ret = mutex_trylock_common(mutex);
+
+	return (ret);
+}
+
+static int
+mutex_lock_common(pthread_mutex_t * mutex)
+{
+	struct pthread	*curthread = _get_curthread();
+	int	ret = 0;
+
+	PTHREAD_ASSERT((mutex != NULL) && (*mutex != NULL),
+	    "Uninitialized mutex in mutex_lock_common");
+
+	/* Reset the interrupted flag: */
+	curthread->interrupted = 0;
+
+	/*
+	 * Enter a loop waiting to become the mutex owner.  We need a
+	 * loop in case the waiting thread is interrupted by a signal
+	 * to execute a signal handler.  It is not (currently) possible
+	 * to remain in the waiting queue while running a handler.
+	 * Instead, the thread is interrupted and backed out of the
+	 * waiting queue prior to executing the signal handler.
+	 */
+	do {
 		/*
 		 * Defer signals to protect the scheduling queues from
 		 * access by the signal handler:
@@ -436,27 +499,27 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 		case PTHREAD_PRIO_NONE:
 			if ((*mutex)->m_owner == NULL) {
 				/* Lock the mutex for this thread: */
-				(*mutex)->m_owner = _thread_run;
+				(*mutex)->m_owner = curthread;
 
 				/* Add to the list of owned mutexes: */
 				_MUTEX_ASSERT_NOT_OWNED(*mutex);
-				TAILQ_INSERT_TAIL(&_thread_run->mutexq,
+				TAILQ_INSERT_TAIL(&curthread->mutexq,
 				    (*mutex), m_qe);
 
-			} else if ((*mutex)->m_owner == _thread_run)
+			} else if ((*mutex)->m_owner == curthread)
 				ret = mutex_self_lock(*mutex);
 			else {
 				/*
 				 * Join the queue of threads waiting to lock
 				 * the mutex: 
 				 */
-				mutex_queue_enq(*mutex, _thread_run);
+				mutex_queue_enq(*mutex, curthread);
 
 				/*
 				 * Keep a pointer to the mutex this thread
 				 * is waiting on:
 				 */
-				_thread_run->data.mutex = *mutex;
+				curthread->data.mutex = *mutex;
 
 				/*
 				 * Unlock the mutex structure and schedule the
@@ -475,42 +538,42 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 			/* Check if this mutex is not locked: */
 			if ((*mutex)->m_owner == NULL) {
 				/* Lock the mutex for this thread: */
-				(*mutex)->m_owner = _thread_run;
+				(*mutex)->m_owner = curthread;
 
 				/* Track number of priority mutexes owned: */
-				_thread_run->priority_mutex_count++;
+				curthread->priority_mutex_count++;
 
 				/*
 				 * The mutex takes on attributes of the
 				 * running thread when there are no waiters.
 				 */
-				(*mutex)->m_prio = _thread_run->active_priority;
+				(*mutex)->m_prio = curthread->active_priority;
 				(*mutex)->m_saved_prio =
-				    _thread_run->inherited_priority;
-				_thread_run->inherited_priority =
+				    curthread->inherited_priority;
+				curthread->inherited_priority =
 				    (*mutex)->m_prio;
 
 				/* Add to the list of owned mutexes: */
 				_MUTEX_ASSERT_NOT_OWNED(*mutex);
-				TAILQ_INSERT_TAIL(&_thread_run->mutexq,
+				TAILQ_INSERT_TAIL(&curthread->mutexq,
 				    (*mutex), m_qe);
 
-			} else if ((*mutex)->m_owner == _thread_run)
+			} else if ((*mutex)->m_owner == curthread)
 				ret = mutex_self_lock(*mutex);
 			else {
 				/*
 				 * Join the queue of threads waiting to lock
 				 * the mutex: 
 				 */
-				mutex_queue_enq(*mutex, _thread_run);
+				mutex_queue_enq(*mutex, curthread);
 
 				/*
 				 * Keep a pointer to the mutex this thread
 				 * is waiting on:
 				 */
-				_thread_run->data.mutex = *mutex;
+				curthread->data.mutex = *mutex;
 
-				if (_thread_run->active_priority >
+				if (curthread->active_priority >
 				    (*mutex)->m_prio)
 					/* Adjust priorities: */
 					mutex_priority_adjust(*mutex);
@@ -530,7 +593,7 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 		/* POSIX priority protection mutex: */
 		case PTHREAD_PRIO_PROTECT:
 			/* Check for a priority ceiling violation: */
-			if (_thread_run->active_priority > (*mutex)->m_prio)
+			if (curthread->active_priority > (*mutex)->m_prio)
 				ret = EINVAL;
 
 			/* Check if this mutex is not locked: */
@@ -539,43 +602,43 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 				 * Lock the mutex for the running
 				 * thread:
 				 */
-				(*mutex)->m_owner = _thread_run;
+				(*mutex)->m_owner = curthread;
 
 				/* Track number of priority mutexes owned: */
-				_thread_run->priority_mutex_count++;
+				curthread->priority_mutex_count++;
 
 				/*
 				 * The running thread inherits the ceiling
 				 * priority of the mutex and executes at that
 				 * priority:
 				 */
-				_thread_run->active_priority = (*mutex)->m_prio;
+				curthread->active_priority = (*mutex)->m_prio;
 				(*mutex)->m_saved_prio =
-				    _thread_run->inherited_priority;
-				_thread_run->inherited_priority =
+				    curthread->inherited_priority;
+				curthread->inherited_priority =
 				    (*mutex)->m_prio;
 
 				/* Add to the list of owned mutexes: */
 				_MUTEX_ASSERT_NOT_OWNED(*mutex);
-				TAILQ_INSERT_TAIL(&_thread_run->mutexq,
+				TAILQ_INSERT_TAIL(&curthread->mutexq,
 				    (*mutex), m_qe);
-			} else if ((*mutex)->m_owner == _thread_run)
+			} else if ((*mutex)->m_owner == curthread)
 				ret = mutex_self_lock(*mutex);
 			else {
 				/*
 				 * Join the queue of threads waiting to lock
 				 * the mutex: 
 				 */
-				mutex_queue_enq(*mutex, _thread_run);
+				mutex_queue_enq(*mutex, curthread);
 
 				/*
 				 * Keep a pointer to the mutex this thread
 				 * is waiting on:
 				 */
-				_thread_run->data.mutex = *mutex;
+				curthread->data.mutex = *mutex;
 
 				/* Clear any previous error: */
-				_thread_run->error = 0;
+				curthread->error = 0;
 
 				/*
 				 * Unlock the mutex structure and schedule the
@@ -592,8 +655,8 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 				 * waiting for the mutex causing a ceiling
 				 * violation.
 				 */
-				ret = _thread_run->error;
-				_thread_run->error = 0;
+				ret = curthread->error;
+				curthread->error = 0;
 			}
 			break;
 
@@ -604,6 +667,13 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 			break;
 		}
 
+		/*
+		 * Check to see if this thread was interrupted and
+		 * is still in the mutex queue of waiting threads:
+		 */
+		if (curthread->interrupted != 0)
+			mutex_queue_remove(*mutex, curthread);
+
 		/* Unlock the mutex structure: */
 		_SPINUNLOCK(&(*mutex)->lock);
 
@@ -612,9 +682,56 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 		 * necessary:
 		 */
 		_thread_kern_sig_undefer();
-	}
+	} while (((*mutex)->m_owner != curthread) && (ret == 0) &&
+	    (curthread->interrupted == 0));
+
+	if (curthread->interrupted != 0 &&
+	    curthread->continuation != NULL)
+		curthread->continuation((void *) curthread);
 
 	/* Return the completion status: */
+	return (ret);
+}
+
+int
+pthread_mutex_lock(pthread_mutex_t *mutex)
+{
+	int	ret = 0;
+
+	if (_thread_initial == NULL)
+		_thread_init();
+
+	if (mutex == NULL)
+		ret = EINVAL;
+
+	/*
+	 * If the mutex is statically initialized, perform the dynamic
+	 * initialization:
+	 */
+	else if ((*mutex != NULL) || ((ret = init_static(mutex)) == 0))
+		ret = mutex_lock_common(mutex);
+
+	return (ret);
+}
+
+int
+_pthread_mutex_lock(pthread_mutex_t *mutex)
+{
+	int	ret = 0;
+
+	if (_thread_initial == NULL)
+		_thread_init();
+
+	if (mutex == NULL)
+		ret = EINVAL;
+
+	/*
+	 * If the mutex is statically initialized, perform the dynamic
+	 * initialization marking it private (delete safe):
+	 */
+	else if ((*mutex != NULL) || ((ret = init_static_private(mutex)) == 0))
+		ret = mutex_lock_common(mutex);
+
 	return (ret);
 }
 
@@ -633,7 +750,7 @@ _mutex_cv_unlock(pthread_mutex_t * mutex)
 int
 _mutex_cv_lock(pthread_mutex_t * mutex)
 {
-	int ret;
+	int	ret;
 	if ((ret = pthread_mutex_lock(mutex)) == 0)
 		(*mutex)->m_refcount--;
 	return (ret);
@@ -642,7 +759,7 @@ _mutex_cv_lock(pthread_mutex_t * mutex)
 static inline int
 mutex_self_trylock(pthread_mutex_t mutex)
 {
-	int ret = 0;
+	int	ret = 0;
 
 	switch (mutex->m_type) {
 
@@ -709,7 +826,8 @@ mutex_self_lock(pthread_mutex_t mutex)
 static inline int
 mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 {
-	int ret = 0;
+	struct pthread	*curthread = _get_curthread();
+	int	ret = 0;
 
 	if (mutex == NULL || *mutex == NULL) {
 		ret = EINVAL;
@@ -731,12 +849,12 @@ mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 			 * Check if the running thread is not the owner of the
 			 * mutex:
 			 */
-			if ((*mutex)->m_owner != _thread_run) {
+			if ((*mutex)->m_owner != curthread) {
 				/*
-				 * Return a permission error when the
-				 * thread doesn't own the lock.
+				 * Return an invalid argument error for no
+				 * owner and a permission error otherwise:
 				 */
-				ret = EPERM;
+				ret = (*mutex)->m_owner == NULL ? EINVAL : EPERM;
 			}
 			else if (((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE) &&
 			    ((*mutex)->m_data.m_count > 0)) {
@@ -762,11 +880,20 @@ mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 				if (((*mutex)->m_owner =
 			  	    mutex_queue_deq(*mutex)) != NULL) {
 					/*
-					 * Allow the new owner of the mutex to
-					 * run:
+					 * Unless the new owner of the mutex is
+					 * currently suspended, allow the owner
+					 * to run.  If the thread is suspended,
+					 * make a note that the thread isn't in
+					 * a wait queue any more.
 					 */
-					PTHREAD_NEW_STATE((*mutex)->m_owner,
-					    PS_RUNNING);
+					if (((*mutex)->m_owner->state !=
+					    PS_SUSPENDED)) {
+						PTHREAD_NEW_STATE((*mutex)->m_owner,
+						    PS_RUNNING);
+					} else {
+						(*mutex)->m_owner->suspended =
+						    SUSP_NOWAIT;
+					}
 
 					/*
 					 * Add the mutex to the threads list of
@@ -790,12 +917,12 @@ mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 			 * Check if the running thread is not the owner of the
 			 * mutex:
 			 */
-			if ((*mutex)->m_owner != _thread_run) {
+			if ((*mutex)->m_owner != curthread) {
 				/*
-				 * Return a permission error when the
-				 * thread doesn't own the lock.
+				 * Return an invalid argument error for no
+				 * owner and a permission error otherwise:
 				 */
-				ret = EPERM;
+				ret = (*mutex)->m_owner == NULL ? EINVAL : EPERM;
 			}
 			else if (((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE) &&
 			    ((*mutex)->m_data.m_count > 0)) {
@@ -814,16 +941,16 @@ mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 				 * not to override changes in the threads base
 				 * priority subsequent to locking the mutex).
 				 */
-				_thread_run->inherited_priority =
+				curthread->inherited_priority =
 					(*mutex)->m_saved_prio;
-				_thread_run->active_priority =
-				    MAX(_thread_run->inherited_priority,
-				    _thread_run->base_priority);
+				curthread->active_priority =
+				    MAX(curthread->inherited_priority,
+				    curthread->base_priority);
 
 				/*
 				 * This thread now owns one less priority mutex.
 				 */
-				_thread_run->priority_mutex_count--;
+				curthread->priority_mutex_count--;
 
 				/* Remove the mutex from the threads queue. */
 				_MUTEX_ASSERT_IS_OWNED(*mutex);
@@ -884,11 +1011,20 @@ mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 						(*mutex)->m_prio;
 
 					/*
-					 * Allow the new owner of the mutex to
-					 * run:
+					 * Unless the new owner of the mutex is
+					 * currently suspended, allow the owner
+					 * to run.  If the thread is suspended,
+					 * make a note that the thread isn't in
+					 * a wait queue any more.
 					 */
-					PTHREAD_NEW_STATE((*mutex)->m_owner,
-					    PS_RUNNING);
+					if (((*mutex)->m_owner->state !=
+					    PS_SUSPENDED)) {
+						PTHREAD_NEW_STATE((*mutex)->m_owner,
+						    PS_RUNNING);
+					} else {
+						(*mutex)->m_owner->suspended =
+						    SUSP_NOWAIT;
+					}
 				}
 			}
 			break;
@@ -899,12 +1035,12 @@ mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 			 * Check if the running thread is not the owner of the
 			 * mutex:
 			 */
-			if ((*mutex)->m_owner != _thread_run) {
+			if ((*mutex)->m_owner != curthread) {
 				/*
-				 * Return a permission error when the
-				 * thread doesn't own the lock.
+				 * Return an invalid argument error for no
+				 * owner and a permission error otherwise:
 				 */
-				ret = EPERM;
+				ret = (*mutex)->m_owner == NULL ? EINVAL : EPERM;
 			}
 			else if (((*mutex)->m_type == PTHREAD_MUTEX_RECURSIVE) &&
 			    ((*mutex)->m_data.m_count > 0)) {
@@ -923,16 +1059,16 @@ mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 				 * not to override changes in the threads base
 				 * priority subsequent to locking the mutex).
 				 */
-				_thread_run->inherited_priority =
+				curthread->inherited_priority =
 					(*mutex)->m_saved_prio;
-				_thread_run->active_priority =
-				    MAX(_thread_run->inherited_priority,
-				    _thread_run->base_priority);
+				curthread->active_priority =
+				    MAX(curthread->inherited_priority,
+				    curthread->base_priority);
 
 				/*
 				 * This thread now owns one less priority mutex.
 				 */
-				_thread_run->priority_mutex_count--;
+				curthread->priority_mutex_count--;
 
 				/* Remove the mutex from the threads queue. */
 				_MUTEX_ASSERT_IS_OWNED(*mutex);
@@ -1004,11 +1140,20 @@ mutex_unlock_common(pthread_mutex_t * mutex, int add_reference)
 					    (*mutex)->m_prio;
 
 					/*
-					 * Allow the new owner of the mutex to
-					 * run:
+					 * Unless the new owner of the mutex is
+					 * currently suspended, allow the owner
+					 * to run.  If the thread is suspended,
+					 * make a note that the thread isn't in
+					 * a wait queue any more.
 					 */
-					PTHREAD_NEW_STATE((*mutex)->m_owner,
-					    PS_RUNNING);
+					if (((*mutex)->m_owner->state !=
+					    PS_SUSPENDED)) {
+						PTHREAD_NEW_STATE((*mutex)->m_owner,
+						    PS_RUNNING);
+					} else {
+						(*mutex)->m_owner->suspended =
+						    SUSP_NOWAIT;
+					}
 				}
 			}
 			break;
@@ -1204,7 +1349,7 @@ mutex_priority_adjust(pthread_mutex_t mutex)
 }
 
 static void
-mutex_rescan_owned (pthread_t pthread, pthread_mutex_t mutex)
+mutex_rescan_owned(pthread_t pthread, pthread_mutex_t mutex)
 {
 	int		active_prio, inherited_prio;
 	pthread_mutex_t	m;
@@ -1316,6 +1461,50 @@ mutex_rescan_owned (pthread_t pthread, pthread_mutex_t mutex)
 	}
 }
 
+void
+_mutex_unlock_private(pthread_t pthread)
+{
+	struct pthread_mutex volatile	*m, *m_next;
+
+	for (m = TAILQ_FIRST(&pthread->mutexq); m != NULL; m = m_next) {
+		m_next = TAILQ_NEXT(m, m_qe);
+		if ((m->m_flags & MUTEX_FLAGS_PRIVATE) != 0)
+			pthread_mutex_unlock(&m);
+	}
+}
+
+void
+_mutex_lock_backout(pthread_t pthread)
+{
+	struct pthread_mutex volatile	*mutex;
+
+	/*
+	 * Defer signals to protect the scheduling queues from
+	 * access by the signal handler:
+	 */
+	_thread_kern_sig_defer();
+	if ((pthread->flags & PTHREAD_FLAGS_IN_MUTEXQ) != 0) {
+		mutex = pthread->data.mutex;
+
+		/* Lock the mutex structure: */
+		_SPINLOCK(&mutex->lock);
+
+		mutex_queue_remove(mutex, pthread);
+
+		/* This thread is no longer waiting for the mutex: */
+		pthread->data.mutex = NULL;
+
+		/* Unlock the mutex structure: */
+		_SPINUNLOCK(&mutex->lock);
+
+	}
+	/*
+	 * Undefer and handle pending signals, yielding if
+	 * necessary:
+	 */
+	_thread_kern_sig_undefer();
+}
+
 /*
  * Dequeue a waiting thread from the head of a mutex queue in descending
  * priority order.
@@ -1325,8 +1514,17 @@ mutex_queue_deq(pthread_mutex_t mutex)
 {
 	pthread_t pthread;
 
-	if ((pthread = TAILQ_FIRST(&mutex->m_queue)) != NULL)
-		TAILQ_REMOVE(&mutex->m_queue, pthread, qe);
+	while ((pthread = TAILQ_FIRST(&mutex->m_queue)) != NULL) {
+		TAILQ_REMOVE(&mutex->m_queue, pthread, sqe);
+		pthread->flags &= ~PTHREAD_FLAGS_IN_MUTEXQ;
+
+		/*
+		 * Only exit the loop if the thread hasn't been
+		 * cancelled.
+		 */
+		if (pthread->interrupted == 0)
+			break;
+	}
 
 	return(pthread);
 }
@@ -1337,7 +1535,10 @@ mutex_queue_deq(pthread_mutex_t mutex)
 static inline void
 mutex_queue_remove(pthread_mutex_t mutex, pthread_t pthread)
 {
-	TAILQ_REMOVE(&mutex->m_queue, pthread, qe);
+	if ((pthread->flags & PTHREAD_FLAGS_IN_MUTEXQ) != 0) {
+		TAILQ_REMOVE(&mutex->m_queue, pthread, sqe);
+		pthread->flags &= ~PTHREAD_FLAGS_IN_MUTEXQ;
+	}
 }
 
 /*
@@ -1348,19 +1549,21 @@ mutex_queue_enq(pthread_mutex_t mutex, pthread_t pthread)
 {
 	pthread_t tid = TAILQ_LAST(&mutex->m_queue, mutex_head);
 
+	PTHREAD_ASSERT_NOT_IN_SYNCQ(pthread);
 	/*
 	 * For the common case of all threads having equal priority,
 	 * we perform a quick check against the priority of the thread
 	 * at the tail of the queue.
 	 */
 	if ((tid == NULL) || (pthread->active_priority <= tid->active_priority))
-		TAILQ_INSERT_TAIL(&mutex->m_queue, pthread, qe);
+		TAILQ_INSERT_TAIL(&mutex->m_queue, pthread, sqe);
 	else {
 		tid = TAILQ_FIRST(&mutex->m_queue);
 		while (pthread->active_priority <= tid->active_priority)
-			tid = TAILQ_NEXT(tid, qe);
-		TAILQ_INSERT_BEFORE(tid, pthread, qe);
+			tid = TAILQ_NEXT(tid, sqe);
+		TAILQ_INSERT_BEFORE(tid, pthread, sqe);
 	}
+	pthread->flags |= PTHREAD_FLAGS_IN_MUTEXQ;
 }
 
 #endif
