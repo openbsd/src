@@ -86,7 +86,13 @@ case "${target}" in
 	path="m68k/mc68020 m68k" ;;
 
   i960*-*-*) path="i960" ;;
-  m88k*-*-* | m88k*-*-*) path="m88k" ;;
+
+  m88k*-*-*bsd* | m88110*-*-*bsd*)
+	echo '#define BSD_SYNTAX' >asm-syntax.h
+	echo '#include "'$srcdir'/m88k/syntax.h"' >>asm-syntax.h
+	path="m88k" ;;
+
+  m88k*-*-*) path="m88k" ;;
   m88110*-*-*) path="m88k/mc88110 m88k" ;;
   ns32k*-*-*) path="n32k" ;;
   ppc601-*-*) path="power powerpc32" ;;

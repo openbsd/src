@@ -1,31 +1,32 @@
-; mc88110 __mpn_add_n -- Add two limb vectors of the same length > 0 and store
-; sum in a third limb vector.
+/* mc88110 __mpn_add_n -- Add two limb vectors of the same length > 0 and store
+sum in a third limb vector.
 
-; Copyright (C) 1995, 1996 Free Software Foundation, Inc.
+Copyright (C) 1995, 1996 Free Software Foundation, Inc.
 
-; This file is part of the GNU MP Library.
+This file is part of the GNU MP Library.
 
-; The GNU MP Library is free software; you can redistribute it and/or modify
-; it under the terms of the GNU Library General Public License as published by
-; the Free Software Foundation; either version 2 of the License, or (at your
-; option) any later version.
+The GNU MP Library is free software; you can redistribute it and/or modify
+it under the terms of the GNU Library General Public License as published by
+the Free Software Foundation; either version 2 of the License, or (at your
+option) any later version.
 
-; The GNU MP Library is distributed in the hope that it will be useful, but
-; WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-; or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
-; License for more details.
+The GNU MP Library is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+License for more details.
 
-; You should have received a copy of the GNU Library General Public License
-; along with the GNU MP Library; see the file COPYING.LIB.  If not, write to
-; the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
-; MA 02111-1307, USA.
+You should have received a copy of the GNU Library General Public License
+along with the GNU MP Library; see the file COPYING.LIB.  If not, write to
+the Free Software Foundation, Inc., 59 Temple Place - Suite 330, Boston,
+MA 02111-1307, USA.
+*/
 
-
-; INPUT PARAMETERS
+/* INPUT PARAMETERS
 #define res_ptr	r2
 #define s1_ptr	r3
 #define s2_ptr	r4
 #define size	r5
+*/
 
 #include "sysdep.h"
 
@@ -33,11 +34,11 @@
 	align	16
 	global	C_SYMBOL_NAME(__mpn_add_n)
 C_SYMBOL_NAME(__mpn_add_n):
-	addu.co	 r0,r0,r0		; clear cy flag
+	addu.co	 r0,r0,r0		/* clear cy flag */
 	xor	 r12,s2_ptr,res_ptr
 	bb1	 2,r12,L1
-; **  V1a  **
-L0:	bb0	 2,res_ptr,L_v1		; branch if res_ptr is aligned?
+/* **  V1a  ** */
+L0:	bb0	 2,res_ptr,L_v1		/* branch if res_ptr is aligned? */
 /* Add least significant limb separately to align res_ptr and s2_ptr */
 	ld	 r10,s1_ptr,0
 	addu	 s1_ptr,s1_ptr,4
@@ -113,17 +114,17 @@ Lend1:	addu.cio r6,r10,r8
 	st	 r6,res_ptr,8
 
 Lret1:	jmp.n	 r1
-	addu.ci	 r2,r0,r0		; return carry-out from most sign. limb
+	addu.ci	 r2,r0,r0		/* return carry-out from most sign. limb */
 
 L1:	xor	 r12,s1_ptr,res_ptr
 	bb1	 2,r12,L2
-; **  V1b  **
+/* **  V1b  ** */
 	or	 r12,r0,s2_ptr
 	or	 s2_ptr,r0,s1_ptr
 	or	 s1_ptr,r0,r12
 	br	 L0
 
-; **  V2  **
+/* **  V2  ** */
 /* If we come here, the alignment of s1_ptr and res_ptr as well as the
    alignment of s2_ptr and res_ptr differ.  Since there are only two ways
    things can be aligned (that we care about) we now know that the alignment
@@ -131,7 +132,7 @@ L1:	xor	 r12,s1_ptr,res_ptr
 
 L2:	cmp	 r12,size,1
 	bb1	 eq,r12,Ljone
-	bb0	 2,s1_ptr,L_v2		; branch if s1_ptr is aligned
+	bb0	 2,s1_ptr,L_v2		/* branch if s1_ptr is aligned */
 /* Add least significant limb separately to align res_ptr and s2_ptr */
 	ld	 r10,s1_ptr,0
 	addu	 s1_ptr,s1_ptr,4
@@ -197,4 +198,4 @@ Ljone:	ld	 r10,s1_ptr,0
 	st	 r6,res_ptr,0
 
 Lret2:	jmp.n	 r1
-	addu.ci	 r2,r0,r0		; return carry-out from most sign. limb
+	addu.ci	 r2,r0,r0		/* return carry-out from most sign. limb */
