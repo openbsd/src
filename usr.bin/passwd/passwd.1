@@ -1,4 +1,4 @@
-.\"	$OpenBSD: passwd.1,v 1.4 1997/02/25 18:19:35 provos Exp $
+.\"	$OpenBSD: passwd.1,v 1.5 1998/01/20 15:32:20 art Exp $
 .\" Copyright (c) 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -41,9 +41,14 @@
 .Sh SYNOPSIS
 .Nm passwd
 .Op Fl l
-.Op Fl k
 .Op Fl y
+.Op Fl k
+.Op Fl n Ar name
+.Op Fl i Ar instance
+.Op Fl r Ar realm
+.Op Fl u Ar username[.instance][@realm]
 .Op Ar user
+.\" This should really be: passwd [-l] [-y] [-k [-n name] [-i instance] [-r realm] [-u username[.instance][@realm]]] [user]
 .Sh DESCRIPTION
 .Nm Passwd
 changes the user's local, Kerberos, or YP password.  First, the user is prompted

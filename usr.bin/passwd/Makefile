@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.15 1997/04/19 21:26:27 millert Exp $
+#	$OpenBSD: Makefile,v 1.16 1998/01/20 15:32:19 art Exp $
 
 .include <bsd.own.mk>
 
 PROG=	passwd
-SRCS=	local_passwd.c yp_passwd.c passwd.c getpwent.c pwd_gensalt.c
+SRCS=	local_passwd.c yp_passwd.c passwd.c pwd_gensalt.c new_pwd.c
 .PATH:  ${.CURDIR}/../../lib/libc/gen
 DPADD+= ${LIBRPCSVC} ${LIBUTIL}
 LDADD+= -lrpcsvc -lutil
@@ -25,13 +25,11 @@ LDADD+=	-lkrb5 -lcrypto
 SRCS+= krb_passwd.c des_rw.c
 CFLAGS+= -DKERBEROS
 DPADD+=	${LIBKRB} ${LIBDES}
-LDADD+=	-lkrb -ldes
+LDADD+=	-lkadm -lkrb -ldes -lcom_err
 .endif
 
 BINMODE=4555
-BINOWN=	root
+BINOWN=root
 
 .include <bsd.prog.mk>
 
-getpwent.o: getpwent.c
-	${COMPILE.c} -UYP ${.IMPSRC}

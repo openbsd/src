@@ -1,42 +1,29 @@
-/*	$OpenBSD: krb_passwd.c,v 1.7 1997/06/29 11:10:33 provos Exp $	*/
+/* $KTH: kpasswd.c,v 1.25 1997/05/02 14:28:51 assar Exp $ */
 
-/*-
- * Copyright (c) 1990 The Regents of the University of California.
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- * 1. Redistributions of source code must retain the above copyright
- *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
- * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
- * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
- * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
- * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
- * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
- * SUCH DAMAGE.
+/* 
+  Copyright (C) 1989 by the Massachusetts Institute of Technology
+
+   Export of this software from the United States of America is assumed
+   to require a specific license from the United States Government.
+   It is the responsibility of any person or organization contemplating
+   export to obtain such a license before exporting.
+
+WITHIN THAT CONSTRAINT, permission to use, copy, modify, and
+distribute this software and its documentation for any purpose and
+without fee is hereby granted, provided that the above copyright
+notice appear in all copies and that both that copyright notice and
+this permission notice appear in supporting documentation, and that
+the name of M.I.T. not be used in advertising or publicity pertaining
+to distribution of the software without specific, written prior
+permission.  M.I.T. makes no representations about the suitability of
+this software for any purpose.  It is provided "as is" without express
+or implied warranty.
+
+  */
+
+/*
+ * change your password with kerberos
  */
-
-#ifndef lint
-/*static char sccsid[] = "from: @(#)krb_passwd.c	5.4 (Berkeley) 3/1/91";*/
-static char rcsid[] = "$OpenBSD: krb_passwd.c,v 1.7 1997/06/29 11:10:33 provos Exp $";
-#endif /* not lint */
 
 #ifdef KERBEROS
 
@@ -47,268 +34,151 @@ static char rcsid[] = "$OpenBSD: krb_passwd.c,v 1.7 1997/06/29 11:10:33 provos E
 #include <netinet/in.h>
 #include <des.h>
 #include <kerberosIV/krb.h>
+#include <kerberosIV/kadm.h>
+#include <kerberosIV/kadm_err.h>
 #include <netdb.h>
 #include <signal.h>
 #include <pwd.h>
 #include <err.h>
 #include <errno.h>
 #include <stdio.h>
-#include "kpasswd_proto.h"
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-#define	PROTO	"tcp"
+char realm[REALM_SZ];
 
-static struct timeval timeout = { CLIENT_KRB_TIMEOUT, 0 };
-static struct kpasswd_data proto_data;
-static des_cblock okey;
-static Key_schedule osched;
-KTEXT_ST ticket;
-Key_schedule random_schedule;
-long authopts;
-char realm[REALM_SZ], krbhst[MAX_HSTNM];
-int sock;
+extern void usage(int value);
 
-krb_passwd()
+int
+krb_passwd(int argc, char **argv)
 {
-	struct servent *se;
-	struct hostent *host;
-	struct sockaddr_in sin;
-	CREDENTIALS cred;
-	int fdsn;
-	fd_set *fdsp;
-	int rval;
-	char pass[_PASSWORD_LEN], password[_PASSWORD_LEN];
-	static void finish();
+    krb_principal principal;
+    krb_principal default_principal;
+    int realm_given = 0;	/* True if realm was give on cmdline */
+    int use_default = 1;	/* True if we should use default name */
+    int status;			/* return code */
+    char pword[MAX_KPW_LEN];
+    int c;
+    char tktstring[MAXPATHLEN];
+    
+    memset (&principal, 0, sizeof(principal));
+    memset (&default_principal, 0, sizeof(default_principal));
+    
+    krb_get_default_principal (default_principal.name,
+			       default_principal.instance,
+			       default_principal.realm);
 
-	static struct rlimit rl = { 0, 0 };
-
-	(void)signal(SIGHUP, SIG_IGN);
-	(void)signal(SIGINT, SIG_IGN);
-	(void)signal(SIGTSTP, SIG_IGN);
-
-	if (setrlimit(RLIMIT_CORE, &rl) < 0) {
-		warn("setrlimit");
-		return(1);
+    while ((c = getopt(argc, argv, "u:n:i:r:h")) != EOF) {
+	switch (c) {
+	case 'u':
+	    status = krb_parse_name (optarg, &principal);
+	    if (status != KSUCCESS)
+		errx (2, "%s", krb_get_err_text(status));
+	    if (principal.realm[0])
+		realm_given++;
+	    else if (krb_get_lrealm(principal.realm, 1) != KSUCCESS)
+		errx (1, "Could not find default realm!");
+	    break;
+	case 'n':
+	    if (k_isname(optarg))
+		strncpy(principal.name, optarg, sizeof(principal.name) - 1);
+	    else {
+		warnx("Bad name: %s", optarg);
+		usage(1);
+	    }
+	    break;
+	case 'i':
+	    if (k_isinst(optarg))
+		strncpy(principal.instance,
+			optarg,
+			sizeof(principal.instance) - 1);
+	    else {
+		warnx("Bad instance: %s", optarg);
+		usage(1);
+	    }
+	    break;
+	case 'r':
+	    if (k_isrealm(optarg)) {
+		strncpy(principal.realm, optarg, sizeof(principal.realm) - 1);
+		realm_given++; 
+	    } else {
+		warnx("Bad realm: %s", optarg);
+		usage(1);
+	    }
+	    break;
+	case 'h':
+	    usage(0);
+	    break;
+	default:
+	    usage(1);
+	    break;
 	}
+	use_default = 0;
+    }
+    if (optind < argc) {
+	use_default = 0;
+	status = krb_parse_name (argv[optind], &principal);
+	if(status != KSUCCESS)
+	    errx (1, "%s", krb_get_err_text (status));
+    }
 
-	if ((se = getservbyname(SERVICE, PROTO)) == NULL) {
-		warnx("couldn't find entry for service %s/%s", SERVICE, PROTO);
-		return(1);
+    if (use_default) {
+	strncpy(principal.name, default_principal.name, ANAME_SZ - 1);
+	principal.name[ANAME_SZ - 1] = '\0';
+	strncpy(principal.instance, default_principal.instance, INST_SZ - 1);
+	principal.instance[INST_SZ - 1] = '\0';
+	strncpy(principal.realm, default_principal.realm, REALM_SZ - 1);
+	principal.realm[REALM_SZ - 1] = '\0';
+    } else {
+	if (!principal.name[0]) {
+	    strncpy(principal.name, default_principal.name, ANAME_SZ - 1);
+	    principal.name[ANAME_SZ - 1] = '\0';
 	}
-
-	if ((rval = krb_get_lrealm(realm,1)) != KSUCCESS) {
-		warnx("couldn't get local Kerberos realm: %s", krb_err_txt[rval]);
-		return(1);
+	if (!principal.realm[0]) {
+	    strncpy(principal.realm, default_principal.realm, REALM_SZ - 1);
+	    principal.realm[REALM_SZ - 1] = '\0';
 	}
+    }
 
-	if ((rval = krb_get_krbhst(krbhst, realm, 1)) != KSUCCESS) {
-		warnx("couldn't get Kerberos host: %s", krb_err_txt[rval]);
-		return(1);
-	}
-
-	if ((host = gethostbyname(krbhst)) == NULL) {
-		warnx("couldn't get host entry for krb host %s", krbhst);
-		return(1);
-	}
-
-	sin.sin_family = host->h_addrtype;
-	bcopy(host->h_addr, (char *) &sin.sin_addr, host->h_length);
-	sin.sin_port = se->s_port;
-
-	if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-		warn("socket");
-		return(1);
-	}
-
-	if (connect(sock, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-		warn("connect");
-		(void)close(sock);
-		return(1);
-	}
-
-	rval = krb_sendauth(
-		authopts,		/* NOT mutual */
-		sock,
-		&ticket,		/* (filled in) */
-		SERVICE,
-		krbhst,			/* instance (krbhst) */
-		realm,			/* dest realm */
-		(u_long) getpid(),	/* checksum */
-		NULL,			/* msg data */
-		NULL,			/* credentials */ 
-		NULL,			/* schedule */
-		NULL,			/* local addr */
-		NULL,			/* foreign addr */
-		"KPWDV0.1"
-	);
-
-	if (rval != KSUCCESS) {
-		warnx("Kerberos sendauth error: %s", krb_err_txt[rval]);
-		return(1);
-	}
-
-	krb_get_cred("krbtgt", realm, realm, &cred);
-
-	(void)printf("Changing Kerberos password for %s.%s@%s.\n",
-	    cred.pname, cred.pinst, realm);
-
-	if (des_read_pw_string(pass,
-	    sizeof(pass)-1, "Old Kerberos password:", 0)) {
-		warnx("error reading old Kerberos password");
-		return(1);
-	}
-
-	(void)des_string_to_key(pass, &okey);
-	(void)des_key_sched(&okey, osched);
-	(void)desrw_set_key(&okey, osched);
-
-	/* wait on the verification string */
-
-	fdsn = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
-		err(1, "malloc");
-	memset(fdsp, 0, fdsn);
-	FD_SET(sock, fdsp);
-
-	rval =
-	    select(sock + 1, fdsp, (fd_set *) 0, (fd_set *) 0, &timeout);
-
-	if ((rval < 1) || !FD_ISSET(sock, fdsp)) {
-		free(fdsp);
-		if(rval == 0) {
-			warnx("timed out (aborted)");
-			cleanup();
-			return(1);
-		}
-		warnx("select failed (aborted)");
-		cleanup();
-		return(1);
-	}
-	free(fdsp);
-
-	/* read verification string */
-
-	if (des_read(sock, &proto_data, sizeof(proto_data)) !=
-	    sizeof(proto_data)) {
-		warnx("couldn't read verification string (aborted)");
-		cleanup();
-		return(1);
-	}
-
-	(void)signal(SIGHUP, finish);
-	(void)signal(SIGINT, finish);
-
-	if (strcmp(SECURE_STRING, proto_data.secure_msg) != 0) {
-		cleanup();
-		/* don't complain loud if user just hit return */
-		if (pass == NULL || (!*pass))
-			return(0);
-		warnx("Sorry");
-		return(1);
-	}
-
-	(void)des_key_sched(&proto_data.random_key, random_schedule);
-	(void)desrw_set_key(&proto_data.random_key, random_schedule);
-	(void)bzero(pass, sizeof(pass));
-
-	if (des_read_pw_string(pass,
-	    sizeof(pass)-1, "New Kerberos password:", 0)) {
-		warnx("error reading new Kerberos password (aborted)");
-		cleanup();
-		return(1);
-	}
-
-	if (des_read_pw_string(password,
-	    sizeof(password)-1, "Retype new Kerberos password:", 0)) {
-		warnx("error reading new Kerberos password (aborted)");
-		cleanup();
-		return(1);
-	}
-
-	if (strcmp(password, pass) != 0) {
-		warnx("password mismatch (aborted)");
-		cleanup();
-		return(1);
-	}
-
-	if (strlen(pass) == 0)
-		(void)printf("using NULL password\n");
-
-	send_update(sock, password, SECURE_STRING);
-
-	/* wait for ACK */
-
-	fdsn = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
-	if ((fdsp = (fd_set *)malloc(fdsn)) == NULL)
-		err(1, "malloc");
-	memset(fdsp, 0, fdsn);
-	FD_SET(sock, fdsp);
-
-	rval =
-	    select(sock + 1, fdsp, (fd_set *) 0, (fd_set *) 0, &timeout);
-	if ((rval < 1) || !FD_ISSET(sock, fdsp)) {
-		free(fdsp);
-		if(rval == 0) {
-			warnx("timed out reading ACK (aborted)");
-			cleanup();
-			exit(1);
-		}
-		warnx("select failed (aborted)");
-		cleanup();
-		exit(1);
-	}
-	free(fdsp);
-	recv_ack(sock);
-	cleanup();
-	exit(0);
-}
-
-send_update(dest, pwd, str)
-	int dest;
-	char *pwd, *str;
-{
-	static struct update_data ud;
-
-	(void)strncpy(ud.secure_msg, str, _PASSWORD_LEN);
-	(void)strncpy(ud.pw, pwd, sizeof(ud.pw));
-	if (des_write(dest, &ud, sizeof(ud)) != sizeof(ud)) {
-		warnx("couldn't write pw update (abort)");
-		bzero((char *)&ud, sizeof(ud));
-		cleanup();
-		exit(1);
-	}
-}
-
-recv_ack(remote)
-	int remote;
-{
-	int cc;
-	char buf[BUFSIZ];
-
-	cc = des_read(remote, buf, sizeof(buf));
-	if (cc <= 0) {
-		warnx("error reading acknowledgement (aborted)");
-		cleanup();
-		exit(1);
-	}
-	(void)printf("%s", buf);
-}
-
-cleanup()
-{
-	(void)bzero((char *)&proto_data, sizeof(proto_data));
-	(void)bzero((char *)okey, sizeof(okey));
-	(void)bzero((char *)osched, sizeof(osched));
-	(void)bzero((char *)random_schedule, sizeof(random_schedule));
-}
-
-static void
-finish()
-{
-	(void)close(sock);
+    snprintf(tktstring, sizeof(tktstring),
+	     TKT_ROOT "_cpw_%u", (unsigned)getpid());
+    krb_set_tkt_string(tktstring);
+    
+    if (get_pw_new_pwd(pword, sizeof(pword), &principal,
+		       realm_given)) {
+	dest_tkt ();
 	exit(1);
+    }
+    
+    status = kadm_init_link (PWSERV_NAME, KRB_MASTER, principal.realm);
+    if (status != KADM_SUCCESS) 
+	com_err(argv[0], status, "while initializing");
+    else {
+	des_cblock newkey;
+	char *pw_msg; /* message from server */
+
+	des_string_to_key(pword, &newkey);
+	status = kadm_change_pw_plain((unsigned char*)&newkey, pword, &pw_msg);
+	memset(newkey, 0, sizeof(newkey));
+      
+	if (status == KADM_INSECURE_PW)
+	    warnx ("Insecure password: %s", pw_msg);
+	else if (status != KADM_SUCCESS)
+	    com_err(argv[0], status, " attempting to change password.");
+    }
+    memset(pword, 0, sizeof(pword));
+
+    if (status != KADM_SUCCESS)
+	fprintf(stderr,"Password NOT changed.\n");
+    else
+	printf("Password changed.\n");
+
+    dest_tkt();
+    if (status)
+	return 2;
+    else 
+	return 0;
 }
 
 #endif /* KERBEROS */
