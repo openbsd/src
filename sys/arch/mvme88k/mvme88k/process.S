@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.S,v 1.23 2003/11/08 16:43:02 miod Exp $	*/
+/*	$OpenBSD: process.S,v 1.24 2003/11/17 14:48:20 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -132,6 +132,15 @@ ENTRY(cpu_switch)
 	st	r2, r14, PCB_IPL	/* save ipl in pcb */
 
 	or.u	r11, r0, hi16(_C_LABEL(curproc))
+	ld	r2, r11, lo16(_C_LABEL(curproc))
+	bcnd	eq0, r2, 1f
+
+	bsr.n	_C_LABEL(pmap_deactivate)
+	 subu	r31, r31,48
+	addu    r31, r31,48
+	or.u	r11, r0, hi16(_C_LABEL(curproc))
+
+1:
 	st	r0, r11, lo16(_C_LABEL(curproc))	/* curproc = NULL */
 
 ASLOCAL(Lidleloop)
@@ -241,7 +250,6 @@ ASLOCAL(Ldoneloop)
 	/* pmap_activate() the process' pmap */
 	or	r2, r0, r9		/* r2 = p */
 	or	r14, r0, r9		/* save p in r14 */
-	/* r2 = pmap, r3 = pcb, r4 = cpu number */
 	bsr.n	_C_LABEL(pmap_activate)
 	 subu	r31, r31,48
 	addu    r31, r31,48
