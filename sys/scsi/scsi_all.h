@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_all.h,v 1.17 2004/07/31 11:31:29 krw Exp $	*/
+/*	$OpenBSD: scsi_all.h,v 1.18 2004/12/18 18:23:53 krw Exp $	*/
 /*	$NetBSD: scsi_all.h,v 1.10 1996/09/12 01:57:17 thorpej Exp $	*/
 
 /*
@@ -307,6 +307,43 @@ struct scsi_mode_header_big {
 	u_int8_t blk_desc_len[2];
 };
 
+/*
+ * SPI status information unit. See section 14.3.5 of SPI-3.
+ */
+struct scsi_status_iu_header {
+/* 2*/	u_int8_t reserved[2];
+/* 3*/	u_int8_t flags;
+#define	SIU_SNSVALID 0x2
+#define	SIU_RSPVALID 0x1
+/* 4*/	u_int8_t status;
+/* 8*/	u_int8_t sense_length[4];
+/*12*/	u_int8_t pkt_failures_length[4];
+	u_int8_t data[1]; /* <pkt failure list><sense data> OR <sense_data> */
+};
+
+#define SIU_PKTFAIL_CODE(siu)	((siu)->data[3])
+#define		SIU_PFC_NONE			0x00
+#define		SIU_PFC_CIU_FIELDS_INVALID	0x02
+#define		SIU_PFC_TMF_NOT_SUPPORTED	0x04
+#define		SIU_PFC_TMF_FAILED		0x05
+#define		SIU_PFC_INVALID_TYPE_CODE	0x06
+#define		SIU_PFC_ILLEGAL_REQUEST		0x07
+
+#define SIU_SENSE_LENGTH(siu)	(_4btol((siu)->sense_length))
+#define SIU_SENSE_DATA(siu)	(((siu)->flags & SIU_RSPVALID) ?	\
+   &(siu)->data[_4btol((siu)->pkt_failures_length)] : &(siu)->data[0])
+
+/*
+ * Values for 'Task Management Flags' field of SPI command information unit.
+ * See section 14.3.1 of SPI-3.
+ */
+#define	SIU_TASKMGMT_NONE		0x00
+#define	SIU_TASKMGMT_ABORT_TASK		0x01
+#define	SIU_TASKMGMT_ABORT_TASK_SET	0x02
+#define	SIU_TASKMGMT_CLEAR_TASK_SET	0x04
+#define	SIU_TASKMGMT_LUN_RESET		0x08
+#define	SIU_TASKMGMT_TARGET_RESET	0x20
+#define	SIU_TASKMGMT_CLEAR_ACA		0x40
 
 /*
  * Status Byte
