@@ -1,4 +1,4 @@
-/* $OpenBSD: tgavar.h,v 1.7 2002/04/26 20:04:50 matthieu Exp $ */
+/* $OpenBSD: tgavar.h,v 1.8 2002/07/04 00:34:28 miod Exp $ */
 /* $NetBSD: tgavar.h,v 1.8 2000/04/02 19:01:11 nathanw Exp $ */
 
 /*
@@ -50,11 +50,11 @@ struct tga_conf {
 	vsize_t   tgac_vvbr_units;	/* what '1' in the VVBR means */
 
 	int	    tgac_ndbuf;		/* number of display buffers */
-	vaddr_t tgac_dbuf[2];	/* display buffer offsets/addresses */
+	vaddr_t tgac_dbuf[2];		/* display buffer offsets/addresses */
 	vsize_t   tgac_dbufsz[2];	/* display buffer sizes */
 
 	int	    tgac_nbbuf;		/* number of display buffers */
-	vaddr_t tgac_bbuf[2];	/* back buffer offsets/addresses */
+	vaddr_t tgac_bbuf[2];		/* back buffer offsets/addresses */
 	vsize_t   tgac_bbufsz[2];	/* back buffer sizes */
 };
 
@@ -83,7 +83,7 @@ struct tga_devconfig {
 	int	    dc_ht;		/* height of frame buffer */
 	int	    dc_rowbytes;	/* bytes in a FB scan line */
 
-	vaddr_t dc_videobase;	/* base of flat frame buffer */
+	vaddr_t dc_videobase;		/* base of flat frame buffer */
 
 	struct rasops_info dc_rinfo;	/* raster display data */
 
@@ -91,7 +91,7 @@ struct tga_devconfig {
 	void	    *dc_ramdac_private; /* RAMDAC private storage */
 
 	void	    (*dc_ramdac_intr)(void *);
-	int		dc_intrenabled; /* can we depend on interrupts yet? */
+	int	    dc_intrenabled;	/* can we depend on interrupts yet? */
 };
 	
 struct tga_softc {
