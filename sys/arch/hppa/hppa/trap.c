@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.40 2002/03/15 21:44:18 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.41 2002/03/16 01:13:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -30,38 +30,28 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* #define INTRDEBUG */
 /* #define TRAPDEBUG */
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
 #include <sys/syscall.h>
 #include <sys/ktrace.h>
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/user.h>
-#include <sys/acct.h>
-#include <sys/signal.h>
-#include <sys/device.h>
 
 #include <net/netisr.h>
 
 #include <uvm/uvm.h>
 
-#include <machine/iomod.h>
-#include <machine/cpufunc.h>
-#include <machine/reg.h>
 #include <machine/autoconf.h>
 
 #ifdef DDB
 #include <machine/db_machdep.h>
-#endif
-
-#if defined(INTRDEBUG) || defined(TRAPDEBUG)
+#ifdef TRAPDEBUG
 #include <ddb/db_output.h>
 #endif
-
+#endif
 
 const char *trap_type[] = {
 	"invalid",
@@ -99,8 +89,6 @@ int trap_types = sizeof(trap_type)/sizeof(trap_type[0]);
 u_int32_t sir;
 int want_resched, astpending;
 
-void pmap_hptdump(void);
-void cpu_intr(struct trapframe *frame);
 void syscall(struct trapframe *frame, int *args);
 
 static __inline void
@@ -361,14 +349,10 @@ trap(type, frame)
 				trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
 			} else {
 				if (p && p->p_addr->u_pcb.pcb_onfault) {
-#ifdef PMAPDEBUG
-					printf("trap: copyin/out %d\n",ret);
-#endif
 					pcbp = &p->p_addr->u_pcb;
 					frame->tf_iioq_tail = 4 +
 					    (frame->tf_iioq_head =
 						pcbp->pcb_onfault);
-					pcbp->pcb_onfault = 0;
 					break;
 				}
 #if 0
@@ -541,82 +525,4 @@ syscall(frame, args)
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p, code, error, rval[0]);
 #endif
-}
-
-/* all the interrupts, minus cpu clock, which is the last */
-struct cpu_intr_vector {
-	struct evcnt evcnt;
-	int pri;
-	int (*handler)(void *);
-	void *arg;
-} cpu_intr_vectors[CPU_NINTS];
-
-void *
-cpu_intr_establish(pri, irq, handler, arg, dv)
-	int pri, irq;
-	int (*handler)(void *);
-	void *arg;
-	struct device *dv;
-{
-	register struct cpu_intr_vector *iv;
-
-	if (0 <= irq && irq < CPU_NINTS && cpu_intr_vectors[irq].handler)
-		return NULL;
-
-	iv = &cpu_intr_vectors[irq];
-	iv->pri = pri;
-	iv->handler = handler;
-	iv->arg = arg;
-	evcnt_attach(dv, dv->dv_xname, &iv->evcnt);
-
-	return iv;
-}
-
-void
-cpu_intr(frame)
-	struct trapframe *frame;
-{
-	u_int32_t eirr = 0, r;
-	register struct cpu_intr_vector *iv;
-	register int bit;
-
-	do {
-		mfctl(CR_EIRR, r);
-		eirr |= r;
-#ifdef INTRDEBUG
-		if (eirr & 0x7fffffff)
-			db_printf ("cpu_intr: 0x%08x & 0x%08x\n",
-			    eirr, frame->tf_eiem);
-#endif
-		eirr &= frame->tf_eiem;
-		bit = ffs(eirr) - 1;
-		if (bit >= 0) {
-			mtctl(1 << bit, CR_EIRR);
-			eirr &= ~(1 << bit);
-			/* ((struct iomod *)cpu_gethpa(0))->io_eir = 0; */
-#ifdef INTRDEBUG
-			if (bit != 31)
-				db_printf ("cpu_intr: 0x%08x\n", (1 << bit));
-#endif
-			iv = &cpu_intr_vectors[bit];
-			if (iv->handler) {
-				register int s, r;
-
-				iv->evcnt.ev_count++;
-				s = splraise(iv->pri);
-				/* no arg means pass the frame */
-				r = (iv->handler)(iv->arg? iv->arg:frame);
-				splx(s);
-#ifdef INTRDEBUG
-				if (!r)
-					db_printf ("%s: can't handle interrupt\n",
-						   iv->evcnt.ev_name);
-#endif
-			}
-#ifdef INTRDEBUG
-			else
-				db_printf ("cpu_intr: stray interrupt %d\n", bit);
-#endif
-		}
-	} while (eirr);
 }
