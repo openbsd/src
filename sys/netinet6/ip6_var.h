@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.3 2000/01/08 13:54:36 itojun Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.4 2000/02/04 18:11:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -72,38 +72,37 @@
  * being reassembled is attached to one of these structures.
  */
 struct	ip6q {
-	u_long	ip6q_head;
-	u_short	ip6q_len;
-	u_char	ip6q_nxt;
-	u_char	ip6q_hlim;
-	struct	ip6asfrag *ip6q_down;
-	struct	ip6asfrag *ip6q_up;
-	u_long	ip6q_ident;
-	u_char	ip6q_arrive;
-	u_char	ip6q_ttl;
-	struct  in6_addr ip6q_src, ip6q_dst;
-	struct	ip6q *ip6q_next;
-	struct	ip6q *ip6q_prev;
-	int	ip6q_unfrglen;
+	u_int32_t	ip6q_head;
+	u_int16_t	ip6q_len;
+	u_int8_t	ip6q_nxt;	/* ip6f_nxt in first fragment */
+	u_int8_t	ip6q_hlim;
+	struct ip6asfrag *ip6q_down;
+	struct ip6asfrag *ip6q_up;
+	u_int32_t	ip6q_ident;
+	u_int8_t	ip6q_arrive;
+	u_int8_t	ip6q_ttl;
+	struct in6_addr	ip6q_src, ip6q_dst;
+	struct ip6q	*ip6q_next;
+	struct ip6q	*ip6q_prev;
+	int		ip6q_unfrglen;	/* len of unfragmentable part */
 #ifdef notyet
-	u_char	*ip6q_nxtp;
+	u_char		*ip6q_nxtp;
 #endif
 };
 
 struct	ip6asfrag {
-	u_long	ip6af_head;
-	u_short	ip6af_len;
-	u_char	ip6af_nxt;
-	u_char	ip6af_hlim;
+	u_int32_t	ip6af_head;
+	u_int16_t	ip6af_len;
+	u_int8_t	ip6af_nxt;
+	u_int8_t	ip6af_hlim;
 	/* must not override the above members during reassembling */
-	struct	ip6asfrag *ip6af_down;
-	struct	ip6asfrag *ip6af_up;
-	u_short	ip6af_mff;
-	u_short	ip6af_off;
-	struct	mbuf *ip6af_m;
-	u_long	ip6af_offset;		/* offset where next header starts */
-	u_short ip6af_frglen;	/* fragmentable part length */
-	u_char	ip6af_x1[10];
+	struct ip6asfrag *ip6af_down;
+	struct ip6asfrag *ip6af_up;
+	struct mbuf	*ip6af_m;
+	int		ip6af_offset;	/* offset in ip6af_m to next header */
+	int		ip6af_frglen;	/* fragmentable part length */
+	int		ip6af_off;	/* fragment offset */
+	u_int16_t	ip6af_mff;	/* more fragment bit in frag off */
 };
 
 #define IP6_REASS_MBUF(ip6af) (*(struct mbuf **)&((ip6af)->ip6af_m))

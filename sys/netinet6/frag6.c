@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.4 2000/01/08 05:28:08 deraadt Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.5 2000/02/04 18:11:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -71,16 +71,49 @@ int frag6_doing_reass;
 u_int frag6_nfragpackets;
 struct	ip6q ip6q;	/* ip6 reassemble queue */
 
+#ifndef offsetof		/* XXX */
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member))
+#endif 
+
 /*
  * Initialise reassembly queue and fragment identifier.
  */
 void
 frag6_init()
 {
-	ip6q.ip6q_next = ip6q.ip6q_prev = &ip6q;
 	ip6_id = arc4random();
+	ip6q.ip6q_next = ip6q.ip6q_prev = &ip6q;
 }
 
+/*
+ * In RFC2460, fragment and reassembly rule do not agree with each other,
+ * in terms of next header field handling in fragment header.
+ * While the sender will use the same value for all of the fragmented packets,
+ * receiver is suggested not to check the consistency.
+ *
+ * fragment rule (p20):
+ *	(2) A Fragment header containing:
+ *	The Next Header value that identifies the first header of
+ *	the Fragmentable Part of the original packet.
+ *		-> next header field is same for all fragments
+ *
+ * reassembly rule (p21): 
+ *	The Next Header field of the last header of the Unfragmentable
+ *	Part is obtained from the Next Header field of the first
+ *	fragment's Fragment header.
+ *		-> should grab it from the first fragment only
+ *
+ * The following note also contradicts with fragment rule - noone is going to
+ * send different fragment with different next header field.
+ *
+ * additional note (p22):
+ *	The Next Header values in the Fragment headers of different
+ *	fragments of the same original packet may differ.  Only the value
+ *	from the Offset zero fragment packet is used for reassembly.
+ *		-> should grab it from the first fragment only
+ *
+ * There is no explicit reason given in the RFC.  Historical reason maybe?
+ */
 /*
  * Fragment input
  */
@@ -93,10 +126,10 @@ frag6_input(mp, offp, proto)
 	struct ip6_hdr *ip6;
 	struct ip6_frag *ip6f;
 	struct ip6q *q6;
-	struct ip6asfrag *af6, *ip6af;
+	struct ip6asfrag *af6, *ip6af, *af6dwn;
 	int offset = *offp, nxt, i, next;
 	int first_frag = 0;
-	u_short fragoff, frgpartlen;
+	int fragoff, frgpartlen;	/* must be larger than u_int16_t */
 	struct ifnet *dstifp;
 #ifdef IN6_IFSTAT_STRICT
 	static struct route_in6 ro;
@@ -157,7 +190,7 @@ frag6_input(mp, offp, proto)
 	    (((ntohs(ip6->ip6_plen) - offset) & 0x7) != 0)) {
 		icmp6_error(m, ICMP6_PARAM_PROB,
 			    ICMP6_PARAMPROB_HEADER,
-			    (caddr_t)&ip6->ip6_plen - (caddr_t)ip6);
+			    offsetof(struct ip6_hdr, ip6_plen));
 		in6_ifstat_inc(dstifp, ifs6_reass_fail);
 		return IPPROTO_DONE;
 	}
@@ -165,16 +198,8 @@ frag6_input(mp, offp, proto)
 	ip6stat.ip6s_fragments++;
 	in6_ifstat_inc(dstifp, ifs6_reass_reqd);
 	
-	/*
-	 * Presence of header sizes in mbufs
-	 * would confuse code below.
-	 */
-#ifdef PULLDOWN_TEST
-	/* XXX too strong mbuf requirement in m_pulldown() world */
-#endif
+	/* offset now points to data portion */
 	offset += sizeof(struct ip6_frag);
-	m->m_data += offset;
-	m->m_len -= offset;
 
 	for (q6 = ip6q.ip6q_next; q6 != &ip6q; q6 = q6->ip6q_next)
 		if (ip6f->ip6f_ident == q6->ip6q_ident &&
@@ -204,17 +229,12 @@ frag6_input(mp, offp, proto)
 			M_DONTWAIT);
 		if (q6 == NULL)
 			goto dropfrag;
+		bzero(q6, sizeof(*q6));
 
 		frag6_insque(q6, &ip6q);
 
+		/* ip6q_nxt will be filled afterwards, from 1st fragment */
 		q6->ip6q_down	= q6->ip6q_up = (struct ip6asfrag *)q6;
-#if 0
-		/*
-		 * It is not necessarily the first segment; fragment offset
-		 * might be non-0.
-		 */
-		q6->ip6q_nxt	= ip6f->ip6f_nxt;
-#endif
 #ifdef notyet
 		q6->ip6q_nxtp	= (u_char *)nxtp;
 #endif
@@ -242,22 +262,20 @@ frag6_input(mp, offp, proto)
 	 * in size.
 	 * If it would exceed, discard the fragment and return an ICMP error.
 	 */
-	frgpartlen =  sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) - offset;
+	frgpartlen = sizeof(struct ip6_hdr) + ntohs(ip6->ip6_plen) - offset;
 	if (q6->ip6q_unfrglen >= 0) {
 		/* The 1st fragment has already arrived. */
 		if (q6->ip6q_unfrglen + fragoff + frgpartlen > IPV6_MAXPACKET) {
-			m->m_data -= offset;
-			m->m_len += offset;
 			icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
-				    offset - sizeof(struct ip6_frag) + 2);
+				    offset - sizeof(struct ip6_frag) +
+					offsetof(struct ip6_frag, ip6f_offlg));
 			return(IPPROTO_DONE);
 		}
 	}
 	else if (fragoff + frgpartlen > IPV6_MAXPACKET) {
-		m->m_data -= offset;
-		m->m_len += offset;
 		icmp6_error(m, ICMP6_PARAM_PROB, ICMP6_PARAMPROB_HEADER,
-			    offset - sizeof(struct ip6_frag) + 2);
+			    offset - sizeof(struct ip6_frag) +
+				offsetof(struct ip6_frag, ip6f_offlg));
 		return(IPPROTO_DONE);
 	}
 	/*
@@ -265,8 +283,6 @@ frag6_input(mp, offp, proto)
 	 * fragment already stored in the reassembly queue.
 	 */
 	if (fragoff == 0) {
-		struct ip6asfrag *af6dwn;
-		
 		for (af6 = q6->ip6q_down; af6 != (struct ip6asfrag *)q6;
 		     af6 = af6dwn) {
 			af6dwn = af6->ip6af_down;
@@ -279,10 +295,9 @@ frag6_input(mp, offp, proto)
 
 				/* dequeue the fragment. */
 				frag6_deq(af6);
+				free(af6, M_FTABLE);
 
 				/* adjust pointer. */
-				merr->m_data -= af6->ip6af_offset;
-				merr->m_len += af6->ip6af_offset;
 				ip6err = mtod(merr, struct ip6_hdr *);
 
 				/*
@@ -294,13 +309,21 @@ frag6_input(mp, offp, proto)
 
 				icmp6_error(merr, ICMP6_PARAM_PROB,
 					    ICMP6_PARAMPROB_HEADER,
-					    erroff - sizeof(struct ip6_frag) + 2);
+					    erroff - sizeof(struct ip6_frag) +
+						offsetof(struct ip6_frag, ip6f_offlg));
 			}
 		}
 	}
 
-	/* Override the IPv6 header */
-	ip6af = (struct ip6asfrag *)ip6;
+	ip6af = (struct ip6asfrag *)malloc(sizeof(struct ip6asfrag), M_FTABLE,
+	    M_DONTWAIT);
+	if (ip6af == NULL)
+		goto dropfrag;
+	bzero(ip6af, sizeof(*ip6af));
+	ip6af->ip6af_head = ip6->ip6_flow;
+	ip6af->ip6af_len = ip6->ip6_plen;
+	ip6af->ip6af_nxt = ip6->ip6_nxt;
+	ip6af->ip6af_hlim = ip6->ip6_hlim;
 	ip6af->ip6af_mff = ip6f->ip6f_offlg & IP6F_MORE_FRAG;
 	ip6af->ip6af_off = fragoff;
 	ip6af->ip6af_frglen = frgpartlen;
@@ -414,20 +437,25 @@ insert:
 	/*
 	 * Reassembly is complete; concatenate fragments.
 	 */
-
 	ip6af = q6->ip6q_down;
 	t = m = IP6_REASS_MBUF(ip6af);
 	af6 = ip6af->ip6af_down;
+	frag6_deq(ip6af);
 	while (af6 != (struct ip6asfrag *)q6) {
+		af6dwn = af6->ip6af_down;
+		frag6_deq(af6);
 		while (t->m_next)
 			t = t->m_next;
 		t->m_next = IP6_REASS_MBUF(af6);
-		af6 = af6->ip6af_down;
+		m_adj(t->m_next, af6->ip6af_offset);
+		free(af6, M_FTABLE);
+		af6 = af6dwn;
 	}
 
 	/* adjust offset to point where the original next header starts */
 	offset = ip6af->ip6af_offset - sizeof(struct ip6_frag);
-	ip6 = (struct ip6_hdr *)ip6af;
+	free(ip6af, M_FTABLE);
+	ip6 = mtod(m, struct ip6_hdr *);
 	ip6->ip6_plen = htons((u_short)next + offset - sizeof(struct ip6_hdr));
 	ip6->ip6_src = q6->ip6q_src;
 	ip6->ip6_dst = q6->ip6q_dst;
@@ -439,16 +467,22 @@ insert:
 	/*
 	 * Delete frag6 header with as a few cost as possible.
 	 */
-
-	if (offset < m->m_len)
+	if (offset < m->m_len) {
 		ovbcopy((caddr_t)ip6, (caddr_t)ip6 + sizeof(struct ip6_frag),
 			offset);
-	else {
-		ovbcopy(mtod(m, caddr_t), (caddr_t)ip6 + offset, m->m_len);
-		m->m_data -= sizeof(struct ip6_frag);
+		m->m_data += sizeof(struct ip6_frag);
+		m->m_len -= sizeof(struct ip6_frag);
+	} else {
+		/* this comes with no copy if the boundary is on cluster */
+		if ((t = m_split(m, offset, M_DONTWAIT)) == NULL) {
+			frag6_remque(q6);
+			free(q6, M_FTABLE);
+			frag6_nfragpackets--;
+			goto dropfrag;
+		}
+		m_adj(t, sizeof(struct ip6_frag));
+		m_cat(m, t);
 	}
-	m->m_data -= offset;	
-	m->m_len += offset; 
 
 	/*
 	 * Store NXT to the original.
@@ -514,8 +548,6 @@ frag6_freef(q6)
 			struct ip6_hdr *ip6;
 
 			/* adjust pointer */
-			m->m_data -= af6->ip6af_offset;
-			m->m_len += af6->ip6af_offset;
 			ip6 = mtod(m, struct ip6_hdr *);
 
 			/* restoure source and destination addresses */
@@ -524,9 +556,9 @@ frag6_freef(q6)
 
 			icmp6_error(m, ICMP6_TIME_EXCEEDED,
 				    ICMP6_TIME_EXCEED_REASSEMBLY, 0);
-		}
-		else
+		} else
 			m_freem(m);
+		free(af6, M_FTABLE);
 	}
 	frag6_remque(q6);
 	free(q6, M_FTABLE);
