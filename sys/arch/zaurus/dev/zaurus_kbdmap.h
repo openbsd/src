@@ -1,4 +1,4 @@
-/* $OpenBSD: zaurus_kbdmap.h,v 1.11 2005/01/15 00:41:14 deraadt Exp $ */
+/* $OpenBSD: zaurus_kbdmap.h,v 1.12 2005/01/15 01:36:12 deraadt Exp $ */
 
 /*
  * Copyright (c) 2005 Dale Rahn <drahn@openbsd.org>
@@ -36,18 +36,18 @@ static const keysym_t zkbd_keydesc_us[] = {
     KC(17),	KS_4,		KS_dollar,
     KC(18),	KS_e,		KS_E,		KS_equal,
     KC(19),	KS_s,
-    KC(20),	KS_d,
+    KC(20),	KS_d,		KS_D,		KS_grave,
     KC(21),	KS_x,
     /* KC(22),	^/t (right japanese) */
     KC(24),	KS_5,		KS_percent,
     KC(25),	KS_r,		KS_R,		KS_plus,
-    KC(26),	KS_t,		KS_T,		KS_braceleft,
+    KC(26),	KS_t,		KS_T,		KS_bracketleft,
     KC(27),	KS_f,		KS_F,		KS_backslash,
     KC(28),	KS_c,
     KC(29),	KS_minus,	KS_minus,	KS_at,
     KC(30),	KS_Escape, /* Cancel */
     KC(32),	KS_6,		KS_ampersand,
-    KC(33),	KS_y,		KS_Y,		KS_braceright,
+    KC(33),	KS_y,		KS_Y,		KS_bracketright,
     KC(34),	KS_g,		KS_G,		KS_semicolon,
     KC(35),	KS_v,
     KC(36),	KS_b,		KS_B,		KS_underscore,
@@ -55,13 +55,13 @@ static const keysym_t zkbd_keydesc_us[] = {
     KC(38),	KS_KP_Enter,	/* ok */
     KC(40),	KS_7,		KS_apostrophe,
     KC(41),	KS_8,		KS_parenleft,
-    KC(42),	KS_u,		KS_U,	
+    KC(42),	KS_u,		KS_U,		KS_braceleft,	
     KC(43),	KS_h,		KS_H,		KS_colon,
     KC(44),	KS_n,
     KC(45),	KS_comma,	KS_slash,	KS_less,
     KC(46),	KS_Cmd_Screen4,	KS_f5,				/* Menu, */
     KC(48),	KS_9,		KS_parenright,
-    KC(49),	KS_i,		KS_I,	
+    KC(49),	KS_i,		KS_I,		KS_braceright,
     KC(50),	KS_j,		KS_J,		KS_asterisk,
     KC(51),	KS_m,
     KC(52),	KS_period,	KS_question,	KS_greater,
@@ -76,12 +76,12 @@ static const keysym_t zkbd_keydesc_us[] = {
     KC(65),	KS_p,
     KC(68),	KS_Return,
     KC(70),	KS_KP_Right, /* right, */
-    KC(80),	KS_KP_Next, /* OK, (ext) */
-    KC(81),	KS_KP_Prior, /* tog left, */
+    KC(80),	KS_KP_Right, /* OK, (ext) */
+    KC(81),	KS_KP_Down, /* tog left, */
     KC(83),	KS_Shift_R,
     KC(84),	KS_Shift_L,
-    KC(88),	KS_KP_Prior, /* cancel (ext), */
-    KC(89),	KS_KP_Next, /* tog right, */
+    KC(88),	KS_KP_Left, /* cancel (ext), */
+    KC(89),	KS_KP_Up, /* tog right, */
     KC(93),	KS_Mode_switch /* Fn */
 };
 
