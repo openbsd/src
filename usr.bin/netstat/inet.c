@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.49 2001/03/03 01:00:20 itojun Exp $	*/
+/*	$OpenBSD: inet.c,v 1.50 2001/06/23 06:09:09 angelos Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.49 2001/03/03 01:00:20 itojun Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.50 2001/06/23 06:09:09 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -272,6 +272,7 @@ tcp_stats(off, name)
 	p(tcps_sndprobe, "\t\t%u window probe packet%s\n");
 	p(tcps_sndwinup, "\t\t%u window update packet%s\n");
 	p(tcps_sndctrl, "\t\t%u control packet%s\n");
+	p(tcps_outhwcsum, "\t\t%u packet%s hardware-checksummed\n");
 	p(tcps_rcvtotal, "\t%u packet%s received\n");
 	p2(tcps_rcvackpack, tcps_rcvackbyte, "\t\t%u ack%s (for %qd byte%s)\n");
 	p(tcps_rcvdupack, "\t\t%u duplicate ack%s\n");
@@ -294,6 +295,7 @@ tcp_stats(off, name)
 	p(tcps_rcvbadoff, "\t\t%u discarded for bad header offset field%s\n");
 	p1(tcps_rcvshort, "\t\t%u discarded because packet too short\n");
 	p1(tcps_rcvnosec, "\t\t%u discarded for missing IPSec protection\n");
+	p(tcps_inhwcsum, "\t\t%u packet%s hardware-checksummed\n");
 	p(tcps_connattempt, "\t%u connection request%s\n");
 	p(tcps_accepts, "\t%u connection accept%s\n");
 	p(tcps_connects, "\t%u connection%s established (including accepts)\n");
@@ -343,6 +345,8 @@ udp_stats(off, name)
 	p1(udps_badlen, "\t%lu with bad data length field\n");
 	p1(udps_badsum, "\t%lu with bad checksum\n");
 	p1(udps_nosum, "\t%lu with no checksum\n");
+	p(udps_inhwcsum, "\t%lu input packet%s hardware-checksummed\n");
+	p(udps_outhwcsum, "\t%lu output packet%s hardware-checksummed\n");
 	p1(udps_noport, "\t%lu dropped due to no socket\n");
 	p(udps_noportbcast, "\t%lu broadcast/multicast datagram%s dropped due to no socket\n");
 	p1(udps_nosec, "\t%lu dropped due to missing IPSec protection\n");
@@ -411,6 +415,8 @@ ip_stats(off, name)
 	p(ips_toolong, "\t%lu packet%s with ip length > max ip packet size\n");
 	p(ips_nogif, "\t%lu tunneling packet%s that can't find gif\n");
 	p(ips_badaddr, "\t%lu datagram%s with bad address in header\n");
+	p(ips_inhwcsum, "\t%lu input datagram%s checksum-processed by hardware\n");
+	p(ips_outhwcsum, "\t%lu output datagram%s checksum-processed by hardware\n");
 #undef p
 #undef p1
 }
