@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.3 1996/08/15 06:33:28 deraadt Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.4 1996/08/15 17:28:40 shawn Exp $	*/
 
 /*
  * Copyright (c) 1996, Shawn Hsiao <shawn@alpha.secc.fju.edu.tw>
@@ -165,8 +165,7 @@ isapnpattach(parent, self, aux)
 		num_pnp_devs = isolation_protocol(sc);
 		if (num_pnp_devs) {
 			printf(": readport 0x%x, %d devices",
-			    sc->sc_dev.dv_xname, (sc->rd_port << 2) | 0x3,
-			    num_pnp_devs);
+			    (sc->rd_port << 2) | 0x3, num_pnp_devs);
 			break;
 		}
 	}
@@ -194,6 +193,7 @@ postisapnpattach(parent, self, aux)
 			ia.ia_bc = iba->iba_bc;
 			ia.ia_ic = iba->iba_ic;
 			ia.id = dev->id;
+			ia.comp_id = dev->comp_id;
 			ia.csn = card->csn;
 			ia.ldn = dev->ldn;
 			ia.ia_delayioh = isc->sc_delayioh;
@@ -273,7 +273,8 @@ isapnpsubmatch(parent, match, aux)
 	struct isa_attach_args *ia = aux;
 	int ret;
 
-	if (cf->cf_pnpid == ia->id) {
+	if (cf->cf_pnpid == ia->id ||
+	    cf->cf_pnpid == ia->comp_id) {
 		ret = (*cf->cf_attach->ca_match)(parent, match, aux);
 		return (ret);
 	}
