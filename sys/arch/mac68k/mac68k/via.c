@@ -84,7 +84,6 @@ void *via2iarg[7] = {
 void		via2_intr(struct frame *);
 void		rbv_intr(struct frame *);
 
-static int	via_inited=0;
 void		(*real_via2_intr)(struct frame *);
 
 /* nubus slot interrupt routines */
@@ -154,7 +153,6 @@ VIA_initialize()
 		real_via2_intr = rbv_intr;
 		via2itab[1] = rbv_nubus_intr;
 	}
-	via_inited = 1;
 }
 
 void

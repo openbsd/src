@@ -402,6 +402,7 @@ mainbus_attach(parent, self, aux)
 					{"ser0",       0},
 					{"sn0",        0},
 					{"nubus0",     1},
+					{"sbc0",       0},
 					{"ncrscsi0",   0},
 					{"ncr96scsi0", 0},
 					{"asc0",       0},

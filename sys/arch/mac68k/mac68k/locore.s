@@ -820,7 +820,6 @@ start:
 
 	.globl	_initenv, _getenvvars	| in machdep.c
 	.globl	_setmachdep		| in machdep.c
-	.globl	_VIA_initialize		| in via.c
 
 	/* Initialize source/destination control registers for movs */
 	moveq	#FC_USERD,d0		| user space
@@ -835,7 +834,6 @@ start:
 	jbsr	_getenvvars		| Parse the environment buffer
 
 	jbsr	_setmachdep		| Set some machine-dep stuff
-	jbsr	_VIA_initialize		| Initialize the VIAs
 
 	jbsr	_vm_set_page_size	| Set the vm system page size, now.
 	jbsr	_consinit		| XXX Should only be if graybar on
