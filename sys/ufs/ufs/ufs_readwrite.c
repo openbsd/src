@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_readwrite.c,v 1.6 1996/07/13 21:49:19 downsj Exp $	*/
+/*	$OpenBSD: ufs_readwrite.c,v 1.7 1996/10/29 08:03:22 tholo Exp $	*/
 /*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
 
 /*-
@@ -96,7 +96,7 @@ READ(v)
 	daddr_t lbn, nextlbn;
 	off_t bytesinfile;
 	long size, xfersize, blkoffset;
-	int error;
+	int error, anyread = 0;
 	u_short mode;
 
 	vp = ap->a_vp;
@@ -170,6 +170,7 @@ READ(v)
 				break;
 			xfersize = size;
 		}
+		anyread = 1;
 		error = uiomove((char *)bp->b_data + blkoffset, (int)xfersize,
 				uio);
 		if (error)
@@ -178,7 +179,8 @@ READ(v)
 	}
 	if (bp != NULL)
 		brelse(bp);
-	ip->i_flag |= IN_ACCESS;
+	if (anyread)
+		ip->i_flag |= IN_ACCESS;
 	return (error);
 }
 
