@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 1999/09/03 18:00:34 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 2000/06/08 10:31:15 art Exp $	*/
 /* 
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)pmap.c	8.4 (Berkeley) 1/26/94
- *      $Id: pmap.c,v 1.15 1999/09/03 18:00:34 art Exp $
+ *      $Id: pmap.c,v 1.16 2000/06/08 10:31:15 art Exp $
  */
 
 /*
@@ -511,7 +511,7 @@ pmap_pinit(pmap)
 		if (pmap->pm_segtab->seg_tab[i] != 0)
 			panic("pmap_pinit: pm_segtab != 0");
 #endif
-	if (pmap == &vmspace0.vm_pmap) {
+	if (pmap == vmspace0.vm_map.pmap) {
 		/*
 		 * The initial process has already been allocated a TLBPID
 		 * in mach_init().

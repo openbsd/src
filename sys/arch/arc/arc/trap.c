@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.23 1999/12/08 06:50:15 itojun Exp $	*/
+/*	$OpenBSD: trap.c,v 1.24 2000/06/08 10:31:15 art Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -338,7 +338,7 @@ trap(statusReg, causeReg, vadr, pc, f)
 		pt_entry_t *pte;
 		unsigned int entry;
 		vm_offset_t pa;
-		pmap_t pmap = &p->p_vmspace->vm_pmap;
+		pmap_t pmap = p->p_vmspace->vm_map.pmap;
 
 		if (!(pte = pmap_segmap(pmap, vadr)))
 			panic("trap: utlbmod: invalid segmap");
