@@ -1,0 +1,134 @@
+.\" $OpenBSD: ipcomp.4,v 1.1 2001/07/05 08:57:16 jjbg Exp $
+.\"
+.\" Copyright (c) 2001 Jean-Jacques Bernard-Gundol <jj@wabbitt.org>
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"    This product includes software developed by Jean-Jacques Bernard-Gundol
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 27, 2001
+.Dt IPCOMP 4
+.Os
+.Sh NAME
+.Nm IPComp
+.Nd IP Payload Compression Protocol
+.Sh NOTE
+.Tn IPComp
+is enabled with the following 
+.Xr sysctl 3
+variable in
+.Pa /etc/sysctl.conf :
+.Bl -tag -width xxxxxxxxxxxxxxxxxxxxx
+.It net.inet.ipcomp.enable
+.El
+.Pp
+.Sh DESCRIPTION
+.Tn IPComp
+is a protocol used to reduce the size of IP datagrams. It can be used 
+to enhance the communication performance between a pair of
+hosts/gateways, especially on slow links, by compressing the datagrams,
+provided the communicating entities have enough computation power.
+.Pp
+This protocol is especially useful when encryption or authentication
+is applied to IP datagrams using the 
+.Tn IPsec
+protocol (see
+.Xr ipsec 4  
+for more information about IPsec). Encrypting information is
+increasing its entropy to a point where compression to a lower layer
+become completely useless (i.e PPP Compression Control
+Protocol). IPcomp is applied at the network layer before other
+encryption operations are applied (except encryption protocols applied
+at a higher layer such as ssh or ssl).
+.Pp
+Just like for the IPsec protocols, IPComp needs some parameters for
+each connection, telling how the compression should be done between
+the entities. The parameters are collected are collected in a
+structure called an IPComp Association or IPCA. The parameters stored
+in an IPCA are: the destination address and the Compression Parameter
+Index (CPI). An IPCA is the pendant of the SA (Security Association)
+for IPsec. 
+.Pp
+Currently, IPCA can be created using the 
+.Xr ipsecadm 8
+tool. Using 
+.Xr ipsecadm 8
+it is also possible to create IPComp flows and bundled
+SA/IPCA. Such a bundle is used to create a combination of IPsec and
+IPComp flows (thus enabling compression in an IPsec protocol). 
+.Pp
+The compression is done on the data following the IP header and an
+IPComp header is inserted between the compressed data and the IP
+header. In the case of IPv6, there are extension headers which cannot be
+compressed since they are modified by the router along the way to the
+destination. These extension headers are hop-by-hop, routing, and
+fragmentation. 
+.Pp
+When doing compression, it is possible that compressed data is smaller
+in size than non compressed one. To avoid this behaviour, a non
+expansion policy is used in IPComp. If the data payload is smaller
+than a given threshold, it will not be compressed. No IPComp header
+will be inserted.
+.Pp
+Just like for IPsec, the implementation is using the virtual interface
+.Nm enc0
+which can be used in packet filters to specify packets that are
+allowed to be processed by IPComp. But since IPsec and IPComp are both
+using this interface, special care must be taken when using a bundle
+SA/IPCA.
+.Pp
+IPComp is using the same policy framework than IPsec. However unlike
+IPsec, only one policy is available for IPComp:
+.Bl -tag -width IPSEC_LEVEL_USE 
+.It IPSEC_LEVEL_USE
+Use IPComp for sending packets but still accept packets which are not
+compressed.
+.El
+.Sh DIAGNOSTICS
+.Xr netstat 1
+can be used to obtain some statistics about IPComp usage, using the
+.Fl p 
+flag. Just like for IPsec, using the
+.Fl r
+flag,
+.Xr netstat 1
+displays information about IPComp flows.
+.Sh SEE ALSO
+.Xr enc 4 ,
+.Xr inet 4 ,
+.Xr ip 4 ,
+.Xr ipsec 4 ,
+.Xr netintro 4 ,
+.Xr ipsecadm 8
+.Sh HISTORY
+The
+.Nm
+protocol first appeared in
+.Ox 2.9 .
+.Sh AUTHOR
+The support for the 
+.Nm 
+protocol was written by Jean-Jacques
+Bernard-Gundol <jj@wabbitt.org>.
