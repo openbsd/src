@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: server.c,v 1.5 2000/12/12 01:53:42 provos Exp $";
+static char rcsid[] = "$Id: server.c,v 1.6 2000/12/14 23:28:59 provos Exp $";
 #endif
 
 #define _SERVER_C_
@@ -319,6 +319,14 @@ server(void)
  		    }
 	       } 
 	  }
+
+#ifdef IPSEC
+	  /* 
+	   * Deal with queue acquire and expire message, since we
+	   * dont have proper timeout code, it needs to go here.
+	   */
+	  kernel_handle_queue();
+#endif
 
 	  schedule_process(global_socket);
 	  fflush(stdout);

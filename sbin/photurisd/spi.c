@@ -33,11 +33,13 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: spi.c,v 1.4 2000/12/11 21:21:18 provos Exp $";
+static char rcsid[] = "$Id: spi.c,v 1.5 2000/12/14 23:28:59 provos Exp $";
 #endif
 
 #define _SPI_C_
 
+#include <sys/types.h>
+#include <sys/queue.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -58,13 +60,19 @@ static char rcsid[] = "$Id: spi.c,v 1.4 2000/12/11 21:21:18 provos Exp $";
 #endif
 
 
-static struct spiob *spiob = NULL;
+TAILQ_HEAD(spilist, spiob) spihead;
+
+void
+spi_init(void)
+{
+	TAILQ_INIT(&spihead);
+}
 
 time_t
 getspilifetime(struct stateob *st)
 {
      /* XXX - destination depend lifetimes */
-     return st->spi_lifetime;
+     return (st->spi_lifetime);
 }
 
 int
@@ -78,7 +86,7 @@ make_spi(struct stateob *st, char *local_address,
      if(*attributes == NULL) {           /* We are in need of attributes */
 	  if (select_attrib(st, attributes, attribsize) == -1) {
 	       log_print("select_attrib() in make_spi()");
-	       return -1;
+	       return (-1);
 	  }
      }
 	
@@ -102,104 +110,96 @@ make_spi(struct stateob *st, char *local_address,
 	  
      *lifetime = getspilifetime(st) + (arc4random() & 0x1F);
 
-     return 0;
+     return (0);
 }
 
 
 int
 spi_insert(struct spiob *ob)
 {
-     struct spiob *tmp;
+	TAILQ_INSERT_TAIL(&spihead, ob, next);
 
-     ob->next = NULL;
-
-     if(spiob == NULL) {
-	  spiob = ob;
-	  return 1;
-     }
-     
-     tmp=spiob;
-     while(tmp->next!=NULL)
-	  tmp = tmp->next;
-
-     tmp->next = ob;
-     return 1;
+	return (1);
 }
 
 int
 spi_unlink(struct spiob *ob)
 {
-     struct spiob *tmp;
-     if(spiob == ob) {
-	  spiob = ob->next;
-	  free(ob);
-	  return 1;
-     }
+	LOG_DBG((LOG_SPI, 45, __FUNCTION__": unlinking %s spi %x",
+		 ob->flags & SPI_OWNER ? "Owner" : "User",
+		 ntohl(*(u_int32_t *)ob->SPI)));
 
-     for(tmp=spiob; tmp!=NULL; tmp=tmp->next) {
-	  if(tmp->next==ob) {
-	       tmp->next=ob->next;
-	       free(ob);
-	       return 1;
-	  }
-     }
-     return 0;
+	TAILQ_REMOVE(&spihead, ob, next);
+	free(ob);
+	
+	return (1);
 }
 
 struct spiob *
 spi_new(char *address, u_int8_t *spi)
 {
      struct spiob *p;
+
      if (spi_find(address, spi) != NULL)
-	  return NULL;
+	  return (NULL);
      if ((p = calloc(1, sizeof(struct spiob))) == NULL)
-	  return NULL;
+	  return (NULL);
 
      if ((p->address = strdup(address)) == NULL) {
 	  free(p);
-	  return NULL;
+	  return (NULL);
      }
      bcopy(spi, p->SPI, SPI_SIZE);
      
-     return p;
+     return (p);
 }
 
 int
 spi_value_reset(struct spiob *ob)
 { 
-     if (ob->address != NULL)
-	  free(ob->address);
-     if (ob->local_address != NULL)
-	  free(ob->local_address);
-     if (ob->attributes != NULL)
-	  free(ob->attributes);
-     if (ob->sessionkey != NULL)
-	  free(ob->sessionkey);
+	if (ob->address != NULL) {
+		free(ob->address);
+		ob->address = NULL;
+	}
+	if (ob->local_address != NULL) {
+		free(ob->local_address);
+		ob->local_address = NULL;
+	}
+	if (ob->attributes != NULL) {
+		free(ob->attributes);
+		ob->attributes = NULL;
+	}
+	if (ob->sessionkey != NULL) {
+		memset(ob->sessionkey, 0, ob->sessionkeysize);
+		free(ob->sessionkey);
+		ob->sessionkey = NULL;
+	}
 
-     return 1;
+	return (1);
 }
 
 
 struct spiob * 
 spi_find_attrib(char *address, u_int8_t *attrib, u_int16_t attribsize) 
 { 
-     struct spiob *tmp = spiob; 
+     struct spiob *tmp; 
      u_int16_t i;
 
-     while(tmp!=NULL) { 
-          if(!strcmp(address, tmp->address)) {
-	       for(i=0;i<attribsize; i += attrib[i+1]+2) {
-		    if (attrib[i] == AT_AH_ATTRIB || attrib[i] == AT_ESP_ATTRIB)
-			 continue;
+     for (tmp = TAILQ_FIRST(&spihead); tmp; tmp = TAILQ_NEXT(tmp, next)) { 
+          if (!strcmp(address, tmp->address)) {
+	       for (i = 0; i < attribsize; i += attrib[i + 1] + 2) {
+		    if (attrib[i] == AT_AH_ATTRIB || 
+			attrib[i] == AT_ESP_ATTRIB)
+			    continue;
 		    if (!isinattrib(tmp->attributes, tmp->attribsize, attrib[i]))
 			 break;
 	       }
 	       if (i == attribsize)
-		    return tmp;
+		    return (tmp);
 	  }
-          tmp = tmp->next; 
      } 
-     return NULL; 
+
+     return (NULL); 
 } 
 
 /* 
@@ -211,67 +211,48 @@ spi_find_attrib(char *address, u_int8_t *attrib, u_int16_t attribsize)
 struct spiob *
 spi_find(char *address, u_int8_t *spi)
 {
-     struct spiob *tmp = spiob;
-     while(tmp!=NULL) {
-          if ((address == NULL || (tmp->flags & SPI_OWNER ? 
-	      !strcmp(address, tmp->local_address) :
-	      !strcmp(address, tmp->address))) &&
-	     !bcmp(spi, tmp->SPI, SPI_SIZE))
-	       return tmp;
-	  tmp = tmp->next;
-     }
-     return NULL;
-}
+	struct spiob *tmp;
 
-struct spiob *
-spi_root(void)
-{
-     return spiob;
-}
+	for (tmp = TAILQ_FIRST(&spihead); tmp; tmp = TAILQ_NEXT(tmp, next)) {
+		if (bcmp(spi, tmp->SPI, SPI_SIZE))
+			continue;
 
-void
-spi_cleanup()
-{
-     struct spiob *p;
-     struct spiob *tmp = spiob;
-     while(tmp!=NULL) {
-	  p = tmp;
-	  tmp = tmp->next;
-	  spi_value_reset(p);
-	  free(p);
-     }
-     spiob = NULL;
+		if (address == NULL)
+			break;
+
+		if (tmp->flags & SPI_OWNER ?
+		    !strcmp(address, tmp->local_address) :
+		    !strcmp(address, tmp->address))
+			break;
+	}
+
+	return (tmp);
 }
 
 void
 spi_expire(void)
 {
-     struct spiob *tmp = spiob, *p;
-     time_t tm;
+	struct spiob *tmp, *next;
+	time_t tm;
 
-     tm = time(NULL);
-     while (tmp != NULL) {
-	  if (tmp->lifetime == -1 || 
-	      tmp->lifetime + (tmp->flags & SPI_OWNER ? 
-			       CLEANUP_TIMEOUT : 0) > tm) {
-	       tmp = tmp->next;
-	       continue;
-	  }
-#ifdef DEBUG
-	  {
-	       int i = BUFFER_SIZE;
-	       bin2hex(buffer, &i, tmp->SPI, 4);
-	       printf("Expiring %s spi %s to %s\n", 
-		      tmp->flags & SPI_OWNER ? "Owner" : "User",
-		      buffer, tmp->address);
-	  }
-#endif
+	tm = time(NULL);
+	for (tmp = TAILQ_FIRST(&spihead); tmp; tmp = next) {
+		next = TAILQ_NEXT(tmp, next);
+
+		if (tmp->lifetime == -1 || 
+		    tmp->lifetime + (tmp->flags & SPI_OWNER ? 
+				     CLEANUP_TIMEOUT : 0) > tm)
+			continue;
+
+		LOG_DBG((LOG_SPI, 30, __FUNCTION__
+			 ": expiring %s spi %x to %s",
+			 tmp->flags & SPI_OWNER ? "Owner" : "User",
+			 ntohl(*(u_int32_t *)tmp->SPI), tmp->address));
+
 #ifdef IPSEC
-	  kernel_unlink_spi(tmp);
+		kernel_unlink_spi(tmp);
 #endif
-	  p = tmp;
-	  tmp = tmp->next;
-	  spi_value_reset(p);
-	  spi_unlink(p);
-     }
+		spi_value_reset(tmp);
+		spi_unlink(tmp);
+	}
 }

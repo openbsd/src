@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: kernel.h,v 1.8 2000/12/14 18:32:25 provos Exp $ */
+/* $Id: kernel.h,v 1.9 2000/12/14 23:28:58 provos Exp $ */
 /*
  * kernel.h: 
  * security paramter index creation.
@@ -115,5 +115,6 @@ EXTERN int kernel_get_socket(void);
 EXTERN void kernel_set_socket_policy(int sd);
 EXTERN void kernel_handle_notify(int sd);
 EXTERN void kernel_notify_result(struct stateob *, struct spiob *, int);
+EXTERN void kernel_handle_queue(void);
 
 #endif /* _KERNEL_H */

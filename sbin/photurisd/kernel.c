@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.14 2000/12/14 18:32:25 provos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.15 2000/12/14 23:28:58 provos Exp $";
 #endif
 
 #include <time.h>
@@ -90,6 +90,14 @@ static int sd;		/* normal PFKEY socket */
 static int regsd;	/* PFKEY socket for Register and Acquire */
 static int pfkey_seq;
 static pid_t pfkey_pid;
+
+struct pfmsg {
+	TAILQ_ENTRY(pfmsg) next;
+
+	struct sadb_msg *smsg;
+};
+
+TAILQ_HEAD(pflist, pfmsg) pfqueue;
 
 /*
  * Translate a Photuris ID into a data structure for the 
@@ -213,18 +221,20 @@ kernel_valid_auth(attrib_t *auth, u_int8_t *flag, u_int16_t size)
 int
 init_kernel(void)
 {
-     if ((sd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) 
-	  log_fatal(__FUNCTION__": socket(PF_KEY) for IPSec keyengine");
-     if ((regsd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) 
-	  log_fatal(__FUNCTION__": socket() for PFKEY register");
+	TAILQ_INIT(&pfqueue);
+	
+	if ((sd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) 
+		log_fatal(__FUNCTION__": socket(PF_KEY) for IPSec keyengine");
+	if ((regsd = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) == -1) 
+		log_fatal(__FUNCTION__": socket() for PFKEY register");
 
-     pfkey_seq = 0;
-     pfkey_pid = getpid();
+	pfkey_seq = 0;
+	pfkey_pid = getpid();
 
-     if (kernel_register(regsd) == -1)
-	  log_fatal(__FUNCTION__": PFKEY socket registration failed");
+	if (kernel_register(regsd) == -1)
+		log_fatal(__FUNCTION__": PFKEY socket registration failed");
      
-     return (1);
+	return (1);
 }
 
 int
@@ -289,11 +299,37 @@ kernel_xf_set(int sd, char *buffer, int blen, struct iovec *iov,
      return (1);
 }
 
+void
+kernel_queue_msg(struct sadb_msg *smsg)
+{
+	struct pfmsg *pfmsg;
+
+	LOG_DBG((LOG_KERNEL, 50, __FUNCTION__": queuing message type %d",
+		 smsg->sadb_msg_type));
+
+	pfmsg = malloc(sizeof(pfmsg));
+	if (pfmsg == NULL) {
+		log_error(__FUNCTION__": malloc");
+		return;
+	}
+
+	pfmsg->smsg = malloc(smsg->sadb_msg_len * 8);
+	if (pfmsg->smsg == NULL) {
+		log_error(__FUNCTION__": malloc");
+		free(pfmsg);
+		return;
+	}
+
+	memcpy(pfmsg->smsg, smsg, smsg->sadb_msg_len * 8);
+
+	TAILQ_INSERT_TAIL(&pfqueue, pfmsg, next);
+}
+
 int
 kernel_xf_read(int sd, char *buffer, int blen, int seq)
 {
      struct sadb_msg *sres = (struct sadb_msg *)buffer;
-     int len;
+     int len, forus;
 
      /*
       * Read in response from the kernel. If seq number and/or PID are
@@ -302,7 +338,7 @@ kernel_xf_read(int sd, char *buffer, int blen, int seq)
       */
      do {
 	  if (recv(sd, sres, sizeof(*sres), MSG_PEEK) != sizeof(*sres)) {
-	       perror("read() in kernel_xf_read()");
+	       log_error(__FUNCTION__": read()");
 	       return (0);
 	  }
 	  len = sres->sadb_msg_len * 8;
@@ -314,19 +350,32 @@ kernel_xf_read(int sd, char *buffer, int blen, int seq)
 	       log_error(__FUNCTION__": read()");
 	       return (0);
 	  }
-     } while (seq && (sres->sadb_msg_seq != seq ||
-		      (sres->sadb_msg_pid && sres->sadb_msg_pid != pfkey_pid)
-		      ));
-	      
+	  
+	  forus = !(sres->sadb_msg_pid && sres->sadb_msg_pid != pfkey_pid) &&
+		  !(seq && sres->sadb_msg_seq != seq);
+
+	  if (!forus) {
+		  switch (sres->sadb_msg_type) {
+		  case SADB_ACQUIRE:
+		  case SADB_EXPIRE:
+			  kernel_queue_msg(sres);
+			  break;
+		  default:
+			  LOG_DBG((LOG_KERNEL, 50, __FUNCTION__
+				   ": skipping message type %d",
+				    sres->sadb_msg_type));
+			  break;
+		  }
+	  }
+	     
+     } while (!forus);
+ 
      if (sres->sadb_msg_errno) {
 	  LOG_DBG((LOG_KERNEL, 40, __FUNCTION__": PFKEYV2 result: %s",
 		    strerror(sres->sadb_msg_errno)));
 	  errno = sres->sadb_msg_errno;
 	  return (0);
      }
-
-     if (sres->sadb_msg_pid && sres->sadb_msg_pid != pfkey_pid)
-	     return (0);
 
      return (1);
 }
@@ -1054,6 +1103,48 @@ kernel_unlink_spi(struct spiob *ospi)
      return (1);
 }
 
+void
+kernel_dispatch_notify(struct sadb_msg *sres)
+{
+	LOG_DBG((LOG_KERNEL, 60, __FUNCTION__": Got PFKEYV2 message: type %d",
+		 sres->sadb_msg_type));
+
+	switch (sres->sadb_msg_type) {
+	case SADB_EXPIRE:
+		LOG_DBG((LOG_KERNEL, 55, __FUNCTION__": Got SA Expiration"));
+		kernel_handle_expire(sres);
+		break;
+	case SADB_ACQUIRE:
+		LOG_DBG((LOG_KERNEL, 55, __FUNCTION__
+			 ": Got Notify SA Request (SADB_ACQUIRE): %d",
+			 sres->sadb_msg_len * 8));
+		LOG_DBG_BUF((LOG_KERNEL, 60, "acquire buf",
+			     (u_char *)sres, sres->sadb_msg_len * 8));
+	  
+		
+		kernel_request_sa(sres);
+		break;
+	default:
+		/* discard silently */
+		return; 
+	}
+}
+
+void
+kernel_handle_queue()
+{
+	struct pfmsg *pfmsg;
+
+	while (pfmsg = TAILQ_FIRST(&pfqueue)) {
+		TAILQ_REMOVE(&pfqueue, pfmsg, next);
+
+		kernel_dispatch_notify(pfmsg->smsg);
+
+		free(pfmsg->smsg);
+		free(pfmsg);
+	}
+}
+
 /*
  * Handles Notifies from the kernel, which can include Requests for new
  * SAs, soft and hard expirations for already established SAs.
@@ -1062,39 +1153,25 @@ kernel_unlink_spi(struct spiob *ospi)
 void
 kernel_handle_notify(int sd)
 {
-     struct sadb_msg *sres = (struct sadb_msg *)buffer;
-     size_t len;
+	struct sadb_msg *sres = (struct sadb_msg *)buffer;
+	size_t len;
 
-     if (!kernel_xf_read(regsd, buffer, BUFFER_SIZE, 0))
-	  return;
+	if (!kernel_xf_read(regsd, buffer, BUFFER_SIZE, 0)) {
+		LOG_DBG((LOG_KERNEL, 65, __FUNCTION__": nothing to read"));
+		return;
+	}
 
-     LOG_DBG((LOG_KERNEL, 60, __FUNCTION__": Got PFKEYV2 message: type %d",
-	      sres->sadb_msg_type));
+	len = sres->sadb_msg_len * 8;
+	sres = malloc(len);
+	if (!sres) {
+		log_error(__FUNCTION__": malloc");
+		return;
+	}
+	memcpy(sres, buffer, len);
 
-     switch (sres->sadb_msg_type) {
-     case SADB_EXPIRE:
-	  LOG_DBG((LOG_KERNEL, 60, __FUNCTION__": Got SA Expiration"));
-	  kernel_handle_expire(sres);
-	  break;
-     case SADB_ACQUIRE:
-	  LOG_DBG((LOG_KERNEL, 60, __FUNCTION__
-		   ": Got Notify SA Request (SADB_ACQUIRE): %d",
-		   sres->sadb_msg_len * 8));
-	  LOG_DBG_BUF((LOG_KERNEL, 60, "acquire buf",
-		       (u_char *)sres, sres->sadb_msg_len * 8));
-	  
-	  len = sres->sadb_msg_len * 8;
-	  sres = malloc(len);
-	  if (sres) {
-		  memcpy(sres, buffer, len);
-		  kernel_request_sa(sres);
-		  free(sres);
-	  }
-	  break;
-     default:
-	  /* discard silently */
-	  return; 
-	  }
+	kernel_dispatch_notify(sres);
+
+	free(sres);
 }
 
 struct sadb_msg *

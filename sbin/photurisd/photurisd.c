@@ -32,7 +32,7 @@
  */
 
 #ifndef lint 
-static char rcsid[] = "$Id: photurisd.c,v 1.6 2000/12/11 21:21:18 provos Exp $";
+static char rcsid[] = "$Id: photurisd.c,v 1.7 2000/12/14 23:28:58 provos Exp $";
 #endif 
 
 #define _PHOTURIS_C_
@@ -162,6 +162,8 @@ main(int argc, char **argv)
      argc -= optind;
      argv += optind;
      
+     spi_init();
+
      init_vars();
 
      init_times();
@@ -170,12 +172,12 @@ main(int argc, char **argv)
 
      init_schemes();
 
-#ifndef DEBUG
+#ifndef USE_DEBUG
      init_signals();
      if (fork())
           exit(0);
      daemon_mode = 1;
-#endif
+#endif /* USE_DEBUG */
 
 #ifdef IPSEC
      init_kernel();

@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_spi_update.c,v 1.4 2000/12/11 21:21:17 provos Exp $";
+static char rcsid[] = "$Id: handle_spi_update.c,v 1.5 2000/12/14 23:28:57 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -150,8 +150,8 @@ handle_spi_update(u_char *packet, int size, char *address,
 #ifdef IPSEC
 	     kernel_unlink_spi(spi);
 #endif
-	     spi_unlink(spi);
 	     spi_value_reset(spi);
+	     spi_unlink(spi);
 	     return 0;
 	} 
 
