@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2000/12/21 21:11:31 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2003/12/31 03:27:23 millert Exp $
 
 # librpc sources
 .PATH:	${LIBCSRCDIR}/arch/${MACHINE}/rpc ${LIBCSRCDIR}/rpc
@@ -55,8 +55,12 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		rpc.3 svc_getargs.3 \
 		rpc.3 svc_getcaller.3 \
 		rpc.3 svc_getreq.3 \
+		rpc.3 svc_getreq_common.3 \
+		rpc.3 svc_getreq_poll.3 \
 		rpc.3 svc_getreqset.3 \
 		rpc.3 svc_getreqset2.3 \
+		rpc.3 svc_max_pollfd.3 \
+		rpc.3 svc_pollfd.3 \
 		rpc.3 svc_register.3 \
 		rpc.3 svc_run.3 \
 		rpc.3 svc_sendreply.3 \

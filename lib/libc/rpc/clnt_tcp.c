@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.18 2001/09/15 13:51:00 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_tcp.c,v 1.19 2003/12/31 03:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
  
 /*
@@ -402,58 +402,49 @@ readtcp(ct, buf, len)
 	caddr_t buf;
 	int len;
 {
-	fd_set *fds, readfds;
-	struct timeval start, after, duration, delta, tmp;
-	int r, save_errno;
+	struct pollfd pfd[1];
+	struct timeval start, after, duration, tmp;
+	int delta, r, save_errno;
 
 	if (len == 0)
 		return (0);
 
-	if (ct->ct_sock+1 > FD_SETSIZE) {
-		int bytes = howmany(ct->ct_sock+1, NFDBITS) * sizeof(fd_mask);
-		fds = (fd_set *)malloc(bytes);
-		if (fds == NULL)
-			return (-1);
-		memset(fds, 0, bytes);
-	} else {
-		fds = &readfds;
-		FD_ZERO(fds);
-	}
-
+	pfd[0].fd = ct->ct_sock;
+	pfd[0].events = POLLIN;
+	delta = ct->ct_wait.tv_sec * 1000 + ct->ct_wait.tv_usec / 1000;
 	gettimeofday(&start, NULL);
-	delta = ct->ct_wait;
-	while (TRUE) {
-		/* XXX we know the other bits are still clear */
-		FD_SET(ct->ct_sock, fds);
-		r = select(ct->ct_sock+1, fds, NULL, NULL, &delta);
+	for (;;) {
+		r = poll(pfd, 1, delta);
 		save_errno = errno;
 
 		gettimeofday(&after, NULL);
 		timersub(&start, &after, &duration);
 		timersub(&ct->ct_wait, &duration, &tmp);
-		delta = tmp;
-		if (delta.tv_sec < 0 || !timerisset(&delta))
+		delta = tmp.tv_sec * 1000 + tmp.tv_usec / 1000;
+		if (delta <= 0)
 			r = 0;
 
 		switch (r) {
 		case 0:
 			ct->ct_error.re_status = RPC_TIMEDOUT;
-			if (fds != &readfds)
-				free(fds);
 			return (-1);
+		case 1:
+			if (pfd[0].revents & POLLNVAL)
+				errno = EBADF;
+			else if (pfd[0].revents & POLLERR)
+				errno = EIO;
+			else
+				break;
+			/* FALLTHROUGH */
 		case -1:
 			if (errno == EINTR)
 				continue;
 			ct->ct_error.re_status = RPC_CANTRECV;
 			ct->ct_error.re_errno = save_errno;
-			if (fds != &readfds)
-				free(fds);
 			return (-1);
 		}
 		break;
 	}
-	if (fds != &readfds)
-		free(fds);
 
 	switch (len = read(ct->ct_sock, buf, len)) {
 	case 0:

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint) 
-static char *rcsid = "$OpenBSD: svc.c,v 1.15 2002/02/16 21:27:24 millert Exp $";
+static char *rcsid = "$OpenBSD: svc.c,v 1.16 2003/12/31 03:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -70,9 +70,15 @@ static struct svc_callout {
 } *svc_head;
 
 static struct svc_callout *svc_find(u_long, u_long, struct svc_callout **);
+static int svc_fd_insert(int);
+static int svc_fd_remove(int);
 
-int __svc_fdsetsize;
-fd_set *__svc_fdset;
+int __svc_fdsetsize = FD_SETSIZE;
+fd_set *__svc_fdset = &svc_fdset;
+static int svc_pollfd_size;		/* number of slots in svc_pollfd */
+static int svc_used_pollfd;		/* number of used slots in svc_pollfd */
+static int *svc_pollfd_freelist;	/* svc_pollfd free list */
+static int svc_max_free;		/* number of used slots in free list */
 
 /* ***************  SVCXPRT related stuff **************** */
 
@@ -96,33 +102,12 @@ __xprt_register(xprt)
 {
 	int sock = xprt->xp_sock;
 
-	if (sock+1 > __svc_fdsetsize) {
-		int bytes = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
-		fd_set *fds;
-
-		fds = (fd_set *)malloc(bytes);
-		if (fds == NULL)
-			return (0);
-		memset(fds, 0, bytes);
-		if (__svc_fdset) {
-			memcpy(fds, __svc_fdset, howmany(__svc_fdsetsize,
-			    NFDBITS) * sizeof(fd_mask));
-			free(__svc_fdset);
-		}
-		__svc_fdset = fds;
-		__svc_fdsetsize = sock+1;
-	}
-
-	if (sock < FD_SETSIZE)
-		FD_SET(sock, &svc_fdset);
-	FD_SET(sock, __svc_fdset);
-
-	if (xports == NULL || sock+1 > xportssize) {
+	if (xports == NULL || sock + 1 > xportssize) {
 		SVCXPRT **xp;
 		int size = FD_SETSIZE;
 
-		if (sock+1 > size)
-			size = sock+1;
+		while (sock + 1 > size)
+			size += FD_SETSIZE;
 		xp = (SVCXPRT **)mem_alloc(size * sizeof(SVCXPRT *));
 		if (xp == NULL)
 			return (0);
@@ -134,9 +119,156 @@ __xprt_register(xprt)
 		xportssize = size;
 		xports = xp;
 	}
+
+	if (!svc_fd_insert(sock))
+		return (0);
 	xports[sock] = xprt;
-	svc_maxfd = max(svc_maxfd, sock);
+
 	return (1);
+}
+
+/*
+ * Insert a socket into svc_pollfd, svc_fdset and __svc_fdset.
+ * If we are out of space, we allocate ~128 more slots than we
+ * need now for future expansion.
+ * We try to keep svc_pollfd well packed (no holes) as possible
+ * so that poll(2) is efficient.
+ */
+static int
+svc_fd_insert(int sock)
+{
+	int slot;
+
+	/*
+	 * Find a slot for sock in svc_pollfd; four possible cases:
+	 *  1) need to allocate more space for svc_pollfd
+	 *  2) there is an entry on the free list
+	 *  3) the free list is empty (svc_used_pollfd is the next slot)
+	 */
+	if (svc_pollfd == NULL || svc_used_pollfd == svc_pollfd_size) {
+		struct pollfd *pfd;
+		int new_size, *new_freelist;
+
+		new_size = svc_pollfd ? svc_pollfd_size + 128 : FD_SETSIZE;
+		pfd = realloc(svc_pollfd, sizeof(*svc_pollfd) * new_size);
+		if (pfd == NULL)
+			return (0);			/* no changes */
+		new_freelist = realloc(svc_pollfd_freelist, new_size / 2);
+		if (new_freelist == NULL) {
+			free(pfd);
+			return (0);			/* no changes */
+		}
+		svc_pollfd = pfd;
+		svc_pollfd_size = new_size;
+		svc_pollfd_freelist = new_freelist;
+		for (slot = svc_used_pollfd; slot < svc_pollfd_size; slot++) {
+			svc_pollfd[slot].fd = -1;
+			svc_pollfd[slot].events = svc_pollfd[slot].revents = 0;
+		}
+		slot = svc_used_pollfd;
+	} else if (svc_max_free != 0) {
+		/* there is an entry on the free list, use it */
+		slot = svc_pollfd_freelist[--svc_max_free];
+	} else {
+		/* nothing on the free list but we have room to grow */
+		slot = svc_used_pollfd;
+	}
+	if (sock + 1 > __svc_fdsetsize) {
+		fd_set *fds;
+		size_t bytes;
+
+		bytes = howmany(sock + 128, NFDBITS) * sizeof(fd_mask);
+		/* realloc() would be nicer but it gets tricky... */
+		if ((fds = (fd_set *)mem_alloc(bytes)) != NULL) {
+			memset(fds, 0, bytes);
+			memcpy(fds, __svc_fdset,
+			    howmany(__svc_fdsetsize, NFDBITS) * sizeof(fd_mask));
+			if (__svc_fdset != &svc_fdset)
+				free(__svc_fdset);
+			__svc_fdset = fds;
+			__svc_fdsetsize = bytes / sizeof(fd_mask);
+		}
+	}
+
+	svc_pollfd[slot].fd = sock;
+	svc_pollfd[slot].events = POLLIN;
+	svc_used_pollfd++;
+	if (svc_max_pollfd < slot + 1)
+		svc_max_pollfd = slot + 1;
+	if (sock < FD_SETSIZE)
+		FD_SET(sock, &svc_fdset);
+	else if (sock < __svc_fdsetsize)
+		FD_SET(sock, __svc_fdset);
+	svc_maxfd = max(svc_maxfd, sock);
+
+	return (1);
+}
+
+/*
+ * Remove a socket from svc_pollfd, svc_fdset and __svc_fdset.
+ * Freed slots are placed on the free list.  If the free list fills
+ * up, we compact svc_pollfd (free list size == svc_pollfd_size /2).
+ */
+static int
+svc_fd_remove(int sock)
+{
+	int slot;
+
+	if (svc_pollfd == NULL)
+		return (0);
+
+	for (slot = 0; slot < svc_max_pollfd; slot++) {
+		if (svc_pollfd[slot].fd == sock) {
+			svc_pollfd[slot].fd = -1;
+			svc_pollfd[slot].events = svc_pollfd[slot].revents = 0;
+			svc_used_pollfd--;
+			if (sock < FD_SETSIZE)
+				FD_CLR(sock, &svc_fdset);
+			else if (sock < __svc_fdsetsize)
+				FD_CLR(sock, __svc_fdset);
+			if (sock == svc_maxfd) {
+				for (svc_maxfd--; svc_maxfd >= 0; svc_maxfd--)
+					if (xports[svc_maxfd])
+						break;
+			}
+			if (svc_max_free == svc_pollfd_size / 2) {
+				int i, j;
+
+				/*
+				 * Out of space in the free list; this means
+				 * that svc_pollfd is half full.  Pack things
+				 * such that svc_max_pollfd == svc_used_pollfd
+				 * and svc_pollfd_freelist is empty.
+				 */
+				for (i = svc_used_pollfd, j = 0;
+				    i < svc_max_pollfd && j < svc_max_free; i++) {
+					if (svc_pollfd[i].fd == -1)
+						continue;
+					/* be sure to use a low-numbered slot */
+					while (svc_pollfd_freelist[j] >=
+					    svc_used_pollfd)
+						j++;
+					svc_pollfd[svc_pollfd_freelist[j++]] =
+					    svc_pollfd[i];
+					svc_pollfd[i].fd = -1;
+					svc_pollfd[i].events =
+					    svc_pollfd[i].revents = 0;
+				}
+				svc_max_pollfd = svc_used_pollfd;
+				svc_max_free = 0;
+				/* could realloc if svc_pollfd_size is big */
+			} else {
+				/* trim svc_max_pollfd from the end */
+				while (svc_max_pollfd > 0 &&
+				    svc_pollfd[svc_max_pollfd - 1].fd == -1)
+					svc_max_pollfd--;
+			}
+			svc_pollfd_freelist[svc_max_free++] = slot;
+
+			return (1);
+		}
+	}
+	return (0);		/* not found, shouldn't happen */
 }
 
 /*
@@ -149,19 +281,8 @@ xprt_unregister(xprt)
 	int sock = xprt->xp_sock;
 
 	if (xports[sock] == xprt) {
-		xports[sock] = (SVCXPRT *)0;
-		if (sock < FD_SETSIZE)
-			FD_CLR(sock, &svc_fdset);
-		FD_CLR(sock, __svc_fdset);
-		if (sock == svc_maxfd) {
-			for (svc_maxfd--; svc_maxfd>=0; svc_maxfd--)
-				if (xports[svc_maxfd])
-					break;
-		}
-		/*
-		 * XXX could use svc_maxfd as a hint to
-		 * decrease the size of __svc_fdset
-		 */
+		xports[sock] = NULL;
+		svc_fd_remove(sock);
 	}
 }
 
@@ -409,14 +530,11 @@ void
 svc_getreq(rdfds)
 	int rdfds;
 {
-	fd_set readfds;
+	int bit;
 
-	FD_ZERO(&readfds);
-	readfds.fds_bits[0] = rdfds;
-	svc_getreqset(&readfds);
+	for (; (bit = ffs(rdfds)); rdfds ^= (1 << (bit - 1)))
+		svc_getreq_common(bit - 1);
 }
-
-void	svc_getreqset2(fd_set *, int);
 
 void
 svc_getreqset(readfds)
@@ -430,6 +548,39 @@ svc_getreqset2(readfds, width)
 	fd_set *readfds;
 	int width;
 {
+	fd_mask mask, *maskp;
+	int bit, sock;
+
+	maskp = readfds->fds_bits;
+	for (sock = 0; sock < width; sock += NFDBITS) {
+		for (mask = *maskp++; (bit = ffs(mask));
+		    mask ^= (1 << (bit - 1)))
+			svc_getreq_common(sock + bit - 1);
+	}
+}
+
+void
+svc_getreq_poll(pfd, nready)
+	struct pollfd *pfd;
+	const int nready;
+{
+	int i, n;
+
+	for (n = nready, i = 0; n > 0; i++) {
+		if (pfd[i].fd == -1)
+			continue;
+		if (pfd[i].revents != 0)
+			n--;
+		if ((pfd[i].revents & (POLLIN | POLLHUP)) == 0)
+			continue;
+		svc_getreq_common(pfd[i].fd);
+	}
+}
+
+void
+svc_getreq_common(fd)
+	int fd;
+{
 	enum xprt_stat stat;
 	struct rpc_msg msg;
 	int prog_found;
@@ -437,74 +588,65 @@ svc_getreqset2(readfds, width)
 	u_long high_vers;
 	struct svc_req r;
 	SVCXPRT *xprt;
-	int bit;
-	fd_mask mask, *maskp;
-	int sock;
 	char cred_area[2*MAX_AUTH_BYTES + RQCRED_SIZE];
+
 	msg.rm_call.cb_cred.oa_base = cred_area;
 	msg.rm_call.cb_verf.oa_base = &(cred_area[MAX_AUTH_BYTES]);
 	r.rq_clntcred = &(cred_area[2*MAX_AUTH_BYTES]);
 
-	maskp = readfds->fds_bits;
-	for (sock = 0; sock < width; sock += NFDBITS) {
-	    for (mask = *maskp++; (bit = ffs(mask)); mask ^= (1 << (bit - 1))) {
-		/* sock has input waiting */
-		xprt = xports[sock + bit - 1];
-		if (xprt == NULL)
-			/* But do we control sock? */
-			continue;
-		/* now receive msgs from xprtprt (support batch calls) */
-		do {
-			if (SVC_RECV(xprt, &msg)) {
+	/* sock has input waiting */
+	xprt = xports[fd];
+	if (xprt == NULL)
+		/* But do we control the fd? */
+		return;
+	/* now receive msgs from xprtprt (support batch calls) */
+	do {
+		if (SVC_RECV(xprt, &msg)) {
+			/* find the exported program and call it */
+			struct svc_callout *s;
+			enum auth_stat why;
 
-				/* now find the exported program and call it */
-				register struct svc_callout *s;
-				enum auth_stat why;
-
-				r.rq_xprt = xprt;
-				r.rq_prog = msg.rm_call.cb_prog;
-				r.rq_vers = msg.rm_call.cb_vers;
-				r.rq_proc = msg.rm_call.cb_proc;
-				r.rq_cred = msg.rm_call.cb_cred;
-				/* first authenticate the message */
-				if ((why= _authenticate(&r, &msg)) != AUTH_OK) {
-					svcerr_auth(xprt, why);
-					goto call_done;
-				}
-				/* now match message with a registered service*/
-				prog_found = FALSE;
-				low_vers = (u_long) -1;
-				high_vers = 0;
-				for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
-					if (s->sc_prog == r.rq_prog) {
-						if (s->sc_vers == r.rq_vers) {
-							(*s->sc_dispatch)(&r, xprt);
-							goto call_done;
-						}  /* found correct version */
-						prog_found = TRUE;
-						if (s->sc_vers < low_vers)
-							low_vers = s->sc_vers;
-						if (s->sc_vers > high_vers)
-							high_vers = s->sc_vers;
-					}   /* found correct program */
-				}
-				/*
-				 * if we got here, the program or version
-				 * is not served ...
-				 */
-				if (prog_found)
-					svcerr_progvers(xprt,
-					low_vers, high_vers);
-				else
-					 svcerr_noprog(xprt);
-				/* Fall through to ... */
+			r.rq_xprt = xprt;
+			r.rq_prog = msg.rm_call.cb_prog;
+			r.rq_vers = msg.rm_call.cb_vers;
+			r.rq_proc = msg.rm_call.cb_proc;
+			r.rq_cred = msg.rm_call.cb_cred;
+			/* first authenticate the message */
+			if ((why= _authenticate(&r, &msg)) != AUTH_OK) {
+				svcerr_auth(xprt, why);
+				goto call_done;
 			}
-		call_done:
-			if ((stat = SVC_STAT(xprt)) == XPRT_DIED){
-				SVC_DESTROY(xprt);
-				break;
+			/* now match message with a registered service*/
+			prog_found = FALSE;
+			low_vers = (u_long) -1;
+			high_vers = 0;
+			for (s = svc_head; s != NULL_SVC; s = s->sc_next) {
+				if (s->sc_prog == r.rq_prog) {
+					if (s->sc_vers == r.rq_vers) {
+						(*s->sc_dispatch)(&r, xprt);
+						goto call_done;
+					}  /* found correct version */
+					prog_found = TRUE;
+					if (s->sc_vers < low_vers)
+						low_vers = s->sc_vers;
+					if (s->sc_vers > high_vers)
+						high_vers = s->sc_vers;
+				}   /* found correct program */
 			}
-		} while (stat == XPRT_MOREREQS);
-	    }
-	}
+			/*
+			 * if we got here, the program or version
+			 * is not served ...
+			 */
+			if (prog_found)
+				svcerr_progvers(xprt, low_vers, high_vers);
+			else
+				 svcerr_noprog(xprt);
+			/* Fall through to ... */
+		}
+	call_done:
+		if ((stat = SVC_STAT(xprt)) == XPRT_DIED){
+			SVC_DESTROY(xprt);
+			break;
+		}
+	} while (stat == XPRT_MOREREQS);
 }

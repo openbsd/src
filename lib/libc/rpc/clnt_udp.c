@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.19 2002/09/06 18:35:12 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.20 2003/12/31 03:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -221,7 +221,7 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	int outlen;
 	int inlen;
 	socklen_t fromlen;
-	fd_set *fds, readfds;
+	struct pollfd pfd[1];
 	struct sockaddr_in from;
 	struct rpc_msg reply_msg;
 	XDR reply_xdrs;
@@ -235,17 +235,8 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	else
 		timeout = cu->cu_total; /* use default timeout */
 
-	if (cu->cu_sock+1 > FD_SETSIZE) {
-		int bytes = howmany(cu->cu_sock+1, NFDBITS) * sizeof(fd_mask);
-		fds = (fd_set *)malloc(bytes);
-		if (fds == NULL)
-			return (cu->cu_error.re_status = RPC_CANTSEND);
-		memset(fds, 0, bytes);
-	} else {
-		fds = &readfds;
-		FD_ZERO(fds);
-	}
-
+	pfd[0].fd = cu->cu_sock;
+	pfd[0].events = POLLIN;
 	timerclear(&time_waited);
 call_again:
 	xdrs = &(cu->cu_outxdrs);
@@ -258,8 +249,6 @@ call_again:
 	if (!XDR_PUTLONG(xdrs, (long *)&proc) ||
 	    !AUTH_MARSHALL(cl->cl_auth, xdrs) ||
 	    !(*xargs)(xdrs, argsp)) {
-		if (fds != &readfds)
-			free(fds);
 		return (cu->cu_error.re_status = RPC_CANTENCODEARGS);
 	}
 	outlen = (int)XDR_GETPOS(xdrs);
@@ -268,19 +257,14 @@ send_again:
 	if (sendto(cu->cu_sock, cu->cu_outbuf, outlen, 0,
 	    (struct sockaddr *)&(cu->cu_raddr), cu->cu_rlen) != outlen) {
 		cu->cu_error.re_errno = errno;
-		if (fds != &readfds)
-			free(fds);
 		return (cu->cu_error.re_status = RPC_CANTSEND);
 	}
 
 	/*
 	 * Hack to provide rpc-based message passing
 	 */
-	if (!timerisset(&timeout)) {
-		if (fds != &readfds)
-			free(fds);
+	if (!timerisset(&timeout))
 		return (cu->cu_error.re_status = RPC_TIMEDOUT);
-	}
 
 	/*
 	 * sub-optimal code appears here because we have
@@ -293,17 +277,22 @@ send_again:
 
 	gettimeofday(&start, NULL);
 	for (;;) {
-		/* XXX we know the other bits are still clear */
-		FD_SET(cu->cu_sock, fds);
-		switch (select(cu->cu_sock+1, fds, NULL, NULL, &cu->cu_wait)) {
+		switch (poll(pfd, 1,
+		    cu->cu_wait.tv_sec * 1000 + cu->cu_wait.tv_usec / 1000)) {
 		case 0:
 			timeradd(&time_waited, &cu->cu_wait, &tmp1);
 			time_waited = tmp1;
 			if (timercmp(&time_waited, &timeout, <))
 				goto send_again;
-			if (fds != &readfds)
-				free(fds);
 			return (cu->cu_error.re_status = RPC_TIMEDOUT);
+		case 1:
+			if (pfd[0].revents & POLLNVAL)
+				errno = EBADF;
+			else if (pfd[0].revents & POLLERR)
+				errno = EIO;
+			else
+				break;
+			/* FALLTHROUGH */
 		case -1:
 			if (errno == EINTR) {
 				gettimeofday(&after, NULL);
@@ -312,13 +301,9 @@ send_again:
 				time_waited = tmp2;
 				if (timercmp(&time_waited, &timeout, <))
 					continue;
-				if (fds != &readfds)
-					free(fds);
 				return (cu->cu_error.re_status = RPC_TIMEDOUT);
 			}
 			cu->cu_error.re_errno = errno;
-			if (fds != &readfds)
-				free(fds);
 			return (cu->cu_error.re_status = RPC_CANTRECV);
 		}
 
@@ -332,8 +317,6 @@ send_again:
 			if (errno == EWOULDBLOCK)
 				continue;
 			cu->cu_error.re_errno = errno;
-			if (fds != &readfds)
-				free(fds);
 			return (cu->cu_error.re_status = RPC_CANTRECV);
 		}
 		if (inlen < sizeof(u_int32_t))
@@ -393,8 +376,6 @@ send_again:
 		cu->cu_error.re_status = RPC_CANTDECODERES;
 	}
 
-	if (fds != &readfds)
-		free(fds);
 	return (cu->cu_error.re_status);
 }
 

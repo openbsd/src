@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.20 2002/09/06 18:35:12 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.21 2003/12/31 03:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -233,8 +233,9 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	socklen_t fromlen;
 	int sock = -1;
 	int on = 1;
-	fd_set *fds = NULL, readfds;
+	struct pollfd pfd[1];
 	int i;
+	int timo;
 	bool_t done = FALSE;
 	u_long xid;
 	u_long port;
@@ -243,7 +244,6 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	struct rmtcallargs a;
 	struct rmtcallres r;
 	struct rpc_msg msg;
-	struct timeval t; 
 	char outbuf[MAX_BROADCAST_SIZE], inbuf[UDPMSGSIZE];
 
 	/*
@@ -263,18 +263,8 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	}
 #endif /* def SO_BROADCAST */
 
-	if (sock+1 > FD_SETSIZE) {
-		int bytes = howmany(sock+1, NFDBITS) * sizeof(fd_mask);
-		fds = (fd_set *)malloc(bytes);
-		if (fds == NULL) {
-			stat = RPC_CANTSEND;
-			goto done_broad;
-		}
-		memset(fds, 0, bytes);
-	} else {
-		fds = &readfds;
-		FD_ZERO(fds);
-	}
+	pfd[0].fd = sock;
+	pfd[0].events = POLLIN;
 
 	nets = newgetbroadcastnets(&addrs, sock);
 	memset(&baddr, 0, sizeof (baddr));
@@ -282,9 +272,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	baddr.sin_family = AF_INET;
 	baddr.sin_port = htons(PMAPPORT);
 	baddr.sin_addr.s_addr = htonl(INADDR_ANY);
-	(void)gettimeofday(&t, (struct timezone *)0);
 	msg.rm_xid = xid = arc4random();
-	t.tv_usec = 0;
 	msg.rm_direction = CALL;
 	msg.rm_call.cb_rpcvers = RPC_MSG_VERSION;
 	msg.rm_call.cb_prog = PMAPPROG;
@@ -318,7 +306,7 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	 * the intended function of sending them slowly over half a
 	 * minute or so
 	 */
-	for (t.tv_sec = 4; t.tv_sec <= 14; t.tv_sec += 2) {
+	for (timo = 4000; timo <= 14000; timo += 2000) {
 		for (i = 0; i < nets; i++) {
 			baddr.sin_addr = addrs[i];
 			if (sendto(sock, outbuf, outlen, 0,
@@ -338,16 +326,22 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 		msg.acpted_rply.ar_results.where = (caddr_t)&r;
 		msg.acpted_rply.ar_results.proc = xdr_rmtcallres;
 
-		/* XXX we know the other bits are still clear */
-		FD_SET(sock, fds);
-		switch (select(sock+1, fds, NULL, NULL, &t)) {
+		switch (poll(pfd, 1, timo)) {
 		case 0:  /* timed out */
 			stat = RPC_TIMEDOUT;
 			continue;
+		case 1:
+			if (pfd[0].revents & POLLNVAL)
+				errno = EBADF;
+			else if (pfd[0].revents & POLLERR)
+				errno = EIO;
+			else
+				break;
+			/* FALLTHROUGH */
 		case -1:  /* some kind of error */
 			if (errno == EINTR)
 				goto recv_again;
-			perror("Broadcast select problem");
+			perror("Broadcast poll problem");
 			stat = RPC_CANTRECV;
 			goto done_broad;
 		}
@@ -393,8 +387,6 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 done_broad:
 	if (addrs)
 		free(addrs);
-	if (fds != &readfds)
-		free(fds);
 	if (sock >= 0)
 		(void)close(sock);
 	AUTH_DESTROY(unix_auth);

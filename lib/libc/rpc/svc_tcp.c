@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.22 2002/09/06 18:35:12 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.23 2003/12/31 03:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -349,29 +349,29 @@ readtcp(xprt, buf, len)
 	int len;
 {
 	int sock = xprt->xp_sock;
-	struct timeval start, delta;
+	int delta, nready;
+	struct timeval start;
 	struct timeval tmp1, tmp2;
-	fd_set *fds = NULL;
+	struct pollfd *pfd = NULL;
 	int prevbytes = 0, bytes;
-	extern int __svc_fdsetsize;
-	extern fd_set *__svc_fdset;
 
-	delta = wait_per_try;
+	pfd = (struct pollfd *)malloc(sizeof(*pfd) * (svc_max_pollfd + 1));
+	if (pfd == NULL)
+		goto fatal_err;
+	pfd[0].fd = sock;
+	pfd[0].events = POLLIN;
+	pfd[0].revents = 0;
+	memcpy(&pfd[1], svc_pollfd, (sizeof(*pfd) * svc_max_pollfd));
+
+	/*
+	 * All read operations timeout after 35 seconds.
+	 * A timeout is fatal for the connection.
+	 */
+	delta = wait_per_try.tv_sec * 1000;
 	gettimeofday(&start, NULL);
 	do {
-		bytes = howmany(__svc_fdsetsize, NFDBITS) * sizeof(fd_mask);
-		if (bytes != prevbytes) {
-			if (fds)
-				free(fds);
-			fds = (fd_set *)malloc(bytes);
-			prevbytes = bytes;
-		}
-		if (fds == NULL)
-			goto fatal_err;
-		memcpy(fds, __svc_fdset, bytes);
-
-		FD_SET(sock, fds);
-		switch (select(svc_maxfd+1, fds, NULL, NULL, &delta)) {
+		nready = poll(pfd, svc_max_pollfd + 1, delta);
+		switch (nready) {
 		case -1:
 			if (errno != EINTR)
 				goto fatal_err;
@@ -380,32 +380,32 @@ readtcp(xprt, buf, len)
 			timersub(&wait_per_try, &tmp2, &tmp1);
 			if (tmp1.tv_sec < 0 || !timerisset(&tmp1))
 				goto fatal_err;
-			delta = tmp1;
+			delta = tmp1.tv_sec * 1000 + tmp1.tv_usec / 1000;
 			continue;
 		case 0:
 			goto fatal_err;
 		default:
-			if (!FD_ISSET(sock, fds)) {
-				svc_getreqset2(fds, svc_maxfd+1);
+			if (pfd[0].revents == 0) {
+				svc_getreq_poll(&pfd[1], nready);
 				gettimeofday(&tmp1, NULL);
 				timersub(&tmp1, &start, &tmp2);
 				timersub(&wait_per_try, &tmp2, &tmp1);
 				if (tmp1.tv_sec < 0 || !timerisset(&tmp1))
 					goto fatal_err;
-				delta = tmp1;
+				delta = tmp1.tv_sec * 1000 + tmp1.tv_usec / 1000;
 				continue;
 			}
 		}
-	} while (!FD_ISSET(sock, fds));
+	} while (pfd[0].revents == 0);
 	if ((len = read(sock, buf, len)) > 0) {
-		if (fds)
-			free(fds);
+		if (pfd)
+			free(pfd);
 		return (len);
 	}
 fatal_err:
 	((struct tcp_conn *)(xprt->xp_p1))->strm_stat = XPRT_DIED;
-	if (fds)
-		free(fds);
+	if (pfd)
+		free(pfd);
 	return (-1);
 }
 

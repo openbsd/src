@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.33 2003/06/29 13:42:40 jmc Exp $
+.\"	$OpenBSD: rpc.3,v 1.34 2003/12/31 03:27:23 millert Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
 .\" All rights reserved.
@@ -114,9 +114,13 @@
 .Nm svc_getargs ,
 .Nm svc_getcaller ,
 .Nm svc_getreq ,
+.Nm svc_getreq_common ,
+.Nm svc_getreq_poll ,
 .Nm svc_getreqset ,
 .Nm svc_getreqset2 ,
 .Nm svc_register ,
+.Nm svc_max_pollfd ,
+.Nm svc_pollfd ,
 .Nm svc_sendreply ,
 .Nm svc_unregister ,
 .Nm svcerr_auth ,
@@ -198,6 +202,10 @@
 .Fa rpc_createerr ;
 .Ft int
 .Fn svc_destroy "SVCXPRT *xprt"
+.Ft struct pollfd *
+.Fa svc_pollfd ;
+.Ft int
+.Fa svc_max_pollfd ;
 .Ft fd_set
 .Fa svc_fdset ;
 .Ft fd_set
@@ -213,9 +221,13 @@
 .Ft struct sockaddr_in *
 .Fn svc_getcaller "SVCXPRT *xprt"
 .Ft int
+.Fn svc_getreq_common "int fd"
+.Ft int
+.Fn svc_getreq_poll "struct pollfd *pfds" "const int pollretval"
+.Ft int
 .Fn svc_getreqset "fd_set *rdfds"
 .Ft int
-.Fn svc_getreqset2 "fd_set *rdfds, int width"
+.Fn svc_getreqset2 "fd_set *rdfds" "int width"
 .Ft int
 .Fn svc_getreq "int rdfds"
 .Ft int
@@ -426,7 +438,6 @@ and
 the supported values of
 .Fa req
 and their argument types and what they do are:
-.Pp
 .Bd -literal -offset indent
 .Tn CLSET_TIMEOUT	struct timeval	set total timeout
 .Tn CLGET_TIMEOUT	struct timeval	get total timeout
@@ -438,7 +449,6 @@ if you set the timeout using
 the timeout parameter passed to
 .Fn clnt_call
 will be ignored in all future calls.
-.Pp
 .Bd -literal -offset indent
 .Tn CLGET_SERVER_ADDR	struct sockaddr_in 	get server's address
 .Ed
@@ -446,7 +456,6 @@ will be ignored in all future calls.
 The following operations are valid for
 .Tn UDP
 only:
-.Pp
 .Bd -literal -offset indent
 .Tn CLSET_RETRY_TIMEOUT   struct timeval	set the retry timeout
 .Tn CLGET_RETRY_TIMEOUT   struct timeval	get the retry timeout
@@ -842,6 +851,35 @@ Use of
 .Fa xprt
 is undefined after calling this routine.
 .Pp
+.Fa svc_pollfd
+is a global variable reflecting the
+.Tn RPC
+service side's
+read file descriptor array.
+This variable is only of interest if service implementors do not call
+.Fn svc_run ,
+but rather do their own asynchronous event processing.
+This variable is read-only, and it may change after calls
+to svc_getreq_poll() or any creation routines.
+Do not pass it directly to
+.Xr poll 2 !
+Instead, make a copy and pass that instead.
+.Pp
+.Fa svc_max_pollfd
+is a global variable containing the maximum length of the
+.Fa svc_pollfd
+array.
+.Fa svc_max_pollfd
+is not a hard limit; it will grow automatically as needed.
+This variable is read-only, and it may change after calls
+to svc_getreq_poll() or any creation routines.
+The purpose of
+.Fa svc_max_pollfd
+is to allow a service implementor to make a copy of
+.Fa svc_pollfd
+that may in turn be passed to
+.Xr poll 2 .
+.Pp
 .Fa __svc_fdset
 and
 .Fa __svc_fdsetsize
@@ -866,6 +904,11 @@ to svc_getreqset() or any creation routines.
 Do not pass its address to
 .Xr select 2 !
 Instead, pass the address of a copy.
+These variables are considered obsolete; new programs should use
+.Fa svc_pollfd
+and
+.Fa svc_max_pollfd
+instead.
 .Pp
 .Fa svc_fdset
 is similar to
@@ -873,16 +916,15 @@ is similar to
 but limited to
 .Fa FD_SETSIZE
 descriptors.
-This is the preferred interface for portability though.
 This is only of interest
 if service implementors do not call
 .Fn svc_run ,
 but rather do their own asynchronous event processing.
 This variable is read-only, and it may change after calls
 to svc_getreqset() or any creation routines.
-Do not pass its address to
+Do not pass it directly to
 .Xr select 2 !
-Instead, pass the address of a copy.
+Instead, make a copy and pass that instead.
 .Pp
 Additionally, note that if the process has descriptor limits
 which are extended beyond
@@ -890,13 +932,17 @@ which are extended beyond
 this variable will only be usable for the first
 .Fa FD_SETSIZE
 descriptors.
+This variable is considered obsolete; new programs should use
+.Fa svc_pollfd
+which does not have this limit.
 .Pp
 .Fa svc_fds
 is similar to
 .Fa svc_fedset ,
 but limited to 32 descriptors.
 This interface is obsoleted by
-.Fa svc_fdset .
+.Fa svc_fdset
+and is included for source compatibility only.
 .Pp
 .Fn svc_freeargs
 is a macro that frees any data allocated by the
@@ -932,6 +978,40 @@ of a procedure associated with the
 .Tn RPC
 service transport handle,
 .Fa xprt .
+.Pp
+.Fn svc_getreq_common
+is called to handle a request on the given socket.
+It is used internally by
+.Fn svc_getreq_poll ,
+.Fn svc_getreqset ,
+.Fn svc_getreqset2 ,
+and
+.Fn svc_getreq .
+.Pp
+.Fn svc_getreq_poll
+is a routine which is only of interest if a service implementor
+does not call
+.Fn svc_run ,
+but instead implements custom asynchronous event processing.
+It is called when the
+.Xr poll 2
+system call has determined that an
+.Tn RPC
+request has arrived on some
+.Tn RPC
+.Fa socket(s) ;
+.Fa pollretval
+is the value returned by
+.Xr poll 2
+and
+.Fa pfds
+is the array of
+.Fa pollfd
+structures passed to
+.Xr poll 2 .
+The routine returns when all sockets described by
+.Fa pollfd
+have been serviced.
 .Pp
 .Fn svc_getreqset
 is a routine which is only of interest if a service implementor
@@ -972,14 +1052,14 @@ value of
 have been serviced.
 This interface is non-portable, but provided for applications which
 need to deal with large fd_set sizes.
-.Tn RPC
-internals use it.
 .Pp
 .Fn svc_getreq
 is similar to
 .Fa svc_getreqset ,
 but limited to 32 descriptors.
 This interface is obsoleted by
+.Fa svc_getreq_poll
+and
 .Fa svc_getreqset .
 .Pp
 .Fn svc_register
@@ -1025,10 +1105,10 @@ It waits for
 .Tn RPC
 requests to arrive, and calls the appropriate service
 procedure using
-.Fn svc_getreq
+.Fn svc_getreq_poll
 when one arrives.
 This procedure is usually waiting for a
-.Xr select 2
+.Xr poll 2
 system call to return.
 .Pp
 .Fn svc_sendreply
@@ -1272,8 +1352,14 @@ service transport handles are created,
 they should register themselves with the
 .Tn RPC
 service package.
-This routine modifies the global variable
-.Fa svc_fds .
+This routine modifies the global variables
+.Fa svc_pollfd ,
+.Fa svc_fdset ,
+.Fa __svc_fdset
+and may modify
+.Fa svc_max_pollfd
+and
+.Fa __svc_fdsetsize .
 Service implementors usually do not need this routine.
 .Pp
 .Fn xprt_unregister
@@ -1285,11 +1371,15 @@ it should unregister itself with the
 .Tn RPC
 service package.
 This routine modifies the global variable
-.Fa svc_fds .
+.Fa svc_pollfd ,
+.Fa svc_fdset ,
+and
+.Fa __svc_fdset .
 Service implementors usually do not need this routine.
 .Sh SEE ALSO
 .\"Xr rpc_secure 3 ,
 .Xr rpcgen 1 ,
+.Xr poll 2 ,
 .Xr select 2 ,
 .Xr getrpcent 3 ,
 .Xr getrpcport 3 ,

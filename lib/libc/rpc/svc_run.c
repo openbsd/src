@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_run.c,v 1.13 2002/08/03 22:04:28 millert Exp $";
+static char *rcsid = "$OpenBSD: svc_run.c,v 1.14 2003/12/31 03:27:23 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -42,45 +42,36 @@ static char *rcsid = "$OpenBSD: svc_run.c,v 1.13 2002/08/03 22:04:28 millert Exp
 #include <stdlib.h>
 #include <string.h>
 
-extern int __svc_fdsetsize;
-extern fd_set *__svc_fdset;
-
-void svc_getreqset2(fd_set *, int);
-
 void
 svc_run()
 {
-	fd_set *fds;
+	struct pollfd *pfd = NULL;
+	int nready, saved_max_pollfd = 0;
 
 	for (;;) {
-		if (__svc_fdset) {
-			int bytes = howmany(__svc_fdsetsize, NFDBITS) *
-			    sizeof(fd_mask);
-			if ((fds = (fd_set *)malloc(bytes)) == NULL) {
-				perror("svc_run");
-				return;
+		if (svc_max_pollfd > saved_max_pollfd) {
+			free(pfd);
+			pfd = malloc(sizeof(*pfd) * svc_max_pollfd);
+			if (pfd == NULL) {
+				perror("svc_run");	/* XXX */
+				return;			/* XXX */
 			}
-			memcpy(fds, __svc_fdset, bytes);
-		} else
-			fds = NULL;
-		switch (select(svc_maxfd+1, fds, 0, 0, (struct timeval *)0)) {
+			saved_max_pollfd = svc_max_pollfd;
+		}
+		memcpy(pfd, svc_pollfd, sizeof(*pfd) * svc_max_pollfd);
+
+		nready = poll(pfd, svc_max_pollfd, INFTIM);
+		switch (nready) {
 		case -1:
-			if (errno == EINTR) {
-				if (fds)
-					free(fds);
+			if (errno == EINTR)
 				continue;
-			}
-			perror("svc_run: - select failed");
-			if (fds)
-				free(fds);
-			return;
+			perror("svc_run: - poll failed");	/* XXX */
+			free(pfd);
+			return;					/* XXX */
 		case 0:
-			if (fds)
-				free(fds);
 			continue;
 		default:
-			svc_getreqset2(fds, svc_maxfd+1);
-			free(fds);
+			svc_getreq_poll(pfd, nready);
 		}
 	}
 }

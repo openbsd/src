@@ -1,4 +1,4 @@
-/*	$OpenBSD: svc.h,v 1.7 2002/02/17 19:42:21 millert Exp $	*/
+/*	$OpenBSD: svc.h,v 1.8 2003/12/31 03:27:23 millert Exp $	*/
 /*	$NetBSD: svc.h,v 1.9 1995/04/29 05:28:01 cgd Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #ifndef _RPC_SVC_H
 #define _RPC_SVC_H
 #include <sys/cdefs.h>
+#include <sys/poll.h>
 
 /*
  * This interface must manage two items concerning remote procedure calling:
@@ -260,13 +261,11 @@ __END_DECLS
  * Global keeper of rpc service descriptors in use
  * dynamic; must be inspected before each call to select 
  */
-extern int svc_maxfd;
-#ifdef FD_SETSIZE
 extern fd_set svc_fdset;
 #define svc_fds svc_fdset.fds_bits[0]	/* compatibility */
-#else
-extern int svc_fds;
-#endif /* def FD_SETSIZE */
+extern struct pollfd *svc_pollfd;
+extern int svc_max_pollfd;
+extern int svc_maxfd;			/* non-standard */
 
 /*
  * a small program implemented by the svc_rpc implementation itself;
@@ -276,6 +275,8 @@ extern void rpctest_service();				/* XXX relic? */
 
 __BEGIN_DECLS
 extern void	svc_getreq(int);
+extern void	svc_getreq_common(int);
+extern void	svc_getreq_poll(struct pollfd *, const int);
 extern void	svc_getreqset(fd_set *);
 extern void	svc_getreqset2(fd_set *, int);
 extern void	svc_run(void);
