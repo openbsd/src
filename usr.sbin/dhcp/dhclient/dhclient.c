@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.7 1999/12/04 00:15:09 angelos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.8 2000/06/25 08:39:59 dugsong Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -91,7 +91,6 @@ u_int16_t local_port;
 u_int16_t remote_port;
 int log_priority;
 int no_daemon;
-int save_scripts;
 int onetry;
 
 static void usage PROTO ((void));
@@ -124,8 +123,6 @@ int main (argc, argv, envp)
 			       ntohs (local_port));
 		} else if (!strcmp (argv [i], "-d")) {
 			no_daemon = 1;
-		} else if (!strcmp (argv [i], "-D")) {
-			save_scripts = 1;
 		} else if (!strcmp (argv [i], "-1")) {
 			onetry = 1;
  		} else if (argv [i][0] == '-') {
@@ -1771,47 +1768,76 @@ void write_client_lease (ip, lease)
 /* Variables holding name of script and file pointer for writing to
    script.   Needless to say, this is not reentrant - only one script
    can be invoked at a time. */
-char scriptName [256];
-FILE *scriptFile;
+char **scriptEnv = NULL;
+int scriptEnvsize = 0;
+
+void script_set_env (name, value)
+	char *name;
+	char *value;
+{
+	int i, namelen;
+
+	namelen = strlen(name);
+	
+	for (i = 0; scriptEnv[i]; i++) {
+		if (strncmp(scriptEnv[i], name, namelen) == 0 &&
+		    scriptEnv[i][namelen] == '=')
+			break;
+	}
+	if (scriptEnv[i]) {
+		/* Reuse the slot. */
+		free(scriptEnv[i]);
+	} else {
+		/* New variable.  Expand if necessary. */
+		if (i >= scriptEnvsize - 1) {
+			scriptEnvsize += 50;
+			scriptEnv = realloc(scriptEnv, scriptEnvsize);
+			if (scriptEnv == NULL)
+				error("script_set_env: no memory for variable");
+		}
+		/* Need to set the NULL pointer at end of array beyond
+		   the new slot. */
+		scriptEnv[i + 1] = NULL;
+	}
+	/* Allocate space and format the variable in the appropriate slot. */
+	scriptEnv[i] = malloc(strlen(name) + 1 + strlen(value) + 1);
+	if (scriptEnv[i] == NULL)
+		error("script_set_env: no memory for variable assignment");
+	
+	snprintf(scriptEnv[i], strlen(name) + 1 + strlen(value) + 1,
+		 "%s=%s", name, value);
+}
+
+void script_flush_env()
+{
+	int i;
+	
+	for (i = 0; scriptEnv[i]; i++) {
+		free(scriptEnv[i]);
+		scriptEnv[i] = NULL;
+	}
+}
 
 void script_init (ip, reason, medium)
 	struct interface_info *ip;
 	char *reason;
 	struct string_list *medium;
 {
-	int fd;
-#ifndef HAVE_MKSTEMP
+	scriptEnvsize = 100;
+	scriptEnv = malloc(scriptEnvsize * sizeof(char *));
 
-	do {
-#endif
-		strcpy (scriptName, "/tmp/dcsXXXXXX");
-#ifdef HAVE_MKSTEMP
-		fd = mkstemp (scriptName);
-#else
-		mktemp (scriptName);
-		fd = creat (scriptName, 0600);
-	} while (fd < 0);
-#endif
+	if (scriptEnv == NULL)
+		error ("script_init: no memory for environment initialization");
 
-#ifdef HAVE_MKSTEMP
-	if (fd == -1)
-		error ("can't write script file: %m");
-#endif
-		
-	scriptFile = fdopen (fd, "w");
-	if (!scriptFile)
-		error ("can't write script file: %m");
-	fprintf (scriptFile, "#!/bin/sh\n\n");
+	scriptEnv[0] = NULL;
+
 	if (ip) {
-		fprintf (scriptFile, "interface=\"%s\"\n", ip -> name);
-		fprintf (scriptFile, "export interface\n");
+		script_set_env ("interface", ip -> name);
 	}
 	if (medium) {
-		fprintf (scriptFile, "medium=\"%s\"\n", medium -> string);
-		fprintf (scriptFile, "export medium\n");
+		script_set_env ("medium", medium -> string);
 	}
-	fprintf (scriptFile, "reason=\"%s\"\n", reason);
-	fprintf (scriptFile, "export reason\n");
+	script_set_env ("reason", reason);
 }
 
 void script_write_params (ip, prefix, lease)
@@ -1821,11 +1847,11 @@ void script_write_params (ip, prefix, lease)
 {
 	int i;
 	u_int8_t dbuf [1500];
+	char name[1024], value[1024];
 	int len;
 
-	fprintf (scriptFile, "%sip_address=\"%s\"\n",
-		 prefix, piaddr (lease -> address));
-	fprintf (scriptFile, "export %sip_address\n", prefix);
+	snprintf (name, sizeof(name), "%sip_address", prefix);
+	script_set_env (name, piaddr (lease -> address));
 
 	/* For the benefit of Linux (and operating systems which may
 	   have similar needs), compute the network address based on
@@ -1843,42 +1869,37 @@ void script_write_params (ip, prefix, lease)
 			lease -> options [DHO_SUBNET_MASK].data,
 			lease -> options [DHO_SUBNET_MASK].len);
 		netmask.len = lease -> options [DHO_SUBNET_MASK].len;
-
+		
 		subnet = subnet_number (lease -> address, netmask);
 		if (subnet.len) {
-			fprintf (scriptFile, "%snetwork_number=\"%s\";\n",
-				 prefix, piaddr (subnet));
-			fprintf (scriptFile, "export %snetwork_number\n",
-				 prefix);
-
+			snprintf (name, sizeof(name), "%snetwork_number",
+				  prefix);
+			script_set_env (name, piaddr (subnet));
+			
 			if (!lease -> options [DHO_BROADCAST_ADDRESS].len) {
 				broadcast = broadcast_addr (subnet, netmask);
 				if (broadcast.len) {
-					fprintf (scriptFile,
-						 "%s%s=\"%s\";\n", prefix,
-						 "broadcast_address",
-						 piaddr (broadcast));
-					fprintf (scriptFile,
-						 "export %s%s\n", prefix,
-						 "broadcast_address");
+					snprintf (name, sizeof(name),
+						  "%sbroadcast_address",
+						  prefix);
+					script_set_env (name,
+							piaddr (broadcast));
 				}
 			}
 		}
 	}
-
+	
 	if (lease -> filename) {
-		fprintf (scriptFile, "%sfilename=\"%s\";\n",
-			 prefix, lease -> filename);
-		fprintf (scriptFile, "export %sfilename\n", prefix);
+		snprintf (name, sizeof(name), "%sfilename", prefix);
+		script_set_env (name, lease -> filename);
 	}
 	if (lease -> server_name) {
-		fprintf (scriptFile, "%sserver_name=\"%s\";\n",
-			 prefix, lease -> server_name);
-		fprintf (scriptFile, "export %sserver_name\n", prefix);
+		snprintf (name, sizeof(name), "%sserver_name", prefix);
+		script_set_env (name, lease -> server_name);
 	}
 	for (i = 0; i < 256; i++) {
 		u_int8_t *dp;
-
+		
 		if (ip -> client -> config -> defaults [i].len) {
 			if (lease -> options [i].len) {
 				switch (ip -> client ->
@@ -1948,35 +1969,54 @@ void script_write_params (ip, prefix, lease)
 		}
 		if (len) {
 			char *s = dhcp_option_ev_name (&dhcp_options [i]);
-				
-			fprintf (scriptFile, "%s%s=\"%s\"\n", prefix, s,
-				 pretty_print_option (i, dp, len, 0, 0));
-			fprintf (scriptFile, "export %s%s\n", prefix, s);
+			
+			snprintf (name, sizeof(name), "%s%s", prefix, s);
+			script_set_env (name, pretty_print_option (i, dp, len, 0, 0));
 		}
 	}
-	fprintf (scriptFile, "%sexpiry=\"%d\"\n",
-		 prefix, (int)lease -> expiry); /* XXX */
-	fprintf (scriptFile, "export %sexpiry\n", prefix);
+	snprintf (name, sizeof(name), "%sexpiry", prefix);
+	snprintf (value, sizeof(value), "%d", (int)lease -> expiry); /* XXX */
+	script_set_env (name, value);
 }
 
 int script_go (ip)
 	struct interface_info *ip;
 {
-	int rval;
+	char *p, *script_name, *script_argv[2];
+	pid_t pid, wait_pid;
+	int status;
 
 	if (ip)
-		fprintf (scriptFile, "%s\n",
-			 ip -> client -> config -> script_name);
+		script_name = ip -> client -> config -> script_name;
 	else
-		fprintf (scriptFile, "%s\n",
-			 top_level_config.script_name);
-	fprintf (scriptFile, "exit $?\n");
-	fclose (scriptFile);
-	chmod (scriptName, 0700);
-	rval = system (scriptName);	
-	if (!save_scripts)
-		unlink (scriptName);
-	return rval;
+		script_name = top_level_config.script_name;
+	
+	if ((p = strrchr(script_name, '/')) != NULL)
+		p++;
+	else
+		p = script_name;
+	
+	script_argv[0] = p;
+	script_argv[1] = NULL;
+	
+	if ((pid = fork()) < 0)
+		error("Can't fork script: %m");
+	
+	if (pid == 0) {
+		execve(script_name, script_argv, scriptEnv);
+		error("script_go: exec: %m");
+	}
+	script_flush_env();
+	
+	wait_pid = wait((int *) &status);
+	
+	if (wait_pid != -1) {
+		if (wait_pid != pid)
+			error ("got wrong pid");
+		if (WIFEXITED(status) || WIFSIGNALED(status))
+			return (WEXITSTATUS(status));
+	}
+	return (-1);
 }
 
 char *dhcp_option_ev_name (option)
