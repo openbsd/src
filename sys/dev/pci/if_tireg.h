@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.8 2000/06/07 05:35:03 jason Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.9 2000/11/21 03:50:48 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -62,6 +62,7 @@
  */
 #define ALT_VENDORID			0x12AE
 #define ALT_DEVICEID_ACENIC		0x0001
+#define ALT_DEVICEID_ACENIC_COPPER	0x0002
 
 /*
  * 3Com 3c985 PCI vendor/device ID.
@@ -74,6 +75,7 @@
  */
 #define NG_VENDORID			0x1385
 #define NG_DEVICEID_GA620		0x620A
+#define NG_DEVICEID_GA620T		0x630A
 
 /*
  * SGI device/vendor ID.
@@ -136,8 +138,8 @@
  * Firmware revision that we want.
  */
 #define TI_FIRMWARE_MAJOR		0xc
-#define TI_FIRMWARE_MINOR		0x3
-#define TI_FIRMWARE_FIX			0x15
+#define TI_FIRMWARE_MINOR		0x4
+#define TI_FIRMWARE_FIX			0xd
 
 /*
  * Miscelaneous Local Control register.
@@ -1035,7 +1037,7 @@ struct ti_event_desc {
 
 #define TI_SSLOTS	256
 #define TI_MSLOTS	256
-#define TI_JSLOTS	256
+#define TI_JSLOTS	384
 
 #define TI_JRAWLEN	(TI_JUMBO_FRAMELEN + ETHER_ALIGN)
 #define TI_JLEN		TI_JRAWLEN
@@ -1120,6 +1122,7 @@ struct ti_softc {
 	void *			ti_intrhand;
 	struct ifmedia		ifmedia;	/* media info */
 	u_int8_t		ti_hwrev;	/* Tigon rev (1 or 2) */
+	u_int8_t		ti_copper;	/* 1000baseTX card */
 	u_int8_t		ti_linkstat;	/* Link state */
 	bus_dma_tag_t		sc_dmatag;
 	struct ti_ring_data	*ti_rdata;	/* rings */
