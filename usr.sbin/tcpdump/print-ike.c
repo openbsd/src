@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.16 2003/12/18 09:14:18 ho Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.17 2004/01/15 22:59:42 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.16 2003/12/18 09:14:18 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.17 2004/01/15 22:59:42 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -131,10 +131,9 @@ ike_print (const u_char *cp, u_int length)
 #define TCHECK(var, l) if ((u_char *)&(var) > ep - l) goto trunc
 
 	ih = (struct isakmp_header *)cp;
-	/* Note funny sized packets */
 
-	if (length < 20)
-		(void)printf(" [len=%d]", length);
+	if (length < sizeof (struct isakmp_header))
+		goto trunc;
 
 	/* 'ep' points to the end of avaible data. */
 	ep = snapend;
