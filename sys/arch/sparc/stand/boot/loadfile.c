@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.1 2002/08/11 23:11:22 art Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.2 2003/03/18 05:11:57 miod Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
@@ -61,6 +61,15 @@ int loadfile(int, vaddr_t *);
 
 vaddr_t ssym, esym;
 
+union {
+#ifdef SPARC_BOOT_AOUT
+	struct exec aout;
+#endif
+#ifdef SPARC_BOOT_ELF
+	Elf_Ehdr elf;
+#endif
+} hdr;
+
 /*
  * Open 'filename', read in program and return the entry point or -1 if error.
  */
@@ -68,14 +77,6 @@ int
 loadfile(int fd, vaddr_t *entryp)
 {
 	struct devices *dp;
-	union {
-#ifdef SPARC_BOOT_AOUT
-		struct exec aout;
-#endif
-#ifdef SPARC_BOOT_ELF
-		Elf_Ehdr elf;
-#endif
-	} hdr;
 	int rval;
 
 	/* Read the exec header. */
@@ -115,12 +116,16 @@ aout_exec(int fd, struct exec *aout, vaddr_t *entryp)
 	int i;
 
 	printf("%d", aout->a_text);
-	lseek(fd, sizeof(struct exec), SEEK_SET);
 	if (N_GETMAGIC(*aout) == ZMAGIC) {
 		entry = (vaddr_t)(addr+sizeof(struct exec));
 		addr += sizeof(struct exec);
 	}
-	if (read(fd, (char *)addr, aout->a_text) != aout->a_text)
+	/* we can't lseek() here - we may be booting off tape */
+	bcopy((char *)aout + sizeof(struct exec), addr,
+	    sizeof(hdr) - sizeof(struct exec));
+	if (read(fd, (char *)addr + sizeof(hdr) - sizeof(struct exec),
+	    aout->a_text - (sizeof(hdr) - sizeof(struct exec))) !=
+	    aout->a_text - (sizeof(hdr) - sizeof(struct exec)))
 		goto shread;
 	addr += aout->a_text;
 	if (N_GETMAGIC(*aout) == ZMAGIC || N_GETMAGIC(*aout) == NMAGIC)
@@ -169,6 +174,41 @@ shread:
 #endif /* SPARC_BOOT_AOUT */
 
 #ifdef SPARC_BOOT_ELF
+
+/*
+ * If we're booting off tape, we can't seek.
+ * Emulate forward moves with reads, and give up on backwards moves.
+ * bsd.rd ought to be correctly ordered.
+ */
+int elf_seek(int, off_t);
+int
+elf_seek(int fd, off_t relpos)
+{
+#define DUMBBUFSIZE	4096
+	char dumbbuf[DUMBBUFSIZE];
+	int len;
+
+	if (relpos < 0) {
+#ifdef DEBUG
+		printf("elf_seek: attempting to seek backwards from %lx bytes, "
+		    "may fail!\n", -relpos);
+#endif
+		if (lseek(fd, relpos, SEEK_CUR) < 0)
+			return (-1);
+		return (0);
+	}
+
+	while (relpos != 0) {
+		len = relpos > DUMBBUFSIZE ? DUMBBUFSIZE : relpos;
+		if (read(fd, dumbbuf, len) != len)
+			return (-1);
+		relpos -= len;
+	}
+
+	return (0);
+#undef DUMBBUFSIZE
+}
+
 static int
 elf_exec(int fd, Elf_Ehdr *elf, vaddr_t *entryp)
 {
@@ -179,25 +219,39 @@ elf_exec(int fd, Elf_Ehdr *elf, vaddr_t *entryp)
 	size_t sz;
 	vaddr_t addr = 0;
 	Elf_Ehdr *fake_elf;
+#define	NUM_HEADERS	12	/* should be more than enough */
+	Elf_Phdr headers[NUM_HEADERS], *phdr;
+	off_t pos, newpos;
 
 	*entryp = 0;
 
 #define A(x) ((x) - *entryp + (vaddr_t)LOADADDR)
 
+	pos = sizeof(hdr);
+
+	/* load the headers */
+	if (elf->e_phnum > NUM_HEADERS)
+		elf->e_phnum = NUM_HEADERS;	/* amnesia rules */
+	newpos = elf->e_phoff;
+	if (elf_seek(fd, newpos - pos))
+		return (1);
+	pos = newpos;
+	if (read(fd, (void *)headers, elf->e_phnum * sizeof(Elf_Phdr)) !=
+	    elf->e_phnum * sizeof(Elf_Phdr)) {
+		printf("read phdr: %s\n", strerror(errno));
+		return (1);
+	}
+	pos += elf->e_phnum * sizeof(Elf_Phdr);
+
 	/* loop through the pheaders and find the entry point. */
 	for (i = 0; i < elf->e_phnum; i++) {
-		Elf_Phdr phdr;
-		lseek(fd, elf->e_phoff + sizeof(phdr) * i, SEEK_SET);
-		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
-			(void)printf("read phdr: %s\n", strerror(errno));
-			return (1);
-		}
-		if (phdr.p_type != PT_LOAD ||
-		    (phdr.p_flags & (PF_W|PF_X)) == 0 ||
-		    (phdr.p_vaddr != elf->e_entry))
+		phdr = &headers[i];
+		if (phdr->p_type != PT_LOAD ||
+		    (phdr->p_flags & (PF_W|PF_X)) == 0 ||
+		    (phdr->p_vaddr != elf->e_entry))
 			continue;
 
-		*entryp = phdr.p_vaddr;
+		*entryp = phdr->p_vaddr;
 	}
 
 	if (*entryp == 0) {
@@ -206,34 +260,34 @@ elf_exec(int fd, Elf_Ehdr *elf, vaddr_t *entryp)
 	}
 
 	for (i = 0; i < elf->e_phnum; i++) {
-		Elf_Phdr phdr;
-		lseek(fd, elf->e_phoff + sizeof(phdr) * i, SEEK_SET);
-		if (read(fd, (void *)&phdr, sizeof(phdr)) != sizeof(phdr)) {
-			(void)printf("read phdr: %s\n", strerror(errno));
-			return (1);
-		}
-		if (phdr.p_type != PT_LOAD ||
-		    (phdr.p_flags & (PF_W|PF_X)) == 0)
+		phdr = &headers[i];
+		if (phdr->p_type != PT_LOAD ||
+		    (phdr->p_flags & (PF_W|PF_X)) == 0)
 			continue;
 
 		/* Read in segment. */
-		printf("%s%lu", first ? "" : "+", phdr.p_filesz);
-		lseek(fd, phdr.p_offset, SEEK_SET);
-		if (read(fd, (caddr_t)A(phdr.p_vaddr), phdr.p_filesz) !=
-		    phdr.p_filesz) {
+		printf("%s%lu", first ? "" : "+", phdr->p_filesz);
+		newpos = phdr->p_offset;
+		if (elf_seek(fd, newpos - pos))
+			return (1);
+		pos = newpos;
+
+		if (read(fd, (caddr_t)A(phdr->p_vaddr), phdr->p_filesz) !=
+		    phdr->p_filesz) {
 			(void)printf("read text: %s\n", strerror(errno));
 			return (1);
 		}
+		pos += phdr->p_filesz;
 
 		/* keep track of highest addr we loaded. */
-		if (first || addr < (phdr.p_vaddr + phdr.p_memsz))
-			addr = (phdr.p_vaddr + phdr.p_memsz);
+		if (first || addr < (phdr->p_vaddr + phdr->p_memsz))
+			addr = (phdr->p_vaddr + phdr->p_memsz);
 
 		/* Zero out bss. */
-		if (phdr.p_filesz < phdr.p_memsz) {
-			(void)printf("+%lu", phdr.p_memsz - phdr.p_filesz);
-			bzero((caddr_t)A(phdr.p_vaddr) + phdr.p_filesz,
-			    phdr.p_memsz - phdr.p_filesz);
+		if (phdr->p_filesz < phdr->p_memsz) {
+			printf("+%lu", phdr->p_memsz - phdr->p_filesz);
+			bzero((caddr_t)A(phdr->p_vaddr) + phdr->p_filesz,
+			    phdr->p_memsz - phdr->p_filesz);
 		}
 		first = 0;
 	}
@@ -243,14 +297,16 @@ elf_exec(int fd, Elf_Ehdr *elf, vaddr_t *entryp)
 
 	ssym = addr;
 	/*
-	 * Retreive symbols.
+	 * Retrieve symbols.
 	 */
 	addr += sizeof(Elf_Ehdr);
 
-	if (lseek(fd, elf->e_shoff, SEEK_SET) == -1)  {
+	newpos = elf->e_shoff;
+	if (elf_seek(fd, newpos - pos)) {
 		printf("seek to section headers: %s\n", strerror(errno));
 		return (1);
 	}
+	pos = newpos;
 
 	sz = elf->e_shnum * sizeof(Elf_Shdr);
 	shp = (Elf_Shdr *)addr;
@@ -260,6 +316,7 @@ elf_exec(int fd, Elf_Ehdr *elf, vaddr_t *entryp)
 		printf("read section headers: %d\n", strerror(errno));
 		return (1);
 	}
+	pos += sz;
 
 	/*
 	 * Now load the symbol sections themselves.  Make sure the
@@ -280,15 +337,18 @@ elf_exec(int fd, Elf_Ehdr *elf, vaddr_t *entryp)
 		    shp[i].sh_type == SHT_STRTAB) {
 			printf("%s%ld", first ? " [" : "+",
 			       (u_long)shp[i].sh_size);
-			if (lseek(fd, shp[i].sh_offset, SEEK_SET) == -1) {
+			newpos = shp[i].sh_offset;
+			if (elf_seek(fd, newpos - pos)) {
 				printf("lseek symbols: %s\n", strerror(errno));
 				return (1);
 			}
+			pos = newpos;
 			if (read(fd, (void *)addr, shp[i].sh_size) !=
 			    shp[i].sh_size) {
 				printf("read symbols: %s\n", strerror(errno));
 				return (1);
 			}
+			pos += shp[i].sh_size;
 			addr += roundup(shp[i].sh_size, sizeof(long));
 			shp[i].sh_offset = off;
 			off += roundup(shp[i].sh_size, sizeof(long));
@@ -311,5 +371,6 @@ no_syms:
 
 	printf("\n");
 	return (0);
+#undef NUM_HEADERS
 }
-#endif /* ALPHA_BOOT_ELF */
+#endif /* SPARC_BOOT_ELF */
