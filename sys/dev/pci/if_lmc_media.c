@@ -1,5 +1,5 @@
-/* $OpenBSD: if_lmc_media.c,v 1.7 2001/06/27 06:02:50 nate Exp $ */
-/* $Id: if_lmc_media.c,v 1.7 2001/06/27 06:02:50 nate Exp $ */
+/* $OpenBSD: if_lmc_media.c,v 1.8 2001/07/09 13:13:43 espie Exp $ */
+/* $Id: if_lmc_media.c,v 1.8 2001/07/09 13:13:43 espie Exp $ */
 
 /*-
  * Copyright (c) 1997-1999 LAN Media Corporation (LMC)
@@ -136,10 +136,14 @@
  * Sigh.  Every OS puts these in different places.  NetBSD and FreeBSD use
  * a C preprocessor that allows this hack, but BSDI does not.
  */
-#if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__FreeBSD__)
 #include INCLUDE_PATH_PREFIX "if_lmc_types.h"
 #include INCLUDE_PATH_PREFIX "if_lmcioctl.h"
 #include INCLUDE_PATH_PREFIX "if_lmcvar.h"
+#elif defined(__OpenBSD__)
+#include <dev/pci/if_lmc_types.h>
+#include <dev/pci/if_lmcioctl.h>
+#include <dev/pci/if_lmcvar.h>
 #else /* BSDI */
 #include "i386/pci/if_lmc_types.h"
 #include "i386/pci/if_lmcioctl.h"
