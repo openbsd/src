@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun3_startup.c,v 1.13 2000/06/06 20:54:12 miod Exp $	*/
+/*	$OpenBSD: sun3_startup.c,v 1.14 2000/06/29 02:25:30 miod Exp $	*/
 /*	$NetBSD: sun3_startup.c,v 1.55 1996/11/20 18:57:38 gwr Exp $	*/
 
 /*-
@@ -829,6 +829,12 @@ sun3_monitor_hooks()
 			switch (*p) {
 			case 'a':
 				boothowto |= RB_ASKNAME;
+				break;
+			case 'b':
+				boothowto |= RB_HALT;
+				break;
+			case 'c':
+				boothowto |= RB_CONFIG;
 				break;
 			case 's':
 				boothowto |= RB_SINGLE;
