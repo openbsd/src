@@ -2,7 +2,7 @@
 pass in quick proto tcp from any to any port 65536
 
 #flags only apply to tcp
-#(similiar to pfail13.in which tests for flags S failure)
+#(similar to pfail13.in which tests for flags S failure)
 pass in proto udp from any to any flags S/SA
 pass in proto { udp, icmp } from any to any flags S/SA
 
