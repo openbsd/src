@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.4 1996/09/01 15:31:02 deraadt Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.5 1996/09/02 22:15:02 millert Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.10 1996/03/15 22:39:26 scottr Exp $	*/
 
 /*-
@@ -159,7 +159,7 @@ rmtgetconn()
 		    size -= TP_BSIZE;
 	(void)setsockopt(rmtape, SOL_SOCKET, SO_RCVBUF, &size, sizeof (size));
 	maxseg = 1024;
-	if (setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG,
+	if (getuid() == 0 && setsockopt(rmtape, IPPROTO_TCP, TCP_MAXSEG,
 	    &maxseg, sizeof (maxseg)) < 0)
 		perror("TCP_MAXSEG setsockopt");
 
