@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1999/01/25 21:53:31 mickey Exp $
+#	$OpenBSD: Makefile,v 1.6 1999/04/20 20:05:22 mickey Exp $
 
 PROG=	boot
 SRCS=	srt0.S boot.c cmd.c vars.c bootarg.c conf.c
@@ -6,7 +6,7 @@ SRCS=	srt0.S boot.c cmd.c vars.c bootarg.c conf.c
 # AFLAGS+=-Wa,-a
 LD?=	ld
 LDFLAGS+=-Bstatic -nostartfiles -nostdlib -N -Ttext $(LINKADDR)
-LDFLAGS+=-T ${.CURDIR}/ld.script
+LDFLAGS+=-T ${.CURDIR}/ld.script -Map boot.map
 #LDFLAGS+=-O -N -S -H -R$(LINKADDR) -e begin -t
 SIZE?=	size
 MAN=	boot.8
@@ -22,9 +22,16 @@ DPADD=	${LIBSA} ${LIBZ} ${LIBKERN}
 
 all:	boot.lif
 
-.if exists(${.CURDIR}/../../compile/DISKLESS/bsd)
-bsd: ${.CURDIR}/../../compile/DISKLESS/bsd
-	gzip -9c ${.CURDIR}/../../compile/DISKLESS/bsd > bsd
+# enable this when SHEPHERD dies
+#.if exists(${.CURDIR}/../../compile/DISKLESS/bsd)
+#bsd: ${.CURDIR}/../../compile/DISKLESS/bsd
+#	gzip -9c ${.CURDIR}/../../compile/DISKLESS/bsd > bsd
+#ADDBOOT+=bsd
+#.endif
+
+.if exists(${.CURDIR}/../../compile/SHEPHERD_PIE/bsd)
+bsd: ${.CURDIR}/../../compile/SHEPHERD_PIE/bsd
+	gzip -9c ${.CURDIR}/../../compile/SHEPHERD_PIE/bsd > bsd
 ADDBOOT+=bsd
 .endif
 
@@ -40,5 +47,5 @@ ${PROG}: $(OBJS) $(DPADD)
 
 .include <bsd.prog.mk>
 
-CPPFLAGS+=${DEBUGFLAGS} -DRELOC=$(LOADADDR)
+CPPFLAGS+=${DEBUGFLAGS} -DRELOC=${LOADADDR} -DHEAP_LIMIT=${HEAP_LIMIT}
 CFLAGS+=$(SACFLAGS)

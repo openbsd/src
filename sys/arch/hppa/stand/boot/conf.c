@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.6 1999/01/25 21:53:31 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.7 1999/04/20 20:05:22 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -42,7 +42,7 @@ const char version[] = "0.04";
 int	debug = 1;
 
 const struct x_sw execsw[] = {
-	{ "elf", elf_probe,	elf_load,	elf_ldsym },
+	{ "elf", elf_probe,	elf_load/*,	elf_ldsym */},
 /*	{ "som", som_probe,	som_load,	som_ldsym }, */
 	{ ""   , NULL,		NULL },
 };
@@ -59,7 +59,7 @@ int nfsys = NENTS(file_system);
 
 struct devsw devsw[] = {
 	{ "ct",	iodcstrategy, ctopen, ctclose, noioctl },
-	{ "sd",	iodcstrategy, dkopen, dkclose, noioctl },
+	{ "dk",	iodcstrategy, dkopen, dkclose, noioctl },
 	{ "lf", iodcstrategy, lfopen, lfclose, noioctl }
 };
 int	ndevs = NENTS(devsw);
