@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.4 1997/05/30 07:48:44 deraadt Exp $
+.\"	$OpenBSD: disklabel.8,v 1.5 1997/10/02 00:09:06 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -46,26 +46,32 @@
 .Sh SYNOPSIS
 .Nm disklabel
 .Op Fl r
+.Op Fl n
 .Ar disk
 .Nm disklabel
 .Fl w
 .Op Fl r
+.Op Fl n
 .Ar disk Ar disktype
 .Oo Ar packid Oc
 .Nm disklabel
 .Fl e
 .Op Fl r
+.Op Fl n
 .Ar disk
 .Nm disklabel
 .Fl R
 .Op Fl r
+.Op Fl n
 .Ar disk Ar protofile
 .Nm disklabel
 .Op Fl NW
+.Op Fl n
 .Ar disk
 .sp
 .Nm disklabel
 .Fl B
+.Op Fl n
 .Oo
 .Fl b Ar boot1
 .Op Fl s Ar boot2
@@ -75,6 +81,7 @@
 .Nm disklabel
 .Fl w
 .Fl B
+.Op Fl n
 .Oo
 .Fl b Ar boot1
 .Op Fl s Ar boot2
@@ -84,6 +91,7 @@
 .Nm disklabel
 .Fl R
 .Fl B
+.Op Fl n
 .Oo
 .Fl b Ar boot1
 .Op Fl s Ar boot2
@@ -116,6 +124,10 @@ The read and install forms also support the
 .Fl B
 option to install bootstrap code.
 These variants are described later.
+.Pp
+In all cases you can specify
+.Fl n
+to operate in no change mode to avoid committing any permanent changes.
 .Pp
 The first form of the command (read) is used to examine the label on the named
 disk drive (e.g. sd0 or /dev/rsd0c).
