@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_shm.c,v 1.31 2002/12/17 23:32:31 millert Exp $	*/
+/*	$OpenBSD: sysv_shm.c,v 1.32 2003/01/06 20:11:28 millert Exp $	*/
 /*	$NetBSD: sysv_shm.c,v 1.50 1998/10/21 22:24:29 tron Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ struct shmid_ds **shmsegs;	/* linear mapping of shmid -> shmseg */
 struct pool shm_pool;
 unsigned short *shmseqs;	/* array of shm sequence numbers */
 
-struct shmid_ds *shm_find_segment_by_shmid(int);
+struct shmid_ds *shm_find_segment_by_shmid(int, int);
 
 /*
  * Provides the following externally accessible functions:
@@ -137,17 +137,17 @@ shm_find_segment_by_key(key_t key)
 }
 
 struct shmid_ds *
-shm_find_segment_by_shmid(int shmid)
+shm_find_segment_by_shmid(int shmid, int findremoved)
 {
 	int segnum;
 	struct shmid_ds *shmseg;
 
 	segnum = IPCID_TO_IX(shmid);
 	if (segnum < 0 || segnum >= shminfo.shmmni ||
-	    (shmseg = shmsegs[segnum]) == NULL)
-		return (NULL);
-	if ((shmseg->shm_perm.mode & SHMSEG_REMOVED) ||
+	    (shmseg = shmsegs[segnum]) == NULL ||
 	    shmseg->shm_perm.seq != IPCID_TO_SEQ(shmid))
+		return (NULL);
+	if (!findremoved && (shmseg->shm_perm.mode & SHMSEG_REMOVED))
 		return (NULL);
 	return (shmseg);
 }
@@ -243,7 +243,7 @@ sys_shmat(struct proc *p, void *v, register_t *retval)
 			shmmap_s->shmid = -1;
 		p->p_vmspace->vm_shm = (caddr_t)shmmap_h;
 	}
-	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid));
+	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid), 0);
 	if (shmseg == NULL)
 		return (EINVAL);
 	error = ipcperm(cred, &shmseg->shm_perm,
@@ -306,7 +306,7 @@ sys_shmctl(struct proc *p, void *v, register_t *retval)
 	struct shmid_ds inbuf;
 	struct shmid_ds *shmseg;
 
-	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid));
+	shmseg = shm_find_segment_by_shmid(SCARG(uap, shmid), 1);
 	if (shmseg == NULL)
 		return (EINVAL);
 	switch (SCARG(uap, cmd)) {
