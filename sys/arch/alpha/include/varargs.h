@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.2 1995/02/16 03:08:11 cgd Exp $	*/
+/*	$NetBSD: varargs.h,v 1.4 1995/12/26 01:16:24 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,36 +40,22 @@
  *	@(#)varargs.h	8.2 (Berkeley) 3/22/94
  */
 
-#ifndef _VARARGS_H_
-#define	_VARARGS_H_
+#ifndef _ALPHA_VARARGS_H_
+#define	_ALPHA_VARARGS_H_
 
-#include <machine/ansi.h>
+#include <machine/stdarg.h>
 
-typedef _BSD_VA_LIST_	va_list;
-
-/*
- * Note that these macros are significantly different than the 'standard'
- * ones.  On the alpha, all arguments are passed as 64 bit quantities.
- */
+#if __GNUC__ == 1
+#define	__va_ellipsis
+#else
+#define	__va_ellipsis	...
+#endif
 
 #define	va_alist	__builtin_va_alist
-#define	va_dcl		va_list __builtin_va_alist; ...
+#define	va_dcl		long __builtin_va_alist; __va_ellipsis
 
-#define	va_start(a) \
-	((a) = *(va_list *)__builtin_saveregs())
+#undef va_start
+#define	va_start(ap) \
+	((ap) = *(va_list *)__builtin_saveregs())
 
-#define	__va_size(type) \
-	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
-
-#define	__REAL_TYPE_CLASS	8
-#define	__va_arg_offset(a, type)					\
-	((__builtin_classify_type(*(type *)0) == __REAL_TYPE_CLASS &&	\
-	    (a).offset <= (6 * 8) ? -(6 * 8) : 0) - __va_size(type))
-
-#define	va_arg(a, type)							\
-	(*((a).offset += __va_size(type),				\
-	    (type *)((a).base + (a).offset + __va_arg_offset(a, type))))
-
-#define	va_end(a)	((void) 0)
-
-#endif /* !_VARARGS_H_ */
+#endif /* !_ALPHA_VARARGS_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: varargs.h,v 1.5 1995/03/28 18:21:27 jtc Exp $	*/
+/*	$NetBSD: varargs.h,v 1.9 1995/12/26 01:16:35 mycroft Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,24 +38,19 @@
 #ifndef _VAX_VARARGS_H_
 #define	_VAX_VARARGS_H_
 
-#include <machine/ansi.h>
+#include <machine/stdarg.h>
 
-typedef _BSD_VA_LIST_	va_list;
-
-#define	va_dcl	int va_alist; ...
-
-#define	va_start(ap) \
-	ap = (char *)&va_alist
-
-#ifdef _KERNEL
-#define va_arg(ap, type) \
-        ((type *)(ap += sizeof(type)))[-1]
+#if __GNUC__ == 1
+#define	__va_ellipsis
 #else
-#define va_arg(ap, type) \
-        ((type *)(ap += sizeof(type) < sizeof(int) ? \
-                (abort(), 0) : sizeof(type)))[-1]
+#define	__va_ellipsis	...
 #endif
 
-#define	va_end(ap)	((void) 0)
+#define	va_alist	__builtin_va_alist
+#define	va_dcl		long __builtin_va_alist; __va_ellipsis
+
+#undef va_start
+#define	va_start(ap) \
+	((ap) = (va_list)&__builtin_va_alist)
 
 #endif /* !_VAX_VARARGS_H_ */
