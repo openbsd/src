@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.150 2004/10/11 10:34:56 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.151 2004/10/11 10:41:16 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -513,13 +513,6 @@ Use in conjunction with
 .Ev INTERACTIVE
 to simplify bulk-package builds.
 .Pq See IGNORE .
-.It Ev BROKEN
-Define only for broken ports, set to reason the port is broken.
-See also
-.Ev NO_IGNORE .
-.It Ev BSD_INSTALL_{PROGRAM,SCRIPT,DATA,MAN}[_DIR]
-Macros passed to make and configure invocations.
-Set based on corresponding INSTALL_* variables.
 .It Ev BIN_PACKAGES
 User settings.
 If set to
@@ -531,6 +524,13 @@ and will not rebuild it if the work directory is absent.
 See also
 .Ev BULK ,
 .Ev TRUST_PACKAGES .
+.It Ev BROKEN
+Define only for broken ports, set to reason the port is broken.
+See also
+.Ev NO_IGNORE .
+.It Ev BSD_INSTALL_{PROGRAM,SCRIPT,DATA,MAN}[_DIR]
+Macros passed to make and configure invocations.
+Set based on corresponding INSTALL_* variables.
 .It Ev BUILD_DEPENDS
 List of other ports the current port needs to build correctly.
 Each item has the form
@@ -717,9 +717,6 @@ If
 .Sq simple ,
 there is a configure script, but it does not fit the normal gnu configure
 conventions.
-.It Ev MODGNU_CONFIG_GUESS_DIRS
-If a port uses config.guess outside WRKSRC, the directories
-containing the other copies must be set here.
 .It Ev COPTS
 User settings.
 Supplementary options appended to ${CFLAGS} for building.
@@ -923,6 +920,9 @@ User settings.
 Base location where packages suitable for ftp (see
 PERMIT_PACKAGE_FTP) will be placed
 (default: ${PKGREPOSITORYBASE}/ftp)
+.It Ev FULLDISTDIR
+Complete path to directory where ${DISTFILES} and ${PATCHFILES} will be
+located, to be used in hand-crafted extraction targets (read-only).
 .It Ev FULLPKGNAME
 Full name of the main created package, taking flavors into account.
 Defaults to ${PKGNAME}${FLAVOR_EXT}.
@@ -938,27 +938,6 @@ Location of the gnu make binary, if needed.
 Defaults to gmake.
 .It Ev HOMEPAGE
 Set to a link to the homepage of the software, if applicable.
-.It Ev LIB_DEPENDS
-Libraries this port depends upon.
-Each item has the form
-.Sq lib_specs:[pkgspec]:directory[,-subpackage][,flavor ...][:target] .
-Similar to BUILD_DEPENDS, except for
-.Sq lib_specs ,
-which is a comma-separated list of
-.Sq lib_spec
-of the form:
-.Sq libname.[version.[subversion]] .
-See
-.Xr library-specs 7
-for more details.
-.Pp
-On architectures that use dynamic libraries,
-.Ev LIB_DEPENDS
-is also used as a run-time dependency, and recorded in the package as
-such.
-.It Ev FULLDISTDIR
-Complete path to directory where ${DISTFILES} and ${PATCHFILES} will be
-located, to be used in hand-crafted extraction targets (read-only).
 .It Ev IGNORE
 The port is ignored and ${IGNORE} is printed if defined.
 Usually set to the reason the port is ignored.
@@ -999,6 +978,24 @@ Usually implies NO_PACKAGE as well.
 Porters should strive to minimize IS_INTERACTIVE ports, by using
 FLAVORS for multiple choice ports, and by postponing human intervention
 to package installation time.
+.It Ev LIB_DEPENDS
+Libraries this port depends upon.
+Each item has the form
+.Sq lib_specs:[pkgspec]:directory[,-subpackage][,flavor ...][:target] .
+Similar to BUILD_DEPENDS, except for
+.Sq lib_specs ,
+which is a comma-separated list of
+.Sq lib_spec
+of the form:
+.Sq libname.[version.[subversion]] .
+See
+.Xr library-specs 7
+for more details.
+.Pp
+On architectures that use dynamic libraries,
+.Ev LIB_DEPENDS
+is also used as a run-time dependency, and recorded in the package as
+such.
 .It Ev LIBTOOL
 Location of the libtool binary for ports that set
 .Ev USE_LIBTOOL
@@ -1082,6 +1079,9 @@ This feature is primarily intended for large, interconnected ports,
 such as the kde suite, where a base package sets up a large, extra
 directory hierarchy that would make the manual checking of packing lists
 tedious.
+.It Ev MODGNU_CONFIG_GUESS_DIRS
+If a port uses config.guess outside WRKSRC, the directories
+containing the other copies must be set here.
 .It Ev MOTIFLIB
 Read-only.
 Correct incantation to link with motif.
@@ -1492,6 +1492,47 @@ Defaults to ${PKGDIR}/UNMESSAGE if this file exists.
 Leave empty if no message is needed.
 .It Ev UNZIP
 Name of the unzip binary.
+.It Ev USE_GMAKE
+Set to
+.Sq Yes
+if gnu make (${GMAKE}) is needed for correct behavior of this port.
+.It Ev USE_LIBTOOL
+Set to
+.Sq Yes
+if libtool is required for correct behavior of this port.
+Adds correct dependencies, and passes LIBTOOL environment variable to
+scripts invocations.
+.It Ev USE_MOTIF
+Set to
+.Sq any
+if port works with any version of motif;
+.Sq lesstif
+if port requires lesstif to work;
+.Sq openmotif
+if ports requires openmotif to work.
+The
+.Sq any
+setting creates an extra flavor choice of
+.Sq lesstif .
+See also
+.Ev MOTIFLIB
+.It Ev USE_SYSTRACE
+Set to
+.Sq Yes
+to protect port building with systrace.
+Set by the user, e.g. in
+.Pa /etc/mk.conf .
+.It Ev USE_X11
+Set to
+.Sq Yes
+if port requires X11 to work.
+.It Ev VMEM_WARNING
+Set to
+.Sq Yes
+if the port requires a lot of memory to compile, and the user is
+likely to see a message like
+.Qq virtual memory exhausted
+with the default process limits.
 .It Ev WARNINGS
 User settings.
 If set to
@@ -1544,47 +1585,6 @@ For instance, setting WRKOBJDIR_www/mozilla=/tmp/obj
 will affect only the mozilla port.
 .It Ev X11BASE
 Where X11 has been installed (default: /usr/X11R6).
-.It Ev USE_GMAKE
-Set to
-.Sq Yes
-if gnu make (${GMAKE}) is needed for correct behavior of this port.
-.It Ev USE_LIBTOOL
-Set to
-.Sq Yes
-if libtool is required for correct behavior of this port.
-Adds correct dependencies, and passes LIBTOOL environment variable to
-scripts invocations.
-.It Ev USE_MOTIF
-Set to
-.Sq any
-if port works with any version of motif;
-.Sq lesstif
-if port requires lesstif to work;
-.Sq openmotif
-if ports requires openmotif to work.
-The
-.Sq any
-setting creates an extra flavor choice of
-.Sq lesstif .
-See also
-.Ev MOTIFLIB
-.It Ev USE_SYSTRACE
-Set to
-.Sq Yes
-to protect port building with systrace.
-Set by the user, e.g. in
-.Pa /etc/mk.conf .
-.It Ev USE_X11
-Set to
-.Sq Yes
-if port requires X11 to work.
-.It Ev VMEM_WARNING
-Set to
-.Sq Yes
-if the port requires a lot of memory to compile, and the user is
-likely to see a message like
-.Qq virtual memory exhausted
-with the default process limits.
 .It Ev XMKMF
 Invocation of xmkmf for CONFIGURE_STYLE=imake port.
 Defaults to xmkmf -a -DPorts.
