@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_macppc.8,v 1.12 2004/02/09 19:21:52 espie Exp $
+.\"	$OpenBSD: boot_macppc.8,v 1.13 2004/05/24 13:43:01 drahn Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@ variable is set to
 .Dq true ,
 or will wait for interactive commands otherwise.
 .Ss Boot process description
-The Apple OpenFirmware will normally load the kernel from the device and
+The Apple Open Firmware will normally load the kernel from the device and
 filename as instructed by the
 .Em boot-device
 and
@@ -82,7 +82,7 @@ installation procedure.
 For HFS shared disks, the
 .Pa ofwboot
 file must be installed manually.
-The ofwboot program can be loaded from any openfirmware recognized
+The ofwboot program can be loaded from any Open Firmware recognized
 disk or network device.
 .Ss Boot process options
 If invoked manually without parameters, or if the specified kernel could
@@ -146,12 +146,12 @@ during the next multi-user boot cycle.
 It is also possible to force other behaviours from ddb.
 .Ss Accessing the PROM
 The prom can only be accessed during system reset, or at power-up.
-To enter OpenFirmware, press and hold
+To enter Open Firmware, press and hold
 .Dq Cntrl
 .Dq Cmd
 .Dq o
 .Dq f
-as the machine resets until it enters the openfirmware debugger.
+as the machine resets until it enters the Open Firmware debugger.
 .Sh FILES
 .Bl -tag -width /usr/mdec/ofwboot -compact
 .It Pa /bsd
@@ -159,7 +159,7 @@ default system kernel
 .It Pa /usr/mdec/ofwboot
 system bootstrap (usually installed on a stand-alone FAT partition or an
 .Tn Apple
-HFS partition, to be readable by openfirmware)
+HFS partition, to be readable by Open Firmware)
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
