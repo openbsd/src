@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.12 2001/05/10 21:08:48 millert Exp $	*/
+/*	$OpenBSD: grf.c,v 1.13 2001/05/17 18:48:35 aaron Exp $	*/
 /*	$NetBSD: grf.c,v 1.41 1997/02/24 06:20:04 scottr Exp $	*/
 
 /*
@@ -377,7 +377,7 @@ grfmap(dev, addrp, p)
 
 #if defined(UVM)
 	error = uvm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *)addrp,
-	    (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0
+	    (vm_size_t)len, VM_PROT_ALL, VM_PROT_ALL, flags, (caddr_t)&vn, 0,
 	    p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur);
 #else
 	error = vm_mmap(&p->p_vmspace->vm_map, (vm_offset_t *) addrp,
