@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.72 2004/01/15 10:15:55 markus Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.73 2004/01/27 09:26:22 markus Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -495,7 +495,6 @@ main(int argc, char *argv[])
 		mode = TCPMD5;
 		smsg.sadb_msg_type = SADB_ADD;
 		smsg.sadb_msg_satype = SADB_X_SATYPE_TCPSIGNATURE;
-		sa.sadb_sa_spi = 0;			/* fixed */
 		i++;
 	} else if (!strcmp(argv[1], "ipcomp")) {
 		mode = IPCOMP;
@@ -1433,7 +1432,7 @@ argfail:
 		exit(1);
 	}
 	if (spi == SPI_LOCAL_USE && !iscmd(mode, FLUSH) && !iscmd(mode, FLOW)
-	    && !iscmd(mode, IPCOMP) && !iscmd(mode, TCPMD5)) {
+	    && !iscmd(mode, IPCOMP)) {
 		fprintf(stderr, "%s: no SPI specified\n", argv[0]);
 		exit(1);
 	}

@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.64 2004/01/15 12:20:08 markus Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.65 2004/01/27 09:26:22 markus Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -334,6 +334,7 @@ Set up a key for use by the RFC 2385 TCP MD5 option.
 Allowed modifiers are:
 .Fl dst ,
 .Fl src ,
+.Fl spi ,
 .Fl key ,
 and
 .Fl keyfile .
@@ -723,7 +724,7 @@ Set up a bypass flow:
 .Pp
 Set up a key for the TCP MD5 option:
 .Bd -literal
-# ipsecadm tcpmd5 -src ::1 -dst ::1 -key deadbeef
+# ipsecadm tcpmd5 -src ::1 -dst ::1 -spi 0100 -key deadbeef
 .Ed
 .Pp
 Delete all esp SAs and their flows and routing information:
