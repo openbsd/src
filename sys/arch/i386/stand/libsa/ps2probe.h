@@ -1,7 +1,7 @@
-/*	$OpenBSD: libsa.h,v 1.33 2001/08/18 15:34:17 mickey Exp $	*/
+/*	$OpenBSD: ps2probe.h,v 1.1 2001/08/18 15:34:17 mickey Exp $	*/
 
 /*
- * Copyright (c) 1996-1999 Michael Shalayeff
+ * Copyright (c) 2001 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,36 +31,19 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <lib/libsa/stand.h>
-#include <machine/biosvar.h>
+static __inline int
+ps2probe(void)
+{
+	char *p;
+	int r;
 
-#define	EXEC_AOUT
-
-#define	DEFAULT_KERNEL_ADDRESS	0x100000
-
-void gateA20 __P((int));
-
-void smpprobe __P((void));
-void pciprobe __P((void));
-void memprobe __P((void));
-void diskprobe __P((void));
-void apmprobe __P((void));
-void apmcheck __P((void));
-void dump_biosmem __P((bios_memmap_t *));
-int mem_add __P((long, long));
-int mem_delete __P((long, long));
-void mem_pass __P((void));
-
-void devboot __P((dev_t, char *));
-void machdep __P((void));
-
-extern const char bdevs[][4];
-extern const int nbdevs;
-extern u_int cnvmem, extmem; /* XXX global pass memprobe()->machdep_start() */
-extern int ps2model;
-
-/* diskprobe.c */
-extern bios_diskinfo_t bios_diskinfo[];
-extern u_int32_t bios_cksumlen;
-
-#define MACHINE_CMD	cmd_machine /* we have i386 specific sommands */
+	__asm __volatile(DOINT(0x15) "\n\t"
+			 "setc %b0\n\t"
+			 : "=a" (r), "=b" (p)
+			 : "0" (0xc000)
+			 : "%ecx", "cc");
+	if (!(r & 0xff))
+		return p[2];
+	else
+		return 0;
+}

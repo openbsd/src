@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 2000/10/25 17:12:07 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 2001/08/18 15:34:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -35,6 +35,7 @@
 #include <machine/apmvar.h>
 #include <machine/biosvar.h>
 #include "debug.h"
+#include "ps2probe.h"
 
 struct BIOS_regs	BIOS_regs;
 
@@ -45,26 +46,29 @@ struct BIOS_regs	BIOS_regs;
 #endif
 
 extern int debug;
+int ps2model;
 
 void
 machdep()
 {
-	/* here */    CKPT('0');
+	/* here */	CKPT('0');
+	printf("probing:");
 #ifndef _TEST
-	gateA20(1);   CKPT('1');
-	debug_init(); CKPT('2');
+	/* probe for a model number, gateA20() neds ps2model */
+	ps2probe();	CKPT('1');
+	gateA20(1);	CKPT('2');
+	debug_init();	CKPT('3');
 #endif
 	/* call console init before doing any io */
-	printf("probing:");
-	cninit();     CKPT('3');
+	cninit();	CKPT('4');
 #ifndef _TEST
-	apmprobe();   CKPT('4');
-	pciprobe();   CKPT('5');
-/*	smpprobe();   CKPT('6'); */
-	memprobe();   CKPT('7');
+	apmprobe();	CKPT('5');
+	pciprobe();	CKPT('6');
+/*	smpprobe();	CKPT('7'); */
+	memprobe();	CKPT('8');
 	printf("\n");
 
-	diskprobe();  CKPT('8');
+	diskprobe();	CKPT('9');
 #endif
-	CKPT('Z');
+			CKPT('Z');
 }
