@@ -74,7 +74,7 @@ visual()
 	void moveenemy();
 
 	destroyed = 0;
-	if(initscr() == ERR){
+	if(initscr() == NULL){
 		puts("Whoops!  No more memory...");
 		return(0);
 	}
