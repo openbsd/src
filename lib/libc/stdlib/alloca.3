@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: alloca.3,v 1.8 2000/04/20 13:50:01 aaron Exp $
+.\"	$OpenBSD: alloca.3,v 1.9 2001/12/06 04:21:27 deraadt Exp $
 .\"
 .Dd May 2, 1991
 .Dt ALLOCA 3
@@ -70,3 +70,15 @@ function is machine dependent; its use is discouraged.
 .\" The function appeared in 32v, pwb and pwb.2 and in 3bsd 4bsd
 .\" The first man page (or link to a man page that I can find at the
 .\" moment is 4.3...
+.Pp
+The
+.Fn alloca
+function is slightly unsafe because it cannot ensure that the pointer
+returned points to a valid and usable block of memory.
+The allocation made may exceed the bounds of the stack, or even go
+further into other objects in memory, and
+.Fn alloca
+cannot determine such an error.
+Avoid
+.Fn alloca
+with large unbounded allocations.
