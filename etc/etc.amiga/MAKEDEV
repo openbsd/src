@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.36 1998/09/15 10:23:21 pattonme Exp $
+#	$OpenBSD: MAKEDEV,v 1.37 1998/09/25 10:22:15 todd Exp $
 #	$NetBSD: MAKEDEV,v 1.21 1996/05/19 21:03:49 veego Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -39,8 +39,8 @@
 #	@(#)MAKEDEV	5.5 (Berkeley) 5/28/91
 #
 # Device "make" file.  Valid arguments:
-#	all	makes all known devices, including local devices,
-#		Tries to make the ``standard'' number of each.
+#	all	makes all known devices, including local devices.
+#		Tries to make the ``standard'' number of each type.
 #	fd	makes fd/* for the fdescfs.
 #	floppy	devices needed for install floppies
 #	std	standard devices
@@ -51,12 +51,12 @@
 #
 # Disks:
 #	fd*	Floppy disks
-#	sd*	SCSI disks, includes flopticals
-#	cd*	SCSI cdrom discs
+#	sd*	SCSI disks
+#	cd*	SCSI cdrom drives
 #	vnd*	"file" pseudo-disks
-#	ccd*	concatenated disk driver
+#	ccd*	concatenated disk devices
 #	wd*	ISA "winchester" disk drives (ST506,IDE,ESDI,RLL,...)
-#	acd*	ISA ATAPI CD-ROM
+#	acd*	ISA ATAPI cdrom drives
 #
 # Console ports:
 #	ttye*	ite bitmapped consoles
@@ -74,8 +74,8 @@
 #
 # Printers:
 #	par*	motherboard parallel port
-#	lpt*	ISA lp
-#	lpa*	interruptless ISA lp
+#	lpt*	stock lp
+#	lpa*	interruptless lp
 #
 # Special purpose devices:
 #	grf*	custom chip (grf0), Retina Z2/Z3 (grf1/grf2),
@@ -84,22 +84,38 @@
 #	kbd	Amiga keyboard
 #	view*	generic interface to graphic displays.
 #	aconf	autoconfig information (not yet)
-#	lkm	loadable kernel modules interface.
+#	lkm	loadable kernel modules interface
 #	bpf*	Berkeley Packet Filter
 #	tun*	network tunnel driver
 #	ipf	IP filter
 #	ss*	SCSI scanners
 #	uk*	unknown SCSI
-#	*random	random data source
-#       audio*  one unit of the audio device. Unit 0 is custom chip audio.
+#	*random	inkernal random data source
+#	audio*	one unit of the audio device. Unit 0 is custom chip audio.
 
-PATH=/sbin:/bin:/usr/sbin:/usr/bin
+PATH=/sbin:/bin:/usr/bin:/usr/sbin
+this=$0
 umask 77
 
+# default shell support functions
+add ()
+{
+	tmp=0
+	while [ "$1" ]
+	do
+		tmp=$(( $1 + $tmp ))
+		shift
+	done
+	echo $tmp
+}
+mult ()
+{
+	echo "$(( $1 * $2 ))"
+}
 hex ()
 {
 	case $1 in
-		[0-9]) echo -n $1 ;;
+		[0-9]) echo -n $1;;
 		10) echo -n a;;
 		11) echo -n b;;
 		12) echo -n c;;
@@ -108,29 +124,60 @@ hex ()
 		15) echo -n f;;
 	esac
 }
+trunc ()
+{
+	# XXX pdksh can't seem to deal with locally scoped variables
+	# in ${foo#$bar} expansions
+	arg1="$1"
+	arg2="$2"
+	echo ${arg1#$arg2}
+}
+unt()
+{
+	# XXX pdksh can't seem to deal with locally scoped variables
+	# in ${foo#$bar} expansions
+	arg1="$1"
+	tmp="${arg1#[a-z]*}"
+	while [ "$tmp" != "$arg1" ]
+	do
+		arg1=$tmp
+		tmp="${arg1#[a-z]*}"
+	done
+	tmp="${arg1%*[a-z]}"
+	while [ "$tmp" != "$arg1" ]
+	do
+		arg1=$tmp
+		tmp="${arg1%*[a-z]}"
+	done
+	echo $arg1
+}
 
 for i
 do
+
+unit=`unt $i`
+[ "$unit" ] || unit=0
+
 case $i in
 all)
-	sh MAKEDEV std fd st0 st1 ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6
-	sh MAKEDEV mouse0 mouse1 tty00 ttyA0 ttyA1
-	sh MAKEDEV ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 ttyB6 ttyB7 ttyB8 ttyB9
-	sh MAKEDEV grf0 grf1 grf2 grf3 grf4 grf5 grf6
-	sh MAKEDEV kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
-	sh MAKEDEV vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6 cd0 cd1 fd0 fd1 fd2 fd3
-	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
-	sh MAKEDEV view00 view01 view02 view03 view04 view05 pty0 pty1
-	sh MAKEDEV lpa0 lpa1 lpt0 lpt1 lpt2 ipl
-	sh MAKEDEV ccd0 ccd1 ccd2 ccd3 wd0 wd1 acd0 ch0 uk0 uk1
-	sh MAKEDEV tun0 tun1 par0 lkm ss0 random audio0 local
+	sh $this std fd st0 st1 ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6
+	sh $this mouse0 mouse1 tty00 ttyA0 ttyA1
+	sh $this ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5 ttyB6 ttyB7 ttyB8 ttyB9
+	sh $this grf0 grf1 grf2 grf3 grf4 grf5 grf6
+	sh $this kbd sd0 sd1 sd2 sd3 sd4 sd5 sd6 sd7 sd8 sd9
+	sh $this vnd0 vnd1 vnd2 vnd3 vnd4 vnd5 vnd6 cd0 cd1 fd0 fd1 fd2 fd3
+	sh $this bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
+	sh $this view00 view01 view02 view03 view04 view05 pty0 pty1
+	sh $this lpa0 lpa1 lpt0 lpt1 lpt2 ipl
+	sh $this ccd0 ccd1 ccd2 ccd3 wd0 wd1 acd0 ch0 uk0 uk1
+	sh $this tun0 tun1 par0 lkm ss0 random audio0 local
 	;;
 
 floppy|ramdisk)
-	sh MAKEDEV std kbd pty0 tty00 ttyA0 ttyA1 ttyB0 ttyB1
-	sh MAKEDEV ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6
-	sh MAKEDEV cd0 cd1 sd0 sd1 sd2 sd3 st0 st1
-	sh MAKEDEV fd0 fd1 wd0 wd1 acd0 rd0 random
+	sh $this std kbd pty0 tty00 ttyA0 ttyA1 ttyB0 ttyB1
+	sh $this ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6
+	sh $this cd0 cd1 sd0 sd1 sd2 sd3 st0 st1
+	sh $this fd0 fd1 wd0 wd1 acd0 rd0 random
 	;;
 
 std)
@@ -599,9 +646,17 @@ audio*)
         chmod 666 $audio $sound $mixer $audioctl
         ;;
 
+
+xfs*)
+	rm -f xfs$unit
+	mknod xfs$unit c 51 $unit 
+	chmod 600 xfs$unit 
+	chown root.wheel xfs$unit
+	;;
+
 local)
 	umask 0
-	test -s MAKEDEV.local && sh MAKEDEV.local
+	test -s MAKEDEV.local && sh $this.local
 	umask 77
 	;;
 
