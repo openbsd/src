@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: varmodifiers.c,v 1.9 2001/05/23 12:34:52 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.10 2001/09/07 12:19:46 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -175,6 +175,7 @@ static void *get_stringarg(const char **, SymTable *, bool, int);
 static void free_stringarg(void *);
 static void *get_patternarg(const char **, SymTable *, bool, int);
 static void *get_spatternarg(const char **, SymTable *, bool, int);
+static void *common_get_patternarg(const char **, SymTable *, bool, int, bool);
 static void free_patternarg(void *);
 static void free_looparg(void *);
 static void *get_sysvpattern(const char **, SymTable *, bool, int);
@@ -1246,6 +1247,16 @@ do_lower(s, n, arg)
     return t;
 }
 
+static void *
+get_patternarg(p, ctxt, err, endc)
+    const char	**p;
+    SymTable	*ctxt;
+    bool	err;
+    int		endc;
+{
+    return common_get_patternarg(p, ctxt, err, endc, false);
+}
+
 /* Extract anchors */
 static void *
 get_spatternarg(p, ctxt, err, endc)
@@ -1256,7 +1267,7 @@ get_spatternarg(p, ctxt, err, endc)
 {
     VarPattern *pattern;
 
-    pattern = get_patternarg(p, ctxt, err, endc);
+    pattern = common_get_patternarg(p, ctxt, err, endc, true);
     if (pattern != NULL && pattern->leftLen > 0) {
 	if (pattern->lhs[pattern->leftLen-1] == '$') {
 		pattern->leftLen--;
@@ -1327,11 +1338,12 @@ get_loop(p, ctxt, err, endc)
 }
 
 static void *
-get_patternarg(p, ctxt, err, endc)
+common_get_patternarg(p, ctxt, err, endc, dosubst)
     const char	**p;
     SymTable	*ctxt;
     bool	err;
     int		endc;
+    bool 	dosubst;
 {
     VarPattern *pattern;
     char	delim;
@@ -1352,7 +1364,7 @@ get_patternarg(p, ctxt, err, endc)
     pattern->lbuffer = pattern->lhs;
     if (pattern->lhs != NULL) {
 	pattern->rhs = VarGetPattern(ctxt, err, &s, delim, delim,
-	    &pattern->rightLen, pattern);
+	    &pattern->rightLen, dosubst ? pattern: NULL);
 	if (pattern->rhs != NULL) {
 	    /* Check for global substitution. If 'g' after the final
 	     * delimiter, substitution is global and is marked that
