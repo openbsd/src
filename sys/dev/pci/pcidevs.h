@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.732 2004/05/10 10:42:19 peter Exp 
+ *	OpenBSD: pcidevs,v 1.733 2004/05/10 16:06:46 peter Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -246,6 +246,7 @@
 #define	PCI_VENDOR_ANTARES	0x1754		/* Antares Microsystems */
 #define	PCI_VENDOR_CAVIUM	0x177d		/* Cavium */
 #define	PCI_VENDOR_LANERGY	0x1812		/* Lanergy */
+#define	PCI_VENDOR_RALINK	0x1814		/* Ralink */
 #define	PCI_VENDOR_SYMPHONY2	0x1c1c		/* Symphony Labs */
 #define	PCI_VENDOR_TEKRAM2	0x1de1		/* Tekram */
 #define	PCI_VENDOR_HINT	0x3388		/* Hint */
@@ -1963,6 +1964,9 @@
 /* Quantum Designs products */
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8500	0x0001		/* 8500 */
 #define	PCI_PRODUCT_QUANTUMDESIGNS_8580	0x0002		/* 8580 */
+
+/* Ralink Technology Corporation */
+#define	PCI_PRODUCT_RALINK_RT2460A	0x0101		/* RT2460A */
 
 /* Realtek (Creative Labs?) products */
 #define	PCI_PRODUCT_REALTEK_RT8029	0x8029		/* 8029 */
