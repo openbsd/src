@@ -1,4 +1,4 @@
-/*	$OpenBSD: nxheap-mprotect.c,v 1.2 2002/08/27 16:43:51 matthieu Exp $	*/
+/*	$OpenBSD: nxheap-mprotect.c,v 1.3 2002/08/27 18:32:12 matthieu Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -71,7 +71,7 @@ main(void)
 	/* here we are successfull on segv and fail if it still executes */
 	fail = 0;
 	mprotect(buf, sizeof(buf), PROT_READ|PROT_WRITE);
-	((void (*)(void))&buf)();
+	((void (*)(void))buf)();
 
 	exit(1);
 }
