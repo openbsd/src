@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.53 1999/03/18 04:36:22 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.54 1999/03/21 17:22:33 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.53 1999/03/18 04:36:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.54 1999/03/21 17:22:33 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1677,7 +1677,7 @@ void
 find_bounds(lp)
 	struct disklabel *lp;
 {
-	struct  partition *pp = &lp->d_partitions[2];
+	struct partition *pp = &lp->d_partitions[2];
 
 	/* Defaults */
 	/* XXX - reserve a cylinder for hp300? */
@@ -1685,20 +1685,38 @@ find_bounds(lp)
 	ending_sector = lp->d_secperunit;
 
 #ifdef DOSLABEL
-	/* If we have an MBR, use values from the OpenBSD/FreeBSD parition. */
+	/*
+	 * If we have an MBR, use values from the {Open,Free,Net}BSD partition.
+	 */
 	if (dosdp && pp->p_size &&
 	    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
 	    dosdp->dp_typ == DOSPTYP_FREEBSD ||
 	    dosdp->dp_typ == DOSPTYP_NETBSD)) {
+		u_int32_t i, new_end;
+
+		/* Set start and end based on the fdisk partition bounds */
 		starting_sector = get_le(&dosdp->dp_start);
 		ending_sector = starting_sector + get_le(&dosdp->dp_size);
+
+		/*
+		 * If there are any BSD or SWAP partitions beyond ending_sector
+		 * we extend ending_sector to include them.  This is done
+		 * because the BIOS geometry is generally different from the
+		 * disk geometry.
+		 */
+		for (i = new_end = 0; i < lp->d_npartitions; i++) {
+			pp = &lp->d_partitions[i];
+			if ((pp->p_fstype == FS_BSDFFS ||
+			    pp->p_fstype == FS_SWAP) &&
+			    pp->p_size + pp->p_offset > new_end)
+				new_end = pp->p_size + pp->p_offset;
+		}
+		if (new_end > ending_sector)
+			ending_sector = new_end;
+
 		printf("\nTreating sectors %u-%u as the OpenBSD portion of the "
 		    "disk.\nYou can use the 'b' command to change this.\n",
 		    starting_sector, ending_sector);
-		/*
-		 * XXX - check to see if any BSD/SWAP partitions go beyond
-		 *	 ending_sector and prompt to extend ending_sector if so.
-		 */
 	}
 #endif
 }
