@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.9 1999/12/02 18:18:43 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.10 2000/01/06 03:08:29 jason Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -215,9 +215,8 @@ xl*	at pci? dev ? function ?		# 3C9xx ethernet cards
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet cards
 tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet cards
-mx*	at pci? dev ? function ?		# Macronix PMAC ethernet
 vr*	at pci? dev ? function ?		# VIA Rhine ethernet
-pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
+dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 ax*	at pci? dev ? function ?		# ASIX AX88140A ethernet

@@ -1,4 +1,4 @@
-#	$OpenBSD: NETTAN,v 1.35 1999/10/03 21:08:15 niklas Exp $
+#	$OpenBSD: NETTAN,v 1.36 2000/01/06 03:08:28 jason Exp $
 #
 #	NETTAN -- Applitron Datasystem AB
 #
@@ -6,7 +6,7 @@
 machine		i386		# architecture, used by config; REQUIRED
 
 #include "../../../conf/GENERIC"
-#	$OpenBSD: NETTAN,v 1.35 1999/10/03 21:08:15 niklas Exp $
+#	$OpenBSD: NETTAN,v 1.36 2000/01/06 03:08:28 jason Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -305,9 +305,8 @@ xl*	at pci? dev ? function ?		# 3c9xx ethernet
 rl*	at pci? dev ? function ?		# RealTek 81[23]9 ethernet
 tx*	at pci? dev ? function ?		# SMC 83C170 EPIC ethernet
 tl*	at pci? dev ? function ?		# Compaq Thunderlan ethernet
-mx*	at pci? dev ? function ?		# Macronix PMAC ethernet
 vr*	at pci? dev ? function ?		# VIA Rhine ethernet
-pn*	at pci? dev ? function ?		# Lite-On PNIC ethernet
+dc*	at pci? dev ? function ?		# 21143, "tulip" clone ethernet
 wb*	at pci? dev ? function ?		# Winbond W89C840F ethernet
 ti*	at pci? dev ? function ?		# Alteon Tigon 1Gb ethernet
 
