@@ -489,10 +489,10 @@ ipv6_discovery_init()
   in6_allones.sin6_len = sizeof(in6_allones);
 
   /* Other fields are bzeroed. */
-  in6_allones.sin6_addr.in6a_words[0] = 0xffffffff;
-  in6_allones.sin6_addr.in6a_words[1] = 0xffffffff;
-  in6_allones.sin6_addr.in6a_words[2] = 0xffffffff;
-  in6_allones.sin6_addr.in6a_words[3] = 0xffffffff;
+  in6_allones.sin6_addr.s6_addr32[0] = 0xffffffff;
+  in6_allones.sin6_addr.s6_addr32[1] = 0xffffffff;
+  in6_allones.sin6_addr.s6_addr32[2] = 0xffffffff;
+  in6_allones.sin6_addr.s6_addr32[3] = 0xffffffff;
   
   timeout(ipv6_nexthop_timer,NULL,hz);
   timeout(ipv6_neighbor_timer,NULL,hz);
@@ -585,10 +585,10 @@ send_nsolicit(rt,ifp,src,mcast)
 					 overridden! */
       i6mop = &i6mo;
 
-      header->ipv6_dst.in6a_words[0] = htonl(0xff020000);
-      header->ipv6_dst.in6a_words[1] = 0;
-      header->ipv6_dst.in6a_words[2] = htonl(1);
-      header->ipv6_dst.in6a_words[3] = neighbor->sin6_addr.in6a_words[3] | htonl(0xff000000);
+      header->ipv6_dst.s6_addr32[0] = htonl(0xff020000);
+      header->ipv6_dst.s6_addr32[1] = 0;
+      header->ipv6_dst.s6_addr32[2] = htonl(1);
+      header->ipv6_dst.s6_addr32[3] = neighbor->sin6_addr.s6_addr32[3] | htonl(0xff000000);
     }
   else
     {
@@ -1493,10 +1493,10 @@ static void
 prefix_concat(prefix,linkloc,mask)
      struct in6_addr *prefix,*linkloc,*mask;
 {
-  prefix->in6a_words[0] = (prefix->in6a_words[0] & mask->in6a_words[0]) | (linkloc->in6a_words[0] & ~mask->in6a_words[0]);
-  prefix->in6a_words[1] = (prefix->in6a_words[1] & mask->in6a_words[1]) | (linkloc->in6a_words[1] & ~mask->in6a_words[1]);
-  prefix->in6a_words[2] = (prefix->in6a_words[2] & mask->in6a_words[2]) | (linkloc->in6a_words[2] & ~mask->in6a_words[2]);
-  prefix->in6a_words[3] = (prefix->in6a_words[3] & mask->in6a_words[3]) | (linkloc->in6a_words[3] & ~mask->in6a_words[3]);
+  prefix->s6_addr32[0] = (prefix->s6_addr32[0] & mask->s6_addr32[0]) | (linkloc->s6_addr32[0] & ~mask->s6_addr32[0]);
+  prefix->s6_addr32[1] = (prefix->s6_addr32[1] & mask->s6_addr32[1]) | (linkloc->s6_addr32[1] & ~mask->s6_addr32[1]);
+  prefix->s6_addr32[2] = (prefix->s6_addr32[2] & mask->s6_addr32[2]) | (linkloc->s6_addr32[2] & ~mask->s6_addr32[2]);
+  prefix->s6_addr32[3] = (prefix->s6_addr32[3] & mask->s6_addr32[3]) | (linkloc->s6_addr32[3] & ~mask->s6_addr32[3]);
 }
 
 /*----------------------------------------------------------------------
@@ -1775,10 +1775,10 @@ ipv6_routeradv_input(incoming, extra)
 		  if (IN6_ARE_ADDR_EQUAL(&i6a->i6a_sockmask.sin6_addr, &mask->sin6_addr))
 		    continue;
 		  if (
-(i6a->i6a_addr.sin6_addr.in6a_words[0] ^ dst->sin6_addr.in6a_words[0]) & i6a->i6a_sockmask.sin6_addr.in6a_words[0] ||
-(i6a->i6a_addr.sin6_addr.in6a_words[1] ^ dst->sin6_addr.in6a_words[1]) & i6a->i6a_sockmask.sin6_addr.in6a_words[1] ||
-(i6a->i6a_addr.sin6_addr.in6a_words[2] ^ dst->sin6_addr.in6a_words[2]) & i6a->i6a_sockmask.sin6_addr.in6a_words[2] ||
-(i6a->i6a_addr.sin6_addr.in6a_words[3] ^ dst->sin6_addr.in6a_words[3]) & i6a->i6a_sockmask.sin6_addr.in6a_words[3])
+(i6a->i6a_addr.sin6_addr.s6_addr32[0] ^ dst->sin6_addr.s6_addr32[0]) & i6a->i6a_sockmask.sin6_addr.s6_addr32[0] ||
+(i6a->i6a_addr.sin6_addr.s6_addr32[1] ^ dst->sin6_addr.s6_addr32[1]) & i6a->i6a_sockmask.sin6_addr.s6_addr32[1] ||
+(i6a->i6a_addr.sin6_addr.s6_addr32[2] ^ dst->sin6_addr.s6_addr32[2]) & i6a->i6a_sockmask.sin6_addr.s6_addr32[2] ||
+(i6a->i6a_addr.sin6_addr.s6_addr32[3] ^ dst->sin6_addr.s6_addr32[3]) & i6a->i6a_sockmask.sin6_addr.s6_addr32[3])
 		    continue;
 
 		  if (i6a->i6a_expire && !(i6a->i6a_addrflags & I6AF_NOTSURE))
@@ -3148,7 +3148,7 @@ void tunnel_child(rt)
 	      /* DANGER:  If original setgate doesn't work properly, this
 		 could be trouble. */
 	      sin = (struct sockaddr_in *)rt->rt_gateway;
-	      sin->sin_addr.s_addr = dst->sin6_addr.in6a_words[3];
+	      sin->sin_addr.s_addr = dst->sin6_addr.s6_addr32[3];
 	      if (rt_setgate(rt,rt_key(rt),rt->rt_gateway))
 		{
 		  DPRINTF(GROSSEVENT, 
