@@ -91,8 +91,9 @@ ex(spp)
 	for (;; ++gp->excmd.if_lno) {
 		/* Display status line and flush. */
 		if (F_ISSET(sp, SC_STATUS)) {
+			if (!F_ISSET(sp, SC_EX_SILENT))
+				msgq_status(sp, sp->lno, 0);
 			F_CLR(sp, SC_STATUS);
-			msgq_status(sp, sp->lno, 0);
 		}
 		(void)ex_fflush(sp);
 
