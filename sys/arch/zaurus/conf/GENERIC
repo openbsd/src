@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.2 2005/01/04 03:47:00 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.3 2005/01/04 05:13:34 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -105,6 +105,13 @@ wi*		at uhub?		# WaveLAN IEEE 802.11DS
 #ugen*		at uhub?		# USB Generic driver
 umass*		at uhub?		# USB Mass Storage devices
 scsibus*	at umass?
+
+sd*             at scsibus?
+#st*             at scsibus?
+cd*             at scsibus?
+#ch*             at scsibus?
+#ss*             at scsibus?
+#uk*             at scsibus?
 
 # cotulla integrated 16550 UARTs
 options COM_PXA2X0
