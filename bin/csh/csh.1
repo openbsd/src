@@ -1,4 +1,4 @@
-.\"	$OpenBSD: csh.1,v 1.26 1999/05/24 13:11:18 aaron Exp $
+.\"	$OpenBSD: csh.1,v 1.27 1999/05/30 17:44:55 aaron Exp $
 .\"	$NetBSD: csh.1,v 1.10 1995/03/21 09:02:35 cgd Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -153,14 +153,14 @@ options were given, the first argument is taken as the name of a file of
 commands to be executed.
 The shell opens this file, and saves its name for possible resubstitution
 by
-.Dq $0 .
+.Sq $0 .
 Since many systems use either the standard version 6 or version 7 shells
 whose shell scripts are not compatible with this shell, the shell will
 execute such a
 .Dq standard
 shell if the first character of a script
 is not a hash mark
-.Pq Ql \&# ;
+.Pq Ql # ;
 i.e., if the script does not start with a comment.
 Remaining arguments initialize the variable
 .Va argv .
@@ -175,12 +175,13 @@ if this is a login shell,
 It then executes
 commands from
 .Pa \&.cshrc
-in the
-.Ar home
-directory of the invoker, and, if this is a login shell, the file
+in the home directory of the invoker,
+and, if this is a login shell, the file
 .Pa \&.login
 in the same location.
-It is typical for users on CRTs to put the command
+It is typical for users on
+.Tn CRT Ns s
+to put the command
 .Ic stty crt
 in their
 .Pa \&.login
@@ -190,102 +191,100 @@ there.
 .Pp
 In the normal case, the shell will begin reading commands from the
 terminal, prompting with
-.Dq %\ .
+.Sq %\ .
 Processing of arguments and the use of the shell to process files
 containing command scripts will be described later.
 .Pp
 The shell repeatedly performs the following actions:
 a line of command input is read and broken into
-.Ar words .
+.Dq words .
 This sequence of words is placed on the command history list and parsed.
 Finally each command in the current line is executed.
 .Pp
 When a login shell terminates it executes commands from the files
 .Pa .logout
-in the user's
-.Ar home
-directory and
+in the user's home directory and
 .Pa /etc/csh.logout .
 .Ss Lexical structure
 The shell splits input lines into words at blanks and tabs with the
 following exceptions.
 The characters
-.Dq & ,
-.Dq \&| ,
-.Dq \&; ,
-.Dq < ,
-.Dq > ,
-.Dq ( ,
+.Ql & ,
+.Ql | ,
+.Ql \&; ,
+.Ql < ,
+.Ql > ,
+.Ql ( ,
 and
-.Dq \&)
+.Ql \&)
 form separate words.
 If doubled in
-.Dq && ,
-.Dq \&|\&| ,
-.Dq << ,
+.Ql && ,
+.Ql || ,
+.Ql << ,
 or
-.Dq >> ,
+.Ql >> ,
 these pairs form single words.
 These parser metacharacters may be made part of other words, or prevented their
 special meaning, by preceding them with a backslash
 .Pq Ql \e .
 A newline preceded by a
-.Dq \e
+.Ql \e
 is equivalent to a blank.
 .Pp
 Strings enclosed in matched pairs of quotations,
-.Dq ' ,
-.Dq ` ,
+.Ql ' ,
+.Ql ` ,
 or
-.Dq \&" ,
+.Ql \&" ,
 form parts of a word; metacharacters in these strings, including blanks
 and tabs, do not form separate words.
 These quotations have semantics to be described later.
 Within pairs of
-.Dq '
+.Ql '
 or
-.Dq \&"
+.Ql \&"
 characters, a newline preceded by a
-.Dq \e
+.Ql \e
 gives
 a true newline character.
 .Pp
 When the shell's input is not a terminal,
 the character
-.Dq #
+.Ql #
 introduces a comment that continues to the end of the
 input line.
 It is prevented this special meaning when preceded by
-.Dq \e
+.Ql \e
 and in quotations using
-.Dq ` ,
-.Dq ' ,
+.Ql ` ,
+.Ql ' ,
 and
-.Dq \&" .
+.Ql \&" .
 .Ss Commands
 A simple command is a sequence of words, the first of which
 specifies the command to be executed.
 A simple command or
 a sequence of simple commands separated by
-.Dq \&|
+.Ql |
 characters forms a pipeline.
 The output of each command in a pipeline is connected to the input of the next.
 Sequences of pipelines may be separated by
-.Dq \&; ,
+.Ql \&; ,
 and are then executed sequentially.
 A sequence of pipelines may be executed without immediately
 waiting for it to terminate by following it with a
-.Dq & .
+.Ql & .
 .Pp
 Any of the above may be placed in
-.Dq \&(
-.Dq \&)
+.Ql (
+.Ql \&)
 to form a simple command (that
 may be a component of a pipeline, for example).
 It is also possible to separate pipelines with
-.Dq \&|\&|
+.Ql ||
 or
-.Dq &&
+.Ql &&
 showing,
 as in the C language,
 that the second is to be executed only if the first fails or succeeds,
@@ -293,13 +292,13 @@ respectively. (See
 .Em Expressions . )
 .Ss Jobs
 The shell associates a
-.Ar job
+.Em job
 with each pipeline.  It keeps
 a table of current jobs, printed by the
-.Ar jobs
+.Ic jobs
 command, and assigns them small integer numbers.  When
 a job is started asynchronously with
-.Dq & ,
+.Ql & ,
 the shell prints a line that looks
 like:
 .Bd -filled -offset indent
@@ -312,7 +311,9 @@ showing that the job which was started asynchronously was job number
 .Pp
 If you are running a job and wish to do something else you may hit
 .Ic ^Z
-(control-Z) which sends a STOP signal to the current job.
+(control-Z) which sends a
+.Dv SIGSTOP
+signal to the current job.
 The shell will then normally show that the job has been
 .Dq Stopped ,
 and print another prompt.  You can then manipulate the state of this job,
@@ -332,7 +333,9 @@ takes effect immediately and
 is like an interrupt in that pending output and unread input are discarded
 when it is typed.  There is another special key
 .Ic ^Y
-that does not generate a STOP signal until a program attempts to
+that does not generate a
+.Dv SIGSTOP
+signal until a program attempts to
 .Xr read 2
 it.
 This request can usefully be typed ahead when you have prepared some commands
@@ -347,46 +350,46 @@ tty option, then background jobs will stop when they try to produce
 output like they do when they try to read input.
 .Pp
 There are several ways to refer to jobs in the shell.  The character
-.Dq %
+.Ql %
 introduces a job name.  If you wish to refer to job number 1, you can
 name it as
-.Dq %1 .
+.Ql %1 .
 Just naming a job brings it to the foreground; thus
-.Dq %1
+.Ic %1
 is a synonym for
-.Dq fg %1 ,
+.Ic fg %1 ,
 bringing job number 1 back into the foreground.
 Similarly, saying
-.Dq %1 &
+.Ic %1 &
 resumes job number 1 in the background.
 Jobs can also be named by prefixes of the string typed in to start them,
 if these prefixes are unambiguous; thus
-.Dq %ex
+.Ic %ex
 would normally restart a suspended
 .Xr ex 1
 job, if there were only one suspended job whose name began with
 the string
-.Dq ex .
+.Qq ex .
 It is also possible to say
-.Dq %?string
+.Ic %?string
 which specifies a job whose text contains
 .Ar string ,
 if there is only one such job.
 .Pp
 The shell maintains a notion of the current and previous jobs.
 In output about jobs, the current job is marked with a
-.Dq +
+.Ql +
 and the previous job with a
-.Dq \- .
+.Ql \- .
 The abbreviation
-.Dq %+
+.Ql %+
 refers to the current job and
-.Dq %\-
+.Ql %\-
 refers to the previous job.  For close
 analogy with the syntax of the
 .Ic history
 mechanism (described below),
-.Dq %%
+.Ql %%
 is also a synonym for the current job.
 .Pp
 The job control mechanism requires that the
@@ -472,7 +475,7 @@ will only expand the input to
 .Pp
 and will sound the terminal bell to indicate that the expansion is
 incomplete, since there are two file names matching the prefix
-.Dq D .
+.Ql D .
 .Pp
 If a partial file name is followed by the end-of-file character
 (usually control-D), then, instead of completing the name,
@@ -483,7 +486,7 @@ the input
 .Dl % vi D<control-D>
 .Pp
 causes all files beginning with
-.Dq D
+.Ql D
 to be listed:
 .Pp
 .Dl DSC.NEW	DSC.OLD
@@ -526,7 +529,10 @@ would result in the completion to
 .Pp
 .Dl % vi xmpl.c
 .Pp
-ignoring the files "xmpl.o" and "xmpl.out".
+ignoring the files
+.Qq xmpl.o
+and
+.Qq xmpl.out .
 However, if the only completion possible requires not ignoring these
 suffixes, then they are not ignored.  In addition,
 .Va fignore
@@ -541,26 +547,26 @@ of new commands, making it easy to repeat commands, repeat arguments
 of a previous command in the current command, or fix spelling mistakes
 in the previous command with little typing and a high degree of confidence.
 History substitutions begin with the character
-.Dq !
+.Ql !
 and may begin
 .Em anywhere
 in the input stream (with the proviso that they do
 .Em not
 nest.)
 This
-.Dq !
+.Ql !
 may be preceded by a
-.Dq \e
+.Ql \e
 to prevent its special meaning; for
 convenience, a
-.Dq !
+.Ql !
 character is passed unchanged when it is followed by a blank,
 tab, newline,
-.Dq =
+.Ql =
 or
-.Dq \&( .
+.Ql ( .
 (History substitutions also occur when an input line begins with
-.Dq ^ .
+.Ql ^ .
 This special abbreviation will be described later.)
 Any input line that contains history substitution is echoed on the terminal
 before it is executed as it could have been typed without history substitution.
@@ -587,39 +593,37 @@ command:
 .Pp
 The commands are shown with their event numbers.
 It is not usually necessary to use event numbers, but the current event
-number can be made part of the
-.Ar prompt
-by placing a
-.Dq !
+number can be made part of the prompt by placing a
+.Ql !
 in the prompt string.
 .Pp
 With the current event 13 we can refer to previous events by event
 number
-.Dq !11 ,
+.Ql !11 ,
 relatively as in
-.Dq !\-2
+.Ql !\-2
 (referring to the same event),
 by a prefix of a command word
 as in
-.Dq !d
+.Ql !d
 for event 12 or
-.Dq !wri
+.Ql !wri
 for event 9, or by a string contained in
 a word in the command as in
-.Dq !?mic?
+.Ql !?mic?
 also referring to event 9.
 These forms, without further change, simply reintroduce the words
 of the specified events, each separated by a single blank.
 As a special case,
-.Dq !!
+.Ql !!
 refers to the previous command; thus
-.Dq !!
+.Ql !!
 alone is a
 .Em redo .
 .Pp
 To select words from an event we can follow the event specification by
 a
-.Dq \&:
+.Ql \&:
 and a designator for the desired words.
 The words of an input line are numbered from 0,
 the first (usually command) word being 0, the second word (first argument)
@@ -634,7 +638,7 @@ first (command) word
 argument
 .It ^
 first argument; i.e.,
-.Dq 1
+.Ql 1
 .It $
 last argument
 .It %
@@ -645,34 +649,34 @@ search
 range of words
 .It Ar \&\-y
 abbreviates
-.Dq \&0\-y
+.Ql \&0\-y
 .It *
 abbreviates
-.Dq ^\-$ ,
+.Ql ^\-$ ,
 or nothing if only 1 word in event
 .It Ar x*
 abbreviates
-.Dq x\-$
+.Ql x\-$
 .It Ar x\-
 like
-.Dq x*
+.Ql x*
 but omitting word
-.Dq $
+.Ql $
 .El
 .Pp
 The
-.Dq \&:
+.Ql \&:
 separating the event specification from the word designator
 can be omitted if the argument selector begins with a
-.Dq ^ ,
-.Dq $ ,
-.Dq * ,
-.Dq \- ,
+.Ql ^ ,
+.Ql $ ,
+.Ql * ,
+.Ql \- ,
 or
-.Dq % .
+.Ql % .
 After the optional word designator can be
 placed a sequence of modifiers, each preceded by a
-.Dq \&: .
+.Ql \&: .
 The following modifiers are defined:
 .Pp
 .Bl -tag -width Ds -compact -offset indent
@@ -680,11 +684,11 @@ The following modifiers are defined:
 Remove a trailing pathname component, leaving the head.
 .It r
 Remove a trailing
-.Dq .xxx
+.Ql .xxx
 component, leaving the root name.
 .It e
 Remove all but the extension
-.Dq .xxx
+.Ql .xxx
 part.
 .It s Ns Ar /l/r/
 Substitute
@@ -697,64 +701,65 @@ Remove all leading pathname components, leaving the tail.
 Repeat the previous substitution.
 .It g
 Apply the change once on each word, prefixing the above; e.g.,
-.Dq g& .
+.Ql g& .
 .It a
 Apply the change as many times as possible on a single word, prefixing
 the above. It can be used together with
-.Dq g
+.Ql g
 to apply a substitution globally.
 .It p
-Print the new command line but do not execute it.
+Print the new command-line but do not execute it.
 .It q
 Quote the substituted words, preventing further substitutions.
 .It x
 Like
-.Dq q ,
+.Ql q ,
 but break into words at blanks, tabs and newlines.
 .El
 .Pp
 Unless preceded by a
-.Dq g
+.Ql g
 the change is applied only to the first
 modifiable word.  With substitutions, it is an error for no word to be
 applicable.
 .Pp
-The left hand side of substitutions are not regular expressions in the sense
+The left-hand side of substitutions are not regular expressions in the sense
 of the editors, but instead strings.
 Any character may be used as the delimiter in place of
-.Dq / ;
+.Ql / ;
 a
-.Dq \e
+.Ql \e
 quotes the delimiter into the
 .Ar l  " "
 and
 .Ar r  " "
 strings.
 The character
-.Dq &
-in the right hand side is replaced by the text from
+.Ql &
+in the right-hand side is replaced by the text from
 the left.
 A
-.Dq \e
+.Ql \e
 also quotes
-.Dq & .
-A null
+.Ql & .
+A
+.Dv NULL
 .Ar l
-.Pq Dq //
+.Pq Ql //
 uses the previous string either from an
 .Ar l
 or from a
 contextual scan string
 .Ar s
 in
-.Dq !? Ns Ar s Ns \e? .
+.Ql !? Ns Ar s Ns \e? .
 The trailing delimiter in the substitution may be omitted if a newline
 follows immediately as may the trailing
-.Dq ?
+.Ql ?
 in a contextual scan.
 .Pp
 A history reference may be given without an event specification; e.g.,
-.Dq !$ .
+.Ql !$ .
 Here, the reference is to the previous command unless a previous
 history reference occurred on the same line in which case this form repeats
 the previous reference.
@@ -766,53 +771,53 @@ from the command matching
 .Pp
 A special abbreviation of a history reference occurs when the first
 non-blank character of an input line is a
-.Dq ^ .
+.Ql ^ .
 This is equivalent to
 .Dq !:s^
 providing a convenient shorthand for substitutions
 on the text of the previous line.
 Thus
-.Dq ^lb^lib
+.Ic ^lb^lib
 fixes the spelling of
 .Dq lib
 in the previous command.
 Finally, a history substitution may be surrounded with
-.Dq {
+.Ql {
 and
-.Dq }
+.Ql }
 if necessary to insulate it from the characters that follow.
 Thus, after
-.Dq ls -ld ~paul
+.Ic ls -ld ~paul
 we might do
-.Dq !{l}a
+.Ic !{l}a
 to do
-.Dq ls -ld ~paula ,
+.Ic ls -ld ~paula ,
 while
-.Dq !la
+.Ic !la
 would look for a command starting with
 .Dq la .
 .Pp
 .Ss Quotations with \' and \&"
 The quotation of strings by
-.Dq '
+.Ql '
 and
-.Dq \&"
+.Ql \&"
 can be used
 to prevent all or some of the remaining substitutions.
 Strings enclosed in
-.Dq '
+.Ql '
 are prevented any further interpretation.
 Strings enclosed in
-.Dq \&"
+.Ql \&"
 may be expanded as described below.
 .Pp
 In both cases the resulting text becomes (all or part of) a single word;
 only in one special case (see
 .Em Command Substitution
 below) does a
-.Dq \&"
+.Ql \&"
 quoted string yield parts of more than one word;
-.Dq '
+.Ql '
 quoted strings never do.
 .Ss Alias substitution
 The shell maintains a list of aliases that can be established, displayed
@@ -821,7 +826,7 @@ and modified by the
 and
 .Ic unalias
 commands.
-After a command line is scanned, it is parsed into distinct commands and
+After a command-line is scanned, it is parsed into distinct commands and
 the first word of each command, left-to-right, is checked to see if it
 has an alias.
 If it does, then the text that is the alias for that command is reread
@@ -837,18 +842,18 @@ Thus if the alias for
 is
 .Dq ls \-l ,
 the command
-.Dq ls /usr
+.Ic ls /usr
 would map to
-.Dq ls \-l /usr ,
+.Ic ls \-l /usr ,
 the argument list here being undisturbed.
 Similarly, if the alias for
 .Dq lookup
 was
 .Dq grep !^ /etc/passwd
 then
-.Dq lookup bill
+.Ic lookup bill
 would map to
-.Dq grep bill /etc/passwd .
+.Ic grep bill /etc/passwd .
 .Pp
 If an alias is found, the word transformation of the input text
 is performed and the aliasing process begins again on the reformed input line.
@@ -884,11 +889,11 @@ For instance, the
 variable is a toggle that causes command input to be echoed.
 The setting of this variable results from the
 .Fl v
-command line option.
+command-line option.
 .Pp
 Other operations treat variables numerically.
 The
-.Dq @
+.Ic @
 command permits numeric calculations to be performed and the result
 assigned to a variable.
 Variable values are, however, always represented as (zero or more) strings.
@@ -898,12 +903,12 @@ zero, and the second and additional words of multiword values are ignored.
 After the input line is aliased and parsed, and before each command
 is executed, variable substitution
 is performed keyed by
-.Dq $
+.Ql $
 characters.
 This expansion can be prevented by preceding the
-.Dq $
+.Ql $
 with a
-.Dq \e
+.Ql \e
 except
 within "'s where it
 .Em always
@@ -915,10 +920,10 @@ Strings quoted by backticks
 are interpreted later (see
 .Sx Command substitution
 below) so
-.Dq $
+.Ql $
 substitution does not occur there until later, if at all.
 A
-.Dq $
+.Ql $
 is passed unchanged if followed by a blank, tab, or end-of-line.
 .Pp
 Input/output redirections are recognized before variable expansion,
@@ -929,18 +934,18 @@ more than one word, the first of which becomes the command name,
 and the rest of which become arguments.
 .Pp
 Unless enclosed in
-.Dq \&"
+.Ql \&"
 or given the
-.Dq :q
+.Ql :q
 modifier, the results of variable
 substitution may eventually be command and filename substituted.
 Within
-.Dq \&" ,
+.Ql \&" ,
 a variable whose value consists of multiple words expands to a
 (portion of) a single word, with the words of the variables value
 separated by blanks.
 When the
-.Dq :q
+.Ql :q
 modifier is applied to a substitution
 the variable will expand to multiple words with each word separated
 by a blank and quoted to prevent later command or filename substitution.
@@ -964,7 +969,7 @@ If
 .Ar name
 is not a shell variable, but is set in the environment, then
 that value is returned (but
-.Dq :
+.Ql \&:
 modifiers and the other forms
 given below are not available here).
 .It $name Ns Op selector
@@ -972,18 +977,18 @@ given below are not available here).
 May be used to select only some of the words from the value of
 .Ar name .
 The selector is subjected to
-.Dq $
+.Ql $
 substitution and may consist of a single
 number or two numbers separated by a
-.Dq \- .
+.Ql \- .
 The first word of a variables value is numbered
-.Dq 1 .
+.Ql 1 .
 If the first number of a range is omitted it defaults to
-.Dq 1 .
+.Ql 1 .
 If the last number of a range is omitted it defaults to
-.Dq $#name .
+.Ql $#name .
 The selector
-.Dq *
+.Ql *
 selects all words.
 It is not an error for a range to be empty if the second argument is omitted
 or in range.
@@ -1005,32 +1010,32 @@ Equivalent to
 .El
 .Pp
 The modifiers
-.Dq :e ,
-.Dq :h ,
-.Dq :t ,
-.Dq :r ,
-.Dq :q ,
+.Ql :e ,
+.Ql :h ,
+.Ql :t ,
+.Ql :r ,
+.Ql :q ,
 and
-.Dq :x
+.Ql :x
 may be applied to
 the substitutions above as may
-.Dq :gh ,
-.Dq :gt ,
+.Ql :gh ,
+.Ql :gt ,
 and
-.Dq :gr .
+.Ql :gr .
 If braces
-.Dq {
-.Dq }
+.Ql {
+.Ql }
 appear in the command form then the modifiers
 must appear within the braces.
 The current implementation allows only one
-.Dq \&:
+.Ql \&:
 modifier on each
-.Dq $
+.Ql $
 expansion.
 .Pp
 The following substitutions may not be modified with
-.Dq \&:
+.Ql \&:
 modifiers.
 .Bl -tag -width Ds -compact -offset indent
 .It $?name
@@ -1042,9 +1047,9 @@ if name is set,
 if it is not.
 .It $?0
 Substitutes
-.Dq 1
+.Ql 1
 if the current input filename is known,
-.Dq 0
+.Ql 0
 if it is not.
 .It \&$\&$\&
 Substitute the (decimal) process number of the (parent) shell.
@@ -1068,7 +1073,7 @@ after input-output redirection is performed, and in a child
 of the main shell.
 .Ss Command substitution
 Command substitution is shown by a command enclosed in
-.Dq ` .
+.Ql ` .
 The output from such a command is normally broken into separate words
 at blanks, tabs and newlines, with null words being discarded;
 this text then replaces the original string.
@@ -1079,13 +1084,13 @@ Note that it is thus possible for a command substitution to yield
 only part of a word, even if the command outputs a complete line.
 .Ss Filename substitution
 If a word contains any of the characters
-.Dq * ,
-.Dq ? ,
-.Dq [ ,
+.Ql * ,
+.Ql ? ,
+.Ql [ ,
 or
-.Dq { ,
+.Ql { ,
 or begins with the character
-.Dq ~ ,
+.Ql ~ ,
 then that word is a candidate for
 filename substitution, also known as
 .Dq globbing .
@@ -1095,31 +1100,31 @@ In a list of words specifying filename substitution it is an error for
 no pattern to match an existing file name, but it is not required
 for each pattern to match.
 Only the metacharacters
-.Dq * ,
-.Dq ? ,
+.Ql * ,
+.Ql ? ,
 and
-.Dq [
+.Ql [
 imply pattern matching,
 the characters
-.Dq ~
+.Ql ~
 and
-.Dq {
+.Ql {
 being more akin to abbreviations.
 .Pp
 In matching filenames, the character
-.Dq \&.
+.Ql \&.
 at the beginning of a filename
 or immediately following a
-.Dq / ,
+.Ql / ,
 as well as the character
-.Dq /
+.Ql /
 must be matched explicitly.
 The character
-.Dq *
+.Ql *
 matches any string of characters, including the null
 string.
 The character
-.Dq ?
+.Ql ?
 matches any single character.
 The sequence
 .Dq Op ...
@@ -1127,21 +1132,21 @@ matches any one of the characters enclosed.
 Within
 .Dq Op ... ,
 a pair of characters separated by
-.Dq \-
+.Ql \-
 matches any character lexically between
 the two (inclusive).
 .Pp
 The character
-.Dq ~
+.Ql ~
 at the beginning of a filename refers to home
 directories.
 Standing alone, i.e.,
-.Dq ~ ,
+.Ql ~ ,
 it expands to the invokers home directory as reflected
 in the value of the variable
 .Ar home .
 When followed by a name consisting of letters, digits and
-.Dq \-
+.Ql \-
 characters,
 the shell searches for a user with that name and substitutes their
 home directory;  thus
@@ -1153,9 +1158,9 @@ and
 to
 .Dq /usr/ken/chmach .
 If the character
-.Dq ~
+.Ql ~
 is followed by a character other than a letter or
-.Dq / ,
+.Ql / ,
 or does not appear at the beginning of a word,
 it is left undisturbed.
 .Pp
@@ -1184,10 +1189,10 @@ might expand to
 was not sorted with the results of the match to
 .Dq *box . )
 As a special case
-.Dq { ,
-.Dq } ,
+.Ql { ,
+.Ql } ,
 and
-.Dq {}
+.Ql {}
 are passed undisturbed.
 .Ss Input/output
 The standard input and the standard output of a command may be redirected
@@ -1208,21 +1213,21 @@ and each input line is compared to
 .Ar word
 before any substitutions are done on the input line.
 Unless a quoting
-.Dq \e ,
-.Dq \&" ,
-.Dq '
+.Ql \e ,
+.Ql \&" ,
+.Ql '
 or
-.Dq `
+.Ql `
 appears in
 .Ar word ,
 variable and command substitution is performed on the intervening lines,
 allowing
-.Dq \e
+.Ql \e
 to quote
-.Dq $ ,
-.Dq \e
+.Ql $ ,
+.Ql \e
 and
-.Dq ` .
+.Ql ` .
 Commands that are substituted have all blanks, tabs, and newlines
 preserved, except for the final newline which is dropped.
 The resultant text is placed in an anonymous temporary file that
@@ -1245,16 +1250,16 @@ terminal or
 or an error results.
 This helps prevent accidental destruction of files.
 Here, the
-.Dq !
+.Ql !
 forms can be used to suppress this check.
 .Pp
 The forms involving
-.Dq &
+.Ql &
 route the standard error output into the specified
 file as well as the standard output.
 .Ar name
 is expanded in the same way as
-.Dq <
+.Ql <
 input filenames are.
 .It >> name
 .It >>& name
@@ -1264,16 +1269,16 @@ Uses file
 .Ar name
 as the standard output;
 like
-.Dq >
+.Ql >
 but places output at the end of the file.
 If the variable
 .Va noclobber
 is set, then it is an error for the file not to exist unless
 one of the
-.Dq !
+.Ql !
 forms is given.
 Otherwise similar to
-.Dq > .
+.Ql > .
 .El
 .Pp
 A command receives the environment in which the shell was
@@ -1283,7 +1288,7 @@ Thus, unlike some previous shells, commands run from a file of shell commands
 have no access to the text of the commands by default;
 instead they receive the original standard input of the shell.
 The
-.Dq <<
+.Ql <<
 mechanism should be used to present inline data.
 This permits shell command scripts to function as components of pipelines
 and allows the shell to block read its input.
@@ -1301,9 +1306,9 @@ above).
 The standard error output may be directed through
 a pipe with the standard output.
 Simply use the form
-.Dq \&|&
+.Ql |&
 instead of just
-.Dq \&| .
+.Ql | .
 .Ss Expressions
 Several of the built-in commands (to be described later)
 take expressions, in which the operators are similar to those of C, with
@@ -1324,79 +1329,79 @@ The following operators are available:
 .Ed
 .Pp
 Here the precedence increases to the right,
-.Dq ==
-.Dq !=
-.Dq =~
+.Ql ==
+.Ql !=
+.Ql =~
 and
-.Dq !~ ,
-.Dq <=
-.Dq >=
-.Dq <
+.Ql !~ ,
+.Ql <=
+.Ql >=
+.Ql <
 and
-.Dq > ,
-.Dq <<
+.Ql > ,
+.Ql <<
 and
-.Dq >> ,
-.Dq +
+.Ql >> ,
+.Ql +
 and
-.Dq \- ,
-.Dq *
-.Dq /
+.Ql \- ,
+.Ql *
+.Ql /
 and
-.Dq %
+.Ql %
 being, in groups, at the same level.
 The
-.Dq ==
-.Dq !=
-.Dq =~
+.Ql ==
+.Ql !=
+.Ql =~
 and
-.Dq !~
+.Ql !~
 operators compare their arguments as strings;
 all others operate on numbers.
 The operators
-.Dq =~
+.Ql =~
 and
-.Dq !~
+.Ql !~
 are like
-.Dq !=
+.Ql !=
 and
-.Dq ==
+.Ql ==
 except that the right
 hand side is a
 .Ar pattern
 (containing, e.g., *'s, ?'s, and instances of
 .Dq [...] )
-against which the left hand operand is matched.  This reduces the
+against which the left-hand operand is matched.  This reduces the
 need for use of the
 .Ar switch
 statement in shell scripts when all that is really needed is pattern matching.
 .Pp
 Strings that begin with
-.Dq 0
+.Ql 0
 are considered octal numbers.
 Null or missing arguments are considered
-.Dq 0 .
+.Ql 0 .
 The result of all expressions are strings,
 which represent decimal numbers.
 It is important to note that no two components of an expression can appear
 in the same word; except when adjacent to components of expressions that
 are syntactically significant to the parser
 .Po
-.Dq & ,
-.Dq \&| ,
-.Dq < ,
-.Dq > ,
-.Dq \&( ,
+.Ql & ,
+.Ql | ,
+.Ql < ,
+.Ql > ,
+.Ql ( ,
 and
-.Dq \&)
+.Ql \&)
 .Pc ,
 they should be surrounded by spaces.
 .Pp
 Also available in expressions as primitive operands are command executions
 enclosed in
-.Dq {
+.Ql {
 and
-.Dq }
+.Ql }
 and file enquiries of the form
 .Fl l
 .Ar name
@@ -1418,12 +1423,12 @@ The specified name is command and filename expanded and then tested
 to see if it has the specified relationship to the real user.
 If the file does not exist or is inaccessible then all enquiries return
 false, i.e.,
-.Dq 0 .
+.Ql 0 .
 Command executions succeed, returning true, i.e.,
-.Dq 1 ,
+.Ql 1 ,
 if the command exits with status 0, otherwise they fail, returning
 false, i.e.,
-.Dq 0 .
+.Ql 0 .
 If more detailed status information is required then the command
 should be executed outside an expression and the variable
 .Ar status
@@ -1483,7 +1488,9 @@ free memory.
 With an argument shows the number of free and used blocks in each size
 category.  The categories start at size 8 and double at each step.
 This command's output may vary across system types, since
-systems other than the VAX may use a different memory allocator.
+systems other than the
+.Tn VAX
+may use a different memory allocator.
 .Pp
 .It Ic bg
 .It Ic bg \&% Ns Ar job ...
@@ -1522,10 +1529,10 @@ If
 .Ar name
 is not found as a subdirectory of the current directory (and does not begin
 with
-.Dq / ,
-.Dq ./
+.Ql / ,
+.Ql ./
 or
-.Dq ../ ) ,
+.Ql ../ ) ,
 then each
 component of the variable
 .Va cdpath
@@ -1534,7 +1541,7 @@ is checked to see if it has a subdirectory
 Finally, if all else fails but
 .Ar name
 is a shell variable whose value begins with
-.Dq / ,
+.Ql / ,
 then this
 is tried to see if it is a directory.
 .Pp
@@ -1627,7 +1634,7 @@ command
 to terminate it prematurely.
 When this command is read from the terminal, the loop is read once
 prompting with
-.Dq ?
+.Ql ?
 before any statements in the loop are executed.
 If you make a mistake typing in a loop at the terminal you can rub it out.
 .Pp
@@ -1635,9 +1642,11 @@ If you make a mistake typing in a loop at the terminal you can rub it out.
 Like
 .Ic echo
 but no
-.Dq \e
+.Ql \e
 escapes are recognized and words are delimited
-by null characters in the output.
+by
+.Tn NUL
+characters in the output.
 Useful for programs that wish to use the shell to filename expand a list
 of words.
 .Pp
@@ -1645,7 +1654,7 @@ of words.
 The specified
 .Ar word
 is filename and command expanded to yield a string of the form
-.Dq label .
+.Ql label .
 The shell rewinds its input as much as possible
 and searches for a line of the form
 .Dq label: ,
@@ -1662,7 +1671,7 @@ is attempted for each component of the
 .Em path
 where the hash function indicates a possible hit, and in each component
 that does not begin with a
-.Dq / .
+.Ql / .
 .Pp
 .It Ic history
 .It Ic history Ar n
@@ -1751,7 +1760,9 @@ option lists process IDs in addition to the normal information.
 .Ar pid
 .It Ic kill Fl sig Ar pid ...
 .It Ic kill Fl l Op exit_status
-Sends either the TERM (terminate) signal or the
+Sends either the
+.Dv SIGTERM
+(terminate) signal or the
 specified signal to the specified jobs or processes.
 Signals are either given by number or by names (as given in
 .Aq Pa signal.h ,
@@ -1766,8 +1777,14 @@ There is no default; just saying
 .Dq kill
 does not
 send a signal to the current job.
-If the signal being sent is TERM (terminate) or HUP (hangup),
-then the job or process will be sent a CONT (continue) signal as well.
+If the signal being sent is
+.Dv SIGTERM
+(terminate) or
+.Dv SIGHUP
+(hangup),
+then the job or process will be sent a
+.Dv SIGCONT
+(continue) signal as well.
 .Pp
 .It Ic limit
 .It Ic limit Ar resource
@@ -1816,12 +1833,12 @@ may be given as a (floating point or integer)
 number followed by a scale factor.  For all limits other than
 .Ar cputime
 the default scale is
-.Dq k
+.Ql k
 or
 .Dq kilobytes
 (1024 bytes);
 a scale factor of
-.Dq m
+.Ql m
 or
 .Dq megabytes
 may also be used.
@@ -1830,10 +1847,10 @@ For
 the default scale is
 .Dq seconds ;
 a scale factor of
-.Dq m
+.Ql m
 for minutes
 or
-.Dq h
+.Ql h
 for hours, or a time of the form
 .Dq mm:ss
 giving minutes
@@ -1870,7 +1887,9 @@ to the given
 The final two forms run command at priority 4 and
 .Ar number
 respectively.
-The greater the number, the less CPU the process will get.
+The greater the number, the less
+.Tn CPU
+the process will get.
 The super-user may specify negative priority by using
 .Dq nice \-number ... .
 .Ar command
@@ -1886,7 +1905,7 @@ ignored for the remainder of the script.
 The second form causes the specified command to be run with hangups
 ignored.
 All processes detached with
-.Dq &
+.Ql &
 are effectively
 .Ic nohup Ns \'ed .
 .Pp
@@ -2114,8 +2133,8 @@ Each case label is successively matched against the specified
 .Ar string
 which is first command and filename expanded.
 The file metacharacters
-.Dq * ,
-.Dq ?
+.Ql * ,
+.Ql ?
 and
 .Dq [...]
 may be used in the case labels,
@@ -2241,15 +2260,15 @@ The second form sets the specified
 to the value of
 .Ar expr .
 If the expression contains
-.Dq < ,
-.Dq > ,
-.Dq &
+.Ql < ,
+.Ql > ,
+.Ql &
 or
-.Dq \&|
+.Ql |
 then at least
 this part of the expression must be placed within
-.Dq \&(
-.Dq \&) .
+.Ql (
+.Ql \&) .
 The third form assigns the value of
 .Ar expr
 to the
@@ -2264,8 +2283,8 @@ component must already exist.
 .El
 .Pp
 The operators
-.Dq *= ,
-.Dq += ,
+.Ql *= ,
+.Ql += ,
 etc. are available as in C.
 The space separating the name from the assignment operator is optional.
 Spaces are, however, mandatory in separating components of
@@ -2273,9 +2292,9 @@ Spaces are, however, mandatory in separating components of
 which would otherwise be single words.
 .Pp
 Special postfix
-.Dq +\|+
+.Ql +\|+
 and
-.Dq \-\|\-
+.Ql \-\|\-
 operators increment and decrement
 .Ar name
 respectively; i.e.,
@@ -2341,7 +2360,7 @@ The full pathname of the current directory.
 .It Ic echo
 Set when the
 .Fl x
-command line option is given.
+command-line option is given.
 Causes each command and its arguments
 to be echoed just before it is executed.
 For non-built-in commands all expansions occur before echoing.
@@ -2353,9 +2372,9 @@ Enable file name completion.
 Can be given a string value to change the characters used in history
 substitution.  The first character of its value is used as the
 history substitution character, replacing the default character
-.Dq ! .
+.Ql ! .
 The second character of its value replaces the character
-.Dq ^
+.Ql ^
 in quick substitutions.
 .It Ic histfile
 Can be set to the pathname where history is going to be saved/restored.
@@ -2399,7 +2418,7 @@ As described in the section on
 .Sx Input/output ,
 restrictions are placed on output redirection to insure that
 files are not accidentally destroyed, and that
-.Dq >>
+.Ql >>
 redirections
 refer to existing files.
 .It Ic noglob
@@ -2457,10 +2476,10 @@ or the commands may not be found.
 The string that is printed before each command is read from
 an interactive terminal input.
 If a
-.Dq !
+.Ql !
 appears in the string it will be replaced by the current event number
 unless a preceding
-.Dq \e
+.Ql \e
 is given.
 Default is
 .Dq %\  ,
@@ -2495,20 +2514,20 @@ Initialized to the (system-dependent) home of the shell.
 .It Ic status
 The status returned by the last command.
 If it terminated abnormally, then 0200 is added to the status.
-Built-in commands that fail return exit status
-.Dq 1 ,
-all other built-in commands set status to
-.Dq 0 .
+Built-in commands that fail return exit status 1,
+all other built-in commands set status to 0.
 .It Ic time
 Controls automatic timing of commands.
-If set, then any command that takes more than this many CPU seconds
+If set, then any command that takes more than this many
+.Tn CPU
+seconds
 will cause a line giving user, system, and real times and a utilization
 percentage which is the ratio of user plus system times to real time
 to be printed when it terminates.
 .It Ic verbose
 Set by the
 .Fl v
-command line option, causes the words of each command to be printed
+command-line option, causes the words of each command to be printed
 after history substitution.
 .El
 .Ss Non-built-in command execution
@@ -2537,7 +2556,7 @@ or
 argument, and in any case for each directory component of
 .Ar path
 that does not begin with a
-.Dq / ,
+.Ql / ,
 the shell concatenates with the given command name to form a path name
 of a file which it then attempts to execute.
 .Pp
@@ -2577,7 +2596,9 @@ Note that this is a special, late occurring, case of
 substitution,
 and only allows words to be prepended to the argument list without change.
 .Ss Signal handling
-The shell normally ignores QUIT signals.
+The shell normally ignores
+.Dv SIGQUIT
+signals.
 Jobs running detached (either by
 .Ic \&&
 or the
@@ -2590,7 +2611,9 @@ Other signals have the values which the shell inherited from its parent.
 The shell's handling of interrupts and terminate signals
 in shell scripts can be controlled by
 .Ic onintr .
-Login shells catch the TERM (terminate) signal;
+Login shells catch the
+.Dv SIGTERM
+(terminate) signal;
 otherwise this signal is passed on to children from the state in the
 shell's parent.
 Interrupts are not allowed when a login shell is reading the file
@@ -2614,10 +2637,10 @@ at login
 read by login shell, at logout
 .It Pa /bin/sh
 standard shell, for shell scripts not starting with a
-.Dq #
+.Ql #
 .It Pa /tmp/sh*
 temporary file for
-.Dq <<
+.Ql <<
 .It Pa /etc/passwd
 source of home directories for
 .Dq ~name
@@ -2676,9 +2699,9 @@ Command sequences of the form
 .Dq a \&; b \&; c
 are also not handled gracefully
 when stopping is attempted.  If you suspend
-.Dq b ,
+.Ql b ,
 the shell will immediately execute
-.Dq c .
+.Ql c .
 This is especially noticeable if this
 expansion results from an alias.
 It suffices to place the sequence of commands in ()'s to force it to
@@ -2694,22 +2717,22 @@ Alias substitution is most often used to clumsily simulate shell procedures;
 shell procedures should be provided instead of aliases.
 .Pp
 Commands within loops, prompted for by
-.Dq ? ,
+.Ql ? ,
 are not placed on the
 .Ic history
 list.
 Control structure should be parsed instead of being recognized as built-in
 commands.  This would allow control commands to be placed anywhere,
 to be combined with
-.Dq \&| ,
+.Ql | ,
 and to be used with
-.Dq &
+.Ql &
 and
-.Dq \&;
+.Ql \&;
 metasyntax.
 .Pp
 It should be possible to use the
-.Dq \&:
+.Ql \&:
 modifiers on the output of command
 substitutions.
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chmod.1,v 1.11 1999/05/16 19:54:36 alex Exp $
+.\"	$OpenBSD: chmod.1,v 1.12 1999/05/30 17:44:55 aaron Exp $
 .\"	$NetBSD: chmod.1,v 1.8 1995/03/21 09:02:07 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -144,7 +144,6 @@ execute permission is needed on
 and, of course, the
 .Pa ls
 binary itself.
-
 .Pp
 The symbolic mode is described by the following grammar:
 .Bd -literal -offset indent
@@ -160,23 +159,23 @@ perm         ::= r | s | t | w | x | X | u | g | o
 The
 .Ar who
 symbols
-.Dq u ,
-.Dq g ,
+.Sq u ,
+.Sq g ,
 and
-.Dq o
+.Sq o
 specify the user, group, and other parts
 of the mode bits, respectively. The
 .Ar who
 symbol
-.Dq a
+.Sq a
 is equivalent to
-.Dq ugo .
+.Sq ugo .
 Do not confuse the
-.Dq o
+.Sq o
 symbol with
 .Dq owner .
 It is the user bit,
-.Dq u ,
+.Sq u ,
 that refers to the owner of the file.
 .Pp
 .ne 1i
@@ -201,11 +200,11 @@ execute/search bits are set in the original (unmodified) mode.
 Operations with the
 .Ar perm
 symbol
-.Dq X
+.Sq X
 are only meaningful in conjunction with the
 .Ar op
 symbol
-.Dq + ,
+.Sq + ,
 and are ignored in all other cases.
 .It u
 The user permission bits in the mode of the original file.
@@ -223,7 +222,7 @@ symbols represent the operation performed, as follows:
 If no value is supplied for
 .Ar perm ,
 the
-.Dq +
+.Sq +
 operation has no effect.
 If no value is supplied for
 .Ar who ,
@@ -240,7 +239,7 @@ values are set.
 If no value is supplied for
 .Ar perm ,
 the
-.Dq \-
+.Sq \-
 operation has no effect.
 If no value is supplied for
 .Ar who ,
@@ -280,18 +279,18 @@ bits, and each operation is applied to the mode bits in the
 order specified.
 .Pp
 Operations upon the other permissions only (specified by the symbol
-.Dq o
+.Sq o
 by itself), in combination with the
 .Ar perm
 symbols
-.Dq s
+.Sq s
 or
-.Dq t ,
+.Sq t ,
 are ignored.
 .Pp
 Care must be taken when granting elevated privileges to a program through the
 set-user-ID (suid) and set-group-ID (sgid) bits. Do not apply
-.Dq s
+.Sq s
 bits to executables you do not trust. Indeed, the source code which makes up
 the suid/sgid binaries shipped with
 .Bx Open
@@ -343,9 +342,9 @@ utility is expected to be
 compatible with the exception of the
 .Ar perm
 symbols
-.Dq t
+.Sq t
 and
-.Dq X
+.Sq X
 which are not included in that standard.
 .Sh BUGS
 There's no

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chio.1,v 1.10 1999/03/03 01:14:56 aaron Exp $
+.\"	$OpenBSD: chio.1,v 1.11 1999/05/30 17:44:54 aaron Exp $
 .\"	$NetBSD: chio.1,v 1.1.1.1 1996/04/03 00:34:38 thorpej Exp $
 .\"
 .\" Copyright (c) 1996 Jason R. Thorpe <thorpej@and.com>
@@ -76,9 +76,9 @@ There are four element types:
 (import/export), and
 .Pa drive
 (data transfer).  In this command description, the shorthand
-.Dq ET
+.Sq ET
 will be used to represent an element type, and
-.Dq EU
+.Sq EU
 will be used to represent an element unit.  For example, to represent
 the first robotic arm in the changer, the ET would be
 .Dq picker
@@ -214,5 +214,7 @@ default changer device
 .Sh AUTHOR
 The
 .Nm
-program and SCSI changer driver were written by Jason R. Thorpe
+program and
+.Tn SCSI
+changer driver were written by Jason R. Thorpe
 <thorpej@and.com> for And Communications (http://www.and.com/).
