@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.54 2000/05/06 17:55:08 itojun Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.55 2000/05/10 03:22:39 jason Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -849,7 +849,7 @@ ip_dooptions(m)
 {
 	register struct ip *ip = mtod(m, struct ip *);
 	register u_char *cp;
-	register struct ip_timestamp *ipt;
+	struct ip_timestamp ipt;
 	register struct in_ifaddr *ia;
 	int opt, optlen, cnt, off, code, type = ICMP_PARAMPROB, forward = 0;
 	struct in_addr sin, dst;
@@ -985,23 +985,23 @@ ip_dooptions(m)
 
 		case IPOPT_TS:
 			code = cp - (u_char *)ip;
-			ipt = (struct ip_timestamp *)cp;
-			if (ipt->ipt_ptr < 5 || ipt->ipt_len < 5)
+			bcopy(cp, &ipt, sizeof(struct ip_timestamp));
+			if (ipt.ipt_ptr < 5 || ipt.ipt_len < 5)
 				goto bad;
-			if (ipt->ipt_ptr - 1 + sizeof(n_time) > ipt->ipt_len) {
-				if (++ipt->ipt_oflw == 0)
+			if (ipt.ipt_ptr - 1 + sizeof(n_time) > ipt.ipt_len) {
+				if (++ipt.ipt_oflw == 0)
 					goto bad;
 				break;
 			}
-			bcopy(cp + ipt->ipt_ptr - 1, &sin, sizeof sin);
-			switch (ipt->ipt_flg) {
+			bcopy(cp + ipt.ipt_ptr - 1, &sin, sizeof sin);
+			switch (ipt.ipt_flg) {
 
 			case IPOPT_TS_TSONLY:
 				break;
 
 			case IPOPT_TS_TSANDADDR:
-				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
-				    sizeof(struct in_addr) > ipt->ipt_len)
+				if (ipt.ipt_ptr - 1 + sizeof(n_time) +
+				    sizeof(struct in_addr) > ipt.ipt_len)
 					goto bad;
 				ipaddr.sin_addr = dst;
 				ia = (INA)ifaof_ifpforaddr((SA)&ipaddr,
@@ -1010,27 +1010,27 @@ ip_dooptions(m)
 					continue;
 				bcopy((caddr_t)&ia->ia_addr.sin_addr,
 				    (caddr_t)&sin, sizeof(struct in_addr));
-				ipt->ipt_ptr += sizeof(struct in_addr);
+				ipt.ipt_ptr += sizeof(struct in_addr);
 				break;
 
 			case IPOPT_TS_PRESPEC:
-				if (ipt->ipt_ptr - 1 + sizeof(n_time) +
-				    sizeof(struct in_addr) > ipt->ipt_len)
+				if (ipt.ipt_ptr - 1 + sizeof(n_time) +
+				    sizeof(struct in_addr) > ipt.ipt_len)
 					goto bad;
 				bcopy((caddr_t)&sin, (caddr_t)&ipaddr.sin_addr,
 				    sizeof(struct in_addr));
 				if (ifa_ifwithaddr((SA)&ipaddr) == 0)
 					continue;
-				ipt->ipt_ptr += sizeof(struct in_addr);
+				ipt.ipt_ptr += sizeof(struct in_addr);
 				break;
 
 			default:
 				goto bad;
 			}
 			ntime = iptime();
-			bcopy((caddr_t)&ntime, (caddr_t)cp + ipt->ipt_ptr - 1,
+			bcopy((caddr_t)&ntime, (caddr_t)cp + ipt.ipt_ptr - 1,
 			    sizeof(n_time));
-			ipt->ipt_ptr += sizeof(n_time);
+			ipt.ipt_ptr += sizeof(n_time);
 		}
 	}
 	if (forward && ipforwarding) {
