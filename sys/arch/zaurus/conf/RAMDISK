@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.19 2005/02/01 15:41:24 drahn Exp $
+#	$OpenBSD: RAMDISK,v 1.20 2005/02/18 15:35:47 dlg Exp $
 #
 # GENERIC machine description file
 #
@@ -69,7 +69,8 @@ pxagpio0	at pxaip?	# GPIO
 scoop0		at pxaip?
 scoop1		at pxaip?
 saost0		at pxaip? addr 0x40a00000 size 0x20
-ohci0		at pxaip? addr 0x4c000000 size 0x70 intr 3
+pxaudc0		at pxaip?
+ohci0		at pxaip?
 usb*		at ohci?
 
 # keyboard

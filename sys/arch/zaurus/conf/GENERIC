@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.28 2005/02/17 15:35:53 dlg Exp $
+#	$OpenBSD: GENERIC,v 1.29 2005/02/18 15:35:47 dlg Exp $
 #
 # GENERIC machine description file
 #
@@ -65,6 +65,7 @@ pxagpio0	at pxaip?	# GPIO
 scoop0		at pxaip?
 scoop1		at pxaip?
 saost0		at pxaip? addr 0x40a00000 size 0x20
+pxaudc0		at pxaip?
 ohci0		at pxaip?
 usb*		at ohci?
 
