@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.51 2004/08/05 15:58:21 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.52 2004/08/05 16:26:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -404,7 +404,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	struct rde_aspath	*oasp;
 
 	RIB_STAT(prefix_move);
-	ENSURE(asp->peer == p->aspath->peer);
+	ENSURE(asp->peer == p->peer);
 
 	/* create new prefix node */
 	np = prefix_alloc();
@@ -496,7 +496,7 @@ prefix_bypeer(struct pt_entry *pte, struct rde_peer *peer)
 	struct prefix	*p;
 
 	LIST_FOREACH(p, &pte->prefix_h, prefix_l) {
-		if (p->aspath->peer == peer)
+		if (p->peer == peer)
 			return p;
 	}
 	return NULL;
@@ -610,7 +610,7 @@ prefix_unlink(struct prefix *pref)
 
 	LIST_REMOVE(pref, path_l);
 	pref->aspath->prefix_cnt--;
-	pref->aspath->peer->prefix_cnt--;
+	pref->peer->prefix_cnt--;
 
 	/* destroy all references to other objects */
 	pref->aspath = NULL;

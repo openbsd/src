@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.24 2004/07/30 14:44:30 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.25 2004/08/05 16:26:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -240,7 +240,7 @@ up_generate_updates(struct rde_peer *peer,
 			/* new prefix got filtered and no old prefex avail */
 			return;
 
-		if (peer == old->aspath->peer)
+		if (peer == old->peer)
 			/* Do not send routes back to sender */
 			return;
 
@@ -253,7 +253,7 @@ up_generate_updates(struct rde_peer *peer,
 			 */
 			return;
 
-		if (old->aspath->peer->conf.ebgp == 0 && peer->conf.ebgp == 0) {
+		if (old->peer->conf.ebgp == 0 && peer->conf.ebgp == 0) {
 			/*
 			 * route reflector redistribution rules:
 			 * 1. if announce is set		-> announce
@@ -262,7 +262,7 @@ up_generate_updates(struct rde_peer *peer,
 			 * 4. old non-client, new client	-> yes
 			 * 5. old client, new client		-> yes
 			 */
-			if (old->aspath->peer->conf.reflector_client == 0 &&
+			if (old->peer->conf.reflector_client == 0 &&
 			    peer->conf.reflector_client == 0 &&
 			    (old->aspath->nexthop->flags &
 			    NEXTHOP_ANNOUNCE) == 0)
@@ -332,7 +332,7 @@ up_generate_updates(struct rde_peer *peer,
 		if (up_add(peer, p, NULL) == -1)
 			log_warnx("queuing withdraw failed.");
 	} else {
-		if (peer == new->aspath->peer) {
+		if (peer == new->peer) {
 			/* Do not send routes back to sender */
 			up_generate_updates(peer, NULL, old);
 			return;
@@ -349,7 +349,7 @@ up_generate_updates(struct rde_peer *peer,
 			return;
 		}
 
-		if (new->aspath->peer->conf.ebgp == 0 && peer->conf.ebgp == 0) {
+		if (new->peer->conf.ebgp == 0 && peer->conf.ebgp == 0) {
 			/*
 			 * route reflector redistribution rules:
 			 * 1. if announce is set		-> announce
@@ -358,7 +358,7 @@ up_generate_updates(struct rde_peer *peer,
 			 * 4. old non-client, new client	-> yes
 			 * 5. old client, new client		-> yes
 			 */
-			if (new->aspath->peer->conf.reflector_client == 0 &&
+			if (new->peer->conf.reflector_client == 0 &&
 			    peer->conf.reflector_client == 0 &&
 			    (new->aspath->nexthop->flags &
 			    NEXTHOP_ANNOUNCE) == 0) {

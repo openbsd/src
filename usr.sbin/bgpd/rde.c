@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.133 2004/08/05 15:58:21 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.134 2004/08/05 16:26:56 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -971,12 +971,12 @@ rde_dump_rib_as(struct prefix *p, pid_t pid)
 	rib.prefixlen = p->prefix->prefixlen;
 	rib.origin = p->aspath->flags.origin;
 	rib.flags = 0;
-	if (p->aspath->nexthop->state == NEXTHOP_REACH)
-		rib.flags |= F_RIB_ELIGIBLE;
 	if (p->prefix->active == p)
 		rib.flags |= F_RIB_ACTIVE;
-	if (p->aspath->peer->conf.ebgp == 0)
+	if (p->peer->conf.ebgp == 0)
 		rib.flags |= F_RIB_INTERNAL;
+	if (p->aspath->nexthop->state == NEXTHOP_REACH)
+		rib.flags |= F_RIB_ELIGIBLE;
 	if (p->aspath->nexthop->flags & NEXTHOP_ANNOUNCE)
 		rib.flags |= F_RIB_ANNOUNCE;
 	rib.aspath_len = aspath_length(p->aspath->flags.aspath);
@@ -1001,12 +1001,12 @@ rde_dump_rib_prefix(struct prefix *p, pid_t pid)
 	pt_getaddr(p->prefix, &prefix.prefix);
 	prefix.prefixlen = p->prefix->prefixlen;
 	prefix.flags = 0;
-	if (p->aspath->nexthop->state == NEXTHOP_REACH)
-		prefix.flags |= F_RIB_ELIGIBLE;
 	if (p->prefix->active == p)
 		prefix.flags |= F_RIB_ACTIVE;
-	if (p->aspath->peer->conf.ebgp == 0)
+	if (p->peer->conf.ebgp == 0)
 		prefix.flags |= F_RIB_INTERNAL;
+	if (p->aspath->nexthop->state == NEXTHOP_REACH)
+		prefix.flags |= F_RIB_ELIGIBLE;
 	if (p->aspath->nexthop->flags & NEXTHOP_ANNOUNCE)
 		prefix.flags |= F_RIB_ANNOUNCE;
 	if (imsg_compose_pid(&ibuf_se, IMSG_CTL_SHOW_RIB_PREFIX, pid,
