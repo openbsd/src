@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.28 2001/10/05 05:03:59 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.29 2001/10/05 21:13:51 jason Exp $	*/
 /*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
@@ -1395,15 +1395,17 @@ zsioctl(dev, cmd, data, flag, p)
 		int bits = 0;
 		u_char m;
 
-		if (cs->cs_preg[5] & ZSWR5_DTR)
-			bits |= TIOCM_DTR;
-		if (cs->cs_preg[5] & ZSWR5_RTS)
-			bits |= TIOCM_RTS;
+		m = cs->cs_preg[5];
+		if (ISSET(m, ZSWR5_DTR))
+			SET(bits, TIOCM_DTR);
+		if (ISSET(m, ZSWR5_RTS))
+			SET(bits, TIOCM_RTS);
+
 		m = cs->cs_zc->zc_csr;
 		if (m & ZSRR0_DCD)
-			bits |= TIOCM_CD;
+			SET(bits, TIOCM_CD);
 		if (m & ZSRR0_CTS)
-			bits |= TIOCM_CTS;
+			SET(bits, TIOCM_CTS);
 		*(int *)data = bits;
 		break;
 	}
@@ -1688,28 +1690,28 @@ tiocm_to_zs(cs, how, val)
 	int how, val;
 {
 	int s;
-	u_char bits = 0, v;
+	u_char bits = 0;
 
-	if (val & TIOCM_DTR);
-		bits |= ZSWR5_DTR;
-	if (val & TIOCM_RTS)
-		bits |= ZSWR5_RTS;
+	if (ISSET(val,TIOCM_DTR))
+		SET(bits, ZSWR5_DTR);
+	if (ISSET(val,TIOCM_RTS))
+		SET(bits, ZSWR5_RTS);
 
 	s = splzs();
-	v = cs->cs_preg[5];
 	switch (how) {
 		case TIOCMBIC:
-			v &= ~bits;
+			CLR(cs->cs_preg[5], bits);
 			break;
+
 		case TIOCMBIS:
-			v |= bits;
+			SET(cs->cs_preg[5], bits);
 			break;
+
 		case TIOCMSET:
-			v &= ~(ZSWR5_RTS | ZSWR5_DTR);
-			v |= bits;
+			CLR(cs->cs_preg[5], ZSWR5_RTS | ZSWR5_DTR);
+			SET(cs->cs_preg[5], bits);
 			break;
 	}
-	cs->cs_preg[5] = v;
 
 	if (cs->cs_heldchange == 0) {
 		if (cs->cs_ttyp->t_state & TS_BUSY) {
