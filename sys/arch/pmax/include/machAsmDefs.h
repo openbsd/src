@@ -1,4 +1,4 @@
-/*      $OpenBSD: machAsmDefs.h,v 1.4 1996/10/29 17:02:39 graichen Exp $	*/
+/*      $OpenBSD: machAsmDefs.h,v 1.5 1999/08/20 16:37:56 maja Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -62,13 +62,13 @@
 /*
  * Define how to access unaligned data word 
  */
-#ifdef MIPSEL
+#ifdef __MIPSEL__
 #define LWLO    lwl
 #define LWHI    lwr
 #define	SWLO	swl
 #define	SWHI	swr
 #endif
-#ifdef MIPSEB
+#ifdef __MIPSEB__
 #define LWLO    lwr
 #define LWHI    lwl
 #define	SWLO	swr
