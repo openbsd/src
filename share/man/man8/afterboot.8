@@ -120,12 +120,10 @@ ppp0: flags=8051<UP,POINTOPOINT,RUNNING,MULTICAST>
 \!\" Will someone else fill in the slip interface.
 \!\"--------------------------------------------------------------------------
 .Pp
-You may wish to turn off multicast routing in
-.Pa /etc/netstart
-by commenting it out, i.e. by placing a # sign at the start of the line:
-.Bd -literal -offset indent
-# route add -net 224.0.0.0 -interface $hostname
-.Ed
+If you wish to turn on multicast routing, see the section titled 
+.Dq Multicast routing.
+in
+.Pa /etc/netstart .
 .Pp
 See
 .Xr dhcp 8
