@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$Id: comsat.c,v 1.2 1996/08/27 10:22:04 deraadt Exp $";
+static char rcsid[] = "$Id: comsat.c,v 1.3 1996/08/27 11:43:52 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,6 +63,7 @@ static char rcsid[] = "$Id: comsat.c,v 1.2 1996/08/27 10:22:04 deraadt Exp $";
 #include <termios.h>
 #include <unistd.h>
 #include <utmp.h>
+#include <vis.h>
 
 int	debug = 0;
 #define	dsyslog	if (debug) syslog
@@ -237,6 +238,7 @@ jkfprintf(tp, name, offset)
 	off_t offset;
 {
 	register char *cp, ch;
+	char visout[4], *s2;
 	register FILE *fi;
 	register int linecnt, charcnt, inheader;
 	register struct passwd *p;
@@ -277,9 +279,9 @@ jkfprintf(tp, name, offset)
 		/* strip weird stuff so can't trojan horse stupid terminals */
 		for (cp = line; (ch = *cp) && ch != '\n'; ++cp, --charcnt) {
 			ch = toascii(ch);
-			if (!isprint(ch) && !isspace(ch))
-				ch |= 0x40;
-			(void)fputc(ch, tp);
+			vis(visout, ch, VIS_SAFE|VIS_NOSLASH, cp[1]);
+			for (s2 = visout; *s2; s2++)
+				(void)fputc(*s2, tp);
 		}
 		(void)fputs(cr, tp);
 		--linecnt;
