@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.4 1996/11/06 03:54:01 tholo Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.5 1996/11/06 06:51:45 tholo Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -86,10 +86,7 @@ namei(ndp)
 	register struct vnode *dp;	/* the directory we are searching */
 	struct iovec aiov;		/* uio for reading symbolic links */
 	struct uio auio;
-	int error, linklen;
-#if 0
-	int dironly = 0;
-#endif
+	int error, linklen, dironly = 0;
 	struct componentname *cnp = &ndp->ni_cnd;
 
 	ndp->ni_cnd.cn_cred = ndp->ni_cnd.cn_proc->p_ucred;
@@ -132,7 +129,6 @@ namei(ndp)
 		return (error);
 	}
 
-#if 0
 	/*
 	 * Ignore trailing /'s, except require the last path element
 	 * to be a directory
@@ -148,7 +144,6 @@ namei(ndp)
 		       cnp->cn_pnbuf[ndp->ni_pathlen - 2] == '/')
 			cnp->cn_pnbuf[--ndp->ni_pathlen - 1] = '\0';
 	}
-#endif
 
 	ndp->ni_loopcnt = 0;
 
@@ -183,19 +178,16 @@ namei(ndp)
 		 * Check for symbolic link
 		 */
 		if ((cnp->cn_flags & ISSYMLINK) == 0) {
-#if 0
 			/*
 			 * Check for directory if dironly
 			 */
 			if (dironly && ndp->ni_vp->v_type != VDIR) {
-				if (cnp->cn_flags & LOCKPARENT)
+				if ((cnp->cn_flags & LOCKPARENT) && ndp->ni_pathlen == 1)
 					VOP_UNLOCK(ndp->ni_dvp);
-				if (cnp->cn_flags & LOCKLEAF)
-					VOP_UNLOCK(ndp->ni_vp);
-				error = ENOTDIR;
-				break;
+				vput(ndp->ni_vp);
+				FREE(cnp->cn_pnbuf, M_NAMEI);
+				return (ENOTDIR);
 			}
-#endif
 			if ((cnp->cn_flags & (SAVENAME | SAVESTART)) == 0)
 				FREE(cnp->cn_pnbuf, M_NAMEI);
 			else
