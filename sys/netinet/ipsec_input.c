@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.68 2003/07/24 11:13:47 markus Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.69 2003/07/28 10:10:16 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -547,6 +547,9 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		m->m_flags |= M_COMP;
 	else
 		m->m_flags |= M_AUTH | M_AUTH_AH;
+
+	if (tdbp->tdb_flags & TDBF_TUNNELING)
+		m->m_flags |= M_TUNNEL;
 
 #if NBPFILTER > 0
 	bpfif = &encif[0].sc_if;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.27 2003/07/09 22:03:16 itojun Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.28 2003/07/28 10:10:16 markus Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -166,9 +166,11 @@ in_gif_input(struct mbuf *m, ...)
 	off = va_arg(ap, int);
 	va_end(ap);
 
-	/* XXX what if we run transport-mode IPsec to protect gif tunnel ? */
-	if (m->m_flags & (M_AUTH | M_CONF))
+	/* IP-in-IP header is caused by tunnel mode, so skip gif lookup */
+	if (m->m_flags & M_TUNNEL) {
+		m->m_flags &= ~M_TUNNEL;
 		goto inject;
+	}
 
 	ip = mtod(m, struct ip *);
 

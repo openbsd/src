@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.70 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.71 2003/07/28 10:10:16 markus Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -140,6 +140,7 @@ struct mbuf {
 #define M_AUTH		0x0800  /* payload was authenticated (AH or ESP auth) */
 #define M_COMP		0x1000  /* payload was compressed (IPCOMP) */
 #define M_AUTH_AH	0x2000  /* header was authenticated (AH) */
+#define M_TUNNEL	0x4000  /* IP-in-IP added by tunnel mode IPsec */
 
 /* Checksumming flags */
 #define	M_IPV4_CSUM_OUT		0x0001	/* IPv4 checksum needed */
@@ -158,7 +159,8 @@ struct mbuf {
 #define M_LOOP		0x0040	/* for Mbuf statistics */
 
 /* flags copied when copying m_pkthdr */
-#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|M_AUTH|M_COMP|M_ANYCAST6|M_LOOP)
+#define	M_COPYFLAGS	(M_PKTHDR|M_EOR|M_PROTO1|M_BCAST|M_MCAST|M_CONF|\
+			 M_AUTH|M_COMP|M_ANYCAST6|M_LOOP|M_TUNNEL)
 
 /* mbuf types */
 #define	MT_FREE		0	/* should be on free list */
