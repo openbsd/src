@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: opendir.c,v 1.2 1996/08/19 08:25:12 tholo Exp $";
+static char rcsid[] = "$OpenBSD: opendir.c,v 1.3 1996/09/07 19:04:06 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -103,8 +103,8 @@ __opendir2(name, flags)
 			close(fd);
 			return (NULL);
 		}
-		unionstack = !strncmp(sfb.f_fstypename, MOUNT_UNION,
-		    MFSNAMELEN);
+		unionstack = strncmp(sfb.f_fstypename, MOUNT_UNION, MFSNAMELEN) == 0 ||
+			     (sfb.f_flags & MNT_UNION);
 	} else {
 		unionstack = 0;
 	}
