@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.11 2001/04/19 22:57:27 deraadt Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.12 2001/05/05 23:23:31 millert Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -30,6 +30,8 @@
 #include <sys/fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
+#include <sys/resource.h>
 #include <sys/wait.h>
 #include <sys/param.h>
 #include <ctype.h>
@@ -68,7 +70,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.11 2001/04/19 22:57:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.12 2001/05/05 23:23:31 millert Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -242,7 +244,7 @@ run_file(filename, uid, gid)
 		perr2("Cannot chdir to ", _PATH_ATSPOOL);
 
 	/*
-	 * Create a file to hold the output of the job we are  about to
+	 * Create a file to hold the output of the job we are about to
 	 * run. Write the mail header.
 	 */
 
@@ -297,16 +299,16 @@ run_file(filename, uid, gid)
 		if (chdir(_PATH_ATJOBS) < 0)
 			perr2("Cannot chdir to ", _PATH_ATJOBS);
 
-		queue = *filename;
-
-		if (queue > 'b')
-		    nice(queue - 'b');
-
 		if (setusercontext(0, pentry, pentry->pw_uid, LOGIN_SETALL) < 0)
 			perr("Cannot set user context");
 
 		if (chdir(pentry->pw_dir) < 0)
 			chdir("/");
+
+		/* First letter indicates requested job priority */
+		queue = tolower((unsigned char) *filename);
+		if (queue > 'b')
+			(void) setpriority(PRIO_PROCESS, 0, queue - 'b');
 
 		if (execle(_PATH_BSHELL, "sh", NULL, nenvp) != 0)
 			perr("Exec failed for /bin/sh");
