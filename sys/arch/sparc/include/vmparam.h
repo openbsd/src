@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.7 1999/04/22 20:36:21 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.8 1999/05/27 23:56:39 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -144,7 +144,7 @@
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 
 #if defined(UVM)
-#defined MACHINE_NEW_NONCONTIG
+#define MACHINE_NEW_NONCONTIG
 #endif
 
 #ifndef MACHINE_NEW_NONCONTG
