@@ -1,4 +1,4 @@
-.\" $OpenBSD: em.4,v 1.1 2002/09/24 19:03:14 nate Exp $
+.\" $OpenBSD: em.4,v 1.2 2002/09/24 19:28:20 deraadt Exp $
 .\" Copyright (c) 2002 Intel Corporation
 .\" All rights reserved.
 .\" Redistribution and use in source and binary forms of the Software, with or without 
@@ -43,7 +43,7 @@ driver provides support for PCI gigabit Ethernet adapters based on
 the Intel 82540, 82542, 82543, 82544, and 82546 Ethernet controller chips.
 This includes the following models:
 .Pp
-.Bl -bullet -compact
+.Bl -item -offset indent -compact
 .It
 Intel PRO/1000 Gigabit Server Adapter (SX Fiber) (PWLA8490)
 .It
@@ -76,46 +76,24 @@ The
 .Nm
 driver supports the following media types:
 .Pp
-.Bl -tag -width ".Cm 1000baseSX"
-.It Cm autoselect
+.Bl -tag -width xxx -offset indent
+.It Cm media No autoselect
 Enables auto-negotiation for speed and duplex.
-.It Cm 10baseT
+.It Cm media No 10baseT Cm mediaopt No full-duplex
 Sets 10Mbps operation.
-Use the
-.Cm mediaopt
-option to select
-.Cm full-duplex
-mode.
-.It Cm 100baseTX
+.It Cm media No 100baseTX Cm mediaopt No full-duplex
 Sets 100Mbps operation.
-Use the
-.Cm mediaopt
-option to select
-.Cm full-duplex
-mode.
-.It Cm 1000baseSX
+.It Cm media No 1000baseSX
 Sets 1000Mbps operation.
 Only 
-.Cm full-duplex
+full-duplex
 mode is supported at this speed.
-.It Cm 1000baseTX
+.It Cm media No 1000baseTX
 Sets 1000Mbps operation.
 Only 
-.Cm full-duplex
+full-duplex
 mode is supported at this speed.
 .El
-.Pp
-The
-.Nm
-driver supports the following media options:
-.Pp
-.Bl -tag -width ".Cm full-duplex" 
-.It Cm full-duplex
-Forces full-duplex operation
-.It Cm half-duplex
-Forces half-duplex operation.
-.El
-.Pp
 .Pp
 For more information on configuring this device, see
 .Xr ifconfig 8 .
