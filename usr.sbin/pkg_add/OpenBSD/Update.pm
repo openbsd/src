@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.33 2004/11/18 21:48:02 espie Exp $
+# $OpenBSD: Update.pm,v 1.34 2004/11/18 21:56:03 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -218,7 +218,7 @@ sub can_do
 	my $plist = OpenBSD::PackingList->from_installation($toreplace);
 	$plist->visit('can_update', 0, $state);
 	if ($state->{okay} == 0) {
-		Warn "Old package contains impossible to update elements\n";
+		Warn "Old package contains unsafe operations\n";
 	}
 	if ($state->{forced}->{update}) {
 		$state->{okay} = 1;
