@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.2 2000/02/13 10:59:06 niklas Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.3 2000/03/01 22:38:51 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -286,6 +286,7 @@ gdt_pci_attach(parent, self, aux)
 	gdt->sc_dpmemt = dpmemt;
 	gdt->sc_dpmemh = dpmemh;
 	gdt->sc_dpmembase = dpmembase;
+	gdt->sc_dmat = pa->pa_dmat;
 
 	/*
 	 * The GDT_PCINEW series also has two other regions to map.

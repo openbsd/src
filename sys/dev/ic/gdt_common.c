@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.4 2000/02/13 11:23:15 niklas Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.5 2000/03/01 22:38:51 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -107,7 +107,7 @@ gdt_attach(gdt)
 	struct gdt_softc *gdt;
 {
 	u_int16_t cdev_cnt;
-	int i, id, drv_cyls, drv_hds, drv_secs;
+	int i, id, drv_cyls, drv_hds, drv_secs, error;
 
 	gdt_polling = 1;
 	gdt_from_wait = 0;
@@ -120,6 +120,16 @@ gdt_attach(gdt)
 	/* Initialize the ccbs */
 	for (i = 0; i < GDT_MAXCMDS; i++) {
 		gdt->sc_ccbs[i].gc_cmd_index = i + 2;
+		error = bus_dmamap_create(gdt->sc_dmat,
+		    (GDT_MAXOFFSETS - 1) << PGSHIFT, GDT_MAXOFFSETS,
+		    (GDT_MAXOFFSETS - 1) << PGSHIFT, 0,
+		    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
+		    &gdt->sc_ccbs[i].gc_dmamap_xfer);
+		if (error) {
+			printf("%s: cannot create ccb dmamap (%d)",
+			    gdt->sc_dev.dv_xname, error);
+			return (1);
+		}
 		(void)gdt_ccb_set_cmd(gdt->sc_ccbs + i, GDT_GCF_UNUSED);
 		TAILQ_INSERT_TAIL(&gdt->sc_free_ccb, &gdt->sc_ccbs[i],
 		    gc_chain);
@@ -460,6 +470,8 @@ gdt_scsi_cmd(xs)
 	u_int32_t blockno, blockcnt;
 	struct scsi_rw *rw;
 	struct scsi_rw_big *rwb;
+	bus_dmamap_t xfer;
+	int error;
 
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_scsi_cmd "));
 
@@ -596,6 +608,26 @@ gdt_scsi_cmd(xs)
 		ccb->gc_service = GDT_CACHESERVICE;
 		gdt_ccb_set_cmd(ccb, GDT_GCF_SCSI);
 
+		xfer = ccb->gc_dmamap_xfer;
+		error = bus_dmamap_load(gdt->sc_dmat, xfer, xs->data, 
+		    xs->datalen, NULL, (xs->flags & SCSI_NOSLEEP) ? 
+		    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
+		if (error) {
+			printf("%s: gdt_scsi_cmd: ", gdt->sc_dev.dv_xname); 
+			if (error == EFBIG)
+				printf("more than %d dma segs\n",
+				    GDT_MAXOFFSETS);
+			else
+				printf("error %d loading dma map\n", error);
+		
+			xs->error = XS_DRIVER_STUFFUP;
+			gdt_free_ccb(gdt, ccb);
+			return (COMPLETE);
+		}
+		bus_dmamap_sync(gdt->sc_dmat, xfer,
+		    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_PREREAD :
+		    BUS_DMASYNC_PREWRITE);
+
 		gdt_enqueue_ccb(gdt, ccb);
 		/* XXX what if enqueue did not start a transfer? */
 		if (gdt_polling) {
@@ -634,9 +666,8 @@ gdt_exec_ccb(ccb)
 	struct gdt_softc *gdt = link->adapter_softc;
 	u_int8_t target = link->target;
 	u_int32_t sg_canz;
-	int i, len, off;
-	u_int8_t *buf;
-	paddr_t pa;
+	bus_dmamap_t xfer;
+	int i;
 
 	GDT_DPRINTF(GDT_D_CMD, ("gdt_exec_ccb(%p, %p) ", xs, ccb));
 
@@ -681,34 +712,28 @@ gdt_exec_ccb(ccb)
 		    ccb->gc_blockcnt);
 	}
 
+	xfer = ccb->gc_dmamap_xfer;
 	if (gdt->sc_cache_feat & GDT_SCATTER_GATHER) {
 		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DESTADDR,
 		    0xffffffff);
-		len = xs->datalen;
-		buf = xs->data;
-		for (i = 0; len > 0; i++) {
-			for (off = PAGE_SIZE, pa = vtophys(buf); off < len;
-			    off += PAGE_SIZE)
-				if (pa + off != vtophys(buf + off))
-					break;
-
+		for (i = 0; i < xfer->dm_nsegs; i++) {
 			gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
-			    GDT_CACHE_SG_LST + i * GDT_SG_SZ + GDT_SG_PTR, pa);
+			    GDT_CACHE_SG_LST + i * GDT_SG_SZ + GDT_SG_PTR,
+			    xfer->dm_segs[i].ds_addr);
 			gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION +
 			    GDT_CACHE_SG_LST + i * GDT_SG_SZ + GDT_SG_LEN,
-			    MIN(off, len));
+			    xfer->dm_segs[i].ds_len);
 			GDT_DPRINTF(GDT_D_IO, ("#%d va %p pa %p len %x\n", i,
-			    buf, (void *)pa, MIN(off, len)));
-
-			len -= off;
-			buf += off;
+			    buf, xfer->dm_segs[i].ds_addr,
+			    xfer->dm_segs[i].ds_len));
 		}
-		sg_canz = i;
+		sg_canz = xfer->dm_nsegs;
 		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_SG_LST +
 		    sg_canz * GDT_SG_SZ + GDT_SG_LEN, 0);
 	} else {
+		/* XXX Hardly correct */
 		gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_DESTADDR,
-		    vtophys(xs->data));
+		    xfer->dm_segs[0].ds_addr);
 		sg_canz = 0;
 	}
 	gdt_enc32(gdt->sc_cmd + GDT_CMD_UNION + GDT_CACHE_SG_CANZ, sg_canz);
@@ -990,6 +1015,10 @@ gdt_intr(arg)
 		untimeout(gdt_timeout, ccb);
 	ctx.service = ccb->gc_service;
 	prev_cmd = ccb->gc_flags & GDT_GCF_CMD_MASK;
+	bus_dmamap_sync(gdt->sc_dmat, ccb->gc_dmamap_xfer,
+	    (xs->flags & SCSI_DATA_IN) ? BUS_DMASYNC_POSTREAD :
+	    BUS_DMASYNC_POSTWRITE);
+	bus_dmamap_unload(gdt->sc_dmat, ccb->gc_dmamap_xfer);
 	gdt_free_ccb(gdt, ccb);
 	switch (prev_cmd) {
 	case GDT_GCF_UNUSED:

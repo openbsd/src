@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdtvar.h,v 1.2 2000/02/07 04:30:21 itojun Exp $	*/
+/*	$OpenBSD: gdtvar.h,v 1.3 2000/03/01 22:38:51 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -68,6 +68,7 @@ struct gdt_intr_ctx {
 struct gdt_ccb {
 	TAILQ_ENTRY(gdt_ccb) gc_chain;
 	struct scsi_xfer *gc_xs;
+	bus_dmamap_t gc_dmamap_xfer;
 	int gc_timeout;
 	u_int32_t gc_info;
 	u_int32_t gc_blockno;
@@ -116,6 +117,7 @@ struct gdt_softc {
 	bus_space_tag_t sc_dpmemt;
 	bus_space_handle_t sc_dpmemh;
 	bus_addr_t sc_dpmembase;
+	bus_dma_tag_t sc_dmat;
 
 	/* XXX These could go into a class-dependent opaque struct instead */
 	bus_space_tag_t sc_iot;
