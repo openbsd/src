@@ -1,4 +1,4 @@
-/*      $OpenBSD: des3.c,v 1.4 2002/04/03 21:33:41 markus Exp $  */
+/*      $OpenBSD: des3.c,v 1.5 2002/06/23 21:46:10 wcobb Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserverd.
@@ -149,8 +149,8 @@ main(int argc, char **argv)
 	des_key_schedule ks1, ks2, ks3;
 	unsigned char iv0[8], iv[8], key[24] = "012345670123456701234567";
 	unsigned char b1[SZ], b2[SZ];
-	int allowed, i, fail = 0;
-	u_int32_t rand;
+	int allowed = 0, i, fail = 0;
+	u_int32_t rand = 0;
 
 	if (geteuid() == 0) {
 		allowed = getallowsoft();

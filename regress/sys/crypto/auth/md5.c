@@ -1,4 +1,4 @@
-/*      $OpenBSD: md5.c,v 1.2 2002/04/03 18:42:15 fgsch Exp $  */
+/*      $OpenBSD: md5.c,v 1.3 2002/06/23 21:46:10 wcobb Exp $  */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserverd.
@@ -145,7 +145,7 @@ static struct {
 int
 main(int argc, char **argv)
 {
-	int allowed, i, count, fail;
+	int allowed = 0, i, count, fail;
 	char *md;
 
 	if (geteuid() == 0) {
