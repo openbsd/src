@@ -1,4 +1,4 @@
-/*	$OpenBSD: wskbdmap_mfii.c,v 1.12 2001/09/04 21:28:54 mickey Exp $ */
+/*	$OpenBSD: wskbdmap_mfii.c,v 1.13 2001/10/04 23:23:46 mickey Exp $ */
 /*	$NetBSD: wskbdmap_mfii.c,v 1.15 2000/05/19 16:40:04 drochner Exp $	*/
 
 /*-
@@ -549,6 +549,7 @@ static const keysym_t pckbd_keydesc_ru[] = {
     KC(51),  KS_comma,		KS_less,	KS_Cyrillic_be,		KS_Cyrillic_BE,
     KC(52),  KS_period,		KS_greater,	KS_Cyrillic_yu,		KS_Cyrillic_YU,
     KC(53),  KS_slash,		KS_question,	KS_Cyrillic_yo,		KS_Cyrillic_YO,
+    KC(184), KS_Mode_switch,   KS_Multi_key,
 };
 
 static const keysym_t pckbd_keydesc_ua[] = {
@@ -592,6 +593,7 @@ static const keysym_t pckbd_keydesc_ua[] = {
     KC(51),  KS_comma,		KS_less,	KS_Cyrillic_be,		KS_Cyrillic_BE,
     KC(52),  KS_period,		KS_greater,	KS_Cyrillic_yu,		KS_Cyrillic_YU,
     KC(53),  KS_slash,		KS_question,	KS_Cyrillic_yo,		KS_Cyrillic_YO,
+    KC(184), KS_Mode_switch,   KS_Multi_key,
 };
 
 static const keysym_t pckbd_keydesc_sg[] = {
