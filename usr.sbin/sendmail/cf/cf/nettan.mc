@@ -35,6 +35,6 @@ divert(-1)
 #
 
 include(`../m4/cf.m4')
-VERSIONID(`@(#)pain.mc	$Revision: 1.1 $')
+VERSIONID(`$OpenBSD: nettan.mc,v 1.2 1996/05/10 16:58:46 niklas Exp $')
 OSTYPE(bsd4.4)dnl
 FEATURE(nullclient,mail.appli.se)dnl
