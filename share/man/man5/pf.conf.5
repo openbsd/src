@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.23 2001/10/11 19:02:19 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.24 2001/10/11 19:52:28 dhartmei Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -475,11 +475,6 @@ pass in on $ext_if proto tcp from any to any port { ssh, smtp, domain, \\
 .Xr services 5 ,
 .Xr pfctl 8 ,
 .Xr pflogd 8
-.Pp
-.Pa http://www.obfuscation.org/ipf/
-has an extensive filter rule tutorial which for the most part applies to
-.Em pf
-as well.
 .Sh HISTORY
 The
 .Nm
