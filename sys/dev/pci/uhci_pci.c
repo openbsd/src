@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci_pci.c,v 1.7 2000/03/27 00:55:59 aaron Exp $	*/
+/*	$OpenBSD: uhci_pci.c,v 1.8 2000/07/04 13:21:59 fgsch Exp $	*/
 /*	$NetBSD: uhci_pci.c,v 1.14 2000/01/25 11:26:06 augustss Exp $	*/
 
 /*
@@ -6,7 +6,7 @@
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (augustss@carlstedt.se) at
+ * by Lennart Augustsson (lennart@augustsson.net) at
  * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,6 @@ int	uhci_pci_detach __P((device_ptr_t, int));
 struct uhci_pci_softc {
 	uhci_softc_t		sc;
 	pci_chipset_tag_t	sc_pc;
-	bus_size_t		sc_size;
 	void 			*sc_ih;		/* interrupt vectoring */
 };
 
@@ -105,7 +104,7 @@ uhci_pci_attach(parent, self, aux)
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
-			   &sc->sc.iot, &sc->sc.ioh, NULL, NULL)) {
+			   &sc->sc.iot, &sc->sc.ioh, NULL, &sc->sc.sc_size)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
@@ -163,8 +162,7 @@ uhci_pci_attach(parent, self, aux)
 
 	r = uhci_init(&sc->sc);
 	if (r != USBD_NORMAL_COMPLETION) {
-		printf("%s: init failed, error=%d\n", 
-		       sc->sc.sc_bus.bdev.dv_xname, r);
+		printf(": init failed, error=%d\n", r);
 		return;
 	}
 
@@ -184,13 +182,13 @@ uhci_pci_detach(self, flags)
 	rv = uhci_detach(&sc->sc, flags);
 	if (rv)
 		return (rv);
-	if (sc->sc_ih) {
+	if (sc->sc_ih != NULL) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
-		sc->sc_ih = 0;
+		sc->sc_ih = NULL;
 	}
-	if (sc->sc_size) {
-		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc_size);
-		sc->sc_size = 0;
+	if (sc->sc.sc_size) {
+		bus_space_unmap(sc->sc.iot, sc->sc.ioh, sc->sc.sc_size);
+		sc->sc.sc_size = 0;
 	}
 	return (0);
 }
