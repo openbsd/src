@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.34 2001/04/06 04:46:18 csapuntz Exp $	*/
+/*	$OpenBSD: param.h,v 1.35 2001/04/07 08:04:49 deraadt Exp $	*/
 /*	$NetBSD: param.h,v 1.23 1996/03/17 01:02:29 thorpej Exp $	*/
 
 /*-
@@ -196,7 +196,7 @@
 
 /* Macros for calculating the offset of a field */
 #if !defined(offsetof) && defined(_KERNEL)
-#define offsetof(s, e) ((unsigned int)&((s *)0)->e)
+#define offsetof(s, e) ((size_t)&((s *)0)->e)
 #endif
 
 /*
