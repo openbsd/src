@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ypclnt.3,v 1.5 1996/12/28 09:06:29 downsj Exp $
+.\"	$OpenBSD: ypclnt.3,v 1.6 1997/06/13 10:09:37 deraadt Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -110,9 +110,9 @@ All occurrences of
 .Pa indomain
 and
 .Pa inmap
-must be non-null, null-terminated strings.  All input strings which also have
+must be non-null, NUL-terminated strings.  All input strings which also have
 a corresponding length parameter cannot be null unless the corresponding
-length value is zero.  Such strings need not be null-terminated.
+length value is zero.  Such strings need not be NUL-terminated.
 .Pp
 All YP lookup calls (the functions
 .Fn yp_all ,
@@ -176,7 +176,11 @@ value from the previous call to
 as the value for
 .Pa inkey .
 .Pp
-Of course, the notions of ``first'' and ``next'' are particular to the
+Of course, the notions of
+.Dq first
+and
+.Dq next
+are particular to the
 type of YP map being accessed, and thus there is no guarantee of lexical
 order.  The only guarantees provided with
 .Fn yp_first
@@ -283,7 +287,7 @@ Returns the order number for a map.
 Returns the hostname for the machine on which the master YP server process for
 a map is running.
 .It Fn yperr_string
-Returns a pointer to a null-terminated error string that does not contain a
+Returns a pointer to a NUL-terminated error string that does not contain a
 .Ql \&.
 or
 .Ql \en .
