@@ -6,7 +6,6 @@
 ./usr/games/battlestar
 ./usr/games/bcd
 ./usr/games/boggle
-./usr/games/bs
 ./usr/games/caesar
 ./usr/games/canfield
 ./usr/games/cfscores
@@ -18,8 +17,6 @@
 ./usr/games/grdc
 ./usr/games/hack
 ./usr/games/hangman
-./usr/games/hunt
-./usr/games/huntd
 ./usr/games/mille
 ./usr/games/monop
 ./usr/games/morse
@@ -33,7 +30,6 @@
 ./usr/games/rain
 ./usr/games/random
 ./usr/games/robots
-./usr/games/rogue
 ./usr/games/rot13
 ./usr/games/sail
 ./usr/games/snake
@@ -126,13 +122,16 @@
 ./usr/share/man/cat6/boggle.0
 ./usr/share/man/cat6/caesar.0
 ./usr/share/man/cat6/canfield.0
+./usr/share/man/cat6/cfscores.0
 ./usr/share/man/cat6/cribbage.0
 ./usr/share/man/cat6/factor.0
 ./usr/share/man/cat6/fish.0
 ./usr/share/man/cat6/fortune.0
 ./usr/share/man/cat6/gomoku.0
+./usr/share/man/cat6/grdc.0
 ./usr/share/man/cat6/hack.0
 ./usr/share/man/cat6/hangman.0
+./usr/share/man/cat6/intro.0
 ./usr/share/man/cat6/mille.0
 ./usr/share/man/cat6/monop.0
 ./usr/share/man/cat6/morse.0
@@ -146,10 +145,10 @@
 ./usr/share/man/cat6/rain.0
 ./usr/share/man/cat6/random.0
 ./usr/share/man/cat6/robots.0
-./usr/share/man/cat6/rogue.0
 ./usr/share/man/cat6/rot13.0
 ./usr/share/man/cat6/sail.0
 ./usr/share/man/cat6/snake.0
+./usr/share/man/cat6/snscore.0
 ./usr/share/man/cat6/tetris.0
 ./usr/share/man/cat6/trek.0
 ./usr/share/man/cat6/worm.0

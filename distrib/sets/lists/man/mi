@@ -1609,13 +1609,6 @@
 ./usr/share/man/cat5/wtmp.0
 ./usr/share/man/cat5/ypserv.acl.0
 ./usr/share/man/cat6
-./usr/share/man/cat6/bs.0
-./usr/share/man/cat6/cfscores.0
-./usr/share/man/cat6/grdc.0
-./usr/share/man/cat6/hunt.0
-./usr/share/man/cat6/huntd.0
-./usr/share/man/cat6/intro.0
-./usr/share/man/cat6/snscore.0
 ./usr/share/man/cat7/ascii.0
 ./usr/share/man/cat7/des_modes.0
 ./usr/share/man/cat7/environ.0
