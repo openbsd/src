@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 2003/12/26 14:26:02 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.7 2003/12/26 14:27:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -307,4 +307,13 @@ log_conn_attempt(struct peer *peer, struct in_addr remote)
 		    "in state %s", p, statenames[peer->state]);
 		free(p);
 	}
+}
+
+char *
+log_ntoa(in_addr_t ip)
+{
+	struct in_addr	ina;
+
+	ina.s_addr = ip;
+	return (inet_ntoa(ina));
 }
