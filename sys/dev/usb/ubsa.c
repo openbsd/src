@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsa.c,v 1.9 2005/01/16 04:53:00 dlg Exp $ 	*/
+/*	$OpenBSD: ubsa.c,v 1.10 2005/03/18 00:33:28 reyk Exp $ 	*/
 /*	$NetBSD: ubsa.c,v 1.5 2002/11/25 00:51:33 fvdl Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
@@ -234,8 +234,12 @@ Static const struct usb_devno ubsa_devs[] = {
 	{ USB_VENDOR_GOHUBS, USB_PRODUCT_GOHUBS_GOCOM232 },
 	/* Peracom */
 	{ USB_VENDOR_PERACOM, USB_PRODUCT_PERACOM_SERIAL1 },
-	/* Vodafone */
-	{ USB_VENDOR_VODAFONE, USB_PRODUCT_VODAFONE_MOBILE_3G }
+	/* Option Vodafone Mobile Connect 3G */
+	{ USB_VENDOR_OPTION, USB_PRODUCT_OPTION_VODAFONEMC3G },
+	/* Option GlobeTrotter 3G FUSION */
+	{ USB_VENDOR_OPTION, USB_PRODUCT_OPTION_GT3GFUSION },
+	/* Option GlobeTrotter 3G QUAD */
+	{ USB_VENDOR_OPTION, USB_PRODUCT_OPTION_GT3GQUAD },
 };
 #define ubsa_lookup(v, p) usb_lookup(ubsa_devs, v, p)
 
@@ -447,7 +451,7 @@ ubsa_request(struct ubsa_softc *sc, u_int8_t request, u_int16_t value)
 	USETW(req.wLength, 0);
 
 	err = usbd_do_request(sc->sc_udev, &req, 0);
-	if (err)
+	if (err && err != USBD_STALLED)
 		printf("%s: ubsa_request: %s\n",
 		    USBDEVNAME(sc->sc_dev), usbd_errstr(err));
 	return (err);
@@ -533,9 +537,9 @@ ubsa_baudrate(struct ubsa_softc *sc, speed_t speed)
 		value = B230400 / speed;
 		break;
 	default:
-		printf("%s: ubsa_param: unsupported baudrate, "
+		DPRINTF(("%s: ubsa_param: unsupported baudrate, "
 		    "forcing default of 9600\n",
-		    USBDEVNAME(sc->sc_dev));
+		    USBDEVNAME(sc->sc_dev)));
 		value = B230400 / B9600;
 		break;
 	};
@@ -576,9 +580,9 @@ ubsa_databits(struct ubsa_softc *sc, tcflag_t cflag)
 	case CS7: value = 2; break;
 	case CS8: value = 3; break;
 	default:
-		printf("%s: ubsa_param: unsupported databits requested, "
+		DPRINTF(("%s: ubsa_param: unsupported databits requested, "
 		    "forcing default of 8\n",
-		    USBDEVNAME(sc->sc_dev));
+		    USBDEVNAME(sc->sc_dev)));
 		value = 3;
 	}
 
