@@ -1,4 +1,4 @@
-.\"/* Copyright 1988,1990,1993,1994 by Paul Vixie
+.\"	$NetBSD: crontab.5,v 1.5 1997/07/13 11:01:16 mouse Exp $
 .\" * All rights reserved
 .\" *
 .\" * Distribute freely, except: don't remove my name from the source or
@@ -15,7 +15,7 @@
 .\" * Paul Vixie          <paul@vix.com>          uunet!decwrl!vixie!paul
 .\" */
 .\"
-.\" $Id: crontab.5,v 1.2 1996/12/07 09:13:11 deraadt Exp $
+.\" $Id: crontab.5,v 1.3 1997/07/17 07:34:44 deraadt Exp $
 .\" 
 .TH CRONTAB 5 "24 January 1994"
 .UC 4
@@ -97,7 +97,7 @@ minute	0-59
 .br
 hour	0-23
 .br
-day of month	0-31
+day of month	1-31
 .br
 month	1-12 (or names, see below)
 .br
@@ -146,6 +146,30 @@ field matches the current time.  For example,
 ``30 4 1,15 * 5''
 would cause a command to be run at 4:30 am on the 1st and 15th of each
 month, plus every Friday.
+.PP
+Instead of the first five fields, one of eight special strings may appear:
+.IP
+.ta 1.5i
+string	meaning
+.br
+------	-------
+.br
+@reboot	Run once, at startup.
+.br
+@yearly	Run once a year, "0 0 1 1 *".
+.br
+@annually	(same as @yearly)
+.br
+@monthly	Run once a month, "0 0 1 * *".
+.br
+@weekly	Run once a week, "0 0 * * 0".
+.br
+@daily	Run once a day, "0 0 * * *".
+.br
+@midnight	(same as @daily)
+.br
+@hourly	Run once an hour, "0 * * * *".
+.br
 .SH EXAMPLE CRON FILE
 .nf
 
@@ -183,6 +207,9 @@ Command output is mailed to the crontab owner (BSD can't do this), can be
 mailed to a person other than the crontab owner (SysV can't do this), or the
 feature can be turned off and no mail will be sent at all (SysV can't do this
 either).
+.PP
+All of the `@' commands that can appear in place of the first five fields
+are extensions.
 .SH AUTHOR
 .nf
 Paul Vixie <paul@vix.com>
