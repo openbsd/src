@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.125 2003/01/04 00:01:34 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.126 2003/01/04 17:40:51 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -352,15 +352,16 @@ void
 print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
     sa_family_t af, u_int8_t proto)
 {
-	if (PF_AZERO(&src->addr.addr, AF_INET6) &&
+	if (src->addr.type != PF_ADDR_NOROUTE &&
+	    dst->addr.type != PF_ADDR_NOROUTE &&
+	    PF_AZERO(&src->addr.addr, AF_INET6) &&
 	    PF_AZERO(&src->addr.mask, AF_INET6) &&
-	    !src->noroute && !dst->noroute &&
 	    !src->port_op && PF_AZERO(&dst->addr.addr, AF_INET6) &&
 	    PF_AZERO(&dst->addr.mask, AF_INET6) && !dst->port_op)
 		printf("all ");
 	else {
 		printf("from ");
-		if (src->noroute)
+		if (src->addr.type == PF_ADDR_NOROUTE)
 			printf("no-route ");
 		else if (PF_AZERO(&src->addr.addr, AF_INET6) &&
 		    PF_AZERO(&src->addr.mask, AF_INET6))
@@ -377,7 +378,7 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 			    proto == IPPROTO_TCP ? "tcp" : "udp");
 
 		printf("to ");
-		if (dst->noroute)
+		if (dst->addr.type == PF_ADDR_NOROUTE)
 			printf("no-route ");
 		else if (PF_AZERO(&dst->addr.addr, AF_INET6) &&
 		    PF_AZERO(&dst->addr.mask, AF_INET6))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.125 2003/01/03 10:39:09 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.126 2003/01/04 17:40:50 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -62,6 +62,8 @@ enum	{ PF_LIMIT_STATES, PF_LIMIT_FRAGS, PF_LIMIT_MAX };
 #define PF_POOL_IDMASK		0x0f
 enum	{ PF_POOL_NONE, PF_POOL_BITMASK, PF_POOL_RANDOM,
 	  PF_POOL_SRCHASH, PF_POOL_ROUNDROBIN };
+enum	{ PF_ADDR_ADDRMASK, PF_ADDR_NOROUTE, PF_ADDR_DYNIFTL,
+	  PF_ADDR_TABLE };
 #define PF_POOL_TYPEMASK	0x0f
 #define PF_POOL_STATICPORT	0x10
 
@@ -85,6 +87,7 @@ struct pf_addr_wrap {
 	struct pf_addr		 addr;
 	struct pf_addr		 mask;
 	struct pf_addr_dyn	*addr_dyn;
+	u_int8_t		 type;		/* PF_ADDR_* */
 };
 
 struct pf_addr_dyn {
@@ -246,7 +249,6 @@ struct pf_rule_addr {
 	u_int16_t		 port[2];
 	u_int8_t		 not;
 	u_int8_t		 port_op;
-	u_int8_t		 noroute;
 };
 
 struct pf_pooladdr {

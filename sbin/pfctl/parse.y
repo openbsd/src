@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.275 2003/01/04 00:01:34 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.276 2003/01/04 17:40:51 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -104,7 +104,6 @@ struct node_host {
 	struct pf_addr		 bcast;
 	sa_family_t		 af;
 	u_int8_t		 not;
-	u_int8_t		 noroute;
 	u_int32_t		 ifindex;	/* link-local IPv6 addrs */
 	char			*ifname;
 	u_int			 ifa_flags;
@@ -1468,7 +1467,7 @@ xhost		: '!' host			{
 			$$ = calloc(1, sizeof(struct node_host));
 			if ($$ == NULL)
 				err(1, "xhost: calloc");
-			$$->noroute = 1;
+			$$->addr.type = PF_ADDR_NOROUTE;
 			$$->next = NULL;
 			$$->tail = $$;
 		}
@@ -3159,13 +3158,11 @@ expand_rule(struct pf_rule *r,
 		r->ifnot = interface->not;
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
-		r->src.noroute = src_host->noroute;
 		r->src.not = src_host->not;
 		r->src.port[0] = src_port->port[0];
 		r->src.port[1] = src_port->port[1];
 		r->src.port_op = src_port->op;
 		r->dst.addr = dst_host->addr;
-		r->dst.noroute = dst_host->noroute;
 		r->dst.not = dst_host->not;
 		r->dst.port[0] = dst_port->port[0];
 		r->dst.port[1] = dst_port->port[1];
@@ -3279,13 +3276,11 @@ expand_nat(struct pf_rule *n,
 		n->ifnot = interface->not;
 		n->proto = proto->proto;
 		n->src.addr = src_host->addr;
-		n->src.noroute = src_host->noroute;
 		n->src.not = src_host->not;
 		n->src.port[0] = src_port->port[0];
 		n->src.port[1] = src_port->port[1];
 		n->src.port_op = src_port->op;
 		n->dst.addr = dst_host->addr;
-		n->dst.noroute = dst_host->noroute;
 		n->dst.not = dst_host->not;
 		n->dst.port[0] = dst_port->port[0];
 		n->dst.port[1] = dst_port->port[1];
@@ -3368,10 +3363,8 @@ expand_rdr(struct pf_rule *r, struct node_if *interfaces,
 		r->ifnot = interface->not;
 		r->proto = proto->proto;
 		r->src.addr = src_host->addr;
-		r->src.noroute = src_host->noroute;
 		r->src.not = src_host->not;
 		r->dst.addr = dst_host->addr;
-		r->dst.noroute = dst_host->noroute;
 		r->dst.not = dst_host->not;
 
 		TAILQ_INIT(&r->rpool.list);
