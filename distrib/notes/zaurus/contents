@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.2 2005/01/15 17:52:09 miod Exp $
+dnl	$OpenBSD: contents,v 1.3 2005/03/19 01:28:34 uwe Exp $
 TopPart
 
 OpenBSDdistsets
@@ -12,6 +12,12 @@ dnl OpenBSDcd
 	zboot		The OpenBSD/MACHINE disk-based boot loader.
 
 	zbsdmod.o	The OpenBSD/MACHINE memory-based boot loader.
+
+	openbsd{:--:}OSrev{:--:}_arm.ipk
+			An installable package for Linux containing
+			the boot loader and the RAMDISK kernel.
+
+	Packages	Index file for the Linux package installer.
 
 DistributionDescription(eleven)
 
