@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.16 1997/07/06 08:01:57 downsj Exp $	*/
-/*	$NetBSD: autoconf.c,v 1.38 1997/05/05 21:11:59 thorpej Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.17 1999/05/25 08:37:49 downsj Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
  * Copyright (c) 1996 Jason R. Thorpe.  All rights reserved.
@@ -249,15 +249,16 @@ configure()
 	LIST_INIT(&dev_data_list_scsi);
 
 	/*
-	 * XXX Enable interrupts.  We have to do this now so that the
-	 * XXX HIL configures.
-	 */
-	(void)spl0();
-
-	/*
-	 * XXX: these should be consolidated into some kind of table
+	 * XXX In order for the HIL to configure, interrupts need to be
+	 * XXX enabled.  However, we need to initialize the HIL driver's
+	 * XXX software state prior to that, since a pending interrupt
+	 * XXX might cause the HIL's interrupt handler to be run in an
+	 * XXX uninitialized environment otherwise.
+	 *
+	 * XXX These should be consolidated into some kind of table.
 	 */
 	hilsoftinit(0, HILADDR);
+	(void)spl0();
 	hilinit(0, HILADDR);
 
 	(void)splhigh();
@@ -314,7 +315,7 @@ device_register(dev, aux)
 	void *aux;
 {
 	struct dev_data *dd;
-	static int seen_netdevice;
+	static int seen_netdevice = 0;
 
 	/*
 	 * Allocate a dev_data structure and fill it in.
