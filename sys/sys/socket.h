@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.10 1997/02/22 07:24:25 angelos Exp $	*/
+/*	$OpenBSD: socket.h,v 1.11 1997/02/28 02:03:33 angelos Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -66,6 +66,10 @@
 #define	SO_OOBINLINE	0x0100		/* leave received OOB data in line */
 #define	SO_REUSEPORT	0x0200		/* allow local address & port reuse */
 
+#define SO_IPSEC_AUTH_LEVEL           0x0400  /* Authentication used */
+#define SO_IPSEC_ESP_TRANS_LEVEL      0x0800  /* Transport encryption */
+#define SO_IPSEC_ESP_NETWORK_LEVEL    0x1000  /* Full-packet encryption */
+
 /*
  * Additional options, not kept in so_options.
  */
@@ -89,14 +93,6 @@
 #define IPSEC_LEVEL_REQUIRE	0x03	/* Require secure inbound, also use */
 #define IPSEC_LEVEL_UNIQUE	0x04	/* Use outbound SA that is unique */
 #define IPSEC_LEVEL_DEFAULT	IPSEC_LEVEL_NONE
-
-/*
- * Security categories
- */
-
-#define IP_AUTH_LEVEL		0x00
-#define IP_ESP_TRANS_LEVEL	0x01
-#define IP_ESP_NETWORK_LEVEL	0x02
 
 /*
  * Structure used for manipulating linger option.
