@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdown.8,v 1.27 2001/08/07 15:57:41 heko Exp $
+.\"	$OpenBSD: shutdown.8,v 1.28 2001/08/07 19:04:50 heko Exp $
 .\"	$NetBSD: shutdown.8,v 1.6 1995/03/18 15:01:07 cgd Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
@@ -174,10 +174,7 @@ and why it is going down (or anything else).
 .Pp
 You can cancel a scheduled shutdown with the
 .Xr kill 1
-command by killing the shutdown process. If shutdown has created
-the
-.Pa /etc/nologin
-file, you should manually delete it after killing the process.
+command by killing the shutdown process.
 .Sh FILES
 .Bl -tag -width /etc/rc.shutdown -compact
 .It Pa /etc/nologin
