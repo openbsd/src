@@ -1,3 +1,5 @@
+.\"	$OpenBSD: telnetd.8,v 1.29 2003/06/02 14:37:35 jmc Exp $
+.\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -78,7 +80,7 @@ option may be used to start up
 .Nm telnetd
 manually, instead of through
 .Xr inetd 8 .
-If started up this way, 
+If started up this way,
 .Ar port
 may be specified to run
 .Nm telnetd
@@ -150,7 +152,7 @@ to print out debugging information
 to the connection, allowing the user to see what
 .Nm telnetd
 is doing.
-There are several possible values for 
+There are several possible values for
 .Ar debugmode :
 .Bl -tag -width exercise
 .It Cm options
@@ -158,7 +160,7 @@ Prints information about the negotiation of
 .Tn TELNET
 options.
 .It Cm report
-Prints the 
+Prints the
 .Cm options
 information, plus some additional information
 about what processing is going on.
@@ -271,7 +273,7 @@ passwords.
 operates by allocating a pseudo-terminal device (see
 .Xr pty 4 )
 for a client, then creating a login process which has
-the slave side of the pseudo-terminal as 
+the slave side of the pseudo-terminal as
 .Dv stdin ,
 .Dv stdout
 and
@@ -285,7 +287,7 @@ between the remote client and the login process.
 .Pp
 When a
 .Tn TELNET
-session is started up, 
+session is started up,
 .Nm telnetd
 sends
 .Tn TELNET
@@ -459,7 +461,6 @@ Kerberos is enabled, and
 indicates a willingness to decrypt
 the data stream.
 .El
-.Sh ENVIRONMENT
 .Sh FILES
 .Bl -tag -width /etc/services -compact
 .It Pa /etc/services
@@ -468,7 +469,7 @@ the data stream.
 .It Pa /etc/iptos
 (if supported)
 .El
-.Sh "SEE ALSO"
+.Sh SEE ALSO
 .Xr login 1 ,
 .Xr telnet 1
 .Sh STANDARDS
