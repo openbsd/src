@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.51 2002/10/25 02:25:43 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.52 2002/12/05 02:08:28 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.163 2002/10/25 02:19:06 itojun Exp $	*/
 
 /*
@@ -324,8 +324,8 @@ main(argc, argv)
 #endif
 
 	/* just to be sure */
-	memset(&smsghdr, 0, sizeof(&smsghdr));
-	memset(&smsgiov, 0, sizeof(&smsgiov));
+	memset(&smsghdr, 0, sizeof(smsghdr));
+	memset(&smsgiov, 0, sizeof(smsgiov));
 
 	preload = 0;
 	datap = &outpack[ICMP6ECHOLEN + ICMP6ECHOTMLEN];
