@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmmu.c,v 1.10 2001/03/18 01:52:30 miod Exp $	*/
+/*	$OpenBSD: cmmu.c,v 1.11 2001/05/21 22:19:50 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -309,8 +309,8 @@ cmmu_parity_enable(void)
       break;
 #endif /* MVME197 */
    }
-#endif  /* PARITY_ENABLE */
    CMMU_UNLOCK;
+#endif  /* PARITY_ENABLE */
 }
 
 /*
