@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.760 2004/09/20 17:27:52 grange Exp $
+$OpenBSD: pcidevs,v 1.761 2004/09/20 18:50:05 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1085,6 +1085,7 @@ product HP TACH_XL2		0x1029	Tach XL2 FibreChannel
 product HP J2585A		0x1030	J2585A
 product HP J2585B		0x1031	J2585B
 product HP DIVA			0x1048	Diva Serial Multiport
+product HP ELROY		0x1054	Elroy Ropes-PCI
 product HP VISUALIZE_FXE	0x108b	Visualize FXe
 product HP TOPTOOLS		0x10c1	TopTools Communications Port
 product HP NETRAID_4M		0x10c2	NetRaid-4M
