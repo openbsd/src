@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
  *
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_cookie_request.c,v 1.2 1997/07/22 11:18:22 provos Exp $";
+static char rcsid[] = "$Id: handle_cookie_request.c,v 1.3 1997/07/25 16:21:42 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -56,7 +56,7 @@ handle_cookie_request(u_char *packet, int size,
 
 {
 	struct cookie_request *header;
-	struct stateob *prev_st, *st;
+	struct stateob *prev_st, *st = NULL;
 	time_t tm = 0;
 
 	u_int8_t icookie[COOKIE_SIZE];
