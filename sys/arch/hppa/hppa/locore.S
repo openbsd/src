@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.63 2002/04/01 16:19:58 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.64 2002/04/02 17:54:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -1412,6 +1412,7 @@ LEAF_ENTRY(pbtlb_l)
 	; DR_PAGE0
 	rsm	(PSW_R|PSW_I), t4
 	ldil	L%0xc041, t1
+	ldo	R%0xc041(t1), t1
 	dep	arg0, 30, 3, t1
 	sync
 	MTCPU_T(22,DR_DTLB)	/* t1 */
@@ -2231,29 +2232,30 @@ EXIT(spstrcpy)
 
 /*
  * adjust the time value
- * XXX: do it the easy way, later we will calculate actual fuzz from itr
+ * XXX: do it the easy way, later we will calculate actual fuzz from itmr
  */
 LEAF_ENTRY(microtime)
-
-	.import time, data
-	ldil	L%-1000000, t3
-	ldil	L%time, t1
-	ldo	R%-1000000(t3), t3
 
 	/* t4 = splhigh() */
 	mfctl	eiem, t4
 	mtctl	r0, eiem
 
-	ldw	R%time+4(t1), t2
-	ldw	R%time(t1), t1
+	.import time, data
+	ldil	L%time, t3
+	ldo	R%time(t3), t3
+	ldw	0(t3), t1
+	ldw	4(t3), t2
 
 	/* splx(t4) */
 	mtctl	t4, eiem
 
-	addi	1, t2, t2
-	addb,<	t2, t3, microtime_no
-	addi	1, t1, t1
+	ldil	L%-1000000, t3
+	ldo	R%-1000000(t3), t3
 
+	addi	1, t2, t2
+	addb,<,n t2, t3, microtime_no
+
+	addi	1, t1, t1
 	copy	t3, t2
 
 microtime_no
