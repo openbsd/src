@@ -3,10 +3,11 @@ Installation is supported from several media types, including:
 	FFS partitions
 	Tape
 	Remote NFS partition
+	CD-ROM (with PROM versions >= 3.0)
 	FTP
 	HTTP
 
-However, you can only boot the installation procedure from tape or
+However, you can only boot the installation procedure from disk, tape or
 network. This requires some setup work to prepare a bootable image,
 either a tape, or a compatible net boot server.
 
@@ -18,6 +19,35 @@ system's disk or onto a SCSI tape.
 The variety of options listed may seem confusing, but situations vary
 widely in terms of what peripherals and what sort of network arrangements
 a user has, the intent is to provide some way that will be practical.
+
+
+Creating a bootable hard disk using SunOS or other Un*x-like system:
+
+	You can copy the miniroot image "miniroot{:--:}OSrev.fs" onto
+	the hard disk you intend to boot on.  Traditionally, the
+	way to do this is to use dd(1) to place the bootable filesystem
+	image in the "swap" partition of the disk (while running in
+	single user mode), and then booting from that partition.
+
+	Using the "b" partition allows you to boot without overwriting
+	any useful parts of the disk, you can also use another partition,
+	but don't used the "a" or "c" partition without understanding
+	the disklabel issues described below under "incompatible systems".
+
+	This requires that you be running SunOS, Solaris, OpenBSD or NetBSD
+	which have a compatible view of SunOS disk labels and partitions.
+
+	Use the dd(1) utility to copy the file to the hard drive.
+	Under SunOS, the command would be:
+
+		dd if=floppy{:--:}OSrev.fs of=/dev/rsd0b bs=36b
+				- or -
+		dd if=miniroot{:--:}OSrev.fs of=/dev/rsd0b bs=36b
+
+	The blocksize is arbitrary as long as it's a multiple of 512-bytes
+	and within the maximum supported by the driver, i.e. bs=126b may
+	not work for all cases.  Again, device/partition names may vary,
+	depending on the OS involved.
 
 
 Creating a network bootable setup using SunOS or other Un*x-like system:
@@ -93,8 +123,8 @@ To install or upgrade OpenBSD using a tape, you need to do the following:
 	sh -x /tmp/maketape noboot
 
 	
-If you're using a system other than OpenBSD or SunOS, the tape name and
-other requirements may change.
+	If you're using a system other than OpenBSD or SunOS, the tape
+	name and other requirements may change.
 
 
 To install OpenBSD using a remote partition, mounted via

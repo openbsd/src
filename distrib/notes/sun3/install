@@ -12,8 +12,8 @@ This is difficult to get set up correctly the first time, but easy to
 use afterwards.  (see ``Installing using a diskless setup'' below).
 
 It is also possible to install OpenBSD "manually" from a running SunOS
-system, using SunOS tools and gnu tar and gunzip (see ``Installing from SunOS''
-below).
+system, using SunOS tools and gnu tar and gunzip (see ``Installing from
+SunOS'' below).
 
 
 This section of the install document is really broken into several parts:
@@ -29,7 +29,7 @@ section gets you up to the point where you've booted the kernel from
 whatever media or setup described in the previous section, to where you
 have to respond to prompts from the install script.  The next section
 describes the path through the install script, and the remainder are
-notes which might be useful, but outside the bounds of simple "how two"
+notes which might be useful, but outside the bounds of simple "how to"
 instructions.
 
 
@@ -223,8 +223,7 @@ may be a better option.
 	or a local disk partition.  To install from a tape, the distrib-
 	ution sets must have been written to tape prior to running the
 	installation program, either as tar images or as gzipped tar
-	images.  Note that installation sets on multiple floppies is not
-	currently supported.
+	images.
 
 OpenBSDFTPInstall
 
@@ -234,7 +233,7 @@ OpenBSDTAPEInstall
 
 OpenBSDNFSInstall
 
-OpenBSDDISKInstall({:-"wdN" or -:},{:-only -:})
+OpenBSDDISKInstall({:-"xdN" or -:},{:-only -:})
 
 OpenBSDCommonFS
 		
@@ -290,12 +289,14 @@ OpenBSD/sun3 uses SunOS disk labels.)  Give yourself adequate
 partition sizes.  Here is an example layout:
 
     partition    size   offset	  will be..
-    sd0a        28140        0	  /
-    sd0b        16170    28140	  swap
-    sd0c       204540        0	  `whole disk'
-    sd0g       160230    44310	  /usr
+    sd0a        48825        0	  /
+    sd0b        69825    48825	  swap
+    sd0c       639450        0	  `whole disk'
+    sd0d        65625   118650    /var
+    sd0g       455175   184275	  /usr
 
-BTW, These are not recommended sizes.
+FYI, this particular disk setup is used on a model 3/60 connected
+to a shoebox with a Micropolis 1558 ESDI drive.
 
 Use SunOS to newfs the partitions which will have filesystems on them.
 (OpenBSD's filesystem format is identical to SunOS).
@@ -356,7 +357,7 @@ Now proceed to reboot the machine and the customize your installation.
 
 Net Boot or Diskless Setup Information:
 
-The set up is similar to SunOS diskless setup, but not identical, because
+The setup is similar to SunOS diskless setup, but not identical, because
 the Sun setup assumes that the bootblocks load a kernel image, which then
 uses NFS to access the exported root partition, while the OpenBSD bootblocks
 use internal NFS routines to load the kernel image directly from the
@@ -378,7 +379,7 @@ Normally, this file is a symbolic link to an appropriate second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
 
-You can find the boot program in `/usr/mdec/boot' in the OpenBSD/sun3
+You can find the boot program in `/usr/mdec/netboot' in the OpenBSD/sun3
 distribution.
 
 Here's an example to illustrate this whole mess:

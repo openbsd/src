@@ -28,20 +28,14 @@ The following Sun3 hardware is supported:
 		On-board "si" (SCSI-3)
 		VME "si" (SCSI-3) board
 
-	SMD Disks:  (the big, heavy ones 8^)
-		Xylogics 450/451  [Note 1]
-		Xylogics 753/7053 [Note 1]
+	SMD Disks:  (the big, heavy ones)
+		Xylogics 450/451
+		Xylogics 753/7053
 
 	Input devices:
 		Sun keyboard and mouse
 
 	Miscellaneous:
 		Battery-backed real-time clock.
-
-Note 1:
-    SMD disk support is almost ready, but could not be tested
-    in time for this release.  Drivers are provided for the
-    Xylogics 450/451 and Xylogics 753/7053 VME boards only as
-    source code.  They compile but have never touched a disk.
 
 If it's not on this list, there is no support for it in this release.

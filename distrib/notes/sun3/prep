@@ -19,7 +19,7 @@ just a '.' if you don't want to change it).  Console values are:
 	00: default graphics display
 	10: tty a (9600-N-8-1)
 	11: tty b (1200-N-8-1)
-	20: Color option board on P4
+	20: Color option board on P4 (model 3/60 only)
 
 OpenBSD will use the EEPROM setting to determine which device to
 use as the console, so you should make sure it is correct.
@@ -48,15 +48,6 @@ both OpenBSD and SunOS environments on the same system.
     "tunefs" command, which enable the soft update feature.  
     Although untested, it is likely that SunOS would be confused by a 
     filesystem with soft update flags enabled.
-
-OpenBSD supports both OpenBSD "native" disklabels and "Sun compatible"
-disklabels.  Unless you have some really good reason, you should stick
-with the Sun compatible labels.  The disklabel(8) "-r" switch says to
-use OpenBSD labels, which is a bit counter-intuitive and contrary to
-the reasons why might want to use "-r" on other OpenBSD ports.
-
-Don't use "-r" with disklabel(8).
-
 
 The OpenBSD "Sun Compatible" disklabel have been extended to support 16
 partitions, which may be compatible with Solaris, but the old SunOS
