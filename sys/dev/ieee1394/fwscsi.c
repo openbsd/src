@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwscsi.c,v 1.4 2002/12/13 22:45:37 tdeval Exp $	*/
+/*	$OpenBSD: fwscsi.c,v 1.5 2002/12/13 22:54:29 tdeval Exp $	*/
 
 /*
  * Copyright (c) 2002 Thierry Deval.  All rights reserved.
@@ -708,7 +708,7 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 		}
 		bzero(data_ab, sizeof(*data_ab));
 
-		data_ab->ab_req = (struct ieee1394_softc *)sc->sc_fwnode;
+		data_ab->ab_req = (struct ieee1394_softc *)fwsc;
 		data_ab->ab_retlen = 0;
 		datalen = roundup(xs->datalen, 4);
 		data_ab->ab_length = datalen & 0xffff;
@@ -754,7 +754,7 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 		}
 		DPRINTFN(2, ("\n"));
 #endif	/* FWSCSI_DEBUG */
-		sc->sc_fwnode->sc1394_inreg(data_ab, TRUE);
+		fwsc->sc1394_inreg(data_ab, TRUE);
 		data_elm->data_ab = data_ab;
 
 		cmd_orb->data_descriptor.node_id = htons(host_id);
@@ -781,11 +781,11 @@ fwscsi_scsi_cmd(struct scsi_xfer *xs)
 #endif	/* NO_THREAD */
 
 #if 0	/* NO_THREAD */
-	sbp2_command_add(sc->sc_fwnode, sc->sc_lun, cmd_orb, 8, xs->data,
+	sbp2_command_add(fwsc, sc->sc_lun, cmd_orb, 8, xs->data,
 	    fwscsi_status_notify);
 #else	/* NO_THREAD */
 	timeout_add(&xs->stimeout, (xs->timeout * hz) / 1000);
-	sbp2_command_add(sc->sc_fwnode, sc->sc_lun, cmd_orb, 8, xs->data,
+	sbp2_command_add(fwsc, sc->sc_lun, cmd_orb, 8, xs->data,
 	    fwscsi_command_wait, (void *)xs);
 #endif	/* NO_THREAD */
 
@@ -1125,16 +1125,6 @@ fwscsi_command_data(struct ieee1394_abuf *ab, int rcode)
 	}
 	DPRINTF(("\n"));
 
-#if	0
-	if (xs->resid > datalen) {
-		xs->resid -= datalen;
-		DPRINTFN(1, ("%s: Wait more", __func__));
-	} else {
-		if (xs->resid != datalen)
-			xs->resid = xs->datalen = data_elm->data_len;
-		DPRINTFN(1, ("%s: Data block complete", __func__));
-	}
-#else
 	if (xs->resid <= datalen) {
 		xs->resid = 0;
 		DPRINTFN(1, ("%s: Data block complete", __func__));
@@ -1142,7 +1132,6 @@ fwscsi_command_data(struct ieee1394_abuf *ab, int rcode)
 		xs->resid -= datalen;
 		DPRINTFN(1, ("%s: Wait more", __func__));
 	}
-#endif
 	DPRINTFN(1, (" -- resid = %d\n", xs->resid));
 }
 #endif

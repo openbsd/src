@@ -1,4 +1,4 @@
-/*	$OpenBSD: fwohci.c,v 1.7 2002/12/13 22:40:16 tdeval Exp $	*/
+/*	$OpenBSD: fwohci.c,v 1.8 2002/12/13 22:54:29 tdeval Exp $	*/
 /*	$NetBSD: fwohci.c,v 1.54 2002/03/29 05:06:42 jmc Exp $	*/
 
 /*
@@ -2088,6 +2088,9 @@ fwohci_handler_set(struct fwohci_softc *sc, int tcode, u_int32_t key1,
 			sc->sc_ctx_ir[fc->fc_ctx] = NULL;
 			fwohci_ctx_free(sc, fc);
 		}
+		DPRINTFN(1, ("%s: ctx %d, tcode %x, key 0x%x, 0x%x [NULL]\n",
+		    __func__, fc->fc_ctx, tcode, key1, key2));
+
 		return 0;
 	}
 	s = splbio();
@@ -2107,8 +2110,8 @@ fwohci_handler_set(struct fwohci_softc *sc, int tcode, u_int32_t key1,
 		LIST_INSERT_HEAD(&fc->fc_handler, fh, fh_list);
 	splx(s);
 
-	DPRINTFN(1, ("%s: ctx %d, tcode %x, key 0x%x, 0x%x\n", __func__,
-	    fc->fc_ctx, tcode, key1, key2));
+	DPRINTFN(1, ("%s: ctx %d, tcode %x, key 0x%x, 0x%x [%08x]\n",
+	    __func__, fc->fc_ctx, tcode, key1, key2, (u_int32_t)handler));
 
 	if (tcode == IEEE1394_TCODE_ISOCHRONOUS_DATABLOCK) {
 		s = splbio();
@@ -4200,11 +4203,6 @@ fwohci_inreg(struct ieee1394_abuf *ab, int allow)
 
 	high = ((ab->ab_addr & 0x0000ffff00000000) >> 32);
 	lo = (ab->ab_addr & 0x00000000ffffffff);
-
-#ifdef	FWOHCI_DEBUG
-	if (ab->ab_retlen)
-		DPRINTF(("%s: retlen=%d\n", __func__, ab->ab_retlen));
-#endif	/* FWOHCI_DEBUG */
 
 	rv = 0;
 	switch (ab->ab_tcode) {
