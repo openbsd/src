@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.139 1995/10/11 04:19:40 mycroft Exp $	*/
+/*	$NetBSD: locore.s,v 1.139.2.1 1995/10/24 16:32:42 mycroft Exp $	*/
 
 #undef DIAGNOSTIC
 #define DIAGNOSTIC
@@ -476,6 +476,11 @@ begin:
 	pushl	%eax
 	call	_init386		# wire 386 chip for unix operation
 	addl	$4,%esp
+
+	/* Clear segment registers; always null in proc0. */
+	xorl	%ecx,%ecx
+	movl	%cx,%fs
+	movl	%cx,%gs
 
 	call 	_main
 
