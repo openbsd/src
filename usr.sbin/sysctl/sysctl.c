@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.16 1997/08/19 05:32:57 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.17 1997/08/19 05:53:12 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.16 1997/08/19 05:32:57 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.17 1997/08/19 05:53:12 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -362,24 +362,24 @@ parse(string, flags)
 				in_port_t port;
 
 				special |= BADDYNAMIC;
-				if (newval != NULL) {
-					(void)memset((void *)&newbaddynamic, 0,
-					    sizeof(newbaddynamic));
-					while (newval &&
-					    (cp = strsep((char **)&newval,
-					    ", \t")) && *cp) {
-						port = atoi(cp);
-						if (port < IPPORT_RESERVED/2 ||
-						    port >= IPPORT_RESERVED)
-							errx(1, "invalid port, "
-							    "range is %d to %d",
-							    IPPORT_RESERVED/2,
-							    IPPORT_RESERVED-1);
-						DP_SET(newbaddynamic, port);
-					}
-					newval = (void *)newbaddynamic;
-					newsize = sizeof(newbaddynamic);
+				if (newval == NULL);
+					break;
+
+				(void)memset((void *)&newbaddynamic, 0,
+				    sizeof(newbaddynamic));
+				while (newval && (cp = strsep((char **)&newval,
+				    ", \t")) && *cp) {
+					port = atoi(cp);
+					if (port < IPPORT_RESERVED/2 ||
+					    port >= IPPORT_RESERVED)
+						errx(1, "invalid port, "
+						    "range is %d to %d",
+						    IPPORT_RESERVED/2,
+						    IPPORT_RESERVED-1);
+					DP_SET(newbaddynamic, port);
 				}
+				newval = (void *)newbaddynamic;
+				newsize = sizeof(newbaddynamic);
 			}
 			break;
 		}
@@ -515,22 +515,29 @@ parse(string, flags)
 		return;
 	}
 	if (special & BADDYNAMIC) {
-		in_port_t port;
+		in_port_t port, lastport;
 		u_int32_t *baddynamic = (u_int32_t *)buf;
 
 		if (!nflag)
-			printf("%s%s", string, newsize ? ":" : " =");
+			printf("%s%s", string, newsize ? ": " : " = ");
+		lastport = 0;
 		for (port = IPPORT_RESERVED/2; port < IPPORT_RESERVED; port++)
-			if (DP_ISSET(baddynamic, port))
-				printf(" %hd", port);
+			if (DP_ISSET(baddynamic, port)) {
+				printf("%s%hd", lastport ? "," : "", port);
+				lastport = port;
+			}
 		if (newsize != 0) {
 			if (!nflag)
-				fputs(" ->", stdout);
+				fputs(" -> ", stdout);
 			baddynamic = (u_int32_t *)newval;
+			lastport = 0;
 			for (port = IPPORT_RESERVED/2; port < IPPORT_RESERVED;
 			    port++)
-				if (DP_ISSET(baddynamic, port))
-					printf(" %hd", port);
+				if (DP_ISSET(baddynamic, port)) {
+					printf("%s%hd", lastport ? "," : "",
+					    port);
+					lastport = port;
+				}
 		}
 		putchar('\n');
 		return;
