@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.22 2004/11/22 01:56:13 espie Exp $
+# $OpenBSD: Add.pm,v 1.23 2004/12/02 00:37:54 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -84,11 +84,11 @@ sub validate_plist($$)
 		my $s = OpenBSD::Vstat::add($fname, $item->{size});
 		next unless defined $s;
 		if ($s->{ro}) {
-			Warn "Error: ", $s->{mnt}, " is read-only ($fname)\n";
+			Warn "Error: ", $s->{dev}, " is read-only ($fname)\n";
 			$problems++;
 		}
 		if ($s->avail() < 0) {
-			Warn "Error: ", $s->{mnt}, " is not large enough ($fname)\n";
+			Warn "Error: ", $s->{dev}, " is not large enough ($fname)\n";
 			$problems++;
 		}
 	}
