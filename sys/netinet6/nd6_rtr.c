@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.20 2002/06/09 00:59:29 itojun Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.21 2002/06/09 14:38:39 itojun Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.97 2001/02/07 11:09:13 itojun Exp $	*/
 
 /*
@@ -204,7 +204,7 @@ nd6_ra_input(m, off, icmp6len)
 	/*
 	 * We only accept RAs only when
 	 * the system-wide variable allows the acceptance, and
-	 * per-interface variable allows RAs on the receiving interface.  
+	 * per-interface variable allows RAs on the receiving interface.
 	 */
 	if (ip6_accept_rtadv == 0)
 		goto freeit;
@@ -384,14 +384,14 @@ nd6_ra_input(m, off, icmp6len)
 	}
 
  skip:
-	
+
 	/*
 	 * Source link layer address
 	 */
     {
 	char *lladdr = NULL;
 	int lladdrlen = 0;
-	
+
 	if (ndopts.nd_opts_src_lladdr) {
 		lladdr = (char *)(ndopts.nd_opts_src_lladdr + 1);
 		lladdrlen = ndopts.nd_opts_src_lladdr->nd_opt_len << 3;
@@ -693,7 +693,7 @@ defrouter_reset()
 	defrouter_delifreq();
 
 	/*
-	 * XXX should we also nuke any default routers in the kernel, by 
+	 * XXX should we also nuke any default routers in the kernel, by
 	 * going through them by rtalloc1()?
 	 */
 }
@@ -818,7 +818,7 @@ defrouter_select()
 		if (!installed_dr || !TAILQ_NEXT(installed_dr, dr_entry))
 			selected_dr = TAILQ_FIRST(&nd_defrouter);
 		else
- 			selected_dr = TAILQ_NEXT(installed_dr, dr_entry);
+			selected_dr = TAILQ_NEXT(installed_dr, dr_entry);
 	} else if (installed_dr &&
 	    (rt = nd6_lookup(&installed_dr->rtaddr, 0, installed_dr->ifp)) &&
 	    (ln = (struct llinfo_nd6 *)rt->rt_llinfo) &&
@@ -842,9 +842,9 @@ defrouter_select()
 	return;
 }
 
-/* 
+/*
  * for default router selection
- * regards router-preference field as a 2-bit signed integer 
+ * regards router-preference field as a 2-bit signed integer
  */
 static int
 rtpref(struct nd_defrouter *dr)
@@ -893,7 +893,7 @@ defrtrlist_update(new)
 			dr->rtlifetime = new->rtlifetime;
 			dr->expire = new->expire;
 
-			/* 
+			/*
 			 * If the preference does not change, there's no need
 			 * to sort the entries.
 			 */
@@ -955,7 +955,7 @@ insert:
 	defrouter_select();
 
 	splx(s);
-		
+
 	return(n);
 }
 
@@ -965,7 +965,7 @@ pfxrtr_lookup(pr, dr)
 	struct nd_defrouter *dr;
 {
 	struct nd_pfxrouter *search;
-	
+
 	for (search = pr->ndpr_advrtrs.lh_first; search; search = search->pfr_next) {
 		if (search->router == dr)
 			break;
@@ -1235,7 +1235,7 @@ prelist_update(new, dr, m)
 	 * This should have been done in nd6_ra_input.
 	 */
 
- 	/*
+	/*
 	 * 5.5.3 (d). If the prefix advertised does not match the prefix of an
 	 * address already in the list, and the Valid Lifetime is not 0,
 	 * form an address.  Note that even a manually configured address
@@ -1260,7 +1260,7 @@ prelist_update(new, dr, m)
 		 */
 		if ((ifa6->ia6_flags & IN6_IFF_ANYCAST) != 0)
 			continue;
-		
+
 		ifa_plen = in6_mask2len(&ifa6->ia_prefixmask.sin6_addr, NULL);
 		if (ifa_plen != new->ndpr_plen ||
 		    !in6_are_prefix_equal(&ifa6->ia_addr.sin6_addr,
@@ -1594,7 +1594,7 @@ nd6_prefix_onlink(pr)
 	}
 
 	/*
-	 * We prefer link-local addresses as the associated interface address. 
+	 * We prefer link-local addresses as the associated interface address.
 	 */
 	/* search for a link-local addr */
 	ifa = (struct ifaddr *)in6ifa_ifpforlinklocal(ifp,
@@ -1784,7 +1784,7 @@ in6_ifadd(pr)
 	 * (2) RFC2462 5.4 suggesting the use of the same interface identifier
 	 * for multiple addresses on a single interface, and possible shortcut
 	 * of DAD.  we omitted DAD for this reason in the past.
-	 * (3) a user can prevent autoconfiguration of global address 
+	 * (3) a user can prevent autoconfiguration of global address
 	 * by removing link-local address by hand (this is partly because we
 	 * don't have other way to control the use of IPv6 on a interface.
 	 * this has been our design choice - cf. NRL's "ifconfig auto").
@@ -1842,7 +1842,7 @@ in6_ifadd(pr)
 	    (ib->ia_addr.sin6_addr.s6_addr32[2] & ~mask.s6_addr32[2]);
 	ifra.ifra_addr.sin6_addr.s6_addr32[3] |=
 	    (ib->ia_addr.sin6_addr.s6_addr32[3] & ~mask.s6_addr32[3]);
-	    
+
 	/* new prefix mask. */
 	ifra.ifra_prefixmask.sin6_len = sizeof(struct sockaddr_in6);
 	ifra.ifra_prefixmask.sin6_family = AF_INET6;
@@ -1852,7 +1852,7 @@ in6_ifadd(pr)
 	/*
 	 * lifetime.
 	 * XXX: in6_init_address_ltimes would override these values later.
-	 * We should reconsider this logic. 
+	 * We should reconsider this logic.
 	 */
 	ifra.ifra_lifetime.ia6t_vltime = pr->ndpr_vltime;
 	ifra.ifra_lifetime.ia6t_pltime = pr->ndpr_pltime;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.60 2002/06/08 21:22:02 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.61 2002/06/09 14:38:39 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -976,7 +976,7 @@ icmp6_notify_error(m, off, icmp6len, code)
 					return(-1);
 				}
 #endif
-				
+
 				if (nxt == IPPROTO_AH)
 					eoff += (eh->ip6e_len + 2) << 2;
 				else
@@ -1230,7 +1230,7 @@ icmp6_mtudisc_update(ip6cp, validated)
 /*
  * Process a Node Information Query packet, based on
  * draft-ietf-ipngwg-icmp-name-lookups-07.
- * 
+ *
  * Spec incompatibilities:
  * - IPv6 Subject address handling
  * - IPv4 Subject address handling support missing
@@ -1923,7 +1923,7 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 				else
 					ltime = 0;
 			}
-			
+
 			bcopy(&ltime, cp, sizeof(u_int32_t));
 			cp += sizeof(u_int32_t);
 
@@ -1934,7 +1934,7 @@ ni6_store_addrs(ni6, nni6, ifp0, resid)
 			if (IN6_IS_ADDR_LINKLOCAL(&ifa6->ia_addr.sin6_addr))
 				((struct in6_addr *)cp)->s6_addr16[1] = 0;
 			cp += sizeof(struct in6_addr);
-			
+
 			resid -= (sizeof(struct in6_addr) + sizeof(u_int32_t));
 			copied += (sizeof(struct in6_addr) +
 				   sizeof(u_int32_t));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.c,v 1.43 2002/06/08 21:51:08 itojun Exp $	*/
+/*	$OpenBSD: in6.c,v 1.44 2002/06/09 14:38:39 itojun Exp $	*/
 /*	$KAME: in6.c,v 1.198 2001/07/18 09:12:38 itojun Exp $	*/
 
 /*
@@ -147,14 +147,14 @@ in6_ifloop_request(int cmd, struct ifaddr *ifa)
 	struct sockaddr_in6 all1_sa;
 	struct rtentry *nrt = NULL;
 	int e;
-	
+
 	bzero(&lo_sa, sizeof(lo_sa));
 	bzero(&all1_sa, sizeof(all1_sa));
 	lo_sa.sin6_family = all1_sa.sin6_family = AF_INET6;
 	lo_sa.sin6_len = all1_sa.sin6_len = sizeof(struct sockaddr_in6);
 	lo_sa.sin6_addr = in6addr_loopback;
 	all1_sa.sin6_addr = in6mask128;
-	
+
 	/*
 	 * We specify the address itself as the gateway, and set the
 	 * RTF_LLINFO flag, so that the corresponding host route would have
@@ -338,7 +338,7 @@ in6_mask2len(mask, lim0)
 			if (*p != 0)
 				return(-1);
 	}
-	
+
 	return x * 8 + y;
 }
 
@@ -597,7 +597,7 @@ in6_control(so, cmd, data, ifp, p)
 			 */
 			maxexpire = (-1) &
 			    ~(1 << ((sizeof(maxexpire) * 8) - 1));
-			if (ia->ia6_lifetime.ia6t_vltime < 
+			if (ia->ia6_lifetime.ia6t_vltime <
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_expire = ia->ia6_updatetime +
 				    ia->ia6_lifetime.ia6t_vltime;
@@ -615,7 +615,7 @@ in6_control(so, cmd, data, ifp, p)
 			 */
 			maxexpire = (-1) &
 			    ~(1 << ((sizeof(maxexpire) * 8) - 1));
-			if (ia->ia6_lifetime.ia6t_pltime < 
+			if (ia->ia6_lifetime.ia6t_pltime <
 			    maxexpire - ia->ia6_updatetime) {
 				retlt->ia6t_preferred = ia->ia6_updatetime +
 				    ia->ia6_lifetime.ia6t_pltime;
@@ -892,7 +892,7 @@ in6_update_ifa(ifp, ifra, ia)
 			 * prefixmask as if the prefix length was 128.
 			 */
 			ifra->ifra_prefixmask.sin6_len =
-			    sizeof(struct sockaddr_in6); 
+			    sizeof(struct sockaddr_in6);
 			for (i = 0; i < 4; i++)
 				ifra->ifra_prefixmask.sin6_addr.s6_addr32[i] =
 				    0xffffffff;
@@ -987,7 +987,7 @@ in6_update_ifa(ifp, ifra, ia)
 	/*
 	 * If a new destination address is specified, scrub the old one and
 	 * install the new destination.  Note that the interface must be
-	 * p2p or loopback (see the check above.) 
+	 * p2p or loopback (see the check above.)
 	 */
 	if (dst6.sin6_family == AF_INET6 &&
 	    !IN6_ARE_ADDR_EQUAL(&dst6.sin6_addr, &ia->ia_dstaddr.sin6_addr)) {
@@ -1037,7 +1037,7 @@ in6_update_ifa(ifp, ifra, ia)
 
 	/*
 	 * Beyond this point, we should call in6_purgeaddr upon an error,
-	 * not just go to unlink. 
+	 * not just go to unlink.
 	 */
 
 	if ((ifp->if_flags & IFF_MULTICAST) != 0) {
@@ -1067,7 +1067,7 @@ in6_update_ifa(ifp, ifra, ia)
 			} else {
 				log(LOG_ERR, "in6_update_ifa: addmulti "
 				    "failed for %s on %s (errno=%d)\n",
-				    ip6_sprintf(&llsol.sin6_addr), 
+				    ip6_sprintf(&llsol.sin6_addr),
 				    ifp->if_xname, error);
 				goto cleanup;
 			}
@@ -1136,7 +1136,7 @@ in6_update_ifa(ifp, ifra, ia)
 			log(LOG_WARNING,
 			    "in6_update_ifa: addmulti failed for "
 			    "%s on %s (errno=%d)\n",
-			    ip6_sprintf(&mltaddr.sin6_addr), 
+			    ip6_sprintf(&mltaddr.sin6_addr),
 			    ifp->if_xname, error);
 			goto cleanup;
 		}
@@ -1152,7 +1152,7 @@ in6_update_ifa(ifp, ifra, ia)
 			} else {
 				log(LOG_WARNING, "in6_update_ifa: "
 				    "addmulti failed for %s on %s (errno=%d)\n",
-				    ip6_sprintf(&mltaddr.sin6_addr), 
+				    ip6_sprintf(&mltaddr.sin6_addr),
 				    ifp->if_xname, error);
 				/* XXX not very fatal, go on... */
 			}
@@ -1202,7 +1202,7 @@ in6_update_ifa(ifp, ifra, ia)
 				log(LOG_WARNING, "in6_update_ifa: "
 				    "addmulti failed for %s on %s "
 				    "(errno=%d)\n",
-				    ip6_sprintf(&mltaddr.sin6_addr), 
+				    ip6_sprintf(&mltaddr.sin6_addr),
 				    ifp->if_xname, error);
 				goto cleanup;
 			}
@@ -2115,7 +2115,7 @@ in6_addr2scopeid(ifp, addr)
 	struct in6_addr *addr;	/* must not be NULL */
 {
 	int scope = in6_addrscope(addr);
-		
+
 	switch(scope) {
 	case IPV6_ADDR_SCOPE_NODELOCAL:
 		return(-1);	/* XXX: is this an appropriate value? */
@@ -2240,7 +2240,7 @@ in6_ifawithscope(oifp, dst)
 	struct ifaddr *ifa;
 	struct ifnet *ifp;
 	struct in6_ifaddr *ifa_best = NULL;
-	
+
 	if (oifp == NULL) {
 		printf("in6_ifawithscope: output interface is not specified\n");
 		return(NULL);

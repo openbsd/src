@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.26 2002/06/08 21:51:08 itojun Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.27 2002/06/09 14:38:39 itojun Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ nd6_ns_input(m, off, icmp6len)
 		lladdr = (char *)(ndopts.nd_opts_src_lladdr + 1);
 		lladdrlen = ndopts.nd_opts_src_lladdr->nd_opt_len << 3;
 	}
-	
+
 	if (IN6_IS_ADDR_UNSPECIFIED(&ip6->ip6_src) && lladdr) {
 		nd6log((LOG_INFO, "nd6_ns_input: bad DAD packet "
 		    "(link-layer address option)\n"));
@@ -199,7 +199,7 @@ nd6_ns_input(m, off, icmp6len)
 		struct rtentry *rt;
 		struct sockaddr_in6 tsin6;
 
-		bzero(&tsin6, sizeof tsin6);		
+		bzero(&tsin6, sizeof tsin6);
 		tsin6.sin6_len = sizeof(struct sockaddr_in6);
 		tsin6.sin6_family = AF_INET6;
 		tsin6.sin6_addr = taddr6;
@@ -337,7 +337,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 	struct route_in6 ro;
 
 	bzero(&ro, sizeof(ro));
-	
+
 	if (IN6_IS_ADDR_MULTICAST(taddr6))
 		return;
 
@@ -483,7 +483,7 @@ nd6_ns_output(ifp, daddr6, taddr6, ln, dad)
 		struct nd_opt_hdr *nd_opt = (struct nd_opt_hdr *)(nd_ns + 1);
 		/* 8 byte alignments... */
 		optlen = (optlen + 7) & ~7;
-		
+
 		m->m_pkthdr.len += optlen;
 		m->m_len += optlen;
 		icmp6len += optlen;
@@ -946,7 +946,7 @@ nd6_na_output(ifp, daddr6, taddr6, flags, tlladdr, sdl0)
 	if (tlladdr && mac) {
 		int optlen = sizeof(struct nd_opt_hdr) + ifp->if_addrlen;
 		struct nd_opt_hdr *nd_opt = (struct nd_opt_hdr *)(nd_na + 1);
-		
+
 		/* roundup to 8 bytes alignment! */
 		optlen = (optlen + 7) & ~7;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.68 2002/06/08 21:52:07 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.69 2002/06/09 14:38:39 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -786,7 +786,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 		m->m_pkthdr.rcvif = NULL;
 	}
 
-#if NPF > 0 
+#if NPF > 0
 	if (pf_test6(PF_OUT, ifp, &m) != PF_PASS) {
 		error = EHOSTUNREACH;
 		m_freem(m);
@@ -795,7 +795,7 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 	if (m == NULL)
 		goto done;
 	ip6 = mtod(m, struct ip6_hdr *);
-#endif 
+#endif
 
 	/*
 	 * Send the packet to the outgoing interface.
@@ -1367,12 +1367,12 @@ do { \
 				}
 				optval = *mtod(m, int *);
 
-				if (optval < IPSEC_LEVEL_BYPASS || 
+				if (optval < IPSEC_LEVEL_BYPASS ||
 				    optval > IPSEC_LEVEL_UNIQUE) {
 					error = EINVAL;
 					break;
 				}
-					
+
 				switch (optname) {
 				case IPV6_AUTH_LEVEL:
 				        if (optval < ipsec_auth_default_level &&
@@ -1619,7 +1619,7 @@ ip6_raw_ctloutput(op, so, level, optname, mp)
 			(void)m_free(*mp);
 		return(EINVAL);
 	}
-		
+
 	switch (optname) {
 	case IPV6_CHECKSUM:
 		/*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.25 2002/06/08 21:51:08 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.26 2002/06/09 14:38:39 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -1805,7 +1805,7 @@ pim6_input(mp, offp, proto)
 		}
 #endif
 
- 		rc = looutput(mif6table[reg_mif_num].m6_ifp, m,
+		rc = looutput(mif6table[reg_mif_num].m6_ifp, m,
 			      (struct sockaddr *) &dst,
 			      (struct rtentry *) NULL);
 	
