@@ -1,4 +1,4 @@
-/*	$OpenBSD: read_termcap.c,v 1.7 2000/03/26 16:45:04 millert Exp $	 */
+/*	$OpenBSD: read_termcap.c,v 1.8 2000/04/14 19:14:02 millert Exp $	 */
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -921,16 +921,23 @@ _nc_read_termcap_entry(const char *const tn, TERMTYPE * const tp)
     char cwd_buf[PATH_MAX];
 #endif
 #if USE_GETCAP
-    char tc[TBUFSIZ];
+    char *p, tc[TBUFSIZ];
     static char *source;
     static int lineno;
 
-    /* we're using getcap(3) */
-    if (_nc_tgetent(tc, &source, &lineno, tn) < 0)
-	return (ERR);
+    if (!issetugid() && (p = getenv("TERMCAP")) != 0 && !is_pathname(p) &&
+	_nc_name_match(p, tn, "|:")) {
 
-    _nc_curr_line = lineno;
-    _nc_set_source(source);
+	strlcpy(tc, p, sizeof(tc));
+	_nc_set_source("TERMCAP");
+    } else {
+	/* we're using getcap(3) */
+	if (_nc_tgetent(tc, &source, &lineno, tn) < 0)
+	    return (ERR);
+
+	_nc_curr_line = lineno;
+	_nc_set_source(source);
+    }
     _nc_read_entry_source((FILE *) 0, tc, FALSE, FALSE, NULLHOOK);
 #else
     /*
