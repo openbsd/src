@@ -17,7 +17,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: ip.c,v 1.2 1997/12/24 09:30:34 brian Exp $
+ * $Id: ip.c,v 1.3 1997/12/28 02:46:57 brian Exp $
  *
  *	TODO:
  *		o Return ICMP message for filterd packet
@@ -273,7 +273,7 @@ PacketCheck(char *cp, int nb, int direction)
   int logit, loglen;
   static char logbuf[200];
 
-  logit = LogIsKept(LogTCPIP);
+  logit = LogIsKept(LogTCPIP) && direction != FL_DIAL;
   loglen = 0;
 
   pip = (struct ip *) cp;
