@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.14 1997/01/27 19:50:04 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.15 1997/02/11 14:51:28 rahnds Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -163,6 +163,7 @@ cdev_decl(lp);
 cdev_decl(lptwo);
 
 cdev_decl(xd);
+cdev_decl(rd);
 
 dev_decl(filedesc,open);
 
@@ -199,6 +200,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 16 */
 	cdev_notdef(),			/* 17: concatenated disk */
 	cdev_notdef(),			/* 18 */
+        cdev_disk_init(NRD,rd),         /* 18: ramdisk device */
 	cdev_disk_init(NVND,vnd),	/* 19: vnode disk */
 	cdev_tape_init(NST,st),		/* 20: SCSI tape */
 	cdev_fd_init(1,filedesc),	/* 21: file descriptor pseudo-dev */
@@ -280,7 +282,7 @@ static int chrtoblktbl[] = {
 	/* 15 */	NODEV,
 	/* 16 */	NODEV,
 	/* 17 */	NODEV,
-	/* 18 */	NODEV,
+	/* 18 */	9,
 	/* 19 */	6,		/* vnode disk */
 	/* 20 */	NODEV,
 	/* 21 */	NODEV,
