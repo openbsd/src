@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.44 2000/07/17 23:26:50 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.45 2000/07/17 23:29:35 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.44 2000/07/17 23:26:50 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.45 2000/07/17 23:29:35 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -203,6 +203,7 @@ static void VarPrintVar __P((void *));
 static const char *context_name __P((GSymT *));
 static Var *new_var __P((const char *, const char *));
 static Var *getvar __P((GSymT *, const char *, const char *, u_int32_t));
+static Var *var_name_with_dollar __P((char *, char **, SymTable *, Boolean, char));
 
 void
 SymTable_Init(ctxt)
@@ -755,6 +756,51 @@ Var_Value(name, ctxt)
 	return NULL;
 }
 
+/*
+ *-----------------------------------------------------------------------
+ * v = var_name_with_dollar(str, &pos, ctxt, err, endc)
+ *   handle variable name that contains a dollar
+ *   str points to the first letter of the variable name,
+ *   &pos to the current position in the name (first dollar at invocation,
+ *   end of name specification at return).
+ *   returns the corresponding variable.
+ *-----------------------------------------------------------------------
+ */
+static Var *
+var_name_with_dollar(str, pos, ctxt, err, endc)
+    char *str;			/* First dollar in variable name */
+    char **pos;			/* Current position in variable spec */
+    SymTable   	*ctxt;    	/* The context for the variable */
+    Boolean 	err;    	/* TRUE if undefined variables are an error */
+    char	endc;		/* End character for spec */
+{
+    BUFFER buf;			/* Store the variable name */
+    size_t sublen;		/* Deal with recursive expansions */
+    Boolean subfree;		
+    char *n; 			/* Sub name */
+    Var *v;
+
+    Buf_Init(&buf, MAKE_BSIZE);
+
+    while (1) {
+	Buf_AddInterval(&buf, str, *pos);
+	n = Var_Parse(*pos, ctxt, err, &sublen, &subfree);
+	if (n != NULL)
+	    Buf_AddString(&buf, n);
+	if (subfree)
+	    free(n);
+	*pos += sublen;
+	str = *pos;
+	for (; **pos != '$'; (*pos)++) {
+	    if (**pos == '\0' || **pos == endc || **pos == ':') {
+		v = VarFind(Buf_Retrieve(&buf), ctxt, FIND_ENV | FIND_MINE);
+		Buf_Destroy(&buf);
+		return v;
+	    }
+	}
+    }
+}
+
 /*-
  *-----------------------------------------------------------------------
  * Var_Parse --
@@ -792,6 +838,8 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
     start = str++;
 
     val = NULL;
+    v = NULL;
+    idx = 0;
 
     if (*str != '(' && *str != '{') {
     	tstr = str + 1;
@@ -802,16 +850,24 @@ Var_Parse(str, ctxt, err, lengthPtr, freePtr)
     	str++;
 
 	/* Find eventual modifiers in the variable */
-	for (tstr = str; *tstr != ':'; tstr++)
-	    if (*tstr == '\0' || *tstr == endc) {
+	for (tstr = str; *tstr != ':'; tstr++) {
+	    if (*tstr == '$') {
+	    	v = var_name_with_dollar(str, &tstr, ctxt, err, endc);
+	    	if (*tstr == '\0' || *tstr == endc)
+		    endc = '\0';
+		break;
+	    } else if (*tstr == '\0' || *tstr == endc) {
 	    	endc = '\0';
 		break;
 	    }
+	}
 	*lengthPtr = tstr+1 - start;
     }
 
-    idx = quick_lookup(str, &tstr, &k);
-    v = varfind(str, tstr, ctxt, FIND_ENV | FIND_MINE, idx, k);
+    if (v == NULL) {
+	idx = quick_lookup(str, &tstr, &k);
+	v = varfind(str, tstr, ctxt, FIND_ENV | FIND_MINE, idx, k);
+    }
     if (v == NULL) {
     	/* Find out about D and F forms of local variables. */
     	if (idx == -1 && tstr == str+2 && (str[1] == 'D' || str[1] == 'F')) {
