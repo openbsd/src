@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.36 1998/10/28 23:40:42 csapuntz Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.37 1998/12/02 07:34:59 deraadt Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -2866,6 +2866,7 @@ static const struct {
     { tulip_identify_smc_nic,		{ 0x00, 0xE0, 0x29 } },
     { tulip_identify_znyx_nic,		{ 0x00, 0xC0, 0x95 } },
     { tulip_identify_cogent_nic,	{ 0x00, 0x00, 0x92 } },
+    { tulip_identify_cogent_nic,	{ 0x00, 0x00, 0xD1 } },
     { tulip_identify_asante_nic,	{ 0x00, 0x00, 0x94 } },
     { tulip_identify_accton_nic,	{ 0x00, 0x00, 0xE8 } },
     { tulip_identify_pnic_nic,		{ 0x00, 0xA0, 0xCC } },
