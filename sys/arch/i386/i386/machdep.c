@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.239 2003/07/25 21:42:02 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.240 2003/07/25 22:47:54 mickey Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1244,14 +1244,6 @@ intel686_cpu_setup(cpu_device, model, step)
 {
 	extern int cpu_feature, cpuid_level;
 	u_quad_t msr119;
-#define rdmsr(msr)	\
-({			\
-	u_quad_t v;	\
-	__asm __volatile ("rdmsr" : "=A" (v) : "c" (msr));	\
-	v;		\
-})
-#define wrmsr(msr, v)	\
-	__asm __volatile ("wrmsr" :: "A" ((u_quad_t) (v)), "c" (msr));
 
 	/*
 	 * Original PPro returns SYSCALL in CPUID but is non-functional.
@@ -1270,16 +1262,14 @@ intel686_cpu_setup(cpu_device, model, step)
 	 * Disable the Pentium3 serial number.
 	 */
 	if ((model == 7) && (cpu_feature & CPUID_SER)) {
-		msr119 = rdmsr(0x119);
-		msr119 |= 0x0000000000200000;
-		wrmsr(0x119, msr119);
+		msr119 = rdmsr(MSR_BBL_CR_CTL);
+		msr119 |= 0x0000000000200000LL;
+		wrmsr(MSR_BBL_CR_CTL, msr119);
 
 		printf("%s: disabling processor serial number\n", cpu_device);
 		cpu_feature &= ~CPUID_SER;
 		cpuid_level = 2;
 	}
-#undef rdmsr
-#undef wrmsr
 }
 
 void

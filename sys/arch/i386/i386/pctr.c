@@ -1,4 +1,4 @@
-/*	$OpenBSD: pctr.c,v 1.16 2003/05/27 23:52:01 fgsch Exp $	*/
+/*	$OpenBSD: pctr.c,v 1.17 2003/07/25 22:47:54 mickey Exp $	*/
 
 /*
  * Pentium performance counter driver for OpenBSD.
@@ -120,10 +120,10 @@ p5ctrsel (fflag, cmd, fn)
 	if (fn >= 0x200)
 		return EINVAL;
 
-	msr11 = rdmsr (0x11);
+	msr11 = rdmsr (P5MSR_CTRSEL);
 	msr11 &= ~(0x1ffLL << shift);
 	msr11 |= fn << shift;
-	wrmsr (0x11, msr11);
+	wrmsr (P5MSR_CTRSEL, msr11);
 	wrmsr (msr, 0);
 
 	return 0;
