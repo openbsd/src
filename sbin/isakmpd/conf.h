@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.h,v 1.4 1998/11/20 07:38:30 niklas Exp $	*/
-/*	$EOM: conf.h,v 1.5 1998/11/20 07:19:22 niklas Exp $	*/
+/*	$OpenBSD: conf.h,v 1.5 1999/02/26 03:34:55 niklas Exp $	*/
+/*	$EOM: conf.h,v 1.6 1999/02/25 11:09:32 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
@@ -59,7 +59,7 @@ extern void conf_free_list (struct conf_list *);
 extern int conf_get_line (FILE *, char *, u_int32_t);
 extern struct conf_list *conf_get_list (char *, char *);
 extern struct conf_list *conf_get_tag_list (char *);
-extern int conf_get_num (char *, char *);
+extern int conf_get_num (char *, char *, int);
 extern char *conf_get_str (char *, char *);
 extern void conf_init (void);
 extern int conf_match_num (char *, char *, int);
