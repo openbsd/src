@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.8 1996/07/23 10:36:41 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.9 1996/12/10 08:37:06 deraadt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.8 1996/07/23 10:36:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.9 1996/12/10 08:37:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -183,6 +183,7 @@ main(argc, argv)
 	struct in_addr saddr;
 	register int i;
 	int ch, fdmask, hold = 1, packlen, preload;
+	int maxsize, maxsizelen;
 	u_char *datap, *packet;
 	char *target, hnamebuf[MAXHOSTNAMELEN];
 	u_char ttl = MAXTTL, loop = 1, df = 0;
@@ -411,6 +412,17 @@ main(argc, argv)
 	    setsockopt(s, IPPROTO_IP, IP_MULTICAST_IF, &saddr,
 		       sizeof(saddr)) < 0)
 		err(1, "setsockopt IP_MULTICAST_IF");
+
+	/* 
+	 * When trying to send large packets, you must increase the
+	 * size of both the send and receive buffers...
+	 */
+	maxsizelen = sizeof maxsize;
+	if (getsockopt(s, SOL_SOCKET, SO_SNDBUF, &maxsize, &maxsizelen) < 0)
+		err(1, "getsockopt");
+	if (maxsize < packlen &&
+	    setsockopt(s, SOL_SOCKET, SO_SNDBUF, &packlen, sizeof(maxsize)) < 0)
+		err(1, "setsockopt");
 
 	/*
 	 * When pinging the broadcast address, you can get a lot of answers.
