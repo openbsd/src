@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.72 2004/01/17 18:27:19 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.73 2004/01/17 21:06:55 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -96,7 +96,7 @@ int		protect_lo(void);
 u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
-void		if_change(u_short, int);
+void		if_change(u_short, int, u_int8_t);
 void		if_announce(void *);
 
 int		send_rtmsg(int, int, struct kroute *);
@@ -798,7 +798,7 @@ get_rtaddrs(int addrs, struct sockaddr *sa, struct sockaddr **rti_info)
 }
 
 void
-if_change(u_short ifindex, int flags)
+if_change(u_short ifindex, int flags, u_int8_t link_state)
 {
 	struct kif_node		*kif;
 	struct kif_kr		*kkr;
@@ -812,9 +812,15 @@ if_change(u_short ifindex, int flags)
 	}
 
 	kif->k.flags = flags;
+	kif->k.link_state = link_state;
 
 	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
-		if (flags & IFF_UP)
+		/*
+		 * we treat link_state == LINK_STATE_UNKNOWN as valid
+		 * not all interfaces have a conecpt of "link state" and/or
+		 * do not report up
+		 */
+		if ((flags & IFF_UP) && (link_state != LINK_STATE_DOWN))
 			kkr->kr->r.flags &= ~F_DOWN;
 		else
 			kkr->kr->r.flags |= F_DOWN;
@@ -1069,6 +1075,7 @@ fetchifs(int ifindex)
 
 		kif->k.ifindex = ifm->ifm_index;
 		kif->k.flags = ifm->ifm_flags;
+		kif->k.link_state = ifm->ifm_data.ifi_link_state;
 
 		if ((sa = rti_info[RTAX_IFP]) != NULL)
 			if (sa->sa_family == AF_LINK) {
@@ -1213,7 +1220,8 @@ dispatch_rtmsg(void)
 			break;
 		case RTM_IFINFO:
 			ifm = (struct if_msghdr *)next;
-			if_change(ifm->ifm_index, ifm->ifm_flags);
+			if_change(ifm->ifm_index, ifm->ifm_flags,
+			    ifm->ifm_data.ifi_link_state);
 			break;
 		case RTM_IFANNOUNCE:
 			if_announce(next);
