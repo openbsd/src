@@ -1,4 +1,4 @@
-.\" $OpenBSD: login_krb5.8,v 1.12 2003/07/25 09:33:44 jmc Exp $
+.\" $OpenBSD: login_krb5.8,v 1.13 2005/03/06 10:47:27 biorn Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -22,10 +22,14 @@
 .Nd provide KerberosV authentication type
 .Sh SYNOPSIS
 .Nm login_krb5
+.Bk -words
 .Op Fl s Ar service
-.Op Fl v Ar ignored
+.Op Fl v Ar login=yes|no
+.Op Fl v Ar notickets=yes|no
+.Op Fl v Ar invokinguser=user
 .Ar user
 .Op Ar class
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -56,8 +60,25 @@ and
 protocol is silently ignored but will report success as KerberosV
 authentication is not challenge-response based).
 .Pp
+If
+.Ar invokinguser
+is set and the
+.Ar user
+argument is root, the principal
+invokinguser/root will be used for authentication.
+.Pp
+If the
+.Ar notickets
+argument is equal to
+.Dq no ,
+the default value, and the
+.Ar login
+argument is equal to
+.Dq yes ,
+then the ticket will be saved in a credentials cache.
+.Pp
 The
-.Ar ignored
+.Ar class
 argument is ignored for compatibility with other login scripts.
 .Pp
 .Nm
