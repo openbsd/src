@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365var.h,v 1.9 2000/06/28 17:48:10 aaron Exp $	*/
+/*	$OpenBSD: i82365var.h,v 1.10 2000/09/05 05:06:58 fgsch Exp $	*/
 /*	$NetBSD: i82365var.h,v 1.4 1998/05/23 18:32:29 matt Exp $	*/
 
 /*
@@ -123,6 +123,7 @@ struct pcic_softc {
 
 	/* this needs to be large enough to hold PCIC_MEM_PAGES bits */
 	int	subregionmask;
+#define PCIC_MAX_MEM_PAGES	(8 * sizeof(int))
 
 	/* used by memory window mapping functions */
 	bus_addr_t membase;
