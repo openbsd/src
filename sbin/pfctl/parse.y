@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.328 2003/02/21 10:54:57 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.329 2003/02/24 21:55:51 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3773,14 +3773,12 @@ symset(const char *nam, const char *val, int persist)
 	for (sym = symhead; sym && strcmp(nam, sym->nam); sym = sym->next)
 		;	/* nothing */
 
-	if (sym == NULL)
-		sym = calloc(1, sizeof(*sym));
-	else
-		if (sym->persist == 1)
-			return (0);
+	if (sym != NULL && sym->persist == 1)
+		return (0);
 
-	if (sym == NULL)
+	if ((sym = calloc(1, sizeof(*sym))) == NULL)
 		return (-1);
+
 	sym->nam = strdup(nam);
 	if (sym->nam == NULL) {
 		free(sym);
