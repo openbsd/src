@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.c,v 1.10 2002/03/25 16:30:55 danh Exp $	*/
+/*	$OpenBSD: gprof.c,v 1.11 2002/05/08 16:46:35 art Exp $	*/
 /*	$NetBSD: gprof.c,v 1.8 1995/04/19 07:15:59 cgd Exp $	*/
 
 /*
@@ -44,16 +44,13 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)gprof.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: gprof.c,v 1.10 2002/03/25 16:30:55 danh Exp $";
+static char rcsid[] = "$OpenBSD: gprof.c,v 1.11 2002/05/08 16:46:35 art Exp $";
 #endif
 #endif /* not lint */
 
 #include "gprof.h"
 
-    /*
-     *	things which get -E excluded by default.
-     */
-char	*defaultEs[] = { "mcount" , "__mcleanup" , 0 };
+int valcmp(const void *, const void *);
 
 static struct gmonhdr	gmonhdr;
 extern char *__progname;
@@ -65,6 +62,7 @@ main(argc, argv)
 {
     char	**sp;
     nltype	**timesortnlp;
+    char	**defaultEs;
 
     --argc;
     argv++;
@@ -151,6 +149,15 @@ main(argc, argv)
 	gmonname = GMONNAME;
     }
 	/*
+	 *	get information about a.out file.
+	 */
+    if (getnfile(a_outname, &defaultEs) == -1)
+	errx(1, "%s: bad format", a_outname);
+	/*
+	 *	sort symbol table.
+	 */
+    qsort(nl, nname, sizeof(nltype), valcmp);
+	/*
 	 *	turn off default functions
 	 */
     for ( sp = &defaultEs[0] ; *sp ; sp++ ) {
@@ -159,10 +166,6 @@ main(argc, argv)
 	eflag = TRUE;
 	addlist( elist , *sp );
     }
-	/*
-	 *	get information about a.out file.
-	 */
-    getnfile();
 	/*
 	 *	get information about mon.out file(s).
 	 */
@@ -210,136 +213,6 @@ main(argc, argv)
     return (0);
 }
 
-    /*
-     * Set up string and symbol tables from a.out.
-     *	and optionally the text space.
-     * On return symbol table is sorted by value.
-     */
-void
-getnfile()
-{
-    FILE	*nfile;
-    int		valcmp();
-
-    nfile = fopen( a_outname ,"r");
-    if (nfile == NULL)
-	err(1, "fopen: %s", a_outname);
-    fread(&xbuf, 1, sizeof(xbuf), nfile);
-    if (N_BADMAG(xbuf))
-	errx(1, "%s: bad format", a_outname );
-    getstrtab(nfile);
-    getsymtab(nfile);
-    gettextspace( nfile );
-    qsort(nl, nname, sizeof(nltype), valcmp);
-    fclose(nfile);
-#   ifdef DEBUG
-	if ( debug & AOUTDEBUG ) {
-	    int j;
-
-	    for (j = 0; j < nname; j++){
-		printf("[getnfile] 0X%08x\t%s\n", nl[j].value, nl[j].name);
-	    }
-	}
-#   endif /* DEBUG */
-}
-
-void
-getstrtab(nfile)
-    FILE	*nfile;
-{
-
-    fseek(nfile, (long)(N_SYMOFF(xbuf) + xbuf.a_syms), 0);
-    if (fread(&ssiz, sizeof (ssiz), 1, nfile) == 0)
-	errx(1, "%s: no string table (old format?)" , a_outname);
-    strtab = calloc(ssiz, 1);
-    if (strtab == NULL)
-	errx(1, "%s: no room for %ld bytes of string table", a_outname , ssiz);
-    if (fread(strtab+sizeof(ssiz), ssiz-sizeof(ssiz), 1, nfile) != 1)
-	err(1, "%s: reading string table", a_outname);
-}
-
-    /*
-     * Read in symbol table
-     */
-void
-getsymtab(nfile)
-    FILE	*nfile;
-{
-    long		i;
-    int			askfor;
-    struct nlist	nbuf;
-
-    /* pass1 - count symbols */
-    fseek(nfile, (long)N_SYMOFF(xbuf), 0);
-    nname = 0;
-    for (i = xbuf.a_syms; i > 0; i -= sizeof(struct nlist)) {
-	fread(&nbuf, sizeof(nbuf), 1, nfile);
-	if ( ! funcsymbol( &nbuf ) ) {
-	    continue;
-	}
-	nname++;
-    }
-    if (nname == 0)
-	errx(1, "%s: no symbols", a_outname);
-    askfor = nname + 1;
-    nl = (nltype *) calloc( askfor , sizeof(nltype) );
-    if (nl == 0)
-	errx(1, "No room for %d bytes of symbol table",
-	    askfor * sizeof(nltype));
-
-    /* pass2 - read symbols */
-    fseek(nfile, (long)N_SYMOFF(xbuf), 0);
-    npe = nl;
-    nname = 0;
-    for (i = xbuf.a_syms; i > 0; i -= sizeof(struct nlist)) {
-	fread(&nbuf, sizeof(nbuf), 1, nfile);
-	if ( ! funcsymbol( &nbuf ) ) {
-#	    ifdef DEBUG
-		if ( debug & AOUTDEBUG ) {
-		    printf( "[getsymtab] rejecting: 0x%x %s\n" ,
-			    nbuf.n_type , strtab + nbuf.n_un.n_strx );
-		}
-#	    endif /* DEBUG */
-	    continue;
-	}
-	npe->value = nbuf.n_value;
-	npe->name = strtab+nbuf.n_un.n_strx;
-#	ifdef DEBUG
-	    if ( debug & AOUTDEBUG ) {
-		printf( "[getsymtab] %d %s 0x%08x\n" ,
-			nname , npe -> name , npe -> value );
-	    }
-#	endif /* DEBUG */
-	npe++;
-	nname++;
-    }
-    npe->value = -1;
-}
-
-    /*
-     *	read in the text space of an a.out file
-     */
-void
-gettextspace( nfile )
-    FILE	*nfile;
-{
-
-    if ( cflag == 0 ) {
-	return;
-    }
-    textspace = (u_char *) malloc( xbuf.a_text );
-    if ( textspace == 0 ) {
-	warnx("ran out room for %d bytes of text space: can't do -c", xbuf.a_text );
-	return;
-    }
-    (void) fseek( nfile , N_TXTOFF( xbuf ) , 0 );
-    if ( fread( textspace , 1 , xbuf.a_text , nfile ) != xbuf.a_text ) {
-	warnx("couldn't read text space: can't do -c");
-	free( textspace );
-	textspace = NULL;
-	return;
-    }
-}
     /*
      *	information from a gmon.out file is in two parts:
      *	an array of sampling hits within pc ranges,
@@ -498,9 +371,11 @@ dumpsum( sumfile )
 }
 
 int
-valcmp(p1, p2)
-    nltype *p1, *p2;
+valcmp(const void *vp1, const void *vp2)
 {
+    const nltype *p1 = vp1;
+    const nltype *p2 = vp2;
+
     if ( p1 -> value < p2 -> value ) {
 	return LESSTHAN;
     }
@@ -675,46 +550,4 @@ alignentries()
 	    nlp->svalue += UNITS_TO_CODE;
 	}
     }
-}
-
-bool
-funcsymbol( nlistp )
-    struct nlist	*nlistp;
-{
-    extern char	*strtab;	/* string table from a.out */
-    extern int	aflag;		/* if static functions aren't desired */
-    char	*name, c;
-
-	/*
-	 *	must be a text symbol,
-	 *	and static text symbols don't qualify if aflag set.
-	 */
-    if ( ! (  ( nlistp -> n_type == ( N_TEXT | N_EXT ) )
-	   || ( ( nlistp -> n_type == N_TEXT ) && ( aflag == 0 ) ) ) ) {
-	return FALSE;
-    }
-	/*
-	 *	can't have any `funny' characters in name,
-	 *	where `funny' means `.', .o file names
-	 *	need to make an exception for sparc .mul & co.
-	 *	perhaps we should just drop this code entirely...
-	 */
-    name = strtab + nlistp -> n_un.n_strx;
-#ifdef __sparc__
-    if (nlistp -> n_value & 3)
-	return FALSE;
-    if ( *name == '.' ) {
-	char *p = name + 1;
-	if ( *p == 'u' )
-	    p++;
-	if ( strcmp ( p, "mul" ) == 0 || strcmp ( p, "div" ) == 0 ||
-	     strcmp ( p, "rem" ) == 0 )
-		return TRUE;
-    }
-#endif
-    while ((c = *name++))
-	if (c == '.')
-	    return FALSE;
-
-    return TRUE;
 }

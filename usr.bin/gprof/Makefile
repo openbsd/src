@@ -1,17 +1,19 @@
-#	$OpenBSD: Makefile,v 1.12 2001/09/10 23:31:34 drahn Exp $
+#	$OpenBSD: Makefile,v 1.13 2002/05/08 16:46:35 art Exp $
+
+.include <bsd.own.mk>
 
 TARGET_MACHINE_ARCH?=	${MACHINE_ARCH}
 
-.if (${TARGET_MACHINE_ARCH} == "alpha") || \
-    (${TARGET_MACHINE_ARCH} == "powerpc") || \
-    (${TARGET_MACHINE_ARCH} == "sparc64") || \
-    (${TARGET_MACHINE_ARCH} == "hppa")
-NOPROG=
-.else
 PROG=	gprof
 SRCS=	gprof.c arcs.c dfn.c lookup.c machine.c hertz.c \
 	printgprof.c printlist.c
 CFLAGS+= -I${.CURDIR} -I.
+
+# XXX - need support for multiple archs.
+.if (${ELF_TOOLCHAIN} == "yes")
+SRCS+=elf.c
+.else
+SRCS+=aout.c
 .endif
 
 .if defined(PROG)

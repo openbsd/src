@@ -1,4 +1,4 @@
-/*	$OpenBSD: i386.c,v 1.6 2002/04/20 03:37:40 tholo Exp $	*/
+/*	$OpenBSD: i386.c,v 1.7 2002/05/08 16:46:35 art Exp $	*/
 /*	$NetBSD: i386.c,v 1.5 1995/04/19 07:16:04 cgd Exp $	*/
 
 /*-
@@ -29,12 +29,12 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: i386.c,v 1.6 2002/04/20 03:37:40 tholo Exp $";
+static char rcsid[] = "$OpenBSD: i386.c,v 1.7 2002/05/08 16:46:35 art Exp $";
 #endif /* not lint */
 
 #include "gprof.h"
 
-#define	iscall(pc)	((*pc) == 0xE8)
+#define	iscall(off)	((*(u_char *)&textspace[off]) == 0xE8)
 
 void
 findcall( parentp , p_lowpc , p_highpc )
@@ -42,10 +42,11 @@ findcall( parentp , p_lowpc , p_highpc )
     unsigned long	p_lowpc;
     unsigned long	p_highpc;
 {
-	unsigned char *pc;
+	unsigned long pc;
 	long len;
 	nltype *childp;
 	unsigned long destpc;
+	int off;
 
 	if (textspace == 0)
 		return;
@@ -59,10 +60,11 @@ findcall( parentp , p_lowpc , p_highpc )
 				parentp -> name , p_lowpc , p_highpc );
 		}
 #	endif /* DEBUG */
-	for (pc = textspace + p_lowpc - N_TXTADDR(xbuf) ; pc < textspace + p_highpc - N_TXTADDR(xbuf) ; pc += len) {
+	for (pc = p_lowpc; pc < p_highpc; pc += len) {
+		off = pc - s_lowpc;
 		len = 1;
-		if (iscall(pc)) {
-			destpc = *(unsigned long *)(pc + 1) + (pc - textspace + N_TXTADDR(xbuf)) + 5;
+		if (iscall(off)) {
+			destpc = *(u_long *)&textspace[off + 1] + off + 5;
 #			ifdef DEBUG
 				if ( debug & CALLDEBUG ) {
 					printf( "[findcall]\t0x%x:calls" , pc - textspace );

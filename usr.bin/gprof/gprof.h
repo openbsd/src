@@ -1,4 +1,4 @@
-/*	$OpenBSD: gprof.h,v 1.7 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: gprof.h,v 1.8 2002/05/08 16:46:35 art Exp $	*/
 /*	$NetBSD: gprof.h,v 1.13 1996/04/01 21:54:06 mark Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ typedef struct arcstruct	arctype;
      * its address, the number of calls and compute its share of cpu time.
      */
 struct nl {
-    char		*name;		/* the name */
+    const char		*name;		/* the name */
     unsigned long	value;		/* the pc entry point */
     unsigned long	svalue;		/* entry point aligned to histograms */
     double		time;		/* ticks in this routine */
@@ -196,9 +196,6 @@ double	totime;			/* total time for all routines */
 double	printtime;		/* total of time being printed */
 double	scale;			/* scale factor converting samples to pc
 				   values: each sample covers scale bytes */
-char	*strtab;		/* string table in core */
-long	ssiz;			/* size of the string table */
-struct	exec xbuf;		/* exec header of a.out */
 unsigned char	*textspace;	/* text space of a.out in core */
 int	cyclethreshold;		/* with -C, minimum cycle size to ignore */
 
@@ -263,12 +260,8 @@ void		dumpsum();
 void		findcall(nltype *, u_long, u_long);
 void		flatprofheader();
 void		flatprofline();
-bool		funcsymbol();
-void		getnfile();
+int		getnfile(const char *, char ***);
 void		getpfile();
-void		getstrtab();
-void		getsymtab();
-void		gettextspace();
 void		gprofheader();
 void		gprofline();
 int		hertz();
@@ -300,7 +293,6 @@ int		timecmp();
 void		timepropagate(nltype *);
 int		topcmp();
 int		totalcmp();
-int		valcmp(nltype *p1, nltype *p2);
 
 #define	LESSTHAN	-1
 #define	EQUALTO		0
