@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.48 2001/06/05 01:29:05 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.49 2001/06/05 05:59:43 niklas Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -202,7 +202,7 @@ exchange_validate (struct message *msg)
 
   while (*pc != EXCHANGE_SCRIPT_END && *pc != EXCHANGE_SCRIPT_SWITCH)
     {
-      LOG_DBG ((LOG_EXCHANGE, 90, 
+      LOG_DBG ((LOG_EXCHANGE, 90,
 		"exchange_validate: checking for required %s",
 		*pc >= ISAKMP_PAYLOAD_NONE
 		? constant_name (isakmp_payload_cst, *pc)
@@ -317,7 +317,7 @@ exchange_run (struct message *msg)
 	      message_free (msg);
 	      return;
 	    }
-	}      
+	}
       else
 	{
 	  done = exchange_validate (msg);
@@ -348,7 +348,7 @@ exchange_run (struct message *msg)
 		    if ((payload->flags & PL_MARK) == 0)
 		      if (!doi->handle_leftover_payload
 			  || doi->handle_leftover_payload (msg, i, payload))
-			LOG_DBG ((LOG_EXCHANGE, 10, 
+			LOG_DBG ((LOG_EXCHANGE, 10,
 				  "exchange_run: unexpected payload %s",
 				  constant_name (isakmp_payload_cst, i)));
 
@@ -378,7 +378,7 @@ exchange_run (struct message *msg)
 	    }
 	}
 
-      LOG_DBG ((LOG_EXCHANGE, 40, 
+      LOG_DBG ((LOG_EXCHANGE, 40,
 		"exchange_run: exchange %p finished step %d, advancing...",
 		exchange, exchange->step));
       exchange->step++;
@@ -402,7 +402,7 @@ exchange_init ()
     {
       LIST_INIT (&exchange_tab[i]);
     }
- 
+
 }
 
 void
@@ -460,7 +460,7 @@ exchange_lookup_by_name (char *name, int phase)
 		  exchange->name ? exchange->name : "<unnamed>", phase,
 		  exchange->phase));
 
-	/* 
+	/*
 	 * Match by name, but don't select finished exchanges, i.e
 	 * where MSG_LAST are set in last_sent msg.
 	 */
@@ -499,7 +499,7 @@ exchange_lookup_active (char *name, int phase)
 	    if (exchange->step > 1)
 	      return exchange;
 	    else
-	      LOG_DBG ((LOG_EXCHANGE, 80, 
+	      LOG_DBG ((LOG_EXCHANGE, 80,
 			"exchange_lookup_active: avoided early (pre-step 1) "
 			"exchange %p", exchange));
 	  }
@@ -864,7 +864,7 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
 	  log_print ("exchange_establish_p2: DOI \"%s\" unsupported", str);
 	  return;
 	}
-      
+
       /* What exchange type do we want?  */
       if (!type)
 	{
@@ -913,9 +913,9 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
   exchange_enter (exchange);
   exchange_dump ("exchange_establish_p2", exchange);
 
-  /* 
-   * Do not create SA's for informational exchanges. 
-   * XXX How to handle new group mode? 
+  /*
+   * Do not create SA's for informational exchanges.
+   * XXX How to handle new group mode?
    */
   if (exchange->type != ISAKMP_EXCH_INFO)
     {
@@ -931,7 +931,7 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
   msg = message_alloc (isakmp_sa->transport, 0, ISAKMP_HDR_SZ);
   msg->isakmp_sa = isakmp_sa;
   sa_reference (isakmp_sa);
-  
+
   msg->extra = args;
 
   /* This needs to be done late or else get_keystate won't work right.  */
@@ -1087,16 +1087,16 @@ exchange_dump_real (char *header, struct exchange *exchange, int class,
 {
   char buf[LOG_SIZE];
   /* Don't risk overflowing the final log buffer.  */
-  int bufsize_max = LOG_SIZE - strlen (header) - 32; 
+  int bufsize_max = LOG_SIZE - strlen (header) - 32;
   struct sa *sa;
 
-  LOG_DBG ((class, level, 
+  LOG_DBG ((class, level,
 	    "%s: %p %s %s policy %s phase %d doi %d exchange %d step %d",
 	    header, exchange, exchange->name ? exchange->name : "<unnamed>",
 	    exchange->policy ? exchange->policy : "<no policy>",
 	    exchange->initiator ? "initiator" : "responder", exchange->phase,
 	    exchange->doi->id, exchange->type, exchange->step));
-  LOG_DBG ((class, level, 
+  LOG_DBG ((class, level,
 	    "%s: icookie %08x%08x rcookie %08x%08x", header,
 	    decode_32 (exchange->cookies), decode_32 (exchange->cookies + 4),
 	    decode_32 (exchange->cookies + 8),
@@ -1106,7 +1106,7 @@ exchange_dump_real (char *header, struct exchange *exchange, int class,
   if (exchange->phase == 2)
     {
       sprintf (buf, "sa_list ");
-      for (sa = TAILQ_FIRST (&exchange->sa_list); 
+      for (sa = TAILQ_FIRST (&exchange->sa_list);
 	   sa && strlen (buf) < bufsize_max; sa = TAILQ_NEXT (sa, next))
 	sprintf (buf + strlen (buf), "%p ", sa);
       if (sa)
@@ -1115,7 +1115,7 @@ exchange_dump_real (char *header, struct exchange *exchange, int class,
   else
     buf[0] = '\0';
 
-  LOG_DBG ((class, level, "%s: msgid %08x %s", header, 
+  LOG_DBG ((class, level, "%s: msgid %08x %s", header,
 	    decode_32 (exchange->message_id), buf));
 }
 
@@ -1149,7 +1149,7 @@ exchange_free_aux (void *v_exch)
   struct sa *sa, *next_sa;
   struct cert_handler *handler;
 
-  LOG_DBG ((LOG_EXCHANGE, 80, "exchange_free_aux: freeing exchange %p", 
+  LOG_DBG ((LOG_EXCHANGE, 80, "exchange_free_aux: freeing exchange %p",
 	    exchange));
 
   if (exchange->last_received)
@@ -1248,12 +1248,12 @@ exchange_check_old_sa (struct sa *sa, void *v_arg)
   struct sa *new_sa = v_arg;
   char res1[1024];
 
-  if (sa == new_sa || !sa->name || !(sa->flags & SA_FLAG_READY) || 
-      (sa->flags & SA_FLAG_REPLACED))
+  if (sa == new_sa || !sa->name || !(sa->flags & SA_FLAG_READY)
+      || (sa->flags & SA_FLAG_REPLACED))
     return 0;
 
-  if (sa->phase != new_sa->phase || new_sa->name == NULL ||
-      strcasecmp (sa->name, new_sa->name))
+  if (sa->phase != new_sa->phase || new_sa->name == NULL
+      || strcasecmp (sa->name, new_sa->name))
     return 0;
 
   if (sa->initiator)
@@ -1264,18 +1264,15 @@ exchange_check_old_sa (struct sa *sa, void *v_arg)
 				     sa->id_i_len, 0), sizeof res1);
 
   LOG_DBG ((LOG_EXCHANGE, 30,
-	    "checking whether new SA replaces existing SA with IDs %s",
-	    res1));
+	    "checking whether new SA replaces existing SA with IDs %s", res1));
 
   if (new_sa->initiator)
     return strcasecmp (res1, ipsec_decode_ids ("%s %s", new_sa->id_i,
-					       new_sa->id_i_len,
-					       new_sa->id_r,
+					       new_sa->id_i_len, new_sa->id_r,
 					       new_sa->id_r_len, 0)) == 0;
   else
     return strcasecmp (res1, ipsec_decode_ids ("%s %s", new_sa->id_r,
-					       new_sa->id_r_len,
-					       new_sa->id_i,
+					       new_sa->id_r_len, new_sa->id_i,
 					       new_sa->id_i_len, 0)) == 0;
 }
 
@@ -1396,7 +1393,8 @@ exchange_finalize (struct message *msg)
 					   0),
 		msg->isakmp_sa == NULL || msg->isakmp_sa->transport == NULL
 		? "<no transport>"
-		: msg->isakmp_sa->transport->vtbl->decode_ids (msg->isakmp_sa->transport)));
+		: msg->isakmp_sa->transport->vtbl->decode_ids (msg->isakmp_sa
+							       ->transport)));
     }
 
   exchange->doi->finalize_exchange (msg);
@@ -1404,10 +1402,10 @@ exchange_finalize (struct message *msg)
     exchange->finalize (exchange, exchange->finalize_arg, 0);
   exchange->finalize = 0;
 
-  /* copy the ID from phase 1 to exchange or phase 2 SA */
-  if (msg->isakmp_sa) 
+  /* Copy the ID from phase 1 to exchange or phase 2 SA.  */
+  if (msg->isakmp_sa)
     {
-      if (exchange->id_i && exchange->id_r) 
+      if (exchange->id_i && exchange->id_r)
 	{
 	  ipsec_clone_id (&msg->isakmp_sa->id_i, &msg->isakmp_sa->id_i_len,
 			  exchange->id_i, exchange->id_i_len);
@@ -1520,25 +1518,23 @@ exchange_save_certreq (struct message *msg)
 {
   struct payload *cp = TAILQ_FIRST (&msg->payload[ISAKMP_PAYLOAD_CERT_REQ]);
   struct exchange *exchange = msg->exchange;
-  struct certreq_aca *tmp;
+  struct certreq_aca *aca;
 
   for ( ; cp; cp = TAILQ_NEXT (cp, link))
     {
       cp->flags |= PL_MARK;
-      tmp = certreq_decode (GET_ISAKMP_CERTREQ_TYPE (cp->p),
+      aca = certreq_decode (GET_ISAKMP_CERTREQ_TYPE (cp->p),
 			    cp->p + ISAKMP_CERTREQ_AUTHORITY_OFF,
-			    GET_ISAKMP_GEN_LENGTH (cp->p) - 
+			    GET_ISAKMP_GEN_LENGTH (cp->p) -
 			    ISAKMP_CERTREQ_AUTHORITY_OFF);
-      if (!tmp)
-	continue;
-      TAILQ_INSERT_TAIL (&exchange->aca_list, tmp, link);
+      if (aca)
+	TAILQ_INSERT_TAIL (&exchange->aca_list, aca, link);
     }
 
   return 0;
 }
 
-/* Free the list of pending CERTREQ */
-
+/* Free the list of pending CERTREQ.  */
 void
 exchange_free_aca_list (struct exchange *exchange)
 {
@@ -1572,10 +1568,10 @@ exchange_add_certs (struct message *msg)
   id = exchange->initiator ? exchange->id_r : exchange->id_i;
   id_len = exchange->initiator ? exchange->id_r_len : exchange->id_i_len;
 
-  for (aca = TAILQ_FIRST (&exchange->aca_list); aca; 
+  for (aca = TAILQ_FIRST (&exchange->aca_list); aca;
        aca = TAILQ_NEXT (aca, link))
     {
-      /* XXX? If we can not satisfy a CERTREQ we drop the message */
+      /* XXX? If we can not satisfy a CERTREQ we drop the message.  */
       if (!aca->handler->cert_obtain (id, id_len, aca->data, &cert, &certlen))
 	{
 	  log_print ("exchange_add_certs: could not obtain cert for a type %d "
@@ -1599,7 +1595,7 @@ exchange_add_certs (struct message *msg)
 	}
     }
 
-  /* We dont need the CERT REQs any more, they are anwsered */
+  /* We dont need the CERT REQs any more, they are answered.  */
   exchange_free_aca_list (exchange);
 
   return 0;

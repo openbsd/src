@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.42 2001/06/05 05:08:26 angelos Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.43 2001/06/05 05:59:42 niklas Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -386,8 +386,8 @@ pre_shared_gen_skeyid (struct exchange *exchange, size_t *sz)
   if (buf)
     free (buf);
 
-  /* Fail if no key could be found */
-  if (key == NULL) 
+  /* Fail if no key could be found.  */
+  if (!key)
     return 0;
 
   /* Store the secret key for later policy processing.  */
@@ -611,7 +611,7 @@ rsa_sig_decode_hash (struct message *msg)
     }
 #endif /* USE_POLICY || USE_KEYNOTE */
 
-  /* Obtain a certificate from our certificate storage */
+  /* Obtain a certificate from our certificate storage.  */
   if (handler->cert_obtain (id, id_len, 0, &rawcert, &rawcertlen))
     {
       if (handler->id == ISAKMP_CERTENC_X509_SIG)
@@ -667,7 +667,7 @@ rsa_sig_decode_hash (struct message *msg)
 				     GET_ISAKMP_CERT_ENCODING (p->p))));
 	  continue;
 	}
-  
+
       cert = handler->cert_get (p->p + ISAKMP_CERT_DATA_OFF,
 				GET_ISAKMP_GEN_LENGTH (p->p)
 				- ISAKMP_CERT_DATA_OFF);
@@ -764,15 +764,15 @@ rsa_sig_decode_hash (struct message *msg)
       found++;
     }
 
-  /* If no certificate provided a key, try to find a validated DNSSEC KEY. */
 #if defined(USE_DNSSEC)
+  /* If no certificate provided a key, try to find a validated DNSSEC KEY.  */
   if (!found)
     {
       rawkey = dns_get_key (IKE_AUTH_RSA_SIG, msg, &rawkeylen);
       if (rawkey)
 	found++;
-      
-      /* We need to convert 'void *rawkey' into 'RSA *key'. */
+
+      /* We need to convert 'void *rawkey' into 'RSA *key'.  */
       if (dns_RSA_dns_to_x509 (rawkey, rawkeylen, &key) == -1)
 	{
 	  log_print ("rsa_sig_decode_hash: KEY to RSA key conversion failed");
@@ -858,10 +858,10 @@ pre_shared_encode_hash (struct message *msg)
   buf = ipsec_add_hash_payload (msg, hashsize);
   if (!buf)
     return -1;
-    
+
   if (ike_auth_hash (exchange, buf + ISAKMP_HASH_DATA_OFF) == -1)
     return -1;
-    
+
   snprintf (header, 80, "pre_shared_encode_hash: HASH_%c",
 	    initiator ? 'I' : 'R');
   LOG_DBG_BUF ((LOG_MISC, 80, header, buf + ISAKMP_HASH_DATA_OFF, hashsize));
@@ -1019,7 +1019,7 @@ rsa_sig_encode_hash (struct message *msg)
 	      id_len - ISAKMP_ID_DATA_OFF + ISAKMP_GEN_SZ);
       break;
 
-      /* XXX Support more ID types ? */
+      /* XXX Support more ID types?  */
     default:
       buf2 = NULL;
       break;
@@ -1076,7 +1076,7 @@ rsa_sig_encode_hash (struct message *msg)
       free (buf);
       return -1;
     }
-    
+
   snprintf (header, 80, "rsa_sig_encode_hash: HASH_%c", initiator ? 'I' : 'R');
   LOG_DBG_BUF ((LOG_MISC, 80, header, buf, hashsize));
 

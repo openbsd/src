@@ -1,4 +1,4 @@
-/*	$OpenBSD: cert.c,v 1.17 2001/05/31 20:21:25 angelos Exp $	*/
+/*	$OpenBSD: cert.c,v 1.18 2001/06/05 05:59:42 niklas Exp $	*/
 /*	$EOM: cert.c,v 1.18 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
@@ -108,7 +108,11 @@ cert_get (u_int16_t id)
   return 0;
 }
 
-/* Decode a CERTREQ and return a parsed structure.  */
+/*
+ * Decode the certificate request of type TYPE contained in DATA extending
+ * DATALEN bytes.  Return a certreq_aca structure which the caller is
+ * responsible for deallocating.
+ */
 struct certreq_aca *
 certreq_decode (u_int16_t type, u_int8_t *data, u_int32_t datalen)
 {

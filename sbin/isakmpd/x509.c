@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.51 2001/05/31 20:20:59 angelos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.52 2001/06/05 05:59:43 niklas Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -1029,7 +1029,7 @@ x509_certreq_decode (u_int8_t *asn, u_int32_t len)
   if (!asn_template_clone (&aca, 1)
       || (asn = asn_decode_sequence (asn, len, &aca)) == 0)
     {
-      log_print ("x509_certreq_validate: can not decode 'acceptable CA' info");
+      log_print ("x509_certreq_decode: can not decode 'acceptable CA' info");
       goto fail;
     }
   memset (&naca, 0, sizeof (naca));
@@ -1138,8 +1138,17 @@ x509_cert_obtain (u_int8_t *id, size_t id_len, void *data, u_int8_t **cert,
   if (!scert)
     return 0;
 
+  *certlen = LC (i2d_X509, (scert, NULL));
+  p = *cert = malloc (*certlen);
+  if (!p)
+    {
+      log_error ("x509_cert_obtain: malloc (%d) failed", *certlen);
+      return 0;
+    }
+  *certlen = LC (i2d_X509, (scert, &p));
+
   x509_serialize (scert, cert, certlen);
-  if (*cert == NULL)
+  if (!*cert)
     return 0;
   return 1;
 }
@@ -1373,15 +1382,15 @@ x509_printable (void *cert)
   int i;
 
   x509_serialize (cert, &data, &datalen);
-  if (data == NULL)
-    return NULL;
+  if (!data)
+    return 0;
 
   s = malloc (datalen * 2);
-  if (s == NULL)
+  if (!s)
     {
       free (data);
       log_error ("x509_printable: malloc (%d) failed", datalen * 2);
-      return NULL;
+      return 0;
     }
 
   for (i = 0; i < datalen; i++)
@@ -1400,10 +1409,10 @@ x509_from_printable (char *cert)
 
   plen = (strlen (cert) + 1) / 2;
   buf = malloc (plen);
-  if (buf == NULL)
+  if (!buf)
     {
       log_error ("x509_from_printable: malloc (%d) failed", plen);
-      return NULL;
+      return 0;
     }
 
   ret = hex2raw (cert, buf, plen);
@@ -1411,12 +1420,12 @@ x509_from_printable (char *cert)
     {
       free (buf);
       log_error ("x509_from_printable: badly formatted cert");
-      return NULL;
+      return 0;
     }
 
   foo = x509_cert_get (buf, plen);
   free (buf);
-  if (foo == NULL)
+  if (!foo)
     log_error ("x509_from_printable: could not retrieve certificate");
   return foo;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.h,v 1.19 2001/05/31 20:23:52 angelos Exp $	*/
+/*	$OpenBSD: exchange.h,v 1.20 2001/06/05 05:59:43 niklas Exp $	*/
 /*	$EOM: exchange.h,v 1.28 2000/09/28 12:54:28 niklas Exp $	*/
 
 /*
@@ -145,7 +145,7 @@ struct exchange {
   u_int8_t *id_r;
   size_t id_r_len;
 
-  /* Policy session identifier, where applicable */
+  /* Policy session identifier, where applicable.  */
   int policy_id;
 
   /* Crypto info needed to encrypt/decrypt packets in this exchange.  */
@@ -191,12 +191,12 @@ struct exchange {
   void *sent_cert; /* Certificate (to be) sent to peer, native format */
   void *sent_key; /* Key we'll use to authenticate to peer, native format */
 
-  /* ACQUIRE sequence number */
+  /* ACQUIRE sequence number.  */
   u_int32_t seq;
 
   /* XXX This is no longer necessary, it is covered by policy.  */
 
-  /* Acceptable authorities for cert requests */
+  /* Acceptable authorities for cert requests.  */
   TAILQ_HEAD (aca_head, certreq_aca) aca_list;
 
   /* DOI-specific opaque data.  */
