@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: tty.c,v 1.18 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: tty.c,v 1.19 2003/04/04 20:25:06 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -546,10 +546,10 @@ tty_OpenInfo(struct physical *p)
   static char buf[13];
 
   if (Online(dev))
-    strcpy(buf, "with");
+    strlcpy(buf, "with", sizeof buf);
   else
-    strcpy(buf, "no");
-  strcat(buf, " carrier");
+    strlcpy(buf, "no", sizeof buf);
+  strlcat(buf, " carrier", sizeof buf);
 
   return buf;
 }

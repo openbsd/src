@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.39 2002/07/29 22:02:38 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.40 2003/04/04 20:25:07 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.39 2002/07/29 22:02:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.40 2003/04/04 20:25:07 deraadt Exp $";
 #endif
 #endif
 
@@ -208,8 +208,8 @@ main(argc, argv)
     phase = PHASE_INITIALIZE;
     p = ttyname(0);
     if (p)
-	strcpy(devnam, p);
-    strcpy(default_devnam, devnam);
+	strlcpy(devnam, p, MAXPATHLEN);
+    strlcpy(default_devnam, devnam, sizeof default_devnam);
 
     script_env = NULL;
 
@@ -228,7 +228,7 @@ main(argc, argv)
 
     uid = getuid();
     privileged = uid == 0;
-    sprintf(numbuf, "%u", uid);
+    snprintf(numbuf, sizeof numbuf, "%u", uid);
     script_setenv("UID", numbuf);
 
     /*
@@ -277,7 +277,7 @@ main(argc, argv)
     }
 
     script_setenv("DEVICE", devnam);
-    sprintf(numbuf, "%d", baud_rate);
+    snprintf(numbuf, sizeof numbuf, "%d", baud_rate);
     script_setenv("SPEED", numbuf);
 
     /*
@@ -402,7 +402,7 @@ main(argc, argv)
 	open_ppp_loopback();
 
 	syslog(LOG_INFO, "Using interface ppp%d", ifunit);
-	(void) sprintf(ifname, "ppp%d", ifunit);
+	(void) snprintf(ifname, sizeof ifname, "ppp%d", ifunit);
 	script_setenv("IFNAME", ifname);
 
 	create_pidfile();	/* write pid to file */
@@ -541,7 +541,7 @@ main(argc, argv)
 	if (!demand) {
 
 	    syslog(LOG_INFO, "Using interface ppp%d", ifunit);
-	    (void) sprintf(ifname, "ppp%d", ifunit);
+	    (void) snprintf(ifname, sizeof ifname, "ppp%d", ifunit);
 	    script_setenv("IFNAME", ifname);
 
 	    create_pidfile();	/* write pid to file */
@@ -661,7 +661,8 @@ create_pidfile()
 {
     FILE *pidfile;
 
-    (void) sprintf(pidfilename, "%s%s.pid", _PATH_VARRUN, ifname);
+    (void) snprintf(pidfilename, sizeof pidfilename,
+	"%s%s.pid", _PATH_VARRUN, ifname);
     if ((pidfile = fopen(pidfilename, "w")) != NULL) {
 	fprintf(pidfile, "%ld\n", (long)pid);
 	(void) fclose(pidfile);
@@ -1277,7 +1278,7 @@ log_packet(p, len, prefix, level)
     char *prefix;
     int level;
 {
-    strcpy(line, prefix);
+    strlcpy(line, prefix, sizeof line);
     linep = line + strlen(line);
     format_packet(p, len, pr_log, NULL);
     if (linep != line)
@@ -1645,12 +1646,8 @@ script_setenv(var, value)
     int i;
     char *p, *newstring;
 
-    newstring = (char *) malloc(vl + strlen(value) + 2);
-    if (newstring == 0)
+    if (asprintf(&newstring, "%s=%s", var, value) == -1)
 	novm("script_setenv");
-    strcpy(newstring, var);
-    newstring[vl] = '=';
-    strcpy(newstring+vl+1, value);
 
     /* check if this variable is already set */
     if (script_env != 0) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipxcp.c,v 1.10 2002/07/01 19:31:37 deraadt Exp $	*/
+/*	$OpenBSD: ipxcp.c,v 1.11 2003/04/04 20:25:07 deraadt Exp $	*/
 
 /*
  * ipxcp.c - PPP IPX Control Protocol.
@@ -47,7 +47,7 @@
 #if 0
 static char rcsid[] = "Id: ipxcp.c,v 1.6 1998/03/25 03:08:16 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ipxcp.c,v 1.10 2002/07/01 19:31:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ipxcp.c,v 1.11 2003/04/04 20:25:07 deraadt Exp $";
 #endif
 #endif
 
@@ -194,7 +194,8 @@ ipx_ntoa(ipxaddr)
 u_int32_t ipxaddr;
 {
     static char b[64];
-    sprintf(b, "%x", ipxaddr);
+
+    snprintf(b, sizeof b, "%x", ipxaddr);
     return b;
 }
 
@@ -1239,42 +1240,38 @@ ipxcp_script(f, script)
     char strnetwork[32], strpid[32];
     char *argv[14],	 strproto_lcl[32], strproto_rmt[32];
 
-    sprintf (strpid,   "%ld", (long)getpid());
-    sprintf (strspeed, "%d", baud_rate);
+    snprintf(strpid, sizeof strpid, "%ld", (long)getpid());
+    snprintf(strspeed, sizeof strspeed, "%d", baud_rate);
 
     strproto_lcl[0] = '\0';
     if (go->neg_router && ((go->router & BIT(IPX_NONE)) == 0)) {
 	if (go->router & BIT(RIP_SAP))
-	    strcpy (strproto_lcl, "RIP ");
+	    strlcpy (strproto_lcl, "RIP ", sizeof strproto_lcl);
 	if (go->router & BIT(NLSP))
-	    strcat (strproto_lcl, "NLSP ");
+	    strlcat (strproto_lcl, "NLSP ", sizeof strproto_lcl);
     }
 
     if (strproto_lcl[0] == '\0')
-	strcpy (strproto_lcl, "NONE ");
-
-    strproto_lcl[strlen (strproto_lcl)-1] = '\0';
+	strlcpy (strproto_lcl, "NONE ", sizeof strproto_lcl);
 
     strproto_rmt[0] = '\0';
     if (ho->neg_router && ((ho->router & BIT(IPX_NONE)) == 0)) {
 	if (ho->router & BIT(RIP_SAP))
-	    strcpy (strproto_rmt, "RIP ");
+	    strlcpy (strproto_rmt, "RIP ", sizeof strproto_rmt);
 	if (ho->router & BIT(NLSP))
-	    strcat (strproto_rmt, "NLSP ");
+	    strlcat (strproto_rmt, "NLSP ", sizeof strproto_rmt);
     }
 
     if (strproto_rmt[0] == '\0')
-	strcpy (strproto_rmt, "NONE ");
+	strlcpy (strproto_rmt, "NONE ", sizeof strproto_rmt);
 
-    strproto_rmt[strlen (strproto_rmt)-1] = '\0';
+    strlcpy (strnetwork, ipx_ntoa (go->network), sizeof strnetwork);
 
-    strcpy (strnetwork, ipx_ntoa (go->network));
-
-    sprintf (strlocal,
+    snprintf (strlocal, sizeof strlocal,
 	     "%02X%02X%02X%02X%02X%02X",
 	     NODE(go->our_node));
 
-    sprintf (strremote,
+    snprintf (strremote, sizeof strremote,
 	     "%02X%02X%02X%02X%02X%02X",
 	     NODE(ho->his_node));
 

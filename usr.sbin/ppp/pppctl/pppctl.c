@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pppctl.c,v 1.9 2002/07/02 16:09:05 brian Exp $
+ *	$Id: pppctl.c,v 1.10 2003/04/04 20:25:06 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -124,7 +124,7 @@ Receive(int fd, int display)
                     /* password time */
                     if (!passwd)
                         passwd = getpass("Password: ");
-                    sprintf(Buffer, "passwd %s\n", passwd);
+                    snprintf(Buffer, sizeof Buffer, "passwd %s\n", passwd);
                     memset(passwd, '\0', strlen(passwd));
                     if (display & REC_VERBOSE)
                         write(1, Buffer, strlen(Buffer));
@@ -145,7 +145,7 @@ Receive(int fd, int display)
             else
                 flush = last - Buffer + 1;
             write(1, Buffer, flush);
-            strcpy(Buffer, Buffer + flush);
+            strlcpy(Buffer, Buffer + flush, sizeof Buffer);
             len -= flush;
         }
     }
@@ -286,7 +286,7 @@ main(int argc, char **argv)
             return 1;
         }
         ifsun.sun_family = AF_LOCAL;
-        strcpy(ifsun.sun_path, argv[arg]);
+        strlcpy(ifsun.sun_path, argv[arg], sizeof ifsun.sun_path);
 
         if (fd = socket(AF_LOCAL, SOCK_STREAM, 0), fd < 0) {
             warnx("cannot create local domain socket");
@@ -379,8 +379,10 @@ main(int argc, char **argv)
     len = 0;
     Command[sizeof(Command)-1] = '\0';
     for (arg++; arg < argc; arg++) {
-        if (len && len < sizeof(Command)-1)
-            strcpy(Command+len++, " ");
+        if (len && len < sizeof(Command)-1) {
+            strcpy(Command+len, " ");
+	    len++;
+	}
         strncpy(Command+len, argv[arg], sizeof(Command)-len-1);
         len += strlen(Command+len);
     }
@@ -448,7 +450,7 @@ main(int argc, char **argv)
                         start++;
                     if (next)
                         *next = '\0';
-                    strcpy(Buffer, start);
+                    strlcpy(Buffer, start, sizeof Buffer);
                     Buffer[sizeof(Buffer)-2] = '\0';
                     strcat(Buffer, "\n");
                     if (verbose)

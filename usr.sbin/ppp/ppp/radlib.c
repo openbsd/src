@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: radlib.c,v 1.7 2002/06/15 01:33:23 brian Exp $
+ *	$OpenBSD: radlib.c,v 1.8 2003/04/04 20:25:06 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -415,7 +415,7 @@ rad_config(struct rad_handle *h, const char *path)
 
 		if (rad_add_server(h, host, port, secret, timeout, maxtries) ==
 		    -1) {
-			strcpy(msg, h->errmsg);
+			strlcpy(msg, h->errmsg, sizeof msg);
 			generr(h, "%s:%d: %s", path, linenum, msg);
 			retval = -1;
 			break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.18 2002/12/23 21:07:43 mickey Exp $	*/
+/*	$OpenBSD: options.c,v 1.19 2003/04/04 20:25:07 deraadt Exp $	*/
 
 /*
  * options.c - handles option processing for PPP.
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: options.c,v 1.42 1998/03/26 04:46:06 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.18 2002/12/23 21:07:43 mickey Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.19 2003/04/04 20:25:07 deraadt Exp $";
 #endif
 #endif
 
@@ -700,12 +700,8 @@ options_from_user()
     if (pw == NULL || (user = pw->pw_dir) == NULL || user[0] == 0)
 	return 1;
     file = _PATH_USEROPT;
-    path = malloc(strlen(user) + strlen(file) + 2);
-    if (path == NULL)
+    if (asprintf(&path, "%s/%s", user, file) == -1)
 	novm("init file name");
-    strcpy(path, user);
-    strcat(path, "/");
-    strcat(path, file);
     ret = options_from_file(path, 0, 1, privileged);
     free(path);
     return ret;
@@ -726,14 +722,8 @@ options_for_tty()
 	dev += 5;
     if (strcmp(dev, "tty") == 0)
 	return 1;		/* don't look for /etc/ppp/options.tty */
-    path = malloc(strlen(_PATH_TTYOPT) + strlen(dev) + 1);
-    if (path == NULL)
+    if (asprintf(&path, "%s%s", _PATH_TTYOPT, dev) == -1)
 	novm("tty init file name");
-    strcpy(path, _PATH_TTYOPT);
-    /* Turn slashes into dots, for Solaris case (e.g. /dev/term/a) */
-    for (p = path + strlen(path); *dev != 0; ++dev)
-	*p++ = (*dev == '/'? '.': *dev);
-    *p = 0;
     ret = options_from_file(path, 0, 0, 1);
     free(path);
     return ret;
@@ -1121,8 +1111,8 @@ callfile(argv)
     l = strlen(arg) + strlen(_PATH_PEERFILES) + 1;
     if ((fname = (char *) malloc(l)) == NULL)
 	novm("call file name");
-    strcpy(fname, _PATH_PEERFILES);
-    strcat(fname, arg);
+    strlcpy(fname, _PATH_PEERFILES, l);
+    strlcat(fname, arg, l);
 
     ok = options_from_file(fname, 1, 1, 1);
 
@@ -1687,9 +1677,8 @@ setdevname(cp, quiet)
 	return 0;
 
     if (strncmp("/dev/", cp, 5) != 0) {
-	strcpy(dev, "/dev/");
-	strncat(dev, cp, MAXPATHLEN - 5);
-	dev[MAXPATHLEN-1] = 0;
+	strlcpy(dev, "/dev/", sizeof dev);
+	strlcat(dev, cp, sizeof dev);
 	cp = dev;
     }
 

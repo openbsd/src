@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcp.c,v 1.9 2002/07/01 19:31:37 deraadt Exp $	*/
+/*	$OpenBSD: ipcp.c,v 1.10 2003/04/04 20:25:07 deraadt Exp $	*/
 
 /*
  * ipcp.c - PPP IP Control Protocol.
@@ -46,7 +46,7 @@
 #if 0
 static char rcsid[] = "Id: ipcp.c,v 1.34 1998/04/28 23:38:09 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ipcp.c,v 1.9 2002/07/01 19:31:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ipcp.c,v 1.10 2003/04/04 20:25:07 deraadt Exp $";
 #endif
 #endif
 
@@ -174,7 +174,7 @@ u_int32_t ipaddr;
 
     ipaddr = ntohl(ipaddr);
 
-    sprintf(b, "%d.%d.%d.%d",
+    snprintf(b, sizeof b, "%d.%d.%d.%d",
 	    (u_char)(ipaddr >> 24),
 	    (u_char)(ipaddr >> 16),
 	    (u_char)(ipaddr >> 8),
@@ -1368,9 +1368,11 @@ ipcp_script(f, script)
     char strspeed[32], strlocal[32], strremote[32];
     char *argv[8];
 
-    sprintf(strspeed, "%d", baud_rate);
-    strcpy(strlocal, ip_ntoa(ipcp_gotoptions[f->unit].ouraddr));
-    strcpy(strremote, ip_ntoa(ipcp_hisoptions[f->unit].hisaddr));
+    snprintf(strspeed, sizeof strspeed, "%d", baud_rate);
+    strlcpy(strlocal, ip_ntoa(ipcp_gotoptions[f->unit].ouraddr),
+	sizeof strlocal);
+    strlcpy(strremote, ip_ntoa(ipcp_hisoptions[f->unit].hisaddr),
+	sizeof strremote);
 
     argv[0] = script;
     argv[1] = ifname;

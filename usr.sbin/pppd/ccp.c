@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccp.c,v 1.11 2002/09/13 00:12:10 deraadt Exp $	*/
+/*	$OpenBSD: ccp.c,v 1.12 2003/04/04 20:25:07 deraadt Exp $	*/
 
 /*
  * ccp.c - PPP Compression Control Protocol.
@@ -39,7 +39,7 @@
 #if 0
 static char rcsid[] = "Id: ccp.c,v 1.22 1998/03/25 01:25:02 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ccp.c,v 1.11 2002/09/13 00:12:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ccp.c,v 1.12 2003/04/04 20:25:07 deraadt Exp $";
 #endif
 #endif
 
@@ -885,27 +885,28 @@ method_name(opt, opt2)
     case CI_DEFLATE:
     case CI_DEFLATE_DRAFT:
 	if (opt2 != NULL && opt2->deflate_size != opt->deflate_size)
-	    sprintf(result, "Deflate%s (%d/%d)",
+	    snprintf(result, sizeof result, "Deflate%s (%d/%d)",
 		    (opt->method == CI_DEFLATE_DRAFT? "(old#)": ""),
 		    opt->deflate_size, opt2->deflate_size);
 	else
-	    sprintf(result, "Deflate%s (%d)",
+	    snprintf(result, sizeof result, "Deflate%s (%d)",
 		    (opt->method == CI_DEFLATE_DRAFT? "(old#)": ""),
 		    opt->deflate_size);
 	break;
     case CI_BSD_COMPRESS:
 	if (opt2 != NULL && opt2->bsd_bits != opt->bsd_bits)
-	    sprintf(result, "BSD-Compress (%d/%d)", opt->bsd_bits,
+	    snprintf(result, sizeof result,
+		    "BSD-Compress (%d/%d)", opt->bsd_bits,
 		    opt2->bsd_bits);
 	else
-	    sprintf(result, "BSD-Compress (%d)", opt->bsd_bits);
+	    snprintf(result, sizeof result, "BSD-Compress (%d)", opt->bsd_bits);
 	break;
     case CI_PREDICTOR_1:
 	return "Predictor 1";
     case CI_PREDICTOR_2:
 	return "Predictor 2";
     default:
-	sprintf(result, "Method %d", opt->method);
+	snprintf(result, sizeof result, "Method %d", opt->method);
     }
     return result;
 }
@@ -928,7 +929,7 @@ ccp_up(f)
 		syslog(LOG_NOTICE, "%s compression enabled",
 		       method_name(go, ho));
 	    } else {
-		strcpy(method1, method_name(go, NULL));
+		strncpy(method1, method_name(go, NULL), sizeof method1);
 		syslog(LOG_NOTICE, "%s / %s compression enabled",
 		       method1, method_name(ho, NULL));
 	    }

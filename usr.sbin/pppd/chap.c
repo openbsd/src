@@ -1,4 +1,4 @@
-/*	$OpenBSD: chap.c,v 1.11 2002/09/13 00:12:10 deraadt Exp $	*/
+/*	$OpenBSD: chap.c,v 1.12 2003/04/04 20:25:07 deraadt Exp $	*/
 
 /*
  * chap.c - Challenge Handshake Authentication Protocol.
@@ -55,7 +55,7 @@
 #if 0
 static char rcsid[] = "Id: chap.c,v 1.15 1997/11/27 06:07:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chap.c,v 1.11 2002/09/13 00:12:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chap.c,v 1.12 2003/04/04 20:25:07 deraadt Exp $";
 #endif
 #endif
 
@@ -738,9 +738,9 @@ ChapSendStatus(cstate, code)
     char msg[256];
 
     if (code == CHAP_SUCCESS)
-	sprintf(msg, "Welcome to %s.", hostname);
+	snprintf(msg, sizeof msg, "Welcome to %s.", hostname);
     else
-	sprintf(msg, "I don't like you.  Go 'way.");
+	snprintf(msg, sizeof msg, "I don't like you.  Go 'way.");
     msglen = strlen(msg);
 
     outlen = CHAP_HEADERLEN + msglen;

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: tun.c,v 1.16 2002/06/15 08:02:01 brian Exp $
+ *	$OpenBSD: tun.c,v 1.17 2003/04/04 20:25:06 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -94,7 +94,7 @@ tun_configure(struct bundle *bundle)
     return;
   }
 
-  sprintf(ifr.ifr_name, "tun%d", bundle->unit);
+  snprintf(ifr.ifr_name, sizeof ifr.ifr_name, "tun%d", bundle->unit);
   ifr.ifr_mtu = bundle->iface->mtu;
   if (ioctl(s, SIOCSIFMTU, &ifr) < 0)
       log_Printf(LogERROR, "tun_configure: ioctl(SIOCSIFMTU): %s\n",

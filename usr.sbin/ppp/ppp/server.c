@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: server.c,v 1.15 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: server.c,v 1.16 2003/04/04 20:25:06 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -219,7 +219,7 @@ server_Reopen(struct bundle *bundle)
   enum server_stat ret;
 
   if (server.cfg.sockname[0] != '\0') {
-    strcpy(name, server.cfg.sockname);
+    strlcpy(name, server.cfg.sockname, sizeof name);
     mask = server.cfg.mask;
     server_Close(bundle);
     if (server.cfg.sockname[0] != '\0' && stat(server.cfg.sockname, &st) == 0)
@@ -255,7 +255,7 @@ server_LocalOpen(struct bundle *bundle, const char *name, mode_t mask)
     return SERVER_INVALID;
   }
   ifsun.sun_family = AF_LOCAL;
-  strcpy(ifsun.sun_path, name);
+  strlcpy(ifsun.sun_path, name, sizeof ifsun.sun_path);
 
   s = socket(PF_LOCAL, SOCK_STREAM, 0);
   if (s < 0) {

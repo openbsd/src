@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: mp.c,v 1.30 2002/05/16 01:13:39 brian Exp $
+ *	$OpenBSD: mp.c,v 1.31 2003/04/04 20:25:06 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -902,7 +902,7 @@ mp_Enddisc(u_char c, const char *address, int len)
 
   switch (c) {
     case ENDDISC_NULL:
-      sprintf(result, "Null Class");
+      snprintf(result, sizeof result, "Null Class");
       break;
 
     case ENDDISC_LOCAL:
@@ -914,7 +914,7 @@ mp_Enddisc(u_char c, const char *address, int len)
         snprintf(result, sizeof result, "IP %s",
                  inet_ntoa(*(const struct in_addr *)address));
       else
-        sprintf(result, "IP[%d] ???", len);
+        snprintf(result, sizeof result, "IP[%d] ???", len);
       break;
 
     case ENDDISC_MAC:
@@ -923,11 +923,11 @@ mp_Enddisc(u_char c, const char *address, int len)
         snprintf(result, sizeof result, "MAC %02x:%02x:%02x:%02x:%02x:%02x",
                  m[0], m[1], m[2], m[3], m[4], m[5]);
       } else
-        sprintf(result, "MAC[%d] ???", len);
+        snprintf(result, sizeof result, "MAC[%d] ???", len);
       break;
 
     case ENDDISC_MAGIC:
-      sprintf(result, "Magic: 0x");
+      snprintf(result, sizeof result, "Magic: 0x");
       header = strlen(result);
       if (len > sizeof result - header - 1)
         len = sizeof result - header - 1;
@@ -940,7 +940,7 @@ mp_Enddisc(u_char c, const char *address, int len)
       break;
 
      default:
-      sprintf(result, "%d: ", (int)c);
+      snprintf(result, sizeof result, "%d: ", (int)c);
       header = strlen(result);
       if (len > sizeof result - header - 1)
         len = sizeof result - header - 1;

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: bundle.c,v 1.66 2002/06/15 08:02:00 brian Exp $
+ *	$OpenBSD: bundle.c,v 1.67 2003/04/04 20:25:06 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -1544,7 +1544,7 @@ bundle_SendDatalink(struct datalink *dl, int s, struct sockaddr_un *sun)
   constlock = physical_LockedDevice(dl->physical);
   if (constlock) {
     lock = alloca(strlen(constlock) + 1);
-    strcpy(lock, constlock);
+    strlcpy(lock, constlock, strlen(constlock) + 1);
   } else
     lock = NULL;
 

@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: alias_ftp.c,v 1.14 2002/03/31 02:38:49 brian Exp $
+ * $OpenBSD: alias_ftp.c,v 1.15 2003/04/04 20:25:06 deraadt Exp $
  */
 
 /*
@@ -518,23 +518,24 @@ NewFtpMessage(struct ip *pip,
 
 		if (ftp_message_type == FTP_PORT_COMMAND) {
 		    /* Generate PORT command string. */
-		    sprintf(stemp, "PORT %d,%d,%d,%d,%d,%d\r\n",
+		    snprintf(stemp, sizeof stemp, "PORT %d,%d,%d,%d,%d,%d\r\n",
 			    a1,a2,a3,a4,p1,p2);
 		} else {
 		    /* Generate 227 reply string. */
-		    sprintf(stemp,
+		    snprintf(stemp, sizeof stemp,
 			    "227 Entering Passive Mode (%d,%d,%d,%d,%d,%d)\r\n",
 			    a1,a2,a3,a4,p1,p2);
 		}
 		break;
 	    case FTP_EPRT_COMMAND:
 		/* Generate EPRT command string. */
-		sprintf(stemp, "EPRT |1|%d.%d.%d.%d|%d|\r\n",
+		snprintf(stemp, sizeof stemp, "EPRT |1|%d.%d.%d.%d|%d|\r\n",
 			a1,a2,a3,a4,ntohs(alias_port));
 		break;
 	    case FTP_229_REPLY:
 		/* Generate 229 reply string. */
-		sprintf(stemp, "229 Entering Extended Passive Mode (|||%d|)\r\n",
+		snprintf(stemp, sizeof stemp,
+			"229 Entering Extended Passive Mode (|||%d|)\r\n",
 			ntohs(alias_port));
 		break;
 	    }

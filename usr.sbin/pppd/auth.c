@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.26 2003/02/18 13:14:43 jmc Exp $	*/
+/*	$OpenBSD: auth.c,v 1.27 2003/04/04 20:25:07 deraadt Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -77,7 +77,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.37 1998/03/26 04:46:03 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: auth.c,v 1.26 2003/02/18 13:14:43 jmc Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.27 2003/04/04 20:25:07 deraadt Exp $";
 #endif
 #endif
 
@@ -560,9 +560,9 @@ auth_check_options()
 
     /* Default our_name to hostname, and user to our_name */
     if (our_name[0] == 0 || usehostname)
-	strcpy(our_name, hostname);
+	strlcpy(our_name, hostname, MAXHOSTNAMELEN);
     if (user[0] == 0)
-	strcpy(user, our_name);
+	strlcpy(user, our_name, MAXNAMELEN);
 
     /* If authentication is required, ask peer for CHAP or PAP. */
     if (auth_required && !wo->neg_chap && !wo->neg_upap) {
@@ -1424,7 +1424,7 @@ scan_authfile(f, client, server, ipaddr, secret, addrs, filename)
 	 * Special syntax: @filename means read secret from file.
 	 */
 	if (word[0] == '@') {
-	    strcpy(atfile, word+1);
+	    strlcpy(atfile, word+1, sizeof atfile);
 	    if ((sf = fopen(atfile, "r")) == NULL) {
 		syslog(LOG_WARNING, "can't open indirect secret file %s",
 		       atfile);
@@ -1440,7 +1440,7 @@ scan_authfile(f, client, server, ipaddr, secret, addrs, filename)
 	    fclose(sf);
 	}
 	if (secret != NULL)
-	    strcpy(lsecret, word);
+	    strlcpy(lsecret, word, sizeof lsecret);
 
 	/*
 	 * Now read address authorization info and make a wordlist.
@@ -1478,7 +1478,7 @@ scan_authfile(f, client, server, ipaddr, secret, addrs, filename)
 	    free_wordlist(addr_list);
 	addr_list = alist;
 	if (secret != NULL)
-	    strcpy(secret, lsecret);
+	    strlcpy(secret, lsecret, MAXWORDLEN);
 
 	if (!newline)
 	    break;
@@ -1525,10 +1525,10 @@ auth_script(script)
     if ((pw = getpwuid(getuid())) != NULL && pw->pw_name != NULL)
 	user_name = pw->pw_name;
     else {
-	sprintf(struid, "%u", getuid());
+	snprintf(struid, sizeof struid, "%u", getuid());
 	user_name = struid;
     }
-    sprintf(strspeed, "%d", baud_rate);
+    snprintf(strspeed, sizeof strspeed, "%d", baud_rate);
 
     argv[0] = script;
     argv[1] = ifname;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys-bsd.c,v 1.19 2002/09/13 00:12:10 deraadt Exp $	*/
+/*	$OpenBSD: sys-bsd.c,v 1.20 2003/04/04 20:25:07 deraadt Exp $	*/
 
 /*
  * sys-bsd.c - System-dependent procedures for setting up
@@ -78,7 +78,7 @@
 #if 0
 static char rcsid[] = "Id: sys-bsd.c,v 1.31 1998/04/02 12:04:19 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.19 2002/09/13 00:12:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sys-bsd.c,v 1.20 2003/04/04 20:25:07 deraadt Exp $";
 #endif
 #endif
 
@@ -1593,10 +1593,8 @@ lock(dev)
 
     if ((p = strrchr(dev, '/')) != NULL)
 	dev = p + 1;
-    lock_file = malloc(strlen(LOCK_PREFIX) + strlen(dev) + 1);
-    if (lock_file == NULL)
+    if (asprintf(&lock_file, "%s%s", LOCK_PREFIX, dev) == -1)
 	novm("lock file name");
-    strcat(strcpy(lock_file, LOCK_PREFIX), dev);
 
     while ((fd = open(lock_file, O_EXCL | O_CREAT | O_RDWR, 0644)) < 0) {
 	if (errno == EEXIST
@@ -1631,7 +1629,7 @@ lock(dev)
 	return -1;
     }
 
-    sprintf(hdb_lock_buffer, "%10ld\n", (long)getpid());
+    snprintf(hdb_lock_buffer, sizeof hdb_lock_buffer, "%10ld\n", (long)getpid());
     write(fd, hdb_lock_buffer, 11);
 
     close(fd);

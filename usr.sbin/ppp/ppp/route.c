@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: route.c,v 1.26 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: route.c,v 1.27 2003/04/04 20:25:06 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -128,17 +128,17 @@ p_sockaddr(struct prompt *prompt, struct sockaddr *phost,
             sprintf(buf+f*3, "%02x:", MAC[f]);
           buf[f*3-1] = '\0';
         } else
-          strcpy(buf, "??:??:??:??:??:??");
+          strlcpy(buf, "??:??:??:??:??:??", sizeof buf);
       } else
-        sprintf(buf, "<IFT type %d>", dl->sdl_type);
+        snprintf(buf, sizeof buf, "<IFT type %d>", dl->sdl_type);
     }  else if (dl->sdl_slen)
-      sprintf(buf, "<slen %d?>", dl->sdl_slen);
+      snprintf(buf, sizeof buf, "<slen %d?>", dl->sdl_slen);
     else
-      sprintf(buf, "link#%d", dl->sdl_index);
+      snprintf(buf, sizeof buf, "link#%d", dl->sdl_index);
     break;
 
   default:
-    sprintf(buf, "<AF type %d>", phost->sa_family);
+    snprintf(buf, sizeof buf, "<AF type %d>", phost->sa_family);
     break;
   }
 

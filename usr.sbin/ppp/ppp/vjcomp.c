@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: vjcomp.c,v 1.16 2002/05/16 01:13:39 brian Exp $
+ * $OpenBSD: vjcomp.c,v 1.17 2003/04/04 20:25:06 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -193,7 +193,7 @@ vj2asc(u_int32_t val)
     snprintf(asc, sizeof asc, "%d VJ slots with%s slot compression",
             (int)((val>>8)&15)+1, val & 1 ?  "" : "out");
   else
-    strcpy(asc, "VJ disabled");
+    strlcpy(asc, "VJ disabled", sizeof asc);
   return asc;
 }
 
