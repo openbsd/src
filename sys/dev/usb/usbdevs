@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.127 2004/12/08 02:31:43 jsg Exp $
+$OpenBSD: usbdevs,v 1.128 2005/01/03 22:53:25 reyk Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -347,6 +347,7 @@ vendor BROADCOM		0x0a5c	Broadcom
 vendor GREENHOUSE	0x0a6b	GREENHOUSE
 vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor NEODIO		0x0aec  Neodio
+vendor VODAFONE		0x0af0  Vodafone
 vendor TODOS		0x0b0c	Todos Data System
 vendor SIIG2		0x0b39	SIIG
 vendor TEKRAM		0x0b3b	Tekram Technology
@@ -1685,6 +1686,9 @@ product VISIONEER 8600		0x0331	OneTouch 8600
 
 /* Vivitar products */
 product VIVITAR DSC350		0x0003	DSC350
+
+/* Vodafone products */
+product VODAFONE MOBILE_3G	0x5000	Mobile Connect 3G
 
 /* Wacom products */
 product WACOM CT0405U		0x0000	CT-0405-U Tablet
