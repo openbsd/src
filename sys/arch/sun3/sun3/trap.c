@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.13 1997/02/04 01:31:35 kstailey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.14 1997/02/06 20:03:59 kstailey Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -312,6 +312,7 @@ trap(type, code, v, frame)
 		sig = SIGILL;
 		ucode = frame.f_format;
 		si_type = ILL_COPROC;
+		v = frame.f_pc;
 		break;
 
 	case T_COPERR|T_USER:	/* user coprocessor violation */
@@ -319,6 +320,7 @@ trap(type, code, v, frame)
 		ucode = 0;
 		sig = SIGFPE;
 		si_type = FPE_FLTINV;
+		v = frame.f_pc;
 		break;
 
 	case T_FPERR|T_USER:	/* 68881 exceptions */
@@ -334,6 +336,7 @@ trap(type, code, v, frame)
 		ucode = code;
 		sig = SIGFPE;
 		si_type = FPE_FLTRES;
+		v = frame.f_pc;
 		break;
 
 	case T_FPEMULI:		/* FPU faults in supervisor mode */
@@ -353,6 +356,7 @@ trap(type, code, v, frame)
 		ucode = frame.f_format; /* XXX was ILL_PRIVIN_FAULT */
 		sig = SIGILL;
 		si_type = ILL_ILLOPC;
+		v = frame.f_pc;
 #endif
 		break;
 
@@ -361,24 +365,28 @@ trap(type, code, v, frame)
 		ucode = frame.f_format;
 		sig = SIGILL;
 		si_type = ILL_PRVOPC;
+		v = frame.f_pc;
 		break;
 
 	case T_ZERODIV|T_USER:		/* Divide by zero */
 		ucode = frame.f_format;
 		sig = SIGFPE;
 		si_type = FPE_INTDIV;
+		v = frame.f_pc;
 		break;
 
 	case T_CHKINST|T_USER:		/* CHK instruction trap */
 		ucode = frame.f_format;
 		sig = SIGFPE;
 		si_type = FPE_FLTSUB;
+		v = frame.f_pc;
 		break;
 
 	case T_TRAPVINST|T_USER:	/* TRAPV instruction trap */
 		ucode = frame.f_format;
-		sig = SIGFPE;
-		si_type = FPE_FLTOVF;
+		sig = SIGILL;
+		si_type = ILL_ILLTRP;
+		v = frame.f_pc;
 		break;
 
 	/*
@@ -451,7 +459,7 @@ trap(type, code, v, frame)
 		register struct vmspace *vm = NULL;
 		register vm_map_t map;
 		int rv;
-		vm_prot_t ftype;
+		vm_prot_t ftype, vftype;
 		extern vm_map_t kernel_map;
 
 		/* vmspace only significant if T_USER */
@@ -479,9 +487,10 @@ trap(type, code, v, frame)
 				map = kernel_map;
 		}
 
-		if (WRFAULT(code))
+		if (WRFAULT(code)) {
+			vftype = VM_PROT_WRITE;
 			ftype = VM_PROT_READ | VM_PROT_WRITE;
-		else
+		} else
 			ftype = VM_PROT_READ;
 		va = trunc_page((vm_offset_t)v);
 
@@ -567,7 +576,7 @@ trap(type, code, v, frame)
 			goto dopanic;
 		}
 		frame.f_pad = code & 0xffff;
-		ucode = T_MMUFLT;
+		ucode = vftype;
 		sig = SIGSEGV;
 		si_type = SEGV_MAPERR;
 		break;
