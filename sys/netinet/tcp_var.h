@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.56 2004/01/29 11:55:28 markus Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.57 2004/01/31 19:40:10 markus Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ struct tcpcb {
 	tcp_seq	iss;			/* initial send sequence number */
 	u_long	snd_wnd;		/* send window */
 #if 1 /*def TCP_SACK*/
-	int	sack_disable;		/* disable SACK for this connection */
+	int	sack_enable;		/* enable SACK for this connection */
 	int	snd_numholes;		/* number of holes seen by sender */
 	struct sackhole *snd_holes;	/* linked list of holes (sorted) */
 #if 1 /*defined(TCP_SACK) && defined(TCP_FACK)*/

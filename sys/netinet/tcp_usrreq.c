@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.77 2004/01/30 11:33:32 henning Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.78 2004/01/31 19:40:10 markus Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -563,7 +563,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 			break;
 
 #ifdef TCP_SACK
-		case TCP_SACK_DISABLE:
+		case TCP_SACK_ENABLE:
 			if (m == NULL || m->m_len < sizeof (int)) {
 				error = EINVAL;
 				break;
@@ -580,9 +580,9 @@ tcp_ctloutput(op, so, level, optname, mp)
 			}
 
 			if (*mtod(m, int *))
-				tp->sack_disable = 1;
+				tp->sack_enable = 1;
 			else
-				tp->sack_disable = 0;
+				tp->sack_enable = 0;
 			break;
 #endif
 #ifdef TCP_SIGNATURE
@@ -600,7 +600,7 @@ tcp_ctloutput(op, so, level, optname, mp)
 			if (*mtod(m, int *)) {
 				tp->t_flags |= TF_SIGNATURE;
 #ifdef TCP_SACK
-				tp->sack_disable = 1;
+				tp->sack_enable = 0;
 #endif /* TCP_SACK */
 			} else
 				tp->t_flags &= ~TF_SIGNATURE;
@@ -626,8 +626,8 @@ tcp_ctloutput(op, so, level, optname, mp)
 			*mtod(m, int *) = tp->t_maxseg;
 			break;
 #ifdef TCP_SACK
-		case TCP_SACK_DISABLE:
-			*mtod(m, int *) = tp->sack_disable;
+		case TCP_SACK_ENABLE:
+			*mtod(m, int *) = tp->sack_enable;
 			break;
 #endif
 #ifdef TCP_SIGNATURE

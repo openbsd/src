@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.151 2004/01/29 17:02:56 markus Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.152 2004/01/31 19:40:09 markus Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -945,7 +945,7 @@ after_listen:
 		TCP_TIMER_ARM(tp, TCPT_KEEP, tcp_keepidle);
 
 #ifdef TCP_SACK
-	if (!tp->sack_disable)
+	if (tp->sack_enable)
 		tcp_del_sackholes(tp, th); /* Delete stale SACK holes */
 #endif /* TCP_SACK */
 
@@ -961,7 +961,7 @@ after_listen:
 			goto drop;
 
 #ifdef TCP_SACK
-	if (!tp->sack_disable) {
+	if (tp->sack_enable) {
 		tp->rcv_laststart = th->th_seq; /* last rec'vd segment*/
 		tp->rcv_lastend = th->th_seq + tlen;
 	}
@@ -1076,7 +1076,7 @@ after_listen:
 			 */
 #ifdef TCP_SACK
 			/* Clean receiver SACK report if present */
-			if (!tp->sack_disable && tp->rcv_numsacks)
+			if (tp->sack_enable && tp->rcv_numsacks)
 				tcp_clean_sackreport(tp);
 #endif /* TCP_SACK */
 			++tcpstat.tcps_preddat;
@@ -1189,9 +1189,8 @@ after_listen:
                  * also replied with one, then TF_SACK_PERMIT should have
                  * been set in tcp_dooptions().  If it was not, disable SACKs.
                  */
-                if (!tp->sack_disable)
-                        if ((tp->t_flags & TF_SACK_PERMIT) == 0)
-                                tp->sack_disable = 1;
+		if (tp->sack_enable)
+			tp->sack_enable = tp->t_flags & TF_SACK_PERMIT;
 #endif
 #ifdef TCP_ECN
 		/*
@@ -1616,7 +1615,7 @@ trimthenstep6:
 					tp->snd_last = tp->snd_max;
 #endif
 #ifdef TCP_SACK
-                    			if (!tp->sack_disable) {
+                    			if (tp->sack_enable) {
 						TCP_TIMER_DISARM(tp, TCPT_REXMT);
 						tp->t_rtttime = 0;
 #ifdef TCP_ECN
@@ -1670,7 +1669,7 @@ trimthenstep6:
 					 * while (awnd < cwnd)
 					 *         sendsomething();
 					 */
-					if (!tp->sack_disable) {
+					if (tp->sack_enable) {
 						if (tp->snd_awnd < tp->snd_cwnd)
 							tcp_output(tp);
 						goto drop;
@@ -1696,7 +1695,7 @@ trimthenstep6:
 		 * for the other side's cached packets, retract it.
 		 */
 #if defined(TCP_SACK)
-		if (!tp->sack_disable) {
+		if (tp->sack_enable) {
 			if (tp->t_dupacks >= tcprexmtthresh) {
 				/* Check for a partial ACK */
 				if (tcp_sack_partialack(tp, th)) {
@@ -2001,7 +2000,7 @@ dodata:							/* XXX */
 			tp->t_flags |= TF_ACKNOW;
 		}
 #ifdef TCP_SACK
-		if (!tp->sack_disable)
+		if (tp->sack_enable)
 			tcp_update_sack_list(tp);
 #endif
 
@@ -2249,7 +2248,7 @@ tcp_dooptions(tp, cp, cnt, th, m, iphlen, oi)
 
 #ifdef TCP_SACK
 		case TCPOPT_SACK_PERMITTED:
-			if (tp->sack_disable || optlen!=TCPOLEN_SACK_PERMITTED)
+			if (!tp->sack_enable || optlen!=TCPOLEN_SACK_PERMITTED)
 				continue;
 			if (th->th_flags & TH_SYN)
 				/* MUST only be set on SYN */
@@ -2532,7 +2531,7 @@ tcp_sack_option(struct tcpcb *tp, struct tcphdr *th, u_char *cp, int optlen)
 	u_char *tmp_cp;
 	struct sackhole *cur, *p, *temp;
 
-	if (tp->sack_disable)
+	if (!tp->sack_enable)
 		return (1);
 
 	/* Note: TCPOLEN_SACK must be 2*sizeof(tcp_seq) */
@@ -2749,7 +2748,7 @@ tcp_del_sackholes(tp, th)
 	struct tcpcb *tp;
 	struct tcphdr *th;
 {
-	if (!tp->sack_disable && tp->t_state != TCPS_LISTEN) {
+	if (tp->sack_enable && tp->t_state != TCPS_LISTEN) {
 		/* max because this could be an older ack just arrived */
 		tcp_seq lastack = SEQ_GT(th->th_ack, tp->snd_una) ?
 			th->th_ack : tp->snd_una;
@@ -3769,7 +3768,7 @@ syn_cache_get(src, dst, th, hlen, tlen, so, m)
 		goto abort;
 	}
 #ifdef TCP_SACK
-	tp->sack_disable = (sc->sc_flags & SCF_SACK_PERMIT) ? 0 : 1;
+	tp->sack_enable = sc->sc_flags & SCF_SACK_PERMIT;
 #endif
 
 	tp->iss = sc->sc_iss;
@@ -3964,7 +3963,7 @@ syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi)
 #endif
 		tb.pf = tp->pf;
 #ifdef TCP_SACK
-		tb.sack_disable = tcp_do_sack ? 0 : 1;
+		tb.sack_enable = tcp_do_sack;
 #endif
 		tb.t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
 #ifdef TCP_SIGNATURE
@@ -4072,7 +4071,7 @@ syn_cache_add(src, dst, th, iphlen, so, m, optp, optlen, oi)
 	 * Set SCF_SACK_PERMIT if peer did send a SACK_PERMITTED option
 	 * (i.e., if tcp_dooptions() did set TF_SACK_PERMIT).
 	 */
-	if (!tb.sack_disable && (tb.t_flags & TF_SACK_PERMIT))
+	if (tb.sack_enable && (tb.t_flags & TF_SACK_PERMIT))
 		sc->sc_flags |= SCF_SACK_PERMIT;
 #endif
 #ifdef TCP_SIGNATURE

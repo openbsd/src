@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.62 2004/01/22 14:38:28 markus Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.63 2004/01/31 19:40:10 markus Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -143,7 +143,8 @@ struct sackhole *
 tcp_sack_output(struct tcpcb *tp)
 {
 	struct sackhole *p;
-	if (tp->sack_disable)
+
+	if (!tp->sack_enable)
 		return (NULL);
 	p = tp->snd_holes;
 	while (p) {
@@ -239,7 +240,7 @@ tcp_output(tp)
 #endif
 
 #if defined(TCP_SACK) && defined(TCP_SIGNATURE) && defined(DIAGNOSTIC)
-	if (!tp->sack_disable && (tp->t_flags & TF_SIGNATURE))
+	if (tp->sack_enable && (tp->t_flags & TF_SIGNATURE))
 		return (EINVAL);
 #endif /* defined(TCP_SACK) && defined(TCP_SIGNATURE) && defined(DIAGNOSTIC) */
 
@@ -264,7 +265,7 @@ again:
 	 * snd_nxt.  There may be SACK information that allows us to avoid
 	 * resending already delivered data.  Adjust snd_nxt accordingly.
 	 */
-	if (!tp->sack_disable && SEQ_LT(tp->snd_nxt, tp->snd_max))
+	if (tp->sack_enable && SEQ_LT(tp->snd_nxt, tp->snd_max))
 		tcp_sack_adjust(tp);
 #endif
 	off = tp->snd_nxt - tp->snd_una;
@@ -273,7 +274,7 @@ again:
 	 * But in FACK, sendable data is limited by snd_awnd < snd_cwnd,
 	 * regardless of offset.
 	 */
-	if (!tp->sack_disable && (tp->t_dupacks > tcprexmtthresh))
+	if (tp->sack_enable && (tp->t_dupacks > tcprexmtthresh))
 		win = tp->snd_wnd;
 	else
 #endif
@@ -289,7 +290,7 @@ again:
 	 * we're replacing a (future) new transmission with a retransmission
 	 * now, and we previously incremented snd_cwnd in tcp_input().
 	 */
-	if (!tp->sack_disable && !sendalot) {
+	if (tp->sack_enable && !sendalot) {
 		if (tp->t_dupacks >= tcprexmtthresh &&
 		    (p = tcp_sack_output(tp))) {
 			off = p->rxmit - tp->snd_una;
@@ -352,7 +353,7 @@ again:
 	 * amount of outstanding data (snd_awnd) is >= snd_cwnd, then
 	 * do not send data (like zero window conditions)
 	 */
-	if (!tp->sack_disable && len && SEQ_GT(tp->snd_last, tp->snd_una) &&
+	if (tp->sack_enable && len && SEQ_GT(tp->snd_last, tp->snd_una) &&
 	    (tp->snd_awnd >= tp->snd_cwnd))
 		len = 0;
 #endif /* TCP_FACK */
@@ -560,7 +561,7 @@ send:
 			 * SYN ACK, include SACK_PERMIT_HDR option if peer has
 			 * already done so.
 			 */
-			if (!tp->sack_disable && ((flags & TH_ACK) == 0 ||
+			if (tp->sack_enable && ((flags & TH_ACK) == 0 ||
 			    (tp->t_flags & TF_SACK_PERMIT))) {
 				*((u_int32_t *) (opt + optlen)) =
 				    htonl(TCPOPT_SACK_PERMIT_HDR);
@@ -632,7 +633,7 @@ send:
 	 * Only as many SACKs are sent as are permitted by the maximum options
 	 * size.  No more than three SACKs are sent.
 	 */
-	if (!tp->sack_disable && tp->t_state == TCPS_ESTABLISHED &&
+	if (tp->sack_enable && tp->t_state == TCPS_ESTABLISHED &&
 	    (tp->t_flags & (TF_SACK_PERMIT|TF_NOOPT)) == TF_SACK_PERMIT &&
 	    tp->rcv_numsacks) {
 		u_int32_t *lp = (u_int32_t *)(opt + optlen);
@@ -1034,7 +1035,7 @@ send:
 			}
 		}
 #ifdef TCP_SACK
-		if (!tp->sack_disable) {
+		if (tp->sack_enable) {
 			if (sack_rxmit && (p->rxmit != tp->snd_nxt)) {
 				goto timer;
 			}
@@ -1064,7 +1065,7 @@ send:
 		 */
 #ifdef TCP_SACK
  timer:
-		if (!tp->sack_disable && sack_rxmit &&
+		if (tp->sack_enable && sack_rxmit &&
 		    TCP_TIMER_ISARMED(tp, TCPT_REXMT) == 0 &&
 		    tp->snd_nxt != tp->snd_max) {
 			TCP_TIMER_ARM(tp, TCPT_REXMT, tp->t_rxtcur);
