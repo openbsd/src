@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.27 2004/04/09 21:52:17 henning Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.28 2004/05/30 01:51:51 mcbride Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -175,7 +175,6 @@ void nge_miibus_writereg(struct device *, int, int, int);
 void nge_miibus_statchg(struct device *);
 
 void nge_setmulti(struct nge_softc *);
-u_int32_t nge_crc(struct nge_softc *, caddr_t);
 void nge_reset(struct nge_softc *);
 int nge_list_rx_init(struct nge_softc *);
 int nge_list_tx_init(struct nge_softc *);
@@ -603,36 +602,6 @@ nge_miibus_statchg(dev)
 		NGE_CLRBIT(sc, NGE_CFG, NGE_CFG_MODE_1000);
 }
 
-u_int32_t
-nge_crc(sc, addr)
-	struct nge_softc	*sc;
-	caddr_t			addr;
-{
-	u_int32_t		crc, carry;
-	int			i, j;
-	u_int8_t		c;
-
-	/* Compute CRC for the address value. */
-	crc = 0xFFFFFFFF; /* initial value */
-
-	for (i = 0; i < 6; i++) {
-		c = *(addr + i);
-		for (j = 0; j < 8; j++) {
-			carry = ((crc & 0x80000000) ? 1 : 0) ^ (c & 0x01);
-			crc <<= 1;
-			c >>= 1;
-			if (carry)
-				crc = (crc ^ 0x04c11db6) | carry;
-		}
-	}
-
-	/*
-	 * return the filter bit position
-	 */
-
-	return((crc >> 21) & 0x00000FFF);
-}
-
 void
 nge_setmulti(sc)
 	struct nge_softc	*sc;
@@ -644,6 +613,7 @@ nge_setmulti(sc)
 	u_int32_t		h = 0, i, filtsave;
 	int			bit, index;
 
+allmulti:
 	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		NGE_CLRBIT(sc, NGE_RXFILT_CTL,
 		    NGE_RXFILTCTL_MCHASH|NGE_RXFILTCTL_UCHASH);
@@ -677,7 +647,12 @@ nge_setmulti(sc)
 	 */
 	ETHER_FIRST_MULTI(step, ac, enm);
 	while (enm != NULL) {
-		h = nge_crc(sc, LLADDR((struct sockaddr_dl *)enm->enm_addrlo));
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
+		h = (ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 21) &
+		    0x00000FFF;
 		index = (h >> 4) & 0x7F;
 		bit = h & 0xF;
 		CSR_WRITE_4(sc, NGE_RXFILT_CTL,
