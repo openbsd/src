@@ -358,7 +358,7 @@ isp_pci_dmasetup(isp, xs, rq, iptrp, optr)
 	}
 
 	if (rq->req_handle >= RQUEST_QUEUE_LEN) {
-		panic("%s: bad handle (%d) in isp_pci_dmasetup\n",
+		panic("%s: bad handle (%d) in isp_pci_dmasetup",
 		    isp->isp_name, rq->req_handle);
 		/* NOTREACHED */
 	}
