@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2005/03/19 00:27:35 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2005/03/19 00:28:04 deraadt Exp $
 
 TOP=    ${.CURDIR}/..
 IPK=	openbsd${OSrev}_arm.ipk
@@ -43,7 +43,7 @@ ${IPK}:
 	echo 2.0 > debian-binary; chown ${BINOWN}:${BINGRP} debian-binary
 	tar -czf ${IPK} ./debian-binary ./data.tar.gz ./control.tar.gz
 
-Packages:
+Packages: ${IPK}
 	echo "Package: openbsd" > ${.OBJDIR}/Packages
 	echo "Version: ${OSREV}" >> ${.OBJDIR}/Packages
 	echo "Priority: optional" >> ${.OBJDIR}/Packages
@@ -62,7 +62,7 @@ install: ${IPK} Packages
 
 clean cleandir:
 	rm -rf data control ${IPK} debian-binary control.tar.gz data.tar.gz \
-	    bootbsd.png
+	    bootbsd.png Packages
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>
