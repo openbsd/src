@@ -1,4 +1,4 @@
-/* $OpenBSD: cpu.c,v 1.8 2000/11/08 19:16:58 ericj Exp $ */
+/* $OpenBSD: cpu.c,v 1.9 2001/01/20 20:25:22 art Exp $ */
 /* $NetBSD: cpu.c,v 1.44 2000/05/23 05:12:53 thorpej Exp $ */
 
 /*-
@@ -79,7 +79,6 @@
 #include <machine/cpu.h>
 #include <machine/rpb.h>
 #include <machine/prom.h>
-#include <machine/alpha.h>
 
 #if defined(MULTIPROCESSOR)
 #include <sys/malloc.h>

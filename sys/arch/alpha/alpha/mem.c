@@ -1,4 +1,4 @@
-/* $OpenBSD: mem.c,v 1.12 2000/11/08 19:16:59 ericj Exp $ */
+/* $OpenBSD: mem.c,v 1.13 2001/01/20 20:29:53 art Exp $ */
 /* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
 
 /*
@@ -55,7 +55,6 @@
 #include <sys/conf.h>
 
 #include <machine/cpu.h>
-#include <machine/alpha.h>
 
 #include <vm/vm.h>
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: prom.c,v 1.8 2000/11/08 19:16:59 ericj Exp $ */
+/* $OpenBSD: prom.c,v 1.9 2001/01/20 20:27:40 art Exp $ */
 /* $NetBSD: prom.c,v 1.39 2000/03/06 21:36:05 thorpej Exp $ */
 
 /* 
@@ -35,7 +35,6 @@
 
 #include <machine/cpu.h>
 #include <machine/rpb.h>
-#include <machine/alpha.h>
 #define	ENABLEPROM
 #include <machine/prom.h>
 
