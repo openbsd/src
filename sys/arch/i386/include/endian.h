@@ -1,4 +1,4 @@
-/*	$NetBSD: endian.h,v 1.17 1996/05/03 19:25:23 christos Exp $	*/
+/*	$NetBSD: endian.h,v 1.16 1995/06/01 17:19:18 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -60,10 +60,10 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-u_int32_t   htonl __P((u_int32_t));
-u_int16_t  htons __P((u_int16_t));
-u_int32_t   ntohl __P((u_int32_t));
-u_int16_t  ntohs __P((u_int16_t));
+unsigned long   htonl __P((unsigned long));
+unsigned short  htons __P((unsigned short));
+unsigned long   ntohl __P((unsigned long));
+unsigned short  ntohs __P((unsigned short));
 __END_DECLS
 
 
@@ -71,14 +71,14 @@ __END_DECLS
 
 #if defined(_KERNEL) && !defined(I386_CPU)
 #define	__byte_swap_long_variable(x) \
-({ register u_int32_t __x = (x); \
+({ register unsigned long __x = (x); \
    __asm ("bswap %1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
    __x; })
 #else
 #define	__byte_swap_long_variable(x) \
-({ register u_int32_t __x = (x); \
+({ register unsigned long __x = (x); \
    __asm ("rorw $8, %w1\n\trorl $16, %1\n\trorw $8, %w1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
@@ -86,7 +86,7 @@ __END_DECLS
 #endif	/* _KERNEL && ... */
 
 #define	__byte_swap_word_variable(x) \
-({ register u_int16_t __x = (x); \
+({ register unsigned short __x = (x); \
    __asm ("rorw $8, %w1" \
 	: "=r" (__x) \
 	: "0" (__x)); \
@@ -127,10 +127,10 @@ __END_DECLS
 /*
  * Macros for network/external number representation conversion.
  */
-#define	NTOHL(x)	(x) = ntohl((u_int32_t)(x))
-#define	NTOHS(x)	(x) = ntohs((u_int16_t)(x))
-#define	HTONL(x)	(x) = htonl((u_int32_t)(x))
-#define	HTONS(x)	(x) = htons((u_int16_t)(x))
+#define	NTOHL(x)	(x) = ntohl((unsigned long)(x))
+#define	NTOHS(x)	(x) = ntohs((unsigned short)(x))
+#define	HTONL(x)	(x) = htonl((unsigned long)(x))
+#define	HTONS(x)	(x) = htons((unsigned short)(x))
 
 #endif /* _POSIX_SOURCE */
 
