@@ -1,4 +1,4 @@
 #tests an edge case in LOOP_THROUGH behaviour, the one loop despite the 
 #list is empty
-altq on { lo0 tun0 } priq bandwidth 10Mb queue q_def
+altq on { lo0 tun0 } priq bandwidth 10Mb tbrsize 1824 queue q_def
 queue q_def priq(default)
