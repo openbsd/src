@@ -1,4 +1,4 @@
-/*	$OpenBSD: ieee80211_ioctl.c,v 1.7 2005/02/27 22:27:56 reyk Exp $	*/
+/*	$OpenBSD: ieee80211_ioctl.c,v 1.8 2005/04/01 16:29:55 uwe Exp $	*/
 /*	$NetBSD: ieee80211_ioctl.c,v 1.15 2004/05/06 02:58:16 dyoung Exp $	*/
 
 /*-
@@ -825,6 +825,18 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 #endif
 
 	switch (cmd) {
+	case SIOCS80211NWID:
+	case SIOCS80211NWKEY:
+	case SIOCS80211POWER:
+	case SIOCS80211TXPOWER:
+		error = suser(curproc, 0);
+		if (error)
+			return (error);
+	default:
+		break;
+	}
+
+	switch (cmd) {
 	case SIOCSIFADDR:
 	case SIOCGIFADDR:
 #ifdef __OpenBSD__
@@ -1062,8 +1074,6 @@ ieee80211_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		break;
 	case SIOCS80211TXPOWER:
 		txpower = (struct ieee80211_txpower *)data;
-		if ((error = suser(curproc, 0)))
-			break;
 		if ((ic->ic_caps & IEEE80211_C_TXPMGT) == 0) {
 			error = EINVAL;
 			break;
