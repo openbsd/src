@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.110 2004/11/24 00:23:15 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.111 2004/11/24 18:53:15 deraadt Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -52,7 +52,7 @@ option		CD9660		# ISO 9660 + Rock Ridge file system
 option		MSDOSFS		# MS-DOS file system
 option		FDESC		# /dev/fd
 option		FIFO		# FIFOs; RECOMMENDED
-option		KERNFS		# /kern
+#option		KERNFS		# /kern
 option		PORTAL		# dynamically created filesystem objects
 option		PROCFS		# /proc
 # layer filesystems
