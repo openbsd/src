@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_pcb.c,v 1.5 2000/01/11 19:31:56 fgsch Exp $	*/
+/*	$OpenBSD: ipx_pcb.c,v 1.6 2000/01/13 04:45:14 fgsch Exp $	*/
 
 /*-
  *
@@ -41,13 +41,10 @@
  */
 
 #include <sys/param.h>
-#include <sys/queue.h>
 #include <sys/systm.h>
 #include <sys/mbuf.h>
-#include <sys/errno.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
-#include <sys/protosw.h>
 
 #include <net/if.h>
 #include <net/route.h>
