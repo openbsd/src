@@ -1490,6 +1490,7 @@
 ./usr/share/man/cat3/cuserid.0
 ./usr/share/man/cat3/daemon.0
 ./usr/share/man/cat3/db.0
+./usr/share/man/cat3/dbm.0
 ./usr/share/man/cat3/dbopen.0
 ./usr/share/man/cat3/def_prog_mode.0
 ./usr/share/man/cat3/def_shell_mode.0
@@ -1981,6 +1982,7 @@
 ./usr/share/man/cat3/mvwscanw.0
 ./usr/share/man/cat3/napms.0
 ./usr/share/man/cat3/ncurses.0
+./usr/share/man/cat3/ndbm.0
 ./usr/share/man/cat3/network.0
 ./usr/share/man/cat3/newpad.0
 ./usr/share/man/cat3/newterm.0
