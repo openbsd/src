@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_token.c,v 1.3 2001/10/24 13:06:36 mpech Exp $	*/
+/*	$OpenBSD: login_token.c,v 1.4 2001/12/06 05:37:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Berkeley Software Design, Inc. All rights reserved.
@@ -67,8 +67,6 @@ main(argc, argv)
 	int mode = 0;
 	struct rlimit cds;
 
-	(void)signal(SIGQUIT, SIG_IGN);
-	(void)signal(SIGINT, SIG_IGN);
 	(void)setpriority(PRIO_PROCESS, 0, 0);
 
 	openlog(NULL, LOG_ODELAY, LOG_AUTH);

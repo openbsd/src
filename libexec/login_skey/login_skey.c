@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_skey.c,v 1.4 2001/10/24 13:06:35 mpech Exp $	*/
+/*	$OpenBSD: login_skey.c,v 1.5 2001/12/06 05:37:04 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995 Berkeley Software Design, Inc. All rights reserved.
@@ -73,8 +73,6 @@ main(argc, argv)
 
 	skeyprompt[0] = '\0';
 
-	(void)signal(SIGQUIT, SIG_IGN);
-	(void)signal(SIGINT, SIG_IGN);
 	(void)signal(SIGALRM, timedout);
 	(void)setpriority(PRIO_PROCESS, 0, 0);
 
