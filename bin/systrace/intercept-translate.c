@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.7 2002/07/19 14:38:57 itojun Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.8 2002/07/20 04:19:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -200,7 +201,7 @@ ic_get_sockaddr(struct intercept_translate *trans, int fd, pid_t pid,
 	struct sockaddr_storage sa;
 	socklen_t len;
 
-	len = (socklen_t )trans->trans_addr2;
+	len = (intptr_t)trans->trans_addr2;
 	if (len == 0 || len > sizeof(struct sockaddr_storage))
 		return (-1);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace-translate.c,v 1.7 2002/07/19 22:22:54 itojun Exp $	*/
+/*	$OpenBSD: systrace-translate.c,v 1.8 2002/07/20 04:19:53 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -174,7 +174,7 @@ static int
 print_uname(char *buf, size_t buflen, struct intercept_translate *tl)
 {
 	struct passwd *pw;
-	uid_t uid = (uid_t)tl->trans_addr;
+	uid_t uid = (intptr_t)tl->trans_addr;
 
 	pw = getpwuid(uid);
 	snprintf(buf, buflen, "%s", pw != NULL ? pw->pw_name : "<unknown>");
