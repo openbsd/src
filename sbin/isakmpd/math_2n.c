@@ -1,8 +1,9 @@
-/*	$OpenBSD: math_2n.c,v 1.4 1999/02/26 03:46:18 niklas Exp $	*/
-/*	$EOM: math_2n.c,v 1.11 1999/02/25 11:39:12 niklas Exp $	*/
+/*	$OpenBSD: math_2n.c,v 1.5 1999/04/05 21:01:23 niklas Exp $	*/
+/*	$EOM: math_2n.c,v 1.13 1999/04/05 08:04:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -110,8 +111,8 @@ b2n_init (b2n_ptr n)
 void
 b2n_clear (b2n_ptr n)
 {
-  /* XXX Does all systems deal with free (NULL) nicely?  */
-  free (n->limp);
+  if (n->limp)
+    free (n->limp);
 }
 
 void
@@ -132,7 +133,7 @@ b2n_resize (b2n_ptr n, unsigned int chunks)
   /* XXX - is there anything I can do here? */
   new = realloc (n->limp, size);
   if (new == NULL)
-    return ;
+    return;
 
   n->limp = new;
   n->chunks = chunks;
@@ -161,7 +162,7 @@ b2n_set (b2n_ptr d, b2n_ptr s)
 void
 b2n_set_null (b2n_ptr n)
 {
-  b2n_resize (n , 1);
+  b2n_resize (n, 1);
   n->limp[0] = n->bits = n->dirty = 0;
 }
 
@@ -171,9 +172,9 @@ b2n_set_ui (b2n_ptr n, unsigned int val)
 #if CHUNK_BITS < 32
   int i, chunks;
 
-  chunks = (CHUNK_BYTES - 1 + sizeof (val))/CHUNK_BYTES;
+  chunks = (CHUNK_BYTES - 1 + sizeof (val)) / CHUNK_BYTES;
 
-  b2n_resize (n, chunks );
+  b2n_resize (n, chunks);
 
   for (i = 0; i < chunks; i++)
     {
@@ -505,7 +506,7 @@ b2n_rshift (b2n_ptr d, b2n_ptr n, unsigned int s)
   else
     tmp = n;
 
-  memmove (d->limp, tmp->limp+maj+(min ? 1 : 0), CHUNK_BYTES * newsize);
+  memmove (d->limp, tmp->limp + maj + (min ? 1 : 0), CHUNK_BYTES * newsize);
   b2n_resize (d, newsize);
 
   d->bits = tmp->bits - ((maj + (min ? 1 : 0)) << CHUNK_SHIFTS);
@@ -514,7 +515,6 @@ b2n_rshift (b2n_ptr d, b2n_ptr n, unsigned int s)
 /*
  * Normal polynomial multiplication.
  */
-
 void
 b2n_mul (b2n_ptr d, b2n_ptr n, b2n_ptr m)
 {
@@ -567,7 +567,6 @@ b2n_mul (b2n_ptr d, b2n_ptr n, b2n_ptr m)
  * Squaring in this polynomial ring is more efficient than normal
  * multiplication.
  */
-
 void
 b2n_square (b2n_ptr d, b2n_ptr n)
 {
@@ -579,7 +578,7 @@ b2n_square (b2n_ptr d, b2n_ptr n)
   maj = (maj + CHUNK_MASK) >> CHUNK_SHIFTS;
 
   b2n_init (t);
-  b2n_resize (t, 2*maj + ((CHUNK_MASK + 2*min) >> CHUNK_SHIFTS));
+  b2n_resize (t, 2 * maj + ((CHUNK_MASK + 2 * min) >> CHUNK_SHIFTS));
 
   chunk = 0;
   bits = 0;
@@ -599,7 +598,7 @@ b2n_square (b2n_ptr d, b2n_ptr n)
 	    }
 	}
     else
-	chunk += 2;
+      chunk += 2;
  
   t->dirty = 1;
   B2N_SWAP (d, t);
@@ -610,7 +609,6 @@ b2n_square (b2n_ptr d, b2n_ptr n)
  * Normal polynomial division.
  * These functions are far from optimal in speed.
  */
-
 void
 b2n_div_q (b2n_ptr d, b2n_ptr n, b2n_ptr m)
 {
@@ -677,7 +675,8 @@ b2n_div (b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
   /* The first iteration is done over the relevant bits */
   bits = (CHUNK_MASK + sn) & CHUNK_MASK;
   for (i = len; i >= 0 && b2n_sigbit (nenn) >= sm; i--)
-    for (j = (i == len ? bits : CHUNK_MASK); j >= 0 && b2n_sigbit (nenn) >= sm; j--)
+    for (j = (i == len ? bits : CHUNK_MASK); j >= 0 && b2n_sigbit (nenn) >= sm;
+	 j--)
       {
 	if (nenn->limp[i] & b2n_mask[j])
 	  {
@@ -688,19 +687,17 @@ b2n_div (b2n_ptr q, b2n_ptr r, b2n_ptr n, b2n_ptr m)
 	b2n_rshift (mask, mask, 1);
       }
 
-
   B2N_SWAP (r, nenn);
 
   b2n_clear (nenn);
   b2n_clear (div);
   b2n_clear (shift);
+  b2n_clear (mask);
 }
-
 
 /*
  * Functions for Operation on GF(2**n) ~= GF(2)[x]/p(x).
  */
-
 void
 b2n_mod (b2n_ptr m, b2n_ptr n, b2n_ptr p)
 {
@@ -723,13 +720,15 @@ b2n_gcd (b2n_ptr e, b2n_ptr go, b2n_ptr ho)
 {
   b2n_t g, h;
 
-  b2n_init (g); b2n_set (g, go);
-  b2n_init (h); b2n_set (h, ho);
+  b2n_init (g);
+  b2n_set (g, go);
+  b2n_init (h);
+  b2n_set (h, ho);
   
   while (b2n_cmp_null (h))
     {
       b2n_mod (g, g, h);
-      B2N_SWAP (g,h);
+      B2N_SWAP (g, h);
     }
 
   B2N_SWAP (e, g);
@@ -744,7 +743,7 @@ b2n_mul_inv (b2n_ptr ga, b2n_ptr be, b2n_ptr p)
   b2n_t a;
 
   b2n_init (a);
-  b2n_set_ui (a,1);
+  b2n_set_ui (a, 1);
 
   b2n_div_mod (ga, a, be, p);
 
@@ -756,15 +755,18 @@ b2n_div_mod (b2n_ptr ga, b2n_ptr a, b2n_ptr be, b2n_ptr p)
 {
   b2n_t s0, s1, s2, q, r0, r1;
 
-  /* There is no multiplicative inverse to Null */
+  /* There is no multiplicative inverse to Null.  */
   if (!b2n_cmp_null(be))
     {
       b2n_set_null (ga);
       return;
     }
 
-  b2n_init (s0); b2n_init (s1); b2n_init (s2);
-  b2n_init (r0); b2n_init (r1);
+  b2n_init (s0);
+  b2n_init (s1);
+  b2n_init (s2);
+  b2n_init (r0);
+  b2n_init (r1);
   b2n_init (q);
 
   b2n_set (r0, p);
@@ -787,8 +789,11 @@ b2n_div_mod (b2n_ptr ga, b2n_ptr a, b2n_ptr be, b2n_ptr p)
     }
   B2N_SWAP (ga, s0);
 
-  b2n_clear (s0); b2n_clear (s1); b2n_clear (s2);
-  b2n_clear (r0); b2n_clear (r1);
+  b2n_clear (s0);
+  b2n_clear (s1);
+  b2n_clear (s2);
+  b2n_clear (r0);
+  b2n_clear (r1);
   b2n_clear (q);
 }
 
@@ -798,7 +803,6 @@ b2n_div_mod (b2n_ptr ga, b2n_ptr a, b2n_ptr be, b2n_ptr p)
  * 2 - 2*Trace. 
  * If z is a square root, z + 1 is the other.
  */
-
 void
 b2n_trace (b2n_ptr ho, b2n_ptr a, b2n_ptr p)
 {
@@ -824,7 +828,6 @@ b2n_trace (b2n_ptr ho, b2n_ptr a, b2n_ptr p)
  * The halftrace yields the square root if the degree of the
  * irreduceable polynomial is odd.
  */
-
 void
 b2n_halftrace (b2n_ptr ho, b2n_ptr a, b2n_ptr p)
 {
@@ -834,7 +837,7 @@ b2n_halftrace (b2n_ptr ho, b2n_ptr a, b2n_ptr p)
   b2n_init (h);
   b2n_set (h, a);
   
-  for (i = 0; i < (m - 1)/2; i++)
+  for (i = 0; i < (m - 1) / 2; i++)
     {
       b2n_square (h, h);
       b2n_mod (h, h, p);
@@ -853,7 +856,6 @@ b2n_halftrace (b2n_ptr ho, b2n_ptr a, b2n_ptr p)
  * Solving the equation: y**2 + y = b in GF(2**m) where ip is the 
  * irreduceable polynomial. If m is odd, use the half trace.
  */
-
 void
 b2n_sqrt (b2n_ptr zo, b2n_ptr b, b2n_ptr ip)
 {
@@ -904,11 +906,9 @@ b2n_sqrt (b2n_ptr zo, b2n_ptr b, b2n_ptr ip)
   b2n_clear (z);
 }
 
-
 /*
  * Exponentiation modulo a polynomial.
  */
-
 void
 b2n_exp_mod (b2n_ptr d, b2n_ptr b0, u_int32_t e, b2n_ptr p)
 {
@@ -945,12 +945,10 @@ b2n_exp_mod (b2n_ptr d, b2n_ptr b0, u_int32_t e, b2n_ptr p)
 /*
  * Normal addition behaves as Z_{2**n} and not F_{2**n}.
  */
-
 void
 b2n_nadd (b2n_ptr d0, b2n_ptr a0, b2n_ptr b0)
 {
   int i, carry;
-
   b2n_ptr a, b;
   b2n_t d;
 
@@ -978,14 +976,14 @@ b2n_nadd (b2n_ptr d0, b2n_ptr a0, b2n_ptr b0)
       carry = (d->limp[i] < a->limp[i] ? 1 : 0);
     }
   
-  for ( ; i < a->chunks && carry; i++)
+  for (; i < a->chunks && carry; i++)
     {
       d->limp[i] = a->limp[i] + carry;
       carry = (d->limp[i] < a->limp[i] ? 1 : 0);
     }
 
   if (i < a->chunks)
-      memcpy (d->limp + i, a->limp + i, CHUNK_BYTES*(a->chunks - i));
+      memcpy (d->limp + i, a->limp + i, CHUNK_BYTES * (a->chunks - i));
 
   d->dirty = 1;
   B2N_SWAP (d0, d);
@@ -996,7 +994,6 @@ b2n_nadd (b2n_ptr d0, b2n_ptr a0, b2n_ptr b0)
 /*
  * Very special sub, a > b.
  */
-
 void
 b2n_nsub (b2n_ptr d0, b2n_ptr a, b2n_ptr b)
 {
@@ -1018,7 +1015,7 @@ b2n_nsub (b2n_ptr d0, b2n_ptr a, b2n_ptr b)
       carry = (d->limp[i] > a->limp[i] ? 1 : 0);
     }
   
-  for ( ; i < a->chunks && carry; i++)
+  for (; i < a->chunks && carry; i++)
     {
       d->limp[i] = a->limp[i] - carry;
       carry = (d->limp[i] > a->limp[i] ? 1 : 0);
