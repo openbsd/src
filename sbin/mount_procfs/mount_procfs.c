@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_procfs.c,v 1.4 1997/01/15 23:41:25 millert Exp $	*/
+/*	$OpenBSD: mount_procfs.c,v 1.5 1997/08/20 05:10:26 millert Exp $	*/
 /*	$NetBSD: mount_procfs.c,v 1.7 1996/04/13 01:31:59 jtc Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.4 1997/01/15 23:41:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.5 1997/08/20 05:10:26 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.4 1997/01/15 23:41:25 miller
 #include <sys/mount.h>
 
 #include <err.h>
+#include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -93,8 +94,13 @@ main(argc, argv)
 	if (argc != 2)
 		usage();
 
-	if (mount(MOUNT_PROCFS, argv[1], mntflags, NULL))
-		err(1, NULL);
+	if (mount(MOUNT_PROCFS, argv[1], mntflags, NULL)) {
+		if (errno == EOPNOTSUPP)
+			errx(1, "%s: Filesystem not supported by kernel",
+			    argv[1]);
+		else
+			err(1, argv[1]);
+	}
 	exit(0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_fdesc.c,v 1.4 1997/01/15 23:41:19 millert Exp $	*/
+/*	$OpenBSD: mount_fdesc.c,v 1.5 1997/08/20 05:10:20 millert Exp $	*/
 /*	$NetBSD: mount_fdesc.c,v 1.7 1996/04/13 01:31:15 jtc Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_fdesc.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_fdesc.c,v 1.4 1997/01/15 23:41:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_fdesc.c,v 1.5 1997/08/20 05:10:20 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: mount_fdesc.c,v 1.4 1997/01/15 23:41:19 millert
 #include <sys/mount.h>
 
 #include <err.h>
+#include <errno.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -93,8 +94,13 @@ main(argc, argv)
 	if (argc != 2)
 		usage();
 
-	if (mount(MOUNT_FDESC, argv[1], mntflags, NULL))
-		err(1, NULL);
+	if (mount(MOUNT_FDESC, argv[1], mntflags, NULL)) {
+		if (errno == EOPNOTSUPP)
+			errx(1, "%s: Filesystem not supported by kernel",
+			    argv[1]);
+		else
+			err(1, argv[1]);
+	}
 	exit(0);
 }
 

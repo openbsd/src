@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ados.c,v 1.5 1997/01/15 23:41:16 millert Exp $	*/
+/*	$OpenBSD: mount_ados.c,v 1.6 1997/08/20 05:10:17 millert Exp $	*/
 /*	$NetBSD: mount_ados.c,v 1.5 1996/04/13 01:30:59 jtc Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: mount_ados.c,v 1.5 1997/01/15 23:41:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_ados.c,v 1.6 1997/08/20 05:10:17 millert Exp $";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
@@ -41,6 +41,7 @@ static char rcsid[] = "$OpenBSD: mount_ados.c,v 1.5 1997/01/15 23:41:16 millert 
 #include <sys/stat.h>
 #include <ctype.h>
 #include <err.h>
+#include <errno.h>
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
@@ -130,9 +131,12 @@ main(argc, argv)
 			args.mask = sb.st_mode & (S_IRWXU | S_IRWXG | S_IRWXO);
 	}
 
-	if (mount(MOUNT_ADOSFS, dir, mntflags, &args) < 0)
-		err(1, "mount");
-
+	if (mount(MOUNT_ADOSFS, dir, mntflags, &args) < 0) {
+		if (errno == EOPNOTSUPP)
+			errx(1, "%s: Filesystem not supported by kernel", dir);
+		else
+			err(1, dir);
+	}
 	exit (0);
 }
 

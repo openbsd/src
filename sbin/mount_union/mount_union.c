@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_union.c,v 1.4 1997/01/15 23:41:27 millert Exp $	*/
+/*	$OpenBSD: mount_union.c,v 1.5 1997/08/20 05:10:28 millert Exp $	*/
 /*	$NetBSD: mount_union.c,v 1.3 1996/04/13 01:32:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_union.c	8.5 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_union.c,v 1.4 1997/01/15 23:41:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_union.c,v 1.5 1997/08/20 05:10:28 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -57,6 +57,7 @@ static char rcsid[] = "$OpenBSD: mount_union.c,v 1.4 1997/01/15 23:41:27 millert
 #include <miscfs/union/union.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -116,8 +117,13 @@ main(argc, argv)
 
 	args.target = target;
 
-	if (mount(MOUNT_UNION, argv[1], mntflags, &args))
-		err(1, NULL);
+	if (mount(MOUNT_UNION, argv[1], mntflags, &args)) {
+		if (errno == EOPNOTSUPP)
+			errx(1, "%s: Filesystem not supported by kernel",
+			    argv[1]);
+		else
+			err(1, argv[1]);
+	}
 	exit(0);
 }
 

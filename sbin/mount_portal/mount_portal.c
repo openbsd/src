@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.12 1997/08/04 19:25:19 deraadt Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.13 1997/08/20 05:10:25 millert Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.12 1997/08/04 19:25:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.13 1997/08/20 05:10:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,7 +129,6 @@ main(argc, argv)
 	int fdssize;
 
 	qelem q;
-	int rc;
 	int so;
 	int error = 0;
 
@@ -201,9 +200,12 @@ main(argc, argv)
 	 */
 	openlog("portald", LOG_CONS|LOG_PID, LOG_DAEMON);
 
-	rc = mount(MOUNT_PORTAL, mountpt, mntflags, &args);
-	if (rc < 0) {
-		syslog(LOG_ERR, "mount: %m");
+	if (mount(MOUNT_PORTAL, mountpt, mntflags, &args)) {
+		if (errno == EOPNOTSUPP)
+			syslog(LOG_ERR,
+			    "mount: Filesystem not supported by kernel");
+		else
+			syslog(LOG_ERR, "mount: %m");
 		exit(1);
 	}
 

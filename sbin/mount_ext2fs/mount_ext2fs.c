@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_ext2fs.c,v 1.5 1997/06/20 14:40:00 kstailey Exp $	*/
+/*	$OpenBSD: mount_ext2fs.c,v 1.6 1997/08/20 05:10:19 millert Exp $	*/
 /*	$NetBSD: mount_ffs.c,v 1.3 1996/04/13 01:31:19 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_ufs.c	8.2 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_ext2fs.c,v 1.5 1997/06/20 14:40:00 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: mount_ext2fs.c,v 1.6 1997/08/20 05:10:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -113,6 +113,9 @@ main(argc, argv)
 		case EINVAL:
 			errcause =
 			    "specified device does not match mounted device";
+			break;
+		case EOPNOTSUPP:
+			errcause = "filesystem not supported by kernel";
 			break;
 		default:
 			errcause = strerror(errno);

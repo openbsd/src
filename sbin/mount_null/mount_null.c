@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_null.c,v 1.4 1997/01/15 23:41:23 millert Exp $	*/
+/*	$OpenBSD: mount_null.c,v 1.5 1997/08/20 05:10:24 millert Exp $	*/
 /*	$NetBSD: mount_null.c,v 1.3 1996/04/13 01:31:49 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_null.c	8.5 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_null.c,v 1.4 1997/01/15 23:41:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_null.c,v 1.5 1997/08/20 05:10:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: mount_null.c,v 1.4 1997/01/15 23:41:23 millert 
 #include <miscfs/nullfs/null.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -105,8 +106,13 @@ main(argc, argv)
 
 	args.target = target;
 
-	if (mount(MOUNT_NULL, argv[1], mntflags, &args))
-		err(1, NULL);
+	if (mount(MOUNT_NULL, argv[1], mntflags, &args)) {
+		if (errno == EOPNOTSUPP)
+			errx(1, "%s: Filesystem not supported by kernel",
+			    argv[1]);
+		else
+			err(1, argv[1]);
+	}
 	exit(0);
 }
 

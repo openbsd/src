@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_umap.c,v 1.5 1997/01/15 23:41:26 millert Exp $	*/
+/*	$OpenBSD: mount_umap.c,v 1.6 1997/08/20 05:10:27 millert Exp $	*/
 /*	$NetBSD: mount_umap.c,v 1.5 1996/04/13 01:32:05 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_umap.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.5 1997/01/15 23:41:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.6 1997/08/20 05:10:27 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -58,6 +58,7 @@ static char rcsid[] = "$OpenBSD: mount_umap.c,v 1.5 1997/01/15 23:41:26 millert 
 #include <miscfs/umapfs/umap.h>
 
 #include <err.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -230,8 +231,13 @@ main(argc, argv)
 	args.gnentries = gnentries;
 	args.gmapdata  = gmapdata;
 
-	if (mount(MOUNT_UMAP, argv[1], mntflags, &args))
-		err(1, NULL);
+	if (mount(MOUNT_UMAP, argv[1], mntflags, &args)) {
+		if (errno == EOPNOTSUPP)
+			errx(1, "%s: Filesystem not supported by kernel",
+			    argv[1]);
+		else
+			err(1, argv[1]);
+	}
 	exit(0);
 }
 
