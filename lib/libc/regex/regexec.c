@@ -36,7 +36,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: regexec.c,v 1.4 1996/09/15 09:31:27 tholo Exp $";
+static char rcsid[] = "$OpenBSD: regexec.c,v 1.5 1997/04/12 18:22:25 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -58,27 +58,27 @@ static char rcsid[] = "$OpenBSD: regexec.c,v 1.4 1996/09/15 09:31:27 tholo Exp $
 #include "regex2.h"
 
 /* macros for manipulating states, small version */
-#define	states	long
+#define	states	int
 #define	states1	states		/* for later use in regexec() decision */
 #define	CLEAR(v)	((v) = 0)
-#define	SET0(v, n)	((v) &= ~((unsigned long)1 << (n)))
-#define	SET1(v, n)	((v) |= (unsigned long)1 << (n))
-#define	ISSET(v, n)	(((v) & ((unsigned long)1 << (n))) != 0)
+#define	SET0(v, n)	((v) &= ~((unsigned)1 << (n)))
+#define	SET1(v, n)	((v) |= (unsigned)1 << (n))
+#define	ISSET(v, n)	(((v) & ((unsigned)1 << (n))) != 0)
 #define	ASSIGN(d, s)	((d) = (s))
 #define	EQ(a, b)	((a) == (b))
-#define	STATEVARS	long dummy	/* dummy version */
+#define	STATEVARS	int dummy	/* dummy version */
 #define	STATESETUP(m, n)	/* nothing */
 #define	STATETEARDOWN(m)	/* nothing */
 #define	SETUP(v)	((v) = 0)
-#define	onestate	long
-#define	INIT(o, n)	((o) = (unsigned long)1 << (n))
-#define	INC(o)		((o) = (unsigned long)(o) << 1)
+#define	onestate	int
+#define	INIT(o, n)	((o) = (unsigned)1 << (n))
+#define	INC(o)		((o) = (unsigned)(o) << 1)
 #define	ISSTATEIN(v, o)	(((v) & (o)) != 0)
 /* some abbreviations; note that some of these know variable names! */
 /* do "if I'm here, I can also be there" etc without branches */
-#define	FWD(dst, src, n)	((dst) |= ((unsigned long)(src)&(here)) << (n))
-#define	BACK(dst, src, n)	((dst) |= ((unsigned long)(src)&(here)) >> (n))
-#define	ISSETBACK(v, n)	(((v) & ((unsigned long)here >> (n))) != 0)
+#define	FWD(dst, src, n)	((dst) |= ((unsigned)(src)&(here)) << (n))
+#define	BACK(dst, src, n)	((dst) |= ((unsigned)(src)&(here)) >> (n))
+#define	ISSETBACK(v, n)	(((v) & ((unsigned)here >> (n))) != 0)
 /* function names */
 #define SNAMES			/* engine.c looks after details */
 
@@ -113,13 +113,13 @@ static char rcsid[] = "$OpenBSD: regexec.c,v 1.4 1996/09/15 09:31:27 tholo Exp $
 #define	ISSET(v, n)	((v)[n])
 #define	ASSIGN(d, s)	memcpy(d, s, m->g->nstates)
 #define	EQ(a, b)	(memcmp(a, b, m->g->nstates) == 0)
-#define	STATEVARS	long vn; char *space
+#define	STATEVARS	int vn; char *space
 #define	STATESETUP(m, nv)	{ (m)->space = malloc((nv)*(m)->g->nstates); \
 				if ((m)->space == NULL) return(REG_ESPACE); \
 				(m)->vn = 0; }
 #define	STATETEARDOWN(m)	{ free((m)->space); }
 #define	SETUP(v)	((v) = &m->space[m->vn++ * m->g->nstates])
-#define	onestate	long
+#define	onestate	int
 #define	INIT(o, n)	((o) = (n))
 #define	INC(o)	((o)++)
 #define	ISSTATEIN(v, o)	((v)[o])

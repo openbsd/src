@@ -1,4 +1,4 @@
-/*	$OpenBSD: regex2.h,v 1.2 1996/08/19 08:31:14 tholo Exp $	*/
+/*	$OpenBSD: regex2.h,v 1.3 1997/04/12 18:22:24 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993, 1994 Henry Spencer.
@@ -75,8 +75,8 @@
  * In state representations, an operator's bit is on to signify a state
  * immediately *preceding* "execution" of that operator.
  */
-typedef unsigned long sop;	/* strip operator */
-typedef long sopno;
+typedef unsigned sop;	/* strip operator */
+typedef int sopno;
 #define	OPRMASK	0xf8000000
 #define	OPDMASK	0x07ffffff
 #define	OPSHIFT	((unsigned)27)

@@ -36,7 +36,7 @@
  */
 
 #if defined(SNAMES) && defined(LIBC_SCCS) && !defined(lint)
-static char enginercsid[] = "$OpenBSD: engine.c,v 1.2 1996/08/19 08:31:06 tholo Exp $";
+static char enginercsid[] = "$OpenBSD: engine.c,v 1.3 1997/04/12 18:22:22 millert Exp $";
 #endif /* SNAMES and LIBC_SCCS and not lint */
 
 /*
@@ -1051,7 +1051,7 @@ sopno stopst;
 
 	printf("%s %s-", title, pchar(*start));
 	printf("%s ", pchar(*stop));
-	printf("%ld-%ld\n", (long)startst, (long)stopst);
+	printf("%d-%d\n", startst, stopst);
 }
 
 #ifndef PCHARDONE
