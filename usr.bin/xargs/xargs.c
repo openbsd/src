@@ -1,4 +1,4 @@
-/*	$OpenBSD: xargs.c,v 1.17 2003/07/15 23:30:47 tedu Exp $	*/
+/*	$OpenBSD: xargs.c,v 1.18 2003/08/15 22:46:46 millert Exp $	*/
 /*	$FreeBSD: xargs.c,v 1.51 2003/05/03 19:09:11 obrien Exp $	*/
 
 /*-
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)xargs.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: xargs.c,v 1.17 2003/07/15 23:30:47 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: xargs.c,v 1.18 2003/08/15 22:46:46 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -243,7 +243,7 @@ main(int argc, char *argv[])
 		errx(1, "insufficient space for command");
 
 	if ((bbp = malloc((size_t)(nline + 1))) == NULL)
-		errx(1, NULL);
+		err(1, NULL);
 	ebp = (argp = p = bbp) + nline - 1;
 	for (;;)
 		parse_input(argc, argv);
@@ -423,7 +423,7 @@ prerun(int argc, char *argv[])
 	 */
 	tmp = malloc((argc + 1) * sizeof(char**));
 	if (tmp == NULL)
-		errx(1, NULL);
+		err(1, NULL);
 	tmp2 = tmp;
 
 	/*
@@ -431,7 +431,7 @@ prerun(int argc, char *argv[])
 	 * cannot do strnsubst() to it.
 	 */
 	if ((*tmp++ = strdup(*avj++)) == NULL)
-		errx(1, NULL);
+		err(1, NULL);
 
 	/*
 	 * For each argument to utility, if we have not used up
@@ -449,7 +449,7 @@ prerun(int argc, char *argv[])
 				repls--;
 		} else {
 			if ((*tmp = strdup(*tmp)) == NULL)
-				errx(1, NULL);
+				err(1, NULL);
 			tmp++;
 		}
 	}
