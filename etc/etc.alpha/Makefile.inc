@@ -1,13 +1,9 @@
-#	$OpenBSD: Makefile.inc,v 1.11 2001/01/23 09:04:11 art Exp $
+#	$OpenBSD: Makefile.inc,v 1.12 2001/03/05 14:32:10 deraadt Exp $
 #	etc.alpha/Makefile.inc -- alpha-specific etc Makefile targets
 
 .ifdef DESTDIR
 
-snap_md: binutils bsd distrib boot
-
-binutils:
-	cd ${DESTDIR} && tar cf - usr/*openbsd* \
-	    | ${GZIP} ${GZIPFLAGS} > snapshot/usr.binutils.tar${GZIPEXT}
+snap_md: bsd distrib boot
 
 bsd:
 	cd ${.CURDIR}/../sys/arch/alpha/conf && config GENERIC
