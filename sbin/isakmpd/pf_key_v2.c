@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.150 2004/09/17 13:53:08 ho Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.151 2004/12/27 11:02:03 hshoexer Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -4076,7 +4076,7 @@ pf_key_v2_acquire(struct pf_key_v2_msg *pmsg)
 					}
 					authm = key_printable(ISAKMP_KEY_RSA,
 					    ISAKMP_KEYTYPE_PRIVATE,
-					    (u_int8_t *) sauth + 1,
+					    (u_int8_t *)(sauth + 1),
 					    sauth->sadb_x_cred_len -
 					    sizeof *sauth);
 					if (!authm) {
