@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsmoused.8,v 1.1 2001/04/14 04:47:41 aaron Exp $
+.\"	$OpenBSD: wsmoused.8,v 1.2 2001/05/23 16:36:00 aaron Exp $
 .\"
 .Dd April 8, 2001
 .Dt WSMOUSED 8 i386
@@ -10,13 +10,13 @@ wsmouse daemon
 .Sh SYNOPSIS
 .Nm wsmoused
 .Op Fl 2df
-.Op Fl t Ar protocol
-.Op Fl C Ar threshold
+.Op Fl t Ar type
+.Op Fl C Ar thresh
 .Op Fl I Ar pid_file
 .Op Fl M Ar N=M
 .Op Fl p Ar device
 .Nm wsmoused
-.Ar -i Ar info
+.Op Fl i
 .Op Fl p Ar device
 .Sh DESCRIPTION
 .Nm
@@ -43,7 +43,7 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl 2
 Indicate that the mouse has two-buttons. In that case, the right button pastes.
-.It Fl C
+.It Fl C Ar thresh
 Set double click speed as the maximum interval in msec between button clicks.
 If omitted, the default value of 500 msec will be assumed.
 This option will have effect only on the cut and paste operations
@@ -57,9 +57,9 @@ If omitted, the process ID will be stored in
 .Pa /var/run/wsmoused.pid .
 .It Fl M Ar N=M
 Assign the physical button
-.Em M
+.Ar M
 to the logical button
-.Em N .
+.Ar N .
 You may specify as many instances of this option as you like.
 More than one
 physical button may be assigned to a logical button at the same time.
@@ -74,16 +74,16 @@ Do not become a daemon and instead run as a foreground process.
 Useful for testing and debugging.
 .It Fl i
 Print the type and the protocol of the mouse and exit.
-.It Fl p Ar port
-Use the device
-.Em port
+.It Fl p Ar device
+Use device
+.Ar device
 to communicate with the mouse. If this option is not present, the device opened
 is
 .Pa /dev/wsmouse
 (the multiplexer device that receive all mouse events from all wsmouse
- compatible mice on the system). For a serial mouse, you have to explicitly
+compatible mice on the system). For a serial mouse, you have to explicitly
 specify the serial port, i.e.
-.Em port
+.device port
 must be one of
 .Pa /dev/cua0[0-3]
 .It Fl t Ar type
