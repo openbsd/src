@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.10 1998/04/27 03:13:53 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.11 1998/05/18 19:13:20 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.10 1998/04/27 03:13:53 deraadt Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.11 1998/05/18 19:13:20 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -475,7 +475,7 @@ sendf(rname, opts)
 		(void) write(rem, buf, strlen(buf));
 		if (response() < 0)
 			return;
-		sizerr = (readlink(target, buf, BUFSIZ) != stb.st_size);
+		sizerr = (readlink(target, buf, BUFSIZ-1) != stb.st_size);
 		(void) write(rem, buf, stb.st_size);
 		if (debug)
 			printf("readlink = %.*s\n", (int)stb.st_size, buf);

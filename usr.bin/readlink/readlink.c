@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: readlink.c,v 1.13 1997/11/18 22:52:10 niklas Exp $
+ * $OpenBSD: readlink.c,v 1.14 1998/05/18 19:12:03 deraadt Exp $
  *
  * Copyright (c) 1997
  *	Kenneth Stailey (hereinafter referred to as the author)
@@ -71,7 +71,7 @@ main(argc, argv)
 
 	if (fflag)
 		realpath(argv[0], buf);
-	else if ((n = readlink(argv[0], buf, PATH_MAX)) < 0)
+	else if ((n = readlink(argv[0], buf, sizeof buf-1)) < 0)
 		exit(1);
 	buf[n] = '\0';
 

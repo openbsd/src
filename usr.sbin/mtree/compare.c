@@ -1,5 +1,5 @@
 /*	$NetBSD: compare.c,v 1.11 1996/09/05 09:56:48 mycroft Exp $	*/
-/*	$OpenBSD: compare.c,v 1.9 1997/07/18 05:49:02 millert Exp $	*/
+/*	$OpenBSD: compare.c,v 1.10 1998/05/18 19:10:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)compare.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: compare.c,v 1.9 1997/07/18 05:49:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: compare.c,v 1.10 1998/05/18 19:10:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -339,7 +339,7 @@ rlink(name)
 	static char lbuf[MAXPATHLEN];
 	register int len;
 
-	if ((len = readlink(name, lbuf, sizeof(lbuf))) == -1)
+	if ((len = readlink(name, lbuf, sizeof(lbuf)-1)) == -1)
 		error("%s: %s", name, strerror(errno));
 	lbuf[len] = '\0';
 	return (lbuf);

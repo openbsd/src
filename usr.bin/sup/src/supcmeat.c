@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.8 1997/09/16 11:01:20 deraadt Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.9 1998/05/18 19:13:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -837,7 +837,7 @@ register struct stat *statp;
 	}
 	linkname = t->Tlink->Tname;
 	if (!new && (t->Tflags&FNEW) == 0 &&
-	    (n = readlink (t->Tname,buf,sizeof(buf))) >= 0 &&
+	    (n = readlink (t->Tname,buf,sizeof(buf)-1)) >= 0 &&
 	    (n == strlen (linkname)) && (strncmp (linkname,buf,n) == 0))
 		return (FALSE);
 	if (thisC->Cflags&CFLIST) {

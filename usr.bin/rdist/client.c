@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.5 1997/07/21 01:53:37 angelos Exp $	*/
+/*	$OpenBSD: client.c,v 1.6 1998/05/18 19:12:29 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: client.c,v 1.5 1997/07/21 01:53:37 angelos Exp $";
+"$OpenBSD: client.c,v 1.6 1998/05/18 19:12:29 deraadt Exp $";
 
 static char sccsid[] = "@(#)client.c";
 
@@ -667,7 +667,7 @@ static int sendlink(rname, opts, stb, user, group, destdir)
 	/*
 	 * Gather and send additional link info
 	 */
-	sizerr = (readlink(target, lbuf, sizeof(lbuf)) != stb->st_size);
+	sizerr = (readlink(target, lbuf, sizeof(lbuf)-1) != stb->st_size);
 	(void) sprintf(tbuf, "%.*s", (int) stb->st_size, lbuf);
 	(void) sendcmd(C_NONE, "%s\n", tbuf);
 
