@@ -1,4 +1,4 @@
-/*	$OpenBSD: ttycom.h,v 1.3 1996/05/22 11:54:28 deraadt Exp $	*/
+/*	$OpenBSD: ttycom.h,v 1.4 1996/09/09 23:35:17 downsj Exp $	*/
 /*	$NetBSD: ttycom.h,v 1.4 1996/05/19 17:17:53 jonathan Exp $	*/
 
 /*-
@@ -62,8 +62,6 @@ struct winsize {
 	unsigned short	ws_ypixel;	/* vertical size, pixels */
 };
 
-#define	TIOCMODG	_IOR('t', 3, int)	/* get modem control state */
-#define	TIOCMODS	_IOW('t', 4, int)	/* set modem control state */
 #define		TIOCM_LE	0001		/* line enable */
 #define		TIOCM_DTR	0002		/* data terminal ready */
 #define		TIOCM_RTS	0004		/* request to send */
@@ -130,6 +128,10 @@ struct winsize {
 #define		TIOCFLAG_CLOCAL		0x02	/* set clocal on open */
 #define		TIOCFLAG_CRTSCTS	0x04	/* set crtscts on open */
 #define		TIOCFLAG_MDMBUF		0x08	/* set mdmbuf on open */
+
+/* Backwards compatibility */
+#define	TIOCMODG	TIOCMGET
+#define	TIOCMODS	TIOCMSET
 
 #define	TTYDISC		0		/* termios tty line discipline */
 #define	TABLDISC	3		/* tablet discipline */
