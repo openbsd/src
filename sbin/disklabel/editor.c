@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.11 1997/10/15 19:39:48 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.12 1997/10/15 22:49:04 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.11 1997/10/15 19:39:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.12 1997/10/15 22:49:04 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -67,6 +67,7 @@ void	make_contiguous __P((struct disklabel *));
 u_int32_t next_offset __P((struct disklabel *));
 int	partition_cmp __P((const void *, const void *));
 struct partition **sort_partitions __P((struct disklabel *, u_int16_t *));
+void	getdisktype __P((struct disklabel *, char *));
 
 /* from disklabel.c */
 int	checklabel __P((struct disklabel *));
@@ -103,6 +104,8 @@ editor(lp, f)
 	puts("Initial label editor (enter '?' for help at any prompt)\n");
 	if (has_overlap(&label, &freeblocks, 1))
 		errx(1, "can't run when there is partition overlap.");
+
+	getdisktype(&label, "You need to specify a disk type for this disk.");
 
 #ifdef CYLCHECK
 	puts("This platform requires that partition offsets/sizes be on cylinder boundaries.\nPartition offsets/sizes will be rounded to the nearest cylinder automatically.");
@@ -705,6 +708,7 @@ editor_display(lp, freep, unit)
 	int i;
 
 	printf("device: %s\n", specname);
+	printf("type: %s\n", dktypenames[lp->d_type]);
 	printf("disk: %.*s\n", (int)sizeof(lp->d_typename), lp->d_typename);
 	printf("label: %.*s\n", (int)sizeof(lp->d_packname), lp->d_packname);
 	printf("bytes/sector: %ld\n", (long)lp->d_secsize);
@@ -1092,6 +1096,29 @@ edit_parms(lp, freep)
 
 	printf("Changing device parameters for %s\n\n", specname);
 
+	/* disk type */
+	for (;;) {
+		p = getstring(lp, "disk type",
+		    "What kind of disk is this?  Usually SCSI, ST506, or "
+		    "floppy (use ST506 for IDE).", dktypenames[lp->d_type]);
+		for (ui = 1; ui < DKMAXTYPES && strcasecmp(p, dktypenames[ui]);
+		    ui++)
+			;
+		if (ui < DKMAXTYPES) {
+			break;
+		} else {
+			printf("\"%s\" is not a valid disk type.\n", p);
+			fputs("Valid types are: ", stdout);
+			for (ui = 1; ui < DKMAXTYPES; ui++) {
+				printf("\"%s\"", dktypenames[ui]);
+				if (ui < DKMAXTYPES - 1)
+					fputs(", ", stdout);
+			}
+			putchar('\n');
+		}
+	}
+	lp->d_type = ui;
+
 	/* pack/label id */
 	p = getstring(lp, "label name",
 	    "15 char string that describes this label, usually the disk name.",
@@ -1219,4 +1246,47 @@ sort_partitions(lp, npart)
 
 	*npart = npartitions;
 	return(spp);
+}
+
+/*
+ * Get a valid disk type if necessary.
+ */
+void
+getdisktype(lp, banner)
+	struct disklabel *lp;
+	char *banner;
+{
+	int i;
+	char *s;
+
+	if (lp->d_type > DKMAXTYPES || lp->d_type == 0) {
+		puts(banner);
+		puts("Possible values are:");
+		for (i = 1; i < DKMAXTYPES; i++) {
+			printf("\"%s\"", dktypenames[i]);
+			if (i < DKMAXTYPES - 1)
+				fputs(", ", stdout);
+		}
+		putchar('\n');
+
+		for (;;) {
+			s = getstring(lp, "Disk type",
+			    "What kind of disk is this?  Usually SCSI, ST506, or floppy (use ST506 for IDE).",
+			    "SCSI");
+			for (i = 1; i < DKMAXTYPES; i++)
+				if (strcasecmp(s, dktypenames[i]) == 0) {
+					lp->d_type = i;
+					putchar('\n');
+					return;
+				}
+			printf("\"%s\" is not a valid disk type.\n", s);
+			fputs("Valid types are: ", stdout);
+			for (i = 1; i < DKMAXTYPES; i++) {
+				printf("\"%s\"", dktypenames[i]);
+				if (i < DKMAXTYPES - 1)
+					fputs(", ", stdout);
+			}
+			putchar('\n');
+		}
+	}
 }
