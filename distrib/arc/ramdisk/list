@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.5 1997/05/24 16:22:18 pefo Exp $
+#	$OpenBSD: list,v 1.6 1997/09/04 06:24:49 deraadt Exp $
 
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
 SRCDIRS usr.bin/vi usr.sbin/pppd
@@ -21,6 +21,7 @@ LINK	instbin			bin/mv
 LINK	instbin			bin/pax bin/tar bin/cpio
 LINK	instbin			bin/rm
 LINK	instbin			bin/pdksh bin/sh
+ARGVLINK pdksh			-sh
 LINK	instbin			bin/sleep
 LINK	instbin			bin/stty
 LINK	instbin			bin/sync
@@ -64,9 +65,6 @@ SYMLINK ../../instbin		usr/bin/ftp
 SYMLINK ../../instbin		usr/bin/gzip usr/bin/gunzip usr/bin/gzcat
 SYMLINK ../../instbin		usr/bin/sed
 SYMLINK ../../instbin		usr/bin/build usr/bin/vi
-
-# `internal' crunchgen links
-ARGVLINK sh		-sh
 
 # copy the MAKEDEV script and make some devices
 COPY	${DESTDIR}/dev/MAKEDEV	dev/MAKEDEV

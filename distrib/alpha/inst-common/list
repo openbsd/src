@@ -1,10 +1,9 @@
 #
-#	$OpenBSD: list,v 1.6 1997/07/09 15:12:59 millert Exp $
+#	$OpenBSD: list,v 1.7 1997/09/04 06:24:50 deraadt Exp $
 #
 
 # copy the crunched binary, link to it, and kill it
 COPY	${OBJDIR}/raminst		raminst
-LINK	raminst			bin/-sh
 LINK	raminst			bin/cat
 LINK	raminst			bin/chmod
 LINK	raminst			bin/cp
@@ -19,10 +18,10 @@ LINK	raminst			bin/ls
 #LINK	raminst			bin/hostname
 LINK	raminst			bin/mkdir
 LINK	raminst			bin/mv
-LINK	raminst			bin/pdksh
+LINK	raminst			bin/pdksh bin/sh
+ARGVLINK pdksh			-sh
 #LINK	raminst			bin/pwd
 LINK	raminst			bin/rm
-LINK	raminst			bin/sh
 LINK	raminst			bin/stty
 LINK	raminst			bin/sleep
 #LINK	raminst			bin/sync
