@@ -1,4 +1,4 @@
-/*	$OpenBSD: tc-m68k.c,v 1.4 1996/06/17 00:24:29 deraadt Exp $	*/
+/*	$OpenBSD: tc-m68k.c,v 1.5 2002/06/26 11:25:43 espie Exp $	*/
 
 /* tc-m68k.c  All the m68020 specific stuff in one convenient, huge,
    slow to compile, easy to find file.
@@ -29,6 +29,8 @@
 
 /* note that this file includes real declarations and thus can only be included by one source file per executable. */
 #include "opcode/m68k.h"
+#include "opcode/m68k-aliases.h"
+
 #ifdef TE_SUN
 /* This variable contains the value to write out at the beginning of
    the a.out file.  The 2<<16 means that this is a 68020 file instead
@@ -2926,6 +2928,16 @@ void
 		/* Didn't his mommy tell him about null pointers? */
 		if (retval && *retval)
 		    as_fatal("Internal Error:  Can't hash %s: %s",ins->name,retval);
+	}
+	for (i = 0; i < m68k_numaliases; i++) {
+	    const char *name = m68k_opcode_aliases[i].primary;
+	    const char *alias = m68k_opcode_aliases[i].alias;
+	    void *val = hash_find(op_hash, name);
+	    if (!val)
+	      as_fatal("Internal Error: Can't find %s in hash table", name);
+	    retval = hash_insert(op_hash, alias, val);
+	    if (retval && *retval)
+	      as_fatal("Internal Error: Can't hash %s: %s", alias, retval);
 	}
 	
 	for (i = 0; i < sizeof(mklower_table) ; i++)
