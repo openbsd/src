@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.292 2000/07/27 19:16:33 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.293 2000/07/31 19:49:12 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -595,8 +595,8 @@ product 3DLABS 500MX		0x0006	GLINT 500MX
 product 3DLABS PERMEDIA2	0x0007	GLINT Permedia 2
 
 /* Aironet Products */
-product AIRONET PC4500		0x4500	PC4500 Wireless LAN Adapter
-product AIRONET PC4800		0x4800	PC4800 Wireless LAN Adapter
+product AIRONET PC4500		0x4500	PC4500 Wireless
+product AIRONET PC4800		0x4800	PC4800 Wireless
 
 /* ACC Products */
 product ACC 2188		0x0000	ACCM 2188 VL-PCI
@@ -754,7 +754,7 @@ product ATI MACH64_VV		0x5656	Mach64 VV
 
 /* Applied Micro Circuts products */
 product AMCIRCUITS S5933	0x4750	S5933 PCI Matchmaker
-product AMCIRCUITS LANAI	0x8043	Myrinet LANai Interface
+product AMCIRCUITS LANAI	0x8043	Myrinet LANai
 
 /* Atronics products */
 product ATRONICS IDE_2015PL	0x2015	IDE-2015PL
@@ -1610,6 +1610,7 @@ product VIATECH VT82C586_IDE	0x1571	VT82C586 (Apollo VP) IDE
 product VIATECH VT82C1595	0x1595	VT82C1595 (Apollo VP2) Host-PCI
 product VIATECH VT83C572	0x3038	VT83C572 USB
 product VIATECH VT82C586_PWR	0x3040	VT82C586 (Apollo VP) Power Management
+product VIATECH VT82C596	0x3050	VT82C596 Power Management
 product VIATECH RHINE		0x3043	Rhine/RhineII
 product	VIATECH RHINEII_2	0x3065	RhineII-2
 product	VIATECH	VT82C686A_SMB	0x3057	VT82C686A (Apollo 133) SMBus
