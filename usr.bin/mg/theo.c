@@ -64,6 +64,7 @@ static const char *talk[] = {
 	"I could search... but I'm a lazy bum ;)",
 	"sshutup sshithead, ssharpsshooting susshi sshplats ssharking assholes.",
 	"Lazy bums slacking on your asses.",
+	"35 commits an hour? That's pathetic!",
 	"Fine software takes time to prepare.  Give a little slack."
 };
 
