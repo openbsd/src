@@ -1,0 +1,1767 @@
+/*	$OpenBSD: pccom.c,v 1.1 1996/07/07 00:05:49 downsj Exp $	*/
+/*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
+
+/*-
+ * Copyright (c) 1993, 1994, 1995, 1996
+ *	Charles M. Hannum.  All rights reserved.
+ * Copyright (c) 1991 The Regents of the University of California.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Berkeley and its contributors.
+ * 4. Neither the name of the University nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	@(#)com.c	7.5 (Berkeley) 5/16/91
+ */
+
+/*
+ * PCCOM driver, uses National Semiconductor NS16450/NS16550AF UART
+ */
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/ioctl.h>
+#include <sys/select.h>
+#include <sys/tty.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/conf.h>
+#include <sys/file.h>
+#include <sys/uio.h>
+#include <sys/kernel.h>
+#include <sys/syslog.h>
+#include <sys/types.h>
+#include <sys/device.h>
+
+#include <machine/intr.h>
+#include <machine/bus.h>
+
+#include <dev/isa/isavar.h>
+#include <dev/isa/comreg.h>
+#include <arch/i386/isa/pccomvar.h>
+#include <dev/ic/ns16550reg.h>
+#ifdef PCCOM_HAYESP
+#include <dev/ic/hayespreg.h>
+#endif
+#define	com_lcr	com_cfcr
+
+#include "pccom.h"
+
+struct pccom_softc {
+	struct device sc_dev;
+	void *sc_ih;
+	bus_chipset_tag_t sc_bc;
+	struct tty *sc_tty;
+
+	int sc_overflows;
+	int sc_floods;
+	int sc_errors;
+
+	int sc_halt;
+
+	int sc_iobase;
+#ifdef PCCOM_HAYESP
+	int sc_hayespbase;
+#endif
+
+	bus_io_handle_t sc_ioh;
+	bus_io_handle_t sc_hayespioh;
+
+	u_char sc_hwflags;
+#define	COM_HW_NOIEN	0x01
+#define	COM_HW_FIFO	0x02
+#define	COM_HW_HAYESP	0x04
+#define	COM_HW_ABSENT_PENDING	0x08	/* reattached, awaiting close/reopen */
+#define	COM_HW_ABSENT	0x10		/* configure actually failed, or removed */
+#define	COM_HW_REATTACH	0x20		/* reattaching */
+#define	COM_HW_CONSOLE	0x40
+	u_char sc_swflags;
+#define	COM_SW_SOFTCAR	0x01
+#define	COM_SW_CLOCAL	0x02
+#define	COM_SW_CRTSCTS	0x04
+#define	COM_SW_MDMBUF	0x08
+	int	sc_fifolen;
+	u_char sc_msr, sc_mcr, sc_lcr, sc_ier;
+	u_char sc_dtr;
+
+#define RBUFSIZE 512
+#define RBUFMASK 511
+ 	u_int sc_rxget;
+ 	volatile u_int sc_rxput;
+ 	u_char sc_rxbuf[RBUFSIZE];
+ 	u_char *sc_tba;
+ 	int sc_tbc;
+};
+
+#ifdef PCCOM_HAYESP
+int pccomprobeHAYESP __P((bus_io_handle_t hayespioh, struct pccom_softc *sc));
+#endif
+void	pccomdiag	__P((void *));
+int	pccomspeed	__P((long));
+int	pccomparam	__P((struct tty *, struct termios *));
+void	pccomstart	__P((struct tty *));
+void 	pccomsoft	__P((void));
+int	pccomhwiflow	__P((struct tty *, int));
+
+/* XXX: These belong elsewhere */
+cdev_decl(pccom);
+bdev_decl(pccom);
+
+struct consdev;
+void	pccomcnprobe	__P((struct consdev *));
+void	pccomcninit	__P((struct consdev *));
+int	pccomcngetc	__P((dev_t));
+void	pccomcnputc	__P((dev_t, int));
+void	pccomcnpollc	__P((dev_t, int));
+
+static u_char tiocm_xxx2mcr __P((int));
+
+/*
+ * XXX the following two cfattach structs should be different, and possibly
+ * XXX elsewhere.
+ */
+int	pccomprobe __P((struct device *, void *, void *));
+void	pccomattach __P((struct device *, struct device *, void *));
+void	pccom_absent_notify __P((struct pccom_softc *sc));
+void	pccomstart_pending __P((void *));
+
+#if NPCCOM_ISA
+struct cfattach pccom_isa_ca = {
+	sizeof(struct pccom_softc), pccomprobe, pccomattach
+};
+#endif
+
+#if NPCCOM_COMMULTI
+struct cfattach pccom_commulti_ca = {
+	sizeof(struct pccom_softc), pccomprobe, pccomattach
+};
+#endif
+
+struct cfdriver pccom_cd = {
+	NULL, "pccom", DV_TTY
+};
+
+void pccominit __P((bus_chipset_tag_t, bus_io_handle_t, int));
+
+#ifndef CONSPEED
+#define	CONSPEED B9600
+#endif
+
+#ifdef PCCOMCONSOLE
+int	pccomdefaultrate = CONSPEED;		/* XXX why set default? */
+#else
+int	pccomdefaultrate = TTYDEF_SPEED;
+#endif
+int	pccomconsaddr;
+int	pccomconsinit;
+int	pccomconsattached;
+bus_chipset_tag_t pccomconsbc;
+bus_io_handle_t pccomconsioh;
+tcflag_t pccomconscflag = TTYDEF_CFLAG;
+
+int	pccommajor;
+int	pccomsopen = 0;
+int	pccomevents = 0;
+
+#ifdef KGDB
+#include <machine/remote-sl.h>
+extern int kgdb_dev;
+extern int kgdb_rate;
+extern int kgdb_debug_init;
+#endif
+
+#define	PCCOMUNIT(x)	(minor(x))
+
+/* Macros to clear/set/test flags. */
+#define	SET(t, f)	(t) |= (f)
+#define	CLR(t, f)	(t) &= ~(f)
+#define	ISSET(t, f)	((t) & (f))
+
+#if NPCCOM_PCMCIA
+#include <dev/pcmcia/pcmciavar.h>
+
+int	pccom_pcmcia_match __P((struct device *, void *, void *));
+void	pccom_pcmcia_attach __P((struct device *, struct device *, void *));
+int	pccom_pcmcia_detach __P((struct device *));
+
+struct cfattach pccom_pcmcia_ca = {
+	sizeof(struct pccom_softc), pccom_pcmcia_match, pccomattach,
+	pccom_pcmcia_detach
+};
+
+int	pccom_pcmcia_mod __P((struct pcmcia_link *pc_link, struct device *self,
+	    struct pcmcia_conf *pc_cf, struct cfdata *cf));
+
+/* additional setup needed for pcmcia devices */
+/* modify config entry */
+int 
+pccom_pcmcia_mod(pc_link, self, pc_cf, cf)
+    struct pcmcia_link *pc_link;
+    struct device *self;
+    struct pcmcia_conf *pc_cf; 
+    struct cfdata *cf;
+{               
+    int err; 
+    struct pcmciadevs *dev = pc_link->device;
+    struct ed_softc *sc = (void *)self; 
+    if (!(err = PCMCIA_BUS_CONFIG(pc_link->adapter, pc_link, self,
+				  pc_cf, cf))) {
+        pc_cf->memwin = 0;
+	if (pc_cf->cfgtype == 0) 
+	    pc_cf->cfgtype = CFGENTRYID; /* determine from ioaddr */
+    }
+    return err;
+}
+
+int pccom_pcmcia_isa_attach __P((struct device *, void *, void *,
+			       struct pcmcia_link *));
+int pccom_pcmcia_remove __P((struct pcmcia_link *, struct device *));
+
+static struct pcmcia_pccom {
+    struct pcmcia_device pcd;
+} pcmcia_pccom =  {
+    {"PCMCIA Modem card", pccom_pcmcia_mod, pccom_pcmcia_isa_attach,
+     NULL, pccom_pcmcia_remove}
+};          
+
+
+struct pcmciadevs pcmcia_pccom_devs[] = {
+  { "pccom", 0,
+  NULL, "*MODEM*", NULL, NULL,
+  NULL, (void *)&pcmcia_pccom 
+  },
+  { "pccom", 0,
+  NULL, NULL, "*MODEM*", NULL,
+  NULL, (void *)&pcmcia_pccom 
+  },
+  { "pccom", 0,
+  NULL, NULL, NULL, "*MODEM*",
+  NULL, (void *)&pcmcia_pccom 
+  },
+  {NULL}
+};
+#define npccom_pcmcia_devs sizeof(pcmcia_pccom_devs)/sizeof(pcmcia_pccom_devs[0])
+
+int
+pccom_pcmcia_match(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	return pcmcia_slave_match(parent, match, aux, pcmcia_pccom_devs,
+				  npccom_pcmcia_devs);
+}
+
+int
+pccom_pcmcia_isa_attach(parent, match, aux, pc_link)
+	struct device *parent;
+	void *match;
+	void *aux;
+	struct pcmcia_link *pc_link;
+{
+	struct isa_attach_args *ia = aux;
+	struct pccom_softc *sc = match;
+
+	int rval;
+	if (rval = pccomprobe(parent, sc->sc_dev.dv_cfdata, ia)) {
+		if (ISSET(pc_link->flags, PCMCIA_REATTACH)) {
+#ifdef PCCOM_DEBUG
+			printf("pccomreattach, hwflags=%x\n", sc->sc_hwflags);
+#endif
+			sc->sc_hwflags = COM_HW_REATTACH |
+				(sc->sc_hwflags & (COM_HW_ABSENT_PENDING|COM_HW_CONSOLE));
+		} else
+			sc->sc_hwflags = 0;
+	}
+	return rval;
+}
+
+
+/*
+ * Called by config_detach attempts, shortly after pccom_pcmcia_remove
+ * was called.
+ */
+int
+pccom_pcmcia_detach(self)
+	struct device *self;
+{
+	struct pccom_softc *sc = (void *)self;
+
+	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT_PENDING)) {
+		/* don't let it really be detached, it is still open */
+		return EBUSY;
+	}
+	return 0;		/* OK! */
+}
+
+/*
+ * called by pcmcia framework to accept/reject remove attempts.
+ * If we return 0, then the detach will proceed.
+ */
+int
+pccom_pcmcia_remove(pc_link, self)
+	struct pcmcia_link *pc_link;
+	struct device *self;
+{
+	struct pccom_softc *sc = (void *)self;
+	struct tty *tp;
+	int s;
+
+	if (!sc->sc_tty)
+		goto ok;
+	tp = sc->sc_tty;
+
+	/* not in use ?  if so, return "OK" */
+	if (!ISSET(tp->t_state, TS_ISOPEN) &&
+	    !ISSET(tp->t_state, TS_WOPEN)) {
+		ttyfree(sc->sc_tty);
+		sc->sc_tty = NULL;
+    ok:
+		isa_intr_disestablish(sc->sc_bc, sc->sc_ih);
+		sc->sc_ih = NULL;
+		SET(sc->sc_hwflags, COM_HW_ABSENT);
+		return 0;		/* OK! */
+	}
+	/*
+	 * Not easily removed.  Put device into a dead state, clean state
+	 * as best we can.  notify all waiters.
+	 */
+	SET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING);
+#ifdef PCCOM_DEBUG
+	printf("pending detach flags %x\n", sc->sc_hwflags);
+#endif
+
+	s = spltty();
+	pccom_absent_notify(sc);
+	splx(s);
+
+	return 0;
+}
+
+#if 0
+void
+pccom_pcmcia_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct pcmcia_attach_args *paa = aux;
+	
+	printf("pccom_pcmcia_attach %p %p %p\n", parent, self, aux);
+	delay(2000000);
+	if (!pcmcia_configure(parent, self, paa->paa_link)) {
+		struct pccom_softc *sc = (void *)self;
+		sc->sc_hwflags |= COM_HW_ABSENT;
+		printf(": not attached\n");
+	}
+}
+#endif
+#endif
+
+/*
+ * must be called at spltty() or higher.
+ */
+void
+pccom_absent_notify(sc)
+	struct pccom_softc *sc;
+{
+	struct tty *tp = sc->sc_tty;
+
+	if (tp) {
+		CLR(tp->t_state, TS_CARR_ON|TS_BUSY);
+		ttyflush(tp, FREAD|FWRITE);
+	}
+}
+
+int
+pccomspeed(speed)
+	long speed;
+{
+#define	divrnd(n, q)	(((n)*2/(q)+1)/2)	/* divide and round off */
+
+	int x, err;
+
+	if (speed == 0)
+		return 0;
+	if (speed < 0)
+		return -1;
+	x = divrnd((COM_FREQ / 16), speed);
+	if (x <= 0)
+		return -1;
+	err = divrnd((COM_FREQ / 16) * 1000, speed * x) - 1000;
+	if (err < 0)
+		err = -err;
+	if (err > COM_TOLERANCE)
+		return -1;
+	return x;
+
+#undef	divrnd(n, q)
+}
+
+int
+pccomprobe1(bc, ioh, iobase)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	int iobase;
+{
+	int i, k;
+
+	/* force access to id reg */
+	bus_io_write_1(bc, ioh, com_lcr, 0);
+	bus_io_write_1(bc, ioh, com_iir, 0);
+	for (i = 0; i < 32; i++) {
+	    k = bus_io_read_1(bc, ioh, com_iir);
+	    if (k & 0x38) {
+		bus_io_read_1(bc, ioh, com_data); /* cleanup */
+	    } else
+		break;
+	}
+	if (i >= 32) 
+	    return 0;
+
+	return 1;
+}
+
+#ifdef PCCOM_HAYESP
+int
+pccomprobeHAYESP(hayespioh, sc)
+	bus_io_handle_t hayespioh;
+	struct pccom_softc *sc;
+{
+	char	val, dips;
+	int	combaselist[] = { 0x3f8, 0x2f8, 0x3e8, 0x2e8 };
+	bus_chipset_tag_t bc = sc->sc_bc;
+
+	/*
+	 * Hayes ESP cards have two iobases.  One is for compatibility with
+	 * 16550 serial chips, and at the same ISA PC base addresses.  The
+	 * other is for ESP-specific enhanced features, and lies at a
+	 * different addressing range entirely (0x140, 0x180, 0x280, or 0x300).
+	 */
+
+	/* Test for ESP signature */
+	if ((bus_io_read_1(bc, hayespioh, 0) & 0xf3) == 0)
+		return 0;
+
+	/*
+	 * ESP is present at ESP enhanced base address; unknown com port
+	 */
+
+	/* Get the dip-switch configurations */
+	bus_io_write_1(bc, hayespioh, HAYESP_CMD1, HAYESP_GETDIPS);
+	dips = bus_io_read_1(bc, hayespioh, HAYESP_STATUS1);
+
+	/* Determine which com port this ESP card services: bits 0,1 of  */
+	/*  dips is the port # (0-3); combaselist[val] is the com_iobase */
+	if (sc->sc_iobase != combaselist[dips & 0x03])
+		return 0;
+
+	printf(": ESP");
+
+ 	/* Check ESP Self Test bits. */
+	/* Check for ESP version 2.0: bits 4,5,6 == 010 */
+	bus_io_write_1(bc, hayespioh, HAYESP_CMD1, HAYESP_GETTEST);
+	val = bus_io_read_1(bc, hayespioh, HAYESP_STATUS1); /* Clear reg 1 */
+	val = bus_io_read_1(bc, hayespioh, HAYESP_STATUS2);
+	if ((val & 0x70) < 0x20) {
+		printf("-old (%o)", val & 0x70);
+		/* we do not support the necessary features */
+		return 0;
+	}
+
+	/* Check for ability to emulate 16550: bit 8 == 1 */
+	if ((dips & 0x80) == 0) {
+		printf(" slave");
+		/* XXX Does slave really mean no 16550 support?? */
+		return 0;
+	}
+
+	/*
+	 * If we made it this far, we are a full-featured ESP v2.0 (or
+	 * better), at the correct com port address.
+	 */
+
+	SET(sc->sc_hwflags, COM_HW_HAYESP);
+	printf(", 1024 byte fifo\n");
+	return 1;
+}
+#endif
+
+int
+pccomprobe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	int iobase, needioh;
+	int rv = 1;
+
+#if NPCCOM_ISA || NPCCOM_PCMCIA
+#define IS_ISA(parent) \
+	(!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isa") || \
+	 !strcmp((parent)->dv_cfdata->cf_driver->cd_name, "pcmcia"))
+#elif NPCCOM_ISA
+#define IS_ISA(parent) \
+	!strcmp((parent)->dv_cfdata->cf_driver->cd_name, "isa")
+#endif
+	/*
+	 * XXX should be broken out into functions for isa probe and
+	 * XXX for commulti probe, with a helper function that contains
+	 * XXX most of the interesting stuff.
+	 */
+#if NPCCOM_ISA || NPCCOM_PCMCIA
+	if (IS_ISA(parent)) {
+		struct isa_attach_args *ia = aux;
+
+		bc = ia->ia_bc;
+		iobase = ia->ia_iobase;
+		needioh = 1;
+	} else
+#endif
+#if NPCCOM_COMMULTI
+	if (1) {
+		struct cfdata *cf = match;
+		struct pccommulti_attach_args *ca = aux;
+ 
+		if (cf->cf_loc[0] != -1 && cf->cf_loc[0] != ca->ca_slave)
+			return (0);
+
+		bc = ca->ca_bc;
+		iobase = ca->ca_iobase;
+		ioh = ca->ca_ioh;
+		needioh = 0;
+	} else
+#endif
+		return(0);			/* This cannot happen */
+
+	/* if it's in use as console, it's there. */
+	if (iobase == pccomconsaddr && !pccomconsattached)
+		goto out;
+
+	if (needioh && bus_io_map(bc, iobase, COM_NPORTS, &ioh)) {
+		rv = 0;
+		goto out;
+	}
+	rv = pccomprobe1(bc, ioh, iobase);
+	if (needioh)
+		bus_io_unmap(bc, ioh, COM_NPORTS);
+
+out:
+#if NPCCOM_ISA || NPCCOM_PCMCIA
+	if (rv && IS_ISA(parent)) {
+		struct isa_attach_args *ia = aux;
+
+		ia->ia_iosize = COM_NPORTS;
+		ia->ia_msize = 0;
+	}
+#endif
+	return (rv);
+}
+
+void
+pccomattach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct pccom_softc *sc = (void *)self;
+	int iobase, irq;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+#ifdef PCCOM_HAYESP
+	int	hayesp_ports[] = { 0x140, 0x180, 0x280, 0x300, 0 };
+	int	*hayespp;
+#endif
+
+	/*
+	 * XXX should be broken out into functions for isa attach and
+	 * XXX for commulti attach, with a helper function that contains
+	 * XXX most of the interesting stuff.
+	 */
+	if (ISSET(sc->sc_hwflags, COM_HW_REATTACH)) {
+		int s;
+		s = spltty();
+		pccom_absent_notify(sc);
+		splx(s);
+	} else
+	    sc->sc_hwflags = 0;
+	sc->sc_swflags = 0;
+#if NPCCOM_ISA || NPCCOM_PCMCIA
+	if (IS_ISA(parent)) {
+		struct isa_attach_args *ia = aux;
+
+		/*
+		 * We're living on an isa.
+		 */
+		iobase = ia->ia_iobase;
+		bc = ia->ia_bc;
+	        if (iobase != pccomconsaddr) {
+	                if (bus_io_map(bc, iobase, COM_NPORTS, &ioh))
+				panic("pccomattach: io mapping failed");
+		} else
+	                ioh = pccomconsioh;
+		irq = ia->ia_irq;
+	} else
+#endif
+#if NPCCOM_COMMULTI
+	if (1) {
+		struct pccommulti_attach_args *ca = aux;
+
+		/*
+		 * We're living on a pccommulti.
+		 */
+		iobase = ca->ca_iobase;
+		bc = ca->ca_bc;
+		ioh = ca->ca_ioh;
+		irq = IRQUNK;
+
+		if (ca->ca_noien)
+			SET(sc->sc_hwflags, COM_HW_NOIEN);
+	} else
+#endif
+		panic("pccomattach: impossible");
+
+	sc->sc_bc = bc;
+	sc->sc_ioh = ioh;
+	sc->sc_iobase = iobase;
+
+	if (iobase == pccomconsaddr) {
+		pccomconsattached = 1;
+
+		/* 
+		 * Need to reset baud rate, etc. of next print so reset
+		 * pccomconsinit.  Also make sure console is always "hardwired".
+		 */
+		delay(1000);			/* wait for output to finish */
+		pccomconsinit = 0;
+		SET(sc->sc_hwflags, COM_HW_CONSOLE);
+		SET(sc->sc_swflags, COM_SW_SOFTCAR);
+	}
+
+#ifdef PCCOM_HAYESP
+	/* Look for a Hayes ESP board. */
+	for (hayespp = hayesp_ports; *hayespp != 0; hayespp++) {
+		bus_io_handle_t hayespioh;
+
+#define	HAYESP_NPORTS	8			/* XXX XXX XXX ??? ??? ??? */
+		if (bus_io_map(bc, *hayespp, HAYESP_NPORTS, &hayespioh))
+			continue;
+		if (pccomprobeHAYESP(hayespioh, sc)) {
+			sc->sc_hayespbase = *hayespp;
+			sc->sc_hayespioh = hayespioh;
+			sc->sc_fifolen = 1024;
+			break;
+		}
+		bus_io_unmap(bc, hayespioh, HAYESP_NPORTS);
+	}
+	/* No ESP; look for other things. */
+	if (*hayespp == 0) {
+#endif
+
+	sc->sc_fifolen = 1;
+	/* look for a NS 16550AF UART with FIFOs */
+	bus_io_write_1(bc, ioh, com_fifo,
+	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_14);
+	delay(100);
+	if (ISSET(bus_io_read_1(bc, ioh, com_iir), IIR_FIFO_MASK) ==
+	    IIR_FIFO_MASK)
+		if (ISSET(bus_io_read_1(bc, ioh, com_fifo), FIFO_TRIGGER_14) ==
+		    FIFO_TRIGGER_14) {
+			SET(sc->sc_hwflags, COM_HW_FIFO);
+			printf(": ns16550a, working fifo\n");
+			sc->sc_fifolen = 16;
+		} else
+			printf(": ns16550, broken fifo\n");
+	else
+		printf(": ns8250 or ns16450, no fifo\n");
+	bus_io_write_1(bc, ioh, com_fifo, 0);
+#ifdef PCCOM_HAYESP
+	}
+#endif
+
+	/* disable interrupts */
+	bus_io_write_1(bc, ioh, com_ier, 0);
+	bus_io_write_1(bc, ioh, com_mcr, 0);
+
+	if (irq != IRQUNK) {
+#if NPCCOM_ISA || NPCCOM_PCMCIA
+		if (IS_ISA(parent)) {
+			struct isa_attach_args *ia = aux;
+
+			sc->sc_ih = isa_intr_establish(ia->ia_ic, irq,
+			    IST_EDGE, IPL_HIGH, pccomintr, sc,
+			    sc->sc_dev.dv_xname);
+		} else
+#endif
+			panic("pccomattach: IRQ but can't have one");
+	}
+
+#ifdef KGDB
+	if (kgdb_dev == makedev(pccommajor, unit)) {
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+			kgdb_dev = -1;	/* can't debug over console port */
+		else {
+			pccominit(bc, ioh, kgdb_rate);
+			if (kgdb_debug_init) {
+				/*
+				 * Print prefix of device name,
+				 * let kgdb_connect print the rest.
+				 */
+				printf("%s: ", sc->sc_dev.dv_xname);
+				kgdb_connect(1);
+			} else
+				printf("%s: kgdb enabled\n",
+				    sc->sc_dev.dv_xname);
+		}
+	}
+#endif
+
+	/* XXX maybe move up some? */
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+		printf("%s: console\n", sc->sc_dev.dv_xname);
+}
+
+int
+pccomopen(dev, flag, mode, p)
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
+{
+	int unit = PCCOMUNIT(dev);
+	struct pccom_softc *sc;
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	struct tty *tp;
+	int s;
+	int error = 0;
+ 
+	if (unit >= pccom_cd.cd_ndevs)
+		return ENXIO;
+	sc = pccom_cd.cd_devs[unit];
+	if (!sc || ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING))
+		return ENXIO;
+
+	if (!sc->sc_tty) {
+		tp = sc->sc_tty = ttymalloc();
+		tty_attach(tp);
+	} else
+		tp = sc->sc_tty;
+
+	tp->t_oproc = pccomstart;
+	tp->t_param = pccomparam;
+	tp->t_hwiflow = pccomhwiflow;
+	tp->t_dev = dev;
+	if (!ISSET(tp->t_state, TS_ISOPEN)) {
+		SET(tp->t_state, TS_WOPEN);
+		ttychars(tp);
+		tp->t_iflag = TTYDEF_IFLAG;
+		tp->t_oflag = TTYDEF_OFLAG;
+		if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+			tp->t_cflag = pccomconscflag;
+		else
+			tp->t_cflag = TTYDEF_CFLAG;
+		if (ISSET(sc->sc_swflags, COM_SW_CLOCAL))
+			SET(tp->t_cflag, CLOCAL);
+		if (ISSET(sc->sc_swflags, COM_SW_CRTSCTS))
+			SET(tp->t_cflag, CRTSCTS);
+		if (ISSET(sc->sc_swflags, COM_SW_MDMBUF))
+			SET(tp->t_cflag, MDMBUF);
+		tp->t_lflag = TTYDEF_LFLAG;
+		tp->t_ispeed = tp->t_ospeed = pccomdefaultrate;
+
+		s = spltty();
+
+		pccomparam(tp, &tp->t_termios);
+		ttsetwater(tp);
+
+		sc->sc_rxput = sc->sc_rxget = sc->sc_tbc = 0;
+
+		bc = sc->sc_bc;
+		ioh = sc->sc_ioh;
+#ifdef PCCOM_HAYESP
+		/* Setup the ESP board */
+		if (ISSET(sc->sc_hwflags, COM_HW_HAYESP)) {
+			bus_io_handle_t hayespioh = sc->sc_hayespioh;
+
+			bus_io_write_1(bc, ioh, com_fifo,
+			     FIFO_DMA_MODE|FIFO_ENABLE|
+			     FIFO_RCV_RST|FIFO_XMT_RST|FIFO_TRIGGER_8);
+
+			/* Set 16550 compatibility mode */
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD1, HAYESP_SETMODE);
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2, 
+			     HAYESP_MODE_FIFO|HAYESP_MODE_RTS|
+			     HAYESP_MODE_SCALE);
+
+			/* Set RTS/CTS flow control */
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD1, HAYESP_SETFLOWTYPE);
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2, HAYESP_FLOW_RTS);
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2, HAYESP_FLOW_CTS);
+
+			/* Set flow control levels */
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD1, HAYESP_SETRXFLOW);
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2, 
+			     HAYESP_HIBYTE(HAYESP_RXHIWMARK));
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2,
+			     HAYESP_LOBYTE(HAYESP_RXHIWMARK));
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2,
+			     HAYESP_HIBYTE(HAYESP_RXLOWMARK));
+			bus_io_write_1(bc, hayespioh, HAYESP_CMD2,
+			     HAYESP_LOBYTE(HAYESP_RXLOWMARK));
+		} else
+#endif
+		if (ISSET(sc->sc_hwflags, COM_HW_FIFO)) {
+			/*
+			 * (Re)enable and drain FIFOs.
+			 *
+			 * Certain SMC chips cause problems if the FIFOs are
+			 * enabled while input is ready. Turn off the FIFO
+			 * if necessary to clear the input. Test the input
+			 * ready bit after enabling the FIFOs to handle races
+			 * between enabling and fresh input.
+			 *
+			 * Set the FIFO threshold based on the receive speed.
+			 */
+			for (;;) {
+			 	bus_io_write_1(bc, ioh, com_fifo, 0);
+				delay(100);
+				(void) bus_io_read_1(bc, ioh, com_data);
+				bus_io_write_1(bc, ioh, com_fifo,
+				    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST |
+				    (tp->t_ispeed <= 1200 ?
+				    FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
+				delay(100);
+				if(!ISSET(bus_io_read_1(bc, ioh,
+				    com_lsr), LSR_RXRDY))
+				    	break;
+			}
+		}
+
+		/* flush any pending I/O */
+		while (ISSET(bus_io_read_1(bc, ioh, com_lsr), LSR_RXRDY))
+			(void) bus_io_read_1(bc, ioh, com_data);
+		/* you turn me on, baby */
+		sc->sc_mcr = MCR_DTR | MCR_RTS;
+		if (!ISSET(sc->sc_hwflags, COM_HW_NOIEN))
+			SET(sc->sc_mcr, MCR_IENABLE);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		sc->sc_ier = IER_ERXRDY | IER_ERLS | IER_EMSC;
+		bus_io_write_1(bc, ioh, com_ier, sc->sc_ier);
+
+		sc->sc_msr = bus_io_read_1(bc, ioh, com_msr);
+		if (ISSET(sc->sc_swflags, COM_SW_SOFTCAR) ||
+		    ISSET(sc->sc_msr, MSR_DCD) || ISSET(tp->t_cflag, MDMBUF))
+			SET(tp->t_state, TS_CARR_ON);
+		else
+			CLR(tp->t_state, TS_CARR_ON);
+	} else if (ISSET(tp->t_state, TS_XCLUDE) && p->p_ucred->cr_uid != 0)
+		return EBUSY;
+	else
+		s = spltty();
+
+	/* wait for carrier if necessary */
+	if (!ISSET(flag, O_NONBLOCK))
+		while (!ISSET(tp->t_cflag, CLOCAL) &&
+		    !ISSET(tp->t_state, TS_CARR_ON)) {
+			SET(tp->t_state, TS_WOPEN);
+			error = ttysleep(tp, &tp->t_rawq, TTIPRI | PCATCH,
+			    ttopen, 0);
+			if (error) {
+				/* XXX should turn off chip if we're the
+				   only waiter */
+				splx(s);
+				return error;
+			}
+		}
+	splx(s);
+
+	return (*linesw[tp->t_line].l_open)(dev, tp);
+}
+ 
+int
+pccomclose(dev, flag, mode, p)
+	dev_t dev;
+	int flag, mode;
+	struct proc *p;
+{
+	int unit = PCCOMUNIT(dev);
+	struct pccom_softc *sc = pccom_cd.cd_devs[unit];
+	struct tty *tp = sc->sc_tty;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
+	int s;
+
+	/* XXX This is for cons.c. */
+	if (!ISSET(tp->t_state, TS_ISOPEN))
+		return 0;
+
+	(*linesw[tp->t_line].l_close)(tp, flag);
+	s = spltty();
+	if (!ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
+		/* can't do any of this stuff .... */
+		CLR(sc->sc_lcr, LCR_SBREAK);
+		bus_io_write_1(bc, ioh, com_lcr, sc->sc_lcr);
+		bus_io_write_1(bc, ioh, com_ier, 0);
+		if (ISSET(tp->t_cflag, HUPCL) &&
+		    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR)) {
+			/* XXX perhaps only clear DTR */
+			bus_io_write_1(bc, ioh, com_mcr, 0);
+		}
+	}
+	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
+/*
+ * FIFO off
+ */
+	bus_io_write_1(bc, ioh, com_fifo, 0);
+	splx(s);
+	ttyclose(tp);
+#ifdef PCCOM_DEBUG
+	/* mark it ready for more use if reattached earlier */
+	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT_PENDING)) {
+	    printf("pccomclose pending cleared\n");
+	}
+#endif
+	CLR(sc->sc_hwflags, COM_HW_ABSENT_PENDING);
+
+#ifdef notyet /* XXXX */
+	if (ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+		ttyfree(tp);
+		sc->sc_tty = 0;
+	}
+#endif
+	return 0;
+}
+ 
+int
+pccomread(dev, uio, flag)
+	dev_t dev;
+	struct uio *uio;
+	int flag;
+{
+	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
+		int s = spltty();
+		pccom_absent_notify(sc);
+		splx(s);
+		return EIO;
+	}
+
+	return ((*linesw[tp->t_line].l_read)(tp, uio, flag));
+}
+ 
+int
+pccomwrite(dev, uio, flag)
+	dev_t dev;
+	struct uio *uio;
+	int flag;
+{
+	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+ 
+	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
+		int s = spltty();
+		pccom_absent_notify(sc);
+		splx(s);
+		return EIO;
+	}
+
+	return ((*linesw[tp->t_line].l_write)(tp, uio, flag));
+}
+
+struct tty *
+pccomtty(dev)
+	dev_t dev;
+{
+	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(dev)];
+	struct tty *tp = sc->sc_tty;
+
+	return (tp);
+}
+ 
+static u_char
+tiocm_xxx2mcr(data)
+	int data;
+{
+	u_char m = 0;
+
+	if (ISSET(data, TIOCM_DTR))
+		SET(m, MCR_DTR);
+	if (ISSET(data, TIOCM_RTS))
+		SET(m, MCR_RTS);
+	return m;
+}
+
+int
+pccomioctl(dev, cmd, data, flag, p)
+	dev_t dev;
+	u_long cmd;
+	caddr_t data;
+	int flag;
+	struct proc *p;
+{
+	int unit = PCCOMUNIT(dev);
+	struct pccom_softc *sc = pccom_cd.cd_devs[unit];
+	struct tty *tp = sc->sc_tty;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
+	int error;
+
+	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
+		int s = spltty();
+		pccom_absent_notify(sc);
+		splx(s);
+		return EIO;
+	}
+
+	error = (*linesw[tp->t_line].l_ioctl)(tp, cmd, data, flag, p);
+	if (error >= 0)
+		return error;
+	error = ttioctl(tp, cmd, data, flag, p);
+	if (error >= 0)
+		return error;
+
+	switch (cmd) {
+	case TIOCSBRK:
+		SET(sc->sc_lcr, LCR_SBREAK);
+		bus_io_write_1(bc, ioh, com_lcr, sc->sc_lcr);
+		break;
+	case TIOCCBRK:
+		CLR(sc->sc_lcr, LCR_SBREAK);
+		bus_io_write_1(bc, ioh, com_lcr, sc->sc_lcr);
+		break;
+	case TIOCSDTR:
+		SET(sc->sc_mcr, sc->sc_dtr);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		break;
+	case TIOCCDTR:
+		CLR(sc->sc_mcr, sc->sc_dtr);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		break;
+	case TIOCMSET:
+		CLR(sc->sc_mcr, MCR_DTR | MCR_RTS);
+	case TIOCMBIS:
+		SET(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		break;
+	case TIOCMBIC:
+		CLR(sc->sc_mcr, tiocm_xxx2mcr(*(int *)data));
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		break;
+	case TIOCMGET: {
+		u_char m;
+		int bits = 0;
+
+		m = sc->sc_mcr;
+		if (ISSET(m, MCR_DTR))
+			SET(bits, TIOCM_DTR);
+		if (ISSET(m, MCR_RTS))
+			SET(bits, TIOCM_RTS);
+		m = sc->sc_msr;
+		if (ISSET(m, MSR_DCD))
+			SET(bits, TIOCM_CD);
+		if (ISSET(m, MSR_CTS))
+			SET(bits, TIOCM_CTS);
+		if (ISSET(m, MSR_DSR))
+			SET(bits, TIOCM_DSR);
+		if (ISSET(m, MSR_RI | MSR_TERI))
+			SET(bits, TIOCM_RI);
+		if (bus_io_read_1(bc, ioh, com_ier))
+			SET(bits, TIOCM_LE);
+		*(int *)data = bits;
+		break;
+	}
+	case TIOCGFLAGS: {
+		int driverbits, userbits = 0;
+
+		driverbits = sc->sc_swflags;
+		if (ISSET(driverbits, COM_SW_SOFTCAR))
+			SET(userbits, TIOCFLAG_SOFTCAR);
+		if (ISSET(driverbits, COM_SW_CLOCAL))
+			SET(userbits, TIOCFLAG_CLOCAL);
+		if (ISSET(driverbits, COM_SW_CRTSCTS))
+			SET(userbits, TIOCFLAG_CRTSCTS);
+		if (ISSET(driverbits, COM_SW_MDMBUF))
+			SET(userbits, TIOCFLAG_MDMBUF);
+
+		*(int *)data = userbits;
+		break;
+	}
+	case TIOCSFLAGS: {
+		int userbits, driverbits = 0;
+
+		error = suser(p->p_ucred, &p->p_acflag); 
+		if (error != 0)
+			return(EPERM); 
+
+		userbits = *(int *)data;
+		if (ISSET(userbits, TIOCFLAG_SOFTCAR) ||
+		    ISSET(sc->sc_hwflags, COM_HW_CONSOLE))
+			SET(driverbits, COM_SW_SOFTCAR);
+		if (ISSET(userbits, TIOCFLAG_CLOCAL))
+			SET(driverbits, COM_SW_CLOCAL);
+		if (ISSET(userbits, TIOCFLAG_CRTSCTS))
+			SET(driverbits, COM_SW_CRTSCTS);
+		if (ISSET(userbits, TIOCFLAG_MDMBUF))
+			SET(driverbits, COM_SW_MDMBUF);
+
+		sc->sc_swflags = driverbits;
+		break;
+	}
+	default:
+		return ENOTTY;
+	}
+
+	return 0;
+}
+
+int
+pccomparam(tp, t)
+	struct tty *tp;
+	struct termios *t;
+{
+	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
+	int ospeed = pccomspeed(t->c_ospeed);
+	u_char lcr;
+	tcflag_t oldcflag;
+	int s;
+
+	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
+		int s = spltty();
+		pccom_absent_notify(sc);
+		splx(s);
+		return EIO;
+	}
+
+	/* check requested parameters */
+	if (ospeed < 0 || (t->c_ispeed && t->c_ispeed != t->c_ospeed))
+		return EINVAL;
+
+	lcr = ISSET(sc->sc_lcr, LCR_SBREAK);
+
+	switch (ISSET(t->c_cflag, CSIZE)) {
+	case CS5:
+		SET(lcr, LCR_5BITS);
+		break;
+	case CS6:
+		SET(lcr, LCR_6BITS);
+		break;
+	case CS7:
+		SET(lcr, LCR_7BITS);
+		break;
+	case CS8:
+		SET(lcr, LCR_8BITS);
+		break;
+	}
+	if (ISSET(t->c_cflag, PARENB)) {
+		SET(lcr, LCR_PENAB);
+		if (!ISSET(t->c_cflag, PARODD))
+			SET(lcr, LCR_PEVEN);
+	}
+	if (ISSET(t->c_cflag, CSTOPB))
+		SET(lcr, LCR_STOPB);
+
+	sc->sc_lcr = lcr;
+
+	s = spltty();
+
+	if (ospeed == 0) {
+		CLR(sc->sc_mcr, MCR_DTR);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+	}
+
+	/*
+	 * Set the FIFO threshold based on the receive speed, if we are
+	 * changing it.
+	 */
+#if 1
+	if (tp->t_ispeed != t->c_ispeed) {
+#else
+	if (1) {
+#endif
+		if (ospeed != 0) {
+			/*
+			 * Make sure the transmit FIFO is empty before
+			 * proceeding.  If we don't do this, some revisions
+			 * of the UART will hang.  Interestingly enough,
+			 * even if we do this will the last character is
+			 * still being pushed out, they don't hang.  This
+			 * seems good enough.
+			 */
+			while (ISSET(tp->t_state, TS_BUSY)) {
+				int error;
+
+				++sc->sc_halt;
+				error = ttysleep(tp, &tp->t_outq,
+				    TTOPRI | PCATCH, "pccomprm", 0);
+				--sc->sc_halt;
+				if (error) {
+					splx(s);
+					pccomstart(tp);
+					return (error);
+				}
+			}
+
+			bus_io_write_1(bc, ioh, com_lcr, lcr | LCR_DLAB);
+			bus_io_write_1(bc, ioh, com_dlbl, ospeed);
+			bus_io_write_1(bc, ioh, com_dlbh, ospeed >> 8);
+			bus_io_write_1(bc, ioh, com_lcr, lcr);
+			SET(sc->sc_mcr, MCR_DTR);
+			bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		} else
+			bus_io_write_1(bc, ioh, com_lcr, lcr);
+
+		if (!ISSET(sc->sc_hwflags, COM_HW_HAYESP) &&
+		    ISSET(sc->sc_hwflags, COM_HW_FIFO))
+			bus_io_write_1(bc, ioh, com_fifo,
+			    FIFO_ENABLE |
+			    (t->c_ispeed <= 1200 ? FIFO_TRIGGER_1 : FIFO_TRIGGER_8));
+	} else
+		bus_io_write_1(bc, ioh, com_lcr, lcr);
+
+	/* When not using CRTSCTS, RTS follows DTR. */
+	if (!ISSET(t->c_cflag, CRTSCTS)) {
+		if (ISSET(sc->sc_mcr, MCR_DTR)) {
+			if (!ISSET(sc->sc_mcr, MCR_RTS)) {
+				SET(sc->sc_mcr, MCR_RTS);
+				bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+			}
+		} else {
+			if (ISSET(sc->sc_mcr, MCR_RTS)) {
+				CLR(sc->sc_mcr, MCR_RTS);
+				bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+			}
+		}
+		sc->sc_dtr = MCR_DTR | MCR_RTS;
+	} else
+		sc->sc_dtr = MCR_DTR;
+
+	/* and copy to tty */
+	tp->t_ispeed = t->c_ispeed;
+	tp->t_ospeed = t->c_ospeed;
+	oldcflag = tp->t_cflag;
+	tp->t_cflag = t->c_cflag;
+
+	/*
+	 * If DCD is off and MDMBUF is changed, ask the tty layer if we should
+	 * stop the device.
+	 */
+	if (!ISSET(sc->sc_msr, MSR_DCD) &&
+	    !ISSET(sc->sc_swflags, COM_SW_SOFTCAR) &&
+	    ISSET(oldcflag, MDMBUF) != ISSET(tp->t_cflag, MDMBUF) &&
+	    (*linesw[tp->t_line].l_modem)(tp, 0) == 0) {
+		CLR(sc->sc_mcr, sc->sc_dtr);
+		bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+	}
+
+	/* Just to be sure... */
+	splx(s);
+	pccomstart(tp);
+	return 0;
+}
+
+void
+pccomstart_pending(arg)
+	void *arg;
+{
+	struct pccom_softc *sc = arg;
+	int s;
+
+	s = spltty();
+	pccom_absent_notify(sc);
+	splx(s);
+}
+
+/*
+ * (un)block input via hw flowcontrol
+ */
+int
+pccomhwiflow(tp, block)
+	struct tty *tp;
+	int block;
+{
+	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
+	int	s;
+
+/*
+ * XXX
+ * Is spltty needed at all ? sc->sc_mcr is only in pccomsoft() not pccomintr()
+ */
+	s = spltty();
+	if (block) {
+		/* When not using CRTSCTS, RTS follows DTR. */
+		if (ISSET(tp->t_cflag, MDMBUF)) {
+			CLR(sc->sc_mcr, (MCR_DTR | MCR_RTS));
+			bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		}
+		else {
+			CLR(sc->sc_mcr, MCR_RTS);
+			bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		}
+	}
+	else {
+		/* When not using CRTSCTS, RTS follows DTR. */
+		if (ISSET(tp->t_cflag, MDMBUF)) {
+			SET(sc->sc_mcr, (MCR_DTR | MCR_RTS));
+			bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		}
+		else {
+			SET(sc->sc_mcr, MCR_RTS);
+			bus_io_write_1(bc, ioh, com_mcr, sc->sc_mcr);
+		}
+	}
+	splx(s);
+	return 1;
+}
+
+
+void
+pccomstart(tp)
+	struct tty *tp;
+{
+	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
+	int s, count;
+
+	s = spltty();
+	if (ISSET(sc->sc_hwflags, COM_HW_ABSENT|COM_HW_ABSENT_PENDING)) {
+		/*
+		 * not quite good enough: if caller is ttywait() it will
+		 * go to sleep immediately, so hang out a bit and then
+		 * prod caller again.
+		 */
+		pccom_absent_notify(sc);
+		timeout(pccomstart_pending, sc, 1);
+		goto out;
+	}
+	if (ISSET(tp->t_state, TS_BUSY))
+		goto out;
+	if (ISSET(tp->t_state, TS_TIMEOUT | TS_TTSTOP) || sc->sc_halt > 0)
+		goto stopped;
+	if (ISSET(tp->t_cflag, CRTSCTS) && !ISSET(sc->sc_msr, MSR_CTS))
+		goto stopped;
+	if (tp->t_outq.c_cc <= tp->t_lowat) {
+		if (ISSET(tp->t_state, TS_ASLEEP)) {
+			CLR(tp->t_state, TS_ASLEEP);
+			wakeup((caddr_t)&tp->t_outq);
+		}
+		selwakeup(&tp->t_wsel);
+	}
+	count = ndqb(&tp->t_outq, 0);
+	splhigh();
+	if (count > 0) {
+		int n;
+
+		SET(tp->t_state, TS_BUSY);
+		if (!ISSET(sc->sc_ier, IER_ETXRDY)) {
+			SET(sc->sc_ier, IER_ETXRDY);
+			bus_io_write_1(bc, ioh, com_ier, sc->sc_ier);
+		}
+		n = sc->sc_fifolen;
+		if (n > count)
+			n = count;
+		sc->sc_tba = tp->t_outq.c_cf;
+		while (--n >= 0) {
+			bus_io_write_1(bc, ioh, com_data, *sc->sc_tba++);
+			--count;
+		}
+		sc->sc_tbc = count;
+		goto out;
+	}
+stopped:
+	if (ISSET(sc->sc_ier, IER_ETXRDY)) {
+		CLR(sc->sc_ier, IER_ETXRDY);
+		bus_io_write_1(bc, ioh, com_ier, sc->sc_ier);
+	}
+out:
+	splx(s);
+	return;
+}
+
+/*
+ * Stop output on a line.
+ */
+int
+pccomstop(tp, flag)
+	struct tty *tp;
+	int flag;
+{
+	int s;
+	struct pccom_softc *sc = pccom_cd.cd_devs[PCCOMUNIT(tp->t_dev)];
+
+	s = splhigh();
+	if (ISSET(tp->t_state, TS_BUSY)) {
+		sc->sc_tbc = 0;
+		if (!ISSET(tp->t_state, TS_TTSTOP))
+			SET(tp->t_state, TS_FLUSH);
+	}
+	splx(s);
+	return 0;
+}
+
+void
+pccomdiag(arg)
+	void *arg;
+{
+	struct pccom_softc *sc = arg;
+	int overflows;
+	int s;
+
+	s = spltty();
+	overflows = sc->sc_overflows;
+	sc->sc_overflows = 0;
+	splx(s);
+
+	if (overflows)
+		log(LOG_WARNING, "%s: %d silo overflow%s\n",
+		    sc->sc_dev.dv_xname, overflows, overflows == 1 ? "" : "s");
+}
+
+#ifdef PCCOM_DEBUG
+int	maxcc = 0;
+#endif
+
+void
+pccomsoft()
+{
+	struct pccom_softc	*sc;
+	struct tty *tp;
+	struct linesw	*line;
+	int	unit, s, c;
+	u_int rxget;
+	static int lsrmap[8] = {
+		0,      TTY_PE,
+		TTY_FE, TTY_PE|TTY_FE,
+		TTY_FE, TTY_PE|TTY_FE,
+		TTY_FE, TTY_PE|TTY_FE
+	};
+
+	for (unit = 0; unit < pccom_cd.cd_ndevs; unit++) {
+		sc = pccom_cd.cd_devs[unit];
+		if (sc == NULL)
+			continue;
+		tp = sc->sc_tty;
+/*
+ * XXX only use (tp == NULL) ???
+ */
+		if (tp == NULL || !ISSET(tp->t_state, TS_ISOPEN | TS_WOPEN))
+			continue;
+	 	line = &linesw[tp->t_line];
+/*
+ * XXX where do we _really_ need spltty(), if at all ???
+ */
+		s = spltty();
+		rxget = sc->sc_rxget;
+		while (rxget != sc->sc_rxput) {
+			u_char	lsr;
+
+			lsr = sc->sc_rxbuf[rxget];
+			rxget = (rxget + 1) & RBUFMASK;
+			if (ISSET(lsr, LSR_RCV_MASK)) {
+#ifdef DDB
+ 				if (ISSET(lsr, LSR_BI) &&
+				    ISSET(sc->sc_hwflags, COM_HW_CONSOLE)) {
+			 		Debugger();
+					rxget = (rxget + 1) & RBUFMASK;
+					continue;
+ 				}
+#endif
+				if (ISSET(lsr, LSR_OE)) {
+					sc->sc_overflows++;
+					if (sc->sc_errors++ == 0)
+						timeout(pccomdiag, sc, 60 * hz);
+				}
+				c = sc->sc_rxbuf[rxget];
+				rxget = (rxget + 1) & RBUFMASK;
+				c |= lsrmap[(lsr & (LSR_BI|LSR_FE|LSR_PE)) >> 2];
+				line->l_rint(c, tp);
+			}
+			else if (ISSET(lsr, LSR_TXRDY)) {
+				CLR(tp->t_state, TS_BUSY);
+				if (ISSET(tp->t_state, TS_FLUSH))
+					CLR(tp->t_state, TS_FLUSH);
+				else
+					ndflush(&tp->t_outq,
+				 	(int)(sc->sc_tba - tp->t_outq.c_cf));
+				if (sc->sc_halt > 0)
+					wakeup(&tp->t_outq);
+				line->l_start(tp);
+			}
+			else if (lsr == 0) {
+				u_char	msr;
+
+				msr = sc->sc_rxbuf[rxget];
+				rxget = (rxget + 1) & RBUFMASK;
+				if (ISSET(msr, MSR_DDCD) &&
+		    		   !ISSET(sc->sc_swflags, COM_SW_SOFTCAR)) {
+					if (ISSET(msr, MSR_DCD))
+						line->l_modem(tp, 1);
+					else if (line->l_modem(tp, 0) == 0) {
+						CLR(sc->sc_mcr, sc->sc_dtr);
+						bus_io_write_1(sc->sc_bc,
+							       sc->sc_ioh,
+							       com_mcr,
+							       sc->sc_mcr);
+					}
+				}
+				if (ISSET(msr, MSR_DCTS) &&
+				    ISSET(msr, MSR_CTS) &&
+				    ISSET(tp->t_cflag, CRTSCTS))
+					line->l_start(tp);
+			}
+		}
+		sc->sc_rxget = rxget;
+/*
+ * XXX this is the place where we could unblock the input
+ */
+		splx(s);
+	}
+}
+
+int
+pccomintr(arg)
+	void	*arg;
+{
+	struct pccom_softc *sc = arg;
+	struct tty *tp = sc->sc_tty;
+	bus_chipset_tag_t bc = sc->sc_bc;
+	bus_io_handle_t ioh = sc->sc_ioh;
+	u_char	lsr;
+	u_int	rxput;
+
+	if (ISSET(bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND))
+		return (0);
+
+	rxput = sc->sc_rxput;
+	do {
+		u_char	msr, delta;
+
+		for (;;) {
+			lsr = bus_io_read_1(bc, ioh, com_lsr);
+			if (!ISSET(lsr, LSR_RCV_MASK))
+				break;
+			sc->sc_rxbuf[rxput] = lsr;
+			rxput = (rxput + 1) & RBUFMASK;
+			sc->sc_rxbuf[rxput] = bus_io_read_1(bc, ioh, com_data);
+			rxput = (rxput + 1) & RBUFMASK;
+		}
+		msr = bus_io_read_1(bc, ioh, com_msr);
+		delta = msr ^ sc->sc_msr;
+		if (!ISSET(delta, MSR_DCD | MSR_CTS | MSR_RI | MSR_DSR))
+			continue;
+		sc->sc_msr = msr;
+/*
+ * stop output straight away if CTS drops and RTS/CTS flowcontrol is used
+ * XXX what about DTR/DCD flowcontrol (ISSET(t_cflag, MDMBUF))
+ */
+		msr = (msr & 0xf0) | (delta >> 4);
+		if (ISSET(tp->t_cflag, CRTSCTS) && ISSET(msr, MSR_DCTS)) {
+			if (!ISSET(msr, MSR_CTS))
+				sc->sc_tbc = 0;
+		}
+		sc->sc_rxbuf[rxput] = 0;
+		rxput = (rxput + 1) & RBUFMASK;
+		sc->sc_rxbuf[rxput] = msr;
+		rxput = (rxput + 1) & RBUFMASK;
+	} while (!ISSET(bus_io_read_1(bc, ioh, com_iir), IIR_NOPEND));
+	if (ISSET(lsr, LSR_TXRDY)) {
+		if (sc->sc_tbc > 0) {
+			int	n;
+
+			n = sc->sc_fifolen;
+			if (n > sc->sc_tbc)
+				n = sc->sc_tbc;
+			while (--n >= 0) {
+				bus_io_write_1(bc, ioh, com_data, *sc->sc_tba++);
+				--sc->sc_tbc;
+			}
+		}
+		else if (ISSET(tp->t_state, TS_BUSY)) {
+			sc->sc_rxbuf[rxput] = lsr;
+			rxput = (rxput + 1) & RBUFMASK;
+		}
+	}
+	if (sc->sc_rxput != rxput) {
+/*
+ * XXX
+ * This is the place to do input flow control by dropping RTS or DTR.
+ * However, 115200 bps transfers get maxcc only up to 112 while there's
+ * room for 512 so should we bother ?
+ */
+#ifdef PCCOM_DEBUG
+		int	cc;
+
+		cc = rxput - sc->sc_rxget;
+		if (cc < 0)
+			cc += RBUFSIZE;
+		if (cc > maxcc)
+			maxcc = cc;
+#endif
+		sc->sc_rxput = rxput;
+		setsofttty();
+	}
+	return 1;
+}
+
+/*
+ * Following are all routines needed for PCCOM to act as console
+ */
+#include <dev/cons.h>
+
+void
+pccomcnprobe(cp)
+	struct consdev *cp;
+{
+	/* XXX NEEDS TO BE FIXED XXX */
+	bus_chipset_tag_t bc = 0;
+	bus_io_handle_t ioh;
+	int found;
+
+	if (bus_io_map(bc, CONADDR, COM_NPORTS, &ioh)) {
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
+	found = pccomprobe1(bc, ioh, CONADDR);
+	bus_io_unmap(bc, ioh, COM_NPORTS);
+	if (!found) {
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
+
+	/* locate the major number */
+	for (pccommajor = 0; pccommajor < nchrdev; pccommajor++)
+		if (cdevsw[pccommajor].d_open == pccomopen)
+			break;
+
+	/* initialize required fields */
+	cp->cn_dev = makedev(pccommajor, CONUNIT);
+#ifdef	PCCOMCONSOLE
+	cp->cn_pri = CN_REMOTE;		/* Force a serial port console */
+#else
+	cp->cn_pri = CN_NORMAL;
+#endif
+}
+
+void
+pccomcninit(cp)
+	struct consdev *cp;
+{
+
+#if 0
+	XXX NEEDS TO BE FIXED XXX
+	pccomconsbc = ???;
+#endif
+	if (bus_io_map(pccomconsbc, CONADDR, COM_NPORTS, &pccomconsioh))
+		panic("pccomcninit: mapping failed");
+
+	pccominit(pccomconsbc, pccomconsioh, pccomdefaultrate);
+	pccomconsaddr = CONADDR;
+	pccomconsinit = 0;
+}
+
+void
+pccominit(bc, ioh, rate)
+	bus_chipset_tag_t bc;
+	bus_io_handle_t ioh;
+	int rate;
+{
+	int s = splhigh();
+	u_char stat;
+
+	bus_io_write_1(bc, ioh, com_lcr, LCR_DLAB);
+	rate = pccomspeed(pccomdefaultrate);
+	bus_io_write_1(bc, ioh, com_dlbl, rate);
+	bus_io_write_1(bc, ioh, com_dlbh, rate >> 8);
+	bus_io_write_1(bc, ioh, com_lcr, LCR_8BITS);
+	bus_io_write_1(bc, ioh, com_ier, IER_ERXRDY | IER_ETXRDY);
+	bus_io_write_1(bc, ioh, com_fifo, FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_4);
+	stat = bus_io_read_1(bc, ioh, com_iir);
+	splx(s);
+}
+
+int
+pccomcngetc(dev)
+	dev_t dev;
+{
+	int s = splhigh();
+	bus_chipset_tag_t bc = pccomconsbc;
+	bus_io_handle_t ioh = pccomconsioh;
+	u_char stat, c;
+
+	while (!ISSET(stat = bus_io_read_1(bc, ioh, com_lsr), LSR_RXRDY))
+		;
+	c = bus_io_read_1(bc, ioh, com_data);
+	stat = bus_io_read_1(bc, ioh, com_iir);
+	splx(s);
+	return c;
+}
+
+/*
+ * Console kernel output character routine.
+ */
+void
+pccomcnputc(dev, c)
+	dev_t dev;
+	int c;
+{
+	int s = splhigh();
+	bus_chipset_tag_t bc = pccomconsbc;
+	bus_io_handle_t ioh = pccomconsioh;
+	u_char stat;
+	register int timo;
+
+#ifdef KGDB
+	if (dev != kgdb_dev)
+#endif
+	if (pccomconsinit == 0) {
+		pccominit(bc, ioh, pccomdefaultrate);
+		pccomconsinit = 1;
+	}
+	/* wait for any pending transmission to finish */
+	timo = 50000;
+	while (!ISSET(stat = bus_io_read_1(bc, ioh, com_lsr), LSR_TXRDY) && --timo)
+		;
+	bus_io_write_1(bc, ioh, com_data, c);
+	/* wait for this transmission to complete */
+	timo = 1500000;
+	while (!ISSET(stat = bus_io_read_1(bc, ioh, com_lsr), LSR_TXRDY) && --timo)
+		;
+	/* clear any interrupts generated by this transmission */
+	stat = bus_io_read_1(bc, ioh, com_iir);
+	splx(s);
+}
+
+void
+pccomcnpollc(dev, on)
+	dev_t dev;
+	int on;
+{
+
+}
