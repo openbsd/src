@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.60 2001/08/23 19:32:46 niklas Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.61 2002/01/23 17:14:28 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -204,20 +204,19 @@ ike_auth_get_key (int type, char *id, char *local_id, size_t *keylen)
 	  struct stat sb;
 	  struct keynote_deckey dc;
 	  char *privkeyfile, *buf2;
-	  int fd;
+	  int fd, pkflen;
 
-	  privkeyfile = calloc (strlen (keyfile) + strlen (local_id)
-				+ sizeof PRIVATE_KEY_FILE + sizeof "//" - 1,
-				sizeof (char));
+	  pkflen = strlen (keyfile) + strlen (local_id) +
+	    sizeof PRIVATE_KEY_FILE + sizeof "//" - 1;
+	  privkeyfile = calloc (pkflen, sizeof (char));
 	  if (!privkeyfile)
 	    {
 	      log_print ("ike_auth_get_key: failed to allocate %d bytes",
-			 strlen (keyfile) + strlen (local_id)
-			 + sizeof PRIVATE_KEY_FILE + sizeof "//" - 1);
+			 pkflen);
 	      return 0;
 	    }
 
-	  sprintf (privkeyfile, "%s/%s/%s", keyfile, local_id,
+	  snprintf (privkeyfile, pkflen, "%s/%s/%s", keyfile, local_id,
 		   PRIVATE_KEY_FILE);
 	  keyfile = privkeyfile;
 
@@ -750,6 +749,7 @@ rsa_sig_decode_hash (struct message *msg)
         {
 	  struct keynote_deckey dc;
 	  char *pp;
+	  int dclen;
 
 	  dc.dec_algorithm = KEYNOTE_ALGORITHM_RSA;
 	  dc.dec_key = key;
@@ -763,18 +763,18 @@ rsa_sig_decode_hash (struct message *msg)
 	      return -1;
 	    }
 
-	  exchange->keynote_key = calloc (strlen (pp) + sizeof "rsa-hex:",
-					  sizeof (char));
+	  dclen = strlen (pp) + sizeof "rsa-hex:";
+	  exchange->keynote_key = calloc (dclen, sizeof (char));
 	  if (!exchange->keynote_key)
 	    {
 	      free (pp);
 	      LK (kn_free_key, (&dc));
 	      log_print ("rsa_sig_decode_hash: failed to allocate %d bytes",
-			 strlen (pp) + sizeof "rsa-hex:");
+			 dclen);
 	      return -1;
 	    }
 
-	  sprintf (exchange->keynote_key, "rsa-hex:%s", pp);
+	  snprintf (exchange->keynote_key, dclen, "rsa-hex:%s", pp);
 	  free (pp);
 	}
 #endif
@@ -1215,7 +1215,7 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
 		"ipsec_id_string failed"));
       return -1;
     }
-  strncat (filename, fstr, sizeof filename - 1 - strlen (filename));
+  strlcat (filename, fstr, sizeof filename - strlen (filename));
   free (fstr);
 
   /* If the file does not exist, fail silently.  */
