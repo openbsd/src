@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.148 2004/09/16 20:04:22 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.149 2004/09/19 09:00:51 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -610,9 +610,9 @@ PERMIT_PACKAGE_CDROM) will be placed
 Path to a local database that holds distribution files (usually a CD-ROM
 or other similar media), used to retrieve distribution files before going
 to the network.
-Defaults to
-.Pa /cdrom/distfiles .
-Set to empty to avoid checking any path.
+Defaults to empty, set to
+.Pa /cdrom/distfiles/${DIST_SUBDIR}
+to check that path.
 Distribution files are still copied or linked (see
 .Ev FETCH_SYMLINK_DISFILES )
 into
