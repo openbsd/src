@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pica,v 1.3 1996/05/02 07:59:36 pefo Exp $
+#	$OpenBSD: files.pica,v 1.4 1996/05/15 07:09:08 pefo Exp $
 #	$NetBSD: files.pica,v 1.16 1995/04/30 10:11:00 cgd Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
@@ -80,11 +80,10 @@ file	arch/pica/dev/lpt.c		lpt	needs-count
 #	Console driver on PC-style graphics
 device	pc: tty
 attach	pc at pica
-device	pms
+device	pms: tty
 attach	pms at pica
-file	arch/pica/dev/pccons.c		pms	needs-count
+file	arch/pica/dev/pccons.c		pc	needs-count
 
-#	PS2 type mouse driver.
 
 # Floppy disk controller
 device	fdc {drive = -1}

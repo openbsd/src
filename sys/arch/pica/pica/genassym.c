@@ -34,10 +34,9 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)genassym.c	8.2 (Berkeley) 9/23/93
- *      $Id: genassym.c,v 1.1.1.1 1995/10/18 10:39:19 deraadt Exp $
+ *      $Id: genassym.c,v 1.2 1996/05/15 07:09:11 pefo Exp $
  */
 
-#define _KERNEL
 
 #include <sys/param.h>
 #include <sys/buf.h>

@@ -34,7 +34,7 @@ LD=ld.ok
 INCLUDES=	-I. -I$S/arch -I$S
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dpica -D__NetBSD__ ${GP} \
 		-mips2 -mcpu=r4000
-CFLAGS=         ${DEBUG} -O2 -Werror
+CFLAGS=         ${DEBUG} -O2 -Werror -mno-abicalls
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 
 ### find out what to use for libkern
@@ -57,6 +57,9 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 # where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
 # capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
 # is marked as config-dependent.
+
+USRLAND_C=	${CC} ${CFLAGS} -mabicalls ${CPPFLAGS} ${PROF} -c $<
+USRLAND_C_C=	${CC} ${CFLAGS} -mabicalls ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
@@ -143,8 +146,11 @@ in_proto.o: Makefile
 assym.h: genassym
 	./genassym >assym.h
 
-genassym: ${PICA}/pica/genassym.c
-	${NORMAL_C_C}
+genassym: genassym.o
+	${CC} -o $@ genassym.o
+
+genassym.o: ${PICA}/pica/genassym.c
+	${USRLAND_C_C}
 
 depend: assym.h param.c
 	mkdep ${COPTS} ${CFILES} ioconf.c param.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.5 1996/05/02 07:59:42 pefo Exp $ */
+/*	$OpenBSD: conf.c,v 1.6 1996/05/15 07:09:10 pefo Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.5 1996/05/02 07:59:42 pefo Exp $
+ *      $Id: conf.c,v 1.6 1996/05/15 07:09:10 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -158,14 +158,14 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NPTY,pts),	/* 4: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 5: pseudo-tty master */
 	cdev_log_init(1,log),		/* 6: /dev/klog */
-	cdev_fd_init(1,fd),		/* 7: file descriptor pseudo-dev */
+	cdev_fd_init(1,filedesc),	/* 7: file descriptor pseudo-dev */
 	cdev_disk_init(NCD,cd),		/* 8: SCSI CD */
 	cdev_disk_init(NSD,sd),		/* 9: SCSI disk */
 	cdev_tape_init(NST,st),		/* 10: SCSI tape */
 	cdev_disk_init(NVND,vnd),	/* 11: vnode disk */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 12: berkeley packet filter */
 	cdev_disk_init(NFDC,fd),	/* 13: Floppy disk */
-	cdev_pc_init(1,pc),		/* 14: builtin pc style console dev */
+	cdev_pc_init(NPC,pc),		/* 14: builtin pc style console dev */
 	cdev_mouse_init(1,pms),		/* 15: builtin PS2 style mouse */
 	cdev_lpt_init(NLPT,lpt),	/* 16: lpt paralell printer interface */
 	cdev_tty_init(NCOM,com),	/* 17: com 16C450 serial interface */

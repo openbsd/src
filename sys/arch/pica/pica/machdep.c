@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.7 1996/05/08 08:33:32 mickey Exp $
+ *      $Id: machdep.c,v 1.8 1996/05/15 07:09:11 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -517,6 +517,7 @@ consinit()
  * cpu_startup: allocate memory for variable-sized tables,
  * initialize cpu, and do autoconfiguration.
  */
+void
 cpu_startup()
 {
 	register unsigned i;
@@ -863,6 +864,7 @@ sys_sigreturn(p, v, retval)
 
 int	waittime = -1;
 
+void
 boot(howto)
 	register int howto;
 {

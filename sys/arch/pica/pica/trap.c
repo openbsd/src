@@ -38,7 +38,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.5 1996/05/01 18:16:22 pefo Exp $
+ *      $Id: trap.c,v 1.6 1996/05/15 07:09:12 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -625,7 +625,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 #endif
 #ifdef KTRACE
 		if (KTRPOINT(p, KTR_SYSRET))
-			ktrsysret(p->p_tracep, code, i, rval);
+			ktrsysret(p->p_tracep, code, i, rval[0]);
 #endif
 		goto out;
 	    }

@@ -164,7 +164,7 @@ int ethdebug = 0;
 int snintr __P((struct sn_softc *));
 int snioctl __P((struct ifnet *ifp, u_long cmd, caddr_t data));
 void snstart __P((struct ifnet *ifp));
-void snwatchdog __P(( /*int unit */ ));
+void snwatchdog __P((struct ifnet *ifp));
 void snreset __P((struct sn_softc *sc));
 
 /*
@@ -245,8 +245,8 @@ void mtd_free __P((struct mtd *));
 struct mtd *mtd_alloc __P((void));
 
 int sngetaddr __P((struct sn_softc *sc));
-int sninit __P((int unit));
-int snstop __P((int unit));
+int sninit __P((struct sn_softc *sc));
+int snstop __P((struct sn_softc *sc));
 int sonicput __P((struct sn_softc *sc, struct mbuf *m0));
 
 void camdump __P((struct sn_softc *sc));
@@ -343,8 +343,8 @@ printf("mapped to offset 0x%x size 0x%x\n", SONICBUF - pp, p - SONICBUF);
 
 	BUS_INTR_ESTABLISH(ca, (intr_handler_t)snintr, (void *)sc);
 
-	ifp->if_name = "sn";
-	ifp->if_unit = sc->sc_dev.dv_unit;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_ioctl = snioctl;
 	ifp->if_start = snstart;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -363,11 +363,12 @@ snioctl(ifp, cmd, data)
 	caddr_t data;
 {
 	struct ifaddr *ifa;
-	struct sn_softc *sc = sn_cd.cd_devs[ifp->if_unit];
+	struct sn_softc *sc = ifp->if_softc;
 	int     s = splnet(), err = 0;
 	int	temp;
+	int	error;
 
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
+	if ((error = ether_ioctl(ifp, &sc->sc_ac, cmd, data)) > 0) {
 		splx(s);
 		return error;
 	}
@@ -380,12 +381,12 @@ snioctl(ifp, cmd, data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			(void)sninit(ifp->if_unit);
+			(void)sninit(ifp->if_softc);
 			arp_ifinit(&sc->sc_ac, ifa);
 			break;
 #endif
 		default:
-			(void)sninit(ifp->if_unit);
+			(void)sninit(ifp->if_softc);
 			break;
 		}
 		break;
@@ -393,11 +394,11 @@ snioctl(ifp, cmd, data)
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    ifp->if_flags & IFF_RUNNING) {
-			snstop(ifp->if_unit);
+			snstop(ifp->if_softc);
 			ifp->if_flags &= ~IFF_RUNNING;
 		} else if (ifp->if_flags & IFF_UP &&
 		    (ifp->if_flags & IFF_RUNNING) == 0)
-			(void)sninit(ifp->if_unit);
+			(void)sninit(ifp->if_softc);
 		/*
 		 * If the state of the promiscuous bit changes, the interface
 		 * must be reset to effect the change.
@@ -447,7 +448,7 @@ void
 snstart(ifp)
 	struct ifnet *ifp;
 {
-	struct sn_softc *sc = sn_cd.cd_devs[ifp->if_unit];
+	struct sn_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 	int	len;
 
@@ -498,15 +499,14 @@ snreset(sc)
 	struct sn_softc *sc;
 {
 	printf("snreset\n");
-	snstop(sc->sc_dev.dv_unit);
-	sninit(sc->sc_dev.dv_unit);
+	snstop(sc);
+	sninit(sc);
 }
 
 int 
-sninit(unit)
-	int unit;
+sninit(sc)
+	struct sn_softc *sc;
 {
-	struct sn_softc *sc = sn_cd.cd_devs[unit];
 	struct sonic_reg *csr = sc->sc_csr;
 	int s, error;
 
@@ -562,7 +562,7 @@ sninit(unit)
 	return (0);
 
 bad:
-	snstop(sc->sc_dev.dv_unit);
+	snstop(sc);
 	return (error);
 }
 
@@ -572,10 +572,9 @@ bad:
  * part way through.
  */
 int 
-snstop(unit)
-	int unit;
+snstop(sc)
+	struct sn_softc *sc;
 {
-	struct sn_softc *sc = sn_cd.cd_devs[unit];
 	struct mtd *mtd;
 	int s = splnet();
 
@@ -608,20 +607,20 @@ snstop(unit)
  * will be handled by higher level protocol timeouts.
  */
 void
-snwatchdog(unit)
-	int unit;
+snwatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct sn_softc *sc = sn_cd.cd_devs[unit];
+	struct sn_softc *sc = ifp->if_softc;
 	int temp;
 
 	if (mtdhead && mtdhead->mtd_mbuf) {
 		/* something still pending for transmit */
 		if (mtdhead->mtd_txp->status == 0)
 			log(LOG_ERR, "%s%d: Tx - timeout\n",
-			    sc->sc_if.if_name, sc->sc_if.if_unit);
+			    sc->sc_if.if_xname, sc->sc_if.if_softc);
 		else
 			log(LOG_ERR, "%s%d: Tx - lost interrupt\n",
-			    sc->sc_if.if_name, sc->sc_if.if_unit);
+			    sc->sc_if.if_xname, sc->sc_if.if_softc);
 		temp = sc->sc_if.if_flags & IFF_UP;
 		snreset(sc);
 		sc->sc_if.if_flags |= temp;
@@ -713,7 +712,7 @@ sonicput(sc, m0)
 		mtd_free(mtdnew);
 		m_freem(m0);
 		log(LOG_ERR, "%s%d: tx too many fragments %d\n",
-		    sc->sc_if.if_name, sc->sc_if.if_unit, fr);
+		    sc->sc_if.if_xname, sc->sc_if.if_softc, fr);
 		sc->sc_if.if_oerrors++;
 		return (len);
 	}
@@ -761,7 +760,7 @@ sngetaddr(sc)
 	unsigned i, x, y;
 	char   *cp, *ea;
 
-#if 1
+#if 0
 	sc->sc_csr->s_cr = CR_RST;
 	wbflush();
 	sc->sc_csr->s_cep = 0;

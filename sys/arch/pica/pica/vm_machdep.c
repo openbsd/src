@@ -38,7 +38,7 @@
  * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *
  *	from: @(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
- *      $Id: vm_machdep.c,v 1.2 1996/05/01 18:16:25 pefo Exp $
+ *      $Id: vm_machdep.c,v 1.3 1996/05/15 07:09:12 pefo Exp $
  */
 
 
@@ -180,10 +180,11 @@ void cpu_exit(p)
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
-cpu_coredump(p, vp, cred)
+cpu_coredump(p, vp, cred, core)
 	struct proc *p;
 	struct vnode *vp;
 	struct ucred *cred;
+	struct core *core;
 {
 	extern struct proc *machFPCurProcPtr;
 
@@ -204,9 +205,10 @@ cpu_coredump(p, vp, cred)
  * Both addresses are assumed to reside in the Sysmap,
  * and size must be a multiple of CLSIZE.
  */
+void
 pagemove(from, to, size)
 	register caddr_t from, to;
-	int size;
+	size_t size;
 {
 	register pt_entry_t *fpte, *tpte;
 

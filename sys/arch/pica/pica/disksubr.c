@@ -43,28 +43,11 @@
 extern struct device *bootdv;
 
 /* was this the boot device ? */
-int
+void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
-#ifdef NOTDEF
-	/* XXX: sd -> scsibus -> esp */
-	struct bootpath *bp = ((struct esp_softc *)dev->dv_parent->dv_parent)->sc_bp;
-	char name[10];
-
-#define CRAZYMAP(v) ((v) == 3 ? 0 : (v) == 0 ? 3 : (v))
-
-	if (bp == NULL) {
-		printf("no boot path\n");
-		return -1;
-	}
-	sprintf(name, "%s%d", bp->name, CRAZYMAP(bp->val[0]));
-	if (strcmp(name, dev->dv_xname) == 0) {
-		bootdv = dev;
-	}
-#endif
-	return 1;
 }
 
 /*
