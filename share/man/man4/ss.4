@@ -1,4 +1,4 @@
-.\" $OpenBSD: ss.4,v 1.15 2004/09/30 19:59:25 mickey Exp $
+.\" $OpenBSD: ss.4,v 1.16 2004/12/09 17:41:01 miod Exp $
 .\"
 .\" Copyright (c) 1998 Kenneth Stailey and Ian Darwin
 .\"
@@ -54,13 +54,6 @@ Not recently tested but worked in the past true SCSI scanners: Mustek 600CX
 and 1200CX (these do not do SCSI disconnect-reconnect; they will lock up
 the bus during operation.
 A second controller can be used.)
-.Sh KERNEL CONFIGURATION
-Obviously a SCSI host adapter must be present in the config file before this
-device can be configured.
-.Pp
-If a count is given, that many
-.Nm
-devices will be configured into the kernel.
 .Sh IOCTLS
 This device provides the
 .Nm SCIOCGET

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sd.4,v 1.14 2004/09/30 19:59:25 mickey Exp $
+.\"	$OpenBSD: sd.4,v 1.15 2004/12/09 17:41:01 miod Exp $
 .\"	$NetBSD: sd.4,v 1.3 1996/10/20 23:15:23 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -130,13 +130,6 @@ This allows sharing the disk with other operating systems.
 .\"by the drive and a single
 .\".Sq Li c
 .\"partition encompassing the entire slice.
-.\".Sh KERNEL CONFIGURATION
-.\"It is only necessary to explicitly configure one
-.\".Nm
-.\"device; data structures are dynamically allocated as disks are found
-.\"on the
-.\".Tn SCSI
-.\"bus.
 .Sh IOCTLS
 The following
 .Xr ioctl 2

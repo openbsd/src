@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ch.4,v 1.9 2004/09/30 19:59:24 mickey Exp $
+.\"	$OpenBSD: ch.4,v 1.10 2004/12/09 17:41:00 miod Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Julian Elischer <julian@freebsd.org>.  All rights reserved.
@@ -60,44 +60,30 @@ It is also possible to specify what
 unit a device should come on-line as; refer to
 .Xr scsi 4
 for details on kernel configuration.
-.Sh KERNEL CONFIGURATION
-In configuring, if an optional
-.Ar count
-is given in the specification, that number of SCSI media changers
-are configured.
-Most storage for them is allocated only when found
-so a large number of configured devices is cheap (once the first
-has included the driver).
-.Sh IOCTLS
-The following
-.Xr ioctl 2
-call applies to the changer.
-It is defined in the header file
-.Aq Pa sys/chio.h .
-.Bl -tag -width DIOCSDINFO
-.It Dv CHIOOP
-This appears to be a
-.Dq do-everything
-call.
-.El
+.\" .Sh IOCTLS
+.\" The following
+.\" .Xr ioctl 2
+.\" call applies to the changer.
+.\" It is defined in the header file
+.\" .Aq Pa sys/chio.h .
+.\" .Bl -tag -width DIOCSDINFO
+.\" .It Dv CHIOOP
+.\" This appears to be a
+.\" .Dq do-everything
+.\" call.
+.\" .El
 .Sh FILES
 .Bl -tag -width /dev/ch[0-9] -compact
 .It Pa /dev/ch[0-9]
 device entries
 .El
 .Sh SEE ALSO
+.Xr chio 1 ,
 .Xr cd 4 ,
 .Xr intro 4 ,
 .Xr scsi 4 ,
 .Xr sd 4 ,
 .Xr st 4
-.Sh DISCLAIMER
-These manpages were derived from the
-.Fx
-documentation of the generic SCSI drivers.
-Since naming and calling conventions may have diverged or suffered port
-specific changes, please review the appropriate header files and configuration
-file for your port.
 .Sh HISTORY
 The
 .Nm

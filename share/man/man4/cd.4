@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cd.4,v 1.16 2004/09/30 19:59:24 mickey Exp $
+.\"	$OpenBSD: cd.4,v 1.17 2004/12/09 17:41:00 miod Exp $
 .\"	$NetBSD: cd.4,v 1.3 1996/10/20 23:15:21 explorer Exp $
 .\"
 .\" Copyright (c) 1996
@@ -71,9 +71,6 @@ may be used to read the synthesized
 disk label
 structure, which will contain correct figures for the size of the
 CD-ROM should that information be required.
-.Sh KERNEL CONFIGURATION
-Any number of CD-ROM devices may be attached to the system regardless of system
-configuration as all resources are dynamically allocated.
 .Sh IOCTLS
 The following
 .Xr ioctl 2
@@ -341,6 +338,7 @@ raw mode CD-ROM devices
 .Sh DIAGNOSTICS
 None.
 .Sh SEE ALSO
+.Xr cdio 1 ,
 .Xr ioctl 2 ,
 .Xr intro 4 ,
 .Xr scsi 4 ,
