@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_core.c,v 1.10 2003/02/11 19:20:28 mickey Exp $	*/
+/*	$OpenBSD: bktr_core.c,v 1.11 2003/03/12 00:28:54 mickey Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_core.c,v 1.114 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -2838,8 +2838,8 @@ rgb_vbi_prog(bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 		*dma_prog++ = (u_long) vtophys((caddr_t)bktr->vbidata +
 				((i+MAX_VBI_LINES) * VBI_LINE_SIZE));
 #else
-		*dma_prog++ = bktr->dm_vbidata->dm_segs->ds_addr +
-				((i+MAX_VBI_LINES) * VBI_LINE_SIZE);
+		*dma_prog++ = htole32(bktr->dm_vbidata->dm_segs->ds_addr +
+				((i+MAX_VBI_LINES) * VBI_LINE_SIZE));
 #endif
 	}
 
@@ -2938,7 +2938,7 @@ rgb_prog( bktr_ptr_t bktr, char i_flag, int cols, int rows, int interlace )
 #ifdef __FreeBSD__
 		target_buffer = (u_long) vtophys(bktr->bigbuf);
 #else
-		*dma_prog++ = htole32(bktr->dm_mem->dm_segs->ds_addr);
+		target_buffer = bktr->dm_mem->dm_segs->ds_addr;
 #endif
 		pitch = cols*Bpp;
 	}
