@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.21 2003/04/01 05:03:52 grange Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.22 2003/04/02 21:40:35 grange Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.26 2000/05/10 16:58:42 thorpej Exp $	*/
 
 /*
@@ -447,7 +447,7 @@ typedef u_int8_t pci_revision_t;
 #define PCI_CAP_AGP		0x02
 #define PCI_CAP_VPD		0x03
 #define PCI_CAP_SLOTID		0x04
-#define PCI_CAP_MBI		0x05
+#define PCI_CAP_MSI		0x05
 #define PCI_CAP_CPCI_HOTSWAP	0x06
 #define PCI_CAP_PCIX		0x07
 #define PCI_CAP_LDT		0x08
