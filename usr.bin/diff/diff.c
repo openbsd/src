@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.39 2003/09/06 05:25:22 tedu Exp $	*/
+/*	$OpenBSD: diff.c,v 1.40 2003/09/07 18:16:02 tedu Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.39 2003/09/06 05:25:22 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.40 2003/09/07 18:16:02 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -46,7 +46,7 @@ char	*start, *ifdefname, *diffargs, *label;
 struct stat stb1, stb2;
 struct excludes *excludes_list;
 
-#define	OPTIONS	"abC:c::dD:efhiL:lnNPqrS:sTtU:u::wX:x:"
+#define	OPTIONS	"0123456789abC:cdD:efhiL:lnNPqrS:sTtU:uwX:x:"
 static struct option longopts[] = {
 	{ "text",			no_argument,		0,	'a' },
 	{ "ignore-space-change",	no_argument,		0,	'b' },
@@ -84,13 +84,23 @@ main(int argc, char **argv)
 {
 	char *ep, **oargv;
 	long  l;
-	int   ch, gotstdin;
+	int   ch, lastch, gotstdin;
 
 	oargv = argv;
 	gotstdin = 0;
 
+	lastch = 0;
 	while ((ch = getopt_long(argc, argv, OPTIONS, longopts, NULL)) != -1) {
 		switch (ch) {
+		case '0': case '1': case '2': case '3': case '4':
+		case '5': case '6': case '7': case '8': case '9':
+			if (!(lastch == 'c' || lastch == 'u' ||
+			    (lastch >= '0' && lastch <= '9')))
+				usage();
+			if (lastch == 'c' || lastch == 'u')
+				context = 0;
+			context = context * 10 + ch - '0';
+			break;
 		case 'a':
 			aflag = 1;
 			break;
@@ -185,6 +195,7 @@ main(int argc, char **argv)
 			usage();
 			break;
 		}
+		lastch = ch;
 	}
 	argc -= optind;
 	argv += optind;
