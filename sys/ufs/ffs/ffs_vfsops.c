@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vfsops.c,v 1.66 2004/06/21 23:50:38 tholo Exp $	*/
+/*	$OpenBSD: ffs_vfsops.c,v 1.67 2004/07/14 18:48:43 pedro Exp $	*/
 /*	$NetBSD: ffs_vfsops.c,v 1.19 1996/02/09 22:22:26 christos Exp $	*/
 
 /*
@@ -122,7 +122,7 @@ ffs_mountroot()
 	swapdev_vp = NULL;
 	if ((error = bdevvp(swapdev, &swapdev_vp)) ||
 	    (error = bdevvp(rootdev, &rootvp))) {
-		printf("ffs_mountroot: can't setup bdevvp's");
+		printf("ffs_mountroot: can't setup bdevvp's\n");
 		if (swapdev_vp)
 			vrele(swapdev_vp);
 		return (error);
