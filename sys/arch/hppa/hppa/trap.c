@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.8 1999/08/16 02:48:39 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.9 1999/08/16 03:22:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -42,6 +42,7 @@
 #include <sys/user.h>
 #include <sys/acct.h>
 #include <sys/signal.h>
+#include <sys/device.h>
 
 #include <net/netisr.h>
 
@@ -508,9 +509,9 @@ cpu_intr_establish(pri, irq, handler, arg, dv)
 	iv->pri = pri;
 	iv->handler = handler;
 	iv->arg = arg;
-	evcnt_attach(dv, dv->dv_xname, iv->evcnt);
+	evcnt_attach(dv, dv->dv_xname, &iv->evcnt);
 
-	return p;
+	return iv;
 }
 
 void
@@ -535,17 +536,21 @@ cpu_intr(frame)
 #endif
 			iv = &cpu_intr_vectors[bit];
 			if (iv->handler) {
-				register int s = splx(iv->pri);
+				register int s, r;
 
 				iv->evcnt.ev_count++;
+				s = splx(iv->pri);
+				r = (iv->handler)(iv->arg? iv->arg:frame);
+				splx(s);
+
 				/* no arg means pass the frame */
-				if (!(iv->handler)(iv->arg? iv->arg:frame))
+				if (!r)
 #ifdef INTRDEBUG1
 					panic ("%s: can't handle interrupt",
-					       iv->name);
+					       iv->evcnt.ev_name);
 #else
 					printf ("%s: can't handle interrupt\n",
-						iv->name);
+						iv->evcnt.ev_name);
 #endif
 				splx(s);
 			} else {
