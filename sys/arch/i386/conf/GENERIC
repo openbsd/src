@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.137 1999/11/14 11:53:00 ho Exp $
+#	$OpenBSD: GENERIC,v 1.138 1999/11/20 11:18:58 matthieu Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -315,6 +315,7 @@ joy*	at isapnp?
 #aeon*	at pci? dev ? function ?		# Aeon crypto card
 
 pseudo-device	pctr		1
+pseudo-device	mtrr		1	# Memory range attributes control
 pseudo-device	sequencer	1
 #pseudo-device	raid		4	# RAIDframe disk driver
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpufunc.h,v 1.4 1999/10/26 03:44:17 downsj Exp $	*/
+/*	$OpenBSD: cpufunc.h,v 1.5 1999/11/20 11:18:59 matthieu Exp $	*/
 /*	$NetBSD: cpufunc.h,v 1.8 1994/10/27 04:15:59 cgd Exp $	*/
 
 /*
@@ -218,6 +218,28 @@ enable_intr()
 #endif
 {
 	__asm __volatile("sti");
+}
+
+static __inline void
+wbinvd(void)
+{
+        __asm __volatile("wbinvd");
+}
+
+
+static __inline void
+wrmsr(u_int msr, u_int64_t newval)
+{
+        __asm __volatile(".byte 0x0f, 0x30" : : "A" (newval), "c" (msr));
+}
+
+static __inline u_int64_t
+rdmsr(u_int msr)
+{
+        u_int64_t rv;
+
+        __asm __volatile(".byte 0x0f, 0x32" : "=A" (rv) : "c" (msr));
+        return (rv);
 }
 
 #endif /* !_I386_CPUFUNC_H_ */
