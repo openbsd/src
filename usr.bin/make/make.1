@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.32 2000/06/06 15:32:25 ericj Exp $
+.\"	$OpenBSD: make.1,v 1.33 2000/06/30 23:26:25 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -291,17 +291,22 @@ dependencies may be followed by a creation script, unless the
 .Ql Ic ::
 operator is used.
 .Pp
-If the first or first two characters of the command line are
-.Ql Ic @
+If a command line begins by a combination of the characters,
+.Ql Ic @ ,
+.Ql Ic \- 
 and/or
-.Ql Ic \- ,
+.Ql Ic + ,
 the command is treated specially.
-A
-.Ql Ic @
+.Bl -tag -width `@'
+.It Ql Ic @
 causes the command not to be echoed before it is executed.
-A
-.Ql Ic \-
+.It Ql Ic \-
 causes any non-zero exit status of the command line to be ignored.
+.It Ql Ic +
+causes the command to be executed even if
+.Fl n
+has been specified (This can be useful to debug recursive Makefiles).
+.El
 .Sh VARIABLE ASSIGNMENTS
 Variables in
 .Nm
@@ -1233,7 +1238,7 @@ When handling pre-BSD 4.4 archives,
 may erroneously mark archive members as out of date if the archive name
 was truncated.
 .Pp
-Variable handling is incredibly inefficient.
+Variable handling is somewhat inefficient.
 .Pp
 The handling of ; and other special characters in tests may be utterly
 bogus.
@@ -1262,6 +1267,10 @@ A+=$I
 \&.endfor
 .Ed
 A will evaluate to a b c d after the loop, not z b c d.
+.Pp
+The 
+.Ql +
+command modificator is ignored in parallel make mode.
 .Sh SEE ALSO
 .Xr mkdep 1
 .Pp

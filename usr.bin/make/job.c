@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.33 2000/06/23 16:41:53 espie Exp $	*/
+/*	$OpenBSD: job.c,v 1.34 2000/06/30 23:26:25 espie Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.33 2000/06/23 16:41:53 espie Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.34 2000/06/30 23:26:25 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -559,13 +559,13 @@ JobPrintCommand(cmdp, jobp)
     /*
      * Check for leading @' and -'s to control echoing and error checking.
      */
-    while (*cmd == '@' || *cmd == '-') {
-	if (*cmd == '@') {
+    for (;; cmd++) {
+    	if (*cmd == '@')
 	    shutUp = TRUE;
-	} else {
+	else if (*cmd == '-')
 	    errOff = TRUE;
-	}
-	cmd++;
+	else if (*cmd != '+')
+	    break;
     }
 
     while (isspace((unsigned char) *cmd))
