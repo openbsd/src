@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.33 1997/07/19 20:35:37 niklas Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.34 1997/07/28 08:26:58 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.33 1997/07/19 20:35:37 niklas Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.34 1997/07/28 08:26:58 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -99,7 +99,9 @@ int	bootsize;	/* size of remaining boot program */
 char	*xxboot;	/* primary boot */
 char	*bootxx;	/* secondary boot */
 char	boot0[MAXPATHLEN];
+#if NUMBOOT > 1
 char	boot1[MAXPATHLEN];
+#endif
 #endif
 
 enum {
