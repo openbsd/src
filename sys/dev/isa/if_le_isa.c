@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_isa.c,v 1.11 1998/01/18 18:58:38 niklas Exp $	*/
+/*	$OpenBSD: if_le_isa.c,v 1.12 1998/02/15 01:50:13 deraadt Exp $	*/
 /*	$NetBSD: if_le_isa.c,v 1.2 1996/05/12 23:52:56 mycroft Exp $	*/
 
 /*-
@@ -119,6 +119,7 @@ depca_isa_probe(lesc, ia)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	bus_space_tag_t iot = lesc->sc_iot;
 	bus_space_handle_t ioh = lesc->sc_ioh;
+	int iosize = 16;
 	int port;
 
 #if 0
@@ -127,7 +128,7 @@ depca_isa_probe(lesc, ia)
 #endif
 	int i;
 
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, iosize, 0, &ioh))
 		return (0);
 	lesc->sc_iot = iot;
 	lesc->sc_ioh = ioh;
@@ -136,7 +137,7 @@ depca_isa_probe(lesc, ia)
 	lesc->sc_card = DEPCA;
 
 	if (lance_isa_probe(sc) == 0) {
-		bus_space_unmap(iot, ioh, ia->ia_iosize);
+		bus_space_unmap(iot, ioh, iosize);
 		return 0;
 	}
 
@@ -201,14 +202,14 @@ found:
 	if (sum != rom_sum) {
 		printf("%s: checksum mismatch; calculated %04x != read %04x",
 		    sc->sc_dev.dv_xname, sum, rom_sum);
-		bus_space_unmap(iot, ioh, ia->ia_iosize);
+		bus_space_unmap(iot, ioh, iosize);
 		return 0;
 	}
 #endif
 
 	bus_space_write_1(iot, ioh, DEPCA_CSR, DEPCA_CSR_NORMAL);
 
-	ia->ia_iosize = 16;
+	ia->ia_iosize = iosize;
 	ia->ia_drq = DRQUNK;
 	bus_space_unmap(iot, ioh, ia->ia_iosize);
 	return 1;
@@ -222,9 +223,10 @@ ne2100_isa_probe(lesc, ia)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	bus_space_tag_t iot = lesc->sc_iot;
 	bus_space_handle_t ioh = lesc->sc_ioh;
+	int iosize = 24;
 	int i;
 
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, iosize, 0, &ioh))
 		return (0);
 	lesc->sc_iot = iot;
 	lesc->sc_ioh = ioh;
@@ -233,7 +235,7 @@ ne2100_isa_probe(lesc, ia)
 	lesc->sc_card = NE2100;
 
 	if (lance_isa_probe(sc) == 0) {
-		bus_space_unmap(iot, ioh, ia->ia_iosize);
+		bus_space_unmap(iot, ioh, iosize);
 		return 0;
 	}
 
@@ -243,7 +245,7 @@ ne2100_isa_probe(lesc, ia)
 	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
 		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, i);
 
-	ia->ia_iosize = 24;
+	ia->ia_iosize = iosize;
 	bus_space_unmap(iot, ioh, ia->ia_iosize);
 	return 1;
 }
@@ -256,9 +258,10 @@ bicc_isa_probe(lesc, ia)
 	struct am7990_softc *sc = &lesc->sc_am7990;
 	bus_space_handle_t ioh;
 	bus_space_tag_t iot = ia->ia_iot;
+	int iosize = 16;
 	int i;
 
-	if (bus_space_map(iot, ia->ia_iobase, ia->ia_iosize, 0, &ioh))
+	if (bus_space_map(iot, ia->ia_iobase, iosize, 0, &ioh))
 		return (0);
 	lesc->sc_iot = iot;
 	lesc->sc_ioh = ioh;
@@ -267,7 +270,7 @@ bicc_isa_probe(lesc, ia)
 	lesc->sc_card = BICC;
 
 	if (lance_isa_probe(sc) == 0) {
-		bus_space_unmap(iot, ioh, ia->ia_iosize);
+		bus_space_unmap(iot, ioh, iosize);
 		return 0;
 	}
 
@@ -277,7 +280,7 @@ bicc_isa_probe(lesc, ia)
 	for (i = 0; i < sizeof(sc->sc_arpcom.ac_enaddr); i++)
 		sc->sc_arpcom.ac_enaddr[i] = bus_space_read_1(iot, ioh, i * 2);
 
-	ia->ia_iosize = 16;
+	ia->ia_iosize = iosize;
 	bus_space_unmap(iot, ioh, ia->ia_iosize);
 	return 1;
 }
