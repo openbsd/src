@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus.c,v 1.1 2000/04/08 05:50:52 aaron Exp $ */
+/*	$OpenBSD: rbus.c,v 1.2 2000/05/31 15:52:50 aaron Exp $ */
 /*	$NetBSD: rbus.c,v 1.3 1999/11/06 06:20:53 soren Exp $	*/
 /*
  * Copyright (c) 1999
@@ -93,9 +93,9 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 {
   bus_addr_t decodesize = mask + 1;
   bus_addr_t boundary, search_addr;
-  int val = 0;
+  int val;
   bus_addr_t result;
-  int exflags = EX_FAST | EX_NOWAIT;
+  int exflags = EX_FAST | EX_NOWAIT | EX_MALLOCOK;
 
   DPRINTF(("rbus_space_alloc: addr %lx, size %lx, mask %lx, align %lx\n",
 	   addr, size, mask, align));
@@ -117,6 +117,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
     /* sanity check: the subregion [substart, subend] should be
        smaller than the region included in sh_extent */
     if (substart < rbt->rb_ext->ex_start || subend > rbt->rb_ext->ex_end) {
+      DPRINTF(("rbus: out of range\n"));
       return 1;
     }
 
@@ -142,14 +143,19 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 	search_addr += boundary;
       }
 
+      val = 1;
       for (; search_addr + size <= subend; search_addr += boundary) {
 	val = extent_alloc_subregion(rbt->rb_ext,search_addr, search_addr+size,
 				size, align, 0, exflags, (u_long *)&result);
+        DPRINTF(("rbus: trying [%lx:%lx] %lx\n",
+            search_addr, search_addr+size, align));
 	if (val == 0) {
 	  break;
 	}
       }
-      if (val) {
+      if (val != 0) {
+        /* no space found */
+        DPRINTF(("rbus: no space found\n"));
 	return 1;
       }
     }
@@ -167,6 +173,7 @@ rbus_space_alloc_subregion(rbt, substart, subend, addr, size, mask, align, flags
 
   } else {
     /* error!! */
+    DPRINTF(("rbus: no rbus type\n"));
     return 1;
   }
   return 1;
