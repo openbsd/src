@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.c,v 1.63 2002/06/10 18:08:58 ho Exp $	*/
+/*	$OpenBSD: sa.c,v 1.64 2002/09/08 12:38:04 ho Exp $	*/
 /*	$EOM: sa.c,v 1.112 2000/12/12 00:22:52 niklas Exp $	*/
 
 /*
@@ -175,7 +175,10 @@ sa_check_name_phase (struct sa *sa, void *v_arg)
 struct sa *
 sa_lookup_by_name (char *name, int phase)
 {
-  struct name_phase_arg arg = { name, phase };
+  struct name_phase_arg arg;
+
+  arg.name = name;
+  arg.phase = phase;
 
   return sa_find (sa_check_name_phase, &arg);
 }
@@ -246,7 +249,10 @@ isakmp_sa_check (struct sa *sa, void *v_arg)
 struct sa *
 sa_lookup_isakmp_sa (struct sockaddr *dst, u_int8_t *spi)
 {
-  struct dst_isakmpspi_arg arg = { dst, spi };
+  struct dst_isakmpspi_arg arg;
+
+  arg.dst = dst;
+  arg.spi = spi;
 
   return sa_find (isakmp_sa_check, &arg);
 }
@@ -255,7 +261,11 @@ sa_lookup_isakmp_sa (struct sockaddr *dst, u_int8_t *spi)
 struct sa *
 sa_lookup_by_peer (struct sockaddr *dst, socklen_t dstlen)
 {
-  struct addr_arg arg = { dst, dstlen, 0 };
+  struct addr_arg arg;
+
+  arg.addr = dst;
+  arg.len = dstlen;
+  arg.phase = 0;
 
   return sa_find (sa_check_peer, &arg);
 }
@@ -264,7 +274,11 @@ sa_lookup_by_peer (struct sockaddr *dst, socklen_t dstlen)
 struct sa *
 sa_isakmp_lookup_by_peer (struct sockaddr *dst, socklen_t dstlen)
 {
-  struct addr_arg arg = { dst, dstlen, 1 };
+  struct addr_arg arg;
+
+  arg.addr = dst;
+  arg.len = dstlen;
+  arg.phase = 1;
 
   return sa_find (sa_check_peer, &arg);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.69 2002/07/05 11:08:13 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.70 2002/09/08 12:38:04 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -236,7 +236,11 @@ ipsec_sa_check (struct sa *sa, void *v_arg)
 struct sa *
 ipsec_sa_lookup (struct sockaddr *dst, u_int32_t spi, u_int8_t proto)
 {
-  struct dst_spi_proto_arg arg = { dst, spi, proto };
+  struct dst_spi_proto_arg arg;
+
+  arg.dst = dst;
+  arg.spi = spi;
+  arg.proto = proto;
 
   return sa_find (ipsec_sa_check, &arg);
 }
