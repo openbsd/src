@@ -46,10 +46,10 @@ elif test $# -eq 2; then
 	        *[-.]gz* | *[-.][zZ] | *.t[ga]z)
 			F=`echo "$2" | sed 's|.*/||;s|[-.][zZtga]*||'`
 			TF=`mktemp /tmp/"$F".XXXXXXXXXX` || exit 1
-                        gzip -cdfq "$2" > $TF
-                        gzip -cdfq "$1" | $comp $OPTIONS - $TF
+                        gzip -cdfq "$2" > "$TF"
+                        gzip -cdfq "$1" | $comp $OPTIONS - "$TF"
                         STAT="$?"
-			/bin/rm -f $TF;;
+			/bin/rm -f "$TF";;
 
                 *)      gzip -cdfq "$1" | $comp $OPTIONS - "$2"
                         STAT="$?";;
