@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fseek.3,v 1.2 1996/08/19 08:32:46 tholo Exp $
+.\"	$OpenBSD: fseek.3,v 1.3 1999/05/27 14:08:39 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,7 @@
 .Ft int
 .Fn fgetpos "FILE *stream" "fpos_t *pos"
 .Ft int
-.Fn fsetpos "FILE *stream" "fpos_t *pos"
+.Fn fsetpos "FILE *stream" "const fpos_t *pos"
 .Sh DESCRIPTION
 The
 .Fn fseek
