@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_spf.c,v 1.6 2005/03/14 18:21:29 norby Exp $ */
+/*	$OpenBSD: rde_spf.c,v 1.7 2005/03/17 16:46:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Esben Norby <norby@openbsd.org>
@@ -629,13 +629,15 @@ rt_remove(struct rt_node *r)
 void
 rt_invalidate(void)
 {
-	struct rt_node	*r;
+	struct rt_node	*r, *nr;
 
-	RB_FOREACH(r, rt_tree, &rt)
+	for (r = RB_MIN(rt_tree, &rt); r != NULL; r = nr) {
+		nr = RB_NEXT(rt_tree, &rt, r);
 		if (r->invalid)
 			rt_remove(r);
 		else
 			r->invalid = true;
+	}
 }
 
 void
