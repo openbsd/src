@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcwd.3,v 1.7 1999/07/09 13:35:16 aaron Exp $
+.\"	$OpenBSD: getcwd.3,v 1.8 2000/12/24 00:30:47 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -104,8 +104,7 @@ into the memory referenced by
 .Sh ERRORS
 The
 .Fn getwd
-function
-will fail if:
+function will fail if:
 .Bl -tag -width Er
 .It Bq Er EACCES
 Read or search permission was denied for a component of the pathname.
@@ -131,8 +130,7 @@ plus 1.
 .Sh STANDARDS
 The
 .Fn getcwd
-function
-conforms to
+function conforms to
 .St -ansiC .
 The ability to specify a null pointer and have
 .Fn getcwd
@@ -145,7 +143,6 @@ function appeared in
 .Sh BUGS
 The
 .Fn getwd
-function
-does not do sufficient error checking and is not able to return very
+function does not do sufficient error checking and is not able to return very
 long, but valid, paths.
 It is provided for compatibility.

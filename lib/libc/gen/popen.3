@@ -1,4 +1,4 @@
-.\"	$OpenBSD: popen.3,v 1.8 1999/08/31 16:52:34 aaron Exp $
+.\"	$OpenBSD: popen.3,v 1.9 2000/12/24 00:30:50 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,9 +50,7 @@ The
 .Fn popen
 function
 .Dq opens
-a process by creating a pipe,
-forking,
-and invoking the shell.
+a process by creating a pipe, forking, and invoking the shell.
 Since a pipe is by definition unidirectional, the
 .Fa type
 argument may specify only reading or writing, not both;
@@ -103,9 +101,8 @@ streams are fully buffered by default.
 .Pp
 The
 .Fn pclose
-function waits for the associated process to terminate
-and returns the exit status of the command
-as returned by
+function waits for the associated process to terminate and returns the
+exit status of the command as returned by
 .Xr wait4 2 .
 .Sh RETURN VALUES
 The
@@ -121,8 +118,7 @@ or if it cannot allocate memory.
 .Pp
 The
 .Fn pclose
-function
-returns \-1 if
+function returns \-1 if
 .Fa stream
 is not associated with a
 .Dq popened
@@ -161,9 +157,8 @@ The latter can be avoided by calling
 before
 .Fn popen .
 .Pp
-Failure to execute the shell
-is indistinguishable from the shell's failure to execute command,
-or an immediate exit of the command.
+Failure to execute the shell is indistinguishable from the shell's
+failure to execute command, or an immediate exit of the command.
 The only hint is an exit status of 127.
 .Pp
 The

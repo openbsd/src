@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pw_dup.3,v 1.1 2000/11/21 00:49:58 millert Exp $
+.\"	$OpenBSD: pw_dup.3,v 1.2 2000/12/24 00:30:50 aaron Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -40,8 +40,8 @@ The
 .Fn pw_dup
 function allocates sufficient memory for a copy of the struct passwd
 .Fa pw ,
-does the copy, and returns a pointer to it.  This is useful as
-subsequent calls to
+does the copy, and returns a pointer to it.
+This is useful as subsequent calls to
 .Fn getpwent ,
 .Fn getpwnam ,
 and

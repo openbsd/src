@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setmode.3,v 1.7 2000/01/22 02:30:41 aaron Exp $
+.\"	$OpenBSD: setmode.3,v 1.8 2000/12/24 00:30:51 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -47,8 +47,7 @@
 .Sh DESCRIPTION
 The
 .Fn getmode
-function
-returns a copy of the file permission bits
+function returns a copy of the file permission bits
 .Fa mode
 as altered by the values pointed to by
 .Fa set .
@@ -57,8 +56,7 @@ may be examined.
 .Pp
 The
 .Fn setmode
-function
-takes an absolute (octal) or symbolic value, as described in
+function takes an absolute (octal) or symbolic value, as described in
 .Xr chmod 1 ,
 as an argument
 and returns a pointer to mode values to be supplied to
@@ -91,11 +89,9 @@ returns.
 .Sh ERRORS
 The
 .Fn setmode
-function
-may fail and set
+function may fail and set
 .Va errno
-for any of the errors specified for the library
-routine
+for any of the errors specified for the library routine
 .Xr malloc 3 .
 .Sh SEE ALSO
 .Xr chmod 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getmntinfo.3,v 1.8 2000/04/18 03:01:26 aaron Exp $
+.\"	$OpenBSD: getmntinfo.3,v 1.9 2000/12/24 00:30:48 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -45,16 +45,14 @@
 .Sh DESCRIPTION
 The
 .Fn getmntinfo
-function
-returns an array of
+function returns an array of
 .Xr statfs
 structures describing each currently mounted file system (see
 .Xr statfs 2 ) .
 .Pp
 The
 .Fn getmntinfo
-function
-passes its
+function passes its
 .Fa flags
 parameter transparently to
 .Xr getfsstat 2 .
@@ -76,8 +74,7 @@ will be lost.
 .Sh ERRORS
 The
 .Fn getmntinfo
-function
-may fail and set
+function may fail and set
 .Va errno
 for any of the errors specified for the library routines
 .Xr getfsstat 2

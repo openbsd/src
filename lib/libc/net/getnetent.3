@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnetent.3,v 1.10 2000/12/17 21:30:38 millert Exp $
+.\"	$OpenBSD: getnetent.3,v 1.11 2000/12/24 00:30:56 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,11 +59,8 @@ The
 .Fn getnetbyname ,
 and
 .Fn getnetbyaddr
-functions
-each return a pointer to an object with the
-following structure
-containing the broken-out
-fields of a line in the network database,
+functions each return a pointer to an object with the following structure
+containing the broken-out fields of a line in the network database,
 .Pa /etc/networks .
 .Bd -literal -offset indent
 struct	netent {
@@ -90,13 +87,11 @@ Network numbers are returned in machine byte order.
 .Pp
 The
 .Fn getnetent
-function
-reads the next line of the file, opening the file if necessary.
+function reads the next line of the file, opening the file if necessary.
 .Pp
 The
 .Fn setnetent
-function
-opens and rewinds the file.
+function opens and rewinds the file.
 If the
 .Fa stayopen
 flag is non-zero,
@@ -107,15 +102,13 @@ or
 .Pp
 The
 .Fn endnetent
-function
-closes the file.
+function closes the file.
 .Pp
 The
 .Fn getnetbyname
-function
 and
 .Fn getnetbyaddr
-search the domain name server if the system is configured to use one.
+functions search the domain name server if the system is configured to use one.
 If the search fails, or no name server is configured, they sequentially
 search from the beginning of the file until a matching net name or
 net address and type is found, or until
@@ -127,8 +120,7 @@ Network numbers are supplied in host order.
 .It Pa /etc/networks
 .El
 .Sh DIAGNOSTICS
-Null pointer
-(0) returned on
+Null pointer (0) returned on
 .Dv EOF
 or error.
 .Sh SEE ALSO

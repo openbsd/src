@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.1 2000/11/21 00:51:16 millert Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.2 2000/12/24 00:30:46 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -101,8 +101,8 @@
 .Fn auth_setstate "auth_session_t *as" "int state"
 .Sh DESCRIPTION
 These functions provide the lower level interface to the BSD
-Authentication system.  They all operate on a BSD Authentication
-session pointer,
+Authentication system.
+They all operate on a BSD Authentication session pointer,
 .Fa as ,
 which is returned by
 .Fn auth_open .
@@ -111,7 +111,7 @@ must be passed to all other BSD Authentication functions called.
 The
 .Fn auth_open
 function returns
-.Nm NULL
+.Dv NULL
 if it was unable to allocate memory for the session.
 The session is terminated by the
 .Fn auth_close
@@ -119,9 +119,10 @@ function,
 which also sets any environment variables requested by the login script
 (assuming the user was not rejected) or removes files created by the
 login script if the authentication was not successful.
-It returns the final state of the authentication request.  A return
-value of 0 implies the user was not authenticated.  A non-zero return
-value is made up the 1 or more of the following values ORed together:
+It returns the final state of the authentication request.
+A return value of 0 implies the user was not authenticated.
+A non-zero return value is made up the 1 or more of the following values
+ORed together:
 .Bl -tag -width AUTH_ROOTOKAYXX
 .It Li AUTH_OKAY
 The user was authenticated.
@@ -139,8 +140,9 @@ In addition to the values above, it also may contain the bits:
 .Bl -tag -width AUTH_ROOTOKAYXX
 .It Li AUTH_SILENT
 Do not report an error, the user was not authenticated for access and
-was not expected to be.  This is returned by login scripts that allow
-changing of the users password, for instance.
+was not expected to be.
+This is returned by login scripts that allow changing of the users password,
+for instance.
 This value is stripped off for normal returns.
 .It Li AUTH_CHALLENGE
 The user was not authenticated for access and a challenge was issued.
@@ -172,7 +174,8 @@ In addition to the pointer to the BSD Authentication session, it takes
 the following parameters:
 .Bl -tag -width indent
 .It Ar path
-The full path name of the login script to run.  The call will fail if
+The full path name of the login script to run.
+The call will fail if
 .Ar path
 does not pass the requirements of the
 .Xr secure_path 3
@@ -181,22 +184,21 @@ function.
 The remaining arguments, which should be of type
 .Ft char *
 and terminated with a
-.Ev NULL
+.Dv NULL
 are passed to the login script at the end of the command line.
 .El
 .Pp
 The
 .Fn auth_call
-function,
-after verifying the
+function, after verifying the
 .Ar path ,
 creates a bi-directional pipe (socketpair) which is located on
-file descriptor 3 for the child (the login script).  This is
-known as the
+file descriptor 3 for the child (the login script).
+This is known as the
 .Dq back channel .
 The actual command line passed to the child is made up of
 3 parts.
-The parameters passed to 
+The parameters passed to
 .Fn auth_call
 following
 .Ar path
@@ -220,16 +222,16 @@ The name and value are separated by an
 .sp
 Once the login script has been spawned, any data specified by the
 .Fn auth_setdata
-is written to the back channel.  Multiple blocks of data may have
-been specified and they will be sent in the same order they were
-specified.  As the data is sent, the storage for the data is
-zeroed out and then freed (the data is zeroed out since it may
-contain sensitive information, such as a password).
+is written to the back channel.
+Multiple blocks of data may have been specified and they will be sent
+in the same order they were specified.
+As the data is sent, the storage for the data is zeroed out and then freed
+(the data is zeroed out since it may contain sensitive information,
+such as a password).
 Once any data is written out,
 .Fn auth_call
-reads up to 8192 bytes of data from the back channel.  The
-state of the session is determined from this data
-(see
+reads up to 8192 bytes of data from the back channel.
+The state of the session is determined from this data (see
 .Xr login.conf 5
 for details).
 If the login script exits with a 0 and does not specify any return state
@@ -278,7 +280,7 @@ It internally uses the
 .Fn auth_call
 function.
 The generated challenge is returned.
-.Nm NULL
+.Dv NULL
 is returned on error or if no challenge was generated.
 The challenge can also be extracted by the
 .Fn auth_getchallenge
@@ -293,8 +295,8 @@ functions check the password expiration (change) and account expiration
 times.
 They return 0 if no change or expiration time is set for the account.
 They return a negative value of how many seconds have passed since
-the password or account expired.  In this case the state of the
-session is marked with either
+the password or account expired.
+In this case the state of the session is marked with either
 .Li AUTH_PWEXPIRED
 or
 .Li AUTH_EXPIRED
@@ -336,10 +338,10 @@ file.
 This value is not directly used by BSD Authentication, rather, it is
 passed to the login scripts for their possible use.
 .It Li AUTH_INTERACTIVE
-If set to any value then the session is tagged as interactive.  If
-not set the session is not interactive.  When the value is requested
-it is always either
-.Nm NULL
+If set to any value then the session is tagged as interactive.
+If not set the session is not interactive.
+When the value is requested it is always either
+.Dv NULL
 or
 .Dq True .
 The auth subroutines may choose to provide additional information to
@@ -393,8 +395,7 @@ on
 .sp
 The
 .Fn auth_setdata
-function
-makes a copy of
+function makes a copy of
 .Fa len
 bytes of data pointed to by
 .Fa ptr
@@ -423,7 +424,7 @@ is
 and
 .Fa value
 is
-.Li NULL
+.Dv NULL
 then all items are cleared.
 .sp
 The
@@ -435,8 +436,8 @@ be set with the value of
 when a script is executed by
 .Fn auth_call .
 The actual arguments to the script will be placed at the beginning
-of the argument vector.  For each option two arguments will be
-issued:
+of the argument vector.
+For each option two arguments will be issued:
 .Li -v name=value .
 .sp
 The function
@@ -446,7 +447,9 @@ If the name has already been set by
 .Fn auth_setitem
 then the
 .Fa pwd
-argument may be NULL, else it must be the password entry to use.
+argument may be
+.Dv NULL ,
+else it must be the password entry to use.
 .sp
 The function
 .Fn auth_setstate

@@ -29,11 +29,11 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login_cap.3,v 1.3 2000/10/18 05:12:07 aaron Exp $
+.\" $OpenBSD: login_cap.3,v 1.4 2000/12/24 00:30:50 aaron Exp $
 .\" BSDI $From: login_cap.3,v 1.4 1997/11/07 16:22:27 jch Exp $
 .\"
 .Dd July 16, 1996
-.Dt LOGIN_CAP 3 
+.Dt LOGIN_CAP 3
 .Os
 .Sh NAME
 .Nm login_getclass ,
@@ -81,15 +81,17 @@ function extracts the entry specified by
 .Li default
 if
 .Ar class
-is NULL or the empty string)
-from
+is
+.Dv NULL
+or the empty string) from
 .Pa /etc/login.conf
 (see
 .Xr login.conf 5 ) .
 If the entry is found, a
 .Li login_cap_t
 pointer is returned.
-NULL is returned if the user class is not found.
+.Dv NULL
+is returned if the user class is not found.
 When the
 .Li login_cap_t
 structure is no longer needed, is should be freed by the
@@ -105,13 +107,16 @@ any of the other
 functions may be called.
 The
 .Fn login_getstyle
-function
-is used to obtain the style of authentication that should be used for
+function is used to obtain the style of authentication that should be used for
 this user class.
 The
 .Ar style
-argument may either be NULL or the desired style of authentication.
-If NULL, the first available authentication style will be used.
+argument may either be
+.Dv NULL
+or the desired style of authentication.
+If
+.Dv NULL ,
+the first available authentication style will be used.
 The
 .Ar type
 argument refers to the type of authentication being performed.
@@ -123,13 +128,17 @@ Future releases may remove the requirement for the "auth-" prefix and add
 it if it is missing.
 If
 .Ar type
-is NULL then only "auth" will be looked at.
+is
+.Dv NULL
+then only "auth" will be looked at.
 (See
 .Xr login.conf 5 ) .
 The
-.Fn login_getstyle 
-function will return NULL if the desired style of authentication
-is not available, or if no style is available.
+.Fn login_getstyle
+function will return
+.Dv NULL
+if the desired style of authentication is not available,
+or if no style is available.
 .Pp
 The
 .Fn login_getcapnum ,
@@ -158,60 +167,60 @@ if no capabilities were found for this class (typically meaning that
 the default class was used and the
 .Li /etc/login.conf
 file is missing).
-It returns a non-zero value if 
+It returns a non-zero value if
 .Ar cap ,
 with no value, was found,
 zero otherwise.
 .Pp
 The
 .Fn secure_path
-function takes a path name and returns 0 if the path name is secure, -1
+function takes a path name and returns 0 if the path name is secure, \-1
 if not.
-To be secure a path must
-exist,
-be a regular file (and not a directory),
-owned by root,
-and only writable by the owner (root).
+To be secure a path must exist, be a regular file (and not a direectory),
+owned by root, and only writable by the owner (root).
 .Pp
 The
 .Fn setclasscontext
 function takes
 .Ar class ,
-the name of a user class,
-and sets the resources defined by that class according to
+the name of a user class, and sets the resources defined by that
+class according to
 .Ar flags.
 Only the
-.Nm LOGIN_SETPATH ,
-.Nm LOGIN_SETPRIORITY ,
-.Nm LOGIN_SETRESOURCES ,
+.Dv LOGIN_SETPATH ,
+.Dv LOGIN_SETPRIORITY ,
+.Dv LOGIN_SETRESOURCES ,
 and
-.Nm LOGIN_SETUMASK
+.Dv LOGIN_SETUMASK
 bits are used.
-(See 
+(See
 .Fn setusercontext
 below).
-It returns 0 on success and -1 on failure.
+It returns 0 on success and \-1 on failure.
 .Pp
 The
 .Fn setusercontext
-function
-sets the resources according to
+function sets the resources according to
 .Ar flags .
 The
 .Ar lc
-argument, if not NULL, contains the class information that should
-be used.
+argument, if not
+.Dv NULL ,
+contains the class information that should be used.
 The
 .Ar pwd
-argument, if not NULL, provides information about the user.
+argument, if not
+.Dv NULL ,
+provides information about the user.
 Both
 .Ar lc
 and
 .Ar pwd
-cannot be NULL.
+cannot be
+.Dv NULL .
 The
 .Ar uid
-argument is used in place of the user id contained in the
+argument is used in place of the user ID contained in the
 .Ar pwd
 structure when calling
 .Xr setuid 2 .
@@ -219,37 +228,37 @@ The various bits available to be or-ed together to make up
 .Ar flags
 are:
 .Bl -tag -width LOGIN_SETRESOURCESXX
-.It LOGIN_SETGROUP
+.It Dv LOGIN_SETGROUP
 Set the group id and call
 .Xr initgroups 3 .
 Requires the
 .Xr pwd
 field be specified.
-.It LOGIN_SETLOGIN
+.It Dv LOGIN_SETLOGIN
 Sets the login name by
 .Xr setlogin 2 .
 Requires the
 .Ar pwd
 field be specified.
-.It LOGIN_SETPATH
+.It Dv LOGIN_SETPATH
 Sets the
 .Ev PATH
 environment variable.
-.It LOGIN_SETPRIORITY
+.It Dv LOGIN_SETPRIORITY
 Sets the priority by
 .Xr setpriority 2 .
-.It LOGIN_SETRESOURCES
+.It Dv LOGIN_SETRESOURCES
 Sets the various system resources by
 .Xr setrlimit 2 .
-.It LOGIN_SETUMASK
+.It Dv LOGIN_SETUMASK
 Sets the umask by
 .Xr umask 2 .
-.It LOGIN_SETUSER
-Sets the user id to
+.It Dv LOGIN_SETUSER
+Sets the user ID to
 .Ar uid
 by
 .Xr setuid 2 .
-.It LOGIN_SETALL
+.It Dv LOGIN_SETALL
 Sets all of the above.
 .El
 .Sh SEE ALSO

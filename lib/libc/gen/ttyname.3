@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ttyname.3,v 1.11 2000/04/18 03:01:28 aaron Exp $
+.\"	$OpenBSD: ttyname.3,v 1.12 2000/12/24 00:30:52 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,8 +68,7 @@ in the initialization file
 .Pp
 The
 .Fn isatty
-function
-determines if the file descriptor
+function determines if the file descriptor
 .Fa fd
 refers to a valid
 terminal type device.
@@ -78,9 +77,7 @@ The
 .Fn ttyname
 and
 .Fn ttyname_r
-functions
-get the related device name of
-a file descriptor for which
+functions get the related device name of a file descriptor for which
 .Fn isatty
 is true.
 The
@@ -100,8 +97,7 @@ The maximum length of the terminal name is
 .Pp
 The
 .Fn ttyslot
-function
-fetches the current process's control terminal number from the
+function fetches the current process's control terminal number from the
 .Xr ttys 5
 file entry.
 .Sh RETURN VALUES
@@ -109,8 +105,7 @@ The
 .Fn ttyname
 and
 .Fn ttyname_r
-functions return the null-terminated
-name if the device is found and
+functions return the null-terminated name if the device is found and
 .Fn isatty
 is true; otherwise
 a null pointer is returned and
@@ -127,8 +122,7 @@ is set to indicate the error.
 .Pp
 The
 .Fn ttyslot
-function
-returns the unit number of the device file if found; otherwise
+function returns the unit number of the device file if found; otherwise
 the value zero is returned.
 .Sh ERRORS
 The
@@ -166,8 +160,7 @@ The
 .Fn ttyname ,
 and
 .Fn ttyslot
-functions
-appeared in
+functions appeared in
 .At v7 .
 The
 .Fn ttyname_r

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: setproctitle.3,v 1.11 2000/08/25 17:43:14 aaron Exp $
+.\"	$OpenBSD: setproctitle.3,v 1.12 2000/12/24 00:30:51 aaron Exp $
 .\"
 .\" Copyright (c) 1994, 1995 Christopher G. Demetriou
 .\" All rights reserved.
@@ -74,10 +74,10 @@ The
 function first appeared in
 .Nx 0.9a .
 .Sh CAVEATS
-It is important to never pass a string with user-supplied data as a 
+It is important to never pass a string with user-supplied data as a
 format without using
 .Ql %s .
-An attacker can put format specifiers in the string to mangle your stack, 
+An attacker can put format specifiers in the string to mangle your stack,
 leading to a possible security hole.
 This holds true even if you have built the string
 .Dq by hand

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolver.3,v 1.13 2000/01/03 11:51:08 itojun Exp $
+.\"	$OpenBSD: resolver.3,v 1.14 2000/12/24 00:30:57 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -108,8 +108,7 @@ Global configuration and state information that is used by the
 resolver routines is kept in the structure
 .Li _res .
 Most of the values have reasonable defaults and can be ignored.
-Options
-stored in
+Options stored in
 .Li _res.options
 are defined in
 .Aq Pa resolv.h
@@ -142,8 +141,7 @@ Used with
 .Dv RES_USEVC
 to keep the
 .Tn TCP
-connection open between
-queries.
+connection open between queries.
 This is useful only in programs that regularly do many queries.
 .Tn UDP
 should be the normal mode used.
@@ -180,12 +178,10 @@ The option is not meaningful on
 .Pp
 The
 .Fn res_init
-routine
-reads the configuration file (if any; see
+routine reads the configuration file (if any; see
 .Xr resolv.conf 5 )
-to get the default domain name,
-search list and
-the Internet address of the local name server(s).
+to get the default domain name, search list, and the Internet address
+of the local name server(s).
 If no server is configured, the host running
 the resolver is tried.
 The current domain name is defined by the hostname
@@ -235,8 +231,7 @@ The
 .Fn res_search
 routine makes a query and awaits a response like
 .Fn res_query ,
-but in addition, it implements the default and search rules
-controlled by the
+but in addition, it implements the default and search rules controlled by the
 .Dv RES_DEFNAMES
 and
 .Dv RES_DNSRCH
@@ -247,11 +242,9 @@ The remaining routines are lower-level routines used by
 .Fn res_query .
 The
 .Fn res_mkquery
-function
-constructs a standard query message and places it in
+function constructs a standard query message and places it in
 .Fa buf .
-It returns the size of the query, or \-1 if the query is
-larger than
+It returns the size of the query, or \-1 if the query is larger than
 .Fa buflen .
 The query type
 .Fa op
@@ -266,21 +259,18 @@ is currently unused but is intended for making update messages.
 .Pp
 The
 .Fn res_send
-routine
-sends a pre-formatted query and returns an answer.
+routine sends a pre-formatted query and returns an answer.
 It will call
 .Fn res_init
 if
 .Dv RES_INIT
 is not set, send the query to the local name server, and
 handle timeouts and retries.
-The length of the reply message is returned, or
-\-1 if there were errors.
+The length of the reply message is returned, or \-1 if there were errors.
 .Pp
 The
 .Fn dn_comp
-function
-compresses the domain name
+function compresses the domain name
 .Fa exp_dn
 and stores it in
 .Fa comp_dn .
@@ -289,8 +279,7 @@ The size of the array pointed to by
 .Fa comp_dn
 is given by
 .Fa length .
-The compression uses
-an array of pointers
+The compression uses an array of pointers
 .Fa dnptrs
 to previously compressed names in the current message.
 The first pointer points
@@ -300,8 +289,7 @@ The limit to the array is specified by
 .Fa lastdnptr .
 A side effect of
 .Fn dn_comp
-is to update the list of pointers for
-labels inserted into the message
+is to update the list of pointers for labels inserted into the message
 as the name is compressed.
 If
 .Em dnptr
@@ -316,8 +304,7 @@ the list of labels is not updated.
 .Pp
 The
 .Fn dn_expand
-entry
-expands the compressed domain name
+entry expands the compressed domain name
 .Fa comp_dn
 to a full domain name
 The compressed name is contained in a query or reply message;

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: scanf.3,v 1.9 2000/07/31 22:20:56 pjanzen Exp $
+.\"	$OpenBSD: scanf.3,v 1.10 2000/12/24 00:30:59 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -113,8 +113,7 @@ All conversions are introduced by the
 (percent sign) character.
 The
 .Fa format
-string
-may also contain other characters.
+string may also contain other characters.
 Whitespace (such as blanks, tabs, or newlines) in the
 .Fa format
 string match any amount of whitespace, including none, in the input.
@@ -333,8 +332,7 @@ a conversion, although it can be suppressed with the
 flag.
 .El
 .Pp
-For backwards compatibility,
-other conversion characters (except
+For backwards compatibility, other conversion characters (except
 .Ql \e0 )
 are taken as if they were
 .Ql %d
@@ -345,15 +343,10 @@ and a `conversion' of
 causes an immediate return of
 .Dv EOF .
 .Sh RETURN VALUES
-These
-functions
-return
-the number of input items assigned, which can be fewer than provided
-for, or even zero, in the event of a matching failure.
-Zero
-indicates that, while there was input available,
-no conversions were assigned;
-typically this is due to an invalid input character,
+These functions return the number of input items assigned, which can be fewer
+than provided for, or even zero, in the event of a matching failure.
+Zero indicates that, while there was input available, no conversions were
+assigned; typically this is due to an invalid input character,
 such as an alphabetic character for a
 .Ql %d
 conversion.

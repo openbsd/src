@@ -1,4 +1,4 @@
-.\"	$OpenBSD: authenticate.3,v 1.2 2000/12/23 16:03:06 markus Exp $
+.\"	$OpenBSD: authenticate.3,v 1.3 2000/12/24 00:30:46 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -68,11 +68,11 @@
 .Fn auth_verify "auth_session_t *as" "char *style" "char *name" "..."
 .Sh DESCRIPTION
 These functions provide a simplified interface to the BSD Authentication
-system 
+system
 .Pq see Xr bsd_auth 3 Ns .
 The
 .Fn auth_userokay
-function provides a single function call interface.  
+function provides a single function call interface.
 Provided a user's name in
 .Ar name
 and an optional
@@ -88,9 +88,11 @@ If
 .Ar style
 is not
 .Dv NULL
-it specifies the desired style of authentication to be used.  If it is
+it specifies the desired style of authentication to be used.
+If it is
 .Dv NULL
-then the default style for the user is used.  In this case
+then the default style for the user is used.
+In this case
 .Ar name
 may include the desired style by appending it to the user's name with a
 single colon
@@ -109,7 +111,8 @@ is
 then
 .Fn auth_userokay
 operates in an interactive mode with the user on standard input, output,
-and error.  If
+and error.
+If
 .Ar password
 is specified,
 .Fn auth_userokay
@@ -121,8 +124,8 @@ The
 .Fn auth_usercheck
 function operates the same as the
 .Fn auth_userokay
-function except that it does not close the BSD Authentication session
-created.  Rather than returning the status of the session it returns
+function except that it does not close the BSD Authentication session created.
+Rather than returning the status of the session it returns
 a pointer to the newly created BSD Authentication session.
 .Pp
 The
@@ -170,11 +173,11 @@ The string
 .Dq approve-
 will be prepended to
 .Ar type
-if missing. 
+if missing.
 The resulting type is used to lookup an entry in the
 .Pa /etc/login.conf
-for the user's class.  If the entry is missing the generic
-entry for
+for the user's class.
+If the entry is missing the generic entry for
 .Dq approve
 will be used.
 The
@@ -182,7 +185,8 @@ The
 argument will be passed to the approval program as the name of the user.
 The
 .Ar lc
-argument points to a login class structure.  If it is
+argument points to a login class structure.
+If it is
 .Dv NULL
 then a login class structure will be looked up for the class of
 user
@@ -193,12 +197,12 @@ function returns a value of 0 on failure to approve the user.
 .Pp
 Prior to actually calling the approval script, the account's
 expiration time, the associated nologin file, and existence
-of the account's home directory 
+of the account's home directory
 .Po
 if
 .Li requirehome
 is set for this class
-.Pc 
+.Pc
 are checked.
 Failure on any of these points causes the
 .Fn auth_approval
@@ -234,27 +238,27 @@ The
 .Fn auth_verify
 function is a front end to the
 .Fn auth_call
-function 
+function
 .Pq see Xr auth_subr 3 Ns .
 It will open a BSD Authentication session, if needed, and will set
 the style and user name based on the
 .Ar style
 and
 .Ar name
-arguments, if not 
+arguments, if not
 .Dv NULL .
 The variable arguments are passed to
 .Fn auth_call
 via the
 .Fn auth_set_va_list
-function 
+function
 .Pq see Xr auth_subr 3 Ns .
 The, possibly created, BSD Authentication session is returned.
 The
 .Fn auth_getstate
 or
 .Fn auth_close
-function 
+function
 .Pq see Xr auth_subr 3
 should be used to determine the outcome of the authentication request.
 .Pp
@@ -263,12 +267,12 @@ The
 function takes a null terminated string pointed to by
 .Ar value
 and returns a null terminated string suitable for passing
-back to a calling program on the back channel.  This function
-is for use by the login scripts themselves.
+back to a calling program on the back channel.
+This function is for use by the login scripts themselves.
 The string returned should be freed by
 .Xr free 3
 when it is no longer needed.
-A value of 
+A value of
 .Dv NULL
 is returned if no memory was available for the new copy of the string.
 .Sh SEE ALSO

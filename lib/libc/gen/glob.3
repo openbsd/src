@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.15 2000/12/15 14:31:19 aaron Exp $
+.\"	$OpenBSD: glob.3,v 1.16 2000/12/24 00:30:49 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,9 +49,8 @@
 .Sh DESCRIPTION
 The
 .Fn glob
-function
-is a pathname generator that implements the rules for file name pattern
-matching used by the shell.
+function is a pathname generator that implements the rules for file name
+pattern matching used by the shell.
 .Pp
 The include file
 .Aq Pa glob.h
@@ -99,8 +98,7 @@ It is the caller's responsibility to create the structure pointed to by
 .Fa pglob .
 The
 .Fn glob
-function allocates other space as needed, including the memory pointed
-to by
+function allocates other space as needed, including the memory pointed to by
 .Fa gl_pathv .
 .Pp
 The argument
@@ -204,9 +202,8 @@ The following additional fields in the
 structure have been
 initialized with alternate functions for
 .Fn glob
-to use to open, read,
-and close directories and to get stat information on names found
-in those directories.
+to use to open, read, and close directories and to get stat information
+on names found in those directories.
 .Bd -literal
 	void *(*gl_opendir)(const char * name);
 	struct dirent *(*gl_readdir)(void *);
@@ -227,9 +224,7 @@ The pattern
 .Ql {}
 is left unexpanded for historical reasons.
 .Xr (csh 1
-does the same thing to
-ease typing
-of
+does the same thing to ease typing of
 .Xr find 1
 patterns.)
 .It Dv GLOB_MAGCHAR
@@ -276,8 +271,7 @@ will try to
 .Dq foo/Makefile
 even if
 .Dq foo
-is not a directory, resulting in a
-call to
+is not a directory, resulting in a call to
 .Fa errfunc .
 The error routine can suppress this action by testing for
 .Er ENOENT
@@ -285,8 +279,7 @@ and
 .Er ENOTDIR ;
 however, the
 .Dv GLOB_ERR
-flag will still cause an immediate
-return when this happens.
+flag will still cause an immediate return when this happens.
 .Pp
 If
 .Fa errfunc
@@ -354,8 +347,7 @@ or
 .Ql [ ,
 cleared if not.
 .It Fa gl_pathv
-Contains a pointer to a null-terminated
-list of matched pathnames.
+Contains a pointer to a null-terminated list of matched pathnames.
 However, if
 .Fa gl_pathc
 is zero, the contents of
@@ -396,8 +388,7 @@ are still set as specified above.
 .Sh EXAMPLES
 A rough equivalent of
 .Ql "ls -l *.c *.h"
-can be obtained with the
-following code:
+can be obtained with the following code:
 .Bd -literal -offset indent
 glob_t g;
 
@@ -431,8 +422,7 @@ and the fields
 .Fa gl_matchc
 and
 .Fa gl_flags
-should not be used by applications striving for strict
-standards conformance.
+should not be used by applications striving for strict standards conformance.
 .Sh HISTORY
 The
 .Fn glob

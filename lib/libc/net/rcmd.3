@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rcmd.3,v 1.22 2000/12/21 22:59:53 deraadt Exp $
+.\"	$OpenBSD: rcmd.3,v 1.23 2000/12/24 00:30:56 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -62,8 +62,7 @@
 .Sh DESCRIPTION
 The
 .Fn rcmd
-function
-is used by the superuser to execute a command on a remote
+function is used by the superuser to execute a command on a remote
 machine using an authentication scheme based on reserved
 port numbers.
 If the calling process is not setuid, the
@@ -92,8 +91,7 @@ The
 .Fn rresvport
 and
 .Fn rresvport_af
-functions
-return a descriptor to a socket
+functions return a descriptor to a socket
 with an address in the privileged port space.
 The
 .Fn iruserok
@@ -112,8 +110,7 @@ is an address family independent variant of
 .Pp
 The
 .Fn rcmd
-function
-looks up the host
+function looks up the host
 .Fa *ahost
 using
 .Xr gethostbyname 3 ,
@@ -245,16 +242,14 @@ and
 .Sh DIAGNOSTICS
 The
 .Fn rcmd
-function
-returns a valid socket descriptor on success.
+function returns a valid socket descriptor on success.
 It returns \-1 on error and prints a diagnostic message on the standard error.
 .Pp
 The
 .Fn rresvport
 and
 .Fn rresvport_af
-functions
-return a valid, bound socket descriptor on success.
+functions return a valid, bound socket descriptor on success.
 It returns \-1 on error with the global value
 .Va errno
 set according to the reason for failure.

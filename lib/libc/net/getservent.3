@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getservent.3,v 1.10 2000/12/17 21:30:38 millert Exp $
+.\"	$OpenBSD: getservent.3,v 1.11 2000/12/24 00:30:56 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,11 +59,8 @@ The
 .Fn getservbyname ,
 and
 .Fn getservbyport
-functions
-each return a pointer to an object with the
-following structure
-containing the broken-out
-fields of a line in the network services database,
+functions each return a pointer to an object with the following structure
+containing the broken-out fields of a line in the network services database,
 .Pa /etc/services .
 .Bd -literal -offset indent
 struct	servent {
@@ -84,19 +81,16 @@ A zero-terminated list of alternate names for the service.
 The port number at which the service resides.
 Port numbers are returned in network byte order.
 .It Fa s_proto
-The name of the protocol to use when contacting the
-service.
+The name of the protocol to use when contacting the service.
 .El
 .Pp
 The
 .Fn getservent
-function
-reads the next line of the file, opening the file if necessary.
+function reads the next line of the file, opening the file if necessary.
 .Pp
 The
 .Fn setservent
-function
-opens and rewinds the file.
+function opens and rewinds the file.
 If the
 .Fa stayopen
 flag is non-zero,
@@ -107,19 +101,15 @@ or
 .Pp
 The
 .Fn endservent
-function
-closes the file.
+function closes the file.
 .Pp
 The
 .Fn getservbyname
 and
 .Fn getservbyport
-functions
-sequentially search from the beginning
-of the file until a matching
-protocol name or
-port number (specified in network byte order) is found,
-or until
+functions sequentially search from the beginning of the file until a
+matching protocol name or port number (specified in network byte order)
+is found, or until
 .Dv EOF
 is encountered.
 If a protocol name is also supplied (non-null),
@@ -129,8 +119,7 @@ searches must also match the protocol.
 .It Pa /etc/services
 .El
 .Sh DIAGNOSTICS
-Null pointer
-(0) returned on
+Null pointer (0) returned on
 .Dv EOF
 or error.
 .Sh SEE ALSO
@@ -147,7 +136,6 @@ and
 functions appeared in
 .Bx 4.2 .
 .Sh BUGS
-These functions use static data storage;
-if the data is needed for future use, it should be
-copied before any subsequent calls overwrite it.
+These functions use static data storage; if the data is needed for future use,
+it should be copied before any subsequent calls overwrite it.
 Expecting port numbers to fit in a 32-bit quantity is probably naive.

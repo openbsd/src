@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.58 2000/12/21 01:14:13 itojun Exp $
+.\"	$OpenBSD: sysctl.3,v 1.59 2000/12/24 00:30:52 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -723,8 +723,9 @@ The default value is 60 seconds.
 Returns 1 if Path MTU Discovery is enabled.
 .It Li ip.mtudisctimeout
 Returns the number of seconds in which a route added by the Path MTU
-Discovery engine will time out.  When the route times out, the Path
-MTU Discovery engine will attempt to probe a larger path MTU.
+Discovery engine will time out.
+When the route times out, the Path MTU Discovery engine will attempt
+to probe a larger path MTU.
 .It Li ipip.allow
 If set to 0, incoming IP-in-IP packets will not be processed.
 If set to any other value, processing will occur.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: unvis.3,v 1.11 2000/04/18 03:01:28 aaron Exp $
+.\"	$OpenBSD: unvis.3,v 1.12 2000/12/24 00:30:53 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -49,12 +49,10 @@ The
 .Fn unvis
 and
 .Fn strunvis
-functions
-are used to decode a visual representation of characters, as produced
-by the
+functions are used to decode a visual representation of characters,
+as produced by the
 .Xr vis 3
-function, back into
-the original form.
+function, back into the original form.
 .Fn unvis
 is called with successive characters in
 .Fa c
@@ -71,8 +69,7 @@ into the buffer pointed to by
 .Pp
 The
 .Fn strunvis
-function
-simply copies
+function simply copies
 .Fa src
 to
 .Fa dst ,
@@ -90,8 +87,7 @@ equal to the size of
 .Pp
 The
 .Fn unvis
-function
-implements a state machine that can be used to decode an arbitrary
+function implements a state machine that can be used to decode an arbitrary
 stream of bytes.
 All state associated with the bytes being decoded is stored outside the
 .Fn unvis
@@ -105,8 +101,7 @@ with each successive byte, along with a pointer
 to this integer, and a pointer to a destination character.
 The
 .Fn unvis
-function
-has several return codes that must be handled properly.
+function has several return codes that must be handled properly.
 They are:
 .Bl -tag -width UNVIS_VALIDPUSH
 .It Li \&0 (zero)

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getpwent.3,v 1.14 2000/11/21 00:49:58 millert Exp $
+.\"	$OpenBSD: getpwent.3,v 1.15 2000/12/24 00:30:49 aaron Exp $
 .\"
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -58,9 +58,7 @@
 .Ft void
 .Fn endpwent void
 .Sh DESCRIPTION
-These functions
-operate on the password database file
-which is described in
+These functions operate on the password database file which is described in
 .Xr passwd 5 .
 Each entry in the database is defined by the structure
 .Li struct passwd
@@ -118,8 +116,7 @@ with an argument of zero.
 .Pp
 The
 .Fn endpwent
-function
-closes any open files.
+function closes any open files.
 .Pp
 These routines have been written to
 .Dq shadow
@@ -144,8 +141,7 @@ The
 .Fn endpwent
 and
 .Fn setpwent
-functions
-have no return value.
+functions have no return value.
 .Sh FILES
 .Bl -tag -width /etc/master.passwd -compact
 .It Pa /etc/pwd.db

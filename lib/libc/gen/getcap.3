@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getcap.3,v 1.19 2000/04/18 03:01:26 aaron Exp $
+.\"	$OpenBSD: getcap.3,v 1.20 2000/12/24 00:30:47 aaron Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -74,8 +74,7 @@
 .Sh DESCRIPTION
 The
 .Fn cgetent
-function
-extracts the capability record
+function extracts the capability record
 .Fa name
 from the database specified by the null-terminated
 file array
@@ -220,8 +219,7 @@ character of the capability string literally.
 and
 .Fn cgetnext
 comprise a function group that provides for sequential
-access of the null-terminated
-array of file names,
+access of the null-terminated array of file names,
 .Fa db_array .
 .Fn cgetfirst
 returns the first record in the database and resets the access
@@ -265,15 +263,12 @@ and may be edited with standard
 text editors.
 Blank lines and lines beginning with a
 .Sq \&#
-are comments
-and ignored.
+are comments and are ignored.
 Lines ending with a
 .Sq \|\e
-indicate that the next line
-is a continuation of the current line; the
+indicate that the next line is a continuation of the current line; the
 .Sq \|\e
-and following newline
-are ignored.
+and following newline are ignored.
 Long lines are usually continued onto several physical
 lines by ending each line except the last with a
 .Sq \|\e .

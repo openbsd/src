@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fopen.3,v 1.10 2000/10/18 14:33:36 aaron Exp $
+.\"	$OpenBSD: fopen.3,v 1.11 2000/12/24 00:30:58 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -54,8 +54,7 @@
 .Sh DESCRIPTION
 The
 .Fn fopen
-function
-opens the file whose name is the string pointed to by
+function opens the file whose name is the string pointed to by
 .Fa path
 and associates a stream with it.
 .Pp
@@ -134,8 +133,7 @@ is not affected in any way.
 .Pp
 The
 .Fn freopen
-function
-opens the file whose name is the string pointed to by
+function opens the file whose name is the string pointed to by
 .Fa path
 and associates the stream pointed to by
 .Fa stream
@@ -150,9 +148,7 @@ argument is used just as in the
 function.
 The primary use of the
 .Fn freopen
-function
-is to change the file associated with a
-standard text stream
+function is to change the file associated with a standard text stream
 .Pf ( Em stderr ,
 .Em stdin ,
 or
@@ -189,32 +185,28 @@ The
 .Fn fdopen
 and
 .Fn freopen
-functions
-may also fail and set
+functions may also fail and set
 .Va errno
 for any of the errors specified for the routine
 .Xr malloc 3 .
 .Pp
 The
 .Fn fopen
-function
-may also fail and set
+function may also fail and set
 .Va errno
 for any of the errors specified for the routine
 .Xr open 2 .
 .Pp
 The
 .Fn fdopen
-function
-may also fail and set
+function may also fail and set
 .Va errno
 for any of the errors specified for the routine
 .Xr fcntl 2 .
 .Pp
 The
 .Fn freopen
-function
-may also fail and set
+function may also fail and set
 .Va errno
 for any of the errors specified for the routines
 .Xr open 2 ,
@@ -231,13 +223,11 @@ The
 .Fn fopen
 and
 .Fn freopen
-functions
-conform to
+functions conform to
 .St -ansiC .
 The
 .Fn fdopen
-function
-conforms to
+function conforms to
 .St -p1003.1-88 .
 .Sh CAVEATS
 Proper code using

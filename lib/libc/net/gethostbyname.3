@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gethostbyname.3,v 1.15 2000/04/18 03:01:31 aaron Exp $
+.\"	$OpenBSD: gethostbyname.3,v 1.16 2000/12/24 00:30:56 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -68,10 +68,8 @@ The
 .Fn gethostbyname
 and
 .Fn gethostbyaddr
-functions
-each return a pointer to an object with the
-following structure describing an internet host
-referenced by name or by address, respectively.
+functions each return a pointer to an object with the following structure
+describing an internet host referenced by name or by address, respectively.
 This structure contains either information obtained from the name server (i.e.,
 .Xr resolver 3
 and
@@ -140,8 +138,7 @@ The only address family currently supported is
 .Pp
 The
 .Fn sethostent
-function
-may be used to request the use of a connected
+function may be used to request the use of a connected
 .Tn TCP
 socket for queries.
 If the
@@ -159,8 +156,7 @@ datagrams.
 .Pp
 The
 .Fn endhostent
-function
-closes the
+function closes the
 .Tn TCP
 connection.
 .Pp
@@ -239,13 +235,11 @@ re-opening the file if necessary.
 .Pp
 The
 .Fn sethostent
-function
-opens and/or rewinds the file
+function opens and/or rewinds the file
 .Pa /etc/hosts .
 If the
 .Fa stayopen
-argument is non-zero,
-the file will not be closed after each call to
+argument is non-zero, the file will not be closed after each call to
 .Fn gethostbyname ,
 .Fn gethostbyname2 ,
 or
@@ -253,8 +247,7 @@ or
 .Pp
 The
 .Fn endhostent
-function
-closes the file.
+function closes the file.
 .Sh HISTORY
 The
 .Fn herror

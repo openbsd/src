@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.9 2000/08/25 17:43:14 aaron Exp $
+.\"	$OpenBSD: syslog.3,v 1.10 2000/12/24 00:30:52 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -57,8 +57,7 @@
 .Sh DESCRIPTION
 The
 .Fn syslog
-function
-writes
+function writes
 .Fa message
 to the system message logger.
 The message is then written to the system console, log files,
@@ -78,8 +77,7 @@ A trailing newline is added if none is present.
 .Pp
 The
 .Fn vsyslog
-function
-is an alternate form in which the arguments have already been captured
+function is an alternate form in which the arguments have already been captured
 using the variable-length argument facilities of
 .Xr varargs 3 .
 .Pp
@@ -119,9 +117,7 @@ normally of use only when debugging a program.
 .Pp
 The
 .Fn openlog
-function
-provides for more specialized processing of the messages sent
-by
+function provides for more specialized processing of the messages sent by
 .Fn syslog
 and
 .Fn vsyslog .
@@ -215,13 +211,11 @@ through
 .Pp
 The
 .Fn closelog
-function
-can be used to close the log file.
+function can be used to close the log file.
 .Pp
 The
 .Fn setlogmask
-function
-sets the log priority mask to
+function sets the log priority mask to
 .Fa maskpri
 and returns the previous mask.
 Calls to

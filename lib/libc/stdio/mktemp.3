@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.24 2000/11/22 18:13:23 deraadt Exp $
+.\"	$OpenBSD: mktemp.3,v 1.25 2000/12/24 00:30:58 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -86,9 +86,8 @@ should be used, though 10 is much better.
 .Pp
 The
 .Fn mkstemp
-function
-makes the same replacement to the template and creates the template file,
-mode 0600, returning a file descriptor opened for reading and writing.
+function makes the same replacement to the template and creates the template
+file, mode 0600, returning a file descriptor opened for reading and writing.
 This avoids the race between testing for a file's existence and opening it
 for use.
 .Pp
@@ -125,8 +124,7 @@ The
 .Fn mkstemp
 and
 .Fn mkdtemp
-functions
-may set
+functions may set
 .Va errno
 to one of the following values:
 .Bl -tag -width Er

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ctermid.3,v 1.4 1999/06/04 01:30:10 aaron Exp $
+.\"	$OpenBSD: ctermid.3,v 1.5 2000/12/24 00:30:47 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -80,8 +80,7 @@ function conforms to
 .Sh BUGS
 By default the
 .Fn ctermid
-function
-writes all information to an internal static object.
+function writes all information to an internal static object.
 Subsequent calls to
 .Fn ctermid
 will modify the same object.

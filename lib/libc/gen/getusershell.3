@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getusershell.3,v 1.8 2000/04/18 03:01:27 aaron Exp $
+.\"	$OpenBSD: getusershell.3,v 1.9 2000/12/24 00:30:49 aaron Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -50,8 +50,7 @@
 .Sh DESCRIPTION
 The
 .Fn getusershell
-function
-returns a pointer to a legal user shell as defined by the
+function returns a pointer to a legal user shell as defined by the
 system manager in the file
 .Pa /etc/shells .
 If
@@ -66,8 +65,7 @@ were listed in the file.
 .Pp
 The
 .Fn getusershell
-function
-reads the next
+function reads the next
 line (opening the file if necessary);
 .Fn setusershell
 rewinds the file;

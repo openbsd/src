@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgrent.3,v 1.9 2000/04/18 03:01:26 aaron Exp $
+.\"	$OpenBSD: getgrent.3,v 1.10 2000/12/24 00:30:48 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -123,8 +123,7 @@ with an argument of zero.
 .Pp
 The
 .Fn endgrent
-function
-closes any open files.
+function closes any open files.
 .Pp
 The
 .Fn getgrgid_r
@@ -207,7 +206,7 @@ The functions
 .Fn getgrent ,
 .Fn getgrnam ,
 .Fn getgrgid ,
-.Fn setgroupent
+.Fn setgroupent ,
 and
 .Fn setgrent
 leave their results in an internal static object and return

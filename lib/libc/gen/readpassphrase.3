@@ -1,4 +1,4 @@
-.\"	$OpenBSD: readpassphrase.3,v 1.1 2000/11/21 00:48:37 millert Exp $
+.\"	$OpenBSD: readpassphrase.3,v 1.2 2000/12/24 00:30:50 aaron Exp $
 .\"
 .\" Copyright (c) 2000 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -46,7 +46,8 @@ and the
 flag is not set,
 .Fn readpassphrase
 displays the prompt on the standard error output and reads from the standard
-input.  In this case it is generally not possible to turn off echo.
+input.
+In this case it is generally not possible to turn off echo.
 .Pp
 Up to
 .Fa bufsiz
@@ -74,14 +75,14 @@ space.
 .Sh RETURN VALUES
 On success,
 .Fn readpassphrase
-returns a pointer to the NUL-terminated passphrase.  If the
+returns a pointer to the null-terminated passphrase.
+If the
 .Dv RPP_REQUIRE_TTY
 flag is set and
 .Pa /dev/tty
 is inaccessible,
 .Fn readpassphrase
-returns the
-.Dv NULL pointer.
+returns a null pointer.
 .Sh EXAMPLES
 The following code fragment will read a passphrase from
 .Pa /dev/tty

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: initgroups.3,v 1.9 2000/04/15 11:46:02 aaron Exp $
+.\"	$OpenBSD: initgroups.3,v 1.10 2000/12/24 00:30:49 aaron Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -44,19 +44,16 @@
 .Sh DESCRIPTION
 The
 .Fn initgroups
-function
-uses the
+function uses the
 .Xr getgrouplist 3
-function to calculate the supplementary group IDs for the user
-specified in
+function to calculate the supplementary group IDs for the user specified in
 .Fa name .
 This group list then set up for the current process using
 .Xr setgroups 2 .
 The
 .Fa basegid
 is automatically included in the group list.
-Typically this value is given as
-the group number from the password file.
+Typically this value is given as the group number from the password file.
 .Pp
 If the groups database lists more than
 .Ev NGROUPS
@@ -68,8 +65,7 @@ the later groups are ignored.
 .Sh RETURN VALUES
 The
 .Fn initgroups
-function
-returns \-1 if it was not invoked by the superuser.
+function returns \-1 if it was not invoked by the superuser.
 .Sh SEE ALSO
 .Xr setgroups 2 ,
 .Xr getgrouplist 3
@@ -85,7 +81,6 @@ function called by
 .Fn initgroups
 uses the routines based on
 .Xr getgrent 3 .
-If the invoking program uses any of these routines,
-the group structure will
-be overwritten in the call to
+If the invoking program uses any of these routines, the group structure
+will be overwritten in the call to
 .Fn initgroups .
