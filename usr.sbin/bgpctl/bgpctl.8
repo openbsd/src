@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpctl.8,v 1.17 2004/04/30 06:15:44 jmc Exp $
+.\" $OpenBSD: bgpctl.8,v 1.18 2004/05/21 16:01:57 claudio Exp $
 .\"
 .\" Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
 .\"
@@ -99,6 +99,14 @@ routing table.
 Take the bgp session to the specified neighbor up.
 .It Li neighbor Ar address down
 Take the bgp session to the specified neighbor down.
+.It Li network add Ar prefix
+Add the specified prefix to the list of announced networks.
+.It Li network delete Ar prefix
+Remove the specified prefix from the list of announced networks.
+.It Li network flush
+Remove all dynamicaly added prefixes form the list of announced networks.
+.It Li network flush
+Show all announced networks.
 .El
 .Pp
 Commands to switch between displays may be abbreviated to the
