@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.60 1998/06/26 01:50:42 deraadt Exp $
+$OpenBSD: pcidevs,v 1.61 1998/06/29 20:51:29 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -481,6 +481,7 @@ vendor COMPEX		0x11f6	Compex
 vendor PMCSIERRA	0x11f8	PMC-Sierra
 vendor CYCLADES		0x120e	Cyclades
 vendor ESSENTIAL	0x120f	Essential Communications
+vendor 3DFX		0x121a	3DFX Interactive
 vendor ARIEL		0x1220	Ariel
 vendor AZTECH		0x122d	Aztech
 vendor 3DO		0x1239	The 3D0 Company
@@ -528,6 +529,10 @@ product	3COM 3C900COMBO		0x9001	3c900 10Mbps-Combo
 product	3COM 3C905TX		0x9050	3c905 100Base-TX
 product	3COM 3C905T4		0x9051	3c905 100Base-T4
 product	3COM 3C905B		0x9055	3c905B 100Base-T4
+
+/* 3DFX Interactive */
+product 3DFX VOODOO		0x0001	Voodoo
+product 3DFX VOODOO2		0x0002	Voodoo2
 
 /* 3D Labs products */
 product 3DLABS 300SX		0x0001	300SX (Glint)
