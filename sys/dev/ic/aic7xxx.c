@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx.c,v 1.60 2004/10/24 04:28:33 krw Exp $	*/
+/*	$OpenBSD: aic7xxx.c,v 1.61 2004/12/30 17:20:09 krw Exp $	*/
 /*	$NetBSD: aic7xxx.c,v 1.108 2003/11/02 11:07:44 wiz Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.60 2004/10/24 04:28:33 krw Exp $
+ * $Id: aic7xxx.c,v 1.61 2004/12/30 17:20:09 krw Exp $
  */
 /*
  * Ported from FreeBSD by Pascal Renauld, Network Storage Solutions, Inc. - April 2003
@@ -6523,55 +6523,47 @@ ahc_print_register(ahc_reg_parse_entry_t *table, u_int num_entries,
 		   const char *name, u_int address, u_int value,
 		   u_int *cur_column, u_int wrap_point)
 {
-	int	printed;
-	u_int	printed_mask;
-	char    line[1024];
+	u_int printed_mask;
+	char line[1024];
+	int entry, printed;
 
 	line[0] = 0;
+	printed_mask = 0;
 
 	if (cur_column != NULL && *cur_column >= wrap_point) {
 		printf("\n");
 		*cur_column = 0;
 	}
-	printed = snprintf(line, sizeof(line), "%s[0x%x]", name, value);
-	if (table == NULL) {
-		printed += snprintf(&line[printed], (sizeof line) - printed,
-		    " ");
-		printf("%s", line);
-		if (cur_column != NULL)
-			*cur_column += printed;
-		return (printed);
-	}
-	printed_mask = 0;
-	while (printed_mask != 0xFF) {
-		int entry;
+	snprintf(line, sizeof(line), "%s[0x%x]", name, value);
+	if (table == NULL)
+		goto done;
 
+	while (printed_mask != 0xFF) {
 		for (entry = 0; entry < num_entries; entry++) {
-			if (((value & table[entry].mask)
-			  != table[entry].value)
-			 || ((printed_mask & table[entry].mask)
-			  == table[entry].mask))
+			if (((value & table[entry].mask) != table[entry].value)
+			    || ((printed_mask & table[entry].mask) ==
+			    table[entry].mask))
 				continue;
-			printed += snprintf(&line[printed],
-			    (sizeof line) - printed, "%s%s", 
-				printed_mask == 0 ? ":(" : "|",
-				table[entry].name);
+			if (printed_mask == 0)
+				strlcat(line, ":(", sizeof line);
+			else
+				strlcat(line, "|", sizeof line);
+			strlcat(line, table[entry].name, sizeof line);
 			printed_mask |= table[entry].mask;
-			
 			break;
 		}
 		if (entry >= num_entries)
 			break;
 	}
 	if (printed_mask != 0)
-		printed += snprintf(&line[printed],
-		    (sizeof line) - printed, ") ");
-	else
-		printed += snprintf(&line[printed],
-		    (sizeof line) - printed, " ");
+		strlcat(line, ")", sizeof line);
+
+done:
+	printf("%s ", line);
+	printed = strlen(line) + 1;
+
 	if (cur_column != NULL)
 		*cur_column += printed;
-	printf("%s", line);
 
 	return (printed);
 }
