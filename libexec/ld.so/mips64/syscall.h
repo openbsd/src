@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.h,v 1.1 2004/08/11 17:11:45 pefo Exp $ */
+/*	$OpenBSD: syscall.h,v 1.2 2004/09/09 17:47:44 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -45,18 +45,18 @@ extern long _dl__syscall(quad_t val, ...);
  *  any dynamic address resolving has been done.
  */
 
-extern inline int
+extern inline void
 _dl_exit(int status)
 {
 	register int __status __asm__ ("$2");
 
 	__asm__ volatile (
-	    "move  $2,%1\n\t"
 	    "move  $4,%2\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall"
 	    : "=r" (__status)
-	    : "0" (SYS_exit), "r" (status)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_exit), "r" (status)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	while (1)
 		;
@@ -68,16 +68,16 @@ _dl_open(const char* addr, int flags)
 	register int status __asm__ ("$2");
 
 	__asm__ volatile (
-	    "move  $2,%1\n\t"
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
 	    "li    $2,-1\n\t"
 	    "1:"
 	    : "=r" (status)
-	    : "0" (SYS_open), "r" (addr), "r" (flags)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_open), "r" (addr), "r" (flags)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -88,15 +88,15 @@ _dl_close(int fd)
 	register int status __asm__ ("$2");
 
 	__asm__ volatile (
-	    "move  $2,%1\n\t"
 	    "move  $4,%2\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
 	    "li    $2,-1\n\t"
 	    "1:"
 	    : "=r" (status)
-	    : "0" (SYS_close), "r" (fd)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_close), "r" (fd)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -107,17 +107,17 @@ _dl_write(int fd, const char* buf, size_t len)
 	register ssize_t status __asm__ ("$2");
 
 	__asm__ volatile (
-	    "move  $2,%1\n\t"
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "move  $6,%4\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
 	    "li    $2,-1\n\t"
 	    "1:"
 	    : "=r" (status)
-	    : "0" (SYS_write), "r" (fd), "r" (buf), "r" (len)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_write), "r" (fd), "r" (buf), "r" (len)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -128,57 +128,26 @@ _dl_read(int fd, const char* buf, size_t len)
 	register ssize_t status __asm__ ("$2");
 
 	__asm__ volatile (
-	    "move  $2,%1\n\t"
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "move  $6,%4\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
 	    "li    $2,-1\n\t"
 	    "1:"
 	    : "=r" (status)
-	    : "0" (SYS_read), "r" (fd), "r" (buf), "r" (len)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_read), "r" (fd), "r" (buf), "r" (len)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
 
 extern inline void *
-_dl_mmap(void *addr, size_t size, int prot, int flags, int fd, off_t f_offset)
+_dl_mmap(void *addr, size_t len, int prot, int flags, int fd, off_t offset)
 {
-	register void * malloc_buffer __asm__ ("$2");
-
-	__asm__ volatile (
-	    "move  $2,%1\n\t"
-	    "addiu $29,-40\n\t"
-	    "move  $6,%2\n\t"
-	    "move  $7,%3\n\t"
-	    "sw    %4,16($29)\n\t"
-	    "sw    %5,20($29)\n\t"
-#ifdef __MIPSEL__
-	    "li    $4,197\n\t"
-	    "li    $5,0\n\t"
-	    "sw    %6,24($29)\n\t"
-	    "sw    $0,28($29)\n\t"
-	    "sw    %7,32($29)\n\t"
-	    "sw    $0,36($29)\n\t"
-#endif
-#ifdef __MIPSEB__
-	    "li    $4,0\n\t"
-	    "li    $5,197\n\t"
-	    "sw    %6,24($29)\n\t"
-	    "sw    $0,28($29)\n\t"
-	    "sw    $0,32($29)\n\t"
-	    "sw    %7,36($29)\n\t"
-#endif
-	    "syscall\n\t"
-	    "addiu $29,40"
-	    : "=r" (malloc_buffer)
-	    : "0" (SYS___syscall), "r" (addr), "r" (size), "r" (prot),
-	    "r" (flags), "r" (fd), "r" ((int)f_offset)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
-	    "$10","$11","$12","$13","$14","$15","$24","$25");
-	return malloc_buffer;
+	return((void *)_dl__syscall((quad_t)SYS_mmap, addr, len, prot,
+	    flags, fd, 0, offset));
 }
 
 extern inline int
@@ -187,16 +156,16 @@ _dl_munmap(const void* addr, size_t len)
 	register int status __asm__ ("$2");
 
 	__asm__ volatile (
-	    "move  $2,%1\n\t"
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
 	    "li    $2,-1\n\t"
 	    "1:"
 	    : "=r" (status)
-	    : "0" (SYS_munmap), "r" (addr), "r" (len)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_munmap), "r" (addr), "r" (len)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -207,14 +176,14 @@ _dl_mprotect(const void *addr, size_t size, int prot)
 	register int status __asm__ ("$2");
 
 	__asm__ volatile (
-	    "move  $2,%1\n\t"
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "move  $6,%4\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall"
 	    : "=r" (status)
-	    : "0" (SYS_mprotect), "r" (addr), "r" (size), "r" (prot)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_mprotect), "r" (addr), "r" (size), "r" (prot)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -225,13 +194,13 @@ _dl_stat(const char *addr, struct stat *sb)
 	register int status __asm__ ("$2");
 
 	__asm__ volatile (
-	    "move  $2,%1\n\t"
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall"
 	    : "=r" (status)
-	    : "0" (SYS_stat), "r" (addr), "r" (sb)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_stat), "r" (addr), "r" (sb)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -242,13 +211,13 @@ _dl_fstat(const int fd, struct stat *sb)
 	register int status __asm__ ("$2");
 
 	__asm__ volatile (
-	    "move  $2,%1\n\t"
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall"
 	    : "=r" (status)
-	    : "0" (SYS_fstat), "r" (fd), "r" (sb)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_fstat), "r" (fd), "r" (sb)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -259,17 +228,17 @@ _dl_fcntl(int fd, int cmd, int flag)
 	register int status __asm__ ("$2");
 
 	__asm__ volatile (
-	    "move  $2,%1\n\t"
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "move  $6,%4\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
 	    "li    $2,-1\n\t"
 	    "1:"
 	    : "=r" (status)
-	    : "0" (SYS_fcntl), "r" (fd), "r" (cmd), "r" (flag)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_fcntl), "r" (fd), "r" (cmd), "r" (flag)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -279,18 +248,19 @@ _dl_getdirentries(int fd, char *buf, int nbytes, long *basep)
 {
 	register int status __asm__ ("$2");
 
-	__asm__ volatile ("move  $2,%1\n\t"
+	__asm__ volatile (
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
 	    "move  $6,%4\n\t"
 	    "move  $7,%5\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall\n\t"
 	    "beq   $7,$0,1f\n\t"
 	    "li    $2,-1\n\t"
 	    "1:"
 	    : "=r" (status)
-	    : "0" (SYS_getdirentries), "r" (fd), "r" (buf), "r" (nbytes), "r" (basep)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_getdirentries), "r" (fd), "r" (buf), "r" (nbytes), "r" (basep)
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -301,11 +271,11 @@ _dl_issetugid(void)
 	register int status __asm__ ("$2");
 
 	__asm__ volatile (
-	    "move  $2,%1\n\t"
+	    "li    $2,%1\n\t"
 	    "syscall"
 	    : "=r" (status)
-	    : "0" (SYS_issetugid)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "I" (SYS_issetugid)
+	    :  "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
 	return status;
 }
@@ -329,14 +299,14 @@ _dl_sigprocmask(int how, const sigset_t *set, sigset_t *oset)
         }
 
         __asm__ volatile (
-	    "li    $2,%1\n\t"
 	    "move  $4,%2\n\t"
 	    "move  $5,%3\n\t"
+	    "li    $2,%1\n\t"
             "syscall\n\t"
             "move    %0, $2"
             : "=r" (sig_store)
             : "I" (SYS_sigprocmask), "r" (how), "r" (sig_store1)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
         if (oset != NULL)
                 *oset = sig_store;
@@ -350,23 +320,21 @@ _dl_sysctl(int *name, u_int namelen, void *oldp, size_t *oldplen, void *newp,
         register int status __asm__ ("$2");
 
         __asm__ volatile (
-	    "move  $2,%1\n\t"
-	    "addiu $29,-40\n\t"
             "move  $4,%2\n\t"
             "move  $5,%3\n\t"
             "move  $6,%4\n\t"
             "move  $7,%5\n\t"
-            "sw    %6,16($29)\n\t"
-            "sw    %7,20($29)\n\t"
+            "move  $8,%6\n\t"
+            "move  $9,%7\n\t"
+	    "li    $2,%1\n\t"
             "syscall\n\t"
-	    "addiu $29,40\n\t"
             "beqz   $2,1f\n\t"
             "li    $2,-1\n\t"
             "1:"
             : "=r" (status)
-            : "r" (SYS___sysctl), "r" (name), "r" (namelen), "r" (oldp),
+            : "I" (SYS___sysctl), "r" (name), "r" (namelen), "r" (oldp),
             "r" (oldplen), "r" (newp), "r" (newlen)
-	    : "$2", "$3", "$4", "$5", "$6", "$7", "$8", "$9",
+	    : "$3", "$4", "$5", "$6", "$7", "$8", "$9",
 	    "$10","$11","$12","$13","$14","$15","$24","$25");
         return status;
 }

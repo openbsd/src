@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.1 2004/08/11 17:11:45 pefo Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.2 2004/09/09 17:47:43 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2004 Opsycon AB, Sweden.
@@ -42,39 +42,55 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 	int	i;
 	int	numrel;
 	int	fails = 0;
-	Elf32_Addr loff;
-	Elf32_Rel  *relocs;
+	struct load_list *load_list;
+	Elf64_Addr loff;
+	Elf64_Rel  *relocs;
 
 	loff = object->load_offs;
-	numrel = object->Dyn.info[relsz] / sizeof(Elf32_Rel);
-	relocs = (Elf32_Rel *)(object->Dyn.info[rel]);
+	numrel = object->Dyn.info[relsz] / sizeof(Elf64_Rel);
+	relocs = (Elf64_Rel *)(object->Dyn.info[rel]);
 
 	if (relocs == NULL)
 		return(0);
 
+	/*
+	 * Change protection of all write protected segments in the
+	 * object so we can do relocations in the .rodata section.
+	 * After relocation restore protection.
+	 */
+	load_list = object->load_list;
+	while (load_list != NULL) {
+		if ((load_list->prot & PROT_WRITE) == 0)
+			_dl_mprotect(load_list->start, load_list->size,
+			    load_list->prot|PROT_WRITE);
+		load_list = load_list->next;
+	}
+
+
+	DL_DEB(("relocating %d\n", numrel));
 	for (i = 0; i < numrel; i++, relocs++) {
-		Elf32_Addr r_addr = relocs->r_offset + loff;
-		Elf32_Addr ooff = 0;
-		const Elf32_Sym *sym, *this;
+		Elf64_Addr r_addr = relocs->r_offset + loff;
+		Elf64_Addr ooff = 0;
+		const Elf64_Sym *sym, *this;
 		const char *symn;
 		int type;
 
-		if (ELF32_R_SYM(relocs->r_info) == 0xffffff)
+		if (ELF64_R_SYM(relocs->r_info) == 0xffffff)
 			continue;
 
 		sym = object->dyn.symtab;
-		sym += ELF32_R_SYM(relocs->r_info);
+		sym += ELF64_R_SYM(relocs->r_info);
 		this = sym;
 		symn = object->dyn.strtab + sym->st_name;
-		type = ELF32_R_TYPE(relocs->r_info);
+		type = ELF64_R_TYPE(relocs->r_info);
 
-		if (ELF32_R_SYM(relocs->r_info) &&
-		    !(ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-		    ELF32_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
+		if (ELF64_R_SYM(relocs->r_info) &&
+		    !(ELF64_ST_BIND(sym->st_info) == STB_LOCAL &&
+		    ELF64_ST_TYPE (sym->st_info) == STT_NOTYPE)) {
 			ooff = _dl_find_symbol(symn, _dl_objects, &this, NULL,
 			SYM_SEARCH_ALL | SYM_NOWARNNOTFOUND | SYM_PLT,
 			sym->st_size, object);
-			if (!this && ELF32_ST_BIND(sym->st_info) == STB_GLOBAL) {
+			if (!this && ELF64_ST_BIND(sym->st_info) == STB_GLOBAL) {
 				_dl_printf("%s: can't resolve reference '%s'\n",
 				    _dl_progname, symn);
 				fails++;
@@ -82,14 +98,22 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 
 		}
 
-		switch (ELF32_R_TYPE(relocs->r_info)) {
-		case R_MIPS_REL32:
-			if (ELF32_ST_BIND(sym->st_info) == STB_LOCAL &&
-			    (ELF32_ST_TYPE(sym->st_info) == STT_SECTION ||
-			    ELF32_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
-				*(u_int32_t *)r_addr += loff + sym->st_value;
+		switch (ELF64_R_TYPE(relocs->r_info)) {
+		case R_MIPS_REL32_64:
+			if (ELF64_ST_BIND(sym->st_info) == STB_LOCAL &&
+			    (ELF64_ST_TYPE(sym->st_info) == STT_SECTION ||
+			    ELF64_ST_TYPE(sym->st_info) == STT_NOTYPE) ) {
+				*(u_int64_t *)r_addr += loff + sym->st_value;
 			} else if (this) {
-				*(u_int32_t *)r_addr += this->st_value + ooff;
+				/* XXX Handle non aligned relocs. .eh_frame
+				 * XXX in libstdc++ seems to have them... */
+				if (((long)r_addr & 7)) {
+					u_int64_t robj;
+					_dl_bcopy((char *)r_addr, &robj, sizeof(robj));
+					robj += this->st_value + ooff;
+					_dl_bcopy(&robj, (char *)r_addr, sizeof(robj));
+				} else
+					*(u_int64_t *)r_addr += this->st_value + ooff;
 			}
 			break;
 
@@ -97,12 +121,19 @@ _dl_md_reloc(elf_object_t *object, int rel, int relsz)
 			break;
 
 		default:
-			_dl_printf("%s: unsupported relocation '%s'\n",
-			    _dl_progname, symn);
+			_dl_printf("%s: unsupported relocation '%d'\n",
+			    _dl_progname, ELF64_R_TYPE(relocs->r_info));
 			_dl_exit(1);
 		}
 	}
-
+	DL_DEB(("done %d fails\n", fails));
+	load_list = object->load_list;
+	while (load_list != NULL) {
+		if ((load_list->prot & PROT_WRITE) == 0)
+			_dl_mprotect(load_list->start, load_list->size,
+			    load_list->prot);
+		load_list = load_list->next;
+	}
 	return(fails);
 }
 
@@ -119,12 +150,12 @@ void
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	int	i, n;
-	Elf32_Addr loff;
-	Elf32_Addr ooff;
-	Elf32_Addr *gotp;
-	Elf32_Addr plt_addr;
-	const Elf32_Sym  *symp;
-	const Elf32_Sym  *this;
+	Elf64_Addr loff;
+	Elf64_Addr ooff;
+	Elf64_Addr *gotp;
+	Elf64_Addr plt_addr;
+	const Elf64_Sym  *symp;
+	const Elf64_Sym  *this;
 	const char *strt;
 
 	if (object->status & STAT_GOT_DONE)
@@ -140,13 +171,13 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	/*
 	 *  Set up pointers for run time (lazy) resolving.
 	 */
-	gotp[0] = (int)_dl_rt_resolve;
-	if (gotp[1] & 0x80000000) {
-		gotp[1] = (int)object | 0x80000000;
+	gotp[0] = (long)_dl_rt_resolve;
+	if (gotp[1] & 0x0000000080000000) {
+		gotp[1] = (long)object | 0x0000000080000000;
 	}
 
 	/*  First do all local references. */
-	for (i = ((gotp[1] & 0x80000000) ? 2 : 1); i < n; i++) {
+	for (i = ((gotp[1] & 0x0000000080000000) ? 2 : 1); i < n; i++) {
 		gotp[i] += loff;
 	DL_DEB(("got: '%p' = %x\n", &gotp[i], gotp[i]));
 	}
@@ -191,7 +222,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 	 */
 	while (n--) {
 		if (symp->st_shndx == SHN_UNDEF &&
-		    ELF32_ST_TYPE(symp->st_info) == STT_FUNC) {
+		    ELF64_ST_TYPE(symp->st_info) == STT_FUNC) {
 	DL_DEB(("got: '%s' = %x\n", strt + symp->st_name, symp->st_value));
 			if (symp->st_value == 0 || !lazy) {
 				this = 0;
@@ -212,7 +243,7 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 			    symp->st_size, object);
 			if (this)
 				*gotp = this->st_value + ooff;
-		} else if (ELF32_ST_TYPE(symp->st_info) == STT_FUNC) {
+		} else if (ELF64_ST_TYPE(symp->st_info) == STT_FUNC) {
 			*gotp += loff;
 		} else {	/* XXX ??? */	/* Resolve all others immediatly */
 			*gotp = symp->st_value + loff;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.1 2004/08/11 17:11:45 pefo Exp $ */
+/*	$OpenBSD: ldasm.S,v 1.2 2004/09/09 17:47:43 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -27,6 +27,7 @@
  */
 
 #include <machine/asm.h>
+#include <sys/syscall.h>
 
 /* Stack at this stage is:
  * struct stack {
@@ -37,36 +38,53 @@
  * };
  */
 
-LEAF(_dl_start)		/* Not really LEAF, but we simplify */
-	addu	sp, -64		# Some space.
-	.cprestore 12
+FRAMESZ= MKFSIZ(4,16)
+GPOFF= FRAMESZ-2*REGSZ
+RAOFF= FRAMESZ-1*REGSZ
 
-	la	a1, 1f
+LEAF(_dl_start, FRAMESZ)		/* Not really LEAF, but we simplify */
+	PTR_SUBU sp, FRAMESZ		# Some space.
+	SETUP_GP64(GPOFF, _dl_start)
+
+	LA	s1, 1f
 	bgezal	zero, 1f
 1:
-	subu	s0, ra, a1	# This is the load offset
-	addu	a0, sp, 64	# Where stack info is.
-	addu	a1, sp, 16	# Where fast AUX info will be.
-	la	t9, _dl_boot_bind
-	addu	t9, s0
-	jalr	t9		# Relocate ourself.
 
-	lw	a3, 64(sp)	# argc
-	addu	a0, sp, 68	# argv
-	addi	a1, a0, 4
-	sll	a3, a3, 2
-	addu	a1, a3
-	addu	a3, sp, 16	# Where fast AUX info will be.
-	move	a2, s0		# Load offset
-	jal	_dl_boot	# Go do the linking.
+	# This is a hack to change protection of .rodata so it
+	# can be relocated. A better way to find the location
+	# of .rodata should probably be used.
+	li	v0, SYS_mprotect
+	or	a0, ra, 0xfff
+	xor	a0, 0xfff
+	li	a1, 0x8000
+	li	a2, 7 /* (PROT_READ|PROT_WRITE|PROT_EXEC) */
+	syscall
 
-	addu	sp, 64		# Restore stack pointer.
-	move	t9, v0		# Entry address from _dl_boot.
-	j	t9		# Go execute the 'real' program.
+	PTR_SUBU s0, ra, s1		# This is the load offset
+	PTR_ADDU a0, sp, FRAMESZ	# Where stack info is.
+	PTR_ADDU a1, sp, 0		# Where fast AUX info will be.
+	LA	t9, _dl_boot_bind
+	PTR_ADDU t9, s0
+	jalr	t9			# Relocate ourself.
+
+	REG_L	a3, FRAMESZ(sp)		# argc
+	PTR_ADDU a0, sp, FRAMESZ+REGSZ	# argv
+	PTR_ADDU a1, a0, REGSZ
+	PTR_SLL  a3, a3, LOGREGSZ
+	PTR_ADDU a1, a3
+	PTR_ADDU a3, sp, 0		# Where fast AUX info will be.
+	move	a2, s0			# Load offset
+	jal	_dl_boot		# Go do the linking.
+
+	RESTORE_GP64
+	PTR_ADDU sp, FRAMESZ		# Restore stack pointer.
+	move	t9, v0			# Entry address from _dl_boot.
+	j	t9			# Go execute the 'real' program.
 END(_dl_start)
 
-LEAF(_dl__syscall)
-	li	v0, 0		# Indirect syscall.
+LEAF(_dl__syscall, 0)
+	li	v0, SYS___syscall	# Indirect syscall.
+	syscall
 	bne	a3, zero, 1f
 	j	ra
 1:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.1 2004/08/11 17:11:45 pefo Exp $ */
+/*	$OpenBSD: archdep.h,v 1.2 2004/09/09 17:47:43 pefo Exp $ */
 
 /*
  * Copyright (c) 1998-2002 Opsycon AB, Sweden.
@@ -37,62 +37,71 @@
 
 #define RTLD_PROTECT_PLT
 
-#define	DL_MALLOC_ALIGN	4	/* Arch constraint or otherwise */
+#define	DL_MALLOC_ALIGN	16	/* Arch constraint or otherwise */
 
 #define	MACHID	EM_MIPS		/* ELF e_machine ID value checked */
 
-#define	RELTYPE	Elf32_Rel
-#define	RELSIZE	sizeof(Elf32_Rel)
+//static inline void
+//RELOC_REL(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
+//{
+//}
+#define RELOC_REL(relp, symp, adrp, val)				\
+do {									\
+	if (ELF64_R_TYPE(relp->r_info) == R_MIPS_REL32_64)	{		\
+		if (ELF64_R_SYM(rp->r_info) != 0)			\
+			*adrp = symp->st_value + val;			\
+		else							\
+			*adrp += val;					\
+	} else if (ELF64_R_TYPE(relp->r_info) != R_MIPS_NONE) {		\
+		_dl_exit(ELF64_R_TYPE(relp->r_info)+100);		\
+	}								\
+} while (0)
 
 static inline void
-RELOC_REL(Elf_Rel *r, const Elf_Sym *s, Elf_Addr *p, unsigned long v)
-{
-}
-
-static inline void
-RELOC_RELA(Elf32_Rela *r, const Elf32_Sym *s, Elf32_Addr *p, unsigned long v)
+RELOC_RELA(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v)
 {
 	_dl_exit(20);
 }
 
 struct elf_object;
 
-static inline void
-RELOC_GOT(struct elf_object *dynld, long loff)
-{
-	Elf32_Addr *gotp;
-	int i, n;
-	const Elf_Sym *sp;
-
-	/* Do all local gots */
-	gotp = dynld->dyn.pltgot;
-	n = dynld->Dyn.info[DT_MIPS_LOCAL_GOTNO - DT_LOPROC + DT_NUM];
-
-	for (i = ((gotp[1] & 0x80000000) ? 2 : 1); i < n; i++) {
-		gotp[i] += loff;
-	}
-	gotp += n;
-
-	/* Do symbol referencing gots. There should be no global... */
-	n =  dynld->Dyn.info[DT_MIPS_SYMTABNO - DT_LOPROC + DT_NUM] -
-	  dynld->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
-	sp = dynld->dyn.symtab;
-	sp += dynld->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];
-
-	while (n--) {
-		if (sp->st_shndx == SHN_UNDEF ||
-		    sp->st_shndx == SHN_COMMON) {
-			_dl_exit(6);
-		} else if (ELF32_ST_TYPE(sp->st_info) == STT_FUNC) {
-			*gotp += loff;
-		} else {
-			*gotp = sp->st_value + loff;
-		}
-		gotp++;
-		sp++;
-	}
-	dynld->status |= STAT_GOT_DONE;
-}
+#define RELOC_GOT(obj, off)						\
+do {									\
+	struct elf_object *__dynld = obj;				\
+	long __loff = off;						\
+	Elf64_Addr *gotp;						\
+	int i, n;							\
+	const Elf_Sym *sp;						\
+									\
+	/* Do all local gots */						\
+	gotp = __dynld->dyn.pltgot;					\
+	n = __dynld->Dyn.info[DT_MIPS_LOCAL_GOTNO - DT_LOPROC + DT_NUM];\
+									\
+	for (i = ((gotp[1] & 0x0000000080000000) ? 2 : 1); i < n; i++) {\
+		gotp[i] += __loff;					\
+	}								\
+	gotp += n;							\
+									\
+	/* Do symbol referencing gots. There should be no global... */	\
+	n =  __dynld->Dyn.info[DT_MIPS_SYMTABNO - DT_LOPROC + DT_NUM] -	\
+	  __dynld->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];	\
+	sp = __dynld->dyn.symtab;					\
+	sp += __dynld->Dyn.info[DT_MIPS_GOTSYM - DT_LOPROC + DT_NUM];	\
+									\
+	while (n--) {							\
+		if (sp->st_shndx == SHN_UNDEF ||			\
+		    sp->st_shndx == SHN_COMMON) {			\
+			_dl_exit(6);					\
+		} else if (ELF64_ST_TYPE(sp->st_info) == STT_FUNC) {	\
+			*gotp += __loff;				\
+		} else {						\
+			*gotp = sp->st_value + __loff;			\
+		}							\
+		gotp++;							\
+		sp++;							\
+	}								\
+	__dynld->status |= STAT_GOT_DONE;				\
+} while(0)
 
 #define GOT_PERMS PROT_READ
 
