@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.38 2002/11/07 22:02:18 millert Exp $ */
+/* $OpenBSD: user.c,v 1.39 2002/11/07 22:05:43 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -1665,6 +1665,10 @@ groupdel(int argc, char **argv)
 		usermgmt_usage("groupdel");
 	}
 	checkeuid();
+	if (getgrnam(*argv) == NULL) {
+		warnx("No such group: `%s'", *argv);
+		return EXIT_FAILURE;
+	}
 	if (!modify_gid(*argv, NULL)) {
 		err(EXIT_FAILURE, "can't change %s file", _PATH_GROUP);
 	}
