@@ -1,4 +1,4 @@
-/*	$OpenBSD: database.c,v 1.13 2003/03/15 00:39:01 millert Exp $	*/
+/*	$OpenBSD: database.c,v 1.14 2004/06/03 18:41:58 millert Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: database.c,v 1.13 2003/03/15 00:39:01 millert Exp $";
+static char const rcsid[] = "$OpenBSD: database.c,v 1.14 2004/06/03 18:41:58 millert Exp $";
 #endif
 
 /* vix 26jan87 [RCS has the log]
@@ -208,7 +208,7 @@ process_crontab(const char *uname, const char *fname, const char *tabname,
 		log_it(fname, getpid(), "NOT REGULAR", tabname);
 		goto next_crontab;
 	}
-	if ((statbuf->st_mode & 07777) != 0600) {
+	if ((statbuf->st_mode & 07577) != 0400) {
 		log_it(fname, getpid(), "BAD FILE MODE", tabname);
 		goto next_crontab;
 	}
