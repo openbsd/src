@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_axppci_33.c,v 1.11 1999/01/11 05:11:03 millert Exp $	*/
+/*	$OpenBSD: pci_axppci_33.c,v 1.12 2001/06/25 21:49:42 csapuntz Exp $	*/
 /*	$NetBSD: pci_axppci_33.c,v 1.10 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -86,6 +86,7 @@ pci_axppci_33_pickintr(lcp)
 
         /* Not supported on AXPpci33. */
         pc->pc_pciide_compat_intr_establish = NULL;
+        pc->pc_pciide_compat_intr_disestablish = NULL;
 
 #if NSIO
 	sio_intr_setup(pc, iot);

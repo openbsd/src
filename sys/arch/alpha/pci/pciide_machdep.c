@@ -1,4 +1,4 @@
-/* $OpenBSD: pciide_machdep.c,v 1.1 1998/07/01 02:42:40 angelos Exp $ */
+/* $OpenBSD: pciide_machdep.c,v 1.2 2001/06/25 21:49:43 csapuntz Exp $ */
 /* $NetBSD: pciide_machdep.c,v 1.2 1998/04/18 01:09:20 thorpej Exp $ */
 
 /*
@@ -67,4 +67,12 @@ pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)
 
 	return (alpha_pciide_compat_intr_establish(pc, dev, pa, chan,
 	    func, arg));
+}
+
+void
+pciide_machdep_compat_intr_disestablish(pc, cookie)
+	pci_chipset_tag_t pc;
+	void *cookie;
+{
+	return (alpha_pciide_compat_intr_disestablish(pc, cookie));
 }

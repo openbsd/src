@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_up1000.c,v 1.2 2001/04/17 14:53:34 art Exp $	*/
+/*	$OpenBSD: pci_up1000.c,v 1.3 2001/06/25 21:49:43 csapuntz Exp $	*/
 /* $NetBSD: pci_up1000.c,v 1.6 2000/12/28 22:59:07 sommerfeld Exp $ */
 
 /*-
@@ -75,6 +75,8 @@ void    api_up1000_intr_disestablish(void *, void *);
 
 void	*api_up1000_pciide_compat_intr_establish(void *, struct device *,
 	    struct pci_attach_args *, int, int (*)(void *), void *);
+void    api_up1000_pciide_compat_intr_disestablish(void *, pci_chipset_tag_t,
+            void *);
 
 void
 pci_up1000_pickintr(struct irongate_config *icp)
@@ -93,6 +95,8 @@ pci_up1000_pickintr(struct irongate_config *icp)
 
 	pc->pc_pciide_compat_intr_establish =
 	    api_up1000_pciide_compat_intr_establish;
+	pc->pc_pciide_compat_intr_disestablish =
+	    api_up1000_pciide_compat_intr_disestablish;
 
 #if NSIO
 	sio_intr_setup(pc, iot);
@@ -212,8 +216,13 @@ api_up1000_pciide_compat_intr_establish(void *icv, struct device *dev,
 	    func, arg, "up 1000 irq");
 	if (cookie == NULL)
 		return (NULL);
-	printf("%s: %s channel interrupting at %s\n", dev->dv_xname,
-	    PCIIDE_CHANNEL_NAME(chan), sio_intr_string(NULL /*XXX*/, irq));
 #endif
 	return (cookie);
+}
+
+void
+api_up1000_pciide_compat_intr_disestablish(void *v, pci_chipset_tag_t pc,
+    void *cookie)
+{
+	sio_intr_disestablish(NULL, cookie);
 }

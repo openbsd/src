@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.11 1999/01/11 05:11:03 millert Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.12 2001/06/25 21:49:42 csapuntz Exp $	*/
 /*	$NetBSD: pci_kn20aa.c,v 1.21 1996/11/17 02:05:27 cgd Exp $	*/
 
 /*
@@ -94,6 +94,7 @@ pci_kn20aa_pickintr(ccp)
 
         /* Not supported on KN20AA. */
         pc->pc_pciide_compat_intr_establish = NULL;
+        pc->pc_pciide_compat_intr_disestablish = NULL;
 
 	kn20aa_pci_intr = alpha_shared_intr_alloc(KN20AA_MAX_IRQ);
 	for (i = 0; i < KN20AA_MAX_IRQ; i++)

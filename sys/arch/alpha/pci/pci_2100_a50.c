@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.12 1999/01/11 05:11:02 millert Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.13 2001/06/25 21:49:40 csapuntz Exp $	*/
 /*	$NetBSD: pci_2100_a50.c,v 1.12 1996/11/13 21:13:29 cgd Exp $	*/
 
 /*
@@ -85,6 +85,7 @@ pci_2100_a50_pickintr(acp)
 
 	/* Not supported on 2100 A50. */
 	pc->pc_pciide_compat_intr_establish = NULL;
+	pc->pc_pciide_compat_intr_disestablish = NULL;
 
 #if NSIO
         sio_intr_setup(pc, iot);
