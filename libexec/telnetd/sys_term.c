@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_term.c,v 1.21 2000/11/16 19:00:19 millert Exp $	*/
+/*	$OpenBSD: sys_term.c,v 1.22 2001/01/17 23:51:54 deraadt Exp $	*/
 /*	$NetBSD: sys_term.c,v 1.9 1996/03/20 04:25:53 tls Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)sys_term.c	8.4+1 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: sys_term.c,v 1.8 1996/02/28 20:38:21 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: sys_term.c,v 1.21 2000/11/16 19:00:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: sys_term.c,v 1.22 2001/01/17 23:51:54 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1881,19 +1881,19 @@ cleanup(sig)
 	(void)chmod(line, 0666);
 	(void)chown(line, 0, 0);
 	(void) shutdown(net, 2);
-	exit(1);
+	_exit(1);
 # else
 	void rmut();
 
 	rmut();
 	vhangup();	/* XXX */
 	(void) shutdown(net, 2);
-	exit(1);
+	_exit(1);
 # endif
 #else	/* PARENT_DOES_UTMP */
 # ifdef	NEWINIT
 	(void) shutdown(net, 2);
-	exit(1);
+	_exit(1);
 # else	/* NEWINIT */
 #  ifdef CRAY
 	static int incleanup = 0;
@@ -1950,7 +1950,7 @@ cleanup(sig)
 	if (t == 0)
 		cleantmp(&wtmp);
 #  endif /* CRAY */
-	exit(1);
+	_exit(1);
 # endif	/* NEWINT */
 #endif	/* PARENT_DOES_UTMP */
 }
