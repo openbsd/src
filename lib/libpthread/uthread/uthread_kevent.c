@@ -1,4 +1,5 @@
-/*	$OpenBSD: uthread_kevent.c,v 1.2 2001/08/21 19:24:53 fgsch Exp $	*/
+/*	$OpenBSD: uthread_kevent.c,v 1.3 2001/12/08 17:08:07 fgsch Exp $	*/
+
 /*-
  * Copyright (c) 2000 Jonathan Lemon <jlemon@flugsvamp.com>
  * All rights reserved.
@@ -49,7 +50,7 @@ kevent(int kq, const struct kevent *changelist, int nchanges,
 
 	rc = _thread_sys_kevent(kq, changelist, nchanges,
 	    eventlist, nevents, &nullts);
-	if (rc == 0 && (timeout == NULL ||
+	if (rc == 0 && eventlist != NULL && nevents > 0 && (timeout == NULL ||
 	    timeout->tv_sec != 0 || timeout->tv_nsec != 0)) {
 		/* Save the socket file descriptor: */
 		curthread->data.fd.fd = kq;
