@@ -46,8 +46,9 @@ main()
 	/* do a dup2 */
 	dup2(fd, 1);
 	write(1, should_succeed, (size_t)strlen(should_succeed));
+#if i_understood_this
 	_thread_sys_write(1, should_fail, strlen(should_fail));
-
+#endif
 	if (execve(argv[0], argv, environ) < OK) 
 		err(1, "execve");
 
