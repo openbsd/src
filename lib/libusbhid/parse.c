@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.2 2002/05/10 00:09:17 nate Exp $	*/
+/*	$OpenBSD: parse.c,v 1.3 2004/06/04 00:47:32 deraadt Exp $	*/
 /*	$NetBSD: parse.c,v 1.2 2001/12/29 20:44:22 augustss Exp $	*/
 
 /*
@@ -93,6 +93,8 @@ hid_start_parse(report_desc_t d, int kindset, int id)
 	struct hid_data *s;
 
 	s = malloc(sizeof *s);
+	if (s == NULL)
+		return (NULL);
 	memset(s, 0, sizeof *s);
 	s->start = s->p = d->data;
 	s->end = d->data + d->size;
@@ -142,17 +144,12 @@ hid_get_item(hid_data_t s, hid_item_t *h)
 static int
 hid_get_item_raw(hid_data_t s, hid_item_t *h)
 {
-	hid_item_t *c;
+	hid_item_t *c = &s->cur, *hi, nc;
 	unsigned int bTag = 0, bType = 0, bSize;
 	unsigned char *data;
-	int dval;
-	unsigned char *p;
-	hid_item_t *hi;
-	hid_item_t nc;
-	int i;
 	hid_kind_t retkind;
-
-	c = &s->cur;
+	unsigned char *p;
+	int dval, i;
 
  top:
 	if (s->multimax) {
@@ -169,7 +166,7 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 			*h = *c;
 			/*
 			 * 'multimax' is only non-zero if the current
-                         *  item kind is input/output/feature
+			 *  item kind is input/output/feature
 			 */
 			h->pos = s->kindpos[c->kind];
 			s->kindpos[c->kind] += c->report_size;
@@ -249,8 +246,7 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 					c->report_count = 1;
 					if (s->minset) {
 						for (i = c->usage_minimum;
-						     i <= c->usage_maximum;
-						     i++) {
+						    i <= c->usage_maximum; i++) {
 							s->usages[s->nusage] = i;
 							if (s->nusage < MAXUSAGE-1)
 								s->nusage++;
@@ -338,15 +334,16 @@ hid_get_item_raw(hid_data_t s, hid_item_t *h)
 				break;
 			case 8:
 				c->report_ID = dval;
-				s->kindpos[hid_input] =
-				    s->kindpos[hid_output] =
-				    s->kindpos[hid_feature] = 0;
+				s->kindpos[hid_input] = 0;
+				s->kindpos[hid_output] = 0;
+				s->kindpos[hid_feature] = 0;
 				break;
 			case 9:
 				c->report_count = dval;
 				break;
 			case 10: /* Push */
 				hi = malloc(sizeof *hi);
+				/* XXX unchecked malloc */
 				*hi = s->cur;
 				c->next = hi;
 				break;
@@ -425,7 +422,7 @@ hid_report_size(report_desc_t r, enum hid_kind k, int id)
 
 int
 hid_locate(report_desc_t desc, unsigned int u, enum hid_kind k,
-	   hid_item_t *h, int id)
+    hid_item_t *h, int id)
 {
 	hid_data_t d;
 

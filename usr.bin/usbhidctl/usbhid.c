@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhid.c,v 1.5 2004/04/03 21:01:25 jmc Exp $	*/
+/*	$OpenBSD: usbhid.c,v 1.6 2004/06/04 00:47:32 deraadt Exp $	*/
 /*      $NetBSD: usbhid.c,v 1.22 2002/02/20 20:30:42 christos Exp $ */
 
 /*
@@ -932,7 +932,8 @@ main(int argc, char **argv)
 		/* NOTREACHED */
 	}
 
-	hid_init(table);
+	if (hid_start(table) == -1)
+		errx(1, "hid_init");
 
 	if (dev[0] != '/') {
 		snprintf(devnamebuf, sizeof(devnamebuf), "/dev/%s%s",

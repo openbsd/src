@@ -1,4 +1,4 @@
-/*	$OpenBSD: data.c,v 1.2 2002/05/10 00:09:17 nate Exp $	*/
+/*	$OpenBSD: data.c,v 1.3 2004/06/04 00:47:32 deraadt Exp $	*/
 /*	$NetBSD: data.c,v 1.1 2001/12/28 17:45:26 augustss Exp $	*/
 
 /*
@@ -33,15 +33,9 @@
 int
 hid_get_data(const void *p, const hid_item_t *h)
 {
-	const unsigned char *buf;
-	unsigned int hpos;
-	unsigned int hsize;
-	int data;
-	int i, end, offs;
-
-	buf = p;
-	hpos = h->pos;			/* bit position of data */
-	hsize = h->report_size;		/* bit length of data */
+	const unsigned char *buf = p;
+	unsigned int hpos = h->pos, hsize = h->report_size;
+	int data, i, end, offs;
 
 	if (hsize == 0)
 		return (0);
@@ -63,14 +57,9 @@ hid_get_data(const void *p, const hid_item_t *h)
 void
 hid_set_data(void *p, const hid_item_t *h, int data)
 {
-	unsigned char *buf;
-	unsigned int hpos;
-	unsigned int hsize;
+	unsigned char *buf = p;
+	unsigned int hpos = h->pos, hsize = h->report_size;
 	int i, end, offs, mask;
-
-	buf = p;
-	hpos = h->pos;			/* bit position of data */
-	hsize = h->report_size;		/* bit length of data */
 
 	if (hsize != 32) {
 		mask = (1 << hsize) - 1;
@@ -87,5 +76,5 @@ hid_set_data(void *p, const hid_item_t *h, int data)
 
 	for (i = 0; i <= end; i++)
 		buf[offs + i] = (buf[offs + i] & (mask >> (i*8))) |
-			((data >> (i*8)) & 0xff);
+		    ((data >> (i*8)) & 0xff);
 }

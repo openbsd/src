@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbhidaction.c,v 1.3 2004/04/03 21:01:25 jmc Exp $ */
+/*	$OpenBSD: usbhidaction.c,v 1.4 2004/06/04 00:47:32 deraadt Exp $ */
 /*      $NetBSD: usbhidaction.c,v 1.7 2002/01/18 14:38:59 augustss Exp $ */
 
 /*
@@ -127,11 +127,12 @@ main(int argc, char **argv)
 	if (conf == NULL || dev == NULL)
 		usage();
 
-	hid_init(NULL);
+	if (hid_start(NULL) == -1)
+		errx(1, "hid_init");
 
 	if (dev[0] != '/') {
 		snprintf(devnamebuf, sizeof(devnamebuf), "/dev/%s%s",
-			 isdigit(dev[0]) ? "uhid" : "", dev);
+		    isdigit(dev[0]) ? "uhid" : "", dev);
 		dev = devnamebuf;
 	}
 
@@ -233,7 +234,6 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 	struct hid_data *d;
 	struct hid_item h;
 	int u, lo, hi, range;
-	
 
 	f = fopen(conf, "r");
 	if (f == NULL)
@@ -256,12 +256,12 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 		if (sscanf(buf, "%s %s %[^\n]", name, value, action) != 3) {
 			if (isdemon) {
 				syslog(LOG_WARNING, "config file `%s', line %d"
-				       ", syntax error: %s", conf, line, buf);
+				    ", syntax error: %s", conf, line, buf);
 				freecommands(cmds);
 				return (NULL);
 			} else {
 				errx(1, "config file `%s', line %d,"
-				     ", syntax error: %s", conf, line, buf);
+				    ", syntax error: %s", conf, line, buf);
 			}
 		}
 
@@ -279,22 +279,22 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 			if (sscanf(value, "%d", &cmd->value) != 1) {
 				if (isdemon) {
 					syslog(LOG_WARNING,
-					       "config file `%s', line %d, "
-					       "bad value: %s\n",
-					       conf, line, value);
+					    "config file `%s', line %d, "
+					    "bad value: %s\n",
+					    conf, line, value);
 					freecommands(cmds);
 					return (NULL);
 				} else {
 					errx(1, "config file `%s', line %d, "
-					     "bad value: %s\n",
-					     conf, line, value);
+					    "bad value: %s\n",
+					    conf, line, value);
 				}
 			}
 		}
 
 		coll[0] = 0;
 		for (d = hid_start_parse(repd, 1 << hid_input, reportid);
-		     hid_get_item(d, &h); ) {
+		    hid_get_item(d, &h); ) {
 			if (verbose > 2)
 				printf("kind=%d usage=%x\n", h.kind, h.usage);
 			if (h.flags & HIO_CONST)
@@ -313,7 +313,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 				}
 				for (u = lo; u <= hi; u++) {
 					snprintf(usage, sizeof usage,  "%s:%s",
-						 hid_usage_page(HID_PAGE(u)), 
+						 hid_usage_page(HID_PAGE(u)),
 						 hid_usage_in_page(u));
 					if (verbose > 2)
 						printf("usage %s\n", usage);
@@ -322,11 +322,11 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 					if (coll[0]) {
 						snprintf(usage, sizeof usage,
 						  "%s.%s:%s", coll+1,
-						  hid_usage_page(HID_PAGE(u)), 
+						  hid_usage_page(HID_PAGE(u)),
 						  hid_usage_in_page(u));
 						if (verbose > 2)
 							printf("usage %s\n",
-							       usage);
+							    usage);
 						if (!strcasecmp(usage, name))
 							goto foundhid;
 					}
@@ -335,7 +335,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 			case hid_collection:
 				snprintf(coll + strlen(coll),
 				    sizeof coll - strlen(coll),  ".%s:%s",
-				    hid_usage_page(HID_PAGE(h.usage)), 
+				    hid_usage_page(HID_PAGE(h.usage)),
 				    hid_usage_in_page(h.usage));
 				break;
 			case hid_endcollection:
@@ -353,12 +353,12 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 		}
 		if (isdemon) {
 			syslog(LOG_WARNING, "config file `%s', line %d, HID "
-			       "item not found: `%s'\n", conf, line, name);
+			    "item not found: `%s'\n", conf, line, name);
 			freecommands(cmds);
 			return (NULL);
 		} else {
 			errx(1, "config file `%s', line %d, HID item "
-			     "not found: `%s'\n", conf, line, name);
+			    "not found: `%s'\n", conf, line, name);
 		}
 
 	foundhid:
@@ -375,7 +375,7 @@ parse_conf(const char *conf, report_desc_t repd, int reportid, int ignore)
 
 		if (verbose)
 			printf("PARSE:%d %s, %d, '%s'\n", cmd->line, name,
-			       cmd->value, cmd->action);
+			    cmd->value, cmd->action);
 	}
 	fclose(f);
 	return (cmds);

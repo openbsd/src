@@ -1,4 +1,4 @@
-/*	$OpenBSD: descr.c,v 1.3 2002/05/10 00:09:17 nate Exp $	*/
+/*	$OpenBSD: descr.c,v 1.4 2004/06/04 00:47:32 deraadt Exp $	*/
 /*	$NetBSD: descr.c,v 1.2 2002/02/20 20:31:07 christos Exp $	*/
 
 /*
@@ -58,10 +58,8 @@ hid_use_report_desc(unsigned char *data, unsigned int size)
 	report_desc_t r;
 
 	r = malloc(sizeof(*r) + size);
-	if (r == 0) {
-		errno = ENOMEM;
+	if (r == NULL)
 		return (NULL);
-	}
 	r->size = size;
 	memcpy(r->data, data, size);
 	return (r);

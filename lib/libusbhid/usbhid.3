@@ -1,4 +1,4 @@
-.\"	$OpenBSD: usbhid.3,v 1.6 2003/05/24 18:30:32 jmc Exp $
+.\"	$OpenBSD: usbhid.3,v 1.7 2004/06/04 00:47:32 deraadt Exp $
 .\"	$NetBSD: usbhid.3,v 1.5 2002/02/07 07:00:52 ross Exp $
 .\"
 .\" Copyright (c) 1999, 2001 Lennart Augustsson <augustss@netbsd.org>
@@ -40,6 +40,7 @@
 .Nm hid_locate ,
 .Nm hid_usage_page ,
 .Nm hid_usage_in_page ,
+.Nm hid_start ,
 .Nm hid_init ,
 .Nm hid_get_data ,
 .Nm hid_set_data
@@ -72,6 +73,8 @@
 .Fn hid_parse_usage_in_page "const char *"
 .Ft void
 .Fn hid_init "char *file"
+.Ft int
+.Fn hid_start "char *file"
 .Ft int
 .Fn hid_get_data "void *data" "hid_item_t *h"
 .Ft void
@@ -180,11 +183,14 @@ if it cannot be found.
 .Pp
 Before any of these functions can be called the usage table
 must be parsed, this is done by calling
-.Fn hid_init
+.Fn hid_start
 with the name of the table.
 Passing
 .Fa NULL
 to this function will cause it to use the default table.
+A return value of -1 indicates that an error has occured, and
+.Va errno
+is set.
 .Ss DATA EXTRACTION FUNCTIONS
 Given the data obtained from a HID device and an item in the
 report descriptor the
