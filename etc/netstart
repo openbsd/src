@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.79 2001/07/03 03:28:19 deraadt Exp $
+#	$OpenBSD: netstart,v 1.80 2001/07/06 05:44:40 angelos Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -255,7 +255,7 @@ NO:YES)
 	;;
 *:NO)
 	set `if [ $multicast_host = YES ]; then
-		ed -s '!route -n show' <<EOF
+		ed -s '!route -n show -inet' <<EOF
 /^default/p
 EOF
 	else
