@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.25 1996/10/30 15:01:49 niklas Exp $	*/
+/*	$OpenBSD: com.c,v 1.26 1996/11/09 21:50:43 tholo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -1562,6 +1562,7 @@ comintr(arg)
 						goto next;
 					}
 #endif
+					data = 0;
 				}
 				if (p >= sc->sc_ibufend) {
 					sc->sc_floods++;
