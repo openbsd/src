@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.34 2002/04/21 15:52:08 millert Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.35 2002/04/26 02:17:33 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -131,6 +131,12 @@ For WaveLAN Gold cards, the key can be up to
 text string or 26 hexadecimal digits.
 Either way, the key will be concatenated with a 24-bit IV to generate
 the seed for RC4.
+Note that
+.Nm
+has no way to determine whether or not a card is capable of using
+104 bit WEP.
+Some cards accept a 104 bit key even though they only support 40 bit
+keys, in which case WEP encryption will simply fail to work.
 .It Fl T Ar 1|2|3|4
 Specify which of the four WEP encryption keys will be used to encrypt
 transmitted packets.
