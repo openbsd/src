@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-udp.c,v 1.17 2000/12/07 22:52:00 mickey Exp $	*/
+/*	$OpenBSD: print-udp.c,v 1.18 2001/03/06 16:42:08 jakob Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.17 2000/12/07 22:52:00 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-udp.c,v 1.18 2001/03/06 16:42:08 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -356,6 +356,7 @@ static int udp_cksum(register const struct ip *ip,
 #define OLD_RADIUS_ACCT_PORT 1646
 #define RADIUS_AUTH_PORT     1812
 #define RADIUS_ACCT_PORT     1813
+#define LWRES_PORT 921
 
 #ifdef INET6
 #define RIPNG_PORT 521		/*XXX*/
@@ -562,6 +563,8 @@ udp_print(register const u_char *bp, u_int length, register const u_char *bp2)
 #define ISPORT(p) (dport == (p) || sport == (p))
 		if (ISPORT(NAMESERVER_PORT))
 			ns_print((const u_char *)(up + 1), length);
+		else if (ISPORT(LWRES_PORT))
+			lwres_print((const u_char *)(up + 1), length);
 		else if (ISPORT(TIMED_PORT))
 			timed_print((const u_char *)(up + 1), length);
 		else if (ISPORT(TFTP_PORT))
