@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.29 2004/08/27 15:40:44 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.30 2004/11/09 20:49:17 krapht Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -176,7 +176,6 @@ struct cvsroot {
 
 
 struct cvs_ent {
-	char    *ce_line;
 	char    *ce_buf;
 	u_int    ce_type;
 	char    *ce_name;
@@ -229,6 +228,7 @@ typedef struct cvs_histfile {
 #ifdef CVS
 extern char *cvs_command;
 extern char *cvs_editor;
+extern char *cvs_msg;
 
 extern int   cvs_cmdop;
 extern int   cvs_nocase;
@@ -246,6 +246,7 @@ int  cvs_commit   (int, char **);
 int  cvs_diff     (int, char **);
 int  cvs_getlog   (int, char **);
 int  cvs_history  (int, char **);
+int  cvs_import   (int, char **);
 int  cvs_init     (int, char **);
 int  cvs_server   (int, char **);
 int  cvs_status   (int, char **);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.17 2004/08/31 12:25:51 joris Exp $	*/
+/*	$OpenBSD: entries.c,v 1.18 2004/11/09 20:49:17 krapht Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -123,6 +123,7 @@ cvs_ent_open(const char *dir, int flags)
 		TAILQ_INSERT_TAIL(&(ep->cef_ent), ent, ce_list);
 	}
 	if (ferror(fp)) {
+		cvs_log(LP_ERRNO, "read error on %s", entpath);
 		cvs_ent_close(ep);
 		return (NULL);
 	}
@@ -352,12 +353,6 @@ cvs_ent_parse(const char *entry)
 		return (NULL);
 	}
 
-	entp->ce_line = strdup(entry);
-	if (entp->ce_line == NULL) {
-		cvs_ent_free(entp);
-		return (NULL);
-	}
-
 	if (*fields[0] == '\0')
 		entp->ce_type = CVS_ENT_FILE;
 	else if (*fields[0] == 'D')
@@ -389,8 +384,6 @@ cvs_ent_free(struct cvs_ent *ent)
 {
 	if (ent->ce_rev != NULL)
 		rcsnum_free(ent->ce_rev);
-	if (ent->ce_line != NULL)
-		free(ent->ce_line);
 	if (ent->ce_buf != NULL)
 		free(ent->ce_buf);
 	free(ent);
