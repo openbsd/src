@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.8 2001/05/20 08:34:27 angelos Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.9 2001/05/22 23:38:34 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -335,15 +335,24 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb, struct tdb *tdb2)
 	    return ENXIO;
     }
 
-    /* Add a record of what we've done to the packet */
-    mtag = m_tag_get(PACKET_TAG_IPSEC_DONE, sizeof(struct tdb_ident),
-		     M_NOWAIT);
+    /*
+     * Add a record of what we've done or what needs to be done to the
+     * packet.
+     */
+    if ((tdb->tdb_flags & TDBF_SKIPCRYPTO) == 0)
+      mtag = m_tag_get(PACKET_TAG_IPSEC_DONE, sizeof(struct tdb_ident),
+		       M_NOWAIT);
+    else
+      mtag = m_tag_get(PACKET_TAG_IPSEC_NEEDED, sizeof(struct tdb_ident),
+		       M_NOWAIT);
+
     if (mtag == NULL)
     {
 	m_freem(m);
 	DPRINTF(("ipsp_process_done(): could not allocate packet tag\n"));
 	return ENOMEM;
     }
+
     tdbi = (struct tdb_ident *)(mtag + 1);
     bcopy(&tdb->tdb_dst, &tdbi->dst, sizeof(union sockaddr_union));
     tdbi->proto = tdb->tdb_sproto;
