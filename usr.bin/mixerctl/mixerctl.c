@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.4 1998/05/02 22:28:07 millert Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.5 1999/07/19 20:54:21 mickey Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -300,6 +300,10 @@ main(argc, argv)
 		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &dinfo) < 0)
 			break;
 	}
+
+	if (ndev == 0)
+		errx(1, "no mixer devices configured");
+
 	rfields = calloc(ndev, sizeof *rfields);
 	fields = calloc(ndev, sizeof *fields);
 	infos = calloc(ndev, sizeof *infos);
