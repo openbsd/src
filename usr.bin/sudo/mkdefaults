@@ -109,8 +109,9 @@ print CFILE "\tNULL, 0, NULL\n    }\n};\n";
 # Print out def_tuple
 if (@tuple_values) {
     print HEADER "\nenum def_tupple {\n";
-    foreach (@tuple_values) {
-	print HEADER "\t$_,\n";
+    for ($i = 0; $i <= $#tuple_values; $i++) {
+	printf HEADER "\t%s%s\n", $tuple_values[$i],
+	    $i != $#tuple_values ? "," : "";
     }
     print HEADER "};\n";
 }
