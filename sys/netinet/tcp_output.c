@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.4 1996/09/12 06:19:56 tholo Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.5 1996/09/12 06:36:57 tholo Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.14 1996/02/13 23:43:53 christos Exp $	*/
 
 /*
@@ -427,8 +427,8 @@ send:
 	 * window for use in delaying messages about window sizes.
 	 * If resending a FIN, be sure not to use a new sequence number.
 	 */
-	if (flags & TH_FIN && tp->t_flags & TF_SENTFIN && 
-	    tp->snd_nxt == tp->snd_max)
+	if ((flags & TH_FIN) && (tp->t_flags & TF_SENTFIN) && 
+	    (tp->snd_nxt == tp->snd_max))
 		tp->snd_nxt--;
 	/*
 	 * If we are doing retransmissions, then snd_nxt will
@@ -463,6 +463,8 @@ send:
 		win = (long)TCP_MAXWIN << tp->rcv_scale;
 	if (win < (long)(tp->rcv_adv - tp->rcv_nxt))
 		win = (long)(tp->rcv_adv - tp->rcv_nxt);
+	if (flags & TH_RST)
+		win = 0;
 	ti->ti_win = htons((u_int16_t) (win>>tp->rcv_scale));
 	if (SEQ_GT(tp->snd_up, tp->snd_nxt)) {
 		ti->ti_urp = htons((u_int16_t)(tp->snd_up - tp->snd_nxt));
