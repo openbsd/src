@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.2 2004/11/29 22:07:41 miod Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.3 2005/03/03 02:14:02 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -539,7 +539,7 @@ rfx_initialize(struct rfx_softc *sc, struct sbus_attach_args *sa,
 	 * Skip copyright notice
 	 */
 	data += RFX_INIT_OFFSET / sizeof(u_int32_t);
-	cnt = RFX_INIT_SIZE - RFX_INIT_OFFSET / sizeof(u_int32_t);
+	cnt = (RFX_INIT_SIZE - RFX_INIT_OFFSET) / sizeof(u_int32_t);
 	cnt >>= 1;
 
 	/*
@@ -572,7 +572,7 @@ rfx_initialize(struct rfx_softc *sc, struct sbus_attach_args *sa,
 	}
 
 #ifdef DEBUG
-	if (cnt == 0)
+	if (cnt != 0)
 		printf("%s: incoherent initialization data!\n");
 #endif
 
