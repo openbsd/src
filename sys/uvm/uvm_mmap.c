@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.47 2003/07/01 22:18:09 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.48 2003/07/01 23:23:04 tedu Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -441,8 +441,10 @@ sys_mmap(p, v, retval)
 		 * not fixed: make sure we skip over the largest possible heap.
 		 * we will refine our guess later (e.g. to account for VAC, etc)
 		 */
-
-		if (addr < uvm_map_hint(p, prot))
+		if (addr == 0)
+			addr = uvm_map_hint(p, prot);
+		else if (!(flags & MAP_TRYFIXED) &&
+		    addr < uvm_map_hint(p, prot))
 			addr = uvm_map_hint(p, prot);
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.16 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: mman.h,v 1.17 2003/07/01 23:23:04 tedu Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -57,6 +57,7 @@
 #define	MAP_INHERIT	 0x0080	/* region is retained after exec */
 #define	MAP_NOEXTEND	 0x0100	/* for MAP_FILE, don't change file size */
 #define	MAP_HASSEMAPHORE 0x0200	/* region may contain semaphores */
+#define	MAP_TRYFIXED	 0x0400 /* attempt hint address, even within heap */
 
 /*
  * Error return from mmap()
