@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysv_msg.c,v 1.12 2002/03/14 01:27:05 millert Exp $	*/
+/*	$OpenBSD: sysv_msg.c,v 1.13 2002/12/22 04:52:10 millert Exp $	*/
 /*	$NetBSD: sysv_msg.c,v 1.19 1996/02/09 19:00:18 christos Exp $	*/
 
 /*
@@ -361,7 +361,7 @@ sys_msgget(p, v, retval)
 		msqptr->msg_perm.gid = cred->cr_gid;
 		msqptr->msg_perm.mode = (msgflg & 0777);
 		/* Make sure that the returned msqid is unique */
-		msqptr->msg_perm.seq++;
+		msqptr->msg_perm.seq = (msqptr->msg_perm.seq + 1) & 0x7fff;
 		msqptr->msg_first = NULL;
 		msqptr->msg_last = NULL;
 		msqptr->msg_cbytes = 0;
