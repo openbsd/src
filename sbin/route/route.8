@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route.8,v 1.6 1997/07/13 23:12:08 angelos Exp $
+.\"	$OpenBSD: route.8,v 1.7 1998/01/15 17:22:32 niklas Exp $
 .\"	$NetBSD: route.8,v 1.6 1995/03/18 15:00:13 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -42,7 +42,7 @@
 .Nd manually manipulate the routing tables.
 .Sh SYNOPSIS
 .Nm route
-.Op Fl nqv
+.Op Fl dnqv
 .Ar command
 .Oo
 .Op Ar modifiers
@@ -65,12 +65,14 @@ programmatic interface discussed in
 .Xr route 4 .
 .Pp
 .Bl -tag -width Ds
+.It Fl d
+Run in debug-only mode, i.e. don't actually modify the routing table.
 .It Fl n
 Bypasses attempts to print host and network names symbolically
 when reporting actions.  (The process of translating between symbolic
 names and numerical equivalents can be quite time consuming, and
 may require correct operation of the network; thus it may be expedient
-to forgo this, especially when attempting to repair networking operations),
+to forgo this, especially when attempting to repair networking operations).
 .It Fl v
 (verbose) Print additional details.
 .It Fl q
