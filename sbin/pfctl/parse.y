@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.224 2002/11/28 12:14:24 mcbride Exp $	*/
+/*	$OpenBSD: parse.y,v 1.225 2002/11/28 14:43:39 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -522,8 +522,8 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 
 /* altq stuff */
 
-altqif		: ALTQ interface SCHEDULER schedtype bandwidth tbrsize
-		  QUEUE qassign	{
+altqif		: ALTQ interface SCHEDULER schedtype bandwidth qlimit
+		  tbrsize QUEUE qassign	{
 			struct	pf_altq a;
 
 			if (check_rulestate(PFCTL_STATE_QUEUE))
@@ -540,12 +540,13 @@ altqif		: ALTQ interface SCHEDULER schedtype bandwidth tbrsize
 				yyerror("interface bandwidth must be absolute");
 				YYERROR;
 			}
-			a.tbrsize = $6;
-			if ($8 == NULL) {
+			a.qlimit = $6;
+			a.tbrsize = $7;
+			if ($9 == NULL) {
 				yyerror("no child queues specified");
 				YYERROR;
 			}
-			if (expand_altq(&a, $2, $8))
+			if (expand_altq(&a, $2, $9))
 				YYERROR;
 		}
 		;
