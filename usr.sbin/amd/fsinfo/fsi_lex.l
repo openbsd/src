@@ -37,7 +37,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsi_lex.l	8.2 (Berkeley) 2/17/94
- *	$Id: fsi_lex.l,v 1.1.1.1 1995/10/18 08:47:18 deraadt Exp $
+ *	$Id: fsi_lex.l,v 1.2 2001/01/02 20:01:34 mickey Exp $
  */
 
 /*
@@ -262,7 +262,7 @@ static int first = 1;
 			first = 0;
 			return 0;
 		} else {
-			perror(prog);
+			warn(prog);
 		}
 	}
 

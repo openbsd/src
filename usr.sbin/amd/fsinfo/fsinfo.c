@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsinfo.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsinfo.c,v 1.3 1997/01/15 23:43:47 millert Exp $
+ *	$Id: fsinfo.c,v 1.4 2001/01/02 20:01:35 mickey Exp $
  */
 
 #ifndef lint
@@ -67,7 +67,6 @@ int verbose;
 char idvbuf[1024];
 
 char **g_argv;
-char *progname;
 
 /*
  * Output file prefixes
@@ -90,19 +89,7 @@ char *v[];
 	int ch;
 	int usage = 0;
 	char *iptr = idvbuf;
-
-	/*
-	 * Determine program name
-	 */
-	if (v[0]) {
-		progname = strrchr(v[0], '/');
-		if (progname && progname[1])
-			progname++;
-		else
-			progname = v[0];
-	}
-	if (!progname)
-		progname = "fsinfo";
+	int  iptr_size = sizeof(idvbuf);
 
 	while ((ch = getopt(c, v, "a:b:d:e:f:h:m:D:U:I:qv")) != -1)
 	switch (ch) {
@@ -144,8 +131,13 @@ char *v[];
 		verbose = 1;
 		break;
 	case 'I': case 'D': case 'U':
-		sprintf(iptr, "-%c%s ", ch, optarg);
-		iptr += strlen(iptr);
+		if (snprintf(iptr, iptr_size, "-%c%s ", ch, optarg) >= iptr_size)
+			usage++;
+		else {
+			size_t l = strlen(iptr);
+			iptr_size -= l;
+			iptr += strlen(iptr);
+		}
 		break;
 	default:
 		usage++;
@@ -165,7 +157,7 @@ char *v[];
 "\
 Usage: %s [-v] [-a autodir] [-h hostname] [-b bootparams] [-d dumpsets]\n\
 \t[-e exports] [-f fstabs] [-m automounts]\n\
-\t[-I dir] [-D|-U string[=string]] config ...\n", progname);
+\t[-I dir] [-D|-U string[=string]] config ...\n", __progname);
 		exit(1);
 	}
 
@@ -202,9 +194,10 @@ static char *find_username()
 /*
  * MAIN
  */
+int
 main(argc, argv)
-int argc;
-char *argv[];
+	int argc;
+	char *argv[];
 {
 	/*
 	 * Process arguments
@@ -214,10 +207,8 @@ char *argv[];
 	/*
 	 * If no hostname given then use the local name
 	 */
-	if (!*hostname && gethostname(hostname, sizeof(hostname)) < 0) {
-		perror("gethostname");
-		exit(1);
-	}
+	if (!*hostname && gethostname(hostname, sizeof(hostname)) < 0)
+		err(1, "gethostname");
 
 	/*
 	 * Get the username
@@ -269,5 +260,5 @@ char *argv[];
 
 	col_cleanup(1);
 
-	exit(errors);
+	return (errors);
 }

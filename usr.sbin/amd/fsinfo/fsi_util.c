@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsi_util.c	8.1 (Berkeley) 6/6/93
- *	$Id: fsi_util.c,v 1.4 1997/02/17 22:13:28 deraadt Exp $
+ *	$Id: fsi_util.c,v 1.5 2001/01/02 20:01:35 mickey Exp $
  */
 
 #include "../fsinfo/fsinfo.h"
@@ -45,7 +45,7 @@ void error(s, s1, s2, s3, s4)
 char *s, *s1, *s2, *s3, *s4;
 {
 	col_cleanup(0);
-	fprintf(stderr, "%s: Error, ", progname);
+	fprintf(stderr, "%s: Error, ", __progname);
 	fprintf(stderr, s, s1, s2, s3, s4);
 	fputc('\n', stderr);
 	errors++;
@@ -77,7 +77,7 @@ void fatal(s, s1, s2, s3, s4)
 char *s, *s1, *s2, *s3, *s4;
 {
 	col_cleanup(1);
-	fprintf(stderr, "%s: Fatal, ", progname);
+	fprintf(stderr, "%s: Fatal, ", __progname);
 	fprintf(stderr, s, s1, s2, s3, s4);
 	fputc('\n', stderr);
 	exit(1);
@@ -108,7 +108,7 @@ char *s, *s1, *s2, *s3, *s4;
 {
 	if (verbose > 0) {
 		fputc('#', stdout);
-		fprintf(stdout, "%s: ", progname);
+		fprintf(stdout, "%s: ", __progname);
 		fprintf(stdout, s, s1, s2, s3, s4);
 		putc('\n', stdout);
 	}
@@ -140,7 +140,7 @@ FILE *fp;
 # \"%s\" run by %s@%s on %s\
 #\n\
 ",
-	progname, username, hostname, cp);
+	__progname, username, hostname, cp);
 }
 
 static int show_range = 10;

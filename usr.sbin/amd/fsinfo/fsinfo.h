@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsinfo.h	8.1 (Berkeley) 6/6/93
- *	$Id: fsinfo.h,v 1.2 1997/01/31 14:42:11 graichen Exp $
+ *	$Id: fsinfo.h,v 1.3 2001/01/02 20:01:35 mickey Exp $
  */
 
 /*
@@ -84,6 +84,7 @@ typedef char *voidp;
 
 #include <string.h>
 #include <stdlib.h>
+#include <err.h>
 
 #include "fsi_data.h"
 
@@ -123,7 +124,7 @@ extern char *fsmount_strings[];
 extern char *host_strings[];
 extern char *ether_if_strings[];
 extern char *autodir;
-extern char *progname;
+extern char *__progname;
 extern char hostname[];
 extern char *username;
 extern char **g_argv;
