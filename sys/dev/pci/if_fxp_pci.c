@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fxp_pci.c,v 1.4 2000/09/25 21:03:15 aaron Exp $	*/
+/*	$OpenBSD: if_fxp_pci.c,v 1.5 2000/12/29 14:03:01 art Exp $	*/
 
 /*
  * Copyright (c) 1995, David Greenman
@@ -176,7 +176,7 @@ fxp_pci_attach(parent, self, aux)
 	/*
 	 * revisions
 	 * 2 = 82557
-	 * 4, 6 = 82558
+	 * 4-6 = 82558
 	 * 8 = 82559
 	 */
 	sc->not_82557 = (rev >= 4) ? 1 : 0;
