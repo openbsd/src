@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.535 2002/07/29 19:23:54 millert Exp 
+ *		OpenBSD: pcidevs,v 1.536 2002/07/31 01:56:20 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1637,6 +1637,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_SOFTK56_PCI,
 	    "SoftK56 PCI",
+	},
+	{
+	    PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_HSF_56K_HSFI,
+	    "HSF 56k HSFi",
 	},
 	{
 	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C599,
@@ -4389,6 +4393,14 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SUPERSAVAGE,
 	    "SuperSavage",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TWISTER,
+	    "Twister",
+	},
+	{
+	    PCI_VENDOR_S3, PCI_PRODUCT_S3_TWISTER_K,
+	    "Twister-K",
 	},
 	{
 	    PCI_VENDOR_S3, PCI_PRODUCT_S3_SONICVIBES,

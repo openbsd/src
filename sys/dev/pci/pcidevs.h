@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.535 2002/07/29 19:23:54 millert Exp 
+ *		OpenBSD: pcidevs,v 1.536 2002/07/31 01:56:20 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1090,6 +1090,7 @@
 #define	PCI_PRODUCT_CONEXANT_RS7112	0x1803		/* 10/100 MiniPCI Ethernet */
 #define	PCI_PRODUCT_CONEXANT_56K_WINMODEM3	0x1804		/* 10/100 MiniPCI Ethernet */
 #define	PCI_PRODUCT_CONEXANT_SOFTK56_PCI	0x2443		/* SoftK56 PCI */
+#define	PCI_PRODUCT_CONEXANT_HSF_56K_HSFI	0x2f00		/* HSF 56k HSFi */
 
 /* Contaq Microsystems products */
 #define	PCI_PRODUCT_CONTAQ_82C599	0x0600		/* 82C599 PCI-VLB */
@@ -1980,6 +1981,8 @@
 #define	PCI_PRODUCT_S3_SAVAGE_IXMV	0x8c12		/* Savage/IX-MV */
 #define	PCI_PRODUCT_S3_SAVAGE_IX	0x8c13		/* Savage/IX */
 #define	PCI_PRODUCT_S3_SUPERSAVAGE	0x8c2e		/* SuperSavage */
+#define	PCI_PRODUCT_S3_TWISTER	0x8d01		/* Twister */
+#define	PCI_PRODUCT_S3_TWISTER_K	0x8d02		/* Twister-K */
 #define	PCI_PRODUCT_S3_SONICVIBES	0xca00		/* SonicVibes */
 
 /* Schneider & Koch (SysKonnect) */
