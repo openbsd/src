@@ -1,7 +1,8 @@
-/*	$OpenBSD: bevar.h,v 1.4 1998/07/05 09:25:56 deraadt Exp $	*/
+/*	$OpenBSD: bevar.h,v 1.5 1998/08/26 05:00:54 jason Exp $	*/
 
 /*
- * Copyright (c) 1998 Theo de Raadt.  All rights reserved.
+ * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -11,13 +12,13 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
+ * 3. The name of the authors may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
- * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
@@ -29,11 +30,10 @@
 struct besoftc {
 	struct	device sc_dev;
 	struct	sbusdev sc_sd;		/* sbus device */
-	struct	arpcom sc_arpcom;
 	struct	intrhand sc_ih;		/* interrupt vectoring */
-	struct	dma_softc *sc_dma;	/* pointer to my dma */
+	struct	arpcom sc_arpcom;	/* ethernet common */
 
-	u_long	sc_laddr;		/* DMA address */
+	struct	qec_softc *sc_qec;	/* QEC parent */
 	struct	qecregs *sc_qr;		/* QEC registers */
 	struct	be_bregs *sc_br;	/* registers */
 	struct	be_cregs *sc_cr;	/* registers */
@@ -41,16 +41,16 @@ struct besoftc {
 
 	void	*sc_mem;
 	int	sc_memsize;
-	long	sc_addr;
 	int	sc_conf3;
 	u_int	sc_rev;
 
 	int	sc_promisc;
 	int	sc_burst;
+	int	sc_tcvr_type;
 
-	int	sc_txnew, sc_txold;
-	int	sc_rxnew, sc_rxold;
-
+	struct	be_bufs *sc_bufs, *sc_bufs_dva;
 	struct	be_desc *sc_desc, *sc_desc_dva;
-	struct	be_bufs	*sc_bufs, *sc_bufs_dva;
+
+	int	sc_no_td, sc_first_td, sc_last_td;
+	int	sc_last_rd;
 };
