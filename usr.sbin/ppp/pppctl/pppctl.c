@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: pppctl.c,v 1.12 2003/04/14 03:14:17 deraadt Exp $
+ *	$Id: pppctl.c,v 1.13 2003/08/19 23:57:09 deraadt Exp $
  */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <poll.h>
 #include <unistd.h>
 
 #define LINELEN 2048
@@ -160,15 +161,13 @@ static void
 check_fd(int sig)
 {
   if (data != -1) {
-    struct timeval t;
-    fd_set f;
+    struct pollfd pfd[1];
     static char buf[LINELEN];
     int len;
 
-    FD_ZERO(&f);
-    FD_SET(data, &f);
-    t.tv_sec = t.tv_usec = 0;
-    if (select(data+1, &f, NULL, NULL, &t) > 0) {
+    pfd[0].fd = data;
+    pfd[1].events = POLLIN;
+    if (poll(pfd, 1, 0) > 0) {
       len = read(data, buf, sizeof buf);
       if (len > 0)
         write(1, buf, len);
