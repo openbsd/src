@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.29 1997/01/02 21:33:33 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.30 1997/01/05 21:28:07 bitblt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -680,7 +680,9 @@ checkuser(fname, name)
 static void
 end_login()
 {
-
+	sigset_t allsigs;
+	sigfillset (&allsigs);
+	sigprocmask (SIG_BLOCK, &allsigs, NULL);
 	(void) seteuid((uid_t)0);
 	if (logged_in) {
 		logwtmp(ttyline, "", "");
@@ -701,6 +703,7 @@ pass(passwd)
 	FILE *fd;
 	static char homedir[MAXPATHLEN];
 	char rootdir[MAXPATHLEN];
+	sigset_t allsigs;
 
 	if (logged_in || askpasswd == 0) {
 		reply(503, "Login with USER first.");
@@ -832,6 +835,8 @@ skip:
 		reply(550, "Can't set uid.");
 		goto bad;
 	}
+	sigfillset(&allsigs);
+	sigprocmask(SIG_UNBLOCK,&allsigs,NULL);
 
 	/*
 	 * Set home directory so that use of ~ (tilde) works correctly.
@@ -1045,9 +1050,12 @@ getdatasock(mode)
 	char *mode;
 {
 	int on = 1, s, t, tries;
+	sigset_t allsigs;
 
 	if (data >= 0)
 		return (fdopen(data, mode));
+	sigfillset(&allsigs);
+	sigprocmask (SIG_BLOCK, &allsigs, NULL);
 	(void) seteuid((uid_t)0);
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s < 0)
@@ -1068,6 +1076,9 @@ getdatasock(mode)
 		sleep(tries);
 	}
 	(void) seteuid((uid_t)pw->pw_uid);
+	sigfillset(&allsigs);
+	sigprocmask (SIG_UNBLOCK, &allsigs, NULL);
+
 #ifdef IP_TOS
 	on = IPTOS_THROUGHPUT;
 	if (setsockopt(s, IPPROTO_IP, IP_TOS, (char *)&on, sizeof(int)) < 0)
@@ -1095,6 +1106,8 @@ bad:
 	/* Return the real value of errno (close may change it) */
 	t = errno;
 	(void) seteuid((uid_t)pw->pw_uid);
+	sigfillset (&allsigs);
+	sigprocmask (SIG_UNBLOCK, &allsigs, NULL);
 	(void) close(s);
 	errno = t;
 	return (NULL);
@@ -1708,9 +1721,13 @@ void
 dologout(status)
 	int status;
 {
+	sigset_t allsigs;
+
 	transflag = 0;
 
 	if (logged_in) {
+		sigfillset(&allsigs);
+		sigprocmask(SIG_BLOCK, &allsigs, NULL);
 		(void) seteuid((uid_t)0);
 		logwtmp(ttyline, "", "");
 		if (doutmp)
