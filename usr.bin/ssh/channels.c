@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: channels.c,v 1.197 2003/09/23 20:41:11 markus Exp $");
+RCSID("$OpenBSD: channels.c,v 1.198 2003/11/21 11:57:03 djm Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -969,7 +969,7 @@ channel_decode_socks5(Channel *c, fd_set * readset, fd_set * writeset)
 	have = buffer_len(&c->input);
 	if (!(c->flags & SSH_SOCKS5_AUTHDONE)) {
 		/* format: ver | nmethods | methods */
-		if (have < 2) 
+		if (have < 2)
 			return 0;
 		nmethods = p[1];
 		if (have < nmethods + 2)
@@ -1034,7 +1034,7 @@ channel_decode_socks5(Channel *c, fd_set * readset, fd_set * writeset)
 	else if (inet_ntop(af, dest_addr, c->path, sizeof(c->path)) == NULL)
 		return -1;
 	c->host_port = ntohs(dest_port);
-	
+
 	debug2("channel %d: dynamic request: socks5 host %s port %u command %u",
 	    c->self, c->path, c->host_port, s5_req.command);
 

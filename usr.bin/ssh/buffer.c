@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: buffer.c,v 1.20 2003/09/19 09:03:00 markus Exp $");
+RCSID("$OpenBSD: buffer.c,v 1.21 2003/11/21 11:57:03 djm Exp $");
 
 #include "xmalloc.h"
 #include "buffer.h"
@@ -105,7 +105,7 @@ restart:
 		goto restart;
 	}
 	/* Increase the size of the buffer and retry. */
-	
+
 	newlen = buffer->alloc + len + 32768;
 	if (newlen > 0xa00000)
 		fatal("buffer_append_space: alloc %u not supported",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gss-genr.c,v 1.2 2003/11/17 11:06:07 markus Exp $	*/
+/*	$OpenBSD: gss-genr.c,v 1.3 2003/11/21 11:57:03 djm Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -253,14 +253,14 @@ ssh_gssapi_sign(Gssctxt *ctx, gss_buffer_t buffer, gss_buffer_t hash)
 	if ((ctx->major = gss_get_mic(&ctx->minor, ctx->context,
 	    GSS_C_QOP_DEFAULT, buffer, hash)))
 		ssh_gssapi_error(ctx);
-	
+
 	return (ctx->major);
 }
 
 void
-ssh_gssapi_buildmic(Buffer *b, const char *user, const char *service, 
-    const char *context) 
-{	
+ssh_gssapi_buildmic(Buffer *b, const char *user, const char *service,
+    const char *context)
+{
 	buffer_init(b);
 	buffer_put_string(b, session_id2, session_id2_len);
 	buffer_put_char(b, SSH2_MSG_USERAUTH_REQUEST);

@@ -28,7 +28,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth-krb5.c,v 1.14 2003/11/04 08:54:09 djm Exp $");
+RCSID("$OpenBSD: auth-krb5.c,v 1.15 2003/11/21 11:57:02 djm Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -83,7 +83,7 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
 	if (problem)
 		goto out;
 
-	problem = krb5_cc_initialize(authctxt->krb5_ctx, ccache, 
+	problem = krb5_cc_initialize(authctxt->krb5_ctx, ccache,
 		authctxt->krb5_user);
 	if (problem)
 		goto out;
@@ -98,7 +98,7 @@ auth_krb5_password(Authctxt *authctxt, const char *password)
 	if (problem)
 		goto out;
 
-	problem = krb5_cc_gen_new(authctxt->krb5_ctx, &krb5_fcc_ops, 
+	problem = krb5_cc_gen_new(authctxt->krb5_ctx, &krb5_fcc_ops,
 	    &authctxt->krb5_fwd_ccache);
 	if (problem)
 		goto out;

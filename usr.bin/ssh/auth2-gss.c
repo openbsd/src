@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth2-gss.c,v 1.6 2003/11/17 11:06:07 markus Exp $	*/
+/*	$OpenBSD: auth2-gss.c,v 1.7 2003/11/21 11:57:03 djm Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -82,11 +82,11 @@ userauth_gssapi(Authctxt *authctxt)
 		present = 0;
 		doid = packet_get_string(&len);
 
-		if (len > 2 && 
+		if (len > 2 &&
 		   doid[0] == SSH_GSS_OIDTYPE &&
 		   doid[1] == len - 2) {
-                        oid.elements = doid + 2;
-                        oid.length   = len - 2;
+			oid.elements = doid + 2;
+			oid.length   = len - 2;
 			gss_test_oid_set_member(&ms, &oid, supported,
 			    &present);
 		} else {
@@ -255,21 +255,21 @@ input_gssapi_mic(int type, u_int32_t plen, void *ctxt)
 	Buffer b;
 	gss_buffer_desc mic, gssbuf;
 	u_int len;
-	
+
 	if (authctxt == NULL || (authctxt->methoddata == NULL && !use_privsep))
 		fatal("No authentication or GSSAPI context");
-	
+
 	gssctxt = authctxt->methoddata;
-	
+
 	mic.value = packet_get_string(&len);
 	mic.length = len;
-	
+
 	ssh_gssapi_buildmic(&b, authctxt->user, authctxt->service,
 	    "gssapi-with-mic");
-	
+
 	gssbuf.value = buffer_ptr(&b);
 	gssbuf.length = buffer_len(&b);
-	
+
 	if (!GSS_ERROR(PRIVSEP(ssh_gssapi_checkmic(gssctxt, &gssbuf, &mic))))
 		authenticated = PRIVSEP(ssh_gssapi_userok(authctxt->user));
 	else
@@ -277,7 +277,7 @@ input_gssapi_mic(int type, u_int32_t plen, void *ctxt)
 
 	buffer_free(&b);
 	xfree(mic.value);
-	
+
 	authctxt->postponed = 0;
 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_TOKEN, NULL);
 	dispatch_set(SSH2_MSG_USERAUTH_GSSAPI_ERRTOK, NULL);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: gss-serv-krb5.c,v 1.1 2003/08/22 10:56:09 markus Exp $	*/
+/*	$OpenBSD: gss-serv-krb5.c,v 1.2 2003/11/21 11:57:03 djm Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Simon Wilkinson. All rights reserved.
@@ -44,7 +44,7 @@ static krb5_context krb_context = NULL;
 
 /* Initialise the krb5 library, for the stuff that GSSAPI won't do */
 
-static int 
+static int
 ssh_gssapi_krb5_init()
 {
 	krb5_error_code problem;
@@ -119,7 +119,7 @@ ssh_gssapi_krb5_storecreds(ssh_gssapi_client *client)
 		return;
 	}
 
-	if ((problem = krb5_parse_name(krb_context, 
+	if ((problem = krb5_parse_name(krb_context,
 	    client->exportedname.value, &princ))) {
 		logit("krb5_parse_name(): %.100s",
 		    krb5_get_err_text(krb_context, problem));
@@ -137,7 +137,7 @@ ssh_gssapi_krb5_storecreds(ssh_gssapi_client *client)
 
 	krb5_free_principal(krb_context, princ);
 
-	if ((maj_status = gss_krb5_copy_ccache(&min_status, 
+	if ((maj_status = gss_krb5_copy_ccache(&min_status,
 	    client->creds, ccache))) {
 		logit("gss_krb5_copy_ccache() failed");
 		krb5_cc_destroy(krb_context, ccache);

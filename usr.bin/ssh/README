@@ -1,7 +1,7 @@
 This release of OpenSSH is for OpenBSD systems only.
 
 Please read
-        http://www.openssh.com/portable.html
+	http://www.openssh.com/portable.html
 if you want to install OpenSSH on other operating systems.
 
 To extract and install this release on your OpenBSD system use:

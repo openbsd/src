@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh.c,v 1.202 2003/10/11 08:24:08 markus Exp $");
+RCSID("$OpenBSD: ssh.c,v 1.203 2003/11/21 11:57:03 djm Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -594,7 +594,7 @@ again:
 		options.proxy_command = NULL;
 
 	/* Open a connection to the remote host. */
-	if (ssh_connect(host, &hostaddr, options.port, 
+	if (ssh_connect(host, &hostaddr, options.port,
 	    options.address_family, options.connection_attempts,
 	    original_effective_uid == 0 && options.use_privileged_port,
 	    options.proxy_command) != 0)
@@ -702,7 +702,7 @@ again:
 	packet_close();
 
 	/*
-	 * Send SIGHUP to proxy command if used. We don't wait() in 
+	 * Send SIGHUP to proxy command if used. We don't wait() in
 	 * case it hangs and instead rely on init to reap the child
 	 */
 	if (proxy_command_pid > 1)

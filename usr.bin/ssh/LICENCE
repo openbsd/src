@@ -45,16 +45,16 @@ OpenSSH contains no GPL code.
     software are publicly available on the Internet and at any major
     bookstore, scientific library, and patent office worldwide.  More
     information can be found e.g. at "http://www.cs.hut.fi/crypto".
-    
+
     The legal status of this program is some combination of all these
     permissions and restrictions.  Use only at your own responsibility.
     You will be responsible for any legal consequences yourself; I am not
     making any claims whether possessing or using this is legal or not in
     your country, and I am not taking any responsibility on your behalf.
-    
-    
-    			    NO WARRANTY
-    
+
+
+			    NO WARRANTY
+
     BECAUSE THE PROGRAM IS LICENSED FREE OF CHARGE, THERE IS NO WARRANTY
     FOR THE PROGRAM, TO THE EXTENT PERMITTED BY APPLICABLE LAW.  EXCEPT WHEN
     OTHERWISE STATED IN WRITING THE COPYRIGHT HOLDERS AND/OR OTHER PARTIES
@@ -64,7 +64,7 @@ OpenSSH contains no GPL code.
     TO THE QUALITY AND PERFORMANCE OF THE PROGRAM IS WITH YOU.  SHOULD THE
     PROGRAM PROVE DEFECTIVE, YOU ASSUME THE COST OF ALL NECESSARY SERVICING,
     REPAIR OR CORRECTION.
-    
+
     IN NO EVENT UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING
     WILL ANY COPYRIGHT HOLDER, OR ANY OTHER PARTY WHO MAY MODIFY AND/OR
     REDISTRIBUTE THE PROGRAM AS PERMITTED ABOVE, BE LIABLE TO YOU FOR DAMAGES,
@@ -112,15 +112,15 @@ OpenSSH contains no GPL code.
     with the following license:
 
      * @version 3.0 (December 2000)
-     * 
+     *
      * Optimised ANSI C code for the Rijndael cipher (now AES)
-     * 
+     *
      * @author Vincent Rijmen <vincent.rijmen@esat.kuleuven.ac.be>
      * @author Antoon Bosselaers <antoon.bosselaers@esat.kuleuven.ac.be>
      * @author Paulo Barreto <paulo.barreto@terra.com.br>
-     * 
+     *
      * This code is hereby placed in the public domain.
-     * 
+     *
      * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ''AS IS'' AND ANY EXPRESS
      * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
      * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
@@ -203,4 +203,4 @@ OpenSSH contains no GPL code.
      * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 ------
-$OpenBSD: LICENCE,v 1.17 2003/08/22 20:55:06 markus Exp $
+$OpenBSD: LICENCE,v 1.18 2003/11/21 11:57:02 djm Exp $

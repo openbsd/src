@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.167 2003/11/04 08:54:09 djm Exp $");
+RCSID("$OpenBSD: session.c,v 1.168 2003/11/21 11:57:03 djm Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -781,7 +781,7 @@ do_setup_env(Session *s, const char *shell)
 	env[0] = NULL;
 
 #ifdef GSSAPI
-	/* Allow any GSSAPI methods that we've used to alter 
+	/* Allow any GSSAPI methods that we've used to alter
 	 * the childs environment as they see fit
 	 */
 	ssh_gssapi_do_child(&env, &envsize);
