@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.41 2005/03/08 08:17:16 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.42 2005/03/08 14:14:11 dlg Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -2546,7 +2546,7 @@ ehci_intrlist_timeout(void *arg)
 	ehci_softc_t *sc = arg;
 	int s = splusb();
 
-	printf("ehci_intrlist_timeout\n");
+	DPRINTFN(1, ("ehci_intrlist_timeout\n"));
 	usb_schedsoftintr(&sc->sc_bus);
 
 	splx(s);
