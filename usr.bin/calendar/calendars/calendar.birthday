@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.7 1997/08/27 10:48:29 provos Exp $
+ * $OpenBSD: calendar.birthday,v 1.8 1998/10/31 09:49:56 mickey Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -258,6 +258,7 @@
 12/01	Woody Allen (Allen Stuart Konigsberg) born in Brooklyn, NY, 1935
 12/04	Tommy Bolin dies of a heroin overdose in Miami, 1976
 12/05	Walt (Walter Elias) Disney born in Chicago, 1901
+12/06	Samich Laus brewing
 12/08	Horace (Quintus Horatius Flaccus) born in Venosa (Italy), 65BC
 12/08	James (Grover) Thurber born in Columbus, Ohio, 1894
 12/10	Emily Dickenson born, 1830
