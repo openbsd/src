@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypbind.c,v 1.5 1996/05/14 18:53:38 deraadt Exp $";
+static char rcsid[] = "$Id: ypbind.c,v 1.6 1996/05/24 11:43:36 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -833,7 +833,7 @@ int force;
 	}
 
 	/* we do not support sunos 3.0 insecure servers */
-	if (ntohs(raddrp->sin_port) < IPPORT_RESERVED)
+	if (ntohs(raddrp->sin_port) >= IPPORT_RESERVED)
 		return;
 
 	/* soft update, alive */
