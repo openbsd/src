@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan_ffs.c,v 1.10 2003/07/02 21:44:58 deraadt Exp $	*/
+/*	$OpenBSD: scan_ffs.c,v 1.11 2004/02/16 19:13:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Niklas Hallqvist, Tobias Weingartner
@@ -43,6 +43,8 @@
 #define FLAG_VERBOSE		1
 #define FLAG_SMART		2
 #define FLAG_LABELS		4
+
+static void usage(void);
 
 static int
 ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
@@ -113,13 +115,13 @@ ufsscan(int fd, daddr_t beg, daddr_t end, int flags)
 
 
 static void
-usage(int code)
+usage(void)
 {
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-lsv] [-b begin] [-e end] device\n",
 	    __progname);
-	exit(code);
+	exit(1);
 }
 
 
@@ -147,14 +149,14 @@ main(int argc, char *argv[])
 			flags |= FLAG_LABELS;
 			break;
 		default:
-			usage(1);
+			usage();
 			/* NOTREACHED */
 	}
 	argc -= optind;
 	argv += optind;
 
 	if (argc != 1)
-		usage(1);
+		usage();
 
 	fd = opendev(argv[0], O_RDONLY, OPENDEV_PART, NULL);
 	if (fd < 0)
