@@ -1,4 +1,4 @@
-/*    $OpenBSD: ipnat.c,v 1.21 1998/03/07 00:34:27 deraadt Exp $    */
+/*    $OpenBSD: ipnat.c,v 1.22 1998/03/21 22:42:13 millert Exp $    */
 /*
  * Copyright (C) 1993-1997 by Darren Reed.
  *
@@ -55,7 +55,7 @@
 
 #if !defined(lint)
 static const char sccsid[] ="@(#)ipnat.c	1.9 6/5/96 (C) 1993 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.21 1998/03/07 00:34:27 deraadt Exp $";
+static const char rcsid[] = "@(#)$Id: ipnat.c,v 1.22 1998/03/21 22:42:13 millert Exp $";
 #endif
 
 
@@ -134,7 +134,7 @@ char *argv[];
 
 	if (!(opts & OPT_NODO) && ((fd = open(IPL_NAT, O_RDWR)) == -1) &&
 	    ((fd = open(IPL_NAT, O_RDONLY)) == -1)) {
-		perror("open");
+		perror("open "IPL_NAT);
 		exit(-1);
 	}
 
