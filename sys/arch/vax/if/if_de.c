@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.14 2004/07/07 23:10:45 deraadt Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.15 2004/09/15 17:46:43 grange Exp $	*/
 /*	$NetBSD: if_de.c,v 1.27 1997/04/19 15:02:29 ragge Exp $	*/
 
 /*
@@ -70,12 +70,6 @@
 #ifdef NS
 #include <netns/ns.h>
 #include <netns/ns_if.h>
-#endif
-
-#ifdef ISO
-#include <netiso/iso.h>
-#include <netiso/iso_var.h>
-extern char all_es_snpa[], all_is_snpa[];
 #endif
 
 #include <machine/cpu.h>
