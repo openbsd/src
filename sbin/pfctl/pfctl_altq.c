@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.25 2002/12/17 20:06:05 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.26 2002/12/23 15:56:24 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -514,15 +514,6 @@ print_cbq_opts(const struct pf_altq *a)
 	const struct cbq_opts	*opts;
 
 	opts = &a->pq_u.cbq_opts;
-
-/*	printf("  cbq options: minburst %u maxburst %u"
-	    " pktsize %u maxpktsize %u\n",
-	    opts->minburst, opts->maxburst,
-	    opts->pktsize, opts->maxpktsize);
-	printf("        ns_per_byte %u maxidle %u minidle %d offtime %u\n",
-	    opts->ns_per_byte, opts->maxidle, opts->minidle, opts->offtime);
-*/
-
 	if (opts->flags) {
 		printf("cbq(");
 		if (opts->flags & CBQCLF_RED)
