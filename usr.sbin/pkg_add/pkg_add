@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.56 2004/09/18 13:28:19 espie Exp $
+# $OpenBSD: pkg_add,v 1.57 2004/09/20 07:31:42 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -111,7 +111,7 @@ sub install
 {
 	my ($self, $archive, $destdir, $verbose, $not) = @_;
 
-	my $filename = $destdir.$self->{name};
+	my $filename = $destdir.$self->fullname();
 	my $orig = $self->{copyfrom};
 	if (!defined $orig) {
 		die "\@sample element does not reference a valid file\n";

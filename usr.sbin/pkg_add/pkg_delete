@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.43 2004/09/18 09:27:05 espie Exp $
+# $OpenBSD: pkg_delete,v 1.44 2004/09/20 07:31:42 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -208,7 +208,7 @@ use OpenBSD::md5;
 sub delete
 {
 	my ($self, $state) = @_;
-	my $name = $self->{name};
+	my $name = $self->fullname();
 	my $realname = $state->{destdir}.$name;
 
 	my $orig = $self->{copyfrom};
