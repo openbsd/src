@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 2001/10/10 04:21:02 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.1 2001/10/10 04:21:02 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -12,7 +12,7 @@ UTILS?=		${.CURDIR}/../../miniroot
 MOUNT_POINT=	/mnt
 MTREE=		${.CURDIR}/mtree.conf
 
-FLOPPY=		floppy${REV}.fs
+FLOPPY=		floppyB${REV}.fs
 FLOPPYSIZE?=	2880
 FLOPPYTYPE?=	floppy
 INSTALLBOOT?=	/usr/mdec/installboot
@@ -35,7 +35,7 @@ IMAGE?=		ramdisk${REV}.fs
 IMAGESIZE?=	8192 # 4MB in 512 byte blocks
 NEWFS_WILL_FAIL?=false
 CRUNCHGENOPTS?=
-KERNEL?=	RAMDISKU1
+KERNEL?=	RAMDISKU5
 UTILS?=		${.CURDIR}/../miniroot
 STRIP?=		strip
 
