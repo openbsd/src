@@ -1,4 +1,4 @@
-/*	$OpenBSD: mmfile.c,v 1.5 2003/06/23 22:05:23 tedu Exp $	*/
+/*	$OpenBSD: mmfile.c,v 1.6 2003/06/24 18:43:11 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -89,7 +89,7 @@ mmfgetln(mmf_t *mmf, size_t *l)
 
 	if (mmf->ptr >= mmf->end)
 		return NULL;
-	if ((lflag || qflag) &! boleol) {
+	if ((lflag || qflag) && !boleol) {
 		/* Find starting point to search. */
 		if (mmf->ptr == mmf->base)
 			p = mmf->ptr;
