@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.74 2004/10/01 21:01:45 miod Exp $	*/
+/*	$OpenBSD: theo.c,v 1.75 2004/11/11 09:55:51 henning Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -161,7 +161,8 @@ static const char *talk[] = {
 	"Have you been living in a cave, or are you just being a jerk?",
 	"If you want it, go do the stinking work yourself.",
 	"A burp means less gas later",
-	"optimism in man kind does not belong here"
+	"optimism in man kind does not belong here",
+	"First user who tries to push this button, he pounds into the ground with a rant of death."
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
