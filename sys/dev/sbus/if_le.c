@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.6 2002/03/14 01:27:02 millert Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.7 2002/05/13 19:45:51 jason Exp $	*/
 /*	$NetBSD: if_le.c,v 1.17 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -93,16 +93,6 @@ struct cfattach le_sbus_ca = {
 	sizeof(struct le_softc), lematch_sbus, leattach_sbus
 };
 
-extern struct cfdriver le_cd;
-
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
-
 static void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
 static u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
 
@@ -114,7 +104,11 @@ lewrcsr(sc, port, val)
 	struct le_softc *lesc = (struct le_softc *)sc;
 
 	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, port);
+	bus_space_barrier(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, 2,
+	    BUS_SPACE_BARRIER_WRITE);
 	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RDP, val);
+	bus_space_barrier(lesc->sc_bustag, lesc->sc_reg, LEREG1_RDP, 2,
+	    BUS_SPACE_BARRIER_WRITE);
 
 #if defined(SUN4M)
 	/*
@@ -125,7 +119,7 @@ lewrcsr(sc, port, val)
 	if (CPU_ISSUN4M) {
 		volatile u_int16_t discard;
 		discard = bus_space_read_2(lesc->sc_bustag, lesc->sc_reg,
-					   LEREG1_RDP);
+		    LEREG1_RDP);
 	}
 #endif
 }
@@ -138,6 +132,8 @@ lerdcsr(sc, port)
 	struct le_softc *lesc = (struct le_softc *)sc;
 
 	bus_space_write_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, port);
+	bus_space_barrier(lesc->sc_bustag, lesc->sc_reg, LEREG1_RAP, 2,
+	    BUS_SPACE_BARRIER_WRITE);
 	return (bus_space_read_2(lesc->sc_bustag, lesc->sc_reg, LEREG1_RDP));
 }
 
@@ -171,13 +167,10 @@ leattach_sbus(parent, self, aux)
 	lesc->sc_bustag = sa->sa_bustag;
 	lesc->sc_dmatag = dmatag = sa->sa_dmatag;
 
-	if (sbus_bus_map(sa->sa_bustag,
-			 sa->sa_slot,
-			 sa->sa_offset,
-			 sa->sa_size,
-			 BUS_SPACE_MAP_LINEAR,
-			 0, &lesc->sc_reg) != 0) {
-		printf("%s @ sbus: cannot map registers\n", self->dv_xname);
+	if (sbus_bus_map(sa->sa_bustag, sa->sa_reg[0].sbr_slot,
+	    sa->sa_reg[0].sbr_offset, sa->sa_reg[0].sbr_size,
+	    BUS_SPACE_MAP_LINEAR, 0, &lesc->sc_reg) != 0) {
+		printf(": cannot map registers\n");
 		return;
 	}
 
@@ -189,7 +182,6 @@ leattach_sbus(parent, self, aux)
 	 */
 	for (sd = ((struct sbus_softc *)parent)->sc_sbdev; sd != NULL;
 	     sd = sd->sd_bchain) {
-
 		struct lebuf_softc *lebuf = (struct lebuf_softc *)sd->sd_dev;
 
 		if (strncmp("lebuffer", sd->sd_dev->dv_xname, 8) != 0)
@@ -205,8 +197,7 @@ leattach_sbus(parent, self, aux)
 
 		/* That old black magic... */
 		sc->sc_conf3 = getpropint(sa->sa_node,
-					  "busmaster-regval",
-					  LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
+		    "busmaster-regval", LE_C3_BSWP | LE_C3_ACON | LE_C3_BCON);
 		break;
 	}
 
@@ -217,43 +208,33 @@ leattach_sbus(parent, self, aux)
 		bus_dma_segment_t seg;
 		int rseg, error;
 
-#ifndef BUS_DMA_24BIT
-/* XXX - This flag is not defined on all archs */
-#define BUS_DMA_24BIT	0
-#endif
 		/* Get a DMA handle */
 		if ((error = bus_dmamap_create(dmatag, MEMSIZE, 1, MEMSIZE, 0,
-						BUS_DMA_NOWAIT|BUS_DMA_24BIT,
-						&lesc->sc_dmamap)) != 0) {
-			printf("%s: DMA map create error %d\n",
-				self->dv_xname, error);
+		     BUS_DMA_NOWAIT|BUS_DMA_24BIT, &lesc->sc_dmamap)) != 0) {
+			printf(": DMA map create error %d\n", error);
 			return;
 		}
 
 		/* Allocate DMA buffer */
 		if ((error = bus_dmamem_alloc(dmatag, MEMSIZE, 0, 0,
-					 &seg, 1, &rseg,
-					 BUS_DMA_NOWAIT|BUS_DMA_24BIT)) != 0){
-			printf("%s: DMA buffer allocation error %d\n",
-				self->dv_xname, error);
+		     &seg, 1, &rseg, BUS_DMA_NOWAIT|BUS_DMA_24BIT)) != 0){
+			printf(": DMA buffer allocation error %d\n", error);
 			return;
 		}
 
 		/* Map DMA buffer into kernel space */
 		if ((error = bus_dmamem_map(dmatag, &seg, rseg, MEMSIZE,
-				       (caddr_t *)&sc->sc_mem,
-				       BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-			printf("%s: DMA buffer map error %d\n",
-				self->dv_xname, error);
+		     (caddr_t *)&sc->sc_mem,
+		     BUS_DMA_NOWAIT|BUS_DMA_COHERENT|BUS_DMA_24BIT)) != 0) {
+			printf(": DMA buffer map error %d\n", error);
 			bus_dmamem_free(lesc->sc_dmatag, &seg, rseg);
 			return;
 		}
 
 		/* Load DMA buffer */
 		if ((error = bus_dmamap_load(dmatag, lesc->sc_dmamap, sc->sc_mem,
-		    MEMSIZE, NULL, BUS_DMA_NOWAIT|BUS_DMA_COHERENT)) != 0) {
-			printf("%s: DMA buffer map load error %d\n",
-				self->dv_xname, error);
+		    MEMSIZE, NULL, BUS_DMA_NOWAIT|BUS_DMA_COHERENT|BUS_DMA_24BIT)) != 0) {
+			printf(": DMA buffer map load error %d\n", error);
 			bus_dmamem_free(dmatag, &seg, rseg);
 			bus_dmamem_unmap(dmatag, sc->sc_mem, MEMSIZE);
 			return;
@@ -282,5 +263,5 @@ leattach_sbus(parent, self, aux)
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
 		(void)bus_intr_establish(lesc->sc_bustag, sa->sa_pri,
-					 IPL_NET, 0, am7990_intr, sc);
+		    IPL_NET, 0, am7990_intr, sc);
 }
