@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.25 2001/11/05 09:51:13 deraadt Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.26 2001/12/04 21:18:04 millert Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.25 2001/11/05 09:51:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.26 2001/12/04 21:18:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,7 +62,6 @@ static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.25 2001/11/05 09:51:13 deraadt Exp
 #include <errno.h>
 #include <glob.h>
 #include <pwd.h>
-#include <setjmp.h>
 #include <signal.h>
 #include <tzfile.h>
 #include <stdio.h>
@@ -100,6 +99,7 @@ off_t	restart_point;
 static	int cmd_type;
 static	int cmd_form;
 static	int cmd_bytesz;
+static	int state;
 char	cbuf[512];
 char	*fromname;
 
@@ -641,9 +641,11 @@ cmd
 			reply(221, "Goodbye.");
 			dologout(0);
 		}
-	| error CRLF
+	| error
 		{
-			yyerrok;
+			yyclearin;		/* discard lookahead data */
+			yyerrok;		/* clear error condition */
+			state = 0;		/* reset lexer state */
 		}
 	;
 rcmd
@@ -976,8 +978,6 @@ check_login_epsvall
 
 %%
 
-extern jmp_buf errcatch;
-
 #define	CMD	0	/* beginning of command */
 #define	ARGS	1	/* expect miscellaneous arguments */
 #define	STR1	2	/* expect SP followed by STRING */
@@ -1178,7 +1178,7 @@ toolong(signo)
 static int
 yylex()
 {
-	static int cpos, state;
+	static int cpos;
 	char *cp, *cp2;
 	struct tab *p;
 	int n;
@@ -1221,8 +1221,7 @@ yylex()
 			if (p != 0) {
 				if (p->implemented == 0) {
 					nack(p->name);
-					longjmp(errcatch,0);
-					/* NOTREACHED */
+					return (LEXERR);
 				}
 				state = p->state;
 				yylval.s = p->name;
@@ -1247,8 +1246,7 @@ yylex()
 				if (p->implemented == 0) {
 					state = CMD;
 					nack(p->name);
-					longjmp(errcatch,0);
-					/* NOTREACHED */
+					return (LEXERR);
 				}
 				state = p->state;
 				yylval.s = p->name;
@@ -1401,9 +1399,8 @@ yylex()
 		default:
 			fatal("Unknown state in scanner.");
 		}
-		yyerror((char *) 0);
 		state = CMD;
-		longjmp(errcatch,0);
+		return (LEXERR);
 	}
 }
 
