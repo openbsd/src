@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.7 1998/11/11 23:25:02 jason Exp $	*/
+/*	$OpenBSD: if_xlreg.h,v 1.8 1998/11/23 19:56:51 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -548,7 +548,7 @@ struct xl_softc {
 	struct arpcom		arpcom;		/* interface info */
 	struct ifmedia		ifmedia;	/* media info */
 	u_int32_t		iobase;		/* pointer to PIO space */
-#ifndef XL_USEIOSPACE
+#if defined(XL_USEIOSPACE) && defined(__FreeBSD__)
 	volatile caddr_t	csr;		/* pointer to register map */
 #endif
 	struct xl_type		*xl_info;	/* 3Com adapter info */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.14 1998/11/16 15:29:18 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.15 1998/11/23 19:56:50 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1848,8 +1848,10 @@ static int xl_newbuf(sc, c)
 
 	MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 	if (m_new == NULL) {
+#if defined(__FreeBSD__)
 		printf("xl%d: no memory for rx list -- packet dropped!\n",
 								sc->xl_unit);
+#endif
 		return(ENOBUFS);
 	}
 
@@ -1861,8 +1863,10 @@ static int xl_newbuf(sc, c)
 
 	MCLGET(m_new, M_DONTWAIT);
 	if (!(m_new->m_flags & M_EXT)) {
+#if defined(__FreeBSD__)
 		printf("xl%d: no memory for rx list -- packet dropped!\n",
 								sc->xl_unit);
+#endif
 		m_freem(m_new);
 		return(ENOBUFS);
 	}
@@ -2291,15 +2295,19 @@ static int xl_encap(sc, c, m_head)
 
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
+#if defined(__FreeBSD__)
 			printf("xl%d: no memory for tx list", sc->xl_unit);
+#endif
 			return(1);
 		}
 		if (m_head->m_pkthdr.len > MHLEN) {
 			MCLGET(m_new, M_DONTWAIT);
 			if (!(m_new->m_flags & M_EXT)) {
 				m_freem(m_new);
+#if defined(__FreeBSD__)
 				printf("xl%d: no memory for tx list",
 						sc->xl_unit);
+#endif
 				return(1);
 			}
 		}
@@ -3054,8 +3062,7 @@ xl_attach(parent, self, aux)
 	sc->sc_st = pa->pa_iot;
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
-		printf("%s: failed to enable memory mapping\n",
-		    sc->sc_dev.dv_xname);
+		printf(": failed to enable memory mapping\n");
 		return;
 	}
 	if (pci_mem_find(pc, pa->pa_tag, XL_PCI_LOMEM, &iobase, &iosize, NULL)){
@@ -3066,7 +3073,6 @@ xl_attach(parent, self, aux)
 		printf(": can't map mem space\n");
 		return;
 	}
-	sc->csr = (volatile caddr_t)&iobase;
 	sc->sc_st = pa->pa_memt;
 #endif
 
@@ -3096,7 +3102,7 @@ xl_attach(parent, self, aux)
 	 * Get station address from the EEPROM.
 	 */
 	if (xl_read_eeprom(sc, (caddr_t)&enaddr, XL_EE_OEM_ADR0, 3, 1)) {
-		printf("%s: failed to read station address\n",
+		printf("\n%s: failed to read station address\n",
 		    sc->sc_dev.dv_xname);
 		return;
 	}
