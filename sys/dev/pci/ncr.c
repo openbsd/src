@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.47 1999/12/02 22:12:13 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.48 2000/02/06 22:03:19 niklas Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -96,7 +96,7 @@
 #ifndef	SCSI_NCR_MAX_SYNC
 
 #ifndef SCSI_NCR_DFLT_SYNC
-#define SCSI_NCR_DFLT_SYNC   (12)
+#define SCSI_NCR_DFLT_SYNC   (10)
 #endif /* SCSI_NCR_DFLT_SYNC */
 
 #else
@@ -1324,7 +1324,7 @@ struct script {
 	ncrcmd	skip		[  8];
 	ncrcmd	skip2		[  3];
 	ncrcmd  idle		[  2];
-	ncrcmd	select		[ 22];
+	ncrcmd	select		[ 18];
 	ncrcmd	prepare		[  4];
 	ncrcmd	loadpos		[ 14];
 	ncrcmd	prepare2	[ 24];
@@ -1339,8 +1339,8 @@ struct script {
 	ncrcmd  msg_bad		[  6];
 	ncrcmd  complete	[ 13];
 	ncrcmd	cleanup		[ 12];
-	ncrcmd	cleanup0	[ 11];
-	ncrcmd	signal		[ 10];
+	ncrcmd	cleanup0	[  9];
+	ncrcmd	signal		[ 12];
 	ncrcmd  save_dp		[  5];
 	ncrcmd  restore_dp	[  5];
 	ncrcmd  disconnect	[ 12];
@@ -1376,11 +1376,11 @@ struct scripth {
 	ncrcmd  getcc		[  4];
 	ncrcmd  getcc1		[  5];
 #ifdef NCR_GETCC_WITHMSG
-	ncrcmd	getcc2		[ 33];
+	ncrcmd	getcc2		[ 29];
 #else
 	ncrcmd	getcc2		[ 14];
 #endif
-	ncrcmd	getcc3		[ 10];
+	ncrcmd	getcc3		[  6];
 	ncrcmd	aborttag	[  4];
 	ncrcmd	abort		[ 22];
 	ncrcmd	snooptest	[  9];
@@ -1466,7 +1466,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.47 1999/12/02 22:12:13 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.48 2000/02/06 22:03:19 niklas Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -1788,14 +1788,6 @@ static	struct script script0 = {
 	SCR_JUMPR ^ IFTRUE (WHEN (SCR_MSG_IN)),
 		0,
 
-	/*
-	**	Save target id to ctest0 register
-	*/
-
-	SCR_FROM_REG (sdid),
-		0,
-	SCR_TO_REG (ctest0),
-		0,
 	/*
 	**	Send the IDENTIFY and SIMPLE_TAG messages
 	**	(and the M_X_SYNC_REQ message)
@@ -2238,20 +2230,20 @@ static	struct script script0 = {
 		0,
 	SCR_JUMP ^ IFTRUE (DATA (S_CHECK_COND)),
 		PADDRH(getcc2),
-	/*
-	**	And make the DSA register invalid.
-	*/
-/*>>>*/	SCR_LOAD_REG (dsa, 0xff), /* invalid */
-		0,
 }/*-------------------------< SIGNAL >----------------------*/,{
 	/*
 	**	if status = queue full,
 	**	reinsert in startqueue and stall queue.
 	*/
-	SCR_FROM_REG (SS_REG),
+/*>>>*/	SCR_FROM_REG (SS_REG),
 		0,
 	SCR_INT ^ IFTRUE (DATA (S_QUEUE_FULL)),
 		SIR_STALL_QUEUE,
+	/*
+	**	And make the DSA register invalid.
+	*/
+	SCR_LOAD_REG (dsa, 0xff), /* invalid */
+		0,
 	/*
 	**	if job completed ...
 	*/
@@ -2469,7 +2461,7 @@ static	struct script script0 = {
 	*/
 	SCR_REG_SFBR (ssid, SCR_AND, 0x8F),
 		0,
-	SCR_TO_REG (ctest0),
+	SCR_TO_REG (sdid),
 		0,
 	SCR_JUMP,
 		NADDR (jump_tcb),
@@ -3054,13 +3046,6 @@ static	struct scripth scripth0 = {
 	SCR_SEL_TBL_ATN ^ offsetof (struct dsb, select),
 		PADDR(badgetcc),
 	/*
-	**	save target id.
-	*/
-	SCR_FROM_REG (sdid),
-		0,
-	SCR_TO_REG (ctest0),
-		0,
-	/*
 	**	Send the IDENTIFY message.
 	**	In case of short transfer, remove ATN.
 	*/
@@ -3090,13 +3075,6 @@ static	struct scripth scripth0 = {
 	*/
 	SCR_SEL_TBL ^ offsetof (struct dsb, select),
 		PADDR(badgetcc),
-	/*
-	**	save target id.
-	*/
-	SCR_FROM_REG (sdid),
-		0,
-	SCR_TO_REG (ctest0),
-		0,
 	/*
 	**	Force error if selection timeout
 	*/
@@ -5487,7 +5465,7 @@ static void ncr_setsync (ncb_p np, ccb_p cp, u_char scntl3, u_char sxfer)
 	struct scsi_xfer *xp;
 	tcb_p tp;
 	int div;
-	u_char target = INB (nc_ctest0) & 0x0f;
+	u_char target = INB (nc_sdid) & 0x0f;
 
 	assert (cp);
 	if (!cp) return;
@@ -5569,7 +5547,7 @@ static void ncr_setsync (ncb_p np, ccb_p cp, u_char scntl3, u_char sxfer)
 static void ncr_setwide (ncb_p np, ccb_p cp, u_char wide, u_char ack)
 {
 	struct scsi_xfer *xp;
-	u_short target = INB (nc_ctest0) & 0x0f;
+	u_short target = INB (nc_sdid) & 0x0f;
 	tcb_p tp;
 	u_char	scntl3;
 	u_char	sxfer;
@@ -5951,7 +5929,7 @@ static void ncr_log_hard_error(ncb_p np, u_short sist, u_char dstat)
 	}
 
 	printf ("%s:%d: ERROR (%x:%x) (%x-%x-%x) (%x/%x) @ (%s %x:%08x).\n",
-		ncr_name (np), (unsigned)INB (nc_ctest0)&0x0f, dstat, sist,
+		ncr_name (np), (unsigned)INB (nc_sdid)&0x0f, dstat, sist,
 		(unsigned)INB (nc_socl), (unsigned)INB (nc_sbcl), (unsigned)INB (nc_sbdl),
 		(unsigned)INB (nc_sxfer),(unsigned)INB (nc_scntl3), script_name, script_ofs,
 		(unsigned)INL (nc_dbc));
@@ -6182,7 +6160,7 @@ void ncr_exception (ncb_p np)
 			return;
 		};
 		printf ("%s: target %d doesn't release the bus.\n",
-			ncr_name (np), INB (nc_ctest0)&0x0f);
+			ncr_name (np), INB (nc_sdid)&0x0f);
 		/*
 		**	return without restarting the NCR.
 		**	timeout will do the real work.
@@ -6559,7 +6537,7 @@ void ncr_int_sir (ncb_p np)
 	u_char num = INB (nc_dsps);
 	ccb_p	cp=0;
 	u_long	dsa;
-	u_char	target = INB (nc_ctest0) & 0x0f;
+	u_char	target = INB (nc_sdid) & 0x0f;
 	tcb_p	tp     = &np->target[target];
 	int     i;
 	if (DEBUG_FLAGS & DEBUG_TINY) printf ("I#%d", num);
