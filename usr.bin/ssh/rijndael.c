@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.c,v 1.5 2000/12/09 13:41:51 markus Exp $	*/
+/*	$OpenBSD: rijndael.c,v 1.6 2000/12/09 13:48:31 markus Exp $	*/
 
 /* This is an independent implementation of the encryption algorithm:   */
 /*                                                                      */
@@ -52,105 +52,20 @@ void gen_tabs	__P((void));
 
 /* Invert byte order in a 32 bit variable                           */
 
-#define bswap(x)    (rotl(x, 8) & 0x00ff00ff | rotr(x, 8) & 0xff00ff00)
+#define bswap(x)    ((rotl(x, 8) & 0x00ff00ff) | (rotr(x, 8) & 0xff00ff00))
 
 /* Extract byte from a 32 bit quantity (little endian notation)     */ 
 
 #define byte(x,n)   ((u1byte)((x) >> (8 * n)))
 
 #if BYTE_ORDER != LITTLE_ENDIAN
-#define BLOCK_SWAP
-#endif
-
-/* For inverting byte order in input/output 32 bit words if needed  */
-
-#ifdef  BLOCK_SWAP
 #define BYTE_SWAP
-#define WORD_SWAP
 #endif
 
 #ifdef  BYTE_SWAP
 #define io_swap(x)  bswap(x)
 #else
 #define io_swap(x)  (x)
-#endif
-
-/* For inverting the byte order of input/output blocks if needed    */
-
-#ifdef  WORD_SWAP
-
-#define get_block(x)                            \
-    ((u4byte*)(x))[0] = io_swap(in_blk[3]);     \
-    ((u4byte*)(x))[1] = io_swap(in_blk[2]);     \
-    ((u4byte*)(x))[2] = io_swap(in_blk[1]);     \
-    ((u4byte*)(x))[3] = io_swap(in_blk[0])
-
-#define put_block(x)                            \
-    out_blk[3] = io_swap(((u4byte*)(x))[0]);    \
-    out_blk[2] = io_swap(((u4byte*)(x))[1]);    \
-    out_blk[1] = io_swap(((u4byte*)(x))[2]);    \
-    out_blk[0] = io_swap(((u4byte*)(x))[3])
-
-#define get_key(x,len)                          \
-    ((u4byte*)(x))[4] = ((u4byte*)(x))[5] =     \
-    ((u4byte*)(x))[6] = ((u4byte*)(x))[7] = 0;  \
-    switch((((len) + 63) / 64)) {               \
-    case 2:                                     \
-    ((u4byte*)(x))[0] = io_swap(in_key[3]);     \
-    ((u4byte*)(x))[1] = io_swap(in_key[2]);     \
-    ((u4byte*)(x))[2] = io_swap(in_key[1]);     \
-    ((u4byte*)(x))[3] = io_swap(in_key[0]);     \
-    break;                                      \
-    case 3:                                     \
-    ((u4byte*)(x))[0] = io_swap(in_key[5]);     \
-    ((u4byte*)(x))[1] = io_swap(in_key[4]);     \
-    ((u4byte*)(x))[2] = io_swap(in_key[3]);     \
-    ((u4byte*)(x))[3] = io_swap(in_key[2]);     \
-    ((u4byte*)(x))[4] = io_swap(in_key[1]);     \
-    ((u4byte*)(x))[5] = io_swap(in_key[0]);     \
-    break;                                      \
-    case 4:                                     \
-    ((u4byte*)(x))[0] = io_swap(in_key[7]);     \
-    ((u4byte*)(x))[1] = io_swap(in_key[6]);     \
-    ((u4byte*)(x))[2] = io_swap(in_key[5]);     \
-    ((u4byte*)(x))[3] = io_swap(in_key[4]);     \
-    ((u4byte*)(x))[4] = io_swap(in_key[3]);     \
-    ((u4byte*)(x))[5] = io_swap(in_key[2]);     \
-    ((u4byte*)(x))[6] = io_swap(in_key[1]);     \
-    ((u4byte*)(x))[7] = io_swap(in_key[0]);     \
-    }
-
-#else
-
-#define get_block(x)                            \
-    ((u4byte*)(x))[0] = io_swap(in_blk[0]);     \
-    ((u4byte*)(x))[1] = io_swap(in_blk[1]);     \
-    ((u4byte*)(x))[2] = io_swap(in_blk[2]);     \
-    ((u4byte*)(x))[3] = io_swap(in_blk[3])
-
-#define put_block(x)                            \
-    out_blk[0] = io_swap(((u4byte*)(x))[0]);    \
-    out_blk[1] = io_swap(((u4byte*)(x))[1]);    \
-    out_blk[2] = io_swap(((u4byte*)(x))[2]);    \
-    out_blk[3] = io_swap(((u4byte*)(x))[3])
-
-#define get_key(x,len)                          \
-    ((u4byte*)(x))[4] = ((u4byte*)(x))[5] =     \
-    ((u4byte*)(x))[6] = ((u4byte*)(x))[7] = 0;  \
-    switch((((len) + 63) / 64)) {               \
-    case 4:                                     \
-    ((u4byte*)(x))[6] = io_swap(in_key[6]);     \
-    ((u4byte*)(x))[7] = io_swap(in_key[7]);     \
-    case 3:                                     \
-    ((u4byte*)(x))[4] = io_swap(in_key[4]);     \
-    ((u4byte*)(x))[5] = io_swap(in_key[5]);     \
-    case 2:                                     \
-    ((u4byte*)(x))[0] = io_swap(in_key[0]);     \
-    ((u4byte*)(x))[1] = io_swap(in_key[1]);     \
-    ((u4byte*)(x))[2] = io_swap(in_key[2]);     \
-    ((u4byte*)(x))[3] = io_swap(in_key[3]);     \
-    }
-
 #endif
 
 #define LARGE_TABLES
@@ -368,8 +283,8 @@ rijndael_set_key(rijndael_ctx *ctx, const u4byte *in_key, const u4byte key_len,
 
 	ctx->k_len = (key_len + 31) / 32;
 
-	e_key[0] = in_key[0]; e_key[1] = in_key[1];
-	e_key[2] = in_key[2]; e_key[3] = in_key[3];
+	e_key[0] = io_swap(in_key[0]); e_key[1] = io_swap(in_key[1]);
+	e_key[2] = io_swap(in_key[2]); e_key[3] = io_swap(in_key[3]);
 	
 	switch(ctx->k_len) {
         case 4: t = e_key[3];
@@ -377,13 +292,13 @@ rijndael_set_key(rijndael_ctx *ctx, const u4byte *in_key, const u4byte key_len,
 			loop4(i);
                 break;
 
-        case 6: e_key[4] = in_key[4]; t = e_key[5] = in_key[5];
+        case 6: e_key[4] = io_swap(in_key[4]); t = e_key[5] = io_swap(in_key[5]);
                 for(i = 0; i < 8; ++i) 
 			loop6(i);
                 break;
 
-        case 8: e_key[4] = in_key[4]; e_key[5] = in_key[5];
-                e_key[6] = in_key[6]; t = e_key[7] = in_key[7];
+        case 8: e_key[4] = io_swap(in_key[4]); e_key[5] = io_swap(in_key[5]);
+                e_key[6] = io_swap(in_key[6]); t = e_key[7] = io_swap(in_key[7]);
                 for(i = 0; i < 7; ++i) 
 			loop8(i);
                 break;
@@ -423,8 +338,10 @@ rijndael_encrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 	u4byte *e_key = ctx->e_key;
 	u4byte  b0[4], b1[4], *kp;
 
-	b0[0] = in_blk[0] ^ e_key[0]; b0[1] = in_blk[1] ^ e_key[1];
-	b0[2] = in_blk[2] ^ e_key[2]; b0[3] = in_blk[3] ^ e_key[3];
+	b0[0] = io_swap(in_blk[0]) ^ e_key[0];
+	b0[1] = io_swap(in_blk[1]) ^ e_key[1];
+	b0[2] = io_swap(in_blk[2]) ^ e_key[2];
+	b0[3] = io_swap(in_blk[3]) ^ e_key[3];
 
 	kp = e_key + 4;
 
@@ -442,8 +359,8 @@ rijndael_encrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 	f_nround(b1, b0, kp); f_nround(b0, b1, kp);
 	f_nround(b1, b0, kp); f_lround(b0, b1, kp);
 
-	out_blk[0] = b0[0]; out_blk[1] = b0[1];
-	out_blk[2] = b0[2]; out_blk[3] = b0[3];
+	out_blk[0] = io_swap(b0[0]); out_blk[1] = io_swap(b0[1]);
+	out_blk[2] = io_swap(b0[2]); out_blk[3] = io_swap(b0[3]);
 }
 
 /* decrypt a block of text  */
@@ -469,8 +386,10 @@ rijndael_decrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 	u4byte *e_key = ctx->e_key;
 	u4byte *d_key = ctx->d_key;
 
-	b0[0] = in_blk[0] ^ e_key[4 * k_len + 24]; b0[1] = in_blk[1] ^ e_key[4 * k_len + 25];
-	b0[2] = in_blk[2] ^ e_key[4 * k_len + 26]; b0[3] = in_blk[3] ^ e_key[4 * k_len + 27];
+	b0[0] = io_swap(in_blk[0]) ^ e_key[4 * k_len + 24];
+	b0[1] = io_swap(in_blk[1]) ^ e_key[4 * k_len + 25];
+	b0[2] = io_swap(in_blk[2]) ^ e_key[4 * k_len + 26];
+	b0[3] = io_swap(in_blk[3]) ^ e_key[4 * k_len + 27];
 
 	kp = d_key + 4 * (k_len + 5);
 
@@ -488,6 +407,6 @@ rijndael_decrypt(rijndael_ctx *ctx, const u4byte *in_blk, u4byte *out_blk)
 	i_nround(b1, b0, kp); i_nround(b0, b1, kp);
 	i_nround(b1, b0, kp); i_lround(b0, b1, kp);
 
-	out_blk[0] = b0[0]; out_blk[1] = b0[1];
-	out_blk[2] = b0[2]; out_blk[3] = b0[3];
+	out_blk[0] = io_swap(b0[0]); out_blk[1] = io_swap(b0[1]);
+	out_blk[2] = io_swap(b0[2]); out_blk[3] = io_swap(b0[3]);
 }
