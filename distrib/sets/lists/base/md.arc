@@ -52,7 +52,7 @@
 ./usr/lib/libssl.so.2.2
 ./usr/lib/libtermcap.so.5.0
 ./usr/lib/libtermlib.so.5.0
-./usr/lib/libutil.so.4.4
+./usr/lib/libutil.so.4.5
 ./usr/lib/libwrap.so.1.1
 ./usr/lib/libz.so.1.3
 ./usr/lib/perl5/mips-openbsd
