@@ -1,5 +1,5 @@
-/*	$OpenBSD: ipsec.c,v 1.18 1999/05/02 22:05:35 niklas Exp $	*/
-/*	$EOM: ipsec.c,v 1.108 1999/05/02 21:02:04 niklas Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.19 1999/05/06 22:44:16 niklas Exp $	*/
+/*	$EOM: ipsec.c,v 1.111 1999/05/06 21:23:06 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -97,6 +97,7 @@ static struct keystate *ipsec_get_keystate (struct message *);
 static u_int8_t *ipsec_get_spi (size_t *, u_int8_t, struct message *);
 static int ipsec_handle_leftover_payload (struct message *, u_int8_t,
 					  struct payload *);
+static int ipsec_informational_post_hook (struct message *);
 static int ipsec_informational_pre_hook (struct message *);
 static int ipsec_initiator (struct message *);
 static void ipsec_proto_init (struct proto *, char *);
@@ -129,7 +130,7 @@ static struct doi ipsec_doi = {
   ipsec_get_keystate,
   ipsec_get_spi,
   ipsec_handle_leftover_payload,
-  ipsec_fill_in_hash,
+  ipsec_informational_post_hook,
   ipsec_informational_pre_hook,
   ipsec_is_attribute_incompatible,
   ipsec_proto_init,
@@ -1743,11 +1744,28 @@ ipsec_fill_in_hash (struct message *msg)
   return 0;
 }
 
+/* Add a HASH payload to MSG, if we have an ISAKMP SA we're protected by.  */
 static int
 ipsec_informational_pre_hook (struct message *msg)
 {
-  struct ipsec_sa *isa = msg->isakmp_sa->data;
-  struct hash *hash = hash_get (isa->hash);
+  struct sa *isakmp_sa = msg->isakmp_sa;
+  struct ipsec_sa *isa;
+  struct hash *hash;
 
+  if (!isakmp_sa)
+    return 0;
+  isa = isakmp_sa->data;
+  hash = hash_get (isa->hash);
   return ipsec_add_hash_payload (msg, hash->hashsize) == 0;
+}
+
+/*
+ * Fill in the HASH payload in MSG, if we have an ISAKMP SA we're protected by.
+ */
+static int
+ipsec_informational_post_hook (struct message *msg)
+{
+  if (!msg->isakmp_sa)
+    return 0;
+  return ipsec_fill_in_hash (msg);
 }
