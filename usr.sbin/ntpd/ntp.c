@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.38 2004/10/22 21:17:37 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.39 2004/10/27 10:55:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -18,6 +18,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/time.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
@@ -59,7 +60,7 @@ ntp_sighdlr(int sig)
 pid_t
 ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 {
-	int			 nfds, i, j, idx_peers, timeout, nullfd;
+	int			 a, b, nfds, i, j, idx_peers, timeout, nullfd;
 	u_int			 pfd_elms = 0, idx2peer_elms = 0;
 	u_int			 listener_cnt, new_cnt;
 	pid_t			 pid;
@@ -69,6 +70,7 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 	struct listen_addr	*la;
 	struct ntp_peer		*p;
 	struct ntp_peer		**idx2peer = NULL;
+	struct timespec		 tp;
 	time_t			 nextaction;
 	void			*newp;
 
@@ -130,6 +132,10 @@ ntp_main(int pipe_prnt[2], struct ntpd_conf *nconf)
 
 	bzero(&conf->status, sizeof(conf->status));
 	conf->status.leap = LI_ALARM;
+	clock_getres(CLOCK_REALTIME, &tp);
+	for (a = 0, b = tp.tv_nsec; b > 0; a--, b >>= 1);
+	conf->status.precision = a;
+	
 
 	log_info("ntp engine ready");
 
