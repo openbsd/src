@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.144 2002/02/09 14:13:37 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.145 2002/02/13 20:04:57 todd Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -319,7 +319,7 @@ snap_md:
 .endif	# DESTDIR check
 
 MAKEDEVARCHS+= alpha
-#MAKEDEVARCHS+= amiga
+MAKEDEVARCHS+= amiga
 #MAKEDEVARCHS+= hp300
 #MAKEDEVARCHS+= hppa
 MAKEDEVARCHS+= i386
