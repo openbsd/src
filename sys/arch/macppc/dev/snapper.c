@@ -1,4 +1,4 @@
-/*	$OpenBSD: snapper.c,v 1.3 2004/01/12 02:19:13 drahn Exp $	*/
+/*	$OpenBSD: snapper.c,v 1.4 2004/01/12 02:38:03 drahn Exp $	*/
 /*	$NetBSD: snapper.c,v 1.1 2003/12/27 02:19:34 grant Exp $	*/
 
 /*-
@@ -371,7 +371,7 @@ snapper_attach(parent, self, aux)
 	    sc, "snapper");
 	/* intr_establish(iirq, iirq_type, IPL_AUDIO, snapper_intr, sc); */
 
-	printf(": irq %d,%d,%d\n", sc->sc_dev.dv_xname, cirq, oirq, iirq);
+	printf(": irq %d,%d,%d\n", cirq, oirq, iirq);
 
 	snapper_config(sc,  sc->sc_node, parent);
 	config_defer(self, snapper_defer);
