@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.2 1997/02/16 22:31:25 pefo Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 1997/02/20 11:50:46 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist.  All rights reserved.
@@ -61,11 +61,6 @@ static __inline CAT3(u_int,m,_t)					      \
 CAT(bus_space_read_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
      bus_addr_t ba)							      \
 {									      \
-	wbflush();							      \
-	wbflush();							      \
-	wbflush();							      \
-	wbflush();							      \
-	wbflush();							      \
 	return *(volatile CAT3(u_int,m,_t) *)(bsh + ba);		      \
 }
 
@@ -75,18 +70,17 @@ bus_space_read(4,32)
 
 #define	bus_space_read_8	!!! bus_space_read_8 unimplemented !!!
 
-#define bus_space_read_multi(n, m)					      \
-static __inline void						       	      \
-CAT(bus_space_read_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,     \
-    bus_addr_t ba, CAT3(u_int,m,_t) *buf, bus_size_t cnt)		      \
-{									      \
-	while (cnt--)							      \
-		*buf++ = CAT(bus_space_read_,n)(bst, bsh, ba);		      \
-}
+#define bus_space_read_multi_1(t, h, o, a, c) do {			      \
+		insb((h) + (o), (a), (c));				      \
+	} while(0)
 
-bus_space_read_multi(1,8)
-bus_space_read_multi(2,16)
-bus_space_read_multi(4,32)
+#define bus_space_read_multi_2(t, h, o, a, c) do {			      \
+		insw((h) + (o), (a), (c));				      \
+	} while(0)
+
+#define bus_space_read_multi_4(t, h, o, a, c) do {			      \
+		insl((h) + (o), (a), (c));				      \
+	} while(0)
 
 #define	bus_space_read_multi_8	!!! bus_space_read_multi_8 not implemented !!!
 
@@ -95,13 +89,6 @@ static __inline void							      \
 CAT(bus_space_write_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
      bus_addr_t ba, CAT3(u_int,m,_t) x)					      \
 {									      \
-	wbflush();							      \
-	wbflush();							      \
-	wbflush();							      \
-	wbflush();							      \
-	wbflush();							      \
-	wbflush();							      \
-	wbflush();							      \
 	*(volatile CAT3(u_int,m,_t) *)(bsh + ba) = x;			      \
 }
 
@@ -111,18 +98,18 @@ bus_space_write(4,32)
 
 #define	bus_space_write_8	!!! bus_space_write_8 unimplemented !!!
 
-#define bus_space_write_multi(n, m)					      \
-static __inline void						       	      \
-CAT(bus_space_write_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
-    bus_addr_t ba, const CAT3(u_int,m,_t) *buf, bus_size_t cnt)		      \
-{									      \
-	while (cnt--)							      \
-		CAT(bus_space_write_,n)(bst, bsh, ba, *buf++);		      \
-}
 
-bus_space_write_multi(1,8)
-bus_space_write_multi(2,16)
-bus_space_write_multi(4,32)
+#define bus_space_write_multi_1(t, h, o, a, c) do {			      \
+		outsb((h) + (o), (a), (c));				      \
+	} while(0)
+
+#define bus_space_write_multi_2(t, h, o, a, c) do {			      \
+		outsw((h) + (o), (a), (c));				      \
+	} while(0)
+
+#define bus_space_write_multi_4(t, h, o, a, c) do {			      \
+		outsl((h) + (o), (a), (c));				      \
+	} while(0)
 
 #define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!
 
