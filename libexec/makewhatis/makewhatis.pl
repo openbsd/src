@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.28 2004/02/11 18:50:43 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.29 2004/03/01 20:13:24 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -447,7 +447,7 @@ sub handle_formated
 	    }
 	    while (<$file>) {
 		chomp;
-		# perl agregates several subjects in one manpage
+		# perl aggregates several subjects in one manpage
 		if (m/^$/) {
 		    add_formated_subject(\@lines, $subject, $section, $filename) 
 			if defined $subject;
@@ -467,6 +467,7 @@ sub handle_formated
 		    	$subject =~ s/(?:\-\cH)*\-$//;
 			s/^\s*//;
 		    }
+		    s/^\s+/ /;
 		    $subject.=$_;
 		}
 	    }
@@ -491,9 +492,9 @@ sub find_manpages
 	sub {
 	return unless /\.[\dln]\w*(?:\.Z|\.gz)?$/;
 	return unless -f $_;
-	my $inode = (stat _)[1];
-	return if defined $nodes{$inode};
-	$nodes{$inode} = 1;
+	my $unique = (stat _)[0]."/".(stat _)[1];
+	return if defined $nodes{$unique};
+	$nodes{$unique} = 1;
 	push(@$list, $File::Find::name);
 	}, $dir);
     return $list;
