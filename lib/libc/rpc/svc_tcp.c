@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.12 1997/02/17 00:03:57 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.13 1997/03/29 06:09:58 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -129,6 +129,7 @@ svctcp_create(sock, sendsize, recvsize)
 	u_int sendsize;
 	u_int recvsize;
 {
+	bool_t madesock = FALSE;
 	register SVCXPRT *xprt;
 	register struct tcp_rendezvous *r;
 	struct sockaddr_in addr;
@@ -139,6 +140,7 @@ svctcp_create(sock, sendsize, recvsize)
 			perror("svctcp_.c - udp socket creation problem");
 			return ((SVCXPRT *)NULL);
 		}
+		madesock = TRUE;
 	}
 	memset(&addr, 0, sizeof (addr));
 	addr.sin_len = sizeof(struct sockaddr_in);
@@ -150,13 +152,15 @@ svctcp_create(sock, sendsize, recvsize)
 	if ((getsockname(sock, (struct sockaddr *)&addr, &len) != 0)  ||
 	    (listen(sock, 2) != 0)) {
 		perror("svctcp_.c - cannot getsockname or listen");
-		(void)close(sock);
+		if (madesock)
+			(void)close(sock);
 		return ((SVCXPRT *)NULL);
 	}
 	r = (struct tcp_rendezvous *)mem_alloc(sizeof(*r));
 	if (r == NULL) {
 		(void)fprintf(stderr, "svctcp_create: out of memory\n");
-		(void)close(sock);
+		if (madesock)
+			(void)close(sock);
 		return (NULL);
 	}
 	r->sendsize = sendsize;
@@ -164,7 +168,8 @@ svctcp_create(sock, sendsize, recvsize)
 	xprt = (SVCXPRT *)mem_alloc(sizeof(SVCXPRT));
 	if (xprt == NULL) {
 		(void)fprintf(stderr, "svctcp_create: out of memory\n");
-		(void)close(sock);
+		if (madesock)
+			(void)close(sock);
 		free(r);
 		return (NULL);
 	}
@@ -259,7 +264,7 @@ rendezvous_request(xprt)
 				u_char c = (u_char)opts.ipopt_list[i];
 				if (c == IPOPT_LSRR || c == IPOPT_SSRR) {
 					close(sock);
-					goto again;
+					return (FALSE);
 				}
 				if (c == IPOPT_EOL)
 					break;
@@ -276,7 +281,7 @@ rendezvous_request(xprt)
 	 */
 	if (addr.sin_port == htons(20)) {
 		close(sock);
-		goto again;
+		return (FALSE);
 	}
 
 	/*
