@@ -27,6 +27,8 @@ block in log quick on ppp0 from any to any with ipopts
 #
 block in log quick on ppp0 from 198.168.4.0/24 to any
 block in log quick on ppp0 from localhost to any
+block in log quick on ppp0 from 0.0.0.0/32 to any
+block in log quick on ppp0 from 255.255.255.255/32 to any
 #
 #  Block all incoming UDP traffic except talk and DNS traffic.  NFS
 #  and portmap are special-cased and logged.

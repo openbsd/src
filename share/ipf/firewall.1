@@ -24,6 +24,8 @@ block in log quick on ppp0 proto tcp/udp all with short
 #
 block in log quick on ppp0 from 198.168.4.0/24 to any
 block in log quick on ppp0 from localhost to any
+block in log quick on ppp0 from 0.0.0.0/32 to any
+block in log quick on ppp0 from 255.255.255.255/32 to any
 #
 #  Block any incoming traffic to NFS ports, to the RPC portmapper, and
 #  to X servers.
