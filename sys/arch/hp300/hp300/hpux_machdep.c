@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_machdep.c,v 1.13 2002/07/20 19:24:55 art Exp $	*/
+/*	$OpenBSD: hpux_machdep.c,v 1.14 2002/08/02 16:11:11 millert Exp $	*/
 /*	$NetBSD: hpux_machdep.c,v 1.19 1998/02/16 20:58:30 thorpej Exp $	*/
 
 /*
@@ -240,6 +240,9 @@ hpux_sys_getcontext(p, v, retval)
 	const char *str;
 	int l, i, error = 0;
 	int len; 
+
+	if (SCARG(uap, len) <= 0)
+		return (EINVAL);
 
 	for (i = 0; context_table[i].str != NULL; i++)
 		if (context_table[i].val == fputype)
