@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: popen.c,v 1.8 1997/08/24 21:25:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.9 1997/09/11 18:51:04 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -89,12 +89,14 @@ popen(program, type)
 		return (NULL);
 		/* NOTREACHED */
 	case 0:				/* Child. */
+	    {
+		struct pid *pcur;
 		/*
 		 * because vfork() instead of fork(), must leak FILE *,
 		 * but luckily we are terminally headed for an execl()
 		 */
-		for (cur = pidlist; cur; cur = cur->next)
-			close(fileno(cur->fp));
+		for (pcur = pidlist; pcur; pcur = pcur->next)
+			close(fileno(pcur->fp));
 
 		if (*type == 'r') {
 			int tpdes1 = pdes[1];
@@ -119,6 +121,7 @@ popen(program, type)
 		execl(_PATH_BSHELL, "sh", "-c", program, NULL);
 		_exit(127);
 		/* NOTREACHED */
+	    }
 	}
 
 	/* Parent; assume fdopen can't fail. */
