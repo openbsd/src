@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.c,v 1.6 1996/11/30 21:08:56 millert Exp $	*/
+/*	$OpenBSD: job.c,v 1.7 1997/06/15 21:29:22 millert Exp $	*/
 /*	$NetBSD: job.c,v 1.16 1996/11/06 17:59:08 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: job.c,v 1.6 1996/11/30 21:08:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: job.c,v 1.7 1997/06/15 21:29:22 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,11 +164,10 @@ static int     	  numCommands; 	    /* The number of commands actually printed
 
 /*
  * tfile is the name of a file into which all shell commands are put. It is
- * used over by removing it before the child shell is executed. The XXXXX in
- * the string are replaced by the pid of the make process in a 5-character
- * field with leading zeroes.
+ * used over by removing it before the child shell is executed. The XXXXXXXXXX
+ * in the string are replaced by mkstemp(3).
  */
-static char     tfile[] = TMPPAT;
+static char     tfile[sizeof(TMPPAT)];
 
 
 /*
@@ -1663,7 +1662,6 @@ JobStart(gn, flags, previous)
 {
     register Job  *job;       /* new job descriptor */
     char	  *argv[4];   /* Argument vector to shell */
-    static int    jobno = 0;  /* job number of catching output in a file */
     Boolean	  cmdsOK;     /* true if the nodes commands were all right */
     Boolean 	  local;      /* Set true if the job was run locally */
     Boolean 	  noExec;     /* Set true if we decide not to run the job */
@@ -1869,8 +1867,7 @@ JobStart(gn, flags, previous)
     /*
      * If we're using pipes to catch output, create the pipe by which we'll
      * get the shell's output. If we're using files, print out that we're
-     * starting a job and then set up its temporary-file name. This is just
-     * tfile with two extra digits tacked on -- jobno.
+     * starting a job and then set up its temporary-file name.
      */
     if (!compatMake || (job->flags & JOB_FIRST)) {
 	if (usePipes) {
@@ -1884,9 +1881,9 @@ JobStart(gn, flags, previous)
 	} else {
 	    (void) fprintf(stdout, "Remaking `%s'\n", gn->name);
   	    (void) fflush(stdout);
-	    sprintf(job->outFile, "%s%02d", tfile, jobno);
-	    jobno = (jobno + 1) % 100;
-	    job->outFd = open(job->outFile,O_WRONLY|O_CREAT|O_APPEND,0600);
+	    (void) strcpy(job->outFile, TMPPAT);
+	    if ((job->outFd = mkstemp(job->outFile)) == -1)
+		Punt("Cannot create temp file: %s", strerror(errno));
 	    (void) fcntl(job->outFd, F_SETFD, 1);
 	}
     }
@@ -2402,8 +2399,13 @@ Job_Init(maxproc, maxlocal)
 			     * be running at once. */
 {
     GNode         *begin;     /* node for commands to do at the very start */
+    int	          tfd;
 
-    (void) sprintf(tfile, "/tmp/make%05d", getpid());
+    (void) strcpy(tfile, TMPPAT);
+    if ((tfd = mkstemp(tfile)) == -1)
+	Punt("Cannot create temp file: %s", strerror(errno));
+    else
+	(void) close(tfd);
 
     jobs =  	  Lst_Init(FALSE);
     stoppedJobs = Lst_Init(FALSE);

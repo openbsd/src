@@ -1,4 +1,4 @@
-/*	$OpenBSD: job.h,v 1.3 1996/11/30 21:08:57 millert Exp $	*/
+/*	$OpenBSD: job.h,v 1.4 1997/06/15 21:29:23 millert Exp $	*/
 /*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #ifndef _JOB_H_
 #define _JOB_H_
 
-#define TMPPAT	"/tmp/makeXXXXX"
+#define TMPPAT	"/tmp/makeXXXXXXXXXX"
 
 /*
  * The SEL_ constants determine the maximum amount of time spent in select
@@ -130,7 +130,7 @@ typedef struct Job {
 	}   	    o_pipe;	    /* data used when catching the output via
 				     * a pipe */
 	struct {
-	    char  	of_outFile[sizeof(TMPPAT)+2];
+	    char  	of_outFile[sizeof(TMPPAT)];
 	    	  	    	    	/* Name of file to which shell output
 					 * was rerouted */
 	    int	    	of_outFd;	/* Stream open to the output
