@@ -1,5 +1,7 @@
+/*	$OpenBSD: kvm_getloadavg.c,v 1.1 1996/03/19 23:15:33 niklas Exp $	*/
+
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,47 +33,75 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-/* from: static char sccsid[] = "@(#)getent.c	8.2 (Berkeley) 12/15/93"; */
-/* from: static char *rcsid = "$NetBSD: getent.c,v 1.5 1996/02/24 01:15:22 jtk Exp $"; */
-static char *rcsid = "$OpenBSD: getent.c,v 1.2 1996/03/19 23:15:53 niklas Exp $";
-#endif /* not lint */
+#if defined(LIBC_SCCS) && !defined(lint)
+static char sccsid[] = "@(#)kvm_getloadavg.c	8.1 (Berkeley) 6/4/93";
+#endif /* LIBC_SCCS and not lint */
 
-#include <stdlib.h>
-#include "misc-proto.h"
+#include <sys/param.h>
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <sys/proc.h>
+#include <sys/sysctl.h>
+#include <vm/vm_param.h>
 
-static char *area;
+#include <db.h>
+#include <fcntl.h>
+#include <limits.h>
+#include <nlist.h>
+#include <kvm.h>
 
-int getent __P((char *, char *));
-char *getstr __P((char *, char **));
+#include "kvm_private.h"
 
-/*ARGSUSED*/
+static struct nlist nl[] = {
+	{ "_averunnable" },
+#define	X_AVERUNNABLE	0
+	{ "_fscale" },
+#define	X_FSCALE	1
+	{ "" },
+};
+
+/*
+ * kvm_getloadavg() -- Get system load averages, from live or dead kernels.
+ *
+ * Put `nelem' samples into `loadavg' array.
+ * Return number of samples retrieved, or -1 on error.
+ */
 int
-getent(cp, name)
-char *cp, *name;
+kvm_getloadavg(kd, loadavg, nelem)
+	kvm_t *kd;
+	double loadavg[];
+	int nelem;
 {
-#ifdef	HAS_CGETENT
-	char *dba[2];
+	struct loadavg loadinfo;
+	struct nlist *p;
+	int fscale, i;
 
-	dba[0] = "/etc/gettytab";
-	dba[1] = 0;
-	return((cgetent(&area, dba, name) == 0) ? 1 : 0);
-#else
-	return(0);
-#endif
-}
+	if (ISALIVE(kd))
+		return (getloadavg(loadavg, nelem));
 
-#ifndef	SOLARIS
-/*ARGSUSED*/
-char *
-getstr(id, cpp)
-char *id, **cpp;
-{
-# ifdef	HAS_CGETENT
-	char *answer;
-	return((cgetstr(area, id, &answer) > 0) ? answer : 0);
-# else
-	return(0);
-# endif
+	if (kvm_nlist(kd, nl) != 0) {
+		for (p = nl; p->n_type != 0; ++p);
+		_kvm_err(kd, kd->program,
+		    "%s: no such symbol", p->n_name);
+		return (-1);
+	}
+
+#define KREAD(kd, addr, obj) \
+	(kvm_read(kd, addr, (char *)(obj), sizeof(*obj)) != sizeof(*obj))
+	if (KREAD(kd, nl[X_AVERUNNABLE].n_value, &loadinfo)) {
+		_kvm_err(kd, kd->program, "can't read averunnable");
+		return (-1);
+	}
+
+	/*
+	 * Old kernels have fscale separately; if not found assume
+	 * running new format.
+	 */
+	if (!KREAD(kd, nl[X_FSCALE].n_value, &fscale))
+		loadinfo.fscale = fscale;
+
+	nelem = MIN(nelem, sizeof(loadinfo.ldavg) / sizeof(fixpt_t));
+	for (i = 0; i < nelem; i++)
+		loadavg[i] = (double) loadinfo.ldavg[i] / loadinfo.fscale;
+	return (nelem);
 }
-#endif

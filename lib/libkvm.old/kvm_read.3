@@ -1,7 +1,11 @@
-.\"	$OpenBSD: getdtablesize.3,v 1.2 1996/03/19 23:15:06 niklas Exp $
+.\"	$OpenBSD: kvm_read.3,v 1.1 1996/03/19 23:15:41 niklas Exp $
 .\"
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1992, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software developed by the Computer Systems
+.\" Engineering group at Lawrence Berkeley Laboratory under DARPA contract
+.\" BG 91-66 and contributed to Berkeley.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -31,34 +35,60 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)getdtablesize.2	6.5 (Berkeley) 3/10/91
+.\"     @(#)kvm_read.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 10, 1991
-.Dt GETDTABLESIZE 3
-.Os BSD 4.2
+.Dd June 4, 1993
+.Dt KVM_READ 3
+.Os
 .Sh NAME
-.Nm getdtablesize
-.Nd get descriptor table size
+.Nm kvm_read ,
+.Nm kvm_write
+.Nd read or write kernel virtual memory
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
-.Ft int
-.Fn getdtablesize void
+.Fd #include <kvm.h>
+.Ft ssize_t
+.Fn kvm_read "kvm_t *kd" "u_long addr" "void *buf" "size_t nbytes"
+.Ft ssize_t
+.Fn kvm_write "kvm_t *kd" "u_long addr" "const void *buf" "size_t nbytes"
 .Sh DESCRIPTION
-Each process has a fixed size descriptor table,
-which is guaranteed to have at least 20 slots.  The entries in
-the descriptor table are numbered with small integers starting at 0.
-The call
-.Fn getdtablesize
-returns the size of this table.
-.Sh SEE ALSO
-.Xr close 2 ,
-.Xr dup 2 ,
-.Xr getrlimit 2 ,
-.Xr open 2 ,
-.Xr select 2 ,
-.Xr sysconf 3
-.Sh HISTORY
 The
-.Fn getdtablesize
-function call appeared in
-.Bx 4.2 .
+.Fn kvm_read
+and
+.Fn kvm_write
+functions are used to read and write kernel virtual memory (or a crash
+dump file). See
+.Fn kvm_open 3
+or
+.Fn kvm_openfiles 3
+for information regarding opening kernel virtual memory and crash dumps.
+.Pp
+The
+.Fn kvm_read
+function transfers
+.Fa nbytes 
+bytes of data from
+the kernel space address
+.Fa addr
+to
+.Fa buf .
+Conversely, 
+.Fn kvm_write
+transfers data from
+.Fa buf
+to
+.Fa addr .
+Unlike their SunOS counterparts, these functions cannot be used to 
+read or write process address spaces.
+.Sh RETURN VALUES
+Upon success, the number of bytes actually transferred is returned.
+Otherwise, -1 is returned.
+.Sh SEE ALSO
+.Xr kvm 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_getargv 3 ,
+.Xr kvm_getenvv 3 ,
+.Xr kvm_geterr 3 ,
+.Xr kvm_getprocs 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3

@@ -1,7 +1,7 @@
-/*	$OpenBSD: kvm_i386.c,v 1.2 1996/03/19 23:15:23 niklas Exp $	*/
-
+/*	$OpenBSD: kvm_vax.c,v 1.1 1996/03/19 23:15:43 niklas Exp $	*/
+/*	$NetBSD: kvm_vax.c,v 1.1.1.1 1996/03/16 10:05:24 leo Exp $ */
 /*-
- * Copyright (c) 1989, 1992, 1993
+ * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software developed by the Computer Systems
@@ -37,21 +37,17 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.2 1996/03/19 23:15:23 niklas Exp $";
-#endif /* LIBC_SCCS and not lint */
-
 /*
- * i386 machine dependent routines for kvm.  Hopefully, the forthcoming 
- * vm code will one day obsolete this module.
+ * VAX machine dependent routines for kvm.  Hopefully, the forthcoming
+ * vm code will one day obsolete this module.  Furthermore, I hope it
+ * gets here soon, because this basically is an error stub! (sorry)
+ * This code may not work anyway.
  */
 
 #include <sys/param.h>
 #include <sys/user.h>
 #include <sys/proc.h>
 #include <sys/stat.h>
-#include <stdlib.h>
 #include <unistd.h>
 #include <nlist.h>
 #include <kvm.h>
@@ -64,83 +60,56 @@ static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.2 1996/03/19 23:15:23 niklas Exp 
 
 #include "kvm_private.h"
 
-#include <machine/pte.h>
-
-#ifndef btop
-#define	btop(x)		(((unsigned)(x)) >> PGSHIFT)	/* XXX */
-#define	ptob(x)		((caddr_t)((x) << PGSHIFT))	/* XXX */
-#endif
-
 struct vmstate {
-	pd_entry_t *PTD;
+	u_long end;
 };
 
 void
 _kvm_freevtop(kd)
 	kvm_t *kd;
 {
-	if (kd->vmst != 0) {
-		if (kd->vmst->PTD != 0)
-			free(kd->vmst->PTD);
-
+	if (kd->vmst != 0)
 		free(kd->vmst);
-	}
 }
 
 int
 _kvm_initvtop(kd)
 	kvm_t *kd;
 {
-	struct vmstate *vm;
+	register int i;
+	register int off;
+	register struct vmstate *vm;
+	struct stat st;
 	struct nlist nlist[2];
-	u_long pa;
 
 	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
 	if (vm == 0)
 		return (-1);
+
 	kd->vmst = vm;
 
-	nlist[0].n_name = "_PTDpaddr";
-	nlist[1].n_name = 0;
+	if (fstat(kd->pmfd, &st) < 0)
+		return (-1);
 
+	/* Get end of kernel address */
+	nlist[0].n_name = "_end";
+	nlist[1].n_name = 0;
 	if (kvm_nlist(kd, nlist) != 0) {
-		_kvm_err(kd, kd->program, "bad namelist");
+		_kvm_err(kd, kd->program, "pmap_stod: no such symbol");
 		return (-1);
 	}
-
-	vm->PTD = 0;
-
-	if (lseek(kd->pmfd, (off_t)(nlist[0].n_value - KERNBASE), 0) == -1 &&
-	    errno != 0) {
-		_kvm_syserr(kd, kd->program, "kvm_lseek");
-		goto invalid;
-	}
-	if (read(kd->pmfd, &pa, sizeof pa) != sizeof pa) {
-		_kvm_syserr(kd, kd->program, "kvm_read");
-		goto invalid;
-	}
-
-	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
-
-	if (lseek(kd->pmfd, (off_t)pa, 0) == -1 && errno != 0) {
-		_kvm_syserr(kd, kd->program, "kvm_lseek");
-		goto invalid;
-	}
-	if (read(kd->pmfd, vm->PTD, NBPG) != NBPG) {
-		_kvm_syserr(kd, kd->program, "kvm_read");
-		goto invalid;
-	}
+	vm->end = (u_long)nlist[0].n_value;
 
 	return (0);
-
-invalid:
-	if (vm->PTD != 0)
-		free(vm->PTD);
-	return (-1);
 }
 
+#define VA_OFF(va) (va & (NBPG - 1))
+
 /*
- * Translate a kernel virtual address to a physical address.
+ * Translate a kernel virtual address to a physical address using the
+ * mapping information in kd->vm.  Returns the result in pa, and returns
+ * the number of bytes that are contiguously available from this 
+ * physical address.  This routine is used only for crashdumps.
  */
 int
 _kvm_kvatop(kd, va, pa)
@@ -148,48 +117,19 @@ _kvm_kvatop(kd, va, pa)
 	u_long va;
 	u_long *pa;
 {
-	struct vmstate *vm;
-	u_long offset;
-	u_long pte_pa;
-	pt_entry_t pte;
+	register int end;
 
-	if (ISALIVE(kd)) {
-		_kvm_err(kd, 0, "vatop called in live kernel!");
-		return(0);
+	if (va < KERNBASE) {
+		_kvm_err(kd, 0, "invalid address (%x<%x)", va, KERNBASE);
+		return (0);
 	}
 
-	vm = kd->vmst;
-	offset = va & PGOFSET;
-
-        /*
-         * If we are initializing (kernel page table descriptor pointer
-	 * not yet set) * then return pa == va to avoid infinite recursion.
-         */
-        if (vm->PTD == 0) {
-                *pa = va;
-                return (NBPG - offset);
-        }
-	if ((vm->PTD[pdei(va)] & PG_V) == 0)
-		goto invalid;
-
-	pte_pa = (vm->PTD[pdei(va)] & PG_FRAME) +
-	    (ptei(va) * sizeof(pt_entry_t));
-	/* XXX READ PHYSICAL XXX */
-	{
-		if (lseek(kd->pmfd, (off_t)pte_pa, 0) == -1 && errno != 0) {
-			_kvm_syserr(kd, kd->program, "kvm_lseek");
-			goto invalid;
-		}
-		if (read(kd->pmfd, &pte, sizeof pte) != sizeof pte) {
-			_kvm_syserr(kd, kd->program, "kvm_read");
-			goto invalid;
-		}
+	end = kd->vmst->end;
+	if (va >= end) {
+		_kvm_err(kd, 0, "invalid address (%x>=%x)", va, end);
+		return (0);
 	}
 
-	*pa = (pte & PG_FRAME) + offset;
-	return (NBPG - offset);
-
-invalid:
-	_kvm_err(kd, 0, "invalid address (%x)", va);
-	return (0);
+	*pa = (va - KERNBASE);
+	return (end - va);
 }

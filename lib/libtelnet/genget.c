@@ -1,3 +1,5 @@
+/*	$OpenBSD: genget.c,v 1.2 1996/03/19 23:15:52 niklas Exp $	*/
+
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,9 +34,11 @@
  */
 
 #ifndef lint
-/* from: static char sccsid[] = "@(#)genget.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$Id: genget.c,v 1.1.1.1 1995/10/18 08:43:11 deraadt Exp $";
+/* from: static char sccsid[] = "@(#)genget.c	8.2 (Berkeley) 5/30/95"; */
+/* from: static char *rcsid = "$NetBSD: genget.c,v 1.5 1996/02/24 01:15:21 jtk Exp $"; */
+static char *rcsid = "$OpenBSD: genget.c,v 1.2 1996/03/19 23:15:52 niklas Exp $";
 #endif /* not lint */
+
 
 #include <ctype.h>
 #include "misc-proto.h"
@@ -54,21 +58,22 @@ int Ambiguous __P((char *));
 isprefix(s1, s2)
 	register char *s1, *s2;
 {
+	register int n = 0;
 	char *os1;
 	register char c1, c2;
 
-        if (*s1 == '\0')
-                return(-1);
-        os1 = s1;
+	if (*s1 == '\0')
+		return(-1);
+	os1 = s1;
 	c1 = *s1;
 	c2 = *s2;
-        while (LOWER(c1) == LOWER(c2)) {
+	while (LOWER(c1) == LOWER(c2)) {
 		if (c1 == '\0')
 			break;
-                c1 = *++s1;
-                c2 = *++s2;
-        }
-        return(*s1 ? 0 : (*s2 ? (s1 - os1) : (os1 - s1)));
+		c1 = *++s1;
+		c2 = *++s2;
+	}
+	return(*s1 ? 0 : (*s2 ? (s1 - os1) : (os1 - s1)));
 }
 
 static char *ambiguous;		/* special return value for command routines */

@@ -1,12 +1,12 @@
-/*	$OpenBSD: i386_iopl.c,v 1.2 1996/03/19 23:15:00 niklas Exp $	*/
-/*	$NetBSD: i386_iopl.c,v 1.2 1996/02/27 22:57:29 jtc Exp $	*/
+/*	$OpenBSD: i386_vm86.c,v 1.1 1996/03/19 23:15:03 niklas Exp $	*/
+/*	$NetBSD: i386_vm86.c,v 1.1 1996/02/21 00:21:56 jtk Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by John T. Kohl and Charles M. Hannum.
+ * by John Kohl.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -18,10 +18,10 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
+ *        This product includes software developed by the NetBSD 
+ *	  Foundation, Inc. and its contributors.
+ * 4. Neither the name of The NetBSD Foundation nor the names of its 
+ *    contributors may be used to endorse or promote products derived 
  *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
@@ -39,16 +39,16 @@
 
 #include <sys/cdefs.h>
 #include <sys/types.h>
-
+#include <machine/signal.h>
+#include <machine/segments.h>
 #include <machine/sysarch.h>
+#include <machine/vm86.h>
 
 int
-i386_iopl(iopl)
-	int iopl;
+i386_vm86(vmcp)
+	register struct vm86_struct *vmcp;
 {
-	struct i386_iopl_args p;
 
-	p.iopl = iopl;
-
-	return sysarch(I386_IOPL, (char *)&p);
+	return sysarch(I386_VM86, (char *)vmcp);
 }
+

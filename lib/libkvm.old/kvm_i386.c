@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.2 1996/03/19 23:15:23 niklas Exp $	*/
+/*	$OpenBSD: kvm_i386.c,v 1.1 1996/03/19 23:15:34 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.2 1996/03/19 23:15:23 niklas Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.1 1996/03/19 23:15:34 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*

@@ -1,5 +1,6 @@
 #	from: @(#)Makefile	8.2 (Berkeley) 12/15/93
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:43:11 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 1996/03/19 23:15:46 niklas Exp $
+#	$NetBSD: Makefile,v 1.6 1996/02/24 01:15:15 jtk Exp $
 
 LIB=	telnet
 SRCS=	auth.c encrypt.c genget.c getent.c misc.c

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.2 1996/03/19 23:15:22 niklas Exp $	*/
+/*	$OpenBSD: kvm.c,v 1.1 1996/03/19 23:15:28 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -48,16 +48,11 @@ static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 
-#include <sys/core.h>
-#include <sys/exec_aout.h>
-#include <sys/kcore.h>
-
 #include <vm/vm.h>
 #include <vm/vm_param.h>
 #include <vm/swap_pager.h>
 
 #include <machine/vmparam.h>
-#include <machine/kcore.h>
 
 #include <ctype.h>
 #include <db.h>
@@ -74,12 +69,8 @@ static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #include "kvm_private.h"
 
 static int	kvm_dbopen __P((kvm_t *, const char *));
-static int	_kvm_get_header __P((kvm_t *));
 static kvm_t	*_kvm_open __P((kvm_t *, const char *, const char *,
 		    const char *, int, char *));
-static int	clear_gap __P((kvm_t *, FILE *, int));
-static off_t	Lseek __P((kvm_t *, int, off_t, int));
-static ssize_t	Read __P(( kvm_t *, int, void *, size_t));
 
 char *
 kvm_geterr(kd)
@@ -173,42 +164,6 @@ _kvm_malloc(kd, n)
 	return (p);
 }
 
-/*
- * Wrappers for Lseek/Read system calls.  They check for errors and
- * call _kvm_syserr() if appropriate.
- */
-static off_t
-Lseek(kd, fd, offset, whence)
-	kvm_t	*kd;
-	int	fd, whence;
-	off_t	offset;
-{
-	off_t	off;
-
-	errno = 0;
-	if ((off = lseek(fd, offset, whence)) == -1 && errno != 0) {
-		_kvm_syserr(kd, kd->program, "Lseek");
-		return (-1);
-	}
-	return (off);
-}
-
-static ssize_t
-Read(kd, fd, buf, nbytes)
-	kvm_t	*kd;
-	int	fd;
-	void	*buf;
-	size_t	nbytes;
-{
-	ssize_t	rv;
-
-	errno = 0;
-
-	if ((rv = read(fd, buf, nbytes)) != nbytes && errno != 0)
-		_kvm_syserr(kd, kd->program, "Read");
-	return (rv);
-}
-
 static kvm_t *
 _kvm_open(kd, uf, mf, sf, flag, errout)
 	register kvm_t *kd;
@@ -233,9 +188,6 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 	kd->argv = 0;
 	kd->vmst = 0;
 	kd->vm_page_buckets = 0;
-	kd->kcore_hdr = 0;
-	kd->cpu_hdr = 0;
-	kd->dump_off = 0;
 
 	if (uf == 0)
 		uf = _PATH_UNIX;
@@ -303,17 +255,8 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 			_kvm_syserr(kd, kd->program, "%s", uf);
 			goto failed;
 		}
-
-		/*
-		 * If there is no valid core header, fail silently here.
-		 * The address translations however will fail without 
-		 * header. Things can be made to run by calling
-		 * kvm_dump_mkheader() before doing any translation.
-		 */
-		if (_kvm_get_header(kd) == 0) {
-			if (_kvm_initvtop(kd) < 0)
-				goto failed;
-		}
+		if (_kvm_initvtop(kd) < 0)
+			goto failed;
 	}
 	return (kd);
 failed:
@@ -324,277 +267,6 @@ failed:
 		strcpy(errout, kd->errbuf);
 	(void)kvm_close(kd);
 	return (0);
-}
-
-static int
-_kvm_get_header(kd)
-kvm_t	*kd;
-{
-	cpu_kcore_hdr_t	ckhdr;
-	kcore_hdr_t	khdr;
-	kcore_seg_t	seghdr;
-	off_t		offset;
-
-	if (Lseek(kd, kd->pmfd, (off_t)0, SEEK_SET) == -1)
-		return (-1);
-
-	if (Read(kd, kd->pmfd, &khdr, sizeof(khdr)) != sizeof(khdr))
-		return (-1);
-	offset = khdr.c_hdrsize;
-
-	/*
-	 * Currently, we only support dump-files made by the current
-	 * architecture...
-	 */
-	if ((CORE_GETMAGIC(khdr) != KCORE_MAGIC)
-	     || ((CORE_GETMID(khdr) != MID_MACHINE)))
-			return (-1);
-
-	/*
-	 * Currently, we only support exactly 2 segments: cpu-segment
-	 * and data-segment in exactly that order.
-	 */
-	if (khdr.c_nseg != 2)
-		return (-1);
-
-	/*
-	 * Read the next segment header: cpu segment
-	 */
-	if (Lseek(kd, kd->pmfd, (off_t)offset, SEEK_SET) == -1)
-		return (-1);
-	if (Read(kd, kd->pmfd, &seghdr, sizeof(seghdr)) != sizeof(seghdr))
-		return (-1);
-	if (CORE_GETMAGIC(seghdr) != KCORESEG_MAGIC
-		|| CORE_GETFLAG(seghdr) != CORE_CPU)
-		return (-1);
-	offset += khdr.c_seghdrsize;
-	if (Lseek(kd, kd->pmfd, (off_t)offset, SEEK_SET) == -1)
-		return (-1);
-	if (Read(kd, kd->pmfd, &ckhdr, sizeof(ckhdr)) != sizeof(ckhdr))
-		return (-1);
-	offset += seghdr.c_size;
-
-	/*
-	 * Read the next segment header: data segment
-	 */
-	if (Lseek(kd, kd->pmfd, (off_t)offset, SEEK_SET) == -1)
-		return (-1);
-	if (Read(kd, kd->pmfd, &seghdr, sizeof(seghdr)) != sizeof(seghdr))
-		return (-1);
-	offset += khdr.c_seghdrsize;
-
-	if (CORE_GETMAGIC(seghdr) != KCORESEG_MAGIC
-		|| CORE_GETFLAG(seghdr) != CORE_DATA)
-		return (-1);
-
-	kd->kcore_hdr = (kcore_hdr_t *)_kvm_malloc(kd, sizeof(*kd->kcore_hdr));
-	if (kd->kcore_hdr == NULL)
-		return (-1);
-	kd->cpu_hdr = (cpu_kcore_hdr_t *)_kvm_malloc(kd, sizeof(*kd->cpu_hdr));
-	if (kd->cpu_hdr == NULL) {
-		free((void *)kd->kcore_hdr);
-		kd->kcore_hdr = NULL;
-		return (-1);
-	}
-
-	*kd->kcore_hdr = khdr;
-	*kd->cpu_hdr   = ckhdr;
-	kd->dump_off   = offset;
-	return (0);
-}
-
-/*
- * Translate a physical address to a file-offset in the crash-dump.
- */
-off_t
-_kvm_pa2off(kd, pa)
-	kvm_t	*kd;
-	u_long	pa;
-{
-	off_t		off;
-	phys_ram_seg_t	*rsp;
-
-	off = 0;
-	for (rsp = kd->cpu_hdr->ram_segs; rsp->size; rsp++) {
-		if (pa >= rsp->start && pa < rsp->start + rsp->size) {
-			pa -= rsp->start;
-			break;
-		}
-		off += rsp->size;
-	}
-	return(pa + off + kd->dump_off);
-}
-
-int
-kvm_dump_mkheader(kd_live, kd_dump, dump_off)
-kvm_t	*kd_live, *kd_dump;
-off_t	dump_off;
-{
-	kcore_hdr_t	kch;
-	kcore_seg_t	kseg;
-	cpu_kcore_hdr_t	ckhdr;
-	int		hdr_size;
-
-	hdr_size = 0;
-	if (kd_dump->kcore_hdr != NULL) {
-	    _kvm_err(kd_dump, kd_dump->program, "already has a dump header");
-	    return (-1);
-	}
-	if (!ISALIVE(kd_live) || ISALIVE(kd_dump)) {
-		_kvm_err(kd_live, kd_live->program, "wrong arguments");
-		return (-1);
-	}
-
-	/*
-	 * Check for new format crash dump
-	 */
-	if (Lseek(kd_dump, kd_dump->pmfd, dump_off, SEEK_SET) == -1)
-		return (-1);
-	if (Read(kd_dump, kd_dump->pmfd, &kseg, sizeof(kseg)) != sizeof(kseg))
-		return (-1);
-	if ((CORE_GETMAGIC(kseg) == KCORE_MAGIC)
-	     && ((CORE_GETMID(kseg) == MID_MACHINE))) {
-		hdr_size += ALIGN(sizeof(kcore_seg_t));
-		if (Lseek(kd_dump, kd_dump->pmfd, dump_off+hdr_size, SEEK_SET)
-									== -1)
-			return (-1);
-		if (Read(kd_dump, kd_dump->pmfd, &ckhdr, sizeof(ckhdr))
-							!= sizeof(ckhdr))
-			return (-1);
-		hdr_size += kseg.c_size;
-		if (Lseek(kd_dump, kd_dump->pmfd, dump_off+hdr_size, SEEK_SET)
-									== -1)
-			return (-1);
-		kd_dump->cpu_hdr = (cpu_kcore_hdr_t *)
-				_kvm_malloc(kd_dump, sizeof(cpu_kcore_hdr_t));
-		*kd_dump->cpu_hdr = ckhdr;
-	}
-
-	/*
-	 * Create a kcore_hdr.
-	 */
-	kd_dump->kcore_hdr = (kcore_hdr_t *)
-				_kvm_malloc(kd_dump, sizeof(kcore_hdr_t));
-	if (kd_dump->kcore_hdr == NULL) {
-		if (kd_dump->cpu_hdr != NULL) {
-			free((void *)kd_dump->cpu_hdr);
-			kd_dump->cpu_hdr = NULL;
-		}
-		return (-1);
-	}
-
-	kd_dump->kcore_hdr->c_hdrsize    = ALIGN(sizeof(kcore_hdr_t));
-	kd_dump->kcore_hdr->c_seghdrsize = ALIGN(sizeof(kcore_seg_t));
-	kd_dump->kcore_hdr->c_nseg       = 2;
-	CORE_SETMAGIC(*(kd_dump->kcore_hdr), KCORE_MAGIC, MID_MACHINE,0);
-
-	/*
-	 * If there is no cpu_hdr at this point, we probably have an
-	 * old format crash dump.....bail out
-	 */
-	if (kd_dump->cpu_hdr == NULL) {
-		free((void *)kd_dump->kcore_hdr);
-		kd_dump->kcore_hdr = NULL;
-		_kvm_err(kd_dump, kd_dump->program, "invalid dump");
-	}
-
-	kd_dump->dump_off  = dump_off + hdr_size;
-
-	/*
-	 * Now that we have a valid header, enable translations.
-	 */
-	_kvm_initvtop(kd_dump);
-
-	return(hdr_size);
-}
-
-static int
-clear_gap(kd, fp, size)
-kvm_t	*kd;
-FILE	*fp;
-int	size;
-{
-	if (size <= 0) /* XXX - < 0 should never happen */
-		return (0);
-	while (size-- > 0) {
-		if (fputc(0, fp) == EOF) {
-			_kvm_syserr(kd, kd->program, "clear_gap");
-			return (-1);
-		}
-	}
-	return (0);
-}
-
-/*
- * Write the dump header info to 'fp'. Note that we can't use fseek(3) here
- * because 'fp' might be a file pointer obtained by zopen().
- */
-int
-kvm_dump_wrtheader(kd, fp, dumpsize)
-kvm_t	*kd;
-FILE	*fp;
-int	dumpsize;
-{
-	kcore_seg_t	seghdr;
-	long		offset;
-	int		gap;
-
-	if (kd->kcore_hdr == NULL || kd->cpu_hdr == NULL) {
-		_kvm_err(kd, kd->program, "no valid dump header(s)");
-		return (-1);
-	}
-
-	/*
-	 * Write the generic header
-	 */
-	offset = 0;
-	if (fwrite((void*)kd->kcore_hdr, sizeof(kcore_hdr_t), 1, fp) <= 0) {
-		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
-		return (-1);
-	}
-	offset += kd->kcore_hdr->c_hdrsize;
-	gap     = kd->kcore_hdr->c_hdrsize - sizeof(kcore_hdr_t);
-	if (clear_gap(kd, fp, gap) == -1)
-		return (-1);
-
-	/*
-	 * Write the cpu header
-	 */
-	CORE_SETMAGIC(seghdr, KCORESEG_MAGIC, 0, CORE_CPU);
-	seghdr.c_size = ALIGN(sizeof(cpu_kcore_hdr_t));
-	if (fwrite((void*)&seghdr, sizeof(seghdr), 1, fp) <= 0) {
-		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
-		return (-1);
-	}
-	offset += kd->kcore_hdr->c_seghdrsize;
-	gap     = kd->kcore_hdr->c_seghdrsize - sizeof(seghdr);
-	if (clear_gap(kd, fp, gap) == -1)
-		return (-1);
-
-	if (fwrite((void*)kd->cpu_hdr, sizeof(cpu_kcore_hdr_t), 1, fp) <= 0) {
-		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
-		return (-1);
-	}
-	offset += seghdr.c_size;
-	gap     = seghdr.c_size - sizeof(cpu_kcore_hdr_t);
-	if (clear_gap(kd, fp, gap) == -1)
-		return (-1);
-
-	/*
-	 * Write the actual dump data segment header
-	 */
-	CORE_SETMAGIC(seghdr, KCORESEG_MAGIC, 0, CORE_DATA);
-	seghdr.c_size = dumpsize;
-	if (fwrite((void*)&seghdr, sizeof(seghdr), 1, fp) <= 0) {
-		_kvm_syserr(kd, kd->program, "kvm_dump_wrtheader");
-		return (-1);
-	}
-	offset += kd->kcore_hdr->c_seghdrsize;
-	gap     = kd->kcore_hdr->c_seghdrsize - sizeof(seghdr);
-	if (clear_gap(kd, fp, gap) == -1)
-		return (-1);
-
-	return (offset);
 }
 
 kvm_t *
@@ -651,10 +323,6 @@ kvm_close(kd)
 		error |= (kd->db->close)(kd->db);
 	if (kd->vmst)
 		_kvm_freevtop(kd);
-	if (kd->cpu_hdr != NULL)
-		free((void *)kd->cpu_hdr);
-	if (kd->kcore_hdr != NULL)
-		free((void *)kd->kcore_hdr);
 	if (kd->procbase != 0)
 		free((void *)kd->procbase);
 	if (kd->swapspc != 0)
@@ -767,12 +435,6 @@ kvm_nlist(kd, nl)
 		}
 		rec.data = p->n_name;
 		rec.size = len;
-
-		/*
-		 * Make sure that n_value = 0 when the symbol isn't found
-		 */
-		p->n_value = 0;
-
 		if ((kd->db->get)(kd->db, (DBT *)&rec, (DBT *)&rec, 0))
 			continue;
 		if (rec.data == 0 || rec.size != sizeof(struct nlist))
@@ -794,40 +456,6 @@ kvm_nlist(kd, nl)
 	return ((p - nl) - nvalid);
 }
 
-int kvm_dump_inval(kd)
-kvm_t	*kd;
-{
-	struct nlist	nlist[2];
-	u_long		pa;
-
-	if (ISALIVE(kd)) {
-		_kvm_err(kd, kd->program, "clearing dump on live kernel");
-		return (-1);
-	}
-	nlist[0].n_name = "_dumpmag";
-	nlist[1].n_name = NULL;
-
-	if (kvm_nlist(kd, nlist) == -1) {
-		_kvm_err(kd, 0, "bad namelist");
-		return (-1);
-	}
-	if (_kvm_kvatop(kd, (u_long)nlist[0].n_value, &pa) == 0)
-		return (-1);
-
-	errno = 0;
-	if (lseek(kd->pmfd, _kvm_pa2off(kd, pa), SEEK_SET) == -1
-		&& errno != 0) {
-		_kvm_err(kd, 0, "cannot invalidate dump - lseek");
-		return (-1);
-	}
-	pa = 0;
-	if (write(kd->pmfd, &pa, sizeof(pa)) != sizeof(pa)) {
-		_kvm_err(kd, 0, "cannot invalidate dump - write");
-		return (-1);
-	}
-	return (0);
-}
-
 ssize_t
 kvm_read(kd, kva, buf, len)
 	kvm_t *kd;
@@ -844,8 +472,7 @@ kvm_read(kd, kva, buf, len)
 		 * device and let the active kernel do the address translation.
 		 */
 		errno = 0;
-		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
-			&& errno != 0) {
+		if (lseek(kd->vmfd, (off_t)kva, 0) == -1 && errno != 0) {
 			_kvm_err(kd, 0, "invalid address (%x)", kva);
 			return (0);
 		}
@@ -857,24 +484,17 @@ kvm_read(kd, kva, buf, len)
 			_kvm_err(kd, kd->program, "short read");
 		return (cc);
 	} else {
-		if ((kd->kcore_hdr == NULL) || (kd->cpu_hdr == NULL)) {
-			_kvm_err(kd, kd->program, "no valid dump header");
-			return (0);
-		}
 		cp = buf;
 		while (len > 0) {
-			u_long	pa;
-			off_t	foff;
+			u_long pa;
 		
 			cc = _kvm_kvatop(kd, kva, &pa);
 			if (cc == 0)
 				return (0);
 			if (cc > len)
 				cc = len;
-			foff = _kvm_pa2off(kd, pa);
 			errno = 0;
-			if (lseek(kd->pmfd, foff, SEEK_SET) == -1
-				&& errno != 0) {
+			if (lseek(kd->pmfd, (off_t)pa, 0) == -1 && errno != 0) {
 				_kvm_syserr(kd, 0, _PATH_MEM);
 				break;
 			}
@@ -914,8 +534,7 @@ kvm_write(kd, kva, buf, len)
 		 * Just like kvm_read, only we write.
 		 */
 		errno = 0;
-		if (lseek(kd->vmfd, (off_t)kva, SEEK_SET) == -1
-			&& errno != 0) {
+		if (lseek(kd->vmfd, (off_t)kva, 0) == -1 && errno != 0) {
 			_kvm_err(kd, 0, "invalid address (%x)", kva);
 			return (0);
 		}

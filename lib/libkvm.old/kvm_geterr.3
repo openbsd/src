@@ -1,7 +1,11 @@
-.\"	$OpenBSD: getdtablesize.3,v 1.2 1996/03/19 23:15:06 niklas Exp $
+.\"	$OpenBSD: kvm_geterr.3,v 1.1 1996/03/19 23:15:31 niklas Exp $
 .\"
-.\" Copyright (c) 1983, 1991 The Regents of the University of California.
-.\" All rights reserved.
+.\" Copyright (c) 1992, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" This code is derived from software developed by the Computer Systems
+.\" Engineering group at Lawrence Berkeley Laboratory under DARPA contract
+.\" BG 91-66 and contributed to Berkeley.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -31,34 +35,48 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     from: @(#)getdtablesize.2	6.5 (Berkeley) 3/10/91
+.\"     @(#)kvm_geterr.3	8.1 (Berkeley) 6/4/93
 .\"
-.Dd March 10, 1991
-.Dt GETDTABLESIZE 3
-.Os BSD 4.2
+.Dd June 4, 1993
+.Dt KVM_GETERR 3
+.Os
 .Sh NAME
-.Nm getdtablesize
-.Nd get descriptor table size
+.Nm kvm_geterr
+.Nd get error message on kvm descriptor
 .Sh SYNOPSIS
-.Fd #include <unistd.h>
-.Ft int
-.Fn getdtablesize void
+.Fd #include <kvm.h>
+.br
+.Ft char *
+.Fn kvm_geterr "kvm_t *kd"
 .Sh DESCRIPTION
-Each process has a fixed size descriptor table,
-which is guaranteed to have at least 20 slots.  The entries in
-the descriptor table are numbered with small integers starting at 0.
-The call
-.Fn getdtablesize
-returns the size of this table.
+This function returns a string describing the most recent error condition
+on the descriptor
+.Fa kd .
+The results are undefined if the most recent
+.Xr kvm 3
+library call did not produce an error.
+The string returned is stored in memory owned by 
+.Xr kvm 3
+so the message should be copied out and saved elsewhere if necessary.
+.Sh BUGS
+This routine cannot be used to access error conditions due to a failed
+.Fn kvm_openfiles
+call, since failure is indicated by returning a
+.Dv NULL
+descriptor.
+Therefore, errors on open are output to the special error buffer
+passed to 
+.Fn kvm_openfiles .
+This option is not available to
+.Fn kvm_open .
 .Sh SEE ALSO
-.Xr close 2 ,
-.Xr dup 2 ,
-.Xr getrlimit 2 ,
-.Xr open 2 ,
-.Xr select 2 ,
-.Xr sysconf 3
-.Sh HISTORY
-The
-.Fn getdtablesize
-function call appeared in
-.Bx 4.2 .
+.Xr kvm 3 ,
+.Xr kvm_close 3 ,
+.Xr kvm_getargv 3 ,
+.Xr kvm_getenvv 3 ,
+.Xr kvm_getprocs 3 ,
+.Xr kvm_nlist 3 ,
+.Xr kvm_open 3 ,
+.Xr kvm_openfiles 3 ,
+.Xr kvm_read 3 ,
+.Xr kvm_write 3

@@ -1,4 +1,5 @@
-/*	$OpenBSD: kvm_i386.c,v 1.2 1996/03/19 23:15:23 niklas Exp $	*/
+/*	$OpenBSD: kvm_ns32k.c,v 1.1 1996/03/19 23:15:38 niklas Exp $	*/
+/*	$NetBSD: kvm_ns32k.c,v 1.1.1.1 1996/03/16 10:05:24 leo Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -37,14 +38,12 @@
  * SUCH DAMAGE.
  */
 
-#if defined(LIBC_SCCS) && !defined(lint)
-/* from: static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.2 1996/03/19 23:15:23 niklas Exp $";
-#endif /* LIBC_SCCS and not lint */
+/* from: "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93"; */
 
 /*
- * i386 machine dependent routines for kvm.  Hopefully, the forthcoming 
+ * ns32k machine dependent routines for kvm.  Hopefully, the forthcoming 
  * vm code will one day obsolete this module.
+ *
  */
 
 #include <sys/param.h>
@@ -72,8 +71,12 @@ static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.2 1996/03/19 23:15:23 niklas Exp 
 #endif
 
 struct vmstate {
+	pd_entry_t **PTDpaddr;
 	pd_entry_t *PTD;
 };
+
+#define KREAD(kd, addr, p)\
+	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
 
 void
 _kvm_freevtop(kd)
@@ -93,7 +96,7 @@ _kvm_initvtop(kd)
 {
 	struct vmstate *vm;
 	struct nlist nlist[2];
-	u_long pa;
+	pt_entry_t *tmpPTD;
 
 	vm = (struct vmstate *)_kvm_malloc(kd, sizeof(*vm));
 	if (vm == 0)
@@ -108,35 +111,21 @@ _kvm_initvtop(kd)
 		return (-1);
 	}
 
+	vm->PTDpaddr = 0;
 	vm->PTD = 0;
-
-	if (lseek(kd->pmfd, (off_t)(nlist[0].n_value - KERNBASE), 0) == -1 &&
-	    errno != 0) {
-		_kvm_syserr(kd, kd->program, "kvm_lseek");
-		goto invalid;
-	}
-	if (read(kd->pmfd, &pa, sizeof pa) != sizeof pa) {
-		_kvm_syserr(kd, kd->program, "kvm_read");
-		goto invalid;
+	if (KREAD(kd, (u_long)nlist[0].n_value - KERNBASE, &vm->PTDpaddr)) {
+		_kvm_err(kd, kd->program, "cannot read PTDpaddr");
+		return (-1);
 	}
 
-	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
-
-	if (lseek(kd->pmfd, (off_t)pa, 0) == -1 && errno != 0) {
-		_kvm_syserr(kd, kd->program, "kvm_lseek");
-		goto invalid;
+	tmpPTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
+	if ((kvm_read(kd, (u_long)vm->PTDpaddr, tmpPTD, NBPG)) != NBPG) {
+		free(tmpPTD);
+		_kvm_err(kd, kd->program, "cannot read PTD");
+		return (-1);
 	}
-	if (read(kd->pmfd, vm->PTD, NBPG) != NBPG) {
-		_kvm_syserr(kd, kd->program, "kvm_read");
-		goto invalid;
-	}
-
+	vm->PTD = tmpPTD;
 	return (0);
-
-invalid:
-	if (vm->PTD != 0)
-		free(vm->PTD);
-	return (-1);
 }
 
 /*
@@ -177,7 +166,7 @@ _kvm_kvatop(kd, va, pa)
 	/* XXX READ PHYSICAL XXX */
 	{
 		if (lseek(kd->pmfd, (off_t)pte_pa, 0) == -1 && errno != 0) {
-			_kvm_syserr(kd, kd->program, "kvm_lseek");
+			_kvm_syserr(kd, 0, "kvm_lseek");
 			goto invalid;
 		}
 		if (read(kd->pmfd, &pte, sizeof pte) != sizeof pte) {
