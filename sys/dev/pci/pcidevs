@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.526 2002/07/06 14:26:58 gluk Exp $
+	$OpenBSD: pcidevs,v 1.527 2002/07/10 18:07:49 deraadt Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -58,7 +58,7 @@ vendor REPLY		0x1006	Reply Group
 vendor NETFRAME		0x1007	NetFrame Systems
 vendor EPSON		0x1008	Epson
 vendor PHOENIX		0x100a	Phoenix Technologies
-vendor NS		0x100b	National Semiconductor
+vendor NS		0x100b	NS
 vendor TSENG		0x100c	Tseng Labs
 vendor AST		0x100d	AST Research
 vendor WEITEK		0x100e	Weitek
