@@ -497,6 +497,7 @@
 ./usr/share/man/cat1/pkg_create.0
 ./usr/share/man/cat1/pkg_delete.0
 ./usr/share/man/cat1/pkg_info.0
+./usr/share/man/cat1/pkg_mklocatedb.0
 ./usr/share/man/cat1/pkill.0
 ./usr/share/man/cat1/pl2pm.0
 ./usr/share/man/cat1/pod2html.0
@@ -1415,6 +1416,7 @@
 ./usr/share/man/cat4/qsphy.0
 ./usr/share/man/cat4/radio.0
 ./usr/share/man/cat4/raid.0
+./usr/share/man/cat4/ral.0
 ./usr/share/man/cat4/random.0
 ./usr/share/man/cat4/ray.0
 ./usr/share/man/cat4/rd.0

@@ -1839,6 +1839,7 @@
 ./usr/sbin/pkg_create
 ./usr/sbin/pkg_delete
 ./usr/sbin/pkg_info
+./usr/sbin/pkg_mklocatedb
 ./usr/sbin/popa3d
 ./usr/sbin/portmap
 ./usr/sbin/ppp
