@@ -1,11 +1,6 @@
 TODO :
 ------
 
-- Rewrite handler_set to allow sub regions, minimums, etc without having to
-  register 100 callbacks for 100 quad reads.
-
-- Use handler_set (with NULL cb) to create a higher level <bus>_unreg.
-
 - Move all mbuf code to if_fw.c. Make if_fw use the generic read/write/inreg
   and then it can translate the packets into the appropriate mbuf's.
 
@@ -26,6 +21,8 @@ TODO :
 
 - Implement proper handlers with either 1 main thread, or timeouts and
   callbacks.
+
+- Move all the SBP2 data manipulation routines to SBP2 codebase.
 
 ==============================================================================
 
@@ -55,3 +52,8 @@ DONE :
   callbacks.
 
 - Make fwohci detach correctly (for cardbus/etc type interfaces).
+
+- Use handler_set (with NULL cb) to create a higher level <bus>_unreg.
+
+- Rewrite handler_set to allow sub regions, minimums, etc without having to
+  register 100 callbacks for 100 quad reads.
