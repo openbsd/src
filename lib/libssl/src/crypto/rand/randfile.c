@@ -73,7 +73,7 @@
 # include <sys/stat.h>
 #endif
 
-#include <openssl/e_os.h>
+#include "openssl/e_os.h"
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 
@@ -82,6 +82,9 @@
 #define RAND_DATA 1024
 
 /* #define RFILE ".rnd" - defined in ../../e_os.h */
+
+/* Note that these functions are intended for seed files only.
+ * Entropy devices and EGD sockets are handled in rand_unix.c */
 
 int RAND_load_file(const char *file, long bytes)
 	{
@@ -213,7 +216,7 @@ err:
 	return (rand_err ? -1 : ret);
 	}
 
-const char *RAND_file_name(char *buf, int size)
+const char *RAND_file_name(char *buf, size_t size)
 	{
 	char *s = NULL;
 	char *ret=NULL;
@@ -239,6 +242,8 @@ const char *RAND_file_name(char *buf, int size)
 			strlcat(buf,RFILE,size);
 			ret=buf;
 			}
+		  else
+		  	buf[0] = '\0'; /* no file name */
 		}
 
 #ifdef DEVRANDOM
@@ -257,3 +262,4 @@ const char *RAND_file_name(char *buf, int size)
 #endif
 	return(ret);
 	}
+
