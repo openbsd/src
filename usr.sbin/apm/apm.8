@@ -1,3 +1,5 @@
+.\"	$OpenBSD: apm.8,v 1.16 2001/07/05 20:10:31 mickey Exp $
+.\"
 .\" Copyright (c) 1996 John T. Kohl
 .\" All rights reserved.
 .\"
@@ -24,8 +26,6 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: apm.8,v 1.15 2001/07/04 07:10:51 mickey Exp $
-.\"
 .Dd March 18, 1996
 .Dt APM 8
 .Os
@@ -34,19 +34,11 @@
 .Nd Advanced Power Management control program
 .Sh SYNOPSIS
 .Nm zzz
-.Op Fl S
-.Op Fl z
+.Op Fl Sz
 .Op Fl f Ar sockname
 .Br
 .Nm apm
-.Op Fl z
-.Op Fl S
-.Op Fl s
-.Op Fl l
-.Op Fl m
-.Op Fl b
-.Op Fl a
-.Op Fl v
+.Op Fl ablmsSvz
 .Op Fl f Ar sockname
 .Sh DESCRIPTION
 .Nm
@@ -60,29 +52,31 @@ displays the current power management state in verbose form.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl z
-Put the system into suspend (deep sleep) mode.
-.It Fl S
-Put the system into stand-by (light sleep) mode.
-.It Fl l
-Display the estimated battery lifetime (in percent).
-.It Fl m
-Display the estimated battery lifetime (in minutes).
-.It Fl b
-Display the battery status.
-0 means high, 1 means low, 2 means
-critical, 3 means charging, 4 means absent, and 255 means unknown.
 .It Fl a
 Display the external charger (A/C status).
 0 means disconnected, 1
 means connected, 2 means backup power source, and 255 means unknown.
-.It Fl v
-Request more verbose description of the displayed states.
+.It Fl b
+Display the battery status.
+0 means high, 1 means low, 2 means
+critical, 3 means charging, 4 means absent, and 255 means unknown.
 .It Fl f Ar sockname
 Set the name of the socket via which to contact
 .Xr apmd 8
 to
 .Pa sockname .
+.It Fl l
+Display the estimated battery lifetime (in percent).
+.It Fl m
+Display the estimated battery lifetime (in minutes).
+.It Fl S
+Put the system into stand-by (light sleep) mode.
+.It Fl s
+Display if power management is enabled.
+.It Fl v
+Request more verbose description of the displayed states.
+.It Fl z
+Put the system into suspend (deep sleep) mode.
 .El
 .Pp
 The
@@ -115,7 +109,7 @@ APM functions.
 .Xr apmd 8
 .Sh REFERENCES
 Advanced Power Management (APM) BIOS Interface Specification (revision
-1.1), Intel Corporation and Microsoft Corporation
+1.2), Intel Corporation and Microsoft Corporation
 .Sh HISTORY
 The
 .Nm

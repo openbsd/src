@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.3 1998/10/29 18:21:44 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.4 2001/07/05 20:10:32 mickey Exp $	*/
 
 /*
  *  Copyright (c) 1996 John T. Kohl
@@ -50,10 +50,6 @@
 
 extern char *__progname;
 extern char *optarg;
-extern int optind;
-extern int optopt;
-extern int opterr;
-extern int optreset;
 
 void usage(void);
 void zzusage(void);
@@ -164,7 +160,7 @@ main(int argc, char *argv[])
     struct apm_command command;
     struct apm_reply reply;
 
-    while ((ch = getopt(argc, argv, "lmbvadsSzf:")) != -1)
+    while ((ch = getopt(argc, argv, "lmbvasSzf:")) != -1)
 	switch(ch) {
 	case 'v':
 	    verbose = TRUE;
