@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.142 2004/06/28 18:14:11 sturm Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.143 2004/07/11 20:46:32 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -116,10 +116,8 @@ target that simulates invoking
 Check distribution archives and distribution patches control sum against
 the results recorded in ${CHECKSUM_FILE},
 using the cryptographic signature utilities listed in ${PREFERRED_CIPHERS}.
-Normally ${ALLFILES}
-are checksummed, unless
-.Ev IGNOREFILES
-is set to a list of files to ignore.
+All the files needed to recreate a port should be in ${ALLFILES} and
+checksummed.
 Invoking
 .Ar checksum
 with REFETCH=true
@@ -292,8 +290,7 @@ See also
 .Ar unlink-categories .
 .It Ar makesum
 Create the ${CHECKSUM_FILE} list of recorded checksums by running the
-cryptographic fingerprints sha1, md5 and rmd160 on ${ALLFILES} minus
-${IGNOREFILES}.
+cryptographic fingerprints sha1, md5 and rmd160 on ${ALLFILES}.
 .Ev NO_CHECKSUM
 can be used to avoid all checksumming steps.
 .It Ar manpages-check
@@ -942,11 +939,6 @@ Location of the gnu make binary, if needed.
 Defaults to gmake.
 .It Ev HOMEPAGE
 Set to a link to the homepage of the software, if applicable.
-.It Ev IGNOREFILES
-Set to the list of files that cannot be checksummed.
-For use by ports which
-fetch dynamically generated archives that can't be checksummed.
-Avoid using IGNOREFILES whenever possible.
 .It Ev LIB_DEPENDS
 Libraries this port depends upon.
 Each item has the form
@@ -1732,6 +1724,10 @@ instead.
 .It Ev HAVE_MOTIF
 Old user settings.
 No longer needed since OpenMotif is now free.
+.It Ev IGNOREFILES
+Set to the list of files that can't be checksummed.
+All uses of it have led to postponing the correct action: talking
+to the software author and getting him to provide versioned archives.
 .It Ev MANn
 List of unformatted manpages, per section.
 .It Ev MANPREFIX
