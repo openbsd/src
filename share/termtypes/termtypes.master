@@ -1,6 +1,6 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.31 2001/11/05 18:09:02 naddy Exp $
+# $OpenBSD: termtypes.master,v 1.32 2002/02/18 00:40:37 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
@@ -17214,6 +17214,16 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 	kf8=\E[OR, kf9=\E[OS, khome=\E[H, ri=\EM, rmam=\E[?7l, 
 	rmir=\E[4l, rmkx=\E>, rmso=\E[m, rmul=\E[m, sgr0=\E[m, 
 	smam=\E[?7h, smir=\E[4h, smkx=\E=, smso=\E[7m, smul=\E[4m, 
+# This entry is for the BSD window program.  It pessimistically
+# assumes a rather dumb terminal.  In practice this is fine since
+# window will place a better entry in the TERMCAP environment variable.
+window-v2|window program version 2, 
+	OTbs, am, da, db, msgr, OTpt, 
+	it#8, 
+	bel=^G, clear=\\EE, cr=^M, cub1=^H, cud1=^J, cuf1=\\EC, 
+	cup=\\EY%p1%{32}%+%c%p2%{32}%+%c, cuu1=\\EA, ed=\\EJ, 
+	el=\\EK, home=\\EH, ht=^I, kbs=^H, kcub1=^H, kcud1=\\EB, 
+	nel=^M^J, sgr0=\\Er\177, 
 ######## ICH/ICH1 VERSUS RMIR/SMIR
 #
 # Some non-curses applications get confused if both ich/ich1 and rmir/smir
