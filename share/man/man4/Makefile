@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.282 2004/12/01 01:29:37 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.283 2004/12/17 00:28:30 jaredy Exp $
 
 MAN=	aac.4 ac97.4 acphy.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 ahd.4 \
 	aic.4 amdpm.4 ami.4 amphy.4 an.4 aria.4 ast.4 atalk.4 \
@@ -34,8 +34,8 @@ MAN=	aac.4 ac97.4 acphy.4 addcom.4 adv.4 aha.4 ahb.4 ahc.4 ahd.4 \
 	ukphy.4 ulpt.4 umass.4 umct.4 umidi.4 umodem.4 ums.4 \
 	unix.4 upl.4 uplcom.4 urio.4 url.4 urlphy.4 usb.4 \
 	uscanner.4 usscanner.4 uvisor.4 uvscom.4 uyap.4 vga.4 vge.4 \
-	viaenv.4 vlan.4 vnd.4 vr.4 wb.4 wd.4 wdc.4 we.4 wi.4tbl \
-	wscons.4 wsdisplay.4 wskbd.4 wsmouse.4 wsmux.4 xe.4 \
+	viaenv.4 vlan.4 vnd.4 vr.4 watchdog.4 wb.4 wd.4 wdc.4 we.4 \
+	wi.4tbl wscons.4 wsdisplay.4 wskbd.4 wsmouse.4 wsmux.4 xe.4 \
 	xf86.4 xl.4 xmphy.4 yds.4 ym.4 zero.4
 
 
