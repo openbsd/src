@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.172 2001/11/27 17:50:36 frantzen Exp $ */
+/*	$OpenBSD: pf.c,v 1.173 2001/11/27 20:29:25 jasoni Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4496,7 +4496,7 @@ pf_route(struct mbuf *m, struct pf_rule *r)
 sendorfree:
 	    for (m0 = m1; m0; m0 = m1) {
 		    m1 = m0->m_nextpkt;
-		    m->m_nextpkt = 0;
+		    m0->m_nextpkt = 0;
 		    if (error == 0)
 			    error = (*ifp->if_output)(ifp, m0, sintosa(dst),
 				NULL);
