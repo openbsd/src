@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.19 2000/03/23 16:54:44 art Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.20 2000/07/05 08:10:57 pjanzen Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -535,9 +535,7 @@ realitexpire(arg)
 
 /*
  * Check that a proposed value to load into the .it_value or
- * .it_interval part of an interval timer is acceptable, and
- * fix it to have at least minimal value (i.e. if it is less
- * than the resolution of the clock, round it up.)
+ * .it_interval part of an interval timer is acceptable.
  */
 int
 itimerfix(tv)
@@ -547,8 +545,6 @@ itimerfix(tv)
 	if (tv->tv_sec < 0 || tv->tv_sec > 100000000 ||
 	    tv->tv_usec < 0 || tv->tv_usec >= 1000000)
 		return (EINVAL);
-	if (tv->tv_sec == 0 && tv->tv_usec != 0 && tv->tv_usec < tick)
-		tv->tv_usec = tick;
 	return (0);
 }
 
