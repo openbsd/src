@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcvar.h,v 1.6 1999/12/11 10:15:03 csapuntz Exp $     */
+/*      $OpenBSD: wdcvar.h,v 1.7 1999/12/14 18:07:43 csapuntz Exp $     */
 /*	$NetBSD: wdcvar.h,v 1.17 1999/04/11 20:50:29 bouyer Exp $	*/
 
 /*-
@@ -208,7 +208,7 @@ struct wdc_xfer {
 
 	/* Used by ATAPISCSI */
 	int timeout;
-	u_int64_t endtime;
+	int endticks;
 	int delay;
 	unsigned int expect_irq:1;
 	unsigned int claim_irq:1;
