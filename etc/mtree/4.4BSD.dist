@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.111 2001/09/07 15:31:56 jason Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.112 2001/09/09 16:50:14 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -128,11 +128,6 @@ lib
 # ./etc/tcfs
 tcfs
 # ./etc/tcfs
-..
-
-# ./etc/uucp
-uucp
-# ./etc/uucp
 ..
 
 # ./etc
@@ -326,11 +321,6 @@ lpr
 # ./libexec/sendmail
 sendmail	type=dir uname=root gname=wheel mode=0755
 # ./libexec/sendmail
-..
-
-# ./usr/libexec/uucp
-uucp
-# ./usr/libexec/uucp
 ..
 
 # ./usr/libexec
