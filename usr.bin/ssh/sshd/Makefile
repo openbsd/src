@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.37 2001/03/04 01:46:30 djm Exp $
+#	$OpenBSD: Makefile,v 1.38 2001/03/29 21:17:40 markus Exp $
 
 .PATH:		${.CURDIR}/..
 
@@ -11,7 +11,7 @@ CFLAGS+=-DHAVE_LOGIN_CAP
 
 SRCS=	sshd.c auth-rhosts.c auth-passwd.c auth-rsa.c auth-rh-rsa.c \
 	sshpty.c sshlogin.c servconf.c serverloop.c \
-	auth.c auth1.c auth2.c auth-options.c session.c dh.c \
+	auth.c auth1.c auth2.c auth-options.c session.c \
 	auth-chall.c auth2-chall.c groupaccess.c
 
 .include <bsd.own.mk> # for KERBEROS and AFS
