@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.21 2000/06/17 19:42:18 deraadt Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.22 2000/11/13 15:39:08 itojun Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.21 2000/06/17 19:42:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.22 2000/11/13 15:39:08 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -135,7 +135,7 @@ char	*fromname;
 %token	<s> ALL
 %token	<i> NUMBER
 
-%type	<i> check_login octal_number byte_size
+%type	<i> check_login check_epsvall octal_number byte_size
 %type	<i> struct_code mode_code type_code form_code
 %type	<s> pathstring pathname password username
 %type	<i> host_port host_long_port4 host_long_port6
@@ -166,10 +166,10 @@ cmd
 			memset($3, 0, strlen($3));
 			free($3);
 		}
-	| PORT check_login SP host_port CRLF
+	| PORT check_login check_epsvall SP host_port CRLF
 		{
-			if ($2) {
-				if ($4) {
+			if ($2 && $3) {
+				if ($5) {
 					usedefault = 1;
 					reply(500,	
 					    "Illegal PORT rejected (range errors).");
@@ -195,45 +195,45 @@ cmd
 				}
 			}
 		}
-	| LPRT check_login SP host_long_port4 CRLF
+	| LPRT check_login check_epsvall SP host_long_port4 CRLF
 		{
-			/* reject invalid host_long_port4 */
-			if ($4) {
-				reply(500, "Illegal LPRT command rejected");
-				usedefault = 1;
-			} else if (epsvall) {
-				reply(501, "LPRT disallowed after EPSV ALL");
-				usedefault = 1;
-			} else {
-				usedefault = 0;
-				if (pdata >= 0) {
-					(void) close(pdata);
-					pdata = -1;
+			if ($2 && $3) {
+				/* reject invalid host_long_port4 */
+				if ($5) {
+					reply(500,
+					    "Illegal LPRT command rejected");
+					usedefault = 1;
+				} else {
+					usedefault = 0;
+					if (pdata >= 0) {
+						(void) close(pdata);
+						pdata = -1;
+					}
+					reply(200, "LPRT command successful.");
 				}
-				reply(200, "LPRT command successful.");
 			}
 		}
 
-	| LPRT check_login SP host_long_port6 CRLF
+	| LPRT check_login check_epsvall SP host_long_port6 CRLF
 		{
-			/* reject invalid host_long_port6 */
-			if ($4) {
-				reply(500, "Illegal LPRT command rejected");
-				usedefault = 1;
-			} else if (epsvall) {
-				reply(501, "LPRT disallowed after EPSV ALL");
-				usedefault = 1;
-			} else {
-				usedefault = 0;
-				if (pdata >= 0) {
-					(void) close(pdata);
-					pdata = -1;
+			if ($2 && $3) {
+				/* reject invalid host_long_port6 */
+				if ($5) {
+					reply(500,
+					    "Illegal LPRT command rejected");
+					usedefault = 1;
+				} else {
+					usedefault = 0;
+					if (pdata >= 0) {
+						(void) close(pdata);
+						pdata = -1;
+					}
+					reply(200, "LPRT command successful.");
 				}
-				reply(200, "LPRT command successful.");
 			}
 		}
 
-	| EPRT check_login SP STRING CRLF
+	| EPRT check_login check_epsvall SP STRING CRLF
 		{
 			char *tmp = NULL;
 			char *result[3];
@@ -242,6 +242,8 @@ cmd
 			struct addrinfo hints;
 			struct addrinfo *res;
 			int i;
+
+			if ($2 && $3) { /* XXX indentation */
 
 			if (epsvall) {
 				reply(501, "EPRT disallowed after EPSV ALL");
@@ -255,7 +257,7 @@ cmd
 
 			/*XXX checks for login */
 
-			tmp = strdup($4);
+			tmp = strdup($5);
 			if (!tmp) {
 				fatal("not enough core.");
 				/*NOTREACHED*/
@@ -318,50 +320,49 @@ cmd
 			}
 			reply(200, "EPRT command successful.");
 		eprt_done:;
+
+			}
 		}
 
-	| PASV check_login CRLF
+	| PASV check_login check_epsvall CRLF
 		{
-			if ($2) {
+			if ($2 && $3)
 				passive();
-			}
 		}
-	| LPSV CRLF
+	| LPSV check_login check_epsvall CRLF
 		{
-			if (epsvall)
-				reply(501, "LPSV disallowed after EPSV ALL");
-			else
+			if ($2 && $3)
 				long_passive("LPSV", PF_UNSPEC);
 		}
-	| EPSV SP NUMBER CRLF
+	| EPSV check_login SP NUMBER CRLF
 		{
 			int pf;
-			switch ($3) {
-			case 1:
-				pf = PF_INET;
-				break;
-			case 2:
-				pf = PF_INET6;
-				break;
-			default:
-				pf = -1;	/*junk*/
-				break;
+			if ($2) {
+				switch ($4) {
+				case 1:
+					pf = PF_INET;
+					break;
+				case 2:
+					pf = PF_INET6;
+					break;
+				default:
+					pf = -1;	/*junk*/
+					break;
+				}
+				long_passive("EPSV", pf);
 			}
-			long_passive("EPSV", pf);
 		}
-	| EPSV SP ALL CRLF
+	| EPSV check_login SP ALL CRLF
 		{
-			if (!logged_in) {
-				syslog(LOG_NOTICE, "long passive but not logged in");
-				reply(503, "Login with USER first.");
-			} else {
+			if ($2) {
 				reply(200, "EPSV ALL command successful.");
 				epsvall++;
 			}
 		}
-	| EPSV CRLF
+	| EPSV check_login CRLF
 		{
-			long_passive("EPSV", PF_UNSPEC);
+			if ($2)
+				long_passive("EPSV", PF_UNSPEC);
 		}
 	| TYPE check_login SP type_code CRLF
 		{
@@ -1052,6 +1053,19 @@ check_login
 				reply(530, "Please login with USER and PASS.");
 				$$ = 0;
 			}
+		}
+	;
+
+check_epsvall
+	: /* empty */
+		{
+			if (epsvall) {
+				reply(501, "the command is disallowed "
+				    "after EPSV ALL");
+				usedefault = 1;
+				$$ = 0;
+			} else
+				$$ = 1;
 		}
 	;
 
