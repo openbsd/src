@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.44 2003/02/26 19:07:32 nate Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.45 2003/03/05 20:24:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1879,7 +1879,7 @@ void ti_rxeof(sc)
 		}
 
 		if (m == NULL)
-			panic("%s: couldn't get mbuf\n", sc->sc_dv.dv_xname);
+			panic("%s: couldn't get mbuf", sc->sc_dv.dv_xname);
 
 		m->m_pkthdr.len = m->m_len = cur_rx->ti_len;
 		ifp->if_ipackets++;
