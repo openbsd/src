@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.73 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.74 2001/11/11 07:43:30 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2415,10 +2415,12 @@ cmd_pci_intr(arg)
 		if ((i == 0 && (priirq & CMD_CONF_DRV0_INTR)) ||
 		    (i == 1 && (secirq & CMD_ARTTIM23_IRQ))) {
 			crv = wdcintr(wdc_cp);
-			if (crv == 0)
+			if (crv == 0) {
+#if 0
 				printf("%s:%d: bogus intr\n",
 				    sc->sc_wdcdev.sc_dev.dv_xname, i);
-			else
+#endif
+			} else
 				rv = 1;
 		}
 	}
