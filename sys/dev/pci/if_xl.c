@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.9 1998/09/11 03:23:15 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.10 1998/09/23 20:48:46 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -850,6 +850,8 @@ static void xl_autoneg_mii(sc, flag, verbose)
 
 	ifm = &sc->ifmedia;
 	ifp = &sc->arpcom.ac_if;
+
+	ifm->ifm_media = IFM_ETHER | IFM_AUTO;
 
 	/*
 	 * The 100baseT4 PHY on the 3c905-T4 has the 'autoneg supported'
@@ -1712,12 +1714,12 @@ xl_attach(config_id, unit)
 		break;
 	case XL_XCVR_100BTX:
 	case XL_XCVR_MII:
-		media = sc->ifmedia.ifm_media;
 #ifdef XL_BACKGROUND_AUTONEG
 		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
 #else
 		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
 #endif
+		media = sc->ifmedia.ifm_media;
 		break;
 	case XL_XCVR_100BFX:
 		media = IFM_ETHER|IFM_100_FX;
@@ -3277,12 +3279,12 @@ xl_attach(parent, self, aux)
 		break;
 	case XL_XCVR_100BTX:
 	case XL_XCVR_MII:
-		media = sc->ifmedia.ifm_media;
 #ifdef XL_BACKGROUND_AUTONEG
 		xl_autoneg_mii(sc, XL_FLAG_SCHEDDELAY, 1);
 #else
 		xl_autoneg_mii(sc, XL_FLAG_FORCEDELAY, 1);
 #endif
+		media = sc->ifmedia.ifm_media;
 		break;
 	case XL_XCVR_100BFX:
 		media = IFM_ETHER|IFM_100_FX;
