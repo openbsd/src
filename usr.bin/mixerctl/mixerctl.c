@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.15 2004/01/22 17:44:54 vincent Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.16 2004/03/02 23:09:27 tedu Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ main(int argc, char **argv)
 	char *sep = "=";
 	mixer_devinfo_t dinfo;
 	mixer_ctrl_t val;
-	int ndev = 0;
+	int ndev;
 
 	if ((file = getenv("MIXERDEVICE")) == 0 || *file == '\0')
 	        file = "/dev/mixer";
@@ -280,8 +280,8 @@ main(int argc, char **argv)
 		if ((fd = open(file, O_RDONLY)) == -1)
 			err(1, "%s", file);
 
-	for(;;) {
-		dinfo.index = ndev++;
+	for(ndev = 0; ; ndev++) {
+		dinfo.index = ndev;
 		if (ioctl(fd, AUDIO_MIXER_DEVINFO, &dinfo) < 0)
 			break;
 	}
