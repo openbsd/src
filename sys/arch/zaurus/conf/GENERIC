@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 2005/01/14 17:52:25 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.14 2005/01/14 18:09:07 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -39,24 +39,11 @@ makeoptions	BOARDTYPE="zaurus"
 
 maxusers	32
 
-# Standard system options
-
-#options 	UCONSOLE	# users can use TIOCCONS (for xconsole)
-#options 	INSECURE	# disable kernel securelevel
-
-#options 	RTC_OFFSET=0	# hardware clock is this many mins. west of GMT
-#options 	NTP		# NTP phase/frequency locked loop
-
 # CPU options
 options 	CPU_XSCALE_PXA2X0	# Support the XScale core
 options 	XSCALE_CACHE_WRITE_THROUGH
 #options 	XSCALE_CACHE_WRITE_BACK
 makeoptions	CPUFLAGS="-mcpu=xscale"
-
-
-# FPA options
-
-#options 	ARMFPE		# ARM Ltd FPE
 
 #option WSDISPLAY_COMPAT_USL		# VT handling
 #option WSDISPLAY_COMPAT_RAWKBD		# can get raw scancoetes
@@ -132,15 +119,13 @@ cd*		at scsibus?
 #ss*		at scsibus?
 #uk*		at scsibus?
 
-# cotulla integrated 16550 UARTs
+# integrated 16550 UARTs
 options COM_PXA2X0
-com0	at pxaip?  addr 0x40100000 intr 22      # Full Function UART
-com1	at pxaip?  addr 0x40200000 intr 21 	# BlueTootth UART
+com0	at pxaip?  addr 0x40100000 intr 22	# Full Function UART
+com1	at pxaip?  addr 0x40200000 intr 21	# BlueTootth UART
 #com2	at pxaip?  addr 0x40700000 intr 20	# Standard UART (for IrDA)
 options FFUARTCONSOLE
 #options BTUARTCONSOLE
-options KGDB_DEVNAME="\"btuart\""   # ffuart or btuart
-options KGDB_DEVRATE=115200
 
 #aupxa0	at pxaip?		# AC97 interface
 
@@ -181,13 +166,7 @@ urlphy*	at mii?			# Realtek RTL8150L internal PHY
 #ciphy* at mii?			# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?			# "unknown" PHYs
 
-# On-board device support
-#obio0		at pxaip? intr 8
-#sm0		at obio? addr 0x0c000000 intr 3 	# on-board SMC 91C96
-#options LUBBOCK_SMC91C96_16BIT
-
 # LCD
-#lcd0		at obio?
 lcd0		at pxaip?
 wsdisplay*	at lcd? console ?
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
