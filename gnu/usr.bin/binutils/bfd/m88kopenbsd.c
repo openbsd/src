@@ -22,7 +22,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
 #define	TARGET_PAGE_SIZE	4096
 
 #define	DEFAULT_ARCH		bfd_arch_m88k
-#define	DEFAULT_MID		M_M88K_OPENBSD
+#define	DEFAULT_MID		M_88K_OPENBSD
 
 /* Do not "beautify" the CONCAT* macro args.  Traditional C will not
    remove whitespace added here, and thus will fail to concatenate

@@ -306,7 +306,7 @@ enum machine_type {
   M_VAX4K_NETBSD = 150,	/* NetBSD/vax 4K pages binary */
   M_MIPS1 = 151,        /* MIPS R2000/R3000 binary */
   M_MIPS2 = 152,        /* MIPS R4000/R6000 binary */
-  M_M88K_OPENBSD = 153,	/* OpenBSD/m88k binary */
+  M_88K_OPENBSD = 153,	/* OpenBSD/m88k binary */
   M_SPARC64_NETBSD = 156, /* NetBSD/sparc64 binary */
   M_X86_64_NETBSD = 157, /* NetBSD/amd64 binary */
   M_SPARCLET_2 = 163,	/* 0xa3, reserved */
