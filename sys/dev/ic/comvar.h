@@ -1,4 +1,4 @@
-/*	$OpenBSD: comvar.h,v 1.33 2003/07/15 03:15:58 jason Exp $	*/
+/*	$OpenBSD: comvar.h,v 1.34 2003/09/23 16:51:12 millert Exp $	*/
 /*	$NetBSD: comvar.h,v 1.5 1996/05/05 19:50:47 christos Exp $	*/
 
 /*
@@ -79,7 +79,7 @@ struct com_softc {
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	void *sc_si;
 #else
-	struct timeout sc_poll_tmo;
+	struct timeout sc_comsoft_tmo;
 #endif
 
 	int sc_overflows;
@@ -144,7 +144,7 @@ int	comspeed(long, long);
 u_char	com_cflag2lcr(tcflag_t);
 int	comparam(struct tty *, struct termios *);
 void	comstart(struct tty *);
-void	compoll(void *);
+void	comsoft(void *);
 
 struct consdev;
 int	comcnattach(bus_space_tag_t, int, int, int, tcflag_t);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.15 2003/06/02 23:28:10 millert Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.16 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/malloc.h>
 #include <sys/namei.h>
 #include <sys/mbuf.h>
+#include <sys/poll.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/un.h>
@@ -80,7 +81,6 @@ int	portal_setattr(void *);
 #define	portal_read	eopnotsupp
 #define	portal_write	eopnotsupp
 #define	portal_ioctl    (int (*)(void *))enoioctl
-#define	portal_select	eopnotsupp
 #define	portal_fsync	nullop
 #define	portal_remove	eopnotsupp
 int	portal_link(void *);
@@ -102,6 +102,7 @@ int	portal_print(void *);
 int	portal_pathconf(void *);
 #define	portal_advlock	eopnotsupp
 #define	portal_bwrite	eopnotsupp
+int	portal_poll(void *);
 
 int (**portal_vnodeop_p)(void *);
 struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
@@ -117,7 +118,7 @@ struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_read_desc, portal_read },		/* read */
 	{ &vop_write_desc, portal_write },		/* write */
 	{ &vop_ioctl_desc, portal_ioctl },		/* ioctl */
-	{ &vop_select_desc, portal_select },		/* select */
+	{ &vop_poll_desc, portal_poll },		/* poll */
 	{ &vop_revoke_desc, portal_revoke },            /* revoke */
 	{ &vop_fsync_desc, portal_fsync },		/* fsync */
 	{ &vop_remove_desc, portal_remove },		/* remove */
@@ -718,4 +719,17 @@ portal_badop(v)
 {
 	panic ("portal: bad op");
 	return (0);
+}
+
+int
+portal_poll(v)
+	void *v;
+{
+	struct vop_poll_args /* {
+		struct vnode *a_vp;
+		int a_events;  
+		struct proc *a_p;   
+	} */ *ap = v;
+
+	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }

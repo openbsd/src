@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.60 2003/08/23 19:21:15 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.61 2003/09/23 16:51:12 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #include <sys/resourcevar.h>
 #include <sys/sysctl.h>
 #include <sys/pool.h>
+#include <sys/poll.h>
 
 #include <sys/namei.h>
 
@@ -1026,35 +1027,35 @@ ttioctl(tp, cmd, data, flag, p)
 }
 
 int
-ttselect(device, rw, p)
+ttpoll(device, events, p)
 	dev_t device;
-	int rw;
+	int events;
 	struct proc *p;
 {
-	register struct tty *tp;
-	int nread, s;
+	struct tty *tp;
+	int revents, s;
 
 	tp = (*cdevsw[major(device)].d_tty)(device);
 
+	revents = 0;
 	s = spltty();
-	switch (rw) {
-	case FREAD:
-		nread = ttnread(tp);
-		if (nread > 0 || (!ISSET(tp->t_cflag, CLOCAL) &&
-				  !ISSET(tp->t_state, TS_CARR_ON)))
-			goto win;
-		selrecord(p, &tp->t_rsel);
-		break;
-	case FWRITE:
-		if (tp->t_outq.c_cc <= tp->t_lowat) {
-win:			splx(s);
-			return (1);
-		}
-		selrecord(p, &tp->t_wsel);
-		break;
+	if (events & (POLLIN | POLLRDNORM)) {
+		if (ttnread(tp) > 0 || (!ISSET(tp->t_cflag, CLOCAL) &&
+		    !ISSET(tp->t_state, TS_CARR_ON)))
+			revents |= events & (POLLIN | POLLRDNORM);
+	}
+	if (events & (POLLOUT | POLLWRNORM)) {
+		if (tp->t_outq.c_cc <= tp->t_lowat)
+			revents |= events & (POLLOUT | POLLWRNORM);
+	}
+	if (revents == 0) {
+		if (events & (POLLIN | POLLRDNORM))
+			selrecord(p, &tp->t_rsel);
+		if (events & (POLLOUT | POLLWRNORM))
+			selrecord(p, &tp->t_wsel);
 	}
 	splx(s);
-	return (0);
+	return (revents);
 }
 
 struct filterops ttyread_filtops =

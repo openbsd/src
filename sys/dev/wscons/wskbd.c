@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.36 2003/08/15 20:32:18 tedu Exp $ */
+/* $OpenBSD: wskbd.c,v 1.37 2003/09/23 16:51:12 millert Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -1075,7 +1075,7 @@ getkeyrepeat:
 }
 
 int
-wskbdselect(dev, events, p)
+wskbdpoll(dev, events, p)
 	dev_t dev;
 	int events;
 	struct proc *p;

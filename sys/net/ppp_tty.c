@@ -1,4 +1,4 @@
-/*	$OpenBSD: ppp_tty.c,v 1.18 2003/09/18 19:32:20 tedu Exp $	*/
+/*	$OpenBSD: ppp_tty.c,v 1.19 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: ppp_tty.c,v 1.12 1997/03/24 21:23:10 christos Exp $	*/
 
 /*
@@ -706,7 +706,7 @@ pppasyncctlp(sc)
     struct tty *tp;
     int s;
 
-    /* Put a placeholder byte in canq for ttselect()/ttnread(). */
+    /* Put a placeholder byte in canq for ttpoll()/ttnread(). */
     s = spltty();
     tp = (struct tty *) sc->sc_devp;
     putc(0, &tp->t_canq);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vnops.c,v 1.21 2003/06/02 23:28:11 millert Exp $ */
+/*	$OpenBSD: union_vnops.c,v 1.22 2003/09/23 16:51:13 millert Exp $ */
 /*	$NetBSD: union_vnops.c,v 1.59 2002/09/27 15:37:48 provos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@ int union_read(void *);
 int union_write(void *);
 int union_lease(void *);
 int union_ioctl(void *);
-int union_select(void *);
+int union_poll(void *);
 int union_fsync(void *);
 int union_remove(void *);
 int union_link(void *);
@@ -117,7 +117,7 @@ struct vnodeopv_entry_desc union_vnodeop_entries[] = {
 	{ &vop_write_desc, union_write },		/* write */
 	{ &vop_lease_desc, union_lease },		/* lease */
 	{ &vop_ioctl_desc, union_ioctl },		/* ioctl */
-	{ &vop_select_desc, union_select },		/* select */
+	{ &vop_poll_desc, union_poll },			/* poll */
 	{ &vop_fsync_desc, union_fsync },		/* fsync */
 	{ &vop_remove_desc, union_remove },		/* remove */
 	{ &vop_link_desc, union_link },			/* link */
@@ -1073,20 +1073,18 @@ union_ioctl(v)
 }
 
 int
-union_select(v)
+union_poll(v)
 	void *v;
 {
-	struct vop_select_args /* {
+	struct vop_poll_args /* {
 		struct vnode *a_vp;
-		int  a_which;
-		int  a_fflags;
-		struct ucred *a_cred;
+		int  a_events;
 		struct proc *a_p;
 	} */ *ap = v;
 	register struct vnode *vp = OTHERVP(ap->a_vp);
 
 	ap->a_vp = vp;
-	return (VCALL(vp, VOFFSET(vop_select), ap));
+	return (VCALL(vp, VOFFSET(vop_poll), ap));
 }
 
 int

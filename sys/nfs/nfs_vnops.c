@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.55 2003/06/02 23:28:20 millert Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.56 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -97,7 +97,7 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_write_desc, nfs_write },		/* write */
 	{ &vop_lease_desc, nfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, nfs_ioctl },		/* ioctl */
-	{ &vop_select_desc, nfs_select },	/* select */
+	{ &vop_poll_desc, nfs_poll },		/* poll */
 	{ &vop_kqfilter_desc, vop_generic_kqfilter },	/* kqfilter */
 	{ &vop_revoke_desc, nfs_revoke },	/* revoke */
 	{ &vop_fsync_desc, nfs_fsync },		/* fsync */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dead_vnops.c,v 1.14 2003/06/02 23:28:10 millert Exp $	*/
+/*	$OpenBSD: dead_vnops.c,v 1.15 2003/09/23 16:51:12 millert Exp $	*/
 /*	$NetBSD: dead_vnops.c,v 1.16 1996/02/13 13:12:48 mycroft Exp $	*/
 
 /*
@@ -40,6 +40,7 @@
 #include <sys/namei.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
+#include <sys/poll.h>
 
 /*
  * Prototypes for dead operations on vnodes.
@@ -58,7 +59,7 @@ int	dead_open(void *);
 int	dead_read(void *);
 int	dead_write(void *);
 int	dead_ioctl(void *);
-int	dead_select(void *);
+int	dead_poll(void *);
 #define dead_fsync	nullop
 #define dead_remove	dead_badop
 #define dead_link	dead_badop
@@ -98,7 +99,7 @@ struct vnodeopv_entry_desc dead_vnodeop_entries[] = {
 	{ &vop_read_desc, dead_read },		/* read */
 	{ &vop_write_desc, dead_write },	/* write */
 	{ &vop_ioctl_desc, dead_ioctl },	/* ioctl */
-	{ &vop_select_desc, dead_select },	/* select */
+	{ &vop_poll_desc, dead_poll },		/* poll */
 	{ &vop_fsync_desc, dead_fsync },	/* fsync */
 	{ &vop_remove_desc, dead_remove },	/* remove */
 	{ &vop_link_desc, dead_link },		/* link */
@@ -224,13 +225,21 @@ dead_ioctl(v)
 
 /* ARGSUSED */
 int
-dead_select(v)
+dead_poll(v)
 	void *v;
 {
+#if 0
+	struct vop_poll_args /* {
+		struct vnode *a_vp;
+		int a_events;
+		struct proc *a_p;
+	} */ *ap = v;
+#endif
+
 	/*
 	 * Let the user find out that the descriptor is gone.
 	 */
-	return (1);
+	return (POLLHUP);
 }
 
 /*

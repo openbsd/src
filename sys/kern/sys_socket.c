@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_socket.c,v 1.8 2003/06/02 23:28:06 millert Exp $	*/
+/*	$OpenBSD: sys_socket.c,v 1.9 2003/09/23 16:51:12 millert Exp $	*/
 /*	$NetBSD: sys_socket.c,v 1.13 1995/08/12 23:59:09 mycroft Exp $	*/
 
 /*
@@ -41,13 +41,14 @@
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/ioctl.h>
+#include <sys/poll.h>
 #include <sys/stat.h>
 
 #include <net/if.h>
 #include <net/route.h>
 
 struct	fileops socketops = {
-	soo_read, soo_write, soo_ioctl, soo_select, soo_kqfilter,
+	soo_read, soo_write, soo_ioctl, soo_poll, soo_kqfilter,
 	soo_stat, soo_close
 };
 
@@ -139,45 +140,39 @@ soo_ioctl(fp, cmd, data, p)
 }
 
 int
-soo_select(fp, which, p)
+soo_poll(fp, events, p)
 	struct file *fp;
-	int which;
+	int events;
 	struct proc *p;
 {
-	register struct socket *so = (struct socket *)fp->f_data;
-	register int s = splsoftnet();
+	struct socket *so = (struct socket *)fp->f_data;
+	int revents = 0;
+	int s = splsoftnet();
 
-	switch (which) {
-
-	case FREAD:
-		if (soreadable(so)) {
-			splx(s);
-			return (1);
+	if (events & (POLLIN | POLLRDNORM)) {
+		if (soreadable(so))
+			revents |= events & (POLLIN | POLLRDNORM);
+	}
+	if (events & (POLLOUT | POLLWRNORM)) {
+		if (sowriteable(so))
+			revents |= events & (POLLOUT | POLLWRNORM);
+	}
+	if (events & (POLLPRI | POLLRDBAND)) {
+		if (so->so_oobmark || (so->so_state & SS_RCVATMARK))
+			revents |= events & (POLLPRI | POLLRDBAND);
+	}
+	if (revents == 0) {
+		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND)) {
+			selrecord(p, &so->so_rcv.sb_sel);
+			so->so_rcv.sb_flags |= SB_SEL;
 		}
-		selrecord(p, &so->so_rcv.sb_sel);
-		so->so_rcv.sb_flags |= SB_SEL;
-		break;
-
-	case FWRITE:
-		if (sowriteable(so)) {
-			splx(s);
-			return (1);
+		if (events & (POLLOUT | POLLWRNORM)) {
+			selrecord(p, &so->so_snd.sb_sel);
+			so->so_snd.sb_flags |= SB_SEL;
 		}
-		selrecord(p, &so->so_snd.sb_sel);
-		so->so_snd.sb_flags |= SB_SEL;
-		break;
-
-	case 0:
-		if (so->so_oobmark || (so->so_state & SS_RCVATMARK)) {
-			splx(s);
-			return (1);
-		}
-		selrecord(p, &so->so_rcv.sb_sel);
-		so->so_rcv.sb_flags |= SB_SEL;
-		break;
 	}
 	splx(s);
-	return (0);
+	return (revents);
 }
 
 int

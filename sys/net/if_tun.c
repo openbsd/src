@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.49 2003/08/15 20:32:19 tedu Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.50 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/device.h>
 #include <sys/vnode.h>
 #include <sys/signalvar.h>
+#include <sys/poll.h>
 #include <sys/conf.h>
 
 #include <machine/cpu.h>
@@ -128,7 +129,7 @@ int	tun_output(struct ifnet *, struct mbuf *, struct sockaddr *,
 int	tunioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	tunread(dev_t, struct uio *, int);
 int	tunwrite(dev_t, struct uio *, int);
-int	tunselect(dev_t, int, struct proc *);
+int	tunpoll(dev_t, int, struct proc *);
 int	tunkqfilter(dev_t, struct knote *);
 
 
@@ -742,12 +743,12 @@ tunwrite(dev, uio, ioflag)
  * anyway, it either accepts the packet or drops it.
  */
 int
-tunselect(dev, rw, p)
+tunpoll(dev, events, p)
 	dev_t		dev;
-	int		rw;
+	int		events;
 	struct proc	*p;
 {
-	int		unit, s;
+	int		unit, revents, s;
 	struct tun_softc *tp;
 	struct ifnet	*ifp;
 	struct mbuf	*m;
@@ -757,27 +758,25 @@ tunselect(dev, rw, p)
 
 	tp = &tunctl[unit];
 	ifp = &tp->tun_if;
+	revents = 0;
 	s = splimp();
-	TUNDEBUG(("%s: tunselect\n", ifp->if_xname));
+	TUNDEBUG(("%s: tunpoll\n", ifp->if_xname));
 
-	switch (rw) {
-	case FREAD:
+	if (events & (POLLIN | POLLRDNORM)) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m != NULL) {
-			splx(s);
 			TUNDEBUG(("%s: tunselect q=%d\n", ifp->if_xname,
 				  ifp->if_snd.ifq_len));
-			return 1;
+			revents |= events & (POLLIN | POLLRDNORM);
+		} else {
+			TUNDEBUG(("%s: tunpoll waiting\n", ifp->if_xname));
+			selrecord(p, &tp->tun_rsel);
 		}
-		selrecord(curproc, &tp->tun_rsel);
-		break;
-	case FWRITE:
-		splx(s);
-		return 1;
 	}
+	if (events & (POLLOUT | POLLWRNORM))
+		revents |= events & (POLLOUT | POLLWRNORM);
 	splx(s);
-	TUNDEBUG(("%s: tunselect waiting\n", ifp->if_xname));
-	return 0;
+	return (revents);
 }
 
 /* Does not currently work */

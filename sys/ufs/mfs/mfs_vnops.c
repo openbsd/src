@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfs_vnops.c,v 1.23 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: mfs_vnops.c,v 1.24 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: mfs_vnops.c,v 1.8 1996/03/17 02:16:32 christos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ struct vnodeopv_entry_desc mfs_vnodeop_entries[] = {
 	{ &vop_read_desc, mfs_read },			/* read */
 	{ &vop_write_desc, mfs_write },			/* write */
 	{ &vop_ioctl_desc, mfs_ioctl },			/* ioctl */
-	{ &vop_select_desc, mfs_select },		/* select */
+	{ &vop_poll_desc, mfs_poll },			/* poll */
 	{ &vop_revoke_desc, mfs_revoke },               /* revoke */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
 	{ &vop_remove_desc, mfs_remove },		/* remove */

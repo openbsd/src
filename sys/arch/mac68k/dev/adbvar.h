@@ -1,4 +1,4 @@
-/*	$OpenBSD: adbvar.h,v 1.7 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: adbvar.h,v 1.8 2003/09/23 16:51:11 millert Exp $	*/
 /*	$NetBSD: adbvar.h,v 1.5 1997/01/13 07:01:24 scottr Exp $	*/
 
 /*-
@@ -58,7 +58,7 @@ int	adbclose(dev_t dev, int flag, int mode, struct proc *p);
 int	adbread(dev_t dev, struct uio *uio, int flag);
 int	adbwrite(dev_t dev, struct uio *uio, int flag);
 int	adbioctl(dev_t , int , caddr_t , int , struct proc *);
-int	adbselect(dev_t dev, int rw, struct proc *p);
+int	adbpoll(dev_t dev, int rw, struct proc *p);
 
 /* adbsysadm.s */
 void	extdms_complete(void);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.28 2003/06/02 23:28:05 millert Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.29 2003/09/23 16:51:12 millert Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -54,6 +54,7 @@
 #include <sys/ioctl.h>
 #include <sys/ioccom.h>
 #include <sys/cdio.h>
+#include <sys/poll.h>
 
 #include <miscfs/fifofs/fifo.h>
 #include <miscfs/specfs/specdev.h>
@@ -407,13 +408,19 @@ cd9660_ioctl(v)
 
 /* ARGSUSED */
 int
-cd9660_select(v)
+cd9660_poll(v)
 	void *v;
 {
+	struct vop_poll_args /* {
+		struct vnode *a_vp;
+		int a_events;
+		struct proc *a_p;
+	} */ *ap = v;
+
 	/*
 	 * We should really check to see if I/O is possible.
 	 */
-	return (1);
+	return (seltrue(ap->a_vp->v_rdev, ap->a_events, ap->a_p));
 }
 
 /*
@@ -1038,7 +1045,7 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_write_desc, cd9660_write },	/* write */
 	{ &vop_lease_desc, cd9660_lease_check },/* lease */
 	{ &vop_ioctl_desc, cd9660_ioctl },	/* ioctl */
-	{ &vop_select_desc, cd9660_select },	/* select */
+	{ &vop_poll_desc, cd9660_poll },	/* poll */
 	{ &vop_revoke_desc, cd9660_revoke },    /* revoke */
 	{ &vop_fsync_desc, cd9660_fsync },	/* fsync */
 	{ &vop_remove_desc, cd9660_remove },	/* remove */

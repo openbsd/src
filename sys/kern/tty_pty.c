@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_pty.c,v 1.14 2003/07/22 01:03:12 mickey Exp $	*/
+/*	$OpenBSD: tty_pty.c,v 1.15 2003/09/23 16:51:12 millert Exp $	*/
 /*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/signalvar.h>
 #include <sys/uio.h>
 #include <sys/conf.h>
+#include <sys/poll.h>
 
 #define BUFSIZ 100		/* Chunk size iomoved to/from user */
 
@@ -233,7 +234,7 @@ ptswrite(dev, uio, flag)
 
 /*
  * Start output on pseudo-tty.
- * Wake up process selecting or sleeping for input from controlling tty.
+ * Wake up process polling or sleeping for input from controlling tty.
  */
 void
 ptsstart(tp)
@@ -501,58 +502,52 @@ block:
 }
 
 int
-ptcselect(dev, rw, p)
-	dev_t dev;
-	int rw;
-	struct proc *p;
+ptcpoll(dev_t dev, int events, struct proc *p)
 {
-	register struct pt_softc *pti = &pt_softc[minor(dev)];
-	register struct tty *tp = pti->pt_tty;
-	int s;
+	struct pt_softc *pti = &pt_softc[minor(dev)];
+	struct tty *tp = pti->pt_tty;
+	int revents = 0, s;
 
-	if ((tp->t_state&TS_CARR_ON) == 0)
-		return (1);
-	switch (rw) {
+	if (!ISSET(tp->t_state, TS_CARR_ON))
+		return (POLLHUP);
 
-	case FREAD:
+	if (!ISSET(tp->t_state, TS_ISOPEN))
+		goto notopen;
+
+	if (events & (POLLIN | POLLRDNORM)) {
 		/*
-		 * Need to block timeouts (ttrstart).
+		 * Need to protect access to t_outq
 		 */
 		s = spltty();
-		if ((tp->t_state&TS_ISOPEN) &&
-		     tp->t_outq.c_cc && (tp->t_state&TS_TTSTOP) == 0) {
-			splx(s);
-			return (1);
-		}
+		if ((tp->t_outq.c_cc && !ISSET(tp->t_state, TS_TTSTOP)) ||
+		     ((pti->pt_flags & PF_PKT) && pti->pt_send) ||
+		     ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl))
+			revents |= events & (POLLIN | POLLRDNORM);
 		splx(s);
-		/* FALLTHROUGH */
-
-	case 0:					/* exceptional */
-		if ((tp->t_state&TS_ISOPEN) &&
-		    (((pti->pt_flags & PF_PKT) && pti->pt_send) ||
-		     ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl)))
-			return (1);
-		selrecord(p, &pti->pt_selr);
-		break;
-
-
-	case FWRITE:
-		if (tp->t_state&TS_ISOPEN) {
-			if (pti->pt_flags & PF_REMOTE) {
-			    if (tp->t_canq.c_cc == 0)
-				return (1);
-			} else {
-			    if (tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG-2)
-				    return (1);
-			    if (tp->t_canq.c_cc == 0 && ISSET(tp->t_lflag, ICANON))
-				    return (1);
-			}
-		}
-		selrecord(p, &pti->pt_selw);
-		break;
-
 	}
-	return (0);
+	if (events & (POLLOUT | POLLWRNORM)) {
+		if ((pti->pt_flags & PF_REMOTE) ?
+		     (tp->t_canq.c_cc == 0) :
+		     ((tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG - 2) ||
+		      (tp->t_canq.c_cc == 0 && ISSET(tp->t_lflag, ICANON))))
+			revents |= events & (POLLOUT | POLLWRNORM);
+	}
+	if (events & (POLLPRI | POLLRDBAND)) {
+		/* If in packet or user control mode, check for data. */
+		if (((pti->pt_flags & PF_PKT) && pti->pt_send) ||
+		     ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl))
+			revents |= events & (POLLPRI | POLLRDBAND);
+	}
+
+	if (revents == 0) {
+notopen:
+		if (events & (POLLIN | POLLPRI | POLLRDNORM | POLLRDBAND))
+			selrecord(p, &pti->pt_selr);
+		if (events & (POLLOUT | POLLWRNORM))
+			selrecord(p, &pti->pt_selw);
+	}
+
+	return (revents);
 }
 
 void

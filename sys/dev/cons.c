@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.13 2003/08/15 20:32:16 tedu Exp $	*/
+/*	$OpenBSD: cons.c,v 1.14 2003/09/23 16:51:12 millert Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -203,14 +203,14 @@ cnioctl(dev, cmd, data, flag, p)
 
 /*ARGSUSED*/
 int
-cnselect(dev, rw, p)
+cnpoll(dev, rw, p)
 	dev_t dev;
 	int rw;
 	struct proc *p;
 {
 
 	/*
-	 * Redirect the select, if that's appropriate.
+	 * Redirect the poll, if that's appropriate.
 	 * I don't want to think of the possible side effects
 	 * of console redirection here.
 	 */
@@ -220,7 +220,7 @@ cnselect(dev, rw, p)
 		return ENXIO;
 	else
 		dev = cn_tab->cn_dev;
-	return (ttselect(cn_tab->cn_dev, rw, p));
+	return (ttpoll(cn_tab->cn_dev, rw, p));
 }
 
 

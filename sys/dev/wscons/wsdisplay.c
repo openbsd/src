@@ -1,4 +1,4 @@
-/* $OpenBSD: wsdisplay.c,v 1.50 2003/02/23 19:08:11 tedu Exp $ */
+/* $OpenBSD: wsdisplay.c,v 1.51 2003/09/23 16:51:12 millert Exp $ */
 /* $NetBSD: wsdisplay.c,v 1.37.4.1 2000/06/30 16:27:53 simonb Exp $ */
 
 /*
@@ -1325,7 +1325,7 @@ wsdisplaymmap(dev, offset, prot)
 }
 
 int
-wsdisplayselect(dev, events, p)
+wsdisplaypoll(dev, events, p)
 	dev_t dev;
 	int events;
 	struct proc *p;
@@ -1339,7 +1339,7 @@ wsdisplayselect(dev, events, p)
 	scr = sc->sc_scr[WSDISPLAYSCREEN(dev)];
 
 	if (WSSCREEN_HAS_TTY(scr))
-		return (ttselect(dev, events, p));
+		return (ttpoll(dev, events, p));
 	else
 		return (0);
 }

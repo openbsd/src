@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.34 2003/08/11 10:19:24 mickey Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.35 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <sys/buf.h>
 #include <sys/dirent.h>
 #include <sys/msgbuf.h>
+#include <sys/poll.h>
 #include <miscfs/kernfs/kernfs.h>
 
 #include <uvm/uvm_extern.h>
@@ -126,7 +127,6 @@ int	kernfs_setattr(void *);
 int	kernfs_read(void *);
 int	kernfs_write(void *);
 #define	kernfs_ioctl	(int (*)(void *))enoioctl
-#define	kernfs_select	eopnotsupp
 #define	kernfs_mmap	eopnotsupp
 #define	kernfs_fsync	nullop
 #define	kernfs_seek	nullop
@@ -174,7 +174,7 @@ struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_read_desc, kernfs_read },	/* read */
 	{ &vop_write_desc, kernfs_write },	/* write */
 	{ &vop_ioctl_desc, kernfs_ioctl },	/* ioctl */
-	{ &vop_select_desc, kernfs_select },	/* select */
+	{ &vop_poll_desc, kernfs_poll },	/* poll */
 	{ &vop_revoke_desc, kernfs_revoke },    /* revoke */
 	{ &vop_fsync_desc, kernfs_fsync },	/* fsync */
 	{ &vop_remove_desc, kernfs_remove },	/* remove */
@@ -947,4 +947,17 @@ kernfs_badop(v)
 
 	panic("kernfs: bad op");
 	return 0;
+}
+
+int
+kernfs_poll(v)
+	void *v;
+{
+	struct vop_poll_args /* {
+		struct vnode *a_vp;
+		int a_events;  
+		struct proc *a_p;   
+	} */ *ap = v;
+
+	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }

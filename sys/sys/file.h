@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.22 2003/08/06 20:51:35 deraadt Exp $	*/
+/*	$OpenBSD: file.h,v 1.23 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: file.h,v 1.11 1995/03/26 20:24:13 jtc Exp $	*/
 
 /*
@@ -51,7 +51,7 @@ struct	fileops {
 		    struct ucred *);
 	int	(*fo_ioctl)(struct file *, u_long, caddr_t,
 		    struct proc *);
-	int	(*fo_select)(struct file *, int, struct proc *);
+	int	(*fo_poll)(struct file *, int, struct proc *);
 	int	(*fo_kqfilter)(struct file *, struct knote *);
 	int	(*fo_stat)(struct file *, struct stat *, struct proc *);
 	int	(*fo_close)(struct file *, struct proc *);

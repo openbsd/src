@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.41 2003/01/26 23:16:14 jason Exp $	*/
+/*	$OpenBSD: audio.c,v 1.42 2003/09/23 16:51:12 millert Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -110,7 +110,7 @@ int	audio_close(dev_t, int, int, struct proc *);
 int	audio_read(dev_t, struct uio *, int);
 int	audio_write(dev_t, struct uio *, int);
 int	audio_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	audio_select(dev_t, int, struct proc *);
+int	audio_poll(dev_t, int, struct proc *);
 paddr_t	audio_mmap(dev_t, off_t, int);
 
 int	mixer_open(dev_t, struct audio_softc *, int, int, struct proc *);
@@ -762,7 +762,7 @@ audioioctl(dev, cmd, addr, flag, p)
 }
 
 int
-audioselect(dev, events, p)
+audiopoll(dev, events, p)
 	dev_t dev;
 	int events;
 	struct proc *p;
@@ -782,7 +782,7 @@ audioselect(dev, events, p)
 	switch (AUDIODEV(dev)) {
 	case SOUND_DEVICE:
 	case AUDIO_DEVICE:
-		error = audio_select(dev, events, p);
+		error = audio_poll(dev, events, p);
 		break;
 	case AUDIOCTL_DEVICE:
 	case MIXER_DEVICE:
@@ -1813,37 +1813,33 @@ audio_selwakeup(struct audio_softc *sc, int play)
     (sc->sc_mode & AUMODE_RECORD || sc->sc_pr.used <= sc->sc_pr.usedlow)
 
 int
-audio_select(dev, rw, p)
+audio_poll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	int unit = AUDIOUNIT(dev);
 	struct audio_softc *sc = audio_cd.cd_devs[unit];
-	int rv, s = splaudio();
+	int revents = 0, s = splaudio();
 
-	DPRINTF(("audio_select: rw=0x%x mode=%d\n", rw, sc->sc_mode));
+	DPRINTF(("audio_poll: events=0x%x mode=%d\n", events, sc->sc_mode));
 
-	switch (rw) {
-
-	case FREAD:
-		rv = AUDIO_FILTREAD(sc);
-		splx(s);
-		if (rv)
-			return (1);
-		selrecord(p, &sc->sc_rsel);
-		break;
-
-	case FWRITE:
-		rv = AUDIO_FILTWRITE(sc);
-		splx(s);
-		if (rv)
-			return (1);
-		selrecord(p, &sc->sc_wsel);
-		break;
+	if (events & (POLLIN | POLLRDNORM)) {
+		if (AUDIO_FILTREAD(sc))
+			revents |= events & (POLLIN | POLLRDNORM);
+	}
+	if (events & (POLLOUT | POLLWRNORM)) {
+		if (AUDIO_FILTWRITE(sc))
+			revents |= events & (POLLOUT | POLLWRNORM);
+	}
+	if (revents == 0) {
+		if (events & (POLLIN | POLLRDNORM))
+			selrecord(p, &sc->sc_rsel);
+		if (events & (POLLOUT | POLLWRNORM))
+			selrecord(p, &sc->sc_wsel);
 	}
 	splx(s);
-	return (0);
+	return (revents);
 }
 
 paddr_t

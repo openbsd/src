@@ -1,4 +1,4 @@
-/*	$OpenBSD: sequencer.c,v 1.8 2002/07/27 08:01:47 nordin Exp $	*/
+/*	$OpenBSD: sequencer.c,v 1.9 2003/09/23 16:51:12 millert Exp $	*/
 /*	$NetBSD: sequencer.c,v 1.13 1998/11/25 22:17:07 augustss Exp $	*/
 
 /*
@@ -632,30 +632,31 @@ sequencerioctl(dev, cmd, addr, flag, p)
 }
 
 int
-sequencerselect(dev, rw, p)
+sequencerpoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	struct sequencer_softc *sc = &seqdevs[SEQUENCERUNIT(dev)];
+	int revents = 0;
 
-	DPRINTF(("sequencerselect: %p rw=0x%x\n", sc, rw));
+	DPRINTF(("sequencerpoll: %p rw=0x%x\n", sc, events));
 
-	switch (rw) {
-	case FREAD:
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (!SEQ_QEMPTY(&sc->inq))
-			return (1);
-		selrecord(p, &sc->rsel);
-		break;
-
-	case FWRITE:
-		if (SEQ_QLEN(&sc->outq) < sc->lowat)
-			return (1);
-		selrecord(p, &sc->wsel);
-		break;
+			revents |= events & (POLLIN | POLLRDNORM);
 	}
-
-	return (0);
+	if (events & (POLLOUT | POLLWRNORM)) {
+		if (SEQ_QLEN(&sc->outq) < sc->lowat)
+			revents |= events & (POLLOUT | POLLWRNORM);
+	}
+	if (revents == 0) {
+		if (events & (POLLIN | POLLRDNORM))
+			selrecord(p, &sc->rsel);
+		if (events & (POLLOUT | POLLWRNORM))
+			selrecord(p, &sc->wsel);
+	}
+	return (revents);
 }
 
 void

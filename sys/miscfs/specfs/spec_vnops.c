@@ -1,4 +1,4 @@
-/*	$OpenBSD: spec_vnops.c,v 1.26 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: spec_vnops.c,v 1.27 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: spec_vnops.c,v 1.29 1996/04/22 01:42:38 christos Exp $	*/
 
 /*
@@ -47,6 +47,7 @@
 #include <sys/file.h>
 #include <sys/disklabel.h>
 #include <sys/lockf.h>
+#include <sys/poll.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -78,7 +79,7 @@ struct vnodeopv_entry_desc spec_vnodeop_entries[] = {
 	{ &vop_write_desc, spec_write },		/* write */
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
-	{ &vop_select_desc, spec_select },		/* select */
+	{ &vop_poll_desc, spec_poll },			/* poll */
 	{ &vop_kqfilter_desc, spec_kqfilter },		/* kqfilter */
 	{ &vop_revoke_desc, spec_revoke },              /* revoke */
 	{ &vop_fsync_desc, spec_fsync },		/* fsync */
@@ -450,14 +451,12 @@ spec_ioctl(v)
 
 /* ARGSUSED */
 int
-spec_select(v)
+spec_poll(v)
 	void *v;
 {
-	struct vop_select_args /* {
+	struct vop_poll_args /* {
 		struct vnode *a_vp;
-		int  a_which;
-		int  a_fflags;
-		struct ucred *a_cred;
+		int  a_events;
 		struct proc *a_p;
 	} */ *ap = v;
 	register dev_t dev;
@@ -465,11 +464,11 @@ spec_select(v)
 	switch (ap->a_vp->v_type) {
 
 	default:
-		return (1);		/* XXX */
+		return (seltrue(ap->a_vp->v_rdev, ap->a_events, ap->a_p));
 
 	case VCHR:
 		dev = ap->a_vp->v_rdev;
-		return (*cdevsw[major(dev)].d_select)(dev, ap->a_which, ap->a_p);
+		return (*cdevsw[major(dev)].d_poll)(dev, ap->a_events, ap->a_p);
 	}
 }
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.92 2003/08/15 20:32:16 tedu Exp $	*/
+/*	$OpenBSD: com.c,v 1.93 2003/09/23 16:51:12 millert Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -344,11 +344,11 @@ com_attach_subr(sc)
 	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
 	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
-	sc->sc_si = softintr_establish(IPL_TTY, compoll, sc);
+	sc->sc_si = softintr_establish(IPL_TTY, comsoft, sc);
 	if (sc->sc_si == NULL)
 		panic("%s: can't establish soft interrupt.", sc->sc_dev.dv_xname);
 #else
-	timeout_set(&sc->sc_poll_tmo, compoll, sc);
+	timeout_set(&sc->sc_comsoft_tmo, comsoft, sc);
 #endif
 
 	/*
@@ -412,7 +412,7 @@ com_detach(self, flags)
 #ifdef __HAVE_GENERIC_SOFT_INTERRUPTS
 	softintr_disestablish(sc->sc_si);
 #else
-	timeout_del(&sc->sc_poll_tmo);
+	timeout_del(&sc->sc_comsoft_tmo);
 #endif
 
 	return (0);
@@ -516,7 +516,7 @@ comopen(dev, flag, mode, p)
 		ttsetwater(tp);
 
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-		timeout_add(&sc->sc_poll_tmo, 1);
+		timeout_add(&sc->sc_comsoft_tmo, 1);
 #endif
 
 		sc->sc_ibufp = sc->sc_ibuf = sc->sc_ibufs[0];
@@ -677,7 +677,7 @@ comclose(dev, flag, mode, p)
 	}
 	CLR(tp->t_state, TS_BUSY | TS_FLUSH);
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-	timeout_del(&sc->sc_poll_tmo);
+	timeout_del(&sc->sc_comsoft_tmo);
 #endif
 	sc->sc_cua = 0;
 	splx(s);
@@ -1148,7 +1148,7 @@ comdiag(arg)
 }
 
 void
-compoll(arg)
+comsoft(arg)
 	void *arg;
 {
 	struct com_softc *sc = (struct com_softc *)arg;
@@ -1213,7 +1213,7 @@ compoll(arg)
 
 out:
 #ifndef __HAVE_GENERIC_SOFT_INTERRUPTS
-	timeout_add(&sc->sc_poll_tmo, 1);
+	timeout_add(&sc->sc_comsoft_tmo, 1);
 #else
 	;
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.14 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: tty.h,v 1.15 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -245,7 +245,7 @@ int	 ttioctl(struct tty *tp, u_long com, caddr_t data, int flag,
 	    struct proc *p);
 int	 ttread(struct tty *tp, struct uio *uio, int flag);
 void	 ttrstrt(void *tp);
-int	 ttselect(dev_t device, int rw, struct proc *p);
+int	 ttpoll(dev_t device, int events, struct proc *p);
 int	 ttkqfilter(dev_t dev, struct knote *kn);
 void	 ttsetwater(struct tty *tp);
 int	 ttspeedtab(int speed, struct speedtab *table);
@@ -281,7 +281,7 @@ int	cttyopen(dev_t, int, int, struct proc *);
 int	cttyread(dev_t, struct uio *, int);
 int	cttywrite(dev_t, struct uio *, int);
 int	cttyioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	cttyselect(dev_t, int, struct proc *);
+int	cttypoll(dev_t, int, struct proc *);
 
 int	clalloc(struct clist *, int, int);
 void	clfree(struct clist *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.30 2003/08/25 23:26:55 tedu Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.31 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1374,7 +1374,7 @@ struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_write_desc, ext2fs_write },		/* write */
 	{ &vop_lease_desc, ufs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, ufs_ioctl },			/* ioctl */
-	{ &vop_select_desc, ufs_select },		/* select */
+	{ &vop_poll_desc, ufs_poll },		/* poll */
 	{ &vop_kqfilter_desc, vop_generic_kqfilter },	/* kqfilter */
 	{ &vop_fsync_desc, ext2fs_fsync },		/* fsync */
 	{ &vop_remove_desc, ext2fs_remove },	/* remove */

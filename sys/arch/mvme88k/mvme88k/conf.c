@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.26 2003/06/02 23:27:52 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.27 2003/09/23 16:51:11 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -87,7 +87,7 @@ cdev_decl(flash);
 #define	cdev_mdev_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, (dev_type_select((*))) enodev, \
+	(dev_type_stop((*))) enodev, 0, (dev_type_poll((*))) enodev, \
 	dev_init(c,n,mmap) }
 
 #if notyet

@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.31 2003/06/02 23:28:21 millert Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.32 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -237,7 +237,7 @@ int	soo_write(struct file *fp, off_t *, struct uio *uio,
 	    struct ucred *cred);
 int	soo_ioctl(struct file *fp, u_long cmd, caddr_t data,
 	    struct proc *p);
-int	soo_select(struct file *fp, int which, struct proc *p);
+int	soo_poll(struct file *fp, int events, struct proc *p);
 int	soo_kqfilter(struct file *fp, struct knote *kn);
 int 	soo_close(struct file *fp, struct proc *p);
 int	soo_stat(struct file *, struct stat *, struct proc *);

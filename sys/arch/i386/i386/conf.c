@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.103 2003/06/27 16:57:14 nate Exp $	*/
+/*	$OpenBSD: conf.c,v 1.104 2003/09/23 16:51:11 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -93,7 +93,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define cdev_pc_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect, dev_init(c,n,mmap), D_TTY }
+	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap), D_TTY }
 
 /* open, close, read, ioctl */
 #define cdev_joy_init(c,n) { \
@@ -109,11 +109,11 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
         (dev_type_stop((*))) enodev, 0,  seltrue, \
         (dev_type_mmap((*))) enodev, 0 }
 
-/* open, close, ioctl, select -- XXX should be a generic device */
+/* open, close, ioctl, poll -- XXX should be a generic device */
 #define cdev_ocis_init(c,n) { \
         dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
         (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-        (dev_type_stop((*))) enodev, 0,  dev_init(c,n,select), \
+        (dev_type_stop((*))) enodev, 0,  dev_init(c,n,poll), \
         (dev_type_mmap((*))) enodev, 0 }
 
 /* open, close, read, ioctl */

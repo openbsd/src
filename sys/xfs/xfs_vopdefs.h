@@ -24,8 +24,8 @@ NNPFS_VOP_DEF(write);
 NNPFS_VOP_DEF(lease);
 #define HAVE_VOP_IOCTL 1
 NNPFS_VOP_DEF(ioctl);
-#define HAVE_VOP_SELECT 1
-NNPFS_VOP_DEF(select);
+#define HAVE_VOP_POLL 1
+NNPFS_VOP_DEF(poll);
 #define HAVE_VOP_KQFILTER 1
 NNPFS_VOP_DEF(kqfilter);
 #define HAVE_VOP_REVOKE 1

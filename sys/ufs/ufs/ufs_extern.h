@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.19 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.20 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -85,7 +85,7 @@ int	 ufs_rename(void *);
 #define  ufs_revoke  vop_generic_revoke
 int	 ufs_rmdir(void *);
 int	 ufs_seek(void *);
-int	 ufs_select(void *);
+int	 ufs_poll(void *);
 int	 ufs_kqfilter(void *);
 int	 ufs_setattr(void *);
 int	 ufs_strategy(void *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.27 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.28 2003/09/23 16:51:11 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -82,7 +82,7 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 #define cdev_wscons_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), dev_init(c,n,stop), \
-	dev_init(c,n,tty), ttselect /* ttpoll */, dev_init(c,n,mmap) }
+	dev_init(c,n,tty), ttpoll, dev_init(c,n,mmap) }
 
 #include "audio.h"
 #include "pty.h"

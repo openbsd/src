@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.8 2002/03/14 01:26:52 millert Exp $	*/
+/*	$OpenBSD: midi.c,v 1.9 2003/09/23 16:51:12 millert Exp $	*/
 /*	$NetBSD: midi.c,v 1.10 1998/12/20 14:26:44 drochner Exp $	*/
 
 /*
@@ -695,37 +695,34 @@ midiioctl(dev, cmd, addr, flag, p)
 }
 
 int
-midiselect(dev, rw, p)
+midipoll(dev, events, p)
 	dev_t dev;
-	int rw;
+	int events;
 	struct proc *p;
 {
 	int unit = MIDIUNIT(dev);
 	struct midi_softc *sc = midi_cd.cd_devs[unit];
-	int s = splaudio();
+	int revents = 0, s = splaudio();
 
-	DPRINTF(("midiselect: %p rw=0x%x\n", sc, rw));
+	DPRINTF(("midipoll: %p events=0x%x\n", sc, events));
 
-	switch (rw) {
-	case FREAD:
-		if (sc->inbuf.used > 0) {
-			splx(s);
-			return (1);
-		}
-		selrecord(p, &sc->rsel);
-		break;
-
-	case FWRITE:
-		if (sc->outbuf.used < sc->outbuf.usedhigh) {
-			splx(s);
-			return (1);
-		}
-		selrecord(p, &sc->wsel);
-		break;
+	if (events & (POLLIN | POLLRDNORM)) {
+		if (sc->inbuf.used > 0)
+			revents |= events & (POLLIN | POLLRDNORM);
+	}
+	if (events & (POLLOUT | POLLWRNORM)) {
+		if (sc->outbuf.used < sc->outbuf.usedhigh)
+			revents |= events & (POLLOUT | POLLWRNORM);
+	}
+	if (revents == 0) {
+		if (events & (POLLIN | POLLRDNORM))
+			selrecord(p, &sc->rsel);
+		if (events & (POLLOUT | POLLWRNORM))
+			selrecord(p, &sc->wsel);
 	}
 
 	splx(s);
-	return (0);
+	return (revents);
 }
 
 void

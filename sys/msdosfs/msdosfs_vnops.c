@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vnops.c,v 1.41 2003/08/15 20:32:19 tedu Exp $	*/
+/*	$OpenBSD: msdosfs_vnops.c,v 1.42 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: msdosfs_vnops.c,v 1.63 1997/10/17 11:24:19 ws Exp $	*/
 
 /*-
@@ -64,6 +64,7 @@
 #include <sys/malloc.h>
 #include <sys/dirent.h>		/* defines dirent structure */
 #include <sys/lockf.h>
+#include <sys/poll.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -706,20 +707,16 @@ msdosfs_ioctl(v)
 }
 
 int
-msdosfs_select(v)
+msdosfs_poll(v)
 	void *v;
 {
-#if 0
-	struct vop_select_args /* {
+	struct vop_poll_args /* {
 		struct vnode *a_vp;
-		int a_which;
-		int a_fflags;
-		struct ucred *a_cred;
+		int a_events;
 		struct proc *a_p;
 	} */ *ap;
-#endif
 
-	return (1);             /* DOS filesystems never block? */
+	return (seltrue(ap->a_vp->v_rdev, ap->a_events, ap->a_p));
 }
 
 /*
@@ -1904,7 +1901,7 @@ struct vnodeopv_entry_desc msdosfs_vnodeop_entries[] = {
 	{ &vop_write_desc, msdosfs_write },		/* write */
 	{ &vop_lease_desc, msdosfs_lease_check },	/* lease */
 	{ &vop_ioctl_desc, msdosfs_ioctl },		/* ioctl */
-	{ &vop_select_desc, msdosfs_select },		/* select */
+	{ &vop_poll_desc, msdosfs_poll },		/* poll */
 	{ &vop_fsync_desc, msdosfs_fsync },		/* fsync */
 	{ &vop_remove_desc, msdosfs_remove },		/* remove */
 	{ &vop_link_desc, msdosfs_link },		/* link */

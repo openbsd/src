@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfvar.h,v 1.12 2003/06/02 23:27:48 millert Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.13 2003/09/23 16:51:11 millert Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ struct image_data {
 int	grfopen(dev_t dev, int flag, int mode, struct proc *p);
 int	grfclose(dev_t dev, int flag, int mode, struct proc *p);
 int	grfioctl(dev_t, int, caddr_t, int, struct proc *p);
-int	grfselect(dev_t dev, int rw, struct proc *p);
+int	grfpoll(dev_t dev, int rw, struct proc *p);
 paddr_t	grfmmap(dev_t dev, off_t off, int prot);
 int	grfon(dev_t dev);
 int	grfoff(dev_t dev);

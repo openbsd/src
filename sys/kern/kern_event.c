@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.20 2003/08/15 20:32:18 tedu Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.21 2003/09/23 16:51:12 millert Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -48,6 +48,7 @@
 #include <sys/stat.h>
 #include <sys/uio.h>
 #include <sys/mount.h>
+#include <sys/poll.h>
 #include <sys/syscallargs.h>
 
 int	kqueue_scan(struct file *fp, int maxevents,
@@ -60,7 +61,7 @@ int	kqueue_write(struct file *fp, off_t *poff, struct uio *uio,
 		    struct ucred *cred);
 int	kqueue_ioctl(struct file *fp, u_long com, caddr_t data,
 		    struct proc *p);
-int	kqueue_select(struct file *fp, int which, struct proc *p);
+int	kqueue_poll(struct file *fp, int events, struct proc *p);
 int 	kqueue_kqfilter(struct file *fp, struct knote *kn);
 int	kqueue_stat(struct file *fp, struct stat *st, struct proc *p);
 int	kqueue_close(struct file *fp, struct proc *p);
@@ -70,7 +71,7 @@ struct fileops kqueueops = {
 	kqueue_read,
 	kqueue_write,
 	kqueue_ioctl,
-	kqueue_select,
+	kqueue_poll,
 	kqueue_kqfilter,
 	kqueue_stat,
 	kqueue_close
@@ -700,22 +701,22 @@ kqueue_ioctl(struct file *fp, u_long com, caddr_t data, struct proc *p)
 
 /*ARGSUSED*/
 int
-kqueue_select(struct file *fp, int which, struct proc *p)
+kqueue_poll(struct file *fp, int events, struct proc *p)
 {
 	struct kqueue *kq = (struct kqueue *)fp->f_data;
-	int res = 0;
+	int revents = 0;
 	int s = splnet();
 
-	if (which == FREAD) {
+	if (events & (POLLIN | POLLRDNORM)) {
 		if (kq->kq_count) {
-			res = 1;
+			revents |= events & (POLLIN | POLLRDNORM);
 		} else {
 			selrecord(p, &kq->kq_sel);
 			kq->kq_state |= KQ_SEL;
 		}
 	}
 	splx(s);
-	return (res);
+	return (revents);
 }
 
 /*ARGSUSED*/

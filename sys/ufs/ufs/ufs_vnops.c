@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.49 2003/08/15 20:32:21 tedu Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.50 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -53,6 +53,7 @@
 #include <sys/dirent.h>
 #include <sys/lockf.h>
 #include <sys/event.h>
+#include <sys/poll.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -582,23 +583,19 @@ ufs_ioctl(v)
 
 /* ARGSUSED */
 int
-ufs_select(v)
+ufs_poll(v)
 	void *v;
 {
-#if 0
-	struct vop_select_args /* {
+	struct vop_poll_args /* {
 		struct vnode *a_vp;
-		int  a_which;
-		int  a_fflags;
-		struct ucred *a_cred;
+		int  a_events;
 		struct proc *a_p;
 	} */ *ap = v;
-#endif
 
 	/*
 	 * We should really check to see if I/O is possible.
 	 */
-	return (1);
+	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }
 
 /*

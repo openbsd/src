@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.59 2003/06/10 18:34:51 jason Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.60 2003/09/23 16:51:12 millert Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -86,7 +86,7 @@ void	cryptoattach(int);
 int	cryptof_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	cryptof_write(struct file *, off_t *, struct uio *, struct ucred *);
 int	cryptof_ioctl(struct file *, u_long, caddr_t, struct proc *p);
-int	cryptof_select(struct file *, int, struct proc *);
+int	cryptof_poll(struct file *, int, struct proc *);
 int	cryptof_kqfilter(struct file *, struct knote *);
 int	cryptof_stat(struct file *, struct stat *, struct proc *);
 int	cryptof_close(struct file *, struct proc *);
@@ -95,7 +95,7 @@ static struct fileops cryptofops = {
     cryptof_read,
     cryptof_write,
     cryptof_ioctl,
-    cryptof_select,
+    cryptof_poll,
     cryptof_kqfilter,
     cryptof_stat,
     cryptof_close
@@ -585,7 +585,7 @@ fail:
 
 /* ARGSUSED */
 int
-cryptof_select(struct file *fp, int which, struct proc *p)
+cryptof_poll(struct file *fp, int events, struct proc *p)
 {
 	return (0);
 }
@@ -689,9 +689,9 @@ cryptoioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 }
 
 int
-cryptoselect(dev_t dev, int rw, struct proc *p)
+cryptopoll(dev_t dev, int events, struct proc *p)
 {
-	return (0);
+	return (seltrue(dev, events, p));
 }
 
 struct csession *

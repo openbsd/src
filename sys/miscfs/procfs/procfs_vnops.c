@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.29 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.30 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/resourcevar.h>
+#include <sys/poll.h>
 #include <sys/ptrace.h>
 #include <sys/stat.h>
 
@@ -131,7 +132,6 @@ int	procfs_setattr(void *);
 #define	procfs_read	procfs_rw
 #define	procfs_write	procfs_rw
 int	procfs_ioctl(void *);
-#define	procfs_select	procfs_badop
 #define	procfs_fsync	procfs_badop
 #define	procfs_remove	procfs_badop
 int	procfs_link(void *);
@@ -171,7 +171,7 @@ struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_read_desc, procfs_read },		/* read */
 	{ &vop_write_desc, procfs_write },		/* write */
 	{ &vop_ioctl_desc, procfs_ioctl },		/* ioctl */
-	{ &vop_select_desc, procfs_select },		/* select */
+	{ &vop_poll_desc, procfs_poll },		/* poll */
 	{ &vop_fsync_desc, procfs_fsync },		/* fsync */
 	{ &vop_remove_desc, procfs_remove },		/* remove */
 	{ &vop_link_desc, procfs_link },		/* link */
@@ -1121,4 +1121,16 @@ atopid(b, len)
 	}
 
 	return (p);
+}
+int
+procfs_poll(v)
+	void *v;
+{
+	struct vop_poll_args /* {
+		struct vnode *a_vp;
+		int a_events;
+		struct proc *a_p;
+	} */ *ap = v;
+
+	return (ap->a_events & (POLLIN | POLLOUT | POLLRDNORM | POLLWRNORM));
 }

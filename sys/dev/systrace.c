@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.31 2003/08/15 20:32:16 tedu Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.32 2003/09/23 16:51:12 millert Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -45,6 +45,7 @@
 #include <sys/lock.h>
 #include <sys/pool.h>
 #include <sys/mount.h>
+#include <sys/poll.h>
 
 #include <compat/common/compat_util.h>
 
@@ -59,14 +60,14 @@ int	systraceclose(dev_t, int, int, struct proc *);
 int	systraceread(dev_t, struct uio *, int);
 int	systracewrite(dev_t, struct uio *, int);
 int	systraceioctl(dev_t, u_long, caddr_t, int, struct proc *);
-int	systraceselect(dev_t, int, struct proc *);
+int	systracepoll(dev_t, int, struct proc *);
 
 uid_t	systrace_seteuid(struct proc *,  uid_t);
 gid_t	systrace_setegid(struct proc *,  gid_t);
 int	systracef_read(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_write(struct file *, off_t *, struct uio *, struct ucred *);
 int	systracef_ioctl(struct file *, u_long, caddr_t, struct proc *p);
-int	systracef_select(struct file *, int, struct proc *);
+int	systracef_poll(struct file *, int, struct proc *);
 int	systracef_kqfilter(struct file *, struct knote *);
 int	systracef_stat(struct file *, struct stat *, struct proc *);
 int	systracef_close(struct file *, struct proc *);
@@ -152,7 +153,7 @@ static struct fileops systracefops = {
 	systracef_read,
 	systracef_write,
 	systracef_ioctl,
-	systracef_select,
+	systracef_poll,
 	systracef_kqfilter,
 	systracef_stat,
 	systracef_close
@@ -361,26 +362,27 @@ systracef_ioctl(fp, cmd, data, p)
 
 /* ARGSUSED */
 int
-systracef_select(fp, which, p)
+systracef_poll(fp, events, p)
 	struct file *fp;
-	int which;
+	int events;
 	struct proc *p;
 {
 	struct fsystrace *fst = (struct fsystrace *)fp->f_data;
-	int ready = 0;
+	int revents = 0;
 
-	if (which != FREAD)
+	if ((events & (POLLIN | POLLRDNORM)) == 0)
 		return (0);
 
 	systrace_lock();
 	lockmgr(&fst->lock, LK_EXCLUSIVE, NULL, p);
 	systrace_unlock();
-	ready = TAILQ_FIRST(&fst->messages) != NULL;
-	if (!ready)
+	if (!TAILQ_EMPTY(&fst->messages))
+		revents = events & (POLLIN | POLLRDNORM);
+	else
 		selrecord(p, &fst->si);
 	lockmgr(&fst->lock, LK_RELEASE, NULL, p);
 
-	return (ready);
+	return (revents);
 }
 
 /* ARGSUSED */
@@ -558,12 +560,12 @@ systraceioctl(dev, cmd, data, flag, p)
 }
 
 int
-systraceselect(dev, rw, p)
+systracepoll(dev, events, p)
 	dev_t	dev;
-	int	rw;
+	int	events;
 	struct proc *p;
 {
-	return (0);
+	return (seltrue(dev, events, p));
 }
 
 void

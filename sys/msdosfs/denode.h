@@ -1,4 +1,4 @@
-/*	$OpenBSD: denode.h,v 1.14 2003/08/14 21:26:10 tedu Exp $	*/
+/*	$OpenBSD: denode.h,v 1.15 2003/09/23 16:51:13 millert Exp $	*/
 /*	$NetBSD: denode.h,v 1.24 1997/10/17 11:23:39 ws Exp $	*/
 
 /*-
@@ -272,7 +272,7 @@ int	lease_check(void *);
 #define	msdosfs_lease_check nullop
 #endif
 int	msdosfs_ioctl(void *);
-int	msdosfs_select(void *);
+int	msdosfs_poll(void *);
 int	msdosfs_fsync(void *);
 int	msdosfs_remove(void *);
 int	msdosfs_link(void *);

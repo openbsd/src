@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.17 2003/04/13 22:55:51 miod Exp $	*/
+/*	$OpenBSD: conf.h,v 1.18 2003/09/23 16:51:11 millert Exp $	*/
 /*	$NetBSD: conf.h,v 1.8 1996/12/31 07:12:43 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@ cdev_decl(mm);
 #define	cdev_openprom_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
 	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) nullop, 0, (dev_type_select((*))) enodev, \
+	(dev_type_stop((*))) nullop, 0, (dev_type_poll((*))) enodev, \
 	(dev_type_mmap((*))) enodev }
 
 cdev_decl(openprom);
@@ -48,11 +48,11 @@ cdev_decl(zs);
 bdev_decl(fd);
 cdev_decl(fd);
 
-/* open, close, read, write, ioctl, select */
+/* open, close, read, write, ioctl, poll */
 #define	cdev_gen_init(c,n) { \
 	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) nullop, \
-	0, dev_init(c,n,select), (dev_type_mmap((*))) enodev }
+	0, dev_init(c,n,poll), (dev_type_mmap((*))) enodev }
 
 bdev_decl(xd);
 cdev_decl(xd);
