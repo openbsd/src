@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xxx.c,v 1.9 1994/06/29 06:33:03 cgd Exp $	*/
+/*	$NetBSD: subr_xxx.c,v 1.10 1996/02/04 02:16:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -80,7 +80,7 @@ enoioctl()
  * that is not supported by the current system binary.
  */
 int
-enosys()
+enosys ()
 {
 
 	return (ENOSYS);
@@ -100,8 +100,10 @@ eopnotsupp()
 /*
  * Generic null operation, always returns success.
  */
+/*ARGSUSED*/
 int
-nullop()
+nullop(v)
+	void *v;
 {
 
 	return (0);

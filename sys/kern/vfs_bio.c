@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.39 1995/08/02 22:01:46 cgd Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.41 1996/02/09 19:00:53 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -58,6 +58,7 @@
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>
+#include <sys/cpu.h>
 
 /* Macros to clear/set/test flags. */
 #define	SET(t, f)	(t) |= (f)
@@ -96,6 +97,10 @@ int needbuffer;
  */
 #define	binsheadfree(bp, dp)	TAILQ_INSERT_HEAD(dp, bp, b_freelist)
 #define	binstailfree(bp, dp)	TAILQ_INSERT_TAIL(dp, bp, b_freelist)
+
+static __inline struct buf *bio_doread __P((struct vnode *, daddr_t, int,
+					    struct ucred *, int));
+int count_lock_queue __P((void));
 
 void
 bremfree(bp)
@@ -155,7 +160,7 @@ bufinit()
 	}
 }
 
-__inline struct buf *
+static __inline struct buf *
 bio_doread(vp, blkno, size, cred, async)
 	struct vnode *vp;
 	daddr_t blkno;
@@ -194,6 +199,7 @@ bio_doread(vp, blkno, size, cred, async)
  * Read a disk block.
  * This algorithm described in Bach (p.54).
  */
+int
 bread(vp, blkno, size, cred, bpp)
 	struct vnode *vp;
 	daddr_t blkno;
@@ -214,6 +220,7 @@ bread(vp, blkno, size, cred, bpp)
  * Read-ahead multiple disk blocks. The first is sync, the rest async.
  * Trivial modification to the breada algorithm presented in Bach (p.55).
  */
+int
 breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
 	struct vnode *vp;
 	daddr_t blkno; int size;
@@ -248,6 +255,7 @@ breadn(vp, blkno, size, rablks, rasizes, nrablks, cred, bpp)
  * implemented as a call to breadn().
  * XXX for compatibility with old file systems.
  */
+int
 breada(vp, blkno, size, rablkno, rabsize, cred, bpp)
 	struct vnode *vp;
 	daddr_t blkno; int size;
@@ -262,10 +270,11 @@ breada(vp, blkno, size, rablkno, rabsize, cred, bpp)
 /*
  * Block write.  Described in Bach (p.56)
  */
+int
 bwrite(bp)
 	struct buf *bp;
 {
-	int rv, s, sync, wasdelayed;
+	int rv, sync, wasdelayed;
 
 	/*
 	 * Remember buffer type, to switch on it later.  If the write was
@@ -327,9 +336,10 @@ bwrite(bp)
 }
 
 int
-vn_bwrite(ap)
-	struct vop_bwrite_args *ap;
+vn_bwrite(v)
+	void *v;
 {
+	struct vop_bwrite_args *ap = v;
 
 	return (bwrite(ap->a_bp));
 }
@@ -584,6 +594,7 @@ geteblk(size)
  * start a write.  If the buffer grows, it's the callers
  * responsibility to fill out the buffer's additional contents.
  */
+void
 allocbuf(bp, size)
 	struct buf *bp;
 	int size;
@@ -616,7 +627,7 @@ allocbuf(bp, size)
 		/* and steal its pages, up to the amount we need */
 		amt = min(nbp->b_bufsize, (desired_size - bp->b_bufsize));
 		pagemove((nbp->b_data + nbp->b_bufsize - amt),
-			bp->b_data + bp->b_bufsize, amt);
+			 bp->b_data + bp->b_bufsize, amt);
 		bp->b_bufsize += amt;
 		nbp->b_bufsize -= amt;
 

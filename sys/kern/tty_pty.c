@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.30 1995/10/10 01:27:03 mycroft Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.32 1996/02/09 19:00:41 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -46,11 +46,16 @@
 #include <sys/ioctl.h>
 #include <sys/proc.h>
 #include <sys/tty.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/uio.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
+#include <sys/signalvar.h>
+#include <sys/uio.h>
+
+#undef NPTY	/* XXX */
+#include <kern/kern_conf.h>
+
 
 #if NPTY == 1
 #undef NPTY
@@ -78,7 +83,10 @@ int	npty = NPTY;		/* for pstat -t */
 #define	PF_NOSTOP	0x40
 #define PF_UCNTL	0x80		/* user control mode */
 
-void	ptsstop __P((struct tty *, int));
+void	ptyattach __P((int));
+void	ptcwakeup __P((struct tty *, int));
+struct tty *ptytty __P((dev_t));
+void	ptsstart __P((struct tty *));
 
 /*
  * Establish n (or default if n is 1) ptys in the system.
@@ -99,6 +107,7 @@ ptyattach(n)
 }
 
 /*ARGSUSED*/
+int
 ptsopen(dev, flag, devtype, p)
 	dev_t dev;
 	int flag, devtype;
@@ -132,8 +141,9 @@ ptsopen(dev, flag, devtype, p)
 		tp->t_state |= TS_WOPEN;
 		if (flag&FNONBLOCK)
 			break;
-		if (error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
-		    ttopen, 0))
+		error = ttysleep(tp, (caddr_t)&tp->t_rawq, TTIPRI | PCATCH,
+				 ttopen, 0);
+		if (error)
 			return (error);
 	}
 	error = (*linesw[tp->t_line].l_open)(dev, tp);
@@ -141,6 +151,7 @@ ptsopen(dev, flag, devtype, p)
 	return (error);
 }
 
+int
 ptsclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
@@ -148,14 +159,15 @@ ptsclose(dev, flag, mode, p)
 {
 	register struct pt_softc *pti = &pt_softc[minor(dev)];
 	register struct tty *tp = pti->pt_tty;
-	int err;
+	int error;
 
-	err = (*linesw[tp->t_line].l_close)(tp, flag);
-	err |= ttyclose(tp);
+	error = (*linesw[tp->t_line].l_close)(tp, flag);
+	error |= ttyclose(tp);
 	ptcwakeup(tp, FREAD|FWRITE);
-	return (err);
+	return (error);
 }
 
+int
 ptsread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -175,15 +187,17 @@ again:
 			    p->p_flag & P_PPWAIT)
 				return (EIO);
 			pgsignal(p->p_pgrp, SIGTTIN, 1);
-			if (error = ttysleep(tp, (caddr_t)&lbolt, 
-			    TTIPRI | PCATCH, ttybg, 0))
+			error = ttysleep(tp, (caddr_t)&lbolt, 
+					 TTIPRI | PCATCH, ttybg, 0);
+			if (error)
 				return (error);
 		}
 		if (tp->t_canq.c_cc == 0) {
 			if (flag & IO_NDELAY)
 				return (EWOULDBLOCK);
-			if (error = ttysleep(tp, (caddr_t)&tp->t_canq,
-			    TTIPRI | PCATCH, ttyin, 0))
+			error = ttysleep(tp, (caddr_t)&tp->t_canq,
+					 TTIPRI | PCATCH, ttyin, 0);
+			if (error)
 				return (error);
 			goto again;
 		}
@@ -208,6 +222,7 @@ again:
  * Wakeups of controlling tty will happen
  * indirectly, when tty driver calls ptsstart.
  */
+int
 ptswrite(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -240,6 +255,32 @@ ptsstart(tp)
 	ptcwakeup(tp, FREAD);
 }
 
+int
+ptsstop(tp, flush)
+	register struct tty *tp;
+	int flush;
+{
+	struct pt_softc *pti = &pt_softc[minor(tp->t_dev)];
+	int flag;
+
+	/* note: FLUSHREAD and FLUSHWRITE already ok */
+	if (flush == 0) {
+		flush = TIOCPKT_STOP;
+		pti->pt_flags |= PF_STOPPED;
+	} else
+		pti->pt_flags &= ~PF_STOPPED;
+	pti->pt_send |= flush;
+	/* change of perspective */
+	flag = 0;
+	if (flush & FREAD)
+		flag |= FWRITE;
+	if (flush & FWRITE)
+		flag |= FREAD;
+	ptcwakeup(tp, flag);
+	return 0;
+}
+
+void
 ptcwakeup(tp, flag)
 	struct tty *tp;
 	int flag;
@@ -286,9 +327,12 @@ ptcopen(dev, flag, devtype, p)
 	return (0);
 }
 
+/*ARGSUSED*/
 int
-ptcclose(dev)
+ptcclose(dev, flag, devtype, p)
 	dev_t dev;
+	int flag, devtype;
+	struct proc *p;
 {
 	register struct pt_softc *pti = &pt_softc[minor(dev)];
 	register struct tty *tp = pti->pt_tty;
@@ -299,6 +343,7 @@ ptcclose(dev)
 	return (0);
 }
 
+int
 ptcread(dev, uio, flag)
 	dev_t dev;
 	struct uio *uio;
@@ -324,7 +369,8 @@ ptcread(dev, uio, flag)
 				if (pti->pt_send & TIOCPKT_IOCTL) {
 					cc = min(uio->uio_resid,
 						sizeof(tp->t_termios));
-					uiomove(&tp->t_termios, cc, uio);
+					uiomove((caddr_t) &tp->t_termios,
+						cc, uio);
 				}
 				pti->pt_send = 0;
 				return (0);
@@ -343,8 +389,9 @@ ptcread(dev, uio, flag)
 			return (0);	/* EOF */
 		if (flag & IO_NDELAY)
 			return (EWOULDBLOCK);
-		if (error = tsleep((caddr_t)&tp->t_outq.c_cf, TTIPRI | PCATCH,
-		    ttyin, 0))
+		error = tsleep((caddr_t)&tp->t_outq.c_cf, TTIPRI | PCATCH,
+			       ttyin, 0);
+		if (error)
 			return (error);
 	}
 	if (pti->pt_flags & (PF_PKT|PF_UCNTL))
@@ -365,84 +412,8 @@ ptcread(dev, uio, flag)
 	return (error);
 }
 
-void
-ptsstop(tp, flush)
-	register struct tty *tp;
-	int flush;
-{
-	struct pt_softc *pti = &pt_softc[minor(tp->t_dev)];
-	int flag;
 
-	/* note: FLUSHREAD and FLUSHWRITE already ok */
-	if (flush == 0) {
-		flush = TIOCPKT_STOP;
-		pti->pt_flags |= PF_STOPPED;
-	} else
-		pti->pt_flags &= ~PF_STOPPED;
-	pti->pt_send |= flush;
-	/* change of perspective */
-	flag = 0;
-	if (flush & FREAD)
-		flag |= FWRITE;
-	if (flush & FWRITE)
-		flag |= FREAD;
-	ptcwakeup(tp, flag);
-}
-
-ptcselect(dev, rw, p)
-	dev_t dev;
-	int rw;
-	struct proc *p;
-{
-	register struct pt_softc *pti = &pt_softc[minor(dev)];
-	register struct tty *tp = pti->pt_tty;
-	int s;
-
-	if ((tp->t_state&TS_CARR_ON) == 0)
-		return (1);
-	switch (rw) {
-
-	case FREAD:
-		/*
-		 * Need to block timeouts (ttrstart).
-		 */
-		s = spltty();
-		if ((tp->t_state&TS_ISOPEN) &&
-		     tp->t_outq.c_cc && (tp->t_state&TS_TTSTOP) == 0) {
-			splx(s);
-			return (1);
-		}
-		splx(s);
-		/* FALLTHROUGH */
-
-	case 0:					/* exceptional */
-		if ((tp->t_state&TS_ISOPEN) &&
-		    (pti->pt_flags&PF_PKT && pti->pt_send ||
-		     pti->pt_flags&PF_UCNTL && pti->pt_ucntl))
-			return (1);
-		selrecord(p, &pti->pt_selr);
-		break;
-
-
-	case FWRITE:
-		if (tp->t_state&TS_ISOPEN) {
-			if (pti->pt_flags & PF_REMOTE) {
-			    if (tp->t_canq.c_cc == 0)
-				return (1);
-			} else {
-			    if (tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG-2)
-				    return (1);
-			    if (tp->t_canq.c_cc == 0 && (tp->t_iflag&ICANON))
-				    return (1);
-			}
-		}
-		selrecord(p, &pti->pt_selw);
-		break;
-
-	}
-	return (0);
-}
-
+int
 ptcwrite(dev, uio, flag)
 	dev_t dev;
 	register struct uio *uio;
@@ -450,7 +421,7 @@ ptcwrite(dev, uio, flag)
 {
 	register struct pt_softc *pti = &pt_softc[minor(dev)];
 	register struct tty *tp = pti->pt_tty;
-	register u_char *cp;
+	register u_char *cp = NULL;
 	register int cc = 0;
 	u_char locbuf[BUFSIZ];
 	int cnt = 0;
@@ -521,14 +492,71 @@ block:
 			return (EWOULDBLOCK);
 		return (0);
 	}
-	if (error = tsleep((caddr_t)&tp->t_rawq.c_cf, TTOPRI | PCATCH,
-	    ttyout, 0)) {
+	error = tsleep((caddr_t)&tp->t_rawq.c_cf, TTOPRI | PCATCH,
+		       ttyout, 0);
+	if (error) {
 		/* adjust for data copied in but not written */
 		uio->uio_resid += cc;
 		return (error);
 	}
 	goto again;
 }
+
+int
+ptcselect(dev, rw, p)
+	dev_t dev;
+	int rw;
+	struct proc *p;
+{
+	register struct pt_softc *pti = &pt_softc[minor(dev)];
+	register struct tty *tp = pti->pt_tty;
+	int s;
+
+	if ((tp->t_state&TS_CARR_ON) == 0)
+		return (1);
+	switch (rw) {
+
+	case FREAD:
+		/*
+		 * Need to block timeouts (ttrstart).
+		 */
+		s = spltty();
+		if ((tp->t_state&TS_ISOPEN) &&
+		     tp->t_outq.c_cc && (tp->t_state&TS_TTSTOP) == 0) {
+			splx(s);
+			return (1);
+		}
+		splx(s);
+		/* FALLTHROUGH */
+
+	case 0:					/* exceptional */
+		if ((tp->t_state&TS_ISOPEN) &&
+		    (((pti->pt_flags & PF_PKT) && pti->pt_send) ||
+		     ((pti->pt_flags & PF_UCNTL) && pti->pt_ucntl)))
+			return (1);
+		selrecord(p, &pti->pt_selr);
+		break;
+
+
+	case FWRITE:
+		if (tp->t_state&TS_ISOPEN) {
+			if (pti->pt_flags & PF_REMOTE) {
+			    if (tp->t_canq.c_cc == 0)
+				return (1);
+			} else {
+			    if (tp->t_rawq.c_cc + tp->t_canq.c_cc < TTYHOG-2)
+				    return (1);
+			    if (tp->t_canq.c_cc == 0 && (tp->t_iflag&ICANON))
+				    return (1);
+			}
+		}
+		selrecord(p, &pti->pt_selw);
+		break;
+
+	}
+	return (0);
+}
+
 
 struct tty *
 ptytty(dev)
@@ -541,6 +569,7 @@ ptytty(dev)
 }
 
 /*ARGSUSED*/
+int
 ptyioctl(dev, cmd, data, flag, p)
 	dev_t dev;
 	u_long cmd;
@@ -616,7 +645,7 @@ ptyioctl(dev, cmd, data, flag, p)
 			ttyflush(tp, FREAD|FWRITE);
 			return (0);
 
-#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
+#ifdef COMPAT_OLDTTY
 		case TIOCSETP:		
 		case TIOCSETN:
 #endif
@@ -660,11 +689,9 @@ ptyioctl(dev, cmd, data, flag, p)
 		case TIOCSETA:
 		case TIOCSETAW:
 		case TIOCSETAF:
-#if defined(COMPAT_43) || defined(COMPAT_FREEBSD)
+#ifdef COMPAT_OLDTTY
 		case TIOCSETP:
 		case TIOCSETN:
-#endif
-#if defined(COMPAT_43) || defined(COMPAT_SUNOS) || defined(COMPAT_FREEBSD)
 		case TIOCSETC:
 		case TIOCSLTC:
 		case TIOCLBIS:

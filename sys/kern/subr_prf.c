@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prf.c,v 1.19 1995/06/16 10:52:17 cgd Exp $	*/
+/*	$NetBSD: subr_prf.c,v 1.21 1996/02/09 19:00:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1988, 1991, 1993
@@ -55,6 +55,8 @@
 #include <sys/syslog.h>
 #include <sys/malloc.h>
 
+#include <dev/cons.h>
+
 /*
  * Note that stdarg.h and the ANSI style va_start macro is used for both
  * ANSI and traditional C compilers.
@@ -71,12 +73,11 @@
 
 struct	tty *constty;			/* pointer to console "window" tty */
 
-extern	cnputc();			/* standard console putc */
-int	(*v_putc)() = cnputc;		/* routine to putc on virtual console */
+void	(*v_putc) __P((int)) = cnputc;	/* routine to putc on virtual console */
 
-static void  putchar __P((int ch, int flags, struct tty *tp));
-static char *ksprintn __P((u_long num, int base, int *len));
-void kprintf __P((const char *fmt, int flags, struct tty *tp, va_list ap));
+static void putchar __P((int, int, struct tty *));
+static char *ksprintn __P((u_long, int, int *));
+void kprintf __P((const char *, int, struct tty *, va_list));
 
 int consintr = 1;			/* Ok to handle console interrupts? */
 
@@ -101,10 +102,12 @@ panic(const char *fmt, ...)
 #else
 panic(fmt, va_alist)
 	char *fmt;
+	va_dcl
 #endif
 {
 	int bootopt;
 	va_list ap;
+	static const char fm[] = "panic: %r\n";
 
 	bootopt = RB_AUTOBOOT | RB_DUMP;
 	if (panicstr)
@@ -113,7 +116,7 @@ panic(fmt, va_alist)
 		panicstr = fmt;
 
 	va_start(ap, fmt);
-	printf("panic: %r\n", fmt, ap);
+	printf(fm, fmt, ap);
 	va_end(ap);
 
 #ifdef KGDB
@@ -151,6 +154,7 @@ uprintf(const char *fmt, ...)
 #else
 uprintf(fmt, va_alist)
 	char *fmt;
+	va_dcl
 #endif
 {
 	register struct proc *p = curproc;
@@ -195,6 +199,7 @@ tprintf(tpr_t tpr, const char *fmt, ...)
 tprintf(tpr, fmt, va_alist)
 	tpr_t tpr;
 	char *fmt;
+	va_dcl
 #endif
 {
 	register struct session *sess = (struct session *)tpr;
@@ -225,6 +230,7 @@ ttyprintf(struct tty *tp, const char *fmt, ...)
 ttyprintf(tp, fmt, va_alist)
 	struct tty *tp;
 	char *fmt;
+	va_dcl
 #endif
 {
 	va_list ap;
@@ -248,6 +254,7 @@ log(int level, const char *fmt, ...)
 log(level, fmt, va_alist)
 	int level;
 	char *fmt;
+	va_dcl
 #endif
 {
 	register int s;
@@ -275,7 +282,7 @@ logpri(level)
 	register char *p;
 
 	putchar('<', TOLOG, NULL);
-	for (p = ksprintn((u_long)level, 10, NULL); ch = *p--;)
+	for (p = ksprintn((u_long)level, 10, NULL); (ch = *p--) != 0;)
 		putchar(ch, TOLOG, NULL);
 	putchar('>', TOLOG, NULL);
 }
@@ -286,6 +293,7 @@ addlog(const char *fmt, ...)
 #else
 addlog(fmt, va_alist)
 	char *fmt;
+	va_dcl
 #endif
 {
 	register int s;
@@ -310,6 +318,7 @@ printf(const char *fmt, ...)
 #else
 printf(fmt, va_alist)
 	char *fmt;
+	va_dcl
 #endif
 {
 	va_list ap;
@@ -402,13 +411,13 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 		case 'b':
 			ul = va_arg(ap, int);
 			p = va_arg(ap, char *);
-			for (q = ksprintn(ul, *p++, NULL); ch = *q--;)
+			for (q = ksprintn(ul, *p++, NULL); (ch = *q--) != 0;)
 				putchar(ch, flags, tp);
 
 			if (!ul)
 				break;
 
-			for (tmp = 0; n = *p++;) {
+			for (tmp = 0; (n = *p++) != 0;) {
 				if (ul & (1 << (n - 1))) {
 					putchar(tmp ? ',' : '<', flags, tp);
 					for (; (n = *p) > ' '; ++p)
@@ -431,7 +440,7 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 		case 's':
 			if ((p = va_arg(ap, char *)) == NULL)
 				p = "(null)";
-			while (ch = *p++)
+			while ((ch = *p++) != 0)
 				putchar(ch, flags, tp);
 			break;
 		case 'd':
@@ -463,7 +472,7 @@ number:			p = ksprintn(ul, base, &tmp);
 			if (width && (width -= tmp) > 0)
 				while (width--)
 					putchar(padc, flags, tp);
-			while (ch = *p--)
+			while ((ch = *p--) != 0)
 				putchar(ch, flags, tp);
 			break;
 		default:
@@ -518,11 +527,13 @@ putchar(c, flags, tp)
 /*
  * Scaled down version of sprintf(3).
  */
+int
 #ifdef __STDC__
 sprintf(char *buf, const char *cfmt, ...)
 #else
 sprintf(buf, cfmt, va_alist)
 	char *buf, *cfmt;
+	va_dcl
 #endif
 {
 	register const char *fmt = cfmt;
@@ -565,7 +576,7 @@ reswitch:	switch (ch = *(u_char *)fmt++) {
 		/* case 'r': ... break; XXX */
 		case 's':
 			p = va_arg(ap, char *);
-			while (*bp++ = *p++)
+			while ((*bp++ = *p++) != 0)
 				continue;
 			--bp;
 			break;
@@ -601,7 +612,7 @@ number:			p = ksprintn(ul, base, &tmp);
 			if (width && (width -= tmp) > 0)
 				while (width--)
 					*bp++ = padc;
-			while (ch = *p--)
+			while ((ch = *p--) != 0)
 				*bp++ = ch;
 			break;
 		default:

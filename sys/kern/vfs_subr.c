@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.47 1995/10/07 06:28:48 mycroft Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.51 1996/02/09 19:01:01 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -59,6 +59,8 @@
 #include <sys/malloc.h>
 #include <sys/domain.h>
 #include <sys/mbuf.h>
+#include <sys/syscallargs.h>
+#include <sys/cpu.h>
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
@@ -88,9 +90,54 @@ int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
 TAILQ_HEAD(freelst, vnode) vnode_free_list;	/* vnode free list */
 struct mntlist mountlist;			/* mounted filesystem list */
 
+int vfs_lock __P((struct mount *));
+void vfs_unlock __P((struct mount *));
+struct mount *getvfs __P((fsid_t *));
+long makefstype __P((char *));
+void vattr_null __P((struct vattr *));
+int getnewvnode __P((enum vtagtype, struct mount *, int (**)(void *),
+		     struct vnode **));
+void insmntque __P((struct vnode *, struct mount *));
+int vinvalbuf __P((struct vnode *, int, struct ucred *, struct proc *, int,
+		   int));
+void vflushbuf __P((struct vnode *, int));
+void brelvp __P((struct buf *));
+int bdevvp __P((dev_t, struct vnode **));
+int cdevvp __P((dev_t, struct vnode **));
+int getdevvp __P((dev_t, struct vnode **, enum vtype));
+struct vnode *checkalias __P((struct vnode *, dev_t, struct mount *));
+int vget __P((struct vnode *, int));
+void vref __P((struct vnode *));
+void vput __P((struct vnode *));
+void vrele __P((struct vnode *));
+void vhold __P((struct vnode *));
+void holdrele __P((struct vnode *));
+int vflush __P((struct mount *, struct vnode *, int));
+void vgoneall __P((struct vnode *));
+void vgone __P((struct vnode *));
+int vcount __P((struct vnode *));
+void vprint __P((char *, struct vnode *));
+int vfs_mountedon __P((struct vnode *));
+int vfs_export __P((struct mount *, struct netexport *, struct export_args *));
+struct netcred *vfs_export_lookup __P((struct mount *, struct netexport *,
+				       struct mbuf *));
+int vaccess __P((mode_t, uid_t, gid_t, mode_t, struct ucred *));
+void vfs_unmountall __P((void));
+void vfs_shutdown __P((void));
+
+static int vfs_hang_addrlist __P((struct mount *, struct netexport *,
+				  struct export_args *));
+static int vfs_free_netcred __P((struct radix_node *, void *));
+static void vfs_free_addrlist __P((struct netexport *));
+
+#ifdef DEBUG
+void printlockedvnodes __P((void));
+#endif
+
 /*
  * Initialize the vnode management data structures.
  */
+void
 vntblinit()
 {
 
@@ -102,6 +149,7 @@ vntblinit()
  * Lock a filesystem.
  * Used to prevent access to it while mounting and unmounting.
  */
+int
 vfs_lock(mp)
 	register struct mount *mp;
 {
@@ -136,6 +184,7 @@ vfs_unlock(mp)
  * Mark a mount point as busy.
  * Used to synchronize access and to delay unmounting.
  */
+int
 vfs_busy(mp)
 	register struct mount *mp;
 {
@@ -154,6 +203,7 @@ vfs_busy(mp)
  * Free a busy filesystem.
  * Panic if filesystem is not busy.
  */
+void
 vfs_unbusy(mp)
 	register struct mount *mp;
 {
@@ -242,9 +292,9 @@ vattr_null(vap)
 	vap->va_mode = vap->va_nlink = vap->va_uid = vap->va_gid =
 		vap->va_fsid = vap->va_fileid =
 		vap->va_blocksize = vap->va_rdev =
-		vap->va_atime.ts_sec = vap->va_atime.ts_nsec =
-		vap->va_mtime.ts_sec = vap->va_mtime.ts_nsec =
-		vap->va_ctime.ts_sec = vap->va_ctime.ts_nsec =
+		vap->va_atime.tv_sec = vap->va_atime.tv_nsec =
+		vap->va_mtime.tv_sec = vap->va_mtime.tv_nsec =
+		vap->va_ctime.tv_sec = vap->va_ctime.tv_nsec =
 		vap->va_flags = vap->va_gen = VNOVAL;
 	vap->va_vaflags = 0;
 }
@@ -252,21 +302,23 @@ vattr_null(vap)
 /*
  * Routines having to do with the management of the vnode table.
  */
-extern int (**dead_vnodeop_p)();
-extern void vclean();
+extern int (**dead_vnodeop_p) __P((void *));
 long numvnodes;
 
 /*
  * Return the next vnode from the free list.
  */
+int
 getnewvnode(tag, mp, vops, vpp)
 	enum vtagtype tag;
 	struct mount *mp;
-	int (**vops)();
+	int (**vops) __P((void *));
 	struct vnode **vpp;
 {
 	register struct vnode *vp;
+#ifdef DIAGNOSTIC
 	int s;
+#endif
 
 	if ((vnode_free_list.tqh_first == NULL &&
 	     numvnodes < 2 * desiredvnodes) ||
@@ -325,6 +377,7 @@ getnewvnode(tag, mp, vops, vpp)
 /*
  * Move a vnode from one mount queue to another.
  */
+void
 insmntque(vp, mp)
 	register struct vnode *vp;
 	register struct mount *mp;
@@ -346,13 +399,14 @@ insmntque(vp, mp)
 /*
  * Update outstanding I/O count and do wakeup if requested.
  */
+void
 vwakeup(bp)
 	register struct buf *bp;
 {
 	register struct vnode *vp;
 
 	bp->b_flags &= ~B_WRITEINPROG;
-	if (vp = bp->b_vp) {
+	if ((vp = bp->b_vp) != NULL) {
 		if (--vp->v_numoutput < 0)
 			panic("vwakeup: neg numoutput");
 		if ((vp->v_flag & VBWAIT) && vp->v_numoutput <= 0) {
@@ -379,7 +433,7 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	int s, error;
 
 	if (flags & V_SAVE) {
-		if (error = VOP_FSYNC(vp, cred, MNT_WAIT, p))
+		if ((error = VOP_FSYNC(vp, cred, MNT_WAIT, p)) != 0)
 			return (error);
 		if (vp->v_dirtyblkhd.lh_first != NULL)
 			panic("vinvalbuf: dirty bufs");
@@ -479,6 +533,7 @@ loop:
 /*
  * Associate a buffer with a vnode.
  */
+void
 bgetvp(vp, bp)
 	register struct vnode *vp;
 	register struct buf *bp;
@@ -501,6 +556,7 @@ bgetvp(vp, bp)
 /*
  * Disassociate a buffer from a vnode.
  */
+void
 brelvp(bp)
 	register struct buf *bp;
 {
@@ -523,6 +579,7 @@ brelvp(bp)
  * Used to assign file specific control information
  * (indirect blocks) to the vnode to which they belong.
  */
+void
 reassignbuf(bp, newvp)
 	register struct buf *bp;
 	register struct vnode *newvp;
@@ -554,6 +611,7 @@ reassignbuf(bp, newvp)
  * Used for root filesystem, argdev, and swap areas.
  * Also used for memory file system special devices.
  */
+int
 bdevvp(dev, vpp)
 	dev_t dev;
 	struct vnode **vpp;
@@ -566,6 +624,7 @@ bdevvp(dev, vpp)
  * Create a vnode for a character device.
  * Used for kernfs and some console handling.
  */
+int
 cdevvp(dev, vpp)
 	dev_t dev;
 	struct vnode **vpp;
@@ -579,6 +638,7 @@ cdevvp(dev, vpp)
  * Used by bdevvp (block device) for root file system etc.,
  * and by cdevvp (character device) for console and kernfs.
  */
+int
 getdevvp(dev, vpp, type)
 	dev_t dev;
 	struct vnode **vpp;
@@ -590,14 +650,14 @@ getdevvp(dev, vpp, type)
 
 	if (dev == NODEV)
 		return (0);
-	error = getnewvnode(VT_NON, (struct mount *)0, spec_vnodeop_p, &nvp);
+	error = getnewvnode(VT_NON, NULL, spec_vnodeop_p, &nvp);
 	if (error) {
 		*vpp = NULLVP;
 		return (error);
 	}
 	vp = nvp;
 	vp->v_type = type;
-	if (nvp = checkalias(vp, dev, (struct mount *)0)) {
+	if ((nvp = checkalias(vp, dev, NULL)) != 0) {
 		vput(vp);
 		vp = nvp;
 	}
@@ -795,6 +855,7 @@ int busyprt = 0;	/* print out busy vnodes */
 struct ctldebug debug1 = { "busyprt", &busyprt };
 #endif
 
+int
 vflush(mp, skipvp, flags)
 	struct mount *mp;
 	struct vnode *skipvp;
@@ -877,7 +938,7 @@ vclean(vp, flags)
 	 * so that its count cannot fall to zero and generate a
 	 * race against ourselves to recycle it.
 	 */
-	if (active = vp->v_usecount)
+	if ((active = vp->v_usecount) != 0)
 		VREF(vp);
 	/*
 	 * Even if the count is zero, the VOP_INACTIVE routine may still
@@ -1004,10 +1065,7 @@ vgone(vp)
 	/*
 	 * Delete from old mount point vnode list, if on one.
 	 */
-	if (vp->v_mount != NULL) {
-		LIST_REMOVE(vp, v_mntvnodes);
-		vp->v_mount = NULL;
-	}
+	insmntque(vp, (struct mount *)0);
 	/*
 	 * If special device, remove it from special device alias list.
 	 */
@@ -1068,6 +1126,7 @@ vgone(vp)
 /*
  * Lookup a vnode by device number.
  */
+int
 vfinddev(dev, type, vpp)
 	dev_t dev;
 	enum vtype type;
@@ -1161,6 +1220,7 @@ vprint(label, vp)
  * List all of the locked vnodes in the system.
  * Called when debugging the kernel.
  */
+void
 printlockedvnodes()
 {
 	register struct mount *mp;
@@ -1186,6 +1246,7 @@ int kinfo_vgetfailed;
  * Copyout address of vnode followed by vnode.
  */
 /* ARGSUSED */
+int
 sysctl_vnode(where, sizep)
 	char *where;
 	size_t *sizep;
@@ -1295,7 +1356,8 @@ vfs_hang_addrlist(mp, nep, argp)
 	np = (struct netcred *)malloc(i, M_NETADDR, M_WAITOK);
 	bzero((caddr_t)np, i);
 	saddr = (struct sockaddr *)(np + 1);
-	if (error = copyin(argp->ex_addr, (caddr_t)saddr, argp->ex_addrlen))
+	error = copyin(argp->ex_addr, (caddr_t)saddr, argp->ex_addrlen);
+	if (error)
 		goto out;
 	if (saddr->sa_len > argp->ex_addrlen)
 		saddr->sa_len = argp->ex_addrlen;
@@ -1343,7 +1405,7 @@ out:
 static int
 vfs_free_netcred(rn, w)
 	struct radix_node *rn;
-	caddr_t w;
+	void *w;
 {
 	register struct radix_node_head *rnh = (struct radix_node_head *)w;
 
@@ -1363,9 +1425,8 @@ vfs_free_addrlist(nep)
 	register struct radix_node_head *rnh;
 
 	for (i = 0; i <= AF_MAX; i++)
-		if (rnh = nep->ne_rtable[i]) {
-			(*rnh->rnh_walktree)(rnh, vfs_free_netcred,
-			    (caddr_t)rnh);
+		if ((rnh = nep->ne_rtable[i]) != NULL) {
+			(*rnh->rnh_walktree)(rnh, vfs_free_netcred, rnh);
 			free((caddr_t)rnh, M_RTABLE);
 			nep->ne_rtable[i] = 0;
 		}
@@ -1384,7 +1445,7 @@ vfs_export(mp, nep, argp)
 		mp->mnt_flag &= ~(MNT_EXPORTED | MNT_DEFEXPORTED);
 	}
 	if (argp->ex_flags & MNT_EXPORTED) {
-		if (error = vfs_hang_addrlist(mp, nep, argp))
+		if ((error = vfs_hang_addrlist(mp, nep, argp)) != 0)
 			return (error);
 		mp->mnt_flag |= MNT_EXPORTED;
 	}
@@ -1440,8 +1501,6 @@ vaccess(file_mode, uid, gid, acc_mode, cred)
 	struct ucred *cred;
 {
 	mode_t mask;
-	int i;
-	register gid_t *gp;
 	
 	/* User id 0 always gets access. */
 	if (cred->cr_uid == 0)
@@ -1495,7 +1554,7 @@ vfs_unmountall()
 	for (allerror = 0,
 	     mp = mountlist.cqh_last; mp != (void *)&mountlist; mp = nmp) {
 		nmp = mp->mnt_list.cqe_prev;
-		if (error = dounmount(mp, MNT_FORCE, &proc0)) {
+		if ((error = dounmount(mp, MNT_FORCE, &proc0)) != 0) {
 			printf("unmount of %s failed with error %d\n",
 			    mp->mnt_stat.f_mntonname, error);
 			allerror = 1;
@@ -1527,14 +1586,14 @@ vfs_shutdown()
 #endif
 
 		/* Sync before unmount, in case we hang on something. */
-		sys_sync(&proc0, (void *)0, (int *)0);
+		sys_sync(&proc0, (void *)0, (register_t *)0);
 
 		/* Unmount file systems. */
 		vfs_unmountall();
 	}
 
 	/* Sync again after unmount, just in case. */
-	sys_sync(&proc0, (void *)0, (int *)0);
+	sys_sync(&proc0, (void *)0, (register_t *)0);
 
 	/* Wait for sync to finish. */
 	for (iter = 0; iter < 20; iter++) {

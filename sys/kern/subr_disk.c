@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.15 1996/01/07 22:03:49 thorpej Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.16 1996/02/09 18:59:56 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 Jason R. Thorpe.  All rights reserved.
@@ -315,10 +315,10 @@ disk_attach(diskp)
 }
 
 /*
- * Detatch a disk.
+ * Detach a disk.
  */
 void
-disk_detatch(diskp)
+disk_detach(diskp)
 	struct disk *diskp;
 {
 
@@ -333,7 +333,7 @@ disk_detatch(diskp)
 	 */
 	TAILQ_REMOVE(&disklist, diskp, dk_link);
 	if (--disk_count < 0)
-		panic("disk_detatch: disk_count < 0");
+		panic("disk_detach: disk_count < 0");
 }
 
 /*

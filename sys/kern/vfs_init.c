@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.4 1995/03/19 23:45:01 mycroft Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.6 1996/02/09 19:00:58 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,6 +51,7 @@
 #include <sys/buf.h>
 #include <sys/errno.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
 
 /*
  * Sigh, such primitive tools are these...
@@ -73,14 +74,21 @@ extern struct vnodeop_desc *vfs_op_descs[];
  */
 int vfs_opv_numops;
 
-typedef (*PFI)();   /* the standard Pointer to a Function returning an Int */
+typedef (*PFI) __P((void *));
+
+void vfs_opv_init __P((void));
+void vfs_opv_init_explicit __P((struct vnodeopv_desc *));
+void vfs_opv_init_default __P((struct vnodeopv_desc *));
+void vfs_op_init __P((void));
 
 /*
  * A miscellaneous routine.
  * A generic "default" routine that just returns an error.
  */
+/*ARGSUSED*/
 int
-vn_default_error()
+vn_default_error(v)
+	void *v;
 {
 
 	return (EOPNOTSUPP);
@@ -111,7 +119,7 @@ void
 vfs_opv_init_explicit(vfs_opv_desc)
 	struct vnodeopv_desc *vfs_opv_desc;
 {
-	int (**opv_desc_vector)();
+	int (**opv_desc_vector) __P((void *));
 	struct vnodeopv_entry_desc *opve_descp;
 
 	opv_desc_vector = *(vfs_opv_desc->opv_desc_vector_p);
@@ -166,8 +174,7 @@ vfs_opv_init_default(vfs_opv_desc)
 	struct vnodeopv_desc *vfs_opv_desc;
 {
 	int j;
-	int (**opv_desc_vector)();
-	struct vnodeopv_entry_desc *opve_descp;
+	int (**opv_desc_vector) __P((void *));
 
 	opv_desc_vector = *(vfs_opv_desc->opv_desc_vector_p);
 
@@ -232,12 +239,12 @@ vfs_op_init()
  */
 extern struct vnodeops dead_vnodeops;
 extern struct vnodeops spec_vnodeops;
-extern void vclean();
 struct vattr va_null;
 
 /*
  * Initialize the vnode structures and initialize each file system type.
  */
+void
 vfsinit()
 {
 	struct vfsops **vfsp;

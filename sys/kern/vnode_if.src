@@ -1,4 +1,4 @@
-#	$NetBSD: vnode_if.src,v 1.8 1994/12/14 18:58:43 mycroft Exp $
+#	$NetBSD: vnode_if.src,v 1.9 1996/02/09 14:45:38 mycroft Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -149,8 +149,8 @@ vop_remove {
 };
 
 vop_link {
-	IN WILLRELE struct vnode *vp;
-	IN struct vnode *tdvp;
+	IN WILLRELE struct vnode *dvp;
+	IN struct vnode *vp;
 	IN struct componentname *cnp;
 };
 
