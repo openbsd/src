@@ -1,0 +1,3 @@
+Please change the default cell in ThisCell if you have an AFS server that
+is located closer to you. stacken.kth.se has good connectivity, but getting
+root.afs over long distances is unnecessary.
