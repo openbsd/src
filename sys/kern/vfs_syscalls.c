@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.96 2002/07/12 14:02:22 art Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.97 2002/08/23 15:39:31 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -612,7 +612,6 @@ sys_fstatfs(p, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	FREF(fp);
 	error = VFS_STATFS(mp, sp, p);
 	FRELE(fp);
 	if (error)
@@ -728,9 +727,9 @@ sys_fchdir(p, v, retval)
 
 	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	/* No need to FREF/FRELE since we VREF the vnode here. */
 	vp = (struct vnode *)fp->f_data;
 	VREF(vp);
+	FRELE(fp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
@@ -1809,7 +1808,6 @@ sys_fchflags(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -1900,7 +1898,6 @@ sys_fchmod(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -2043,7 +2040,6 @@ sys_fchown(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -2166,7 +2162,6 @@ sys_futimes(p, v, retval)
 	}
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -2244,9 +2239,10 @@ sys_ftruncate(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	if ((fp->f_flag & FWRITE) == 0)
-		return (EINVAL);
-	FREF(fp);
+	if ((fp->f_flag & FWRITE) == 0) {
+		error = EINVAL;
+		goto bad;
+	}
 	vp = (struct vnode *)fp->f_data;
 	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -2258,6 +2254,7 @@ sys_ftruncate(p, v, retval)
 		error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
 	}
 	VOP_UNLOCK(vp, 0, p);
+bad:
 	FRELE(fp);
 	return (error);
 }
@@ -2281,7 +2278,6 @@ sys_fsync(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	error = VOP_FSYNC(vp, fp->f_cred, MNT_WAIT, p);
@@ -2510,9 +2506,10 @@ sys_getdirentries(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
-	FREF(fp);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto bad;
+	}
 	vp = (struct vnode *)fp->f_data;
 unionread:
 	if (vp->v_type != VDIR) {
@@ -2617,6 +2614,8 @@ out:
 
 /*
  * Convert a user file descriptor to a kernel file entry.
+ *
+ * On return *fpp is FREF:ed.
  */
 int
 getvnode(fdp, fd, fpp)
@@ -2630,7 +2629,9 @@ getvnode(fdp, fd, fpp)
 		return (EBADF);
 	if (fp->f_type != DTYPE_VNODE)
 		return (EINVAL);
+	FREF(fp);
 	*fpp = fp;
+
 	return (0);
 }
 
@@ -2983,7 +2984,6 @@ sys_extattr_set_fd(struct proc *p, void *v, register_t *retval)
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	FREF(fp);
 	error = extattr_set_vp((struct vnode *)fp->f_data,
 	    SCARG(uap, attrnamespace), attrname, SCARG(uap, data),
 	    SCARG(uap, nbytes), p, retval);
@@ -3106,7 +3106,6 @@ sys_extattr_get_fd(p, v, retval)
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	FREF(fp);
 	error = extattr_get_vp((struct vnode *)fp->f_data,
 	    SCARG(uap, attrnamespace), attrname, SCARG(uap, data),
 	    SCARG(uap, nbytes), p, retval);
@@ -3195,7 +3194,6 @@ sys_extattr_delete_fd(p, v, retval)
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 
-	FREF(fp);
 	error = extattr_delete_vp((struct vnode *)fp->f_data,
 	    SCARG(uap, attrnamespace), attrname, p);
 	FRELE(fp);

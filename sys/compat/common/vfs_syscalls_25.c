@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_25.c,v 1.3 2002/03/14 01:26:49 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_25.c,v 1.4 2002/08/23 15:39:31 art Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -147,7 +147,6 @@ compat_25_sys_fstatfs(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	FREF(fp);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
 	error = VFS_STATFS(mp, sp, p);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.19 2002/03/14 01:26:49 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.20 2002/08/23 15:39:31 art Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -355,9 +355,10 @@ compat_43_sys_getdirentries(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	if ((fp->f_flag & FREAD) == 0)
-		return (EBADF);
-	FREF(fp);
+	if ((fp->f_flag & FREAD) == 0) {
+		error = EBADF;
+		goto bad;
+	}
 	vp = (struct vnode *)fp->f_data;
 unionread:
 	if (vp->v_type != VDIR) {

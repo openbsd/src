@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_misc.c,v 1.41 2002/03/14 01:26:51 millert Exp $	 */
+/*	$OpenBSD: svr4_misc.c,v 1.42 2002/08/23 15:39:31 art Exp $	 */
 /*	$NetBSD: svr4_misc.c,v 1.42 1996/12/06 03:22:34 christos Exp $	 */
 
 /*
@@ -305,7 +305,6 @@ svr4_sys_getdents(p, v, retval)
 	args.resid = SCARG(uap, nbytes);
 	args.outp = (caddr_t)SCARG(uap, buf);
 
-	FREF(fp);
 	error = readdir_with_callback(fp, &fp->f_offset, SCARG(uap, nbytes),
 	    svr4_readdir_callback, &args);
 	FRELE(fp);
@@ -334,7 +333,6 @@ svr4_sys_getdents64(p, v, retval)
 	args.resid = SCARG(uap, nbytes);
 	args.outp = (caddr_t)SCARG(uap, dp);
 
-	FREF(fp);
 	error = readdir_with_callback(fp, &fp->f_offset, SCARG(uap, nbytes),
 	    svr4_readdir64_callback, &args);
 	FRELE(fp);
@@ -430,7 +428,7 @@ svr4_sys_fchroot(p, v, retval)
 		return error;
 	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
 		return error;
-	FREF(fp);
+
 	vp = (struct vnode *) fp->f_data;
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_type != VDIR)

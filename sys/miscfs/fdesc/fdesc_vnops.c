@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.31 2002/03/14 01:27:07 millert Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.32 2002/08/23 15:39:31 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -570,7 +570,6 @@ fdesc_setattr(v)
 		}
 		return (error);
 	}
-	FREF(fp);
 	vp = (struct vnode *)fp->f_data;
 	if (vp->v_mount->mnt_flag & MNT_RDONLY) {
 		error = EROFS;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_pathname.c,v 1.7 2002/02/13 19:08:06 art Exp $	*/
+/*	$OpenBSD: ultrix_pathname.c,v 1.8 2002/08/23 15:39:31 art Exp $	*/
 /*	$NetBSD: ultrix_pathname.c,v 1.2 1996/04/07 17:23:07 jonathan Exp $	*/
 
 /*
@@ -284,7 +284,7 @@ ultrix_sys_fstatfs(p, v, retval)
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
-	FREF(fp);
+
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
 	error = VFS_STATFS(mp, sp, p);

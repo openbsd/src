@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.39 2002/08/23 01:13:09 pvalchev Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.40 2002/08/23 15:39:31 art Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -436,15 +436,17 @@ sunos_sys_getdents(p, v, retval)
 
 	vp = (struct vnode *)fp->f_data;
 	/* SunOS returns ENOTDIR here, BSD would use EINVAL */
-	if (vp->v_type != VDIR)
-		return (ENOTDIR);
+	if (vp->v_type != VDIR) {
+		error = ENOTDIR;
+		goto bad;
+	}
 
 	args.resid = SCARG(uap, nbytes);
 	args.outp = (caddr_t)SCARG(uap, buf);
 
-	FREF(fp);
 	error = readdir_with_callback(fp, &fp->f_offset, args.resid,
 	    sunos_readdir_callback, &args);
+bad:
 	FRELE(fp);
 	if (error)
 		return (error);
@@ -596,7 +598,6 @@ sunos_sys_fchroot(p, v, retval)
 	if ((error = getvnode(fdp, SCARG(uap, fd), &fp)) != 0)
 		return (error);
 	vp = (struct vnode *)fp->f_data;
-	FREF(fp);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
@@ -864,7 +865,6 @@ sunos_sys_fstatfs(p, v, retval)
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	FREF(fp);
 	error = VFS_STATFS(mp, sp, p);
 	FRELE(fp);
 	if (error)
