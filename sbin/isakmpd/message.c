@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.60 2003/06/14 11:47:13 ho Exp $	*/
+/*	$OpenBSD: message.c,v 1.61 2003/09/02 18:14:52 ho Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -1216,6 +1216,14 @@ message_recv (struct message *msg)
   if ((msg->exchange->flags & EXCHANGE_FLAG_COMMITTED) == 0
       && (flags & ISAKMP_FLAGS_COMMIT))
     msg->exchange->flags |= EXCHANGE_FLAG_HE_COMMITTED;
+
+  /* Require encryption for any phase 2 message. XXX Always?  */
+  if (msg->exchange->phase == 2 && (flags & ISAKMP_FLAGS_ENC) == 0)
+    {
+      log_print ("message_recv: cleartext phase 2 message");
+      message_drop (msg, ISAKMP_NOTIFY_INVALID_FLAGS, 0, 1, 1);
+      return -1;
+    }
 
   /* OK let the exchange logic do the rest.  */
   exchange_run (msg);
