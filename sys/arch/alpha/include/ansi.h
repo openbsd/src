@@ -1,4 +1,4 @@
-/*	$OpenBSD: ansi.h,v 1.6 1997/01/24 19:57:06 niklas Exp $	*/
+/*	$OpenBSD: ansi.h,v 1.7 1997/07/05 21:09:07 millert Exp $	*/
 /*	$NetBSD: ansi.h,v 1.6 1996/11/15 22:38:45 jtc Exp $	*/
 
 /*-
@@ -52,7 +52,7 @@
 #define	_BSD_PTRDIFF_T_	long			/* ptr1 - ptr2 */
 #define	_BSD_SIZE_T_	unsigned long		/* sizeof() */
 #define	_BSD_SSIZE_T_	long			/* byte count or error */
-#define	_BSD_TIME_T_	int			/* time() */
+#define	_BSD_TIME_T_	int32_t			/* time() */
 typedef struct {
 	char *base;
 	int offset;
