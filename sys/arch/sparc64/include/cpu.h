@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.16 2003/02/10 10:47:58 jason Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.17 2003/02/12 06:32:59 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -203,13 +203,13 @@ void setsoftint(void);
 void setsoftnet(void);
 #endif
 
-int	want_ast;
+extern	int want_ast;
 
 /*
  * Preempt the current process if in interrupt from user mode,
  * or after the current trap/syscall if in system mode.
  */
-int	want_resched;		/* resched() was called */
+extern	int want_resched;	/* resched() was called */
 #define	need_resched()		(want_resched = 1, want_ast = 1)
 
 /*
