@@ -21,7 +21,7 @@
 #if 0
 static char sccsid[] = "@(#) socket.c 1.15 97/03/21 19:27:24";
 #else
-static char rcsid[] = "$OpenBSD: socket.c,v 1.6 2003/05/27 02:19:44 itojun Exp $";
+static char rcsid[] = "$OpenBSD: socket.c,v 1.7 2003/12/27 22:58:35 henning Exp $";
 #endif
 #endif
 
@@ -108,7 +108,7 @@ struct request_info *request;
 	    return;				/* give up */
 	}
 #ifdef really_paranoid
-	memset(buf, 0 sizeof(buf));
+	memset(buf, 0, sizeof(buf));
 #endif
     }
     request->client->sin = (struct sockaddr *)&client;
