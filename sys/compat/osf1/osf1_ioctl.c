@@ -1,4 +1,4 @@
-/* 	$OpenBSD: osf1_ioctl.c,v 1.3 2000/08/04 15:47:55 ericj Exp $ */
+/* 	$OpenBSD: osf1_ioctl.c,v 1.4 2000/09/06 13:38:36 ericj Exp $ */
 /*	$NetBSD: osf1_ioctl.c,v 1.11 1999/05/05 01:51:33 cgd Exp $	*/
 
 /*
@@ -72,11 +72,13 @@
 extern int scdebug;
 #endif
 
-static int osf1_ioctl_f	__P((struct proc *p, struct sys_ioctl_args *nuap,
+int osf1_ioctl_f	__P((struct proc *p, struct sys_ioctl_args *nuap,
 			    register_t *retval, int cmd, int dir, int len));
-static int osf1_ioctl_i	__P((struct proc *p, struct sys_ioctl_args *nuap,
+int osf1_ioctl_i	__P((struct proc *p, struct sys_ioctl_args *nuap,
 			    register_t *retval, int cmd, int dir, int len));
-static int osf1_ioctl_t	__P((struct proc *p, struct sys_ioctl_args *nuap,
+int osf1_ioctl_t	__P((struct proc *p, struct sys_ioctl_args *nuap,
+			    register_t *retval, int cmd, int dir, int len));
+int osf1_ioctl_m 	__P((struct proc *p, struct sys_ioctl_args *nuap,
 			    register_t *retval, int cmd, int dir, int len));
 
 int
@@ -144,12 +146,14 @@ osf1_sys_ioctl(p, v, retval)
 		return osf1_ioctl_i(p, &a, retval, cmd, dir, len);
 	case 't':
 		return osf1_ioctl_t(p, &a, retval, cmd, dir, len);
+	case 'm':
+		return osf1_ioctl_m(p, &a, retval, cmd, dir, len); 
 	default:
 		return (ENOTTY);
 	}
 }
 
-static int
+int
 osf1_ioctl_f(p, uap, retval, cmd, dir, len)
 	struct proc *p;
 	struct sys_ioctl_args *uap;
@@ -167,7 +171,7 @@ osf1_ioctl_f(p, uap, retval, cmd, dir, len)
 	case 125:			/* OSF/1 FIOASYNC */
 	case 126:			/* OSF/1 FIONBIO */
 	case 127:			/* OSF/1 FIONREAD */
-		/* same as in NetBSD */
+		/* same as in OpenBSD */
 		break;
 		
 	default:
@@ -177,7 +181,31 @@ osf1_ioctl_f(p, uap, retval, cmd, dir, len)
 	return sys_ioctl(p, uap, retval);
 }
 
-static int
+/*
+ * Mag Tape ioctl's
+ */
+int
+osf1_ioctl_m(p, uap, retval, cmd, dir, len)
+	struct proc *p;
+	struct sys_ioctl_args *uap;
+	register_t *retval;
+	int cmd;
+	int dir;
+	int len;
+{
+	switch (cmd) {
+	case 1:				/* OSF/1 MTIOCTOP (XXX) */
+	case 2:				/* OSF/1 MTIOCGET (XXX) */
+		/* same as in OpenBSD */
+		break;
+	default:
+		return (ENOTTY);
+	}
+
+	return sys_ioctl(p, uap, retval);
+}
+
+int
 osf1_ioctl_i(p, uap, retval, cmd, dir, len)
 	struct proc *p;
 	struct sys_ioctl_args *uap;
@@ -201,7 +229,7 @@ osf1_ioctl_i(p, uap, retval, cmd, dir, len)
 	case 34:			/* OSF/1 SIOCGIFDSTADDR */
 	case 35:			/* OSF/1 SIOCGIFBRDADDR */
 	case 37:			/* OSF/1 SIOCGIFNETMASK */
-		/* same as in NetBSD */
+		/* same as in OpenBSD */
 		break;
 
 	default:
@@ -211,7 +239,7 @@ osf1_ioctl_i(p, uap, retval, cmd, dir, len)
 	return sys_ioctl(p, uap, retval);
 }
 
-static int
+int
 osf1_ioctl_t(p, uap, retval, cmd, dir, len)
 	struct proc *p;
 	struct sys_ioctl_args *uap;
@@ -235,7 +263,7 @@ osf1_ioctl_t(p, uap, retval, cmd, dir, len)
 	case 97:			/* OSF/1 TIOCSCTTY */
 	case 103:			/* OSF/1 TIOCSWINSZ */
 	case 104:			/* OSF/1 TIOCGWINSZ */
-		/* same as in NetBSD */
+		/* same as in OpenBSD */
 		break;
 		
 	default:
