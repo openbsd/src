@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.22 2003/08/07 19:47:33 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.23 2003/08/22 18:09:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -94,47 +94,19 @@ cpuattach(parent, self, aux)
 	void *aux;
 {
 	/* machdep.c */
+	extern struct pdc_model pdc_model;
 	extern struct pdc_cache pdc_cache;
 	extern struct pdc_btlb pdc_btlb;
 	extern u_int cpu_ticksnum, cpu_ticksdenom;
 	extern u_int fpu_enable;
 
-	struct pdc_model pdc_model PDC_ALIGNMENT;
-	struct pdc_cpuid pdc_cpuid PDC_ALIGNMENT;
-	u_int pdc_cversion[32] PDC_ALIGNMENT;
-	register struct cpu_softc *sc = (struct cpu_softc *)self;
-	register struct confargs *ca = aux;
-	const char *p = NULL;
+	struct cpu_softc *sc = (struct cpu_softc *)self;
+	struct confargs *ca = aux;
 	u_int mhz = 100 * cpu_ticksnum / cpu_ticksdenom;
-	int err;
+	const char *p;
 
-	bzero (&pdc_cpuid, sizeof(pdc_cpuid));
-	if (pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_CPUID,
-		     &pdc_cpuid, sc->sc_dev.dv_unit, 0, 0, 0) >= 0) {
-
-		/* patch for old 8200 */
-		if (pdc_cpuid.version == HPPA_CPU_PCXUP &&
-		    pdc_cpuid.revision > 0x0d)
-			pdc_cpuid.version = HPPA_CPU_PCXUP1;
-			
-		p = hppa_mod_info(HPPA_TYPE_CPU, pdc_cpuid.version);
-	}
-	/* otherwise try to guess on component version numbers */
-	else if (pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_COMP,
-		     &pdc_cversion, sc->sc_dev.dv_unit) >= 0) {
-		/* XXX p = hppa_mod_info(HPPA_TYPE_CPU,pdc_cversion[0]); */
-	}
-
-	printf (": %s ", p? p : cpu_typename);
-	if (sc->sc_dev.dv_xname)
-		(*cpu_desidhash)();
-
-	if ((err = pdc_call((iodcio_t)pdc, 0, PDC_MODEL, PDC_MODEL_INFO,
-			    &pdc_model)) < 0) {
-#ifdef DEBUG
-		printf("PDC_MODEL(%d) ", err);
-#endif
-	} else {
+	printf (": %s ", cpu_typename);
+	if (pdc_model.hvers) {
 		static const char lvls[4][4] = { "0", "1", "1.5", "2" };
 
 		printf("L%s-%c ", lvls[pdc_model.pa_lvl], "AB"[pdc_model.mc]);
