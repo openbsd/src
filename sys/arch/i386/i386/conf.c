@@ -118,6 +118,12 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
         (dev_type_stop((*))) enodev, 0,  dev_init(c,n,select), \
         (dev_type_mmap((*))) enodev, 0 }
 
+/* open, close, read, ioctl */
+#define cdev_joy_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
+	(dev_type_stop((*))) enodev, 0, seltrue, (dev_type_mmap((*))) enodev }
+		 
 cdev_decl(cn);
 cdev_decl(ctty);
 #define	mmread	mmrw
@@ -179,6 +185,8 @@ cdev_decl(vnd);
 cdev_decl(audio);
 cdev_decl(svr4_net);
 cdev_decl(ccd);
+#include "joy.h"
+cdev_decl(joy);
 
 /* open, close, read, ioctl */
 cdev_decl(ipl);
@@ -222,7 +230,7 @@ struct cdevsw	cdevsw[] =
 	cdev_fd_init(1,fd),		/* 22: file descriptor pseudo-device */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 23: Berkeley packet filter */
 	cdev_notdef(),			/* 24 */
-	cdev_notdef(),			/* 25 */
+	cdev_joy_init(NJOY,joy),	/* 25: Game adapter */
 	cdev_ocis_init(NPCMCIABUS,pcmciabus), /* 26: PCMCIA Bus */
 	cdev_spkr_init(NSPEAKER,spkr),	/* 27: PC speaker */
 	cdev_lkm_init(NLKM,lkm),	/* 28: loadable module driver */

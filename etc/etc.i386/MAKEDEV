@@ -71,6 +71,7 @@
 #	lkm	loadable kernel modules interface
 #	audio	audio device
 #	tun*	network tunnel driver
+#	joy*	joystick driver
 #	pcmcia*	PCMCIA card drivers
 #
 
@@ -85,7 +86,7 @@ all)
 	sh MAKEDEV st0 st1 ch0 cd0 cd1 mcd0 vnd0 vnd1 lpa0 lpa1
 	sh MAKEDEV ccd0 ccd1 ccd2 ccd3
 	sh MAKEDEV lpt0 lpt1 lpt2 ttyv0 bpf0 bpf1 bpf2 bpf3 ipl tun0 tun1 tun2
-	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio local
+	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio local joy0 joy1
 # MISSING:
 #	sh MAKEDEV mouse-?
 	;;
@@ -331,6 +332,14 @@ audio*)
 	mknod mixer c 42 16
 	chown root.wheel audio sound mixer
 	chmod 666 audio sound mixer
+	;;
+
+joy*)
+	unit=`expr $i : 'joy\(.*\)'`
+	rm -f joy$unit
+	mknod joy$unit c 25 $unit
+	chown root.wheel joy$unit
+	chmod 666 joy$unit
 	;;
 	
 pcmcia*)

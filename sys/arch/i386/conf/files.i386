@@ -114,6 +114,10 @@ file	arch/i386/isa/spkr.c		speaker needs-flag
 device	le at isa, pci: ether, ifnet, isadma
 file	dev/isa/if_le.c			le
 
+# Game adapter (joystick)
+device	joy at isa
+file	arch/i386/isa/joy.c			joy needs-flag
+
 #
 # EISA-only drivers
 #
