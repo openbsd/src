@@ -1,3 +1,5 @@
+/* $OpenBSD: http_conf_globals.h,v 1.15 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *

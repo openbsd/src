@@ -1,3 +1,5 @@
+/* $OpenBSD: http_request.h,v 1.8 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -84,12 +86,11 @@ extern "C" {
  */
 
 API_EXPORT(request_rec *) ap_sub_req_lookup_uri(const char *new_file,
-                                             const request_rec *r);
+    const request_rec *r);
 API_EXPORT(request_rec *) ap_sub_req_lookup_file(const char *new_file,
-                                              const request_rec *r);
+    const request_rec *r);
 API_EXPORT(request_rec *) ap_sub_req_method_uri(const char *method,
-                                                const char *new_file,
-                                                const request_rec *r);
+    const char *new_file, const request_rec *r);
 API_EXPORT(int) ap_run_sub_req(request_rec *r);
 API_EXPORT(void) ap_destroy_sub_req(request_rec *r);
 
@@ -100,7 +101,8 @@ API_EXPORT(void) ap_destroy_sub_req(request_rec *r);
  */
 
 API_EXPORT(void) ap_internal_redirect(const char *new_uri, request_rec *);
-API_EXPORT(void) ap_internal_redirect_handler(const char *new_uri, request_rec *);
+API_EXPORT(void) ap_internal_redirect_handler(const char *new_uri,
+    request_rec *);
 API_EXPORT(int) ap_some_auth_required(request_rec *r);
 API_EXPORT(int) ap_is_initial_req(request_rec *r);
 API_EXPORT(time_t) ap_update_mtime(request_rec *r, time_t dependency_mtime);

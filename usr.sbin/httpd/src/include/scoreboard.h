@@ -1,3 +1,5 @@
+/* $OpenBSD: scoreboard.h,v 1.11 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -126,41 +128,41 @@ typedef int ap_generation_t;
 
 /* stuff which the children generally write, and the parent mainly reads */
 typedef struct {
-    vtime_t cur_vtime;		/* the child's current vtime */
-    unsigned short timeout_len;	/* length of the timeout */
-    unsigned char status;
-    unsigned long access_count;
-    unsigned long bytes_served;
-    unsigned long my_access_count;
-    unsigned long my_bytes_served;
-    unsigned long conn_bytes;
-    unsigned short conn_count;
-    struct timeval start_time;
-    struct timeval stop_time;
-    struct tms times;
-    char client[32];		/* Keep 'em small... */
-    char request[64];		/* We just want an idea... */
-    server_rec *vhostrec;	/* What virtual host is being accessed? */
-                                /* SEE ABOVE FOR SAFE USAGE! */
+	vtime_t cur_vtime;		/* the child's current vtime */
+	unsigned short timeout_len;	/* length of the timeout */
+	unsigned char status;
+	unsigned long access_count;
+	unsigned long bytes_served;
+	unsigned long my_access_count;
+	unsigned long my_bytes_served;
+	unsigned long conn_bytes;
+	unsigned short conn_count;
+	struct timeval start_time;
+	struct timeval stop_time;
+	struct tms times;
+	char client[32];		/* Keep 'em small... */
+	char request[64];		/* We just want an idea... */
+	server_rec *vhostrec;	/* What virtual host is being accessed? */
+				/* SEE ABOVE FOR SAFE USAGE! */
 } short_score;
 
 typedef struct {
-    ap_generation_t running_generation;	/* the generation of children which
+	ap_generation_t running_generation;/* the generation of children which
                                          * should still be serving requests. */
 } global_score;
 
 /* stuff which the parent generally writes and the children rarely read */
 typedef struct {
-    pid_t pid;
-    time_t last_rtime;		/* time(0) of the last change */
-    vtime_t last_vtime;		/* the last vtime the parent has seen */
-    ap_generation_t generation;	/* generation of this child */
+	pid_t pid;
+	time_t last_rtime;		/* time(0) of the last change */
+	vtime_t last_vtime;		/* the last vtime the parent has seen */
+	ap_generation_t generation;	/* generation of this child */
 } parent_score;
 
 typedef struct {
-    short_score servers[HARD_SERVER_LIMIT];
-    parent_score parent[HARD_SERVER_LIMIT];
-    global_score global;
+	short_score servers[HARD_SERVER_LIMIT];
+	parent_score parent[HARD_SERVER_LIMIT];
+	global_score global;
 } scoreboard;
 
 #define SCOREBOARD_SIZE		sizeof(scoreboard)

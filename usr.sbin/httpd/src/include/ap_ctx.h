@@ -1,3 +1,5 @@
+/* $OpenBSD: ap_ctx.h,v 1.6 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * Copyright (c) 1998-2000 The Apache Group.  All rights reserved.
  *
@@ -75,13 +77,13 @@
 #define AP_CTX_MAX_ENTRIES 1024
 
 typedef struct {
-    char *ce_key;
-    void *ce_val;
+	char *ce_key;
+	void *ce_val;
 } ap_ctx_entry;
 
 typedef struct {
-    pool          *cr_pool;
-    ap_ctx_entry **cr_entry;
+	pool          *cr_pool;
+	ap_ctx_entry **cr_entry;
 } ap_ctx_rec;
 
 typedef ap_ctx_rec ap_ctx;

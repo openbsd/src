@@ -1,3 +1,5 @@
+/* $OpenBSD: fnmatch.h,v 1.3 2005/03/28 23:26:51 niallo Exp $ */
+
 /*-
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.

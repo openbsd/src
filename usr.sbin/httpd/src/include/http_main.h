@@ -1,3 +1,5 @@
+/* $OpenBSD: http_main.h,v 1.12 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -123,7 +125,8 @@ API_EXPORT(void) ap_reset_timeout(request_rec *);
 
 API_EXPORT(void) ap_child_terminate(request_rec *r);
 API_EXPORT(void) ap_sync_scoreboard_image(void);
-API_EXPORT(int) ap_update_child_status(int child_num, int status, request_rec *r);
+API_EXPORT(int) ap_update_child_status(int child_num, int status,
+    request_rec *r);
 void ap_time_process_request(int child_num, int status);
 API_EXPORT(unsigned int) ap_set_callback_and_alarm(void (*fn) (int), int x);
 API_EXPORT(int) ap_check_alarm(void);
@@ -152,8 +155,8 @@ char *ap_init_mutex_method(char *t);
  * disable this feature, use -1 for write_fd.
  */
 API_EXPORT(void) ap_register_other_child(int pid,
-       void (*maintenance) (int reason, void *data, ap_wait_t status), void *data,
-				      int write_fd);
+    void (*maintenance) (int reason, void *data, ap_wait_t status),
+    void *data, int write_fd);
 #define OC_REASON_DEATH		0	/* child has died, caller must call
 					 * unregister still */
 #define OC_REASON_UNWRITABLE	1	/* write_fd is unwritable */

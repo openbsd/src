@@ -1,3 +1,5 @@
+/* $OpenBSD: util_script.h,v 1.7 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -75,19 +77,17 @@ API_EXPORT(char **) ap_create_environment(pool *p, table *t);
 API_EXPORT(int) ap_find_path_info(const char *uri, const char *path_info);
 API_EXPORT(void) ap_add_cgi_vars(request_rec *r);
 API_EXPORT(void) ap_add_common_vars(request_rec *r);
-API_EXPORT(int) ap_scan_script_header_err(request_rec *r, FILE *f, char *buffer);
+API_EXPORT(int) ap_scan_script_header_err(request_rec *r, FILE *f,
+    char *buffer);
 API_EXPORT(int) ap_scan_script_header_err_buff(request_rec *r, BUFF *f,
-                                               char *buffer);
+    char *buffer);
 API_EXPORT(int) ap_scan_script_header_err_core(request_rec *r, char *buffer,
-				       int (*getsfunc) (char *, int, void *),
-				       void *getsfunc_data);
-API_EXPORT_NONSTD(int) ap_scan_script_header_err_strs(request_rec *r, 
-                                                      char *buffer, 
-                                                      const char **termch,
-                                                      int *termarg, ...);
+    int (*getsfunc) (char *, int, void *), void *getsfunc_data);
+API_EXPORT_NONSTD(int) ap_scan_script_header_err_strs(request_rec *r,
+    char *buffer, const char **termch, int *termarg, ...);
 API_EXPORT(void) ap_send_size(size_t size, request_rec *r);
-API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0, char **env,
-                          int shellcmd);
+API_EXPORT(int) ap_call_exec(request_rec *r, child_info *pinfo, char *argv0,
+    char **env, int shellcmd);
 
 #ifdef __cplusplus
 }

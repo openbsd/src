@@ -1,3 +1,5 @@
+/* $OpenBSD: util_md5.h,v 1.8 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *

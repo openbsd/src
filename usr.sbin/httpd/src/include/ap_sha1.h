@@ -1,3 +1,5 @@
+/* $OpenBSD: ap_sha1.h,v 1.7 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -89,12 +91,11 @@ typedef u_int32_t AP_LONG;         /* a 32-bit quantity */
 API_EXPORT(void) ap_sha1_base64(const char *clear, int len, char *out);
 API_EXPORT(void) ap_SHA1Init(AP_SHA1_CTX *context);
 API_EXPORT(void) ap_SHA1Update(AP_SHA1_CTX *context, const char *input,
-			       unsigned int inputLen);
+    unsigned int inputLen);
 API_EXPORT(void) ap_SHA1Update_binary(AP_SHA1_CTX *context,
-				      const unsigned char *input,
-				      unsigned int inputLen);
+    const unsigned char *input, unsigned int inputLen);
 API_EXPORT(void) ap_SHA1Final(unsigned char digest[SHA_DIGESTSIZE],
-                              AP_SHA1_CTX *context);
+    AP_SHA1_CTX *context);
 
 #ifdef __cplusplus
 }

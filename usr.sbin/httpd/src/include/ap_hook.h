@@ -1,3 +1,5 @@
+/* $OpenBSD: ap_hook.h,v 1.5 2005/03/28 23:26:51 niallo Exp $ */
+
 #if 0
 =cut
 #endif
@@ -293,27 +295,27 @@ typedef unsigned short int ap_hook_state;
 
 /* the union holding the arbitrary decline values */
 typedef union {
-    char   v_char;
-    int    v_int;
-    long   v_long;
-    float  v_float;
-    double v_double;
-    void  *v_ptr;
+	char   v_char;
+	int    v_int;
+	long   v_long;
+	float  v_float;
+	double v_double;
+	void  *v_ptr;
 } ap_hook_value;
 
 /* the structure holding one hook function and its context */
 typedef struct {
-    void *hf_ptr;              /* function pointer       */
-    void *hf_ctx;              /* function context       */
+	void *hf_ptr;              /* function pointer       */
+	void *hf_ctx;              /* function context       */
 } ap_hook_func;
 
 /* the structure holding one hook entry with all its registered functions */
 typedef struct {
-    char          *he_hook;    /* hook name (=unique id) */
-    ap_hook_sig    he_sig;     /* hook signature         */
-    int            he_modeid;  /* hook mode id           */
-    ap_hook_value  he_modeval; /* hook mode value        */
-    ap_hook_func **he_func;    /* hook registered funcs  */
+	char          *he_hook;    /* hook name (=unique id) */
+	ap_hook_sig    he_sig;     /* hook signature         */
+	int            he_modeid;  /* hook mode id           */
+	ap_hook_value  he_modeval; /* hook mode value        */
+	ap_hook_func **he_func;    /* hook registered funcs  */
 } ap_hook_entry;
 
 /* the maximum number of hooks and functions per hook */
@@ -376,11 +378,14 @@ typedef struct {
 
 API_EXPORT(void)          ap_hook_init         (void);
 API_EXPORT(void)          ap_hook_kill         (void);
-API_EXPORT(int)           ap_hook_configure    (char *hook, ap_hook_sig sig, ap_hook_mode modeid, ...);
-API_EXPORT(int)           ap_hook_register_I   (char *hook, void *func, void *ctx);
+API_EXPORT(int)           ap_hook_configure    (char *hook, ap_hook_sig sig,
+    ap_hook_mode modeid, ...);
+API_EXPORT(int)           ap_hook_register_I   (char *hook, void *func,
+    void *ctx);
 API_EXPORT(int)           ap_hook_unregister_I (char *hook, void *func);
 API_EXPORT(ap_hook_state) ap_hook_status       (char *hook);
-API_EXPORT(int)           ap_hook_use          (char *hook, ap_hook_sig sig, ap_hook_mode modeid, ...);
+API_EXPORT(int)           ap_hook_use          (char *hook, ap_hook_sig sig,
+    ap_hook_mode modeid, ...);
 API_EXPORT(int)           ap_hook_call         (char *hook, ...);
 
 #endif /* AP_HOOK_H */

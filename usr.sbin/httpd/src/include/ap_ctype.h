@@ -1,3 +1,5 @@
+/* $OpenBSD: ap_ctype.h,v 1.7 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *

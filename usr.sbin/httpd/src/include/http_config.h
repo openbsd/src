@@ -1,3 +1,5 @@
+/* $OpenBSD: http_config.h,v 1.12 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -75,36 +77,36 @@ extern "C" {
  * RAW_ARGS.
  */
 enum cmd_how {
-    RAW_ARGS,			/* cmd_func parses command line itself */
-    TAKE1,			/* one argument only */
-    TAKE2,			/* two arguments only */
-    ITERATE,			/* one argument, occuring multiple times
+	RAW_ARGS,		/* cmd_func parses command line itself */
+	TAKE1,			/* one argument only */
+	TAKE2,			/* two arguments only */
+	ITERATE,		/* one argument, occuring multiple times
 				 * (e.g., IndexIgnore)
 				 */
-    ITERATE2,			/* two arguments, 2nd occurs multiple times
+	ITERATE2,		/* two arguments, 2nd occurs multiple times
 				 * (e.g., AddIcon)
 				 */
-    FLAG,			/* One of 'On' or 'Off' */
-    NO_ARGS,			/* No args at all, e.g. </Directory> */
-    TAKE12,			/* one or two arguments */
-    TAKE3,			/* three arguments only */
-    TAKE23,			/* two or three arguments */
-    TAKE123,			/* one, two or three arguments */
-    TAKE13			/* one or three arguments */
+	FLAG,			/* One of 'On' or 'Off' */
+	NO_ARGS,		/* No args at all, e.g. </Directory> */
+	TAKE12,			/* one or two arguments */
+	TAKE3,			/* three arguments only */
+	TAKE23,			/* two or three arguments */
+	TAKE123,		/* one, two or three arguments */
+	TAKE13			/* one or three arguments */
 };
 
 typedef struct command_struct {
-    const char *name;		/* Name of this command */
-    const char *(*func) ();	/* Function invoked */
-    void *cmd_data;		/* Extra data, for functions which
+	const char *name;		/* Name of this command */
+	const char *(*func) ();	/* Function invoked */
+	void *cmd_data;		/* Extra data, for functions which
 				 * implement multiple commands...
 				 */
-    int req_override;		/* What overrides need to be allowed to
+	int req_override;	/* What overrides need to be allowed to
 				 * enable this command.
 				 */
-    enum cmd_how args_how;	/* What the command expects as arguments */
+	enum cmd_how args_how;	/* What the command expects as arguments */
 
-    const char *errmsg;		/* 'usage' message, in case of syntax errors */
+	const char *errmsg;	/* 'usage' message, in case of syntax errors */
 } command_rec;
 
 /* The allowed locations for a configuration directive are the union of
@@ -148,30 +150,31 @@ typedef struct command_struct {
  */
 
 typedef struct {
-    void *info;			/* Argument to command from cmd_table */
-    int override;		/* Which allow-override bits are set */
-    int limited;		/* Which methods are <Limit>ed */
+	void *info;		/* Argument to command from cmd_table */
+	int override;		/* Which allow-override bits are set */
+	int limited;		/* Which methods are <Limit>ed */
 
-    configfile_t *config_file;	/* Config file structure from pcfg_openfile() */
+			      /* Config file structure from pcfg_openfile() */
+	configfile_t *config_file;
 
-    ap_pool *pool;			/* Pool to allocate new storage in */
-    struct pool *temp_pool;		/* Pool for scratch memory; persists during
+	ap_pool *pool;			/* Pool to allocate new storage in */
+	struct pool *temp_pool;	/* Pool for scratch memory; persists during
 				 * configuration, but wiped before the first
 				 * request is served...
 				 */
-    server_rec *server;		/* Server_rec being configured for */
-    char *path;			/* If configuring for a directory,
+	server_rec *server;		/* Server_rec being configured for */
+	char *path;			/* If configuring for a directory,
 				 * pathname of that directory.
 				 * NOPE!  That's what it meant previous to the
 				 * existance of <Files>, <Location> and regex
 				 * matching.  Now the only usefulness that can
-				 * be derived from this field is whether a command
-				 * is being called in a server context (path == NULL)
-				 * or being called in a dir context (path != NULL).
+			* be derived from this field is whether a command
+			 * is being called in a server context (path == NULL)
+			 * or being called in a dir context (path != NULL).
 				 */
-    const command_rec *cmd;	/* configuration command */
-    const char *end_token;	/* end token required to end a nested section */
-    void *context;		/* per_dir_config vector passed 
+	const command_rec *cmd;	/* configuration command */
+	const char *end_token;	/* end token required to end a nested section */
+	void *context;		/* per_dir_config vector passed 
 				 * to handle_command */
 } cmd_parms;
 
@@ -189,129 +192,130 @@ typedef struct {
  */
 
 typedef struct module_struct {
-    int version;		/* API version, *not* module version;
+	int version;		/* API version, *not* module version;
 				 * check that module is compatible with this
 				 * version of the server.
 				 */
-    int minor_version;          /* API minor version. Provides API feature
-                                 * milestones. Not checked during module init
+	int minor_version;          /* API minor version. Provides API feature
+				 * milestones. Not checked during module init
 				 */
-    int module_index;		/* Index to this modules structures in
+	int module_index;	/* Index to this modules structures in
 				 * config vectors.
 				 */
 
-    const char *name;
-    void *dynamic_load_handle;
+	const char *name;
+	void *dynamic_load_handle;
 
-    struct module_struct *next;
+	struct module_struct *next;
 
-    unsigned long magic;        /* Magic Cookie to identify a module structure;
-                                 * It's mainly important for the DSO facility
-                                 * (see also mod_so).
-                                 */
+	unsigned long magic;    /* Magic Cookie to identify a module structure;
+				 * It's mainly important for the DSO facility
+				 * (see also mod_so).
+				 */
 
-    /* init() occurs after config parsing, but before any children are
-     * forked.
-     * Modules should not rely on the order in which create_server_config
-     * and create_dir_config are called.
-     */
-    void (*init) (server_rec *, pool *);
-    void *(*create_dir_config) (pool *p, char *dir);
-    void *(*merge_dir_config) (pool *p, void *base_conf, void *new_conf);
-    void *(*create_server_config) (pool *p, server_rec *s);
-    void *(*merge_server_config) (pool *p, void *base_conf, void *new_conf);
+	/* init() occurs after config parsing, but before any children are
+	* forked.
+	* Modules should not rely on the order in which create_server_config
+	* and create_dir_config are called.
+	*/
+	void (*init) (server_rec *, pool *);
+	void *(*create_dir_config) (pool *p, char *dir);
+	void *(*merge_dir_config) (pool *p, void *base_conf, void *new_conf);
+	void *(*create_server_config) (pool *p, server_rec *s);
+	void *(*merge_server_config) (pool *p, void *base_conf, void *new_conf);
 
-    const command_rec *cmds;
-    const handler_rec *handlers;
+	const command_rec *cmds;
+	const handler_rec *handlers;
 
-    /* Hooks for getting into the middle of server ops...
+	/* Hooks for getting into the middle of server ops...
 
-     * translate_handler --- translate URI to filename
-     * access_checker --- check access by host address, etc.   All of these
-     *                    run; if all decline, that's still OK.
-     * check_user_id --- get and validate user id from the HTTP request
-     * auth_checker --- see if the user (from check_user_id) is OK *here*.
-     *                  If all of *these* decline, the request is rejected
-     *                  (as a SERVER_ERROR, since the module which was
-     *                  supposed to handle this was configured wrong).
-     * type_checker --- Determine MIME type of the requested entity;
-     *                  sets content_type, _encoding and _language fields.
-     * logger --- log a transaction.
-     * post_read_request --- run right after read_request or internal_redirect,
-     *                  and not run during any subrequests.
-     */
+	* translate_handler --- translate URI to filename
+	* access_checker --- check access by host address, etc.   All of these
+	*                    run; if all decline, that's still OK.
+	* check_user_id --- get and validate user id from the HTTP request
+	* auth_checker --- see if the user (from check_user_id) is OK *here*.
+	*                  If all of *these* decline, the request is rejected
+	*                  (as a SERVER_ERROR, since the module which was
+	*                  supposed to handle this was configured wrong).
+	* type_checker --- Determine MIME type of the requested entity;
+	*                  sets content_type, _encoding and _language fields.
+	* logger --- log a transaction.
+        * post_read_request --- run right after read_request or
+	*                internal_redirect, and not run during any subrequests.
+	*/
 
-    int (*translate_handler) (request_rec *);
-    int (*ap_check_user_id) (request_rec *);
-    int (*auth_checker) (request_rec *);
-    int (*access_checker) (request_rec *);
-    int (*type_checker) (request_rec *);
-    int (*fixer_upper) (request_rec *);
-    int (*logger) (request_rec *);
-    int (*header_parser) (request_rec *);
+	int (*translate_handler) (request_rec *);
+	int (*ap_check_user_id) (request_rec *);
+	int (*auth_checker) (request_rec *);
+	int (*access_checker) (request_rec *);
+	int (*type_checker) (request_rec *);
+	int (*fixer_upper) (request_rec *);
+	int (*logger) (request_rec *);
+	int (*header_parser) (request_rec *);
 
-    /* Regardless of the model the server uses for managing "units of
-     * execution", i.e. multi-process, multi-threaded, hybrids of those,
-     * there is the concept of a "heavy weight process".  That is, a
-     * process with its own memory space, file spaces, etc.  This method,
-     * child_init, is called once for each heavy-weight process before
-     * any requests are served.  Note that no provision is made yet for
-     * initialization per light-weight process (i.e. thread).  The
-     * parameters passed here are the same as those passed to the global
-     * init method above.
-     */
-    void (*child_init) (server_rec *, pool *);
-    void (*child_exit) (server_rec *, pool *);
-    int (*post_read_request) (request_rec *);
+	/* Regardless of the model the server uses for managing "units of
+	* execution", i.e. multi-process, multi-threaded, hybrids of those,
+	* there is the concept of a "heavy weight process".  That is, a
+	* process with its own memory space, file spaces, etc.  This method,
+	* child_init, is called once for each heavy-weight process before
+	* any requests are served.  Note that no provision is made yet for
+	* initialization per light-weight process (i.e. thread).  The
+	* parameters passed here are the same as those passed to the global
+	* init method above.
+	*/
+	void (*child_init) (server_rec *, pool *);
+	void (*child_exit) (server_rec *, pool *);
+	int (*post_read_request) (request_rec *);
 
-    /*
-     * ANSI C guarantees us that we can at least _extend_ the module structure
-     * with additional hooks without the need to change all existing modules.
-     * Because: ``If there are fewer initializers in the list than members of
-     * the structure, the trailing members are initialized with 0.'' (The C
-     * Programming Language, 2nd Ed., A8.7 Initialization). So we just
-     * have to put our additional hooks here:
-     *
-     * add_module: 
-     *     Called from within ap_add_module() right after the module structure
-     *     was linked into the Apache internal module list.  It is mainly
-     *     intended to be used to define configuration defines (<IfDefine>)
-     *     which have to be available directly after a LoadModule/AddModule.
-     *     Actually this is the earliest possible hook a module can use.
-     *
-     * remove_module: 
-     *     Called from within ap_remove_module() right before the module
-     *     structure is kicked out from the Apache internal module list.
-     *     Actually this is last possible hook a module can use and exists for
-     *     consistency with the add_module hook.
-     *
-     * rewrite_command:
-     *     Called right after a configuration directive line was read and
-     *     before it is processed. It is mainly intended to be used for
-     *     rewriting directives in order to provide backward compatibility to
-     *     old directive variants.
-     *
-     * new_connection:
-     *     Called from within the internal new_connection() function, right
-     *     after the conn_rec structure for the new established connection was
-     *     created and before Apache starts processing the request with
-     *     ap_read_request().  It is mainly intended to be used to setup/run
-     *     connection dependent things like sending start headers for
-     *     on-the-fly compression, etc.
-     *
-     * close_connection:
-     *     Called from within the Apache dispatching loop just before any
-     *     ap_bclose() is performed on the socket connection, but a long time
-     *     before any pool cleanups are done for the connection (which can be
-     *     too late for some applications).  It is mainly intended to be used
-     *     to close/finalize connection dependent things like sending end
-     *     headers for on-the-fly compression, etc.
-     */
-    void  (*add_module) (struct module_struct *);
-    void  (*remove_module) (struct module_struct *);
-    char *(*rewrite_command) (cmd_parms *, void *config, const char *);
-    void  (*new_connection) (conn_rec *);
-    void  (*close_connection) (conn_rec *);
+	/*
+	* ANSI C guarantees us that we can at least extend the module structure
+	* with additional hooks without the need to change all existing modules.
+	* Because: ``If there are fewer initializers in the list than members of
+	* the structure, the trailing members are initialized with 0.'' (The C
+	* Programming Language, 2nd Ed., A8.7 Initialization). So we just
+	* have to put our additional hooks here:
+	*
+	* add_module:
+	*     Called from within ap_add_module() right after the module
+	*     structure was linked into the Apache internal module list.
+	*     It is mainly intended to be used to define configuration defines
+	*     (<IfDefine>) which have to be available directly after a
+	*     LoadModule/AddModule. Actually this is the earliest possible
+	*     hook a module can use.
+	*
+	* remove_module:
+	*     Called from within ap_remove_module() right before the module
+	*     structure is kicked out from the Apache internal module list.
+	*     Actually this is last possible hook a module can use and exists
+	*     for consistency with the add_module hook.
+	*
+	* rewrite_command:
+	*     Called right after a configuration directive line was read and
+	*     before it is processed. It is mainly intended to be used for
+	*     rewriting directives in order to provide backward compatibility to
+	*     old directive variants.
+	*
+	* new_connection:
+	*     Called from within the internal new_connection() function, right
+	*     after the conn_rec structure for the new established connection
+	*     was created and before Apache starts processing the request with
+	*     ap_read_request().  It is mainly intended to be used to setup/run
+	*     connection dependent things like sending start headers for
+	*     on-the-fly compression, etc.
+	*
+	* close_connection:
+	*     Called from within the Apache dispatching loop just before any
+	*     ap_bclose() is performed on the socket connection, but a long time
+	*     before any pool cleanups are done for the connection (which can be
+	*     too late for some applications).  It is mainly intended to be used
+	*     to close/finalize connection dependent things like sending end
+	*     headers for on-the-fly compression, etc.
+	*/
+	void  (*add_module) (struct module_struct *);
+	void  (*remove_module) (struct module_struct *);
+	char *(*rewrite_command) (cmd_parms *, void *config, const char *);
+	void  (*new_connection) (conn_rec *);
+	void  (*close_connection) (conn_rec *);
 } module;
 
 /* Initializer for the first few module slots, which are only
@@ -347,7 +351,8 @@ API_EXPORT(void) ap_set_module_config(void *conf_vector, module *m, void *val);
 /* Generic command handling function... */
 
 API_EXPORT_NONSTD(const char *) ap_set_string_slot(cmd_parms *, char *, char *);
-API_EXPORT_NONSTD(const char *) ap_set_string_slot_lower(cmd_parms *, char *, char *);
+API_EXPORT_NONSTD(const char *) ap_set_string_slot_lower(cmd_parms *, char *,
+    char *);
 API_EXPORT_NONSTD(const char *) ap_set_flag_slot(cmd_parms *, char *, int);
 API_EXPORT_NONSTD(const char *) ap_set_file_slot(cmd_parms *, char *, char *);
 
@@ -386,7 +391,8 @@ API_EXPORT(void) ap_single_module_configure(pool *p, server_rec *s, module *m);
 
 /* For http_main.c... */
 
-API_EXPORT(server_rec *) ap_read_config(pool *conf_pool, pool *temp_pool, char *config_name);
+API_EXPORT(server_rec *) ap_read_config(pool *conf_pool, pool *temp_pool,
+    char *config_name);
 API_EXPORT(void) ap_init_modules(pool *p, server_rec *s);
 API_EXPORT(void) ap_child_init_modules(pool *p, server_rec *s);
 API_EXPORT(void) ap_child_exit_modules(pool *p, server_rec *s);
@@ -404,14 +410,16 @@ CORE_EXPORT(void *) ap_merge_per_dir_configs(pool *p, void *base, void *new);
 /* For http_core.c... (<Directory> command and virtual hosts) */
 
 CORE_EXPORT(int) ap_parse_htaccess(void **result, request_rec *r, int override,
-		const char *path, const char *access_name);
+    const char *path, const char *access_name);
 
 CORE_EXPORT(const char *) ap_init_virtual_host(pool *p, const char *hostname,
-				server_rec *main_server, server_rec **);
-CORE_EXPORT(void) ap_process_resource_config(server_rec *s, char *fname, pool *p, pool *ptemp);
+    server_rec *main_server, server_rec **);
+CORE_EXPORT(void) ap_process_resource_config(server_rec *s, char *fname,
+    pool *p, pool *ptemp);
 
 /* ap_check_cmd_context() definitions: */
-API_EXPORT(const char *) ap_check_cmd_context(cmd_parms *cmd, unsigned forbidden);
+API_EXPORT(const char *) ap_check_cmd_context(cmd_parms *cmd,
+    unsigned forbidden);
 
 /* ap_check_cmd_context():              Forbidden in: */
 #define  NOT_IN_VIRTUALHOST     0x01 /* <Virtualhost> */
@@ -420,17 +428,22 @@ API_EXPORT(const char *) ap_check_cmd_context(cmd_parms *cmd, unsigned forbidden
 #define  NOT_IN_LOCATION        0x08 /* <Location> */
 #define  NOT_IN_FILES           0x10 /* <Files> */
 #define  NOT_IN_DIR_LOC_FILE    (NOT_IN_DIRECTORY|NOT_IN_LOCATION|NOT_IN_FILES) /* <Directory>/<Location>/<Files>*/
-#define  GLOBAL_ONLY            (NOT_IN_VIRTUALHOST|NOT_IN_LIMIT|NOT_IN_DIR_LOC_FILE)
+#define  GLOBAL_ONLY      (NOT_IN_VIRTUALHOST|NOT_IN_LIMIT|NOT_IN_DIR_LOC_FILE)
 
 
 /* Module-method dispatchers, also for http_request.c */
 
 API_EXPORT(int) ap_translate_name(request_rec *);
-API_EXPORT(int) ap_check_access(request_rec *);	/* check access on non-auth basis */
-API_EXPORT(int) ap_check_user_id(request_rec *);	/* obtain valid username from client auth */
-API_EXPORT(int) ap_check_auth(request_rec *);	/* check (validated) user is authorized here */
-API_EXPORT(int) ap_find_types(request_rec *);	/* identify MIME type */
-API_EXPORT(int) ap_run_fixups(request_rec *);	/* poke around for other metainfo, etc.... */
+/* check access on non-auth basis */
+API_EXPORT(int) ap_check_access(request_rec *);
+/* obtain valid username from client auth */
+API_EXPORT(int) ap_check_user_id(request_rec *);
+/* check (validated) user is authorized here */
+API_EXPORT(int) ap_check_auth(request_rec *);
+/* identify MIME type */
+API_EXPORT(int) ap_find_types(request_rec *);
+/* poke around for other metainfo, etc.... */
+API_EXPORT(int) ap_run_fixups(request_rec *);
 API_EXPORT(int) ap_invoke_handler(request_rec *);
 API_EXPORT(int) ap_log_transaction(request_rec *r);
 API_EXPORT(int) ap_header_parse(request_rec *);
@@ -438,10 +451,14 @@ API_EXPORT(int) ap_run_post_read_request(request_rec *);
 
 /* for mod_perl */
 
-CORE_EXPORT(const command_rec *) ap_find_command(const char *name, const command_rec *cmds);
-CORE_EXPORT(const command_rec *) ap_find_command_in_modules(const char *cmd_name, module **mod);
-CORE_EXPORT(void *) ap_set_config_vectors(cmd_parms *parms, void *config, module *mod);
-CORE_EXPORT(const char *) ap_handle_command(cmd_parms *parms, void *config, const char *l);
+CORE_EXPORT(const command_rec *) ap_find_command(const char *name,
+    const command_rec *cmds);
+CORE_EXPORT(const command_rec *) ap_find_command_in_modules(const char
+    *cmd_name, module **mod);
+CORE_EXPORT(void *) ap_set_config_vectors(cmd_parms *parms, void *config,
+    module *mod);
+CORE_EXPORT(const char *) ap_handle_command(cmd_parms *parms, void *config,
+    const char *l);
 
 #endif
 

@@ -1,3 +1,5 @@
+/* $OpenBSD: buff.h,v 1.12 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -92,33 +94,32 @@ extern "C" {
 typedef struct buff_struct BUFF;
 
 struct buff_struct {
-    int flags;			/* flags */
-    unsigned char *inptr;	/* pointer to next location to read */
-    int incnt;			/* number of bytes left to read from input buffer;
+	int flags;			/* flags */
+	unsigned char *inptr;	/* pointer to next location to read */
+	int incnt;		/* number of bytes left to read from input buffer;
 				 * always 0 if had a read error  */
-    int outchunk;		/* location of chunk header when chunking */
-    int outcnt;			/* number of byte put in output buffer */
-    unsigned char *inbase;
-    unsigned char *outbase;
-    int bufsiz;
-    void (*error) (BUFF *fb, int op, void *data);
-    void *error_data;
-    long int bytes_sent;	/* number of bytes actually written */
+	int outchunk;		/* location of chunk header when chunking */
+	int outcnt;		/* number of byte put in output buffer */
+	unsigned char *inbase;
+	unsigned char *outbase;
+	int bufsiz;
+	void (*error) (BUFF *fb, int op, void *data);
+	void *error_data;
+	long int bytes_sent;	/* number of bytes actually written */
 
-    ap_pool *pool;
+	ap_pool *pool;
 
-/* could also put pointers to the basic I/O routines here */
-    int fd;			/* the file descriptor */
-    int fd_in;			/* input file descriptor, if different */
+	/* could also put pointers to the basic I/O routines here */
+	int fd;			/* the file descriptor */
+	int fd_in;		/* input file descriptor, if different */
 
-    /* transport handle, for RPC binding handle or some such */
-    void *t_handle;
+	/* transport handle, for RPC binding handle or some such */
+	void *t_handle;
 
-    ap_ctx *ctx;
+	ap_ctx *ctx;
 
-    void *callback_data;
-    void (*filter_callback)(BUFF *, const void *, int );
-	
+	void *callback_data;
+	void (*filter_callback)(BUFF *, const void *, int );
 };
 
 /* Options to bset/getopt */
@@ -175,8 +176,7 @@ struct child_info {
     int dummy;
 };
 API_EXPORT(int) ap_bspawn_child(pool *, int (*)(void *, child_info *), void *,
-					enum kill_conditions, BUFF **pipe_in, BUFF **pipe_out,
-					BUFF **pipe_err);
+    enum kill_conditions, BUFF **pipe_in, BUFF **pipe_out, BUFF **pipe_err);
 
 /* enable non-blocking operations */
 API_EXPORT(int) ap_bnonblock(BUFF *fb, int direction);

@@ -1,32 +1,4 @@
-/*
- * This is work is derived from material Copyright RSA Data Security, Inc.
- *
- * The RSA copyright statement and Licence for that original material is
- * included below. This is followed by the Apache copyright statement and
- * licence for the modifications made to that material.
- */
-
-/* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
-   rights reserved.
-
-   License to copy and use this software is granted provided that it
-   is identified as the "RSA Data Security, Inc. MD5 Message-Digest
-   Algorithm" in all material mentioning or referencing this software
-   or this function.
-
-   License is also granted to make and use derivative works provided
-   that such works are identified as "derived from the RSA Data
-   Security, Inc. MD5 Message-Digest Algorithm" in all material
-   mentioning or referencing the derived work.
-
-   RSA Data Security, Inc. makes no representations concerning either
-   the merchantability of this software or the suitability of this
-   software for any particular purpose. It is provided "as is"
-   without express or implied warranty of any kind.
-
-   These notices must be retained in any copies of any part of this
-   documentation and/or software.
- */
+/* $OpenBSD: ap_md5.h,v 1.9 2005/03/28 23:26:51 niallo Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -110,12 +82,11 @@ typedef unsigned int UINT4;
 
 API_EXPORT(void) ap_MD5Init(AP_MD5_CTX *context);
 API_EXPORT(void) ap_MD5Update(AP_MD5_CTX *context, const unsigned char *input,
-			      unsigned int inputLen);
+    unsigned int inputLen);
 API_EXPORT(void) ap_MD5Final(unsigned char digest[MD5_DIGESTSIZE],
-			     AP_MD5_CTX *context);
+    AP_MD5_CTX *context);
 API_EXPORT(void) ap_MD5Encode(const unsigned char *password,
-			      const unsigned char *salt,
-			      char *result, size_t nbytes);
+    const unsigned char *salt, char *result, size_t nbytes);
 API_EXPORT(void) ap_to64(char *s, unsigned long v, int n);
 
 #ifdef __cplusplus

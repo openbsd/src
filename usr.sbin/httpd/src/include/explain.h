@@ -1,3 +1,4 @@
+/* $OpenBSD: explain.h,v 1.2 2005/03/28 23:26:51 niallo Exp $ */
 
 #ifdef __cplusplus
 extern "C" {

@@ -1,3 +1,5 @@
+/* $OpenBSD: ap_alloc.h,v 1.8 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -80,16 +82,16 @@ extern "C" {
  */
 
 /* Arenas for configuration info and transaction info
- * --- actual layout of the pool structure is private to 
- * alloc.c.  
+ * --- actual layout of the pool structure is private to
+ * alloc.c.
  */
 
 typedef struct pool pool;
 typedef struct pool ap_pool;
 
-API_EXPORT(pool *) ap_init_alloc(void);		/* Set up everything */
+API_EXPORT(pool *) ap_init_alloc(void);         /* Set up everything */
 void ap_cleanup_alloc(void);
-API_EXPORT(pool *) ap_make_sub_pool(pool *);	/* All pools are subpools of permanent_pool */
+API_EXPORT(pool *) ap_make_sub_pool(pool *);    /* All pools are subpools of permanent_pool */
 typedef enum { AP_POOL_RD, AP_POOL_RW } ap_pool_lock_mode;
 int ap_shared_pool_possible(void);
 void ap_init_alloc_shared(int);
@@ -164,7 +166,8 @@ API_EXPORT(void *) ap_pcalloc(struct pool *, int nbytes);
 API_EXPORT(char *) ap_pstrdup(struct pool *, const char *s);
 /* make a nul terminated copy of the n characters starting with s */
 API_EXPORT(char *) ap_pstrndup(struct pool *, const char *s, int n);
-API_EXPORT_NONSTD(char *) ap_pstrcat(struct pool *,...);	/* all '...' must be char* */
+API_EXPORT_NONSTD(char *) ap_pstrcat(struct pool *,...);
+/* all '...' must be char* */
 API_EXPORT_NONSTD(char *) ap_psprintf(struct pool *, const char *fmt, ...)
     __attribute__((format(printf,2,3)));
 API_EXPORT(char *) ap_pvsprintf(struct pool *, const char *fmt, va_list);
@@ -174,18 +177,18 @@ API_EXPORT(char *) ap_pvsprintf(struct pool *, const char *fmt, va_list);
  */
 
 typedef struct {
-    ap_pool *pool;
-    int elt_size;
-    int nelts;
-    int nalloc;
-    char *elts;
+	ap_pool *pool;
+	int elt_size;
+	int nelts;
+	int nalloc;
+	char *elts;
 } array_header;
 
 API_EXPORT(array_header *) ap_make_array(pool *p, int nelts, int elt_size);
 API_EXPORT(void *) ap_push_array(array_header *);
 API_EXPORT(void) ap_array_cat(array_header *dst, const array_header *src);
 API_EXPORT(array_header *) ap_append_arrays(pool *, const array_header *,
-					 const array_header *);
+    const array_header *);
 
 /* ap_array_pstrcat generates a new string from the pool containing
  * the concatenated sequence of substrings referenced as elements within
@@ -194,7 +197,7 @@ API_EXPORT(array_header *) ap_append_arrays(pool *, const array_header *,
  * If sep is non-NUL, it will be inserted between elements as a separator.
  */
 API_EXPORT(char *) ap_array_pstrcat(pool *p, const array_header *arr,
-                                    const char sep);
+    const char sep);
 
 /* copy_array copies the *entire* array.  copy_array_hdr just copies
  * the header, and arranges for the elements to be copied if (and only
@@ -217,10 +220,10 @@ API_EXPORT(array_header *) ap_copy_array_hdr(pool *p, const array_header *src);
 typedef struct table table;
 
 typedef struct {
-    char *key;		/* maybe NULL in future;
+	char *key;      /* maybe NULL in future;
 			 * check when iterating thru table_elts
 			 */
-    char *val;
+	char *val;
 } table_entry;
 
 API_EXPORT(table *) ap_make_table(pool *p, int nelts);
@@ -229,15 +232,18 @@ API_EXPORT(void) ap_clear_table(table *);
 API_EXPORT(const char *) ap_table_get(const table *, const char *);
 API_EXPORT(void) ap_table_set(table *, const char *name, const char *val);
 API_EXPORT(void) ap_table_setn(table *, const char *name, const char *val);
-API_EXPORT(void) ap_table_merge(table *, const char *name, const char *more_val);
-API_EXPORT(void) ap_table_mergen(table *, const char *name, const char *more_val);
+API_EXPORT(void) ap_table_merge(table *, const char *name,
+    const char *more_val);
+API_EXPORT(void) ap_table_mergen(table *, const char *name,
+    const char *more_val);
 API_EXPORT(void) ap_table_unset(table *, const char *key);
 API_EXPORT(void) ap_table_add(table *, const char *name, const char *val);
 API_EXPORT(void) ap_table_addn(table *, const char *name, const char *val);
-API_EXPORT_NONSTD(void) ap_table_do(int (*comp) (void *, const char *, const char *), 
-                                    void *rec, const table *t,...);
+API_EXPORT_NONSTD(void) ap_table_do(int (*comp) (void *, const char *,
+    const char *), void *rec, const table *t,...);
 
-API_EXPORT(table *) ap_overlay_tables(pool *p, const table *overlay, const table *base);
+API_EXPORT(table *) ap_overlay_tables(pool *p, const table *overlay,
+    const table *base);
 
 /* Conceptually, ap_overlap_tables does this:
 
@@ -246,12 +252,12 @@ API_EXPORT(table *) ap_overlay_tables(pool *p, const table *overlay, const table
     int i;
 
     for (i = 0; i < barr->nelts; ++i) {
-	if (flags & AP_OVERLAP_TABLES_MERGE) {
-	    ap_table_mergen(a, belt[i].key, belt[i].val);
-	}
-	else {
-	    ap_table_setn(a, belt[i].key, belt[i].val);
-	}
+        if (flags & AP_OVERLAP_TABLES_MERGE) {
+            ap_table_mergen(a, belt[i].key, belt[i].val);
+        }
+        else {
+            ap_table_setn(a, belt[i].key, belt[i].val);
+        }
     }
 
     Except that it is more efficient (less space and cpu-time) especially
@@ -271,7 +277,8 @@ API_EXPORT(void) ap_overlap_tables(table *a, const table *b, unsigned flags);
  * written which assume that a table is the same as an array_header. -djg
  */
 #define ap_table_elts(t) ((array_header *)(t))
-#define ap_is_empty_table(t) (((t) == NULL)||(((array_header *)(t))->nelts == 0))
+#define ap_is_empty_table(t) \
+    (((t) == NULL)||(((array_header *)(t))->nelts == 0))
 
 /* routines to remember allocation of other sorts of things...
  * generic interface first.  Note that we want to have two separate
@@ -279,7 +286,7 @@ API_EXPORT(void) ap_overlap_tables(table *a, const table *b, unsigned flags);
  * to keep CGI scripts and the like from inheriting access to things
  * they shouldn't be able to touch, and one for actually cleaning up,
  * when the actual server process wants to get rid of the thing,
- * whatever it is.  
+ * whatever it is.
  *
  * kill_cleanup disarms a cleanup, presumably because the resource in
  * question has been closed, freed, or whatever, and it's scarce
@@ -300,15 +307,15 @@ API_EXPORT(void) ap_overlap_tables(table *a, const table *b, unsigned flags);
  */
 
 API_EXPORT(void) ap_register_cleanup(pool *p, void *data,
-				     void (*plain_cleanup) (void *),
-				     void (*child_cleanup) (void *));
+    void (*plain_cleanup) (void *), void (*child_cleanup) (void *));
 API_EXPORT(void) ap_register_cleanup_ex(pool *p, void *data,
-				      void (*plain_cleanup) (void *),
-				      void (*child_cleanup) (void *),
-				      int (*magic_cleanup) (void *));
+    void (*plain_cleanup) (void *), void (*child_cleanup) (void *),
+    int (*magic_cleanup) (void *));
 
-API_EXPORT(void) ap_kill_cleanup(pool *p, void *data, void (*plain_cleanup) (void *));
-API_EXPORT(void) ap_run_cleanup(pool *p, void *data, void (*cleanup) (void *));
+API_EXPORT(void) ap_kill_cleanup(pool *p, void *data,
+    void (*plain_cleanup) (void *));
+API_EXPORT(void) ap_run_cleanup(pool *p, void *data,
+    void (*cleanup) (void *));
 
 /* A "do-nothing" cleanup, for register_cleanup; it's faster to do
  * things this way than to test for NULL. */
@@ -331,11 +338,13 @@ API_EXPORT(void) ap_unblock_alarms(void);
  * the note_cleanups_for_foo routines are for 
  */
 
-API_EXPORT(FILE *) ap_pfopen(struct pool *, const char *name, const char *fmode);
-API_EXPORT(FILE *) ap_pfdopen(struct pool *, int fd, const char *fmode);
+API_EXPORT(FILE *) ap_pfopen(struct pool *, const char *name,
+    const char *fmode);
+API_EXPORT(FILE *) ap_pfdopen(struct pool *, int fd,
+    const char *fmode);
 API_EXPORT(int) ap_popenf(struct pool *, const char *name, int flg, int mode);
-API_EXPORT(int) ap_popenf_ex(struct pool *, const char *name, int flg,
-                             int mode, int domagic);
+API_EXPORT(int) ap_popenf_ex(struct pool *, const char *name, int flg, int mode,
+    int domagic);
 
 API_EXPORT(void) ap_note_cleanups_for_file(pool *, FILE *);
 API_EXPORT(void) ap_note_cleanups_for_file_ex(pool *, FILE *, int);
@@ -375,20 +384,19 @@ API_EXPORT(void) ap_pclosedir(pool *p, DIR * d);
  */
 
 enum kill_conditions {
-    kill_never,			/* process is never sent any signals */
-    kill_always,		/* process is sent SIGKILL on pool cleanup */
-    kill_after_timeout,		/* SIGTERM, wait 3 seconds, SIGKILL */
-    just_wait,			/* wait forever for the process to complete */
-    kill_only_once		/* send SIGTERM and then wait */
+	kill_never,             /* process is never sent any signals */
+	kill_always,            /* process is sent SIGKILL on pool cleanup */
+	kill_after_timeout,     /* SIGTERM, wait 3 seconds, SIGKILL */
+	just_wait,              /* wait forever for the process to complete */
+	kill_only_once          /* send SIGTERM and then wait */
 };
 
 typedef struct child_info child_info;
 API_EXPORT(void) ap_note_subprocess(pool *a, pid_t pid,
-				    enum kill_conditions how);
+    enum kill_conditions how);
 API_EXPORT(int) ap_spawn_child(pool *, int (*)(void *, child_info *),
-				   void *, enum kill_conditions,
-				   FILE **pipe_in, FILE **pipe_out,
-				   FILE **pipe_err);
+   void *, enum kill_conditions, FILE **pipe_in, FILE **pipe_out,
+   FILE **pipe_err);
 int ap_close_fd_on_exec(int fd);
 
 /* magic numbers --- min free bytes to consider a free pool block useable,

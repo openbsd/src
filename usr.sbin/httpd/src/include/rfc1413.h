@@ -1,3 +1,5 @@
+/* $OpenBSD: rfc1413.h,v 1.7 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -69,4 +71,4 @@ API_EXPORT(extern char *) ap_rfc1413(conn_rec *conn, server_rec *srv);
 }
 #endif
 
-#endif	/* !APACHE_RFC1413_H */
+#endif /* !APACHE_RFC1413_H */

@@ -1,3 +1,5 @@
+/* $OpenBSD: ap_ebcdic.h,v 1.4 2005/03/28 23:26:51 niallo Exp $ */
+
 /* ====================================================================
  * The Apache Software License, Version 1.1
  *
@@ -53,7 +55,7 @@
  */
 
 #ifndef AP_EBCDIC_H
-#define AP_EBCDIC_H  "$Id: ap_ebcdic.h,v 1.3 2003/08/21 13:11:35 henning Exp $"
+#define AP_EBCDIC_H  "$Id: ap_ebcdic.h,v 1.4 2005/03/28 23:26:51 niallo Exp $"
 
 #include <sys/types.h>
 
