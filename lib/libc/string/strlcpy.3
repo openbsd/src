@@ -1,4 +1,4 @@
-.\" $OpenBSD: strlcpy.3,v 1.1 1998/07/01 01:29:45 millert Exp $
+.\" $OpenBSD: strlcpy.3,v 1.2 1998/07/06 19:17:21 millert Exp $
 .\"
 .\" Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -34,9 +34,9 @@
 .Nd size-bounded string copying and concatenation
 .Sh SYNOPSIS
 .Fd #include <string.h>
-.Ft char *
+.Ft size_t
 .Fn strlcpy "char *dst" "const char *src" "size_t size"
-.Ft char *
+.Ft size_t
 .Fn strlcat "char *dst" "const char *src" "size_t size"
 .Sh DESCRIPTION
 The
