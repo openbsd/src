@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_clock.c,v 1.14 1997/01/25 23:31:47 tholo Exp $	*/
+/*	$OpenBSD: kern_clock.c,v 1.15 1997/01/25 23:35:58 tholo Exp $	*/
 /*	$NetBSD: kern_clock.c,v 1.34 1996/06/09 04:51:03 briggs Exp $	*/
 
 /*-
@@ -284,7 +284,7 @@ static int psdiv, pscnt;		/* prof => stat divider */
 int	psratio;			/* ratio: prof / stat */
 int	tickfix, tickfixinterval;	/* used if tick not really integral */
 #ifndef NTP
-static int tickfixcnt;			/* number of ticks since last fix */
+static int tickfixcnt;			/* accumulated fractional error */
 #else
 int	fixtick;			/* used by NTP for same */
 int	shifthz;
@@ -415,10 +415,10 @@ hardclock(frame)
 
 #ifndef NTP
 	if (tickfix) {
-		tickfixcnt++;
+		tickfixcnt += tickfix;
 		if (tickfixcnt >= tickfixinterval) {
-			delta += tickfix;
-			tickfixcnt = 0;
+			delta++;
+			tickfixcnt -= tickfixinterval;
 		}
 	}
 #else
