@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.3 2001/10/09 21:16:20 nate Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.4 2001/12/24 18:30:43 mickey Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -36,7 +36,7 @@
 
 /*
  * Broadcom BCM570x family gigabit ethernet driver for FreeBSD.
- * 
+ *
  * Written by Bill Paul <wpaul@windriver.com>
  * Senior Engineer, Wind River Systems
  */
@@ -56,7 +56,7 @@
  *
  * The BCM5700 supports the PCI v2.2 and PCI-X v1.0 standards, and will
  * function in a 32-bit/64-bit 33/66Mhz bus, or a 64-bit/133Mhz bus.
- * 
+ *
  * The BCM5701 is a single-chip solution incorporating both the BCM5700
  * MAC and a BCM5401 10/100/1000 PHY. Unlike the BCM5700, the BCM5700
  * does not support external SSRAM.
@@ -295,8 +295,8 @@ bge_vpd_read(sc)
 	if (res.vr_id != VPD_RES_ID) {
 		printf("%s: bad VPD resource id: expected %x got %x\n",
 			sc->bge_dev.dv_xname, VPD_RES_ID, res.vr_id);
-                return;
-        }
+		return;
+	}
 
 	pos += sizeof(res);
 	sc->bge_vpd_prodname = malloc(res.vr_len + 1, M_DEVBUF, M_NOWAIT);
@@ -309,7 +309,7 @@ bge_vpd_read(sc)
 
 	if (res.vr_id != VPD_RES_READ) {
 		printf("%s: bad VPD resource id: expected %x got %x\n",
-		       sc->bge_dev.dv_xname, VPD_RES_READ, res.vr_id);
+		    sc->bge_dev.dv_xname, VPD_RES_READ, res.vr_id);
 		return;
 	}
 
@@ -363,7 +363,7 @@ bge_eeprom_getbyte(sc, addr, dest)
 	/* Get result. */
 	byte = CSR_READ_4(sc, BGE_EE_DATA);
 
-        *dest = (byte >> ((addr % 4) * 8)) & 0xFF;
+	*dest = (byte >> ((addr % 4) * 8)) & 0xFF;
 
 	return(0);
 }
@@ -508,12 +508,12 @@ bge_alloc_jumbo_mem(sc)
 	if (bus_dmamem_map(sc->bge_dmatag, &seg, rseg, BGE_JMEM, &kva,
 			   BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
-		       sc->bge_dev.dv_xname, BGE_JMEM);
+		    sc->bge_dev.dv_xname, BGE_JMEM);
 		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
 		return (ENOBUFS);
 	}
 	if (bus_dmamap_create(sc->bge_dmatag, BGE_JMEM, 1, BGE_JMEM, 0,
-			      BUS_DMA_NOWAIT, &sc->bge_cdata.bge_rx_jumbo_map)) {
+	    BUS_DMA_NOWAIT, &sc->bge_cdata.bge_rx_jumbo_map)) {
 		printf("%s: can't create dma map\n", sc->bge_dev.dv_xname);
 		bus_dmamem_unmap(sc->bge_dmatag, kva, BGE_JMEM);
 		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
@@ -527,7 +527,7 @@ bge_alloc_jumbo_mem(sc)
 		bus_dmamem_unmap(sc->bge_dmatag, kva, BGE_JMEM);
 		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
 		return (ENOBUFS);
-        }
+	}
 	sc->bge_cdata.bge_jumbo_buf = (caddr_t)kva;
 	DPRINTFN(1,("bge_jumbo_buf = 0x%08X\n", sc->bge_cdata.bge_jumbo_buf));
 
@@ -542,8 +542,8 @@ bge_alloc_jumbo_mem(sc)
 	for (i = 0; i < BGE_JSLOTS; i++) {
 		sc->bge_cdata.bge_jslots[i] = ptr;
 		ptr += BGE_JLEN;
-		entry = malloc(sizeof(struct bge_jpool_entry), 
-			       M_DEVBUF, M_NOWAIT);
+		entry = malloc(sizeof(struct bge_jpool_entry),
+		    M_DEVBUF, M_NOWAIT);
 		if (entry == NULL) {
 			bus_dmamap_unload(sc->bge_dmatag,
 					  sc->bge_cdata.bge_rx_jumbo_map);
@@ -553,7 +553,7 @@ bge_alloc_jumbo_mem(sc)
 			bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
 			sc->bge_cdata.bge_jumbo_buf = NULL;
 			printf("%s: no memory for jumbo buffer queue!\n",
-			       sc->bge_dev.dv_xname);
+			    sc->bge_dev.dv_xname);
 			return(ENOBUFS);
 		}
 		entry->slot = i;
@@ -572,9 +572,9 @@ bge_jalloc(sc)
 	struct bge_softc		*sc;
 {
 	struct bge_jpool_entry   *entry;
-	
+
 	entry = LIST_FIRST(&sc->bge_jfree_listhead);
-	
+
 	if (entry == NULL) {
 		printf("%s: no free jumbo buffers\n", sc->bge_dev.dv_xname);
 		return(NULL);
@@ -638,14 +638,14 @@ bge_newbuf_std(sc, i, m)
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
 			printf("%s: mbuf allocation failed "
-			       "-- packet dropped!\n", sc->bge_dev.dv_xname);
+			    "-- packet dropped!\n", sc->bge_dev.dv_xname);
 			return(ENOBUFS);
 		}
 
 		MCLGET(m_new, M_DONTWAIT);
 		if (!(m_new->m_flags & M_EXT)) {
 			printf("%s: cluster allocation failed "
-			       "-- packet dropped!\n", sc->bge_dev.dv_xname);
+			    "-- packet dropped!\n", sc->bge_dev.dv_xname);
 			m_freem(m_new);
 			return(ENOBUFS);
 		}
@@ -690,7 +690,7 @@ bge_newbuf_jumbo(sc, i, m)
 		MGETHDR(m_new, M_DONTWAIT, MT_DATA);
 		if (m_new == NULL) {
 			printf("%s: mbuf allocation failed "
-			       "-- packet dropped!\n", sc->bge_dev.dv_xname);
+			    "-- packet dropped!\n", sc->bge_dev.dv_xname);
 			return(ENOBUFS);
 		}
 
@@ -699,7 +699,7 @@ bge_newbuf_jumbo(sc, i, m)
 		if (buf == NULL) {
 			m_freem(m_new);
 			printf("%s: jumbo allocation failed "
-			       "-- packet dropped!\n", sc->bge_dev.dv_xname);
+			    "-- packet dropped!\n", sc->bge_dev.dv_xname);
 			return(ENOBUFS);
 		}
 
@@ -738,9 +738,8 @@ bge_init_rx_ring_std(sc)
 	int i;
 
 	for (i = 0; i < BGE_STD_RX_RING_CNT; i++) {
-		if (bus_dmamap_create(sc->bge_dmatag, MCLBYTES, 1,
-				      MCLBYTES, 0, BUS_DMA_NOWAIT,
-				      &sc->bge_cdata.bge_rx_std_map[i]))
+		if (bus_dmamap_create(sc->bge_dmatag, MCLBYTES, 1, MCLBYTES,
+		    0, BUS_DMA_NOWAIT, &sc->bge_cdata.bge_rx_std_map[i]))
 			return(ENOBUFS);
 	}
 
@@ -780,7 +779,7 @@ bge_init_rx_ring_jumbo(sc)
 	int i;
 	struct bge_rcb *rcb;
 	struct bge_rcb_opaque *rcbo;
-	
+
 	for (i = 0; i < BGE_JUMBO_RX_RING_CNT; i++) {
 		if (bge_newbuf_jumbo(sc, i, NULL) == ENOBUFS)
 			return(ENOBUFS);
@@ -848,8 +847,7 @@ bge_init_tx_ring(sc)
 
 	for (i = 0; i < BGE_TX_RING_CNT; i++) {
 		if (bus_dmamap_create(sc->bge_dmatag, MCLBYTES, BGE_NTXSEG,
-				      MCLBYTES, 0, BUS_DMA_NOWAIT,
-				      &sc->bge_cdata.bge_tx_map[i]))
+		    MCLBYTES, 0, BUS_DMA_NOWAIT, &sc->bge_cdata.bge_tx_map[i]))
 			return(ENOBUFS);
 	}
 
@@ -882,7 +880,7 @@ bge_setmulti(sc)
 {
 	struct arpcom		*ac = &sc->arpcom;
 	struct ifnet		*ifp = &ac->ac_if;
-	struct ether_multi      *enm;
+	struct ether_multi	*enm;
 	struct ether_multistep  step;
 	u_int32_t		hashes[4] = { 0, 0, 0, 0 };
 	u_int32_t		h;
@@ -930,10 +928,10 @@ bge_chipinit(sc)
 	/* Set endianness before we access any non-PCI registers. */
 #if BYTE_ORDER == BIG_ENDIAN
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
-		       BGE_BIGENDIAN_INIT);
+	    BGE_BIGENDIAN_INIT);
 #else
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
-		       BGE_LITTLEENDIAN_INIT);
+	    BGE_LITTLEENDIAN_INIT);
 #endif
 
 	/*
@@ -942,7 +940,7 @@ bge_chipinit(sc)
 	 */
 	if (CSR_READ_4(sc, BGE_RXCPU_MODE) & BGE_RXCPUMODE_ROMFAIL) {
 		printf("%s: RX CPU self-diagnostics failed!\n",
-		       sc->bge_dev.dv_xname);
+		    sc->bge_dev.dv_xname);
 		return(ENODEV);
 	}
 
@@ -963,7 +961,7 @@ bge_chipinit(sc)
 
 	/* Set up the PCI DMA control register. */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_DMA_RW_CTL,
-		       BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD|0x0F);
+	    BGE_PCI_READ_CMD|BGE_PCI_WRITE_CMD|0x0F);
 
 	/*
 	 * Set up general mode register.
@@ -978,8 +976,8 @@ bge_chipinit(sc)
 		    BGE_MODECTL_BYTESWAP_DATA|BGE_MODECTL_WORDSWAP_DATA|
 		    BGE_MODECTL_MAC_ATTN_INTR|BGE_MODECTL_HOST_SEND_BDS|
 		    BGE_MODECTL_NO_RX_CRC
-//		    |BGE_MODECTL_TX_NO_PHDR_CSUM|
-//		    BGE_MODECTL_RX_NO_PHDR_CSUM
+/*		    |BGE_MODECTL_TX_NO_PHDR_CSUM| */
+/*		    BGE_MODECTL_RX_NO_PHDR_CSUM */
 );
 #endif
 
@@ -1025,8 +1023,8 @@ bge_chipinit(sc)
 #if 0
 			if (bootverbose)
 				printf("%s: cache line size %d not "
-				       "supported; disabling PCI MWI\n",
-				       sc->bge_dev.dv_xname, cachesize);
+				    "supported; disabling PCI MWI\n",
+				    sc->bge_dev.dv_xname, cachesize);
 #endif
 			PCI_CLRBIT(pa->pa_pc, pa->pa_tag, BGE_PCI_CMD,
 			    PCIM_CMD_MWIEN);
@@ -1037,9 +1035,9 @@ bge_chipinit(sc)
 #ifdef __brokenalpha__
 	/*
 	 * Must insure that we do not cross an 8K (bytes) boundary
-	 * for DMA reads.  Our highest limit is 1K bytes.  This is a 
-	 * restriction on some ALPHA platforms with early revision 
-	 * 21174 PCI chipsets, such as the AlphaPC 164lx 
+	 * for DMA reads.  Our highest limit is 1K bytes.  This is a
+	 * restriction on some ALPHA platforms with early revision
+	 * 21174 PCI chipsets, such as the AlphaPC 164lx
 	 */
 	PCI_SETBIT(sc, BGE_PCI_DMA_RW_CTL, BGE_PCI_READ_BNDRY_1024, 4);
 #endif
@@ -1102,7 +1100,7 @@ bge_blockinit(sc)
 
 	if (i == BGE_TIMEOUT) {
 		printf("%s: buffer manager failed to start\n",
-		       sc->bge_dev.dv_xname);
+		    sc->bge_dev.dv_xname);
 		return(ENXIO);
 	}
 
@@ -1119,7 +1117,7 @@ bge_blockinit(sc)
 
 	if (i == BGE_TIMEOUT) {
 		printf("%s: flow-through queue init failed\n",
-		       sc->bge_dev.dv_xname);
+		    sc->bge_dev.dv_xname);
 		return(ENXIO);
 	}
 
@@ -1189,7 +1187,7 @@ bge_blockinit(sc)
 		RCB_WRITE_4(sc, rcb_addr, bge_nicaddr, 0);
 		rcb_addr += sizeof(struct bge_rcb);
 	}
-	
+
 	/* Configure TX RCB 0 (we use only the first ring) */
 	rcb_addr = BGE_MEMWIN_START + BGE_SEND_RING_RCB;
 	RCB_WRITE_4(sc, rcb_addr, bge_hostaddr.bge_addr_hi, 0);
@@ -1337,7 +1335,7 @@ bge_blockinit(sc)
 	/* Turn on write DMA state machine */
 	CSR_WRITE_4(sc, BGE_WDMA_MODE,
 	    BGE_WDMAMODE_ENABLE|BGE_WDMAMODE_ALL_ATTNS);
-	
+
 	/* Turn on read DMA state machine */
 	CSR_WRITE_4(sc, BGE_RDMA_MODE,
 	    BGE_RDMAMODE_ENABLE|BGE_RDMAMODE_ALL_ATTNS);
@@ -1472,7 +1470,7 @@ bge_attach(parent, self, aux)
 
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		printf("%s: failed to enable memory mapping!\n",
-		       sc->bge_dev.dv_xname);
+		    sc->bge_dev.dv_xname);
 		error = ENXIO;
 		goto fail;
 	}
@@ -1489,7 +1487,7 @@ bge_attach(parent, self, aux)
 		printf(": can't map mem space\n");
 		goto fail;
 	}
-	
+
 	sc->bge_btag = pa->pa_memt;
 
 	DPRINTFN(5, ("pci_intr_map\n"));
@@ -1503,7 +1501,7 @@ bge_attach(parent, self, aux)
 
 	DPRINTFN(5, ("pci_intr_establish\n"));
 	sc->bge_intrhand = pci_intr_establish(pc, ih, IPL_NET, bge_intr, sc,
-					      sc->bge_dev.dv_xname);
+	    sc->bge_dev.dv_xname);
 
 	if (sc->bge_intrhand == NULL) {
 		printf(": couldn't establish interrupt");
@@ -1520,7 +1518,7 @@ bge_attach(parent, self, aux)
 
 	if (bge_chipinit(sc)) {
 		printf("%s: chip initializatino failed\n",
-		       sc->bge_dev.dv_xname);
+		    sc->bge_dev.dv_xname);
 		bge_release_resources(sc);
 		error = ENXIO;
 		goto fail;
@@ -1541,7 +1539,7 @@ bge_attach(parent, self, aux)
 	 * A Broadcom chip was detected. Inform the world.
 	 */
 	printf(": Ethernet address: %s\n",
-	       ether_sprintf(sc->arpcom.ac_enaddr));
+	    ether_sprintf(sc->arpcom.ac_enaddr));
 
 	/* Allocate the general information block and ring buffers. */
 	sc->bge_dmatag = pa->pa_dmat;
@@ -1556,14 +1554,14 @@ bge_attach(parent, self, aux)
 			   sizeof(struct bge_ring_data), &kva,
 			   BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
-		       sc->bge_dev.dv_xname, sizeof(struct bge_ring_data));
+		    sc->bge_dev.dv_xname, sizeof(struct bge_ring_data));
 		bus_dmamem_free(sc->bge_dmatag, &seg, rseg);
 		goto fail;
 	}
 	DPRINTFN(5, ("bus_dmamem_create\n"));
 	if (bus_dmamap_create(sc->bge_dmatag, sizeof(struct bge_ring_data), 1,
-			      sizeof(struct bge_ring_data), 0,
-			      BUS_DMA_NOWAIT, &sc->bge_ring_map)) {
+	    sizeof(struct bge_ring_data), 0,
+	    BUS_DMA_NOWAIT, &sc->bge_ring_map)) {
 		printf("%s: can't create dma map\n", sc->bge_dev.dv_xname);
 		bus_dmamem_unmap(sc->bge_dmatag, kva,
 				 sizeof(struct bge_ring_data));
@@ -1589,7 +1587,7 @@ bge_attach(parent, self, aux)
 	/* Try to allocate memory for jumbo buffers. */
 	if (bge_alloc_jumbo_mem(sc)) {
 		printf("%s: jumbo buffer allocation failed\n",
-		       sc->bge_dev.dv_xname);
+		    sc->bge_dev.dv_xname);
 		error = ENXIO;
 		goto fail;
 	}
@@ -1636,7 +1634,7 @@ bge_attach(parent, self, aux)
 		     bge_ifmedia_sts);
 	mii_attach(&sc->bge_dev, &sc->bge_mii, 0xffffffff,
 		   MII_PHY_ANY, MII_OFFSET_ANY, 0);
-		
+
 	if (LIST_FIRST(&sc->bge_mii.mii_phys) == NULL) {
 		printf("%s: no PHY found!\n", sc->bge_dev.dv_xname);
 		ifmedia_add(&sc->bge_mii.mii_media, IFM_ETHER|IFM_MANUAL,
@@ -1669,17 +1667,17 @@ bge_release_resources(sc)
 		free(sc->bge_vpd_readonly, M_DEVBUF);
 
 #ifdef fake
-        if (sc->bge_intrhand != NULL)
-                bus_teardown_intr(dev, sc->bge_irq, sc->bge_intrhand);
+	if (sc->bge_intrhand != NULL)
+		bus_teardown_intr(dev, sc->bge_irq, sc->bge_intrhand);
 
-        if (sc->bge_irq != NULL)
+	if (sc->bge_irq != NULL)
 		bus_release_resource(dev, SYS_RES_IRQ, 0, sc->bge_irq);
 
-        if (sc->bge_res != NULL)
+	if (sc->bge_res != NULL)
 		bus_release_resource(dev, SYS_RES_MEMORY,
 		    BGE_PCI_BAR0, sc->bge_res);
 
-        if (sc->bge_rdata != NULL)
+	if (sc->bge_rdata != NULL)
 		contigfree(sc->bge_rdata,
 		    sizeof(struct bge_ring_data), M_DEVBUF);
 #endif
@@ -1699,8 +1697,8 @@ bge_reset(sc)
 	pcistate = pci_conf_read(pa->pa_pc, pa->pa_tag, BGE_PCI_PCISTATE);
 
 	pci_conf_write(pa->pa_pc, pa->pa_tag, BGE_PCI_MISC_CTL,
-	       BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
-	       BGE_PCIMISCCTL_ENDIAN_WORDSWAP|BGE_PCIMISCCTL_PCISTATE_RW);
+	    BGE_PCIMISCCTL_INDIRECT_ACCESS|BGE_PCIMISCCTL_MASK_PCI_INTR|
+	    BGE_PCIMISCCTL_ENDIAN_WORDSWAP|BGE_PCIMISCCTL_PCISTATE_RW);
 
 	/* Issue global reset */
 	bge_writereg_ind(sc, BGE_MISC_CFG,
@@ -1733,10 +1731,10 @@ bge_reset(sc)
 			break;
 		DELAY(10);
 	}
-	
+
 	if (i == BGE_TIMEOUT) {
 		printf("%s: firmware handshake timed out\n",
-		       sc->bge_dev.dv_xname);
+		    sc->bge_dev.dv_xname);
 		return;
 	}
 
@@ -1795,7 +1793,7 @@ bge_rxeof(sc)
 		int			have_tag = 0;
 #endif
 #ifdef BGE_CHECKSUM
-		int                     sumflags = 0;
+		int			sumflags = 0;
 #endif
 
 		cur_rx = &sc->bge_rdata->
@@ -1853,8 +1851,8 @@ bge_rxeof(sc)
 
 #if NBPFILTER > 0
 		/*
-	 	 * Handle BPF listeners. Let the BPF user see the packet.
-	 	 */
+		 * Handle BPF listeners. Let the BPF user see the packet.
+		 */
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
@@ -2016,14 +2014,13 @@ bge_tick(xsc)
 	}
 
 	mii_tick(mii);
- 
+
 	if (!sc->bge_link && mii->mii_media_status & IFM_ACTIVE &&
 	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 		sc->bge_link++;
 		if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_TX ||
 		    IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_SX)
-			printf("%s: gigabit link up\n",
-			       sc->bge_dev.dv_xname);
+			printf("%s: gigabit link up\n", sc->bge_dev.dv_xname);
 		if (ifp->if_snd.ifq_head != NULL)
 			bge_start(ifp);
 	}
@@ -2044,7 +2041,7 @@ bge_stats_update(sc)
 	ifp->if_collisions +=
 	  (READ_STAT(sc, stats, dot3StatsSingleCollisionFrames.bge_addr_lo) +
 	   READ_STAT(sc, stats, dot3StatsMultipleCollisionFrames.bge_addr_lo) +
-	   READ_STAT(sc, stats, dot3StatsExcessiveCollisions.bge_addr_lo) + 
+	   READ_STAT(sc, stats, dot3StatsExcessiveCollisions.bge_addr_lo) +
 	   READ_STAT(sc, stats, dot3StatsLateCollisions.bge_addr_lo)) -
 	  ifp->if_collisions;
 
@@ -2104,9 +2101,9 @@ bge_encap(sc, m_head, txidx)
 #endif
 
 	/*
- 	 * Start packing the mbufs in this chain into
+	 * Start packing the mbufs in this chain into
 	 * the fragment pointers. Stop when we run out
- 	 * of fragments or hit the end of the mbuf chain.
+	 * of fragments or hit the end of the mbuf chain.
 	 */
 	txmap = sc->bge_cdata.bge_tx_map[frag];
 	if (bus_dmamap_load_mbuf(sc->bge_dmatag, txmap, m,
@@ -2276,7 +2273,7 @@ bge_init(xsc)
 	struct bge_softc *sc = xsc;
 	struct ifnet *ifp;
 	u_int16_t *m;
-        int s;
+	int s;
 
 	s = splimp();
 
@@ -2423,7 +2420,7 @@ bge_ifmedia_sts(ifp, ifmr)
 			ifmr->ifm_status |= IFM_ACTIVE;
 		ifmr->ifm_active |= IFM_1000_SX;
 		if (CSR_READ_4(sc, BGE_MAC_MODE) & BGE_MACMODE_HALF_DUPLEX)
-			ifmr->ifm_active |= IFM_HDX;	
+			ifmr->ifm_active |= IFM_HDX;
 		else
 			ifmr->ifm_active |= IFM_FDX;
 		return;
@@ -2466,7 +2463,7 @@ bge_ioctl(ifp, command, data)
 		default:
 			bge_init(sc);
 			break;
-                }
+		}
 		break;
 	case SIOCSIFMTU:
 		if (ifr->ifr_mtu > BGE_JUMBO_MTU)
@@ -2515,11 +2512,11 @@ bge_ioctl(ifp, command, data)
 	case SIOCGIFMEDIA:
 		if (sc->bge_tbi) {
 			error = ifmedia_ioctl(ifp, ifr, &sc->bge_ifmedia,
-					      command);
+			    command);
 		} else {
 			mii = &sc->bge_mii;
 			error = ifmedia_ioctl(ifp, ifr, &mii->mii_media,
-					      command);
+			    command);
 		}
 		error = 0;
 		break;
@@ -2650,7 +2647,7 @@ bge_shutdown(xsc)
 {
 	struct bge_softc *sc = (struct bge_softc *)xsc;
 
-	bge_stop(sc); 
+	bge_stop(sc);
 	bge_reset(sc);
 }
 
