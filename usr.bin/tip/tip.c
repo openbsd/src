@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.23 2004/05/26 18:17:59 deraadt Exp $	*/
+/*	$OpenBSD: tip.c,v 1.24 2004/11/07 09:48:08 otto Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.23 2004/05/26 18:17:59 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.24 2004/11/07 09:48:08 otto Exp $";
 #endif /* not lint */
 
 /*
@@ -138,7 +138,7 @@ notnumber:
 	(void)signal(SIGQUIT, cleanup);
 	(void)signal(SIGHUP, cleanup);
 	(void)signal(SIGTERM, cleanup);
-	(void)signal(SIGCHLD, SIG_IGN);
+	(void)signal(SIGCHLD, SIG_DFL);
 
 	if ((i = hunt(system)) == 0) {
 		printf("all ports busy\n");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cu.c,v 1.15 2004/05/26 18:17:59 deraadt Exp $	*/
+/*	$OpenBSD: cu.c,v 1.16 2004/11/07 09:48:08 otto Exp $	*/
 /*	$NetBSD: cu.c,v 1.5 1997/02/11 09:24:05 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cu.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cu.c,v 1.15 2004/05/26 18:17:59 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cu.c,v 1.16 2004/11/07 09:48:08 otto Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -135,7 +135,7 @@ cumain(argc, argv)
 	signal(SIGQUIT, cleanup);
 	signal(SIGHUP, cleanup);
 	signal(SIGTERM, cleanup);
-	signal(SIGCHLD, SIG_IGN);
+	signal(SIGCHLD, SIG_DFL);
 
 	/*
 	 * The "cu" host name is used to define the

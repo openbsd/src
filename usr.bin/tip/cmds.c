@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.19 2004/05/26 18:17:58 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.20 2004/11/07 09:48:08 otto Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.19 2004/05/26 18:17:58 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.20 2004/11/07 09:48:08 otto Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -510,7 +510,7 @@ pipeout(c)
  * Fork a program with:
  *  0 <-> remote tty in
  *  1 <-> remote tty out
- *  2 <-> local tty out
+ *  2 <-> local tty stderr
  */
 void
 consh(int c)
@@ -543,8 +543,7 @@ consh(int c)
 
 		dup2(FD, 0);
 		dup2(3, 1);
-		for (i = 3; i < 20; i++)
-			close(i);
+		closefrom(3);
 		signal(SIGINT, SIG_DFL);
 		signal(SIGQUIT, SIG_DFL);
 		execute(buf);
