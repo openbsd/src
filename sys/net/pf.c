@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.419 2004/01/27 09:31:15 markus Exp $ */
+/*	$OpenBSD: pf.c,v 1.420 2004/02/02 12:47:50 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -5251,7 +5251,7 @@ pf_add_mbuf_tag(struct mbuf *m, u_int tag)
 int
 pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 {
-	struct pfi_kif	  *kif = pfi_index2kif[ifp->if_index];
+	struct pfi_kif	  *kif;
 	u_short		   action, reason = 0, log = 0;
 	struct mbuf	  *m = *m0;
 	struct ip	  *h;
@@ -5265,6 +5265,7 @@ pf_test(int dir, struct ifnet *ifp, struct mbuf **m0)
 	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))
 		return (PF_PASS);
 
+	kif = pfi_index2kif[ifp->if_index];
 	if (kif == NULL)
 		return (PF_DROP);
 
@@ -5555,7 +5556,7 @@ done:
 int
 pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 {
-	struct pfi_kif	  *kif = pfi_index2kif[ifp->if_index];
+	struct pfi_kif	  *kif;
 	u_short		   action, reason = 0, log = 0;
 	struct mbuf	  *m = *m0;
 	struct ip6_hdr	  *h;
@@ -5569,6 +5570,7 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	    (m_tag_find(m, PACKET_TAG_PF_GENERATED, NULL) != NULL))
 		return (PF_PASS);
 
+	kif = pfi_index2kif[ifp->if_index];
 	if (kif == NULL)
 		return (PF_DROP);
 
