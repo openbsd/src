@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.50 2004/05/22 16:06:07 jmc Exp $
+.\"	$OpenBSD: pf.4,v 1.51 2004/06/14 20:55:54 cedric Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -758,25 +758,6 @@ contain the number of tables altered or deleted by the kernel.
 Yes, tables can be deleted if one removes the
 .Dv PFR_TFLAG_PERSIST
 flag of an unreferenced table.
-.It Dv DIOCBEGINALTQS Fa "u_int32_t *ticket"
-Clear all inactive ALTQ disciplines and get a
-.Va ticket
-for subsequent ALTQ discipline additions, as well as for the
-.Dv DIOCCOMMITALTQS
-and
-.Dv DIOCXROLLBACK
-calls.
-.Pp
-Unfortunately, there is currently no
-.Dv DIOCROLLBACKALTQS
-ioctl, so
-.Dv DIOCXROLLBACK
-must be used to achieve the desired effect.
-.It Dv DIOCCOMMITALTQS Fa "u_int32_t *ticket"
-Switch all inactive ALTQ disciplines to the active ruleset.
-This ioctl returns
-.Er EBUSY
-if another process is concurrently updating the ALTQ ruleset.
 .It Dv DIOCRINADEFINE Fa "struct pfioc_table *io"
 Defines a table in the inactive set.
 On entry,
@@ -794,78 +775,6 @@ contains 0 if the table was already defined in the inactive list
 or 1 if a new table has been created.
 .Va pfrio_naddr
 contains the number of addresses effectively put in the table.
-.It Dv DIOCRINABEGIN Fa "struct pfioc_table *io"
-Clear all addresses in the inactive table and get a
-.Va ticket
-for subsequent table address entry modifications, as well as for the
-.Dv DIOCRINACOMMIT
-and
-.Dv DIOCXROLLBACK
-calls.
-.Pp
-On exit,
-.Va pfrio_ndel
-contains the number of addresses that were removed from the inactive
-table.
-.Pp
-Unfortunately, there is currently no
-.Dv DIOCRINAROLLBACK
-ioctl, so
-.Dv DIOCXROLLBACK
-must be used to achieve the desired effect.
-.It Dv DIOCRINACOMMIT Fa "struct pfioc_table *io"
-Switch an inactive table of addresses to the active ruleset.
-.Pp
-On entry, a valid
-.Va ticket
-from a previous
-.Dv DIOCRINABEGIN
-call must be supplied.
-On exit,
-.Va pfrio_nadd
-will contain the number of addresses added to the table and
-.Va pfrio_nchange
-will contain the number of addresses changed (negated).
-.Pp
-This ioctl returns
-.Er EBUSY
-if another process is concurrently updating the same table.
-.It Dv DIOCBEGINRULES Fa "struct pfioc_rule *pr"
-Clear all inactive rules in the given
-.Va anchor
-and
-.Va ruleset
-and get a
-.Va ticket
-for subsequent rule additions, as well as for the
-.Dv DIOCCOMMITRULES
-and
-.Dv DIOCXROLLBACK
-calls.
-This ioctl returns
-.Er EINVAL
-if the given
-.Va anchor
-and
-.Va ruleset
-do not exist.
-.Pp
-Unfortunately, there is currently no
-.Dv DIOCROLLBACKRULES
-ioctl, so
-.Dv DIOCXROLLBACK
-must be used to achieve the desired effect.
-.It Dv DIOCCOMMITRULES Fa "struct pfioc_rule *pr"
-Switch an inactive ruleset to the active ruleset using the
-.Va ticket
-obtained from a preceding
-.Dv DIOCBEGINRULES
-call.
-This ioctl returns
-.Er EINVAL
-if the given anchor and ruleset is invalid or
-.Er EBUSY
-if another process is concurrently updating the same ruleset.
 .It Dv DIOCXBEGIN Fa "struct pfioc_trans *io"
 .Bd -literal
 struct pfioc_trans {
