@@ -59,7 +59,7 @@
 #define	INTR_INTERLOCK		/* Use IH_PEND field to interlock interrupts */
 #undef	PARANOID		/* Extremely expensive consistency checks */
 #undef	NO_VCACHE		/* Map w/D$ disabled */
-#define	TRAPTRACE		/* Keep history of all traps (unsafe) */
+#undef	TRAPTRACE		/* Keep history of all traps (unsafe) */
 #undef	FLTRACE			/* Keep history of all page faults */
 #undef	TRAPSTATS		/* Count traps */
 #undef	TRAPS_USE_IG		/* Use Interrupt Globals for all traps */
@@ -3994,7 +3994,7 @@ interrupt_vector:
 	bgeu,pn	%xcc, 3f
 	 nop
 	LDPTR	[%g3 + %g5], %g5	! We have a pointer to the handler
-#if DEBUG
+#ifdef DEBUG
 	brnz,pt %g5, 1f
 	 nop
 	STACKFRAME(-CC64FSZ)		! Get a clean register window
