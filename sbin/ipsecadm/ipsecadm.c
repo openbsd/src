@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.57 2001/06/25 05:16:10 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.58 2001/06/26 20:44:22 itojun Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -63,6 +63,7 @@
 #include <sys/stat.h>
 #include <net/pfkeyv2.h>
 #include <netinet/ip_ipsp.h>
+#include <netinet/in.h>
 
 #define KEYSIZE_LIMIT	1024
 
@@ -104,6 +105,91 @@ transform xf[] = {
 };
 
 #define ROUNDUP(x) (((x) + sizeof(u_int64_t) - 1) & ~(sizeof(u_int64_t) - 1))
+
+/*
+ * returns 0 if "str" represents an address, returns 1 if address/mask,
+ * returns -1 on failure.
+ */
+int
+addrparse(const char *str, struct sockaddr *addr, struct sockaddr *mask)
+{
+    u_long prefixlen;
+    char *p, *sp, *ep;
+    char c;
+    int ret = 0;
+    struct addrinfo hints, *res = NULL;
+    u_char *ap;
+    int bitlen;
+
+    /* slash */
+    if (mask && (p = strchr(str, '/')) != NULL) {
+	if (!p[1])
+	    return -1;
+	ep = NULL;
+	prefixlen = strtoul(p + 1, &ep, 10);
+	if (*ep)
+	    return -1;
+
+	sp = strdup(str);
+	if (!sp)
+	    return -1;
+	sp[p - str] = '\0';
+	str = sp;
+    } else
+	sp = NULL;
+
+    memset(&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+    hints.ai_flags = AI_NUMERICHOST;
+    if (getaddrinfo(str, "0", &hints, &res) != 0)
+	return -1;
+    if (res->ai_next)
+	goto fail;
+
+    memcpy(addr, res->ai_addr, res->ai_addrlen);
+
+    if (!p) {
+	freeaddrinfo(res);
+	if (sp)
+	    free(sp);
+	return 0;
+    }
+
+    switch (res->ai_family) {
+    case AF_INET:
+	ap = (u_char *)&((struct sockaddr_in *)mask)->sin_addr;
+	bitlen = 32;
+	break;
+    case AF_INET6:
+	ap = (u_char *)&((struct sockaddr_in6 *)mask)->sin6_addr;
+	bitlen = 128;
+	break;
+    default:
+	goto fail;
+    }
+
+    if (prefixlen > bitlen)
+	goto fail;
+
+    memset(mask, 0, addr->sa_len);
+    mask->sa_len = addr->sa_len;
+    memset(ap, 0xff, prefixlen / 8);
+    if (prefixlen % 8)
+	ap[prefixlen / 8] = (0xff00 >> (prefixlen % 8)) & 0xff;
+
+    if (res)
+	freeaddrinfo(res);
+    if (sp)
+	free(sp);
+    return 1;
+
+fail:
+    if (res)
+	freeaddrinfo(res);
+    if (sp)
+	free(sp);
+    return -1;
+}
 
 void
 xf_set(struct iovec *iov, int cnt, int len)
@@ -203,7 +289,7 @@ usage()
 	    "\t  -sport\t\t\tsource port for flow\n"
 	    "\t  -dport\t\t\tdestination port for flow\n"
 	    "\t  -transport <val>\t\tprotocol number for flow\n"
-	    "\t  -addr <ip> <net> <ip> <net>\tsubnets for flow\n"
+	    "\t  -addr [<ip> <net> <ip> <net>|<ip/len> <ip/len>] subnets for flow\n"
 	    "\t  -delete\t\t\tdelete specified flow\n"
 	    "\t  -bypass\t\t\tpermit a flow through without IPsec\n"
 	    "\t  -permit\t\t\tsame as bypass\n"
@@ -971,130 +1057,58 @@ main(int argc, char **argv)
 	}
 
 	if (!strcmp(argv[i] + 1, "addr") && iscmd(mode, FLOW) &&
-	    (i + 4 < argc))
+	    (i + 1 < argc))
 	{
+	    int advance;
+
 	    sad4.sadb_address_exttype = SADB_X_EXT_SRC_FLOW;
 	    sad5.sadb_address_exttype = SADB_X_EXT_DST_FLOW;
 	    sad6.sadb_address_exttype = SADB_X_EXT_SRC_MASK;
 	    sad7.sadb_address_exttype = SADB_X_EXT_DST_MASK;
 
-#ifdef INET6
-	    if ((strchr(argv[i + 1], ':') &&
-		 (!strchr(argv[i + 2], ':') || !strchr(argv[i + 3], ':') ||
-		  !strchr(argv[i + 4], ':'))) ||
-		(!strchr(argv[i + 1], ':') &&
-		 (strchr(argv[i + 2], ':') || strchr(argv[i + 3], ':') ||
-		  strchr(argv[i + 4], ':'))))
-	    {
+	    switch (addrparse(argv[i + 1], &osrc->sa, &osmask->sa)) {
+	    case 0:
+		advance = 4;
+		if (i + 4 >= argc)
+		    goto argfail;
+		if (addrparse(argv[i + 2], &osmask->sa, NULL) != 0 ||
+		    addrparse(argv[i + 3], &odst->sa, NULL) != 0 ||
+		    addrparse(argv[i + 4], &odmask->sa, NULL) != 0) {
+		    fprintf(stderr, "%s: Invalid address on -addr\n", argv[0]);
+		    exit (1);
+		}
+		break;
+	    case 1:
+		advance = 2;
+		if (i + 2 >= argc)
+		    goto argfail;
+		if (addrparse(argv[i + 2], &odst->sa, &odmask->sa) != 1) {
+		    fprintf(stderr, "%s: Invalid address on -addr\n", argv[0]);
+		    exit(1);
+		}
+		break;
+	    default:
+	        fprintf(stderr, "%s: Invalid address %s on -addr\n", argv[0],
+		    argv[i + 1]);
+		goto argfail;
+	    }
+	    if (osrc->sa.sa_family != odst->sa.sa_family) {
 		fprintf(stderr,
 			"%s: Mixed address families specified in addr\n",
 			argv[0]);
 		exit(1);
 	    }
 
-	    if (strchr(argv[i + 1], ':'))
-	    {
-		sad4.sadb_address_len = (sizeof(sad4) +
-					 ROUNDUP(sizeof(struct sockaddr_in6)))
-					 / 8;
-		sad5.sadb_address_len = (sizeof(sad5) +
-					 ROUNDUP(sizeof(struct sockaddr_in6)))
-					 / 8;
-		sad6.sadb_address_len = (sizeof(sad6) +
-					 ROUNDUP(sizeof(struct sockaddr_in6)))
-					 / 8;
-		sad7.sadb_address_len = (sizeof(sad7) +
-					 ROUNDUP(sizeof(struct sockaddr_in6)))
-					 / 8;
+	    sad4.sadb_address_len = (sizeof(sad4) +
+				     ROUNDUP(osrc->sa.sa_len)) / 8;
+	    sad5.sadb_address_len = (sizeof(sad5) +
+				     ROUNDUP(odst->sa.sa_len)) / 8;
+	    sad6.sadb_address_len = (sizeof(sad6) +
+				     ROUNDUP(osmask->sa.sa_len)) / 8;
+	    sad7.sadb_address_len = (sizeof(sad7) +
+				     ROUNDUP(odmask->sa.sa_len)) / 8;
 
-		osrc->sin6.sin6_family = odst->sin6.sin6_family = AF_INET6;
-		osmask->sin6.sin6_family = odmask->sin6.sin6_family = AF_INET6;
-		osrc->sin6.sin6_len = odst->sin6.sin6_len =
-				   sizeof(struct sockaddr_in6);
-		osmask->sin6.sin6_len = sizeof(struct sockaddr_in6);
-		odmask->sin6.sin6_len = sizeof(struct sockaddr_in6);
-
-		if (!inet_pton(AF_INET6, argv[i + 1], &osrc->sin6.sin6_addr))
-		{
-		    fprintf(stderr, "%s: source address %s is not valid\n",
-			    argv[0], argv[i + 1]);
-		    exit(1);
-		}
-		i++;
-		if (!inet_pton(AF_INET6, argv[i + 1], &osmask->sin6.sin6_addr))
-		{
-		    fprintf(stderr, "%s: source netmask %s is not valid\n",
-			    argv[0], argv[i + 1]);
-		    exit(1);
-		}
-		i++;
-		if (!inet_pton(AF_INET6, argv[i + 1], &odst->sin6.sin6_addr))
-		{
-		    fprintf(stderr,
-			    "%s: destination address %s is not valid\n",
-			    argv[0], argv[i + 1]);
-		    exit(1);
-		}
-		i++;
-		if (!inet_pton(AF_INET6, argv[i + 1], &odmask->sin6.sin6_addr))
-		{
-		    fprintf(stderr,
-			    "%s: destination netmask %s is not valid\n",
-			    argv[0], argv[i + 1]);
-		    exit(1);
-		}
-		i++;
-	    }
-	    else
-#endif /* INET6 */
-	    {
-		sad4.sadb_address_len = (sizeof(sad4) +
-					 sizeof(struct sockaddr_in)) / 8;
-		sad5.sadb_address_len = (sizeof(sad5) +
-					 sizeof(struct sockaddr_in)) / 8;
-		sad6.sadb_address_len = (sizeof(sad6) +
-					 sizeof(struct sockaddr_in)) / 8;
-		sad7.sadb_address_len = (sizeof(sad7) +
-					 sizeof(struct sockaddr_in)) / 8;
-
-		osrc->sin.sin_family = odst->sin.sin_family = AF_INET;
-		osmask->sin.sin_family = odmask->sin.sin_family = AF_INET;
-		osrc->sin.sin_len = odst->sin.sin_len =
-				   sizeof(struct sockaddr_in);
-		osmask->sin.sin_len = sizeof(struct sockaddr_in);
-		odmask->sin.sin_len = sizeof(struct sockaddr_in);
-
-		if (!inet_pton(AF_INET, argv[i + 1], &osrc->sin.sin_addr))
-		{
-		    fprintf(stderr, "%s: source address %s is not valid\n",
-			    argv[0], argv[i + 1]);
-		    exit(1);
-		}
-		i++;
-		if (!inet_pton(AF_INET, argv[i + 1], &osmask->sin.sin_addr))
-		{
-		    fprintf(stderr, "%s: source netmask %s is not valid\n",
-			    argv[0], argv[i + 1]);
-		    exit(1);
-		}
-		i++;
-		if (!inet_pton(AF_INET, argv[i + 1], &odst->sin.sin_addr))
-		{
-		    fprintf(stderr,
-			    "%s: destination address %s is not valid\n",
-			    argv[0], argv[i + 1]);
-		    exit(1);
-		}
-		i++;
-		if (!inet_pton(AF_INET, argv[i + 1], &odmask->sin.sin_addr))
-		{
-		    fprintf(stderr,
-			    "%s: destination netmask %s is not valid\n",
-			    argv[0], argv[i + 1]);
-		    exit(1);
-		}
-		i++;
-	    }
+	    i += advance;
 	    continue;
 	}
 
@@ -1378,6 +1392,7 @@ main(int argc, char **argv)
 	}
 	
 	/* No match */
+argfail:
 	fprintf(stderr, "%s: Unknown, invalid, or duplicated option: %s\n",
 		argv[0], argv[i]);
 	exit(1);

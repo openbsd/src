@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.37 2001/03/22 03:35:19 angelos Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.38 2001/06/26 20:44:22 itojun Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -464,6 +464,8 @@ otherwise takes the same values as
 The source address, source network mask, destination address and destination
 network mask against which packets need to match to use the specified
 Security Association.
+Alternatively, addresses and masks can be specified as
+.Dq Li source/prefixlen dstination/prefixlen .
 All addresses must be of the same address family
 (IPv4 or IPv6).
 .It Fl transport
