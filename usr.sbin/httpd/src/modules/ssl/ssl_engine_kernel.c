@@ -163,7 +163,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
      */
     cpVHostID = ssl_util_vhostid(conn->pool, srvr);
     ssl_log(srvr, SSL_LOG_INFO, "Connection to child %d established "
-            "(server %s, client %s)", conn->child_num, cpVHostID, conn->remote_ip);
+            "(server %s, client %s)", conn->child_num, cpVHostID, 
+            conn->remote_ip != NULL ? conn->remote_ip : "unknown");
 
     /*
      * Seed the Pseudo Random Number Generator (PRNG)
@@ -289,7 +290,7 @@ void ssl_hook_NewConnection(conn_rec *conn)
             else if (ap_ctx_get(ap_global_ctx, "ssl::handshake::timeout") == (void *)TRUE) {
                 ssl_log(srvr, SSL_LOG_ERROR,
                         "SSL handshake timed out (client %s, server %s)",
-                        conn->remote_ip, cpVHostID);
+                        conn->remote_ip != NULL ? conn->remote_ip : "unknown", cpVHostID);
                 SSL_set_shutdown(ssl, SSL_RECEIVED_SHUTDOWN);
                 SSL_smart_shutdown(ssl);
                 SSL_free(ssl);
@@ -322,8 +323,8 @@ void ssl_hook_NewConnection(conn_rec *conn)
                  * Ok, anything else is a fatal error
                  */
                 ssl_log(srvr, SSL_LOG_ERROR|SSL_ADD_SSLERR|SSL_ADD_ERRNO,
-                        "SSL handshake failed (client %s, server %s)",
-                        conn->remote_ip, cpVHostID);
+                        "SSL handshake failed (server %s, client %s)", cpVHostID, 
+                        conn->remote_ip != NULL ? conn->remote_ip : "unknown");
 
                 /*
                  * try to gracefully shutdown the connection:
@@ -507,7 +508,7 @@ void ssl_hook_CloseConnection(conn_rec *conn)
     ssl_log(conn->server, SSL_LOG_INFO,
             "Connection to child %d closed with %s shutdown (server %s, client %s)",
             conn->child_num, cpType, ssl_util_vhostid(conn->pool, conn->server),
-            conn->remote_ip);
+            conn->remote_ip != NULL ? conn->remote_ip : "unknown");
     return;
 }
 
@@ -1248,12 +1249,13 @@ int ssl_hook_Fixup(request_rec *r)
         ap_table_set(e, "SSL_SERVER_CERT", val);
         val = ssl_var_lookup(r->pool, r->server, r->connection, r, "SSL_CLIENT_CERT");
         ap_table_set(e, "SSL_CLIENT_CERT", val);
-        sk = SSL_get_peer_cert_chain(ssl);
-        for (i = 0; i < sk_X509_num(sk); i++) {
-            var = ap_psprintf(r->pool, "SSL_CLIENT_CERT_CHAIN_%d", i);
-            val = ssl_var_lookup(r->pool, r->server, r->connection, r, var);
-            if (val != NULL)
-                 ap_table_set(e, var, val);
+        if ((sk = SSL_get_peer_cert_chain(ssl)) != NULL) {
+            for (i = 0; i < sk_X509_num(sk); i++) {
+                var = ap_psprintf(r->pool, "SSL_CLIENT_CERT_CHAIN_%d", i);
+                val = ssl_var_lookup(r->pool, r->server, r->connection, r, var);
+                if (val != NULL)
+                     ap_table_set(e, var, val);
+            }
         }
     }
 
@@ -1306,7 +1308,6 @@ int ssl_hook_Fixup(request_rec *r)
  *
  * So we generated 512 and 1024 bit temporary keys on startup
  * which we now just handle out on demand....
- *
  */
 RSA *ssl_callback_TmpRSA(SSL *pSSL, int nExport, int nKeyLen)
 {
@@ -1317,16 +1318,16 @@ RSA *ssl_callback_TmpRSA(SSL *pSSL, int nExport, int nKeyLen)
     if (nExport) {
         /* It's because an export cipher is used */
         if (nKeyLen == 512)
-            rsa = mc->pRSATmpKey512;
+            rsa = (RSA *)mc->pTmpKeys[SSL_TKPIDX_RSA512];
         else if (nKeyLen == 1024)
-            rsa = mc->pRSATmpKey1024;
+            rsa = (RSA *)mc->pTmpKeys[SSL_TKPIDX_RSA1024];
         else
             /* it's too expensive to generate on-the-fly, so keep 1024bit */
-            rsa = mc->pRSATmpKey1024;
+            rsa = (RSA *)mc->pTmpKeys[SSL_TKPIDX_RSA1024];
     }
     else {
         /* It's because a sign-only certificate situation exists */
-        rsa = mc->pRSATmpKey1024;
+        rsa = (RSA *)mc->pTmpKeys[SSL_TKPIDX_RSA1024];
     }
     return rsa;
 }
@@ -1343,16 +1344,16 @@ DH *ssl_callback_TmpDH(SSL *pSSL, int nExport, int nKeyLen)
     if (nExport) {
         /* It's because an export cipher is used */
         if (nKeyLen == 512)
-            dh = mc->pDHTmpParam512;
+            dh = (DH *)mc->pTmpKeys[SSL_TKPIDX_DH512];
         else if (nKeyLen == 1024)
-            dh = mc->pDHTmpParam1024;
+            dh = (DH *)mc->pTmpKeys[SSL_TKPIDX_DH1024];
         else
             /* it's too expensive to generate on-the-fly, so keep 1024bit */
-            dh = mc->pDHTmpParam1024;
+            dh = (DH *)mc->pTmpKeys[SSL_TKPIDX_DH1024];
     }
     else {
         /* It's because a sign-only certificate situation exists */
-        dh = mc->pDHTmpParam1024;
+        dh = (DH *)mc->pTmpKeys[SSL_TKPIDX_DH1024];
     }
     return dh;
 }

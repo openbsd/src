@@ -282,13 +282,13 @@ void ssl_pphrase_Handle(server_rec *s, pool *p)
                  * Ok, anything else now means a fatal error.
                  */
                 if (cpPassPhraseCur == NULL)
-                    ssl_log(pServ, SSL_LOG_ERROR|SSL_ADD_SSLERR, "Init: Private key not found.");
+                    ssl_log(pServ, SSL_LOG_ERROR|SSL_ADD_SSLERR, "Init: Private key not found");
                     if (sc->nPassPhraseDialogType == SSL_PPTYPE_BUILTIN) {
                         fprintf(stdout, "Apache:mod_ssl:Error: Private key not found.\n");
                         fprintf(stdout, "**Stopped\n");
                     }
                 else {
-                    ssl_log(pServ, SSL_LOG_ERROR|SSL_ADD_SSLERR, "Init: Pass phrase incorrect.");
+                    ssl_log(pServ, SSL_LOG_ERROR|SSL_ADD_SSLERR, "Init: Pass phrase incorrect");
                     if (sc->nPassPhraseDialogType == SSL_PPTYPE_BUILTIN) {
                         fprintf(stdout, "Apache:mod_ssl:Error: Pass phrase incorrect.\n");
                         fprintf(stdout, "**Stopped\n");
@@ -436,6 +436,9 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
     if (sc->nPassPhraseDialogType == SSL_PPTYPE_BUILTIN) {
         char *prompt;
         int i;
+#ifdef WIN32
+        FILE *con;
+#endif
 
         ssl_log(s, SSL_LOG_INFO,
                 "Init: Requesting pass phrase via builtin terminal dialog");
@@ -446,11 +449,18 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
          * to the general error logfile.
          */
         dup2(STDERR_FILENO, STDERR_FILENO_STORE);
+#ifdef WIN32
+        if ((con = fopen("con", "w")) != NULL)
+            dup2(fileno(con), STDERR_FILENO);
+        else
+            dup2(STDOUT_FILENO, STDERR_FILENO);
+#else
         dup2(STDOUT_FILENO, STDERR_FILENO);
+#endif
 
         /*
          * The first time display a header to inform the user about what
-         * program he actually speaks to, which modules is responsible for
+         * program he actually speaks to, which module is responsible for
          * this terminal dialog and why to the hell he has to enter
          * something...
          */
@@ -488,6 +498,9 @@ int ssl_pphrase_Handle_CB(char *buf, int bufsize, int ask_twice)
          * Restore STDERR to Apache error logfile
          */
         dup2(STDERR_FILENO_STORE, STDERR_FILENO);
+#ifdef WIN32
+        fclose(con);
+#endif
     }
 
     /*

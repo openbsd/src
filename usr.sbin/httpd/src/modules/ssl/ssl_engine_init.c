@@ -234,6 +234,7 @@ void ssl_init_Module(server_rec *s, pool *p)
 #endif
     if (mc->nInitCount == 1) {
         ssl_pphrase_Handle(s, p);
+        ssl_init_TmpKeysHandle(SSL_TKP_GEN, s, p);
 #ifndef WIN32
         return;
 #endif
@@ -262,51 +263,9 @@ void ssl_init_Module(server_rec *s, pool *p)
     ssl_log(s, SSL_LOG_INFO, "Init: Seeding PRNG with %d bytes of entropy", n);
 
     /*
-     *  pre-generate the temporary RSA keys
+     *  allocate the temporary RSA keys and DH params
      */
-    if (mc->pRSATmpKey512 == NULL) {
-        ssl_log(s, SSL_LOG_INFO, "Init: Generating temporary RSA private keys (512/1024 bits)");
-        mc->pRSATmpKey512 = RSA_generate_key(512, RSA_F4, NULL, NULL);
-        if (mc->pRSATmpKey512 == NULL) {
-#ifdef __OpenBSD__
-            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary (512 b
-it) RSA private key (SSL won't work without an RSA capable shared library)");
-            ssl_log(s, SSL_LOG_ERROR, "Init: pkg_add ftp://ftp.openbsd.org/pub/O
-penBSD/<version>/packages/<arch>/libssl-2.1.tgz if you are able to use RSA");
-            /* harmless in http only case. We'll get a fatal error below
-             * if this didn't work and we try to init https servers
-             */
-            return;
-#else
-            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary (512 b
-it) RSA private key");
-            ssl_die();
-#endif
-
-        }
-        mc->pRSATmpKey1024 = RSA_generate_key(1024, RSA_F4, NULL, NULL);
-        if (mc->pRSATmpKey1024 == NULL) {
-            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary 1024 bit RSA private key");
-            ssl_die();
-        }
-    }
-
-    /*
-     *  pre-configure the temporary DH parameters
-     */
-    if (mc->pDHTmpParam512 == NULL) {
-        ssl_log(s, SSL_LOG_INFO, "Init: Configuring temporary DH parameters (512/1024 bits)");
-        mc->pDHTmpParam512 = ssl_dh_GetTmpParam(512);
-        if (mc->pDHTmpParam512 == NULL) {
-            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to configure temporary 512 bit DH parameters");
-            ssl_die();
-        }
-        mc->pDHTmpParam1024 = ssl_dh_GetTmpParam(1024);
-        if (mc->pDHTmpParam1024 == NULL) {
-            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to configure temporary 1024 bit DH parameters");
-            ssl_die();
-        }
-    }
+    ssl_init_TmpKeysHandle(SSL_TKP_ALLOC, s, p);
 
     /*
      *  initialize servers
@@ -360,6 +319,149 @@ void ssl_init_SSLLibrary(void)
     SSL_library_init();
     ssl_util_thread_setup();
     X509V3_add_standard_extensions();
+    return;
+}
+
+/*
+ * Handle the Temporary RSA Keys and DH Params
+ */
+void ssl_init_TmpKeysHandle(int action, server_rec *s, pool *p)
+{
+    SSLModConfigRec *mc = myModConfig();
+    ssl_asn1_t *asn1;
+    unsigned char *ucp;
+    RSA *rsa;
+    DH *dh;
+
+    /* Generate Keys and Params */
+    if (action == SSL_TKP_GEN) {
+
+        ssl_log(s, SSL_LOG_INFO, "Init: Generating temporary RSA private keys (512/1024 bits)");
+
+        /* generate 512 bit RSA key */
+        if ((rsa = RSA_generate_key(512, RSA_F4, NULL, NULL)) == NULL) {
+#ifdef __OpenBSD__
+            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary 512 bit RSA private key");
+            ssl_log(s, SSL_LOG_ERROR, "Init: (SSL won't work without an RSA capable shared library)");
+            ssl_log(s, SSL_LOG_ERROR, "Init: See ssl(8)");
+            /* harmless in http only case. We'll get a fatal error below
+             * if this didn't work and we try to init https servers
+             */
+            return;
+#else
+            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary 512 bit RSA private key");
+            ssl_die();
+#endif
+        }
+        asn1 = (ssl_asn1_t *)ssl_ds_table_push(mc->tTmpKeys, "RSA:512");
+        asn1->nData  = i2d_RSAPrivateKey(rsa, NULL);
+        asn1->cpData = ap_palloc(mc->pPool, asn1->nData);
+        ucp = asn1->cpData; i2d_RSAPrivateKey(rsa, &ucp); /* 2nd arg increments */
+        RSA_free(rsa);
+
+        /* generate 1024 bit RSA key */
+        if ((rsa = RSA_generate_key(1024, RSA_F4, NULL, NULL)) == NULL) {
+            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary 1024 bit RSA private key");
+            ssl_die();
+        }
+        asn1 = (ssl_asn1_t *)ssl_ds_table_push(mc->tTmpKeys, "RSA:1024");
+        asn1->nData  = i2d_RSAPrivateKey(rsa, NULL);
+        asn1->cpData = ap_palloc(mc->pPool, asn1->nData);
+        ucp = asn1->cpData; i2d_RSAPrivateKey(rsa, &ucp); /* 2nd arg increments */
+        RSA_free(rsa);
+
+        ssl_log(s, SSL_LOG_INFO, "Init: Configuring temporary DH parameters (512/1024 bits)");
+
+        /* import 512 bit DH param */
+        if ((dh = ssl_dh_GetTmpParam(512)) == NULL) {
+            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to import temporary 512 bit DH parameters");
+            ssl_die();
+        }
+        asn1 = (ssl_asn1_t *)ssl_ds_table_push(mc->tTmpKeys, "DH:512");
+        asn1->nData  = i2d_DHparams(dh, NULL);
+        asn1->cpData = ap_palloc(mc->pPool, asn1->nData);
+        ucp = asn1->cpData; i2d_DHparams(dh, &ucp); /* 2nd arg increments */
+        /* no need to free dh, it's static */
+
+        /* import 1024 bit DH param */
+        if ((dh = ssl_dh_GetTmpParam(1024)) == NULL) {
+            ssl_log(s, SSL_LOG_ERROR, "Init: Failed to import temporary 1024 bit DH parameters");
+            ssl_die();
+        }
+        asn1 = (ssl_asn1_t *)ssl_ds_table_push(mc->tTmpKeys, "DH:1024");
+        asn1->nData  = i2d_DHparams(dh, NULL);
+        asn1->cpData = ap_palloc(mc->pPool, asn1->nData);
+        ucp = asn1->cpData; i2d_DHparams(dh, &ucp); /* 2nd arg increments */
+        /* no need to free dh, it's static */
+    }
+
+    /* Allocate Keys and Params */
+    else if (action == SSL_TKP_ALLOC) {
+
+        ssl_log(s, SSL_LOG_INFO, "Init: Configuring temporary RSA private keys (512/1024 bits)");
+
+        /* allocate 512 bit RSA key */
+        if ((asn1 = (ssl_asn1_t *)ssl_ds_table_get(mc->tTmpKeys, "RSA:512")) != NULL) {
+            ucp = asn1->cpData;
+            if ((mc->pTmpKeys[SSL_TKPIDX_RSA512] = 
+                 (void *)d2i_RSAPrivateKey(NULL, &ucp, asn1->nData)) == NULL) {
+                ssl_log(s, SSL_LOG_ERROR, "Init: Failed to load temporary 512 bit RSA private key");
+                ssl_die();
+            }
+        }
+
+        /* allocate 1024 bit RSA key */
+        if ((asn1 = (ssl_asn1_t *)ssl_ds_table_get(mc->tTmpKeys, "RSA:1024")) != NULL) {
+            ucp = asn1->cpData;
+            if ((mc->pTmpKeys[SSL_TKPIDX_RSA1024] = 
+                 (void *)d2i_RSAPrivateKey(NULL, &ucp, asn1->nData)) == NULL) {
+                ssl_log(s, SSL_LOG_ERROR, "Init: Failed to load temporary 1024 bit RSA private key");
+                ssl_die();
+            }
+        }
+
+        ssl_log(s, SSL_LOG_INFO, "Init: Configuring temporary DH parameters (512/1024 bits)");
+
+        /* allocate 512 bit DH param */
+        if ((asn1 = (ssl_asn1_t *)ssl_ds_table_get(mc->tTmpKeys, "DH:512")) != NULL) {
+            ucp = asn1->cpData;
+            if ((mc->pTmpKeys[SSL_TKPIDX_DH512] = 
+                 (void *)d2i_DHparams(NULL, &ucp, asn1->nData)) == NULL) {
+                ssl_log(s, SSL_LOG_ERROR, "Init: Failed to load temporary 512 bit DH parameters");
+                ssl_die();
+            }
+        }
+
+        /* allocate 1024 bit DH param */
+        if ((asn1 = (ssl_asn1_t *)ssl_ds_table_get(mc->tTmpKeys, "DH:1024")) != NULL) {
+            ucp = asn1->cpData;
+            if ((mc->pTmpKeys[SSL_TKPIDX_DH1024] = 
+                 (void *)d2i_DHparams(NULL, &ucp, asn1->nData)) == NULL) {
+                ssl_log(s, SSL_LOG_ERROR, "Init: Failed to load temporary 1024 bit DH parameters");
+                ssl_die();
+            }
+        }
+    }
+
+    /* Free Keys and Params */
+    else if (action == SSL_TKP_FREE) {
+        if (mc->pTmpKeys[SSL_TKPIDX_RSA512] != NULL) {
+            RSA_free((RSA *)mc->pTmpKeys[SSL_TKPIDX_RSA512]);
+            mc->pTmpKeys[SSL_TKPIDX_RSA512] = NULL;
+        }
+        if (mc->pTmpKeys[SSL_TKPIDX_RSA1024] != NULL) {
+            RSA_free((RSA *)mc->pTmpKeys[SSL_TKPIDX_RSA1024]);
+            mc->pTmpKeys[SSL_TKPIDX_RSA1024] = NULL;
+        }
+        if (mc->pTmpKeys[SSL_TKPIDX_DH512] != NULL) {
+            DH_free((DH *)mc->pTmpKeys[SSL_TKPIDX_DH512]);
+            mc->pTmpKeys[SSL_TKPIDX_DH512] = NULL;
+        }
+        if (mc->pTmpKeys[SSL_TKPIDX_DH1024] != NULL) {
+            DH_free((DH *)mc->pTmpKeys[SSL_TKPIDX_DH1024]);
+            mc->pTmpKeys[SSL_TKPIDX_DH1024] = NULL;
+        }
+    }
     return;
 }
 
@@ -541,7 +643,12 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
         ssl_log(s, SSL_LOG_TRACE,
                 "Init: (%s) Configuring RSA server certificate", cpVHostID);
         ucp = asn1->cpData;
-        sc->pPublicCert[SSL_AIDX_RSA] = d2i_X509(NULL, &ucp, asn1->nData);
+        if ((sc->pPublicCert[SSL_AIDX_RSA] = d2i_X509(NULL, &ucp, asn1->nData)) == NULL) {
+            ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR,
+                    "Init: (%s) Unable to import RSA server certificate",
+                    cpVHostID);
+            ssl_die();
+        }
         if (SSL_CTX_use_certificate(ctx, sc->pPublicCert[SSL_AIDX_RSA]) <= 0) {
             ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR,
                     "Init: (%s) Unable to configure RSA server certificate",
@@ -555,7 +662,12 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
         ssl_log(s, SSL_LOG_TRACE,
                 "Init: (%s) Configuring DSA server certificate", cpVHostID);
         ucp = asn1->cpData;
-        sc->pPublicCert[SSL_AIDX_DSA] = d2i_X509(NULL, &ucp, asn1->nData);
+        if ((sc->pPublicCert[SSL_AIDX_DSA] = d2i_X509(NULL, &ucp, asn1->nData)) == NULL) {
+            ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR,
+                    "Init: (%s) Unable to import DSA server certificate",
+                    cpVHostID);
+            ssl_die();
+        }
         if (SSL_CTX_use_certificate(ctx, sc->pPublicCert[SSL_AIDX_DSA]) <= 0) {
             ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR,
                     "Init: (%s) Unable to configure DSA server certificate",
@@ -615,11 +727,16 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
         ssl_log(s, SSL_LOG_TRACE,
                 "Init: (%s) Configuring RSA server private key", cpVHostID);
         ucp = asn1->cpData;
-        sc->pPrivateKey[SSL_AIDX_RSA] = 
-            d2i_PrivateKey(EVP_PKEY_RSA, NULL, &ucp, asn1->nData);
+        if ((sc->pPrivateKey[SSL_AIDX_RSA] = 
+             d2i_PrivateKey(EVP_PKEY_RSA, NULL, &ucp, asn1->nData)) == NULL) {
+            ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR,
+                    "Init: (%s) Unable to import RSA server private key",
+                    cpVHostID);
+            ssl_die();
+        }
         if (SSL_CTX_use_PrivateKey(ctx, sc->pPrivateKey[SSL_AIDX_RSA]) <= 0) {
             ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR,
-                    "Init: (%s) Unable to configure server RSA private key",
+                    "Init: (%s) Unable to configure RSA server private key",
                     cpVHostID);
             ssl_die();
         }
@@ -630,11 +747,16 @@ void ssl_init_ConfigureServer(server_rec *s, pool *p, SSLSrvConfigRec *sc)
         ssl_log(s, SSL_LOG_TRACE,
                 "Init: (%s) Configuring DSA server private key", cpVHostID);
         ucp = asn1->cpData;
-        sc->pPrivateKey[SSL_AIDX_DSA] = 
-            d2i_PrivateKey(EVP_PKEY_DSA, NULL, &ucp, asn1->nData);
+        if ((sc->pPrivateKey[SSL_AIDX_DSA] = 
+             d2i_PrivateKey(EVP_PKEY_DSA, NULL, &ucp, asn1->nData)) == NULL) {
+            ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR,
+                    "Init: (%s) Unable to import DSA server private key",
+                    cpVHostID);
+            ssl_die();
+        }
         if (SSL_CTX_use_PrivateKey(ctx, sc->pPrivateKey[SSL_AIDX_DSA]) <= 0) {
             ssl_log(s, SSL_LOG_ERROR|SSL_ADD_SSLERR,
-                    "Init: (%s) Unable to configure server DSA private key",
+                    "Init: (%s) Unable to configure DSA server private key",
                     cpVHostID);
             ssl_die();
         }
@@ -853,6 +975,11 @@ void ssl_init_ModuleKill(void *data)
      */
     ssl_scache_kill(s);
     ssl_mutex_kill(s);
+
+    /* 
+     * Destroy the temporary keys and params
+     */
+    ssl_init_TmpKeysHandle(SSL_TKP_FREE, s, NULL);
 
     /*
      * Free the non-pool allocated structures

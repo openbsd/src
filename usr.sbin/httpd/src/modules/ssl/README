@@ -7,7 +7,7 @@
  mod_ssl                               ``Ralf Engelschall has released an
  Apache Interface to OpenSSL             excellent module that integrates
  http://www.modssl.org/                  Apache and SSLeay.''                 
- Version 2.3                                               -- Tim J. Hudson
+ Version 2.4                                               -- Tim J. Hudson
                                            
  SYNOPSIS
 
@@ -32,15 +32,18 @@
    mod_ssl.h ............... common header file of mod_ssl
    ssl_engine_compat.c ..... backward compatibility support
    ssl_engine_config.c ..... module configuration handling
+   ssl_engine_dh.c ......... DSA/DH support
    ssl_engine_ds.c ......... data structures
+   ssl_engine_ext.c ........ Extensions to other Apache parts
    ssl_engine_init.c ....... module initialization
-   ssl_engine_kernel.c ..... SSL engine kernel
    ssl_engine_io.c ......... I/O support
+   ssl_engine_kernel.c ..... SSL engine kernel
    ssl_engine_log.c ........ logfile support
    ssl_engine_mutex.c ...... mutual exclusion support
    ssl_engine_pphrase.c .... pass-phrase handling
+   ssl_engine_rand.c ....... PRNG support
    ssl_engine_scache.c ..... session cache support
-   ssl_engine_ext.c ........ Extensions to other Apache parts
+   ssl_engine_vars.c ....... Variable Expansion support
    ssl_expr.c .............. expression handling main source
    ssl_expr.h .............. expression handling common header
    ssl_expr_scan.c ......... expression scanner automaton (pre-generated)
@@ -50,8 +53,12 @@
    ssl_expr_parse.y ........ expression parser source
    ssl_expr_eval.c ......... expression machine evaluation
    ssl_util.c .............. utility functions
+   ssl_util_ssl.c .......... the OpenSSL companion source
+   ssl_util_ssl.h .......... the OpenSSL companion header
    ssl_util_sdbm.c ......... the SDBM library source
    ssl_util_sdbm.h ......... the SDBM library header
+   ssl_util_table.c ........ the hash table library source
+   ssl_util_table.h ........ the hash table library header
 
  The source files are written in clean ANSI C and pass the ``gcc -O -g -ggdb3
  -Wall -Wshadow -Wpointer-arith -Wcast-align -Wmissing-prototypes

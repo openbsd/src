@@ -161,18 +161,30 @@ static void ssl_io_suck_record(request_rec *r, char *buf, int len)
     
     if ((ss = ap_ctx_get(r->ctx, "ssl::io::suck")) == NULL)
         return;
-    if (((ss->bufptr+ss->buflen)-(ss->pendptr+ss->pendlen)) < len) {
-        /* "expand" buffer */
+    if (((ss->bufptr + ss->buflen) - (ss->pendptr + ss->pendlen)) < len) {
+        /* "expand" buffer: actually we cannot really expand the buffer
+           here, because Apache's pool system doesn't support expanding chunks
+           of memory. Instead we have to either reuse processed data or
+           allocate a new chunk of memory in advance if we really need more
+           memory. */
         int newlen;
         char *newptr;
-        if (ss->buflen < len)
-            newlen = ss->buflen * 2;
-        else
-            newlen = ss->buflen + len;
-        newptr = ap_palloc(r->pool, newlen);
-        memcpy(newptr, ss->bufptr, ss->buflen);
-        ss->bufptr = newptr;
-        ss->buflen = newlen;
+
+        if ((  (ss->pendptr - ss->bufptr) 
+             + ((ss->bufptr + ss->buflen) - (ss->pendptr + ss->pendlen)) ) >= len) {
+            /* make memory available by reusing already processed data */
+            memmove(ss->bufptr, ss->pendptr, ss->pendlen);
+            ss->pendptr = ss->bufptr;
+        }
+        else {
+            /* too bad, we have to allocate a new larger buffer */
+            newlen = (ss->buflen * 2) + len;
+            newptr = ap_palloc(r->pool, newlen);
+            ss->bufptr  = newptr;
+            ss->buflen  = newlen;
+            memcpy(ss->bufptr, ss->pendptr, ss->pendlen);
+            ss->pendptr = ss->bufptr;
+        }
     }
     memcpy(ss->pendptr+ss->pendlen, buf, len);
     ss->pendlen += len;
@@ -501,7 +513,7 @@ static int SSL_sendwithtimeout(BUFF *fb, const char *buf, int len)
             do {
                 retry=0;
                 FD_ZERO(&fdset);
-                FD_SET(sock, &fdset);
+                FD_SET((unsigned int)sock, &fdset);
                 tv.tv_usec = 0;
                 rv = select(FD_SETSIZE, NULL, &fdset, NULL, &tv);
                 if (rv == SOCKET_ERROR)
@@ -555,7 +567,7 @@ static int SSL_recvwithtimeout(BUFF *fb, char *buf, int len)
     if (rv <= 0) {
         if (BIO_sock_should_retry(rv)) {
             FD_ZERO(&fdset);
-            FD_SET(sock, &fdset);
+            FD_SET((unsigned int)sock, &fdset);
             tv.tv_usec = 0;
             rv = select(FD_SETSIZE, &fdset, NULL, NULL, &tv);
             if (rv == SOCKET_ERROR)

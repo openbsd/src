@@ -23,6 +23,112 @@
       / __/ |__   _|
   __ |_____(_) |_| ___________________________________________
 
+  Changes with mod_ssl 2.4.8 (02-Nov-1999 to 05-Nov-1999)
+
+   *) ** IMPORTANT BUGFIX **
+      If (and only if)...
+         1. a server restart at least once happened
+         2. a HTTPS request occurs from a 40-bit/export browser
+         3. the underlaying Unix flavor doesn't map DSOs always
+            to the same memory address on each restart
+      ...then a segfault was very likely to occur for usually
+      all previous mod_ssl version. 
+      
+      The reason was that mod_ssl's temporary RSA keys and DH parameters
+      were stored in the persistent memory pool directly as OpenSSL's
+      RSA and DH structures. But although these structures successfully
+      survived restarts, the contained pointers, which were placed there
+      by OpenSSL and which were referencing _static_ parts of OpenSSL,
+      pointed to Nirvana after restarts. So on the next need for RSA
+      temporary keys or DH parameters (usually caused by 40bit clients)
+      the OpenSSL library internally segfaulted while processing these
+      structures.
+
+      This was a very long-standing bug and is now fixed by storing the
+      RSA keys and DH parameters as raw (and this way safe) DER-encoded
+      ASN.1 dats streams (and not structures) in the persistent memory
+      pool.
+
+   *) Added an FAQ entry about Verisign GIDs and the intermediate CA
+      certificate which is required to fill the gap in the server certificate
+      chain or browsers will complain.
+
+   *) The configure.bat for Win32 now tries to complain if patches were
+      rejected while they are applied to the Apache source tree.
+
+   *) Updated ANNOUNCE and README documents.
+
+  Changes with mod_ssl 2.4.7 (22-Oct-1999 to 02-Nov-1999)
+
+   *) Added a check to mod_so to complain with a warning if one loads
+      a plain Apache 1.3 DSO under EAPI (which might work, but can also
+      segfault).
+
+   *) Added more defensive programming checks in the cert/key handling.
+
+   *) Added an entry to the FAQ about the commercial alternatives.
+
+   *) Disabled SysV IPC semaphore based mutex variant for FreeBSD < 3.0 and
+      any OpenBSD and NetBSD platforms because of conflicts with their
+      non-POSIX conforming semctl(2) prototypes.
+
+   *) Added an FAQ entry on how to enable Anonymous 
+      Diffie-Hellman (ADH) ciphers.
+
+   *) Now `make certificate' allows one to also change the
+      certificate validity time (default is still 365 days).
+
+   *) Recreated the ssl.crt/ca-bundle.crt file with all CA certs found in
+      Netscape Communicator 4.7's cert7.db file.
+
+  Changes with mod_ssl 2.4.6 (01-Oct-1999 to 22-Oct-1999)
+
+   *) Re-created RSA and DSA certificates and private keys for both SnakeOil
+      CA and SnakeOil Server, because the RSA certificate already expired
+      recently.  The cert/keys are now valid for the next 2 years.
+
+   *) Freshed up the test welcome page htdocs/index.html with a feather
+      background image (just for fun ;) and with a few other cosmetic
+      cleanups. 
+
+   *) Fixed a few compile warnings under Win32 environment.
+
+   *) Fixed interactive terminal based pass phrase dialog on Win32 platform by
+      explicitly opening `con' (the console) instead of trying to use stdout
+      (which seems to be no longer connected to the console under Win32).
+
+   *) Fixed expiration checks for the session cache. The
+      calculation and time comparsions were incorrect.
+
+   *) Now `httpd -V' also shows the value of EAPI_MM_CORE_PATH
+      (the path to the MM temporary files) if EAPI_MM is activated.
+
+   *) Made sure that `httpd -t' correctly dies, i.e. including a
+      cleanup of the global MM shared memory pool. Same for
+      `httpd -V'. This is important to not let temporary files
+      stay around which confuse `apachectl'.
+
+   *) Changed a few checks in ssl_engine_scache.c to be even more
+      conservative in order to prevent problems in advance.
+   
+   *) Reduced the size check for DBM session caching from 1024 to 950 bytes,
+      because most DBM libraries have a limit of 1022. This should make sure
+      we do not break some requirements some DBM libraries implicitly assume
+      (even they do not explicitly document it).
+
+   *) Fixed SSL_EXPERIMENTAL code related to the POST problem.  We now do a
+      more careful memory management and a segfault-situation was removed,
+      too.
+
+   *) Now the PID is appended to the global MM based shared memory pool
+      alloc.c allocates. This avoids problems with multiple server instances
+      run from the same installation.
+
+   *) Fixed a few typos in the INSTALL document.
+
+   *) Fixed a nasty bug in the fixup phase which caused ``SSLOptions
+      +ExportCertChain'' to dump core if no client certificates were present.
+
   Changes with mod_ssl 2.4.5 (28-Sep-1999 to 01-Oct-1999)
 
    *) Now ``make certificate'' displays a warning message if one generates a

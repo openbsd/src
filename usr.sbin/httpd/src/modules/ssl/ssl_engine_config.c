@@ -127,10 +127,6 @@ void ssl_config_global_create(void)
          * initialize per-module configuration
          */
         mc->nInitCount             = 0;
-        mc->pRSATmpKey512          = NULL;
-        mc->pRSATmpKey1024         = NULL;
-        mc->pDHTmpParam512         = NULL;
-        mc->pDHTmpParam1024        = NULL;
         mc->nSessionCacheMode      = SSL_SCMODE_UNSET;
         mc->szSessionCacheDataFile = NULL;
         mc->nSessionCacheDataSize  = 0;
@@ -143,6 +139,9 @@ void ssl_config_global_create(void)
         mc->aRandSeed              = ap_make_array(pPool, 4, sizeof(ssl_randseed_t));
         mc->tPrivateKey            = ssl_ds_table_make(pPool, sizeof(ssl_asn1_t));
         mc->tPublicCert            = ssl_ds_table_make(pPool, sizeof(ssl_asn1_t));
+        mc->tTmpKeys               = ssl_ds_table_make(pPool, sizeof(ssl_asn1_t));
+
+        (void)memset(mc->pTmpKeys, 0, SSL_TKPIDX_MAX*sizeof(void *));
 
 #ifdef SSL_VENDOR
         mc->ctx = ap_ctx_new(pPool);

@@ -415,7 +415,7 @@ void ssl_util_thread_setup(void)
 
     for (i = 0; i < CRYPTO_NUM_LOCKS; i++)
         lock_cs[i] = CreateMutex(NULL, FALSE, NULL);
-    CRYPTO_set_locking_callback((void(*)(int, int, char*, int))
+    CRYPTO_set_locking_callback((void(*)(int, int, const char *, int))
                                 win32_locking_callback);
 #endif /* WIN32 */
     return;

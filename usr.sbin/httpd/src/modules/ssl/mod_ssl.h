@@ -256,8 +256,9 @@
 #define SSL_MUTEX_LOCK_MODE (_S_IREAD|_S_IWRITE )
 #endif
 #if defined(USE_SYSVSEM_SERIALIZED_ACCEPT) ||\
-    defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) ||\
-    (defined(LINUX) && defined(__GLIBC__) && defined(__GLIBC_MINOR__) && \
+    (defined(__FreeBSD__) && defined(__FreeBSD_version) &&\
+     __FreeBSD_version >= 300000) ||\
+    (defined(LINUX) && defined(__GLIBC__) && defined(__GLIBC_MINOR__) &&\
      LINUX >= 2 && __GLIBC__ >= 2 && __GLIBC_MINOR__ >= 1) ||\
     defined(SOLARIS2)
 #define SSL_CAN_USE_SEM
@@ -380,6 +381,20 @@ typedef int ssl_algo_t;
 #define SSL_AIDX_RSA     (0)
 #define SSL_AIDX_DSA     (1)
 #define SSL_AIDX_MAX     (2)
+
+/*
+ * Define IDs for the temporary RSA keys and DH params
+ */
+
+#define SSL_TKP_GEN        (0)
+#define SSL_TKP_ALLOC      (1)
+#define SSL_TKP_FREE       (2)
+
+#define SSL_TKPIDX_RSA512  (0)
+#define SSL_TKPIDX_RSA1024 (1)
+#define SSL_TKPIDX_DH512   (2)
+#define SSL_TKPIDX_DH1024  (3)
+#define SSL_TKPIDX_MAX     (4)
 
 /*
  * Define the SSL options
@@ -505,10 +520,6 @@ typedef struct {
     pool           *pPool;
     BOOL            bFixed;
     int             nInitCount;
-    RSA            *pRSATmpKey512;
-    RSA            *pRSATmpKey1024;
-    DH             *pDHTmpParam512;
-    DH             *pDHTmpParam1024;
     int             nSessionCacheMode;
     char           *szSessionCacheDataFile;
     int             nSessionCacheDataSize;
@@ -519,6 +530,8 @@ typedef struct {
     int             nMutexFD;
     int             nMutexSEMID;
     array_header   *aRandSeed;
+    ssl_ds_table   *tTmpKeys;
+    void           *pTmpKeys[SSL_TKPIDX_MAX];
     ssl_ds_table   *tPublicCert;
     ssl_ds_table   *tPrivateKey;
     struct {
@@ -626,6 +639,7 @@ const char  *ssl_cmd_SSLRequire(cmd_parms *, SSLDirConfigRec *, char *);
 /*  module initialization  */
 void         ssl_init_Module(server_rec *, pool *);
 void         ssl_init_SSLLibrary(void);
+void         ssl_init_TmpKeysHandle(int, server_rec *, pool *);
 void         ssl_init_ConfigureServer(server_rec *, pool *, SSLSrvConfigRec *);
 void         ssl_init_CheckServers(server_rec *, pool *);
 STACK_OF(X509_NAME) 
