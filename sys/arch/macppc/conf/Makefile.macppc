@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.macppc,v 1.17 2003/11/21 17:53:19 espie Exp $
+#	$OpenBSD: Makefile.macppc,v 1.18 2004/01/20 03:32:44 brad Exp $
 #
 # Makefile for OpenBSD PowerPC
 #
@@ -37,7 +37,7 @@ MACPPC=	$S/arch/macppc
 
 INCLUDES=	-I. -I$S/arch -I$S -nostdinc -L${DESTDIR}/usr/include
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL \
-		-Dmacppc
+		-D__macppc__
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
 CMACHFLAGS=	-msoft-float -Wa,-m7400 -fno-builtin-printf -fno-builtin-log
@@ -142,8 +142,7 @@ clean::
 		[Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
-		${MACPPC}/macppc/Locore.c ${CFILES} \
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB ${CFILES} \
 		ioconf.c param.c | \
 		grep -v 'static function .* unused'
 
