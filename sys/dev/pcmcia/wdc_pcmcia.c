@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_pcmcia.c,v 1.1 1999/07/20 21:51:21 fgsch Exp $	*/
+/*	$OpenBSD: wdc_pcmcia.c,v 1.2 1999/07/21 04:41:54 fgsch Exp $	*/
 /*	$NetBSD: wdc_pcmcia.c,v 1.19 1999/02/19 21:49:43 abs Exp $ */
 
 /*-
@@ -106,7 +106,7 @@ struct wdc_pcmcia_product {
 
 	{ PCMCIA_VENDOR_IBM,
 	  PCMCIA_PRODUCT_IBM_PORTABLE_CDROM_DRIVE,
-	  0, { NULL, "PCMCIA Portable CD-ROM Drive", NULL, NULL },
+	  0, { NULL, "Portable CD-ROM Drive", NULL, NULL },
 	  PCMCIA_STR_IBM_PORTABLE_CDROM_DRIVE },
 
 	{ PCMCIA_VENDOR_HAGIWARASYSCOM,
