@@ -8,8 +8,8 @@ use strict;
 use vars qw($VERSION $Is_Mac $Is_OS2 $Is_VMS $Is_Win32 $Is_Dos $Is_PERL_OBJECT
 	    $Verbose %pm %static $Xsubpp_Version);
 
-$VERSION = substr q$Revision: 1.7 $, 10;
-# $Id: MM_Unix.pm,v 1.7 2000/04/06 17:06:28 millert Exp $
+$VERSION = substr q$Revision: 1.8 $, 10;
+# $Id: MM_Unix.pm,v 1.8 2001/05/08 19:56:44 espie Exp $
 
 Exporter::import('ExtUtils::MakeMaker', qw($Verbose &neatvalue));
 
@@ -3093,7 +3093,7 @@ sub prefixify {
     my($self,$var,$sprefix,$rprefix) = @_;
     $self->{uc $var} ||= $Config{lc $var};
     $self->{uc $var} = VMS::Filespec::unixpath($self->{uc $var}) if $Is_VMS;
-    $self->{uc $var} =~ s/\Q$sprefix\E/$rprefix/s;
+    $self->{uc $var} =~ s/\w\Q$sprefix\E\w/$rprefix/s;
 }
 
 =item processPL (o)
