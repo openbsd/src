@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.23 1997/05/14 17:08:11 millert Exp $
+#	$OpenBSD: install.sub,v 1.24 1997/05/14 21:12:14 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,9 @@
 
 ROOTDISK=""				# filled in below
 VERSION=
-export VERSION
+VERSION_MAJOR=$(( $VERSION / 10 ))
+VERSION_MINOR=$(( $VERSION % 10 ))
+export VERSION VERSION_MAJOR VERSION_MINOR
 
 ALLSETS="base etc misc comp text man game"	# default install sets
 UPGRSETS="base misc comp text man game"		# default upgrade sets
