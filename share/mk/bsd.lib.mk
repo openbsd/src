@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.33 2001/07/20 23:02:21 espie Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.34 2001/07/21 16:04:03 espie Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -10,6 +10,8 @@
 
 .if exists(${.CURDIR}/shlib_version)
 .include "${.CURDIR}/shlib_version"
+SHLIB_MAJOR=${major}
+SHLIB_MINOR=${minor}
 .endif
 
 .MAIN: all
