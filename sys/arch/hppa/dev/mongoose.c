@@ -1,4 +1,4 @@
-/*	$OpenBSD: mongoose.c,v 1.13 2003/08/07 19:47:33 mickey Exp $	*/
+/*	$OpenBSD: mongoose.c,v 1.14 2003/08/11 05:48:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -534,11 +534,12 @@ mgmatch(parent, cfdata, aux)
 	bus_space_handle_t ioh;
 
 	if (ca->ca_type.iodc_type != HPPA_TYPE_BHA ||
-	    ca->ca_type.iodc_sv_model != HPPA_BHA_EISA)
+	    (ca->ca_type.iodc_sv_model != HPPA_BHA_EISA &&
+	     ca->ca_type.iodc_sv_model != HPPA_BHA_WEISA))
 		return 0;
 
-	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE, IOMOD_HPASIZE,
-			  0, &ioh))
+	if (bus_space_map(ca->ca_iot, ca->ca_hpa + MONGOOSE_MONGOOSE,
+	    IOMOD_HPASIZE, 0, &ioh))
 		return 0;
 
 	/* XXX check EISA signature */
