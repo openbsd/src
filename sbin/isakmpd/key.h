@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.h,v 1.3 2001/07/02 02:28:35 deraadt Exp $	*/
+/*	$OpenBSD: key.h,v 1.4 2002/03/05 00:10:43 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -35,5 +35,5 @@ void key_free (int, int, void *);
 void key_serialize (int, int, void *, u_int8_t **, size_t *);
 char *key_printable (int, int, u_int8_t *, int);
 void key_from_printable (int, int, char *, u_int8_t **, int *);
-void *key_internalize (int, int, u_int8_t *, int);
+void *key_internalize (int, int, const u_int8_t *, int);
 #endif /* _KEY_H_ */

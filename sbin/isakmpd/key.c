@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.6 2002/01/23 18:44:47 ho Exp $	*/
+/*	$OpenBSD: key.c,v 1.7 2002/03/05 00:10:43 deraadt Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -124,7 +124,7 @@ key_printable (int type, int private, u_int8_t *data, int datalen)
 
 /* Convert from serialized to internal.  */
 void *
-key_internalize (int type, int private, u_int8_t *data, int datalen)
+key_internalize (int type, int private, const u_int8_t *data, int datalen)
 {
   switch (type)
     {
