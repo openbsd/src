@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.34 1998/07/23 05:27:37 csapuntz Exp $	*/
+/*	$OpenBSD: wd.c,v 1.35 1998/08/06 09:57:09 downsj Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -176,31 +176,27 @@ wdattach(parent, self, aux)
 	printf(": <%s>\n", buf);
 	if (d_link->sc_lp->d_type != DTYPE_ST506) {
 		if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA) != 0) {
-
-			printf("%s: %dMB, %d sec, %d bytes/sec (%dKB cache)\n",
-			       self->dv_xname,
-			       d_link->sc_params.wdp_lbacapacity / 2048,
-			       d_link->sc_params.wdp_lbacapacity,
-			       DEV_BSIZE, /* XXX */
-			       d_link->sc_params.wdp_bufsize / 2);
-
-			printf ("%s: %d cyl, %d head, %d sec\n",
+			printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec, %d sec total\n",
 				self->dv_xname,
+				d_link->sc_params.wdp_lbacapacity / 2048,
 				d_link->sc_params.wdp_cylinders,
 				d_link->sc_params.wdp_heads,
-				d_link->sc_params.wdp_sectors);
-		}
-		else {
-			printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec (%dKB cache)\n",
-			       self->dv_xname,
-			       d_link->sc_params.wdp_cylinders *
-			       (d_link->sc_params.wdp_heads *
-				d_link->sc_params.wdp_sectors) / (1048576 / DEV_BSIZE),
-			       d_link->sc_params.wdp_cylinders,
-			       d_link->sc_params.wdp_heads,
-			       d_link->sc_params.wdp_sectors,
-			       DEV_BSIZE,
-			       d_link->sc_params.wdp_bufsize / 2);
+				d_link->sc_params.wdp_sectors,
+				DEV_BSIZE, /* XXX */
+				d_link->sc_params.wdp_lbacapacity);
+		} else {
+			printf("%s: %dMB, %d cyl, %d head, %d sec, %d bytes/sec, %d sec total\n",
+				self->dv_xname,
+				d_link->sc_params.wdp_cylinders *
+					(d_link->sc_params.wdp_heads *
+					 d_link->sc_params.wdp_sectors) / (1048576 / DEV_BSIZE),
+				d_link->sc_params.wdp_cylinders,
+				d_link->sc_params.wdp_heads,
+				d_link->sc_params.wdp_sectors,
+				DEV_BSIZE, /* XXX */
+				d_link->sc_params.wdp_cylinders *
+					(d_link->sc_params.wdp_heads *
+					 d_link->sc_params.wdp_sectors));
 		}
 	}
 
@@ -228,9 +224,12 @@ wdattach(parent, self, aux)
 		       d_link->sc_multiple,
 		       (d_link->sc_flags & WDF_32BIT) == 0 ? 16 : 32);
 	if ((d_link->sc_params.wdp_capabilities & WD_CAP_LBA) != 0)
-		printf(" lba addressing\n");
+		printf(" lba addressing");
 	else
-		printf(" chs addressing\n");
+		printf(" chs addressing");
+	if (d_link->sc_params.wdp_bufsize > 0)
+		printf(" (%dKB cache)", d_link->sc_params.wdp_bufsize / 2);
+	printf("\n");
 }
 
 /*
