@@ -201,7 +201,7 @@ rk07|RK07|DEC RK07:\
 # Disk on a UDA50
 # NOTE: the space normally reserved for the bad sector
 # table is used in the f and g partitions because the UDA50
-# does it's own bad sector forwarding.  The partitions are
+# does its own bad sector forwarding.  The partitions are
 # not rounded to cylinder boundaries since we use the same
 # partition tables in the driver for all drives.
 #
