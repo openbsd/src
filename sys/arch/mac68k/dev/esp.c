@@ -353,7 +353,7 @@ espattach(parent, self, aux)
 			sc->sc_freq = 25000000;
 		}
 	} else {
-		sc->sc_reg = (volatile u_char *) SCSIBase + 0x400;
+		sc->sc_reg = (volatile u_char *) SCSIBase + 0x402;
 		mac68k_register_scsi_b_irq((void (*)(void *)) espintr, sc);
 		sc->irq_mask = V2IF_SCSIDRQ; /* V2IF_T1? */
 		sc->sc_freq = 25000000;
