@@ -1,4 +1,4 @@
-/*	$OpenBSD: mixerctl.c,v 1.14 2004/01/22 08:06:18 tedu Exp $	*/
+/*	$OpenBSD: mixerctl.c,v 1.15 2004/01/22 17:44:54 vincent Exp $	*/
 /*	$NetBSD: mixerctl.c,v 1.11 1998/04/27 16:55:23 augustss Exp $	*/
 
 /*
@@ -372,11 +372,15 @@ main(int argc, char **argv)
 						}
 					}
 				}
-			argv++;
+				argv++;
 			} else {
 				p = findfield(*argv);
-				prfield(p, sep, vflag);
-				fprintf(out, "\n");
+				if (p == NULL)
+					warnx("field %s does not exist", *argv);
+				else {
+					prfield(p, sep, vflag);
+					fprintf(out, "\n");
+				}
 			}
 		}
 	} else
