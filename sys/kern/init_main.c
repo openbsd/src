@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.6 1996/05/02 13:12:05 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.7 1996/05/06 09:56:20 niklas Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84 1996/04/22 01:38:12 christos Exp $	*/
 
 /*
@@ -112,7 +112,8 @@ struct	timeval runtime;
 
 static void start_init __P((struct proc *));
 static void start_pagedaemon __P((struct proc *));
-void main __P((void *));
+/* XXX return int so gcc -Werror won't complain */
+int main __P((void *));
 
 #ifdef cpu_set_init_frame
 void *initframep;				/* XXX should go away */
@@ -148,7 +149,8 @@ struct emul emul_netbsd = {
  * hard work is done in the lower-level initialization routines including
  * startup(), which does memory initialization and autoconfiguration.
  */
-void
+/* XXX return int, so gcc -Werror won't complain */
+int
 main(framep)
 	void *framep;				/* XXX should go away */
 {
