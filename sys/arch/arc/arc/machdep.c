@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.28 1997/05/19 16:01:09 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.29 1997/05/19 16:21:20 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.28 1997/05/19 16:01:09 pefo Exp $
+ *      $Id: machdep.c,v 1.29 1997/05/19 16:21:20 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -1143,6 +1143,7 @@ boot(howto)
 		printf("System restart.\n");
 		delay(2000000);
 		(void)kbc_8042sysreset();	/* Try this first */
+		delay(100000);			/* Give it a chance */
 		__asm__(" li $2, 0xbfc00000; jr $2; nop\n");
 		while(1); /* Forever */
 	}
