@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap.c,v 1.5 1999/06/04 00:23:17 art Exp $	*/
+/*	$OpenBSD: uvm_swap.c,v 1.6 1999/06/17 15:40:54 art Exp $	*/
 /*	$NetBSD: uvm_swap.c,v 1.23 1998/12/26 06:25:59 marc Exp $	*/
 
 /*
@@ -327,6 +327,12 @@ uvm_swap_init()
 			    NULL, NULL, 0);
 	if (vndbuf_pool == NULL)
 		panic("swapinit: pool_create failed");
+
+	/*
+	 * Setup the initial swap partition
+	 */
+	swapmount();
+
 	/*
 	 * done!
 	 */
@@ -1948,11 +1954,6 @@ uvm_swap_aiodone(aio)
 	s = splbio();
 	pool_put(swapbuf_pool, sbp);
 	splx(s);
-
-	/*
-	 * Setup the initial swap partition
-	 */
-	swapmount();
 
 	/*
 	 * done!
