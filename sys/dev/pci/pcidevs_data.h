@@ -2103,6 +2103,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "Riva TNT",
 	},
 	{
+	    PCI_VENDOR_NVIDIA, PCI_PRODUCT_NVIDIA_RIVA_TNT2,
+	    0,
+	    "Nvidia",
+	    "Riva TNT2",
+	},
+	{
 	    PCI_VENDOR_OAKTECH, PCI_PRODUCT_OAKTECH_OTI1007,
 	    0,
 	    "Oak Technology",
