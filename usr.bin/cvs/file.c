@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.51 2005/01/12 20:10:09 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.52 2005/01/24 16:41:28 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -910,9 +910,6 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 				else
 					cfp->cf_cvstat = CVS_FST_MODIFIED;
 			}
-
-			cvs_ent_remove(CVS_DIR_ENTRIES(parent),
-			    CVS_FILE_NAME(cfp));
 		}
 	} else {
 		if (ent == NULL) {
@@ -923,6 +920,9 @@ cvs_file_lget(const char *path, int flags, CVSFILE *parent)
 		} else
 			cfp->cf_cvstat = CVS_FST_LOST;
 	}
+
+	if (ent != NULL)
+		cvs_ent_remove(CVS_DIR_ENTRIES(parent), CVS_FILE_NAME(cfp));
 
 	if ((cfp->cf_type == DT_DIR) && (cvs_file_getdir(cfp, flags) < 0)) {
 		cvs_file_free(cfp);
