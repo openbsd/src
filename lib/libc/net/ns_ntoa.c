@@ -45,6 +45,8 @@ static char rcsid[] = "$NetBSD: ns_ntoa.c,v 1.4 1995/02/25 06:20:51 cgd Exp $";
 #include <netns/ns.h>
 #include <stdio.h>
 
+static char *spectHex __P((char *));
+
 char *
 ns_ntoa(addr)
 	struct ns_addr addr;
@@ -56,7 +58,6 @@ ns_ntoa(addr)
 	char *cp2;
 	register u_char *up = addr.x_host.c_host;
 	u_char *uplim = up + 6;
-	static char *spectHex();
 
 	net.net_e = addr.x_net;
 	sprintf(obuf, "%lx", ntohl(net.long_e));

@@ -144,7 +144,7 @@ getanswer(answer, anslen, iquery)
 	if (qdcount) {
 		if (iquery) {
 			if ((n = dn_expand((u_char *)answer->buf,
-			    (u_char *)eom, (u_char *)cp, (u_char *)bp,
+			    (u_char *)eom, (u_char *)cp, bp,
 			    buflen)) < 0) {
 				h_errno = NO_RECOVERY;
 				return ((struct hostent *) NULL);
@@ -174,7 +174,7 @@ getanswer(answer, anslen, iquery)
 	haveanswer = 0;
 	while (--ancount >= 0 && cp < eom) {
 		if ((n = dn_expand((u_char *)answer->buf, (u_char *)eom,
-		    (u_char *)cp, (u_char *)bp, buflen)) < 0)
+		    (u_char *)cp, bp, buflen)) < 0)
 			break;
 		cp += n;
 		type = _getshort(cp);
@@ -195,7 +195,7 @@ getanswer(answer, anslen, iquery)
 		}
 		if (iquery && type == T_PTR) {
 			if ((n = dn_expand((u_char *)answer->buf,
-			    (u_char *)eom, (u_char *)cp, (u_char *)bp,
+			    (u_char *)eom, (u_char *)cp, bp,
 			    buflen)) < 0)
 				break;
 			cp += n;
@@ -368,11 +368,11 @@ gethostbyaddr(addr, len, type)
 		switch (lookups[i]) {
 #ifdef YP
 		case 'y':
-			hp = _yp_gethtbyaddr(addr, len, type);
+			hp = _yp_gethtbyaddr(addr);
 			break;
 #endif
 		case 'b':
-			n = res_query(qbuf, C_IN, T_PTR, (char *)&buf, sizeof(buf));
+			n = res_query(qbuf, C_IN, T_PTR, (u_char *)&buf, sizeof(buf));
 			if (n < 0) {
 #ifdef DEBUG
 				if (_res.options & RES_DEBUG)
@@ -469,7 +469,7 @@ again:
 
 struct hostent *
 _gethtbyname(name)
-	char *name;
+	const char *name;
 {
 	register struct hostent *p;
 	register char **cp;
@@ -598,9 +598,8 @@ done:
 }
 
 struct hostent *
-_yp_gethtbyaddr(addr, len, type)
+_yp_gethtbyaddr(addr)
 	const char *addr;
-	int len, type;
 {
 	struct hostent *hp = (struct hostent *)NULL;
 	static char *__ypcurrent;

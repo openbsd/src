@@ -15,8 +15,12 @@ static char *rcsid = "$NetBSD: htons.c,v 1.5 1995/04/28 23:25:19 jtc Exp $";
 #undef htons
 
 unsigned short
+#if __STDC__
+htons(unsigned short x)
+#else
 htons(x)
 	unsigned short x;
+#endif
 {
 #if BYTE_ORDER == LITTLE_ENDIAN
 	u_char *s = (u_char *) &x;
