@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.11 1997/08/08 22:01:08 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.12 1997/10/02 11:58:12 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.21 1996/05/03 19:42:03 christos Exp $	*/
 
 /*
@@ -75,7 +75,7 @@ char   *readbsdlabel __P((struct buf *, void (*) __P((struct buf *)), int, int,
 #endif
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
 char   *readdoslabel __P((struct buf *, void (*) __P((struct buf *)),
-    struct disklabel *, struct cpu_disklabel *));
+    struct disklabel *, struct cpu_disklabel *, int *, int *));
 #endif
 #if defined(DISKLABEL_AMIGA) || defined(DISKLABEL_ALL)
 char   *readamigalabel __P((struct buf *, void (*) __P((struct buf *)),
@@ -210,7 +210,6 @@ readbsdlabel(bp, strat, cyl, sec, off, endian, lp)
 				msg = NULL;
 				break;
 			}
-
 		}
 		if (off >= 0)
 			break;
@@ -274,7 +273,7 @@ readdisklabel(dev, strat, lp, osdep)
 
 		case DLT_I386:
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
-			msg = readdoslabel(bp, strat, lp, osdep);
+			msg = readdoslabel(bp, strat, lp, osdep, 0, 0);
 			if (msg)
 				/* Fallback alternative */
 				fallbacklabel = *lp;
@@ -326,11 +325,13 @@ readdisklabel(dev, strat, lp, osdep)
  * MBR is valid.
  */
 char *
-readdoslabel(bp, strat, lp, osdep)
+readdoslabel(bp, strat, lp, osdep, partoffp, cylp)
 	struct buf *bp;
 	void (*strat) __P((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *osdep;
+	int *partoffp;
+	int *cylp;
 {
 	struct dos_partition *dp = osdep->u._i386.dosparts, *dp2;
 	struct dkbad *db, *bdp = &DKBAD(osdep);
@@ -364,6 +365,8 @@ readdoslabel(bp, strat, lp, osdep)
 			/* if successful, wander through dos partition table */
 			if (biowait(bp)) {
 				msg = "dos partition I/O error";
+				if (partoffp)
+					*partoffp = -1;
 				return (msg);
 			}
 			bcopy(bp->b_data + DOSPARTOFF, dp,
@@ -464,6 +467,12 @@ donot:
 		lp->d_sbsize = 64*1024;		/* XXX ? */
 		lp->d_npartitions = n > 0 ? n + 8 : 3;
 	}
+
+	/* record the OpenBSD partition's placement for the caller */
+	if (partoffp)
+		*partoffp = dospartoff;
+	if (cylp)
+		*cylp = cyl;
 
 	/* next, dig out disk label */
 	msg = readbsdlabel(bp, strat, cyl, dospartoff + I386_LABELSECTOR, -1,
@@ -620,7 +629,7 @@ writedisklabel(dev, strat, lp, osdep)
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
 	struct cpu_disklabel cdl;
 #endif
-	int labeloffset, error, i, endian;
+	int labeloffset, error, i, endian, partoff = 0, cyl = 0;
 	u_int64_t csum, *p;
 
 	/* get a buffer and initialize it */
@@ -647,7 +656,8 @@ writedisklabel(dev, strat, lp, osdep)
 
 		case DLT_I386:
 #if defined(DISKLABEL_I386) || defined(DISKLABEL_ALL)
-			msg = readdoslabel(bp, strat, &dl, &cdl);
+			msg = readdoslabel(bp, strat, &dl, &cdl, &partoff,
+			    &cyl);
 			labeloffset = I386_LABELOFFSET;
 			endian = LITTLE_ENDIAN;
 #endif
@@ -667,8 +677,15 @@ writedisklabel(dev, strat, lp, osdep)
 	}
 
 	if (msg) {
-		error = ESRCH;
-		goto done;
+		if (partoff == -1)
+			return EIO;
+
+		/* Write it in the regular place with native byte order. */
+		labeloffset = LABELOFFSET;
+		endian = BYTE_ORDER;
+		bp->bp_blkno = partoff + LABELSECTOR;
+		bp->bp_cylin = cyl;
+		bp->bp_bcount = lp->d_secsize;
 	}
 
 	if (endian != BYTE_ORDER) {
