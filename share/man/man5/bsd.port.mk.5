@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.149 2004/09/19 09:00:51 pvalchev Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.150 2004/10/11 10:34:56 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1486,6 +1486,10 @@ User settings.
 If set, expands to a command that will release a lock.
 This lock will reside in
 .Pa ${LOCKDIR} .
+.It Ev UNMESSAGE
+File recorded in the package and displayed during deinstallation.
+Defaults to ${PKGDIR}/UNMESSAGE if this file exists.
+Leave empty if no message is needed.
 .It Ev UNZIP
 Name of the unzip binary.
 .It Ev WARNINGS
@@ -2111,14 +2115,15 @@ generated from templates in ${PKGDIR}.
 .It
 If not overridden by the user, determine which set of templates to use,
 depending on the current SUBPACKAGE and FLAVOR information.
-Set ${PLIST}, ${DESCR}, ${COMMENT}, ${MESSAGE} accordingly.
+Set ${PLIST}, ${DESCR}, ${COMMENT}, ${MESSAGE}, ${UNMESSAGE} accordingly.
 .It
 Detect the existence of ${PKGDIR}/{REQ,INSTALL,DEINSTALL}${SUBPACKAGE}.
 Modify PKG_ARGS accordingly, to use the generated files, and add
 dependencies to regenerate the files if the templates change.
 .It
-Generate the actual DESCR, and if needed, MESSAGE, REQ, INSTALL, DEINSTALL
-from the templates in ${DESCR}, ${MESSAGE}, ${PKGDIR}/REQ${SUBPACKAGE},
+Generate the actual DESCR, and if needed, MESSAGE, UNMESSAGE, 
+REQ, INSTALL, DEINSTALL from the templates in ${DESCR}, ${MESSAGE}, 
+${UNMESSAGE}, ${PKGDIR}/REQ${SUBPACKAGE},
 ${PKGDIR}/INSTALL${SUBPACKAGE}, ${PKGDIR}/DEINSTALL${SUBPACKAGE}, by
 substituting the variables in ${SUBST_VARS}, and by substituting
 ${FLAVORS} with the canonical flavor extension for this port,
@@ -2185,8 +2190,8 @@ target does a fairly good job of automatically generating PLIST and
 PFRAG.shared fragments.
 .Pp
 In MULTI_PACKAGES mode, there must be separate COMMENT, DESCR, and PLIST
-templates for each SUBPACKAGE (and optional distinct MESSAGE, REQ, INSTALL,
-DEINSTALL files in a similar way).
+templates for each SUBPACKAGE (and optional distinct MESSAGE, UNMESSAGE,
+REQ, INSTALL, DEINSTALL files in a similar way).
 This contrasts with the FLAVORS
 situation, where all these files will automatically default to the
 non-flavor version if there is no flavor-specific file around.
