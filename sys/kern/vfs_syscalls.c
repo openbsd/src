@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.71 2001/05/13 02:40:46 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.72 2001/05/14 14:55:48 art Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -861,24 +861,23 @@ sys_open(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sys_open_args /* {
+	struct sys_open_args /* {
 		syscallarg(char *) path;
 		syscallarg(int) flags;
 		syscallarg(int) mode;
 	} */ *uap = v;
-	register struct filedesc *fdp = p->p_fd;
-	register struct file *fp;
-	register struct vnode *vp;
+	struct filedesc *fdp = p->p_fd;
+	struct file *fp;
+	struct vnode *vp;
 	struct vattr vattr;
 	int flags, cmode;
-	struct file *nfp;
 	int type, indx, error, localtrunc = 0;
 	struct flock lf;
 	struct nameidata nd;
 
-	if ((error = falloc(p, &nfp, &indx)) != 0)
+	if ((error = falloc(p, &fp, &indx)) != 0)
 		return (error);
-	fp = nfp;
+
 	flags = FFLAGS(SCARG(uap, flags));
 	cmode = ((SCARG(uap, mode) &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
