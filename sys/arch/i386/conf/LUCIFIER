@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.8 1997/10/20 01:40:12 todd Exp $
+#	$OpenBSD: LUCIFIER,v 1.9 1997/10/21 15:24:31 mickey Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -22,8 +22,8 @@ option		COMPAT_BSDOS	# binary compatibility with BSD/OS
 
 #option		INSECURE	# default to secure
 
-option		TIMEZONE=0	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
+option		TIMEZONE=300	# time zone to adjust RTC time by
+option		DST=1		# daylight savings time used by RTC
 
 option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices
