@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.c,v 1.12 2004/02/10 00:41:44 tom Exp $	*/
+/*	$OpenBSD: debug.c,v 1.13 2004/03/09 19:12:12 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -13,8 +13,8 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -71,7 +71,7 @@ dump_regs(u_int trapno, u_int arg)
 	    trapno, arg, trap_names[trapno], save_cons);
 
 	/* Register dump */
-	for(i = 1; i <= nreg; i++)
+	for (i = 1; i <= nreg; i++)
 		printf("%s\t%x%c", reg_names[i-1], *reg_values[i-1],
 		    ((i%4)? ' ': '\n'));
 
@@ -88,11 +88,12 @@ void
 dump_mem(char *l, void *p, size_t n)
 {
 	register int i;
+
 	printf("%s [%p]:%s", l, p, (n > 6? "\n":" "));
-	for(i = 1; i <= n; i++)
+	for (i = 1; i <= n; i++)
 		printf("%x%c", *(u_int32_t *)p++, ((i%8)? ' ': '\n'));
 	if (n % 8)
-		printf ("\n");
+		printf("\n");
 }
 
 

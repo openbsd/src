@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_i386.c,v 1.27 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: dev_i386.c,v 1.28 2004/03/09 19:12:12 tom Exp $	*/
 
 /*
  * Copyright (c) 1996-1999 Michael Shalayeff
@@ -73,7 +73,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 		else if (debug)
 			printf("%d", rc);
 #endif
-			
+
 	}
 #ifdef DEBUG
 	if (debug)
@@ -112,7 +112,7 @@ int pch_pos = 0;
 void
 putchar(int c)
 {
-	switch(c) {
+	switch (c) {
 	case '\177':	/* DEL erases */
 		cnputc('\b');
 		cnputc(' ');
@@ -124,7 +124,7 @@ putchar(int c)
 	case '\t':
 		do
 			cnputc(' ');
-		while(++pch_pos % 8);
+		while (++pch_pos % 8);
 		break;
 	case '\n':
 	case '\r':
@@ -147,11 +147,11 @@ getchar(void)
 		c = '\n';
 
 	if ((c < ' ' && c != '\n') || c == '\177')
-		return(c);
+		return c;
 
 	putchar(c);
 
-	return(c);
+	return c;
 }
 
 char ttyname_buf[8];
@@ -160,9 +160,9 @@ char *
 ttyname(int fd)
 {
 	snprintf(ttyname_buf, sizeof ttyname_buf, "%s%d",
-	    cdevs[major(cn_tab->cn_dev)],
-	    minor(cn_tab->cn_dev));
-	return (ttyname_buf);
+	    cdevs[major(cn_tab->cn_dev)], minor(cn_tab->cn_dev));
+
+	return ttyname_buf;
 }
 
 dev_t
@@ -174,18 +174,19 @@ ttydev(char *name)
 	while (no >= name && *no >= '0' && *no <= '9')
 		unit = (unit < 0 ? 0 : (unit * 10)) + *no-- - '0';
 	if (no < name || unit < 0)
-		return (NODEV);
+		return NODEV;
 	for (i = 0; i < ncdevs; i++)
 		if (strncmp(name, cdevs[i], no - name + 1) == 0)
 			return (makedev(i, unit));
-	return (NODEV);
+	return NODEV;
 }
 
 int
 cnspeed(dev_t dev, int sp)
 {
 	if (major(dev) == 8)	/* comN */
-		return comspeed(dev, sp);
+		return (comspeed(dev, sp));
+
 	/* pc0 and anything else */
 	return 9600;
 }

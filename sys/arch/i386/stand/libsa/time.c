@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.14 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: time.c,v 1.15 2004/03/09 19:12:13 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -50,8 +50,7 @@ bcdtoint(u_int8_t c)
  * Quick compute of time in seconds since the Epoch
  */
 const u_short monthcount[] = {
-	0, 0, 31, 59, 90, 120, 151, 181,
-	212, 243, 273, 304, 334, 365
+	0, 0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365
 };
 
 static __inline time_t
@@ -65,8 +64,8 @@ compute(int year, u_int8_t month, u_int8_t day, u_int8_t hour,
 	tt = (year - 1970) * 365 + monthcount[month] + day;
 
 	/* Compute for leap year */
-	for(month <= 2? year--:0;year >= 1970;year--)
-		if(isleap(year))
+	for (month <= 2 ? year-- : 0; year >= 1970; year--)
+		if (isleap(year))
 			tt++;
 
 	/* Plus the time */
@@ -79,13 +78,13 @@ static int
 bios_time_date(int f, u_int8_t *b)
 {
 	__asm __volatile(DOINT(0x1a) "\n\t"
-		       "setc %b0\n\t"
-		       "movb %%ch, 0(%2)\n\t"
-		       "movb %%cl, 1(%2)\n\t"
-		       "movb %%dh, 2(%2)\n\t"
-		       "movb %%dl, 3(%2)\n\t"
-		       : "=a" (f)
-		       : "0" (f), "p" (b) : "%ecx", "%edx", "cc");
+	    "setc %b0\n\t"
+	    "movb %%ch, 0(%2)\n\t"
+	    "movb %%cl, 1(%2)\n\t"
+	    "movb %%dh, 2(%2)\n\t"
+	    "movb %%dl, 3(%2)\n\t"
+	    : "=a" (f)
+	    : "0" (f), "p" (b) : "%ecx", "%edx", "cc");
 	if (f & 0xff)
 		return -1;
 	else {
@@ -118,20 +117,20 @@ getsecs(void)
 	u_int8_t timebuf[4], datebuf[4];
 
 	/* Query BIOS for time & date */
-	if(!biostime(timebuf) && !biosdate(datebuf)) {
+	if (!biostime(timebuf) && !biosdate(datebuf)) {
 #ifdef notdef
 		int dst;
 
 		dst = timebuf[3];
 #endif
 		/* Convert to seconds since Epoch */
-		return compute(datebuf[0] * 100 + datebuf[1],
-			       datebuf[2], datebuf[3],
-			       timebuf[0], timebuf[1], timebuf[2]);
+		return (compute(datebuf[0] * 100 + datebuf[1],
+		    datebuf[2], datebuf[3],
+		    timebuf[0], timebuf[1], timebuf[2]));
 	} else
 		errno = EIO;
 
-	return(1);
+	return 1;
 }
 
 u_int
@@ -139,8 +138,10 @@ sleep(u_int i)
 {
 	register time_t t;
 
-	/* loop for that number of seconds, polling BIOS,
-	   so that it may handle interrupts */
+	/*
+	 * Loop for the requested number of seconds, polling BIOS,
+	 * so that it may handle interrupts.
+	 */
 	for (t = getsecs() + i; getsecs() < t; cnischar());
 
 	return 0;

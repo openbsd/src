@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.26 2003/12/16 03:10:18 deraadt Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.27 2004/03/09 19:12:12 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -82,6 +82,7 @@ pc_getc(dev_t dev)
 
 	__asm __volatile(DOINT(0x16) : "=a" (rv) : "0" (0x000) :
 	    "%ecx", "%edx", "cc" );
+
 	return (rv & 0xff);
 }
 
@@ -147,7 +148,7 @@ int
 comspeed(dev_t dev, int sp)
 {
 	int i, newsp;
-        int err;
+	int err;
 
 	if (sp <= 0)
 		return com_speed;
@@ -204,11 +205,10 @@ com_putc(dev_t dev, int c)
 	/* check online (DSR) */
 	__asm __volatile(DOINT(0x14) : "=a" (rv) :
 	    "0" (0x300), "d" (dev) : "%ecx", "cc" );
-	if ( !(rv & 0x20) )
+	if ( (rv & 0x20) == 0)
 		return;
 
 	/* send character */
 	__asm __volatile(DOINT(0x14) : "=a" (rv) :
 	    "0" (c | 0x100), "d" (dev) : "%ecx", "cc" );
 }
-

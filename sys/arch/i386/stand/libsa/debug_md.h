@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_md.h,v 1.5 2003/06/03 20:22:11 mickey Exp $	*/
+/*	$OpenBSD: debug_md.h,v 1.6 2004/03/09 19:12:12 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -54,4 +54,3 @@
 #define DUMP_REGS	__asm("int $2")
 extern struct reg reg;
 #endif
-

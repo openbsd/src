@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_i386.S,v 1.11 2003/06/03 20:22:11 mickey Exp $	*/
+/*	$OpenBSD: debug_i386.S,v 1.12 2004/03/09 19:12:12 tom Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -122,5 +122,3 @@ ENTRY(check_regs)
 	movl	$0x47374736, (%edi)
 #endif
 	ret
-
-

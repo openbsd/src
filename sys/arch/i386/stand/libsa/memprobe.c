@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.41 2004/01/09 21:15:00 deraadt Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.42 2004/03/09 19:12:13 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -14,8 +14,8 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -49,15 +49,15 @@ checkA20(void)
 	int st;
 
 	/* Simple check */
-	if(*p != *q)
-		return(1);
+	if (*p != *q)
+		return 1;
 
 	/* Complex check */
 	*p = ~(*p);
 	st = (*p != *q);
 	*p = ~(*p);
 
-	return(st);
+	return st;
 }
 
 /* BIOS int 15, AX=E820
@@ -73,27 +73,28 @@ bios_E820(bios_memmap_t *mp)
 
 	do {
 		BIOS_regs.biosr_es = ((u_int)(mp) >> 4);
-		__asm __volatile(DOINT(0x15) "; setc %b1"
-				: "=a" (sig), "=d" (rc), "=b" (off)
-				: "0" (0xE820), "1" (0x534d4150), "b" (off),
-				  "c" (sizeof(*mp)), "D" (((u_int)mp) & 0xF)
-				: "cc", "memory");
-			off = BIOS_regs.biosr_bx;
 
-			if (rc & 0xff || sig != 0x534d4150)
-				break;
-			gotcha++;
-			if (!mp->type)
-				mp->type = BIOS_MAP_RES;
-			mp++;
+		__asm __volatile(DOINT(0x15) "; setc %b1"
+		    : "=a" (sig), "=d" (rc), "=b" (off)
+		    : "0" (0xE820), "1" (0x534d4150), "b" (off),
+		      "c" (sizeof(*mp)), "D" (((u_int)mp) & 0xF)
+		    : "cc", "memory");
+		off = BIOS_regs.biosr_bx;
+
+		if (rc & 0xff || sig != 0x534d4150)
+			break;
+		gotcha++;
+		if (!mp->type)
+			mp->type = BIOS_MAP_RES;
+		mp++;
 	} while (off);
 
 	if (!gotcha)
-		return (NULL);
+		return NULL;
 #ifdef DEBUG
 	printf("0x15[E820] ");
 #endif
-	return (mp);
+	return mp;
 }
 
 #if 0
@@ -113,25 +114,27 @@ bios_E801(bios_memmap_t *mp)
 
 	/* Test for possibility of 0xE801 */
 	info =  getSYSCONFaddr();
-	if(!info) return(NULL);
+	if (!info)
+		return NULL;
 	/* XXX - Should test model/submodel/rev here */
 	printf("model(%d,%d,%d)", info[2], info[3], info[4]);
 
 	/* Check for 94 or later bios */
 	info = (void *)0xFFFFB;
-	if(info[0] == '9' && info[1] <= '3') return(NULL);
+	if (info[0] == '9' && info[1] <= '3')
+		return NULL;
 
 	/* We might have this call */
 	__asm __volatile(DOINT(0x15) "; mov %%ax, %%si; setc %b0"
-		: "=a" (rc), "=S" (m1), "=b" (m2), "=c" (m3), "=d" (m4)
-		: "0" (0xE801));
+	    : "=a" (rc), "=S" (m1), "=b" (m2), "=c" (m3), "=d" (m4)
+	    : "0" (0xE801));
 
 	/* Test for failure */
-	if(rc & 0xff)
-		return (NULL);
+	if (rc & 0xff)
+		return NULL;
 
 	/* Fixup for screwed up machines */
-	if(m1 == 0){
+	if (m1 == 0) {
 		m1 = m3;
 		m2 = m4;
 	}
@@ -163,10 +166,10 @@ bios_8800(bios_memmap_t *mp)
 	int rc, mem;
 
 	__asm __volatile(DOINT(0x15) "; setc %b0"
-		: "=c" (rc), "=a" (mem) : "a" (0x8800));
+	    : "=c" (rc), "=a" (mem) : "a" (0x8800));
 
-	if(rc & 0xff)
-		return (NULL);
+	if (rc & 0xff)
+		return NULL;
 #ifdef DEBUG
 	printf("0x15[8800] ");
 #endif
@@ -230,23 +233,23 @@ addrprobe(u_int kloc)
 
 	save[0] = *loc;
 	/* Probe address */
-	for(i = 0; i < NENTS(addrprobe_pat); i++){
+	for (i = 0; i < NENTS(addrprobe_pat); i++) {
 		*loc = addrprobe_pat[i];
-		if(*loc != addrprobe_pat[i])
+		if (*loc != addrprobe_pat[i])
 			ret++;
 	}
 	*loc = save[0];
 
 	if (!ret) {
 		/* Write address */
-		for(i = 0; i < NENTS(addrprobe_pat); i++) {
+		for (i = 0; i < NENTS(addrprobe_pat); i++) {
 			save[i] = loc[i];
 			loc[i] = addrprobe_pat[i];
 		}
 
 		/* Read address */
-		for(i = 0; i < NENTS(addrprobe_pat); i++) {
-			if(loc[i] != addrprobe_pat[i])
+		for (i = 0; i < NENTS(addrprobe_pat); i++) {
+			if (loc[i] != addrprobe_pat[i])
 				ret++;
 			loc[i] = save[i];
 		}
@@ -276,8 +279,8 @@ badprobe(bios_memmap_t *mp)
 	 * There is no need to do this in assembly language.  This is
 	 * much easier to debug in C anyways.
 	 */
-	for(ram = 1024; ram < 512 * 1024; ram += 4)
-		if(addrprobe(ram))
+	for (ram = 1024; ram < 512 * 1024; ram += 4)
+		if (addrprobe(ram))
 			break;
 
 	mp->addr = 1024 * 1024;
@@ -300,17 +303,17 @@ memprobe(void)
 	printf(" mem[");
 #endif
 
-	if(!(pm = bios_E820(bios_memmap))) {
+	if ((pm = bios_E820(bios_memmap)) == NULL) {
 		im = bios_int12(bios_memmap);
 #if 0
 		pm = bios_E801(im);
-		if (!pm)
+		if (pm == NULL)
 #endif
 			pm = bios_8800(im);
-		if (!pm)
+		if (pm == NULL)
 			pm = badprobe(im);
-		if (!pm) {
-			printf (" No Extended memory detected.");
+		if (pm == NULL) {
+			printf(" No Extended memory detected.");
 			pm = im;
 		}
 	}
@@ -327,7 +330,7 @@ memprobe(void)
 
 	/* XXX - Compatibility, remove later (smpprobe() relies on it) */
 	extmem = cnvmem = 0;
-	for(im = bios_memmap; im->type != BIOS_MAP_END; im++) {
+	for (im = bios_memmap; im->type != BIOS_MAP_END; im++) {
 		/* Count only "good" memory chunks 12K and up in size */
 		if ((im->type == BIOS_MAP_FREE) && (im->size >= 12*1024)) {
 			if (im->size > 1024 * 1024)
@@ -345,10 +348,10 @@ memprobe(void)
 			 * We ignore "good" memory in the 640K-1M hole.
 			 * We drop "machine {cnvmem,extmem}" commands.
 			 */
-			if(im->addr < IOM_BEGIN)
+			if (im->addr < IOM_BEGIN)
 				cnvmem = max(cnvmem,
 				    im->addr + im->size) / 1024;
-			if(im->addr >= IOM_END)
+			if (im->addr >= IOM_END)
 				extmem += im->size / 1024;
 		}
 	}
@@ -364,7 +367,7 @@ dump_biosmem(bios_memmap_t *tm)
 	register bios_memmap_t *p;
 	register u_int total = 0;
 
-	if (!tm)
+	if (tm == NULL)
 		tm = bios_memmap;
 
 	/* libsa printf does not handle quad args, so we use long
@@ -372,12 +375,12 @@ dump_biosmem(bios_memmap_t *tm)
 	 * 4G of RAM on a x86 box, this not likely to cause a problem.
 	 * If/when we do, libsa may need to be updated some...
 	 */
-	for(p = tm; p->type != BIOS_MAP_END; p++) {
-		printf("Region %ld: type %u at 0x%x for %uKB\n", 
+	for (p = tm; p->type != BIOS_MAP_END; p++) {
+		printf("Region %ld: type %u at 0x%x for %uKB\n",
 		    (long)(p - tm), p->type, (u_int)p->addr,
 		    (u_int)(p->size / 1024));
 
-		if(p->type == BIOS_MAP_FREE)
+		if (p->type == BIOS_MAP_FREE)
 			total += p->size / 1024;
 	}
 
@@ -396,8 +399,8 @@ mem_delete(long sa, long ea)
 
 			/* can we eat it as a whole? */
 			if ((sa - sp) <= NBPG && (ep - ea) <= NBPG) {
-				bcopy (p + 1, p, (char *)bios_memmap +
-				       sizeof(bios_memmap) - (char *)p);
+				bcopy(p + 1, p, (char *)bios_memmap +
+				    sizeof(bios_memmap) - (char *)p);
 				break;
 			/* eat head or legs */
 			} else if (sa <= sp && sp < ea) {
@@ -409,9 +412,9 @@ mem_delete(long sa, long ea)
 				break;
 			} else if (sp < sa && ea < ep) {
 				/* bite in half */
-				bcopy (p, p + 1, (char *)bios_memmap +
-				       sizeof(bios_memmap) - (char *)p -
-				       sizeof(bios_memmap[0]));
+				bcopy(p, p + 1, (char *)bios_memmap +
+				    sizeof(bios_memmap) - (char *)p -
+				    sizeof(bios_memmap[0]));
 				p[1].addr = ea;
 				p[1].size = ep - ea;
 				p->size = sa - sp;
@@ -444,8 +447,8 @@ mem_add(long sa, long ea)
 				break;
 			} else if (ea < sp) {
 				/* insert before */
-				bcopy (p, p + 1, (char *)bios_memmap +
-				       sizeof(bios_memmap) - (char *)(p - 1));
+				bcopy(p, p + 1, (char *)bios_memmap +
+				    sizeof(bios_memmap) - (char *)(p - 1));
 				p->addr = sa;
 				p->size = ea - sa;
 				break;

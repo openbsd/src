@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.67 2003/11/27 00:33:24 espie Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.68 2004/03/09 19:12:12 tom Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -14,8 +14,8 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -57,13 +57,13 @@ struct biosdisk {
 #endif
 
 struct EDD_CB {
-	u_int8_t  edd_len;   /* size of packet */
-	u_int8_t  edd_res1;  /* reserved */
-	u_int8_t  edd_nblk;  /* # of blocks to transfer */
-	u_int8_t  edd_res2;  /* reserved */
-	u_int16_t edd_off;   /* address of buffer (offset) */
-	u_int16_t edd_seg;   /* address of buffer (segment) */
-	u_int64_t edd_daddr; /* starting block */
+	u_int8_t  edd_len;	/* size of packet */
+	u_int8_t  edd_res1;	/* reserved */
+	u_int8_t  edd_nblk;	/* # of blocks to transfer */
+	u_int8_t  edd_res2;	/* reserved */
+	u_int16_t edd_off;	/* address of buffer (offset) */
+	u_int16_t edd_seg;	/* address of buffer (segment) */
+	u_int64_t edd_daddr;	/* starting block */
 };
 
 /*
@@ -73,9 +73,11 @@ static int
 biosdreset(int dev)
 {
 	int rv;
+
 	__asm __volatile (DOINT(0x13) "; setc %b0" : "=a" (rv)
-			  : "0" (0), "d" (dev) : "%ecx", "cc");
-	return (rv & 0xff)? rv >> 8 : 0;
+	    : "0" (0), "d" (dev) : "%ecx", "cc");
+
+	return ((rv & 0xff)? rv >> 8 : 0);
 }
 
 /*
@@ -96,23 +98,23 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 		printf("getinfo: try #8, 0x%x, %p\n", dev, pdi);
 #endif
 	__asm __volatile (DOINT(0x13) "\n\t"
-			  "setc %b0; movzbl %h1, %1\n\t"
-			  "movzbl %%cl, %3; andb $0x3f, %b3\n\t"
-			  "xchgb %%cl, %%ch; rolb $2, %%ch"
-			  : "=a" (rv), "=d" (pdi->bios_heads),
-			    "=c" (pdi->bios_cylinders),
-			    "=b" (pdi->bios_sectors)
-			  : "0" (0x0800), "1" (dev) : "cc");
+	    "setc %b0; movzbl %h1, %1\n\t"
+	    "movzbl %%cl, %3; andb $0x3f, %b3\n\t"
+	    "xchgb %%cl, %%ch; rolb $2, %%ch"
+	    : "=a" (rv), "=d" (pdi->bios_heads),
+	      "=c" (pdi->bios_cylinders),
+	      "=b" (pdi->bios_sectors)
+	    : "0" (0x0800), "1" (dev) : "cc");
 
 #ifdef BIOS_DEBUG
 	if (debug) {
 		printf("getinfo: got #8\n");
 		printf("disk 0x%x: %d,%d,%d\n", dev, pdi->bios_cylinders,
-			pdi->bios_heads, pdi->bios_sectors);
+		    pdi->bios_heads, pdi->bios_sectors);
 	}
 #endif
 	if (rv & 0xff)
-		return (1);
+		return 1;
 
 	/* Fix up info */
 	pdi->bios_number = dev;
@@ -122,11 +124,11 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 
 	/* Sanity check */
 	if (!pdi->bios_cylinders || !pdi->bios_heads || !pdi->bios_sectors)
-		return(1);
+		return 1;
 
 	/* CD-ROMs sometimes return heads == 1 */
 	if (pdi->bios_heads < 2)
-		return(1);
+		return 1;
 
 	/* NOTE:
 	 * This currently hangs/reboots some machines
@@ -169,7 +171,7 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 	} else
 		pdi->bios_edd = -1;
 
-	return(0);
+	return 0;
 }
 
 /*
@@ -183,22 +185,22 @@ CHS_rw(int rw, int dev, int cyl, int head, int sect, int nsect, void *buf)
 	rw = rw == F_READ ? 2 : 3;
 	BIOS_regs.biosr_es = (u_int32_t)buf >> 4;
 	__asm __volatile ("movb %b7, %h1\n\t"
-			  "movb %b6, %%dh\n\t"
-			  "andl $0xf, %4\n\t"
-			  /* cylinder; the highest 2 bits of cyl is in %cl */
-			  "xchgb %%ch, %%cl\n\t"
-			  "rorb  $2, %%cl\n\t"
-			  "orb %b5, %%cl\n\t"
-			  "inc %%cx\n\t"
-			  DOINT(0x13) "\n\t"
-			  "setc %b0"
-			  : "=a" (rv)
-			  : "0" (nsect), "d" (dev), "c" (cyl),
-			    "b" (buf), "m" (sect), "m" (head),
-			    "m" (rw)
-			  : "cc", "memory");
+	    "movb %b6, %%dh\n\t"
+	    "andl $0xf, %4\n\t"
+	    /* cylinder; the highest 2 bits of cyl is in %cl */
+	    "xchgb %%ch, %%cl\n\t"
+	    "rorb  $2, %%cl\n\t"
+	    "orb %b5, %%cl\n\t"
+	    "inc %%cx\n\t"
+	    DOINT(0x13) "\n\t"
+	    "setc %b0"
+	    : "=a" (rv)
+	    : "0" (nsect), "d" (dev), "c" (cyl),
+	      "b" (buf), "m" (sect), "m" (head),
+	      "m" (rw)
+	    : "cc", "memory");
 
-	return (rv & 0xff)? rv >> 8 : 0;
+	return ((rv & 0xff)? rv >> 8 : 0);
 }
 
 static __inline int
@@ -220,14 +222,14 @@ EDD_rw(int rw, int dev, u_int64_t daddr, u_int32_t nblk, void *buf)
 
 	/* if offset/segment are zero, punt */
 	if (!cb.edd_seg && !cb.edd_off)
-		return (1);
+		return 1;
 
 	/* Call extended read/write (with disk packet) */
 	BIOS_regs.biosr_ds = (u_int32_t)&cb >> 4;
 	__asm __volatile (DOINT(0x13) "; setc %b0" : "=a" (rv)
-			  : "0" ((rw == F_READ)? 0x4200: 0x4300),
-			    "d" (dev), "S" ((int) (&cb) & 0xf) : "%ecx", "cc");
-	return (rv & 0xff)? rv >> 8 : 0;
+	    : "0" ((rw == F_READ)? 0x4200: 0x4300),
+	      "d" (dev), "S" ((int) (&cb) & 0xf) : "%ecx", "cc");
+	return ((rv & 0xff)? rv >> 8 : 0);
 }
 
 /*
@@ -249,12 +251,12 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 		 */
 		bb = alloca(nsect * DEV_BSIZE);
 		if (rw != F_READ)
-			bcopy (buf, bb, nsect * DEV_BSIZE);
+			bcopy(buf, bb, nsect * DEV_BSIZE);
 	} else
 		bb = buf;
 
 	/* Try to do operation up to 5 times */
-	for (error = 1, j = 5; j-- && error;) {
+	for (error = 1, j = 5; j-- && error; ) {
 		/* CHS or LBA access? */
 		if (bd->bios_edd != -1) {
 			error = EDD_rw(rw, dev, off, nsect, bb);
@@ -265,9 +267,11 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 
 			/* Handle track boundaries */
 			for (error = i = 0; error == 0 && i < nsect;
- 					i += n, off += n, p += n * DEV_BSIZE) {
+			    i += n, off += n, p += n * DEV_BSIZE) {
 
-				btochs(off, cyl, head, sect, bd->bios_heads, bd->bios_sectors);
+				btochs(off, cyl, head, sect, bd->bios_heads,
+				    bd->bios_sectors);
+
 				if ((sect + (nsect - i)) >= bd->bios_sectors)
 					n = bd->bios_sectors - sect;
 				else
@@ -290,7 +294,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 #ifdef BIOS_DEBUG
 			if (debug)
 				printf("\nBIOS error 0x%x (%s)\n",
-					error, biosdisk_err(error));
+				    error, biosdisk_err(error));
 #endif
 			biosdreset(dev);
 			break;
@@ -298,7 +302,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 	}
 
 	if (bb != buf && rw == F_READ)
-		bcopy (bb, buf, nsect * DEV_BSIZE);
+		bcopy(bb, buf, nsect * DEV_BSIZE);
 
 #ifdef BIOS_DEBUG
 	if (debug) {
@@ -308,7 +312,7 @@ biosd_io(int rw, bios_diskinfo_t *bd, daddr_t off, int nsect, void *buf)
 	}
 #endif
 
-	return (error);
+	return error;
 }
 
 /*
@@ -323,19 +327,19 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 	int error, i;
 
 	/* Sanity check */
-	if(bd->bios_heads == 0 || bd->bios_sectors == 0)
-		return("failed to read disklabel");
+	if (bd->bios_heads == 0 || bd->bios_sectors == 0)
+		return "failed to read disklabel";
 
 	/* MBR is a harddisk thing */
 	if (bd->bios_number & 0x80) {
 		/* Read MBR */
 		error = biosd_io(F_READ, bd, DOSBBSECTOR, 1, &mbr);
 		if (error)
-			return(biosdisk_err(error));
+			return (biosdisk_err(error));
 
 		/* check mbr signature */
 		if (mbr.dmbr_sign != DOSMBR_SIGNATURE)
-			return("bad MBR signature\n");
+			return "bad MBR signature\n";
 
 		/* Search for OpenBSD partition */
 		for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
@@ -346,10 +350,11 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 		if (off == 0)
 			for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
 				if (mbr.dmbr_parts[i].dp_typ == DOSPTYP_NETBSD)
-					off = mbr.dmbr_parts[i].dp_start + LABELSECTOR;
+					off = mbr.dmbr_parts[i].dp_start +
+					    LABELSECTOR;
 
 		if (off == 0)
-			return("no BSD partition\n");
+			return "no BSD partition\n";
 	} else
 		off = LABELSECTOR;
 
@@ -362,8 +367,8 @@ bios_getdisklabel(bios_diskinfo_t *bd, struct disklabel *label)
 	/* read disklabel */
 	error = biosd_io(F_READ, bd, off, 1, buf);
 
-	if(error)
-		return("failed to read disklabel");
+	if (error)
+		return "failed to read disklabel";
 
 	/* Fill in disklabel */
 	return (getdisklabel(buf, label));
@@ -374,7 +379,7 @@ biosopen(struct open_file *f, ...)
 {
 	va_list ap;
 	register char	*cp, **file;
-	dev_t	maj, unit, part;
+	dev_t maj, unit, part;
 	struct diskinfo *dip;
 	int biosdev;
 
@@ -397,8 +402,8 @@ biosopen(struct open_file *f, ...)
 			cp++;
 	}
 
-	for (maj = 0; maj < nbdevs && 
-	     strncmp(*file, bdevs[maj], cp - *file); maj++);
+	for (maj = 0; maj < nbdevs && strncmp(*file, bdevs[maj], cp - *file); )
+	    maj++;
 	if (maj >= nbdevs) {
 		printf("Unknown device: ");
 		for (cp = *file; *cp != ':'; cp++)
@@ -421,7 +426,7 @@ biosopen(struct open_file *f, ...)
 		printf("Bad partition id\n");
 		return EPART;
 	}
-		
+
 	cp++;	/* skip ':' */
 	if (*cp != 0)
 		*file = cp;
@@ -448,9 +453,9 @@ biosopen(struct open_file *f, ...)
 	{ dev_t bsd_dev;
 		bsd_dev = dip->bios_info.bsd_dev;
 		dip->bsddev = MAKEBOOTDEV(B_TYPE(bsd_dev), B_ADAPTOR(bsd_dev),
-			B_CONTROLLER(bsd_dev), unit, part);
+		    B_CONTROLLER(bsd_dev), unit, part);
 		dip->bootdev = MAKEBOOTDEV(B_TYPE(bsd_dev), B_ADAPTOR(bsd_dev),
-			B_CONTROLLER(bsd_dev), B_UNIT(bsd_dev), part);
+		    B_CONTROLLER(bsd_dev), B_UNIT(bsd_dev), part);
 	}
 
 #if 0
@@ -461,13 +466,13 @@ biosopen(struct open_file *f, ...)
 #ifdef BIOS_DEBUG
 	if (debug) {
 		printf("BIOS geometry: heads=%u, s/t=%u; EDD=%d\n",
-			dip->bios_info.bios_heads, dip->bios_info.bios_sectors,
-			dip->bios_info.bios_edd);
+		    dip->bios_info.bios_heads, dip->bios_info.bios_sectors,
+		    dip->bios_info.bios_edd);
 	}
 #endif
 
 	/* Try for disklabel again (might be removable media) */
-	if(dip->bios_info.flags & BDI_BADLABEL){
+	if (dip->bios_info.flags & BDI_BADLABEL){
 		const char *st = bios_getdisklabel(&dip->bios_info,
 		    &dip->disklabel);
 #ifdef BIOS_DEBUG
@@ -478,7 +483,7 @@ biosopen(struct open_file *f, ...)
 			dip->bios_info.flags &= ~BDI_BADLABEL;
 			dip->bios_info.flags |= BDI_GOODLABEL;
 		} else
-			return (ERDLAB);
+			return ERDLAB;
 	}
 
 	f->f_devdata = dip;
@@ -486,7 +491,7 @@ biosopen(struct open_file *f, ...)
 	return 0;
 }
 
-const u_char bidos_errs[] = 
+const u_char bidos_errs[] =
 /* ignored	"\x00" "successful completion\0" */
 		"\x01" "invalid function/parameter\0"
 		"\x02" "address mark not found\0"
@@ -528,7 +533,7 @@ biosdisk_err(u_int error)
 	register const u_char *p = bidos_errs;
 
 	while (*p && *p != error)
-		while(*p++);
+		while (*p++);
 
 	return ++p;
 }
@@ -546,7 +551,7 @@ const struct biosdisk_errors {
 	{ 0x0C, ENXIO },
 	{ 0x0D, EINVAL },
 	{ 0x10, EECC },
-	{ 0x20, EHER },	
+	{ 0x20, EHER },
 	{ 0x31, ENXIO },
 	{ 0x32, ENXIO },
 	{ 0x00, EIO }
@@ -557,7 +562,7 @@ biosdisk_errno(u_int error)
 {
 	register const struct biosdisk_errors *p;
 
-	if (!error)
+	if (error == 0)
 		return 0;
 
 	for (p = tab; p->error && p->error != error; p++);
@@ -593,13 +598,14 @@ biosstrategy(void *devdata, int rw, daddr_t blk, size_t size, void *buf,
 	if (rsize != NULL)
 		*rsize = nsect * DEV_BSIZE;
 
-	return biosdisk_errno(error);
+	return (biosdisk_errno(error));
 }
 
 int
 biosclose(struct open_file *f)
 {
 	f->f_devdata = NULL;
+
 	return 0;
 }
 
@@ -608,4 +614,3 @@ biosioctl(struct open_file *f, u_long cmd, void *data)
 {
 	return 0;
 }
-

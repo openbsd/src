@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd_i386.c,v 1.27 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: cmd_i386.c,v 1.28 2004/03/09 19:12:12 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -14,8 +14,8 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -50,11 +50,11 @@ int Xregs(void);
 int bootbuf(void *, int);
 
 const struct cmd_table cmd_machine[] = {
-	{ "boot",     CMDT_CMD, Xboot },
-	{ "diskinfo", CMDT_CMD, Xdiskinfo },
-	{ "memory",   CMDT_CMD, Xmemory },
+	{ "boot",	CMDT_CMD, Xboot },
+	{ "diskinfo",	CMDT_CMD, Xdiskinfo },
+	{ "memory",	CMDT_CMD, Xmemory },
 #ifdef DEBUG
-	{ "regs",     CMDT_CMD, Xregs },
+	{ "regs",	CMDT_CMD, Xregs },
 #endif
 	{ NULL, 0 }
 };
@@ -85,21 +85,22 @@ Xboot(void)
 	bios_diskinfo_t *bd = NULL;
 	char buf[DEV_BSIZE], *dest = (void *)BOOTBIOS_ADDR;
 
-	if(cmd.argc != 2) {
+	if (cmd.argc != 2) {
 		printf("machine boot {fd,hd}<0123>[abcd]\n");
 		printf("Where [0123] is the disk number,"
-			" and [abcd] is the partition.\n");
+		    " and [abcd] is the partition.\n");
 		return 0;
 	}
 
 	/* Check arg */
-	if(cmd.argv[1][0] != 'f' && cmd.argv[1][0] != 'h')
+	if (cmd.argv[1][0] != 'f' && cmd.argv[1][0] != 'h')
 		goto bad;
-	if(cmd.argv[1][1] != 'd')
+	if (cmd.argv[1][1] != 'd')
 		goto bad;
-	if(cmd.argv[1][2] < '0' || cmd.argv[1][2] > '3')
+	if (cmd.argv[1][2] < '0' || cmd.argv[1][2] > '3')
 		goto bad;
-	if((cmd.argv[1][3] < 'a' || cmd.argv[1][3] > 'd') && cmd.argv[1][3] != '\0')
+	if ((cmd.argv[1][3] < 'a' || cmd.argv[1][3] > 'd') &&
+	    cmd.argv[1][3] != '\0')
 		goto bad;
 
 	printf("Booting from %s ", cmd.argv[1]);
@@ -116,14 +117,15 @@ Xboot(void)
 	/* Read boot sector from device */
 	bd = bios_dklookup(dev);
 	st = biosd_io(F_READ, bd, 0, 1, buf);
-	if(st) goto bad;
+	if (st)
+		goto bad;
 
 	/* Frob boot flag in buffer from HD */
-	if((dev & 0x80) && (part > 0)){
+	if ((dev & 0x80) && (part > 0)){
 		int i, j;
 
-		for(i = 0, j = DOSPARTOFF; i < 4; i++, j += 16)
-			if(part == i)
+		for (i = 0, j = DOSPARTOFF; i < 4; i++, j += 16)
+			if (part == i)
 				buf[j] |= 0x80;
 			else
 				buf[j] &= ~0x80;
@@ -158,7 +160,7 @@ Xmemory(void)
 			else
 				addr = 0;
 			if (addr == 0 && (*p != '@' || size == 0)) {
-				printf ("bad language\n");
+				printf("bad language\n");
 				return 0;
 			} else {
 				switch (cmd.argv[i][0]) {
@@ -169,7 +171,7 @@ Xmemory(void)
 					mem_add(addr, addr + size);
 					break;
 				default :
-					printf ("bad OP\n");
+					printf("bad OP\n");
 					return 0;
 				}
 			}

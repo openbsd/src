@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.28 2003/06/03 20:22:11 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.29 2004/03/09 19:12:13 tom Exp $	*/
 
 /*
  * Copyright (c) 1997-1998 Michael Shalayeff
@@ -14,8 +14,8 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR 
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHORS ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
  * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
@@ -38,7 +38,7 @@
 #include <lib/libsa/loadfile.h>
 
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
-	__attribute__ ((noreturn));
+    __attribute__ ((noreturn));
 
 void
 run_loadfile(u_long *marks, int howto)
@@ -68,7 +68,7 @@ run_loadfile(u_long *marks, int howto)
 	printf("entry point at 0x%x\n", (int) entry);
 	/* stack and the gung is ok at this point, so, no need for asm setup */
 	(*(startfuncp)entry)(howto, bootdev, BOOTARG_APIVER,
-		marks[MARK_END], extmem, cnvmem, ac, (int)av);
+	    marks[MARK_END], extmem, cnvmem, ac, (int)av);
 	/* not reached */
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosprobe.c,v 1.3 2003/08/11 06:23:09 deraadt Exp $	*/
+/*	$OpenBSD: biosprobe.c,v 1.4 2004/03/09 19:12:12 tom Exp $	*/
 
 /*
  * Copyright (c) 2002 Tobias Weingartner
@@ -39,22 +39,22 @@
 void *
 getSYSCONFaddr(void)
 {
- 	u_int32_t status;
+	u_int32_t status;
 	u_int8_t *vers;
 
- 	__asm __volatile(DOINT(0x15) "\n\t"
-			"setc %%al\n\t"
-			: "=a" (status)
-			: "0" (0xC000)
-			: "%ebx", "%ecx", "%edx", "%esi", "%edi", "cc");
+	__asm __volatile(DOINT(0x15) "\n\t"
+	    "setc %%al\n\t"
+	    : "=a" (status)
+	    : "0" (0xC000)
+	    : "%ebx", "%ecx", "%edx", "%esi", "%edi", "cc");
 
 	/* On failure we go for a NULL */
-	if(status)
-		return(NULL);
+	if (status)
+		return NULL;
 
 	/* Calculate where the version bytes are */
 	vers = (void*)((BIOS_regs.biosr_es << 4) | BIOS_regs.biosr_bx);
-	return(vers);
+	return vers;
 }
 
 void *
@@ -64,18 +64,20 @@ getEBDAaddr(void)
 	u_int8_t *info;
 
 	info = getSYSCONFaddr();
-	if(!info) return(NULL);
+
+	if (!info)
+		return NULL;
 
 	__asm __volatile(DOINT(0x15) "\n\t"
-			"setc %%al"
-			: "=a" (status)
-			: "0" (0xC100)
-			: "%ebx", "%ecx", "%edx", "%esi", "%edi", "cc");
+	    "setc %%al"
+	    : "=a" (status)
+	    : "0" (0xC100)
+	    : "%ebx", "%ecx", "%edx", "%esi", "%edi", "cc");
 
-	if(status) return(NULL);
+	if (status)
+		return NULL;
 
 	info = (void *)(BIOS_regs.biosr_es << 4);
 
-	return(info);
+	return info;
 }
-
