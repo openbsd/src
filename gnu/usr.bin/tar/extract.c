@@ -568,6 +568,8 @@ extract_archive ()
 
     case LF_LINK:
     again_link:
+      if (f_exstdout)
+	break;
       {
 	struct stat st1, st2;
 
@@ -600,6 +602,8 @@ extract_archive ()
 #ifdef S_ISLNK
     case LF_SYMLINK:
     again_symlink:
+      if (f_exstdout)
+	break;
       if (f_unlink && !f_keep) {
 	  if (unlink(skipcrud + current_file_name) == -1)
 		if (errno != ENOENT)
@@ -631,6 +635,8 @@ extract_archive ()
 #endif
 #if defined(S_IFCHR) || defined(S_IFBLK)
     make_node:
+      if (f_exstdout)
+	break;
       if (f_unlink && !f_keep) {
 	  if (unlink(skipcrud + current_file_name) == -1)
 		if (errno != ENOENT)
@@ -655,6 +661,8 @@ extract_archive ()
       /* If local system doesn't support FIFOs, use default case */
     case LF_FIFO:
     make_fifo:
+      if (f_exstdout)
+	break;
       if (f_unlink && !f_keep) {
 	  if (unlink(skipcrud + current_file_name) == -1)
 		if (errno != ENOENT)
@@ -679,6 +687,8 @@ extract_archive ()
     case LF_DUMPDIR:
       namelen = strlen (current_file_name + skipcrud) - 1;
     really_dir:
+      if (f_exstdout)
+	break;
       /* Check for trailing /, and zap as many as we find. */
       while (namelen
 	     && current_file_name[skipcrud + namelen] == '/')
@@ -771,14 +781,13 @@ extract_archive ()
       break;
 
     case LF_VOLHDR:
-      if (f_verbose)
-	{
+      if (!f_exstdout && f_verbose)
 	  printf ("Reading %s\n", current_file_name);
-	}
       break;
 
     case LF_NAMES:
-      extract_mangle (head);
+      if (!f_exstdout)
+	  extract_mangle (head);
       break;
 
     case LF_MULTIVOL:
