@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.75 2004/04/13 12:07:06 djm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.76 2004/04/15 18:13:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.75 2004/04/13 12:07:06 djm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.76 2004/04/15 18:13:07 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -332,20 +332,6 @@ main(int argc, char *argv[])
 		pfd[i].events = 0;
 	}
 
-#ifndef SUN_LEN
-#define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
-#endif
-	for (i = 0; i < nfunix; i++) {
-		if ((fd = unix_socket(funixn[i], SOCK_DGRAM, 0666)) == -1) {
-			if (i == 0)
-				die(0);
-			continue;
-		}
-		double_rbuf(fd);
-		pfd[PFD_UNIX_0 + i].fd = fd;
-		pfd[PFD_UNIX_0 + i].events = POLLIN;
-	}
-
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) != -1) {
 		struct servent *sp;
 
@@ -372,15 +358,31 @@ main(int argc, char *argv[])
 		}
 	}
 
-	if (ctlsock_path != NULL) {
-		if ((fd = unix_socket(ctlsock_path, SOCK_STREAM, 0600)) == -1)
-			die(0);
-		if (listen(fd, 16) == -1) {
-			logerror("ctlsock listen");
-			die(0);
+#ifndef SUN_LEN
+#define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
+#endif
+	for (i = 0; i < nfunix; i++) {
+		if ((fd = unix_socket(funixn[i], SOCK_DGRAM, 0666)) == -1) {
+			if (i == 0 && !Debug)
+				die(0);
+			continue;
 		}
-		pfd[PFD_CTLSOCK].fd = fd;
-		pfd[PFD_CTLSOCK].events = POLLIN;
+		double_rbuf(fd);
+		pfd[PFD_UNIX_0 + i].fd = fd;
+		pfd[PFD_UNIX_0 + i].events = POLLIN;
+	}
+
+	if (ctlsock_path != NULL) {
+		fd = unix_socket(ctlsock_path, SOCK_STREAM, 0600);
+		if (fd != -1) {
+			if (listen(fd, 16) == -1) {
+				logerror("ctlsock listen");
+				die(0);
+			}
+			pfd[PFD_CTLSOCK].fd = fd;
+			pfd[PFD_CTLSOCK].events = POLLIN;
+		} else if (!Debug)
+			die(0);
 	}
 
 	if ((fd = open(_PATH_KLOG, O_RDONLY, 0)) == -1) {
@@ -1513,6 +1515,16 @@ unix_socket(char *path, int type, mode_t mode)
 	if ((fd = socket(AF_UNIX, type, 0)) == -1) {
 		logerror("socket");
 		return (-1);
+	}
+
+	if (Debug) {
+		if (connect(fd, (struct sockaddr *)&s_un, sizeof(s_un)) == 0 ||
+		    errno == EPROTOTYPE) {
+			close(fd);
+			errno = EISCONN;
+			logerror("connect");
+			return (-1);
+		}
 	}
 
 	old_umask = umask(0177);
