@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.32 2000/12/02 02:10:58 angelos Exp $	*/
-/*	$EOM: x509.c,v 1.45 2000/11/23 12:51:21 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.33 2000/12/12 01:46:39 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.51 2000/12/12 01:38:38 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -78,8 +78,8 @@
  * our own hash table.  It also gets collisons if we have several certificates
  * only differing in subjectAltName.
  */
-static X509_STORE *x509_certs = NULL;
-static X509_STORE *x509_cas = NULL;
+static X509_STORE *x509_certs = 0;
+static X509_STORE *x509_cas = 0;
 
 /* Initial number of bits used as hash.  */
 #define INITIAL_BUCKET_BITS 6
@@ -90,7 +90,7 @@ struct x509_hash {
   X509 *cert;
 };
 
-static LIST_HEAD (x509_list, x509_hash) *x509_tab = NULL;
+static LIST_HEAD (x509_list, x509_hash) *x509_tab = 0;
 
 /* Works both as a maximum index and a mask.  */
 static int bucket_mask;
@@ -113,6 +113,7 @@ x509_generate_kn (X509 *cert)
   X509_OBJECT obj;
   X509 *icert;
   RSA *key;
+  char **new_asserts;
 
   issuer = LC (X509_get_issuer_name, (cert));
   subject = LC (X509_get_subject_name, (cert));
@@ -135,6 +136,7 @@ x509_generate_kn (X509 *cert)
     {
       log_print ("x509_generate_kn: failed to get memory for public key");
       LC (RSA_free, (key));
+      log_print ("x509_generate_kn: cannot get subject key");
       return 0;
     }
   if (!ikey)
@@ -190,6 +192,7 @@ x509_generate_kn (X509 *cert)
       log_error ("x509_generate_kn: failed to get memory for public key");
       free (ikey);
       LC (RSA_free, (key));
+      log_print ("x509_generate_kn: cannot get issuer key");
       return 0;
     }
   if (!skey)
@@ -202,7 +205,7 @@ x509_generate_kn (X509 *cert)
   LC (RSA_free, (key));
 
   buf = calloc (strlen (fmt) + strlen (ikey) + strlen (skey), sizeof (char));
-  if (buf == NULL)
+  if (!buf)
     {
       log_error ("x509_generate_kn: "
 		 "failed to allocate memory for KeyNote credential");
@@ -258,43 +261,42 @@ x509_generate_kn (X509 *cert)
   /* Store the X509-derived assertion so we can use it as a policy */
   if (x509_policy_asserts_num == 0)
     {
-	x509_policy_asserts = calloc (4, sizeof(char *));
-	if (x509_policy_asserts == NULL)
-	  {
-	    log_error ("x509_generate_kn: failed to allocate %d bytes",
-		       4 * sizeof(char *));
-	    free (buf);
-	    return 0;
-	  }
+      x509_policy_asserts = calloc (4, sizeof (char *));
+      if (!x509_policy_asserts)
+	{
+	  log_error ("x509_generate_kn: failed to allocate %d bytes",
+		     4 * sizeof (char *));
+	  free (buf);
+	  return 0;
+	}
 
-	x509_policy_asserts_num_alloc = 4;
-	x509_policy_asserts_num = 1;
-	x509_policy_asserts[0] = buf;
+      x509_policy_asserts_num_alloc = 4;
+      x509_policy_asserts_num = 1;
+      x509_policy_asserts[0] = buf;
     }
   else
     {
-	if (x509_policy_asserts_num + 1 > x509_policy_asserts_num_alloc)
-	  {
-	    char **foo;
+      if (x509_policy_asserts_num + 1 > x509_policy_asserts_num_alloc)
+	{
+	  x509_policy_asserts_num_alloc *= 2;
+	  new_asserts = realloc (x509_policy_asserts,
+				 x509_policy_asserts_num_alloc
+				 * sizeof (char *));
+	  if (!new_asserts)
+	    {
+	      x509_policy_asserts_num_alloc /= 2;
+	      log_error ("x509_generate_kn: failed to allocate %d bytes",
+			 x509_policy_asserts_num_alloc * sizeof (char *));
+	      free (buf);
+	      return 0;
+	    }
 
-	    x509_policy_asserts_num_alloc *= 2;
-	    foo = realloc (x509_policy_asserts,
-			   x509_policy_asserts_num_alloc * sizeof(char *));
-	    if (foo == NULL)
-	      {
-		x509_policy_asserts_num_alloc /= 2;
-		log_error ("x509_generate_kn: failed to allocate %d bytes",
-			   x509_policy_asserts_num_alloc * sizeof(char *));
-		free (buf);
-		return 0;
-	      }
+	  free (x509_policy_asserts);
+	  x509_policy_asserts = new_asserts;
+	}
 
-	    free (x509_policy_asserts);
-	    x509_policy_asserts = foo;
-	  }
-
-	/* Assign to the next available */
-	x509_policy_asserts[x509_policy_asserts_num++] = buf;
+      /* Assign to the next available */
+      x509_policy_asserts[x509_policy_asserts_num++] = buf;
     }
 
   /* 
@@ -383,8 +385,8 @@ x509_hash_find (u_int8_t *id, size_t len)
       id_found = 0;
       for (i = 0; i < n; i++)
 	{
-	  LOG_DBG_BUF ((LOG_CRYPTO, 70, "cert_cmp: ", id, len));
-	  LOG_DBG_BUF ((LOG_CRYPTO, 70, "cert_cmp: ", cid[i], clen[i]));
+	  LOG_DBG_BUF ((LOG_CRYPTO, 70, "cert_cmp", id, len));
+	  LOG_DBG_BUF ((LOG_CRYPTO, 70, "cert_cmp", cid[i], clen[i]));
 	  /* XXX This identity predicate needs to be understood.  */
 	  if (clen[i] == len && id[0] == cid[i][0]
 	      && memcmp (id + 4, cid[i] + 4, len - 4) == 0)
@@ -421,19 +423,19 @@ x509_hash_enter (X509 *cert)
       return 0;
     }
 
-  certh = malloc (sizeof *certh);
-  if (!certh)
-    {
-      cert_free_subjects (n, id, len);
-      log_error ("x509_hash_enter: malloc (%d) failed", sizeof *certh);
-      return 0;
-    }
-  memset (certh, 0, sizeof *certh);
-
-  certh->cert = cert;
-
   for (i = 0; i < n; i++)
     {
+      certh = malloc (sizeof *certh);
+      if (!certh)
+        {
+          cert_free_subjects (n, id, len);
+          log_error ("x509_hash_enter: malloc (%d) failed", sizeof *certh);
+          return 0;
+        }
+      memset (certh, 0, sizeof *certh);
+
+      certh->cert = cert;
+
       bucket = x509_hash (id[i], len[i]);
 
       LIST_INSERT_HEAD (&x509_tab[bucket], certh, link);
@@ -532,22 +534,19 @@ x509_read_from_dir (X509_STORE *ctx, char *name, int hash)
 
       if (hash)
 	{
+
+	  if (!x509_hash_enter (cert))
+	    log_print ("x509_read_from_dir: x509_hash_enter (%s) failed",
+		       file->d_name);
 #ifdef USE_POLICY
 #ifdef USE_KEYNOTE
-  if (x509_generate_kn (cert) == 0)
+	  if (x509_generate_kn (cert) == 0)
 #else
-  if (libkeynote && x509_generate_kn (cert) == 0)
+	    if (libkeynote && x509_generate_kn (cert) == 0)
 #endif
-    {
-      log_print ("x509_read_from_dir: x509_generate_kn failed");
-      continue;
-    }
+	      log_print ("x509_read_from_dir: x509_generate_kn failed");
 #endif /* USE_POLICY */
 	}
-
-      if (hash && !x509_hash_enter (cert))
-	log_print ("x509_read_from_dir: x509_hash_enter (%s) failed",
-		   file->d_name);
     }
 
   closedir (dir);
@@ -621,7 +620,7 @@ x509_cert_init (void)
       free (x509_policy_asserts);
     }
 
-  x509_policy_asserts = NULL;
+  x509_policy_asserts = 0;
   x509_policy_asserts_num = x509_policy_asserts_num_alloc = 0;
 #endif
 
@@ -816,13 +815,13 @@ X509 *
 x509_from_asn (u_char *asn, u_int len)
 {
   BIO *certh;
-  X509 *scert = NULL;
+  X509 *scert = 0;
 
   certh = LC (BIO_new, (LC (BIO_s_mem, ())));
   if (!certh)
     {
       log_error ("x509_from_asn: BIO_new (BIO_s_mem ()) failed");
-      return NULL;
+      return 0;
     }
 	  
   if (LC (BIO_write, (certh, asn, len)) == -1)
