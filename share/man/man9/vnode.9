@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vnode.9,v 1.10 2002/11/08 08:08:47 mpech Exp $
+.\"     $OpenBSD: vnode.9,v 1.11 2002/12/20 06:19:39 art Exp $
 .\"
 .\" Copyright (c) 2001 Constantine Sapuntzakis
 .\" All rights reserved.
@@ -123,7 +123,7 @@ and released by calling
 .Xr vn_unlock 9 .
 The vnode lock is used to serialize operations through the file system for
 a given file when there are multiple concurrent requests on the same file. 
-Many file system functions require that you hold the vnode lock on entry.
+Many file system functions require that the vnode lock is held on entry.
 The vnode lock may be held when sleeping.
 .Pp
 A vnode will not be reclaimed as long as the vnode lock is held by some 
@@ -221,7 +221,7 @@ The exceptions are bgetvp and brelvp.
 The following fields of the vnode are manipulated at interrupt level:
 v_numoutput, v_holdcnt, v_dirtyblkhd, v_cleanblkhd, v_bioflag, v_freelist,
 and v_synclist.
-Any accesses to these field should be protected by splbio,
+Any accesses to these fields should be protected by splbio,
 unless you are certain that there is no chance an interrupt handler
 will modify them.
 .Sh HISTORY
