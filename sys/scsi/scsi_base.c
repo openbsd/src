@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.39 2002/12/30 21:50:28 grange Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.40 2003/02/20 04:02:06 krw Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -132,9 +132,8 @@ scsi_get_xs(sc_link, flags)
  * If another process is waiting for an xs, do a wakeup, let it proceed
  */
 void 
-scsi_free_xs(xs, flags)
+scsi_free_xs(xs)
 	struct scsi_xfer *xs;
-	int flags;
 {
 	struct scsi_link *sc_link = xs->sc_link;
 
@@ -372,7 +371,7 @@ scsi_done(xs)
 		scsi_user_done(xs); /* to take a copy of the sense etc. */
 		SC_DEBUG(sc_link, SDEV_DB3, ("returned from user done()\n "));
 
-		scsi_free_xs(xs, SCSI_NOSLEEP); /* restarts queue too */
+		scsi_free_xs(xs); /* restarts queue too */
 		SC_DEBUG(sc_link, SDEV_DB3, ("returning to adapter\n"));
 		return;
 	}
@@ -425,7 +424,7 @@ retry:
 		 */
 		(*sc_link->device->done)(xs);
 	}
-	scsi_free_xs(xs, SCSI_NOSLEEP);
+	scsi_free_xs(xs);
 	if (bp)
 		biodone(bp);
 }
@@ -535,7 +534,7 @@ scsi_scsi_cmd(sc_link, scsi_cmd, cmdlen, data_addr, datalen,
 	 * we have finished with the xfer stuct, free it and
 	 * check if anyone else needs to be started up.
 	 */
-	scsi_free_xs(xs, flags);
+	scsi_free_xs(xs);
 	splx(s);
 	return error;
 }

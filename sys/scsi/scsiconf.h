@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.h,v 1.36 2002/12/30 21:50:28 grange Exp $	*/
+/*	$OpenBSD: scsiconf.h,v 1.37 2003/02/20 04:02:06 krw Exp $	*/
 /*	$NetBSD: scsiconf.h,v 1.35 1997/04/02 02:29:38 mycroft Exp $	*/
 
 /*
@@ -321,7 +321,7 @@ caddr_t scsi_inqmatch(struct scsi_inquiry_data *, caddr_t, int,
 void	scsi_init(void);
 struct scsi_xfer *
 	scsi_get_xs(struct scsi_link *, int);
-void	scsi_free_xs(struct scsi_xfer *, int);
+void	scsi_free_xs(struct scsi_xfer *);
 int	scsi_execute_xs(struct scsi_xfer *);
 u_long	scsi_size(struct scsi_link *, int);
 int	scsi_test_unit_ready(struct scsi_link *, int, int);
