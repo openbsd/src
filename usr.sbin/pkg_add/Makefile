@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.1 2003/10/28 17:12:57 espie Exp $
+# $OpenBSD: Makefile,v 1.2 2003/10/28 17:16:06 espie Exp $
 
 MAN=pkg_add.1 pkg_info.1 pkg_create.1 pkg_delete.1 pkg.1
 
@@ -48,6 +48,5 @@ clean:
 .include <bsd.man.mk>
 .endif
 
-.include <bsd.subdir.mk>
 .include <bsd.obj.mk>
-
+.include <bsd.subdir.mk>
