@@ -13,6 +13,7 @@
 #include <netinet/in.h>
 
 #include <stdio.h>
+#include <poll.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
@@ -85,18 +86,20 @@ timed_read(fd, buf, siz, timeout)
 {
 	int error, tot = 0, i, r;
 	char *p = buf;
-	fd_set readfds;
+	struct pollfd rfd[1];
 	struct timeval tv, start, after, duration, tmp;
 
 	tv.tv_sec = timeout;
 	tv.tv_usec = 0;
 
 	while (1) {
-		FD_ZERO(&readfds);
-		FD_SET(fd, &readfds);
+		rfd[0].fd = fd;
+		rfd[0].events = POLLIN;
+		rfd[0].revents = 0;
 
 		gettimeofday(&start, NULL);
-		if ((error = select(fd + 1, &readfds, 0, 0, &tv)) <= 0)
+		if ((error = poll(rfd, 1, tv.tv_sec * 1000 +
+		    tv.tv_usec / 1000)) <= 0)
 			return error;
 		r = read(fd, p, siz - tot);
 		if (r == -1 || r == 0)
