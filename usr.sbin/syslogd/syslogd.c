@@ -238,12 +238,16 @@ main(argc, argv)
 			SecureMode = 0;
 			break;
 		case 'a':
-			if (nfunix < MAXFUNIX)
-				funixn[nfunix++] = optarg;
-			else
+			if (nfunix >= MAXFUNIX)
 				fprintf(stderr,
 				    "syslogd: out of descriptors, ignoring %s\n",
 				    optarg);
+			else if (strlen(optarg) >= sizeof(sunx.sun_path))
+				fprintf(stderr,
+				    "syslogd: path to long, ignoring %s\n",
+				    optarg);
+			else
+				funixn[nfunix++] = optarg;
 			break;
 		case '?':
 		default:
