@@ -8,7 +8,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.30 2000/08/25 16:10:05 deraadt Exp $");
+RCSID("$OpenBSD: session.c,v 1.31 2000/08/28 03:50:54 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -811,7 +811,7 @@ do_child(const char *command, struct passwd * pw, const char *term,
 #endif
 		}
 		if (getuid() != pw->pw_uid || geteuid() != pw->pw_uid)
-			fatal("Failed to set uids to %d.", (int) pw->pw_uid);
+			fatal("Failed to set uids to %u.", (u_int) pw->pw_uid);
 	}
 	/*
 	 * Get the shell from the password data.  An empty shell field is
