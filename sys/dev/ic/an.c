@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.11 2001/02/20 19:39:38 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.12 2001/02/26 06:19:33 tholo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -826,6 +826,28 @@ an_setdef(sc, areq)
 		sp = (struct an_ltv_gen *)areq;
 		sc->an_tx_rate = sp->an_val;
 		break;
+	case AN_RID_WEP_VOLATILE:
+		/* Disable the MAC */
+		an_cmd(sc, AN_CMD_DISABLE, 0);
+
+		/* Just write the key, we dont' want to save it */
+		an_write_record(sc, (struct an_ltv_gen *)areq);
+
+		/* Turn the MAC back on */
+		an_cmd(sc, AN_CMD_ENABLE, 0);
+
+		break;
+	case AN_RID_WEP_PERMANENT:
+		/* Disable the MAC */
+		an_cmd(sc, AN_CMD_DISABLE, 0);
+
+		/* Just write the key, the card will save it in this mode */
+		an_write_record(sc, (struct an_ltv_gen *)areq);
+
+		/* Turn the MAC back on */
+		an_cmd(sc, AN_CMD_ENABLE, 0);
+
+		break;
 	default:
 		printf("%s: unknown RID: %x\n",
 		    sc->sc_dev.dv_xname, areq->an_type);
@@ -931,7 +953,9 @@ an_ioctl(ifp, command, data)
 			    sc->an_if_flags & IFF_PROMISC) {
 				an_promisc(sc, 0);
 			}
-			an_init(sc);
+			else {
+				an_init(sc);
+			}
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				an_stop(sc);

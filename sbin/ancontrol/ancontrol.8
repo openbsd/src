@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ancontrol.8,v 1.6 2000/11/09 17:52:52 aaron Exp $
+.\"	$OpenBSD: ancontrol.8,v 1.7 2001/02/26 06:19:34 tholo Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu> All rights reserved.
@@ -47,23 +47,28 @@
 .Op Fl I
 .Op Fl T
 .Op Fl C
-.Op Fl t Ar 0|1|2|3|4
-.Op Fl s Ar 0|1|2|3
 .Op Fl a Ar AP
-.Op Fl v Ar 1|2|3|4
 .Op Fl b Ar beacon period
-.Op Fl d Ar 0|1|2|3
+.Op Fl c Ar channel number
 .Op Fl v Ar 0|1
+.Op Fl d Ar 0|1|2|3
+.Op Fl e Ar 0|1|2|3
+.Op Fl f Ar fragmentation threshold
 .Op Fl j Ar netjoin timeout
+.Op Fl v Ar 0|1|2|3|4|5|6|7
+.Op Fl k Ar key
+.Op Fl K Ar 0|1|2
 .Op Fl l Ar station name
 .Op Fl m Ar macaddress
-.Op Fl n Ar SSID
 .Op Fl v Ar 1|2|3
+.Op Fl n Ar SSID
 .Op Fl o Ar 0|1
 .Op Fl p Ar tx power
-.Op Fl c Ar channel number
-.Op Fl f Ar fragmentation threshold
 .Op Fl r Ar RTS threshold
+.Op Fl s Ar 0|1|2|3
+.Op Fl t Ar 0|1|2|3|4
+.Op Fl v Ar 1|2|3|4
+.Op Fl W Ar 0|1|2
 .Sh DESCRIPTION
 The
 .Nm
@@ -168,7 +173,7 @@ Valid selections are as follows:
 .Pp
 Note that for IBSS (ad-hoc) mode, only PSP mode is supported, and only
 if the ATIM window is non-zero.
-.It Fl a Ar AP Fl v Ar "1|2|3|4
+.It Fl v Ar "1|2|3|4" Fl a Ar AP
 Set preferred access point.
 The
 .Ar AP
@@ -189,7 +194,7 @@ Set the ad-hoc mode beacon period.
 The becon period is specified in
 milliseconds.
 The default is 100ms.
-.It Fl d Ar 0|1|2|3 Fl v Ar "0|1"
+.It Fl v Ar "0|1" Fl d Ar "0|1|2|3"
 Select the antenna diversity.
 Aironet devices can be configured with up
 to two antennas, and transmit and receive diversity can be configured
@@ -214,6 +219,33 @@ option: selection
 sets the receive diversity and
 .Ar 1
 sets the transmit diversity.
+.It Fl d Ar "0|1|2|3"
+Set the transmit WEP key to use.
+Note that until this command is issued, the device will use the
+last key programmed.  The transmit key is stored in NVRAM.
+Currently set transmit key can be checked via
+.Fl C
+option.
+.It Fl v Ar "0|1|2|3|4|5|6|7" Fl k Ar key
+Set a WEP key.
+For 40 bits, prefix 10 hex digits with 0x.
+For 128 bits, prefix 26 hex digits with 0x.
+Use "" as the key to erase it.
+Supports 4 keys; even numbers are for permanent keys
+and odd numbers are for temporary keys.
+For example, "-v 1" sets the first temporary key.
+(A "permanent" key is stored in NVRAM; a "temporary" key is not.)
+Note that the device will use the most recently-programmed key
+by default.
+Currently set keys can be checked via
+.Fl C
+option, only the sizes of the keys are returned.
+.It Fl K Ar "0|1|2"
+Set authorization type.
+Use 0 for none, 1 for "Open", 2 for "Shared Key".
+.It Fl W Ar "0|1|2"
+Enable WEP.
+Use 0 for no WEP, 1 to enable full WEP, 2 for mixed cell.
 .It Fl j Ar netjoin timeout
 Set the ad-hoc network join timeout.
 When a station is first activated
@@ -242,7 +274,7 @@ is specified as a series of six hexadecimal values separated by colons,
 e.g.: 00:60:1d:12:34:56.
 This programs the new address into the card
 and updates the interface as well.
-.It Fl n Ar SSID "[-v 1|2|3]"
+.It Fl v Ar "1|2|3" Fl n Ar SSID
 Set the desired SSID (network name).
 There are three SSIDs which allows
 the NIC to work with access points at several locations without needing

@@ -1,4 +1,4 @@
-/*	$OpenBSD: anvar.h,v 1.1 2000/04/03 01:01:59 mickey Exp $	*/
+/*	$OpenBSD: anvar.h,v 1.2 2001/02/26 06:19:34 tholo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -162,6 +162,15 @@ struct an_sigcache {
 #endif
 
 #ifndef _KERNEL
+struct an_ltv_key {
+	u_int16_t		an_len;
+	u_int16_t		an_type;
+	u_int16_t		kindex;
+	u_int8_t		mac[6];
+	u_int16_t		klen;
+	u_int8_t		key[16];
+};
+
 struct an_ltv_stats {
 	u_int16_t		an_fudge;
 	u_int16_t		an_len;			/* 0x00 */
@@ -367,6 +376,9 @@ struct an_ltv_genconfig {
 #define AN_AUTHTYPE_OPEN			0x0001
 #define AN_AUTHTYPE_SHAREDKEY			0x0002
 #define AN_AUTHTYPE_EXCLUDE_UNENCRYPTED		0x0004
+#define AN_AUTHTYPE_MASK			0x00FF
+#define AN_AUTHTYPE_PRIVACY_IN_USE		0x0100
+#define AN_AUTHTYPE_ALLOW_UNENCRYPTED		0x0200
 
 #define AN_PSAVE_NONE				0x0000
 #define AN_PSAVE_CAM				0x0001
@@ -533,6 +545,8 @@ struct an_ltv_status {
 #define AN_RID_APLIST		0xFF12	/* Valid AP list */
 #define AN_RID_DRVNAME		0xFF13	/* ID name of this node for diag */
 #define AN_RID_ENCAPPROTO	0xFF14	/* Payload encapsulation type */
+#define AN_RID_WEP_VOLATILE	0xFF15	/* Temporary WEP key configuration */
+#define AN_RID_WEP_PERMANENT	0xFF16	/* Permanent WEP key configuration */
 #define AN_RID_ACTUALCFG	0xFF20	/* Current configuration settings */
 
 /*
