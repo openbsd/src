@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.21 1999/10/17 00:31:06 deraadt Exp $
+.\" $Id: ssh.1,v 1.22 1999/10/17 16:58:39 provos Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -365,6 +365,9 @@ Verbose mode.  Causes
 .Nm
 to print debugging messages about its progress.  This is helpful in
 debugging connection, authentication, and configuration problems.
+The verbose mode is also used to display
+.Xr skey 1
+challenges, if the user entered "s/key" as password.
 .It Fl x
 Disables X11 forwarding.  This can also be specified on a per-host
 basis in a configuration file.
