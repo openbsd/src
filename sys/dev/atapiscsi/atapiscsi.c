@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.27 2000/06/30 06:56:24 art Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.28 2000/07/20 07:40:33 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -68,6 +68,8 @@
 
 #include <dev/atapiscsi/atapiconf.h>
 
+#define WDCDEBUG
+
 #define DEBUG_INTR   0x01
 #define DEBUG_XFERS  0x02
 #define DEBUG_STATUS 0x04
@@ -77,7 +79,7 @@
 #define DEBUG_POLL   0x40
 #define DEBUG_ERRORS 0x80   /* Debug error handling code */
 
-#ifdef WDCDEBUG
+#if defined(WDCDEBUG)
 int wdcdebug_atapi_mask = 0;
 #define WDCDEBUG_PRINT(args, level) \
 	if (wdcdebug_atapi_mask & (level)) \
@@ -224,6 +226,11 @@ atapiscsi_attach(parent, self, aux)
 
 	printf("\n");
 
+#ifdef WDCDEBUG
+	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
+		wdcdebug_atapi_mask |= DEBUG_PROBE;
+#endif
+
 	as->chp = chp;
 	as->sc_adapterlink.adapter_softc = as;
 	as->sc_adapterlink.adapter_target = 7;
@@ -295,6 +302,11 @@ atapiscsi_attach(parent, self, aux)
 			wdc_print_caps(drvp);
 		}
 	}
+
+#ifdef WDCDEBUG
+	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
+		wdcdebug_atapi_mask &= ~DEBUG_PROBE;
+#endif
 }
 
 void

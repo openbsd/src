@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.18 2000/06/30 01:03:41 art Exp $     */
+/*      $OpenBSD: wdc.c,v 1.19 2000/07/20 07:40:32 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -93,6 +93,8 @@
 #include <dev/ic/wdcvar.h>
 
 #include "atapiscsi.h"
+
+#define WDCDEBUG
 
 #define WDCDELAY  100 /* 100 microseconds */
 #define WDCNDELAY_RST (WDC_RESET_WAIT * 1000 / WDCDELAY)
@@ -366,6 +368,10 @@ wdcprobe(chp)
 	if (!chp->_vtbl)
 		chp->_vtbl = &wdc_default_vtbl;
 
+#ifdef WDCDEBUG
+	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
+		wdcdebug_mask |= DEBUG_PROBE;
+#endif
 	/*
 	 * Sanity check to see if the wdc channel responds at all.
 	 */
@@ -422,15 +428,16 @@ wdcprobe(chp)
 		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
 		delay(10);
 		/* Save registers contents */
+		st0 = CHP_READ_REG(chp, wdr_status);
 		sc = CHP_READ_REG(chp, wdr_seccnt);
 		sn = CHP_READ_REG(chp, wdr_sector);
 		cl = CHP_READ_REG(chp, wdr_cyl_lo);
 		ch = CHP_READ_REG(chp, wdr_cyl_hi);
 
-		WDCDEBUG_PRINT(("%s:%d:%d: after reset, sc=0x%x sn=0x%x "
+		WDCDEBUG_PRINT(("%s:%d:%d: after reset, st=0x%x, sc=0x%x sn=0x%x "
 		    "cl=0x%x ch=0x%x\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-	    	    chp->channel, drive, sc, sn, cl, ch), DEBUG_PROBE);
+	    	    chp->channel, drive, st0, sc, sn, cl, ch), DEBUG_PROBE);
 		/*
 		 * This is a simplification of the test in the ATAPI
 		 * spec since not all drives seem to set the other regs
@@ -445,6 +452,11 @@ wdcprobe(chp)
 				chp->ch_drive[drive].drive_flags |= DRIVE_OLD;
 		}
 	}
+
+#ifdef WDCDEBUG
+	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
+		wdcdebug_mask &= ~DEBUG_PROBE;
+#endif
 	return (ret_value);	
 }
 
@@ -499,6 +511,11 @@ wdcattach(chp)
 #endif
 		return;
 	}
+
+#ifdef WDCDEBUG
+	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
+		wdcdebug_mask |= DEBUG_PROBE;
+#endif
 
 	/* init list only once */
 	if (inited == 0) {
@@ -581,7 +598,7 @@ wdcattach(chp)
 	/* If no drives, abort here */
 	if ((chp->ch_drive[0].drive_flags & DRIVE) == 0 &&
 	    (chp->ch_drive[1].drive_flags & DRIVE) == 0)
-		return;
+		goto exit;
 
 	/*
 	 * Attach an ATAPI bus, if needed.
@@ -655,6 +672,13 @@ wdcattach(chp)
 #ifndef __OpenBSD__
 	wdc_delref(chp);
 #endif
+
+ exit:
+#ifdef WDCDEBUG
+	if (chp->wdc->sc_dev.dv_cfdata->cf_flags & WDC_OPTION_PROBE_VERBOSE)
+		wdcdebug_mask &= ~DEBUG_PROBE;
+#endif
+	return;
 }
 
 /*
@@ -1459,8 +1483,8 @@ __wdccommand_done(chp, xfer)
 {
 	struct wdc_command *wdc_c = xfer->cmd;
 
-	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d\n",
-	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive), DEBUG_FUNCS);
+	WDCDEBUG_PRINT(("__wdccommand_done %s:%d:%d %02x\n",
+	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive, chp->ch_status), DEBUG_FUNCS);
 	if (chp->ch_status & WDCS_DWF)
 		wdc_c->flags |= AT_DF;
 	if (chp->ch_status & WDCS_ERR) {
