@@ -1,4 +1,4 @@
-.\" $OpenBSD: ssh-agent.1,v 1.18 2000/11/15 19:55:29 markus Exp $
+.\" $OpenBSD: ssh-agent.1,v 1.19 2000/11/15 20:09:01 markus Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -154,7 +154,7 @@ but is normally added to the agent using
 at login time.
 .It Pa $HOME/.ssh/id_dsa
 Contains the DSA authentication identity of the user.
-.Pq Pa /tmp/ssh-XXXXXXXX/agent.<pid> ,
+.It Pa /tmp/ssh-XXXXXXXX/agent.<pid>
 Unix-domain sockets used to contain the connection to the
 authentication agent.
 These sockets should only be readable by the owner.
