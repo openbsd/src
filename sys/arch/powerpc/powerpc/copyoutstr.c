@@ -1,4 +1,4 @@
-/*	$OpenBSD: copyoutstr.c,v 1.4 2000/01/14 05:42:17 rahnds Exp $	*/
+/*	$OpenBSD: copyoutstr.c,v 1.5 2001/06/24 05:02:27 drahn Exp $	*/
 
 /*-
  * Copyright (C) 1995 Wolfgang Solfrank.
@@ -32,18 +32,19 @@
  */
 #include <sys/param.h>
 #include <sys/errno.h>
+#include <sys/systm.h>
 
 /*
  * Emulate copyoutstr.
  */
 int
 copyoutstr(kaddr, udaddr, len, done)
-	void *kaddr;
+	const void *kaddr;
 	void *udaddr;
 	size_t len;
 	size_t *done;
 {
-	u_char *kp = kaddr;
+	u_char *kp = (u_char *)kaddr;
 	int l;
 	
 	for (l = 0; len-- > 0; l++) {
