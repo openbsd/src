@@ -1,4 +1,4 @@
-.\"     $OpenBSD: pts.1,v 1.4 2002/06/07 04:28:42 hin Exp $
+.\"     $OpenBSD: pts.1,v 1.5 2002/06/07 15:45:39 hin Exp $
 .\"	$KTH: pts.1,v 1.1.2.1 2001/07/26 19:54:02 lha Exp $
 .Dd March 25, 2000
 .Dt PTS 1
@@ -14,8 +14,7 @@
 The
 .Nm
 utility is used to manipulate the contents of the AFS Protection Database,
-which contains information about users and groups and is handled by the
-Protection Server.
+which contains information about users and groups in AFS.
 Note that the
 .Nm
 utility does
@@ -33,8 +32,11 @@ utility provides several commands:
 add a user to a group
 .It Cm chown
 change owner of user or group
-.It Cm creategroup / cg
+.It Cm creategroup
 create a new group
+.It Cm cg
+shorthand for
+.Nm creategroup
 .It Cm createuser
 create a new user
 .It Cm dump
@@ -43,19 +45,23 @@ dump pts database
 delete user or group
 .It Cm examine
 examine a user or a group
-.It Cm help Cm ?
+.It Cm help
 get help on
 .Nm
+.It Cm ?
+shorthand for help 
 .It Cm listmax
-print largest uid and gid
+print largest afs user and group
 .It Cm listowned
 list groups owned by a user or group, or orphaned groups
-.It Cm membership Cm groups
+.It Cm membership
+list group or user membership
+.It Cm groups
 list group or user membership
 .It Cm removeuser
 remove a user from a group
 .It Cm rename
-rename user/group
+rename a user or a group
 .It Cm setfields
 not yet implemented
 .It Cm setmax
@@ -118,16 +124,14 @@ Change owner of a group or user.
 .Bd -filled -offset indent -compact
 Create a new group.
 If
-.Fl id
+.Ar idnumber
 is not specified, a new idnumber is taken automatically.
 .Ed
 .Pp
 .Ic pts cg
 .Bd -filled -offset indent -compact
-.Ic pts cg
-is an alias for the
-.Ic pts creategroup
-command.
+Shorthand for
+.Nm creategroup Ns .
 .Ed
 .Pp
 .Ic pts createuser
@@ -139,7 +143,7 @@ command.
 .Bd -filled -offset indent -compact
 Create a new user.
 If
-.Fl id
+.Ar idnumber
 is not specified, a new idnumber is taken automatically.
 .Ed
 .Pp
@@ -201,10 +205,8 @@ List the members of a group, or the groups a user is a member of.
 .Pp
 .Ic pts groups
 .Bd -filled -offset indent -compact
-.Ic pts groups
-is an alias for the
-.Ic pts membership
-command.
+Shorthand for
+.Nm membership Ns .
 .Ed
 .Pp
 .Ic pts removeuser
@@ -231,24 +233,22 @@ Rename a user or group.
 .Pp
 .Ic pts setfields
 .Bd -filled -offset indent -compact
-This command is available in the original AFS client, but has not been
-implemented yet.
+Not yet implemented.
 .Ed
 .Pp
 .Ic pts setmax
 .Bd -filled -offset indent -compact
-This command is available in the original AFS client, but has not been
-implemented yet.
+Not yet implemented.
 .Ed
 .Pp
 .Ic pts syncdb
 .Bd -filled -offset indent -compact
-This command has not been implemented yet.
+Not yet implemented.
 .Ed
 .Sh SEE ALSO
-.Xr afsd 8 ,
+.Xr afsd 1 ,
 .Xr fs 1 ,
-.Xr vos 8
+.Xr vos 1
 .Sh STANDARDS
 The Arla authors are trying to mimic the behaviour of the original AFS
 utilities.
