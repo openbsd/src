@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.18 2001/05/16 19:14:03 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.19 2001/05/16 23:34:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -242,7 +242,22 @@ const struct ac97_source_info {
 		AudioCoutputs,	AudioNspatial,	"depth", AUDIO_MIXER_VALUE,
 		WRAP(ac97_volume_mono),
 		AC97_REG_3D_CONTROL, 4, 0, 0, 1, 0x0000
-	},
+	}, {
+		/* Surround volume */
+		AudioCoutputs,	"surround",	NULL,	AUDIO_MIXER_VALUE,
+		WRAP(ac97_volume_stereo),
+		AC97_REG_SURROUND_VOLUME, 6, 0, 1, 0, 0x8080
+	}, {
+		/* Center volume */
+		AudioCoutputs,	"center",	NULL,	AUDIO_MIXER_VALUE,
+		WRAP(ac97_volume_mono),
+		AC97_REG_CENTER_LFE_VOLUME, 6, 0, 1, 0, 0x8080
+	}, {
+		/* LFE volume */
+		AudioCoutputs,	"lfe",		NULL,	AUDIO_MIXER_VALUE,
+		WRAP(ac97_volume_mono),
+		AC97_REG_CENTER_LFE_VOLUME, 6, 8, 1, 0, 0x8080
+	}
 
 	/* Missing features: Simulated Stereo, POP, Loopback mode */
 } ;
@@ -394,8 +409,8 @@ const char * const ac97feature[] = {
 
 int ac97_str_equal __P((const char *, const char *));
 void ac97_setup_source_info __P((struct ac97_softc *));
-void ac97_read __P((struct ac97_softc *, u_int8_t, u_int16_t *));
 void ac97_setup_defaults __P((struct ac97_softc *));
+int ac97_read __P((struct ac97_softc *, u_int8_t, u_int16_t *));
 int ac97_write __P((struct ac97_softc *, u_int8_t, u_int16_t));
 
 #define AC97_DEBUG 10
@@ -413,8 +428,7 @@ int	ac97debug = 0;
 #define DPRINTFN(n,x)
 #endif
 
-
-void
+int
 ac97_read(as, reg, val)
 	struct ac97_softc *as;
 	u_int8_t	reg;
@@ -427,12 +441,12 @@ ac97_read(as, reg, val)
 	    reg != AC97_REG_RESET)) ||
 	    (as->host_flags & AC97_HOST_DONT_READANY)) {
 		*val = as->shadow_reg[reg >> 1];
-		return;
+		return (0);
 	}
 
 	if ((error = as->host_if->read(as->host_if->arg, reg, val)))
 		*val = as->shadow_reg[reg >> 1];
-	return;
+	return (error);
 }
 
 int
@@ -649,6 +663,13 @@ ac97_attach(host_if)
 		printf("%s\n", ac97enhancement[AC97_SOUND_ENHANCEMENT(caps)]);
 	}
 
+	ac97_read(as, AC97_REG_EXT_AUDIO_ID, &caps);
+	if (caps)
+		DPRINTF(("ac97: ext id %b\n", caps, AC97_EXT_AUDIO_BITS));
+	if (caps & AC97_EXT_AUDIO_VRA)
+		ac97_write(as, AC97_REG_EXT_AUDIO_CTRL,
+		    AC97_EXT_AUDIO_VRA | AC97_EXT_AUDIO_VRM);
+
 	ac97_setup_source_info(as);
 
 	/* Just enable the DAC and master volumes by default */
@@ -676,7 +697,6 @@ ac97_attach(host_if)
 
 	return (0);
 }
-
 
 int
 ac97_query_devinfo(codec_if, dip)
@@ -869,6 +889,56 @@ ac97_mixer_get_port(codec_if, cp)
 	default:
 		return (EINVAL);
 	}
+
+	return (0);
+}
+
+int
+ac97_set_rate(codec_if, p, mode)
+	struct ac97_codec_if *codec_if;
+	struct audio_params *p;
+	int mode;
+{
+	struct ac97_softc *as = (struct ac97_softc *)codec_if;
+	u_int16_t reg, val, regval, id = 0;
+
+	DPRINTFN(5, ("set_rate(%lu) ", p->sample_rate));
+
+	if (p->sample_rate > 0xffff) {
+		if (mode != AUMODE_PLAY)
+			return (EINVAL);
+		if (ac97_read(as, AC97_REG_EXT_AUDIO_ID, &id))
+			return (EIO);
+		if (!(id & AC97_EXT_AUDIO_DRA))
+			return (EINVAL);
+		if (ac97_read(as, AC97_REG_EXT_AUDIO_CTRL, &id))
+			return (EIO);
+		id |= AC97_EXT_AUDIO_DRA;
+		if (ac97_write(as, AC97_REG_EXT_AUDIO_CTRL, id))
+			return (EIO);
+		p->sample_rate /= 2;
+	}
+
+	/* i guess it's better w/o clicks and squeecks when changing the rate */
+	if (ac97_read(as, AC97_REG_POWER, &val) ||
+	    ac97_write(as, AC97_REG_POWER, val |
+	      (mode == AUMODE_PLAY? AC97_POWER_OUT : AC97_POWER_IN)))
+		return (EIO);
+
+	reg = mode == AUMODE_PLAY ?
+	    AC97_REG_FRONT_DAC_RATE : AC97_REG_PCM_ADC_RATE;
+
+	if (ac97_write(as, reg, (u_int16_t) p->sample_rate) ||
+	    ac97_read(as, reg, &regval))
+		return (EIO);
+	p->sample_rate = regval;
+	if (id & AC97_EXT_AUDIO_DRA)
+		p->sample_rate *= 2;
+
+	DPRINTFN(5, (" %lu\n", regval));
+
+	if (ac97_write(as, AC97_REG_POWER, val))
+		return (EIO);
 
 	return (0);
 }
