@@ -21,7 +21,7 @@ or implied warranty.
         
 #include "krb_locl.h"
 
-RCSID("$KTH: tf_util.c,v 1.39.2.2 2000/06/23 04:03:58 assar Exp $");
+RCSID("$KTH: tf_util.c,v 1.43 2000/11/30 07:15:26 assar Exp $");
 
 
 #define TOO_BIG -1
@@ -133,104 +133,104 @@ static int tf_read(void *s, int n);
 int
 tf_init(char *tf_name, int rw)
 {
-  /* Unix implementation */
-  int wflag;
-  struct stat stat_buf;
-  int i_retry;
+    /* Unix implementation */
+    int wflag;
+    struct stat stat_buf;
+    int i_retry;
 
-  switch (rw) {
-  case R_TKT_FIL:
-    wflag = 0;
-    break;
-  case W_TKT_FIL:
-    wflag = 1;
-    break;
-  default:
-    if (krb_debug)
-      krb_warning("tf_init: illegal parameter\n");
-    return TKT_FIL_ACC;
-  }
-  if (lstat(tf_name, &stat_buf) < 0)
-    switch (errno) {
-    case ENOENT:
-      return NO_TKT_FIL;
+    switch (rw) {
+    case R_TKT_FIL:
+	wflag = 0;
+	break;
+    case W_TKT_FIL:
+	wflag = 1;
+	break;
     default:
-      return TKT_FIL_ACC;
+	if (krb_debug)
+	    krb_warning("tf_init: illegal parameter\n");
+	return TKT_FIL_ACC;
     }
-  if (!S_ISREG(stat_buf.st_mode))
-    return TKT_FIL_ACC;
+    if (lstat(tf_name, &stat_buf) < 0)
+	switch (errno) {
+	case ENOENT:
+	    return NO_TKT_FIL;
+	default:
+	    return TKT_FIL_ACC;
+	}
+    if (!S_ISREG(stat_buf.st_mode))
+	return TKT_FIL_ACC;
 
-  /* The code tries to guess when the calling program is running
-   * set-uid and prevent unauthorized access.
-   *
-   * All library functions now assume that the right set of userids
-   * are set upon entry, therefore it's not strictly necessary to
-   * perform these test for programs adhering to these assumptions.
-   *
-   * This doesn't work on cygwin because getuid() returns a different
-   * uid than the owner of files that are created.
-   */
+    /* The code tries to guess when the calling program is running
+     * set-uid and prevent unauthorized access.
+     *
+     * All library functions now assume that the right set of userids
+     * are set upon entry, therefore it's not strictly necessary to
+     * perform these test for programs adhering to these assumptions.
+     *
+     * This doesn't work on cygwin because getuid() returns a different
+     * uid than the owner of files that are created.
+     */
 #ifndef __CYGWIN__
-  {
-    uid_t me = getuid();
-    if (stat_buf.st_uid != me && me != 0)
-      return TKT_FIL_ACC;
-  }
+    {
+	uid_t me = getuid();
+	if (stat_buf.st_uid != me && me != 0)
+	    return TKT_FIL_ACC;
+    }
 #endif
 
-  /*
-   * If "wflag" is set, open the ticket file in append-writeonly mode
-   * and lock the ticket file in exclusive mode.  If unable to lock
-   * the file, sleep and try again.  If we fail again, return with the
-   * proper error message. 
-   */
+    /*
+     * If "wflag" is set, open the ticket file in append-writeonly mode
+     * and lock the ticket file in exclusive mode.  If unable to lock
+     * the file, sleep and try again.  If we fail again, return with the
+     * proper error message. 
+     */
 
-  curpos = sizeof(tfbfr);
+    curpos = sizeof(tfbfr);
 
     
-  if (wflag) {
-    fd = open(tf_name, O_RDWR | O_BINARY, 0600);
+    if (wflag) {
+	fd = open(tf_name, O_RDWR | O_BINARY, 0600);
+	if (fd < 0) {
+	    return TKT_FIL_ACC;
+	}
+	for (i_retry = 0; i_retry < TF_LCK_RETRY_COUNT; i_retry++) {
+	    if (flock(fd, LOCK_EX | LOCK_NB) < 0) {
+		if (krb_debug)
+		    krb_warning("tf_init: retry %d of write lock of `%s'.\n",
+				i_retry, tf_name);
+		sleep (TF_LCK_RETRY);
+	    } else {
+		return KSUCCESS;		/* all done */
+	    }
+	}
+	close (fd);
+	fd = -1;
+	return TKT_FIL_LCK;
+    }
+    /*
+     * Otherwise "wflag" is not set and the ticket file should be opened
+     * for read-only operations and locked for shared access. 
+     */
+
+    fd = open(tf_name, O_RDONLY | O_BINARY, 0600);
     if (fd < 0) {
-      return TKT_FIL_ACC;
+	return TKT_FIL_ACC;
     }
+
     for (i_retry = 0; i_retry < TF_LCK_RETRY_COUNT; i_retry++) {
-      if (flock(fd, LOCK_EX | LOCK_NB) < 0) {
-	if (krb_debug)
-	  krb_warning("tf_init: retry %d of write lock of `%s'.\n",
-		      i_retry, tf_name);
-	sleep (TF_LCK_RETRY);
-      } else {
-	return KSUCCESS;		/* all done */
-      }
+	if (flock(fd, LOCK_SH | LOCK_NB) < 0) {
+	    if (krb_debug)
+		krb_warning("tf_init: retry %d of read lock of `%s'.\n",
+			    i_retry, tf_name);
+	    sleep (TF_LCK_RETRY);
+	} else {
+	    return KSUCCESS;		/* all done */
+	}
     }
-    close (fd);
+    /* failure */
+    close(fd);
     fd = -1;
     return TKT_FIL_LCK;
-  }
-  /*
-   * Otherwise "wflag" is not set and the ticket file should be opened
-   * for read-only operations and locked for shared access. 
-   */
-
-  fd = open(tf_name, O_RDONLY | O_BINARY, 0600);
-  if (fd < 0) {
-    return TKT_FIL_ACC;
-  }
-
-  for (i_retry = 0; i_retry < TF_LCK_RETRY_COUNT; i_retry++) {
-    if (flock(fd, LOCK_SH | LOCK_NB) < 0) {
-      if (krb_debug)
-	krb_warning("tf_init: retry %d of read lock of `%s'.\n",
-		    i_retry, tf_name);
-      sleep (TF_LCK_RETRY);
-    } else {
-      return KSUCCESS;		/* all done */
-    }
-  }
-  /* failure */
-  close(fd);
-  fd = -1;
-  return TKT_FIL_LCK;
 }
 
 /*
@@ -249,21 +249,21 @@ tf_init(char *tf_name, int rw)
 int
 tf_create(char *tf_name)
 {
-  if (unlink (tf_name) && errno != ENOENT)
-    return TKT_FIL_ACC;
+    if (unlink (tf_name) && errno != ENOENT)
+	return TKT_FIL_ACC;
 
-  fd = open(tf_name, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);
-  if (fd < 0)
-    return TKT_FIL_ACC;
-  if (flock(fd, LOCK_EX | LOCK_NB) < 0) {
-    sleep(TF_LCK_RETRY);
+    fd = open(tf_name, O_RDWR | O_CREAT | O_EXCL | O_BINARY, 0600);
+    if (fd < 0)
+	return TKT_FIL_ACC;
     if (flock(fd, LOCK_EX | LOCK_NB) < 0) {
-      close(fd);
-      fd = -1;
-      return TKT_FIL_LCK;
+	sleep(TF_LCK_RETRY);
+	if (flock(fd, LOCK_EX | LOCK_NB) < 0) {
+	    close(fd);
+	    fd = -1;
+	    return TKT_FIL_LCK;
+	}
     }
-  }
-  return KSUCCESS;
+    return KSUCCESS;
 }
 
 /*
@@ -278,18 +278,18 @@ tf_create(char *tf_name)
 int
 tf_get_pname(char *p)
 {
-  if (fd < 0) {
-    if (krb_debug)
-      krb_warning("tf_get_pname called before tf_init.\n");
-    return TKT_FIL_INI;
-  }
-  if (tf_gets(p, ANAME_SZ) < 2)	/* can't be just a null */
-    {
-      if (krb_debug) 
-	krb_warning ("tf_get_pname: pname < 2.\n");
-      return TKT_FIL_FMT;
+    if (fd < 0) {
+	if (krb_debug)
+	    krb_warning("tf_get_pname called before tf_init.\n");
+	return TKT_FIL_INI;
     }
-  return KSUCCESS;
+    if (tf_gets(p, ANAME_SZ) < 2)	/* can't be just a null */
+	{
+	    if (krb_debug) 
+		krb_warning ("tf_get_pname: pname < 2.\n");
+	    return TKT_FIL_FMT;
+	}
+    return KSUCCESS;
 }
 
 /*
@@ -300,17 +300,17 @@ tf_get_pname(char *p)
 int
 tf_put_pname(const char *p)
 {
-  unsigned count;
+    unsigned count;
 
-  if (fd < 0) {
-    if (krb_debug)
-      krb_warning("tf_put_pname called before tf_create.\n");
-    return TKT_FIL_INI;
-  }
-  count = strlen(p)+1;
-  if (write(fd,p,count) != count)
-    return(KFAILURE);
-  return KSUCCESS;
+    if (fd < 0) {
+	if (krb_debug)
+	    krb_warning("tf_put_pname called before tf_create.\n");
+	return TKT_FIL_INI;
+    }
+    count = strlen(p)+1;
+    if (write(fd,p,count) != count)
+	return(KFAILURE);
+    return KSUCCESS;
 }
 
 /*
@@ -326,18 +326,18 @@ tf_put_pname(const char *p)
 int
 tf_get_pinst(char *inst)
 {
-  if (fd < 0) {
-    if (krb_debug)
-      krb_warning("tf_get_pinst called before tf_init.\n");
-    return TKT_FIL_INI;
-  }
-  if (tf_gets(inst, INST_SZ) < 1)
-    {
-      if (krb_debug)
-	krb_warning("tf_get_pinst: inst_sz < 1.\n");
-      return TKT_FIL_FMT;
+    if (fd < 0) {
+	if (krb_debug)
+	    krb_warning("tf_get_pinst called before tf_init.\n");
+	return TKT_FIL_INI;
     }
-  return KSUCCESS;
+    if (tf_gets(inst, INST_SZ) < 1)
+	{
+	    if (krb_debug)
+		krb_warning("tf_get_pinst: inst_sz < 1.\n");
+	    return TKT_FIL_FMT;
+	}
+    return KSUCCESS;
 }
 
 /*
@@ -348,17 +348,17 @@ tf_get_pinst(char *inst)
 int
 tf_put_pinst(const char *inst)
 {
-  unsigned count;
+    unsigned count;
 
-  if (fd < 0) {
-    if (krb_debug)
-      krb_warning("tf_put_pinst called before tf_create.\n");
-    return TKT_FIL_INI;
-  }
-  count = strlen(inst)+1;
-  if (write(fd,inst,count) != count)
-    return(KFAILURE);
-  return KSUCCESS;
+    if (fd < 0) {
+	if (krb_debug)
+	    krb_warning("tf_put_pinst called before tf_create.\n");
+	return TKT_FIL_INI;
+    }
+    count = strlen(inst)+1;
+    if (write(fd,inst,count) != count)
+	return(KFAILURE);
+    return KSUCCESS;
 }
 
 /*
@@ -373,131 +373,134 @@ tf_put_pinst(const char *inst)
  */
 
 static int
-real_tf_get_cred(CREDENTIALS *c)
+real_tf_get_cred(CREDENTIALS *c, off_t *pos)
 {
-  KTEXT   ticket = &c->ticket_st;	/* pointer to ticket */
-  int     k_errno;
+    KTEXT   ticket = &c->ticket_st;	/* pointer to ticket */
+    int     k_errno;
 
-  if (fd < 0) {
-    if (krb_debug)
-      krb_warning ("tf_get_cred called before tf_init.\n");
-    return TKT_FIL_INI;
-  }
-  if ((k_errno = tf_gets(c->service, SNAME_SZ)) < 2)
-    switch (k_errno) {
-    case TOO_BIG:
-      if (krb_debug)
-	krb_warning("tf_get_cred: too big service cred.\n");
-    case 1:		/* can't be just a null */
-      tf_close();
-      if (krb_debug)
-	krb_warning("tf_get_cred: null service cred.\n");
-      return TKT_FIL_FMT;
-    case 0:
-      return EOF;
+    if (fd < 0) {
+	if (krb_debug)
+	    krb_warning ("tf_get_cred called before tf_init.\n");
+	return TKT_FIL_INI;
     }
-  if ((k_errno = tf_gets(c->instance, INST_SZ)) < 1)
-    switch (k_errno) {
-    case TOO_BIG:
-      if (krb_debug)
-	krb_warning ("tf_get_cred: too big instance cred.\n");
-      return TKT_FIL_FMT;
-    case 0:
-      return EOF;
+    if(pos)
+	*pos = lseek(fd, 0, SEEK_CUR) - lastpos + curpos;
+    if ((k_errno = tf_gets(c->service, SNAME_SZ)) < 2)
+	switch (k_errno) {
+	case TOO_BIG:
+	    if (krb_debug)
+		krb_warning("tf_get_cred: too big service cred.\n");
+	case 1:		/* can't be just a null */
+	    tf_close();
+	    if (krb_debug)
+		krb_warning("tf_get_cred: null service cred.\n");
+	    return TKT_FIL_FMT;
+	case 0:
+	    return EOF;
+	}
+    if ((k_errno = tf_gets(c->instance, INST_SZ)) < 1)
+	switch (k_errno) {
+	case TOO_BIG:
+	    if (krb_debug)
+		krb_warning ("tf_get_cred: too big instance cred.\n");
+	    return TKT_FIL_FMT;
+	case 0:
+	    return EOF;
+	}
+    if ((k_errno = tf_gets(c->realm, REALM_SZ)) < 2)
+	switch (k_errno) {
+	case TOO_BIG:
+	    if (krb_debug)
+		krb_warning ("tf_get_cred: too big realm cred.\n");
+	case 1:		/* can't be just a null */
+	    tf_close();
+	    if (krb_debug)
+		krb_warning ("tf_get_cred: null realm cred.\n");
+	    return TKT_FIL_FMT;
+	case 0:
+	    return EOF;
+	}
+    if (
+	tf_read((c->session), DES_KEY_SZ) < 1 ||
+	tf_read(&(c->lifetime), sizeof(c->lifetime)) < 1 ||
+	tf_read(&(c->kvno), sizeof(c->kvno)) < 1 ||
+	tf_read(&(ticket->length), sizeof(ticket->length))
+	< 1 ||
+	/* don't try to read a silly amount into ticket->dat */
+	ticket->length > MAX_KTXT_LEN ||
+	tf_read((ticket->dat), ticket->length) < 1 ||
+	tf_read(&(c->issue_date), sizeof(c->issue_date)) < 1
+	) {
+	tf_close();
+	if (krb_debug)
+	    krb_warning ("tf_get_cred: failed tf_read.\n");
+	return TKT_FIL_FMT;
     }
-  if ((k_errno = tf_gets(c->realm, REALM_SZ)) < 2)
-    switch (k_errno) {
-    case TOO_BIG:
-      if (krb_debug)
-	krb_warning ("tf_get_cred: too big realm cred.\n");
-    case 1:		/* can't be just a null */
-      tf_close();
-      if (krb_debug)
-	krb_warning ("tf_get_cred: null realm cred.\n");
-      return TKT_FIL_FMT;
-    case 0:
-      return EOF;
-    }
-  if (
-      tf_read((c->session), DES_KEY_SZ) < 1 ||
-      tf_read(&(c->lifetime), sizeof(c->lifetime)) < 1 ||
-      tf_read(&(c->kvno), sizeof(c->kvno)) < 1 ||
-      tf_read(&(ticket->length), sizeof(ticket->length))
-      < 1 ||
-      /* don't try to read a silly amount into ticket->dat */
-      ticket->length > MAX_KTXT_LEN ||
-      tf_read((ticket->dat), ticket->length) < 1 ||
-      tf_read(&(c->issue_date), sizeof(c->issue_date)) < 1
-      ) {
-    tf_close();
-    if (krb_debug)
-      krb_warning ("tf_get_cred: failed tf_read.\n");
-    return TKT_FIL_FMT;
-  }
-  return KSUCCESS;
+    return KSUCCESS;
 }
 
 int
 tf_get_cred(CREDENTIALS *c)
 {
-  int ret;
-  int fake;
+    int ret;
+    int fake;
 
-  do {
-    fake = 0;
+    do {
+	fake = 0;
 
-    ret = real_tf_get_cred (c);
-    if (ret)
-      return ret;
+	ret = real_tf_get_cred (c, NULL);
+	if (ret)
+	    return ret;
 
-    if(strcmp(c->service, MAGIC_TICKET_NAME) == 0) {
-      if(strcmp(c->instance, MAGIC_TICKET_TIME_DIFF_INST) == 0) {
-	/* we found the magic `time diff' ticket; update the kdc time
-         differential, and then get the next ticket */
-	u_int32_t d;
+	if(strcmp(c->service, MAGIC_TICKET_NAME) == 0) {
+	    if(strcmp(c->instance, MAGIC_TICKET_TIME_DIFF_INST) == 0) {
+		/* we found the magic `time diff' ticket; update the kdc time
+		   differential, and then get the next ticket */
+		u_int32_t d;
 
-	krb_get_int(c->ticket_st.dat, &d, 4, 0);
-	krb_set_kdc_time_diff(d);
-	fake = 1;
-      } else if (strcmp(c->instance, MAGIC_TICKET_ADDR_INST) == 0) {
-	fake = 1;
-      }
-    }
-  } while (fake);
-  return ret;
+		krb_get_int(c->ticket_st.dat, &d, 4, 0);
+		krb_set_kdc_time_diff(d);
+		fake = 1;
+	    } else if (strcmp(c->instance, MAGIC_TICKET_ADDR_INST) == 0) {
+		fake = 1;
+	    }
+	}
+    } while (fake);
+    return ret;
 }
 
 int
 tf_get_cred_addr(char *realm, size_t realm_sz, struct in_addr *addr)
 {
-  int ret;
-  int fake;
-  CREDENTIALS cred;
+    int ret;
+    int fake;
+    CREDENTIALS cred;
 
-  do {
-    fake = 1;
+    do {
+	fake = 1;
 
-    ret = real_tf_get_cred (&cred);
-    if (ret)
-      return ret;
+	ret = real_tf_get_cred (&cred, NULL);
+	if (ret)
+	    return ret;
 
-    if(strcmp(cred.service, MAGIC_TICKET_NAME) == 0) {
-      if(strcmp(cred.instance, MAGIC_TICKET_TIME_DIFF_INST) == 0) {
-	/* we found the magic `time diff' ticket; update the kdc time
-         differential, and then get the next ticket */
-	u_int32_t d;
+	if(strcmp(cred.service, MAGIC_TICKET_NAME) == 0) {
+	    if(strcmp(cred.instance, MAGIC_TICKET_TIME_DIFF_INST) == 0) {
+		/* we found the magic `time diff' ticket; update the kdc time
+		   differential, and then get the next ticket */
+		u_int32_t d;
 
-	krb_get_int(cred.ticket_st.dat, &d, 4, 0);
-	krb_set_kdc_time_diff(d);
-      } else if (strcmp(cred.instance, MAGIC_TICKET_ADDR_INST) == 0) {
-	strlcpy(realm, cred.realm, realm_sz);
-	memcpy (addr, cred.ticket_st.dat, sizeof(*addr));
-	fake = 0;
-      }
-    }
-  } while (fake);
-  return ret;
+		krb_get_int(cred.ticket_st.dat, &d, 4, 0);
+		krb_set_kdc_time_diff(d);
+	    } else if (strcmp(cred.instance, MAGIC_TICKET_ADDR_INST) == 0) {
+		strlcpy(realm, cred.realm, realm_sz);
+		memcpy (addr, cred.ticket_st.dat, sizeof(*addr));
+		fake = 0;
+	    }
+	}
+    } while (fake);
+    return ret;
 }
+
 
 /*
  * tf_close() closes the ticket file and sets "fd" to -1. If "fd" is
@@ -510,12 +513,12 @@ tf_get_cred_addr(char *realm, size_t realm_sz, struct in_addr *addr)
 void
 tf_close(void)
 {
-  if (!(fd < 0)) {
-    flock(fd, LOCK_UN);
-    close(fd);
-    fd = -1;		/* see declaration of fd above */
-  }
-  memset(tfbfr, 0, sizeof(tfbfr));
+    if (fd >= 0) {
+	flock(fd, LOCK_UN);
+	close(fd);
+	fd = -1;		/* see declaration of fd above */
+    }
+    memset(tfbfr, 0, sizeof(tfbfr));
 }
 
 /*
@@ -539,28 +542,28 @@ tf_close(void)
 static int
 tf_gets(char *s, int n)
 {
-  int count;
+    int count;
 
-  if (fd < 0) {
-    if (krb_debug)
-      krb_warning ("tf_gets called before tf_init.\n");
-    return TKT_FIL_INI;
-  }
-  for (count = n - 1; count > 0; --count) {
-    if (curpos >= sizeof(tfbfr)) {
-      lastpos = read(fd, tfbfr, sizeof(tfbfr));
-      curpos = 0;
+    if (fd < 0) {
+	if (krb_debug)
+	    krb_warning ("tf_gets called before tf_init.\n");
+	return TKT_FIL_INI;
     }
-    if (curpos == lastpos) {
-      tf_close();
-      return 0;
+    for (count = n - 1; count > 0; --count) {
+	if (curpos >= sizeof(tfbfr)) {
+	    lastpos = read(fd, tfbfr, sizeof(tfbfr));
+	    curpos = 0;
+	}
+	if (curpos == lastpos) {
+	    tf_close();
+	    return 0;
+	}
+	*s = tfbfr[curpos++];
+	if (*s++ == '\0')
+	    return (n - count);
     }
-    *s = tfbfr[curpos++];
-    if (*s++ == '\0')
-      return (n - count);
-  }
-  tf_close();
-  return TOO_BIG;
+    tf_close();
+    return TOO_BIG;
 }
 
 /*
@@ -579,23 +582,76 @@ tf_gets(char *s, int n)
 static int
 tf_read(void *v, int n)
 {
-  char *s = (char *)v;
-  int count;
+    char *s = (char *)v;
+    int count;
     
-  for (count = n; count > 0; --count) {
-    if (curpos >= sizeof(tfbfr)) {
-      lastpos = read(fd, tfbfr, sizeof(tfbfr));
-      curpos = 0;
+    for (count = n; count > 0; --count) {
+	if (curpos >= sizeof(tfbfr)) {
+	    lastpos = read(fd, tfbfr, sizeof(tfbfr));
+	    curpos = 0;
+	}
+	if (curpos == lastpos) {
+	    tf_close();
+	    return 0;
+	}
+	*s++ = tfbfr[curpos++];
     }
-    if (curpos == lastpos) {
-      tf_close();
-      return 0;
-    }
-    *s++ = tfbfr[curpos++];
-  }
-  return n;
+    return n;
 }
      
+/* write a cred at the current position in the ticket file */
+ 
+static int
+tf_write_cred(char *service,	/* Service name */
+	      char *instance,	/* Instance */
+	      char *realm,	/* Auth domain */
+	      unsigned char *session, /* Session key */
+	      int lifetime,	/* Lifetime */
+	      int kvno,		/* Key version number */
+	      KTEXT ticket,	/* The ticket itself */
+	      u_int32_t issue_date) /* The issue time */
+{
+    int count;			/* count for write */
+
+    /* Write the ticket and associated data */
+    /* Service */
+    count = strlen(service) + 1;
+    if (write(fd, service, count) != count)
+	goto bad;
+    /* Instance */
+    count = strlen(instance) + 1;
+    if (write(fd, instance, count) != count)
+	goto bad;
+    /* Realm */
+    count = strlen(realm) + 1;
+    if (write(fd, realm, count) != count)
+	goto bad;
+    /* Session key */
+    if (write(fd, session, 8) != 8)
+	goto bad;
+    /* Lifetime */
+    if (write(fd, &lifetime, sizeof(int)) != sizeof(int))
+	goto bad;
+    /* Key vno */
+    if (write(fd, &kvno, sizeof(int)) != sizeof(int))
+	goto bad;
+    /* Tkt length */
+    if (write(fd, &(ticket->length), sizeof(int)) !=
+	sizeof(int))
+	goto bad;
+    /* Ticket */
+    count = ticket->length;
+    if (write(fd, ticket->dat, count) != count)
+	goto bad;
+    /* Issue date */
+    if (write(fd, &issue_date, sizeof(issue_date)) != sizeof(issue_date))
+	goto bad;
+
+    return (KSUCCESS);
+  bad:
+    return (KFAILURE);
+}
+
 /*
  * tf_save_cred() appends an incoming ticket to the end of the ticket
  * file.  You must call tf_init() before calling tf_save_cred().
@@ -620,53 +676,65 @@ tf_save_cred(char *service,	/* Service name */
 	     KTEXT ticket,	/* The ticket itself */
 	     u_int32_t issue_date) /* The issue time */
 {
-  int count;			/* count for write */
+    if (fd < 0) {      /* fd is ticket file as set by tf_init */
+	if (krb_debug)
+	    krb_warning ("tf_save_cred called before tf_init.\n");
+	return TKT_FIL_INI;
+    }
+    /* Find the end of the ticket file */
+    lseek(fd, 0L, SEEK_END);
+    
+    return tf_write_cred(service, instance, realm, session, 
+			 lifetime, kvno, ticket, issue_date);
+}
 
-  if (fd < 0) {			/* fd is ticket file as set by tf_init */
-    if (krb_debug)
-      krb_warning ("tf_save_cred called before tf_init.\n");
-    return TKT_FIL_INI;
-  }
-  /* Find the end of the ticket file */
-  lseek(fd, 0L, SEEK_END);
-
-  /* Write the ticket and associated data */
-  /* Service */
-  count = strlen(service) + 1;
-  if (write(fd, service, count) != count)
-    goto bad;
-  /* Instance */
-  count = strlen(instance) + 1;
-  if (write(fd, instance, count) != count)
-    goto bad;
-  /* Realm */
-  count = strlen(realm) + 1;
-  if (write(fd, realm, count) != count)
-    goto bad;
-  /* Session key */
-  if (write(fd, session, 8) != 8)
-    goto bad;
-  /* Lifetime */
-  if (write(fd, &lifetime, sizeof(int)) != sizeof(int))
-    goto bad;
-  /* Key vno */
-  if (write(fd, &kvno, sizeof(int)) != sizeof(int))
-    goto bad;
-  /* Tkt length */
-  if (write(fd, &(ticket->length), sizeof(int)) !=
-      sizeof(int))
-    goto bad;
-  /* Ticket */
-  count = ticket->length;
-  if (write(fd, ticket->dat, count) != count)
-    goto bad;
-  /* Issue date */
-  if (write(fd, &issue_date, sizeof(issue_date)) != sizeof(issue_date))
-    goto bad;
-
-  return (KSUCCESS);
-bad:
-  return (KFAILURE);
+/* replace the cred in the cache that matches `cred' */
+int
+tf_replace_cred(CREDENTIALS *cred)
+{
+    char dummy[ANAME_SZ];
+    CREDENTIALS c;
+    int ret;
+    off_t pos;
+    if (fd < 0) {
+	if (krb_debug)
+	    krb_warning ("tf_replace_cred called before tf_init.\n");
+	return TKT_FIL_INI;
+    }
+    if(lseek(fd, 0, SEEK_SET) < 0)
+	return errno;
+    curpos = sizeof(tfbfr);
+    ret = tf_get_pname(dummy);
+    if(ret)
+	return ret;
+    ret = tf_get_pinst(dummy);
+    if(ret)
+	return ret;
+    while(1) {
+	ret = real_tf_get_cred(&c, &pos);
+	if(ret == EOF)
+	    break;
+	else if(ret)
+	    return ret;
+	if(strcmp(c.service, cred->service) == 0 &&
+	   strcmp(c.instance, cred->instance) == 0 &&
+	   strcmp(c.realm, cred->realm) == 0) {
+	    memset(&c, 0, sizeof(c));
+	    if(lseek(fd, pos, SEEK_SET) < 0)
+		return errno;
+	    return tf_write_cred(cred->service, 
+				 cred->instance, 
+				 cred->realm,
+				 cred->session,
+				 cred->lifetime,
+				 cred->kvno,
+				 &cred->ticket_st,
+				 cred->issue_date);
+	}
+    }
+    /* at this point tf_get_cred has closed(!) the ticket file, so
+       it's safe to call save_credentials */
+    return save_credentials_cred(cred);
 }
 
 int
@@ -707,11 +775,11 @@ tf_setup(CREDENTIALS *cred, const char *pname, const char *pinst)
 int
 in_tkt(char *pname, char *pinst)
 {
-  int ret;
+    int ret;
   
-  ret = tf_create (tkt_string());
-  if (ret != KSUCCESS)
-    return ret;
+    ret = tf_create (tkt_string());
+    if (ret != KSUCCESS)
+	return ret;
 
     if (tf_put_pname(pname) != KSUCCESS ||
 	tf_put_pinst(pinst) != KSUCCESS) {
@@ -732,34 +800,34 @@ in_tkt(char *pname, char *pinst)
 int
 tf_get_addr (const char *realm, struct in_addr *addr)
 {
-  CREDENTIALS cred;
-  krb_principal princ;
-  int ret;
+    CREDENTIALS cred;
+    krb_principal princ;
+    int ret;
 
-  ret = tf_init (tkt_string (), R_TKT_FIL);
-  if (ret)
-    return ret;
+    ret = tf_init (tkt_string (), R_TKT_FIL);
+    if (ret)
+	return ret;
 
-  ret = tf_get_pname (princ.name);
-  if (ret)
-    goto out;
-  ret = tf_get_pinst (princ.name);
-  if (ret)
-    goto out;
-  while ((ret = real_tf_get_cred (&cred)) == KSUCCESS) {
-    if (strcmp (cred.service, MAGIC_TICKET_NAME) == 0
-	&& strcmp (cred.instance, MAGIC_TICKET_ADDR_INST) == 0
-	&& (realm == NULL
-	    || strcmp (cred.realm, realm) == 0)) {
-      memcpy (addr, cred.ticket_st.dat, sizeof(*addr));
-      goto out;
+    ret = tf_get_pname (princ.name);
+    if (ret)
+	goto out;
+    ret = tf_get_pinst (princ.name);
+    if (ret)
+	goto out;
+    while ((ret = real_tf_get_cred (&cred, NULL)) == KSUCCESS) {
+	if (strcmp (cred.service, MAGIC_TICKET_NAME) == 0
+	    && strcmp (cred.instance, MAGIC_TICKET_ADDR_INST) == 0
+	    && (realm == NULL
+		|| strcmp (cred.realm, realm) == 0)) {
+	    memcpy (addr, cred.ticket_st.dat, sizeof(*addr));
+	    goto out;
+	}
     }
-  }
-  ret = KFAILURE;
+    ret = KFAILURE;
 
-out:
-  tf_close ();
-  return ret;
+  out:
+    tf_close ();
+    return ret;
 }
 
 /*
@@ -769,21 +837,21 @@ out:
 int
 tf_store_addr (const char *realm, struct in_addr *addr)
 {
-  int ret;
-  des_cblock s = { 0, 0, 0, 0, 0, 0, 0, 0 };
-  KTEXT_ST t;
+    int ret;
+    des_cblock s = { 0, 0, 0, 0, 0, 0, 0, 0 };
+    KTEXT_ST t;
 
-  ret = tf_init (tkt_string (), W_TKT_FIL);
-  if (ret)
+    ret = tf_init (tkt_string (), W_TKT_FIL);
+    if (ret)
+	return ret;
+
+    t.length = sizeof(*addr);
+    memcpy (t.dat, addr, sizeof(*addr));
+
+    ret = tf_save_cred (MAGIC_TICKET_NAME, MAGIC_TICKET_ADDR_INST,
+			(char *)realm, s, 0, /* lifetime */ 
+			0, /* kvno */
+			&t, time(NULL));
+    tf_close ();
     return ret;
-
-  t.length = sizeof(*addr);
-  memcpy (t.dat, addr, sizeof(*addr));
-
-  ret = tf_save_cred (MAGIC_TICKET_NAME, MAGIC_TICKET_ADDR_INST,
-		      (char *)realm, s, 0, /* lifetime */ 
-		      0, /* kvno */
-		      &t, time(NULL));
-  tf_close ();
-  return ret;
 }

@@ -1,8 +1,8 @@
-/*	$OpenBSD: kafs.h,v 1.2 2000/02/25 16:12:38 hin Exp $	*/
+/*	$OpenBSD: kafs.h,v 1.3 2002/06/08 21:49:01 hin Exp $	*/
 /*	$KTH: kafs.h,v 1.28 1998/04/26 18:20:09 joda Exp $	*/
 
 /*
- * Copyright (c) 1995, 1996, 1997 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -38,6 +38,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
+
+/* $KTH: kafs.h,v 1.35 2001/09/10 16:05:31 assar Exp $ */
 
 #ifndef __KAFS_H
 #define __KAFS_H
@@ -97,6 +99,16 @@ krb5_error_code krb5_afslog __P((krb5_context, krb5_ccache,
 #define _PATH_ARLA_THISCELL	_PATH_ARLA_VICE "ThisCell"
 #define _PATH_ARLA_CELLSERVDB 	_PATH_ARLA_VICE "CellServDB"
 #define _PATH_ARLA_THESECELLS	_PATH_ARLA_VICE "TheseCells"
+
+#define _PATH_OPENAFS_DEBIAN_VICE		"/etc/openafs/"
+#define _PATH_OPENAFS_DEBIAN_THISCELL		_PATH_OPENAFS_DEBIAN_VICE "ThisCell"
+#define _PATH_OPENAFS_DEBIAN_CELLSERVDB 	_PATH_OPENAFS_DEBIAN_VICE "CellServDB"
+#define _PATH_OPENAFS_DEBIAN_THESECELLS		_PATH_OPENAFS_DEBIAN_VICE "TheseCells"
+
+#define _PATH_ARLA_DEBIAN_VICE			"/etc/arla/"
+#define _PATH_ARLA_DEBIAN_THISCELL		_PATH_ARLA_DEBIAN_VICE "ThisCell"
+#define _PATH_ARLA_DEBIAN_CELLSERVDB		_PATH_ARLA_DEBIAN_VICE "CellServDB"
+#define _PATH_ARLA_DEBIAN_THESECELLS		_PATH_ARLA_DEBIAN_VICE "TheseCells"
 
 extern int _kafs_debug;
 

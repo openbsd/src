@@ -18,7 +18,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$KTH: sysv_default.c,v 1.11 1999/03/13 21:15:24 assar Exp $");
+RCSID("$KTH: sysv_default.c,v 1.12 2001/06/04 14:08:41 assar Exp $");
 
 #include "sysv_default.h"
 

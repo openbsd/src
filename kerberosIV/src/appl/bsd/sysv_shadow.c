@@ -18,7 +18,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$KTH: sysv_shadow.c,v 1.8 1997/12/29 19:56:07 bg Exp $");
+RCSID("$KTH: sysv_shadow.c,v 1.9 2001/06/04 14:08:41 assar Exp $");
 
 #ifdef SYSV_SHADOW
 

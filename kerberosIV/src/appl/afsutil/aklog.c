@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -66,16 +66,13 @@
 
 #include <roken.h>
 
-RCSID("$KTH: aklog.c,v 1.24.2.1 2000/06/23 02:31:15 assar Exp $");
+RCSID("$KTH: aklog.c,v 1.29 2001/08/26 01:48:42 assar Exp $");
 
 static int debug = 0;
 
 static void
 DEBUG(const char *, ...)
-#ifdef __GNUC__
-__attribute__ ((format (printf, 1, 2)))
-#endif
-;
+    __attribute__ ((format (printf, 1, 2)));
 
 static void
 DEBUG(const char *fmt, ...)
@@ -155,7 +152,7 @@ createuser (const char *cell)
     cell = cellbuf;
   }
 
-  if(krb_get_default_principal(name, instance, realm))
+  if(krb_get_default_principal(name, instance, realm) < 0)
     errx (1, "Could not even figure out who you are");
 
   snprintf (cmd, sizeof(cmd),
@@ -173,7 +170,7 @@ main(int argc, char **argv)
   int do_aklog = -1;
   int do_createuser = -1;
   const char *cell = NULL;
-  char *realm = NULL;
+  const char *realm = NULL;
   char cellbuf[64];
   
   if(!k_hasafs())

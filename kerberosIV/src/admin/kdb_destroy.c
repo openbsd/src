@@ -9,7 +9,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$KTH: kdb_destroy.c,v 1.9 1998/06/09 19:24:13 joda Exp $");
+RCSID("$KTH: kdb_destroy.c,v 1.12 2001/09/13 00:34:06 assar Exp $");
 
 int
 main(int argc, char **argv)

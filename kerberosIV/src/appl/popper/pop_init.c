@@ -5,7 +5,7 @@
  */
 
 #include <popper.h>
-RCSID("$KTH: pop_init.c,v 1.51.2.1 2000/04/12 15:47:58 assar Exp $");
+RCSID("$KTH: pop_init.c,v 1.58 2001/02/20 01:44:47 assar Exp $");
 
 
 #if defined(KRB4) || defined(KRB5)
@@ -20,6 +20,34 @@ pop_net_read(POP *p, int fd, void *buf, size_t len)
 #endif
 }
 #endif
+
+static char *addr_log;
+
+static void
+pop_write_addr(POP *p, struct sockaddr *addr)
+{
+    char ts[32];
+    char as[128];
+    time_t t;
+    FILE *f;
+    if(addr_log == NULL)
+	return;
+    t = time(NULL);
+    strftime(ts, sizeof(ts), "%Y%m%d%H%M%S", localtime(&t));
+    if(inet_ntop (addr->sa_family, socket_get_address(addr), 
+		  as, sizeof(as)) == NULL) {
+        pop_log(p, POP_PRIORITY, "failed to print address");
+	return;
+    }
+    
+    f = fopen(addr_log, "a");
+    if(f == NULL) {
+        pop_log(p, POP_PRIORITY, "failed to open address log (%s)", addr_log);
+	return;
+    }
+    fprintf(f, "%s %s\n", as, ts);
+    fclose(f);
+}
 
 #ifdef KRB4
 static int
@@ -58,7 +86,7 @@ krb4_authenticate (POP *p, int s, u_char *buf, struct sockaddr *addr)
         pop_log(p, POP_PRIORITY, "%s: (%s.%s@%s) %s", p->client, 
                 p->kdata.pname, p->kdata.pinst, p->kdata.prealm,
 		krb_get_err_text(auth));
-        exit (1);
+	return -1;
     }
 
 #ifdef DEBUG
@@ -77,6 +105,7 @@ krb5_authenticate (POP *p, int s, u_char *buf, struct sockaddr *addr)
     krb5_auth_context auth_context = NULL;
     u_int32_t len;
     krb5_ticket *ticket;
+    char *server;
 
     if (memcmp (buf, "\x00\x00\x00\x13", 4) != 0)
 	return -1;
@@ -96,28 +125,35 @@ krb5_authenticate (POP *p, int s, u_char *buf, struct sockaddr *addr)
 			 KRB5_RECVAUTH_IGNORE_VERSION,
 			 NULL,
 			 &ticket);
-    if (ret == 0) {
-	char *s;
-	ret = krb5_unparse_name(p->context, ticket->server, &s);
-	if(ret) {
-	    pop_log(p, POP_PRIORITY, "krb5_unparse_name: %s", 
-		    krb5_get_err_text(p->context, ret));
-	    exit(1);
-	}
-	/* does this make sense? */
-	if(strncmp(server, "pop/", 4) != 0) {
-	    pop_log(p, POP_PRIORITY,
-		    "Got ticket for service `%s'", server);
-	    exit(1);
-	} else if(p->debug)
-	    pop_log(p, POP_DEBUG, 
-		    "Accepted ticket for service `%s'", s);
-	free(s);
-	krb5_auth_con_free (p->context, auth_context);
-	krb5_copy_principal (p->context, ticket->client, &p->principal);
-	krb5_free_ticket (p->context, ticket);
-
+    if (ret) {
+	pop_log(p, POP_PRIORITY, "krb5_recvauth: %s",
+		krb5_get_err_text(p->context, ret));
+	return -1;
     }
+
+
+    ret = krb5_unparse_name(p->context, ticket->server, &server);
+    if(ret) {
+	pop_log(p, POP_PRIORITY, "krb5_unparse_name: %s", 
+		krb5_get_err_text(p->context, ret));
+	ret = -1;
+	goto out;
+    }
+    /* does this make sense? */
+    if(strncmp(server, "pop/", 4) != 0) {
+	pop_log(p, POP_PRIORITY,
+		"Got ticket for service `%s'", server);
+	ret = -1;
+	goto out;
+    } else if(p->debug)
+	pop_log(p, POP_DEBUG, 
+		"Accepted ticket for service `%s'", server);
+    free(server);
+ out:
+    krb5_auth_con_free (p->context, auth_context);
+    krb5_copy_principal (p->context, ticket->client, &p->principal);
+    krb5_free_ticket (p->context, ticket);
+
     return ret;
 }
 #endif
@@ -135,12 +171,14 @@ krb_authenticate(POP *p, struct sockaddr *addr)
     }
 #ifdef KRB4
     if (krb4_authenticate (p, 0, buf, addr) == 0){
+	pop_write_addr(p, addr);
 	p->version = 4;
 	return POP_SUCCESS;
     }
 #endif
 #ifdef KRB5
     if (krb5_authenticate (p, 0, buf, addr) == 0){
+	pop_write_addr(p, addr);
 	p->version = 5;
 	return POP_SUCCESS;
     }
@@ -178,6 +216,7 @@ static struct getargs args[] = {
     { "port", 'p', arg_string, &port_str, "port to listen to", "port" },
     { "trace-file", 't', arg_string, &trace_file, "trace all command to file", "file" },
     { "timeout", 'T', arg_integer, &timeout, "timeout", "seconds" },
+    { "address-log", 0, arg_string, &addr_log, "enable address log", "file" },
     { "help", 'h', arg_flag, &help_flag },
     { "version", 'v', arg_flag, &version_flag }
 };
@@ -206,8 +245,7 @@ pop_init(POP *p,int argcount,char **argmessage)
 {
     struct sockaddr_storage cs_ss;
     struct sockaddr *cs = (struct sockaddr *)&cs_ss;
-    struct hostent      *   ch;                 /*  Client host information */
-    int                     len;
+    socklen_t		    len;
     char                *   trace_file_name = "/tmp/popper-trace";
     int			    portnum = 0;
     int 		    optind = 0;
@@ -217,16 +255,22 @@ pop_init(POP *p,int argcount,char **argmessage)
     memset (p, 0, sizeof(POP));
 
     /*  Save my name in a global variable */
-    p->myname = (char*)__progname;
+    p->myname = (char*)getprogname();
 
     /*  Get the name of our host */
     gethostname(p->myhost,MaxHostNameLen);
 
 #ifdef KRB5
-    krb5_init_context (&p->context);
+    {
+	krb5_error_code ret;
 
-    krb5_openlog(p->context, p->myname, &p->logf);
-    krb5_set_warn_dest(p->context, p->logf);
+	ret = krb5_init_context (&p->context);
+	if (ret)
+	    errx (1, "krb5_init_context failed: %d", ret);
+
+	krb5_openlog(p->context, p->myname, &p->logf);
+	krb5_set_warn_dest(p->context, p->logf);
+    }
 #else
     /*  Open the log file */
     roken_openlog(p->myname,POP_LOGOPTS,POP_FACILITY);
@@ -312,59 +356,13 @@ pop_init(POP *p,int argcount,char **argmessage)
     p->ipport = ntohs(socket_get_port (cs));
 
     /*  Get the canonical name of the host to whom I am speaking */
-    ch = getipnodebyaddr (socket_get_address (cs),
-			  socket_addr_size (cs),
-			  cs->sa_family,
-			  &error);
-    if (ch == NULL){
-        pop_log(p,POP_PRIORITY,
-            "Unable to get canonical name of client, err = %d",error);
+    error = getnameinfo_verified (cs, len, p->client, sizeof(p->client),
+				  NULL, 0, 0);
+    if (error) {
+	pop_log (p, POP_PRIORITY,
+		 "getnameinfo: %s", gai_strerror (error));
 	strlcpy (p->client, p->ipaddr, sizeof(p->client));
     }
-    /*  Save the cannonical name of the client host in 
-        the POP parameter block */
-    else {
-        /*  Distrust distant nameservers */
-        struct hostent      *   ch_again;
-        char            *   *   addrp;
-
-        /*  See if the name obtained for the client's IP 
-            address returns an address */
-	ch_again = getipnodebyname (ch->h_name,
-				    cs->sa_family,
-				    0,
-				    &error);
-
-        if (ch_again == NULL) {
-            pop_log(p,POP_PRIORITY,
-                "Client at \"%s\" resolves to an unknown host name \"%s\"",
-                    p->ipaddr,ch->h_name);
-	    strlcpy (p->client, p->ipaddr, sizeof(p->client));
-        }
-        else {
-            /*  Save the host name (the previous value was 
-                destroyed by gethostbyname) */
-	    strlcpy (p->client, ch->h_name, sizeof(p->client));
-
-            /*  Look for the client's IP address in the list returned 
-                for its name */
-            for (addrp=ch_again->h_addr_list; *addrp; ++addrp)
-	        if (memcmp(*addrp,
-			   socket_get_address (cs),
-			   socket_addr_size (cs)) == 0)
-		    break;
-
-            if (!*addrp) {
-                pop_log (p,POP_PRIORITY,
-                    "Client address \"%s\" not listed for its host name \"%s\"",
-                        p->ipaddr,ch->h_name);
-		strlcpy (p->client, p->ipaddr, sizeof(p->client));
-            }
-        }
-	freehostent (ch_again);
-    }
-    if(ch != NULL)
-	freehostent (ch);
 
     /*  Create input file stream for TCP/IP communication */
     if ((p->input = fdopen(STDIN_FILENO,"r")) == NULL){

@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: kip.h,v 1.18.2.1 2000/06/23 02:55:01 assar Exp $ */
+/* $KTH: kip.h,v 1.20 2000/12/29 22:10:11 assar Exp $ */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -71,6 +71,9 @@
 #include <netinet/tcp.h>
 #endif
 #include <netdb.h>
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
 #ifdef HAVE_SYS_SOCKIO_H
 #include <sys/sockio.h>
 #endif

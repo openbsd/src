@@ -36,7 +36,7 @@
 #include <termcap.h>
 #endif
 
-RCSID("$KTH: telnet.c,v 1.25 1999/03/11 13:49:34 joda Exp $");
+RCSID("$KTH: telnet.c,v 1.30.2.3 2002/02/07 17:34:51 joda Exp $");
 
 #define	strip(x) (eight ? (x) : ((x) & 0x7f))
 
@@ -70,6 +70,7 @@ int
 	netdata,	/* Print out network data flow */
 	crlf,		/* Should '\r' be mapped to <CR><LF> (or <CR><NUL>)? */
 	telnetport,
+        wantencryption = 0,
 	SYNCHing,	/* we are in TELNET SYNCH mode */
 	flushout,	/* flush output */
 	autoflush = 0,	/* flush output when interrupting? */
@@ -83,6 +84,8 @@ int
 	globalmode;
 
 char *prompt = 0;
+
+int scheduler_lockout_tty = 0;
 
 cc_t escape;
 cc_t rlogin;
@@ -579,7 +582,7 @@ mklist(char *buf, char *name)
 #define ISASCII(c) (!((c)&0x80))
 		if ((c == ' ') || !ISASCII(c))
 			n = 1;
-		else if (islower(c))
+		else if (islower((unsigned char)c))
 			*cp = toupper(c);
 	}
 
@@ -637,15 +640,21 @@ static char termbuf[1024];
 static int
 telnet_setupterm(const char *tname, int fd, int *errp)
 {
-	if (tgetent(termbuf, tname) == 1) {
-		termbuf[1023] = '\0';
-		if (errp)
-			*errp = 1;
-		return(0);
-	}
+#ifdef HAVE_TGETENT
+    if (tgetent(termbuf, tname) == 1) {
+	termbuf[1023] = '\0';
 	if (errp)
-		*errp = 0;
-	return(-1);
+	    *errp = 1;
+	return(0);
+    }
+    if (errp)
+	*errp = 0;
+    return(-1);
+#else
+    strlcpy(termbuf, tname, sizeof(termbuf));
+    if(errp) *errp = 1;
+    return 0;
+#endif
 }
 
 int resettermname = 1;
@@ -1414,9 +1423,15 @@ unsigned char *opt_replyend;
 void
 env_opt_start()
 {
-	if (opt_reply)
-		opt_reply = (unsigned char *)realloc(opt_reply, OPT_REPLY_SIZE);
-	else
+	if (opt_reply) {
+		void *tmp = realloc (opt_reply, OPT_REPLY_SIZE);
+		if (tmp != NULL) {
+			opt_reply = tmp;
+		} else {
+			free (opt_reply);
+			opt_reply = NULL;
+		}
+	} else
 		opt_reply = (unsigned char *)malloc(OPT_REPLY_SIZE);
 	if (opt_reply == NULL) {
 /*@*/		printf("env_opt_start: malloc()/realloc() failed!!!\n");
@@ -1464,14 +1479,16 @@ env_opt_add(unsigned char *ep)
 				strlen((char *)ep) + 6 > opt_replyend)
 	{
 		int len;
+		void *tmp;
 		opt_replyend += OPT_REPLY_SIZE;
 		len = opt_replyend - opt_reply;
-		opt_reply = (unsigned char *)realloc(opt_reply, len);
-		if (opt_reply == NULL) {
+		tmp = realloc(opt_reply, len);
+		if (tmp == NULL) {
 /*@*/			printf("env_opt_add: realloc() failed!!!\n");
 			opt_reply = opt_replyp = opt_replyend = NULL;
 			return;
 		}
+		opt_reply = tmp;
 		opt_replyp = opt_reply + len - (opt_replyend - opt_replyp);
 		opt_replyend = opt_reply + len;
 	}
@@ -1943,7 +1960,7 @@ telsnd()
  */
 
 
-static int
+    int
 Scheduler(int block) /* should we block in the select ? */
 {
 		/* One wants to be a bit careful about setting returnValue
@@ -1974,6 +1991,10 @@ Scheduler(int block) /* should we block in the select ? */
 
     /* If we have seen a signal recently, reset things */
 
+    if (scheduler_lockout_tty) {
+        ttyin = ttyout = 0;
+    }
+
     /* Call to system code to process rings */
 
     returnValue = process_rings(netin, netout, netex, ttyin, ttyout, !block);
@@ -1996,6 +2017,8 @@ Scheduler(int block) /* should we block in the select ? */
 void
 my_telnet(char *user)
 {
+    int printed_encrypt = 0;
+    
     sys_telnet_init();
 
 #if	defined(AUTHENTICATION) || defined(ENCRYPTION)
@@ -2033,6 +2056,68 @@ my_telnet(char *user)
 	if (binary)
 	    tel_enter_binary(binary);
     }
+
+#ifdef ENCRYPTION
+    /*
+     * Note: we assume a tie to the authentication option here.  This
+     * is necessary so that authentication fails, we don't spin
+     * forever. 
+     */
+    if (wantencryption) {
+	extern int auth_has_failed;
+	time_t timeout = time(0) + 60;
+
+	send_do(TELOPT_ENCRYPT, 1);
+	send_will(TELOPT_ENCRYPT, 1);
+	while (1) {
+	    if (my_want_state_is_wont(TELOPT_AUTHENTICATION)) {
+		if (wantencryption == -1) {
+		    break;
+		} else {
+		    printf("\nServer refused to negotiate authentication,\n");
+		    printf("which is required for encryption.\n");
+		    Exit(1);
+		}
+	    }
+	    if (auth_has_failed) {
+		printf("\nAuthentication negotation has failed,\n");
+		printf("which is required for encryption.\n");
+		Exit(1);
+	    }
+	    if (my_want_state_is_dont(TELOPT_ENCRYPT) ||
+		my_want_state_is_wont(TELOPT_ENCRYPT)) {
+		printf("\nServer refused to negotiate encryption.\n");
+		Exit(1);
+	    }
+	    if (encrypt_is_encrypting())
+		break;
+	    if (time(0) > timeout) {
+		printf("\nEncryption could not be enabled.\n");
+		Exit(1);
+	    }
+	    if (printed_encrypt == 0) {
+		    printed_encrypt = 1;
+		    printf("Waiting for encryption to be negotiated...\n");
+		    /*
+		     * Turn on MODE_TRAPSIG and then turn off localchars 
+		     * so that ^C will cause telnet to exit.
+		     */
+		    TerminalNewMode(getconnmode()|MODE_TRAPSIG);
+		    intr_waiting = 1;
+	    }
+	    if (intr_happened) {
+		    printf("\nUser interrupt.\n");
+		    Exit(1);
+	    }
+	    telnet_spin();
+	}
+	if (printed_encrypt) {
+		printf("Encryption negotiated.\n");
+		intr_waiting = 0;
+		setconnmode(0);
+	}
+    }
+#endif
 
     for (;;) {
 	int schedValue;
@@ -2272,6 +2357,7 @@ sendnaws()
     if (my_state_is_wont(TELOPT_NAWS))
 	return;
 
+#undef PUTSHORT
 #define	PUTSHORT(cp, x) { if ((*cp++ = ((x)>>8)&0xff) == IAC) *cp++ = IAC; \
 			    if ((*cp++ = ((x))&0xff) == IAC) *cp++ = IAC; }
 

@@ -33,7 +33,7 @@
 
 #include "telnet_locl.h"
 
-RCSID("$KTH: commands.c,v 1.56 1999/09/16 20:41:35 assar Exp $");
+RCSID("$KTH: commands.c,v 1.67 2001/08/29 00:45:20 assar Exp $");
 
 #if	defined(IPPROTO_IP) && defined(IP_TOS)
 int tos = -1;
@@ -350,11 +350,12 @@ send_wontcmd(char *name)
     return(send_tncmd(send_wont, "wont", name));
 }
 
+extern char *telopts[];		/* XXX */
+
 static int
 send_tncmd(void (*func)(), char *cmd, char *name)
 {
     char **cpp;
-    extern char *telopts[];
     int val = 0;
 
     if (isprefix(name, "help") || isprefix(name, "?")) {
@@ -988,7 +989,6 @@ unsetcmd(int argc, char *argv[])
  * 'mode' command.
  */
 #ifdef	KLUDGELINEMODE
-extern int kludgelinemode;
 
 static int
 dokludgemode(void)
@@ -1030,7 +1030,6 @@ static int
 dolmmode(int bit, int on)
 {
     unsigned char c;
-    extern int linemode;
 
     if (my_want_state_is_wont(TELOPT_LINEMODE)) {
 	printf("?Need to have LINEMODE option enabled first.\r\n");
@@ -1328,8 +1327,6 @@ shell(int argc, char **argv)
 static int
 bye(int argc, char **argv)
 {
-    extern int resettermname;
-
     if (connected) {
 	shutdown(net, 2);
 	printf("Connection closed.\r\n");
@@ -1551,7 +1548,6 @@ env_find(unsigned char *var)
 void
 env_init(void)
 {
-	extern char **environ;
 	char **epp, *cp;
 	struct env_lst *ep;
 
@@ -1569,7 +1565,7 @@ env_init(void)
 	 * "unix:0.0", we have to get rid of "unix" and insert our
 	 * hostname.
 	 */
-	if ((ep = env_find("DISPLAY"))
+	if ((ep = env_find((unsigned char*)"DISPLAY"))
 	    && (*ep->value == ':'
 	    || strncmp((char *)ep->value, "unix:", 5) == 0)) {
 		char hbuf[256+1];
@@ -1581,9 +1577,23 @@ env_init(void)
 
 		/* If this is not the full name, try to get it via DNS */
 		if (strchr(hbuf, '.') == 0) {
-			struct hostent *he = roken_gethostbyname(hbuf);
-			if (he != NULL)
-				strlcpy(hbuf, he->h_name, 256);
+			struct addrinfo hints, *ai, *a;
+			int error;
+
+			memset (&hints, 0, sizeof(hints));
+			hints.ai_flags = AI_CANONNAME;
+
+			error = getaddrinfo (hbuf, NULL, &hints, &ai);
+			if (error == 0) {
+				for (a = ai; a != NULL; a = a->ai_next)
+					if (a->ai_canonname != NULL) {
+						strlcpy (hbuf,
+							 ai->ai_canonname,
+							 256);
+						break;
+					}
+				freeaddrinfo (ai);
+			}
 		}
 
 		asprintf (&cp, "%s%s", hbuf, cp2);
@@ -1595,7 +1605,8 @@ env_init(void)
 	 * USER with the value from LOGNAME.  By default, we
 	 * don't export the USER variable.
 	 */
-	if ((env_find("USER") == NULL) && (ep = env_find("LOGNAME"))) {
+	if ((env_find((unsigned char*)"USER") == NULL) && 
+	    (ep = env_find((unsigned char*)"LOGNAME"))) {
 		env_define((unsigned char *)"USER", ep->value);
 		env_unexport((unsigned char *)"USER");
 	}
@@ -1958,7 +1969,7 @@ status(int argc, char **argv)
 /*
  * Function that gets called when SIGINFO is received.
  */
-void
+RETSIGTYPE
 ayt_status(int ignore)
 {
     call(status, "status", "notmuch", 0);
@@ -2048,30 +2059,15 @@ cmdrc(char *m1, char *m2)
 int
 tn(int argc, char **argv)
 {
-    struct hostent *host = 0;
-#ifdef HAVE_IPV6
-    struct sockaddr_in6 sin6;
-#endif
-    struct sockaddr_in sin;
-    struct sockaddr *sa = NULL;
-    int sa_size = 0;
     struct servent *sp = 0;
-    unsigned long temp;
-    extern char *inet_ntoa();
-#if defined(IP_OPTIONS) && defined(IPPROTO_IP)
-    char *srp = 0;
-    int srlen;
-#endif
     char *cmd, *hostp = 0, *portp = 0;
     char *user = 0;
-    int family, port = 0;
-    char **addr_list;
+    int port = 0;
 
     /* clear the socket address prior to use */
 
     if (connected) {
 	printf("?Already connected to %s\r\n", hostname);
-	setuid(getuid());
 	return 0;
     }
     if (argc < 2) {
@@ -2112,99 +2108,28 @@ tn(int argc, char **argv)
 	}
     usage:
 	printf("usage: %s [-l user] [-a] host-name [port]\r\n", cmd);
-	setuid(getuid());
 	return 0;
     }
     if (hostp == 0)
 	goto usage;
 
-#if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
+    strlcpy (_hostname, hostp, sizeof(_hostname));
+    hostp = _hostname;
     if (hostp[0] == '@' || hostp[0] == '!') {
-	if ((hostname = strrchr(hostp, ':')) == NULL)
-	    hostname = strrchr(hostp, '@');
-	hostname++;
-	srp = 0;
-	temp = sourceroute(hostp, &srp, &srlen);
-	if (temp == 0) {
-	    fprintf (stderr, "%s: %s\r\n", srp ? srp : "", hstrerror(h_errno));
-	    setuid(getuid());
-	    return 0;
-	} else if (temp == -1) {
-	    printf("Bad source route option: %s\r\n", hostp);
-	    setuid(getuid());
-	    return 0;
-	} else {
-	    abort();
+	char *p;
+	hostname = NULL;
+	for (p = hostp + 1; *p; p++) {
+	    if (*p == ',' || *p == '@')
+		hostname = p;
 	}
-    } else {
-#endif
-	memset (&sin, 0, sizeof(sin));
-#ifdef HAVE_IPV6
-	memset (&sin6, 0, sizeof(sin6));
-
-	if(inet_pton(AF_INET6, hostp, &sin6.sin6_addr)) {
-	    sin6.sin6_family = family = AF_INET6;
-	    sa = (struct sockaddr *)&sin6;
-	    sa_size = sizeof(sin6);
-	    strlcpy(_hostname, hostp, sizeof(_hostname));
-	    hostname =_hostname;
-	} else
-#endif
-	if(inet_aton(hostp, &sin.sin_addr)){
-	    sin.sin_family = family = AF_INET;
-	    sa = (struct sockaddr *)&sin;
-	    sa_size = sizeof(sin);
-	    strlcpy(_hostname, hostp, sizeof(_hostname));
-	    hostname = _hostname;
-	} else {
-#ifdef HAVE_GETHOSTBYNAME2
-#ifdef HAVE_IPV6
-	    host = gethostbyname2(hostp, AF_INET6);
-	    if(host == NULL)
-#endif
-		host = gethostbyname2(hostp, AF_INET);
-#else
-	    host = roken_gethostbyname(hostp);
-#endif
-	    if (host) {
-		strlcpy(_hostname, host->h_name, sizeof(_hostname));
-		family = host->h_addrtype;
-		addr_list = host->h_addr_list;
-
-		switch(family) {
-		case AF_INET:
-		    memset(&sin, 0, sizeof(sin));
-		    sa_size = sizeof(sin);
-		    sa = (struct sockaddr *)&sin;
-		    sin.sin_family = family;
-		    sin.sin_addr   = *((struct in_addr *)(*addr_list));
-		    break;
-#ifdef HAVE_IPV6
-		case AF_INET6:
-		    memset(&sin6, 0, sizeof(sin6));
-		    sa_size = sizeof(sin6);
-		    sa = (struct sockaddr *)&sin6;
-		    sin6.sin6_family = family;
-		    sin6.sin6_addr   = *((struct in6_addr *)(*addr_list));
-		    break;
-#endif
-		default:
-		    fprintf(stderr, "Bad address family: %d\n", family);
-		    return 0;
-		}
-
-		_hostname[sizeof(_hostname)-1] = '\0';
-		hostname = _hostname;
-	    } else {
-	        fprintf (stderr, "%s: %s\r\n", hostp ? hostp : "",
-			 hstrerror(h_errno));
-		setuid(getuid());
-		return 0;
-	    }
+	if (hostname == NULL) {
+	    fprintf(stderr, "%s: bad source route specification\n", hostp);
+	    return 0;
 	}
-#if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
-    }
-#endif
+	*hostname++ = '\0';
+    } else
+	hostname = hostp;
+
     if (portp) {
 	if (*portp == '-') {
 	    portp++;
@@ -2218,7 +2143,6 @@ tn(int argc, char **argv)
 		port = sp->s_port;
 	    else {
 		printf("%s: bad port number\r\n", portp);
-		setuid(getuid());
 		return 0;
 	    }
 	} else {
@@ -2229,112 +2153,106 @@ tn(int argc, char **argv)
 	    sp = roken_getservbyname("telnet", "tcp");
 	    if (sp == 0) {
 		fprintf(stderr, "telnet: tcp/telnet: unknown service\r\n");
-		setuid(getuid());
 		return 0;
 	    }
 	    port = sp->s_port;
 	}
 	telnetport = 1;
     }
-    do {
-	switch(family) {
-	case AF_INET:
-	    sin.sin_port = port;
-	    printf("Trying %s...\r\n", inet_ntoa(sin.sin_addr));
-	    break;
-#ifdef HAVE_IPV6
-	case AF_INET6: {
-#ifndef INET6_ADDRSTRLEN
-#define INET6_ADDRSTRLEN 46 
-#endif
 
-	    char buf[INET6_ADDRSTRLEN];
+    {
+	struct addrinfo *ai, *a, hints;
+	int error;
+	char portstr[NI_MAXSERV];
 
-	    sin6.sin6_port = port;
-#ifdef HAVE_INET_NTOP
-	    printf("Trying %s...\r\n", inet_ntop(AF_INET6,
-						 &sin6.sin6_addr,
-						 buf,
-						 sizeof(buf)));
-#endif
-	    break;
-	}
-#endif
-	default:
-	    abort();
-	}
+	memset (&hints, 0, sizeof(hints));
+	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_protocol = IPPROTO_TCP;
+	hints.ai_flags    = AI_CANONNAME;
 
+	snprintf (portstr, sizeof(portstr), "%u", ntohs(port));
 
-	net = socket(family, SOCK_STREAM, 0);
-	setuid(getuid());
-	if (net < 0) {
-	    perror("telnet: socket");
+	error = getaddrinfo (hostname, portstr, &hints, &ai);
+	if (error) {
+	    fprintf (stderr, "%s: %s\r\n", hostname, gai_strerror (error));
 	    return 0;
 	}
-#if	defined(IP_OPTIONS) && defined(IPPROTO_IP) && defined(HAVE_SETSOCKOPT)
-	if (srp && setsockopt(net, IPPROTO_IP, IP_OPTIONS, (void *)srp,
-			      srlen) < 0)
-		perror("setsockopt (IP_OPTIONS)");
-#endif
-#if	defined(IPPROTO_IP) && defined(IP_TOS)
-	{
-# if	defined(HAVE_GETTOSBYNAME)
-	    struct tosent *tp;
-	    if (tos < 0 && (tp = gettosbyname("telnet", "tcp")))
-		tos = tp->t_tos;
-# endif
-	    if (tos < 0)
-		tos = 020;	/* Low Delay bit */
-	    if (tos
-		&& (setsockopt(net, IPPROTO_IP, IP_TOS,
-		    (void *)&tos, sizeof(int)) < 0)
-		&& (errno != ENOPROTOOPT))
-		    perror("telnet: setsockopt (IP_TOS) (ignored)");
-	}
-#endif	/* defined(IPPROTO_IP) && defined(IP_TOS) */
 
-	if (debug && SetSockOpt(net, SOL_SOCKET, SO_DEBUG, 1) < 0) {
-		perror("setsockopt (SO_DEBUG)");
-	}
+	for (a = ai; a != NULL && connected == 0; a = a->ai_next) {
+	    char addrstr[256];
 
-	if (connect(net, sa, sa_size) < 0) {
-	    if (host && addr_list[1]) {
-		int oerrno = errno;
+	    if (a->ai_canonname != NULL)
+		strlcpy (_hostname, a->ai_canonname, sizeof(_hostname));
 
-		switch(family) {
-		case AF_INET :
-		    fprintf(stderr, "telnet: connect to address %s: ",
-			    inet_ntoa(sin.sin_addr));
-		    sin.sin_addr = *((struct in_addr *)(*++addr_list));
-		    break;
-#ifdef HAVE_IPV6
-		case AF_INET6: {
-		    char buf[INET6_ADDRSTRLEN];
+	    if (getnameinfo (a->ai_addr, a->ai_addrlen,
+			     addrstr, sizeof(addrstr),
+			     NULL, 0, NI_NUMERICHOST) != 0)
+		strlcpy (addrstr, "unknown address", sizeof(addrstr));
+			     
+	    printf("Trying %s...\r\n", addrstr);
 
-		    fprintf(stderr, "telnet: connect to address %s: ",
-			    inet_ntop(AF_INET6, &sin6.sin6_addr, buf,
-				      sizeof(buf)));
-		    sin6.sin6_addr = *((struct in6_addr *)(*++addr_list));
-		    break;
-		}
-#endif
-		default:
-		    abort();
-		}
-		    
-		errno = oerrno;
-		perror(NULL);
-		NetClose(net);
+	    net = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+	    if (net < 0) {
+		warn ("socket");
 		continue;
 	    }
-	    perror("telnet: Unable to connect to remote host");
-	    return 0;
+
+#if	defined(IP_OPTIONS) && defined(IPPROTO_IP) && defined(HAVE_SETSOCKOPT)
+	if (hostp[0] == '@' || hostp[0] == '!') {
+	    char *srp = 0;
+	    int srlen;
+	    int proto, opt;
+
+	    if ((srlen = sourceroute(a, hostp, &srp, &proto, &opt)) < 0) {
+		(void) NetClose(net);
+		net = -1;
+		continue;
+	    }
+	    if (srp && setsockopt(net, proto, opt, srp, srlen) < 0)
+		perror("setsockopt (source route)");
 	}
-	connected++;
-#if	defined(AUTHENTICATION) || defined(ENCRYPTION)
-	auth_encrypt_connect(connected);
 #endif
-    } while (connected == 0);
+
+#if	defined(IPPROTO_IP) && defined(IP_TOS)
+	    if (a->ai_family == AF_INET) {
+# if	defined(HAVE_GETTOSBYNAME)
+		struct tosent *tp;
+		if (tos < 0 && (tp = gettosbyname("telnet", "tcp")))
+		    tos = tp->t_tos;
+# endif
+		if (tos < 0)
+		    tos = 020;	/* Low Delay bit */
+		if (tos
+		    && (setsockopt(net, IPPROTO_IP, IP_TOS,
+				   (void *)&tos, sizeof(int)) < 0)
+		    && (errno != ENOPROTOOPT))
+		    perror("telnet: setsockopt (IP_TOS) (ignored)");
+	    }
+#endif	/* defined(IPPROTO_IP) && defined(IP_TOS) */
+	    if (debug && SetSockOpt(net, SOL_SOCKET, SO_DEBUG, 1) < 0) {
+		perror("setsockopt (SO_DEBUG)");
+	    }
+
+	    if (connect (net, a->ai_addr, a->ai_addrlen) < 0) {
+		fprintf (stderr, "telnet: connect to address %s: %s\n",
+			 addrstr, strerror(errno));
+		NetClose(net);
+		if (a->ai_next != NULL) {
+		    continue;
+		} else {
+		    freeaddrinfo (ai);
+		    return 0;
+		}
+	    }
+	    ++connected;
+#if	defined(AUTHENTICATION) || defined(ENCRYPTION)
+	    auth_encrypt_connect(connected);
+#endif
+	}
+	freeaddrinfo (ai);
+	if (connected == 0)
+	    return 0;
+    }
     cmdrc(hostp, hostname);
     if (autologin && user == NULL)
 	user = (char *)get_default_username ();
@@ -2550,10 +2468,11 @@ help(int argc, char **argv)
 
 /*
  * Source route is handed in as
- *	[!]@hop1@hop2...[@|:]dst
- * If the leading ! is present, it is a
- * strict source route, otherwise it is
- * assmed to be a loose source route.
+ *	[!]@hop1@hop2...@dst
+ *
+ * If the leading ! is present, it is a strict source route, otherwise it is
+ * assmed to be a loose source route.  Note that leading ! is effective
+ * only for IPv4 case.
  *
  * We fill in the source route option as
  *	hop1,hop2,hop3...dest
@@ -2561,133 +2480,202 @@ help(int argc, char **argv)
  * be the address to connect() to.
  *
  * Arguments:
- *	arg:	pointer to route list to decipher
+ *	ai:	The address (by struct addrinfo) for the final destination.
  *
- *	cpp: 	If *cpp is not equal to NULL, this is a
- *		pointer to a pointer to a character array
- *		that should be filled in with the option.
+ *	arg:	Pointer to route list to decipher
  *
+ *	cpp: 	Pointer to a pointer, so that sourceroute() can return
+ *		the address of result buffer (statically alloc'ed).
+ *
+ *	protop/optp:
+ *		Pointer to an integer.  The pointed variable
  *	lenp:	pointer to an integer that contains the
  *		length of *cpp if *cpp != NULL.
  *
  * Return values:
  *
- *	Returns the address of the host to connect to.  If the
+ *	Returns the length of the option pointed to by *cpp.  If the
  *	return value is -1, there was a syntax error in the
- *	option, either unknown characters, or too many hosts.
- *	If the return value is 0, one of the hostnames in the
- *	path is unknown, and *cpp is set to point to the bad
- *	hostname.
+ *	option, either arg contained unknown characters or too many hosts,
+ *	or hostname cannot be resolved.
  *
- *	*cpp:	If *cpp was equal to NULL, it will be filled
- *		in with a pointer to our static area that has
- *		the option filled in.  This will be 32bit aligned.
+ *	The caller needs to pass return value (len), *cpp, *protop and *optp
+ *	to setsockopt(2).
  *
- *	*lenp:	This will be filled in with how long the option
- *		pointed to by *cpp is.
+ *	*cpp:	Points to the result buffer.  The region is statically
+ *		allocated by the function.
+ *
+ *	*protop:
+ *		protocol # to be passed to setsockopt(2).
+ *
+ *	*optp:	option # to be passed to setsockopt(2).
  *
  */
-unsigned long
-sourceroute(char *arg, char **cpp, int *lenp)
+int
+sourceroute(struct addrinfo *ai,
+	    char *arg,
+	    char **cpp,
+	    int *protop,
+	    int *optp)
 {
-	static char lsr[44];
 	char *cp, *cp2, *lsrp, *lsrep;
-	int tmp;
-	struct in_addr sin_addr;
-	struct hostent *host = 0;
-	char c;
+	struct addrinfo hints, *res;
+	int len, error;
+	struct sockaddr_in *sin;
+	register char c;
+	static char lsr[44];
+#ifdef INET6
+	struct cmsghdr *cmsg;
+	struct sockaddr_in6 *sin6;
+	static char rhbuf[1024];
+#endif
 
 	/*
-	 * Verify the arguments, and make sure we have
-	 * at least 7 bytes for the option.
+	 * Verify the arguments.
 	 */
-	if (cpp == NULL || lenp == NULL)
-		return((unsigned long)-1);
-	if (*cpp != NULL && *lenp < 7)
-		return((unsigned long)-1);
-	/*
-	 * Decide whether we have a buffer passed to us,
-	 * or if we need to use our own static buffer.
-	 */
-	if (*cpp) {
-		lsrp = *cpp;
-		lsrep = lsrp + *lenp;
-	} else {
-		*cpp = lsrp = lsr;
-		lsrep = lsrp + 44;
-	}
+	if (cpp == NULL)
+		return -1;
 
 	cp = arg;
 
-	/*
-	 * Next, decide whether we have a loose source
-	 * route or a strict source route, and fill in
-	 * the begining of the option.
-	 */
-	if (*cp == '!') {
+	*cpp = NULL;
+	switch (ai->ai_family) {
+	case AF_INET:
+		lsrp = lsr;
+		lsrep = lsrp + sizeof(lsr);
+
+		/*
+		 * Next, decide whether we have a loose source
+		 * route or a strict source route, and fill in
+		 * the begining of the option.
+		 */
+		if (*cp == '!') {
+			cp++;
+			*lsrp++ = IPOPT_SSRR;
+		} else
+			*lsrp++ = IPOPT_LSRR;
+		if (*cp != '@')
+			return -1;
+		lsrp++;		/* skip over length, we'll fill it in later */
+		*lsrp++ = 4;
 		cp++;
-		*lsrp++ = IPOPT_SSRR;
-	} else
-		*lsrp++ = IPOPT_LSRR;
+		*protop = IPPROTO_IP;
+		*optp = IP_OPTIONS;
+		break;
+#ifdef INET6
+	case AF_INET6:
+/* this needs to be updated for rfc2292bis */
+#ifdef IPV6_PKTOPTIONS
+		cmsg = inet6_rthdr_init(rhbuf, IPV6_RTHDR_TYPE_0);
+		if (*cp != '@')
+			return -1;
+		cp++;
+		*protop = IPPROTO_IPV6;
+		*optp = IPV6_PKTOPTIONS;
+		break;
+#else
+		return -1;
+#endif
+#endif
+	default:
+		return -1;
+	}
 
-	if (*cp != '@')
-		return((unsigned long)-1);
-
-	lsrp++;		/* skip over length, we'll fill it in later */
-	*lsrp++ = 4;
-
-	cp++;
-
-	sin_addr.s_addr = 0;
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = ai->ai_family;
+	hints.ai_socktype = SOCK_STREAM;
 
 	for (c = 0;;) {
 		if (c == ':')
 			cp2 = 0;
-		else for (cp2 = cp; (c = *cp2); cp2++) {
+		else for (cp2 = cp; (c = *cp2) != '\0'; cp2++) {
 			if (c == ',') {
 				*cp2++ = '\0';
 				if (*cp2 == '@')
 					cp2++;
 			} else if (c == '@') {
 				*cp2++ = '\0';
-			} else if (c == ':') {
+			}
+#if 0	/*colon conflicts with IPv6 address*/
+			else if (c == ':') {
 				*cp2++ = '\0';
-			} else
+			}
+#endif
+			else
 				continue;
 			break;
 		}
 		if (!c)
 			cp2 = 0;
 
-		if ((tmp = inet_addr(cp)) != -1) {
-			sin_addr.s_addr = tmp;
-		} else if ((host = roken_gethostbyname(cp))) {
-			memmove(&sin_addr,
-				host->h_addr_list[0],
-				sizeof(sin_addr));
-		} else {
-			*cpp = cp;
-			return(0);
+		error = getaddrinfo(cp, NULL, &hints, &res);
+		if (error) {
+			fprintf(stderr, "%s: %s\n", cp, gai_strerror(error));
+			return -1;
 		}
-		memmove(lsrp, &sin_addr, 4);
-		lsrp += 4;
+		if (ai->ai_family != res->ai_family) {
+			freeaddrinfo(res);
+			return -1;
+		}
+		if (ai->ai_family == AF_INET) {
+			/*
+			 * Check to make sure there is space for address
+			 */
+			if (lsrp + 4 > lsrep) {
+				freeaddrinfo(res);
+				return -1;
+			}
+			sin = (struct sockaddr_in *)res->ai_addr;
+			memcpy(lsrp, &sin->sin_addr, sizeof(struct in_addr));
+			lsrp += sizeof(struct in_addr);
+		}
+#ifdef INET6
+		else if (ai->ai_family == AF_INET6) {
+			sin6 = (struct sockaddr_in6 *)res->ai_addr;
+			inet6_rthdr_add(cmsg, &sin6->sin6_addr,
+				IPV6_RTHDR_LOOSE);
+		}
+#endif
+		else {
+			freeaddrinfo(res);
+			return -1;
+		}
+		freeaddrinfo(res);
 		if (cp2)
 			cp = cp2;
 		else
 			break;
-		/*
-		 * Check to make sure there is space for next address
-		 */
+	}
+	if (ai->ai_family == AF_INET) {
+		/* record the last hop */
 		if (lsrp + 4 > lsrep)
-			return((unsigned long)-1);
+			return -1;
+		sin = (struct sockaddr_in *)ai->ai_addr;
+		memcpy(lsrp, &sin->sin_addr, sizeof(struct in_addr));
+		lsrp += sizeof(struct in_addr);
+#ifndef	sysV88
+		lsr[IPOPT_OLEN] = lsrp - lsr;
+		if (lsr[IPOPT_OLEN] <= 7 || lsr[IPOPT_OLEN] > 40)
+			return -1;
+		*lsrp++ = IPOPT_NOP;	/*32bit word align*/
+		len = lsrp - lsr;
+		*cpp = lsr;
+#else
+		ipopt.io_len = lsrp - lsr;
+		if (ipopt.io_len <= 5)	/*is 3 better?*/
+			return -1;
+		*cpp = (char 8)&ipopt;
+#endif
 	}
-	if ((*(*cpp+IPOPT_OLEN) = lsrp - *cpp) <= 7) {
-		*cpp = 0;
-		*lenp = 0;
-		return((unsigned long)-1);
+#ifdef INET6
+	else if (ai->ai_family == AF_INET6) {
+		inet6_rthdr_lasthop(cmsg, IPV6_RTHDR_LOOSE);
+		len = cmsg->cmsg_len;
+		*cpp = rhbuf;
 	}
-	*lsrp++ = IPOPT_NOP; /* 32 bit word align it */
-	*lenp = lsrp - *cpp;
-	return(sin_addr.s_addr);
+#endif
+	else
+		return -1;
+	return len;
 }
 #endif

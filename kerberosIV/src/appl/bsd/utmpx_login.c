@@ -18,7 +18,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$KTH: utmpx_login.c,v 1.21 1999/03/29 17:57:31 joda Exp $");
+RCSID("$KTH: utmpx_login.c,v 1.23 2001/06/04 14:08:41 assar Exp $");
 
 /* utmpx_login - update utmp and wtmp after login */
 
@@ -37,7 +37,7 @@ utmpx_update(struct utmpx *ut, char *line, char *user, char *host)
     strncpy(ut->ut_id, make_id(clean_tty), sizeof(ut->ut_id));
 #endif
     strncpy(ut->ut_user, user, sizeof(ut->ut_user));
-    strncpy(ut->ut_host, host, sizeof(ut->ut_host));
+    shrink_hostname (host, ut->ut_host, sizeof(ut->ut_host));
 #ifdef HAVE_STRUCT_UTMPX_UT_SYSLEN
     ut->ut_syslen = strlen(host) + 1;
     if (ut->ut_syslen > sizeof(ut->ut_host))

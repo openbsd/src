@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "kip.h"
 
-RCSID("$KTH: kipd.c,v 1.16.2.3 2000/10/18 20:46:45 assar Exp $");
+RCSID("$KTH: kipd.c,v 1.22 2001/09/17 04:42:48 assar Exp $");
 
 static int
 recv_conn (int sock, des_cblock *key, des_key_schedule schedule,
@@ -44,7 +44,7 @@ recv_conn (int sock, des_cblock *key, des_key_schedule schedule,
      AUTH_DAT auth;
      char instance[INST_SZ];
      struct sockaddr_in thisaddr, thataddr;
-     int addrlen;
+     socklen_t addrlen;
      char version[KRB_SENDAUTH_VLEN + 1];
      u_char ok = 0;
      struct passwd *passwd;

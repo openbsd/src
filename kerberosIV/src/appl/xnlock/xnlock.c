@@ -8,7 +8,7 @@
  */
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: xnlock.c,v 1.78.2.1 2000/06/23 03:09:47 assar Exp $");
+RCSID("$KTH: xnlock.c,v 1.89 2001/09/10 14:12:43 assar Exp $");
 #endif
 
 #include <stdio.h>
@@ -199,7 +199,7 @@ get_words(void)
 static void
 usage(void)
 {
-    fprintf(stderr, "usage: %s [options] [message]\n", __progname);
+    fprintf(stderr, "usage: %s [options] [message]\n", getprogname());
     fprintf(stderr, "-fg color     foreground color\n");
     fprintf(stderr, "-bg color     background color\n");
     fprintf(stderr, "-rv           reverse foreground/background colors\n");
@@ -372,12 +372,22 @@ walk(int dir)
     lastdir = dir;
 }
 
+static long
+my_random (void)
+{
+#ifdef HAVE_RANDOM
+    return random();
+#else
+    return rand();
+#endif
+}
+
 static int
 think(void)
 {
-    if (rand() & 1)
+    if (my_random() & 1)
 	walk(FRONT);
-    if (rand() & 1) {
+    if (my_random() & 1) {
 	words = get_words();
 	return 1;
     }
@@ -392,21 +402,21 @@ move(XtPointer _p, XtIntervalId *_id)
     if (!length) {
 	int tries = 0;
 	dir = 0;
-	if ((rand() & 1) && think()) {
+	if ((my_random() & 1) && think()) {
 	    talk(0); /* sets timeout to itself */
 	    return;
 	}
-	if (!(rand() % 3) && (interval = look())) {
+	if (!(my_random() % 3) && (interval = look())) {
 	    timeout_id = XtAppAddTimeOut(app, interval, move, NULL);
 	    return;
 	}
-	interval = 20 + rand() % 100;
+	interval = 20 + my_random() % 100;
 	do  {
 	    if (!tries)
-		length = Width/100 + rand() % 90, tries = 8;
+		length = Width/100 + my_random() % 90, tries = 8;
 	    else
 		tries--;
-	    switch (rand() % 8) {
+	    switch (my_random() % 8) {
 		case 0:
 		    if (x - X_INCR*length >= 5)
 			dir = LEFT;
@@ -568,6 +578,28 @@ verify_krb5(const char *password)
 			   NULL);
     if (ret == 0){
 #ifdef KRB4
+	if (krb5_config_get_bool(context, NULL,
+				 "libdefaults",
+				 "krb4_get_tickets",
+				 NULL)) {
+	    CREDENTIALS c;
+	    krb5_creds mcred, cred;
+
+	    krb5_make_principal(context, &mcred.server,
+				client->realm,
+				"krbtgt",
+				client->realm,
+				NULL);
+	    ret = krb5_cc_retrieve_cred(context, id, 0, &mcred, &cred);
+	    if(ret == 0) {
+		ret = krb524_convert_creds_kdc_ccache(context, id, &cred, &c);
+		if(ret == 0) 
+		    tf_setup(&c, c.pname, c.pinst);
+		memset(&c, 0, sizeof(c));
+		krb5_free_creds_contents(context, &cred);
+	    }
+	    krb5_free_principal(context, mcred.server);
+	}
 	if (k_hasafs())
 	    krb5_afslog(context, id, NULL, NULL);
 #endif
@@ -893,21 +925,21 @@ look(void)
 {
     XSetForeground(dpy, gc, White);
     XSetBackground(dpy, gc, Black);
-    if (rand() % 3) {
-	XCopyPlane(dpy, (rand() & 1)? down : front, XtWindow(widget), gc,
+    if (my_random() % 3) {
+	XCopyPlane(dpy, (my_random() & 1)? down : front, XtWindow(widget), gc,
 	    0, 0, 64,64, x, y, 1L);
 	return 1000L;
     }
-    if (!(rand() % 5))
+    if (!(my_random() % 5))
 	return 0;
-    if (rand() % 3) {
-	XCopyPlane(dpy, (rand() & 1)? left_front : right_front,
+    if (my_random() % 3) {
+	XCopyPlane(dpy, (my_random() & 1)? left_front : right_front,
 	    XtWindow(widget), gc, 0, 0, 64,64, x, y, 1L);
 	return 1000L;
     }
-    if (!(rand() % 5))
+    if (!(my_random() % 5))
 	return 0;
-    XCopyPlane(dpy, (rand() & 1)? left0 : right0, XtWindow(widget), gc,
+    XCopyPlane(dpy, (my_random() & 1)? left0 : right0, XtWindow(widget), gc,
 	0, 0, 64,64, x, y, 1L);
     return 1000L;
 }
@@ -942,9 +974,15 @@ main (int argc, char **argv)
       strlcpy(login, pw->pw_name, sizeof(login));
     }
 
-    srand(getpid());
+#if defined(HAVE_SRANDOMDEV)
+    srandomdev();
+#elif defined(HAVE_RANDOM)
+    srandom(time(NULL));
+#else
+    srand (time(NULL));
+#endif
     for (i = 0; i < STRING_LENGTH; i++)
-	STRING[i] = ((unsigned long)rand() % ('~' - ' ')) + ' ';
+	STRING[i] = ((unsigned long)my_random() % ('~' - ' ')) + ' ';
 
     locked_at = time(0);
 
@@ -956,8 +994,12 @@ main (int argc, char **argv)
 #endif
 #ifdef KRB5
     {
+	krb5_error_code ret;
 	char *str;
-	krb5_init_context(&context);
+
+	ret = krb5_init_context(&context);
+	if (ret)
+	    errx (1, "krb5_init_context failed: %d", ret);
 	krb5_get_default_principal(context, &client);
 	krb5_unparse_name(context, client, &str);
 	snprintf(userprompt, sizeof(userprompt), "User: %s", str);

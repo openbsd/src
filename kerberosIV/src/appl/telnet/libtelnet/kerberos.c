@@ -55,7 +55,7 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: kerberos.c,v 1.46 1999/09/16 20:41:33 assar Exp $");
+RCSID("$KTH: kerberos.c,v 1.54 2001/08/22 20:30:22 assar Exp $");
 
 #ifdef	KRB4
 #ifdef HAVE_SYS_TYPES_H
@@ -65,7 +65,6 @@ RCSID("$KTH: kerberos.c,v 1.46 1999/09/16 20:41:33 assar Exp $");
 #include <arpa/telnet.h>
 #endif
 #include <stdio.h>
-#include <des.h>	/* BSD wont include this in krb.h, so we do it here */
 #include <krb.h>
 #include <pwd.h>
 #include <stdlib.h>
@@ -170,7 +169,6 @@ kerberos4_send(char *name, Authenticator *ap)
     CREDENTIALS cred;
     int r;
 
-    printf("[ Trying %s ... ]\r\n", name);
     if (!UserNameRequested) {
 	if (auth_debug_mode) {
 	    printf("Kerberos V4: no user name supplied\r\n");
@@ -190,6 +188,8 @@ kerberos4_send(char *name, Authenticator *ap)
 	printf("Kerberos V4: no realm for %s\r\n", RemoteHostName);
 	return(0);
     }
+    printf("[ Trying %s (%s.%s@%s) ... ]\r\n", name, 
+	   KRB_SERVICE_NAME, instance, realm);
     r = krb_mk_req(&auth, KRB_SERVICE_NAME, instance, realm, 0L);
     if (r) {
 	printf("mk_req failed: %s\r\n", krb_get_err_text(r));
@@ -200,7 +200,8 @@ kerberos4_send(char *name, Authenticator *ap)
 	printf("get_cred failed: %s\r\n", krb_get_err_text(r));
 	return(0);
     }
-    if (!auth_sendname(UserNameRequested, strlen(UserNameRequested))) {
+    if (!auth_sendname((unsigned char*)UserNameRequested, 
+		       strlen(UserNameRequested))) {
 	if (auth_debug_mode)
 	    printf("Not enough room for user name\r\n");
 	return(0);
@@ -219,7 +220,9 @@ kerberos4_send(char *name, Authenticator *ap)
 
 	des_key_sched(&cred.session, sched);
 	memcpy (&cred_session, &cred.session, sizeof(cred_session));
+#ifndef HAVE_OPENSSL
 	des_init_random_number_generator(&cred.session);
+#endif
 	des_new_random_key(&session_key);
 	des_ecb_encrypt(&session_key, &session_key, sched, 0);
 	des_ecb_encrypt(&session_key, &challenge, sched, 0);
@@ -272,7 +275,7 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
     char realm[REALM_SZ];
     char instance[INST_SZ];
     int r;
-    int addr_len;
+    socklen_t addr_len;
 
     if (cnt-- < 1)
 	return;
@@ -331,8 +334,7 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
 			 "%s%u",
 			 TKT_ROOT,
 			 (unsigned)pw->pw_uid);
-		if(setenv("KRBTKFILE", ts, 1) != 0)
-		    errx(1, "cannot set KRBTKFILE");
+		esetenv("KRBTKFILE", ts, 1);
 
 		if (pw->pw_uid == 0)
 		    syslog(LOG_INFO|LOG_AUTH,
@@ -358,6 +360,8 @@ kerberos4_is(Authenticator *ap, unsigned char *data, int cnt)
 		Data(ap, KRB_REJECT, (void *)msg, -1);
 		free(msg);
 	    }
+	    auth_finished(ap, AUTH_REJECT);
+	    break;
 	}
 	auth_finished(ap, AUTH_USER);
 	break;
@@ -570,11 +574,11 @@ kerberos4_printsub(unsigned char *data, int cnt, unsigned char *buf, int buflen)
 	goto common2;
 
     default:
-	snprintf(buf, buflen, " %d (unknown)", data[3]);
+	snprintf((char*)buf, buflen, " %d (unknown)", data[3]);
     common2:
 	BUMP(buf, buflen);
 	for (i = 4; i < cnt; i++) {
-	    snprintf(buf, buflen, " %d", data[i]);
+	    snprintf((char*)buf, buflen, " %d", data[i]);
 	    BUMP(buf, buflen);
 	}
 	break;
@@ -646,7 +650,7 @@ pack_cred(CREDENTIALS *cred, unsigned char *buf)
 static int
 unpack_cred(unsigned char *buf, int len, CREDENTIALS *cred)
 {
-    unsigned char *p = buf;
+    char *p = (char*)buf;
     u_int32_t tmp;
 
     strncpy (cred->service, p, ANAME_SZ);

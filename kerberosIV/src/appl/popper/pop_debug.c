@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995 - 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -34,7 +34,7 @@
 /* Tiny program to help debug popper */
 
 #include "popper.h"
-RCSID("$KTH: pop_debug.c,v 1.16 1999/12/02 16:58:33 joda Exp $");
+RCSID("$KTH: pop_debug.c,v 1.21 2001/02/20 01:44:47 assar Exp $");
 
 static void
 loop(int s)
@@ -66,44 +66,32 @@ loop(int s)
 static int
 get_socket (const char *hostname, int port)
 {
-    struct hostent *hostent = NULL;
-    char **h;
-    int error;
-    int af;
+    int ret;
+    struct addrinfo *ai, *a;
+    struct addrinfo hints;
+    char portstr[NI_MAXSERV];
+    
+    memset (&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
+    snprintf (portstr, sizeof(portstr), "%d", ntohs(port));
+    ret = getaddrinfo (hostname, portstr, &hints, &ai);
+    if (ret)
+	errx (1, "getaddrinfo %s: %s", hostname, gai_strerror (ret));
 
-#ifdef HAVE_IPV6    
-    if (hostent == NULL)
-	hostent = getipnodebyname (hostname, AF_INET6, 0, &error);
-#endif
-    if (hostent == NULL)
-	hostent = getipnodebyname (hostname, AF_INET, 0, &error);
-
-    if (hostent == NULL)
-	errx(1, "gethostbyname '%s' failed: %s", hostname, hstrerror(error));
-
-    af = hostent->h_addrtype;
-
-    for (h = hostent->h_addr_list; *h != NULL; ++h) {
-	struct sockaddr_storage sa_ss;
-	struct sockaddr *sa = (struct sockaddr *)&sa_ss;
+    for (a = ai; a != NULL; a = a->ai_next) {
 	int s;
 
-	sa->sa_family = af;
-	socket_set_address_and_port (sa, *h, port);
-
-	s = socket (af, SOCK_STREAM, 0);
+	s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
 	if (s < 0)
-	    err (1, "socket");
-	if (connect (s, sa, socket_sockaddr_size(sa)) < 0) {
-	    warn ("connect(%s)", hostname);
+	    continue;
+	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
 	    close (s);
 	    continue;
 	}
-	freehostent (hostent);
+	freeaddrinfo (ai);
 	return s;
     }
-    freehostent (hostent);
-    exit (1);
+    err (1, "failed to connect to %s", hostname);
 }
 
 #ifdef KRB4
@@ -149,7 +137,9 @@ doit_v5 (char *host, int port)
     krb5_principal server;
     int s = get_socket (host, port);
 
-    krb5_init_context (&context);
+    ret = krb5_init_context (&context);
+    if (ret)
+	errx (1, "krb5_init_context failed: %d", ret);
     
     ret = krb5_sname_to_principal (context,
 				   host,
@@ -256,6 +246,15 @@ main(int argc, char **argv)
 		errx (1, "Bad port `%s'", port_str);
 	    port = htons(port);
 	}
+    }
+    if (port == 0) {
+#ifdef KRB5
+	port = krb5_getportbyname (NULL, "kpop", "tcp", 1109);
+#elif defined(KRB4)
+	port = k_getportbyname ("kpop", "tcp", 1109);
+#else
+#error must define KRB4 or KRB5
+#endif
     }
 
 #if defined(KRB4) && defined(KRB5)

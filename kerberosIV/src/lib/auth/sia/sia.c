@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "sia_locl.h"
 
-RCSID("$KTH: sia.c,v 1.32.2.1 1999/12/20 09:49:30 joda Exp $");
+RCSID("$KTH: sia.c,v 1.36 2001/09/13 01:19:14 assar Exp $");
 
 int 
 siad_init(void)
@@ -52,12 +52,18 @@ int
 siad_ses_init(SIAENTITY *entity, int pkgind)
 {
     struct state *s = malloc(sizeof(*s));
+
     SIA_DEBUG(("DEBUG", "siad_ses_init"));
     if(s == NULL)
 	return SIADFAIL;
     memset(s, 0, sizeof(*s));
 #ifdef SIA_KRB5
-    krb5_init_context(&s->context);
+    {
+      krb5_error_code ret;
+      ret = krb5_init_context(&s->context);
+      if (ret)
+	return SIADFAIL;
+    }
 #endif
     entity->mech[pkgind] = (int*)s;
     return SIADSUCCESS;

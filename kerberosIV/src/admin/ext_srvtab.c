@@ -9,7 +9,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$KTH: ext_srvtab.c,v 1.18 1999/09/16 20:37:20 assar Exp $");
+RCSID("$KTH: ext_srvtab.c,v 1.20 2001/09/02 23:58:56 assar Exp $");
 
 static des_cblock master_key;
 static des_cblock session_key;
@@ -57,8 +57,10 @@ main(int argc, char **argv)
     
     memset(realm, 0, sizeof(realm));
     
-#ifdef HAVE_ATEXIT
+#if defined(HAVE_ATEXIT)
     atexit(StampOutSecrets);
+#elif defined(HAVE_ON_EXIT)
+    on_exit(StampOutSecrets);
 #endif
 
     /* Parse commandline arguments */

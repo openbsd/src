@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997-1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997-2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 #include "push_locl.h"
-RCSID("$KTH: push.c,v 1.34.2.1 1999/12/06 17:25:28 assar Exp $");
+RCSID("$KTH: push.c,v 1.45 2001/09/04 09:45:52 assar Exp $");
 
 #ifdef KRB4
 static int use_v4 = -1;
@@ -72,7 +72,7 @@ struct getargs args[] = {
       "number-or-service" },
     { "from",	 0,  arg_flag,		&do_from,	"Behave like from",
       NULL },
-    { "header",	 0,  arg_string,	&header_str,	"Header string to print", NULL },
+    { "headers", 0,  arg_string,	&header_str,	"Headers to print", NULL },
     { "count", 'c',  arg_flag,		&do_count,	"Print number of messages", NULL},
     { "version", 0,  arg_flag,		&do_version,	"Print version",
       NULL },
@@ -87,7 +87,7 @@ usage (int ret)
     arg_printusage (args,
 		    sizeof(args) / sizeof(args[0]),
 		    NULL,
-		    "[[{po:username[@hostname] | hostname[:username]}] ...]"
+		    "[[{po:username[@hostname] | hostname[:username]}] ...] "
 		    "filename");
     exit (ret);
 }
@@ -95,45 +95,39 @@ usage (int ret)
 static int
 do_connect (const char *hostname, int port, int nodelay)
 {
-    struct hostent *hostent = NULL;
-    char **h;
+    struct addrinfo *ai, *a;
+    struct addrinfo hints;
     int error;
-    int af;
-    int s;
+    int s = -1;
+    char portstr[NI_MAXSERV];
 
-#ifdef HAVE_IPV6    
-    if (hostent == NULL)
-	hostent = getipnodebyname (hostname, AF_INET6, 0, &error);
-#endif
-    if (hostent == NULL)
-	hostent = getipnodebyname (hostname, AF_INET, 0, &error);
+    memset (&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
 
-    if (hostent == NULL)
-	errx(1, "gethostbyname '%s' failed: %s", hostname, hstrerror(error));
+    snprintf (portstr, sizeof(portstr), "%u", ntohs(port));
 
-    af = hostent->h_addrtype;
+    error = getaddrinfo (hostname, portstr, &hints, &ai);
+    if (error)
+	errx (1, "getaddrinfo(%s): %s", hostname, gai_strerror(error));
 
-    for (h = hostent->h_addr_list; *h != NULL; ++h) {
-	struct sockaddr_storage sa_ss;
-	struct sockaddr *sa = (struct sockaddr *)&sa_ss;
-
-	sa->sa_family = af;
-	socket_set_address_and_port (sa, *h, port);
-
-	s = socket (af, SOCK_STREAM, 0);
+    for (a = ai; a != NULL; a = a->ai_next) {
+	s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
 	if (s < 0)
-	    err (1, "socket");
-	if (connect(s, sa, socket_sockaddr_size(sa)) < 0) {
-	    warn ("connect(%s)", hostname);
-	    close (s);
 	    continue;
-	} else {
-	    break;
+	if (connect (s, a->ai_addr, a->ai_addrlen) < 0) {
+	    warn ("connect(%s)", hostname);
+ 	    close (s);
+ 	    continue;
 	}
+	break;
     }
-    freehostent (hostent);
-    if (*h == NULL)
+    freeaddrinfo (ai);
+    if (a == NULL) {
+	warnx ("failed to contact %s", hostname);
 	return -1;
+    }
+
     if(setsockopt(s, IPPROTO_TCP, TCP_NODELAY,
 		  (void *)&nodelay, sizeof(nodelay)) < 0)
 	err (1, "setsockopt TCP_NODELAY");
@@ -163,9 +157,7 @@ write_state_init (struct write_state *w, int fd)
 #endif
     w->allociovecs = min(STEP, w->maxiovecs);
     w->niovecs = 0;
-    w->iovecs = malloc(w->allociovecs * sizeof(*w->iovecs));
-    if (w->iovecs == NULL)
-	err (1, "malloc");
+    w->iovecs = emalloc(w->allociovecs * sizeof(*w->iovecs));
     w->fd = fd;
 }
 
@@ -179,10 +171,8 @@ write_state_add (struct write_state *w, void *v, size_t len)
 	    w->niovecs = 0;					
 	} else {						
 	    w->allociovecs = min(w->allociovecs + STEP, w->maxiovecs);	
-	    w->iovecs = realloc (w->iovecs,				
-				 w->allociovecs * sizeof(*w->iovecs));	
-	    if (w->iovecs == NULL)					
-		errx (1, "realloc");				
+	    w->iovecs = erealloc (w->iovecs,				
+				  w->allociovecs * sizeof(*w->iovecs));	
 	}							
     }								
     w->iovecs[w->niovecs].iov_base = v;				
@@ -218,7 +208,7 @@ doit(int s,
 {
     int ret;
     char out_buf[PUSH_BUFSIZ];
-    size_t out_len = 0;
+    int out_len = 0;
     char in_buf[PUSH_BUFSIZ + 1];	/* sentinel */
     size_t in_len = 0;
     char *in_ptr = in_buf;
@@ -231,11 +221,32 @@ doit(int s,
     size_t from_line_length;
     time_t now;
     struct write_state write_state;
+    int numheaders = 1;
+    char **headers = NULL;
+    int i;
+    char *tmp = NULL;
 
     if (do_from) {
+	char *tmp2;
+
+	tmp2 = tmp = estrdup(header_str);
+
 	out_fd = -1;
 	if (verbose)
 	    fprintf (stderr, "%s@%s\n", user, host);
+	while (*tmp != '\0') {
+	    tmp = strchr(tmp, ',');
+	    if (tmp == NULL)
+		break;
+	    tmp++;
+	    numheaders++;
+	}
+
+	headers = emalloc(sizeof(char *) * (numheaders + 1));
+	for (i = 0; i < numheaders; i++) {
+	    headers[i] = strtok_r(tmp2, ",", &tmp2);
+	}
+	headers[numheaders] = NULL;
     } else {
 	out_fd = open(outfilename, O_WRONLY | O_APPEND | O_CREAT, 0666);
 	if (out_fd < 0)
@@ -251,6 +262,8 @@ doit(int s,
     out_len = snprintf (out_buf, sizeof(out_buf),
 			"USER %s\r\nPASS hej\r\nSTAT\r\n",
 			user);
+    if (out_len < 0)
+	errx (1, "snprintf failed");
     if (net_write (s, out_buf, out_len) != out_len)
 	err (1, "write");
     if (verbose > 1)
@@ -264,6 +277,8 @@ doit(int s,
 
 	FD_ZERO(&readset);
 	FD_ZERO(&writeset);
+	if (s >= FD_SETSIZE)
+	    errx (1, "fd too large");
 	FD_SET(s,&readset);
 	if (((state == STAT || state == RETR || state == TOP)
 	     && asked_for < count)
@@ -300,12 +315,17 @@ doit(int s,
 		if (state == TOP) {
 		    char *copy = beg;
 
-		    if (strncasecmp(copy,
-				    header_str,
-				    min(p - copy + 1, strlen(header_str))) == 0) {
-			fprintf (stdout, "%.*s\n", (int)(p - copy), copy);
+		    for (i = 0; i < numheaders; i++) {
+			size_t len;
+
+			len = min(p - copy + 1, strlen(headers[i]));
+			if (strncasecmp(copy, headers[i], len) == 0) {
+			    fprintf (stdout, "%.*s\n", (int)(p - copy), copy);
+			}
 		    }
 		    if (beg[0] == '.' && beg[1] == '\r' && beg[2] == '\n') {
+			if (numheaders > 1)
+			    fprintf (stdout, "\n");
 			state = STAT;
 			if (++retrieved == count) {
 			    state = QUIT;
@@ -446,6 +466,8 @@ doit(int s,
 	    else if(state == DELE)
 		out_len = snprintf (out_buf, sizeof(out_buf),
 				    "DELE %u\r\n", ++asked_deleted);
+	    if (out_len < 0)
+		errx (1, "snprintf failed");
 	    if (net_write (s, out_buf, out_len) != out_len)
 		err (1, "write");
 	    if (verbose > 1)
@@ -454,8 +476,12 @@ doit(int s,
     }
     if (verbose)
 	fprintf (stderr, "Done\n");
-    if (!do_from)
+    if (do_from) {
+	free (tmp);
+	free (headers);
+    } else {
 	write_state_destroy (&write_state);
+    }
     return 0;
 }
 
@@ -576,12 +602,8 @@ hesiod_get_pobox (const char **user)
 	if (strcasecmp(hpo->hesiod_po_type, "pop") != 0)
 	    errx (1, "Unsupported po type %s", hpo->hesiod_po_type);
 
-	ret = strdup(hpo->hesiod_po_host);
-	if(ret == NULL)
-	    errx (1, "strdup: out of memory");
-	*user = strdup(hpo->hesiod_po_name);
-	if (*user == NULL)
-	    errx (1, "strdup: out of memory");
+	ret = estrdup(hpo->hesiod_po_host);
+	*user = estrdup(hpo->hesiod_po_name);
 	hesiod_free_postoffice (context, hpo);
     }
     hesiod_end (context);
@@ -603,12 +625,8 @@ hesiod_get_pobox (const char **user)
 	if (strcasecmp(hpo->po_type, "pop") != 0)
 	    errx (1, "Unsupported po type %s", hpo->po_type);
 
-	ret = strdup(hpo->po_host);
-	if(ret == NULL)
-	    errx (1, "strdup: out of memory");
-	*user = strdup(hpo->po_name);
-	if (*user == NULL)
-	    errx (1, "strdup: out of memory");
+	ret = estrdup(hpo->po_host);
+	*user = estrdup(hpo->po_name);
     }
     return ret;
 }
@@ -648,9 +666,7 @@ parse_pobox (char *a0, const char **host, const char **user)
 
 	    if (pwd == NULL)
 		errx (1, "Who are you?");
-	    *user = strdup (pwd->pw_name);
-	    if (*user == NULL)
-		errx (1, "strdup: out of memory");
+	    *user = estrdup (pwd->pw_name);
 	}
 	*host = get_pobox (user);
 	return;
@@ -703,7 +719,13 @@ main(int argc, char **argv)
     char *pobox = NULL;
 
 #ifdef KRB5
-    krb5_init_context (&context);
+    {
+	krb5_error_code ret;
+
+	ret = krb5_init_context (&context);
+	if (ret)
+	    errx (1, "krb5_init_context failed: %d", ret);
+    }
 #endif
 
     if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
@@ -765,14 +787,15 @@ main(int argc, char **argv)
 	    port = htons(port);
 	}
     }
-    if (port == 0)
+    if (port == 0) {
 #ifdef KRB5
 	port = krb5_getportbyname (context, "kpop", "tcp", 1109);
 #elif defined(KRB4)
-    port = k_getportbyname ("kpop", "tcp", 1109);
+	port = k_getportbyname ("kpop", "tcp", htons(1109));
 #else
 #error must define KRB4 or KRB5
 #endif
+    }
 
     parse_pobox (pobox, &host, &user);
 

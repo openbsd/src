@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$KTH: rsh.c,v 1.43.2.2 2000/10/10 12:53:50 assar Exp $");
+RCSID("$KTH: rsh.c,v 1.47 2001/08/26 01:43:47 assar Exp $");
 
 CREDENTIALS cred;
 Key_schedule schedule;
@@ -82,7 +82,7 @@ sendsig(int signo_)
     char signo = signo_;
 #ifndef NOENCRYPTION
     if (doencrypt)
-	des_enc_write(rfd2, &signo, 1, schedule, &cred.session);
+	bsd_des_enc_write(rfd2, &signo, 1, schedule, &cred.session);
     else
 #endif
 	write(rfd2, &signo, 1);
@@ -121,7 +121,7 @@ talk(int nflag, sigset_t omask, int pid, int rem)
 	goto rewrite;
 #ifndef NOENCRYPTION
     if (doencrypt)
-	wc = des_enc_write(rem, bp, cc, schedule, &cred.session);
+	wc = bsd_des_enc_write(rem, bp, cc, schedule, &cred.session);
     else
 #endif
 	wc = write(rem, bp, cc);
@@ -158,7 +158,7 @@ talk(int nflag, sigset_t omask, int pid, int rem)
 	    errno = 0;
 #ifndef NOENCRYPTION
 	    if (doencrypt)
-		cc = des_enc_read(rfd2, buf, sizeof buf,
+		cc = bsd_des_enc_read(rfd2, buf, sizeof buf,
 				  schedule, &cred.session);
 	    else
 #endif
@@ -173,7 +173,7 @@ talk(int nflag, sigset_t omask, int pid, int rem)
 	    errno = 0;
 #ifndef NOENCRYPTION
 	    if (doencrypt)
-		cc = des_enc_read(rem, buf, sizeof buf,
+		cc = bsd_des_enc_read(rem, buf, sizeof buf,
 				  schedule, &cred.session);
 	    else
 #endif

@@ -35,15 +35,10 @@
 #include <kafs.h>
 #include <getarg.h>
 
-RCSID("$KTH: kdestroy.c,v 1.17 1999/12/02 16:58:36 joda Exp $");
+RCSID("$KTH: kdestroy.c,v 1.19 2001/02/20 23:07:55 assar Exp $");
 
-#ifdef LEGACY_KDESTROY
-int ticket_flag = 1;
-int unlog_flag  = 0;
-#else
 int ticket_flag = -1;
 int unlog_flag  = -1;
-#endif
 int quiet_flag;
 int help_flag;
 int version_flag;
@@ -75,20 +70,30 @@ main(int argc, char **argv)
     int optind = 0;
     int ret = RET_TKFIL;
 
-    if(getarg(args, num_args, argc, argv, &optind))
+    if (getarg(args, num_args, argc, argv, &optind))
 	usage(1);
 
-    if(help_flag)
+    if (unlog_flag == -1 && ticket_flag == -1) {
+      ticket_flag = 1;
+#ifdef LEGACY_KDESTROY
+      unlog_flag = 0;
+#else
+      unlog_flag = (getenv("LEGACY_KDESTROY") != 0) ? 0 : 1;
+#endif
+    }
+    else if (unlog_flag == -1)
+      unlog_flag = 0;
+    else if (ticket_flag == -1)
+      ticket_flag = 0;
+
+    if (help_flag)
 	usage(0);
 
-    if(version_flag) {
+    if (version_flag) {
 	print_version(NULL);
 	exit(0);
     }
     
-    if (unlog_flag == -1 && ticket_flag == -1)
-        unlog_flag = ticket_flag = 1;
-
     if (ticket_flag)
         ret = dest_tkt();
 

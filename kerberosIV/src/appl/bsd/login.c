@@ -45,7 +45,7 @@
 #include <sys/capability.h>
 #endif
 
-RCSID("$KTH: login.c,v 1.125.2.2 2000/06/23 02:33:07 assar Exp $");
+RCSID("$KTH: login.c,v 1.132 2001/02/20 23:07:50 assar Exp $");
 
 #ifdef OTP
 #include <otp.h>
@@ -131,7 +131,7 @@ static void
 motd(void)
 {
 	int fd, nchars;
-	RETSIGTYPE (*oldint)();
+	RETSIGTYPE (*oldint)(int);
 	char tbuf[8192];
 
 	if ((fd = open(_PATH_MOTDFILE, O_RDONLY, 0)) < 0)
@@ -663,8 +663,7 @@ main(int argc, char **argv)
         sysv_newenv(argc, argv, pwd, term, pflag);
 #ifdef KERBEROS
 	if (krbtkfile_env)
-	    if(setenv("KRBTKFILE", krbtkfile_env, 1) != 0)
-		errx(1, "cannot set KRBTKFILE");
+	    esetenv("KRBTKFILE", krbtkfile_env, 1);
 #endif
 
 	if (tty[sizeof("tty")-1] == 'd')

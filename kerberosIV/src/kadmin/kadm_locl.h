@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -31,7 +31,7 @@
  * SUCH DAMAGE.
  */
 
-/* $KTH: kadm_locl.h,v 1.31 1999/12/02 16:58:36 joda Exp $ */
+/* $KTH: kadm_locl.h,v 1.32.2.1 2002/02/01 16:16:57 assar Exp $ */
 
 #include "config.h"
 #include "protos.h"
@@ -112,7 +112,11 @@ struct hostent  *gethostbyname(const char *);
 #include <com_err.h>
 #include <sl.h>
 
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <krb_err.h>
 #include <krb_db.h>
@@ -124,6 +128,10 @@ struct hostent  *gethostbyname(const char *);
 
 #include "kadm_server.h"
 #include "pw_check.h"
+
+#ifdef HAVE_OPENSSL
+#define des_new_random_key des_random_key
+#endif
 
 /* from libacl */
 /* int acl_check(char *acl, char *principal); */
@@ -143,7 +151,7 @@ int kadm_ser_add (u_char *, int, AUTH_DAT *, u_char **, int *);
 int kadm_ser_mod (u_char *, int, AUTH_DAT *, u_char **, int *);
 int kadm_ser_get (u_char *, int, AUTH_DAT *, u_char **, int *);
 int kadm_ser_delete (u_char *, int, AUTH_DAT *, u_char **, int *);
-int kadm_ser_init (int inter, char realm[], struct in_addr);
+int kadm_ser_init (int inter, char realm[], struct in_addr, int port);
 int kadm_ser_in (u_char **, int *, u_char *);
 
 int get_pw_new_pwd  (char *pword, int pwlen, krb_principal *pr, int print_realm);

@@ -15,7 +15,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$KTH: kdb_edit.c,v 1.28 1999/09/16 20:37:21 assar Exp $");
+RCSID("$KTH: kdb_edit.c,v 1.30 2001/08/26 01:40:36 assar Exp $");
 
 #ifdef DEBUG
 extern  kerb_debug;
@@ -382,8 +382,10 @@ main(int argc, char **argv)
 						    stdout)) < 0)
       return 1;
 
+#ifndef HAVE_OPENSSL
     /* Initialize non shared random sequence */
     des_init_random_number_generator(&master_key);
+#endif
 
     /* lookup the default values */
     n = kerb_get_principal(KERB_DEFAULT_NAME, KERB_DEFAULT_INST,

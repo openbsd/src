@@ -19,7 +19,7 @@
 
 #include "kuser_locl.h"
 
-RCSID("$KTH: kinit.c,v 1.17 1997/12/12 04:48:44 assar Exp $");
+RCSID("$KTH: kinit.c,v 1.18 2001/02/20 23:07:56 assar Exp $");
 
 #define	LIFE	DEFAULT_TKT_LIFE /* lifetime of ticket in 5-minute units */
 #define CHPASSLIFE 2
@@ -39,7 +39,7 @@ get_input(char *s, int size, FILE *stream)
 static void
 usage(void)
 {
-    fprintf(stderr, "Usage: %s [-irvlp] [name]\n", __progname);
+    fprintf(stderr, "Usage: %s [-irvlp] [name]\n", getprogname());
     exit(1);
 }
 

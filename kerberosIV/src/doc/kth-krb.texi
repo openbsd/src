@@ -1,6 +1,6 @@
 \input texinfo @c -*- texinfo -*-
 @c %**start of header
-@c $KTH: kth-krb.texi,v 1.80 1999/12/02 16:58:35 joda Exp $
+@c $KTH: kth-krb.texi,v 1.81 1999/12/31 01:14:57 assar Exp $
 @setfilename kth-krb.info
 @settitle KTH-KRB
 @iftex

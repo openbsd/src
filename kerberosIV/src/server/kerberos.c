@@ -9,7 +9,7 @@
 #include "config.h"
 #include "protos.h"
 
-RCSID("$KTH: kerberos.c,v 1.87.2.3 2000/10/18 20:24:13 assar Exp $");
+RCSID("$KTH: kerberos.c,v 1.99 2001/09/17 04:42:50 assar Exp $");
 
 /*
  * If support for really large numbers of network interfaces is
@@ -79,7 +79,11 @@ RCSID("$KTH: kerberos.c,v 1.87.2.3 2000/10/18 20:24:13 assar Exp $");
 #include <roken.h>
 #include <base64.h>
 
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 #include <krb_db.h>
 #include <prot.h>
@@ -88,6 +92,10 @@ RCSID("$KTH: kerberos.c,v 1.87.2.3 2000/10/18 20:24:13 assar Exp $");
 #include <krb_log.h>
 
 #include <kdc.h>
+
+#ifdef HAVE_OPENSSL
+#define des_new_random_key des_random_key
+#endif
 
 static des_key_schedule master_key_schedule;
 static des_cblock master_key;
@@ -103,9 +111,6 @@ static int nflag;		/* don't check max age */
 static int rflag;		/* alternate realm specified */
 
 /* fields within the received request packet */
-static char *req_name_ptr;
-static char *req_inst_ptr;
-static char *req_realm_ptr;
 static u_int32_t req_time_ws;
 
 static char local_realm[REALM_SZ];
@@ -123,7 +128,7 @@ usage(void)
     fprintf(stderr, "Usage: %s [-s] [-m] [-n] [-p pause_seconds]"
 	    " [-a max_age] [-l log_file] [-i address_to_listen_on]"
 	    " [-r realm] [database_pathname]\n",
-	    __progname);
+	    getprogname());
     exit(1);
 }
 
@@ -141,8 +146,7 @@ kerb_err_reply(int f, struct sockaddr_in *client, int err, char *string)
 
     snprintf (e_msg, sizeof(e_msg),
 	      "\nKerberos error -- %s", string);
-    cr_err_reply(e_pkt, req_name_ptr, req_inst_ptr, req_realm_ptr,
-		 req_time_ws, err, e_msg);
+    cr_err_reply(e_pkt, "", "", "", req_time_ws, err, e_msg);
     sendto(f, (char*)e_pkt->dat, e_pkt->length, 0, (struct sockaddr *)client,
 	   sizeof(*client));
 }
@@ -303,7 +307,6 @@ kerberos(unsigned char *buf, int len,
     msg_type &= ~1;
     switch(msg_type){
     case AUTH_MSG_KDC_REQUEST:
-	/* XXX range check */
 	p += krb_get_nir(p, name, sizeof(name),
 			 inst, sizeof(inst),
 			 realm, sizeof(realm));
@@ -559,7 +562,7 @@ static void
 mksocket(struct descr *d, struct in_addr addr, int type, 
 	 const char *service, int port)
 {
-    int     on = 1;
+    int on = 1;
     int sock;
 
     memset(d, 0, sizeof(struct descr));
@@ -719,6 +722,14 @@ main(int argc, char **argv)
 
     umask(077);		/* Create protected files */
 
+#if defined(HAVE_SRANDOMDEV)
+    srandomdev();
+#elif defined(HAVE_RANDOM)
+    srandom(time(NULL));
+#else
+    srand (time(NULL));
+#endif
+
     while ((c = getopt(argc, argv, "snmp:P:a:l:r:i:")) != -1) {
 	switch(c) {
 	case 's':
@@ -856,7 +867,9 @@ main(int argc, char **argv)
 
     fprintf(stdout, "\nCurrent Kerberos master key version is %d\n",
 	    master_key_version);
+#ifndef HAVE_OPENSSL
     des_init_random_number_generator(&master_key);
+#endif
 
     if (!rflag) {
 	/* Look up our local realm */
@@ -893,7 +906,8 @@ read_socket(struct descr *n)
 {
     int b;
     struct sockaddr_in from;
-    int fromlen = sizeof(from);
+    socklen_t fromlen = sizeof(from);
+
     b = recvfrom(n->s, n->buf.dat + n->buf.length, 
 		 MAX_PKT_LEN - n->buf.length, 0, 
 		 (struct sockaddr *)&from, &fromlen);
@@ -925,13 +939,13 @@ read_socket(struct descr *n)
 	    if(n->buf.length <= 0){
 		const char *msg = 
 		    "HTTP/1.1 404 Not found\r\n"
-		    "Server: KTH-KRB/1\r\n"
+		    "Server: KTH-KRB/" VERSION "\r\n"
 		    "Content-type: text/html\r\n"
 		    "Content-transfer-encoding: 8bit\r\n\r\n"
 		    "<TITLE>404 Not found</TITLE>\r\n"
 		    "<H1>404 Not found</H1>\r\n"
 		    "That page does not exist. Information about "
-		    "<A HREF=\"http://www.pdc.kth.se/kth-krb\">KTH-KRB</A> "
+		    "<A HREF=\"http://www.pdc.kth.se/kth-krb/\">KTH-KRB</A> "
 		    "is available elsewhere.\r\n";
 		fromlen = sizeof(from);
 		if(getpeername(n->s,(struct sockaddr*)&from, &fromlen) == 0)
@@ -1041,7 +1055,11 @@ loop(struct descr *fds, int base_nfds)
 	     * We are possibly the subject of a DOS attack, pick a TCP
 	     * connection at random and drop it.
 	     */
+#ifdef HAVE_RANDOM
+	    int r = random() % (nfds - base_nfds);
+#else
 	    int r = rand() % (nfds - base_nfds);
+#endif
 	    r = r + base_nfds;
 	    FD_CLR(fds[r].s, &readfds);
 	    close(fds[r].s);
@@ -1078,7 +1096,7 @@ loop(struct descr *fds, int base_nfds)
 			minfree->buf.length = 0;
 			memcpy(&minfree->addr, &n->addr, sizeof(minfree->addr));
 		    }
-		}else
+		} else
 		    read_socket(n);
 	    }
 	}

@@ -33,7 +33,7 @@
  *	@(#)externs.h	8.3 (Berkeley) 5/30/95
  */
 
-/* $KTH: externs.h,v 1.18 1998/07/09 23:16:36 assar Exp $ */
+/* $KTH: externs.h,v 1.23.2.1 2002/02/06 03:40:42 assar Exp $ */
 
 #ifndef	BSD
 # define BSD 43
@@ -66,6 +66,7 @@ extern int
     localchars,		/* we recognize interrupt/quit */
     donelclchars,	/* the user has set "localchars" */
     showoptions,
+    wantencryption,	/* User has requested encryption */
     net,		/* Network file descriptor */
     tin,		/* Terminal input file descriptor */
     tout,		/* Terminal output file descriptor */
@@ -81,6 +82,8 @@ extern int
     termdata,		/* Print out terminal data flow */
     debug;		/* Debug level */
 
+extern int intr_happened, intr_waiting;	/* for interrupt handling */
+
 extern cc_t escape;	/* Escape to command mode */
 extern cc_t rlogin;	/* Rlogin mode escape character */
 #ifdef	KLUDGELINEMODE
@@ -95,6 +98,8 @@ extern char
     dont[],
     will[],
     wont[],
+    do_dont_resp[],
+    will_wont_resp[],
     options[],		/* All the little options */
     *hostname;		/* Who are we connected to? */
 #if	defined(ENCRYPTION)
@@ -182,7 +187,7 @@ extern jmp_buf
 int telnet_net_write(unsigned char *str, int len);
 void net_encrypt(void);
 int telnet_spin(void);
-char *telnet_getenv(char *val);
+char *telnet_getenv(const char *val);
 char *telnet_gets(char *prompt, char *result, int length, int echo);
 #endif
 
@@ -200,7 +205,8 @@ unsigned char * env_default(int init, int welldefined);
 unsigned char * env_getvalue(unsigned char *var);
 
 void set_escape_char(char *s);
-unsigned long sourceroute(char *arg, char **cpp, int *lenp);
+int sourceroute(struct addrinfo *ai, char *arg, char **cpp,
+		int *prototp, int *optp);
 
 #if	defined(AUTHENTICATION)
 int auth_enable (char *);
@@ -222,7 +228,7 @@ int 	EncryptStatus (void);
 #endif
 
 #ifdef SIGINFO
-void ayt_status(int);
+RETSIGTYPE ayt_status(int);
 #endif
 int tn(int argc, char **argv);
 void command(int top, char *tbuf, int cnt);
@@ -427,3 +433,9 @@ extern Ring
     ttyoring,
     ttyiring;
 
+extern int resettermname;
+extern int linemode;
+#ifdef KLUDGELINEMODE
+extern int kludgelinemode;
+#endif
+extern int want_status_response;

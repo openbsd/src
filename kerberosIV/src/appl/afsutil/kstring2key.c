@@ -33,7 +33,7 @@
 
 #include "config.h"
 
-RCSID("$KTH: kstring2key.c,v 1.16 1999/12/02 16:58:28 joda Exp $");
+RCSID("$KTH: kstring2key.c,v 1.18 2001/08/26 01:40:37 assar Exp $");
 
 #include <stdio.h>
 #include <string.h>
@@ -42,7 +42,11 @@ RCSID("$KTH: kstring2key.c,v 1.16 1999/12/02 16:58:28 joda Exp $");
 
 #include <roken.h>
 
+#ifdef HAVE_OPENSSL
+#include <openssl/des.h>
+#else
 #include <des.h>
+#endif
 #include <krb.h>
 
 #define VERIFY 0
@@ -52,7 +56,7 @@ usage(void)
 {
     fprintf(stderr,
 	    "Usage: %s [-c AFS cellname] [ -5 krb5salt ] [ password ]\n",
-	    __progname);
+	    getprogname());
     fprintf(stderr,
 	    "       krb5salt is realmname APPEND principal APPEND instance\n");
     exit(1);

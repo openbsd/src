@@ -42,7 +42,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$KTH: rshd.c,v 1.60.2.3 2000/10/18 20:39:12 assar Exp $");
+RCSID("$KTH: rshd.c,v 1.71 2001/09/17 04:42:47 assar Exp $");
 
 extern char *__rcmd_errstr; /* syslog hook from libc/net/rcmd.c. */
 extern int __check_rhosts_file;
@@ -73,7 +73,8 @@ int
 main(int argc, char *argv[])
 {
     struct linger linger;
-    int ch, on = 1, fromlen;
+    int ch, on = 1;
+    socklen_t fromlen;
     struct sockaddr_in from;
     int portnum = 0;
 
@@ -284,7 +285,9 @@ doit(struct sockaddr_in *fromp)
     }
 
     errorstr = NULL;
-    inaddr2str (fromp->sin_addr, remotehost, sizeof(remotehost));
+    getnameinfo_verified ((struct sockaddr *)fromp, sizeof(*fromp),
+			  remotehost, sizeof(remotehost),
+			  NULL, 0, 0);
 
     if (use_kerberos) {
 	kdata = &authbuf;
@@ -294,9 +297,10 @@ doit(struct sockaddr_in *fromp)
 	version[VERSION_SIZE - 1] = '\0';
 	if (doencrypt) {
 	    struct sockaddr_in local_addr;
-	    rc = sizeof(local_addr);
+	    socklen_t la_len;
+	    la_len = sizeof(local_addr);
 	    if (getsockname(0, (struct sockaddr *)&local_addr,
-			    &rc) < 0) {
+			    &la_len) < 0) {
 		syslog(LOG_ERR, "getsockname: %m");
 		error("rshd: getsockname: %m");
 		exit(1);
@@ -422,7 +426,7 @@ doit(struct sockaddr_in *fromp)
 		close(pv1[1]);
 		close(pv2[0]);
 #ifndef NOENCRYPTION
-		des_enc_write(s, msg, sizeof(msg) - 1, schedule, &kdata->session);
+		bsd_des_enc_write(s, msg, sizeof(msg) - 1, schedule, &kdata->session);
 #else
 		write(s, msg, sizeof(msg) - 1);
 #endif
@@ -479,7 +483,7 @@ doit(struct sockaddr_in *fromp)
 		    int	ret;
 		    if (doencrypt)
 #ifndef NOENCRYPTION
-			ret = des_enc_read(s, &sig, 1, schedule, &kdata->session);
+			ret = bsd_des_enc_read(s, &sig, 1, schedule, &kdata->session);
 #else
 		    ret = read(s, &sig, 1);
 #endif
@@ -499,7 +503,7 @@ doit(struct sockaddr_in *fromp)
 		    } else {
 			if (doencrypt)
 #ifndef NOENCRYPTION
-			    des_enc_write(s, buf, cc, schedule, &kdata->session);
+			    bsd_des_enc_write(s, buf, cc, schedule, &kdata->session);
 #else
 			write(s, buf, cc);
 #endif
@@ -516,7 +520,7 @@ doit(struct sockaddr_in *fromp)
 			FD_CLR(pv1[0], &readfrom);
 		    } else
 #ifndef NOENCRYPTION
-			des_enc_write(STDOUT_FILENO, buf, cc, schedule, &kdata->session);
+			bsd_des_enc_write(STDOUT_FILENO, buf, cc, schedule, &kdata->session);
 #else
 		    write(STDOUT_FILENO, buf, cc);
 #endif
@@ -527,7 +531,7 @@ doit(struct sockaddr_in *fromp)
 		    && FD_ISSET(pv2[1], &wready)) {
 		    errno = 0;
 #ifndef NOENCRYPTION
-		    cc = des_enc_read(STDIN_FILENO, buf, sizeof(buf), schedule, &kdata->session);
+		    cc = bsd_des_enc_read(STDIN_FILENO, buf, sizeof(buf), schedule, &kdata->session);
 #else
 		    cc = read(STDIN_FILENO, buf, sizeof(buf));
 #endif
@@ -636,6 +640,7 @@ error(const char *fmt, ...)
     } else
 	len = 0;
     len += vsnprintf(bp, sizeof(buf) - len, fmt, ap);
+    len = min(len, sizeof(buf));
     write(STDERR_FILENO, buf, len);
     va_end(ap);
 }

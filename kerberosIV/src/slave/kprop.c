@@ -19,7 +19,7 @@ provided "as is" without express or implied warranty.
 
 #include "slav_locl.h"
 
-RCSID("$KTH: kprop.c,v 1.37 1999/09/16 20:41:59 assar Exp $");
+RCSID("$KTH: kprop.c,v 1.39 2001/08/26 01:46:15 assar Exp $");
 
 #include "kprop.h"
 
@@ -141,6 +141,7 @@ prop_to_slaves(struct slave_host *sl,
     u_char obuf[KPROP_BUFSIZ + 64]; /* leave room for private msg overhead */
     struct sockaddr_in sin, my_sin;
     int     i, n, s;
+    socklen_t sock_len;
     struct slave_host *cs;	/* current slave */
     char   my_host_name[MaxHostNameLen], *p_my_host_name;
     char   kprop_service_instance[INST_SZ];
@@ -178,13 +179,15 @@ prop_to_slaves(struct slave_host *sl,
 		
 		/* for krb_mk_{priv, safe} */
 		memset(&my_sin, 0, sizeof my_sin);
-		n = sizeof my_sin;
-		if (getsockname (s, (struct sockaddr *) &my_sin, &n) != 0) {
+		sock_len = sizeof my_sin;
+		if (getsockname (s,
+				 (struct sockaddr *) &my_sin,
+				 &sock_len) != 0) {
 		    warn ("getsockname(%s)", cs->name);
 		    close (s);
 		    continue;	/*** NEXT SLAVE ***/
 		}
-		if (n != sizeof (my_sin)) {
+		if (sock_len != sizeof (my_sin)) {
 		    warnx ("can't get socketname %s length", cs->name);
 		    close (s);
 		    continue;	/*** NEXT SLAVE ***/

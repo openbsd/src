@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$KTH: rcp_util.c,v 1.8 1998/09/28 11:45:21 joda Exp $");
+RCSID("$KTH: rcp_util.c,v 1.9 2000/07/08 12:11:59 assar Exp $");
 
 char *
 colon(char *cp)
@@ -73,7 +73,7 @@ bad:	warnx("%s: invalid user name", cp0);
 int
 susystem(char *s, int userid)
 {
-    RETSIGTYPE (*istat)(), (*qstat)();
+    RETSIGTYPE (*istat)(int), (*qstat)(int);
     int status;
     pid_t pid;
 

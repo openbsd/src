@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998, 1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -35,7 +35,7 @@
 #include <config.h>
 #endif
 
-RCSID("$KTH: pagsh.c,v 1.22 1999/12/02 16:58:28 joda Exp $");
+RCSID("$KTH: pagsh.c,v 1.24 2001/02/20 23:11:33 assar Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -69,6 +69,8 @@ main(int argc, char **argv)
   char **args;
   int i;
 
+  set_progname(argv[0]);
+
   do {
     snprintf(tf, sizeof(tf), "%s%u_%u", TKT_ROOT, (unsigned int)getuid(),
 	    (unsigned int)(getpid()*time(0)));
@@ -76,8 +78,7 @@ main(int argc, char **argv)
   } while(f < 0);
   close(f);
   unlink(tf);
-  if(setenv("KRBTKFILE", tf, 1) != 0)
-      errx(1, "cannot set KRBTKFILE");
+  esetenv("KRBTKFILE", tf, 1);
 
   i = 0;
 

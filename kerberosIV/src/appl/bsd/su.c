@@ -33,7 +33,7 @@
 
 #include "bsd_locl.h"
 
-RCSID ("$KTH: su.c,v 1.70.2.2 2000/12/07 14:04:19 assar Exp $");
+RCSID ("$KTH: su.c,v 1.77 2001/08/28 10:12:40 assar Exp $");
 
 #ifdef SYSV_SHADOW
 #include "sysv_shadow.h"
@@ -258,24 +258,18 @@ main (int argc, char **argv)
 	    if (environ == NULL)
 		err (1, "malloc");
 	    environ[0] = NULL;
-	    if(setenv ("PATH", _PATH_DEFPATH, 1) != 0)
-		errx(1, "cannot set PATH");
+	    esetenv ("PATH", _PATH_DEFPATH, 1);
 	    if (t)
-		if(setenv ("TERM", t, 1) != 0)
-		    errx(1, "cannot set TERM");
+		esetenv ("TERM", t, 1);
 	    if (k)
-		if(setenv ("KRBTKFILE", k, 1) != 0)
-		    errx(1, "cannot set KRBTKFILE");
+		esetenv ("KRBTKFILE", k, 1);
 	    if (chdir (pwd->pw_dir) < 0)
 		errx (1, "no directory");
 	}
 	if (asthem || pwd->pw_uid)
-	    if(setenv ("USER", pwd->pw_name, 1) != 0)
-		errx(1, "cannot set USER");
-	if(setenv ("HOME", pwd->pw_dir, 1) != 0)
-	    errx(1, "cannot set HOME");
-	if(setenv ("SHELL", shell, 1) != 0)
-	    errx(1, "cannot set SHELL");
+	    esetenv ("USER", pwd->pw_name, 1);
+	esetenv ("HOME", pwd->pw_dir, 1);
+	esetenv ("SHELL", shell, 1);
     }
     if (iscsh == YES) {
 	if (fastlogin)
@@ -360,8 +354,12 @@ kerberos (char *username, char *user, char *lrealm, int uid)
     if (lrealm != NULL) {
 	allowed = koktologin (username, lrealm, user) == 0;
     } else {
-	for (n = 1; !allowed && krb_get_lrealm (tmp_realm, n) == KSUCCESS; ++n)
+	for (n = 1;
+	     !allowed && (kerno = krb_get_lrealm (tmp_realm, n)) == KSUCCESS;
+	     ++n)
 	    allowed = koktologin (username, tmp_realm, user) == 0;
+	if (kerno != KSUCCESS)
+	    return (1);
 	lrealm = tmp_realm;
     }
     if (!allowed && !uid) {
@@ -374,8 +372,7 @@ kerberos (char *username, char *user, char *lrealm, int uid)
 	      "%s_%s_to_%s_%u", TKT_ROOT, username, user,
 	     (unsigned) getpid ());
 
-    if(setenv ("KRBTKFILE", krbtkfile, 1) != 0)
-	errx(1, "cannot set KRBTKFILE");
+    esetenv ("KRBTKFILE", krbtkfile, 1);
     krb_set_tkt_string (krbtkfile);
     /*
      * Set real as well as effective ID to 0 for the moment,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995, 1996, 1997, 1998 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995 - 2001 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #include "kauth.h"
 
-RCSID("$KTH: kauthd.c,v 1.25.2.1 2000/06/28 19:07:58 assar Exp $");
+RCSID("$KTH: kauthd.c,v 1.30 2001/02/20 23:13:06 assar Exp $");
 
 krb_principal princ;
 static char locuser[SNAME_SZ];
@@ -80,7 +80,7 @@ doit(int sock)
      char instance[INST_SZ];
      des_key_schedule schedule;
      struct sockaddr_in thisaddr, thataddr;
-     int addrlen;
+     socklen_t addrlen;
      int len;
      char buf[BUFSIZ];
      void *data;
@@ -99,7 +99,9 @@ doit(int sock)
 	  return 1;
      }
 
-     inaddr2str (thataddr.sin_addr, remotehost, sizeof(remotehost));
+     getnameinfo_verified ((struct sockaddr *)&thataddr, sizeof(thataddr),
+			   remotehost, sizeof(remotehost),
+			   NULL, 0, 0);
 
      k_getsockinst (sock, instance, sizeof(instance));
      status = krb_recvauth (KOPT_DO_MUTUAL, sock, &ticket, "rcmd", instance,
@@ -172,9 +174,14 @@ doit(int sock)
 				   lifetime, NULL, decrypt_remote_tkt, &arg);
      }
      if (status == KSUCCESS) {
+	 char remoteaddr[INET6_ADDRSTRLEN];
+
+	 getnameinfo ((struct sockaddr *)&thataddr, sizeof(thataddr),
+		      remoteaddr, sizeof(remoteaddr),
+		      NULL, 0, NI_NUMERICHOST);
+
 	 syslog (LOG_INFO, "from %s(%s): %s -> %s",
-		 remotehost,
-		 inet_ntoa(thataddr.sin_addr),
+		 remotehost, remoteaddr,
 		 locuser,
 		 krb_unparse_name (&princ));
 	  write_encrypted (sock, "ok", sizeof("ok") - 1, schedule,
@@ -192,6 +199,8 @@ doit(int sock)
 int
 main (int argc, char **argv)
 {
+    set_progname(argv[0]);
+
     openlog ("kauthd", LOG_ODELAY, LOG_AUTH);
 
     if(argc > 1 && strcmp(argv[1], "-i") == 0)

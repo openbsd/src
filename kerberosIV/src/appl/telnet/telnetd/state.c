@@ -33,7 +33,7 @@
 
 #include "telnetd.h"
 
-RCSID("$KTH: state.c,v 1.13 1999/05/13 23:12:50 assar Exp $");
+RCSID("$KTH: state.c,v 1.14 2000/10/02 05:06:02 assar Exp $");
 
 unsigned char	doopt[] = { IAC, DO, '%', 'c', 0 };
 unsigned char	dont[] = { IAC, DONT, '%', 'c', 0 };
@@ -1016,8 +1016,7 @@ suboption(void)
 	    return;
 	settimer(xdisplocsubopt);
 	subpointer[SB_LEN()] = '\0';
-	if(setenv("DISPLAY", (char *)subpointer, 1) != 0)
-	    errx(1, "cannot set DISPLAY");
+	esetenv("DISPLAY", (char *)subpointer, 1);
 	break;
     }  /* end of case TELOPT_XDISPLOC */
 
@@ -1184,8 +1183,7 @@ suboption(void)
 	    case ENV_USERVAR:
 		*cp = '\0';
 		if (valp)
-		    if(setenv(varp, valp, 1) != 0)
-			errx(1, "cannot set %s", varp);
+		    esetenv(varp, valp, 1);
 		else
 		    unsetenv(varp);
 		cp = varp = (char *)subpointer;
@@ -1204,8 +1202,7 @@ suboption(void)
 	}
 	*cp = '\0';
 	if (valp)
-	    if(setenv(varp, valp, 1) != 0)
-		errx(1, "cannot set %s", varp);
+	    esetenv(varp, valp, 1);
 	else
 	    unsetenv(varp);
 	break;

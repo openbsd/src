@@ -33,7 +33,7 @@
 
 #include "telnetd.h"
 
-RCSID("$KTH: sys_term.c,v 1.89.2.6 2000/12/08 23:34:05 assar Exp $");
+RCSID("$KTH: sys_term.c,v 1.104 2001/09/17 02:09:04 assar Exp $");
 
 #if defined(_CRAY) || (defined(__hpux) && !defined(HAVE_UTMPX_H))
 # define PARENT_DOES_UTMP
@@ -102,6 +102,8 @@ char	wtmpf[]	= "/etc/wtmp";
 
 #endif /* STREAMSPTY */
 
+#undef NOERROR
+
 #ifdef	HAVE_SYS_STREAM_H
 #ifdef  HAVE_SYS_UIO_H
 #include <sys/uio.h>
@@ -141,6 +143,9 @@ char	wtmpf[]	= "/etc/wtmp";
 
 #ifdef HAVE_UTIL_H
 #include <util.h>
+#endif
+#ifdef HAVE_LIBUTIL_H
+#include <libutil.h>
 #endif
 
 # ifndef	TCSANOW
@@ -398,7 +403,7 @@ int getpty(int *ptynum)
 #if SunOS == 40
     int dummy;
 #endif
-#if 0 /* && defined(HAVE_OPENPTY) */
+#if __linux
     int master;
     int slave;
     if(openpty(&master, &slave, line, 0, 0) == 0){
@@ -822,8 +827,6 @@ void getptyslave(void)
     int t = -1;
 
     struct winsize ws;
-    extern int def_row, def_col;
-    extern int def_tspeed, def_rspeed;
     /*
      * Opening the slave side may cause initilization of the
      * kernel tty structure.  We need remember the state of
@@ -1110,7 +1113,8 @@ make_id (char *tty)
 
 /* ARGSUSED */
 void
-startslave(char *host, int autologin, char *autoname)
+startslave(const char *host, const char *utmp_host,
+	   int autologin, char *autoname)
 {
     int i;
 
@@ -1158,7 +1162,7 @@ startslave(char *host, int autologin, char *autoname)
 	wtmp.ut_type = LOGIN_PROCESS;
 	wtmp.ut_pid = pid;
 	strncpy(wtmp.ut_user,  "LOGIN", sizeof(wtmp.ut_user));
-	strncpy(wtmp.ut_host,  host, sizeof(wtmp.ut_host));
+	strncpy(wtmp.ut_host,  utmp_host, sizeof(wtmp.ut_host));
 	strncpy(wtmp.ut_line,  clean_ttyname(line), sizeof(wtmp.ut_line));
 #ifdef HAVE_STRUCT_UTMP_UT_ID
 	strncpy(wtmp.ut_id, wtmp.ut_line + 3, sizeof(wtmp.ut_id));
@@ -1177,6 +1181,10 @@ startslave(char *host, int autologin, char *autoname)
 # endif	/* PARENT_DOES_UTMP */
     } else {
 	getptyslave();
+#if defined(DCE)
+	/* if we authenticated via K5, try and join the PAG */
+	kerberos5_dfspag();
+#endif
 	start_login(host, autologin, autoname);
 	/*NOTREACHED*/
     }
@@ -1188,7 +1196,6 @@ extern char **environ;
 void
 init_env(void)
 {
-    extern char *getenv(const char *);
     char **envp;
 
     envp = envinit;
@@ -1255,10 +1262,10 @@ scrub_env(void)
 struct arg_val {
     int size;
     int argc;
-    char **argv;
+    const char **argv;
 };
 
-static int addarg(struct arg_val*, char*);
+static void addarg(struct arg_val*, const char*);
 
 /*
  * start_login(host)
@@ -1268,10 +1275,11 @@ static int addarg(struct arg_val*, char*);
  */
 
 void
-start_login(char *host, int autologin, char *name)
+start_login(const char *host, int autologin, char *name)
 {
     struct arg_val argv;
     char *user;
+    int save_errno;
 
 #ifdef HAVE_UTMPX_H
     int pid = getpid();
@@ -1312,7 +1320,7 @@ start_login(char *host, int autologin, char *name)
     /* init argv structure */ 
     argv.size=0;
     argv.argc=0;
-    argv.argv=(char**)malloc(0); /*so we can call realloc later */
+    argv.argv=malloc(0); /*so we can call realloc later */
     addarg(&argv, "login");
     addarg(&argv, "-h");
     addarg(&argv, host);
@@ -1367,25 +1375,23 @@ start_login(char *host, int autologin, char *name)
     sleep(1);
 
     execv(new_login, argv.argv);
-
+    save_errno = errno;
     syslog(LOG_ERR, "%s: %m\n", new_login);
-    fatalperror(net, new_login);
+    fatalperror_errno(net, new_login, save_errno);
     /*NOTREACHED*/
 }
 
-
-
-static int addarg(struct arg_val *argv, char *val)
+static void
+addarg(struct arg_val *argv, const char *val)
 {
-    if(argv->size <= argv->argc+1){
-	argv->argv = (char**)realloc(argv->argv, sizeof(char*) * (argv->size + 10));
-	if(argv->argv == NULL)
-	    return 1; /* this should probably be handled better */
+    if(argv->size <= argv->argc+1) {
+	argv->argv = realloc(argv->argv, sizeof(char*) * (argv->size + 10));
+	if (argv->argv == NULL)
+	    fatal (net, "realloc: out of memory");
 	argv->size+=10;
     }
-    argv->argv[argv->argc++]=val;
-    argv->argv[argv->argc]=NULL;
-    return 0;
+    argv->argv[argv->argc++] = val;
+    argv->argv[argv->argc]   = NULL;
 }
 
 

@@ -25,7 +25,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$KTH: login_access.c,v 1.19 1999/05/14 22:02:14 assar Exp $");
+RCSID("$KTH: login_access.c,v 1.20 2001/06/04 14:08:39 assar Exp $");
 
 #ifdef LOGIN_ACCESS
 

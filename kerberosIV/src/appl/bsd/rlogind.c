@@ -42,7 +42,7 @@
 
 #include "bsd_locl.h"
 
-RCSID("$KTH: rlogind.c,v 1.109.2.2 2000/06/23 02:37:06 assar Exp $");
+RCSID("$KTH: rlogind.c,v 1.117 2001/09/17 04:42:47 assar Exp $");
 
 extern int __check_rhosts_file;
 
@@ -310,7 +310,8 @@ int
 main(int argc, char **argv)
 {
     struct sockaddr_in from;
-    int ch, fromlen, on;
+    socklen_t fromlen;
+    int ch, on;
     int interactive = 0;
     int portnum = 0;
 
@@ -421,7 +422,9 @@ doit(int f, struct sockaddr_in *fromp)
 	fatal(f, "Remote host requires Kerberos authentication", 0);
 
     alarm(0);
-    inaddr2str (fromp->sin_addr, hostname, sizeof(hostname));
+    getnameinfo_verified ((struct sockaddr *)fromp, sizeof(*fromp),
+			  hostname, sizeof(hostname),
+			  NULL, 0, 0);
 
     if (use_kerberos) {
 	retval = do_krb_login(fromp);
@@ -450,7 +453,7 @@ doit(int f, struct sockaddr_in *fromp)
     }
 #ifndef NOENCRYPTION
     if (doencrypt)
-	des_enc_write(f, SECURE_MESSAGE,
+	bsd_des_enc_write(f, SECURE_MESSAGE,
 		      strlen(SECURE_MESSAGE),
 		      schedule, &kdata->session);
     else
@@ -667,7 +670,7 @@ protocol(int f, int master)
 	if (FD_ISSET(f, &ibits)) {
 #ifndef NOENCRYPTION
 	    if (doencrypt)
-		fcc = des_enc_read(f, fibuf,
+		fcc = bsd_des_enc_read(f, fibuf,
 				   sizeof(fibuf),
 				   schedule, &kdata->session);
 	    else
@@ -733,7 +736,7 @@ protocol(int f, int master)
 	if ((FD_ISSET(f, &obits)) && pcc > 0) {
 #ifndef NOENCRYPTION
 	    if (doencrypt)
-		cc = des_enc_write(f, pbp, pcc, schedule, &kdata->session);
+		cc = bsd_des_enc_write(f, pbp, pcc, schedule, &kdata->session);
 	    else
 #endif
 		cc = write(f, pbp, pcc);
@@ -806,7 +809,7 @@ fatal(int f, const char *msg, int syserr)
     len = strlen(bp);
 #ifndef NOENCRYPTION
     if (doencrypt)
-	des_enc_write(f, buf, bp + len - buf, schedule, &kdata->session);
+	bsd_des_enc_write(f, buf, bp + len - buf, schedule, &kdata->session);
     else
 #endif
 	write(f, buf, bp + len - buf);
@@ -917,8 +920,10 @@ do_krb_login(struct sockaddr_in *dest)
     k_getsockinst(0, instance, sizeof(instance));
 
     if (doencrypt) {
-	rc = sizeof(faddr);
-	if (getsockname(0, (struct sockaddr *)&faddr, &rc))
+	socklen_t faddr_len;
+
+	faddr_len = sizeof(faddr);
+	if (getsockname(0, (struct sockaddr *)&faddr, &faddr_len))
 	    return (-1);
 	authopts = KOPT_DO_MUTUAL;
 	rc = krb_recvauth(

@@ -88,11 +88,15 @@
 #include <unistd.h>
 #endif
 #ifdef HAVE_LIMITS_H
-#include <limits.h> /* Solaris ARG_MAX */
+#include <limits.h>
 #endif
 
 #include "glob.h"
 #include "roken.h"
+
+#ifndef ARG_MAX
+#define ARG_MAX _POSIX_ARG_MAX
+#endif
 
 #define	CHAR_DOLLAR		'$'
 #define	CHAR_DOT		'.'

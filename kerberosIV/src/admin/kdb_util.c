@@ -14,8 +14,9 @@
  */
 
 #include "adm_locl.h"
+#include <getarg.h>
 
-RCSID("$KTH: kdb_util.c,v 1.42.2.1 2000/10/10 12:59:16 assar Exp $");
+RCSID("$KTH: kdb_util.c,v 1.46 2001/02/20 23:07:49 assar Exp $");
 
 static des_cblock master_key, new_master_key;
 static des_key_schedule master_key_schedule, new_master_key_schedule;
@@ -293,6 +294,8 @@ clear_secrets (void)
   memset(new_master_key_schedule, 0, sizeof (des_key_schedule));
 }
 
+static int prompt_flag = 1;
+
 static void
 convert_new_master_key (char *db_file, FILE *out)
 {
@@ -300,8 +303,12 @@ convert_new_master_key (char *db_file, FILE *out)
   errx (1, "Sorry, this function is not available with "
 	"the new master key scheme.");
 #else
-  printf ("\n\nEnter the CURRENT master key.");
-  if (kdb_get_master_key (KDB_GET_PROMPT, &master_key,
+  if(prompt_flag) {
+      printf ("\n\nEnter the CURRENT master key.");
+      fflush(stdout);
+  }
+
+  if (kdb_get_master_key (prompt_flag ? KDB_GET_PROMPT : 0, &master_key,
 			  master_key_schedule) != 0) {
     clear_secrets ();
     errx (1, "Couldn't get master key.");
@@ -313,6 +320,7 @@ convert_new_master_key (char *db_file, FILE *out)
   }
 
   printf ("\n\nNow enter the NEW master key.  Do not forget it!!");
+  fflush(stdout);
   if (kdb_get_master_key (KDB_GET_TWICE, &new_master_key,
 			  new_master_key_schedule) != 0) {
     clear_secrets ();
@@ -345,9 +353,9 @@ convert_key_old_db (Principal *p)
   copy_to_key(&p->key_low, &p->key_high, key);
 
 #ifndef NOENCRYPTION
-  des_pcbc_encrypt((des_cblock *)key,(des_cblock *)key,
-	(long)sizeof(des_cblock),master_key_schedule,
-	(des_cblock *)master_key_schedule, DES_DECRYPT);
+  des_pcbc_encrypt(key,key,
+		   (long)sizeof(des_cblock),master_key_schedule,
+		   (des_cblock *)master_key_schedule, DES_DECRYPT);
 #endif
 
   /* make new key, new style */
@@ -408,10 +416,34 @@ convert_old_format_db (char *db_file, FILE *out)
   dump_db (db_file, out, convert_key_old_db);
 }
 
+static int help_flag;
+static int version_flag;
+
+static struct getargs args[] = {
+    { NULL, 'n', arg_negative_flag, &prompt_flag, "don't prompt for master key" },
+    { "help",	'h', arg_flag,		&help_flag },
+    { "version",  0, arg_flag,		&version_flag }
+};
+
+static void
+usage (int ret)
+{
+    arg_printusage (args,
+		    sizeof(args) / sizeof(args[0]),
+		    NULL,
+		    "operation file [database]");
+    fprintf(stderr, "Operation is one of: load, merge, dump, slave_dump,\n");
+    fprintf(stderr, "                     new_master_key, convert_old_db\n");
+    fprintf(stderr, "use file `-' for stdout\n");
+
+    exit (ret);
+}
+
 int
 main(int argc, char **argv)
 {
     int ret;
+    int optind = 0;
     FILE   *file;
     enum {
 	OP_LOAD,
@@ -424,50 +456,58 @@ main(int argc, char **argv)
     char *file_name;
     char *db_name;
 
-    if (argc != 3 && argc != 4) {
-	fprintf(stderr, "Usage: %s operation file [database name].\n",
-		argv[0]);
-	fprintf(stderr, "Operation is one of: "
-		"load, merge, dump, slave_dump, new_master_key, "
-		"convert_old_db\n");
-	fprintf(stderr, "use file `-' for stdout\n");
-	exit(1);
+    if (getarg (args, sizeof(args) / sizeof(args[0]), argc, argv,
+		&optind))
+	usage (1);
+
+    if (help_flag)
+	usage (0);
+
+    if (version_flag) {
+	print_version(NULL);
+	return 0;
     }
-    if (argc == 3)
+
+    argc -= optind;
+    argv += optind;
+    
+    if (argc != 2 && argc != 3) 
+	usage (1);
+    if (argc == 2)
 	db_name = DBM_FILE;
     else
-	db_name = argv[3];
+	db_name = argv[2];
     
     ret = kerb_db_set_name (db_name);
     
     /* this makes starting slave servers ~14.3 times easier */
-    if(ret && strcmp(argv[1], "load") == 0)
+    if(ret && strcmp(argv[0], "load") == 0)
        ret = kerb_db_create (db_name);
 
     if(ret)
       err (1, "Can't open database");
 
-    if (!strcmp(argv[1], "load"))
+    if (!strcmp(argv[0], "load"))
 	op = OP_LOAD;
-    else if (!strcmp(argv[1], "merge"))
+    else if (!strcmp(argv[0], "merge"))
 	op = OP_MERGE;
-    else if (!strcmp(argv[1], "dump"))
+    else if (!strcmp(argv[0], "dump"))
 	op = OP_DUMP;
-    else if (!strcmp(argv[1], "slave_dump"))
+    else if (!strcmp(argv[0], "slave_dump"))
         op = OP_SLAVE_DUMP;
-    else if (!strcmp(argv[1], "new_master_key"))
+    else if (!strcmp(argv[0], "new_master_key"))
         op = OP_NEW_MASTER;
-    else if (!strcmp(argv[1], "convert_old_db"))
+    else if (!strcmp(argv[0], "convert_old_db"))
         op = OP_CONVERT_OLD_DB;
     else {
-        warnx ("%s is an invalid operation.", argv[1]);
+        warnx ("%s is an invalid operation.", argv[0]);
 	warnx ("Valid operations are \"load\", \"merge\", "
 	       "\"dump\", \"slave_dump\", \"new_master_key\", "
 	       "and \"convert_old_db\"");
 	return 1;
     }
 
-    file_name = argv[2];
+    file_name = argv[1];
     if (strcmp (file_name, "-") == 0
 	&& op != OP_LOAD
 	&& op != OP_MERGE)
@@ -483,23 +523,18 @@ main(int argc, char **argv)
 	file = fopen (file_name, mode);
     }
     if (file == NULL)
-        err (1, "open %s", argv[2]);
+        err (1, "open %s", argv[1]);
 
     switch (op) {
     case OP_DUMP:
-      if ((dump_db(db_name, file, (void (*)(Principal *)) 0) == EOF)
-	  || (fflush(file) != 0)
-	  || (fsync(fileno(file)) != 0)
-	  || (fclose(file) == EOF))
-	err(1, "%s", file_name);
-      break;
     case OP_SLAVE_DUMP:
-      if ((dump_db(db_name, file, (void (*)(Principal *)) 0) == EOF)
+      if ((dump_db(db_name, file, NULL) == EOF)
 	  || (fflush(file) != 0)
 	  || (fsync(fileno(file)) != 0)
 	  || (fclose(file) == EOF))
 	err(1, "%s", file_name);
-      update_ok_file(file_name);
+      if(op == OP_SLAVE_DUMP)
+	  update_ok_file(file_name);
       break;
     case OP_LOAD:
       load_db (db_name, file);

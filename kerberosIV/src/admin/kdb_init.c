@@ -10,7 +10,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$KTH: kdb_init.c,v 1.25 1999/09/16 20:37:21 assar Exp $");
+RCSID("$KTH: kdb_init.c,v 1.27 2001/08/26 01:40:36 assar Exp $");
 
 enum ap_op {
     NULL_KEY,			/* setup null keys */
@@ -140,8 +140,10 @@ main(int argc, char **argv)
     fprintf(stderr, "Wrote master key to %s\n", MKEYFILE);
 #endif
 
+#ifndef HAVE_OPENSSL
     /* Initialize non shared random sequence */
     des_init_random_number_generator(&master_key);
+#endif
 
     /* Maximum lifetime for changepw.kerberos (kadmin) tickets, 10 minutes */
 #define ADMLIFE (1 + (CLOCK_SKEW/(5*60)))

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1995-1999 Kungliga Tekniska Högskolan
+ * Copyright (c) 1995-2000 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  * 
@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$KTH: verify.c,v 1.20 1999/12/02 16:58:37 joda Exp $");
+RCSID("$KTH: verify.c,v 1.25 2001/06/18 13:11:33 assar Exp $");
 #endif
 #include <unistd.h>
 #include <sys/types.h>
@@ -123,7 +123,11 @@ verify_krb5(struct passwd *pwd,
     krb5_ccache ccache;
     krb5_principal principal;
     
-    krb5_init_context(&context);
+    ret = krb5_init_context(&context);
+    if (ret) {
+	syslog(LOG_AUTH|LOG_DEBUG, "krb5_init_context failed: %d", ret);
+	goto out;
+    }
 
     ret = krb5_parse_name (context, pwd->pw_name, &principal);
     if (ret) {
@@ -175,7 +179,7 @@ verify_krb5(struct passwd *pwd,
 	free (realm);
 	ret = krb5_cc_retrieve_cred(context, ccache, 0, &mcred, &cred);
 	if(ret == 0) {
-	    ret = krb524_convert_creds_kdc(context, ccache, &cred, &c);
+	    ret = krb524_convert_creds_kdc_ccache(context, ccache, &cred, &c);
 	    if(ret)
 		krb5_warn(context, ret, "converting creds");
 	    else {
@@ -193,9 +197,11 @@ verify_krb5(struct passwd *pwd,
     if (!pag_set && k_hasafs()) {
 	k_setpag();
 	pag_set = 1;
+    }
+
+    if (pag_set)
 	krb5_afslog_uid_home(context, ccache, NULL, NULL, 
 			     pwd->pw_uid, pwd->pw_dir);
-    }
 #endif
 out:
     if(ret && !quiet)
@@ -222,8 +228,9 @@ verify_krb4(struct passwd *pwd,
 	    if (!pag_set && k_hasafs()) {
 		k_setpag ();
 		pag_set = 1;
+            }
+            if (pag_set)
 		krb_afslog_uid_home (0, 0, pwd->pw_uid, pwd->pw_dir);
-	    }
 	} else if (!quiet)
 	    printf ("%s\n", krb_get_err_text (ret));
     }
@@ -242,6 +249,12 @@ afs_verify(char *name,
 
     if(pwd == NULL)
 	return 1;
+
+    if (!pag_set && k_hasafs()) {
+        k_setpag();
+        pag_set=1;
+    }
+
     if (ret)
 	ret = unix_verify_user (name, password);
 #ifdef KRB5
@@ -277,12 +290,10 @@ afs_gettktstring (void)
 	}
     }
 #ifdef KRB5
-    if(setenv("KRB5CCNAME",krb5ccname,1) != 0)
-	errx(1, "cannot set KRB5CCNAME");
+    esetenv("KRB5CCNAME",krb5ccname,1);
 #endif
 #ifdef KRB4
-    if(setenv("KRBTKFILE",krbtkfile,1) != 0)
-	errx(1, "cannot set KRBTKFILE");
+    esetenv("KRBTKFILE",krbtkfile,1);
     return krbtkfile;
 #else
     return "";

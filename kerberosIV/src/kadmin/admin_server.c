@@ -30,7 +30,7 @@ or implied warranty.
 
 #include "kadm_locl.h"
 
-RCSID("$KTH: admin_server.c,v 1.49.2.2 2000/10/18 20:24:57 assar Exp $");
+RCSID("$KTH: admin_server.c,v 1.54.2.1 2002/02/01 16:15:49 assar Exp $");
 
 /* Almost all procs and such need this, so it is global */
 admin_params prm;		/* The command line parameters struct */
@@ -272,7 +272,7 @@ static void
 accept_client (int admin_fd)
 {
     int pipe_fd[2];
-    int addrlen;
+    socklen_t addrlen;
     struct sockaddr_in peer;
     pid_t pid;
     int peer_fd;
@@ -291,7 +291,11 @@ accept_client (int admin_fd)
 	    if (nunauth == 0)
 		return;
 
+#ifdef HAVE_RANDOM
+	    victim = random() % nchildren;
+#else
 	    victim = rand() % nchildren;
+#endif
 	    if (children[victim].authenticated == 0) {
 		kill(children[victim].pid, SIGINT);
 		close(children[victim].pipe_fd);
@@ -527,6 +531,7 @@ main(int argc, char **argv)		/* admin_server main routine */
     int errval;
     int c;
     struct in_addr i_addr;
+    int port = 0;
 
     umask(077);		/* Create protected files */
 
@@ -537,7 +542,15 @@ main(int argc, char **argv)		/* admin_server main routine */
 
     memset(krbrlm, 0, sizeof(krbrlm));
 
-    while ((c = getopt(argc, argv, "f:hmnd:a:r:i:")) != -1)
+#if defined(HAVE_SRANDOMDEV)
+    srandomdev();
+#elif defined(HAVE_RANDOM)
+    srandom(time(NULL));
+#else
+    srand (time(NULL));
+#endif
+
+    while ((c = getopt(argc, argv, "f:hmnd:a:r:i:p:")) != -1)
 	switch(c) {
 	case 'f':			/* Syslog file name change */
 	    prm.sysfile = optarg;
@@ -567,9 +580,26 @@ main(int argc, char **argv)		/* admin_server main routine */
 		exit (1);
 	    }
 	    break;
+	case 'p' : {
+	    struct servent *sp;
+
+	    sp = getservbyname(optarg, "tcp");
+	    if (sp != NULL) {
+		port = sp->s_port;
+	    } else {
+		char *end;
+
+		port = htons(strtol(optarg, &end, 0));
+		if (port == 0 && end == optarg) {
+		    fprintf(stderr, "Bad port: %s\n", optarg);
+		    exit (1);
+		}
+	    }
+	    break;
+	}
 	case 'h':			/* get help on using admin_server */
 	default:
-	    errx(1, "Usage: kadmind [-h] [-n] [-m] [-r realm] [-d dbname] [-f filename] [-a acldir] [-i address_to_listen_on]");
+	    errx(1, "Usage: kadmind [-h] [-n] [-m] [-r realm] [-d dbname] [-f filename] [-a acldir] [-i address_to_listen_on] [-p port]");
 	}
 
     if (krbrlm[0] == 0)
@@ -590,8 +620,14 @@ main(int argc, char **argv)		/* admin_server main routine */
 	close_syslog();
 	byebye();
     }
+    if (port == 0)
+	port = k_getportbyname (KADM_SNAME,
+				"tcp",
+				htons(751));	
+
     /* set up the server_parm struct */
-    if ((errval = kadm_ser_init(prm.inter, krbrlm, i_addr))==KADM_SUCCESS) {
+    if ((errval = kadm_ser_init(prm.inter, krbrlm, i_addr,
+				port))==KADM_SUCCESS) {
 	kerb_fini();			/* Close the Kerberos database--
 					   will re-open later */
 	errval = kadm_listen();		/* listen for calls to server from

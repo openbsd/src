@@ -16,7 +16,7 @@
 ************************************************************************/
 /* Author: Wietse Venema <wietse@wzv.win.tue.nl> */
 
-/* $KTH: sysv_default.h,v 1.5 1996/10/27 23:51:14 assar Exp $ */
+/* $KTH: sysv_default.h,v 1.6 2001/06/04 14:08:41 assar Exp $ */
 
 extern char *default_console;
 extern char *default_altsh;

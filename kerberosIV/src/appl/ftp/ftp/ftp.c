@@ -32,7 +32,7 @@
  */
 
 #include "ftp_locl.h"
-RCSID ("$KTH: ftp.c,v 1.60.2.1 2000/06/23 02:45:40 assar Exp $");
+RCSID ("$KTH: ftp.c,v 1.70 2001/09/07 20:28:10 nectar Exp $");
 
 struct sockaddr_storage hisctladdr_ss;
 struct sockaddr *hisctladdr = (struct sockaddr *)&hisctladdr_ss;
@@ -55,62 +55,59 @@ typedef void (*sighand) (int);
 char *
 hookup (const char *host, int port)
 {
-    struct hostent *hp = NULL;
-    int s, len;
     static char hostnamebuf[MaxHostNameLen];
+    struct addrinfo *ai, *a;
+    struct addrinfo hints;
     int error;
-    int af;
-    char **h;
-    int ret;
+    char portstr[NI_MAXSERV];
+    socklen_t len;
+    int s;
 
-#ifdef HAVE_IPV6
-    if (hp == NULL)
-	hp = getipnodebyname (host, AF_INET6, 0, &error);
-#endif
-    if (hp == NULL)
-	hp = getipnodebyname (host, AF_INET, 0, &error);
+    memset (&hints, 0, sizeof(hints));
+    hints.ai_socktype = SOCK_STREAM;
+    hints.ai_protocol = IPPROTO_TCP;
+    hints.ai_flags    = AI_CANONNAME;
 
-    if (hp == NULL) {
-	warnx ("%s: %s", host, hstrerror(error));
+    snprintf (portstr, sizeof(portstr), "%u", ntohs(port));
+
+    error = getaddrinfo (host, portstr, &hints, &ai);
+    if (error) {
+	warnx ("%s: %s", host, gai_strerror(error));
 	code = -1;
 	return NULL;
     }
-    strlcpy (hostnamebuf, hp->h_name, sizeof(hostnamebuf));
+    strlcpy (hostnamebuf, host, sizeof(hostnamebuf));
     hostname = hostnamebuf;
-    af = hisctladdr->sa_family = hp->h_addrtype;
 
-    for (h = hp->h_addr_list;
-	 *h != NULL;
-	 ++h) {
+    for (a = ai; a != NULL; a = a->ai_next) {
+	s = socket (a->ai_family, a->ai_socktype, a->ai_protocol);
+	if (s < 0)
+	    continue;
+
+	if (a->ai_canonname != NULL)
+	    strlcpy (hostnamebuf, a->ai_canonname, sizeof(hostnamebuf));
+
+	memcpy (hisctladdr, a->ai_addr, a->ai_addrlen);
 	
-	s = socket (af, SOCK_STREAM, 0);
-	if (s < 0) {
-	    warn ("socket");
-	    code = -1;
-	    freehostent (hp);
-	    return (0);
-	}
+	error = connect (s, a->ai_addr, a->ai_addrlen);
+	if (error < 0) {
+	    char addrstr[256];
 
-	socket_set_address_and_port (hisctladdr, *h, port);
-
-	ret = connect (s, hisctladdr, socket_sockaddr_size(hisctladdr));
-	if (ret < 0) {
-	    char addr[256];
-
-	    if (inet_ntop (af, socket_get_address(hisctladdr),
-			   addr, sizeof(addr)) == NULL)
-		strlcpy (addr, "unknown address",
-				 sizeof(addr));
-	    warn ("connect %s", addr);
+	    if (getnameinfo (a->ai_addr, a->ai_addrlen,
+			     addrstr, sizeof(addrstr),
+			     NULL, 0, NI_NUMERICHOST) != 0)
+		strlcpy (addrstr, "unknown address", sizeof(addrstr));
+			     
+	    warn ("connect %s", addrstr);
 	    close (s);
 	    continue;
 	}
 	break;
     }
-    freehostent (hp);
-    if (ret < 0) {
+    freeaddrinfo (ai);
+    if (error < 0) {
+	warnx ("failed to contact %s", host);
 	code = -1;
-	close (s);
 	return NULL;
     }
 
@@ -203,7 +200,9 @@ login (char *host)
     }
     strlcpy(username, user, sizeof(username));
     n = command("USER %s", user);
-    if (n == CONTINUE) {
+    if (n == COMPLETE) 
+       n = command("PASS dummy"); /* DK: Compatibility with gssftp daemon */
+    else if(n == CONTINUE) {
 	if (pass == NULL) {
 	    char prompt[128];
 	    if(myname && 
@@ -532,9 +531,9 @@ empty (fd_set * mask, int sec)
 {
     struct timeval t;
 
-    t.tv_sec = (long) sec;
+    t.tv_sec = sec;
     t.tv_usec = 0;
-    return (select (32, mask, NULL, NULL, &t));
+    return (select (FD_SETSIZE, mask, NULL, NULL, &t));
 }
 
 jmp_buf sendabort;
@@ -624,7 +623,7 @@ sendrequest (char *cmd, char *local, char *remote, char *lmode, int printnames)
     int c, d;
     FILE *fin, *dout = 0;
     int (*closefunc) (FILE *);
-    RETSIGTYPE (*oldintr)(), (*oldintp)();
+    RETSIGTYPE (*oldintr)(int), (*oldintp)(int);
     long bytes = 0, hashbytes = HASHBYTES;
     char *rmode = "w";
 
@@ -1242,7 +1241,7 @@ static int
 active_mode (void)
 {
     int tmpno = 0;
-    int len;
+    socklen_t len;
     int result;
 
 noport:
@@ -1368,7 +1367,8 @@ dataconn (const char *lmode)
 {
     struct sockaddr_storage from_ss;
     struct sockaddr *from = (struct sockaddr *)&from_ss;
-    int s, fromlen = sizeof (from_ss);
+    socklen_t fromlen = sizeof(from_ss);
+    int s;
 
     if (passivemode)
 	return (fdopen (data, lmode));
@@ -1628,6 +1628,8 @@ abort:
     pswitch (!proxy);
     if (cpend) {
 	FD_ZERO (&mask);
+	if (fileno(cin) >= FD_SETSIZE)
+	    errx (1, "fd too large");
 	FD_SET (fileno (cin), &mask);
 	if ((nfnd = empty (&mask, 10)) <= 0) {
 	    if (nfnd < 0) {
@@ -1656,6 +1658,8 @@ reset (int argc, char **argv)
 
     FD_ZERO (&mask);
     while (nfnd > 0) {
+	if (fileno (cin) >= FD_SETSIZE)
+	    errx (1, "fd too large");
 	FD_SET (fileno (cin), &mask);
 	if ((nfnd = empty (&mask, 0)) < 0) {
 	    warn ("reset");
@@ -1729,8 +1733,12 @@ abort_remote (FILE * din)
     fprintf (cout, "%cABOR\r\n", DM);
     fflush (cout);
     FD_ZERO (&mask);
+    if (fileno (cin) >= FD_SETSIZE)
+	errx (1, "fd too large");
     FD_SET (fileno (cin), &mask);
     if (din) {
+    if (fileno (din) >= FD_SETSIZE)
+	errx (1, "fd too large");
 	FD_SET (fileno (din), &mask);
     }
     if ((nfnd = empty (&mask, 10)) <= 0) {

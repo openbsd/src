@@ -10,7 +10,7 @@
 
 #include "adm_locl.h"
 
-RCSID("$KTH: kstash.c,v 1.10 1997/03/30 17:35:37 assar Exp $");
+RCSID("$KTH: kstash.c,v 1.11 2001/02/20 23:07:49 assar Exp $");
 
 /* change this later, but krblib_dbm needs it for now */
 

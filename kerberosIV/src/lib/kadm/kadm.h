@@ -1,5 +1,5 @@
 /*
- * $KTH: kadm.h,v 1.17 1998/10/23 14:25:55 joda Exp $
+ * $KTH: kadm.h,v 1.18 2001/08/26 01:46:12 assar Exp $
  *
  * Copyright 1988 by the Massachusetts Institute of Technology.
  *
@@ -24,7 +24,7 @@
 typedef struct {
   struct sockaddr_in admin_addr;
   struct sockaddr_in my_addr;
-  int my_addr_len;
+  socklen_t my_addr_len;
   int admin_fd;			/* file descriptor for link to admin server */
   char sname[ANAME_SZ];		/* the service name */
   char sinst[INST_SZ];		/* the services instance */

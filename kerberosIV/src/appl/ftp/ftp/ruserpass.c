@@ -32,7 +32,7 @@
  */
 
 #include "ftp_locl.h"
-RCSID("$KTH: ruserpass.c,v 1.16 1999/09/16 20:37:31 assar Exp $");
+RCSID("$KTH: ruserpass.c,v 1.19 2000/01/08 07:45:11 assar Exp $");
 
 static	int token (void);
 static	FILE *cfile;
@@ -71,10 +71,10 @@ static struct toktab {
 static char *
 guess_domain (char *hostname, size_t sz)
 {
-    struct hostent *he;
+    struct addrinfo *ai, *a;
+    struct addrinfo hints;
+    int error;
     char *dot;
-    char *a;
-    char **aliases;
 
     if (gethostname (hostname, sz) < 0) {
 	strlcpy (hostname, "", sz);
@@ -84,23 +84,24 @@ guess_domain (char *hostname, size_t sz)
     if (dot != NULL)
 	return dot + 1;
 
-    he = gethostbyname (hostname);
-    if (he == NULL)
+    memset (&hints, 0, sizeof(hints));
+    hints.ai_flags = AI_CANONNAME;
+
+    error = getaddrinfo (hostname, NULL, &hints, &ai);
+    if (error)
 	return hostname;
 
-    dot = strchr (he->h_name, '.');
-    if (dot != NULL) {
-	strlcpy (hostname, he->h_name, sz);
-	return dot + 1;
-    }
-    for (aliases = he->h_aliases; (a = *aliases) != NULL; ++aliases) {
-	dot = strchr (a, '.');
-	if (dot != NULL) {
-	    strlcpy (hostname, a, sz);
-	    return dot + 1;
+    for (a = ai; a != NULL; a = a->ai_next)
+	if (a->ai_canonname != NULL) {
+	    strlcpy (hostname, ai->ai_canonname, sz);
+	    break;
 	}
-    }
-    return hostname;
+    freeaddrinfo (ai);
+    dot = strchr (hostname, '.');
+    if (dot != NULL)
+	return dot + 1;
+    else
+	return hostname;
 }
 
 int
