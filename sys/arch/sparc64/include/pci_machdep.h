@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.5 2002/04/03 16:54:19 jason Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.6 2002/06/08 18:06:02 jason Exp $	*/
 /* $NetBSD: pci_machdep.h,v 1.7 2001/07/20 00:07:14 eeh Exp $ */
 
 /*
@@ -82,6 +82,8 @@ int		pci_dev_funcorder(pci_chipset_tag_t, int, int, char *);
 #endif
 int		pci_bus_maxdevs(pci_chipset_tag_t, int);
 pcitag_t	pci_make_tag(pci_chipset_tag_t, int, int, int);
+void		pci_conf_setfunc(pcireg_t (*rd)(pci_chipset_tag_t, pcitag_t, int),
+    void (*wr)(pci_chipset_tag_t, pcitag_t, int, pcireg_t));
 pcireg_t	pci_conf_read(pci_chipset_tag_t, pcitag_t, int);
 void		pci_conf_write(pci_chipset_tag_t, pcitag_t, int,
 				    pcireg_t);
