@@ -36,12 +36,11 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: signal.c,v 1.1.1.2 1998/07/21 13:20:22 peter Exp $";
+static const char rcsid[] = "$Id: signal.c,v 1.2 1998/07/21 19:48:04 peter Exp $";
 #endif
 
 #include <pthread.h>
 #include <signal.h>
-#include <config.h>
 
 /* This will force init.o to get dragged in; if you've got support for
    C++ initialization, that'll cause pthread_init to be called at

@@ -43,7 +43,7 @@ static char sccsid[] = "@(#)ttyname.c	5.10 (Berkeley) 5/6/91";
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
-#include "config.h"
+#include <sys/__path.h>
 
 static pthread_mutex_t ttyname_lock = PTHREAD_MUTEX_INITIALIZER;
 static pthread_key_t ttyname_key;

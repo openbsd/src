@@ -8,17 +8,11 @@
 #		-Initial cut for pthreads.
 #
 
-CC = ../pgcc -notinstalled
-CPP = gcc -E
-srctop = /dr1/my/masters/mysql/mit-pthreads
-srcdir = /dr1/my/masters/mysql/mit-pthreads/tests
-VPATH = /dr1/my/masters/mysql/mit-pthreads/tests
 CDEBUGFLAGS = -g -O2 -Werror
 
-INCLUDES= -I../include -I.. -I$(srctop)/include
+INCLUDES= -I../arch/${MACHINE} -I../include -I.. -I$(srctop)/include
 CFLAGS = $(CDEBUGFLAGS) $(INCLUDES) $(ADDL_CFLAGS) -DSRCDIR=\"$(srcdir)\"
-LIBS = -lm -lgcc -L../obj/ -lpthread
-#LIBS = -static 
+LIBS = -static -lm -lgcc -L../obj.${MACHINE}/ -lpthread
 
 # This list used to include test_select, but that test doesn't terminate.
 TESTS = test_create test_pthread_join test_switch test_sleep test_readdir \

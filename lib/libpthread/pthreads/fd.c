@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: fd.c,v 1.1.1.2 1998/07/21 13:19:53 peter Exp $";
+static const char rcsid[] = "$Id: fd.c,v 1.2 1998/07/21 19:48:00 peter Exp $";
 #endif
 
 #include <pthread.h>
@@ -49,7 +49,6 @@ static const char rcsid[] = "$Id: fd.c,v 1.1.1.2 1998/07/21 13:19:53 peter Exp $
 #include <sys/stat.h>
 #include <sys/uio.h>
 #include <sys/ioctl.h>
-#include "config.h"
 #ifdef HAVE_SYS_FILIO_H
 #include <sys/filio.h>				/* For ioctl */
 #endif

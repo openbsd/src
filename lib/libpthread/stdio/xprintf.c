@@ -6,8 +6,8 @@
 */
 /*
 ** NAME:    $Source: /home/cvs/src/lib/libpthread/stdio/Attic/xprintf.c,v $
-** VERSION: $Revision: 1.1.1.1 $
-** DATE:    $Date: 1998/07/21 13:22:19 $
+** VERSION: $Revision: 1.2 $
+** DATE:    $Date: 1998/07/21 19:48:06 $
 **
 ** ONELINER:   A replacement for formatted printing programs.
 **
@@ -725,7 +725,7 @@ int sprintf(char *buf, const char *fmt, ...){
   rc = vxprintf(sout,&arg,fmt,ap);
   va_end(ap);
 }
-int vsprintf(char *buf,const char *fmt,va_list ap){
+int vsprintf(char *buf,const char *fmt,pthread_va_list ap){
   struct s_strargument arg;
   arg.next = buf;
   arg.last = 0;
@@ -744,7 +744,7 @@ int snprintf(char *buf, size_t n, const char *fmt, ...){
   rc = vxprintf(sout,&arg,fmt,ap);
   va_end(ap);
 }  
-int vsnprintf(char *buf, size_t n, const char *fmt, va_list ap){
+int vsnprintf(char *buf, size_t n, const char *fmt, pthread_va_list ap){
   struct s_strargument arg;
   arg.next = buf;
   arg.last = &buf[n-1];
@@ -825,7 +825,7 @@ char *mprintf(const char *zFormat, ...){
 ** The name is changed to TclVMPrintf() to conform with Tcl naming
 ** conventions.
 */
-char *vmprintf(const char *zFormat,va_list ap){
+char *vmprintf(const char *zFormat,pthread_va_list ap){
   struct sgMprintf sMprintf;
   char zBuf[200];
   sMprintf.nChar = 0;
@@ -866,7 +866,7 @@ int fprintf(FILE *pOut, const char *zFormat, ...){
   va_end(ap);
   return retc;
 }
-int vfprintf(FILE *pOut, const char *zFormat, va_list ap){
+int vfprintf(FILE *pOut, const char *zFormat, pthread_va_list ap){
   return vxprintf(fout,pOut,zFormat,ap);
 }
 int printf(const char *zFormat, ...){
@@ -878,6 +878,6 @@ int printf(const char *zFormat, ...){
   va_end(ap);
   return retc;
 }
-int vprintf(const char *zFormat, va_list ap){
+int vprintf(const char *zFormat, pthread_va_list ap){
   return vxprintf(fout,stdout,zFormat,ap);
 }

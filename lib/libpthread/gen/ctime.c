@@ -46,7 +46,6 @@ static char sccsid[] = "@(#)ctime.c	5.26 (Berkeley) 2/23/91";
 */
 
 /*LINTLIBRARY*/
-#include "config.h"
 #include <pthread.h>
 #include <sys/param.h>
 #include <fcntl.h>

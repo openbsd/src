@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$Id: fd_kern.c,v 1.1.1.2 1998/07/21 13:19:55 peter Exp $";
+static const char rcsid[] = "$Id: fd_kern.c,v 1.2 1998/07/21 19:48:02 peter Exp $";
 #endif
 
 #include <pthread.h>
@@ -56,8 +56,6 @@ static const char rcsid[] = "$Id: fd_kern.c,v 1.1.1.2 1998/07/21 13:19:55 peter 
 #include <errno.h>
 #include <pthread/posix.h>
 #include <string.h>
-
-#include "config.h"
 
 #if defined (HAVE_SYSCALL_SENDTO) && !defined (HAVE_SYSCALL_SEND)
 

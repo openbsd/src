@@ -11,28 +11,33 @@ SRCS+= cleanup.c cond.c fd.c fd_kern.c fd_pipe.c file.c globals.c malloc.c \
 
 OBJS+= syscalls.o
 
+AVAILABLE_SYSCALLS =  open write read creat close fcntl lseek dup pipe fchmod fchown execve fstat lstat link unlink chdir chown chmod stat rename ioctl fstatfs sigsuspend sigaction sigprocmask getdents waitsys poll putmsg getmsg pgrpsys exit readv writev fork
+
+SYSCALL_TEMPLATE = ${.CURDIR}/arch/${MACHINE}/syscall-template.S
+SYSCALL_S = ${.CURDIR}/arch/${MACHINE}/syscall.S
+
 .if !defined(NOPIC)
 SOBJS+= syscalls.so
-SYSCALL_PIC_COMPILE= $(CC) $(CFLAGS) -DSYSCALL_NAME=$$syscall -DPIC -c ${.CURDIR}/syscall-template.S -o ${.OBJDIR}/syscalls/S$$syscall.so
+SYSCALL_PIC_COMPILE= $(CC) $(CFLAGS) -DSYSCALL_NAME=$$syscall -DPIC -c ${SYSCALL_TEMPLATE} -o ${.OBJDIR}/syscalls/S$$syscall.so
 .else
 SYSCALL_PIC_COMPILE= true
 .endif
 
 .if !defined(NOPROFILE)
 POBJS+= syscalls.po
-SYSCALL_PROF_COMPILE= $(CC) $(CFLAGS) -DSYSCALL_NAME=$$syscall -pg -c ${.CURDIR}/syscall-template.S -o ${.OBJDIR}/syscalls/S$$syscall.po
+SYSCALL_PROF_COMPILE= $(CC) $(CFLAGS) -DSYSCALL_NAME=$$syscall -pg -c ${SYSCALL_TEMPLATE} -o ${.OBJDIR}/syscalls/S$$syscall.po
 .else
 SYSCALL_PROF_COMPILE= true
 .endif
 
-syscalls.o syscalls.so syscalls.po : syscall-template.S
+syscalls.o syscalls.so syscalls.po : ${SYSCALL_TEMPLATE}
 	-rm -rf ${.OBJDIR}/syscalls
 	mkdir ${.OBJDIR}/syscalls
 	for syscall in $(AVAILABLE_SYSCALLS) ; do \
 	  case " $(SYSCALL_EXCEPTIONS) " in \
 	    *" "$$syscall" "*) ;; \
 	    *)	echo $$syscall ; \
-		$(CC) $(CFLAGS) -DSYSCALL_NAME=$$syscall -c ${.CURDIR}/syscall-template.S -o ${.OBJDIR}/syscalls/S$$syscall.o ; \
+		$(CC) $(CFLAGS) -DSYSCALL_NAME=$$syscall -c ${SYSCALL_TEMPLATE} -o ${.OBJDIR}/syscalls/S$$syscall.o ; \
 		$(SYSCALL_PIC_COMPILE) ; \
 		$(SYSCALL_PROF_COMPILE) ;; \
 	  esac ; \
@@ -48,13 +53,13 @@ syscalls.o syscalls.so syscalls.po : syscall-template.S
 	rm -r ${.OBJDIR}/syscalls
 
 syscall.o: syscall.S
-	cpp ${CPPFLAGS} ${.CURDIR}/syscall.S > syscall.i
+	cpp ${CPPFLAGS} ${SYSCALL_S} > syscall.i
 	as syscall.i 
 	rm syscall.i
 	mv a.out syscall.o
 
 syscall.po: syscall.S
-	cpp ${CPPFLAGS} ${.CURDIR}/syscall.S > syscall.i
+	cpp ${CPPFLAGS} ${SYSCALL_S} > syscall.i
 	as syscall.i 
 	rm syscall.i
 	mv a.out syscall.po
