@@ -1,4 +1,4 @@
-/*	$OpenBSD: worm.c,v 1.12 2001/09/03 17:45:43 pjanzen Exp $	*/
+/*	$OpenBSD: worm.c,v 1.13 2001/09/03 18:04:08 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)worm.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: worm.c,v 1.12 2001/09/03 17:45:43 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: worm.c,v 1.13 2001/09/03 18:04:08 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -287,6 +287,7 @@ process(ch)
 		case CNTRL('Z'): suspend(0); return;
 		case CNTRL('C'): crash(); return;
 		case CNTRL('D'): crash(); return;
+		case ERR: leave(0); return;
 		default: return;
 	}
 	lastch = ch;
