@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_group.c,v 1.5 1999/04/05 20:59:37 niklas Exp $	*/
-/*	$EOM: math_group.c,v 1.15 1999/04/05 20:18:04 niklas Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.6 1999/04/19 21:22:49 niklas Exp $	*/
+/*	$EOM: math_group.c,v 1.16 1999/04/17 23:20:38 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -48,18 +48,18 @@
 #include "math_ec2n.h"
 #include "math_group.h"
 
-/* We do not want to export these definitions */
+/* We do not want to export these definitions.  */
 int modp_getlen (struct group *);
 void modp_getraw (struct group *, mpz_ptr, u_int8_t *);
-void modp_setraw (struct group *, mpz_ptr, u_int8_t *, int);
-void modp_setrandom (struct group *, mpz_ptr);
-void modp_operation (struct group *, mpz_ptr, mpz_ptr, mpz_ptr);
+int modp_setraw (struct group *, mpz_ptr, u_int8_t *, int);
+int modp_setrandom (struct group *, mpz_ptr);
+int modp_operation (struct group *, mpz_ptr, mpz_ptr, mpz_ptr);
 
 int ec2n_getlen (struct group *);
 void ec2n_getraw (struct group *, ec2np_ptr, u_int8_t *);
-void ec2n_setraw (struct group *, ec2np_ptr, u_int8_t *, int);
-void ec2n_setrandom (struct group *, ec2np_ptr);
-void ec2n_operation (struct group *, ec2np_ptr, ec2np_ptr, ec2np_ptr);
+int ec2n_setraw (struct group *, ec2np_ptr, u_int8_t *, int);
+int ec2n_setrandom (struct group *, ec2np_ptr);
+int ec2n_operation (struct group *, ec2np_ptr, ec2np_ptr, ec2np_ptr);
 
 struct ec2n_group {
   ec2np_t gen;				/* Generator */
@@ -73,7 +73,7 @@ struct modp_group {
   mpz_t a, b, c, d;
 };
 
-/* 
+/*
  * This module provides access to the operations on the specified group
  * and is absolutly free of any cryptographic devices. This is math :-).
  */
@@ -120,59 +120,58 @@ struct modp_dscr oakley_modp[] =
 
 struct ec2n_dscr oakley_ec2n[] = {
   { OAKLEY_GRP_3, 76,	/* This group is also considered insecure (P1363) */
-    "0x0800000000000000000000004000000000000001", 
+    "0x0800000000000000000000004000000000000001",
     "0x7b",
     "0x00",
     "0x7338f" },
-  { OAKLEY_GRP_4, 91, 
+  { OAKLEY_GRP_4, 91,
     "0x020000000000000000000000000000200000000000000001",
     "0x18",
     "0x00",
     "0x1ee9" },
 };
 
+/* XXX I want to get rid of the casting here.  */
 struct group groups[] = {
   {
-    MODP, OAKLEY_GRP_1, 0, &oakley_modp[0], NULL, NULL, NULL, NULL, NULL,
+    MODP, OAKLEY_GRP_1, 0, &oakley_modp[0], 0, 0, 0, 0, 0,
     (int (*) (struct group *))modp_getlen,
     (void (*) (struct group *, void *, u_int8_t *))modp_getraw,
-    (void (*) (struct group *, void *, u_int8_t *, int))modp_setraw,
-    (void (*) (struct group *, void *))modp_setrandom,
-    (void (*) (struct group *, void *, void *, void *))modp_operation
+    (int (*) (struct group *, void *, u_int8_t *, int))modp_setraw,
+    (int (*) (struct group *, void *))modp_setrandom,
+    (int (*) (struct group *, void *, void *, void *))modp_operation
   },
   {
-    MODP, OAKLEY_GRP_2, 0, &oakley_modp[1], NULL, NULL, NULL, NULL, NULL,
+    MODP, OAKLEY_GRP_2, 0, &oakley_modp[1], 0, 0, 0, 0, 0,
     (int (*) (struct group *))modp_getlen,
     (void (*) (struct group *, void *, u_int8_t *))modp_getraw,
-    (void (*) (struct group *, void *, u_int8_t *, int))modp_setraw,
-    (void (*) (struct group *, void *))modp_setrandom,
-    (void (*) (struct group *, void *, void *, void *))modp_operation
+    (int (*) (struct group *, void *, u_int8_t *, int))modp_setraw,
+    (int (*) (struct group *, void *))modp_setrandom,
+    (int (*) (struct group *, void *, void *, void *))modp_operation
   },
   {
-    EC2N, OAKLEY_GRP_3, 0, &oakley_ec2n[0], NULL, NULL, NULL, NULL, NULL,
+    EC2N, OAKLEY_GRP_3, 0, &oakley_ec2n[0], 0, 0, 0, 0, 0,
     (int (*) (struct group *))ec2n_getlen,
     (void (*) (struct group *, void *, u_int8_t *))ec2n_getraw,
-    (void (*) (struct group *, void *, u_int8_t *, int))ec2n_setraw,
-    (void (*) (struct group *, void *))ec2n_setrandom,
-    (void (*) (struct group *, void *, void *, void *))ec2n_operation
+    (int (*) (struct group *, void *, u_int8_t *, int))ec2n_setraw,
+    (int (*) (struct group *, void *))ec2n_setrandom,
+    (int (*) (struct group *, void *, void *, void *))ec2n_operation
   },
   {
-    EC2N, OAKLEY_GRP_4, 0, &oakley_ec2n[1], NULL, NULL, NULL, NULL, NULL,
+    EC2N, OAKLEY_GRP_4, 0, &oakley_ec2n[1], 0, 0, 0, 0, 0,
     (int (*) (struct group *))ec2n_getlen,
     (void (*) (struct group *, void *, u_int8_t *))ec2n_getraw,
-    (void (*) (struct group *, void *, u_int8_t *, int))ec2n_setraw,
-    (void (*) (struct group *, void *))ec2n_setrandom,
-    (void (*) (struct group *, void *, void *, void *))ec2n_operation
+    (int (*) (struct group *, void *, u_int8_t *, int))ec2n_setraw,
+    (int (*) (struct group *, void *))ec2n_setrandom,
+    (int (*) (struct group *, void *, void *, void *))ec2n_operation
   }
 };
-
 
 /*
  * Initalize the group structure for later use,
  * this is done by converting the values given in the describtion
  * and converting them to their native representation.
- */ 
-
+ */
 void
 group_init (void)
 {
@@ -190,7 +189,7 @@ group_init (void)
 	break;
 	
       default:
-	log_print ("Unknown group type %d at index %d in group_init().", 
+	log_print ("Unknown group type %d at index %d in group_init().",
 		   groups[i].type, i);
 	break;
       }
@@ -287,7 +286,7 @@ modp_free (struct group *old)
   struct modp_group *grp = old->group;
 
   mpz_clear (grp->p);
-  mpz_clear (grp->gen); 
+  mpz_clear (grp->gen);
   mpz_clear (grp->a);
   mpz_clear (grp->b);
   mpz_clear (grp->c);
@@ -299,11 +298,11 @@ void
 modp_init (struct group *group)
 {
   struct modp_dscr *dscr = (struct modp_dscr *)group->group;
-
   struct modp_group *grp;
 
-  if ((grp = malloc (sizeof (struct modp_group))) == NULL)
-    log_fatal ("modp_init: out of memory");
+  grp = malloc (sizeof *grp);
+  if (!grp)
+    log_fatal ("modp_init: malloc (%d) failed", sizeof *grp);
 
   group->bits = dscr->bits;
 
@@ -328,9 +327,10 @@ ec2n_clone (struct group *new, struct group *clone)
 {
   struct ec2n_group *new_grp, *clone_grp = clone->group;
 
-  if ((new_grp = malloc (sizeof (struct ec2n_group))) == NULL)
+  new_grp = malloc (sizeof *new_grp);
+  if (!new_grp)
     {
-      log_print ("ec2n_clone: out of memory");
+      log_error ("ec2n_clone: malloc (%d) failed", sizeof *new_grp);
       free (new);
       return 0;
     }
@@ -339,14 +339,15 @@ ec2n_clone (struct group *new, struct group *clone)
 
   new->group = new_grp;
   ec2ng_init (new_grp->grp);
-  ec2ng_set (new_grp->grp, clone_grp->grp);
-
-  ec2np_init (new_grp->gen); 
-  ec2np_set (new_grp->gen, clone_grp->gen);
-
+  ec2np_init (new_grp->gen);
   ec2np_init (new_grp->a);
   ec2np_init (new_grp->b);
   ec2np_init (new_grp->c);
+
+  if (ec2ng_set (new_grp->grp, clone_grp->grp))
+    goto fail;
+  if (ec2np_set (new_grp->gen, clone_grp->gen))
+    goto fail;
 
   new->gen = new_grp->gen;
   new->a = new_grp->a;
@@ -355,6 +356,16 @@ ec2n_clone (struct group *new, struct group *clone)
   new->d = ((ec2np_ptr)new->a)->x;
 
   return new;
+
+ fail:
+  ec2ng_clear (new_grp->grp);
+  ec2np_clear (new_grp->gen);
+  ec2np_clear (new_grp->a);
+  ec2np_clear (new_grp->b);
+  ec2np_clear (new_grp->c);
+  free (new_grp);
+  free (new);
+  return 0;
 }
 
 void
@@ -363,7 +374,7 @@ ec2n_free (struct group *old)
   struct ec2n_group *grp = old->group;
 
   ec2ng_clear (grp->grp);
-  ec2np_clear (grp->gen); 
+  ec2np_clear (grp->gen);
   ec2np_clear (grp->a);
   ec2np_clear (grp->b);
   ec2np_clear (grp->c);
@@ -375,31 +386,36 @@ void
 ec2n_init (struct group *group)
 {
   struct ec2n_dscr *dscr = (struct ec2n_dscr *)group->group;
-
   struct ec2n_group *grp;
 
-  if ((grp = malloc (sizeof (struct ec2n_group))) == NULL)
-    log_fatal ("ec2n_init: out of memory");
+  grp = malloc (sizeof *grp);
+  if (!grp)
+    log_fatal ("ec2n_init: malloc (%d) failed", sizeof *grp);
 
   group->bits = dscr->bits;
 
   ec2ng_init (grp->grp);
-  ec2ng_set_p_str (grp->grp, dscr->polynomial);
-  grp->grp->p->bits = b2n_sigbit (grp->grp->p);
-  ec2ng_set_a_str (grp->grp, dscr->a);
-  ec2ng_set_b_str (grp->grp, dscr->b);
-
   ec2np_init (grp->gen);
-  ec2np_set_x_str (grp->gen, dscr->gen_x);
-  ec2np_find_y (grp->gen, grp->grp);
+  ec2np_init (grp->a);
+  ec2np_init (grp->b);
+  ec2np_init (grp->c);
+
+  if (ec2ng_set_p_str (grp->grp, dscr->polynomial))
+    goto fail;
+  grp->grp->p->bits = b2n_sigbit (grp->grp->p);
+  if (ec2ng_set_a_str (grp->grp, dscr->a))
+    goto fail;
+  if (ec2ng_set_b_str (grp->grp, dscr->b))
+    goto fail;
+
+  if (ec2np_set_x_str (grp->gen, dscr->gen_x))
+    goto fail;
+  if (ec2np_find_y (grp->gen, grp->grp))
+    goto fail;
 
   /* Sanity check */
   if (!ec2np_ison (grp->gen, grp->grp))
     log_fatal ("ec2n_init: generator is not on curve");
-
-  ec2np_init (grp->a);
-  ec2np_init (grp->b);
-  ec2np_init (grp->c);
 
   group->gen = grp->gen;
   group->a = grp->a;
@@ -408,9 +424,13 @@ ec2n_init (struct group *group)
   group->d = ((ec2np_ptr)group->a)->x;
 
   group->group = grp;
+  return;
+
+ fail:
+  log_fatal ("ec2n_init: general failure");
 }
 
-int 
+int
 modp_getlen (struct group *group)
 {
   struct modp_group *grp = (struct modp_group *)group->group;
@@ -418,19 +438,20 @@ modp_getlen (struct group *group)
   return mpz_sizeinoctets (grp->p);
 }
 
-void 
+void
 modp_getraw (struct group *grp, mpz_ptr v, u_int8_t *d)
 {
   mpz_getraw (d, v, grp->getlen (grp));
 }
 
-void 
+int
 modp_setraw (struct group *grp, mpz_ptr d, u_int8_t *s, int l)
 {
   mpz_setraw (d, s, l);
+  return 0;
 }
 
-void 
+int
 modp_setrandom (struct group *grp, mpz_ptr d)
 {
   int i, l = grp->getlen (grp);
@@ -447,16 +468,19 @@ modp_setrandom (struct group *grp, mpz_ptr d)
       mpz_add_ui (d, d, tmp & 0xFF);
       tmp >>= 8;
     }
+  return 0;
 }
 
-void 
+int
 modp_operation (struct group *group, mpz_ptr d, mpz_ptr a, mpz_ptr e)
 {
   struct modp_group *grp = (struct modp_group *)group->group;
+
   mpz_powm (d, a, e, grp->p);
+  return 0;
 }
 
-int 
+int
 ec2n_getlen (struct group *group)
 {
   struct ec2n_group *grp = (struct ec2n_group *)group->group;
@@ -465,7 +489,7 @@ ec2n_getlen (struct group *group)
   return (7 + bits) >> 3;
 }
 
-void 
+void
 ec2n_getraw (struct group *group, ec2np_ptr xo, u_int8_t *e)
 {
   struct ec2n_group *grp = (struct ec2n_group *)group->group;
@@ -477,19 +501,19 @@ ec2n_getraw (struct group *group, ec2np_ptr xo, u_int8_t *e)
   chunks = (CHUNK_MASK + bytes) >> CHUNK_SHIFTS;
   bytes = ((7 + (bytes & CHUNK_MASK)) >> 3);
 
-  for (i = chunks-1; i >= 0; i--)
+  for (i = chunks - 1; i >= 0; i--)
     {
       tmp = (i >= x->chunks ? 0 : x->limp[i]);
       for (j = (i == chunks - 1 ? bytes : CHUNK_BYTES) - 1; j >= 0; j--)
 	{
-	  e[j] = tmp & 0xFF;
+	  e[j] = tmp & 0xff;
 	  tmp >>= 8;
 	}
       e += (i == chunks - 1 ? bytes : CHUNK_BYTES);
     }
 }
 
-void 
+int
 ec2n_setraw (struct group *grp, ec2np_ptr out, u_int8_t *s, int l)
 {
   int len, bytes, i, j;
@@ -497,7 +521,8 @@ ec2n_setraw (struct group *grp, ec2np_ptr out, u_int8_t *s, int l)
   CHUNK_TYPE tmp;
 
   len = (CHUNK_BYTES - 1 + l) / CHUNK_BYTES;
-  b2n_resize (outx, len);
+  if (b2n_resize (outx, len))
+    return -1;
 
   bytes = ((l - 1) % CHUNK_BYTES) + 1;
 
@@ -511,14 +536,16 @@ ec2n_setraw (struct group *grp, ec2np_ptr out, u_int8_t *s, int l)
 	}
       outx->limp[i] = tmp;
     }
+  return 0;
 }
 
-void 
+int
 ec2n_setrandom (struct group *group, ec2np_ptr x)
 {
   b2n_ptr d = x->x;
   struct ec2n_group *grp = (struct ec2n_group *)group->group;
-  b2n_random (d, b2n_sigbit (grp->grp->p) - 1);
+
+  return b2n_random (d, b2n_sigbit (grp->grp->p) - 1);
 }
 
 /*
@@ -528,14 +555,15 @@ ec2n_setrandom (struct group *group, ec2np_ptr x)
  * to supply the variable 'a' with the chunks of the Y cooridnate
  * set to zero.
  */
-void 
+int
 ec2n_operation (struct group *grp, ec2np_ptr d, ec2np_ptr a, ec2np_ptr e)
 {
   b2n_ptr ex = e->x;
   struct ec2n_group *group = (struct ec2n_group *)grp->group;
 
   if (a->y->chunks == 0)
-    ec2np_find_y (a, group->grp);
+    if (ec2np_find_y (a, group->grp))
+      return -1;
 
-  ec2np_mul (d, a, ex, group->grp);
+  return ec2np_mul (d, a, ex, group->grp);
 }

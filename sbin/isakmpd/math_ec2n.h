@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_ec2n.h,v 1.3 1998/11/17 11:10:16 niklas Exp $	*/
-/*	$EOM: math_ec2n.h,v 1.3 1998/07/17 16:32:16 provos Exp $	*/
+/*	$OpenBSD: math_ec2n.h,v 1.4 1999/04/19 21:22:49 niklas Exp $	*/
+/*	$EOM: math_ec2n.h,v 1.4 1999/04/17 23:20:37 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -47,19 +47,28 @@ typedef struct {
 typedef _ec2n_point *ec2np_ptr;
 typedef _ec2n_point ec2np_t[1];
 
-#define EC2NP_SWAP(k,n) {int _i_; _i_ = (k)->inf; (k)->inf = (n)->inf; \
- (n)->inf = _i_; B2N_SWAP ((k)->x, (n)->x); B2N_SWAP ((k)->y, (n)->y);}
+#define EC2NP_SWAP(k,n) do \
+  { \
+    int _i_; \
+\
+    _i_ = (k)->inf; \
+    (k)->inf = (n)->inf; \
+    (n)->inf = _i_; \
+    B2N_SWAP ((k)->x, (n)->x); \
+    B2N_SWAP ((k)->y, (n)->y); \
+  } \
+while (0)
 
 void ec2np_init (ec2np_ptr);
 void ec2np_clear (ec2np_ptr);
-void ec2np_set (ec2np_ptr, ec2np_ptr);
+int ec2np_set (ec2np_ptr, ec2np_ptr);
 
 #define ec2np_set_x_ui(n, y) b2n_set_ui ((n)->x, y)
 #define ec2np_set_y_ui(n, x) b2n_set_ui ((n)->y, x)
 #define ec2np_set_x_str(n, y) b2n_set_str ((n)->x, y)
 #define ec2np_set_y_str(n, x) b2n_set_str ((n)->y, x)
 
-/* Definitions for the group to which the points to belong to */
+/* Definitions for the group to which the points to belong to.  */
 
 typedef struct {
   b2n_t a, b, p;
@@ -70,7 +79,7 @@ typedef _ec2n_group ec2ng_t[1];
 
 void ec2ng_init (ec2ng_ptr);
 void ec2ng_clear (ec2ng_ptr);
-void ec2ng_set (ec2ng_ptr, ec2ng_ptr);
+int ec2ng_set (ec2ng_ptr, ec2ng_ptr);
 
 #define ec2ng_set_a_ui(n, x) b2n_set_ui ((n)->a, x)
 #define ec2ng_set_b_ui(n, x) b2n_set_ui ((n)->b, x)
@@ -79,12 +88,12 @@ void ec2ng_set (ec2ng_ptr, ec2ng_ptr);
 #define ec2ng_set_b_str(n, x) b2n_set_str ((n)->b, x)
 #define ec2ng_set_p_str(n, x) b2n_set_str ((n)->p, x)
 
-/* Functions for computing on the elliptic group */
+/* Functions for computing on the elliptic group.  */
 
-void ec2np_right (b2n_ptr n, ec2np_ptr, ec2ng_ptr);
-int ec2np_ison (ec2np_ptr, ec2ng_ptr);
+int ec2np_add (ec2np_ptr, ec2np_ptr, ec2np_ptr, ec2ng_ptr);
 int ec2np_find_y (ec2np_ptr, ec2ng_ptr);
-void ec2np_add (ec2np_ptr, ec2np_ptr, ec2np_ptr, ec2ng_ptr);
-void ec2np_mul (ec2np_ptr, ec2np_ptr, b2n_ptr, ec2ng_ptr);
+int ec2np_ison (ec2np_ptr, ec2ng_ptr);
+int ec2np_mul (ec2np_ptr, ec2np_ptr, b2n_ptr, ec2ng_ptr);
+int ec2np_right (b2n_ptr n, ec2np_ptr, ec2ng_ptr);
 
 #endif /* _MATH_2N_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509test.c,v 1.5 1999/03/02 15:27:36 niklas Exp $	*/
-/*	$EOM: x509test.c,v 1.3 1998/08/21 14:33:12 provos Exp $	*/
+/*	$OpenBSD: x509test.c,v 1.6 1999/04/19 21:22:49 niklas Exp $	*/
+/*	$EOM: x509test.c,v 1.4 1999/04/17 23:20:45 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -74,7 +74,7 @@ open_file (char *name)
   if (fd == -1)
     log_fatal ("open (\"%s\", O_RDONLY)", name);
   addr = mmap (0, file_sz, PROT_READ | PROT_WRITE, MAP_FILE | MAP_PRIVATE,
-		    fd, 0);
+	       fd, 0);
   if (!addr)
     log_fatal ("mmap (0, %d, PROT_READ | PROT_WRITE, MAP_FILE | MAP_PRIVATE,"
 	       "%d, 0)", file_sz, fd);
@@ -128,10 +128,10 @@ main (void)
   LINECOL (p2, p); cert.end = strdup (p2);
   munmap (addr, file_sz);
 
-  /* XXX - just put any IP number in there - XXX */
+  /* XXX Just put any IP number in there.  */
   cert.extension.type = strdup (ASN_ID_SUBJECT_ALT_NAME);
   cert.extension.val = p = malloc (8);
-  /* XXX - this could also be encoded as norm_type, but time is lacking */
+  /* XXX This could also be encoded as norm_type, but time is lacking.  */
   p[0] = 0x30; p[1] = 0x06; p[2] = 0x87; p[3] = 0x04;
   memset (p + 4, 0, 4);
 

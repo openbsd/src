@@ -1,5 +1,5 @@
-/*	$OpenBSD: math_ec2n.c,v 1.5 1999/04/05 21:01:41 niklas Exp $	*/
-/*	$EOM: math_ec2n.c,v 1.7 1999/04/05 08:04:58 niklas Exp $	*/
+/*	$OpenBSD: math_ec2n.c,v 1.6 1999/04/19 21:22:49 niklas Exp $	*/
+/*	$EOM: math_ec2n.c,v 1.8 1999/04/17 23:20:36 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -58,15 +58,16 @@ ec2np_clear (ec2np_ptr n)
   b2n_clear (n->y);
 }
 
-void
+int
 ec2np_set (ec2np_ptr d, ec2np_ptr n)
 {
   if (d == n)
-    return;
+    return 0;
 
   d->inf = n->inf;
-  b2n_set (d->x, n->x);
-  b2n_set (d->y, n->y);
+  if (b2n_set (d->x, n->x))
+    return -1;
+  return b2n_set (d->y, n->y);
 }
 
 /* Group */
@@ -87,36 +88,52 @@ ec2ng_clear (ec2ng_ptr n)
   b2n_clear (n->p);
 }
 
-void
+int
 ec2ng_set (ec2ng_ptr d, ec2ng_ptr n)
 {
-  b2n_set (d->a, n->a);
-  b2n_set (d->b, n->b);
-  b2n_set (d->p, n->p);
+  if (b2n_set (d->a, n->a))
+    return -1;
+  if (b2n_set (d->b, n->b))
+    return -1;
+  return b2n_set (d->p, n->p);
 }
 
 /* Arithmetic functions */
 
-void
+int
 ec2np_right (b2n_ptr n, ec2np_ptr p, ec2ng_ptr g)
 {
   b2n_t temp;
 
   b2n_init (temp);
+
   /* First calc x**3 + ax**2 + b */
-  b2n_square (n, p->x);
-  b2n_mod (n, n, g->p);
+  if (b2n_square (n, p->x))
+    goto fail;
+  if (b2n_mod (n, n, g->p))
+    goto fail;
 
-  b2n_mul (temp, g->a, n);	/* a*x**2 */
-  b2n_mod (temp, temp, g->p);
+  if (b2n_mul (temp, g->a, n))	/* a*x**2 */
+    goto fail;
+  if (b2n_mod (temp, temp, g->p))
+    goto fail;
 
-  b2n_mul (n, n, p->x);		/* x**3 */
-  b2n_mod (n, n, g->p);
+  if (b2n_mul (n, n, p->x))	/* x**3 */
+    goto fail;
+  if (b2n_mod (n, n, g->p))
+    goto fail;
 
-  b2n_add (n, n, temp);
-  b2n_add (n, n, g->b);
+  if (b2n_add (n, n, temp))
+    goto fail;
+  if (b2n_add (n, n, g->b))
+    goto fail;
 
   b2n_clear (temp);
+  return 0;
+
+ fail:
+  b2n_clear (temp);
+  return -1;
 }
 
 int
@@ -134,16 +151,22 @@ ec2np_ison (ec2np_ptr p, ec2ng_ptr g)
   b2n_init (temp);
 
   /* First calc x**3 + ax**2 + b */
-  ec2np_right (x, p, g);
+  if (ec2np_right (x, p, g))
+    return -1;
 
   /* Now calc y**2 + xy */
-  b2n_square (y, p->y);
-  b2n_mod (y, y, g->p);
+  if (b2n_square (y, p->y))
+    return -1;
+  if (b2n_mod (y, y, g->p))
+    return -1;
 
-  b2n_mul (temp, p->y, p->x);
-  b2n_mod (temp, temp, g->p);
+  if (b2n_mul (temp, p->y, p->x))
+    return -1;
+  if (b2n_mod (temp, temp, g->p))
+    return -1;
 
-  b2n_add (y, y, temp);
+  if (b2n_add (y, y, temp))
+    return -1;
 
   res = !b2n_cmp (x, y);
 
@@ -160,25 +183,35 @@ ec2np_find_y (ec2np_ptr p, ec2ng_ptr g)
   b2n_t right;
 
   b2n_init (right);
-  ec2np_right (right, p, g);		/* Right sight of equation */
-  b2n_mul_inv (p->y, p->x, g->p);
 
-  b2n_square (p->y, p->y);
-  b2n_mod (p->y, p->y, g->p);
+  if (ec2np_right (right, p, g))		/* Right sight of equation */
+    return -1;
+  if (b2n_mul_inv (p->y, p->x, g->p))
+    return -1;
 
-  b2n_mul (right, right, p->y);		/* x^-2 * right */
-  b2n_mod (right, right, g->p);
+  if (b2n_square (p->y, p->y))
+    return -1;
+  if (b2n_mod (p->y, p->y, g->p))
+    return -1;
 
-  b2n_sqrt (p->y, right, g->p);		/* Find root */
-  b2n_mul (p->y, p->y, p->x);
-  b2n_mod (p->y, p->y, g->p);
+  if (b2n_mul (right, right, p->y))		/* x^-2 * right */
+    return -1;
+  if (b2n_mod (right, right, g->p))
+    return -1;
+
+  if (b2n_sqrt (p->y, right, g->p))		/* Find root */
+    return -1;
+  if (b2n_mul (p->y, p->y, p->x))
+    return -1;
+  if (b2n_mod (p->y, p->y, g->p))
+    return -1;
 
   b2n_clear (right);
 
-  return 1;
+  return 0;
 }
 
-void
+int
 ec2np_add (ec2np_ptr d, ec2np_ptr a, ec2np_ptr b, ec2ng_ptr g)
 {
   b2n_t lambda, temp;
@@ -186,22 +219,16 @@ ec2np_add (ec2np_ptr d, ec2np_ptr a, ec2np_ptr b, ec2ng_ptr g)
 
   /* Check for Neutral Element */
   if (b->inf)
-    {
-      ec2np_set (d, a);
-      return;
-    }
+    return ec2np_set (d, a);
   if (a->inf)
-    {
-      ec2np_set (d, b);
-      return;
-    }
+    return ec2np_set (d, b);
 
   if (!b2n_cmp (a->x, b->x) && (b2n_cmp (a->y, b->y) || !b2n_cmp_null (a->x)))
     {
       d->inf = 1;
-      b2n_set_null (d->x);
-      b2n_set_null (d->y);
-      return;
+      if (b2n_set_null (d->x))
+	return -1;
+      return b2n_set_null (d->y);
     }
 
   b2n_init (lambda);
@@ -210,45 +237,72 @@ ec2np_add (ec2np_ptr d, ec2np_ptr a, ec2np_ptr b, ec2ng_ptr g)
 
   if (b2n_cmp (a->x, b->x))
     {
-      b2n_add (temp, a->x, b->x);
-      b2n_add (lambda, a->y, b->y);
-      b2n_div_mod (lambda, lambda, temp, g->p);
+      if (b2n_add (temp, a->x, b->x))
+	goto fail;
+      if (b2n_add (lambda, a->y, b->y))
+	goto fail;
+      if (b2n_div_mod (lambda, lambda, temp, g->p))
+	goto fail;
 
-      b2n_square (pn->x, lambda);
-      b2n_mod (pn->x, pn->x, g->p);
+      if (b2n_square (pn->x, lambda))
+	goto fail;
+      if (b2n_mod (pn->x, pn->x, g->p))
+	goto fail;
 
-      b2n_add (pn->x, pn->x, lambda);
-      b2n_add (pn->x, pn->x, g->a);
-      b2n_add (pn->x, pn->x, a->x);
-      b2n_add (pn->x, pn->x, b->x);
+      if (b2n_add (pn->x, pn->x, lambda))
+	goto fail;
+      if (b2n_add (pn->x, pn->x, g->a))
+	goto fail;
+      if (b2n_add (pn->x, pn->x, a->x))
+	goto fail;
+      if (b2n_add (pn->x, pn->x, b->x))
+	goto fail;
     }
   else
     {
-      b2n_div_mod (lambda, b->y, b->x, g->p);
-      b2n_add (lambda, lambda, b->x);
+      if (b2n_div_mod (lambda, b->y, b->x, g->p))
+	goto fail;
+      if (b2n_add (lambda, lambda, b->x))
+	goto fail;
 
-      b2n_square (pn->x, lambda);
-      b2n_mod (pn->x, pn->x, g->p);
-      b2n_add (pn->x, pn->x, lambda);
-      b2n_add (pn->x, pn->x, g->a);
+      if (b2n_square (pn->x, lambda))
+	goto fail;
+      if (b2n_mod (pn->x, pn->x, g->p))
+	goto fail;
+      if (b2n_add (pn->x, pn->x, lambda))
+	goto fail;
+      if (b2n_add (pn->x, pn->x, g->a))
+	goto fail;
     }
 
-  b2n_add (pn->y, b->x, pn->x);
+  if (b2n_add (pn->y, b->x, pn->x))
+    goto fail;
 
-  b2n_mul (pn->y, pn->y, lambda);
-  b2n_mod (pn->y, pn->y, g->p);
+  if (b2n_mul (pn->y, pn->y, lambda))
+    goto fail;
+  if (b2n_mod (pn->y, pn->y, g->p))
+    goto fail;
 
-  b2n_add (pn->y, pn->y, pn->x);
-  b2n_add (pn->y, pn->y, b->y);
+  if (b2n_add (pn->y, pn->y, pn->x))
+    goto fail;
+  if (b2n_add (pn->y, pn->y, b->y))
+    goto fail;
 
   EC2NP_SWAP (d, pn);
 
   ec2np_clear (pn);
   b2n_clear (lambda);
   b2n_clear (temp);
+  return 0;
+
+ fail:
+  ec2np_clear (pn);
+  b2n_clear (lambda);
+  b2n_clear (temp);
+  return -1;
 }
 
-void
+int
 ec2np_mul (ec2np_ptr d, ec2np_ptr a, b2n_ptr e, ec2ng_ptr g)
 {
   int i, j, bits, start;
@@ -258,25 +312,31 @@ ec2np_mul (ec2np_ptr d, ec2np_ptr a, b2n_ptr e, ec2ng_ptr g)
   if (!b2n_cmp_null (e))
     {
       d->inf = 1;
-      b2n_set_null (d->x);
-      b2n_set_null (d->y);
-      return;
+      if (b2n_set_null (d->x))
+	return -1;
+      return b2n_set_null (d->y);
     }
 
   b2n_init (h);
   b2n_init (k);
-
   ec2np_init (q);
   ec2np_init (mina);
-  ec2np_set (q, a);
 
-  /* Create the point -a */
-  ec2np_set (mina, a);
-  b2n_add (mina->y, mina->y, mina->x);
+  if (ec2np_set (q, a))
+    goto fail;
 
-  b2n_set (k, e);
-  b2n_3mul (h, k);
-  b2n_resize (k, h->chunks);
+  /* Create the point -a.  */
+  if (ec2np_set (mina, a))
+    goto fail;
+  if (b2n_add (mina->y, mina->y, mina->x))
+    goto fail;
+
+  if (b2n_set (k, e))
+    goto fail;
+  if (b2n_3mul (h, k))
+    goto fail;
+  if (b2n_resize (k, h->chunks))
+    goto fail;
 
   /* 
    * This is low level but can not be avoided, since we have to do single
@@ -298,23 +358,34 @@ ec2np_mul (ec2np_ptr d, ec2np_ptr a, b2n_ptr e, ec2ng_ptr g)
    * This is the addition, subtraction method which is faster because
    * we avoid one out of three additions (mean).
    */
-
   for (i = start; i >= 0; i--)
     for (j = (i == start ? bits : CHUNK_BITS) - 1; j >= 0; j--)
       if (i > 0 || j > 0)
 	{
-	  ec2np_add (q, q, q, g);
+	  if (ec2np_add (q, q, q, g))
+	    goto fail;
 	  if ((h->limp[i] & b2n_mask[j]) && !(k->limp[i] & b2n_mask[j]))
-	    ec2np_add (q, q, a, g);
+	    {
+	      if (ec2np_add (q, q, a, g))
+		goto fail;
+	    }
 	  else if (!(h->limp[i] & b2n_mask[j]) && (k->limp[i] & b2n_mask[j]))
-	    ec2np_add (q, q, mina, g);
+	    if (ec2np_add (q, q, mina, g))
+	      goto fail;
 	}
 
   EC2NP_SWAP (d, q);
 
   b2n_clear (k);
   b2n_clear (h);
-
   ec2np_clear (q);
   ec2np_clear (mina);
+  return 0;
+
+ fail:
+  b2n_clear (k);
+  b2n_clear (h);
+  ec2np_clear (q);
+  ec2np_clear (mina);
+  return -1;
 }

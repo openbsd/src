@@ -1,5 +1,5 @@
-/*	$OpenBSD: crypto.c,v 1.5 1999/04/05 21:00:27 niklas Exp $	*/
-/*	$EOM: crypto.c,v 1.24 1999/04/05 07:57:03 niklas Exp $	*/
+/*	$OpenBSD: crypto.c,v 1.6 1999/04/19 21:22:49 niklas Exp $	*/
+/*	$EOM: crypto.c,v 1.25 1999/04/17 23:20:21 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -59,22 +59,22 @@ void cast1_decrypt (struct keystate *, u_int8_t *, u_int16_t);
 
 struct crypto_xf transforms[] = {
   {
-    DES_CBC, "Data Encryption Standard (CBC-Mode)", 8, 8, BLOCKSIZE, NULL, 
+    DES_CBC, "Data Encryption Standard (CBC-Mode)", 8, 8, BLOCKSIZE, 0,
     des1_init,
     des1_encrypt, des1_decrypt
   },
   {
-    TRIPLEDES_CBC, "Triple-DES (CBC-Mode)", 24, 24, BLOCKSIZE, NULL,
+    TRIPLEDES_CBC, "Triple-DES (CBC-Mode)", 24, 24, BLOCKSIZE, 0,
     des3_init,
     des3_encrypt, des3_decrypt
   },
   {
-    BLOWFISH_CBC, "Blowfish (CBC-Mode)", 12, 56, BLOCKSIZE, NULL,
+    BLOWFISH_CBC, "Blowfish (CBC-Mode)", 12, 56, BLOCKSIZE, 0,
     blf_init,
     blf_encrypt, blf_decrypt
   },
   {
-    CAST_CBC, "CAST (CBC-Mode)", 12, 16, BLOCKSIZE, NULL,
+    CAST_CBC, "CAST (CBC-Mode)", 12, 16, BLOCKSIZE, 0,
     cast_init,
     cast1_encrypt, cast1_decrypt
   },

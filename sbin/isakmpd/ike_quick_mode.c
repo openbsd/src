@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.12 1999/04/06 17:08:53 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.81 1999/04/06 14:11:35 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.13 1999/04/19 21:22:49 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.82 1999/04/17 23:20:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -1277,11 +1277,17 @@ gen_g_xy (struct message *msg)
   ie->g_xy = malloc (ie->g_x_len);
   if (!ie->g_xy)
     {
-      /* XXX How to log and notify peer?  */
+      /* XXX How to notify peer?  */
+      log_error ("gen_g_xy: malloc (%d) failed", ie->g_x_len);
       return;
     }
-  dh_create_shared (ie->group, ie->g_xy,
-		    exchange->initiator ? ie->g_xr : ie->g_xi);
+  if (dh_create_shared (ie->group, ie->g_xy,
+			exchange->initiator ? ie->g_xr : ie->g_xi))
+    {
+      /* XXX How to notify peer?  */
+      log_print ("gen_g_xy: dh_create_shared failed");
+      return;
+    }
   log_debug_buf (LOG_MISC, 80, "gen_g_xy: g^xy", ie->g_xy, ie->g_x_len);
 }
 
