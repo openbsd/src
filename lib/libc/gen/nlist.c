@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: nlist.c,v 1.24 1998/01/20 22:10:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nlist.c,v 1.25 1998/08/21 19:25:36 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -69,34 +69,35 @@ __aout_fdnlist(fd, list)
 	register off_t stroff, symoff;
 	register u_long symsize;
 	register int nent, cc;
-	size_t strsize;
+	int strsize;
 	struct nlist nbuf[1024];
 	struct exec exec;
-	struct stat st;
 
 	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
 	    read(fd, &exec, sizeof(exec)) != sizeof(exec) ||
-	    N_BADMAG(exec) || fstat(fd, &st) < 0)
+	    N_BADMAG(exec) || exec.a_syms == NULL)
 		return (-1);
 
 	symoff = N_SYMOFF(exec);
 	symsize = exec.a_syms;
 	stroff = symoff + symsize;
 
-	/* Check for files too large to mmap. */
-	if (st.st_size - stroff > SIZE_T_MAX) {
-		errno = EFBIG;
+	/* Read in the size of the string table. */
+	if (read(fd, (char *)&strsize, sizeof(strsize)) != sizeof(strsize))
 		return (-1);
-	}
+
 	/*
 	 * Map string table into our address space.  This gives us
 	 * an easy way to randomly access all the strings, without
 	 * making the memory allocation permanent as with malloc/free
-	 * (i.e., munmap will return it to the system).
+	 * (i.e., munmap will return it to the system).  We try to
+	 * get a clean snapshot via MAP_COPY but that does not work
+	 * for cdevs (like /dev/ksyms) so we try without if that fails.
 	 */
-	strsize = st.st_size - stroff;
-	strtab = mmap(NULL, (size_t)strsize, PROT_READ, MAP_COPY|MAP_FILE,
-	    fd, stroff);
+	if ((strtab = mmap(NULL, (size_t)strsize, PROT_READ, MAP_COPY|MAP_FILE,
+	    fd, stroff)) == MAP_FAILED)
+		strtab = mmap(NULL, (size_t)strsize, PROT_READ, 0, fd,
+		    stroff);
 	if (strtab == MAP_FAILED)
 		return (-1);
 	/*
