@@ -1,4 +1,5 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1997/09/21 11:45:52 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 2001/01/29 01:19:21 deraadt Exp $
 
 # modify to taste
+DESTDIR=
 BINDIR?= /usr/bin
