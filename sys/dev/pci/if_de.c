@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_de.c,v 1.28 1998/01/07 11:03:26 deraadt Exp $	*/
+/*	$OpenBSD: if_de.c,v 1.29 1998/02/22 21:26:57 niklas Exp $	*/
 /*	$NetBSD: if_de.c,v 1.45 1997/06/09 00:34:18 thorpej Exp $	*/
 
 /*-
@@ -3378,11 +3378,12 @@ tulip_rx_intr(
 	    me->m_len = total_len - last_offset;
 	    eh = *mtod(ms, struct ether_header *);
 #if NBPFILTER > 0
-	    if (sc->tulip_bpf != NULL)
+	    if (sc->tulip_bpf != NULL) {
 		if (me == ms)
 		    TULIP_BPF_TAP(sc, mtod(ms, caddr_t), total_len);
 		else
 		    TULIP_BPF_MTAP(sc, ms);
+	    }
 #endif
 	    sc->tulip_flags |= TULIP_RXACT;
 	    if ((sc->tulip_flags & (TULIP_PROMISC|TULIP_HASHONLY))
