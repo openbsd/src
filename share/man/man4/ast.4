@@ -1,4 +1,5 @@
-.\"	$OpenBSD: hsq.4,v 1.1 1999/11/28 12:30:20 downsj Exp $
+.\"	$OpenBSD: ast.4,v 1.1 2000/05/20 17:19:51 deraadt Exp $
+.\"	$NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -37,25 +38,27 @@
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"	from: Id: com.4,v 1.1 1993/08/06 11:19:07 cgd Exp
 .\"
-.Dd November 28, 1999
-.Dt HSQ 4 i386
+.Dd March 30, 1994
+.Dt AST 4 i386
 .Os
 .Sh NAME
-.Nm hsq
+.Nm ast
 .Nd
 multiplexing serial communications interface
 .Sh SYNOPSIS
-.Cd "hsq0 at isa? port 0x140 irq 10"
-.Cd "com* at hsq? slave ?"
+.Cd "ast0 at isa? port 0x1a0 irq 5"
+.Cd "ast1 at isa? port 0x2a0 irq 6"
+.Cd "com* at ast? slave ?"
 .Sh DESCRIPTION
 The
-.Nm hsq
+.Nm ast
 driver provides support for boards that multiplex together up to four
 .Tn EIA
 .Tn RS-232C
 .Pf ( Tn CCITT
 .Tn V.28 )
-communications interfaces.
+communications interfaces.  Apparently the original master of hardware
+using this multiplexing protocol was AST.
 .Pp
 Each
 .Nm
@@ -76,6 +79,31 @@ specification for the
 device is used to compute the base addresses for the
 .Nm com
 subdevices and the port for the interrupt multiplexing register.
+.Pp
+On a real AST card, the jumpers are as follows:
+.Bl -tag -width xxxxx
+.It SW1-1
+Turn ON for irq 2.  Default is OFF.
+.It SW1-2
+Turn ON for irq 3.  Default is OFF.
+.It SW1-3
+Turn ON for irq 4.  Default is OFF.
+.It SW2-1
+Turn ON for irq 5.  This is ON for the first card, OFF otherwise.
+.It SW2-2
+Turn ON for irq 6.  This is ON for the second card, OFF otherwise.
+.It SW2-3
+Turn ON for irq 7.  Default is OFF.
+.It SW3-1
+`Compatible mode'.  The ast driver needs extended mode, so leave this OFF.
+.It SW3-2
+IO Address.  In extended mode, this should be OFF for the first card at
+0x1a0-0x1a7 and ON for the second card at 0x2a0-0x2a7.
+.It SW3-3
+Interrupt sharing.  Default is OFF.
+.It SW3-4
+Reserved, must be OFF.
+.El
 .Sh FILES
 .Bl -tag -width Pa
 .It Pa /dev/tty0?
@@ -85,6 +113,5 @@ subdevices and the port for the interrupt multiplexing register.
 .Sh HISTORY
 The
 .Nm
-driver was written by Denis A. Doroshenko, based on the
-.Xr ast 4
-driver.
+driver was written by Roland McGrath and placed into the public
+domain.

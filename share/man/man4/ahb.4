@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aha.4,v 1.8 1999/06/05 13:18:35 aaron Exp $
+.\"	$OpenBSD: ahb.4,v 1.1 2000/05/20 17:19:51 deraadt Exp $
 .\"
 .\" Copyright (c) 1994 James A. Jegers
 .\" All rights reserved.
@@ -23,33 +23,18 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd November 29, 1994
-.Dt AHA 4 i386
+.Dt AHB 4 i386
 .Os
 .Sh NAME
-.Nm aha
-.Nd Adaptec 154x SCSI adapter driver
+.Nm ahb
+.Nd Adaptec 1742 SCSI adapter driver
 .Sh SYNOPSIS
-.Cd "aha0 at isa? port 0x330 irq ? drq ?"
-.Cd "scsibus* at aha?"
+.Cd "ahb0 at eisa? slot ? irq ?"
+.Cd "scsibus* at ahb?"
 .Sh DESCRIPTION
 The
 .Nm
-driver provides support for the following SCSI adapters:
-.Pp
-.Bl -tag -width -offset indent -compact
-.It Adaptec AHA-1540
-.It Adaptec AHA-154xA
-.It Adaptec AHA-154xB
-.It Adaptec AHA-1542C
-.It Adaptec AHA-1542CF
-.It Adaptec AHA-1542CP
-.It Adaptec AHA-1640
-.It Buslogic BT-54x
-.It Tekram DC-300B
-.It Tekram DC-320E
-.El
-This driver uses bounce buffers if the machine has more than 16
-megabytes of memory.
+driver provides support for the Adaptec AHA-1742 EISA SCSI adapter.
 .Sh SEE ALSO
 .Xr cd 4 ,
 .Xr ch 4 ,

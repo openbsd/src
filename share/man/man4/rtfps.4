@@ -1,5 +1,4 @@
-.\"	$OpenBSD: ast.4,v 1.5 1999/07/09 13:35:43 aaron Exp $
-.\"	$NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp $
+.\"	$OpenBSD: rtfps.4,v 1.1 2000/05/20 17:19:51 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -38,27 +37,27 @@
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
 .\"	from: Id: com.4,v 1.1 1993/08/06 11:19:07 cgd Exp
 .\"
-.Dd March 30, 1994
-.Dt AST 4 i386
+.Dd August 7, 1994
+.Dt RTFPS 4 i386
 .Os
 .Sh NAME
-.Nm ast
+.Nm rtfps
 .Nd
 multiplexing serial communications interface
 .Sh SYNOPSIS
-.Cd "ast0 at isa? port 0x1a0 irq 5"
-.Cd "ast1 at isa? port 0x2a0 irq 6"
-.Cd "com* at ast? slave ?"
+.Cd "rtfps0 at isa? port 0x1230 irq 10"
+.Cd "com* at rtfps0 slave 0"
 .Sh DESCRIPTION
 The
-.Nm ast
-driver provides support for boards that multiplex together up to four
-.Tn EIA
+.Nm rtfps
+driver provides support for IBM RT PC boards that multiplex together up to four
+.Rn EIA
 .Tn RS-232C
 .Pf ( Tn CCITT
 .Tn V.28 )
-communications interfaces.  Apparently the original master of hardware
-using this multiplexing protocol was AST.
+or
+.Tn RS-422A
+communications interfaces.
 .Pp
 Each
 .Nm
@@ -68,42 +67,14 @@ devices.  The kernel configuration specifies these
 .Nm com
 devices as slave devices of the
 .Nm
-device, as shown in the synopsis.  The slave ID given for each
-.Nm com
-device determines which bit in the interrupt multiplexing register is
-tested to find interrupts for that device.
+device, as shown in the synopsis.
 The
 .Tn port
 specification for the
 .Nm
 device is used to compute the base addresses for the
 .Nm com
-subdevices and the port for the interrupt multiplexing register.
-.Pp
-On a real AST card, the jumpers are as follows:
-.Bl -tag -width xxxxx
-.It SW1-1
-Turn ON for irq 2.  Default is OFF.
-.It SW1-2
-Turn ON for irq 3.  Default is OFF.
-.It SW1-3
-Turn ON for irq 4.  Default is OFF.
-.It SW2-1
-Turn ON for irq 5.  This is ON for the first card, OFF otherwise.
-.It SW2-2
-Turn ON for irq 6.  This is ON for the second card, OFF otherwise.
-.It SW2-3
-Turn ON for irq 7.  Default is OFF.
-.It SW3-1
-`Compatible mode'.  The ast driver needs extended mode, so leave this OFF.
-.It SW3-2
-IO Address.  In extended mode, this should be OFF for the first card at
-0x1a0-0x1a7 and ON for the second card at 0x2a0-0x2a7.
-.It SW3-3
-Interrupt sharing.  Default is OFF.
-.It SW3-4
-Reserved, must be OFF.
-.El
+subdevices.
 .Sh FILES
 .Bl -tag -width Pa
 .It Pa /dev/tty0?
@@ -113,5 +84,17 @@ Reserved, must be OFF.
 .Sh HISTORY
 The
 .Nm
-driver was written by Roland McGrath and placed into the public
-domain.
+driver was written by Charles Hannum, based on the
+.Nm ast
+driver.
+.Sh BUGS
+The
+.Nm
+driver is unlikely to work on non-EISA and non-PCI machines.  The ISA
+bus only asserts 10 I/O address lines, and this is not enough.
+.Pp
+Even on EISA and PCI machines, some address conflicts have been observed.
+On one machine, the second port always conflicted with something (though
+it's not clear what) and caused strange results.  Disabling the second
+port in the kernel config allowed the other three ports to function
+correctly.

@@ -1,5 +1,4 @@
-.\"	$OpenBSD: com.4,v 1.7 1999/11/28 12:29:00 downsj Exp $
-.\"	$NetBSD: com.4,v 1.5 1996/03/16 00:07:08 thorpej Exp $
+.\"	$OpenBSD: hsq.4,v 1.1 2000/05/20 17:19:51 deraadt Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
 .\" All rights reserved.
@@ -36,85 +35,56 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)dca.4	5.2 (Berkeley) 3/27/91
+.\"	from: Id: com.4,v 1.1 1993/08/06 11:19:07 cgd Exp
 .\"
-.Dd July 12, 1998
-.Dt COM 4 i386
+.Dd November 28, 1999
+.Dt HSQ 4 i386
 .Os
 .Sh NAME
-.Nm com
+.Nm hsq
 .Nd
-serial communications interface
+multiplexing serial communications interface
 .Sh SYNOPSIS
-.Cd "com0 at isa? port" \&"IO_COM1\&" irq 4
-.Cd "com1 at isa? port" \&"IO_COM2\&" irq 3
-.Pp
-.Cd "pccom0 at isa? port" \&"IO_COM1\&" irq 4
-.Cd "pccom1 at isa? port" \&"IO_COM2\&" irq 3
-.Cd "pccom* at isapnp?"
+.Cd "hsq0 at isa? port 0x140 irq 10"
+.Cd "com* at hsq? slave ?"
 .Sh DESCRIPTION
 The
-.Nm com
-and
-.Nm pccom
-drivers provide support for NS8250-, NS16450-, NS16550-, ST16650-, and
-TI16750-based
+.Nm hsq
+driver provides support for boards that multiplex together up to four
 .Tn EIA
 .Tn RS-232C
 .Pf ( Tn CCITT
 .Tn V.28 )
 communications interfaces.
-The
-.Nm pccom
-driver also supports the XR16850 UART.
 .Pp
-The NS8250 and NS16450 have single
-character buffers, the NS16550 has a 16 character buffer, while
-the ST16650 has a 32 character buffer, and the TI16750 has a 64 character
-buffer.  The XR16850 has a 128 character buffer.
-.Pp
-The
+Each
+.Nm
+device is the master device for up to four
 .Nm com
-and
-.Nm pccom
-drivers are mutually exclusive; both may not be present in the same system at
-the same time.  Attempting to compile such a system will fail.
-.Pp
-Input and output for each line may set to one of following baud rates;
-50, 75, 110, 134.5, 150, 300, 600, 1200, 1800, 2400, 4800, 9600,
-19200, 38400, 57600, or 115200, or any other baud rate which is a factor
-of 115200.
+devices.  The kernel configuration specifies these
+.Nm com
+devices as slave devices of the
+.Nm
+device, as shown in the synopsis.  The slave ID given for each
+.Nm com
+device determines which bit in the interrupt multiplexing register is
+tested to find interrupts for that device.
+The
+.Tn port
+specification for the
+.Nm
+device is used to compute the base addresses for the
+.Nm com
+subdevices and the port for the interrupt multiplexing register.
 .Sh FILES
 .Bl -tag -width Pa
-.It Pa /dev/tty00
-.It Pa /dev/tty01
-.It Pa /dev/cua00
-.It Pa /dev/cua01
-.El
-.Sh DIAGNOSTICS
-.Bl -diag
-.It com%d: %d silo overflows
-The input
-.Dq silo
-has overflowed and incoming data has been lost.
-.It com%d: weird interrupt: iir=%x
-The device has generated an unexpected interrupt
-with the code listed.
+.It Pa /dev/tty0?
 .El
 .Sh SEE ALSO
-.Xr ast 4 ,
-.Xr rtfps 4 ,
-.Xr tty 4
+.Xr com 4
 .Sh HISTORY
 The
 .Nm
-driver was originally derived from the
-.Nm HP9000/300
-.Nm dca
-driver and is
-.Ud
-.Sh BUGS
-Data loss is possible on busy systems with unbuffered UARTs at high speed.
-.Pp
-The name of this driver and the constants which define the locations
-of the various serial ports are holdovers from
-.Nm DOS .
+driver was written by Denis A. Doroshenko, based on the
+.Xr ast 4
+driver.
