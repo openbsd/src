@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhu.c,v 1.2 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: dhu.c,v 1.3 2002/02/15 20:45:30 nordin Exp $	*/
 /*	$NetBSD: dhu.c,v 1.17 2000/01/24 02:40:28 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -381,7 +381,7 @@ dhuopen(dev, flag, mode, p)
 	s = spltty();
 	DHU_WRITE_BYTE(DHU_UBA_CSR, DHU_CSR_RXIE | line);
 	sc->sc_dhu[line].dhu_modem = DHU_READ_WORD(DHU_UBA_STAT);
-	(void) splx(s);
+	splx(s);
 
 	tp = sc->sc_dhu[line].dhu_tty;
 
@@ -413,7 +413,7 @@ dhuopen(dev, flag, mode, p)
 		if (error)
 			break;
 	}
-	(void) splx(s);
+	splx(s);
 	if (error)
 		return (error);
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
@@ -583,7 +583,7 @@ dhustop(tp, flag)
 		if (!(tp->t_state & TS_TTSTOP))
 			tp->t_state |= TS_FLUSH;
 	}
-	(void) splx(s);
+	splx(s);
 }
 
 static void
@@ -645,7 +645,7 @@ dhustart(tp)
 		    DHU_READ_WORD(DHU_UBA_TBUFAD2) | DHU_TBUFAD2_DMA_START);
 	}
 out:
-	(void) splx(s);
+	splx(s);
 	return;
 }
 
@@ -736,7 +736,7 @@ dhuparam(tp, t)
 
 	DHU_WRITE_WORD(DHU_UBA_LNCTRL, lnctrl);
 
-	(void) splx(s);
+	splx(s);
 	return (0);
 }
 
@@ -816,7 +816,7 @@ dhumctl(sc, line, bits, how)
 		break;
 
 	case DMGET:
-		(void) splx(s);
+		splx(s);
 		return (mbits);
 	}
 
@@ -837,6 +837,6 @@ dhumctl(sc, line, bits, how)
 
 	DHU_WRITE_WORD(DHU_UBA_LNCTRL, lnctrl);
 
-	(void) splx(s);
+	splx(s);
 	return (mbits);
 }

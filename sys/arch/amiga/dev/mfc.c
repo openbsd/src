@@ -1,4 +1,4 @@
-/*	$OpenBSD: mfc.c,v 1.10 1997/01/16 09:25:01 niklas Exp $ */
+/*	$OpenBSD: mfc.c,v 1.11 2002/02/15 20:45:30 nordin Exp $ */
 /*	$NetBSD: mfc.c,v 1.18 1996/12/23 09:10:23 veego Exp $ */
 
 /*
@@ -937,7 +937,7 @@ mfcsmctl(dev, bits, how)
 		ub = ~sc->sc_regs->du_ip;
 		break;
 	}
-	(void)splx(s);
+	splx(s);
 
 	/* XXXX should keep DTR & RTS states in softc? */
 	bits = TIOCM_DTR | TIOCM_RTS;

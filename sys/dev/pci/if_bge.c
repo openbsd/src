@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.5 2002/01/11 01:31:21 nordin Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.6 2002/02/15 20:45:31 nordin Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2529,7 +2529,7 @@ bge_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }

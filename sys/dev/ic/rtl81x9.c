@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.12 2002/01/08 05:38:53 fgsch Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.13 2002/02/15 20:45:31 nordin Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -1028,7 +1028,7 @@ void rl_init(xsc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	(void)splx(s);
+	splx(s);
 
 	timeout_set(&sc->sc_tick_tmo, rl_tick, sc);
 	timeout_add(&sc->sc_tick_tmo, hz);
@@ -1132,7 +1132,7 @@ int rl_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }

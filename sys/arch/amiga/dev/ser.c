@@ -1,4 +1,4 @@
-/*	$OpenBSD: ser.c,v 1.10 2002/01/30 20:45:34 nordin Exp $	*/
+/*	$OpenBSD: ser.c,v 1.11 2002/02/15 20:45:30 nordin Exp $	*/
 /*	$NetBSD: ser.c,v 1.43 1998/01/12 10:40:11 thorpej Exp $	*/
 
 /*
@@ -1047,7 +1047,7 @@ sermctl(dev, bits, how)
 		ub = ~ciab.pra;
 		break;
 	}
-	(void)splx(s);
+	splx(s);
 
 	bits = 0;
 	if (ISSET(ub, CIAB_PRA_DTR))

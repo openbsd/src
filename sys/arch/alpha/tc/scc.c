@@ -1,4 +1,4 @@
-/*	$OpenBSD: scc.c,v 1.11 2002/01/16 20:50:16 miod Exp $	*/
+/*	$OpenBSD: scc.c,v 1.12 2002/02/15 20:45:29 nordin Exp $	*/
 /*	$NetBSD: scc.c,v 1.28 1996/12/05 01:39:43 cgd Exp $	*/
 
 /*
@@ -1217,7 +1217,7 @@ sccmctl(dev, bits, how)
 		break;
 
 	case DMGET:
-		(void) splx(s);
+		splx(s);
 		return (mbits);
 	}
 	if (line == SCC_CHANNEL_B) {
@@ -1230,7 +1230,7 @@ sccmctl(dev, bits, how)
 	}
 	if ((mbits & DML_DTR) || (sc->scc_softCAR & (1 << line)))
 		sc->scc_tty[line]->t_state |= TS_CARR_ON;
-	(void) splx(s);
+	splx(s);
 	return (mbits);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz.c,v 1.7 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: dz.c,v 1.8 2002/02/15 20:45:30 nordin Exp $	*/
 /*	$NetBSD: dz.c,v 1.23 2000/06/04 02:14:12 matt Exp $	*/
 /*
  * Copyright (c) 1996  Ken C. Wellsch.  All rights reserved.
@@ -329,7 +329,7 @@ dzopen(dev_t dev, int flag, int mode, struct proc *p)
 		if (error)
 			break;
 	}
-	(void) splx(s);
+	splx(s);
 	if (error)
 		return (error);
 	return ((*linesw[tp->t_line].l_open)(dev, tp));
@@ -558,7 +558,7 @@ dzparam(struct tty *tp, struct termios *t)
 
 	DZ_WRITE_WORD(dr_lpr, lpr);
 
-	(void) splx(s);
+	splx(s);
 	return (0);
 }
 
@@ -613,7 +613,7 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 		break;
 
 	  case DMGET:
-		(void) splx(s);
+		splx(s);
 		return (mbits);
 	}
 
@@ -631,7 +631,7 @@ dzmctl(struct dz_softc *sc, int line, int bits, int how)
 		DZ_WRITE_BYTE(dr_break, sc->sc_brk);
 	}
 
-	(void) splx(s);
+	splx(s);
 	return (mbits);
 }
 
@@ -692,7 +692,7 @@ dzscan(void *arg)
 
 		sc->sc_rxint = 0;
 	}
-	(void) splx(s);
+	splx(s);
 	timeout_add(&dz_timeout, hz);
 	return;
 }

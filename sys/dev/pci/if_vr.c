@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.21 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.22 2002/02/15 20:45:31 nordin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1374,7 +1374,7 @@ vr_init(xsc)
 		printf("%s: initialization failed: no memory for rx buffers\n",
 							sc->sc_dev.dv_xname);
 		vr_stop(sc);
-		(void)splx(s);
+		splx(s);
 		return;
 	}
 
@@ -1427,7 +1427,7 @@ vr_init(xsc)
 	if (!timeout_pending(&sc->sc_to))
 		timeout_add(&sc->sc_to, hz);
 
-	(void)splx(s);
+	splx(s);
 }
 
 /*
@@ -1527,7 +1527,7 @@ vr_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }

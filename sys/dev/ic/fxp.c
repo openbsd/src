@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.30 2001/11/06 19:53:18 miod Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.31 2002/02/15 20:45:31 nordin Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -1548,7 +1548,7 @@ fxp_ioctl(ifp, command, data)
 	default:
 		error = EINVAL;
 	}
-	(void) splx(s);
+	splx(s);
 	return (error);
 }
 

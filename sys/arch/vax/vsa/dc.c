@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.5 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: dc.c,v 1.6 2002/02/15 20:45:31 nordin Exp $	*/
 /*	$NetBSD: dc.c,v 1.4 1996/10/13 03:36:10 christos Exp $	*/
 /*-
  * Copyright (c) 1992, 1993
@@ -842,7 +842,7 @@ dcmctl(dev, bits, how)
 		break;
 
 	case DMGET:
-		(void) splx(s);
+		splx(s);
 		return (mbits);
 	}
 	switch (unit & 03) {
@@ -863,7 +863,7 @@ dcmctl(dev, bits, how)
 	}
 	if ((mbits & DML_DTR) && (dcsoftCAR[unit >> 2] & b))
 		dc_tty[unit]->t_state |= TS_CARR_ON;
-	(void) splx(s);
+	splx(s);
 	return (mbits);
 }
 

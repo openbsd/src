@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.47 2002/01/16 20:50:17 miod Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.48 2002/02/15 20:45:30 nordin Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1269,7 +1269,7 @@ mainbus_attach(parent, dev, aux)
 			if (strcmp(cp, "zs") == 0)
 				autoconf_nzs++;
 			if (/*audio &&*/ autoconf_nzs >= 2)	/*XXX*/
-				(void) splx(11 << 8);		/*XXX*/
+				splx(11 << 8);		/*XXX*/
 #endif
 			oca.ca_bustype = BUS_MAIN;
 			(void) config_found(dev, (void *)&oca, mbprint);

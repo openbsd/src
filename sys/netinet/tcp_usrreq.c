@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.55 2002/01/14 03:11:55 provos Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.56 2002/02/15 20:45:32 nordin Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -421,7 +421,7 @@ tcp_usrreq(so, req, m, nam, control)
 
 	case PRU_SENSE:
 		((struct stat *) m)->st_blksize = so->so_snd.sb_hiwat;
-		(void) splx(s);
+		splx(s);
 		return (0);
 
 	case PRU_RCVOOB:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.24 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.25 2002/02/15 20:45:31 nordin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1707,7 +1707,7 @@ void tl_init(xsc)
 	/* Send the RX go command */
 	CMD_SET(sc, TL_CMD_GO|TL_CMD_NES|TL_CMD_RT);
 
-	(void)splx(s);
+	splx(s);
 
 	/* Start the stats update counter */
 	timeout_set(&sc->tl_stats_tmo, tl_stats_update, sc);
@@ -1849,7 +1849,7 @@ int tl_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }

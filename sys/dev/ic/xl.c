@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.33 2002/01/25 05:44:06 nordin Exp $	*/
+/*	$OpenBSD: xl.c,v 1.34 2002/02/15 20:45:31 nordin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2099,7 +2099,7 @@ void xl_init(xsc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	(void)splx(s);
+	splx(s);
 
 	timeout_add(&sc->xl_stsup_tmo, hz);
 
@@ -2323,7 +2323,7 @@ xl_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.20 2002/02/08 04:43:24 chris Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.21 2002/02/15 20:45:31 nordin Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1385,7 +1385,7 @@ void sis_init(xsc)
 		printf("sis%d: initialization failed: no "
 			"memory for rx buffers\n", sc->sis_unit);
 		sis_stop(sc);
-		(void)splx(s);
+		splx(s);
 		return;
 	}
 
@@ -1495,7 +1495,7 @@ void sis_init(xsc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	(void)splx(s);
+	splx(s);
 
 	timeout_set(&sc->sis_timeout, sis_tick, sc);
 	timeout_add(&sc->sis_timeout, hz);
@@ -1614,7 +1614,7 @@ int sis_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }

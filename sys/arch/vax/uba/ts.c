@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts.c,v 1.5 2002/01/16 20:50:17 miod Exp $ */
+/*	$OpenBSD: ts.c,v 1.6 2002/02/15 20:45:30 nordin Exp $ */
 /*	$NetBSD: ts.c,v 1.11 1997/01/11 11:34:43 ragge Exp $ */
 
 /*-
@@ -1124,11 +1124,11 @@ tsopen (dev, flag, type, p)
 	s = splbio ();
 	if (sc->sc_state < ST_RUNNING) {		/* XXX */
 		printf ("%s not running.\n", sc->sc_dev.dv_xname);
-		(void) splx (s);
+		splx(s);
 		sc->sc_openf = 0;
 		return (ENXIO);
 	}
-	(void) splx (s);
+	splx(s);
 
 	/*
 	 * check if transport is really online.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.44 2001/12/13 17:43:02 nate Exp $	*/
+/*	$OpenBSD: dc.c,v 1.45 2002/02/15 20:45:31 nordin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2804,7 +2804,7 @@ void dc_init(xsc)
 		printf("dc%d: initialization failed: no "
 		    "memory for rx buffers\n", sc->dc_unit);
 		dc_stop(sc);
-		(void)splx(s);
+		splx(s);
 		return;
 	}
 
@@ -2859,7 +2859,7 @@ void dc_init(xsc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	(void)splx(s);
+	splx(s);
 
 	timeout_set(&sc->dc_tick_tmo, dc_tick, sc);
 
@@ -3019,7 +3019,7 @@ int dc_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.20 2002/01/11 01:31:21 nordin Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.21 2002/02/15 20:45:31 nordin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -749,7 +749,7 @@ sk_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }
@@ -1889,7 +1889,7 @@ void sk_init(xsc)
 		printf("%s: initialization failed: no "
 		    "memory for rx buffers\n", sc_if->sk_dev.dv_xname);
 		sk_stop(sc_if);
-		(void)splx(s);
+		splx(s);
 		return;
 	}
 	sk_init_tx_ring(sc_if);

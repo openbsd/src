@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.15 2001/11/06 19:53:19 miod Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.16 2002/02/15 20:45:31 nordin Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -544,7 +544,7 @@ int sf_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }
@@ -1067,7 +1067,7 @@ void sf_init(xsc)
 	if (sf_init_rx_ring(sc) == ENOBUFS) {
 		printf("sf%d: initialization failed: no "
 		    "memory for rx buffers\n", sc->sf_unit);
-		(void)splx(s);
+		splx(s);
 		return;
 	}
 

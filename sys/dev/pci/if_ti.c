@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.33 2002/01/11 01:31:21 nordin Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.34 2002/02/15 20:45:31 nordin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2365,7 +2365,7 @@ int ti_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msc.c,v 1.6 1997/01/16 09:25:04 niklas Exp $ */
+/*	$OpenBSD: msc.c,v 1.7 2002/02/15 20:45:30 nordin Exp $ */
 /*	$NetBSD: msc.c,v 1.13 1996/12/23 09:10:26 veego Exp $	*/
 
 /*
@@ -1129,7 +1129,7 @@ mscmctl(dev, bits, how)
 
 	bits = msc->flags;
 
-	(void) splx(s);
+	splx(s);
   
 	return(bits);
 }

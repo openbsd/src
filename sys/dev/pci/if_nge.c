@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_nge.c,v 1.15 2001/11/13 21:00:16 mickey Exp $	*/
+/*	$OpenBSD: if_nge.c,v 1.16 2002/02/15 20:45:31 nordin Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1689,7 +1689,7 @@ void nge_init(xsc)
 		printf("%s: initialization failed: no "
 			"memory for rx buffers\n", sc->sc_dv.dv_xname);
 		nge_stop(sc);
-		(void)splx(s);
+		splx(s);
 		return;
 	}
 
@@ -1815,7 +1815,7 @@ void nge_init(xsc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	(void)splx(s);
+	splx(s);
 }
 
 /*
@@ -1954,7 +1954,7 @@ int nge_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }

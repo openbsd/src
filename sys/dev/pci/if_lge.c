@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lge.c,v 1.6 2001/11/06 19:53:19 miod Exp $	*/
+/*	$OpenBSD: if_lge.c,v 1.7 2002/02/15 20:45:31 nordin Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2000, 2001
@@ -1348,7 +1348,7 @@ void lge_init(xsc)
 		printf("%s: initialization failed: no "
 		       "memory for rx buffers\n", sc->sc_dv.dv_xname);
 		lge_stop(sc);
-		(void)splx(s);
+		splx(s);
 		return;
 	}
 
@@ -1445,7 +1445,7 @@ void lge_init(xsc)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	(void)splx(s);
+	splx(s);
 
 	timeout_add(&sc->lge_timeout, hz);
 
@@ -1570,7 +1570,7 @@ int lge_ioctl(ifp, command, data)
 		break;
 	}
 
-	(void)splx(s);
+	splx(s);
 
 	return(error);
 }
