@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.363 2005/03/14 02:29:33 krw Exp $
+#	$OpenBSD: install.sub,v 1.364 2005/03/26 01:40:21 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2005 Todd Miller, Theo de Raadt, Ken Westerback
@@ -255,7 +255,7 @@ ask() {
 	local _question=$1 _default=$2
 
 	set -o noglob
-	while : ; do
+	while :; do
 		echo -n "$_question "
 		[[ -z $_default ]] || echo -n "[$_default] "
 		read resp
@@ -296,7 +296,7 @@ ask_yn() {
 	local _q=$1 _a=${2:-no} _resp
 	typeset -l _resp
 
-	while : ; do
+	while :; do
 		ask "$_q" "$_a"
 		_resp=$resp
 		case $_resp in
@@ -477,7 +477,7 @@ addhostent() {
 select_sets() {
 	local _avail=$1 _selected=$2 _next _f _action
 
-	while : ; do
+	while :; do
 		_action=
 		cat << __EOT
 
@@ -527,7 +527,7 @@ __EOT
 configure_ifs() {
 	local _IFDEVS=$IFDEVS _ifs _name _media _hn
 
-	while : ; do
+	while :; do
 		ask_which "interface" "do you wish to initialize" "$_IFDEVS" \
 			"" "No more interfaces to initialize"
 		[[ $resp == done ]] && break
@@ -675,7 +675,7 @@ v4_defroute() {
 	_dr=$(route -n show -inet | sed -ne '/^default */{s///; s/ .*//; p;}')
 	[[ -f /tmp/dhclient.conf ]] && _dr=dhcp
 
-	while : ; do
+	while :; do
 		ask_until "$_prompt" "$_dr"
 		case $resp in
 		none|dhcp) break ;;
@@ -982,7 +982,7 @@ install_url() {
 
 	# Get server IP address or hostname
 	: ${_prompt:="Server? (IP address, hostname or 'done')"}
-	while : ; do
+	while :; do
 		eval resp=\$_${_url_type}_server_ip
 		ask_until "$_prompt" "$resp"
 		case $resp in
@@ -1072,7 +1072,7 @@ install_url() {
 install_mounted_fs() {
 	local _mp=$1 _dir=$2
 
-	while : ; do
+	while :; do
 		ask_until "Pathname to the sets? (or 'done')" "$_dir"
 		case $resp in
 		done)	return
@@ -1226,7 +1226,7 @@ set_timezone() {
 
 	: ${TZ:=GMT}
 
-	while : ; do
+	while :; do
 		_zonepath=$_zoneroot
 
 		ask "What timezone are you in? ('?' for list)" "$TZ"
@@ -1288,7 +1288,7 @@ successfully loaded. If you are not sure what sets to ${MODE}, refer to the
 installation notes for details on the contents of each.
 __EOT
 
-	while : ; do
+	while :; do
 		_d=
 		cat << __EOT
 

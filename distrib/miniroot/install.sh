@@ -1,5 +1,5 @@
 #!/bin/ksh
-#	$OpenBSD: install.sh,v 1.149 2004/11/06 18:05:48 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.150 2005/03/26 01:40:21 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -85,7 +85,7 @@ if [ ! -f /etc/fstab ]; then
 	DISK=
 	_DKDEVS=$DKDEVS
 
-	while : ; do
+	while :; do
 		_DKDEVS=`rmel "$DISK" $_DKDEVS`
 
 		# Always do ROOTDISK first, and repeat until
@@ -162,7 +162,7 @@ if [ ! -f /etc/fstab ]; then
 
 		# Now prompt the user for the mount points.
 		_i=0
-		while : ; do
+		while :; do
 			_pp=${_partitions[$_i]}
 			_ps=$(( ${_psizes[$_i]} / 2 ))
 			_mp=${_mount_points[$_i]}
