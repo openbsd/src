@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.18 2002/12/06 16:16:15 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.19 2002/12/07 19:12:34 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -55,6 +55,7 @@ static	int check_commit_cbq(int, int, struct pf_altq *);
 static	void print_cbq_opts(const struct pf_altq *);
 static	char *rate2str(double);
 u_int32_t	getifspeed(char *);
+u_long	getifmtu(char *);
 
 TAILQ_HEAD(altqs, pf_altq) altqs = TAILQ_HEAD_INITIALIZER(altqs);
 
@@ -211,7 +212,7 @@ eval_pfaltq(struct pfctl *pf, struct pf_altq *pa, u_int32_t bw_absolute,
 			size = 8;
 		else
 			size = 24;
-		size = size * 1500;  /* assume the default mtu is 1500 */
+		size = size * getifmtu(pa->ifname);
 		pa->tbrsize = size;
 	}
 	return (errors);
@@ -298,9 +299,7 @@ eval_pfqueue_cbq(struct pfctl *pf, struct pf_altq *pa)
 	struct	cbq_opts *opts;
 	u_int	ifmtu;
 
-#if 1
-	ifmtu = 1500;	/* should be obtained from the interface */
-#endif
+	ifmtu = getifmtu(pa->ifname);
 	opts = &pa->pq_u.cbq_opts;
 
 	if (opts->pktsize == 0) {	/* use default */
@@ -631,4 +630,25 @@ getifspeed(char *ifname)
 	if (shutdown(s, SHUT_RDWR) == -1)
 		err(1, "shutdown");
 	return ((u_int32_t)ifrdat.ifi_baudrate);
+}
+
+u_long
+getifmtu(char *ifname)
+{
+	int	s;
+	struct	ifreq ifr;
+
+	if ((s = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+		err(1, "socket");
+	strlcpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	if (ioctl(s, SIOCGIFMTU, (caddr_t)&ifr) == -1)
+		err(1, "SIOCGIFMTU");
+	if (shutdown(s, SHUT_RDWR) == -1)
+		err(1, "shutdown");
+	if (ifr.ifr_mtu > 0)
+		return (ifr.ifr_mtu);
+	else {
+		warnx("could not get mtu for %s, assuming 1500", ifname);
+		return (1500);
+	}
 }
