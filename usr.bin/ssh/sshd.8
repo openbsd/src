@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: sshd.8,v 1.51 2000/05/08 17:42:31 hugh Exp $
+.\" $Id: sshd.8,v 1.52 2000/05/31 06:36:40 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSHD 8
@@ -569,6 +569,12 @@ The default is
 .Dq no .
 Note that disabling X11 forwarding does not improve security in any
 way, as users can always install their own forwarders.
+.It Cm XAuthLocation
+Specifies the location of the
+.Xr xauth 1
+program.
+The default is
+.Pa /usr/X11R6/bin/xauth .
 .El
 .Sh LOGIN PROCESS
 When a user successfully logs in,

@@ -9,7 +9,7 @@
 .\"
 .\" Created: Sat Apr 22 21:55:14 1995 ylo
 .\"
-.\" $Id: ssh.1,v 1.54 2000/05/29 20:20:46 markus Exp $
+.\" $Id: ssh.1,v 1.55 2000/05/31 06:36:40 markus Exp $
 .\"
 .Dd September 25, 1999
 .Dt SSH 1
@@ -940,6 +940,12 @@ The argument must be
 .Dq yes
 or
 .Dq no .
+.It Cm XAuthLocation
+Specifies the location of the
+.Xr xauth 1
+program.
+The default is
+.Pa /usr/X11R6/bin/xauth .
 .Sh ENVIRONMENT
 .Nm
 will normally set the following environment variables:
