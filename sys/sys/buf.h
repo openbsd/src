@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.39 2002/03/14 03:16:12 millert Exp $	*/
+/*	$OpenBSD: buf.h,v 1.40 2002/05/23 13:47:45 art Exp $	*/
 /*	$NetBSD: buf.h,v 1.25 1997/04/09 21:12:17 mycroft Exp $	*/
 
 /*
@@ -93,7 +93,8 @@ struct buf {
 	void	*b_saveaddr;		/* Original b_addr for physio. */
 	daddr_t	b_lblkno;		/* Logical block number. */
 	daddr_t	b_blkno;		/* Underlying physical block number. */
-					/* Function to call upon completion. */
+					/* Function to call upon completion.
+					 * Will be called at splbio(). */
 	void	(*b_iodone)(struct buf *);
 	struct	vnode *b_vp;		/* Device vnode. */
 	int	b_dirtyoff;		/* Offset in buffer of dirty region. */
