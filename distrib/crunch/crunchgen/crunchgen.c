@@ -1,4 +1,4 @@
-/*	$OpenBSD: crunchgen.c,v 1.8 1997/01/26 12:57:14 niklas Exp $	*/
+/*	$OpenBSD: crunchgen.c,v 1.9 1997/01/31 19:40:42 rahnds Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -405,6 +405,11 @@ void add_special(int argc, char **argv)
 	if((p->srcdir = strdup(argv[3])) == NULL)
 	    out_of_memory();
     }
+    else if(!strcmp(argv[2], "mf_name")) {
+	if(argc != 4) goto argcount;
+	if((p->mf_name = strdup(argv[3])) == NULL)
+	    out_of_memory();
+    }
     else if(!strcmp(argv[2], "objdir")) {
 	if(argc != 4) goto argcount;
 	if((p->objdir = strdup(argv[3])) == NULL)
@@ -519,17 +524,14 @@ void fillin_program(prog_t *p)
         }
     }
 
-    /*
-     * We have a sourcedir try to find a makefile and get objs from it,
-     * unless we already have objs cached.
-     */
-    if (p->srcdir) {
+    /* We have a sourcedir and no explict objs, try */
+    /* to find makefile and get objs from it. */
+    if (p->srcdir && !p->objs) {
         for (i = 0; mf_name[i] != NULL; i++) {
             sprintf(path, "%s/%s", p->srcdir, mf_name[i]);
             if (is_nonempty_file(path)) {
 		p->mf_name = mf_name[i];
-                if (!p->objs)
-			fillin_program_objs(p, path);
+                fillin_program_objs(p, path);
                 break;
             }
         }
@@ -653,6 +655,8 @@ void gen_specials_cache(void)
 	fprintf(cachef, "\n");
 	if(p->srcdir)
 	    fprintf(cachef, "special %s srcdir %s\n", p->name, p->srcdir);
+	if(p->mf_name)
+	    fprintf(cachef, "special %s mf_name %s\n", p->name, p->mf_name);
 	if(p->objdir)
 	    fprintf(cachef, "special %s objdir %s\n", p->name, p->objdir);
 	if(p->objs) {
