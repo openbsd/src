@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.10 2001/12/04 22:44:32 art Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.11 2002/02/02 16:05:58 art Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -475,7 +475,11 @@ portal_open(v)
 	 * Check that the mode the file is being opened for is a subset 
 	 * of the mode of the existing descriptor.
 	 */
- 	fp = p->p_fd->fd_ofiles[fd];
+	if ((fp = fd_getfile(p->p_fd, fd)) == NULL) {
+		portal_closefd(p, fd);
+		error = EBADF;
+		goto bad;
+	}
 	if (((ap->a_mode & (FREAD|FWRITE)) | fp->f_flag) != fp->f_flag) {
 		portal_closefd(p, fd);
 		error = EACCES;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.30 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.31 2002/02/02 16:05:58 art Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -685,8 +685,10 @@ sunos_sys_open(p, v, retval)
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
-		struct file *fp = fdp->fd_ofiles[*retval];
+		struct file *fp;
 
+		if ((fp = fd_getfile(fdp, *retval)) == NULL)
+			return (EBADF);
 		/* ignore any error, just give it a try */
 		if (fp->f_type == DTYPE_VNODE)
 			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, p);

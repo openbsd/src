@@ -1,4 +1,4 @@
-/*	$OpenBSD: ultrix_pathname.c,v 1.4 2000/04/21 15:50:21 millert Exp $	*/
+/*	$OpenBSD: ultrix_pathname.c,v 1.5 2002/02/02 16:05:58 art Exp $	*/
 /*	$NetBSD: ultrix_pathname.c,v 1.2 1996/04/07 17:23:07 jonathan Exp $	*/
 
 /*
@@ -185,8 +185,10 @@ ultrix_sys_open(p, v, retval)
 
 	if (!ret && !noctty && SESS_LEADER(p) && !(p->p_flag & P_CONTROLT)) {
 		struct filedesc *fdp = p->p_fd;
-		struct file *fp = fdp->fd_ofiles[*retval];
+		struct file *fp;
 
+		if ((fd = fd_getfile(fdp, *retval)) == NULL)
+			return (EBADF);
 		/* ignore any error, just give it a try */
 		if (fp->f_type == DTYPE_VNODE)
 			(fp->f_ops->fo_ioctl)(fp, TIOCSCTTY, (caddr_t)0, p);

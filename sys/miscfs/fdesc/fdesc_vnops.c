@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.27 2001/12/19 08:58:06 art Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.28 2002/02/02 16:05:58 art Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -352,7 +352,7 @@ fdesc_lookup(v)
 			goto bad;
 		}
 
-		if (fd >= nfiles || p->p_fd->fd_ofiles[fd] == NULL) {
+		if (fd_getfile(p->p_fd, fd) == NULL) {
 			error = EBADF;
 			goto bad;
 		}
@@ -658,7 +658,7 @@ fdesc_readdir(v)
 			case FD_STDERR:
 				if ((ft->ft_fileno - FD_STDIN) >= fdp->fd_nfiles)
 					continue;
-				if (fdp->fd_ofiles[ft->ft_fileno - FD_STDIN] == NULL)
+				if (fd_getfile(fdp, ft->ft_fileno - FD_STDIN) == NULL)
 					continue;
 				break;
 			}
@@ -685,7 +685,7 @@ fdesc_readdir(v)
 				break;
 	
 			default:
-				if (fdp->fd_ofiles[i - 2] == NULL)
+				if (fd_getfile(fdp, i - 2) == NULL)
 					continue;
 				d.d_fileno = i - 2 + FD_STDIN;
 				d.d_namlen = sprintf(d.d_name, "%d", i - 2);

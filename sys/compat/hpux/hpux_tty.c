@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_tty.c,v 1.5 2001/10/26 12:03:27 art Exp $	*/
+/*	$OpenBSD: hpux_tty.c,v 1.6 2002/02/02 16:05:58 art Exp $	*/
 /*	$NetBSD: hpux_tty.c,v 1.14 1997/04/01 19:59:05 scottr Exp $	*/
 
 /*
@@ -83,8 +83,8 @@ hpux_termio(fd, com, data, p)
 	int (*ioctlrout) __P((struct file *fp, u_long com,
 	    caddr_t data, struct proc *p));
 
-
-	fp = p->p_fd->fd_ofiles[fd];
+	if ((fp = fd_getfile(p->p_fd, fd)) == NULL)
+		return (EBADF);
 	ioctlrout = fp->f_ops->fo_ioctl;
 	switch (com) {
 	case HPUXTCGETATTR:

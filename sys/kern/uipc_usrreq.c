@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_usrreq.c,v 1.15 2001/10/26 12:03:27 art Exp $	*/
+/*	$OpenBSD: uipc_usrreq.c,v 1.16 2002/02/02 16:05:58 art Exp $	*/
 /*	$NetBSD: uipc_usrreq.c,v 1.18 1996/02/09 19:00:50 christos Exp $	*/
 
 /*
@@ -750,11 +750,12 @@ unp_internalize(control, p)
 	oldfds = (cm->cmsg_len - sizeof (*cm)) / sizeof (int);
 	ip = (int *)(cm + 1);
 	for (i = 0; i < oldfds; i++) {
+		struct file *fp;
 		fd = *ip++;
-		if (fd_getfile(fdp, fd) == NULL)
+		if ((fp = fd_getfile(fdp, fd)) == NULL)
 			return (EBADF);
-		if (fdp->fd_ofiles[fd]->f_count == LONG_MAX-2 ||
-		    fdp->fd_ofiles[fd]->f_msgcount == LONG_MAX-2)
+		if (fp->f_count == LONG_MAX-2 ||
+		    fp->f_msgcount == LONG_MAX-2)
 			return (EDEADLK);
 	}
 	ip = (int *)(cm + 1);
@@ -766,7 +767,8 @@ unp_internalize(control, p)
 	for (i = 0; i < oldfds; i++) {
 		bcopy(ip, &fd, sizeof fd);
 		ip++;
-		fp = fdp->fd_ofiles[fd];
+		fp = fd_getfile(fdp, fd);
+		/* XXX - are ew really sure that this will never fail? */
 		bcopy(&fp, rp, sizeof fp);
 		rp++;
 		fp->f_count++;

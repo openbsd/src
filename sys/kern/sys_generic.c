@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.31 2001/11/14 19:47:07 deraadt Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.32 2002/02/02 16:05:58 art Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -787,8 +787,7 @@ selscan(p, ibits, obits, nfd, retval)
 			bits = pibits->fds_bits[i/NFDBITS];
 			while ((j = ffs(bits)) && (fd = i + --j) < nfd) {
 				bits &= ~(1 << j);
-				fp = fdp->fd_ofiles[fd];
-				if (fp == NULL)
+				if ((fp = fd_getfile(fdp, fd)) == NULL)
 					return (EBADF);
 				if ((*fp->f_ops->fo_select)(fp, flag[msk], p)) {
 					FD_SET(fd, pobits);
@@ -884,19 +883,11 @@ pollscan(p, pl, nfd, retval)
 	 */
 	for (i = 0; i < nfd; i++) {
 		/* Check the file descriptor. */
-		if (pl[i].fd < 0)
-			continue;
-		if (pl[i].fd >= fdp->fd_nfiles) {
-			pl[i].revents = POLLNVAL;
-			n++;
-			continue;
-		} else if (pl[i].fd < 0) {
+		if (pl[i].fd < 0) {
 			pl[i].revents = 0;
 			continue;
 		}
-
-		fp = fdp->fd_ofiles[pl[i].fd];
-		if (fp == NULL) {
+		if ((fp = fd_getfile(fdp, pl[i].fd)) == NULL) {
 			pl[i].revents = POLLNVAL;
 			n++;
 			continue;
