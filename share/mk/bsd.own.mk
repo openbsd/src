@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.27 1999/12/01 15:29:56 deraadt Exp $
+#	$OpenBSD: bsd.own.mk,v 1.28 2000/02/08 20:26:29 espie Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -41,6 +41,7 @@ BINGRP?=	bin
 BINOWN?=	root
 BINMODE?=	555
 NONBINMODE?=	444
+DIRMODE?=	755
 
 # Define MANZ to have the man pages compressed (gzip)
 #MANZ=		1
