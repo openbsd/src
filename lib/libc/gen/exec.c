@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: exec.c,v 1.12 2002/02/19 19:39:36 millert Exp $";
+static char rcsid[] = "$OpenBSD: exec.c,v 1.13 2002/07/30 00:15:13 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -142,7 +142,7 @@ execvp(name, argv)
 	char * const *argv;
 {
 	char **memp;
-	register int cnt, lp, ln;
+	register int cnt, lp, ln, len;
 	register char *p;
 	int eacces = 0;
 	char *bp, *cur, *path, buf[MAXPATHLEN];
@@ -166,12 +166,13 @@ execvp(name, argv)
 	/* Get the path we're searching. */
 	if (!(path = getenv("PATH")))
 		path = _PATH_DEFPATH;
-	cur = alloca(strlen(path) + 1);
+	len = strlen(path) + 1;
+	cur = alloca(len);
 	if (cur == NULL) {
 		errno = ENOMEM;
 		return (-1);
 	}
-	strcpy(cur, path);
+	strlcpy(cur, path, len);
 	path = cur;
 	while ((p = strsep(&cur, ":"))) {
 		/*
