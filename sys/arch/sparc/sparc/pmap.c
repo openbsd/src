@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.79 2000/11/07 11:42:10 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.80 2000/11/22 11:57:04 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -559,32 +559,32 @@ void	setpte4m __P((vaddr_t va, int pte));
 static void mmu_setup4m_L1 __P((int, struct pmap *));
 static void mmu_setup4m_L2 __P((int, struct regmap *));
 static void  mmu_setup4m_L3 __P((int, struct segmap *));
-/*static*/ void	mmu_reservemon4m __P((struct pmap *));
+void	mmu_reservemon4m __P((struct pmap *));
 
-/*static*/ void pmap_rmk4m __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-/*static*/ void pmap_rmu4m __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-/*static*/ void pmap_enk4m __P((struct pmap *, vaddr_t, vm_prot_t,
+void	pmap_rmk4m __P((struct pmap *, vaddr_t, vaddr_t, int, int));
+void	pmap_rmu4m __P((struct pmap *, vaddr_t, vaddr_t, int, int));
+void	pmap_enk4m __P((struct pmap *, vaddr_t, vm_prot_t,
 			  int, struct pvlist *, int));
-/*static*/ void pmap_enu4m __P((struct pmap *, vaddr_t, vm_prot_t,
+void	pmap_enu4m __P((struct pmap *, vaddr_t, vm_prot_t,
 			  int, struct pvlist *, int));
-/*static*/ void pv_changepte4m __P((struct pvlist *, int, int));
-/*static*/ int  pv_syncflags4m __P((struct pvlist *));
-/*static*/ int  pv_link4m __P((struct pvlist *, struct pmap *, vaddr_t, int));
-/*static*/ void pv_unlink4m __P((struct pvlist *, struct pmap *, vaddr_t));
+void	pv_changepte4m __P((struct pvlist *, int, int));
+int	pv_syncflags4m __P((struct pvlist *));
+int	pv_link4m __P((struct pvlist *, struct pmap *, vaddr_t, int));
+void	pv_unlink4m __P((struct pvlist *, struct pmap *, vaddr_t));
 #endif
 
 #if defined(SUN4) || defined(SUN4C)
-/*static*/ void	mmu_reservemon4_4c __P((int *, int *));
-/*static*/ void pmap_rmk4_4c __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-/*static*/ void pmap_rmu4_4c __P((struct pmap *, vaddr_t, vaddr_t, int, int));
-/*static*/ void pmap_enk4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
+void	mmu_reservemon4_4c __P((int *, int *));
+void	pmap_rmk4_4c __P((struct pmap *, vaddr_t, vaddr_t, int, int));
+void	pmap_rmu4_4c __P((struct pmap *, vaddr_t, vaddr_t, int, int));
+void	pmap_enk4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
 			  int, struct pvlist *, int));
-/*static*/ void pmap_enu4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
+void	pmap_enu4_4c __P((struct pmap *, vaddr_t, vm_prot_t,
 			  int, struct pvlist *, int));
-/*static*/ void pv_changepte4_4c __P((struct pvlist *, int, int));
-/*static*/ int  pv_syncflags4_4c __P((struct pvlist *));
-/*static*/ int  pv_link4_4c __P((struct pvlist *, struct pmap *, vaddr_t, int));
-/*static*/ void pv_unlink4_4c __P((struct pvlist *, struct pmap *, vaddr_t));
+void	pv_changepte4_4c __P((struct pvlist *, int, int));
+int	pv_syncflags4_4c __P((struct pvlist *));
+int	pv_link4_4c __P((struct pvlist *, struct pmap *, vaddr_t, int));
+void	pv_unlink4_4c __P((struct pvlist *, struct pmap *, vaddr_t));
 #endif
 
 #if !defined(SUN4M) && (defined(SUN4) || defined(SUN4C))
@@ -2135,7 +2135,7 @@ pv_syncflags4_4c(pv0)
  * definition nonempty, since it must have at least two elements
  * in it to have PV_NC set, and we only remove one here.)
  */
-/*static*/ void
+void
 pv_unlink4_4c(pv, pm, va)
 	struct pvlist *pv;
 	struct pmap *pm;
@@ -2208,7 +2208,7 @@ pv_unlink4_4c(pv, pm, va)
  * It returns PG_NC if the (new) pvlist says that the address cannot
  * be cached.
  */
-/*static*/ int
+int
 pv_link4_4c(pv, pm, va, nc)
 	struct pvlist *pv;
 	struct pmap *pm;
@@ -2534,7 +2534,7 @@ pv_unlink4m(pv, pm, va)
  * It returns SRMMU_PG_C if the (new) pvlist says that the address cannot
  * be cached (i.e. its results must be (& ~)'d in.
  */
-/*static*/ int
+int
 pv_link4m(pv, pm, va, nc)
 	struct pvlist *pv;
 	struct pmap *pm;
@@ -3843,7 +3843,7 @@ pmap_remove(pm, va, endva)
 #if defined(SUN4) || defined(SUN4C)
 
 /* remove from kernel */
-/*static*/ void
+void
 pmap_rmk4_4c(pm, va, endva, vr, vs)
 	struct pmap *pm;
 	vaddr_t va, endva;
@@ -3945,7 +3945,7 @@ pmap_rmk4_4c(pm, va, endva, vr, vs)
 
 #if defined(SUN4M)		/* 4M version of pmap_rmk */
 /* remove from kernel (4m)*/
-/*static*/ void
+void
 pmap_rmk4m(pm, va, endva, vr, vs)
 	struct pmap *pm;
 	vaddr_t va, endva;
@@ -4035,7 +4035,7 @@ pmap_rmk4m(pm, va, endva, vr, vs)
 #if defined(SUN4) || defined(SUN4C)
 
 /* remove from user */
-/*static*/ void
+void
 pmap_rmu4_4c(pm, va, endva, vr, vs)
 	struct pmap *pm;
 	vaddr_t va, endva;
@@ -4193,7 +4193,7 @@ if (pm->pm_ctx == NULL) {
 
 #if defined(SUN4M)		/* 4M version of pmap_rmu */
 /* remove from user */
-/*static*/ void
+void
 pmap_rmu4m(pm, va, endva, vr, vs)
 	struct pmap *pm;
 	vaddr_t va, endva;
