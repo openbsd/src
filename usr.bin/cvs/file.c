@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.32 2004/08/27 15:43:15 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.33 2004/08/31 11:17:02 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -246,6 +246,11 @@ cvs_file_create(const char *path, u_int type, mode_t mode)
 	cfp->cf_mode = mode;
 	cfp->cf_ddat->cd_root = cvsroot_get(path);
 	cfp->cf_ddat->cd_repo = strdup(cfp->cf_path);
+
+	if (cfp->cf_ddat->cd_repo == NULL) {
+		cvs_file_free(cfp);
+		return (NULL);
+	}
 
 	if (type == DT_DIR) {
 		if ((mkdir(path, mode) == -1) || (cvs_mkadmin(cfp, mode) < 0)) {
