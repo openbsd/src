@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.156 2000/10/18 21:28:54 mickey Exp $
+#	$OpenBSD: rc,v 1.157 2000/10/27 06:36:35 deraadt Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -141,6 +141,11 @@ else
 	dd if=/var/db/host.random of=/dev/arandom bs=1024 count=64 \
 	    > /dev/null 2>&1
 fi
+
+# reset seed file, so that if a shutdown-less reboot occurs,
+# the next seed is not a repeat
+dd if=/dev/urandom of=/var/db/host.random bs=1024 count=64 \
+    > /dev/null 2>&1
 
 # clean up left-over files
 rm -f /etc/nologin
