@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /* $FreeBSD: if_em.c,v 1.46 2004/09/29 18:28:28 mlaier Exp $ */
-/* $OpenBSD: if_em.c,v 1.34 2004/12/08 15:41:46 markus Exp $ */
+/* $OpenBSD: if_em.c,v 1.35 2005/01/01 05:17:32 brad Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -1416,7 +1416,7 @@ em_media_change(struct ifnet *ifp)
 		printf("%s: Unsupported media type\n", sc->sc_dv.dv_xname);
 	}
 
-        /* As the speed/duplex settings my have changed we need to
+        /* As the speed/duplex settings may have changed we need to
          * reset the PHY.
          */
         sc->hw.phy_reset_disable = FALSE;
