@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.26 1999/07/30 19:41:29 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.27 2000/09/02 13:45:38 espie Exp $	*/
 /*	$NetBSD: conf.c,v 1.42 1997/01/07 11:35:03 mrg Exp $	*/
 
 /*-
@@ -108,6 +108,14 @@ dev_decl(filedesc,open);
 #include "audio.h"
 cdev_decl(audio);
 
+/* open, close, read */
+#define cdev_joy_init(c,n) { \
+	dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
+	(dev_type_write((*)))enodev, (dev_type_ioctl((*)))enodev, \
+	(dev_type_stop((*)))enodev, 0, seltrue, \
+	(dev_type_mmap((*)))enodev }
+
+
 struct cdevsw	cdevsw[] =
 {
 	cdev_cn_init(1,cn),		/* 0: virtual console */
@@ -153,7 +161,7 @@ struct cdevsw	cdevsw[] =
 	cdev_ch_init(NCH,ch),		/* 40: SCSI autochanger */
 	cdev_disk_init(NRD,rd),		/* 41: RAM disk */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 42: Kernel symbols device */
-	cdev_notdef(),			/* 43 */
+	cdev_joy_init(1,joy),		/* 43: Joystick */
 	cdev_notdef(),			/* 44 */
 	cdev_notdef(),			/* 45 */
 	cdev_notdef(),			/* 46 */

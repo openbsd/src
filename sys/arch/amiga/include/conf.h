@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.11 1999/07/30 20:19:04 deraadt Exp $	*/
+/*	$OpenBSD: conf.h,v 1.12 2000/09/02 13:45:40 espie Exp $	*/
 /*	$NetBSD: conf.h,v 1.4 1996/11/30 01:13:07 is Exp $	*/
 
 /*
@@ -73,6 +73,8 @@ bdev_decl(wd);
 cdev_decl(wd);
 
 cdev_decl(ksyms);
+
+cdev_decl(joy);
 
 /* open, close, ioctl, select, mmap -- XXX should be a map device */
 #define	cdev_grf_init(c,n) { \
