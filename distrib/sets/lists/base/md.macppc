@@ -57,6 +57,8 @@
 ./usr/lib/libkvm.so.6.0
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.1
+./usr/lib/libncurses.so.8.0
+./usr/lib/libnpthread.so.0.7
 ./usr/lib/libobjc.so.0.0
 ./usr/lib/libocurses.so.3.0
 ./usr/lib/libossaudio.so.1.0
