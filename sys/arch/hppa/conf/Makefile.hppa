@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.13 2002/06/22 14:05:51 millert Exp $
+#	$OpenBSD: Makefile.hppa,v 1.14 2002/07/18 04:33:03 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -46,14 +46,14 @@ CMACHFLAGS=	-mfast-indirect-calls -mportable-runtime -mno-space-regs
 COPTS?=		-Os
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-T ${HPPA}/conf/ld.script -Ttext 12000 -Map bsd.map
+LINKFLAGS=	-T ${HPPA}/conf/ld.script -Ttext 80000 -Map bsd.map
 STRIPFLAGS=	-g -X -x
 
 .if ${IDENT:M-DDDB} != ""
 CFLAGS+=	-fno-omit-frame-pointer
 .endif
 
-.if ${IDENT:M-DHP7[01]00_CPU} != ""
+.if ${IDENT:M-DHP7000_CPU} != ""
 CFLAGS+=	-mpa-risc-1-0 -mschedule=700
 .elif ${IDENT:M-DHP8*_CPU} != ""
 CFLAGS+=	-mpa-risc-2-0
