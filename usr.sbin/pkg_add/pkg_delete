@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.55 2004/10/11 14:35:08 espie Exp $
+# $OpenBSD: pkg_delete,v 1.56 2004/10/11 14:40:04 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -208,18 +208,11 @@ sub delete
 }
 
 package OpenBSD::PackingElement::Unexec;
-use OpenBSD::Error;
 
 sub delete
 {
 	my ($self, $state) = @_;
-	my $cmd = $self->{expanded};
-	main::ensure_ldconfig($state);
-	if ($state->{beverbose}) {
-		print "unexec: $cmd\n";
-	}
-	return if $state->{not};
-	System('/bin/sh', '-c', $cmd);
+	$self->run($state);
 }
 
 package OpenBSD::PackingElement::FileBase;
@@ -428,13 +421,7 @@ sub delete
 	my ($self, $state) = @_;
 	return unless $state->{extra};
 
-	my $cmd = $self->{expanded};
-	main::ensure_ldconfig($state);
-	if ($state->{beverbose}) {
-		print "unexec: $cmd\n";
-	}
-	return if $state->{not};
-	System($cmd);
+	$self->run($state);
 }
 
 package OpenBSD::PackingElement::Lib;

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.52 2004/10/11 14:35:08 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.53 2004/10/11 14:40:04 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -863,6 +863,7 @@ sub destate
 
 package OpenBSD::PackingElement::ExeclikeAction;
 use File::Basename;
+use OpenBSD::Error;
 our @ISA=qw(OpenBSD::PackingElement::Action);
 
 sub expand
@@ -892,6 +893,15 @@ sub destate
 {
 	my ($self, $state) = @_;
 	$self->{expanded} = $self->expand($self->{name}, $state);
+}
+
+sub run
+{
+	my ($self, $state) = @_;
+
+	main::ensure_ldconfig($state);
+	print $self->keyword(), " ", $self->{expanded}, "\n" if $state->{beverbose};
+	System('/bin/sh', '-c', $self->{expanded}) unless $state->{not};
 }
 
 package OpenBSD::PackingElement::Exec;
