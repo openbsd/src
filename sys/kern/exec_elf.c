@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.42 2002/10/06 22:39:25 art Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.43 2002/11/22 22:10:21 drahn Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -444,7 +444,7 @@ ELFNAME2(exec,makecmds)(struct proc *p, struct exec_package *epp)
 	Elf_Ehdr *eh = epp->ep_hdr;
 	Elf_Phdr *ph, *pp;
 	Elf_Addr phdr = 0;
-	int error, i, nload;
+	int error, i;
 	char interp[MAXPATHLEN];
 	u_long pos = 0, phsize;
 	u_int8_t os = OOS_NULL;
@@ -537,7 +537,7 @@ native:
 	/*
 	 * Load all the necessary sections
 	 */
-	for (i = nload = 0; i < eh->e_phnum; i++) {
+	for (i = 0; i < eh->e_phnum; i++) {
 		Elf_Addr addr = ELFDEFNNAME(NO_ADDR), size = 0;
 		int prot = 0;
 
@@ -546,28 +546,50 @@ native:
 		switch (ph[i].p_type) {
 		case PT_LOAD:
 			/*
-			 * XXX
-			 * Can handle only 2 sections: text and data
+			 * Calcuates size of text and data segments
+			 * by starting at first and going to end of last.
+			 * 'rwx' sections are treated as data.
+			 * this is correct for BSS_PLT, but may not be
+			 * for DATA_PLT, is fine for TEXT_PLT.
 			 */
-			if (nload++ == 2)
-				goto bad;
 			ELFNAME(load_psection)(&epp->ep_vmcmds, epp->ep_vp,
 			    &ph[i], &addr, &size, &prot, 0);
 			/*
 			 * Decide whether it's text or data by looking
-			 * at the entry point.
+			 * at the protection of the section
 			 */
-			if (eh->e_entry >= addr &&
-			    eh->e_entry < (addr + size)) {
-				epp->ep_taddr = addr;
-				epp->ep_tsize = size;
-				if (epp->ep_daddr == ELFDEFNNAME(NO_ADDR)) {
+			if (prot & VM_PROT_WRITE) {
+				/* data section */
+				if (epp->ep_dsize == ELFDEFNNAME(NO_ADDR)) {
 					epp->ep_daddr = addr;
 					epp->ep_dsize = size;
+				} else {
+					if (addr < epp->ep_daddr) {
+						epp->ep_dsize =
+						    epp->ep_dsize +
+						    epp->ep_daddr -
+						    addr;
+						epp->ep_daddr = addr;
+					} else
+						epp->ep_dsize = addr+size -
+						    epp->ep_daddr;
 				}
-			} else {
-				epp->ep_daddr = addr;
-				epp->ep_dsize = size;
+			} else if (prot & VM_PROT_EXECUTE) {
+				/* text section */
+				if (epp->ep_tsize == ELFDEFNNAME(NO_ADDR)) {
+					epp->ep_taddr = addr;
+					epp->ep_tsize = size;
+				} else {
+					if (addr < epp->ep_taddr) {
+						epp->ep_tsize =
+						    epp->ep_tsize +
+						    epp->ep_taddr -
+						    addr;
+						epp->ep_taddr = addr;
+					} else
+						epp->ep_tsize = addr+size -
+						    epp->ep_taddr;
+				}
 			}
 			break;
 
