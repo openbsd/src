@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.h,v 1.15 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: tip.h,v 1.16 2003/09/20 18:15:32 millert Exp $	*/
 /*	$NetBSD: tip.h,v 1.7 1997/04/20 00:02:46 mellon Exp $	*/
 
 /*
@@ -223,6 +223,7 @@ extern value_t	vtable[];	/* variable table */
 #define HALFDUPLEX	30
 #define	LECHO		31
 #define	PARITY		32
+#define	HARDWAREFLOW	33
 
 #define NOVAL	((value_t *)NULL)
 #define NOACU	((acu_t *)NULL)
@@ -286,6 +287,7 @@ void	cumain(int argc, char *argv[]);
 void	daemon_uid(void);
 void	disconnect(char *reason);
 void	execute(char *s);
+void	hardwareflow(char *option);
 void	logent(char *group, char *num, char *acu, char *message);
 void	loginit(void);
 void	prtime(char *s, time_t a);

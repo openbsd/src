@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.20 2003/06/03 02:56:18 millert Exp $	*/
+/*	$OpenBSD: tip.c,v 1.21 2003/09/20 18:15:32 millert Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: tip.c,v 1.20 2003/06/03 02:56:18 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tip.c,v 1.21 2003/09/20 18:15:32 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -537,6 +537,8 @@ ttysetup(speed)
 	cntrl.c_cflag |= CS8;
 	if (boolean(value(DC)))
 		cntrl.c_cflag |= CLOCAL;
+	if (boolean(value(HARDWAREFLOW)))
+		cntrl.c_cflag |= CRTSCTS;	
 	cntrl.c_iflag &= ~(ISTRIP|ICRNL);
 	cntrl.c_oflag &= ~OPOST;
 	cntrl.c_lflag &= ~(ICANON|ISIG|IEXTEN|ECHO);
