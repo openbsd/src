@@ -1,4 +1,4 @@
-.\"	$OpenBSD: du.1,v 1.4 1996/10/18 18:16:06 millert Exp $
+.\"	$OpenBSD: du.1,v 1.5 1998/02/16 09:23:06 deraadt Exp $
 .\"	$NetBSD: du.1,v 1.6 1996/10/18 07:20:31 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -44,7 +44,7 @@
 .Nm du
 .Op Fl H | Fl L | Fl P
 .Op Fl a | Fl s
-.Op Fl ckx
+.Op Fl ckrx
 .Op Ar file ...
 .Sh DESCRIPTION
 The
@@ -81,6 +81,11 @@ Partial numbers of blocks are rounded up.
 Display the grand total after all the arguments have been processed.
 .It Fl s
 Display only the grand total for the specified files.
+.It Fl r
+Generate messages about directories that cannot be read, files
+that cannot be opened, and so on.  This is the default case.
+This option exists solely for conformance with
+.St -xpg4 .
 .It Fl x
 Filesystem mount points are not traversed.
 .El
