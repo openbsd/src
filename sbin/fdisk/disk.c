@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.21 2004/07/11 09:17:36 tom Exp $	*/
+/*	$OpenBSD: disk.c,v 1.22 2004/08/03 09:23:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -236,7 +236,7 @@ DISK_printmetrics(disk_t *disk, char *units)
 	if (disk->real)
 		printf("geometry: %d/%d/%d [%.0f %s]\n", disk->real->cylinders,
 		    disk->real->heads, disk->real->sectors, size,
-		       unit_types[i].lname);
+		    unit_types[i].lname);
 	else
 		printf("geometry: <none>\n");
 
