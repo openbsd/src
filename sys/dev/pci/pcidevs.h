@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.522 2002/06/11 05:40:39 matthieu Exp 
+ *		OpenBSD: pcidevs,v 1.523 2002/06/19 21:08:31 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1593,6 +1593,9 @@
 /* Moxa */
 #define	PCI_PRODUCT_MOXA_CP114	0x1141		/* CP-114 */
 #define	PCI_PRODUCT_MOXA_C168H	0x1680		/* C168H */
+
+/* Mesa Ridge Technologies (MAGMA) */
+#define	PCI_PRODUCT_MRTMAGMA_DMA4	0x0011		/* DMA4 serial */
 
 /* Mylex products */
 #define	PCI_PRODUCT_MYLEX_960P	0x0001		/* DAC960P RAID */
