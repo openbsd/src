@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.137 2004/03/31 08:42:30 jmc Exp $
+.\"	$OpenBSD: sysctl.3,v 1.138 2004/04/20 06:41:47 tedu Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -347,6 +347,7 @@ information.
 .It Dv KERN_INTRCNT No "	node	not applicable"
 .It Dv KERN_JOB_CONTROL No "	integer	no"
 .It Dv KERN_MALLOCSTATS No "	node	no"
+.It Dv KERN_MAXCLUSTERS No "	integer	yes"
 .It Dv KERN_MAXFILES No "	integer	yes"
 .It Dv KERN_MAXPARTITIONS No "	integer	no"
 .It Dv KERN_MAXPROC No "	integer	yes"
@@ -522,6 +523,10 @@ name.
 Each node returns a
 .Li struct kmemstats .
 .El
+.It Dv KERN_MAXCLUSTERS
+The maximum number of
+.Xr mbuf 9
+clusters that may be allocated.
 .It Dv KERN_MAXFILES
 The maximum number of open files that may be open in the system.
 .It Dv KERN_MAXPARTITIONS
