@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_vtf.c,v 1.11 1999/11/27 21:39:29 aaron Exp $	*/
+/*	$OpenBSD: pcvt_vtf.c,v 1.12 2000/01/17 02:46:23 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1049,7 +1049,6 @@ vt_designate(struct video_state *svsp)
 		case 'B': /* USASCII */
 #ifdef HAVECSD_ASCII
 			ctp = csd_ascii;
-			pcdisp_special = 0;
 #endif
 			break;
 
@@ -1113,7 +1112,6 @@ vt_designate(struct video_state *svsp)
 		case '0': /* special graphics */
 #ifdef HAVECSD_SPECIAL
 			ctp = csd_special;
-			pcdisp_special = 1;
 #endif
 			break;
 
@@ -1144,7 +1142,6 @@ vt_designate(struct video_state *svsp)
 		case '<': /* DEC Supplemental */
 #ifdef HAVECSD_SUPPLEMENTAL
 			ctp = csd_supplemental;
-			pcdisp_special = 1;
 #endif
 			break;
 
@@ -1157,7 +1154,6 @@ vt_designate(struct video_state *svsp)
 		case '>': /* DEC Technical */
 #ifdef HAVECSD_TECHNICAL
 			ctp = csd_technical;
-			pcdisp_special = 1;
 #endif
 			break;
 
