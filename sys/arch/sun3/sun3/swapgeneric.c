@@ -46,34 +46,11 @@
 
 #include <machine/mon.h>
   
-/*
- * This will be called if the config file fails to include:
- *  	option GENERIC
- *      option NFSCLIENT
- *      option FFS
- */
-static int
-no_mountroot()
-{
-	printf("swapgeneric: configuration error!\n");
-	boot(RB_HALT);
-}
-
-#ifdef	FFS
-extern int ffs_mountroot();
-#else	/* FFS */
-#define ffs_mountroot no_mountroot
-#endif	/* FFS */
-
 #ifdef	NFSCLIENT
 extern char	*nfsbootdevname;	/* nfs_boot.c */
-extern int nfs_mountroot(); 	/* nfs_vfsops.c */
 #else	/* NFSCLIENT */
-static char	*nfsbootdevname;
-#define nfs_mountroot no_mountroot
-#endif	/* NFSCLIENT */
 
-int (*mountroot)() = no_mountroot;
+int (*mountroot) __P((void)) = NULL;
 
 dev_t	rootdev = NODEV;
 dev_t	dumpdev = NODEV;
@@ -350,14 +327,17 @@ swapgeneric()
 	 * Choose the root fstype.
 	 * XXX - Hard coded for now.
 	 */
+#ifdef NFSCLIENT
 	if (rootdev == NODEV) {
 		/* Set boot interface name for nfs_mountroot. */
 		nfsbootdevname = boot_ifname;
 		ds_tostr(&ds, boot_ifname);
 		mountroot = nfs_mountroot;
-	} else {
+	} else
+#endif /* NFSCLIENT */
+	{
 		/* XXX - Should ask for the root fstype here. -gwr */
-		mountroot = ffs_mountroot;
+		mountroot = dk_mountroot;
 	}
 
 	/*
