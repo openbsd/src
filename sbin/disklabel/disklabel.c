@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.61 1999/03/16 04:47:16 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.62 1999/03/23 05:18:49 millert Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.61 1999/03/16 04:47:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.62 1999/03/23 05:18:49 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -128,7 +128,7 @@ struct disklabel *makebootarea __P((char *, struct disklabel *, int));
 void	display __P((FILE *, struct disklabel *));
 void	display_partition __P((FILE *, struct disklabel *, char **, int, char, int));
 int	width_partition __P((struct disklabel *, int));
-int	editor __P((struct disklabel *, int, char *, char *));
+int	editor __P((struct disklabel *, int, char *, char *, int));
 int	edit __P((struct disklabel *, int));
 int	editit __P((void));
 char	*skip __P((char *));
@@ -146,11 +146,12 @@ main(argc, argv)
 	char *argv[];
 {
 	int ch, f, writeable, error = 0;
+	int whole_mode = 0;
 	char *fstabfile = NULL;
 	struct disklabel *lp;
 	FILE *t;
 
-	while ((ch = getopt(argc, argv, "BEF:NRWb:denrs:tvw")) != -1)
+	while ((ch = getopt(argc, argv, "BEFf:NRWb:denrs:tvw")) != -1)
 		switch (ch) {
 #if NUMBOOT > 0
 		case 'B':
@@ -196,6 +197,9 @@ main(argc, argv)
 			op = EDITOR;
 			break;
 		case 'F':
+			whole_mode = 1;
+			break;
+		case 'f':
 			fstabfile = optarg;
 			break;
 		case 'r':
@@ -270,7 +274,7 @@ main(argc, argv)
 			usage();
 		if ((lp = readlabel(f)) == NULL)
 			exit(1);
-		error = editor(lp, f, specname, fstabfile);
+		error = editor(lp, f, specname, fstabfile, whole_mode);
 		break;
 	case READ:
 		if (argc != 1)
@@ -591,6 +595,7 @@ readmbr(f)
 {
 	static int mbr[DEV_BSIZE / sizeof(int)];
 	struct dos_partition *dp;
+	u_int16_t signature;
 	int part;
 
 	/*
@@ -601,7 +606,8 @@ readmbr(f)
 	if (lseek(f, (off_t)DOSBBSECTOR * DEV_BSIZE, SEEK_SET) < 0 ||
 	    read(f, mbr, sizeof(mbr)) < sizeof(mbr))
 		err(4, "can't read master boot record");
-
+	signature = *((u_char *)mbr + DOSMBR_SIGNATURE_OFF) |
+	    (*((u_char *)mbr + DOSMBR_SIGNATURE_OFF + 1) << 8);
 	bcopy((char *)mbr+DOSPARTOFF, (char *)mbr, sizeof(*dp) * NDOSPART);
 		
 	/*
@@ -646,6 +652,13 @@ readmbr(f)
 		}
 	}
 
+	/*
+	 * If there is no signature and no OpenBSD partition this is probably
+	 * not an MBR.
+	 */
+	if (signature != DOSMBR_SIGNATURE)
+		return (NULL);
+
 	/* If no OpenBSD partition, find first used partition. */
 	for (part = 0; part < NDOSPART; part++) {
 		if (get_le(&dp[part].dp_size)) {
@@ -654,7 +667,7 @@ readmbr(f)
 		}
 	}
 	/* Table appears to be empty. */
-	return (0);
+	return (NULL);
 }
 #endif
 
@@ -874,7 +887,7 @@ makedisktab(f, lp)
 	FILE *f;
 	struct disklabel *lp;
 {
-	int i, j;
+	int i;
 	char *did = "\\\n\t:";
 	struct partition *pp;
 
@@ -1738,8 +1751,8 @@ usage()
 	    "  disklabel [-nv] [-r|-d] -e disk%s        (edit)\n",
 	    blank);
 	fprintf(stderr,
-	    "  disklabel [-nv] [-r|-d] [-F temp] -E disk%s(simple editor)\n",
-	    blank);
+	    "  disklabel [-nv] [-r|-d] [-F] [-f temp] -E disk%.*s  (simple editor)\n",
+	    strlen(blank) - 9, blank);
 	fprintf(stderr,
 	    "  disklabel [-nv] [-r]%s -R disk proto     (restore)\n",
 	    boot);

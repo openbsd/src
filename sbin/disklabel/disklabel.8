@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.26 1999/03/16 04:47:15 millert Exp $
+.\"	$OpenBSD: disklabel.8,v 1.27 1999/03/23 05:18:49 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -65,7 +65,8 @@
 .Ar disk
 .Nm disklabel
 .Fl E
-.Op Fl F Ar tempfile
+.Op Fl f Ar tempfile
+.Op Fl F
 .Op Fl n
 .Op Fl d Li \&| Fl r
 .Op Fl v
@@ -343,6 +344,17 @@ to delete all partitions).  If no partition is specified, the
 user will be prompted for one.  You may not delete the
 .Dq c
 partition.
+.It g Op d|b|u
+Set disk geometry based on what the
+.Em disk ,
+.Em BIOS ,
+or
+.Em user
+thinks (the
+.Em user
+geometry is simply what the label said before
+.Nm
+made any changes).
 .It m Op part
 Modify parameters for an existing partition.  If no partition is
 specified, the user will be prompted for one.  This option allows
@@ -356,7 +368,7 @@ specified, the user will be prompted for one.  This option is only
 valid if
 .Nm
 was invoked with the
-.Fl F
+.Fl f
 flag.
 .It s Op path
 Save the label to a file in ASCII format (suitable for loading via
@@ -375,19 +387,26 @@ Exit the editor without saving any changes to the label.
 .El
 .Pp
 The
-.Fl F Ar tempfile
-flag to
+.Fl F
+and
+.Fl f Ar tempfile
+flags to
 .Nm
-is only valid in conjunction with the
+are only valid when used in conjunction with the
 .Fl E
-flag.  When specified,
+flag.  When the
+.Fl f
+flag is specified,
 .Nm
 will write entries to
 .Ar tempfile
 in
 .Xr fstab 5
 format for any partitions for which mount point information has been
-specified.
+specified.  The
+.Fl F
+flag indicates that the entire disk is to be used for
+.Ox .
 .Pp
 The final three forms of
 .Nm

@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.56 1999/03/21 22:11:42 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.57 1999/03/23 05:18:50 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.56 1999/03/21 22:11:42 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.57 1999/03/23 05:18:50 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -78,7 +78,7 @@ struct mountinfo {
 };
 
 void	edit_parms __P((struct disklabel *, u_int32_t *));
-int	editor __P((struct disklabel *, int, char *, char *));
+int	editor __P((struct disklabel *, int, char *, char *, int));
 void	editor_add __P((struct disklabel *, char **, u_int32_t *, char *));
 void	editor_change __P((struct disklabel *, u_int32_t *, char *));
 void	editor_countfree __P((struct disklabel *, u_int32_t *));
@@ -95,7 +95,7 @@ u_int32_t next_offset __P((struct disklabel *, struct partition *));
 int	partition_cmp __P((const void *, const void *));
 struct partition **sort_partitions __P((struct disklabel *, u_int16_t *));
 void	getdisktype __P((struct disklabel *, char *, char *));
-void	find_bounds __P((struct disklabel *));
+void	find_bounds __P((struct disklabel *, struct disklabel *, int));
 void	set_bounds __P((struct disklabel *, u_int32_t *));
 struct diskchunk *free_chunks __P((struct disklabel *));
 char **	mpcopy __P((char **, char **));
@@ -134,7 +134,7 @@ extern	struct dos_partition *dosdp;	/* DOS partition, if found */
  * Simple partition editor.  Primarily intended for new labels.
  */
 int
-editor(lp, f, dev, fstabfile)
+editor(lp, f, dev, fstabfile, whole_mode)
 	struct disklabel *lp;
 	int f;
 	char *dev;
@@ -159,11 +159,11 @@ editor(lp, f, dev, fstabfile)
 	/* Don't allow disk type of "unknown" */
 	getdisktype(&label, "You need to specify a type for this disk.", dev);
 
-	/* How big is the OpenBSD portion of the disk?  */
-	find_bounds(&label);
-
 	/* Get the on-disk and BIOS geometries if possible */
 	get_geometry(f, &disk_geop, &bios_geop);
+
+	/* How big is the OpenBSD portion of the disk?  */
+	find_bounds(&label, bios_geop, whole_mode);
 
 	/* Set freesectors based on bounds and initial label */
 	editor_countfree(&label, &freesectors);
@@ -173,7 +173,7 @@ editor(lp, f, dev, fstabfile)
 		errx(1, "can't run when there is partition overlap.");
 
 	/* If we don't have a 'c' partition, create one. */
-	pp = &label.d_partitions[2];
+	pp = &label.d_partitions[RAW_PART];
 	if (label.d_npartitions < 3 || pp->p_size == 0) {
 		puts("No 'c' partition found, adding one that spans the disk.");
 		if (label.d_npartitions < 3)
@@ -1692,10 +1692,12 @@ free_chunks(lp)
  * What is the OpenBSD portion of the disk?  Uses the MBR if applicable.
  */
 void
-find_bounds(lp)
+find_bounds(lp, bios_lp, whole_mode)
 	struct disklabel *lp;
+	struct disklabel *bios_lp;
+	int whole_mode;
 {
-	struct partition *pp = &lp->d_partitions[2];
+	struct partition *pp = &lp->d_partitions[RAW_PART];
 
 	/* Defaults */
 	/* XXX - reserve a cylinder for hp300? */
@@ -1704,33 +1706,66 @@ find_bounds(lp)
 
 #ifdef DOSLABEL
 	/*
-	 * If we have an MBR, use values from the {Open,Free,Net}BSD partition.
+	 * If we have an MBR, use values from the {Open,Free,Net}BSD partition
+	 * unless we are in whole disk mode (in which case we ignore the MBR).
 	 */
-	if (dosdp && pp->p_size &&
-	    (dosdp->dp_typ == DOSPTYP_OPENBSD ||
-	    dosdp->dp_typ == DOSPTYP_FREEBSD ||
-	    dosdp->dp_typ == DOSPTYP_NETBSD)) {
-		u_int32_t i, new_end;
+	if (dosdp) {
+	    if (!whole_mode && (dosdp->dp_typ == DOSPTYP_OPENBSD ||
+		    dosdp->dp_typ == DOSPTYP_FREEBSD ||
+		    dosdp->dp_typ == DOSPTYP_NETBSD)) {
+			u_int32_t i, new_end;
 
-		/* Set start and end based on the fdisk partition bounds */
-		starting_sector = get_le(&dosdp->dp_start);
-		ending_sector = starting_sector + get_le(&dosdp->dp_size);
+			/* Set start and end based on fdisk partition bounds */
+			starting_sector = get_le(&dosdp->dp_start);
+			ending_sector = starting_sector + get_le(&dosdp->dp_size);
 
-		/*
-		 * If there are any BSD or SWAP partitions beyond ending_sector
-		 * we extend ending_sector to include them.  This is done
-		 * because the BIOS geometry is generally different from the
-		 * disk geometry.
-		 */
-		for (i = new_end = 0; i < lp->d_npartitions; i++) {
-			pp = &lp->d_partitions[i];
-			if ((pp->p_fstype == FS_BSDFFS ||
-			    pp->p_fstype == FS_SWAP) &&
-			    pp->p_size + pp->p_offset > new_end)
-				new_end = pp->p_size + pp->p_offset;
+			/*
+			 * If the ending sector of the BSD fdisk partition
+			 * is equal to the ending sector of the BIOS geometry
+			 * but the real sector count > BIOS sector count,
+			 * adjust the bounds accordingly.  We do this because
+			 * the BIOS geometry is limited to disks of ~4gig.
+			 */
+			if (bios_lp && ending_sector == bios_lp->d_secperunit &&
+			    lp->d_secperunit > bios_lp->d_secperunit)
+				ending_sector = lp->d_secperunit;
+
+			/*
+			 * If there are any BSD or SWAP partitions beyond
+			 * ending_sector we extend ending_sector to include
+			 * them.  This is done because the BIOS geometry is
+			 * generally different from the disk geometry.
+			 */
+			for (i = new_end = 0; i < lp->d_npartitions; i++) {
+				pp = &lp->d_partitions[i];
+				if ((pp->p_fstype == FS_BSDFFS ||
+				    pp->p_fstype == FS_SWAP) &&
+				    pp->p_size + pp->p_offset > new_end)
+					new_end = pp->p_size + pp->p_offset;
+			}
+			if (new_end > ending_sector)
+				ending_sector = new_end;
+
+			/*
+			 * If we are honoring the fdisk partitions, we should
+			 * use the BIOS geometry unless ending_sector is beyond
+			 * the end of the BIOS geometry, in which case we know
+			 * the BIOS geometry is bogus.
+			 */
+			if (bios_lp != NULL && ending_sector <= bios_lp->d_secperunit) {
+				lp->d_secsize = bios_lp->d_secsize;
+				lp->d_nsectors = bios_lp->d_nsectors;
+				lp->d_ntracks = bios_lp->d_ntracks;
+				lp->d_ncylinders = bios_lp->d_ncylinders;
+				lp->d_secpercyl = bios_lp->d_secpercyl;
+				lp->d_secperunit = bios_lp->d_secperunit;
+				puts("Using BIOS geometry...\nYou can use the "
+				    "'g' command to change this.");
+			}
+		} else {
+			/* Don't trounce the MBR */
+			starting_sector = 32;
 		}
-		if (new_end > ending_sector)
-			ending_sector = new_end;
 
 		printf("\nTreating sectors %u-%u as the OpenBSD portion of the "
 		    "disk.\nYou can use the 'b' command to change this.\n",
