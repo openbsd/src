@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_hpt_reg.h,v 1.6 2003/07/19 20:53:01 grange Exp $	*/
+/*	$OpenBSD: pciide_hpt_reg.h,v 1.7 2003/07/19 21:10:24 grange Exp $	*/
 /*      $NetBSD: pciide_hpt_reg.h,v 1.4 2001/07/23 14:55:27 bouyer Exp $       */
 
 /*
@@ -47,7 +47,6 @@
 #define HPT370_REV 0x03
 #define HPT370A_REV 0x04
 #define HPT372_REV 0x05
-#define HPT372A_REV 0x01
 #define HPT374_REV 0x07
 
 #define HPT_IDETIM(chan, drive) (0x40 + ((drive) * 4) + ((chan) * 8))
