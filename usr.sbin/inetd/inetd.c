@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.57 1999/12/08 13:21:17 itojun Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.58 1999/12/10 10:28:40 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.57 1999/12/08 13:21:17 itojun Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.58 1999/12/10 10:28:40 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -672,7 +672,7 @@ config(sig)
 {
 	register struct servtab *sep, *cp, **sepp;
 	int omask;
-	int n;
+	int n, add;
 	char protoname[10];
 
 	if (!setconfig()) {
@@ -686,6 +686,7 @@ config(sig)
 		for (sep = servtab; sep; sep = sep->se_next)
 			if (matchconf(sep, cp))
 				break;
+		add = 0;
 		if (sep != 0) {
 			int i;
 
@@ -714,12 +715,9 @@ config(sig)
 			sep->se_rpcversh = cp->se_rpcversh;
 			sigsetmask(omask);
 			freeconfig(cp);
-			if (debug)
-				print_service("REDO", sep);
+			add = 1;
 		} else {
 			sep = enter(cp);
-			if (debug)
-				print_service("ADD ", sep);
 		}
 		sep->se_checked = 1;
 
@@ -860,6 +858,8 @@ config(sig)
 			free (cp);
 			cp = getconfigent();
 		}
+		if (debug)
+			print_service(add ? "REDO" : "ADD", sep);
 	}
 	endconfig();
 	/*
@@ -1933,7 +1933,8 @@ print_service(action, sep)
 
 	fprintf(stderr,
 	    " wait.max=%hd.%d user:group=%s.%s builtin=%lx server=%s\n",
-	    sep->se_wait, sep->se_max, sep->se_user, sep->se_group,
+	    sep->se_wait, sep->se_max, sep->se_user,
+	    sep->se_group ? sep->se_group : "wheel",
 	    (long)sep->se_bi, sep->se_server);
 }
 
