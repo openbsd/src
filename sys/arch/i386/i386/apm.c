@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.19 1997/12/17 22:05:31 rees Exp $	*/
+/*	$OpenBSD: apm.c,v 1.20 1998/04/27 23:39:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -182,7 +182,7 @@ apm_perror(str, regs)
 	const char *str;
 	struct apmregs *regs;
 {
-	printf("APM %s: %s (%d)\n", str,
+	printf("apm0: APM %s: %s (%d)\n", str,
 	    apm_err_translate(APM_ERR_CODE(regs)),
 	    APM_ERR_CODE(regs));
 
@@ -215,8 +215,8 @@ apm_power_print (sc, regs)
 		printf("unknown,");
 		break;
 	}
-	printf(" battery charge ");
-	if (apm_minver == 0)
+	if (apm_minver == 0) {
+		printf(" battery charge ");
 		switch (BATT_STATE(regs)) {
 		case APM_BATT_HIGH:
 			printf("high");
@@ -237,10 +237,11 @@ apm_power_print (sc, regs)
 			printf("undecoded (%x)", BATT_STATE(regs));
 			break;
 		}
-	else if (apm_minver >= 1) {
+	} else if (apm_minver >= 1) {
 		if (BATT_FLAGS(regs) & APM_BATT_FLAG_NOBATTERY)
-			printf("[no battery]");
+			printf(" no battery");
 		else {
+			printf(" battery charge ");
 			if (BATT_FLAGS(regs) & APM_BATT_FLAG_HIGH)
 				printf("high");
 			else if (BATT_FLAGS(regs) & APM_BATT_FLAG_LOW)
@@ -259,8 +260,6 @@ apm_power_print (sc, regs)
 	}
 
 	printf("\n");
-
-	return;
 }
 
 /*
@@ -352,16 +351,15 @@ apm_event_handle(sc, regs)
 			DPRINTF(("damn fool BIOS did not wait for answer\n"));
 		if (apm_record_event(sc, regs->bx)) {
 			(void) apm_set_powstate(APM_DEV_ALLDEVS,
-						APM_LASTREQ_INPROG);
+			    APM_LASTREQ_INPROG);
 			apm_standbys++;
 		} else
 			(void) apm_set_powstate(APM_DEV_ALLDEVS,
-						APM_LASTREQ_REJECTED);
+			    APM_LASTREQ_REJECTED);
 		break;
 	case APM_USER_SUSPEND_REQ:
 		DPRINTF(("user wants suspend--fat chance!\n"));
-		(void) apm_set_powstate(APM_DEV_ALLDEVS,
-					APM_LASTREQ_REJECTED);
+		(void) apm_set_powstate(APM_DEV_ALLDEVS, APM_LASTREQ_REJECTED);
 		if (apm_record_event(sc, regs->bx))
 			apm_suspends++;
 		break;
@@ -371,11 +369,11 @@ apm_event_handle(sc, regs)
 			DPRINTF(("damn fool BIOS did not wait for answer\n"));
 		if (apm_record_event(sc, regs->bx)) {
 			(void) apm_set_powstate(APM_DEV_ALLDEVS,
-						APM_LASTREQ_INPROG);
+			    APM_LASTREQ_INPROG);
 			apm_suspends++;
 		} else
 			(void) apm_set_powstate(APM_DEV_ALLDEVS,
-						APM_LASTREQ_REJECTED);
+			    APM_LASTREQ_REJECTED);
 		break;
 	case APM_POWER_CHANGE:
 		DPRINTF(("power status change\n"));
@@ -456,7 +454,7 @@ apm_powmgt_enable(onoff)
 	bzero(&regs, sizeof(regs));
 	regs.cx = onoff ? APM_MGT_ENABLE : APM_MGT_DISABLE;
 	if (apmcall(APM_PWR_MGT_ENABLE,
-		    (apm_minver? APM_DEV_APM_BIOS : APM_MGT_ALL), &regs) != 0)
+	    (apm_minver? APM_DEV_APM_BIOS : APM_MGT_ALL), &regs) != 0)
 		apm_perror("power management enable", &regs);
 }
 #endif
@@ -472,7 +470,7 @@ apm_powmgt_engage(onoff, dev)
 	bzero(&regs, sizeof(regs));
 	regs.cx = onoff ? APM_MGT_ENGAGE : APM_MGT_DISENGAGE;
 	if (apmcall(APM_PWR_MGT_ENGAGE, dev, &regs) != 0)
-		printf("APM power mgmt engage (device %x): %s (%d)\n",
+		printf("apm0: APM engage (device %x): %s (%d)\n",
 		    dev, apm_err_translate(APM_ERR_CODE(&regs)),
 		    APM_ERR_CODE(&regs));
 }
@@ -631,9 +629,9 @@ apmprobe(parent, match, aux)
 
 	if (ap->apm_code32_base + ap->apm_code_len > IOM_END)
 		ap->apm_code_len -= ap->apm_code32_base + ap->apm_code_len -
-			IOM_END;
+		    IOM_END;
 	if (bus_space_map(ba->bios_memt, ap->apm_code32_base,
-			  ap->apm_code_len, 1, &ch) != 0) {
+	    ap->apm_code_len, 1, &ch) != 0) {
 #ifdef DEBUG
 		printf("apm0: can't map code\n");
 #endif
@@ -641,10 +639,9 @@ apmprobe(parent, match, aux)
 	}
 	bus_space_unmap(ba->bios_memt, ch, ap->apm_code_len);
 	if (ap->apm_data_base + ap->apm_data_len > IOM_END)
-		ap->apm_data_len -= ap->apm_data_base + ap->apm_data_len -
-			IOM_END;
+	    ap->apm_data_len -= ap->apm_data_base + ap->apm_data_len - IOM_END;
 	if (bus_space_map(ba->bios_memt, ap->apm_data_base,
-			  ap->apm_data_len, 1, &dh) != 0) {
+	    ap->apm_data_len, 1, &dh) != 0) {
 #ifdef DEBUG
 		printf("apm0: can't map data\n");
 #endif
