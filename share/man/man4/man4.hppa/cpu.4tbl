@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.21 2004/08/30 09:14:52 jmc Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.22 2004/08/31 05:20:23 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -72,13 +72,13 @@ CPU:PA:Clock  :Caches:TLB:BAT:Models
        :    :  :  64 L1D*:  : :B132,B160,B180
        :    :  :8192 L2:  : :C132L,C160L
        :    :  :       :  : :744, 745, 748
-       :    :  :       :  : :RDI PrecisioBook
+       :    :  :       :  : :RDI PrecisionBook
 8000:2.0:180:1024 L1I:96:  :C160, C180
     :   :   :1024 L1D:  :  :J280, J282
 8200:2.0:300:2048 L1I:120:  :C200, C240
     :   :   :2048 L1D:   :  :J2240
 8500:2.0:440: 512 L1I*:160:  :A400,A500,C360
-    :   :   :1024 L1D*:   :  :B1000,B2000
+    :   :   :1024 L1D*:   :  :B1000,B2000,C3000
     :   :   :         :   :  :J5000,J7000
 8600:2.0:550: 512 L1I*:160:  :A400,A500,C3600
     :   :   :1024 L1D*:   :  :B2000,B2600
