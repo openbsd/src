@@ -1,4 +1,4 @@
-#	$OpenBSD: images,v 1.7 2004/06/03 03:14:20 tedu Exp $
+#	$OpenBSD: images,v 1.8 2005/01/31 17:21:13 espie Exp $
 
 #------------------------------------------------------------------------------
 # images:  file(1) magic for image formats (see also "iff")
@@ -515,3 +515,4 @@
 # From: Jason Bacon <bacon@smithers.neuro.mcw.edu>
 0	beshort	0x3020			character Computer Graphics Metafile
 
+0	lelong	20000630		OpenEXR image data
