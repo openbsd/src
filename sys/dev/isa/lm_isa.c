@@ -1,4 +1,4 @@
-/*	$OpenBSD: lm_isa.c,v 1.1 2003/04/25 21:24:15 grange Exp $	*/
+/*	$OpenBSD: lm_isa.c,v 1.2 2003/05/28 19:15:37 grange Exp $	*/
 /*	$NetBSD: lm_isa.c,v 1.9 2002/11/15 14:55:44 ad Exp $ */
 
 /*-
@@ -75,8 +75,10 @@ lm_isa_match(struct device *parent, void *match, void *aux)
 	int rv;
 
 	/* Must supply an address */
-	if (ia->ipa_nio < 1)
+	if (ia->ipa_nio < 1) {
+		DPRINTF(("%s: ipa_nio=%d\n", __func__, ia->ipa_nio));
 		return (0);
+	}
 
 #ifdef __NetBSD__
 	if (ISA_DIRECT_CONFIG(ia))
@@ -89,9 +91,10 @@ lm_isa_match(struct device *parent, void *match, void *aux)
 	iot = ia->ia_iot;
 	iobase = ia->ipa_io[0].base;
 
-	if (bus_space_map(iot, iobase, 8, 0, &ioh))
+	if (bus_space_map(iot, iobase, 8, 0, &ioh)) {
+		DPRINTF(("%s: can't map i/o space\n", __func__));
 		return (0);
-
+	}
 
 	/* Bus independent probe */
 	rv = lm_probe(iot, ioh);
