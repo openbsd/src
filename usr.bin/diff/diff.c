@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.11 2003/06/25 23:04:53 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.12 2003/06/26 00:20:48 tedu Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -47,6 +47,42 @@ static char const sccsid[] = "@(#)diff.c 4.7 5/11/89";
 /*
  * diff - driver and subroutines
  */
+int	opt;
+int	aflag;			/* treat all files as text */
+int	tflag;			/* expand tabs on output */
+/* Algorithm related options. */
+int	hflag;			/* -h, use halfhearted DIFFH */
+int	bflag;			/* ignore blanks in comparisons */
+int	wflag;			/* totally ignore blanks in comparisons */
+int	iflag;			/* ignore case in comparisons */
+/* Options on hierarchical diffs. */
+int	lflag;			/* long output format with header */
+int	rflag;			/* recursively trace directories */
+int	sflag;			/* announce files which are same */
+char	*start;			/* do file only if name >= this */
+/* Variables for -I D_IFDEF option. */
+int	wantelses;		/* -E */
+char	*ifdef1;		/* String for -1 */
+char	*ifdef2;		/* String for -2 */
+char	*endifname;		/* What we will print on next #endif */
+int	inifdef;
+/* Variables for -c and -u context option. */
+int	context;		/* lines of context to be printed */
+/* State for exit status. */
+int	status;
+int	anychange;
+char	*tempfile;		/* used when comparing against std input */
+/* Variables for diffdir. */
+char	**diffargv;		/* option list to pass to recursive diffs */
+
+/*
+ * Input file names.
+ * With diffdir, file1 and file2 are allocated BUFSIZ space,
+ * and padded with a '/', and then efile0 and efile1 point after
+ * the '/'.
+ */
+char	*file1, *file2, *efile1, *efile2;
+struct	stat stb1, stb2;
 
 char diff[] = _PATH_DIFF;
 char diffh[] = _PATH_DIFFH;
@@ -65,8 +101,11 @@ main(int argc, char **argv)
 	status = 2;
 	diffargv = argv;
 
-	while ((ch = getopt(argc, argv, "bC:cD:efhilnrS:stU:uw")) != -1) {
+	while ((ch = getopt(argc, argv, "abC:cD:efhilnrS:stU:uw")) != -1) {
 		switch (ch) {
+		case 'a':
+			aflag++;
+			break;
 		case 'b':
 			bflag++;
 			break;
