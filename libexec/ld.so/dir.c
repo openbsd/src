@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.8 2003/07/06 20:03:57 deraadt Exp $	*/
+/*	$OpenBSD: dir.c,v 1.9 2004/05/18 16:50:31 mickey Exp $	*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,6 @@
 static char rcsid[] = ": opendir.c,v 1.6 1998/08/15 08:10:14 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#include <syscall.h>
 #include <sys/param.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -42,8 +41,10 @@ static char rcsid[] = ": opendir.c,v 1.6 1998/08/15 08:10:14 deraadt Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include "util.h"
+
+#include "syscall.h"
 #include "archdep.h"
+#include "util.h"
 #include "dir.h"
 
 long _dl_telldir(const DIR *dirp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sod.c,v 1.20 2003/11/11 14:51:01 drahn Exp $	*/
+/*	$OpenBSD: sod.c,v 1.21 2004/05/18 16:50:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1993 Paul Kranenburg
@@ -43,8 +43,8 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <syscall.h>
 
+#include "syscall.h"
 #include "archdep.h"
 #include "util.h"
 #include "sod.h"
