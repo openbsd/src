@@ -278,7 +278,7 @@ void parse_lease_time (cfile, timep)
 }
 
 /* No BNF for numeric aggregates - that's defined by the caller.  What
-   this function does is to parse a sequence of numbers seperated by
+   this function does is to parse a sequence of numbers separated by
    the token specified in seperator.  If max is zero, any number of
    numbers will be parsed; otherwise, exactly max numbers are
    expected.  Base and size tell us how to internalize the numbers

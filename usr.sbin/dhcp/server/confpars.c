@@ -1209,7 +1209,7 @@ struct lease *parse_lease_declaration (cfile)
 			}
 		} else {
 			switch (token) {
-				/* Colon-seperated hexadecimal octets... */
+				/* Colon-separated hexadecimal octets... */
 			      case UID:
 				seenbit = 8;
 				token = peek_token (&val, cfile);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.7 2002/02/14 02:53:36 aaron Exp $	*/
+/*	$OpenBSD: boot.c,v 1.8 2003/03/11 04:42:25 david Exp $	*/
 /*	$NetBSD: boot.c,v 1.5 1997/10/17 11:19:23 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: boot.c,v 1.7 2002/02/14 02:53:36 aaron Exp $";
+static char rcsid[] = "$OpenBSD: boot.c,v 1.8 2003/03/11 04:42:25 david Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -262,7 +262,7 @@ writefsinfo(dosfs, boot)
 	 * correctly, it has to be fixed pretty often.
 	 *
 	 * Therefor, we handle the FSINFO block only informally,
-	 * fixing it if neccessary, but otherwise ignoring the
+	 * fixing it if necessary, but otherwise ignoring the
 	 * fact that it was incorrect.
 	 */
 	return 0;

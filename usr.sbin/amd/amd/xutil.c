@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.9 2002/08/05 07:24:26 pvalchev Exp $
+ *	$Id: xutil.c,v 1.10 2003/03/11 04:45:54 david Exp $
  */
 
 #include "config.h"
@@ -173,7 +173,7 @@ checkup_mem(void)
 #endif /* DEBUG_MEM */
 
 /*
- * Take a log format string and expand occurences of %m
+ * Take a log format string and expand occurrences of %m
  * with the current error code taken from errno.  Make sure
  * 'e' never gets longer than maxlen characters.
  */

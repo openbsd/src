@@ -177,7 +177,7 @@ void parse_option_buffer (packet, buffer, length)
 }
 
 /* cons options into a big buffer, and then split them out into the
-   three seperate buffers if needed.  This allows us to cons up a set
+   three separate buffers if needed.  This allows us to cons up a set
    of vendor options using the same routine. */
 
 int cons_options (inpacket, outpacket, mms,
