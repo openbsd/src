@@ -1,4 +1,5 @@
 /* DWARF 2 debugging format support for GDB.
+
    Copyright 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2003,
    2004
    Free Software Foundation, Inc.
@@ -219,43 +220,40 @@ asection *dwarf_eh_frame_section;
 /* The data in a compilation unit header, after target2host
    translation, looks like this.  */
 struct comp_unit_head
-  {
-    unsigned long length;
-    short version;
-    unsigned int abbrev_offset;
-    unsigned char addr_size;
-    unsigned char signed_addr_p;
-    unsigned int offset_size;	/* size of file offsets; either 4 or 8 */
-    unsigned int initial_length_size; /* size of the length field; either
-                                         4 or 12 */
+{
+  unsigned long length;
+  short version;
+  unsigned int abbrev_offset;
+  unsigned char addr_size;
+  unsigned char signed_addr_p;
 
-    /* Offset to the first byte of this compilation unit header in the 
-     * .debug_info section, for resolving relative reference dies. */
+  /* Size of file offsets; either 4 or 8.  */
+  unsigned int offset_size;
 
-    unsigned int offset;
+  /* Size of the length field; either 4 or 12.  */
+  unsigned int initial_length_size;
 
-    /* Pointer to this compilation unit header in the .debug_info
-     * section */
+  /* Offset to the first byte of this compilation unit header in the
+     .debug_info section, for resolving relative reference dies.  */
+  unsigned int offset;
 
-    char *cu_head_ptr;
+  /* Pointer to this compilation unit header in the .debug_info
+     section.  */
+  char *cu_head_ptr;
 
-    /* Pointer to the first die of this compilatio unit.  This will
-     * be the first byte following the compilation unit header. */
+  /* Pointer to the first die of this compilation unit.  This will be
+     the first byte following the compilation unit header.  */
+  char *first_die_ptr;
 
-    char *first_die_ptr;
+  /* Pointer to the next compilation unit header in the program.  */
+  struct comp_unit_head *next;
 
-    /* Pointer to the next compilation unit header in the program. */
+  /* Base address of this compilation unit.  */
+  CORE_ADDR base_address;
 
-    struct comp_unit_head *next;
-
-    /* Base address of this compilation unit.  */
-
-    CORE_ADDR base_address;
-
-    /* Non-zero if base_address has been set.  */
-
-    int base_known;
-  };
+  /* Non-zero if base_address has been set.  */
+  int base_known;
+};
 
 /* Fixed size for the DIE hash table.  */
 #ifndef REF_HASH_SIZE
@@ -1245,6 +1243,7 @@ dwarf2_build_psymtabs_easy (struct objfile *objfile, int mainline)
       struct comp_unit_head cu_header;
       int bytes_read;
 
+      cu_header.initial_length_size = 0;
       entry_length = read_initial_length (abfd, pubnames_ptr, &cu_header,
                                          &bytes_read);
       pubnames_ptr += bytes_read;
@@ -1263,7 +1262,7 @@ dwarf2_build_psymtabs_easy (struct objfile *objfile, int mainline)
 #endif
 
 /* Read in the comp unit header information from the debug_info at
-   info_ptr. */
+   info_ptr.  */
 
 static char *
 read_comp_unit_head (struct comp_unit_head *cu_header,
@@ -1271,6 +1270,7 @@ read_comp_unit_head (struct comp_unit_head *cu_header,
 {
   int signed_addr;
   int bytes_read;
+
   cu_header->length = read_initial_length (abfd, info_ptr, cu_header,
                                            &bytes_read);
   info_ptr += bytes_read;
@@ -1535,15 +1535,15 @@ dwarf2_build_psymtabs_hard (struct objfile *objfile, int mainline)
          also happen.) This happens in VxWorks.  */
       free_named_symtabs (pst->filename);
 
+      info_ptr = beg_of_comp_unit + cu.header.length
+                                  + cu.header.initial_length_size;
+
       if (comp_unit_die.has_stmt_list)
         {
           /* Get the list of files included in the current compilation unit,
              and build a psymtab for each of them.  */
           dwarf2_build_include_psymtabs (&cu, &comp_unit_die, pst);
         }
-
-      info_ptr = beg_of_comp_unit + cu.header.length
-                                  + cu.header.initial_length_size;
 
       do_cleanups (back_to_inner);
     }
@@ -1634,6 +1634,7 @@ create_all_comp_units (struct objfile *objfile)
 
       /* Read just enough information to find out where the next
 	 compilation unit is.  */
+      cu_header.initial_length_size = 0;
       cu_header.length = read_initial_length (objfile->obfd, info_ptr,
 					      &cu_header, &bytes_read);
 
@@ -5841,18 +5842,18 @@ read_address (bfd *abfd, char *buf, struct dwarf2_cu *cu, int *bytes_read)
    sense for the 32-bit format, this initial zero can be considered to
    be an escape value which indicates the presence of the older 64-bit
    format.  As written, the code can't detect (old format) lengths
-   greater than 4GB.  If it becomes necessary to handle lengths somewhat
-   larger than 4GB, we could allow other small values (such as the
-   non-sensical values of 1, 2, and 3) to also be used as escape values
-   indicating the presence of the old format.
+   greater than 4GB.  If it becomes necessary to handle lengths
+   somewhat larger than 4GB, we could allow other small values (such
+   as the non-sensical values of 1, 2, and 3) to also be used as
+   escape values indicating the presence of the old format.
 
-   The value returned via bytes_read should be used to increment
-   the relevant pointer after calling read_initial_length().
+   The value returned via bytes_read should be used to increment the
+   relevant pointer after calling read_initial_length().
    
    As a side effect, this function sets the fields initial_length_size
    and offset_size in cu_header to the values appropriate for the
    length field.  (The format of the initial length field determines
-   the width of file offsets to be fetched later with fetch_offset().)
+   the width of file offsets to be fetched later with read_offset().)
    
    [ Note:  read_initial_length() and read_offset() are based on the
      document entitled "DWARF Debugging Information Format", revision
@@ -5864,8 +5865,8 @@ read_address (bfd *abfd, char *buf, struct dwarf2_cu *cu, int *bytes_read)
      This document is only a draft and is subject to change.  (So beware.)
 
      Details regarding the older, non-standard 64-bit format were
-     determined empirically by examining 64-bit ELF files produced
-     by the SGI toolchain on an IRIX 6.5 machine.
+     determined empirically by examining 64-bit ELF files produced by
+     the SGI toolchain on an IRIX 6.5 machine.
 
      - Kevin, July 16, 2002
    ] */
@@ -5874,47 +5875,45 @@ static LONGEST
 read_initial_length (bfd *abfd, char *buf, struct comp_unit_head *cu_header,
                      int *bytes_read)
 {
-  LONGEST retval = 0;
+  LONGEST length = bfd_get_32 (abfd, (bfd_byte *) buf);
 
-  retval = bfd_get_32 (abfd, (bfd_byte *) buf);
-
-  if (retval == 0xffffffff)
+  if (length == 0xffffffff)
     {
-      retval = bfd_get_64 (abfd, (bfd_byte *) buf + 4);
+      length = bfd_get_64 (abfd, (bfd_byte *) buf + 4);
       *bytes_read = 12;
-      if (cu_header != NULL)
-	{
-	  cu_header->initial_length_size = 12;
-	  cu_header->offset_size = 8;
-	}
     }
-  else if (retval == 0)
+  else if (length == 0)
     {
-      /* Handle (non-standard) 64-bit DWARF2 formats such as that used
-         by IRIX.  */
-      retval = bfd_get_64 (abfd, (bfd_byte *) buf);
+      /* Handle the (non-standard) 64-bit DWARF2 format used by IRIX.  */
+      length = bfd_get_64 (abfd, (bfd_byte *) buf);
       *bytes_read = 8;
-      if (cu_header != NULL)
-	{
-	  cu_header->initial_length_size = 8;
-	  cu_header->offset_size = 8;
-	}
     }
   else
     {
       *bytes_read = 4;
-      if (cu_header != NULL)
-	{
-	  cu_header->initial_length_size = 4;
-	  cu_header->offset_size = 4;
-	}
     }
 
- return retval;
+  if (cu_header)
+    {
+      gdb_assert (cu_header->initial_length_size == 0
+		  || cu_header->initial_length_size == 4
+		  || cu_header->initial_length_size == 8
+		  || cu_header->initial_length_size == 12);
+
+      if (cu_header->initial_length_size != 0
+	  && cu_header->initial_length_size != *bytes_read)
+	complaint (&symfile_complaints,
+		   "intermixed 32-bit and 64-bit DWARF sections");
+
+      cu_header->initial_length_size = *bytes_read;
+      cu_header->offset_size = (*bytes_read == 4) ? 4 : 8;
+    }
+
+  return length;
 }
 
 /* Read an offset from the data stream.  The size of the offset is
-   given by cu_header->offset_size. */
+   given by cu_header->offset_size.  */
 
 static LONGEST
 read_offset (bfd *abfd, char *buf, const struct comp_unit_head *cu_header,
@@ -5938,7 +5937,7 @@ read_offset (bfd *abfd, char *buf, const struct comp_unit_head *cu_header,
 		      bfd_get_filename (abfd));
     }
 
- return retval;
+  return retval;
 }
 
 static char *
@@ -6272,8 +6271,8 @@ dwarf_decode_line_header (unsigned int offset, bfd *abfd,
       return 0;
     }
 
-  /* Make sure that at least there's room for the total_length field.  That
-     could be 12 bytes long, but we're just going to fudge that.  */
+  /* Make sure that at least there's room for the total_length field.
+     That could be 12 bytes long, but we're just going to fudge that.  */
   if (offset + 4 >= dwarf2_per_objfile->line_size)
     {
       dwarf2_statement_list_fits_in_line_number_section_complaint ();
@@ -6287,8 +6286,9 @@ dwarf_decode_line_header (unsigned int offset, bfd *abfd,
 
   line_ptr = dwarf2_per_objfile->line_buffer + offset;
 
-  /* read in the header */
-  lh->total_length = read_initial_length (abfd, line_ptr, NULL, &bytes_read);
+  /* Read in the header.  */
+  lh->total_length =
+    read_initial_length (abfd, line_ptr, &cu->header, &bytes_read);
   line_ptr += bytes_read;
   if (line_ptr + lh->total_length > (dwarf2_per_objfile->line_buffer
 				     + dwarf2_per_objfile->line_size))
@@ -6321,7 +6321,7 @@ dwarf_decode_line_header (unsigned int offset, bfd *abfd,
       line_ptr += 1;
     }
 
-  /* Read directory table  */
+  /* Read directory table.  */
   while ((cur_dir = read_string (abfd, line_ptr, &bytes_read)) != NULL)
     {
       line_ptr += bytes_read;
@@ -6329,7 +6329,7 @@ dwarf_decode_line_header (unsigned int offset, bfd *abfd,
     }
   line_ptr += bytes_read;
 
-  /* Read file name table */
+  /* Read file name table.  */
   while ((cur_file = read_string (abfd, line_ptr, &bytes_read)) != NULL)
     {
       unsigned int dir_index, mod_time, length;
@@ -6457,6 +6457,7 @@ dwarf_decode_lines (struct line_header *lh, char *comp_dir, bfd *abfd,
 	     are 1-based.  */
           struct file_entry *fe = &lh->file_names[file - 1];
           char *dir;
+
           if (fe->dir_index)
             dir = lh->include_dirs[fe->dir_index - 1];
           else
@@ -6464,14 +6465,15 @@ dwarf_decode_lines (struct line_header *lh, char *comp_dir, bfd *abfd,
 	  dwarf2_start_subfile (fe->name, dir);
 	}
 
-      /* Decode the table. */
+      /* Decode the table.  */
       while (!end_sequence)
 	{
 	  op_code = read_1_byte (abfd, line_ptr);
 	  line_ptr += 1;
 
 	  if (op_code >= lh->opcode_base)
-	    {		/* Special operand.  */
+	    {		
+	      /* Special operand.  */
 	      adj_opcode = op_code - lh->opcode_base;
 	      address += (adj_opcode / lh->line_range)
 		* lh->minimum_instruction_length;
@@ -6479,7 +6481,7 @@ dwarf_decode_lines (struct line_header *lh, char *comp_dir, bfd *abfd,
               lh->file_names[file - 1].included_p = 1;
               if (!decode_for_pst_p)
                 {
-	          /* append row to matrix using current values */
+	          /* Append row to matrix using current values.  */
 	          record_line (current_subfile, line, 
 	                       check_cu_functions (address, cu));
                 }
@@ -6548,11 +6550,12 @@ dwarf_decode_lines (struct line_header *lh, char *comp_dir, bfd *abfd,
 	      break;
 	    case DW_LNS_set_file:
               {
-                /* lh->include_dirs and lh->file_names are 0-based,
-                   but the directory and file name numbers in the
-                   statement program are 1-based.  */
+                /* The arrays lh->include_dirs and lh->file_names are
+                   0-based, but the directory and file name numbers in
+                   the statement program are 1-based.  */
                 struct file_entry *fe;
                 char *dir;
+
                 file = read_unsigned_leb128 (abfd, line_ptr, &bytes_read);
                 line_ptr += bytes_read;
                 fe = &lh->file_names[file - 1];
@@ -6576,9 +6579,9 @@ dwarf_decode_lines (struct line_header *lh, char *comp_dir, bfd *abfd,
 	      break;
 	    /* Add to the address register of the state machine the
 	       address increment value corresponding to special opcode
-	       255.  Ie, this value is scaled by the minimum instruction
-	       length since special opcode 255 would have scaled the
-	       the increment.  */
+	       255.  I.e., this value is scaled by the minimum
+	       instruction length since special opcode 255 would have
+	       scaled the the increment.  */
 	    case DW_LNS_const_add_pc:
 	      address += (lh->minimum_instruction_length
 			  * ((255 - lh->opcode_base) / lh->line_range));
@@ -6588,8 +6591,10 @@ dwarf_decode_lines (struct line_header *lh, char *comp_dir, bfd *abfd,
 	      line_ptr += 2;
 	      break;
 	    default:
-	      {  /* Unknown standard opcode, ignore it.  */
+	      {
+		/* Unknown standard opcode, ignore it.  */
 		int i;
+
 		for (i = 0; i < lh->standard_opcode_lengths[op_code]; i++)
 		  {
 		    (void) read_unsigned_leb128 (abfd, line_ptr, &bytes_read);
