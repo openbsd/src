@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.91 2001/06/19 14:09:45 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.92 2001/06/19 15:40:45 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -112,7 +112,7 @@ extern int startup_pipe;
 extern void destroy_sensitive_data(void);
 
 /* original command from peer. */
-char *original_command = NULL;
+const char *original_command = NULL;
 
 /* data */
 #define MAX_SESSIONS 10
@@ -266,12 +266,12 @@ do_authenticated1(Authctxt *authctxt)
 			if (type == SSH_CMSG_EXEC_CMD) {
 				command = packet_get_string(&dlen);
 				debug("Exec command '%.500s'", command);
-				packet_integrity_check(plen, 4 + dlen, type);
+				do_exec(s, command);
+				xfree(command);
 			} else {
-				command = NULL;
-				packet_integrity_check(plen, 0, type);
+				do_exec(s, NULL);
 			}
-			do_exec(s, command);
+			packet_done();
 			session_close(s);
 			return;
 
@@ -514,13 +514,7 @@ do_exec(Session *s, const char *command)
 	else
 		do_exec_no_pty(s, command);
 
-	if (command != NULL)
-		xfree(command);
-
-	if (original_command != NULL) {
-		xfree(original_command);
-		original_command = NULL;
-	}
+	original_command = NULL;
 }
 
 
@@ -1320,6 +1314,7 @@ session_exec_req(Session *s)
 	char *command = packet_get_string(&len);
 	packet_done();
 	do_exec(s, command);
+	xfree(command);
 	return 1;
 }
 
