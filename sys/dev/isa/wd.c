@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.30 1997/10/18 10:37:14 deraadt Exp $	*/
+/*	$OpenBSD: wd.c,v 1.31 1997/10/18 21:09:57 deraadt Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -567,7 +567,7 @@ wdgetdisklabel(dev, wd)
 		    wd->sc_dk.dk_cpulabel);
 	}
 	if (errstring) {
-		*/printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);*/
+		/*printf("%s: %s\n", wd->sc_dev.dv_xname, errstring);*/
 		return;
 	}
 
