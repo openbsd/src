@@ -1,4 +1,4 @@
-/* $OpenBSD: radioctl.c,v 1.9 2004/08/08 00:21:55 jaredy Exp $ */
+/* $OpenBSD: radioctl.c,v 1.10 2004/08/08 00:23:15 deraadt Exp $ */
 /* $RuOBSD: radioctl.c,v 1.4 2001/10/20 18:09:10 pva Exp $ */
 
 /*
@@ -88,7 +88,7 @@ void	print_value(int);
 void	change_value(const struct opt_t);
 void	update_value(int, u_long *, u_long);
 
-void     warn_unsupported(int);
+void	warn_unsupported(int);
 void	usage(void);
 
 void	show_verbose(const char *, int);
@@ -152,7 +152,7 @@ main(int argc, char **argv)
 		if (strchr(*avp, '=') != NULL) {
 			mode = O_RDWR;
 			break;
-		}	
+		}
 
 	rd = open(radiodev, mode);
 	if (rd < 0)
@@ -190,9 +190,9 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "usage:  %s [-f file] [-n] variable ...\n"
-	    "        %s [-f file] [-n] variable=value ...\n"
-	    "        %s [-f file] [-n] -a\n",
+	    "usage: %s [-f file] [-n] variable ...\n"
+	    "       %s [-f file] [-n] variable=value ...\n"
+	    "       %s [-f file] [-n] -a\n",
 	    __progname, __progname, __progname);
 	exit(1);
 }
