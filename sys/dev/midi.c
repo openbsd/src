@@ -1,3 +1,5 @@
+/*	$OpenBSD: midi.c,v 1.11 2004/09/21 06:03:15 brad Exp $	*/
+
 /*
  * Copyright (c) 2003, 2004 Alexandre Ratchov
  *
