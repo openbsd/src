@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.32 2003/06/28 04:55:07 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.33 2003/09/26 17:01:14 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -296,6 +296,8 @@ mksymlinks(void)
 		q = machinearch;
 	} else {
 		p = strdup("machine");
+		if (!p)
+			errx(1, "out of memory");
 		q = machine;
 	}
 	(void)unlink(q);
@@ -704,7 +706,7 @@ optiondelta(void)
 
 	for (nnewopts = 0, nv = options; nv != NULL; nv = nv->nv_next)
 		nnewopts++;
-	newopts = (struct opt *)malloc(nnewopts * sizeof(struct opt));
+	newopts = (struct opt *)emalloc(nnewopts * sizeof(struct opt));
 	if (newopts == NULL)
 		ret = 0;
 	for (i = 0, nv = options; nv != NULL; nv = nv->nv_next, i++) {
