@@ -1,4 +1,6 @@
-# $OpenBSD: Makefile,v 1.3 2004/07/20 06:36:51 david Exp $
+# $OpenBSD: Makefile,v 1.4 2004/07/21 04:28:49 david Exp $
+
+.include <bsd.own.mk>
 
 NOMAN=
 NOPROG=
