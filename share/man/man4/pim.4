@@ -24,7 +24,7 @@
 .\" DEALINGS IN THE SOFTWARE.
 .\"
 .\" $FreeBSD: src/share/man/man4/pim.4,v 1.2 2004/07/09 09:22:36 ru Exp $
-.\" $OpenBSD: pim.4,v 1.1 2005/01/14 14:53:54 mcbride Exp $
+.\" $OpenBSD: pim.4,v 1.2 2005/01/16 01:27:43 jmc Exp $
 .\" $NetBSD: pim.4,v 1.2 2004/09/12 13:06:14 wiz Exp $
 .\"
 .Dd September 4, 2003
@@ -55,8 +55,8 @@
 .Sh DESCRIPTION
 .Tn PIM
 is the common name for two multicast routing protocols:
-Protocol Independent Multicast - Sparse Mode (PIM-SM) and
-Protocol Independent Multicast - Dense Mode (PIM-DM).
+Protocol Independent Multicast \- Sparse Mode (PIM-SM) and
+Protocol Independent Multicast \- Dense Mode (PIM-DM).
 .Pp
 PIM-SM is a multicast routing protocol that can use the underlying
 unicast routing information base or a separate multicast-capable
@@ -79,7 +79,7 @@ the user must enable multicast routing and PIM processing in the kernel
 .Sx SYNOPSIS
 about the kernel configuration options),
 and must run a PIM-SM or PIM-DM capable user-level process.
-From developer's point of view,
+From a developer's point of view,
 the programming guide described in the
 .Sx "Programming Guide"
 section should be used to control the PIM processing in the kernel.
@@ -93,70 +93,71 @@ one of the following socket options should be used to enable or disable
 PIM processing in the kernel.
 Note that those options require certain privilege
 (i.e., root privilege):
-.Bd -literal
+.Bd -literal -offset 4n
 /* IPv4 */
 int v = 1;        /* 1 to enable, or 0 to disable */
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_PIM, (void *)\*[Am]v, sizeof(v));
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_PIM, (void *)&v, sizeof(v));
 .Ed
-.Bd -literal
+.Bd -literal -offset 4n
 /* IPv6 */
 int v = 1;        /* 1 to enable, or 0 to disable */
-setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_PIM, (void *)\*[Am]v, sizeof(v));
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_PIM, (void *)&v, sizeof(v));
 .Ed
 .Pp
 After PIM processing is enabled, the multicast-capable interfaces
 should be added
 (see
 .Xr multicast 4 ) .
-In case of PIM-SM, the PIM-Register virtual interface must be added
+For PIM-SM, the PIM-Register virtual interface must be added
 as well.
 This can be accomplished by using the following options:
-.Bd -literal
+.Bd -literal -offset indent
 /* IPv4 */
 struct vifctl vc;
-memset(\*[Am]vc, 0, sizeof(vc));
+memset(&vc, 0, sizeof(vc));
 /* Assign all vifctl fields as appropriate */
 \&...
 if (is_pim_register_vif)
     vc.vifc_flags |= VIFF_REGISTER;
-setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_VIF, (void *)\*[Am]vc,
+setsockopt(mrouter_s4, IPPROTO_IP, MRT_ADD_VIF, (void *)&vc,
            sizeof(vc));
 .Ed
-.Bd -literal
+.Bd -literal -offset indent
 /* IPv6 */
 struct mif6ctl mc;
-memset(\*[Am]mc, 0, sizeof(mc));
+memset(&mc, 0, sizeof(mc));
 /* Assign all mif6ctl fields as appropriate */
 \&...
 if (is_pim_register_vif)
     mc.mif6c_flags |= MIFF_REGISTER;
-setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_ADD_MIF, (void *)\*[Am]mc,
+setsockopt(mrouter_s6, IPPROTO_IPV6, MRT6_ADD_MIF, (void *)&mc,
            sizeof(mc));
 .Ed
 .Pp
 Sending or receiving of PIM packets can be accomplished by
-opening first a
+first opening a
 .Dq raw socket
 (see
 .Xr socket 2 ) ,
 with protocol value of
 .Dv IPPROTO_PIM :
-.Bd -literal
+.Bd -literal -offset indent
 /* IPv4 */
 int pim_s4;
 pim_s4 = socket(AF_INET, SOCK_RAW, IPPROTO_PIM);
 .Ed
-.Bd -literal
+.Bd -literal -offset indent
 /* IPv6 */
 int pim_s6;
 pim_s6 = socket(AF_INET6, SOCK_RAW, IPPROTO_PIM);
 .Ed
 .Pp
-Then, the following system calls can be used to send or receive PIM
+Then the following system calls can be used to send or receive PIM
 packets:
 .Xr sendto 2 ,
 .Xr sendmsg 2 ,
 .Xr recvfrom 2 ,
+and
 .Xr recvmsg 2 .
 .\"
 .Sh SEE ALSO
@@ -176,12 +177,11 @@ packets:
 .\" XXX the PIM-SM number must be updated after RFC 2362 is
 .\" replaced by a new RFC by the end of year 2003 or so.
 The PIM-SM protocol is specified in RFC 2362 (to be replaced by
-.%T draft-ietf-pim-sm-v2-new-* ) .
+.Pa draft-ietf-pim-sm-v2-new-* ) .
 The PIM-DM protocol is specified in
-.%T draft-ietf-pim-dm-new-v2-* ) .
+.Pa draft-ietf-pim-dm-new-v2-* .
 .\"
 .Sh AUTHORS
-.An -nosplit
 The original IPv4 PIM kernel support for IRIX and SunOS-4.x was
 implemented by
 .An Ahmed Helmy
@@ -195,6 +195,7 @@ flavors and modified by
 (WIDE Project), and
 .An Pavlin Radoslavov
 (USC/ISI and ICSI).
+.Pp
 The IPv6 PIM kernel support was implemented by the KAME project
 .Pq Pa http://www.kame.net ,
 and was based on the IPv4 PIM kernel support.
