@@ -1,11 +1,10 @@
-/*	$OpenBSD: adwmcode.h,v 1.1 1998/11/17 06:14:58 downsj Exp $	*/
-/*      $NetBSD: adwmcode.h,v 1.1 1998/09/26 16:10:42 dante Exp $        */
+/*      $NetBSD: adwmcode.h,v 1.2 2000/02/03 20:29:17 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
  * Systems Inc. SCSI controllers
  * 
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Author: Baldassare Dante Profeta <dante@mclink.it>
@@ -42,8 +41,12 @@
 #ifndef ADV_MCODE_H
 #define ADV_MCODE_H
 
-extern u_int8_t adv_mcode[];
-extern u_int16_t adv_mcode_size;
-extern u_int32_t adv_mcode_chksum;
+extern u_int8_t adv_asc3550_mcode[];
+extern u_int16_t adv_asc3550_mcode_size;
+extern u_int32_t adv_asc3550_mcode_chksum;
+
+extern u_int8_t adv_asc38C0800_mcode[];
+extern u_int16_t adv_asc38C0800_mcode_size;
+extern u_int32_t adv_asc38C0800_mcode_chksum;
 
 #endif	/* ADV_MCODE_H */

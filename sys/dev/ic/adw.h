@@ -1,11 +1,10 @@
-/*	$OpenBSD: adw.h,v 1.2 1998/12/30 15:13:04 downsj Exp $	*/
-/*      $NetBSD: adw.h,v 1.1 1998/09/26 16:10:41 dante Exp $        */
+/*      $NetBSD: adw.h,v 1.5 2000/02/03 20:29:15 dante Exp $        */
 
 /*
  * Generic driver definitions and exported functions for the Advanced
  * Systems Inc. SCSI controllers
  * 
- * Copyright (c) 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Author: Baldassare Dante Profeta <dante@mclink.it>
@@ -45,10 +44,55 @@
 /******************************************************************************/
 
 typedef int (* ADW_ISR_CALLBACK) (ADW_SOFTC *, ADW_SCSI_REQ_Q *);
-typedef int (* ADW_SBRESET_CALLBACK) (ADW_SOFTC *);
+typedef void (* ADW_ASYNC_CALLBACK) (ADW_SOFTC *, u_int8_t);
 
-/* per request scatter-gather element limit  */
-#define ADW_MAX_SG_LIST		64
+
+/*
+ * Every adw_carrier structure _MUST_ always be aligned on a 16 bytes boundary
+ */
+struct adw_carrier {
+/* ---------- the microcode wants the field below ---------- */
+	u_int32_t	unused;	  /* Carrier Virtual Address -UNUSED- */
+	u_int32_t	carr_pa;  /* Carrier Physical Address */
+	u_int32_t	areq_vpa; /* ADW_SCSI_REQ_Q Physical Address */
+	/*
+	 * next_vpa [31:4]	Carrier Physical Next Pointer
+	 *
+	 * next_vpa [3:1]	Reserved Bits
+	 * next_vpa [0]		Done Flag set in Response Queue.
+	 */
+	u_int32_t	next_vpa;
+/* ----------                                     ---------- */
+	struct adw_carrier	*nexthash;	/* Carrier Virtual Address */
+
+	int			id;
+	/*
+	 * This DMA map maps the buffer involved in the carrier transfer.
+	 */
+//	bus_dmamap_t	dmamap_xfer;
+};
+
+typedef struct adw_carrier ADW_CARRIER;
+
+#define ADW_CARRIER_SIZE	((((int)((sizeof(ADW_CARRIER)-1)/16))+1)*16)
+
+
+/*
+ * Mask used to eliminate low 4 bits of carrier 'next_vpa' field.
+ */
+#define ASC_NEXT_VPA_MASK       0xFFFFFFF0
+
+#define ASC_RQ_DONE             0x00000001
+#define ASC_CQ_STOPPER          0x00000000
+
+#define ASC_GET_CARRP(carrp) ((carrp) & ASC_NEXT_VPA_MASK)
+
+
+/*
+ * per request scatter-gather element limit
+ * We could have up to 256 SG lists.
+ */
+#define ADW_MAX_SG_LIST		255
 
 /* 
  * Scatter-Gather Definitions per request.
@@ -61,14 +105,18 @@ typedef int (* ADW_SBRESET_CALLBACK) (ADW_SOFTC *);
 	((ADW_MAX_SG_LIST + (NO_OF_SG_PER_BLOCK - 1))/NO_OF_SG_PER_BLOCK)
 
 
-struct adw_ccb
-{
-	ADW_SG_BLOCK		sg_block[ADW_NUM_SG_BLOCK];
+struct adw_ccb {
 	ADW_SCSI_REQ_Q		scsiq;
+	ADW_SG_BLOCK		sg_block[ADW_NUM_SG_BLOCK];
 
-	struct scsi_sense_data scsi_sense;
+	ADW_CARRIER		*carr_list;	/* carriers involved */
+
+	struct scsi_sense_data  scsi_sense;
 
 	TAILQ_ENTRY(adw_ccb)	chain;
+	struct adw_ccb		*nexthash;
+	u_int32_t		hashkey;
+
 	struct scsi_xfer	*xs;	/* the scsi_xfer for this cmd */
 	int			flags;	/* see below */
 
@@ -82,18 +130,25 @@ struct adw_ccb
 typedef struct adw_ccb ADW_CCB;
 
 /* flags for ADW_CCB */
-#define CCB_ALLOC       0x01
-#define CCB_ABORT       0x02
-#define	CCB_WATCHDOG	0x10
+#define CCB_ALLOC	0x01
+#define CCB_ABORTING	0x02
+#define CCB_ABORTED	0x04
 
 
-#define ADW_MAX_CCB	64
+#define ADW_MAX_CARRIER	20	/* Max. number of host commands (253) */
+#define ADW_MAX_CCB	16	/* Max. number commands per device (63) */
 
-struct adw_control
-{
-	ADW_CCB	ccbs[ADW_MAX_CCB];	/* all our control blocks */
+struct adw_control {
+	ADW_CCB		ccbs[ADW_MAX_CCB];	/* all our control blocks */
+	ADW_CARRIER	*carriers;		/* all our carriers */
+	bus_dmamap_t	dmamap_xfer;
 };
 
+/*
+ * Offset of a carrier from the beginning of the carriers DMA mapping.
+ */
+#define	ADW_CARRIER_ADDR(sc, x)	((sc)->sc_dmamap_carrier->dm_segs[0].ds_addr + \
+			(((u_long)x) - ((u_long)(sc)->sc_control->carriers)))
 /*
  * Offset of a CCB from the beginning of the control DMA mapping.
  */
@@ -105,6 +160,8 @@ struct adw_control
 int adw_init __P((ADW_SOFTC *sc));
 void adw_attach __P((ADW_SOFTC *sc));
 int adw_intr __P((void *arg));
+ADW_CCB *adw_ccb_phys_kv __P((ADW_SOFTC *, u_int32_t));
+ADW_CARRIER *adw_carrier_phys_kv __P((ADW_SOFTC *, u_int32_t));
 
 /******************************************************************************/
 

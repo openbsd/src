@@ -1,8 +1,8 @@
-/*	$OpenBSD: adw_pci.c,v 1.1 1998/11/17 06:11:05 downsj Exp $	*/
-/* $NetBSD: adw_pci.c,v 1.2 1998/09/26 19:53:34 dante Exp $	 */
+/* $NetBSD: adw_pci.c,v 1.3 2000/02/03 20:28:26 dante Exp $	 */
 
 /*
- * Copyright (c) 1998 The NetBSD Foundation, Inc. All rights reserved.
+ * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * All rights reserved.
  *
  * Author: Baldassare Dante Profeta <dante@mclink.it>
  *
@@ -86,13 +86,15 @@ struct cfattach adw_pci_ca =
 int
 adw_pci_match(parent, match, aux)
 	struct device  *parent;
-	void *match, *aux;
+	void           *match, *aux;
 {
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ADVSYS)
 		switch (PCI_PRODUCT(pa->pa_id)) {
 		case PCI_PRODUCT_ADVSYS_WIDE:
+			return (1);
+		case PCI_PRODUCT_ADVSYS_U2W:
 			return (1);
 		}
 
@@ -116,9 +118,6 @@ adw_pci_attach(parent, self, aux)
 	const char     *intrstr;
 	int retval;
 
-
-	sc->sc_flags = 0x0;
-
 	/*
 	 * Latency timer settings.
 	 */
@@ -127,8 +126,9 @@ adw_pci_attach(parent, self, aux)
 
 		bhlcr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_BHLC_REG);
 
-		if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_WIDE) &&
-		    (PCI_LATTIMER(bhlcr) < 0x20)) {
+		if( ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_WIDE) ||
+		     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_U2W)) &&
+		     (PCI_LATTIMER(bhlcr) < 0x20)) {
 			bhlcr &= 0xFFFF00FFUL;
 			bhlcr |= 0x00002000UL;
 			pci_conf_write(pa->pa_pc, pa->pa_tag,
@@ -137,8 +137,9 @@ adw_pci_attach(parent, self, aux)
 	}
 
 
-	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_WIDE) &&
-	    (command & PCI_COMMAND_PARITY_ENABLE) == 0) {
+	if (((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_WIDE) ||
+	     (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADVSYS_U2W)) &&
+	     (command & PCI_COMMAND_PARITY_ENABLE) == 0) {
 		sc->cfg.control_flag |= CONTROL_FLAG_IGNORE_PERR;
 	}
 	/*
