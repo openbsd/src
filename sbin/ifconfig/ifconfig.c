@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.90 2004/02/26 20:25:09 millert Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.91 2004/03/08 17:21:52 mcbride Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.90 2004/02/26 20:25:09 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.91 2004/03/08 17:21:52 mcbride Exp $";
 #endif
 #endif /* not lint */
 
@@ -437,11 +437,12 @@ main(int argc, char *argv[])
 		argc--, argv++;
 		if (argc < 1)
 			usage();
-		(void) strlcpy(name, *argv, sizeof(name));
+		if (strlcpy(name, *argv, sizeof(name)) >= IFNAMSIZ)
+			errx(1, "interface name '%s' too long", *argv);
 	} else if (!strcmp(*argv, "-C")) {
 		Cflag = 1;
-	} else
-		(void) strlcpy(name, *argv, sizeof(name));
+	} else if (strlcpy(name, *argv, sizeof(name)) >= IFNAMSIZ)
+		errx(1, "interface name '%s' too long", *argv);
 	argc--, argv++;
 	if (argc > 0) {
 		for (afp = rafp = afs; rafp->af_name; rafp++)
