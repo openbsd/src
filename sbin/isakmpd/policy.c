@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.43 2001/08/11 05:26:59 angelos Exp $	*/
+/*	$OpenBSD: policy.c,v 1.44 2001/08/24 11:19:01 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -58,24 +58,15 @@
 
 #include "sysdep.h"
 
-#include "app.h"
 #include "conf.h"
-#include "connection.h"
-#include "cookie.h"
-#include "doi.h"
 #include "dyn.h"
 #include "exchange.h"
-#include "init.h"
 #include "ipsec.h"
 #include "isakmp_doi.h"
-#include "math_group.h"
 #include "sa.h"
-#include "timer.h"
 #include "transport.h"
-#include "udp.h"
 #include "log.h"
 #include "message.h"
-#include "ui.h"
 #include "util.h"
 #include "policy.h"
 #include "x509.h"
