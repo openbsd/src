@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.8,v 1.50 2000/05/25 04:37:21 itojun Exp $
+.\"	$OpenBSD: sysctl.8,v 1.51 2000/06/14 17:17:05 provos Exp $
 .\"	$NetBSD: sysctl.8,v 1.4 1995/09/30 07:12:49 thorpej Exp $
 .\"
 .\" Copyright (c) 1993
@@ -144,7 +144,9 @@ privilege can change the value.
 .It kern.arandom	u_int	no
 .It vm.loadavg	struct	no
 .It vm.psstrings	struct	no
-.It vm.swapencrypt	integer	yes
+.It vm.swapencrypt.enable	integer	yes
+.It vm.swapencrypt.keyscreated	integer	no
+.It vm.swapencrypt.keysdeleted	integer	no
 .It fs.posix.setuid	integer	yes
 .It net.inet.ip.forwarding	integer	yes
 .It net.inet.ip.redirect	integer	yes
@@ -370,6 +372,8 @@ definitions for second level network identifiers
 definitions for third level profiling identifiers
 .It Pa <vm/vm_param.h>
 definitions for second level virtual memory identifiers
+.It Pa <uvm/uvm_swap_encrypt.h>
+definitions for third level virtual memory identifiers
 .It Pa <netinet/in.h>
 definitions for third level IPv4/v6 identifiers and
 fourth level IPv4/v6 identifiers
