@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc.c,v 1.5 2000/01/03 01:22:53 aaron Exp $	*/
+/*	$OpenBSD: if_dc.c,v 1.6 2000/01/06 03:06:51 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -165,15 +165,11 @@ struct dc_type dc_devs[] = {
 	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981 },
 	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985 },
 	{ PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A },
-#if 0
 	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713 },
 	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98715 },
 	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_98713 },
-#endif
 	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC },
-#if 0
 	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNICII },
-#endif
 	{ 0, 0 }
 };
 
@@ -2111,6 +2107,10 @@ int dc_intr(arg)
 	while((status = CSR_READ_4(sc, DC_ISR)) & DC_INTRS) {
 
 		CSR_WRITE_4(sc, DC_ISR, status);
+		if ((status & DC_INTRS) == 0) {
+			claimed = 0;
+			break;
+		}
 
 		if (status & DC_ISR_RX_OK)
 			dc_rxeof(sc);
