@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvsintro.7,v 1.3 2004/12/08 19:37:28 xsa Exp $
+.\"	$OpenBSD: cvsintro.7,v 1.4 2005/01/04 15:03:24 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -40,25 +40,211 @@ This document provides an introduction to using OpenCVS to manage repositories.
 It will first cover some of the aspects of using and managing CVS and,
 where appropriate, explain the main differences between OpenCVS and other
 distributions.
-
-.Sh CREATING A REPOSITORY
-Before CVS can be used, a repository must be created.
-A repository is simply a directory where the CVS daemon can store the version
-information for the files that it will host.
-
-
-.Sh CREATING A MODULE
-
-.Sh PROPAGATING CHANGES
-
-.Sh REMOVING FILES
-
+.Sh USING CVS TO TRACK SOURCE CHANGES
+One of the most common uses of
+.Xr cvs 1
+is to track changes to a collection of source files (a
+.Em module )
+contained within a certain, defined, location (a
+.Em repository ) .
+This allows the user to keep a set of local sources in sync
+with a set of remote sources.
+It also allows the user to view information about changes to the repository
+(such as what the exact change was, who made it, and when),
+to view and compare information about different versions of a file,
+and possibly to make local changes to files.
+.Pp
+As an example,
+we'll look at a user wishing to track source changes to the
+.Ox
+tree,
+maintaining a local (personal) copy of the source on their own machine.
+The user will have to decide:
+.Bl -bullet
+.It
+The cvs server to use.
+There may be only one server or, for larger projects,
+a number of mirror servers.
+.It
+Where the source module(s) will be kept on the local machine.
+.El
+.Pp
+In our example, the
+.Ox
+project, there are a large number of servers to choose from.
+It's generally better to use a server geographically closer to you
+since this tends to be faster and less of a strain for the master server.
+Utilities such as
+.Xr ping 8
+and
+.Xr traceroute 8
+can be used to decide which host will be best to use.
+Secondly, the local repository has to be stored somewhere.
+.Ox
+uses
+.Pa /usr/src
+as the default location for its source tree
+(the
+.Dq src
+module),
+but this is largely arbitrary.
+.Pp
+This example shows how a user initially checks out a copy of the source tree
+from local mirror anoncvs.nl.openbsd.org:
+.Bd -literal -offset indent
+$ cd /usr
+$ cvs -d anoncvs@anoncvs.nl.openbsd.org:/cvs checkout src
+.Ed
+.Pp
+In this case it was first necessary to add ourselves to the
+.Dq wsrc
+group, since
+.Pa /usr/src
+is writable only by user
+.Dq root
+and/or group
+.Dq wsrc .
+The
+.Fl d
+option was necessary to tell
+.Xr cvs 1
+the location of the remote server.
+Note the
+.Dq :/cvs
+string appended to the server's address:
+the path to the repository
+.Em must
+be specified.
+Finally the
+.Ic checkout
+command was used to obtain a copy of the module
+.Dq src .
+.Pp
+Note that the above example simply checked out
+.Ox Ns -current :
+often different software versions are available:
+use an identifier
+.Pq Em tag
+to specify which version to check out.
+.Pp
+Thereafter the user is free to manipulate the source tree
+using the
+.Xr cvs 1
+utility itself.
+For example, the following would update (sync) the local copy of
+.Dq src
+with the remote copy:
+.Bd -literal -offset indent
+$ cd /usr/src
+$ cvs -d anoncvs@anoncvs.nl.openbsd.org:/cvs update -Pd
+.Ed
+.Pp
+General users may wish to use
+.Xr cvs 1
+simply to keep a copy of sources up to date with a development tree;
+developers of software projects can also use
+.Xr cvs 1
+to make their own changes to a set of remote source files,
+and to view changes made by other software developers.
+.Pp
+See
+.Xr cvs 1
+for more information on the different commands available.
+See also
+.Xr cvsrc 5
+for details on configuring
+.Xr cvs 1
+itself.
+.Sh USING CVS TO MANAGE A REPOSITORY
+Software developers may wish to use
+.Xr cvs 1
+and
+.Xr cvsd 8
+to manage their own software projects.
+Here we look at an example usage:
+providing remote access to a small group of developers
+working on project
+.Dq foo ,
+located in
+.Pa /cvs/projects .
+First of all a
+.Em repository
+has to be created.
+A repository is just the location of the group of files
+to be managed.
+Within the repository,
+files may be organised into collections of files,
+called
+.Em modules ,
+which are just logical groupings of files.
+.Pp
+In our example, module
+.Dq foo
+is located at
+.Pa /cvs/projects/foo
+on machine
+.Dq cvs.example.org .
+Therefore
+.Pa /cvs/projects
+is both the root directory
+.Pq Em $CVSROOT
+of our repository and the name of our repository.
+.Pp
+If a set of source files already exist,
+possibly already under revision control,
+they can be added to a repository using the
+.Xr cvs 1
+command
+.Ic import .
+This is a useful way of adding modules to a pre-existent repository.
+In our example we are starting from scratch,
+so the repository has to be initialised using the
+.Ic init
+command:
+.Bd -literal -offset indent
+# cd /cvs/projects
+# cvs -d /cvs/projects init
+.Ed
+.Pp
+This will create a default administrative directory,
+.Pa $CVSROOT/CVSROOT ,
+filled with files concerned with the management of the repository.
+.Pp
+After initialisation, the CVS daemon,
+.Xr cvsd 8 ,
+has to be started to provide a means of access and management
+to the repository.
+The following example shows the arguments required to start
+.Xr cvsd 8
+with our example repository,
+.Dq projects :
+.Pp
+.Dl # cvsd -p -r /cvs/projects
+.Pp
+In the above example, the
+.Fl p
+option was also used to ensure there were no problems with file permissions.
+.Pp
+Configuration variables, such as the root directory of the CVS repository,
+can be specified in the configuration file
+.Xr cvsd.conf 5 .
+See also
+.Xr cvsd 8
+for more information on running and configuring the CVS daemon.
+.Pp
+Thereafter, access will have to be arranged for
+developers participating in the project.
+This typically means providing SSH access via
+.Xr sshd 8
+for remote access,
+unless the development network is local.
 .Sh SEE ALSO
 .Xr cvs 1 ,
-.Xr diff 1 ,
-.Xr patch 1 ,
 .Xr rcs 1 ,
-.Xr cvsd 8
+.Xr cvsd.conf 5 ,
+.Xr cvsrc 5 ,
+.Xr cvsd 8 ,
+.Xr sshd 8
 .Sh HISTORY
 The OpenCVS project is a BSD-licensed rewrite of the original
 Concurrent Versioning System written by Jean-Francois Brousseau.
