@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_node.c,v 1.7 1997/11/08 17:21:06 niklas Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.8 1998/07/22 16:40:08 deraadt Exp $	*/
 /*	$NetBSD: cd9660_node.c,v 1.17 1997/05/05 07:13:57 mycroft Exp $	*/
 
 /*-
@@ -396,7 +396,8 @@ cd9660_tstamp_conv7(pi,pu)
 	struct timespec *pu;
 {
 	int crtime, days;
-	int y, m, d, hour, minute, second, tz;
+	int y, m, d, hour, minute, second;
+	signed char tz;
 	
 	y = pi[0] + 1900;
 	m = pi[1];
@@ -404,7 +405,7 @@ cd9660_tstamp_conv7(pi,pu)
 	hour = pi[3];
 	minute = pi[4];
 	second = pi[5];
-	tz = pi[6];
+	tz = (signed char) pi[6];
 	
 	if (y < 1970) {
 		pu->tv_sec  = 0;
