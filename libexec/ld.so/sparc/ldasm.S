@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.2 2002/07/27 13:56:36 art Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.3 2002/07/27 15:35:55 art Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -93,9 +93,9 @@ _dl_start:
 
 	mov	%l3, %o4
 	ld	[%l0], %l3		! argc = *sp
-	sll	%l3, 3, %l3		! argc *= sizeof(long)
-	add	%l0, 8, %o0		! argv = [sp + argc]
-	add	%l0, 16, %o1		! envp = sp + 16 +
+	sll	%l3, 2, %l3		! argc *= sizeof(long)
+	add	%l0, 4, %o0		! argv = [sp + argc]
+	add	%l0, 8, %o1		! envp = sp + 8 +
 	add	%o1, %l3, %o1		!	+ argc
 
 	add	%o4, (7*4), %l2
