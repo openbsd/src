@@ -882,7 +882,6 @@
 ./usr/share/man/cat4/aic.0
 ./usr/share/man/cat4/alpha
 ./usr/share/man/cat4/alpha/com.0
-./usr/share/man/cat4/alpha/cy.0
 ./usr/share/man/cat4/alpha/esp.0
 ./usr/share/man/cat4/alpha/intro.0
 ./usr/share/man/cat4/alpha/kmem.0
@@ -930,6 +929,7 @@
 ./usr/share/man/cat4/auich.0
 ./usr/share/man/cat4/auvia.0
 ./usr/share/man/cat4/awi.0
+./usr/share/man/cat4/bge.0
 ./usr/share/man/cat4/bmtphy.0
 ./usr/share/man/cat4/bpf.0
 ./usr/share/man/cat4/brgphy.0
@@ -1201,10 +1201,18 @@
 ./usr/share/man/cat4/sparc/xy.0
 ./usr/share/man/cat4/sparc/zs.0
 ./usr/share/man/cat4/sparc64
+./usr/share/man/cat4/sparc64/audioce.0
+./usr/share/man/cat4/sparc64/audiocs.0
 ./usr/share/man/cat4/sparc64/autoconf.0
+./usr/share/man/cat4/sparc64/be.0
+./usr/share/man/cat4/sparc64/gem.0
+./usr/share/man/cat4/sparc64/hme.0
 ./usr/share/man/cat4/sparc64/intro.0
 ./usr/share/man/cat4/sparc64/kmem.0
 ./usr/share/man/cat4/sparc64/mem.0
+./usr/share/man/cat4/sparc64/openprom.0
+./usr/share/man/cat4/sparc64/qe.0
+./usr/share/man/cat4/sparc64/qec.0
 ./usr/share/man/cat4/spp.0
 ./usr/share/man/cat4/sppp.0
 ./usr/share/man/cat4/sqphy.0

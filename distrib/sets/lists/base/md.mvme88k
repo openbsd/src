@@ -450,6 +450,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/cy82c693var.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/czreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/eapreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_bgereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_lgereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_ngereg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/if_txpreg.ph

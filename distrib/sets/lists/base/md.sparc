@@ -435,6 +435,7 @@
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/hifn7751reg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/hifn7751var.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/i82365_pcivar.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_bgereg.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_devar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_levar.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/dev/pci/if_lgereg.ph

@@ -385,6 +385,7 @@
 ./usr/include/dev/pci/hifn7751reg.h
 ./usr/include/dev/pci/hifn7751var.h
 ./usr/include/dev/pci/i82365_pcivar.h
+./usr/include/dev/pci/if_bgereg.h
 ./usr/include/dev/pci/if_devar.h
 ./usr/include/dev/pci/if_levar.h
 ./usr/include/dev/pci/if_lgereg.h
