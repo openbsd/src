@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.8 2002/03/27 02:19:57 fgsch Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.9 2002/06/09 02:21:55 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mkalias.c,v 1.8 2002/03/27 02:19:57 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: mkalias.c,v 1.9 2002/06/09 02:21:55 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -60,7 +60,7 @@ split_address(address, len, user, host)
 	char *c, *s, *r;
 	int  i = 0;
 
-	if (index(address, '@')) {
+	if (strchr(address, '@')) {
 		s = user;
 		for (c = address; i < len; i++) {
 			if (*c == '@') {
@@ -75,7 +75,7 @@ split_address(address, len, user, host)
 	
 	}
 		
-	if (r = rindex(address, '!')) {
+	if (r = strrchr(address, '!')) {
 		s = host;
 		for (c = address; i < len; i++) {
 			if (c == r) {
@@ -98,8 +98,8 @@ check_host(address, host, dflag, uflag, Eflag)
 	char answer[PACKETSZ];
 	int  status;
 
-	if ((dflag && index(address, '@')) ||
-	    (uflag && index(address, '!')))
+	if ((dflag && strchr(address, '@')) ||
+	    (uflag && strchr(address, '!')))
 		return(0);
 
 	if ((_res.options & RES_INIT) == 0)
@@ -283,12 +283,12 @@ fail:
 			continue;			/* Sendmail token */
 		if (strncmp(key.dptr, "YP_", 3)==0)	/* YP token */
 			continue;
-		if (index(val.dptr, ','))
+		if (strchr(val.dptr, ','))
 			continue;			/* List... */
-		if (index(val.dptr, '|'))
+		if (strchr(val.dptr, '|'))
 			continue;			/* Pipe... */
 
-		if (!(index(val.dptr, '@') || index(val.dptr, '!')))
+		if (!(strchr(val.dptr, '@') || strchr(val.dptr, '!')))
 			continue;		/* Skip local users */
 
 		split_address(val.dptr, val.dsize, user, host);
