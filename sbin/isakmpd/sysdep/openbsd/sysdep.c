@@ -1,5 +1,5 @@
-/*	$OpenBSD: sysdep.c,v 1.6 1999/08/05 22:40:37 niklas Exp $	*/
-/*	$EOM: sysdep.c,v 1.8 1999/08/05 15:00:06 niklas Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.7 2000/12/12 01:46:17 niklas Exp $	*/
+/*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -179,11 +179,11 @@ sysdep_ipsec_delete_spi (struct sa *sa, struct proto *proto, int incoming)
 }
 
 int
-sysdep_ipsec_enable_sa (struct sa *sa)
+sysdep_ipsec_enable_sa (struct sa *sa, struct sa *isakmp_sa)
 {
   if (app_none)
     return 0;
-  return KEY_API (enable_sa) (sa);
+  return KEY_API (enable_sa) (sa, isakmp_sa);
 }
 
 int

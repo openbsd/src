@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.h,v 1.3 1999/05/01 20:43:44 niklas Exp $	*/
-/*	$EOM: pf_key_v2.h,v 1.3 1999/05/01 20:21:15 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.h,v 1.4 2000/12/12 01:46:17 niklas Exp $	*/
+/*	$EOM: pf_key_v2.h,v 1.4 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -46,7 +46,7 @@ struct sockaddr;
 
 extern void pf_key_v2_connection_check (char *);
 extern int pf_key_v2_delete_spi (struct sa *, struct proto *, int);
-extern int pf_key_v2_enable_sa (struct sa *);
+extern int pf_key_v2_enable_sa (struct sa *, struct sa *);
 extern int pf_key_v2_enable_spi (in_addr_t, in_addr_t, in_addr_t, in_addr_t,
 				 u_int8_t *, u_int8_t, in_addr_t);
 extern u_int8_t *pf_key_v2_get_spi (size_t *, u_int8_t, struct sockaddr *, int,
