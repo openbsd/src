@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.5 2004/08/26 13:30:25 pefo Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.6 2004/09/22 08:01:58 pefo Exp $	*/
 /*
  * Copyright (c) 1996 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -68,7 +68,7 @@ static int findblkmajor(struct device *);
 static struct device * getdisk(char *, int, int, dev_t *);
 struct device *getdevunit(char *, int);
 struct devmap *boot_findtype(char *);
-void makebootdev(const char *cp);
+void makebootdev(const char *, int);
 const char *boot_get_path_component(const char *, char *, int *);
 
 /* Struct translating from ARCS to bsd. */
@@ -479,7 +479,7 @@ boot_findtype(char *s)
  * Boot names look like: 'scsi()disk(n)rdisk()partition(0)/bsd'
  */
 void
-makebootdev(const char *bp)
+makebootdev(const char *bp, int offs)
 {
 	char namebuf[256];
 	const char *cp, *ncp, *ecp, *devname;
@@ -497,7 +497,7 @@ makebootdev(const char *bp)
 				devname = dp->dev;
 				break;
 			case DEVMAP_UNIT:
-				unit = i - 1;
+				unit = i - 1 + offs;
 				break;
 			case DEVMAP_PART:
 				partition = i;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.14 2004/09/21 08:55:20 miod Exp $ */
+/*	$OpenBSD: machdep.c,v 1.15 2004/09/22 08:01:58 pefo Exp $ */
 
 /*
  * Copyright (c) 2003-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -84,7 +84,7 @@
 
 extern struct consdev *cn_tab;
 extern char kernel_text[];
-extern void makebootdev(const char *);
+extern void makebootdev(const char *, int);
 extern void stacktrace(void);
 
 /* the following is used externally (sysctl_hw) */
@@ -123,6 +123,7 @@ int	ncpu = 1;		/* At least one cpu in the system */
 struct	user *proc0paddr;
 struct	user *curprocpaddr;
 int	console_ok;		/* set when console initialized */
+int	bootdriveoffs = 0;
 
 int32_t *environment;
 struct sys_rec sys_config;
@@ -220,7 +221,16 @@ mips_init(int argc, int32_t *argv)
 		sys_config.pci_mem[0].bus_base_dma = 0x00000000;/*XXX*/
 		sys_config.pci_mem[0].bus_reverse = my_endian;
 		sys_config.cpu[0].tlbwired = 2;
-		sys_config.cpu[0].clock = 200000000;  /* Reasonable default */
+		sys_config.cpu[0].clock = 180000000;  /* Reasonable default */
+
+		/* R1xK O2's are one disk slot machines. Offset slotno */
+		switch ((cp0_get_prid() >> 8) & 0xff) {
+		case MIPS_R10000:
+		case MIPS_R12000:
+		case MIPS_R14000:
+			bootdriveoffs = -1;
+			break;
+		}
 	} else {
 		bios_putstring("Unsupported system!!!\n");
 		while(1);
@@ -279,7 +289,7 @@ mips_init(int argc, int32_t *argv)
 	cp = Bios_GetEnvironmentVariable("OSLoadPartition");
 	if (cp == NULL)
 		cp = "unknown";
-	makebootdev(cp);
+	makebootdev(cp, bootdriveoffs);
 
 	/*
 	 * Look at arguments passed to us and compute boothowto.
