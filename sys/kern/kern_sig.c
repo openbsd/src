@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.10 1996/10/27 02:26:55 tholo Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.11 1996/10/27 03:48:29 tholo Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -1054,8 +1054,6 @@ coredump(p)
 	int error, error1;
 	char name[MAXCOMLEN+6];		/* progname.core */
 	struct core core;
-	uid_t uid;
-	gid_t gid;
 
 	/*
 	 * Don't dump if not root and the process has used set user or
@@ -1070,30 +1068,6 @@ coredump(p)
 	    p->p_rlimit[RLIMIT_CORE].rlim_cur)
 		return (EFBIG);
 
-	sprintf(name, "%s.core", p->p_comm);
-
-	/*
-	 * Verify that EUID can write a core file...
-	 */
-	uid = cred->cr_uid;
-	gid = cred->cr_gid;
-	cred->cr_uid = p->p_cred->p_ruid;
-	cred->cr_gid = p->p_cred->p_rgid;
-	NDINIT(&nd, LOOKUP, NOFOLLOW | LOCKLEAF, UIO_SYSSPACE, name, p);
-	if ((error = namei(&nd)) != 0) {
-		cred->cr_uid = uid;
-		cred->cr_gid = gid;
-		return (error);
-	}
-	vp = nd.ni_vp;
-	if ((error = vn_writechk(vp)) == 0)
-		error = VOP_ACCESS(vp, VWRITE, cred, p);
-	vput(vp);
-	cred->cr_uid = uid;
-	cred->cr_gid = gid;
-	if (error)
-		return (error);
-
 	/*
 	 * ... but actually write it as UID
 	 */
@@ -1101,6 +1075,7 @@ coredump(p)
 	cred->cr_uid = p->p_cred->p_ruid;
 	cred->cr_gid = p->p_cred->p_rgid;
 
+	sprintf(name, "%s.core", p->p_comm);
 	NDINIT(&nd, LOOKUP, NOFOLLOW, UIO_SYSSPACE, name, p);
 	if ((error = vn_open(&nd, O_CREAT | FWRITE, S_IRUSR | S_IWUSR)) != 0) {
 		crfree(cred);
