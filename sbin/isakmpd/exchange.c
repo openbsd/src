@@ -1,5 +1,5 @@
-/*	$OpenBSD: exchange.c,v 1.14 1999/04/05 20:58:13 niklas Exp $	*/
-/*	$EOM: exchange.c,v 1.75 1999/04/05 18:28:50 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.15 1999/04/19 19:58:17 niklas Exp $	*/
+/*	$EOM: exchange.c,v 1.88 1999/04/18 18:01:21 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -192,7 +192,8 @@ exchange_validate (struct message *msg)
 
   while (*pc != EXCHANGE_SCRIPT_END && *pc != EXCHANGE_SCRIPT_SWITCH)
     {
-      log_debug (LOG_MISC, 90, "exchange_validate: checking for required %s",
+      log_debug (LOG_EXCHANGE, 90, 
+		 "exchange_validate: checking for required %s",
 		 *pc >= ISAKMP_PAYLOAD_NONE
 		 ? constant_name (isakmp_payload_cst, *pc)
 		 : constant_name (exchange_script_cst, *pc));
@@ -373,7 +374,8 @@ exchange_run (struct message *msg)
 	    }
 	}
 
-      log_debug (LOG_MISC, 40, "exchange_run: finished step %d, advancing...",
+      log_debug (LOG_EXCHANGE, 40, 
+		 "exchange_run: finished step %d, advancing...",
 		 exchange->step);
       exchange->step++;
       while (*exchange->exch_pc != EXCHANGE_SCRIPT_SWITCH
@@ -425,7 +427,7 @@ exchange_lookup_from_icookie (u_int8_t *cookie)
   int i;
   struct exchange *exchange;
 
-  for (i = 0; i < bucket_mask; i++)
+  for (i = 0; i <= bucket_mask; i++)
     for (exchange = LIST_FIRST (&exchange_tab[i]); exchange;
 	 exchange = LIST_NEXT (exchange, link))
       if (memcmp (exchange->cookies, cookie, ISAKMP_HDR_ICOOKIE_LEN) == 0
@@ -441,17 +443,55 @@ exchange_lookup_by_name (char *name, int phase)
   int i;
   struct exchange *exchange;
 
-  for (i = 0; i < bucket_mask; i++)
+  /* If we search for nothing, we will find nothing.  */
+  if (!name)
+    return 0;
+
+  for (i = 0; i <= bucket_mask; i++)
     for (exchange = LIST_FIRST (&exchange_tab[i]); exchange;
 	 exchange = LIST_NEXT (exchange, link))
       {
-	log_debug(LOG_MISC, 90,
-		  "exchange_lookup_by_name: %s == %s && %d == %d?", name,
-		  exchange->name ? exchange->name : "<unnamed>", phase,
-		  exchange->phase);
+	log_debug (LOG_EXCHANGE, 90,
+		   "exchange_lookup_by_name: %s == %s && %d == %d?", name,
+		   exchange->name ? exchange->name : "<unnamed>", phase,
+		   exchange->phase);
 	if (exchange->name && strcasecmp (exchange->name, name) == 0
 	    && exchange->phase == phase)
 	  return exchange;
+      }
+  return 0;
+}
+
+/* Lookup an exchange out of the name, phase and step > 1.  */
+struct exchange *
+exchange_lookup_active (char *name, int phase)
+{
+  int i;
+  struct exchange *exchange;
+
+  /* XXX Almost identical to exchange_lookup_by_name().  */
+
+  if (!name)
+    return 0;
+
+  for (i = 0; i <= bucket_mask; i++)
+    for (exchange = LIST_FIRST (&exchange_tab[i]); exchange;
+	 exchange = LIST_NEXT (exchange, link))
+      {
+	log_debug (LOG_EXCHANGE, 90,
+		   "exchange_lookup_active: %s == %s && %d == %d?",
+		   name, exchange->name ? exchange->name : "<unnamed>", phase,
+		   exchange->phase);
+	if (exchange->name && strcasecmp (exchange->name, name) == 0
+	    && exchange->phase == phase)
+	  {
+	    if (exchange->step > 1)
+	      return exchange;
+	    else
+	      log_debug (LOG_EXCHANGE, 80, 
+			 "exchange_lookup_active: avoided early (pre-step 1) "
+			 "exchange %p", exchange);
+	  }
       }
   return 0;
 }
@@ -596,20 +636,20 @@ exchange_create (int phase, int initiator, int doi, int type)
 
 struct exchange_finalization_node
 {
-  void (*first) (void *, int);
+  void (*first) (struct exchange *, void *, int);
   void *first_arg;
-  void (*second) (void *, int);
+  void (*second) (struct exchange *, void *, int);
   void *second_arg;
 };
 
 /* Run the finalization functions of ARG.  */
 static void
-exchange_run_finalizations (void *arg, int fail)
+exchange_run_finalizations (struct exchange *exchange, void *arg, int fail)
 {
   struct exchange_finalization_node *node = arg;
 
-  node->first (node->first_arg, fail);
-  node->second (node->second_arg, fail);
+  node->first (exchange, node->first_arg, fail);
+  node->second (exchange, node->second_arg, fail);
   free (node);
 }
 
@@ -619,7 +659,8 @@ exchange_run_finalizations (void *arg, int fail)
  */
 static void
 exchange_add_finalization (struct exchange *exchange,
-			   void (*finalize) (void *, int), void *arg)
+			   void (*finalize) (struct exchange *, void *, int),
+			   void *arg)
 {
   struct exchange_finalization_node *node;
 
@@ -652,7 +693,8 @@ exchange_add_finalization (struct exchange *exchange,
 /* Establish a phase 1 exchange.  */
 void
 exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
-		       char *name, void *args, void (*finalize) (void *, int),
+		       char *name, void *args,
+		       void (*finalize) (struct exchange *, void *, int),
 		       void *arg)
 {
   struct exchange *exchange;
@@ -662,13 +704,6 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 
   if (name)
     {
-      exchange = exchange_lookup_by_name (name, 1);
-      if (exchange)
-	{
-	  exchange_add_finalization (exchange, finalize, arg);
-	  return;
-	}
-
       /* If no exchange type given, fetch from the configuration.  */
       if (type == 0)
 	{
@@ -779,7 +814,9 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 /* Establish a phase 2 exchange.  XXX With just one SA for now.  */
 void
 exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
-		       void *args, void (*finalize) (void *, int), void *arg)
+		       void *args,
+		       void (*finalize) (struct exchange *, void *, int),
+		       void *arg)
 {
   struct exchange *exchange;
   struct message *msg;
@@ -789,13 +826,6 @@ exchange_establish_p2 (struct sa *isakmp_sa, u_int8_t type, char *name,
 
   if (name)
     {
-      exchange = exchange_lookup_by_name (name, 2);
-      if (exchange)
-	{
-	  exchange_add_finalization (exchange, finalize, arg);
-	  return;
-	}
-
       /* Find out our phase 2 modes.  */
       tag = conf_get_str (name, "Configuration");
       if (!tag)
@@ -893,87 +923,111 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
   struct exchange *exchange;
   struct sockaddr *dst;
   int dst_len;
-  char *name, *policy, *str;
+  char *name = 0, *policy = 0, *str;
   u_int32_t want_doi;
   u_int8_t type;
 
   /* XXX Similar code can be found in exchange_establish_p1.  Share?  */
 
   /*
-   * Find out our inbound phase 1 mode.
-   * XXX Assumes IPv4.
+   * Unless this is an informational exchange, look up our policy for this
+   * peer.
    */
-  t->vtbl->get_dst (t, &dst, &dst_len);
-  name = conf_get_str ("Phase 1",
-		       inet_ntoa (((struct sockaddr_in *)dst)->sin_addr));
-  if (!name)
+  type = GET_ISAKMP_HDR_EXCH_TYPE (msg->iov[0].iov_base);
+  if (type != ISAKMP_EXCH_INFO)
     {
-      name = conf_get_str ("Phase 1", "Default");
-      if (!name)
+      /*
+       * Find out our inbound phase 1 mode.
+       * XXX Assumes IPv4.  It might make sense to search through several
+       * policies too.
+       */
+      t->vtbl->get_dst (t, &dst, &dst_len);
+      name = conf_get_str ("Phase 1",
+			   inet_ntoa (((struct sockaddr_in *)dst)->sin_addr));
+      if (name)
 	{
-	  log_print ("exchange_setup_p1: "
-		     "no \"Default\" tag in [Phase 1] section");
+	  /*
+	   * If another phase 1 exchange is ongoing don't bother returning the
+	   * call. However, we will need to continue responding if our phase 1
+	   * exchange is still waiting for step 1 (i.e still half-open).
+	   */
+	  if (exchange_lookup_active (name, 1))
+	    return 0;
+	}
+      else
+	{
+	  name = conf_get_str ("Phase 1", "Default");
+	  if (!name)
+	    {
+	      log_print ("exchange_setup_p1: "
+			 "no \"Default\" tag in [Phase 1] section");
+	      return 0;
+	    }
+	}
+
+      policy = conf_get_str (name, "Configuration");
+      if (!policy)
+	{
+	  log_print ("exchange_setup_p1: no configuration for peer \"%s\"",
+		     name);
 	  return 0;
 	}
-    }
 
-  policy = conf_get_str (name, "Configuration");
-  if (!policy)
-    {
-      log_print ("exchange_setup_p1: no configuration for peer \"%s\"", name);
-      return 0;
-    }
+      /* Figure out the DOI.  */
+      str = conf_get_str (policy, "DOI");
+      if (!str)
+	{
+	  log_print ("exchange_setup_p1: no \"DOI\" tag in [%s] section",
+		     policy);
+	  return 0;
+	}
+      if (strcasecmp (str, "ISAKMP") == 0)
+	want_doi = ISAKMP_DOI_ISAKMP;
+      else if (strcasecmp (str, "IPSEC") == 0)
+	want_doi = IPSEC_DOI_IPSEC;
+      else
+	{
+	  log_print ("exchange_setup_p1: DOI \"%s\" unsupported", str);
+	  return 0;
+	}
+      if (want_doi != doi)
+	{
+	  /* XXX Should I tell what DOI I got?  */
+	  log_print ("exchange_setup_p1: expected %s DOI", str);
+	  return 0;
+	}
 
-  /* Figure out the DOI.  */
-  str = conf_get_str (policy, "DOI");
-  if (!str)
-    {
-      log_print ("exchange_setup_p1: no \"DOI\" tag in [%s] section", policy);
-      return 0;
-    }
-  if (strcasecmp (str, "ISAKMP") == 0)
-    want_doi = ISAKMP_DOI_ISAKMP;
-  else if (strcasecmp (str, "IPSEC") == 0)
-    want_doi = IPSEC_DOI_IPSEC;
-  else
-    {
-      log_print ("exchange_setup_p1: DOI \"%s\" unsupported", str);
-      return 0;
-    }
-  if (want_doi != doi)
-    {
-      /* XXX Should I tell what DOI I got?  */
-      log_print ("exchange_setup_p1: expected %s DOI", str);
-      return 0;
-    }
-
-  /* What exchange type do we want?  */
-  str = conf_get_str (policy, "EXCHANGE_TYPE");
-  if (!str)
-    {
-      log_print ("exchange_setup_p1: no \"EXCHANGE_TYPE\" tag in [%s] section",
-		 policy);
-      return 0;
-    }
-  type = constant_value (isakmp_exch_cst, str);
-  if (!type)
-    {
-      log_print ("exchange_setup_p1: unknown exchange type %s", str);
-      return 0;
-    }
-  if (type != GET_ISAKMP_HDR_EXCH_TYPE (msg->iov[0].iov_base))
-    {
-      /* XXX Should I tell what exchange type I got?  */
-      log_print ("exchange_setup_p1: expected exchange type %s", str);
-      return 0;
+      /* What exchange type do we want?  */
+      str = conf_get_str (policy, "EXCHANGE_TYPE");
+      if (!str)
+	{
+	  log_print ("exchange_setup_p1: "
+		     "no \"EXCHANGE_TYPE\" tag in [%s] section", policy);
+	  return 0;
+	}
+      type = constant_value (isakmp_exch_cst, str);
+      if (!type)
+	{
+	  log_print ("exchange_setup_p1: unknown exchange type %s", str);
+	  return 0;
+	}
+      if (type != GET_ISAKMP_HDR_EXCH_TYPE (msg->iov[0].iov_base))
+	{
+	  log_print ("exchange_setup_p1: expected exchange type %s got %s",
+		     str,
+		     constant_lookup (isakmp_exch_cst,
+				      GET_ISAKMP_HDR_EXCH_TYPE (msg->iov[0]
+								.iov_base)));
+	  return 0;
+	}
     }
 
   exchange = exchange_create (1, 0, doi, type);
   if (!exchange)
     return 0;
 
-  exchange->name = strdup (name);
-  if (!exchange->name)
+  exchange->name = name ? strdup (name) : 0;
+  if (name && !exchange->name)
     {
       log_error ("exchange_setup_p1: strdup (\"%s\") failed", name);
       exchange_free (exchange);
@@ -1009,21 +1063,47 @@ exchange_setup_p2 (struct message *msg, u_int8_t doi)
 
 /* Dump interesting data about an exchange.  */
 static void
-exchange_dump (char *header, struct exchange *exchange)
+exchange_dump_real (char *header, struct exchange *exchange, int class,
+		    int level)
 {
-  log_debug (LOG_MISC, 10,
+  char buf[LOG_SIZE];
+  /* Don't risk overflowing the final log buffer. */
+  int bufsize_max = LOG_SIZE - strlen(header) - 32; 
+  struct sa *sa;
+
+  log_debug (class, level, 
 	     "%s: %p %s %s policy %s phase %d doi %d exchange %d step %d",
 	     header, exchange, exchange->name ? exchange->name : "<unnamed>",
 	     exchange->policy ? exchange->policy : "<no policy>",
 	     exchange->initiator ? "initiator" : "responder", exchange->phase,
 	     exchange->doi->id, exchange->type, exchange->step);
-  log_debug (LOG_MISC, 10,
+  log_debug (class, level, 
 	     "%s: icookie %08x%08x rcookie %08x%08x", header,
 	     decode_32 (exchange->cookies), decode_32 (exchange->cookies + 4),
 	     decode_32 (exchange->cookies + 8),
 	     decode_32 (exchange->cookies + 12));
-  log_debug (LOG_MISC, 10, "%s: msgid %08x", header,
-	     decode_32 (exchange->message_id));
+
+  /* Include phase 2 SA list for this exchange */
+  if (exchange->phase == 2)
+    {
+      sprintf (buf, "sa_list ");
+      for (sa = TAILQ_FIRST (&exchange->sa_list); 
+	   sa && strlen(buf) < bufsize_max; sa = TAILQ_NEXT (sa, next))
+	sprintf (buf + strlen(buf), "%p ", sa);
+      if (sa)
+	strcat (buf, "...");
+    }
+  else
+    buf[0] = '\0';
+
+  log_debug (class, level, "%s: msgid %08x %s", header, 
+	     decode_32 (exchange->message_id), buf);
+}
+
+static void
+exchange_dump (char *header, struct exchange *exchange)
+{
+  exchange_dump_real (header, exchange, LOG_EXCHANGE, 10);
 }
 
 void
@@ -1032,10 +1112,10 @@ exchange_report (void)
   int i;
   struct exchange *exchange;
 
-  for (i = 0; i < bucket_mask; i++)
+  for (i = 0; i <= bucket_mask; i++)
     for (exchange = LIST_FIRST (&exchange_tab[i]); exchange;
 	 exchange = LIST_NEXT (exchange, link))
-      exchange_dump ("exchange_report", exchange);
+      exchange_dump_real ("exchange_report", exchange, LOG_REPORT, 0);
 }
 
 /* Add a reference to EXCHANGE.  */
@@ -1051,7 +1131,8 @@ exchange_release (struct exchange *exchange)
   if (--exchange->refcnt)
     return;
 
-  log_debug (LOG_MISC, 80, "exchange_release: freeing exchange %p", exchange);
+  log_debug (LOG_EXCHANGE, 80, "exchange_release: freeing exchange %p", 
+	     exchange);
 
   if (exchange->nonce_i)
     free (exchange->nonce_i);
@@ -1073,7 +1154,7 @@ exchange_release (struct exchange *exchange)
 
   /* Tell potential finalize routine we never got there.  */
   if (exchange->finalize)
-    exchange->finalize (exchange->finalize_arg, 1);
+    exchange->finalize (exchange, exchange->finalize_arg, 1);
 
   free (exchange);
 }
@@ -1119,6 +1200,19 @@ exchange_upgrade_p1 (struct message *msg)
   sa_isakmp_upgrade (msg);
 }
 
+static int
+exchange_check_old_sa (struct sa *sa, void *v_arg)
+{
+  struct sa *new_sa = v_arg;
+  
+  if(sa == new_sa || !sa->name || !(sa->flags & SA_FLAG_READY) || 
+     (sa->flags & SA_FLAG_REPLACED))
+    return 0;
+
+  return sa->phase == new_sa->phase && new_sa->name &&
+    strcasecmp(sa->name, new_sa->name) == 0;
+}
+
 void
 exchange_finalize (struct message *msg)
 {
@@ -1139,6 +1233,8 @@ exchange_finalize (struct message *msg)
    */
   for (sa = TAILQ_FIRST (&exchange->sa_list); sa; sa = TAILQ_NEXT (sa, next))
     {
+      struct sa *old_sa;
+
       /* Move over the name to the SA.  */
       sa->name = exchange->name ? strdup (exchange->name) : 0;
 
@@ -1152,6 +1248,10 @@ exchange_finalize (struct message *msg)
 					 ISAKMP_NOTIFY_STATUS_CONNECTED, proto,
 					 i);
 	}
+
+      /* Locate any old SAs and mark them replaced (SA_FLAG_REPLACED).  */
+      while ((old_sa = sa_find (exchange_check_old_sa, sa)) != 0)
+	sa_mark_replaced (old_sa);
 
       /* Setup the SA flags.  */
       sa->flags |= SA_FLAG_READY;
@@ -1181,7 +1281,7 @@ exchange_finalize (struct message *msg)
     }
   exchange->doi->finalize_exchange (msg);
   if (exchange->finalize)
-    exchange->finalize (exchange->finalize_arg, 0);
+    exchange->finalize (exchange, exchange->finalize_arg, 0);
   exchange->finalize = 0;
 
   /* No need for this anymore.  */
@@ -1209,7 +1309,7 @@ exchange_nonce (struct exchange *exchange, int peer, size_t nonce_sz,
     }
   memcpy (*nonce, buf, nonce_sz);
   snprintf (header, 32, "exchange_nonce: NONCE_%c", initiator ? 'i' : 'r');
-  log_debug_buf (LOG_MISC, 80, header, *nonce, nonce_sz);
+  log_debug_buf (LOG_EXCHANGE, 80, header, *nonce, nonce_sz);
   return 0;
 }
 
@@ -1267,7 +1367,7 @@ exchange_save_certreq (struct message *msg)
 			    cp->p + ISAKMP_CERTREQ_AUTHORITY_OFF,
 			    GET_ISAKMP_GEN_LENGTH (cp->p) - 
 			    ISAKMP_CERTREQ_AUTHORITY_OFF);
-      if (tmp == NULL)
+      if (!tmp)
 	continue;
       TAILQ_INSERT_TAIL (&exchange->aca_list, tmp, link);
     }
@@ -1285,9 +1385,9 @@ exchange_free_aca_list (struct exchange *exchange)
   for (aca = TAILQ_FIRST (&exchange->aca_list); aca;
        aca = TAILQ_FIRST (&exchange->aca_list))
     {
-      if (aca->data != NULL)
+      if (aca->data)
 	{
-	  if (aca->handler != NULL)
+	  if (aca->handler)
 	    aca->handler->free_aca (aca->data);
 	  free (aca->data);
 	}
@@ -1339,32 +1439,17 @@ exchange_add_certs (struct message *msg)
 }
 
 static void
-exchange_establish_finalize (void *arg, int fail)
+exchange_establish_finalize (struct exchange *exchange, void *arg, int fail)
 {
   char *name = arg;
-  char *peer;
-  struct sa *isakmp_sa;
+
+  log_debug (LOG_EXCHANGE, 20,
+	     "exchange_establish_finalize: "
+	     "finalizing exchange %p with arg %p (%s) & fail = %d",
+	     exchange, arg, name ? name : "<unnamed>", fail);
 
   if (!fail)
-    {
-      peer = conf_get_str (name, "ISAKMP-peer");
-      if (!peer)
-	{
-	  log_print ("exchange_establish_finalize: "
-		     "no ISAKMP-peer given for \"%s\"", name);
-	  return;
-	}
-
-      isakmp_sa = sa_lookup_by_name (peer, 1);
-      if (!isakmp_sa)
-	{
-	  log_print ("exchange_establish_finalize: "
-		     "did not find \"%s\" ISAKMP SA", peer);
-	  return;
-	}
-
-      exchange_establish_p2 (isakmp_sa, 0, name, 0, 0, 0);
-    }
+    exchange_establish (name, 0, 0);
   free (name);
 }
 
@@ -1373,15 +1458,32 @@ exchange_establish_finalize (void *arg, int fail)
  * taking ARG as an argument to be run after the exchange is ready.
  */
 void
-exchange_establish (char *name, void (*finalize) (void *, int), void *arg)
+exchange_establish (char *name,
+		    void (*finalize) (struct exchange *, void *, int),
+		    void *arg)
 {
   int phase;
   char *trpt;
   struct transport *transport;
   char *peer;
   struct sa *isakmp_sa;
-
+  struct exchange *exchange;
   phase = conf_get_num (name, "Phase", 0);
+
+  /*
+   * First of all, never try to establish anything if another exchange of the
+   * same kind is running.
+   */
+  exchange = exchange_lookup_by_name (name, phase);
+  if (exchange)
+    {
+      log_debug (LOG_EXCHANGE, 40,
+		 "exchange_establish: %s exchange already exists as %p", name,
+		 exchange);
+      exchange_add_finalization (exchange, finalize, arg);
+      return;
+    }
+
   switch (phase)
     {
     case 1:
