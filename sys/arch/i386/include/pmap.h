@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.15 2001/08/11 11:45:27 art Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.16 2001/08/12 17:55:56 mickey Exp $	*/
 /*	$NetBSD: pmap.h,v 1.44 2000/04/24 17:18:18 thorpej Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #include <machine/cpufunc.h>
 #include <machine/pte.h>
 #include <machine/segments.h>
-#include <vm/pglist.h>
+#include <uvm/uvm_pglist.h>
 #include <uvm/uvm_object.h>
 
 /*
