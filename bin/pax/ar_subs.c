@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.5 1997/01/24 19:41:19 millert Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.6 1997/02/27 23:32:57 michaels Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.5 1997/01/24 19:41:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: ar_subs.c,v 1.6 1997/02/27 23:32:57 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -294,13 +294,10 @@ extract()
 		/*
 		 * if required, chdir around.
 		 */
-		if ((arcn->pat != NULL) && (arcn->pat->chdnam != NULL)) {
-			if (chdir(arcn->pat->chdnam) < 0) {
+		if ((arcn->pat != NULL) && (arcn->pat->chdname != NULL))
+			if (chdir(arcn->pat->chdname) != 0)
 				syswarn(1, errno, "Cannot chdir to %s",
-				    arcn->pat->chdnam);
-				return;
-			}
-		}
+				    arcn->pat->chdname);
 
 		/*
 		 * all ok, extract this member based on type
@@ -351,12 +348,9 @@ extract()
 		/*
 		 * if required, chdir around.
 		 */
-		if ((arcn->pat != NULL) && (arcn->pat->chdnam != NULL)) {
-			if (chdir(cwdpt) < 0) {
-				syswarn(0, errno, "Can't chdir to %s", cwdpt);
-				return;
-			}
-		}
+		if ((arcn->pat != NULL) && (arcn->pat->chdname != NULL))
+			if (chdir(cwdpt) != 0)
+				syswarn(1, errno, "Can't chdir to %s", cwdpt);
 	}
 
 	/*

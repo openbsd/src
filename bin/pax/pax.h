@@ -1,4 +1,4 @@
-/*	$OpenBSD: pax.h,v 1.6 1996/12/09 12:00:16 deraadt Exp $	*/
+/*	$OpenBSD: pax.h,v 1.7 1997/02/27 23:32:59 michaels Exp $	*/
 /*	$NetBSD: pax.h,v 1.3 1995/03/21 09:07:41 cgd Exp $	*/
 
 /*-
@@ -166,7 +166,7 @@ typedef struct {
 typedef struct pattern {
 	char		*pstr;		/* pattern to match, user supplied */
 	char		*pend;		/* end of a prefix match */
-	char		*chdnam;
+	char		*chdname;	/* the dir to change to if not NULL.  */
 	int		plen;		/* length of pstr */
 	int		flgs;		/* processing/state flags */
 #define MTCH		0x1		/* pattern has been matched */

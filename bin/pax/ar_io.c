@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_io.c,v 1.10 1997/02/20 06:54:31 tholo Exp $	*/
+/*	$OpenBSD: ar_io.c,v 1.11 1997/02/27 23:32:56 michaels Exp $	*/
 /*	$NetBSD: ar_io.c,v 1.5 1996/03/26 23:54:13 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ar_io.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ar_io.c,v 1.10 1997/02/20 06:54:31 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ar_io.c,v 1.11 1997/02/27 23:32:56 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -165,6 +165,9 @@ ar_open(name)
 	if (arfd < 0)
 		return(-1);
 
+	if (chdname != NULL)
+		if (chdir(chdname) != 0)
+			syswarn(1, errno, "Failed chdir to %s", chdname);
 	/*
 	 * set up is based on device type
 	 */

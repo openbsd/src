@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.14 1997/02/20 06:54:34 tholo Exp $	*/
+/*	$OpenBSD: options.c,v 1.15 1997/02/27 23:32:58 michaels Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: options.c,v 1.14 1997/02/20 06:54:34 tholo Exp $";
+static char rcsid[] = "$OpenBSD: options.c,v 1.15 1997/02/27 23:32:58 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -599,7 +599,6 @@ tar_options(argc, argv)
 {
 	register int c;
 	int fstdin = 0;
-	char *chdnam = (char *)NULL;
 
 	/*
 	 * process option flags
@@ -723,7 +722,7 @@ tar_options(argc, argv)
 			 */
 			break;
 		case 'C':
-			chdnam = optarg;
+			chdname = optarg;
 			break;
 		case 'H':
 			/*
@@ -797,37 +796,32 @@ tar_options(argc, argv)
 	default:
 		{
 			int sawpat = 0;
-
+				
 			while (*argv != (char *)NULL) {
-				if (!strcmp(*argv, "-C")) {
+				if (strcmp(*argv, "-C") == 0) {
 					if(*++argv == (char *)NULL)
 						break;
-					chdnam = *argv++;
+					chdname = *argv++;
 
 					continue;
 				}
-				if (pat_add(*argv++, chdnam) < 0)
+				if (pat_add(*argv++, chdname) < 0)
 					tar_usage();
 				sawpat++;
 			}
-
 			/*
-			 * If there were no patterns, but there was a chdir,
-			 * we do it now.
-			 */
-			if ((sawpat == 0) && (chdnam != (char *)NULL)) {
-				if (chdir(chdnam) < 0) {
-					syswarn(0, errno, "Can't chdir to %s",
-					    chdnam);
-					exit(exit_val);
-				}
-			}
+			 * if patterns were added, we are doing	chdir()
+			 * on a file-by-file basis, else, just one 
+			 * global chdir (if any) after opening input.
+			*/
+			if (sawpat > 0)
+				chdname = NULL;	
 		}
 		break;
 	case ARCHIVE:
 	case APPND:
-		if (chdnam != (char *)NULL) {	/* initial chdir() */
-			if (ftree_add(chdnam, 1) < 0)
+		if (chdname != (char *)NULL) {	/* initial chdir() */
+			if (ftree_add(chdname, 1) < 0)
 				tar_usage();
 		}
 

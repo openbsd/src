@@ -1,4 +1,4 @@
-/*	$OpenBSD: pat_rep.c,v 1.5 1996/10/27 06:45:12 downsj Exp $	*/
+/*	$OpenBSD: pat_rep.c,v 1.6 1997/02/27 23:32:59 michaels Exp $	*/
 /*	$NetBSD: pat_rep.c,v 1.4 1995/03/21 09:07:33 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)pat_rep.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.5 1996/10/27 06:45:12 downsj Exp $";
+static char rcsid[] = "$OpenBSD: pat_rep.c,v 1.6 1997/02/27 23:32:59 michaels Exp $";
 #endif
 #endif /* not lint */
 
@@ -234,12 +234,12 @@ rep_add(str)
 
 #if __STDC__
 int
-pat_add(char *str, char *chdnam)
+pat_add(char *str, char *chdname)
 #else
 int
-pat_add(str, chdnam)
+pat_add(str, chdname)
 	char *str;
-	char *chdnam;
+	char *chdname;
 #endif
 {
 	register PATTERN *pt;
@@ -267,15 +267,8 @@ pat_add(str, chdnam)
 	pt->plen = strlen(str);
 	pt->fow = NULL;
 	pt->flgs = 0;
-	if (chdnam != (char *)NULL) {
-		pt->chdnam = strdup(chdnam);
-		if (pt->chdnam == (char *)NULL) {
-			paxwarn(1,
-			    "Unable to allocate memory for pattern string");
-			return(-1);
-		}
-	} else
-		pt->chdnam = (char *)NULL;
+	pt->chdname = chdname;
+
 	if (pathead == NULL) {
 		pattail = pathead = pt;
 		return(0);
@@ -441,8 +434,6 @@ pat_sel(arcn)
 		return(-1);
 	}
 	*ppt = pt->fow;
-	if (pt->chdnam != (char *)NULL)
-		(void)free(pt->chdnam);
 	(void)free((char *)pt);
 	arcn->pat = NULL;
 	return(0);
