@@ -1,5 +1,5 @@
-.\"	$OpenBSD: posix1e.3,v 1.1 2002/02/22 21:06:00 drahn Exp $
-.\"-
+.\"	$OpenBSD: posix1e.3,v 1.2 2002/02/22 21:55:58 drahn Exp $
+.\"
 .\" Copyright (c) 2000 Robert N. M. Watson
 .\" All rights reserved.
 .\"
@@ -32,10 +32,8 @@
 .Sh NAME
 .Nm posix1e
 .Nd introduction to the POSIX.1e security API
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
-.In sys/types.h
+.In #include <sys/types.h>
 .Sh DESCRIPTION
 The IEEE POSIX.1e specification never left draft form, but the interfaces
 it describes are now widely used despite inherent limitations.  Currently,
@@ -60,7 +58,6 @@ functionality described in POSIX.1.  These additional labels provide
 fine-grained discretionary access control, fine-grained capabilities,
 and labels necessary for mandatory access control.  POSIX.2c describes
 a set of userland utilities for manipulating these labels.
-.Sh FILES
 .Sh SEE ALSO
 .Xr extattr 9
 .Sh STANDARDS

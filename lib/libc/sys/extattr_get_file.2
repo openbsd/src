@@ -1,4 +1,4 @@
-.\" $OpenBSD: extattr_get_file.2,v 1.1 2002/02/22 21:06:01 drahn Exp $
+.\" $OpenBSD: extattr_get_file.2,v 1.2 2002/02/22 21:55:58 drahn Exp $
 .\"
 .\" Copyright (c) 2001 Dima Dorfman <dima@unixfreak.org>
 .\" All rights reserved.
@@ -37,12 +37,9 @@
 .Nm extattr_set_file ,
 .Nm extattr_delete_file
 .Nd system calls to manipulate VFS extended attributes
-.Sh LIBRARY
-.Lb libc
 .Sh SYNOPSIS
-.In sys/types.h
-.In sys/extattr.h
-.In sys/uio.h
+.In #include <sys/types.h>
+.In #include <sys/extattr.h>
 .Ft ssize_t
 .Fn extattr_get_fd "int fd" "int attrnamespace" "const char *attrname" "void *data" "size_t nbytes"
 .Ft int
@@ -212,7 +209,7 @@ Search permission is denied for a component of the path prefix.
 .Xr extattrctl 8 ,
 .Xr getextattr 8 ,
 .Xr setextattr 8 ,
-.Xr extattr 9 ,
+.Xr extattr 9
 .Sh HISTORY
 Extended attribute support was developed as part of the
 .Tn TrustedBSD
