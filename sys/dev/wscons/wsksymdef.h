@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.22 2002/11/23 23:48:04 miod Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.23 2003/01/04 13:24:31 maja Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -355,6 +355,17 @@
 #define KS_Cyrillic_yeukr	0xa4
 #define KS_Cyrillic_YEUKR	0xb4
 
+/*
+ * Group Latin-5 (iso8859-9)
+ */
+
+#define KS_L5_Gbreve		0xd0
+#define KS_L5_Idotabove		0xdd
+#define KS_L5_Scedilla		0xde
+#define KS_L5_gbreve		0xf0
+#define KS_L5_idotless		0xfd
+#define KS_L5_scedilla		0xfe
+
  /*
  * Group Latin-7 (iso8859-13)
  */
@@ -650,7 +661,8 @@
 #define KB_LT			0x1300
 #define KB_LA			0x1400
 #define KB_BR			0x1500
-#define	KB_NL			0x1600
+#define KB_NL			0x1600
+#define KB_TR			0x1700
 
 #define KB_NODEAD		0x0001
 #define KB_DECLK		0x0002	/* DEC LKnnn layout */
@@ -683,7 +695,8 @@
 	{ KB_LT,	"lt" }, \
 	{ KB_LA,	"la" }, \
 	{ KB_BR,	"br" },	\
-	{ KB_NL,	"nl" }
+	{ KB_NL,	"nl" }, \
+	{ KB_TR,	"tr" }
 
 #define KB_VARTAB \
 	{ KB_NODEAD,	"nodead" }, \
