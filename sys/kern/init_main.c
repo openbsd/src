@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.78 1995/10/07 06:28:05 mycroft Exp $	*/
+/*	$NetBSD: init_main.c,v 1.79 1995/12/09 04:07:41 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1995 Christopher G. Demetriou.  All rights reserved.
@@ -136,7 +136,6 @@ main(framep)
 	void *framep;				/* XXX should go away */
 {
 	register struct proc *p;
-	register struct filedesc0 *fdp;
 	register struct pdevinit *pdev;
 	register int i;
 	int s;
@@ -194,13 +193,12 @@ main(framep)
 	p->p_ucred->cr_ngroups = 1;	/* group 0 */
 
 	/* Create the file descriptor table. */
-	fdp = &filedesc0;
-	p->p_fd = &fdp->fd_fd;
-	fdp->fd_fd.fd_refcnt = 1;
-	fdp->fd_fd.fd_cmask = cmask;
-	fdp->fd_fd.fd_ofiles = fdp->fd_dfiles;
-	fdp->fd_fd.fd_ofileflags = fdp->fd_dfileflags;
-	fdp->fd_fd.fd_nfiles = NDFILE;
+	p->p_fd = &filedesc0.fd_fd;
+	filedesc0.fd_fd.fd_refcnt = 1;
+	filedesc0.fd_fd.fd_cmask = cmask;
+	filedesc0.fd_fd.fd_ofiles = filedesc0.fd_dfiles;
+	filedesc0.fd_fd.fd_ofileflags = filedesc0.fd_dfileflags;
+	filedesc0.fd_fd.fd_nfiles = NDFILE;
 
 	/* Create the limits structures. */
 	p->p_limit = &limit0;
@@ -298,13 +296,13 @@ main(framep)
 	mountlist.cqh_first->mnt_flag |= MNT_ROOTFS;
 	mountlist.cqh_first->mnt_op->vfs_refcount++;
 
-	/* Get the vnode for '/'.  Set fdp->fd_fd.fd_cdir to reference it. */
+	/* Get the vnode for '/'.  Set filedesc0.fd_fd.fd_cdir to reference it. */
 	if (VFS_ROOT(mountlist.cqh_first, &rootvnode))
 		panic("cannot find root vnode");
-	fdp->fd_fd.fd_cdir = rootvnode;
-	VREF(fdp->fd_fd.fd_cdir);
+	filedesc0.fd_fd.fd_cdir = rootvnode;
+	VREF(filedesc0.fd_fd.fd_cdir);
 	VOP_UNLOCK(rootvnode);
-	fdp->fd_fd.fd_rdir = NULL;
+	filedesc0.fd_fd.fd_rdir = NULL;
 	swapinit();
 
 	/*
