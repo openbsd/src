@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.1 2002/01/08 00:59:59 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.2 2002/02/14 13:29:21 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -30,36 +30,36 @@ _DEV(all)
 _DEV(std)
 _DEV(local)
 _TITLE(tap)
-_DEV(st,18,11)
+_DEV(st, 18, 11)
 _TITLE(dis)
-_DEV(sd,17,7)
-_DEV(vnd,19,5)
-_DEV(ccd,33,9)
-_DEV(cd,58,18)
-_DEV(xy,9,3)
-_DEV(xd,42,10)
+_DEV(sd, 17, 7)
+_DEV(vnd, 19, 5)
+_DEV(ccd, 33, 9)
+_DEV(cd, 58, 18)
+_DEV(xy, 9, 3)
+_DEV(xd, 42, 10)
 _TITLE(term)
-_DEV(tzs,12)  
-dnl _DEV(czs,12)
+_DEV(tzs, 12)  
+dnl _DEV(czs, 12)
 _TITLE(pty)
-_DEV(tty,20)
-_DEV(pty,21)
+_DEV(tty, 20)
+_DEV(pty, 21)
 _TITLE(prn)
 _TITLE(call)
 _TITLE(spec)
-_DEV(btw,27)
-_DEV(ctw,31)
-_DEV(cfr,39)
-_DEV(bpf,36)
-_DEV(pf,75)
-_DEV(tun,24)
-_DEV(rd,52,13)
-_DEV(rnd,72)
-_DEV(uk,98)
-_DEV(ss,99)
-_DEV(fdesc,23)
-_DEV(xfs,51)
-_DEV(altq,85)
+_DEV(btw, 27)
+_DEV(ctw, 31)
+_DEV(cfr, 39)
+_DEV(bpf, 36)
+_DEV(pf, 75)
+_DEV(tun, 24)
+_DEV(rd, 52, 13)
+_DEV(rnd, 72)
+_DEV(uk, 98)
+_DEV(ss, 99)
+_DEV(fdesc, 23)
+_DEV(xfs, 51)
+_DEV(altq, 85)
 dnl
 divert(2)dnl
 dnl
@@ -69,7 +69,7 @@ test -d /usr/etc && PATH=$PATH:/usr/etc
 dnl
 divert(7)dnl
 dnl
-_std(2,3,37,7,16)
+_std(2, 3, 37, 7, 16)
 	M kd		c 1 0 600
 	M eeprom	c 3 11 640 kmem
 	M mouse		c 13 0

@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.4 2002/02/09 16:59:50 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.5 2002/02/14 13:29:20 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -30,49 +30,49 @@ _DEV(all)
 _DEV(std)
 _DEV(local)
 _TITLE(tap)
-_DEV(st,20,5)
+_DEV(st, 20, 5)
 _TITLE(dis)
-_DEV(aflo,18,2)
-_DEV(sd,8,4)
-_DEV(rd,41,16)
-_DEV(ccd,7,8)
-_DEV(wd,37,0)
-_DEV(cd,9,7,8)
-_DEV(vnd,19,6)
+_DEV(aflo, 18, 2)
+_DEV(sd, 8, 4)
+_DEV(rd, 41, 16)
+_DEV(ccd, 7, 8)
+_DEV(wd, 37, 0)
+_DEV(cd, 9, 7, 8)
+_DEV(vnd, 19, 6)
 _TITLE(cons)
 _DEV(ttye)
 _TITLE(point)
 _DEV(amouse)
 _TITLE(term)
-_DEV(com,12)
+_DEV(com, 12)
 _DEV(ttyA)
 _DEV(attyB)
 _TITLE(pty)
-_DEV(tty,4)
-_DEV(pty,5)
+_DEV(tty, 4)
+_DEV(pty, 5)
 _TITLE(prn)
 _DEV(par)
-_DEV(lpt,33)
+_DEV(lpt, 33)
 _DEV(lpa)
 _TITLE(spec)
-_DEV(grf_amiga,10)
-_DEV(kbd,14)
-_DEV(joy,43)
-_DEV(akbd,14)
+_DEV(grf_amiga, 10)
+_DEV(kbd, 14)
+_DEV(joy, 43)
+_DEV(akbd, 14)
 _DEV(view)
 _DEV(aconf)
-_DEV(lkm,24)
-_DEV(bpf,22)
-_DEV(tun,23)
-_DEV(pf,34)
-_DEV(ss,25)
-_DEV(uk,36)
-_DEV(rnd,35)
-_DEV(au,39)
-_DEV(xfs,51)
-_DEV(ch,40)
-_DEV(altq,52)
-_DEV(fdesc,21)
+_DEV(lkm, 24)
+_DEV(bpf, 22)
+_DEV(tun, 23)
+_DEV(pf, 34)
+_DEV(ss, 25)
+_DEV(uk, 36)
+_DEV(rnd, 35)
+_DEV(au, 39)
+_DEV(xfs, 51)
+_DEV(ch, 40)
+_DEV(altq, 52)
+_DEV(fdesc, 21)
 dnl
 divert(7)dnl
 dnl
@@ -83,13 +83,13 @@ ramdisk)
 	_recurse fd0 fd1 wd0 wd1 rd0 random
 	;;
 
-_std(1,2,42,3,6)
+_std(1, 2, 42, 3, 6)
 	M reload	c 2 20 600
 	;;
 
 ttyA[01])
 	M ttyA$U c 17 $U 660 dialer uucp
-	M ttyM$U c 17 Add($U,128) 660 dialer uucp
+	M ttyM$U c 17 Add($U, 128) 660 dialer uucp
 	;;
 
 par*)
@@ -126,8 +126,8 @@ grf*)
 # for those that need it, also make overlay and image devices:
 	case $U in
 	4)
-		M grfov$U c 10 Add($U,16) 600
-		M grfim$U c 10 Add($U,32) 600
+		M grfov$U c 10 Add($U, 16) 600
+		M grfim$U c 10 Add($U, 32) 600
 		;;
 	esac
 	;;
@@ -160,5 +160,5 @@ view*)
 
 ttyB*)
 	M ttyB$U c 32 $U 660 dialer uucp
-	M cuaB$U c 32 Add($U,128) 660 dialer uucp
+	M cuaB$U c 32 Add($U, 128) 660 dialer uucp
 	;;

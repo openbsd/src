@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.3 2002/02/14 04:37:15 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.4 2002/02/14 13:29:20 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -30,37 +30,37 @@ _DEV(all)
 _DEV(std)
 _DEV(local)
 _TITLE(tap)
-_DEV(ct,7,0)
-_DEV(mt,16,1)
-_DEV(st_hp300,20,6)
+_DEV(ct, 7, 0)
+_DEV(mt, 16, 1)
+_DEV(st_hp300, 20, 6)
 _TITLE(dis)
-_DEV(ccd,17,5)
-_DEV(hd,9,2)
-_DEV(sd,8,4)
-_DEV(vnd,19,6)
-_DEV(rd,34,8)
+_DEV(ccd, 17, 5)
+_DEV(hd, 9, 2)
+_DEV(sd, 8, 4)
+_DEV(vnd, 19, 6)
+_DEV(rd, 34, 8)
 _TITLE(termp)
-_DEV(dca,12)
-_DEV(dcm,15)
+_DEV(dca, 12)
+_DEV(dcm, 15)
 _DEV(apci)
 _TITLE(pty)
-_DEV(tty,4)
-_DEV(pty,5)
+_DEV(tty, 4)
+_DEV(pty, 5)
 _TITLE(prn)
-_DEV(ppi,11)
+_DEV(ppi, 11)
 _TITLE(call)
 _TITLE(spec)
-_DEV(fdesc,21)
-_DEV(grf,10)
+_DEV(fdesc, 21)
+_DEV(grf, 10)
 _DEV(ite)
-_DEV(hil,14)
-_DEV(bpf,22)
-_DEV(tun,23)
-_DEV(pf,33)
-_DEV(lkm,24)
-_DEV(rnd,32)
-_DEV(xfs,51)
-_DEV(altq,52)
+_DEV(hil, 14)
+_DEV(bpf, 22)
+_DEV(tun, 23)
+_DEV(pf, 33)
+_DEV(lkm, 24)
+_DEV(rnd, 32)
+_DEV(xfs, 51)
+_DEV(altq, 52)
 dnl
 divert(7)dnl
 dnl
@@ -71,14 +71,14 @@ ramdisk)
 	_recurse bpf0 bpf1 tun0 tun1 lkm random
 	;;
 
-_std(1,2,36,3,6)
+_std(1, 2, 36, 3, 6)
 	;;
 
 dca*)
 	case $U in
 	0|1|2|3)
 		M tty$U c major_dca_c $U 660 dialer uucp
-		M cua$U c major_dca_c Add($U,128) 660 dialer uucp
+		M cua$U c major_dca_c Add($U, 128) 660 dialer uucp
 		;;
 	*)
 		echo bad unit for dca in: $i
@@ -114,7 +114,7 @@ apci*)
 	0)
 		for i in 0 1 2 3; do
 			M ttya${i} c 35 ${i} 660 dialer uucp
-			M cuaa${i} c 35 Add($i,128) 660 dialer uucp
+			M cuaa${i} c 35 Add($i, 128) 660 dialer uucp
 		done
 		;;
 	*)

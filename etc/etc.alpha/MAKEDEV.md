@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.7 2002/02/09 16:59:50 deraadt Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.8 2002/02/14 13:29:20 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -31,60 +31,60 @@ _DEV(ramdisk)
 _DEV(std)
 _DEV(loc)
 _TITLE(tap)
-_DEV(st,12,2)
+_DEV(st, 12, 2)
 _TITLE(dis)
-_DEV(sd,8,8)
-_DEV(cd,13,3)
-_DEV(vnd,9,9)
-_DEV(ccd,27,7)
-_DEV(wd,36,0)
-_DEV(rd,28,6)
-_DEV(raid,43,16)
-_DEV(flo,37,4)
+_DEV(sd, 8, 8)
+_DEV(cd, 13, 3)
+_DEV(vnd, 9, 9)
+_DEV(ccd, 27, 7)
+_DEV(wd, 36, 0)
+_DEV(rd, 28, 6)
+_DEV(raid, 43, 16)
+_DEV(flo, 37, 4)
 _TITLE(term)
 _DEV(ttyB)
 _DEV(wscons)
-_DEV(wsdisp,25)
-_DEV(wskbd,29)
-_DEV(wsmux,56)
-_DEV(com,26)
-_DEV(ttyc,38)
+_DEV(wsdisp, 25)
+_DEV(wskbd, 29)
+_DEV(wsmux, 56)
+_DEV(com, 26)
+_DEV(ttyc, 38)
 _TITLE(point)
-_DEV(wsmouse,30)
+_DEV(wsmouse, 30)
 _TITLE(pty)
-_DEV(tty,4)
-_DEV(pty,5)
+_DEV(tty, 4)
+_DEV(pty, 5)
 _TITLE(prn)
-_DEV(lpt,31)
+_DEV(lpt, 31)
 _DEV(lpa)
 _TITLE(usb)
-_DEV(usb,45)
-_DEV(uhid,46)
-_DEV(ulpt,47)
-_DEV(ugen,48)
-_DEV(utty,49)
+_DEV(usb, 45)
+_DEV(uhid, 46)
+_DEV(ulpt, 47)
+_DEV(ugen, 48)
+_DEV(utty, 49)
 _TITLE(spec)
-_DEV(ch,14)
-_DEV(pf,35)
-_DEV(bpf,11)
-_DEV(altq,53)
-_DEV(iop,54)
-_DEV(pci,52)
+_DEV(ch, 14)
+_DEV(pf, 35)
+_DEV(bpf, 11)
+_DEV(altq, 53)
+_DEV(iop, 54)
+_DEV(pci, 52)
 _DEV(usbs)
-_DEV(fdesc,10)
-_DEV(lkm,16)
-_DEV(tun,7)
+_DEV(fdesc, 10)
+_DEV(lkm, 16)
+_DEV(tun, 7)
 _DEV(mmcl)
 _DEV(kbd)
 _DEV(mouse)
-_DEV(rnd,34)
-_DEV(uk,33)
-_DEV(ss,32)
-_DEV(xfs,51)
-_DEV(au,24)
-_DEV(speak,40)
-_DEV(rmidi,41)
-_DEV(music,42)
+_DEV(rnd, 34)
+_DEV(uk, 33)
+_DEV(ss, 32)
+_DEV(xfs, 51)
+_DEV(au, 24)
+_DEV(speak, 40)
+_DEV(rmidi, 41)
+_DEV(music, 42)
 dnl
 divert(7)dnl
 dnl
@@ -93,17 +93,17 @@ ramdisk)
 	_recurse st0 cd0 ttyC0 random rd0
 	;;
 
-_std(1,2,39,3,6)
+_std(1, 2, 39, 3, 6)
 	;;
 
 ttyB*|ttyc*)
 	U=${i##tty?}
 	case $i in
-	ttyB*)	type=B major=15 minor=Mult($U,2);;
+	ttyB*)	type=B major=15 minor=Mult($U, 2);;
 	ttyc*)	type=c major=38 minor=$U;;
 	esac
 	M tty$type$U c $major $minor 660 dialer uucp
-	M cua$type$U c $major Add($minor,128) 660 dialer uucp
+	M cua$type$U c $major Add($minor, 128) 660 dialer uucp
 	;;
 
 mmclock)

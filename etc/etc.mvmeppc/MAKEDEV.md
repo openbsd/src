@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV.md,v 1.1 2002/02/08 20:26:36 todd Exp $
+#	$OpenBSD: MAKEDEV.md,v 1.2 2002/02/14 13:29:20 todd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -27,26 +27,26 @@
 _TITLE(make)
 _DEV(all)
 _DEV(std)
-_DEV(fdesc,21)
+_DEV(fdesc, 21)
 _DEV(local)
 _DEV(ramd)
 _TITLE(tap)
-_DEV(st,20,5)
+_DEV(st, 20, 5)
 _TITLE(dis)
-_DEV(wd,11,0)
-_DEV(sd,8,2)
-_DEV(cd,9,3)
-_DEV(vnd,19,14)
-_DEV(rd,17,17)
-_DEV(ccd,18,16)
-_DEV(raid,54,19)
+_DEV(wd, 11, 0)
+_DEV(sd, 8, 2)
+_DEV(cd, 9, 3)
+_DEV(vnd, 19, 14)
+_DEV(rd, 17, 17)
+_DEV(ccd, 18, 16)
+_DEV(raid, 54, 19)
 _TITLE(term)
 _DEV(wscons)
-_DEV(wsdisp,67)
-_DEV(wskbd,68)
-_DEV(com,7)
+_DEV(wsdisp, 67)
+_DEV(wskbd, 68)
+_DEV(com, 7)
 _TITLE(point)
-_DEV(wsmouse,69)
+_DEV(wsmouse, 69)
 _TITLE(pty)
 _DEV(tty)
 _DEV(pty)
@@ -67,13 +67,13 @@ _DEV(tun)
 _DEV(lkm)
 _DEV(rnd)
 _DEV(altq)
-_DEV(pf,39)
+_DEV(pf, 39)
 _DEV(usbs)
 #
 dnl
 divert(7)dnl
 dnl
-_std(1,2,43,3,6)
+_std(1, 2, 43, 3, 6)
 	M reload	c 2 20	640 kmem
 	;;
 

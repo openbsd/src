@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.3 2002/02/13 20:21:54 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.4 2002/02/14 13:29:20 todd Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -30,36 +30,36 @@ _DEV(all)
 _DEV(std)
 _DEV(loc)
 _TITLE(tap)
-_DEV(st,11,5)
+_DEV(st, 11, 5)
 _TITLE(dis)
-_DEV(flo,24,7)
-_DEV(sd,10,4)
-_DEV(cd,12,6)
-_DEV(ccd,7,1)
-_DEV(vnd,8,2)
-_DEV(rd,9,3)
+_DEV(flo, 24, 7)
+_DEV(sd, 10, 4)
+_DEV(cd, 12, 6)
+_DEV(ccd, 7, 1)
+_DEV(vnd, 8, 2)
+_DEV(rd, 9, 3)
 _TITLE(term)
-_DEV(com,23)
+_DEV(com, 23)
 _TITLE(pty)
-_DEV(tty,4)
-_DEV(pty,5)
+_DEV(tty, 4)
+_DEV(pty, 5)
 _TITLE(prn)
-_DEV(lpt,30)
+_DEV(lpt, 30)
 _TITLE(call)
 _TITLE(spec)
 _DEV(hil)
-_DEV(fdesc,16)
-_DEV(bpf,17)
-_DEV(tun,18)
-_DEV(pf,21)
-_DEV(lkm,19)
-_DEV(altq,33)
-_DEV(rnd,20)
-_DEV(xfs,31)
-_DEV(ch,13)
-_DEV(ss,14)
-_DEV(uk,15)
-_DEV(pdc,22)
+_DEV(fdesc, 16)
+_DEV(bpf, 17)
+_DEV(tun, 18)
+_DEV(pf, 21)
+_DEV(lkm, 19)
+_DEV(altq, 33)
+_DEV(rnd, 20)
+_DEV(xfs, 31)
+_DEV(ch, 13)
+_DEV(ss, 14)
+_DEV(uk, 15)
+_DEV(pdc, 22)
 #
 dnl
 divert(7)dnl
@@ -70,5 +70,5 @@ ramdisk)
 	_recurse bpf0 bpf1 tun0 tun1 lkm random
 	;;
 
-_std(1,2,29,3,6)
+_std(1, 2, 29, 3, 6)
 	;;
