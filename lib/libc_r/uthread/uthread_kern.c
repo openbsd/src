@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_kern.c,v 1.10 2000/10/04 05:55:35 d Exp $	*/
+/*	$OpenBSD: uthread_kern.c,v 1.11 2001/01/16 04:51:07 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -520,6 +520,12 @@ _thread_kern_sched(struct sigcontext * scp)
 			/* Restore errno. */
 			errno = _thread_run->error;
 
+			/*
+			 * Restore the new thread, saving current.
+			 */
+			_thread_machdep_switch(&_thread_run->_machdep,
+			    &old_thread_run->_machdep);
+
 			/* Check if a signal context was saved: */
 			if (_thread_run->sig_saved == 1) {
 				/*
@@ -542,6 +548,7 @@ _thread_kern_sched(struct sigcontext * scp)
 					thread_run_switch_hook(_last_user_thread,
 					    _thread_run);
 				}
+				_thread_check_cancel();
 				_thread_sys_sigreturn(&_thread_run->saved_sigcontext);
 			} else {
 				/*
@@ -556,18 +563,7 @@ _thread_kern_sched(struct sigcontext * scp)
 				}
 
 				_thread_check_cancel();
-
-				/*
-				 * Resume thread _thread_run.
-				 */
-				_thread_machdep_switch(&_thread_run->_machdep,
-					&old_thread_run->_machdep);
-				/*
-				 * This thread is now the new _thread_run
-				 * again.
-				 */
 				return;
-
 			}
 
 			/* This point should not be reached. */
