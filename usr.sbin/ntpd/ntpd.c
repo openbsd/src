@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.c,v 1.25 2004/12/06 20:57:17 mickey Exp $ */
+/*	$OpenBSD: ntpd.c,v 1.26 2004/12/20 15:10:05 moritz Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -164,7 +164,7 @@ main(int argc, char *argv[])
 			}
 
 		if (nfds == 0 && conf.settime) {
-			log_debug("no reply received, skipping initial time"
+			log_debug("no reply received, skipping initial time "
 			    "setting");
 			conf.settime = 0;
 			timeout = INFTIM;
@@ -175,7 +175,7 @@ main(int argc, char *argv[])
 
 		if (nfds > 0 && (pfd[PFD_PIPE].revents & POLLOUT))
 			if (msgbuf_write(&ibuf->w) < 0) {
-				log_warn("pipe write error (to child");
+				log_warn("pipe write error (to child)");
 				quit = 1;
 			}
 
