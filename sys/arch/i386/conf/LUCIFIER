@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.5 1997/10/08 19:23:54 mickey Exp $
+#	$OpenBSD: LUCIFIER,v 1.6 1997/10/13 00:19:33 mickey Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -92,7 +92,6 @@ mainbus0 at root
 
 bios0	at mainbus0
 apm0	at bios0
-option	APM_NOIDLE
 
 isa0	at mainbus0
 #eisa0	at mainbus0
@@ -116,12 +115,13 @@ npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
 #isapnp0	at isa?
 
+#vga0	at pci? dev ? function ?
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
 vt0	at isa? port 0x60 irq 1
 
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
+pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+pccom1	at isa? port 0x2f8 irq 3
+pccom2	at isa? port 0x3e8 irq 5
 #com3	at isa? port 0x2e8 irq 9	# (conflicts with some video cards)
 #ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
 #ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
@@ -130,7 +130,7 @@ com2	at isa? port 0x3e8 irq 5
 #com*	at boca? slave ?
 #rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
 #com*	at rtfps? slave ?
-com3    at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
+pccom3	at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
 
 # option for using CD1400 handshaking for incoming data
 # requires a special cable that exchanges the RTS and DTR lines
@@ -138,9 +138,9 @@ com3    at pcmcia? port 0x2e8 size 8 irq 3 slot ? # PCMCIA modem cards
 #cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
 #cy*	at pci?				# PCI cyclom card
 
-lpt0	at isa? port 0x378 irq 5	# standard PC parallel ports
+lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
-lpt2	at isa? port 0x3bc
+lpt2	at isa? port 0x3bc iosiz 4
 
 #lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
 #lms1	at isa? port 0x238 irq 5
@@ -188,7 +188,13 @@ fd*	at fdc? drive ?
 
 #mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
 
-scd0	at isa? port 0x300 irq 10	# Sony CD-ROM drives
+scd0	at isa? port 0x300		# Sony CD-ROM drives
+scd0	at isa? port 0x310		# Sony CD-ROM drives
+scd0	at isa? port 0x320		# Sony CD-ROM drives
+scd0	at isa? port 0x330		# Sony CD-ROM drives
+scd0	at isa? port 0x340		# Sony CD-ROM drives
+scd0	at isa? port 0x350		# Sony CD-ROM drives
+scd0	at isa? port 0x360		# Sony CD-ROM drives
 
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wdc1	at isa? port 0x170 irq 15
@@ -199,8 +205,9 @@ acd*	at atapibus? drive?
 
 #wt0	at isa? port 0x300 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
+option ED_DEBUG
 ed0	at isa? port 0x280 iomem 0xd0000 irq 9	# WD/SMC, 3C503, and NE[12]000
-ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
+ed1	at isa? port 0x240 iomem 0xd8000 irq 9	#   ethernet cards
 ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #eg0	at isa? port 0x310 irq 5		# 3C505/Etherlink+ ethernet cards
 #el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
@@ -226,7 +233,7 @@ ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 #pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System
 #sp0	at pss0 port 0x530 irq 10 drq 0	# 	sound port driver
 
-sb0	at isa? port 0x220 irq 7 drq 1	# SoundBlaster
+sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
 #pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
 #gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis UltraSound (flags is record drq)
