@@ -1,3 +1,4 @@
+/*	$OpenBSD: mfsiom.h,v 1.2 1997/02/24 14:27:15 niklas Exp $	*/
 /*	$NetBSD: mfsiom.h,v 1.2 1994/06/29 06:47:14 cgd Exp $	*/
 
 /*

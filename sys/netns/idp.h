@@ -1,3 +1,4 @@
+/*	$OpenBSD: idp.h,v 1.2 1997/02/24 14:38:36 niklas Exp $	*/
 /*	$NetBSD: idp.h,v 1.5 1994/06/29 06:41:28 cgd Exp $	*/
 
 /*

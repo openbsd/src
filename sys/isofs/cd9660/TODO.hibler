@@ -1,3 +1,4 @@
+#	$OpenBSD: TODO.hibler,v 1.2 1997/02/24 14:30:49 niklas Exp $
 #	$NetBSD: TODO.hibler,v 1.6 1994/12/13 22:33:10 mycroft Exp $
 
 1. Investiate making ISOFS another UFS shared filesystem (ala FFS/MFS/LFS).

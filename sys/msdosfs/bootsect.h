@@ -1,3 +1,4 @@
+/*	$OpenBSD: bootsect.h,v 1.2 1997/02/24 14:32:46 niklas Exp $	*/
 /*	$NetBSD: bootsect.h,v 1.7 1995/07/24 06:36:23 leo Exp $	*/
 
 /*

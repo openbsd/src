@@ -1,3 +1,4 @@
+/*	$OpenBSD: bpb.h,v 1.2 1997/02/24 14:32:47 niklas Exp $	*/
 /*	$NetBSD: bpb.h,v 1.5 1995/07/24 06:37:15 leo Exp $	*/
 
 /*
