@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.125 2002/07/21 19:55:33 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.126 2002/07/22 18:05:10 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -197,7 +197,7 @@ hifn_attach(parent, self, aux)
 	if (sc->sc_flags & HIFN_IS_7811) {
 		u_int32_t revid;
 
-		READ_REG_1(sc, HIFN_1_REVID);
+		revid = READ_REG_1(sc, HIFN_1_REVID);
 		if (revid == 0x2)
 			sc->sc_flags |= HIFN_NO_BURSTWRITE;
 	}
