@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.7 2001/06/13 08:45:34 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.8 2001/06/26 18:43:06 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -216,9 +216,23 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 
-	if (object->obj_type != OBJTYPE_EXE || !lazy || pltgot == NULL) {
+	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 		return;
+	}
+
+	if (object->obj_type != OBJTYPE_EXE) {
+		int i, size;
+		Elf_Addr *addr;
+		Elf_RelA *rela;
+
+		size = object->Dyn.info[DT_PLTRELSZ] / sizeof(Elf_RelA);
+		rela = (Elf_RelA *)(object->Dyn.info[DT_JMPREL]);
+
+		for (i = 0; i < size; i++) {
+			addr = (Elf_Addr *)(object->load_offs + rela[i].r_offset);
+			*addr += object->load_offs;
+		}
 	}
 
 	pltgot[2] = (Elf_Addr)_dl_bind_start;
