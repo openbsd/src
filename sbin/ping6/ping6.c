@@ -1,5 +1,5 @@
-/*	$OpenBSD: ping6.c,v 1.25 2001/01/12 19:05:40 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.111 2001/01/12 19:04:03 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.26 2001/01/12 19:11:38 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.112 2001/01/12 19:11:49 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -995,9 +995,7 @@ main(argc, argv)
 		memset(fdmaskp, 0, fdmasks);
 		FD_SET(s, fdmaskp);
 		cc = select(s + 1, fdmaskp, NULL, NULL, tv);
-		if ((cc < 0 && errno == EINTR) || (options & F_FLOOD)) {
-			if (!signo)
-				break;
+		if ((cc < 0 && errno == EINTR) || ((options & F_FLOOD) && signo)) {
 			if (seenalrm) {
 				retransmit();
 				seenalrm = 0;
@@ -1010,6 +1008,7 @@ main(argc, argv)
 				oninfo(SIGINFO);
 				seeninfo = 0;
 			}
+			signo = 0;
 			continue;
 		} else if (cc == 0)
 			continue;
