@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.165 2005/01/03 01:02:45 espie Exp $
+# $OpenBSD: pkg_add,v 1.166 2005/01/13 00:29:37 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -60,6 +60,7 @@ sub can_install($$$)
 			}
 		} else {
 			print "Can't install $pkgname because it's already installed\n";
+			$state->{installed}->{$handle->{pkgname}} = 1;
 			$errors++;
 			return undef;
 		}
@@ -139,6 +140,9 @@ sub pre_add($$)
 		}
 		return undef;
 	}
+	if ($handle->{finished}) {
+		return undef;
+	}
 	my $dir = $handle->info();
     	my $plist = $handle->{plist} = 
 	    OpenBSD::PackingList->fromfile($dir.CONTENTS);
@@ -170,6 +174,9 @@ sub pre_add($$)
 		return $handle;
 	} else {
 		$handle->close();
+		rmtree($handle->info());
+		delete $handle->{plist};
+		$handle->{finished} = 1;
 		if ($state->{forced}->{kitchensink}) {
 			$errors = 0;
 		}
