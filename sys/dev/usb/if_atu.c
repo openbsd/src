@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.18 2004/11/17 14:13:47 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.19 2004/11/19 22:38:12 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -45,57 +45,46 @@
  * Ported to OpenBSD by Theo de Raadt and David Gwynne.
  */
 
+#include "bpfilter.h"
+
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/lock.h>
+#include <sys/sockio.h>
 #include <sys/mbuf.h>
 #include <sys/kernel.h>
-#include <sys/proc.h>
 #include <sys/socket.h>
-#include <sys/device.h>
-
-#include <sys/sockio.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
-#include <sys/kernel.h>
-
-#include <net/if.h>
-#include <net/if_arp.h>
-#include <net/if_dl.h>
-#include <net/if_media.h>
-
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/in_var.h>
-#include <netinet/ip.h>
-#include <netinet/if_ether.h>
-
-#include "bpfilter.h"
-#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
-#if NBPFILTER > 0
-#include <net/bpf.h>
-#endif
-
-#include <sys/ucred.h>
 #include <sys/kthread.h>
 #include <sys/queue.h>
+#include <sys/device.h>
+
 #include <machine/bus.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
 #include <dev/usb/usbdi_util.h>
 #include <dev/usb/usbdivar.h>
-#if 0
-#include <dev/usb/usb_ethersubr.h>
-#endif
 
 #include <dev/usb/usbdevs.h>
 
+#if NBPFILTER > 0
+#define BPF_MTAP(ifp, m) bpf_mtap((ifp)->if_bpf, (m))
+#include <net/bpf.h>
+#endif
+
+#include <net/if.h>
+#include <net/if_dl.h>
+#include <net/if_media.h>
+
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/if_ether.h>
+#endif
+
 #include <dev/ic/if_wi_ieee.h>
 
-#include <net80211/ieee80211.h>
-#include <net80211/ieee80211_ioctl.h>
-#include <net80211/ieee80211_radiotap.h>
 #include <net80211/ieee80211_var.h>
+#include <net80211/ieee80211_radiotap.h>
 
 #ifdef USB_DEBUG
 #define ATU_DEBUG
