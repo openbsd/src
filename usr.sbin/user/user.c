@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.6 2000/04/24 22:52:36 jakob Exp $ */
+/* $OpenBSD: user.c,v 1.7 2000/04/24 22:59:25 jakob Exp $ */
 /* $NetBSD: user.c,v 1.17 2000/04/14 06:26:55 simonb Exp $ */
 
 /*
@@ -32,8 +32,6 @@
  * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/stat.h>
 
