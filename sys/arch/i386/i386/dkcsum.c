@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.13 2004/12/25 23:02:24 miod Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.14 2004/12/31 20:37:25 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -70,7 +70,7 @@ dkcsumattach()
 	pribootdev = altbootdev = 0;
 
 	/*
-	 * XXX Whatif DEV_BSIZE is changed to something else than the BIOS
+	 * XXX What if DEV_BSIZE is changed to something else than the BIOS
 	 * blocksize?  Today, /boot doesn't cover that case so neither need
 	 * I care here.
 	 */
