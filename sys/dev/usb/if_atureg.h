@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.12 2004/12/04 23:56:50 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.13 2004/12/05 00:16:14 dlg Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -32,7 +32,7 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.12 2004/12/04 23:56:50 dlg Exp $ */
+/* $ATUWI: $Id: if_atureg.h,v 1.13 2004/12/05 00:16:14 dlg Exp $ */
 
 /************ 		driver options 		************/
 
@@ -166,10 +166,10 @@
  * According to the 802.11 spec (7.1.2) the frame body can be up to 2312 bytes
  */
 #define ATU_RX_BUFSZ		(ATU_RX_HDRLEN + \
-				 sizeof(struct wi_80211_hdr) + 2312 + 4)
+				 sizeof(struct ieee80211_frame_addr4) + 2312 + 4)
 /* BE CAREFULL! should add ATU_TX_PADDING */
 #define ATU_TX_BUFSZ		(ATU_TX_HDRLEN + \
-				 sizeof(struct wi_80211_hdr) + 2312)
+				 sizeof(struct ieee80211_frame_addr4) + 2312)
 #define ATU_MGMT_BUFSZ	(ATU_TX_HDRLEN + 300)
 
 #define ATU_MIN_FRAMELEN	60

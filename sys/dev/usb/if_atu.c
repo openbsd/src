@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.30 2004/12/04 23:56:49 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.31 2004/12/05 00:16:14 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -80,8 +80,6 @@
 #include <netinet/in.h>
 #include <netinet/if_ether.h>
 #endif
-
-#include <dev/ic/if_wi_ieee.h>
 
 #include <net80211/ieee80211_var.h>
 #include <net80211/ieee80211_radiotap.h>
@@ -2204,7 +2202,6 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 	int				len = 0;
 #endif
 	struct ieee80211_nwid		nwid;
-	struct wi_req			wreq;
 	int				change, s;
 
 	s = splnet();
@@ -2603,38 +2600,6 @@ atu_ioctl(struct ifnet *ifp, u_long command, caddr_t data)
 		}
 		break;
 #endif
-
-	case SIOCGWAVELAN:
-		DPRINTFN(15, ("%s: ioctl: get wavelan\n",
-		    USBDEVNAME(sc->atu_dev)));
-		/*
-		err = ether_ioctl(ifp, &sc->arpcom, command, data);
-		break;
-		*/
-
-		/* TODO: implement */
-
-		err = copyin(ifr->ifr_data, &wreq, sizeof(wreq));
-		if (err)
-			break;
-
-		DPRINTFN(15, ("%s: SIOCGWAVELAN\n", USBDEVNAME(sc->atu_dev)));
-		if (wreq.wi_len > WI_MAX_DATALEN) {
-			err = EINVAL;
-			break;
-		}
-
-		DPRINTFN(15, ("%s: ioctl: wi_type=%04x %d\n",
-		    USBDEVNAME(sc->atu_dev), wreq.wi_type, wreq.wi_type));
-		err = 0;
-		/* err = EINVAL; */
-		break;
-
-	case SIOCSWAVELAN:
-		DPRINTFN(15, ("%s: ioctl: wavset type=%x\n",
-		    USBDEVNAME(sc->atu_dev), 0));
-		err = 0;
-		break;
 
 	default:
 		DPRINTFN(15, ("%s: default\n", USBDEVNAME(sc->atu_dev)));
