@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile,v 1.6 2001/07/11 03:02:24 pvalchev Exp $
+#	$OpenBSD: Makefile,v 1.7 2001/07/11 05:56:02 pvalchev Exp $
 
 DIR=/usr/src/libexec/ld.so/obj/ld.so
-#necssary to build the shared objects. not necessary for dltest but
+#necessary to build the shared objects. not necessary for dltest but
 #doesn't hurt
 CFLAGS += -fpic
 CFLAGS += -g
