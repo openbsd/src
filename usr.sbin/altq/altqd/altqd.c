@@ -1,5 +1,5 @@
-/*	$OpenBSD: altqd.c,v 1.6 2001/12/03 08:40:43 kjc Exp $	*/
-/*	$KAME: altqd.c,v 1.5 2001/08/16 10:39:16 kjc Exp $	*/
+/*	$OpenBSD: altqd.c,v 1.7 2002/02/13 08:23:04 kjc Exp $	*/
+/*	$KAME: altqd.c,v 1.9 2002/02/12 10:12:15 kjc Exp $	*/
 /*
  * Copyright (c) 2001 Theo de Raadt
  * All rights reserved.
@@ -24,7 +24,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Copyright (C) 1997-2000
+ * Copyright (C) 1997-2002
  *	Sony Computer Science Laboratories, Inc.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,25 +49,21 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/un.h>
+#include <sys/stat.h>
+#include <net/if.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
-#include <ctype.h>
 #include <errno.h>
 #include <signal.h>
 #include <fcntl.h>
 #include <syslog.h>
 #include <err.h>
-
-#include <sys/param.h>
-#include <sys/socket.h>
-#include <sys/un.h>
-#include <sys/stat.h>
-
-#include <net/if.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
 
 #include <altq/altq.h>
 #include "altq_qop.h"
@@ -75,15 +71,7 @@
 
 #define MAX_CLIENT		10
 
-int	altqd_socket = -1;
-FILE *	client[MAX_CLIENT];
-int	T;  			/* Current Thread number */
-FILE	*infp;			/* Input file pointer */
-char	*infile = NULL;		/* command input file.  stdin if NULL. */
-fd_set	fds, t_fds;
-
-#define  DEFAULT_DEBUG_MASK	0
-#define  DEFAULT_LOGGING_LEVEL	LOG_INFO
+volatile sig_atomic_t gotsig_hup, gotsig_int, gotsig_term;
 
 void usage(void);
 void sig_pipe(int);
@@ -107,8 +95,6 @@ sig_pipe(int sig)
 	 */
 }
 
-volatile sig_atomic_t gotsig_hup, gotsig_int, gotsig_term;
-
 void
 sig_hup(int sig)
 {
@@ -130,11 +116,15 @@ sig_term(int sig)
 int
 main(int argc, char **argv)
 {
-	int		c;
-	int		i, maxfd;
+	int	i, c, maxfd, rval, qpsock;
+	fd_set	fds, rfds;
+	FILE	*fp, *client[MAX_CLIENT];
 
-	m_debug = DEFAULT_DEBUG_MASK;
-	l_debug = DEFAULT_LOGGING_LEVEL;
+	m_debug = 0;
+	l_debug = LOG_INFO;
+	fp = NULL;
+	for (i = 0; i < MAX_CLIENT; i++)
+		client[i] = NULL;
 
 	while ((c = getopt(argc, argv, "f:vDdl:")) != -1) {
 		switch (c) {
@@ -178,7 +168,7 @@ main(int argc, char **argv)
 	/*
 	 * open a unix domain socket for altqd clients
 	 */
-	if ((altqd_socket = socket(AF_LOCAL, SOCK_STREAM, 0)) < 0)
+	if ((qpsock = socket(AF_LOCAL, SOCK_STREAM, 0)) < 0)
 		LOG(LOG_ERR, errno, "can't open unix domain socket");
 	else {
 		struct sockaddr_un addr;
@@ -187,17 +177,17 @@ main(int argc, char **argv)
 		addr.sun_family = AF_LOCAL;
 		strlcpy(addr.sun_path, QUIP_PATH, sizeof(addr.sun_path));
 		unlink(QUIP_PATH);
-		if (bind(altqd_socket, (struct sockaddr *)&addr,
+		if (bind(qpsock, (struct sockaddr *)&addr,
 		    sizeof(addr)) < 0) {
 			LOG(LOG_ERR, errno, "can't bind to %s", QUIP_PATH);
-			close(altqd_socket);
-			altqd_socket = -1;
+			close(qpsock);
+			qpsock = -1;
 		}
 		chmod(QUIP_PATH, 0666);
-		if (listen(altqd_socket, SOMAXCONN) < 0) {
+		if (listen(qpsock, SOMAXCONN) < 0) {
 			LOG(LOG_ERR, errno, "can't listen to %s", QUIP_PATH);
-			close(altqd_socket);
-			altqd_socket = -1;
+			close(qpsock);
+			qpsock = -1;
 		}
 	}
 
@@ -209,90 +199,69 @@ main(int argc, char **argv)
 			LOG(LOG_WARNING, errno, "can't open pid file");
 	} else {
 		/* interactive mode */
-		if (infile) {
-			if ((infp = fopen(infile, "r")) == NULL)
-				err(1, "Cannot open input file");
-		} else {
-			infp = stdin;
-			printf("\nEnter ? or command:\n");
-			printf("altqd %s> ", cur_ifname());
-		}
+		fp = stdin;
+		printf("\nEnter ? or command:\n");
+		printf("altqd %s> ", cur_ifname());
 		fflush(stdout);
 	}
 
 	/*
 	 * go into the command mode.
-	 * the code below is taken from rtap of rsvpd.
 	 */
 	FD_ZERO(&fds);
 	maxfd = 0;
-	if (infp != NULL) {
-		FD_SET(fileno(infp), &fds);
-		maxfd = MAX(maxfd, fileno(infp) + 1);
+	if (fp != NULL) {
+		FD_SET(fileno(fp), &fds);
+		maxfd = MAX(maxfd, fileno(fp) + 1);
 	}
-	if (altqd_socket >= 0) {
-		FD_SET(altqd_socket, &fds);
-		maxfd = MAX(maxfd, altqd_socket + 1);
+	if (qpsock >= 0) {
+		FD_SET(qpsock, &fds);
+		maxfd = MAX(maxfd, qpsock + 1);
 	}
-	while (1) {
-		int rc;
 
+	rval = 1;
+	while (rval) {
 		if (gotsig_hup) {
 			qcmd_destroyall();
 			gotsig_hup = 0;
-			printf("reinitializing altqd...\n");
-			qcmd_init();
+			LOG(LOG_INFO, 0, "reinitializing altqd...");
+			if (qcmd_init() != 0) {
+				LOG(LOG_INFO, 0, "reinitialization failed");
+				break;
+			}
 		}
 		if (gotsig_term || gotsig_int) {
-			fprintf(stderr, "Exiting on signal %d\n",
-				gotsig_term ? SIGTERM : SIGINT);
-
-			qcmd_destroyall();
-
-			if (daemonize)
-				closelog();
-			exit(0);
+			LOG(LOG_INFO, 0, "Exiting on signal %d",
+			    gotsig_term ? SIGTERM : SIGINT);
+			break;
 		}
 
-		FD_COPY(&fds, &t_fds);
-		rc = select(maxfd, &t_fds, NULL, NULL, NULL);
-		if (rc < 0) {
+		FD_COPY(&fds, &rfds);
+		if (select(maxfd, &rfds, NULL, NULL, NULL) < 0) {
 			if (errno != EINTR)
 				err(1, "select");
 			continue;
 		}
 
 		/*
-		 * If there is control input, read the input line,
+		 * if there is command input, read the input line,
 		 * parse it, and execute.
 		 */
-		if (infp && FD_ISSET(fileno(infp), &t_fds)) {
-			rc = DoCommand(infile, infp);
-			if (rc == 0) {
-				/*
-				 * EOF on input.  If reading from file,
-				 * go to stdin; else exit.
-				 */
-				if (infile) {
-					infp = stdin;
-					infile = NULL;
-					printf("\nEnter ? or command:\n");
-					FD_SET(fileno(infp), &fds);
-				} else {
-					LOG(LOG_INFO, 0, "Exiting.");
-					(void) qcmd_destroyall();
-					exit(0);
-				}
-			} else if (infp == stdin)
+		if (fp && FD_ISSET(fileno(fp), &rfds)) {
+			rval = do_command(fp);
+			if (rval == 0) {
+				/* quit command or eof on input */
+				LOG(LOG_INFO, 0, "Exiting.");
+			} else if (fp == stdin)
 				printf("altqd %s> ", cur_ifname());
 			fflush(stdout);
-		} else if (altqd_socket >= 0 && FD_ISSET(altqd_socket, &t_fds)) {
+		} else if (qpsock >= 0 && FD_ISSET(qpsock, &rfds)) {
 			/*
 			 * quip connection request from client via unix
 			 * domain socket; get a new socket for this
 			 * connection and add it to the select list.
 			 */
-			int newsock = accept(altqd_socket, NULL, NULL);
+			int newsock = accept(qpsock, NULL, NULL);
 
 			if (newsock == -1) {
 				LOG(LOG_ERR, errno, "accept");
@@ -315,7 +284,7 @@ main(int argc, char **argv)
 				if (client[i] == NULL)
 					continue;
 				fd = fileno(client[i]);
-				if (FD_ISSET(fd, &t_fds)) {
+				if (FD_ISSET(fd, &rfds)) {
 					if (quip_input(client[i]) != 0 ||
 					    fflush(client[i]) != 0) {
 						/* connection closed */
@@ -327,4 +296,18 @@ main(int argc, char **argv)
 			}
 		}
 	}
+
+	/* cleanup and exit */
+	qcmd_destroyall();
+	if (qpsock >= 0)
+		(void)close(qpsock);
+	unlink(QUIP_PATH);
+
+	for (i = 0; i < MAX_CLIENT; i++)
+		if (client[i] != NULL)
+			(void)fclose(client[i]);
+	if (daemonize) {
+		closelog();
+	}
+	exit(0);
 }
