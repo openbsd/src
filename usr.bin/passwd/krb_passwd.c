@@ -1,4 +1,4 @@
-/*	$OpenBSD: krb_passwd.c,v 1.9 1998/02/25 15:57:48 art Exp $	*/
+/*	$OpenBSD: krb_passwd.c,v 1.10 1998/03/09 22:17:32 art Exp $	*/
 /* $KTH: kpasswd.c,v 1.25 1997/05/02 14:28:51 assar Exp $ */
 
 /*
@@ -74,6 +74,8 @@ krb_passwd(int argc, char **argv)
     char pword[MAX_KPW_LEN];
     int c;
     char tktstring[MAXPATHLEN];
+
+    seteuid(getuid());
     
     memset (&principal, 0, sizeof(principal));
     memset (&default_principal, 0, sizeof(default_principal));
