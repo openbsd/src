@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rfork.2,v 1.8 1998/07/06 18:28:22 deraadt Exp $
+.\"	$OpenBSD: rfork.2,v 1.9 1999/01/11 01:01:23 niklas Exp $
 .\"
 .\" This manual page is taken directly from Plan9, and modified to
 .\" describe the actual OpenBSD implementation.  Permission for
@@ -41,7 +41,6 @@ If set, the child process will be dissociated from the parent. Upon
 exit the child will not leave a status for the parent to collect.
 See 
 .Xr wait 2 .
-This is not currently implemented.
 .It RFNAMEG, RFCNAMEG, RFENVG, RFCENVG, RFNOTEG
 These are Plan 9 specific flags, and not implemented.
 .It RFFDG
