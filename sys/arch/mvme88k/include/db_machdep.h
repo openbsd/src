@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.23 2003/09/26 19:04:28 miod Exp $ */
+/*	$OpenBSD: db_machdep.h,v 1.24 2003/10/05 20:23:53 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -69,9 +69,9 @@
 
 #ifdef DDB
 
-/* 
+/*
  * This is a hack so that mc88100 can use software single step
- * and mc88110 can use the wonderful hardware single step 
+ * and mc88110 can use the wonderful hardware single step
  * feature. XXX smurph
  */
 #define INTERNAL_SSTEP		/* Use local Single Step routines */
@@ -83,8 +83,8 @@
 /* Entry trap for the debugger - used for inline assembly breaks*/
 #define ENTRY_ASM       	"tb0 0, r0, 132"
 
-typedef	vm_offset_t		db_addr_t;
-typedef	int			db_expr_t;
+typedef	vaddr_t		db_addr_t;
+typedef	int		db_expr_t;
 typedef	struct m88100_saved_state db_regs_t;
 extern db_regs_t	ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
@@ -114,12 +114,12 @@ int ddb_entry_trap(int level, db_regs_t *eframe);
 
 #ifdef INTERNAL_SSTEP
 extern register_t getreg_val(db_regs_t *, int);
-void db_set_single_step(register db_regs_t *);
-void db_clear_single_step(register db_regs_t *);
+void db_set_single_step(db_regs_t *);
+void db_clear_single_step(db_regs_t *);
 #else
 /* need software single step */
 #define SOFTWARE_SSTEP 1 /* we need this for mc88100 */
-#endif 
+#endif
 
 /*
  * Debugger can get to any address space

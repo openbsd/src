@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.18 2003/08/06 21:08:06 millert Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.19 2003/10/05 20:23:52 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -36,6 +36,7 @@
 #include <ddb/db_output.h>	/* db_printf                      */
 #include <ddb/db_sym.h>		/* DB_STGY_PROC, etc.             */
 #include <ddb/db_command.h>	/* db_recover                     */
+#include <ddb/db_access.h>
 
 union instruction {
 	unsigned rawbits;
@@ -95,10 +96,9 @@ static inline unsigned br_dest(unsigned addr, union instruction inst)
 
 #define TRACE_DEBUG	/* undefine to disable debugging */
 
-extern void db_read_bytes(vm_offset_t addr, int size, char *data);
 int frame_is_sane(db_regs_t *regs);
 char *m88k_exception_name(unsigned vector);
-unsigned db_trace_get_val(vm_offset_t addr, unsigned *ptr);
+unsigned db_trace_get_val(vaddr_t addr, unsigned *ptr);
 void db_stack_trace_print(db_regs_t *addr, int have_addr,
     db_expr_t count, char *modif, int (*pr)(const char *, ...));
 
@@ -150,7 +150,7 @@ db_setf_regs(struct db_variable      *vp,
 	db_expr_t		*valuep,
 	int			op)		/* read/write */
 {
-	register int   *regp = (int *) ((char *) DDB_REGS + (int) (vp->valuep));
+	int   *regp = (int *) ((char *) DDB_REGS + (int) (vp->valuep));
 
 	if (op == DB_VAR_GET)
 		*valuep = *regp;
@@ -251,7 +251,7 @@ hex_value_needs_0x(unsigned value)
 {
 	int i;
 	unsigned last = 0;
-	unsigned char c; 
+	unsigned char c;
 	unsigned have_a_hex_digit = 0;
 
 	if (value <= 9)
@@ -283,7 +283,7 @@ int
 frame_is_sane(db_regs_t *regs)
 {
 	/* no good if we can't read the whole frame */
-	if (badwordaddr((vm_offset_t)regs) || badwordaddr((vm_offset_t)&regs->mode)) {
+	if (badwordaddr((vaddr_t)regs) || badwordaddr((vaddr_t)&regs->mode)) {
 		db_printf("[WARNING: frame at 0x%x : unreadable]\n", regs);
 		return 0;
 	}
@@ -368,7 +368,7 @@ m88k_exception_name(unsigned vector)
  * Return 1 if was able to read, 0 otherwise.
  */
 unsigned
-db_trace_get_val(vm_offset_t addr, unsigned *ptr)
+db_trace_get_val(vaddr_t addr, unsigned *ptr)
 {
 	label_t db_jmpbuf;
 	label_t *prev = db_recover;
@@ -452,7 +452,7 @@ print_args(void)
 			db_printf("?");
 		else {
 			unsigned value = saved_reg_value(reg);
-			db_printf("%s%x", hex_value_needs_0x(value) ? 
+			db_printf("%s%x", hex_value_needs_0x(value) ?
 				  "0x" : "", value);
 		}
 		if (reg == last_arg)
@@ -493,7 +493,7 @@ static int
 is_jump_source_ok(unsigned return_to, unsigned jump_to)
 {
 	unsigned flags;
-	union instruction instruction; 
+	union instruction instruction;
 
 	/*
 	 * Delayed branches are most common... look two instructions before
@@ -930,21 +930,20 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 		 * Here we are just looking for kernel exception frames.
 		 */
 
-		if (badwordaddr((vm_offset_t)stack) ||
-		    badwordaddr((vm_offset_t)(stack+4)))
+		if (badwordaddr((vaddr_t)stack) ||
+		    badwordaddr((vaddr_t)(stack+4)))
 			break;
 
-		db_read_bytes((vm_offset_t)stack, 2*sizeof(int), (char *)pair);
+		db_read_bytes((vaddr_t)stack, 2*sizeof(int), (char *)pair);
 
 		/* the pairs should match and equal stack+8 */
 		if (pair[0] == pair[1]) {
 			if (pair[0] != stack+8) {
 				/*
-				if (!badwordaddr((vm_offset_t)pair[0]) && (pair[0]!=0))
+				if (!badwordaddr((vaddr_t)pair[0]) && (pair[0]!=0))
 				(*pr)("stack_trace:found pair 0x%x but != to stack+8\n",
 				pair[0]);
 				*/
-				
 			}
 
 			else if (frame_is_sane((db_regs_t*)pair[0])) {
@@ -980,11 +979,11 @@ db_stack_trace_cmd2(db_regs_t *regs, int (*pr)(const char *, ...))
 		stack = stack & ~(KERNEL_STACK_SIZE-1);	/* point to the bottom */
 		stack += KERNEL_STACK_SIZE - 8;
 
-		if (badwordaddr((vm_offset_t)stack) ||
-		    badwordaddr((vm_offset_t)stack))
+		if (badwordaddr((vaddr_t)stack) ||
+		    badwordaddr((vaddr_t)stack))
 			return;
 
-		db_read_bytes((vm_offset_t)stack, 2*sizeof(int), (char *)pair);
+		db_read_bytes((vaddr_t)stack, 2*sizeof(int), (char *)pair);
 		if (pair[0] != pair[1])
 			return;
 

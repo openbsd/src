@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.28 2003/10/03 21:46:24 miod Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.29 2003/10/05 20:23:52 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -42,10 +42,11 @@
 #include <machine/trap.h>		/* current_thread()	*/
 #include <machine/db_machdep.h>		/* local ddb stuff	*/
 #include <machine/bugio.h>		/* bug routines		*/
-#include <machine/locore.h>		 
+#include <machine/locore.h>
 #include <machine/cpu_number.h>
 #include <machine/m88100.h>
 
+#include <ddb/db_access.h>
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_interface.h>
@@ -54,19 +55,17 @@
 
 extern label_t *db_recover;
 extern unsigned int db_maxoff;
-extern unsigned db_trace_get_val(vm_offset_t addr, unsigned *ptr);
+extern unsigned db_trace_get_val(vaddr_t, unsigned *);
 extern int frame_is_sane(db_regs_t *);
 extern void cnpollc(int);
-void kdbprinttrap(int type, int code);
+void kdbprinttrap(int, int);
 
-void m88k_db_trap(int type, struct m88100_saved_state *regs);
-int ddb_nmi_trap(int level, db_regs_t *eframe);
-void ddb_error_trap(char *error, db_regs_t *eframe);
-void db_read_bytes(vm_offset_t addr, int size, char *data);
-void db_write_bytes(char *addr, int size, char *data);
-void db_putc(int c);
+void m88k_db_trap(int, struct m88100_saved_state *);
+int ddb_nmi_trap(int, db_regs_t *);
+void ddb_error_trap(char *, db_regs_t *);
+void db_putc(int);
 int db_getc(void);
-void cpu_interrupt_to_db(int cpu_no);
+void cpu_interrupt_to_db(int);
 char *db_task_name(void);
 int m88k_dmx_print(unsigned, unsigned, unsigned, unsigned);
 void m88k_db_pause(unsigned);
@@ -213,8 +212,8 @@ m88k_db_print_frame(addr, have_addr, count, modif)
 		return;
 	}
 
-	if (badwordaddr((vm_offset_t)s) ||
-	    badwordaddr((vm_offset_t)(&((db_regs_t*)s)->mode))) {
+	if (badwordaddr((vaddr_t)s) ||
+	    badwordaddr((vaddr_t)(&((db_regs_t*)s)->mode))) {
 		db_printf("frame at 0x%08x is unreadable\n", s);
 		return;
 	}
@@ -379,7 +378,7 @@ m88k_db_pause(ticks)
 void
 m88k_db_trap(type, regs)
 	int type;
-	register struct m88100_saved_state *regs;
+	struct m88100_saved_state *regs;
 {
 #if 0
 	int i;
@@ -392,7 +391,7 @@ m88k_db_trap(type, regs)
 		db_printf("WARNING: entered debugger with interrupts disabled\n");
 
 	switch(type) {
-    
+
 	case T_KDB_BREAK:
 	case T_KDB_TRACE:
 	case T_KDB_ENTRY:
@@ -406,9 +405,9 @@ m88k_db_trap(type, regs)
 			/*NOTREACHED*/
 		}
 	}
-    
+
 	ddb_regs = *regs;
-    
+
 	db_active++;
 	cnpollc(TRUE);
 	db_trap(type, 0);
@@ -431,14 +430,14 @@ extern int trap_types;
 void
 kdbprinttrap(type, code)
 	int type, code;
-{       
+{
 	printf("kernel: ");
 	if (type >= trap_types || type < 0)
-		printf("type %d", type); 
-	else    
+		printf("type %d", type);
+	else
 		printf("%s", trap_type[type]);
 	printf(" trap\n");
-}       
+}
 
 void
 Debugger()
@@ -478,7 +477,7 @@ ddb_break_trap(type, eframe)
 	if (type == T_KDB_BREAK) {
 		/*
 		 * back up an instruction and retry the instruction
-		 * at the breakpoint address.  mc88110's exip reg 
+		 * at the breakpoint address.  mc88110's exip reg
 		 * already has the adress of the exception instruction.
 		 */
 		if (cputyp != CPU_88110) {
@@ -523,12 +522,9 @@ ddb_error_trap(error, eframe)
  * Read bytes from kernel address space for debugger.
  */
 void
-db_read_bytes(addr, size, data)
-	vm_offset_t     addr;
-	register int    size;
-	register char   *data;
+db_read_bytes(db_addr_t addr, size_t size, char *data)
 {
-	register char	*src;
+	char *src;
 
 	src = (char *)addr;
 
@@ -544,25 +540,20 @@ db_read_bytes(addr, size, data)
  * write access in pmap_bootstrap()). XXX nivas
  */
 void
-db_write_bytes(addr, size, data)
-	char *addr;
-	int size;
-	char *data;
+db_write_bytes(db_addr_t addr, size_t size, char *data)
 {
-	register char *dst;
-	vm_offset_t physaddr;
-	int i = size;
+	char *dst;
+	paddr_t physaddr;
+	psize_t psize = size;
 
 	dst = (char *)addr;
-	
+
 	while (--size >= 0) {
-#if 0
-		db_printf("byte %x\n", *data);
-#endif
-		*dst++ = *data++;    
+		*dst++ = *data++;
 	}
-	pmap_extract(pmap_kernel(), (vm_offset_t)addr, &physaddr);
-	cmmu_flush_cache(physaddr, i); 
+	/* XXX test return value */
+	pmap_extract(pmap_kernel(), (vaddr_t)addr, &physaddr);
+	cmmu_flush_cache(physaddr, psize);
 }
 
 /* to print a character to the console */
@@ -655,7 +646,7 @@ m88k_db_iflush(addr, have_addr, count, modif)
 	addr = 0;
 #ifdef may_be_removed
 	cmmu_remote_set(addr, CMMU_SCR, 0, CMMU_FLUSH_CACHE_CBI_ALL);
-#endif 
+#endif
 }
 
 /* flush dcache */
@@ -670,7 +661,7 @@ m88k_db_dflush(addr, have_addr, count, modif)
 	addr = 0;
 #ifdef may_be_removed
 	cmmu_remote_set(addr, CMMU_SCR, 1, CMMU_FLUSH_CACHE_CBI_ALL);
-#endif 
+#endif
 }
 
 /* probe my cache */
@@ -708,7 +699,7 @@ m88k_db_peek(addr, have_addr, count, modif)
 		  (unsigned)cmmu_remote_get(0, CMMU_CTP1, 0),
 		  (unsigned)cmmu_remote_get(0, CMMU_CTP2, 0),
 		  (unsigned)cmmu_remote_get(0, CMMU_CTP3, 0));
-#endif 
+#endif
 }
 
 
@@ -766,7 +757,7 @@ m88k_db_translate(addr, have_addr, count, modif)
 		while (c = *modif++, c != 0) {
 			switch (c) {
 			default:
-				db_printf("bad modifier [%c]\n", c); 
+				db_printf("bad modifier [%c]\n", c);
 				wanthelp = 1;
 				break;
 			case 'h':
@@ -873,14 +864,14 @@ char *
 db_task_name()
 {
 	static unsigned buffer[(DB_TASK_NAME_LEN + 5) / sizeof(unsigned)];
-	unsigned ptr = (vm_offset_t)(TOP_OF_USER_STACK - 4);
-	unsigned limit = ptr - MAX_DISTANCE_TO_LOOK;
+	vaddr_t ptr = (vaddr_t)(TOP_OF_USER_STACK - 4);
+	vaddr_t limit = ptr - MAX_DISTANCE_TO_LOOK;
 	unsigned word;
 	int i;
 
 	/* skip zeros at the end */
 	while (ptr > limit &&
-	       (i = db_trace_get_val((vm_offset_t)ptr, &word)) && (word == 0)) {
+	       (i = db_trace_get_val(ptr, &word)) && (word == 0)) {
 		ptr -= 4; /* continue looking for a non-null word */
 	}
 
@@ -909,7 +900,7 @@ db_task_name()
 
 	for (i = 0; i < sizeof(buffer); i++, ptr += 4) {
 		buffer[i] = 0; /* just in case it's not read */
-		db_trace_get_val((vm_offset_t)ptr, &buffer[i]);
+		db_trace_get_val(ptr, &buffer[i]);
 	}
 	return (char *)buffer;
 }
