@@ -1,7 +1,7 @@
-/*	$OpenBSD: inp.c,v 1.26 2003/08/10 21:28:48 otto Exp $	*/
+/*	$OpenBSD: inp.c,v 1.27 2003/08/12 21:13:10 otto Exp $	*/
 
 #ifndef lint
-static const char     rcsid[] = "$OpenBSD: inp.c,v 1.26 2003/08/10 21:28:48 otto Exp $";
+static const char     rcsid[] = "$OpenBSD: inp.c,v 1.27 2003/08/12 21:13:10 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -307,7 +307,8 @@ static void
 plan_b(const char *filename)
 {
 	FILE	*ifp;
-	int	i = 0, maxlen = 1;
+	int	i = 0, j, maxlen = 1;
+	char	*p;
 	bool	found_revision = (revision == NULL);
 
 	using_plan_a = false;
@@ -322,6 +323,10 @@ plan_b(const char *filename)
 		if ((i = strlen(buf)) > maxlen)
 			maxlen = i;	/* find longest line */
 	}
+	last_line_missing_eol = i > 0 && buf[i - 1] != '\n';
+	if (last_line_missing_eol && maxlen == i)
+		maxlen++;
+		
 	if (revision != NULL) {
 		if (!found_revision) {
 			if (force) {
@@ -354,17 +359,21 @@ plan_b(const char *filename)
 	if (tibuf[1] == NULL)
 		fatal("out of memory\n");
 	for (i = 1;; i++) {
-		if (!(i % lines_per_buf))	/* new block */
+		p = tibuf[0] + maxlen * (i % lines_per_buf);
+		if (i % lines_per_buf == 0)	/* new block */
 			if (write(tifd, tibuf[0], BUFFERSIZE) < BUFFERSIZE)
 				pfatal("can't write temp file");
-		if (fgets(tibuf[0] + maxlen * (i % lines_per_buf),
-		    maxlen + 1, ifp) == NULL) {
+		if (fgets(p, maxlen + 1, ifp) == NULL) {
 			input_lines = i - 1;
-			if (i % lines_per_buf)
+			if (i % lines_per_buf != 0)
 				if (write(tifd, tibuf[0], BUFFERSIZE) < BUFFERSIZE)
 					pfatal("can't write temp file");
 			break;
 		}
+		j = strlen(p);
+		/* These are '\n' terminated strings, so no need to add a NUL */
+		if (j == 0 || p[j - 1] != '\n')
+			p[j] = '\n';
 	}
 	fclose(ifp);
 	close(tifd);
