@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.129 2004/08/02 21:30:55 claudio Exp $ */
+/*	$OpenBSD: parse.y,v 1.130 2004/08/03 13:46:22 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1099,6 +1099,10 @@ filter_set_opt	: LOCALPREF number		{
 		}
 		| PREPEND number		{
 			$$.flags = SET_PREPEND;
+			if ($2 > 128) {
+				yyerror("to many prepends");
+				YYERROR;
+			}
 			$$.prepend = $2;
 		}
 		| PFTABLE string		{
