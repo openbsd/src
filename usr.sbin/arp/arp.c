@@ -98,6 +98,12 @@ main(argc, argv)
 
 	pid = getpid();
 	while ((ch = getopt(argc, argv, "andsf")) != -1)
+		if (ch == 'n')
+			nflag = 1;
+
+	optind = 1;
+	optreset = 1;
+	while ((ch = getopt(argc, argv, "andsf")) != -1)
 		switch((char)ch) {
 		case 'a':
 			dump(0);
@@ -108,7 +114,6 @@ main(argc, argv)
 			(void)delete(argv[2], argv[3]);
 			return (0);
 		case 'n':
-			nflag = 1;
 			break;
 		case 's':
 			if (argc < 4 || argc > 7)
