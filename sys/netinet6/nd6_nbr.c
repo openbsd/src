@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_nbr.c,v 1.2 1999/12/08 12:13:37 deraadt Exp $	*/
+/*	$OpenBSD: nd6_nbr.c,v 1.3 1999/12/08 19:53:39 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -950,9 +950,11 @@ nd6_dad_start(ifa, tick)
 	bzero(dp, sizeof(*dp));
 	TAILQ_INSERT_TAIL(&dadq, (struct dadq *)dp, dad_list);
 
+#ifdef DEBUG
 	/* XXXJRT This is probably a purely debugging message. */
 	printf("%s: starting DAD for %s\n", if_name(ifa->ifa_ifp),
 	    ip6_sprintf(&ia->ia_addr.sin6_addr));
+#endif
 
 	/*
 	 * Send NS packet for DAD, ip6_dad_count times.
