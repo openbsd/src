@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.11 1999/09/14 08:21:37 espie Exp $	*/
+/*	$OpenBSD: misc.c,v 1.12 1999/09/14 08:35:17 espie Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.11 1999/09/14 08:21:37 espie Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.12 1999/09/14 08:35:17 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,23 +80,23 @@ static void enlarge_strspace();
  */
 ptrdiff_t
 indx(s1, s2)
-const char *s1;
-const char *s2;
+	const char *s1;
+	const char *s2;
 {
-	char *r;
+	char *t;
 
-	r = strstr(s1, s2);
-	if (r)
-		return (r - s1);
-	else
+	t = strstr(s1, s2);
+	if (t == NULL)
 		return (-1);
+	else
+		return (t - s1);
 }
 /*
  *  putback - push character back onto input
  */
 void
 putback(c)
-pbent c;
+	pbent c;
 {
 	if (bp >= endpbb)
 		enlarge_bufspace();
@@ -110,12 +110,12 @@ pbent c;
  */
 void
 pbstr(s)
-register char *s;
+	char *s;
 {
 	size_t n;
 
 	n = strlen(s);
-	while (endpbb - bp < n)
+	while (endpbb - bp <= n)
 		enlarge_bufspace();
 	while (n > 0)
 		*bp++ = s[--n];
@@ -126,9 +126,9 @@ register char *s;
  */
 void
 pbnum(n)
-int n;
+	int n;
 {
-	register int num;
+	int num;
 
 	num = (n < 0) ? -n : n;
 	do {
@@ -205,7 +205,7 @@ void enlarge_bufspace()
  */
 void
 chrsave(c)
-char c;
+	char c;
 {
 	if (ep >= endest) 
 		enlarge_strspace();
@@ -233,9 +233,9 @@ compute_prevep()
  */
 void
 getdiv(n)
-int n;
+	int n;
 {
-	register int c;
+	int c;
 
 	if (active == outfile[n])
 		errx(1, "undivert: diversion still active");
@@ -258,7 +258,7 @@ onintr(signo)
 void
 killdiv()
 {
-	register int n;
+	int n;
 
 	for (n = 0; n < MAXOUT; n++)
 		if (outfile[n] != NULL) {
@@ -268,9 +268,9 @@ killdiv()
 
 char *
 xalloc(n)
-unsigned long n;
+	unsigned long n;
 {
-	register char *p = malloc(n);
+	char *p = malloc(n);
 
 	if (p == NULL)
 		err(1, "malloc");
@@ -279,9 +279,9 @@ unsigned long n;
 
 char *
 xstrdup(s)
-const char *s;
+	const char *s;
 {
-	register char *p = strdup(s);
+	char *p = strdup(s);
 	if (p == NULL)
 		err(1, "strdup");
 	return p;

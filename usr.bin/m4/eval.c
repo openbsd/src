@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.16 1999/09/14 08:23:09 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.17 1999/09/14 08:35:16 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.16 1999/09/14 08:23:09 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.17 1999/09/14 08:35:16 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,11 +86,11 @@ static char rcsid[] = "$OpenBSD: eval.c,v 1.16 1999/09/14 08:23:09 espie Exp $";
 
 void
 eval(argv, argc, td)
-register char *argv[];
-register int argc;
-register int td;
+	char *argv[];
+	int argc;
+	int td;
 {
-	register int c, n;
+	int c, n;
 	static int sysval = 0;
 
 #ifdef DEBUG
@@ -392,13 +392,13 @@ char *dumpfmt = "`%s'\t`%s'\n";	       /* format string for dumpdef   */
  */
 void
 expand(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
-	register char *t;
-	register char *p;
-	register int n;
-	register int argno;
+	char *t;
+	char *p;
+	int n;
+	int argno;
 
 	t = argv[0];		       /* defn string as a whole */
 	p = t;
@@ -463,10 +463,10 @@ register int argc;
  */
 void
 dodefine(name, defn)
-register char *name;
-register char *defn;
+	char *name;
+	char *defn;
 {
-	register ndptr p;
+	ndptr p;
 
 	if (!*name)
 		errx(1, "null definition.");
@@ -489,9 +489,9 @@ register char *defn;
  */
 void
 dodefn(name)
-char *name;
+	char *name;
 {
-	register ndptr p;
+	ndptr p;
 
 	if ((p = lookup(name)) != nil && p->defn != null) {
 		pbstr(rquote);
@@ -509,10 +509,10 @@ char *name;
  */
 void
 dopushdef(name, defn)
-register char *name;
-register char *defn;
+	char *name;
+	char *defn;
 {
-	register ndptr p;
+	ndptr p;
 
 	if (!*name)
 		errx(1, "null definition");
@@ -533,10 +533,10 @@ register char *defn;
  */
 void
 dodump(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
-	register int n;
+	int n;
 	ndptr p;
 
 	if (argc > 2) {
@@ -557,8 +557,8 @@ register int argc;
  */
 void
 doifelse(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
 	cycle {
 		if (STREQ(argv[2], argv[3]))
@@ -579,7 +579,7 @@ register int argc;
  */
 int
 doincl(ifile)
-char *ifile;
+	char *ifile;
 {
 	if (ilevel + 1 == MAXINP)
 		errx(1, "too many include files.");
@@ -598,10 +598,10 @@ char *ifile;
  */
 int
 dopaste(pfile)
-char *pfile;
+	char *pfile;
 {
 	FILE *pf;
-	register int c;
+	int c;
 
 	if ((pf = fopen(pfile, "r")) != NULL) {
 		while ((c = getc(pf)) != EOF)
@@ -618,8 +618,8 @@ char *pfile;
  */
 void
 dochq(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
 	if (argc > 2) {
 		if (*argv[2])
@@ -644,8 +644,8 @@ register int argc;
  */
 void
 dochc(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
 	if (argc > 2) {
 		if (*argv[2])
@@ -668,7 +668,7 @@ register int argc;
  */
 void
 dodiv(n)
-register int n;
+	int n;
 {
 	int fd;
 
@@ -693,11 +693,11 @@ register int n;
  */
 void
 doundiv(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
-	register int ind;
-	register int n;
+	int ind;
+	int n;
 
 	if (argc > 2) {
 		for (ind = 2; ind < argc; ind++) {
@@ -718,11 +718,11 @@ register int argc;
  */
 void
 dosub(argv, argc)
-register char *argv[];
-register int argc;
+	char *argv[];
+	int argc;
 {
-	register char *ap, *fc, *k;
-	register int nc;
+	char *ap, *fc, *k;
+	int nc;
 
 	if (argc < 5)
 		nc = MAXTOK;
@@ -770,13 +770,13 @@ register int argc;
  */
 void
 map(dest, src, from, to)
-register char *dest;
-register char *src;
-register char *from;
-register char *to;
+	char *dest;
+	char *src;
+	char *from;
+	char *to;
 {
-	register char *tmp;
-	register char sch, dch;
+	char *tmp;
+	char sch, dch;
 	static char mapvec[128] = {
 		0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11,
 		12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23,

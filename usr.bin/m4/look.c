@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.3 1999/09/06 13:10:48 espie Exp $	*/
+/*	$OpenBSD: look.c,v 1.4 1999/09/14 08:35:16 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -57,9 +57,9 @@ static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
 
 int
 hash(name)
-register char *name;
+	char *name;
 {
-	register unsigned long h = 0;
+	unsigned long h = 0;
 	while (*name)
 		h = (h << 5) + h + *name++;
 	return (h % HASHSIZE);
@@ -70,9 +70,9 @@ register char *name;
  */
 ndptr 
 lookup(name)
-char *name;
+	char *name;
 {
-	register ndptr p;
+	ndptr p;
 
 	for (p = hashtab[hash(name)]; p != nil; p = p->nxtptr)
 		if (STREQ(name, p->name))
@@ -86,9 +86,9 @@ char *name;
  */
 ndptr 
 addent(name)
-char *name;
+	char *name;
 {
-	register int h;
+	int h;
 	ndptr p;
 
 	h = hash(name);
@@ -101,7 +101,7 @@ char *name;
 
 static void
 freent(p)
-ndptr p;
+	ndptr p;
 {
 	if (!(p->type & STATIC)) {
 		free((char *) p->name);
@@ -116,11 +116,11 @@ ndptr p;
  */
 void
 remhash(name, all)
-char *name;
-int all;
+	char *name;
+	int all;
 {
-	register int h;
-	register ndptr xp, tp, mp;
+	int h;
+	ndptr xp, tp, mp;
 
 	h = hash(name);
 	mp = hashtab[h];

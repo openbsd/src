@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.16 1999/09/14 08:30:20 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 1999/09/14 08:35:16 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.16 1999/09/14 08:30:20 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.17 1999/09/14 08:35:16 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -146,10 +146,10 @@ main(argc,argv)
 	int argc;
 	char *argv[];
 {
-	register int c;
-	register int n;
+	int c;
+	int n;
 	char *p;
-	register FILE *ifp;
+	FILE *ifp;
 
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		signal(SIGINT, onintr);
@@ -263,12 +263,13 @@ do_look_ahead(t, token)
  * macro - the work horse..
  */
 void
-macro() {
+macro()
+{
 	char token[MAXTOK], chars[2];
-	register char *s;
-	register int t, l;
-	register ndptr p;
-	register int  nlpar;
+	char *s;
+	int t, l;
+	ndptr p;
+	int  nlpar;
 
 	cycle {
 		t = gpbc();
@@ -330,9 +331,12 @@ macro() {
 				} else if (LOOK_AHEAD(l,lquote)) {
 					nlpar++;
 					s = lquote;
-				} else if (l == EOF)
-					errx(1, "missing right quote");
-				else {
+				} else if (l == EOF) {
+					if (nlpar == 1)
+						errx(1, "missing right quote.");
+					else
+						errx(1, "missing %d right quotes.", nlpar);
+				} else {
 					chars[0] = l;
 					chars[1] = EOS;
 					s = chars;
@@ -428,13 +432,13 @@ macro() {
  */
 ndptr
 inspect(tp) 
-register char *tp;
+	char *tp;
 {
-	register char c;
-	register char *name = tp;
-	register char *etp = tp+MAXTOK;
-	register ndptr p;
-	register unsigned long h = 0;
+	char c;
+	char *name = tp;
+	char *etp = tp+MAXTOK;
+	ndptr p;
+	unsigned long h = 0;
 
 	while ((isalnum(c = gpbc()) || c == '_') && tp < etp)
 		h = (h << 5) + h + (*tp++ = c);
@@ -454,14 +458,15 @@ register char *tp;
  * initkwds - initialise m4 keywords as fast as possible. 
  * This very similar to install, but without certain overheads,
  * such as calling lookup. Malloc is not used for storing the 
- * keyword strings, since we simply use the static  pointers
+ * keyword strings, since we simply use the static pointers
  * within keywrds block.
  */
 void
-initkwds() {
-	register int i;
-	register int h;
-	register ndptr p;
+initkwds()
+{
+	size_t i;
+	int h;
+	ndptr p;
 
 	for (i = 0; i < MAXKEYS; i++) {
 		h = hash(keywrds[i].knam);
@@ -473,3 +478,4 @@ initkwds() {
 		p->type = keywrds[i].ktyp | STATIC;
 	}
 }
+
