@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.40 2000/01/07 23:08:17 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.20 2000/04/04 03:48:47 smurph Exp $
+ * $OpenBSD: aic7xxx.c,v 1.21 2000/04/05 04:29:58 smurph Exp $
  */
 /*
  * A few notes on features of the driver.
@@ -1378,7 +1378,7 @@ ahc_set_syncrate(ahc, devinfo, syncrate, period, offset, type, paused, done)
 	 * Print messages if we're verbose and at the end of a negotiation
 	 * cycle.
 	 */
-	if (done && bootverbose) {
+	if (done) {
 		if (offset != 0) {
 			printf("%s: target %d synchronous at %sMHz, "
 			       "offset = 0x%x\n", ahc_name(ahc),
@@ -2597,9 +2597,10 @@ ahc_handle_msg_reject(ahc, devinfo)
 		struct tmode_tstate *tstate;
 
 		/* note 8bit xfers */
-		printf("%s:%c:%d: refuses WIDE negotiation.  Using "
-		       "8bit transfers\n", ahc_name(ahc),
-		       devinfo->channel, devinfo->target);
+		if (bootverbose)
+			printf("%s:%c:%d: refuses WIDE negotiation.  Using "
+			       "8bit transfers\n", ahc_name(ahc),
+			       devinfo->channel, devinfo->target);
 		ahc_set_width(ahc, devinfo,
 			      MSG_EXT_WDTR_BUS_8_BIT,
 			      AHC_TRANS_ACTIVE|AHC_TRANS_GOAL,
@@ -2633,14 +2634,16 @@ ahc_handle_msg_reject(ahc, devinfo)
 				 AHC_TRANS_ACTIVE|AHC_TRANS_GOAL,
 				 /*paused*/TRUE,
 				 /*done*/TRUE);
-		printf("%s:%c:%d: refuses synchronous negotiation. "
-		       "Using asynchronous transfers\n",
-		       ahc_name(ahc),
-		       devinfo->channel, devinfo->target);
+		if (bootverbose)
+			printf("%s:%c:%d: refuses synchronous negotiation. "
+			       "Using asynchronous transfers\n",
+			       ahc_name(ahc),
+			       devinfo->channel, devinfo->target);
 	} else if ((scb->hscb->control & MSG_SIMPLE_Q_TAG) != 0) {
-		printf("%s:%c:%d: refuses tagged commands.  Performing "
-		       "non-tagged I/O\n", ahc_name(ahc),
-		       devinfo->channel, devinfo->target);
+		if (bootverbose)
+			printf("%s:%c:%d: refuses tagged commands.  Performing "
+			       "non-tagged I/O\n", ahc_name(ahc),
+			       devinfo->channel, devinfo->target);
 			
 		ahc_set_tags(ahc, devinfo, FALSE);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.13 2000/03/22 04:01:07 smurph Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.14 2000/04/05 04:29:59 smurph Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -428,7 +428,8 @@ void *aux;
 		sfunct = ahc_inb(ahc, SFUNCT) & ~ALT_MODE;
 		ahc_outb(ahc, SFUNCT, sfunct | ALT_MODE);
 		optionmode = ahc_inb(ahc, OPTIONMODE);
-		printf("OptionMode = %x\n", optionmode);
+		if (bootverbose)
+			printf("%s: OptionMode = %x\n", ahc_name(ahc), optionmode);
 		ahc_outb(ahc, OPTIONMODE, OPTIONMODE_DEFAULTS);
 		/* Send CRC info in target mode every 4K */
 		ahc_outb(ahc, TARGCRCCNT, 0);
