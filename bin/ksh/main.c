@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.19 1999/11/14 18:18:39 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.20 2000/12/19 21:48:54 markus Exp $	*/
 
 /*
  * startup, main loop, environments and error handling
@@ -338,7 +338,8 @@ main(argc, argv)
 	{
 		struct stat s_stdin;
 
-		if (fstat(0, &s_stdin) >= 0 && S_ISCHR(s_stdin.st_mode))
+		if (fstat(0, &s_stdin) >= 0 && S_ISCHR(s_stdin.st_mode) &&
+		    Flag(FTALKING))     
 			reset_nonblock(0);
 	}
 
