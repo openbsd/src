@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugio.c,v 1.12 2004/01/29 00:40:10 miod Exp $ */
+/*	$OpenBSD: bugio.c,v 1.13 2004/04/12 13:14:54 miod Exp $ */
 /*  Copyright (c) 1998 Steve Murphree, Jr. */
 
 #include <sys/param.h>
@@ -17,7 +17,7 @@ void bug_vector(void);
 void sysbug_vector(void);
 
 #define MVMEPROM_CALL(x)						\
-	__asm__ __volatile__ (__CONCAT("or r9,r0,",__STRING(x)));	\
+	__asm__ __volatile__ ("or r9,r0," __STRING(x));			\
 	__asm__ __volatile__ ("tb0 0,r0,496")
 
 void

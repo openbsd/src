@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88410.h,v 1.7 2003/10/05 20:27:46 miod Exp $ */
+/*	$OpenBSD: m88410.h,v 1.8 2004/04/12 13:14:56 miod Exp $ */
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * All rights reserved.
@@ -181,4 +181,4 @@ mc88410_present(void)
 
 #endif	/* _LOCORE */
 
-#endif __MACHINE_M88410_H__
+#endif	/* __MACHINE_M88410_H__ */
