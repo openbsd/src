@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsstat.c,v 1.10 2000/05/01 19:48:04 provos Exp $	*/
+/*	$OpenBSD: nfsstat.c,v 1.11 2001/06/25 17:15:46 markus Exp $	*/
 /*	$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 static char sccsid[] = "from: @(#)nfsstat.c	8.1 (Berkeley) 6/6/93";
 static char *rcsid = "$NetBSD: nfsstat.c,v 1.7 1996/03/03 17:21:30 thorpej Exp $";
 #else
-static char *rcsid = "$OpenBSD: nfsstat.c,v 1.10 2000/05/01 19:48:04 provos Exp $";
+static char *rcsid = "$OpenBSD: nfsstat.c,v 1.11 2001/06/25 17:15:46 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -247,18 +247,14 @@ intpr(display)
 		       nfsstats.rpccnt[NFSPROC_READDIR],
 		       nfsstats.rpccnt[NFSPROC_READDIRPLUS],
 		       nfsstats.rpccnt[NFSPROC_ACCESS]);
-		printf("%9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s\n",
-		       "Mknod", "Fsstat", "Fsinfo", "PathConf", "Commit",
-		       "GLease", "Vacate", "Evict");
-		printf("%9d %9d %9d %9d %9d %9d %9d %9d\n",
+		printf("%9.9s %9.9s %9.9s %9.9s %9.9s\n",
+		       "Mknod", "Fsstat", "Fsinfo", "PathConf", "Commit");
+		printf("%9d %9d %9d %9d %9d\n",
 		       nfsstats.rpccnt[NFSPROC_MKNOD],
 		       nfsstats.rpccnt[NFSPROC_FSSTAT],
 		       nfsstats.rpccnt[NFSPROC_FSINFO],
 		       nfsstats.rpccnt[NFSPROC_PATHCONF],
-		       nfsstats.rpccnt[NFSPROC_COMMIT],
-		       nfsstats.rpccnt[NQNFSPROC_GETLEASE],
-		       nfsstats.rpccnt[NQNFSPROC_VACATED],
-		       nfsstats.rpccnt[NQNFSPROC_EVICTED]);
+		       nfsstats.rpccnt[NFSPROC_COMMIT]);
 		printf("Rpc Info:\n");
 		printf("%9.9s %9.9s %9.9s %9.9s %9.9s\n",
 		       "TimedOut", "Invalid", "X Replies", "Retries", "Requests");
@@ -318,18 +314,14 @@ intpr(display)
 		       nfsstats.srvrpccnt[NFSPROC_READDIR],
 		       nfsstats.srvrpccnt[NFSPROC_READDIRPLUS],
 		       nfsstats.srvrpccnt[NFSPROC_ACCESS]);
-		printf("%9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s %9.9s\n",
-		       "Mknod", "Fsstat", "Fsinfo", "PathConf", "Commit",
-		       "GLease", "Vacate", "Evict");
-		printf("%9d %9d %9d %9d %9d %9d %9d %9d\n",
+		printf("%9.9s %9.9s %9.9s %9.9s %9.9s\n",
+		       "Mknod", "Fsstat", "Fsinfo", "PathConf", "Commit");
+		printf("%9d %9d %9d %9d %9d\n",
 		       nfsstats.srvrpccnt[NFSPROC_MKNOD],
 		       nfsstats.srvrpccnt[NFSPROC_FSSTAT],
 		       nfsstats.srvrpccnt[NFSPROC_FSINFO],
 		       nfsstats.srvrpccnt[NFSPROC_PATHCONF],
-		       nfsstats.srvrpccnt[NFSPROC_COMMIT],
-		       nfsstats.srvrpccnt[NQNFSPROC_GETLEASE],
-		       nfsstats.srvrpccnt[NQNFSPROC_VACATED],
-		       nfsstats.srvrpccnt[NQNFSPROC_EVICTED]);
+		       nfsstats.srvrpccnt[NFSPROC_COMMIT]);
 		printf("Server Ret-Failed\n");
 		printf("%17d\n", nfsstats.srvrpc_errs);
 		printf("Server Faults\n");
