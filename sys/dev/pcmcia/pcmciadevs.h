@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.22 1999/08/14 05:48:47 fgsch Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.23 1999/08/15 19:11:18 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.20 1999/08/14 05:47:41 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.21 1999/08/15 19:10:32 fgsch Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -84,6 +84,11 @@
 #define	PCMCIA_CIS_ADAPTEC_APA1460_2	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_ADAPTEC_APA1460_2	0x0002
 #define	PCMCIA_STR_ADAPTEC_APA1460_2	"Adaptec APA-1460/B SCSI Host Adapter"
+
+/* Allied Telesis */
+#define	PCMCIA_CIS_COREGA_LA_PCM	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_COREGA_LA_PCM	0x0002
+#define	PCMCIA_STR_COREGA_LA_PCM	"Allied Telesis LA-PCM"
 
 /* BreezeCOM Products */
 #define	PCMCIA_CIS_BREEZECOM_BREEZENET	{ NULL, NULL, NULL, NULL }
