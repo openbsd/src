@@ -1,5 +1,5 @@
-/*	$OpenBSD: sa.c,v 1.30 2000/08/03 07:24:23 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.107 2000/07/17 18:57:59 provos Exp $	*/
+/*	$OpenBSD: sa.c,v 1.31 2000/08/03 07:28:44 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.108 2000/08/03 07:22:29 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -44,7 +44,6 @@
 #include "cookie.h"
 #include "doi.h"
 #include "exchange.h"
-#include "ipsec.h"
 #include "isakmp.h"
 #include "log.h"
 #include "message.h"
