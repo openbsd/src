@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.10 2000/12/07 19:36:37 deraadt Exp $	*/
+/*	$OpenBSD: io.c,v 1.11 2001/06/05 21:27:16 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.10 2000/12/07 19:36:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.11 2001/06/05 21:27:16 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -127,7 +127,7 @@ cal()
 				if (spev[i].uname != NULL)
 					free(spev[i].uname);
 				if ((spev[i].uname = strdup(p)) == NULL)
-					errx(1, "cannot allocate memory");
+					err(1, NULL);
 				spev[i].ulen = strlen(p);
 				i = NUMEV + 1;
 			}
@@ -154,7 +154,7 @@ cal()
 				while (m) {
 				cur_evt = (struct event *) malloc(sizeof(struct event));
 				if (cur_evt == NULL)
-					errx(1, "cannot allocate memory");
+					err(1, NULL);
 
 				cur_evt->when = m->when;
 				snprintf(cur_evt->print_date,
@@ -165,7 +165,7 @@ cal()
 					cur_evt->ldesc = NULL;
 				} else {
 					if ((cur_evt->ldesc = strdup(p)) == NULL)
-						errx(1, "cannot allocate memory");
+						err(1, NULL);
 					cur_evt->desc = &(cur_evt->ldesc);
 					ev1 = cur_evt;
 				}
@@ -179,7 +179,7 @@ cal()
 		else if (printing) {
 			if ((ev1->ldesc = realloc(ev1->ldesc,
 			    (2 + strlen(ev1->ldesc) + strlen(buf)))) == NULL)
-				errx(1, "cannot allocate memory");
+				err(1, NULL);
 			strcat(ev1->ldesc, "\n");
 			strcat(ev1->ldesc, buf);
 		}

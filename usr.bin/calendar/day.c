@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.10 1999/11/25 03:46:46 pjanzen Exp $	*/
+/*	$OpenBSD: day.c,v 1.11 2001/06/05 21:27:16 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.10 1999/11/25 03:46:46 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.11 2001/06/05 21:27:16 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ void setnnames(void)
 		if (ndays[i].name != NULL)
 			free(ndays[i].name);
 		if ((ndays[i].name = strdup(buf)) == NULL)
-			errx(1, "cannot allocate memory");
+			err(1, NULL);
 		ndays[i].len = strlen(buf);
 
 		l = strftime(buf, sizeof(buf), "%A", &tm);
@@ -118,7 +118,7 @@ void setnnames(void)
 		if (fndays[i].name != NULL)
 			free(fndays[i].name);
 		if ((fndays[i].name = strdup(buf)) == NULL)
-			errx(1, "cannot allocate memory");
+			err(1, NULL);
 		fndays[i].len = strlen(buf);
 	}
 
@@ -131,7 +131,7 @@ void setnnames(void)
 		if (nmonths[i].name != NULL)
 			free(nmonths[i].name);
 		if ((nmonths[i].name = strdup(buf)) == NULL)
-			errx(1, "cannot allocate memory");
+			err(1, NULL);
 		nmonths[i].len = strlen(buf);
 
 		l = strftime(buf, sizeof(buf), "%B", &tm);
@@ -141,7 +141,7 @@ void setnnames(void)
 		if (fnmonths[i].name != NULL)
 			free(fnmonths[i].name);
 		if ((fnmonths[i].name = strdup(buf)) == NULL)
-			errx(1, "cannot allocate memory");
+			err(1, NULL);
 		fnmonths[i].len = strlen(buf);
 	}
 	/* Hardwired special events */
@@ -153,7 +153,7 @@ void setnnames(void)
 	spev[1].getev = paskha;
 	for (i = 0; i < NUMEV; i++) {
 		if (spev[i].name == NULL)
-			errx(1, "cannot allocate memory");
+			err(1, NULL);
 		spev[i].uname = NULL;
 	}
 }
@@ -427,7 +427,7 @@ isnow(endp)
 					return(NULL);
 			}
 			if ((tmp = malloc(sizeof(struct match))) == NULL)
-				errx(1, "cannot allocate memory");
+				err(1, NULL);
 			tmp->when = f_time + v2 * SECSPERDAY;
 			(void)mktime(&tmtmp);
 			if (strftime(tmp->print_date,
@@ -520,7 +520,7 @@ isnow(endp)
 				if (tdiff <= offset + f_dayAfter) {
 					if (tdiff >=  0) {
 					if ((tmp = malloc(sizeof(struct match))) == NULL)
-						errx(1, "cannot allocate memory");
+						err(1, NULL);
 					tmp->when = ttmp;
 					if (strftime(tmp->print_date,
 					    sizeof(tmp->print_date),
