@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.65 2002/06/01 07:44:21 deraadt Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.66 2002/06/07 04:56:13 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -325,22 +325,6 @@ ipsec_finalize_exchange (struct message *msg)
 	  for (sa = TAILQ_FIRST (&exchange->sa_list); sa;
 	       sa = TAILQ_NEXT (sa, next))
 	    {
-	      for (proto = TAILQ_FIRST (&sa->protos), last_proto = 0; proto;
-		   proto = TAILQ_NEXT (proto, link))
-		{
-		  if (sysdep_ipsec_set_spi (sa, proto, 0, isakmp_sa)
-		      || (last_proto
-			  && sysdep_ipsec_group_spis (sa, last_proto, proto,
-						      0))
-		      || sysdep_ipsec_set_spi (sa, proto, 1, isakmp_sa)
-		      || (last_proto
-			  && sysdep_ipsec_group_spis (sa, last_proto, proto,
-						      1)))
-		    /* XXX Tear down this exchange.  */
-		    return;
-		  last_proto = proto;
-		}
-
 	      isa = sa->data;
 
 	      if (exchange->initiator)
@@ -362,6 +346,22 @@ ipsec_finalize_exchange (struct message *msg)
 				 "ipsec_set_network failed");
 		      return;
 		    }
+		}
+
+	      for (proto = TAILQ_FIRST (&sa->protos), last_proto = 0; proto;
+		   proto = TAILQ_NEXT (proto, link))
+		{
+		  if (sysdep_ipsec_set_spi (sa, proto, 0, isakmp_sa)
+		      || (last_proto
+			  && sysdep_ipsec_group_spis (sa, last_proto, proto,
+						      0))
+		      || sysdep_ipsec_set_spi (sa, proto, 1, isakmp_sa)
+		      || (last_proto
+			  && sysdep_ipsec_group_spis (sa, last_proto, proto,
+						      1)))
+		    /* XXX Tear down this exchange.  */
+		    return;
+		  last_proto = proto;
 		}
 
 #ifdef USE_DEBUG
