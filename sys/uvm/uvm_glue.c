@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_glue.c,v 1.25 2001/11/07 02:55:50 art Exp $	*/
-/*	$NetBSD: uvm_glue.c,v 1.43 2000/11/25 06:27:59 chs Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.26 2001/11/10 19:20:39 art Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.44 2001/02/06 19:54:44 eeh Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -94,9 +94,6 @@ static void uvm_swapout __P((struct proc *));
 /*
  * XXXCDC: do these really belong here?
  */
-
-unsigned maxdmap = MAXDSIZ;	/* kern_resource.c: RLIMIT_DATA max */
-unsigned maxsmap = MAXSSIZ;	/* kern_resource.c: RLIMIT_STACK max */
 
 int readbuffers = 0;		/* allow KGDB to read kern buffer pool */
 				/* XXX: see uvm_kernacc */
