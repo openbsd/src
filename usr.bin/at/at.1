@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.12 1999/09/14 05:28:23 deraadt Exp $
+.\" $OpenBSD: at.1,v 1.13 2000/03/04 21:12:00 aaron Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
 .Dd April 12, 1995
 .Dt AT 1
@@ -34,17 +34,19 @@
 .Op Fl mv
 .Op Ar time
 .Sh DESCRIPTION
-.Nm
+.Nm at
 and
 .Nm batch
 read commands from standard input or a specified file which
 are to be executed at a later time, using
 .Xr sh 1 .
+.Pp
+The related programs are as follows:
 .Bl -tag -width indent
 .It Nm at
 Executes commands at a specified time.
 .It Nm atq
-Lists the user's pending jobs, unless the user is the superuser.
+Lists the user's pending jobs, unless the user is the super-user.
 In that case, all users' jobs are listed.
 .It Nm atrm
 Deletes jobs.
@@ -54,126 +56,7 @@ the load average drops below 1.5, or the value specified in the invocation of
 .Nm atrun .
 .El
 .Pp
-.Nm
-allows some moderately complex
-.Ar time
-specifications.  It accepts times of the form
-.Ar HHMM
-or
-.Ar HH:MM
-to run a job at a specific time of day.
-(If that time is already past, the next day is assumed.)
-You may also specify
-.Nm midnight ,
-.Nm noon ,
-or
-.Nm teatime
-(4pm)
-and you can have a time-of-day suffixed with
-.Nm AM
-or
-.Nm PM
-for running in the morning or the evening.
-You can also say what day the job will be run,
-by giving a date in the form
-.Ar \%month-name day
-with an optional
-.Ar year ,
-or giving a date of the form
-.Ar MMDDYY ,
-.Ar MM/DD/YY
-or
-.Ar DD.MM.YY .
-The year may be given as two digits or four digits.
-If the year is given as two digits, it is taken to occur as soon as
-possible in the future, which may be in the next century --
-unless it's last year, in which case it's considered to be
-a typo.
-The specification of a date must follow the specification of
-the time of day.
-You can also give times like
-.Op Nm now
-.Nm + Ar count \%time-units ,
-where the time-units can be
-.Nm minutes ,
-.Nm hours ,
-.Nm days ,
-or
-.Nm weeks
-and you can tell
-.Nm
-to run the job today by suffixing the time with
-.Nm today
-and to run the job tomorrow by suffixing the time with
-.Nm tomorrow .
-.Pp
-For example, to run a job at 4pm three days from now, you would do
-.Nm at 4pm + 3 days .
-To run a job at 10:00am on July 31, you would do
-.Nm at 10am Jul 31 .
-To run a job at 1am tomorrow, you would do
-.Nm at 1am tomorrow .
-.Pp
-For both
-.Nm
-and
-.Nm batch ,
-commands are read from standard input or the file specified
-with the
-.Fl f
-option and executed.
-The working directory, the environment (except for the variables
-.Ev TERM ,
-.Ev TERMCAP ,
-.Ev DISPLAY ,
-and
-.Ev _ )
-and the
-.Ar umask
-are retained from the time of invocation.
-An
-.Nm
-or
-.Nm batch
-command invoked from a
-.Xr su 1
-shell will retain the current user ID.
-The user will be mailed standard error and standard output from his
-commands, if any. Mail will be sent using the command
-.Xr sendmail 8 .
-If
-.Nm
-is executed from a
-.Xr su 1
-shell, the owner of the login shell will receive the mail.
-.Pp
-The superuser may use these commands in any case.
-For other users, permission to use at is determined by the files
-.Pa /var/at/at.allow
-and
-.Pa /var/at/at.deny .
-.Pp
-If the file
-.Pa /var/at/at.allow
-exists, only usernames mentioned in it are allowed to use
-.Nm at .
-.Pp
-If
-.Pa /var/at/at.allow
-does not exist,
-.Pa /var/at/at.deny
-is checked. Every username not mentioned in it is then allowed
-to use
-.Nm at .
-.Pp
-If neither exists, only the superuser is allowed use of
-.Nm at .
-.Pp
-An empty
-.Pa /var/at/at.deny
-means that every user is allowed use these commands.
-This is the default configuration.
-.Sh OPTIONS
+The options are as follows:
 .Bl -tag -width indent
 .It Fl V
 Prints the version number to standard error.
@@ -181,19 +64,19 @@ Prints the version number to standard error.
 Uses the specified queue.
 A queue designation consists of a single letter.  Valid queue designations
 range from
-.Nm a
+.Sy a
 to
-.Nm z
+.Sy z
 and
-.Nm A
+.Sy A
 to
-.Nm Z .
+.Sy Z .
 The
-.Nm c
+.Sy c
 queue is the default for
-.Nm
+.Nm at
 and the
-.Nm E
+.Sy E
 queue for
 .Nm batch .
 Queues with higher letters run with increased niceness.
@@ -210,13 +93,13 @@ Reads the job from
 .Ar file
 rather than standard input.
 .It Fl l
-Is an alias for
+An alias for
 .Nm atq .
 .It Fl d
-Is an alias for
+An alias for
 .Nm atrm .
 .It Fl b
-Is an alias for
+An alias for
 .Nm batch .
 .It Fl v
 For
@@ -225,6 +108,128 @@ shows completed but not yet deleted jobs in the queue.  Otherwise
 shows the time the job will be executed.
 .It Fl c
 Prints the jobs listed on the command line to standard output.
+.El
+.Pp
+.Nm at
+allows some moderately complex
+.Ar time
+specifications.  It accepts times of the form
+.Ar HHMM
+or
+.Ar HH:MM
+to run a job at a specific time of day.
+(If that time is already past, the next day is assumed.)
+You may also specify
+.Sy midnight ,
+.Sy noon ,
+or
+.Sy teatime
+(4pm)
+and you can have a time-of-day suffixed with
+.Dq AM
+or
+.Dq PM
+for running in the morning or the evening.
+You can also say what day the job will be run,
+by giving a date in the form
+.Ar \%month-name day
+with an optional
+.Ar year ,
+or giving a date of the form
+.Ar MMDDYY ,
+.Ar MM/DD/YY
+or
+.Ar DD.MM.YY .
+.Pp
+The year may be given as two or four digits.
+If the year is given as two digits, it is taken to occur as soon as
+possible in the future, which may be in the next century --
+unless it's last year, in which case it's considered to be
+a typo.
+.Pp
+The specification of a date must follow the specification of
+the time of day.
+You can also give times like
+.Op Sq now
+.Sy + Ar count \%time-units ,
+where the time-units can be
+.Sy minutes ,
+.Sy hours ,
+.Sy days ,
+or
+.Sy weeks
+and you can tell
+.Nm at
+to run the job today by suffixing the time with
+.Sy today
+and to run the job tomorrow by suffixing the time with
+.Sy tomorrow .
+.Pp
+For example, to run a job at 4pm three days from now, you would do
+.Ic at 4pm + 3 days .
+To run a job at 10:00am on July 31, you would do
+.Ic at 10am Jul 31 .
+To run a job at 1am tomorrow, you would do
+.Ic at 1am tomorrow .
+.Pp
+For both
+.Nm at
+and
+.Nm batch ,
+commands are read from standard input or the file specified
+with the
+.Fl f
+option and executed.
+The working directory, the environment (except for the variables
+.Ev TERM ,
+.Ev TERMCAP ,
+.Ev DISPLAY ,
+and
+.Ev _ ) ,
+and the
+.Ar umask
+are retained from the time of invocation.
+An
+.Nm at
+or
+.Nm batch
+command invoked from a
+.Xr su 1
+shell will retain the current user ID.
+The user will be mailed standard error and standard output from his
+commands, if any. Mail will be sent using the command
+.Xr sendmail 8 .
+If
+.Nm at
+is executed from a
+.Xr su 1
+shell, the owner of the login shell will receive the mail.
+.Pp
+The super-user may use these commands in any case.
+For other users, permission to use at is determined by the files
+.Pa /var/at/at.allow
+and
+.Pa /var/at/at.deny .
+.Pp
+If the file
+.Pa /var/at/at.allow
+exists, only usernames mentioned in it are allowed to use
+.Nm at .
+If
+.Pa /var/at/at.allow
+does not exist,
+.Pa /var/at/at.deny
+is checked. Every username not mentioned in it is then allowed
+to use
+.Nm at .
+If neither exists, only the super-user is allowed use of
+.Nm at .
+.Pp
+An empty
+.Pa /var/at/at.deny
+means that every user is allowed use these commands.
+This is the default configuration.
+.Pp
 .Sh FILES
 .Bl -tag -width /var/at/.lockfile -compact
 .It Pa /var/at/jobs
@@ -246,19 +251,18 @@ job-creation lock file
 .Xr atrun 8 ,
 .Xr cron 8 ,
 .Xr sendmail 8
-.El
 .Sh BUGS
 If the file
 .Pa /var/run/utmp
 is not available or corrupted, or if the user is not logged on at the
 time
-.Nm
+.Nm at
 is invoked, the mail is sent to the user ID found
 in the environment variable
 .Ev LOGNAME .
 If that is undefined or empty, the current user ID is assumed.
 .Pp
-.Nm
+.Nm at
 and
 .Nm batch
 as presently implemented are not suitable when users are competing for
@@ -273,6 +277,6 @@ always prints the year as two digits.  Since
 only permits submission of jobs in the future, it is somewhat
 clear which century the job will run in.
 .Sh AUTHORS
-.Nm
+.Nm at
 was mostly written by Thomas Koenig <ig25@rz.uni-karlsruhe.de>.
 The time parsing routines are by David Parsons <orc@pell.chi.il.us>.

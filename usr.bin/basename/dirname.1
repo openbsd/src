@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dirname.1,v 1.6 1999/11/20 07:45:56 dugsong Exp $
+.\"	$OpenBSD: dirname.1,v 1.7 2000/03/04 21:12:01 aaron Exp $
 .\"
 .\" Copyright (c) 1990, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,6 +53,11 @@ with the last slash
 character to the end of
 .Ar string ,
 and writes the result to the standard output.
+.Pp
+The
+.Nm
+utility
+exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
 The following line sets the shell variable
 .Ev FOO
@@ -60,11 +65,6 @@ to
 .Pa /usr/bin :
 .Pp
 .Dl FOO=`dirname /usr/bin/tail`
-.Sh DIAGNOSTICS
-The
-.Nm
-utility
-exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr basename 1 ,
 .Xr csh 1 ,

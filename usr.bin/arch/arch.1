@@ -1,3 +1,5 @@
+.\" $OpenBSD: arch.1,v 1.5 2000/03/04 21:12:00 aaron Exp $
+.\"
 .\" Copyright (c) 1994 SigmaSoft, Th. Lockert
 .\" All rights reserved.
 .\"
@@ -26,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: arch.1,v 1.4 1999/08/19 22:17:38 niklas Exp $
+.\"	$OpenBSD: arch.1,v 1.5 2000/03/04 21:12:00 aaron Exp $
 .\"
 .Dd June 22, 1996
 .Dt ARCH 1
@@ -42,11 +44,11 @@
 .Op Fl a
 .Sh DESCRIPTION
 The
-.Nm
+.Nm arch
 and
 .Nm machine
-command displays the machine's architecture in slightly different ways.
-.Nm
+commands display the machine's architecture in slightly different ways.
+.Nm arch
 by default displays the application architecture, defined by both the
 operating system and the instruction set architecture, while
 .Nm machine
@@ -57,8 +59,9 @@ which describes the host.  This is useful for dynamic discovery
 of the target architecture in build or configuration scripts
 needing to work in cross-compilation environments.
 .Pp
-The following options are available to
-.Nm arch :
+The options for
+.Nm arch
+are as follows:
 .Bl -tag -width indent
 .It Fl k
 Display the kernel architecture instead of application
@@ -68,17 +71,12 @@ Display the chosen architecture in a short form, i.e. without the
 operating system prefixed.
 .El
 .Pp
-The
+The options for
 .Nm machine
-command accepts this option:
+are as follows:
 .Bl -tag -width indent
 .It Fl a
 Display the application architecture instead of the kernel architecture.
 .El
 .Sh SEE ALSO
 .Xr uname 1
-.Sh HISTORY
-The
-.Nm
-command is
-.Ud .

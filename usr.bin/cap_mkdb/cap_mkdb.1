@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cap_mkdb.1,v 1.10 1999/07/03 02:11:08 aaron Exp $
+.\"	$OpenBSD: cap_mkdb.1,v 1.11 2000/03/04 21:12:01 aaron Exp $
 .\"	$NetBSD: cap_mkdb.1,v 1.4 1995/03/26 03:59:36 glass Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -80,7 +80,7 @@ format.
 .It Fl v
 Print out the number of capability records in the database.
 .El
-.Sh FORMAT
+.Pp
 Each record is stored in the database using two different types of keys.
 .Pp
 The first type is a key which consists of the first capability of
@@ -104,10 +104,22 @@ in a key/data pair of the second type.
 The data field of this key/data pair is used to look up a key/data
 pair of the first type which has the real data associated with the
 name.
-.Sh RETURN VALUE
+.Pp
 The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
+.Sh FILES
+.Bl -tag -width /usr/share/misc/terminfo.db -compact
+.It Pa /usr/share/misc/termcap
+uncompiled terminal capabilities file
+.It Pa /usr/share/misc/termcap.db
+terminal capabilities database
+.It Pa /usr/share/misc/terminfo.db
+terminal information database
+.It Pa /etc/termcap
+symbolic link to
+.Pa /usr/share/misc/termcap
+.El
 .Sh SEE ALSO
 .Xr dbopen 3 ,
 .Xr getcap 3 ,

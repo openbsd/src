@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ar.1,v 1.6 1999/08/27 07:14:00 fgsch Exp $
+.\"	$OpenBSD: ar.1,v 1.7 2000/03/04 21:11:59 aaron Exp $
 .\"	$NetBSD: ar.1,v 1.7 1995/08/18 15:05:11 pk Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -90,7 +90,7 @@ utility creates and maintains groups of files combined into an archive.
 Once an archive has been created, new files can be added and existing
 files can be extracted, deleted, or replaced.
 .Pp
-Files are named in the archive by a single component, i.e., if a file
+Files are named in the archive by a single component; i.e., if a file
 referenced by a path containing a slash
 .Pq Ql /
 is archived it will be
@@ -113,6 +113,7 @@ is for the creation and maintenance of libraries suitable for use with
 the loader (see
 .Xr ld 1 )
 although it is not restricted to this purpose.
+.Pp
 The options are as follows:
 .Bl -tag -width indent
 .It Fl a
@@ -155,7 +156,7 @@ option.
 Move the specified archive files within the archive.
 If one of the options
 .Fl a ,
-.Fl b
+.Fl b ,
 or
 .Fl i
 are specified, the files are moved before or after the
@@ -187,7 +188,7 @@ Files that replace existing files do not change the order of the files
 within the archive.
 New files are appended to the archive unless one of the options
 .Fl a ,
-.Fl b
+.Fl b ,
 or
 .Fl i
 is specified.
@@ -225,15 +226,15 @@ Provide verbose output.
 When used with the
 .Fl d ,
 .Fl m ,
-.Fl q
+.Fl q ,
 or
 .Fl x
 options,
 .Nm
 gives a file-by-file description of the archive modification.
-This description consists of three, white-space separated fields: the
+This description consists of three, whitespace-separated fields: the
 option letter, a dash
-.Pq Ql -
+.Pq Ql - ,
 and the file name.
 When used with the
 .Fl r
@@ -267,7 +268,7 @@ displays an
 .Dq ls -l
 style listing of information about the members of
 the archive.
-This listing consists of eight, white-space separated fields:
+This listing consists of eight, whitespace-separated fields:
 the file permissions (see
 .Xr strmode 3 ),
 the decimal user and group IDs, separated by a single slash
@@ -309,6 +310,11 @@ default temporary file directory
 .It Pa ar.XXXXXXXXXX
 temporary file names
 .El
+.Sh SEE ALSO
+.Xr ld 1 ,
+.Xr ranlib 1 ,
+.Xr strmode 3 ,
+.Xr ar 5
 .Sh COMPATIBILITY
 By default,
 .Nm
@@ -335,8 +341,3 @@ The
 utility is expected to offer a superset of the
 .St -p1003.2
 functionality.
-.Sh SEE ALSO
-.Xr ld 1 ,
-.Xr ranlib 1 ,
-.Xr strmode 3 ,
-.Xr ar 5
