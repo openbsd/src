@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.24 1997/10/07 18:54:47 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.25 1998/01/07 00:33:44 niklas Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -150,7 +150,7 @@ file	arch/amiga/dev/grf_et.c		grfet needs-flag
 file	arch/amiga/dev/ite_et.c		grfet & ite
 
 # device defined in sys/conf/files
-# A2065, Ameristar, Ariadne ethernet cards
+# A2065, Ameristar ethernet cards
 attach	le at zbus with le_zbus
 file	arch/amiga/dev/if_le.c		le_zbus needs-flag
 
@@ -173,6 +173,11 @@ file	arch/amiga/dev/if_es.c		es needs-flag
 device	qn:	ifnet, ether
 attach	qn at zbus
 file	arch/amiga/dev/if_qn.c		qn needs-flag
+
+# Ariadne ethernet card (will merge into le soon)
+device	ae:	ifnet, ether
+attach	ae at zbus
+file	arch/amiga/dev/if_ae.c		ae needs-count
 
 # A2232 msc serial ports
 device	msc:	tty
