@@ -1,5 +1,3 @@
-/*	$OpenBSD: infblock.c,v 1.4 1998/05/30 02:20:51 mickey Exp $	*/
-
 /* infblock.c -- interpret and process block types to last block
  * Copyright (C) 1995-1996 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
@@ -14,7 +12,7 @@
 struct inflate_codes_state {int dummy;}; /* for buggy compilers */
 
 /* Table for deflate from PKZIP's appnote.txt. */
-local const uInt border[] = { /* Order of the bit length code lengths */
+local uInt border[] = { /* Order of the bit length code lengths */
         16, 17, 18, 0, 8, 7, 9, 6, 10, 5, 11, 4, 12, 3, 13, 2, 14, 1, 15};
 
 /*
@@ -112,7 +110,7 @@ uInt w;
 }
 
 
-#ifdef DEBUG_ZLIB
+#ifdef DEBUG
   extern uInt inflate_hufts;
 #endif
 int inflate_blocks(s, z, r)
@@ -311,7 +309,7 @@ int r;
         bl = 9;         /* must be <= 9 for lookahead assumptions */
         bd = 6;         /* must be <= 9 for lookahead assumptions */
         t = s->sub.trees.table;
-#ifdef DEBUG_ZLIB
+#ifdef DEBUG
       inflate_hufts = 0;
 #endif
         t = inflate_trees_dynamic(257 + (t & 0x1f), 1 + ((t >> 5) & 0x1f),

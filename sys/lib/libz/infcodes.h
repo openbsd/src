@@ -1,5 +1,3 @@
-/*	$OpenBSD: infcodes.h,v 1.2 1997/11/07 15:57:48 niklas Exp $	*/
-
 /* infcodes.h -- header to use infcodes.c
  * Copyright (C) 1995-1996 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 

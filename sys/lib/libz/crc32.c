@@ -1,15 +1,13 @@
-/* $OpenBSD: crc32.c,v 1.4 1998/05/30 02:20:50 mickey Exp $ */
 /* crc32.c -- compute the CRC-32 of a data stream
  * Copyright (C) 1995-1996 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h 
  */
 
+/* $Id: crc32.c,v 1.5 1998/09/08 03:32:04 millert Exp $ */
 
 #include "zlib.h"
 
-#ifndef local
 #define local static
-#endif
 
 #ifdef DYNAMIC_CRC_TABLE
 
@@ -47,7 +45,7 @@ local void make_crc_table()
   int n, k;
   uLong poly;            /* polynomial exclusive-or pattern */
   /* terms of polynomial defining this crc (except x^32): */
-  static const Byte p[] = {0,1,2,4,5,7,8,10,11,12,16,22,23,26};
+  static Byte p[] = {0,1,2,4,5,7,8,10,11,12,16,22,23,26};
 
   /* make exclusive-or pattern from polynomial (0xedb88320L) */
   poly = 0L;
