@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci_pci.c,v 1.16 2002/06/07 22:26:33 miod Exp $	*/
+/*	$OpenBSD: ohci_pci.c,v 1.17 2002/06/08 14:53:00 drahn Exp $	*/
 /*	$NetBSD: ohci_pci.c,v 1.9 1999/05/20 09:52:35 augustss Exp $	*/
 
 /*
@@ -107,6 +107,7 @@ ohci_pci_attach(parent, self, aux)
 	pci_intr_handle_t ih;
 	pcireg_t csr;
 	usbd_status r;
+	int s;
 
 	/* Map I/O registers */
 	if (pci_mapreg_map(pa, PCI_CBMEM, PCI_MAPREG_TYPE_MEM, 0,
@@ -132,9 +133,11 @@ ohci_pci_attach(parent, self, aux)
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh,
 	    OHCI_INTERRUPT_DISABLE, OHCI_ALL_INTRS);
 
+	s = splusb();
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
+		splx(s);
 		return;
 	}
 
@@ -146,6 +149,7 @@ ohci_pci_attach(parent, self, aux)
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
+		splx(s);
 		return;
 	}
 	printf(": %s", intrstr);
@@ -154,8 +158,10 @@ ohci_pci_attach(parent, self, aux)
 	if (r != USBD_NORMAL_COMPLETION) {
 		printf("%s: init failed, error=%d\n",
 		    sc->sc.sc_bus.bdev.dv_xname, r);
+		splx(s);
 		return;
 	}
+	splx(s);
 
 	/* Attach usb device. */
 	sc->sc.sc_child = config_found((void *)sc, &sc->sc.sc_bus,
