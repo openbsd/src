@@ -1,5 +1,4 @@
-	$OpenBSD: pcidevs,v 1.303 2000/08/11 16:57:28 deraadt Exp $
-
+	$OpenBSD: pcidevs,v 1.304 2000/08/25 09:37:52 niklas Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
