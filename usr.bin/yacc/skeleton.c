@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.6 1996/07/28 02:03:26 deraadt Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.7 1996/12/27 08:05:18 tholo Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ char *banner[] =
 {
     "#ifndef lint",
     "/*static char yysccsid[] = \"from: @(#)yaccpar	1.9 (Berkeley) 02/21/93\";*/",
-    "static char yyrcsid[] = \"$OpenBSD: skeleton.c,v 1.6 1996/07/28 02:03:26 deraadt Exp $\";",
+    "static const char yyrcsid[] = \"$OpenBSD: skeleton.c,v 1.7 1996/12/27 08:05:18 tholo Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -233,12 +233,12 @@ char *body[] =
     "        goto yyreduce;",
     "    }",
     "    if (yyerrflag) goto yyinrecovery;",
-    "#ifdef lint",
+    "#if defined(lint) || defined(__GNUC__)",
     "    goto yynewerror;",
     "#endif",
     "yynewerror:",
     "    yyerror(\"syntax error\");",
-    "#ifdef lint",
+    "#if defined(lint) || defined(__GNUC__)",
     "    goto yyerrlab;",
     "#endif",
     "yyerrlab:",
