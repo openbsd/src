@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.110 2003/08/07 19:54:14 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.111 2003/08/20 03:15:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -370,7 +370,7 @@ hppa_init(start)
 	if ((error = pdc_call((iodcio_t)pdc, 0, PDC_BLOCK_TLB,
 	    PDC_BTLB_DEFAULT, &pdc_btlb)) < 0) {
 #ifdef DEBUG
-		printf("WARNING: PDC_BTLB error %d", error);
+		printf("WARNING: PDC_BTLB error %d\n", error);
 #endif
 	} else {
 #ifdef BTLBDEBUG
