@@ -604,7 +604,7 @@ getcap()
 	if (DO == 0)
 		DO = "\n";
 
-	BS = tgetstr("bc", &ap);
+	BS = tgetstr("le", &ap);
 	if (BS == 0 && tgetflag("bs"))
 		BS = "\b";
 	if (BS)
@@ -654,7 +654,7 @@ getcap()
 	}
 	NDlength = strlen(ND);
 	if (BS == 0) {
-		fprintf(stderr, "Terminal must have `bs' or `bc' capability\n");
+		fprintf(stderr, "Terminal must have `bs' or `le' capability\n");
 		exit(5);
 	}
 	BSlength = strlen(BS);
