@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.172 1999/08/12 11:30:49 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.174 1999/08/19 01:47:14 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -312,7 +312,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5237,
 	    0,
 	    "Acer Labs",
-	    "M5237 USB Host",
+	    "M5237 USB",
 	},
 	{
 	    PCI_VENDOR_ALI, PCI_PRODUCT_ALI_M5243,
@@ -559,6 +559,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ASIX",
 	    "AX88140A 10/100",
+	},
+	{
+	    PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88141,
+	    0,
+	    "ASIX",
+	    "AX88141 10/100",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH32,
@@ -1716,7 +1722,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_USB,
 	    0,
 	    "Intel",
-	    "82371AB USB Host (PIIX4)",
+	    "82371AB USB (PIIX4)",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_82371AB_PMC,
