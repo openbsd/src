@@ -387,7 +387,7 @@ int main(int argc, char **argv)
     prog = argv[0];
     opterr = 0;
 
-    while ((c = getopt(argc, argv, "DRvnNXlprf:P:m:")) != EOF)
+    while ((c = getopt(argc, argv, "DRUvnNXlprf:P:m:")) != EOF)
 	switch (c)
 	{
 	case 'D':
@@ -397,6 +397,7 @@ int main(int argc, char **argv)
 	    verbose = 1;
 	    break;
 	case 'R':
+	case 'U':
 	    /* nothing */
 	    exit(EXIT_OK);
 	    break;
