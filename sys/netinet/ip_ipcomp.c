@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_ipcomp.c,v 1.2 2002/06/09 16:26:10 itojun Exp $ */
+/* $OpenBSD: ip_ipcomp.c,v 1.3 2002/06/18 19:28:05 angelos Exp $ */
 
 /*
  * Copyright (c) 2001 Jean-Jacques Bernard-Gundol (jj@wabbitt.org)
@@ -644,7 +644,8 @@ ipcomp_output_cb(cp)
 		DPRINTF(("ipcomp_output_cb(): TDB expired while in crypto\n"));
 		goto baddone;
 	}
-	/* Check for crypto errors */
+
+	/* Check for crypto errors. */
 	if (crp->crp_etype) {
 		/* Reset session ID */
 		if (tdb->tdb_cryptoid != 0)
@@ -663,23 +664,22 @@ ipcomp_output_cb(cp)
 	/* Shouldn't happen... */
 	if (m == NULL) {
 		ipcompstat.ipcomps_crypto++;
-		DPRINTF(
-		    ("ipcomp_output_cb(): bogus returned buffer from crypto\n"
-		    ));
+		DPRINTF(("ipcomp_output_cb(): bogus returned buffer from "
+		    "crypto\n"));
 		error = EINVAL;
 		goto baddone;
 	}
-	/* Check sizes */
+
+	/* Check sizes. */
 	if (rlen < crp->crp_olen) {
-		/* compression was useless, we have lost time */
-		FREE(tc, M_XDATA);
+		/* Compression was useless, we have lost time. */
 		crypto_freereq(crp);
 		error = ipsp_process_done(m, tdb);
 		splx(s);
 		return error;
 	}
 
-	/* Adjust the length in the IP header */
+	/* Adjust the length in the IP header. */
 
 	switch (tdb->tdb_dst.sa.sa_family) {
 #ifdef INET
@@ -697,8 +697,8 @@ ipcomp_output_cb(cp)
 #endif /* INET6 */
 
 	default:
-		DPRINTF(
-		    ("ipcomp_output(): unknown/unsupported protocol family %d, IPCA %s/%08x\n",
+		DPRINTF(("ipcomp_output(): unknown/unsupported protocol "
+		    "family %d, IPCA %s/%08x\n",
 		    tdb->tdb_dst.sa.sa_family, ipsp_address(tdb->tdb_dst),
 		    ntohl(tdb->tdb_spi)));
 		m_freem(m);
@@ -707,7 +707,7 @@ ipcomp_output_cb(cp)
 		break;
 	}
 
-	/* Release the crypto descriptor */
+	/* Release the crypto descriptor. */
 	crypto_freereq(crp);
 
 	error = ipsp_process_done(m, tdb);
