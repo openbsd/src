@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.4 2002/06/05 15:59:52 provos Exp $	*/
+/*	$OpenBSD: filter.c,v 1.5 2002/06/05 16:09:20 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -463,6 +463,35 @@ filter_negstringmatch(struct intercept_translate *tl, struct logic *logic)
 		return (1);
 
 	return (strcasecmp(line, logic->filterdata) != 0);
+}
+
+int
+filter_inpath(struct intercept_translate *tl, struct logic *logic)
+{
+	char *line, c;
+	int len;
+
+	if ((line = intercept_translate_print(tl)) == NULL)
+		return (0);
+
+	len = strlen(line);
+	if (len == 0 || len > strlen(logic->filterdata))
+		return (0);
+
+	/* Root is always in path */
+	if (len == 1)
+		return (line[0] == '/');
+
+	/* Complete filename needs to fit */
+	if (strncmp(line, logic->filterdata, len))
+		return (0);
+
+	/* Termination has to be \0 or / */
+	c = ((char *)logic->filterdata)[len];
+	if (c != '/' && c != '\0')
+		return (0);
+
+	return (1);
 }
 
 int

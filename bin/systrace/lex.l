@@ -77,6 +77,7 @@ eq		{ return EQ; }
 neq		{ return NEQ; }
 sub		{ return SUB; }
 nsub		{ return NSUB; }
+inpath		{ return INPATH; }
 true		{ return TRUE; }
 "->"		{ return THEN; }
 \(		{ return LBRACE; }

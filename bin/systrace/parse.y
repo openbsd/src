@@ -50,6 +50,7 @@ int filter_stringmatch(struct intercept_translate *, struct logic *);
 int filter_negstringmatch(struct intercept_translate *, struct logic *);
 int filter_substrmatch(struct intercept_translate *, struct logic *);
 int filter_negsubstrmatch(struct intercept_translate *, struct logic *);
+int filter_inpath(struct intercept_translate *, struct logic *);
 int filter_true(struct intercept_translate *, struct logic *);
 
 struct logic *parse_newsymbol(char *, int, char *);
@@ -63,7 +64,7 @@ struct filter *myfilter;
 %}
 
 %token	AND OR NOT LBRACE RBRACE LSQBRACE RSQBRACE THEN MATCH PERMIT DENY
-%token	EQ NEQ TRUE SUB NSUB
+%token	EQ NEQ TRUE SUB NSUB INPATH
 %token	<string> STRING
 %token	<string> CMDSTRING
 %token	<number> NUMBER
@@ -224,6 +225,16 @@ symbol		: STRING typeoff MATCH CMDSTRING
 		break;
 
 	node->filter_match = filter_negsubstrmatch;
+	$$ = node;
+}
+		| STRING typeoff INPATH CMDSTRING
+{
+	struct logic *node;
+
+	if ((node = parse_newsymbol($1, $2, $4)) == NULL)
+		break;
+
+	node->filter_match = filter_inpath;
 	$$ = node;
 }
 		| TRUE
