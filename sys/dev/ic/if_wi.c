@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.65 2002/06/12 04:43:41 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.66 2002/06/14 03:58:45 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.65 2002/06/12 04:43:41 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.66 2002/06/14 03:58:45 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1593,6 +1593,7 @@ wi_ioctl(ifp, command, data)
 		case WI_RID_ROAMING_MODE:
 		case WI_RID_CREATE_IBSS:
 		case WI_RID_MICROWAVE_OVEN:
+		case WI_RID_OWN_SSID:
 			/*
 			 * Check for features that may not be supported
 			 * (must be just before default case).
@@ -1604,7 +1605,9 @@ wi_ioctl(ifp, command, data)
 			    (wreq.wi_type == WI_RID_CREATE_IBSS &&
 			    !(sc->wi_flags & WI_FLAGS_HAS_CREATE_IBSS)) ||
 			    (wreq.wi_type == WI_RID_MICROWAVE_OVEN &&
-			    !(sc->wi_flags & WI_FLAGS_HAS_MOR)))
+			    !(sc->wi_flags & WI_FLAGS_HAS_MOR)) ||
+			    (wreq.wi_type == WI_RID_OWN_SSID &&
+			    wreq.wi_len != 0))
 				break;
 			/* FALLTHROUGH */
 		default:
