@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.30 2003/02/03 08:42:15 cedric Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.31 2003/02/03 14:51:36 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -560,8 +560,6 @@ pfctl_begin_table(void)
 {
 	static int hookreg;
 
-	if ((loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) == 0)
-		return;
 	if (pfr_ina_begin(&ticket, NULL, 0) != 0) {
 		radix_perror();
 		exit(1);
@@ -606,21 +604,19 @@ pfctl_define_table(char *name, int flags, int addrs, int noaction)
 {
 	struct pfr_table tbl;
 
-	if (noaction || (loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) == 0) {
-		size = 0;
-		return;
-	}
-	bzero(&tbl, sizeof(tbl));
-	if (strlcpy(tbl.pfrt_name, name, sizeof(tbl.pfrt_name)) >=
-	    sizeof(tbl.pfrt_name))
-		errx(1, "pfctl_define_table: strlcpy");
-	tbl.pfrt_flags = flags;
+	if (!noaction) {
+		bzero(&tbl, sizeof(tbl));
+		if (strlcpy(tbl.pfrt_name, name, sizeof(tbl.pfrt_name)) >=
+		    sizeof(tbl.pfrt_name))
+			errx(1, "pfctl_define_table: strlcpy");
+		tbl.pfrt_flags = flags;
 
-	inactive = 1;
-	if (pfr_ina_define(&tbl, buffer.addrs, size, NULL, NULL, ticket,
-	    addrs ? PFR_FLAG_ADDRSTOO : 0) != 0) {
-		radix_perror();
-		exit(1);
+		inactive = 1;
+		if (pfr_ina_define(&tbl, buffer.addrs, size, NULL, NULL,
+		    ticket, addrs ? PFR_FLAG_ADDRSTOO : 0) != 0) {
+			radix_perror();
+			exit(1);
+		}
 	}
 	size = 0;
 }
@@ -628,8 +624,6 @@ pfctl_define_table(char *name, int flags, int addrs, int noaction)
 void
 pfctl_commit_table(void)
 {
-	if ((loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL)) == 0)
-		return;
 	if (pfr_ina_commit(ticket, NULL, NULL, 0) != 0) {
 		radix_perror();
 		exit(1);

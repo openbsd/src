@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.144 2003/02/03 13:57:47 henning Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.145 2003/02/03 14:51:36 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -963,7 +963,8 @@ pfctl_rules(int dev, char *filename, int opts)
 			if (ioctl(dev, DIOCBEGINRULES, &pr[PF_RULESET_FILTER]))
 				err(1, "DIOCBEGINRULES");
 		}
-		pfctl_begin_table();
+		if (loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL))
+			pfctl_begin_table();
 	}
 	/* fill in callback data */
 	pf.dev = dev;
@@ -1003,7 +1004,8 @@ pfctl_rules(int dev, char *filename, int opts)
 			if (ioctl(dev, DIOCCOMMITRULES, &pr[PF_RULESET_FILTER]))
 				err(1, "DIOCCOMMITRULES");
 		}
-		pfctl_commit_table();
+		if (loadopt & (PFCTL_FLAG_TABLE | PFCTL_FLAG_ALL))
+			pfctl_commit_table();
 	}
 	if (fin != stdin)
 		fclose(fin);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.46 2003/02/03 13:40:45 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.47 2003/02/03 14:51:36 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -151,7 +151,6 @@ struct pf_timeout {
 #define PFCTL_FLAG_TABLE	0x20
 
 extern const struct pf_timeout pf_timeouts[];
-extern int loadopt;
 
 void			 set_ipmask(struct node_host *, u_int8_t);
 void			 ifa_load(void);
