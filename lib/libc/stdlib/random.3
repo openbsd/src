@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)random.3	6.5 (Berkeley) 4/19/91
-.\"	$Id: random.3,v 1.1.1.1 1995/10/18 08:42:19 deraadt Exp $
+.\"	$Id: random.3,v 1.2 1996/05/04 11:57:28 deraadt Exp $
 .\"
 .Dd April 19, 1991
 .Dt RANDOM 3
@@ -60,6 +60,12 @@ default table of size 31 long integers to return successive pseudo-random
 numbers in the range from 0 to
 .if t 2\u\s731\s10\d\(mi1.
 .if n (2**31)\(mi1.
+The maximum value returned by
+.Fn random
+is
+.Dv LONG_MAX
+(as defined by the header file
+.Aq Pa limits.h ) .
 The period of this random number generator is very large, approximately
 .if t 16\(mu(2\u\s731\s10\d\(mi1).
 .if n 16*((2**31)\(mi1).
