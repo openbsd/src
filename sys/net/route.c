@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.9 1999/01/08 00:56:06 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.10 1999/02/04 00:54:03 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ rtredirect(dst, gateway, netmask, flags, src, rtp)
 {
 	register struct rtentry *rt;
 	int error = 0;
-	short *stat = NULL;
+	u_int32_t *stat = NULL;
 	struct rt_addrinfo info;
 	struct ifaddr *ifa;
 
