@@ -1,4 +1,4 @@
-/*	$OpenBSD: pte.h,v 1.5 1999/09/02 05:43:38 mickey Exp $	*/
+/*	$OpenBSD: pte.h,v 1.6 1999/09/02 06:16:58 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1993,1994 The University of Utah and
@@ -43,7 +43,7 @@
 #define		TLB_AR_URW	0x01f00000
 #define		TLB_AR_URX	0x02f00000
 #define		TLB_AR_URWX	0x03f00000
-#define TLB_ZERO	0x00080000	/* software only */
+#define TLB_UNCACHEABLE	0x00080000
 #define TLB_ICACHE	0x00040000	/* software only */
 #define TLB_NOTUSED	0x00020000      /* software only */
 #define TLB_DCACHE	0x00010000      /* software only */
