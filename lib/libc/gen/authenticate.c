@@ -1,4 +1,4 @@
-/*	$OpenBSD: authenticate.c,v 1.12 2002/07/14 23:47:30 deraadt Exp $	*/
+/*	$OpenBSD: authenticate.c,v 1.13 2002/10/15 20:16:08 millert Exp $	*/
 
 /*-
  * Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
@@ -279,7 +279,7 @@ auth_approval(auth_session_t *as, login_cap_t *lc, char *name, char *type)
 	}
 	if (approve)
 		auth_call(as, approve, strrchr(approve, '/') + 1, name,
-		    lc->lc_class, type, 0);
+		    lc->lc_class, type, (char *)NULL);
 
 out:
 	if (approve)
@@ -343,7 +343,7 @@ auth_usercheck(char *name, char *style, char *type, char *password)
 		auth_setdata(as, password, strlen(password) + 1);
 	} else
 		as = NULL;
-	as = auth_verify(as, style, name, lc->lc_class, NULL);
+	as = auth_verify(as, style, name, lc->lc_class, (char *)NULL);
 	login_close(lc);
 	return (as);
 }
@@ -442,7 +442,7 @@ auth_userresponse(auth_session_t *as, char *response, int more)
 
 	snprintf(path, sizeof(path), _PATH_AUTHPROG "%s", style);
 
-	auth_call(as, path, style, "-s", "response", name, class, NULL);
+	auth_call(as, path, style, "-s", "response", name, class, (char *)NULL);
 
 	/*
 	 * If they authenticated then make sure they did not expire
@@ -489,6 +489,6 @@ auth_verify(auth_session_t *as, char *style, char *name, ...)
 	va_start(ap, name);
 	auth_set_va_list(as, ap);
 	auth_call(as, path, auth_getitem(as, AUTHV_STYLE), "-s",
-	    auth_getitem(as, AUTHV_SERVICE), name, NULL);
+	    auth_getitem(as, AUTHV_SERVICE), name, (char *)NULL);
 	return (as);
 }
