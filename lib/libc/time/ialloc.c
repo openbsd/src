@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)ialloc.c	8.29";
-static char rcsid[] = "$OpenBSD: ialloc.c,v 1.5 1998/08/14 21:39:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ialloc.c,v 1.6 2001/10/30 16:53:13 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*LINTLIBRARY*/
@@ -31,9 +31,14 @@ irealloc(pointer, size)
 void * const	pointer;
 const int	size;
 {
+	void *p;
+
 	if (pointer == NULL)
 		return imalloc(size);
-	return realloc((void *) pointer, (size_t) nonzero(size));
+	p = realloc((void *) pointer, (size_t) nonzero(size));
+	if (p == NULL && pointer)
+		free(pointer);
+	return p;
 }
 
 char *
@@ -49,7 +54,8 @@ const char * const	new;
 		oldsize = 0;
 	else if (newsize == 0)
 		return old;
-	else	oldsize = strlen(old);
+	else
+		oldsize = strlen(old);
 	if ((result = irealloc(old, oldsize + newsize + 1)) != NULL)
 		if (new != NULL)
 			(void) strcpy(result + oldsize, new);
