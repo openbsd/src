@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.5 2001/08/20 23:05:36 jason Exp $
+#	$OpenBSD: GENERIC,v 1.6 2001/08/21 14:33:53 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -42,3 +42,28 @@ le*		at ledma?
 qec*		at sbus? slot ? offset ?
 qe*		at qec?
 be*		at qec?
+
+#
+# Note the flags on the esp entries below, that work around
+# deficiencies in the current driver:
+#	bits 0-7:  disable disconnect/reselect for the corresponding target
+#	bits 8-15: disable synch negotiation for target [bit-8]
+#	Note: targets 4-7 have disconnect/reselect enabled on the premise
+#	      that tape devices normally have one of these targets. Tape
+#	      devices should be allowed to disconnect for the SCSI bus
+#	      to operate acceptably.
+#
+dma*	at sbus? slot ? offset ?		# SBus
+esp*	at dma? flags 0x0000			# SBus
+esp*	at sbus? slot ? offset ?
+
+# SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
+# to the underlying hardware controller.
+scsibus*	at esp?
+
+# These entries find devices on all SCSI busses and assign
+# unit numers dynamically.
+sd*		at scsibus? target ? lun ?
+cd*		at scsibus? target ? lun ?
+ch*		at scsibus? target ? lun ?
+uk*		at scsibus? target ? lun ?
