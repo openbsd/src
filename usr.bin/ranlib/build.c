@@ -1,4 +1,4 @@
-/*	$OpenBSD: build.c,v 1.3 1997/11/05 18:57:27 deraadt Exp $	*/
+/*	$OpenBSD: build.c,v 1.4 1997/11/05 19:47:11 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)build.c	5.3 (Berkeley) 3/12/91";*/
-static char rcsid[] = "$OpenBSD: build.c,v 1.3 1997/11/05 18:57:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: build.c,v 1.4 1997/11/05 19:47:11 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -242,12 +242,12 @@ symobj()
 
 	uid = getuid();
 	if (uid > USHRT_MAX) {
-		warnx("warning: uid %d truncated to %d", uid, USHRT_MAX);
+		warnx("warning: uid %u truncated to %u", uid, USHRT_MAX);
 		uid = USHRT_MAX;
 	}
 	gid = getgid();
 	if (gid > USHRT_MAX) {
-		warnx("warning: gid %d truncated to %d", gid, USHRT_MAX);
+		warnx("warning: gid %u truncated to %u", gid, USHRT_MAX);
 		gid = USHRT_MAX;
 	}
 

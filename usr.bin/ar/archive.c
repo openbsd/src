@@ -1,5 +1,5 @@
 /*	$NetBSD: archive.c,v 1.7 1995/03/26 03:27:46 glass Exp $	*/
-/*	$OpenBSD: archive.c,v 1.4 1997/06/17 20:47:08 kstailey Exp $	*/
+/*	$OpenBSD: archive.c,v 1.5 1997/11/05 19:47:08 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -230,12 +230,12 @@ put_arobj(cfp, sb)
 		uid = sb->st_uid;
 		gid = sb->st_gid;
 		if (uid > USHRT_MAX) {
-			warnx("warning: uid %d truncated to %d", uid,
+			warnx("warning: uid %u truncated to %u", uid,
 			    USHRT_MAX);
 			uid = USHRT_MAX;
 		}
 		if (gid > USHRT_MAX) {
-			warnx("warning: gid %d truncated to %d", gid,
+			warnx("warning: gid %u truncated to %u", gid,
 			    USHRT_MAX);
 			gid = USHRT_MAX;
 		}
