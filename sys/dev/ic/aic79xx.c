@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.7 2004/08/23 20:16:01 marco Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.8 2004/09/18 19:54:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -240,7 +240,7 @@ void		ahd_dumpseq(struct ahd_softc *ahd);
 #endif
 void		ahd_loadseq(struct ahd_softc *ahd);
 int		ahd_check_patch(struct ahd_softc *ahd,
-					struct patch **start_patch,
+					const struct patch **start_patch,
 					u_int start_instr, u_int *skip_addr);
 u_int		ahd_resolve_seqaddr(struct ahd_softc *ahd,
 					    u_int address);
@@ -8364,7 +8364,7 @@ ahd_loadseq(struct ahd_softc *ahd)
 	struct	cs cs_table[num_critical_sections];
 	u_int	begin_set[num_critical_sections];
 	u_int	end_set[num_critical_sections];
-	struct	patch *cur_patch;
+	const struct	patch *cur_patch;
 	u_int	cs_count;
 	u_int	cur_cs;
 	u_int	i;
@@ -8519,11 +8519,11 @@ ahd_loadseq(struct ahd_softc *ahd)
 }
 
 int
-ahd_check_patch(struct ahd_softc *ahd, struct patch **start_patch,
+ahd_check_patch(struct ahd_softc *ahd, const struct patch **start_patch,
 		u_int start_instr, u_int *skip_addr)
 {
-	struct	patch *cur_patch;
-	struct	patch *last_patch;
+	const struct	patch *cur_patch;
+	const struct	patch *last_patch;
 	u_int	num_patches;
 
 	num_patches = sizeof(patches)/sizeof(struct patch);
@@ -8557,7 +8557,7 @@ ahd_check_patch(struct ahd_softc *ahd, struct patch **start_patch,
 u_int
 ahd_resolve_seqaddr(struct ahd_softc *ahd, u_int address)
 {
-	struct patch *cur_patch;
+	const struct patch *cur_patch;
 	int address_offset;
 	u_int skip_addr;
 	u_int i;
