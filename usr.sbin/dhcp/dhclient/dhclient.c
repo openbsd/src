@@ -56,7 +56,7 @@
 
 #ifndef lint
 static char copyright[] =
-"$Id: dhclient.c,v 1.16 2001/02/23 16:51:16 beck Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
+"$Id: dhclient.c,v 1.17 2001/06/04 23:41:56 angelos Exp $ Copyright (c) 1995, 1996 The Internet Software Consortium.  All rights reserved.\n";
 #endif /* not lint */
 
 #include "dhcpd.h"
@@ -1980,6 +1980,7 @@ void script_write_params (ip, prefix, lease)
 						config -> defaults [i].len,
 						lease -> options [i].data,
 						lease -> options [i].len);
+					dp [len] = '\0';
 					break;
 				      case ACTION_APPEND:
 					len = (ip -> client ->
@@ -1999,6 +2000,7 @@ void script_write_params (ip, prefix, lease)
 						config -> defaults [i].data,
 						ip -> client -> 
 						config -> defaults [i].len);
+					dp [len] = '\0';
 				}
 			} else {
 				dp = ip -> client ->
