@@ -115,10 +115,6 @@ Boston, MA 02111-1307, USA.  */
 #define OBSD_CPP_SPEC "%{posix:-D_POSIX_SOURCE} %{pthread:-D_POSIX_THREADS}"
 #endif
 
-/* LIB_SPEC appropriate for OpenBSD.  Include -lpthread if -pthread is
-   specified on the command line. */
-#define OBSD_LIB_SPEC "%{!shared:%{pthread:-lpthread%{p:_p}%{!p:%{pg:_p}}}} %{!shared:-lc%{p:_p}%{!p:%{pg:_p}}}"
-
 #ifndef OBSD_HAS_CORRECT_SPECS
 
 #ifndef OBSD_NO_DYNAMIC_LIBRARIES

@@ -402,7 +402,15 @@ case $machine in
 	esac
 	;;
 *-*-openbsd*)
-	tm_file=${cpu_type}/openbsd.h
+	case $machine in
+	*-*-openbsd2* | *-*-openbsd3.[012])
+		openbsd_libspec="openbsd-libc_r.h"
+		;;
+	*)
+		openbsd_libspec="openbsd-libpthread.h"
+		;;
+	esac
+	tm_file="${openbsd_libspec} ${cpu_type}/openbsd.h"
 	tmake_file="t-libc-ok t-openbsd t-libgcc-pic"
 	xm_defines=POSIX
 	# for gcc in tree, we use our own fragment
@@ -695,7 +703,7 @@ arm*-*-netbsdelf*)
 	tmake_file="${tmake_file} arm/t-netbsd"
 	;;
 arm*-*-openbsd*)
-	tm_file="dbxelf.h elfos.h arm/elf.h arm/aout.h arm/arm.h openbsd.h arm/openbsd.h"
+	tm_file="dbxelf.h elfos.h arm/elf.h arm/aout.h arm/arm.h openbsd.h ${tm_file}"
 	tmake_file="${tmake_file} arm/t-netbsd"
 	;;
 arm*-*-netbsd*)
@@ -1161,13 +1169,13 @@ i[34567]86-*-openbsd*)
 	tmake_file="t-libc-ok t-openbsd i386/t-openbsd"
 	tm_file="${cpu_type}/${cpu_type}.h i386/unix.h i386/att.h dbxelf.h elfos.h i386/i386elf.h"
 	tm_file="${tm_file} exec-stack.h"
-	tm_file="${tm_file} openbsd.h i386/openbsdelf.h"
+	tm_file="${tm_file} openbsd.h openbsd-libpthread.h i386/openbsdelf.h"
 	gas=yes
 	gnu_ld=yes
 	stabs=yes
   	;;
 x86_64-*-openbsd*)
-	tm_file="i386/biarch64.h i386/i386.h i386/unix.h i386/att.h dbxelf.h elfos.h openbsd.h i386/x86-64.h i386/openbsd64.h"
+	tm_file="i386/biarch64.h i386/i386.h i386/unix.h i386/att.h dbxelf.h elfos.h openbsd.h openbsd-libpthread.h i386/x86-64.h i386/openbsd64.h"
 	tmake_file="t-libc-ok t-openbsd i386/t-openbsd"
 	;;
 i[34567]86-*-coff*)
@@ -2426,7 +2434,7 @@ sparc-*-openbsd*)
 	use_collect2=yes
 	;;
 sparc64-*-openbsd*)
-	tm_file="sparc/openbsd1-64.h sparc/sparc.h elfos.h svr4.h sparc/sysv4.h sparc/sp64-elf.h openbsd.h sparc/openbsd64.h"
+	tm_file="sparc/openbsd1-64.h sparc/sparc.h elfos.h svr4.h sparc/sysv4.h sparc/sp64-elf.h openbsd.h ${openbsd_libspec} sparc/openbsd64.h"
 	xm_file=sparc/xm-sp64.h
 	gas=yes gnu_ld=yes
 	with_cpu=ultrasparc
