@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.17 2002/07/01 18:01:40 vincent Exp $	*/
+/*	$OpenBSD: tty.c,v 1.18 2002/08/23 18:43:49 vincent Exp $	*/
 
 /*
  * Terminfo display driver
@@ -52,7 +52,7 @@ winchhandler(int sig)
  * gets started up.
  */
 void
-ttinit()
+ttinit(void)
 {
 	char	*tv_stype, *p;
 
@@ -126,14 +126,16 @@ ttinit()
  * The keypad_xmit doesn't really belong here but...
  */
 void
-ttreinit()
+ttreinit(void)
 {
-	if (enter_ca_mode)
+	if (enter_ca_mode) {
 		/* enter application mode */
 		putpad(enter_ca_mode, 1);
-	if (keypad_xmit)
+	}
+	if (keypad_xmit) {
 		/* turn on keypad */
 		putpad(keypad_xmit, 1);
+	}
 
 	ttresize();
 }
@@ -145,7 +147,7 @@ ttreinit()
  * query the display for the increment, and put it back to what it was.
  */
 void
-tttidy()
+tttidy(void)
 {
 #ifdef	XKEYS
 	ttykeymaptidy();
@@ -162,8 +164,7 @@ tttidy()
  * location last time!
  */
 void
-ttmove(row, col)
-	int row, col;
+ttmove(int row, int col)
 {
 	if (ttrow != row || ttcol != col) {
 		putpad(tgoto(cursor_address, col, row), 1);
@@ -176,7 +177,7 @@ ttmove(row, col)
  * Erase to end of line.
  */
 void
-tteeol()
+tteeol(void)
 {
 	int	i;
 
@@ -194,7 +195,7 @@ tteeol()
  * Erase to end of page.
  */
 void
-tteeop()
+tteeop(void)
 {
 	int	line;
 
@@ -232,8 +233,7 @@ ttbeep()
  * and delete line sequences.
  */
 void
-ttinsl(row, bot, nchunk)
-	int row, bot, nchunk;
+ttinsl(int row, int bot, int nchunk)
 {
 	int	i, nl;
 
@@ -404,7 +404,7 @@ ttcolor(color)
  * new and old settings.
  */
 void
-ttresize()
+ttresize(void)
 {
 	int newrow = 0, newcol = 0;
 
@@ -430,8 +430,7 @@ ttresize()
  */
 /* ARGSUSED */
 static int
-fakec(c)
-	char c;
+fakec(char c)
 {
 	cci++;
 	return 0;
@@ -439,8 +438,7 @@ fakec(c)
 
 /* calculate the cost of doing string s */
 static int
-charcost(s)
-	char *s;
+charcost(char *s)
 {
 	int	cci = 0;
 
