@@ -1,4 +1,4 @@
-/* $OpenBSD: tsort.c,v 1.10 2001/07/14 14:18:50 espie Exp $ */
+/* $OpenBSD: tsort.c,v 1.11 2002/02/14 12:11:49 espie Exp $ */
 /* ex:ts=8 sw=4: 
  */
 
@@ -743,7 +743,7 @@ traverse_node(n, o, c)
 	for (;;) {
 		n->mark = o;
 		if (DEBUG_TRAVERSE)
-			printf("%s(%d) ", n->k, n->mark);
+			printf("%s(%u) ", n->k, n->mark);
 		/* Find next arc to explore.  */
 		if (n->traverse) 
 			n->traverse = n->traverse->next;
