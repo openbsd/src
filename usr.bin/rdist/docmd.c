@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.5 1997/02/12 19:48:24 dm Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.6 1997/07/22 06:59:38 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: docmd.c,v 1.5 1997/02/12 19:48:24 dm Exp $";
+"$OpenBSD: docmd.c,v 1.6 1997/07/22 06:59:38 millert Exp $";
 
 static char sccsid[] = "@(#)docmd.c	5.1 (Berkeley) 6/6/85";
 
@@ -285,9 +285,10 @@ static int remotecmd(rhost, luser, ruser, cmd)
 	if (becomeuser() != 0)
 		exit(1);
 #else	/* !DIRECT_RCMD */
-	debugmsg(DM_MISC, "Remote shell command = '%s'\n", path_remsh);
+	debugmsg(DM_MISC, "Remote shell command = '%s'\n",
+	    path_remsh ? path_remsh : "default");
 	(void) signal(SIGPIPE, SIG_IGN);
-	desc = rshrcmd(&rhost, -1, luser, ruser, cmd, 0);
+	desc = rcmdsh(&rhost, -1, luser, ruser, cmd, path_remsh);
 	if (desc > 0)
 		(void) signal(SIGPIPE, sighandler);
 #endif	/* DIRECT_RCMD */

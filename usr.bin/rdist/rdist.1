@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdist.1,v 1.4 1996/06/26 05:38:16 deraadt Exp $
+.\"	$OpenBSD: rdist.1,v 1.5 1997/07/22 06:59:39 millert Exp $
 .\"
 .\" Copyright (c) 1983 Regents of the University of California.
 .\" All rights reserved.
@@ -831,6 +831,9 @@ ${FILES} :: stamp.cory
 .IP TMPDIR
 Name of temporary directory to use.  Default is 
 .B /tmp.
+.IP RSH
+Name of the default remote shell program to use.  Default is
+.B /usr/bin/rsh.
 .SH FILES
 .nf
 .ta \w'/tmp/rdist*    'u

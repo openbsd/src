@@ -1,4 +1,4 @@
-/* * $OpenBSD: os-openbsd.h,v 1.8 1997/07/22 04:42:06 millert Exp $*/
+/* * $OpenBSD: os-openbsd.h,v 1.9 1997/07/22 06:59:39 millert Exp $*/
 /*
  * Copyright (c) 1993 Michael A. Cooper
  * Copyright (c) 1993 Regents of the University of California.
@@ -157,9 +157,3 @@ typedef void POINTER;
  * We have <paths.h>
  */
 #define PATHS_H	<paths.h>
-
-/*
- * Path to the remote shell command.
- * May be overridden via the environment variable RSH.
- */
-#define _PATH_REMSH		_PATH_RSH		/**/

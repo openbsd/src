@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdist.c,v 1.3 1996/06/26 05:38:17 deraadt Exp $	*/
+/*	$OpenBSD: rdist.c,v 1.4 1997/07/22 06:59:39 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 static char RCSid[] = 
-"$OpenBSD: rdist.c,v 1.3 1996/06/26 05:38:17 deraadt Exp $";
+"$OpenBSD: rdist.c,v 1.4 1997/07/22 06:59:39 millert Exp $";
 
 static char sccsid[] = "@(#)main.c	5.1 (Berkeley) 6/6/85";
 
@@ -66,7 +66,7 @@ char   	       *remotemsglist = NULL;
 char		optchars[] = "A:a:bcd:DFf:hil:L:M:m:NnOo:p:P:qRrst:Vvwxy";
 FILE   	       *opendist();
 char	       *path_rdistd = _PATH_RDISTD;
-char	       *path_remsh = _PATH_REMSH;
+char	       *path_remsh = NULL;
 
 /*
  * Add a hostname to the host list
@@ -280,6 +280,9 @@ main(argc, argv, envp)
 	if (nflag && IS_ON(options, DO_VERIFY))
 		fatalerr(
 		 "The -n flag and \"verify\" mode may not both be used.");
+
+	if (path_remsh == NULL)
+		path_remsh = getenv("RSH");
 
 	/*
 	 * Don't fork children for nflag
