@@ -1,12 +1,13 @@
 #test matching on tos; test queue rules which specify qlimit, test altq rule
 #with tbrsize specification, test queue rules which do not specify bandwidth,
 #test queue rule which doesn't specify anything
+#test altq rule with qlimit spec
 
 intf = "lo0"
 developerhosts="10.0.0.0/24"
 employeehosts="10.0.1.0/24"
 
-altq on $intf scheduler cbq(ecn) bandwidth 10Mb tbrsize 5000 \
+altq on $intf scheduler cbq(ecn) bandwidth 10Mb qlimit 100 tbrsize 5000 \
 	queue { std, http, mail, ssh }
 
 queue	std bandwidth 10% qlimit 1 cbq(default)
