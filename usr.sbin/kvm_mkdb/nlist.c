@@ -1,4 +1,4 @@
-/*	$OpenBSD: nlist.c,v 1.12 1998/08/21 19:31:29 millert Exp $	*/
+/*	$OpenBSD: nlist.c,v 1.13 1998/08/23 00:57:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: nlist.c,v 1.12 1998/08/21 19:31:29 millert Exp $";
+static char *rcsid = "$OpenBSD: nlist.c,v 1.13 1998/08/23 00:57:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,8 +84,8 @@ static void badread __P((int, char *));
 static u_long get_kerntext __P((char *kfn, u_int magic));
 
 int
-__aout_knlist(name, db)
-	char *name;
+__aout_knlist(fd, db)
+	int fd;
 	DB *db;
 {
 	register int nsyms;
@@ -93,15 +93,11 @@ __aout_knlist(name, db)
 	FILE *fp;
 	NLIST nbuf;
 	DBT data, key;
-	int fd, nr, strsize;
+	int nr, strsize;
 	size_t len;
 	u_long kerntextoff;
 	size_t snamesize;
 	char *strtab, buf[1024], *sname, *p;
-
-	kfile = name;
-	if ((fd = open(name, O_RDONLY, 0)) < 0)
-		err(1, "can't open %s", name);
 
 	/* Read in exec structure. */
 	nr = read(fd, &ebuf, sizeof(struct exec));
@@ -138,14 +134,14 @@ __aout_knlist(name, db)
 
 	/* Seek to symbol table. */
 	if (!(fp = fdopen(fd, "r")))
-		err(1, "%s", name);
+		err(1, "%s", kfile);
 	if (fseek(fp, N_SYMOFF(ebuf), SEEK_SET) == -1)
-		err(1, "%s", name);
+		err(1, "%s", kfile);
 	
 	data.data = (u_char *)&nbuf;
 	data.size = sizeof(NLIST);
 
-	kerntextoff = get_kerntext(name, N_GETMAGIC(ebuf));
+	kerntextoff = get_kerntext(kfile, N_GETMAGIC(ebuf));
 
 	/* Read each symbol and enter it into the database. */
 	nsyms = ebuf.a_syms / sizeof(struct nlist);
@@ -154,7 +150,7 @@ __aout_knlist(name, db)
 		if (fread((char *)&nbuf, sizeof (NLIST), 1, fp) != 1) {
 			if (feof(fp))
 				badfmt("corrupted symbol table");
-			err(1, "%s", name);
+			err(1, "%s", kfile);
 		}
 		if (!nbuf._strx || nbuf.n_type&N_STAB)
 			continue;
@@ -287,30 +283,26 @@ badread(nr, p)
 
 #ifdef _NLIST_DO_ELF
 int
-__elf_knlist(name, db)
-	char *name;
+__elf_knlist(fd, db)
+	int fd;
 	DB *db;
 {
-	register struct nlist *p;
 	register caddr_t strtab;
 	register off_t symstroff, symoff;
 	register u_long symsize;
 	register u_long kernvma, kernoffs;
-	register int cc, i;
+	register int i;
 	Elf32_Sym sbuf;
-	Elf32_Sym *s;
 	size_t symstrsize;
 	char *shstr, buf[1024];
 	Elf32_Ehdr eh;
 	Elf32_Shdr *sh = NULL;
-	struct stat st;
 	DBT data, key;
 	NLIST nbuf;
 	FILE *fp;
 
-	kfile = name;
-	if ((fp = fopen(name, "r")) < 0)
-		err(1, "%s", name);
+	if ((fp = fdopen(fd, "r")) < 0)
+		err(1, "%s", kfile);
 
 	if (fseek(fp, (off_t)0, SEEK_SET) == -1 ||
 	    fread(&eh, sizeof(eh), 1, fp) != 1 ||
@@ -379,7 +371,7 @@ __elf_knlist(name, db)
 		if (fread((char *)&sbuf, sizeof(sbuf), 1, fp) != 1) {
 			if (feof(fp))
 				badfmt("corrupted symbol table");
-			err(1, "%s", name);
+			err(1, "%s", kfile);
 		}
 		if (!sbuf.st_name)
 			continue;
@@ -464,8 +456,8 @@ __elf_knlist(name, db)
 				 (p) < (e)->a.data_start + (e)->a.dsize)
 
 int
-__ecoff_knlist(name, db)
-	char *name;
+__ecoff_knlist(fd, db)
+	int fd;
 	DB *db;
 {
 	struct ecoff_exechdr *exechdrp;
@@ -480,16 +472,11 @@ __ecoff_knlist(name, db)
 	long i, nesyms;
 	DBT data, key;
 	NLIST nbuf;
-	int fd;
 	char *sname = NULL;
 	size_t len, snamesize = 0;
 
-	kfile = name;
-	if ((fd = open(name, O_RDONLY)) == -1)
-		err(1, "%s", name);
-
 	if (fstat(fd, &st) < 0)
-		err(1, "can't stat %s", name);
+		err(1, "can't stat %s", kfile);
 	if (st.st_size > SIZE_T_MAX) {
 		fmterr = "file too large";
 		BAD;
@@ -588,7 +575,7 @@ out:
 #endif /* _NLIST_DO_ECOFF */
 
 static struct knlist_handlers {
-	int	(*fn) __P((char *name, DB *db));
+	int	(*fn) __P((int fd, DB *db));
 } nlist_fn[] = {
 #ifdef _NLIST_DO_AOUT
 	{ __aout_knlist },
@@ -602,15 +589,17 @@ static struct knlist_handlers {
 };
 
 int
-create_knlist(name, db)
+create_knlist(name, fd, db)
 	char *name;
+	int fd;
 	DB *db;
 {
 	int i, error;
 
 	for (i = 0; i < sizeof(nlist_fn)/sizeof(nlist_fn[0]); i++) {
 		fmterr = NULL;
-		if ((error = (nlist_fn[i].fn)(name, db)) == 0)
+		kfile = name;
+		if ((error = (nlist_fn[i].fn)(fd, db)) == 0)
 			break;
 	}
 	if (fmterr != NULL)

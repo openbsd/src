@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_mkdb.c,v 1.4 1998/08/19 07:43:37 millert Exp $	*/
+/*	$OpenBSD: kvm_mkdb.c,v 1.5 1998/08/23 00:57:14 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)kvm_mkdb.c	8.3 (Berkeley) 5/4/95";
 #else
-static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.4 1998/08/19 07:43:37 millert Exp $";
+static char *rcsid = "$OpenBSD: kvm_mkdb.c,v 1.5 1998/08/23 00:57:14 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,7 +80,7 @@ main(argc, argv)
 	char *argv[];
 {
 	DB *db;
-	int ch, verbose = 0;
+	int fd, ch, verbose = 0;
 	char *nlistpath, *nlistname, dbtemp[MAXPATHLEN], dbname[MAXPATHLEN];
 
 	while ((ch = getopt(argc, argv, "v")) != -1)
@@ -98,8 +98,17 @@ main(argc, argv)
 	if (argc > 1)
 		usage();
 
-	nlistpath = argc > 0 ? argv[0] : _PATH_UNIX;
-	nlistname = basename(nlistpath);
+	/* If no kernel specified use _PATH_KSYMS and fall back to _PATH_UNIX */
+	if (argc > 0) {
+		nlistpath = argv[0];
+		if ((fd = open(nlistpath, O_RDONLY, 0)) == -1)
+			err(1, "can't open %s", nlistpath);
+	} else {
+		if ((fd = open((nlistpath = _PATH_KSYMS), O_RDONLY, 0)) == -1 &&
+		    (fd = open((nlistpath = _PATH_UNIX), O_RDONLY, 0)) == -1)
+			err(1, "can't open %s", nlistpath);
+	}
+	nlistname = argc > 0 ? basename(argv[0]) : basename(_PATH_UNIX);
 
 	(void)snprintf(dbtemp, sizeof(dbtemp), "%skvm_%s.tmp",
 	    _PATH_VARDB, nlistname);
@@ -117,7 +126,7 @@ main(argc, argv)
 	    S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, DB_HASH, &openinfo);
 	if (db == NULL)
 		err(1, "can't dbopen %s", dbtemp);
-	if (create_knlist(nlistpath, db) != 0) {
+	if (create_knlist(nlistpath, fd, db) != 0) {
 		(void)unlink(dbtemp);
 		errx(1, "cannot determine executable type of %s", nlistpath);
 	}
