@@ -1,4 +1,4 @@
-/*	$OpenBSD: systrace.c,v 1.17 2002/06/18 23:28:29 deraadt Exp $	*/
+/*	$OpenBSD: systrace.c,v 1.18 2002/06/19 16:31:07 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -34,6 +34,7 @@
 #include <sys/wait.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>
@@ -67,7 +68,7 @@ trans_cb(int fd, pid_t pid, int policynr,
 	struct intercept_translate *tl;
 	struct intercept_pid *ipid;
 	struct filterq *pflq = NULL;
-	char output[1024], *p, *line;
+	char output[_POSIX2_LINE_MAX], *p, *line;
 	int size;
 
 	action = ICPOLICY_PERMIT;
@@ -131,7 +132,7 @@ short
 gen_cb(int fd, pid_t pid, int policynr, char *name, int code,
     char *emulation, void *args, int argsize, void *cbarg)
 {
-	char output[1024];
+	char output[_POSIX2_LINE_MAX];
 	struct policy *policy;
 	struct intercept_pid *ipid;
 	short action = ICPOLICY_PERMIT;

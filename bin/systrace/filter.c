@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.12 2002/06/18 01:54:31 deraadt Exp $	*/
+/*	$OpenBSD: filter.c,v 1.13 2002/06/19 16:31:07 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/tree.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -206,11 +207,13 @@ filter_parse(char *line, struct filter **pfilter)
 int
 filter_parse_simple(char *rule, short *paction, short *pfuture)
 {
-	char buf[1024];
+	char buf[_POSIX2_LINE_MAX];
 	int isfuture = 1;
 	char *line, *p;
 
-	strlcpy(buf, rule, sizeof(buf));
+	if (strlcpy(buf, rule, sizeof(buf)) >= sizeof(buf))
+		return (-1);
+
 	line = buf;
 
 	if (!strcmp("permit", line)) {

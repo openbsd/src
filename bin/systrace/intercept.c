@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept.c,v 1.5 2002/06/10 19:16:26 provos Exp $	*/
+/*	$OpenBSD: intercept.c,v 1.6 2002/06/19 16:31:07 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -365,22 +365,27 @@ intercept_read(int fd)
 char *
 intercept_get_string(int fd, pid_t pid, void *addr)
 {
-	static char name[1024];
-	int off = 0;
+	static char name[MAXPATHLEN];
+	int off = 0, done = 0;
 
 	do {
 		if (intercept.io(fd, pid, INTERCEPT_READ, addr + off,
 			&name[off], 4) == -1) {
-			warn("ioctl");
+			warn("%s: ioctl", __func__);
 			return (NULL);
 		}
 
 		off += 4;
 		name[off] = '\0';
 		if (strlen(name) < off)
-			break;
+			done = 1;
 
-	} while (off < sizeof(name));
+	} while (!done && off < sizeof(name));
+
+	if (!done) {
+		warnx("%s: string too long", __func__);
+		return (NULL);
+	}
 
 	return (name);
 }
@@ -388,25 +393,32 @@ intercept_get_string(int fd, pid_t pid, void *addr)
 char *
 intercept_filename(int fd, pid_t pid, void *addr)
 {
-	static char cwd[1024];
+	static char cwd[2*MAXPATHLEN];
 	char *name;
 
 	name = intercept_get_string(fd, pid, addr);
 	if (name == NULL)
-		err(1, "%s:%d: getstring", __func__, __LINE__);
+		err(1, "%s: getstring", __func__);
 
 	if (name[0] != '/') {
 		if (intercept.getcwd(fd, pid, cwd, sizeof(cwd)) == NULL)
-			err(1, "%s:%d: getcwd", __func__, __LINE__);
+			err(1, "%s: getcwd", __func__);
 
-		strlcat(cwd, "/", sizeof(cwd));
-		strlcat(cwd, name, sizeof(cwd));
-	} else
-		strlcpy(cwd, name, sizeof(cwd));
+		if (strlcat(cwd, "/", sizeof(cwd)) >= sizeof(cwd))
+			goto error;
+		if (strlcat(cwd, name, sizeof(cwd)) >= sizeof(cwd))
+			goto error;
+	} else {
+		if (strlcpy(cwd, name, sizeof(cwd)) >= sizeof(cwd))
+			goto error;
+	}
 
 	simplify_path(cwd);
 
 	return (cwd);
+
+ error:
+	errx(1, "%s: filename too long", __func__);
 }
 
 void

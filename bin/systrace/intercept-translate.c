@@ -1,4 +1,4 @@
-/*	$OpenBSD: intercept-translate.c,v 1.2 2002/06/04 19:15:54 deraadt Exp $	*/
+/*	$OpenBSD: intercept-translate.c,v 1.3 2002/06/19 16:31:07 provos Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -33,6 +33,7 @@
 #include <sys/param.h>
 #include <sys/tree.h>
 #include <sys/socket.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -95,7 +96,7 @@ intercept_translate(struct intercept_translate *trans,
 char *
 intercept_translate_print(struct intercept_translate *trans)
 {
-	char line[1024];
+	char line[_POSIX2_LINE_MAX];
 
 	if (trans->trans_print == NULL) {
 		if (trans->print(line, sizeof(line), trans) == -1)
