@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atq.1,v 1.1 2002/05/14 18:05:39 millert Exp $
+.\"	$OpenBSD: atq.1,v 1.2 2003/02/19 22:11:42 millert Exp $
 .\"
 .\" Copyright (c) 1985, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -92,8 +92,8 @@ Jobs that have completed but have not yet been removed are also displayed.
 If a name(s) is provided, only those files belonging to that user(s) are
 displayed.
 .Sh FILES
-.Bl -tag -width /var/at/jobs -compact
-.It Pa /var/at/jobs
+.Bl -tag -width /var/cron/atjobs -compact
+.It Pa /var/cron/atjobs
 directory containing job files
 .El
 .Sh SEE ALSO

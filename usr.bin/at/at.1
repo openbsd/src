@@ -1,4 +1,4 @@
-.\" $OpenBSD: at.1,v 1.29 2003/02/19 20:47:09 millert Exp $
+.\" $OpenBSD: at.1,v 1.30 2003/02/19 22:11:42 millert Exp $
 .\"
 .\" Copyright (C) 1993, 1994  Thomas Koenig
 .\" Copyright (C) 1993  David Parsons
@@ -276,20 +276,20 @@ shell, the owner of the login shell will receive the mail.
 For non-root users, permission to run
 .Nm
 is determined by the files
-.Pa /var/at/at.allow
+.Pa /var/cron/at.allow
 and
-.Pa /var/at/at.deny .
+.Pa /var/cron/at.deny .
 .Em Note :
 these files must be readable by group crontab (if they exist).
 .Pp
 If the file
-.Pa /var/at/at.allow
+.Pa /var/cron/at.allow
 exists, only usernames mentioned in it are allowed to use
 .Nm at .
 If
-.Pa /var/at/at.allow
+.Pa /var/cron/at.allow
 does not exist,
-.Pa /var/at/at.deny
+.Pa /var/cron/at.deny
 is checked.
 Every username not mentioned in it is then allowed to use
 .Nm at .
@@ -297,16 +297,16 @@ If neither exists, only the superuser is allowed to run
 .Nm at .
 .Pp
 An empty
-.Pa /var/at/at.deny
+.Pa /var/cron/at.deny
 means that every user is allowed use these commands.
 This is the default configuration.
 .Sh FILES
-.Bl -tag -width /var/at/at.allow -compact
-.It Pa /var/at/jobs
+.Bl -tag -width /var/cron/at.allow -compact
+.It Pa /var/cron/atjobs
 directory containing job files
-.It Pa /var/at/at.allow
+.It Pa /var/cron/at.allow
 allow permission control
-.It Pa /var/at/at.deny
+.It Pa /var/cron/at.deny
 deny permission control
 .El
 .Sh SEE ALSO

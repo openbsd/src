@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.143 2003/02/04 01:35:08 deraadt Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.144 2003/02/19 22:11:42 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1792,17 +1792,6 @@ dev		mode=0555
 # ./var/empty
 ..
 
-# ./var/at
-at		gname=daemon
-
-# ./var/at/jobs
-jobs		gname=crontab mode=01770
-# ./var/at/jobs
-..
-
-# ./var/at
-..
-
 # ./var/backups
 backups		mode=0700
 # ./var/backups
@@ -1821,8 +1810,15 @@ crash		mode=770
 # ./var/cron
 cron		mode=0555
 
+# ./var/cron/atjobs
+atjobs		gname=crontab mode=01770
+
 # ./var/cron/tabs
-tabs		gname=crontab mode=1730
+..
+
+# ./var/cron/tabs
+tabs		gname=crontab mode=01730
+
 # ./var/cron/tabs
 ..
 

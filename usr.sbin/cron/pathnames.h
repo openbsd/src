@@ -1,4 +1,4 @@
-/*	$OpenBSD: pathnames.h,v 1.8 2002/07/15 19:13:29 millert Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.9 2003/02/19 22:11:42 millert Exp $	*/
 
 /* Copyright 1993,1994 by Paul Vixie
  * All rights reserved
@@ -60,8 +60,8 @@
 			 * LOG_CRON is defined by <syslog.h>, LOG_FILE will not
 			 * be used.
 			 */
-#define	ALLOW_FILE	"allow"
-#define DENY_FILE	"deny"
+#define	ALLOW_FILE	"cron.allow"
+#define DENY_FILE	"cron.deny"
 #define LOG_FILE	"log"
 
 			/* where should the daemon stick its PID?
@@ -108,8 +108,8 @@
 #endif /*SENDMAIL*/
 
 /* XXX */
-#define _PATH_ATJOBS	"/var/at/jobs"
-#define _PATH_AT_ALLOW	"/var/at/at.allow"
-#define _PATH_AT_DENY	"/var/at/at.deny"
+#define _PATH_ATJOBS	"/var/cron/atjobs"
+#define _PATH_AT_ALLOW	"/var/cron/at.allow"
+#define _PATH_AT_DENY	"/var/cron/at.deny"
 
 #endif /* _PATHNAMES_H_ */
