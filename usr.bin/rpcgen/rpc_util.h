@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.h,v 1.6 2001/11/24 19:17:47 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.h,v 1.7 2001/11/24 19:19:59 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.h,v 1.3 1995/06/11 21:50:10 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -104,7 +104,6 @@ definition *findval();
 #define FINDVAL(list,item,finder) \
 	findval(list, item, finder)
 
-void crash __P((void));
 char *fixtype __P((char *));
 char *stringfix __P((char *));
 char *locase __P((char *));

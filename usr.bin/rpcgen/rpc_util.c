@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_util.c,v 1.5 2001/11/24 19:17:47 deraadt Exp $	*/
+/*	$OpenBSD: rpc_util.c,v 1.6 2001/11/24 19:19:59 deraadt Exp $	*/
 /*	$NetBSD: rpc_util.c,v 1.6 1995/08/29 23:05:57 cgd Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -42,7 +42,6 @@ static char sccsid[] = "@(#)rpc_util.c 1.11 89/02/22 (C) 1987 SMI";
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <unistd.h>
 #include "rpc_scan.h"
 #include "rpc_parse.h"
 #include "rpc_util.h"
@@ -69,7 +68,6 @@ list *defined;			/* list of defined things */
 /*
  * Reinitialize the world 
  */
-void
 reinitialize()
 {
 	memset(curline, 0, MAXLINESIZE);
@@ -81,7 +79,6 @@ reinitialize()
 /*
  * string equality 
  */
-int
 streq(a, b)
 	char *a;
 	char *b;
@@ -119,6 +116,7 @@ storeval(lstp, val)
 	list **l;
 	list *lst;
 
+	
 	for (l = lstp; *l != NULL; l = (list **) & (*l)->next);
 	lst = ALLOC(list);
 	lst->val = val;
@@ -126,7 +124,7 @@ storeval(lstp, val)
 	*l = lst;
 }
 
-static int
+static
 findit(def, type)
 	definition *def;
 	char *type;
@@ -195,7 +193,7 @@ ptype(prefix, type, follow)
 	}
 }
 
-static int
+static
 typedefed(def, type)
 	definition *def;
 	char *type;
@@ -207,7 +205,6 @@ typedefed(def, type)
 	}
 }
 
-int
 isvectordef(type, rel)
 	char *type;
 	relation rel;
@@ -241,7 +238,7 @@ locase(str)
 	static char buf[100];
 	char *p = buf;
 
-	while ((c = *str++)) {
+	while (c = *str++) {
 		*p++ = (c >= 'A' && c <= 'Z') ? (c - 'A' + 'a') : c;
 	}
 	*p = 0;
@@ -281,7 +278,6 @@ error(msg)
  * Something went wrong, unlink any files that we may have created and then
  * die. 
  */
-void
 crash()
 {
 	int i;
@@ -356,6 +352,7 @@ tabify(f, tab)
 	}
 }
 
+
 static token tokstrings[] = {
 	{TOK_IDENT, "identifier"},
 	{TOK_CONST, "const"},
@@ -403,7 +400,7 @@ toktostr(kind)
 	return (sp->str);
 }
 
-static void
+static
 printbuf()
 {
 	char c;
@@ -412,7 +409,7 @@ printbuf()
 
 #	define TABSIZE 4
 
-	for (i = 0; (c = curline[i]); i++) {
+	for (i = 0; c = curline[i]; i++) {
 		if (c == '\t') {
 			cnt = 8 - (i % TABSIZE);
 			c = ' ';
@@ -453,7 +450,7 @@ make_argname(pname, vname)
 	char *vname;
 {
 	char *name;
-
+	
 	name = (char *)malloc(strlen(pname) + strlen(vname) + strlen(ARGEXT) + 3);
 	if (!name) {
 		fprintf(stderr, "failed in malloc");
@@ -496,7 +493,8 @@ find_type(type)
 {
 	bas_type * ptr;
 
-	ptr = typ_list_h;
+	ptr=typ_list_h;
+
 
 	while (ptr != NULL) {
 		if (strcmp(ptr->name,type) == 0)

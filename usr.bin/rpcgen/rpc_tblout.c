@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_tblout.c,v 1.5 2001/11/24 19:17:47 deraadt Exp $	*/
+/*	$OpenBSD: rpc_tblout.c,v 1.6 2001/11/24 19:19:59 deraadt Exp $	*/
 /*	$NetBSD: rpc_tblout.c,v 1.3 1995/06/24 15:00:15 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -53,29 +53,30 @@ static char tbl_hdr[] = "struct rpcgen_table %s_table[] = {\n";
 static char tbl_end[] = "};\n";
 
 static char null_entry[] = "\n\t(char *(*)())0,\n\
-\t(xdrproc_t) xdr_void,\t\t\t0,\n\
-\t(xdrproc_t) xdr_void,\t\t\t0,\n";
+ \t(xdrproc_t) xdr_void,\t\t\t0,\n\
+ \t(xdrproc_t) xdr_void,\t\t\t0,\n";
 
 static char tbl_nproc[] = "int %s_nproc =\n\tsizeof(%s_table)/sizeof(%s_table[0]);\n\n";
 
-static void write_table __P((definition *));
-static void printit __P((char *, char *));
+static write_table __P((definition *));
+static printit __P((char *, char *));
 
 void
 write_tables()
 {
-	definition *def;
 	list *l;
+	definition *def;
 
 	f_print(fout, "\n");
 	for (l = defined; l != NULL; l = l->next) {
 		def = (definition *) l->val;
-		if (def->def_kind == DEF_PROGRAM)
+		if (def->def_kind == DEF_PROGRAM) {
 			write_table(def);
+		}
 	}
 }
 
-static void
+static
 write_table(def)
 	definition *def;
 {
@@ -103,10 +104,10 @@ write_table(def)
 			current = atoi(proc->proc_num);
 			if (current != expected++) {
 				f_print(fout,
-				    "\n/*\n * WARNING: table out of order\n */\n");
+			"\n/*\n * WARNING: table out of order\n */\n");
 				if (warning == 0) {
 					f_print(stderr,
-					    "WARNING %s table is out of order\n",
+				    "WARNING %s table is out of order\n",
 					    progvers);
 					warning = 1;
 					nonfatalerrors = 1;
@@ -116,22 +117,22 @@ write_table(def)
 			f_print(fout, "\n\t(char *(*)())RPCGEN_ACTION(");
 
 			/* routine to invoke */
-			if (!newstyle)
-				pvname_svc(proc->proc_name, vp->vers_num);
+			if ( !newstyle)
+			  pvname_svc(proc->proc_name, vp->vers_num);
 			else {
-				if (newstyle)
-					f_print(fout, "_");   /* calls internal func */
-				pvname(proc->proc_name, vp->vers_num);
+			  if( newstyle )
+			    f_print( fout, "_");   /* calls internal func */
+			  pvname(proc->proc_name, vp->vers_num);
 			}
 			f_print(fout, "),\n");
 
 			/* argument info */
-			if (proc->arg_num > 1)
-				printit((char*) NULL, proc->args.argname);
+			if( proc->arg_num > 1 )
+			  printit((char*) NULL, proc->args.argname );
 			else  
-				/* do we have to do something special for newstyle */
-				printit(proc->args.decls->decl.prefix,
-				    proc->args.decls->decl.type);
+			  /* do we have to do something special for newstyle */
+			  printit( proc->args.decls->decl.prefix,
+				  proc->args.decls->decl.type );
 			/* result info */
 			printit(proc->res_prefix, proc->res_type);
 		}
@@ -142,12 +143,14 @@ write_table(def)
 	}
 }
 
-static void
+static
 printit(prefix, type)
 	char *prefix;
 	char *type;
 {
-	int len, tabs;
+	int len;
+	int tabs;
+
 
  	len = fprintf(fout, "\txdr_%s,", stringfix(type));
 	/* account for leading tab expansion */
@@ -159,7 +162,7 @@ printit(prefix, type)
 	if (streq(type, "void")) {
 		f_print(fout, "0");
 	} else {
-		f_print(fout, "sizeof (");
+		f_print(fout, "sizeof ( ");
 		/* XXX: should "follow" be 1 ??? */
 		ptype(prefix, type, 0);
 		f_print(fout, ")");
