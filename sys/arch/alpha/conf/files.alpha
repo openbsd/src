@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.46 2001/03/21 17:26:38 art Exp $
+#	$OpenBSD: files.alpha,v 1.47 2001/04/14 17:51:41 art Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -188,6 +188,14 @@ file	arch/alpha/pci/cia_bus_mem.c	cia
 file	arch/alpha/pci/cia_bwx_bus_io.c	cia
 file	arch/alpha/pci/cia_bwx_bus_mem.c	cia
 
+device	irongate: pcibus
+attach	irongate at mainbus
+file	arch/alpha/pci/irongate.c		irongate
+file	arch/alpha/pci/irongate_bus_io.c	irongate
+file	arch/alpha/pci/irongate_bus_mem.c	irongate
+file	arch/alpha/pci/irongate_dma.c		irongate
+file	arch/alpha/pci/irongate_pci.c		irongate
+
 device  tsc { }
 attach  tsc at mainbus
 file    arch/alpha/pci/tsc.c            dec_6600
@@ -206,6 +214,7 @@ file	arch/alpha/pci/pci_eb164_intr.s	dec_eb164
 file	arch/alpha/pci/pci_kn20aa.c	dec_kn20aa
 file	arch/alpha/pci/pci_550.c	dec_550
 file	arch/alpha/pci/pci_6600.c	dec_6600
+file	arch/alpha/pci/pci_up1000.c	api_up1000
 
 #
 # PCI Bus devices
@@ -289,7 +298,7 @@ file	arch/alpha/alpha/dec_eb164.c		dec_eb164	needs-flag
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
 file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
 file    arch/alpha/alpha/dec_6600.c             dec_6600	needs-flag
-
+file	arch/alpha/alpha/api_up1000.c		api_up1000	needs-flag
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
 include "compat/osf1/files.osf1"
