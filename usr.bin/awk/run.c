@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.4 1997/01/21 23:47:55 kstailey Exp $	*/
+/*	$OpenBSD: run.c,v 1.5 1997/01/21 23:57:37 kstailey Exp $	*/
 /****************************************************************
 Copyright (C) AT&T and Lucent Technologies 1996
 All Rights Reserved
@@ -791,7 +791,8 @@ int format(char *buf, int bufsize, char *s, Node *a)
 		a = a->nnext;
 		switch (flag) {
 		case 0:	sprintf((char *)p, "%s", fmt);	/* unknown, so dump it too */
-			p += len += strlen(p);
+			len += strlen(p);
+			p += strlen(p);
 			sprintf((char *)p, "%s", getsval(x));
 			break;
 		case 1:	sprintf((char *)p, (char *)fmt, getfval(x)); break;
@@ -814,7 +815,8 @@ int format(char *buf, int bufsize, char *s, Node *a)
 			break;
 		}
 		tempfree(x);
-		p += len += strlen(p);
+		len += strlen(p);
+		p += strlen(p);
 		s++;
 	}
 	*p = '\0';
