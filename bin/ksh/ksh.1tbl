@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ksh.1tbl,v 1.53 2003/06/06 10:05:52 jmc Exp $
+.\"	$OpenBSD: ksh.1tbl,v 1.54 2003/07/07 14:11:58 jmc Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"     The Regents of the University of California.  All rights reserved.
@@ -477,18 +477,16 @@ In the following compound command descriptions, command lists (denoted as
 that are followed by reserved words must end with a semicolon, a newline, or
 a (syntactically correct) reserved word.
 For example,
-.Pp
-.Bl -inset -indent -compact
-.It Ic { echo foo; echo bar; }
-.It Ic { echo foo; echo bar<newline> }
-.It Ic { { echo foo; echo bar; } }
-.El
+.Bd -unfilled -offset indent
+.Ic { echo foo; echo bar; }
+.Ic { echo foo; echo bar<newline> }
+.Ic { { echo foo; echo bar; } }
+.Ed
 .Pp
 are all valid, but
-.Pp
-.Bl -inset -indent -compact
-.It Ic { echo foo; echo bar }
-.El
+.Bd -unfilled -offset -indent
+.Ic { echo foo; echo bar }
+.Ed
 .Pp
 is not.
 .Bl -tag -width Ds
@@ -725,7 +723,6 @@ Similar to the
 and
 .Ic \&[ Ar ... Ic \&]
 commands (described later), with the following exceptions:
-.Pp
 .Bl -bullet -offset indent
 .It
 Field splitting and file name generation are not performed on arguments.
@@ -743,15 +740,15 @@ and
 respectively.
 .It
 Operators (e.g.,
-.Ql Fl f ,
-.Ql = ,
-.Ql ! ,
+.Sq Fl f ,
+.Sq = ,
+.Sq \&! ,
 etc.) must be unquoted.
 .It
 The second operand of the
-.Ql !=
+.Sq !=
 and
-.Ql =
+.Sq =
 expressions are patterns (e.g., the comparison
 .Ic [[ foobar = f*r ]]
 succeeds).
@@ -2019,7 +2016,6 @@ is a decimal integer specifying the base, and
 is a number in the specified base.
 .Pp
 The operators are evaluated as follows:
-.Pp
 .Bl -tag -width Ds -offset indent
 .It unary Ic \&+
 Result is the argument (included for completeness).
@@ -2494,9 +2490,9 @@ Test.
 In
 .Tn POSIX
 mode, the expression
-.Ql Fl t
+.Sq Fl t
 (preceded by some number of
-.Ql Ic \&!
+.Sq Ic \&!
 arguments) is always true as it is a non-zero length string; in
 .Pf non- Tn POSIX
 mode, it tests if file descriptor 1 is a tty (i.e., the
@@ -3057,7 +3053,7 @@ is syntactic sugar for
 .Ic let \&" Ns Ar expr Ns Ic \&" .
 .It Xo Ic print
 .Oo Fl nprsu Ns Ar n No \&|
-.Fl R No Op Fl en Oc
+.Fl R Op Fl en Oc
 .Op Ar argument ...
 .Xc
 .Ic print
@@ -3695,9 +3691,9 @@ is
 or unset, if it has embedded spaces (i.e.,
 .Ev IFS
 characters), or if it is a unary operator like
-.Ql Ic \&!
+.Sq Ic \&!
 or
-.Ql Fl n .
+.Sq Fl n .
 Use tests like
 .Ic if \&[ \&"X$foo\&" = Xbar \&]
 instead.
@@ -4750,7 +4746,7 @@ Like
 except if
 .Ar n
 is not specified, it goes to the most recent remembered line.
-.It Ic Ar n Ns Ic v
+.It Ar n Ns Ic v
 Edit line
 .Ar n
 using the vi editor; if
@@ -5045,7 +5041,6 @@ except the buffer is pasted at the current position.
 .El
 .Pp
 Miscellaneous vi commands
-.Pp
 .Bl -tag -width Ds
 .It Ic ^J No and Ic ^M
 The current line is read, parsed, and executed by the shell.
@@ -5062,6 +5057,7 @@ Undo all changes that have been made to the current line.
 .It Ar intr No and Ar quit
 The interrupt and quit terminal characters cause the current line to be
 deleted and a new prompt to be printed.
+.El
 .Sh FILES
 .Bl -tag -width "/etc/suid_profile" -compact
 .It Pa ~/.profile
