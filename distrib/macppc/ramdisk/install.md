@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.5 2002/02/14 03:26:05 deraadt Exp $
+#	$OpenBSD: install.md,v 1.6 2002/02/23 18:29:51 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -68,7 +68,17 @@ md_get_partition_range() {
 }
 
 md_questions() {
-	:
+	echo
+	echo -n "Do you expect to run the X Window System? [y] "
+	getresp y
+	case "$resp" in
+		y*|Y*)
+			xfree86=y
+			;;
+		*)
+			;;
+	esac
+	echo
 }
 
 md_installboot() {
@@ -85,6 +95,14 @@ md_installboot() {
 		else
 			echo "Failed, you will not be able to boot from /dev/${1}."
 		fi
+	fi
+	if [ "$xfree86" = y ]; then
+		echo
+		echo "Enabling machdep.allowaperture. Read xf86(4) for more information."
+		echo '1,$s/^#machdep\.allowaperture=2/machdep\.allowaperture=2	/
+w
+q' | ed /mnt/etc/sysctl.conf 2> /dev/null
+		echo
 	fi
 }
 
