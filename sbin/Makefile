@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.52 2000/05/19 16:41:52 mickey Exp $
+#	$OpenBSD: Makefile,v 1.53 2000/06/18 00:25:50 provos Exp $
 
 # Not ported: XNSrouted enpload scsiformat startslip
 # Missing: icheck
@@ -25,6 +25,7 @@ SUBDIR+= mount_umap
 SUBDIR+= mount_union
 SUBDIR+= mount_ext2fs fsck_ext2fs
 SUBDIR+= mount_xfs
+SUBDIR+= mount_tcfs
 
 # IPv6
 SUBDIR+= ping6 rtsol
