@@ -6,7 +6,7 @@
 #include "yp.h"
 #include "ypv1.h"
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ypserv_xdr_v1.c,v 1.2 2001/11/19 09:03:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_xdr_v1.c,v 1.3 2002/01/01 21:15:03 deraadt Exp $";
 #endif /* not lint */
 
 bool_t
@@ -14,7 +14,7 @@ xdr_ypreqtype(xdrs, objp)
 	XDR *xdrs;
 	ypreqtype *objp;
 {
-	register long *buf;
+	int32_t *buf;
 
 	if (!xdr_enum(xdrs, (enum_t *)objp)) {
 		return (FALSE);
@@ -27,7 +27,7 @@ xdr_ypresptype(xdrs, objp)
 	XDR *xdrs;
 	ypresptype *objp;
 {
-	register long *buf;
+	int32_t *buf;
 
 	if (!xdr_enum(xdrs, (enum_t *)objp)) {
 		return (FALSE);
@@ -41,30 +41,25 @@ xdr_yprequest(xdrs, objp)
 	yprequest *objp;
 {
 	if (!xdr_ypreqtype(xdrs, &objp->yp_reqtype)) {
-		printf("error 1\n");
 		return (FALSE);
 	}
 	switch (objp->yp_reqtype) {
 	case YPREQ_KEY:
 		if (!xdr_ypreq_key(xdrs, &objp->yp_reqbody.yp_req_keytype)) {
-			printf("error 2\n");
 			return (FALSE);
 		}
 		break;
 	case YPREQ_NOKEY:
 		if (!xdr_ypreq_nokey(xdrs, &objp->yp_reqbody.yp_req_nokeytype)) {
-			printf("error 3\n");
 			return (FALSE);
 		}
 		break;
 	case YPREQ_MAP_PARMS:
 		if (!xdr_ypmap_parms(xdrs, &objp->yp_reqbody.yp_req_map_parmstype)) {
-			printf("error 4\n");
 			return (FALSE);
 		}
 		break;
 	default:
-		printf("error 5\n");
 		return (FALSE);
 	}
 	return (TRUE);
@@ -75,7 +70,7 @@ xdr_ypresponse(xdrs, objp)
 	XDR *xdrs;
 	ypresponse *objp;
 {
-	register long *buf;
+	int32_t *buf;
 
 	if (!xdr_ypresptype(xdrs, &objp->yp_resptype)) {
 		return (FALSE);
