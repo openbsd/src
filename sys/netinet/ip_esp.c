@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.25 1999/10/29 05:21:45 angelos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.26 1999/11/04 11:23:43 ho Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -148,6 +148,7 @@ esp_input(m, va_alist)
     sunion.sin.sin_family = AF_INET;
     sunion.sin.sin_len = sizeof(struct sockaddr_in);
     sunion.sin.sin_addr = ipo->ip_dst;
+    s = spltdb();
     tdbp = gettdb(spi, &sunion, IPPROTO_ESP);
     if (tdbp == NULL)
     {
@@ -242,7 +243,6 @@ esp_input(m, va_alist)
     if (ipo->ip_p == IPPROTO_TCP || ipo->ip_p == IPPROTO_UDP)
     {
 	struct tdb_ident *tdbi = NULL;
-	int s = spltdb();
 
 	if (tdbp->tdb_bind_out)
 	{
@@ -264,7 +264,6 @@ esp_input(m, va_alist)
 
     no_mem:
 	m->m_pkthdr.tdbi = tdbi;
-	splx(s);
     } else
         m->m_pkthdr.tdbi = NULL;
 
@@ -295,6 +294,7 @@ esp_input(m, va_alist)
         bpf_mtap(m->m_pkthdr.rcvif->if_bpf, &m0);
     }
 #endif
+    splx(s);
 
     /*
      * Interface pointer is already in first mbuf; chop off the 
