@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.13 1997/05/04 04:50:22 tholo Exp $
+#	$OpenBSD: install.sub,v 1.14 1997/05/04 05:08:00 tholo Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@ ROOTDISK=""				# filled in below
 VERSION=
 export VERSION
 
-ALLSETS="etc base misc comp text man game"	# default install sets
+ALLSETS="base etc misc comp text man game"	# default install sets
 UPGRSETS="base misc comp text man game"		# default upgrade sets
 THESETS=					# one of the above
 
