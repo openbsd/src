@@ -73,7 +73,7 @@
 #include <sparc/sparc/auxreg.h>
 
 #include <machine/kbd.h>
-#include <dev/ic/z8530.h>
+#include <dev/ic/z8530reg.h>
 #include <sparc/dev/zsvar.h>
 
 #ifdef KGDB
