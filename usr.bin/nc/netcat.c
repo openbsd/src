@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.63 2003/09/22 21:39:40 miod Exp $ */
+/* $OpenBSD: netcat.c,v 1.64 2003/10/19 22:50:35 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -172,7 +172,8 @@ main(int argc, char *argv[])
 			break;
 		case 'x':
 			xflag = 1;
-			proxy = strdup(optarg);
+			if ((proxy = strdup(optarg)) == NULL)
+				err(1, NULL);
 			break;
 		case 'z':
 			zflag = 1;
