@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.3 1997/05/05 06:01:49 millert Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.4 1997/07/08 10:42:24 niklas Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
@@ -52,6 +52,10 @@
 #include <machine/rpb.h>
 #include <machine/prom.h>
 
+/* XXX this is a userland header!!! must go. */
+#define _AOUT_INCLUDE_
+#include <nlist.h>
+
 #define _KERNEL
 #include "include/pte.h"
 
@@ -63,7 +67,7 @@ static int elf_exec __P((int, Elf_Ehdr *, u_int64_t *));
 #endif
 int loadfile __P((char *, u_int64_t *));
 
-vm_offset_t ffp_save, ptbr_save;
+vm_offset_t ffp_save, ptbr_save, esym;
 
 /*
  * Open 'filename', read in program and return the entry point or -1 if error.
@@ -127,6 +131,10 @@ coff_exec(fd, coff, entryp)
 	struct ecoff_exechdr *coff;
 	u_int64_t *entryp;
 {
+	struct nlist *symtab;
+	struct ecoff_symhdr symhdr;
+	struct ecoff_extsym sym;
+	int i, symsize;
 
 	/* Read in text. */
 	(void)printf("%lu", coff->a.tsize);
@@ -159,7 +167,47 @@ coff_exec(fd, coff, entryp)
 		ffp_save = coff->a.data_start + coff->a.dsize;
 	if (ffp_save < coff->a.bss_start + coff->a.bsize)
 		ffp_save = coff->a.bss_start + coff->a.bsize;
-	ffp_save = ALPHA_K0SEG_TO_PHYS((ffp_save + PGOFSET & ~PGOFSET)) >> PGSHIFT;
+
+	/* Get symbols if there for DDB's sake.  */
+	if (coff->f.f_symptr) {
+		lseek(fd, coff->f.f_symptr, 0);
+		if (read(fd, &symhdr, coff->f.f_nsyms) != coff->f.f_nsyms) {
+			printf("read data: %s\n", strerror(errno));
+			return (1);
+		}
+		*(long *)ffp_save = symsize =
+		    symhdr.esymMax * sizeof(struct nlist);
+		ffp_save += sizeof(long);
+		printf("+[%d", symsize);
+		symtab = (struct nlist *)ffp_save;
+		bzero(symtab, symsize);
+		lseek(fd, symhdr.cbExtOffset, 0);
+		for (i = 0; i < symhdr.esymMax; i++) {
+			if (read(fd, &sym, sizeof(sym)) != sizeof(sym)) {
+				printf("read data: %s\n", strerror(errno));
+				return (1);
+			}
+			symtab->n_un.n_strx = sym.es_strindex;
+			symtab->n_value = sym.es_value;
+			symtab->n_type = N_EXT;
+			symtab++;
+		}
+		ffp_save += symsize;
+		*(int *)ffp_save = symhdr.estrMax + sizeof(int);
+		ffp_save += sizeof(int);
+		lseek(fd, symhdr.cbSsExtOffset, 0);
+		if (read(fd, (char *)ffp_save, symhdr.estrMax) !=
+		    symhdr.estrMax) {
+			printf("read data: %s\n", strerror(errno));
+			return (1);
+		}
+		ffp_save += symhdr.estrMax;
+		printf("+%d]", symhdr.estrMax);
+		esym = ((ffp_save + sizeof(int) - 1) & ~(sizeof(int) - 1));
+	}
+
+	ffp_save = ALPHA_K0SEG_TO_PHYS((ffp_save + PGOFSET & ~PGOFSET)) >>
+	    PGSHIFT;
 	ffp_save += 2;		/* XXX OSF/1 does this, no idea why. */
 
 	(void)printf("\n");
