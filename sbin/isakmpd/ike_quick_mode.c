@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.17 1999/06/02 06:30:39 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.88 1999/05/30 14:12:30 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.18 1999/06/05 23:09:21 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.89 1999/06/05 22:07:20 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -794,7 +794,7 @@ post_quick_mode (struct message *msg)
   struct prf *prf;
   struct sa *sa;
   struct proto *proto;
-  struct ipsec_proto *iproto = proto->data;
+  struct ipsec_proto *iproto;
   u_int8_t *keymat;
   int i;
 
