@@ -1,5 +1,5 @@
-$OpenBSD: BUGS,v 1.11 1999/08/05 22:41:53 niklas Exp $
-$EOM: BUGS,v 1.32 1999/08/05 14:58:14 niklas Exp $
+$OpenBSD: BUGS,v 1.12 1999/10/01 14:09:31 niklas Exp $
+$EOM: BUGS,v 1.37 1999/09/30 12:44:40 niklas Exp $
 
 Until we have a bug-tracking system setup, we might just add bugs to this
 file:
@@ -78,3 +78,20 @@ file:
 * I have seen INITIAL-CONTACT sent on the second Main Mode.
 
 * When ID mismatches occur, coredumps may follow, investigate!
+
+* ESP+AH does not work properly
+
+* Looping QM seen (due to lost sendpackets from other participant?)
+
+* Teardown from UI does not remove exchanges.
+
+* Wrong error message when policy check fails.
+
+* Restransmit of QM (packet 1) after INFO/PAYLOAD_MALFORMED was received.
+
+* SIGSEGV after sa_enter: sa added to sa list, trigged by DELETE notify (Linux)
+
+* Passive connections, undefined local&remote IDs will cause IKE peer IDs
+  to be used. 
+
+* host route support in KLIPS does not work properly
