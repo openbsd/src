@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp.h,v 1.3 1997/02/24 14:06:47 niklas Exp $	*/
+/*	$OpenBSD: udp.h,v 1.4 2001/06/09 07:03:45 angelos Exp $	*/
 /*	$NetBSD: udp.h,v 1.6 1995/04/13 06:37:10 cgd Exp $	*/
 
 /*
@@ -36,6 +36,9 @@
  *	@(#)udp.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETINET_UDP_H_
+#define _NETINET_UDP_H_
+
 /*
  * Udp protocol header.
  * Per RFC 768, September, 1981.
@@ -46,3 +49,5 @@ struct udphdr {
 	u_int16_t uh_ulen;		/* udp length */
 	u_int16_t uh_sum;		/* udp checksum */
 };
+
+#endif /* _NETINET_UDP_H_ */

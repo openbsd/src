@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_var.h,v 1.35 2000/12/13 09:47:08 provos Exp $	*/
+/*	$OpenBSD: tcp_var.h,v 1.36 2001/06/09 07:03:43 angelos Exp $	*/
 /*	$NetBSD: tcp_var.h,v 1.17 1996/02/13 23:44:24 christos Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)tcp_var.h	8.3 (Berkeley) 4/10/94
  */
+
+#ifndef _NETINET_TCP_VAR_H_
+#define _NETINET_TCP_VAR_H_
 
 struct sackblk {
 	tcp_seq start;		/* start seq no. of sack block */
@@ -405,5 +408,5 @@ void	tcp_rndiss_init __P((void));
 tcp_seq	tcp_rndiss_next __P((void));
 u_int16_t
 	tcp_rndiss_encrypt __P((u_int16_t));
-
 #endif /* _KERNEL */
+#endif /* _NETINET_TCP_VAR_H_ */

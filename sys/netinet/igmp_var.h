@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp_var.h,v 1.3 1997/02/05 15:48:22 deraadt Exp $	*/
+/*	$OpenBSD: igmp_var.h,v 1.4 2001/06/09 07:03:40 angelos Exp $	*/
 /*	$NetBSD: igmp_var.h,v 1.9 1996/02/13 23:41:31 christos Exp $	*/
 
 /*
@@ -40,6 +40,9 @@
  *	@(#)igmp_var.h	8.1 (Berkeley) 7/19/93
  */
 
+#ifndef _NETINET_IGMP_VAR_H_
+#define _NETINET_IGMP_VAR_H_
+
 /*
  * Internet Group Management Protocol (IGMP),
  * implementation-specific definitions.
@@ -79,4 +82,5 @@ void	igmp_joingroup __P((struct in_multi *));
 void	igmp_leavegroup __P((struct in_multi *));
 void	igmp_fasttimo __P((void));
 void	igmp_slowtimo __P((void));
-#endif
+#endif /* _KERNEL */
+#endif /* _NETINET_IGMP_VAR_H_ */

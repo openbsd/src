@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.33 2000/09/19 03:20:58 angelos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.34 2001/06/09 07:03:41 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -35,8 +35,8 @@
  * PURPOSE.
  */
 
-#ifndef _NETINET_ESP_H_
-#define _NETINET_ESP_H_
+#ifndef _NETINET_IP_ESP_H_
+#define _NETINET_IP_ESP_H_
 
 #define ESP_ALEN	12	/* 96-bit authenticator */
 
@@ -78,4 +78,4 @@ struct espstat
 extern int esp_enable;
 struct espstat espstat;
 #endif /* _KERNEL */
-#endif _NETINET_ESP_H_
+#endif _NETINET_IP_ESP_H_

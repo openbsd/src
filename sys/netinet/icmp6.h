@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.15 2001/02/07 11:43:52 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.16 2001/06/09 07:03:39 angelos Exp $	*/
 /*	$KAME: icmp6.h,v 1.39 2001/02/06 03:48:06 itojun Exp $	*/
 
 /*
@@ -679,5 +679,4 @@ do { \
 extern int	icmp6_rediraccept;	/* accept/process redirects */
 extern int	icmp6_redirtimeout;	/* cache time for redirect routes */
 #endif /* _KERNEL */
-
-#endif /* not _NETINET_ICMP6_H_ */
+#endif /* _NETINET_ICMP6_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.h,v 1.3 1999/08/08 00:43:00 niklas Exp $	*/
+/*	$OpenBSD: igmp.h,v 1.4 2001/06/09 07:03:40 angelos Exp $	*/
 /*	$NetBSD: igmp.h,v 1.6 1995/05/31 06:08:21 mycroft Exp $	*/
 
 /*
@@ -39,6 +39,9 @@
  *
  *	@(#)igmp.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_IGMP_H_
+#define _NETINET_IGMP_H_
 
 /*
  * Internet Group Management Protocol (IGMP) definitions.
@@ -94,4 +97,5 @@ struct igmp {
 
 #ifdef _KERNEL
 void	rti_delete __P((struct ifnet *));
-#endif
+#endif /* _KERNEL */
+#endif /* _NETINET_IGMP_H_ */

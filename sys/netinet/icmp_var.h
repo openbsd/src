@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp_var.h,v 1.5 2000/10/10 14:24:33 itojun Exp $	*/
+/*	$OpenBSD: icmp_var.h,v 1.6 2001/06/09 07:03:39 angelos Exp $	*/
 /*	$NetBSD: icmp_var.h,v 1.8 1995/03/26 20:32:19 jtc Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)icmp_var.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_ICMP_VAR_H_
+#define _NETINET_ICMP_VAR_H_
 
 /*
  * Variables related to this implementation
@@ -73,4 +76,5 @@ struct	icmpstat {
 
 #ifdef _KERNEL
 struct	icmpstat icmpstat;
-#endif
+#endif /* _KERNEL */
+#endif /* _NETINET_ICMP_VAR_H_ */

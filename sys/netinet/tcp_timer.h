@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_timer.h,v 1.3 1997/02/24 14:06:46 niklas Exp $	*/
+/*	$OpenBSD: tcp_timer.h,v 1.4 2001/06/09 07:03:43 angelos Exp $	*/
 /*	$NetBSD: tcp_timer.h,v 1.6 1995/03/26 20:32:37 jtc Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)tcp_timer.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_TCP_TIMER_H_
+#define _NETINET_TCP_TIMER_H_
 
 /*
  * Definitions of the TCP timers.  These timers are counted
@@ -109,7 +112,7 @@
 #ifdef	TCPTIMERS
 char *tcptimers[] =
     { "REXMT", "PERSIST", "KEEP", "2MSL" };
-#endif
+#endif /* TCPTIMERS */
 
 /*
  * Force a time value to be in a certain range.
@@ -129,4 +132,5 @@ extern int tcp_keepintvl;		/* time between keepalive probes */
 extern int tcp_maxidle;			/* time to drop after starting probes */
 extern int tcp_ttl;			/* time to live for TCP segs */
 extern int tcp_backoff[];
-#endif
+#endif /* _KERNEL */
+#endif /* _NETINET_TCP_TIMER_H_ */

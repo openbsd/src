@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.h,v 1.12 2000/12/12 20:55:52 mickey Exp $	*/
+/*	$OpenBSD: ip_icmp.h,v 1.13 2001/06/09 07:03:42 angelos Exp $	*/
 /*	$NetBSD: ip_icmp.h,v 1.10 1996/02/13 23:42:28 christos Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)ip_icmp.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_IP_ICMP_H_
+#define _NETINET_IP_ICMP_H_
 
 /*
  * Interface Control Message Protocol Definitions.
@@ -193,4 +196,5 @@ int	icmp_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 struct rtentry *
 	icmp_mtudisc_clone(struct sockaddr *);
 void	icmp_mtudisc __P((struct icmp *));
-#endif
+#endif /* _KERNEL */
+#endif /* _NETINET_IP_ICMP_H_ */

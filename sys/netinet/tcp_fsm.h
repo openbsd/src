@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_fsm.h,v 1.4 1997/11/08 19:54:12 deraadt Exp $	*/
+/*	$OpenBSD: tcp_fsm.h,v 1.5 2001/06/09 07:03:43 angelos Exp $	*/
 /*	$NetBSD: tcp_fsm.h,v 1.6 1994/10/14 16:01:48 mycroft Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)tcp_fsm.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_TCP_FSM_H_
+#define _NETINET_TCP_FSM_H_
 
 /*
  * TCP FSM state definitions.
@@ -74,11 +77,11 @@ u_char	tcp_outflags[TCP_NSTATES] = {
     TH_ACK, TH_ACK,
     TH_FIN|TH_ACK, TH_ACK, TH_FIN|TH_ACK, TH_ACK, TH_ACK,
 };
-#endif
+#endif /* TCPOUTFLAGS */
 
 #ifdef KPROF
 int	tcp_acounts[TCP_NSTATES][PRU_NREQ];
-#endif
+#endif /* KPROF */
 
 #ifdef	TCPSTATES
 char *tcpstates[] = {
@@ -86,4 +89,5 @@ char *tcpstates[] = {
 	"ESTABLISHED",	"CLOSE_WAIT",	"FIN_WAIT_1",	"CLOSING",
 	"LAST_ACK",	"FIN_WAIT_2",	"TIME_WAIT",
 };
-#endif
+#endif /* TCPSTATES */
+#endif /* _NETINET_TCP_FSM_H_ */

@@ -1,5 +1,8 @@
-/*	$OpenBSD: ip_mroute.h,v 1.6 2000/01/21 03:15:05 angelos Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.7 2001/06/09 07:03:42 angelos Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.10 1996/02/13 23:42:55 christos Exp $	*/
+
+#ifndef _NETINET_IP_MROUTE_H_
+#define _NETINET_IP_MROUTE_H_
 
 /*
  * Definitions for IP multicast forwarding.
@@ -222,14 +225,12 @@ int	legal_vif_num __P((int));
 int	ip_rsvp_vif_init __P((struct socket *, struct mbuf *));
 int	ip_rsvp_vif_done __P((struct socket *, struct mbuf *));
 void	ip_rsvp_force_done __P((struct socket *));
-#if 0
-void	rsvp_input __P((struct mbuf *, struct ifnet *));
-#else
 void rsvp_input __P((struct mbuf *, int, int));
-#endif
 #else
 int	ip_mforward __P((struct mbuf *, struct ifnet *));
-#endif
+#endif /* RSVP_ISI */
+
 void	ipip_mroute_input __P((struct mbuf *, ...));
 
 #endif /* _KERNEL */
+#endif /* _NETINET_IP_MROUTE_H_ */

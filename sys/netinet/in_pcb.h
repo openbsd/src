@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.35 2001/05/27 03:53:09 angelos Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.36 2001/06/09 07:03:40 angelos Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -64,6 +64,9 @@
  *
  *	@(#)in_pcb.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_IN_PCB_H_
+#define _NETINET_IN_PCB_H_
 
 #include <sys/queue.h>
 #include <netinet/ip6.h>
@@ -277,4 +280,5 @@ struct 	in6_addr *in6_selectsrc __P((struct sockaddr_in6 *,
 				     struct in6_addr *, int *));
 int	in6_selecthlim __P((struct inpcb *, struct ifnet *));
 int	in6_pcbsetport __P((struct in6_addr *, struct inpcb *));
-#endif
+#endif /* _KERNEL */
+#endif /* _NETINET_IN_PCB_H_ */

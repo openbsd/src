@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_var.h,v 1.18 2001/05/28 05:29:36 angelos Exp $	*/
+/*	$OpenBSD: ip_var.h,v 1.19 2001/06/09 07:03:42 angelos Exp $	*/
 /*	$NetBSD: ip_var.h,v 1.16 1996/02/13 23:43:20 christos Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)ip_var.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_IP_VAR_H_
+#define _NETINET_IP_VAR_H_
 
 #include <sys/queue.h>
 
@@ -196,4 +199,5 @@ void	 rip_input __P((struct mbuf *, ...));
 int	 rip_output __P((struct mbuf *, ...));
 int	 rip_usrreq __P((struct socket *,
 	    int, struct mbuf *, struct mbuf *, struct mbuf *));
-#endif
+#endif /* _KERNEL */
+#endif /* _NETINET_IP_VAR_H_ */

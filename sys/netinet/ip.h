@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip.h,v 1.6 1999/12/08 06:50:19 itojun Exp $	*/
+/*	$OpenBSD: ip.h,v 1.7 2001/06/09 07:03:41 angelos Exp $	*/
 /*	$NetBSD: ip.h,v 1.9 1995/05/15 01:22:44 cgd Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)ip.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_IP_H_
+#define _NETINET_IP_H_
 
 /*
  * Definitions for internet protocol version 4.
@@ -185,3 +188,4 @@ struct ippseudo {
 	u_int8_t  ippseudo_p;		/* protocol */
 	u_int16_t ippseudo_len;		/* protocol length */
 };
+#endif /* _NETINET_IP_H_ */

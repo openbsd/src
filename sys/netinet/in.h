@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.45 2001/05/27 05:27:01 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.46 2001/06/09 07:03:40 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -513,5 +513,5 @@ char	  *inet_ntoa __P((struct in_addr));
 #define	satosin(sa)	((struct sockaddr_in *)(sa))
 #define	sintosa(sin)	((struct sockaddr *)(sin))
 #define	ifatoia(ifa)	((struct in_ifaddr *)(ifa))
-#endif
-#endif /* !_NETINET_IN_H_ */
+#endif /* _KERNEL */
+#endif /* _NETINET_IN_H_ */

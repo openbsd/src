@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_var.h,v 1.3 1999/12/08 06:50:19 itojun Exp $	*/
+/*	$OpenBSD: in_var.h,v 1.4 2001/06/09 07:03:41 angelos Exp $	*/
 /*	$NetBSD: in_var.h,v 1.16 1996/02/13 23:42:15 christos Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)in_var.h	8.1 (Berkeley) 6/10/93
  */
+
+#ifndef _NETINET_IN_VAR_H_
+#define _NETINET_IN_VAR_H_
 
 #include <sys/queue.h>
 
@@ -218,3 +221,5 @@ int	in_control __P((struct socket *, u_long, caddr_t, struct ifnet *));
 
 /* INET6 stuff */
 #include <netinet6/in6_var.h>
+
+#endif /* _NETINET_IN_VAR_H_ */

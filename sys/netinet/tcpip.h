@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcpip.h,v 1.4 1997/08/26 20:02:35 deraadt Exp $	*/
+/*	$OpenBSD: tcpip.h,v 1.5 2001/06/09 07:03:45 angelos Exp $	*/
 /*	$NetBSD: tcpip.h,v 1.6 1995/11/21 01:07:44 cgd Exp $	*/
 
 /*
@@ -36,6 +36,9 @@
  *	@(#)tcpip.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef _NETINET_TCPIP_H_
+#define _NETINET_TCPIP_H_
+
 /*
  * Tcp+ip header, after ip options removed.
  */
@@ -58,3 +61,5 @@ struct tcpiphdr {
 #define	ti_win		ti_t.th_win
 #define	ti_sum		ti_t.th_sum
 #define	ti_urp		ti_t.th_urp
+
+#endif /* _NETINET_TCPIP_H_ */

@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.h,v 1.1 2000/01/07 21:38:01 angelos Exp $ */
+/*      $OpenBSD: ip_gre.h,v 1.2 2001/06/09 07:03:42 angelos Exp $ */
 /*	$NetBSD: ip_gre.h,v 1.3 1998/10/07 23:33:02 thorpej Exp $ */
 
 /*
@@ -37,6 +37,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef _NETINET_IP_GRE_H_
+#define _NETINET_IP_GRE_H_
+
 /*
  * Names for GRE sysctl objects
  */
@@ -68,5 +71,6 @@ int     gre_sysctl __P((int *, u_int, void *, size_t *, void *, size_t));
 
 #ifndef MROUTING
 void gre_ipip_input __P((struct mbuf *, ...));
-#endif
+#endif /* MROUTING */
 #endif /* _KERNEL */
+#endif /* _NETINET_IP_GRE_H_ */
