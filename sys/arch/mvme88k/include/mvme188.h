@@ -1,4 +1,4 @@
-/*	$OpenBSD: mvme188.h,v 1.17 2004/04/26 12:34:05 miod Exp $ */
+/*	$OpenBSD: mvme188.h,v 1.18 2004/07/23 22:19:09 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -97,16 +97,12 @@
 #define MVME188_GLBRES	0xFFF8700C	/* 188 global reset reg */
 
 #define GCSR_BASE	0xfff86000
-#define GLOBAL0		GCSR_BASE + 0x01
-#define GLOBAL1		GCSR_BASE + 0x03
-#define GLOBAL2		GCSR_BASE + 0x05
-#define GLOBAL3		GCSR_BASE + 0x07
 #define GLB0		0xfff86001
 #define GLB1		0xfff86003
 #define GLB2		0xfff86005
 #define GLB3		0xfff86007
 #define	M188_LRST	0x00000080
-#define	M188_SYSCONNEG	0x00000040
+#define	M188_SYSCON	0x00000040
 #define UCSR_REG	0xfff87000
 #define GLBRES_REG	0xfff8700C
 
@@ -371,5 +367,3 @@ extern unsigned int *volatile int_mask_reg[MAX_CPUS];
 #define M188_IVEC		0x40	/* vector returned upon MVME188 int */
 
 #endif	/* __MACHINE_MVME188_H__ */
-
-
