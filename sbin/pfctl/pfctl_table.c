@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_table.c,v 1.21 2003/01/14 21:58:12 henning Exp $ */
+/*	$OpenBSD: pfctl_table.c,v 1.22 2003/01/18 11:46:06 cedric Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -284,10 +284,8 @@ pfctl_table(int argc, char *argv[], char *tname, char *command,
 		if (opts & PF_OPT_VERBOSE2) {
 			flags |= PFR_FLAG_REPLACE;
 			buffer2.caddr = calloc(sizeof(buffer.addrs[0]), size);
-			if (buffer2.caddr == NULL) {
-				perror(__progname);
-				return 1;
-			}
+			if (buffer2.caddr == NULL)
+				err(1, "calloc");
 			memcpy(buffer2.addrs, buffer.addrs, size *
 			    sizeof(buffer.addrs[0]));
 		}
@@ -328,6 +326,8 @@ grow_buffer(int bs, int minsize)
 		if (msize < 64)
 			msize = 64;
 		buffer.caddr = calloc(bs, msize);
+		if (buffer.caddr == NULL)
+			err(1, "calloc");
 	} else {
 		int omsize = msize;
 		if (minsize == 0)
@@ -335,12 +335,9 @@ grow_buffer(int bs, int minsize)
 		else
 			msize = minsize;
 		buffer.caddr = realloc(buffer.caddr, msize * bs);
-		if (buffer.caddr)
-			bzero(buffer.caddr + omsize * bs, (msize-omsize) * bs);
-	}
-	if (!buffer.caddr) {
-		perror(__progname);
-		exit(1);
+		if (buffer.caddr == NULL)
+			err(1, "realloc");
+		bzero(buffer.caddr + omsize * bs, (msize-omsize) * bs);
 	}
 }
 
@@ -397,10 +394,8 @@ load_addr(int argc, char *argv[], char *file, int nonetwork)
 		fp = stdin;
 	else {
 		fp = fopen(file, "r");
-		if (fp == NULL) {
-			perror(__progname);
-			exit(1);
-		}
+		if (fp == NULL)
+			err(1, "%s", file);
 	}
 	while (next_token(buf, fp))
 		append_addr(buf, nonetwork);
@@ -485,7 +480,6 @@ append_addr(char *s, int test)
 			if (buffer.addrs[size].pfra_net > 128)
 				errx(1, "illegal netmask %d",
 				    buffer.addrs[size].pfra_net);
-			break;
 			break;
 		default:
 			errx(1, "unknown address family %d", n->af);
@@ -623,7 +617,7 @@ pfctl_define_table(char *name, int flags, int addrs)
 	bzero(&tbl, sizeof(tbl));
 	if (strlcpy(tbl.pfrt_name, name, sizeof(tbl.pfrt_name)) >=
 	    sizeof(tbl.pfrt_name))
-		errx(1, "pfctl_define_table");
+		errx(1, "pfctl_define_table: strlcpy");
 	tbl.pfrt_flags = flags;
 
 	inactive = 1;
