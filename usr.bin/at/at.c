@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.31 2002/11/20 19:57:19 millert Exp $	*/
+/*	$OpenBSD: at.c,v 1.32 2003/01/02 15:48:40 mpech Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -73,7 +73,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.31 2002/11/20 19:57:19 millert Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.32 2003/01/02 15:48:40 mpech Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -675,7 +675,8 @@ process_jobs(int argc, char **argv, int what)
 		job_matches = (argc == 0) ? 1 : 0;
 		if (!job_matches) {
 			for (i = 0; i < jobs_len; i++) {
-				if (strcmp(dirent->d_name, jobs[i]) == 0) {
+				if (jobs[i] != NULL &&
+				    strcmp(dirent->d_name, jobs[i]) == 0) {
 					jobs[i] = NULL;
 					job_matches = 1;
 					break;
