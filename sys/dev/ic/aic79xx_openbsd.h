@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx_openbsd.h,v 1.5 2004/08/23 20:16:01 marco Exp $	*/
+/*	$OpenBSD: aic79xx_openbsd.h,v 1.6 2004/10/24 04:40:06 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -144,21 +144,6 @@ struct ahd_platform_data {
 struct scb_platform_data {
 };
 
-/********************************* Byte Order *********************************/
-#define ahd_htobe16(x) htobe16(x)
-#define ahd_htobe32(x) htobe32(x)
-#define ahd_htobe64(x) htobe64(x)
-#define ahd_htole16(x) htole16(x)
-#define ahd_htole32(x) htole32(x)
-#define ahd_htole64(x) htole64(x)
-
-#define ahd_be16toh(x) be16toh(x)
-#define ahd_be32toh(x) be32toh(x)
-#define ahd_be64toh(x) be64toh(x)
-#define ahd_le16toh(x) letoh16(x)
-#define ahd_le32toh(x) letoh32(x)
-#define ahd_le64toh(x) letoh64(x)
-
 /************************** Timer DataStructures ******************************/
 typedef struct timeout ahd_timer_t;
 
@@ -192,13 +177,13 @@ ahd_callback_t  ahd_stat_timer;
 			  (ahd)->bshs[(port) >> 8], (port) & 0xFF, value)
 
 #define ahd_inw_atomic(ahd, port)				\
-	ahd_le16toh(bus_space_read_2((ahd)->tags[(port) >> 8],	\
+	aic_le16toh(bus_space_read_2((ahd)->tags[(port) >> 8],	\
 				     (ahd)->bshs[(port) >> 8], (port) & 0xFF))
 
 #define ahd_outw_atomic(ahd, port, value)			\
 	bus_space_write_2((ahd)->tags[(port) >> 8],		\
 			  (ahd)->bshs[(port) >> 8],		\
-			  (port & 0xFF), ahd_htole16(value))
+			  (port & 0xFF), aic_htole16(value))
 
 #define ahd_outsb(ahd, port, valp, count)			\
 	bus_space_write_multi_1((ahd)->tags[(port) >> 8],	\
@@ -229,7 +214,6 @@ void ahd_list_lock(int *flags);
 void ahd_list_unlock(int *flags);
 
 /****************************** OS Primitives *********************************/
-#define ahd_delay DELAY
 
 /************************** Transaction Operations ****************************/
 void ahd_set_transaction_status(struct scb *, uint32_t);
