@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.133 2001/06/24 21:14:33 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.134 2001/06/24 23:11:45 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -925,6 +925,11 @@ ipsp_kern(int off, char **bufp, int len)
 			     ipsp_address(tdb->tdb_proxy));
 	      else
 		l += sprintf(buffer + l, "\n");
+
+	      if (tdb->tdb_mtu && tdb->tdb_mtutimeout > time.tv_sec)
+		l += sprintf(buffer + l,
+			     "\tMTU: %d, expires in %qu seconds\n",
+			      tdb->tdb_mtu, tdb->tdb_mtutimeout - time.tv_sec);
 
 	      if (tdb->tdb_local_cred)
 		l += sprintf(buffer + l, "\tLocal credential type %d\n", ((struct ipsec_ref *) tdb->tdb_local_cred)->ref_type);
