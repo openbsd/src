@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.26 2003/07/08 04:45:32 millert Exp $	*/
+/*	$OpenBSD: diff.c,v 1.27 2003/07/09 00:07:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.26 2003/07/08 04:45:32 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.27 2003/07/09 00:07:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -38,13 +38,13 @@ static const char rcsid[] = "$OpenBSD: diff.c,v 1.26 2003/07/08 04:45:32 millert
 
 #include "diff.h"
 
-int	 aflag, bflag, iflag, Nflag, Pflag, rflag, sflag, tflag, wflag;
+int	 aflag, bflag, iflag, lflag, Nflag, Pflag, rflag, sflag, tflag, wflag;
 int	 format, context, status;
 char	*start, *ifdefname, *diffargs;
 struct stat stb1, stb2;
 struct excludes *excludes_list;
 
-#define	OPTIONS	"abC:cD:efhinNPqrS:stU:uwX:x:"
+#define	OPTIONS	"abC:cD:efhilnNPqrS:stU:uwX:x:"
 static struct option longopts[] = {
 	{ "text",			no_argument,		0,	'a' },
 	{ "ignore-space-change",	no_argument,		0,	'b' },
@@ -53,6 +53,7 @@ static struct option longopts[] = {
 	{ "ed",				no_argument,		0,	'e' },
 	{ "forward-ed",			no_argument,		0,	'f' },
 	{ "ignore-case",		no_argument,		0,	'i' },
+	{ "paginate",			no_argument,		0,	'l' },
 	{ "new-file",			no_argument,		0,	'N' },
 	{ "rcs",			no_argument,		0,	'n' },
 	{ "unidirectional-new-file",	no_argument,		0,	'P' },
@@ -116,6 +117,9 @@ main(int argc, char **argv)
 			break;
 		case 'i':
 			iflag = 1;
+			break;
+		case 'l':
+			lflag = 1;
 			break;
 		case 'N':
 			Nflag = 1;
@@ -187,13 +191,15 @@ main(int argc, char **argv)
 		error("%s", argv[1]);
 	if (gotstdin && (S_ISDIR(stb1.st_mode) || S_ISDIR(stb2.st_mode)))
 		errorx("can't compare - to a directory");
+	set_argstr(oargv, argv);
 	if (S_ISDIR(stb1.st_mode) && S_ISDIR(stb2.st_mode)) {
 		if (format == D_IFDEF)
 			errorx("-D option not supported with directories");
-		set_argstr(oargv, argv);
 		diffdir(argv[0], argv[1]);
-	} else
-		diffreg(argv[0], argv[1], 0);
+	} else {
+		print_status(diffreg(argv[0], argv[1], 0), argv[0], argv[1],
+		    NULL);
+	}
 	exit(status);
 }
 
@@ -225,6 +231,21 @@ erealloc(void *p, size_t n)
 	if ((q = realloc(p, n)) == NULL)
 		error(NULL);
 	return (q);
+}
+
+int
+easprintf(char **ret, const char *fmt, ...)
+{
+	int len;
+	va_list ap;
+
+	va_start(ap, fmt);
+	len = vasprintf(ret, fmt, ap);
+	va_end(ap);
+
+	if (len == -1)
+		error(NULL);
+	return(len);
 }
 
 __dead void
@@ -312,6 +333,36 @@ push_excludes(char *pattern)
 	entry->pattern = pattern;
 	entry->next = excludes_list;
 	excludes_list = entry;
+}
+
+void
+print_status(int val, char *path1, char *path2, char *entry)
+{
+	switch (val) {
+	case D_ONLY:
+		printf("Only in %s: %s\n", path1, entry);
+		break;
+	case D_COMMON:
+		printf("Common subdirectories: %s%s and %s%s\n",
+		    path1, entry ? entry : "", path2, entry ? entry : "");
+		break;
+	case D_BINARY:
+		printf("Binary files %s%s and %s%s differ\n",
+		    path1, entry ? entry : "", path2, entry ? entry : "");
+		break;
+	case D_DIFFER:
+		if (format == D_BRIEF)
+			printf("Files %s%s and %s%s differ\n",
+			    path1, entry ? entry : "",
+			    path2, entry ? entry : "");
+		break;
+	case D_SAME:
+		if (sflag)
+			printf("Files %s%s and %s%s are identical\n",
+			    path1, entry ? entry : "",
+			    path2, entry ? entry : "");
+		break;
+	}
 }
 
 __dead void

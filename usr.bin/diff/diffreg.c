@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.30 2003/07/08 04:51:30 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.31 2003/07/09 00:07:44 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,17 +65,17 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.30 2003/07/08 04:51:30 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.31 2003/07/09 00:07:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
 #include <libgen.h>
-#include <paths.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -83,6 +83,7 @@ static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.30 2003/07/08 04:51:30 mill
 #include <unistd.h>
 
 #include "diff.h"
+#include "pathnames.h"
 
 /*
  * diff - compare two files.
@@ -257,14 +258,16 @@ u_char cup2low[256] = {
 	0xfd, 0xfe, 0xff
 };
 
-void
+int
 diffreg(char *ofile1, char *ofile2, int flags)
 {
 	char *file1 = ofile1;
 	char *file2 = ofile2;
 	FILE *f1 = NULL;
 	FILE *f2 = NULL;
-	int i;
+	int rval = D_SAME;
+	int i, ostdout = -1;
+	pid_t pid = -1;
 
 	anychange = 0;
 	chrtran = (iflag ? cup2low : clow2low);
@@ -332,7 +335,7 @@ diffreg(char *ofile1, char *ofile2, int flags)
 
 	switch (files_differ(f1, f2, flags)) {
 	case 0:
-		goto same;
+		goto closem;
 	case 1:
 		break;
 	default:
@@ -346,19 +349,58 @@ notsame:
 	 * Files certainly differ at this point; set status accordingly
 	 */
 	status |= 1;
-	if (format == D_BRIEF) {
-		printf("Files %s and %s differ\n", file1, file2);
-		goto closem;
-	}
-	if (flags & D_HEADER) {
-		if (format == D_EDIT)
-			printf("ed - %s << '-*-END-*-'\n", basename(file1));
-		else
-			printf("%s %s %s\n", diffargs, file1, file2);
-	}
+	rval = D_DIFFER;
 	if (!asciifile(f1) || !asciifile(f2)) {
-		printf("Binary files %s and %s differ\n", file1, file2);
+		rval = D_BINARY;
 		goto closem;
+	}
+	if (format == D_BRIEF)
+		goto closem;
+	if (lflag) {
+		/* redirect stdout to pr */
+		int pfd[2];
+		char *header;
+		char *prargv[] = { "pr", "-h", NULL, "-f", NULL };
+
+		easprintf(&header, "%s %s %s", diffargs, file1, file2);
+		prargv[2] = header;
+		fflush(stdout);
+		rewind(stdout);
+		pipe(pfd);
+		switch ((pid = fork())) {
+		case -1:
+			warnx("No more processes");
+			status |= 2;
+			free(header);
+			return (D_ERROR);
+		case 0:
+			/* child */
+			if (pfd[0] != STDIN_FILENO) {
+				dup2(pfd[0], STDIN_FILENO);
+				close(pfd[0]);
+			}
+			close(pfd[1]);
+			execv(_PATH_PR, prargv);
+			_exit(127);
+		default:
+			/* parent */
+			if (pfd[1] != STDOUT_FILENO) {
+				ostdout = dup(STDOUT_FILENO);
+				dup2(pfd[1], STDOUT_FILENO);
+				close(pfd[1]);
+			}
+			close(pfd[0]);
+			rewind(stdout);
+			free(header);
+		}
+	} else {
+		if (flags & D_HEADER) {
+			if (format == D_EDIT)
+				printf("ed - %s << '-*-END-*-'\n",
+				    basename(file1));
+			else
+				printf("%s %s %s\n", diffargs, file1, file2);
+		}
 	}
 	prepare(0, f1);
 	prepare(1, f2);
@@ -389,12 +431,20 @@ notsame:
 	ixnew = erealloc(ixnew, (len[1] + 2) * sizeof(long));
 	check(file1, f1, file2, f2);
 	output(file1, f1, file2, f2);
-	if ((flags & D_HEADER) && format == D_EDIT)
-		printf("w\nq\n-*-END-*-\n");
-same:
-	if (anychange == 0 && sflag != 0)
-		printf("Files %s and %s are identical\n", file1, file2);
+	if (ostdout != -1) {
+		int wstatus;
 
+		/* close the pipe to pr and restore stdout */
+		fflush(stdout);
+		rewind(stdout);
+		if (ostdout != STDOUT_FILENO) {
+			close(STDOUT_FILENO);
+			dup2(ostdout, STDOUT_FILENO);
+			close(ostdout);
+		}
+		waitpid(pid, &wstatus, 0);
+	} else if ((flags & D_HEADER) && format == D_EDIT)
+		printf("w\nq\n-*-END-*-\n");
 closem:
 	if (f1 != NULL)
 		fclose(f1);
@@ -412,6 +462,7 @@ closem:
 		tempfiles[1] = NULL;
 	} else if (file2 != ofile2)
 		free(file2);
+	return (rval);
 }
 
 /*
@@ -470,6 +521,7 @@ copytemp(const char *file, int n)
 	signal(SIGINT, quit);
 	signal(SIGPIPE, quit);
 	signal(SIGTERM, quit);
+	signal(SIGPIPE, SIG_IGN);
 	ofd = mkstemp(tempfile);
 	if (ofd < 0)
 		return (NULL);
@@ -486,16 +538,13 @@ char *
 splice(char *dir, char *file)
 {
 	char *tail, *buf;
-	size_t len;
 
 	tail = strrchr(file, '/');
 	if (tail == NULL)
 		tail = file;
 	else
 		tail++;
-	len = strlen(dir) + 1 + strlen(tail) + 1;
-	buf = emalloc(len);
-	snprintf(buf, len, "%s/%s", dir, tail);
+	easprintf(&buf, "%s/%s", dir, tail);
 	return (buf);
 }
 
@@ -960,7 +1009,7 @@ change(char *file1, FILE *f1, char *file2, FILE *f2, int a, int b, int c, int d)
 	if ((format == D_EDIT || format == D_REVERSE) && c <= d)
 		puts(".");
 	if (inifdef) {
-		fprintf(stdout, "#endif /* %s */\n", ifdefname);
+		printf("#endif /* %s */\n", ifdefname);
 		inifdef = 0;
 	}
 }
@@ -993,13 +1042,13 @@ fetch(long *f, int a, int b, FILE *lb, char *s, int oldfile)
 		return;
 	if (format == D_IFDEF) {
 		if (inifdef) {
-			fprintf(stdout, "#else /* %s%s */\n",
+			printf("#else /* %s%s */\n",
 			    oldfile == 1 ? "!" : "", ifdefname);
 		} else {
 			if (oldfile)
-				fprintf(stdout, "#ifndef %s\n", ifdefname);
+				printf("#ifndef %s\n", ifdefname);
 			else
-				fprintf(stdout, "#ifdef %s\n", ifdefname);
+				printf("#ifdef %s\n", ifdefname);
 		}
 		inifdef = 1 + oldfile;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffdir.c,v 1.21 2003/07/06 22:17:21 millert Exp $	*/
+/*	$OpenBSD: diffdir.c,v 1.22 2003/07/09 00:07:44 millert Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.21 2003/07/06 22:17:21 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffdir.c,v 1.22 2003/07/09 00:07:44 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -44,6 +44,8 @@ static int dircompare(const void *, const void *);
 static int excluded(const char *);
 static struct dirent **slurpdir(char *, char **, int);
 static void diffit(struct dirent *, char *, size_t, char *, size_t);
+
+#define d_status	d_type		/* we need to store status for -l */
 
 /*
  * Diff directory traveral. Will be called recursively if -r was specified.
@@ -113,6 +115,8 @@ diffdir(char *p1, char *p2)
 			/* file only in first dir, only diff if -N */
 			if (Nflag)
 				diffit(dent1, path1, dirlen1, path2, dirlen2);
+			else if (lflag)
+				dent1->d_status |= D_ONLY;
 			else if (format == D_NORMAL || format == D_CONTEXT ||
 			    format == D_UNIFIED || format == D_BRIEF)
 				/* XXX GNU diff always prints this XXX */
@@ -123,12 +127,27 @@ diffdir(char *p1, char *p2)
 			/* file only in second dir, only diff if -N or -P */
 			if (Nflag || Pflag)
 				diffit(dent2, path1, dirlen1, path2, dirlen2);
+			else if (lflag)
+				dent2->d_status |= D_ONLY;
 			else if (format == D_NORMAL || format == D_CONTEXT ||
 			    format == D_UNIFIED || format == D_BRIEF)
 				/* XXX GNU diff always prints this XXX */
 				printf("Only in %.*s: %s\n", (int)(dirlen2 - 1),
 				    path2, dent2->d_name);
 			dp2++;
+		}
+	}
+	if (lflag) {
+		path1[dirlen1 - 1] = '\0';
+		path2[dirlen2 - 1] = '\0';
+		for (dp1 = dirp1; (dent1 = *dp1) != NULL; dp1++) {
+			print_status(dent1->d_status, path1, path2,
+			    dent1->d_name);
+		}
+		for (dp2 = dirp2; (dent2 = *dp2) != NULL; dp2++) {
+			if (dent2->d_status == D_ONLY)
+				print_status(dent2->d_status, path2, NULL,
+				    dent2->d_name);
 		}
 	}
 
@@ -201,8 +220,10 @@ slurpdir(char *path, char **bufp, int enoentok)
 	for (entries = 0, cp = buf; cp < ebuf; ) {
 		dp = (struct dirent *)cp;
 		if (dp->d_fileno != 0 && dp->d_type != DT_WHT &&
-		    !excluded(dp->d_name))
+		    !excluded(dp->d_name)) {
+			dp->d_status = 0;
 			dirlist[entries++] = dp;
+		}
 		if (dp->d_reclen <= 0)
 			break;
 		cp += dp->d_reclen;
@@ -261,13 +282,15 @@ diffit(struct dirent *dp, char *path1, size_t plen1, char *path2, size_t plen2)
 	if (S_ISDIR(stb1.st_mode) && S_ISDIR(stb2.st_mode)) {
 		if (rflag)
 			diffdir(path1, path2);
+		else if (lflag)
+			dp->d_status |= D_COMMON;
 		else if (format != D_EDIT)
 			/* XXX GNU diff always prints this for dirs XXX */
 			printf("Common subdirectories: %s and %s\n",
 			    path1, path2);
 		return;
 	}
-	diffreg(path1, path2, flags);
+	dp->d_status = diffreg(path1, path2, flags);
 }
 
 /*
