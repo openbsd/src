@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: md5.c,v 1.3 1996/11/24 02:26:00 niklas Exp $
+ * $OpenBSD: md5.c,v 1.4 1997/06/20 20:35:29 flipk Exp $
  *
  * Derived from:
  */
@@ -30,8 +30,8 @@
 /*
  * Length of test block, number of test blocks.
  */
-#define TEST_BLOCK_LEN 1000
-#define TEST_BLOCK_COUNT 1000
+#define TEST_BLOCK_LEN 10000
+#define TEST_BLOCK_COUNT 10000
 
 static void MDString PROTO_LIST((char *));
 static void MDTimeTrial PROTO_LIST((void));
@@ -107,6 +107,7 @@ MDTimeTrial()
 	printf
 	    ("MD5 time trial. Digesting %d %d-byte blocks ...",
 	    TEST_BLOCK_LEN, TEST_BLOCK_COUNT);
+	fflush(stdout);
 
 	/* Initialize block */
 	for (i = 0; i < TEST_BLOCK_LEN; i++)
