@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.9 1997/11/08 17:21:08 niklas Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.10 1998/08/06 19:34:22 csapuntz Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -825,23 +825,6 @@ cd9660_symlink(v)
 }
 
 /*
- * cd9660 abort op, called after namei() when a CREATE/DELETE isn't actually
- * done. If a buffer has been saved in anticipation of a CREATE, delete it.
- */
-int
-cd9660_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
-}
-
-/*
  * Lock an inode.
  */
 int
@@ -1002,7 +985,7 @@ int	lease_check	__P((void *));
 #define	cd9660_truncate	eopnotsupp
 #define	cd9660_update	eopnotsupp
 #define	cd9660_bwrite	eopnotsupp
-#define cd9660_revoke   vop_revoke
+#define cd9660_revoke   vop_generic_revoke
 
 /*
  * Global vfs data structures for cd9660
@@ -1035,7 +1018,7 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_symlink_desc, cd9660_symlink },	/* symlink */
 	{ &vop_readdir_desc, cd9660_readdir },	/* readdir */
 	{ &vop_readlink_desc, cd9660_readlink },/* readlink */
-	{ &vop_abortop_desc, cd9660_abortop },	/* abortop */
+	{ &vop_abortop_desc, vop_generic_abortop },	/* abortop */
 	{ &vop_inactive_desc, cd9660_inactive },/* inactive */
 	{ &vop_reclaim_desc, cd9660_reclaim },	/* reclaim */
 	{ &vop_lock_desc, cd9660_lock },	/* lock */
@@ -1051,7 +1034,7 @@ struct vnodeopv_entry_desc cd9660_vnodeop_entries[] = {
 	{ &vop_vfree_desc, cd9660_vfree },	/* vfree */
 	{ &vop_truncate_desc, cd9660_truncate },/* truncate */
 	{ &vop_update_desc, cd9660_update },	/* update */
-	{ &vop_bwrite_desc, vn_bwrite },
+	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc cd9660_vnodeop_opv_desc =
@@ -1104,7 +1087,7 @@ struct vnodeopv_entry_desc cd9660_specop_entries[] = {
 	{ &vop_vfree_desc, spec_vfree },	/* vfree */
 	{ &vop_truncate_desc, spec_truncate },	/* truncate */
 	{ &vop_update_desc, cd9660_update },	/* update */
-	{ &vop_bwrite_desc, vn_bwrite },
+	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc cd9660_specop_opv_desc =
@@ -1155,7 +1138,7 @@ struct vnodeopv_entry_desc cd9660_fifoop_entries[] = {
 	{ &vop_vfree_desc, fifo_vfree },	/* vfree */
 	{ &vop_truncate_desc, fifo_truncate },	/* truncate */
 	{ &vop_update_desc, cd9660_update },	/* update */
-	{ &vop_bwrite_desc, vn_bwrite },
+	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc cd9660_fifoop_opv_desc =

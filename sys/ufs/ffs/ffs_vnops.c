@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.6 1997/11/06 05:59:20 csapuntz Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.7 1998/08/06 19:35:07 csapuntz Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_symlink_desc, ufs_symlink },		/* symlink */
 	{ &vop_readdir_desc, ufs_readdir },		/* readdir */
 	{ &vop_readlink_desc, ufs_readlink },		/* readlink */
-	{ &vop_abortop_desc, ufs_abortop },		/* abortop */
+	{ &vop_abortop_desc, vop_generic_abortop },	/* abortop */
 	{ &vop_inactive_desc, ufs_inactive },		/* inactive */
 	{ &vop_reclaim_desc, ffs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
@@ -112,7 +112,7 @@ struct vnodeopv_entry_desc ffs_vnodeop_entries[] = {
 	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
 	{ &vop_truncate_desc, ffs_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
-	{ &vop_bwrite_desc, vn_bwrite },
+	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void*)))NULL }
 };
 struct vnodeopv_desc ffs_vnodeop_opv_desc =
@@ -134,7 +134,7 @@ struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_lease_desc, spec_lease_check },		/* lease */
 	{ &vop_ioctl_desc, spec_ioctl },		/* ioctl */
 	{ &vop_select_desc, spec_select },		/* select */
-	{ &vop_revoke_desc, spec_revoke },              /* revoke */
+	{ &vop_revoke_desc, spec_revoke },      /* revoke */
 	{ &vop_mmap_desc, spec_mmap },			/* mmap */
 	{ &vop_fsync_desc, ffs_fsync },			/* fsync */
 	{ &vop_seek_desc, spec_seek },			/* seek */
@@ -163,7 +163,7 @@ struct vnodeopv_entry_desc ffs_specop_entries[] = {
 	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
 	{ &vop_truncate_desc, spec_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
-	{ &vop_bwrite_desc, vn_bwrite },
+	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc ffs_specop_opv_desc =
@@ -215,7 +215,7 @@ struct vnodeopv_entry_desc ffs_fifoop_entries[] = {
 	{ &vop_vfree_desc, ffs_vfree },			/* vfree */
 	{ &vop_truncate_desc, fifo_truncate },		/* truncate */
 	{ &vop_update_desc, ffs_update },		/* update */
-	{ &vop_bwrite_desc, vn_bwrite },
+	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc ffs_fifoop_opv_desc =

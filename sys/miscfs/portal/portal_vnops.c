@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.6 1998/06/11 16:34:25 deraadt Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.7 1998/08/06 19:34:44 csapuntz Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -95,17 +95,16 @@ int	portal_link	__P((void *));
 #define	portal_rmdir	eopnotsupp
 int	portal_symlink	__P((void *));
 int	portal_readdir	__P((void *));
-#define portal_revoke   vop_revoke
+#define portal_revoke   vop_generic_revoke
 #define	portal_readlink	eopnotsupp
-int	portal_abortop	__P((void *));
 int	portal_inactive	__P((void *));
 int	portal_reclaim	__P((void *));
-#define	portal_lock	vop_nolock
-#define	portal_unlock	vop_nounlock
+#define	portal_lock	vop_generic_lock
+#define	portal_unlock	vop_generic_unlock
 #define	portal_bmap	portal_badop
 #define	portal_strategy	portal_badop
 int	portal_print	__P((void *));
-#define	portal_islocked	vop_noislocked
+#define	portal_islocked	vop_generic_islocked
 int	portal_pathconf	__P((void *));
 #define	portal_advlock	eopnotsupp
 #define	portal_blkatoff	eopnotsupp
@@ -142,7 +141,7 @@ struct vnodeopv_entry_desc portal_vnodeop_entries[] = {
 	{ &vop_symlink_desc, portal_symlink },		/* symlink */
 	{ &vop_readdir_desc, portal_readdir },		/* readdir */
 	{ &vop_readlink_desc, portal_readlink },	/* readlink */
-	{ &vop_abortop_desc, portal_abortop },		/* abortop */
+	{ &vop_abortop_desc, vop_generic_abortop },		/* abortop */
 	{ &vop_inactive_desc, portal_inactive },	/* inactive */
 	{ &vop_reclaim_desc, portal_reclaim },		/* reclaim */
 	{ &vop_lock_desc, portal_lock },		/* lock */
@@ -726,20 +725,6 @@ portal_symlink(v)
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
-}
-
-int
-portal_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
- 
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.14 1998/06/11 16:34:23 deraadt Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.15 1998/08/06 19:34:36 csapuntz Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -137,21 +137,20 @@ int	kernfs_write	__P((void *));
 #define	kernfs_remove	eopnotsupp
 int	kernfs_link	__P((void *));
 #define	kernfs_rename	eopnotsupp
-#define kernfs_revoke   vop_revoke
+#define kernfs_revoke   vop_generic_revoke
 #define	kernfs_mkdir	eopnotsupp
 #define	kernfs_rmdir	eopnotsupp
 int	kernfs_symlink	__P((void *));
 int	kernfs_readdir	__P((void *));
 #define	kernfs_readlink	eopnotsupp
-int	kernfs_abortop	__P((void *));
 int	kernfs_inactive	__P((void *));
 int	kernfs_reclaim	__P((void *));
-#define	kernfs_lock	vop_nolock
-#define	kernfs_unlock	vop_nounlock
+#define	kernfs_lock	vop_generic_lock
+#define	kernfs_unlock	vop_generic_unlock
 #define	kernfs_bmap	kernfs_badop
 #define	kernfs_strategy	kernfs_badop
 int	kernfs_print	__P((void *));
-#define	kernfs_islocked	vop_noislocked
+#define	kernfs_islocked	vop_generic_islocked
 int	kernfs_pathconf	__P((void *));
 #define	kernfs_advlock	eopnotsupp
 #define	kernfs_blkatoff	eopnotsupp
@@ -191,7 +190,7 @@ struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_symlink_desc, kernfs_symlink },	/* symlink */
 	{ &vop_readdir_desc, kernfs_readdir },	/* readdir */
 	{ &vop_readlink_desc, kernfs_readlink },/* readlink */
-	{ &vop_abortop_desc, kernfs_abortop },	/* abortop */
+	{ &vop_abortop_desc, vop_generic_abortop },	/* abortop */
 	{ &vop_inactive_desc, kernfs_inactive },/* inactive */
 	{ &vop_reclaim_desc, kernfs_reclaim },	/* reclaim */
 	{ &vop_lock_desc, kernfs_lock },	/* lock */
@@ -813,20 +812,6 @@ kernfs_symlink(v)
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
-}
-
-int
-kernfs_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
- 
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
 }
 
 /*

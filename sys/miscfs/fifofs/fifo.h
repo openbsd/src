@@ -1,4 +1,4 @@
-/*	$OpenBSD: fifo.h,v 1.5 1997/11/06 05:58:33 csapuntz Exp $	*/
+/*	$OpenBSD: fifo.h,v 1.6 1998/08/06 19:34:34 csapuntz Exp $	*/
 /*	$NetBSD: fifo.h,v 1.10 1996/02/09 22:40:15 christos Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ int	fifo_select	__P((void *));
 #define fifo_fsync	nullop
 #define fifo_seek	fifo_badop
 #define fifo_remove	fifo_badop
-#define fifo_revoke     vop_revoke
+#define fifo_revoke     vop_generic_revoke
 #define fifo_link	fifo_badop
 #define fifo_rename	fifo_badop
 #define fifo_mkdir	fifo_badop
@@ -71,12 +71,12 @@ int	fifo_select	__P((void *));
 #define fifo_abortop	fifo_badop
 int fifo_inactive __P((void *));
 #define fifo_reclaim	nullop
-#define fifo_lock       vop_nolock
-#define fifo_unlock     vop_nounlock
+#define fifo_lock       vop_generic_lock
+#define fifo_unlock     vop_generic_unlock
 int	fifo_bmap	__P((void *));
 #define fifo_strategy	fifo_badop
 int	fifo_print	__P((void *));
-#define fifo_islocked	vop_noislocked
+#define fifo_islocked	vop_generic_islocked
 int	fifo_pathconf	__P((void *));
 int	fifo_advlock	__P((void *));
 #define fifo_blkatoff	fifo_badop

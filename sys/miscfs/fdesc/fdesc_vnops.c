@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.11 1998/06/11 16:34:21 deraadt Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.12 1998/08/06 19:34:32 csapuntz Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ int	fdesc_select	__P((void *));
 #define	fdesc_fsync	nullop
 #define	fdesc_seek	nullop
 #define	fdesc_remove	eopnotsupp
-#define fdesc_revoke    vop_revoke
+#define fdesc_revoke    vop_generic_revoke
 int	fdesc_link	__P((void *));
 #define	fdesc_rename	eopnotsupp
 #define	fdesc_mkdir	eopnotsupp
@@ -116,16 +116,15 @@ int	fdesc_link	__P((void *));
 int	fdesc_symlink	__P((void *));
 int	fdesc_readdir	__P((void *));
 int	fdesc_readlink	__P((void *));
-int	fdesc_abortop	__P((void *));
 int	fdesc_inactive	__P((void *));
 int	fdesc_reclaim	__P((void *));
-#define	fdesc_lock	vop_nolock
-#define	fdesc_unlock	vop_nounlock
+#define	fdesc_lock	vop_generic_lock
+#define	fdesc_unlock	vop_generic_unlock
 #define	fdesc_bmap	fdesc_badop
 #define	fdesc_strategy	fdesc_badop
 int	fdesc_print	__P((void *));
 int	fdesc_pathconf	__P((void *));
-#define	fdesc_islocked	vop_noislocked
+#define	fdesc_islocked	vop_generic_islocked
 #define	fdesc_advlock	eopnotsupp
 #define	fdesc_blkatoff	eopnotsupp
 #define	fdesc_valloc	eopnotsupp
@@ -163,7 +162,7 @@ struct vnodeopv_entry_desc fdesc_vnodeop_entries[] = {
 	{ &vop_symlink_desc, fdesc_symlink },	/* symlink */
 	{ &vop_readdir_desc, fdesc_readdir },	/* readdir */
 	{ &vop_readlink_desc, fdesc_readlink },	/* readlink */
-	{ &vop_abortop_desc, fdesc_abortop },	/* abortop */
+	{ &vop_abortop_desc, vop_generic_abortop },	/* abortop */
 	{ &vop_inactive_desc, fdesc_inactive },	/* inactive */
 	{ &vop_reclaim_desc, fdesc_reclaim },	/* reclaim */
 	{ &vop_lock_desc, fdesc_lock },		/* lock */
@@ -1039,20 +1038,6 @@ fdesc_symlink(v)
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
-}
-
-int
-fdesc_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
- 
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.11 1998/06/27 07:32:11 deraadt Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.12 1998/08/06 19:34:46 csapuntz Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -127,7 +127,6 @@ int	procfs_link	__P((void *));
 int	procfs_symlink	__P((void *));
 int	procfs_readdir	__P((void *));
 int	procfs_readlink	__P((void *));
-int	procfs_abortop	__P((void *));
 int	procfs_inactive	__P((void *));
 int	procfs_reclaim	__P((void *));
 #define	procfs_lock	nullop
@@ -175,7 +174,7 @@ struct vnodeopv_entry_desc procfs_vnodeop_entries[] = {
 	{ &vop_symlink_desc, procfs_symlink },		/* symlink */
 	{ &vop_readdir_desc, procfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, procfs_readlink },	/* readlink */
-	{ &vop_abortop_desc, procfs_abortop },		/* abortop */
+	{ &vop_abortop_desc, vop_generic_abortop },	/* abortop */
 	{ &vop_inactive_desc, procfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, procfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, procfs_lock },		/* lock */
@@ -464,25 +463,6 @@ procfs_symlink(v)
 	return (EROFS);
 }
 
-/*
- * _abortop is called when operations such as
- * rename and create fail.  this entry is responsible
- * for undoing any side-effects caused by the lookup.
- * this will always include freeing the pathname buffer.
- */
-int
-procfs_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
-}
 
 /*
  * generic entry point for unsupported operations

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_extern.h,v 1.7 1998/01/09 20:38:03 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_extern.h,v 1.8 1998/08/06 19:35:13 csapuntz Exp $	*/
 /*	$NetBSD: ufs_extern.h,v 1.5 1996/02/09 22:36:03 christos Exp $	*/
 
 /*-
@@ -58,7 +58,6 @@ struct vfsconf;
 struct vnode;
 
 __BEGIN_DECLS
-int	 ufs_abortop	__P((void *));
 int	 ufs_access	__P((void *));
 int	 ufs_advlock	__P((void *));
 int	 ufs_bmap	__P((void *));
@@ -87,7 +86,7 @@ int	 ufs_readdir	__P((void *));
 int	 ufs_readlink	__P((void *));
 int	 ufs_remove	__P((void *));
 int	 ufs_rename	__P((void *));
-#define  ufs_revoke  vop_revoke
+#define  ufs_revoke  vop_generic_revoke
 int	 ufs_rmdir	__P((void *));
 int	 ufs_seek	__P((void *));
 int	 ufs_select	__P((void *));

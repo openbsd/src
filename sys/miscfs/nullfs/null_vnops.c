@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_vnops.c,v 1.9 1997/12/27 04:49:14 csapuntz Exp $	*/
+/*	$OpenBSD: null_vnops.c,v 1.10 1998/08/06 19:34:42 csapuntz Exp $	*/
 /*	$NetBSD: null_vnops.c,v 1.7 1996/05/10 22:51:01 jtk Exp $	*/
 
 /*
@@ -231,9 +231,9 @@ null_bypass(v)
 	void *v;
 {
 	struct vop_generic_args /* {
-		struct vnodeop_desc *a_desc;
-		<other random data follows, presumably>
-	} */ *ap = v;
+				   struct vnodeop_desc *a_desc;
+				   <other random data follows, presumably>
+				   } */ *ap = v;
 	register struct vnode **this_vp_p;
 	int error;
 	struct vnode *old_vps[VDESC_MAX_VPS];
@@ -271,7 +271,7 @@ null_bypass(v)
 		 * that aren't.  (We must always map first vp or vclean fails.)
 		 */
 		if (i && (*this_vp_p == NULLVP ||
-		    (*this_vp_p)->v_op != null_vnodeop_p)) {
+			  (*this_vp_p)->v_op != null_vnodeop_p)) {
 			old_vps[i] = NULLVP;
 		} else {
 			old_vps[i] = *this_vp_p;
@@ -305,56 +305,45 @@ null_bypass(v)
 		if (old_vps[i] != NULLVP) {
 			*(vps_p[i]) = old_vps[i];
 			if (reles & 1) {
-				/* they really vput them, so we must drop
-				   our locks (but mark underneath as
-				   unlocked first).
-				   Beware of vnode duplication--put it once,
-				   and rele the rest.  Check this 
-				   by looking at our upper flag. */
-			    if (VTONULL(*(vps_p[i]))->null_flags & NULL_LOCKED) {
-				    VTONULL(*(vps_p[i]))->null_flags &= ~NULL_LLOCK;
-				    vput(*(vps_p[i]));
-			    } else
-				    vrele(*(vps_p[i]));
+				vrele(*(vps_p[i]));
 			}
 		}
-	}
 
-	/*
-	 * Map the possible out-going vpp
-	 * (Assumes that the lower layer always returns
-	 * a VREF'ed vpp unless it gets an error.)
-	 */
-	if (descp->vdesc_vpp_offset != VDESC_NO_OFFSET &&
-	    !(descp->vdesc_flags & VDESC_NOMAP_VPP) &&
-	    !error) {
 		/*
-		 * XXX - even though some ops have vpp returned vp's,
-		 * several ops actually vrele this before returning.
-		 * We must avoid these ops.
-		 * (This should go away when these ops are regularized.)
+		 * Map the possible out-going vpp
+		 * (Assumes that the lower layer always returns
+		 * a VREF'ed vpp unless it gets an error.)
 		 */
-		if (descp->vdesc_flags & VDESC_VPP_WILLRELE)
-			goto out;
-		vppp = VOPARG_OFFSETTO(struct vnode***,
-				 descp->vdesc_vpp_offset,ap);
-		/*
-		 * This assumes that **vppp is a locked vnode (it is always
-		 * so as of this writing, NetBSD-current 1995/02/16)
-		 */
-		/*
-		 * (don't want to lock it if being called on behalf
-		 * of lookup--it plays weird locking games depending
-		 * on whether or not it's looking up ".", "..", etc.
-		 */
-		error = null_node_create(old_vps[0]->v_mount, **vppp, *vppp,
-					 descp == &vop_lookup_desc ? 0 : 1);
+		if (descp->vdesc_vpp_offset != VDESC_NO_OFFSET &&
+		    !(descp->vdesc_flags & VDESC_NOMAP_VPP) &&
+		    !error) {
+			/*
+			 * XXX - even though some ops have vpp returned vp's,
+			 * several ops actually vrele this before returning.
+			 * We must avoid these ops.
+			 * (This should go away when these ops are regularized.)
+			 */
+			if (descp->vdesc_flags & VDESC_VPP_WILLRELE)
+				goto out;
+			vppp = VOPARG_OFFSETTO(struct vnode***,
+					       descp->vdesc_vpp_offset,ap);
+			/*
+			 * This assumes that **vppp is a locked vnode (it is always
+			 * so as of this writing, NetBSD-current 1995/02/16)
+			 *
+			 * (don't want to lock it if being called on behalf
+			 * of lookup--it plays weird locking games depending
+			 * on whether or not it's looking up ".", "..", etc.
+			 */
+			error = null_node_create(old_vps[0]->v_mount, **vppp, *vppp,
+						 descp == &vop_lookup_desc ? 0 : 1);
+		}
 	}
 
  out:
 	return (error);
+	
 }
-
 
 /*
  *  We handle getattr only to change the fsid.
@@ -434,19 +423,8 @@ null_print(v)
 		struct vnode *a_vp;
 	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
-	register struct null_node *nn = VTONULL(vp);
 
 	printf ("\ttag VT_NULLFS, vp=%p, lowervp=%p\n", vp, NULLVPTOLOWERVP(vp));
-#ifdef DIAGNOSTIC
-	printf("%s%s owner pid %d retpc %p retret %p\n",
-	       (nn->null_flags & NULL_LOCKED) ? "(LOCKED) " : "",
-	       (nn->null_flags & NULL_LLOCK) ? "(LLOCK) " : "",
-	       nn->null_pid, nn->null_lockpc, nn->null_lockpc2);
-#else
-	printf("%s%s\n",
-	       (nn->null_flags & NULL_LOCKED) ? "(LOCKED) " : "",
-	       (nn->null_flags & NULL_LLOCK) ? "(LLOCK) " : "");
-#endif
 	vprint("nullfs lowervp", NULLVPTOLOWERVP(vp));
 	return (0);
 }
@@ -519,108 +497,34 @@ null_lock(v)
 	void *v;
 {
 	struct vop_lock_args *ap = v;
-	struct vnode *vp = ap->a_vp;
-	struct null_node *nn;
-	struct proc *p = ap->a_p;
 
-#ifdef NULLFS_DIAGNOSTIC
-	vprint("null_lock_e", ap->a_vp);
-	printf("retpc=%p, retretpc=%p\n",
-	       RETURN_PC(0),
-	       RETURN_PC(1));
+#if 0
+	vop_generic_lock(ap);
+	if ((ap->a_flags & LK_TYPE_MASK) == LK_DRAIN)
+		return (0);
+	ap->a_flags &= ~LK_INTERLOCK;
 #endif
-start:
-	while (vp->v_flag & VXLOCK) {
-		vp->v_flag |= VXWANT;
-		tsleep((caddr_t)vp, PINOD, "nulllock1", 0);
-	}
-
-	nn = VTONULL(vp);
-
-	if ((nn->null_flags & NULL_LLOCK) == 0 &&
-	    (vp->v_usecount != 0)) {
-		/*
-		 * only lock underlying node if we haven't locked it yet
-		 * for null ops, and our refcount is nonzero.  If usecount
-		 * is zero, we are probably being reclaimed so we need to
-		 * keep our hands off the lower node.
-		 */
-		vn_lock(nn->null_lowervp, LK_EXCLUSIVE | LK_RETRY, p);
-		nn->null_flags |= NULL_LLOCK;
-	}
-
-	if (nn->null_flags & NULL_LOCKED) {
-#ifdef DIAGNOSTIC
-		if (curproc && nn->null_pid == curproc->p_pid &&
-		    nn->null_pid > -1 && curproc->p_pid > -1) {
-			vprint("self-lock", vp);
-			panic("null: locking against myself");
-		}
-#endif
-		nn->null_flags |= NULL_WANTED;
-		tsleep((caddr_t)nn, PINOD, "nulllock2", 0);
-		goto start;
-	}
-
-#ifdef DIAGNOSTIC
-	if (curproc)
-		nn->null_pid = curproc->p_pid;
-	else
-		nn->null_pid = -1;
-	nn->null_lockpc = RETURN_PC(0);
-	nn->null_lockpc2 = RETURN_PC(1);
-#endif
-
-	nn->null_flags |= NULL_LOCKED;
-	return (0);
+	return (null_bypass((struct vop_generic_args *)ap));
 }
 
 int
 null_unlock(v)
 	void *v;
 {
-	struct vop_lock_args *ap = v;
-	struct proc *p = ap->a_p;
-	struct null_node *nn = VTONULL(ap->a_vp);
-
-#ifdef NULLFS_DIAGNOSTIC
-	vprint("null_unlock_e", ap->a_vp);
+	struct vop_unlock_args *ap = v;
+#if 0
+	vop_generic_unlock(ap);
+	ap->a_flags &= ~LK_INTERLOCK;
 #endif
-#ifdef DIAGNOSTIC
-	if ((nn->null_flags & NULL_LOCKED) == 0) {
-		vprint("null_unlock", ap->a_vp);
-		panic("null: unlocking unlocked node");
-	}
-	if (curproc && nn->null_pid != curproc->p_pid &&
-	    curproc->p_pid > -1 && nn->null_pid > -1) {
-		vprint("null_unlock", ap->a_vp);
-		panic("null: unlocking other process's null node");
-	}
-#endif
-	nn->null_flags &= ~NULL_LOCKED;
-
-	if ((nn->null_flags & NULL_LLOCK) != 0)
-		VOP_UNLOCK(nn->null_lowervp, 0, p);
-
-	nn->null_flags &= ~NULL_LLOCK;
-    
-	if (nn->null_flags & NULL_WANTED) {
-		nn->null_flags &= ~NULL_WANTED;
-		wakeup((caddr_t)nn);
-	}
-#ifdef DIAGNOSTIC
-	nn->null_pid = 0;
-	nn->null_lockpc = nn->null_lockpc2 = 0;
-#endif
-	return (0);
+	return (null_bypass((struct vop_generic_args *)ap));
 }
 
 int
 null_islocked(v)
 	void *v;
 {
-	struct vop_islocked_args *ap = v;
-	return ((VTONULL(ap->a_vp)->null_flags & NULL_LOCKED) ? 1 : 0);
+	/* XXX */
+	return (0);
 }
 
 int
@@ -634,130 +538,56 @@ null_lookup(v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	register int error;
-	register struct vnode *dvp;
 	int flags = ap->a_cnp->cn_flags;
 	struct componentname *cnp = ap->a_cnp;
+#if 0
+	register struct vnode *dvp, *vp;
 	struct proc *p = cnp->cn_proc;
+	struct vop_unlock_args unlockargs;
+	struct vop_lock_args lockargs;
+#endif
+
 #ifdef NULLFS_DIAGNOSTIC
 	printf("null_lookup: dvp=%lx, name='%s'\n",
 	       ap->a_dvp, cnp->cn_nameptr);
 #endif
+
+	if ((flags & ISLASTCN) && (ap->a_dvp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return (EROFS);
+	error = null_bypass((struct vop_generic_args *)ap);
+	if (error == EJUSTRETURN && (flags & ISLASTCN) &&
+	    (ap->a_dvp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == CREATE || cnp->cn_nameiop == RENAME))
+		error = EROFS;
+
+#if 0
 	/*
-	 * the starting dir (ap->a_dvp) comes in locked.
+	 * We must do the same locking and unlocking at this layer as 
+	 * is done in the layers below us. We could figure this out 
+	 * based on the error return and the LASTCN, LOCKPARENT, and
+	 * LOCKLEAF flags. However, it is more expidient to just find 
+	 * out the state of the lower level vnodes and set ours to the
+	 * same state.
 	 */
-
-	/* set LOCKPARENT to hold on to it until done below */
-	cnp->cn_flags |= LOCKPARENT;
-	error = null_bypass(ap);
-	if (!(flags & LOCKPARENT))
-		cnp->cn_flags &= ~LOCKPARENT;
-
-	if (error)
-		/*
-		 * starting dir is still locked/has been relocked
-		 * on error return.
-		 */
-		return error;
-
-	if (ap->a_dvp != *ap->a_vpp) {
-		/*
-		 * Lookup returns node locked; we mark both lower and
-		 * upper nodes as locked by setting the lower lock
-		 * flag (it came back locked), and then call lock to
-		 * set upper lock flag & record pid, etc.  see
-		 * null_node_create()
-		 */
-		VTONULL(*ap->a_vpp)->null_flags |= NULL_LLOCK;
-
-		dvp = ap->a_dvp;
-		if (flags & ISDOTDOT) {
-			/*
-			 * If we're looking up `..' and this isn't the
-			 * last component, then the starting directory
-			 * ("parent") is _unlocked_ as a side-effect
-			 * of lookups.  This is to avoid deadlocks:
-			 * lock order is always parent, child, so
-			 * looking up `..'  requires dropping the lock
-			 * on the starting directory.
-			 */
-			/* see ufs_lookup() for hairy ugly locking protocol
-			   examples */
-			/*
-			 * underlying starting dir comes back locked if flags &
-			 * LOCKPARENT (which we artificially set above) and
-			 * ISLASTCN.
-			 */
-			if (flags & ISLASTCN) {
-				VTONULL(dvp)->null_flags |= NULL_LLOCK;	/* no-op, right? */
-#ifdef NULLFS_DIAGNOSTIC
-				if (!VOP_ISLOCKED(VTONULL(dvp)->null_lowervp)) {
-					vprint("lowerdvp not locked after lookup\n", dvp);
-					panic("null_lookup not locked");
-				}
-#endif
-			} else {
-				VTONULL(dvp)->null_flags &= ~NULL_LLOCK;
-#ifdef NULLFS_DIAGNOSTIC
-				if (VOP_ISLOCKED(VTONULL(dvp)->null_lowervp)) {
-					vprint("lowerdvp locked after lookup?\n", dvp);
-					panic("null_lookup locked");
-				}
-#endif
-			}
-			/*
-			 * locking order: drop lock on lower-in-tree
-			 * element, then get lock on higher-in-tree
-			 * element, then (if needed) re-fetch lower
-			 * lock.  No need for vget() since we hold a
-			 * refcount to the starting directory
-			 */
-			VOP_UNLOCK(dvp, 0, p);
-			vn_lock(*ap->a_vpp, LK_EXCLUSIVE | LK_RETRY, p);
-			/*
-			 * we should return our directory locked if
-			 * (flags & LOCKPARENT) and (flags & ISLASTCN)
-			 */
-			if ((flags & LOCKPARENT) && (flags & ISLASTCN))
-				vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY, p);
-		} else {
-			/*
-			 * Normal directory locking order: we hold the starting
-			 * directory locked; now lock our layer of the target.
-			 */
-			vn_lock(*ap->a_vpp, LK_RETRY | LK_EXCLUSIVE, p);
-			/*
-			 * underlying starting dir comes back locked
-			 * if lockparent (we set it) and no error
-			 * (this leg) and ISLASTCN
-			 */
-			if (flags & ISLASTCN) {
-				VTONULL(dvp)->null_flags |= NULL_LLOCK;	/* no op, right? */
-#ifdef NULLFS_DIAGNOSTIC
-				if (!VOP_ISLOCKED(VTONULL(dvp)->null_lowervp)) {
-					vprint("lowerdvp not locked after lookup\n", dvp);
-					panic("null_lookup not locked");
-				}
-#endif
-			} else {
-				VTONULL(dvp)->null_flags &= ~NULL_LLOCK;
-#ifdef NULLFS_DIAGNOSTIC
-				if (VOP_ISLOCKED(VTONULL(dvp)->null_lowervp)) {
-					vprint("lowerdvp locked after lookup?\n", dvp);
-					panic("null_lookup locked");
-				}
-#endif
-			}
-			/*
-			 * we should return our directory unlocked if
-			 * our caller didn't want the parent locked,
-			 * !(flags & LOCKPARENT), or we're not at the
-			 * end yet, !(flags & ISLASTCN)
-			 */
-			if (!(flags & LOCKPARENT) || !(flags & ISLASTCN))
-				VOP_UNLOCK(dvp, 0, p);
-		}
+	dvp = ap->a_dvp;
+	vp = *ap->a_vpp;
+	if (dvp == vp)
+		return (error);
+	if (!VOP_ISLOCKED(dvp)) {
+		unlockargs.a_vp = dvp;
+		unlockargs.a_flags = 0;
+		unlockargs.a_p = p;
+		vop_generic_unlock(&unlockargs);
 	}
-	return error;
+	if (vp != NULLVP && VOP_ISLOCKED(vp)) {
+		lockargs.a_vp = vp;
+		lockargs.a_flags = LK_SHARED;
+		lockargs.a_p = p;
+		vop_generic_lock(&lockargs);
+	}
+#endif
+	return (error);
 }
 
 /*

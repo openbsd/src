@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.20 1998/05/11 05:42:01 deraadt Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.21 1998/08/06 19:35:00 csapuntz Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ struct vnodeopv_entry_desc nfsv2_vnodeop_entries[] = {
 	{ &vop_symlink_desc, nfs_symlink },	/* symlink */
 	{ &vop_readdir_desc, nfs_readdir },	/* readdir */
 	{ &vop_readlink_desc, nfs_readlink },	/* readlink */
-	{ &vop_abortop_desc, nfs_abortop },	/* abortop */
+	{ &vop_abortop_desc, vop_generic_abortop },	/* abortop */
 	{ &vop_inactive_desc, nfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, nfs_reclaim },	/* reclaim */
 	{ &vop_lock_desc, nfs_lock },		/* lock */
@@ -186,7 +186,7 @@ struct vnodeopv_entry_desc spec_nfsv2nodeop_entries[] = {
 	{ &vop_vfree_desc, spec_vfree },	/* vfree */
 	{ &vop_truncate_desc, spec_truncate },	/* truncate */
 	{ &vop_update_desc, nfs_update },	/* update */
-	{ &vop_bwrite_desc, vn_bwrite },
+	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc spec_nfsv2nodeop_opv_desc =
@@ -238,7 +238,7 @@ struct vnodeopv_entry_desc fifo_nfsv2nodeop_entries[] = {
 	{ &vop_vfree_desc, fifo_vfree },	/* vfree */
 	{ &vop_truncate_desc, fifo_truncate },	/* truncate */
 	{ &vop_update_desc, nfs_update },	/* update */
-	{ &vop_bwrite_desc, vn_bwrite },
+	{ &vop_bwrite_desc, vop_generic_bwrite },
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc fifo_nfsv2nodeop_opv_desc =
@@ -3077,7 +3077,7 @@ nfs_bwrite(v)
 }
 
 /*
- * This is a clone of vn_bwrite(), except that B_WRITEINPROG isn't set unless
+ * This is a clone of vop_generic_bwrite(), except that B_WRITEINPROG isn't set unless
  * the force flag is one and it also handles the B_NEEDCOMMIT flag.
  */
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.12 1998/07/20 00:49:21 espie Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.13 1998/08/06 19:34:18 csapuntz Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -63,7 +63,6 @@ int	adosfs_select	__P((void *));
 int	adosfs_strategy	__P((void *));
 int	adosfs_link	__P((void *));
 int	adosfs_symlink	__P((void *));
-int	adosfs_abortop	__P((void *));
 int	adosfs_lock	__P((void *));
 int	adosfs_unlock	__P((void *));
 int	adosfs_bmap	__P((void *));
@@ -129,7 +128,7 @@ struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
 	{ &vop_symlink_desc, adosfs_symlink },		/* symlink */
 	{ &vop_readdir_desc, adosfs_readdir },		/* readdir */
 	{ &vop_readlink_desc, adosfs_readlink },	/* readlink */
-	{ &vop_abortop_desc, adosfs_abortop },		/* abortop */
+	{ &vop_abortop_desc, vop_generic_abortop },		/* abortop */
 	{ &vop_inactive_desc, adosfs_inactive },	/* inactive */
 	{ &vop_reclaim_desc, adosfs_reclaim },		/* reclaim */
 	{ &vop_lock_desc, adosfs_lock },		/* lock */
@@ -497,20 +496,6 @@ adosfs_symlink(v)
 	VOP_ABORTOP(ap->a_dvp, ap->a_cnp);
 	vput(ap->a_dvp);
 	return (EROFS);
-}
-
-int
-adosfs_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
- 
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
 }
 
 /*

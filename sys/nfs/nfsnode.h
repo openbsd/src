@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsnode.h,v 1.6 1997/11/06 05:59:06 csapuntz Exp $	*/
+/*	$OpenBSD: nfsnode.h,v 1.7 1998/08/06 19:35:02 csapuntz Exp $	*/
 /*	$NetBSD: nfsnode.h,v 1.16 1996/02/18 11:54:04 fvdl Exp $	*/
 
 /*
@@ -176,7 +176,7 @@ int	nfsfifo_read __P((void *));
 int	nfsfifo_write __P((void *));
 #define nfs_ioctl ((int (*) __P((void *)))enoioctl)
 #define nfs_select ((int (*) __P((void *)))seltrue)
-#define nfs_revoke vop_revoke
+#define nfs_revoke vop_generic_revoke
 int	nfs_mmap __P((void *));
 int	nfs_fsync __P((void *));
 #define nfs_seek ((int (*) __P((void *)))nullop)
@@ -188,12 +188,11 @@ int	nfs_rmdir __P((void *));
 int	nfs_symlink __P((void *));
 int	nfs_readdir __P((void *));
 int	nfs_readlink __P((void *));
-int	nfs_abortop __P((void *));
 int	nfs_inactive __P((void *));
 int	nfs_reclaim __P((void *));
-#define nfs_lock ((int (*) __P((void *)))vop_nolock)
-#define nfs_unlock ((int (*) __P((void *)))vop_nounlock)
-#define nfs_islocked ((int (*) __P((void *)))vop_noislocked)
+#define nfs_lock ((int (*) __P((void *)))vop_generic_lock)
+#define nfs_unlock ((int (*) __P((void *)))vop_generic_unlock)
+#define nfs_islocked ((int (*) __P((void *)))vop_generic_islocked)
 int	nfs_bmap __P((void *));
 int	nfs_strategy __P((void *));
 int	nfs_print __P((void *));

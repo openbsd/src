@@ -1,4 +1,4 @@
-/*	$OpenBSD: union_vnops.c,v 1.10 1998/07/13 02:52:01 csapuntz Exp $	*/
+/*	$OpenBSD: union_vnops.c,v 1.11 1998/08/06 19:34:51 csapuntz Exp $	*/
 /*	$NetBSD: union_vnops.c,v 1.30.4.1 1996/05/25 22:10:14 jtc Exp $	*/
 
 /*
@@ -1623,7 +1623,7 @@ union_lock(v)
 	int    flags = ap->a_flags;
 	int    error = 0;
 
-	vop_nolock(ap);
+	vop_generic_lock(ap);
 	/*
 	 * Need to do real lockmgr-style locking here.
 	 * in the mean time, draining won't work quite right,
@@ -1720,7 +1720,7 @@ union_unlock(v)
 	un->un_pid = 0;
 #endif
 
-	vop_nounlock(v);
+	vop_generic_unlock(v);
 
 	return (0);
 }

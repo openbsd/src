@@ -1,4 +1,4 @@
-/*	$OpenBSD: specdev.h,v 1.6 1997/11/06 05:58:45 csapuntz Exp $	*/
+/*	$OpenBSD: specdev.h,v 1.7 1998/08/06 19:34:48 csapuntz Exp $	*/
 /*	$NetBSD: specdev.h,v 1.12 1996/02/13 13:13:01 mycroft Exp $	*/
 
 /*
@@ -110,9 +110,9 @@ int	spec_fsync	__P((void *));
 #define	spec_abortop	spec_badop
 int spec_inactive __P((void *));
 #define	spec_reclaim	nullop
-#define spec_lock       vop_nolock
-#define spec_unlock     vop_nounlock
-#define spec_islocked   vop_noislocked
+#define spec_lock       vop_generic_lock
+#define spec_unlock     vop_generic_unlock
+#define spec_islocked   vop_generic_islocked
 int	spec_bmap	__P((void *));
 int	spec_strategy	__P((void *));
 int	spec_print	__P((void *));
@@ -124,5 +124,5 @@ int	spec_advlock	__P((void *));
 #define	spec_vfree	spec_badop
 #define	spec_truncate	nullop
 #define	spec_update	nullop
-#define	spec_bwrite	vn_bwrite
-#define spec_revoke     vop_revoke
+#define	spec_bwrite	vop_generic_bwrite
+#define spec_revoke     vop_generic_revoke

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.20 1998/04/25 07:04:11 niklas Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.21 1998/08/06 19:34:26 csapuntz Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -103,12 +103,12 @@ struct simplelock spechash_slock;
 
 void insmntque __P((struct vnode *, struct mount *));
 int getdevvp __P((dev_t, struct vnode **, enum vtype));
-int vunref __P((struct vnode *));
 
 int vfs_hang_addrlist __P((struct mount *, struct netexport *,
 				  struct export_args *));
 int vfs_free_netcred __P((struct radix_node *, void *));
 void vfs_free_addrlist __P((struct netexport *));
+static __inline__ void vputonfreelist __P((struct vnode *));
 
 #ifdef DEBUG
 void printlockedvnodes __P((void));
@@ -419,9 +419,10 @@ getnewvnode(tag, mp, vops, vpp)
 			vprint("free vnode", vp);
 			panic("free vnode isn't");
 		}
+
 		TAILQ_REMOVE(listhd, vp, v_freelist);
-		/* see comment on why 0xdeadb is set at end of vgone (below) */
-		vp->v_flag |= VGONEHACK;
+		vp->v_flag &= ~VONFREELIST;
+
 		simple_unlock(&vnode_free_list_slock);
 		vp->v_lease = NULL;
 		if (vp->v_type != VBAD)
@@ -643,18 +644,22 @@ vget(vp, flags, p)
 		tsleep((caddr_t)vp, PINOD, "vget", 0);
 		return (ENOENT);
  	}
-	if (vp->v_usecount == 0) {
+	if ((vp->v_flag & VONFREELIST) && (vp->v_usecount == 0)) {
 		simple_lock(&vnode_free_list_slock);
 		if (vp->v_holdcnt > 0)
 			TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
 		else
 			TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
 		simple_unlock(&vnode_free_list_slock);
+		vp->v_flag &= ~VONFREELIST;
 	}
  	vp->v_usecount++;
 	if (flags & LK_TYPE_MASK) {
 		if ((error = vn_lock(vp, flags | LK_INTERLOCK, p)) != 0) {
-			vunref(vp);
+			vp->v_usecount--;
+			if (vp->v_usecount == 0)
+				vputonfreelist(vp);
+
 			simple_unlock(&vp->v_interlock);
 		}
 		return (error);
@@ -680,37 +685,34 @@ vref(vp)
 }
 #endif /* DIAGNOSTIC */
 
-int
-vunref(vp)
-	struct vnode *vp;
+static __inline__ void
+vputonfreelist(vp)
+        struct vnode *vp;
+
 {
-#ifdef DIAGNOSTIC
-	if (vp == NULL)
-		panic("vrele: null vp");
-#endif
-	simple_lock (&vp->v_interlock);
-	vp->v_usecount--;
-	if (vp->v_usecount > 0) {
-		simple_unlock(&vp->v_interlock);
-		return (vp->v_usecount);
-	}
-#ifdef DIAGNOSTIC
-	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
-		vprint("vrele: bad ref count", vp);
-		panic("vrele: ref cnt");
-	}
-#endif
+	struct freelst *lst;
+
 	/*
 	 * insert at tail of LRU list
 	 */
+	
+	vp->v_flag |= VONFREELIST;
+
 	simple_lock(&vnode_free_list_slock);
-	if (vp->v_holdcnt > 0)
-		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
+
+	if (vp->v_holdcnt > 0) 
+		lst = &vnode_hold_list;
 	else
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+		lst = &vnode_free_list;
+
+	
+	if (vp->v_type == VBAD)
+		TAILQ_INSERT_HEAD(lst, vp, v_freelist);
+	else
+		TAILQ_INSERT_TAIL(lst, vp, v_freelist);		
+
 	simple_unlock(&vnode_free_list_slock);
 
-	return (0);
 }
 
 /*
@@ -722,7 +724,7 @@ vput(vp)
 {
 	struct proc *p = curproc;	/* XXX */
 
-#ifdef DIGANOSTIC
+#ifdef DIAGNOSTIC
 	if (vp == NULL)
 		panic("vput: null vp");
 #endif
@@ -739,17 +741,12 @@ vput(vp)
 		panic("vput: ref cnt");
 	}
 #endif
-	/*
-	 * insert at tail of LRU list
-	 */
-	simple_lock(&vnode_free_list_slock);
-	if (vp->v_holdcnt > 0)
-		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
-	else
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-	simple_unlock(&vnode_free_list_slock);
-	simple_unlock(&vp->v_interlock);
 	VOP_INACTIVE(vp, p);
+
+	if (vp->v_usecount == 0)
+	  vputonfreelist(vp);
+
+	simple_unlock(&vp->v_interlock);
 }
 
 /*
@@ -760,11 +757,31 @@ void
 vrele(vp)
 	register struct vnode *vp;
 {
-	struct proc *p = curproc;
+	struct proc *p = curproc;	/* XXX */
 
-	if (vunref(vp) == 0 &&
-	    vn_lock(vp, LK_EXCLUSIVE |LK_INTERLOCK, p) == 0)
+#ifdef DIAGNOSTIC
+	if (vp == NULL)
+		panic("vrele: null vp");
+#endif
+	simple_lock(&vp->v_interlock);
+	vp->v_usecount--;
+	if (vp->v_usecount > 0) {
+		simple_unlock(&vp->v_interlock);
+		return;
+	}
+#ifdef DIAGNOSTIC
+	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
+		vprint("vrele: bad ref count", vp);
+		panic("vrele: ref cnt");
+	}
+#endif
+	if (vn_lock(vp, LK_EXCLUSIVE |LK_INTERLOCK, p) == 0)
 		VOP_INACTIVE(vp, p);
+
+	if (vp->v_usecount == 0)
+	  vputonfreelist(vp);
+
+	simple_unlock(&vp->v_interlock);
 }
 
 #ifdef DIAGNOSTIC
@@ -779,16 +796,9 @@ vhold(vp)
 	/*
 	 * If it is on the freelist and the hold count is currently
 	 * zero, move it to the hold list.
-	 *
-	 * The VGONEHACK flag reflects a call from getnewvnode,
-	 * which will remove the vnode from the free list, but
-	 * will not increment the ref count until after it calls vgone
-	 * If the ref count we're incremented first, vgone would
-	 * (incorrectly) try to close the previous instance of the
-	 * underlying object.
 	 */
   	simple_lock(&vp->v_interlock);
-	if (!(vp->v_flag & VGONEHACK) &&
+	if ((vp->v_flag & VONFREELIST) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
 		simple_lock(&vnode_free_list_slock);
 		TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
@@ -814,10 +824,8 @@ holdrele(vp)
 	/*
 	 * If it is on the holdlist and the hold count drops to
 	 * zero, move it to the free list. 
-	 *
-	 * See above for VGONEHACK
 	 */
-	if (!(vp->v_flag & VGONEHACK) &&
+	if ((vp->v_flag & VONFREELIST) &&
 	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
 		simple_lock(&vnode_free_list_slock);
 		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
@@ -987,9 +995,13 @@ vclean(vp, flags, p)
 	if (VOP_RECLAIM(vp, p))
 		panic("vclean: cannot reclaim");
 	if (active) {
-		if (vunref(vp) == 0 &&
-		    vp->v_holdcnt > 0)
-			panic("vclean: not clean");
+		vp->v_usecount--;
+		if (vp->v_usecount == 0) {
+			if (vp->v_holdcnt > 0)
+				panic("vclean: not clean");
+			vputonfreelist(vp);
+		}
+
 		simple_unlock(&vp->v_interlock);
 	}
 	cache_purge(vp);
@@ -1121,21 +1133,20 @@ vgonel(vp, p)
 	/*
 	 * If it is on the freelist and not already at the head,
 	 * move it to the head of the list. 
-	 *
-	 * See above about the VGONEHACK
 	 */
-	if (vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
+	vp->v_type = VBAD;
+
+	if ((vp->v_flag & VONFREELIST) &&
+	    vp->v_usecount == 0) {
+                simple_lock(&vnode_free_list_slock);
 		if (vp->v_holdcnt > 0)
 			panic("vgonel: not clean");		
-		if (!(vp->v_flag & VGONEHACK) &&
-		    TAILQ_FIRST(&vnode_free_list) != vp) {
-			TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
-			TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
-		}
-		simple_unlock(&vnode_free_list_slock);
+                if (TAILQ_FIRST(&vnode_free_list) != vp) {
+                        TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
+                        TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
+                }
+                simple_unlock(&vnode_free_list_slock);
 	}
-	vp->v_type = VBAD;
 }
 
 /*

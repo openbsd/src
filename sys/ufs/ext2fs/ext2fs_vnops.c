@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vnops.c,v 1.7 1998/07/28 00:13:15 millert Exp $	*/
+/*	$OpenBSD: ext2fs_vnops.c,v 1.8 1998/08/06 19:35:04 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_vnops.c,v 1.1 1997/06/11 09:34:09 bouyer Exp $	*/
 
 /*
@@ -1440,7 +1440,7 @@ struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_symlink_desc, ext2fs_symlink },	/* symlink */
 	{ &vop_readdir_desc, ext2fs_readdir },	/* readdir */
 	{ &vop_readlink_desc, ext2fs_readlink },/* readlink */
-	{ &vop_abortop_desc, ufs_abortop },		/* abortop */
+	{ &vop_abortop_desc, vop_generic_abortop },		/* abortop */
 	{ &vop_inactive_desc, ext2fs_inactive },/* inactive */
 	{ &vop_reclaim_desc, ext2fs_reclaim },	/* reclaim */
 	{ &vop_lock_desc, ufs_lock },			/* lock */
@@ -1456,7 +1456,7 @@ struct vnodeopv_entry_desc ext2fs_vnodeop_entries[] = {
 	{ &vop_vfree_desc, ext2fs_vfree },		/* vfree */
 	{ &vop_truncate_desc, ext2fs_truncate },/* truncate */
 	{ &vop_update_desc, ext2fs_update },	/* update */
-	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_bwrite_desc, vop_generic_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void*)))NULL }
 };
 struct vnodeopv_desc ext2fs_vnodeop_opv_desc =
@@ -1505,7 +1505,7 @@ struct vnodeopv_entry_desc ext2fs_specop_entries[] = {
 	{ &vop_vfree_desc, ext2fs_vfree },		/* vfree */
 	{ &vop_truncate_desc, spec_truncate },	/* truncate */
 	{ &vop_update_desc, ext2fs_update },	/* update */
-	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_bwrite_desc, vop_generic_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc ext2fs_specop_opv_desc =
@@ -1555,7 +1555,7 @@ struct vnodeopv_entry_desc ext2fs_fifoop_entries[] = {
 	{ &vop_vfree_desc, ext2fs_vfree },		/* vfree */
 	{ &vop_truncate_desc, fifo_truncate },	/* truncate */
 	{ &vop_update_desc, ext2fs_update },	/* update */
-	{ &vop_bwrite_desc, vn_bwrite },		/* bwrite */
+	{ &vop_bwrite_desc, vop_generic_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 struct vnodeopv_desc ext2fs_fifoop_opv_desc =

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_node.c,v 1.10 1997/11/06 05:59:00 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_node.c,v 1.11 1998/08/06 19:34:58 csapuntz Exp $	*/
 /*	$NetBSD: nfs_node.c,v 1.16 1996/02/18 11:53:42 fvdl Exp $	*/
 
 /*
@@ -239,21 +239,3 @@ nfs_reclaim(v)
 	return (0);
 }
 
-/*
- * Nfs abort op, called after namei() when a CREATE/DELETE isn't actually
- * done. Currently nothing to do.
- */
-/* ARGSUSED */
-int
-nfs_abortop(v)
-	void *v;
-{
-	struct vop_abortop_args /* {
-		struct vnode *a_dvp;
-		struct componentname *a_cnp;
-	} */ *ap = v;
-
-	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
-		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
-	return (0);
-}

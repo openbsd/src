@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_default.c,v 1.2 1998/01/11 02:10:44 csapuntz Exp $  */
+/*       $OpenBSD: vfs_default.c,v 1.3 1998/08/06 19:34:24 csapuntz Exp $  */
 
 
 /*
@@ -47,7 +47,8 @@
 #include <sys/proc.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
-
+#include <sys/namei.h>
+#include <sys/malloc.h>
 #include <miscfs/specfs/specdev.h>
 
 
@@ -58,7 +59,7 @@ extern struct simplelock spechash_slock;
  * and with all vnodes aliased to the requested vnode.
  */
 int
-vop_revoke(v)
+vop_generic_revoke(v)
 	void *v;
 {
 	struct vop_revoke_args /* {
@@ -70,7 +71,7 @@ vop_revoke(v)
 
 #ifdef DIAGNOSTIC
 	if ((ap->a_flags & REVOKEALL) == 0)
-		panic("vop_revoke");
+		panic("vop_generic_revoke");
 #endif
 
 	vp = ap->a_vp;
@@ -84,7 +85,7 @@ vop_revoke(v)
 		if (vp->v_flag & VXLOCK) {
 			vp->v_flag |= VXWANT;
 			simple_unlock(&vp->v_interlock);
-			tsleep((caddr_t)vp, PINOD, "vop_revokeall", 0);
+			tsleep((caddr_t)vp, PINOD, "vop_generic_revokeall", 0);
 			return(0);
 		}
 		/*
@@ -118,12 +119,27 @@ vop_revoke(v)
 
 
 int
-vn_bwrite(v)
+vop_generic_bwrite(v)
 	void *v;
 {
 	struct vop_bwrite_args *ap = v;
 
 	return (bwrite(ap->a_bp));
+}
+
+
+int
+vop_generic_abortop(v)
+	void *v;
+{
+	struct vop_abortop_args /* {
+		struct vnode *a_dvp;
+		struct componentname *a_cnp;
+	} */ *ap = v;
+ 
+	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
+		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
+	return (0);
 }
 
 /*
@@ -133,7 +149,7 @@ vn_bwrite(v)
  * count is maintained in an auxillary vnode lock structure.
  */
 int
-vop_nolock(v)
+vop_generic_lock(v)
 	void *v;
 {
 	struct vop_lock_args /* {
@@ -181,7 +197,7 @@ vop_nolock(v)
 		return (0);
 	case LK_RELEASE:
 	default:
-		panic("vop_nolock: bad operation %d", flags & LK_TYPE_MASK);
+		panic("vop_generic_lock: bad operation %d", flags & LK_TYPE_MASK);
 	}
 	if (flags & LK_INTERLOCK)
 		vnflags |= LK_INTERLOCK;
@@ -202,7 +218,7 @@ vop_nolock(v)
  */
 
 int
-vop_nounlock(v)
+vop_generic_unlock(v)
 	void *v;
 {
 	struct vop_unlock_args /* {
@@ -222,7 +238,7 @@ vop_nounlock(v)
  * Return whether or not the node is in use.
  */
 int
-vop_noislocked(v)
+vop_generic_islocked(v)
 	void *v;
 {
 	struct vop_islocked_args /* {

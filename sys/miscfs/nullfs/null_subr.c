@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_subr.c,v 1.7 1997/11/06 05:58:39 csapuntz Exp $	*/
+/*	$OpenBSD: null_subr.c,v 1.8 1998/08/06 19:34:41 csapuntz Exp $	*/
 /*	$NetBSD: null_subr.c,v 1.6 1996/05/10 22:50:52 jtk Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ loop:
 		}
 	}
 
-	return NULL;
+	return NULLVP;
 }
 
 
@@ -147,12 +147,18 @@ null_node_alloc(mp, lowervp, vpp)
 	extern int (**dead_vnodeop_p) __P((void *));
 	struct proc *p = curproc;
 
-	if ((error = getnewvnode(VT_NULL, mp, null_vnodeop_p, &vp)) != 0)
-		return (error);
-	vp->v_type = lowervp->v_type;
 
 	MALLOC(xp, struct null_node *, sizeof(struct null_node), M_TEMP,
 	    M_WAITOK);
+
+	if ((error = getnewvnode(VT_NULL, mp, null_vnodeop_p, vpp)) != 0) {
+		FREE (xp, M_TEMP);
+		return (error);
+	}
+
+	vp = *vpp;
+	vp->v_type = lowervp->v_type;
+
 	if (vp->v_type == VBLK || vp->v_type == VCHR) {
 		MALLOC(vp->v_specinfo, struct specinfo *,
 		    sizeof(struct specinfo), M_VNODE, M_WAITOK);
@@ -162,11 +168,6 @@ null_node_alloc(mp, lowervp, vpp)
 	vp->v_data = xp;
 	xp->null_vnode = vp;
 	xp->null_lowervp = lowervp;
-	xp->null_flags = 0;
-#ifdef DIAGNOSTIC
-	xp->null_pid = -1;
-	xp->null_lockpc = xp->null_lockpc2 = 0;
-#endif
 	/*
 	 * Before we insert our new node onto the hash chains,
 	 * check to see if someone else has beaten us to it.
@@ -230,7 +231,6 @@ loop:
 	}
 	/* XXX end of transmogrified checkalias() */
 
-	*vpp = vp;
 	VREF(lowervp);	/* Extra VREF will be vrele'd in null_node_create */
 	hd = NULL_NHASH(lowervp);
 	LIST_INSERT_HEAD(hd, xp, null_hash);
@@ -254,7 +254,6 @@ null_node_create(mp, lowervp, newvpp, takelock)
 	int takelock;
 {
 	struct vnode *aliasvp;
-	struct proc *p = curproc; /* XXX */
 
 	if ((aliasvp = null_node_find(mp, lowervp)) != NULL) {
 		/*
@@ -299,11 +298,6 @@ null_node_create(mp, lowervp, newvpp, takelock)
 #ifdef NULLFS_DIAGNOSTIC
 	vprint("null_node_create: alias", aliasvp);
 #endif
-	/* lower node was locked: mark it as locked and take
-	   upper layer lock */
-	VTONULL(aliasvp)->null_flags |= NULL_LLOCK;
-	if (takelock)
-		vn_lock(aliasvp, LK_EXCLUSIVE | LK_RETRY, p);
 
 	*newvpp = aliasvp;
 	return (0);

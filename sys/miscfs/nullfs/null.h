@@ -1,4 +1,4 @@
-/*	$OpenBSD: null.h,v 1.9 1998/03/01 17:18:01 niklas Exp $	*/
+/*	$OpenBSD: null.h,v 1.10 1998/08/06 19:34:38 csapuntz Exp $	*/
 /*	$NetBSD: null.h,v 1.7 1996/05/17 20:53:11 gwr Exp $	*/
 
 /*
@@ -57,28 +57,7 @@ struct null_node {
 	LIST_ENTRY(null_node)	null_hash;	/* Hash list */
 	struct vnode	        *null_lowervp;	/* VREFed once */
 	struct vnode		*null_vnode;	/* Back pointer */
-	unsigned int		null_flags;	/* locking, etc. */
-#ifdef DIAGNOSTIC
-	pid_t			null_pid;	/* who's locking it? */
-	caddr_t			null_lockpc; /* their return addr */
-	caddr_t			null_lockpc2; /* their return addr^2 */
-#endif
 };
-
-#if !defined(__GNUC__) || __GNUC__ < 2 || (__GNUC__ == 2 && __GNUC_MINOR__ < 5)
-#define RETURN_PC(frameno) (void *)0
-#else
-/* Some architectures can just get the current frame's return address */
-#if defined(__alpha__) || defined(__mips__)
-#define RETURN_PC(frameno) (frameno ? 0 : __builtin_return_address(frameno))
-#else
-#define RETURN_PC(frameno) __builtin_return_address(frameno)
-#endif
-#endif
-
-#define NULL_WANTED	0x01
-#define NULL_LOCKED	0x02
-#define NULL_LLOCK	0x04
 
 extern int null_node_create __P((struct mount *mp, struct vnode *target, struct vnode **vpp, int lockit));
 

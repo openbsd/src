@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_var.h,v 1.8 1998/02/22 01:21:32 niklas Exp $	*/
+/*	$OpenBSD: nfs_var.h,v 1.9 1998/08/06 19:34:59 csapuntz Exp $	*/
 /*	$NetBSD: nfs_var.h,v 1.3 1996/02/18 11:53:54 fvdl Exp $	*/
 
 /*
@@ -81,7 +81,6 @@ u_long nfs_hash __P((nfsfh_t *, int));
 int nfs_nget __P((struct mount *, nfsfh_t *, int, struct nfsnode **));
 int nfs_inactive __P((void *));
 int nfs_reclaim __P((void *));
-int nfs_abortop __P((void *));
 
 /* nfs_vnops.c */
 int nfs_null __P((struct vnode *, struct ucred *, struct proc *));

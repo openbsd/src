@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.3 1998/03/14 19:32:59 millert Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.4 1998/08/06 19:34:27 csapuntz Exp $  */
 
 
 /*
@@ -208,10 +208,10 @@ sched_sync(p)
 int   sync_fsync __P((void *));
 int   sync_inactive __P((void *));
 #define sync_reclaim nullop
-#define sync_lock vop_nolock
-#define sync_unlock vop_nounlock
+#define sync_lock vop_generic_lock
+#define sync_unlock vop_generic_unlock
 int   sync_print __P((void *));
-#define sync_islocked vop_noislocked
+#define sync_islocked vop_generic_islocked
  
 int (**sync_vnodeop_p) __P((void *));
 struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
