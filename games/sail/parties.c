@@ -1,3 +1,4 @@
+/*	$OpenBSD: parties.c,v 1.2 1999/01/18 06:20:53 pjanzen Exp $	*/
 /*	$NetBSD: parties.c,v 1.3 1995/04/22 10:37:04 cgd Exp $	*/
 
 /*
@@ -35,20 +36,21 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)parties.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)parties.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: parties.c,v 1.3 1995/04/22 10:37:04 cgd Exp $";
+static char rcsid[] = "$OpenBSD: parties.c,v 1.2 1999/01/18 06:20:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
+int
 meleeing(from, to)
-struct ship *from;
-register struct ship *to;
+	struct ship *from;
+	struct ship *to;
 {
-	register struct BP *p = from->file->OBP;
-	register struct BP *q = p + NBP;
+	struct BP *p = from->file->OBP;
+	struct BP *q = p + NBP;
 
 	for (; p < q; p++)
 		if (p->turnsent && p->toship == to)
@@ -56,12 +58,13 @@ register struct ship *to;
 	return 0;
 }
 
+int
 boarding(from, isdefense)
-register struct ship *from;
-char isdefense;
+	struct ship *from;
+	char isdefense;
 {
-	register struct BP *p = isdefense ? from->file->DBP : from->file->OBP;
-	register struct BP *q = p + NBP;
+	struct BP *p = isdefense ? from->file->DBP : from->file->OBP;
+	struct BP *q = p + NBP;
 
 	for (; p < q; p++)
 		if (p->turnsent)
@@ -69,14 +72,15 @@ char isdefense;
 	return 0;
 }
 
+void
 unboard(ship, to, isdefense)
-register struct ship *ship, *to;
-register char isdefense;
+	struct ship *ship, *to;
+	char isdefense;
 {
-	register struct BP *p = isdefense ? ship->file->DBP : ship->file->OBP;
-	register n;
+	struct BP *p = isdefense ? ship->file->DBP : ship->file->OBP;
+	int n;
 
 	for (n = 0; n < NBP; p++, n++)
 		if (p->turnsent && (p->toship == to || isdefense || ship == to))
-			Write(isdefense ? W_DBP : W_OBP, ship, 0, n, 0, 0, 0);
+			Write(isdefense ? W_DBP : W_OBP, ship, n, 0, 0, 0);
 }

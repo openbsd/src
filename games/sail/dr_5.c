@@ -1,3 +1,4 @@
+/*	$OpenBSD: dr_5.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $	*/
 /*	$NetBSD: dr_5.c,v 1.3 1995/04/22 10:36:51 cgd Exp $	*/
 
 /*
@@ -35,20 +36,21 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)dr_5.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)dr_5.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: dr_5.c,v 1.3 1995/04/22 10:36:51 cgd Exp $";
+static char rcsid[] = "$OpenBSD: dr_5.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
+void
 subtract(from, totalfrom, crewfrom, fromcap, pcfrom)
-struct ship *from, *fromcap;
-int pcfrom;
-register int  totalfrom, crewfrom[3];
+	struct ship *from, *fromcap;
+	int pcfrom;
+	int  totalfrom, crewfrom[3];
 {
-	register int n;
+	int n;
 
 	if (fromcap == from && totalfrom) {		/* if not captured */
 		for (n = 0; n < 3; n++) {
@@ -60,23 +62,24 @@ register int  totalfrom, crewfrom[3];
 				totalfrom = 0;
 			}
 		}
-		Write(W_CREW, from, 0, crewfrom[0], crewfrom[1], crewfrom[2], 0);
+		Write(W_CREW, from, crewfrom[0], crewfrom[1], crewfrom[2], 0);
 	} else if (totalfrom) {
 		pcfrom -= totalfrom;
 		pcfrom = pcfrom < 0 ? 0 : pcfrom;
-		Write(W_PCREW, from, 0, pcfrom, 0, 0, 0);
+		Write(W_PCREW, from, pcfrom, 0, 0, 0);
 	}
 }
 
+int
 mensent(from, to, crew, captured, pc, isdefense)
-struct ship *from, *to, **captured;
-int crew[3], *pc;
-char isdefense;
+	struct ship *from, *to, **captured;
+	int crew[3], *pc;
+	char isdefense;
 {					/* returns # of crew squares sent */
 	int men = 0;
-	register int n;
+	int n;
 	int c1, c2, c3;
-	register struct BP *bp;
+	struct BP *bp;
 
 	*pc = from->file->pcrew;
 	*captured = from->file->captured;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: dr_2.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $	*/
 /*	$NetBSD: dr_2.c,v 1.4 1995/04/24 12:25:12 cgd Exp $	*/
 
 /*
@@ -37,17 +38,19 @@
 #if 0
 static char sccsid[] = "@(#)dr_2.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: dr_2.c,v 1.4 1995/04/24 12:25:12 cgd Exp $";
+static char rcsid[] = "$OpenBSD: dr_2.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "driver.h"
+#include <stdlib.h>
 
 #define couldwin(f,t) (f->specs->crew2 > t->specs->crew2 * 1.5)
 
+void
 thinkofgrapples()
 {
-	register struct ship *sp, *sq;
+	struct ship *sp, *sq;
 	char friendly;
 
 	foreachship(sp) {
@@ -60,12 +63,12 @@ thinkofgrapples()
 					continue;
 				if (range(sp, sq) != 1)
 					continue;
-				if (grappled2(sp, sq))
-					if (toughmelee(sp, sq, 0, 0))
+				if (grappled2(sp, sq)) {
+					if (is_toughmelee(sp, sq, 0, 0))
 						ungrap(sp, sq);
 					else
 						grap(sp, sq);
-				else if (couldwin(sp, sq)) {
+				} else if (couldwin(sp, sq)) {
 					grap(sp, sq);
 					sp->file->loadwith = L_GRAPE;
 				}
@@ -75,10 +78,11 @@ thinkofgrapples()
 	}
 }
 
+void
 checkup()
 {
-	register struct ship *sp, *sq;
-	register char explode, sink;
+	struct ship *sp, *sq;
+	char explode, sink;
 
 	foreachship(sp) {
 		if (sp->file->dir == 0)
@@ -89,25 +93,26 @@ checkup()
 			continue;
 		if (die() < 5)
 			continue;
-		Write(sink == 1 ? W_SINK : W_EXPLODE, sp, 0, 2, 0, 0, 0);
-		Write(W_DIR, sp, 0, 0, 0, 0, 0);
+		Write(sink == 1 ? W_SINK : W_EXPLODE, sp, 2, 0, 0, 0);
+		Write(W_DIR, sp, 0, 0, 0, 0);
 		if (snagged(sp))
 			foreachship(sq)
 				cleansnag(sp, sq, 1);
 		if (sink != 1) {
-			makesignal(sp, "exploding!", (struct ship *)0);
+			makemsg(sp, "exploding!");
 			foreachship(sq) {
 				if (sp != sq && sq->file->dir && range(sp, sq) < 4)
 					table(RIGGING, L_EXPLODE, sp->specs->guns/13, sq, sp, 6);
 			}
 		} else
-			makesignal(sp, "sinking!", (struct ship *)0);
+			makemsg(sp, "sinking!");
 	}
 }
 
+void
 prizecheck()
 {
-	register struct ship *sp;
+	struct ship *sp;
 
 	foreachship(sp) {
 		if (sp->file->captured == 0)
@@ -115,28 +120,29 @@ prizecheck()
 		if (sp->file->struck || sp->file->dir == 0)
 			continue;
 		if (sp->specs->crew1 + sp->specs->crew2 + sp->specs->crew3 > sp->file->pcrew * 6) {
-			Write(W_SIGNAL, sp, 1,
-				(long)"prize crew overthrown", 0, 0, 0);
-			Write(W_POINTS, sp->file->captured, 0, sp->file->captured->file->points - 2 * sp->specs->pts, 0, 0, 0);
-			Write(W_CAPTURED, sp, 0, -1, 0, 0, 0);
+			Writestr(W_SIGNAL, sp, "prize crew overthrown");
+			Write(W_POINTS, sp->file->captured, sp->file->captured->file->points - 2 * sp->specs->pts, 0, 0, 0);
+			Write(W_CAPTURED, sp, -1, 0, 0, 0);
 		}
 	}
 }
 
-strend(str)
-char *str;
+int
+str_end(str)
+	const char *str;
 {
-	register char *p;
+	const char *p;
 
 	for (p = str; *p; p++)
 		;
 	return p == str ? 0 : p[-1];
 }
 
+void
 closeon(from, to, command, ta, ma, af)
-register struct ship *from, *to;
-char command[];
-int ma, ta, af;
+	struct ship *from, *to;
+	char command[];
+	int ma, ta, af;
 {
 	int high;
 	char temp[10];
@@ -146,23 +152,24 @@ int ma, ta, af;
 	try(command, temp, ma, ta, af, ma, from->file->dir, from, to, &high, 0);
 }
 
-int dtab[] = {0,1,1,2,3,4,4,5};		/* diagonal distances in x==y */
+const int dtab[] = {0,1,1,2,3,4,4,5};	/* diagonal distances in x==y */
 
+int
 score(movement, ship, to, onlytemp)
-char movement[];
-register struct ship *ship, *to;
-char onlytemp;
+	char movement[];
+	struct ship *ship, *to;
+	char onlytemp;
 {
 	char drift;
 	int row, col, dir, total, ran;
-	register struct File *fp = ship->file;
+	struct File *fp = ship->file;
 
 	if ((dir = fp->dir) == 0)
 		return 0;
 	row = fp->row;
 	col = fp->col;
 	drift = fp->drift;
-	move(movement, ship, &fp->dir, &fp->row, &fp->col, &drift);
+	move_ship(movement, ship, &fp->dir, &fp->row, &fp->col, &drift);
 	if (!*movement)
 		(void) strcpy(movement, "d");
 
@@ -181,12 +188,13 @@ char onlytemp;
 	return total;
 }
 
-move(p, ship, dir, row, col, drift)
-register char *p;
-register struct ship *ship;
-register char *dir;
-register short *row, *col;
-register char *drift;
+void
+move_ship(p, ship, dir, row, col, drift)
+	const char *p;
+	struct ship *ship;
+	unsigned char *dir;
+	short *row, *col;
+	char *drift;
 {
 	int dist;
 	char moved = 0;
@@ -215,7 +223,7 @@ register char *drift;
 	}
 	if (!moved) {
 		if (windspeed != 0 && ++*drift > 2) {
-			if (ship->specs->class >= 3 && !snagged(ship)
+			if ((ship->specs->class >= 3 && !snagged(ship))
 			    || (turn & 1) == 0) {
 				*row -= dr[winddir];
 				*col -= dc[winddir];
@@ -225,16 +233,17 @@ register char *drift;
 		*drift = 0;
 }
 
+void
 try(command, temp, ma, ta, af, vma, dir, f, t, high, rakeme)
-register struct ship *f, *t;
-int ma, ta, af, *high, rakeme;
-char command[], temp[];
+	struct ship *f, *t;
+	int ma, ta, af, vma, dir, *high, rakeme;
+	char command[], temp[];
 {
-	register int new, n;
+	int new, n;
 	char st[4];
 #define rakeyou (gunsbear(f, t) && !gunsbear(t, f))
 
-	if ((n = strend(temp)) < '1' || n > '9')
+	if ((n = str_end(temp)) < '1' || n > '9')
 		for (n = 1; vma - n >= 0; n++) {
 			(void) sprintf(st, "%d", n);
 			(void) strcat(temp, st);
@@ -247,17 +256,17 @@ char command[], temp[];
 				dir, f, t, high, rakeme);
 			rmend(temp);
 		}
-	if (ma > 0 && ta > 0 && (n = strend(temp)) != 'l' && n != 'r' || !strlen(temp)) {
+	if ((ma > 0 && ta > 0 && (n = str_end(temp)) != 'l' && n != 'r') || !strlen(temp)) {
 		(void) strcat(temp, "r");
 		new = score(temp, f, t, rakeme);
-		if (new > *high && (!rakeme || gunsbear(f, t) && !gunsbear(t, f))) {
+		if (new > *high && (!rakeme || (gunsbear(f, t) && !gunsbear(t, f)))) {
 			*high = new;
 			(void) strcpy(command, temp);
 		}
 		try(command, temp, ma-1, ta-1, af, min(ma-1, maxmove(f, (dir == 8 ? 1 : dir+1), 0)), (dir == 8 ? 1 : dir+1),f,t,high,rakeme);
 		rmend(temp);
 	}
-	if ((ma > 0 && ta > 0 && (n = strend(temp)) != 'l' && n != 'r') || !strlen(temp)){
+	if ((ma > 0 && ta > 0 && (n = str_end(temp)) != 'l' && n != 'r') || !strlen(temp)){
 		(void) strcat(temp, "l");
 		new = score(temp, f, t, rakeme);
 		if (new > *high && (!rakeme || (gunsbear(f, t) && !gunsbear(t, f)))){
@@ -269,10 +278,11 @@ char command[], temp[];
 	}
 }
 
+void
 rmend(str)
-char *str;
+	char *str;
 {
-	register char *p;
+	char *p;
 
 	for (p = str; *p; p++)
 		;

@@ -1,3 +1,4 @@
+/*	$OpenBSD: player.h,v 1.5 1999/01/18 06:20:53 pjanzen Exp $	*/
 /*	$NetBSD: player.h,v 1.4 1995/04/22 10:37:22 cgd Exp $	*/
 
 /*
@@ -32,11 +33,11 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)player.h	8.1 (Berkeley) 5/31/93
+ *	@(#)player.h	8.2 (Berkeley) 5/3/95
  */
 
 #include <curses.h>
-#include "externs.h"
+#include "extern.h"
 
 /* sizes and coordinates for the screen */
 
@@ -109,7 +110,7 @@ char loaded, fired, changed, repaired;
 char dont_adjust;
 int viewrow, viewcol;
 char movebuf[sizeof SHIP(0)->file->movebuf];
-char *version;
+extern char version[];
 int player;
 struct ship *ms;		/* memorial structure, &cc->ship[player] */
 struct File *mf;		/* ms->file */

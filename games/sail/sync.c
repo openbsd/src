@@ -1,4 +1,5 @@
-/*	$NetBSD: sync.c,v 1.4 1995/04/24 12:25:28 cgd Exp $	*/
+/*	$OpenBSD: sync.c,v 1.2 1999/01/18 06:20:54 pjanzen Exp $	*/
+/*	$NetBSD: sync.c,v 1.9 1998/08/30 09:19:40 veego Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -33,50 +34,128 @@
  * SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)sync.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)sync.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: sync.c,v 1.4 1995/04/24 12:25:28 cgd Exp $";
+static char rcsid[] = "$OpenBSD: sync.c,v 1.2 1999/01/18 06:20:54 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include <fcntl.h>
+#include <errno.h>
+#ifdef __STDC__
+#include <stdarg.h>
+#else
+#include <varargs.h>
+#endif
+#include <stdlib.h>
+#include <unistd.h>
 #include <sys/file.h>
-#include <sys/errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+#include "extern.h"
+#include "pathnames.h"
 
 #define BUFSIZE 4096
 
+static const char SF[] = _PATH_SYNC;
+static const char LF[] = _PATH_LOCK;
 static char sync_buf[BUFSIZE];
 static char *sync_bp = sync_buf;
-static char sync_lock[25];
-static char sync_file[25];
+static char sync_lock[sizeof SF];
+static char sync_file[sizeof LF];
 static long sync_seek;
 static FILE *sync_fp;
-#define SF "/tmp/#sailsink.%d"
-#define LF "/tmp/#saillock.%d"
 
-/*VARARGS3*/
-makesignal(from, fmt, ship, a, b, c)
-	struct ship *from;
-	char *fmt;
-	register struct ship *ship;
-	long a, b, c;
+void
+fmtship(buf, len, fmt, ship)
+	char *buf;
+	size_t len;
+	const char *fmt;
+	struct ship *ship;
 {
-	char message[80];
+	while (*fmt) {
+		if (len-- == 0) {
+			*buf = '\0';
+			return;
+		}
+		if (*fmt == '$' && fmt[1] == '$') {
+			size_t l = snprintf(buf, len, "%s (%c%c)",
+			    ship->shipname, colours(ship), sterncolour(ship));
+			buf += l;
+			len -= l - 1;
+			fmt += 2;
+		}
+		else
+			*buf++ = *fmt++;
+	}
 
-	if (ship == 0)
-		(void) sprintf(message, fmt, a, b, c);
-	else
-		(void) sprintf(message, fmt,
-			ship->shipname, colours(ship),
-			sterncolour(ship), a, b, c);
-	Write(W_SIGNAL, from, 1, (long)message, 0, 0, 0);
+	if (len > 0)
+		*buf = '\0';
 }
 
-#include <sys/types.h>
-#include <sys/stat.h>
+
+/*VARARGS3*/
+void
+#ifdef __STDC__
+makesignal(struct ship *from, const char *fmt, struct ship *ship, ...)
+#else
+makesignal(va_alias)
+	va_dcl
+#endif
+{
+	char message[BUFSIZ];
+	char format[BUFSIZ];
+	va_list ap;
+#ifndef __STDC__
+	struct ship *from;
+	const char *fmt;
+	struct ship *ship;
+
+	va_start(ap);
+	from = va_arg(ap, struct ship *);
+	fmt = va_arg(ap, const char *);
+	ship = va_arg(ap, struct ship *);
+#else
+	va_start(ap, ship);
+#endif
+	fmtship(format, sizeof(format), fmt, ship);
+	(void) vsprintf(message, format, ap);
+	va_end(ap);
+	Writestr(W_SIGNAL, from, message);
+}
+
+void
+#ifdef __STDC__
+makemsg(struct ship *from, const char *fmt, ...)
+#else
+makemsg(va_alias)
+	va_dcl
+#endif
+{
+	char message[BUFSIZ];
+	va_list ap;
+#ifndef __STDC__
+	struct ship *from;
+	const char *fmt;
+
+	va_start(ap);
+	from = va_arg(ap, struct ship *);
+	fmt = va_arg(ap, const char *);
+#else
+	va_start(ap, fmt);
+#endif
+	(void) vsprintf(message, fmt, ap);
+	va_end(ap);
+	Writestr(W_SIGNAL, from, message);
+}
+
+int
 sync_exists(game)
+	int game;
 {
 	char buf[sizeof sync_file];
 	struct stat s;
@@ -84,73 +163,100 @@ sync_exists(game)
 
 	(void) sprintf(buf, SF, game);
 	(void) time(&t);
-	if (stat(buf, &s) < 0)
+	setegid(egid);
+	if (stat(buf, &s) < 0) {
+		setegid(gid);
 		return 0;
+	}
 	if (s.st_mtime < t - 60*60*2) {		/* 2 hours */
 		(void) unlink(buf);
 		(void) sprintf(buf, LF, game);
 		(void) unlink(buf);
+		setegid(gid);
 		return 0;
-	} else
-		return 1;
+	}
+	setegid(gid);
+	return 1;
 }
 
+int
 sync_open()
 {
+	struct stat tmp;
+
 	if (sync_fp != NULL)
 		(void) fclose(sync_fp);
 	(void) sprintf(sync_lock, LF, game);
 	(void) sprintf(sync_file, SF, game);
-	if (access(sync_file, 0) < 0) {
-		int omask = umask(issetuid ? 077 : 011);
+	setegid(egid);
+	if (stat(sync_file, &tmp) < 0) {
+		mode_t omask = umask(002);
 		sync_fp = fopen(sync_file, "w+");
 		(void) umask(omask);
 	} else
 		sync_fp = fopen(sync_file, "r+");
+	setegid(gid);
 	if (sync_fp == NULL)
 		return -1;
 	sync_seek = 0;
 	return 0;
 }
 
+void
 sync_close(remove)
 	char remove;
 {
 	if (sync_fp != 0)
 		(void) fclose(sync_fp);
-	if (remove)
+	if (remove) {
+		setegid(egid);
 		(void) unlink(sync_file);
+		setegid(gid);
+	}
 }
 
-Write(type, ship, isstr, a, b, c, d)
+void
+Write(type, ship, a, b, c, d)
 	int type;
 	struct ship *ship;
-	char isstr;
 	long a, b, c, d;
 {
-	if (isstr)
-		(void) sprintf(sync_bp, "%d %d %d %s\n",
-			type, ship->file->index, isstr, a);
-	else
-		(void) sprintf(sync_bp, "%d %d %d %d %d %d %d\n",
-			type, ship->file->index, isstr, a, b, c, d);
+	(void) sprintf(sync_bp, "%d %d 0 %ld %ld %ld %ld\n",
+		       type, ship->file->index, a, b, c, d);
 	while (*sync_bp++)
 		;
 	sync_bp--;
 	if (sync_bp >= &sync_buf[sizeof sync_buf])
 		abort();
-	(void) sync_update(type, ship, a, b, c, d);
+	(void) sync_update(type, ship, NULL, a, b, c, d);
 }
 
+void
+Writestr(type, ship, a)
+	int type;
+	struct ship *ship;
+	const char *a;
+{
+	(void) sprintf(sync_bp, "%d %d 1 %s\n",
+		       type, ship->file->index, a);
+	while (*sync_bp++)
+		;
+	sync_bp--;
+	if (sync_bp >= &sync_buf[sizeof sync_buf])
+		abort();
+	(void) sync_update(type, ship, a, 0, 0, 0, 0);
+}
+
+int
 Sync()
 {
 	sig_t sighup, sigint;
-	register n;
+	int n;
 	int type, shipnum, isstr;
+	char *astr;
 	long a, b, c, d;
 	char buf[80];
 	char erred = 0;
-	extern errno;
 
 	sighup = signal(SIGHUP, SIG_IGN);
 	sigint = signal(SIGINT, SIG_IGN);
@@ -161,8 +267,12 @@ Sync()
 		if (errno != EWOULDBLOCK)
 			return -1;
 #else
-		if (link(sync_file, sync_lock) >= 0)
+		setegid(egid);
+		if (link(sync_file, sync_lock) >= 0) {
+			setegid(gid);
 			break;
+		}
+		setegid(gid);
 		if (errno != EEXIST)
 			return -1;
 #endif
@@ -170,7 +280,7 @@ Sync()
 	}
 	if (n <= 0)
 		return -1;
-	(void) fseek(sync_fp, sync_seek, 0);
+	(void) fseek(sync_fp, sync_seek, SEEK_SET);
 	for (;;) {
 		switch (fscanf(sync_fp, "%d%d%d", &type, &shipnum, &isstr)) {
 		case 3:
@@ -185,7 +295,7 @@ Sync()
 		if (isstr != 0 && isstr != 1)
 			goto bad;
 		if (isstr) {
-			register char *p;
+			char *p;
 			for (p = buf;;) {
 				switch (*p++ = getc(sync_fp)) {
 				case '\n':
@@ -202,19 +312,21 @@ Sync()
 			*p = 0;
 			for (p = buf; *p == ' '; p++)
 				;
-			a = (long)p;
-			b = c = d = 0;
-		} else
-			if (fscanf(sync_fp, "%d%d%d%d", &a, &b, &c, &d) != 4)
+			astr = p;
+			a = b = c = d = 0;
+		} else {
+			if (fscanf(sync_fp, "%ld%ld%ld%ld", &a, &b, &c, &d) != 4)
 				goto bad;
-		if (sync_update(type, SHIP(shipnum), a, b, c, d) < 0)
+			astr = NULL;
+		}
+		if (sync_update(type, SHIP(shipnum), astr, a, b, c, d) < 0)
 			goto bad;
 	}
 bad:
 	erred++;
 out:
 	if (!erred && sync_bp != sync_buf) {
-		(void) fseek(sync_fp, 0L, 2);
+		(void) fseek(sync_fp, 0L, SEEK_END);
 		(void) fwrite(sync_buf, sizeof *sync_buf, sync_bp - sync_buf,
 			sync_fp);
 		(void) fflush(sync_fp);
@@ -224,35 +336,39 @@ out:
 #ifdef LOCK_EX
 	(void) flock(fileno(sync_fp), LOCK_UN);
 #else
+	setegid(egid);
 	(void) unlink(sync_lock);
+	setegid(gid);
 #endif
 	(void) signal(SIGHUP, sighup);
 	(void) signal(SIGINT, sigint);
 	return erred ? -1 : 0;
 }
 
-sync_update(type, ship, a, b, c, d)
+int
+sync_update(type, ship, astr, a, b, c, d)
 	int type;
-	register struct ship *ship;
+	struct ship *ship;
+	const char *astr;
 	long a, b, c, d;
 {
 	switch (type) {
 	case W_DBP: {
-		register struct BP *p = &ship->file->DBP[a];
+		struct BP *p = &ship->file->DBP[a];
 		p->turnsent = b;
 		p->toship = SHIP(c);
 		p->mensent = d;
 		break;
 		}
 	case W_OBP: {
-		register struct BP *p = &ship->file->OBP[a];
+		struct BP *p = &ship->file->OBP[a];
 		p->turnsent = b;
 		p->toship = SHIP(c);
 		p->mensent = d;
 		break;
 		}
 	case W_FOUL: {
-		register struct snag *p = &ship->file->foul[a];
+		struct snag *p = &ship->file->foul[a];
 		if (SHIP(a)->file->dir == 0)
 			break;
 		if (p->sn_count++ == 0)
@@ -261,7 +377,7 @@ sync_update(type, ship, a, b, c, d)
 		break;
 		}
 	case W_GRAP: {
-		register struct snag *p = &ship->file->grap[a];
+		struct snag *p = &ship->file->grap[a];
 		if (SHIP(a)->file->dir == 0)
 			break;
 		if (p->sn_count++ == 0)
@@ -270,8 +386,8 @@ sync_update(type, ship, a, b, c, d)
 		break;
 		}
 	case W_UNFOUL: {
-		register struct snag *p = &ship->file->foul[a];
-		if (p->sn_count > 0)
+		struct snag *p = &ship->file->foul[a];
+		if (p->sn_count > 0) {
 			if (b) {
 				ship->file->nfoul -= p->sn_count;
 				p->sn_count = 0;
@@ -279,11 +395,12 @@ sync_update(type, ship, a, b, c, d)
 				ship->file->nfoul--;
 				p->sn_count--;
 			}
+		}
 		break;
 		}
 	case W_UNGRAP: {
-		register struct snag *p = &ship->file->grap[a];
-		if (p->sn_count > 0)
+		struct snag *p = &ship->file->grap[a];
+		if (p->sn_count > 0) {
 			if (b) {
 				ship->file->ngrap -= p->sn_count;
 				p->sn_count = 0;
@@ -291,24 +408,26 @@ sync_update(type, ship, a, b, c, d)
 				ship->file->ngrap--;
 				p->sn_count--;
 			}
+		}
 		break;
 		}
 	case W_SIGNAL:
-		if (mode == MODE_PLAYER)
+		if (mode == MODE_PLAYER) {
 			if (nobells)
-				Signal("%s (%c%c): %s", ship, a);
+				Signal("$$: %s", ship, astr);
 			else
-				Signal("\7%s (%c%c): %s", ship, a);
+				Signal("\7$$: %s", ship, astr);
+		}
 		break;
 	case W_CREW: {
-		register struct shipspecs *s = ship->specs;
+		struct shipspecs *s = ship->specs;
 		s->crew1 = a;
 		s->crew2 = b;
 		s->crew3 = c;
 		break;
 		}
 	case W_CAPTAIN:
-		(void) strncpy(ship->file->captain, (char *)a,
+		(void) strncpy(ship->file->captain, astr,
 			sizeof ship->file->captain - 1);
 		ship->file->captain[sizeof ship->file->captain - 1] = 0;
 		break;
@@ -332,13 +451,13 @@ sync_update(type, ship, a, b, c, d)
 		ship->file->FS = a;
 		break;
 	case W_GUNL: {
-		register struct shipspecs *s = ship->specs;
+		struct shipspecs *s = ship->specs;
 		s->gunL = a;
 		s->carL = b;
 		break;
 		}
 	case W_GUNR: {
-		register struct shipspecs *s = ship->specs;
+		struct shipspecs *s = ship->specs;
 		s->gunR = a;
 		s->carR = b;
 		break;
@@ -347,7 +466,7 @@ sync_update(type, ship, a, b, c, d)
 		ship->specs->hull = a;
 		break;
 	case W_MOVE:
-		(void) strncpy(ship->file->movebuf, (char *)a,
+		(void) strncpy(ship->file->movebuf, astr,
 			sizeof ship->file->movebuf - 1);
 		ship->file->movebuf[sizeof ship->file->movebuf - 1] = 0;
 		break;
@@ -361,7 +480,7 @@ sync_update(type, ship, a, b, c, d)
 		ship->specs->qual = a;
 		break;
 	case W_RIGG: {
-		register struct shipspecs *s = ship->specs;
+		struct shipspecs *s = ship->specs;
 		s->rig1 = a;
 		s->rig2 = b;
 		s->rig3 = c;

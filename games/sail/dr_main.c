@@ -1,3 +1,4 @@
+/*	$OpenBSD: dr_main.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $	*/
 /*	$NetBSD: dr_main.c,v 1.4 1995/04/22 10:36:52 cgd Exp $	*/
 
 /*
@@ -37,34 +38,32 @@
 #if 0
 static char sccsid[] = "@(#)dr_main.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$NetBSD: dr_main.c,v 1.4 1995/04/22 10:36:52 cgd Exp $";
+static char rcsid[] = "$OpenBSD: dr_main.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "driver.h"
+#include <stdlib.h>
+#include <unistd.h>
+#include <err.h>
 
+int
 dr_main()
 {
-	register int n;
-	register struct ship *sp;
+	int n;
+	struct ship *sp;
 	int nat[NNATION];
 	int value = 0;
 
 	(void) signal(SIGINT, SIG_IGN);
 	(void) signal(SIGQUIT, SIG_IGN);
 	(void) signal(SIGTSTP, SIG_IGN);
-	if (issetuid)
-		(void) setuid(geteuid());
-	if (game < 0 || game >= NSCENE) {
-		fprintf(stderr, "DRIVER: Bad game number %d\n", game);
-		exit(1);
-	}
+	if (game < 0 || game >= NSCENE)
+		errx(1, "driver: Bad game number %d\n", game);
 	cc = &scene[game];
 	ls = SHIP(cc->vessels);
-	if (sync_open() < 0) {
-		perror("driver: syncfile");
-		exit(1);
-	}
+	if (sync_open() < 0)
+		err(1, "driver: syncfile");
 	for (n = 0; n < NNATION; n++)
 		nat[n] = 0;
 	foreachship(sp) {

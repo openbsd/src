@@ -1,3 +1,4 @@
+/*	$OpenBSD: pathnames.h,v 1.2 1999/01/18 06:20:53 pjanzen Exp $	*/
 /*	$NetBSD: pathnames.h,v 1.3 1995/04/22 10:37:06 cgd Exp $	*/
 
 /*-
@@ -36,3 +37,5 @@
  */
 
 #define	_PATH_LOGFILE	"/var/games/saillog"
+#define	_PATH_SYNC	"/tmp/#sailsink.%d"
+#define	_PATH_LOCK	"/tmp/#saillock.%d"

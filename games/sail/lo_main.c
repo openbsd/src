@@ -1,3 +1,4 @@
+/*	$OpenBSD: lo_main.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $	*/
 /*	$NetBSD: lo_main.c,v 1.3 1995/04/22 10:36:59 cgd Exp $	*/
 
 /*
@@ -35,9 +36,9 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lo_main.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)lo_main.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: lo_main.c,v 1.3 1995/04/22 10:36:59 cgd Exp $";
+static char rcsid[] = "$OpenBSD: lo_main.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -48,15 +49,16 @@ static char rcsid[] = "$NetBSD: lo_main.c,v 1.3 1995/04/22 10:36:59 cgd Exp $";
  */
 #include <sys/types.h>
 #include <pwd.h>
-#include "externs.h"
+#include "extern.h"
 #include "pathnames.h"
 
-char *title[] = {
+const char *const title[] = {
 	"Admiral", "Commodore", "Captain", "Captain",
 	"Captain", "Captain", "Captain", "Commander",
 	"Commander", "Lieutenant"
 };
 
+int
 lo_main()
 {
 	FILE *fp;

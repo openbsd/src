@@ -1,3 +1,4 @@
+/*	$OpenBSD: main.c,v 1.3 1999/01/18 06:20:53 pjanzen Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/04/22 10:37:01 cgd Exp $	*/
 
 /*
@@ -41,25 +42,40 @@ static char copyright[] =
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.3 1995/04/22 10:37:01 cgd Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.3 1999/01/18 06:20:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
+#include <fcntl.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
+#include <err.h>
 
 /*ARGSUSED*/
+int
 main(argc, argv)
 	int argc;
-	register char **argv;
+	char **argv;
 {
-	register char *p;
+	char *p;
 	int i;
+	int fd;
 
-	(void) srand(getpid());
-	issetuid = getuid() != geteuid();
-	if (p = strrchr(*argv, '/'))
+	gid = getgid();
+	egid = getegid();
+	setegid(gid);
+
+	fd = open("/dev/null", O_RDONLY);
+	if (fd < 3)
+		exit(1);
+	close(fd);
+
+	srandom(getpid());
+	if ((p = strrchr(*argv, '/')))
 		p++;
 	else
 		p = *argv;
@@ -81,7 +97,7 @@ main(argc, argv)
 			debug++;
 			break;
 		case 'x':
-			randomize;
+			randomize++;
 			break;
 		case 'l':
 			longfmt++;
@@ -90,14 +106,13 @@ main(argc, argv)
 			nobells++;
 			break;
 		default:
-			fprintf(stderr, "SAIL: Unknown flag %s.\n", p);
-			exit(1);
+			errx(1, "unknown flag %s", p);
 		}
 	if (*argv)
 		game = atoi(*argv);
 	else
 		game = -1;
-	if (i = setjmp(restart))
+	if ((i = setjmp(restart)))
 		mode = i;
 	switch (mode) {
 	case MODE_PLAYER:
@@ -107,7 +122,7 @@ main(argc, argv)
 	case MODE_LOGGER:
 		return lo_main();
 	default:
-		fprintf(stderr, "SAIL: Unknown mode %d.\n", mode);
+		warnx("Unknown mode %d", mode);
 		abort();
 	}
 	/*NOTREACHED*/

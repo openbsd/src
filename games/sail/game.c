@@ -1,3 +1,4 @@
+/*	$OpenBSD: game.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $	*/
 /*	$NetBSD: game.c,v 1.3 1995/04/22 10:36:56 cgd Exp $	*/
 
 /*
@@ -35,22 +36,23 @@
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)game.c	8.1 (Berkeley) 5/31/93";
+static char sccsid[] = "@(#)game.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: game.c,v 1.3 1995/04/22 10:36:56 cgd Exp $";
+static char rcsid[] = "$OpenBSD: game.c,v 1.2 1999/01/18 06:20:52 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
-#include "externs.h"
+#include "extern.h"
 
+int
 maxturns(ship, af)
-register struct ship *ship;
-char *af;
+	struct ship *ship;
+	char *af;
 {
-	register int turns;
+	int turns;
 
 	turns = ship->specs->ta;
-	if (*af = (ship->file->drift > 1 && turns)) {
+	if ((*af = (ship->file->drift > 1 && turns)) != 0) {
 		turns--;
 		if (ship->file->FS == 1)
 			turns = 0;
@@ -58,11 +60,12 @@ char *af;
 	return turns;
 }
 
+int
 maxmove(ship, dir, fs)
-register struct ship *ship;
-int dir, fs;
+	struct ship *ship;
+	int dir, fs;
 {
-	register int riggone = 0, Move, flank = 0;
+	int riggone = 0, Move, flank = 0;
 
 	Move = ship->specs->bs;
 	if (!ship->specs->rig1)

@@ -1,3 +1,4 @@
+/*	$OpenBSD: pl_4.c,v 1.2 1999/01/18 06:20:53 pjanzen Exp $	*/
 /*	$NetBSD: pl_4.c,v 1.4 1995/04/24 12:25:17 cgd Exp $	*/
 
 /*
@@ -37,42 +38,44 @@
 #if 0
 static char sccsid[] = "@(#)pl_4.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pl_4.c,v 1.4 1995/04/24 12:25:17 cgd Exp $";
+static char rcsid[] = "$OpenBSD: pl_4.c,v 1.2 1999/01/18 06:20:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "player.h"
 
+void
 changesail()
 {
 	int rig, full;
 
 	rig = mc->rig1;
 	full = mf->FS;
-	if (windspeed == 6 || windspeed == 5 && mc->class > 4)
+	if (windspeed == 6 || (windspeed == 5 && mc->class > 4))
 		rig = 0;
 	if (mc->crew3 && rig) {
 		if (!full) {
 			if (sgetch("Increase to Full sails? ",
 				(struct ship *)0, 1) == 'y') {
 				changed = 1;
-				Write(W_FS, ms, 0, 1, 0, 0, 0);
+				Write(W_FS, ms, 1, 0, 0, 0);
 			}
 		} else {
 			if (sgetch("Reduce to Battle sails? ",
 				(struct ship *)0, 1) == 'y') {
-				Write(W_FS, ms, 0, 0, 0, 0, 0);
+				Write(W_FS, ms, 0, 0, 0, 0);
 				changed = 1;
 			}
 		}
 	} else if (!rig)
-		Signal("Sails rent to pieces", (struct ship *)0);
+		Msg("Sails rent to pieces");
 }
 
+void
 acceptsignal()
 {
 	char buf[60];
-	register char *p = buf;
+	char *p = buf;
 
 	*p++ = '"';
 	sgetstr("Message? ", p, sizeof buf - 2);
@@ -80,14 +83,15 @@ acceptsignal()
 		;
 	p[-1] = '"';
 	*p = 0;
-	Write(W_SIGNAL, ms, 1, (long)buf, 0, 0, 0);
+	Writestr(W_SIGNAL, ms, buf);
 }
 
+void
 lookout()
 {
-	register struct ship *sp;
+	struct ship *sp;
 	char buf[3];
-	register char c;
+	char c;
 
 	sgetstr("What ship? ", buf, sizeof buf);
 	foreachship(sp) {
@@ -100,10 +104,10 @@ lookout()
 	}
 }
 
-char *
+const char *
 saywhat(sp, flag)
-register struct ship *sp;
-char flag;
+	struct ship *sp;
+	char flag;
 {
 	if (sp->file->captain[0])
 		return sp->file->captain;
@@ -117,18 +121,19 @@ char flag;
 		return "(computer)";
 }
 
+void
 eyeball(ship)
-register struct ship *ship;
+	struct ship *ship;
 {
 	int i;
 
 	if (ship->file->dir != 0) {
-		Signal("Sail ho! (range %d, %s)",
-			(struct ship *)0, range(ms, ship), saywhat(ship, 0));
+		Msg("Sail ho! (range %d, %s)",
+		    range(ms, ship), saywhat(ship, 0));
 		i = portside(ms, ship, 1) - mf->dir;
 		if (i <= 0)
 			i += 8;
-		Signal("%s (%c%c) %s %s %s.",
+		Signal("$$ %s %s %s.",
 			ship, countryname[ship->nationality],
 			classname[ship->specs->class], directionname[i]);
 	}

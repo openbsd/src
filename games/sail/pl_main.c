@@ -1,3 +1,4 @@
+/*	$OpenBSD: pl_main.c,v 1.3 1999/01/18 06:20:53 pjanzen Exp $	*/
 /*	$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $	*/
 
 /*
@@ -37,34 +38,36 @@
 #if 0
 static char sccsid[] = "@(#)pl_main.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: pl_main.c,v 1.5 1995/04/24 12:25:25 cgd Exp $";
+static char rcsid[] = "$OpenBSD: pl_main.c,v 1.3 1999/01/18 06:20:53 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
 #include "player.h"
 #include <sys/types.h>
 #include <sys/wait.h>
-
-void choke(), child();
+#include <stdlib.h>
+#include <unistd.h>
+#include <err.h>
 
 /*ARGSUSED*/
+int
 pl_main()
 {
-
 	initialize();
-	Signal("Aye aye, Sir", (struct ship *)0);
+	Msg("Aye aye, Sir");
 	play();
 	return 0;			/* for lint,  play() never returns */
 }
 
+void
 initialize()
 {
-	register struct File *fp;
-	register struct ship *sp;
+	struct File *fp;
+	struct ship *sp;
 	char captain[80];
 	char message[60];
 	int load;
-	register int n;
+	int n;
 	char *nameptr;
 	int nat[NNATION];
 
@@ -84,10 +87,8 @@ reprint:
 		while (getchar() != '\n')
 			;
 	}
-	if (game < 0 || game >= NSCENE) {
-		(void) puts("Very funny.");
-		exit(1);
-	}
+	if (game < 0 || game >= NSCENE)
+		errx(1, "Very funny.");
 	cc = &scene[game];
 	ls = SHIP(cc->vessels);
 
@@ -95,10 +96,8 @@ reprint:
 		nat[n] = 0;
 	foreachship(sp) {
 		if (sp->file == NULL &&
-		    (sp->file = (struct File *)calloc(1, sizeof (struct File))) == NULL) {
-			(void) puts("OUT OF MEMORY");
-			exit(1);
-		}
+		    (sp->file = (struct File *)calloc(1, sizeof (struct File))) == NULL)
+			errx(1, "out of memory");
 		sp->file->index = sp - SHIP(0);
 		sp->file->stern = nat[sp->nationality]++;
 		sp->file->dir = sp->shipdir;
@@ -112,10 +111,8 @@ reprint:
 	(void) signal(SIGINT, choke);
 
 	hasdriver = sync_exists(game);
-	if (sync_open() < 0) {
-		perror("sail: syncfile");
-		exit(1);
-	}
+	if (sync_open() < 0)
+		err(1, "syncfile");
 
 	if (hasdriver) {
 		(void) puts("Synchronizing with the other players...");
@@ -174,7 +171,7 @@ reprint:
 	mf = ms->file;
 	mc = ms->specs;
 
-	Write(W_BEGIN, ms, 0, 0, 0, 0, 0);
+	Write(W_BEGIN, ms, 0, 0, 0, 0);
 	if (Sync() < 0)
 		leave(LEAVE_SYNC);
 
@@ -207,7 +204,7 @@ reprint:
 		    captain[strlen(captain) - 1] = '\0';
 	}
 	captain[sizeof captain - 1] = '\0';
-	Write(W_CAPTAIN, ms, 1, (long)captain, 0, 0, 0);
+	Writestr(W_CAPTAIN, ms, captain);
 	for (n = 0; n < 2; n++) {
 		char buf[10];
 
@@ -240,14 +237,10 @@ reprint:
 		}
 	}
 
-	/* SCREENTEST calls initscr */
-	if (!SCREENTEST()) {
-		printf("Can't sail on this terminal.\n");
-		exit(1);
-	}
 	initscreen();
 	draw_board();
-	(void) sprintf(message, "Captain %s assuming command", captain);
-	Write(W_SIGNAL, ms, 1, (long)message, 0, 0, 0);
-	newturn();
+	(void) snprintf(message, sizeof message, "Captain %s assuming command",
+			captain);
+	Writestr(W_SIGNAL, ms, message);
+	newturn(0);
 }
