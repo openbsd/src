@@ -1,4 +1,4 @@
-$OpenBSD: miidevs,v 1.39 2003/10/05 03:24:24 krw Exp $
+$OpenBSD: miidevs,v 1.40 2004/04/15 08:45:04 mickey Exp $
 /* $NetBSD: miidevs,v 1.3 1998/11/05 03:43:43 thorpej Exp $ */
 
 /*-
@@ -54,6 +54,7 @@ oui INTEL			0x00aa00	Intel
 oui LEVEL1			0x00207b	Level 1
 oui MYSON			0x00c0b4	Myson Technology
 oui NATSEMI			0x080017	National Semiconductor
+oui PLESSEY			0x046b40	Plessey Semiconductor
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui SEEQ			0x00a07d	Seeq
 oui SIS				0x00e006	Silicon Integrated Systems
@@ -165,6 +166,9 @@ model NATSEMI DP83843		0x0001 DP83843 10/100 media interface
 model NATSEMI DP83815		0x0002 DP83815 10/100 integrated
 model NATSEMI DP83891		0x0005 DP83891 10/100/1000 media interface
 model NATSEMI DP83861		0x0006 DP83861 10/100/1000 media interface
+
+/* Plessey Semiconductor PHYs */
+model PLESSEY NWK914		0x0000 NWK914 10/100 media interface
 
 /* Quality Semiconductor PHYs */
 model QUALSEMI QS6612		0x0000 QS6612 10/100 media interface
