@@ -1,0 +1,360 @@
+# Modefile written by !MakeModes version 0.19 (22-Aug-1994)
+# Monitor description file for Acorn AKF60 monitor
+# Line rate: 30 - 50 kHz
+
+file_format:1
+monitor_title:Acorn AKF60
+DPMS_state:1
+
+# Letterbox modes
+
+# 240 x 352 (70Hz)
+startmode
+mode_name:
+x_res:240
+y_res:352
+pixel_rate:9440
+h_timings:18,16,8,240,8,10
+v_timings:2,58,0,352,0,37
+sync_pol:2
+endmode
+
+# 320 x 250 (70Hz - Modes 6,7)
+# Low band
+startmode
+mode_name:
+x_res:320
+y_res:250
+pixel_rate:12587
+h_timings:36,14,12,320,12,6
+v_timings:2,109,0,250,0,88
+sync_pol:2
+endmode
+
+# 320 x 256 (70Hz - Modes 1,2,5,9,10,13)
+# Low band
+startmode
+mode_name:
+x_res:320
+y_res:256
+pixel_rate:12587
+h_timings:36,14,12,320,12,6
+v_timings:2,106,0,256,0,85
+sync_pol:2
+endmode
+
+# 384 x 288 (70Hz)
+# Low band
+startmode
+mode_name:
+x_res:384
+y_res:288
+pixel_rate:18881
+h_timings:64,16,66,384,66,4
+v_timings:2,58,32,288,32,37
+sync_pol:2
+endmode
+
+# 480 x 352 (70Hz)
+# Low band
+startmode
+mode_name:480 x 352
+x_res:480
+y_res:352
+pixel_rate:18881
+h_timings:64,16,18,480,18,4
+v_timings:2,58,0,352,0,37
+sync_pol:2
+endmode
+
+# 640 x 200 (70Hz - Modes 44,45,46)
+# Low band
+startmode
+mode_name:
+x_res:640
+y_res:200
+pixel_rate:25175
+h_timings:88,22,22,640,22,6
+v_timings:2,134,0,200,0,113
+sync_pol:2
+endmode
+
+# 640 x 250 (70Hz - Modes 3,11,14)
+# Low band
+startmode
+mode_name:
+x_res:640
+y_res:250
+pixel_rate:25175
+h_timings:88,22,22,640,22,6
+v_timings:2,109,0,250,0,88
+sync_pol:2
+endmode
+
+# 640 x 256 (70Hz - Modes 0,4,8,12,15)
+# Low band
+startmode
+mode_name:
+x_res:640
+y_res:256
+pixel_rate:25175
+h_timings:88,22,22,640,22,6
+v_timings:2,106,0,256,0,85
+sync_pol:2
+endmode
+
+# 640 x 352 (70Hz - Modes 41,42,43)
+# Low band
+startmode
+mode_name:
+x_res:640
+y_res:352
+pixel_rate:25175
+h_timings:88,22,22,640,22,6
+v_timings:2,58,0,352,0,37
+sync_pol:2
+endmode
+
+# Other modes (some also numbered)
+
+# 320 x 480 (60Hz - Games modes 48,49)
+# Low band
+startmode
+mode_name:
+x_res:320
+y_res:480
+pixel_rate:12587
+h_timings:36,14,12,320,12,6
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 320 x 480 (72Hz)
+# Mid band
+startmode
+mode_name:
+x_res:320
+y_res:480
+pixel_rate:15750
+h_timings:28,30,16,320,16,6
+v_timings:3,28,0,480,0,9
+sync_pol:3
+endmode
+
+# 320 x 480 (75Hz)
+# Mid band
+startmode
+mode_name:
+x_res:320
+y_res:480
+pixel_rate:15750
+h_timings:26,34,16,320,16,8
+v_timings:3,16,0,480,0,1
+sync_pol:3
+endmode
+
+# 360 x 480 (60Hz - PCSoft mode 47)
+# Low band
+startmode
+mode_name:
+x_res:360
+y_res:480
+pixel_rate:16783
+h_timings:62,44,16,360,16,34
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 640 x 480 (60Hz - Modes 25,26,27,28)
+# Low band
+startmode
+mode_name:640 x 480
+x_res:640
+y_res:480
+pixel_rate:25175
+h_timings:88,22,22,640,22,6
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 640 x 480 (72Hz)
+# Mid band
+startmode
+mode_name:640 x 480
+x_res:640
+y_res:480
+pixel_rate:31500
+h_timings:52,64,30,640,30,14
+#    VESA:40,128,0,640,0,24
+v_timings:3,28,0,480,0,9
+sync_pol:3
+endmode
+
+# 640 x 480 (75Hz)
+# Mid band
+startmode
+mode_name:640 x 480
+x_res:640
+y_res:480
+pixel_rate:31500
+h_timings:62,64,30,640,30,14
+#    VESA:64,120,0,640,0,16
+v_timings:3,16,0,480,0,1
+sync_pol:3
+endmode
+
+# 800 x 600 (56Hz - Modes 29,30,31)
+# Mid band
+startmode
+mode_name:800 x 600
+x_res:800
+y_res:600
+pixel_rate:36000
+h_timings:70,74,34,800,34,12
+#    VESA:72,128,0,800,0,24
+v_timings:2,22,0,600,0,1
+sync_pol:0
+endmode
+
+# 800 x 600 (60Hz)
+# Mid band
+startmode
+mode_name:800 x 600
+x_res:800
+y_res:600
+pixel_rate:40000
+h_timings:112,64,40,800,40,0
+#    VESA:128,88, 0,800,0,40
+v_timings:4,23,0,600,0,1
+sync_pol:0
+endmode
+
+# 800 x 600 (72Hz)
+# High band
+startmode
+mode_name:800 x 600
+x_res:800
+y_res:600
+pixel_rate:50000
+h_timings:88,34,42,800,42,34
+#    VESA:120,64, 0,800,0,56
+v_timings:6,23,0,600,0,37
+sync_pol:0
+endmode
+
+# 800 x 600 (75Hz)
+# High band
+startmode
+mode_name:800 x 600
+x_res:800
+y_res:600
+pixel_rate:49500
+h_timings:80,46,42,800,42,46
+#    VESA:80,160,0,800,0,16
+v_timings:3,21,0,600,0,1
+sync_pol:0
+endmode
+
+# 1024 x 768 (60Hz)
+# High band
+startmode
+mode_name:1024 x 768
+x_res:1024
+y_res:768
+pixel_rate:65000
+h_timings:128,36,60,1024,60,36
+#    VESA:136,160,0,1024,0,24
+v_timings:6,29,0,768,0,3
+sync_pol:0
+endmode
+
+# Pixel-doubled modes
+
+# 1280 x 480 (60Hz)
+# Low band
+startmode
+mode_name:1280 x 480
+x_res:1280
+y_res:480
+pixel_rate:50350
+h_timings:176,44,44,1280,44,12
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 1280 x 480 (72Hz)
+# Mid band
+startmode
+mode_name:1280 x 480
+x_res:1280
+y_res:480
+pixel_rate:63000
+h_timings:104,128,60,1280,60,28
+#    VESA:80,256,0,1280,0,48
+v_timings:3,28,0,480,0,9
+sync_pol:3
+endmode
+
+# 1280 x 480 (75Hz)
+# Mid band
+startmode
+mode_name:1280 x 480
+x_res:1280
+y_res:480
+pixel_rate:63000
+h_timings:124,128,60,1280,60,28
+#    VESA:128,240,0,1280,0,32
+v_timings:3,16,0,480,0,1
+sync_pol:3
+endmode
+
+# 1600 x 600 (56Hz)
+# Mid band
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:72000
+h_timings:140,148,68,1600,68,24
+v_timings:2,22,0,600,0,1
+sync_pol:0
+endmode
+
+# 1600 x 600 (60Hz)
+# Mid band
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:80000
+h_timings:224,128,80,1600,80,0
+#    VESA:256,176, 0,1600,0,80
+v_timings:4,23,0,600,0,1
+sync_pol:0
+endmode
+
+# 1600 x 600 (72Hz)
+# High band
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:100000
+h_timings:176,68,84,1600,84,68
+#    VESA:240,128, 0,1600,0,112
+v_timings:6,23,0,600,0,37
+sync_pol:0
+endmode
+
+# 1600 x 600 (75Hz)
+# High band
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:99000
+h_timings:160,92,84,1600,84,92
+#    VESA:160,320,0,1600,0,32
+v_timings:3,21,0,600,0,1
+sync_pol:0
+endmode

@@ -1,0 +1,13 @@
+Ok there are a number of things that need to be done that I do not
+have time to do and am unlikely to have time to do them in the near
+future.
+These are currently being left in the hope that users will do them
+instead.
+
+1. replace netinet/in_cksum.c with an assembly version
+2. replace netns/ns_chsum.c with an assembly version
+3. drivers for currently unsupported podules
+4. replacing the C string functions in libc with assembly ones (work
+   started but not finished)
+5. porting libpthread to arm32 architecture
+

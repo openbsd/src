@@ -1,0 +1,412 @@
+# Modefile written by !MakeModes version 0.19 (22-Aug-1994)
+# Monitor description file for Taxan 875+LR monitor
+# Line rate: 30 - 82 kHz
+# Frame rate: 50 - 120 Hz
+# Dot rate: Up to 135 MHz
+
+file_format:1
+monitor_title:Taxan 875+LR
+DPMS_state:0
+
+# Letterbox modes
+
+# 240 x 352 (70Hz)
+startmode
+mode_name:
+x_res:240
+y_res:352
+pixel_rate:9440
+h_timings:20,16,8,240,8,8
+v_timings:2,58,0,352,0,37
+sync_pol:2
+endmode
+
+# 320 x 250 (70Hz - Modes 6,7)
+startmode
+mode_name:
+x_res:320
+y_res:250
+pixel_rate:12587
+h_timings:42,14,12,320,12,0
+v_timings:2,109,0,250,0,88
+sync_pol:2
+endmode
+
+# 320 x 256 (70Hz - Modes 1,2,5,9,10,13)
+startmode
+mode_name:
+x_res:320
+y_res:256
+pixel_rate:12587
+h_timings:42,14,12,320,12,0
+v_timings:2,106,0,256,0,85
+sync_pol:2
+endmode
+
+# 384 x 288 (70Hz)
+startmode
+mode_name:
+x_res:384
+y_res:288
+pixel_rate:18881
+h_timings: 68,16,66,384,66,0
+v_timings: 2,58,32,288,32,37
+sync_pol:2
+endmode
+
+# 480 x 352 (70Hz)
+startmode
+mode_name:480 x 352
+x_res:480
+y_res:352
+pixel_rate:18881
+h_timings: 68,16,18,480,18,0
+v_timings: 2,58,0,352,0,37
+sync_pol:2
+endmode
+
+# 640 x 200 (70Hz - Modes 44,45,46)
+startmode
+mode_name:
+x_res:640
+y_res:200
+pixel_rate:25175
+h_timings:92,24,22,640,22,0
+v_timings:2,134,0,200,0,113
+sync_pol:2
+endmode
+
+# 640 x 250 (70Hz - Modes 3,11,14)
+startmode
+mode_name:
+x_res:640
+y_res:250
+pixel_rate:25175
+h_timings:92,24,22,640,22,0
+v_timings:2,109,0,250,0,88
+sync_pol:2
+endmode
+
+# 640 x 256 (70Hz - Modes 0,4,8,12,15)
+startmode
+mode_name:
+x_res:640
+y_res:256
+pixel_rate:25175
+h_timings:92,24,22,640,22,0
+v_timings:2,106,0,256,0,85
+sync_pol:2
+endmode
+
+# 640 x 352 (70Hz - Modes 41,42,43)
+startmode
+mode_name:
+x_res:640
+y_res:352
+pixel_rate:25175
+h_timings:92,24,22,640,22,0
+v_timings:2,58,0,352,0,37
+sync_pol:2
+endmode
+
+# Other modes (some also numbered)
+
+# 320 x 480 (60Hz - Games modes 48,49)
+startmode
+mode_name:
+x_res:320
+y_res:480
+pixel_rate:12587
+h_timings:42,14,12,320,12,0
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 320 x 480 (72Hz)
+startmode
+mode_name:
+x_res:320
+y_res:480
+pixel_rate:15750
+h_timings:24,40,16,320,16,0
+v_timings:3,28,0,480,0,9
+sync_pol:3
+endmode
+
+# 320 x 480 (75Hz)
+startmode
+mode_name:
+x_res:320
+y_res:480
+pixel_rate:15750
+h_timings:24,44,16,320,16,0
+v_timings:3,16,0,480,0,1
+sync_pol:3
+endmode
+
+# 360 x 480 (60Hz - PCSoft mode 47)
+startmode
+mode_name:
+x_res:360
+y_res:480
+pixel_rate:16783
+h_timings:64,46,16,360,16,30
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 640 x 480 (60Hz - Modes 25,26,27,28)
+startmode
+mode_name:640 x 480
+x_res:640
+y_res:480
+pixel_rate:25175
+h_timings:94,22,22,640,22,0
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 640 x 480 (72Hz)
+startmode
+mode_name:640 x 480
+x_res:640
+y_res:480
+pixel_rate:31500
+h_timings:48,84,30,640,30,0
+#    VESA:40,128,0,640,0,24
+v_timings:3,28,0,480,0,9
+sync_pol:3
+endmode
+
+# 640 x 480 (75Hz)
+startmode
+mode_name:640 x 480
+x_res:640
+y_res:480
+pixel_rate:31500
+h_timings:64,76,30,640,30,0
+#    VESA:64,120,0,640,0,16
+v_timings:3,16,0,480,0,1
+sync_pol:3
+endmode
+
+# 800 x 600 (56Hz - Modes 29,30,31)
+startmode
+mode_name:800 x 600
+x_res:800
+y_res:600
+pixel_rate:36000
+h_timings:72,84,34,800,34,0
+#    VESA:72,128,0,800,0,24
+v_timings:2,22,0,600,0,1
+sync_pol:0
+endmode
+
+# 800 x 600 (60Hz)
+startmode
+mode_name:800 x 600
+x_res:800
+y_res:600
+pixel_rate:40000
+h_timings:128,48,40,800,40,0
+#    VESA:128,88, 0,800,0,40
+v_timings:4,23,0,600,0,1
+sync_pol:0
+endmode
+
+# 800 x 600 (72Hz)
+startmode
+mode_name:800 x 600
+x_res:800
+y_res:600
+pixel_rate:50000
+h_timings:100,42,42,800,42,14
+#    VESA:120,64, 0,800,0,56
+v_timings:6,23,0,600,0,37
+sync_pol:0
+endmode
+
+# Stick with just the 72Hz mode as this is a factory default
+# 800 x 600 (75Hz)
+#startmode
+#mode_name:800 x 600
+#x_res:800
+#y_res:600
+#pixel_rate:49500
+#h_timings:80,92,42,800,42,0
+#    VESA:80,160,0,800,0,16
+#v_timings:3,21,0,600,0,1
+#sync_pol:0
+#endmode
+
+# 1024 x 768 (60Hz)
+startmode
+mode_name:1024 x 768
+x_res:1024
+y_res:768
+pixel_rate:65000
+h_timings:136,64,60,1024,60,0
+#    VESA:136,160,0,1024,0,24
+v_timings:6,29,0,768,0,3
+sync_pol:0
+endmode
+
+# 1024 x 768 (70Hz)
+startmode
+mode_name:1024 x 768
+x_res:1024
+y_res:768
+pixel_rate:75000
+h_timings:124,36,72,1024,72,0
+#    VESA:136,144,0,1024,0,24
+v_timings:6,29,0,768,0,3
+sync_pol:0
+endmode
+
+# this has been removed so that it does not get selected for the 16 colour
+# version. 70Hz 1024x768 is a build in setting, 75Hz ain't !
+# 1024 x 768 (75Hz)
+#startmode
+#mode_name:1024 x 768
+#x_res:1024
+#y_res:768
+#pixel_rate:80310
+#     VESA:78750
+#h_timings:122,86,30,1024,76,0
+#    VESA: 96,176,0,1024,0,16
+#v_timings:3,28,0,768,0,1
+#sync_pol:0
+#endmode
+
+# 1152 x 900 (53Hz)
+startmode
+mode_name:1152 x 900
+x_res:1152
+y_res:900
+pixel_rate:76000
+h_timings:152,64,60,1152,100,0
+v_timings:6,29,0,900,0,3
+sync_pol:3
+endmode
+
+# 1152 x 900 (76Hz)
+startmode
+mode_name:1152 x 900
+x_res:1152
+y_res:900
+pixel_rate:117000
+h_timings:170,96,96,1152,104,12
+v_timings:3,33,0,900,0,3
+sync_pol:3
+endmode
+
+# 1280 x 1024 (60Hz)
+startmode
+mode_name:1280 x 1024
+x_res:1280
+y_res:1024
+pixel_rate:110000
+h_timings:166,90,96,1280,96,0
+#h_timings:128,256,0,1280,0,64
+v_timings:3,32,0,1024,0,3
+sync_pol:0
+endmode
+
+# The taxan has a 70Hz 1280 x 768 build in just got to find it.
+# 1280 x 1024 (70Hz)
+startmode
+mode_name:1280 x 1024
+x_res:1280
+y_res:1024
+pixel_rate:128000
+h_timings:160,88,96,1280,96,0
+#h_timings:166,90,96,1280,96,0
+#h_timings:128,256,0,1280,0,64
+v_timings:3,32,0,1024,0,3
+sync_pol:0
+endmode
+
+# Pixel-doubled modes
+
+# 1280 x 480 (60Hz)
+startmode
+mode_name:1280 x 480
+x_res:1280
+y_res:480
+pixel_rate:50350
+h_timings:188,44,44,1280,44,0
+v_timings:2,32,0,480,0,11
+sync_pol:3
+endmode
+
+# 1280 x 480 (72Hz)
+startmode
+mode_name:1280 x 480
+x_res:1280
+y_res:480
+pixel_rate:63000
+h_timings:96,172,58,1280,58,0
+#    VESA:80,256,0,1280,0,48
+v_timings:3,28,0,480,0,9
+sync_pol:3
+endmode
+
+# 1280 x 480 (75Hz)
+startmode
+mode_name:1280 x 480
+x_res:1280
+y_res:480
+pixel_rate:63000
+h_timings:128,156,58,1280,58,0
+#    VESA:128,240,0,1280,0,32
+v_timings:3,16,0,480,0,1
+sync_pol:3
+endmode
+
+# 1600 x 600 (56Hz)
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:72000
+h_timings:144,168,68,1600,68,0
+v_timings:2,22,0,600,0,1
+sync_pol:0
+endmode
+
+# 1600 x 600 (60Hz)
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:80000
+h_timings:256,98,78,1600,78,2
+#    VESA:256,176, 0,1600,0,80
+v_timings:4,23,0,600,0,1
+sync_pol:0
+endmode
+
+# 1600 x 600 (72Hz)
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:100000
+h_timings:226,58,84,1600,84,28
+#    VESA:240,128, 0,1600,0,112
+v_timings:6,23,0,600,0,37
+sync_pol:0
+endmode
+
+# 1600 x 600 (75Hz)
+startmode
+mode_name:1600 x 600
+x_res:1600
+y_res:600
+pixel_rate:99000
+h_timings:160,188,82,1600,82,0
+#    VESA:160,320,0,1600,0,32
+v_timings:3,21,0,600,0,1
+sync_pol:0
+endmode
+

@@ -1,0 +1,3 @@
+$NetBSD: .keep_me,v 1.1 1996/01/31 23:19:04 mark Exp $
+
+This file must remain so that 'cvs checkout' makes the compile directory.

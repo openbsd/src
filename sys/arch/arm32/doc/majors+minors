@@ -1,0 +1,246 @@
+/* $NetBSD: majors+minors,v 1.3 1996/04/19 20:04:29 mark Exp $ */
+
+/*
+ * Copyright (c) 1994 Mark Brinicombe.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *	This product includes software developed by Mark Brinicombe.
+ * 4. The name of the company nor the name of the author may be used to
+ *    endorse or promote products derived from this software without specific
+ *    prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+ * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ * RiscBSD kernel project
+ *
+ * majors
+ *
+ * list of all allocated major numbers
+ *
+ * Created      : 17/09/94
+ * Last updated : 30/12/95
+ *
+ *    $Id: majors+minors,v 1.1.1.1 1996/04/24 11:08:39 deraadt Exp $
+ */
+
+List of allocated and reserved major and minor numbers
+
+The block and character major numbers are ALWAYS allocated together to the
+same device driver even if the driver does not require both.
+ 
+ 0 B 	- reserved
+ 0 C	- memory device
+	  minor = 0 - /dev/mem
+	  minor = 1 - /dev/kmem
+	  minor = 2 - /dev/null
+	  minor = 3 - /dev/zero
+ 1 B	- swap device
+ 1 C	- psuedo swap device
+	  minor = 0 - /dev/drum
+ 2 B	- reserved
+ 2 C	- console device
+	  minor = 0 - /dev/console
+ 3 B	- reserved
+ 3 C	- controlling terminal
+	  minor = 0 - /dev/tty
+ 4 B	- reserved
+ 4 C	- virtual console
+	  /dev/ttyv{unit}
+	  unit = minor
+ 5 B	- reserved
+ 5 C	- kernel log device
+	  minor = 0 - /dev/klog
+ 6 B	- reserved
+ 6 C	- psuedo tty master
+	  /dev/pty{class}{unit}
+	  unit = minor % 16
+	  minor / 16 = 0 - class = p
+	  minor / 16 = 1 - class = q
+	  minor / 16 = 2 - class = r
+	  minor / 16 = 3 - class = s
+	  minor / 16 = 4 - class = t
+ 7 B	- reserved
+ 7 C	- psuedo tty slave
+	  /dev/tty{class}{unit}
+	  unit = minor % 16
+	  minor / 16 = 0 - class = p
+	  minor / 16 = 1 - class = q
+	  minor / 16 = 2 - class = r
+	  minor / 16 = 3 - class = s
+	  minor / 16 = 4 - class = t
+ 8 B	- reserved
+ 8 C	- parallel printer
+	  /dev/lp{class}{unit}
+	  unit = minor & 0x1f
+	  minor & 0x80 = 0x00 - class = t - interrupt driver
+	  minor & 0x80 = 0x80 - class = a - polling driver
+	  e.g.
+	    0 - /dev/lpt0
+	  128 - /dev/lpa0
+ 9 B	- reserved
+ 9 C	- quadrature mouse
+	  minor = 0 - /dev/quadmouse
+10 B	- reserved
+10 C	- beep device
+	  minor = 0 - /dev/beep
+11 B	- reserved
+11 C	- keyboard device
+	  minor = 0 - /dev/kbd
+12 B	- reserved
+12 C	- serial port
+	  /dev/tty0{unit}
+	  unit = minor
+13 B	- reserver
+13 C	- reserved
+14 B	- reserved
+14 C	- reserved
+15 B	- reserved
+15 C	- reserved
+16 B	- ST506/ESDI/IDE disk
+	  /dev/wd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+16 C	- ST506/ESDI/IDE disk
+	  /dev/rwd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+17 B	- floppy disk
+	  /dev/fd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+17 C	- floppy disk
+	  /dev/rfd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+18 B	- ram disk
+	  /dev/rd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+18 C	- ram disk
+	  /dev/rrd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+19 B	- vnode disk driver
+	  /dev/vnd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+19 C	- vnode disk driver
+	  /dev/rvnd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+20 B	- reserved (ATAPI CDROM)
+	  /dev/wcd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+20 C	- reserved (ATAPI CDROM)
+	  /dev/rwcd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+21 B	- concatenated disk driver
+	  /dev/ccd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+21 C	- concatenated disk driver
+	  /dev/rccd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+22 B	- reserved
+22 C	- reserved
+23 B	- reserved
+23 C	- reserved
+24 B	- SCSI disk
+	  /dev/sd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+24 C	- SCSI disk
+	  /dev/rsd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+25 B	- SCSI tape
+25 C	- SCSI tape
+26 B	- SCSI cdrom
+	  /dev/cd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+26 C	- SCSI cdrom
+	  /dev/rcd{unit}{partition}
+	  partition = minor % 8
+	  unit = minor / 8
+27 B	- reserved
+27 C	- SCSI autochanger
+	  /dev/ch{unit}
+	  unit = minor
+28 B	- reserved
+28 C	- SCSI unknown device
+	  /dev/uk{unit}
+	  unit = minor
+29 B	- reserved
+29 C	- SCSI scanner device
+	  /dev/ss{unit}
+	  unit = minor
+30 B	- reserved
+30 C	- reserved
+31 B	- reserved
+31 C	- reserved
+32 B	- reserved
+32 C	- Berkeley packet filter
+	  /dev/bpf{unit}
+	  unit = minor
+	  minor = 0 - /dev/bpf0
+	  minor = 1 - /dev/bpf1
+	  minor = 2 - /dev/bpf2
+	  minor = 3 - /dev/bpf3
+33 B	- reserved
+33 C	- network tunnel
+	  /dev/tun{unit}
+	  unit = minor
+	  minor = 0 - /dev/tun0
+	  minor = 1 - /dev/tun1
+	  minor = 2 - /dev/tun2
+34 B	- reserved
+34 C	- file descriptor pseudo-device
+	  minor = 0 - /dev/stdin
+	  minor = 1 - /dev/stdout
+	  minor = 2 - /dev/stderr
+35 B	- reserved
+35 C	- loadable module driver
+	  minor = 0 - /dev/lkm
+36 B	- reserved
+36 C	- generic audio device
+37 B	- reserved
+37 C	- vidcvideo device
+	  minor = 0 - /dev/vidcvideo
+38 B	- reserved
+38 C	- cpu/hydra
+	  minor = 0 - /dev/cpu0
+39 B	- reserved
+39 C	- reserved
+40 B	- reserved
+40 C	- PS2 mouse
+	  minor = 0 - /dev/pms
+41 B	- reserved
+41 C	- reserved
+42 B	- reserved
+42 C	- IIC device
+43 B	- reserved
+43 C	- RTC device

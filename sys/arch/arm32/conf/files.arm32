@@ -1,0 +1,271 @@
+#
+# First try for arm-specific configuration info
+#
+
+maxpartitions	8
+maxusers 2 8 64
+
+device mainbus { [base = -1], [dack = -1], [irq = -1] }
+attach mainbus at root
+file	arch/arm32/mainbus/mainbus.c		mainbus
+
+device hydrabus { [slot = -1] }
+attach hydrabus at mainbus
+file	arch/arm32/mainbus/exp/hydra.c			hydrabus needs-flag
+file	arch/arm32/mainbus/exp/hydraboot.S		hydrabus
+
+device cpu
+attach cpu at mainbus, hydrabus
+file	arch/arm32/mainbus/cpu.c			cpu needs-flag
+major	{cpu = 38}
+
+#Standard NetBSD wd driver
+device  wdc {drive = -1}
+attach	wdc at mainbus
+device  wd: disk
+attach	wd at wdc
+file    arch/arm32/mainbus/wd.c			wdc needs-flag
+major   {wd = 16}
+
+#Hacked NetBSD wd driver with cd and atapi support - nasty hack atm
+#device  wdc {drive = -1}
+#attach  wdc at mainbus
+#device  wd: disk
+#attach  wd at wdc
+#file    arch/arm32/mainbus/exp/wd.c		wdc needs-flag
+#major   {wd = 16}
+
+device  atapi: disk
+attach	atapi at mainbus
+file    arch/arm32/mainbus/exp/atapi.c		atapi needs-flag
+
+device  wcd: disk
+attach	wcd at mainbus
+file    arch/arm32/mainbus/exp/wcd.c		wcd needs-flag
+major   {wcd = 20}
+
+#Standard NetBSD fd driver
+device  fdc {drive = -1}
+attach	fdc at mainbus
+device  fd: disk
+attach	fd at fdc
+file    arch/arm32/mainbus/fd.c			fdc needs-flag
+major   {fd = 17}
+
+# RAM disk driver
+pseudo-device	rd
+file	dev/ramdisk.c				rd needs-count
+file	arch/arm32/dev/rd_hooks.c		rd | ramdisk_hooks
+major   {rd = 18}
+
+device  lpt: tty, ether, ifnet
+attach	lpt at mainbus
+file    arch/arm32/mainbus/lpt.c		lpt needs-flag
+major   {lpt = 8}
+
+device  com: tty
+attach	com at mainbus
+file    arch/arm32/mainbus/com.c		com needs-flag
+major   {com = 12}
+
+# Mouse devices
+device  quadmouse: tty
+attach	quadmouse at mainbus
+file    arch/arm32/mainbus/qmouse.c		quadmouse needs-flag
+major   {quadmouse = 9}
+
+device  pms: tty
+attach	pms at mainbus
+file    arch/arm32/mainbus/pms.c		pms needs-flag
+major   {pms = 40}
+
+# Audio devices
+device	beep
+attach	beep at mainbus
+file    arch/arm32/mainbus/beep.c			beep needs-flag
+major   {beep = 10}
+
+device	audio: audio
+attach	audio at mainbus
+file	arch/arm32/mainbus/vidcaudio.c		vidcaudio needs-flag
+major   {audio = 36}
+
+device	kbd
+attach	kbd at mainbus
+file    arch/arm32/mainbus/kbd.c			kbd needs-flag
+major   {kbd = 11}
+
+# Podule bus device
+device podulebus { [slot = -1] }
+attach podulebus at root
+file	arch/arm32/podulebus/podulebus.c		podulebus
+
+# Ethernet devices
+device ea: ether, ifnet
+attach ea at podulebus
+file	arch/arm32/podulebus/if_ea.c		ea
+
+device eb: ether, ifnet
+attach eb at podulebus
+file	arch/arm32/podulebus/if_eb.c		eb
+
+device eh: ether, ifnet
+attach eh at podulebus
+file	arch/arm32/podulebus/if_eh.c		eh
+
+device ie: ether, ifnet
+attach ie at podulebus
+file	arch/arm32/podulebus/if_ie.c		ie
+
+# IIC/RTC files
+device iic { addr = -1 }
+attach iic at mainbus
+file	arch/arm32/mainbus/iic_asm.S		iic
+file	arch/arm32/mainbus/iic.c		iic	needs-flag
+
+device rtc
+attach rtc at iic
+file	arch/arm32/mainbus/rtc.c		rtc	needs-count
+
+#define	kgdb
+
+#device kie: kgdb
+#attach kie at podule
+#file	arch/arm32/podulebus/kgdb_ie.c		kie
+
+#file	arch/arm32/arm32/kgdb_glue.c			kgdb
+#file	arch/arm32/arm32/kgdb_step.c			kgdb
+
+#
+# Machine-independent SCSI drivers
+#
+
+include "../../../scsi/files.scsi"
+major   {sd = 24}
+major   {st = 25}
+major   {cd = 26}
+major   {ch = 27}
+major	{uk = 28}
+major	{ss = 29}
+
+# Generic sbic (WD3393) driver
+define	sbic
+file	arch/arm32/podulebus/sbic.c		sbic
+
+# Acorn SCSI I specific layer for sbic
+device  asc: scsi, sbic
+attach	asc at podulebus
+file	arch/arm32/podulebus/asc.c		asc
+
+# Generic fas216 + esp216 driver
+define	sfas
+file	arch/arm32/podulebus/sfas.c	sfas
+
+# Cumana specific layer for sfas
+device	csc: scsi, sfas
+attach	csc at podulebus
+file	arch/arm32/podulebus/exp/csc.c	csc
+
+device	ptsc: scsi, sfas
+attach	ptsc at podulebus
+file	arch/arm32/podulebus/ptsc.c	ptsc
+
+# Generic NCR driver
+define	ncr
+file	arch/arm32/podulebus/ncr5380sbc.c	ncr
+
+# Oak specific layer for ncr
+device	oak: scsi, ncr
+attach	oak at podulebus
+file	arch/arm32/podulebus/oak.c	oak
+
+device  vidcvideo
+attach	vidcvideo at mainbus
+major	{vidcvideo = 37}
+device  vt: tty
+attach	vt at mainbus
+file    arch/arm32/dev/console/console.c	vt needs-count
+file    arch/arm32/dev/console/vidcconsole.c	vt needs-count
+file	arch/arm32/dev/console/vidc_mc.S	vt needs-count
+file    arch/arm32/dev/console/vidc.c		vt needs-count
+file    arch/arm32/dev/console/vt220.c		vt needs-count
+file	arch/arm32/dev/console/debugconsole.c 	vt needs-count
+file	arch/arm32/dev/console/dumb.c 		vt needs-count
+
+file	arch/arm32/arm32/autoconf.c
+file	arch/arm32/arm32/blockio.S
+file	arch/arm32/arm32/clock.c
+file	arch/arm32/arm32/conf.c
+file	arch/arm32/arm32/cpuswitch.S
+file	arch/arm32/arm32/disksubr.c		disk
+file	arch/arm32/arm32/stubs.c
+file	arch/arm32/arm32/exception.S
+file	arch/arm32/arm32/syscall.c
+file	arch/arm32/arm32/ast.c
+file	arch/arm32/arm32/fault.c
+file	arch/arm32/arm32/undefined.c
+file	arch/arm32/arm32/mem.c
+file	arch/arm32/arm32/scratch.S
+file	arch/arm32/arm32/process_machdep.c
+file	arch/arm32/arm32/machdep.c
+file	arch/arm32/arm32/sys_machdep.c
+file	arch/arm32/arm32/vm_machdep.c
+file	arch/arm32/arm32/pmap.c
+file	arch/arm32/arm32/fusu.c
+
+file	netinet/in_cksum.c		inet
+file	netns/ns_cksum.c		ns
+
+# IRQ/FIQ files
+file	arch/arm32/arm32/spl.S
+file	arch/arm32/arm32/irq.S
+file	arch/arm32/arm32/irqhandler.c
+file	arch/arm32/arm32/fiq.S
+
+# library functions
+file	arch/arm32/arm32/strstr.c
+file	arch/arm32/arm32/strtoul.c
+file	arch/arm32/arm32/memset.S
+file	arch/arm32/arm32/bcopy_page.S
+file	arch/arm32/arm32/bcopy.S
+file	arch/arm32/arm32/bcopyinout.S
+file	arch/arm32/arm32/copystr.S
+file	arch/arm32/arm32/coproc15.S
+file	arch/arm32/arm32/setcpsr.S
+file	arch/arm32/arm32/setstack.S
+
+# files related to the shell
+file	arch/arm32/kshell/shell_input.c		kshell
+file	arch/arm32/kshell/shell_shell.c		kshell
+file	arch/arm32/kshell/shell_disassem.c	kshell
+file	arch/arm32/kshell/strchr.c		kshell
+file	arch/arm32/kshell/dumphex.c		kshell
+
+# files related to debugging
+file	arch/arm32/arm32/debug.c
+file	arch/arm32/arm32/disassem.c
+file	arch/arm32/arm32/postmortem.c
+ 
+file    dev/cons.c
+file	dev/cninit.c
+
+# Signal precision FPE
+file	arch/arm32/fpe-sp/fpe.c			fpe
+file	arch/arm32/fpe-sp/fpeadd.S		fpe
+file	arch/arm32/fpe-sp/fpesub.S		fpe
+file	arch/arm32/fpe-sp/fpemul.S		fpe
+file	arch/arm32/fpe-sp/fpediv.S		fpe
+file	arch/arm32/fpe-sp/fpefix.S		fpe
+file	arch/arm32/fpe-sp/fpecmf.S		fpe
+file	arch/arm32/fpe-sp/fpetoe.S		fpe
+
+# ARM FPE
+file	arch/arm32/fpe-arm/armfpe_glue.S	armfpe
+file	arch/arm32/fpe-arm/armfpe_init.c	armfpe
+file	arch/arm32/fpe-arm/armfpe.s		armfpe
+
+# DDB
+file	arch/arm32/arm32/db_disasm.c		ddb
+file	arch/arm32/arm32/db_interface.c		ddb
+file	arch/arm32/arm32/db_trace.c		ddb
+file	arch/arm32/arm32/db_machdep.c		ddb
