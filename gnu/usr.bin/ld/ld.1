@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: ld.1,v 1.1.1.1 1995/10/18 08:40:55 deraadt Exp $
+.\"	$Id: ld.1,v 1.2 1996/06/17 00:12:29 deraadt Exp $
 .\"
 .Dd October 14, 1993
 .Dt LD 1
@@ -87,7 +87,8 @@ option
 according to the search rules in effect. If such a file can not be
 found a traditional archive is looked for.
 This options can appear anywhere on the command line and is complementary
-to -Bstatic.
+to
+.Fl B Ns Ar static .
 .It Fl B Ns Ar static
 The counterpart of
 .Fl B Ns Ar dynamic .
@@ -136,7 +137,9 @@ to the list of directories to search for libraries specified with the
 option.
 .It Fl l Ns Ar lib-spec
 This option specifies a library to be considered for inclusion in the
-output. If the -Bdynamic option is in effect, a shared library of the
+output. If the
+.Fl B Ns Ar dynamic
+option is in effect, a shared library of the
 form lib<spec>.so.m.n
 .Po where \&
 .Em m
@@ -145,8 +148,10 @@ is the major, and
 is the minor version number, respectively
 .Pc is searched for first. The
 library with the highest version found in the search path is selected.
-If no shared library is found or the -Bstatic options is in effect,
-an archive of the form lib<spec>.a is looked for in the library seach path.
+If no shared library is found or the
+.Fl B Ns Ar static
+option is in effect, an archive of the form lib<spec>.a is looked for in
+the library search path.
 .It Fl M
 Produce output about the mapping of segments of the input files and the
 values assigned to
@@ -167,18 +172,18 @@ usually
 .Dq /usr/lib
 .Pc
 for
-.Ar -l
+.Fl l
 specified libraries.
 .It Fl o Ar filename
 Specifies the name of the output file. Defaults to
-.Dq a.out.
+.Dq a.out .
 .It Fl Q
 Produce a
 .Dv QMAGIC
 output file.
 .It Fl r
 Produce relocatable object file, suitable for another pass through
-.Nm ld.
+.Nm ld .
 .It Fl R
 Record the given path within the executable for run-time libary search.
 This only applies to dynamically linked executables.
@@ -213,9 +218,25 @@ Trace the manipulations inflicted on
 Make a
 .Dv ZMAGIC
 output file. This is the default.
+.Sh ENVIRONMENT
+.Nm
+utilizes the following environment variables:
+.Bl -tag -width "LD_LIBRARY_PATH"
+.It Ev LD_LIBRARY_PATH
+This colon-separated list of directories is inserted into the search
+path for libraries following any directories specified via
+.Fl L
+options and preceding the built-in path.
+.It Ev LD_NOSTD_PATH
+When set, do not search the built-in path for libraries.
+This is an alternative to the
+.Fl nostdlib
+command-line flag.
+.El
 .Sh FILES
 .Sh SEE ALSO
 .Xr ldconfig 1 ,
+.Xr ld.so 1 ,
 .Xr link 5
 .Sh CAVEATS
 An entry point must now explicitly be given if the output is intended to be
