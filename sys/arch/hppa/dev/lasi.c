@@ -1,4 +1,4 @@
-/*	$OpenBSD: lasi.c,v 1.14 2003/07/30 21:24:19 mickey Exp $	*/
+/*	$OpenBSD: lasi.c,v 1.15 2003/08/05 21:09:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -183,6 +183,7 @@ lasiattach(parent, self, aux)
 		break;	/* only has one led. works different */
 
 	case HPPA_BOARD_HP715_64:
+	case HPPA_BOARD_HP715_80:
 	case HPPA_BOARD_HP715_100:
 	case HPPA_BOARD_HP715_100XC:
 	case HPPA_BOARD_HP725_100:
@@ -193,14 +194,15 @@ lasiattach(parent, self, aux)
 		machine_ledword = 1;
 		break;
 
+	case HPPA_BOARD_HP800_A180C:
 	case HPPA_BOARD_HP780_C100:
 	case HPPA_BOARD_HP780_C110:
-	case HPPA_BOARD_HP770_J200:
-	case HPPA_BOARD_HP770_J210:
 	case HPPA_BOARD_HP779_C132L:
 	case HPPA_BOARD_HP779_C160L:
 	case HPPA_BOARD_HP779_C180L:
 	case HPPA_BOARD_HP779_C160L1:
+	case HPPA_BOARD_HP770_J200:
+	case HPPA_BOARD_HP770_J210:
 		if (bus_space_map(ca->ca_iot, 0xf0190000,
 		    4, 0, (bus_space_handle_t *)&machine_ledaddr))
 			machine_ledaddr = NULL;
