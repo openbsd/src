@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sisreg.h,v 1.19 2004/09/28 04:37:33 brad Exp $ */
+/*	$OpenBSD: if_sisreg.h,v 1.20 2005/04/05 00:13:57 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -218,6 +218,7 @@
 
 #define SIS_TXCFG_DRAIN_THRESH	0x0000003F /* 32-byte units */
 #define SIS_TXCFG_FILL_THRESH	0x00003F00 /* 32-byte units */
+#define SIS_TXCFG_MPII03D	0x00040000 /* "Must be 1" */
 #define SIS_TXCFG_DMABURST	0x00700000
 #define SIS_TXCFG_AUTOPAD	0x10000000
 #define SIS_TXCFG_LOOPBK	0x20000000

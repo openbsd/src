@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.43 2005/01/15 05:24:11 brad Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.44 2005/04/05 00:13:57 brad Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1508,11 +1508,8 @@ int sis_intr(arg)
 	sc = arg;
 	ifp = &sc->arpcom.ac_if;
 
-	/* Supress unwanted interrupts */
-	if (!(ifp->if_flags & IFF_UP)) {
-		sis_stop(sc);
+	if (sc->sis_stopped)	/* Most likely shared interrupt */
 		return claimed;
-	}
 
 	/* Disable interrupts. */
 	CSR_WRITE_4(sc, SIS_IER, 0);
@@ -1623,7 +1620,7 @@ void sis_start(ifp)
 {
 	struct sis_softc	*sc;
 	struct mbuf		*m_head = NULL;
-	u_int32_t		idx;
+	u_int32_t		idx, queued = 0;
 
 	sc = ifp->if_softc;
 
@@ -1648,6 +1645,8 @@ void sis_start(ifp)
 		/* now we are committed to transmit the packet */
 		IFQ_DEQUEUE(&ifp->if_snd, m_head);
 
+		queued++;
+
 		/*
 		 * If there's a BPF listener, bounce a copy of this frame
 		 * to him.
@@ -1657,17 +1656,17 @@ void sis_start(ifp)
 			bpf_mtap(ifp->if_bpf, m_head);
 #endif
 	}
-	if (idx == sc->sis_cdata.sis_tx_prod)
-		return;
 
-	/* Transmit */
-	sc->sis_cdata.sis_tx_prod = idx;
-	SIS_SETBIT(sc, SIS_CSR, SIS_CSR_TX_ENABLE);
+	if (queued) {
+		/* Transmit */
+		sc->sis_cdata.sis_tx_prod = idx;
+		SIS_SETBIT(sc, SIS_CSR, SIS_CSR_TX_ENABLE);
 
-	/*
-	 * Set a timeout in case the chip goes out to lunch.
-	 */
-	ifp->if_timer = 5;
+		/*
+		 * Set a timeout in case the chip goes out to lunch.
+		 */
+		ifp->if_timer = 5;
+	}
 
 	return;
 }
@@ -1728,14 +1727,14 @@ void sis_init(xsc)
 	sis_list_tx_init(sc);
 
         /*
-	 * Page 78 of the DP83815 data sheet (september 2002 version)
+	 * Short Cable Receive Errors (MP21.E)
+	 * also: Page 78 of the DP83815 data sheet (september 2002 version)
 	 * recommends the following register settings "for optimum
 	 * performance." for rev 15C.  The driver from NS also sets  
 	 * the PHY_CR register for later versions.
 	 */
-	 if (sc->sis_type == SIS_TYPE_83815) {
+	 if (sc->sis_type == SIS_TYPE_83815 && sc->sis_srr <= NS_SRR_15D) {
 		CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
-		/* DC speed = 01 */
 		CSR_WRITE_4(sc, NS_PHY_CR, 0x189C);
 		if (sc->sis_srr == NS_SRR_15C) {  
 			/* set val for c2 */
@@ -1817,32 +1816,34 @@ void sis_init(xsc)
 		SIS_CLRBIT(sc, SIS_RX_CFG, SIS_RXCFG_RX_TXPKTS);
 	}
 
+	if (sc->sis_type == SIS_TYPE_83815 && sc->sis_srr >= NS_SRR_16A) {
+		/*
+		 * MPII03.D: Half Duplex Excessive Collisions.
+		 * Also page 49 in 83816 manual
+		 */
+		SIS_SETBIT(sc, SIS_TX_CFG, SIS_TXCFG_MPII03D);
+ 	}
+
 	if (sc->sis_type == SIS_TYPE_83815 && sc->sis_srr < NS_SRR_16A &&
 	     IFM_SUBTYPE(mii->mii_media_active) == IFM_100_TX) {
 		uint32_t reg;
 
 		/*
-		 * Some DP83815s experience problems when used with short
-		 * (< 30m/100ft) Ethernet cables in 100BaseTX mode.  This
-		 * sequence adjusts the DSP's signal attenuation to fix the
-		 * problem.
+		 * Short Cable Receive Errors (MP21.E)
 		 */
 		CSR_WRITE_4(sc, NS_PHY_PAGE, 0x0001);
-
-		reg = CSR_READ_4(sc, NS_PHY_DSPCFG);
-		/* Allow coefficient to be read */
-		CSR_WRITE_4(sc, NS_PHY_DSPCFG, (reg & 0xfff) | 0x1000);
-		DELAY(100);
-		reg = CSR_READ_4(sc, NS_PHY_TDATA);
-		if ((reg & 0x0080) == 0 ||
-		    (reg > 0xd8 && reg <= 0xff)) {
+		reg = CSR_READ_4(sc, NS_PHY_DSPCFG) & 0xfff;
+		CSR_WRITE_4(sc, NS_PHY_DSPCFG, reg | 0x1000);
+		DELAY(100000);
+		reg = CSR_READ_4(sc, NS_PHY_TDATA) & 0xff;
+		if ((reg & 0x0080) == 0 || (reg > 0xd8 && reg <= 0xff)) {
 #ifdef DEBUG
 			printf("%s: Applying short cable fix (reg=%x)\n",
 			    sc->sc_dev.dv_xname, reg);
 #endif
 			CSR_WRITE_4(sc, NS_PHY_TDATA, 0x00e8);
-			/* Adjust coefficient and prevent change */
-			SIS_SETBIT(sc, NS_PHY_DSPCFG, 0x20);
+			reg = CSR_READ_4(sc, NS_PHY_DSPCFG);
+			SIS_SETBIT(sc, NS_PHY_DSPCFG, reg | 0x20);
 		}
 		CSR_WRITE_4(sc, NS_PHY_PAGE, 0);
 	}
@@ -1998,6 +1999,10 @@ void sis_watchdog(ifp)
 
 	sc = ifp->if_softc;
 
+	if (sc->sis_stopped) {
+		return;
+	}
+
 	ifp->if_oerrors++;
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
 
@@ -2032,6 +2037,7 @@ void sis_stop(sc)
 	timeout_del(&sc->sis_timeout);
 	CSR_WRITE_4(sc, SIS_IER, 0);
 	CSR_WRITE_4(sc, SIS_IMR, 0);
+	CSR_READ_4(sc, SIS_ISR); /* clear any interrupts already pending */
 	SIS_SETBIT(sc, SIS_CSR, SIS_CSR_TX_DISABLE|SIS_CSR_RX_DISABLE);
 	DELAY(1000);
 	CSR_WRITE_4(sc, SIS_TX_LISTPTR, 0);
