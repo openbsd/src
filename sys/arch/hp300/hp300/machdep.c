@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.45 2001/05/10 17:02:34 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.46 2001/05/15 01:57:49 millert Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -431,7 +431,7 @@ cpu_startup()
 	printf("avail mem = %lu (%uK)\n", ptoa(uvmexp.free),
 	    ptoa(uvmexp.free)/1024);
 #else
-	printf("avail mem = %lu  (%uK)\n", ptoa(cnt.v_free_count),
+	printf("avail mem = %lu (%uK)\n", ptoa(cnt.v_free_count),
 	    ptoa(cnt.v_free_count)/1024);
 #endif
 	printf("using %d buffers containing %u bytes (%uK) of memory\n",
