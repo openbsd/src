@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.61 2000/01/09 23:59:57 jason Exp $
+#	$OpenBSD: files.pci,v 1.62 2000/01/10 13:58:16 jason Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -129,10 +129,10 @@ device	rl: ether, ifnet, mii, ifmedia
 attach	rl at pci
 file	dev/pci/if_rl.c			rl
 
-# Lite-On PNIC
-device	pn: ether, ifnet, ifmedia
-attach	pn at pci
-file	dev/pci/if_pn.c			pn
+# Macronix
+device	mx: ether, ifnet, ifmedia
+attach	mx at pci
+file	dev/pci/if_mx.c			mx
 
 # Via Rhine
 device	vr: ether, ifnet, ifmedia
