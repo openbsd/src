@@ -1,4 +1,4 @@
-.\"	$OpenBSD: doc-common,v 1.17 1999/09/23 08:25:03 deraadt Exp $
+.\"	$OpenBSD: doc-common,v 1.18 2000/02/05 12:24:12 espie Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -170,11 +170,11 @@
 .	if "\\$3"LOCAL" .ds vT OpenBSD Local Manual
 .	if "\\$3"alpha" .as vT \ (Alpha)
 .	if "\\$3"amiga" .as vT \ (Amiga)
-.	if "\\$3"arc"	.as vT \ (ARC)
+.	if "\\$3"arc" .as vT \ (ARC)
 .	if "\\$3"arm32" .as vT \ (Arm32)
 .	if "\\$3"atari" .as vT \ (Atari)
 .	if "\\$3"hp300" .as vT \ (HP300)
-.	if "\\$3"hppa"	.as vT \ (HPPA)
+.	if "\\$3"hppa" .as vT \ (HPPA)
 .	if "\\$3"i386"  .as vT \ (i386)
 .	if "\\$3"mac68k" .as vT \ (Mac68K)
 .	if "\\$3"mvme68k" .as vT \ (MVME68K)
