@@ -12,7 +12,7 @@ Created: Mon Aug 21 15:48:58 1995 ylo
 */
 
 #include "includes.h"
-RCSID("$Id: servconf.c,v 1.4 1999/09/29 18:16:20 dugsong Exp $");
+RCSID("$Id: servconf.c,v 1.5 1999/09/29 22:08:13 dugsong Exp $");
 
 #include "ssh.h"
 #include "servconf.h"
@@ -109,7 +109,7 @@ void fill_default_server_options(ServerOptions *options)
     options->rsa_authentication = 1;
 #ifdef KRB4
   if (options->kerberos_authentication == -1)
-    options->kerberos_authentication = 1;
+    options->kerberos_authentication = (access(KEYFILE, R_OK) == 0);
   if (options->kerberos_or_local_passwd == -1)
     options->kerberos_or_local_passwd = 0;
   if (options->kerberos_ticket_cleanup == -1)
@@ -119,7 +119,7 @@ void fill_default_server_options(ServerOptions *options)
   if (options->kerberos_tgt_passing == -1)
     options->kerberos_tgt_passing = 0;
   if (options->afs_token_passing == -1)
-    options->afs_token_passing = 1;
+    options->afs_token_passing = k_hasafs();
 #endif /* AFS */
   if (options->password_authentication == -1)
     options->password_authentication = 1;

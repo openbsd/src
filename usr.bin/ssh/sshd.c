@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.7 1999/09/29 21:15:54 deraadt Exp $");
+RCSID("$Id: sshd.c,v 1.8 1999/09/29 22:08:13 dugsong Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -834,13 +834,13 @@ void do_connection(int privileged_port)
   if (options.rsa_authentication)
     auth_mask |= 1 << SSH_AUTH_RSA;
 #ifdef KRB4
-  if (options.kerberos_authentication && (access(KEYFILE, R_OK) == 0))
+  if (options.kerberos_authentication)
     auth_mask |= 1 << SSH_AUTH_KERBEROS;
 #endif
 #ifdef AFS
   if (options.kerberos_tgt_passing)
     auth_mask |= 1 << SSH_PASS_KERBEROS_TGT;
-  if (options.afs_token_passing && k_hasafs())
+  if (options.afs_token_passing)
     auth_mask |= 1 << SSH_PASS_AFS_TOKEN;
 #endif
   if (options.password_authentication)
