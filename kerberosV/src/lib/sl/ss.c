@@ -137,12 +137,13 @@ ss_execute_line (int index, const char *line)
 int
 ss_listen (int index)
 {
-    char *prompt = malloc(strlen(subsystems[index].name) + 3);
+    size_t len = strlen(subsystems[index].name) + 3;
+    char *prompt = malloc(len);
     if (prompt == NULL)
 	return ENOMEM;
 
-    strcpy(prompt, subsystems[index].name);
-    strcat(prompt, ": ");
+    strlcpy(prompt, subsystems[index].name, len);
+    strlcat(prompt, ": ", len);
     sl_loop(subsystems[index].table, prompt);
     free(prompt);
     return 0;

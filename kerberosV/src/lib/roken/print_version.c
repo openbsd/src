@@ -69,8 +69,8 @@ print_version(const char *progname)
 	msg[0] = '\0';
 	for(i = 0; i < num_args; i++) {
 	    if(i > 0)
-		strcat(msg, ", ");
-	    strcat(msg, arg[i]);
+		strlcat(msg, ", ", len+1);
+	    strlcat(msg, arg[i], len+1);
 	}
     }
     fprintf(stderr, "%s (%s)\n", progname, msg);

@@ -54,8 +54,8 @@ init_generate (const char *filename, const char *base)
 {
     orig_filename = filename;
     if(base)
-	strcpy(headerbase, base);
-    sprintf(header, "%s.h", headerbase);
+	strlcpy(headerbase, base, sizeof(headerbase));
+    snprintf(header, sizeof(header), "%s.h", headerbase);
     headerfile = fopen (header, "w");
     if (headerfile == NULL)
 	err (1, "open %s", header);

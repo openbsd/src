@@ -102,9 +102,7 @@ statement	: INDEX NUMBER
 		}
 		| PREFIX STRING
 		{
-		    prefix = realloc(prefix, strlen($2) + 2);
-		    strcpy(prefix, $2);
-		    strcat(prefix, "_");
+		    asprintf(&prefix, "%s_", $2);
 		    free($2);
 		}
 		| PREFIX

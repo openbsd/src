@@ -38,10 +38,8 @@ RCSID("$KTH: der_copy.c,v 1.8 1999/12/02 17:05:01 joda Exp $");
 int
 copy_general_string (const general_string *from, general_string *to)
 {
-    *to = malloc(strlen(*from) + 1);
-    if(*to == NULL)
+    if ((*to = strdup(*from)) == NULL)
 	return ENOMEM;
-    strcpy(*to, *from);
     return 0;
 }
 

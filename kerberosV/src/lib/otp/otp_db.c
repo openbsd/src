@@ -195,7 +195,7 @@ otp_put (void *v, OtpContext *ctx)
 
   if (rem < len)
       return -1;
-  strcpy (p, ctx->alg->name);
+  strlcpy (p, ctx->alg->name, rem);
   p += len;
   rem -= len;
 
@@ -220,7 +220,7 @@ otp_put (void *v, OtpContext *ctx)
   len = strlen(ctx->seed) + 1;
   if (rem < len)
       return -1;
-  strcpy (p, ctx->seed);
+  strlcpy (p, ctx->seed, rem);
   p += len;
   rem -= len;
   dat.dptr  = buf;

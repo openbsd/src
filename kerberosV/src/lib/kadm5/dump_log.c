@@ -124,7 +124,7 @@ print_entry(kadm5_server_context *server_context,
 	}
 	if(mask & KADM5_PRINC_EXPIRE_TIME) {
 	    if(ent.valid_end == NULL) {
-		strcpy(t, "never");
+		strlcpy(t, "never", sizeof(t));
 	    } else {
 		strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", 
 			 localtime(ent.valid_end));
@@ -133,7 +133,7 @@ print_entry(kadm5_server_context *server_context,
 	}
 	if(mask & KADM5_PW_EXPIRATION) {
 	    if(ent.pw_end == NULL) {
-		strcpy(t, "never");
+		strlcpy(t, "never", sizeof(t));
 	    } else {
 		strftime(t, sizeof(t), "%Y-%m-%d %H:%M:%S", 
 			 localtime(ent.pw_end));
@@ -149,14 +149,14 @@ print_entry(kadm5_server_context *server_context,
 	}
 	if(mask & KADM5_MAX_LIFE) {
 	    if(ent.max_life == NULL)
-		strcpy(t, "for ever");
+		strlcpy(t, "for ever", sizeof(t));
 	    else
 		unparse_time(*ent.max_life, t, sizeof(t));
 	    printf("    max life = %s\n", t);
 	}
 	if(mask & KADM5_MAX_RLIFE) {
 	    if(ent.max_renew == NULL)
-		strcpy(t, "for ever");
+		strlcpy(t, "for ever", sizeof(t));
 	    else
 		unparse_time(*ent.max_renew, t, sizeof(t));
 	    printf("    max rlife = %s\n", t);

@@ -52,9 +52,9 @@ _warnerr(krb5_context context, int do_errtext,
     args[0] = args[1] = NULL;
     arg = args;
     if(fmt){
-	strcat(xfmt, "%s");
+	strlcat(xfmt, "%s", sizeof(xfmt));
 	if(do_errtext)
-	    strcat(xfmt, ": ");
+	    strlcat(xfmt, ": ", sizeof(xfmt));
 	vasprintf(&msg, fmt, ap);
 	if(msg == NULL)
 	    return ENOMEM;
@@ -63,7 +63,7 @@ _warnerr(krb5_context context, int do_errtext,
     if(context && do_errtext){
 	const char *err_msg;
 
-	strcat(xfmt, "%s");
+	strlcat(xfmt, "%s", sizeof(xfmt));
 
 	err_str = krb5_get_error_string(context);
 	if (err_str != NULL) {

@@ -303,7 +303,7 @@ time2generalizedtime (time_t t, octet_string *s)
 	 return ENOMEM;
      s->length = 15;
      tm = gmtime (&t);
-     sprintf (s->data, "%04d%02d%02d%02d%02d%02dZ", tm->tm_year + 1900,
+     snprintf (s->data, 16, "%04d%02d%02d%02d%02d%02dZ", tm->tm_year + 1900,
 	      tm->tm_mon + 1, tm->tm_mday, tm->tm_hour, tm->tm_min,
 	      tm->tm_sec);
      return 0;

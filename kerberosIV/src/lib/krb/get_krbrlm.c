@@ -115,7 +115,7 @@ krb_get_lrealm(char *r, int n)
       if (strcmp(t, no_default_realm) == 0)
 	return KFAILURE;	/* Can't figure out default realm */
 
-      strcpy(r, t);
+      strlcpy(r, t, REALM_SZ);
       return KSUCCESS;
     }
     else

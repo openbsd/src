@@ -175,19 +175,21 @@ expand_realms(krb5_context context,
 		return ENOMEM;
 	    }
 	    r->realm = tmp;
-	    strcat(r->realm, prev_realm);
+	    strlcat(r->realm, prev_realm, 
+		    strlen(r->realm) + strlen(prev_realm) + 1);
 	}else if(r->leading_slash && !r->leading_space && prev_realm){
 	    /* yet another exception: if you use x500-names, the
                leading realm doesn't have to be "quoted" with a space */
+	    size_t len = strlen(r->realm) + strlen(prev_realm) + 1;
 	    char *tmp;
-	    tmp = malloc(strlen(r->realm) + strlen(prev_realm) + 1);
+	    tmp = malloc(len);
 	    if(tmp == NULL){
 		free_realms(realms);
 		krb5_set_error_string (context, "malloc: out of memory");
 		return ENOMEM;
 	    }
-	    strcpy(tmp, prev_realm);
-	    strcat(tmp, r->realm);
+	    strlcpy(tmp, prev_realm, len);
+	    strlcat(tmp, r->realm, len);
 	    free(r->realm);
 	    r->realm = tmp;
 	}
@@ -369,10 +371,10 @@ krb5_domain_x500_encode(char **realms, int num_realms, krb5_data *encoding)
     *s = '\0';
     for(i = 0; i < num_realms; i++){
 	if(i && i < num_realms - 1)
-	    strcat(s, ",");
+	    strlcat(s, ",", len+1);
 	if(realms[i][0] == '/')
-	    strcat(s, " ");
-	strcat(s, realms[i]);
+	    strlcat(s, " ", len+1);
+	strlcat(s, realms[i], len+1);
     }
     encoding->data = s;
     encoding->length = strlen(s);

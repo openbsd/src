@@ -209,7 +209,7 @@ parse_reply(unsigned char *data, int len)
 		return NULL;
 	    }
 	    (*rr)->u.mx->preference = (p[0] << 8) | p[1];
-	    strcpy((*rr)->u.mx->domain, host);
+	    strlcpy((*rr)->u.mx->domain, host, strlen(host));
 	    break;
 	}
 	case T_SRV:{
@@ -228,7 +228,7 @@ parse_reply(unsigned char *data, int len)
 	    (*rr)->u.srv->priority = (p[0] << 8) | p[1];
 	    (*rr)->u.srv->weight = (p[2] << 8) | p[3];
 	    (*rr)->u.srv->port = (p[4] << 8) | p[5];
-	    strcpy((*rr)->u.srv->target, host);
+	    strlcpy((*rr)->u.srv->target, host, strlen(host));
 	    break;
 	}
 	case T_TXT:{
@@ -286,7 +286,7 @@ parse_reply(unsigned char *data, int len)
 	    (*rr)->u.sig->sig_len        = sig_len;
 	    memcpy ((*rr)->u.sig->sig_data, p + 18 + status, sig_len);
 	    (*rr)->u.sig->signer         = &(*rr)->u.sig->sig_data[sig_len];
-	    strcpy((*rr)->u.sig->signer, host);
+	    strlcpy((*rr)->u.sig->signer, host, strlen(host));
 	    break;
 	}
 

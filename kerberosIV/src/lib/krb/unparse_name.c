@@ -54,11 +54,11 @@ krb_unparse_name_r(krb_principal *pr, char *fullname)
 {
     quote_string("'@\\", pr->name, fullname);
     if(pr->instance[0]){
-	strcat(fullname, ".");
+	strlcat(fullname, ".", MAX_K_NAME_SZ);
 	quote_string("@\\", pr->instance, fullname + strlen(fullname));
     }
     if(pr->realm[0]){
-	strcat(fullname, "@");
+	strlcat(fullname, "@", MAX_K_NAME_SZ);
 	quote_string("\\", pr->realm, fullname + strlen(fullname));
     }
     return fullname;

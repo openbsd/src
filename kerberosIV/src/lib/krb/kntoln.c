@@ -61,7 +61,7 @@ krb_kntoln(AUTH_DAT *ad, char *lname)
         return(KFAILURE);
     if (strcmp(ad->prealm, lrealm))
         return(KFAILURE);
-    strcpy(lname, ad->pname);
+    strlcpy(lname, ad->pname, sizeof lname);
     return(KSUCCESS);
 }
 
@@ -124,22 +124,22 @@ an_to_ln(AUTH_DAT *ad, char *lname)
 	    return(KFAILURE);
 	}
 	/* Got it! */
-	strcpy(lname,val.dptr);
+	strlcpy(lname,val.dptr, REALM_SZ);
 	return(KSUCCESS);
-    } else strcpy(lname,ad->pname);
+    } else strlcpy(lname, ad->pname, REALM_SZ);
     return(KSUCCESS);
 }
 
 void
 an_to_a(AUTH_DAT *ad, char *str)
 {
-    strcpy(str, ad->pname);
+    strlcpy(str, ad->pname, ANAME_SZ+INST_SZ+REALM_SZ+2);
     if(*ad->pinst) {
-	strcat(str, ".");
-	strcat(str, ad->pinst);
+	strlcat(str, ".", ANAME_SZ+INST_SZ+REALM_SZ+2);
+	strlcat(str, ad->pinst, ANAME_SZ+INST_SZ+REALM_SZ+2);
     }
-    strcat(str, "@");
-    strcat(str, ad->prealm);
+    strlcat(str, "@", ANAME_SZ+INST_SZ+REALM_SZ+2);
+    strlcat(str, ad->prealm, ANAME_SZ+INST_SZ+REALM_SZ+2);
 }
 
 /*
@@ -150,15 +150,17 @@ an_to_a(AUTH_DAT *ad, char *str)
 int
 a_to_an(char *str, AUTH_DAT *ad)
 {
-    char *buf = (char *)malloc(strlen(str)+1);
+    char *buf;
     char *rlm, *inst, *princ;
+    size_t len = strlen(str) + 1;
 
+    buf = (char *)malloc(len);
     if(!(*lrealm) && (krb_get_lrealm(lrealm,1) == KFAILURE)) {
 	free(buf);
 	return(KFAILURE);
     }
     /* destructive string hacking is more fun.. */
-    strcpy(buf, str);
+    strlcpy(buf, str, len);
 
     if (rlm = index(buf, '@')) {
 	*rlm++ = '\0';
@@ -166,11 +168,15 @@ a_to_an(char *str, AUTH_DAT *ad)
     if (inst = index(buf, '.')) {
 	*inst++ = '\0';
     }
-    strcpy(ad->pname, buf);
-    if(inst) strcpy(ad->pinst, inst);
-    else *ad->pinst = '\0';
-    if (rlm) strcpy(ad->prealm, rlm);
-    else strcpy(ad->prealm, lrealm);
+    strlcpy(ad->pname, buf, sizeof ad->pname);
+    if(inst)
+	strlcpy(ad->pinst, inst, sizeof ad->pinst);
+    else
+	*ad->pinst = '\0';
+    if (rlm)
+	strlcpy(ad->prealm, rlm, sizeof ad->prealm);
+    else
+	strlcpy(ad->prealm, lrealm, sizeof ad->prealm);
     free(buf);
     return(KSUCCESS);
 }

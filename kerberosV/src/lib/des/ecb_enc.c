@@ -96,7 +96,7 @@ char *des_options()
 			size="int";
 		else
 			size="long";
-		sprintf(buf,"des(%s,%s,%s,%s)",ptr,risc,unroll,size);
+		snprintf(buf,sizeof buf,"des(%s,%s,%s,%s)",ptr,risc,unroll,size);
 		}
 	return(buf);
 	}
