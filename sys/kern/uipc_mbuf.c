@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.29 2001/05/17 18:41:44 provos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.30 2001/05/18 23:29:33 millert Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -123,7 +123,7 @@ mclpool_alloc(sz, flags, mtype)
 	return ((void *)uvm_km_alloc_poolpage1(mb_map, uvmexp.mb_object,
 	    waitok));
 #else
-	return pool_page_alloc(sz, flags, mtype);
+	return pool_page_alloc_nointr(sz, flags, mtype);
 #endif
 }
 
@@ -136,7 +136,7 @@ mclpool_release(v, sz, mtype)
 #if defined(UVM)
 	uvm_km_free_poolpage1(mb_map, (vaddr_t)v);
 #else
-	pool_page_free(v, sz, mtype);
+	pool_page_free_nointr(v, sz, mtype);
 #endif
 }
 
