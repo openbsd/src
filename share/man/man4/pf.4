@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.4,v 1.37 2003/08/28 09:41:22 jmc Exp $
+.\"	$OpenBSD: pf.4,v 1.38 2003/10/01 14:32:54 cedric Exp $
 .\"
 .\" Copyright (C) 2001, Kjell Wooding.  All rights reserved.
 .\"
@@ -97,11 +97,6 @@ Adds pool address
 to the buffer address pool to be used in the following
 DIOCADDRULE or DIOCCHANGERULE call.
 All other members of the structure are ignored.
-.It Dv DIOCBEGINRULES  Fa "u_int32_t"
-Clears the inactive ruleset for the type of rule indicated by
-.Va rule.action
-and returns a ticket for subsequent
-DIOCADDRULE and DIOCCOMMITRULES calls.
 .It Dv DIOCADDRULE     Fa "struct pfioc_rule"
 .Bd -literal
 struct pfioc_rule {
@@ -120,7 +115,7 @@ Adds
 at the end of the inactive ruleset.
 Requires
 .Va ticket
-obtained through preceding DIOCBEGINRULES call, and
+obtained through preceding DIOCXBEGIN call, and
 .Va pool_ticket
 obtained through DIOCBEGINADDRS call.
 DIOCADDADDR must also be called if any pool addresses are required.
@@ -133,13 +128,6 @@ names indicate the anchor and ruleset in which to append the rule.
 and
 .Va action
 are ignored.
-.It Dv DIOCCOMMITRULES Fa "u_int32_t"
-Switch inactive to active filter ruleset.
-Requires
-.Va ticket .
-.It Dv DIOCBEGINALTQS  Fa "u_int32_t"
-Clears the inactive list of queues and returns a ticket for subsequent
-DIOCADDALTQ and DIOCCOMMITALTQS calls.
 .It Dv DIOCADDALTQ     Fa "struct pfioc_altq"
 Adds
 .Bd -literal
@@ -149,10 +137,6 @@ struct pfioc_altq {
 	struct pf_altq   altq;
 };
 .Ed
-.It Dv DIOCCOMMITALTQS Fa "u_int32_t"
-Switch inactive to active list of queues.
-Requires
-.Va ticket .
 .It Dv DIOCGETRULES    Fa "struct pfioc_rule"
 Returns
 .Va ticket
@@ -525,19 +509,6 @@ or deleted by the kernel.
 Yes, tables can be deleted if one removes the
 .Va persist
 flag of an unreferenced table.
-.It Dv DIOCRINABEGIN Fa "struct pfioc_table"
-Starts a transaction with the inactive set of tables.
-Cleans up any leftover from a previously aborted transaction, and returns
-a new ticket.
-On exit, pfrio_ndel contains the number of leftover table deleted, and
-pfrio_ticket contains a valid ticket to use for the following two IOCTLs.
-.It Dv DIOCRINACOMMIT Fa "struct pfioc_table"
-Commit the inactive set of tables into the active set.
-While copying the addresses, do a best effort to keep statistics for
-addresses present before and after the commit.
-On entry, io->pfrio_ticket takes a valid ticket.
-On exit, io->pfrio_nadd and io->pfrio_nchange contain the number of tables
-added and altered by the commit operation.
 .It Dv DIOCRINADEFINE Fa "struct pfioc_table"
 Defines a table in the inactive set.
 On entry, pfrio_table contains the table id and pfrio_buffer[pfrio_size]
@@ -546,6 +517,46 @@ A valid ticket must also be supplied to pfrio_ticket.
 On exit, pfrio_nadd contains 0 if the table was already defined in the
 inactive list, or 1 if a new table has been created.
 pfrio_naddr contains the number of addresses effectively put in the table.
+.It Dv DIOCXBEGIN Fa "struct pfioc_trans"
+.Bd -literal
+#define PF_RULESET_ALTQ         (PF_RULESET_MAX)
+#define PF_RULESET_TABLE        (PF_RULESET_MAX+1)
+struct pfioc_trans {
+        int              size;  /* number of elements */
+        int              esize; /* size of each element in bytes */
+        struct pfioc_trans_e {
+                int             rs_num;
+                char            anchor[PF_ANCHOR_NAME_SIZE];
+                char            ruleset[PF_RULESET_NAME_SIZE];
+                u_int32_t       ticket;
+        }               *array;
+};
+.Ed
+.Pp
+Clears all the inactive rulesets specified in the
+.Fa "struct pfioc_trans_e"
+array.
+For each ruleset, a ticket is returned for subsequent "add rule" IOCTLs,
+as well as for the
+.Dv DIOCXCOMMIT
+and
+.Dv DIOCXROLLBACK
+calls.
+.It Dv DIOCXCOMMIT Fa "struct pfioc_trans"
+Atomically switch a vector of inactive rulesets to the active rulesets.
+Implemented as a standard 2-phase commit, which will either fail for all
+rulesets or completely succeed.
+All tickets need to be valid.
+Returns
+.Dv EBUSY
+if a concurrent process is trying to update some of the same rulesets
+concurrently.
+.It Dv DIOCXROLLBACK Fa "struct pfioc_trans"
+Clean up the kernel by undoing all changes that have taken place on the
+inactive rulesets since the last
+.Dv DIOCXBEGIN .
+.Dv DIOCXROLLBACK
+will silently ignore rulesets for which the ticket is invalid.
 .It Dv DIOCFPFLUSH
 Flush the passive OS fingerprint table.
 .It Dv DIOCFPADD Fa "struct pf_osfp_ioctl"
