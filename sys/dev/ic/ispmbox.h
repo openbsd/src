@@ -1,4 +1,4 @@
-/*	$OpenBSD: ispmbox.h,v 1.16 2001/12/14 00:20:55 mjacob Exp $ */
+/*	$OpenBSD: ispmbox.h,v 1.17 2002/05/17 01:34:58 mjacob Exp $ */
 /*
  * Mailbox and Queue Entry Definitions for for Qlogic ISP SCSI adapters.
  *
@@ -48,7 +48,7 @@
 					/*   c */
 					/*   d */
 #define MBOX_CHECK_FIRMWARE		0x000e
-					/*   f */
+#define	MBOX_READ_RAM_WORD_EXTENDED	0x000f
 #define MBOX_INIT_REQ_QUEUE		0x0010
 #define MBOX_INIT_RES_QUEUE		0x0011
 #define MBOX_EXECUTE_IOCB		0x0012
@@ -104,8 +104,10 @@
 #define	MBOX_EXEC_BIOS_IOCB		0x0042
 #define	MBOX_SET_FW_FEATURES		0x004a
 #define	MBOX_GET_FW_FEATURES		0x004b
-#define		FW_FEATURE_LVD_NOTIFY	0x2
 #define		FW_FEATURE_FAST_POST	0x1
+#define		FW_FEATURE_LVD_NOTIFY	0x2
+#define		FW_FEATURE_RIO_32BIT	0x4
+#define		FW_FEATURE_RIO_16BIT	0x8
 
 #define	MBOX_ENABLE_TARGET_MODE		0x0055
 #define		ENABLE_TARGET_FLAG	0x8000
@@ -138,6 +140,9 @@
 #define	MBOX_SEND_CHANGE_REQUEST	0x0070
 #define	MBOX_FABRIC_LOGOUT		0x0071
 #define	MBOX_INIT_LIP_LOGIN		0x0072
+
+#define	MBOX_DRIVER_HEARTBEAT		0x005B
+#define	MBOX_FW_HEARTBEAT		0x005C
 
 #define	MBOX_GET_SET_DATA_RATE		0x005D	/* 23XX only */
 #define		MBGSD_GET_RATE	0
@@ -641,9 +646,11 @@ typedef struct isp_icb {
 #define	ICBXOPT_RIO_OFF		0
 #define	ICBXOPT_RIO_16BIT	1
 #define	ICBXOPT_RIO_32BIT	2
-#define	ICBXOPT_RIO_16BIT_DELAY	3
-#define	ICBXOPT_RIO_32BIT_DELAY	4
+#define	ICBXOPT_RIO_16BIT_IOCB	3
+#define	ICBXOPT_RIO_32BIT_IOCB	4
 
+#define	ICBZOPT_ENA_RDXFR_RDY	0x01
+#define	ICBZOPT_ENA_OOF		(1 << 6) /* out of order frame handling */
 /* These 3 only apply to the 2300 */
 #define	ICBZOPT_RATE_ONEGB	(MBGSD_ONEGB << 14)
 #define	ICBZOPT_RATE_TWOGB	(MBGSD_TWOGB << 14)
@@ -769,9 +776,40 @@ typedef struct {
 #define			SVC3_ROLE_MASK	0x30
 #define			SVC3_ROLE_SHIFT	4
 
-#define	SNS_GAN	0x100
-#define	SNS_GP3	0x171
-#define	SNS_RFT	0x217
+/*
+ * CT definition
+ *
+ * This is as the QLogic f/w documentations defines it- which is just opposite,
+ * bit wise, from what the specification defines it as. Additionally, the
+ * ct_response and ct_resid (really from FC-GS-2) need to be byte swapped.
+ */
+
+typedef struct {
+	u_int8_t	ct_revision;
+	u_int8_t	ct_portid[3];
+	u_int8_t	ct_fcs_type;
+	u_int8_t	ct_fcs_subtype;
+	u_int8_t	ct_options;
+	u_int8_t	ct_res0;
+	u_int16_t	ct_response;
+	u_int16_t	ct_resid;
+	u_int8_t	ct_res1;
+	u_int8_t	ct_reason;
+	u_int8_t	ct_explanation;
+	u_int8_t	ct_vunique;
+} ct_hdr_t;
+#define	FS_ACC	0x8002
+#define	FS_RJT	0x8001
+
+#define	FC4_IP		5 /* ISO/EEC 8802-2 LLC/SNAP "Out of Order Delivery" */
+#define	FC4_SCSI	8 /* SCSI-3 via Fivre Channel Protocol (FCP) */
+
+#define	SNS_GA_NXT	0x100
+#define	SNS_GPN_ID	0x112
+#define	SNS_GNN_ID	0x113
+#define	SNS_GFF_ID	0x11F
+#define	SNS_GID_FT	0x171
+#define	SNS_RFT_ID	0x217
 typedef struct {
 	u_int16_t	snscb_rblen;	/* response buffer length (words) */
 	u_int16_t	snscb_res0;
@@ -780,23 +818,70 @@ typedef struct {
 	u_int16_t	snscb_res1;
 	u_int16_t	snscb_data[1];	/* variable data */
 } sns_screq_t;	/* Subcommand Request Structure */
-#define	SNS_GAN_REQ_SIZE	(sizeof (sns_screq_t)+(5*(sizeof (u_int16_t))))
-#define	SNS_GP3_REQ_SIZE	(sizeof (sns_screq_t)+(5*(sizeof (u_int16_t))))
-#define	SNS_RFT_REQ_SIZE	(sizeof (sns_screq_t)+(21*(sizeof (u_int16_t))))
 
 typedef struct {
-	u_int8_t	snscb_cthdr[16];
+	u_int16_t	snscb_rblen;	/* response buffer length (words) */
+	u_int16_t	snscb_res0;
+	u_int16_t	snscb_addr[4];	/* response buffer address */
+	u_int16_t	snscb_sblen;	/* subcommand buffer length (words) */
+	u_int16_t	snscb_res1;
+	u_int16_t	snscb_cmd;
+	u_int16_t	snscb_res2;
+	u_int32_t	snscb_res3;
+	u_int32_t	snscb_port;
+} sns_ga_nxt_req_t;
+#define	SNS_GA_NXT_REQ_SIZE	(sizeof (sns_ga_nxt_req_t))
+
+typedef struct {
+	u_int16_t	snscb_rblen;	/* response buffer length (words) */
+	u_int16_t	snscb_res0;
+	u_int16_t	snscb_addr[4];	/* response buffer address */
+	u_int16_t	snscb_sblen;	/* subcommand buffer length (words) */
+	u_int16_t	snscb_res1;
+	u_int16_t	snscb_cmd;
+	u_int16_t	snscb_res2;
+	u_int32_t	snscb_res3;
+	u_int32_t	snscb_portid;
+} sns_gxn_id_req_t;
+#define	SNS_GXN_ID_REQ_SIZE	(sizeof (sns_gxn_id_req_t))
+
+typedef struct {
+	u_int16_t	snscb_rblen;	/* response buffer length (words) */
+	u_int16_t	snscb_res0;
+	u_int16_t	snscb_addr[4];	/* response buffer address */
+	u_int16_t	snscb_sblen;	/* subcommand buffer length (words) */
+	u_int16_t	snscb_res1;
+	u_int16_t	snscb_cmd;
+	u_int16_t	snscb_mword_div_2;
+	u_int32_t	snscb_res3;
+	u_int32_t	snscb_fc4_type;
+} sns_gid_ft_req_t;
+#define	SNS_GID_FT_REQ_SIZE	(sizeof (sns_gid_ft_req_t))
+
+typedef struct {
+	u_int16_t	snscb_rblen;	/* response buffer length (words) */
+	u_int16_t	snscb_res0;
+	u_int16_t	snscb_addr[4];	/* response buffer address */
+	u_int16_t	snscb_sblen;	/* subcommand buffer length (words) */
+	u_int16_t	snscb_res1;
+	u_int16_t	snscb_cmd;
+	u_int16_t	snscb_res2;
+	u_int32_t	snscb_res3;
+	u_int32_t	snscb_port;
+	u_int32_t	snscb_fc4_types[8];
+} sns_rft_id_req_t;
+#define	SNS_RFT_ID_REQ_SIZE	(sizeof (sns_rft_id_req_t))
+
+typedef struct {
+	ct_hdr_t	snscb_cthdr;
 	u_int8_t	snscb_port_type;
 	u_int8_t	snscb_port_id[3];
 	u_int8_t	snscb_portname[8];
 	u_int16_t	snscb_data[1];	/* variable data */
 } sns_scrsp_t;	/* Subcommand Response Structure */
-#define	SNS_GAN_RESP_SIZE	608	/* Maximum response size (bytes) */
-#define	SNS_GP3_RESP_SIZE	532	/* XXX: For 128 ports */
-#define	SNS_RFT_RESP_SIZE	16
 
 typedef struct {
-	u_int8_t	snscb_cthdr[16];
+	ct_hdr_t	snscb_cthdr;
 	u_int8_t	snscb_port_type;
 	u_int8_t	snscb_port_id[3];
 	u_int8_t	snscb_portname[8];
@@ -812,6 +897,30 @@ typedef struct {
 	u_int8_t	snscb_fpname[8];
 	u_int8_t	snscb_reserved;
 	u_int8_t	snscb_hardaddr[3];
-} sns_ganrsp_t;	/* Subcommand Response Structure */
+} sns_ga_nxt_rsp_t;	/* Subcommand Response Structure */
+#define	SNS_GA_NXT_RESP_SIZE	(sizeof (sns_ga_nxt_rsp_t))
+
+typedef struct {
+	ct_hdr_t	snscb_cthdr;
+	u_int8_t	snscb_wwn[8];
+} sns_gxn_id_rsp_t;
+#define	SNS_GXN_ID_RESP_SIZE	(sizeof (sns_gxn_id_rsp_t))
+
+typedef struct {
+	ct_hdr_t	snscb_cthdr;
+	u_int32_t	snscb_fc4_features[32];
+} sns_gff_id_rsp_t;
+#define	SNS_GFF_ID_RESP_SIZE	(sizeof (sns_gff_id_rsp_t))
+
+typedef struct {
+	ct_hdr_t	snscb_cthdr;
+	struct {
+		u_int8_t	control;
+		u_int8_t	portid[3];
+	} snscb_ports[1];
+} sns_gid_ft_rsp_t;
+#define	SNS_GID_FT_RESP_SIZE(x)	((sizeof (sns_gid_ft_rsp_t)) + ((x - 1) << 2))
+
+#define	SNS_RFT_ID_RESP_SIZE	(sizeof (ct_hdr_t))
 
 #endif	/* _ISPMBOX_H */
