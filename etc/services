@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.56 2004/04/10 09:07:30 jmc Exp $
+#	$OpenBSD: services,v 1.57 2004/06/22 03:04:24 ho Exp $
 #
 # Network services, Internet style
 #
@@ -201,33 +201,35 @@ krbupdate	760/tcp		kreg		# BSD Kerberos registration
 #> does register or list uses of these ports as a convenience to the
 #> community.
 #
-socks		1080/tcp		# Socks
-kpop		1109/tcp		# Pop with Kerberos
+socks		1080/tcp			# Socks
+kpop		1109/tcp			# Pop with Kerberos
 ingreslock	1524/tcp
 ingreslock	1524/udp
-prospero-np	1525/tcp		# Prospero non-privileged
+prospero-np	1525/tcp			# Prospero non-privileged
 prospero-np	1525/udp
-pptp		1723/tcp		# Point-to-Point Tunneling Protocol
-pptp		1723/udp		# Point-to-Point Tunneling Protocol
-ssdp		1900/tcp		# SSDP
-ssdp		1900/udp		# SSDP
-nfsd		2049/udp	nfs	# NFS server
-nfsd		2049/tcp	nfs	# NFS server
-eklogin		2105/tcp		# Kerberos encrypted rlogin
-rkinit		2108/tcp		# Kerberos remote kinit
-kf		2110/tcp		# forward credentials
-kx		2111/tcp		# X over kerberos
-kip		2112/tcp		# IP over kerberos
-kauth		2120/tcp		# Remote kauth
-krb524		4444/udp		# Kerberos 5->4
-krb524		4444/tcp		# Kerberos 5->4
-iprop		2121/tcp		# Kerberos incremental propagation
-daap		3689/tcp		# Digital Audio Access Protocol
-daap		3689/udp		# Digital Audio Access Protocol
-rfe		5002/tcp		# Radio Free Ethernet
-rfe		5002/udp		# Actually uses UDP only
-sip		5060/tcp		# SIP
-sip		5060/udp		# SIP
+pptp		1723/tcp			# Point-to-Point Tunneling Protocol
+pptp		1723/udp			# Point-to-Point Tunneling Protocol
+ssdp		1900/tcp			# SSDP
+ssdp		1900/udp			# SSDP
+nfsd		2049/udp	nfs		# NFS server
+nfsd		2049/tcp	nfs		# NFS server
+eklogin		2105/tcp			# Kerberos encrypted rlogin
+rkinit		2108/tcp			# Kerberos remote kinit
+kf		2110/tcp			# forward credentials
+kx		2111/tcp			# X over kerberos
+kip		2112/tcp			# IP over kerberos
+kauth		2120/tcp			# Remote kauth
+iprop		2121/tcp			# Kerberos incremental propagation
+daap		3689/tcp			# Digital Audio Access Protocol
+daap		3689/udp			# Digital Audio Access Protocol
+krb524		4444/tcp			# Kerberos 5->4
+krb524		4444/udp			# Kerberos 5->4
+ipsec-nat-t	4500/tcp	ipsec-msft	# Kerberos 5->4
+ipsec-nat-t	4500/udp	ipsec-msft	# Kerberos 5->4
+rfe		5002/tcp			# Radio Free Ethernet
+rfe		5002/udp			# Actually uses UDP only
+sip		5060/tcp			# SIP
+sip		5060/udp			# SIP
 #
 # AFS Services
 #
