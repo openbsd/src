@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.5 1998/11/30 21:12:35 mickey Exp $
+$OpenBSD: cpudevs,v 1.6 1998/12/04 01:56:14 mickey Exp $
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -35,13 +35,12 @@ $OpenBSD: cpudevs,v 1.5 1998/11/30 21:12:35 mickey Exp $
  */
 
 #board	HP705		0x302	705 (Bushmaster)
-
 board	HP710		0x300	710 (Bushmaster)
 
-board	HP712_60	0x600	712/60 (Gekko)
-board	HP712_80	0x601	712/80 (Gekko)
-board	HP712_80i	0x602	712/80i (Gekko)
-board	HP712_100	0x605	712/100 (Gekko)
+board	HP712_60	0x600	712/60 (Gecko)
+board	HP712_80	0x601	712/80 (Gecko)
+board	HP712_80i	0x602	712/80i (Gecko)
+board	HP712_100	0x605	712/100 (Gecko)
 
 board	HP715_33	0x311	715/33 (Scorpio)
 board	HP715_50	0x310	715/50 (Scorpio)
@@ -78,21 +77,40 @@ board	HP750		0x201	750 (Coral)
 #board	HP777_100	0x592   777/100 (C-class C200)
 #board	HP777_120	0x58E   777/120 (C-class C210)
 
-#board	HP810		0x100	810 (Burgundy)
+#board	HP806			806 (E25)
+#board	HP807			807 (F10)
 #board	HP815		0x103	808/815
+#board	HP810		0x100	810 (Burgundy)
+#board	HP816			816 (E35)
+#board	HP817			817 (F20)
 #board	HP820		0x101	82[02]
 #board	HP825		0x008	825 (FireFox)
-#board	HP827		0x102	827/832
+#board	HP826			826 (E45)
+#board	HP827		0x102	827/832 (H20)
+#board	HP829			829 (K400)
 #board	HP835		0x00a	83[456]
+#board	HP837			837 (F30)
 #board	HP840		0x004	840 (Indigo)
 #board	HP842		0x104	842
 #board	HP845		0x00b	84[456]
+#board	HP847			847 (H30)
 #board	HP850		0x080	850 (Cheetah)
 #board	HP850_OPDC	0x00C	850 (Cheetah)
 #board	HP852		0x105	852
 #board	HP855		0x081	855 (Jaguar)
+#board	HP856			856 (E55)
+#board	HP857			857 (I30)
+#board	HP867			867 (G40/H40)
 #board	HP860		0x082	PN10C
 #board	HP870		0x083	870
+#board	HP877			877 (I40)
+#board	HP887			887 (G50/H50)
+#board	HP887			887 (G60/H60)
+#board	HP887			887 (G70/H70)
+#board	HP891			891 (T500)
+#board	HP897			897 (I50)
+#board	HP897			897 (I60)
+#board	HP897			897 (I70)
 
 /*
  * CORE devices
@@ -147,7 +165,7 @@ fio	A1NB	0x7e	Core audio (no beeper)
 fio	A2	0x7f	Advanced audio
 fio	HPIB	0x80	Core HPIB
 
-# Gekko section
+# Gecko section
 fio	GSCSI	0x82	Core SCSI
 fio	GPCFD	0x83	floppy controller
 fio	GPCIO	0x84	PS/2 port
