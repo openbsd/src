@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.36 2000/11/16 20:02:17 provos Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.37 2001/02/13 21:00:48 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -148,6 +148,7 @@ fork1(p1, flags, stack, stacksize, retval)
 	int count;
 	static int pidchecked = 0;
 	vaddr_t uaddr;
+	int s;
 	extern void endtsleep __P((void *));
 	extern void realitexpire __P((void *));
 
@@ -404,12 +405,12 @@ again:
 	/*
 	 * Make child runnable, set start time, and add to run queue.
 	 */
-	(void) splstatclock();
+	s = splstatclock();
 	p2->p_stats->p_start = time;
 	p2->p_acflag = AFORK;
 	p2->p_stat = SRUN;
 	setrunqueue(p2);
-	(void) spl0();
+	splx(s);
 
 	/*
 	 * Now can be swapped.
