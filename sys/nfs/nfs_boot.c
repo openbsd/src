@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_boot.c,v 1.6 1996/10/20 17:05:21 briggs Exp $ */
+/*	$OpenBSD: nfs_boot.c,v 1.7 1996/10/20 17:07:27 briggs Exp $ */
 /*	$NetBSD: nfs_boot.c,v 1.26 1996/05/07 02:51:25 thorpej Exp $	*/
 
 /*
@@ -60,7 +60,7 @@ int nfs_boot_init(nd, procp)
 	struct nfs_diskless *nd;
 	struct proc *procp;
 {
-	panic("nfs_boot_init: no ether");
+	panic("nfs_boot_init: NFSCLIENT not enabled in kernel");
 }
 
 void
