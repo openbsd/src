@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdvar.h,v 1.9 2003/10/16 20:03:40 grange Exp $	*/
+/*	$OpenBSD: wdvar.h,v 1.10 2003/10/21 09:57:04 jmc Exp $	*/
 /*	$NetBSD: wdvar.h,v 1.3 1998/11/11 19:38:27 bouyer Exp $	*/
 
 /*
@@ -39,10 +39,10 @@ struct ata_bio {
 #define ATA_POLL    0x0002 /* poll for completion */
 #define ATA_ITSDONE 0x0004 /* the transfer is as done as it gets */
 #define ATA_SINGLE  0x0008 /* transfer has to be done in single-sector mode */
-#define ATA_LBA     0x0010 /* tranfert uses LBA adressing */
-#define ATA_READ    0x0020 /* tranfert is a read (otherwise a write) */
+#define ATA_LBA     0x0010 /* transfer uses LBA addressing */
+#define ATA_READ    0x0020 /* transfer is a read (otherwise a write) */
 #define ATA_CORR    0x0040 /* transfer had a corrected error */
-#define ATA_LBA48   0x0080 /* transfer uses 48-bit LBA adressing */
+#define ATA_LBA48   0x0080 /* transfer uses 48-bit LBA addressing */
     int multi; /* number of blocks to transfer in multi-mode */
     struct disklabel *lp; /* pointer to drive's label info */
     daddr_t blkno; /* block addr */
@@ -50,7 +50,7 @@ struct ata_bio {
     daddr_t nblks; /* number of block currently transfering */
     int     nbytes; /* number of bytes currently transfering */
     long    bcount; /* total number of bytes */
-    char   *databuf; /* data buffer adress */
+    char   *databuf; /* data buffer address */
     volatile int error;
 #define NOERROR   0 /* There was no error (r_error invalid) */
 #define ERROR     1 /* check r_error */

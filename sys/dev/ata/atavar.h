@@ -1,4 +1,4 @@
-/*	$OpenBSD: atavar.h,v 1.16 2003/10/16 20:21:07 grange Exp $	*/
+/*	$OpenBSD: atavar.h,v 1.17 2003/10/21 09:57:04 jmc Exp $	*/
 /*	$NetBSD: atavar.h,v 1.13 1999/03/10 13:11:43 bouyer Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ struct ata_drive_datas {
 	u_int8_t atapi_cap;
 
 	/* Keeps track of the number of resets that have occurred in a row
-	   without a succesful command completion. */
+	   without a successful command completion. */
 	u_int8_t n_resets;
 	u_int8_t n_dmaerrs;
 	u_int32_t n_xfers;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.66 2003/10/17 08:14:09 grange Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.67 2003/10/21 10:00:28 jmc Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -1143,7 +1143,7 @@ wdc_atapi_intr_complete(chp, xfer, timeout, ret)
 			}
 
 			/*
-			 * request sense failed ! it's not suppossed
+			 * request sense failed ! it's not supposed
  			 * to be possible
 			 */
 			sc_xfer->error = XS_SHORTSENSE;
@@ -1153,7 +1153,7 @@ wdc_atapi_intr_complete(chp, xfer, timeout, ret)
 		} else {
 			/*
 			 * command completed, but no data was read.
-			 * use the short sense we saved previsouly.
+			 * use the short sense we saved previously.
 			 */
 			sc_xfer->error = XS_SHORTSENSE;
 		}

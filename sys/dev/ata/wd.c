@@ -1,4 +1,4 @@
-/*	$OpenBSD: wd.c,v 1.33 2003/09/28 21:01:42 grange Exp $ */
+/*	$OpenBSD: wd.c,v 1.34 2003/10/21 09:57:04 jmc Exp $ */
 /*	$NetBSD: wd.c,v 1.193 1999/02/28 17:15:27 explorer Exp $ */
 
 /*
@@ -140,7 +140,7 @@ struct wd_softc {
 	struct buf *sc_bp; /* buf being transferred */
 	struct ata_drive_datas *drvp; /* Our controller's infos */
 	int openings;
-	struct ataparams sc_params;/* drive characteistics found */
+	struct ataparams sc_params;/* drive characteristics found */
 	int sc_flags;
 #define WDF_LOCKED	  0x01
 #define WDF_WANTED	  0x02
