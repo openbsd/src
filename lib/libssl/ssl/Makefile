@@ -73,13 +73,17 @@ HDRS=	ssl.h ssl2.h ssl3.h ssl23.h tls1.h
 .PATH:	${LSSL_SRC}
 
 includes:
-	@cd ${LSSL_SRC}; for i in $(HDRS); do \
-		j="cmp -s $$i ${DESTDIR}/usr/include/ssl/`basename $$i` || \
+	@d=`mktemp -d /tmp/libsslXXXXXXXXXX`; \
+	cd ${LSSL_SRC}; for i in $(HDRS); do \
+		f=`basename $$i`; \
+		j="sed 's/#include \"\\([^\"]*\\)\"/#include <ssl\\/\\1>/' \
+		       $$i >$$d/$$f && \
+		(cmp -s $$d/$$f ${DESTDIR}/usr/include/ssl/$$f || \
 		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
-		$$i ${DESTDIR}/usr/include/ssl"; \
+		$$d/$$f ${DESTDIR}/usr/include/ssl)"; \
 		echo $$j; \
 		eval "$$j"; \
-	done
-
+	done; \
+	rm -rf $$d
 
 .include <bsd.lib.mk>

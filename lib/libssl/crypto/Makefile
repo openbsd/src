@@ -164,14 +164,18 @@ HDRS= 	asn1/asn1.h asn1/asn1_mac.h bf/blowfish.h bio/bio.h \
 	${LCRYPTO_SRC}/txt_db ${LCRYPTO_SRC}
 
 includes:
-	@cd ${LCRYPTO_SRC}; for i in $(HDRS); do \
-		j="cmp -s ${LCRYPTO_SRC}/$$i \
-		${DESTDIR}/usr/include/ssl/`basename $$i` || \
+	@d=`mktemp -d /tmp/libsslXXXXXXXXXX`; \
+	cd ${LCRYPTO_SRC}; for i in $(HDRS); do \
+		f=`basename $$i`; \
+		j="sed 's/#include \"\\([^\"]*\\)\"/#include <ssl\\/\\1>/' \
+		       ${LCRYPTO_SRC}/$$i >$$d/$$f && \
+		(cmp -s $$d/$$f ${DESTDIR}/usr/include/ssl/$$f || \
 		${INSTALL} ${INSTALL_COPY} -o ${BINOWN} -g ${BINGRP} -m 444 \
-		${LCRYPTO_SRC}/$$i ${DESTDIR}/usr/include/ssl"; \
+			   $$d/$$f ${DESTDIR}/usr/include/ssl)"; \
 		echo $$j; \
 		eval "$$j"; \
-	done
+	done; \
+	rm -rf $$d
 
 
 .include <bsd.lib.mk>
