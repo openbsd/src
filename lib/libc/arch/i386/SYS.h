@@ -33,7 +33,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: SYS.h,v 1.11 2002/02/19 22:12:36 millert Exp $
+ *	$OpenBSD: SYS.h,v 1.12 2002/06/10 17:44:38 fgsch Exp $
  */
 
 #include <machine/asm.h>
@@ -46,22 +46,6 @@
  * and weakly aliased to the name {syscall}. This allows the thread
  * library to replace system calls at link time.
  */
-
-#ifdef _NO_WEAK_ALIASES
-
-#ifdef _THREAD_SAFE
-/* Use _thread_sys_{syscall} when compiled with -D_THREAD_SAFE */
-#ifdef __STDC__
-#define	SYSENTRY(x)	ENTRY(_thread_sys_ ## x)
-#else /* ! __STDC__ */
-#define	SYSENTRY(x)	ENTRY(_thread_sys_/**/x)
-#endif /* ! __STDC__ */
-#else /* ! _THREAD_SAFE */
-/* Use {syscall} when compiling without -D_THREAD_SAFE */
-#define SYSENTRY(x)	ENTRY(x)
-#endif /* ! _THREAD_SAFE */
-
-#else /* WEAK_ALIASES */
 
 /* Use both _thread_sys_{syscall} and [weak] {syscall}. */
 
@@ -76,7 +60,6 @@
 			.weak _C_LABEL(x);		\
 			_C_LABEL(x) = _C_LABEL(_thread_sys_/**/x)
 #endif /* ! __STDC__ */
-#endif /* WEAK_ALIASES */
 
 #ifdef __STDC__
 #define	__DO_SYSCALL(x)					\
