@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.6 1996/08/19 08:21:17 tholo Exp $
+#	$OpenBSD: Makefile.inc,v 1.7 1996/09/15 23:16:13 tholo Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -62,8 +62,8 @@ MLINKS+=directory.3 closedir.3 directory.3 dirfd.3 directory.3 opendir.3 \
 	directory.3 telldir.3
 MLINKS+=err.3 verr.3 err.3 errx.3 err.3 verrx.3 err.3 warn.3 err.3 vwarn.3 \
         err.3 warnx.3 err.3 vwarnx.3
-MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 execv.3 \
-	exec.3 execvp.3
+MLINKS+=exec.3 execl.3 exec.3 execle.3 exec.3 execlp.3 exec.3 exect.3 \
+	exec.3 execv.3 exec.3 execvp.3
 MLINKS+=fts.3 fts_open.3 fts.3 fts_read.3 fts.3 fts_children.3 \
 	fts.3 fts_set.3 fts.3 fts_close.3 
 MLINKS+=isinf.3 isnan.3
