@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.43 2001/05/11 06:38:47 angelos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.44 2001/05/14 07:18:05 angelos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -56,6 +56,7 @@
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/disklabel.h>
+#include <sys/disk.h>
 #include <vm/vm.h>
 #include <sys/sysctl.h>
 #include <sys/msgbuf.h>
@@ -78,6 +79,9 @@
 extern struct forkstat forkstat;
 extern struct nchstats nchstats;
 extern int nselcoll;
+extern struct disklist_head disklist;
+
+int sysctl_diskinit(int);
 
 /*
  * Lock to avoid too many processes vslocking a large amount of memory
@@ -216,6 +220,9 @@ int hostnamelen;
 char domainname[MAXHOSTNAMELEN];
 int domainnamelen;
 long hostid;
+char *disknames = NULL;
+struct disk *diskstats = NULL;
+
 #ifdef INSECURE
 int securelevel = -1;
 #else
@@ -243,7 +250,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF ||
-			      name[0] == KERN_MALLOCSTATS))
+	    name[0] == KERN_MALLOCSTATS || name[0] == KERN_TTY))
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
@@ -381,6 +388,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_FORKSTAT:
 		return (sysctl_rdstruct(oldp, oldlenp, newp, &forkstat,
 		    sizeof(struct forkstat)));
+	case KERN_TTY:
+		return (sysctl_tty(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -401,6 +411,7 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	extern char machine[], cpu_model[];
+	int err;
 
 	/* all sysctl names at this level are terminal */
 	if (namelen != 1)
@@ -427,6 +438,19 @@ hw_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 #endif
 	case HW_PAGESIZE:
 		return (sysctl_rdint(oldp, oldlenp, newp, PAGE_SIZE));
+	case HW_DISKNAMES:
+		err = sysctl_diskinit(0);
+		if (err)
+			return err;
+		return (sysctl_rdstring(oldp, oldlenp, newp, disknames));
+	case HW_DISKSTATS:
+		err = sysctl_diskinit(1);
+		if (err)
+			return err;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, diskstats,
+		    disk_count * sizeof(struct disk)));
+	case HW_DISKCOUNT:
+		return (sysctl_rdint(oldp, oldlenp, newp, disk_count));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -623,7 +647,7 @@ sysctl__string(oldp, oldlenp, newp, newlen, str, maxlen, trunc)
 		return (EINVAL);
 	if (oldp) {
 		if (trunc && *oldlenp < len) {
-			/* XXX save & zap NUL terminator while copying */
+			/* save & zap NUL terminator while copying */
 			c = str[*oldlenp-1];
 			str[*oldlenp-1] = '\0';
 			error = copyout(str, oldp, *oldlenp);
@@ -921,4 +945,77 @@ fill_eproc(p, ep)
 	strncpy(ep->e_emul, p->p_emul->e_name, EMULNAMELEN);
 	ep->e_emul[EMULNAMELEN] = '\0';
 	ep->e_maxrss = p->p_rlimit ? p->p_rlimit[RLIMIT_RSS].rlim_cur : 0;
+}
+
+/*
+ * Initialize disknames/diskstats for export by sysctl. If update is set,
+ * then we simply update the disk statistics information.
+ */
+int
+sysctl_diskinit(update)
+	int update;
+{
+	struct disk *dk, *ndk;
+	int i, tlen, l;
+
+	if (disk_change) {
+		for (dk = TAILQ_FIRST(&disklist), tlen = 0; dk;
+		    dk = TAILQ_NEXT(dk, dk_link))
+			tlen += strlen(dk->dk_name) + 1;
+
+		if (disknames)
+			free(disknames, M_SYSCTL);
+		if (diskstats)
+			free(diskstats, M_SYSCTL);
+		diskstats = NULL;
+		disknames = NULL;
+		diskstats = malloc(disk_count * sizeof(struct disk),
+		    M_SYSCTL, M_NOWAIT);
+		if (diskstats == NULL)
+			return ENOMEM;
+		disknames = malloc(tlen, M_SYSCTL, M_NOWAIT);
+		if (disknames == NULL) {
+			free(diskstats, M_SYSCTL);
+			diskstats = NULL;
+			return ENOMEM;
+		}
+		for (dk = TAILQ_FIRST(&disklist), i = 0, l = 0; dk;
+		    dk = TAILQ_NEXT(dk, dk_link), i++) {
+			l += sprintf(disknames + l, "%s,",
+			    dk->dk_name ? dk->dk_name : "");
+			ndk = diskstats + i;
+			bcopy(dk, ndk, sizeof(struct disk));
+
+			/* Blank out some of the fields, just paranoid */
+			bzero(&ndk->dk_link, sizeof(ndk->dk_link));
+			bzero(&ndk->dk_lock, sizeof(struct lock));
+			ndk->dk_labelsector = 0;
+			ndk->dk_name = NULL;
+			ndk->dk_driver = NULL;
+			ndk->dk_label = NULL;
+			ndk->dk_cpulabel = NULL;
+		}
+
+		/* Eliminate trailing comma */
+		if (l != 0)
+			disknames[l - 1] = '\0';
+		disk_change = 0;
+	} else if (update) {
+		/* Just update, number of drives hasn't changed */
+		for (dk = TAILQ_FIRST(&disklist), i = 0; dk;
+		    dk = TAILQ_NEXT(dk, dk_link), i++) {
+			ndk = diskstats + i;
+			bcopy(dk, ndk, sizeof(struct disk));
+
+			/* Blank out some of the fields, just paranoid */
+			bzero(&ndk->dk_link, sizeof(ndk->dk_link));
+			bzero(&ndk->dk_lock, sizeof(struct lock));
+			ndk->dk_labelsector = 0;
+			ndk->dk_name = NULL;
+			ndk->dk_driver = NULL;
+			ndk->dk_label = NULL;
+			ndk->dk_cpulabel = NULL;
+		}
+	}
+	return 0;
 }
