@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.15 2004/10/31 10:43:38 canacar Exp $ */
+/*	$OpenBSD: dispatch.c,v 1.16 2005/01/31 18:27:38 millert Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998, 1999
@@ -279,29 +279,32 @@ discover_interfaces(int state)
 void
 dispatch(void)
 {
-	int count, i, nfds = 0, to_msec;
+	int nfds, i, to_msec;
 	struct protocol *l;
-	struct pollfd *fds;
+	static struct pollfd *fds;
+	static int nfds_max;
 	time_t howlong;
 
-	for (l = protocols; l; l = l->next)
-		++nfds;
-	fds = (struct pollfd *)malloc((nfds) * sizeof (struct pollfd));
-	if (fds == NULL)
-		error("Can't allocate poll structures.");
+	for (nfds = 0, l = protocols; l; l = l->next)
+		nfds++;
+	if (nfds > nfds_max) {
+		fds = realloc(fds, nfds * sizeof(struct pollfd));
+		if (fds == NULL)
+			error("Can't allocate poll structures.");
+		nfds_max = nfds;
+	}
 
-	do {
+	for (;;) {
 		/*
 		 * Call any expired timeouts, and then if there's
-		 * still a timeout registered, time out the select
+		 * still a timeout registered, time out the poll
 		 * call then.
 		 */
+		time(&cur_time);
 another:
 		if (timeouts) {
-			struct timeout *t;
-
 			if (timeouts->when <= cur_time) {
-				t = timeouts;
+				struct timeout *t = timeouts;
 				timeouts = timeouts->next;
 				(*(t->func))(t->what);
 				t->next = free_timeouts;
@@ -323,43 +326,32 @@ another:
 			to_msec = -1;
 
 		/* Set up the descriptors to be polled. */
-		i = 0;
-
-		for (l = protocols; l; l = l->next) {
+		for (i = 0, l = protocols; l; l = l->next) {
 			struct interface_info *ip = l->local;
 
 			if (ip && (l->handler != got_one || !ip->dead)) {
 				fds[i].fd = l->fd;
 				fds[i].events = POLLIN;
-				fds[i].revents = 0;
 				++i;
 			}
 		}
-
 		if (i == 0)
 			error("No live interfaces to poll on - exiting.");
 
-		/* Wait for a packet or a timeout... XXX */
-		count = poll(fds, nfds, to_msec);
-
-		/* Not likely to be transitory... */
-		if (count == -1) {
-			if (errno == EAGAIN || errno == EINTR) {
-				time(&cur_time);
-				continue;
-			} else
+		/* Wait for a packet or a timeout... */
+		switch (poll(fds, nfds, to_msec)) {
+		case -1:
+			if (errno != EAGAIN && errno != EINTR)
 				error("poll: %m");
+			/* FALLTHROUGH */
+		case 0:
+			continue;	/* no packets */
 		}
 
-		/* Get the current time... */
-		time(&cur_time);
-
-		i = 0;
-		for (l = protocols; l; l = l->next) {
+		for (i = 0, l = protocols; l; l = l->next) {
 			struct interface_info *ip = l->local;
 
 			if ((fds[i].revents & (POLLIN | POLLHUP))) {
-				fds[i].revents = 0;
 				if (ip && (l->handler != got_one ||
 				    !ip->dead))
 					(*(l->handler))(l);
@@ -369,7 +361,7 @@ another:
 			++i;
 		}
 		interfaces_invalidated = 0;
-	} while (1);
+	}
 }
 
 
