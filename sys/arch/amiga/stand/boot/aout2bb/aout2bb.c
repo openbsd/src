@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: aout2bb.c,v 1.1 1997/01/16 09:26:48 niklas Exp $
+ * $OpenBSD: aout2bb.c,v 1.2 1997/03/22 00:20:48 niklas Exp $
  * $NetBSD: aout2bb.c,v 1.2 1996/12/31 22:39:58 veego Exp $
  *
  * Copyright (c) 1996 Ignatios Souvatzis
@@ -45,6 +45,7 @@
 #include <sys/mman.h>		/* of the machine we're running on */
 #include <machine/endian.h>	/* of the machine we're running on */
 
+#include <machine/exec.h>	/* TARGET */
 #include <sys/exec_aout.h>	/* TARGET */
 
 #include "aout2bb.h"
