@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.54 2001/06/25 23:00:55 csapuntz Exp $     */
+/*      $OpenBSD: pciide.c,v 1.55 2001/06/26 05:58:38 csapuntz Exp $     */
 /*	$NetBSD: pciide.c,v 1.110 2001/03/20 17:56:46 bouyer Exp $	*/
 
 /*
@@ -1223,13 +1223,12 @@ pciide_unmap_compat_intr(pa, cp, compatchan, interface)
 	struct pciide_channel *cp;
 	int compatchan, interface;
 {
-	struct pciide_softc *sc = (struct pciide_softc *)cp->wdc_channel.wdc;
 	struct channel_softc *wdc_cp = &cp->wdc_channel;
 
 	if ((interface & PCIIDE_INTERFACE_PCI(wdc_cp->channel)) != 0)
 		return;
 
-	pciide_machdep_compat_intr_disestablish(&sc->sc_wdcdev.sc_dev, cp->ih);
+	pciide_machdep_compat_intr_disestablish(pa->pa_pc, cp->ih);
 }
 
 void
