@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.5 1996/10/14 09:01:01 etheisen Exp $	*/
+/*	$OpenBSD: more.c,v 1.6 1996/10/14 15:23:54 etheisen Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -1058,10 +1058,12 @@ register FILE *f;
 		ret(dlines);			/* XXX - Maybe broken on dumb
 							 terminals */
 	    }
+	/* 4.3BSD more - Display next [count] lines of text  */
 	case ' ':
 	case 'z':
 	    if (nlines == 0) nlines = dlines;
-	    else if (comchar == 'z') dlines = nlines;
+	    else if (comchar == 'z')
+		dlines = nlines;
 	    ret (nlines);
 	case 'd':
 	case ctrl('D'):
@@ -1071,7 +1073,9 @@ register FILE *f;
 	case 'Q':
 	    end_it ();
 	case 's':
-	case 'f':
+	/* POSIX.2 Move forward one screenfull */
+	case 'f': 				/* POSIX.2 [count]f */
+	case ctrl('F'):				/*         [count]control-F */
 	    if (nlines == 0) nlines++;
 	    if (comchar == 'f')
 		nlines *= dlines;
