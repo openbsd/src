@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.1.1.2 2000/06/13 03:40:02 rahnds Exp $ */
+/*	$OpenBSD: library.c,v 1.2 2000/10/06 17:40:17 rahnds Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -262,6 +262,9 @@ _dl_tryload_shlib(const char *libname, int type)
 			res = _dl_mmap(start, size, PFLAGS(phdp->p_flags),
 					MAP_FIXED|MAP_COPY, libfile,
 					phdp->p_offset & ~align);
+#ifdef __powerpc__
+			_dl_syncicache(start, size);
+#endif
 			if(_dl_check_error(res)) {
 				_dl_printf("%s: rtld mmap failed mapping %s.\n",
 						_dl_progname, libname);

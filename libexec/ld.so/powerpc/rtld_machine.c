@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2000/08/25 03:36:38 rahnds Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.3 2000/10/06 17:39:30 rahnds Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -366,4 +366,23 @@ void
 _dl_md_reloc_got(elf_object_t *object, int lazy)
 {
 	/* relocations all done via rela relocations above */
+}
+
+/* should not be defined here, but is is 32 for all powerpc 603-G4 */
+#define CACHELINESIZE 32
+void
+_dl_syncicache(char *from, size_t len)
+{
+        int l = len;
+	unsigned int off = 0;
+
+	while (off < len) {
+                asm volatile ("dcbst %1,%0" :: "r"(from), "r"(off));
+		asm volatile ("sync");
+                asm volatile ("icbi 0,%0" :: "r"(from), "r"(off));
+		asm volatile ("sync");
+		asm volatile ("isync");
+
+                off += CACHELINESIZE;
+        }
 }
