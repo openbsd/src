@@ -15,7 +15,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $OpenBSD: alias_nbt.c,v 1.4 2000/02/27 01:38:24 brian Exp $
+ * $OpenBSD: alias_nbt.c,v 1.5 2000/09/02 22:12:26 brian Exp $
  *
  *  TODO:
  *       oClean up. 
@@ -43,23 +43,6 @@
 #include <netinet/tcp.h>
 
 #include "alias_local.h"
-
-#define ADJUST_CHECKSUM(acc, cksum) { \
-    acc += cksum; \
-    if (acc < 0) \
-    { \
-        acc = -acc; \
-        acc = (acc >> 16) + (acc & 0xffff); \
-        acc += acc >> 16; \
-        cksum = (u_short) ~acc; \
-    } \
-    else \
-    { \
-        acc = (acc >> 16) + (acc & 0xffff); \
-        acc += acc >> 16; \
-        cksum = (u_short) acc; \
-    } \
-}
 
 typedef struct {
 	struct in_addr		oldaddr;
