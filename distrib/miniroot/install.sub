@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.200 2002/04/09 01:01:19 krw Exp $
+#	$OpenBSD: install.sub,v 1.201 2002/04/09 01:59:41 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -66,6 +66,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 
+# OpenBSD install/upgrade script common subroutines and initialization code
+
 # include machine-dependent functions
 # The following functions must be provided:
 #	md_get_diskdevs()	- return available disk devices
@@ -81,8 +83,6 @@
 
 # include machine dependent subroutines
 . install.md
-
-# OpenBSD install/upgrade script common subroutines and initialization code
 
 getresp() {
 	local _no_shell=0
@@ -117,8 +117,8 @@ getresp() {
 	set +o noglob
 }
 
+# test the first argument against the remaining ones, return success on a match
 isin() {
-	# test the first argument against the remaining ones, return success on a match
 	local	_a=$1
 
 	shift
@@ -129,9 +129,9 @@ isin() {
 	return 1
 }
 
+# add first argument to list formed by the remaining arguments
+# adds to the tail if the element does not already exist
 addel() {
-	# add first argument to list formed by the remaining arguments
-	# adds to the tail if the element does not already exist
 	local	_a=$1 _seen=
 
 	shift
@@ -147,8 +147,8 @@ addel() {
 	fi
 }
 
+# remove first argument from list formed by the remaining arguments
 rmel() {
-	# remove first argument from list formed by the remaining arguments
 	local	_a=$1
 
 	shift
@@ -160,8 +160,8 @@ rmel() {
 	done
 }
 
+# read lines on stdin, return Nth element of each line, like cut(1)
 cutword () {
-	# read lines on stdin, return Nth element of each line, like cut(1)
 	local _a _n _oifs=$IFS
 
 	# optional field separator
@@ -178,8 +178,8 @@ cutword () {
 	IFS=$_oifs
 }
 
+# read a line of data, return last element. Equiv. of awk '{print $NF}'.
 cutlast () {
-	# read a line of data, return last element. Equiv. of awk '{print $NF}'.
 	local _a _oifs=$IFS
 
 	# optional field separator
@@ -194,8 +194,8 @@ cutlast () {
 	eval echo \$$#
 }
 
+# return first character of argument
 firstchar () {
-	# return first character of argument
 	local _a=$1
 
 	while [ ${#_a} != 1 ]; do
@@ -229,8 +229,8 @@ isnumeric() {
 	echo 1; return
 }
 
+# return available network devices
 get_ifdevs() {
-	# return available network devices
 	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|gre|ppp|sl|tun|bridge)[[:digit:]])' | cutword -t: 1
 }
 
@@ -270,8 +270,8 @@ bsort() {
 	fi
 }
 
+# return true when the list $1 contains a set also in one of $2 ... $n
 list_has_sets() {
-	# return true when the list $1 contains a set also in one of $2 ... $n
 	local _list=$1 _f
 
 	shift
@@ -293,10 +293,9 @@ list_has_sets() {
 	return 1
 }
 
+# log in via ftp to host $1 as user $2 with password $3
+# and return a list of all files in the directory $4 on stdout
 ftp_list_files() {
-	# log in via ftp to host $1 as user $2 with password $3
-	# and return a list of all files in the directory $4 on stdout
-
 	ftp ${_ftp_active} -V -n "$1" << __EOT
 user "$2" "$3"
 cd "$4"
@@ -305,8 +304,8 @@ quit
 __EOT
 }
 
+# $1 is relative mountpoint
 get_localdir() {
-	# $1 is relative mountpoint
 	local _mp=$1 _dir=
 
 	while : ; do
@@ -396,27 +395,24 @@ __EOT
 	fi
 }
 
+# Create an entry in the hosts file. If an entry with the
+# same symbolic name already exists, delete it.
+# $1 - IP address
+# $2 - symbolic name
 addhostent() {
-	# $1 - IP address
-	# $2 - symbolic name
-
-	# Create an entry in the hosts file. If an entry with the
-	# same symbolic name already exists, delete it.
-
 	sed "/ $2\$/d" < /tmp/hosts > /tmp/hosts.new
 	mv /tmp/hosts.new /tmp/hosts
 
 	echo "$1 $2" >> /tmp/hosts
 }
 
+# Create a hostname.* file for the interface.
+# $1 - interface name
+# $2 - interface symbolic name
+# $3 - interface IP address
+# $4 - interface netmask
+# $5 - (optional) interface media directives
 addifconfig() {
-	# $1 - interface name
-	# $2 - interface symbolic name
-	# $3 - interface IP address
-	# $4 - interface netmask
-	# $5 - (optional) interface media directives
-
-	# Create a hostname.* file for the interface.
 	if [ "$3" = "dhcp" ]; then
 		echo "dhcp NONE NONE NONE $5" > /tmp/hostname.$1
 		addhostent 127.0.0.1 $2
@@ -923,7 +919,6 @@ __EOT
 #        $2 is the location that generated the list of files in $1.
 # or
 #     2) a list of .tgz or .tar.gz files found in $2
-
 get_sets_list () {
 	local _f _file_list=$1 _src=$2
 
@@ -977,7 +972,6 @@ __EOT
 # Set global _get_files to the list of sets requested by the user
 # from $1. Add this list to _setsdone after saving current value
 # of _setsdone.
-
 get_get_files_list () {
 	local _src=$1
 
@@ -1068,26 +1062,24 @@ install_get_files_list () {
 	done
 }
 
+# Encode $1 as specified for usercodes and passwords in RFC 1738
+# section 3.1, and now supported by our in-tree ftp:
+#
+#    ':' -> '%3a'
+#    '@' -> '%40'
+#    '/' -> '%2f'
+#
+# *NOTE* quotes around $1 are required to preserve trailing or
+# embeddded blanks in usercodes and passwords!
 encode_for_url() {
-	# Encode $1 as specified for usercodes and passwords in RFC 1738
-	# section 3.1, and now supported by our in-tree ftp:
-	#
-	#    ':' -> '%3a'
-	#    '@' -> '%40'
-	#    '/' -> '%2f'
-	#
-	# *NOTE* quotes around $1 are required to preserve trailing or
-	# embeddded blanks in usercodes and passwords!
-
 	echo "$1" | sed -e 's/:/%3a/g' -e 's/@/%40/g' -e 's/\//%2f/g'
 }
 
+# Get several parameters from the user, and xfer
+# files from the server.
+# Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
+#	_ftp_server_password, and _ftp_active must be global.
 install_url() {
-	# Get several parameters from the user, and xfer
-	# files from the server.
-	# Note:	_ftp_server_ip, _ftp_server_dir, _ftp_server_login,
-	#	_ftp_server_password, and _ftp_active must be global.
-
 	local _f _file_list _url_type _url_base _url_login _url_pass _oifs
 
 	# Parse arguments, shell style
@@ -1288,8 +1280,8 @@ __EOT
 	fi
 }
 
+# $1 - directory containing installation sets
 install_from_mounted_fs() {
-	# $1 - directory containing installation sets
 	local _f _get_files _file_list
 
 	if [ ! -d "$1" ]; then
@@ -1890,10 +1882,9 @@ __EOT
 	done
 }
 
+# Create a fstab to use for fsck'ing, mounting and unmounting all
+# of the target filesystems relative to /mnt.
 munge_fstab() {
-	# Create a fstab to use for fsck'ing, mounting and unmounting all
-	# of the target filesystems relative to /mnt.
-
 	local _dev _mp _fstype _opt _rest
 
 	while read _dev _mp _fstype _opt _rest; do
@@ -1922,9 +1913,9 @@ munge_fstab() {
 	done > /etc/fstab
 }
 
+# Must mount filesystems manually, one at a time, so we can make
+# sure the mount points exist.
 mount_fs() {
-	# Must mount filesystems manually, one at a time, so we can make
-	# sure the mount points exist.
 	local _async=$1 _dev _mp _fstype _opt _rest
 
 	while read _dev _mp _fstype _opt _rest; do
@@ -1948,8 +1939,8 @@ __EOT
 	done < /etc/fstab
 }
 
+# Script is exiting. Clean up as much as possible.
 cleanup_on_exit() {
-	# Script is exiting. Clean up as much as possible.
 	local _bad_devs
 
 	echo "\nCleaning up..."
@@ -1975,10 +1966,10 @@ cleanup_on_exit() {
 	echo "Done."
 }
 
+# Remount all filesystems in /etc/fstab with the options from
+# /etc/fstab, i.e. without any options such as async which
+# may have been used in the first mount.
 remount_fs() {
-	# Remount all filesystems in /etc/fstab with the options from
-	# /etc/fstab, i.e. without any options such as async which
-	# may have been used in the first mount.
 	local _dev _mp _fstype _opt _rest
 
 	while read _dev _mp _fstype _opt _rest; do
@@ -1989,8 +1980,8 @@ remount_fs() {
 	done < /etc/fstab
 }
 
+# Preen all filesystems in /etc/fstab, showing individual results.
 check_fs() {
-	# Preen all filesystems in /etc/fstab, showing individual results.
 	local _dev _rest _badfsck=0
 
 	while read _dev _rest; do
@@ -2006,13 +1997,11 @@ check_fs() {
 	return $_badfsck
 }
 
+# Find LAST instance of DOMAIN or SEARCH and extract first domain name
+# on that line as FQDN. Then ask user, just to be sure.
+# $1 = resolv.conf file to search for FQDN
+# $2 = hosts file to add FQDN information to
 get_fqdn() {
-	# $1 = resolv.conf file to search for FQDN
-	# $2 = hosts file to add FQDN information to
-
-	# Find LAST instance of DOMAIN or SEARCH and extract first domain name
-	# on that line as FQDN. Then ask user, just to be sure.
-
 	if [ -f "$1" ]; then
 		FQDN=`sed -n \
 			-e '/^domain[[:space:]][[:space:]]*/{s///;s/\([^[:space:]]*\).*$/\1/;h;}' \
