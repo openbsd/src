@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernel.h,v 1.3 1996/03/03 12:11:53 niklas Exp $	*/
+/*	$OpenBSD: kernel.h,v 1.4 1996/04/17 04:58:36 mickey Exp $	*/
 /*	$NetBSD: kernel.h,v 1.11 1995/03/03 01:24:16 cgd Exp $	*/
 
 /*-
@@ -67,3 +67,8 @@ extern int profhz;		/* profiling clock's frequency */
 extern int lbolt;		/* once a second sleep address */
 extern int tickdelta;
 extern long timedelta;
+
+void	MD5Init __P((u_int32_t[4]));
+void	MD5Transform __P((u_int32_t[4], u_int32_t const [16]));
+
+
