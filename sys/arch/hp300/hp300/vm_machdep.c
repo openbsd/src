@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.33 2001/11/06 19:53:14 miod Exp $	*/
-/*	$NetBSD: vm_machdep.c,v 1.47 1999/03/26 23:41:29 mycroft Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.34 2001/12/06 18:52:38 millert Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.60 2001/07/06 05:53:35 chs Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -63,12 +63,21 @@
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
- * Copy and update the kernel stack and pcb, making the child
- * ready to run, and marking it so that it can return differently
- * than the parent.  Returns 1 in the child process, 0 in the parent.
- * We currently double-map the user area so that the stack is at the same
- * address in each process; in the future we will probably relocate
- * the frame pointers on the stack after copying.
+ * Copy and update the pcb and trap frame, making the child ready to run.
+ * 
+ * Rig the child's kernel stack so that it will start out in
+ * proc_trampoline() and call child_return() with p2 as an
+ * argument. This causes the newly-created child process to go
+ * directly to user level with an apparent return value of 0 from
+ * fork(), while the parent process returns normally.
+ *
+ * p1 is the process being forked; if p1 == &proc0, we are creating
+ * a kernel thread, and the return path and argument are specified with
+ * `func' and `arg'.
+ *
+ * If an alternate user-level stack is requested (with non-zero values
+ * in both the stack and stacksize args), set up the user stack pointer
+ * accordingly.
  */
 void
 cpu_fork(p1, p2, stack, stacksize, func, arg)
@@ -97,8 +106,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	*pcb = p1->p_addr->u_pcb;
 
 	/*
-	 * Copy the trap frame, and arrange for the child to return directly
-	 * through child_return().
+	 * Copy the trap frame.
 	 */
 	tf = (struct trapframe *)((u_int)p2->p_addr + USPACE) - 1;
 	p2->p_md.md_regs = (int *)tf;
@@ -119,11 +127,9 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 
 /*
  * cpu_exit is called as the last action during exit.
- * We release the address space and machine-dependent resources,
- * including the memory for the user structure and kernel stack.
- * Once finished, we call switch_exit, which switches to a temporary
- * pcb and stack and never returns.  We block memory allocation
- * until switch_exit has made things safe again.
+ *
+ * Block context switches and then call switch_exit() which will
+ * switch to another process thus we never return.
  */
 void
 cpu_exit(p)
@@ -196,7 +202,8 @@ cpu_coredump(p, vp, cred, chdr)
 
 /*
  * Move pages from one kernel virtual address to another.
- * Both addresses are assumed to reside in the Sysmap.
+ * Both addresses are assumed to reside in the Sysmap,
+ * and size must be a multiple of PAGE_SIZE.
  */
 void
 pagemove(from, to, size)
@@ -219,11 +226,12 @@ pagemove(from, to, size)
 			panic("pagemove 3");
 #endif
 		pmap_kremove((vaddr_t)from, PAGE_SIZE);
-		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ|VM_PROT_WRITE);
+		pmap_kenter_pa((vaddr_t)to, pa, VM_PROT_READ | VM_PROT_WRITE);
 		from += PAGE_SIZE;
 		to += PAGE_SIZE;
 		size -= PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 }
 
 /*
@@ -276,12 +284,9 @@ kvtop(addr)
 }
 
 /*
- * Map an IO request into kernel virtual address space.
- *
- * XXX we allocate KVA space by using kmem_alloc_wait which we know
- * allocates space without backing physical memory.  This implementation
- * is a total crock, the multiple mappings of these physical pages should
- * be reflected in the higher-level VM structures to avoid problems.
+ * Map a user I/O request into kernel virtual address space.
+ * Note: the pages are already locked by uvm_vslock(), so we
+ * do not need to pass an access_type to pmap_enter().   
  */
 void
 vmapbuf(bp, len)
@@ -291,7 +296,7 @@ vmapbuf(bp, len)
 	struct pmap *upmap, *kpmap;
 	vaddr_t uva;		/* User VA (map from) */
 	vaddr_t kva;		/* Kernel VA (new to) */
-	paddr_t pa;		/* physical address */
+	paddr_t pa; 		/* physical address */
 	vsize_t off;
 
 	if ((bp->b_flags & B_PHYS) == 0)
@@ -308,15 +313,17 @@ vmapbuf(bp, len)
 	do {
 		if (pmap_extract(upmap, uva, &pa) == FALSE)
 			panic("vmapbuf: null page frame");
-		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE, PMAP_WIRED);
+		pmap_enter(kpmap, kva, pa, VM_PROT_READ|VM_PROT_WRITE,
+		    PMAP_WIRED);
 		uva += PAGE_SIZE;
 		kva += PAGE_SIZE;
 		len -= PAGE_SIZE;
 	} while (len);
+	pmap_update(pmap_kernel());
 }
 
 /*
- * Free the io map PTEs associated with this IO operation.
+ * Unmap a previously-mapped user I/O request.
  */
 void
 vunmapbuf(bp, len)
@@ -329,14 +336,12 @@ vunmapbuf(bp, len)
 	if ((bp->b_flags & B_PHYS) == 0)
 		panic("vunmapbuf");
 
-	kva = trunc_page((vaddr_t)bp->b_data);
+	kva = trunc_page((vaddr_t)(bp->b_data));
 	off = (vaddr_t)bp->b_data - kva;
 	len = round_page(off + len);
 
-	/*
-	 * pmap_remove() is unnecessary here, as kmem_free_wakeup()
-	 * will do it for us.
-	 */
+	pmap_remove(vm_map_pmap(phys_map), kva, kva + len);
+	pmap_update(pmap_kernel());
 	uvm_km_free_wakeup(phys_map, kva, len);
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
