@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.29 2005/03/11 20:34:59 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.30 2005/03/11 20:39:15 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -102,6 +102,8 @@ void		ral_wakeup_expire(struct ral_softc *);
 int		ral_ack_rate(int);
 uint16_t	ral_txtime(int, int, uint32_t);
 uint8_t		ral_plcp_signal(int);
+void		ral_setup_tx_desc(struct ral_softc *, struct ral_tx_desc *,
+		    uint32_t, int, int, int, bus_addr_t);
 int		ral_tx_bcn(struct ral_softc *, struct mbuf *,
 		    struct ieee80211_node *);
 int		ral_tx_mgt(struct ral_softc *, struct mbuf *,
@@ -1533,6 +1535,61 @@ ral_plcp_signal(int rate)
 	/* unsupported rates (should not get there) */
 	default:	return 0xff;
 	}
+}
+
+void
+ral_setup_tx_desc(struct ral_softc *sc, struct ral_tx_desc *desc,
+    uint32_t flags, int len, int rate, int encrypt, bus_addr_t physaddr)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint16_t plcp_length;
+	int remainder;
+
+	desc->flags = htole32(flags);
+	desc->flags |= htole32(len << 16);
+	desc->flags |= encrypt ? htole32(RAL_TX_CIPHER_BUSY) :
+	    htole32(RAL_TX_BUSY | RAL_TX_VALID);
+	if (RAL_RATE_IS_OFDM(rate))
+		desc->flags |= htole32(RAL_TX_OFDM);
+
+	desc->physaddr = htole32(physaddr);
+	desc->wme = htole32(
+	    8 << RAL_WME_CWMAX_BITS_SHIFT |
+	    3 << RAL_WME_CWMIN_BITS_SHIFT |
+	    2 << RAL_WME_AIFSN_BITS_SHIFT);
+
+	/*
+	 * Fill PLCP fields.
+	 */
+	desc->plcp_service = 4;
+
+	len += 4; /* account for FCS */
+	if (RAL_RATE_IS_OFDM(rate)) {
+		/*
+		 * PLCP length field (LENGTH).
+		 * From IEEE Std 802.11a-1999, pp. 14.
+		 */
+		plcp_length = len & 0xfff;
+		desc->plcp_length = htole16((plcp_length >> 6) << 8 |
+		    (plcp_length & 0x3f));
+	} else {
+		/*
+		 * Long PLCP LENGTH field.
+		 * From IEEE Std 802.11b-1999, pp. 16.
+		 */
+		plcp_length = (8 * len * 2) / rate;
+		remainder = (8 * len * 2) % rate;
+		if (remainder != 0) {
+			if (rate == 22 && (rate - remainder) / 16 != 0)
+				desc->plcp_service |= RAL_PLCP_LENGEXT;
+			plcp_length++;
+		}
+		desc->plcp_length = htole16(plcp_length);
+	}
+
+	desc->plcp_signal = ral_plcp_signal(rate);
+	if (rate != 2 && (ic->ic_flags & IEEE80211_F_SHPREAMBLE))
+		desc->plcp_signal |= 0x08;
 }
 
 int
