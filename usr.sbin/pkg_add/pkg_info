@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.1.1.1 2003/10/16 17:43:34 espie Exp $
+# $OpenBSD: pkg_info,v 1.2 2003/10/19 18:40:11 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -28,6 +28,7 @@
 use strict;
 use warnings;
 use OpenBSD::PackageInfo;
+use OpenBSD::PackageName;
 use Getopt::Std;
 use File::Copy;
 # XXX we don't want to load these packages all the time
@@ -99,6 +100,18 @@ if (@ARGV == 0) {
 
 for my $pkg (@ARGV) {
 	my $dir = installed_info($pkg);
+	unless (-d $dir) {
+		if (OpenBSD::PackageName::is_stem($pkg)) {
+			my @l = OpenBSD::PackageName::findstem($pkg, installed_packages());
+			if (@l == 1) {
+				$dir = installed_info($l[0]);
+			} elsif (@l != 0) {
+				print STDERR "$pkg: ambiguous (", join(" ",@l), ")\n";
+				next;
+			}
+		}
+	}
+				
 	unless (-d $dir) {
 		my $true_package = OpenBSD::PackageLocator->find($pkg);
 		next unless $true_package;
