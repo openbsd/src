@@ -718,6 +718,7 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/des_locl.ph
+./usr/libdata/perl5/site_perl/arm-openbsd/crypto/md5.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/podd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/crypto/rmd160.ph
@@ -2026,7 +2027,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/lockf.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/malloc.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mbuf.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/sys/md5k.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/memrange.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/sys/mman.ph

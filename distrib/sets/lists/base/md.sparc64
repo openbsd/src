@@ -105,6 +105,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/des_locl.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/md5.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/podd.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/crypto/rmd160.ph
@@ -1469,7 +1470,6 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/lockf.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/malloc.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/mbuf.ph
-./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/md5k.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/memrange.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/mman.ph

@@ -51,6 +51,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/deflate.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/des.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/des_locl.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/crypto/md5.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/podd.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/rijndael.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/crypto/rmd160.ph
@@ -1343,7 +1344,6 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/lockf.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/malloc.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/mbuf.ph
-./usr/libdata/perl5/site_perl/vax-openbsd/sys/md5k.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/memrange.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/midiio.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/sys/mman.ph

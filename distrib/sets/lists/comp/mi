@@ -70,6 +70,7 @@
 ./usr/include/crypto/deflate.h
 ./usr/include/crypto/des.h
 ./usr/include/crypto/des_locl.h
+./usr/include/crypto/md5.h
 ./usr/include/crypto/podd.h
 ./usr/include/crypto/rijndael.h
 ./usr/include/crypto/rmd160.h
@@ -1267,7 +1268,6 @@
 ./usr/include/sys/lockf.h
 ./usr/include/sys/malloc.h
 ./usr/include/sys/mbuf.h
-./usr/include/sys/md5k.h
 ./usr/include/sys/memrange.h
 ./usr/include/sys/midiio.h
 ./usr/include/sys/mman.h
