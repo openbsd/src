@@ -1,4 +1,4 @@
-/*	$OpenBSD: lexi.c,v 1.5 1997/09/10 07:06:37 deraadt Exp $	*/
+/*	$OpenBSD: lexi.c,v 1.6 1998/05/22 05:15:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985 Sun Microsystems, Inc.
@@ -37,7 +37,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lexi.c	5.16 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$OpenBSD: lexi.c,v 1.5 1997/09/10 07:06:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: lexi.c,v 1.6 1998/05/22 05:15:12 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -157,7 +157,8 @@ lexi()
 				 * reserved words */
 	if (isdigit(*buf_ptr) || (buf_ptr[0] == '.' && isdigit(buf_ptr[1]))) {
 	    int         seendot = 0,
-	                seenexp = 0;
+	                seenexp = 0,
+			seensfx = 0;
 	    if (*buf_ptr == '0' &&
 		    (buf_ptr[1] == 'x' || buf_ptr[1] == 'X')) {
 		*e_token++ = *buf_ptr++;
@@ -188,8 +189,25 @@ lexi()
 				*e_token++ = *buf_ptr++;
 			}
 		}
-	    if (*buf_ptr == 'L' || *buf_ptr == 'l')
-		*e_token++ = *buf_ptr++;
+	    while (1) {
+		if (!(seensfx & 1) &&
+			(*buf_ptr == 'U' || *buf_ptr == 'u')) {
+		    CHECK_SIZE_TOKEN;
+		    *e_token++ = *buf_ptr++;
+		    seensfx |= 1;
+		    continue;
+		}
+        	if (!(seensfx & 2) &&
+			(*buf_ptr == 'L' || *buf_ptr == 'l')) {
+		    CHECK_SIZE_TOKEN;
+		    if (buf_ptr[1] == buf_ptr[0])
+		        *e_token++ = *buf_ptr++;
+		    *e_token++ = *buf_ptr++;
+		    seensfx |= 2;
+		    continue;
+		}
+		break;
+	    }
 	}
 	else
 	    while (chartype[*buf_ptr] == alphanum) {	/* copy it over */
