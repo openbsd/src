@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.58 2003/06/13 17:51:14 millert Exp $	*/
+/*	$OpenBSD: options.c,v 1.59 2003/06/26 00:10:17 deraadt Exp $	*/
 /*	$NetBSD: options.c,v 1.6 1996/03/26 23:54:18 mrg Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)options.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: options.c,v 1.58 2003/06/13 17:51:14 millert Exp $";
+static const char rcsid[] = "$OpenBSD: options.c,v 1.59 2003/06/26 00:10:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -978,6 +978,8 @@ tar_options(int argc, char **argv)
 			arcname = _PATH_DEFTAPE;
 	}
 }
+
+int mkpath(char *);
 
 int
 mkpath(path)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ar_subs.c,v 1.24 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: ar_subs.c,v 1.25 2003/06/26 00:10:17 deraadt Exp $	*/
 /*	$NetBSD: ar_subs.c,v 1.5 1995/03/21 09:07:06 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)ar_subs.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.24 2003/06/02 23:32:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ar_subs.c,v 1.25 2003/06/26 00:10:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -383,7 +383,7 @@ wr_archive(ARCHD *arcn, int is_app)
 	int hlk;
 	int wr_one;
 	off_t cnt;
-	int (*wrf)();
+	int (*wrf)(ARCHD *);
 	int fd = -1;
 	time_t now;
 
@@ -1072,7 +1072,7 @@ next_head(ARCHD *arcn)
 			/*
 			 * this format has trailers outside of valid headers
 			 */
-			if ((ret = (*frmt->trail)(hdbuf,in_resync,&cnt)) == 0){
+			if ((ret = (*frmt->trail)(arcn,hdbuf,in_resync,&cnt)) == 0){
 				/*
 				 * valid trailer found, drain input as required
 				 */
@@ -1119,7 +1119,7 @@ next_head(ARCHD *arcn)
 	 * the header. NOTE: the parameters are different than trailer routines
 	 * which encode trailers outside of the header!
 	 */
-	if (frmt->inhead && ((*frmt->trail)(arcn) == 0)) {
+	if (frmt->inhead && ((*frmt->trail)(arcn,NULL,0,NULL) == 0)) {
 		/*
 		 * valid trailer found, drain input as required
 		 */

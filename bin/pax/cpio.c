@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpio.c,v 1.15 2003/06/02 23:32:08 millert Exp $	*/
+/*	$OpenBSD: cpio.c,v 1.16 2003/06/26 00:10:17 deraadt Exp $	*/
 /*	$NetBSD: cpio.c,v 1.5 1995/03/21 09:07:13 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)cpio.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: cpio.c,v 1.15 2003/06/02 23:32:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: cpio.c,v 1.16 2003/06/26 00:10:17 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -92,7 +92,7 @@ cpio_strd(void)
  */
 
 int
-cpio_trail(ARCHD *arcn)
+cpio_trail(ARCHD *arcn, char *notused, int notused2, int *notused3)
 {
 	/*
 	 * look for trailer id in file we are about to process

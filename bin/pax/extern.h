@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.26 2003/06/13 17:51:14 millert Exp $	*/
+/*	$OpenBSD: extern.h,v 1.27 2003/06/26 00:10:17 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@ int gid_name(char *, gid_t *);
  * cpio.c
  */
 int cpio_strd(void);
-int cpio_trail(ARCHD *);
+int cpio_trail(ARCHD *, char *, int, int *);
 int cpio_endwr(void);
 int cpio_id(char *, int);
 int cpio_rd(ARCHD *, char *);
@@ -280,7 +280,7 @@ u_int st_hash(char *, int, int);
 extern char *gnu_hack_string;
 int tar_endwr(void);
 off_t tar_endrd(void);
-int tar_trail(char *, int, int *);
+int tar_trail(ARCHD *, char *, int, int *);
 int tar_id(char *, int);
 int tar_opt(void);
 int tar_rd(ARCHD *, char *);

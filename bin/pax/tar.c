@@ -1,4 +1,4 @@
-/*	$OpenBSD: tar.c,v 1.30 2003/06/02 23:32:09 millert Exp $	*/
+/*	$OpenBSD: tar.c,v 1.31 2003/06/26 00:10:18 deraadt Exp $	*/
 /*	$NetBSD: tar.c,v 1.5 1995/03/21 09:07:49 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)tar.c	8.2 (Berkeley) 4/18/94";
 #else
-static const char rcsid[] = "$OpenBSD: tar.c,v 1.30 2003/06/02 23:32:09 millert Exp $";
+static const char rcsid[] = "$OpenBSD: tar.c,v 1.31 2003/06/26 00:10:18 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -110,7 +110,7 @@ tar_endrd(void)
  */
 
 int
-tar_trail(char *buf, int in_resync, int *cnt)
+tar_trail(ARCHD *ignore, char *buf, int in_resync, int *cnt)
 {
 	int i;
 
