@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ipnat.5,v 1.16 2001/01/17 07:43:33 fgsch Exp $
+.\"	$OpenBSD: ipnat.5,v 1.17 2001/01/20 20:16:10 fgsch Exp $
 .\"
 .TH IPNAT 5
 .SH NAME
@@ -12,7 +12,7 @@ ipmap :: = mapblock | redir | map .
 map ::= mapit ifname ipmask "->" ipmask [ mapport ] .
 map ::= mapit ifname fromto "->" ipmask [ mapport ] .
 mapblock ::= "map-block" ifname ipmask "->" ipmask [ ports ] .
-redir ::= "rdr" ifname [ fromspec ] ipmask "->" ip [ ports ] [ tcpudp ] .
+redir ::= "rdr" ifname ipmask dport "->" ip [ "," ip ] [ ports ] options .
 
 dport ::= "port" portnum [ "-" portnum ] .
 ports ::= "ports" numports | "auto" .
