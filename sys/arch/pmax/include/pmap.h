@@ -107,4 +107,10 @@ struct pmap kernel_pmap_store;
 #define pmax_round_seg(a) mips_round_seg(a)
 /* End of stuff from the NetBSD mips tree TTTTT */
 
+/*
+ *      Bootstrap the system enough to run with virtual memory.
+ *      firstaddr is the first unused kseg0 address (not page aligned).
+ */
+void    pmap_bootstrap __P((vm_offset_t firstaddr));
+
 #endif	/* _PMAP_MACHINE_ */

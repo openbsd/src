@@ -21,7 +21,7 @@
 cdev_decl(mm);
 
 
-cdev_decl(scc);		/* pmax (also alpha m-d z8530 SCC */
+cdev_decl(scc);		/* pmax (also alpha) m-d z8530 SCC */
 cdev_decl(dc);		/* dc7085 dz11-on-a-chip */
 
 bdev_decl(rz);		/* antique 4.4bsd/pmax SCSI disk */
@@ -33,3 +33,10 @@ cdev_decl(tz);
 cdev_decl(dtop);	/* Personal Decstation (MAXINE) desktop bus */
 cdev_decl(fb);		/* generic framebuffer pseudo-device */
 cdev_decl(rcons);	/* framebuffer-based raster console pseudo-device */
+
+/* TTTTT - stuff from NetBSD mips conf.h */
+cdev_decl(pms);
+
+bdev_decl(fd);
+cdev_decl(fd);
+/* TTTTT - end of stuff from NetBSD mips conf.h */

@@ -52,6 +52,7 @@
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
 
+#include <pmax/conf.h>
 #include <machine/cpu.h>
 
 #include <vm/vm.h>
@@ -61,9 +62,10 @@ caddr_t zeropage;
 
 /*ARGSUSED*/
 int
-mmopen(dev, flag, mode)
+mmopen(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+        struct proc *p;
 {
 
 	return (0);
@@ -71,9 +73,10 @@ mmopen(dev, flag, mode)
 
 /*ARGSUSED*/
 int
-mmclose(dev, flag, mode)
+mmclose(dev, flag, mode, p)
 	dev_t dev;
 	int flag, mode;
+        struct proc *p;
 {
 
 	return (0);
@@ -86,7 +89,7 @@ mmrw(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	register vm_offset_t o, v;
+	register vm_offset_t v;
 	register int c;
 	register struct iovec *iov;
 	int error = 0;

@@ -108,7 +108,8 @@ cdev_decl(mm);
 #include "bpfilter.h"
 #include "dtop.h"
 cdev_decl(dtop);
-#include "dc.h"
+#include "dc_ioasic.h"
+#include "dc_ds.h"
 cdev_decl(dc);
 #include "scc.h"
 cdev_decl(scc);
@@ -128,6 +129,11 @@ cdev_decl(xcfb);
 cdev_decl(mfb);
 dev_decl(filedesc,open);
 
+#if (NDC_DS > 0) || (NDC_IOASIC > 0)
+# define NDC 1
+#else
+# define NDC 0
+#endif
 
 /* a framebuffer with an attached mouse: */
 /* open, close, ioctl, poll, mmap */

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmax_trap.c,v 1.39 1996/10/13 03:39:54 christos Exp $	*/
+/*	$NetBSD: pmax_trap.c,v 1.44 1997/05/31 20:33:35 mhitch Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,13 +84,13 @@
 #include <net/if.h>
 #include <netinet/if_ether.h>
 
-struct ifnet; struct arpcom;
+struct ifnet; struct ethercom;
 #include <dev/ic/am7990var.h>		/* Lance interrupt for kn01 */
 
 #include "asc.h"
 #include "sii.h"
 #include "le_pmax.h"
-#include "dc.h"
+#include "dc_ds.h"
 
 #include <sys/cdefs.h>
 #include <sys/syslog.h>
@@ -110,7 +110,10 @@ struct	proc *machFPCurProcPtr;		/* pointer to last proc to use FP */
 
 
 
+#ifdef DS3100
 static void pmax_errintr __P((void));
+#endif
+
 static void kn02_errintr __P((void)), kn02ba_errintr __P((void));
 
 #ifdef DS5000_240
@@ -175,7 +178,7 @@ int leintr __P((void *));
 #if NSII > 0
 int siiintr __P((void *));
 #endif
-#if NDC > 0
+#if NDC_DS > 0
 int dcintr __P((void *));
 #endif
 
@@ -204,11 +207,12 @@ kn01_intr(mask, pc, statusReg, causeReg)
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 
-		/* keep clock interrupts enabled */
+		/* keep clock interrupts enabled when we return */
 		causeReg &= ~MACH_INT_MASK_3;
 	}
-	/* Re-enable clock interrupts ASAP*/
-	splx(MACH_INT_MASK_3 | MACH_SR_INT_ENA_CUR);
+
+	/* If clock interrupts were enabled, re-enable them ASAP. */
+	splx(MACH_SR_INT_ENA_CUR | (statusReg & MACH_INT_MASK_3));
 
 #if NSII > 0
 	if (mask & MACH_INT_MASK_0) {
@@ -230,12 +234,12 @@ kn01_intr(mask, pc, statusReg, causeReg)
 	}
 #endif /* NLE_PMAX */
 
-#if NDC > 0
+#if NDC_DS > 0
 	if (mask & MACH_INT_MASK_2) {
 		dcintr(dc_cd.cd_devs[0]);
 		intrcnt[SERIAL0_INTR]++;
 	}
-#endif /* NDC */
+#endif /* NDC_DS */
 
 	if (mask & MACH_INT_MASK_4) {
 		pmax_errintr();
@@ -282,11 +286,13 @@ kn02_intr(mask, pc, statusReg, causeReg)
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 
-		/* keep clock interrupts enabled */
+		/* keep clock interrupts enabled when we return */
 		causeReg &= ~MACH_INT_MASK_1;
 	}
-	/* Re-enable clock interrupts */
-	splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
+
+	/* If clock interrups were enabled, re-enable them ASAP. */
+	splx(MACH_SR_INT_ENA_CUR | (statusReg & MACH_INT_MASK_1));
+
 	if (mask & MACH_INT_MASK_0) {
 		static int intr_map[8] = { SLOT0_INTR, SLOT1_INTR, SLOT2_INTR,
 					   /* these two bits reserved */
@@ -476,10 +482,12 @@ xine_intr(mask, pc, statusReg, causeReg)
 		cf.sr = statusReg;
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
+		/* keep clock interrupts enabled when we return */
 		causeReg &= ~MACH_INT_MASK_1;
 	}
-	/* reenable clock interrupts */
-	splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
+
+	/* If clock interrups were enabled, re-enable them ASAP. */
+	splx(MACH_SR_INT_ENA_CUR | (statusReg & MACH_INT_MASK_1));
 
 	if (mask & MACH_INT_MASK_3) {
 		intr = *intrp;
@@ -616,10 +624,12 @@ kn03_intr(mask, pc, statusReg, causeReg)
 		hardclock(&cf);
 		intrcnt[HARDCLOCK]++;
 		old_buscycle = latched_cycle_cnt - old_buscycle;
+		/* keep clock interrupts enabled when we return */
 		causeReg &= ~MACH_INT_MASK_1;
 	}
-	/* reenable clock interrupts */
-	splx(MACH_INT_MASK_1 | MACH_SR_INT_ENA_CUR);
+
+	/* If clock interrups were enabled, re-enable them ASAP. */
+	splx(MACH_SR_INT_ENA_CUR | (statusReg & MACH_INT_MASK_1));
 
 	/*
 	 * Check for late clock interrupts (allow 10% slop). Be careful

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.50 1996/10/13 21:37:49 jonathan Exp $	*/
+/*	$NetBSD: trap.c,v 1.55 1997/05/25 10:01:38 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -346,6 +346,8 @@ extern void MachSwitchFPState __P((struct proc *from, struct user *to));
 /* only called by locore */
 extern u_int trap __P((u_int status, u_int cause, u_int vaddr,  u_int pc,
 			 int args));
+extern void interrupt __P((u_int status, u_int cause, u_int pc));
+extern void softintr __P((unsigned statusReg, unsigned pc));
 
 
 #ifdef DEBUG /* stack trace code, also useful to DDB one day */
@@ -1044,7 +1046,7 @@ interrupt(statusReg, causeReg, pc /* XXX what, args */ )
 	/* process network interrupt if we trapped or will very soon */
 	/* XXX fixme: operator precedence botch? */
 	if ((mask & MACH_SOFT_INT_MASK_1) ||
-	    netisr && (statusReg & MACH_SOFT_INT_MASK_1)) {
+	    (netisr && (statusReg & MACH_SOFT_INT_MASK_1))) {
 		clearsoftnet();
 		cnt.v_soft++;
 		intrcnt[SOFTNET_INTR]++;
@@ -1325,7 +1327,7 @@ MachEmulateBranch(regsPtr, instPC, fpcCSR, allowNonBranch)
  * resuming execution, and then restoring the old instruction.
  */
 int
-cpu_singlestep(p)
+mips_singlestep(p)
 	register struct proc *p;
 {
 	register unsigned va;

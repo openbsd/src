@@ -183,11 +183,11 @@ fbioctl(dev, cmd, data, flag, p)
 		break;
 
 	case FBIOGVIDEO:
-		*(int *)data = fi->fi_blanked;
+		*(int *)data = (fi->fi_blanked) ? FBVIDEO_OFF: FBVIDEO_ON;
 		break;
 
 	case FBIOSVIDEO:
-		if (*(int *)data)
+		if (*(int *)data == FBVIDEO_OFF)
 			return (*(fi->fi_driver->fbd_blank)) (fi);
 		else
 			return (*(fi->fi_driver->fbd_unblank)) (fi);

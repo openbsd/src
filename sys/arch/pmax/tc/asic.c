@@ -1,4 +1,4 @@
-/*	$NetBSD: asic.c,v 1.15 1996/10/13 03:39:58 christos Exp $	*/
+/*	$NetBSD: asic.c,v 1.16 1997/05/24 09:30:27 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -113,7 +113,7 @@ struct asic_slot *asic_slots;
 #ifdef IOASIC_DEBUG
 #define IOASIC_DPRINTF(x)	printf x
 #else
-#define IOASIC_DPRINTF(x)	(void) x
+#define IOASIC_DPRINTF(x)	do { if (0) printf x ; } while (0)
 #endif
 
 int

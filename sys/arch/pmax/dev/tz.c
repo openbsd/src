@@ -1,4 +1,4 @@
-/*	$NetBSD: tz.c,v 1.14 1996/10/13 12:34:20 jonathan Exp $	*/
+/*	$NetBSD: tz.c,v 1.15 1997/01/31 02:00:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 #include <sys/proc.h>
 #include <sys/syslog.h>
 #include <sys/tprintf.h>
+#include <sys/device.h>
 
 #include <sys/conf.h>
 #include <machine/conf.h>
@@ -77,6 +78,7 @@ struct	pmax_driver tzdriver = {
 };
 
 struct	tz_softc {
+	struct	device sc_dev;		/* new config glue */
 	struct	pmax_scsi_device *sc_sd;	/* physical unit info */
 	int	sc_flags;		/* see below */
 	int	sc_tapeid;		/* tape drive id */
@@ -139,6 +141,12 @@ tzprobe(xxxsd)
 	sc->sc_cmd.unit = sd->sd_unit;
 	sc->sc_cmd.flags = 0;
 	sc->sc_rwcmd.unitNumber = sd->sd_slave;
+
+	/* XXX set up device info */				/* XXX */
+	bzero(&sc->sc_dev, sizeof(sc->sc_dev));			/* XXX */
+	sprintf(sc->sc_dev.dv_xname, "tz%d", sd->sd_unit);	/* XXX */
+	sc->sc_dev.dv_unit = sd->sd_unit;			/* XXX */
+	sc->sc_dev.dv_class = DV_TAPE;				/* XXX */
 
 	/* try to find out what type of device this is */
 	sc->sc_flags = TZF_ALTCMD;	/* force use of sc_cdb */
@@ -232,6 +240,10 @@ tzprobe(xxxsd)
 			sc->sc_tapeid = 0;
 		}
 	}
+
+	sd->sd_devp = &sc->sc_dev;				/* XXX */
+	TAILQ_INSERT_TAIL(&alldevs, &sc->sc_dev, dv_list);	/* XXX */
+
 	return (1);
 
 bad:

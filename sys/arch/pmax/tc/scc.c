@@ -1,4 +1,4 @@
-/*	$NetBSD: scc.c,v 1.18 1996/10/16 05:04:51 jonathan Exp $	*/
+/*	$NetBSD: scc.c,v 1.22 1997/05/25 10:28:22 jonathan Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -66,8 +66,6 @@
  */
 
 
-#include "scc.h"
-#if NSCC > 0
 /*
  * Intel 82530 dual usart chip driver. Supports the serial port(s) on the
  * Personal DECstation 5000/xx and DECstation 5000/1xx, plus the keyboard
@@ -124,6 +122,8 @@
 
 #include <machine/conf.h>
 
+#include "rasterconsole.h"
+
 extern void ttrstrt	__P((void *));
 
 #ifdef alpha
@@ -136,8 +136,10 @@ extern void ttrstrt	__P((void *));
  * support from the tty drivers. This is ugly and broken and won't
  * compile on Alphas. 
  */
-#ifdef pmax
+#if defined (pmax)
+#if NRASTERCONSOLE > 0
 #define HAVE_RCONS
+#endif
 extern int pending_remcons;
 #endif
 
@@ -315,6 +317,7 @@ static struct consdev scccons = {
 	NULL, NULL, sccGetc, sccPutc, sccPollc, NODEV, 0
 };
 void scc_consinit __P((dev_t dev, scc_regmap_t *sccaddr));
+void scc_oconsinit __P((struct scc_softc *sc, dev_t dev));
 
 
 /*
@@ -416,8 +419,12 @@ sccmatch(parent, cfdata, aux)
 	    (strncmp(d->iada_modname, "scc", TC_ROM_LLEN)!= 0))
 	    return (0);
 	    
-	/* XXX MATCH CFLOC */
-	if (cf->cf_unit >= NSCC)
+	/*
+	 * Check user-specified offset against the ioasic offset.
+	 * Allow it to be wildcarded.
+	 */
+	if (cf->cf_loc[0] != -1 &&
+	    cf->cf_loc[0] != d->iada_offset)
 		return (0);
 
 	/* Get the address, and check it for validity. */
@@ -510,10 +517,12 @@ sccattach(parent, self, aux)
 	 * For a remote console, wait a while for previous output to
 	 * complete.
 	 */
-#ifdef HAVE_RCONS
+#ifdef pmax
 	if (CONSOLE_ON_UNIT(unit) && (cn_tab->cn_pri == CN_REMOTE))
 		DELAY(10000);
-#else
+#endif
+
+#ifdef alpha
 	if ((cputype == ST_DEC_3000_500 && sc->sc_dv.dv_unit == 1) ||
 	    (cputype == ST_DEC_3000_300 && sc->sc_dv.dv_unit == 0))
 		DELAY(10000);
@@ -557,8 +566,10 @@ sccattach(parent, self, aux)
 		 * on kn03, maybe kmin?
 		 * And what about maxine?
 		 */
-		if (cn_tab->cn_dev == unit && cputype != DS_MAXINE)
+		if (cn_tab->cn_dev == unit && cputype != DS_MAXINE) {
+			printf ("\n");
 			return;
+		}
 
 		/*
 		 * If we are using the PROM serial-console routines
@@ -576,7 +587,7 @@ sccattach(parent, self, aux)
 
 		printf(" (In sccattach: cn_dev = 0x%x)", cn_tab->cn_dev);
 	 	printf(" (Unit = %d)", unit);
-		printf(": console");
+		printf(": console\n");
 		pending_remcons = 0;
 		/*
 		 * XXX We should support configurations where the PROM
@@ -1448,14 +1459,12 @@ scc_modem_intr(dev)
 	 * Is it related to  console handling?
 	 */
 #ifndef alpha
-#ifdef	notyet	/*XXX -does this help pmax console? */
 	if (car) {
 		/* carrier present */
 		if (!(tp->t_state & TS_CARR_ON))
 			(void)(*linesw[tp->t_line].l_modem)(tp, 1);
 	} else if (tp->t_state & TS_CARR_ON)
 		(void)(*linesw[tp->t_line].l_modem)(tp, 0);
-#endif /*notyet*/
 #endif /* !alpha */
 	splx(s);
 }
@@ -1603,4 +1612,3 @@ rr(msg, regs)
 	    r0, r1, r2, r10, r15);
 }
 #endif /* SCC_DEBUG */
-#endif /* NSCC */

@@ -1,4 +1,4 @@
-/*	$NetBSD: fbvar.h,v 1.1 1995/09/11 08:18:51 jonathan Exp $ */
+/*	$NetBSD: fbvar.h,v 1.2 1997/05/24 05:49:22 jonathan Exp $ */
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -145,7 +145,9 @@ struct fbdevice {
 
 #define FB_INESC	0x001		/* processing an escape sequence */
 #define FB_STANDOUT	0x002		/* standout mode */
-/* #define FB_BOLD	0x?		/* boldface mode */
+#ifdef notyet
+# define FB_BOLD	0x?		/* boldface mode */
+#endif
 #define FB_INVERT	0x008		/* white on black mode */
 #define FB_VISBELL	0x010		/* visual bell */
 #define FB_CURSOR	0x020		/* cursor is visible */

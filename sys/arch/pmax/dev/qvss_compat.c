@@ -1,4 +1,4 @@
-/*	$NetBSD: qvss_compat.c,v 1.6 1996/10/13 03:39:36 christos Exp $	*/
+/*	$NetBSD: qvss_compat.c,v 1.8 1997/05/25 10:53:33 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -89,7 +89,8 @@
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 
-#include "dc.h"
+#include "dc_ds.h"
+#include "dc_ioasic.h"
 #include "scc.h"
 #include "dtop.h"
 
@@ -99,8 +100,17 @@
  */
 
 #include <pmax/dev/qvssvar.h>			/* our own externs */
+
+struct termios; struct dcregs;
+#include <pmax/dev/dtopvar.h>			/* dtop console I/O decls */
+#include <pmax/tc/sccvar.h>			/* ioasic z8530 I/O decls */
+#include <pmax/dev/dcvar.h>			/* DZ-11 chip console I/O */
+
 extern int pmax_boardtype;
 
+/*
+ * Prototypes of local functions
+ */
 extern void pmEventQueueInit __P((pmEventQueue *qe));
 void	genKbdEvent __P((int ch));
 void	genMouseEvent __P((MouseReport *newRepPtr));
@@ -110,41 +120,12 @@ void	genDeconfigMouse __P((void));
 void	mouseInput __P((int cc));
 
 
-
-#if NDC > 0
-extern void (*dcDivertXInput)();
-extern void (*dcMouseEvent)();
-extern void (*dcMouseButtons)();
-#endif
 #if NSCC > 0
-extern void (*sccDivertXInput)();
-extern void (*sccMouseEvent)();
-extern void (*sccMouseButtons)();
-#endif
-#if NDTOP > 0
-extern void (*dtopDivertXInput)();
-extern void (*dtopMouseEvent)();
-extern void (*dtopMouseButtons)();
+extern void (*sccDivertXInput) __P((int cc));
+extern void (*sccMouseEvent) __P((int));
+extern void (*sccMouseButtons) __P((int));
 #endif
 
-
-#if 0 /*XXX*/
-#if NDC > 0
-#include <machine/dc7085cons.h>
-extern int dcGetc(), dcparam();
-extern void dcPutc();
-#endif
-#if NDTOP > 0
-#include <pmax/dev/dtopreg.h>
-extern void dtopKBDPutc();
-#endif
-#if NSCC > 0
-#include <pmax/dev/sccreg.h>
-extern int sccGetc(), sccparam();
-extern void sccPutc();
-#endif
-
-#endif /* 0 */
 extern struct fbinfo *firstfi;
 
 
@@ -566,14 +547,22 @@ genConfigMouse()
 
 	s = spltty();
 	switch (pmax_boardtype) {
-#if NDC > 0
+#if NDC_IOASIC > 0
 	case DS_3MAX:
+		dcDivertXInput = genKbdEvent;
+		dcMouseEvent = (void (*) __P((int)))genMouseEvent;
+		dcMouseButtons = (void (*) __P((int)))genMouseButtons;
+		break;
+#endif /* NDC_IOASIC */
+
+#if NDC_DS > 0
 	case DS_PMAX:
 		dcDivertXInput = genKbdEvent;
-		dcMouseEvent = genMouseEvent;
-		dcMouseButtons = genMouseButtons;
+		dcMouseEvent = (void (*) __P((int)))genMouseEvent;
+		dcMouseButtons = (void (*) __P((int)))genMouseButtons;
 		break;
-#endif
+#endif /* NDC_DS */
+
 #if NSCC > 1
 	case DS_3MIN:
 	case DS_3MAXPLUS:
@@ -605,27 +594,37 @@ genDeconfigMouse()
 
 	s = spltty();
 	switch (pmax_boardtype) {
-#if NDC > 0
+#if NDC_IOASIC > 0
 	case DS_3MAX:
-	case DS_PMAX:
-		dcDivertXInput = (void (*)())0;
-		dcMouseEvent = (void (*)())0;
-		dcMouseButtons = (void (*)())0;
+
+		dcDivertXInput = (void (*) __P((int)) )0;
+		dcMouseEvent = (void (*) __P((int)) )0;
+		dcMouseButtons = (void (*) __P((int)) )0;
 		break;
-#endif
+#endif  /* NDC_IOASIC */
+
+#if NDC_DS > 0
+	case DS_PMAX:
+		dcDivertXInput = (void (*) __P((int)) )0;
+		dcMouseEvent = (void (*) __P((int)) )0;
+		dcMouseButtons =  (void (*) __P((int)) )0;
+		break;
+#endif /* NDC_DS */
+
 #if NSCC > 1
 	case DS_3MIN:
 	case DS_3MAXPLUS:
-		sccDivertXInput = (void (*)())0;
-		sccMouseEvent = (void (*)())0;
-		sccMouseButtons = (void (*)())0;
+		sccDivertXInput = (void (*) __P((int)) )0;
+		sccMouseEvent = (void (*) __P((MouseReport *)) )0;
+		sccMouseButtons = (void (*) __P((MouseReport *)) )0;
 		break;
 #endif
+
 #if NDTOP > 0
 	case DS_MAXINE:
-		dtopDivertXInput = (void (*)())0;
-		dtopMouseEvent = (void (*)())0;
-		dtopMouseButtons = (void (*)())0;
+		dtopDivertXInput = (void (*) __P((int)) )0;
+		dtopMouseEvent = (void (*) __P((MouseReport *)) )0;
+		dtopMouseButtons = (void (*) __P((MouseReport *)) )0;
 		break;
 #endif
 	default:

@@ -44,3 +44,52 @@
 #define ECOFF_BADMAG(ep) ((ep)->f.f_magic != ECOFF_MAGIC_MIPSEL)
 
 #define ECOFF_SEGMENT_ALIGNMENT(ep) ((ep)->a.vstamp < 23 ? 8 : 16)
+
+/* TTTTT - stuff from NetBSD mips dir */ 
+
+extern void	cpu_exec_ecoff_setregs __P((
+    struct proc *, struct exec_package *, u_long, register_t *));
+
+
+/*
+ * ECOFF symbol definitions for 32-bit mips.
+ * XXX 64-bit (mips3?) may be different.
+ */
+struct ecoff_symhdr {
+	int16_t		magic;
+	int16_t		vstamp;
+	int32_t		lineMax;
+	int32_t		densenumMax;
+	int32_t		procMax;
+	int32_t		lsymMax;
+	int32_t		optsymMax;
+	int32_t		auxsymMax;
+	int32_t		lstrMax;
+	int32_t		estrMax;
+	int32_t		fdMax;
+	int32_t		rfdMax;
+	int32_t		esymMax;
+	long		linesize;
+	long		cbLineOffset;
+	long		cbDnOffset;
+	long		cbPdOffset;
+	long		cbSymOffset;
+	long		cbOptOffset;
+	long		cbAuxOffset;
+	long		cbSsOffset;
+	long		cbSsExtOffset;
+	long		cbFdOffset;
+	long		cbRfdOffset;
+	long		cbExtOffset;
+};
+
+struct ecoff_extsym {
+	int32_t		es_strindex;
+	int32_t		es_value;
+	unsigned	es_type:6;
+	unsigned	es_class:5;
+	unsigned	:1;
+	unsigned	es_symauxindex:20;
+};
+
+/* TTTTT - end of stuff from NetBSD mips dir */

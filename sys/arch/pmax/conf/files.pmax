@@ -42,7 +42,7 @@ file	dev/tc/tc.c			tc		needs-flag
 # The TurboChannel IOCTL ASIC. Present on IOASIC machines,
 # which is all turbochannel machines ever built except the 3MAX (5000/200).
 #
-device ioasic { } 		#{ }	# not really optional
+device ioasic { offset = -1 } 		# not really optional
 attach ioasic at tc
 file	arch/pmax/tc/asic.c		ioasic | dc_ds # TTTTT dc_ds is ugly
 
@@ -104,11 +104,11 @@ file	arch/pmax/dev/rz.c		rz needs-count
 # DC7085 (DZ-like four-port serial device) on mainbus on non-IOASIC machines.
 # For the 3MAX (aka kn02 aka 5k/200) pretend that it's on an  ASIC.
 device dc
-file	arch/pmax/dev/dc.c		dc	needs-flag
+file	arch/pmax/dev/dc.c		dc
 attach dc at ioasic with dc_ioasic
-file	arch/pmax/dev/dc_ioasic.c	dc_ioasic | dc_ds # TTTTT ugly
+file	arch/pmax/dev/dc_ioasic.c	dc_ioasic | dc_ds needs-flag # TTTTT ugly
 attach dc at mainbus with dc_ds
-file	arch/pmax/dev/dc_ds.c		dc_ds
+file	arch/pmax/dev/dc_ds.c		dc_ds	needs-flag
 
 
 # The "desktop bus" on the MAXINE (5k/25). What is it, anyway? ADB?
@@ -135,7 +135,7 @@ device pm
 file	arch/pmax/dev/pm.c		pm needs-flag
 file	arch/pmax/dev/bt478.c		pm
 attach pm at mainbus with pm_ds
-file	arch/pmax/dev/pm_ds.c		dc_ds
+file	arch/pmax/dev/pm_ds.c		pm_ds
 
 ########################################################################
 # Turbochannel options.
@@ -156,7 +156,7 @@ file	arch/pmax/dev/mfb.c		mfb needs-flag
 #  Zilog 8350/Intel 82350(?) SCC UART.
 device scc
 attach scc at ioasic
-file	arch/pmax/tc/scc.c		scc needs-count
+file	arch/pmax/tc/scc.c		scc needs-flag
 
 # MAXINE onboard framebuffer
 device	xcfb

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfb.c,v 1.18 1996/10/13 13:14:01 jonathan Exp $	*/
+/*	$NetBSD: sfb.c,v 1.19 1997/01/22 17:27:54 mhitch Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -131,7 +131,7 @@ void sfbattach __P((struct device *, struct device *, void *));
 int sfb_intr __P((void *sc));
 
 struct cfattach sfb_ca = {
-	sizeof(struct device), sfbmatch, sfbattach
+	sizeof(struct fbinfo), sfbmatch, sfbattach
 };
 
 struct cfdriver sfb_cd = {

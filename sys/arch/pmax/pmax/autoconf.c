@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.18 1996/10/13 03:39:44 christos Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.24 1997/05/25 08:17:00 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,6 +61,7 @@
 #include <sys/device.h>
 
 #include <machine/cpu.h>
+#include <machine/autoconf.h>
 #include <pmax/dev/device.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/turbochannel.h>
@@ -79,10 +80,6 @@ void xconsinit __P((void));	/* XXX console-init continuation */
  */
 int spl0 __P((void));
 #endif
-
-void	configure __P((void));
-void	makebootdev __P((char *cp));
-
 
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.1 1995/08/28 20:01:34 jonathan Exp $	*/
+/*	$NetBSD: trap.h,v 1.2 1997/05/25 05:01:51 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1995, Jonathan Stone
@@ -33,7 +33,7 @@
 /*
  * Functions defined in trap.c, used in machdep.c and locore
  */
-extern int pmax_intr __P((u_int mask, u_int pc, u_int statusReg,
+extern int kn01_intr __P((u_int mask, u_int pc, u_int statusReg,
 		   u_int causeReg));
 extern int kmin_intr __P((u_int mask, u_int pc, u_int statusReg,
 		   u_int causeReg));
@@ -43,7 +43,7 @@ extern int xine_intr __P((u_int mask, u_int pc, u_int statusReg,
 extern int kn02_intr __P((u_int mask, u_int pc, u_int statusReg,
 		   u_int causeReg));
 
-extern	int (*pmax_hardware_intr) __P((u_int mask, u_int pc, u_int statusReg,
+extern	int (*mips_hardware_intr) __P((u_int mask, u_int pc, u_int statusReg,
 		   u_int causeReg));
 #ifdef DS5000_240
 extern int kn03_intr __P((u_int mask, u_int pc, u_int statusReg,

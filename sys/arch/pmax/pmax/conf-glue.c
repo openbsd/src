@@ -1,4 +1,4 @@
-/*	$NetBSD: conf-glue.c,v 1.12 1996/10/13 03:39:47 christos Exp $	*/
+/*	$NetBSD: conf-glue.c,v 1.13 1997/05/24 09:37:45 jonathan Exp $	*/
 
 /*
  * conf-glue.c:
@@ -229,7 +229,7 @@ noattach(parent, self, aux)
 	       ca->ca_name, self->dv_unit,
 	       parent->dv_xname);
 #else
-	panic("Can't do new-config attach of old device %s\n",
+	panic("Can't do new-config attach of old device %s%d\n",
 	      ca->ca_name, self->dv_unit);
 #endif
 	return;

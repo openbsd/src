@@ -51,3 +51,11 @@ struct mdproc {
 
 /* md_flags */
 #define	MDP_FPUSED	0x0001	/* floating point coprocessor used */
+
+/* TTTTT - stuff from NetBSD mips dir */
+#ifdef _KERNEL
+/* kernel single-step emulation */
+struct proc;
+extern int mips_singlestep __P((struct proc *p));
+#endif /* _KERNEL */
+/* TTTTT - end of stuff from NetBSD mips dir */

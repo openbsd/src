@@ -1,4 +1,4 @@
-/*	$NetBSD: dcvar.h,v 1.3 1996/09/25 20:48:57 jonathan Exp $	*/
+/*	$NetBSD: dcvar.h,v 1.4 1997/05/28 14:21:39 jonathan Exp $	*/
 
 /*
  * External declarations from DECstation dc serial driver.
@@ -37,7 +37,14 @@ int	dcintr __P((void * xxxunit));
 extern int dcGetc __P ((dev_t dev));
 extern int dcparam __P((register struct tty *tp, register struct termios *t));
 extern void dcPutc __P((dev_t dev, int c));
-void dc_consinit __P((dev_t dev, dcregs *dcaddr));
+
+struct dc7085regs;
+void dc_consinit __P((dev_t dev, volatile struct dc7085regs *dcaddr));
+
+/* QVSS-compatible in-kernel X input event parser, pointer tracker */
+void	(*dcDivertXInput) __P((int cc)); /* X windows keyboard input routine */
+void	(*dcMouseEvent) __P((int));	/* X windows mouse motion event routine */
+void	(*dcMouseButtons) __P((int));	/* X windows mouse buttons event routine */
 
 #endif	/* _DCVAR_H */
 #endif	/* _KERNEL */

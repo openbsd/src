@@ -1,4 +1,4 @@
-/*	$NetBSD: device.h,v 1.11 1996/10/01 01:04:50 jonathan Exp $	*/
+/*	$NetBSD: device.h,v 1.12 1997/01/31 02:00:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,6 +45,7 @@
  * different types of controllers.
  */
 struct ScsiCmd;
+struct device;
 
 struct pmax_driver {
 	char	*d_name;	/* device driver name (e.g., "rz") */
@@ -88,6 +89,7 @@ struct pmax_scsi_device {
 	int		sd_flags;	/* flags */
 
 	int		sd_alive;	/* true if init routine succeeded */
+	struct device	*sd_devp;	/* new config glue kludge */
 };
 
 /* Define special unit types used by the config program */

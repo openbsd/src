@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.h,v 1.7 1996/05/29 06:19:49 mhitch Exp $	*/
+/*	$NetBSD: autoconf.h,v 1.8 1997/05/25 06:10:47 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -74,3 +74,5 @@ void	set_clockintr __P((void (*)(struct clockframe *)));
 #endif
 void	set_iointr __P((void (*)(void *, int)));
 int	badaddr			__P((void *, u_int));
+void	configure __P((void));
+void	makebootdev __P((char *cp));

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_cons.c,v 1.14 1996/10/13 03:39:48 christos Exp $	*/
+/*	$NetBSD: cpu_cons.c,v 1.17 1997/05/24 08:19:48 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -80,13 +80,15 @@
 #include "mfb.h"
 #include "xcfb.h"
 #include "sfb.h"
-#include "dc.h"
+#include "dc_ds.h"
+#include "dc_ioasic.h"
 #include "dtop.h"
 #include "scc.h"
 #include "asc.h"
 #include "tc.h"
+#include  "rasterconsole.h"
 
-#if NDC > 0
+#if (NDC_DS > 0) || (NDC_IOASIC > 0)
 #include <machine/dc7085cons.h>
 #include <pmax/dev/dc_cons.h>
 #include <pmax/dev/dc_ds_cons.h>
@@ -209,6 +211,7 @@ consinit()
 	 * whatever the PROM vector gave us.
 	 */
 
+#if NRASTERCONSOLE > 0
 	if (pmax_boardtype == DS_PMAX && kbd == 1)
 		screen = 1;
 	/*
@@ -229,7 +232,7 @@ consinit()
 	if (screen) {
 	    switch (pmax_boardtype) {
 	    case DS_PMAX:
-#if NDC > 0 && NPM > 0
+#if NDC_DS > 0 && NPM > 0
 		if (pminit(0, 0, 1)) {
 			cd.cn_pri = CN_INTERNAL;
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
@@ -238,7 +241,7 @@ consinit()
 			cd.cn_putc = rcons_vputc;	/*XXX*/
 			return;
 		}
-#endif /* NDC and NPM */
+#endif /* NDC_DS and NPM */
 		goto remcons;
 
 	    case DS_MAXINE:
@@ -259,13 +262,13 @@ consinit()
 		break;
 
 	    case DS_3MAX:
-#if NDC > 0
+#if NDC_IOASIC > 0
 		if (kbd == 7) {
 			cd.cn_dev = makedev(DCDEV, DCKBD_PORT);
 			cd.cn_getc = LKgetc;
 			lk_divert(dcGetc, makedev(DCDEV, DCKBD_PORT));
 		} else
-#endif /* NDC */
+#endif /* NDC_IOASIC */
 			goto remcons;
 		break;
 
@@ -307,23 +310,25 @@ consinit()
 
 remcons:
 
+#endif	/* NRASTERCONSOLE > 0 */
+
 	/*
 	 * Configure a serial port as a remote console.
 	 */
 	switch (pmax_boardtype) {
 	case DS_PMAX:
-#if NDC > 0
+#if NDC_DS > 0
 		if (kbd == 4)
 			cd.cn_dev = makedev(DCDEV, DCCOMM_PORT);
 		else
 			cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
 		dc_ds_consinit(cd.cn_dev);
 		return;
-#endif /* NDC */
+#endif /* NDC_DS */
 		break;
 
 	case DS_3MAX:
-#if NDC > 0
+#if (NDC_IOASIC > 0)
 		cd.cn_dev = makedev(DCDEV, DCPRINTER_PORT);
 		dc_ioasic_consinit(cd.cn_dev);
 		return;

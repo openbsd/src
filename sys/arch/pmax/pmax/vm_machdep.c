@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.13 1996/10/13 03:39:57 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.15 1997/05/25 10:16:17 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,6 +67,8 @@ extern int  copykstack __P((struct user *up));
 extern void MachSaveCurFPState __P((struct proc *p));
 extern int switch_exit __P((void)); /* XXX never returns? */
 
+extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
+
 /*
  * Finish a fork operation, with process p2 nearly set up.
  * Copy and update the kernel stack and pcb, making the child
@@ -114,7 +116,7 @@ cpu_fork(p1, p2)
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	/* cache segtab for ULTBMiss() */
-	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_pmap.pm_segtab;
+	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
 
 	/*
 	 * Arrange for a non-local goto when the new process
@@ -346,7 +348,8 @@ vunmapbuf(bp, len)
  * The first two are so cheap they could just be macros. The last two
  * overlap, so we must check for UADDR pages first.
  *
- * XXX the u-area mappng should all change anyway.
+ * XXX the double-mapped u-area holding the current process's kernel stack
+ * and u-area at a fixed address should be fixed.
  */
 vm_offset_t
 kvtophys(vm_offset_t kva)

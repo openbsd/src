@@ -1,4 +1,4 @@
-/*	$NetBSD: tc_subr.c,v 1.9 1996/10/13 03:40:03 christos Exp $	*/
+/*	$NetBSD: tc_subr.c,v 1.10 1997/05/24 09:17:24 jonathan Exp $	*/
 
 /*
  * Copyright 1996 The Board of Trustees of The Leland Stanford
@@ -14,16 +14,11 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>			/* printf() */
 #include <sys/device.h>
 #include <dev/cons.h>
 #include <dev/tc/tcvar.h>
 #include <machine/autoconf.h>
-
-
-/* Which TC framebuffers have drivers, for configuring a console device. */
-#include <cfb.h>
-#include <mfb.h>
-#include <sfb.h>
 
 extern int pmax_boardtype;
 
@@ -63,6 +58,20 @@ static int tc_consprobeslot __P((tc_addr_t slotaddr));
 #include <pmax/pmax/maxine.h>
 
 #include <pmax/pmax/turbochannel.h>
+
+#include <machine/fbio.h>
+#include <machine/fbvar.h>
+#include <pmax/dev/cfbvar.h>
+#include <pmax/dev/mfbvar.h>
+#include <pmax/dev/sfbvar.h>
+#include <pmax/dev/xcfbvar.h>
+
+
+/* Which TC framebuffers have drivers, for configuring a console device. */
+#include "cfb.h"
+#include "mfb.h"
+#include "sfb.h"
+
 
 /*#include <pmax/pmax/nameglue.h>*/
 #define KV(x) ((tc_addr_t)MACH_PHYS_TO_UNCACHED(x))
@@ -389,7 +398,6 @@ tc_consprobeslot(tc_slotaddr)
 
 	char name[20];
 	void *slotaddr = (void *) tc_slotaddr;
-	struct tcbus_attach_args * sc_desc;
 
 	if (tc_badaddr(slotaddr))
 		return (0);
@@ -445,7 +453,7 @@ tc_ds_intr_establish(dev, cookie, level, handler, val)
 
 	/* Never tested on these processors */
 	if (cputype == DS_3MIN || cputype == DS_MAXINE)
-	    printf("tc_enable %s sc %x slot %d\n",
+	    printf("tc_enable %s sc %x slot %p\n",
 		   dev->dv_xname, (int)val, cookie);
 
 #ifdef DIAGNOSTIC
@@ -507,5 +515,5 @@ tc_ds_ioasic_iointr (framep, vec)
     void * framep;
     int vec;
 {
-	printf("bogus interrupt handler fp %x vec %d\n", framep, vec);
+	printf("bogus interrupt handler fp %p vec %d\n", framep, vec);
 }

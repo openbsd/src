@@ -1,6 +1,8 @@
-/*	$NetBSD: types.h,v 1.12 1996/04/09 20:54:08 jonathan Exp $	*/
+/*	$NetBSD: types.h,v 1.13 1996/12/05 00:13:56 cgd Exp $	*/
 
 /*-
+
+#define	__BROKEN_INDIRECT_CONFIG
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *

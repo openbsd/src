@@ -1,4 +1,4 @@
-/*	$NetBSD: mfb.c,v 1.20 1996/10/13 13:13:59 jonathan Exp $	*/
+/*	$NetBSD: mfb.c,v 1.23 1997/04/19 08:25:31 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -202,7 +202,7 @@ void mfbattach __P((struct device *, struct device *, void *));
 int mfb_intr __P((void *sc));
 
 struct cfattach mfb_ca = {
-	sizeof(struct device), mfbmatch, mfbattach
+	sizeof(struct fbinfo), mfbmatch, mfbattach
 };
 
 struct cfdriver mfb_cd = {
@@ -308,13 +308,13 @@ mfbinit(fi, mfbaddr, unit, silent)
 	fi->fi_base = (caddr_t)(mfbaddr + MFB_OFFSET_BT431);
 	fi->fi_vdac = (caddr_t)(mfbaddr + MFB_OFFSET_BT455);
 	fi->fi_size = (fi->fi_pixels + MFB_FB_SIZE) - fi->fi_base;
-	fi->fi_linebytes = 1280;
+	fi->fi_linebytes = 2048;	/* inter-line stride (blitting) */
 	fi->fi_driver = &mfb_driver;
 	fi->fi_blanked = 0;
 
 	/* Fill in Frame Buffer Type struct. */
 	fi->fi_type.fb_boardtype = PMAX_FBTYPE_MFB;
-	fi->fi_type.fb_width = 1280;
+	fi->fi_type.fb_width = 1280;	/* visible screen pixels */
 	fi->fi_type.fb_height = 1024;
 	fi->fi_type.fb_depth = 8;
 	fi->fi_type.fb_cmsize = 0;
@@ -479,6 +479,7 @@ mfbPosCursor(fi, x, y)
 {
 	bt431_regmap_t *regs = (bt431_regmap_t *)(fi -> fi_base);
 
+#ifdef MELLON
 	if (y < 0)
 	  y = 0;
 	else if (y > fi -> fi_type.fb_width - fi -> fi_cursor.width - 1)
@@ -487,6 +488,15 @@ mfbPosCursor(fi, x, y)
 	  x = 0;
 	else if (x > fi -> fi_type.fb_height - fi -> fi_cursor.height - 1)
 	  x = fi -> fi_type.fb_height - fi -> fi_cursor.height - 1;
+
+#else /* old-style pmax glass tty */
+ 	if (y < fi->fi_fbu->scrInfo.min_cur_y ||
+	    y > fi->fi_fbu->scrInfo.max_cur_y)
+		y = fi->fi_fbu->scrInfo.max_cur_y;
+	if (x < fi->fi_fbu->scrInfo.min_cur_x ||
+	    x > fi->fi_fbu->scrInfo.max_cur_x)
+		x = fi->fi_fbu->scrInfo.max_cur_x;
+#endif /* old-style pmax glass tty */
 
 	fi -> fi_cursor.x = x;
 	fi -> fi_cursor.y = y;
@@ -520,6 +530,8 @@ mfbInitColorMapBlack(fi, blackpix)
 {
 	u_char rgb [3];
 	register int i;
+
+	blackpix = 1; /* XXX XXX XXX defeat screensave bug */
 
 	if (blackpix)
 		rgb [0] = rgb [1] = rgb [2] = 0xff;
@@ -688,7 +700,7 @@ bt455_video_off(fi)
 	mfbRestoreCursorColor (fi);
 
 	bcopy (cursor_save, cursor_RGB, 6);
-	fi -> fi_blanked = 0;
+	fi -> fi_blanked = 1;
 
 	return 0;
 }

@@ -91,21 +91,21 @@ le0		at tc?			# decstation 5000/200 baseboard
 le*		at tc?			# other lance network interfaces
 # ioasic standard baseboard options (5000/2x, 5000/1xx, 5000/2[46]0)
 ioasic0         at tc?
-clock0          at ioasic?		# rtc
-asc0            at ioasic?		# system scsi subslot
-scc0		at ioasic?
-le0		at ioasic?		# tc onboard lance
-scc1		at ioasic?		# not present on maxine
+clock0          at ioasic? offset?	# rtc
+asc0            at ioasic? offset?	# system scsi subslot
+scc0		at ioasic? offset?
+le0		at ioasic? offset?	# tc onboard lance
+scc1		at ioasic? offset?	# not present on maxine
 # MAXINE-only ioasic baseboard devices and on-baseboard "options"
 xcfb0		at tc?			# tc framebuffer "option"
-dtop0		at ioasic0		# destop bus,  lk501 kbd,  mouse
+dtop0		at ioasic0 offset?	# destop bus,  lk501 kbd,  mouse
 # 5000/200-only (aka 3MAX aka KN02) baseboard devices (tc but no ioasic)
 clock0		at mainbus0		# rtc
 dc0		at mainbus0
 le0		at tc?			# tc ether "option" on baseboard
 asc0		at tc?			# tc scsi  "option" on baseboard
 # for now, pretend this machine has an ioasic
-dc0		at ioasic?		# dc7083 four-port dz device
+dc0		at ioasic? offset? 	# dc7083 four-port dz device
 # 2100/3100-only (aka PMAX aka KN01) baseboard devices.
 clock0		at mainbus0		# rtc
 pm0		at mainbus0		# 3100 onboard fb
