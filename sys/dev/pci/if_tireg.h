@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.5 2000/01/18 05:26:25 jason Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.6 2000/02/15 03:56:27 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 #define TI_FIRMWARE_MAJOR		0xc
 #define TI_FIRMWARE_MINOR		0x3
-#define TI_FIRMWARE_FIX			0xf
+#define TI_FIRMWARE_FIX			0x12
 
 /*
  * Miscelaneous Local Control register.
