@@ -1,4 +1,4 @@
-/*	$OpenBSD: word.c,v 1.6 2002/02/21 15:27:29 deraadt Exp $	*/
+/*	$OpenBSD: word.c,v 1.7 2002/05/29 12:44:59 vincent Exp $	*/
 
 /*
  *		Word mode commands.
@@ -69,6 +69,11 @@ upperword(f, n)
 {
 	int	c;
 
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read-only");
+		return (FALSE);
+	}
+
 	if (n < 0)
 		return FALSE;
 	while (n--) {
@@ -101,6 +106,10 @@ lowerword(f, n)
 {
 	int	c;
 
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read-only");
+		return (FALSE);
+	}
 	if (n < 0)
 		return FALSE;
 	while (n--) {
@@ -134,6 +143,11 @@ capword(f, n)
 	int f, n;
 {
 	int	c;
+
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read-only");
+		return (FALSE);
+	}
 
 	if (n < 0)
 		return FALSE;
@@ -178,6 +192,10 @@ delfword(f, n)
 	LINE	*dotp;
 	int	 doto;
 
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read-only");
+		return (FALSE);
+	}
 	if (n < 0)
 		return FALSE;
 
@@ -225,6 +243,11 @@ delbword(f, n)
 	int f, n;
 {
 	RSIZE	size;
+
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read-only");
+		return (FALSE);
+	}
 
 	if (n < 0)
 		return FALSE;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: region.c,v 1.9 2002/02/20 22:30:54 vincent Exp $	*/
+/*	$OpenBSD: region.c,v 1.10 2002/05/29 12:44:59 vincent Exp $	*/
 
 /*
  *		Region based commands.
@@ -93,6 +93,11 @@ lowerregion(f, n)
 	REGION	 region;
 	int	 loffs, c, s;
 
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read-only");
+		return (FALSE);
+	}
+
 	if ((s = getregion(&region)) != TRUE)
 		return s;
 
@@ -130,6 +135,10 @@ upperregion(f, n)
 	REGION	  region;
 	int	  loffs, c, s;
 
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read-only");
+		return (FALSE);
+	}
 	if ((s = getregion(&region)) != TRUE)
 		return s;
 	
@@ -261,6 +270,10 @@ prefixregion(f, n)
 	int	 nline;
 	int	 s;
 
+	if (curbp->b_flag & BFREADONLY) {
+		ewprintf("Buffer is read-only");
+		return (FALSE);
+	}
 	if ((f == TRUE) && ((s = setprefix(FFRAND, 1)) != TRUE))
 		return s;
 
