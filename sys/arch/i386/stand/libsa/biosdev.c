@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.51 1998/04/18 07:39:42 deraadt Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.52 1998/06/11 02:30:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -307,30 +307,36 @@ bios_getdisklabel(bd, label)
 	if(bd->bios_heads == 0 || bd->bios_sectors == 0)
 		return("failed to read disklabel");
 
-	/* Read MBR */
-	btochs(DOSBBSECTOR, cyl, head, sect, bd->bios_heads, bd->bios_sectors);
+	/* MBR is a hard thing */
+	if (bd->bios_number & 0x80) {
+		/* Read MBR */
+		btochs(DOSBBSECTOR, cyl, head, sect,
+		       bd->bios_heads, bd->bios_sectors);
 
-	error = biosd_io(F_READ, bd->bios_number, cyl, head, sect, 1, &mbr);
-	if(error)
-		return(biosdisk_err(error));
+		error = biosd_io(F_READ, bd->bios_number,
+				 cyl, head, sect, 1, &mbr);
+		if(error)
+			return(biosdisk_err(error));
 
-	/* check mbr signature */
-	if (mbr.dmbr_sign != DOSMBR_SIGNATURE)
-		return("bad MBR signature\n");
+		/* check mbr signature */
+		if (mbr.dmbr_sign != DOSMBR_SIGNATURE)
+			return("bad MBR signature\n");
 
-	/* Search for OpenBSD partition */
-	for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
-		if (mbr.dmbr_parts[i].dp_typ == DOSPTYP_OPENBSD)
-			off = mbr.dmbr_parts[i].dp_start + LABELSECTOR;
-
-	/* just in case */
-	if (off == 0)
+		/* Search for OpenBSD partition */
 		for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
-			if (mbr.dmbr_parts[i].dp_typ == DOSPTYP_NETBSD)
+			if (mbr.dmbr_parts[i].dp_typ == DOSPTYP_OPENBSD)
 				off = mbr.dmbr_parts[i].dp_start + LABELSECTOR;
 
-	if (off == 0)
-		return("no BSD partition\n");
+		/* just in case */
+		if (off == 0)
+			for (off = 0, i = 0; off == 0 && i < NDOSPART; i++)
+				if (mbr.dmbr_parts[i].dp_typ == DOSPTYP_NETBSD)
+					off = mbr.dmbr_parts[i].dp_start + LABELSECTOR;
+
+		if (off == 0)
+			return("no BSD partition\n");
+	} else
+		off = LABELSECTOR;
 
 	/* Load BSD disklabel */
 	buf = alloca(DEV_BSIZE);
