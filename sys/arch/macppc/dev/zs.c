@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.9 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: zs.c,v 1.10 2003/10/16 03:31:25 drahn Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -185,10 +185,7 @@ void zscnpollc(dev_t, int);
  * Is the zs chip present?
  */
 int
-zsc_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+zsc_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 	struct cfdata *cf = match;
@@ -209,10 +206,7 @@ zsc_match(parent, match, aux)
  * not set up the keyboard as ttya, etc.
  */
 void
-zsc_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+zsc_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct zsc_softc *zsc = (void *)self;
 	struct confargs *ca = aux;
@@ -415,9 +409,7 @@ zsc_attach(parent, self, aux)
 }
 
 int
-zsc_print(aux, name)
-	void *aux;
-	const char *name;
+zsc_print(void *aux, const char *name)
 {
 	struct zsc_attach_args *args = aux;
 
@@ -431,10 +423,7 @@ zsc_print(aux, name)
 }
 
 int
-zsmdioctl(cs, cmd, data)
-	struct zs_chanstate *cs;
-	u_long cmd;
-	caddr_t data;
+zsmdioctl(struct zs_chanstate *cs, u_long cmd, caddr_t data)
 {
 	switch (cmd) {
 	default:
@@ -444,8 +433,7 @@ zsmdioctl(cs, cmd, data)
 }
 
 void
-zsmd_setclock(cs)
-	struct zs_chanstate *cs;
+zsmd_setclock(struct zs_chanstate *cs)
 {
 #ifdef NOTYET
 	struct xzs_chanstate *xcs = (void *)cs;
@@ -468,11 +456,10 @@ static int zssoftpending;
  * so we have to look at all of them on each interrupt.
  */
 int
-zshard(arg)
-	void *arg;
+zshard(void *arg)
 {
-	register struct zsc_softc *zsc;
-	register int unit, rval;
+	struct zsc_softc *zsc;
+	int unit, rval;
 
 	rval = 0;
 	for (unit = 0; unit < zsc_cd.cd_ndevs; unit++) {
@@ -501,8 +488,8 @@ int
 zssoft(arg)
 	void *arg;
 {
-	register struct zsc_softc *zsc;
-	register int unit;
+	struct zsc_softc *zsc;
+	int unit;
 
 	/* This is not the only ISR on this IPL. */
 	if (zssoftpending == 0)
@@ -867,7 +854,7 @@ zs_write_reg(cs, reg, val)
 u_char zs_read_csr(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char val;
+	u_char val;
 
 	val = in8(cs->cs_reg_csr);
 	ZS_DELAY();
@@ -888,7 +875,7 @@ void  zs_write_csr(cs, val)
 u_char zs_read_data(cs)
 	struct zs_chanstate *cs;
 {
-	register u_char val;
+	u_char val;
 
 	val = in8(cs->cs_reg_data);
 	ZS_DELAY();
@@ -940,8 +927,8 @@ zs_disable(cs)
 
 cons_decl(zs);
 
-void	zs_putc(register volatile struct zschan *, int);
-int	zs_getc(register volatile struct zschan *);
+void	zs_putc(volatile struct zschan *, int);
+int	zs_getc(volatile struct zschan *);
 extern int	zsopen( dev_t dev, int flags, int mode, struct proc *p);
 
 static int stdin, stdout;

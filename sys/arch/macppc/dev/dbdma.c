@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbdma.c,v 1.6 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: dbdma.c,v 1.7 2003/10/16 03:31:25 drahn Exp $	*/
 /*	$NetBSD: dbdma.c,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
 
 /*
@@ -35,9 +35,7 @@
 dbdma_command_t	*dbdma_alloc_commands = NULL;
 
 void
-dbdma_start(dmap, dt)
-	dbdma_regmap_t *dmap;
-	dbdma_t dt;
+dbdma_start(dbdma_regmap_t *dmap, dbdma_t dt)
 {
 	u_int32_t addr = dt->d_paddr;
 
@@ -65,8 +63,7 @@ dbdma_start(dmap, dt)
 }
 
 void
-dbdma_stop(dmap)
-	dbdma_regmap_t *dmap;
+dbdma_stop(dbdma_regmap_t *dmap)
 {
 	DBDMA_ST4_ENDIAN(&dmap->d_control, DBDMA_CLEAR_CNTRL(DBDMA_CNTRL_RUN) |
 			  DBDMA_SET_CNTRL(DBDMA_CNTRL_FLUSH));
@@ -76,8 +73,7 @@ dbdma_stop(dmap)
 }
 
 void
-dbdma_flush(dmap)
-	dbdma_regmap_t *dmap;
+dbdma_flush(dbdma_regmap_t *dmap)
 {
 	DBDMA_ST4_ENDIAN(&dmap->d_control, DBDMA_SET_CNTRL(DBDMA_CNTRL_FLUSH));
 
@@ -86,8 +82,7 @@ dbdma_flush(dmap)
 }
 
 void
-dbdma_reset(dmap)
-	dbdma_regmap_t *dmap;
+dbdma_reset(dbdma_regmap_t *dmap)
 {
 	DBDMA_ST4_ENDIAN(&dmap->d_control,
 			 DBDMA_CLEAR_CNTRL( (DBDMA_CNTRL_ACTIVE	|
@@ -102,8 +97,7 @@ dbdma_reset(dmap)
 }
 
 void
-dbdma_continue(dmap)
-	dbdma_regmap_t *dmap;
+dbdma_continue(dbdma_regmap_t *dmap)
 {
 	DBDMA_ST4_ENDIAN(&dmap->d_control,
 		DBDMA_SET_CNTRL(DBDMA_CNTRL_RUN | DBDMA_CNTRL_WAKE) |
@@ -111,8 +105,7 @@ dbdma_continue(dmap)
 }
 
 void
-dbdma_pause(dmap)
-	dbdma_regmap_t *dmap;
+dbdma_pause(dbdma_regmap_t *dmap)
 {
 	DBDMA_ST4_ENDIAN(&dmap->d_control,DBDMA_SET_CNTRL(DBDMA_CNTRL_PAUSE));
 
@@ -121,9 +114,7 @@ dbdma_pause(dmap)
 }
 
 dbdma_t
-dbdma_alloc(dmat, size)
-	bus_dma_tag_t dmat;
-	int size;
+dbdma_alloc(bus_dma_tag_t dmat, int size)
 {
 	dbdma_t dt;
 	int error, nsegs = 0;

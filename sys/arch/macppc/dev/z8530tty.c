@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.4 2003/10/03 16:44:49 miod Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.5 2003/10/16 03:31:25 drahn Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*-
@@ -237,9 +237,7 @@ void zstty_diag(void *);
  * zstty_match: how is this zs channel configured?
  */
 int
-zstty_match(parent, match, aux)
-	struct device *parent;
-	void   *match, *aux;
+zstty_match(struct device *parent, void *match, void *aux)
 {
 	struct cfdata *cf = match;
 	struct zsc_attach_args *args = aux;
@@ -256,10 +254,7 @@ zstty_match(parent, match, aux)
 }
 
 void
-zstty_attach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
-
+zstty_attach(struct device *parent, struct device *self, void   *aux)
 {
 	struct zsc_softc *zsc = (void *) parent;
 	struct zstty_softc *zst = (void *) self;
@@ -289,6 +284,7 @@ zstty_attach(parent, self, aux)
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == zsopen)
 			break;
+
 	dev = makedev(maj, tty_unit);
 
 	if (zst->zst_swflags)
@@ -422,8 +418,7 @@ zstty_attach(parent, self, aux)
  * Return pointer to our tty.
  */
 struct tty *
-zstty(dev)
-	dev_t dev;
+zstty(dev_t dev)
 {
 	struct zstty_softc *zst;
 	int unit = minor(dev);
@@ -438,8 +433,7 @@ zstty(dev)
 
 
 void
-zs_shutdown(zst)
-	struct zstty_softc *zst;
+zs_shutdown(struct zstty_softc *zst)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	struct tty *tp = zst->zst_tty;
@@ -489,14 +483,10 @@ zs_shutdown(zst)
  * Open a zs serial (tty) port.
  */
 int
-zsopen(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+zsopen(dev_t dev, int flags, int mode, struct proc *p)
 {
-	register struct tty *tp;
-	register struct zs_chanstate *cs;
+	struct tty *tp;
+	struct zs_chanstate *cs;
 	struct zstty_softc *zst;
 	int s, s2;
 	int error, unit;
@@ -634,15 +624,11 @@ bad:
  * Close a zs serial port.
  */
 int
-zsclose(dev, flags, mode, p)
-	dev_t dev;
-	int flags;
-	int mode;
-	struct proc *p;
+zsclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	struct zstty_softc *zst;
-	register struct zs_chanstate *cs;
-	register struct tty *tp;
+	struct zs_chanstate *cs;
+	struct tty *tp;
 
 	zst = zstty_cd.cd_devs[minor(dev)];
 	cs = zst->zst_cs;
@@ -671,10 +657,7 @@ zsclose(dev, flags, mode, p)
  * Read/write zs serial port.
  */
 int
-zsread(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+zsread(dev_t dev, struct uio *uio, int flags)
 {
 	struct zstty_softc *zst;
 	struct tty *tp;
@@ -686,10 +669,7 @@ zsread(dev, uio, flags)
 }
 
 int
-zswrite(dev, uio, flags)
-	dev_t dev;
-	struct uio *uio;
-	int flags;
+zswrite(dev_t dev, struct uio *uio, int flags)
 {
 	struct zstty_softc *zst;
 	struct tty *tp;
@@ -704,12 +684,7 @@ zswrite(dev, uio, flags)
                       TIOCFLAG_CRTSCTS | TIOCFLAG_MDMBUF )
 
 int
-zsioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+zsioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
@@ -791,8 +766,7 @@ zsioctl(dev, cmd, data, flag, p)
  * Start or restart transmission.
  */
 void
-zsstart(tp)
-	struct tty *tp;
+zsstart(struct tty *tp)
 {
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
@@ -842,11 +816,9 @@ zsstart(tp)
 	}
 
 	/* Output the first character of the contiguous buffer. */
-	{
-		zs_write_data(cs, *zst->zst_tba);
-		zst->zst_tbc--;
-		zst->zst_tba++;
-	}
+	zs_write_data(cs, *zst->zst_tba);
+	zst->zst_tbc--;
+	zst->zst_tba++;
 out:
 	splx(s);
 }
@@ -855,9 +827,7 @@ out:
  * Stop output, e.g., for ^S or output flush.
  */
 int
-zsstop(tp, flag)
-	struct tty *tp;
-	int flag;
+zsstop(struct tty *tp, int flag)
 {
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
@@ -884,9 +854,7 @@ zsstop(tp, flag)
  * making sure all the changes could be done.
  */
 int
-zsparam(tp, t)
-	struct tty *tp;
-	struct termios *t;
+zsparam(struct tty *tp, struct termios *t)
 {
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
@@ -1065,8 +1033,7 @@ zsparam(tp, t)
  * Must be called at splzs().
  */
 void
-zs_maskintr(zst)
-	struct zstty_softc *zst;
+zs_maskintr(struct zstty_softc *zst)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	int tmp15;
@@ -1091,9 +1058,7 @@ zs_maskintr(zst)
  * in transmission, the change is deferred.
  */
 void
-zs_modem(zst, onoff)
-	struct zstty_softc *zst;
-	int onoff;
+zs_modem(struct zstty_softc *zst, int onoff)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 
@@ -1116,10 +1081,7 @@ zs_modem(zst, onoff)
 }
 
 void
-tiocm_to_zs(zst, how, ttybits)
-	struct zstty_softc *zst;
-	u_long how;
-	int ttybits;
+tiocm_to_zs(struct zstty_softc *zst, u_long how, int ttybits)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char zsbits;
@@ -1156,8 +1118,7 @@ tiocm_to_zs(zst, how, ttybits)
 }
 
 int
-zs_to_tiocm(zst)
-	struct zstty_softc *zst;
+zs_to_tiocm(struct zstty_softc *zst)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char zsbits;
@@ -1185,9 +1146,7 @@ zs_to_tiocm(zst)
  * be set or cleared according to the "block" arg passed.
  */
 int
-zshwiflow(tp, block)
-	struct tty *tp;
-	int block;
+zshwiflow(struct tty *tp, int block)
 {
 	struct zstty_softc *zst;
 	struct zs_chanstate *cs;
@@ -1225,8 +1184,7 @@ zshwiflow(tp, block)
  * called at splzs
  */
 void
-zs_hwiflow(zst)
-	struct zstty_softc *zst;
+zs_hwiflow(struct zstty_softc *zst)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 
@@ -1257,8 +1215,7 @@ void zstty_stsoft(struct zstty_softc *, struct tty *);
  * called at splzs
  */
 void
-zstty_rxint(cs)
-	struct zs_chanstate *cs;
+zstty_rxint(struct zs_chanstate *cs)
 {
 	struct zstty_softc *zst = cs->cs_private;
 	u_char *put, *end;
@@ -1333,8 +1290,7 @@ zstty_rxint(cs)
  * transmitter ready interrupt.  (splzs)
  */
 void
-zstty_txint(cs)
-	struct zs_chanstate *cs;
+zstty_txint(struct zs_chanstate *cs)
 {
 	struct zstty_softc *zst = cs->cs_private;
 
@@ -1380,9 +1336,7 @@ zstty_txint(cs)
  * status change interrupt.  (splzs)
  */
 void
-zstty_stint(cs, force)
-	struct zs_chanstate *cs;
-	int force;
+zstty_stint(struct zs_chanstate *cs, int force)
 {
 	struct zstty_softc *zst = cs->cs_private;
 	u_char rr0, delta;
@@ -1422,8 +1376,7 @@ zstty_stint(cs, force)
 }
 
 void
-zstty_diag(arg)
-	void *arg;
+zstty_diag(void *arg)
 {
 	struct zstty_softc *zst = arg;
 	int overflows, floods;
@@ -1444,9 +1397,7 @@ zstty_diag(arg)
 }
 
 void
-zstty_rxsoft(zst, tp)
-	struct zstty_softc *zst;
-	struct tty *tp;
+zstty_rxsoft(struct zstty_softc *zst, struct tty *tp)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	int (*rint)(int c, struct tty *tp) = linesw[tp->t_line].l_rint;
@@ -1543,11 +1494,8 @@ zstty_rxsoft(zst, tp)
 }
 
 void
-zstty_txsoft(zst, tp)
-	struct zstty_softc *zst;
-	struct tty *tp;
+zstty_txsoft(struct zstty_softc *zst, struct tty *tp)
 {
-
 	CLR(tp->t_state, TS_BUSY);
 	if (ISSET(tp->t_state, TS_FLUSH))
 		CLR(tp->t_state, TS_FLUSH);
@@ -1557,9 +1505,7 @@ zstty_txsoft(zst, tp)
 }
 
 void
-zstty_stsoft(zst, tp)
-	struct zstty_softc *zst;
-	struct tty *tp;
+zstty_stsoft(struct zstty_softc *zst, struct tty *tp)
 {
 	struct zs_chanstate *cs = zst->zst_cs;
 	u_char rr0, delta;
@@ -1602,8 +1548,7 @@ zstty_stsoft(zst, tp)
  * EITHER the TS_TBLOCK flag or zst_rx_blocked flag is set.
  */
 void
-zstty_softint(cs)
-	struct zs_chanstate *cs;
+zstty_softint(struct zs_chanstate *cs)
 {
 	struct zstty_softc *zst = cs->cs_private;
 	struct tty *tp = zst->zst_tty;

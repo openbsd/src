@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb.c,v 1.7 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: adb.c,v 1.8 2003/10/16 03:31:25 drahn Exp $	*/
 /*	$NetBSD: adb.c,v 1.6 1999/08/16 06:28:09 tsubai Exp $	*/
 
 /*-
@@ -76,10 +76,7 @@ struct cfdriver adb_cd = {
 };
 
 int
-adbmatch(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+adbmatch(struct device *parent, void *cf, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -109,9 +106,7 @@ extern clock_read_t  *clock_read;
 
 
 void
-adbattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+adbattach(struct device *parent, struct device *self, void *aux)
 {
 	struct adb_softc *sc = (struct adb_softc *)self;
 	struct confargs *ca = aux;
@@ -135,7 +130,7 @@ adbattach(parent, self, aux)
 	ADBReInit();
 
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_HIGH,
-		adb_intr, sc, "adb");
+	    adb_intr, sc, "adb");
 
 	/* init powerpc globals which control RTC functionality */
 	clock_read = NULL;
@@ -197,9 +192,7 @@ adbattach(parent, self, aux)
 }
 
 int
-adbprint(args, name)
-	void *args;
-	const char *name;
+adbprint(void *args, const char *name)
 {
 	struct adb_attach_args *aa_args = (struct adb_attach_args *)args;
 	int rv = UNCONF;

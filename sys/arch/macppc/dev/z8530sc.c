@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.c,v 1.2 2003/06/02 23:27:49 millert Exp $ */
+/*	$OpenBSD: z8530sc.c,v 1.3 2003/10/16 03:31:25 drahn Exp $ */
 /*	$NetBSD: z8530sc.c,v 1.4 1996/05/17 19:30:34 gwr Exp $	*/
 
 /*
@@ -65,9 +65,7 @@
 #include <machine/z8530var.h>
 
 void
-zs_break(cs, set)
-	struct zs_chanstate *cs;
-	int set;
+zs_break(struct zs_chanstate *cs, int set)
 {
 
 	if (set) {
@@ -85,8 +83,7 @@ zs_break(cs, set)
  * drain on-chip fifo
  */
 void
-zs_iflush(cs)
-	struct zs_chanstate *cs;
+zs_iflush(struct zs_chanstate *cs)
 {
 	u_char c, rr0, rr1;
 	int i;
@@ -123,8 +120,7 @@ zs_iflush(cs)
  * Call this with interrupts disabled.
  */
 void
-zs_loadchannelregs(cs)
-	struct zs_chanstate *cs;
+zs_loadchannelregs(struct zs_chanstate *cs)
 {
 	u_char *reg;
 
@@ -227,8 +223,7 @@ zs_loadchannelregs(cs)
  * the order.
  */
 int
-zsc_intr_hard(arg)
-	void *arg;
+zsc_intr_hard(void *arg)
 {
 	struct zsc_softc *zsc = arg;
 	struct zs_chanstate *cs;
@@ -278,8 +273,7 @@ zsc_intr_hard(arg)
  * ZS software interrupt.  Scan all channels for deferred interrupts.
  */
 int
-zsc_intr_soft(arg)
-	void *arg;
+zsc_intr_soft(void *arg)
 {
 	struct zsc_softc *zsc = arg;
 	struct zs_chanstate *cs;
@@ -313,33 +307,28 @@ void zsnull_txint(struct zs_chanstate *);
 void zsnull_softint(struct zs_chanstate *);
 
 void
-zsnull_rxint(cs)
-	struct zs_chanstate *cs;
+zsnull_rxint(struct zs_chanstate *cs)
 {
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
 }
 
 void
-zsnull_stint(cs, force)
-	struct zs_chanstate *cs;
-	int force;
+zsnull_stint(struct zs_chanstate *cs, int force)
 {
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
 }
 
 void
-zsnull_txint(cs)
-	struct zs_chanstate *cs;
+zsnull_txint(struct zs_chanstate *cs)
 {
 	/* Ask for softint() call. */
 	cs->cs_softreq = 1;
 }
 
 void
-zsnull_softint(cs)
-	struct zs_chanstate *cs;
+zsnull_softint(struct zs_chanstate *cs)
 {
 	zs_write_reg(cs,  1, 0);
 	zs_write_reg(cs, 15, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.18 2003/07/02 21:30:13 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.19 2003/10/16 03:31:25 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -108,10 +108,7 @@ struct cfdriver macintr_cd = {
 };
 
 int
-macintr_match(parent, cf, aux) 
-	struct device *parent;
-	void *cf;
-	void *aux;
+macintr_match(struct device *parent, void *cf, void *aux)
 {
 	struct confargs *ca = aux;
 	char type[40];
@@ -121,9 +118,8 @@ macintr_match(parent, cf, aux)
 	 */
 	if (strcmp(ca->ca_name, "interrupt-controller") == 0 ) {
 		OF_getprop(ca->ca_node, "device_type", type, sizeof(type));
-		if (strcmp(type,  "interrupt-controller") == 0) {
+		if (strcmp(type,  "interrupt-controller") == 0)
 			return 1;
-		}
 	}
 
 	/*
@@ -131,9 +127,8 @@ macintr_match(parent, cf, aux)
 	 * faked to allow old firmware which does not have an entry
 	 * to attach to this device.
 	 */
-	if (strcmp(ca->ca_name, "legacy-interrupt-controller") == 0 ) {
+	if (strcmp(ca->ca_name, "legacy-interrupt-controller") == 0 )
 		return 1;
-	}
 	return 0;
 }
 
@@ -149,9 +144,7 @@ extern intr_disestablish_t *mac_intr_disestablish_func;
 void macintr_collect_preconf_intr(void);
 
 void
-macintr_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+macintr_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct confargs *ca = aux;
 	extern intr_establish_t *intr_establish_func;
@@ -169,12 +162,13 @@ macintr_attach(parent, self, aux)
 	macintr_collect_preconf_intr();
 
 	mac_intr_establish(parent, 0x14, IST_LEVEL, IPL_HIGH,
-		macintr_prog_button, (void *)0x14, "prog button");
+	    macintr_prog_button, (void *)0x14, "prog button");
 
 	ppc_intr_enable(1);
 
 	printf("\n");
 }
+
 void
 macintr_collect_preconf_intr()
 {
@@ -215,8 +209,7 @@ macintr_prog_button (void *arg)
 }
 
 static int
-fakeintr(arg)
-	void *arg;
+fakeintr(void *arg)
 {
 
 	return 0;
@@ -228,14 +221,8 @@ void nameinterrupt( int replace, char *newstr);
  * Register an interrupt handler.
  */
 void *
-macintr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
-	void * lcv;
-	int irq;
-	int type;
-	int level;
-	int (*ih_fun)(void *);
-	void *ih_arg;
-	char *name;
+macintr_establish(void * lcv, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg, char *name)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand;
@@ -313,9 +300,7 @@ printf("vI %d ", irq);
  * Deregister an interrupt handler.
  */
 void
-macintr_disestablish(lcp, arg)
-	void *lcp;
-	void *arg;
+macintr_disestablish(void *lcp, void *arg)
 {
 	struct intrhand *ih = arg;
 	int irq = ih->ih_irq;
@@ -344,10 +329,8 @@ macintr_disestablish(lcp, arg)
 
 
 static char *
-intr_typename(type)
-	int type;
+intr_typename(int type)
 {
-
 	switch (type) {
         case IST_NONE :
 		return ("none");
@@ -431,8 +414,7 @@ intr_calculatemasks()
 	}
 }
 static void
-enable_irq(x)
-	int x;
+enable_irq(int x)
 {
 	int state0, state1, v;
 	int irq;
@@ -443,17 +425,17 @@ enable_irq(x)
 	while (x) {
 		v = 31 - cntlzw(x);
 		irq = m_hwirq[v];
-		if (irq < 32) {
+		if (irq < 32)
 			state0 |= 1 << irq;
-		} else {
+		else
 			state1 |= 1 << (irq - 32);
-		}
+
 		x &= ~(1 << v);
 	}
 
-	if (heathrow_FCR) {
+	if (heathrow_FCR)
 		out32rb(INT_ENABLE_REG1, state1);
-	}
+
 	out32rb(INT_ENABLE_REG0, state0);
 }
 
@@ -463,8 +445,7 @@ int m_virq_inited = 0;
  * Map 64 irqs into 32 (bits).
  */
 static int
-mapirq(irq)
-	int irq;
+mapirq(int irq)
 {
 	int v;
 	int i;
@@ -478,9 +459,8 @@ mapirq(irq)
 	}
 
 	/* irq in table already? */
-	if (m_virq[irq] != 0) {
+	if (m_virq[irq] != 0)
 		return m_virq[irq];
-	}
 
 	if (irq < 0 || irq >= 64)
 		panic("invalid irq");
@@ -502,8 +482,7 @@ printf("\nmapirq %x to %x\n", irq, v);
  * Count leading zeros.
  */
 static __inline int
-cntlzw(x)
-	int x;
+cntlzw(int x)
 {
 	int a;
 

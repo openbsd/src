@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.15 2003/06/16 03:45:40 jason Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.16 2003/10/16 03:31:25 drahn Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -240,10 +240,7 @@ const struct awacs_speed_tab {
 };
 
 int
-awacs_match(parent, match, aux)
-	struct device *parent;
-	void *match;
-	void *aux;
+awacs_match(struct device *parent, void *match, void *aux)
 {
 	struct confargs *ca = aux;
 
@@ -266,10 +263,7 @@ awacs_match(parent, match, aux)
 }
 
 void
-awacs_attach(parent, self, aux)
-	struct device *parent;
-	struct device *self;
-	void *aux;
+awacs_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct awacs_softc *sc = (struct awacs_softc *)self;
 	struct confargs *ca = aux;
@@ -304,17 +298,17 @@ awacs_attach(parent, self, aux)
 		cirq_type = oirq_type = iirq_type = IST_LEVEL;
 	}
 	mac_intr_establish(parent, cirq, cirq_type, IPL_AUDIO, awacs_intr,
-		sc, "awacs");
+	    sc, "awacs");
 	mac_intr_establish(parent, oirq, oirq_type, IPL_AUDIO, awacs_tx_intr,
-		sc, "awacs/tx");
+	    sc, "awacs/tx");
 	mac_intr_establish(parent, iirq, iirq_type, IPL_AUDIO, awacs_rx_intr,
-		sc, "awacs/rx");
+	    sc, "awacs/rx");
 
 	printf(": irq %d,%d,%d",
 		cirq, oirq, iirq);
 
 	sc->sc_soundctl = AWACS_INPUT_SUBFRAME0 | AWACS_OUTPUT_SUBFRAME0 |
-		AWACS_RATE_44100 | AWACS_INT_PORTCHG;
+	    AWACS_RATE_44100 | AWACS_INT_PORTCHG;
 	awacs_write_reg(sc, AWACS_SOUND_CTRL, sc->sc_soundctl);
 
 	sc->sc_codecctl0 = AWACS_CODEC_ADDR0 | AWACS_CODEC_EMSEL0;
@@ -367,9 +361,7 @@ awacs_attach(parent, self, aux)
 }
 
 u_int
-awacs_read_reg(sc, reg)
-	struct awacs_softc *sc;
-	int reg;
+awacs_read_reg(struct awacs_softc *sc, int reg)
 {
 	char *addr = sc->sc_reg;
 
@@ -377,9 +369,7 @@ awacs_read_reg(sc, reg)
 }
 
 void
-awacs_write_reg(sc, reg, val)
-	struct awacs_softc *sc;
-	int reg, val;
+awacs_write_reg(struct awacs_softc *sc, int reg, int val)
 {
 	char *addr = sc->sc_reg;
 
@@ -387,17 +377,14 @@ awacs_write_reg(sc, reg, val)
 }
 
 void
-awacs_write_codec(sc, value)
-	struct awacs_softc *sc;
-	int value;
+awacs_write_codec(struct awacs_softc *sc, int value)
 {
 	awacs_write_reg(sc, AWACS_CODEC_CTRL, value);
 	while (awacs_read_reg(sc, AWACS_CODEC_CTRL) & AWACS_CODEC_BUSY);
 }
 
 int
-awacs_intr(v)
-	void *v;
+awacs_intr(void *v)
 {
 	int reason;
 	struct awacs_softc *sc = v;
@@ -431,8 +418,7 @@ awacs_intr(v)
 }
 
 int
-awacs_tx_intr(v)
-	void *v;
+awacs_tx_intr(void *v)
 {
 	struct awacs_softc *sc = v;
 	struct dbdma_command *cmd = sc->sc_odmap;
@@ -460,8 +446,7 @@ awacs_tx_intr(v)
 	return (1);
 }
 int
-awacs_rx_intr(v)
-	void *v;
+awacs_rx_intr(void *v)
 {
 	struct awacs_softc *sc = v;
 	struct dbdma_command *cmd = sc->sc_idmap;
@@ -490,9 +475,7 @@ awacs_rx_intr(v)
 }
 
 int
-awacs_open(h, flags)
-	void *h;
-	int flags;
+awacs_open(void *h, int flags)
 {
 	return 0;
 }
@@ -501,8 +484,7 @@ awacs_open(h, flags)
  * Close function is called at splaudio().
  */
 void
-awacs_close(h)
-	void *h;
+awacs_close(void *h)
 {
 	struct awacs_softc *sc = h;
 
@@ -514,9 +496,7 @@ awacs_close(h)
 }
 
 int
-awacs_query_encoding(h, ae)
-	void *h;
-	struct audio_encoding *ae;
+awacs_query_encoding(void *h, struct audio_encoding *ae)
 {
 	switch (ae->index) {
 	case 0:
@@ -611,10 +591,8 @@ awacs_cvt_ulinear_mono_16_be(void *v, u_char *p, int cc)
 }
 
 int
-awacs_set_params(h, setmode, usemode, play, rec)
-	void *h;
-	int setmode, usemode;
-	struct audio_params *play, *rec;
+awacs_set_params(void *h, int setmode, int usemode, struct audio_params *play,
+    struct audio_params *rec)
 {
 	struct awacs_softc *sc = h;
 	struct audio_params *p;
@@ -723,9 +701,7 @@ awacs_set_params(h, setmode, usemode, play, rec)
 }
 
 int
-awacs_round_blocksize(h, size)
-	void *h;
-	int size;
+awacs_round_blocksize(void *h, int size)
 {
 	if (size < PAGE_SIZE)
 		size = PAGE_SIZE;
@@ -733,8 +709,7 @@ awacs_round_blocksize(h, size)
 }
 
 int
-awacs_halt_output(h)
-	void *h;
+awacs_halt_output(void *h)
 {
 	struct awacs_softc *sc = h;
 
@@ -746,8 +721,7 @@ awacs_halt_output(h)
 }
 
 int
-awacs_halt_input(h)
-	void *h;
+awacs_halt_input(void *h)
 {
 	struct awacs_softc *sc = h;
 
@@ -757,9 +731,7 @@ awacs_halt_input(h)
 }
 
 int
-awacs_getdev(h, retp)
-	void *h;
-	struct audio_device *retp;
+awacs_getdev(void *h, struct audio_device *retp)
 {
 	*retp = awacs_device;
 	return 0;
@@ -779,9 +751,7 @@ enum {
 };
 
 int
-awacs_set_port(h, mc)
-	void *h;
-	mixer_ctrl_t *mc;
+awacs_set_port(void *h, mixer_ctrl_t *mc)
 {
 	struct awacs_softc *sc = h;
 	int l, r;
@@ -851,9 +821,7 @@ awacs_set_port(h, mc)
 }
 
 int
-awacs_get_port(h, mc)
-	void *h;
-	mixer_ctrl_t *mc;
+awacs_get_port(void *h, mixer_ctrl_t *mc)
 {
 	struct awacs_softc *sc = h;
 	int vol, l, r;
@@ -907,11 +875,8 @@ awacs_get_port(h, mc)
 }
 
 int
-awacs_query_devinfo(h, dip)
-	void *h;
-	mixer_devinfo_t *dip;
+awacs_query_devinfo(void *h, mixer_devinfo_t *dip)
 {
-
 	DPRINTF("query_devinfo %d\n", dip->index);
 
 	switch (dip->index) {
@@ -1005,10 +970,7 @@ awacs_query_devinfo(h, dip)
 }
 
 size_t
-awacs_round_buffersize(h, dir, size)
-	void *h;
-	int dir;
-	size_t size;
+awacs_round_buffersize(void *h, int dir, size_t size)
 {
 	size = (size + PGOFSET) & ~(PGOFSET);
 	if (size > AWACS_DMALIST_MAX * AWACS_DMASEG_MAX)
@@ -1017,10 +979,7 @@ awacs_round_buffersize(h, dir, size)
 }
 
 void *
-awacs_allocm(h, dir, size, type, flags)
-	void *h;
-	int dir, type, flags;
-	size_t size;
+awacs_allocm(void *h, int dir, size_t size, int type, int flags)
 {
 	struct awacs_softc *sc = h;
 	struct awacs_dma *p;
@@ -1084,11 +1043,7 @@ awacs_allocm(h, dir, size, type, flags)
 }
 
 paddr_t
-awacs_mappage(h, mem, off, prot)
-	void *h;
-	void *mem;
-	off_t off;
-	int prot;
+awacs_mappage(void *h, void *mem, off_t off, int prot)
 {
 	if (off < 0)
 		return -1;
@@ -1096,20 +1051,14 @@ awacs_mappage(h, mem, off, prot)
 }
 
 int
-awacs_get_props(h)
-	void *h;
+awacs_get_props(void *h)
 {
 	return AUDIO_PROP_FULLDUPLEX /* | AUDIO_PROP_MMAP */;
 }
 
 int
-awacs_trigger_output(h, start, end, bsize, intr, arg, param)
-	void *h;
-	void *start, *end;
-	int bsize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+awacs_trigger_output(void *h, void *start, void *end, int bsize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct awacs_softc *sc = h;
 	struct awacs_dma *p;
@@ -1149,13 +1098,8 @@ awacs_trigger_output(h, start, end, bsize, intr, arg, param)
 }
 
 int
-awacs_trigger_input(h, start, end, bsize, intr, arg, param)
-	void *h;
-	void *start, *end;
-	int bsize;
-	void (*intr)(void *);
-	void *arg;
-	struct audio_params *param;
+awacs_trigger_input(void *h, void *start, void *end, int bsize,
+    void (*intr)(void *), void *arg, struct audio_params *param)
 {
 	struct awacs_softc *sc = h;
 	struct awacs_dma *p;
@@ -1195,9 +1139,7 @@ awacs_trigger_input(h, start, end, bsize, intr, arg, param)
 }
 
 void
-awacs_set_speaker_volume(sc, left, right)
-	struct awacs_softc *sc;
-	int left, right;
+awacs_set_speaker_volume(struct awacs_softc *sc, int left, int  right)
 {
 	int lval = 15 - (left  & 0xff) / 16;
 	int rval = 15 - (right & 0xff) / 16;
@@ -1210,9 +1152,7 @@ awacs_set_speaker_volume(sc, left, right)
 }
 
 void
-awacs_set_ext_volume(sc, left, right)
-	struct awacs_softc *sc;
-	int left, right;
+awacs_set_ext_volume(struct awacs_softc *sc, int left, int  right)
 {
 	int lval = 15 - (left  & 0xff) / 16;
 	int rval = 15 - (right & 0xff) / 16;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.22 2003/08/07 16:08:58 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.23 2003/10/16 03:31:25 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -105,10 +105,7 @@ struct cfdriver openpic_cd = {
 };
 
 int
-openpic_match(parent, cf, aux) 
-	struct device *parent;
-	void *cf;
-	void *aux;
+openpic_match(struct device *parent, void *cf, void *aux)
 {
 	char type[40];
 	struct confargs *ca = aux;
@@ -117,9 +114,8 @@ openpic_match(parent, cf, aux)
 
 	if (strcmp(ca->ca_name, "interrupt-controller") == 0 ) {
 		OF_getprop(ca->ca_node, "device_type", type, sizeof(type));
-		if (strcmp(type,  "open-pic") == 0) {
+		if (strcmp(type,  "open-pic") == 0)
 			return 1;
-		}
 	}
 	return 0;
 }
@@ -134,9 +130,7 @@ void openpic_intr_disestablish( void *lcp, void *arg);
 void openpic_collect_preconf_intr(void);
 
 void
-openpic_attach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+openpic_attach(struct device *parent, struct device  *self, void *aux)
 {
 	struct confargs *ca = aux;
 	extern intr_establish_t *intr_establish_func;
@@ -189,9 +183,8 @@ openpic_collect_preconf_intr()
 	}
 }
 
-int
-fakeintr(arg)
-	void *arg;
+static int
+fakeintr(void *arg)
 {
 
 	return 0;
@@ -204,14 +197,8 @@ void nameinterrupt( int replace, char *newstr);
  * Register an interrupt handler.
  */
 void *
-openpic_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
-	void * lcv;
-	int irq;
-	int type;
-	int level;
-	int (*ih_fun)(void *);
-	void *ih_arg;
-	char *name;
+openpic_intr_establish(void *lcv, int irq, int type, int level,
+    int (*ih_fun)(void *), void *ih_arg, char *name)
 {
 	struct intrhand **p, *q, *ih;
 	static struct intrhand fakehand;
@@ -289,9 +276,7 @@ printf("vI %d ", irq);
  * Deregister an interrupt handler.
  */
 void
-openpic_intr_disestablish(lcp, arg)
-	void *lcp;
-	void *arg;
+openpic_intr_disestablish(void *lcp, void *arg)
 {
 	struct intrhand *ih = arg;
 	int irq = ih->ih_irq;
@@ -320,12 +305,11 @@ openpic_intr_disestablish(lcp, arg)
 
 
 static char *
-intr_typename(type)
-	int type;
+intr_typename(int type)
 {
 
 	switch (type) {
-        case IST_NONE :
+        case IST_NONE:
 		return ("none");
         case IST_PULSE:
 		return ("pulsed");
@@ -415,27 +399,25 @@ int o_virq_inited = 0;
  * Map 64 irqs into 32 (bits).
  */
 static int
-mapirq(irq)
-	int irq;
+mapirq(int irq)
 {
 	int v;
 	int i;
 
 	if (o_virq_inited == 0) {
 		o_virq_max = 0;
-		for (i = 0; i < ICU_LEN; i++) {
+		for (i = 0; i < ICU_LEN; i++)
 			o_virq[i] = 0;
-		}
 		o_virq_inited = 1;
 	}
 
 	/* irq in table already? */
-	if (o_virq[irq] != 0) {
+	if (o_virq[irq] != 0)
 		return o_virq[irq];
-	}
 
 	if (irq < 0 || irq >= ICU_LEN)
 		panic("invalid irq");
+
 	o_virq_max++;
 	v = o_virq_max;
 	if (v > HWIRQ_MAX)
@@ -454,8 +436,7 @@ printf("\nmapirq %x to %x\n", irq, v);
  * Count leading zeros.
  */
 static __inline int
-cntlzw(x)
-	int x;
+cntlzw(int x)
 {
 	int a;
 
@@ -522,8 +503,7 @@ openpic_do_pending_int()
 }
 
 u_int
-openpic_read(reg)
-	int reg;
+openpic_read(int reg)
 {
 	char *addr = (void *)(openpic_base + reg);
 
@@ -531,9 +511,7 @@ openpic_read(reg)
 }
 
 void
-openpic_write(reg, val)
-	int reg;
-	u_int val;
+openpic_write(int reg, u_int val)
 {
 	char *addr = (void *)(openpic_base + reg);
 
@@ -541,54 +519,46 @@ openpic_write(reg, val)
 }
 
 void
-openpic_enable_irq_mask(irq_mask)
-int irq_mask;
+openpic_enable_irq_mask(int irq_mask)
 {
 	int irq;
 	for ( irq = 0; irq <= o_virq_max; irq++) {
-		if (irq_mask & (1 << irq)) {
+		if (irq_mask & (1 << irq))
 			openpic_enable_irq(o_hwirq[irq]);
-		} else {
+		else
 			openpic_disable_irq(o_hwirq[irq]);
-		}
 	}
 }
 
 void
-openpic_set_enable_irq(irq, type)
-	int irq;
-	int type;
+openpic_set_enable_irq(int irq, int type)
 {
 	u_int x;
 
 	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
 	x &= ~(OPENPIC_IMASK|OPENPIC_SENSE_LEVEL|OPENPIC_SENSE_EDGE);
-	if (type == IST_LEVEL) {
+	if (type == IST_LEVEL)
 		x |= OPENPIC_SENSE_LEVEL;
-	} else {
+	else
 		x |= OPENPIC_SENSE_EDGE;
-	}
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 }
 void
-openpic_enable_irq(irq)
-	int irq;
+openpic_enable_irq(int irq)
 {
 	u_int x;
 
 	x = openpic_read(OPENPIC_SRC_VECTOR(irq));
 	x &= ~(OPENPIC_IMASK|OPENPIC_SENSE_LEVEL|OPENPIC_SENSE_EDGE);
-	if (o_intrtype[o_virq[irq]] == IST_LEVEL) {
+	if (o_intrtype[o_virq[irq]] == IST_LEVEL)
 		x |= OPENPIC_SENSE_LEVEL;
-	} else {
+	else
 		x |= OPENPIC_SENSE_EDGE;
-	}
 	openpic_write(OPENPIC_SRC_VECTOR(irq), x);
 }
 
 void
-openpic_disable_irq(irq)
-	int irq;
+openpic_disable_irq(int irq)
 {
 	u_int x;
 
@@ -598,8 +568,7 @@ openpic_disable_irq(irq)
 }
 
 void
-openpic_set_priority(cpu, pri)
-        int cpu, pri;
+openpic_set_priority(int cpu, int pri)
 {
 	u_int x;
 
@@ -610,15 +579,13 @@ openpic_set_priority(cpu, pri)
 }
 
 int
-openpic_read_irq(cpu)
-	int cpu;
+openpic_read_irq(int cpu)
 {
 	return openpic_read(OPENPIC_IACK(cpu)) & OPENPIC_VECTOR_MASK;
 }
 
 void
-openpic_eoi(cpu)
-        int cpu;
+openpic_eoi(int cpu)
 {
         openpic_write(OPENPIC_EOI(cpu), 0);
         openpic_read(OPENPIC_EOI(cpu));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.6 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: ams.c,v 1.7 2003/10/16 03:31:25 drahn Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -81,10 +81,7 @@ const struct wsmouse_accessops ams_accessops = {
 };
 
 static int
-amsmatch(parent, cf, aux)
-	struct device *parent;
-	void *cf;
-	void *aux;
+amsmatch(struct device *parent, void *cf, void *aux)
 {
 	struct adb_attach_args *aa_args = aux;
 
@@ -95,9 +92,7 @@ amsmatch(parent, cf, aux)
 }
 
 static void
-amsattach(parent, self, aux)
-	struct device *parent, *self;
-	void   *aux;
+amsattach(struct device *parent, struct device *self, void   *aux)
 {
 	ADBSetInfoBlock adbinfo;
 	struct ams_softc *sc = (struct ams_softc *)self;
@@ -210,8 +205,7 @@ amsattach(parent, self, aux)
  * 	     Mouse Systems A^3 Mouse, Logitech non-EMP MouseMan
  */
 void
-ems_init(sc)
-	struct ams_softc *sc;
+ems_init(struct ams_softc *sc)
 {
 	int adbaddr;
 	short cmd;
@@ -401,10 +395,7 @@ ems_init(sc)
  * an ADB event record.
  */
 void
-ms_adbcomplete(buffer, data_area, adb_command)
-	caddr_t buffer;
-	caddr_t data_area;
-	int adb_command;
+ms_adbcomplete(caddr_t buffer, caddr_t data_area, int adb_command)
 {
 	adb_event_t event;
 	struct ams_softc *sc;
@@ -461,9 +452,7 @@ ms_adbcomplete(buffer, data_area, adb_command)
  * x- and y-axis motion, and handoff the event to the appropriate subsystem.
  */
 static void
-ms_processevent(event, sc)
-	adb_event_t *event;
-	struct ams_softc *sc;
+ms_processevent(adb_event_t *event, struct ams_softc *sc)
 {
 	adb_event_t new_event;
 	int i, button_bit, max_byte, mask, buttons;
@@ -530,19 +519,13 @@ ms_processevent(event, sc)
 }
 
 int
-ams_enable(v)
-	void *v;
+ams_enable(void *v)
 {
 	return 0;
 }
 
 int
-ams_ioctl(v, cmd, data, flag, p)
-	void *v;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+ams_ioctl(void *v, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	switch (cmd) {
 	case WSMOUSEIO_GTYPE:
@@ -550,12 +533,10 @@ ams_ioctl(v, cmd, data, flag, p)
 		return (0);
 	}
 
-
 	return -1;
 }
 
 void
-ams_disable(v)
-	void *v;
+ams_disable(void *v)
 {
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.7 2002/09/15 09:01:58 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.8 2003/10/16 03:31:25 drahn Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -113,9 +113,7 @@ struct filterops apmread_filtops =
 
 
 int
-apmmatch(parent, match, aux)
-	struct device *parent;
-	void *match, *aux;
+apmmatch(struct device *parent, void *match, void *aux)
 {
 	struct adb_attach_args *aa = (void *)aux;		
 	if (aa->origaddr != ADBADDR_APM ||
@@ -130,9 +128,7 @@ apmmatch(parent, match, aux)
 }
 
 void
-apmattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+apmattach(struct device *parent, struct device *self, void *aux)
 {
 	struct pmu_battery_info info;
 
@@ -143,10 +139,7 @@ apmattach(parent, self, aux)
 }
 
 int
-apmopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+apmopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct apm_softc *sc;
 	int error = 0;
@@ -186,10 +179,7 @@ apmopen(dev, flag, mode, p)
 }
 
 int
-apmclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag, mode;
-	struct proc *p;
+apmclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct apm_softc *sc;
 
@@ -212,12 +202,7 @@ apmclose(dev, flag, mode, p)
 }
 
 int
-apmioctl(dev, cmd, data, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t data;
-	int flag;
-	struct proc *p;
+apmioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 {
 	struct apm_softc *sc;
 	struct pmu_battery_info batt;
@@ -296,13 +281,12 @@ apmioctl(dev, cmd, data, flag, p)
 			    ((batt.cur_charge * 3600) / (-batt.draw)) / 60;
 
 			/* XXX - Arbitrary */
-			if (power->battery_life > 60) {
+			if (power->battery_life > 60)
 				power->battery_state = APM_BATT_HIGH;
-			} else if (power->battery_life < 10) {
+			else if (power->battery_life < 10)
 				power->battery_state = APM_BATT_CRITICAL;
-			} else {
+			else
 				power->battery_state = APM_BATT_LOW;
-			}
 		}
 
 		break;
@@ -315,8 +299,7 @@ apmioctl(dev, cmd, data, flag, p)
 }
 
 void
-filt_apmrdetach(kn)
-	struct knote *kn;
+filt_apmrdetach(struct knote *kn)
 {
 	struct apm_softc *sc = (struct apm_softc *)kn->kn_hook;
 
@@ -324,9 +307,7 @@ filt_apmrdetach(kn)
 }
 
 int
-filt_apmread(kn, hint)
-	struct knote *kn;
-	long hint;
+filt_apmread(struct knote *kn, long hint)
 {
 	/* XXX weird kqueue_scan() semantics */
 	if (hint && !kn->kn_data)
@@ -336,9 +317,7 @@ filt_apmread(kn, hint)
 }
 
 int
-apmkqfilter(dev, kn)
-	dev_t dev;
-	struct knote *kn;
+apmkqfilter(dev_t dev, struct knote *kn)
 {
 	struct apm_softc *sc;
 
