@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdate.8,v 1.26 2004/02/18 20:10:53 jmc Exp $
+.\"	$OpenBSD: rdate.8,v 1.27 2004/05/25 15:54:28 jakob Exp $
 .\"	$NetBSD: rdate.8,v 1.4 1996/04/08 20:55:17 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
@@ -46,7 +46,7 @@ host name or address given as the argument.
 The time source may be an RFC 868 TCP protocol server,
 which is usually implemented as a built-in service of
 .Xr inetd 8 ,
-or an RFC 1361 protocol SNTP/NTP server.
+or an RFC 2030 protocol SNTP/NTP server.
 By default,
 .Nm
 uses the RFC 868 TCP protocol.
@@ -75,7 +75,7 @@ You can determine if you need this parameter if you sync against an NTP
 server (with this parameter) or (recommended) check with a local radio
 controlled watch or phone service.
 .It Fl n
-Use SNTP (RFC 1361) instead of the RFC 868 time protocol.
+Use SNTP (RFC 2030) instead of the RFC 868 time protocol.
 .It Fl p
 Do not set, just print the remote time.
 .It Fl s
