@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.43 2000/09/17 14:40:39 aaron Exp $
+	$OpenBSD: pcmciadevs,v 1.44 2000/10/27 07:53:35 aaron Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -89,19 +89,19 @@ vendor RATOC			0xc015	RATOC System Inc.
 product 3COM 3CXM056BNW		0x002f 3Com/NoteWorthy 3CXM056-BNW
 product 3COM 3CXEM556B		0x003d 3Com 3CXEM556B-INT
 product 3COM 3CXEM556		0x0035 3Com 3CXEM556
-product 3COM 3CCFEM556BI	0x0556 3Com/Megahertz 3CCFEM556BI
+product 3COM 3CCFEM556BI	0x0556 3Com 3CCFEM556BI
 product 3COM 3C562		0x0562 3Com 3c562
 product 3COM 3C589		0x0589 3Com 3c589
-product 3COM 3C574		0x0574 3Com 3c574-TX
-product 3COM 3C1		0x0cf1 3Com/Megahertz 3C1 10Mbps LAN CF+ Card
+product 3COM 3C574		0x0574 3Com 3c574
+product 3COM 3C1		0x0cf1 3Com 3C1
 
 /* Adaptec */
 product ADAPTEC APA1460_1	0x0001 Adaptec APA-1460/A
 product ADAPTEC APA1460_2	0x0002 Adaptec APA-1460/B
 
 /* Aironet */
-product AIRONET PC4500		0x0005 Aironet PC4500 Wireless LAN Adapter
-product AIRONET PC4800		0x0007 Aironet PC4800 Wireless LAN Adapter
+product AIRONET PC4500		0x0005 Aironet PC4500
+product AIRONET PC4800		0x0007 Aironet PC4800
 
 /* Allied Telesis K.K. */
 product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
@@ -112,7 +112,7 @@ product BAY SURFER_PRO		0x0806 AirSurfer Pro
 product BAY STACK_660		0x0807 BayStack 660
 
 /* BreezeCOM */
-product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET IEEE 802.11 FHSS
+product BREEZECOM BREEZENET	0x0102 BreezeCOM BreezeNET
 
 /* Contec C-NET(PC) */
 product CONTEC CNETPC		0x0000 Contec C-NET(PC)C
@@ -136,7 +136,7 @@ product FARALLON SKYLINE	0x0a01 SkyLINE Wireless
 
 /* Fujitsu */
 product FUJITSU SCSI600		0x0401 Fujitsu 600
-product FUJITSU LA10S		0x1003 Fujitsu Compact Flash Ethernet
+product FUJITSU LA10S		0x1003 Fujitsu CF Ethernet
 product FUJITSU LA501		0x2000 Fujitsu Towa LA501
 
 /* IBM */
@@ -202,9 +202,9 @@ product NEWMEDIA2 BUSTOASTER	0x0001 NewMedia BusToaster
 product NOKIA C020_WLAN		0x20c0 Nokia C020
 
 /* Panasonic */
-product PANASONIC KXLC002	0x0304 Panasonic 4X CD-ROM Interface Card
-product PANASONIC KXLC003	0x0504 Panasonic 8X CD-ROM Interface Card
-product PANASONIC KME		0x2604 Panasonic CD-R/RW Interface Card
+product PANASONIC KXLC002	0x0304 Panasonic 4X CD-ROM Interface
+product PANASONIC KXLC003	0x0504 Panasonic 8X CD-ROM Interface
+product PANASONIC KME		0x2604 Panasonic CD-R/RW Interface
 
 /* Proxim */
 product PROXIM ROAMABOUT_2400FH	0x1058 Digital RoamAbout 2400FH
@@ -223,7 +223,7 @@ product RAYTHEON WLAN		0x0000 WLAN Adapter
 product RATOC REX_R280		0x0001 RATOC REX-R280
 
 /* Sandisk */
-product SANDISK SDCFB		0x0401 Sandisk CompactFlash Card
+product SANDISK SDCFB		0x0401 Sandisk CompactFlash
 
 /* Simple Technology */
 product SIMPLETECH COMMUNICATOR288 0x0100 Simple Technology 28.8 Communicator
