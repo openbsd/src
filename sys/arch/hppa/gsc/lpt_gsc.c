@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpt_gsc.c,v 1.10 2004/02/13 21:28:19 mickey Exp $	*/
+/*	$OpenBSD: lpt_gsc.c,v 1.11 2004/09/14 22:32:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -101,55 +101,62 @@ lpt_gsc_probe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct confargs *ca = aux;
+	struct gsc_attach_args *ga = aux;
 	bus_space_handle_t ioh;
 	bus_addr_t base;
 	u_int8_t mask, data;
 	int i, rv;
 
-	if (ca->ca_type.iodc_type != HPPA_TYPE_FIO ||
-	    ca->ca_type.iodc_sv_model != HPPA_FIO_CENT)
+	if (ga->ga_type.iodc_type != HPPA_TYPE_FIO ||
+	    ga->ga_type.iodc_sv_model != HPPA_FIO_CENT)
 		return 0;
 
 #ifdef DEBUG
-#define	ABORT								     \
-	do {								     \
-		printf("lpt_gsc_probe: mask %x data %x failed\n", mask,	     \
-		    data);						     \
-		return 0;						     \
+#define	ABORT								\
+	do {								\
+		printf("lpt_gsc_probe: mask %x data %x failed\n", mask,	\
+		    data);						\
+		return 0;						\
 	} while (0)
 #else
-#define	ABORT	return 0
+#define	ABORT	do {							\
+			bus_space_unmap(ga->ga_iot, ioh, LPT_NPORTS);	\
+			return 0;					\
+		} while (0)
 #endif
 
-	base = ca->ca_hpa + LPTGSC_OFFSET;
-	ioh = ca->ca_hpa + LPTGSC_OFFSET;
+	base = ga->ga_hpa + LPTGSC_OFFSET;
+	if (bus_space_map(ga->ga_iot, base, LPT_NPORTS, 0, &ioh)) {
+		printf("lpt_gsc_probe: cannot map io space\n");
+		return 0;
+	}
 
 	rv = 0;
 	mask = 0xff;
 
 	data = 0x55;				/* Alternating zeros */
-	if (!lpt_port_test(ca->ca_iot, ioh, base, lpt_data, data, mask))
+	if (!lpt_port_test(ga->ga_iot, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	data = 0xaa;				/* Alternating ones */
-	if (!lpt_port_test(ca->ca_iot, ioh, base, lpt_data, data, mask))
+	if (!lpt_port_test(ga->ga_iot, ioh, base, lpt_data, data, mask))
 		ABORT;
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking zero */
 		data = ~(1 << i);
-		if (!lpt_port_test(ca->ca_iot, ioh, base, lpt_data, data, mask))
+		if (!lpt_port_test(ga->ga_iot, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
 	for (i = 0; i < CHAR_BIT; i++) {	/* Walking one */
 		data = (1 << i);
-		if (!lpt_port_test(ca->ca_iot, ioh, base, lpt_data, data, mask))
+		if (!lpt_port_test(ga->ga_iot, ioh, base, lpt_data, data, mask))
 			ABORT;
 	}
 
-	bus_space_write_1(ca->ca_iot, ioh, lpt_data, 0);
-	bus_space_write_1(ca->ca_iot, ioh, lpt_control, 0);
+	bus_space_write_1(ga->ga_iot, ioh, lpt_data, 0);
+	bus_space_write_1(ga->ga_iot, ioh, lpt_control, 0);
+	bus_space_unmap(ga->ga_iot, ioh, LPT_NPORTS);
 
 	return 1;
 }
@@ -161,12 +168,17 @@ lpt_gsc_attach(parent, self, aux)
 {
 	struct lpt_softc *sc = (void *)self;
 	struct gsc_attach_args *ga = aux;
+	bus_addr_t base;
 
 	/* sc->sc_flags |= LPT_POLLED; */
 
 	sc->sc_state = 0;
 	sc->sc_iot = ga->ga_iot;
-	sc->sc_ioh = ga->ga_hpa + LPTGSC_OFFSET;
+	base = ga->ga_hpa + LPTGSC_OFFSET;
+	if (bus_space_map(ga->ga_iot, base, LPT_NPORTS, 0, &sc->sc_ioh)) {
+		printf(": cannot map io space\n");
+		return;
+	}
 
 	lpt_attach_common(sc);
 
