@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.18 2001/01/29 00:33:13 aaron Exp $
+#	$OpenBSD: files.usb,v 1.19 2001/01/29 00:43:39 aaron Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -85,6 +85,11 @@ file	dev/usb/urio.c			urio		needs-flag
 device	uvisor: ucombus
 attach	uvisor at uhub
 file	dev/usb/uvisor.c		uvisor
+
+# YAP firmware loader
+device	uyap: ezload
+attach	uyap at uhub
+file	dev/usb/uyap.c			uyap
 
 # Ethernet adapters
 # ADMtek AN986 Pegasus
