@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.169 2001/11/20 09:27:58 mpech Exp $ */
+/*	$OpenBSD: pf.c,v 1.170 2001/11/21 19:00:24 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4516,11 +4516,6 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 	off = ((caddr_t)h - m->m_data) + sizeof(struct ip6_hdr);
 	pd.proto = h->ip6_nxt;
 	do {			
-		while (off >= m->m_len) {
-			off -= m->m_len;
-			m = m->m_next;
-		}
-
 		switch (pd.proto) {
 		case IPPROTO_FRAGMENT: 
 			/* XXX we don't handle fragments yet */
@@ -4532,11 +4527,19 @@ pf_test6(int dir, struct ifnet *ifp, struct mbuf **m0)
 		case IPPROTO_ROUTING:
 		case IPPROTO_DSTOPTS: {
 			/* get next header and header length */
-			struct _opt6 *opt6;
+			struct _opt6 opt6;
 
-			opt6 = (struct _opt6 *)(mtod(m, caddr_t) + off);
-			pd.proto = opt6->opt6_nxt;
-			off += (opt6->opt6_hlen + 1) * 8;
+			if (!pf_pull_hdr(m, off, &opt6, sizeof(opt6),
+			    NULL, NULL, pd.af)) {
+				DPFPRINTF(PF_DEBUG_MISC,
+				    ("pf: IPv6 short opt\n"));
+				action = PF_DROP;
+				REASON_SET(&reason, PFRES_SHORT);
+				log = 1;
+				goto done;
+			}
+			pd.proto = opt6.opt6_nxt;
+			off += (opt6.opt6_hlen + 1) * 8;
 			/* goto the next header */
 			break;
 		}
