@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: kroute.c,v 1.3 2005/02/15 15:39:30 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -900,7 +900,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	r.hdr.rtm_msglen = sizeof(r);
 	r.hdr.rtm_version = RTM_VERSION;
 	r.hdr.rtm_type = action;
-	r.hdr.rtm_flags = RTF_PROTO1;
+	r.hdr.rtm_flags = RTF_PROTO2;
 	if (kroute->flags & F_BLACKHOLE)
 		r.hdr.rtm_flags |= RTF_BLACKHOLE;
 	if (kroute->flags & F_REJECT)
