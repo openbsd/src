@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.24 1998/11/12 04:30:02 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.25 1998/11/20 01:35:32 art Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -802,10 +802,8 @@ vrele(vp)
 #endif
 	vputonfreelist(vp);
 
-	if (vn_lock(vp, LK_EXCLUSIVE |LK_INTERLOCK, p) == 0)
+	if (vn_lock(vp, LK_EXCLUSIVE|LK_INTERLOCK, p) == 0)
 		VOP_INACTIVE(vp, p);
-
-	simple_unlock(&vp->v_interlock);
 }
 
 #ifdef DIAGNOSTIC
