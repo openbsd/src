@@ -17,6 +17,14 @@ static __dead void __vpanic __P((const char *, const char *, const char *,
 static __dead void __panic __P((const char *, const char *, const char *,
 	int, const char *, ...)) __attribute__((noreturn));
 
+#if defined(__OpenBSD__) || defined(__FreeBSD__)
+#include <pthread.h>
+#include <pthread_np.h>
+#define SET_NAME(x)	pthread_set_name_np(pthread_self(), x)
+#else
+#define SET_NAME(x)	/* nada */
+#endif
+
 static void
 __vpanic(type, errstr, filenm, lineno, fmt, ap)
 	const char *type; 

@@ -55,6 +55,8 @@ sigsuspender (void *arg)
 	int save_count, status, i;
 	sigset_t run_mask;
 
+	SET_NAME("sigsuspender");
+
 	/* Run with all signals blocked. */
 	sigfillset (&run_mask);
 	CHECKe(sigprocmask (SIG_SETMASK, &run_mask, NULL));
@@ -172,7 +174,6 @@ int main (int argc, char *argv[])
 	 * Create the sigsuspender thread.
 	 */
 	CHECKr(pthread_create (&suspender_tid, &pattr, sigsuspender, NULL));
-	pthread_set_name_np (suspender_tid, "sigsuspender");
 
 	/*
 	 * Verify that an ignored signal doesn't cause a wakeup.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: test_cancel.c,v 1.1 1999/01/17 23:57:26 d Exp $	*/
+/*	$OpenBSD: test_cancel.c,v 1.2 1999/03/10 09:23:55 d Exp $	*/
 /* David Leonard <d@openbsd.org>, 1999. Public Domain. */
 
 #include <pthread.h>
@@ -48,7 +48,7 @@ child1fn(arg)
 	char buf[1024];
 	int len;
 
-	pthread_set_name_np(pthread_self(), "c1");
+	SET_NAME("c1");
 	CHECKr(pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL));
 	/* something that will block */
 	CHECKe(fd = open("/dev/tty", O_RDONLY));
@@ -74,7 +74,7 @@ void *
 child2fn(arg)
 	void *arg;
 {
-	pthread_set_name_np(pthread_self(), "c2");
+	SET_NAME("c2");
 
 	CHECKr(pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED, NULL));
 	pthread_cleanup_push(c2handler, NULL);
@@ -124,7 +124,7 @@ void *
 child3fn(arg)
 	void *arg;
 {
-	pthread_set_name_np(pthread_self(), "c3");
+	SET_NAME("c3");
 	pthread_cleanup_push(c3handler, NULL);
 
 	/* Cancel myself */

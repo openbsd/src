@@ -53,6 +53,8 @@ sigwaiter (void *arg)
 	int signo;
 	sigset_t mask;
 
+	SET_NAME("sigwaiter");
+
 	/* Block SIGHUP */
 	sigemptyset (&mask);
 	sigaddset (&mask, SIGHUP);
@@ -140,7 +142,6 @@ int main (int argc, char *argv[])
 	 * Create the sigwaiter thread.
 	 */
 	CHECKr(pthread_create (&tid, &pattr, sigwaiter, NULL));
-	pthread_set_name_np (tid, "sigwaiter");
 
 	/*
 	 * Verify that an ignored signal doesn't cause a wakeup.

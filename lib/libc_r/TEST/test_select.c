@@ -16,7 +16,7 @@ bg_routine(arg)
 	void *arg;
 {
   char dot = '.';
-  pthread_set_name_np(pthread_self(), "bg");
+  SET_NAME("bg");
   write(STDOUT_FILENO,"bg routine running\n",19);
   /*pthread_dump_state();*/
   while (1) {
@@ -39,7 +39,7 @@ fg_routine(arg)
   int n;
   fd_set r;
 
-  pthread_set_name_np(pthread_self(), "fg");
+  SET_NAME("fg");
 
   flags = fcntl(STDIN_FILENO, F_GETFL);
   CHECKr(fcntl(STDIN_FILENO, F_SETFL, flags | O_NONBLOCK));

@@ -32,6 +32,7 @@ void *
 new_thread(arg)
 	void *arg;
 {
+	SET_NAME("writer");
 	while(1) {
 		CHECKe(write (fd, (char *) arg, 1));
 		x[(char *)arg - buf] = 1;
@@ -83,7 +84,7 @@ main(argc, argv)
 		    (void*)(buf+i)));
 
 	/* give all threads a chance to run */
-	sleep (2);
+	sleep (6);
 
 	for (i = 0; i < count; i++)
 		ASSERT(x[i]);	/* make sure each thread ran */

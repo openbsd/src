@@ -20,6 +20,8 @@ thread_contention(arg)
 {
 	pthread_mutex_t *mutex = arg;
 
+	SET_NAME("cntntn");
+
 	CHECKr(pthread_mutex_lock(mutex));
 	ASSERT(contention_variable == 1);
 	contention_variable = 2;
@@ -37,7 +39,6 @@ test_contention_lock(mutex)
 	CHECKr(pthread_mutex_lock(mutex));
 	contention_variable = 0;
 	CHECKr(pthread_create(&thread, NULL, thread_contention, mutex));
-	pthread_set_name_np(thread, "cntntn");
 	pthread_yield();
 	contention_variable = 1;
 	CHECKr(pthread_mutex_unlock(mutex));

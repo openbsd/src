@@ -30,7 +30,7 @@ sock_write(arg)
 {
 	int fd = *(int *)arg;
 
-	pthread_set_name_np(pthread_self(), "writer");
+	SET_NAME("writer");
 	CHECKe(write(fd, MESSAGE5, sizeof(MESSAGE5)));
 	return(NULL);
 }
@@ -43,7 +43,7 @@ waiter(sig)
 	int status;
 	pid_t pid;
 
-	pthread_set_name_np(pthread_self(), "waiter");
+	SET_NAME("waiter");
 	CHECKr(pthread_mutex_lock(&waiter_mutex));
 	printf("waiting for child\n");
 	CHECKe(pid = wait(&status));
