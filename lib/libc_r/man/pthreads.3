@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.3 1999/03/22 04:21:45 d Exp $
+.\" $OpenBSD: pthreads.3,v 1.4 1999/05/26 00:13:11 d Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -42,6 +42,8 @@ or
 .Xr pthread_cond_timedwait 3 .
 .It dead
 Waiting for resource deallocation by the thread garbage collector.
+.It deadlock
+Waiting for a resource held by the thread itself.
 .It fdlr_wait
 File descriptor read lock wait.
 .It fdlw_wait
@@ -86,6 +88,8 @@ Executing
 .Xr sleep 3
 or
 .Xr nanosleep 2 .
+.It spinblock
+Waiting for a machine-level atomic lock.
 .It suspended
 Suspended with
 .Xr pthread_suspend_np 3 .
