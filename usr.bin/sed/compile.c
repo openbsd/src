@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.19 2004/07/09 19:39:40 otto Exp $	*/
+/*	$OpenBSD: compile.c,v 1.20 2004/07/10 11:41:26 otto Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.2 (Berkeley) 4/28/95"; */
-static char *rcsid = "$OpenBSD: compile.c,v 1.19 2004/07/09 19:39:40 otto Exp $";
+static char *rcsid = "$OpenBSD: compile.c,v 1.20 2004/07/10 11:41:26 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -503,7 +503,7 @@ compile_subst(char *p, struct s_subst *s)
 		size += sp - op;
 		if (asize - size < _POSIX2_LINE_MAX + 1) {
 			asize *= 2;
-			text = xmalloc(asize);
+			text = xrealloc(text, asize);
 		}
 	} while (cu_fgets(p = lbuf, sizeof(lbuf)));
 	err(COMPILE, "unterminated substitute in regular expression");
