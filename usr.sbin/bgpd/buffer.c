@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.9 2003/12/24 13:28:01 henning Exp $ */
+/*	$OpenBSD: buffer.c,v 1.10 2003/12/26 17:13:52 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -105,8 +105,10 @@ buf_write(int sock, struct buf *buf)
 			return (-1);
 	}
 
-	if (n == 0)			/* connection closed */
+	if (n == 0) {			/* connection closed */
+		errno = 0;
 		return (-2);
+	}
 
 	if (n < buf->size - buf->rpos) {	/* not all data written yet */
 		buf->rpos += n;
