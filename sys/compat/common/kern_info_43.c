@@ -1,3 +1,5 @@
+/*	$Id: kern_info_43.c,v 1.2 1996/02/02 22:45:44 etheisen Exp $ */
+
 /*	$NetBSD: kern_info_43.c,v 1.3 1995/10/07 06:26:24 mycroft Exp $	*/
 
 /*
@@ -108,6 +110,52 @@ compat_43_sys_gethostname(p, v, retval)
 #define	KINFO_LOADAVG		(5<<8)
 #define	KINFO_CLOCKRATE		(6<<8)
 
+/* Non-standard BSDI extension - only present on their 4.3 net-2 releases */
+#define       KINFO_BSDI_SYSINFO      (101<<8)
+
+/*
+ * XXX this is bloat, but I hope it's better here than on the potentially
+ * limited kernel stack...  -Peter
+ */
+
+struct {      
+	char    *bsdi_machine;          /* "i386" on BSD/386 */
+	char    *pad0;
+	long    pad1;
+	long    pad2;
+	long    pad3;
+	u_long  pad4;
+	u_long  pad5;
+	u_long  pad6;
+
+	char    *bsdi_ostype;           /* "BSD/386" on BSD/386 */
+	char    *bsdi_osrelease;        /* "1.1" on BSD/386 */
+	long    pad7;   
+	long    pad8;
+	char    *pad9;
+
+	long    pad10;
+	long    pad11;  
+	int     pad12;
+	long    pad13; 
+	quad_t  pad14; 
+	long    pad15;
+
+	struct  timeval pad16;
+	/* we dont set this, because BSDI's uname used gethostname() instead */
+	char    *bsdi_hostname;         /* hostname on BSD/386 */
+
+	/* the actual string data is appended here */
+
+} bsdi_si;
+/*
+ * this data is appended to the end of the bsdi_si structure during copyout.
+ * The "char *" offsets are relative to the base of the bsdi_si struct.
+ * This contains "OpenBSD\01.2-BUILT-nnnnnn\0i386\0", and these strings
+ * should not exceed the length of the buffer here... (or else!! :-)
+ */
+char bsdi_strings[80];        /* It had better be less than this! */
+
 int
 compat_43_sys_getkerninfo(p, v, retval)
 	struct proc *p;
@@ -122,6 +170,8 @@ compat_43_sys_getkerninfo(p, v, retval)
 	} */ *uap = v;
 	int error, name[5];
 	size_t size;
+
+	extern char ostype[], osrelease[], version[], machine[];
 
 	if (SCARG(uap, size) && (error = copyin((caddr_t)SCARG(uap, size),
 	    (caddr_t)&size, sizeof(size))))
@@ -176,6 +226,64 @@ compat_43_sys_getkerninfo(p, v, retval)
 		error =
 		    kern_sysctl(name, 1, SCARG(uap, where), &size, NULL, 0, p);
 		break;
+
+	case KINFO_BSDI_SYSINFO: { 
+		/*
+		 * this is pretty crude, but it's just enough for uname()
+		 * from BSDI's 1.x libc to work.
+		 */
+
+		u_int needed;
+		u_int left;
+		char *s;
+
+		bzero((char *)&bsdi_si, sizeof(bsdi_si));
+		bzero(bsdi_strings, sizeof(bsdi_strings));
+
+		s = bsdi_strings;
+
+		bsdi_si.bsdi_ostype = ((char *)(s - bsdi_strings)) + sizeof(bsdi_si);
+		strcpy(s, ostype);
+		s += strlen(s) + 1;
+
+		bsdi_si.bsdi_osrelease = ((char *)(s - bsdi_strings)) + sizeof(bsdi_si);
+		strcpy(s, osrelease);
+		s += strlen(s) + 1;
+
+		bsdi_si.bsdi_machine = ((char *)(s - bsdi_strings)) + sizeof(bsdi_si);
+		strcpy(s, machine);
+		s += strlen(s) + 1;
+
+		needed = sizeof(bsdi_si) + (s - bsdi_strings);
+
+		if (SCARG(uap, where) == NULL) {
+			/* process is asking how much buffer to supply.. */
+			size = needed;
+			error = 0;
+			break;
+		}
+
+		/* if too much buffer supplied, trim it down */
+		if (size > needed)
+			size = needed;
+
+		/* how much of the buffer is remaining */
+		left = size;
+
+		if ((error = copyout((char *)&bsdi_si, SCARG(uap, where), left)) != 0)
+			break;
+
+		/* is there any point in continuing? */
+		if (left > sizeof(bsdi_si))
+			left -= sizeof(bsdi_si);
+		else
+			break;
+
+		error = copyout(&bsdi_strings, SCARG(uap, where) + sizeof(bsdi_si),
+				left);
+
+		break;
+	}
 
 	default:
 		return (EOPNOTSUPP);
