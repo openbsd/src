@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.5 1996/05/02 13:17:50 deraadt Exp $	*/
+/*	$OpenBSD: ch.c,v 1.6 1996/08/12 10:21:41 deraadt Exp $	*/
 /*	$NetBSD: ch.c,v 1.21 1996/04/19 00:02:29 christos Exp $	*/
 
 /*
@@ -295,7 +295,8 @@ chioctl(dev, cmd, data, flags, p)
 	/* Implement prevent/allow? */
 
 	default:
-		error = scsi_do_ioctl(sc->sc_link, dev, cmd, data, flags, p);
+		error = scsi_do_safeioctl(sc->sc_link, dev, cmd, data,
+		    flags, p);
 		break;
 	}
 
