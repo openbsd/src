@@ -1,3 +1,5 @@
+/*	$OpenBSD: apm-proto.h,v 1.2 2001/03/23 01:00:41 mickey Exp $	*/
+
 /*
  *  Copyright (c) 1996 John T. Kohl
  *  All rights reserved.

@@ -1,3 +1,5 @@
+/*	$OpenBSD: apmd.c,v 1.14 2001/03/23 01:00:41 mickey Exp $	*/
+
 /*
  *  Copyright (c) 1995, 1996 John T. Kohl
  *  All rights reserved.
@@ -70,6 +72,8 @@ enum apm_state handle_client(int sock_fd, int ctl_fd);
 void suspend(int ctl_fd);
 void stand_by(int ctl_fd);
 void resume(int ctl_fd);
+void powerup(int ctl_fd);
+void powerdown(int ctl_fd);
 void sigexit(int signo);
 void make_noise(int howmany);
 void do_etc_file(const char *file);
@@ -264,6 +268,17 @@ int howmany;
     return;
 }
 
+void
+powerup(int ctl_fd)
+{
+    do_etc_file(_PATH_APM_ETC_POWERUP);
+}
+
+void
+powerdown(int ctl_fd)
+{
+    do_etc_file(_PATH_APM_ETC_POWERDOWN);
+}
 
 void
 suspend(int ctl_fd)
@@ -305,6 +320,7 @@ main(int argc, char *argv[])
     int statonly = 0;
     int enableonly = 0;
     int pctonly = 0;
+    int powerstatus = 0, powerbak = 0, powerchange = 0;
     int messages = 0;
     fd_set *devfdsp, *selfdsp;
     struct apm_event_info apmevent;
@@ -404,7 +420,11 @@ main(int argc, char *argv[])
 
 	if (ready == 0) {
 	    /* wakeup for timeout: take status */
-	    power_status(ctl_fd, 0, 0);
+	    powerbak = power_status(ctl_fd, 0, 0);
+	    if (powerstatus != powerbak) {
+		powerstatus = powerbak;
+		powerchange = 1;
+	    }
 	}
 	if (FD_ISSET(ctl_fd, selfdsp)) {
 	    suspends = standbys = resumes = 0;
@@ -430,10 +450,19 @@ main(int argc, char *argv[])
 		case APM_NORMAL_RESUME:
 		case APM_CRIT_RESUME:
 		case APM_SYS_STANDBY_RESUME:
+		    powerbak = power_status(ctl_fd, 0, 0);
+		    if (powerstatus != powerbak) {
+			powerstatus = powerbak;
+			powerchange = 1;
+		    }
 		    resumes++;
 		    break;
 		case APM_POWER_CHANGE:
-		    power_status(ctl_fd, 0, 0);
+		    powerbak = power_status(ctl_fd, 0, 0);
+		    if (powerstatus != powerbak) {
+			powerstatus = powerbak;
+			powerchange = 1;
+		    }
 		    break;
 		default:
 		    break;
@@ -449,6 +478,13 @@ main(int argc, char *argv[])
 	    } else if (resumes) {
 		resume(ctl_fd);
 		syslog(LOG_NOTICE, "system resumed from APM sleep");
+	    }
+	    if (powerchange) {
+		if (powerstatus)
+		    powerup(ctl_fd);
+		else
+		    powerdown(ctl_fd);
+		powerchange = 0;
 	    }
 	    ready--;
 	}
