@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.35 2004/07/23 21:01:09 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.36 2004/07/23 23:15:49 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -804,19 +804,18 @@ dartmodemtrans(sc, ip, ipcr)
 		port = B_PORT;
 		dcdstate = !(ip & IPDCDB);
 	} else {
-		printf("dartmodemtrans: unknown transition:\n");
-		printf("dartmodemtrans: ip=0x%x ipcr=0x%x\n",
+		printf("dartmodemtrans: unknown transition ip=0x%x ipcr=0x%x\n",
 		       ip, ipcr);
-		panic("dartmodemtrans");
+		return;
 	}
+
 	dart = &sc->sc_dart[port];
 	tp = dart->tty;
-
-	dprintf(("dartmodemtrans: tp=0x%x new DCD state: %s\n",
-		 tp, dcdstate ? "UP" : "DOWN"));
-
-	if (tp != NULL && (tp->t_state & TS_ISOPEN))
+	if (tp != NULL) {
+		dprintf(("dartmodemtrans: tp=0x%x new DCD state: %s\n",
+		    tp, dcdstate ? "UP" : "DOWN"));
 		ttymodem(tp, dcdstate);
+	}
 }
 
 int
