@@ -1730,6 +1730,7 @@
 ./usr/share/misc/airport
 ./usr/share/misc/ascii
 ./usr/share/misc/birthtoken
+./usr/share/misc/countrycodes
 ./usr/share/misc/eqnchar
 ./usr/share/misc/inter.phone
 ./usr/share/misc/mail.help
