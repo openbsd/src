@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.50 2002/02/05 15:41:24 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.51 2002/02/14 22:58:15 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -153,13 +153,6 @@ fork1(p1, exitsig, flags, stack, stacksize, func, arg, retval)
 	int s;
 	extern void endtsleep __P((void *));
 	extern void realitexpire __P((void *));
-
-#ifndef RFORK_FDSHARE
-	/* XXX - Too dangerous right now. */
-	if (flags & FORK_SHAREFILES) {
-		return (EOPNOTSUPP);
-	}
-#endif
 
 	/*
 	 * Although process entries are dynamically created, we still keep
