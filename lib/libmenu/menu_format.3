@@ -1,5 +1,35 @@
+.\" $OpenBSD: menu_format.3,v 1.4 1998/07/24 16:39:28 millert Exp $
+.\"
+.\"***************************************************************************
+.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\"                                                                          *
+.\" Permission is hereby granted, free of charge, to any person obtaining a  *
+.\" copy of this software and associated documentation files (the            *
+.\" "Software"), to deal in the Software without restriction, including      *
+.\" without limitation the rights to use, copy, modify, merge, publish,      *
+.\" distribute, distribute with modifications, sublicense, and/or sell       *
+.\" copies of the Software, and to permit persons to whom the Software is    *
+.\" furnished to do so, subject to the following conditions:                 *
+.\"                                                                          *
+.\" The above copyright notice and this permission notice shall be included  *
+.\" in all copies or substantial portions of the Software.                   *
+.\"                                                                          *
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+.\" OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+.\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+.\" IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+.\" DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+.\" OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+.\" THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+.\"                                                                          *
+.\" Except as contained in this notice, the name(s) of the above copyright   *
+.\" holders shall not be used in advertising or otherwise to promote the     *
+.\" sale, use or other dealings in this Software without prior written       *
+.\" authorization.                                                           *
+.\"***************************************************************************
+.\"
+.\" $From: menu_format.3x,v 1.5 1998/03/11 21:12:53 juergen Exp $
 '\" t
-.\" $OpenBSD: menu_format.3,v 1.3 1997/12/14 23:19:33 millert Exp $
 .TH menu_format 3 ""
 .SH NAME
 \fBmenu_format\fR - set and get menu sizes
@@ -12,8 +42,9 @@ int menu_format(const MENU *menu, int *rows, int *cols);
 .br
 .SH DESCRIPTION
 The function \fBset_menu_format\fR sets the maximum display size of the given
-window.  If this size is too small to display all menu items, the menu will be
-made scrollable.
+menu.  If this size is too small to display all menu items, the menu will be
+made scrollable. If this size is larger than the menus subwindow and the
+subwindow is too small to display all menu items, \fBpost_menu()\fR will fail.
 
 The default format is 16 rows, 1 column.  Calling \fBset_menu_format\fR with a
 null menu pointer will change this default.  A zero row or column argument to

@@ -1,4 +1,4 @@
-/*	$OpenBSD: m_new.c,v 1.4 1998/07/24 16:39:09 millert Exp $	*/
+/*	$OpenBSD: m_adabind.c,v 1.1 1998/07/24 16:38:52 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -33,77 +33,35 @@
  ****************************************************************************/
 
 /***************************************************************************
-* Module m_new                                                             *
-* Creation and destruction of new menus                                    *
+* Module m_adabind.c                                                       *
+* Helper routines to ease the implementation of an Ada95 binding to        *
+* ncurses. For details and copyright of the binding see the ../Ada95       *
+* subdirectory.                                                            *
 ***************************************************************************/
-
 #include "menu.priv.h"
 
-MODULE_ID("$From: m_new.c,v 1.7 1998/02/11 12:13:49 tom Exp $")
+MODULE_ID("$From: m_adabind.c,v 1.6 1998/02/11 12:13:50 tom Exp $")
 
-/*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  MENU *new_menu(ITEM **items)
-|   
-|   Description   :  Creates a new menu connected to the item pointer
-|                    array items and returns a pointer to the new menu.
-|                    The new menu is initialized with the values from the
-|                    default menu.
-|
-|   Return Values :  NULL on error
-+--------------------------------------------------------------------------*/
-MENU *new_menu(ITEM ** items)
+/* Prototypes for the functions in this module */
+void  _nc_ada_normalize_menu_opts (int *opt);
+void  _nc_ada_normalize_item_opts (int *opt);
+ITEM* _nc_get_item(const MENU*, int);
+
+void _nc_ada_normalize_menu_opts (int *opt)
 {
-  MENU *menu = (MENU *)calloc(1,sizeof(MENU));
-  
-  if (menu)
+  *opt = ALL_MENU_OPTS & (*opt);
+}
+
+void _nc_ada_normalize_item_opts (int *opt)
+{
+  *opt = ALL_ITEM_OPTS & (*opt);
+}
+
+ITEM* _nc_get_item(const MENU* menu, int idx) {
+  if (menu && menu->items && idx>=0 && (idx<menu->nitems))
     {
-      *menu = _nc_Default_Menu;
-      menu->rows = menu->frows;
-      menu->cols = menu->fcols;
-      if (items && *items)
-	{
-	  if (!_nc_Connect_Items(menu,items))
-	    {
-	      free(menu);
-	      menu = (MENU *)0;
-	    }
-	}
+      return menu->items[idx];
     }
-
-  if (!menu)
-    SET_ERROR(E_SYSTEM_ERROR);
-
-  return(menu);
+  else
+    return (ITEM*)0;
 }
-
-/*---------------------------------------------------------------------------
-|   Facility      :  libnmenu  
-|   Function      :  int free_menu(MENU *menu)  
-|   
-|   Description   :  Disconnects menu from its associated item pointer 
-|                    array and frees the storage allocated for the menu.
-|
-|   Return Values :  E_OK               - success
-|                    E_BAD_ARGUMENT     - Invalid menu pointer passed
-|                    E_POSTED           - Menu is already posted
-+--------------------------------------------------------------------------*/
-int free_menu(MENU * menu)
-{
-  if (!menu)
-    RETURN(E_BAD_ARGUMENT);
-  
-  if ( menu->status & _POSTED )
-    RETURN(E_POSTED);
-  
-  if (menu->items) 
-    _nc_Disconnect_Items(menu);
-  
-  if ((menu->status & _MARK_ALLOCATED) && menu->mark)
-    free(menu->mark);
-
-  free(menu);
-  RETURN(E_OK);
-}
-
-/* m_new.c ends here */
