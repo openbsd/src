@@ -13,7 +13,7 @@
 
 #include <sendmail.h>
 
-SM_RCSID("@(#)$Sendmail: conf.c,v 8.1051 2004/10/06 21:36:06 ca Exp $")
+SM_RCSID("@(#)$Sendmail: conf.c,v 8.1052 2004/12/15 22:45:55 ca Exp $")
 
 #include <sendmail/pathnames.h>
 #if NEWDB
@@ -6033,10 +6033,6 @@ char	*FFRCompileOptions[] =
 	/* Allow local (not just TCP) socket connection to server. */
 	"_FFR_DAEMON_NETUNIX",
 #endif /* _FFR_DAEMON_NETUNIX */
-#if _FFR_DEAL_WITH_ERROR_SSL
-	/* Deal with SSL errors by recognizing them as EOF. */
-	"_FFR_DEAL_WITH_ERROR_SSL",
-#endif /* _FFR_DEAL_WITH_ERROR_SSL */
 #if _FFR_DEPRECATE_MAILER_FLAG_I
 	/* What it says :-) */
 	"_FFR_DEPRECATE_MAILER_FLAG_I",

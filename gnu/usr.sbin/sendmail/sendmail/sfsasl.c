@@ -9,10 +9,16 @@
  */
 
 #include <sm/gen.h>
-SM_RCSID("@(#)$Sendmail: sfsasl.c,v 8.100 2004/11/23 18:32:32 ca Exp $")
+SM_RCSID("@(#)$Sendmail: sfsasl.c,v 8.101 2004/12/15 22:45:55 ca Exp $")
 #include <stdlib.h>
 #include <sendmail.h>
 #include <errno.h>
+
+/* allow to disable error handling code just in case... */
+#ifndef DEAL_WITH_ERROR_SSL
+# define DEAL_WITH_ERROR_SSL	1
+#endif /* ! DEAL_WITH_ERROR_SSL */
+
 #if SASL
 # include "sfsasl.h"
 
@@ -599,19 +605,19 @@ tls_read(fp, buf, size)
 */
 		break;
 	  case SSL_ERROR_SSL:
-#if _FFR_DEAL_WITH_ERROR_SSL
+#if DEAL_WITH_ERROR_SSL
 		if (r == 0 && errno == 0) /* out of protocol EOF found */
 			break;
-#endif /* _FFR_DEAL_WITH_ERROR_SSL */
+#endif /* DEAL_WITH_ERROR_SSL */
 		err = "generic SSL error";
 		if (LogLevel > 9)
 			tlslogerr("read");
 
-#if _FFR_DEAL_WITH_ERROR_SSL
+#if DEAL_WITH_ERROR_SSL
 		/* avoid repeated calls? */
 		if (r == 0)
 			r = -1;
-#endif /* _FFR_DEAL_WITH_ERROR_SSL */
+#endif /* DEAL_WITH_ERROR_SSL */
 		break;
 	}
 	if (err != NULL)
@@ -704,11 +710,11 @@ tls_write(fp, buf, size)
 		if (LogLevel > 9)
 			tlslogerr("write");
 
-#if _FFR_DEAL_WITH_ERROR_SSL
+#if DEAL_WITH_ERROR_SSL
 		/* avoid repeated calls? */
 		if (r == 0)
 			r = -1;
-#endif /* _FFR_DEAL_WITH_ERROR_SSL */
+#endif /* DEAL_WITH_ERROR_SSL */
 		break;
 	}
 	if (err != NULL)

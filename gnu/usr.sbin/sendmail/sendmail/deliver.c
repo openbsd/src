@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1998-2004 Sendmail, Inc. and its suppliers.
+ * Copyright (c) 1998-2005 Sendmail, Inc. and its suppliers.
  *	All rights reserved.
  * Copyright (c) 1983, 1995-1997 Eric P. Allman.  All rights reserved.
  * Copyright (c) 1988, 1993
@@ -14,7 +14,7 @@
 #include <sendmail.h>
 #include <sys/time.h>
 
-SM_RCSID("@(#)$Sendmail: deliver.c,v 8.981 2004/09/30 18:28:32 ca Exp $")
+SM_RCSID("@(#)$Sendmail: deliver.c,v 8.983 2005/01/07 17:43:22 ca Exp $")
 
 #if HASSETUSERCONTEXT
 # include <login_cap.h>
@@ -2900,17 +2900,6 @@ reconnect:	/* after switching to an encrypted connection */
 		smtpinit(m, mci, e, ONLY_HELO(mci->mci_flags));
 		CLR_HELO(mci->mci_flags);
 
-		/*
-		**  If a cached connection gave a 421 reply to the
-		**  RSET, the connection will be closed by now.
-		*/
-
-		if (mci->mci_state == MCIS_CLOSED)
-		{
-			rcode = EX_TEMPFAIL;
-			goto give_up;
-		}
-
 		if (IS_DLVR_RETURN(e))
 		{
 			/*
@@ -3809,7 +3798,10 @@ endmailer(mci, e, pv)
 
 	/* close output to mailer */
 	if (mci->mci_out != NULL)
+	{
 		(void) sm_io_close(mci->mci_out, SM_TIME_DEFAULT);
+		mci->mci_out = NULL;
+	}
 
 	/* copy any remaining input to transcript */
 	if (mci->mci_in != NULL && mci->mci_state != MCIS_ERROR &&
@@ -3836,8 +3828,10 @@ endmailer(mci, e, pv)
 
 	/* now close the input */
 	if (mci->mci_in != NULL)
+	{
 		(void) sm_io_close(mci->mci_in, SM_TIME_DEFAULT);
-	mci->mci_in = mci->mci_out = NULL;
+		mci->mci_in = NULL;
+	}
 	mci->mci_state = MCIS_CLOSED;
 
 	errno = save_errno;
