@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.15 2000/12/12 02:19:59 millert Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.16 2001/01/10 20:11:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.15 2000/12/12 02:19:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.16 2001/01/10 20:11:30 deraadt Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -200,6 +200,8 @@ ypgetnewpasswd(pw, old_pass)
 		} else
 			p = "";
 		*old_pass = strdup(p);
+		if (*old_pass == NULL)
+			pw_error(NULL, 1, 1);
 	}
 
 	pwd_tries = pwd_gettries(pw);
@@ -227,7 +229,10 @@ ypgetnewpasswd(pw, old_pass)
                 (void)printf("Couldn't generate salt.\n");
                 pw_error(NULL, 0, 0);
         }
-	return(strdup(crypt(buf, salt)));
+	p = strdup(crypt(buf, salt));
+	if (p == NULL)
+		pw_error(NULL, 1, 1);
+	return (p);
 }
 
 static char *
@@ -301,6 +306,8 @@ ypgetpwnam(nam)
 	if (__yplin)
 		free(__yplin);
 	__yplin = (char *)malloc(vallen + 1);
+	if (__yplin == NULL)
+		pw_error(NULL, 1, 1);
 	strncpy(__yplin, val, vallen);
 	__yplin[vallen] = '\0';
 	free(val);
