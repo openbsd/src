@@ -333,37 +333,42 @@ void RMD160Update(context, data, nbytes)
 
 	(void)memset(X, 0, sizeof(X));
 
-	if (context->buflen > 0) {
-		ofs = 64 - context->buflen;
-		if ( ofs > nbytes )
-			ofs = nbytes;
-		(void)memcpy(context->bbuffer + context->buflen, data, ofs);
+        if ( context->buflen + nbytes < 64 )
+        {
+                (void)memcpy(context->bbuffer + context->buflen, data, nbytes);
+                context->buflen += nbytes;
+        }
+        else
+        {
+                /* process first block */
+                ofs = 64 - context->buflen;
+                (void)memcpy(context->bbuffer + context->buflen, data, ofs);
 #if BYTE_ORDER == LITTLE_ENDIAN
-		(void)memcpy(X, context->bbuffer, sizeof(X));
+                (void)memcpy(X, context->bbuffer, sizeof(X));
 #else
-		for (j=0; j < 16; j++)
-			X[j] = BYTES_TO_DWORD(context->bbuffer + (4 * j));
+                for (j=0; j < 16; j++)
+                        X[j] = BYTES_TO_DWORD(context->bbuffer + (4 * j));
 #endif
-		RMD160Transform(context->state, X);
-		nbytes -= ofs;
-	}
+                RMD160Transform(context->state, X);
+                nbytes -= ofs;
 
-	/* process all complete blocks */
-	for (i = 0; i < (nbytes >> 6); i++) {
+                /* process remaining complete blocks */
+                for (i = 0; i < (nbytes >> 6); i++) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		(void)memcpy(X, data + (64 * i) + ofs, sizeof(X));
+                        (void)memcpy(X, data + (64 * i) + ofs, sizeof(X));
 #else
-		for (j=0; j < 16; j++)
-			X[j] = BYTES_TO_DWORD(data + (64 * i) + (4 * j) + ofs);
+                        for (j=0; j < 16; j++)
+                                X[j] = BYTES_TO_DWORD(data + (64 * i) + (4 * j) + ofs);
 #endif
-		RMD160Transform(context->state, X);
-	}
+                        RMD160Transform(context->state, X);
+                }
 
-	/*
-	 * Put bytes from data into context's buffer
-	 */
-	context->buflen = nbytes & 63;
-	memcpy(context->bbuffer, data + (64 * i) + ofs, context->buflen);
+                /*
+                 * Put last bytes from data into context's buffer
+                 */
+                context->buflen = nbytes & 63;
+                memcpy(context->bbuffer, data + (64 * i) + ofs, context->buflen);
+        }
 }
 
 /********************************************************************/

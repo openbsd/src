@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_rmd160.c,v 1.4 1998/06/02 16:12:40 janjaap Exp $       */
+/*       $OpenBSD: ip_rmd160.c,v 1.5 1998/09/09 22:34:28 janjaap Exp $       */
 /********************************************************************\
  *
  *      FILE:     rmd160.c
@@ -334,37 +334,42 @@ void RMD160Update(context, data, nbytes)
 
 	bzero(X, sizeof(X));
 
-	if (context->buflen > 0) {
-		ofs = 64 - context->buflen;
-		if ( ofs > nbytes )
-		  ofs = nbytes;
+        if ( context->buflen + nbytes < 64 )
+        {
+		bcopy(data, context->bbuffer + context->buflen, nbytes);
+                context->buflen += nbytes;
+        }
+        else
+        {
+                /* process first block */
+                ofs = 64 - context->buflen;
 		bcopy(data, context->bbuffer + context->buflen, ofs);
 #if BYTE_ORDER == LITTLE_ENDIAN
 		bcopy(context->bbuffer, X, sizeof(X));
 #else
-		for (j=0; j < 16; j++)
-			X[j] = BYTES_TO_DWORD(context->bbuffer + (4 * j));
+                for (j=0; j < 16; j++)
+                        X[j] = BYTES_TO_DWORD(context->bbuffer + (4 * j));
 #endif
-		RMD160Transform(context->state, X);
-		nbytes -= ofs;
-	}
+                RMD160Transform(context->state, X);
+                nbytes -= ofs;
 
-	/* process all complete blocks */
-	for (i = 0; i < (nbytes >> 6); i++) {
+                /* process remaining complete blocks */
+                for (i = 0; i < (nbytes >> 6); i++) {
 #if BYTE_ORDER == LITTLE_ENDIAN
-		bcopy(data + (64 * i) + ofs, X, sizeof(X));
+			bcopy(data + (64 * i) + ofs, X, sizeof(X));
 #else
-		for (j=0; j < 16; j++)
-			X[j] = BYTES_TO_DWORD(data + (64 * i) + (4 * j) + ofs);
+                        for (j=0; j < 16; j++)
+                                X[j] = BYTES_TO_DWORD(data + (64 * i) + (4 * j) + ofs);
 #endif
-		RMD160Transform(context->state, X);
-	}
+                        RMD160Transform(context->state, X);
+                }
 
-	/*
-	 * Put bytes from data into context's buffer
-	 */
-	context->buflen = nbytes & 63;
-	bcopy(data + (64 * i) + ofs, context->bbuffer, context->buflen);
+                /*
+                 * Put last bytes from data into context's buffer
+                 */
+                context->buflen = nbytes & 63;
+		bcopy(data + (64 * i) + ofs, context->bbuffer, context->buflen);
+        }
 }
 
 /********************************************************************/
