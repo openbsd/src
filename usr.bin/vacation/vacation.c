@@ -1,4 +1,4 @@
-/*	$OpenBSD: vacation.c,v 1.6 1997/07/29 02:08:40 bitblt Exp $	*/
+/*	$OpenBSD: vacation.c,v 1.7 1997/07/29 16:48:13 deraadt Exp $	*/
 /*	$NetBSD: vacation.c,v 1.7 1995/04/29 05:58:27 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)vacation.c	8.2 (Berkeley) 1/26/94";
 #endif
-static char rcsid[] = "$OpenBSD: vacation.c,v 1.6 1997/07/29 02:08:40 bitblt Exp $";
+static char rcsid[] = "$OpenBSD: vacation.c,v 1.7 1997/07/29 16:48:13 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -429,7 +429,7 @@ sendmessage(myname)
 	close(pvect[0]);
 	sfp = fdopen(pvect[1], "w");
 	fprintf(sfp, "To: %s\n", from);
-	fprintf(sfp, "From: %s\n, myname);
+	fprintf(sfp, "From: %s\n", myname);
 	while (fgets(buf, sizeof buf, mfp))
 		fputs(buf, sfp);
 	fclose(mfp);
