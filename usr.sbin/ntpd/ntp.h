@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.h,v 1.3 2004/06/02 10:08:59 henning Exp $ */
+/*	$OpenBSD: ntp.h,v 1.4 2004/06/05 12:29:15 alexander Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -16,6 +16,9 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+
+#ifndef _NTP_H_
+#define _NTP_H_
 
 /* Style borrowed from NTP ref/tcpdump and updated for SNTPv4 (RFC2030). */
 
@@ -135,13 +138,4 @@ struct ntp_msg {
 
 #define	JAN_1970	2208988800UL	/* 1970 - 1900 in seconds */
 
-/* prototypes */
-
-/* ntp_msg.c */
-void	get_ts(struct l_fixedpt *);
-int	ntp_getmsg(char *, ssize_t, struct ntp_msg *);
-int	ntp_sendmsg(int, struct sockaddr *, struct ntp_msg *, ssize_t, int);
-
-/* server.c */
-int	setup_listeners(struct servent *, struct ntpd_conf *);
-int	ntp_reply(int, struct sockaddr *, struct ntp_msg *, int);
+#endif /* _NTP_H_ */

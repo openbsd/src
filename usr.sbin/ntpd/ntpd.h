@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntpd.h,v 1.4 2004/06/02 10:08:59 henning Exp $ */
+/*	$OpenBSD: ntpd.h,v 1.5 2004/06/05 12:29:15 alexander Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,8 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <stdarg.h>
+
+#include "ntp.h"
 
 #define	NTPD_USER	"_ntp"
 #define	CONFFILE	"/etc/ntpd.conf"
@@ -134,3 +136,11 @@ int	 cmdline_symset(char *);
 int	 check_file_secrecy(int, const char *);
 int	 host(const char *, struct sockaddr *, u_int8_t *);
 
+/* ntp_msg.c */
+void	get_ts(struct l_fixedpt *);
+int	ntp_getmsg(char *, ssize_t, struct ntp_msg *);
+int	ntp_sendmsg(int, struct sockaddr *, struct ntp_msg *, ssize_t, int);
+
+/* server.c */
+int	setup_listeners(struct servent *, struct ntpd_conf *);
+int	ntp_reply(int, struct sockaddr *, struct ntp_msg *, int);
