@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd.c,v 1.44 1999/09/25 03:28:48 deraadt Exp $	*/
+/*	$OpenBSD: cd.c,v 1.45 1999/10/14 05:23:02 deraadt Exp $	*/
 /*	$NetBSD: cd.c,v 1.100 1997/04/02 02:29:30 mycroft Exp $	*/
 
 /*
@@ -88,6 +88,17 @@
 #define CD_BLOCK_OFFSET	150
 #define CD_FRAMES	75
 #define CD_SECS		60
+
+#define TOC_HEADER_LEN			0
+#define TOC_HEADER_STARTING_TRACK	2
+#define TOC_HEADER_ENDING_TRACK		3
+#define TOC_HEADER_SZ			4
+
+#define TOC_ENTRY_CONTROL_ADDR_TYPE	1
+#define TOC_ENTRY_TRACK			2
+#define TOC_ENTRY_MSF_LBA		4
+#define TOC_ENTRY_SZ			8
+
 
 struct cd_toc {
 	struct ioc_toc_header header;
@@ -1143,6 +1154,9 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	int spoofonly;
 {
 	char *errstring;
+	u_int8_t hdr[TOC_HEADER_SZ],  *ent, *toc = NULL;
+	u_int32_t lba, nlba;
+	int tocidx, i, n, len, is_data, data_track = -1;
 
 	bzero(lp, sizeof(struct disklabel));
 	bzero(clp, sizeof(struct cpu_disklabel));
@@ -1175,24 +1189,96 @@ cdgetdisklabel(dev, cd, lp, clp, spoofonly)
 	lp->d_bbsize = BBSIZE;
 	lp->d_sbsize = SBSIZE;
 
-	lp->d_partitions[RAW_PART].p_offset = 0;
-	lp->d_partitions[RAW_PART].p_size =
-	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
-	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
-	lp->d_npartitions = RAW_PART + 1;
-
 	lp->d_magic = DISKMAGIC;
 	lp->d_magic2 = DISKMAGIC;
 	lp->d_checksum = dkcksum(lp);
 
+	/* The raw partition is special.  */
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size = lp->d_secperunit;
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+	lp->d_npartitions = RAW_PART + 1;
+
 	/*
-	 * Call the generic disklabel extraction routine
+	 * Read the TOC and loop throught the individual tracks and lay them
+	 * out in our disklabel.  If there is a data track, call the generic
+	 * disklabel read routine.  XXX should we move all data tracks up front
+	 * before any other tracks?
 	 */
-	errstring = readdisklabel(CDLABELDEV(dev), cdstrategy, lp, clp,
-	    spoofonly);
-	if (errstring) {
-		/*printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);*/
+	if (cd_read_toc(cd, 0, 0, hdr, TOC_HEADER_SZ, 0))
 		return;
+	n = hdr[TOC_HEADER_ENDING_TRACK] - hdr[TOC_HEADER_STARTING_TRACK] + 1;
+	/* n + 1 because of leadout track */
+	len = TOC_HEADER_SZ + (n + 1) * TOC_ENTRY_SZ;
+	MALLOC(toc, u_int8_t *, len, M_TEMP, M_WAITOK);
+	if (cd_read_toc (cd, CD_LBA_FORMAT, 0, toc, len, 0))
+		goto done;
+
+	/* Create the partition table.  */
+	ent = toc + TOC_HEADER_SZ;
+	lba = ((cd->sc_link->quirks & ADEV_LITTLETOC) ?
+	    ent[TOC_ENTRY_MSF_LBA] | ent[TOC_ENTRY_MSF_LBA + 1] << 8 |
+	    ent[TOC_ENTRY_MSF_LBA + 2] << 16 |
+	    ent[TOC_ENTRY_MSF_LBA + 3] << 24 :
+	    ent[TOC_ENTRY_MSF_LBA] << 24 | ent[TOC_ENTRY_MSF_LBA + 1] << 16 |
+	    ent[TOC_ENTRY_MSF_LBA + 2] << 8 | ent[TOC_ENTRY_MSF_LBA + 3]);
+
+	i = 0;
+	for (tocidx = hdr[TOC_HEADER_STARTING_TRACK]; 
+	     tocidx <= hdr[TOC_HEADER_ENDING_TRACK]; 
+	     tocidx++) {
+		ent += TOC_ENTRY_SZ;
+		nlba = ((cd->sc_link->quirks & ADEV_LITTLETOC) ?
+			ent[TOC_ENTRY_MSF_LBA] |
+			ent[TOC_ENTRY_MSF_LBA + 1] << 8 |
+			ent[TOC_ENTRY_MSF_LBA + 2] << 16 |
+			ent[TOC_ENTRY_MSF_LBA + 3] << 24 :
+			ent[TOC_ENTRY_MSF_LBA] << 24 |
+			ent[TOC_ENTRY_MSF_LBA + 1] << 16 |
+			ent[TOC_ENTRY_MSF_LBA + 2] << 8 |
+			ent[TOC_ENTRY_MSF_LBA + 3]);
+		is_data = ent[TOC_ENTRY_CONTROL_ADDR_TYPE] & 4;
+
+		lp->d_partitions[i].p_fstype =
+			is_data ? FS_UNUSED : FS_OTHER;
+		lp->d_partitions[i].p_offset = lba;
+		lp->d_partitions[i].p_size = nlba - lba;
+		lba = nlba;
+
+		if (is_data) { 
+			if (data_track == -1)
+				data_track = i;
+
+			i++;
+			if (i == RAW_PART)
+				i++;
+
+			if (i >= MAXPARTITIONS)
+				break;
+		}
+	}
+
+	if (i < MAXPARTITIONS)
+		bzero(&lp->d_partitions[i], sizeof(lp->d_partitions[i]));
+
+	lp->d_npartitions = max(RAW_PART, i - 1) + 1;
+
+done:
+	if (toc)
+		FREE(toc, M_TEMP);
+
+	/* We have a data track, look in there for a real disklabel.  */
+	if (data_track != -1) {
+#if 0
+		/* This might not necessarily work */
+		errstring = readdisklabel(MAKECDDEV(major(dev), CDUNIT(dev), 
+		    data_track), cdstrategy, lp, clp, spoofonly);
+#else
+		errstring = readdisklabel(CDLABELDEV(dev),
+		    cdstrategy, lp, clp, spoofonly);
+#endif
+		/*if (errstring)
+			printf("%s: %s\n", cd->sc_dev.dv_xname, errstring);*/
 	}
 }
 
