@@ -1,5 +1,5 @@
 /*	$NetBSD: db_disasm.c,v 1.8 2001/06/12 05:31:44 simonb Exp $	*/
-/*	$OpenBSD: db_disasm.c,v 1.4 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.5 2003/02/20 16:48:25 drahn Exp $	*/
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
@@ -579,8 +579,8 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			u_int LI;
 			LI = extract_field(instr, 31 - 29, 24);
 			LI = LI << 2;
-			if (LI & 0x04000000) {
-				LI &= ~0x7ffffff;
+			if (LI & 0x02000000) {
+				LI |= ~0x03ffffff;
 			}
 			if ((instr & (1 << 1)) == 0) {
 				/* CHECK AA bit */
@@ -589,14 +589,14 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			db_find_sym_and_offset(LI, &name, &offset);
 			if (name) {
 				if (offset == 0) {
-				pstr += sprintf (pstr, "0x%x (%s)", addr + LI,
+				pstr += sprintf (pstr, "0x%x (%s)", LI,
 					name);
 				} else {
-				pstr += sprintf (pstr, "0x%x (%s+0x%x)", addr + LI,
+				pstr += sprintf (pstr, "0x%x (%s+0x%x)", LI,
 					name, offset);
 				}
 			} else {
-				pstr += sprintf (pstr, "0x%x", addr + LI);
+				pstr += sprintf (pstr, "0x%x", LI);
 			}
 		}
 		break;
@@ -622,14 +622,14 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			db_find_sym_and_offset(BD, &name, &offset);
 			if (name) {
 				if (offset == 0) {
-				pstr += sprintf (pstr, "0x%x (%s)", addr + BD,
+				pstr += sprintf (pstr, "0x%x (%s)", BD,
 					name);
 				} else {
-				pstr += sprintf (pstr, "0x%x (%s+0x%x)", addr + BD,
+				pstr += sprintf (pstr, "0x%x (%s+0x%x)", BD,
 					name, offset);
 				}
 			} else {
-				pstr += sprintf (pstr, "0x%x", addr + BD);
+				pstr += sprintf (pstr, "0x%x", BD);
 			}
 		}
 		break;
