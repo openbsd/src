@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_obio.c,v 1.1 2001/09/01 15:50:00 drahn Exp $	*/
+/*	$OpenBSD: if_wi_obio.c,v 1.2 2001/09/10 12:55:59 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -85,6 +85,7 @@ void	wi_stop			__P((struct wi_softc *));
 
 struct wi_obio_softc {
 	struct wi_softc sc_wi;
+	u_int keywest;
 };
 
 struct cfattach wi_obio_ca = {
@@ -121,6 +122,8 @@ wi_obio_attach(parent, self, aux)
 	if (bus_space_map(sc->wi_btag, ca->ca_reg[0], ca->ca_reg[1], 0, &sc->wi_bhandle)) {
 		printf("cant' map i/o space\n");
 	}
+	/* FSCKING hackery */
+	psc->keywest = (u_int) mapiodev(0x80000000, 0x1d000);
 
 	/* Establish the interrupt. */
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_NET,
@@ -194,7 +197,8 @@ int
 wi_obio_enable(sc)
 	struct wi_softc *sc;
 {
-	const u_int keywest = 0x80000000;	/* XXX */
+	struct wi_obio_softc *psc = (struct wi_obio_softc *)sc;
+	const u_int keywest = psc->keywest;	/* XXX */
 	const u_int fcr2 = keywest + 0x40;
 	const u_int gpio = keywest + 0x6a;
 	const u_int extint_gpio = keywest + 0x58;
@@ -236,7 +240,8 @@ void
 wi_obio_disable(sc)
 	struct wi_softc *sc;
 {
-	const u_int keywest = 0x80000000;	/* XXX */
+	struct wi_obio_softc *psc = (struct wi_obio_softc *)sc;
+	const u_int keywest = psc->keywest;	/* XXX */
 	const u_int fcr2 = keywest + 0x40;
 	u_int x;
 
