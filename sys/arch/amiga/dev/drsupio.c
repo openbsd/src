@@ -1,4 +1,4 @@
-/*	$OpenBSD: drsupio.c,v 1.2 2002/03/14 01:26:28 millert Exp $ */
+/*	$OpenBSD: drsupio.c,v 1.3 2002/06/11 03:25:42 miod Exp $ */
 /*	$NetBSD: drsupio.c,v 1.1 1997/08/27 19:32:53 is Exp $ */
 
 /*
@@ -38,7 +38,6 @@
 
 #include <sys/types.h>
 
-#include <sys/conf.h>
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/param.h>

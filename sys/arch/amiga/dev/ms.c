@@ -1,4 +1,4 @@
-/*	$OpenBSD: ms.c,v 1.6 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: ms.c,v 1.7 2002/06/11 03:25:43 miod Exp $	*/
 /*	$NetBSD: ms.c,v 1.14 1996/12/23 09:10:25 veego Exp $	*/
 
 /*
@@ -70,7 +70,6 @@
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/device.h>
 
-#include <sys/conf.h>
 #include <machine/conf.h>
 
 void msattach(struct device *, struct device *, void *);

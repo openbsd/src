@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite.c,v 1.15 2002/03/14 01:26:29 millert Exp $  */
+/*	$OpenBSD: ite.c,v 1.16 2002/06/11 03:25:42 miod Exp $  */
 /*	$NetBSD: ite.c,v 1.47 1996/12/23 09:10:20 veego Exp $	*/
 
 /*
@@ -69,10 +69,9 @@
 #include <amiga/dev/grfioctl.h>
 #include <amiga/dev/grfvar.h>
 
-#include <machine/cpu.h>	/* for is_draco() */
-
-#include <sys/conf.h>
 #include <machine/conf.h>
+#include <machine/cons.h>
+#include <machine/cpu.h>	/* for is_draco() */
 
 #include "grfcc.h"
 #include "ite.h"

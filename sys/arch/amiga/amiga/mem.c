@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.18 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: mem.c,v 1.19 2002/06/11 03:25:31 miod Exp $	*/
 /*	$NetBSD: mem.c,v 1.18 1997/02/02 07:17:14 thorpej Exp $	*/
 
 /*
@@ -46,13 +46,13 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/systm.h>
 #include <sys/uio.h>
 #include <sys/malloc.h>
 #include <sys/proc.h>
 
+#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <uvm/uvm_extern.h>

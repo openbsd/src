@@ -1,4 +1,4 @@
-/*	$OpenBSD: msc.c,v 1.8 2002/03/14 01:26:29 millert Exp $ */
+/*	$OpenBSD: msc.c,v 1.9 2002/06/11 03:25:43 miod Exp $ */
 /*	$NetBSD: msc.c,v 1.13 1996/12/23 09:10:26 veego Exp $	*/
 
 /*
@@ -76,7 +76,6 @@
 #include <amiga/amiga/cia.h>
 #include <amiga/amiga/cc.h>
 
-#include <sys/conf.h>
 #include <machine/conf.h>
 
 /* 6502 code for A2232 card */

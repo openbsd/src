@@ -1,4 +1,4 @@
-/*	$OpenBSD: view.c,v 1.6 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: view.c,v 1.7 2002/06/11 03:25:43 miod Exp $	*/
 /*	$NetBSD: view.c,v 1.16 1996/10/13 03:07:35 christos Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include <amiga/dev/viewioctl.h>
 #include <amiga/dev/viewvar.h>
 
-#include <sys/conf.h>
 #include <machine/conf.h>
 
 #include "view.h"

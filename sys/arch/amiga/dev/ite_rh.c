@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_rh.c,v 1.3 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: ite_rh.c,v 1.4 2002/06/11 03:25:42 miod Exp $	*/
 /*	$NetBSD: ite_rh.c,v 1.7 1996/04/23 22:53:05 veego Exp $	*/
 
 /*
@@ -35,13 +35,13 @@
 #if NGRFRH > 0
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
 #include <sys/tty.h>
 #include <sys/systm.h>
 #include <dev/cons.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <amiga/amiga/device.h>
 #include <amiga/dev/grfioctl.h>

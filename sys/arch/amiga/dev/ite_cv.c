@@ -1,4 +1,4 @@
-/*	$OpenBSD: ite_cv.c,v 1.4 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: ite_cv.c,v 1.5 2002/06/11 03:25:42 miod Exp $	*/
 /*	$NetBSD: ite_cv.c,v 1.3 1996/05/19 21:05:58 veego Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 #if NGRFCV > 0
 
 #include <sys/param.h>
-#include <sys/conf.h>
 #include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/ioctl.h>
@@ -52,6 +51,7 @@
 #include <sys/termios.h>
 #include <sys/malloc.h>
 #include <dev/cons.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 #include <amiga/dev/itevar.h>
 #include <amiga/dev/iteioctl.h>

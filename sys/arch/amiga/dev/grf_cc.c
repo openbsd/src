@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_cc.c,v 1.10 2002/03/14 01:26:28 millert Exp $	*/
+/*	$OpenBSD: grf_cc.c,v 1.11 2002/06/11 03:25:42 miod Exp $	*/
 /*	$NetBSD: grf_cc.c,v 1.23 1996/12/23 09:10:02 veego Exp $	*/
 
 /*
@@ -56,7 +56,6 @@
 #include <amiga/dev/grfabs_reg.h>
 #include <amiga/dev/viewioctl.h>
 
-#include <sys/conf.h>
 #include <machine/conf.h>
 #include <uvm/uvm_extern.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: joy.c,v 1.2 2002/03/14 01:26:29 millert Exp $ */
+/*	$OpenBSD: joy.c,v 1.3 2002/06/11 03:25:42 miod Exp $ */
 
 /*
  * Copyright (c) 2000 Marc Espie.
@@ -30,7 +30,6 @@
 #include <sys/device.h>
 #include <sys/systm.h>
 #include <machine/joystick.h>
-#include <sys/conf.h>
 #include <machine/conf.h>
 #include <amiga/amiga/device.h>
 #include <amiga/amiga/custom.h>

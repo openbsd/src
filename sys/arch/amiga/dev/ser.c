@@ -1,4 +1,4 @@
-/*	$OpenBSD: ser.c,v 1.12 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: ser.c,v 1.13 2002/06/11 03:25:43 miod Exp $	*/
 /*	$NetBSD: ser.c,v 1.43 1998/01/12 10:40:11 thorpej Exp $	*/
 
 /*
@@ -52,7 +52,6 @@
 #include <sys/kernel.h>
 #include <sys/syslog.h>
 #include <sys/queue.h>
-#include <sys/conf.h>
 
 #include <machine/cpu.h>
 

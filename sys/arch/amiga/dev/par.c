@@ -1,4 +1,4 @@
-/*	$OpenBSD: par.c,v 1.9 2002/03/14 01:26:29 millert Exp $	*/
+/*	$OpenBSD: par.c,v 1.10 2002/06/11 03:25:43 miod Exp $	*/
 /*	$NetBSD: par.c,v 1.16 1996/12/23 09:10:28 veego Exp $	*/
 
 /*
@@ -57,7 +57,6 @@
 #include <amiga/amiga/cia.h>
 #include <amiga/dev/parioctl.h>
 
-#include <sys/conf.h>
 #include <machine/conf.h>
 
 struct	par_softc {
