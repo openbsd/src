@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.200 2004/06/25 10:10:14 itojun Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.201 2004/07/11 15:54:21 itojun Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1367,7 +1367,7 @@ void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct pfi_kif *, u_short *,
 	    struct pf_pdesc *);
 int	pf_normalize_ip6(struct mbuf **, int, struct pfi_kif *, u_short *,
-	    struct pf_pdesc *, struct mbuf **);
+	    struct pf_pdesc *);
 int	pf_normalize_tcp(int, struct pfi_kif *, struct mbuf *, int, int, void *,
 	    struct pf_pdesc *);
 void	pf_normalize_tcp_cleanup(struct pf_state *);

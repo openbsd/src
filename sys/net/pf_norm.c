@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.94 2004/07/05 00:15:20 henning Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.95 2004/07/11 15:54:21 itojun Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -56,7 +56,6 @@
 
 #ifdef INET6
 #include <netinet/ip6.h>
-#include <netinet6/ip6_var.h>
 #endif /* INET6 */
 
 #include <net/pfvar.h>
@@ -105,25 +104,6 @@ RB_HEAD(pf_frag_tree, pf_fragment)	pf_frag_tree, pf_cache_tree;
 RB_PROTOTYPE(pf_frag_tree, pf_fragment, fr_entry, pf_frag_compare);
 RB_GENERATE(pf_frag_tree, pf_fragment, fr_entry, pf_frag_compare);
 
-#ifdef INET6
-struct pf_fragment6 {
-	TAILQ_ENTRY(pf_fragment6) next;
-
-	/* packets received, connected by m->m_nextpkt */
-	struct mbuf *m;
-
-	/* search key */
-	struct in6_addr src, dst;
-	u_int32_t ident;
-
-	struct timeout lifetime;
-};
-
-TAILQ_HEAD(pf_frag_tree6, pf_fragment6) pf_frag_tree6;
-
-struct pool pf_fragment6_pl;
-#endif
-
 /* Private prototypes */
 void			 pf_ip2key(struct pf_fragment *, struct ip *);
 void			 pf_remove_fragment(struct pf_fragment *);
@@ -136,13 +116,6 @@ struct mbuf		*pf_fragcache(struct mbuf **, struct ip*,
 			    struct pf_fragment **, int, int, int *);
 int			 pf_normalize_tcpopt(struct pf_rule *, struct mbuf *,
 			    struct tcphdr *, int);
-#ifdef INET6
-void			 pf_ip2key6(struct pf_fragment6 *, struct ip6_hdr *,
-			    struct ip6_frag *);
-struct pf_fragment6	*pf_find_fragment6(u_int32_t, struct in6_addr *,
-			    struct in6_addr *);
-static void		 pf_frag6_expire(void *);
-#endif
 
 #define	DPFPRINTF(x) do {				\
 	if (pf_status.debug >= PF_DEBUG_MISC) {		\
@@ -169,11 +142,6 @@ pf_normalize_init(void)
 	    NULL);
 	pool_init(&pf_state_scrub_pl, sizeof(struct pf_state_scrub), 0, 0, 0,
 	    "pfstscr", NULL);
-
-#ifdef INET6
-	pool_init(&pf_fragment6_pl, sizeof(struct pf_fragment6), 0, 0, 0,
-	    "pffrag6", NULL);
-#endif
 
 	pool_sethiwat(&pf_frag_pl, PFFRAG_FRAG_HIWAT);
 	pool_sethardlimit(&pf_frent_pl, PFFRAG_FRENT_HIWAT, NULL, 0);
@@ -1058,24 +1026,11 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct pfi_kif *kif, u_short *reason,
 }
 
 #ifdef INET6
-struct pf_fragment6 *
-pf_find_fragment6(u_int32_t ident, struct in6_addr *src, struct in6_addr *dst)
-{
-	struct pf_fragment6 *p;
-
-	TAILQ_FOREACH(p, &pf_frag_tree6, next) {
-		if (p->ident == ident && IN6_ARE_ADDR_EQUAL(&p->src, src) &&
-		    IN6_ARE_ADDR_EQUAL(&p->dst, dst))
-			return p;
-	}
-	return NULL;
-}
-
 int
 pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
-    u_short *reason, struct pf_pdesc *pd, struct mbuf **tree)
+    u_short *reason, struct pf_pdesc *pd)
 {
-	struct mbuf		*m = *m0, *n;
+	struct mbuf		*m = *m0;
 	struct pf_rule		*r;
 	struct ip6_hdr		*h = mtod(m, struct ip6_hdr *);
 	int			 off;
@@ -1084,18 +1039,11 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 	struct ip6_opt_jumbo	 jumbo;
 	struct ip6_frag		 frag;
 	u_int32_t		 jumbolen = 0, plen;
+	u_int16_t		 fragoff = 0;
 	int			 optend;
 	int			 ooff;
 	u_int8_t		 proto;
-	int			 protooff;
 	int			 terminal;
-	int			 nxt;
-	struct pf_fragment6	*frag6;
-
-#if 1
-	if (dir == PF_FORWARD)
-		return (PF_PASS);
-#endif
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_SCRUB].active.ptr);
 	while (r != NULL) {
@@ -1132,19 +1080,10 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 
 	off = sizeof(struct ip6_hdr);
 	proto = h->ip6_nxt;
-	protooff = offsetof(struct ip6_hdr, ip6_nxt);
 	terminal = 0;
 	do {
 		switch (proto) {
 		case IPPROTO_FRAGMENT:
-			if (m_tag_find(m, PACKET_TAG_PF_FRAGCACHE, NULL)
-			    != NULL) {
-				/*
-				 * the fragment have already passed the
-				 * "scrub in".  no need to go to reass code
-				 */
-				goto frag_scrub;
-			}
 			goto fragment;
 			break;
 		case IPPROTO_AH:
@@ -1158,7 +1097,6 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 			else
 				off += (ext.ip6e_len + 1) * 8;
 			proto = ext.ip6e_nxt;
-			protooff = off + offsetof(struct ip6_ext, ip6e_nxt);
 			break;
 		case IPPROTO_HOPOPTS:
 			if (!pf_pull_hdr(m, off, &ext, sizeof(ext), NULL,
@@ -1205,7 +1143,6 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 
 			off = optend;
 			proto = ext.ip6e_nxt;
-			protooff = off + offsetof(struct ip6_ext, ip6e_nxt);
 			break;
 		default:
 			terminal = 1;
@@ -1227,53 +1164,21 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 	if (r->min_ttl && h->ip6_hlim < r->min_ttl)
 		h->ip6_hlim = r->min_ttl;
 
- frag_scrub:
 	return (PF_PASS);
 
  fragment:
-	/* jumbo payload packets cannot be fragmented */
-	plen = ntohs(h->ip6_plen);
-	if (plen == 0 || jumbolen)
+	if (ntohs(h->ip6_plen) == 0 || jumbolen)
 		goto drop;
-
-	m->m_nextpkt = NULL;
+	plen = ntohs(h->ip6_plen);
 
 	if (!pf_pull_hdr(m, off, &frag, sizeof(frag), NULL, NULL, AF_INET6))
 		goto shortpkt;
+	fragoff = ntohs(frag.ip6f_offlg & IP6F_OFF_MASK);
+	if (fragoff + (plen - off - sizeof(frag)) > IPV6_MAXPACKET)
+		goto badfrag;
 
-	frag6 = pf_find_fragment6(frag.ip6f_ident, &h->ip6_src, &h->ip6_dst);
-	if (frag6 == NULL) {
-		/* fresh fragment id/src/dst tuple */
-		frag6 = pool_get(&pf_fragment6_pl, PR_NOWAIT);
-		bzero(frag6, sizeof(*frag6));
-		frag6->ident = frag.ip6f_ident;
-		frag6->src = h->ip6_src;
-		frag6->dst = h->ip6_dst;
-		timeout_set(&frag6->lifetime, pf_frag6_expire, frag6);
-		timeout_add(&frag6->lifetime, hz * 60);
-		TAILQ_INSERT_HEAD(&pf_frag_tree6, frag6, next);
-	} else
-		; /* i saw this id/src/dst tuple in the past */
-
-	/* to be passed to the caller as is */
-	n = m_copym(m, 0, M_COPYALL, M_DONTWAIT);
-	if (n) {
-		n->m_nextpkt = frag6->m;
-		frag6->m = n;
-	}
-	n = NULL;
-
-	nxt = frag6_input(m0, &off, IPPROTO_FRAGMENT);
-	if (nxt == IPPROTO_DONE) {
-		*m0 = m = NULL;
-		goto drop;
-	}
-
-	TAILQ_REMOVE(&pf_frag_tree6, frag6, next);
-	*tree = frag6->m;
-	timeout_del(&frag6->lifetime);
-	pool_put(&pf_fragment6_pl, frag6);
-
+	/* do something about it */
+	/* remember to set pd->flags |= PFDESC_IP_REAS */
 	return (PF_PASS);
 
  shortpkt:
@@ -1287,22 +1192,12 @@ pf_normalize_ip6(struct mbuf **m0, int dir, struct pfi_kif *kif,
 	if (r != NULL && r->log)
 		PFLOG_PACKET(kif, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
 	return (PF_DROP);
-}
 
-static void
-pf_frag6_expire(void *arg)
-{
-	struct pf_fragment6 *frag6 = (struct pf_fragment6 *)arg;
-	struct mbuf *n;
-
-	TAILQ_REMOVE(&pf_frag_tree6, frag6, next);
-
-	for (; frag6->m; frag6->m = n) {
-		n = frag6->m->m_nextpkt;
-		frag6->m->m_nextpkt = NULL;
-		m_freem(frag6->m);
-	}
-	pool_put(&pf_fragment6_pl, frag6);
+ badfrag:
+	REASON_SET(reason, PFRES_FRAG);
+	if (r != NULL && r->log)
+		PFLOG_PACKET(kif, h, m, AF_INET6, dir, *reason, r, NULL, NULL);
+	return (PF_DROP);
 }
 #endif /* INET6 */
 
