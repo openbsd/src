@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.279 2000/07/07 18:15:27 chris Exp $
+	$OpenBSD: pcidevs,v 1.280 2000/07/11 20:12:53 marc Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1366,6 +1366,10 @@ product S3 SAVAGE3D_M		0x8a21	Savage 3DM
 product S3 SAVAGE4		0x8a22	Savage 4
 product S3 VIRGE_MX		0x8c01	ViRGE MX
 product S3 VIRGE_MXP		0x8c03	ViRGE MXP
+product S3 SAVAGE_MXMV		0x8c10	Savage/MX-MV
+product S3 SAVAGE_MX		0x8c11	Savage/MX
+product S3 SAVAGE_IXMV		0x8c12	Savage/IX-MV
+product S3 SAVAGE_IX		0x8c13	Savage/IX
 product S3 SONICVIBES		0xca00	SonicVibes
 
 /* Schneider & Koch (SysKonnect) */
