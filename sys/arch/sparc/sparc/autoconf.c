@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.34 2000/02/22 19:27:59 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.35 2000/07/14 20:27:32 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1305,23 +1305,23 @@ findzs(zs)
 
 #if defined(SUN4C) || defined(SUN4M)
 	if (CPU_ISSUN4COR4M) {
-		register int node, addr;
+		register int node;
 
 		node = firstchild(findroot());
 		if (CPU_ISSUN4M) { /* zs is in "obio" tree on Sun4M */
 			node = findnode(node, "obio");
 			if (!node)
-			    panic("findzs: no obio node");
+				panic("findzs: no obio node");
 			node = firstchild(node);
 		}
+		printf("[zs%d]", zs);
 		while ((node = findnode(node, "zs")) != 0) {
-			if (getpropint(node, "slave", -1) == zs) {
-				if ((addr = getpropint(node, "address", 0)) == 0)
-					panic("findzs: zs%d not mapped by PROM", zs);
-				return ((void *)addr);
-			}
+			if (getpropint(node, "slave", -1) == zs)
+				return ((void *)getpropint(node, "address", 0));
 			node = nextsibling(node);
 		}
+		printf("huh");
+		return (NULL);
 	}
 #endif
 	panic("findzs: cannot find zs%d", zs);
