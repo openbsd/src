@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.25 2001/09/18 01:50:44 millert Exp $ */
+/* $OpenBSD: user.c,v 1.26 2001/11/08 23:26:45 millert Exp $ */
 /* $NetBSD: user.c,v 1.40 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -344,9 +344,9 @@ creategid(char *group, int gid, char *name)
 		return 0;
 	}
 	while ((cc = fread(buf, sizeof(char), sizeof(buf), from)) > 0) {
-		if (fwrite(buf, sizeof(char), cc, to) != cc) {
+		if (fwrite(buf, cc, 1, to) <= 0) {
 			(void) fclose(from);
-			(void) close(fd);
+			(void) fclose(to);
 			(void) unlink(f);
 			warn("can't create gid: short write to `%s'", f);
 			return 0;
@@ -423,9 +423,9 @@ modify_gid(char *group, char *newent)
 				(void) strlcpy(buf, newent, sizeof(buf));
 			}
 		}
-		if (fwrite(buf, sizeof(char), cc, to) != cc) {
+		if (fwrite(buf, cc, 1, to) <= 0) {
 			(void) fclose(from);
-			(void) close(fd);
+			(void) fclose(to);
 			(void) unlink(f);
 			warn("can't create gid: short write to `%s'", f);
 			return 0;
@@ -452,10 +452,7 @@ append_group(char *user, int ngroups, char **groups)
 	char		buf[LINE_MAX];
 	char		f[MaxFileNameLen];
 	char		*colon;
-	int		groupc;
-	int		entc;
 	int		fd;
-	int		nc;
 	int		cc;
 	int		i;
 	int		j;
@@ -508,29 +505,27 @@ append_group(char *user, int ngroups, char **groups)
 			warn("badly formed entry `%s'", buf);
 			continue;
 		}
-		entc = (int)(colon - buf);
 		for (i = 0 ; i < ngroups ; i++) {
-			if ((groupc = strlen(groups[i])) == 0) {
-				continue;
-			}
-			if (cc >= sizeof(buf)) {
-				warn("line `%s' too long, skipping", buf);
-				continue;
-			}
-			if (entc == groupc && strncmp(groups[i], buf, entc) == 0) {
-				if ((nc = snprintf(&buf[cc - 1],
-						sizeof(buf) - cc + 1,
-						"%s%s\n",
-						(buf[cc - 2] == ':') ? "" : ",",
-						user)) >= sizeof(buf) - cc + 1) {
-					warnx("Warning: group `%s' entry too long", groups[i]);
+			if (strncmp(groups[i], buf, colon - buf) == 0) {
+				while (isspace(buf[cc - 1]))
+					cc--;
+				buf[(j = cc)] = '\0';
+				if (*(colon + 1) != '\0')
+					strlcat(buf, ",", sizeof(buf));
+				cc = strlcat(buf, user, sizeof(buf)) + 1;
+				if (cc >= sizeof(buf)) {
+					warnx("Warning: group `%s' would "
+					    "become too long, not modifying",
+					    groups[i]);
+					cc = j + 1;
 				}
-				cc += nc - 1;
+				buf[cc - 1] = '\n';
+				buf[cc] = '\0';
 			}
 		}
-		if (fwrite(buf, sizeof(char), cc, to) != cc) {
+		if (fwrite(buf, cc, 1, to) <= 0) {
 			(void) fclose(from);
-			(void) close(fd);
+			(void) fclose(to);
 			(void) unlink(f);
 			warn("can't create gid: short write to `%s'", f);
 			return 0;
