@@ -68,11 +68,15 @@
  * use one of the two `wasted' pages at KERNBASE+_MAXNBPG (see locore.s).
  */
 
+
 #ifndef IODEV_0
 #define	IODEV_0	0xfe000000	/* must match VM_MAX_KERNEL_ADDRESS */
 
 #define _MAXNBPG	8192	/* fixed VAs, independent of actual NBPG */
 #define _MAXNCPU	4	/* fixed VA allocation allows 4 CPUs */
+
+/* [4c:] interrupt register as described above */
+#define	INTRREG_VA	(    KERNBASE + _MAXNBPG)		/* [4c] */
 
 /* [4m:] interrupt and counter registers take (1 + NCPU) pages. */
 

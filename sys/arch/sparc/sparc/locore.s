@@ -276,10 +276,11 @@ _msgbuf = KERNBASE
  * for this, wasting a page of physical memory.
  *
  * This doesn't work for the Sun4M, which can have 5 or more pages of
- * registers. Thus we use a reserved piece of the virtual address space, set
- * up in bootstrap().
+ * registers, a system register and one for each processor.  Thus we use
+ * a reserved piece of the virtual address space, set up in bootstrap().
  */
-IE_reg_addr = KERNBASE + 8192		! this page not used; points to IEreg
+
+IE_reg_addr = INTRREG_VA	! KERNBASE + 8192 - points to IEreg
 
 /*
  * Each trap has room for four instructions, of which one perforce must
