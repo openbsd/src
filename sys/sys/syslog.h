@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslog.h,v 1.5 1998/02/10 18:41:57 deraadt Exp $	*/
+/*	$OpenBSD: syslog.h,v 1.6 2001/10/24 08:16:42 jjbg Exp $	*/
 /*	$NetBSD: syslog.h,v 1.14 1996/04/03 20:46:44 christos Exp $	*/
 
 /*
@@ -35,6 +35,9 @@
  *
  *	@(#)syslog.h	8.1 (Berkeley) 6/2/93
  */
+
+#ifndef _SYS_SYSLOG_H_
+#define _SYS_SYSLOG_H_
 
 #define	_PATH_LOG	"/dev/log"
 
@@ -144,6 +147,20 @@ CODE facilitynames[] = {
 };
 #endif
 
+/* Used by reentrant functions */
+
+struct syslog_data {
+	int	log_file;
+	int	connected;
+	int	opened;
+	int	log_stat;
+	const char 	*log_tag;
+	int 	log_fac;
+	int 	log_mask;
+};
+
+#define SYSLOG_DATA_INIT {-1, 0, 0, 0, NULL, LOG_USER, 0xff}
+
 #ifdef _KERNEL
 #define	LOG_PRINTF	-1	/* pseudo-priority to indicate use of printf */
 #endif
@@ -186,6 +203,13 @@ int	setlogmask __P((int));
 void	syslog __P((int, const char *, ...))
     __attribute__((__format__(__printf__,2,3)));
 void	vsyslog __P((int, const char *, _BSD_VA_LIST_));
+void	closelog_r __P((struct syslog_data *));
+void	openlog_r __P((const char *, int, int, struct syslog_data *));
+int	setlogmask_r __P((int, struct syslog_data *));
+void	syslog_r __P((int, struct syslog_data *, const char *, ...))
+     __attribute__((__format__(__printf__,3,4)));
+void	vsyslog_r __P((int, struct syslog_data *, const char *, 
+     _BSD_VA_LIST_));
 __END_DECLS
 
 #else /* !_KERNEL */
@@ -198,3 +222,5 @@ int	addlog __P((const char *, ...))
 void	logwakeup __P((void));
 
 #endif /* !_KERNEL */
+#endif /* !_SYS_SYSLOG_H_ */
+

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslog.3,v 1.12 2001/07/27 16:41:20 marc Exp $
+.\"	$OpenBSD: syslog.3,v 1.13 2001/10/24 08:16:42 jjbg Exp $
 .\"
 .\" Copyright (c) 1985, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -36,10 +36,15 @@
 .Os
 .Sh NAME
 .Nm syslog ,
+.Nm syslog_r,
 .Nm vsyslog ,
+.Nm vsyslog_r,
 .Nm openlog ,
+.Nm openlog_r,
 .Nm closelog ,
-.Nm setlogmask
+.Nm closelog_r,
+.Nm setlogmask,
+.Nm setlogmask_r
 .Nd control system log
 .Sh SYNOPSIS
 .Fd #include <syslog.h>
@@ -47,13 +52,36 @@
 .Ft void
 .Fn syslog "int priority" "const char *message" "..."
 .Ft void
+.Fn syslog_r "int priority" "struct syslog_data *data" "const char *message" "..."
+.Ft void
 .Fn vsyslog "int priority" "const char *message" "va_list args"
+.Ft void
+.Fn vsyslog_r "int priority" "struct syslog_data *data" "const char *message" "va_list args"
 .Ft void
 .Fn openlog "const char *ident" "int logopt" "int facility"
 .Ft void
+.Fn openlog_r "const char *ident" "int logopt" "int facility" "struct syslog_data *data"
+.Ft void
 .Fn closelog void
+.Ft void
+.Fn closelog_r "struct syslog_data *data"
 .Ft int
 .Fn setlogmask "int maskpri"
+.Ft int
+.Fn setlogmask_r "int maskpri" "struct syslog_data *data"
+.Bd -literal
+
+struct syslog_data {
+        int     log_file;
+        int     connected;
+        int     opened;
+        int     log_stat;
+        const char      *log_tag;
+        int     log_fac;
+        int     log_mask;
+};
+
+#define SYSLOG_DATA_INIT {-1, 0, 0, 0, NULL, LOG_USER, 0xff}
 .Sh DESCRIPTION
 The
 .Fn syslog
@@ -74,6 +102,39 @@ message (as denoted by the global variable
 see
 .Xr strerror 3 ) .
 A trailing newline is added if none is present.
+.Pp
+The
+.Fn syslog_r 
+function is a reentrant version of the
+.Xr syslog 3
+function. It takes a pointer to a 
+.Fa syslog_data
+structure which is used to store
+information. This parameter must be initialized before
+.Fn syslog_r
+is called. The SYSLOG_DATA_INIT constant is used for this purpose. 
+The 
+.Fa syslog_data
+structure is composed of the following elements:
+.Bl -tag -width connected
+.It Dv log_file
+contains the file descriptor of the file where the message is logged.
+.It Dv connected
+indicates if connect has been done
+.It Dv opened
+indicates if 
+.Xr openlog_r 3 
+has been called.
+.It Dv log_stat
+status bits, set by
+.Xr openlog_r 3
+.It Dv log_tag
+string to tag the entry with
+.It Dv log_fac
+facility code
+.It Dv log_mask
+mask of priorities to be logged
+.El
 .Pp
 The
 .Fn vsyslog
@@ -115,6 +176,16 @@ Messages that contain information
 normally of use only when debugging a program.
 .El
 .Pp
+The
+.Fn vsyslog_r
+is used the same way than 
+.Fn vsyslog
+except than it takes an additional pointer on a
+.Fa syslog_data
+structure. It is a reentrant version of the 
+.Fn vsyslog 
+function described above.
+.Pp 
 The
 .Fn openlog
 function provides for more specialized processing of the messages sent by
@@ -210,8 +281,22 @@ through
 .El
 .Pp
 The
+.Fn openlog_r
+function is the reentrant version of the 
+.Fn openlog 
+function. It takes an additional pointer on a 
+.Fa syslog_data
+structure. This function must be used in conjunction with the other
+reentrant functions. 
+.Pp
+The
 .Fn closelog
-function can be used to close the log file.
+function can be used to close the log file. 
+.Fn closelog_r
+do the same thing but in a reentrant way and takes an additional
+pointer on a 
+.Fa syslog_data
+structure.
 .Pp
 The
 .Fn setlogmask
@@ -232,18 +317,32 @@ the mask for all priorities up to and including
 is given by the macro
 .Fn LOG_UPTO toppri ; .
 The default allows all priorities to be logged.
+.Pp
+The
+.Fn setlogmask_r
+function is the reentrant version of
+.Fn setlogmask .
+It takes an additional pointer on a
+.Fa syslog_data
+structure.
 .Sh RETURN VALUES
 The
 .Fn closelog ,
+.Fn closelog_r ,
 .Fn openlog ,
+.Fn openlog_r ,
 .Fn syslog ,
-and
+.Fn syslog_r ,
 .Fn vsyslog
+and
+.Fn vsyslog_r
 functions return no value.
 .Pp
-The routine
+The routines
 .Fn setlogmask
-always returns the previous log mask level.
+and
+.Fn setlogmask_r
+always return the previous log mask level.
 .Sh EXAMPLES
 .Bd -literal -offset indent -compact
 syslog(LOG_ALERT, "who: internal error 23");
@@ -263,6 +362,8 @@ syslog(LOG_INFO|LOG_LOCAL2, "foobar error: %m");
 These
 functions appeared in
 .Bx 4.2 .
+The reentrant functions appeared in
+.Ox 3.1 .
 .Sh CAVEATS
 It is important never to pass a string with user-supplied data as a
 format without using
