@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_url.c,v 1.3 2002/05/07 19:32:49 nate Exp $ */
+/*	$OpenBSD: if_url.c,v 1.4 2002/05/09 16:13:31 nate Exp $ */
 /*	$NetBSD: if_url.c,v 1.2 2002/03/28 21:49:19 ichiro Exp $	*/
 /*
  * Copyright (c) 2001, 2002
@@ -275,7 +275,7 @@ USB_ATTACH(url)
 	err = url_mem(sc, URL_CMD_READMEM, URL_IDR0, (void *)eaddr,
 		      ETHER_ADDR_LEN);
 	if (err) {
-		printf("%s: read MAC address faild\n", devname);
+		printf("%s: read MAC address failed\n", devname);
 		splx(s);
 		goto bad;
 	}
@@ -286,6 +286,7 @@ USB_ATTACH(url)
 	/* initialize interface infomation */
 	ifp = GET_IFP(sc);
 	ifp->if_softc = sc;
+	ifp->if_mtu = ETHERMTU;
 	strncpy(ifp->if_xname, devname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 	ifp->if_start = url_start;
@@ -1111,6 +1112,7 @@ Static int
 url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct url_softc *sc = ifp->if_softc;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct mii_data *mii;
 	int s, error = 0;
@@ -1123,18 +1125,77 @@ url_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	s = splnet();
 
 	switch (cmd) {
+	case SIOCSIFADDR:
+		ifp->if_flags |= IFF_UP;
+		url_init(ifp);
+
+		switch (ifa->ifa_addr->sa_family) {
+#ifdef INET
+		case AF_INET:
+			arp_ifinit(&sc->sc_ac, ifa);
+			break;
+#endif /* INET */
+#ifdef NS
+		case AF_NS:
+		    {
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+
+			if (ns_nullhost(*ina))
+				ina->x_host = *(union ns_host *)
+					LLADDR(ifp->if_sadl);
+			else
+				memcpy(LLADDR(ifp->if_sadl),
+				       ina->x_host.c_host,
+				       ifp->if_addrlen);
+			break;
+		    }
+#endif /* NS */
+		}
+		break;
+
+	case SIOCSIFMTU:
+		if (ifr->ifr_mtu > ETHERMTU)
+			error = EINVAL;
+		else
+			ifp->if_mtu = ifr->ifr_mtu;
+		break;
+
+	case SIOCSIFFLAGS:
+		if (ifp->if_flags & IFF_UP) {
+			if (ifp->if_flags & IFF_RUNNING &&
+			    ifp->if_flags & IFF_PROMISC) {
+				URL_SETBIT2(sc, URL_RCR,
+					    URL_RCR_AAM|URL_RCR_AAP);
+			} else if (ifp->if_flags & IFF_RUNNING &&
+				   !(ifp->if_flags & IFF_PROMISC)) {
+				URL_CLRBIT2(sc, URL_RCR,
+					    URL_RCR_AAM|URL_RCR_AAP);
+			} else if (!(ifp->if_flags & IFF_RUNNING))
+				url_init(ifp);
+		} else {
+			if (ifp->if_flags & IFF_RUNNING)
+				url_stop(ifp, 1);
+		}
+		error = 0;
+		break;
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		error = (cmd == SIOCADDMULTI) ?
+			ether_addmulti(ifr, &sc->sc_ac) :
+			ether_delmulti(ifr, &sc->sc_ac);
+		if (error == ENETRESET) {
+			url_init(ifp);
+		}
+		url_setmulti(sc);
+		error = 0;
+		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:
 		mii = GET_MII(sc);
 		error = ifmedia_ioctl(ifp, ifr, &mii->mii_media, cmd);
 		break;
-
 	default:
-		error = ether_ioctl(ifp, &sc->sc_ac, cmd, data);
-		if (error == ENETRESET) {
-			url_setmulti(sc);
-			error = 0;
-		}
+		error = EINVAL;
 		break;
 	}
 
