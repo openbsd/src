@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.23 1999/02/17 00:14:26 deraadt Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.24 1999/03/24 02:59:06 cmetz Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -768,7 +768,7 @@ udp_output(m, va_alist)
 		if (control)
 			if ((error = ipv6_controltoheader(&m, control,
 			    &forceif, &payload)))
-		goto release;
+				goto release;
 
 		/* 
 		 * Always calculate udp checksum for IPv6 datagrams
@@ -776,6 +776,11 @@ udp_output(m, va_alist)
 		if (!(uh->uh_sum = in6_cksum(m, IPPROTO_UDP, len +
 		    sizeof(struct udphdr), payload))) 
 			uh->uh_sum = 0xffff;
+
+		error = ipv6_output(m, &inp->inp_route6, 
+		    inp->inp_socket->so_options & SO_DONTROUTE,
+		    (inp->inp_flags & INP_IPV6_MCAST)?inp->inp_moptions6:NULL,
+		    forceif, inp->inp_socket);
 	} else
 #endif /* INET6 */
 	{
@@ -788,60 +793,52 @@ udp_output(m, va_alist)
 		ui->ui_sport = inp->inp_lport;
 		ui->ui_dport = inp->inp_fport;
 		ui->ui_ulen = ui->ui_len;
-        }
 
-	/*
-	 * Stuff checksum and output datagram.
-	 */
-#ifdef INET6
-	if (!v6packet) {
-#endif /* INET6 */
-	ui->ui_sum = 0;
-	if (udpcksum) {
-		if ((ui->ui_sum = in_cksum(m, sizeof (struct udpiphdr) +
-		    len)) == 0)
-			ui->ui_sum = 0xffff;
-	}
-	((struct ip *)ui)->ip_len = sizeof (struct udpiphdr) + len;
-#ifdef INET6
-	/*
-	 *  For now, we use the default values for ttl and tos for 
-	 *  v4 packets sent using a v6 pcb.  We probably want to
-	 *  later allow v4 setsockopt operations on a v6 socket to 
-	 *  modify the ttl and tos for v4 packets sent using
-	 *  the mapped address format.  We really ought to
-	 *  save the v4 ttl and v6 hoplimit in separate places 
-	 *  instead of craming both in the inp_hu union.
-	 */
-	if (inp->inp_flags & INP_IPV6) {
-		((struct ip *)ui)->ip_ttl = ip_defttl;
-		((struct ip *)ui)->ip_tos = 0;	  
-	} else
-#endif /* INET6 */
-	{
-		((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	/* XXX */
-		((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
-	}
+		/*
+		 * Stuff checksum and output datagram.
+		 */
 
-	((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	/* XXX */
-	((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;	/* XXX */
-	udpstat.udps_opackets++;
+		ui->ui_sum = 0;
+		if (udpcksum) {
+			if ((ui->ui_sum = in_cksum(m, sizeof (struct udpiphdr) +
+			    len)) == 0)
+				ui->ui_sum = 0xffff;
+		}
+		((struct ip *)ui)->ip_len = sizeof (struct udpiphdr) + len;
 #ifdef INET6
-	if (v6packet)
-		error = ipv6_output(m, &inp->inp_route6, 
-		    inp->inp_socket->so_options & SO_DONTROUTE,
-		    (inp->inp_flags & INP_IPV6_MCAST)?inp->inp_moptions6:NULL,
-		    forceif, inp->inp_socket);
-	else
+		/*
+		 *  For now, we use the default values for ttl and tos for 
+		 *  v4 packets sent using a v6 pcb.  We probably want to
+		 *  later allow v4 setsockopt operations on a v6 socket to 
+		 *  modify the ttl and tos for v4 packets sent using
+		 *  the mapped address format.  We really ought to
+		 *  save the v4 ttl and v6 hoplimit in separate places 
+		 *  instead of craming both in the inp_hu union.
+		 */
+		if (inp->inp_flags & INP_IPV6) {
+			((struct ip *)ui)->ip_ttl = ip_defttl;
+			((struct ip *)ui)->ip_tos = 0;	  
+		} else
+#endif /* INET6 */
+		{
+			((struct ip *)ui)->ip_ttl = inp->inp_ip.ip_ttl;	
+			((struct ip *)ui)->ip_tos = inp->inp_ip.ip_tos;
+		}
+
+		udpstat.udps_opackets++;
+#ifdef INET6
 		if (inp->inp_flags & INP_IPV6_MCAST)
-		    error = ip_output(m, inp->inp_options, &inp->inp_route,
-		    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
-		    NULL, NULL, inp->inp_socket);
-	else
+			error = ip_output(m, inp->inp_options, &inp->inp_route,
+				inp->inp_socket->so_options &
+				(SO_DONTROUTE | SO_BROADCAST),
+				NULL, NULL, inp->inp_socket);
+		else
 #endif /* INET6 */
-		error = ip_output(m, inp->inp_options, &inp->inp_route,
-		    inp->inp_socket->so_options & (SO_DONTROUTE | SO_BROADCAST),
-		    inp->inp_moptions, inp);
+			error = ip_output(m, inp->inp_options, &inp->inp_route,
+				inp->inp_socket->so_options &
+				(SO_DONTROUTE | SO_BROADCAST),
+		    		inp->inp_moptions, inp, NULL);
+	}
 
 bail:
 	if (addr) {
