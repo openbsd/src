@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le.c,v 1.8 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: if_le.c,v 1.9 2003/07/07 15:37:07 jason Exp $	*/
 /*	$NetBSD: if_le.c,v 1.17 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -93,13 +93,11 @@ struct cfattach le_sbus_ca = {
 	sizeof(struct le_softc), lematch_sbus, leattach_sbus
 };
 
-static void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-static u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
+void le_sbus_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+u_int16_t le_sbus_rdcsr(struct am7990_softc *, u_int16_t);
 
-static void
-lewrcsr(sc, port, val)
-	struct am7990_softc *sc;
-	u_int16_t port, val;
+void
+le_sbus_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -124,10 +122,8 @@ lewrcsr(sc, port, val)
 #endif
 }
 
-static u_int16_t
-lerdcsr(sc, port)
-	struct am7990_softc *sc;
-	u_int16_t port;
+u_int16_t
+le_sbus_rdcsr(struct am7990_softc *sc, u_int16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -139,10 +135,7 @@ lerdcsr(sc, port)
 
 
 int
-lematch_sbus(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+lematch_sbus(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
@@ -151,9 +144,7 @@ lematch_sbus(parent, vcf, aux)
 }
 
 void
-leattach_sbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+leattach_sbus(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
@@ -255,8 +246,8 @@ leattach_sbus(parent, self, aux)
 	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
 	sc->sc_zerobuf = am7990_zerobuf_contig;
 
-	sc->sc_rdcsr = lerdcsr;
-	sc->sc_wrcsr = lewrcsr;
+	sc->sc_rdcsr = le_sbus_rdcsr;
+	sc->sc_wrcsr = le_sbus_wrcsr;
 
 	am7990_config(&lesc->sc_am7990);
 

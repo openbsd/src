@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_hme_sbus.c,v 1.6 2003/06/27 01:36:53 jason Exp $	*/
+/*	$OpenBSD: if_hme_sbus.c,v 1.7 2003/07/07 15:37:07 jason Exp $	*/
 /*	$NetBSD: if_hme_sbus.c,v 1.6 2001/02/28 14:52:48 mrg Exp $	*/
 
 /*-
@@ -84,10 +84,7 @@ struct cfattach hme_sbus_ca = {
 };
 
 int
-hmematch_sbus(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+hmematch_sbus(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
@@ -98,9 +95,7 @@ hmematch_sbus(parent, vcf, aux)
 }
 
 void
-hmeattach_sbus(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+hmeattach_sbus(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct hmesbus_softc *hsc = (void *)self;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_lebuffer.c,v 1.3 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: if_le_lebuffer.c,v 1.4 2003/07/07 15:37:07 jason Exp $	*/
 /*	$NetBSD: if_le_lebuffer.c,v 1.10 2002/03/11 16:00:56 pk Exp $	*/
 
 /*-
@@ -95,13 +95,11 @@ struct cfdriver lebuffer_cd = {
 	NULL, "lebuffer", DV_DULL
 };
 
-static void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-static u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
+void le_lebuffer_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+u_int16_t le_lebuffer_rdcsr(struct am7990_softc *, u_int16_t);
 
-static void
-lewrcsr(sc, port, val)
-	struct am7990_softc *sc;
-	u_int16_t port, val;
+void
+le_lebuffer_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -122,10 +120,8 @@ lewrcsr(sc, port, val)
 #endif
 }
 
-static u_int16_t
-lerdcsr(sc, port)
-	struct am7990_softc *sc;
-	u_int16_t port;
+u_int16_t
+le_lebuffer_rdcsr(struct am7990_softc *sc, u_int16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -134,10 +130,7 @@ lerdcsr(sc, port)
 }
 
 int
-lematch_lebuffer(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+lematch_lebuffer(struct device *parent, void *vcf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct cfdata *cf = vcf;
@@ -147,9 +140,7 @@ lematch_lebuffer(parent, vcf, aux)
 
 
 void
-leattach_lebuffer(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+leattach_lebuffer(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
@@ -189,8 +180,8 @@ leattach_lebuffer(parent, self, aux)
 	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
 	sc->sc_zerobuf = am7990_zerobuf_contig;
 
-	sc->sc_rdcsr = lerdcsr;
-	sc->sc_wrcsr = lewrcsr;
+	sc->sc_rdcsr = le_lebuffer_rdcsr;
+	sc->sc_wrcsr = le_lebuffer_wrcsr;
 
 	am7990_config(&lesc->sc_am7990);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_le_ledma.c,v 1.9 2003/06/24 21:54:38 henric Exp $	*/
+/*	$OpenBSD: if_le_ledma.c,v 1.10 2003/07/07 15:37:07 jason Exp $	*/
 /*	$NetBSD: if_le_ledma.c,v 1.14 2001/05/30 11:46:35 mrg Exp $	*/
 
 /*-
@@ -94,8 +94,8 @@ void	leattach_ledma(struct device *, struct device *, void *);
  * Media types supported by the Sun4m.
  */
 
-void	lesetutp(struct am7990_softc *);
-void	lesetaui(struct am7990_softc *);
+void	le_ledma_setutp(struct am7990_softc *);
+void	le_ledma_setaui(struct am7990_softc *);
 
 int	lemediachange(struct ifnet *);
 void	lemediastatus(struct ifnet *, struct ifmediareq *);
@@ -104,28 +104,14 @@ struct cfattach le_ledma_ca = {
 	sizeof(struct le_softc), lematch_ledma, leattach_ledma
 };
 
-#if defined(_KERNEL_OPT)
-#include "opt_ddb.h"
-#endif
+void le_ledma_wrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
+u_int16_t le_ledma_rdcsr(struct am7990_softc *, u_int16_t);
+void le_ledma_hwreset(struct am7990_softc *);
+void le_ledma_hwinit(struct am7990_softc *);
+void le_ledma_nocarrier(struct am7990_softc *);
 
-#ifdef DDB
-#define	integrate
-#define hide
-#else
-#define	integrate	static __inline
-#define hide		static
-#endif
-
-static void lewrcsr(struct am7990_softc *, u_int16_t, u_int16_t);
-static u_int16_t lerdcsr(struct am7990_softc *, u_int16_t);
-hide void lehwreset(struct am7990_softc *);
-hide void lehwinit(struct am7990_softc *);
-hide void lenocarrier(struct am7990_softc *);
-
-static void
-lewrcsr(sc, port, val)
-	struct am7990_softc *sc;
-	u_int16_t port, val;
+void
+le_ledma_wrcsr(struct am7990_softc *sc, u_int16_t port, u_int16_t val)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -146,10 +132,8 @@ lewrcsr(sc, port, val)
 #endif
 }
 
-static u_int16_t
-lerdcsr(sc, port)
-	struct am7990_softc *sc;
-	u_int16_t port;
+u_int16_t
+le_ledma_rdcsr(struct am7990_softc *sc, u_int16_t port)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -158,8 +142,7 @@ lerdcsr(sc, port)
 }
 
 void
-lesetutp(sc)
-	struct am7990_softc *sc;
+le_ledma_setutp(struct am7990_softc *sc)
 {
 	struct lsi64854_softc *dma = ((struct le_softc *)sc)->sc_dma;
 	u_int32_t csr;
@@ -171,8 +154,7 @@ lesetutp(sc)
 }
 
 void
-lesetaui(sc)
-	struct am7990_softc *sc;
+le_ledma_setaui(struct am7990_softc *sc)
 {
 	struct lsi64854_softc *dma = ((struct le_softc *)sc)->sc_dma;
 	u_int32_t csr;
@@ -184,8 +166,7 @@ lesetaui(sc)
 }
 
 int
-lemediachange(ifp)
-	struct ifnet *ifp;
+lemediachange(struct ifnet *ifp)
 {
 	struct am7990_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_ifmedia;
@@ -201,11 +182,11 @@ lemediachange(ifp)
 	 */
 	switch (IFM_SUBTYPE(ifm->ifm_media)) {
 	case IFM_10_T:
-		lesetutp(sc);
+		le_ledma_setutp(sc);
 		break;
 
 	case IFM_10_5:
-		lesetaui(sc);
+		le_ledma_setaui(sc);
 		break;
 
 	case IFM_AUTO:
@@ -219,9 +200,7 @@ lemediachange(ifp)
 }
 
 void
-lemediastatus(ifp, ifmr)
-	struct ifnet *ifp;
-	struct ifmediareq *ifmr;
+lemediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct am7990_softc *sc = ifp->if_softc;
 	struct lsi64854_softc *dma = ((struct le_softc *)sc)->sc_dma;
@@ -235,9 +214,8 @@ lemediastatus(ifp, ifmr)
 		ifmr->ifm_active = IFM_ETHER|IFM_10_5;
 }
 
-hide void
-lehwreset(sc)
-	struct am7990_softc *sc;
+void
+le_ledma_hwreset(struct am7990_softc *sc)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 	struct lsi64854_softc *dma = lesc->sc_dma;
@@ -267,9 +245,8 @@ lehwreset(sc)
 	delay(20000);	/* must not touch le for 20ms */
 }
 
-hide void
-lehwinit(sc)
-	struct am7990_softc *sc;
+void
+le_ledma_hwinit(struct am7990_softc *sc)
 {
 
 	/*
@@ -278,18 +255,17 @@ lehwinit(sc)
 	 */
 	switch (IFM_SUBTYPE(sc->sc_ifmedia.ifm_cur->ifm_media)) {
 	case IFM_10_T:
-		lesetutp(sc);
+		le_ledma_setutp(sc);
 		break;
 
 	case IFM_10_5:
-		lesetaui(sc);
+		le_ledma_setaui(sc);
 		break;
 	}
 }
 
-hide void
-lenocarrier(sc)
-	struct am7990_softc *sc;
+void
+le_ledma_nocarrier(struct am7990_softc *sc)
 {
 	struct le_softc *lesc = (struct le_softc *)sc;
 
@@ -304,7 +280,7 @@ lenocarrier(sc)
 		case IFM_AUTO:
 			printf("%s: lost carrier on UTP port"
 			    ", switching to AUI port\n", sc->sc_dev.dv_xname);
-			lesetaui(sc);
+			le_ledma_setaui(sc);
 		}
 	} else {
 		switch (IFM_SUBTYPE(sc->sc_ifmedia.ifm_media)) {
@@ -312,16 +288,13 @@ lenocarrier(sc)
 		case IFM_AUTO:
 			printf("%s: lost carrier on AUI port"
 			    ", switching to UTP port\n", sc->sc_dev.dv_xname);
-			lesetutp(sc);
+			le_ledma_setutp(sc);
 		}
 	}
 }
 
 int
-lematch_ledma(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+lematch_ledma(struct device *parent, void *vcf, void *aux)
 {
 	struct cfdata *cf = vcf;
 	struct sbus_attach_args *sa = aux;
@@ -331,9 +304,7 @@ lematch_ledma(parent, vcf, aux)
 
 
 void
-leattach_ledma(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+leattach_ledma(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct le_softc *lesc = (struct le_softc *)self;
@@ -425,11 +396,11 @@ leattach_ledma(parent, self, aux)
 	sc->sc_copyfrombuf = am7990_copyfrombuf_contig;
 	sc->sc_zerobuf = am7990_zerobuf_contig;
 
-	sc->sc_rdcsr = lerdcsr;
-	sc->sc_wrcsr = lewrcsr;
-	sc->sc_hwinit = lehwinit;
-	sc->sc_nocarrier = lenocarrier;
-	sc->sc_hwreset = lehwreset;
+	sc->sc_rdcsr = le_ledma_rdcsr;
+	sc->sc_wrcsr = le_ledma_wrcsr;
+	sc->sc_hwinit = le_ledma_hwinit;
+	sc->sc_nocarrier = le_ledma_nocarrier;
+	sc->sc_hwreset = le_ledma_hwreset;
 
 	/* Establish interrupt handler */
 	if (sa->sa_nintr != 0)
@@ -439,5 +410,5 @@ leattach_ledma(parent, self, aux)
 	am7990_config(&lesc->sc_am7990);
 
 	/* now initialize DMA */
-	lehwreset(sc);
+	le_ledma_hwreset(sc);
 }

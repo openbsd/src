@@ -1,4 +1,4 @@
-/*	$OpenBSD: lebuffer.c,v 1.4 2003/03/05 21:53:07 jason Exp $	*/
+/*	$OpenBSD: lebuffer.c,v 1.5 2003/07/07 15:37:07 jason Exp $	*/
 /*	$NetBSD: lebuffer.c,v 1.12 2002/03/11 16:00:57 pk Exp $ */
 
 /*-
@@ -61,9 +61,7 @@ struct cfattach lebuffer_ca = {
 };
 
 int
-lebufprint(aux, busname)
-	void *aux;
-	const char *busname;
+lebufprint(void *aux, const char *busname)
 {
 	struct sbus_attach_args *sa = aux;
 	bus_space_tag_t t = sa->sa_bustag;
@@ -76,10 +74,7 @@ lebufprint(aux, busname)
 }
 
 int
-lebufmatch(parent, vcf, aux)
-	struct device *parent;
-	void *vcf;
-	void *aux;
+lebufmatch(struct device *parent, void *vcf, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct cfdata *cf = vcf;
@@ -91,9 +86,7 @@ lebufmatch(parent, vcf, aux)
  * Attach all the sub-devices we can find
  */
 void
-lebufattach(parent, self, aux)
-	struct device *parent, *self;
-	void *aux;
+lebufattach(struct device *parent, struct device *self, void *aux)
 {
 	struct sbus_attach_args *sa = aux;
 	struct lebuf_softc *sc = (void *)self;
