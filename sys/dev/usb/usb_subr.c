@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.29 2004/10/31 12:10:52 dlg Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.30 2004/11/02 21:28:55 dlg Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.103 2003/01/10 11:19:13 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -166,7 +166,7 @@ usbd_get_string_desc(usbd_device_handle dev, int sindex, int langid,
 	if (err)
 		return (err);
 
-	if (actlen < 2)
+	if (actlen < 1)
 		return (USBD_SHORT_XFER);
 
 	USETW(req.wLength, sdesc->bLength);	/* the whole string */
