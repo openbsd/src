@@ -1,4 +1,4 @@
-#	$OpenBSD: files.wsfont,v 1.1 2001/03/18 04:30:23 nate Exp $
+#	$OpenBSD: files.wsfont,v 1.2 2003/04/14 10:42:28 miod Exp $
 # 	$NetBSD: files.wsfont,v 1.7 2000/11/21 11:44:45 tsutsui Exp $
 
-file	dev/wsfont/wsfont.c	rasterconsole | wsdisplay
+file	dev/wsfont/wsfont.c	wsdisplay
