@@ -1,8 +1,12 @@
-/*	$NetBSD: ns_init.c,v 1.1 1996/02/02 15:28:50 mrg Exp $	*/
+/*	$OpenBSD: ns_init.c,v 1.2 1997/03/12 10:42:30 downsj Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
+#if 0
 static char sccsid[] = "@(#)ns_init.c	4.38 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: ns_init.c,v 8.12 1995/12/29 07:16:18 vixie Exp ";
+static char rcsid[] = "$From: ns_init.c,v 8.24 1996/12/02 09:17:21 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: ns_init.c,v 1.2 1997/03/12 10:42:30 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -60,6 +64,7 @@ static char rcsid[] = "$Id: ns_init.c,v 8.12 1995/12/29 07:16:18 vixie Exp ";
  * --Copyright--
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
@@ -76,7 +81,7 @@ static char rcsid[] = "$Id: ns_init.c,v 8.12 1995/12/29 07:16:18 vixie Exp ";
 
 #undef nsaddr
 
-enum limit { Datasize };
+enum limit { Datasize , Files };
 
 static void		zoneinit __P((struct zoneinfo *)),
 			get_forwarders __P((FILE *)),
@@ -84,13 +89,18 @@ static void		zoneinit __P((struct zoneinfo *)),
 #ifdef DEBUG
 			content_zone __P((int)),
 #endif
+			do_reload __P((char *, int, int)),
 			free_forwarders __P((void)),
 			ns_limit __P((const char *name, int value)),
+			ns_checknames __P((const char *names,
+					   const char *severity)),
 			ns_rlimit __P((const char *name, enum limit limit,
 				       long value)),
 			ns_option __P((const char *name));
 
 static struct zoneinfo	*find_zone __P((char *, int, int));
+
+static enum severity	checkname_severity[num_trans];
 
 /*
  * Set new refresh time for zone.  Use a random number in the last half of
@@ -131,6 +141,11 @@ ns_init(bootfile)
 
 	dprintf(1, (ddt, "\nns_init(%s)\n", bootfile));
 	gettime(&tt);
+
+	memset(checkname_severity, '\0', sizeof checkname_severity);
+	checkname_severity[primary_trans] = fail;
+	checkname_severity[secondary_trans] = warn;
+	checkname_severity[response_trans] = ignore;
 
         if (loads == 0) {
 		if ((zones =
@@ -189,6 +204,7 @@ ns_init(bootfile)
 #ifdef SECURE_ZONES
 		free_netlist(&zp->secure_nets);
 #endif
+		do_reload(zp->z_origin, zp->z_type, zp->z_class);
 		syslog(LOG_NOTICE, "Zone \"%s\" was removed", zp->z_origin);
 		free(zp->z_origin);
 		free(zp->z_source);
@@ -232,9 +248,6 @@ boot_read(filename, includefile)
 #endif
 	struct stat f_time;
 	static int tmpnum = 0;		/* unique number for tmp zone files */
-#ifdef ALLOW_UPDATES
-	char *flag;
-#endif
 	int slineno;			/* Saved global line number. */
 	int i;
 
@@ -278,6 +291,11 @@ boot_read(filename, includefile)
 		} else if (strcasecmp(buf, "options") == 0) {
 			while (getword(buf, sizeof(buf), fp, 0))
 				ns_option(buf);
+			continue;
+		} else if (strcasecmp(buf, "check-names") == 0) {
+			(void) getword(buf, sizeof(buf), fp, 0);
+			(void) getword(obuf, sizeof(obuf), fp, 0);
+			ns_checknames(buf, obuf);
 			continue;
 		} else if (strcasecmp(buf, "forwarders") == 0) {
 			get_forwarders(fp);
@@ -484,29 +502,7 @@ boot_read(filename, includefile)
 
 		case Z_PRIMARY:
 			source = savestr(buf);
-#ifdef ALLOW_UPDATES
-			if (getword(buf, sizeof(buf), fp, 0)) {
-				endline(fp);
-				flag = buf;
-				while (flag) {
-				    char *cp = strchr(flag, ',');
-				    if (cp)
-					*cp++ = 0;
-				    if (strcasecmp(flag, "dynamic") == 0)
-					zp->z_flags |= Z_DYNAMIC;
-				    else if (strcasecmp(flag, "addonly") == 0)
-					zp->z_flags |= Z_DYNADDONLY;
-				    else {
-					syslog(LOG_NOTICE,
-					       "%s: line %d: bad flag '%s'\n",
-					       filename, lineno, flag);
-				    }
-				    flag = cp;
-				}
-			}
-#else /*ALLOW_UPDATES*/
     		        endline(fp);
-#endif
 
 			dprintf(1, (ddt, ", source = %s\n", source));
 			/*
@@ -539,13 +535,8 @@ boot_read(filename, includefile)
 			dprintf(1, (ddt, "reloading zone\n"));
 			if (!db_load(zp->z_source, zp->z_origin, zp, NULL))
 				zp->z_flags |= Z_AUTH;
-#ifdef ALLOW_UPDATES
-			/* Guarantee calls to ns_maint() */
-			zp->z_refresh = maint_interval;
-#else
 			zp->z_refresh = 0;	/* no maintenance needed */
 			zp->z_time = 0;
-#endif
 			break;
 
 		case Z_SECONDARY:
@@ -590,7 +581,7 @@ boot_read(filename, includefile)
 			if (zp->z_source &&
 			    (strcmp(source, zp->z_source) ||
 			     (stat(zp->z_source, &f_time) == -1 ||
-			     (zp->z_ftime != f_time.st_mtime)))) {
+			      (zp->z_ftime != f_time.st_mtime)))) {
 				dprintf(1, (ddt, "backup file changed\n"));
 				free(zp->z_source);
 				zp->z_source = NULL;
@@ -601,6 +592,11 @@ boot_read(filename, includefile)
 #else
                         	remove_zone(hashtab, zp - zones);
 #endif
+				/*
+				 * reload parent so that NS records are
+				 * present during the zone transfer.
+				 */
+				do_reload(zp->z_origin, zp->z_type, zp->z_class);
 			}
 			if (zp->z_source)
 				free(source);
@@ -680,71 +676,6 @@ zoneinit(zp)
 	}
 }
 
-#ifdef ALLOW_UPDATES
-/*
- * Look for the authoritative zone with the longest matching RHS of dname
- * and return its zone # or zero if not found.
- */
-int
-findzone(dname, class)
-	char *dname;
-	int class;
-{
-	char *dZoneName, *zoneName;
-	int dZoneNameLen, zoneNameLen;
-	int maxMatchLen = 0;
-	int maxMatchZoneNum = 0;
-	int zoneNum;
-
-	dprintf(4, (ddt, "findzone(dname=%s, class=%d)\n", dname, class));
-#ifdef DEBUG
-	if (debug >= 5) {
-		fprintf(ddt, "zone dump:\n");
-		for (zoneNum = 1; zoneNum < nzones; zoneNum++)
-			printzoneinfo(zoneNum);
-	}
-#endif
-
-	dZoneName = strchr(dname, '.');
-	if (dZoneName == NULL)
-		dZoneName = "";	/* root */
-	else
-		dZoneName++;	/* There is a '.' in dname, so use remainder of
-				   string as the zone name */
-	dZoneNameLen = strlen(dZoneName);
-	for (zoneNum = 1; zoneNum < nzones; zoneNum++) {
-		if (zones[zoneNum].z_type == Z_NIL)
-			continue;
-		zoneName = (zones[zoneNum]).z_origin;
-		zoneNameLen = strlen(zoneName);
-		/* The zone name may or may not end with a '.' */
-		if (zoneName[zoneNameLen - 1] == '.')
-			zoneNameLen--;
-		if (dZoneNameLen != zoneNameLen)
-			continue;
-		dprintf(5, (ddt, "about to strncasecmp('%s', '%s', %d)\n",
-			    dZoneName, zoneName, dZoneNameLen));
-		if (strncasecmp(dZoneName, zoneName, dZoneNameLen) == 0) {
-			dprintf(5, (ddt, "match\n"));
-			/*
-			 * See if this is as long a match as any so far.
-			 * Check if "<=" instead of just "<" so that if
-			 * root domain (whose name length is 0) matches,
-			 * we use it's zone number instead of just 0
-			 */
-			if (maxMatchLen <= zoneNameLen) {
-				maxMatchZoneNum = zoneNum;
-				maxMatchLen = zoneNameLen;
-			}
-		} else {
-			dprintf(5, (ddt, "no match\n"));
-		}
-	}
-	dprintf(4, (ddt, "findzone: returning %d\n", maxMatchZoneNum));
-	return (maxMatchZoneNum);
-}
-#endif /* ALLOW_UPDATES */
-
 static void
 get_forwarders(fp)
 	FILE *fp;
@@ -758,7 +689,7 @@ get_forwarders(fp)
 
 	dprintf(1, (ddt, "forwarders "));
 
-	/* on mulitple forwarder lines, move to end of the list */
+	/* On multiple forwarder lines, move to end of the list. */
 #ifdef SLAVE_FORWARD
 	if (fwdtab != NULL){
 		forward_count++;
@@ -868,6 +799,75 @@ find_zone(name, type, class)
 	return NULL;
 }
 
+static void
+do_reload(domain, type, class)
+	char *domain;
+	int type;
+	int class;
+{
+	char *s;
+	struct zoneinfo *zp;
+
+	dprintf(1, (ddt, "do_reload: %s %d %d\n", 
+		    *domain ? domain : ".", type, class));
+
+	/* the zone has changed type? */
+	/* NOTE: we still exist so don't match agains ourselves */
+	/* If we are a STUB or SECONDARY check that we have loaded */
+	if (((type != Z_STUB) && (zp = find_zone(domain, Z_STUB, class)) &&
+	     zp->z_serial) ||
+	    ((type != Z_CACHE) && find_zone(domain, Z_CACHE, class)) ||
+	    ((type != Z_PRIMARY) && find_zone(domain, Z_PRIMARY, class)) ||
+	    ((type != Z_SECONDARY)
+	     && (zp = find_zone(domain, Z_SECONDARY, class)) && zp->z_serial)
+	    ) {
+		return;
+	}
+
+	while ((s = strchr(domain, '.')) || *domain) {
+		if (s)
+			domain = s + 1;	/* skip dot */
+		else
+			domain = "";	/* root zone */
+
+		if ((zp = find_zone(domain, Z_STUB, class)) ||
+		    (zp = find_zone(domain, Z_CACHE, class)) ||
+		    (zp = find_zone(domain, Z_PRIMARY, class)) ||
+		    (zp = find_zone(domain, Z_SECONDARY, class))) {
+
+			dprintf(1, (ddt, "do_reload: matched %s\n",
+				    *domain ? domain : "."));
+
+#ifdef CLEANCACHE
+			if (zp->z_type == Z_CACHE)
+				remove_zone(fcachetab, 0, 1);
+			else
+				remove_zone(hashtab, zp - zones, 1);
+#else
+			if (zp->z_type == Z_CACHE)
+				remove_zone(fcachetab, 0);
+			else
+				remove_zone(hashtab, zp - zones);
+#endif
+			zp->z_flags &= ~Z_AUTH;
+
+			switch (zp->z_type) {
+			case Z_SECONDARY:
+			case Z_STUB:
+				zoneinit(zp);
+				break;
+			case Z_PRIMARY:
+			case Z_CACHE:
+				if (db_load(zp->z_source, zp->z_origin, zp, 0)
+				    == 0)
+					zp->z_flags |= Z_AUTH;
+				break;
+			}
+			break;
+		}
+	}
+}
+
 #ifdef DEBUG
 /* prints out the content of zones */
 static void
@@ -893,12 +893,177 @@ ns_limit(name, value)
 		max_xfers_per_ns = value;
 	} else if (!strcasecmp(name, "datasize")) {
 		ns_rlimit("datasize", Datasize, value);
+	} else if (!strcasecmp(name, "files")) {
+		ns_rlimit("files", Files, value);
 	} else {
 		syslog(LOG_ERR,
 		       "error: unrecognized limit in bootfile: \"%s\"",
 		       name);
 		exit(1);
 	}
+}
+
+static int
+select_string(strings, string)
+	const char *strings[];
+	const char *string;
+{
+	int i;
+
+	for (i = 0; strings[i] != NULL; i++)
+		if (!strcasecmp(strings[i], string))
+			return (i);
+	return (-1);
+}
+
+static void
+ns_checknames(transport_str, severity_str)
+	const char *transport_str;
+	const char *severity_str;
+{
+	enum transport transport;
+	enum severity severity;
+	int i;
+
+	if ((i = select_string(transport_strings, transport_str)) == -1) {
+		syslog(LOG_ERR,
+		      "error: unrecognized transport type in bootfile: \"%s\"",
+		       transport_str);
+		exit(1);
+	}
+	transport = (enum transport) i;
+
+	if ((i = select_string(severity_strings, severity_str)) == -1) {
+		syslog(LOG_ERR,
+		       "error: unrecognized severity type in bootfile: \"%s\"",
+		       severity_str);
+		exit(1);
+	}
+	severity = (enum severity) i;
+
+	checkname_severity[transport] = severity;
+	syslog(LOG_INFO, "check-names %s %s", transport_str, severity_str);
+}
+
+enum context
+ns_ptrcontext(owner)
+	const char *owner;
+{
+	if (samedomain(owner, "in-addr.arpa") || samedomain(owner, "ip6.int"))
+		return (hostname_ctx);
+	return (domain_ctx);
+}
+
+enum context
+ns_ownercontext(type, transport)
+	int type;
+	enum transport transport;
+{
+	enum context context;
+
+	switch (type) {
+	case T_A:
+	case T_WKS:
+	case T_MX:
+		switch (transport) {
+		case primary_trans:
+		case secondary_trans:
+			context = owner_ctx;
+			break;
+		case response_trans:
+			context = hostname_ctx;
+			break;
+		default:
+			panic(-1, "impossible condition in ns_ownercontext()");
+		}
+		break;
+	case T_MB:
+	case T_MG:
+		context = mailname_ctx;
+	default:
+		context = domain_ctx;
+		break;
+	}
+	return (context);
+}
+
+int
+ns_nameok(name, class, transport, context, owner, source)
+	const char *name;
+	int class;
+	enum transport transport;
+	enum context context;
+	struct in_addr source;
+	const char *owner;
+{
+	enum severity severity = checkname_severity[transport];
+	int ok;
+
+	if (severity == ignore)
+		return (1);
+	switch (context) {
+	case domain_ctx:
+		ok = (class != C_IN) || res_dnok(name);
+		break;
+	case owner_ctx:
+		ok = (class != C_IN) || res_ownok(name);
+		break;
+	case mailname_ctx:
+		ok = res_mailok(name);
+		break;
+	case hostname_ctx:
+		ok = res_hnok(name);
+		break;
+	default:
+		panic(-1, "impossible condition in ns_nameok()");
+	}
+	if (!ok) {
+		char *s, *o;
+
+		if (source.s_addr == INADDR_ANY)
+			s = strdup(transport_strings[transport]);
+		else {
+			s = malloc(strlen(transport_strings[transport]) +
+				   sizeof " from [000.000.000.000]");
+			if (s)
+				sprintf(s, "%s from [%s]",
+					transport_strings[transport],
+					inet_ntoa(source));
+		}
+		if (strcasecmp(owner, name) == 0)
+			o = strdup("");
+		else {
+			const char *t = (*owner == '\0') ? "." : owner;
+
+			o = malloc(strlen(t) + sizeof " (owner \"\")");
+			if (o)
+				sprintf(o, " (owner \"%s\")", t);
+		}
+#ifndef ultrix
+		syslog((transport == response_trans) ? LOG_INFO : LOG_NOTICE,
+		       "%s name \"%s\"%s %s (%s) is invalid - %s",
+		       context_strings[context],
+		       name, o != NULL ? o : "[malloc failed]", p_class(class),
+		       s != NULL ? s : "[malloc failed]",
+		       (severity == fail) ? "rejecting" : "proceeding anyway");
+#endif
+		if (severity == warn)
+			ok = 1;
+		if (s)
+			free(s);
+		if (o)
+			free(o);
+	}
+	return (ok);
+}
+
+int
+ns_wildcard(name)
+	const char *name;
+{
+	if (*name != '*')
+		return (0);
+	return (*++name == '\0');
 }
 
 static void
@@ -915,20 +1080,31 @@ ns_rlimit(name, limit, value)
 	       name);
 #else
 	struct rlimit limits;
-	int rlimit;
+	int rlimit = -1;
 
 	switch (limit) {
 	case Datasize:
 		rlimit = RLIMIT_DATA;
 		break;
+	case Files:
+#ifdef RLIMIT_NOFILE
+		rlimit = RLIMIT_NOFILE;
+#endif
+		break;
 	default:
-		abort();
+		panic(-1, "impossible condition in ns_rlimit()");
+	}
+	if (rlimit == -1) {
+		syslog(LOG_WARNING,
+		       "limit \"%s\" not supported on this system - ignored",
+		       name);
+		return;
 	}
 	if (getrlimit(rlimit, &limits) < 0) {
 		syslog(LOG_WARNING, "getrlimit(%s): %m", name);
 		return;
 	}
-	limits.rlim_cur = value;
+	limits.rlim_cur = limits.rlim_max = value;
 	if (setrlimit(rlimit, &limits) < 0) {
 		syslog(LOG_WARNING, "setrlimit(%s, %ld): %m", name, value);
 		return;

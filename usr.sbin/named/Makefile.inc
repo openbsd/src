@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile.inc,v 1.3 1997/03/12 10:41:46 downsj Exp $
 #	$NetBSD: Makefile.inc,v 1.1 1996/02/02 15:25:35 mrg Exp $
 # from: $Id: Makefile.inc,v 8.3 1995/12/31 23:28:00 vixie Exp 
 
@@ -11,4 +12,7 @@ PS=		ps
 IOT=		ABRT
 
 CONFIG?=	-DUSE_OPTIONS_H
-INCLUDE?=	-I. -I${BIND_DIR} -I${BIND_DIR}/include
+INCLUDE?=	-I${.CURDIR} -I${BIND_DIR} -I${BIND_DIR}/include
+
+# we need to use our version of libresolv.
+LIBRESOLV=	${BIND_DIR}/libresolv/${__objdir}/libresolv.a

@@ -1,6 +1,5 @@
-.\"	$NetBSD: getnetent.3,v 1.1 1996/02/02 15:27:26 mrg Exp $
-.\"
-.\" $Id: getnetent.3,v 8.1 1994/12/15 06:24:10 vixie Exp 
+.\"	$OpenBSD: getnetent.3,v 1.2 1997/03/12 10:42:13 downsj Exp $
+.\" $From: getnetent.3,v 8.2 1996/05/09 05:59:10 vixie Exp $
 .TH getnetent 3
 .SH NAME
 getnetent, getnetbyaddr, getnetbyname, setnetent, endnetent \- get networks
@@ -15,7 +14,7 @@ entry
 .B char *\fIname\fP;
 .PP
 .B struct netent *getnetbyaddr(\fInet\fP, \fItype\fP)
-.B long \fInet\fP; int \fItype\fP;
+.B unsigned long \fInet\fP; int \fItype\fP;
 .PP
 .B void setnetent(\fIstayopen\fP)
 .B int \fIstayopen\fP;

@@ -1,8 +1,8 @@
-/*	$NetBSD: db_defs.h,v 1.1 1996/02/02 15:28:06 mrg Exp $	*/
+/*	$OpenBSD: db_defs.h,v 1.2 1997/03/12 10:42:21 downsj Exp $	*/
 
 /*
  *	from db.h	4.16 (Berkeley) 6/1/90
- *	$Id: db_defs.h,v 8.3 1995/06/19 20:55:40 vixie Exp 
+ *	$From: db_defs.h,v 8.5 1996/08/27 08:33:23 vixie Exp $
  */
 
 /*
@@ -92,16 +92,15 @@ struct databuf {
 	int16_t		d_zone;		/* zone number or 0 for the cache */
 	int16_t		d_class;	/* class number */
 	int16_t		d_type;		/* type number */
-	int16_t		d_mark;		/* place to mark data */
 	int16_t		d_size;		/* size of data area */
 #ifdef NCACHE
-	int16_t		d_rcode;	/* rcode added for negative caching */
+	unsigned	d_rcode :4;	/* rcode added for negative caching */
 #endif
-	int16_t		d_rcnt;
+	unsigned	d_rcnt :12;
 #ifdef STATS
 	struct nameser	*d_ns;		/* NS from whence this came */
 #endif
-/*XXX*/	u_int32_t       d_nstime;       /* NS response time, milliseconds */
+	u_int16_t	d_nstime;	/* NS response time, milliseconds */
 	u_char		d_data[sizeof(char*)]; /* malloc'd (padded) */
 };
 #define DATASIZE(n) (sizeof(struct databuf) - sizeof(char*) + n)
@@ -110,6 +109,7 @@ struct databuf {
  * d_flags definitions
  */
 #define DB_F_HINT       0x01		/* databuf belongs to fcachetab */
+#define DB_F_ACTIVE     0x02		/* databuf is linked into a cache */
 
 /*
  * d_cred definitions
@@ -121,13 +121,16 @@ struct databuf {
 #define	DB_C_CACHE	0		/* cache - worst */
 
 struct namebuf {
-	char		*n_dname;	/* domain name */
 	u_int		n_hashval;	/* hash value of n_dname */
 	struct namebuf	*n_next;	/* linked list */
 	struct databuf	*n_data;	/* data records */
 	struct namebuf	*n_parent;	/* parent domain */
 	struct hashbuf	*n_hash;	/* hash table for children */
+	char		_n_name[sizeof(void*)];	/* Counted str, malloc'ed. */
 };
+#define NAMESIZE(n) (sizeof(struct namebuf) - sizeof(void*) + 1 + n + 1)
+#define NAMELEN(nb) ((nb)._n_name[0])
+#define NAME(nb)    ((nb)._n_name + 1)
 
 #ifdef INVQ
 struct invbuf {

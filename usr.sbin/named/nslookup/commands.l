@@ -1,6 +1,5 @@
 %{
-
-/*	$NetBSD: commands.l,v 1.1 1996/02/02 15:29:58 mrg Exp $	*/
+/*	$OpenBSD: commands.l,v 1.2 1997/03/12 10:42:46 downsj Exp $	*/
 
 /*
  * ++Copyright++ 1985

@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$OpenBSD: mxlookup,v 1.2 1997/03/12 10:41:55 downsj Exp $
 #
 #	@(#)mxlookup            e07@nikhef.nl (Eric Wassenaar) 950108
 #

@@ -1,4 +1,4 @@
-/*	$NetBSD: getinfo.c,v 1.1 1996/02/02 15:30:05 mrg Exp $	*/
+/*	$OpenBSD: getinfo.c,v 1.2 1997/03/12 10:42:47 downsj Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -56,8 +56,12 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)getinfo.c	5.26 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: getinfo.c,v 8.3 1995/12/29 07:16:27 vixie Exp ";
+static char rcsid[] = "$From: getinfo.c,v 8.6 1996/12/02 09:17:24 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: getinfo.c,v 1.2 1997/03/12 10:42:47 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -86,11 +90,6 @@ static char rcsid[] = "$Id: getinfo.c,v 8.3 1995/12/29 07:16:27 vixie Exp ";
 
 extern char *_res_resultcodes[];
 extern char *res_skip();
-
-#define	MAXALIASES	35
-#define MAXADDRS	35
-#define MAXDOMAINS	35
-#define MAXSERVERS	10
 
 static char *addr_list[MAXADDRS + 1];
 
@@ -307,13 +306,18 @@ GetAnswer(nsAddrPtr, queryType, msg, msglen, iquery, hostPtr, isServer)
 		    hostPtr->name = Calloc(1, len);
 		    bcopy(bp, hostPtr->name, len);
 		}
-		bp += (((long)bp) % sizeof(align));
+		bp += (((u_int32_t)bp) % sizeof(align));
 
 		if (bp + dlen >= &hostbuf[sizeof(hostbuf)]) {
 		    if (_res.options & RES_DEBUG) {
 			printf("Size (%d) too big\n", dlen);
 		    }
 		    break;
+		}
+		if (numAddresses >= MAXADDRS) {
+			printf("MAXADDRS exceeded: skipping address\n");
+			cp += dlen;
+			continue;
 		}
 		bcopy(cp, *addrPtr++ = (char *)bp, dlen);
 		bp +=dlen;
@@ -572,7 +576,8 @@ GetHostInfoByName(nsAddrPtr, queryClass, queryType, name, hostPtr, isServer)
 {
     int			n;
     register int	result;
-    register char	*cp, **domain;
+    register char	**domain;
+    const char		*cp;
     Boolean		got_nodata = FALSE;
     struct in_addr	ina;
     Boolean		tried_as_is = FALSE;

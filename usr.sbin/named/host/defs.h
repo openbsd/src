@@ -1,14 +1,15 @@
+/*	$OpenBSD: defs.h,v 1.2 1997/03/12 10:41:52 downsj Exp $	*/
+
 /*
 ** Declaration of functions.
 **
-**	@(#)defs.h              e07@nikhef.nl (Eric Wassenaar) 951015
+**	@(#)defs.h              e07@nikhef.nl (Eric Wassenaar) 961113
 */
 
 /*
 ** Internal modules of the host utility
 ** ------------------------------------
 */
-
 	/* main.c */
 
 int main		PROTO((int, char **));
@@ -25,18 +26,16 @@ void set_logfile	PROTO((char *));
 void fatal		PROTO((char *, ...));
 void errmsg		PROTO((char *, ...));
 
-
 	/* info.c */
 
 bool get_hostinfo	PROTO((char *, bool));
 bool get_domaininfo	PROTO((char *, char *));
 int get_info		PROTO((querybuf *, char *, int, int));
-bool print_info		PROTO((querybuf *, int, char *, int, bool));
+bool print_info		PROTO((querybuf *, int, char *, int, int, bool));
 void print_data		PROTO((char *, ...));
-u_char *print_rrec	PROTO((char *, u_char *, u_char *, u_char *, bool));
-u_char *skip_qrec	PROTO((char *, u_char *, u_char *, u_char *));
-bool get_recursive	PROTO((char *));
-
+u_char *print_rrec	PROTO((char *, int, int, u_char *, u_char *, u_char *, bool));
+u_char *skip_qrec	PROTO((char *, int, int, u_char *, u_char *, u_char *));
+bool get_recursive	PROTO((char **));
 
 	/* list.c */
 
@@ -48,8 +47,9 @@ void sort_servers	PROTO((void));
 bool skip_transfer	PROTO((char *));
 void do_check		PROTO((char *));
 bool do_transfer	PROTO((char *));
-bool transfer_zone	PROTO((char *, int, struct in_addr, char *));
-bool get_zone		PROTO((char *, int, struct in_addr, char *));
+bool transfer_zone	PROTO((char *, struct in_addr, char *));
+bool get_zone		PROTO((char *, struct in_addr, char *));
+void update_zone	PROTO((char *));
 bool get_mxrec		PROTO((char *));
 char *get_primary	PROTO((char *));
 bool check_zone		PROTO((char *));
@@ -64,12 +64,15 @@ int zone_index		PROTO((char *, bool));
 void clear_zonetab	PROTO((void));
 int check_canon		PROTO((char *));
 
-
 	/* addr.c */
 
 bool check_addr		PROTO((char *));
 bool check_name		PROTO((ipaddr_t));
 
+	/* geth.c */
+
+struct hostent *geth_byname	PROTO((CONST char *));
+struct hostent *geth_byaddr	PROTO((CONST char *, int, int));
 
 	/* util.c */
 
@@ -84,7 +87,7 @@ void clear_statistics	PROTO((void));
 void show_types		PROTO((char *, int, int));
 void ns_error		PROTO((char *, int, int, char *));
 char *decode_error	PROTO((int));
-void print_status	PROTO((querybuf *));
+void print_status	PROTO((querybuf *, int));
 void pr_error		PROTO((char *, ...));
 void pr_warning		PROTO((char *, ...));
 bool want_type		PROTO((int, int));
@@ -103,21 +106,23 @@ int check_size		PROTO((char *, int, u_char *, u_char *, u_char *, int));
 bool valid_name		PROTO((char *, bool, bool, bool));
 int canonical		PROTO((char *));
 char *mapreverse	PROTO((char *, struct in_addr));
-int compare_name	PROTO((char **, char **));
-
+int compare_name	PROTO((const ptr_t *, const ptr_t *));
 
 	/* misc.c */
 
 ptr_t *xalloc		PROTO((ptr_t *, siz_t));
 char *itoa		PROTO((int));
 char *utoa		PROTO((int));
-char *stoa		PROTO((u_char *, int));
+char *xtoa		PROTO((int));
+char *stoa		PROTO((u_char *, int, bool));
+char *base_ntoa		PROTO((u_char *, int));
 char *nsap_ntoa		PROTO((u_char *, int));
+char *ipng_ntoa		PROTO((u_char *));
+char *pr_date		PROTO((int));
 char *pr_time		PROTO((int, bool));
 char *pr_spherical	PROTO((int, char *, char *));
 char *pr_vertical	PROTO((int, char *, char *));
 char *pr_precision	PROTO((int));
-
 
 	/* send.c */
 
@@ -133,16 +138,51 @@ void _res_perror	PROTO((struct sockaddr_in *, char *, char *));
 ** External library functions
 ** --------------------------
 */
-
 	/* extern */
 
+#if 0
 ipaddr_t inet_addr	PROTO((CONST char *));
 char *inet_ntoa		PROTO((struct in_addr));
 char *hostalias		PROTO((CONST char *));
-char *index		PROTO((const char *, char));
-char *rindex		PROTO((const char *, char));
+#endif
+
+	/* avoid <strings.h> */
+
+#if !defined(index)
+
+char *index		PROTO((const char *, int));
+char *rindex		PROTO((const char *, int));
+
+#endif
+
+	/* <string.h> */
+
+#if !defined(NO_STRING_H)
+#include <string.h>
+#else
+
 char *strcpy		PROTO((char *, const char *));
+char *strncpy		PROTO((char *, const char *, siz_t));
+
+#endif
+
+	/* <stdlib.h> */
+
+#if defined(__STDC__) && !defined(apollo)
+#include <stdlib.h>
+#else
+
 char *getenv		PROTO((const char *));
 ptr_t *malloc		PROTO((siz_t));
 ptr_t *realloc		PROTO((ptr_t *, siz_t));
+free_t free		PROTO((ptr_t *));
 void exit		PROTO((int));
+void qsort		PROTO((ptr_t *, siz_t, siz_t, int (*)(const ptr_t *, const ptr_t *)));
+
+#endif
+
+	/* <unistd.h> */
+
+#if defined(__STDC__) && !defined(apollo)
+#include <unistd.h>
+#endif

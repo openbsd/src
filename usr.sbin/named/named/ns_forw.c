@@ -1,8 +1,12 @@
-/*	$NetBSD: ns_forw.c,v 1.1 1996/02/02 15:28:44 mrg Exp $	*/
+/*	$OpenBSD: ns_forw.c,v 1.2 1997/03/12 10:42:28 downsj Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
+#if 0
 static char sccsid[] = "@(#)ns_forw.c	4.32 (Berkeley) 3/3/91";
-static char rcsid[] = "$Id: ns_forw.c,v 8.9 1995/12/22 10:20:30 vixie Exp ";
+static char rcsid[] = "$From: ns_forw.c,v 8.19 1996/12/02 09:27:36 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.2 1997/03/12 10:42:28 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -60,6 +64,7 @@ static char rcsid[] = "$Id: ns_forw.c,v 8.9 1995/12/22 10:20:30 vixie Exp ";
  * --Copyright--
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -84,7 +89,7 @@ static char rcsid[] = "$Id: ns_forw.c,v 8.9 1995/12/22 10:20:30 vixie Exp ";
  * (no action is taken on errors and qpp is not filled in.)
  */
 int
-ns_forw(nsp, msg, msglen, fp, qsp, dfd, qpp, dname, np)
+ns_forw(nsp, msg, msglen, fp, qsp, dfd, qpp, dname, class, type, np)
 	struct databuf *nsp[];
 	u_char *msg;
 	int msglen;
@@ -93,9 +98,11 @@ ns_forw(nsp, msg, msglen, fp, qsp, dfd, qpp, dname, np)
 	int dfd;
 	struct qinfo **qpp;
 	char *dname;
+	int class, type;
 	struct namebuf *np;
 {
 	register struct qinfo *qp;
+	char tmpdomain[MAXDNAME];
 	struct sockaddr_in *nsa;
 	HEADER *hp;
 	u_int16_t id;
@@ -115,21 +122,26 @@ ns_forw(nsp, msg, msglen, fp, qsp, dfd, qpp, dname, np)
 		     bcmp((char *)qp->q_cmsg+2, msg+2, msglen-2) == 0))) {
 			dprintf(3, (ddt,
 				    "forw: dropped DUP id=%d\n", ntohs(id)));
+#ifdef XSTATS
 			nameserIncr(fp->sin_addr, nssRcvdDupQ);
+#endif
 			return (FW_DUP);
 		}
 	}
 
-	qp = qnew();
-#if defined(LAME_DELEGATION) || defined(VALIDATE)
-	getname(np, qp->q_domain, sizeof qp->q_domain);
-#endif
+	qp = qnew(dname, class, type);
+	getname(np, tmpdomain, sizeof tmpdomain);
+	qp->q_domain = strdup(tmpdomain);
+	if (!qp->q_domain)
+		panic(ENOMEM, "ns_forw: strdup failed");
 	qp->q_from = *fp;	/* nslookup wants to know this */
-	if ((n = nslookup(nsp, qp, dname, "ns_forw")) < 0) {
+	n = nslookup(nsp, qp, dname, "ns_forw");
+	if (n < 0) {
 		dprintf(2, (ddt, "forw: nslookup reports danger\n"));
 		qfree(qp);
 		return (FW_SERVFAIL);
-	} else if (n == 0 && !fwdtab) {
+	}
+	if (n == 0 && !fwdtab) {
 		dprintf(2, (ddt, "forw: no nameservers found\n"));
 		qfree(qp);
 		return (FW_NOSERVER);
@@ -178,12 +190,14 @@ ns_forw(nsp, msg, msglen, fp, qsp, dfd, qpp, dname, np)
 #endif
 	if (sendto(ds, (char *)msg, msglen, 0, (struct sockaddr *)nsa,
 		   sizeof(struct sockaddr_in)) < 0) {
-		if (!haveComplained((char*)(long)nsa->sin_addr.s_addr, sendtoStr))
+		if (!haveComplained((char*)nsa->sin_addr.s_addr, sendtoStr))
 			syslog(LOG_INFO, "ns_forw: sendto([%s].%d): %m",
 			       inet_ntoa(nsa->sin_addr), ntohs(nsa->sin_port));
 		nameserIncr(nsa->sin_addr, nssSendtoErr);
 	}
+#ifdef XSTATS
 	nameserIncr(fp->sin_addr, nssRcvdFwdQ);
+#endif
 	nameserIncr(nsa->sin_addr, nssSentFwdQ);
 	if (qpp)
 		*qpp = qp;
@@ -286,6 +300,8 @@ nslookupComplain(sysloginfo, queryname, complaint, dname, a_rr, nsdp)
 	char abuf[20];
 #endif
 	char *a, *ns;
+	const char *a_type;
+	int print_a;
 
 	dprintf(2, (ddt, "NS '%s' %s\n", dname, complaint));
 	if (sysloginfo && queryname && !haveComplained(queryname, complaint))
@@ -293,6 +309,21 @@ nslookupComplain(sysloginfo, queryname, complaint, dname, a_rr, nsdp)
 		char buf[999];
 
 		a = ns = (char *)NULL;
+		print_a = (a_rr->d_type == T_A);
+		a_type = p_type(a_rr->d_type);
+#ifdef NCACHE
+		if (a_rr->d_rcode) {
+			print_a = 0;
+			switch(a_rr->d_rcode) {
+			case NXDOMAIN:
+				a_type = "NXDOMAIN";
+				break;
+			case NOERROR_NODATA:
+				a_type = "NODATA";
+				break;
+			}
+		}
+#endif
 #ifdef STATS
 		if (nsdp) {
 			if (nsdp->d_ns) {
@@ -311,18 +342,21 @@ nslookupComplain(sysloginfo, queryname, complaint, dname, a_rr, nsdp)
 #endif
 		/* syslog only takes 5 params */
 		if ( a != NULL || ns != NULL)
-			sprintf(buf, "%s: query(%s) %s (%s:%s) learnt (A=%s:NS=%s)",
+			sprintf(buf, "%s: query(%s) %s (%s:%s) learnt (%s=%s:NS=%s)",
 				sysloginfo, queryname,
 				complaint, dname,
-				inet_ntoa(data_inaddr(a_rr->d_data)),
+				print_a ?
+				    inet_ntoa(data_inaddr(a_rr->d_data)) : "",
+				a_type,
 				a ? a : "<Not Available>",
 				ns ? ns : "<Not Available>" );
 		else
 			sprintf(buf, "%s: query(%s) %s (%s:%s)",
 				sysloginfo, queryname,
 				complaint, dname,
-				inet_ntoa(data_inaddr(a_rr->d_data)));
-		syslog(LOG_INFO, buf);
+				print_a ?
+				    inet_ntoa(data_inaddr(a_rr->d_data)) : "");
+		syslog(LOG_INFO, "%s", buf);
 	}
 }
 
@@ -353,16 +387,17 @@ nslookup(nsp, qp, syslogdname, sysloginfo)
 	register struct databuf *dp, *nsdp;
 	register struct qserv *qs;
 	register int n;
-	register unsigned int i;
+	register u_int i;
 	struct hashbuf *tmphtp;
 	char *dname;
 	const char *fname;
-	int oldn, naddr, class, found_arr;
+	int oldn, naddr, class, found_arr, potential_ns;
 	time_t curtime;
 
 	dprintf(3, (ddt, "nslookup(nsp=0x%lx, qp=0x%lx, \"%s\")\n",
 		    (u_long)nsp, (u_long)qp, syslogdname));
 
+	potential_ns = 0;
 	naddr = n = qp->q_naddr;
 	curtime = (u_long) tt.tv_sec;
 	while ((nsdp = *nsp++) != NULL) {
@@ -384,28 +419,82 @@ nslookup(nsp, qp, syslogdname, sysloginfo)
 
 		tmphtp = ((nsdp->d_flags & DB_F_HINT) ?fcachetab :hashtab);
 		np = nlookup(dname, &tmphtp, &fname, 1);
-		if (np == NULL || fname != dname) {
+		if (np == NULL) {
 			dprintf(3, (ddt, "%s: not found %s %lx\n",
 				    dname, fname, (u_long)np));
-			continue;
+			found_arr = 0;
+			goto need_sysquery;
+		}
+		if (fname != dname) {
+			if (findMyZone(np, class) == DB_Z_CACHE) {
+				/*
+				 * lifted from findMyZone()
+                                 * We really need to know if the NS
+				 * is the bottom of one of our zones
+				 * to see if we've got missing glue
+				 */
+				for (; np; np = np_parent(np))
+				    for (dp = np->n_data; dp; dp = dp->d_next)
+					if (match(dp, class, T_NS)) {
+#ifdef NCACHE
+					    if (dp->d_rcode)
+						break;
+#endif
+					    if (dp->d_zone) {
+						static char *complaint =
+						    "Glue A RR missing";
+						nslookupComplain(sysloginfo,
+						                 syslogdname,
+								 complaint,
+								 dname, dp,
+								 nsdp);
+						goto skipserver;
+					    } else {
+						found_arr = 0;
+						goto need_sysquery;
+					    }
+					}
+				/* shouldn't happen, but ... */
+				found_arr = 0;
+				goto need_sysquery;
+			} else {
+				/* Authoritative A RR missing. */
+				continue;
+			}
 		}
 		found_arr = 0;
 		oldn = n;
 
 		/* look for name server addresses */
-		for (dp = np->n_data;  dp != NULL;  dp = dp->d_next) {
+		delete_stale(np);
+		for (dp = np->n_data; dp != NULL; dp = dp->d_next) {
 			struct in_addr nsa;
 
+			if (dp->d_type == T_CNAME && dp->d_class == class) {
+				static const char *complaint =
+					"NS points to CNAME";
 #ifdef NCACHE
-			if (dp->d_rcode)
-				continue;
+				if (dp->d_rcode)
+					continue;
 #endif
-			if (dp->d_type == T_CNAME && dp->d_class == class)
+				nslookupComplain(sysloginfo, syslogdname,
+						complaint, dname, dp, nsdp);
 				goto skipserver;
+			}
 			if (dp->d_type != T_A || dp->d_class != class)
 				continue;
+#ifdef NCACHE
+			if (dp->d_rcode) {
+				static const char *complaint =
+					"A RR negative cache entry";
+				nslookupComplain(sysloginfo, syslogdname,
+						 complaint, dname, dp, nsdp);
+				goto skipserver;
+			}
+#endif
 			if (data_inaddr(dp->d_data).s_addr == INADDR_ANY) {
-				static char *complaint = "Bogus (0.0.0.0) A RR";
+				static const char *complaint =
+					"Bogus (0.0.0.0) A RR";
 				nslookupComplain(sysloginfo, syslogdname,
 						complaint, dname, dp, nsdp);
 				continue;
@@ -413,26 +502,29 @@ nslookup(nsp, qp, syslogdname, sysloginfo)
 #ifdef INADDR_LOOPBACK
 			if (ntohl(data_inaddr(dp->d_data).s_addr) ==
 					INADDR_LOOPBACK) {
-				static char *complaint = "Bogus LOOPBACK A RR";
+				static const char *complaint =
+					"Bogus LOOPBACK A RR";
 				nslookupComplain(sysloginfo, syslogdname,
-						complaint, dname, dp, nsdp);
+						 complaint, dname, dp, nsdp);
 				continue;
 			}
 #endif
 #ifdef INADDR_BROADCAST
 			if (ntohl(data_inaddr(dp->d_data).s_addr) == 
 					INADDR_BROADCAST) {
-				static char *complaint = "Bogus BROADCAST A RR";
+				static const char *complaint =
+					"Bogus BROADCAST A RR";
 				nslookupComplain(sysloginfo, syslogdname,
-						complaint, dname, dp, nsdp);
+						 complaint, dname, dp, nsdp);
 				continue;
 			}
 #endif
 #ifdef IN_MULTICAST
 			if (IN_MULTICAST(ntohl(data_inaddr(dp->d_data).s_addr))) {
-				static char *complaint = "Bogus MULTICAST A RR";
+				static const char *complaint =
+					"Bogus MULTICAST A RR";
 				nslookupComplain(sysloginfo, syslogdname,
-						complaint, dname, dp, nsdp);
+						 complaint, dname, dp, nsdp);
 				continue;
 			}
 #endif
@@ -442,26 +534,14 @@ nslookup(nsp, qp, syslogdname, sysloginfo)
 			 * Never delete our safety-belt information!
 			 */
 			if ((dp->d_zone == 0) &&
-#ifdef DATUMREFCNT
 			    (dp->d_ttl < curtime) &&
-#else
-			    (dp->d_ttl < (curtime+900)) &&
-#endif
 			    !(dp->d_flags & DB_F_HINT) )
 		        {
-				dprintf(3, (ddt,
-					    "nslookup: stale entry '%s'\n",
-					    np->n_dname));
-				/* Cache invalidate the NS RR's */
-#ifndef DATUMREFCNT
-				if (dp->d_ttl < curtime)
-#endif
-				{
-					delete_all(np, class, T_A);
-					n = oldn;
-					found_arr = 0;
-					goto need_sysquery;
-				}
+				syslog(LOG_DEBUG, "nslookup: stale '%s'\n",
+				       NAME(*np));
+				n = oldn;
+				found_arr = 0;
+				goto need_sysquery;
 			}
 #ifdef VALIDATE
 			/* anant@isi.edu validation procedure, maintains a
@@ -496,18 +576,24 @@ nslookup(nsp, qp, syslogdname, sysloginfo)
 			 *
 			 * (originally done in nsContainsUs by vix@dec mar92;
 			 * moved into nslookup by apb@und jan1993)
+			 *
+			 * try to limp along instead of denying service
+			 * gdonl mar96
 			 */
 			if (aIsUs(nsa)) {
 			    static char *complaint = "contains our address";
 			    nslookupComplain(sysloginfo, syslogdname,
 					     complaint, dname, dp, nsdp);
-			    return (-1);
+			    continue;
 			}
 			/*
 			 * If we want to forward to a host that asked us
 			 * this question then either we or they are sick
 			 * (unless they asked from some port other than
 			 * their nameserver port).  (apb@und jan1993)
+			 *
+			 * try to limp along instead of denying service
+			 * gdonl mar96
 			 */
 			if (bcmp((char *)&qp->q_from, (char *)&qs->ns_addr,
 				 sizeof(qp->q_from)) == 0)
@@ -515,7 +601,7 @@ nslookup(nsp, qp, syslogdname, sysloginfo)
 			    static char *complaint = "forwarding loop";
 			    nslookupComplain(sysloginfo, syslogdname,
 					     complaint, dname, dp, nsdp);
-			    return (-1);
+			    continue;
 			}
 #ifdef BOGUSNS
 			/*
@@ -542,21 +628,33 @@ nslookup(nsp, qp, syslogdname, sysloginfo)
 		}
 		dprintf(8, (ddt, "nslookup: %d ns addrs\n", n));
  need_sysquery:
-		if (found_arr == 0 && !(qp->q_flags & Q_SYSTEM))
-			(void) sysquery(dname, class, T_A, NULL, 0, QUERY);
+		if (found_arr == 0) {
+			potential_ns++;
+			if (!(qp->q_flags & Q_SYSTEM))
+				(void) sysquery(dname, class, T_A, NULL, 0,
+						QUERY);
+		}
  skipserver:
 		NULL;
 	}
-out:
+ out:
 	dprintf(3, (ddt, "nslookup: %d ns addrs total\n", n));
 	qp->q_naddr = n;
-#ifdef DATUMREFCNT
-	/* must be run before the sort */
-	for (i = naddr ; i < n ; i++) {
+	if (n == 0 && potential_ns == 0 && !fwdtab) {
+		static char *complaint = "No possible A RRs";
+		if (sysloginfo && syslogdname &&
+		    !haveComplained(syslogdname, complaint))
+		{
+			syslog(LOG_INFO, "%s: query(%s) %s",
+			       sysloginfo, syslogdname, complaint);
+		}
+		return(-1);
+	}
+	/* Update the refcounts before the sort. */
+	for (i = naddr; i < n; i++) {
 		qp->q_addr[i].nsdata->d_rcnt++;
 		qp->q_addr[i].ns->d_rcnt++;
 	}
-#endif
 	if (n > 1) {
 		qsort((char *)qp->q_addr, n, sizeof(struct qserv),
 		      (int (*)__P((const void *, const void *)))qcomp);
@@ -742,7 +840,7 @@ retry(qp)
 			    (u_long)qp, (u_long)qp->q_expire,
 			    (int)(tt.tv_sec - qp->q_expire),
 			    (u_long)tt.tv_sec));
-		if (qp->q_stream) /* return failure code on stream */
+		if (qp->q_stream || (qp->q_flags & Q_PRIMING))
 			goto fail;
 		qremove(qp);
 		return;
@@ -796,7 +894,9 @@ fail:
 		dprintf(1, (ddt, "gave up retry(x%lx) nsid=%d id=%d\n",
 			    (u_long)qp, ntohs(qp->q_nsid), ntohs(qp->q_id)));
 	}
+#ifdef XSTATS
 	nameserIncr(qp->q_from.sin_addr, nssSentFail);
+#endif
 	qremove(qp);
 	return;
 
@@ -870,6 +970,7 @@ qflush()
 	while (nsqhead)
 		qremove(nsqhead);
 	nsqhead = QINFO_NULL;
+	priming = 0;
 }
 
 void
@@ -905,45 +1006,67 @@ qfindid(id)
 }
 
 struct qinfo *
-#ifdef DMALLOC
-qnew_tagged(file, line)
-	char *file;
-	int line;
-#else
-qnew()
-#endif
+qnew(name, class, type)
+	const char *name;
+	int class;
+	int type;
 {
 	register struct qinfo *qp;
 
-	qp = (struct qinfo *)
-#ifdef DMALLOC
-	    dcalloc(file, line, 1, sizeof(struct qinfo));
-#else
-	    calloc(1, sizeof(struct qinfo));
-#endif
-	if (qp == NULL) {
-		dprintf(5, (ddt, "qnew: calloc error\n"));
-		syslog(LOG_ERR, "forw: %m");
-		exit(12);
-	}
-	dprintf(5, (ddt, "qnew(x%lx)\n", (u_long)qp));
+	qp = (struct qinfo *)calloc(1, sizeof(struct qinfo));
+	if (qp == NULL)
+		panic(ENOMEM, "qnew: calloc failed");
+	dprintf(5, (ddt, "qnew(%#x)\n", qp));
 #ifdef BIND_NOTIFY
 	qp->q_notifyzone = DB_Z_CACHE;
 #endif
 	qp->q_link = nsqhead;
 	nsqhead = qp;
+	qp->q_name = strdup(name);
+	if (!qp->q_name)
+		panic(ENOMEM, "qnew: strdup failed");
+	qp->q_class = (u_int16_t)class;
+	qp->q_type = (u_int16_t)type;
 	return (qp);
+}
+
+void
+nsfree(qp, where)
+	struct qinfo *qp;
+	char *where;
+{
+	static const char freed[] = "freed", busy[] = "busy";
+	const char *result;
+	struct databuf *dp;
+	int i;
+
+	for (i = 0 ; i < (int)qp->q_naddr ; i++) {
+		dp = qp->q_addr[i].ns;
+		if (dp) {
+			result = (--(dp->d_rcnt)) ? busy : freed;
+			dprintf(1, (ddt, "%s: ns %s rcnt %d (%s)\n",
+				    where, dp->d_data, dp->d_rcnt, result));
+			if (result == freed)
+				db_free(dp);
+		}
+		dp = qp->q_addr[i].nsdata;
+		if (dp) {
+			result = (--(dp->d_rcnt)) ? busy : freed;
+			dprintf(1, (ddt, "%s: nsdata %s rcnt %d (%s)\n",
+				    where, inet_ntoa(data_inaddr(dp->d_data)),
+				    dp->d_rcnt, result));
+			if (result == freed)
+				db_free(dp);
+		}
+	}
 }
 
 void
 qfree(qp)
 	struct qinfo *qp;
 {
-	register struct qinfo *np;
-	register struct databuf *dp;
-#ifdef	DATUMREFCNT
-	int i;
-#endif
+	struct qinfo *np;
+	struct databuf *dp;
 
 	dprintf(3, (ddt, "Qfree(x%lx)\n", (u_long)qp));
 	if (qp->q_next)
@@ -953,42 +1076,20 @@ qfree(qp)
 	 	free(qp->q_msg);
  	if (qp->q_cmsg)
  		free(qp->q_cmsg);
-#ifdef	DATUMREFCNT
-	for (i = 0 ; i < (int)qp->q_naddr ; i++) {
-		dp = qp->q_addr[i].ns;
-		if (dp)
-			if (--(dp->d_rcnt)) {
-				dprintf(3, (ddt, "qfree: ns %s rcnt %d\n",
-						dp->d_data,
-						dp->d_rcnt));
-			} else {
-				dprintf(3, (ddt, "qfree: ns %s rcnt %d delayed\n",
-						dp->d_data,
-						dp->d_rcnt));
-				free((char*)dp);
-			}
-		dp = qp->q_addr[i].nsdata;
-		if (dp)
-			if ((--(dp->d_rcnt))) {
-				dprintf(3, (ddt, "qfree: nsdata %08.8X rcnt %d\n",
-					*(int32_t *)(dp->d_data),
-					dp->d_rcnt));
-			} else {
-				dprintf(3, (ddt, "qfree: nsdata %08.8X rcnt %d delayed\n",
-					*(int32_t *)(dp->d_data),
-					dp->d_rcnt));
-			free((char*)dp);
-			}
-	}
-#endif
-	if( nsqhead == qp )  {
+	if (qp->q_domain)
+		free(qp->q_domain);
+	if (qp->q_name)
+		free(qp->q_name);
+	nsfree(qp, "qfree");
+	if (nsqhead == qp)
 		nsqhead = qp->q_link;
-	} else {
-		for( np=nsqhead; np->q_link != QINFO_NULL; np = np->q_link )  {
-			if( np->q_link != qp )  continue;
+	else {
+		for (np = nsqhead; np->q_link != QINFO_NULL; np = np->q_link) {
+			if (np->q_link != qp)
+				continue;
 			np->q_link = qp->q_link;	/* dequeue */
 			break;
 		}
 	}
-	free((char *)qp);
+	free((char*)qp);
 }

@@ -1,8 +1,12 @@
-/*	$NetBSD: db_reload.c,v 1.1 1996/02/02 15:28:33 mrg Exp $	*/
+/*	$OpenBSD: db_reload.c,v 1.2 1997/03/12 10:42:25 downsj Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
+#if 0
 static char sccsid[] = "@(#)db_reload.c	4.22 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: db_reload.c,v 8.1 1994/12/15 06:24:14 vixie Exp ";
+static char rcsid[] = "$From: db_reload.c,v 8.3 1996/08/27 08:33:23 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: db_reload.c,v 1.2 1997/03/12 10:42:25 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -60,6 +64,7 @@ static char rcsid[] = "$Id: db_reload.c,v 8.1 1994/12/15 06:24:14 vixie Exp ";
  * --Copyright--
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -99,7 +104,7 @@ db_reload()
 #if 0
 /* someday we'll need this.. (untested since before 1990) */
 void
-db_free(htp)
+ht_free(htp)
 	struct hashbuf *htp;
 {
 	register struct databuf *dp, *nextdp;
@@ -115,7 +120,7 @@ db_free(htp)
 		(void) free((char *)np->n_dname);
 		for (dp = np->n_data; dp != NULL; ) {
 			nextdp = dp->d_next;
-			(void) free((char *)dp);
+			db_free(dp);
 			dp = nextdp;
 		}
 		nextnp = np->n_next;

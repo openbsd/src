@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_glob.h,v 1.1 1996/02/02 15:28:48 mrg Exp $	*/
+/*	$OpenBSD: ns_glob.h,v 1.2 1997/03/12 10:42:30 downsj Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
- *	$Id: ns_glob.h,v 8.6 1995/12/22 10:20:30 vixie Exp 
+ *	$From: ns_glob.h,v 8.11 1996/11/11 06:36:49 vixie Exp $
  */
 
 /*
@@ -125,15 +125,6 @@ DECL	int			needToChkpt	INIT(0);
 	/* need to dump statistics */
 DECL	int			needStatsDump	INIT(0);
 
-#ifdef ALLOW_UPDATES
-	/* need to exit (may need to doadump
-	 * first, if database has changed since
-	 * it was last dumped/booted). Gets
-	 * set by shutdown signal handler
-	 *  (onintr)
-	 */
-DECL	int			needToExit	INIT(0);
-#endif /* ALLOW_UPDATES */
 #ifdef XSTATS
 	/* need to exit 
 	 * set by shutdown signal handler
@@ -270,3 +261,26 @@ DECL	int			max_xfers_per_ns	INIT(MAX_XFERS_PER_NS);
 	/* should IQUERY be answered bogusly rather than with NOTIMPL? */
 DECL	int			fake_iquery	INIT(0);
 #endif
+
+enum context { domain_ctx, owner_ctx, mailname_ctx, hostname_ctx };
+DECL	const char		*context_strings[]
+#ifdef MAIN_PROGRAM
+	= { "domain", "owner", "mail", "host", NULL }
+#endif
+;
+
+enum transport { primary_trans, secondary_trans, response_trans, num_trans };
+DECL	const char		*transport_strings[]
+#ifdef MAIN_PROGRAM
+	= { "primary", "secondary", "response", NULL }
+#endif
+;
+
+enum severity { ignore, warn, fail };
+DECL	const char		*severity_strings[]
+#ifdef MAIN_PROGRAM
+	= { "ignore", "warn", "fail", NULL }
+#endif
+;
+
+DECL	struct in_addr		inaddr_any;	/* Inits to 0.0.0.0 */

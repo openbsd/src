@@ -1,3 +1,5 @@
+/*	$OpenBSD: host.c,v 1.2 1997/03/12 10:41:53 downsj Exp $	*/
+
 /*
  * Copyright (c) 1985, 1989 Regents of the University of California.
  * All rights reserved.
@@ -36,7 +38,7 @@
  */
 
 #ifndef lint
-static char Version[] = "@(#)host.c	e07@nikhef.nl (Eric Wassenaar) 951231";
+static char Version[] = "@(#)host.c	e07@nikhef.nl (Eric Wassenaar) 961013";
 #endif
 
 #if defined(apollo) && defined(lint)
@@ -73,6 +75,7 @@ static char Version[] = "@(#)host.c	e07@nikhef.nl (Eric Wassenaar) 951231";
  * - Implement new resource record types from RFC 1183 and 1348.
  * - Basic experimental NSAP support as defined in RFC 1637.
  * - Implement new resource record types from RFC 1664 and 1712.
+ * - Implement new resource record types from RFC 1876 and 1886.
  * - Code is extensively documented.
  */
 
@@ -269,10 +272,10 @@ Extended usage:  [-x [name ...]] [-X server [name ...]]\
 ";
 
 #include <stdio.h>
-#include <string.h>
 #include <ctype.h>
 #include <errno.h>
 #include <netdb.h>
+#include <time.h>
 
 #include <sys/types.h>		/* not always automatically included */
 #include <sys/param.h>
@@ -281,6 +284,7 @@ Extended usage:  [-x [name ...]] [-X server [name ...]]\
 
 #undef NOERROR			/* in <sys/streams.h> on solaris 2.x */
 #include <arpa/nameser.h>
+#include <arpa/inet.h>
 #include <resolv.h>
 
 #include "port.h"		/* various portability definitions */
@@ -305,7 +309,7 @@ typedef int	bool;		/* boolean type */
 
 #define T_NONE	0		/* yet unspecified resource record type */
 #define T_FIRST	T_A		/* first possible type in resource record */
-#define T_LAST	(T_AXFR - 1)	/* last  possible type in resource record */
+#define T_LAST	(T_IXFR - 1)	/* last  possible type in resource record */
 
 #ifndef NOCHANGE
 #define NOCHANGE 0xf		/* compatibility with older BIND versions */
@@ -315,10 +319,10 @@ typedef int	bool;		/* boolean type */
 #define BROADCAST_ADDR	((ipaddr_t)0xffffffff)
 #define LOCALHOST_ADDR	((ipaddr_t)0x7f000001)
 
-#if PACKETSZ > 1024
-#define MAXPACKET PACKETSZ
+#if PACKETSZ > 8192
+#define MAXPACKET PACKETSZ	/* PACKETSZ should be the max udp size (512) */
 #else
-#define MAXPACKET 1024
+#define MAXPACKET 8192		/* but tcp packets can be considerably larger */
 #endif
 
 typedef union {
@@ -348,7 +352,7 @@ typedef union {
 #endif
 
 EXTERN int errno;
-EXTERN int h_errno;		/* defined in gethostnamadr.c */
+EXTERN int h_errno;		/* defined in the resolver library */
 EXTERN res_state_t _res;	/* defined in res_init.c */
 extern char *dbprefix;		/* prefix for debug messages (send.c) */
 extern char *version;		/* program version number (vers.c) */
@@ -361,19 +365,15 @@ int errorcount = 0;		/* global error count */
 int record_stats[T_ANY+1];	/* count of resource records per type */
 
 char cnamebuf[MAXDNAME+1];
-char *cname = NULL;		/* name to which CNAME is aliased */
-
+char *cname = NULL;		/* RHS name to which CNAME is aliased */
 char mnamebuf[MAXDNAME+1];
-char *mname = NULL;		/* name to which MR or MG is aliased */
-
+char *mname = NULL;		/* RHS name to which MR or MG is aliased */
 char soanamebuf[MAXDNAME+1];
-char *soaname = NULL;		/* domain name of SOA record */
-
+char *soaname = NULL;		/* LHS domain name of SOA record */
 char subnamebuf[MAXDNAME+1];
-char *subname = NULL;		/* domain name of NS record */
-
+char *subname = NULL;		/* LHS domain name of NS record */
 char adrnamebuf[MAXDNAME+1];
-char *adrname = NULL;		/* domain name of A record */
+char *adrname = NULL;		/* LHS domain name of A record */
 
 ipaddr_t address;		/* internet address of A record */
 
@@ -407,6 +407,7 @@ int namelen = 0;		/* select records exceeding this length */
 int recursive = 0;		/* recursive listmode maximum level */
 int recursion_level = 0;	/* current recursion level */
 int skip_level = 0;		/* level beyond which to skip checks */
+int print_level = 0;		/* level below which to skip verbose output */
 
 bool quiet = FALSE;		/* suppress non-fatal warning messages */
 bool reverse = FALSE;		/* generate reverse in-addr.arpa queries */
@@ -435,13 +436,14 @@ bool classprint = FALSE;	/* print class value in non-verbose mode */
 
 #include "defs.h"		/* declaration of functions */
 
-#define lower(c)	(((c) >= 'A' && (c) <= 'Z') ? (c) + 'a' - 'A' : (c))
-#define hexdigit(n)	(((n) < 10) ? '0' + (n) : 'A' + (n) - 10);
-
 #define is_xdigit(c)	(isascii(c) && isxdigit(c))
 #define is_space(c)	(isascii(c) && isspace(c))
 #define is_alnum(c)	(isascii(c) && isalnum(c))
 #define is_upper(c)	(isascii(c) && isupper(c))
+
+#define lowercase(c)	(is_upper(c) ? tolower(c) : (c))
+#define lower(c)	(((c) >= 'A' && (c) <= 'Z') ? (c) + 'a' - 'A' : (c))
+#define hexdigit(n)	(((n) < 10) ? '0' + (n) : 'A' + (n) - 10);
 
 #define bitset(a,b)	(((a) & (b)) != 0)
 #define sameword(a,b)	(strcasecmp(a,b) == 0)
@@ -451,15 +453,18 @@ bool classprint = FALSE;	/* print class value in non-verbose mode */
 #define fakename(a)	(samehead(a,"localhost.") || samehead(a,"loopback."))
 #define nulladdr(a)	(((a) == 0) || ((a) == BROADCAST_ADDR))
 #define fakeaddr(a)	(nulladdr(a) || ((a) == htonl(LOCALHOST_ADDR)))
-#define incopy(a)	*((struct in_addr *)a)
+#define incopy(a)	*((struct in_addr *)(a))
+#define querysize(n)	(((n) > sizeof(querybuf)) ? sizeof(querybuf) : (n))
 
-#define newlist(a,n,t)	(t *)xalloc((ptr_t *)a, (siz_t)((n)*sizeof(t)))
+#define newlist(a,n,t)	(t *)xalloc((ptr_t *)(a), (siz_t)((n)*sizeof(t)))
+#define newstruct(t)	(t *)xalloc((ptr_t *)NULL, (siz_t)(sizeof(t)))
 #define newstring(s)	(char *)xalloc((ptr_t *)NULL, (siz_t)(strlen(s)+1))
 #define newstr(s)	strcpy(newstring(s), s)
-#define xfree(a)	(void) free((ptr_t *)a)
+#define xfree(a)	(void) free((ptr_t *)(a))
 
 #define strlength(s)	(int)strlen(s)
 #define in_string(s,c)	(index(s,c) != NULL)
+#define is_quoted(a,b)	(((a) > (b)) && ((a)[-1] == '\\'))
 
 #define plural(n)	(((n) == 1) ? "" : "s")
 #define plurale(n)	(((n) == 1) ? "" : "es")
@@ -484,7 +489,7 @@ bool classprint = FALSE;	/* print class value in non-verbose mode */
 ** -----------------------------
 **
 **	Exits:
-**		EX_OK		Operation successfully completed
+**		EX_SUCCESS	Operation successfully completed
 **		EX_UNAVAILABLE	Could not obtain requested information
 **		EX_CANTCREAT	Could not create specified log file
 **		EX_NOINPUT	No input arguments were found
@@ -531,8 +536,8 @@ input char *argv[];
 	_res.options &= ~RES_DEBUG;	/* turn off debug printout */
 	_res.options &= ~RES_USEVC;	/* do not use virtual circuit */
 
-	_res.retry = 2;		/* number  of retries, default = 4 */
-	_res.retrans = 5;	/* timeout in seconds, default = 5 or 6 */
+	_res.retry = DEF_RETRIES;	/* number of datagram retries */
+	_res.retrans = DEF_RETRANS;	/* timeout in secs between retries */
 
 	/* initialize packet id */
 	_res.id = getpid() & 0x7fff;
@@ -578,14 +583,14 @@ input char *argv[];
 		{
 		    case 'w' :
 			waitmode = TRUE;
-			new_res.retry = 2;
-			new_res.retrans = 5;
+			new_res.retry = DEF_RETRIES;
+			new_res.retrans = DEF_RETRANS;
 			break;
 
 		    case 's' :
 			if (argv[2] == NULL || argv[2][0] == '-')
 				fatal("Missing timeout value");
-			new_res.retry = 2;
+			new_res.retry = DEF_RETRIES;
 			new_res.retrans = atoi(argv[2]);
 			if (new_res.retrans <= 0)
 				fatal("Invalid timeout value %s", argv[2]);
@@ -797,7 +802,7 @@ input char *argv[];
 #endif
 		    case 'V' :
 			printf("Version %s\n", version);
-			exit(EX_OK);
+			exit(EX_SUCCESS);
 
 		    default:
 			fatal(Usage);
@@ -846,7 +851,7 @@ input char *argv[];
 	_res.options = new_res.options;
 
 	/* show the new resolver database */
-	if (debug > 1 || verbose > 1)
+	if (verbose > 1 || debug > 1)
 		show_res();
 
 	/* show customized default domain */
@@ -943,7 +948,7 @@ input char *argv[];			/* original command line arguments */
 ** ----------------------------------------------
 **
 **	Returns:
-**		EX_OK if information was obtained successfully.
+**		EX_SUCCESS if information was obtained successfully.
 **		Appropriate exit code otherwise.
 */
 
@@ -962,7 +967,7 @@ input char *argv[];
 		result = process_name(argv[i]);
 
 		/* maintain overall result */
-		if (result != EX_OK || excode == EX_NOINPUT)
+		if (result != EX_SUCCESS || excode == EX_NOINPUT)
 			excode = result;
 	}
 
@@ -975,7 +980,7 @@ input char *argv[];
 ** -------------------------------------------------
 **
 **	Returns:
-**		EX_OK if information was obtained successfully.
+**		EX_SUCCESS if information was obtained successfully.
 **		Appropriate exit code otherwise.
 */
 
@@ -1014,7 +1019,7 @@ input FILE *fp;				/* input file with query names */
 			result = process_name(p);
 
 			/* maintain overall result */
-			if (result != EX_OK || excode == EX_NOINPUT)
+			if (result != EX_SUCCESS || excode == EX_NOINPUT)
 				excode = result;
 		}
 	}
@@ -1028,7 +1033,7 @@ input FILE *fp;				/* input file with query names */
 ** ------------------------------------------------------
 **
 **	Returns:
-**		EX_OK if information was obtained successfully.
+**		EX_SUCCESS if information was obtained successfully.
 **		Appropriate exit code otherwise.
 **
 **	Wrapper for execute_name() to hide administrative tasks.
@@ -1075,7 +1080,7 @@ input char *name;			/* command line argument */
 ** ------------------------------------------------------
 **
 **	Returns:
-**		EX_OK if information was obtained successfully.
+**		EX_SUCCESS if information was obtained successfully.
 **		Appropriate exit code otherwise.
 **
 **	Outputs:
@@ -1103,6 +1108,7 @@ input char *name;			/* command line argument */
  * The name can be an ordinary domain name, or an internet address
  * in dotted quad notation. If the -n option is given, the name is
  * supposed to be a dotted nsap address.
+ * Furthermore, an empty input name is treated as the root domain.
  */
 	queryname = name;
 	if (queryname[0] == '\0')
@@ -1120,16 +1126,18 @@ input char *name;			/* command line argument */
 	if (reverse)
 	{
 		if (queryaddr == NOT_DOTTED_QUAD)
-			name = queryname, queryname = NULL;
+			name = NULL;
 		else
-			queryname = in_addr_arpa(queryname);
+			name = in_addr_arpa(queryname);
 
-		if (queryname == NULL)
+		if (name == NULL)
 		{
-			errmsg("Invalid dotted quad %s", name);
+			errmsg("Invalid dotted quad %s", queryname);
 			return(EX_USAGE);
 		}
 
+		/* redefine appropriately */
+		queryname = name;
 		queryaddr = NOT_DOTTED_QUAD;
 	}
 
@@ -1140,17 +1148,21 @@ input char *name;			/* command line argument */
 	if (revnsap)
 	{
 		if (reverse)
-			name = queryname, queryname = NULL;
+			name = NULL;
 		else
-			queryname = nsap_int(queryname);
+			name = nsap_int(queryname);
 
-		if (queryname == NULL)
+		if (name == NULL)
 		{
-			errmsg("Invalid nsap address %s", name);
+			errmsg("Invalid nsap address %s", queryname);
 			return(EX_USAGE);
 		}
 
+		/* redefine appropriately */
+		queryname = name;
 		queryaddr = NOT_DOTTED_QUAD;
+
+		/* this is also a reversed mapping domain */
 		reverse = TRUE;
 	}
 
@@ -1193,7 +1205,7 @@ input char *name;			/* command line argument */
  * All set. Perform requested function.
  */
 	result = execute(queryname, queryaddr);
-	return(result ? EX_OK : EX_UNAVAILABLE);
+	return(result ? EX_SUCCESS : EX_UNAVAILABLE);
 }
 
 /*
@@ -1291,7 +1303,7 @@ input ipaddr_t addr;			/* explicit address of query */
 			{
 				newname = strcpy(newnamebuf, cname);
 
-				if (++ncnames > 5)
+				if (ncnames++ > MAXCHAIN)
 				{
 					errmsg("Possible CNAME loop");
 					return(FALSE);
@@ -1304,7 +1316,7 @@ input ipaddr_t addr;			/* explicit address of query */
 		}
 		else
 		{
-			hp = gethostbyaddr((char *)&inaddr, INADDRSZ, AF_INET);
+			hp = geth_byaddr((char *)&inaddr, INADDRSZ, AF_INET);
 			if (hp != NULL)
 			{
 				print_host("Name", hp);
@@ -1362,7 +1374,8 @@ myhostname()
 		}
 
 		/* cache the result */
-		myname = strcpy(mynamebuf, hp->h_name);
+		myname = strncpy(mynamebuf, hp->h_name, MAXDNAME);
+		myname[MAXDNAME] = '\0';
 	}
 
 	return(myname);
@@ -1447,13 +1460,16 @@ input char *name;			/* name of server to be queried */
  */
 	if (hp != NULL)
 	{
-		server = strcpy(serverbuf, hp->h_name);
+		server = strncpy(serverbuf, hp->h_name, MAXDNAME);
+		server[MAXDNAME] = '\0';
+
 		if (verbose)
 			print_host("Server", hp);
 	}
 	else
 	{
 		server = strcpy(serverbuf, inet_ntoa(inaddr));
+
 		if (verbose)
 			printf("Server: %s\n\n", server);
 	}
@@ -1578,6 +1594,7 @@ input bool qualified;			/* assume fully qualified if set */
 {
 	register char **domain;
 	register char *cp;
+	const char *hp;
 	int dot;			/* number of dots in query name */
 	bool result;			/* result status of action taken */
 	char oldnamebuf[2*MAXDNAME+2];
@@ -1611,12 +1628,12 @@ input bool qualified;			/* assume fully qualified if set */
  * Check for aliases of single name.
  * Note that the alias is supposed to be fully qualified.
  */
-	if (dot == 0 && (cp = hostalias(name)) != NULL)
+	if (dot == 0 && (hp = hostalias(name)) != NULL)
 	{
 		if (verbose)
-			printf("Aliased to \"%s\"\n", cp);
+			printf("Aliased %s to %s\n", name, hp);
 
-		result = get_domaininfo(cp, (char *)NULL);
+		result = get_domaininfo(hp, (char *)NULL);
 		return(result);
 	}
 
@@ -1784,7 +1801,7 @@ input char *domain;			/* domain to which name is relative */
  * If we got a positive answer, the data may still be corrupted.
  */
 	if (result)
-		result = print_info(&answer, n, name, querytype, FALSE);
+	    result = print_info(&answer, n, name, querytype, queryclass, TRUE);
 
 /*
  * Remember the actual name that was queried.
@@ -1860,8 +1877,8 @@ input int class;			/* specific resource record class */
 /*
  * Analyze the status of the answer from the nameserver.
  */
-	if (debug || verbose)
-		print_status(answerbuf);
+	if ((verbose > print_level) || debug)
+		print_status(answerbuf, n);
 
 	bp = (HEADER *)answerbuf;
 	ancount = ntohs(bp->ancount);
@@ -1895,8 +1912,9 @@ input int class;			/* specific resource record class */
 		return(-1);
 	}
 
+	/* valid answer received, avoid buffer overrun */
 	h_errno = 0;
-	return(n);
+	return(querysize(n));
 }
 
 /*
@@ -1913,12 +1931,13 @@ input int class;			/* specific resource record class */
 */
 
 bool
-print_info(answerbuf, answerlen, name, type, listing)
+print_info(answerbuf, answerlen, name, type, class, regular)
 input querybuf *answerbuf;		/* location of answer buffer */
 input int answerlen;			/* length of answer buffer */
 input char *name;			/* full name we are querying about */
 input int type;				/* record type we are querying about */
-input bool listing;			/* set if this is a zone listing */
+input int class;			/* record class we are querying about */
+input bool regular;			/* set if this is a regular lookup */
 {
 	HEADER *bp;
 	int qdcount, ancount, nscount, arcount;
@@ -1940,10 +1959,9 @@ input bool listing;			/* set if this is a zone listing */
  */
 	if (qdcount)
 	{
-		while (qdcount > 0 && cp < eom)
+		while (qdcount > 0 && cp < eom)	/* process all records */
 		{
-			/* cp += dn_skipname(cp, eom) + QFIXEDSZ; */
-			cp = skip_qrec(name, cp, msg, eom);
+			cp = skip_qrec(name, type, class, cp, msg, eom);
 			if (cp == NULL)
 				return(FALSE);
 			qdcount--;
@@ -1964,38 +1982,32 @@ input bool listing;			/* set if this is a zone listing */
  */
 	if (ancount)
 	{
-		if (!listing && verbose && !bp->aa)
+		if ((type != T_AXFR) && verbose && !bp->aa)
 			printf("The following answer is not authoritative:\n");
 
 		while (ancount > 0 && cp < eom)
 		{
-			cp = print_rrec(name, cp, msg, eom, listing);
+			/* reset for each record during zone listings */
+			soaname = NULL, subname = NULL, adrname = NULL, address = 0;
+
+			print_level++;
+			cp = print_rrec(name, type, class, cp, msg, eom, regular);
+			print_level--;
 			if (cp == NULL)
 				return(FALSE);
 			ancount--;
 
-		/*
-		 * When we ask for address and there is a CNAME, it returns
-		 * both the CNAME and the address.  Since we trace down the
-		 * CNAME chain ourselves, we don't really want to print the
-		 * address at this point.
-		 */
-			if (!listmode && !verbose && cname)
+			/* update zone information during zone listings */
+			if (type == T_AXFR)
+				update_zone(name);
+
+			/* we trace down CNAME chains ourselves */
+			if (regular && !verbose && cname)
 				return(TRUE);
 
-		/*
-		 * Recursively expand MR or MG records into MB records.
-		 */
-			if (!listmode && mailmode && mname)
-			{
-				char newnamebuf[MAXDNAME+1];
-				char *newname;
-
-				newname = strcpy(newnamebuf, mname);
-				mname = NULL;
-
-				(void) get_recursive(newname);
-			}
+			/* recursively expand MR/MG records into MB records */
+			if (regular && mailmode && mname)
+				(void) get_recursive(&mname);
 		}
 
 		if (ancount)
@@ -2020,7 +2032,9 @@ input bool listing;			/* set if this is a zone listing */
 
 		while (nscount > 0 && cp < eom)
 		{
-			cp = print_rrec(name, cp, msg, eom, FALSE);
+			print_level++;
+			cp = print_rrec(name, type, class, cp, msg, eom, FALSE);
+			print_level--;
 			if (cp == NULL)
 				return(FALSE);
 			nscount--;
@@ -2041,7 +2055,9 @@ input bool listing;			/* set if this is a zone listing */
 
 		while (arcount > 0 && cp < eom)
 		{
-			cp = print_rrec(name, cp, msg, eom, FALSE);
+			print_level++;
+			cp = print_rrec(name, type, class, cp, msg, eom, FALSE);
+			print_level--;
 			if (cp == NULL)
 				return(FALSE);
 			arcount--;
@@ -2056,6 +2072,7 @@ input bool listing;			/* set if this is a zone listing */
 		}
 	}
 
+	/* all sections were processed successfully */
 	return(TRUE);
 }
 
@@ -2124,23 +2141,26 @@ input char *a, *b, *c, *d;		/* optional arguments */
 #define pr_name(x)	pr_domain(x, listing)
 
 /* check the LHS record name of these records for invalid characters */
-#define test_valid(t)	((t == T_A && !reverse) || t == T_MX || t == T_AAAA)
+#define test_valid(t)	(((t == T_A) && !reverse) || t == T_MX || t == T_AAAA)
 
 /* check the RHS domain name of these records for canonical host names */
 #define test_canon(t)	(t == T_NS || t == T_MX)
 
 u_char *
-print_rrec(name, cp, msg, eom, listing)
+print_rrec(name, qtype, qclass, cp, msg, eom, regular)
 input char *name;			/* full name we are querying about */
+input int qtype;			/* record type we are querying about */
+input int qclass;			/* record class we are querying about */
 register u_char *cp;			/* current position in answer buf */
 input u_char *msg, *eom;		/* begin and end of answer buf */
-input bool listing;			/* set if this is a zone listing */
+input bool regular;			/* set if this is a regular lookup */
 {
 	char rname[MAXDNAME+1];		/* record name in LHS */
 	char dname[MAXDNAME+1];		/* domain name in RHS */
 	int type, class, ttl, dlen;	/* fixed values in every record */
 	u_char *eor;			/* predicted position of next record */
 	bool classmatch;		/* set if we want to see this class */
+	bool listing;			/* set if this is a zone listing */
 	char *host = listhost;		/* contacted host for zone listings */
 	register int n, c;
 	struct in_addr inaddr;
@@ -2176,6 +2196,8 @@ input bool listing;			/* set if this is a zone listing */
 /*
  * Decide whether or not to print this resource record.
  */
+	listing = (qtype == T_AXFR || qtype == T_IXFR) ? TRUE : FALSE;
+
 	if (listing)
 	{
 		classmatch = want_class(class, queryclass);
@@ -2187,10 +2209,6 @@ input bool listing;			/* set if this is a zone listing */
 		doprint = classmatch && want_type(type, T_ANY);
 	}
 
-#ifdef obsolete
-	if (doprint && exclusive && !samedomain(rname, name, TRUE))
-		doprint = FALSE;
-#endif
 	if (doprint && exclusive && !indomain(rname, name, TRUE))
 		doprint = FALSE;
 
@@ -2212,7 +2230,7 @@ input bool listing;			/* set if this is a zone listing */
 	if (verbose || ttlprint)
 		doprintf(("\t%s", itoa(ttl)))
 
-	if (verbose || classprint || (class != queryclass))
+	if (verbose || classprint || (class != qclass))
 		doprintf(("\t%s", pr_class(class)))
 
 	doprintf(("\t%s", pr_type(type)))
@@ -2257,7 +2275,7 @@ input bool listing;			/* set if this is a zone listing */
 				cp += INADDRSZ;
 				break;
 			}
-
+#ifdef obsolete
 			if (dlen == INADDRSZ + 1 + INT16SZ)
 			{
 				bcopy((char *)cp, (char *)&inaddr, INADDRSZ);
@@ -2273,11 +2291,10 @@ input bool listing;			/* set if this is a zone listing */
 				cp += INT16SZ;
 				break;
 			}
-
+#endif
 			address = 0;
 			break;
 		}
-
 		address = 0;
 		cp += dlen;
 		break;
@@ -2310,13 +2327,13 @@ input bool listing;			/* set if this is a zone listing */
 		if (check_size(rname, type, cp, msg, eor, 1) < 0)
 			break;
 		n = *cp++;
-		doprintf(("\t\"%s\"", stoa(cp, n)))
+		doprintf(("\t\"%s\"", stoa(cp, n, TRUE)))
 		cp += n;
 
 		if (check_size(rname, type, cp, msg, eor, 1) < 0)
 			break;
 		n = *cp++;
-		doprintf(("\t\"%s\"", stoa(cp, n)))
+		doprintf(("\t\"%s\"", stoa(cp, n, TRUE)))
 		cp += n;
 		break;
 
@@ -2376,6 +2393,7 @@ input bool listing;			/* set if this is a zone listing */
 		if (check_size(rname, type, cp, msg, eor, 1) < 0)
 			break;
 		n = *cp++;
+
 		protocol = getprotobynumber(n);
 		if (protocol != NULL)
 			doprintf((" %s", protocol->p_name))
@@ -2412,9 +2430,9 @@ input bool listing;			/* set if this is a zone listing */
 
 #ifdef obsolete
 	    case T_TXT:
-		if (dlen > 0)
+		/* if (dlen > 0) */
 		{
-			doprintf(("\t\"%s\"", stoa(cp, dlen)))
+			doprintf(("\t\"%s\"", stoa(cp, dlen, TRUE)))
 			cp += dlen;
 		}
 		break;
@@ -2424,7 +2442,7 @@ input bool listing;			/* set if this is a zone listing */
 		if (check_size(rname, type, cp, msg, eor, 1) < 0)
 			break;
 		n = *cp++;
-		doprintf(("\t\"%s", stoa(cp, n)))
+		doprintf(("\t\"%s\"", stoa(cp, n, TRUE)))
 		cp += n;
 
 		while (cp < eor)
@@ -2432,10 +2450,9 @@ input bool listing;			/* set if this is a zone listing */
 			if (check_size(rname, type, cp, msg, eor, 1) < 0)
 				break;
 			n = *cp++;
-			doprintf(("%s", stoa(cp, n)))
+			doprintf((" \"%s\"", stoa(cp, n, TRUE)))
 			cp += n;
 		}
-		doprintf(("\""))
 		break;
 
 	    case T_MINFO:
@@ -2475,7 +2492,7 @@ input bool listing;			/* set if this is a zone listing */
 		break;
 
 	    case T_UINFO:
-		doprintf(("\t\"%s\"", stoa(cp, dlen)))
+		doprintf(("\t\"%s\"", stoa(cp, dlen, TRUE)))
 		cp += dlen;
 		break;
 
@@ -2525,7 +2542,7 @@ input bool listing;			/* set if this is a zone listing */
 		if (check_size(rname, type, cp, msg, eor, 1) < 0)
 			break;
 		n = *cp++;
-		doprintf(("\t%s", stoa(cp, n)))
+		doprintf(("\t%s", stoa(cp, n, FALSE)))
 		cp += n;
 		break;
 
@@ -2533,7 +2550,7 @@ input bool listing;			/* set if this is a zone listing */
 		if (check_size(rname, type, cp, msg, eor, 1) < 0)
 			break;
 		n = *cp++;
-		doprintf(("\t%s", stoa(cp, n)))
+		doprintf(("\t%s", stoa(cp, n, FALSE)))
 		cp += n;
 
 		if (cp < eor)
@@ -2541,7 +2558,7 @@ input bool listing;			/* set if this is a zone listing */
 			if (check_size(rname, type, cp, msg, eor, 1) < 0)
 				break;
 			n = *cp++;
-			doprintf((" %s", stoa(cp, n)))
+			doprintf((" %s", stoa(cp, n, FALSE)))
 			cp += n;
 		}
 		break;
@@ -2583,19 +2600,19 @@ input bool listing;			/* set if this is a zone listing */
 		if (check_size(rname, type, cp, msg, eor, 1) < 0)
 			break;
 		n = *cp++;
-		doprintf(("\t%s", stoa(cp, n)))
+		doprintf(("\t%s", stoa(cp, n, FALSE)))
 		cp += n;
 
 		if (check_size(rname, type, cp, msg, eor, 1) < 0)
 			break;
 		n = *cp++;
-		doprintf(("\t%s", stoa(cp, n)))
+		doprintf(("\t%s", stoa(cp, n, FALSE)))
 		cp += n;
 
 		if (check_size(rname, type, cp, msg, eor, 1) < 0)
 			break;
 		n = *cp++;
-		doprintf(("\t%s", stoa(cp, n)))
+		doprintf(("\t%s", stoa(cp, n, FALSE)))
 		cp += n;
 		break;
 
@@ -2636,20 +2653,236 @@ input bool listing;			/* set if this is a zone listing */
 		cp += dlen;
 		break;
 
-	    case T_SIG:
-	    case T_KEY:
 	    case T_AAAA:
-		doprintf(("\t(not yet implemented)"))
+		if (dlen == IPNGSIZE)
+		{
+			doprintf(("\t%s", ipng_ntoa(cp)))
+			cp += IPNGSIZE;
+		}
+		break;
+
+	    case T_SIG:
+		if (check_size(rname, type, cp, msg, eor, INT16SZ) < 0)
+			break;
+		n = _getshort(cp);
+		doprintf(("\t%s", pr_type(n)))
+		cp += INT16SZ;
+
+		if (check_size(rname, type, cp, msg, eor, 1) < 0)
+			break;
+		n = *cp++;
+		doprintf((" %s", itoa(n)))
+
+		n = 1 + 3*INT32SZ + INT16SZ;
+		if (check_size(rname, type, cp, msg, eor, n) < 0)
+			break;
+		doprintf((" ("))
+
+		n = *cp++;
+		doprintf(("\n\t\t\t; %s", itoa(n)))
+		doprintf(("\t\t;labels"))
+
+		n = _getlong(cp);
+		doprintf(("\n\t\t\t%s", itoa(n)))
+		doprintf(("\t\t;original ttl"))
+		cp += INT32SZ;
+
+		n = _getlong(cp);
+		doprintf(("\n\t\t\t%s", pr_date(n)))
+		doprintf(("\t;signature expiration"))
+		cp += INT32SZ;
+
+		n = _getlong(cp);
+		doprintf(("\n\t\t\t%s", pr_date(n)))
+		doprintf(("\t;signature signed time"))
+		cp += INT32SZ;
+
+		n = _getshort(cp);
+		doprintf(("\n\t\t\t%s", itoa(n)))
+		doprintf(("\t\t;key footprint"))
+		cp += INT16SZ;
+
+		n = expand_name(rname, type, cp, msg, eom, dname);
+		if (n < 0)
+			break;
+		doprintf(("\n\t\t\t%s", pr_name(dname)))
+		cp += n;
+
+		if (cp < eor)
+		{
+			register char *buf;
+			register int size;
+
+			n = eor - cp;
+			buf = base_ntoa(cp, n);
+			size = strlength(buf);
+			cp += n;
+
+			while ((n = (size > 64) ? 64 : size) > 0)
+			{
+				doprintf(("\n\t%s", stoa((u_char *)buf, n, FALSE)))
+				buf += n; size -= n;
+			}
+		}
+
+		doprintf(("\n\t\t\t)"))
+		break;
+
+	    case T_KEY:
+		if (check_size(rname, type, cp, msg, eor, INT16SZ) < 0)
+			break;
+		n = _getshort(cp);
+		doprintf(("\t0x%s", xtoa(n)))
+		cp += INT16SZ;
+
+		if (check_size(rname, type, cp, msg, eor, 1) < 0)
+			break;
+		n = *cp++;
+		doprintf((" %s", itoa(n)))
+
+		if (check_size(rname, type, cp, msg, eor, 1) < 0)
+			break;
+		n = *cp++;
+		doprintf((" %s", itoa(n)))
+
+		if (cp < eor)
+		{
+			register char *buf;
+			register int size;
+
+			n = eor - cp;
+			buf = base_ntoa(cp, n);
+			size = strlength(buf);
+			cp += n;
+
+			doprintf((" ("))
+			while ((n = (size > 64) ? 64 : size) > 0)
+			{
+				doprintf(("\n\t%s", stoa((u_char *)buf, n, FALSE)))
+				buf += n; size -= n;
+			}
+			doprintf(("\n\t\t\t)"))
+		}
+		break;
+
+	    case T_NXT:
+		n = expand_name(rname, type, cp, msg, eom, dname);
+		if (n < 0)
+			break;
+		doprintf(("\t%s", pr_name(dname)))
+		cp += n;
+
+		n = 0;
+		while (cp < eor)
+		{
+		    c = *cp++;
+		    do
+		    {
+ 			if (c & 0200)
+			{
+			    doprintf((" %s", pr_type(n)))
+			}
+ 			c <<= 1;
+		    } while (++n & 07);
+		}
+		break;
+
+	    case T_SRV:
+		if (check_size(rname, type, cp, msg, eor, INT16SZ) < 0)
+			break;
+		n = _getshort(cp);
+		doprintf(("\t%s", itoa(n)))
+		cp += INT16SZ;
+
+		if (check_size(rname, type, cp, msg, eor, INT16SZ) < 0)
+			break;
+		n = _getshort(cp);
+		doprintf((" %s", itoa(n)))
+		cp += INT16SZ;
+
+		if (check_size(rname, type, cp, msg, eor, INT16SZ) < 0)
+			break;
+		n = _getshort(cp);
+		doprintf((" %s", itoa(n)))
+		cp += INT16SZ;
+
+		n = expand_name(rname, type, cp, msg, eom, dname);
+		if (n < 0)
+			break;
+		doprintf((" %s", pr_name(dname)))
+		cp += n;
+		break;
+
+	    case T_EID:
+	    case T_NIMLOC:
+	    case T_ATMA:
+		doprintf(("\t\"not yet implemented\""))
 		cp += dlen;
 		break;
 
+	    case T_NAPTR:
+		if (check_size(rname, type, cp, msg, eor, INT16SZ) < 0)
+			break;
+		n = _getshort(cp);
+		doprintf(("\t%s", itoa(n)))
+		cp += INT16SZ;
+
+		if (check_size(rname, type, cp, msg, eor, INT16SZ) < 0)
+			break;
+		n = _getshort(cp);
+		doprintf((" %s", itoa(n)))
+		cp += INT16SZ;
+
+		if (check_size(rname, type, cp, msg, eor, 1) < 0)
+			break;
+		n = *cp++;
+		doprintf((" \"%s\"", stoa(cp, n, TRUE)))
+		cp += n;
+
+		if (check_size(rname, type, cp, msg, eor, 1) < 0)
+			break;
+		n = *cp++;
+		doprintf((" \"%s\"", stoa(cp, n, TRUE)))
+		cp += n;
+
+		if (check_size(rname, type, cp, msg, eor, 1) < 0)
+			break;
+		n = *cp++;
+		doprintf((" \"%s\"", stoa(cp, n, TRUE)))
+		cp += n;
+
+		n = expand_name(rname, type, cp, msg, eom, dname);
+		if (n < 0)
+			break;
+		doprintf((" %s", pr_name(dname)))
+		cp += n;
+		break;
+#ifdef notyet
+	    case T_TSIG:
+		if (check_size(rname, type, cp, msg, eor, 1) < 0)
+			break;
+		n = *cp++;
+		doprintf(("\t\"%s\"", stoa(cp, n, TRUE)))
+		cp += n;
+
+		while (cp < eor)
+		{
+			if (check_size(rname, type, cp, msg, eor, 1) < 0)
+				break;
+			n = *cp++;
+			doprintf((" \"%s\"", stoa(cp, n, TRUE)))
+			cp += n;
+		}
+		break;
+#endif
 	    default:
-		doprintf(("\t???"))
+		doprintf(("\t\"???\""))
 		cp += dlen;
 		break;
 	}
 
 /*
+ * End of specific data type processing.
  * Terminate resource record printout.
  */
 	doprintf(("\n"))
@@ -2673,7 +2906,7 @@ input bool listing;			/* set if this is a zone listing */
  * Save the MR or MG alias for MB chain tracing.
  * These features can be enabled only in normal mode.
  */
-	if (!listmode && classmatch)
+	if (regular && classmatch)
 	{
 		if (type == T_CNAME)
 			cname = strcpy(cnamebuf, dname);
@@ -2723,7 +2956,7 @@ input bool listing;			/* set if this is a zone listing */
  * i.e. it should exist and have an A record and not be a CNAME.
  * Currently this test is suppressed during deep recursive zone listings.
  */
-	if (!recurskip && test_canon(type) && (n = check_canon(dname)) != 0)
+	if (!recurskip && test_canon(type) && ((n = check_canon(dname)) != 0))
 	{
 		/* only report definitive target host failures */
 		if (n == HOST_NOT_FOUND)
@@ -2750,7 +2983,7 @@ input bool listing;			/* set if this is a zone listing */
  * it is registered and maps back to the name of the A record.
  * Currently this option has effect here only during zone listings.
  */
-	if (addrmode && (type == T_A && !reverse) && !fakeaddr(address))
+	if (addrmode && ((type == T_A) && !reverse) && !fakeaddr(address))
 	{
 		host = mapreverse(rname, inaddr);
 		if (host == NULL)
@@ -2777,8 +3010,10 @@ input bool listing;			/* set if this is a zone listing */
 */
 
 u_char *
-skip_qrec(name, cp, msg, eom)
+skip_qrec(name, qtype, qclass, cp, msg, eom)
 input char *name;			/* full name we are querying about */
+input int qtype;			/* record type we are querying about */
+input int qclass;			/* record class we are querying about */
 register u_char *cp;			/* current position in answer buf */
 input u_char *msg, *eom;		/* begin and end of answer buf */
 {
@@ -2786,6 +3021,9 @@ input u_char *msg, *eom;		/* begin and end of answer buf */
 	int type, class;		/* fixed values in query record */
 	register int n;
 
+/*
+ * Pickup the standard values present in the query section.
+ */
 	n = expand_name(name, T_NONE, cp, msg, eom, rname);
 	if (n < 0)
 		return(NULL);
@@ -2806,6 +3044,24 @@ input u_char *msg, *eom;		/* begin and end of answer buf */
 		printf("%-20s\t%s\t%s\n",
 			rname, pr_class(class), pr_type(type));
 #endif
+
+/*
+ * The values in the answer should match those in the query.
+ * If there is a mismatch, we just signal an error, but don't abort.
+ * For regular queries there is exactly one record in the query section.
+ */
+	if (!sameword(rname, name))
+		pr_error("invalid answer name %s after %s query for %s",
+			rname, pr_type(qtype), name);
+
+	if (type != qtype)
+		pr_error("invalid answer type %s after %s query for %s",
+			pr_type(type), pr_type(qtype), name);
+
+	if (class != qclass)
+		pr_error("invalid answer class %s after %s query for %s",
+			pr_class(class), pr_type(qtype), name);
+
 	return(cp);
 }
 
@@ -2820,24 +3076,30 @@ input u_char *msg, *eom;		/* begin and end of answer buf */
 
 bool
 get_recursive(name)
-input char *name;			/* name to query about */
+input char **name;			/* name to query about */
 {
 	static int level = 0;		/* recursion level */
+	char newnamebuf[MAXDNAME+1];
+	char *newname;			/* new name to look up */
 	bool result;			/* result status of action taken */
 	int save_errno;
 	int save_herrno;
 
-	if (level > 5)
+	if (level > MAXCHAIN)
 	{
 		errmsg("Recursion too deep");
 		return(FALSE);
 	}
 
+	/* save local copy, and reset indicator */
+	newname = strcpy(newnamebuf, *name);
+	*name = NULL;
+
 	save_errno = errno;
 	save_herrno = h_errno;
 
 	level++;
-	result = get_hostinfo(name, TRUE);
+	result = get_hostinfo(newname, TRUE);
 	level--;
 
 	errno = save_errno;
@@ -2861,9 +3123,9 @@ int nservers = 0;				/* count of nameservers */
 
 #ifdef notyet
 typedef struct srvr_data {
-	char nsname[MAXDNAME+1];		/* nameserver host name */
-	struct in_addr ipaddr[MAXIPADDR];	/* nameserver addresses */
-	int naddrs;				/* count of addresses */
+	char sd_nsname[MAXDNAME+1];		/* nameserver host name */
+	struct in_addr sd_ipaddr[MAXIPADDR];	/* nameserver addresses */
+	int sd_naddrs;				/* count of addresses */
 } srvr_data_t;
 
 srvr_data_t nsinfo[MAXNSNAME];	/* nameserver info */
@@ -2879,27 +3141,34 @@ bool lameserver;		/* server could not provide SOA service */
  * that do not belong to the zone are not stored. Glue records that belong
  * to a delegated zone will be filtered out later during the host count scan.
  * The host names are allocated dynamically.
-#ifdef notyet
- * The host data should have been allocated dynamically to avoid static
- * limits, but this is less important since it is not saved across calls.
- * In case the static limit is reached, increase MAXHOSTS and recompile.
-#endif
+ * The list itself is also allocated dynamically, to avoid static limits,
+ * and to keep the initial bss of the executable to a reasonable size.
+ * Allocation is done in chunks, to reduce considerable malloc overhead.
+ * Note that the list will not shrink during recursive processing.
  */
 
+#ifdef obsolete
 char *hostname[MAXHOSTS];	/* host name of host in zone */
 ipaddr_t hostaddr[MAXHOSTS];	/* first host address */
 bool multaddr[MAXHOSTS];	/* set if this is a multiple address host */
-int hostcount = 0;		/* count of hosts in zone */
+#endif
 
-#ifdef notyet
 typedef struct host_data {
-	char *hostname;		/* host name of host in zone */
-	ipaddr_t hostaddr;	/* first host address */
-	bool multaddr;		/* set if this is a multiple address host */
+	char *hd_hostname;	/* host name of host in zone */
+	ipaddr_t hd_hostaddr;	/* first host address */
+	bool hd_multaddr;	/* set if this is a multiple address host */
 } host_data_t;
 
-host_data_t hostlist[MAXHOSTS];	/* info on hosts in zone */
-#endif
+host_data_t *hostlist = NULL;	/* info on hosts in zone */
+int hostcount = 0;		/* count of hosts in zone */
+
+int maxhosts = 0;		/* number of allocated hostlist entries */
+
+#define MAXHOSTINCR	4096	/* chunk size to increment hostlist */
+
+#define hostname(i)	hostlist[i].hd_hostname
+#define hostaddr(i)	hostlist[i].hd_hostaddr
+#define multaddr(i)	hostlist[i].hd_multaddr
 
 /*
  * Delegated zone information.
@@ -2929,6 +3198,8 @@ int addrcount = 0;		/* count of global addresses */
  */
 
 soa_data_t soa;			/* buffer to store soa data */
+
+int soacount = 0;		/* count of SOA records during listing */
 
 /*
  * Nameserver preference.
@@ -2994,7 +3265,7 @@ input char *name;			/* name of zone to process */
  * Suppress various checks if working beyond the recursion skip level.
  * This affects processing in print_rrec(). It may need refinement.
  */
-	recurskip = (recursion_level > skip_level) ? TRUE : FALSE;
+	recurskip = ((recursion_level > skip_level) && !addrmode) ? TRUE : FALSE;
 
 /*
  * Find the nameservers for the given zone.
@@ -3024,7 +3295,7 @@ input char *name;			/* name of zone to process */
  * Without an explicit server on the command line, the servers we
  * have looked up are supposed to be authoritative for the zone.
  */
-	authserver = server ? FALSE : TRUE;
+	authserver = (server && !primary) ? FALSE : TRUE;
 
 /*
  * Check SOA records at each of the nameservers if so requested.
@@ -3080,21 +3351,21 @@ input char *name;			/* name of zone to process */
 	for (n = i; n < hostcount; n++)
 	{
 		/* skip fake hosts using a very rudimentary test */
-		if (fakename(hostname[n]) || fakeaddr(hostaddr[n]))
+		if (fakename(hostname(n)) || fakeaddr(hostaddr(n)))
 			continue;
 #ifdef justfun
 		/* save longest host name encountered so far */
-		if (verbose && ((i = strlength(hostname[n])) > longsize))
+		if (verbose && ((i = strlength(hostname(n))) > longsize))
 		{
 			longsize = i;
-			(void) strcpy(longname, hostname[n]);
+			(void) strcpy(longname, hostname(n));
 		}
 #endif
 		/* skip apparent glue records */
-		if (gluerecord(hostname[n], name, zonename, nzones))
+		if (gluerecord(hostname(n), name, zonename, nzones))
 		{
 			if (verbose > 1)
-				printf("%s is glue record\n", hostname[n]);
+				printf("%s is glue record\n", hostname(n));
 			continue;
 		}
 
@@ -3104,37 +3375,37 @@ input char *name;			/* name of zone to process */
 	/*
 	 * Mark hosts not residing directly in the zone as extrazone host.
 	 */
-		if (!samedomain(hostname[n], name, TRUE))
+		if (!samedomain(hostname(n), name, TRUE))
 		{
 			nextrs++;
 			if (extrmode || (verbose > 1))
-				printf("%s is extrazone host\n", hostname[n]);
+				printf("%s is extrazone host\n", hostname(n));
 		}
 
 	/*
 	 * Mark hosts with more than one address as gateway host.
 	 * These are not checked for duplicate addresses.
 	 */
-		if (multaddr[n])
+		if (multaddr(n))
 		{
 			ngates++;
 			if (gatemode || (verbose > 1))
-				printf("%s is gateway host\n", hostname[n]);
+				printf("%s is gateway host\n", hostname(n));
 		}
 		
 	/*
 	 * Compare single address hosts against global list of addresses.
 	 * Multiple address hosts are too complicated to handle this way.
 	 */
-		else if (check_dupl(hostaddr[n]))
+		else if (check_dupl(hostaddr(n)))
 		{
 			struct in_addr inaddr;
-			inaddr.s_addr = hostaddr[n];
+			inaddr.s_addr = hostaddr(n);
 
 			ndupls++;
 			if (duplmode || (verbose > 1))
 				printf("%s is duplicate host with address %s\n",
-					hostname[n], inet_ntoa(inaddr));
+					hostname(n), inet_ntoa(inaddr));
 		}
 	}
 
@@ -3174,13 +3445,13 @@ input char *name;			/* name of zone to process */
  * Note that this precludes further use of the zone_index() function.
  */
 	if ((nzones > 1) && (recursive || listzones || mxdomains))
-		qsort((char *)zonename, nzones, sizeof(char *), compare_name);
+		qsort((ptr_t *)zonename, nzones, sizeof(char *), compare_name);
 
 /*
  * The names of the hosts were allocated dynamically.
  */
 	for (n = 0; n < hostcount; n++)
-		xfree(hostname[n]);
+		xfree(hostname(n));
 
 /*
  * Check for mailable delegated zones within this zone.
@@ -3331,8 +3602,7 @@ find_servers(name)
 input char *name;			/* name of zone to find servers for */
 {
 	struct hostent *hp;
-	register int n;
-	register int i;
+	register int n, i;
 
 /*
  * Use the explicit server if given on the command line.
@@ -3342,6 +3612,7 @@ input char *name;			/* name of zone to find servers for */
 	if (server && !primary)
 	{
 		(void) strcpy(nsname[0], server);
+
 		for (i = 0; i < MAXIPADDR && i < _res.nscount; i++)
 			ipaddr[0][i] = nslist(i).sin_addr;
 		naddrs[0] = i;
@@ -3369,7 +3640,7 @@ input char *name;			/* name of zone to find servers for */
 			return(FALSE);
 		}
 
-		hp = gethostbyname(primaryname);
+		hp = geth_byname(primaryname);
 		if (hp == NULL)
 		{
 			ns_error(primaryname, T_A, C_IN, server);
@@ -3377,15 +3648,16 @@ input char *name;			/* name of zone to find servers for */
 			return(FALSE);
 		}
 
-		(void) strcpy(nsname[0], hp->h_name);
+		primaryname = strncpy(nsname[0], hp->h_name, MAXDNAME);
+		primaryname[MAXDNAME] = '\0';
+
 		for (i = 0; i < MAXIPADDR && hp->h_addr_list[i]; i++)
 			ipaddr[0][i] = incopy(hp->h_addr_list[i]);
 		naddrs[0] = i;
 
 		if (verbose)
-			printf("Found %d address%-2s for %s\n",
+			printf("Found %d address%s for %s\n",
 				naddrs[0], plurale(naddrs[0]), nsname[0]);
-
 		nservers = 1;
 		return(TRUE);
 	}
@@ -3394,7 +3666,6 @@ input char *name;			/* name of zone to find servers for */
  * Otherwise we have to find the nameservers for the zone.
  * These are supposed to be authoritative, but sometimes we
  * encounter lame delegations, perhaps due to misconfiguration.
- * Retrieve the NS records for this zone.
  */
 	if (!get_servers(name))
 	{
@@ -3415,7 +3686,7 @@ input char *name;			/* name of zone to find servers for */
 	{
 	    if (naddrs[n] == 0)
 	    {
-		hp = gethostbyname(nsname[n]);
+		hp = geth_byname(nsname[n]);
 		if (hp != NULL)
 		{
 			for (i = 0; i < MAXIPADDR && hp->h_addr_list[i]; i++)
@@ -3424,7 +3695,7 @@ input char *name;			/* name of zone to find servers for */
 		}
 
 		if (verbose)
-			printf("Found %d address%-2s for %s by extra query\n",
+			printf("Found %d address%s for %s by extra query\n",
 				naddrs[n], plurale(naddrs[n]), nsname[n]);
 
 		if (hp == NULL)
@@ -3435,8 +3706,9 @@ input char *name;			/* name of zone to find servers for */
 			/* authoritative denial: probably misconfiguration */
 			if (h_errno == NO_DATA || h_errno == HOST_NOT_FOUND)
 			{
-				errmsg("%s has lame delegation to %s",
-					name, nsname[n]);
+				if (server == NULL)
+					errmsg("%s has lame delegation to %s",
+						name, nsname[n]);
 			}
 		}
 
@@ -3447,7 +3719,7 @@ input char *name;			/* name of zone to find servers for */
 	    else
 	    {
 		if (verbose)
-			printf("Found %d address%-2s for %s\n",
+			printf("Found %d address%s for %s\n",
 				naddrs[n], plurale(naddrs[n]), nsname[n]);
 	    }
 	}
@@ -3494,7 +3766,7 @@ input char *name;			/* name of zone to find servers for */
 		return(FALSE);
 
 	if (verbose > 1)
-		(void) print_info(&answer, n, name, T_NS, FALSE);
+		(void) print_info(&answer, n, name, T_NS, queryclass, FALSE);
 
 	result = get_nsinfo(&answer, n, name);
 	return(result);
@@ -3505,7 +3777,7 @@ input char *name;			/* name of zone to find servers for */
 ** -------------------------------------------------------------------
 **
 **	Returns:
-**		TRUE if servers could be determined successfully.
+**		TRUE if the answer buffer was processed successfully.
 **		FALSE otherwise.
 **
 **	Outputs:
@@ -3539,9 +3811,9 @@ input char *name;			/* name of zone to find servers for */
 	eom = (u_char *)answerbuf + answerlen;
 	cp  = (u_char *)answerbuf + HFIXEDSZ;
 
-	while (qdcount > 0 && cp < eom)
+	if (qdcount > 0 && cp < eom)	/* should be exactly one record */
 	{
-		cp = skip_qrec(name, cp, msg, eom);
+		cp = skip_qrec(name, T_NS, queryclass, cp, msg, eom);
 		if (cp == NULL)
 			return(FALSE);
 		qdcount--;
@@ -3616,7 +3888,7 @@ input char *name;			/* name of zone to find servers for */
 				nservers++;
 			}
 		}
-		else if ((type == T_A) && dlen == INADDRSZ)
+		else if ((type == T_A) && (dlen == INADDRSZ))
 		{
 			for (i = 0; i < nservers; i++)
 				if (sameword(nsname[i], rname))
@@ -3632,12 +3904,16 @@ input char *name;			/* name of zone to find servers for */
 			cp += dlen;
 		}
 		else
+		{
+			/* just ignore other records */
 			cp += dlen;
+		}
 
 		if (cp != eor)
 		{
 			pr_error("size error in %s record for %s, off by %s",
 				pr_type(type), rname, itoa(cp - eor));
+			h_errno = NO_RECOVERY;
 			return(FALSE);
 		}
 
@@ -3652,6 +3928,8 @@ input char *name;			/* name of zone to find servers for */
 		return(FALSE);
 	}
 
+	/* set proper status if no answers found */
+	h_errno = (nservers > 0) ? 0 : TRY_AGAIN;
 	return(TRUE);
 }
 
@@ -3889,7 +4167,7 @@ input char *name;			/* name of zone to do zone xfer for */
 			printf("Trying server %s (%s) ...\n",
 				inet_ntoa(ipaddr[n][i]), nsname[n]);
 
-		if (transfer_zone(name, queryclass, ipaddr[n][i], nsname[n]))
+		if (transfer_zone(name, ipaddr[n][i], nsname[n]))
 			goto done;	/* double break */
 
 		/* zone transfer failed */
@@ -3957,9 +4235,8 @@ done:
 */
 
 bool
-transfer_zone(name, class, inaddr, host)
+transfer_zone(name, inaddr, host)
 input char *name;			/* name of zone to do zone xfer for */
-input int class;			/* specific resource record class */
 input struct in_addr inaddr;		/* address of server to be queried */
 input char *host;			/* name of server to be queried */
 {
@@ -3980,8 +4257,9 @@ input char *host;			/* name of server to be queried */
 
 /*
  * Perform the actual zone transfer.
+ * All error reporting is done by get_zone().
  */
-	if (get_zone(name, class, inaddr, host))
+	if (get_zone(name, inaddr, host))
 		return(TRUE);
 
 /*
@@ -3990,7 +4268,7 @@ input char *host;			/* name of server to be queried */
  * The information gathered is used by list_zone() after the zone transfer.
  */
 	for (n = 0; n < hostcount; n++)
-		xfree(hostname[n]);
+		xfree(hostname(n));
 
 	for (n = 0; n < zonecount; n++)
 		xfree(zonename[n]);
@@ -4022,9 +4300,8 @@ input char *host;			/* name of server to be queried */
 */
 
 bool
-get_zone(name, class, inaddr, host)
+get_zone(name, inaddr, host)
 input char *name;			/* name of zone to do zone xfer for */
-input int class;			/* specific resource record class */
 input struct in_addr inaddr;		/* address of server to be queried */
 input char *host;			/* name of server to be queried */
 {
@@ -4034,11 +4311,12 @@ input char *host;			/* name of server to be queried */
 	int ancount;
 	int sock;
 	struct sockaddr_in sin;
-	register int n;
-	register int i;
+	register int n, i;
 	int nrecords = 0;		/* number of records processed */
-	int soacount = 0;		/* count of SOA records */
+	int npackets = 0;		/* number of packets received */
 
+	/* clear global counts */
+	soacount = 0;			/* count of SOA records */
 	zonecount = 0;			/* count of delegated zones */
 	hostcount = 0;			/* count of host names */
 
@@ -4047,7 +4325,7 @@ input char *host;			/* name of server to be queried */
  */
 	errno = 0;	/* reset before querying nameserver */
 
-	n = res_mkquery(QUERY, name, class, T_AXFR, (qbuf_t *)NULL, 0,
+	n = res_mkquery(QUERY, name, queryclass, T_AXFR, (qbuf_t *)NULL, 0,
 			(rrec_t *)NULL, (qbuf_t *)&query, sizeof(querybuf));
 	if (n < 0)
 	{
@@ -4063,12 +4341,12 @@ input char *host;			/* name of server to be queried */
 		pr_query((qbuf_t *)&query, n, stdout);
 	}
 
+	/* setup destination address */
+	bzero((char *)&sin, sizeof(sin));
+
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(NAMESERVER_PORT);
 	sin.sin_addr = inaddr;
-
-	/* add name and address to error messages */
-	/* _res_setaddr(&sin, host); */
 
 	sock = socket(AF_INET, SOCK_STREAM, 0);
 	if (sock < 0)
@@ -4080,7 +4358,7 @@ input char *host;			/* name of server to be queried */
 
 	if (_res_connect(sock, &sin, sizeof(sin)) < 0)
 	{
-		if (debug || verbose)
+		if (verbose || debug)
 			_res_perror(&sin, host, "connect");
 		(void) close(sock);
 		h_errno = TRY_AGAIN;
@@ -4101,7 +4379,7 @@ input char *host;			/* name of server to be queried */
 	}
 
 /*
- * Process all incoming records, each record in a separate packet.
+ * Process all incoming packets, usually one record in a separate packet.
  */
 	while ((n = _res_read(sock, &sin, host, (char *)&answer, sizeof(querybuf))) != 0)
 	{
@@ -4126,7 +4404,7 @@ input char *host;			/* name of server to be queried */
 		if (debug > 1)
 		{
 			printf("%sgot answer, %d bytes:\n", dbprefix, n);
-			pr_query((qbuf_t *)&answer, n, stdout);
+			pr_query((qbuf_t *)&answer, querysize(n), stdout);
 		}
 
 	/*
@@ -4140,8 +4418,8 @@ input char *host;			/* name of server to be queried */
 
 		if (bp->rcode != NOERROR || ancount == 0)
 		{
-			if (debug || verbose)
-				print_status(&answer);
+			if (verbose || debug)
+				print_status(&answer, n);
 
 			switch (bp->rcode)
 			{
@@ -4171,7 +4449,7 @@ input char *host;			/* name of server to be queried */
 				break;
 			}
 
-			if (nrecords != 0)
+			if (npackets != 0)
 				pr_error("unexpected error during %s for %s from %s",
 					pr_type(T_AXFR), name, host);
 
@@ -4179,99 +4457,44 @@ input char *host;			/* name of server to be queried */
 			return(FALSE);
 		}
 
+		/* valid answer received, avoid buffer overrun */
 		h_errno = 0;
+		n = querysize(n);
 
 	/*
-	 * The nameserver and additional info section should be empty,
-	 * and there should be a single answer in the answer section.
+	 * The nameserver and additional info section should be empty.
+	 * There may be multiple answers in the answer section.
 	 */
-		if (ancount != 1)
+#ifdef obsolete
+		if (ancount > 1)
 			pr_error("multiple answers during %s for %s from %s",
 				pr_type(T_AXFR), name, host);
-
-		i = ntohs(bp->nscount);
-		if (i != 0)
+#endif
+		if (ntohs(bp->nscount) != 0)
 			pr_error("nonzero nscount during %s for %s from %s",
 				pr_type(T_AXFR), name, host);
 
-		i = ntohs(bp->arcount);
-		if (i != 0)
+		if (ntohs(bp->arcount) != 0)
 			pr_error("nonzero arcount during %s for %s from %s",
 				pr_type(T_AXFR), name, host);
 
 	/*
 	 * Valid packet received. Print contents if appropriate.
+	 * Specific zone information will be saved by update_zone().
 	 */
-		nrecords++;
+		npackets += 1;
+		nrecords += ancount;
 
-		soaname = NULL, subname = NULL, adrname = NULL;
+		soaname = NULL, subname = NULL, adrname = NULL, address = 0;
 		listhost = host;
-		(void) print_info(&answer, n, name, T_AXFR, TRUE);
+
+		(void) print_info(&answer, n, name, T_AXFR, queryclass, FALSE);
 
 	/*
 	 * Terminate upon the second SOA record for this zone.
 	 */
-		if (soaname && sameword(soaname, name) && soacount++)
+		if (soacount > 1)
 			break;
-
-		/* the nameserver balks on this one */
-		if (soaname && !sameword(soaname, name))
-			pr_warning("extraneous SOA record for %s within %s from %s",
-				soaname, name, host);
-
-	/*
-	 * Save encountered delegated zone name for recursive listing.
-	 */
-		if (subname && indomain(subname, name, FALSE))
-		{
-			i = zone_index(subname, TRUE);
-#ifdef obsolete
-			for (i = 0; i < zonecount; i++)
-				if (sameword(zonename[i], subname))
-					break;	/* duplicate */
-#endif
-			if (i >= zonecount)
-			{
-				zonename = newlist(zonename, zonecount+1, char *);
-				zonename[zonecount] = newstr(subname);
-				zonecount++;
-			}
-		}
-		/* warn about strange delegated zones */
-		else if (subname && !indomain(subname, name, TRUE))
-			pr_warning("extraneous NS record for %s within %s from %s",
-				subname, name, host);
-
-	/*
-	 * Save encountered name of A record for host name count.
-	 */
-		if (adrname && indomain(adrname, name, FALSE) && !reverse)
-		{
-			i = host_index(adrname, (hostcount < MAXHOSTS));
-#ifdef obsolete
-			for (i = 0; i < hostcount; i++)
-				if (sameword(hostname[i], adrname))
-					break;	/* duplicate */
-#endif
-			if (i < hostcount && address != hostaddr[i])
-				multaddr[i] = TRUE;
-
-			if (i >= hostcount && hostcount < MAXHOSTS)
-			{
-				hostname[hostcount] = newstr(adrname);
-				hostaddr[hostcount] = address;
-				multaddr[hostcount] = FALSE;
-				hostcount++;
-
-				if (hostcount == MAXHOSTS)
-					pr_error("maximum %s hosts reached within %s from %s",
-						itoa(hostcount), name, host);
-			}
-		}
-		/* check for unauthoritative glue records */
-		else if (adrname && !indomain(adrname, name, TRUE))
-			pr_warning("extraneous glue record for %s within %s from %s",
-				adrname, name, host);
 	}
 
 /*
@@ -4304,7 +4527,7 @@ input char *host;			/* name of server to be queried */
 		i = host_index(zonename[n], FALSE);
 #ifdef obsolete
 		for (i = 0; i < hostcount; i++)
-			if (sameword(hostname[i], zonename[n]))
+			if (sameword(hostname(i), zonename[n]))
 				break;	/* found */
 #endif
 		if (i < hostcount)
@@ -4316,10 +4539,107 @@ input char *host;			/* name of server to be queried */
  * The zone transfer has been successful.
  */
 	if (verbose)
-		printf("Transfer complete, %d records received for %s\n",
-			nrecords, name);
+	{
+		printf("Transfer complete, %d record%s received for %s\n",
+			nrecords, plural(nrecords), name);
+		if (npackets != nrecords)
+			printf("Transfer consisted of %d packet%s from %s\n",
+				npackets, plural(npackets), host);
+	}
 
 	return(TRUE);
+}
+
+/*
+** UPDATE_ZONE -- Save zone information during zone listings
+** ---------------------------------------------------------
+**
+**	Returns:
+**		None.
+**
+**	Side effects:
+**		Stores list of delegated zones found in zonename[],
+**		and the count of delegated zones in ``zonecount''.
+**		Stores list of host names found in hostname[],
+**		and the count of host names in ``hostcount''.
+**		Stores the count of SOA records in ``soacount''.
+**
+**	This routine is called by print_info() for each resource record.
+*/
+
+void
+update_zone(name)
+input char *name;			/* name of zone to do zone xfer for */
+{
+	char *host = listhost;		/* contacted host for zone listings */
+	register int i;
+
+/*
+ * Terminate upon the second SOA record for this zone.
+ */
+	if (soaname && sameword(soaname, name))
+		soacount++;
+
+	/* the nameserver balks on this one */
+	else if (soaname && !sameword(soaname, name))
+		pr_warning("extraneous SOA record for %s within %s from %s",
+			soaname, name, host);
+
+/*
+ * Save encountered delegated zone name for recursive listing.
+ */
+	if (subname && indomain(subname, name, FALSE))
+	{
+		i = zone_index(subname, TRUE);
+#ifdef obsolete
+		for (i = 0; i < zonecount; i++)
+			if (sameword(zonename[i], subname))
+				break;	/* duplicate */
+#endif
+		if (i >= zonecount)
+		{
+			zonename = newlist(zonename, zonecount+1, char *);
+			zonename[zonecount] = newstr(subname);
+			zonecount++;
+		}
+	}
+
+	/* warn about strange delegated zones */
+	else if (subname && !indomain(subname, name, TRUE))
+		pr_warning("extraneous NS record for %s within %s from %s",
+			subname, name, host);
+
+/*
+ * Save encountered name of A record for host name count.
+ */
+	if (adrname && indomain(adrname, name, FALSE) && !reverse)
+	{
+		i = host_index(adrname, TRUE);
+#ifdef obsolete
+		for (i = 0; i < hostcount; i++)
+			if (sameword(hostname(i), adrname))
+				break;	/* duplicate */
+#endif
+		if (i >= hostcount)
+		{
+			if (hostcount >= maxhosts)
+			{
+				maxhosts += MAXHOSTINCR;
+				hostlist = newlist(hostlist, maxhosts, host_data_t);
+			}
+			hostname(hostcount) = newstr(adrname);
+			hostaddr(hostcount) = address;
+			multaddr(hostcount) = FALSE;
+			hostcount++;
+		}
+		else if (address != hostaddr(i))
+			multaddr(i) = TRUE;
+	}
+
+	/* check for unauthoritative glue records */
+	else if (adrname && !indomain(adrname, name, TRUE))
+		pr_warning("extraneous glue record for %s within %s from %s",
+			adrname, name, host);
 }
 
 /*
@@ -4345,7 +4665,7 @@ input char *name;			/* domain name to get mx for */
 	if (n < 0)
 		return(FALSE);
 
-	(void) print_info(&answer, n, name, T_MX, FALSE);
+	(void) print_info(&answer, n, name, T_MX, queryclass, FALSE);
 
 	return(TRUE);
 }
@@ -4374,7 +4694,7 @@ input char *name;			/* name of zone to get soa for */
 		return(NULL);
 
 	if (verbose > 1)
-		(void) print_info(&answer, n, name, T_SOA, FALSE);
+		(void) print_info(&answer, n, name, T_SOA, queryclass, FALSE);
 
 	soaname = NULL;
 	(void) get_soainfo(&answer, n, name);
@@ -4416,7 +4736,7 @@ input char *name;			/* name of zone to get soa for */
 		return(FALSE);
 
 	if (verbose > 1)
-		(void) print_info(&answer, n, name, T_SOA, FALSE);
+		(void) print_info(&answer, n, name, T_SOA, queryclass, FALSE);
 
 	soaname = NULL;
 	(void) get_soainfo(&answer, n, name);
@@ -4433,14 +4753,14 @@ input char *name;			/* name of zone to get soa for */
 ** -------------------------------------------------------------
 **
 **	Returns:
-**		TRUE if the SOA record was found successfully.
+**		TRUE if the answer buffer was processed successfully.
 **		FALSE otherwise.
 **
 **	Outputs:
 **		The global struct ``soa'' is filled with the soa data.
 **
 **	Side effects:
-**		Sets ``soaname'' if this is a valid SOA record.
+**		Sets ``soaname'' if there is a valid SOA record.
 **		This variable must have been cleared before calling
 **		get_soainfo() and may be checked afterwards.
 */
@@ -4464,9 +4784,9 @@ input char *name;			/* name of zone to get soa for */
 	eom = (u_char *)answerbuf + answerlen;
 	cp  = (u_char *)answerbuf + HFIXEDSZ;
 
-	while (qdcount > 0 && cp < eom)
+	if (qdcount > 0 && cp < eom)	/* should be exactly one record */
 	{
-		cp = skip_qrec(name, cp, msg, eom);
+		cp = skip_qrec(name, T_SOA, queryclass, cp, msg, eom);
 		if (cp == NULL)
 			return(FALSE);
 		qdcount--;
@@ -4482,6 +4802,7 @@ input char *name;			/* name of zone to get soa for */
 
 /*
  * Check answer section only.
+ * Check that answers match the requested zone. Ignore other entries.
  * The nameserver section may contain the nameservers for the zone,
  * and the additional section their addresses, but not guaranteed.
  * Those sections are usually empty for authoritative answers.
@@ -4520,9 +4841,8 @@ input char *name;			/* name of zone to get soa for */
 			printf("%-20s\t%d\t%s\t%s\n",
 				rname, ttl, pr_class(class), pr_type(type));
 #endif
-		switch (type)
+		if ((type == T_SOA) && sameword(rname, name))
 		{
-		    case T_SOA:
 			n = expand_name(rname, type, cp, msg, eom, soa.primary);
 			if (n < 0)
 				return(FALSE);
@@ -4549,17 +4869,18 @@ input char *name;			/* name of zone to get soa for */
 
 			/* valid complete soa record found */
 			soaname = strcpy(soanamebuf, rname);
-			break;
-
-		    default:
+		}
+		else
+		{
+			/* just ignore other records */
 			cp += dlen;
-			break;
 		}
 
 		if (cp != eor)
 		{
 			pr_error("size error in %s record for %s, off by %s",
 				pr_type(type), rname, itoa(cp - eor));
+			h_errno = NO_RECOVERY;
 			return(FALSE);
 		}
 
@@ -4574,6 +4895,8 @@ input char *name;			/* name of zone to get soa for */
 		return(FALSE);
 	}
 
+	/* set proper status if no answers found */
+	h_errno = (soaname != NULL) ? 0 : TRY_AGAIN;
 	return(TRUE);
 }
 
@@ -4805,7 +5128,7 @@ input int type, class, ttl;		/* resource record fixed values */
  */
 	for (hfunc = type, p = name; (c = *p) != '\0'; p++)
 	{
-		hfunc = ((hfunc << 1) ^ (lower(c) & 0377)) % THASHSIZE;
+		hfunc = ((hfunc << 1) ^ (lowercase(c) & 0377)) % THASHSIZE;
 	}
 
 	for (ps = &ttltab[hfunc]; (s = *ps) != NULL; ps = &s->next)
@@ -4822,7 +5145,7 @@ input int type, class, ttl;		/* resource record fixed values */
 	if (s == NULL)
 	{
 		/* ps = &ttltab[hfunc]; */
-		s = newlist(NULL, 1, ttl_tab_t);
+		s = newstruct(ttl_tab_t);
 
 		/* initialize new entry */
 		s->name = newstr(name);
@@ -4929,14 +5252,14 @@ input bool enter;			/* add to table if not found */
  */
 	for (hfunc = 0, p = name; (c = *p) != '\0'; p++)
 	{
-		hfunc = ((hfunc << 1) ^ (lower(c) & 0377)) % HHASHSIZE;
+		hfunc = ((hfunc << 1) ^ (lowercase(c) & 0377)) % HHASHSIZE;
 	}
 
 	for (ps = &hosttab[hfunc]; (s = *ps) != NULL; ps = &s->next)
 	{
 		if (s->slot >= hostcount)
 			continue;
-		if (sameword(hostname[s->slot], name))
+		if (sameword(hostname(s->slot), name))
 			break;
 	}
 
@@ -4946,7 +5269,7 @@ input bool enter;			/* add to table if not found */
 	if ((s == NULL) && enter)
 	{
 		/* ps = &hosttab[hfunc]; */
-		s = newlist(NULL, 1, host_tab_t);
+		s = newstruct(host_tab_t);
 
 		/* initialize new entry */
 		s->slot = hostcount;
@@ -5038,7 +5361,7 @@ input bool enter;			/* add to table if not found */
  */
 	for (hfunc = 0, p = name; (c = *p) != '\0'; p++)
 	{
-		hfunc = ((hfunc << 1) ^ (lower(c) & 0377)) % ZHASHSIZE;
+		hfunc = ((hfunc << 1) ^ (lowercase(c) & 0377)) % ZHASHSIZE;
 	}
 
 	for (ps = &zonetab[hfunc]; (s = *ps) != NULL; ps = &s->next)
@@ -5055,7 +5378,7 @@ input bool enter;			/* add to table if not found */
 	if ((s == NULL) && enter)
 	{
 		/* ps = &zonetab[hfunc]; */
-		s = newlist(NULL, 1, zone_tab_t);
+		s = newstruct(zone_tab_t);
 
 		/* initialize new entry */
 		s->slot = zonecount;
@@ -5145,7 +5468,7 @@ input char *name;			/* the domain name to check */
  */
 	for (hfunc = 0, p = name; (c = *p) != '\0'; p++)
 	{
-		hfunc = ((hfunc << 1) ^ (lower(c) & 0377)) % CHASHSIZE;
+		hfunc = ((hfunc << 1) ^ (lowercase(c) & 0377)) % CHASHSIZE;
 	}
 
 	for (ps = &canontab[hfunc]; (s = *ps) != NULL; ps = &s->next)
@@ -5161,7 +5484,7 @@ input char *name;			/* the domain name to check */
 	if (s == NULL)
 	{
 		/* ps = &canontab[hfunc]; */
-		s = newlist(NULL, 1, canon_tab_t);
+		s = newstruct(canon_tab_t);
 
 		/* initialize new entry */
 		s->name = newstr(name);
@@ -5191,7 +5514,7 @@ input char *name;			/* host name to check addresses for */
 	struct hostent *hp;
 	register int i;
 	struct in_addr inaddr[MAXADDRS];
-	int naddr;
+	int naddress;
 	char hnamebuf[MAXDNAME+1];
 	char *hname;
 	char inamebuf[MAXDNAME+1];
@@ -5208,20 +5531,21 @@ input char *name;			/* host name to check addresses for */
 		return(FALSE);
 	}
 
-	hname = strcpy(hnamebuf, hp->h_name);
+	hname = strncpy(hnamebuf, hp->h_name, MAXDNAME);
+	hname[MAXDNAME] = '\0';
 
 	for (i = 0; i < MAXADDRS && hp->h_addr_list[i]; i++)
 		inaddr[i] = incopy(hp->h_addr_list[i]);
-	naddr = i;
+	naddress = i;
 
 	if (verbose)
 		printf("Found %d address%s for %s\n",
-			naddr, plurale(naddr), hname);
+			naddress, plurale(naddress), hname);
 
 /*
  * Map back the addresses found, and check whether they revert to host.
  */
-	for (matched = 0, i = 0; i < naddr; i++)
+	for (matched = 0, i = 0; i < naddress; i++)
 	{
 		iname = strcpy(inamebuf, inet_ntoa(inaddr[i]));
 
@@ -5238,7 +5562,7 @@ input char *name;			/* host name to check addresses for */
 			matched++;
 	}
 
-	return((matched == naddr) ? TRUE : FALSE);
+	return((matched == naddress) ? TRUE : FALSE);
 }
 
 /*
@@ -5276,14 +5600,14 @@ input ipaddr_t addr;			/* address of host to check */
 		return(FALSE);
 	}
 
-	hname = strcpy(hnamebuf, hp->h_name);
+	hname = strncpy(hnamebuf, hp->h_name, MAXDNAME);
+	hname[MAXDNAME] = '\0';
 
 	if (verbose)
 		printf("Address %s maps to %s\n", iname, hname);
 
 /*
  * Lookup the host name found to fetch its addresses.
- * Verify whether the mapped host name is canonical.
  */
 	hp = gethostbyname(hname);
 	if (hp == NULL)
@@ -5292,6 +5616,9 @@ input ipaddr_t addr;			/* address of host to check */
 		return(FALSE);
 	}
 
+/*
+ * Verify whether the mapped host name is canonical.
+ */
 	if (!sameword(hp->h_name, hname))
 		pr_warning("%s host %s is not canonical (%s)",
 			iname, hname, hp->h_name);
@@ -5319,6 +5646,95 @@ input ipaddr_t addr;			/* address of host to check */
 }
 
 /*
+** GETH_BYNAME -- Wrapper for gethostbyname
+** ----------------------------------------
+**
+**	Returns:
+**		Pointer to struct hostent if lookup was successful.
+**		NULL otherwise.
+**
+**	Note. This routine works for fully qualified names only.
+**	The entire special res_search() processing can be skipped.
+*/
+
+struct hostent *
+geth_byname(name)
+input CONST char *name;			/* name to do forward lookup for */
+{
+	querybuf answer;
+	struct hostent *hp;
+	register int n;
+
+	hp = gethostbyname(name);
+	if (hp != NULL)
+		return(hp);
+
+	if (verbose > print_level)
+		printf("Finding addresses for %s ...\n", name);
+
+	n = get_info(&answer, name, T_A, C_IN);
+	if (n < 0)
+		return(NULL);
+
+	if ((verbose > print_level + 1) && (print_level < 1))
+		(void) print_info(&answer, n, name, T_A, C_IN, FALSE);
+
+	hp = gethostbyname(name);
+	return(hp);
+}
+
+/*
+** GETH_BYADDR -- Wrapper for gethostbyaddr
+** ----------------------------------------
+**
+**	Returns:
+**		Pointer to struct hostent if lookup was successful.
+**		NULL otherwise.
+*/
+
+struct hostent *
+geth_byaddr(addr, size, family)
+input CONST char *addr;			/* address to do reverse mapping for */
+input int size;				/* size of the address */
+input int family;			/* address family */
+{
+	char addrbuf[4*4 + sizeof(ARPA_ROOT) + 1];
+	char *name = addrbuf;
+	u_char *a = (u_char *)addr;
+	querybuf answer;
+	struct hostent *hp;
+	register int n;
+
+	if (size != INADDRSZ || family != AF_INET)
+	{
+		hp = gethostbyaddr(addr, size, family);
+		return(hp);
+	}
+
+	hp = gethostbyaddr(addr, size, family);
+	if (hp != NULL)
+		return(hp);
+
+	/* construct absolute reverse name *without* trailing dot */
+	(void) sprintf(addrbuf, "%u.%u.%u.%u.%s",
+		a[3]&0xff, a[2]&0xff, a[1]&0xff, a[0]&0xff, ARPA_ROOT);
+
+	if (verbose > print_level)
+		printf("Finding reverse mapping for %s ...\n",
+			inet_ntoa(incopy(addr)));
+
+	n = get_info(&answer, name, T_PTR, C_IN);
+	if (n < 0)
+		return(NULL);
+
+	if ((verbose > print_level + 1) && (print_level < 1))
+		(void) print_info(&answer, n, name, T_PTR, C_IN, FALSE);
+
+	hp = gethostbyaddr(addr, size, family);
+	return(hp);
+}
+
+/*
 ** PARSE_TYPE -- Decode rr type from input string
 ** ----------------------------------------------
 **
@@ -5326,8 +5742,8 @@ input ipaddr_t addr;			/* address of host to check */
 **		Value of resource record type.
 **		-1 if specified record name is invalid.
 **
-**	Note.	T_MD, T_MF, T_MAILA are obsolete, but recognized.
-**		T_AXFR is not allowed to be specified as query type.
+**	Note.	Several types are deprecated or obsolete, but recognized.
+**		T_AXFR/T_IXFR is not allowed to be specified as query type.
 */
 
 int
@@ -5336,22 +5752,26 @@ input char *str;			/* input string with record type */
 {
 	register int type;
 
+		/* standard types */
+
 	if (sameword(str, "A"))		return(T_A);
 	if (sameword(str, "NS"))	return(T_NS);
 	if (sameword(str, "MD"))	return(T_MD);		/* obsolete */
 	if (sameword(str, "MF"))	return(T_MF);		/* obsolete */
 	if (sameword(str, "CNAME"))	return(T_CNAME);
 	if (sameword(str, "SOA"))	return(T_SOA);
-	if (sameword(str, "MB"))	return(T_MB);
-	if (sameword(str, "MG"))	return(T_MG);
-	if (sameword(str, "MR"))	return(T_MR);
-	if (sameword(str, "NULL"))	return(T_NULL);
+	if (sameword(str, "MB"))	return(T_MB);		/* deprecated */
+	if (sameword(str, "MG"))	return(T_MG);		/* deprecated */
+	if (sameword(str, "MR"))	return(T_MR);		/* deprecated */
+	if (sameword(str, "NULL"))	return(T_NULL);		/* obsolete */
 	if (sameword(str, "WKS"))	return(T_WKS);
 	if (sameword(str, "PTR"))	return(T_PTR);
 	if (sameword(str, "HINFO"))	return(T_HINFO);
-	if (sameword(str, "MINFO"))	return(T_MINFO);
+	if (sameword(str, "MINFO"))	return(T_MINFO);	/* deprecated */
 	if (sameword(str, "MX"))	return(T_MX);
 	if (sameword(str, "TXT"))	return(T_TXT);
+
+		/* new types */
 
 	if (sameword(str, "RP"))	return(T_RP);
 	if (sameword(str, "AFSDB"))	return(T_AFSDB);
@@ -5363,20 +5783,33 @@ input char *str;			/* input string with record type */
 	if (sameword(str, "SIG"))	return(T_SIG);
 	if (sameword(str, "KEY"))	return(T_KEY);
 	if (sameword(str, "PX"))	return(T_PX);
-	if (sameword(str, "GPOS"))	return(T_GPOS);
+	if (sameword(str, "GPOS"))	return(T_GPOS);		/* withdrawn */
 	if (sameword(str, "AAAA"))	return(T_AAAA);
 	if (sameword(str, "LOC"))	return(T_LOC);
+	if (sameword(str, "NXT"))	return(T_NXT);
+	if (sameword(str, "EID"))	return(T_EID);
+	if (sameword(str, "NIMLOC"))	return(T_NIMLOC);
+	if (sameword(str, "SRV"))	return(T_SRV);
+	if (sameword(str, "ATMA"))	return(T_ATMA);
+	if (sameword(str, "NAPTR"))	return(T_NAPTR);
+
+		/* nonstandard types */
 
 	if (sameword(str, "UINFO"))	return(T_UINFO);
 	if (sameword(str, "UID"))	return(T_UID);
 	if (sameword(str, "GID"))	return(T_GID);
 	if (sameword(str, "UNSPEC"))	return(T_UNSPEC);
 
+		/* filters */
+
+	if (sameword(str, "IXFR"))	return(-1);		/* illegal */
 	if (sameword(str, "AXFR"))	return(-1);		/* illegal */
 	if (sameword(str, "MAILB"))	return(T_MAILB);
 	if (sameword(str, "MAILA"))	return(T_MAILA);	/* obsolete */
 	if (sameword(str, "ANY"))	return(T_ANY);
 	if (sameword(str, "*"))		return(T_ANY);
+
+		/* unknown types */
 
 	type = atoi(str);
 	if (type >= T_FIRST && type <= T_LAST)
@@ -6016,8 +6449,9 @@ input int rcode;			/* error code from bp->rcode */
 */
 
 void
-print_status(answerbuf)
+print_status(answerbuf, answerlen)
 input querybuf *answerbuf;		/* location of answer buffer */
+input int answerlen;			/* length of answer buffer */
 {
 	HEADER *bp;
 	int ancount;
@@ -6027,13 +6461,26 @@ input querybuf *answerbuf;		/* location of answer buffer */
 	ancount = ntohs(bp->ancount);
 	failed = (bp->rcode != NOERROR || ancount == 0);
 
-	printf("%sQuery %s, %d answer%s%s, %sstatus: %s\n",
-		verbose ? "" : dbprefix,
-		failed ? "failed" : "done",
-		ancount, plural(ancount),
-		bp->tc ? " (truncated)" : "",
-		bp->aa ? "authoritative " : "",
-		decode_error((int)bp->rcode));
+	printf("%s", verbose ? "" : dbprefix);
+
+	printf("Query %s", failed ? "failed" : "done");
+
+	if (bp->tc || (answerlen > PACKETSZ))
+		printf(", %d byte%s", answerlen, plural(answerlen));
+
+	if (bp->tc)
+	{
+		if (answerlen > sizeof(querybuf))
+			printf(" (truncated to %d)", sizeof(querybuf));
+		else
+			printf(" (truncated)");
+	}
+
+	printf(", %d answer%s", ancount, plural(ancount));
+
+	printf(", %s", bp->aa ? "authoritative " : "");
+
+	printf("status: %s\n", decode_error((int)bp->rcode));
 }
 
 /*
@@ -6186,8 +6633,11 @@ input bool equal;			/* set if name may be same as zone */
 	dot = index(name, '.');
 	while (dot != NULL)
 	{
-		if (sameword(dot+1, domain))
-			return(TRUE);
+		if (!is_quoted(dot, name))
+		{
+			if (sameword(dot+1, domain))
+				return(TRUE);
+		}
 
 		dot = index(dot+1, '.');
 	}
@@ -6217,10 +6667,20 @@ input bool equal;			/* set if name may be same as zone */
 		return(equal);
 
 	dot = index(name, '.');
-	if (dot == NULL)
-		return(sameword(domain, "."));
+	while (dot != NULL)
+	{
+		if (!is_quoted(dot, name))
+		{
+			if (sameword(dot+1, domain))
+				return(TRUE);
 
-	if (sameword(dot+1, domain))
+			return(FALSE);
+		}
+
+		dot = index(dot+1, '.');
+	}
+
+	if (sameword(domain, "."))
 		return(TRUE);
 
 	return(FALSE);
@@ -6276,6 +6736,10 @@ input int nzones;			/* number of known delegated zones */
 **
 **	Returns:
 **		Number of shared trailing components in both names.
+**
+**	Note. This routine is currently used only to compare nameserver
+**	names in the RHS of NS records, so there is no need to check
+**	for embedded quoted dots.
 */
 
 int
@@ -6291,7 +6755,7 @@ input char *domain;			/* domain name to compare against */
 
 	while (--i >= 0 && --j >= 0)
 	{
-		if (lower(name[i]) != lower(domain[j]))
+		if (lowercase(name[i]) != lowercase(domain[j]))
 			break;
 		if (domain[j] == '.')
 			matched++;
@@ -6438,10 +6902,12 @@ char *
 pr_type(type)
 input int type;				/* resource record type */
 {
-	static char buf[30];
+	static char buf[30];		/* sufficient for 64-bit values */
 
 	switch (type)
 	{
+		/* standard types */
+
 	    case T_A:       return("A");	/* internet address */
 	    case T_NS:      return("NS");	/* authoritative server */
 	    case T_MD:      return("MD");	/* mail destination */
@@ -6459,6 +6925,8 @@ input int type;				/* resource record type */
 	    case T_MX:      return("MX");	/* mail routing info */
 	    case T_TXT:     return("TXT");	/* descriptive text */
 
+		/* new types */
+
 	    case T_RP:      return("RP");	/* responsible person */
 	    case T_AFSDB:   return("AFSDB");	/* afs database location */
 	    case T_X25:     return("X25");	/* x25 address */
@@ -6472,12 +6940,23 @@ input int type;				/* resource record type */
 	    case T_GPOS:    return("GPOS");	/* geographical position */
 	    case T_AAAA:    return("AAAA");	/* ip v6 address */
 	    case T_LOC:     return("LOC");	/* geographical location */
+	    case T_NXT:     return("NXT");	/* next valid name */
+	    case T_EID:     return("EID");	/* endpoint identifier */
+	    case T_NIMLOC:  return("NIMLOC");	/* nimrod locator */
+	    case T_SRV:     return("SRV");	/* service info */
+	    case T_ATMA:    return("ATMA");	/* atm address */
+	    case T_NAPTR:   return("NAPTR");	/* naming authority urn */
+
+		/* nonstandard types */
 
 	    case T_UINFO:   return("UINFO");	/* user information */
 	    case T_UID:     return("UID");	/* user ident */
 	    case T_GID:     return("GID");	/* group ident */
 	    case T_UNSPEC:  return("UNSPEC");	/* unspecified binary data */
 
+		/* filters */
+
+	    case T_IXFR:    return("IXFR");	/* incremental zone transfer */
 	    case T_AXFR:    return("AXFR");	/* zone transfer */
 	    case T_MAILB:   return("MAILB");	/* matches MB/MR/MG/MINFO */
 	    case T_MAILA:   return("MAILA");	/* matches MD/MF */
@@ -6486,6 +6965,7 @@ input int type;				/* resource record type */
 	    case T_NONE:    return("resource");	/* not yet determined */
 	}
 
+	/* unknown type */
 	(void) sprintf(buf, "%d", type);
 	return(buf);
 }
@@ -6502,7 +6982,7 @@ char *
 pr_class(class)
 input int class;			/* resource record class */
 {
-	static char buf[30];
+	static char buf[30];		/* sufficient for 64-bit values */
 
 	switch (class)
 	{
@@ -6513,19 +6993,21 @@ input int class;			/* resource record class */
 	    case C_ANY:     return("ANY");	/* any class */
 	}
 
+	/* unknown class */
 	(void) sprintf(buf, "%d", class);
 	return(buf);
 }
 
 /*
-** EXPAND_NAME -- Expand compressed domain name in a recource record
+** EXPAND_NAME -- Expand compressed domain name in a resource record
 ** -----------------------------------------------------------------
 **
 **	Returns:
 **		Number of bytes advanced in answer buffer.
 **		-1 if there was a format error.
 **
-**	It is assumed that the specified buffer is of sufficient size.
+**	It is assumed that the specified buffer is of a fixed size
+**	MAXDNAME+1 that should be sufficient to store the data.
 */
 
 int
@@ -6546,6 +7028,9 @@ output char *namebuf;			/* location of buf to expand name in */
 		h_errno = NO_RECOVERY;
 		return(-1);
 	}
+
+	/* should not be necessary, but who knows */
+	namebuf[MAXDNAME] = '\0';
 
 	/* change root to single dot */
 	if (namebuf[0] == '\0')
@@ -6610,7 +7095,7 @@ input int size;				/* required record size remaining */
 **	only in the middle). We only check the individual characters.
 **	Strictly speaking, this restriction is only for ``host names''.
 **	The underscore is illegal, at least not recommended, but is
-**	so abundant that is requires special processing.
+**	so abundant that it requires special processing.
 **
 **	If the domain name represents a mailbox specification, the
 **	first label up to the first (unquoted) dot is the local part
@@ -6621,6 +7106,8 @@ input int size;				/* required record size remaining */
 **	wildcarding. It is valid only in the LHS resource record name,
 **	in definitions in zone files only as the first component.
 **	Used primarily in wildcard MX record definitions.
+**
+**	Note. This routine is much too liberal.
 */
 
 char *specials = ".()<>@,;:\\\"[]";	/* RFC 822 specials */
@@ -6670,7 +7157,7 @@ input bool underscore;			/* set if underscores are allowed */
 			continue;
 
 		/* allow '*' for use in wildcard names */
-		if ((c == '*') && wildcard)
+		if ((c == '*') && (p == name && p[1] == '.') && wildcard)
 			continue;
 
 		/* ignore underscore in certain circumstances */
@@ -6715,7 +7202,7 @@ input char *name;			/* the domain name to check */
 	save_errno = errno;
 	save_herrno = h_errno;
 
-	hp = gethostbyname(name);
+	hp = geth_byname(name);
 	status = h_errno;
 
 	errno = save_errno;
@@ -6770,7 +7257,7 @@ input struct in_addr inaddr;		/* address of A record to check */
 	save_errno = errno;
 	save_herrno = h_errno;
 
-	hp = gethostbyaddr((char *)&inaddr, INADDRSZ, AF_INET);
+	hp = geth_byaddr((char *)&inaddr, INADDRSZ, AF_INET);
 	status = h_errno;
 
 	errno = save_errno;
@@ -6805,10 +7292,10 @@ input struct in_addr inaddr;		/* address of A record to check */
 
 int
 compare_name(a, b)
-input char **a;				/* first name */
-input char **b;				/* second name */
+input const ptr_t *a;			/* first name */
+input const ptr_t *b;			/* second name */
 {
-	return(strcasecmp(*a, *b));
+	return(strcasecmp(*(char **)a, *(char **)b));
 }
 
 /*
@@ -6840,8 +7327,8 @@ input siz_t size;			/* number of bytes to allocate */
 }
 
 /*
-** ITOA -- Convert integer value to ascii string
-** ---------------------------------------------
+** ITOA -- Convert value to decimal integer ascii string
+** -----------------------------------------------------
 **
 **	Returns:
 **		Pointer to string.
@@ -6851,15 +7338,14 @@ char *
 itoa(n)
 input int n;				/* value to convert */
 {
-	static char buf[30];
+	static char buf[30];		/* sufficient for 64-bit values */
 
 	(void) sprintf(buf, "%d", n);
 	return(buf);
 }
 
-
-/*
-** UTOA -- Convert unsigned integer value to ascii string
+/*
+** UTOA -- Convert value to unsigned decimal ascii string
 ** ------------------------------------------------------
 **
 **	Returns:
@@ -6870,26 +7356,48 @@ char *
 utoa(n)
 input int n;				/* value to convert */
 {
-	static char buf[30];
+	static char buf[30];		/* sufficient for 64-bit values */
 
 	(void) sprintf(buf, "%u", (unsigned)n);
 	return(buf);
 }
 
 /*
-** STOA -- Extract partial ascii string
-** ------------------------------------
+** XTOA -- Convert value to hexadecimal ascii string
+** -------------------------------------------------
 **
 **	Returns:
 **		Pointer to string.
 */
 
 char *
-stoa(cp, size)
+xtoa(n)
+input int n;				/* value to convert */
+{
+	static char buf[17];		/* sufficient for 64-bit values */
+
+	(void) sprintf(buf, "%X", (unsigned)n);
+	return(buf);
+}
+
+/*
+** STOA -- Extract partial ascii string, escape if necessary
+** ---------------------------------------------------------
+**
+**	Returns:
+**		Pointer to string.
+*/
+
+char *
+stoa(cp, size, escape)
 input u_char *cp;			/* current position in answer buf */
 input int size;				/* number of bytes to extract */
+input bool escape;			/* escape special characters if set */
 {
-	static char buf[MAXDLEN+1];
+	static char buf[2*MAXDLEN+1];
+	register char *p;
+	register char c;
+	register int i;
 
 	if (size > MAXDLEN)
 		size = MAXDLEN;
@@ -6900,8 +7408,81 @@ input int size;				/* number of bytes to extract */
 	else
 		(void) sprintf(buf, "%s", "");
 #endif
-	bcopy((char *)cp, buf, size);
-	buf[size] = '\0';
+
+	for (p = buf, i = 0; i < size; i++)
+	{
+		c = *cp++;
+		if (escape && (c == '\n' || c == '\\' || c == '"'))
+			*p++ = '\\';
+		*p++ = c;
+	}
+	*p = '\0';
+
+	return(buf);
+}
+
+/*
+** BASE_NTOA -- Convert binary data to base64 ascii
+** ------------------------------------------------
+**
+**	Returns:
+**		Pointer to string.
+**
+**	This routine is used to convert encoded keys and signatures
+**	in T_KEY and T_SIG resource records.
+*/
+
+char b64tab[] =
+"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+char *
+base_ntoa(cp, size)
+input u_char *cp;			/* current position in answer buf */
+input int size;				/* number of bytes to extract */
+{
+	static char buf[MAXB64SIZE+1];
+	register char *p;
+	int c1, c2, c3, c4;
+
+	if (size > MAXMD5SIZE)
+		size = MAXMD5SIZE;
+
+	for (p = buf; size > 2; cp += 3, size -= 3)
+	{
+		c1 = (((int)cp[0] >> 2) & 0x3f);
+		c2 = (((int)cp[0] & 0x03) << 4) + (((int)cp[1] >> 4) & 0x0f);
+		c3 = (((int)cp[1] & 0x0f) << 2) + (((int)cp[2] >> 6) & 0x03);
+		c4 =  ((int)cp[2] & 0x3f);
+
+		*p++ = b64tab[c1];
+		*p++ = b64tab[c2];
+		*p++ = b64tab[c3];
+		*p++ = b64tab[c4];
+	}
+    
+	if (size == 2)
+	{
+		c1 = (((int)cp[0] >> 2) & 0x3f);
+		c2 = (((int)cp[0] & 0x03) << 4) + (((int)cp[1] >> 4) & 0x0f);
+		c3 = (((int)cp[1] & 0x0f) << 2);
+
+		*p++ = b64tab[c1];
+		*p++ = b64tab[c2];
+		*p++ = b64tab[c3];
+		*p++ = '=';
+	}
+	else if (size == 1)
+	{
+		c1 = (((int)cp[0] >> 2) & 0x3f);
+		c2 = (((int)cp[0] & 0x03) << 4);
+
+		*p++ = b64tab[c1];
+		*p++ = b64tab[c2];
+		*p++ = '=';
+		*p++ = '=';
+	}
+	*p = '\0';
+
 	return(buf);
 }
 
@@ -6943,6 +7524,68 @@ input int size;				/* number of bytes to extract */
 			*p++ = '.';
 	}
 	*p = '\0';
+
+	return(buf);
+}
+
+/*
+** IPNG_NTOA -- Convert binary ip v6 address to ascii
+** --------------------------------------------------
+**
+**	Returns:
+**		Pointer to string.
+**
+**	As per RFC 1886 an ip v6 address is encoded in binary form
+**	in the resource record. The size is fixed.
+*/
+
+char *
+ipng_ntoa(cp)
+input u_char *cp;			/* current position in answer buf */
+{
+	static char buf[5*(IPNGSIZE/2)+1];
+	register char *p;
+	register int n;
+	register int i;
+
+	for (p = buf, i = 0; i < IPNGSIZE/2; i++)
+	{
+		n = _getshort(cp);
+		cp += INT16SZ;
+
+		(void) sprintf(p, ":%X", n);
+		p += strlength(p);
+	}
+	*p = '\0';
+
+	return(buf + 1);
+}
+
+/*
+** PR_DATE -- Produce printable version of a clock value
+** -----------------------------------------------------
+**
+**	Returns:
+**		Pointer to string.
+**
+**	The value is a standard absolute clock value.
+*/
+
+char *
+pr_date(value)
+input int value;			/* the clock value to be converted */
+{
+	static char buf[sizeof("YYYYMMDDHHMMSS")+1];
+	time_t clocktime = value;
+	struct tm *t;
+	
+	t = gmtime(&clocktime);
+	t->tm_year += 1900;
+	t->tm_mon += 1;
+
+	(void) sprintf(buf, "%04d%02d%02d%02d%02d%02d",
+		t->tm_year, t->tm_mon, t->tm_mday,
+		t->tm_hour, t->tm_min, t->tm_sec);
 
 	return(buf);
 }
@@ -7060,7 +7703,7 @@ input char *neg;			/* suffix if value negative */
 /*
  * Normalize.
  */
-	value -= (1 << 31);
+	value -= (int)((unsigned)1 << 31);
 
 	direction = pos;
 	if (value < 0)

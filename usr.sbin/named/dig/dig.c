@@ -1,7 +1,11 @@
-/*	$NetBSD: dig.c,v 1.1 1996/02/02 15:26:18 mrg Exp $	*/
+/*	$OpenBSD: dig.c,v 1.2 1997/03/12 10:41:48 downsj Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$Id: dig.c,v 8.6 1995/12/29 21:08:13 vixie Exp ";
+#if 0
+static char rcsid[] = "$From: dig.c,v 8.8 1996/05/21 07:32:40 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: dig.c,v 1.2 1997/03/12 10:41:48 downsj Exp $";
+#endif
 #endif
 
 /*
@@ -142,8 +146,8 @@ static char rcsid[] = "$Id: dig.c,v 8.6 1995/12/29 21:08:13 vixie Exp ";
  *******************************************************************/
 
 
-#define VERSION 21
-#define VSTRING "2.1"
+#define VERSION 22
+#define VSTRING "2.2"
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -192,6 +196,8 @@ static void Usage();
 static int SetOption(), printZone(), printRR();
 static struct timeval difftv();
 static void prnttime();
+static int xstrtonum();
+static void res_re_init();
 
 /* stuff for nslookup modules */
 FILE		*filePtr;
@@ -212,11 +218,13 @@ char		*pager = NULL;
  ** Take arguments appearing in simple string (from file or command line)
  ** place in char**.
  */
+void
 stackarg(y, l)
 	char *l;
 	char **y;
 {
 	int done=0;
+
 	while (!done) {
 		switch (*l) {
 		case '\t':
@@ -241,6 +249,7 @@ stackarg(y, l)
 
 char myhostname[MAXHOSTNAMELEN];
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -286,7 +295,6 @@ main(argc, argv)
 	int envset=0, envsave=0;
 	struct __res_state res_x, res_t;
 	char *pp;
-	time_t t;
 
 	res_init();
 	_res.pfcode = PRF_DEF;
@@ -506,7 +514,7 @@ main(argc, argv)
 		} /* while argv remains */
 
 		if (_res.pfcode & 0x80000)
-			printf("; pfcode: %08x, options: %08x\n",
+			printf("; pfcode: %08lx, options: %08lx\n",
 			       _res.pfcode, _res.options);
 	  
 /*
@@ -627,8 +635,8 @@ main(argc, argv)
 					       myhostname,
 					       inet_ntoa(_res.nsaddr_list[i]
 							 .sin_addr));
-					t = exectime.tv_sec;
-					printf(";; WHEN: %s", ctime(&t));
+					printf(";; WHEN: %s",
+					       ctime(&(exectime.tv_sec)));
 				}
 				if (!x)
 					break;	/* success */
@@ -682,8 +690,8 @@ main(argc, argv)
 			gettimeofday(&exectime,NULL);
 			printf(";; FROM: %s to SERVER: %s\n",
 			       myhostname, srvmsg);
-			t = exectime.tv_sec;
-			printf(";; WHEN: %s", ctime(&t));
+			printf(";; WHEN: %s",
+			       ctime(&(exectime.tv_sec)));
 			printf(";; MSG SIZE  sent: %d  rcvd: %d\n",
 			       bytes_out, bytes_in);
 		}
@@ -902,6 +910,7 @@ SetOption(string)
 /*
  * Force a reinitialization when the domain is changed.
  */
+static void
 res_re_init()
 {
 	static char localdomain[] = "LOCALDOMAIN";
@@ -926,7 +935,7 @@ res_re_init()
 /*
  * convert char string (decimal, octal, or hex) to integer
  */
-int
+static int
 xstrtonum(p)
 	char *p;
 {
@@ -987,11 +996,13 @@ printZone(zone, sin)
 	int			amtToRead;
 	int			numRead;
 	int			numAnswers = 0;
+	int			numRecords = 0;
 	int			result;
 	int			soacnt = 0;
 	int			sockFD;
+	int			count, type, class, rlen, done, n;
 	u_short			len;
-	u_char			*cp, *nmp;
+	u_char			*cp;
 	char			dname[2][NAME_LEN];
 	char			file[NAME_LEN];
 	static u_char		*answer = NULL;
@@ -1047,7 +1058,7 @@ printZone(zone, sin)
 	}
 
 	dname[0][0] = '\0';
-	while (1) {
+	for (done = 0; !done; NULL) {
 	    u_int16_t tmp;
 
 	    /*
@@ -1101,27 +1112,44 @@ printZone(zone, sin)
 		error = ERR_PRINTING;
 		break;
 	    }
-
+	    numRecords += htons(((HEADER *)answer)->ancount);
 	    numAnswers++;
+
+	    /* Header. */
 	    cp = answer + HFIXEDSZ;
-	    if (ntohs(((HEADER *)answer)->qdcount) > 0)
-		cp += dn_skipname((u_char *)cp,
-		    (u_char *)answer + len) + QFIXEDSZ;
-	    nmp = cp;
-	    cp += dn_skipname((u_char *)cp, (u_char *)answer + len);
-	    if ((_getshort((u_char*)cp) == T_SOA)) {
-		(void) dn_expand(answer, answer + len, nmp,
-				 dname[soacnt], sizeof dname[0]);
-	        if (soacnt) {
-		    if (strcmp(dname[0], dname[1]) == 0)
-			break;
-		} else
-		    soacnt++;
+	    /* Question. */
+	    for (count = ntohs(((HEADER *)answer)->qdcount);	
+		 count > 0;
+		 count--)
+		cp += dn_skipname(cp, answer + len) + QFIXEDSZ;
+	    /* Answer. */
+	    for (count = ntohs(((HEADER *)answer)->ancount);
+		 count > 0;
+		 count--) {
+		n = dn_expand(answer, answer + len, cp,
+			      dname[soacnt], sizeof dname[0]);
+		if (n < 0) {
+		    error = ERR_PRINTING;
+		    done++;
+		    break;
+		}
+		cp += n;
+		GETSHORT(type, cp);
+		GETSHORT(class, cp);
+		cp += INT32SZ;	/* ttl */
+		GETSHORT(rlen, cp);
+		cp += rlen;
+		if (type == T_SOA && soacnt++ &&
+		    !strcasecmp(dname[0], dname[1])) {
+		    done++;
+		    break;
+		}
 	    }
 	}
 
-	fprintf(stdout, ";; Received %d record%s.\n",
-		numAnswers, (numAnswers != 1) ? "s" : "");
+	printf(";; Received %d answer%s (%d record%s).\n",
+	       numAnswers, (numAnswers != 1) ? "s" : "",
+	       numRecords, (numRecords != 1) ? "s" : "");
 
 	(void) close(sockFD);
 	sockFD = -1;
@@ -1176,20 +1204,23 @@ printRR(file, msg, eom)
 
     if (ntohs(headerPtr->ancount) == 0) {
 	return(NO_INFO);
-    } else {
-	if (ntohs(headerPtr->qdcount) > 0) {
-	    nameLen = dn_skipname(cp, eom);
-	    if (nameLen < 0)
-		return (ERROR);
-	    cp += nameLen + QFIXEDSZ;
-	}
-	cp = (u_char*) p_rr(cp, msg, stdout);
     }
+    for (n = ntohs(headerPtr->qdcount); n > 0; n--) {
+	nameLen = dn_skipname(cp, eom);
+	if (nameLen < 0)
+	    return (ERROR);
+	cp += nameLen + QFIXEDSZ;
+    }
+#ifdef PROTOCOLDEBUG
+    printf(";;; (message of %d octets has %d answers)\n",
+	   eom - msg, ntohs(headerPtr->ancount));
+#endif
+    for (n = ntohs(headerPtr->ancount); n > 0; n--)
+	cp = (u_char*) p_rr(cp, msg, stdout);
     return(SUCCESS);
 }
 
-static
-struct timeval
+static struct timeval
 difftv(a, b)
 	struct timeval a, b;
 {
@@ -1203,10 +1234,9 @@ difftv(a, b)
 	return(diff);
 }
 
-static
-void
+static void
 prnttime(t)
 	struct timeval t;
 {
-	printf("%u msec", t.tv_sec * 1000 + (t.tv_usec / 1000));
+	printf("%lu msec", (u_long)(t.tv_sec * 1000 + (t.tv_usec / 1000)));
 }

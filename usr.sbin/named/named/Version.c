@@ -1,13 +1,17 @@
-/*	$NetBSD: Version.c,v 1.1 1996/02/02 15:28:02 mrg Exp $	*/
+/*	$OpenBSD: Version.c,v 1.2 1997/03/12 10:42:20 downsj Exp $	*/
 
 /*
  *	@(#)Version.c	4.9 (Berkeley) 7/21/90
- *	$Id: Version.c,v 8.1 1994/12/15 06:24:14 vixie Exp 
+ *	$From: Version.c,v 8.1 1994/12/15 06:24:14 vixie Exp $
  */
 
 #ifndef lint
+#if 0
 char sccsid[] = "@(#)named %VERSION%";
-char rcsid[] = "$Id: Version.c,v 8.1 1994/12/15 06:24:14 vixie Exp ";
+char rcsid[] = "$From: Version.c,v 8.1 1994/12/15 06:24:14 vixie Exp $";
+#else
+char rcsid[] = "$OpenBSD: Version.c,v 1.2 1997/03/12 10:42:20 downsj Exp $";
+#endif
 #endif /* not lint */
 
 char Version[] = "named %VERSION%";

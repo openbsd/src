@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1996/12/08 15:00:00 downsj Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/03/12 10:42:45 downsj Exp $
 #	$NetBSD: Makefile,v 1.1 1996/02/02 15:29:56 mrg Exp $
 # from: $Id: Makefile,v 8.1 1994/12/15 06:23:48 vixie Exp 
 
@@ -7,9 +7,9 @@
 
 PROG=	nslookup
 SRCS=	main.c getinfo.c debug.c send.c skip.c list.c subr.c commands.l
-CFLAGS+= ${INCLUDE}
+CFLAGS+= ${INCLUDE} ${CONFIG}
 DPADD=	${LIBL}
-LDADD=	-ll
+LDADD=	${LIBRESOLV} -ll
 CLEANFILES+=	commands.c lex.yy.c lex.yy.o
 MAN=	nslookup.8
 

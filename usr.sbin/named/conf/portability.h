@@ -1,14 +1,10 @@
-/*	$NetBSD: portability.h,v 1.1 1996/02/02 15:26:12 mrg Exp $	*/
-
 /* portability.h - include or define things that aren't present on all systems
  * vixie@decwrl 26dec92 [new]
  *
- * $Id: portability.h,v 8.11 1995/12/22 10:20:19 vixie Exp 
+ * $Id: portability.h,v 1.2 1997/03/12 10:41:47 downsj Exp $
  */
 
 /*
- * ++Copyright++
- * -
  * Copyright (c) 
  *    The Regents of the University of California.  All rights reserved.
  * 
@@ -39,7 +35,9 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- * -
+ */
+
+/*
  * Portions Copyright (c) 1993 by Digital Equipment Corporation.
  * 
  * Permission to use, copy, modify, and distribute this software for any
@@ -57,21 +55,38 @@
  * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
  * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
  * SOFTWARE.
- * -
- * --Copyright--
  */
 
-/* XXX:	this file has become a hopeless morass, and will be redone someday. */
+/*
+ * Portions Copyright (c) 1996 by Internet Software Consortium.
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND INTERNET SOFTWARE CONSORTIUM DISCLAIMS
+ * ALL WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL INTERNET SOFTWARE
+ * CONSORTIUM BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS
+ * ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
+ * SOFTWARE.
+ */
 
-#include <string.h>
-#include <signal.h>
+#ifndef __BIND_PORTABILITY_H
+#define __BIND_PORTABILITY_H
+
 #include <sys/types.h>
 #include <sys/param.h>
+#include <signal.h>
+#include <string.h>
 #ifndef TIME_H_INCLUDED
 # include <sys/time.h>
 # define TIME_H_INCLUDED
 #endif
 
+/* (ISC = INTERACTIVE Systems Corporation in the next #ifdef, btw.) */
 #ifdef ISC
 # ifndef _POSIX_SOURCE
 #  define _POSIX_SOURCE
@@ -104,7 +119,15 @@
 # define setitimer(a,b,c) __setitimer(a,b,c)
 #endif
 
-/* This is defined in the Makefile for ISC compiles. */
+/* This is for AIX 4.1.x */
+#ifdef _AIX41
+# include <sys/select.h>
+# include <sys/time.h>
+# include <time.h>
+# define vfork fork
+#endif
+
+/* This is defined in the Makefile for INTERACTIVE compiles. */
 #if defined(ISC)
 # define ftruncate(a,b) __ftruncate(a,b)
 # define USE_MEMCPY
@@ -114,17 +137,23 @@
 
 /* SCO UNIX defines only this unique symbol, apparently. */
 #if defined(M_UNIX)
-/* XXX - why is this POSIX_SOURCE instead of _POSIX_SOURCE? */
-# undef POSIX_SOURCE
 # define POSIX_SIGNALS
-# define HAVE_FCHMOD 0
-# define writev(a,b,c) __writev(a,b,c)
-# define ftruncate(a,b) __ftruncate(a,b)
+# if !defined(_SCO_DS)
+/* This section is for 3.2v4.2/ODT3.0 and maybe also for 3.2v4.1/3.2v4.0 */
+/* XXX - why is this POSIX_SOURCE instead of _POSIX_SOURCE? */
+#  undef POSIX_SOURCE
+#  define HAVE_FCHMOD 0
+#  define NEED_WRITEV
+#  define writev(a,b,c) __writev(a,b,c)
+#  define ftruncate(a,b) __ftruncate(a,b)
+# endif
 #endif
 
 #ifdef NeXT
 # define NEED_PUTENV
 # define NEED_SETENV
+# define HAVE_STDLIB_H
+# define NEED_STRDUP
 # define inet_addr(a) __inet_addr(a)
 #endif
 
@@ -135,9 +164,10 @@
 
 #if defined(SUNOS4)
 # define BSD 43
+# define NEED_STRTOUL
 #endif
 
-#if defined(__osf__) && defined(__alpha)
+#if defined(__osf__) && defined(__alpha) && defined(BSD) && (BSD < 199103)
 # undef BSD
 # define BSD 199103
 #endif
@@ -150,14 +180,16 @@
 # define USE_MEMCPY
 #endif
 
+#if defined(apollo)
+# define HAVE_STDLIB_H
+#endif
 
 #if defined(SVR4) && !defined(SYSV)
 # define SYSV
 #endif
 
 #if defined(_POSIX_SOURCE) || defined(__sgi) || defined(__ultrix) || \
-	defined(__hpux) || (defined(BSD) && (BSD >= 199103)) || \
-	(defined(sun) && defined(SYSV))
+	defined(__hpux) || (defined(BSD) && (BSD >= 199103)) || defined(sun)
 # define USE_POSIX
 #endif
 
@@ -183,7 +215,7 @@
 # define NETREAD_BROKEN
 #endif
 
-#if defined(BSD) && BSD >= 199006 && !defined(i386) && !defined(RISCOS_BSD)
+#if defined(BSD) && BSD >= 199006 && !defined(RISCOS_BSD)
 # define HAVE_DAEMON
 #endif
 
@@ -239,33 +271,42 @@ struct timezoneBSD {
 # define _TIMEZONE timezone
 #endif
 
-#if defined(USE_POSIX)
+#if defined(USE_POSIX) || defined(HAVE_STDLIB_H)
 # include <stdlib.h>
-# include <unistd.h>
-# include <limits.h>
+# if defined(__ultrix)
+#  define NEED_STRDUP
+# endif
 
 #else
 
-# define NEED_STRTOUL
+# if !defined(_SCO_DS)
+#  define NEED_STRDUP
+#  define NEED_STRTOUL
+# endif
 
-# define STDIN_FILENO	0
-# define STDOUT_FILENO	1
-# define STDERR_FILENO	2
 # ifndef NeXT
 extern char *getenv __P((char *));
 # else
 extern char *getenv __P((const char *));
 # endif
-extern int errno;
 
 # if !defined(DMALLOC) && !defined(NeXT)
 extern char *malloc(), *realloc(), *calloc();
-#  if defined(sun)
-extern int free();
-#  else
 extern void free();
-#  endif
 # endif
+
+#endif /*HAVE_STDLIB_H*/
+
+#if defined(USE_POSIX)
+# include <unistd.h>
+# include <limits.h>
+
+#else
+
+# define STDIN_FILENO	0
+# define STDOUT_FILENO	1
+# define STDERR_FILENO	2
+extern int errno;
 
 extern int getdtablesize __P((void));
 # ifdef SHORT_FNAMES
@@ -321,13 +362,15 @@ int      strcasecmp __P((const char *, const char *));
 extern void	syslog();
 # endif
 extern char	*ctime __P((const time_t *clock));
+# if !defined(M_UNIX)
 extern int	close(), setitimer(), recv(), sendto(), sigsetmask(),
 		atoi(), getpid(), fork(), read(), ioctl(),
 		setsockopt(), socket(), bind();
+# endif
 #endif
 
 #if !defined(bcopy)	/* some machines have their own macros for this */
-# if defined(USE_POSIX) || \
+# if (defined(USE_POSIX) && !defined(SUNOS4)) || \
 	 (defined(__STDC__) && !defined(sun) && !defined(sequent) \
 	  && !defined(M_UNIX))
 /* use ANSI C3.159-1989 (``ANSI C'') functions if possible;
@@ -366,13 +409,15 @@ extern int bcmp();
 # endif
 #endif
 
-#if (!defined(BSD) || (BSD < 43))
+#if (!defined(BSD) || (BSD < 43)) && !defined(__hpux)
 # define NEED_MKSTEMP
 # if !defined(__ultrix) && !defined(apollo)
-#  define NEED_STRCASECMP
-#  define NEED_MKTEMP
-#  if !defined(SVR4)
-#   define NEED_STRPBRK
+#  if !defined(_SCO_DS)
+#   define NEED_STRCASECMP
+#   define NEED_MKTEMP
+#   if !defined(SVR4)
+#    define NEED_STRPBRK
+#   endif
 #  endif
 # endif
 #endif
@@ -409,8 +454,8 @@ extern int bcmp();
 
 #if !defined(ntohl) && !defined(htonl) && defined(BSD) && (BSD <= 43)
 /* if these aren't null macros in netinet/in.h, extern them here. */
-extern u_short htons(), ntohs();
-extern u_long htonl(), ntohl();
+extern u_short htons __P((u_short)), ntohs __P((u_short));
+extern u_long htonl __P((u_long)), ntohl __P((u_long));
 #endif
 
 #if defined(USE_POSIX) && !defined(sun) && !defined(__sgi) \
@@ -554,6 +599,25 @@ extern u_long htonl(), ntohl();
 #endif
 
 /*
+ * Some systems need _res to be linked into text rather than bss.
+ */
+#if defined(__m88k__)
+# define __BIND_RES_TEXT
+#endif
+
+/*
+ * We need to know the IPv6 address family number even on IPv4-only systems.
+ * Note that this is NOT a protocol constant, and that if the system has its
+ * own AF_INET6, different from ours below, all of BIND's libraries and
+ * executables will need to be recompiled after the system <sys/socket.h>
+ * has had this type added.  The type number below is correct on most BSD-
+ * derived systems for which AF_INET6 is defined.
+ */
+#ifndef AF_INET6
+#define AF_INET6	24
+#endif
+
+/*
  * Prototype the functions we'll be supplying.
  */
 #ifdef NEED_PUTENV
@@ -567,3 +631,9 @@ extern int gettimeofday __P((struct timeval *, struct _TIMEZONE *));
 #if defined(SVR4) && defined(sun)
 extern int gethostname __P((char *, size_t));
 #endif
+
+#ifdef NEED_STRDUP
+extern char *strdup __P((const char *));
+#endif
+
+#endif /*__BIND_PORTABILITY_H*/

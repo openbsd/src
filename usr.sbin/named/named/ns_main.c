@@ -1,8 +1,12 @@
-/*	$NetBSD: ns_main.c,v 1.2 1996/03/21 18:24:11 jtc Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.3 1997/03/12 10:42:31 downsj Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
+#if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
-static char rcsid[] = "$Id: ns_main.c,v 8.13 1996/01/09 20:23:55 vixie Exp ";
+static char rcsid[] = "$From: ns_main.c,v 8.24 1996/11/26 10:11:22 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.3 1997/03/12 10:42:31 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -72,6 +76,7 @@ char copyright[] =
  * Internet Name server (see RCF1035 & others).
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/stat.h>
@@ -159,7 +164,7 @@ usage()
 }
 
 /*ARGSUSED*/
-int
+void
 main(argc, argv, envp)
 	int argc;
 	char *argv[], *envp[];
@@ -169,18 +174,11 @@ main(argc, argv, envp)
 	register struct qstream *sp;
 	register struct qdatagram *dqp;
 	struct qstream *nextsp;
-	int nfds = 0;
+	int nfds;
 	const int on = 1;
 	int rfd, size, len;
 	time_t lasttime, maxctime;
 	u_char buf[BUFSIZ];
-#ifdef POSIX_SIGNALS
-	struct sigaction sact;
-#else
-#ifndef SYSV
-	struct sigvec vec;
-#endif
-#endif
 #ifdef NeXT
 	int old_sigmask;
 #endif
@@ -196,6 +194,9 @@ main(argc, argv, envp)
 #endif
 #ifdef IP_OPTIONS
 	u_char ip_opts[50];		/* arbitrary size */
+#endif
+#ifdef	RLIMIT_NOFILE
+	struct rlimit rl;
 #endif
 
 	local_ns_port = ns_port = htons(NAMESERVER_PORT);
@@ -305,7 +306,10 @@ main(argc, argv, envp)
 	n = 0;
 #if defined(DEBUG) && defined(LOG_PERROR)
 	if (debug)
-		n = LOG_PERROR;
+		n |= LOG_PERROR;
+#endif
+#ifdef LOG_NOWAIT
+	n |= LOG_NOWAIT;
 #endif
 #ifdef LOG_DAEMON
 	openlog("named", LOG_PID|LOG_CONS|LOG_NDELAY|n, LOGFAC);
@@ -313,10 +317,18 @@ main(argc, argv, envp)
 	openlog("named", LOG_PID);
 #endif
 
+#ifdef	RLIMIT_NOFILE
+	rl.rlim_cur = rl.rlim_max = FD_SETSIZE;
+	if (setrlimit(RLIMIT_NOFILE, &rl) == -1)
+		syslog(LOG_ERR, "setrlimit(RLIMIT_FSIZE,FD_SETSIZE): %m");
+#endif
+	/* check that udp checksums are on */
+	ns_udp();
+
 #ifdef WANT_PIDFILE
 	/* tuck my process id away */
 #ifdef PID_FIX
-	fp = fopen(PidFile, "r+");
+	fp = fopen(PidFile, "w");
 	if (fp != NULL) {
 		(void) fgets(oldpid, sizeof(oldpid), fp);
 		(void) rewind(fp);
@@ -345,10 +357,21 @@ main(argc, argv, envp)
 	** Open stream port.
 	*/
 	for (n = 0; ; n++) {
+		int fd;
 		if ((vs = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
 			syslog(LOG_ERR, "socket(SOCK_STREAM): %m");
 			exit(1);
 		}	
+#ifdef F_DUPFD
+		/*
+		 * leave a space for stdio to work in
+		 */
+		if ((fd = fcntl(vs, F_DUPFD, 20)) != -1) {
+			close(vs);
+			vs = fd;
+		} else 
+			syslog(LOG_NOTICE, "fcntl(vs, F_DUPFD, 20): %m");
+#endif
 		if (setsockopt(vs, SOL_SOCKET, SO_REUSEADDR, (char *)&on,
 			sizeof(on)) != 0)
 		{
@@ -396,6 +419,7 @@ main(argc, argv, envp)
 	setsignal(SIGIOT, -1, setstatsflg);
 	setsignal(SIGUSR1, -1, setIncrDbgFlg);
 	setsignal(SIGUSR2, -1, setNoDbgFlg);
+	setsignal(SIGHUP, -1, onhup);
 
 #if defined(SIGWINCH) && defined(QRYLOG)
 	setsignal(SIGWINCH, -1, setQrylogFlg);
@@ -428,7 +452,6 @@ main(argc, argv, envp)
 	setsignal(SIGALRM, SIGCHLD, maint_alarm);
 	setsignal(SIGCHLD, SIGALRM, reapchild);
 	setsignal(SIGPIPE, -1, (SIG_FN (*)())SIG_IGN);
-	setsignal(SIGHUP, -1, onhup);
 
 #if defined(SIGXFSZ)
 	/* Wierd DEC Hesiodism, harmless. */
@@ -438,12 +461,6 @@ main(argc, argv, envp)
 #ifdef SIGSYS
 	setsignal(SIGSYS, -1, sigprof);
 #endif /* SIGSYS */
-
-#ifdef ALLOW_UPDATES
-        /* Catch SIGTERM so we can dump the database upon shutdown if it
-           has changed since it was last dumped/booted */
-	setsignal(SIGTERM, -1, onintr);
-#endif
 
 #ifdef XSTATS
         /* Catch SIGTERM so we can write stats before exiting. */
@@ -458,7 +475,7 @@ main(argc, argv, envp)
 	 * we've done any slow initialization
 	 * and are ready to answer queries.
 	 */
-#ifdef USE_SETSID
+#if defined(USE_SETSID) && !defined(HAVE_DAEMON)
 	if (
 #ifdef DEBUG
 	    !debug ||
@@ -547,14 +564,10 @@ main(argc, argv, envp)
 
 	syslog(LOG_NOTICE, "Ready to answer queries.\n");
 	prime_cache();
-	FD_ZERO(&mask);
-	FD_SET(vs, &mask);
-	if (vs >= nfds)
-		nfds = vs + 1;
-	for (dqp = datagramq; dqp != QDATAGRAM_NULL; dqp = dqp->dq_next) {
-		FD_SET(dqp->dq_dfd, &mask);
-		if (dqp->dq_dfd >= nfds)
-			nfds = dqp->dq_dfd + 1;
+	nfds = getdtablesize();       /* get the number of file descriptors */
+	if (nfds > FD_SETSIZE) {
+		nfds = FD_SETSIZE;	/* Bulletproofing */
+		syslog(LOG_NOTICE, "Return from getdtablesize() > FD_SETSIZE");
 	}
 #ifdef NeXT
 	old_sigmask = sigblock(sigmask(SIGCHLD));
@@ -567,22 +580,6 @@ main(argc, argv, envp)
 			ddt = 0;
 		}
 #endif
-#ifdef ALLOW_UPDATES
-                if (needToExit) {
-			struct zoneinfo *zp;
-			sigblock(~0);   /*
-					 * Block all blockable signals
-					 * to ensure a consistant
-					 * state during final dump
-					 */
-			dprintf(1, (ddt, "Received shutdown signal\n"));
-			for (zp = zones; zp < &zones[nzones]; zp++) {
-				if (zp->z_flags & Z_CHANGED)
-					zonedump(zp);
-                        }
-                        exit(0);
-                }
-#endif /* ALLOW_UPDATES */
 #ifdef XSTATS
                 if (needToExit) {
 		  	ns_logstats();
@@ -645,7 +642,7 @@ main(argc, argv, envp)
 		old_sigmask = sigblock(sigmask(SIGCHLD));
 #endif
 		if (n < 0 && errno != EINTR) {
-			syslog(LOG_ERR, "select(nfds = %d): %m", nfds);
+			syslog(LOG_ERR, "select: %m");
 			sleep(60);
 		}
 		if (n <= 0)
@@ -680,6 +677,8 @@ main(argc, argv, envp)
 					ntohs(from_addr.sin_port),
 					dqp->dq_dfd, n,
 				        ctimel(tt.tv_sec)));
+			    if (n < HFIXEDSZ)
+				break;
 #ifdef DEBUG
 			    if (debug >= 10)
 				fp_nquery(buf, n, ddt);
@@ -751,7 +750,7 @@ main(argc, argv, envp)
 			}
 			if (len != 0) {
 				nameserIncr(from_addr.sin_addr, nssRcvdOpts);
-				if (!haveComplained((char*)(long)
+				if (!haveComplained((char*)
 						    from_addr.sin_addr.s_addr,
 						    "rcvd ip options")) {
 					syslog(LOG_INFO,
@@ -795,12 +794,12 @@ main(argc, argv, envp)
 			sp->s_bufp = (u_char *)&sp->s_tempsize;
 			FD_SET(rfd, &mask);
 			FD_SET(rfd, &tmpmask);
-			if (rfd >= nfds)
-				nfds = rfd + 1;
-			dprintf(1, (ddt,
-				  "\nTCP connection from [%s].%d (fd %d)\n",
-				    inet_ntoa(sp->s_from.sin_addr),
-				    ntohs(sp->s_from.sin_port), rfd));
+#ifdef DEBUG
+			if (debug)
+				syslog(LOG_DEBUG,
+				       "IP/TCP connection from %s (fd %d)\n",
+				       sin_ntoa(&sp->s_from), rfd);
+#endif
 		}
 		if (streamq)
 			dprintf(3, (ddt, "streamq = 0x%lx\n",
@@ -878,8 +877,8 @@ main(argc, argv, envp)
 			 * if we have a query id, then we will send an
 			 * error back to the user.
 			 */
-			if (sp->s_bufsize == 0 &&
-			    (sp->s_bufp - sp->s_buf > INT16SZ)) {
+			if (sp->s_bufsize == 0) {
+			    if (sp->s_bufp - sp->s_buf > INT16SZ) {
 				HEADER *hp;
 
 				hp = (HEADER *)sp->s_buf;
@@ -892,7 +891,30 @@ main(argc, argv, envp)
 				hp->rcode = SERVFAIL;
 				(void) writemsg(sp->s_rfd, sp->s_buf,
 						HFIXEDSZ);
-				continue;
+			    }
+			    continue;
+			}
+			/*
+			 * If the message is too short to contain a valid
+			 * header, try to send back an error, and drop the
+			 * message.
+			 */
+			if (sp->s_bufp - sp->s_buf < HFIXEDSZ) {
+			    if (sp->s_bufp - sp->s_buf > INT16SZ) {
+				HEADER *hp;
+
+				hp = (HEADER *)sp->s_buf;
+				hp->qr = 1;
+				hp->ra = (NoRecurse == 0);
+				hp->ancount = 0;
+				hp->qdcount = 0;
+				hp->nscount = 0;
+				hp->arcount = 0;
+				hp->rcode = SERVFAIL;
+				(void) writemsg(sp->s_rfd, sp->s_buf,
+						HFIXEDSZ);
+			    }
+			    continue;
 			}
 			if ((n == -1) && (errno == PORT_WOULDBLK))
 				continue;
@@ -904,7 +926,9 @@ main(argc, argv, envp)
 			 * Consult database to get the answer.
 			 */
 			if (sp->s_size == 0) {
+#ifdef XSTATS
 				nameserIncr(sp->s_from.sin_addr, nssRcvdTCP);
+#endif
 				sq_query(sp);
 				ns_req(sp->s_buf,
 				       sp->s_bufp - sp->s_buf,
@@ -942,7 +966,9 @@ getnetconf()
 		exit(1);
 	}
 	ntp = NULL;
-#if defined(AF_LINK) && !defined(RISCOS_BSD) && !defined(M_UNIX)
+#if defined(AF_LINK) && \
+	!defined(RISCOS_BSD) && !defined(M_UNIX) && \
+	!defined(sgi) && !defined(sun) && !defined(NO_SA_LEN)
 #define my_max(a, b) (a > b ? a : b)
 #define my_size(p)	my_max((p).sa_len, sizeof(p))
 #else
@@ -1056,7 +1082,7 @@ getnetconf()
 				netloop.mask = 0xffffffff;
 				netloop.addr = ntp->my_addr.s_addr;
 				dprintf(1, (ddt, "loopback address: x%lx\n",
-					    netloop.my_addr.s_addr));
+					    (u_long)netloop.my_addr.s_addr));
 			}
 			continue;
 		} else if ((ifreq.ifr_flags & IFF_POINTOPOINT)) {
@@ -1173,6 +1199,7 @@ opensocket(dqp)
 {
 	int m, n;
 	int on = 1;
+	int fd;
 
 	/*
 	 * Open datagram sockets bound to interface address.
@@ -1181,6 +1208,16 @@ opensocket(dqp)
 		syslog(LOG_ERR, "socket(SOCK_DGRAM): %m - exiting");
 		exit(1);
 	}	
+#ifdef F_DUPFD
+	/*
+	 * leave a space for stdio to work in
+	 */
+	if ((fd = fcntl(dqp->dq_dfd, F_DUPFD, 20)) != -1) {
+		close(dqp->dq_dfd);
+		dqp->dq_dfd = fd;
+	} else 
+		syslog(LOG_NOTICE, "fcntl(dfd, F_DUPFD, 20): %m");
+#endif
 	dprintf(1, (ddt, "dqp->dq_addr %s d_dfd %d\n",
 		    inet_ntoa(dqp->dq_addr), dqp->dq_dfd));
 	if (setsockopt(dqp->dq_dfd, SOL_SOCKET, SO_REUSEADDR,
@@ -1256,22 +1293,6 @@ maint_alarm()
 	errno = save_errno;
 }
 
-
-#ifdef ALLOW_UPDATES
-/*
- * Signal handler to schedule shutdown.  Just set flag, to ensure a consistent
- * state during dump.
- */
-static SIG_FN
-onintr()
-{
-	int save_errno = errno;
-
-	resignal(SIGTERM, -1, onintr);
-        needToExit = 1;
-	errno = save_errno;
-}
-#endif /* ALLOW_UPDATES */
 
 #ifdef XSTATS
 /*

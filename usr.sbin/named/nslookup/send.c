@@ -1,4 +1,4 @@
-/*	$NetBSD: send.c,v 1.1 1996/02/02 15:30:27 mrg Exp $	*/
+/*	$OpenBSD: send.c,v 1.2 1997/03/12 10:42:50 downsj Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -56,8 +56,12 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)send.c	5.18 (Berkeley) 3/2/91";
-static char rcsid[] = "$Id: send.c,v 8.1 1994/12/15 06:24:31 vixie Exp ";
+static char rcsid[] = "$From: send.c,v 8.1 1994/12/15 06:24:31 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: send.c,v 1.2 1997/03/12 10:42:50 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*

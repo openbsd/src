@@ -1,4 +1,4 @@
-/*	$NetBSD: skip.c,v 1.1 1996/02/02 15:30:28 mrg Exp $	*/
+/*	$OpenBSD: skip.c,v 1.2 1997/03/12 10:42:50 downsj Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -56,8 +56,12 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)skip.c	5.12 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: skip.c,v 8.1 1994/12/15 06:24:31 vixie Exp ";
+static char rcsid[] = "$From: skip.c,v 8.1 1994/12/15 06:24:31 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: skip.c,v 1.2 1997/03/12 10:42:50 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*

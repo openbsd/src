@@ -1,4 +1,5 @@
 #!/bin/sh -
+#	$OpenBSD: nslookup,v 1.2 1997/03/12 10:41:55 downsj Exp $
 #
 #	@(#)nslookup            e07@nikhef.nl (Eric Wassenaar) 940919
 #

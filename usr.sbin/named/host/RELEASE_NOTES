@@ -1,4 +1,5 @@
-	@(#)RELEASE_NOTES       e07@nikhef.nl (Eric Wassenaar) 951231
+$OpenBSD: RELEASE_NOTES,v 1.2 1997/03/12 10:41:51 downsj Exp $
+	@(#)RELEASE_NOTES       e07@nikhef.nl (Eric Wassenaar) 961113
 
 yymmdd		Description of changes per release
 TODO		Things that still need to be done
@@ -9,6 +10,173 @@ MISC		Miscellaneous reminders
 # ----------------------------------------------------------------------
 # Description of changes per release
 # ----------------------------------------------------------------------
+
+961113
+	Portability fix.
+		Trying to include <strings.h> was a bit over-ambitious
+		and caused confusion on some platforms.
+		On certain platforms PAGESIZE is not a constant, but
+		hides a sysconf() call. This precludes initialization
+		of static variables in malloc.c
+		There are no functional changes in this release.
+
+961013
+	Configurable defaults.
+		Make the compiled-in read timeout during stream I/O
+		configurable in conf.h. The default value is 60 seconds.
+		Make the new default _res.retry and _res.retrans values
+		configurable in conf.h. Note that the _res.retrans value
+		can be overridden with the -s command line option.
+	Minor fixes.
+		Guard against possible interrupts during I/O handling.
+
+961012
+	Multiple answers during zone listing.
+		Allow multiple resource records per reply buffer packet
+		during zone transfers. Currently BIND puts each resource
+		record in a seperate reply buffer, but there are other
+		implementations which behave differently. Important fix.
+
+961010
+	New resource records and query types.
+		Add support for T_NAPTR resource records.
+		Define T_EID/T_NIMLOC/T_ATMA resource record types, but
+		they have no support yet.
+	Minor fixes.
+		When comparing domain names in routines indomain() or
+		samedomain(), properly handle embedded quoted dots.
+		This is just a generalization. Currently these modules
+		are used only in those cases where embedded quoted dots
+		are not valid.
+	Miscellaneous changes.
+		Attempt to further reduce lint clutter. It is difficult
+		to eliminate this altogether. There are too many subtle
+		differences between various platforms.
+
+960929
+	New resource records and query types.
+		Define the new IXFR type as per RFC 1995. No support
+		for this yet, however.
+		Add support for T_KEY and T_SIG resource records.
+		These require some new utility functions.
+		Recognize T_NXT and T_SRV which still have draft status.
+	Extra safety checks.
+		After a positive return from an ordinary gethostbyname
+		or gethostbyaddr we cannot be absolutely sure that the
+		size of the canonical h_name is within bounds.
+		Note that this is guaranteed by host's internal modules.
+	Minor fixes.
+		Be more restrictive with respect to wildcard checking.
+		Make sure it is really specified as the first label.
+		Construct reverse in-addr.arpa name without trailing dot
+		if we know that this is already an absolute name.
+	Miscellaneous changes.
+		Print also the input name we are going to hostalias().
+		Rename a few variables for better readability.
+		Add various definitions that might be missing in the
+		default include files on some weird platforms.
+		Use a configurable limit for the number of recursive
+		chain lookups.
+		Some cleanup to avoid lint warnings on some platforms.
+	Revised manual page.
+		Some items needed an update.
+		Extend the list of related RFCs.
+		Several layout changes, suggested by Greg Woods.
+
+960921
+	Extend functionality of -A option.
+		If the -A flag is specified along with any explicit
+		list mode option, it not only enables reversed address
+		checking, it also enables those special checks that are
+		normally suppressed during recursive listings, such as
+		checks for canonical host names and invalid underscores.
+	Revise -p option plus explicit server.
+		Consider the set of NS servers gotten from an explicit
+		server as authoritative if the -p option is also given.
+		This affects whether or not to print lame delegation
+		warnings in case the SOA record could not be retrieved.
+		Suppress lame delegation warnings in case the A records
+		for NS servers could not be retrieved and an explicit
+		server is specified. The latter was an oversight.
+		Indicated by Peter Koch <pk@TechFak.Uni-Bielefeld.DE>
+	Improve error reporting.
+		After a negative return from an ordinary gethostbyname
+		or gethostbyaddr we don't know whether or not the answer
+		was authoritative. Perform an extra lookup in some few
+		cases where we really want to distinguish between them.
+		This is kludgy, and needs improvement.
+	Revise additional checking during RR printout.
+		This prevents possible recursive loops in some cases.
+		Requires adapting the way state information is passed
+		via print_info() and print_rrec().
+	Make query section consistency checks.
+		When retrieving certain crucial information, such as
+		SOA or NS records, make sure the qdcount is exactly one
+		as it should be.
+		The values in the query section in a reply should match
+		those in the original query. This is already enforced
+		by the BIND 4.9 res_send(). An error is reported when a
+		mismatch is detected, but results are processed anyway.
+	Make sure response comes from a known server.
+		When using datagrams, compare the source address of the
+		response to the list of known servers. Ignore the answer	
+		if there is a mismatch. Was missing for HOST_RES_SEND.
+	Minor bug fixes.
+		When retrieving SOA records, make sure they belong to
+		the requested domain.
+		Must properly set h_errno in some obscure circumstances.
+	Miscellaneous changes.
+		Clear the entire sockaddr_in before filling in the
+		relevant entries. Some platforms seem to rely on
+		sin_zero being actually zero.
+
+960808
+	Conform to BIND 4.9.5 interpretation of TXT strings.
+		When multiple strings are encoded, they are now treated
+		and printed as individual quoted strings, separated by
+		whitespace. Formerly, they were concatenated and printed
+		as one single quoted string.
+		Note that this interpretation makes the TXT data field
+		multi-valued, and precludes the use of strings that are
+		longer than 255 characters.
+
+960512
+	Allocate list of host data dynamically.
+		This avoids the MAXHOSTS static limit, and keeps the
+		initial BSS of the executable to a reasonable size.
+		Mentioned by Greg Woods <woods@most.weird.com>
+		The list will be expanded in chunks as needed during
+		zone transfers, but will not shrink again.
+	Escape special characters within quoted strings.
+		Data fields of TXT/HINFO/UINFO records are printed as
+		quoted strings. Some special embedded characters should
+		be backslash-escaped in the output format.
+	Properly handle tcp packet overflow.
+		If the supplied answer buffer space is insufficient to
+		store the entire answer, res_send() is supposed to
+		return the length of the entire untruncated answer, not
+		the number of bytes that are actually available.
+	Increase MAXPACKET packet buffer size.
+		This is now set to the maximum value used internally
+		by the BIND named. The same value is used by dig.
+		Although still static, it should be sufficient.
+	Miscellaneous changes.
+		Show the length of the received answer in various debug
+		messages. This gives some insight in case of truncation.
+
+960417
+	Rudimentary support for AAAA RR.
+		Just decode and print the ip v6 address during regular
+		RR type processing, in the most straightforward way.
+		No provisions for reverse lookups yet.
+	Increase MAXPACKET packet buffer size.
+		The traditional value 1024 for the (tcp) packet size is
+		no longer sufficient (see moderators.uu.net MX records).
+	Miscellaneous changes.
+		In verbose mode, show the number of bytes in the answer
+		if it exceeds the (udp) packet size PACKETSZ (512), or
+		in case the answer is truncated. Print the truncation
+		indication at a more appropriate position.
 
 951231
 	Cosmetic changes.
@@ -106,7 +274,7 @@ MISC		Miscellaneous reminders
 950427
 	Fix glitch in host name lookup.
 		New entry would be inadvertently added to the hash
-		lish in case the MAXHOSTS limit was reached.
+		list in case the MAXHOSTS limit was reached.
 	Miscellaneous changes.
 		Speedup comparison of zone names and host names by
 		looking up zone names in the host name hash list.
@@ -674,15 +842,21 @@ MISC		Miscellaneous reminders
 # TODO
 # ----------------------------------------------------------------------
 
-	Documentation changes.
-		References to BIND 4.9, not only 4.8.
-
 	Enhance reverse mapping.
 		The new BIND 4.9.* gethostbyaddr() can be configured
 		to return host aliases in case multiple PTR records
 		were encountered during the reverse lookup.
 		It is unclear what the official host name should be.
 		Should perhaps abandon the idea of official host name.
+		However, the PTR records are still exempt from the new
+		round-robin scheduling, and are returned in the order
+		in which they are defined in the zone file.
+
+	Enhance error reporting.
+		After a negative return from gethostbyname/gethostbyaddr
+		we want to know whether the answer was authoritative or
+		not. In a few places we are able to find out, but this
+		is a kludge and needs to be reimplemented.
 
 # ----------------------------------------------------------------------
 # WISHLIST
@@ -728,6 +902,15 @@ MISC		Miscellaneous reminders
 		default library, you can define NO_YP_LOOKUP in the Makefile
 		to prevent gethostbyname/gethostbyaddr querying the YP/NIS.
 		SUN will probably implement BIND 4.9.3 after its release.
+
+	Multiple answers during zone listing.
+		During zone transfers BIND encapsulates every resource
+		record in a seperate reply buffer containing a HEADER
+		and an answer section (ancount == 1). The authority and
+		additional section are empty. The query section is also
+		empty except in the very first reply buffer.
+		Some non-BIND implementations may send multiple answers
+		per reply buffer (ancount > 1).
 
 # ----------------------------------------------------------------------
 # MISC

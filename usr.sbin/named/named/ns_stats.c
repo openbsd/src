@@ -1,8 +1,12 @@
-/*	$NetBSD: ns_stats.c,v 1.1 1996/02/02 15:29:09 mrg Exp $	*/
+/*	$OpenBSD: ns_stats.c,v 1.2 1997/03/12 10:42:36 downsj Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
+#if 0
 static char sccsid[] = "@(#)ns_stats.c	4.10 (Berkeley) 6/27/90";
-static char rcsid[] = "$Id: ns_stats.c,v 8.4 1995/06/29 09:26:17 vixie Exp ";
+static char rcsid[] = "$From: ns_stats.c,v 8.8 1996/09/22 00:13:10 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: ns_stats.c,v 1.2 1997/03/12 10:42:36 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -65,6 +69,7 @@ static char rcsid[] = "$Id: ns_stats.c,v 8.4 1995/06/29 09:26:17 vixie Exp ";
 /*            dumps a bunch of values into a well-known file              */
 /**************************************************************************/
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
@@ -133,11 +138,6 @@ ns_stats()
 	fprintf(f, "%ld\ttime since reset (secs)\n",
 		(long)(timenow - resettime));
 
-#ifdef DMALLOC
-	/* malloc statistics */
-	dmallocstats(f);
-#endif
-
 	/* query type statistics */
 	fprintf(f, "%lu\tUnknown query types\n", (u_long)typestats[0]);
 	for(i=1; i < T_ANY+1; i++)
@@ -174,31 +174,30 @@ static int		nameserInit;
 static FILE		*nameserStatsFile;
 static u_long		globalStats[nssLast];
 static const char	*statNames[nssLast] = {
-			"RQ",		/* sent us a query */
 			"RR",		/* sent us an answer */
-			"RIQ",		/* sent us an inverse query */
 			"RNXD",		/* sent us a negative response */
-			"RFwdQ",	/* sent us a query we had to fwd */
 			"RFwdR",	/* sent us a response we had to fwd */
-			"RDupQ",	/* sent us a retry */
 			"RDupR",	/* sent us an extra answer */
 			"RFail",	/* sent us a SERVFAIL */
 			"RFErr",	/* sent us a FORMERR */
 			"RErr",		/* sent us some other error */
-			"RTCP",		/* sent us a query using TCP */
 			"RAXFR",	/* sent us an AXFR */
 			"RLame",	/* sent us a lame delegation */
 			"ROpts",	/* sent us some IP options */
 			"SSysQ",	/* sent them a sysquery */
 			"SAns",		/* sent them an answer */
 			"SFwdQ",	/* fwdd a query to them */
-			"SFwdR",	/* fwdd a response to them */
 			"SDupQ",	/* sent them a retry */
-			"SFail",	/* sent them a SERVFAIL */
-			"SFErr",	/* sent them a FORMERR */
 			"SErr",	        /* sent failed (in sendto) */
 #ifdef XSTATS
-			"RNotNsQ",      /* received from remote port != ns_port */
+			"RQ",		/* sent us a query */
+			"RIQ",		/* sent us an inverse query */
+			"RFwdQ",	/* sent us a query we had to fwd */
+			"RDupQ",	/* sent us a retry */
+			"RTCP",		/* sent us a query using TCP */
+			"SFwdR",	/* fwdd a response to them */
+			"SFail",	/* sent them a SERVFAIL */
+			"SFErr",	/* sent them a FORMERR */
 			"SNaAns",       /* sent them a non autoritative answer */
 			"SNXD",         /* sent them a negative response */
 #endif
@@ -359,11 +358,12 @@ ns_logstats()
 	sprintf(buffer, "CPU=%gu/%gs CHILDCPU=%gu/%gs",
 		tv_float(usage.ru_utime), tv_float(usage.ru_stime),
 		tv_float(childu.ru_utime), tv_float(childu.ru_stime));
-	syslog(LOG_INFO, "USAGE %lu %lu %s", timenow, boottime, buffer);
+	syslog(LOG_INFO, "USAGE %lu %lu %s", (u_long)timenow, (u_long)boottime,
+		buffer);
 # undef tv_float
 #endif
 
-	sprintf(header, "NSTATS %lu %lu", timenow, boottime);
+	sprintf(header, "NSTATS %lu %lu", (u_long)timenow, (u_long)boottime);
 	strcpy(buffer, header);
 
 	for (i = 0; i < T_ANY+1; i++) {

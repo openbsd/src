@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.1 1996/02/02 15:30:13 mrg Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1997/03/12 10:42:48 downsj Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -62,8 +62,12 @@ char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)main.c	5.42 (Berkeley) 3/3/91";
-static char rcsid[] = "$Id: main.c,v 8.2 1995/12/22 10:20:42 vixie Exp ";
+static char rcsid[] = "$From: main.c,v 8.4 1996/11/11 06:36:54 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: main.c,v 1.3 1997/03/12 10:42:48 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -518,7 +522,14 @@ SetDefaultServer(string, local)
 			newServer, newDefPtr, 1);
     }
 
-    if (result == SUCCESS || result == NONAUTH) {
+    /* If we ask for an A record and get none back, but get an NS
+       record for the NS server, this is the NONAUTH case.
+       We must check whether we got an IP address for the NS
+       server or not.  */
+    if ((result == SUCCESS || result == NONAUTH) &&
+	((newDefPtr->addrList && newDefPtr->addrList[0] != 0) || 
+	 (newDefPtr->servers && newDefPtr->servers[0] &&
+			newDefPtr->servers[0]->addrList[0] != 0))) {
 	    /*
 	     *  Found info about the new server. Free the resources for
 	     *  the old server.

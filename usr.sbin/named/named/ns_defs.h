@@ -1,8 +1,8 @@
-/*	$NetBSD: ns_defs.h,v 1.1 1996/02/02 15:28:42 mrg Exp $	*/
+/*	$OpenBSD: ns_defs.h,v 1.2 1997/03/12 10:42:28 downsj Exp $	*/
 
 /*
  *	from ns.h	4.33 (Berkeley) 8/23/90
- *	$Id: ns_defs.h,v 8.4 1995/12/22 10:20:30 vixie Exp 
+ *	$From: ns_defs.h,v 8.8 1996/09/22 00:13:10 vixie Exp $
  */
 
 /*
@@ -109,9 +109,6 @@
 	/* sequence-space arithmetic */
 #define SEQ_GT(a,b)	((int32_t)((a)-(b)) > 0)
 
-	/* wildcard predicate */
-#define WILDCARD_P(str) (str[0] == '*' && str[1] == '\0')
-
 	/* cheap garbage collection */
 #define	FREE_ONCE(p) { if (p) { free(p); p = NULL; } }
 
@@ -172,13 +169,8 @@ struct notify {
 #define	Z_INCLUDE	0x0080		/* set if include used in file */
 #define	Z_DB_BAD	0x0100		/* errors when loading file */
 #define	Z_TMP_FILE	0x0200		/* backup file for xfer is temporary */
-#ifdef ALLOW_UPDATES
-#define	Z_DYNAMIC	0x0400		/* allow dynamic updates */
-#define	Z_DYNADDONLY	0x0800		/* dynamic mode: add new data only */
-#define	Z_CHANGED	0x1000		/* zone has changed */
-#endif /* ALLOW_UPDATES */
-#define	Z_XFER_ABORTED	0x2000		/* zone transfer has been aborted */
-#define	Z_XFER_GONE	0x4000		/* zone transfer process is gone */
+#define	Z_XFER_ABORTED	0x0400		/* zone transfer has been aborted */
+#define	Z_XFER_GONE	0x0800		/* zone transfer process is gone */
 
 	/* named_xfer exit codes */
 #define	XFER_UPTODATE	0		/* zone is up-to-date */
@@ -229,9 +221,10 @@ struct qinfo {
 	int16_t		q_nqueries;	/* # of queries required */
 	struct qstream	*q_stream;	/* TCP stream, null if UDP */
 	struct zoneinfo	*q_zquery;	/* Zone query is about (Q_ZSERIAL) */
-#if defined(LAME_DELEGATION) || defined(VALIDATE)
-	char    q_domain[MAXDNAME];	/* domain for servers we are querying */
-#endif
+	char		*q_domain;	/* domain of most enclosing zone cut */
+	char		*q_name;	/* domain of query */
+	u_int16_t	q_class;	/* class of query */
+	u_int16_t	q_type;		/* type of query */
 #ifdef BIND_NOTIFY
 	int		q_notifyzone;	/* zone which needs a sysnotify()
 					 * when the reply to this comes in.
@@ -300,31 +293,30 @@ struct fwdinfo {
 			fwdaddr;
 };
 
-enum nameserStats {	nssRcvdQ,	/* sent us a query */
-			nssRcvdR,	/* sent us an answer */
-			nssRcvdIQ,	/* sent us an inverse query */
+enum nameserStats {	nssRcvdR,	/* sent us an answer */
 			nssRcvdNXD,	/* sent us a negative response */
-			nssRcvdFwdQ,	/* sent us a query we had to fwd */
 			nssRcvdFwdR,	/* sent us a response we had to fwd */
-			nssRcvdDupQ,	/* sent us a retry */
 			nssRcvdDupR,	/* sent us an extra answer */
 			nssRcvdFail,	/* sent us a SERVFAIL */
 			nssRcvdFErr,	/* sent us a FORMERR */
 			nssRcvdErr,	/* sent us some other error */
-			nssRcvdTCP,	/* sent us a query using TCP */
 			nssRcvdAXFR,	/* sent us an AXFR */
 			nssRcvdLDel,	/* sent us a lame delegation */
 			nssRcvdOpts,	/* sent us some IP options */
 			nssSentSysQ,	/* sent them a sysquery */
 			nssSentAns,	/* sent them an answer */
 			nssSentFwdQ,	/* fwdd a query to them */
-			nssSentFwdR,	/* fwdd a response to them */
 			nssSentDupQ,	/* sent them a retry */
-			nssSentFail,	/* sent them a SERVFAIL */
-			nssSentFErr,	/* sent them a FORMERR */
 			nssSendtoErr,	/* error in sendto */
 #ifdef XSTATS
-			nssNotNsQ,      /* query received from remote port != ns_port */
+			nssRcvdQ,	/* sent us a query */
+			nssRcvdIQ,	/* sent us an inverse query */
+			nssRcvdFwdQ,	/* sent us a query we had to fwd */
+			nssRcvdDupQ,	/* sent us a retry */
+			nssRcvdTCP,	/* sent us a query using TCP */
+			nssSentFwdR,	/* fwdd a response to them */
+			nssSentFail,	/* sent them a SERVFAIL */
+			nssSentFErr,	/* sent them a FORMERR */
 			nssSentNaAns,   /* sent them a non autoritative answer */
 			nssSentNXD,     /* sent them a negative response */
 #endif
@@ -380,7 +372,6 @@ typedef struct _to_validate TO_Validate;
 
 #endif /*VALIDATE*/
 
-
 #ifdef DEBUG
 # define dprintf(lev, args) (ddt && (debug >= lev) && fprintf args)
 #else
@@ -401,3 +392,4 @@ typedef struct _to_validate TO_Validate;
 #define INIT(x)
 #define DECL extern
 #endif
+

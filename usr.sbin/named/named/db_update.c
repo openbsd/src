@@ -1,8 +1,12 @@
-/*	$NetBSD: db_update.c,v 1.1 1996/02/02 15:28:37 mrg Exp $	*/
+/*	$OpenBSD: db_update.c,v 1.2 1997/03/12 10:42:26 downsj Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
+#if 0
 static char sccsid[] = "@(#)db_update.c	4.28 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: db_update.c,v 8.7 1995/12/06 20:34:38 vixie Exp ";
+static char rcsid[] = "$From: db_update.c,v 8.18 1996/10/08 04:51:03 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: db_update.c,v 1.2 1997/03/12 10:42:26 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -63,6 +67,7 @@ static char rcsid[] = "$Id: db_update.c,v 8.7 1995/12/06 20:34:38 vixie Exp ";
 #include <stdio.h>
 #include <syslog.h>
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -73,8 +78,6 @@ static char rcsid[] = "$Id: db_update.c,v 8.7 1995/12/06 20:34:38 vixie Exp ";
 #include "named.h"
 
 static void			fixttl __P((struct databuf *));
-static int			db_cmp __P((struct databuf *,
-					    struct databuf *));
 
 /* int
  * isRefByNS(name, htp)
@@ -113,7 +116,7 @@ isRefByNS(name, htp)
 
 
 /* int
- * findMyZone(struct namebuf *np)
+ * findMyZone(struct namebuf *np, int class)
  *	surf the zone cuts and find this zone the hard way
  * return value:
  *	zone number or DB_Z_CACHE if it's outside a zone
@@ -134,7 +137,7 @@ findMyZone(np, class)
 	struct namebuf *np;
 	register int class;
 {
-	for (; np; np = np->n_parent) {
+	for (; np; np = np_parent(np)) {
 		register struct databuf *dp;
 
 		/* if we encounter an SOA, we're in its zone (which can be
@@ -161,7 +164,8 @@ findMyZone(np, class)
 
 
 #ifdef NO_GLUE
-#define ISVALIDGLUE(xdp) ((xdp)->d_type == T_NS || (xdp)->d_type == T_A)
+#define ISVALIDGLUE(xdp) ((xdp)->d_type == T_NS || (xdp)->d_type == T_A \
+			  || (xdp)->d_type == T_AAAA)
 #else
 #define ISVALIDGLUE(xdp) (1)
 #endif /*NO_GLUE*/
@@ -218,6 +222,7 @@ db_update(name, odp, newdp, flags, htp)
 	register struct databuf *dp, *pdp;
 	register struct namebuf *np;
 	int zn, isHintNS;
+	int check_ttl = 0;
 	const char *fname;
 
 	dprintf(3, (ddt, "db_update(%s, 0x%lx, 0x%lx, 0%o, 0x%lx)%s\n",
@@ -226,6 +231,9 @@ db_update(name, odp, newdp, flags, htp)
 	np = nlookup(name, &htp, &fname, newdp != NULL);
 	if (np == NULL || fname != name)
 		return (NONAME);
+	
+	if (newdp && zones[newdp->d_zone].z_type == Z_PRIMARY)
+		check_ttl = 1;
 
 	/* don't let nonauthoritative updates write in authority zones */
 	if (newdp && ((zn = findMyZone(np, newdp->d_class)) != DB_Z_CACHE) &&
@@ -312,7 +320,7 @@ db_update(name, odp, newdp, flags, htp)
 		    != OK) {
 			dprintf(3, (ddt, "db_update: hint %lx freed\n",
 				    (u_long)dp));
-			(void) free((char *)dp);
+			db_free(dp);
 		}
         }
 
@@ -325,10 +333,18 @@ db_update(name, odp, newdp, flags, htp)
 				/* {class,type} doesn't match.  these are
 				 * the aggregation cases.
 				 */
-				if ((dp->d_type == T_CNAME ||
-				     odp->d_type == T_CNAME) &&
+				/* Check that CNAMEs are only accompanied by
+				 * Secure DNS RR's (KEY, SIG, and NXT).
+				 */
+				if (((dp->d_type == T_CNAME &&
+				      odp->d_type != T_KEY &&
+				      odp->d_type != T_SIG &&
+				      odp->d_type != T_NXT) ||
+				     (odp->d_type == T_CNAME &&
+				      dp->d_type != T_KEY &&
+				      dp->d_type != T_SIG &&
+				      dp->d_type != T_NXT)) &&
 				    odp->d_class == dp->d_class &&
-				    odp->d_mark == dp->d_mark &&
 #ifdef NCACHE
 				    /* neither the odp nor the new dp are
 				     * negatively cached records...
@@ -338,7 +354,7 @@ db_update(name, odp, newdp, flags, htp)
 #endif /*NCACHE*/
 				    zones[odp->d_zone].z_type != Z_CACHE) {
 					syslog(LOG_INFO,
-				     "%s has CNAME and other data (illegal)\n",
+				     "%s has CNAME and other data (invalid)\n",
 					    name);
 					goto skip;
 				}
@@ -520,6 +536,19 @@ db_update(name, odp, newdp, flags, htp)
 				    !bcmp(dp->d_data, newdp->d_data,
 					  INT32SZ + sizeof(u_char)))
 					goto delete;
+				if (check_ttl) {
+					if (newdp->d_ttl != dp->d_ttl) 
+					syslog(LOG_WARNING, 
+					"%s %s %s differing ttls: corrected",
+						name[0]?name:".", 
+						p_class(dp->d_class),
+						p_type(dp->d_type));
+					if (newdp->d_ttl > dp->d_ttl) {
+						newdp->d_ttl = dp->d_ttl;
+					} else {
+						dp->d_ttl = newdp->d_ttl;
+					} 
+				}
 			}
 			if ((flags & DB_NODATA) && !db_cmp(dp, odp)) {
 				/* refresh ttl if cache entry */
@@ -537,9 +566,10 @@ db_update(name, odp, newdp, flags, htp)
 					if (odp->d_ttl > dp->d_ttl)
 						dp->d_ttl = odp->d_ttl;
 					dprintf(3, (ddt,
-						"db_update: new ttl %ld +%d\n",
+					       "db_update: new ttl %ld +%ld\n",
 						    (u_long)dp->d_ttl,
-						    dp->d_ttl - tt.tv_sec));
+						    (u_long)
+						     (dp->d_ttl - tt.tv_sec)));
 				}
 				return (DATAEXISTS);
 			}
@@ -551,6 +581,10 @@ db_update(name, odp, newdp, flags, htp)
 			if (odp->d_size > 0)
 				if (db_cmp(dp, odp))
 					goto skip;
+			if (odp->d_clev < dp->d_clev)
+				goto skip;
+			if (odp->d_cred < dp->d_cred)
+				goto skip;
 			foundRR = 1;
 			if (flags & DB_DELETE) {
  delete:			dp = rm_datum(dp, np, pdp);
@@ -587,9 +621,10 @@ db_update(name, odp, newdp, flags, htp)
 	/* Add to end of list, generally preserving order */
 	newdp->d_next = NULL;
 	if ((dp = np->n_data) == NULL)  {
-#ifdef DATUMREFCNT
 		newdp->d_rcnt = 1;
-#endif
+		if (newdp->d_flags & DB_F_ACTIVE)
+			panic(-1, "db_update: DB_F_ACTIVE set");
+		newdp->d_flags |= DB_F_ACTIVE;
 		np->n_data = newdp;
 		return (OK);
 	}
@@ -600,9 +635,10 @@ db_update(name, odp, newdp, flags, htp)
 	}
 	if ((flags & DB_NODATA) && !db_cmp(dp, newdp))
 		return (DATAEXISTS);
-#ifdef	DATUMREFCNT
 	newdp->d_rcnt = 1;
-#endif
+	if (newdp->d_flags & DB_F_ACTIVE)
+		panic(-1, "db_update: DB_F_ACTIVE set");
+	newdp->d_flags |= DB_F_ACTIVE;
 	dp->d_next = newdp;
 	return (OK);
 }
@@ -627,7 +663,7 @@ fixttl(dp)
  * Must be case insensitive for some domain names.
  * Return 0 if equivalent, nonzero otherwise.
  */
-static int
+int
 db_cmp(dp1, dp2)
 	register struct databuf *dp1, *dp2;
 {
@@ -638,8 +674,6 @@ db_cmp(dp1, dp2)
 		return (1);
 	if (dp1->d_size != dp2->d_size)
 		return (1);
-	if (dp1->d_mark != dp2->d_mark)
-		return (1);		/* old and new RR's are distinct */
 #ifdef NCACHE
 	if (dp1->d_rcode && dp2->d_rcode)
 		return ((dp1->d_rcode == dp1->d_rcode)?0:1);
@@ -649,12 +683,15 @@ db_cmp(dp1, dp2)
 
 	switch (dp1->d_type) {
 
+	case T_SIG:
+	case T_KEY:
 	case T_A:
 	case T_UID:
 	case T_GID:
 	case T_WKS:
 	case T_NULL:
 	case T_NSAP:
+	case T_AAAA:
 	case T_LOC:
 #ifdef ALLOW_T_UNSPEC
         case T_UNSPEC:
@@ -703,13 +740,64 @@ db_cmp(dp1, dp2)
 		cp2 += strlen((char *)cp2) + 1;
 		return (bcmp(cp1, cp2, INT32SZ * 5));
 	
+	case T_NAPTR: {
+		int t1,t2;
+
+		if (dp1->d_size != dp2->d_size)
+			return (1);
+		cp1 = dp1->d_data;
+		cp2 = dp2->d_data;
+
+		/* Order */
+		if (*cp1++ != *cp2++ || *cp1++ != *cp2++)	
+			return (1);
+
+		/* Preference */
+		if (*cp1++ != *cp2++ || *cp1++ != *cp2++)	
+			return (1);
+
+		/* Flags */
+		t1 = *cp1++; t2 = *cp2++;
+		if (t1 != t2 || bcmp(cp1, cp2, t1))
+			return (1);
+		cp1 += t1; cp2 += t2;
+
+		/* Services */
+		t1 = *cp1++; t2 = *cp2++;
+		if (t1 != t2 || bcmp(cp1, cp2, t1))
+			return (1);
+		cp1 += t1; cp2 += t2;
+
+		/* Regexp */
+		t1 = *cp1++; t2 = *cp2++;
+		if (t1 != t2 || bcmp(cp1, cp2, t1))
+			return (1);
+		cp1 += t1; cp2 += t2;
+
+		/* Replacement */
+		t1 = strlen((char *)cp1); t2 = strlen((char *)cp2);
+		if (t1 != t2 || bcmp(cp1, cp2, t1))
+			return (1);
+		cp1 += t1 + 1; cp2 += t2 + 1;
+
+		/* they all checked out! */
+		return (0);
+	    }
+
 	case T_MX:
 	case T_AFSDB:
 	case T_RT:
+	case T_SRV:
 		cp1 = dp1->d_data;
 		cp2 = dp2->d_data;
 		if (*cp1++ != *cp2++ || *cp1++ != *cp2++)	/* cmp prio */
 			return (1);
+		if (dp1->d_type == T_SRV) {
+			if (*cp1++ != *cp2++ || *cp1++ != *cp2++) /* weight */
+				return (1);
+			if (*cp1++ != *cp2++ || *cp1++ != *cp2++) /* port */
+				return (1);
+		}
 		return (strcasecmp((char *)cp1, (char *)cp2));
 
 	case T_PX:

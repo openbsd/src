@@ -1,8 +1,12 @@
-/*	$NetBSD: ns_maint.c,v 1.1 1996/02/02 15:28:53 mrg Exp $	*/
+/*	$OpenBSD: ns_maint.c,v 1.2 1997/03/12 10:42:31 downsj Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
+#if 0
 static char sccsid[] = "@(#)ns_maint.c	4.39 (Berkeley) 3/2/91";
-static char rcsid[] = "$Id: ns_maint.c,v 8.11 1995/12/22 10:20:30 vixie Exp ";
+static char rcsid[] = "$From: ns_maint.c,v 8.18 1996/09/22 00:13:10 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: ns_maint.c,v 1.2 1997/03/12 10:42:31 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -100,9 +104,7 @@ static time_t stats_time;
 #endif
 /*
  * Invoked at regular intervals by signal interrupt; refresh all secondary
- * zones from primary name server and remove old cache entries.  Also,
- * ifdef'd ALLOW_UPDATES, dump database if it has changed since last
- * dump/bootup.
+ * zones from primary name server and remove old cache entries.
  */
 void
 ns_maint()
@@ -149,25 +151,13 @@ ns_maint()
 				}
 				qserial_query(zp);
 				break;
-#ifdef ALLOW_UPDATES
-			case Z_PRIMARY:
-				/*
-				 * Checkpoint the zone if it has changed
-				 * since we last checkpointed
-				 */
-				if (zp->z_flags & Z_CHANGED) {
-					zonedump(zp);
-					ns_refreshtime(zp, tt.tv_sec);
-				}
-				break;
-#endif /* ALLOW_UPDATES */
 			}
 			gettime(&tt);
 		}
 	}
 #ifdef CLEANCACHE
 	if ((cache_time + cache_interval) <= tt.tv_sec) {
-		if (cache_time)
+		if (cache_time && (!NoRecurse || !NoFetchGlue))
 			remove_zone(hashtab, 0, 0);
 		cache_time = tt.tv_sec;
 	}
@@ -333,9 +323,9 @@ qserial_answer(qp, serial)
 		if (!haveComplained((char*)zp, "went backward")) {
 			syslog(LOG_NOTICE,
    "Zone \"%s\" (class %d) SOA serial# (%lu) rcvd from [%s] is < ours (%lu)\n",
-			       zp->z_origin, zp->z_class, serial,
+			       zp->z_origin, zp->z_class, (u_long)serial,
 			       inet_ntoa(from_addr.sin_addr),
-			       zp->z_serial);
+			       (u_long)zp->z_serial);
 		}
 	} else {
 		dprintf(1, (ddt, "qserial_answer: zone serial is still OK\n"));
@@ -405,7 +395,7 @@ static void
 startxfer(zp)
 	struct zoneinfo *zp;
 {
-	static char *argv[NSMAX + 20], argv_ns[NSMAX][MAXDNAME];
+	char *argv[NSMAX + 20], argv_ns[NSMAX][MAXDNAME];
 	int argc = 0, argc_ns = 0, pid, i;
 	unsigned int cnt;
 	char debug_str[10];
@@ -481,12 +471,11 @@ startxfer(zp)
 	argv[argc] = 0;
 
 #ifdef DEBUG
-#ifdef ECHOARGS
 	if (debug) {
 		for (i = 0; i < argc; i++) 
-			fprintf(ddt, "Arg %d=%s\n", i, argv[i]);
+			fprintf(ddt, " %s", argv[i]);
+		fprintf(ddt, "\n");
         }
-#endif /* ECHOARGS */
 #endif /* DEBUG */
 
 	gettime(&tt);
@@ -574,7 +563,7 @@ printzoneinfo(zonenum)
 	if (zp->z_time) {
 		fprintf(ddt, ", now time : %lu sec", (u_long)tt.tv_sec);
 		fprintf(ddt, ", time left: %lu sec",
-			(long)(zp->z_time - tt.tv_sec));
+			(u_long)(zp->z_time - tt.tv_sec));
 	}
 	fprintf(ddt, "; flags %lx\n", (u_long)zp->z_flags);
 }
@@ -659,7 +648,7 @@ purge_zone(dname, htp, class)
 
 	dprintf(1, (ddt, "purge_zone(%s,%d)\n", dname, class));
 	if ((np = nlookup(dname, &phtp, &fname, 0)) && dname == fname &&
-	    !WILDCARD_P(dname)) {
+	    !ns_wildcard(NAME(*np))) {
 		for (pdp = NULL, dp = np->n_data; dp != NULL; ) {
 			if (dp->d_class == class)
 				dp = rm_datum(dp, np, pdp);
@@ -940,7 +929,8 @@ endxfer()
 			if (WIFSIGNALED(status)) {
 				if (WTERMSIG(status) != SIGKILL) {
 					syslog(LOG_NOTICE,
-					  "named-xfer exited with signal %d\n",
+				  "named-xfer \"%s\" exited with signal %d\n",
+					  zp->z_origin[0]?zp->z_origin:".",
 					  WTERMSIG(status));
 				}
 				ns_retrytime(zp, tt.tv_sec);

@@ -1,15 +1,9 @@
-/*	$NetBSD: dmalloc.h,v 1.1 1996/02/02 15:28:40 mrg Exp $	*/
-
-/* dmalloc - debugging layer on top of malloc
- * vix 22mar92 [written]
- *
- * $Id: dmalloc.h,v 8.1 1994/12/15 06:24:14 vixie Exp 
- */
+/*	$OpenBSD: res_data.c,v 1.1 1997/03/12 10:42:08 downsj Exp $	*/
 
 /*
- * ++Copyright++
+ * ++Copyright++ 1995
  * -
- * Copyright (c) 
+ * Copyright (c) 1995
  *    The Regents of the University of California.  All rights reserved.
  * 
  * Redistribution and use in source and binary forms, with or without
@@ -61,10 +55,67 @@
  * --Copyright--
  */
 
-#define	malloc(s)	dmalloc(__FILE__, __LINE__, s)
-#define	free(p)		dfree(__FILE__, __LINE__, p)
-#define	calloc(n, s)	dcalloc(__FILE__, __LINE__, n, s)
-#define	realloc(p, s)	drealloc(__FILE__, __LINE__, p, s)
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+static char rcsid[] = "$From: res_data.c,v 8.2 1996/08/05 08:31:35 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: res_data.c,v 1.1 1997/03/12 10:42:08 downsj Exp $";
+#endif
+#endif /* LIBC_SCCS and not lint */
 
-char *dmalloc(), *dcalloc(), *drealloc();
-void dfree(), dmallocstats();
+#include <sys/types.h>
+#include <sys/param.h>
+#include <sys/socket.h>
+#include <sys/time.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <arpa/nameser.h>
+
+#include <stdio.h>
+#include <ctype.h>
+#include <resolv.h>
+#if defined(BSD) && (BSD >= 199103)
+# include <unistd.h>
+# include <stdlib.h>
+# include <string.h>
+#else
+# include "../conf/portability.h"
+#endif
+
+const char *_res_opcodes[] = {
+	"QUERY",
+	"IQUERY",
+	"CQUERYM",
+	"CQUERYU",	/* experimental */
+	"NOTIFY",	/* experimental */
+	"5",
+	"6",
+	"7",
+	"8",
+	"UPDATEA",
+	"UPDATED",
+	"UPDATEDA",
+	"UPDATEM",
+	"UPDATEMA",
+	"ZONEINIT",
+	"ZONEREF",
+};
+
+const char *_res_resultcodes[] = {
+	"NOERROR",
+	"FORMERR",
+	"SERVFAIL",
+	"NXDOMAIN",
+	"NOTIMP",
+	"REFUSED",
+	"6",
+	"7",
+	"8",
+	"9",
+	"10",
+	"11",
+	"12",
+	"13",
+	"14",
+	"NOCHANGE",
+};

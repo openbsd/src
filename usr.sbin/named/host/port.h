@@ -1,16 +1,20 @@
+/*	$OpenBSD: port.h,v 1.2 1997/03/12 10:41:56 downsj Exp $	*/
+
 /*
 ** Various portability definitions.
 **
-**	@(#)port.h              e07@nikhef.nl (Eric Wassenaar) 950925
+**	@(#)port.h              e07@nikhef.nl (Eric Wassenaar) 961010
 */
 
 #if defined(SYSV) || defined(SVR4)
+#define SYSV_MALLOC
 #define SYSV_MEMSET
 #define SYSV_STRCHR
 #define SYSV_SETVBUF
 #endif
 
 #if defined(__hpux) || defined(hpux)
+#define SYSV_MALLOC
 #define SYSV_SETVBUF
 #endif
 
@@ -20,10 +24,8 @@
 #define BIND_48
 #endif
 
-#if defined(BIND_49)
-#if defined(__BIND)
+#if defined(BIND_49) && defined(__BIND)
 #define BIND_493
-#endif
 #endif
 
 /*
@@ -33,14 +35,14 @@
 #ifndef INT16SZ
 #define	INT16SZ		2	/* for systems without 16-bit ints */
 #endif
-
 #ifndef INT32SZ
 #define	INT32SZ		4	/* for systems without 32-bit ints */
 #endif
-
 #ifndef INADDRSZ
 #define	INADDRSZ	4	/* for sizeof(struct inaddr) != 4 */
 #endif
+
+#define	IPNGSIZE	16	/* 128 bit ip v6 address size */
 
 /*
 ** The following should depend on existing definitions.
@@ -86,9 +88,15 @@ typedef int	sigtype_t;
 typedef void	sigtype_t;
 #endif
 
-/* too primitive */
+#if defined(SYSV_MALLOC)
+typedef void	ptr_t;		/* generic pointer type */
+typedef u_int	siz_t;		/* general size type */
+typedef void	free_t;
+#else
 typedef char	ptr_t;		/* generic pointer type */
 typedef u_int	siz_t;		/* general size type */
+typedef int	free_t;
+#endif
 
 #ifdef SYSV_MEMSET
 #define bzero(a,n)	(void) memset(a,'\0',n)
@@ -128,6 +136,10 @@ typedef u_int	siz_t;		/* general size type */
 */
 
 #define PROTO(TYPES)	()
+
+#if !defined(__STDC__) || defined(apollo)
+#define const
+#endif
 
 #if defined(__STDC__) && defined(BIND_49)
 #define CONST	const

@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.1 1996/02/02 15:29:24 mrg Exp $	*/
+/*	$OpenBSD: tree.c,v 1.2 1997/03/12 10:42:38 downsj Exp $	*/
 
 /* tree - balanced binary tree library
  *

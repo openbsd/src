@@ -1,4 +1,4 @@
-/*	$NetBSD: list.c,v 1.1 1996/02/02 15:30:09 mrg Exp $	*/
+/*	$OpenBSD: list.c,v 1.2 1997/03/12 10:42:47 downsj Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989
@@ -56,8 +56,12 @@
  */
 
 #ifndef lint
+#if 0
 static char sccsid[] = "@(#)list.c	5.23 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: list.c,v 8.3 1994/12/19 08:35:16 vixie Exp ";
+static char rcsid[] = "$From: list.c,v 8.9 1996/11/26 10:11:26 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: list.c,v 1.2 1997/03/12 10:42:47 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -211,6 +215,8 @@ ListHosts(string, putToFile)
 		qtype = T_WKS;
 	    } else if (strcmp("-d", option) == 0) {
 		qtype = T_ANY;
+	    } else if (strcmp("-n", option) == 0) {
+		qtype = T_NAPTR;
 	    } else {
 		qtype = T_A;
 	    }
@@ -239,12 +245,14 @@ ListSubr(qtype, domain, cmd)
 	HEADER			*headerPtr;
 	int			msglen;
 	int			amtToRead;
-	int			numRead;
+	int			numRead, n;
 	int			numAnswers = 0;
+	int			numRecords = 0;
 	int			result;
 	int			soacnt = 0;
+	int			count, done;
 	u_short			len;
-	u_char			*cp, *nmp;
+	u_char			*cp;
 	char			dname[2][NAME_LEN];
 	char			file[NAME_LEN];
 	static u_char		*answer = NULL;
@@ -339,96 +347,8 @@ ListSubr(qtype, domain, cmd)
 		 defaultPtr->servers[0]->name);
 	}
 
-#if 0
-	if (qtype == T_CNAME) {
-	    fprintf(filePtr, "%-30s", "Alias");
-	} else if (qtype == T_TXT) {
-	    fprintf(filePtr, "%-30s", "Key");
-	} else {
-	    fprintf(filePtr, "%-30s", "Host or domain name");
-	}
-	switch (qtype) {
-	    case T_A:
-		    fprintf(filePtr, " %-30s\n", "Internet Address");
-		    break;
-	    case T_HINFO:
-		    fprintf(filePtr, " %-30s\n", "CPU & OS");
-		    break;
-	    case T_CNAME:
-		    fprintf(filePtr, " %-30s\n", "Canonical Name");
-		    break;
-	    case T_MX:
-		    fprintf(filePtr, " %-30s\n", "Metric & Host");
-		    break;
-	    case T_PX:
-		    fprintf(filePtr, " %-30s\n", "Mapping information");
-		    break;
-	    case T_AFSDB:
-		    fprintf(filePtr, " %-30s\n", "Subtype & Host");
-		    break;
-		case T_X25:
-			fprintf(filePtr, " %-30s\n", "X25 Address");
-			break
-		case T_ISDN:
-			fprintf(filePtr, " %-30s\n", "ISDN Address");
-			break
-	    case T_WKS:
-		    fprintf(filePtr, " %-4s %s\n", "Protocol", "Services");
-		    break;
-	    case T_MB:
-		    fprintf(filePtr, " %-30s\n", "Mailbox");
-		    break;
-	    case T_MG:
-		    fprintf(filePtr, " %-30s\n", "Mail Group");
-		    break;
-	    case T_MR:
-		    fprintf(filePtr, " %-30s\n", "Mail Rename");
-		    break;
-	    case T_MINFO:
-		    fprintf(filePtr, " %-30s\n", "Mail List Requests & Errors");
-		    break;
-	    case T_UINFO:
-		    fprintf(filePtr, " %-30s\n", "User Information");
-		    break;
-	    case T_UID:
-		    fprintf(filePtr, " %-30s\n", "User ID");
-		    break;
-	    case T_GID:
-		    fprintf(filePtr, " %-30s\n", "Group ID");
-		    break;
-	    case T_TXT:
-		    fprintf(filePtr, " %-30s\n", "Text");
-		    break;
-	    case T_RP:
-		    fprintf(filePtr, " %-30s\n", "Responsible Person");
-		    break;
-	    case T_RT:
-		    fprintf(filePtr, " %-30s\n", "Router");
-		    break;
-	    case T_NSAP:
-		    fprintf(filePtr, " %-30s\n", "NSAP address");
-		    break;
-	    case T_NSAP_PTR:
-		    fprintf(filePtr, " %-30s\n", "NSAP pointer");
-		    break;
-	    case T_NS:
-		    fprintf(filePtr, " %-30s\n", "Name Servers");
-		    break;
-	    case T_PTR:
-		    fprintf(filePtr, " %-30s\n", "Pointers");
-		    break;
-	    case T_SOA:
-		    fprintf(filePtr, " %-30s\n", "Start of Authority");
-		    break;
-	    case T_ANY:
-		    fprintf(filePtr, " %-30s\n", "Resource Record Info.");
-		    break;
-	}
-#endif
-
-
 	dname[0][0] = '\0';
-	while (1) {
+	for (done = 0; !done; NULL) {
 	    unsigned short tmp;
 
 	    /*
@@ -483,34 +403,51 @@ ListSubr(qtype, domain, cmd)
 		error = ERR_PRINTING;
 		break;
 	    }
-
+	    numRecords += htons(((HEADER *)answer)->ancount);
 	    numAnswers++;
 	    if (cmd != NULL && ((numAnswers % HASH_SIZE) == 0)) {
 		fprintf(stdout, "#");
 		fflush(stdout);
 	    }
+	    /* Header. */
 	    cp = answer + HFIXEDSZ;
-	    if (ntohs(((HEADER* )answer)->qdcount) > 0)
-		cp += dn_skipname((u_char *)cp,
-		    (u_char *)answer + len) + QFIXEDSZ;
-	    nmp = cp;
-	    cp += dn_skipname((u_char *)cp, (u_char *)answer + len);
-	    if ((_getshort((u_char*)cp) == T_SOA)) {
-		(void) dn_expand(answer, answer + len, nmp,
-				 dname[soacnt], sizeof dname[0]);
-	        if (soacnt) {
-		    if (strcmp(dname[0], dname[1]) == 0)
-			break;
-		} else
-		    soacnt++;
+	    /* Question. */
+	    for (count = ntohs(((HEADER* )answer)->qdcount);
+		 count > 0;
+		 count--)
+		    cp += dn_skipname(cp, answer + len) + QFIXEDSZ;
+	    /* Answer. */
+	    for (count = ntohs(((HEADER* )answer)->ancount);
+		 count > 0;
+		 count--) {
+		int type, class, rlen;
+
+		n = dn_expand(answer, answer + len, cp,
+			      dname[soacnt], sizeof dname[0]);
+		if (n < 0) {
+		    error = ERR_PRINTING;
+		    done++;
+		    break;
+		}
+		cp += n;
+		GETSHORT(type, cp);
+		GETSHORT(class, cp);
+		cp += INT32SZ;	/* ttl */
+		GETSHORT(rlen, cp);
+		cp += rlen;
+		if (type == T_SOA && soacnt++ &&
+		    !strcasecmp(dname[0], dname[1])) {
+		    done++;
+		    break;
+		}
 	    }
 	}
 
 	if (cmd != NULL) {
-	    fprintf(stdout, "%sReceived %d record%s.\n",
+	    fprintf(stdout, "%sReceived %d answer%s (%d record%s).\n",
 		(numAnswers >= HASH_SIZE) ? "\n" : "",
-		numAnswers,
-		(numAnswers != 1) ? "s" : "");
+		numAnswers, (numAnswers != 1) ? "s" : "",
+		numRecords, (numRecords != 1) ? "s" : "");
 	}
 
 	(void) close(sockFD);
@@ -594,7 +531,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
     HEADER		*headerPtr;
     int			type, class, dlen, nameLen;
     u_int32_t		ttl;
-    int			n, pref;
+    int			n, pref, count;
     struct in_addr	inaddr;
     char		name[NAME_LEN];
     char		name2[NAME_LEN];
@@ -617,13 +554,14 @@ PrintListInfo(file, msg, eom, qtype, domain)
 
     if (ntohs(headerPtr->ancount) == 0) {
 	return(NO_INFO);
-    } else {
-	if (ntohs(headerPtr->qdcount) > 0) {
-	    nameLen = dn_skipname(cp, eom);
-	    if (nameLen < 0)
-		return (ERROR);
-	    cp += nameLen + QFIXEDSZ;
-	}
+    }
+    for (n = ntohs(headerPtr->qdcount); n > 0; n--) {
+	nameLen = dn_skipname(cp, eom);
+	if (nameLen < 0)
+	    return (ERROR);
+	cp += nameLen + QFIXEDSZ;
+    }
+    for (count = ntohs(headerPtr->ancount); count > 0; count--) {
 	nameLen = dn_expand(msg, eom, cp, name, sizeof name);
 	if (nameLen < 0)
 	    return (ERROR);
@@ -680,6 +618,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
 		    } else
 			fprintf(file, " (dlen = %d?)", dlen);
 		}
+		cp += dlen;
 		break;
 
 	    case T_CNAME:
@@ -692,6 +631,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
 		    return (ERROR);
 		}
 		fprintf(file, " %s", name2);
+		cp += nameLen;
 		break;
 
 	    case T_NS:
@@ -701,10 +641,14 @@ PrintListInfo(file, msg, eom, qtype, domain)
 		if (qtype != T_ANY)
 		    fprintf(file,"%s = ", type == T_PTR ? "host" : "server");
 		cp = (u_char *)Print_cdname2(cp, msg, eom, file);
+		if (!cp) {
+		    fprintf(file, " ***\n");
+		    return (ERROR);
+		}
 		break;
 
 	    case T_HINFO:
-		case T_ISDN:
+	    case T_ISDN:
 		{
 		    u_char *cp2 = cp + dlen;
 		    if (n = *cp++) {
@@ -760,6 +704,7 @@ PrintListInfo(file, msg, eom, qtype, domain)
 		    return (ERROR);
 		}
 		fprintf(file, " %s", name2);
+		cp += nameLen;
 		break;
 
 	    case T_PX:
@@ -772,55 +717,127 @@ PrintListInfo(file, msg, eom, qtype, domain)
 			return (ERROR);
 		}
 		fprintf(file, " %s", name2);
-		cp += strlen((char *)cp) + 1;
+		cp += nameLen;
 		nameLen = dn_expand(msg, eom, cp, name2, sizeof name2);
 		if (nameLen < 0) {
-              	fprintf(file, " ***\n");
-              	return (ERROR);
-              }
+		    fprintf(file, " ***\n");
+		    return (ERROR);
+		}
 		fprintf(file, " %s", name2);
+		cp += nameLen;
+		break;
+
+	    case T_X25:
+		if (n = *cp++) {
+		    fprintf(file,"  %.*s", n, cp);
+		    cp += n;
+		}
 		break;
 
 	    case T_TXT:
-		case T_X25:
 		{
 		    u_char *cp2 = cp + dlen;
 		    int c;
 
-		    (void) fputs(" \"", file);
 		    while (cp < cp2) {
-			    if (n = (unsigned char) *cp++) {
-				    for (c = n; c > 0 && cp < cp2; c--)
-					    if ((*cp == '\n') || (*cp == '"')) {
-						(void) putc('\\', file);
-						(void) putc(*cp++, file);
-					    } else
-						(void) putc(*cp++, file);
+		        (void) putc('"', file);
+			if (n = (unsigned char) *cp++)
+			    for (c = n; c > 0 && cp < cp2; c--) {
+				if (strchr("\n\"\\", *cp))
+				    (void) putc('\\', file);
+				(void) putc(*cp++, file);
 			    }
+			(void) putc('"', file);
+			if (cp < cp2)
+			    (void) putc(' ', file);
 		    }
-		    (void) putc('"', file);
 		}
 		break;
 
 	    case T_NSAP:
 		fprintf(file, " %s", inet_nsap_ntoa(dlen, cp, NULL));
+		cp += dlen;
 		break;
+
+	    case T_AAAA: {
+		char t[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:255.255.255.255"];
+
+		fprintf(file, " %s", inet_ntop(AF_INET6, cp, t, sizeof t));
+		cp += dlen;
+		break;
+	    }
+
+	    case T_LOC: {
+		char t[255];
+
+		fprintf(file, "\t%s", loc_ntoa(cp, t));
+		cp += dlen;
+		break;
+	    }
+
+	    case T_SRV: {
+		u_int priority, weight, port;
+
+		priority = _getshort(cp);  cp += INT16SZ;
+		weight   = _getshort(cp);  cp += INT16SZ;
+		port     = _getshort(cp);  cp += INT16SZ;
+		fprintf(file, "\t%u %u %u ", priority, weight, port);
+		if ((cp = (u_char *)Print_cdname(cp, msg, eom, file)) == NULL)
+			return (ERROR);
+		break;
+	    }
+
+	    case T_NAPTR: {
+		u_int order, preference;
+
+                GETSHORT(order, cp);
+                fprintf(file, "\t%u", order);
+
+                GETSHORT(preference, cp);
+                fprintf(file, " %u", preference);
+
+                if (n = *cp++) {
+                     fprintf(file, " \"%.*s\"", (int)n, cp);
+                     cp += n;
+                }
+                if (n = *cp++) {
+                     fprintf(file, " \"%.*s\"", (int)n, cp);
+                     cp += n;
+                }
+                if (n = *cp++) {
+                     fprintf(file, " \"%.*s\"", (int)n, cp);
+                     cp += n;
+                }
+		if ((cp = (u_char *)Print_cdname(cp, msg, eom, file)) == NULL)
+			return (ERROR);
+                break;
+	    }
 
 	    case T_MINFO:
 	    case T_RP:
 		(void) putc(' ', file);
 		cp = (u_char *)Print_cdname(cp, msg, eom, file);
+		if (!cp) {
+		    fprintf(file, " ***\n");
+		    return (ERROR);
+		}
 		fprintf(file, "  ");
 		cp = (u_char *)Print_cdname(cp, msg, eom, file);
+		if (!cp) {
+		    fprintf(file, " ***\n");
+		    return (ERROR);
+		}
 		break;
 
 	    case T_UINFO:
 		fprintf(file, " %s", cp);
+		cp += dlen;
 		break;
 
 	    case T_UID:
 	    case T_GID:
 		fprintf(file, " %lu", _getlong((u_char*)cp));
+		cp += dlen;
 		break;
 
 	    case T_WKS:

@@ -1,5 +1,5 @@
-$NetBSD: nslookup.help,v 1.1 1996/02/02 15:30:17 mrg Exp $
-from: $Id: nslookup.help,v 8.2 1995/06/29 09:26:34 vixie Exp 
+$OpenBSD: nslookup.help,v 1.2 1997/03/12 10:42:48 downsj Exp $
+$From: nslookup.help,v 8.4 1996/10/08 04:51:08 vixie Exp $
 
 Commands: 	(identifiers are shown in uppercase, [] means optional)
 NAME		- print info about the host/domain NAME using default server
@@ -17,7 +17,8 @@ set OPTION	- set an option
     root=NAME	- set root server to NAME
     retry=X	- set number of retries to X
     timeout=X	- set initial time-out interval to X seconds
-    querytype=X	- set query type, e.g., A,ANY,CNAME,HINFO,MX,PX,NS,PTR,SOA,TXT,WKS
+    querytype=X	- set query type, e.g., A,ANY,CNAME,HINFO,MX,PX,NS,PTR,SOA,TXT,WKS,SRV,NAPTR
+    port=X	- set port number to send query on
     type=X	- synonym for querytype
     class=X	- set query class to one of IN (Internet), CHAOS, HESIOD or ANY
 server NAME	- set default server to NAME, using current default server

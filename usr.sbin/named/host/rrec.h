@@ -1,23 +1,24 @@
+/*	$OpenBSD: rrec.h,v 1.2 1997/03/12 10:41:56 downsj Exp $	*/
+
 /*
 ** Resource record structures.
 **
 **	These define the various resource record fields after decoding
 **	from the internal representation in the nameserver answer buffer.
 **
-**	@(#)rrec.h              e07@nikhef.nl (Eric Wassenaar) 941205
+**	@(#)rrec.h              e07@nikhef.nl (Eric Wassenaar) 961010
 */
 
 #define MAXSTRING 255		/* maximum size of single encoded string */
-#define MAXSTRLEN MAXDLEN	/* maximum size of total  encoded string */
+#define MAXSTRLEN MAXDLEN	/* maximum size of multiple substrings */
 
 typedef struct rr_data {
 	u_char databuf[MAXDLEN];	/* generic data buffer */
 } rr_data_t;
 
 /*
-** Record-specific data fields.
+** Record-specific data fields, traditional records.
 */
-	/* traditional records */
 
 typedef struct a_data {
 	ipaddr_t address;		/* internet address of host */
@@ -91,10 +92,12 @@ typedef struct mx_data {
 } mx_data_t;
 
 typedef struct txt_data {
-	char text[MAXSTRLEN+1];		/* concatenated substrings */
+	char text[MAXSTRLEN+1];		/* multiple substrings */
 } txt_data_t;
 
-	/* later additions */
+/*
+** Record-specific data fields, later additions.
+*/
 
 typedef struct rp_data {
 	char mailbox[MAXDNAME+1];	/* name of person mailbox */
@@ -128,6 +131,25 @@ typedef struct nsapptr_data {
 	char nsapdomain[MAXDNAME+1];	/* domain name of nsap pointer */
 } nsapptr_data_t;
 
+typedef struct sig_data {
+	int sigtype;			/* resource record type covered */
+	int algorithm;			/* signature encoding algorithm */
+	int nlabels;			/* number of labels in SIG name */
+	int sigttl;			/* original ttl of SIG record */
+	time_t expiretime;		/* signature expiration time */
+	time_t sigtime;			/* time signature was signed */
+	int footprint;			/* key identification */
+	char signer[MAXDNAME+1];	/* signer's domain name */
+	u_char sig[MAXMD5SIZE];		/* encoded signature */
+} sig_data_t;
+
+typedef struct key_data {
+	int keyflags;			/* key description flags */
+	int protocol;			/* protocol suite */
+	int algorithm;			/* key encoding algorithm */
+	u_char key[MAXMD5SIZE];		/* encoded key */
+} key_data_t;
+
 typedef struct px_data {
 	int mappref;			/* preference value */
 	char map822[MAXDNAME+1];	/* rfc822 domain name */
@@ -140,6 +162,10 @@ typedef struct gpos_data {
 	char altpos[MAXSTRING+1];	/* geographical altitude */
 } gpos_data_t;
 
+typedef struct aaaa_data {
+	u_char ipngaddr[IPNGSIZE];	/* binary ip v6 address */
+} aaaa_data_t;
+
 typedef struct loc_data {
 	int locversion;			/* version number */
 	int objectsize;			/* size of object */
@@ -150,7 +176,30 @@ typedef struct loc_data {
 	int altitude;			/* geographical altitude */
 } loc_data_t;
 
-	/* nonstandard records */
+typedef struct nxt_data {
+	char nxtdomain[MAXDNAME+1];	/* name of next domain in order */
+	u_char typemap[32];		/* types 0-255 */
+} nxt_data_t;
+
+typedef struct srv_data {
+	int srvpref;			/* preference value */
+	int srvweight;			/* load balancing weight */
+	int srvport;			/* port of service */
+	char srvhost[MAXDNAME+1];	/* name of service host */
+} srv_data_t;
+
+typedef struct naptr_data {
+	int naorder;
+	int napref;			/* preference value */
+	char naflags[MAXSTRING+1];	/* flags */
+	char naservice[MAXSTRING+1];
+	char naregexp[MAXSTRING+1];
+	char nahost[MAXDNAME+1];	/* name of naming authority host */
+} naptr_data_t;
+
+/*
+** Record-specific data fields, nonstandard types.
+*/
 
 typedef struct uinfo_data {
 	char userinfo[MAXSTRLEN+1];	/* user description */
@@ -202,9 +251,15 @@ typedef struct rrecord {
 		rt_data_t	data_rt;
 		nsap_data_t	data_nsap;
 		nsapptr_data_t	data_nsapptr;
+		sig_data_t	data_sig;
+		key_data_t	data_key;
 		px_data_t	data_px;
 		gpos_data_t	data_gpos;
+		aaaa_data_t	data_aaaa;
 		loc_data_t	data_loc;
+		nxt_data_t	data_nxt;
+		srv_data_t	data_srv;
+		naptr_data_t	data_naptr;
 		uinfo_data_t	data_uinfo;
 		uid_data_t	data_uid;
 		gid_data_t	data_gid;
@@ -236,9 +291,15 @@ typedef struct rrecord {
 #define t_rt		data.data_rt
 #define t_nsap		data.data_nsap
 #define t_nsapptr	data.data_nsapptr
+#define t_sig		data.data_sig
+#define t_key		data.data_key
 #define t_px		data.data_px
 #define t_gpos		data.data_gpos
+#define t_aaaa		data.data_aaaa
 #define t_loc		data.data_loc
+#define t_nxt		data.data_nxt
+#define t_srv		data.data_srv
+#define t_naptr		data.data_naptr
 #define t_uinfo		data.data_uinfo
 #define t_uid		data.data_uid
 #define t_gid		data.data_gid

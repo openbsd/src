@@ -1,8 +1,12 @@
-/*	$NetBSD: db_save.c,v 1.1 1996/02/02 15:28:35 mrg Exp $	*/
+/*	$OpenBSD: db_save.c,v 1.2 1997/03/12 10:42:25 downsj Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
+#if 0
 static char sccsid[] = "@(#)db_save.c	4.16 (Berkeley) 3/21/91";
-static char rcsid[] = "$Id: db_save.c,v 8.2 1995/06/29 09:26:17 vixie Exp ";
+static char rcsid[] = "$From: db_save.c,v 8.6 1996/09/22 00:13:10 vixie Exp $";
+#else
+static char rcsid[] = "$OpenBSD: db_save.c,v 1.2 1997/03/12 10:42:25 downsj Exp $";
+#endif
 #endif /* not lint */
 
 /*
@@ -64,6 +68,7 @@ static char rcsid[] = "$Id: db_save.c,v 8.2 1995/06/29 09:26:17 vixie Exp ";
  * Buffer allocation and deallocation routines.
  */
 
+#include <sys/types.h>
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -71,6 +76,7 @@ static char rcsid[] = "$Id: db_save.c,v 8.2 1995/06/29 09:26:17 vixie Exp ";
 #include <syslog.h>
 #include <stdio.h>
 #include <errno.h>
+#include <assert.h>
 
 #include "named.h"
 
@@ -84,15 +90,14 @@ savename(name, len)
 {
 	register struct namebuf *np;
 
-	np = (struct namebuf *) malloc(sizeof(struct namebuf));
+	assert(len >= 0 && len <= (MAXLABEL * 4));
+	np = (struct namebuf *) malloc(NAMESIZE(len));
 	if (np == NULL)
 		panic(errno, "savename: malloc");
-	bzero((char*)np, sizeof(struct namebuf));
-	np->n_dname = malloc(len + 1);
-	if (np == NULL)
-		panic(errno, "savename: malloc");
-	strncpy(np->n_dname, name, len);
-	np->n_dname[len] = '\0';
+	bzero((char*)np, NAMESIZE(len));
+	NAMELEN(*np) = (unsigned)len;
+	bcopy(name, NAME(*np), len);
+	NAME(*np)[len] = '\0';
 	return (np);
 }
 
@@ -100,28 +105,16 @@ savename(name, len)
  * Allocate a data buffer & save data.
  */
 struct databuf *
-#ifdef DMALLOC
-savedata_tagged(file, line, class, type, ttl, data, size)
-	char *file;
-	int line;
-#else
 savedata(class, type, ttl, data, size)
-#endif
 	int class, type;
 	u_int32_t ttl;
 	u_char *data;
 	int size;
 {
 	register struct databuf *dp;
-	int bytes = (type == T_NS) ? DATASIZE(size)+INT32SZ : DATASIZE(size);
+	int bytes = DATASIZE(size);
 
-	dp = (struct databuf *) 
-#ifdef DMALLOC
-		dmalloc(file, line, bytes)
-#else
-		malloc(bytes)
-#endif
-	;
+	dp = (struct databuf *)malloc(bytes);
 	if (dp == NULL)
 		panic(errno, "savedata: malloc");
 	bzero((char*)dp, bytes);
@@ -130,7 +123,6 @@ savedata(class, type, ttl, data, size)
 	dp->d_class = class;
 	dp->d_ttl = ttl;
 	dp->d_size = size;
-	dp->d_mark = 0;
 	dp->d_flags = 0;
 	dp->d_cred = 0;
 	dp->d_clev = 0;
