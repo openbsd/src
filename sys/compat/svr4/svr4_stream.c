@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_stream.c,v 1.11 2000/08/30 04:17:41 brad Exp $	 */
+/*	$OpenBSD: svr4_stream.c,v 1.12 2001/04/18 09:06:42 niklas Exp $	 */
 /*	$NetBSD: svr4_stream.c,v 1.19 1996/12/22 23:00:03 fvdl Exp $	 */
 
 /*
@@ -147,6 +147,7 @@ show_ioc(str, ioc)
 {
 	u_char *ptr;
 	int error;
+	int len;
 
 	len = ioc->len;
 	if (len > 1024)
