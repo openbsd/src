@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.6 2000/02/03 00:53:59 angelos Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.7 2000/03/02 18:50:00 ho Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -70,10 +70,7 @@ drivers. Most of the parameters that can be changed relate to the
 IEEE 802.11 protocol which the WaveLAN implements. This includes
 the station name, whether the station is operating in ad-hoc (point
 to point) or BSS (service set) mode, and the network name of a service
-set to join (IBSS) if BSS mode is enabled. The
-.Nm
-command can also be used to view the current settings of these paremeters
-and to dump out the values of the card's statistics counters.
+set to join (IBSS) if BSS mode is enabled.
 .Pp
 The
 .Ar iface
@@ -81,18 +78,18 @@ argument given to
 .Nm
 should be the logical interface name associated with the WaveLAN/IEEE
 device (wi0, wi1, etc...).
+.Pp
+The
+.Nm
+command given without any additional flags retrieves the current card 
+settings from the driver and prints them out.
 .Sh OPTIONS
 The options are as follows:
 .Pp
 .Bl -tag -width Fl
 .It Fl o
-Display the current settings of the specified WaveLAN/IEEE interface.
-This retrieves the current card settings from the driver and prints them
-out. Using the additional
-.Fl o
-flag will cause
-.Nm
-to print out the statistics counters instead of the card settings.
+Display the statistics counters for the specified WaveLAN/IEEE
+interface.
 .It Fl e Ar 0|1
 Enable or disable WEP encryption. Permitted values are
 .Ar 0

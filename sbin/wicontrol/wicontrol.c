@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.6 2000/02/26 23:36:28 ho Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.7 2000/03/02 18:50:00 ho Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,7 +66,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wicontrol.c,v 1.6 2000/02/26 23:36:28 ho Exp $";
+	"@(#) $Id: wicontrol.c,v 1.7 2000/03/02 18:50:00 ho Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -593,7 +593,7 @@ static void usage(p)
 	char			*p;
 {
 	fprintf(stderr,
-	    "usage: wiconfig interface "
+	    "usage: wicontrol interface "
 	    "[-o] [-t tx rate] [-n network name] [-s station name]\n"
 	    "       [-e 0|1] [-k key [-v 1|2|3|4]] [-T 1|2|3|4]\n"
 	    "       [-c 0|1] [-q SSID] [-p port type] [-a access point density]\n"
@@ -633,7 +633,7 @@ int main(argc, argv)
 	char			*argv[];
 {
 	char			*iface = NULL;
-	int                     ch, p, dumpstats = 0;
+	int                     ch, p, dumpstats = 0, dumpinfo = 1;
 
 	if (argc > 1 && argv[1][0] != '-') {
 		iface = argv[1];
@@ -648,7 +648,7 @@ int main(argc, argv)
 			        wi_opt[p].optarg = optarg;
 				if (ch == 'T')	/* key 1-4/0-3 kludge */
 				        (*optarg)--;
-				ch = 0;
+				dumpinfo = ch = 0;
 			}
 		switch(ch) {
 		case 0:
@@ -679,17 +679,16 @@ int main(argc, argv)
 	if (iface == NULL)
 		usage(argv[0]);
 
-	if (dumpstats) {
-	        wi_dumpstats(iface);
-		exit(0);
-	}
-
 	for (p = 0; wi_opt[p].key; p++)
 	        if (wi_opt[p].optarg != NULL)
 		        wi_opt[p].function(iface, wi_opt[p].wi_code, 
 					   wi_opt[p].optarg);
 
-	wi_dumpinfo(iface);
+	if (dumpstats)
+	        wi_dumpstats(iface);
+
+	if (dumpinfo && !dumpstats)
+	        wi_dumpinfo(iface);
 
 	exit(0);
 }
