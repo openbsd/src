@@ -713,8 +713,8 @@ packet_ok(buf, cc, from, seq)
 		int i;
 		u_long *lp = (u_long *)&icp->icmp_ip;
 
-		Printf("\n%d bytes from %s to %s", cc,
-			inet_ntoa(from->sin_addr), inet_ntoa(ip->ip_dst));
+		Printf("\n%d bytes from %s", cc, inet_ntoa(from->sin_addr));
+		Printf(" to %s", inet_ntoa(ip->ip_dst));
 		Printf(": icmp type %d (%s) code %d\n", type, pr_type(type),
 		       icp->icmp_code);
 		for (i = 4; i < cc ; i += sizeof(long))
