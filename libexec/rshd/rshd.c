@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)rshd.c	8.2 (Berkeley) 4/6/94"; */
-static char *rcsid = "$Id: rshd.c,v 1.6 1996/07/23 19:27:42 deraadt Exp $";
+static char *rcsid = "$Id: rshd.c,v 1.7 1996/10/26 04:37:29 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -179,11 +179,12 @@ main(argc, argv)
 }
 
 char	username[20] = "USER=";
+char	logname[23] = "LOGNAME=";
 char	homedir[64] = "HOME=";
 char	shell[64] = "SHELL=";
 char	path[100] = "PATH=";
 char	*envinit[] =
-	    {homedir, shell, path, username, 0};
+	    {homedir, shell, path, logname, username, 0};
 char	**environ;
 
 void
@@ -665,6 +666,7 @@ fail:
 	strncat(homedir, pwd->pw_dir, sizeof(homedir)-6);
 	strcat(path, _PATH_DEFPATH);
 	strncat(shell, pwd->pw_shell, sizeof(shell)-7);
+	strncat(logname, pwd->pw_name, sizeof(logname)-9);
 	strncat(username, pwd->pw_name, sizeof(username)-6);
 	cp = strrchr(pwd->pw_shell, '/');
 	if (cp)
