@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.11 1999/04/18 17:08:07 millert Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.12 2000/08/01 21:26:10 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)dbm.c	8.6 (Berkeley) 11/7/95";
 #else
-static char rcsid[] = "$OpenBSD: ndbm.c,v 1.11 1999/04/18 17:08:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: ndbm.c,v 1.12 2000/08/01 21:26:10 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -203,6 +203,11 @@ _dbm_open(file, suff, flags, mode)
 	if (strlen(file) + strlen(suff) > sizeof(path) - 1) {
 		errno = ENAMETOOLONG;
 		return (NULL);
+	}
+	/* O_WRONLY not supported by db(3) but traditional ndbm allowed it. */
+	if ((flags & O_ACCMODE) == O_WRONLY) {
+		flags &= ~O_WRONLY;
+		flags |= O_RDWR;
 	}
 	info.bsize = 4096;
 	info.ffactor = 40;
