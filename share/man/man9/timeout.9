@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.14 2001/04/23 15:30:27 aaron Exp $
+.\"	$OpenBSD: timeout.9,v 1.15 2001/07/17 02:32:51 krw Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -56,7 +56,7 @@ The
 .Nm timeout
 API provides a mechanism to execute a function at a given time.
 The granularity of the time is limited by the granularity of the
-.Nm hardclock
+.Xr hardclock 9
 timer which executes
 .Nm hz
 times a second.

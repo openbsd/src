@@ -1,4 +1,4 @@
-.\"	$OpenBSD: time.9,v 1.7 2000/10/12 18:06:03 aaron Exp $
+.\"	$OpenBSD: time.9,v 1.8 2001/07/17 02:32:51 krw Exp $
 .\"	$NetBSD: time.9,v 1.1 1995/11/25 21:24:53 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -95,13 +95,12 @@ All of these variables contain times
 expressed in seconds and microseconds since midnight (0 hour),
 January 1, 1970.
 .Pp
-Clock interrupts should be blocked
-when reading or writing
+Clock interrupts should be blocked when reading or writing
 .Va time
 or
 .Va mono_time ,
 because those variables are updated by
-.Fn hardclock .
+.Xr hardclock 9 .
 .Va Boottime
 and
 .Va runtime
