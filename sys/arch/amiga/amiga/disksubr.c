@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.8 1997/01/16 09:23:18 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.9 1997/01/20 15:43:28 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
 
 /*
@@ -592,20 +592,30 @@ getadostype(dostype)
 	case DOST_DOS:
 		adt.archtype = ADT_AMIGADOS;
                 if (b1 > 5)
-			adt.fstype = FS_UNUSED;
+#if 0
+			/*
+			 * XXX at least I, <niklas@appli.se>, have a partition 
+			 * that looks like "DOS\023", wherever that came from,
+			 * but ADOS accepts it, so should we.
+			 */
+			goto unknown;
 		else
-			adt.fstype = FS_ADOS;
+#else
+			printf("found dostype: 0x%x, assuming an ADOS FS "
+			    "although it's unknown", dostype);
+#endif
+		adt.fstype = FS_ADOS;
 		return(adt);
 	case DOST_AMIX:
 		adt.archtype = ADT_AMIX;
 		if (b1 == 2)
 			adt.fstype = FS_BSDFFS;
 		else
-			adt.fstype = FS_UNUSED;
+			goto unknown;
 		return(adt);
 	case DOST_XXXBSD:
 #ifdef DIAGNOSTIC
-		printf("found dostype: 0x%lx which is deprecated", dostype);
+		printf("found dostype: 0x%x which is deprecated", dostype);
 #endif
 		if (b1 == 'S') {
 			dostype = DOST_NBS;
@@ -618,12 +628,13 @@ getadostype(dostype)
 			dostype |= FS_BSDFFS;
 		}
 #ifdef DIAGNOSTIC
-		printf(" using: 0x%lx instead\n", dostype);
+		printf(" using: 0x%x instead\n", dostype);
 #endif
 		return(getadostype(dostype));
 	default:
+	unknown:
 #ifdef DIAGNOSTIC
-		printf("warning unknown dostype: 0x%lx marking unused\n",
+		printf("warning unknown dostype: 0x%x marking unused\n",
 		    dostype);
 #endif
 		adt.archtype = ADT_UNKNOWN;
