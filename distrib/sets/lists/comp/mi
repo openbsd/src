@@ -2878,3 +2878,6 @@
 ./usr/include/ssl/ssl_locl.h
 ./usr/include/ssl/tmdiff.h
 ./usr/include/ssl/x509v3.h
+./usr/include/dev/pci/if_skreg.h
+./usr/include/dev/pci/pciide_pdc202xx_reg.h
+./usr/include/dev/pci/xmaciireg.h

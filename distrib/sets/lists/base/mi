@@ -1,3 +1,4 @@
+./usr/sbin/suexec
 ./altroot
 ./bin
 ./bin/[
@@ -2665,3 +2666,4 @@
 ./usr/sbin/apxs
 ./usr/sbin/logresolve
 ./usr/sbin/rotatelogs
+./usr/lib/apache/include/xml

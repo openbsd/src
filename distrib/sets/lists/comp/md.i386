@@ -104,7 +104,6 @@
 ./usr/lib/libkeycap.a
 ./usr/lib/libkeycap_p.a
 ./usr/lib/libkeycap_pic.a
-./usr/lib/libkeynote_pic.a
 ./usr/lib/libkrb_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a

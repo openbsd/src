@@ -106,7 +106,6 @@
 ./usr/lib/libkadm_pic.a
 ./usr/lib/libkafs_pic.a
 ./usr/lib/libkdb_pic.a
-./usr/lib/libkeynote_pic.a
 ./usr/lib/libkrb_pic.a
 ./usr/lib/libkvm_pic.a
 ./usr/lib/libm_pic.a
