@@ -131,7 +131,8 @@ radix_to_creds(const char *buf, CREDENTIALS *creds)
 	char version;
 	char temp[2048];
 
-	if (!(len = uudecode(buf, (unsigned char *)temp, sizeof(temp))))
+	len = uudecode(buf, (unsigned char *)temp, sizeof(temp));
+	if (len < 0)
 		return 0;
 
 	p = temp;

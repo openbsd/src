@@ -255,6 +255,10 @@ key_read(Key *ret, char **cpp)
 		len = 2*strlen(cp);
 		blob = xmalloc(len);
 		n = uudecode(cp, blob, len);
+		if (n < 0) {
+			error("uudecode %s failed", cp);
+			return 0;
+		}
 		k = dsa_key_from_blob(blob, n);
 		if (k == NULL)
 			 return 0;

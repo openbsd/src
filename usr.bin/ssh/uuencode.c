@@ -10,13 +10,27 @@ int
 uuencode(unsigned char *src, unsigned int srclength,
     char *target, size_t targsize)
 {
-	return b64_ntop(src, srclength, target, targsize);
+	return __b64_ntop(src, srclength, target, targsize);
 }
 
 int
 uudecode(const char *src, unsigned char *target, size_t targsize)
 {
-	return b64_pton(src, target, targsize);
+	int len;
+	char *encoded, *p;
+
+	/* copy the 'readonly' source */
+	encoded = xstrdup(src);
+	/* skip whitespace and data */
+	for (p = encoded; *p == ' ' || *p == '\t'; p++)
+		;
+	for (; *p != '\0' && *p != ' ' && *p != '\t'; p++)
+		;
+	/* and remote trailing whitespace because __b64_pton needs this */
+	*p = '\0';
+	len = __b64_pton(encoded, target, targsize);
+	xfree(encoded);
+	return len;
 }
 
 void
