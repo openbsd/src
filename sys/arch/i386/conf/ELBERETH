@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.14 1997/12/03 15:53:32 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.15 1998/08/24 19:40:42 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -16,7 +16,7 @@ option		INTELLIMOUSE	# pms support for MS IntelliMouse
 
 maxusers	16		# estimated number of users
 option		TIMEZONE=300	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
+option		DST=1		# daylight savings time used by RTC
 option		NTP		# High precision timekeeping support 
 
 option		SWAPPAGER	# paging; REQUIRED
@@ -77,13 +77,13 @@ option		IPFILTER_LOG	# use /dev/ipl
 #option		CCITT,LLC,HDLC	# X.25
 #option		"NMBCLUSTERS=1024"
 
-config		bsd	root on wd0 swap on wd0 and sd0 dumps on sd0
+config		bsd	root on wd0 swap on wd0 and sd0 and sd1 dumps on sd0
 
 mainbus0 at root
 
 bios0	at mainbus0
 isa0	at mainbus0			# ISA and VL bus systems
-pci0	at mainbus0 bus ?
+pci*	at mainbus0 bus ?
 isadma0	at isa?
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
@@ -120,8 +120,9 @@ acd*	at atapibus? drive?
 
 de*	at pci? dev ? function ?	# DC21X4X-based ethernet cards
 
-sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
 spkr0	at pckbd? port 0x61		# built-in speaker
+sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
+audio*  at sb?
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	bpfilter 4		# packet filter (used by rarpd)
