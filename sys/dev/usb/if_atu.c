@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.13 2004/11/12 12:12:29 deraadt Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.14 2004/11/15 09:59:17 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -650,6 +650,9 @@ atu_initial_config(struct atu_softc *sc)
 	if (err) {
 		DPRINTF(("%s: could not get regdomain!\n",
 		    USBDEVNAME(sc->atu_dev)));
+	} else {
+		DPRINTF(("%s: we're in reg domain 0x%x according to the "
+		    "adapter\n", USBDEVNAME(sc->atu_dev), reg_domain));
 	}
 
 #ifdef ATU_DEBUG
@@ -1459,7 +1462,7 @@ atu_mgmt_state_machine(struct atu_softc *sc)
 		if (err) {
 			if (vars->retry++ > ATU_IBSS_RETRIES)
 				vars->state = STATE_GIVEN_UP;
-			DPRINTF(("atu:%d: error creating IBSS...\n",
+			DPRINTF(("%s: error creating IBSS...\n",
 			    USBDEVNAME(sc->atu_dev)));
 		} else {
 			vars->state = STATE_HAPPY_NETWORKING;
@@ -1471,9 +1474,7 @@ atu_mgmt_state_machine(struct atu_softc *sc)
 		 *
 		 * TODO:
 		 * we should bounce back to previous states from here
-		 * on beacon timeout, disassociate or deauthenticate
-		 *
-		 * (but none of that has been implemented at this time)
+		 * on beacon timeout.
 		 */
 		break;
 	case STATE_GIVEN_UP:
@@ -2104,7 +2105,7 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 
 		deauth = (struct wi_mgmt_deauth_hdr *)pkt->WiHeader.addr4;
 
-		DPRINTF(("autiw%d: de-authentication reason: %04x\n",
+		DPRINTF(("%s: de-authentication reason: %04x\n",
 		    USBDEVNAME(sc->atu_dev), deauth->wi_reason));
 
 		/* TODO: should check bssid & mac ! */
@@ -2140,7 +2141,7 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 
 		deassoc = (struct wi_mgmt_disas_hdr *)pkt->WiHeader.addr4;
 
-		DPRINTF(("autiw%d: de-association reason: %04x\n",
+		DPRINTF(("%s: de-association reason: %04x\n",
 		    USBDEVNAME(sc->atu_dev), deassoc->wi_reason));
 
 		/* TODO: should check bssid & mac ! */
@@ -2201,7 +2202,7 @@ atu_handle_mgmt_packet(struct atu_softc *sc, struct atu_rxpkt *pkt)
 		    "yes" : "no"));
 
 #ifdef ATU_DEBUG
-		if (atudebug & FLAG_BEACONSFULL)
+		if (atudebug > 18)
 			atu_print_beacon(sc, pkt);
 #endif
 		if (!(sc->atu_mgmt_flags & ATU_SEARCHING))
