@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.11 1999/03/23 16:36:18 millert Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.12 1999/10/26 03:43:48 downsj Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -88,9 +88,15 @@ struct cpu_disklabel {
 #define	DPSECT(s)	((s) & 0x3f)
 #define	DPCYL(c, s)	((c) + (((s) & 0xc0) << 2))
 
+static __inline u_int32_t get_le __P((void *p));
+
 static __inline u_int32_t
+#ifdef __cplusplus
+get_le(void *p)
+#else
 get_le(p)
 	void *p;
+#endif
 {
 	u_int32_t c;
 	u_int8_t *_p = (u_int8_t *)p;
