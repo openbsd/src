@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_if.c,v 1.4 2003/12/31 22:14:42 deraadt Exp $ */
+/*	$OpenBSD: pf_if.c,v 1.5 2004/01/07 19:58:54 markus Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -611,6 +611,7 @@ pfi_maybe_destroy(struct pfi_kif *p)
 	RB_REMOVE(pfi_ifhead, &pfi_ifs, p);
 	splx(s);
 
+	free(p->pfik_ah_head, PFI_MTYPE);
 	free(p, PFI_MTYPE);
 	return (1);
 }
