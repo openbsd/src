@@ -4195,7 +4195,7 @@ ret_from_intr_vector:
  *       IRQ# = %tt - 0x40
  */
 
-	.comm	_C_LABEL(intrhand), 15 * PTRSZ	! intrhand[0..14]; 0 => error
+	.comm	_C_LABEL(intrhand), 16 * PTRSZ	! intrhand[0..14]; 0 => error
 	.globl _C_LABEL(sparc_interrupt)	! This is for interrupt debugging
 _C_LABEL(sparc_interrupt):
 #ifdef TRAPS_USE_IG
