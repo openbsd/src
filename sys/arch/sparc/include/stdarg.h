@@ -1,4 +1,4 @@
-/*	$NetBSD: stdarg.h,v 1.8 1995/12/25 23:15:38 mycroft Exp $ */
+/*	$NetBSD: stdarg.h,v 1.9 1995/12/29 18:53:01 mycroft Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,12 +54,12 @@ typedef _BSD_VA_LIST_	va_list;
 #define	__va_size(type) \
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
-#ifdef __GCC_NEW_VARARGS__
+#if __GNUC__ > 2 || __GNUC_MINOR__ >= 6
 #define	va_start(ap, last) \
 	(__builtin_next_arg(last), (ap) = (va_list)__builtin_saveregs())
 #else
 #define	va_start(ap, last) \
-	(__builtin_saveregs(), (ap) = (va_list)__builtin_next_arg(last))
+	(__builtin_next_arg(), (ap) = (va_list)__builtin_saveregs())
 #endif
 
 /*
