@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_svcout.c,v 1.2 1996/06/26 05:38:40 deraadt Exp $	*/
+/*	$OpenBSD: rpc_svcout.c,v 1.3 2001/01/11 19:24:24 deraadt Exp $	*/
 /*	$NetBSD: rpc_svcout.c,v 1.7 1995/06/24 14:59:59 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -647,8 +647,8 @@ write_timeout_func()
 	f_print(fout, "closedown()\n");
 	f_print(fout, "{\n");
 	f_print(fout, "\tif (_rpcsvcdirty == 0) {\n");
-	f_print(fout, "\t\textern fd_set svc_fdset;\n");
-	f_print(fout, "\t\tstatic int size;\n");
+	f_print(fout, "\t\textern fd_set *__svc_fdset;\n");
+	f_print(fout, "\t\textern int __svc_fdsetsize;\n");
 	f_print(fout, "\t\tint i, openfd;\n");
 	if (tirpcflag && pmflag) {
 		f_print(fout, "\t\tstruct t_info tinfo;\n\n");
@@ -657,19 +657,8 @@ write_timeout_func()
 		f_print(fout, "\n\t\tif (_rpcfdtype == SOCK_DGRAM)\n");
 	}
 	f_print(fout, "\t\t\texit(0);\n");
-	f_print(fout, "\t\tif (size == 0) {\n");
-	if( tirpcflag ) {
-	  f_print(fout, "\t\t\tstruct rlimit rl;\n\n");
-	  f_print(fout, "\t\t\trl.rlim_max = 0;\n");
-	  f_print(fout, "\t\t\tgetrlimit(RLIMIT_NOFILE, &rl);\n");
-	  f_print(fout, "\t\t\tif ((size = rl.rlim_max) == 0)\n");
-	  f_print(fout, "\t\t\t\treturn;\n");
-	} else {
-	  f_print(fout, "\t\t\tsize = getdtablesize();\n");
-	}
-	f_print(fout, "\t\t}\n");
-	f_print(fout, "\t\tfor (i = 0, openfd = 0; i < size && openfd < 2; i++)\n");
-	f_print(fout, "\t\t\tif (FD_ISSET(i, &svc_fdset))\n");
+	f_print(fout, "\t\tfor (i = 0, openfd = 0; i < __svc_fdsetsize && openfd < 2; i++)\n");
+	f_print(fout, "\t\t\tif (FD_ISSET(i, __svc_fdset))\n");
 	f_print(fout, "\t\t\t\topenfd++;\n");
 	f_print(fout, "\t\tif (openfd <= (_rpcpmstart?0:1))\n");
 	f_print(fout, "\t\t\texit(0);\n");
