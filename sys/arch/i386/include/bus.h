@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.10 1998/01/20 18:40:17 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.11 1998/02/08 04:14:13 niklas Exp $	*/
 /*	$NetBSD: bus.h,v 1.6 1996/11/10 03:19:25 thorpej Exp $	*/
 
 /*-
@@ -748,6 +748,7 @@ void	bus_space_free __P((bus_space_tag_t t, bus_space_handle_t bsh,
 
 /* Forwards needed by prototypes below. */
 struct mbuf;
+struct proc;
 struct uio;
 
 /*
