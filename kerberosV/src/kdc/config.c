@@ -76,9 +76,6 @@ int enable_v4_cross_realm = -1;
 int enable_kaserver = -1;
 #endif
 
-int enable_524 = -1;
-int enable_v4_cross_realm = -1;
-
 static int help_flag;
 static int version_flag;
 

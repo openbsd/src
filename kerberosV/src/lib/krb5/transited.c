@@ -181,7 +181,6 @@ expand_realms(krb5_context context,
 	}else if(r->leading_slash && !r->leading_space && prev_realm){
 	    /* yet another exception: if you use x500-names, the
                leading realm doesn't have to be "quoted" with a space */
-	    size_t len = strlen(r->realm) + strlen(prev_realm) + 1;
 	    char *tmp;
 	    size_t len = strlen(r->realm) + strlen(prev_realm) + 1;
 

@@ -33,7 +33,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-RCSID("$Id: afslog.c,v 1.4 2003/05/11 03:39:59 hin Exp $");
+RCSID("$Id: afslog.c,v 1.5 2003/05/11 04:12:44 hin Exp $");
 #endif
 #include <ctype.h>
 #ifdef KRB5
@@ -116,8 +116,10 @@ expand_cell_name(const char *cell)
     const char *c;
     const char **fn, *files[] = { _PATH_CELLSERVDB,
 				  _PATH_ARLA_CELLSERVDB,
+#if 0
 				  _PATH_OPENAFS_DEBIAN_CELLSERVDB,
 				  _PATH_ARLA_DEBIAN_CELLSERVDB,
+#endif
 				  NULL };
     for(fn = files; *fn; fn++) {
 	f = fopen(*fn, "r");
