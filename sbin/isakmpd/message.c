@@ -1,4 +1,4 @@
-/*	$OpenBSD: message.c,v 1.44 2001/07/01 06:10:34 angelos Exp $	*/
+/*	$OpenBSD: message.c,v 1.45 2001/07/01 20:43:39 niklas Exp $	*/
 /*	$EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include "doi.h"
 #include "exchange.h"
 #include "field.h"
+#include "ipsec_num.h"
 #include "isakmp.h"
 #include "log.h"
 #include "message.h"
@@ -78,6 +79,7 @@ static int message_index_payload (struct message *, struct payload *, u_int8_t,
 				  u_int8_t *);
 static int message_parse_transform (struct message *, struct payload *,
 				    u_int8_t, u_int8_t *);
+static int message_validate_attribute (struct message *, struct payload *);
 static int message_validate_cert (struct message *, struct payload *);
 static int message_validate_cert_req (struct message *, struct payload *);
 static int message_validate_delete (struct message *, struct payload *);
@@ -100,14 +102,14 @@ static int (*message_validate_payload[]) (struct message *, struct payload *) =
   message_validate_key_exch, message_validate_id, message_validate_cert,
   message_validate_cert_req, message_validate_hash, message_validate_sig,
   message_validate_nonce, message_validate_notify, message_validate_delete,
-  message_validate_vendor
+  message_validate_vendor, message_validate_attribute
 };
 
 static struct field *fields[] = {
   isakmp_sa_fld, isakmp_prop_fld, isakmp_transform_fld, isakmp_ke_fld,
   isakmp_id_fld, isakmp_cert_fld, isakmp_certreq_fld, isakmp_hash_fld,
   isakmp_sig_fld, isakmp_nonce_fld, isakmp_notify_fld, isakmp_delete_fld,
-  isakmp_vendor_fld
+  isakmp_vendor_fld, isakmp_attribute_fld
 };
 
 /*
@@ -361,6 +363,30 @@ message_parse_transform (struct message *msg, struct payload *p,
 		 msg->exchange->doi->debug_attribute, msg);
 #endif
 
+  return 0;
+}
+
+/* Validate the attribute payload P in message MSG.  */
+static int
+message_validate_attribute (struct message *msg, struct payload *p)
+{
+#ifdef USE_ISAKMP_CFG
+  /* If we don't have an exchange yet, create one.  */
+  if (!msg->exchange)
+    {
+      if (zero_test (msg->iov[0].iov_base + ISAKMP_HDR_MESSAGE_ID_OFF,
+		     ISAKMP_HDR_MESSAGE_ID_LEN))
+	msg->exchange = exchange_setup_p1 (msg, IPSEC_DOI_IPSEC);
+      else
+	msg->exchange = exchange_setup_p2 (msg, IPSEC_DOI_IPSEC);
+      if (!msg->exchange)
+	{
+	  log_print ("message_validate_attribute: can not create exchange");
+	  message_free (msg);
+	  return -1;
+	}
+    }
+#endif
   return 0;
 }
 
@@ -1033,7 +1059,7 @@ message_recv (struct message *msg)
 
   if (flags & ISAKMP_FLAGS_ENC)
     {
-      if (msg->isakmp_sa == NULL)
+      if (!msg->isakmp_sa)
 	{
 	  LOG_DBG ((LOG_MISC, 10,
 		    "message_recv: no isakmp_sa for encrypted message"));

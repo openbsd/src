@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.38 2001/05/31 20:21:37 angelos Exp $
+#	$OpenBSD: Makefile,v 1.39 2001/07/01 20:43:39 niklas Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
-# Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
+# Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
 # Copyright (c) 2000, 2001 Håkan Olsson.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -53,9 +53,9 @@ OS=		openbsd
 
 # Compile-time configuration of otherwise optional features
 #FEATURES=	tripledes des blowfish cast policy x509 ec aggressive debug gmp
-#FEATURES+=	dnssec
+#FEATURES+=	isakmp_cfg dnssec
 FEATURES=	tripledes des blowfish cast policy x509 ec aggressive debug
-#FEATURES+=
+#FEATURES=
 
 .PATH:		${.CURDIR}/sysdep/${OS}
 
@@ -124,6 +124,9 @@ CFLAGS+=	-Wall -DNEED_SYSDEP_APP \
 #		  strcpy (_y_, _x_); \
 #		})'
 
+# Enable this if you have a DNSSEC enabled OpenSSL
+#LWRESLIB=	/usr/local/lib/liblwres.a
+
 SUBDIR=		apps
 
 .include "sysdep/${OS}/Makefile.sysdep"
@@ -173,7 +176,8 @@ LDADD+=		-lcrypto
 DPADD+=		${LIBCRYPTO}
 .endif
 
-SRCS+=		${IPSEC_SRCS} ${X509} ${POLICY} ${EC} ${AGGRESSIVE} ${DNSSEC}
+SRCS+=		${IPSEC_SRCS} ${X509} ${POLICY} ${EC} ${AGGRESSIVE} ${DNSSEC} \
+		${ISAKMP_CFG}
 CFLAGS+=	${IPSEC_CFLAGS} ${DNSSEC_CFLAGS}
 
 LDADD+=		${DESLIB} ${LWRESLIB}

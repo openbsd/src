@@ -1,8 +1,8 @@
-#	$OpenBSD: isakmp_fld.fld,v 1.5 1999/04/27 21:14:30 niklas Exp $
+#	$OpenBSD: isakmp_fld.fld,v 1.6 2001/07/01 20:43:39 niklas Exp $
 #	$EOM: isakmp_fld.fld,v 1.5 1999/04/25 13:38:22 niklas Exp $
 
 #
-# Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+# Copyright (c) 1998, 2001 Niklas Hallqvist.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -146,4 +146,12 @@ ISAKMP_DELETE : ISAKMP_GEN
 # Vendor ID payload.
 ISAKMP_VENDOR : ISAKMP_GEN
   ID			raw
+.
+
+# Attribute payload.
+ISAKMP_ATTRIBUTE : ISAKMP_GEN
+  TYPE			num 1		isakmp_cfg_cst
+  RESERVED		ign 1
+  ID			num 2
+  ATTRS			raw
 .

@@ -1,8 +1,8 @@
-/*	$OpenBSD: ipsec.h,v 1.17 2001/06/29 04:12:00 ho Exp $	*/
+/*	$OpenBSD: ipsec.h,v 1.18 2001/07/01 20:43:39 niklas Exp $	*/
 /*	$EOM: ipsec.h,v 1.42 2000/12/03 07:58:20 angelos Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
  *
@@ -39,9 +39,14 @@
 #ifndef _IPSEC_H_
 #define _IPSEC_H_
 
+#include <sys/queue.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 
 #include "ipsec_doi.h"
+#ifdef USE_ISAKMP_CFG
+#include "isakmp_cfg.h"
+#endif
 
 struct group;
 struct hash;
@@ -52,8 +57,9 @@ struct sa;
 
 /*
  * IPsec-specific data to be linked into the exchange struct.
- * XXX Should probably be two different structs, one for phase 1 and one
- * for phase 2 parameters.
+ * XXX Should probably be several different structs, one for each kind
+ * of exchange, i.e. phase 1, phase 2 and ISAKMP configuration parameters
+ * separated.
  */
 struct ipsec_exch {
   u_int flags;
@@ -61,7 +67,9 @@ struct ipsec_exch {
   struct ike_auth *ike_auth;
   struct group *group;
   u_int16_t prf_type;
-  u_int8_t  pfs;	/* 0 if no KEY_EXCH was proposed, 1 otherwise */
+
+  /* 0 if no KEY_EXCH was proposed, 1 otherwise */
+  u_int8_t pfs;
 
   /*
    * A copy of the initiator SA payload body for later computation of hashes.
@@ -95,6 +103,12 @@ struct ipsec_exch {
   size_t id_ci_sz;
   u_int8_t *id_cr;
   size_t id_cr_sz;
+
+#ifdef USE_ISAKMP_CFG
+  /* ISAKMP configuration mode parameters */
+  u_int16_t cfg_id;
+  LIST_HEAD (, isakmp_cfg_attr) attrs;
+#endif
 };
 
 #define IPSEC_EXCH_FLAG_NO_ID 1

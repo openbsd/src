@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2001/01/27 12:03:38 niklas Exp $
+#	$OpenBSD: Makefile,v 1.13 2001/07/01 20:43:40 niklas Exp $
 #	$EOM: Makefile,v 1.16 2000/09/28 12:53:27 niklas Exp $
 
 #
@@ -36,6 +36,9 @@
 #
 
 # Test X509
+
+# Enable this if you have a DNSSEC enabled OpenSSL
+#LIBLWRES=	/usr/local/lib/liblwres.a
 
 PROG=		x509test
 SRCS=		x509test.c conf.c log.c libcrypto.c sysdep.c field.c util.c \
@@ -79,7 +82,7 @@ CFLAGS+=	-DUSE_KEYNOTE
 .ifdef USE_LIBCRYPTO
 X509=		x509.c
 CFLAGS+=	-DUSE_LIBCRYPTO
-LDADD+=		-lcrypto
+LDADD+=		-lcrypto ${LIBLWRES}
 DPADD+=		${LIBCRYPTO}
 .endif
 

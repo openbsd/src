@@ -1,4 +1,4 @@
-$OpenBSD: TO-DO,v 1.22 2001/06/27 03:31:40 angelos Exp $
+$OpenBSD: TO-DO,v 1.23 2001/07/01 20:43:39 niklas Exp $
 $EOM: TO-DO,v 1.45 2000/04/07 22:47:38 niklas Exp $
 
 This file mixes small nitpicks with large projects to be done.
@@ -118,7 +118,7 @@ This file mixes small nitpicks with large projects to be done.
 
 * Base mode.
 
-* IKECFG
+* IKECFG [protocol done, configuration controls remain]
 
 * XAUTH framework.
 
@@ -134,10 +134,12 @@ This file mixes small nitpicks with large projects to be done.
 
 * Replace ui's fifo with a slightly more versatile interface.
 
-* Report current configuration.
+* Report current configuration. [done]
 
-* IPv6
+* IPv6 [done]
 
 * AES in phase 1
 
 * x509_certreq_validate needs implementing.
+
+* Smartcard support.

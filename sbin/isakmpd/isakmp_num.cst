@@ -1,8 +1,8 @@
-#	$OpenBSD: isakmp_num.cst,v 1.4 2000/06/08 20:49:37 niklas Exp $
+#	$OpenBSD: isakmp_num.cst,v 1.5 2001/07/01 20:43:39 niklas Exp $
 #	$EOM: isakmp_num.cst,v 1.3 2000/05/17 03:09:50 angelos Exp $
 
 #
-# Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+# Copyright (c) 1998, 2001 Niklas Hallqvist.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -55,7 +55,9 @@ ISAKMP_PAYLOAD
   NOTIFY			11
   DELETE			12
   VENDOR			13
-  RESERVED_MIN			14
+# XXX the following is not quite legitimate according to the IETF process
+  ATTRIBUTE			14
+  RESERVED_MIN			15
   RESERVED_MAX			127
   PRIVATE_MIN			128
   PRIVATE_MAX			255
@@ -69,7 +71,9 @@ ISAKMP_EXCH
   AUTH_ONLY			3
   AGGRESSIVE			4
   INFO				5
-  FUTURE_MIN			6
+# XXX the following is not quite legitimate according to the IETF process
+  TRANSACTION			6
+  FUTURE_MIN			7
   FUTURE_MAX			31
   DOI_MIN			32
   DOI_MAX			255
@@ -155,4 +159,39 @@ ISAKMP_DOI
 # ISAKMP Protocol ID.
 ISAKMP_PROTO
   ISAKMP		1
+.
+
+# ISAKMP transaction message type.
+ISAKMP_CFG
+  REQUEST		1
+  REPLY			2
+  SET			3
+  ACK			4
+  FUTURE_MIN		5
+  FUTURE_MAX		127
+  PRIVATE_MIN		128
+  PRIVATE_MAX		255
+.
+
+# ISAKMP configuration attributes.
+ISAKMP_CFG_ATTR
+  INTERNAL_IP4_ADDRESS		1
+  INTERNAL_IP4_NETMASK		2
+  INTERNAL_IP4_DNS		3
+  INTERNAL_IP4_NBNS		4
+  INTERNAL_ADDRESS_EXPIRY	5
+  INTERNAL_IP4_DHCP		6
+  APPLICATION_VERSION		7
+  INTERNAL_IP6_ADDRESS		8
+  INTERNAL_IP6_NETMASK		9
+  INTERNAL_IP6_DNS		10
+  INTERNAL_IP6_NBNS		11
+  INTERNAL_IP6_DHCP		12
+  INTERNAL_IP4_SUBNET		13
+  SUPPORTED_ATTRIBUTES		14
+  INTERNAL_IP6_SUBNET		15
+  FUTURE_MIN			16
+  FUTURE_MAX			16383
+  PRIVATE_MIN			16384
+  PRIVATE_MAX			32767
 .

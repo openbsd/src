@@ -1,8 +1,8 @@
-/*	$OpenBSD: isakmp_doi.c,v 1.12 2001/06/27 03:31:41 angelos Exp $	*/
+/*	$OpenBSD: isakmp_doi.c,v 1.13 2001/07/01 20:43:39 niklas Exp $	*/
 /*	$EOM: isakmp_doi.c,v 1.42 2000/09/12 16:29:41 ho Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -254,6 +254,11 @@ isakmp_responder (struct message *msg)
 	  p->flags |= PL_MARK;
 	}
       return 0;
+
+#ifdef USE_ISAKMP_CFG
+    case ISAKMP_EXCH_TRANSACTION:
+      /* return 0 isakmp_cfg_responder (msg); */
+#endif /* USE_ISAKMP_CFG */
 
     default:
       /* XXX So far we don't accept any proposals.  */

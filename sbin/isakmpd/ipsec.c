@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.51 2001/07/01 14:17:06 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.52 2001/07/01 20:43:39 niklas Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -61,6 +61,9 @@
 #include "ipsec.h"
 #include "ipsec_doi.h"
 #include "isakmp.h"
+#include "isakmp_cfg.h"
+#include "isakmp_fld.h"
+#include "isakmp_num.h"
 #include "log.h"
 #include "math_group.h"
 #include "message.h"
@@ -541,6 +544,9 @@ static void
 ipsec_free_exchange_data (void *vie)
 {
   struct ipsec_exch *ie = vie;
+#ifdef USE_ISAKMP_CFG
+  struct isakmp_cfg_attr *attr;
+#endif
 
   if (ie->sa_i_b)
     free (ie->sa_i_b);
@@ -568,6 +574,15 @@ ipsec_free_exchange_data (void *vie)
     free (ie->hash_r);
   if (ie->group)
     group_free (ie->group);
+#ifdef USE_ISAKMP_CFG
+  for (attr = LIST_FIRST (&ie->attrs); attr; attr = LIST_FIRST (&ie->attrs))
+    {
+      LIST_REMOVE (attr, link);
+      if (attr->length)
+	free (attr->value);
+      free (attr);
+    }
+#endif
 }
 
 /* Free the DOI-specific SA data pointed to by VISA.  */
@@ -608,6 +623,10 @@ ipsec_exchange_script (u_int8_t type)
 {
   switch (type)
     {
+#ifdef USE_ISAKMP_CFG
+    case ISAKMP_EXCH_TRANSACTION:
+      return script_transaction;
+#endif
     case IKE_EXCH_QUICK_MODE:
       return script_quick_mode;
     case IKE_EXCH_NEW_GROUP_MODE:
@@ -860,11 +879,12 @@ ipsec_initiator (struct message *msg)
   int (**script) (struct message *msg) = 0;
 
   /* Check that the SA is coherent with the IKE rules.  */
-  if ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
-       && exchange->type != ISAKMP_EXCH_AGGRESSIVE
-       && exchange->type != ISAKMP_EXCH_INFO)
-      || (exchange->phase == 2 && exchange->type != IKE_EXCH_QUICK_MODE
-	  && exchange->type != ISAKMP_EXCH_INFO))
+  if (exchange->type != ISAKMP_EXCH_TRANSACTION
+      && ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
+	   && exchange->type != ISAKMP_EXCH_AGGRESSIVE
+	   && exchange->type != ISAKMP_EXCH_INFO)
+	  || (exchange->phase == 2 && exchange->type != IKE_EXCH_QUICK_MODE
+	      && exchange->type != ISAKMP_EXCH_INFO)))
     {
       log_print ("ipsec_initiator: unsupported exchange type %d in phase %d",
 		 exchange->type, exchange->phase);
@@ -879,6 +899,11 @@ ipsec_initiator (struct message *msg)
 #ifdef USE_AGGRESSIVE
     case ISAKMP_EXCH_AGGRESSIVE:
       script = ike_aggressive_initiator;
+      break;
+#endif
+#ifdef USE_ISAKMP_CFG
+    case ISAKMP_EXCH_TRANSACTION:
+      script = isakmp_cfg_initiator;
       break;
 #endif
     case ISAKMP_EXCH_INFO:
@@ -995,7 +1020,7 @@ ipsec_responder (struct message *msg)
   u_int16_t type;
 
   /* Check that a new exchange is coherent with the IKE rules.  */
-  if (exchange->step == 0
+  if (exchange->step == 0 && exchange->type != ISAKMP_EXCH_TRANSACTION
       && ((exchange->phase == 1 && exchange->type != ISAKMP_EXCH_ID_PROT
 	   && exchange->type != ISAKMP_EXCH_AGGRESSIVE
 	   && exchange->type != ISAKMP_EXCH_INFO)
@@ -1017,6 +1042,12 @@ ipsec_responder (struct message *msg)
 #ifdef USE_AGGRESSIVE
     case ISAKMP_EXCH_AGGRESSIVE:
       script = ike_aggressive_responder;
+      break;
+#endif
+
+#ifdef USE_ISAKMP_CFG
+    case ISAKMP_EXCH_TRANSACTION:
+      script = isakmp_cfg_responder;
       break;
 #endif
 
@@ -1943,22 +1974,21 @@ ipsec_build_id (char *section, size_t *sz)
 /*
  * copy an ISAKMPD id
  */
-
 int
 ipsec_clone_id (u_int8_t **did, size_t *did_len, u_int8_t *id, size_t id_len)
 {
   if (*did)
     free (*did);
 
-  if (!id_len || id == NULL)
+  if (!id_len || !id)
     {
-      *did = NULL;
+      *did = 0;
       *did_len = 0;
       return 0;
     }
 
   *did = malloc (id_len);
-  if (*did == NULL)
+  if (!*did)
     {
       *did_len = 0;
       log_error ("ipsec_clone_id: malloc(%d) failed", id_len);
@@ -2233,6 +2263,14 @@ ipsec_id_size (char *section, u_int8_t *id)
 	  return -1;
 	}
       return strlen (data);
+    case IPSEC_ID_DER_ASN1_DN:
+      data = conf_get_str (section, "Name");
+      if (!data)
+	{
+	  log_print ("ipsec_id_size: section %s has no \"Name\" tag", section);
+	  return -1;
+	}
+      break;
     }
   log_print ("ipsec_id_size: unrecognized ID-type %d (%s)", *id, type);
   return -1;
