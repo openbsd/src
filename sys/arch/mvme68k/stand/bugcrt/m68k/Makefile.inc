@@ -1,1 +1,0 @@
-CFLAGS+=-fomit-frame-pointer

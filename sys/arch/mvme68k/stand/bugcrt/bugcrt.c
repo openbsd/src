@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugcrt.c,v 1.4 1996/05/07 03:06:15 rahnds Exp $ */
+/*	$OpenBSD: bugcrt.c,v 1.1 1996/05/10 18:39:15 deraadt Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -10,14 +10,14 @@ struct mvmeprom_args bugargs = { 1 };	/* not in BSS */
 	asm (".long _start");
 start()
 {
-	register int dev_lun asm ("d0");
-	register int ctrl_lun asm ("d1");
-	register int flags asm ("d4");
-	register int ctrl_addr asm ("a0");
-	register int entry asm ("a1");
-	register int conf_blk asm ("a2");
-	register char *arg_start asm ("a5");
-	register char *arg_end asm ("a6");
+	register int dev_lun asm (MVMEPROM_REG_DEVLUN);
+	register int ctrl_lun asm (MVMEPROM_REG_CTRLLUN);
+	register int flags asm (MVMEPROM_REG_FLAGS);
+	register int ctrl_addr asm (MVMEPROM_REG_CTRLADDR);
+	register int entry asm (MVMEPROM_REG_ENTRY);
+	register int conf_blk asm (MVMEPROM_REG_CONFBLK);
+	register char *arg_start asm (MVMEPROM_REG_ARGSTART);
+	register char *arg_end asm (MVMEPROM_REG_ARGEND);
 	extern int edata, end;
 
 	bugargs.dev_lun = dev_lun;
