@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sgi,v 1.6 2004/09/15 16:59:30 matthieu Exp $
+#	$OpenBSD: Makefile.sgi,v 1.7 2004/09/20 10:43:17 miod Exp $
 
 # Makefile for OpenBSD
 #
@@ -22,13 +22,17 @@
 # DEBUG is set to -g if debugging
 # PROF is set to -pg if profiling
 
+.include <bsd.own.mk>
+
 AS?=	as
 CC?=	cc
 MKDEP?=	mkdep
+SIZE?=	size
 CPP?=	cpp
 LD?=	ld ${ENDIAN}
 STRIP?=	strip
 TOUCH?=	touch
+
 CPP+=${ENDIAN}
 CC+=${ENDIAN}
 AS+=${ENDIAN}
@@ -41,15 +45,19 @@ S!=	cd ../../../..; pwd
 SGI=$S/arch/sgi
 MIPS64=	$S/arch/mips64
 
-INCLUDES=	-I. -I$S/arch -I$S
+INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -D__sgi__
-
 CDIAGFLAGS=	-Werror -Wall -Wmissing-prototypes -Wstrict-prototypes \
 		-Wno-uninitialized -Wno-format -Wno-main
-
-CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} -mno-abicalls ${ABI} \
-		${COPTS} -msoft-float -fno-builtin
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -mno-abicalls ${ABI} -D_LOCORE
+CMACHFLAGS+=	-mno-abicalls ${ABI} -msoft-float \
+		-fno-builtin-printf -fno-builtin-log
+.if ${IDENT:M-DNO_PROPOLICE}
+CMACHFLAGS+=	-fno-stack-protector
+.endif
+COPTS?=		-O2
+CFLAGS=		${DEBUG} ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS} ${PIPE}
+AFLAGS=		-x assembler-with-cpp -traditional-cpp \
+		-mno-abicalls ${ABI} -D_LOCORE
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -67,20 +75,8 @@ LIBCOMPAT=	${COMPATLIB}
 LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
-# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
-# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
-# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
-# is marked as config-dependent.
-
-USRLAND_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-USRLAND_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
-DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S_C=	${AS}  ${COPTS} ${PARAM} $< -o $@
 
@@ -111,7 +107,7 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 			${SYSTEM_OBJ} vers.o
 #
 SYSTEM_LD_TAIL=	chmod 755 $@; \
-		size $@
+		${SIZE} $@
 
 %LOAD
 
@@ -131,13 +127,12 @@ symbols.sort: ${SGI}/sgi/symbols.raw
 	grep -v '^#' ${SGI}/sgi/symbols.raw \
 	    | sed 's/^	//' | sort -u > symbols.sort
 
-locore.o: ${SGI}/sgi/locore.S ${MIPS64}/include/asm.h \
-	${MIPS64}/include/cpu.h ${MIPS64}/include/reg.h assym.h
-	${NORMAL_S} ${ISALEV} ${SGI}/sgi/locore.S
+locore.o: ${SGI}/sgi/locore.S assym.h
+	${NORMAL_S}
 
 # the following are necessary because the files depend on the types of
 # cpu's included in the system configuration
-clock.o machdep.o autoconf.o conf.o: Makefile
+clock.o machdep.o autoconf.o conf.o locore.o: Makefile
 
 # depend on network configuration
 uipc_domain.o uipc_proto.o vfs_conf.o: Makefile
@@ -145,7 +140,6 @@ if_tun.o if_loop.o if_ethersubr.o: Makefile
 if_arp.o if_ether.o: Makefile
 ip_input.o ip_output.o in_pcb.o in_proto.o: Makefile
 tcp_subr.o tcp_timer.o tcp_output.o: Makefile
-
 
 assym.h: $S/kern/genassym.sh ${SGI}/sgi/genassym.cf Makefile
 	sh $S/kern/genassym.sh ${CC} ${CFLAGS} ${CPPFLAGS} \
