@@ -2139,6 +2139,7 @@
 ./usr/share/man/ps1/sparc64
 ./usr/share/man/ps1/vax
 ./usr/share/man/ps2
+./usr/share/man/ps2/alpha
 ./usr/share/man/ps2/i386
 ./usr/share/man/ps3
 ./usr/share/man/ps3/alpha
