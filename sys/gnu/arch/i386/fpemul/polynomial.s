@@ -1,4 +1,4 @@
-/*	$OpenBSD: polynomial.s,v 1.1 1996/08/27 10:32:56 downsj Exp $	*/
+/*	$OpenBSD: polynomial.s,v 1.2 2002/10/12 07:12:58 pvalchev Exp $	*/
 /*
  *  polynomial.S
  *
@@ -82,9 +82,13 @@
 
 
 .text
+#ifdef __ELF__
+	.align 4,144
+#else
 	.align 2,144
-.globl _polynomial
-_polynomial:
+#endif
+.globl _C_LABEL(polynomial)
+_C_LABEL(polynomial):
 	pushl	%ebp
 	movl	%esp,%ebp
 	subl	$32,%esp

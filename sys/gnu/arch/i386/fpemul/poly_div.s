@@ -1,5 +1,5 @@
 	.file	"poly_div.S"
-/*	$OpenBSD: poly_div.s,v 1.1 1996/08/27 10:32:53 downsj Exp $	*/
+/*	$OpenBSD: poly_div.s,v 1.2 2002/10/12 07:12:58 pvalchev Exp $	*/
 /*
  *  poly_div.S
  *
@@ -69,9 +69,13 @@
 .text
 
 /*---------------------------------------------------------------------------*/
+#ifdef __ELF__
+	.align 4,144
+#else
 	.align 2,144
-.globl _poly_div2
-_poly_div2:
+#endif
+.globl _C_LABEL(poly_div2)
+_C_LABEL(poly_div2):
 	pushl %ebp
 	movl %esp,%ebp
 
@@ -91,9 +95,13 @@ poly_div2_exit:
 	leave
 	ret
 /*---------------------------------------------------------------------------*/
+#ifdef __ELF__
+	.align 4,144
+#else
 	.align 2,144
-.globl _poly_div4
-_poly_div4:
+#endif
+.globl _C_LABEL(poly_div4)
+_C_LABEL(poly_div4):
 	pushl %ebp
 	movl %esp,%ebp
 
@@ -118,9 +126,13 @@ poly_div4_exit:
 	leave
 	ret
 /*---------------------------------------------------------------------------*/
+#ifdef __ELF__
+	.align 4,144
+#else
 	.align 2,144
-.globl _poly_div16
-_poly_div16:
+#endif
+.globl _C_LABEL(poly_div16)
+_C_LABEL(poly_div16):
 	pushl %ebp
 	movl %esp,%ebp
 

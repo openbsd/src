@@ -1,5 +1,5 @@
 	.file	"reg_u_mul.S"
-/*	$OpenBSD: reg_u_mul.s,v 1.1 1996/08/27 10:33:02 downsj Exp $	*/
+/*	$OpenBSD: reg_u_mul.s,v 1.2 2002/10/12 07:12:59 pvalchev Exp $	*/
 /*
  *  reg_u_mul.S
  *
@@ -80,7 +80,11 @@
 
 
 .data
+#ifdef __ELF__
+	.align 4,0
+#else
 	.align 2,0
+#endif
 accum_0:
 	.long	0
 accum_1:
@@ -88,10 +92,14 @@ accum_1:
 
 
 .text
+#ifdef __ELF__
+	.align 4,144
+#else
 	.align 2,144
+#endif
 
-.globl _reg_u_mul
-_reg_u_mul:
+.globl _C_LABEL(reg_u_mul)
+_C_LABEL(reg_u_mul):
 	pushl	%ebp
 	movl	%esp,%ebp
 	pushl	%esi
@@ -113,7 +121,7 @@ _reg_u_mul:
 	cmpl	EXP_UNDER,%eax
 	jg	xOp1_not_denorm
 
-	call	_denormal_operand
+	call	_C_LABEL(denormal_operand)
 	orl	%eax,%eax
 	jnz	FPU_Arith_exit
 
@@ -122,7 +130,7 @@ xOp1_not_denorm:
 	cmpl	EXP_UNDER,%eax
 	jg	xOp2_not_denorm
 
-	call	_denormal_operand
+	call	_C_LABEL(denormal_operand)
 	orl	%eax,%eax
 	jnz	FPU_Arith_exit
 

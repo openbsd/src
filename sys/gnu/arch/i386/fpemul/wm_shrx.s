@@ -1,5 +1,5 @@
 	.file	"wm_shrx.S"
-/*	$OpenBSD: wm_shrx.s,v 1.1 1996/08/27 10:33:04 downsj Exp $	*/
+/*	$OpenBSD: wm_shrx.s,v 1.2 2002/10/12 07:12:59 pvalchev Exp $	*/
 /*
  *  wm_shrx.S
  *
@@ -73,7 +73,11 @@
 #include <gnu/arch/i386/fpemul/fpu_asm.h>
 
 .text
+#ifdef __ELF__
+	.align 4,144
+#else
 	.align 2,144
+#endif
 
 /*---------------------------------------------------------------------------+
  |   unsigned shrx(void *arg1, unsigned arg2)                                |
@@ -89,9 +93,9 @@
  |   Results returned in the 64 bit arg and eax.                             |
  +---------------------------------------------------------------------------*/
 
-	.globl	_shrx
+	.globl	_C_LABEL(shrx)
 
-_shrx:
+_C_LABEL(shrx):
 	push	%ebp
 	movl	%esp,%ebp
 	pushl	%esi
@@ -169,8 +173,8 @@ L_more_than_95:
  |   part which has been shifted out of the arg.                             |
  |   Results returned in the 64 bit arg and eax.                             |
  +---------------------------------------------------------------------------*/
-	.globl	_shrxs
-_shrxs:
+	.globl	_C_LABEL(shrxs)
+_C_LABEL(shrxs):
 	push	%ebp
 	movl	%esp,%ebp
 	pushl	%esi

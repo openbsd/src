@@ -1,4 +1,4 @@
-/*	$OpenBSD: poly_mul64.s,v 1.1 1996/08/27 10:32:54 downsj Exp $	*/
+/*	$OpenBSD: poly_mul64.s,v 1.2 2002/10/12 07:12:58 pvalchev Exp $	*/
 /*
  *  poly_mul64.S
  *
@@ -70,9 +70,13 @@
 #include <gnu/arch/i386/fpemul/fpu_asm.h>
 
 .text
+#ifdef __ELF__
+	.align 4,144
+#else
 	.align 2,144
-.globl _mul64
-_mul64:
+#endif
+.globl _C_LABEL(mul64)
+_C_LABEL(mul64):
 	pushl %ebp
 	movl %esp,%ebp
 	subl $16,%esp

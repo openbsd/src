@@ -1,5 +1,5 @@
 	.file "reg_round.S"
-/*	$OpenBSD: reg_round.s,v 1.1 1996/08/27 10:33:01 downsj Exp $	*/
+/*	$OpenBSD: reg_round.s,v 1.2 2002/10/12 07:12:59 pvalchev Exp $	*/
 /*
  *  reg_round.S
  *
@@ -131,21 +131,29 @@
 #define	UNMASKED_UNDERFLOW $2
 
 .data
+#ifdef __ELF__
+	.align 4,0
+#else
 	.align 2,0
+#endif
 FPU_bits_lost:
 	.byte	0
 FPU_denormal:
 	.byte	0
 
 .text
+#ifdef __ELF__
+	.align 4,144
+#else
 	.align 2,144
+#endif
 .globl FPU_round
 .globl FPU_round_sqrt
 .globl FPU_Arith_exit
-.globl _round_reg
+.globl _C_LABEL(round_reg)
 
 /* Entry point when called from C */
-_round_reg:
+_C_LABEL(round_reg):
 	pushl	%ebp
 	movl	%esp,%ebp
 	pushl	%esi
@@ -449,7 +457,7 @@ FPU_Arith_exit:
 /* round-up.*/
 xL_precision_lost_up:
 	push	%eax
-	call	_set_precision_flag_up
+	call	_C_LABEL(set_precision_flag_up)
 	popl	%eax
 	jmp	xL_no_precision_loss
 
@@ -457,7 +465,7 @@ xL_precision_lost_up:
 /* truncation.*/
 xL_precision_lost_down:
 	push	%eax
-	call	_set_precision_flag_down
+	call	_C_LABEL(set_precision_flag_down)
 	popl	%eax
 	jmp	xL_no_precision_loss
 
@@ -594,7 +602,7 @@ LNormalise_shift_done:
 	/* There must be a masked underflow*/
 	push	%eax
 	pushl	EX_Underflow
-	call	_exception
+	call	_C_LABEL(exception)
 	popl	%eax
 	popl	%eax
 	jmp	xL_Normalised
@@ -604,12 +612,12 @@ LNormalise_shift_done:
 // Masked response.*/
 L_underflow_to_zero:
 	push	%eax
-	call	_set_precision_flag_down
+	call	_C_LABEL(set_precision_flag_down)
 	popl	%eax
 
 	push	%eax
 	pushl	EX_Underflow
-	call	_exception
+	call	_C_LABEL(exception)
 	popl	%eax
 	popl	%eax
 
@@ -620,7 +628,7 @@ L_underflow_to_zero:
 /* The operations resulted in a number too large to represent.*/
 L_overflow:
 	push	%edi
-	call	_arith_overflow
+	call	_C_LABEL(arith_overflow)
 	pop	%edi
 	jmp	FPU_Arith_exit
 

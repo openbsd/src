@@ -1,5 +1,5 @@
 	.file	"reg_u_sub.S"
-/*	$OpenBSD: reg_u_sub.s,v 1.1 1996/08/27 10:33:02 downsj Exp $	*/
+/*	$OpenBSD: reg_u_sub.s,v 1.2 2002/10/12 07:12:59 pvalchev Exp $	*/
 /*
  *  reg_u_sub.S
  *
@@ -84,9 +84,13 @@
 #include <gnu/arch/i386/fpemul/control_w.h>
 
 .text
+#ifdef __ELF__
+	.align 4,144
+#else
 	.align 2,144
-.globl _reg_u_sub
-_reg_u_sub:
+#endif
+.globl _C_LABEL(reg_u_sub)
+_C_LABEL(reg_u_sub):
 	pushl	%ebp
 	movl	%esp,%ebp
 	pushl	%esi
@@ -100,7 +104,7 @@ _reg_u_sub:
 	cmpl	EXP_UNDER,EXP(%esi)
 	jg	xOp1_not_denorm
 
-	call	_denormal_operand
+	call	_C_LABEL(denormal_operand)
 	orl	%eax,%eax
 	jnz	FPU_Arith_exit
 
@@ -108,7 +112,7 @@ xOp1_not_denorm:
 	cmpl	EXP_UNDER,EXP(%edi)
 	jg	xOp2_not_denorm
 
-	call	_denormal_operand
+	call	_C_LABEL(denormal_operand)
 	orl	%eax,%eax
 	jnz	FPU_Arith_exit
 
@@ -358,7 +362,7 @@ L_exit:
 
 L_underflow:
 	push	%edi
-	call	_arith_underflow
+	call	_C_LABEL(arith_underflow)
 	pop	%ebx
 	jmp	L_exit
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: reg_norm.s,v 1.1 1996/08/27 10:33:00 downsj Exp $	*/
+/*	$OpenBSD: reg_norm.s,v 1.2 2002/10/12 07:12:59 pvalchev Exp $	*/
 /*
  *  reg_norm.s
  *
@@ -73,11 +73,13 @@
 
 
 .text
-
+#ifdef __ELF__
+	.align 4,144
+#else
 	.align 2,144
-.globl _normalize
-
-_normalize:
+#endif
+.globl _C_LABEL(normalize)
+_C_LABEL(normalize):
 	pushl	%ebp
 	movl	%esp,%ebp
 	pushl	%ebx
@@ -131,23 +133,26 @@ L_zero:
 
 L_underflow:
 	push	%ebx
-	call	_arith_underflow
+	call	_C_LABEL(arith_underflow)
 	pop	%ebx
 	jmp	L_exit
 
 L_overflow:
 	push	%ebx
-	call	_arith_overflow
+	call	_C_LABEL(arith_overflow)
 	pop	%ebx
 	jmp	L_exit
 
 
 
 /* Normalise without reporting underflow or overflow */
+#ifdef __ELF__
+	.align 4,144
+#else
 	.align 2,144
-.globl _normalize_nuo
-
-_normalize_nuo:
+#endif
+.globl _C_LABEL(normalize_nuo)
+_C_LABEL(normalize_nuo):
 	pushl	%ebp
 	movl	%esp,%ebp
 	pushl	%ebx
