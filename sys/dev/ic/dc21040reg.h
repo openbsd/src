@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc21040reg.h,v 1.6 1997/11/13 21:12:13 rees Exp $	*/
+/*	$OpenBSD: dc21040reg.h,v 1.7 1998/03/25 12:18:42 pefo Exp $	*/
 /*	$NetBSD: dc21040reg.h,v 1.11 1997/06/08 18:44:02 thorpej Exp $	*/
 
 /*-
@@ -30,6 +30,10 @@
 #if !defined(_DC21040_H)
 #define _DC21040_H
 
+/* XXX The following only works with 2114x chips which have
+ * the descriptor swap bit. 21040 chips need to have the
+ * descriptor in LE order regardles.............
+ */
 #if defined(BYTE_ORDER) && BYTE_ORDER == BIG_ENDIAN
 #define	TULIP_BITFIELD2(a, b)		      b, a
 #define	TULIP_BITFIELD3(a, b, c)	   c, b, a
@@ -47,6 +51,9 @@ typedef struct {
 			      d_flag : 10);
     u_int32_t d_addr1;
     u_int32_t d_addr2;
+#ifdef PPC_MPC106_BUG
+    u_int32_t fill[4];		/* Make descr. 32 bytes avoiding MPC106 bug! */
+#endif
 } tulip_desc_t;
 
 #define	TULIP_DSTS_OWNER	0x80000000	/* Owner (1 = 21040) */
