@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: defs.c,v 1.16 2000/08/31 00:46:12 brian Exp $
+ *	$OpenBSD: defs.c,v 1.17 2000/09/07 00:05:26 brian Exp $
  */
 
 
@@ -35,11 +35,6 @@
 
 #include <ctype.h>
 #include <errno.h>
-#ifdef __OpenBSD__
-#include <util.h>
-#else
-#include <libutil.h>
-#endif
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
