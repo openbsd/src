@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.2 2005/01/28 17:53:33 norby Exp $ */
+/*	$OpenBSD: rde.h,v 1.3 2005/02/09 20:40:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -63,7 +63,7 @@ u_int32_t	 rde_router_id(void);
 void		 rde_nbr_del(struct rde_nbr *);
 int		 rde_nbr_loading(struct area *);
 
-/* rde_spf.c */
+/* rde_lsdb.c */
 void		 lsa_init(struct lsa_tree *);
 int		 lsa_compare(struct vertex *, struct vertex *);
 void		 vertex_free(struct vertex *);
@@ -75,6 +75,7 @@ void		 lsa_del(struct rde_nbr *, struct lsa_hdr *);
 struct vertex	*lsa_find(struct area *, u_int8_t, u_int32_t, u_int32_t);
 void		 lsa_snap(struct area *, u_int32_t);
 void		 lsa_dump(struct lsa_tree *, pid_t);
+void		 lsa_merge(struct rde_nbr *, struct lsa *, struct vertex *);
 
 RB_PROTOTYPE(lsa_tree, vertex, entry, lsa_compare)
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.c,v 1.7 2005/02/09 17:41:16 claudio Exp $ */
+/*	$OpenBSD: interface.c,v 1.8 2005/02/09 20:40:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -138,6 +138,9 @@ if_fsm(struct iface *iface, enum iface_event event)
 	if (new_state != 0)
 		iface->state = new_state;
 
+	if (iface->state != old_state)
+		orig_rtr_lsa(iface->area);
+
 	log_debug("fsm_if: event %s resulted in action %s and changing "
 	    "state for interface %s from %s to %s",
 	    if_event_name(event), if_action_name(iface_fsm[i].action),
@@ -241,6 +244,7 @@ if_init(struct ospfd_conf *xconf)
 	struct area	*area = NULL;
 	struct iface	*iface = NULL;
 
+	/* XXX wrong as hell */
 	if ((xconf->ospf_socket = socket(AF_INET, SOCK_RAW,
 	    IPPROTO_OSPF)) == -1) {
 		log_warn("if_init: error creating socket");
@@ -419,6 +423,7 @@ if_act_elect(struct iface *iface)
 	struct nbr	*nbr, *bdr = NULL, *dr = NULL;
 	int		 round = 0;
 	int		 changed = 0;
+	int		 old_state;
 	char		 b1[16], b2[16], b3[16], b4[16];
 
 	log_debug("if_act_elect: interface %s", iface->name);
@@ -488,6 +493,7 @@ start:
 	 * After the second round still DR or BDR change state to DR or BDR,
 	 * etc.
 	 */
+	old_state = iface->state;
 	if (dr == iface->self)
 		iface->state = IF_STA_DR;
 	else if (bdr == iface->self)
@@ -506,11 +512,15 @@ start:
 	iface->dr = dr;
 	iface->bdr = bdr;
 
-	if (changed)
+	if (changed) {
 		LIST_FOREACH(nbr, &iface->nbr_list, entry) {
 			if (nbr->state & NBR_STA_BIDIR)
 				nbr_fsm(nbr, NBR_EVT_ADJ_OK);
 		}
+		orig_rtr_lsa(iface->area);
+		if (iface->state & IF_STA_DR || old_state & IF_STA_DR)
+			orig_net_lsa(iface);
+	}
 
 	if (if_start_hello_timer(iface)) {
 		log_warnx("if_act_elect: cannot schedule hello_timer");

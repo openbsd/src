@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfe.h,v 1.3 2005/02/02 19:15:07 henning Exp $ */
+/*	$OpenBSD: ospfe.h,v 1.4 2005/02/09 20:40:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Esben Norby <norby@openbsd.org>
@@ -171,6 +171,8 @@ int		 ospfe_imsg_compose_rde(int, u_int32_t, pid_t, void *,
 u_int32_t	 ospfe_router_id(void);
 void		 ospfe_iface_ctl(struct ctl_conn *, unsigned int);
 void		 ospfe_nbr_ctl(struct ctl_conn *);
+void		 orig_rtr_lsa(struct area *);
+void		 orig_net_lsa(struct iface *);
 
 /* interface.c */
 int		 if_fsm(struct iface *, enum iface_event);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_lsdb.c,v 1.6 2005/02/08 12:56:48 claudio Exp $ */
+/*	$OpenBSD: rde_lsdb.c,v 1.7 2005/02/09 20:40:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2004, 2005 Claudio Jeker <claudio@openbsd.org>
@@ -224,7 +224,7 @@ lsa_check(struct rde_nbr *nbr, struct lsa *lsa, u_int16_t len)
 	}
 
 	/* MaxAge handling */
-	if (ntohs(lsa->hdr.age) == MAX_AGE && lsa_find(area,
+	if (lsa->hdr.age == htons(MAX_AGE) && !nbr->self && lsa_find(area,
 	    lsa->hdr.type, lsa->hdr.ls_id, lsa->hdr.adv_rtr) == NULL &&
 	    !rde_nbr_loading(area)) {
 		/*
@@ -466,7 +466,7 @@ lsa_timeout(int fd, short event, void *bula)
 
 	log_debug("lsa_timeout: REFLOOD");
 
-	if (v->nbr->self)
+	if (v->nbr->self && v->lsa->hdr.age != htons(MAX_AGE))
 		lsa_refresh(v);
 
 	rde_imsg_compose_ospfe(IMSG_LS_FLOOD, v->nbr->peerid, 0,
@@ -481,7 +481,7 @@ lsa_refresh(struct vertex *v)
 	u_int16_t	 len;
 
 	/* refresh LSA by increasing sequence number by one */
-	v->lsa->hdr.age = ntohs(DEFAULT_AGE);
+	v->lsa->hdr.age = htons(DEFAULT_AGE);
 	seqnum = ntohl(v->lsa->hdr.seq_num);
 	if (seqnum++ == MAX_SEQ_NUM)
 		/* XXX fix me */
@@ -493,8 +493,37 @@ lsa_refresh(struct vertex *v)
 	v->lsa->hdr.ls_chksum = 0;
 	v->lsa->hdr.ls_chksum = htons(iso_cksum(v->lsa, len, LS_CKSUM_OFFSET));
 
-	v->changed = time(NULL);
+	v->changed = v->stamp = time(NULL);
 	timerclear(&tv);
 	tv.tv_sec = LS_REFRESH_TIME;
+	evtimer_add(&v->ev, &tv);
+}
+
+void
+lsa_merge(struct rde_nbr *nbr, struct lsa *lsa, struct vertex *v)
+{
+	struct timeval	tv;
+	time_t		now;
+
+	if (v == NULL) {
+		lsa_add(nbr, lsa);
+		rde_imsg_compose_ospfe(IMSG_LS_FLOOD, nbr->peerid, 0,
+		    lsa, ntohs(lsa->hdr.len));
+		return;
+	}
+
+	/* TODO check for changes */
+
+	/* set the seq_num to the current on. lsa_refresh() will do the ++ */
+	lsa->hdr.seq_num = v->lsa->hdr.seq_num;
+	/* overwrite the lsa all other fields are unaffected */
+	free(v->lsa);
+	v->lsa = lsa;
+	
+	/* set correct timeout for reflooding the LSA */
+	now = time(NULL);
+	timerclear(&tv);
+	if (v->changed + MIN_LS_ARRIVAL >= now) 
+		tv.tv_sec = MIN_LS_ARRIVAL;
 	evtimer_add(&v->ev, &tv);
 }

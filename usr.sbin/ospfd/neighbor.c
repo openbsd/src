@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.8 2005/02/09 16:14:23 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.9 2005/02/09 20:40:23 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -197,13 +197,22 @@ nbr_fsm(struct nbr *nbr, enum nbr_event event)
 	if (new_state != 0)
 		nbr->state = new_state;
 
-	if (nbr->state != old_state)
+	/* state change inform RDE */
+	if (old_state != nbr->state)
 		ospfe_imsg_compose_rde(IMSG_NEIGHBOR_CHANGE,
 		    nbr->peerid, 0, &new_state, sizeof(new_state));
 
-	if (old_state & ~NBR_STA_PRELIM && new_state & NBR_STA_PRELIM)
-		/* bidirectional communication lost */
+	/* bidirectional communication lost */
+	if (old_state & ~NBR_STA_PRELIM && nbr->state & NBR_STA_PRELIM)
 		if_fsm(nbr->iface, IF_EVT_NBR_CHNG);
+
+	/* neighbor changed from/to FULL originate new rtr and net LSA */
+	if (old_state != nbr->state && (old_state & NBR_STA_FULL ||
+	    nbr->state & NBR_STA_FULL)) {
+		orig_rtr_lsa(nbr->iface->area);
+		if (nbr->iface->state & IF_STA_DR)
+			orig_net_lsa(nbr->iface);
+	}
 
 	if (old_state != nbr->state) {
 		nbr->stats.sta_chng++;
