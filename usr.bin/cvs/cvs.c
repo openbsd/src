@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.30 2005/01/06 19:56:38 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.31 2005/01/06 20:39:27 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -253,7 +253,7 @@ static struct cvs_cmd {
 	},
 	{
 		CVS_OP_STATUS, "status",   { "st", "stat" }, cvs_status,
-		"",
+		"[-lRv]",
 		"",
 		"Display status information on checked out files",
 		NULL,

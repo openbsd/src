@@ -1,4 +1,4 @@
-/*	$OpenBSD: status.c,v 1.6 2004/12/21 18:32:10 jfb Exp $	*/
+/*	$OpenBSD: status.c,v 1.7 2005/01/06 20:39:27 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -63,13 +63,23 @@ int cvs_status_file (CVSFILE *, void *);
 int
 cvs_status(int argc, char **argv)
 {
-	int i, ch, flags;
+	int i, ch, flags, verbose;
 	struct cvsroot *root;
 
+	verbose = 0;
 	flags = CF_SORT|CF_IGNORE|CF_RECURSE;
 
-	while ((ch = getopt(argc, argv, "F:flm:Rr:")) != -1) {
+	while ((ch = getopt(argc, argv, "lRv")) != -1) {
 		switch (ch) {
+		case 'l':
+			flags &= ~CF_RECURSE;
+			break;
+		case 'R':
+			flags |= CF_RECURSE;
+			break;
+		case 'v':
+			verbose = 1;
+			break;
 		default:
 			return (EX_USAGE);
 		}
@@ -95,8 +105,12 @@ cvs_status(int argc, char **argv)
 		return (EX_USAGE);
 	}
 
-	if ((root->cr_method != CVS_METHOD_LOCAL) && (cvs_connect(root) < 0))
-		return (EX_PROTOCOL);
+	if (root->cr_method != CVS_METHOD_LOCAL) {
+		if (cvs_connect(root) < 0)
+			return (EX_PROTOCOL);
+		if (verbose && (cvs_sendarg(root, "-v", 0) < 0))
+			return (EX_PROTOCOL);
+	}
 
 	cvs_file_examine(cvs_files, cvs_status_file, NULL);
 
