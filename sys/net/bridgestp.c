@@ -1,4 +1,4 @@
-/*	$OpenBSD: bridgestp.c,v 1.13 2002/12/09 18:56:14 deraadt Exp $	*/
+/*	$OpenBSD: bridgestp.c,v 1.14 2002/12/10 13:22:55 markus Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -401,6 +401,9 @@ bstp_transmit_tcn(sc)
 	struct mbuf *m;
 	int s, error;
 
+	if ((ifp->if_flags & IFF_RUNNING) == 0)
+		return;
+
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return;
@@ -421,14 +424,11 @@ bstp_transmit_tcn(sc)
 	bcopy(&bpdu, m->m_data + sizeof(*eh), sizeof(bpdu));
 
 	s = splimp();
-	if ((ifp->if_flags & IFF_RUNNING) == 0)
-		goto out;
 	IFQ_ENQUEUE(&ifp->if_snd, m, NULL, error);
 	if (error == 0 && (ifp->if_flags & IFF_OACTIVE) == 0)
 		(*ifp->if_start)(ifp);
 	m = NULL;
 
-out:
 	splx(s);
 	if (m != NULL)
 		m_freem(m);
