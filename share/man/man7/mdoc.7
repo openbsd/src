@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mdoc.7,v 1.16 2000/09/11 01:36:53 aaron Exp $
+.\"	$OpenBSD: mdoc.7,v 1.17 2000/11/08 20:50:59 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -87,7 +87,7 @@ Section Headers.
 Valid headers, in the order of presentation:
 .Bl -tag -width "RETURN VALUES" -compact
 .It Ar NAME
-Name section, should include the
+Name section. Should include the
 .Ql \&.Nm
 or
 .Ql \&.Fn
@@ -96,34 +96,38 @@ and the
 macros.
 .It Ar SYNOPSIS
 Usage.
+All
+.Ql \&.Nm
+macros must be given an argument.
 .It Ar DESCRIPTION
-General description, should include
-options and parameters.
+General description, including any options, operands, or other parameters.
+.It Ar EXAMPLES
+Examples and suggestions.
 .It Ar RETURN VALUES
 Sections two and three function calls.
+.It Ar ERRORS
+Sections two and three error and signal handling.
+.It Ar DIAGNOSTICS
+Section four device interface diagnostics.
 .It Ar ENVIRONMENT
 Describe environment variables.
 .It Ar FILES
-Files associated with the subject.
-.It Ar EXAMPLES
-Examples and suggestions.
-.It Ar DIAGNOSTICS
-Normally used for section four device interface diagnostics.
-.It Ar ERRORS
-Sections two and three error and signal
-handling.
+Files associated with the subject, with short descriptions.
 .It Ar SEE ALSO
 Cross references and citations.
 .It Ar STANDARDS
 Conformance to standards if applicable.
+.It Ar AUTHORS
+Credit to the person or persons who wrote the code and/or documentation.
 .It Ar HISTORY
-If a standard is not applicable, the history
-of the subject should be given.
+A brief history of the subject, including where support first appeared.
 .It Ar BUGS
 Gotchas and caveats.
+.It Ar CAVEATS
+Explanations of common misuses, i.e., security considerations for certain
+library functions.
 .It Ar other
-Customized headers may be added at
-the author's discretion.
+Customized headers may be added at the author's discretion.
 .El
 .It Li \&.Ss
 Subsection Headers.

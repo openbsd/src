@@ -1,12 +1,12 @@
 .\" The following requests are required for all man pages.
 .Dd Month DD, YYYY
-.Dt NAME SECTION
+.Dt NAME SECTION#
 .Os
 .Sh NAME
 .Nm program
 .Nd one line about what it does 
 .Sh SYNOPSIS
-.\" For a program:  program [-abc] files...
+.\" For a program:  program [-abc] file ...
 .Nm program
 .Op Fl abc
 .Op Ar
@@ -15,20 +15,20 @@ The
 .Nm
 utility processes files ...
 .\" The following requests should be uncommented and used where appropriate.
+.\" .Sh EXAMPLES
 .\" This next request is for sections 2 and 3 function return values only.
 .\" .Sh RETURN VALUES
-.\" This next request is for sections 1, 6, 7 & 8 only
-.\" .Sh ENVIRONMENT
-.\" .Sh FILES
-.\" .Sh EXAMPLES
-.\" This next request is for sections 1, 6, 7 & 8 only
-.\"     (command return values (to shell) and fprintf/stderr type diagnostics)
-.\" .Sh DIAGNOSTICS
 .\" The next request is for sections 2 and 3 error and signal handling only.
 .\" .Sh ERRORS
+.\" This next request is for section 4 only.
+.\" .Sh DIAGNOSTICS
+.\" This next request is for sections 1, 6, 7 & 8 only.
+.\" .Sh ENVIRONMENT
+.\" .Sh FILES
 .\" .Sh SEE ALSO
 .\" .Xr foobar 1
 .\" .Sh STANDARDS
-.\" .Sh HISTORY
 .\" .Sh AUTHORS
+.\" .Sh HISTORY
 .\" .Sh BUGS
+.\" .Sh CAVEATS
