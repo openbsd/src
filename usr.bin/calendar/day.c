@@ -1,4 +1,4 @@
-/*	$OpenBSD: day.c,v 1.9 1999/04/25 01:16:04 pjanzen Exp $	*/
+/*	$OpenBSD: day.c,v 1.10 1999/11/25 03:46:46 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: day.c,v 1.9 1999/04/25 01:16:04 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: day.c,v 1.10 1999/11/25 03:46:46 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -248,9 +248,9 @@ time_t Mktime (date)
  *	3-charweekday			(Friday, Monday, mon.)
  *	numeric month or day		(1, 2, 04)
  *
- * Any character may separate them, or they may not be separated.  Any line,
- * following a line that is matched, that starts with "whitespace", is shown
- * along with the matched line.
+ * Any character except \t or '*' may separate them, or they may not be
+ * separated.  Any line following a line that is matched, that starts
+ * with \t, is shown along with the matched line.
  */
 struct match *
 isnow(endp)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.7 1999/04/20 23:03:25 pjanzen Exp $	*/
+/*	$OpenBSD: io.c,v 1.8 1999/11/25 03:46:47 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.7 1999/04/20 23:03:25 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.8 1999/11/25 03:46:47 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -207,7 +207,7 @@ getfield(p, endp, flags)
 	int val, var, i;
 	char *start, savech;
 
-	for (; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
+	for (; !isdigit(*p) && !isalpha(*p) && *p != '*' && *p != '\t'; ++p)
 		;
 	if (*p == '*') {			/* `*' is every month */
 		*flags |= F_ISMONTH;
@@ -286,7 +286,7 @@ getfield(p, endp, flags)
 			return (0);
 		}
 	}
-	for (*p = savech; !isdigit(*p) && !isalpha(*p) && *p != '*'; ++p)
+	for (*p = savech; !isdigit(*p) && !isalpha(*p) && *p != '*' && *p != '\t'; ++p)
 		;
 	*endp = p;
 	return (val);
