@@ -1,5 +1,5 @@
 #!/bin/sh -
-#       $OpenBSD: MAKEDEV,v 1.7 1997/05/11 02:14:05 deraadt Exp $
+#       $OpenBSD: MAKEDEV,v 1.8 1997/05/11 02:18:42 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -62,6 +62,20 @@
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
 umask 77
+
+hex ()
+{
+	case $1 in
+		[0-9]) echo -n $1 ;;
+		10) echo -n a;;
+		11) echo -n b;;
+		12) echo -n c;;
+		13) echo -n d;;
+		14) echo -n e;;
+		15) echo -n f;;
+	esac
+}
+
 for i
 do
 case $i in

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.13 1997/05/04 02:03:02 imp Exp $
+#	$OpenBSD: MAKEDEV,v 1.14 1997/05/11 02:18:41 deraadt Exp $
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
 #
 
@@ -49,6 +49,20 @@
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin
 umask 77
+
+hex ()
+{
+	case $1 in
+		[0-9]) echo -n $1 ;;
+		10) echo -n a;;
+		11) echo -n b;;
+		12) echo -n c;;
+		13) echo -n d;;
+		14) echo -n e;;
+		15) echo -n f;;
+	esac
+}
+
 for i
 do
 case $i in
@@ -100,9 +114,8 @@ pms*)
 fd)
 	rm -rf fd/*
 	mkdir fd > /dev/null 2>&1
-	(cd fd && eval `echo "" | awk ' BEGIN { \
-		for (i = 0; i < 64; i++) \
-			printf("mknod %d c 7 %d;", i, i)}'`)
+	n=0
+	(cd fd && while [ $n -lt 64 ]; do mknod $n c 7 $n; n="$(( $n + 1 ))"; done)
 	chown -R root.wheel fd
 	chmod 555 fd
 	chmod 666 fd/*
@@ -263,11 +276,15 @@ pty*)
 	case $class in
 	0|1|2|3|4)
 		umask 0
-		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
-			for (i = 0; i < 16; i++)
-				printf("rm -f tty%s%x; mknod tty%s%x c 4 %d;" \
-				    "rm -f pty%s%x; mknod pty%s%x c 5 %d; ", \
-				    n, i, n, i, b+i, n, i, n, i, b+i); }'`
+		n=0
+		while [ $n -lt 16 ]
+		do
+			nam=$name`hex $n`
+			rm -rf {tty,pty}$n
+			mknod tty$nam c 4 "$(( $offset + $n ))"
+			mknod pty$nam c 5 "$(( $offset + $n ))"
+			n="$(( $n + 1 ))"
+		done
 		umask 77
 		;;
 	esac
