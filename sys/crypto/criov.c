@@ -1,4 +1,4 @@
-/*      $OpenBSD: criov.c,v 1.4 2001/06/18 07:57:40 deraadt Exp $	*/
+/*      $OpenBSD: criov.c,v 1.5 2001/06/18 08:34:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -66,8 +66,8 @@ iov2pages(uio, np, pp, lp, maxp, nicep)
 
 next_page:
 		
-		if (pmap_extract(pmap_kernel(), va, &pa) == TRUE)
-			panic("iov2pages: unmapped pages 0x%x", va);
+		if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+			panic("iov2pages: unmapped pages");
 
 		pa += off;
 
