@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.50 2001/03/08 02:37:15 ericj Exp $
+#	$OpenBSD: MAKEDEV,v 1.51 2001/05/14 07:56:36 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.8.4.1 1996/06/18 00:41:56 cgd Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -199,7 +199,7 @@ usbs)
 	sh $this utty0 utty1
 	;;
 std)
-	rm -f console drum mem kmem null zero io tty klog stdin stdout stderr ksyms
+	rm -f console drum mem kmem null zero tty klog stdin stdout stderr ksyms
 	mknod console		c 0 0
 	mknod drum		c 3 0	; chmod 640 drum ; chown root.kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chown root.kmem kmem
