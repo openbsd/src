@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pci.c,v 1.2 1998/09/23 18:46:29 deraadt Exp $	*/
+/*	$OpenBSD: if_ne_pci.c,v 1.3 1998/11/06 06:32:15 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pci.c,v 1.8 1998/07/05 00:51:24 jonathan Exp $	*/
 
 /*-
@@ -75,6 +75,9 @@
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
 
+#include <dev/ic/rtl80x9reg.h>
+#include <dev/ic/rtl80x9var.h>
+
 struct ne_pci_softc {
 	struct ne2000_softc sc_ne2000;		/* real "ne2000" softc */
 
@@ -89,38 +92,78 @@ struct cfattach ne_pci_ca = {
 	sizeof(struct ne_pci_softc), ne_pci_match, ne_pci_attach
 };
 
-struct ne_pci_compatdev {
-	pci_vendor_id_t vendor;
-	pci_product_id_t product;
-};
+const struct ne_pci_product {
+	pci_vendor_id_t npp_vendor;
+	pci_product_id_t npp_product;
+	int (*npp_mediachange) __P((struct dp8390_softc *));
+	void (*npp_mediastatus) __P((struct dp8390_softc *,
+	    struct ifmediareq *));
+	void (*npp_init_card) __P((struct dp8390_softc *));
+	void (*npp_init_media) __P((struct dp8390_softc *, int **,
+	    int *, int *));
+	const char *npp_name;
+} ne_pci_products[] = {
+	{ PCI_VENDOR_REALTEK,		PCI_PRODUCT_REALTEK_RT8029,
+	  rtl80x9_mediachange,		rtl80x9_mediastatus,
+	  rtl80x9_init_card,		rtl80x9_init_media,
+	  "RealTek 8029" },
 
-struct ne_pci_compatdev ne_pci_compatdevs[] = {
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8029 },
-	{ PCI_VENDOR_WINBOND, PCI_PRODUCT_WINBOND_W89C940F },
-	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT86C926 },
-	{ PCI_VENDOR_SURECOM, PCI_PRODUCT_SURECOM_NE34 },
-	{ PCI_VENDOR_NETVIN, PCI_PRODUCT_NETVIN_NV5000 },
+	{ PCI_VENDOR_WINBOND,		PCI_PRODUCT_WINBOND_W89C940F,
+	  NULL,				NULL,
+	  NULL,				NULL,
+	  "Winbond 89C940F" },
+
+	{ PCI_VENDOR_VIATECH,		PCI_PRODUCT_VIATECH_VT86C926,
+	  NULL,				NULL,
+	  NULL,				NULL,
+	  "VIA Technologies VT86C926" },
+
+	{ PCI_VENDOR_SURECOM,		PCI_PRODUCT_SURECOM_NE34,
+	  NULL,				NULL,
+	  NULL,				NULL,
+	  "Surecom NE-34" },
+
+	{ PCI_VENDOR_NETVIN,		PCI_PRODUCT_NETVIN_NV5000,
+	  NULL,				NULL,
+	  NULL,				NULL,
+	  "NetVin 5000" },
+
 	/* XXX The following entries need sanity checking in pcidevs */
-	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_COMPEXE },
-	{ PCI_VENDOR_WINBOND2, PCI_PRODUCT_WINBOND2_W89C940 },
-	{ PCI_VENDOR_KTI, PCI_PRODUCT_KTI_KTIE },
-	{ 0, 0 },
+	{ PCI_VENDOR_COMPEX,		PCI_PRODUCT_COMPEX_COMPEXE,
+	  NULL,				NULL,
+	  NULL,				NULL,
+	  "Compex" },
+
+	{ PCI_VENDOR_WINBOND2,		PCI_PRODUCT_WINBOND2_W89C940,
+	  NULL,				NULL,
+	  NULL,				NULL,
+	  "ProLAN" },
+
+	{ PCI_VENDOR_KTI,		PCI_PRODUCT_KTI_KTIE,
+	  NULL,				NULL,
+	  NULL,				NULL,
+	  "KTI" },
+
+	{ 0,				0,
+	  NULL,				NULL,
+	  NULL,				NULL,
+	  NULL },
 };
 
-int ne_pci_lookup __P((pcireg_t));
+const struct ne_pci_product *ne_pci_lookup __P((struct pci_attach_args *));
 
-int
-ne_pci_lookup(id)
-	pcireg_t id;
+const struct ne_pci_product *
+ne_pci_lookup(pa)
+	struct pci_attach_args *pa;
 {
-	struct ne_pci_compatdev *nc;
+	const struct ne_pci_product *npp;
 
-	for (nc = ne_pci_compatdevs; nc->vendor != 0; nc++) {
-		if (PCI_VENDOR(id) == nc->vendor &&
-		    PCI_PRODUCT(id) == nc->product)
-			return (1);
+	for (npp = ne_pci_products; npp->npp_name != NULL; npp++) {
+		if (PCI_VENDOR(pa->pa_id) == npp->npp_vendor &&
+		    PCI_PRODUCT(pa->pa_id) == npp->npp_product)
+			return (npp);
 	}
-	return (0);
+	return (NULL);
 }
 
 /*
@@ -136,8 +179,8 @@ ne_pci_match(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (ne_pci_lookup(pa->pa_id) != 0)
-		return (1);
+	if (ne_pci_lookup(pa) != NULL)
+ 		return (1);
 
 	return (0);
 }
@@ -161,8 +204,18 @@ ne_pci_attach(parent, self, aux)
 	bus_space_tag_t asict;
 	bus_space_handle_t asich;
 	const char *intrstr;
+	const struct ne_pci_product *npp;
 	pci_intr_handle_t ih;
 	pcireg_t csr;
+	int *media, nmedia, defmedia;
+
+	npp = ne_pci_lookup(pa);
+	if (npp == NULL) {
+		printf("\n");
+		panic("ne_pci_attach: impossible");
+	}
+
+	printf(": %s Ethernet\n", npp->npp_name);
 
 #ifdef __NetBSD__
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
@@ -206,13 +259,24 @@ ne_pci_attach(parent, self, aux)
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;
 
-	printf("\n");
+	if (npp->npp_init_media != NULL) {
+		(*npp->npp_init_media)(dsc, &media, &nmedia, &defmedia);
+		dsc->sc_mediachange = npp->npp_mediachange;
+		dsc->sc_mediastatus = npp->npp_mediastatus;
+	} else {
+		media = NULL;
+		nmedia = 0;
+		defmedia = 0;
+	}
+
+	/* Always fill in init_card; it might be used for non-media stuff. */
+	dsc->init_card = npp->npp_init_card;
 
 	/*
 	 * Do generic NE2000 attach.  This will read the station address
 	 * from the EEPROM.
 	 */
-	ne2000_attach(nsc, NULL);
+	ne2000_attach(nsc, NULL, media, nmedia, defmedia);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_isapnp.c,v 1.1 1998/09/22 06:33:19 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_isapnp.c,v 1.2 1998/11/06 06:32:15 fgsch Exp $	*/
 /*	$NetBSD: if_ne_isapnp.c,v 1.7 1998/07/23 19:30:45 christos Exp $	*/
 
 /*-
@@ -88,6 +88,9 @@
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
 
+#include <dev/ic/rtl80x9reg.h>
+#include <dev/ic/rtl80x9var.h>
+
 #include <dev/isa/isavar.h>
 
 #include <dev/isa/isapnpreg.h>
@@ -132,9 +135,17 @@ ne_isapnp_attach(
 	bus_space_handle_t nich;
 	bus_space_tag_t asict;
 	bus_space_handle_t asich;
+	void (*npp_init_media) __P((struct dp8390_softc *, int **,
+	    int *, int *));
+	int *media, nmedia, defmedia;
 	const char *typestr;
+	int netype;
 
 	printf("\n");
+
+	npp_init_media = NULL;
+	media = NULL;
+	nmedia = defmedia = 0;
 
 	nict = ipa->ia_iot;
 	nich = ipa->ipa_io[0].h;
@@ -157,13 +168,29 @@ ne_isapnp_attach(
 	 * Detect it again, so we can print some information about the
 	 * interface.
 	 */
-	switch (ne2000_detect(nict, nich, asict, asich)) {
+	netype = ne2000_detect(nict, nich, asict, asich);
+	switch (netype) {
 	case NE2000_TYPE_NE1000:
 		typestr = "NE1000";
 		break;
 
 	case NE2000_TYPE_NE2000:
 		typestr = "NE2000";
+		/*
+		 * Check for a RealTek 8019.
+		 */
+		bus_space_write_1(nict, nich, ED_P0_CR,
+		    ED_CR_PAGE_0 | ED_CR_STP);
+		if (bus_space_read_1(nict, nich, NERTL_RTL0_8019ID0) ==
+								RTL0_8019ID0 &&
+		    bus_space_read_1(nict, nich, NERTL_RTL0_8019ID1) ==
+								RTL0_8019ID1) {
+			typestr = "NE2000 (RTL8019)";
+			npp_init_media = rtl80x9_init_media;
+			dsc->sc_mediachange = rtl80x9_mediachange;
+			dsc->sc_mediastatus = rtl80x9_mediastatus;
+			dsc->init_card = rtl80x9_init_card;
+		}
 		break;
 
 	default:
@@ -173,6 +200,10 @@ ne_isapnp_attach(
 
 	printf("%s: %s Ethernet\n", dsc->sc_dev.dv_xname, typestr);
 
+	/* Initialize media, if we have it. */
+	if (npp_init_media != NULL)
+		(*npp_init_media)(dsc, &media, &nmedia, &defmedia);
+
 	/* This interface is always enabled. */
 	dsc->sc_enabled = 1;
 
@@ -180,7 +211,7 @@ ne_isapnp_attach(
 	 * Do generic NE2000 attach.  This will read the station address
 	 * from the EEPROM.
 	 */
-	ne2000_attach(nsc, NULL);
+	ne2000_attach(nsc, NULL, media, nmedia, defmedia);
 
 	/* Establish the interrupt handler. */
 	isc->sc_ih = isa_intr_establish(ipa->ia_ic, ipa->ipa_irq[0].num,

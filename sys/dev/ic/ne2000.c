@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000.c,v 1.5 1998/10/14 07:34:42 fgsch Exp $	*/
+/*	$OpenBSD: ne2000.c,v 1.6 1998/11/06 06:32:15 fgsch Exp $	*/
 /*	$NetBSD: ne2000.c,v 1.12 1998/06/10 01:15:50 thorpej Exp $	*/
 
 /*-
@@ -103,9 +103,10 @@ struct cfdriver ne_cd = {
 };
 
 void
-ne2000_attach(nsc, myea)
+ne2000_attach(nsc, myea, media, nmedia, defmedia)
 	struct ne2000_softc *nsc;
 	u_int8_t *myea;
+	int *media, nmedia, defmedia;
 {
 	struct dp8390_softc *dsc = &nsc->sc_dp8390;
 	bus_space_tag_t nict = dsc->sc_regt;
@@ -252,7 +253,7 @@ ne2000_attach(nsc, myea)
 	/* Clear any pending interrupts that might have occurred above. */
 	bus_space_write_1(nict, nich, ED_P0_ISR, 0xff);
 
-	if (dp8390_config(dsc, NULL, 0, 0)) {
+	if (dp8390_config(dsc, media, nmedia, defmedia)) {
 		printf("%s: setup failed\n", dsc->sc_dev.dv_xname);
 		return;
 	}

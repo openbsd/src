@@ -1,4 +1,4 @@
-/*	$OpenBSD: dp8390reg.h,v 1.6 1998/10/04 23:09:56 niklas Exp $	*/
+/*	$OpenBSD: dp8390reg.h,v 1.7 1998/11/06 06:32:14 fgsch Exp $	*/
 /*	$NetBSD: dp8390reg.h,v 1.3 1997/04/29 04:32:08 scottr Exp $	*/
 
 /*
@@ -149,14 +149,15 @@
  *  0   0   0
  *  0   1   1
  *  1   0   2
- *  1   1   reserved
+ *  1   1   3 (only on chips which have extensions to the dp8390)
  */
 #define ED_CR_PS0	0x40
 #define ED_CR_PS1	0x80
 /* bit encoded aliases */
 #define ED_CR_PAGE_0	0x00 /* (for consistency) */
-#define ED_CR_PAGE_1	0x40
-#define ED_CR_PAGE_2	0x80
+#define ED_CR_PAGE_1	(ED_CR_PS0)
+#define ED_CR_PAGE_2	(ED_CR_PS1)
+#define	ED_CR_PAGE_3	(ED_CR_PS1|ED_CR_PS0)
 
 /*
  *		Interrupt Status Register (ISR) definitions

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.3 1998/11/05 09:12:52 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.4 1998/11/06 06:32:15 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -58,6 +58,9 @@
 
 #include <dev/ic/ne2000reg.h>
 #include <dev/ic/ne2000var.h>
+
+#include <dev/ic/rtl80x9reg.h>
+#include <dev/ic/rtl80x9var.h>
 
 int ne_pcmcia_match __P((struct device *, void *, void *));
 void ne_pcmcia_attach __P((struct device *, struct device *, void *));
@@ -330,6 +333,14 @@ ne_pcmcia_attach(parent, self, aux)
 	bus_addr_t offset;
 	int i, j, mwindow;
 	u_int8_t myea[6], *enaddr = NULL;
+	void (*npp_init_media) __P((struct dp8390_softc *, int **,
+	    int *, int *));
+	int *media, nmedia, defmedia;
+	const char *typestr = "";
+
+	npp_init_media = NULL;
+	media = NULL;
+	nmedia = defmedia = 0;
 
 	psc->sc_pf = pa->pf;
 	cfe = pa->pf->cfe_head.sqh_first;
@@ -470,9 +481,30 @@ ne_pcmcia_attach(parent, self, aux)
 		}
 	}
 
-	printf("%s: %s Ethernet\n", dsc->sc_dev.dv_xname, ne_dev->name);
+	/*
+	 * Check for a RealTek 8019.
+	 */
+	bus_space_write_1(dsc->sc_regt, dsc->sc_regh, ED_P0_CR,
+	    ED_CR_PAGE_0 | ED_CR_STP);
+	if (bus_space_read_1(dsc->sc_regt, dsc->sc_regh, NERTL_RTL0_8019ID0)
+		== RTL0_8019ID0 &&
+	    bus_space_read_1(dsc->sc_regt, dsc->sc_regh, NERTL_RTL0_8019ID1)
+		== RTL0_8019ID1) {
+		typestr = " (RTL8019)";
+		npp_init_media = rtl80x9_init_media;
+		dsc->sc_mediachange = rtl80x9_mediachange;
+		dsc->sc_mediastatus = rtl80x9_mediastatus;
+		dsc->init_card = rtl80x9_init_card;
+	}
 
-	ne2000_attach(nsc, enaddr);
+	printf("%s: %s%s Ethernet\n", dsc->sc_dev.dv_xname, ne_dev->name,
+	    typestr);
+
+	/* Initialize media, if we have it. */
+	if (npp_init_media != NULL)
+		(*npp_init_media)(dsc, &media, &nmedia, &defmedia);
+
+	ne2000_attach(nsc, enaddr, media, nmedia, defmedia);
 
 #if 0
 	pcmcia_function_disable(pa->pf);

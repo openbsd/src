@@ -1,8 +1,8 @@
-/*	$OpenBSD: ne2000var.h,v 1.2 1998/11/06 06:32:15 fgsch Exp $	*/
-/*	$NetBSD: ne2000var.h,v 1.2 1997/10/14 22:54:12 thorpej Exp $	*/
+/*	$OpenBSD: rtl80x9var.h,v 1.1 1998/11/06 06:34:36 fgsch Exp $	*/
+/*	$NetBSD: rtl80x9var.h,v 1.1 1998/10/31 00:44:33 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,25 +38,24 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DEV_IC_NE2000VAR_H_
-#define	_DEV_IC_NE2000VAR_H_
+/*
+ * Definitions on RealTek 8019 and 8029 NE2000-compatible network interfaces.
+ *
+ * Data sheets for these chips can be found at:
+ *
+ *	http://www.realtek.com.tw
+ */
 
-struct ne2000_softc {
-	struct dp8390_softc sc_dp8390;
+#ifndef _DEV_IC_RTL80x9_VAR_H_
+#define	_DEV_IC_RTL80x9_VAR_H_
 
-	bus_space_tag_t sc_asict;	/* space tag for ASIC */
-	bus_space_handle_t sc_asich;	/* space handle for ASIC */
+#ifdef _KERNEL
+int	rtl80x9_mediachange __P((struct dp8390_softc *));
+void	rtl80x9_mediastatus __P((struct dp8390_softc *,
+	    struct ifmediareq *));
+void	rtl80x9_init_card __P((struct dp8390_softc *));
+void	rtl80x9_init_media __P((struct dp8390_softc *, int **,
+	    int *, int *));
+#endif /* _KERNEL */
 
-	int sc_type;
-};
-
-/* sc_type */
-#define	NE2000_TYPE_NE1000	1
-#define	NE2000_TYPE_NE2000	2
-
-void	ne2000_attach __P((struct ne2000_softc *, u_int8_t *,
-	    int *, int, int));
-int	ne2000_detect __P((bus_space_tag_t, bus_space_handle_t,
-	    bus_space_tag_t, bus_space_handle_t));
-
-#endif /* _DEV_IC_NE2000VAR_H_ */
+#endif /* _DEV_IC_RTL80x9_VAR_H_ */
