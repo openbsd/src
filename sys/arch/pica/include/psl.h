@@ -1,4 +1,4 @@
-/*      $OpenBSD: psl.h,v 1.2 1996/06/06 23:07:03 deraadt Exp $	*/
+/*      $OpenBSD: psl.h,v 1.3 1996/06/10 09:22:11 pefo Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  *	from: @(#)psl.h	8.1 (Berkeley) 6/10/93
  */
 
-#include <machine/machConst.h>
+#include <machine/cpu.h>
 
 #define	PSL_LOWIPL	(INT_MASK | SR_INT_ENAB)
 
