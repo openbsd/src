@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.48 2003/09/26 16:07:29 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.49 2003/10/03 17:05:50 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -52,6 +52,7 @@
 struct con {
 	int fd;
 	int state;
+	int laststate;
 	int af;
 	struct sockaddr_in sin;
 	void *ia;
@@ -568,6 +569,7 @@ nextstate(struct con *cp)
 		/* banner sent; wait for input */
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
+		cp->laststate = cp->state;
 		cp->state = 1;
 		cp->r = t;
 		break;
@@ -580,6 +582,7 @@ nextstate(struct con *cp)
 			    "Pleased to be wasting your time.\n");
 			cp->op = cp->obuf;
 			cp->ol = strlen(cp->op);
+			cp->laststate = cp->state;
 			cp->state = 2;
 			cp->w = t + stutter;
 			break;
@@ -589,6 +592,7 @@ nextstate(struct con *cp)
 		/* sent 250 Hello, wait for input */
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
+		cp->laststate = cp->state;
 		cp->state = 3;
 		cp->r = t;
 		break;
@@ -601,6 +605,7 @@ nextstate(struct con *cp)
 			    "Your time will be spent, for nothing.\n");
 			cp->op = cp->obuf;
 			cp->ol = strlen(cp->op);
+			cp->laststate = cp->state;
 			cp->state = 4;
 			cp->w = t + stutter;
 			break;
@@ -610,6 +615,7 @@ nextstate(struct con *cp)
 		/* sent 250 Sender ok */
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
+		cp->laststate = cp->state;
 		cp->state = 5;
 		cp->r = t;
 		break;
@@ -622,6 +628,7 @@ nextstate(struct con *cp)
 			    "hurting me.\n");
 			cp->op = cp->obuf;
 			cp->ol = strlen(cp->op);
+			cp->laststate = cp->state;
 			cp->state = 6;
 			cp->w = t + stutter;
 			if (cp->mail[0] && cp->rcpt[0])
@@ -634,7 +641,8 @@ nextstate(struct con *cp)
 		/* sent 250 blah */
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
-		cp->state = 50;
+		cp->laststate = cp->state;
+		cp->state = 5;
 		cp->r = t;
 		break;
 
@@ -648,6 +656,7 @@ nextstate(struct con *cp)
 		} else {
 			snprintf(cp->obuf, cp->osize,
 			    "500 5.5.1 Command unrecognized\n");
+			cp->state = cp->laststate;
 		}
 		cp->ip = cp->ibuf;
 		cp->il = sizeof(cp->ibuf) - 1;
@@ -658,6 +667,7 @@ nextstate(struct con *cp)
 	case 60:
 		if (!strcmp(cp->ibuf, ".") ||
 		    (cp->data_body && ++cp->data_lines >= 10)) {
+		        cp->laststate = cp->state;
 			cp->state = 98;
 			goto done;
 		}
@@ -683,6 +693,7 @@ nextstate(struct con *cp)
 		cp->op = cp->obuf;
 		cp->ol = strlen(cp->op);
 		cp->w = t + stutter;
+		cp->laststate = cp->state;
 		cp->state = 99;
 		break;
 	case 99:
