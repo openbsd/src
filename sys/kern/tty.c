@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.43 2001/03/02 08:04:04 art Exp $	*/
+/*	$OpenBSD: tty.c,v 1.44 2001/05/14 07:15:33 angelos Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@
 #include <sys/malloc.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/sysctl.h>
 
 #include <sys/namei.h>
 
@@ -2329,4 +2330,34 @@ ttyfree(tp)
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);
 	FREE(tp, M_TTYS);
+}
+
+/*
+ * Return tty-related information.
+ */
+int
+sysctl_tty(name, namelen, oldp, oldlenp, newp, newlen)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+{
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case KERN_TTY_TKNIN:
+		return (sysctl_rdquad(oldp, oldlenp, newp, tk_nin));
+	case KERN_TTY_TKNOUT:
+		return (sysctl_rdquad(oldp, oldlenp, newp, tk_nout));
+	case KERN_TTY_TKRAWCC:
+		return (sysctl_rdquad(oldp, oldlenp, newp, tk_rawcc));
+	case KERN_TTY_TKCANCC:
+		return (sysctl_rdquad(oldp, oldlenp, newp, tk_cancc));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
 }
