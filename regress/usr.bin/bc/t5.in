@@ -1,0 +1,7 @@
+define f(a, b, c[]) {
+	auto d,e,f;
+	a=1;
+	return (8);
+}
+
+f(1,2,g[])
