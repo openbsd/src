@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.41 2003/09/04 22:14:43 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.42 2003/09/25 13:32:58 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -27,26 +27,27 @@
 .Nd dump traffic on a network
 .Sh SYNOPSIS
 .Nm tcpdump
+.Bk -words
 .Op Fl adeflnNoOpqStvxX
 .Op Fl c Ar count
+.Op Fl E Oo Ar espalg: Oc Ar espkey
 .Op Fl F Ar file
 .Op Fl i Ar interface
 .Op Fl r Ar file
 .Op Fl s Ar snaplen
 .Op Fl T Ar type
 .Op Fl w Ar file
-.Op Fl E Oo Ar espalg: Oc Ar espkey
 .Op Ar expression
+.Ek
 .Sh DESCRIPTION
 .Nm
-prints out the headers of packets on a network interface
-that match the boolean
+prints out the headers of packets on a network interface that match the boolean
 .Ar expression .
 You must have read access to
-.Pa /dev/bpf\&* .
+.Pa /dev/bpf* .
 .Pp
 The options are as follows:
-.Bl -tag -width Ds
+.Bl -tag -width "-c count"
 .It Fl a
 Attempt to convert network and broadcast addresses to names.
 .It Fl c Ar count
@@ -57,155 +58,17 @@ packets.
 Dump the compiled packet-matching code in a human readable form to
 standard output and stop.
 .It Fl dd
-Dump packet-matching code as a
-.Tn C
-program fragment.
+Dump packet-matching code as a C program fragment.
 .It Fl ddd
 Dump packet-matching code as decimal numbers
 preceded with a count.
 .It Fl e
 Print the link-level header on each dump line.
-.It Fl f
-Print
-.Dq foreign
-internet addresses numerically rather than symbolically.
-This option is intended to get around serious brain damage in
-Sun's yp server \(em usually it hangs forever translating non-local
-internet numbers.
-.It Fl F Ar file
-Use
-.Ar file
-as input for the filter expression.
-Any additional expressions given on the command line are ignored.
-.It Fl i Ar interface
-Listen on
-.Ar interface .
-If unspecified,
-.Nm
-searches the system interface list for the
-lowest numbered, configured
-.Dq up
-interface (excluding loopback).
-Ties are broken by choosing the earliest match.
-.It Fl l
-Make stdout line buffered.
-Useful if you want to see the data while capturing it.
-E.g.,
-.Bd -ragged -offset indent
-.Nm
-.Fl l
-| tee dat
-.Ed
-or
-.br
-.Bd -ragged -offset indent -compact
-.Nm
-.Fl l
-> dat & tail
-.Fl f
-dat
-.Ed
-.It Fl n
-Do not convert addresses (i.e., host addresses, port numbers, etc.)
-to names.
-.It Fl N
-Do not print domain name qualification of host names.
-For example, if you specify this flag then
-.Nm
-will print
-.Dq nic
-instead of
-.Dq nic.ddn.mil .
-.It Fl o
-Print a guess of the possible operating system(s) of hosts that sent TCP SYN
-packets.
-See
-.Xr pf.os 5
-for a description of the passive operating system fingerprints.
-.It Fl O
-Do not run the packet-matching code optimizer.
-This is useful only if you suspect a bug in the optimizer.
-.It Fl p
-Do not put the interface into promiscuous mode.
-The interface might be in promiscuous mode for some other reason; hence,
-.Fl p
-cannot be used as an abbreviation for
-.Dq ether host "{local\&-hw\&-addr}"
-or
-.Dq ether broadcast .
-.It Fl q
-Quick (quiet?) output.
-Print less protocol information so output lines are shorter.
-.It Fl r Ar file
-Read packets from a
-.Ar file
-which was created with the
-.Fl w
-option.
-Standard input is used if
-.Ar file
-is
-.Ql - .
-.It Fl s Ar snaplen
-Analyze at most the first
-.Ar snaplen
-bytes of data from each packet rather than the
-default of 68.
-68 bytes is adequate for
-.Tn IP ,
-.Tn ICMP ,
-.Tn TCP ,
-and
-.Tn UDP
-but may truncate protocol information from name server and
-.Tn NFS
-packets (see below).
-Packets truncated because of a limited
-.Ar snaplen
-are indicated in the output with
-.Dq Op \*(Ba Ns Em proto ,
-where
-.Em proto
-is the name of the protocol level at which the truncation has occurred.
-Taking larger snapshots both increases
-the amount of time it takes to process packets and, effectively,
-decreases the amount of packet buffering.
-This may cause packets to be lost.
-You should limit
-.Ar snaplen
-to the smallest number that will
-capture the protocol information you're interested in.
-.It Fl T Ar type
-Force packets selected by
-.Ar expression
-to be interpreted as the
-specified
-.Ar type .
-Currently known types are
-.Cm cnfp
-.Pq Cisco NetFlow protocol ,
-.Cm rpc
-.Pq Remote Procedure Call ,
-.Cm rtp
-.Pq Real\&-Time Applications protocol ,
-.Cm rtcp
-.Pq Real\&-Time Applications control protocol ,
-.Cm sack
-.Po
-.Tn RFC 2018
-No Selective Acknowledgements
-.Pc ,
-.Cm vat
-.Pq Visual Audio Tool ,
-and
-.Cm wb
-.Pq distributed White Board .
 .It Xo
 .Fl E Oo Ar espalg: Oc Ar espkey
 .Xc
-Try to decrypt
-.Tn RFC 2406
-.Cm ESP
+Try to decrypt RFC 2406 ESP
+.Pq Encapsulating Security Payload
 traffic using the specified hex key
 .Ar espkey .
 Supported algorithms for
@@ -224,36 +87,148 @@ and
 .Cm des-hmac96 .
 The algorithm defaults to
 .Cm aes128-hmac96 .
-This option should be used for debugging only, since
-the key will show up in
+This option should be used for debugging only, since the key will show up in
 .Xr ps 1
 output.
+.It Fl f
+Print
+.Dq foreign
+internet addresses numerically rather than symbolically.
+This option is intended to get around serious brain damage in
+Sun's yp server \(em usually it hangs forever translating non-local
+internet numbers.
+.It Fl F Ar file
+Use
+.Ar file
+as input for the filter expression.
+Any additional expressions given on the command line are ignored.
+.It Fl i Ar interface
+Listen on
+.Ar interface .
+If unspecified,
+.Nm
+searches the system interface list for the lowest numbered, configured
+.Dq up
+interface
+.Pq excluding loopback .
+Ties are broken by choosing the earliest match.
+.It Fl l
+Make stdout line buffered.
+Useful if you want to see the data while capturing it.
+E.g.,
+.Pp
+.Dl # tcpdump -l | tee dat
+or
+.Dl # tcpdump -l > dat & tail -f dat
+.It Fl n
+Do not convert addresses
+.Pq host addresses, port numbers, etc.
+to names.
+.It Fl N
+Do not print domain name qualification of host names.
+For example, if you specify this flag then
+.Nm
+will print
+.Dq nic
+instead of
+.Dq nic.ddn.mil .
+.It Fl o
+Print a guess of the possible operating system(s) of hosts that sent
+TCP SYN packets.
+See
+.Xr pf.os 5
+for a description of the passive operating system fingerprints.
+.It Fl O
+Do not run the packet-matching code optimizer.
+This is useful only if you suspect a bug in the optimizer.
+.It Fl p
+Do not put the interface into promiscuous mode.
+The interface might be in promiscuous mode for some other reason; hence,
+.Fl p
+cannot be used as an abbreviation for
+.Dq ether host \&"{local-hw-addr}\&"
+or
+.Dq ether broadcast .
+.It Fl q
+Quick
+.Pq quiet?
+output.
+Print less protocol information so output lines are shorter.
+.It Fl r Ar file
+Read packets from a
+.Ar file
+which was created with the
+.Fl w
+option.
+Standard input is used if
+.Ar file
+is
+.Ql - .
+.It Fl s Ar snaplen
+Analyze at most the first
+.Ar snaplen
+bytes of data from each packet rather than the default of 68.
+68 bytes is adequate for IP, ICMP, TCP, and UDP,
+but may truncate protocol information from name server and NFS packets
+.Pq see below .
+Packets truncated because of a limited
+.Ar snaplen
+are indicated in the output with
+.Dq Op \*(Ba Ns Em proto ,
+where
+.Em proto
+is the name of the protocol level at which the truncation has occurred.
+Taking larger snapshots both increases the amount of time it takes
+to process packets and, effectively, decreases the amount of packet buffering.
+This may cause packets to be lost.
+You should limit
+.Ar snaplen
+to the smallest number that will capture the protocol information
+you're interested in.
 .It Fl S
-Print absolute, rather than relative,
-.Tn TCP
-sequence numbers.
+Print absolute, rather than relative, TCP sequence numbers.
 .It Fl t
 Do not print a timestamp on each dump line.
 .It Fl tt
 Print an unformatted timestamp on each dump line.
 .It Fl ttt
 Print day and month in timestamp.
+.It Fl T Ar type
+Force packets selected by
+.Ar expression
+to be interpreted as the specified
+.Ar type .
+Currently known types are
+.Cm cnfp
+.Pq Cisco NetFlow protocol ,
+.Cm rpc
+.Pq Remote Procedure Call ,
+.Cm rtp
+.Pq Real-Time Applications protocol ,
+.Cm rtcp
+.Pq Real-Time Applications control protocol ,
+.Cm sack
+.Pq RFC 2018 TCP Selective Acknowledgements Options ,
+.Cm vat
+.Pq Visual Audio Tool ,
+and
+.Cm wb
+.Pq distributed White Board .
 .It Fl v
-(Slightly more) verbose output.
+.Pq Slightly more
+verbose output.
 For example, the time to live
-and type of service information in an
-.Tn IP
-packet are printed.
+.Pq TTL
+and type of service
+.Pq ToS
+information in an IP packet are printed.
 .It Fl vv
 Even more verbose output.
-For example, additional fields are printed from
-.Tn NFS
-reply packets.
+For example, additional fields are printed from NFS reply packets.
 .It Fl w Ar file
 Write the raw packets to
 .Ar file
-rather than parsing and printing
-them out.
+rather than parsing and printing them out.
 They can be analyzed later with the
 .Fl r
 option.
@@ -262,7 +237,8 @@ Standard output is used if
 is
 .Ql - .
 .It Fl x
-Print each packet (minus its link-level header)
+Print each packet
+.Pq minus its link-level header
 in hex.
 The smaller of the entire packet or
 .Ar snaplen
@@ -271,7 +247,9 @@ bytes will be printed.
 Like
 .Fl x
 but dumps the packet in emacs-hexl like format.
-.It Ar expression
+.El
+.Pp
+.Ar expression
 selects which packets will be dumped.
 If no
 .Ar expression
@@ -285,11 +263,11 @@ The
 consists of one or more primitives.
 Primitives usually consist of an
 .Ar id
-(name or number)
+.Pq name or number
 preceded by one or more qualifiers.
 There are three different kinds of qualifiers:
 .Bl -tag -width "proto"
-.It Fa type
+.It Ar type
 Specify which kind of address component the
 .Ar id
 name or number refers to.
@@ -317,16 +295,17 @@ and
 E.g.,
 .Dq src foo ,
 .Dq dst net 128.3 ,
-.Dq src or dst port ftp\&-data .
+.Dq src or dst port ftp-data .
 If there is no
 .Ar dir
 qualifier,
 .Cm src or dst
 is assumed.
-For null link layers (i.e., point-to-point protocols such as
-.Tn SLIP
-or the pflog header)
-the
+For null link layers (i.e., point-to-point protocols such as SLIP
+.Pq Serial Line Internet Protocol
+or the
+.Xr pflog 4
+header), the
 .Cm inbound
 and
 .Cm outbound
@@ -334,15 +313,15 @@ qualifiers can be used to specify a desired direction.
 .It Ar proto
 Restrict the match to a particular protocol.
 Possible protocols are:
+.Cm arp ,
+.Cm decnet ,
 .Cm ether ,
 .Cm fddi ,
 .Cm ip ,
-.Cm arp ,
-.Cm rarp ,
-.Cm decnet ,
 .Cm lat ,
-.Cm moprc ,
 .Cm mopdl ,
+.Cm moprc ,
+.Cm rarp ,
 .Cm tcp ,
 and
 .Cm udp .
@@ -350,9 +329,8 @@ E.g.,
 .Dq ether src foo ,
 .Dq arp net 128.3 ,
 .Dq tcp port 21 .
-If there is
-no protocol qualifier, all protocols consistent with the type are
-assumed.
+If there is no protocol qualifier,
+all protocols consistent with the type are assumed.
 E.g.,
 .Dq src foo
 means
@@ -360,18 +338,18 @@ means
 .Pq ip or arp or rarp
 src foo
 .Dc
-(except the latter is not legal syntax),
+.Pq except the latter is not legal syntax ;
 .Dq net bar
 means
 .Do
 .Pq ip or arp or rarp
 net bar
-.Dc
+.Dc ;
 and
 .Dq port 53
 means
 .Do
-.Pq tcp or udp
+.Pq TCP or UDP
 port 53
 .Dc .
 .Pp
@@ -382,14 +360,13 @@ the parser treats them identically as meaning
 .Qo
 the data link level used on the specified network interface
 .Qc .
-.Tn FDDI
-headers contain Ethernet-like source
-and destination addresses, and often contain Ethernet-like packet
-types, so you can filter on these
-.Tn FDDI
-fields just as with the analogous Ethernet fields.
-.Tn FDDI
-headers also contain other fields,
+FDDI
+.Pq Fiber Distributed Data Interface
+headers contain Ethernet-like source and destination addresses,
+and often contain Ethernet-like packet types,
+so you can filter on these FDDI fields just as with the analogous
+Ethernet fields.
+FDDI headers also contain other fields,
 but you cannot name them explicitly in a filter expression.
 .El
 .Pp
@@ -407,12 +384,12 @@ More complex filter expressions are built up by using the words
 .Cm or ,
 and
 .Cm not
-to combine primitives.
+to combine primitives
 e.g.,
 .Do
 host foo and not port ftp and not port ftp-data
 .Dc .
-To save typing, identical qualifier lists can be omitted.
+To save typing, identical qualifier lists can be omitted
 e.g.,
 .Dq tcp dst port ftp or ftp-data or domain
 is exactly the same as
@@ -423,20 +400,14 @@ tcp dst port ftp or tcp dst port ftp-data or tcp dst port domain
 Allowable primitives are:
 .Bl -tag -width "ether proto proto"
 .It Cm dst host Ar host
-True if the
-.Tn IP
-destination field of the packet is
+True if the IP destination field of the packet is
 .Ar host ,
 which may be either an address or a name.
 .It Cm src host Ar host
-True if the
-.Tn IP
-source field of the packet is
+True if the IP source field of the packet is
 .Ar host .
 .It Cm host Ar host
-True if either the
-.Tn IP
-source or destination of the packet is
+True if either the IP source or destination of the packet is
 .Ar host .
 .Pp
 Any of the above
@@ -456,14 +427,11 @@ which is equivalent to:
 .Ar ip
 .Cm and host
 .Ar host
-.Pp
 .Ed
+.Pp
 If
 .Ar host
-is a name with multiple
-.Tn IP
-addresses, each address will
-be checked for a match.
+is a name with multiple IP addresses, each address will be checked for a match.
 .It Cm ether dst Ar ehost
 True if the Ethernet destination address is
 .Ar ehost .
@@ -484,11 +452,7 @@ True if the packet used
 .Ar host
 as a gateway; i.e., the Ethernet source or destination address was
 .Ar host
-but neither the
-.Tn IP
-source nor the
-.Tn IP
-destination was
+but neither the IP source nor the IP destination was
 .Ar host .
 .Ar host
 must be a name and must be found in both
@@ -504,12 +468,9 @@ An equivalent expression is
 .Ed
 .Pp
 which can be used with either names or numbers for
-.Ar host Ns \&/ Ns Ar ehost .
+.Ar host Ns / Ns Ar ehost .
 .It Cm dst net Ar net
-True if the
-.Tn IP
-destination address of the packet has a network
-number of
+True if the IP destination address of the packet has a network number of
 .Ar net .
 .Ar net
 may be either a name from
@@ -518,20 +479,14 @@ or a network number (see
 .Xr networks 5
 for details).
 .It Cm src net Ar net
-True if the
-.Tn IP
-source address of the packet has a network
-number of
+True if the IP source address of the packet has a network number of
 .Ar net .
 .It Cm net Ar net
-True if either the
-.Tn IP
-source or destination address of the packet has a network
-number of
+True if either the IP source or destination address of the packet
+has a network number of
 .Ar net .
 .It Cm dst port Ar port
-True if the packet is ip/tcp or ip/udp and has a
-destination port value of
+True if the packet is IP/TCP or IP/UDP and has a destination port value of
 .Ar port .
 The
 .Ar port
@@ -541,16 +496,13 @@ can be a number or a name used in
 .Xr tcp 4
 and
 .Xr udp 4 ) .
-If a name is used, both the port
-number and protocol are checked.
-If a number or ambiguous name is used only the port number is checked;
+If a name is used, both the port number and protocol are checked.
+If a number or ambiguous name is used, only the port number is checked;
 e.g.,
 .Dq Cm dst port No 513
-will print both
-tcp/login traffic and udp/who traffic, and
+will print both TCP/login traffic and UDP/who traffic, and
 .Dq Cm dst port No domain
-will print
-both tcp/domain and udp/domain traffic.
+will print both TCP/domain and UDP/domain traffic.
 .It Cm src port Ar port
 True if the packet has a source port value of
 .Ar port .
@@ -566,28 +518,24 @@ as in:
 .Pp
 .D1 Cm tcp src port Ar port
 .Pp
-which matches only
-.Tn TCP
-packets whose source port is
+which matches only TCP packets whose source port is
 .Ar port .
 .It Cm less Ar length
 True if the packet has a length less than or equal to
 .Ar length .
 This is equivalent to:
 .Pp
-.D1 Cm len \*(Le Ar length .
+.D1 Cm len <= Ar length
 .Pp
 .It Cm greater Ar length
 True if the packet has a length greater than or equal to
 .Ar length .
 This is equivalent to:
 .Pp
-.D1 Cm len \*(Ge Ar length .
+.D1 Cm len >= Ar length
 .Pp
 .It Cm ip proto Ar proto
-True if the packet is an
-.Tn IP
-packet (see
+True if the packet is an IP packet (see
 .Xr ip 4 )
 of protocol type
 .Ar proto .
@@ -610,12 +558,9 @@ The
 .Cm ether
 keyword is optional.
 .It Cm ip broadcast
-True if the packet is an
-.Tn IP
-broadcast packet.
-It checks for both
-the all-zeroes and all-ones broadcast conventions and looks up
-the local subnet mask.
+True if the packet is an IP broadcast packet.
+It checks for both the all-zeroes and all-ones broadcast conventions
+and looks up the local subnet mask.
 .It Cm ether multicast
 True if the packet is an Ethernet multicast packet.
 The
@@ -623,12 +568,10 @@ The
 keyword is optional.
 This is shorthand for
 .Do
-.Cm ether Ns [0] \&& 1 !\&= 0
+.Cm ether Ns [0] & 1 != 0
 .Dc .
 .It Cm ip multicast
-True if the packet is an
-.Tn IP
-multicast packet.
+True if the packet is an IP multicast packet.
 .It Cm ether proto Ar proto
 True if the packet is of ether type
 .Ar proto .
@@ -638,30 +581,15 @@ can be a number or a name like
 .Cm arp ,
 or
 .Cm rarp .
-These identifiers are also shell keywords
-and must be escaped.
-In the case of
-.Tn FDDI
-(e.g.,
+These identifiers are also shell keywords and must be escaped.
+In the case of FDDI (e.g.,
 .Dq Cm fddi protocol arp ) ,
-the
-protocol identification comes from the 802.2 Logical Link Control
-.Pq Tn LLC
-header, which is usually layered on top of the
-.Tn FDDI
-header.
+the protocol identification comes from the 802.2 Logical Link Control
+.Pq LLC
+header, which is usually layered on top of the FDDI header.
 .Nm
-assumes, when filtering on the protocol identifier,
-that all
-.Tn FDDI
-packets include an
-.Tn LLC
-header, and that the
-.Tn LLC
-header
-is in so-called
-.Tn SNAP
-format.
+assumes, when filtering on the protocol identifier, that all FDDI packets
+include an LLC header, and that the LLC header is in so-called SNAP format.
 .It Cm decnet src Ar host
 True if the
 .Tn DECNET
@@ -673,8 +601,7 @@ or a
 .Tn DECNET
 host name.
 .Tn DECNET
-host name support is only available on
-systems that are configured to run
+host name support is only available on systems that are configured to run
 .Tn DECNET .
 .It Cm decnet dst Ar host
 True if the
@@ -687,8 +614,8 @@ True if either the
 source or destination address is
 .Ar host .
 .It Cm ifname Ar interface
-True if the packet was logged as coming from the specified interface (applies
-only to packets logged by
+True if the packet was logged as coming from the specified interface
+(applies only to packets logged by
 .Xr pf 4 ) .
 .It Cm on Ar interface
 Synonymous with the
@@ -699,7 +626,7 @@ True if the packet was logged as matching the specified PF rule number
 in the main ruleset (applies only to packets logged by
 .Xr pf 4 ) .
 .It Cm rulenum Ar num
-Synonomous with the
+Synonymous with the
 .Ar rnr
 modifier.
 .It Cm reason Ar code
@@ -711,7 +638,7 @@ The known codes are:
 .Ar short ,
 .Ar normalize ,
 and
-.Ar memory .
+.Ar memory
 (applies only to packets logged by
 .Xr pf 4 ) .
 .It Cm rset Ar name
@@ -719,7 +646,7 @@ True if the packet was logged as matching the specified PF ruleset
 name of an anchored ruleset (applies only to packets logged by
 .Xr pf 4 ) .
 .It Cm ruleset Ar name
-Synonomous with the
+Synonymous with the
 .Ar rset
 modifier.
 .It Cm srnr Ar num
@@ -727,7 +654,7 @@ True if the packet was logged as matching the specified PF rule number
 of an anchored ruleset (applies only to packets logged by
 .Xr pf 4 ) .
 .It Cm subrulenum Ar num
-Synonomous with the
+Synonymous with the
 .Ar srnr
 modifier.
 .It Cm action Ar act
@@ -735,7 +662,7 @@ True if PF took the specified action when the packet was logged.
 Known actions are:
 .Ar pass ,
 and
-.Ar block .
+.Ar block
 (applies only to packets logged by
 .Xr pf 4 ) .
 .It Xo Cm ip ,
@@ -778,9 +705,7 @@ is one of
 and
 .Ar expr
 is an arithmetic expression composed of integer constants
-(expressed in standard
-.Tn C
-syntax),
+.Pq expressed in standard C syntax ,
 the normal binary operators
 .Pf ( Ns Ql + ,
 .Ql - ,
@@ -789,11 +714,12 @@ the normal binary operators
 .Ql & ,
 .Ql | ) ,
 a length operator, and special packet data accessors.
-To access
-data inside the packet, use the following syntax:
+To access data inside the packet, use the following syntax:
+.Sm off
 .Bd -ragged -offset indent
-.Ar proto Op Ar expr No : Ar size
+.Ar proto Op Ar expr : Ar size
 .Ed
+.Sm on
 .Pp
 .Ar proto
 is one of
@@ -806,29 +732,24 @@ is one of
 .Cm udp ,
 or
 .Cm icmp ,
-and
-indicates the protocol layer for the index operation.
-The byte offset, relative to the indicated protocol layer, is
-given by
+and indicates the protocol layer for the index operation.
+The byte offset, relative to the indicated protocol layer, is given by
 .Ar expr .
 .Ar size
-is optional and indicates the number of bytes in the
-field of interest; it can be either one, two, or four, and defaults to one.
+is optional and indicates the number of bytes in the field of interest;
+it can be either one, two, or four, and defaults to one.
 The length operator, indicated by the keyword
 .Cm len ,
-gives the
-length of the packet.
+gives the length of the packet.
 .Pp
 For example,
-.Dq Cm ether Ns [0] \&& 1 !\&= 0
+.Dq Cm ether Ns [0] & 1 != 0
 catches all multicast traffic.
 The expression
-.Dq Cm ip Ns [0] \&& 0xf !\&= 5
-catches all
-.Tn IP
-packets with options.
+.Dq Cm ip Ns [0] & 0xf != 5
+catches all IP packets with options.
 The expression
-.Dq Cm ip Ns [6:2] \&& 0x1fff \&= 0
+.Dq Cm ip Ns [6:2] & 0x1fff = 0
 catches only unfragmented datagrams and frag zero of fragmented datagrams.
 This check is implicitly applied to the
 .Cm tcp
@@ -837,18 +758,14 @@ and
 index operations.
 For instance,
 .Dq Cm tcp Ns [0]
-always means the first
-byte of the
-.Tn TCP
-header,
-and never means the first byte of an
-intervening fragment.
+always means the first byte of the TCP header,
+and never means the first byte of an intervening fragment.
 .El
 .Pp
-Primitives may be combined using
-a parenthesized group of primitives and operators.
+Primitives may be combined using a parenthesized group of primitives and
+operators.
 Parentheses are special to the shell and must be escaped.
-Allowed primitives and operators are:
+Allowable primitives and operators are:
 .Bd -ragged -offset indent
 Negation
 .Po
@@ -856,14 +773,14 @@ Negation
 or
 .Dq Cm not
 .Pc
-.br
+
 Concatenation
 .Po
-.Dq Cm \&&\&&
+.Dq Cm &&
 or
 .Dq Cm and
 .Pc
-.br
+
 Alternation
 .Po
 .Dq Cm ||
@@ -873,15 +790,13 @@ or
 .Ed
 .Pp
 Negation has highest precedence.
-Alternation and concatenation have equal precedence and associate
-left to right.
+Alternation and concatenation have equal precedence and associate left to right.
 Explicit
 .Cm and
 tokens, not juxtaposition,
 are now required for concatenation.
 .Pp
-If an identifier is given without a keyword, the most recent keyword
-is assumed.
+If an identifier is given without a keyword, the most recent keyword is assumed.
 For example,
 .Bd -ragged -offset indent
 .Cm not host
@@ -906,144 +821,72 @@ which should not be confused with
 .Pp
 Expression arguments can be passed to
 .Nm
-as either a single argument
-or as multiple arguments, whichever is more convenient.
-Generally, if the expression contains shell metacharacters, it is
-easier to pass it as a single, quoted argument.
+as either a single argument or as multiple arguments,
+whichever is more convenient.
+Generally, if the expression contains shell metacharacters,
+it is easier to pass it as a single, quoted argument.
 Multiple arguments are concatenated with spaces before being parsed.
 .Sh EXAMPLES
 To print all packets arriving at or departing from sundown:
-.Bd -ragged -offset indent
-.Nm
-.Cm host No sundown
-.Ed
 .Pp
-To print traffic between helios and either hot or ace:
-.Bd -ragged -offset indent
-.Nm
-.Cm host
-helios
-.Cm and
-.Pq hot Cm or No ace
-.Ed
+.Dl # tcpdump host sundown
 .Pp
-To print all
-.Tn IP
-packets between ace and any host except helios:
-.Bd -ragged -offset indent
-.Nm
-.Cm ip host
-ace
-.Cm and not
-helios
-.Ed
+To print traffic between helios and either hot or ace
+(the expression is quoted to prevent the shell from mis-interpreting
+the parentheses):
+.Pp
+.Dl # tcpdump 'host helios and (hot or ace)'
+.Pp
+To print all IP packets between ace and any host except helios:
+.Pp
+.Dl # tcpdump ip host ace and not helios
 .Pp
 To print all traffic between local hosts and hosts at Berkeley:
-.Bd -ragged -offset indent
-.Nm
-.Cm net
-ucb\(enether
-.Ed
 .Pp
-To print all
-.Tn FTP
-traffic through internet gateway snup:
-.Bd -ragged -offset indent
-.Nm
-\&'
-.Cm gateway
-snup
-.Cm and
-.Pq Cm port No ftp Cm or No ftp\&-data
-\&'
+.Dl # tcpdump net ucb-ether
 .Pp
-The expression is quoted to prevent the shell from
-mis\(eninterpreting the parentheses.
-.Ed
+To print all FTP traffic through internet gateway snup:
+.Pp
+.Dl # tcpdump 'gateway snup and (port ftp or ftp-data)'
 .Pp
 To print traffic neither sourced from nor destined for local hosts
-.Po
-if you gateway to one other net, this stuff should never make it
-onto your local net
-.Pc :
-.Bd -ragged -offset indent
-.Nm
-.Cm ip and not net
-localnet
+(if you gateway to one other net, this stuff should never make it onto
+your local net):
+.Pp
+.Dl # tcpdump ip and not net localnet
+.Pp
+To print the start and end packets
+.Pq the SYN and FIN packets
+of each TCP connection that involves a non-local host:
+.Bd -literal -offset indent
+# tcpdump 'tcp[13] & 3 != 0 and not src and dst net localnet'
 .Ed
 .Pp
-To print the start and end packets (the
-.Tn SYN
-and
-.Tn FIN
-packets)
-of each
-.Tn TCP
-connection that involves a non-local host:
-.Bd -ragged -offset indent
-.Nm
-\&'
-.Cm tcp Ns [13] \&& 3 !\&= 0
-.Cm and not src and dst net
-localnet
-\&'
-.Ed
+To print IP packets longer than 576 bytes sent through gateway snup:
 .Pp
-To print
-.Tn IP
-packets longer than 576 bytes sent through gateway snup:
-.Bd -ragged -offset indent
-.Nm
-\&'
-.Cm gateway snup and ip Ns [2:2] \&> 576
-\&'
-.Ed
+.Dl # tcpdump 'gateway snup and ip[2:2] > 576'
 .Pp
-To print
-.Tn IP
-broadcast or multicast packets that were
+To print IP broadcast or multicast packets that were
 .Em not
 sent via Ethernet broadcast or multicast:
-.Bd -ragged -offset indent
-.Nm
-\&'
-.Cm ether Ns [0] \&& 1 = 0
-.Cm and ip Ns [16] \&>\&= 224
-\&'
+.Bd -literal -offset indent
+# tcpdump 'ether[0] & 1 = 0 and ip[16] >= 224'
 .Ed
 .Pp
-To print all
-.Tn ICMP
-packets that are not echo requests/replies (i.e., not ping packets):
-.Bd -ragged -offset indent
-.Nm
-\&'
-.Cm icmp Ns [0] != 8
-.Cm and icmp Ns [0] !\&= 0
-\&'
-.Ed
+To print all ICMP packets that are not echo requests/replies
+.Pq i.e., not ping packets :
 .Pp
-To print and decrypt all
-.Tn ESP
-packets with
-.Tn SPI
-0x00001234:
-.Bd -ragged -offset indent
-.Nm
--E des3-hmac96:ab...def
-\&'
-.Cm ip Ns [20:4] = 0x00001234
-\&'
-.Ed
-.El
+.Dl # tcpdump 'icmp[0] != 8 and icmp[0] != 0'
+.Pp
+To print and decrypt all ESP packets with SPI 0x00001234:
+.Pp
+.Dl # tcpdump -E des3-hmac96:ab...def 'ip[20:4] = 0x00001234'
 .Sh OUTPUT FORMAT
 The output of
 .Nm
 is protocol dependent.
 The following gives a brief description and examples of most of the formats.
-.Pp
-.Em Link Level Headers
-.Pp
+.Ss Link Level Headers
 If the
 .Fl e
 option is given, the link level header is printed out.
@@ -1051,57 +894,41 @@ On Ethernets, the source and destination addresses, protocol,
 and packet length are printed.
 .Pp
 On the packet filter logging interface
-.Pa pflog ,
-logging reason (rule match, bad-offset, fragment, short,
-normalize, memory), action taken (pass/block), direction (in/out) and interface
-information are printed out for each packet.
+.Xr pflog 4 ,
+logging reason
+.Pq rule match, bad-offset, fragment, short, normalize, memory ,
+action taken
+.Pq pass/block ,
+direction
+.Pq in/out
+and interface information are printed out for each packet.
 .Pp
-On
-.Tn FDDI
-networks, the
+On FDDI networks, the
 .Fl e
 option causes
 .Nm
-to print the frame control
-field, the source and destination addresses,
+to print the frame control field, the source and destination addresses,
 and the packet length.
-The frame control field governs the
-interpretation of the rest of the packet.
-Normal packets (such as those containing
-.Tn IP
-datagrams)
+The frame control field governs the interpretation of the rest of the packet.
+Normal packets
+.Pq such as those containing IP datagrams
 are
 .Dq async
-packets, with a priority
-value between 0 and 7; for example,
+packets, with a priority value between 0 and 7; for example,
 .Sy async4 .
-Such packets
-are assumed to contain an 802.2 Logical Link Control
-.Pq Tn LLC
-packet;
-the
-.Tn LLC
-header is printed if it is
+Such packets are assumed to contain an 802.2 Logical Link Control
+.Pq LLC
+packet; the LLC header is printed if it is
 .Em not
-an
-.Tn ISO
-datagram or a
-so-called
-.Tn SNAP
-packet.
+an ISO datagram or a so-called SNAP packet.
 .Pp
-The following description assumes familiarity with
-the
-.Tn SLIP
-compression algorithm described in
-.Tn RFC 1144 .
+The following description assumes familiarity with the
+SLIP compression algorithm described in RFC 1144.
 .Pp
-On
-.Tn SLIP
-links, a direction indicator
+On SLIP links, a direction indicator
 .Po
 .Ql I
-for inbound ,
+for inbound,
 .Ql O
 for outbound
 .Pc ,
@@ -1112,21 +939,17 @@ The three types are
 .Cm utcp ,
 and
 .Cm ctcp .
-No further link information is printed for
-.Cm ip
-packets.
-For
-.Tn TCP
-packets, the connection identifier is printed following the type.
+No further link information is printed for IP packets.
+For TCP packets, the connection identifier is printed following the type.
 If the packet is compressed, its encoded header is printed out.
 The special cases are printed out as
-.Cm \&*S\&+ Ns Ar n
+.Cm *S+ Ns Ar n
 and
-.Cm \&*SA\&+ Ns Ar n ,
+.Cm *SA+ Ns Ar n ,
 where
 .Ar n
-is the amount by which
-the sequence number (or sequence number and ack)
+is the amount by which the sequence number
+.Pq or sequence number and ack
 has changed.
 If it is not a special case, zero or more changes are printed.
 A change is indicated by
@@ -1142,50 +965,45 @@ and
 .Sq I
 .Pq packet ID ,
 followed by a delta
-.Pq \&+n or \&-n ,
+.Pq +n or -n ,
 or a new value
-.Pq \&=n .
+.Pq =n .
 Finally, the amount of data in the packet and compressed header length
 are printed.
 .Pp
-For example, the following line shows an outbound compressed
-.Tn TCP
-packet,
+For example, the following line shows an outbound compressed TCP packet,
 with an implicit connection identifier; the ack has changed by 6,
-the sequence number by 49, and the packet ID
-by 6; there are 3 bytes of
-data and 6 bytes of compressed header:
+the sequence number by 49, and the packet ID by 6;
+there are 3 bytes of data and 6 bytes of compressed header:
 .Bd -ragged -offset indent
 O
-.Cm ctcp No \&*
-.Cm A No \&+6
-.Cm S No \&+49
-.Cm I No \&+6 3
+.Cm ctcp No *
+.Cm A No +6
+.Cm S No +49
+.Cm I No +6 3
 .Pq 6
 .Ed
-.Pp
-.Tn Em ARP\&/ Ns Tn Em RARP Packets
-.Pp
+.Ss ARP/RARP Packets
 arp/rarp output shows the type of request and its arguments.
 The format is intended to be self-explanatory.
-Here is a short sample taken from the start of an
-rlogin from host rtsg to host csam:
+Here is a short sample taken from the start of an rlogin
+from host rtsg to host csam:
 .Bd -literal -offset indent
-arp who\&-has csam tell rtsg
-arp reply csam is\&-at CSAM
+arp who-has csam tell rtsg
+arp reply csam is-at CSAM
 .Ed
 .Pp
-In this example, Ethernet addresses are in caps and internet
-addresses in lower case.
-The first line says that rtsg sent an arp packet asking
-for the Ethernet address of internet host csam.
+In this example, Ethernet addresses are in caps and internet addresses
+in lower case.
+The first line says that rtsg sent an arp packet asking for
+the Ethernet address of internet host csam.
 csam replies with its Ethernet address CSAM.
 .Pp
 This would look less redundant if we had done
 .Nm
 .Fl n :
 .Bd -literal -offset indent
-arp who\&-has 128.3.254.6 tell 128.3.254.68
+arp who-has 128.3.254.6 tell 128.3.254.68
 arp reply 128.3.254.6 is-at 02:07:01:00:01:c4
 .Ed
 .Pp
@@ -1199,36 +1017,28 @@ RTSG Broadcast 0806 64: arp who-has csam tell rtsg
 CSAM RTSG 0806 64: arp reply csam is-at CSAM
 .Ed
 .Pp
-For the first packet this says the Ethernet source address is RTSG, the
-destination is the Ethernet broadcast address, the type field
-contained hex 0806 (type
+For the first packet this says the Ethernet source address is RTSG,
+the destination is the Ethernet broadcast address,
+the type field contained hex 0806 (type
 .Dv ETHER_ARP )
 and the total length was 64 bytes.
-.Pp
-.Tn Em TCP Packets
-.Pp
-The following description assumes familiarity with
-the
-.Tn TCP
-protocol described in
-.Tn RFC 793 .
-If you are not familiar
-with the protocol, neither this description nor
+.Ss TCP Packets
+The following description assumes familiarity with the TCP protocol
+described in RFC 793.
+If you are not familiar with the protocol, neither this description nor
 .Nm
 will be of much use to you.
 .Pp
-The general format of a tcp protocol line is:
+The general format of a TCP protocol line is:
 .Bd -ragged -offset indent
-.Ar src No \&> Ar dst :
-.Ar flags src\&-os data\&-seqno ack window urgent options
+.Ar src No > Ar dst :
+.Ar flags src-os data-seqno ack window urgent options
 .Ed
 .Pp
 .Ar src
 and
 .Ar dst
-are the source and destination
-.Tn IP
-addresses and ports.
+are the source and destination IP addresses and ports.
 .Ar flags
 is some combination of
 .Sq S
@@ -1247,14 +1057,15 @@ or
 or a single
 .Ql \&.
 .Pq no flags .
-.Ar src\&-os
+.Ar src-os
 will list a guess of the source host's operating system if the
 .Fl o
 command line flag was passed to
 .Nm tcpdump .
-.Ar data\&-seqno
+.Ar data-seqno
 describes the portion of sequence space covered
-by the data in this packet (see example below).
+by the data in this packet
+.Pq see example below .
 .Ar ack
 is the sequence number of the next data expected by the other
 end of this connection.
@@ -1264,18 +1075,18 @@ at the other end of this connection.
 .Ar urg
 indicates there is urgent data in the packet.
 .Ar options
-are tcp options enclosed in angle brackets (e.g.,
-.Aq mss 1024 ) .
+are TCP options enclosed in angle brackets e.g.,
+.Aq mss 1024 .
 .Pp
-.Ar src , Ar dst
+.Ar src , dst
 and
 .Ar flags
 are always present.
-The other fields depend on the contents of the packet's tcp protocol header and
+The other fields depend on the contents of the packet's TCP protocol header and
 are output only if appropriate.
 .Pp
 Here is the opening portion of an rlogin from host rtsg to host csam.
-.Bd -literal -offset indent
+.Bd -unfilled -offset 2n
 rtsg.1023 > csam.login: S 768512:768512(0) win 4096 <mss 1024>
 csam.login > rtsg.1023: S 947648:947648(0) ack 768513 win 4096 <mss 1024>
 rtsg.1023 > csam.login: . ack 1 win 4096
@@ -1287,25 +1098,21 @@ csam.login > rtsg.1023: P 2:3(1) ack 21 win 4077 urg 1
 csam.login > rtsg.1023: P 3:4(1) ack 21 win 4077 urg 1
 .Ed
 .Pp
-The first line says that tcp port 1023 on rtsg sent a packet
+The first line says that TCP port 1023 on rtsg sent a packet
 to port login on host csam.
 The
 .Ql S
-indicates that the
-.Tn SYN
-flag was set.
+indicates that the SYN flag was set.
 The packet sequence number was 768512 and it contained no data.
 The notation is
 .Sm off
 .So
-.Ar first : Ns Ar last
-.Ns Po Ns Ar nbytes
+.Ar first : last
+.Po Ar nbytes
 .Pc
 .Sc
 .Sm on
-which means
-sequence
-numbers
+which means sequence numbers
 .Ar first
 up to but not including
 .Ar last
@@ -1313,14 +1120,11 @@ which is
 .Ar nbytes
 bytes of user data.
 There was no piggy-backed ack, the available receive window was 4096
-bytes and there was a max-segment-size option requesting an mss of
-1024 bytes.
+bytes and there was a max-segment-size option requesting an mss of 1024 bytes.
 .Pp
 Csam replies with a similar packet except it includes a piggy-backed
-ack for rtsg's
-.Tn SYN .
-Rtsg then acks csam's
-.Tn SYN .
+ack for rtsg's SYN.
+Rtsg then acks csam's SYN.
 The
 .Ql \&.
 means no flags were set.
@@ -1328,7 +1132,7 @@ The packet contained no data so there is no data sequence number.
 The ack sequence number is a 32-bit integer.
 The first time
 .Nm
-sees a tcp connection, it prints the sequence number from the packet.
+sees a TCP connection, it prints the sequence number from the packet.
 On subsequent packets of the connection, the difference between
 the current packet's sequence number and this initial sequence number
 is printed.
@@ -1346,51 +1150,36 @@ On the 6th line, rtsg sends csam 19 bytes of data
 bytes 2 through 20
 in the rtsg -> csam side of the connection
 .Pc .
-The
-.Tn PUSH
-flag is set in the packet.
+The PUSH flag is set in the packet.
 On the 7th line, csam says it's received data sent by rtsg up to
 but not including byte 21.
-Most of this data is apparently sitting in the
-socket buffer since csam's receive window has gotten 19 bytes smaller.
+Most of this data is apparently sitting in the socket buffer
+since csam's receive window has gotten 19 bytes smaller.
 Csam also sends one byte of data to rtsg in this packet.
 On the 8th and 9th lines,
 csam sends two bytes of urgent, pushed data to rtsg.
+.Ss UDP Packets
+UDP format is illustrated by this rwho packet:
 .Pp
-.Tn Em UDP Packets
+.D1 actinide.who > broadcast.who: udp 84
 .Pp
-.Tn UDP
-format is illustrated by this rwho packet:
-.Bd -literal -offset indent
-actinide.who \&> broadcast.who: udp 84
-.Ed
-.Pp
-This says that port who on host actinide sent a udp datagram to port
-who on host broadcast, the Internet
-broadcast address.
+This says that port who on host actinide sent a UDP datagram to port
+who on host broadcast, the Internet broadcast address.
 The packet contained 84 bytes of user data.
 .Pp
-Some
-.Tn UDP
-services are recognized (from the source or destination port number)
+Some UDP services are recognized
+.Pq from the source or destination port number
 and the higher level protocol information printed.
 In particular, Domain Name service requests
-.Pq Tn RFC 1034/1035
-and
-.Tn Sun RPC
-calls
-.Pq Tn RFC 1050
-to
-.Tn NFS .
-.Pp
-.Tn Em UDP Name Server Requests
-.Pp
+.Pq RFC 1034/1035
+and Sun RPC calls
+.Pq RFC 1050
+to NFS.
+.Ss UDP Name Server Requests
 The following description assumes familiarity with
-the Domain Service protocol described in
-.Tn RFC 1035 .
-If you are not familiar
-with the protocol, the following description will appear to be written
-in greek.
+the Domain Service protocol described in RFC 1035.
+If you are not familiar with the protocol,
+the following description will appear to be written in Greek.
 .Pp
 Name server requests are formatted as
 .Bd -ragged -offset indent
@@ -1400,14 +1189,14 @@ Name server requests are formatted as
 .Ar id op Ns ?\&
 .Ar flags qtype qclass name
 .Pq Ar len
+.Ed
 .Pp
 e.g.,
 .Pp
-h2opolo.1538 > helios.domain: 3+ A? ucbvax.berkeley.edu. (37)
-.Ed
+.D1 h2opolo.1538 > helios.domain: 3+ A? ucbvax.berkeley.edu. (37)
 .Pp
 Host h2opolo asked the domain server on helios for an address record
-.Pq Ar qtype Ns \&=A
+.Pq Ar qtype Ns =A
 associated with the name
 ucbvax.berkeley.edu.
 The query
@@ -1416,11 +1205,7 @@ was 3.
 The
 .Ql +
 indicates the recursion desired flag was set.
-The query length was 37 bytes, not including the
-.Tn UDP
-and
-.Tn IP
-protocol headers.
+The query length was 37 bytes, not including the UDP and IP protocol headers.
 The query operation was the normal one
 .Pq Query
 so the
@@ -1428,9 +1213,7 @@ so the
 field was omitted.
 If
 .Ar op
-had been anything else, it would
-have been printed between the
-3 and the
+had been anything else, it would have been printed between the 3 and the
 .Ql + .
 Similarly, the
 .Ar qclass
@@ -1458,19 +1241,16 @@ where
 is the appropriate count.
 If any of the response bits are set
 .Po
-.Tn AA , RA
-or rcode
+AA, RA or rcode
 .Pc
 or any of the
 .Dq must be zero
 bits are set in bytes two and three,
-.Dq Bq b2\&&3\&= Ns Ar x
+.Dq Bq b2&3= Ns Ar x
 is printed, where
 .Ar x
 is the hex value of header bytes two and three.
-.Pp
-.Tn Em UDP Name Server Responses
-.Pp
+.Ss UDP Name Server Responses
 Name server responses are formatted as
 .Bd -ragged -offset indent
 .Ar src No > Ar dst :
@@ -1482,11 +1262,11 @@ Name server responses are formatted as
 .Ar au
 .Ar type class data
 .Pq Ar len
+.Ed
 .Pp
 e.g.,
-.Pp
+.Bd -unfilled -offset indent
 helios.domain > h2opolo.1538: 3 3/3/7 A 128.32.137.3 (273)
-.br
 helios.domain > h2opolo.1537: 2 NXDomain* 0/1/0 (97)
 .Ed
 .Pp
@@ -1497,11 +1277,7 @@ with 3 answer records, 3 name server records and 7 authority records.
 The first answer record is type A
 .Pq address and its data is internet
 address 128.32.137.3.
-The total size of the response was 273 bytes, excluding
-.Tn UDP
-and
-.Tn IP
-headers.
+The total size of the response was 273 bytes, excluding UDP and IP headers.
 The
 .Ar op
 .Pq Query
@@ -1510,13 +1286,12 @@ and
 .Pq NoError
 were omitted, as was the
 .Ar class
-.Pq Tn C_IN
+.Pq C_IN
 of the A record.
 .Pp
-In the second example,
-helios responds to query
+In the second example, helios responds to query
 .Ar op
-2 with a
+2 with an
 .Ar rcode
 of non-existent domain
 .Pq NXDomain
@@ -1533,37 +1308,29 @@ or
 were printed.
 .Pp
 Other flag characters that might appear are
-.Ql -
-(recursion available,
-.Tn RA ,
+.Sq -
+(recursion available, RA,
 .Em not
 set)
 and
-.Dq \*(Ba
-(truncated message,
-.Tn TC ,
-set).
+.Sq \*(Ba
+.Pq truncated message, TC, set .
 If the question section doesn't contain exactly one entry,
 .Dq Bq Ar n Ns q
 is printed.
 .Pp
-Name server requests and responses tend to be large and the
-default
+Name server requests and responses tend to be large and the default
 .Ar snaplen
-of 68 bytes may not capture enough of the packet
-to print.
+of 68 bytes may not capture enough of the packet to print.
 Use the
 .Fl s
 flag to increase the
 .Ar snaplen
-if you
-need to seriously investigate name server traffic.
+if you need to seriously investigate name server traffic.
 .Dq Fl s No 128
 has worked well for me.
-.Pp
-.Tn Em NFS Requests and Replies
-.Pp
-.Tn Sun NFS
+.Ss NFS Requests and Replies
+Sun NFS
 .Pq Network File System
 requests and replies are printed as:
 .Bd -ragged -offset indent
@@ -1572,13 +1339,13 @@ requests and replies are printed as:
 .Ar dst Ns . Ns Ar nfs :
 .Ns Ar len
 .Ns Ar op args
-.br
+
 .Ar src Ns . Ns Ar nfs
 >
 .Ar dst Ns . Ns Ar xid :
 .Ns Ar reply stat len op results
 .Ed
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 sushi.6709 > wrl.nfs: 112 readlink fh 21,24/10.73165
 wrl.nfs > sushi.6709: reply ok 40 readlink "../var"
 sushi.201b > wrl.nfs:
@@ -1587,19 +1354,15 @@ wrl.nfs > sushi.201b:
 	reply ok 128 lookup fh 9,74/4134.3150
 .Ed
 .Pp
-In the first line, host sushi sends a transaction with ID
-6709 to wrl.
+In the first line, host sushi sends a transaction with ID 6709 to wrl.
 The number following the src host is a transaction ID,
 .Em not
 the source port.
-The request was 112 bytes, excluding the
-.Tn UDP
-and
-.Tn IP
-headers.
+The request was 112 bytes, excluding the UDP and IP headers.
 The
 .Ar op
-was a readlink (read symbolic link)
+was a readlink
+.Pq read symbolic link
 on fh
 .Pq Dq file handle
 21,24/10.731657119.
@@ -1610,21 +1373,19 @@ Wrl replies with a
 .Ar stat
 of ok and the contents of the link.
 .Pp
-In the third line, sushi asks wrl to lookup the name
+In the third line, sushi asks wrl to look up the name
 .Dq xcolors
 in directory file 9,74/4096.6878.
 The data printed depends on the operation type.
 The format is intended to be self-explanatory
-if read in conjunction with an
-.Tn NFS
-protocol spec.
+if read in conjunction with an NFS protocol spec.
 .Pp
 If the
 .Fl v
 .Pq verbose
 flag is given, additional information is printed.
 For example:
-.Bd -literal -offset indent
+.Bd -unfilled -offset indent
 sushi.1372a > wrl.nfs:
 	148 read fh 21,11/12.195 8192 bytes @ 24576
 wrl.nfs > sushi.1372a:
@@ -1632,24 +1393,17 @@ wrl.nfs > sushi.1372a:
 .Ed
 .Pp
 .Fl v
-also prints the
-.Tn IP No header Tn TTL , ID ,
-and fragmentation fields, which have been omitted from this example.
-In the first line, sushi asks wrl
-to read 8192 bytes from file 21,11/12.195,
+also prints the IP header TTL, ID, and fragmentation fields,
+which have been omitted from this example.
+In the first line, sushi asks wrl to read 8192 bytes from file 21,11/12.195,
 at byte offset 24576.
 Wrl replies with a
 .Ar stat of
 ok;
-the packet shown on the
-second line is the first fragment of the reply, and hence is only 1472
-bytes long.
-The other bytes will follow in subsequent fragments, but
-these fragments do not have
-.Tn NFS
-or even
-.Tn UDP
-headers and so might not be
+the packet shown on the second line is the first fragment of the reply,
+and hence is only 1472 bytes long.
+The other bytes will follow in subsequent fragments,
+but these fragments do not have NFS or even UDP headers and so might not be
 printed, depending on the filter expression used.
 Because the
 .Fl v
@@ -1667,58 +1421,37 @@ If the
 .Fl v
 flag is given more than once, even more details are printed.
 .Pp
-.Tn NFS
-requests are very large and much of the detail won't be printed
-unless
+NFS requests are very large and much of the detail won't be printed unless
 .Ar snaplen
 is increased.
 Try using
 .Dq Fl s No 192
-to watch
-.Tn NFS
-traffic.
+to watch NFS traffic.
 .Pp
-.Tn NFS
-reply packets do not explicitly identify the
-.Tn RPC
-operation.
+NFS reply packets do not explicitly identify the RPC operation.
 Instead,
 .Nm
 keeps track of
 .Dq recent
-requests, and matches them to the
-replies using the
+requests, and matches them to the replies using the
 .Ar xid
 .Pq transaction ID .
-If a reply does not closely follow the
-corresponding request, it might not be parsable.
-.Pp
-.Tn Em KIP AppleTalk
-.Pq Tn DDP No in Tn UDP
-.Pp
-AppleTalk
-.Tn DDP
-packets encapsulated in
-.Tn UDP
-datagrams are de-encapsulated and dumped as
-.Tn DDP
-packets
-.Po
-i.e., all the
-.Tn UDP
-header information is discarded
-.Pc .
+If a reply does not closely follow the corresponding request,
+it might not be parsable.
+.Ss KIP AppleTalk (DDP in UDP)
+AppleTalk DDP packets encapsulated in UDP datagrams
+are de-encapsulated and dumped as DDP packets
+.Pq i.e., all the UDP header information is discarded .
 The file
 .Pa /etc/atalk.names
 is used to translate AppleTalk net and node numbers to names.
 Lines in this file have the form
-.Bd -unfilled -offset indent
-.Ar number		name
-
-1.254		ether
-16.1		icsd-net
-1.254.110	ace
-.Ed
+.Bl -column "number" "name" -offset indent
+.It Sy "number" Ta Ta Sy "name"
+.It "1.254" Ta Ta "ether"
+.It "16.1" Ta Ta "icsd-net"
+.It "1.254.110" Ta Ta "ace"
+.El
 .Pp
 The first two lines give the names of AppleTalk networks.
 The third line gives the name of a particular host
@@ -1739,13 +1472,12 @@ AppleTalk addresses are printed in the form
 .Bd -ragged -offset indent
 .Ar net Ns . Ns Ar host Ns .
 .Ns Ar port
+.Ed
 .Pp
 e.g.,
-.Pp
+.Bd -unfilled -offset indent
 144.1.209.2 > icsd-net.112.220
-.br
 office.2 > icsd-net.112.220
-.br
 jssmag.149.235 > icsd-net.2
 .Ed
 .Pp
@@ -1753,59 +1485,51 @@ If
 .Pa /etc/atalk.names
 doesn't exist or doesn't contain an entry for some AppleTalk
 host/net number, addresses are printed in numeric form.
-In the first example,
-.Tn NBP
-.Pq Tn DDP No port 2
+In the first example, NBP
+.Pq DDP port 2
 on net 144.1 node 209
 is sending to whatever is listening on port 220 of net icsd-net node 112.
-The second line is the same except the full name of the source node
-is known
+The second line is the same except the full name of the source node is known
 .Pq Dq office .
 The third line is a send from port 235 on
-net jssmag node 149 to broadcast on the icsd-net
-.Tn NBP
-port.
-The broadcast address (255) is indicated by a net name with no host
-number; for this reason it is a good idea to keep node names and
-net names distinct in
+net jssmag node 149 to broadcast on the icsd-net NBP port.
+The broadcast address
+.Pq 255
+is indicated by a net name with no host number;
+for this reason it is a good idea to keep node names and net names distinct in
 .Pa /etc/atalk.names .
 .Pp
-.Tn NBP
+NBP
 .Pq name binding protocol
-and
-.Tn ATP
+and ATP
 .Pq AppleTalk transaction protocol
 packets have their contents interpreted.
 Other protocols just dump the protocol name
 .Po
-or number if no name is registered for the
-protocol
+or number if no name is registered for the protocol
 .Pc
 and packet size.
 .Pp
-.Tn NBP
-packets are formatted like the following examples:
-.Bd -literal
+NBP packets are formatted like the following examples:
+.Bd -unfilled
 icsd-net.112.220 > jssmag.2: nbp-lkup 190: "=:LaserWriter@*"
 jssmag.209.2 > icsd-net.112.220: nbp-reply 190: "RM1140:LaserWriter@*" 250
 techpit.2 > icsd-net.112.220: nbp-reply 190: "techpit:LaserWriter@*" 186
 .Ed
 .Pp
-The first line is a name lookup request for laserwriters sent by net
-icsdi-net host
+The first line is a name lookup request for laserwriters sent by
+net icsdi-net host
 112 and broadcast on net jssmag.
 The nbp ID for the lookup is 190.
 The second line shows a reply for this request
-.Pq note that it has the same id
+.Pq note that it has the same ID
 from host jssmag.209 saying that it has a laserwriter
 resource named RM1140 registered on port 250.
-The third line is
-another reply to the same request saying host techpit has laserwriter
-techpit registered on port 186.
+The third line is another reply to the same request
+saying host techpit has laserwriter techpit registered on port 186.
 .Pp
-.Tn ATP
-packet formatting is demonstrated by the following example:
-.Bd -literal -offset indent
+ATP packet formatting is demonstrated by the following example:
+.Bd -unfilled -offset indent
 jssmag.209.165 > helios.132: atp-req  12266<0-7> 0xae030001
 helios.132 > jssmag.209.165: atp-resp 12266:0 (512) 0xae040000
 helios.132 > jssmag.209.165: atp-resp 12266:1 (512) 0xae040000
@@ -1822,27 +1546,25 @@ jssmag.209.165 > helios.132: atp-rel  12266<0-7> 0xae030001
 jssmag.209.133 > helios.132: atp-req* 12267<0-7> 0xae030002
 .Ed
 .Pp
-Jssmag.209 initiates transaction id 12266 with host helios by requesting
+Jssmag.209 initiates transaction ID 12266 with host helios by requesting
 up to 8 packets
 .Sm off
-.Pq the Dq Aq 0 \&- 7 .
+.Pq the Dq Aq 0\-7 .
 .Sm on
 The hex number at the end of the line is the value of the
 .Ar userdata
 field in the request.
 .Pp
-Helios responds with 8 512\(enbyte packets.
+Helios responds with 8 512-byte packets.
 The
 .Dq : Ns Ar n
 following the
-transaction id gives the packet sequence number in the transaction
+transaction ID gives the packet sequence number in the transaction
 and the number in parentheses is the amount of data in the packet,
-excluding the atp header.
+excluding the ATP header.
 The
 .Ql *
-on packet 7 indicates that the
-.Tn EOM
-bit was set.
+on packet 7 indicates that the EOM bit was set.
 .Pp
 Jssmag.209 then requests that packets 3 & 5 be retransmitted.
 Helios resends them then jssmag.209 releases the transaction.
@@ -1854,9 +1576,7 @@ on the request indicates that XO
 was
 .Em not
 set.
-.Pp
-.Tn Em IP Fragmentation
-.Pp
+.Ss IP Fragmentation
 Fragmented Internet datagrams are printed as
 .Bd -ragged -offset indent
 .Po
@@ -1865,7 +1585,7 @@ Fragmented Internet datagrams are printed as
 .Ar size
 @
 .Ar offset
-.Op \&+
+.Op +
 .Pc
 .Ed
 .Pp
@@ -1880,9 +1600,7 @@ is the fragment ID.
 .Ar size
 is the fragment size
 .Pq in bytes
-excluding the
-.Tn IP
-header.
+excluding the IP header.
 .Ar offset
 is this fragment's offset
 .Pq in bytes
@@ -1893,11 +1611,9 @@ The first fragment contains the higher level protocol header and the fragment
 info is printed after the protocol info.
 Fragments after the first contain no higher level protocol header and the
 fragment info is printed after the source and destination addresses.
-For example, here is part of an ftp from arizona.edu to lbl\(enrtsg.arpa
-over a
-.Tn CSNET
-connection that doesn't appear to handle 576 byte datagrams:
-.Bd -literal -offset indent
+For example, here is part of an FTP from arizona.edu to lbl-rtsg.arpa
+over a CSNET connection that doesn't appear to handle 576 byte datagrams:
+.Bd -unfilled -offset indent
 arizona.ftp-data > rtsg.1170: . 1024:1332(308) ack 1 win 4096 (frag 595a:328@0+)
 arizona > rtsg: (frag 595a:204@328)
 rtsg.1170 > arizona.ftp-data: . ack 1536 win 2560
@@ -1905,28 +1621,22 @@ rtsg.1170 > arizona.ftp-data: . ack 1536 win 2560
 .Pp
 There are a couple of things to note here: first, addresses in the
 2nd line don't include port numbers.
-This is because the
-.Tn TCP
-protocol information is all in the first fragment and we have no idea
-what the port or sequence numbers are when we print the later fragments.
-Second, the tcp sequence information in the first line is printed as if there
+This is because the TCP protocol information is all in the first fragment
+and we have no idea what the port or sequence numbers are when we print
+the later fragments.
+Second, the TCP sequence information in the first line is printed as if there
 were 308 bytes of user data when, in fact, there are 512 bytes
 .Po
 308 in the first frag and 204 in the second
 .Pc .
-If you are looking for holes
-in the sequence space or trying to match up acks
+If you are looking for holes in the sequence space or trying to match up acks
 with packets, this can fool you.
 .Pp
-A packet with the
-.Tn IP
-.Sy don\&'t fragment
-flag is marked with a
-trailing
+A packet with the IP
+.Sy don't fragment
+flag is marked with a trailing
 .Dq Pq Tn DF .
-.Pp
-.Em Timestamps
-.Pp
+.Ss Timestamps
 By default, all output lines are preceded by a timestamp.
 The timestamp is the current clock time in the form
 .Sm off
@@ -1941,60 +1651,88 @@ serviced the
 interrupt.
 .Sh SEE ALSO
 .\" traffic(1C), nit(4P),
+.Xr ethers 3 ,
 .Xr pcap 3 ,
 .Xr bpf 4 ,
+.Xr ip 4 ,
+.Xr pf 4 ,
+.Xr pflog 4 ,
+.Xr tcp 4 ,
+.Xr udp 4 ,
+.Xr networks 5 ,
 .Xr pf.os 5
+.Rs
+.%R RFC 793
+.%T Transmission Control Protocol
+.%D September 1981
+.Re
+.Rs
+.%R RFC 1034
+.%T Domain Names \- Concepts and Facilities
+.%D November 1987
+.Re
+.Rs
+.%R RFC 1035
+.%T Domain Names \- Implementation and Specification
+.%D November 1987
+.Re
+.Rs
+.%R RFC 1050
+.%T RPC: Remote Procedure Call
+.%D April 1988
+.Re
+.Rs
+.%R RFC 1144
+.%T Compressing TCP/IP Headers for Low-Speed Serial Links
+.%D February 1990
+.Re
+.Rs
+.%R RFC 2018
+.%T TCP Selective Acknowledgement Options
+.%D October 1996
+.Re
+.Rs
+.%R RFC 2406
+.%T IP Encapsulating Security Payload (ESP)
+.%D November 1998
+.Re
 .Sh AUTHORS
-Van Jacobson
-.Pq van@ee.lbl.gov ,
-Craig Leres
-.Pq leres@ee.lbl.gov
-and Steven McCanne
-.Pq mccanne@ee.lbl.gov ,
-all of the
-Lawrence Berkeley Laboratory, University of California, Berkeley, CA.
+.An Van Jacobson Aq van@ee.lbl.gov ,
+.An Craig Leres Aq leres@ee.lbl.gov ,
+and
+.An Steven McCanne Aq mccanne@ee.lbl.gov ,
+all of the Lawrence Berkeley Laboratory, University of California, Berkeley, CA.
 .Sh BUGS
-Please send bug reports to tcpdump@ee.lbl.gov or libpcap@ee.lbl.gov.
+Please send bug reports to
+.Aq tcpdump@ee.lbl.gov
+or
+.Aq libpcap@ee.lbl.gov .
 .Pp
-Some attempt should be made to reassemble
-.Tn IP
-fragments or, at least
-to compute the right length for the higher level protocol.
+Some attempt should be made to reassemble IP fragments,
+or at least to compute the right length for the higher level protocol.
 .Pp
 Name server inverse queries are not dumped correctly: The
 .Pq empty
-question section is printed rather than the real query in the answer
-section.
+question section is printed rather than the real query in the answer section.
 Some believe that inverse queries are themselves a bug and
 prefer to fix the program generating them rather than
 .Nm tcpdump .
 .Pp
-Apple Ethertalk
-.Tn DDP
-packets could be dumped as easily as
-.Tn KIP DDP
-packets but aren't.
-Even if we were inclined to do anything to promote the use of
-Ethertalk (we aren't,
-.Tn LBL
-doesn't allow Ethertalk on any of its
-networks so we'd would have no way of testing this code).
+Apple Ethertalk DDP packets could be dumped as easily as KIP DDP packets
+but aren't.
+Even if we were inclined to do anything to promote the use of Ethertalk
+(we aren't, LBL doesn't allow Ethertalk on any of its
+networks so we'd have no way of testing this code).
 .Pp
 A packet trace that crosses a daylight saving time change will give
-skewed time stamps (the time change is ignored).
+skewed time stamps
+.Pq the time change is ignored .
 .Pp
-Filter expressions that manipulate
-.Tn FDDI
-headers assume that all
-.Tn FDDI
-packets are encapsulated Ethernet packets.
-This is true for
-.Tn IP ,
-.Tn ARP ,
-and
+Filter expressions that manipulate FDDI headers assume that all FDDI packets
+are encapsulated Ethernet packets.
+This is true for IP, ARP, and
 .Tn DECNET
 Phase IV,
-but is not true for protocols such as
-.Tn ISO CLNS .
+but is not true for protocols such as ISO CLNS.
 Therefore, the filter may inadvertently accept certain packets that
 do not properly match the filter expression.
