@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.47 2002/06/01 04:08:47 hugh Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.48 2002/06/07 19:41:23 henning Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -362,6 +362,9 @@ Adds a label (name) to the rule, which can be used to identify the rule.
 For instance,
 .Em pfctl -s labels
 shows per-rule statistics for rules that have labels.
+You can use $srcaddr, $srcport, $dstaddr and $dstport which will be replaced
+by source/destination address/port at parse time in the label.
+This allows for unique labels even when using address lists.
 .Sh MACROS
 .Em pfctl
 supports macro definition and expansion like:
