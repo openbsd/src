@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecreg.h,v 1.4 2000/06/18 03:37:22 jason Exp $	*/
+/*	$OpenBSD: ubsecreg.h,v 1.5 2000/08/11 19:38:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -107,6 +107,15 @@ struct ubsec_mcr {
 	volatile u_int16_t	mcr_pktlen;
 	struct ubsec_pktbuf	mcr_opktbuf;	/* output chain header */
 };
+
+struct ubsec_mcr_add {
+	volatile u_int32_t	mcr_cmdctxp;	/* command ctx pointer */
+	struct ubsec_pktbuf	mcr_ipktbuf;	/* input chain header */
+	volatile u_int16_t	mcr_reserved;
+	volatile u_int16_t	mcr_pktlen;
+	struct ubsec_pktbuf	mcr_opktbuf;	/* output chain header */
+};
+
 #define	UBS_MCR_DONE		0x0001		/* mcr has been processed */
 #define	UBS_MCR_ERROR		0x0002		/* error in processing */
 #define	UBS_MCR_ERRORCODE	0xff00		/* error type */

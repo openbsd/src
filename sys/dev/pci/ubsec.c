@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.19 2000/07/31 21:57:49 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.20 2000/08/11 19:38:15 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -200,7 +200,8 @@ ubsec_intr(arg)
 	struct ubsec_softc *sc = arg;
 	volatile u_int32_t stat, a;
 	struct ubsec_q *q;
-	int npkts = 0;
+	struct ubsec_mcr *mcr;
+	int npkts = 0, i;
 
 	stat = READ_REG(sc, BS_STAT);
 
@@ -217,18 +218,39 @@ ubsec_intr(arg)
 		while (!SIMPLEQ_EMPTY(&sc->sc_qchip)) {
 			q = SIMPLEQ_FIRST(&sc->sc_qchip);
 #ifdef UBSEC_DEBUG
-			printf("mcr_flags %x %x %x\n", &q->q_mcr, q->q_mcr.mcr_flags,
-			    READ_REG(sc, BS_ERR));
+			printf("mcr_flags %x %x %x\n", q->q_mcr,
+			    q->q_mcr->mcr_flags, READ_REG(sc, BS_ERR));
 #endif
-			if ((q->q_mcr.mcr_flags & UBS_MCR_DONE) == 0)
+			if ((q->q_mcr->mcr_flags & UBS_MCR_DONE) == 0)
 				break;
 			npkts++;
 			SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip, q, q_next);
 #ifdef UBSEC_DEBUG
 			printf("intr: callback q %08x flags %04x\n", q,
-			    q->q_mcr.mcr_flags);
+			    q->q_mcr->mcr_flags);
 #endif
+			mcr = q->q_mcr;
 			ubsec_callback(q);
+
+			/*
+			 * search for further sc_qchip ubsec_q's that share
+			 * the same MCR, and complete them too, they must be
+			 * at the top.
+			 */
+			for (i = 1; i < mcr->mcr_pkts; i++) {
+				q = SIMPLEQ_FIRST(&sc->sc_qchip);
+				if (q && q->q_mcr == mcr) {
+					printf("found a share\n");
+					SIMPLEQ_REMOVE_HEAD(&sc->sc_qchip,
+					    q, q_next);
+					ubsec_callback(q);
+				} else {
+					printf("HUH!\n");
+					break;
+				}
+			}
+
+			free(mcr, M_DEVBUF);
 		}
 #ifdef UBSEC_DEBUG
 		if (npkts > 1)
@@ -241,6 +263,7 @@ ubsec_intr(arg)
 		printf("%s: dmaerr %s@%08x\n", sc->sc_dv.dv_xname,
 		       (a & BS_ERR_READ) ? "read" : "write",
 		       a & ~BS_ERR_READ);
+		panic("to let theo see things");
 	}
 
 	ubsec_feed(sc);
@@ -252,14 +275,65 @@ ubsec_feed(sc)
 	struct ubsec_softc *sc;
 {
 	struct ubsec_q *q;
+	struct ubsec_mcr *mcr, *mcr2;
+	int npkts, i;
+	
+	npkts = sc->sc_nqueue;
+	if (npkts > 20)
+		npkts = 20;
+#ifdef not_working_yet
+	if (npkts < 2)
+		goto feed1;
+#else
+	goto feed1;
+#endif
 
+	if (READ_REG(sc, BS_STAT) & BS_STAT_MCR1_FULL)
+		return (0);
+
+	mcr = (struct ubsec_mcr *)malloc(sizeof(struct ubsec_mcr) +
+	    (npkts-1) * sizeof(struct ubsec_mcr_add), M_DEVBUF, M_NOWAIT);
+	if (mcr == NULL)
+		goto feed1;
+
+	printf("merging %d records\n", npkts);
+
+	for (mcr2 = mcr, i = 0; i < npkts; i++) {
+		q = SIMPLEQ_FIRST(&sc->sc_queue);
+		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
+		--sc->sc_nqueue;
+		SIMPLEQ_INSERT_TAIL(&sc->sc_qchip, q, q_next);
+
+		/*
+		 * first packet contains a full mcr, others contain
+		 * a shortened one
+		 */
+		if (i == 0) {
+			bcopy(q->q_mcr, mcr2, sizeof(struct ubsec_mcr));
+			mcr2 += sizeof(struct ubsec_mcr);
+		} else {
+			void *v;
+
+			v = ((void *)q->q_mcr) + sizeof(struct ubsec_mcr) -
+			    sizeof(struct ubsec_mcr_add);
+			bcopy(v, mcr2, sizeof(struct ubsec_mcr_add));
+			mcr2 += sizeof(struct ubsec_mcr_add);
+		}
+		free(q->q_mcr, M_DEVBUF);
+		q->q_mcr = mcr;
+	}
+	mcr->mcr_pkts = npkts;
+	WRITE_REG(sc, BS_MCR1, (u_int32_t)vtophys(mcr));
+	return (0);
+
+feed1:
 	while (!SIMPLEQ_EMPTY(&sc->sc_queue)) {
 		if (READ_REG(sc, BS_STAT) & BS_STAT_MCR1_FULL)
 			break;
 		q = SIMPLEQ_FIRST(&sc->sc_queue);
-		WRITE_REG(sc, BS_MCR1, (u_int32_t)vtophys(&q->q_mcr));
+		WRITE_REG(sc, BS_MCR1, (u_int32_t)vtophys(q->q_mcr));
 #ifdef UBSEC_DEBUG
-		printf("feed: q->chip %08x %08x\n", q, (u_int32_t)vtophys(&q->q_mcr));
+		printf("feed: q->chip %08x %08x\n", q, (u_int32_t)vtophys(q->q_mcr));
 #endif
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q, q_next);
 		--sc->sc_nqueue;
@@ -368,9 +442,18 @@ ubsec_process(crp)
 	}
 	bzero(q, sizeof(struct ubsec_q));
 
-	q->q_mcr.mcr_pkts = 1;
-	q->q_mcr.mcr_flags = 0;
-	q->q_mcr.mcr_cmdctxp = vtophys(&q->q_ctx);
+	q->q_mcr = (struct ubsec_mcr *)malloc(sizeof(struct ubsec_mcr),
+	    M_DEVBUF, M_NOWAIT);
+	if (q->q_mcr == NULL) {
+		free(q, M_DEVBUF);
+		err = ENOMEM;
+		goto errout;
+	}
+	bzero(q->q_mcr, sizeof(struct ubsec_mcr));
+
+	q->q_mcr->mcr_pkts = 1;
+	q->q_mcr->mcr_flags = 0;
+	q->q_mcr->mcr_cmdctxp = vtophys(&q->q_ctx);
 	q->q_sc = sc;
 	q->q_crp = crp;
 
@@ -395,7 +478,7 @@ ubsec_process(crp)
 			maccrd = crd1;
 			enccrd = NULL;
 		} else if (crd1->crd_alg == CRYPTO_DES_CBC ||
-			 crd1->crd_alg == CRYPTO_3DES_CBC) {
+		    crd1->crd_alg == CRYPTO_3DES_CBC) {
 			maccrd = NULL;
 			enccrd = crd1;
 		} else {
@@ -544,7 +627,7 @@ ubsec_process(crp)
 		err = ENOMEM;
 		goto errout;
 	}
-	q->q_mcr.mcr_pktlen = stheend;
+	q->q_mcr->mcr_pktlen = stheend;
 
 #ifdef UBSEC_DEBUG
 	printf("src skip: %d\n", sskip);
@@ -567,7 +650,7 @@ ubsec_process(crp)
 		}
 
 		if (j == 0)
-			pb = &q->q_mcr.mcr_ipktbuf;
+			pb = &q->q_mcr->mcr_ipktbuf;
 		else
 			pb = &q->q_srcpkt[j - 1];
 
@@ -593,10 +676,10 @@ ubsec_process(crp)
 		j++;
 	}
 #ifdef UBSEC_DEBUG
-	printf("  buf[%x]: %d@%x -> %x\n", vtophys(&q->q_mcr),
-	    q->q_mcr.mcr_ipktbuf.pb_len,
-	    q->q_mcr.mcr_ipktbuf.pb_addr,
-	    q->q_mcr.mcr_ipktbuf.pb_next);
+	printf("  buf[%x]: %d@%x -> %x\n", vtophys(q->q_mcr),
+	    q->q_mcr->mcr_ipktbuf.pb_len,
+	    q->q_mcr->mcr_ipktbuf.pb_addr,
+	    q->q_mcr->mcr_ipktbuf.pb_next);
 	for (i = 0; i < j - 1; i++) {
 		printf("  buf[%x]: %d@%x -> %x\n", vtophys(&q->q_srcpkt[i]),
 		    q->q_srcpkt[i].pb_len,
@@ -606,14 +689,14 @@ ubsec_process(crp)
 #endif
 
 	if (enccrd == NULL && maccrd != NULL) {
-		q->q_mcr.mcr_opktbuf.pb_addr = 0;
-		q->q_mcr.mcr_opktbuf.pb_len = 0;
-		q->q_mcr.mcr_opktbuf.pb_next =
+		q->q_mcr->mcr_opktbuf.pb_addr = 0;
+		q->q_mcr->mcr_opktbuf.pb_len = 0;
+		q->q_mcr->mcr_opktbuf.pb_next =
 		    (u_int32_t)vtophys(&q->q_macbuf[0]);
 		printf("opkt: %x %x %x\n",
-		    q->q_mcr.mcr_opktbuf.pb_addr,
-		    q->q_mcr.mcr_opktbuf.pb_len,
-		    q->q_mcr.mcr_opktbuf.pb_next);
+		    q->q_mcr->mcr_opktbuf.pb_addr,
+		    q->q_mcr->mcr_opktbuf.pb_len,
+		    q->q_mcr->mcr_opktbuf.pb_next);
 	} else {
 		if (!nicealign) {
 			int totlen, len;
@@ -689,7 +772,7 @@ ubsec_process(crp)
 			}
 
 			if (j == 0)
-				pb = &q->q_mcr.mcr_opktbuf;
+				pb = &q->q_mcr->mcr_opktbuf;
 			else
 				pb = &q->q_dstpkt[j - 1];
 
@@ -711,10 +794,10 @@ ubsec_process(crp)
 		}
 #ifdef UBSEC_DEBUG
 		printf("  buf[%d, %x]: %d@%x -> %x\n", 0,
-		    vtophys(&q->q_mcr),
-		    q->q_mcr.mcr_opktbuf.pb_len,
-		    q->q_mcr.mcr_opktbuf.pb_addr,
-		    q->q_mcr.mcr_opktbuf.pb_next);
+		    vtophys(q->q_mcr),
+		    q->q_mcr->mcr_opktbuf.pb_len,
+		    q->q_mcr->mcr_opktbuf.pb_addr,
+		    q->q_mcr->mcr_opktbuf.pb_next);
 		for (i = 0; i < j - 1; i++) {
 			printf("  buf[%d, %x]: %d@%x -> %x\n", i+1,
 			    vtophys(&q->q_dstpkt[i]),
@@ -734,6 +817,8 @@ ubsec_process(crp)
 
 errout:
 	if (q != NULL) {
+		if (q->q_mcr)
+			free(q->q_mcr, M_DEVBUF);
 		if (q->q_src_m != q->q_dst_m)
 			m_freem(q->q_dst_m);
 		free(q, M_DEVBUF);
@@ -764,6 +849,10 @@ ubsec_callback(q)
 		break;
 	}
 
+	/*
+	 * note that q->q_mcr is not freed, because ubsec_intr() has to
+	 * deal with possible sharing
+	 */
 	free(q, M_DEVBUF);
 	crypto_done(crp);
 }

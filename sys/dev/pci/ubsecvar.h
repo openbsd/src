@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.6 2000/07/29 23:42:00 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.7 2000/08/11 19:38:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -43,7 +43,7 @@ struct ubsec_softc {
 struct ubsec_q {
 	SIMPLEQ_ENTRY(ubsec_q)		q_next;
 	struct cryptop			*q_crp;
-	struct ubsec_mcr		q_mcr;
+	struct ubsec_mcr		*q_mcr;
 	struct ubsec_pktbuf		q_srcpkt[MAX_SCATTER-1];
 	struct ubsec_pktbuf		q_dstpkt[MAX_SCATTER-1];
 	struct ubsec_pktctx		q_ctx;
