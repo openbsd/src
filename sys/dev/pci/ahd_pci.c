@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahd_pci.c,v 1.4 2004/06/14 00:44:47 krw Exp $	*/
+/*	$OpenBSD: ahd_pci.c,v 1.5 2004/06/23 03:23:18 marco Exp $	*/
 /*
  * Product specific probe and attach routines for:
  *	aic7901 and aic7902 SCSI controllers
@@ -805,7 +805,7 @@ ahd_check_extport(struct ahd_softc *ahd)
 		}
 	}
 
-#if AHD_DEBUG
+#ifdef AHD_DEBUG
 	if (have_seeprom != 0
 	 && (ahd_debug & AHD_DUMP_SEEPROM) != 0) {
 		uint16_t *sc_data;

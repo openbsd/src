@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.h,v 1.3 2004/06/14 00:44:47 krw Exp $	*/
+/*	$OpenBSD: aic79xx.h,v 1.4 2004/06/23 03:23:19 marco Exp $	*/
 /*
  * Core definitions and data structures shareable across OS platforms.
  *
@@ -50,7 +50,7 @@
 #ifndef _AIC79XX_H_
 #define _AIC79XX_H_
 
-#undef AHC_DEBUG
+/* #define AHD_DEBUG */
 
 /* Register Definitions */
 #include <dev/microcode/aic7xxx/aic79xx_reg.h>
@@ -1553,24 +1553,25 @@ cam_status	ahd_find_tmode_devs(struct ahd_softc *ahd,
 /******************************* Debug ***************************************/
 #ifdef AHD_DEBUG
 extern uint32_t ahd_debug;
-#define AHD_SHOW_MISC		0x00001
-#define AHD_SHOW_SENSE		0x00002
-#define AHD_SHOW_RECOVERY	0x00004
-#define AHD_DUMP_SEEPROM	0x00008
-#define AHD_SHOW_TERMCTL	0x00010
-#define AHD_SHOW_MEMORY		0x00020
-#define AHD_SHOW_MESSAGES	0x00040
-#define AHD_SHOW_MODEPTR	0x00080
-#define AHD_SHOW_SELTO		0x00100
-#define AHD_SHOW_FIFOS		0x00200
-#define AHD_SHOW_QFULL		0x00400
-#define	AHD_SHOW_DV		0x00800
-#define AHD_SHOW_MASKED_ERRORS	0x01000
-#define AHD_SHOW_QUEUE		0x02000
-#define AHD_SHOW_TQIN		0x04000
-#define AHD_SHOW_SG		0x08000
-#define AHD_SHOW_INT_COALESCING	0x10000
-#define AHD_DEBUG_SEQUENCER	0x20000
+#define AHD_DEBUG_OPTS		0
+#define     AHD_SHOW_MISC		0x00001
+#define     AHD_SHOW_SENSE		0x00002
+#define     AHD_SHOW_RECOVERY		0x00004
+#define     AHD_DUMP_SEEPROM		0x00008
+#define     AHD_SHOW_TERMCTL		0x00010
+#define     AHD_SHOW_MEMORY		0x00020
+#define     AHD_SHOW_MESSAGES		0x00040
+#define     AHD_SHOW_MODEPTR		0x00080
+#define     AHD_SHOW_SELTO		0x00100
+#define     AHD_SHOW_FIFOS		0x00200
+#define     AHD_SHOW_QFULL		0x00400
+#define	    AHD_SHOW_DV			0x00800
+#define     AHD_SHOW_MASKED_ERRORS	0x01000
+#define     AHD_SHOW_QUEUE		0x02000
+#define     AHD_SHOW_TQIN		0x04000
+#define     AHD_SHOW_SG			0x08000
+#define     AHD_SHOW_INT_COALESCING	0x10000
+#define     AHD_DEBUG_SEQUENCER		0x20000
 #endif
 void			ahd_print_scb(struct scb *scb);
 void			ahd_print_devinfo(struct ahd_softc *ahd,

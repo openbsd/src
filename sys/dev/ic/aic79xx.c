@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.4 2004/06/21 18:33:03 krw Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.5 2004/06/23 03:23:19 marco Exp $	*/
 /*
  * Core routines and tables shareable across OS platforms.
  *
@@ -2683,6 +2683,7 @@ ahd_clear_intstat(struct ahd_softc *ahd)
 #ifdef AHD_DEBUG
 uint32_t ahd_debug = AHD_DEBUG_OPTS;
 #endif
+
 void
 ahd_print_scb(struct scb *scb)
 {
