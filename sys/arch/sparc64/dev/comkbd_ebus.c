@@ -1,4 +1,4 @@
-/*	$OpenBSD: comkbd_ebus.c,v 1.8 2002/11/29 01:00:49 miod Exp $	*/
+/*	$OpenBSD: comkbd_ebus.c,v 1.9 2002/12/10 01:22:34 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -232,8 +232,7 @@ comkbd_attach(parent, self, aux)
 			      0, &sc->sc_ioh) != 0) {
 		printf(": can't map register space\n");
                 return;
-	} else
-		printf("\n");
+	}
 
 	if (ISTYPE5(sc->sc_layout)) {
 		a.keymap = &sunkbd5_keymapdata;
@@ -269,7 +268,8 @@ comkbd_attach(parent, self, aux)
 		COM_WRITE(sc, com_ier, sc->sc_ier);
 		COM_READ(sc, com_iir);
 		COM_WRITE(sc, com_mcr, MCR_IENABLE | MCR_DTR | MCR_RTS);
-	}
+	} else
+		printf("\n");
 
 	sc->sc_wskbddev = config_found(self, &a, wskbddevprint);
 }
