@@ -1,0 +1,108 @@
+.\"     $OpenBSD: spif.4,v 1.1 1999/02/04 03:45:48 jason Exp $
+.\"
+.\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jason L. Wright
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, 
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+.\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd February 4, 1999
+.Dt SPIF 4 sparc
+.Os
+.Sh NAME
+.Nm spif
+.Nd SPARC Serial/Parallel Interface
+.Sh SYNOPSIS
+.Cd "spif* at sbus? slot ? offset ?                " Pq "sun4c/sun4m"
+.Cd "stty* at spif?                                " Pq "sun4c/sun4m"
+.Cd "sbpp* at spif?                                " Pq "sun4c/sun4m"
+.Sh DESCRIPTION
+The 
+.Nm spif
+driver provides support for the Sun Serial/Parallel Interface card
+based around the
+Cirrus Logic CD180 octal serial controller
+and the
+Cirrus Logic PPC2 parallel port controller.
+.Pp
+The device minor numbers for this driver are encoded as follows:
+.Pp
+.Bd -literal
+    +---+---+---+---+---+---+---+---+
+    | 7 | 6 | 5 | 4 | 3 | 2 | 1 | 0 |
+    +---+---+---+---+---+---+---+---+
+      |   |   |   |   |   |   |   |
+      |   |   |   |   |   +---+---+---> port number
+      |   |   |   |   |
+      |   |   |   |   +---------------> unused
+      |   |   |   |
+      |   |   |   +-------------------> dialout (on tty ports)
+      |   |   |
+      |   |   +-----------------------> unused
+      |   |
+      +---+---------------------------> card number
+.Ed
+.Pp
+Up to four cards are supported in the system.
+.Pp
+Each of the serial ports has an 8 byte FIFO for receive and transmit as
+well as automatic hardware (RTS/CTS) flow control.
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "spif%d: ccr timeout"
+A timeout occured while writing to one the registers.
+.It "stty%d-%d: fifo overflow"
+Incoming characters were discarded because the driver's interrupt
+routine could not read them fast enough from the card.
+.It "stty%d-%d: ring overflow"
+Incoming characters were discarded because the application
+in control of the device did not read its input fast enough.
+.El
+.Sh FILES
+.Bl -tag -width /dev/tty[jkl][0-7] -compact
+.It /dev/tty[jkl][0-7]
+Serial ports
+.It /dev/sbpp[0-3]
+Parallel ports
+.El
+.Sh SEE ALSO
+.Xr read 2 , 
+.Xr termios 4 ,
+.Xr tty 4
+.Sh AUTHORS
+The driver was written by Jason Wright <jason@thought.net>, and is
+heavily based on the
+.Xr magma 4
+driver written by Iain Hibbert <plunky@skate.demon.co.uk>.
+.Sh HISTORY
+The
+.Nm spif
+driver was first supported in
+.Ox 2.5 .
+.Sh TODO
+The parallel port is not supported yet.
+.Pp
+Dialout (cua) devices are not yet supported.
