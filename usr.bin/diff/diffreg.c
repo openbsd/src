@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.52 2003/11/10 18:51:35 millert Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.53 2003/11/21 01:28:01 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -65,7 +65,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.52 2003/11/10 18:51:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: diffreg.c,v 1.53 2003/11/21 01:28:01 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -352,11 +352,6 @@ diffreg(char *ofile1, char *ofile2, int flags)
 		goto closem;
 	}
 
-	/*
-	 * Files certainly differ at this point; set status accordingly
-	 */
-	status |= 1;
-	rval = D_DIFFER;
 	if (!asciifile(f1) || !asciifile(f2)) {
 		rval = D_BINARY;
 		goto closem;
@@ -447,6 +442,11 @@ diffreg(char *ofile1, char *ofile2, int flags)
 		waitpid(pid, &wstatus, 0);
 	}
 closem:
+	if (anychange) {
+		status |= 1;
+		if (rval == D_SAME)
+			rval = D_DIFFER;
+	}
 	if (f1 != NULL)
 		fclose(f1);
 	if (f2 != NULL)
