@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.20 2003/06/13 19:02:13 miod Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.21 2003/06/13 21:04:45 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -152,7 +152,6 @@ struct p9100_ctl {
 		volatile u_int32_t	:32;
 		volatile u_int32_t	scr;		/* system config reg */
 #define	SCR_ID_MASK		0x00000007
-#define	SCR_PIXEL_ID_MASK	0x00000007
 #define	SCR_PIXEL_MASK		0x1c000000
 #define	SCR_PIXEL_8BPP		0x08000000
 #define	SCR_PIXEL_16BPP		0x0c000000
