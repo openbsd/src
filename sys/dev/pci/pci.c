@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.6 1997/01/24 19:34:15 niklas Exp $	*/
+/*	$OpenBSD: pci.c,v 1.7 1997/10/10 10:56:41 pefo Exp $	*/
 /*	$NetBSD: pci.c,v 1.26 1996/12/05 01:25:30 cgd Exp $	*/
 
 /*
@@ -263,6 +263,20 @@ pci_io_find(pc, pcitag, reg, iobasep, iosizep)
 	if (iosizep != NULL)
 		*iosizep = PCI_MAPREG_IO_SIZE(sizedata);
 
+#ifdef powerpc
+	/*
+	 * Open Firmware (yuck) shuts down devices before entering a
+	 * program so we need to bring them back 'online' to respond
+         * to bus accesses...
+         */
+	s = splhigh();
+	sizedata = pci_conf_read(pc, pcitag, PCI_COMMAND_STATUS_REG);
+	sizedata |= (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE |
+		     PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE);
+	pci_conf_write(pc, pcitag, PCI_COMMAND_STATUS_REG, sizedata);
+	splx(s);
+#endif
+
 	return (0);
 }
 
@@ -320,6 +334,20 @@ pci_mem_find(pc, pcitag, reg, membasep, memsizep, cacheablep)
 		*memsizep = PCI_MAPREG_MEM_SIZE(sizedata);
 	if (cacheablep != NULL)
 		*cacheablep = PCI_MAPREG_MEM_CACHEABLE(addrdata);
+
+#ifdef power4e
+	/*
+	 * Open Firmware (yuck) shuts down devices before entering a
+	 * program so we need to bring them back 'online' to respond
+         * to bus accesses...
+         */
+	s = splhigh();
+	sizedata = pci_conf_read(pc, pcitag, PCI_COMMAND_STATUS_REG);
+	sizedata |= (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_MEM_ENABLE |
+		     PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE);
+	pci_conf_write(pc, pcitag, PCI_COMMAND_STATUS_REG, sizedata);
+	splx(s);
+#endif
 
 	return 0;
 }
