@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.84 2000/09/19 20:06:55 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.85 2000/10/01 03:19:04 rahnds Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -27,7 +27,7 @@ FILES+=	dlfcn.h link.h
 MFILES=	float.h frame.h stdarg.h varargs.h
 LFILES=	errno.h fcntl.h syslog.h termios.h
 
-.if (${MACHINE_ARCH} == "mips")
+.if (${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "powerpc")
 MFILES+= link.h dlfcn.h
 .endif
 
