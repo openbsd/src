@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.32 2001/09/15 03:54:40 frantzen Exp $	*/
+/*	$OpenBSD: parse.y,v 1.33 2001/09/15 11:21:50 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -546,8 +546,8 @@ icmp_item	: icmptype		{
 				yyerror("illegal icmp code %d", $3);
 				YYERROR;
 			}
-			$$->code = $1;
-			$$->type = $3 + 1;
+			$$->type = $1;
+			$$->code = $3 + 1;
 			$$->proto = IPPROTO_ICMP;
 			$$->next = NULL;
 		}
