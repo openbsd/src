@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_update.c,v 1.7 2004/02/24 14:27:27 claudio Exp $ */
+/*	$OpenBSD: rde_update.c,v 1.8 2004/02/25 22:14:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -226,7 +226,8 @@ up_generate_updates(struct rde_peer *peer,
 			 */
 			return;
 
-		if (peer->conf.ebgp == 0 && old->peer->conf.ebgp == 0)
+		if (peer->conf.ebgp == 0 && old->peer->conf.ebgp == 0 &&
+		    (old->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) == 0)
 			/* Do not redistribute updates to ibgp peers */
 			return;
 
@@ -281,7 +282,8 @@ up_generate_updates(struct rde_peer *peer,
 			 */
 			return;
 
-		if (peer->conf.ebgp == 0 && new->peer->conf.ebgp == 0)
+		if (peer->conf.ebgp == 0 && new->peer->conf.ebgp == 0 &&
+		    (new->aspath->nexthop->flags & NEXTHOP_ANNOUNCE) == 0)
 			/* Do not redistribute updates to ibgp peers */
 			return;
 
