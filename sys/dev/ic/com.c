@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.60 2001/03/15 18:47:52 art Exp $	*/
+/*	$OpenBSD: com.c,v 1.61 2001/03/15 18:55:02 deraadt Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -201,7 +201,7 @@ void   com_kgdb_putc __P((void *, int));
 #endif
 
 int
-comspeedcomspeed(freq, speed)
+comspeed(freq, speed)
 	long freq;
 	long speed;
 {
