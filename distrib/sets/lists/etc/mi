@@ -46,6 +46,8 @@
 ./etc/mail/access.db
 ./etc/mail/aliases
 ./etc/mail/aliases.db
+./etc/mail/genericstable
+./etc/mail/genericstable.db
 ./etc/mail/helpfile
 ./etc/mail/local-host-names
 ./etc/mail/localhost.cf
