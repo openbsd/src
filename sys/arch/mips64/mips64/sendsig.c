@@ -1,4 +1,4 @@
-/*	$OpenBSD: sendsig.c,v 1.4 2004/09/16 09:06:41 miod Exp $ */
+/*	$OpenBSD: sendsig.c,v 1.5 2004/09/17 13:31:22 miod Exp $ */
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -149,7 +149,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	ksc.mulhi = regs->mulhi;
 	ksc.sc_regs[0] = 0xACEDBADE;		/* magic number */
 	bcopy((caddr_t)&regs->ast, (caddr_t)&ksc.sc_regs[1],
-		sizeof(ksc.sc_regs) - sizeof(int));
+		sizeof(ksc.sc_regs) - sizeof(register_t));
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
 		extern struct proc *machFPCurProcPtr;
