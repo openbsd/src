@@ -1,4 +1,5 @@
-.\"	$OpenBSD: lpq.1,v 1.6 2000/03/19 17:57:06 aaron Exp $
+.\"	$OpenBSD: lpq.1,v 1.7 2002/05/20 23:13:50 millert Exp $
+.\"	$NetBSD: lpq.1,v 1.11 2002/01/19 03:23:11 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,8 +42,7 @@
 .Nd spool queue examination program
 .Sh SYNOPSIS
 .Nm lpq
-.Op Fl a
-.Op Fl l
+.Op Fl al
 .Op Fl P Ns Ar printer
 .Op Ar job# Ar ...
 .Op Ar user Ar ...
@@ -52,7 +52,7 @@ examines the spooling area used by
 .Xr lpd 8
 for printing files on the line printer, and reports the status of the
 specified jobs or all jobs associated with a user.
-.Nm lpq
+.Nm
 invoked
 without any arguments reports on any jobs currently in the queue.
 .Pp
@@ -77,7 +77,7 @@ rather than just the specified printer.
 .Pp
 For each job submitted (i.e., invocation of
 .Xr lpr 1 )
-.Nm lpq
+.Nm
 reports the user's name, current rank in the queue, the
 names of files comprising the job, the job identifier (a number which
 may be supplied to
@@ -91,14 +91,12 @@ to be
 File names comprising a job may be unavailable
 (when
 .Xr lpr 1
-is used as a sink in a pipeline) in which case the file
-is indicated as
+is used as a sink in a pipeline) in which case the file is indicated as
 .Dq (standard input) .
 .Pp
 If
-.Nm lpq
-warns that there is no daemon present (i.e., due to some malfunction),
-the
+.Nm
+warns that there is no daemon present (i.e., due to some malfunction), the
 .Xr lpc 8
 command can be used to restart the printer daemon.
 .Sh ENVIRONMENT
@@ -109,16 +107,21 @@ If the following environment variable exists, it is used by
 Specifies an alternate default printer.
 .El
 .Sh FILES
-.Bl -tag -width "/var/spool/*/lock" -compact
+.Bl -tag -width "/var/spool/output/*/lock" -compact
 .It Pa /etc/printcap
-for determining printer characteristics
+To determine printer characteristics.
 .It Pa /var/spool/*
-spooling directory, as determined from printcap
-.It Pa /var/spool/*/cf*
-control files specifying jobs
-.It Pa /var/spool/*/lock
-lock file to obtain the currently active job
+The spooling directory, as determined from printcap.
+.It Pa /var/spool/output/*/cf*
+Control files specifying jobs.
+.It Pa /var/spool/output/*/lock
+The lock file to obtain the currently active job.
 .El
+.Sh DIAGNOSTICS
+Unable to open various files.
+The lock file being malformed.
+Garbage files when there is no daemon active, but files in the
+spooling directory.
 .Sh SEE ALSO
 .Xr lpr 1 ,
 .Xr lprm 1 ,
@@ -130,12 +133,7 @@ appeared in
 .Bx 3 .
 .Sh BUGS
 Due to the dynamic nature of the information in the spooling directory,
-.Nm lpq
+.Nm
 may report unreliably.
 Output formatting is sensitive to the line length of the terminal;
 this can result in widely spaced columns.
-.Sh DIAGNOSTICS
-Unable to open various files.
-The lock file being malformed.
-Garbage
-files when there is no daemon active, but files in the spooling directory.

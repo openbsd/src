@@ -1,4 +1,5 @@
-.\"	$OpenBSD: lpc.8,v 1.9 2000/04/15 11:45:59 aaron Exp $
+.\"	$OpenBSD: lpc.8,v 1.10 2002/05/20 23:13:50 millert Exp $
+.\"	$NetBSD: lpc.8,v 1.14 2002/01/19 03:22:19 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,10 +42,12 @@
 .Nd line printer control program
 .Sh SYNOPSIS
 .Nm lpc
+.Bk -words
 .Oo
 .Ar command
 .Op Ar argument ...
 .Oc
+.Ek
 .Sh DESCRIPTION
 .Nm
 is used by the system administrator to control the
@@ -87,7 +90,7 @@ or, if no argument is given, a list of the recognized commands.
 .It Ic abort  No {\ all\ |\ printer\ }
 Terminate an active spooling daemon on the local host immediately and
 then disable printing (preventing new daemons from being started by
-.Xr lpr )
+.Xr lpr 1 )
 for the specified printers.
 .Pp
 .It Ic clean  No {\ all\ |\ printer\ }
@@ -98,7 +101,7 @@ from the specified printer queue(s) on the local machine.
 .It Ic disable  No {\ all\ |\ printer\ }
 Turn the specified printer queues off.
 This prevents new printer jobs from being entered into the queue by
-.Xr lpr .
+.Xr lpr 1 .
 .Pp
 .It Xo Ic down No {\ all\ |\ printer\ } Ar message
 .Op Ar ...
@@ -128,7 +131,7 @@ Exit from
 Attempt to start a new printer daemon.
 This is useful when some abnormal condition causes the daemon to
 die unexpectedly, leaving jobs in the queue.
-.Xr Lpq
+.Xr lpq 1
 will report that there is no daemon present when this condition occurs.
 If the user is the superuser,
 try to abort the current daemon first (i.e., kill and restart a stuck daemon).
@@ -152,20 +155,14 @@ Undoes the effects of
 .Ic down .
 .El
 .Sh FILES
-.Bl -tag -width /var/spool/*/lockx -compact
+.Bl -tag -width /var/spool/output/*/lock -compact
 .It Pa /etc/printcap
 printer description file
-.It Pa /var/spool/*
+.It Pa /var/spool/output/*
 spool directories
-.It Pa /var/spool/*/lock
+.It Pa /var/spool/output/*/lock
 lock file for queue control
 .El
-.Sh SEE ALSO
-.Xr lpq 1 ,
-.Xr lpr 1 ,
-.Xr lprm 1 ,
-.Xr printcap 5 ,
-.Xr lpd 8
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy "?Ambiguous command"
@@ -179,6 +176,12 @@ or user
 .Dq root
 to execute this command.
 .El
+.Sh SEE ALSO
+.Xr lpq 1 ,
+.Xr lpr 1 ,
+.Xr lprm 1 ,
+.Xr printcap 5 ,
+.Xr lpd 8
 .Sh HISTORY
 The
 .Nm

@@ -1,4 +1,5 @@
-/*	$OpenBSD: rmjob.c,v 1.12 2002/02/16 21:28:03 millert Exp $	*/
+/*	$OpenBSD: rmjob.c,v 1.13 2002/05/20 23:13:50 millert Exp $	*/
+/*	$NetBSD: rmjob.c,v 1.16 2000/04/16 14:43:58 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)rmjob.c	8.2 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.12 2002/02/16 21:28:03 millert Exp $";
+static const char rcsid[] = "$OpenBSD: rmjob.c,v 1.13 2002/05/20 23:13:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,12 +74,11 @@ static int	all = 0;		/* eliminate all files (root only) */
 static int	cur_daemon;		/* daemon's pid */
 static char	current[NAME_MAX];	/* active control file name */
 
-extern uid_t	uid, euid;		/* real and effective user id's */
-
 static	void	do_unlink(char *);
+static	void	alarmer(int);
 
 void
-rmjob()
+rmjob(void)
 {
 	int i, nitems;
 	int assasinated = 0;
@@ -91,7 +91,7 @@ rmjob()
 		fatal("unknown printer");
 	else if (i == -3)
 		fatal("potential reference loop detected in printcap file");
-	if (cgetstr(bp, "lp", &LP) < 0)
+	if (cgetstr(bp, DEFLP, &LP) < 0)
 		LP = _PATH_DEFDEVLP;
 	if (cgetstr(bp, "rp", &RP) < 0)
 		RP = DEFLP;
@@ -100,7 +100,7 @@ rmjob()
 	if (cgetstr(bp,"lo", &LO) < 0)
 		LO = DEFLOCK;
 	cgetstr(bp, "rm", &RM);
-	if ((cp = checkremote()))
+	if ((cp = checkremote()) != NULL)
 		printf("Warning: %s\n", cp);
 
 	/*
@@ -163,8 +163,7 @@ rmjob()
  * Return boolean indicating existence of a lock file.
  */
 int
-lockchk(s)
-	char *s;
+lockchk(char *s)
 {
 	FILE *fp;
 	int i, n;
@@ -178,12 +177,12 @@ lockchk(s)
 	}
 	seteuid(uid);
 	if (!getline(fp)) {
-		(void) fclose(fp);
+		(void)fclose(fp);
 		return(0);		/* no daemon present */
 	}
 	cur_daemon = atoi(line);
 	if (kill(cur_daemon, 0) < 0 && errno != EPERM) {
-		(void) fclose(fp);
+		(void)fclose(fp);
 		return(0);		/* no daemon present */
 	}
 	for (i = 1; (n = fread(current, sizeof(char), sizeof(current), fp)) <= 0; i++) {
@@ -194,7 +193,7 @@ lockchk(s)
 		sleep(i);
 	}
 	current[n-1] = '\0';
-	(void) fclose(fp);
+	(void)fclose(fp);
 	return(1);
 }
 
@@ -202,8 +201,7 @@ lockchk(s)
  * Process a control file.
  */
 void
-process(file)
-	char *file;
+process(char *file)
 {
 	FILE *cfp;
 
@@ -221,13 +219,12 @@ process(file)
 			do_unlink(line+1);
 		}
 	}
-	(void) fclose(cfp);
+	(void)fclose(cfp);
 	do_unlink(file);
 }
 
 static void
-do_unlink(file)
-	char *file;
+do_unlink(char *file)
 {
 	int	ret;
 
@@ -243,8 +240,7 @@ do_unlink(file)
  * Do the dirty work in checking
  */
 int
-chk(file)
-	char *file;
+chk(char *file)
 {
 	int *r, n;
 	char **u, *cp;
@@ -270,7 +266,7 @@ chk(file)
 		if (line[0] == 'P')
 			break;
 	}
-	(void) fclose(cfp);
+	(void)fclose(cfp);
 	if (line[0] != 'P')
 		return(0);
 
@@ -300,8 +296,7 @@ chk(file)
  * Normal users can only remove the file from where it was sent.
  */
 int
-isowner(owner, file)
-	char *owner, *file;
+isowner(char *owner, char *file)
 {
 	if (!strcmp(person, root) && (from == host || !strcmp(from, file+6)))
 		return(1);
@@ -318,7 +313,7 @@ isowner(owner, file)
  * then try removing files on the remote machine.
  */
 void
-rmremote()
+rmremote(void)
 {
 	char *cp;
 	int i, rem;
@@ -342,7 +337,7 @@ rmremote()
 	}
 	for (i = 0; i < requests && cp-buf+10 < sizeof(buf) - 2; i++) {
 		cp += strlen(cp);
-		(void) sprintf(cp, " %d", requ[i]);
+		(void)sprintf(cp, " %d", requ[i]);
 	}
 	strcat(cp, "\n");
 	rem = getport(RM, 0);
@@ -351,21 +346,37 @@ rmremote()
 			printf("%s: ", host);
 		printf("connection to %s is down\n", RM);
 	} else {
+		struct sigaction osa, nsa;
+
+		memset(&nsa, 0, sizeof(nsa));
+		nsa.sa_handler = alarmer;
+		sigemptyset(&nsa.sa_mask);
+		nsa.sa_flags = 0;
+		(void)sigaction(SIGALRM, &nsa, &osa);
+		alarm(wait_time);
+
 		i = strlen(buf);
 		if (write(rem, buf, i) != i)
 			fatal("Lost connection");
 		while ((i = read(rem, buf, sizeof(buf))) > 0)
-			(void) fwrite(buf, 1, i, stdout);
-		(void) close(rem);
+			(void)fwrite(buf, 1, i, stdout);
+		alarm(0);
+		(void)sigaction(SIGALRM, &osa, NULL);
+		(void)close(rem);
 	}
+}
+
+static void
+alarmer(int s)
+{
+	/* nothing */
 }
 
 /*
  * Return 1 if the filename begins with 'cf'
  */
 int
-iscf(d)
-	struct dirent *d;
+iscf(struct dirent *d)
 {
 	return(d->d_name[0] == 'c' && d->d_name[1] == 'f');
 }

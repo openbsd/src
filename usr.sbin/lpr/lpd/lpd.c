@@ -1,5 +1,5 @@
-/*	$OpenBSD: lpd.c,v 1.28 2002/02/16 21:28:03 millert Exp $ */
-/*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
+/*	$OpenBSD: lpd.c,v 1.29 2002/05/20 23:13:50 millert Exp $ */
+/*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.28 2002/02/16 21:28:03 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.29 2002/05/20 23:13:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,72 +88,146 @@ static const char rcsid[] = "$OpenBSD: lpd.c,v 1.28 2002/02/16 21:28:03 millert 
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-#include <netdb.h>
-#include <unistd.h>
-#include <syslog.h>
-#include <signal.h>
+#include <ctype.h>
+#include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <dirent.h>
+#include <netdb.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
+#include <syslog.h>
+#include <unistd.h>
+
 #include "lp.h"
 #include "lp.local.h"
 #include "pathnames.h"
 #include "extern.h"
 
-extern int __ivaliduser(FILE *, in_addr_t, const char *, const char *);
+#define	LPD_NOPORTCHK	0001		/* skip reserved-port check */
 
 int	lflag;				/* log requests flag */
+int	rflag;				/* allow 'of' for remote printers */
+int	sflag;				/* secure (no inet) flag */
 int	from_remote;			/* from remote socket */
+char	**blist;			/* list of addresses to bind(2) to */
+int	blist_size;
+int	blist_addrs;
 
-static void       reapchild(int);
-static void       mcleanup(int);
-static void       doit(void);
-static void       startup(void);
-static void       chkhost(struct sockaddr_in *);
-static int	  ckqueue(char *);
+volatile sig_atomic_t child_count;	/* number of kids forked */
+
+static void		reapchild(int);
+static void		mcleanup(int);
+static void		doit(void);
+static void		startup(void);
+static void		chkhost(struct sockaddr *, int);
+static int		ckqueue(char *);
+static __dead void	usage(void);
+static int		*socksetup(int, int, const char *);
+
+extern int		__ivaliduser_sa(FILE *, struct sockaddr *, socklen_t,
+			    const char *, const char *);
 
 /* unused, needed for lpc */
 volatile sig_atomic_t gotintr;
 
-uid_t	uid, euid;
-
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-	int f, lfd, funix, finet, options, fromlen;
 	fd_set defreadfds;
-	int maxfd = 0;
 	struct sockaddr_un un, fromunix;
-	struct sockaddr_in sin, frominet;
+	struct sockaddr_storage frominet;
 	sigset_t mask, omask;
+	int lfd, i, f, funix, *finet;
+	int options, check_options, maxfd;
+	long l;
+	long child_max = 32;	/* more then enough to hose the system */
+	struct servent *sp;
+	const char *port = "printer";
+	char *cp;
 
 	euid = geteuid();	/* these shouldn't be different */
 	uid = getuid();
-	options = 0;
+	maxfd = options = check_options = 0;
 	gethostname(host, sizeof(host));
 
-	if (euid != 0) {
-		fprintf(stderr,"lpd: must run as root\n");
-		exit(1);
-	}
+	if (euid != 0)
+		errx(1, "must run as root");
 
-	while (--argc > 0) {
-		argv++;
-		if (argv[0][0] == '-')
-			switch (argv[0][1]) {
-			case 'd':
-				options |= SO_DEBUG;
-				break;
-			case 'l':
-				lflag++;
-				break;
+	while ((i = getopt(argc, argv, "b:cdln:rsw:W")) != -1) {
+		switch (i) {
+		case 'b':
+			if (blist_addrs >= blist_size) {
+				blist_size += sizeof(char *) * 4;
+				if (blist == NULL)
+					blist = malloc(blist_size);
+				else
+					blist = realloc(blist, blist_size);
+				if (blist == NULL)
+					err(1, "cant allocate bind addr list");
 			}
+			blist[blist_addrs] = strdup(optarg);
+			if (blist[blist_addrs++] == NULL)
+				err(1, NULL);
+			break;
+		case 'd':
+			options |= SO_DEBUG;
+			break;
+		case 'l':
+			lflag++;
+			break;
+		case 'n':
+			child_max = strtol(optarg, &cp, 10);
+			if (*cp != '\0' || child_max < 0 || child_max > 1024)
+				errx(1, "invalid number of children: %s",
+				    optarg);
+			break;
+		case 'r':
+			rflag++;
+			break;
+		case 's':
+			sflag++;
+			break;
+		case 'w':
+			l = strtol(optarg, &cp, 10);
+			if (*cp != '\0' || l < 0 || l >= INT_MAX)
+				errx(1, "wait time must be postive integer: %s",
+				    optarg);
+			wait_time = (u_int)l;
+			if (wait_time < 30)
+				warnx("warning: wait time less than 30 seconds");
+			break;
+		case 'W':
+			/*
+			 * Allow connections coming from a non-reserved port.
+			 * (done by some lpr-implementations for MS-Windows)
+			 */
+			check_options |= LPD_NOPORTCHK;
+			break;
+		default:
+			usage();
+			break;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	switch (argc) {
+	case 1:
+		port = argv[0];
+		l = strtol(port, &cp, 10);
+		if (*cp != '\0' || l <= 0 || l > USHRT_MAX)
+			errx(1, "port # %s is invalid", port);
+		break;
+	case 0:
+		sp = getservbyname(port, "tcp");
+		if (sp == NULL)
+			errx(1, "%s/tcp: unknown service", port);
+		break;
+	default:
+		usage();
 	}
 
 #ifndef DEBUG
@@ -165,7 +239,7 @@ main(argc, argv)
 
 	openlog("lpd", LOG_PID, LOG_LPR);
 	syslog(LOG_INFO, "restarted");
-	(void) umask(0);
+	(void)umask(0);
 	lfd = open(_PATH_MASTERLOCK, O_WRONLY|O_CREAT, 0644);
 	if (lfd < 0) {
 		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
@@ -181,7 +255,7 @@ main(argc, argv)
 	/*
 	 * write process id for others to know
 	 */
-	sprintf(line, "%u\n", getpid());
+	(void)snprintf(line, sizeof(line), "%u\n", getpid());
 	f = strlen(line);
 	if (write(lfd, line, f) != f) {
 		syslog(LOG_ERR, "%s: %m", _PATH_MASTERLOCK);
@@ -192,26 +266,28 @@ main(argc, argv)
 	 * Restart all the printers.
 	 */
 	startup();
-	(void) unlink(_PATH_SOCKETNAME);
-	funix = socket(AF_UNIX, SOCK_STREAM, 0);
+	(void)unlink(_PATH_SOCKETNAME);
+	funix = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (funix < 0) {
 		syslog(LOG_ERR, "socket: %m");
 		exit(1);
 	}
+
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGHUP);
 	sigaddset(&mask, SIGINT);
 	sigaddset(&mask, SIGQUIT);
 	sigaddset(&mask, SIGTERM);
 	sigprocmask(SIG_BLOCK, &mask, &omask);
-	(void) umask(07);
+
+	(void)umask(07);
 	signal(SIGHUP, mcleanup);
 	signal(SIGINT, mcleanup);
 	signal(SIGQUIT, mcleanup);
 	signal(SIGTERM, mcleanup);
 	memset(&un, 0, sizeof(un));
-	un.sun_family = AF_UNIX;
-	strcpy(un.sun_path, _PATH_SOCKETNAME);
+	un.sun_family = AF_LOCAL;
+	strlcpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path));
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
@@ -219,42 +295,29 @@ main(argc, argv)
 		syslog(LOG_ERR, "ubind: %m");
 		exit(1);
 	}
-	(void) umask(0);
+	(void)umask(0);
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	FD_ZERO(&defreadfds);
 	FD_SET(funix, &defreadfds);
 	if (funix > maxfd)
 		maxfd = funix;
 	listen(funix, 5);
-	finet = socket(AF_INET, SOCK_STREAM, 0);
-	if (finet >= 0) {
-		struct servent *sp;
+	if (!sflag || blist_addrs)
+		finet = socksetup(PF_UNSPEC, options, port);
+	else
+		finet = NULL;	/* pretend we couldn't open TCP socket. */
 
-		if (options & SO_DEBUG) {
-			if (setsockopt(finet, SOL_SOCKET, SO_DEBUG, 0, 0) < 0) {
-				syslog(LOG_ERR, "setsockopt (SO_DEBUG): %m");
-				mcleanup(0);
-			}
+	if (blist != NULL) {
+		for (i = 0; i < blist_addrs; i++)
+			free(blist[i]);
+		free(blist);
+	}
+
+	if (finet) {
+		for (i = 1; i <= *finet; i++) {
+			FD_SET(finet[i], &defreadfds);
+			listen(finet[i], 5);
 		}
-		f = 1;
-		(void) setsockopt(finet, SOL_SOCKET, SO_REUSEADDR, &f,
-		    sizeof(f));
-		sp = getservbyname("printer", "tcp");
-		if (sp == NULL) {
-			syslog(LOG_ERR, "printer/tcp: unknown service");
-			mcleanup(0);
-		}
-		memset(&sin, 0, sizeof(sin));
-		sin.sin_family = AF_INET;
-		sin.sin_port = sp->s_port;
-		if (bind(finet, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
-			syslog(LOG_ERR, "bind: %m");
-			mcleanup(0);
-		}
-		FD_SET(finet, &defreadfds);
-		if (finet > maxfd)
-			maxfd = finet;
-		listen(finet, 5);
 	}
 	/*
 	 * Main loop: accept, do a request, continue.
@@ -262,8 +325,21 @@ main(argc, argv)
 	memset(&frominet, 0, sizeof(frominet));
 	memset(&fromunix, 0, sizeof(fromunix));
 	for (;;) {
-		int domain, nfds, s;
+		int domain, nfds, s, fromlen;
 		fd_set readfds;
+		short sleeptime = 10;	/* overflows in about 2 hours */
+
+		while (child_max < child_count) {
+			syslog(LOG_WARNING,
+			    "too many children, sleeping for %d seconds",
+			    sleeptime);
+			sleep(sleeptime);
+			sleeptime <<= 1;
+			if (sleeptime < 0) {
+				syslog(LOG_CRIT, "sleeptime overflowed! help!");
+				sleeptime = 10;
+			}
+		}
 
 		FD_COPY(&defreadfds, &readfds);
 		nfds = select(maxfd + 1, &readfds, 0, 0, 0);
@@ -273,62 +349,93 @@ main(argc, argv)
 			continue;
 		}
 		if (FD_ISSET(funix, &readfds)) {
-			domain = AF_UNIX, fromlen = sizeof(fromunix);
+			domain = AF_LOCAL;
+			fromlen = sizeof(fromunix);
 			s = accept(funix,
 			    (struct sockaddr *)&fromunix, &fromlen);
-		} else /* if (FD_ISSET(finet, &readfds)) */  {
-			domain = AF_INET, fromlen = sizeof(frominet);
-			s = accept(finet,
-			    (struct sockaddr *)&frominet, &fromlen);
-			if (frominet.sin_port == htons(20)) {
-				close(s);
-				continue;
-			}
+		} else {
+			domain = AF_INET;
+			s = -1;
+			for (i = 1; i <= *finet; i++)
+				if (FD_ISSET(finet[i], &readfds)) {
+					in_port_t port;
+
+					fromlen = sizeof(frominet);
+					s = accept(finet[i],
+					    (struct sockaddr *)&frominet,
+					    &fromlen);
+					switch (frominet.ss_family) {
+					case AF_INET:
+						port = ((struct sockaddr_in *)
+						    &frominet)->sin_port;
+						break;
+					case AF_INET6:
+						port = ((struct sockaddr_in6 *)
+						    &frominet)->sin6_port;
+						break;
+					default:
+						port = 0;
+					}
+					/* check for ftp bounce attack */
+					if (port == htons(20)) {
+						close(s);
+						continue;
+					}
+				}
 		}
 		if (s < 0) {
 			if (errno != EINTR)
 				syslog(LOG_WARNING, "accept: %m");
 			continue;
 		}
-		if (fork() == 0) {
+
+		switch (fork()) {
+		case 0:
 			signal(SIGCHLD, SIG_DFL);
 			signal(SIGHUP, SIG_IGN);
 			signal(SIGINT, SIG_IGN);
 			signal(SIGQUIT, SIG_IGN);
 			signal(SIGTERM, SIG_IGN);
-			(void) close(funix);
-			(void) close(finet);
+			(void)close(funix);
+			if (!sflag && finet)
+				for (i = 1; i <= *finet; i++)
+					(void)close(finet[i]);
 			if (s != STDOUT_FILENO) {
 				dup2(s, STDOUT_FILENO);
-				(void) close(s);
+				(void)close(s);
 			}
 			if (domain == AF_INET) {
+				/* for both AF_INET and AF_INET6 */
 				from_remote = 1;
-				chkhost(&frominet);
+				chkhost((struct sockaddr *)&frominet, check_options);
 			} else
 				from_remote = 0;
 			doit();
 			exit(0);
+		case -1:
+			syslog(LOG_WARNING, "fork: %m, sleeping for 10 seconds...");
+			sleep(10);
+			continue;
+		default:
+			child_count++;
 		}
-		(void) close(s);
+		(void)close(s);
 	}
 }
 
 static void
-reapchild(signo)
-	int signo;
+reapchild(int signo)
 {
 	int save_errno = errno;
 	int status;
 
 	while (waitpid((pid_t)-1, &status, WNOHANG) > 0)
-		;
+		child_count--;
 	errno = save_errno;
 }
 
 static void
-mcleanup(signo)
-	int signo;
+mcleanup(int signo)
 {
 	struct syslog_data sdata = SYSLOG_DATA_INIT;
 
@@ -347,7 +454,7 @@ int	requ[MAXREQUESTS];	/* job number of spool entries */
 int	requests;		/* # of spool requests */
 char	*person;		/* name of person doing lprm */
 
-char	fromb[MAXHOSTNAMELEN];	/* buffer for client's machine name */
+char	fromb[NI_MAXHOST];	/* buffer for client's machine name */
 char	cbuf[BUFSIZ];		/* command line buffer */
 char	*cmdnames[] = {
 	"null",
@@ -359,7 +466,7 @@ char	*cmdnames[] = {
 };
 
 static void
-doit()
+doit(void)
 {
 	char *cp;
 	int n;
@@ -369,7 +476,7 @@ doit()
 		do {
 			if (cp >= &cbuf[sizeof(cbuf) - 1])
 				fatal("Command line too long");
-			if ((n = read(1, cp, 1)) != 1) {
+			if ((n = read(STDOUT_FILENO, cp, 1)) != 1) {
 				if (n < 0)
 					fatal("Lost connection");
 				return;
@@ -378,16 +485,20 @@ doit()
 		*--cp = '\0';
 		cp = cbuf;
 		if (lflag) {
-			if (*cp >= '\1' && *cp <= '\5')
+			if (*cp >= '\1' && *cp <= '\5') {
 				syslog(LOG_INFO, "%s requests %s %s",
 					from, cmdnames[(int)*cp], cp+1);
-			else
+				setproctitle("serving %s: %s %s", from,
+				    cmdnames[(int)*cp], cp+1);
+			} else
 				syslog(LOG_INFO, "bad request (%d) from %s",
 					*cp, from);
 		}
 		switch (*cp++) {
 		case '\1':	/* check the queue and print any jobs there */
 			printer = cp;
+			if (*printer == '\0')
+				printer = DEFLP;
 			printjob();
 			break;
 		case '\2':	/* receive files to be queued */
@@ -396,11 +507,15 @@ doit()
 				exit(1);
 			}
 			printer = cp;
+			if (*printer == '\0')
+				printer = DEFLP;
 			recvjob();
 			break;
 		case '\3':	/* display the queue (short form) */
 		case '\4':	/* display the queue (long form) */
 			printer = cp;
+			if (*printer == '\0')
+				printer = DEFLP;
 			while (*cp) {
 				if (*cp != ' ') {
 					cp++;
@@ -429,6 +544,8 @@ doit()
 				exit(1);
 			}
 			printer = cp;
+			if (*printer == '\0')
+				printer = DEFLP;
 			while (*cp && *cp != ' ')
 				cp++;
 			if (!*cp)
@@ -467,11 +584,10 @@ doit()
  * files left from the last time the machine went down.
  */
 static void
-startup()
+startup(void)
 {
 	char *buf;
 	char *cp;
-	int pid;
 
 	/*
 	 * Restart the daemons.
@@ -488,17 +604,21 @@ startup()
 			}
 		if (lflag)
 			syslog(LOG_INFO, "work for %s", buf);
-		if ((pid = fork()) < 0) {
+		switch (fork()) {
+		case -1:
 			syslog(LOG_WARNING, "startup: cannot fork");
 			mcleanup(0);
-		}
-		if (!pid) {
+			/* NOTREACHED */
+		case 0:
 			printer = buf;
+			setproctitle("working on printer %s", printer);
 			cgetclose();
 			printjob();
 			/* NOTREACHED */
+		default:
+			child_count++;
+			free(buf);
 		}
-		else free(buf);
 	}
 }
 
@@ -506,8 +626,7 @@ startup()
  * Make sure there's some work to do before forking off a child
  */
 static int
-ckqueue(cap)
-	char *cap;
+ckqueue(char *cap)
 {
 	struct dirent *d;
 	DIR *dirp;
@@ -533,47 +652,74 @@ ckqueue(cap)
  * Check to see if the from host has access to the line printer.
  */
 static void
-chkhost(f)
-	struct sockaddr_in *f;
+chkhost(struct sockaddr *f, int check_opts)
 {
-	struct hostent *hp;
+	struct addrinfo hints, *res, *r;
 	FILE *hostf;
 	int first = 1;
 	int good = 0;
+	char host[NI_MAXHOST], ip[NI_MAXHOST];
+	char serv[NI_MAXSERV];
+	int error;
+
+	error = getnameinfo(f, f->sa_len, NULL, 0, serv, sizeof(serv),
+	    NI_NUMERICSERV);
+	if (error)
+		fatal("Malformed from address");
+
+	if (!(check_opts & LPD_NOPORTCHK) &&
+	    atoi(serv) >= IPPORT_RESERVED)
+		fatal("Connect from invalid port (%s)", serv);
 
 	/* Need real hostname for temporary filenames */
-	hp = gethostbyaddr((char *)&f->sin_addr,
-	    sizeof(struct in_addr), f->sin_family);
-	if (hp == NULL)
-		fatal("Host name for your address (%s) unknown",
-			inet_ntoa(f->sin_addr));
+	error = getnameinfo(f, f->sa_len, host, sizeof(host), NULL, 0,
+	    NI_NAMEREQD);
+	if (error) {
+		error = getnameinfo(f, f->sa_len, host, sizeof(host), NULL, 0,
+		    NI_NUMERICHOST);
+		if (error)
+			fatal("Host name for your address unknown");
+		else
+			fatal("Host name for your address (%s) unknown", host);
+	}
 
-	(void) strlcpy(fromb, hp->h_name, sizeof(fromb));
+	(void)strlcpy(fromb, host, sizeof(fromb));
 	from = fromb;
 
+	/* need address in stringform for comparison (no DNS lookup here) */
+	error = getnameinfo(f, f->sa_len, host, sizeof(host), NULL, 0,
+	    NI_NUMERICHOST);
+	if (error)
+		fatal("Cannot print address");
+
 	/* Check for spoof, ala rlogind */
-	hp = gethostbyname(fromb);
-	if (!hp)
-		fatal("hostname for your address (%s) unknown",
-		    inet_ntoa(f->sin_addr));
-	for (; good == 0 && hp->h_addr_list[0] != NULL; hp->h_addr_list++) {
-		if (!bcmp(hp->h_addr_list[0], (caddr_t)&f->sin_addr,
-		    sizeof(f->sin_addr)))
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;	/*dummy*/
+	error = getaddrinfo(fromb, NULL, &hints, &res);
+	if (error) {
+		fatal("hostname for your address (%s) unknown: %s", host,
+		    gai_strerror(error));
+	}
+	for (good = 0, r = res; good == 0 && r; r = r->ai_next) {
+		error = getnameinfo(r->ai_addr, r->ai_addrlen, ip, sizeof(ip),
+		    NULL, 0, NI_NUMERICHOST);
+		if (!error && !strcmp(host, ip))
 			good = 1;
 	}
+	if (res)
+		freeaddrinfo(res);
 	if (good == 0)
-		fatal("address for your hostname (%s) not matched",
-		    inet_ntoa(f->sin_addr));
-
+		fatal("address for your hostname (%s) not matched", host);
+	setproctitle("serving %s", from);
 	hostf = fopen(_PATH_HOSTSEQUIV, "r");
 again:
 	if (hostf) {
-		if (__ivaliduser(hostf, f->sin_addr.s_addr,
-		    DUMMY, DUMMY) == 0) {
-			(void) fclose(hostf);
+		if (__ivaliduser_sa(hostf, f, f->sa_len, DUMMY, DUMMY) == 0) {
+			(void)fclose(hostf);
 			return;
 		}
-		(void) fclose(hostf);
+		(void)fclose(hostf);
 	}
 	if (first == 1) {
 		first = 0;
@@ -582,4 +728,94 @@ again:
 	}
 	fatal("Your host does not have line printer access");
 	/*NOTREACHED*/
+}
+
+static __dead void
+usage(void)
+{
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-dlrsW] [-b bind-address] [-n maxchild] "
+	    "[-w maxwait] [port]\n", __progname);
+	exit(1);
+}
+
+/*
+ * Setup server socket for specified address family.
+ * If af is PF_UNSPEC more than one socket may be returned.
+ * The returned list is dynamically allocated, so the caller needs to free it.
+ */
+int *
+socksetup(int af, int options, const char *port)
+{
+	struct addrinfo hints, *res, *r;
+	int error, maxs = 0, *s, *socks = NULL, blidx = 0;
+	const int on = 1;
+
+	do {
+		memset(&hints, 0, sizeof(hints));
+		hints.ai_flags = AI_PASSIVE;
+		hints.ai_family = af;
+		hints.ai_socktype = SOCK_STREAM;
+		error = getaddrinfo((blist_addrs == 0) ? NULL : blist[blidx],
+		    port ? port : "printer", &hints, &res);
+		if (error) {
+			if (blist_addrs)
+				syslog(LOG_ERR, "%s: %s", blist[blidx],
+				    gai_strerror(error));
+			else
+				syslog(LOG_ERR, "%s", gai_strerror(error));
+			mcleanup(0);
+		}
+
+		/* Count max number of sockets we may open */
+		for (r = res; r; r = r->ai_next, maxs++)
+			;
+		if (socks == NULL) {
+			socks = malloc((maxs + 1) * sizeof(int));
+			if (socks)
+				*socks = 0; /* num of sockets ctr at start */
+		} else
+			socks = realloc(socks, (maxs + 1) * sizeof(int));
+		if (!socks) {
+			syslog(LOG_ERR, "couldn't allocate memory for sockets");
+			mcleanup(0);
+		}
+
+		s = socks + *socks + 1;
+		for (r = res; r; r = r->ai_next) {
+			*s = socket(r->ai_family, r->ai_socktype,
+			            r->ai_protocol);
+			if (*s < 0) {
+				syslog(LOG_DEBUG, "socket(): %m");
+				continue;
+			}
+			if (options & SO_DEBUG)
+				if (setsockopt(*s, SOL_SOCKET, SO_DEBUG,
+					       &on, sizeof(on)) < 0) {
+					syslog(LOG_ERR,
+					       "setsockopt (SO_DEBUG): %m");
+					close (*s);
+					continue;
+				}
+			if (bind(*s, r->ai_addr, r->ai_addrlen) < 0) {
+				syslog(LOG_DEBUG, "bind(): %m");
+				close (*s);
+				continue;
+			}
+			*socks = *socks + 1;
+			s++;
+		}
+
+		if (res)
+			freeaddrinfo(res);
+	} while (++blidx < blist_addrs);
+
+	if (socks == NULL || *socks == 0) {
+		syslog(LOG_ERR, "Couldn't bind to any socket");
+		if (socks != NULL)
+			free(socks);
+		mcleanup(0);
+	}
+	return(socks);
 }

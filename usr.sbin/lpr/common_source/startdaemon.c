@@ -1,4 +1,5 @@
-/*	$OpenBSD: startdaemon.c,v 1.6 2001/12/06 03:12:30 ericj Exp $	*/
+/*	$OpenBSD: startdaemon.c,v 1.7 2002/05/20 23:13:50 millert Exp $	*/
+/*	$NetBSD: startdaemon.c,v 1.10 1998/07/18 05:04:39 lukem Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993, 1994
@@ -37,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)startdaemon.c	8.2 (Berkeley) 4/17/94";
 #else
-static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.6 2001/12/06 03:12:30 ericj Exp $";
+static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.7 2002/05/20 23:13:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,35 +47,35 @@ static const char rcsid[] = "$OpenBSD: startdaemon.c,v 1.6 2001/12/06 03:12:30 e
 #include <sys/un.h>
 
 #include <dirent.h>
+#include <err.h>
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <signal.h>
 #include "lp.h"
 #include "pathnames.h"
-
-extern uid_t	uid, euid;
 
 /*
  * Tell the printer daemon that there are new files in the spool directory.
  */
 
 int
-startdaemon(printer)
-	char *printer;
+startdaemon(char *printer)
 {
 	struct sockaddr_un un;
-	int s, n;
+	int s;
+	size_t n;
 	char buf[BUFSIZ];
 
-	s = socket(AF_UNIX, SOCK_STREAM, 0);
+	s = socket(AF_LOCAL, SOCK_STREAM, 0);
 	if (s < 0) {
-		perror("socket");
+		warn("socket");
 		return(0);
 	}
 	memset(&un, 0, sizeof(un));
-	un.sun_family = AF_UNIX;
-	strcpy(un.sun_path, _PATH_SOCKETNAME);
+	un.sun_family = AF_LOCAL;
+	strlcpy(un.sun_path, _PATH_SOCKETNAME, sizeof(un.sun_path));
 #ifndef SUN_LEN
 #define SUN_LEN(unp) (strlen((unp)->sun_path) + 2)
 #endif
@@ -90,33 +91,32 @@ startdaemon(printer)
 		siginterrupt(SIGINT, 0);
 		seteuid(uid);
 		perror("connect");
-		(void) close(s);
+		(void)close(s);
 		return(0);
 	}
 	siginterrupt(SIGINT, 0);
 	seteuid(uid);
-	if (snprintf(buf, sizeof buf, "\1%s\n", printer) > sizeof buf-1) {
+	n = snprintf(buf, sizeof(buf), "\1%s\n", printer);
+	if (n >= sizeof(buf) || n == -1) {
 		close(s);
 		return (0);
 	}
-	n = strlen(buf);
 
 	/* XXX atomicio inside siginterrupt? */
 	if (write(s, buf, n) != n) {
-		perror("write");
-		(void) close(s);
+		warn("write");
+		(void)close(s);
 		return(0);
 	}
 	if (read(s, buf, 1) == 1) {
 		if (buf[0] == '\0') {		/* everything is OK */
-			(void) close(s);
+			(void)close(s);
 			return(1);
 		}
 		putchar(buf[0]);
 	}
 	while ((n = read(s, buf, sizeof(buf))) > 0)
 		fwrite(buf, 1, n, stdout);
-
-	(void) close(s);
+	(void)close(s);
 	return(0);
 }

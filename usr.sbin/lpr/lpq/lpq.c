@@ -1,4 +1,5 @@
-/*	$OpenBSD: lpq.c,v 1.11 2002/02/16 21:28:04 millert Exp $	*/
+/*	$OpenBSD: lpq.c,v 1.12 2002/05/20 23:13:50 millert Exp $	*/
+/*	$NetBSD: lpq.c,v 1.9 1999/12/07 14:54:47 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpq.c	8.3 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpq.c,v 1.11 2002/02/16 21:28:04 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpq.c,v 1.12 2002/05/20 23:13:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,12 +61,14 @@ static const char rcsid[] = "$OpenBSD: lpq.c,v 1.11 2002/02/16 21:28:04 millert 
 
 #include <sys/param.h>
 
-#include <syslog.h>
+#include <ctype.h>
 #include <dirent.h>
+#include <err.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <ctype.h>
+#include <syslog.h>
+
 #include "lp.h"
 #include "lp.local.h"
 #include "pathnames.h"
@@ -75,36 +78,29 @@ int	 requests;		/* # of spool requests */
 char	*user[MAXUSERS];	/* users to process */
 int	 users;			/* # of users in user array */
 
-uid_t	uid, euid;
-
 volatile sig_atomic_t gotintr;
 
 static int ckqueue(char *);
-void usage(void);
+static __dead void usage(void);
 
 int
-main(argc, argv)
-	int	argc;
-	char	**argv;
+main(int argc, char **argv)
 {
-	extern char	*optarg;
-	extern int	optind;
 	int	ch, aflag, lflag;
 	char	*buf, *cp;
+	long	l;
 
 	euid = geteuid();
 	uid = getuid();
 	seteuid(uid);
 
-	if (gethostname(host, sizeof(host))) {
-		perror("lpq: gethostname");
-		exit(1);
-	}
-	openlog("lpd", 0, LOG_LPR);
+	if (gethostname(host, sizeof(host)) != 0)
+		err(1, "gethostname");
+	openlog("lpq", 0, LOG_LPR);
 
 	aflag = lflag = 0;
-	while ((ch = getopt(argc, argv, "alP:")) != -1)
-		switch((char)ch) {
+	while ((ch = getopt(argc, argv, "alP:w:")) != -1) {
+		switch(ch) {
 		case 'a':
 			++aflag;
 			break;
@@ -114,18 +110,23 @@ main(argc, argv)
 		case 'P':		/* printer name */
 			printer = optarg;
 			break;
+		case 'w':
+			l = strtol(optarg, &cp, 10);
+			if (*cp != '\0' || l < 0 || l >= INT_MAX)
+				errx(1, "wait time must be postive integer: %s",
+				    optarg);
+			wait_time = (u_int)l;
+			if (wait_time < 30)
+				warnx("warning: wait time less than 30 seconds");
+			break;
 		case '?':
 		default:
 			usage();
 		}
-
-	if (!aflag && printer == NULL) {
-		char *p;
-
-		printer = DEFLP;
-		if ((p = getenv("PRINTER")) != NULL)
-			printer = p;
 	}
+
+	if (!aflag && printer == NULL && (printer = getenv("PRINTER")) == NULL)
+		printer = DEFLP;
 
 	for (argc -= optind, argv += optind; argc; --argc, ++argv)
 		if (isdigit(argv[0][0])) {
@@ -162,8 +163,7 @@ main(argc, argv)
 }
 
 static int
-ckqueue(cap)
-	char *cap;
+ckqueue(char *cap)
 {
 	struct dirent *d;
 	DIR *dirp;
@@ -183,9 +183,13 @@ ckqueue(cap)
 	return (0);
 }
 
-void
-usage()
+static __dead void
+usage(void)
 {
-	puts("usage: lpq [-a] [-l] [-Pprinter] [user ...] [job ...]");
+	extern char *__progname;
+
+	fprintf(stderr,
+	    "usage: %s [-a] [-l] [-Pprinter] [user ...] [job ...]\n",
+	    __progname);
 	exit(1);
 }

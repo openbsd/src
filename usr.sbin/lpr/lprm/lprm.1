@@ -1,4 +1,5 @@
-.\"	$OpenBSD: lprm.1,v 1.6 2000/03/19 17:57:07 aaron Exp $
+.\"	$OpenBSD: lprm.1,v 1.7 2002/05/20 23:13:50 millert Exp $
+.\"	$NetBSD: lprm.1,v 1.10 2002/01/19 03:23:47 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,15 +42,17 @@
 .Nd remove jobs from the line printer spooling queue
 .Sh SYNOPSIS
 .Nm lprm
-.Op Fl P Ns Ar printer
 .Op Fl
-.Op Ar job# Ar ...
-.Op Ar user Ar ...
+.Bk -words
+.Op Fl P Ns Ar printer
+.Ek
+.Oo Op Ar job# Ar ...
+.Op Ar user Ar ... Oc
 .Sh DESCRIPTION
 .Nm lprm
 will remove a job, or jobs, from a printer's spool queue.
 Since the spooling directory is protected from users, using
-.Nm lprm
+.Nm
 is normally the only method by which a user may remove a job.
 The owner of a job is determined by the user's login name
 and host name on the machine where the
@@ -66,18 +69,17 @@ Specify the queue associated with a specific
 If a single
 .Dq Fl
 is given,
-.Nm lprm
+.Nm
 will remove all jobs which a user
 owns.
 If the superuser employs this flag, the spool queue will
 be emptied entirely.
 .It Ar user
 Causes
-.Nm lprm
-to attempt to remove any jobs queued belonging to that user
-(or users).
+.Nm
+to attempt to remove any jobs queued belonging to that user (or users).
 This form of invoking
-.Nm lprm
+.Nm
 is useful only to the superuser.
 .It Ar job\ \&#
 A user may dequeue an individual job by specifying its job number.
@@ -95,7 +97,7 @@ program, e.g.,
 .El
 .Pp
 If neither arguments or options are given,
-.Nm lprm
+.Nm
 will delete the currently active job if it is
 owned by the user who invoked
 .Nm lprm .
@@ -104,7 +106,7 @@ owned by the user who invoked
 announces the names of any files it removes and is silent if
 there are no jobs in the queue which match the request list.
 .Pp
-.Nm lprm
+.Nm
 will kill off an active daemon, if necessary, before removing
 any spooling files.
 If a daemon is killed, a new one is
@@ -124,29 +126,29 @@ the default printer is assumed from
 .Ev PRINTER .
 .El
 .Sh FILES
-.Bl -tag -width /var/spool/*/lock/ -compact
+.Bl -tag -width /var/spool/output/*/lock/ -compact
 .It Pa /etc/printcap
-printer characteristics file
-.It Pa /var/spool/*
-spooling directories
-.It Pa /var/spool/*/lock
-lock file used to obtain the PID of the current
-daemon and the job number of the currently active job
+Printer characteristics file.
+.It Pa /var/spool/output/*
+Spooling directories.
+.It Pa /var/spool/output/*/lock
+Lock file used to obtain the PID of the current
+daemon and the job number of the currently active job.
 .El
-.Sh SEE ALSO
-.Xr lpq 1 ,
-.Xr lpr 1 ,
-.Xr lpd 8
 .Sh DIAGNOSTICS
 .Bl -tag -width Ds
 .It Sy Permission denied
 Printed if the user tries to remove files other than his own.
 .El
-.Sh BUGS
-Since there are race conditions possible in the update of the lock file,
-the currently active job may be incorrectly identified.
+.Sh SEE ALSO
+.Xr lpq 1 ,
+.Xr lpr 1 ,
+.Xr lpd 8
 .Sh HISTORY
 The
 .Nm lprm
 command appeared in
 .Bx 3.0 .
+.Sh BUGS
+Since there are race conditions possible in the update of the lock file,
+the currently active job may be incorrectly identified.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: lptest.c,v 1.4 2001/08/30 17:38:13 millert Exp $ */
-/*	$NetBSD: lptest.c,v 1.5 1996/03/21 18:13:20 jtc Exp $	*/
+/*	$OpenBSD: lptest.c,v 1.5 2002/05/20 23:13:50 millert Exp $ */
+/*	$NetBSD: lptest.c,v 1.6 1996/12/09 09:57:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -45,7 +45,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lptest.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: lptest.c,v 1.4 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lptest.c,v 1.5 2002/05/20 23:13:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,6 @@ main(argc, argv)
 		}
 		putchar('\n');
 	}
-	(void) fflush(stdout);
+	(void)fflush(stdout);
 	exit(0);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: lpr.c,v 1.24 2002/02/16 21:28:04 millert Exp $ */
-/*	$NetBSD: lpr.c,v 1.10 1996/03/21 18:12:25 jtc Exp $	*/
+/*	$OpenBSD: lpr.c,v 1.25 2002/05/20 23:13:50 millert Exp $ */
+/*	$NetBSD: lpr.c,v 1.19 2000/10/11 20:23:52 is Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1993
@@ -50,7 +50,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpr.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpr.c,v 1.24 2002/02/16 21:28:04 millert Exp $";
+static const char rcsid[] = "$OpenBSD: lpr.c,v 1.25 2002/05/20 23:13:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -77,6 +77,8 @@ static const char rcsid[] = "$OpenBSD: lpr.c,v 1.24 2002/02/16 21:28:04 millert 
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <err.h>
+
 #include "lp.h"
 #include "lp.local.h"
 #include "pathnames.h"
@@ -94,7 +96,7 @@ static char	*jobname;	/* job name on header page */
 static int	 mailflg;	/* send mail */
 static int	 nact;		/* number of jobs to act on */
 static int	 ncopies = 1;	/* # of copies to make */
-static char	*person;	/* user name */
+static const char *person;	/* user name */
 static int	 qflag;		/* q job, but don't exec daemon */
 static int	 rflag;		/* remove files upon completion */	
 static int	 sflag;		/* symbolic link flag */
@@ -108,34 +110,32 @@ static struct stat statb;
 
 volatile sig_atomic_t gotintr;
 
-static void	 card(int, char *);
+static void	 card(int, const char *);
 static void	 chkprinter(char *);
 static void	 cleanup(int);
 static void	 copy(int, char []);
+static char	*itoa(int);
 static char	*linked(char *);
 static char	*lmktemp(char *, int, int);
 static void	 mktemps(void);
 static int	 nfile(char *);
 static int	 test(char *);
-static char	*itoa(int);
-
-uid_t	uid, euid;
+static void	 usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char **argv)
 {
 	struct passwd *pw;
 	struct group *gptr;
 	char *arg, *cp;
-	char buf[BUFSIZ];
-	int i, f;
+	char buf[MAXPATHLEN];
+	int i, f, ch;
 	struct stat stb;
 
 	euid = geteuid();
 	uid = getuid();
 	seteuid(uid);
+
 	if (signal(SIGHUP, SIG_IGN) != SIG_IGN)
 		signal(SIGHUP, cleanup);
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
@@ -146,136 +146,116 @@ main(argc, argv)
 		signal(SIGTERM, cleanup);
 
 	gethostname(host, sizeof (host));
-	openlog("lpd", 0, LOG_LPR);
+	openlog("lpr", 0, LOG_LPR);
 
-	while (argc > 1 && argv[1][0] == '-') {
-		argc--;
-		arg = *++argv;
-		switch (arg[1]) {
+	while ((ch = getopt(argc, argv,
+	    ":#:1:2:3:4:C:J:P:T:U:cdfghi:lnmprstvw:")) != -1) {
+		switch (ch) {
 
-		case 'P':		/* specifiy printer name */
-			if (arg[2])
-				printer = &arg[2];
-			else if (argc > 1) {
-				argc--;
-				printer = *++argv;
+		case '#':		/* n copies */
+			if (isdigit(*optarg)) {
+				i = atoi(optarg);
+				if (i > 0)
+					ncopies = i;
 			}
+
+		case '4':		/* troff fonts */
+		case '3':
+		case '2':
+		case '1':
+			fonts[optopt - '1'] = optarg;
 			break;
 
 		case 'C':		/* classification spec */
 			hdr++;
-			if (arg[2])
-				class = &arg[2];
-			else if (argc > 1) {
-				argc--;
-				class = *++argv;
-			}
-			break;
-
-		case 'U':		/* user name */
-			hdr++;
-			if (arg[2])
-				person = &arg[2];
-			else if (argc > 1) {
-				argc--;
-				person = *++argv;
-			}
+			class = optarg;
 			break;
 
 		case 'J':		/* job name */
 			hdr++;
-			if (arg[2])
-				jobname = &arg[2];
-			else if (argc > 1) {
-				argc--;
-				jobname = *++argv;
-			}
+			jobname = optarg;
+			break;
+
+		case 'P':		/* specifiy printer name */
+			printer = optarg;
 			break;
 
 		case 'T':		/* pr's title line */
-			if (arg[2])
-				title = &arg[2];
-			else if (argc > 1) {
-				argc--;
-				title = *++argv;
-			}
+			title = optarg;
 			break;
 
-		case 'l':		/* literal output */
-		case 'p':		/* print using ``pr'' */
-		case 't':		/* print troff output (cat files) */
-		case 'n':		/* print ditroff output */
+		case 'U':		/* user name */
+			hdr++;
+			person = optarg;
+			break;
+
+		case 'c':		/* print cifplot output */
 		case 'd':		/* print tex output (dvi files) */
 		case 'g':		/* print graph(1G) output */
-		case 'c':		/* print cifplot output */
+		case 'l':		/* literal output */
+		case 'n':		/* print ditroff output */
+		case 'p':		/* print using ``pr'' */
+		case 't':		/* print troff output (cat files) */
 		case 'v':		/* print vplot output */
-			format = arg[1];
+			format = optopt;
 			break;
 
 		case 'f':		/* print fortran output */
 			format = 'r';
 			break;
 
-		case '4':		/* troff fonts */
-		case '3':
-		case '2':
-		case '1':
-			if (argc > 1) {
-				argc--;
-				fonts[arg[1] - '1'] = *++argv;
-			}
+		case 'h':		/* toggle want of header page */
+			hdr = !hdr;
 			break;
 
-		case 'w':		/* versatec page width */
-			width = arg+2;
-			break;
-
-		case 'r':		/* remove file when done */
-			rflag++;
+		case 'i':		/* indent output */
+			iflag++;
+			indent = atoi(optarg);
+			if (indent < 0)
+				indent = 8;
 			break;
 
 		case 'm':		/* send mail when done */
 			mailflg++;
 			break;
 
-		case 'h':		/* toggle want of header page */
-			hdr = !hdr;
+		case 'q':		/* just q job */
+			qflag++;
+			break;
+
+		case 'r':		/* remove file when done */
+			rflag++;
 			break;
 
 		case 's':		/* try to link files */
 			sflag++;
 			break;
 
-		case 'q':		/* just q job */
-			qflag++;
+		case 'w':		/* versatec page width */
+			width = optarg;
 			break;
 
-		case 'i':		/* indent output */
-			iflag++;
-			indent = arg[2] ? atoi(&arg[2]) : 8;
+		case ':':               /* catch "missing argument" error */
+			if (optopt == 'i') {
+				iflag++; /* -i without args is valid */
+				indent = 8;
+			} else
+				usage();
 			break;
 
-		case '#':		/* n copies */
-			if (isdigit(arg[2])) {
-				i = atoi(&arg[2]);
-				if (i > 0)
-					ncopies = i;
-			}
+		default:
+			usage();
 		}
 	}
-
-	if (printer == NULL) {
-		char *p;
-
+	argc -= optind;
+	argv += optind;
+	if (printer == NULL && (printer = getenv("PRINTER")) == NULL)
 		printer = DEFLP;
-		if ((p = getenv("PRINTER")) != NULL)
-			printer = p;
-	}
 	chkprinter(printer);
 	if (SC && ncopies > 1)
 		errx(1, "multiple copies are not allowed");
 	if (MC > 0 && ncopies > MC)
-		errx(1, "only %d copies are allowed", MC);
+		errx(1, "only %ld copies are allowed", MC);
 	/*
 	 * Get the identity of the person doing the lpr using the same
 	 * algorithm as lprm. 
@@ -305,7 +285,7 @@ main(argc, argv)
 	/*
 	 * Check to make sure queuing is enabled if userid is not root.
 	 */
-	(void) snprintf(buf, sizeof(buf), "%s/%s", SD, LO);
+	(void)snprintf(buf, sizeof(buf), "%s/%s", SD, LO);
 	if (userid && stat(buf, &stb) == 0 && (stb.st_mode & 010))
 		errx(1, "Printer queue is disabled");
 	/*
@@ -314,16 +294,17 @@ main(argc, argv)
 	mktemps();
 	tfd = nfile(tfname);
 	seteuid(euid);
-	(void) fchown(tfd, DU, -1);	/* owned by daemon for protection */
+	(void)fchown(tfd, DU, -1);	/* owned by daemon for protection */
 	seteuid(uid);
 	card('H', host);
 	card('P', person);
 	if (hdr) {
 		if (jobname == NULL) {
-			if (argc == 1)
+			if (argc == 0)
 				jobname = "stdin";
 			else
-				jobname = (arg = strrchr(argv[1], '/')) ? arg+1 : argv[1];
+				jobname = (arg = strrchr(argv[0], '/')) ?
+				    arg + 1 : argv[0];
 		}
 		card('J', jobname);
 		card('C', class);
@@ -343,15 +324,21 @@ main(argc, argv)
 	/*
 	 * Read the files and spool them.
 	 */
-	if (argc == 1)
+	if (argc == 0)
 		copy(0, " ");
-	else while (--argc) {
-		if ((f = test(arg = *++argv)) < 0)
+	else while (argc--) {
+		if (argv[0][0] == '-' && argv[0][1] == '\0') {
+			/* use stdin */
+			copy(0, " ");
+			argv++;
+			continue;
+		}
+		if ((f = test(arg = *argv++)) < 0)
 			continue;	/* file unreasonable */
 
 		if (sflag && (cp = linked(arg)) != NULL) {
-			(void) snprintf(buf, sizeof(buf), "%d %d", statb.st_dev,
-					statb.st_ino);
+			(void)snprintf(buf, sizeof(buf), "%d %d",
+			    statb.st_dev, statb.st_ino);
 			card('S', buf);
 			if (format == 'p')
 				card('T', title ? title : arg);
@@ -371,14 +358,14 @@ main(argc, argv)
 			warn("%s", arg);
 		else {
 			copy(i, arg);
-			(void) close(i);
+			(void)close(i);
 			if (f && unlink(arg) < 0)
 				warnx("%s: not removed", arg);
 		}
 	}
 
 	if (nact) {
-		(void) close(tfd);
+		(void)close(tfd);
 		tfname[inchar]--;
 		/*
 		 * Touch the control file to fix position in the queue.
@@ -394,7 +381,7 @@ main(argc, argv)
 				tfname[inchar]++;
 				cleanup(0);
 			}
-			(void) close(tfd);
+			(void)close(tfd);
 		}
 		if (link(tfname, cfname) < 0) {
 			warn("cannot rename %s", cfname);
@@ -433,14 +420,14 @@ copy(f, n)
 	card('N', n);
 	fd = nfile(dfname);
 	nr = nc = 0;
-	while ((i = read(f, buf, BUFSIZ)) > 0) {
+	while ((i = read(f, buf, sizeof(buf))) > 0) {
 		if (write(fd, buf, i) != i) {
 			warn("%s", n);
 			break;
 		}
 		nc += i;
-		if (nc >= BUFSIZ) {
-			nc -= BUFSIZ;
+		if (nc >= sizeof(buf)) {
+			nc -= sizeof(buf);
 			nr++;
 			if (MX > 0 && nr > MX) {
 				warnx("%s: copy file is too large", n);
@@ -448,7 +435,7 @@ copy(f, n)
 			}
 		}
 	}
-	(void) close(fd);
+	(void)close(fd);
 	if (nc==0 && nr==0) 
 		warnx("%s: empty input file", f ? n : "stdin");
 	else
@@ -464,11 +451,11 @@ linked(file)
 	char *file;
 {
 	char *cp;
-	static char nfile[MAXPATHLEN];
+	static char buf[MAXPATHLEN];
 	int ret;
 
 	if (*file != '/') {
-		if (getcwd(nfile, sizeof(nfile)) == NULL)
+		if (getcwd(buf, sizeof(buf)) == NULL)
 			return(NULL);
 
 		while (file[0] == '.') {
@@ -478,7 +465,7 @@ linked(file)
 				continue;
 			case '.':
 				if (file[2] == '/') {
-					if ((cp = strrchr(nfile, '/')) != NULL)
+					if ((cp = strrchr(buf, '/')) != NULL)
 						*cp = '\0';
 					file += 3;
 					continue;
@@ -486,9 +473,10 @@ linked(file)
 			}
 			break;
 		}
-		strncat(nfile, "/", sizeof(nfile) - strlen(nfile) - 1);
-		strncat(nfile, file, sizeof(nfile) - strlen(nfile) - 1);
-		file = nfile;
+		if (strlcat(buf, "/", sizeof(buf)) >= sizeof(buf) ||
+		    strlcat(buf, file, sizeof(buf)) >= sizeof(buf))
+			return(NULL);
+		file = buf;
 	}
 	seteuid(euid);
 	ret = symlink(file, dfname);
@@ -502,11 +490,15 @@ linked(file)
 static void
 card(c, p2)
 	int c;
-	char *p2;
+	const char *p2;
 {
 	char buf[BUFSIZ];
 	char *p1 = buf;
 	int len = 2;
+
+	if (strlen(p2) > sizeof(buf) - 2)
+		errx(1, "Internal error:  String longer than %ld",
+		    (long)sizeof(buf));
 
 	*p1++ = c;
 	while ((c = *p2++) != '\0' && len < sizeof(buf)) {
@@ -529,7 +521,7 @@ nfile(n)
 
 	seteuid(euid);
 	f = open(n, O_WRONLY | O_EXCL | O_CREAT, FILMOD);
-	(void) umask(oldumask);
+	(void)umask(oldumask);
 	if (f < 0) {
 		warn("%s", n);
 		cleanup(0);
@@ -604,7 +596,7 @@ test(file)
 		warn("cannot stat %s\n", file);
 		goto bad;
 	}
-	if ((statb.st_mode & S_IFMT) == S_IFDIR) {
+	if (S_ISDIR(statb.st_mode)) {
 		warnx("%s is a directory\n", file);
 		goto bad;
 	}
@@ -616,10 +608,10 @@ test(file)
 	    !N_BADMAG(execb)) {
 			warnx("%s is an executable program and is unprintable",
 				file);
-			(void) close(fd);
+			(void)close(fd);
 			goto bad;
 	}
-	(void) close(fd);
+	(void)close(fd);
 	if (rflag) {
 		if ((cp = strrchr(file, '/')) == NULL) {
 			if (access(".", 2) == 0)
@@ -695,9 +687,8 @@ mktemps()
 	int len, fd, n;
 	char *cp;
 	char buf[BUFSIZ];
-	char *lmktemp();
 
-	(void) snprintf(buf, sizeof(buf), "%s/.seq", SD);
+	(void)snprintf(buf, sizeof(buf), "%s/.seq", SD);
 	seteuid(euid);
 	if ((fd = open(buf, O_RDWR|O_CREAT, 0661)) < 0)
 		err(1, "cannot create %s", buf);
@@ -718,10 +709,10 @@ mktemps()
 	dfname = lmktemp("df", n, len);
 	inchar = strlen(SD) + 3;
 	n = (n + 1) % 1000;
-	(void) lseek(fd, (off_t)0, 0);
+	(void)lseek(fd, (off_t)0, 0);
 	snprintf(buf, sizeof(buf), "%03d\n", n);
-	(void) write(fd, buf, strlen(buf));
-	(void) close(fd);	/* unlocks as well */
+	(void)write(fd, buf, strlen(buf));
+	(void)close(fd);	/* unlocks as well */
 }
 
 /*
@@ -736,6 +727,18 @@ lmktemp(id, num, len)
 
 	if ((s = malloc(len)) == NULL)
 		err(1, NULL);
-	(void) snprintf(s, len, "%s/%sA%03d%s", SD, id, num, host);
+	(void)snprintf(s, len, "%s/%sA%03d%s", SD, id, num, host);
 	return(s);
+}
+
+static void
+usage()
+{
+	extern char *__progname;
+
+	fprintf(stderr,
+	    "usage: %s [-cdfghlnmprstv] [-Pprinter] [-#num] [-C class] "
+	    "[-J job] [-T title]\n           [-U user] [-i [numcols]] "
+	    "[-1234 font] [-wnum] [name ...]\n", __progname);
+	exit(1);
 }

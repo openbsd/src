@@ -1,4 +1,5 @@
-/*	$OpenBSD: lpf.c,v 1.6 2002/02/24 08:04:55 pvalchev Exp $	*/
+/*	$OpenBSD: lpf.c,v 1.7 2002/05/20 23:13:50 millert Exp $	*/
+/*	$NetBSD: lpf.c,v 1.8 2000/04/29 00:12:32 abs Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +44,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpf.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: lpf.c,v 1.6 2002/02/24 08:04:55 pvalchev Exp $";
+static const char rcsid[] = "$OpenBSD: lpf.c,v 1.7 2002/05/20 23:13:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,9 +56,10 @@ static const char rcsid[] = "$OpenBSD: lpf.c,v 1.6 2002/02/24 08:04:55 pvalchev 
  */
 
 #include <signal.h>
-#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <unistd.h>
 
 #define MAXWIDTH  132
 #define MAXREP    10
@@ -75,6 +77,8 @@ char	*name;		/* user's login name */
 char	*host;		/* user's machine name */
 char	*acctfile;	/* accounting information file */
 
+__dead void usage(void);
+
 int
 main(argc, argv) 
 	int argc;
@@ -86,45 +90,40 @@ main(argc, argv)
 	int done, linedone, maxrep, ch;
 	char *limit;
 
-	while (--argc) {
-		if (*(cp = *++argv) == '-') {
-			switch (cp[1]) {
-			case 'n':
-				argc--;
-				name = *++argv;
-				break;
-
-			case 'h':
-				argc--;
-				host = *++argv;
-				break;
-
-			case 'w':
-				if ((i = atoi(&cp[2])) > 0 && i <= MAXWIDTH)
-					width = i;
-				break;
-
-			case 'l':
-				length = atoi(&cp[2]);
-				break;
-
-			case 'i':
-				indent = atoi(&cp[2]);
-				break;
-
-			case 'r':	/* map nl->cr-nl */
-				onlcr++;
-				break;
-
-			case 'c':	/* Print control chars */
-				literal++;
-				break;
-			}
-		} else
-			acctfile = cp;
+	while ((ch = getopt(argc, argv, "chr:i:l:n:w:")) != -1) {
+		switch (ch) {
+		case 'n':
+			name = optarg;
+			break;
+		case 'h':
+			host = optarg;
+			break;
+		case 'w':
+			if ((i = atoi(optarg)) > 0 && i <= MAXWIDTH)
+				width = i;
+			break;
+		case 'l':
+			length = atoi(optarg);
+			break;
+		case 'i':
+			indent = atoi(optarg);
+			break;
+		case 'r':	/* map nl->cr-nl */
+			onlcr++;
+			break;
+		case 'c':	/* Print control chars */
+			literal++;
+			break;
+		default:
+			usage();
+		}
 	}
+	argc -= optind;
+	argv += optind;
+	if (argc)
+		acctfile = *argv;
 
-	for (cp = buf[0], limit = buf[MAXREP]; cp < limit; *cp++ = ' ');
+	memset(buf, ' ',  sizeof(buf));
 	done = 0;
 	
 	while (!done) {
@@ -175,7 +174,7 @@ main(argc, argv)
 				}
 
 			default:
-				if ((col >= width) || (!literal && ch < ' ')) {
+				if (col >= width || (!literal && ch < ' ')) {
 					col++;
 					break;
 				}
@@ -226,4 +225,14 @@ main(argc, argv)
 		printf("%7.2f\t%s:%s\n", (float)npages, host, name);
 	}
 	exit(0);
+}
+
+__dead void
+usage(void)
+{
+	extern char *__progname;
+
+	fprintf(stderr, "usage: %s [-c] [-r] [-h host] [-i indent] [-l length]"
+	    " [-n name] [-w width] [acctfile]\n", __progname);
+	exit(1);
 }

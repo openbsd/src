@@ -1,4 +1,5 @@
-.\"	$OpenBSD: pac.8,v 1.5 2000/11/09 17:53:15 aaron Exp $
+.\"	$OpenBSD: pac.8,v 1.6 2002/05/20 23:13:50 millert Exp $
+.\"	$NetBSD: pac.8,v 1.9 2002/01/19 03:24:14 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -41,12 +42,13 @@
 .Nd printer/plotter accounting information
 .Sh SYNOPSIS
 .Nm pac
+.Op Fl cmrs
+.Bk -words
 .Op Fl P Ns Ar printer
-.Op Fl c
-.Op Fl m
+.Ek
+.Bk -words
 .Op Fl p Ns Ar price
-.Op Fl s
-.Op Fl r
+.Ek
 .Op Ar user ...
 .Sh DESCRIPTION
 .Nm pac
@@ -54,8 +56,7 @@ reads the printer/plotter accounting files, accumulating the number
 of pages (the usual case) or feet (for raster devices)
 of paper consumed by each named
 .Ar user ,
-and prints out
-how much each user consumed in pages or feet and dollars.
+and prints out how much each user consumed in pages or feet and dollars.
 .Pp
 When no
 .Ar user
@@ -90,6 +91,28 @@ Accounting information is summarized on the
 summary accounting file; this summarization is necessary since on a
 busy system, the accounting file can grow by several lines per day.
 .El
+.Sh OUTPUT FORMAT
+.Nm
+formats the output into simple table, using four columns:
+.Bl -enum
+.It
+The host name followed by the user's login name (column "Login").
+If the
+.Fl m
+option was specified, the host name will be omitted.
+.It
+The number of pages or feet printed (column "pages/feet").
+.It
+The number of copies made (column "runs").
+.It
+The total price for the user (column "price").
+.El
+.Pp
+If no
+.Ar user
+argument was specified,
+.Nm
+will print a summary line with print totals.
 .Sh FILES
 .Bl -tag -width /var/account/?_sum -compact
 .It Pa /var/account/?acct
@@ -101,11 +124,11 @@ printer capability database
 .El
 .Sh SEE ALSO
 .Xr printcap 5
-.Sh BUGS
-The relationship between the computed price and reality is
-as yet unknown.
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.0 .
+.Sh BUGS
+The relationship between the computed price and reality is
+as yet unknown.

@@ -1,4 +1,5 @@
-/*	$OpenBSD: ttcompat.c,v 1.4 2001/08/30 17:38:13 millert Exp $	*/
+/*	$OpenBSD: ttcompat.c,v 1.5 2002/05/20 23:13:50 millert Exp $	*/
+/*	$NetBSD: ttcompat.c,v 1.9 1995/11/15 22:50:00 pk Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -40,7 +41,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: ttcompat.c,v 1.4 2001/08/30 17:38:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: ttcompat.c,v 1.5 2002/05/20 23:13:50 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,9 +64,11 @@ static const char rcsid[] = "$OpenBSD: ttcompat.c,v 1.4 2001/08/30 17:38:13 mill
 #define	CLR(t, f)	(t) &= ~(f)
 #define	ISSET(t, f)	((t) & (f))
 
+static int	sttygetoflags(struct termios *);
+static void	sttysetoflags(struct termios *, int);
+
 static int
-sttygetoflags(tp)
-	struct termios *tp;
+sttygetoflags(struct termios *tp)
 {
 	tcflag_t iflag = tp->c_iflag;
 	tcflag_t lflag = tp->c_lflag;
@@ -104,9 +107,7 @@ sttygetoflags(tp)
 }
 
 static void
-sttysetoflags(tp, flags)
-	struct termios *tp;
-	int flags;
+sttysetoflags(struct termios *tp, int flags)
 {
 	tcflag_t iflag = tp->c_iflag;
 	tcflag_t oflag = tp->c_oflag;
@@ -172,9 +173,7 @@ sttysetoflags(tp, flags)
 }
 
 void
-sttyclearflags(tp, flags)
-	struct termios *tp;
-	int flags;
+sttyclearflags(struct termios *tp, int flags)
 {
 	tcflag_t iflag = tp->c_iflag;
 	tcflag_t oflag = tp->c_oflag;
@@ -208,9 +207,7 @@ sttyclearflags(tp, flags)
 }
 
 void
-sttysetflags(tp, flags)
-	struct termios *tp;
-	int flags;
+sttysetflags(struct termios *tp, int flags)
 {
 	tcflag_t iflag = tp->c_iflag;
 	tcflag_t oflag = tp->c_oflag;
@@ -243,9 +240,7 @@ sttysetflags(tp, flags)
 }
 
 void
-sttyclearlflags(tp, flags)
-	struct termios *tp;
-	int flags;
+sttyclearlflags(struct termios *tp, int flags)
 {
 	tcflag_t iflag = tp->c_iflag;
 	tcflag_t oflag = tp->c_oflag;
@@ -280,9 +275,7 @@ sttyclearlflags(tp, flags)
 }
 
 void
-sttysetlflags(tp, flags)
-	struct termios *tp;
-	int flags;
+sttysetlflags(struct termios *tp, int flags)
 {
 	tcflag_t iflag = tp->c_iflag;
 	tcflag_t oflag = tp->c_oflag;

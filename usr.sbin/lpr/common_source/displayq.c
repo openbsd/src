@@ -1,4 +1,5 @@
-/*	$OpenBSD: displayq.c,v 1.15 2001/11/01 18:02:32 mickey Exp $	*/
+/*	$OpenBSD: displayq.c,v 1.16 2002/05/20 23:13:50 millert Exp $	*/
+/*	$NetBSD: displayq.c,v 1.21 2001/08/30 00:51:50 itojun Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +38,7 @@
 #if 0
 static const char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: displayq.c,v 1.15 2001/11/01 18:02:32 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: displayq.c,v 1.16 2002/05/20 23:13:50 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,8 +74,6 @@ extern int	requests;	/* # of spool requests */
 extern char    *user[];	        /* users to process */
 extern int	users;		/* # of users in user array */
 
-extern uid_t	uid, euid;
-
 static int	termwidth;
 static int	col;		/* column on screen */
 static char	current[NAME_MAX]; /* current file being printed */
@@ -83,17 +82,18 @@ static int	first;		/* first file in ``files'' column? */
 static int	garbage;	/* # of garbage cf files */
 static int	lflag;		/* long output option */
 static int	rank;		/* order to be printed (-1=none, 0=active) */
-static long	totsize;	/* total print job size in bytes */
+static off_t	totsize;	/* total print job size in bytes */
 
-static char	*head0 = "Rank   Owner      Job  Files";
-static char	*head1 = "Total Size\n";
+static const char *head0 = "Rank   Owner      Job  Files";
+static const char *head1 = "Total Size\n";
+
+static void	alarmer(int);
 
 /*
  * Display the current state of the queue. Format = 1 if long format.
  */
 void
-displayq(format)
-	int format;
+displayq(int format)
 {
 	struct queue *q;
 	int i, nitems, fd, ret, len;
@@ -121,7 +121,7 @@ displayq(format)
 		fatal("unknown printer");
 	else if (i == -3)
 		fatal("potential reference loop detected in printcap file");
-	if (cgetstr(bp, "lp", &LP) < 0)
+	if (cgetstr(bp, DEFLP, &LP) < 0)
 		LP = _PATH_DEFDEVLP;
 	if (cgetstr(bp, "rp", &RP) < 0)
 		RP = DEFLP;
@@ -132,7 +132,7 @@ displayq(format)
 	if (cgetstr(bp, "st", &ST) < 0)
 		ST = DEFSTAT;
 	cgetstr(bp, "rm", &RM);
-	if ((cp = checkremote()))
+	if ((cp = checkremote()) != NULL)
 		printf("Warning: %s\n", cp);
 
 	/*
@@ -157,10 +157,10 @@ displayq(format)
 			fd = open(ST, O_RDONLY);
 			seteuid(uid);
 			if (fd >= 0) {
-				(void) flock(fd, LOCK_SH);
+				(void)flock(fd, LOCK_SH);
 				while ((i = read(fd, line, sizeof(line))) > 0)
-					(void) fwrite(line, 1, i, stdout);
-				(void) close(fd);	/* unlocks as well */
+					(void)fwrite(line, 1, i, stdout);
+				(void)close(fd);	/* unlocks as well */
 			} else
 				putchar('\n');
 		}
@@ -214,14 +214,14 @@ displayq(format)
 				fd = open(ST, O_RDONLY);
 				seteuid(uid);
 				if (fd >= 0) {
-					(void) flock(fd, LOCK_SH);
+					(void)flock(fd, LOCK_SH);
 					while ((i = read(fd, line, sizeof(line))) > 0)
-						(void) fwrite(line, 1, i, stdout);
-					(void) close(fd);	/* unlocks as well */
+						(void)fwrite(line, 1, i, stdout);
+					(void)close(fd);	/* unlocks as well */
 				} else
 					putchar('\n');
 			}
-			(void) fclose(fp);
+			(void)fclose(fp);
 		}
 		/*
 		 * Now, examine the control files and print out the jobs to
@@ -248,50 +248,68 @@ displayq(format)
 	 */
 	if (nitems)
 		putchar('\n');
-	(void) snprintf(line, sizeof line, "%c%s", format + '\3', RP);
+	(void)snprintf(line, sizeof(line), "%c%s", format + '\3', RP);
 	cp = line;
 	cp += strlen(cp);
-	for (i = 0; i < requests && cp-line < sizeof(line) - 1; i++) {
-		len = line + sizeof line - cp;
+	for (i = 0; i < requests && cp - line < sizeof(line) - 1; i++) {
+		len = line + sizeof(line) - cp;
 		if (snprintf(cp, len, " %d", requ[i]) >= len) {
 			cp += strlen(cp);
 			break;
 		}
 		cp += strlen(cp);
 	}
-	for (i = 0; i < users && cp-line < sizeof(line) - 1; i++) {
-		len = line + sizeof line - cp;
+	for (i = 0; i < users && cp - line < sizeof(line) - 1; i++) {
+		len = line + sizeof(line) - cp;
 		if (snprintf(cp, len, " %s", user[i]) >= len) {
 			cp += strlen(cp);
 			break;
 		}
 	}
-	if (cp-line < sizeof(line) - 1) {
+	if (cp-line < sizeof(line) - 1)
 		strcat(line, "\n");
-	} else {
-		line[sizeof line-2] = '\n';
-	}
+	else
+		line[sizeof(line) - 2] = '\n';
 	fd = getport(RM, 0);
 	if (fd < 0) {
 		if (from != host)
 			printf("%s: ", host);
-		printf("connection to %s is down\n", RM);
+		(void)printf("connection to %s is down\n", RM);
 	}
 	else {
+		struct sigaction osa, nsa;
+
 		i = strlen(line);
 		if (write(fd, line, i) != i)
 			fatal("Lost connection");
-		while ((i = read(fd, line, sizeof(line))) > 0)
-			(void) fwrite(line, 1, i, stdout);
-		(void) close(fd);
+		memset(&nsa, 0, sizeof(nsa));
+		nsa.sa_handler = alarmer;
+		sigemptyset(&nsa.sa_mask);
+		sigaddset(&nsa.sa_mask, SIGALRM);
+		nsa.sa_flags = 0;
+		(void)sigaction(SIGALRM, &nsa, &osa);
+		alarm(wait_time);
+		while ((i = read(fd, line, sizeof(line))) > 0) {
+			(void)fwrite(line, 1, i, stdout);
+			alarm(wait_time);
+		}
+		alarm(0);
+		(void)sigaction(SIGALRM, &osa, NULL);
+		(void)close(fd);
 	}
+}
+
+static void
+alarmer(int s)
+{
+	/* nothing */
 }
 
 /*
  * Print a warning message if there is no daemon present.
  */
 void
-nodaemon()
+nodaemon(void)
 {
 	if (remote)
 		printf("\n%s: ", host);
@@ -303,7 +321,7 @@ nodaemon()
  * Print the header for the short listing format
  */
 void
-header()
+header(void)
 {
 	printf(head0);
 	col = strlen(head0)+1;
@@ -312,8 +330,7 @@ header()
 }
 
 void
-inform(cf)
-	char *cf;
+inform(char *cf)
 {
 	int j;
 	FILE *cfp;
@@ -357,9 +374,8 @@ inform(cf)
 		default: /* some format specifer and file name? */
 			if (line[0] < 'a' || line[0] > 'z')
 				continue;
-			if (j == 0 || strcmp(file, line+1) != 0) {
-				(void) strlcpy(file, line+1, sizeof(file));
-			}
+			if (j == 0 || strcmp(file, line+1) != 0)
+				(void)strlcpy(file, line+1, sizeof(file));
 			j++;
 			continue;
 		case 'N':
@@ -371,14 +387,13 @@ inform(cf)
 	fclose(cfp);
 	if (!lflag) {
 		blankfill(termwidth - (80 - SIZCOL));
-		printf("%ld bytes\n", totsize);
+		printf("%lld bytes\n", (long long)totsize);
 		totsize = 0;
 	}
 }
 
 int
-inlist(name, file)
-	char *name, *file;
+inlist(char *name, char *file)
 {
 	int *r, n;
 	char **u, *cp;
@@ -403,9 +418,7 @@ inlist(name, file)
 }
 
 void
-show(nfile, file, copies)
-	char *nfile, *file;
-	int copies;
+show(char *nfile, char *file, int copies)
 {
 	if (strcmp(nfile, " ") == 0)
 		nfile = "(standard input)";
@@ -419,8 +432,7 @@ show(nfile, file, copies)
  * Fill the line with blanks to the specified column
  */
 void
-blankfill(n)
-	int n;
+blankfill(int n)
 {
 	while (col++ < n)
 		putchar(' ');
@@ -430,9 +442,7 @@ blankfill(n)
  * Give the abbreviated dump of the file names
  */
 void
-dump(nfile, file, copies)
-	char *nfile, *file;
-	int copies;
+dump(char *nfile, char *file, int copies)
 {
 	int n, fill;
 	struct stat lbuf;
@@ -466,9 +476,7 @@ dump(nfile, file, copies)
  * Print the long info about the file
  */
 void
-ldump(nfile, file, copies)
-	char *nfile, *file;
-	int copies;
+ldump(char *nfile, char *file, int copies)
 {
 	struct stat lbuf;
 
@@ -478,7 +486,7 @@ ldump(nfile, file, copies)
 	else
 		printf("%-32s", nfile);
 	if (*file && !stat(file, &lbuf))
-		printf(" %qd bytes", lbuf.st_size);
+		printf(" %lld bytes", (long long)lbuf.st_size);
 	else
 		printf(" ??? bytes");
 	putchar('\n');
@@ -489,8 +497,7 @@ ldump(nfile, file, copies)
  *   update col for screen management
  */
 void
-prank(n)
-	int n;
+prank(int n)
 {
 	char rline[100];
 	static char *r[] = {
