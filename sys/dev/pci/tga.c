@@ -1,4 +1,4 @@
-/* $OpenBSD: tga.c,v 1.22 2004/01/09 21:32:24 brad Exp $ */
+/* $OpenBSD: tga.c,v 1.23 2004/02/21 19:38:19 miod Exp $ */
 /* $NetBSD: tga.c,v 1.40 2002/03/13 15:05:18 ad Exp $ */
 
 /*
@@ -93,9 +93,9 @@ void	tga_free_screen(void *, void *);
 int	tga_show_screen(void *, void *, int,
 			   void (*) (void *, int, int), void *);
 void	tga_burner(void *, u_int, u_int);
-int	tga_rop(struct rasops_info *, int, int, int, int, int,
+int	tga_rop(struct rasops_info *, int, int, int, int,
 	struct rasops_info *, int, int);
-int	tga_rop_vtov(struct rasops_info *, int, int, int, int,
+int	tga_rop_vtov(struct rasops_info *, int, int, int,
 	int, struct rasops_info *, int, int );
 void	tga_putchar(void *c, int row, int col, u_int uc, long attr);
 void	tga_eraserows(void *, int, int, long);
@@ -1000,9 +1000,7 @@ tga_copycols(id, row, srccol, dstcol, ncols)
 	dstx = ri->ri_font->fontwidth * dstcol;
 	nx = ri->ri_font->fontwidth * ncols;
 
-	tga_rop(ri, dstx, y,
-	    nx, ri->ri_font->fontheight, RAS_SRC,
-	    ri, srcx, y);
+	tga_rop(ri, dstx, y, nx, ri->ri_font->fontheight, ri, srcx, y);
 }
 
 /*
@@ -1020,18 +1018,8 @@ tga_copyrows(id, srcrow, dstrow, nrows)
 	dsty = ri->ri_font->fontheight * dstrow;
 	ny = ri->ri_font->fontheight * nrows;
 
-	tga_rop(ri, 0, dsty,
-	    ri->ri_emuwidth, ny, RAS_SRC,
-	    ri, 0, srcy);
+	tga_rop(ri, 0, dsty, ri->ri_emuwidth, ny, ri, 0, srcy);
 }
-
-/* Do we need the src? */
-int needsrc[16] = { 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0 };
-
-/* A mapping between our API and the TGA card */
-int map_rop[16] = { 0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6,
-	0xe, 0x1, 0x9, 0x5, 0xd, 0x3, 0xb, 0x7, 0xf
-};
 
 /*
  *  Generic TGA raster op.
@@ -1039,34 +1027,29 @@ int map_rop[16] = { 0x0, 0x8, 0x4, 0xc, 0x2, 0xa, 0x6,
  *   clips the sizes and all of that.
  */
 int
-tga_rop(dst, dx, dy, w, h, rop, src, sx, sy)
+tga_rop(dst, dx, dy, w, h, src, sx, sy)
 	struct rasops_info *dst;
-	int dx, dy, w, h, rop;
+	int dx, dy, w, h;
 	struct rasops_info *src;
 	int sx, sy;
 {
-	if (!dst)
+	if (dst == NULL || src == NULL)
 		return -1;
-	if (needsrc[RAS_GETOP(rop)]) {
-		if (src == NULL)
-			return -1;	/* We want a src */
-		/* Clip against src */
-		if (sx < 0) {
-			w += sx;
-			sx = 0;
-		}
-		if (sy < 0) {
-			h += sy;
-			sy = 0;
-		}
-		if (sx + w > src->ri_emuwidth)
-			w = src->ri_emuwidth - sx;
-		if (sy + h > src->ri_emuheight)
-			h = src->ri_emuheight - sy;
-	} else {
-		if (src != NULL)
-			return -1;	/* We need no src */
+
+	/* Clip against src */
+	if (sx < 0) {
+		w += sx;
+		sx = 0;
 	}
+	if (sy < 0) {
+		h += sy;
+		sy = 0;
+	}
+	if (sx + w > src->ri_emuwidth)
+		w = src->ri_emuwidth - sx;
+	if (sy + h > src->ri_emuheight)
+		h = src->ri_emuheight - sy;
+
 	/* Clip against dst.  We modify src regardless of using it,
 	 * since it really doesn't matter.
 	 */
@@ -1086,11 +1069,8 @@ tga_rop(dst, dx, dy, w, h, rop, src, sx, sy)
 		h = dst->ri_emuheight - dy;
 	if (w <= 0 || h <= 0)
 		return 0;	/* Vacuously true; */
-	if (!src) {
-		/* XXX Punt! */
-		return -1;
-	}
-	return tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy);
+
+	return tga_rop_vtov(dst, dx, dy, w, h, src, sx, sy);
 }
 
 
@@ -1101,9 +1081,9 @@ tga_rop(dst, dx, dy, w, h, rop, src, sx, sy)
  * that are on the card.
  */
 int
-tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
+tga_rop_vtov(dst, dx, dy, w, h, src, sx, sy)
 	struct rasops_info *dst;
-	int dx, dy, w, h, rop;
+	int dx, dy, w, h;
 	struct rasops_info *src;
 	int sx, sy;
 {
@@ -1161,7 +1141,7 @@ tga_rop_vtov(dst, dx, dy, w, h, rop, src, sx, sy)
 		(dx + dst->ri_xorigin) * (dst->ri_depth/8);
 
 	TGAWALREG(dc, TGA_REG_GMOR, 3, 0x0007); /* Copy mode */
-	TGAWALREG(dc, TGA_REG_GOPR, 3, map_rop[rop]);   /* Set up the op */
+	TGAWALREG(dc, TGA_REG_GOPR, 3, 0x0003); /* SRC */
 
 	/*
 	 * we have 3 sizes of pixels to move in X direction:
