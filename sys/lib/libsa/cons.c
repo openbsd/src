@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.2 1997/04/02 04:59:22 mickey Exp $	*/
+/*	$OpenBSD: cons.c,v 1.3 1997/04/26 17:50:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,18 +34,33 @@
 
 #include <stand.h>
 
-struct consw *console = &consw[0];
+static struct consw *console = &consw[0];
 
 int
 cons_probe()
 {
-	int i;
+	int i, f = 0;
 	for (i = 0; i < ncons; i++) {
-		if ((consw[i].cn_probe)() != 0)
+		if ((consw[i].cn_probe)() != 0) {
+			if (f == 0)
+				f++, console = &consw[i];
 			printf("%s present\n", consw[i].name);
+		}
 	}
+	if (!f)	/* not found */
+		printf("no any console detected, ");
 	printf("using %s console\n", console->name);
 	return 1;
+}
+
+char *
+ttyname(fd)
+	int fd;
+{
+	if (fd)
+		return "(not a tty)";
+	else
+		return console->name;
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.22 1997/04/21 19:49:30 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.23 1997/04/26 17:50:08 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.18 1996/11/30 04:35:51 gwr Exp $	*/
 
 /*-
@@ -187,6 +187,7 @@ off_t	null_seek __P((struct open_file *f, off_t offset, int where));
 int	null_stat __P((struct open_file *f, struct stat *sb));
 int	null_readdir __P((struct open_file *f, char *name));
 int	cons_probe __P((void));
+char	*ttyname __P((int)); /* match userland decl, but ignore !0 */
 void	putc __P((int));    
 int	getc __P((void));
 int	ischar __P((void));

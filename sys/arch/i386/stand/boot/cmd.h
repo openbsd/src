@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.h,v 1.4 1997/04/21 20:03:31 mickey Exp $	*/
+/*	$OpenBSD: cmd.h,v 1.5 1997/04/26 17:50:07 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -36,14 +36,17 @@ struct cmd_table;
 struct cmd_state {
 	char bootdev[16]; /* device */
 	char image[32]; /* image */
+	char *conf; /* /etc/boot.conf normally */
 	char cwd[MAXPATHLEN - 32 - 16];
 	void *addr; /* load here */
 	int timeout;
-	char path[MAXPATHLEN]; /* buffer for pathname compose */
 
+	char path[MAXPATHLEN]; /* buffer for pathname compose */
 	const struct cmd_table *cmd;
 	int argc;
 	char *argv[8];	/* XXX i hope this is enough */
 };
 
 int getcmd __P((register struct cmd_state *));
+int read_conf __P((register struct cmd_state *));
+
