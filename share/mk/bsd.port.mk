@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.61 1999/02/17 13:00:42 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.62 1999/02/17 23:45:15 marc Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.61 1999/02/17 13:00:42 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.62 1999/02/17 23:45:15 marc Exp $$
 .if defined(NEED_VERSION)
 VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -95,7 +95,9 @@ REVISION_NEEDED=${NEED_VERSION:C/.*\.//}
 #				  directories will get created, and symbolically linked to from
 #				  ${WRKDIR} (see below).  This is useful for building ports on
 #				  several architectures, then ${PORTSDIR} can be NFS-mounted
-#				  while ${WRKOBJDIR} is local to every arch.
+#				  while ${WRKOBJDIR} is local to every arch
+# NO_SHARED_LIBS - defined as "yes" for those machine architectures that do
+#				  not support shared libraries.
 
 #
 # Variables that typically apply to an individual port.  Non-Boolean
@@ -362,6 +364,13 @@ OPSYS_VER!=	uname -r
 .include "${.CURDIR}/../Makefile.inc"
 .endif
 
+# Define SUPPORT_SHARES for those machines that support shared libraries.
+#
+.if (${MACHINE_ARCH} == "alpha") || (${MACHINE_ARCH} == "powerpc") || \
+    (${MACHINE_ARCH} == "vax") || (${MACHINE_ARCH} == "hppa")
+NO_SHARED_LIBS=	yes
+.endif
+
 NOCLEANDEPENDS=	yes
 NOMANCOMPRESS?=	yes
 DEF_UMASK?=		022
@@ -626,6 +635,9 @@ COMMENT?=	${PKGDIR}/COMMENT
 DESCR?=		${PKGDIR}/DESCR
 .if exists(${PKGDIR}/PLIST.${ARCH})
 PLIST?=		${PKGDIR}/PLIST.${ARCH}
+.else
+.if defined(NO_SHARED_LIBS) && exists(${PKGDIR}/PLIST.noshared)
+PLIST?=		${PKGDIR}/PLIST.noshared
 .else
 PLIST?=		${PKGDIR}/PLIST
 .endif
