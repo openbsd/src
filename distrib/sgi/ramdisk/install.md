@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 2004/08/06 22:33:27 deraadt Exp $
+#	$OpenBSD: install.md,v 1.2 2004/08/26 13:32:15 pefo Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -48,11 +48,7 @@ md_set_term() {
 }
 
 md_installboot() {
-	echo "Installing boot TBD, only netboot for now"
-	return
-	echo "Installing boot on /dev/${1}a"
-	cp /usr/mdec/boot /mnt/boot
-	/usr/mdec/installboot /mnt/boot /usr/mdec/bootxx /dev/r${1}a
+# Nothing to do. Boot is installed when preparing volume header.
 }
 
 md_checkfordisklabel() {
@@ -77,60 +73,117 @@ md_prep_disklabel()
 	local _disk
 
 	_disk=$1
-	md_checkfordisklabel $_disk
+	echo
+	echo "Checking SGI Volume Header:"
+	/usr/mdec/sgivol -q $_disk > /dev/null 2> /dev/null
 	case $? in
-	0)	ask "Do you wish to edit the disklabel on $_disk?" y
-		;;
-	1)	echo "WARNING: Disk $_disk has no label"
-		ask "Do you want to create one with the disklabel editor?" y
-		;;
-	2)	echo "WARNING: Label on disk $_disk is corrupted"
-		ask "Do you want to try and repair the damage using the disklabel editor?" y
-		;;
-
-	esac
-
-	case "$resp" in
-	y*|Y*)	;;
-	*)	return ;;
-	esac
-
-	# display example
+	0)	/usr/mdec/sgivol $_disk
 	cat << __EOT
 
-Disk partition sizes and offsets are in sector (most likely 512 bytes) units.
-You may set these size/offset pairs on cylinder boundaries
-     (the number of sector per cylinder is given in )
-     (the 'sectors/cylinder' entry, which is not shown here)
+A SGI Volume Header was found on the disk. Normally you want to replace it
+with a new Volume Header suitable for installing OpenBSD. Doing this will
+of course delete all data currently on the disk.
+__EOT
+		ask "Do you want to overwrite the current header?" y
+		case "$resp" in
+		y*|Y*)
+			/usr/mdec/sgivol -qi $_disk
+			;;
+		n*|N*)
+			cat << __EOT
+
+If the Volume Header was installed by a previous OpenBSD install keeping
+it is OK as long as the Volume Header has room for the 'boot' program.
+If you are trying to keep an old IRIX Volume Header, OpenBSD install will
+use the 'a' partition on the disk for the install and any data in that
+partition will be lost.
+__EOT
+			ask "Are you sure you want to try to keep the old header?" y
+			case "$resp" in
+			y*|Y*)
+				;;
+			n*|N*)
+				ask "Do you want to overwrite the old header instead?" n
+				case "$resp" in
+				y*|Y*)
+					/usr/mdec/sgivol -qi $_disk
+					;;
+				n*|N*)
+					exit 1
+					;;
+				esac
+				;;
+			esac
+			;;
+		esac
+		;;
+	1)	echo
+		echo "Your disk seems to be unaccessible. It was not possible"
+		echo "determine if there is a proper Volume Header or not."
+		ask "Do you want to continue anyway?" n
+		case "$resp" in
+		y*|Y*)
+			;;
+		n*|N*)
+			exit 1 ;;
+		esac
+		;;
+	2)	echo
+		echo "There is no Volume Header found on the disk. A Volume"
+		echo "header is required to be able to boot from the disk."
+		ask "Do you want to install a Volume Header?" y
+		case "$resp" in
+		y*|Y*)
+			/usr/mdec/sgivol -qi $_disk
+			;;
+		n*|N*)
+			exit 1
+			;;
+		esac
+		;;
+	esac
+
+	echo "Installing boot loader in volume header."
+	/usr/mdec/sgivol -wf boot /usr/mdec/boot $_disk
+	case $? in
+	0)
+		;;
+	*)	echo
+		echo "WARNING: Boot install failed. Booting from disk will not be possible"
+		;;
+	esac
+
+	cat << __EOT
+
+You will now create an OpenBSD disklabel. The default disklabel have an 'a'
+partition which is the space available for OpenBSD. The 'i' partition must
+be retained since it contains the Volume Header nad the boot.
 
 Do not change any parameters except the partition layout and the label name.
+Also, don't change the 'i' partition or start any other partition below the
+end of the 'i' partition. This is the Volume Header and destroying it will
+render the disk useless.
 
-   [Here is an example of what the partition information may look like.]
-10 partitions:
-#        size   offset    fstype   [fsize bsize   cpg]
-  a:   120832    10240    4.2BSD     1024  8192    16   # (Cyl.   11*- 142*)
-  b:   131072   131072      swap                        # (Cyl.  142*- 284*)
-  c:  6265200        0    unused     1024  8192         # (Cyl.    0 - 6809)
-  e:   781250   262144    4.2BSD     1024  8192    16   # (Cyl.  284*- 1134*)
-  f:  1205000  1043394    4.2BSD     1024  8192    16   # (Cyl. 1134*- 2443*)
-  g:  2008403  2248394    4.2BSD     1024  8192    16   # (Cyl. 2443*- 4626*)
-  h:  2008403  4256797    4.2BSD     1024  8192    16   # (Cyl. 4626*- 6809*)
-  i:    10208       32     MSDOS                        # (Cyl.    0*- 11*)
-[End of example]
 __EOT
-	ask "Press [Enter] to continue"
+	md_checkfordisklabel $_disk
+	case $? in
+	2)	echo "WARNING: Label on disk $_disk is corrupted. You will be repairing it.\n"
+		;;
+	esac
 
-	disklabel -W ${_disk}
-	disklabel ${_disk} >/tmp/label.$$
-	disklabel -r -R ${_disk} /tmp/label.$$
-	rm -f /tmp/label.$$
-	disklabel -f /tmp/fstab.${_disk} -E ${_disk}
+	disklabel -W $_disk
+	disklabel -c -f /tmp/fstab.$_disk -E $_disk
 }
 
 md_congrats() {
 	cat << __EOT
 
-Once the machine has rebooted use netbooting to boot into OpenBSD,
-as described in the install document.
+Your machine is now set up to boot OpenBSD. Normally the ARCS PROM will
+set up the system to boot from the first disk found with a valid Volume
+Header. If the 'OSLoader' environment variable already is set to 'boot'
+nothing in the firmware setup should need to be changed. To set up booting
+refer to the install document.
+
+To reboot the system, just enter 'reboot' at the shell prompt.
 __EOT
 }
