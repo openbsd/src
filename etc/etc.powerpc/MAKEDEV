@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$OpenBSD: MAKEDEV,v 1.40 2001/03/03 06:09:25 drahn Exp $
+#	$OpenBSD: MAKEDEV,v 1.41 2001/03/25 06:27:18 drahn Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -170,6 +170,7 @@ ramdisk)
 	sh $this sd0 sd1 sd2 sd3 sd4 st0 st1 cd0 cd1
 	sh $this rd0
 	sh $this random
+	sh $this bpf0
 	sh $this tty00 tty01 pty0
 	sh $this wscons
 	;;
