@@ -1,0 +1,4 @@
+@0 pass in on tun0 proto tcp all user = 3 
+@1 pass in on tun0 proto tcp all group = 7 
+@2 pass in on tun0 proto tcp all user = 3 group = 0 
+@3 pass in on tun0 proto tcp all user = 0 group = 0 
