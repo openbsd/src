@@ -33,18 +33,20 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: strtok.3,v 1.9 1999/09/21 16:44:01 espie Exp $
+.\"	$OpenBSD: strtok.3,v 1.10 1999/11/09 11:20:13 art Exp $
 .\"
 .Dd June 29, 1991
 .Dt STRTOK 3
 .Os
 .Sh NAME
-.Nm strtok
+.Nm strtok, strtok_r
 .Nd string token operations
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
 .Fn strtok "char *str" "const char *sep"
+.Ft char *
+.Fn strtok_r "char *str" "const char *sep" "char **last"
 .Sh DESCRIPTION
 .Bf -symbolic
 This interface is obsoleted by
@@ -70,9 +72,17 @@ The separator string,
 must be supplied each time, and may change between calls.
 .Pp
 The
+.Fn strtok_r
+function is a version of
 .Fn strtok
-function
-returns a pointer to the beginning of each subsequent token in the string,
+that takes an explicit context argument and is reentrant.
+.Pp
+The
+.Fn strtok
+and
+.Fn strtok_r
+functions
+return a pointer to the beginning of each subsequent token in the string,
 after replacing the separator character itself with an
 .Tn ASCII NUL
 character.
@@ -80,7 +90,9 @@ When no more tokens remain, a null pointer is returned.
 .Pp
 Since
 .Fn strtok
-modifies the string,
+and
+.Fn strtok_r
+modify the string,
 .Fa str
 should not point to an area in the initialized data segment.
 .Pp
@@ -92,11 +104,12 @@ the string
 #define MAXTOKENS	128
 
 char s[512], *p, *tokens[MAXTOKENS];
+char *last;
 int i = 0;
 
 snprintf(s, sizeof(s), "cat dog horse cow");
 
-for ((p = strtok(s, " ")); p; (p = strtok(NULL, " ")), i++) {
+for ((p = strtok_r(s, " ", &last)); p; (p = strtok_r(NULL, " ", &last)), i++) {
     if (i < MAXTOKENS - 1)
         tokens[i] = p;
 }
@@ -127,8 +140,6 @@ function
 conforms to
 .St -ansiC .
 .Sh BUGS
-There is no way to get tokens from multiple strings simultaneously.
-.Pp
 The System V
 .Fn strtok ,
 if handed a string containing only delimiter characters,
