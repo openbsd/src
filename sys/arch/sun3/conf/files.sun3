@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sun3,v 1.9 1997/01/13 00:29:26 kstailey Exp $
+#	$OpenBSD: files.sun3,v 1.10 1997/04/04 14:56:57 kstailey Exp $
 #	$NetBSD: files.sun3,v 1.26 1996/10/29 19:58:14 gwr Exp $
 
 #
@@ -38,7 +38,6 @@ file arch/sun3/dev/idprom.c
 
 include "arch/m68k/fpe/files.fpe"
 
-file arch/m68k/m68k/copy.s
 file dev/cons.c
 
 #
