@@ -1,4 +1,4 @@
-/*      $OpenBSD: ncr_reg.h,v 1.3 1996/04/18 23:48:01 niklas Exp $      */
+/*      $OpenBSD: ncr_reg.h,v 1.4 1996/10/13 20:36:16 downsj Exp $      */
 /*      $NetBSD: ncr_reg.h,v 1.8 1996/03/11 23:06:04 cgd Exp $      */
 
 /**************************************************************************
@@ -224,6 +224,8 @@ struct ncr_reg {
 /*4c*/  U_INT8    nc_stest0;
 
 /*4d*/  U_INT8    nc_stest1;
+	#define   DBLEN   0x08	/* clock doubler running		*/
+	#define   DBLSEL  0x04	/* clock doubler selected		*/
 
 /*4e*/  U_INT8    nc_stest2;
 	#define   ROF     0x40	/* reset scsi offset (after gross error!) */
