@@ -1,4 +1,4 @@
-.\"	$OpenBSD: procmap.1,v 1.2 2004/02/17 20:34:43 jmc Exp $
+.\"	$OpenBSD: procmap.1,v 1.3 2004/02/17 21:08:37 jmc Exp $
 .\"	$NetBSD: pmap.1,v 1.6 2003/01/19 21:25:43 atatat Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -193,7 +193,9 @@ exits 0 on success, and \*(Gt0 if an error occurred.
 While the meaning most of the output is self-evident, some pieces of
 it may appear to be a little inscrutable.
 .Pp
-Here a portion of the default output from procmap being run at a
+Here a portion of the default output from
+.Nm
+being run at a
 .Xr sh 1
 prompt shows the starting address of the map entry, the size of the
 map entry, the current protection level of the map entry, and either
@@ -353,7 +355,7 @@ The
 .Nm
 utility appeared in
 .Nx
-as pmap.
+2.0 as pmap.
 .Sh AUTHORS
 The
 .Nm
