@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.10 2000/04/07 22:05:38 niklas Exp $	*/
+/*	$OpenBSD: log.c,v 1.11 2000/06/29 00:01:14 deraadt Exp $	*/
 /*	$EOM: log.c,v 1.27 2000/03/30 14:27:03 ho Exp $	*/
 
 /*
@@ -143,11 +143,11 @@ _log_print (int error, int syslog_level, const char *fmt, va_list ap,
 	  log_to (0);
 
 	  /* (Re)send current message to syslog(). */
-	  syslog (class == LOG_REPORT ? LOG_ALERT : syslog_level, buffer);
+	  syslog (class == LOG_REPORT ? LOG_ALERT : syslog_level, "%s", buffer);
 	}
     }
   else
-    syslog (class == LOG_REPORT ? LOG_ALERT : syslog_level, buffer);
+    syslog (class == LOG_REPORT ? LOG_ALERT : syslog_level, "%s", buffer);
 }
 
 #ifdef USE_DEBUG
