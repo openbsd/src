@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4tbl,v 1.19 2002/06/12 02:04:25 millert Exp $
+.\"	$OpenBSD: wi.4tbl,v 1.20 2002/06/20 17:30:07 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -152,6 +152,8 @@ Corega CGWLPCIA11:Prism-II:PCI
 Dlink DWL520:Prism-2.5:PCI
 Dlink DWL650:Prism-2.5:PCMCIA
 ELSA XI300:Prism-II:PCMCIA
+ELSA XI325:Prism-2.5:PCMCIA
+ELSA XI325H:Prism-2.5:PCMCIA
 ELSA XI800:Prism-II:CF
 EMTAC A2424i:Prism-II:PCMCIA
 Ericsson Wireless LAN CARD C11:Spectrum24:PCMCIA
