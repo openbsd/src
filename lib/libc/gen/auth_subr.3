@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.8 2002/05/08 16:31:05 millert Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.9 2002/10/15 17:53:18 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -363,6 +363,8 @@ The style of authentication being performed, as defined by the
 .Pa /etc/login.conf file.
 The style determines which login script should actually be used.
 .El
+The value returned points to private memory and should not be
+freed by the caller.
 .Pp
 The
 .Fn auth_getvalue
@@ -422,13 +424,20 @@ The items are described above with the
 .Fn auth_getitem
 function.
 In addition, if
-.Fa item
+.Fa value
 is
-.Li AUTH_ALL
-and
+.Dv NULL ,
+the
+.Fa item
+is cleared.
+If
 .Fa value
 is
 .Dv NULL
+and
+.Fa item
+is
+.Li AUTH_ALL
 then all items are cleared.
 .Pp
 The
