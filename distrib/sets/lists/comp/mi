@@ -272,7 +272,6 @@
 ./usr/include/dev/raidframe/rf_archs.h
 ./usr/include/dev/raidframe/rf_aselect.h
 ./usr/include/dev/raidframe/rf_callback.h
-./usr/include/dev/raidframe/rf_ccmn.h
 ./usr/include/dev/raidframe/rf_chaindecluster.h
 ./usr/include/dev/raidframe/rf_configure.h
 ./usr/include/dev/raidframe/rf_copyback.h
