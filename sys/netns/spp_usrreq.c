@@ -1,4 +1,4 @@
-/*	$OpenBSD: spp_usrreq.c,v 1.6 1998/01/03 22:32:57 deraadt Exp $	*/
+/*	$OpenBSD: spp_usrreq.c,v 1.7 1998/03/10 08:29:14 deraadt Exp $	*/
 /*	$NetBSD: spp_usrreq.c,v 1.9 1996/02/13 22:14:13 christos Exp $	*/
 
 /*
@@ -1171,7 +1171,7 @@ void
 spp_setpersist(cb)
 	register struct sppcb *cb;
 {
-	register t = ((cb->s_srtt >> 2) + cb->s_rttvar) >> 1;
+	register int t = ((cb->s_srtt >> 2) + cb->s_rttvar) >> 1;
 	extern int spp_backoff[];
 
 	if (cb->s_timer[SPPT_REXMT] && spp_do_persist_panics)
