@@ -154,9 +154,6 @@ krb_rd_priv(in, in_length, schedule, key, sender, receiver, m_data)
     /* don't swap, net order always */
     p += sizeof(src_addr);
 
-    if (!krb_equiv(src_addr, sender->sin_addr.s_addr))
-	return RD_AP_MODIFIED;
-
     /* safely get time_sec */
     bcopy((char *) p, (char *)&(m_data->time_sec),
 	  sizeof(m_data->time_sec));

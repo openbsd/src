@@ -311,8 +311,6 @@ krb_rd_req(authent, service, instance, from_addr, ad, fn)
 
     if (krb_ap_req_debug)
         log("Address: %d %d",ad->address,from_addr);
-    if (from_addr && (!krb_equiv(ad->address, from_addr)))
-        return(RD_AP_BADD);
 
     (void) gettimeofday(&t_local,(struct timezone *) 0);
     delta_t = abs((int)(t_local.tv_sec - r_time_sec));

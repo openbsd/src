@@ -1,4 +1,4 @@
-/*	$Id: site.h,v 1.2 1995/12/14 08:43:43 tholo Exp $	*/
+/*	$Id: site.h,v 1.3 1996/01/29 19:18:40 tholo Exp $	*/
 
 /* 
  * Site-specific definitions.
@@ -12,7 +12,6 @@
  */
 #define	KRB_CONF	"/etc/kerberosIV/krb.conf"
 #define	KRB_RLM_TRANS	"/etc/kerberosIV/krb.realms"
-#define	KRB_EQUIV	"/etc/kerberosIV/krb.equiv"
 #define KRB_ACL		"/etc/kerberosIV/kerberos.acl"
 #define MKEYFILE	"/etc/kerberosIV/master_key"
 #define KEYFILE		"/etc/kerberosIV/srvtab"
