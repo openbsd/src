@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.51 2002/07/25 18:30:57 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.52 2002/07/25 18:50:37 deraadt Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -2332,7 +2332,6 @@ return_from_syscall:
  * An interrupt frame is built in the space for a full trapframe;
  * this contains the psr, pc, npc, and interrupt level.
  */
-!	.comm	_intrhand, 15 * 8	! intrhand[0..14]; 0 => error
 softintr_sun44c:
 	sethi	%hi(INTRREG_VA), %l6
 	ldub	[%l6 + %lo(INTRREG_VA)], %l5
