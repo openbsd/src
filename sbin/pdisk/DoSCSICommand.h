@@ -1,7 +1,7 @@
 /*
  * DoScsiCommand.h -
  *
- * Modifed by Eryk Vershen (eryk@apple.com)
+ * Modified by Eryk Vershen (eryk@apple.com)
  * from an original by Martin Minow
  */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.72 2002/11/24 20:39:28 henning Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.73 2003/03/16 05:20:27 margarida Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -81,7 +81,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.72 2002/11/24 20:39:28 henning Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.73 2003/03/16 05:20:27 margarida Exp $";
 #endif
 #endif /* not lint */
 
@@ -207,7 +207,7 @@ int	prefix(void *val, int);
 /*
  * Media stuff.  Whenever a media command is first performed, the
  * currently select media is grabbed for this interface.  If `media'
- * is given, the current media word is modifed.  `mediaopt' commands
+ * is given, the current media word is modified.  `mediaopt' commands
  * only modify the set and clear words.  They then operate on the
  * current media word later.
  */
