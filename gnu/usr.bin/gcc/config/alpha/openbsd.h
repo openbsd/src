@@ -83,6 +83,12 @@ Boston, MA 02111-1307, USA.  */
 
 #include "alpha/alpha.h"
 
+/* Don't tell collect2 we use COFF as we don't have (yet ?) a dynamic ld
+   library with the proper functions to handle this -> collect2 will
+   default to using nm. */
+#undef OBJECT_FORMAT_COFF
+#undef EXTENDED_COFF
+
 /* Since gas and gld are standard on OpenBSD, we don't need this */
 #undef ASM_FINAL_SPEC
 
