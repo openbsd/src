@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.57 2002/03/12 07:35:06 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.58 2002/03/12 21:36:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2161,7 +2161,7 @@ LEAF_ENTRY(name)				! \
 	ldw	P_ADDR(t1), t1			! \
 	ldil	L%fusufault, t2			! \
 	ldo	R%fusufault(t2), t2		! \
-	ldw	U_PCB+PCB_ONFAULT(t1), t3	! \
+	ldw	U_PCB+PCB_ONFAULT(t1), r1	! \
 	stw	t2, U_PCB+PCB_ONFAULT(t1)	! \
 	ldw	U_PCB+PCB_SPACE(t1), t2		! \
 	mtsp	t2, sr1
@@ -2170,18 +2170,18 @@ LEAF_ENTRY(name)				! \
 	FUSUX(name)				! \
 	insn	0(sr1, arg0), ret0		! \
 	bv	r0(rp)				! \
-	stw	r0, U_PCB+PCB_ONFAULT(t1)	! \
+	stw	r1, U_PCB+PCB_ONFAULT(t1)	! \
 EXIT(name)
 
 #define	SUX(name,insn)				  \
 	FUSUX(name)				! \
 	insn	arg1, 0(sr1, arg0)		! \
 	bv	r0(rp)				! \
-	stw	r0, U_PCB+PCB_ONFAULT(t1)	! \
+	stw	r1, U_PCB+PCB_ONFAULT(t1)	! \
 EXIT(name)
 
 LEAF_ENTRY(fusufault)
-	stw	r0, U_PCB+PCB_ONFAULT(t1)
+	stw	r1, U_PCB+PCB_ONFAULT(t1)
 ALTENTRY(fusubadaddr)
 	bv	0(rp)
 	ldi	-1, ret0
@@ -2199,6 +2199,7 @@ SUX(suswintr, sth)
 	.align	64
 
 LEAF_ENTRY(copy_on_fault)
+	stw	r1, PCB_ONFAULT+U_PCB(r31)
 	bv	0(rp)
 	ldi	EFAULT, %ret0
 EXIT(copy_on_fault)
@@ -2213,7 +2214,7 @@ LEAF_ENTRY(spstrcpy)
 	ldil	L%curproc, r31
 	ldw	R%curproc(r31), r31
 	ldw	P_ADDR(r31), r31
-	ldw	PCB_ONFAULT+U_PCB(r31), t3
+	ldw	PCB_ONFAULT+U_PCB(r31), r1
 	ldil	L%copy_on_fault, t2
 	ldo	R%copy_on_fault(t2), t2
 	stw	t2, PCB_ONFAULT+U_PCB(r31)
@@ -2241,7 +2242,7 @@ $spstrcpy_exit
 	add,=	r0, arg0, r0
 	stw	arg1, 0(arg0)
 	bv	0(rp)
-	stw	t3, PCB_ONFAULT+U_PCB(r31)
+	stw	r1, PCB_ONFAULT+U_PCB(r31)
 EXIT(spstrcpy)
 
 
