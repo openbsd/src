@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_configure.c,v 1.6 2002/03/29 14:26:59 tdeval Exp $	*/
+/*	$OpenBSD: rf_configure.c,v 1.7 2002/04/19 00:15:28 miod Exp $	*/
 /*	$NetBSD: rf_configure.c,v 1.14 2001/02/04 21:05:42 christos Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <ansidecl.h>
 #include <errno.h>
 #include <strings.h>
 #include <sys/types.h>
@@ -60,6 +59,13 @@
 #include "rf_general.h"
 #include "rf_decluster.h"
 #include "rf_configure.h"
+
+/* so much for #include <ansidecl.h> */
+#ifdef __GNUCC__
+#define	ATTRIBUTE_UNUSED	__attribute__ ((__unused__))
+#else
+#define	ATTRIBUTE_UNUSED
+#endif
 
 /* 
  * XXX we include this here so we don't need to drag rf_debugMem.c into
