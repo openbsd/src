@@ -52,9 +52,6 @@
 #define HAVE_SYS_UTSNAME_H
 #define HAVE_UNAME
 
-#define	TELNETD_USER		"_telnetd"
-#define	TELNETD_CHROOT		"/var/empty"
-
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
