@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.83 1999/11/09 00:03:03 aaron Exp $
+#	$OpenBSD: Makefile,v 1.84 1999/11/09 22:38:15 aaron Exp $
 #	$NetBSD: Makefile,v 1.22.4.2 1996/07/18 00:51:10 jtc Exp $
 
 MAN=	ac97.4 atalk.4 atapiscsi.4 audio.4 adv.4 ahc.4 al.4 ax.4 bpf.4 \
@@ -12,7 +12,7 @@ MAN=	ac97.4 atalk.4 atapiscsi.4 audio.4 adv.4 ahc.4 al.4 ax.4 bpf.4 \
 	rl.4 rln.4 rlphy.4 route.4 scsi.4 sd.4 sf.4 sk.4 sl.4 sm.4 spp.4 \
 	sppp.4 sqphy.4 ss.4 st.4 sv.4 tb.4 tcp.4 termios.4 ti.4 tl.4 tlphy.4 \
 	tp.4 tty.4 tun.4 tx.4 udp.4 ugen.4 uhid.4 uk.4 unix.4 usb.4 vnd.4 vr.4 \
-	wb.4 wd.4 we.4 xl.4 ym.4
+	wb.4 wd.4 we.4 xl.4 ym.4 zero.4
 
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=netintro.4 networking.4
