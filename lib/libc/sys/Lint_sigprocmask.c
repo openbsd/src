@@ -1,4 +1,4 @@
-/*	$OpenBSD: Lint_sigprocmask.c,v 1.1 1998/02/08 22:45:13 tholo Exp $	*/
+/*	$OpenBSD: Lint_sigprocmask.c,v 1.2 2004/09/14 22:18:56 deraadt Exp $	*/
 /*	$NetBSD: Lint_sigprocmask.c,v 1.1 1997/11/06 00:53:15 cgd Exp $	*/
 
 /*
@@ -10,10 +10,7 @@
 
 /*ARGSUSED*/
 int
-sigprocmask(how, set, oset)
-	int how;
-	const sigset_t *set;
-	sigset_t *oset;
+sigprocmask(int how, const sigset_t *set, sigset_t *oset)
 {
 	return (0);
 }
