@@ -56,7 +56,7 @@
 #include "podd.h"
 #include "sk.h"
 
-#ifdef PROTO
+#ifdef _DES_PROTO
 static int check_parity(des_cblock (*key));
 #else
 static int check_parity();

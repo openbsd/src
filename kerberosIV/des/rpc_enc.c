@@ -49,7 +49,7 @@
 #include "des_locl.h"
 #include "version.h"
 
-#ifdef PROTO
+#ifdef _DES_PROTO
 int _des_crypt(char *buf,int len,struct desparams *desp);
 #else
 int _des_crypt();

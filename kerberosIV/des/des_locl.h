@@ -65,8 +65,8 @@
 #include <time.h>
 #include <io.h>
 #define RAND
-#undef PROTO
-#define PROTO
+#undef _DES_PROTO
+#define _DES_PROTO
 #endif
 
 #if defined(__STDC__) || defined(VMS) || defined(M_XENIX) || defined(MSDOS)
@@ -81,8 +81,8 @@
 #define getpid() 2
 extern int errno;
 #define RAND
-#undef PROTO
-#define PROTO
+#undef _DES_PROTO
+#define _DES_PROTO
 #endif
 
 #if defined(NOCONST)
@@ -90,8 +90,8 @@ extern int errno;
 #endif
 
 #ifdef __STDC__
-#undef PROTO
-#define PROTO
+#undef _DES_PROTO
+#define _DES_PROTO
 #endif
 
 #ifdef RAND

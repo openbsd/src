@@ -113,10 +113,10 @@ extern int des_rw_mode;		/* defaults to DES_PCBC_MODE */
  * compiler has problems with the prototypes, make sure this line always
  * evaluates to true :-) */
 #if defined(MSDOS) || defined(__STDC__)
-#undef PROTO
-#define PROTO
+#undef _DES_PROTO
+#define _DES_PROTO
 #endif
-#ifdef PROTO
+#ifdef _DES_PROTO
 void des_ecb3_encrypt(des_cblock *input,des_cblock *output,
 	des_key_schedule ks1,des_key_schedule ks2,
 	des_key_schedule ks3, int enc);

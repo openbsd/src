@@ -118,7 +118,7 @@ struct IOSB {
 #define NX509_SIG 32
 #endif
 
-#ifdef PROTO
+#ifdef _DES_PROTO
 static void read_till_nl(FILE *);
 static int read_pw(char *buf, char *buff, int size, char *prompt, int verify);
 static void recsig(int);

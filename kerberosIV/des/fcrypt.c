@@ -390,7 +390,7 @@ static const unsigned long skb[8][64]={
 
 static const int shifts2[16]={0,0,1,1,1,1,1,1,0,1,1,1,1,1,1,0};
 
-#ifdef PROTO
+#ifdef _DES_PROTO
 static int body(unsigned long *out0, unsigned long *out1,
 	des_key_schedule ks, unsigned long Eswap0, unsigned long Eswap1);
 static int des_set_key(des_cblock (*key), des_key_schedule schedule);
@@ -531,7 +531,7 @@ static unsigned const char cov_2char[64]={
 0x73,0x74,0x75,0x76,0x77,0x78,0x79,0x7A
 };
 
-#ifdef PROTO
+#ifdef _DES_PROTO
 #ifdef PERL5
 char *des_crypt(char *buf,char *salt);
 #else
