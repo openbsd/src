@@ -2307,7 +2307,7 @@ ex_badaddr(sp, cp, ba, nret)
 	 * underlying file, that's the real problem.
 	 */
 	if (sp->ep == NULL) {
-		ex_emsg(sp, cp->name, EXM_NOFILEYET);
+		ex_emsg(sp, cp != NULL ? cp->name : NULL, EXM_NOFILEYET);
 		return;
 	}
 
