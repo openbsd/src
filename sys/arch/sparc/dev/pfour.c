@@ -1,4 +1,4 @@
-/*	$NetBSD: cgfourreg.h,v 1.4 1994/11/20 20:52:03 deraadt Exp $ */
+/*	$Id: pfour.c,v 1.4 1995/11/09 21:26:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
