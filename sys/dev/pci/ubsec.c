@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.80 2002/01/28 15:44:36 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.81 2002/01/28 16:26:21 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -452,8 +452,9 @@ ubsec_feed(sc)
 
 	bus_dmamap_sync(sc->sc_dmat, q->q_src_map,
 	    0, q->q_src_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
-	bus_dmamap_sync(sc->sc_dmat, q->q_dst_map,
-	    0, q->q_dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+	if (q->q_dst_map != NULL)
+		bus_dmamap_sync(sc->sc_dmat, q->q_dst_map,
+		    0, q->q_dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 
 	q->q_nstacked_mcrs = npkts - 1;		/* Number of packets stacked */
 
@@ -461,8 +462,9 @@ ubsec_feed(sc)
 		q2 = SIMPLEQ_FIRST(&sc->sc_queue);
 		bus_dmamap_sync(sc->sc_dmat, q2->q_src_map,
 		    0, q2->q_src_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
-		bus_dmamap_sync(sc->sc_dmat, q2->q_dst_map,
-		    0, q2->q_dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+		if (q2->q_dst_map != NULL)
+			bus_dmamap_sync(sc->sc_dmat, q2->q_dst_map,
+			    0, q2->q_dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_queue, q2, q_next);
 		--sc->sc_nqueue;
 
@@ -494,8 +496,9 @@ feed1:
 
 		bus_dmamap_sync(sc->sc_dmat, q->q_src_map,
 		    0, q->q_src_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
-		bus_dmamap_sync(sc->sc_dmat, q->q_dst_map,
-		    0, q->q_dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+		if (q->q_dst_map != NULL)
+			bus_dmamap_sync(sc->sc_dmat, q->q_dst_map,
+			    0, q->q_dst_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 		bus_dmamap_sync(sc->sc_dmat, q->q_dma->d_alloc.dma_map,
 		    0, q->q_dma->d_alloc.dma_map->dm_mapsize,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -914,12 +917,6 @@ ubsec_process(crp)
 			goto errout;
 		}
 	}
-	q->q_src_l = q->q_src_map->dm_mapsize;
-	q->q_src_npa = q->q_src_map->dm_nsegs;
-	for (i = 0; i < q->q_src_map->dm_nsegs; i++) {
-		q->q_src_packp[i] = q->q_src_map->dm_segs[i].ds_addr;
-		q->q_src_packl[i] = q->q_src_map->dm_segs[i].ds_len;
-	}
 	nicealign = ubsec_dmamap_aligned(q->q_src_map);
 
 	dmap->d_dma->d_mcr.mcr_pktlen = htole16(stheend);
@@ -927,24 +924,21 @@ ubsec_process(crp)
 #ifdef UBSEC_DEBUG
 	printf("src skip: %d\n", sskip);
 #endif
-	for (i = j = 0; i < q->q_src_npa; i++) {
+	for (i = j = 0; i < q->q_src_map->dm_nsegs; i++) {
 		struct ubsec_pktbuf *pb;
+		bus_size_t packl = q->q_src_map->dm_segs[i].ds_len;
+		bus_addr_t packp = q->q_src_map->dm_segs[i].ds_addr;
 
-#ifdef UBSEC_DEBUG
-		printf("  src[%d->%d]: %d@%x\n", i, j,
-		    q->q_src_packl[i], q->q_src_packp[i]);
-#endif
-		if (sskip) {
-			if (sskip >= q->q_src_packl[i]) {
-				sskip -= q->q_src_packl[i];
-				continue;
-			}
-			q->q_src_packp[i] += sskip;
-			q->q_src_packl[i] -= sskip;
-			sskip = 0;
+		if (sskip >= packl) {
+			sskip -= packl;
+			continue;
 		}
 
-		if (q->q_src_packl[i] > 0xfffc) {
+		packl -= sskip;
+		packp += sskip;
+		sskip = 0;
+
+		if (packl > 0xfffc) {
 			err = EIO;
 			goto errout;
 		}
@@ -954,19 +948,20 @@ ubsec_process(crp)
 		else
 			pb = &dmap->d_dma->d_sbuf[j - 1];
 
-		pb->pb_addr = htole32(q->q_src_packp[i]);
+		pb->pb_addr = htole32(packp);
+
 		if (stheend) {
-			if (q->q_src_packl[i] > stheend) {
+			if (packl > stheend) {
 				pb->pb_len = htole32(stheend);
 				stheend = 0;
 			} else {
-				pb->pb_len = htole32(q->q_src_packl[i]);
-				stheend -= q->q_src_packl[i];
+				pb->pb_len = htole32(packl);
+				stheend -= packl;
 			}
 		} else
-			pb->pb_len = htole32(q->q_src_packl[i]);
+			pb->pb_len = htole32(packl);
 
-		if ((i + 1) == q->q_src_npa)
+		if ((i + 1) == q->q_src_map->dm_nsegs)
 			pb->pb_next = 0;
 		else
 			pb->pb_next = htole32(dmap->d_alloc.dma_paddr +
@@ -993,7 +988,7 @@ ubsec_process(crp)
 			int totlen, len;
 			struct mbuf *m, *top, **mp;
 
-			totlen = q->q_dst_l = q->q_src_l;
+			totlen = q->q_src_map->dm_mapsize;
 			if (q->q_src_m->m_flags & M_PKTHDR) {
 				len = MHLEN;
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
@@ -1063,34 +1058,24 @@ ubsec_process(crp)
 			}
 		}
 
-		q->q_dst_l = q->q_dst_map->dm_mapsize;
-		q->q_dst_npa = q->q_dst_map->dm_nsegs;
-		for (i = 0; i < q->q_dst_map->dm_nsegs; i++) {
-			q->q_dst_packp[i] = q->q_dst_map->dm_segs[i].ds_addr;
-			q->q_dst_packl[i] = q->q_dst_map->dm_segs[i].ds_len;
-		}
-
 #ifdef UBSEC_DEBUG
 		printf("dst skip: %d\n", dskip);
 #endif
-		for (i = j = 0; i < q->q_dst_npa; i++) {
+		for (i = j = 0; i < q->q_dst_map->dm_nsegs; i++) {
 			struct ubsec_pktbuf *pb;
+			bus_size_t packl = q->q_dst_map->dm_segs[i].ds_len;
+			bus_addr_t packp = q->q_dst_map->dm_segs[i].ds_addr;
 
-#ifdef UBSEC_DEBUG
-			printf("  dst[%d->%d]: %d@%x\n", i, j,
-			    q->q_dst_packl[i], q->q_dst_packp[i]);
-#endif
-			if (dskip) {
-				if (dskip >= q->q_dst_packl[i]) {
-					dskip -= q->q_dst_packl[i];
-					continue;
-				}
-				q->q_dst_packp[i] += dskip;
-				q->q_dst_packl[i] -= dskip;
-				dskip = 0;
+			if (dskip >= packl) {
+				dskip -= packl;
+				continue;
 			}
 
-			if (q->q_dst_packl[i] > 0xfffc) {
+			packl -= dskip;
+			packp += dskip;
+			dskip = 0;
+
+			if (packl > 0xfffc) {
 				err = EIO;
 				goto errout;
 			}
@@ -1100,20 +1085,20 @@ ubsec_process(crp)
 			else
 				pb = &dmap->d_dma->d_dbuf[j - 1];
 
-			pb->pb_addr = htole32(q->q_dst_packp[i]);
+			pb->pb_addr = htole32(packp);
 
 			if (dtheend) {
-				if (q->q_dst_packl[i] > dtheend) {
+				if (packl > dtheend) {
 					pb->pb_len = htole32(dtheend);
 					dtheend = 0;
 				} else {
-					pb->pb_len = htole32(q->q_dst_packl[i]);
-					dtheend -= q->q_dst_packl[i];
+					pb->pb_len = htole32(packl);
+					dtheend -= packl;
 				}
 			} else
-				pb->pb_len = htole32(q->q_dst_packl[i]);
+				pb->pb_len = htole32(packl);
 
-			if ((i + 1) == q->q_dst_npa) {
+			if ((i + 1) == q->q_dst_map->dm_nsegs) {
 				if (maccrd)
 					pb->pb_next = htole32(dmap->d_alloc.dma_paddr +
 					    offsetof(struct ubsec_dmachunk, d_macbuf[0]));
@@ -1152,9 +1137,6 @@ ubsec_process(crp)
 		bcopy(&ctx, dmap->d_alloc.dma_vaddr +
 		    offsetof(struct ubsec_dmachunk, d_ctx),
 		    sizeof(struct ubsec_pktctx));
-	bus_dmamap_sync(sc->sc_dmat, dmap->d_alloc.dma_map, 0,
-	    dmap->d_alloc.dma_map->dm_mapsize,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	s = splnet();
 	SIMPLEQ_INSERT_TAIL(&sc->sc_queue, q, q_next);
@@ -1207,9 +1189,11 @@ ubsec_callback(sc, q)
 	    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_sync(sc->sc_dmat, q->q_src_map,
 	    0, q->q_src_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-	bus_dmamap_sync(sc->sc_dmat, q->q_dst_map,
-	    0, q->q_dst_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
-	bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
+	if (q->q_dst_map != NULL) {
+		bus_dmamap_sync(sc->sc_dmat, q->q_dst_map,
+		    0, q->q_dst_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+		bus_dmamap_destroy(sc->sc_dmat, q->q_src_map);
+	}
 	bus_dmamap_destroy(sc->sc_dmat, q->q_dst_map);
 
 	if ((crp->crp_flags & CRYPTO_F_IMBUF) && (q->q_src_m != q->q_dst_m)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsecvar.h,v 1.24 2002/01/28 15:44:36 jason Exp $	*/
+/*	$OpenBSD: ubsecvar.h,v 1.25 2002/01/28 16:26:21 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Theo de Raadt
@@ -95,21 +95,12 @@ struct ubsec_q {
 	int				q_nstacked_mcrs;
 	struct ubsec_q			*q_stacked_mcr[UBS_MAX_AGGR-1];
 	struct cryptop			*q_crp;
-	struct ubsec_pktbuf		q_srcpkt[UBS_MAX_SCATTER-1];
-	struct ubsec_pktbuf		q_dstpkt[UBS_MAX_SCATTER-1];
 	struct ubsec_dma		*q_dma;
 
 	struct mbuf			*q_src_m, *q_dst_m;
 	struct uio			*q_src_io, *q_dst_io;
 
-	long				q_src_packp[UBS_MAX_SCATTER];
-	int				q_src_packl[UBS_MAX_SCATTER];
-	int				q_src_npa, q_src_l;
 	bus_dmamap_t			q_src_map;
-
-	long				q_dst_packp[UBS_MAX_SCATTER];
-	int				q_dst_packl[UBS_MAX_SCATTER];
-	int				q_dst_npa, q_dst_l;
 	bus_dmamap_t			q_dst_map;
 
 	int				q_sesn;
