@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_amd64.8,v 1.4 2004/12/27 16:41:11 miod Exp $
+.\"	$OpenBSD: boot_amd64.8,v 1.5 2005/01/07 11:49:32 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\"
@@ -153,6 +153,8 @@ It is also possible to force other behaviours from ddb.
 .Bl -tag -width /usr/mdec/biosboot -compact
 .It Pa /bsd
 default system kernel
+.It Pa /bsd.mp
+multi-processor capable kernel
 .It Pa /bsd.rd
 standalone installation kernel, suitable for disaster recovery
 .It Pa /usr/mdec/mbr
