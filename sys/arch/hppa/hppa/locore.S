@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.145 2005/01/23 16:28:29 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.146 2005/03/16 13:20:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -818,12 +818,12 @@ $syscall_return
 	 * sp will be left in virtual until restored from trapframe,
 	 * since we don't use it anyway.
 	 */
-	rsm	RESET_PSL, r0
-	nop ! nop ! nop ! nop ! nop ! nop ! nop
-$syscall_return_phys
-
+	ssm	0, r0
 	ldil	L%$trap_tmp_save, t3
 	ldo	R%$trap_tmp_save(t3), t3
+	nop ! nop ! nop ! nop ! nop
+	rsm	RESET_PSL, r0
+$syscall_return_phys
 
 	/* finally we can restore the space and offset queues and the ipsw */
 	ldw	TF_IISQH(t3), t1
