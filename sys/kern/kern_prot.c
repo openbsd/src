@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_prot.c,v 1.2 1996/03/03 17:19:52 niklas Exp $	*/
+/*	$OpenBSD: kern_prot.c,v 1.3 1996/08/01 05:26:02 tholo Exp $	*/
 /*	$NetBSD: kern_prot.c,v 1.33 1996/02/09 18:59:42 christos Exp $	*/
 
 /*
@@ -275,19 +275,29 @@ sys_setuid(p, v, retval)
 	uid = SCARG(uap, uid);
 #endif
 	if (uid != pc->p_ruid &&
+	    uid != pc->pc_ucred->cr_uid &&
 	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
 	/*
 	 * Everything's okay, do it.
-	 * Transfer proc count to new user.
+	 */
+	if (uid == pc->pc_ucred->cr_uid ||
+	    suser(pc->pc_ucred, &p->p_acflag) == 0) {
+		/*
+		 * Transfer proc count to new user.
+		 */
+		if (uid != pc->p_ruid) {
+			(void)chgproccnt(pc->p_ruid, -1);
+			(void)chgproccnt(uid, 1);
+		}
+		pc->p_ruid = uid;
+		pc->p_svuid = uid;
+	}
+	/*
 	 * Copy credentials so other references do not see our changes.
 	 */
-	(void)chgproccnt(pc->p_ruid, -1);
-	(void)chgproccnt(uid, 1);
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_uid = uid;
-	pc->p_ruid = uid;
-	pc->p_svuid = uid;
 	p->p_flag |= P_SUGID;
 	return (0);
 }
@@ -343,12 +353,17 @@ sys_setgid(p, v, retval)
 #else
 	gid = SCARG(uap, gid);
 #endif
-	if (gid != pc->p_rgid && (error = suser(pc->pc_ucred, &p->p_acflag)))
+	if (gid != pc->p_rgid &&
+	    gid != pc->pc_ucred->cr_gid &&
+	    (error = suser(pc->pc_ucred, &p->p_acflag)))
 		return (error);
+	if (gid == pc->pc_ucred->cr_gid ||
+	    suser(pc->pc_ucred, &p->p_acflag) == 0) {
+		pc->p_rgid = gid;
+		pc->p_svgid = gid;
+	}
 	pc->pc_ucred = crcopy(pc->pc_ucred);
 	pc->pc_ucred->cr_gid = gid;
-	pc->p_rgid = gid;
-	pc->p_svgid = gid;		/* ??? */
 	p->p_flag |= P_SUGID;
 	return (0);
 }

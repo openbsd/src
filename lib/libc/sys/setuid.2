@@ -62,8 +62,11 @@ user IDs and the saved set-user-ID of the current process
 to the specified value.
 The
 .Fn setuid
-function is permitted if the specified ID is equal to the real user ID
-of the process, or if the effective user ID is that of the super user.
+function is permitted if the effective user ID is that of the super user,
+or if the specified user ID is the same as the effective user ID.  If
+not, but the specified user ID is the same as the real user ID,
+.Fn setuid
+will set the effective user ID to the real user ID.
 .Pp
 The
 .Fn setgid
@@ -73,8 +76,11 @@ group IDs and the saved set-group-ID of the current process
 to the specified value.
 The
 .Fn setgid
-function is permitted if the specified ID is equal to the real group ID
-of the process, or if the effective user ID is that of the super user.
+function is permitted if the effective user ID is that of the super user,
+or if the specified group ID is the same as the effective group ID.  If
+not, but the specified group ID is the same as the real group ID,
+.Fn setgid
+will set the effective group ID to the real group ID.
 .Pp
 The
 .Fn seteuid
@@ -109,10 +115,10 @@ The
 and
 .Fn setgid
 functions are compliant with the
-.St -p1003.1-88
+.St -p1003.1-90
 specification with
 .Li _POSIX_SAVED_IDS
-not defined.
+defined, with the extensions allowed in section B.4.2.2.
 The
 .Fn seteuid
 and
