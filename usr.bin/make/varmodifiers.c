@@ -1,4 +1,4 @@
-/*	$OpenBSD: varmodifiers.c,v 1.4 2000/07/24 21:57:28 espie Exp $	*/
+/*	$OpenBSD: varmodifiers.c,v 1.5 2000/09/14 13:35:38 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -118,7 +118,7 @@ static Boolean VarSubstitute __P((const char *, Boolean, Buffer, void *));
 static char *VarGetPattern __P((SymTable *, int, char **, int, int *, size_t *,
 				VarPattern *));
 static char *VarQuote __P((const char *));
-static char *VarModify __P((const char *, Boolean (*)(const char *, Boolean, Buffer, void *), void *));
+static char *VarModify __P((char *, Boolean (*)(const char *, Boolean, Buffer, void *), void *));
 static Boolean VarUppercase __P((const char *, Boolean, Buffer, void *));
 static Boolean VarLowercase __P((const char *, Boolean, Buffer, void *));
 
@@ -769,19 +769,18 @@ VarRESubstitute(word, addSpace, buf, patternp)
  *-----------------------------------------------------------------------
  */
 static char *
-VarModify (str, modProc, datum)
-    const char    	  *str;	    /* String whose words should be trimmed */
-				    /* Function to use to modify them */
+VarModify(str, modProc, datum)
+    char    	  *str;	    	/* String whose words should be trimmed */
+			    	/* Function to use to modify them */
     Boolean    	  (*modProc) __P((const char *, Boolean, Buffer, void *));
-    void          *datum;    	    /* Datum to pass it */
+    void          *datum;	/* Datum to pass it */
 {
-    BUFFER  	  buf;	    	    /* Buffer for the new string */
-    Boolean 	  addSpace; 	    /* TRUE if need to add a space to the
-				     * buffer before adding the trimmed
-				     * word */
-    char 	  **av;		    /* word list */
-    char 	  *as;		    /* word list memory */
-    int ac, i;
+    BUFFER  	  buf;		/* Buffer for the new string */
+    Boolean 	  addSpace;	/* TRUE if need to add a space to the
+				 * buffer before adding the trimmed
+				 * word */
+    char 	  *end;
+    char	  *word;
 
     if (str == NULL)
     	return NULL;
@@ -789,13 +788,16 @@ VarModify (str, modProc, datum)
     Buf_Init(&buf, 0);
     addSpace = FALSE;
 
-    av = brk_string(str, &ac, FALSE, &as);
+    end = str;
 
-    for (i = 0; i < ac; i++)
-	addSpace = (*modProc)(av[i], addSpace, &buf, datum);
+    while ((word = iterate_words(&end)) != NULL) {
+	char	  termc;
 
-    free(as);
-    free(av);
+	termc = *end;
+	*end = '\0';
+	addSpace = (*modProc)(word, addSpace, &buf, datum);
+	*end = termc;
+    }
     return Buf_Retrieve(&buf);
 }
 

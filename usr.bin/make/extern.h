@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.30 2000/09/14 13:32:06 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.31 2000/09/14 13:35:38 espie Exp $	*/
 /*	$NetBSD: nonints.h,v 1.12 1996/11/06 17:59:19 christos Exp $	*/
 
 /*-
@@ -105,10 +105,12 @@ extern void str_init __P((void));
 extern void str_end __P((void));
 extern char *str_concat __P((const char *, const char *, char));
 extern char **brk_string __P((const char *, int *, Boolean, char **));
+extern const char *iterate_words __P((const char **));
 extern int Str_Match __P((const char *, const char *));
 extern const char *Str_SYSVMatch __P((const char *, const char *, size_t *len));
 extern void Str_SYSVSubst __P((Buffer, const char *, const char *, size_t));
 extern char *interval_dup __P((const char *begin, const char *end));
+extern char *escape_dup __P((const char *, const char *, const char *));
 
 /* suff.c */
 extern void Suff_ClearSuffixes __P((void));

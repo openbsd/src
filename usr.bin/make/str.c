@@ -1,4 +1,4 @@
-/*	$OpenBSD: str.c,v 1.15 2000/09/14 13:32:07 espie Exp $	*/
+/*	$OpenBSD: str.c,v 1.16 2000/09/14 13:35:38 espie Exp $	*/
 /*	$NetBSD: str.c,v 1.13 1996/11/06 17:59:23 christos Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
 static char     sccsid[] = "@(#)str.c	5.8 (Berkeley) 6/1/90";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: str.c,v 1.15 2000/09/14 13:32:07 espie Exp $";
+static char rcsid[] = "$OpenBSD: str.c,v 1.16 2000/09/14 13:35:38 espie Exp $";
 #endif
 #endif				/* not lint */
 
@@ -219,6 +219,54 @@ done:	argv[argc] = (char *)NULL;
 	return(argv);
 }
 
+/* Iterate through a string word by word,
+ * without needing to copy anything.
+ * More light-weight than brk_string, handles \ ' " as well.
+ *
+ * position = s;
+ * while ((begin = iterate_words(&position)) != NULL) {
+ *   do_something_with_word_interval(begin, position);
+ * }
+ */
+const char *
+iterate_words(end)
+    const char 	**end;
+{
+    const char 	*start, *p;
+    char	state = 0;
+    start = *end;
+
+    while (isspace(*start))
+    	start++;
+    if (*start == '\0')
+    	return NULL;
+
+    for (p = start;; p++)
+    	switch(*p) {
+	    case '\\':
+	    	if (p[1] != '\0')
+		    p++;
+		break;
+	    case '\'':
+	    case '"':
+	    	if (state == *p)
+		    state = 0;
+		else if (state == 0)
+		    state = *p;
+		break;
+	    case ' ':
+	    case '\t':
+	    	if (state != 0)
+		    break;
+	    	/* FALLTHROUGH */
+	    case '\0':
+	    	*end = p;
+		return start;
+	    default:
+	    	break;
+	    }
+}
+	
 /*
  * Str_Match --
  *
@@ -452,3 +500,30 @@ interval_dup(begin, end)
     s[end-begin] = '\0';
     return s;
 }
+
+/* copy interval, skipping characters in the set.  */
+char *
+escape_dup(begin, end, set)
+    const char *begin;
+    const char *end;
+    const char *set;
+{
+    char *s, *t;
+
+    t = s = emalloc(end - begin + 1);
+    while (begin != end) {
+    	if (*begin == '\\') {
+	    begin++;
+	    if (begin == end) {
+	    	*t++ = '\\';
+		break;
+	    }
+	    if (strchr(set, *begin) == NULL) 
+	    	*t++ = '\\';
+	}
+	*t++ = *begin++;
+    }
+    *t++ = '\0';
+    return s;
+}
+

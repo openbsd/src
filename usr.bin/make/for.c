@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.21 2000/09/14 13:32:06 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.22 2000/09/14 13:35:38 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -83,7 +83,7 @@
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: for.c,v 1.21 2000/09/14 13:32:06 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.22 2000/09/14 13:35:38 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,19 +121,12 @@ build_words_list(lst, s)
     Lst lst;
     const char *s;
 {
-    const char *wrd;
+    const char *end, *wrd;
 
-    for (;;) {
-	for (; *s != '\0' && isspace(*s); s++)
-	    continue;
-	if (*s == '\0')
-	    break;
-	for (wrd = s; *s != '\0' && !isspace(*s); s++)
-	    continue;
-    	/* note that we fill the list backward, since 
-     	 * Parse_FromString stacks strings.  */
-	Lst_AtFront(lst, interval_dup(wrd, s));
-    }
+    end = s;
+
+    while ((wrd = iterate_words(&end)) != NULL)
+    	Lst_AtFront(lst, escape_dup(wrd, end, "\"'"));
 }
 
 /*
