@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.17 2000/03/08 08:43:04 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.24 2000/03/07 20:40:24 niklas Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.18 2000/04/07 22:05:48 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.25 2000/04/07 19:01:39 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -422,7 +422,7 @@ ike_phase_1_initiator_send_KE_NONCE (struct message *msg)
   return ike_phase_1_send_KE_NONCE (msg, 16);
 }
 
-/* Accept receptor's public DH value and nonce.  */
+/* Accept responder's public DH value and nonce.  */
 int
 ike_phase_1_initiator_recv_KE_NONCE (struct message *msg)
 {
