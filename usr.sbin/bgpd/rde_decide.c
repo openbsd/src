@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.10 2004/01/06 10:51:14 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.11 2004/01/07 00:01:17 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -216,9 +216,7 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 		 * has an unreachable nexthop
 		 */
 
-		if (!(xp != NULL && xp->aspath->nexthop != NULL &&
-		    xp->aspath->nexthop->state != NEXTHOP_REACH))
-			rde_send_kroute(xp, pte->active);
+		rde_send_kroute(xp, pte->active);
 
 		if (xp == NULL || xp->aspath->nexthop == NULL ||
 		    xp->aspath->nexthop->state != NEXTHOP_REACH)
