@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.4 1996/10/14 03:54:59 etheisen Exp $	*/
+/*	$OpenBSD: more.c,v 1.5 1996/10/14 09:01:01 etheisen Exp $	*/
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
  * All rights reserved.
@@ -977,6 +977,9 @@ register FILE *f;
     FILE *helpf;
     int done;
     char comchar, cmdbuf[80], *p;
+    char option[8];
+    char *EDITOR;
+    char *editor;
 
 #define ret(val) retval=val;done++;break
 
@@ -1162,14 +1165,35 @@ register FILE *f;
 	    fclose (helpf);
 	    prompt (filename);
 	    break;
+	/* Run Editor */
 	case 'v':	/* This case should go right before default */
 	    if (!no_intty) {
 		kill_line ();
-		cmdbuf[0] = '+';
+		strcpy(cmdbuf, "-c");
 		scanstr (Currline - dlines < 0 ? 0
-				: Currline - (dlines + 1) / 2, &cmdbuf[1]);
-		pr ("vi "); pr (cmdbuf); putchar (' '); pr (fnames[fnum]);
-		execute (filename, _PATH_VI, "vi", cmdbuf, fnames[fnum], 0);
+				: Currline - (dlines + 1) / 2, option);
+
+		/* POSIX.2 more EDITOR env. var. behavior */
+		if ((EDITOR = getenv("EDITOR")) != NULL) {
+
+		    /* Need to look for vi or ex as
+		     * we need to tell them the current
+		     * line number
+		     */ 
+		    if ((editor = strrchr(EDITOR, '/')) == NULL) 
+			editor = EDITOR;
+		    else
+			editor++;
+		    if ((strcmp(editor, "vi") == 0) ||
+			(strcmp(editor, "ex") == 0)) 
+			execute (filename, EDITOR, EDITOR, cmdbuf, option, fnames[fnum], 0);
+		    else /* must be some other editor */
+			execute (filename, EDITOR, EDITOR, fnames[fnum], 0);
+		}
+		else { /* default editor */
+			execute (filename, _PATH_VI, _PATH_VI, cmdbuf, option, fnames[fnum], 0);
+		}
+
 		break;
 	    }
 	default:
@@ -1410,7 +1434,7 @@ va_dcl
 		open("/dev/tty", 0);
 	    }
 	    va_start(argp);
-	    execv (cmd, argp);
+	    execvp (cmd, argp);
 	    write (2, "exec failed\n", 12);
 	    exit (1);
 	    va_end(argp);	/* balance {}'s for some UNIX's */
@@ -1428,7 +1452,7 @@ va_dcl
 	} else
 	    write(2, "can't fork\n", 11);
 	set_tty ();
-	pr ("------------------------\n");
+	/* pr ("------------------------\n"); */
 	prompt (filename);
 }
 /*

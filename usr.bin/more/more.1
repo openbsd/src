@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.4 1996/09/28 22:20:48 etheisen Exp $
+.\"	$OpenBSD: more.1,v 1.5 1996/10/14 09:00:58 etheisen Exp $
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -32,7 +32,7 @@
 .\"
 .\"	@(#)more.1	6.6 (Berkeley) 4/18/91
 .\"
-.TH MORE 1 "April 18, 1991"
+.TH MORE 1 "October 14, 1996"
 .UC 4
 .SH NAME
 more, page \- file perusal filter for crt viewing
@@ -195,6 +195,25 @@ or
 .I .profile
 file.
 .PP
+.I More
+looks in the environment variable
+.I EDITOR
+to determine which editor the
+.I v
+command invokes.
+If the editor specified is
+.I vi
+or
+.I ex
+it will start at the current
+.I more
+line number.
+If no
+.I EDITOR
+environment variable is specified the default
+.I vi
+editor will be used.
+.PP
 If
 .I more
 is reading from a file, rather than a pipe, then a percentage is displayed
@@ -245,9 +264,13 @@ Exit from
 Display the current line number.
 .PP
 .IP v
-Start up the editor
+Starts the editor at the current line number if editor is
 .I vi
-at the current line.
+or
+.I ex.
+The environment variable
+.I EDITOR
+affects this command according to the rules outlined above.
 .PP
 .IP h
 Help command; give a description of all the
