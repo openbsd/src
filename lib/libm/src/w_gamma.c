@@ -11,7 +11,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: w_gamma.c,v 1.6 1995/05/10 20:49:00 jtc Exp $";
+static char rcsid[] = "$NetBSD: w_gamma.c,v 1.7 1995/11/20 22:06:43 jtc Exp $";
 #endif
 
 /* double gamma(double x)
@@ -33,10 +33,10 @@ extern int signgam;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_gamma_r(x,&signgam);
+	return __ieee754_lgamma_r(x,&signgam);
 #else
         double y;
-        y = __ieee754_gamma_r(x,&signgam);
+        y = __ieee754_lgamma_r(x,&signgam);
         if(_LIB_VERSION == _IEEE_) return y;
         if(!finite(y)&&finite(x)) {
             if(floor(x)==x&&x<=0.0)

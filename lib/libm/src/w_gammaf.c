@@ -14,7 +14,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: w_gammaf.c,v 1.3 1995/05/10 20:49:04 jtc Exp $";
+static char rcsid[] = "$NetBSD: w_gammaf.c,v 1.4 1995/11/20 22:06:48 jtc Exp $";
 #endif
 
 #include "math.h"
@@ -30,10 +30,10 @@ extern int signgam;
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_gammaf_r(x,&signgam);
+	return __ieee754_lgammaf_r(x,&signgam);
 #else
         float y;
-        y = __ieee754_gammaf_r(x,&signgam);
+        y = __ieee754_lgammaf_r(x,&signgam);
         if(_LIB_VERSION == _IEEE_) return y;
         if(!finitef(y)&&finitef(x)) {
             if(floorf(x)==x&&x<=(float)0.0)

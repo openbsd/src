@@ -14,7 +14,7 @@
  */
 
 #if defined(LIBM_SCCS) && !defined(lint)
-static char rcsid[] = "$NetBSD: w_gammaf_r.c,v 1.3 1995/05/10 20:49:05 jtc Exp $";
+static char rcsid[] = "$NetBSD: w_gammaf_r.c,v 1.4 1995/11/20 22:06:50 jtc Exp $";
 #endif
 
 /* 
@@ -33,10 +33,10 @@ static char rcsid[] = "$NetBSD: w_gammaf_r.c,v 1.3 1995/05/10 20:49:05 jtc Exp $
 #endif
 {
 #ifdef _IEEE_LIBM
-	return __ieee754_gammaf_r(x,signgamp);
+	return __ieee754_lgammaf_r(x,signgamp);
 #else
         float y;
-        y = __ieee754_gammaf_r(x,signgamp);
+        y = __ieee754_lgammaf_r(x,signgamp);
         if(_LIB_VERSION == _IEEE_) return y;
         if(!finitef(y)&&finitef(x)) {
             if(floorf(x)==x&&x<=(float)0.0)
