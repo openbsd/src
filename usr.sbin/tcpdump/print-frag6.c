@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-frag6.c,v 1.1 2000/04/26 21:35:40 jakob Exp $	*/
+/*	$OpenBSD: print-frag6.c,v 1.2 2004/06/22 11:58:44 itojun Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994
@@ -84,12 +84,10 @@ frag6_print(register const u_char *bp, register const u_char *bp2)
 			       (long)(bp - bp2) - sizeof(struct ip6_frag));
 	}
 
-#if 0
 	/* it is meaningless to decode non-first fragment */
 	if (ntohs(dp->ip6f_offlg & IP6F_OFF_MASK) != 0)
 		return 65535;
 	else
-#endif
 	{
 		fputs(" ", stdout);
 		return sizeof(struct ip6_frag);
