@@ -2200,9 +2200,41 @@ push_frame_in_operand (insn, orig, push_size, boundary)
       return;
 	    
     case SET:
-      /* skip the insn that restores setjmp address */
-      if (XEXP (x, 0) == frame_pointer_rtx)
+      /*
+	skip setjmp setup insn and setjmp restore insn
+	alpha case:
+	(set (MEM (reg:SI xx)) (frame_pointer_rtx)))
+	(set (frame_pointer_rtx) (REG))
+      */
+      if (GET_CODE (XEXP (x, 0)) == MEM
+	  && XEXP (x, 1) == frame_pointer_rtx)
 	return;
+      if (XEXP (x, 0) == frame_pointer_rtx
+	  && GET_CODE (XEXP (x, 1)) == REG)
+	return;
+
+      /*
+	powerpc case: restores setjmp address
+	(set (frame_pointer_rtx) (plus frame_pointer_rtx const_int -n))
+	or
+	(set (reg) (plus frame_pointer_rtx const_int -n))
+	(set (frame_pointer_rtx) (reg))
+      */
+      if (GET_CODE (XEXP (x, 0)) == REG
+	  && GET_CODE (XEXP (x, 1)) == PLUS
+	  && XEXP (XEXP (x, 1), 0) == frame_pointer_rtx
+	  && CONSTANT_P (XEXP (XEXP (x, 1), 1))
+	  && INTVAL (XEXP (XEXP (x, 1), 1)) < 0)
+	{
+	  x = XEXP (x, 1);
+	  offset = AUTO_OFFSET(x);
+	  if (x->used || abs (offset) < boundary)
+	    return;
+
+	  XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset - push_size);
+	  x->used = 1; insn_pushed = TRUE;
+	  return;
+	}
 
       /* reset fp_equiv register */
       else if (GET_CODE (XEXP (x, 0)) == REG
@@ -2235,15 +2267,10 @@ push_frame_in_operand (insn, orig, push_size, boundary)
       if (CONSTANT_P (XEXP (x, 1))
 	  && XEXP (x, 0) == frame_pointer_rtx)
 	{
-	  if (x->used || abs (offset) < boundary)
+	  if (x->used || offset < boundary)
 	    return;
 
-	  if (offset > 0)
-	    offset += push_size;
-	  else
-	    offset -= push_size;
-
-	  XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset);
+	  XEXP (x, 1) = gen_rtx_CONST_INT (VOIDmode, offset + push_size);
 	  x->used = 1; insn_pushed = TRUE;
 
 	  return;
@@ -2280,15 +2307,11 @@ push_frame_in_operand (insn, orig, push_size, boundary)
 	{
 	  HOST_WIDE_INT offset = INTVAL (SET_SRC (PATTERN (PREV_INSN (insn))));
 
-	  if (x->used || abs (offset) < boundary)
+	  if (x->used || offset < boundary)
 	    return;
 	  
-	  if (offset > 0)
-	    offset += push_size;
-	  else
-	    offset -= push_size;
-
-	  SET_SRC (PATTERN (PREV_INSN (insn))) = gen_rtx_CONST_INT (VOIDmode, offset);
+	  SET_SRC (PATTERN (PREV_INSN (insn)))
+	    = gen_rtx_CONST_INT (VOIDmode, offset + push_size);
 	  x->used = 1;
 	  XEXP (x, 1)->used = 1;
 
