@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.15 2001/10/29 12:43:44 espie Exp $
+.\"	$OpenBSD: pool.9,v 1.16 2002/02/25 00:23:20 art Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -57,10 +57,13 @@
 .Fa "u_int align_offset"
 .Fa "int nitems"
 .Fa "char *wmesg"
-.Fa "u_int pagesz"
-.Fa "void *(*palloc)(unsigned long sz, int flags, int tag)"
-.Fa "void (*prelease)(void *v, unsigned long sz, int tag)"
-.Fa "int mtag"
+.Fa "struct pool_allocator *palloc"
+.Fc
+.Ft void
+.Fo pool_set_drain_hook
+.Fa "struct pool *pp"
+.Fa "void (*fun)(void *, int)"
+.Fa "void *arg"
 .Fc
 .Ft void *
 .Fn pool_get "struct pool *pp" "int flags"
@@ -72,7 +75,13 @@
 .Fn pool_sethiwat "struct pool *pp" "int n"
 .Ft void
 .Fn pool_setlowat "struct pool *pp" "int n"
-.\" .Fn POOL_STORAGE_SIZE "size" "nitems"
+.Ft void
+.Fo pool_sethardlimit
+.Fa "struct pool *pp"
+.Fa "int n"
+.Fa "const char *warnmess"
+.Fa "int ratecap"
+.Fc
 .Sh DESCRIPTION
 These utility routines provide management of pools of fixed-sized
 areas of memory.
@@ -82,9 +91,10 @@ This can be used by applications to guarantee the availability of a minimum
 amount of memory needed to continue operation independent of the memory
 resources currently available from the system-wide memory allocator
 .Pq Xr malloc 9 .
-The pool manager can optionally obtain temporary memory by calling the
+The pool manager obtains memory by using the special-purpose memory
+allocator
 .Fn palloc
-function passed to
+passed to
 .Fn pool_init ,
 for extra pool items in case the number of allocations exceeds
 the nominal number of pool items managed by a pool resource.
@@ -96,7 +106,7 @@ The function
 initializes a resource pool.
 The arguments are:
 .Pp
-.Bl -tag -offset indent -width "prelease"
+.Bl -tag -offset indent -width "align_offset"
 .It Fa pool
 Specifies the pool storage to be initialized.
 .It Fa size
@@ -118,52 +128,49 @@ This number may be zero,
 in which case
 .Fn pool_prime
 can be used at a later time to add permanent items to the pool.
-.It Fa wchan
+.It Fa wmesg
 The message passed on to
 .Xr tsleep 9
 if
 .Fn pool_get
 must wait for items to be returned to the pool.
-.It Fa pagesz
-The unit which is used to allocate additional memory to the pool.
-It must be a power of two.
 .It Fa palloc
-is called to add additional memory if the pool is depleted.
-It must return
-.Fa pagesz
-aligned memory.
-The argument
-.Fa sz
-shall be a multiple of
-.Fa pagesz .
-.It Fa prelease
-is called to release pages back to the system.
+The back-end allocator used to manage the memory for the pool.
 .Fn palloc
-and
-.Fn prelease
 may be
 .Dv NULL ,
-in which case the pool manager uses
+in which case the pool manager uses the
+.Em pool_allocator_kmem
+allocator which uses
 .Xr uvm_km_kmemalloc 9
 and
 .Xr uvm_km_free 9
 to allocate and release memory using the
-.Em kernel_map
+.Em kmem_map
 .Po see 
 .Xr uvm 9
 .Pc .
-.It Fa mtag
-The memory tag passed to
-.Fn palloc
-and
-.Fn prelease
-when allocating or releasing memory pages.
+It is recommended to set this to
+.Em pool_allocator_nointr
+if the pool will never be accessed in interrupt context, since that
+allocator is much more efficient.
 .El
-.\".Pp
-.\"The macro
-.\".Fn POOL_STORAGE_SIZE "size" "nitems"
-.\"can be used to determine the amount of storage needed to setup a pool,
-.\"given the size and number of the pool items.
+.Ss SETTING DRAIN CALLBACK
+The
+.Fn pool_set_drain_hook
+function can be used to specify a function that will be called when
+memory is running low.
+The callback
+.Fa fun
+will be called with the arguments
+.Fa arg
+which is the third argument to
+.Fn pool_set_drain_hook
+and
+.Fa flags
+which will have
+.Dv PR_WAITOK
+set if the drain hook is allowed to sleep.
 .Ss ALLOCATING ITEMS FROM A POOL
 .Fn pool_get
 allocates an item from the pool and returns a pointer to it.
@@ -297,6 +304,17 @@ Unlike
 .Fn pool_prime ,
 this function does not allocate the necessary memory up-front.
 .El
+.Ss SETTING HARD LIMITS
+The
+.Fn pool_sethardlmit
+sets a hard limit on the pool to
+.Fa n
+items.
+If the hard limit is reached
+.Fa warnmess
+will be printed to the console, but no more than every
+.Fa ratecap
+seconds.
 .Ss POTENTIAL PITFALLS
 Note that undefined behaviour results when mixing the storage providing
 methods supported by the pool resource routines.
