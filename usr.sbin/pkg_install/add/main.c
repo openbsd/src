@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.14 2002/02/16 21:28:06 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 2002/09/08 22:01:50 tdeval Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.14 2002/02/16 21:28:06 millert Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.15 2002/09/08 22:01:50 tdeval Exp $";
 #endif
 
 /*
@@ -148,7 +148,8 @@ main(int argc, char **argv)
 		}
 		else if (ispkgpattern(*argv)
 			 && (s=findbestmatchingname(dirname_of(*argv),
-						    basename_of(*argv))) > 0) {
+						    basename_of(*argv)))
+			    != NULL) {
 		    if (Verbose)
 			printf("Using %s for %s\n",s, *argv);
 		    pkgs[ch] = (char *) malloc(MAXPATHLEN * sizeof(char));
