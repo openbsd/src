@@ -1,4 +1,4 @@
-/*	$NetBSD: stand.h,v 1.12 1995/09/18 21:19:47 pk Exp $	*/
+/*	$NetBSD: stand.h,v 1.13 1996/01/13 22:25:42 leo Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -120,6 +120,7 @@ void	gets __P((char *));
 __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
 __dead void	_rtt __P((void)) __attribute__((noreturn));
 void	bcopy __P((const void *, void *, size_t));
+void	*memcpy __P((void *, const void *, size_t));
 void	exec __P((char *, char *, int));
 int	open __P((const char *, int));
 int	close __P((int));
