@@ -41,7 +41,7 @@ static char rcsid[] = "$NetBSD: nlist.c,v 1.6 1995/09/29 04:19:59 cgd Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
-#ifdef __alpha__
+#if defined(__alpha__) || defined(pica)
 #define		DO_ECOFF
 #else
 #define		DO_AOUT
