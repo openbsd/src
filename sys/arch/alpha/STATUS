@@ -1,33 +1,13 @@
-$OpenBSD: STATUS,v 1.7 1998/01/09 07:39:44 niklas Exp $
+$OpenBSD: STATUS,v 1.8 2001/02/06 07:28:39 niklas Exp $
 $NetBSD: STATUS,v 1.6 1996/11/26 15:58:04 cgd Exp $
 
 OpenBSD/Alpha's Status
 
 If you find an inaccuracy in this file, can clarify it in any place,
-etc., please send mail to me (niklas@appli.se).
+etc., please send mail to alpha@openbsd.org.
 
 
 Supported hardware:
-
-	DEC 3000/[456789]00 (I've not tested them, but they should
-	"just work") using the following peripherals:
-
-		Supported hardware:
-			Built-in serial ports
-			Built-in LANCE ethernet.
-			Built-in SCSI chips (53c[f]94), though both
-			    may not work at the same time.
-
-		Things that may work but haven't been tested:
-			TurboChannel option slot LANCE (PMAD-A)
-
-		Things are aren't supported:
-			No frame buffers of any type.
-			Other TurboChannel option boards (see the
-			    TODO.users file.)
-			The ISDN/Audio chip.
-
-	DEC 3000/300 family, with same hardware above.
 
 	AlphaStation {200,250,255,400} systems using the following
 	peripherals:
@@ -69,6 +49,7 @@ Supported hardware:
 	as systems mentioned above.
 
 At this time none of the following systems are supported:
+	DEC 3000/[3456789]00
 	DECpc AXP 150 systems (EISA-bus PC-like systems)
 	Alpha "server" systems (other than perhaps the
 	    AlphaServer 400, which might be an AlphaStation 400
