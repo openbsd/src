@@ -105,9 +105,8 @@ ip4_input(register struct mbuf *m, int iphlen)
 	ipi = (struct ip *)((caddr_t)ipo + iphlen);
 	
 	/*
-	 * XXX - Should we do anything to the inner packet?
-	 * Does arriving at the far end of the tunnel count as one hop
-	 * (thus requiring ipi->ip_ttl to be decremented)?
+	 * RFC 1853 specifies that the inner TTL should not be touched on
+	 * decapsulation.
 	 */
 
 	if (ipi->ip_v != IPVERSION)
@@ -125,9 +124,13 @@ ip4_input(register struct mbuf *m, int iphlen)
 	m->m_pkthdr.len -= iphlen;
 	m->m_data += iphlen;
 	
-	/* XXX -- interface pointer stays the same (which is probably
-	 * the way it should be.
-	 */
+	/*
+	 * Interface pointer stays the same; if no IPsec processing has
+	 * been done (or will be done), this will point to a normal 
+  	 * interface. Otherwise, it'll point to an encap interface, which
+ 	 * will allow a packet filter to distinguish between secure and
+	 * untrusted packets.
+ 	 */
 
 	ifq = &ipintrq;
 
