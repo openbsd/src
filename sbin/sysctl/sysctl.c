@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.64 2001/06/01 19:27:07 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.65 2001/06/01 19:29:13 mickey Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.64 2001/06/01 19:27:07 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.65 2001/06/01 19:29:13 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,13 +237,13 @@ main(argc, argv)
 		vfsinit();
 		for (lvl1 = 1; lvl1 < CTL_MAXID; lvl1++)
 			listall(topname[lvl1].ctl_name, &secondlevel[lvl1]);
-		exit(0);
+		return (0);
 	}
 	if (argc == 0)
 		usage();
 	for (; *argv != NULL; ++argv)
 		parse(*argv, 1);
-	exit(0);
+	return (0);
 }
 
 /*
