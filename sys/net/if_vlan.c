@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.27 2001/10/01 09:27:31 niklas Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.28 2001/10/05 06:32:34 drahn Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -152,7 +152,7 @@ vlanattach(int count)
 	if (ifv_softc == NULL)
 		panic("vlanattach: MALLOC failed");
 	nifvlan = count;
-	bzero(ifv_softc, nifvlan * sizeof(ifv_softc));
+	bzero(ifv_softc, nifvlan * sizeof(struct ifvlan));
 
 	for (i = 0; i < nifvlan; i++) {
 		ifp = &ifv_softc[i].ifv_if;
