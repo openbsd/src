@@ -1,13 +1,13 @@
-/*	$OpenBSD: spamd-setup.c,v 1.4 2003/03/09 02:50:54 beck Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.5 2003/03/09 19:22:26 beck Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
- * Redistribution and use in source and binary forms, with or withou
+ * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- * 1. Redistributions of source code must retain the above copyrigh
+ * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyrigh
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
@@ -15,10 +15,10 @@
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
- * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BU
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
  * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
  * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TOR
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
@@ -35,12 +35,13 @@
 #include <unistd.h>
 #include <err.h>
 #include <netinet/ip_ipsp.h>
+#include <netdb.h>
+#include <machine/endian.h>
 
 #define PATH_FTP		"/usr/bin/ftp"
 #define PATH_PFCTL		"/sbin/pfctl"
 #define PATH_SPAMD_CONF		"/etc/spamd.conf"
 #define SPAMD_ARG_MAX		256 /* max # of args to an exec */
-#define SPAMD_CONFIG_PORT	8026
 
 struct cidr {
 	u_int32_t addr;
@@ -712,6 +713,11 @@ main(int argc, char *argv[])
 	char **db_array, *buf;
 	char *name;
 	int i;
+	struct servent *ent;
+
+	if ((ent = getservbyname("spamd-cfg", "tcp")) == NULL)
+		errx(1, "Can't find service \"spamd-cfg\" in /etc/services");
+	ent->s_port = ntohs(ent->s_port);
 
 	dbs = argc + 2;
 	dbc = 0;
@@ -758,10 +764,10 @@ main(int argc, char *argv[])
 		cidrs = collapse_blacklist(blists[i].bl, blists[i].blc);
 		if (cidrs == NULL)
 			errx(1, "Malloc failed");
-		if (configure_spamd(SPAMD_CONFIG_PORT, blists[i].name,
+		if (configure_spamd(ent->s_port, blists[i].name,
 		    blists[i].message, cidrs) == -1)
 			err(1, "Can't connect to spamd on port %d",
-			    SPAMD_CONFIG_PORT);
+			    ent->s_port);
 		if (configure_pf(cidrs) == -1)
 			err(1, "pfctl failed");
 		tmp = cidrs;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.22 2003/03/08 22:05:20 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.23 2003/03/09 19:22:25 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -41,6 +41,10 @@
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+
+#include <netdb.h>
+#include <sys/types.h>
+#include <machine/endian.h>
 
 #include "sdl.h"
 
@@ -700,10 +704,18 @@ main(int argc, char *argv[])
 	struct passwd *pw;
 	int ch, s, s2, conflisten = 0, i, omax = 0;
 	int sinlen, one = 1;
-	u_short port = 8025;
+	u_short port, cfg_port;
+	struct servent *ent;
 
 	tzset();
 	openlog_r("spamd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
+
+	if ((ent = getservbyname("spamd", "tcp")) == NULL)
+		errx(1, "Can't find service \"spamd\" in /etc/services");
+	port = ntohs(ent->s_port);
+	if ((ent = getservbyname("spamd-cfg", "tcp")) == NULL)
+		errx(1, "Can't find service \"spamd-cff\" in /etc/services");
+	cfg_port = ntohs(ent->s_port);
 
 	if (gethostname(hostname, sizeof hostname) == -1)
 		err(1, "gethostname");
@@ -785,7 +797,7 @@ main(int argc, char *argv[])
 	lin.sin_len = sizeof(sin);
 	lin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 	lin.sin_family = AF_INET;
-	lin.sin_port = htons(port + 1);
+	lin.sin_port = htons(cfg_port);
 
 	if (bind(conflisten, (struct sockaddr *)&lin, sizeof lin) == -1)
 		err(1, "bind local");

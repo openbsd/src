@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.49 2003/01/24 06:43:29 millert Exp $
+#	$OpenBSD: services,v 1.50 2003/03/09 19:22:25 beck Exp $
 #
 # Network services, Internet style
 #
@@ -250,6 +250,8 @@ mysql		3306/tcp		# MySQL
 postgresql	5432/tcp		# PostgreSQL
 canna		5680/tcp		# Kana->Kanji server
 icb		7326/tcp		# Internet Citizen's Band
+spamd		8025/tcp		# spamd(8)
+spamd-cfg	8026/tcp		# spamd(8) configuration
 hunt		26740/udp		# hunt(6)
 #
 # Appletalk

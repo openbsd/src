@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.3 2003/03/08 21:36:12 jmc Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.4 2003/03/09 19:22:26 beck Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -66,7 +66,12 @@ Output is concatenated to build up a table for
 Then the blacklist addresses are sent to a running
 .Xr spamd 8
 along with the message spamd will give on mail rejection when a
-matching client connects.
+matching client connects. The configuration port for
+.Xr spamd 8
+is found from
+.Xr services 5 ,
+by looking for the named service
+.Em spamd-cfg .
 .Pp
 .Nm
 reads all configuration information from a 
@@ -79,5 +84,6 @@ file.
 .Sh SEE ALSO
 .Xr ftp 1 ,
 .Xr pf 4 ,
+.Xr services 5 ,
 .Xr spamd.conf 5 ,
 .Xr spamd 8
