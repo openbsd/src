@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.1 1997/11/09 23:04:58 niklas Exp $	*/
+/*	$OpenBSD: endian.h,v 1.2 1997/11/10 10:29:14 niklas Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -56,21 +56,32 @@ typedef u_int16_t in_port_t;
 
 #ifdef __GNUC__
 
-#define __swap16gen(x) ({ u_int16_t y = (x); (u_int16_t)(y << 8 | y >> 8); })
-#define __swap32gen(x) ({						\
-	u_int32_t y = (x);						\
+#define __swap16gen(x) ({						\
+	u_int16_t __swap16gen_x = (x);					\
 									\
-	(u_int32_t)(y << 24 | (y & 0xff00) << 8 | (y & 0xff0000) >> 8 |	\
-	    y >> 24);							\
+	(u_int16_t)((__swap16gen_x & 0xff) << 8 |			\
+	    (__swap16gen_x & 0xff00) >> 8);				\
+})
+
+#define __swap32gen(x) ({						\
+	u_int32_t __swap32gen_x = (x);					\
+									\
+	(u_int32_t)((__swap32gen_x & 0xff) << 24 |			\
+	    (__swap32gen_x & 0xff00) << 8 |				\
+	    (__swap32gen_x & 0xff0000) >> 8 |				\
+	    (__swap32gen_x & 0xff000000) >> 24);			\
 })
 
 #else /* __GNUC__ */
 
-/* Note that these macros evaluates their arguments several times.  */
-#define __swap16gen(x) (u_int16_t)((u_int16_t)(x) << 8 | (u_int16_t)(x) >> 8)
-#define __swap32gen(x) \
-    (u_int32_t)((u_int32_t)(x) << 24 | ((u_int32_t)(x) & 0xff00) << 8 | \
-    ((u_int32_t)(x) & 0xff0000) >> 8 | (u_int32_t)(x) >> 24)
+/* Note that these macros evaluate their arguments several times.  */
+#define __swap16gen(x)							\
+    (u_int16_t)(((u_int16_t)(x) & 0xff) << 8 | ((u_int16_t)(x) & 0xff00) >> 8)
+
+#define __swap32gen(x)							\
+    (u_int32_t)(((u_int32_t)(x) & 0xff) << 24 |				\
+    ((u_int32_t)(x) & 0xff00) << 8 | ((u_int32_t)(x) & 0xff0000) >> 8 |	\
+    ((u_int32_t)(x) & 0xff000000) >> 24)
 
 #endif /* __GNUC__ */
 
@@ -84,15 +95,17 @@ typedef u_int16_t in_port_t;
 #if __GNUC__
 
 #define swap16(x) ({							\
-	u_int16_t __x = (x);						\
+	u_int16_t __swap16_x = (x);					\
 									\
-	__builtin_constant_p(x) ? __swap16gen(__x) : __swap16md(__x);	\
+	__builtin_constant_p(x) ? __swap16gen(__swap16_x) :		\
+	    __swap16md(__swap16_x);					\
 })
 
 #define swap32(x) ({							\
-	u_int32_t __x = (x);						\
+	u_int32_t __swap32_x = (x);					\
 									\
-	__builtin_constant_p(x) ? __swap32gen(__x) : __swap32md(__x);	\
+	__builtin_constant_p(x) ? __swap32gen(__swap32_x) :		\
+	    __swap32md(__swap32_x);					\
 })
 
 #endif /* __GNUC__  */
@@ -116,8 +129,13 @@ __END_DECLS
 
 #if BYTE_ORDER == LITTLE_ENDIAN
 
+/* Can be overridden by machine/endian.h before inclusion of this file.  */
+#ifndef _QUAD_HIGHWORD
 #define _QUAD_HIGHWORD 1
+#endif
+#ifndef _QUAD_LOWWORD
 #define _QUAD_LOWWORD 0
+#endif
 
 #define htobe16 swap16
 #define htobe32 swap32
@@ -133,8 +151,13 @@ __END_DECLS
 
 #if BYTE_ORDER == BIG_ENDIAN
 
+/* Can be overridden by machine/endian.h before inclusion of this file.  */
+#ifndef _QUAD_HIGHWORD
 #define _QUAD_HIGHWORD 0
+#endif
+#ifndef _QUAD_LOWWORD
 #define _QUAD_LOWWORD 1
+#endif
 
 #define htole16 swap16
 #define htole32 swap32
