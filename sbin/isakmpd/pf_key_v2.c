@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.117 2002/09/11 09:50:44 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.118 2002/12/04 15:06:33 markus Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -3074,6 +3074,16 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   bzero (dstbuf, sizeof dstbuf);
   bzero (srcbuf, sizeof srcbuf);
 
+  if (dstaddr->sa_family == 0)
+    {
+      /* Destination was not specified in the flow -- can we derive it? */
+      if (dhostflag == 0)
+	{
+          log_print("pf_key_v2_acquire: Cannot determine precise destination");
+          goto fail;
+        }
+      dstaddr = dflow;
+    }
   switch (dstaddr->sa_family)
     {
     case AF_INET:
@@ -3122,6 +3132,16 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	      log_print ("pf_key_v2_acquire: inet_ntop failed");
 	      goto fail;
 	    }
+          break;
+
+	default:
+	  /* 
+	   * The kernel will pass an all '0' EXT_ADDRESS_SRC if it wasn't
+	   * specified for the flow. In that case, do NOT specify the srcaddr
+	   * in the Peer- name below
+	   */
+	  srcbuf[0] = 0;
+	  srcaddr = NULL;
 	  break;
 	}
     }
