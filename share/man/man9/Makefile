@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile,v 1.3 1996/03/11 13:04:48 mickey Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/03/29 13:42:59 mickey Exp $
 #       $NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	boot.9 copy.9 disk.9 doshutdownhooks.9 fetch.9 intro.9 inittodr.9 \
-	resettodr.9 shutdownhook_establish.9 store.9 time.9 \
+	resettodr.9 rnd.9 shutdownhook_establish.9 store.9 time.9 \
 	vm_allocate.9 vm_map_copy.9 vm_deallocate.9 vm_map_inherit.9 \
 	vm_map_protect.9
 
