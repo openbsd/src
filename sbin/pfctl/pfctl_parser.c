@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.183 2003/12/15 07:11:30 mcbride Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.184 2003/12/17 16:36:30 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -508,7 +508,7 @@ print_status(struct pf_status *s, int opts)
 		printf("%15s\n\n", "Debug: Loud");
 		break;
 	}
-	printf("hostid: 0x%08x\n\n", ntohl(s->hostid));
+	printf("Hostid: 0x%08x\n\n", ntohl(s->hostid));
 	if (s->ifname[0] != 0) {
 		printf("Interface Stats for %-16s %5s %16s\n",
 		    s->ifname, "IPv4", "IPv6");
@@ -534,7 +534,7 @@ print_status(struct pf_status *s, int opts)
 	printf("%-27s %14s %16s\n", "State Table", "Total", "Rate");
 	printf("  %-25s %14u %14s\n", "current entries", s->states, "");
 	for (i = 0; i < FCNT_MAX; i++) {
-		printf("  %-25s %14llu", pf_fcounters[i],
+		printf("  %-25s %14llu ", pf_fcounters[i],
 			    (unsigned long long)s->fcounters[i]);
 		if (runtime > 0)
 			printf("%14.1f/s\n",
