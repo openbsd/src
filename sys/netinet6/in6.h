@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6.h,v 1.17 2000/08/27 01:43:26 itojun Exp $	*/
+/*	$OpenBSD: in6.h,v 1.18 2000/10/17 21:46:19 itojun Exp $	*/
 /*	$KAME: in6.h,v 1.52 2000/07/15 15:28:02 itojun Exp $	*/
 
 /*
@@ -591,12 +591,13 @@ extern void in6_if_up __P((struct ifnet *));
 __BEGIN_DECLS
 struct cmsghdr;
 
-extern int inet6_option_space(int);
-extern int inet6_option_init(void *, struct cmsghdr **, int);
-extern int inet6_option_append(struct cmsghdr *, const u_int8_t *, int, int);
-extern u_int8_t *inet6_option_alloc(struct cmsghdr *, int, int, int);
-extern int inet6_option_next(const struct cmsghdr *, u_int8_t **);
-extern int inet6_option_find(const struct cmsghdr *, u_int8_t **, int);
+extern int inet6_option_space __P((int));
+extern int inet6_option_init __P((void *, struct cmsghdr **, int));
+extern int inet6_option_append __P((struct cmsghdr *, const u_int8_t *,
+	int, int));
+extern u_int8_t *inet6_option_alloc __P((struct cmsghdr *, int, int, int));
+extern int inet6_option_next __P((const struct cmsghdr *, u_int8_t **));
+extern int inet6_option_find __P((const struct cmsghdr *, u_int8_t **, int));
 
 extern size_t inet6_rthdr_space __P((int, int));
 extern struct cmsghdr *inet6_rthdr_init __P((void *, int));
