@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atureg.h,v 1.19 2004/12/13 08:09:51 dlg Exp $ */
+/*	$OpenBSD: if_atureg.h,v 1.20 2004/12/20 12:11:57 deraadt Exp $ */
 /*
  * Copyright (c) 2003
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -18,7 +18,7 @@
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY Daan Vreeken AND CONTRIBUTORS ``AS IS'' AND
+ * THIS SOFTWARE IS PROVIDED BY DAAN VREEKEN AND CONTRIBUTORS ``AS IS'' AND
  * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
  * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL Daan Vreeken OR THE VOICES IN HIS HEAD
@@ -32,42 +32,8 @@
  *
  */
 
-/* $ATUWI: $Id: if_atureg.h,v 1.19 2004/12/13 08:09:51 dlg Exp $ */
-
-/************ 		driver options 		************/
-
-/*
- * If you want to disable Intersil or RFMD support in the driver, uncomment
- * one of the following line. This will make the driver about 30 KB smaller
- * since the firmware-images will be left out. (Yes, leaving both out saves
- * 60KB, but that leaves you with a driver that doesn't support any devices :)
- */
-/* #define ATU_NO_INTERSIL */
-/* #define ATU_NO_RFMD */
-/* #define ATU_NO_RFMD2958 */
-/* #define ATU_NO_RFMD2958_SMC */
-
 #define ATU_CONFIG_NO		1
 #define ATU_IFACE_IDX		0
-
-/************ various performance optimizations ************/
-
-/*
- * setting ATU_NO_OPTIMIZATIONS will set all further options to default
- * values...
- *
- * no optimizations	392.78 KB/sec
- * with optimizations	485.64 KB/sec
- * (+/- 23.6% increase)
- *
- * Disclaimer : Most speed tests were done by transferring a large file over
- * FTP with an MTU of 1500. The tests are done on slow (Pentium-133) machines
- * so small changes in driver-overhead would be easilly noticeable. These
- * numbers are different for every other PC, I have just put them here to show
- * in what order of magnitude the differences are.
- */
-/* #define ATU_NO_OPTIMIZATIONS */
-
 
 /* the number of simultaniuously requested RX transfers */
 #define ATU_RX_LIST_CNT	1
@@ -88,76 +54,18 @@
 #define ATU_TX_LIST_CNT	8
 
 /*
- * Normally, when a packet arrives at the driver (with a call to atu_start)
- * we start up a USB transfer and transfer the packet to the adapter. Then
- * atu_txeof gets called on interrupt and we hand over the mbuf to
- * usb_tx_done. usb_tx_done will queue the mbuf and schedules a net-isr.
- * After the interrupt the scheduler will call the net-isr. There the mbuf
- * is free'd and atu_start is called (if there are packets on the TX queue).
- * This means that on average 2 task-switches are performed for every single
- * packet we transmit. 
- * If we simply NOT call usb_tx_done when a single transfer is done, but wait
- * for the other transfers we started simultaneously to complete, we can save
- * the overhead of the extra task-switching.
- *
- * measurements :
- * off		465.55 KB/sec
- * on		487.57 KB/sec
- * (+/- 4.7% increase)
- */
-#define ATU_LAZY_TX_NETISR
-
-/*
- * Minimum number of simultaneous transfers before we start being lazy.
- * Setting this to 0 will make us so lazy we could keep mbuf's around forever
- * (which you do not want)
- */
-#define ATU_LAZY_TX_MIN		1
-
-/*
- * Maximum number of queued mbufs before we call usb_tx_done (should never
- * be higher than ATU_TX_LIST_CNT)
- */
-#define ATU_LAZY_TX_MAX		8
-
-/*
- * Whether or not we padd usb packets transfered to the adapter. looking at
+ * Whether or not we pad usb packets transfered to the adapter. looking at
  * drivers on other platforms there seems to be something magic about the
  * padding.
  * my measurements :
  * on	- 532.55 KB/sec
  * off	- 536.74 KB/sec
- * I don't see the reason why we should padd bytes here. The adapter seems
+ * I don't see the reason why we should pad bytes here. The adapter seems
  * to be transmitting packets just fine without the padding. So the default is
  * to have no padding, but it's at least supplied as an option. This seems to
  * be necessary with newer firmware versions, but I haven't tested that yet.
  */
 /* #define ATU_TX_PADDING */
-
-/*
- * ATU_PROFILING isn't a real optimization. it adds s bunch of sysctl
- * variables that count the number of function calls and data transfers we
- * make. with some shell scripts around it you can easilly measure the
- * performance of the driver and see where bottlenecks might be.
- */
-/* #define ATU_PROFILING */
-
-
-
-
-/**** NO user configurable options beyond this point ****/
-
-
-#ifdef ATU_NO_OPTIMIZATIONS
-#undef ATU_LAZY_TX_NETISR
-#undef ATU_TX_PADDING
-#undef ATU_TX_LIST_CNT
-#define ATU_TX_LIST_CNT		1
-#undef ATU_RX_LIST_CNT
-#define ATU_RX_LIST_CNT		1
-#endif
-
-
 
 /*
  * According to the 802.11 spec (7.1.2) the frame body can be up to 2312 bytes
@@ -177,7 +85,6 @@
  */
 #define ATU_DEFAULT_MTU	1500
 #define ATU_MAX_MTU		(2312 - 2)
-
 
 #define ATU_ENDPT_RX		0x0
 #define ATU_ENDPT_TX		0x1
@@ -217,9 +124,6 @@ struct atu_chain {
 	u_int8_t		atu_idx;
 	u_int16_t		atu_length;
 	int			atu_in_xfer;
-#ifdef ATU_LAZY_TX_NETISR
-	u_int8_t		atu_not_freed;
-#endif /* ATU_LAZY_TX_NETISR */
 	SLIST_ENTRY(atu_chain)	atu_list;
 };
 
@@ -234,16 +138,12 @@ struct atu_cdata {
 	u_int8_t		atu_tx_last_idx;	
 };
 
-
 #define MAX_SSID_LEN		32
 #define ATU_AVG_TIME		20
 
-
 struct atu_softc {
 	USBBASEDEVICE           atu_dev;
-
 	struct ieee80211com	sc_ic;
-
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
 
@@ -267,11 +167,6 @@ struct atu_softc {
 
 	struct atu_cdata	atu_cdata;
 
-#ifdef ATU_LAZY_TX_NETISR
-	int			atu_lazy_tx_cnt;
-	/* struct mbuf		*atu_lazy_tx_list[ATU_LAZY_TX_MAX]; */
-#endif /* ATU_LAZY_TX_NETISR */
-
 	struct timeval		atu_rx_notice;
 	
 	u_int8_t		atu_bssid[ETHER_ADDR_LEN];
@@ -291,7 +186,7 @@ struct atu_softc {
 	u_int8_t		atu_encrypt;
 #define ATU_WEP_RX		0x01
 #define ATU_WEP_TX		0x02
-#define ATU_WEP_TXRX		(0x01 | 0x02)
+#define ATU_WEP_TXRX		(ATU_WEP_RX | ATU_WEP_TX)
 	int			atu_wepkey;
 	int			atu_wepkeylen;
 	u_int8_t		atu_wepkeys[4][13];
@@ -443,7 +338,6 @@ struct atu_cmd_start_ibss {
 	uByte		Res[3];  
 } UPACKED;
 
-
 /*
  * The At76c503 adapters come with different types of radios on them.
  * At this moment the driver supports adapters with RFMD and Intersil radios.
@@ -486,7 +380,6 @@ struct atu_fw {
 	u_int8_t		build;
 } UPACKED;
         
-
 /*
  * The header the AT76c503 puts in front of RX packets (for both managment &
  * data)
