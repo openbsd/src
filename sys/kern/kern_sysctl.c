@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.10 1996/06/29 21:07:52 tholo Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.11 1996/08/08 06:36:45 tholo Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -121,11 +121,9 @@ sys___sysctl(p, v, retval)
 	case CTL_NET:
 		fn = net_sysctl;
 		break;
-#ifdef notyet
 	case CTL_FS:
 		fn = fs_sysctl;
 		break;
-#endif
 	case CTL_MACHDEP:
 		fn = cpu_sysctl;
 		break;

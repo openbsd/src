@@ -77,6 +77,7 @@ int	vttoif_tab[9] = {
 
 int doforce = 1;		/* 1 => permit forcible unmounting */
 int prtactive = 0;		/* 1 => print out reclaim of active vnodes */
+int suid_clear = 1;		/* 1 => clear SUID / SGID on owner change */
 
 /*
  * Insq/Remq for the vnode usage lists.
@@ -1609,4 +1610,57 @@ vfs_shutdown()
 		printf("giving up\n");
 	else
 		printf("done\n");
+}
+
+/*
+ * posix file system related system variables.
+ */
+int
+fs_posix_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	/* all sysctl names at this level are terminal */
+	if (namelen != 1)
+		return (ENOTDIR);
+
+	switch (name[0]) {
+	case FS_POSIX_SETUID:
+		if (newp && securelevel > 0)
+			return (EPERM);
+		return(sysctl_int(oldp, oldlenp, newp, newlen, &suid_clear));
+	default:
+		return (EOPNOTSUPP);
+	}
+	/* NOTREACHED */
+}
+
+/*
+ * file system related system variables.
+ */
+int
+fs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
+{
+	sysctlfn *fn;
+
+	switch (name[0]) {
+	case FS_POSIX:
+		fn = fs_posix_sysctl;
+		break;
+	default:
+		return (EOPNOTSUPP);
+	}
+	return (*fn)(name + 1, namelen - 1, oldp, oldlenp, newp, newlen, p);
 }

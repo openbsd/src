@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.7 1996/06/29 21:06:43 tholo Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.8 1996/08/08 06:36:48 tholo Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -212,6 +212,28 @@ struct kinfo_proc {
 		long	e_spare[4];
 	} kp_eproc;
 };
+
+/*
+ * CTL_FS identifiers
+ */
+#define	FS_POSIX	1		/* POSIX flags */
+#define	FS_MAXID	2
+
+#define	CTL_FS_NAMES { \
+	{ 0, 0 }, \
+	{ "posix", CTLTYPE_NODE }, \
+}
+
+/*
+ * CTL_FS identifiers
+ */
+#define	FS_POSIX_SETUID	1		/* int: always clear SGID/SUID bit when owner change */
+#define	FS_POSIX_MAXID	2
+
+#define	CTL_FS_POSIX_NAMES { \
+	{ 0, 0 }, \
+	{ "setuid", CTLTYPE_INT }, \
+}
 
 /*
  * CTL_HW identifiers

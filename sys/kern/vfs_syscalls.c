@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.11 1996/08/08 04:23:03 tholo Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.12 1996/08/08 06:36:47 tholo Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -59,6 +59,8 @@
 
 #include <vm/vm.h>
 #include <sys/sysctl.h>
+
+extern int suid_clear;
 
 static int change_dir __P((struct nameidata *, struct proc *));
 
@@ -1498,15 +1500,16 @@ sys_chown(p, v, retval)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
-		error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
-		if (error)
-			goto out;
-		mode = vattr.va_mode;
-		if (vattr.va_uid != SCARG(uap, uid))
-			mode &= ~VSUID;
-		if (vattr.va_gid != SCARG(uap, gid))
-			mode &= ~VSGID;
-		if (mode == vattr.va_mode)
+		if (suser(p->p_ucred, &p->p_acflag) ||
+		    suid_clear) {
+			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
+			if (error)
+				goto out;
+			mode = vattr.va_mode & ~(VSUID | VSGID);
+			if (mode == vattr.va_mode)
+				mode = VNOVAL;
+		}
+		else
 			mode = VNOVAL;
 		VATTR_NULL(&vattr);
 		vattr.va_uid = SCARG(uap, uid);
@@ -1548,15 +1551,16 @@ sys_fchown(p, v, retval)
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
 		error = EROFS;
 	else {
-		error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
-		if (error)
-			goto out;
-		mode = vattr.va_mode;
-		if (vattr.va_uid != SCARG(uap, uid))
-			mode &= ~VSUID;
-		if (vattr.va_gid != SCARG(uap, gid))
-			mode &= ~VSGID;
-		if (mode == vattr.va_mode)
+		if (suser(p->p_ucred, &p->p_acflag) ||
+		    suid_clear) {
+			error = VOP_GETATTR(vp, &vattr, p->p_ucred, p);
+			if (error)
+				goto out;
+			mode = vattr.va_mode & ~(VSUID | VSGID);
+			if (mode == vattr.va_mode)
+				mode = VNOVAL;
+		}
+		else
 			mode = VNOVAL;
 		VATTR_NULL(&vattr);
 		vattr.va_uid = SCARG(uap, uid);
