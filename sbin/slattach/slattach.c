@@ -1,4 +1,4 @@
-/*	$OpenBSD: slattach.c,v 1.5 1996/11/13 07:17:20 downsj Exp $	*/
+/*	$OpenBSD: slattach.c,v 1.6 1999/06/02 18:45:39 deraadt Exp $	*/
 /*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: slattach.c,v 1.5 1996/11/13 07:17:20 downsj Exp $";
+static char rcsid[] = "$OpenBSD: slattach.c,v 1.6 1999/06/02 18:45:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -163,7 +163,8 @@ main(argc, argv)
 		;
 	if(dev[i] == '/')
 		i++;
-	(void) sprintf(pidfilename, "%sslip.%s.pid", _PATH_VARRUN, dev + i);
+	(void) snprintf(pidfilename, sizeof pidfilename,
+	    "%sslip.%s.pid", _PATH_VARRUN, dev + i);
 	truncate(pidfilename, 0);    /* If this fails, so will the next one... */
 	if ((pidfile = fopen(pidfilename, "w")) != NULL) {
 		fprintf(pidfile, "%d\n", pid);
