@@ -153,13 +153,13 @@ paramters generated, you can generate a certificate
 and unencrypted private key using the command:
 .Bd -literal -offset indent
 # ssleay req -x509 -nodes -newkey dsa:dsa1024.pem \\
-  -out /etc/dsacert.pem -keyout /etc/ssl/private/dsakey.pem
+  -out /etc/ssl/dsacert.pem -keyout /etc/ssl/private/dsakey.pem
 .Ed
 .Pp
 To generate an encrypted private key, you would use:
 .Bd -literal -offset indent
-# ssleay req -x509 -nodes -newkey dsa:dsa1024.pem \\
-  -out /etc/dsacert.pem -keyout /etc/ssl/private/dsakey.pem
+# ssleay req -x509 -newkey dsa:dsa1024.pem \\
+  -out /etc/ssl/dsacert.pem -keyout /etc/ssl/private/dsakey.pem
 .Ed
 .Sh GENERATING RSA SERVER CERTIFICATES FOR WEB SERVERS
 To generate
@@ -201,7 +201,13 @@ This
 .Pa server.csr
 file can then be given to
 .Ar Certifying Authority
-who will sign the key.
+who will sign the key. One such CA is 
+.Ar Thawte Certification
+which you can reach at
+.Ar http://www.thawte.com/.
+Thawte can currently sign RSA keys for you. A procedure is being worked out
+to allow for DSA keys.
+.Pp
 You can also sign the key yourself, using the command:
 .Bd -literal -offset indent
 # ssleay x509 -req -days 365 -in /etc/ssl/private/server.csr \\
