@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.45 2001/03/14 21:13:24 tholo Exp $	*/
+/*	$OpenBSD: x509.c,v 1.46 2001/03/27 16:50:35 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -491,12 +491,11 @@ x509_generate_kn (X509 *cert)
       return 0;
     }
 
-
-  buf = malloc (strlen (fmt2) + strlen (isname) + strlen (subname));
+  buf = malloc (strlen (fmt2) + strlen (isname) + strlen (subname) + 56);
   if (!buf)
     {
-      log_error ("x509_generate_kn: malloc (%d) failed",
-		 strlen (fmt2) + strlen (isname) + strlen (subname));
+      log_error ("x509_generate_kn: malloc (%d) failed", strlen (fmt2) +
+		 strlen (isname) + strlen (subname) + 56);
       return 0;
     }
 
