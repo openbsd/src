@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ni.c,v 1.1 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: if_ni.c,v 1.2 2002/08/09 20:26:44 jsyn Exp $ */
 /*	$NetBSD: if_ni.c,v 1.15 2002/05/22 16:03:14 wiz Exp $ */
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -139,15 +139,15 @@ struct	ni_softc {
 	u_int8_t	sc_enaddr[ETHER_ADDR_LEN];
 };
 
-static	int	nimatch __P((struct device *, struct cfdata *, void *));
-static	void	niattach __P((struct device *, struct device *, void *));
-static	void	niinit __P((struct ni_softc *));
-static	void	nistart __P((struct ifnet *));
-static	void	niintr __P((void *));
-static	int	niioctl __P((struct ifnet *, u_long, caddr_t));
+static	int	nimatch(struct device *, struct cfdata *, void *);
+static	void	niattach(struct device *, struct device *, void *);
+static	void	niinit(struct ni_softc *);
+static	void	nistart(struct ifnet *);
+static	void	niintr(void *);
+static	int	niioctl(struct ifnet *, u_long, caddr_t);
 static	int	ni_add_rxbuf(struct ni_softc *, struct ni_dg *, int);
-static	void	ni_setup __P((struct ni_softc *));
-static	void	nitimeout __P((struct ifnet *));
+static	void	ni_setup(struct ni_softc *);
+static	void	nitimeout(struct ifnet *);
 static	void	ni_shutdown(void *);
 static	void ni_getpgs(struct ni_softc *sc, int size, caddr_t *v, paddr_t *p);
 static	int failtest(struct ni_softc *, int, int, int, char *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: score.c,v 1.8 2002/07/18 07:13:57 pjanzen Exp $	*/
+/*	$OpenBSD: score.c,v 1.9 2002/08/09 20:26:44 jsyn Exp $	*/
 /*	$NetBSD: score.c,v 1.5 1995/04/22 10:28:26 cgd Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)score.c	8.1 (Berkeley) 5/31/93";
 #else
-static const char rcsid[] = "$OpenBSD: score.c,v 1.8 2002/07/18 07:13:57 pjanzen Exp $";
+static const char rcsid[] = "$OpenBSD: score.c,v 1.9 2002/08/09 20:26:44 jsyn Exp $";
 #endif
 #endif /* not lint */
 
@@ -229,11 +229,11 @@ struct score_entry {
 	char nickname[MAX_OPT_LEN + 1];
 };
 
-static void pad_spaces __P((char *, size_t));
+static void pad_spaces(char *, size_t);
 static void unpad_spaces(char *);
-static int read_score_entry __P((struct score_entry *, FILE *));
-static void write_score_entry __P((const struct score_entry *, int, FILE *));
-static void make_score __P((struct score_entry *, const object *, int));
+static int read_score_entry(struct score_entry *, FILE *);
+static void write_score_entry(const struct score_entry *, int, FILE *);
+static void make_score(struct score_entry *, const object *, int);
 
 
 static void

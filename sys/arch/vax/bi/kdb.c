@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdb.c,v 1.7 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: kdb.c,v 1.8 2002/08/09 20:26:44 jsyn Exp $ */
 /*	$NetBSD: kdb.c,v 1.26 2001/11/13 12:51:34 lukem Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
@@ -90,14 +90,14 @@ struct	kdb_softc {
 	bus_space_handle_t sc_ioh;
 };
 
-int	kdbmatch __P((struct device *, struct cfdata *, void *));
-void	kdbattach __P((struct device *, struct device *, void *));
-void	kdbreset __P((int));
-void	kdbintr __P((void *));
-void	kdbctlrdone __P((struct device *));
-int	kdbprint __P((void *, const char *));
-void	kdbsaerror __P((struct device *, int));
-void	kdbgo __P((struct device *, struct mscp_xi *));
+int	kdbmatch(struct device *, struct cfdata *, void *);
+void	kdbattach(struct device *, struct device *, void *);
+void	kdbreset(int);
+void	kdbintr(void *);
+void	kdbctlrdone(struct device *);
+int	kdbprint(void *, const char *);
+void	kdbsaerror(struct device *, int);
+void	kdbgo(struct device *, struct mscp_xi *);
 
 struct	cfattach kdb_ca = {
 	sizeof(struct kdb_softc), kdbmatch, kdbattach

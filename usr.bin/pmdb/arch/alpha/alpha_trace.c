@@ -1,4 +1,4 @@
-/*	$OpenBSD: alpha_trace.c,v 1.4 2002/07/22 02:54:23 art Exp $	*/
+/*	$OpenBSD: alpha_trace.c,v 1.5 2002/08/09 20:26:44 jsyn Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -172,11 +172,11 @@ inst_load(int ins)
 	return (0);
 }
 
-static __inline int sext __P((u_int));
-static __inline int rega __P((u_int));
-static __inline int regb __P((u_int));
-static __inline int regc __P((u_int));
-static __inline int disp __P((u_int));
+static __inline int sext(u_int);
+static __inline int rega(u_int);
+static __inline int regb(u_int);
+static __inline int regc(u_int);
+static __inline int disp(u_int);
 
 static __inline int
 sext(x)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: consio.c,v 1.4 2002/06/11 09:36:23 hugh Exp $ */
+/*	$OpenBSD: consio.c,v 1.5 2002/08/09 20:26:45 jsyn Exp $ */
 /*	$NetBSD: consio.c,v 1.13 2002/05/24 21:40:59 ragge Exp $ */
 /*
  * Copyright (c) 1994, 1998 Ludd, University of Lule}, Sweden.
@@ -66,12 +66,12 @@ int rom_getc;		/* ROM-address of get-routine */
 unsigned char	*ka630_conspage;
 
 /* Function that initializes things for KA630 ROM console I/O */
-void ka630_consinit __P((void));
+void ka630_consinit(void);
 
 /* Functions that use KA630 ROM for console I/O */
-void ka630_rom_putchar __P((int c));
-int ka630_rom_getchar __P((void));
-int ka630_rom_testchar __P((void));
+void ka630_rom_putchar(int c);
+int ka630_rom_getchar(void);
+int ka630_rom_testchar(void);
 
 /* Also added such a thing for KA53 - MK-991208 */
 unsigned char  *ka53_conspage;

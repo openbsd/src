@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.88 2002/07/29 22:19:39 mickey Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.89 2002/08/09 20:26:45 jsyn Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -243,9 +243,9 @@ void acard_chip_map(struct pciide_softc*, struct pci_attach_args*);
 void acard_setup_channel(struct channel_softc*);
 int  acard_pci_intr(void *);
 
-void serverworks_chip_map __P((struct pciide_softc*, struct pci_attach_args*));
-void serverworks_setup_channel __P((struct channel_softc*));
-int  serverworks_pci_intr __P((void *));
+void serverworks_chip_map(struct pciide_softc*, struct pci_attach_args*);
+void serverworks_setup_channel(struct channel_softc*);
+int  serverworks_pci_intr(void *);
  
 void pciide_channel_dma_setup(struct pciide_channel *);
 int  pciide_dma_table_setup(struct pciide_softc*, int, int);

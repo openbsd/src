@@ -1,4 +1,4 @@
-/*	$OpenBSD: macros.h,v 1.10 2002/06/11 09:36:24 hugh Exp $ */
+/*	$OpenBSD: macros.h,v 1.11 2002/08/09 20:26:45 jsyn Exp $ */
 /*	$NetBSD: macros.h,v 1.20 2000/07/19 01:02:52 matt Exp $	*/
 
 /*
@@ -100,7 +100,7 @@ bcopy(const void *from, void *toe, size_t len)
 }
 #endif
 
-void	blkclr __P((void *, size_t));
+void	blkclr(void *, size_t);
 
 static __inline__ void *
 memset(void *block, int c, size_t len)
