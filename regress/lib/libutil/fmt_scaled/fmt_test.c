@@ -108,6 +108,7 @@ static struct {			/* the test cases */
 	{ 1LL<<61, "2.0E", 0 },
 	{ 1LL<<62, "4.0E", 0 },
 	{ 1LL<<63, "", ERANGE },
+	{ 1099512676352LL, "1.0T", 0}
 };
 #	define DDATA_LENGTH (sizeof ddata/sizeof *ddata)
 
