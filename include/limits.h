@@ -1,4 +1,4 @@
-/*	$OpenBSD: limits.h,v 1.9 2004/05/31 18:31:52 millert Exp $	*/
+/*	$OpenBSD: limits.h,v 1.10 2004/05/31 18:34:41 millert Exp $	*/
 /*	$NetBSD: limits.h,v 1.7 1994/10/26 00:56:00 cgd Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
 #define	_POSIX_RE_DUP_MAX	255
 #define _POSIX_SSIZE_MAX	32767
 #define _POSIX_STREAM_MAX	8
-#define _POSIX_SYMLINK_MAX	255
+#define _POSIX_SYMLINK_MAX	_POSIX_PATH_MAX
 #define _POSIX_SYMLOOP_MAX	8
 #define _POSIX_TZNAME_MAX	3
 
