@@ -1,4 +1,4 @@
-/*	$OpenBSD: rnd.c,v 1.4 1996/08/10 19:41:16 deraadt Exp $	*/
+/*	$OpenBSD: rnd.c,v 1.5 1996/08/11 06:41:38 dm Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff.
@@ -263,6 +263,12 @@ struct timer_rand_state {
 	int	dont_count_entropy:1;
 };
 
+struct arc4_stream {
+	u_char	i;
+	u_char	j;
+	u_char	s[256];
+};
+
 /* tags for different random sources */
 #define	ENT_NET		0x100
 #define	ENT_BLKDEV	0x200
@@ -272,6 +278,7 @@ struct timer_rand_state {
 cdev_decl(rnd);
 
 static struct random_bucket random_state;
+static struct arc4_stream arc4random_state;
 static u_int32_t random_pool[POOLWORDS];
 static struct timer_rand_state keyboard_timer_state;
 static struct timer_rand_state mouse_timer_state;
@@ -284,11 +291,53 @@ static int	rnd_sleep = 0;
 #ifndef MIN
 #define MIN(a,b) (((a) < (b)) ? (a) : (b))
 #endif
+
+static void
+arc4_init (struct arc4_stream *as, u_char *data, int len)
+{
+	int n;
+	u_char si;
+
+	as->i--;
+	for (n = 0; n < 256; n++) {
+		as->i = (as->i + 1) & 0xff;
+		si = as->s[as->i];
+		as->j = (as->j + si + data[n % len]) & 0xff;
+		as->s[as->i] = as->s[as->j];
+		as->s[as->j] = si;
+	}
+}
+
+static inline u_char
+arc4_getbyte (struct arc4_stream *as)
+{
+	u_char si, sj;
+
+	as->i = (as->i + 1) & 0xff;
+	si = as->s[as->i];
+	as->i = (as->i + si) & 0xff;
+	sj = as->s[as->j];
+	as->s[as->i] = sj;
+	as->s[as->j] = si;
+	return (as->s[(si + sj) & 0xff]);
+}
+
+u_int
+arc4random (void)
+{
+  return ((arc4_getbyte (&arc4random_state) << 24)
+	  | (arc4_getbyte (&arc4random_state) << 16)
+	  | (arc4_getbyte (&arc4random_state) << 8)
+	  | arc4_getbyte (&arc4random_state));
+}
 	
 void
 rndattach(num)
 	int	num;
 {
+	int i;
+	struct timeval tv;
+
 	if (num > 1)
 		panic("no more than one rnd device");
 
@@ -302,6 +351,11 @@ rndattach(num)
 				    M_DEVBUF, M_WAITOK);
 	bzero(tty_timer_state, nchrdev*sizeof(*tty_timer_state));
 	extract_timer_state.dont_count_entropy = 1;
+
+	for (i = 0; i < 256; i++)
+		arc4random_state.s[i] = i;
+	microtime (&tv);
+	arc4_init (&arc4random_state, (u_char *) &tv, sizeof (tv));
 }
 
 int
@@ -623,6 +677,14 @@ rndread(dev, uio, ioflag)
 			while (i--)
 				buf[i] = random();
 			break;
+		case RND_ARND:
+		    {
+			u_char *cp = (u_char *) buf;
+			u_char *end = cp + n;
+			while (cp < end)
+				*cp++ = arc4_getbyte (&arc4random_state);
+			break;
+		    }
 		}
 		splx(s);
 		if (n != 0 && ret == 0)
@@ -644,6 +706,19 @@ rndselect(dev, rw, p)
 		return 1;
 	}
 	return 0;
+}
+
+static inline void
+arc4_stir (struct arc4_stream *as)
+{
+	int rsec = random_state.entropy_count >> 3;
+	u_int buf[2 + POOLWORDS];
+	int n = min (sizeof(buf) - 2 * sizeof (u_int), rsec);
+
+	microtime ((struct timeval *) buf);
+	get_random_bytes (buf + 2, n);
+	arc4_init (&arc4random_state, (u_char *) buf,
+		   2 * sizeof (u_int) + n);
 }
 
 int
@@ -668,11 +743,16 @@ rndwrite(dev, uio, flags)
 		if (!ret) {
 			int	i;
 			while (n % sizeof(u_int32_t))
-				buf[n++] = 0;
+				((u_char *) buf)[n++] = 0;
+			n >>= 2;
 			for (i = 0; i < n; i++)
 				add_entropy_word(&random_state, buf[i]);
 		}
 	}
+
+	if (minor(dev) == RND_ARND && !ret)
+		arc4_stir (&arc4random_state);
+
 	return ret;
 }
 
@@ -704,6 +784,15 @@ rndioctl(dev, cmd, data, flag, p)
 		if (suser(p->p_ucred, &p->p_acflag) != 0)
 			return EPERM;
 		random_state.entropy_count = 0;
+		ret = 0;
+		break;
+	case RNDSTIRARC4:
+		if (suser(p->p_ucred, &p->p_acflag) != 0)
+			return EPERM;
+		if (random_state.entropy_count < 64)
+			return EAGAIN;
+		arc4_stir (&arc4random_state);
+		ret = 0;
 		break;
 	default:
 		ret = EINVAL;
