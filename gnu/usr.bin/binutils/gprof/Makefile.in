@@ -51,6 +51,10 @@ OBJS=	$(MY_TARGET).o basic_blocks.o bsd_callg_bl.o call_graph.o \
 # Files that can be generated, but should be included in distribution.
 GEN_FILES = flat_bl.c bsd_callg_bl.c fsf_callg_bl.c
 
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.
+INSTALL_MAN = install-man
+
 CFLAGS=-g -DDEBUG
 LDFLAGS=
 HLDFLAGS = @HLDFLAGS@
@@ -99,8 +103,10 @@ install-info: gprof.info
 		$(INSTALL_DATA) $$dir/$$i $(infodir)/$$i ; \
 	done
 
-install: all
+install: all $(INSTALL_MAN)
 	$(INSTALL_XFORM) gprof $(bindir)/gprof
+
+install-man:
 	$(INSTALL_XFORM1) $(srcdir)/gprof.1 $(man1dir)/gprof.1
 
 gprof:	$(OBJS) $(LIBDEPS)

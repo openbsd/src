@@ -496,6 +496,10 @@ YYOBJ = c-exp.tab.o f-exp.tab.o m2-exp.tab.o
 
 DISTSTUFF = $(YYFILES)
 
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.
+INSTALL_MAN = install-man
+
 # Prevent Sun make from putting in the machine type.  Setting
 # TARGET_ARCH to nothing works for SunOS 3, 4.0, but not for 4.1.
 .c.o:
@@ -530,7 +534,7 @@ gdb.z:gdb.1
 # time it takes for make to check that all is up to date.
 # install-only is intended to address that need.
 install: all install-only
-install-only:
+install-only: $(INSTALL_MAN)
 	transformed_name=`t='$(program_transform_name)'; \
 			  echo gdb | sed -e $$t` ; \
 		if test "x$$transformed_name" = x; then \
@@ -539,13 +543,15 @@ install-only:
 		  true ; \
 		fi ; \
 		$(INSTALL_PROGRAM) gdb $(bindir)/$$transformed_name ; \
-		$(INSTALL_DATA) $(srcdir)/gdb.1 $(man1dir)/$$transformed_name.1
 	if [ x"$(ENABLE_GDBTK)" != x ] ; then \
 		  $(INSTALL_DATA) $(srcdir)/gdbtk.tcl $(datadir)/gdbtk.tcl ; \
 		else \
 		  true ; \
 		fi
 	@$(MAKE) DO=install "DODIRS=$(SUBDIRS)" $(FLAGS_TO_PASS) subdir_do 
+
+install-man:
+	$(INSTALL_DATA) $(srcdir)/gdb.1 $(man1dir)/$$transformed_name.1
 
 uninstall: force
 	transformed_name=`t='$(program_transform_name)'; \
