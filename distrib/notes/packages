@@ -22,7 +22,7 @@ the different installation methods follow.  If emacs is to be installed
 it should be installed first as it creates the ``info'' directory file
 that may be modified by other applications.
 
-Installing applications from the the CD-ROM package collection:
+Installing applications from the CD-ROM package collection:
 
 	The OpenBSD CD-ROM ships with applications pre-built
 	for various hardware architectures.  The applications
