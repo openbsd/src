@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.127 2004/06/21 23:50:36 tholo Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.128 2004/07/05 00:15:20 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2475,7 +2475,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 						    addr;
 		static struct pfioc_trans_e	 ioe;
 		static struct pfr_table		 table;
-		int			 	 i;
+		int				 i;
 
 		if (io->esize != sizeof(ioe)) {
 			error = ENODEV;

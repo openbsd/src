@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.93 2004/07/03 05:57:12 itojun Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.94 2004/07/05 00:15:20 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1484,7 +1484,7 @@ pf_normalize_tcp_init(struct mbuf *m, int off, struct pf_pdesc *pd,
 					    sizeof(u_int32_t));
 					memcpy(&tsecr, &opt[6],
 					    sizeof(u_int32_t));
-		    			src->scrub->pfss_tsval0 = ntohl(tsval);
+					src->scrub->pfss_tsval0 = ntohl(tsval);
 					src->scrub->pfss_tsval = ntohl(tsval);
 					src->scrub->pfss_tsecr = ntohl(tsecr);
 					microuptime(&src->scrub->pfss_last);
@@ -1768,17 +1768,18 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 			DPFPRINTF(("Timestamp failed %c%c%c%c\n",
 			    SEQ_LT(tsval, dst->scrub->pfss_tsecr) ? '0' : ' ',
 			    SEQ_GT(tsval, src->scrub->pfss_tsval +
-			        tsval_from_last) ? '1' : ' ',
+			    tsval_from_last) ? '1' : ' ',
 			    SEQ_GT(tsecr, dst->scrub->pfss_tsval) ? '2' : ' ',
 			    SEQ_LT(tsecr, dst->scrub->pfss_tsval0)? '3' : ' '));
-			DPFPRINTF((" tsval: %lu  tsecr: %lu  +ticks: %lu  idle: %lus %lums\n",
+			DPFPRINTF((" tsval: %lu  tsecr: %lu  +ticks: %lu  "
+			    "idle: %lus %lums\n",
 			    tsval, tsecr, tsval_from_last, delta_ts.tv_sec,
 			    delta_ts.tv_usec / 1000));
 			DPFPRINTF((" src->tsval: %lu  tsecr: %lu\n",
 			    src->scrub->pfss_tsval, src->scrub->pfss_tsecr));
-			DPFPRINTF((" dst->tsval: %lu  tsecr: %lu  tsval0: %lu\n",
-			    dst->scrub->pfss_tsval, dst->scrub->pfss_tsecr,
-			    dst->scrub->pfss_tsval0));
+			DPFPRINTF((" dst->tsval: %lu  tsecr: %lu  tsval0: %lu"
+			    "\n", dst->scrub->pfss_tsval,
+			    dst->scrub->pfss_tsecr, dst->scrub->pfss_tsval0));
 			if (pf_status.debug >= PF_DEBUG_MISC) {
 				pf_print_state(state);
 				pf_print_flags(th->th_flags);
@@ -1828,7 +1829,8 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 			 * stack changed its RFC1323 behavior?!?!
 			 */
 			if (pf_status.debug >= PF_DEBUG_MISC) {
-				DPFPRINTF(("Did not receive expected RFC1323 timestamp\n"));
+				DPFPRINTF(("Did not receive expected RFC1323 "
+				    "timestamp\n"));
 				pf_print_state(state);
 				pf_print_flags(th->th_flags);
 				printf("\n");
@@ -1856,7 +1858,9 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 			if (pf_status.debug >= PF_DEBUG_MISC && dst->scrub &&
 			    (dst->scrub->pfss_flags & PFSS_TIMESTAMP)) {
 				/* Don't warn if other host rejected RFC1323 */
-				DPFPRINTF(("Broken RFC1323 stack did not timestamp data packet.  Disabled PAWS security.\n"));
+				DPFPRINTF(("Broken RFC1323 stack did not "
+				    "timestamp data packet. Disabled PAWS "
+				    "security.\n"));
 				pf_print_state(state);
 				pf_print_flags(th->th_flags);
 				printf("\n");
@@ -1884,7 +1888,7 @@ pf_normalize_tcp_stateful(struct mbuf *m, int off, struct pf_pdesc *pd,
 			    (SEQ_LT(tsval, src->scrub->pfss_tsval0) ||
 			    src->scrub->pfss_tsval0 == 0)) {
 				/* tsval0 MUST be the lowest timestamp */
-	    			src->scrub->pfss_tsval0 = tsval;
+				src->scrub->pfss_tsval0 = tsval;
 			}
 
 			/* Only fully initialized after a TS gets echoed */
