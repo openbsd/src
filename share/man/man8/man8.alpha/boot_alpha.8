@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_alpha.8,v 1.6 2002/10/17 23:18:48 miod Exp $
+.\"	$OpenBSD: boot_alpha.8,v 1.7 2003/02/01 16:38:39 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -69,27 +69,28 @@ variable.
 Option letters are case insensitive.
 The following option letters are recognized:
 .Bl -tag -width "XXX" -offset indent -compact
-.It a
+.Pp
+.It Cm a
 Boot the system multi-user.
-.It b
+.It Cm b
 Enter the debugger,
 .Xr ddb 4 ,
 as soon as the kernel console has been initialized.
-.It c
+.It Cm c
 Enter the
 .Dq User Kernel Configuration
 mode upon startup
 .Pq Xr boot_config 8 .
-.It d
+.It Cm d
 Create a kernel crash dump immediately after the devices have been configured.
 This option is only available on kernels compiled with
 .Qq option DEBUG .
-.It h
+.It Cm h
 On the next system reboot, always halt the system, even if a reboot is
 required.
-.It n
+.It Cm n
 Prompt for the root filesystem device after the devices have been configured.
-.It s
+.It Cm s
 Boot the system single-user.
 This is the default behaviour of the kernel if no flags are specified.
 .El

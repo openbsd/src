@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hp300.8,v 1.3 2002/10/17 23:18:51 miod Exp $
+.\"	$OpenBSD: boot_hp300.8,v 1.4 2003/02/01 16:38:39 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -108,21 +108,22 @@ at the boot prompt.
 .Pp
 The following options are recognized:
 .Bl -tag -width "-XXX" -offset indent -compact
-.It -a
+.Pp
+.It Fl a
 Prompt for the root filesystem device after the devices have been configured.
-.It -b
+.It Fl b
 On the next system reboot, always halt the system, even if a reboot is
 required.
-.It -c
+.It Fl c
 Enter the
 .Dq User Kernel Configuration
 mode upon startup
 .Pq see Xr boot_config 8 .
-.It -d
+.It Fl d
 Enter the debugger,
 .Xr ddb 4 ,
 as soon as the kernel console has been initialized.
-.It -s
+.It Fl s
 Boot the system single-user.
 The system will be booted multi-user unless this option is specified.
 .El
@@ -130,8 +131,9 @@ The system will be booted multi-user unless this option is specified.
 If the user does not enter anything after a few seconds, the bootloader
 will attempt to boot a kernel from the device it was loaded from, with no
 options.
-The following kernel filenames will be tried, in that order:
+The following kernel filenames will be tried, in this order:
 .Bl -item -compact
+.Pp
 .It
 bsd
 .It

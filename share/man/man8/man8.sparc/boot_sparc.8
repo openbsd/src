@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.5 2002/10/17 23:18:51 miod Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.6 2003/02/01 16:38:39 jmc Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -166,19 +166,20 @@ and is the factory default.
 .Ss Boot process options
 The following options are recognized:
 .Bl -tag -width "-XXX" -offset indent -compact
-.It -a
+.Pp
+.It Fl a
 Prompt for the root filesystem and swap devices after the devices have
 been configured.
-.It -c
+.It Fl c
 Enter the
 .Dq User Kernel Configuration
 mode upon startup
 .Pq see Xr boot_config 8 .
-.It -d
+.It Fl d
 Enter the debugger ,
 .Xr ddb 4 ,
 as soon as the kernel console has been initialized.
-.It -s
+.It Fl s
 Boot the system single-user.
 The system will be booted multi-user unless this option is specified.
 .El
@@ -199,7 +200,7 @@ during the next multi-user boot cycle), and after the dump is complete
 If the
 .Xr sysctl 8
 variable
-.Ev ddb.console
+.Ev Em ddb.console
 is enabled, at any time you can break back to the ROM by pressing the
 .Dq L1
 .Pq also known as the Dq stop key

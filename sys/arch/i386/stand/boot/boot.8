@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.30 2002/09/16 07:58:15 miod Exp $
+.\"	$OpenBSD: boot.8,v 1.31 2003/02/01 16:38:39 jmc Exp $
 .\"
 .\" Copyright (c) 1997-2001 Michael Shalayeff
 .\" All rights reserved.
@@ -48,7 +48,7 @@ this program is loaded by the
 .Xr biosboot 8
 primary bootstrap loader and provides a convenient way to load the kernel.
 This program acts as an enhanced boot monitor for PC systems, providing
-common interface for the kernel to start from.
+a common interface for the kernel to start from.
 .Pp
 Basic operations include:
 .Pp
@@ -124,10 +124,10 @@ program, followed by the
 .Pp
 .Dl boot>
 .Pp
-prompt, which means you are in the interactive mode and may enter commands.
+prompt, which means you are in interactive mode and may enter commands.
 If you do not,
 .Nm
-will proceed to loading the kernel with the current parameters after the
+will proceed to load the kernel with the current parameters after the
 timeout period has expired.
 .El
 .Sh COMMANDS

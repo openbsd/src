@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_macppc.8,v 1.4 2002/11/08 08:08:47 mpech Exp $
+.\"	$OpenBSD: boot_macppc.8,v 1.5 2003/02/01 16:38:39 jmc Exp $
 .\"
 .\" Copyright (c) 1992, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -117,19 +117,20 @@ specification.
 .Pp
 The following options are recognized:
 .Bl -tag -width "-XXX" -offset indent -compact
-.It -a
+.Pp
+.It Fl a
 Prompt for the root filesystem and swap devices after the devices have
 been configured.
-.It -c
+.It Fl c
 Enter the
 .Dq User Kernel Config
 mode upon startup
 .Pq see Xr boot_config 8 .
-.It -d
+.It Fl d
 Enter the debugger,
 .Xr ddb 4 ,
 as soon as the kernel console has been initialized.
-.It -s
+.It Fl s
 Boot the system single-user.
 The system will be booted multi-user unless this option is specified.
 .El
@@ -162,7 +163,7 @@ default system kernel
 .It Pa /usr/mdec/ofwboot
 system bootstrap (usually installed on a standalone FAT partition or an
 .Tn Apple
-HFS partition, to be readable by openfirmware).
+HFS partition, to be readable by openfirmware)
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_hppa.8,v 1.1 2002/10/17 23:18:51 miod Exp $
+.\"	$OpenBSD: boot_hppa.8,v 1.2 2003/02/01 16:38:39 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Miodrag Vallat.
 .\" All rights reserved.
@@ -49,7 +49,7 @@ archive, either on a disk device, or via the network, using the
 .Em bootp
 or
 .Em rboot
-protocols, depening on the PDC version.
+protocols, depending on the PDC version.
 .Ss PDC concepts
 If autoboot is enabled, the PDC will attempt to boot from the specified
 .Dq boot path
@@ -82,7 +82,8 @@ Select from menu:
 .Pp
 which provides the following commands:
 .Bl -tag -width "XXX" -offset indent -compact
-.It b
+.Pp
+.It Cm b
 boot from a device found during the scan,
 either with its short
 .Dq P#
@@ -92,11 +93,11 @@ For example, to boot from the
 disk with id 6 off the built-in (first) controller,
 one would enter
 .Ic b Ar scsi.6.0 .
-.It s
+.It Cm s
 rescan for bootable devices.
-.It a
+.It Cm a
 enter the second part of interactive mode.
-.It x
+.It Cm x
 resume an interrupted boot sequence.
 .El
 .Pp
@@ -105,7 +106,7 @@ The
 mode, recognizable with its
 .Em BOOT_ADMIN>
 prompt, controls the various boot options.
-The complete list of commands depends of the machine and PDC version.
+The complete list of commands depends on the machine and PDC version.
 The following list only mentions commands impacting the boot process.
 .Bl -tag -width AUTOSELECT -offset indent
 .It AUTOSELECT
@@ -113,10 +114,10 @@ Displays or changes the autoboot setting.
 If autoselect is set to
 .Dq on ,
 the PDC will always attempt to boot the first bootable device found in
-that order:
+this order:
 .Bl -enum -offset indent -compact
 .It
-boot device
+Boot device
 .Em path
 setting.
 .It
@@ -175,30 +176,30 @@ screen center (unless you are using a serial console).
 There is only one interactive mode, with a
 .Em BOOT_ADMIN>
 prompt, which provides both boot settings and commands.
-The complete list of commands depends of the machine and PDC version.
+The complete list of commands depends on the machine and PDC version.
 The following list only mentions commands impacting the boot process.
 .Bl -tag -width auto\ search -offset indent
-.It auto\ boot
+.It Ic auto boot
 Displays or changes the autoboot setting.
 If
-.Ev auto\ boot
+.Ev Ic auto boot
 is set to
 .Dq on ,
 the PDC will always attempt to boot.
-The booted device choosen will depend of the
-.Ev auto\ search
+The booted device choosen will depend on the
+.Ev Ic auto search
 setting.
-.It auto\ search
+.It Ic auto search
 Displays or changes the device scan setting.
 If
-.Ev auto\ search
+.Ev Ic auto search
 is set to
 .Dq on ,
 the PDC will attempt to boot the first bootable device found in
-that order:
+this order:
 .Bl -enum -offset indent -compact
 .It
-boot device
+Boot device
 .Em path
 setting.
 .It
@@ -218,20 +219,20 @@ devices connected to secondary controllers,
 the highest ID numbers being preferred.
 .El
 If
-.Ev auto\ search
+.Ev Ic auto search
 is set to
 .Dq off
 and the primary boot path points to a bootable device,
 no device scan will occur.
 .Pp
 Note that setting
-.Ev auto\ search
+.Ev Ic auto search
 to
 .Dq on
 will force autoboot, regardless of the
-.Ev auto\ boot
+.Ev Ic auto boot
 value.
-.It boot
+.It Ic boot
 Boots off the specified device.
 The
 .Dq primary
@@ -242,7 +243,7 @@ path settings may be booted with
 and
 .Ic boot Ar alt
 respectively.
-.It path
+.It Ic path
 Displays or changes the boot and console devices.
 The boot device is defined as the
 .Dq primary
@@ -262,7 +263,7 @@ will list the various path settings.
 .Ss Boot process options
 The
 .Ox
-hppa boot loader program is extensively described is a separate document,
+hppa boot loader program is extensively described in a separate document,
 .Xr boot 8 .
 .Ss Abnormal system termination
 If the system crashes, it will enter the kernel debugger,
