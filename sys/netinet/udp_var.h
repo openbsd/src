@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_var.h,v 1.9 1995/06/12 00:48:09 mycroft Exp $	*/
+/*	$NetBSD: udp_var.h,v 1.10 1995/11/21 01:07:48 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -42,8 +42,6 @@ struct	udpiphdr {
 	struct 	ipovly ui_i;		/* overlaid ip structure */
 	struct	udphdr ui_u;		/* udp header */
 };
-#define	ui_next		ui_i.ih_next
-#define	ui_prev		ui_i.ih_prev
 #define	ui_x1		ui_i.ih_x1
 #define	ui_pr		ui_i.ih_pr
 #define	ui_len		ui_i.ih_len

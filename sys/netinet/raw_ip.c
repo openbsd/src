@@ -1,4 +1,4 @@
-/*	$NetBSD: raw_ip.c,v 1.21 1995/06/18 20:01:15 cgd Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.22 1995/11/30 16:42:18 pk Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -255,6 +255,15 @@ rip_usrreq(so, req, m, nam, control)
 #ifdef MROUTING
 	extern struct socket *ip_mrouter;
 #endif
+	if (req == PRU_CONTROL)
+		return (in_control(so, (long)m, (caddr_t)nam,
+			(struct ifnet *)control));
+
+	if (inp == NULL && req != PRU_ATTACH) {
+		error = EINVAL;
+		goto release;
+	}
+
 	switch (req) {
 
 	case PRU_ATTACH:
@@ -396,6 +405,7 @@ rip_usrreq(so, req, m, nam, control)
 	default:
 		panic("rip_usrreq");
 	}
+release:
 	if (m != NULL)
 		m_freem(m);
 	return (error);

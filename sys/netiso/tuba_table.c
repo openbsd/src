@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_table.c,v 1.4 1995/08/12 23:59:53 mycroft Exp $	*/
+/*	$NetBSD: tuba_table.c,v 1.5 1995/10/16 05:28:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -91,7 +91,7 @@ tuba_lookup(siso, wait)
 	struct tuba_cache **new;
 	int dupentry = 0, sum_a = 0, sum_b = 0, old_size, i;
 
-	if ((rn = rn_match((caddr_t)&siso->siso_addr, tuba_tree->rnh_treetop))
+	if ((rn = rn_match((caddr_t)&siso->siso_addr, tuba_tree))
 	     && ((rn->rn_flags & RNF_ROOT) == 0)) {
 		tc = (struct tuba_cache *)rn;
 		tc->tc_time = time.tv_sec;

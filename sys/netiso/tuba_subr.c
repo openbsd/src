@@ -1,4 +1,4 @@
-/*	$NetBSD: tuba_subr.c,v 1.4 1995/06/13 07:58:24 mycroft Exp $	*/
+/*	$NetBSD: tuba_subr.c,v 1.5 1995/11/21 01:07:54 cgd Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -326,8 +326,8 @@ tuba_tcpinput(m, src, dst)
 		ti->ti_src.s_addr = tuba_table[findex]->tc_sum;
 	else
 		ti->ti_src.s_addr = tuba_table[findex]->tc_ssum;
-	ti->ti_prev = ti->ti_next = 0;
-	ti->ti_x1 = 0; ti->ti_pr = ISOPROTO_TCP;
+	bzero(ti->ti_x1, sizeof ti->ti_x1);
+	ti->ti_pr = ISOPROTO_TCP;
 	ti->ti_len = htons((u_short)tlen);
 	if (ti->ti_sum = in_cksum(m, m->m_pkthdr.len)) {
 		tcpstat.tcps_rcvbadsum++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_subr.c,v 1.19 1995/06/12 06:48:54 mycroft Exp $	*/
+/*	$NetBSD: tcp_subr.c,v 1.20 1995/11/21 01:07:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -104,8 +104,7 @@ tcp_template(tp)
 		m->m_len = sizeof (struct tcpiphdr);
 		n = mtod(m, struct tcpiphdr *);
 	}
-	n->ti_next = n->ti_prev = 0;
-	n->ti_x1 = 0;
+	bzero(n->ti_x1, sizeof n->ti_x1);
 	n->ti_pr = IPPROTO_TCP;
 	n->ti_len = htons(sizeof (struct tcpiphdr) - sizeof (struct ip));
 	n->ti_src = inp->inp_laddr;
@@ -176,13 +175,12 @@ tcp_respond(tp, ti, m, ack, seq, flags)
 		xchg(ti->ti_dport, ti->ti_sport, u_int16_t);
 #undef xchg
 	}
-	ti->ti_len = htons((u_short)(sizeof (struct tcphdr) + tlen));
+	ti->ti_len = htons((u_int16_t)(sizeof (struct tcphdr) + tlen));
 	tlen += sizeof (struct tcpiphdr);
 	m->m_len = tlen;
 	m->m_pkthdr.len = tlen;
 	m->m_pkthdr.rcvif = (struct ifnet *) 0;
-	ti->ti_next = ti->ti_prev = 0;
-	ti->ti_x1 = 0;
+	bzero(ti->ti_x1, sizeof ti->ti_x1);
 	ti->ti_seq = htonl(seq);
 	ti->ti_ack = htonl(ack);
 	ti->ti_x2 = 0;
@@ -215,7 +213,7 @@ tcp_newtcpcb(inp)
 	if (tp == NULL)
 		return ((struct tcpcb *)0);
 	bzero((char *) tp, sizeof(struct tcpcb));
-	tp->seg_next = tp->seg_prev = (struct tcpiphdr *)tp;
+	LIST_INIT(&tp->segq);
 	tp->t_maxseg = tcp_mssdflt;
 
 	tp->t_flags = tcp_do_rfc1323 ? (TF_REQ_SCALE|TF_REQ_TSTMP) : 0;
@@ -271,7 +269,7 @@ struct tcpcb *
 tcp_close(tp)
 	register struct tcpcb *tp;
 {
-	register struct tcpiphdr *t;
+	register struct ipqent *qe;
 	struct inpcb *inp = tp->t_inpcb;
 	struct socket *so = inp->inp_socket;
 	register struct mbuf *m;
@@ -346,12 +344,10 @@ tcp_close(tp)
 	}
 #endif /* RTV_RTT */
 	/* free the reassembly queue, if any */
-	t = tp->seg_next;
-	while (t != (struct tcpiphdr *)tp) {
-		t = (struct tcpiphdr *)t->ti_next;
-		m = REASS_MBUF((struct tcpiphdr *)t->ti_prev);
-		remque(t->ti_prev);
-		m_freem(m);
+	while ((qe = tp->segq.lh_first) != NULL) {
+		LIST_REMOVE(qe, ipqe_q);
+		m_freem(qe->ipqe_m);
+		FREE(qe, M_IPQ);
 	}
 	if (tp->t_template)
 		(void) m_free(dtom(tp->t_template));

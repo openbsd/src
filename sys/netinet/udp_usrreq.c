@@ -1,4 +1,4 @@
-/*	$NetBSD: udp_usrreq.c,v 1.24 1995/08/12 23:59:42 mycroft Exp $	*/
+/*	$NetBSD: udp_usrreq.c,v 1.25 1995/11/21 01:07:46 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993
@@ -142,9 +142,8 @@ udp_input(m, iphlen)
 	 * Checksum extended UDP header and data.
 	 */
 	if (udpcksum && uh->uh_sum) {
-		((struct ipovly *)ip)->ih_next = 0;
-		((struct ipovly *)ip)->ih_prev = 0;
-		((struct ipovly *)ip)->ih_x1 = 0;
+		bzero(((struct ipovly *)ip)->ih_x1,
+		    sizeof ((struct ipovly *)ip)->ih_x1);
 		((struct ipovly *)ip)->ih_len = uh->uh_ulen;
 		if (uh->uh_sum = in_cksum(m, len + sizeof (struct ip))) {
 			udpstat.udps_badsum++;
@@ -437,8 +436,7 @@ udp_output(inp, m, addr, control)
 	 * and addresses and length put into network format.
 	 */
 	ui = mtod(m, struct udpiphdr *);
-	ui->ui_next = ui->ui_prev = 0;
-	ui->ui_x1 = 0;
+	bzero(ui->ui_x1, sizeof ui->ui_x1);
 	ui->ui_pr = IPPROTO_UDP;
 	ui->ui_len = htons((u_int16_t)len + sizeof (struct udphdr));
 	ui->ui_src = inp->inp_laddr;

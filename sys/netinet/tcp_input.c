@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.19 1995/08/04 01:12:23 mycroft Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.20 1995/11/21 01:07:39 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1990, 1993, 1994
@@ -87,7 +87,7 @@ extern u_long sb_max;
  */
 #define	TCP_REASS(tp, ti, m, so, flags) { \
 	if ((ti)->ti_seq == (tp)->rcv_nxt && \
-	    (tp)->seg_next == (struct tcpiphdr *)(tp) && \
+	    (tp)->segq.lh_first == NULL && \
 	    (tp)->t_state == TCPS_ESTABLISHED) { \
 		if ((ti)->ti_flags & TH_PUSH) \
 			tp->t_flags |= TF_ACKNOW; \
@@ -112,7 +112,7 @@ tcp_reass(tp, ti, m)
 	register struct tcpiphdr *ti;
 	struct mbuf *m;
 {
-	register struct tcpiphdr *q;
+	register struct ipqent *p, *q, *nq, *tiqe;
 	struct socket *so = tp->t_inpcb->inp_socket;
 	int flags;
 
@@ -124,11 +124,22 @@ tcp_reass(tp, ti, m)
 		goto present;
 
 	/*
+	 * Allocate a new queue entry, before we throw away any data.
+	 * If we can't, just drop the packet.  XXX
+	 */
+	MALLOC(tiqe, struct ipqent *, sizeof (struct ipqent), M_IPQ, M_NOWAIT);
+	if (tiqe == NULL) {
+		tcpstat.tcps_rcvmemdrop++;
+		m_freem(m);
+		return (0);
+	}
+
+	/*
 	 * Find a segment which begins after this one does.
 	 */
-	for (q = tp->seg_next; q != (struct tcpiphdr *)tp;
-	    q = (struct tcpiphdr *)q->ti_next)
-		if (SEQ_GT(q->ti_seq, ti->ti_seq))
+	for (p = NULL, q = tp->segq.lh_first; q != NULL;
+	    p = q, q = q->ipqe_q.le_next)
+		if (SEQ_GT(q->ipqe_tcp->ti_seq, ti->ti_seq))
 			break;
 
 	/*
@@ -136,52 +147,58 @@ tcp_reass(tp, ti, m)
 	 * our data already.  If so, drop the data from the incoming
 	 * segment.  If it provides all of our data, drop us.
 	 */
-	if ((struct tcpiphdr *)q->ti_prev != (struct tcpiphdr *)tp) {
+	if (p != NULL) {
+		register struct tcpiphdr *phdr = p->ipqe_tcp;
 		register int i;
-		q = (struct tcpiphdr *)q->ti_prev;
+
 		/* conversion to int (in i) handles seq wraparound */
-		i = q->ti_seq + q->ti_len - ti->ti_seq;
+		i = phdr->ti_seq + phdr->ti_len - ti->ti_seq;
 		if (i > 0) {
 			if (i >= ti->ti_len) {
 				tcpstat.tcps_rcvduppack++;
 				tcpstat.tcps_rcvdupbyte += ti->ti_len;
 				m_freem(m);
+				FREE(tiqe, M_IPQ);
 				return (0);
 			}
 			m_adj(m, i);
 			ti->ti_len -= i;
 			ti->ti_seq += i;
 		}
-		q = (struct tcpiphdr *)(q->ti_next);
 	}
 	tcpstat.tcps_rcvoopack++;
 	tcpstat.tcps_rcvoobyte += ti->ti_len;
-	REASS_MBUF(ti) = m;		/* XXX */
 
 	/*
 	 * While we overlap succeeding segments trim them or,
 	 * if they are completely covered, dequeue them.
 	 */
-	while (q != (struct tcpiphdr *)tp) {
-		register int i = (ti->ti_seq + ti->ti_len) - q->ti_seq;
+	for (; q != NULL; q = nq) {
+		register struct tcpiphdr *qhdr = q->ipqe_tcp;
+		register int i = (ti->ti_seq + ti->ti_len) - qhdr->ti_seq;
+
 		if (i <= 0)
 			break;
-		if (i < q->ti_len) {
-			q->ti_seq += i;
-			q->ti_len -= i;
-			m_adj(REASS_MBUF(q), i);
+		if (i < qhdr->ti_len) {
+			qhdr->ti_seq += i;
+			qhdr->ti_len -= i;
+			m_adj(q->ipqe_m, i);
 			break;
 		}
-		q = (struct tcpiphdr *)q->ti_next;
-		m = REASS_MBUF((struct tcpiphdr *)q->ti_prev);
-		remque(q->ti_prev);
-		m_freem(m);
+		nq = q->ipqe_q.le_next;
+		m_freem(q->ipqe_m);
+		LIST_REMOVE(q, ipqe_q);
+		FREE(q, M_IPQ);
 	}
 
-	/*
-	 * Stick new segment in its place.
-	 */
-	insque(ti, q->ti_prev);
+	/* Insert the new fragment queue entry into place. */
+	tiqe->ipqe_m = m;
+	tiqe->ipqe_tcp = ti;
+	if (p == NULL) {
+		LIST_INSERT_HEAD(&tp->segq, tiqe, ipqe_q);
+	} else {
+		LIST_INSERT_AFTER(p, tiqe, ipqe_q);
+	}
 
 present:
 	/*
@@ -190,22 +207,24 @@ present:
 	 */
 	if (TCPS_HAVEESTABLISHED(tp->t_state) == 0)
 		return (0);
-	ti = tp->seg_next;
-	if (ti == (struct tcpiphdr *)tp || ti->ti_seq != tp->rcv_nxt)
+	q = tp->segq.lh_first;
+	if (q == NULL || q->ipqe_tcp->ti_seq != tp->rcv_nxt)
 		return (0);
-	if (tp->t_state == TCPS_SYN_RECEIVED && ti->ti_len)
+	if (tp->t_state == TCPS_SYN_RECEIVED && q->ipqe_tcp->ti_len)
 		return (0);
 	do {
-		tp->rcv_nxt += ti->ti_len;
-		flags = ti->ti_flags & TH_FIN;
-		remque(ti);
-		m = REASS_MBUF(ti);
-		ti = (struct tcpiphdr *)ti->ti_next;
+		tp->rcv_nxt += q->ipqe_tcp->ti_len;
+		flags = q->ipqe_tcp->ti_flags & TH_FIN;
+
+		nq = q->ipqe_q.le_next;
+		LIST_REMOVE(q, ipqe_q);
 		if (so->so_state & SS_CANTRCVMORE)
-			m_freem(m);
+			m_freem(q->ipqe_m);
 		else
-			sbappend(&so->so_rcv, m);
-	} while (ti != (struct tcpiphdr *)tp && ti->ti_seq == tp->rcv_nxt);
+			sbappend(&so->so_rcv, q->ipqe_m);
+		FREE(q, M_IPQ);
+		q = nq;
+	} while (q != NULL && q->ipqe_tcp->ti_seq == tp->rcv_nxt);
 	sorwakeup(so);
 	return (flags);
 }
@@ -257,8 +276,7 @@ tcp_input(m, iphlen)
 	 */
 	tlen = ((struct ip *)ti)->ip_len;
 	len = sizeof (struct ip) + tlen;
-	ti->ti_next = ti->ti_prev = 0;
-	ti->ti_x1 = 0;
+	bzero(ti->ti_x1, sizeof ti->ti_x1);
 	ti->ti_len = (u_int16_t)tlen;
 	HTONS(ti->ti_len);
 	if (ti->ti_sum = in_cksum(m, len)) {
@@ -479,7 +497,7 @@ findpcb:
 				return;
 			}
 		} else if (ti->ti_ack == tp->snd_una &&
-		    tp->seg_next == (struct tcpiphdr *)tp &&
+		    tp->segq.lh_first == NULL &&
 		    ti->ti_len <= sbspace(&so->so_rcv)) {
 			/*
 			 * this is a pure, in-sequence data packet

@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.14 1995/09/30 07:02:08 thorpej Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.15 1995/11/21 01:07:43 cgd Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993, 1994
@@ -43,8 +43,7 @@
  * Tcp control block, one per tcp; fields:
  */
 struct tcpcb {
-	struct	tcpiphdr *seg_next, *seg_prev;
-					/* list of control blocks */
+	struct ipqehead segq;		/* sequencing queue */
 	short	t_state;		/* state of this connection */
 	short	t_timer[TCPT_NTIMERS];	/* tcp timers */
 	short	t_rxtshift;		/* log(2) of rexmt exp. backoff */
@@ -163,16 +162,6 @@ struct tcpcb {
 #define	TCP_REXMTVAL(tp) \
 	((((tp)->t_srtt >> TCP_RTT_SHIFT) + (tp)->t_rttvar) >> 2)
 
-/* XXX
- * We want to avoid doing m_pullup on incoming packets but that
- * means avoiding dtom on the tcp reassembly code.  That in turn means
- * keeping an mbuf pointer in the reassembly queue (since we might
- * have a cluster).  As a quick hack, the source & destination
- * port numbers (which are no longer needed once we've located the
- * tcpcb) are overlayed with an mbuf pointer.
- */
-#define REASS_MBUF(ti) (*(struct mbuf **)&((ti)->ti_t))
-
 /*
  * TCP statistics.
  * Many of these should be kept per connection,
@@ -211,6 +200,7 @@ struct	tcpstat {
 	u_long	tcps_rcvbyte;		/* bytes received in sequence */
 	u_long	tcps_rcvbadsum;		/* packets received with ccksum errs */
 	u_long	tcps_rcvbadoff;		/* packets received with bad offset */
+	u_long	tcps_rcvmemdrop;	/* packets dropped for lack of memory */
 	u_long	tcps_rcvshort;		/* packets received too short */
 	u_long	tcps_rcvduppack;	/* duplicate-only packets received */
 	u_long	tcps_rcvdupbyte;	/* duplicate-only bytes received */
