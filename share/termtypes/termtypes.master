@@ -1,13 +1,13 @@
 ######## TERMINAL TYPE DESCRIPTIONS SOURCE FILE
 #
-# $OpenBSD: termtypes.master,v 1.24 2000/06/26 12:57:26 millert Exp $
+# $OpenBSD: termtypes.master,v 1.25 2000/07/10 03:16:08 millert Exp $
 #
 # This version of terminfo.src is distributed with ncurses.
 # Report bugs to
 #	bug-ncurses@gnu.org
 #
 #	Version 10.2.1
-#	Date: 2000/06/11 01:40:36
+#	Date: 2000/07/01 21:23:58
 #	terminfo syntax
 #
 #	Eric S. Raymond		(current maintainer)
@@ -2787,6 +2787,48 @@ rxvt-basic|rxvt terminal base (X Window System),
 rxvt|rxvt terminal emulator (X Window System), 
 	ncv@, 
 	sgr0=\E[m\017, use=rxvt-basic, use=ecma+color, 
+
+# From: Michael Jennings <mej@valinux.com>
+# removed kf0 which conflicts with kf10 -TD
+# remove cvvis which conflicts with cnorm -TD
+# There's no u6 because Eterm appears to lack CPR (cursor position report).
+Eterm|Eterm-color|Eterm with xterm-style color support (X Window System), 
+	am, bce, bw, eo, km, mc5i, mir, msgr, xenl, xon, 
+	btns#5, cols#80, it#8, lines#24, lm#0, ncv@, 
+	acsc=``aaffggjjkkllmmnnooppqqrrssttuuvvwwxxyyzz{{||}}~~, 
+	bel=^G, blink=\E[5m, bold=\E[1m, civis=\E[?25l, 
+	clear=\E[H\E[2J, cnorm=\E[?25h, cr=^M, 
+	csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD, cub1=^H, 
+	cud=\E[%p1%dB, cud1=\E[B, cuf=\E[%p1%dC, cuf1=\E[C, 
+	cup=\E[%i%p1%d;%p2%dH, cuu=\E[%p1%dA, cuu1=\E[A, 
+	dch=\E[%p1%dP, dch1=\E[P, dl=\E[%p1%dM, dl1=\E[M, 
+	ech=\E[%p1%dX, ed=\E[J, el=\E[K, el1=\E[1K, enacs=\E)0, 
+	flash=\E[?5h\E[?5l, home=\E[H, hpa=\E[%i%p1%dG, ht=^I, 
+	hts=\EH, ich=\E[%p1%d@, ich1=\E[@, il=\E[%p1%dL, il1=\E[L, 
+	ind=^J, is1=\E[?47l\E>\E[?1l, 
+	is2=\E[r\E[m\E[2J\E[H\E[?7h\E[?1;3;4;6l\E[4l, 
+	kDC=\E[3$, kEND=\E[8$, kHOM=\E[7$, kLFT=\E[d, kNXT=\E[6$, 
+	kPRV=\E[5$, kRIT=\E[c, ka1=\E[7~, ka3=\E[5~, kb2=\EOu, 
+	kbeg=\EOu, kbs=^H, kc1=\E[8~, kc3=\E[6~, kcbt=\E[Z, 
+	kcub1=\E[D, kcud1=\E[B, kcuf1=\E[C, kcuu1=\E[A, 
+	kdch1=\E[3~, kel=\E[8\^, kend=\E[8~, kent=\EOM, kf1=\E[11~, 
+	kf10=\E[21~, kf11=\E[23~, kf12=\E[24~, kf13=\E[25~, 
+	kf14=\E[26~, kf15=\E[28~, kf16=\E[29~, kf17=\E[31~, 
+	kf18=\E[32~, kf19=\E[33~, kf2=\E[12~, kf20=\E[34~, 
+	kf3=\E[13~, kf4=\E[14~, kf5=\E[15~, kf6=\E[17~, kf7=\E[18~, 
+	kf8=\E[19~, kf9=\E[20~, kfnd=\E[1~, khlp=\E[28~, 
+	khome=\E[7~, kich1=\E[2~, kmous=\E[M, knp=\E[6~, kpp=\E[5~, 
+	kslt=\E[4~, mc4=\E[4i, mc5=\E[5i, rc=\E8, rev=\E[7m, ri=\EM, 
+	rmacs=^O, rmam=\E[?7l, rmcup=\E[2J\E[?47l\E8, rmir=\E[4l, 
+	rmkx=, rmso=\E[27m, rmul=\E[24m, 
+	rs1=\E>\E[1;3;4;5;6l\E[?7h\E[m\E[r\E[2J\E[H, 
+	rs2=\E[r\E[m\E[2J\E[H\E[?7h\E[?1;3;4;6l\E[4l\E>, 
+	sc=\E7, 
+	sgr=\E[0%?%p1%p6%|%t;1%;%?%p2%t;4%;%?%p1%p3%|%t;7%;%?%p4%t;5%;m%?%p9%t\016%e\017%;, 
+	sgr0=\E[m\017, smacs=^N, smam=\E[?7h, smcup=\E7\E[?47h, 
+	smir=\E[4h, smkx=, smso=\E[7m, smul=\E[4m, tbc=\E[3g, 
+	u7=\E[6n, u8=\E[?1;2c, u9=\E[c, vpa=\E[%i%p1%dd, 
+	use=ecma+color, 
 
 # These (xtermc and xtermm) are distributed with Solaris.  They refer to a
 # variant of xterm which is apparently no longer supported, but are interesting
@@ -18300,6 +18342,9 @@ v3220|LANPAR Vision II model 3220/3221/3222,
 #
 # 2000/6/10
 #	* add kmous capability to linux to use Joerg Schoen's gpm patch.
+#
+# 2000/7/1
+#	* add Eterm (Michael Jennings)
 #
 # The following sets edit modes for GNU EMACS.
 # Local Variables:
