@@ -1,5 +1,5 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.3 1998/11/17 11:10:15 niklas Exp $
-.\" $EOM: isakmpd.conf.5,v 1.4 1998/10/12 07:21:38 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.4 1998/11/20 23:47:42 niklas Exp $
+.\" $EOM: isakmpd.conf.5,v 1.5 1998/11/20 23:45:05 niklas Exp $
 .\"
 .\" Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
 .\"
@@ -74,52 +74,53 @@ An example of a configuration file:
 # A configuration sample for the isakmpd ISAKMP/Oakley (aka IKE) daemon.
 
 [General]
-Retransmits=		10
+Retransmits=		5
 
-[Main mode initiator]
-Offered-transforms=	BLF-SHA-16,DES-MD5
-
-[Main mode responder]
-# XXX Not yet supported.
+[Main mode]
+Offered-transforms=	BLF-SHA-M1024,DES-MD5
 #Accepted-transforms=	BLF-SHA-M1024,BLF-SHA-EC185,BLF-SHA-EC155,DES-MD5
+Accepted-transforms=	BLF-SHA-EC185,BLF-SHA-EC155,DES-MD5
 
 [DES-MD5]
 ENCRYPTION_ALGORITHM=	DES_CBC
 HASH_ALGORITHM=		MD5
 AUTHENTICATION_METHOD=	PRE_SHARED
 GROUP_DESCRIPTION=	MODP_768
-
-[BLF-SHA-16]
-ENCRYPTION_ALGORITHM=	BLOWFISH_CBC
-KEY_LENGTH=		128
-HASH_ALGORITHM=		SHA
-AUTHENTICATION_METHOD=	PRE_SHARED
-GROUP_DESCRIPTION=	MODP_1024
+Life=			LIFE_600_SECS
 
 [BLF-SHA-M1024]
-ENCRYPTION_ALGORITHM=	BLOWFISH
+ENCRYPTION_ALGORITHM=	BLOWFISH_CBC
+KEY_LENGTH=		128,64:196
 HASH_ALGORITHM=		SHA
 AUTHENTICATION_METHOD=	PRE_SHARED
 GROUP_DESCRIPTION=	MODP_1024
+Life=			LIFE_600_SECS
 
 [BLF-SHA-EC155]
-ENCRYPTION_ALGORITHM=	BLOWFISH
+ENCRYPTION_ALGORITHM=	BLOWFISH_CBC
+KEY_LENGTH=		128,64:196
 HASH_ALGORITHM=		SHA
 AUTHENTICATION_METHOD=	PRE_SHARED
 GROUP_DESCRIPTION=	EC2N_155
+Life=			LIFE_600_SECS
 
 [BLF-SHA-EC185]
-ENCRYPTION_ALGORITHM=	BLOWFISH
+ENCRYPTION_ALGORITHM=	BLOWFISH_CBC
+KEY_LENGTH=		128,64:196
 HASH_ALGORITHM=		SHA
 AUTHENTICATION_METHOD=	PRE_SHARED
 GROUP_DESCRIPTION=	EC2N_185
+Life=			LIFE_600_SECS
 
-[Quick mode initiator]
-Offered-suites=		QM-ESP-DES-MD5-SUITE,QM-AH-MD5-ESP-DES-SUITE
-
-[Quick mode responder]
+[Quick mode]
+#Offered-suites=		QM-ESP-DES-SUITE,\
+#			QM-ESP-DES-MD5-SUITE,QM-AH-MD5-ESP-DES-SUITE
+Offered-suites=		QM-ESP-DES-SUITE
 # XXX Not yet supported.
 #Accepted-suites=	QM-ESP-DES-MD5-SUITE,QM-AH-MD5-ESP-DES-SUITE
+
+[QM-ESP-DES-SUITE]
+Protocols=		QM-ESP-DES
 
 [QM-ESP-DES-MD5-SUITE]
 Protocols=		QM-ESP-DES-MD5
@@ -160,10 +161,12 @@ Transforms=		QM-ESP-DES-XF
 [QM-ESP-DES-XF]
 TRANSFORM_ID=		DES
 ENCAPSULATION_MODE=	TUNNEL
+Life=			LIFE_600_SECS,LIFE_32_MB
 
 [PRE_SHARED]
-# A general pre-shared key used for everyone.  XXX Should be per-peer later.
-KEY=			mekmitasdigoat
+127.0.0.1=		my_key_to_myself
+# A general pre-shared key used for everyone.
+Default=		mekmitasdigoat
 
 [RSA_SIG]
 CERT=			/etc/isakmpd_cert
