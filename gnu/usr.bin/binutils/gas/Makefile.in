@@ -103,6 +103,7 @@ STRIP = @STRIP@
 USE_INCLUDED_LIBINTL = @USE_INCLUDED_LIBINTL@
 USE_NLS = @USE_NLS@
 VERSION = @VERSION@
+YLWRAP = $(top_srcdir)/../ylwrap
 atof = @atof@
 cgen_cpu_prefix = @cgen_cpu_prefix@
 extra_objects = @extra_objects@
