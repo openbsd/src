@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.213 2003/03/10 09:40:47 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.214 2003/03/10 14:15:02 jmc Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -426,7 +426,8 @@ Clears the
 bit from a matching ip packet.
 Some operating systems are known to generate fragmented packets with the
 .Ar dont-fragment
-bit set. This is particularly true with NFS.
+bit set.
+This is particularly true with NFS.
 .Ar Scrub
 will drop such fragmented
 .Ar dont-fragment
@@ -436,16 +437,16 @@ is specified.
 .Pp
 Unfortunately some operating systems also generate their
 .Ar dont-fragment
-packets that all contain a zero IP identification field.
+packets with a zero IP identification field.
 Clearing the
 .Ar dont-fragment
 bit on packets with a zero IP ID may cause deleterious results if an
 upstream router later fragments the packet.
-Using the below mentioned
+Using the
 .Ar random-id
-modifier is recommended in combination with the
+modifier (see below) is recommended in combination with the
 .Ar no-df
-modifier to insure unique IP identifiers.
+modifier to ensure unique IP identifiers.
 .It Ar min-ttl <number>
 Enforces a minimum ttl for matching ip packets.
 .It Ar max-mss <number>
