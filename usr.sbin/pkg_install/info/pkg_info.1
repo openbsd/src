@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.4 1998/10/13 23:09:51 marc Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.5 1999/02/27 13:44:20 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintainance
 .\" of non-core utilities.
@@ -43,6 +43,10 @@ The
 .Ar pkg-name
 may be the name of an installed package, the pathname to a package
 distribution file, or a URL to an ftp-available package.
+.Nm
+will try to complete
+.Ar pkg-name
+with a version number while looking through installed packages.
 .Pp
 The following command-line options are supported:
 .Bl -tag -width indent
