@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.11 2001/10/28 03:14:59 jason Exp $	*/
+/*	$OpenBSD: conf.c,v 1.12 2001/11/15 03:59:08 jason Exp $	*/
 /*	$NetBSD: conf.c,v 1.17 2001/03/26 12:33:26 lukem Exp $ */
 
 /*
@@ -127,6 +127,7 @@ cdev_decl(xfs_dev);
 #endif
 
 #include "ksyms.h"
+#include "inet.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -240,7 +241,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 72 */
 	cdev_pf_init(NPF,pf),		/* 73: packet filter */
 	cdev_altq_init(NALTQ,altq),	/* 74: ALTQ control interface */
-	cdev_notdef(),			/* 75 */
+	cdev_crypto_init(NCRYPTO,crypto), /* 75: /dev/crypto */
 	cdev_ksyms_init(NKSYMS,ksyms),	/* 76 *: Kernel symbols device */
 	cdev_tty_init(NSABTTY,sabtty),	/* 77: sab82532 serial ports */
 	cdev_notdef(),			/* 78 */
