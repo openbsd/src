@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_conf.c,v 1.10 1997/11/08 17:21:04 niklas Exp $	*/
+/*	$OpenBSD: vfs_conf.c,v 1.11 1997/12/26 22:33:01 csapuntz Exp $	*/
 /*	$NetBSD: vfs_conf.c,v 1.21.4.1 1995/11/01 00:06:26 jtc Exp $	*/
 
 /*
@@ -150,17 +150,17 @@ static struct vfsconf vfsconflist[] = {
 
         /* Fast Filesystem */
 #ifdef FFS
-        { &ffs_vfsops, "ffs", 1, 0, MNT_LOCAL, ffs_mountroot, NULL },
+        { &ffs_vfsops, MOUNT_FFS, 1, 0, MNT_LOCAL, ffs_mountroot, NULL },
 #endif
 
         /* Log-based Filesystem */
 #ifdef LFS
-        { &lfs_vfsops, "lfs", 5, 0, MNT_LOCAL, lfs_mountroot, NULL },
+        { &lfs_vfsops, MOUNT_LFS, 5, 0, MNT_LOCAL, lfs_mountroot, NULL },
 #endif
 
         /* Memory-based Filesystem */
 #ifdef MFS
-        { &mfs_vfsops, "mfs", 3, 0, MNT_LOCAL, mfs_mountroot, NULL },
+        { &mfs_vfsops, MOUNT_MFS, 3, 0, MNT_LOCAL, mfs_mountroot, NULL },
 #endif
 
 #ifdef EXT2FS
@@ -168,62 +168,62 @@ static struct vfsconf vfsconflist[] = {
 #endif
         /* ISO9660 (aka CDROM) Filesystem */
 #ifdef CD9660
-        { &cd9660_vfsops, "cd9660", 14, 0, MNT_LOCAL, cd9660_mountroot, NULL },
+        { &cd9660_vfsops, MOUNT_CD9660, 14, 0, MNT_LOCAL, cd9660_mountroot, NULL },
 #endif
 
         /* MSDOS Filesystem */
 #ifdef MSDOSFS
-        { &msdosfs_vfsops, "msdos", 4, 0, MNT_LOCAL, NULL, NULL },
+        { &msdosfs_vfsops, MOUNT_MSDOS, 4, 0, MNT_LOCAL, NULL, NULL },
 #endif
 
         /* AmigaDOS Filesystem */
 #ifdef ADOSFS
-        { &adosfs_vfsops, "adosfs", 16, 0, MNT_LOCAL, NULL, NULL },
+        { &adosfs_vfsops, MOUNT_ADOSFS, 16, 0, MNT_LOCAL, NULL, NULL },
 #endif
 
         /* Sun-compatible Network Filesystem */
 #ifdef NFSCLIENT
-        { &nfs_vfsops, "nfs", 2, 0, 0, nfs_mountroot, NULL },
+        { &nfs_vfsops, MOUNT_NFS, 2, 0, 0, nfs_mountroot, NULL },
 #endif
 
         /* Andrew Filesystem */
 #ifdef AFS
-        { &afs_vfsops, "andrewfs", 13, 0, 0, afs_mountroot, NULL },
+        { &afs_vfsops, MOUNT_AFS, 13, 0, 0, afs_mountroot, NULL },
 #endif
 
         /* /proc Filesystem */
 #ifdef PROCFS
-        { &procfs_vfsops, "procfs", 12, 0, 0, NULL, NULL },
+        { &procfs_vfsops, MOUNT_PROCFS, 12, 0, 0, NULL, NULL },
 #endif
 
         /* Loopback (Minimal) Filesystem Layer */
 #ifdef NULLFS
-        { &null_vfsops, "loopback", 9, 0, 0, NULL, NULL },
+        { &null_vfsops, MOUNT_NULL, 9, 0, 0, NULL, NULL },
 #endif
 
         /* Union (translucent) Filesystem */
 #ifdef UNION
-        { &union_vfsops, "union", 15, 0, 0, NULL, NULL },
+        { &union_vfsops, MOUNT_UNION, 15, 0, 0, NULL, NULL },
 #endif
 
         /* User/Group Identifer Remapping Filesystem */
 #ifdef UMAPFS
-        { &umap_vfsops, "umap", 10, 0, 0, NULL, NULL },
+        { &umap_vfsops, MOUNT_UMAP, 10, 0, 0, NULL, NULL },
 #endif
 
         /* Portal Filesystem */
 #ifdef PORTAL
-        { &portal_vfsops, "portal", 8, 0, 0, NULL, NULL },
+        { &portal_vfsops, MOUNT_PORTAL, 8, 0, 0, NULL, NULL },
 #endif
 
         /* File Descriptor Filesystem */
 #ifdef FDESC
-        { &fdesc_vfsops, "fdesc", 7, 0, 0, NULL, NULL },
+        { &fdesc_vfsops, MOUNT_FDESC, 7, 0, 0, NULL, NULL },
 #endif
 
         /* Kernel Information Filesystem */
 #ifdef KERNFS
-        { &kernfs_vfsops, "kernfs", 11, 0, 0, NULL, NULL },
+        { &kernfs_vfsops, MOUNT_KERNFS, 11, 0, 0, NULL, NULL },
 #endif
 
 };
