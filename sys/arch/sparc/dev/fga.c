@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.9 2002/04/30 01:12:29 art Exp $	*/
+/*	$OpenBSD: fga.c,v 1.10 2002/07/08 21:15:24 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -610,7 +610,12 @@ fgaopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
+	struct fga_softc *sc;
+
 	if (fga_cd.cd_ndevs == 0)
+		return (ENXIO);
+	sc = fga_cd.cd_devs[0];
+	if (sc == NULL)
 		return (ENXIO);
 	return (0);
 }
