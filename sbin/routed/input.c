@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.4 1996/09/05 14:31:27 mickey Exp $	*/
+/*	$OpenBSD: input.c,v 1.5 1996/09/06 13:05:52 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.4 1996/09/05 14:31:27 mickey Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.5 1996/09/06 13:05:52 deraadt Exp $";
 #endif
 
 #include "defs.h"
@@ -304,6 +304,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 			       naddr_ntoa(FROM_NADDR));
 			return;
 		}
+#if PERMIT_TRACE
 		if (rip->rip_cmd == RIPCMD_TRACEON) {
 			rip->rip_tracefile[size-4] = '\0';
 			trace_on((char*)rip->rip_tracefile, 0);
@@ -311,6 +312,10 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 			trace_off("tracing turned off by %s\n",
 				  naddr_ntoa(FROM_NADDR));
 		}
+#else
+		msglog("trace command from %s ignored: %s\n",
+		    rip->rip_tracefile);
+#endif
 		return;
 
 	case RIPCMD_RESPONSE:
