@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.h,v 1.11 2000/03/16 22:11:05 art Exp $	*/
+/*	$OpenBSD: vm_map.h,v 1.12 2001/03/09 14:20:52 art Exp $	*/
 /*	$NetBSD: vm_map.h,v 1.11 1995/03/26 20:39:10 jtc Exp $	*/
 
 /* 
@@ -130,7 +130,7 @@ struct vm_map_entry {
 	vm_prot_t		protection;	/* protection code */
 	vm_prot_t		max_protection;	/* maximum protection */
 	vm_inherit_t		inheritance;	/* inheritance */
-	int			wired_count;	/* can be paged if = 0 */
+	int			wired_count;	/* can be paged if == 0 */
 #ifdef UVM
 	struct vm_aref		aref;		/* anonymous overlay */
 	int			advice;		/* madvise advice */
@@ -141,6 +141,8 @@ struct vm_map_entry {
 
 #endif /* UVM */
 };
+
+#define		VM_MAPENT_ISWIRED(entry)	((entry)->wired_count != 0)
 
 /*
  *	Maps are doubly-linked lists of map entries, kept sorted
@@ -163,7 +165,14 @@ struct vm_map {
 	simple_lock_data_t	hint_lock;	/* lock for hint storage */
 	vm_map_entry_t		first_free;	/* First free space hint */
 #ifdef UVM
-	int			flags;		/* flags (read-only) */
+	/*
+	 * Locking note: read-only flags need not be locked to read
+	 * them; they are set once at map creation time, and never
+	 * changed again.  Only read-write flags require that the
+	 * appropriate map lock be acquired before reading or writing
+	 * the flag.
+	 */
+	int			flags;		/* flags */
 #else
 	boolean_t		entries_pageable; /* map entries pageable?? */
 #endif
@@ -174,8 +183,9 @@ struct vm_map {
 
 #ifdef UVM
 /* vm_map flags */
-#define VM_MAP_PAGEABLE		0x01		/* entries are pageable*/
-#define VM_MAP_INTRSAFE		0x02		/* interrupt safe map */
+#define VM_MAP_PAGEABLE		0x01		/* ro: entries are pageable*/
+#define VM_MAP_INTRSAFE		0x02		/* ro: interrupt safe map */
+#define VM_MAP_WIREFUTURE	0x04		/* rw: wire future mappings */
 /*
  *     Interrupt-safe maps must also be kept on a special list,
  *     to assist uvm_fault() in avoiding locking problems.
@@ -336,23 +346,23 @@ do {									\
 }
 #ifdef DIAGNOSTIC
 #define	vm_map_lock(map) { \
-	if (lockmgr(&(map)->lock, LK_EXCLUSIVE, (void *)0, curproc) != 0) { \
+	if (lockmgr(&(map)->lock, LK_EXCLUSIVE, NULL, curproc) != 0) { \
 		panic("vm_map_lock: failed to get lock"); \
 	} \
 	(map)->timestamp++; \
 }
 #else
 #define	vm_map_lock(map) { \
-	lockmgr(&(map)->lock, LK_EXCLUSIVE, (void *)0, curproc); \
+	lockmgr(&(map)->lock, LK_EXCLUSIVE, NULL, curproc); \
 	(map)->timestamp++; \
 }
 #endif /* DIAGNOSTIC */
 #define	vm_map_unlock(map) \
-		lockmgr(&(map)->lock, LK_RELEASE, (void *)0, curproc)
+		lockmgr(&(map)->lock, LK_RELEASE, NULL, curproc)
 #define	vm_map_lock_read(map) \
-		lockmgr(&(map)->lock, LK_SHARED, (void *)0, curproc)
+		lockmgr(&(map)->lock, LK_SHARED, NULL, curproc)
 #define	vm_map_unlock_read(map) \
-		lockmgr(&(map)->lock, LK_RELEASE, (void *)0, curproc)
+		lockmgr(&(map)->lock, LK_RELEASE, NULL, curproc)
 #define vm_map_set_recursive(map) { \
 	simple_lock(&(map)->lk_interlock); \
 	(map)->lk_flags |= LK_CANRECURSE; \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mman.h,v 1.7 1998/06/02 05:22:26 deraadt Exp $	*/
+/*	$OpenBSD: mman.h,v 1.8 2001/03/09 14:20:50 art Exp $	*/
 /*	$NetBSD: mman.h,v 1.11 1995/03/26 20:24:23 jtc Exp $	*/
 
 /*-
@@ -89,6 +89,13 @@
 #define	MS_SYNC		0x02	/* perform synchronous writes */
 #define	MS_INVALIDATE	0x04	/* invalidate cached data */
 
+/*
+ * Flags to mlockall
+ */
+#define	MCL_CURRENT	0x01	/* lock all pages currently mapped */
+#define	MCL_FUTURE	0x02	/* lock all pages mapped in the future */
+
+
 #ifndef _KERNEL
 
 #include <sys/cdefs.h>
@@ -101,6 +108,8 @@ int	munmap __P((void *, size_t));
 int	msync __P((void *, size_t, int));
 int	mlock __P((const void *, size_t));
 int	munlock __P((const void *, size_t));
+int	mlockall __P((int));
+int	munlockall __P((void));
 int	madvise __P((void *, size_t, int));
 int	mincore __P((void *, size_t, char *));
 int	minherit __P((void *, size_t, int));

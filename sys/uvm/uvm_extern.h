@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_extern.h,v 1.9 2001/03/09 05:34:38 smart Exp $	*/
-/*	$NetBSD: uvm_extern.h,v 1.27 1999/05/26 19:16:36 thorpej Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.10 2001/03/09 14:20:50 art Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.28 1999/06/15 23:27:47 thorpej Exp $	*/
 
 /*
  *
@@ -325,6 +325,7 @@ int			uvm_map __P((vm_map_t, vaddr_t *, vsize_t,
 				struct uvm_object *, vaddr_t, uvm_flag_t));
 int			uvm_map_pageable __P((vm_map_t, vaddr_t, 
 				vaddr_t, boolean_t));
+int			uvm_map_pageable_all __P((vm_map_t, int, vsize_t));
 boolean_t		uvm_map_checkprot __P((vm_map_t, vaddr_t,
 				vaddr_t, vm_prot_t));
 int			uvm_map_protect __P((vm_map_t, vaddr_t, 

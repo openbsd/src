@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.6 2001/01/29 02:07:46 niklas Exp $	*/
-/*	$NetBSD: uvm_mmap.c,v 1.21 1999/05/23 06:27:13 mrg Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.7 2001/03/09 14:20:52 art Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.23 1999/06/16 17:25:39 minoura Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -131,15 +131,140 @@ sys_mincore(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-#if 0
 	struct sys_mincore_args /* {
-		syscallarg(caddr_t) addr;
+		syscallarg(void *) addr;
 		syscallarg(size_t) len;
 		syscallarg(char *) vec;
 	} */ *uap = v;
-#endif
+	vm_page_t m;
+	char *vec, pgi;
+	struct uvm_object *uobj;
+	struct vm_amap *amap;
+	struct vm_anon *anon;
+	vm_map_entry_t entry;
+	vaddr_t start, end, lim;
+	vm_map_t map;
+	vsize_t len;
+	int error = 0, npgs;
 
-	return (ENOSYS);
+	map = &p->p_vmspace->vm_map;
+
+	start = (vaddr_t)SCARG(uap, addr);
+	len = SCARG(uap, len);
+	vec = SCARG(uap, vec);
+
+	if (start & PAGE_MASK)
+		return (EINVAL);
+	len = round_page(len);
+	end = start + len;
+	if (end <= start)
+		return (EINVAL);
+
+	npgs = len >> PAGE_SHIFT;
+
+	if (uvm_useracc(vec, npgs, B_WRITE) == FALSE)
+		return (EFAULT);
+
+	/*
+	 * Lock down vec, so our returned status isn't outdated by
+	 * storing the status byte for a page.
+	 */
+	uvm_vslock(p, vec, npgs, VM_PROT_WRITE);
+
+	vm_map_lock_read(map);
+
+	if (uvm_map_lookup_entry(map, start, &entry) == FALSE) {
+		error = ENOMEM;
+		goto out;
+	}
+
+	for (/* nothing */;
+	     entry != &map->header && entry->start < end;
+	     entry = entry->next) {
+#ifdef DIAGNOSTIC
+		if (UVM_ET_ISSUBMAP(entry))
+			panic("mincore: user map has submap");
+		if (start < entry->start)
+			panic("mincore: hole");
+#endif
+		/* Make sure there are no holes. */
+		if (entry->end < end &&
+		     (entry->next == &map->header ||
+		      entry->next->start > entry->end)) {
+			error = ENOMEM;
+			goto out;
+		}
+
+		lim = end < entry->end ? end : entry->end;
+
+		/*
+		 * Special case for mapped devices; these are always
+		 * considered resident.
+		 */
+		if (UVM_ET_ISOBJ(entry)) {
+			extern struct uvm_pagerops uvm_deviceops; /* XXX */
+#ifdef DIAGNOSTIC
+			if (UVM_OBJ_IS_KERN_OBJECT(entry->object.uvm_obj))
+				panic("mincore: user map has kernel object");
+#endif
+			if (entry->object.uvm_obj->pgops == &uvm_deviceops) {
+				for (/* nothing */; start < lim;
+				     start += PAGE_SIZE, vec++)
+					subyte(vec, 1);
+				continue;
+			}
+		}
+
+		uobj = entry->object.uvm_obj;	/* top layer */
+		amap = entry->aref.ar_amap;	/* bottom layer */
+
+		if (amap != NULL)
+			amap_lock(amap);
+		if (uobj != NULL)
+			simple_lock(&uobj->vmobjlock);
+
+		for (/* nothing */; start < lim; start += PAGE_SIZE, vec++) {
+			pgi = 0;
+			if (amap != NULL) {
+				/* Check the top layer first. */
+				anon = amap_lookup(&entry->aref,
+				    start - entry->start);
+				/* Don't need to lock anon here. */
+				if (anon != NULL && anon->u.an_page != NULL) {
+					/*
+					 * Anon has the page for this entry
+					 * offset.
+					 */
+					pgi = 1;
+				}
+			}
+
+			if (uobj != NULL && pgi == 0) {
+				/* Check the bottom layer. */
+				m = uvm_pagelookup(uobj,
+				    entry->offset + (start - entry->start));
+				if (m != NULL) {
+					/*
+					 * Object has the page for this entry
+					 * offset.
+					 */
+					pgi = 1;
+				}
+			}
+
+			(void) subyte(vec, pgi);
+		}
+
+		if (uobj != NULL)
+			simple_unlock(&obj->vmobjlock);
+		if (amap != NULL)
+			amap_unlock(amap);
+	}
+
+ out:
+	vm_map_unlock_read(map);
+	uvm_vsunlock(p, SCARG(uap, vec), npgs);
+	return (error);
 }
 
 #if 0
@@ -816,6 +941,75 @@ sys_munlock(p, v, retval)
 	error = uvm_map_pageable(&p->p_vmspace->vm_map, addr, addr+size, TRUE);
 	return (error == KERN_SUCCESS ? 0 : ENOMEM);
 }
+
+#ifdef notyet
+/*
+ * sys_mlockall: lock all pages mapped into an address space.
+ */
+
+int
+sys_mlockall(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct sys_mlockall_args /* {
+		syscallarg(int) flags;
+	} */ *uap = v;
+	vsize_t limit;
+	int error, flags;
+
+	flags = SCARG(uap, flags);
+
+	if (flags == 0 ||
+	    (flags & ~(MCL_CURRENT|MCL_FUTURE)) != 0)
+		return (EINVAL);
+
+#ifdef pmap_wired_count
+	/* Actually checked in uvm_map_pageable_all() */
+	limit = p->p_rlimit[RLIMIT_MEMLOCK].rlim_cur;
+#else
+	limit = 0;
+	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0)
+		return (error);
+#endif
+
+	error = uvm_map_pageable_all(&p->p_vmspace->vm_map, flags, limit);
+	switch (error) {
+	case KERN_SUCCESS:
+		error = 0;
+		break;
+
+	case KERN_NO_SPACE:	/* XXX overloaded */
+		error = ENOMEM;
+		break;
+
+	default:
+		/*
+		 * "Some or all of the memory could not be locked when
+		 * the call was made."
+		 */
+		error = EAGAIN;
+	}
+
+	return (error);
+}
+
+/*
+ * sys_munlockall: unlock all pages mapped into an address space.
+ */
+
+int
+sys_munlockall(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+
+	(void) uvm_map_pageable_all(&p->p_vmspace->vm_map, 0, 0);
+	return (0);
+}
+#endif
 
 /*
  * uvm_mmap: internal version of mmap

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_fault.c,v 1.7 2001/03/08 15:21:36 smart Exp $	*/
-/*	$NetBSD: uvm_fault.c,v 1.33 1999/06/04 23:38:41 thorpej Exp $	*/
+/*	$OpenBSD: uvm_fault.c,v 1.8 2001/03/09 14:20:51 art Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.35 1999/06/16 18:43:28 thorpej Exp $	*/
 
 /*
  *
@@ -646,7 +646,7 @@ ReFault:
 	 */
 
 	enter_prot = ufi.entry->protection;
-	wired = (ufi.entry->wired_count != 0) || (fault_type == VM_FAULT_WIRE);
+	wired = VM_MAPENT_ISWIRED(ufi.entry) || (fault_type == VM_FAULT_WIRE);
 	if (wired)
 		access_type = enter_prot; /* full access for wired */
 
@@ -846,7 +846,7 @@ ReFault:
 			    VM_PAGE_TO_PHYS(anon->u.an_page),
 			    (anon->an_ref > 1) ? (enter_prot & ~VM_PROT_WRITE) :
 			    enter_prot, 
-			    (ufi.entry->wired_count != 0), 0);
+			    VM_MAPENT_ISWIRED(ufi.entry), 0);
 		}
 		simple_unlock(&anon->an_lock);
 	}
@@ -1734,8 +1734,7 @@ uvm_fault_wire(map, start, end, access_type)
 
 	/*
 	 * now fault it in page at a time.   if the fault fails then we have
-	 * to undo what we have done.   note that in uvm_fault VM_PROT_NONE 
-	 * is replaced with the max protection if fault_type is VM_FAULT_WIRE.
+	 * to undo what we have done.
 	 */
 
 	for (va = start ; va < end ; va += PAGE_SIZE) {
