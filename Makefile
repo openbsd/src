@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.35 1998/05/18 14:24:42 mickey Exp $
+#	$OpenBSD: Makefile,v 1.36 1998/05/18 17:37:04 mickey Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -159,7 +159,7 @@ cross-gas:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	-mkdir -p ${CROSSDIR}/usr/bin
 	-mkdir -p ${CROSSDIR}/usr/`cat ${CROSSDIR}/TARGET_CANON`/bin
-	(cd gnu/usr.bin/gas; \
+	(cd ${.CURDIR}/gnu/usr.bin/gas; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
@@ -174,7 +174,7 @@ cross-gas:
 cross-ld:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	-mkdir -p ${CROSSDIR}/usr/bin
-	(cd gnu/usr.bin/ld; \
+	(cd ${.CURDIR}/gnu/usr.bin/ld; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
@@ -189,7 +189,7 @@ cross-ld:
 cross-ar:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	-mkdir -p ${CROSSDIR}/usr/bin
-	(cd usr.bin/ar; \
+	(cd ${.CURDIR}/usr.bin/ar; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
@@ -202,7 +202,7 @@ cross-ar:
 cross-ranlib:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	-mkdir -p ${CROSSDIR}/usr/bin
-	(cd usr.bin/ranlib; \
+	(cd ${.CURDIR}/usr.bin/ranlib; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
@@ -215,7 +215,7 @@ cross-ranlib:
 cross-strip:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	-mkdir -p ${CROSSDIR}/usr/bin
-	(cd usr.bin/strip; \
+	(cd ${.CURDIR}/usr.bin/strip; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
@@ -229,7 +229,7 @@ cross-strip:
 cross-size:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	-mkdir -p ${CROSSDIR}/usr/bin
-	(cd usr.bin/size; \
+	(cd ${.CURDIR}/usr.bin/size; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
@@ -243,7 +243,7 @@ cross-size:
 cross-nm:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	-mkdir -p ${CROSSDIR}/usr/bin
-	(cd usr.bin/nm; \
+	(cd ${.CURDIR}/usr.bin/nm; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
@@ -257,7 +257,7 @@ cross-nm:
 cross-gcc:
 	-mkdir -p ${CROSSDIR}/usr/obj
 	-mkdir -p ${CROSSDIR}/usr/bin
-	cd gnu/usr.bin/gcc; \
+	cd ${.CURDIR}/gnu/usr.bin/gcc; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj BSDSRCDIR=${.CURDIR} \
 	    MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} -f Makefile.bsd-wrapper obj
@@ -276,8 +276,8 @@ cross-gcc:
 	CPP=`${CROSSDIR}/usr/bin/cc -print-libgcc-file-name | \
 	    sed 's/libgcc\.a/cpp/'`; \
 	    sed -e 's#/usr/libexec/cpp#'$$CPP'#' \
-	    -e 's#/usr/include#${CROSSDIR}/usr/include#' usr.bin/cpp/cpp.sh \
-	    >${CROSSDIR}/usr/bin/cpp
+	    -e 's#/usr/include#${CROSSDIR}/usr/include#' \
+	    ${.CURDIR}/usr.bin/cpp/cpp.sh > ${CROSSDIR}/usr/bin/cpp
 	chmod ${BINMODE} ${CROSSDIR}/usr/bin/cpp
 	chown ${BINOWN}.${BINGRP} ${CROSSDIR}/usr/bin/cpp
 
@@ -287,7 +287,7 @@ cross-lib:
 	-mkdir -p ${CROSSDIR}/var/db
 	MACHINE=${TARGET} MACHINE_ARCH=`cat ${CROSSDIR}/TARGET_ARCH`; \
 	export MACHINE MACHINE_ARCH; \
-	(cd lib; \
+	(cd ${.CURDIR}/lib; \
 	    BSDOBJDIR=${CROSSDIR}/usr/obj \
 	    BSDSRCDIR=${.CURDIR} MAKEOBJDIR=obj.${MACHINE}.${TARGET} \
 	    ${MAKE} obj; \
