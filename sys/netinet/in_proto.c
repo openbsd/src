@@ -1,5 +1,5 @@
-/*	$OpenBSD: in_proto.c,v 1.2 1996/03/03 22:30:33 niklas Exp $	*/
-/*	$NetBSD: in_proto.c,v 1.13 1996/02/13 23:42:09 christos Exp $	*/
+/*	$OpenBSD: in_proto.c,v 1.3 1996/03/04 08:21:53 niklas Exp $	*/
+/*	$NetBSD: in_proto.c,v 1.14 1996/02/18 18:58:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -81,7 +81,7 @@
 #endif /* EON */
 
 #ifdef MROUTING
-#include <netinet/mroute.h>
+#include <netinet/ip_mroute.h>
 #endif /* MROUTING */
 
 extern	struct domain inetdomain;

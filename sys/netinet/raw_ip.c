@@ -1,5 +1,5 @@
-/*	$OpenBSD: raw_ip.c,v 1.3 1996/03/03 22:30:43 niklas Exp $	*/
-/*	$NetBSD: raw_ip.c,v 1.24 1996/02/13 23:43:29 christos Exp $	*/
+/*	$OpenBSD: raw_ip.c,v 1.4 1996/03/04 08:21:52 niklas Exp $	*/
+/*	$NetBSD: raw_ip.c,v 1.25 1996/02/18 18:58:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993
@@ -205,6 +205,9 @@ rip_ctloutput(op, so, level, optname, m)
 	struct mbuf **m;
 {
 	register struct inpcb *inp = sotoinpcb(so);
+#ifdef MROUTING
+	int error;
+#endif
 
 	if (level != IPPROTO_IP) {
 		if (m != 0 && *m != 0)
