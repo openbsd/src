@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibios.c,v 1.12 2000/09/07 20:50:39 mickey Exp $	*/
+/*	$OpenBSD: pcibios.c,v 1.13 2000/09/20 19:39:55 mickey Exp $	*/
 /*	$NetBSD: pcibios.c,v 1.5 2000/08/01 05:23:59 uch Exp $	*/
 
 /*
@@ -167,10 +167,12 @@ pcibiosprobe(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
+	struct bios_attach_args *ba = aux;
 	struct bios32_entry_info ei;
 	u_int32_t rev_maj, rev_min, mech1, mech2, scmech1, scmech2, maxbus;
 
-	return (bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry, &ei) &&
+	return (!strcmp(ba->bios_dev, "pcibios") &&
+	    bios32_service(PCIBIOS_SIGNATURE, &pcibios_entry, &ei) &&
 	    pcibios_get_status(NULL, &rev_maj, &rev_min, &mech1, &mech2,
 	        &scmech1, &scmech2, &maxbus) == PCIBIOS_SUCCESS);
 }
