@@ -1,4 +1,4 @@
-#	$OpenBSD: LUCIFIER,v 1.18 1999/01/02 00:32:55 niklas Exp $
+#	$OpenBSD: LUCIFIER,v 1.19 1999/02/13 06:42:06 mickey Exp $
 #
 
 source	/sys
@@ -6,10 +6,10 @@ build	/usr/obj/sys/arch/i386/compile/LUCIFIER
 
 machine		i386		# architecture, used by config; REQUIRED
 
-option		I386_CPU	# CPU classes; at least one is REQUIRED
+#option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
-option		I586_CPU
-option		I686_CPU
+#option		I586_CPU
+#option		I686_CPU
 #option		GPL_MATH_EMULATE	# floating point emulation
 
 option		VM86		# Virtual 8086 emulation
@@ -39,7 +39,6 @@ option		DDB		# in-kernel debugger
 option		DEBUG		# more dubugging code
 option		DIAGNOSTIC	# internal consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
-option		PTRACE		# process tracing
 
 option		SYSVMSG		# System V-like message queues
 option		SYSVSEM		# System V-like semaphores
@@ -58,6 +57,7 @@ option		QUOTA		# UFS quotas
 #option		LFS		# log-structured file system
 option		EXT2FS		# Second Extended Filesystem
 option		MFS		# memory file system
+option		XFS
 
 option		NFSCLIENT	# Network File System client
 option		NFSSERVER	# Network File System server
@@ -75,11 +75,12 @@ option		UNION		# union file system
 
 option		GATEWAY		# packet forwarding
 option		INET		# IP + ICMP + TCP + UDP
+option		TCP_SACK,TCP_FACK
 option		IPSEC		# IPsec
 #option		NS		# XNS
 #option		NSIP		# XNS tunneling over IP
-#option		IPX		# IPX+SPX
-#option		IPXIP		# IPX tunneling over IP
+option		IPX		# IPX+SPX
+option		IPXIP		# IPX tunneling over IP
 #option		ISO,TPIP	# OSI
 #option		EON		# OSI tunneling over IP
 #option		CCITT,LLC,HDLC	# X.25
@@ -118,69 +119,39 @@ pcic1	at isa? port 0x3e2 iomem 0xd4000 iosiz 0x4000
 
 # PCMCIA bus support
 pcmcia*	at pcic? controller ? socket ?
+option	PCMCIADEBUG
+option	PCMCIAVERBOSE
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
-#isapnp0	at isa?
+isapnp0	at isa?
 
 #vga0	at pci? dev ? function ?
 #pc0	at isa? port 0x60 irq 1		# generic PC console device
 vt0	at isa? port 0x60 irq 1
 
-pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-#pccom1	at isa? port 0x2f8 irq 3
-pccom2	at isa? port 0x3e8 irq 5
-#ast0	at isa? port 0x1a0 irq 5	# AST 4-port serial card
-#ast1	at isa? port 0x2a0 irq 6	# 2nd AST 4-port serial card
-#com*	at ast? slave ?
-#boca0	at isa? port 0x100 irq 5	# BOCA 8-port serial cards
-#com*	at boca? slave ?
-#rtfps0	at isa? port 0x1230 irq 10	# RT 4-port serial cards
-#com*	at rtfps? slave ?
-pccom*	at pcmcia? function ?		# PCMCIA modem cards
+pcppi0	at isa?
+sysbeep0 at pcppi?
+midi*	at pcppi?
 
-# option for using CD1400 handshaking for incoming data
-# requires a special cable that exchanges the RTS and DTR lines
-# options CY_HW_RTS
-#cy0	at isa? iomem 0xd4000 irq 12	# ISA cyclom card
-#cy*	at pci?				# PCI cyclom card
+com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+#com1	at isa? port 0x2f8 irq 3
+com2	at isa? port 0x3e8 irq 5
+com*	at pcmcia? function ?		# PCMCIA modem cards
 
 lpt0	at isa? port 0x378 irq 7	# standard PC parallel ports
 lpt1	at isa? port 0x278
 lpt2	at isa? port 0x3bc iosiz 4
 
-#lms0	at isa? port 0x23c irq 5	# Logitech bus mouse
-#lms1	at isa? port 0x238 irq 5
-#mms0	at isa? port 0x23c irq 5	# Microsoft InPort mouse
-#mms1	at isa? port 0x238 irq 5
 #pms0	at pckbd? irq 12		# PS/2 auxiliary port mouse
 
-#bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt1	at isa? port 0x334 irq ? drq ?	# BusLogic [57]4X SCSI controllers
-#bt2	at isa? port ? irq ?
-#scsibus* at bt?
 #aha0	at isa? port 0x330 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 #scsibus* at aha?
-#ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controllers
-#scsibus* at ahb?
-#ahc0	at isa? port ? irq ?		# Adaptec 284x SCSI controllers
-#ahc*	at eisa? slot ?			# Adaptec 274x, aic7770 SCSI controllers
 ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
 scsibus* at ahc?
 #aic0	at isa? port 0x340 irq 11	# Adaptec 152[02] SCSI controllers
 #scsibus* at aic?
-#ncr*	at pci? dev ? function ?	# NCR 538XX SCSI controllers
-#scsibus* at ncr?
-#sea0	at isa? iomem 0xc8000 irq 5	# Seagate ST0[12] SCSI controllers
-#scsibus* at sea?
-#uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
-#uha*	at eisa? slot ?			# UltraStor 24f SCSI controllers
-#scsibus* at uha?
-#wds0	at isa? port 0x350 irq 15 drq 6	# WD7000 and TMC-7000 controllers
-#wds1	at isa? port 0x358 irq 11 drq 5
-#scsibus* at wds?
 
 sd*	at scsibus? target ? lun ?	# SCSI disk drives
 st*	at scsibus? target ? lun ?	# SCSI tape drives
@@ -197,24 +168,26 @@ fd*	at fdc? drive ?
 #scd0	at isa? port 0x300 irq 10	# Sony CD-ROM drives
 #pcd0	at isa? port 0x300 irq 10	# Panasonic CD-ROM drives
 
-wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
-wdc1	at isa? port 0x170 irq 15
-wd*	at wdc? drive ?
+#wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
+#wdc1	at isa? port 0x170 irq 15
+#wd*	at wdc? drive ?
 
-atapibus* at wdc?
-acd*	at atapibus? drive?
+#atapibus* at wdc?
+#acd*	at atapibus? drive?
 
 #wt0	at isa? port 0x308 irq 5 drq 1	# Archive and Wangtek QIC tape drives
 
-ed0	at isa? port 0x280 iomem 0xd0000 irq 3	# WD/SMC, 3C503, and NE[12]000
 xl0	at pci? dev ? function ?
-#ep0	at pci? dev ? function ?
+ne*	at pcmcia? function ?
+option	GWETHER
 
 sb0	at isa? port 0x220 irq 5 drq 1	# SoundBlaster
 #wss0	at isa? port 0x530 irq 10 drq 0	# Windows Sound System
-#pas0	at isa? port 0x220 irq 7 drq 1	# ProAudio Spectrum
-#gus0	at isa? port 0x220 irq 7 drq 1 flags 6 # Gravis UltraSound (flags is record drq)
 
+midi*	at sb?
+#opl*	at sb?
+opl*	at isa? port 0x388
+midi*	at opl?
 audio*	at sb?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
@@ -222,17 +195,17 @@ joy0	at isa? port 0x201
 
 pseudo-device	loop	2	# network loopback
 #pseudo-device	null	1	# network blackhole
-pseudo-device	bpfilter 8	# packet filter
+pseudo-device	bpfilter 16	# packet filter
 pseudo-device	sl	2	# CSLIP
 pseudo-device	ppp	2	# PPP
-pseudo-device	tun	2	# network tunneling over tty
+pseudo-device	tun	4	# network tunneling over tty
 pseudo-device	enc	1	# encryption device
 pseudo-device	strip	1	# Starmode Radio IP interface
 
 pseudo-device	pty	64	# pseudo-terminals
 pseudo-device	tb	1	# tablet line discipline
 pseudo-device	vnd	4	# paging to files
-pseudo-device	ccd	4	# concatenated disk devices
-pseudo-device	ksyms		# kernel symbol table
+pseudo-device	ccd	2	# concatenated disk devices
+pseudo-device	ksyms	1	# kernel symbol table
 
-pseudo-device	pctr
+#pseudo-device	pctr
