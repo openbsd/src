@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.README,v 1.35 2003/08/11 17:31:51 jakob Exp $
+#	$OpenBSD: bsd.README,v 1.36 2003/08/29 00:04:41 jolan Exp $
 #	$NetBSD: bsd.README,v 1.17 1996/04/13 02:08:08 thorpej Exp $
 #	@(#)bsd.README	5.1 (Berkeley) 5/11/90
 
@@ -310,10 +310,6 @@ BINMODE		Binary mode.
 CLEANFILES	Additional files to remove for the clean and cleandir targets.
 
 COPTS		Additional flags to the compiler when creating C objects.
-
-HIDEGAME	If HIDEGAME is defined, the binary is installed in
-		/usr/games/hide, and a symbolic link is created to
-		/usr/games/dm.
 
 LDADD		Additional loader objects.  Usually used for libraries.
 		For example, to load with the compatibility and utility
