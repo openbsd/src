@@ -98,7 +98,7 @@ extern "C" {
 /* Set default for OS/2 file system */
 #define DOCUMENT_LOCATION  HTTPD_ROOT "/docs"
 #else
-#define DOCUMENT_LOCATION  HTTPD_ROOT "/var/www/htdocs"
+#define DOCUMENT_LOCATION  HTTPD_ROOT "/htdocs"
 #endif
 #endif /* DOCUMENT_LOCATION */
 
