@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.5 1996/12/06 01:55:33 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.6 1997/02/13 05:41:38 deraadt Exp $	*/
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -266,9 +266,9 @@ pw_scan(bp, pw, flags)
 	struct passwd *pw;
 	int *flags;
 {
-	long id;
+	u_long id;
 	int root;
-	char *p, *sh;
+	char *p, *sh, *p2;
 
 	if (flags != (int *)NULL)
 		*flags = 0;
@@ -282,27 +282,37 @@ pw_scan(bp, pw, flags)
 
 	if (!(p = strsep(&bp, ":")))			/* uid */
 		goto fmt;
-	id = atol(p);
+	id = strtoul(p, &p2, 10);
 	if (root && id) {
 		warnx("root uid should be 0");
 		return (0);
 	}
-	if (id > USHRT_MAX) {
-		warnx("%s > max uid value (%d)", p, USHRT_MAX);
+	if (*p2 != ':') {
+		warnx("illegal uid field");
 		return (0);
 	}
-	pw->pw_uid = id;
+	if (id >= UINT_MAX) {
+		/* errno is set to ERANGE by strtoul(3) */
+		warnx("uid greater than %u", UINT_MAX-1);
+		return (0);
+	}
+	pw->pw_uid = (uid_t)id;
 	if ((*p == '\0') && (flags != (int *)NULL))
 		*flags |= _PASSWORD_NOUID;
 
 	if (!(p = strsep(&bp, ":")))			/* gid */
 		goto fmt;
-	id = atol(p);
-	if (id > USHRT_MAX) {
-		warnx("%s > max gid value (%d)", p, USHRT_MAX);
+	id = strtoul(p, &p2, 10);
+	if (*p2 != ':') {
+		warnx("illegal gid field");
 		return (0);
 	}
-	pw->pw_gid = id;
+	if (id > UINT_MAX) {
+		/* errno is set to ERANGE by strtoul(3) */
+		warnx("gid greater than %u", UINT_MAX-1);
+		return (0);
+	}
+	pw->pw_gid = (gid_t)id;
 	if ((*p == '\0') && (flags != (int *)NULL))
 		*flags |= _PASSWORD_NOGID;
 
