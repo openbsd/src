@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_cipher_TDES.c,v 1.4 2000/06/18 16:23:10 provos Exp $	*/
+/*	$OpenBSD: tcfs_cipher_TDES.c,v 1.5 2000/06/18 19:08:44 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -45,10 +45,10 @@ TDES_init_key (char *key)
 	char digest[16];
 	MD5_CTX ctx;
 	int i;
-
 	
 	/* Fold the bigger key into a Triple-DES suitable one */
 	bcopy (key, dkey, sizeof(dkey));
+
 	MD5Init(&ctx);
 	MD5Update(&ctx, key, KEYSIZE);
 	MD5Final(digest, &ctx);
@@ -90,13 +90,13 @@ TDES_encrypt(char *block, int nb, void *key)
         xi = (u_int32_t *)block;
         tmp = block;
         des_ecb3_encrypt((des_cblock *)tmp, (des_cblock *)tmp,
-			 ks[0], ks[1], ks[2],DES_ENCRYPT);
+			 ks[2], ks[1], ks[0], DES_ENCRYPT);
         tmp += 8;
-        for (i = 1;i < nb/8;i++) {
+        for (i = 1;i < nb/8; i++) {
                 *(xi+2) ^= *xi;
                 *(xi+3) ^= *(xi + 1);
                 des_ecb3_encrypt((des_cblock *)tmp, (des_cblock *)tmp,
-				 ks[0], ks[1], ks[2], DES_ENCRYPT);
+				 ks[2], ks[1], ks[0], DES_ENCRYPT);
                 tmp += 8;
                 xi += 2;
         }
