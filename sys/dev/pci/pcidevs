@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.25 1998/01/05 13:35:24 deraadt Exp $
+$OpenBSD: pcidevs,v 1.26 1998/01/06 02:33:44 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -657,7 +657,7 @@ product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
 
 /* DEC products */
 product DEC 21050	0x0001	DECchip 21050 PCI-PCI Bridge
-product DEC 21040	0x0002  DECchip 21040 (Tulip)
+product DEC 21040	0x0002	DECchip 21040 (Tulip)
 product DEC 21030	0x0004	DECchip 21030 (TGA)
 product DEC NVRAM	0x0007	Zephyr NV-RAM
 product DEC KZPSA	0x0008	KZPSA
@@ -665,7 +665,7 @@ product DEC 21140	0x0009	DECchip 21140 (FasterNet)
 product DEC PBXGB	0x000d	TGA2
 product DEC DEFPA	0x000f	DEFPA
 /* product DEC ???	0x0010	??? VME Interface */
-product DEC 21041	0x0014  DECchip 21041 (Tulip Pass 3)
+product DEC 21041	0x0014	DECchip 21041 (Tulip Pass 3)
 product DEC DGLPB	0x0016	DGLPB (OPPO)
 product DEC 21142	0x0019	DECchip 21142/3
 product DEC 21052	0x0021	DECchip 21052 PCI-PCI Bridge
@@ -731,19 +731,20 @@ product INTEL 82596	0x1226	82596 LAN Controller
 product INTEL EEPRO100	0x1227	EE Pro 100 10/100 Fast Ethernet
 product INTEL EEPRO100S	0x1228	EE Pro 100 Smart 10/100 Fast Ethernet
 product INTEL 82557	0x1229	82557 Fast Ethernet LAN Controller
-product INTEL 82437	0x122d	82437FX (Triton) PCI, Cache, and DRAM Controller
+product INTEL 82437FX	0x122d	82437FX (Triton) PCI, Cache, and DRAM Controller
 product INTEL 82471	0x122e	82471FB (Triton) PCI-ISA Bridge
 product INTEL 82438	0x1230	82438 (Triton) IDE controller
 product INTEL 82371MX	0x1234	82371 (Triton MX) PCI-ISA Bridge and IDE Controller
 product INTEL 82437MX	0x1235	82437 (Triton MX) PCI, Cache, and DRAM Controller
-product INTEL 82440FX	0x1237	82440FX (Natoma) PCI and Memory Controller
+product INTEL 82441FX	0x1237	82441FX PCI and Memory Controller (PMC)
 product INTEL 82380AB	0x123c	82380AB Mobile PCI-to-ISA Bridge (MISA)
 product INTEL 82380FB	0x124b	82380FB Mobile PCI-to-PCI Bridge (MPCI2)
 product INTEL 82439HX	0x1250	82439HX (Triton II) TXC Host Bridge
 product INTEL 82371SB	0x7000	82371SB (Triton II) PCI-ISA Bridge
 product INTEL 82371IDE	0x7010	82371SB (Triton II) IDE controller
 product INTEL 82371USB	0x7020	82371SB (Triton II) USB Interface
-product INTEL 82430VX	0x7030	82430VX (Triton VX) Host Bridge
+product INTEL 82439TX	0x7100	82439TX System Controller (MTXC)
+product INTEL 82437VX	0x7030	82437VX System Controller (TVX)
 product INTEL 82439TX	0x7100	82439TX System Controller (MTXC)
 product INTEL 82371AB	0x7110	82371AB PIIX4 ISA Bridge
 product INTEL 82371AB_IDE	0x7111	82371AB IDE controller (PIIX4)
@@ -878,7 +879,7 @@ product TEKRAM2	DC690C 0x690c	DC-690C
 
 /* Texas Instruments products */
 product TI	CT1130		0xac12	CT1130
-  
+
 /* Toshiba products */
 product TOSHIBA R4X00	0x102f	R4x00 Host-PCI Bridge
 
@@ -932,6 +933,10 @@ product VIATECH VT82C576	0x0576	VT82C576 3V
 product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
 product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA Bridge
 product VIATECH VT82C416MV	0x1571	VT82C416MV
+product VIATECH VT86C926	0x0926	VT86C926 Amazon PCI-Ethernet Controller
+product VIATECH VT82C586	0x0586	VT82C586 (Apollo VP) PCI-ISA Bridge
+product VIATECH VT82C595	0x1595	VT82C595 (Apollo VP2) Host-PCI Bridge
+product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 
 /* Vortex Computer Systems products */
 product VORTEX GDT_6000B	0x0001	GDT 6000b
