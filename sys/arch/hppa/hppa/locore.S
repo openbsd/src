@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.61 2002/03/19 19:03:20 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.62 2002/03/24 07:52:24 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -965,7 +965,7 @@ hpmc_v
 	ATRAP(excpt,T_EXCEPTION)
 #endif
 	STRAP(dtlb,T_DTLBMISS,DTLBPRE)	/* 15. data TLB miss fault */
-	STRAP(itlbna,T_ITLBMISSNA,ITLBPRE)/* 16. ITLB non-access miss fault */
+	STRAP(itlbna,T_ITLBMISSNA,DTLBPRE)/* 16. ITLB non-access miss fault */
 	STRAP(dtlbna,T_DTLBMISSNA,DTLBPRE)/* 17. DTLB non-access miss fault */
 	ATRAP(dprot,T_DPROT)		/* 18. data protection trap
 					      unalligned data reference trap */
