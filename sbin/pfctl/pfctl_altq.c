@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.66 2003/04/14 15:50:53 kjc Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.67 2003/04/14 16:35:13 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -827,8 +827,9 @@ print_hfsc_opts(const struct pf_altq *a)
 
 	opts = &a->pq_u.hfsc_opts;
 
-	if (opts->flags || opts->rtsc_m2 != 0 || opts->lssc_m2 != 0 ||
-	    opts->ulsc_m2 != 0) {
+	if (opts->flags || opts->rtsc_m2 != 0 || opts->ulsc_m2 != 0 ||
+	    (opts->lssc_m2 != 0 && (opts->lssc_m2 != a->bandwidth ||
+	    (opts->lssc_m2 != a->bandwidth && opts->lssc_m1 != 0)))) {
 		printf("hfsc(");
 		if (opts->flags & HFCF_RED)
 			printf(" red");
@@ -850,7 +851,8 @@ print_hfsc_opts(const struct pf_altq *a)
 				printf(" realtime %s",
 				    rate2str((double)opts->rtsc_m2));
 		}
-		if (opts->lssc_m2 != 0) {
+		if (opts->lssc_m2 != 0 && (opts->lssc_m2 != a->bandwidth ||
+		    (opts->lssc_m2 != a->bandwidth && opts->lssc_m1 != 0))) {
 			if (opts->lssc_d != 0)
 				printf(" linkshare(%s %ums %s)",
 				    rate2str((double)opts->lssc_m1),
