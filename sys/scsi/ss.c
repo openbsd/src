@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.16 1997/03/08 20:43:09 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.17 1997/03/08 20:51:36 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -660,7 +660,8 @@ ss_set_window(ss, sio)
 		window_data.halftone_pattern[1] = 
 			ss->quirkdata->halftone_pattern[1];
 	} /* else leave halftone set to zero. */
-	/* leave rif set to zero. */
+	if (ss->quirkdata->quirks & SS_Q_NEEDS_RIF_SET)
+		window_data.rif = 1;
 	if (ss->quirkdata->quirks & SS_Q_NEEDS_PADDING_TYPE)
 		window_data.pad_type = ss->quirkdata->pad_type;
 	else
