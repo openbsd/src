@@ -1,4 +1,4 @@
-$OpenBSD: TODO.users,v 1.6 1998/01/09 07:39:43 niklas Exp $
+$OpenBSD: TODO.users,v 1.7 1998/10/02 16:55:07 niklas Exp $
 $NetBSD: TODO.users,v 1.5 1996/10/01 21:24:37 cgd Exp $
 
 The OpenBSD/Alpha "User" To-Do List
@@ -22,9 +22,6 @@ Chris Demetriou <cgd@cs.cmu.edu>.
 Niklas Hallqvist
 niklas@openbsd.org
 --
-Test programs; find and fix bugs.  In particular:
-	(1) make sure accounting works
-	(2) /usr/games
 
 Test TurboChannel option slot support.  Write TurboChannel option
 board drivers.  Test PMAD-A (TC le) driver.
