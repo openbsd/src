@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.116 2004/06/25 08:41:19 art Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.117 2004/06/28 01:34:46 aaron Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -62,6 +62,9 @@
 #include <sys/exec.h>
 #include <sys/mbuf.h>
 #include <sys/sensors.h>
+#ifdef __HAVE_EVCOUNT
+#include <sys/evcount.h>
+#endif
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
@@ -279,6 +282,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		case KERN_INTRCNT:
 		case KERN_WATCHDOG:
 		case KERN_EMUL:
+#ifdef __HAVE_EVCOUNT
+		case KERN_EVCOUNT:
+#endif
 			break;
 		default:
 			return (ENOTDIR);	/* overloaded */
@@ -517,6 +523,11 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (!error)
 			nmbclust_update();
 		return (error);
+#ifdef __HAVE_EVCOUNT
+	case KERN_EVCOUNT:
+		return (evcount_sysctl(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
+#endif
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -1762,6 +1773,9 @@ sysctl_sysvipc(name, namelen, where, sizep)
 int
 sysctl_intrcnt(int *name, u_int namelen, void *oldp, size_t *oldlenp)
 {
+#ifdef __HAVE_EVCOUNT
+	return (evcount_sysctl(name, namelen, oldp, oldlenp, NULL, 0));
+#else
 	extern int intrcnt[], eintrcnt[];
 	extern char intrnames[], eintrnames[];
 	char *intrname;
@@ -1795,6 +1809,7 @@ sysctl_intrcnt(int *name, u_int namelen, void *oldp, size_t *oldlenp)
 	default:
 		return (EOPNOTSUPP);
 	}
+#endif
 }
 
 int nsensors = 0;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.78 2004/06/11 01:32:05 deraadt Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.79 2004/06/28 01:34:46 aaron Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -180,7 +180,8 @@ struct ctlname {
 #define	KERN_EMUL		65	/* node: emuls */
 #define	KERN_PROC2		66	/* struct: process entries */
 #define	KERN_MAXCLUSTERS	67	/* number of mclusters */
-#define	KERN_MAXID		68	/* number of valid kern ids */
+#define KERN_EVCOUNT		68	/* node: event counters */
+#define	KERN_MAXID		69	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -251,6 +252,7 @@ struct ctlname {
  	{ "emul", CTLTYPE_NODE }, \
  	{ "proc2", CTLTYPE_STRUCT }, \
  	{ "maxclusters", CTLTYPE_INT }, \
+	{ "evcount", CTLTYPE_NODE }, \
 }
 
 /*
@@ -454,12 +456,13 @@ struct kinfo_proc2 {
 };
 
 /*
- * KERN_INTR_CNT
+ * KERN_INTRCNT
  */
 #define KERN_INTRCNT_NUM	1	/* int: # intrcnt */
 #define KERN_INTRCNT_CNT	2	/* node: intrcnt */
 #define KERN_INTRCNT_NAME	3	/* node: names */
-#define KERN_INTRCNT_MAXID	4
+#define KERN_INTRCNT_VECTOR	4	/* node: interrupt vector # */
+#define KERN_INTRCNT_MAXID	5
 
 #define CTL_KERN_INTRCNT_NAMES { \
 	{ 0, 0 }, \
