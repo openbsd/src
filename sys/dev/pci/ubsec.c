@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.52 2001/05/23 04:46:41 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.53 2001/05/23 14:42:52 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -645,7 +645,6 @@ ubsec_process(crp)
 		err = ENOMEM;
 		goto errout;
 	}
-
 	q->q_mcr = (struct ubsec_mcr *)q->q_mcr_dma.dma_vaddr;
 	bzero(q->q_mcr, sizeof(struct ubsec_mcr));
 	bzero(&ctx, sizeof(ctx));
@@ -1059,9 +1058,9 @@ ubsec_process(crp)
 
 errout:
 	if (q != NULL) {
-		if (q->q_ctx_dma.dma_map)
+		if (q->q_ctx_dma.dma_map != NULL)
 			ubsec_dma_free(sc, &q->q_ctx_dma);
-		if (q->q_mcr)
+		if (q->q_mcr_dma.dma_map != NULL)
 			ubsec_dma_free(sc, &q->q_mcr_dma);
 		if (q->q_dst_m && q->q_src_m != q->q_dst_m)
 			m_freem(q->q_dst_m);
@@ -1305,7 +1304,7 @@ ubsec_dma_malloc(sc, size, dma, mapflags)
 {
         int r;
 
-	if ((r = bus_dmamem_alloc(sc->sc_dmat, size, PAGE_SIZE, 0,
+	if ((r = bus_dmamem_alloc(sc->sc_dmat, size, 4, 0,
 	    &dma->dma_seg, 1, &dma->dma_nseg, 0)) != 0)
 		goto fail_0;
 
@@ -1331,6 +1330,7 @@ fail_2:
 fail_1:
 	bus_dmamem_free(sc->sc_dmat, &dma->dma_seg, dma->dma_nseg);
 fail_0:
+	dma->dma_map = NULL;
 	return (r);
 }
 
