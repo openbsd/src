@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.25 2002/06/05 23:13:45 mickey Exp $
+#	$OpenBSD: inter.phone,v 1.26 2002/06/06 03:39:10 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -43,11 +43,60 @@
 31:55:Apeldoorn:Netherlands
 31:70:The Hague:Netherlands
 31:76:Breda:Netherlands
-32:15:Malines (Mechelen):Belgium
 32:2:Brussels:Belgium
 32:3:Antwerp:Belgium
+32:4:Liege:Belgium
+32:9:Ghent:Belgium
+32:10:Wavre:Belgium
+32:11:Hasselt:Belgium
+32:12:Tongeren:Belgium
+32:13:Diest:Belgium
+32:14:Herentals:Belgium
+32:15:Mechelen:Belgium
+32:16:Leuven:Belgium
+32:19:Waremme:Belgium
 32:41:Liege (Luik):Belgium
-32:9:Ghent (Gand):Belgium
+32:50:Brugge:Belgium
+32:51:Roeselare:Belgium
+32:52:Dendermonde:Belgium
+32:53:Aalst:Belgium
+32:54:Ninove:Belgium
+32:55:Ronse:Belgium
+32:56:Kortrijk:Belgium
+32:57:Ieper:Belgium
+32:58:Veurne:Belgium
+32:59:Oostende:Belgium
+32:60:Chimay:Belgium
+32:61:Libramont-Chevigny:Belgium
+32:63:Arlon:Belgium
+32:64:La Louviere:Belgium
+32:65:Mons:Belgium
+32:67:Nivelles:Belgium
+32:68:Ath:Belgium
+32:69:Tournai:Belgium
+32:71:Charleroi:Belgium
+32:80:Stavelot:Belgium
+32:81:Namur:Belgium
+32:82:Dinant:Belgium
+32:83:Ciney:Belgium
+32:84:Marche-en-Famenne:Belgium
+32:85:Huy:Belgium
+32:86:Durbuy:Belgium
+32:87:Verviers:Belgium
+32:472:Proximus:Belgium
+32:474:Proximus:Belgium
+32:473:Proximus:Belgium
+32:475:Proximus:Belgium
+32:476:Proximus:Belgium
+32:477:Proximus:Belgium
+32:478:Proximus:Belgium
+32:479:Proximus:Belgium
+32:485:Base:Belgium
+32:486:Base:Belgium
+32:495:Mobistar:Belgium
+32:496:Mobistar:Belgium
+32:497:Mobistar:Belgium
+32:498:Mobistar:Belgium
 33:1:Paris and surrounds:France
 33:2:NW region:France
 33:3:NE region:France
