@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.22 1998/05/08 04:52:27 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.23 1998/07/09 06:33:28 deraadt Exp $	*/
 
 /*
  * main.c - Point-to-Point Protocol main module
@@ -23,7 +23,7 @@
 #if 0
 static char rcsid[] = "Id: main.c,v 1.49 1998/05/05 05:24:17 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.22 1998/05/08 04:52:27 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.23 1998/07/09 06:33:28 deraadt Exp $";
 #endif
 #endif
 
@@ -79,7 +79,7 @@ char ifname[IFNAMSIZ];		/* Interface name */
 int ifunit;			/* Interface unit number */
 
 char *progname;			/* Name of this program */
-char hostname[MAXNAMELEN];	/* Our hostname */
+char hostname[MAXHOSTNAMELEN];	/* Our hostname */
 static char pidfilename[MAXPATHLEN];	/* name of pid file */
 static char default_devnam[MAXPATHLEN];	/* name of default device */
 static pid_t pid;		/* Our pid */
@@ -197,11 +197,10 @@ main(argc, argv)
     setlogmask(LOG_UPTO(LOG_INFO));
 #endif
 
-    if (gethostname(hostname, MAXNAMELEN) < 0 ) {
+    if (gethostname(hostname, sizeof hostname) < 0 ) {
 	option_error("Couldn't get hostname: %m");
 	die(1);
     }
-    hostname[MAXNAMELEN-1] = 0;
 
     uid = getuid();
     privileged = uid == 0;
