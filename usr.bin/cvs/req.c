@@ -1,4 +1,4 @@
-/*	$OpenBSD: req.c,v 1.1 2004/08/03 04:58:45 jfb Exp $	*/
+/*	$OpenBSD: req.c,v 1.2 2004/08/04 12:41:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -57,6 +57,7 @@ extern int   cvs_readonly;
 
 static int  cvs_req_root       (int, char *);
 static int  cvs_req_directory  (int, char *);
+static int  cvs_req_argument   (int, char *);
 static int  cvs_req_version    (int, char *);
 
 
@@ -83,8 +84,8 @@ struct cvs_reqhdlr {
 	{ NULL               },
 	{ NULL               },
 	{ NULL               },
-	{ NULL               },	/* 20 */
-	{ NULL               },
+	{ cvs_req_argument   },	/* 20 */
+	{ cvs_req_argument   },
 	{ NULL               },
 	{ NULL               },
 	{ NULL               },
@@ -138,6 +139,17 @@ struct cvs_reqhdlr {
 
 
 /*
+ * Argument array built by `Argument' and `Argumentx' requests.
+ */
+
+static char *cvs_req_args[CVS_PROTO_MAXARG];
+static int   cvs_req_nargs = 0;
+
+
+
+
+
+/*
  * cvs_req_handle()
  *
  * Generic request handler dispatcher.  The handler expects the first line
@@ -184,6 +196,44 @@ cvs_req_directory(int reqid, char *line)
 {
 
 
+
+	return (0);
+}
+
+
+static int
+cvs_req_argument(int reqid, char *line)
+{
+	char *nap;
+
+	if (cvs_req_nargs == CVS_PROTO_MAXARG) {
+		cvs_log(LP_ERR, "too many arguments");
+		return (-1);
+	}
+
+	if (reqid == CVS_REQ_ARGUMENT) {
+		cvs_req_args[cvs_req_nargs] = strdup(line);
+		if (cvs_req_args[cvs_req_nargs] == NULL) {
+			cvs_log(LP_ERRNO, "failed to copy argument");
+			return (-1);
+		}
+		cvs_req_nargs++;
+	}
+	else if (reqid == CVS_REQ_ARGUMENTX) {
+		if (cvs_req_nargs == 0)
+			cvs_log(LP_WARN, "no argument to append to");
+		else {
+			asprintf(&nap, "%s%s", cvs_req_args[cvs_req_nargs - 1],
+			    line);
+			if (nap == NULL) {
+				cvs_log(LP_ERRNO,
+				    "failed to append to argument");
+				return (-1);
+			}
+			free(cvs_req_args[cvs_req_nargs - 1]);
+			cvs_req_args[cvs_req_nargs - 1] = nap;
+		}
+	}
 
 	return (0);
 }
