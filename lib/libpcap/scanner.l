@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scanner.l,v 1.6 1997/07/22 07:42:32 deraadt Exp $	*/
+/*	$OpenBSD: scanner.l,v 1.7 1998/06/26 21:01:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -24,7 +24,7 @@
 
 #ifndef lint
 static char rcsid[] =
-    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.6 1997/07/22 07:42:32 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/lib/libpcap/scanner.l,v 1.7 1998/06/26 21:01:03 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -133,7 +133,7 @@ outbound	return OUTBOUND;
 {B}:{B}:{B}:{B}:{B}:{B} { yylval.e = pcap_ether_aton((char *)yytext);
 			  return EID; }
 {B}:+({B}:+)+		{ bpf_error("bogus ethernet address %s", yytext); }
-[A-Za-z0-9][-_.A-Za-z0-9]*[.A-Za-z0-9] {
+[A-Za-z0-9]([-_.A-Za-z0-9]*[.A-Za-z0-9])? {
 			 yylval.s = sdup((char *)yytext); return ID; }
 "\\"[^ !()\n\t]+	{ yylval.s = sdup((char *)yytext + 1); return ID; }
 [^ \[\]\t\n\-_.A-Za-z0-9!<>()&|=]+i {
