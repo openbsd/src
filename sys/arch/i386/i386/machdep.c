@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.289 2004/04/11 18:12:10 deraadt Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.290 2004/04/19 22:26:22 tom Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1177,9 +1177,9 @@ cyrix3_cpu_setup(cpu_device, model, step)
 			printf(" RNG");
 		}
 
-#ifdef CRYPTO
 		/* Enable AES engine if present and disabled */
 		if (val & 0x40) {
+#ifdef CRYPTO
 			extern int viac3_crypto_present;
 
 			if (!(val & 0x80)) {
@@ -1190,9 +1190,9 @@ cyrix3_cpu_setup(cpu_device, model, step)
 				wrmsr(0x1107, msreg);
 			}
 			viac3_crypto_present = 1;
+#endif /* CRYPTO */
 			printf(" AES");
 		}
-#endif /* CRYPTO */
 
 		printf("\n");
 		break;
