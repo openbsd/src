@@ -1,5 +1,5 @@
-$OpenBSD: README,v 1.7 1999/03/02 15:01:09 niklas Exp $
-$EOM: README,v 1.17 1999/03/02 14:44:01 niklas Exp $
+$OpenBSD: README,v 1.8 1999/03/24 14:58:45 niklas Exp $
+$EOM: README,v 1.18 1999/03/08 00:39:25 niklas Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
 implementation.  It's written by Niklas Hallqvist and Niels Provos,
@@ -53,7 +53,7 @@ and another fifo (let's say /tmp/other.fifo).  Then edit the config
 file to have some peer descriptions that fit your need and issue a
 command like this:
 
-$ echo "C IPsec-peer-1" >/tmp/other.fifo
+$ echo "c IPsec-peer-1" >/tmp/other.fifo
 
 and watch.  You can turn on debugging on that isakmpd too of course, for
 greater fun.
