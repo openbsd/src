@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.41 2000/03/23 15:55:52 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.42 2000/04/20 10:03:42 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -497,8 +497,7 @@ sys_execve(p, v, retval)
 		 */
 		if (p->p_tracep && !(p->p_traceflag & KTRFAC_ROOT)) {
 			p->p_traceflag = 0;
-			vrele(p->p_tracep);
-			p->p_tracep = NULL;
+			ktrsettracevnode(p, NULL);
 		}
 #endif
 		p->p_ucred = crcopy(cred);

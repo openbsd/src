@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.h,v 1.2 1996/03/03 12:11:54 niklas Exp $	*/
+/*	$OpenBSD: ktrace.h,v 1.3 2000/04/20 10:03:41 art Exp $	*/
 /*	$NetBSD: ktrace.h,v 1.12 1996/02/04 02:12:29 christos Exp $	*/
 
 /*
@@ -172,5 +172,7 @@ void ktrnamei __P((struct vnode *, char *));
 void ktrpsig __P((struct vnode *, int, sig_t, int, int));
 void ktrsyscall __P((struct vnode *, register_t, size_t, register_t []));
 void ktrsysret __P((struct vnode *, register_t, int, register_t));
+
+void ktrsettracevnode __P((struct proc *, struct vnode *));
 
 #endif	/* !_KERNEL */

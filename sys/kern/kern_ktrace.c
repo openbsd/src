@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.17 2000/04/19 10:56:41 art Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.18 2000/04/20 10:03:42 art Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -59,6 +59,29 @@ int ktrsetchildren __P((struct proc *, struct proc *, int, int,
 			struct vnode *));
 int ktrwrite __P((struct vnode *, struct ktr_header *));
 int ktrcanset __P((struct proc *, struct proc *));
+
+/*
+ * Change the trace vnode in a correct way (to avoid races).
+ */
+void
+ktrsettracevnode(p, newvp)
+	struct proc *p;
+	struct vnode *newvp;
+{
+	struct vnode *vp;
+
+	if (p->p_tracep == newvp)	/* avoid work */
+		return;
+
+	if (newvp != NULL)
+		VREF(newvp);
+
+	vp = p->p_tracep;
+	p->p_tracep = newvp;
+
+	if (vp != NULL)
+		vrele(vp);
+}
 
 void
 ktrinitheader(kth, p, type)
@@ -324,9 +347,8 @@ sys_ktrace(curp, v, retval)
 		for (p = LIST_FIRST(&allproc); p; p = LIST_NEXT(p, p_list)) {
 			if (p->p_tracep == vp) {
 				if (ktrcanset(curp, p)) {
-					p->p_tracep = NULL;
 					p->p_traceflag = 0;
-				        vrele(vp);
+					ktrsettracevnode(p, NULL);
 				} else
 					error = EPERM;
 			}
@@ -391,15 +413,7 @@ ktrops(curp, p, ops, facs, vp)
 	if (!ktrcanset(curp, p))
 		return (0);
 	if (ops == KTROP_SET) {
-		if (p->p_tracep != vp) { 
-			/*
-			 * if trace file already in use, relinquish
-			 */
-			if (p->p_tracep != NULL)
-				vrele(p->p_tracep);
-			VREF(vp);
-			p->p_tracep = vp;
-		}
+		ktrsettracevnode(p, vp);
 		p->p_traceflag |= facs;
 		if (curp->p_ucred->cr_uid == 0)
 			p->p_traceflag |= KTRFAC_ROOT;
@@ -408,10 +422,7 @@ ktrops(curp, p, ops, facs, vp)
 		if (((p->p_traceflag &= ~facs) & KTRFAC_MASK) == 0) {
 			/* no more tracing */
 			p->p_traceflag = 0;
-			if (p->p_tracep != NULL) {
-				vrele(p->p_tracep);
-				p->p_tracep = NULL;
-			}
+			ktrsettracevnode(p, NULL);
 		}
 	}
 
@@ -496,9 +507,8 @@ ktrwrite(vp, kth)
 	    error);
 	for (p = LIST_FIRST(&allproc); p != NULL; p = LIST_NEXT(p, p_list)) {
 		if (p->p_tracep == vp) {
-			p->p_tracep = NULL;
 			p->p_traceflag = 0;
-			vrele(vp);
+			ktrsettracevnode(p, NULL);
 		}
 	}
 

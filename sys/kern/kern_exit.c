@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exit.c,v 1.22 2000/03/23 15:55:52 art Exp $	*/
+/*	$OpenBSD: kern_exit.c,v 1.23 2000/04/20 10:03:43 art Exp $	*/
 /*	$NetBSD: kern_exit.c,v 1.39 1996/04/22 01:38:25 christos Exp $	*/
 
 /*
@@ -63,6 +63,7 @@
 #include <sys/filedesc.h>
 #include <sys/signalvar.h>
 #include <sys/sched.h>
+#include <sys/ktrace.h>
 #ifdef SYSVSHM
 #include <sys/shm.h>
 #endif
@@ -210,7 +211,7 @@ exit1(p, rv)
 	 */
 	p->p_traceflag = 0;	/* don't trace the vrele() */
 	if (p->p_tracep)
-		vrele(p->p_tracep);
+		ktrsettracevnode(p, NULL);
 #endif
 	/*
 	 * Remove proc from allproc queue and pidhash chain.
