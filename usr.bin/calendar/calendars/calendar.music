@@ -1,7 +1,7 @@
 /*
  * Music
  *
- * $OpenBSD: calendar.music,v 1.5 1997/08/27 10:56:48 provos Exp $
+ * $OpenBSD: calendar.music,v 1.6 2001/11/06 07:08:22 mickey Exp $
  */
 
 #ifndef _calendar_music_
@@ -153,6 +153,7 @@
 10/18	Chuck Berry is born in San Jose, California, 1926
 10/20	Three members of Lynyrd Skynyrd die in a plane crash, 1977
 10/22	Franz Liszt born, 1811
+10/22	Pablo Casals died in Puerto Rico, 1973
 10/25	Jon Anderson (Yes) is born in Lancashire, England, 1944
 10/25	The Rolling Stones appear on The Ed Sullivan Show, 1964
 10/29	Duane Allman dies in motorcycle crash near Macon, Georgia, 1971
@@ -174,6 +175,7 @@
 11/25	Johann Strauss, Jr., writes `On the Beautiful Blue Danube', 1867
 11/26	Cream performs their farewell concert at Royal Albert Hall, 1968
 11/27	Jimi Hendrix (Johnny Allen Hendrix) is born in Seattle, 1942
+11/29	Pau Casals born in Vendrell, 1876
 12/05	Mozart dies, 1791
 12/06	First sound recording made by Thomas Edison, 1877
 12/06	The Rolling Stones play Altamont Speedway near San Francisco, 1969
