@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.3 2003/11/14 20:14:32 drahn Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.4 2003/12/20 22:40:27 miod Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -716,7 +716,7 @@ mpc_intr_string(void *lcv, pci_intr_handle_t ih)
 {
 	static char str[16];
 
-	snprintf(str, sizeof str, "irq %d", ih);
+	snprintf(str, sizeof str, "irq %ld", ih);
 	return(str);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.8 2003/11/03 06:43:02 david Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.9 2003/12/20 22:40:27 miod Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -283,11 +283,11 @@ pciaddr_do_resource_allocate(struct pcibr_softc *sc, pci_chipset_tag_t pc,
 
 	if (pciaddr_ioaddr(pci_conf_read(pc, tag, mapreg)) != *addr) {
 		pci_conf_write(pc, tag, mapreg, 0); /* clear */
-		printf("fixup failed. (new address=%#x)\n", *addr);
+		printf("fixup failed. (new address=%#lx)\n", *addr);
 		return (1);
 	}
 	if (pcibr_flags & PCIBR_VERBOSE)
-		printf("new address 0x%08x\n", *addr);
+		printf("new address 0x%08lx\n", *addr);
 
 	return (0);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.1 2003/10/31 03:54:33 drahn Exp $	*/
+/*	$OpenBSD: dma.c,v 1.2 2003/12/20 22:40:27 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -140,7 +140,7 @@ _dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf,
 		 * Get the physical address for this segment.
 		 */
 		if (pmap_extract(pmap, vaddr, (paddr_t *)&curaddr) != TRUE) {
-			panic("dmamap_load_buffer pmap %x vaddr %x "
+			panic("dmamap_load_buffer pmap %p vaddr %lx "
 				"pmap_extract failed", pmap, vaddr);
 		}
 

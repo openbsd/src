@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.35 2003/11/25 21:16:44 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.36 2003/12/20 22:40:27 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -589,8 +589,8 @@ cpu_startup()
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 	ppc_malloc_ok = 1;
 	
-	printf("avail mem = %d (%dK)\n", ptoa(uvmexp.free),
-	    ptoa(uvmexp.free)/1024);
+	printf("avail mem = %ld (%ldK)\n", ptoa(uvmexp.free),
+	    ptoa(uvmexp.free) / 1024);
 	printf("using %d buffers containing %d bytes of memory\n", nbuf,
 	    bufpages * PAGE_SIZE);
 	

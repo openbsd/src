@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdbdisksubr.c,v 1.1 2003/11/13 23:00:55 drahn Exp $	*/
+/*	$OpenBSD: rdbdisksubr.c,v 1.2 2003/12/20 22:40:28 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
 
 /*
@@ -299,7 +299,7 @@ getadostype(u_long dostype)
 			goto unknown;
 		else
 #else
-			printf("found dostype: 0x%x, assuming an ADOS FS "
+			printf("found dostype: 0x%lx, assuming an ADOS FS "
 			    "although it's unknown\n", dostype);
 #endif
 		adt.fstype = FS_ADOS;
@@ -313,7 +313,7 @@ getadostype(u_long dostype)
 		return (adt);
 	case DOST_XXXBSD:
 #ifdef DIAGNOSTIC
-		printf("found dostype: 0x%x which is deprecated", dostype);
+		printf("found dostype: 0x%lx which is deprecated", dostype);
 #endif
 		if (b1 == 'S') {
 			dostype = DOST_NBS;
@@ -326,7 +326,7 @@ getadostype(u_long dostype)
 			dostype |= FS_BSDFFS;
 		}
 #ifdef DIAGNOSTIC
-		printf(" using: 0x%x instead\n", dostype);
+		printf(" using: 0x%lx instead\n", dostype);
 #endif
 		return (getadostype(dostype));
 	case DOST_EXT2:
@@ -336,7 +336,7 @@ getadostype(u_long dostype)
 	default:
 	unknown:
 #ifdef DIAGNOSTIC
-		printf("warning unknown dostype: 0x%x marking unused\n",
+		printf("warning unknown dostype: 0x%lx marking unused\n",
 		    dostype);
 #endif
 		adt.archtype = ADT_UNKNOWN;
