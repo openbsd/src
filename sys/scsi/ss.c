@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.28 1997/03/11 12:06:48 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.29 1997/03/13 12:19:59 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -87,6 +87,7 @@ struct quirkdata {
 	u_int8_t halftone_pattern[2];
 	int pad_type;
 	long bit_ordering;
+	u_int8_t scanner_type;
 	/*
 	 * To enable additional scanner options, point vendor_unique_sw
 	 * at a function that adds more stuff to the SET_WINDOW parameters.
@@ -97,7 +98,12 @@ struct quirkdata {
 	 * If the scanner requires use of GET_BUFFER_STATUS before READ
 	 * it can be called from ss_minphys().
 	 */
-	void	(*special_minphys)__P(( struct ss_softc *, struct buf *));
+	void	(*special_minphys)__P((struct ss_softc *, struct buf *));
+
+	/*
+	 * 
+	 */
+	int	(*compute_sizes)__P((void));
 };
 
 struct ss_quirk_inquiry_pattern {
@@ -143,7 +149,8 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_HALFTONE |
 		 SS_Q_BIT_ORDERING,
 		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
-		 ricoh_is410_sw, get_buffer_status
+		 RICOH_IS50,
+		 ricoh_is410_sw, get_buffer_status, NULL
 	 }},
 	{{T_SCANNER, T_FIXED,
 	 "RICOH   ", "IS410           ", "    "}, {
@@ -153,7 +160,8 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_HALFTONE |
 		 SS_Q_BIT_ORDERING,
 		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
-		 ricoh_is410_sw, get_buffer_status
+		 RICOH_IS410,
+		 ricoh_is410_sw, get_buffer_status, NULL
 	 }},
 	{{T_SCANNER, T_FIXED,	       /* Ricoh IS-410 OEMed by IBM */
 	 "IBM     ", "2456-001        ", "    "}, {
@@ -163,7 +171,8 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_HALFTONE |
 		 SS_Q_BIT_ORDERING,
 		 320, 0, 0, 0, { 2, 0x0a }, 0, 7,
-		 ricoh_is410_sw, get_buffer_status
+		 RICOH_IS410,
+		 ricoh_is410_sw, get_buffer_status, NULL
 	 }},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UC630           ", "    "}, {
@@ -171,7 +180,8 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_WINDOW_DESC_LEN |
 		 SS_Q_HALFTONE,
 		 0x2e, 0, 0, 0, { 0, 1 }, 0, 0,
-		 umax_uc630_sw, NULL
+		 UMAX_UC630,
+		 umax_uc630_sw, NULL, NULL
 	 }},
 	{{T_SCANNER, T_FIXED,
 	 "UMAX    ", "UG630           ", "    "}, {
@@ -179,7 +189,8 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_WINDOW_DESC_LEN |
 		 SS_Q_HALFTONE,
 		 0x2e, 0, 0, 0, { 0, 1 }, 0, 0,
-		 umax_uc630_sw, NULL
+		 UMAX_UG630,
+		 umax_uc630_sw, NULL, NULL
 	 }},
 #ifdef NOTYET			/* ADF version */
 	{{T_SCANNER, T_FIXED,
@@ -192,7 +203,8 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_SET_RIF |
 		 SS_Q_PADDING_TYPE,
 		 64, 0, 0, 0, { 0, 1 }, 0, 0,
-		 fujistsu_m3096g_sw, NULL
+		 FUJITSU_M3096G,
+		 fujistsu_m3096g_sw, NULL, NULL
 	 }},
 #else				/* flatbed-only version */
 	{{T_SCANNER, T_FIXED,
@@ -204,7 +216,8 @@ struct ss_quirk_inquiry_pattern ss_quirk_patterns[] = {
 		 SS_Q_HALFTONE |
 		 SS_Q_PADDING_TYPE,
 		 0, 0, 0, 0, { 0, 1 }, 0, 0,
-		 NULL, NULL
+		 FUJITSU_M3096G,
+		 NULL, NULL, NULL
 	 }},
 #endif
 };
@@ -301,6 +314,9 @@ ssattach(parent, self, aux)
 	ss->sio.scan_quality		= 100;
 	ss->sio.scan_image_mode		= SIM_GRAYSCALE;
 
+	/* XXX fill in the rest of the scan_io struct by calling the
+	   compute_sizes routine */
+
 	/*
 	 * Set up the buf queue for this device
 	 */
@@ -329,12 +345,10 @@ ss_identify_scanner(ss, inqbuf)
 		if (ss->quirkdata->special_minphys != NULL) {
 			ss->special.minphys = ss->quirkdata->special_minphys;
 		}
-		printf("%s\n", ss->quirkdata->name);
+		printf("\n%s: %s\n", ss->sc_dev.dv_xname, ss->quirkdata->name);
 	} else {
 		printf("\n%s: generic scanner\n", ss->sc_dev.dv_xname);
 		ss->sio.scan_scanner_type = GENERIC_SCSI2;
-		/* XXX fill in the rest of the scan_io struct by
-                   calling compute_sizes routine */
 	}
 }
 
