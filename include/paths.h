@@ -1,4 +1,4 @@
-/*	$OpenBSD: paths.h,v 1.13 1998/08/17 20:13:42 millert Exp $	*/
+/*	$OpenBSD: paths.h,v 1.14 1998/10/08 21:32:54 art Exp $	*/
 /*	$NetBSD: paths.h,v 1.7 1994/10/26 00:56:12 cgd Exp $	*/
 
 /*
@@ -67,6 +67,7 @@
 #define	_PATH_TTY	"/dev/tty"
 #define	_PATH_UNIX	"/bsd"
 #define	_PATH_VI	"/usr/bin/vi"
+#define _PATH_AFSD	"/usr/libexec/afsd"
 
 /* Provide trailing slash, since mostly used for building pathnames. */
 #define _PATH_BOOTDIR	"/usr/mdec/"
