@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.263 2002/12/18 10:02:40 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.264 2002/12/18 10:16:55 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -591,6 +591,11 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			r.action = PF_BINAT;
 			r.af = $4;
 			if ($5 != NULL) {
+				if ($5->next != NULL) {
+					yyerror("proto list expansion"
+					    " not supported in binat-anchor");
+					YYERROR;
+				}
 				r.proto = $5->proto;
 				free($5);
 			}
