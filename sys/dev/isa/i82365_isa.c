@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365_isa.c,v 1.10 2000/06/23 16:53:08 aaron Exp $	*/
+/*	$OpenBSD: i82365_isa.c,v 1.11 2000/06/28 17:48:10 aaron Exp $	*/
 /*	$NetBSD: i82365_isa.c,v 1.11 1998/06/09 07:25:00 thorpej Exp $	*/
 
 /*
@@ -218,6 +218,7 @@ pcic_isa_attach(parent, self, aux)
 				pcic_write(h, PCIC_CSC_INTR,
 				    (sc->irq << PCIC_CSC_INTR_IRQ_SHIFT) |
 				    PCIC_CSC_INTR_CD_ENABLE);
+				powerhook_establish(pcic_power, h);
 			}
 		}
 	} else

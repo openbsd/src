@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82365var.h,v 1.8 2000/06/23 16:53:08 aaron Exp $	*/
+/*	$OpenBSD: i82365var.h,v 1.9 2000/06/28 17:48:10 aaron Exp $	*/
 /*	$NetBSD: i82365var.h,v 1.4 1998/05/23 18:32:29 matt Exp $	*/
 
 /*
@@ -175,6 +175,8 @@ void	pcic_chip_io_unmap __P((pcmcia_chipset_handle_t, int));
 
 void	pcic_chip_socket_enable __P((pcmcia_chipset_handle_t));
 void	pcic_chip_socket_disable __P((pcmcia_chipset_handle_t));
+
+void	pcic_power __P((int, void *));
 
 #define pcic_read(h, idx) \
 	(*(h)->ph_read)((h), (idx))
