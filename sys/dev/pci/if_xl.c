@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.30 1999/09/26 17:50:07 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.31 1999/10/07 12:02:58 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -184,6 +184,7 @@ int xl_list_rx_init	__P((struct xl_softc *));
 int xl_list_tx_init	__P((struct xl_softc *));
 void xl_wait		__P((struct xl_softc *));
 void xl_mediacheck	__P((struct xl_softc *));
+void xl_choose_xcvr	__P((struct xl_softc *, int));
 #ifdef notdef
 void xl_testpacket	__P((struct xl_softc *));
 #endif
@@ -711,9 +712,9 @@ void xl_testpacket(sc)
 #endif
 
 void xl_setcfg(sc)
-	struct xl_softc		*sc;
+	struct xl_softc *sc;
 {
-	u_int32_t		icfg;
+	u_int32_t icfg;
 
 	XL_SEL_WIN(3);
 	icfg = CSR_READ_4(sc, XL_W3_INTERNAL_CFG);
@@ -723,14 +724,17 @@ void xl_setcfg(sc)
 		icfg |= (XL_XCVR_MII << XL_ICFG_CONNECTOR_BITS);
 	if (sc->xl_media & XL_MEDIAOPT_BTX)
 		icfg |= (XL_XCVR_AUTO << XL_ICFG_CONNECTOR_BITS);
+
+	CSR_WRITE_4(sc, XL_W3_INTERNAL_CFG, icfg);
+	CSR_WRITE_4(sc, XL_COMMAND, XL_CMD_COAX_STOP);
 }
 
 void xl_setmode(sc, media)
-	struct xl_softc		*sc;
-	int			media;
+	struct xl_softc *sc;
+	int media;
 {
-	u_int32_t		icfg;
-	u_int16_t		mediastat;
+	u_int32_t icfg;
+	u_int16_t mediastat;
 
 	printf("xl%d: selecting ", sc->xl_unit);
 
@@ -816,8 +820,6 @@ void xl_setmode(sc, media)
 	CSR_WRITE_2(sc, XL_W4_MEDIA_STATUS, mediastat);
 	DELAY(800);
 	XL_SEL_WIN(7);
-
-	return;
 }
 
 void xl_reset(sc)
@@ -897,8 +899,6 @@ xl_probe(parent, match, aux)
 void xl_mediacheck(sc)
 	struct xl_softc		*sc;
 {
-	u_int16_t		devid;
-
 	/*
 	 * If some of the media options bits are set, assume they are
 	 * correct. If not, try to figure it out down below.
@@ -930,6 +930,14 @@ void xl_mediacheck(sc)
 			"should probably consult your vendor\n", sc->xl_unit);
 	}
 
+	xl_choose_xcvr(sc, 1);
+}
+
+void xl_choose_xcvr(sc, verbose)
+	struct xl_softc *sc;
+	int verbose;
+{
+	u_int16_t devid;
 
 	/*
 	 * Read the device ID from the EEPROM.
@@ -943,34 +951,42 @@ void xl_mediacheck(sc)
 	case TC_DEVICEID_KRAKATOA_10BT:		/* 3c900B-TPO */
 		sc->xl_media = XL_MEDIAOPT_BT;
 		sc->xl_xcvr = XL_XCVR_10BT;
-		printf("xl%d: guessing 10BaseT transceiver\n", sc->xl_unit);
+		if (verbose)
+			printf("xl%d: guessing 10BaseT transceiver\n",
+			    sc->xl_unit);
 		break;
 	case TC_DEVICEID_BOOMERANG_10BT_COMBO:	/* 3c900-COMBO */
 	case TC_DEVICEID_KRAKATOA_10BT_COMBO:	/* 3c900B-COMBO */
 		sc->xl_media = XL_MEDIAOPT_BT|XL_MEDIAOPT_BNC|XL_MEDIAOPT_AUI;
 		sc->xl_xcvr = XL_XCVR_10BT;
-		printf("xl%d: guessing COMBO (AUI/BNC/TP)\n", sc->xl_unit);
+		if (verbose)
+			printf("xl%d: guessing COMBO (AUI/BNC/TP)\n",
+			    sc->xl_unit);
 		break;
 	case TC_DEVICEID_KRAKATOA_10BT_TPC:	/* 3c900B-TPC */
 		sc->xl_media = XL_MEDIAOPT_BT|XL_MEDIAOPT_BNC;
 		sc->xl_xcvr = XL_XCVR_10BT;
-		printf("xl%d: guessing TPC (BNC/TP)\n", sc->xl_unit);
+		if (verbose)
+			printf("xl%d: guessing TPC (BNC/TP)\n", sc->xl_unit);
 		break;
 	case TC_DEVICEID_CYCLONE_10FL:		/* 3c900B-FL */
 		sc->xl_media = XL_MEDIAOPT_10FL;
 		sc->xl_xcvr = XL_XCVR_AUI;
-		printf("xl%d: guessing 10baseFL\n", sc->xl_unit);
+		if (verbose)
+			printf("xl%d: guessing 10baseFL\n", sc->xl_unit);
 		break;
 	case TC_DEVICEID_BOOMERANG_10_100BT:	/* 3c905-TX */
 		sc->xl_media = XL_MEDIAOPT_MII;
 		sc->xl_xcvr = XL_XCVR_MII;
-		printf("xl%d: guessing MII\n", sc->xl_unit);
+		if (verbose)
+			printf("xl%d: guessing MII\n", sc->xl_unit);
 		break;
 	case TC_DEVICEID_BOOMERANG_100BT4:	/* 3c905-T4 */
 	case TC_DEVICEID_CYCLONE_10_100BT4:	/* 3c905B-T4 */
 		sc->xl_media = XL_MEDIAOPT_BT4;
 		sc->xl_xcvr = XL_XCVR_MII;
-		printf("xl%d: guessing 100BaseT4/MII\n", sc->xl_unit);
+		if (verbose)
+			printf("xl%d: guessing 100BaseT4/MII\n", sc->xl_unit);
 		break;
 	case TC_DEVICEID_HURRICANE_10_100BT:	/* 3c905B-TX */
 	case TC_DEVICEID_HURRICANE_10_100BT_SERV:/* 3c980-TX */
@@ -979,12 +995,16 @@ void xl_mediacheck(sc)
 	case TC_DEVICEID_TORNADO_10_100BT:	/* 3c905C-TX */
 		sc->xl_media = XL_MEDIAOPT_BTX;
 		sc->xl_xcvr = XL_XCVR_AUTO;
-		printf("xl%d: guessing 10/100 internal\n", sc->xl_unit);
+		if (verbose)
+			printf("xl%d: guessing 10/100 internal\n",
+			    sc->xl_unit);
 		break;
 	case TC_DEVICEID_CYCLONE_10_100_COMBO:	/* 3c905B-COMBO */
 		sc->xl_media = XL_MEDIAOPT_BTX|XL_MEDIAOPT_BNC|XL_MEDIAOPT_AUI;
 		sc->xl_xcvr = XL_XCVR_AUTO;
-		printf("xl%d: guessing 10/100 plus BNC/AUI\n", sc->xl_unit);
+		if (verbose)
+			printf("xl%d: guessing 10/100 plus BNC/AUI\n",
+			    sc->xl_unit);
 		break;
 	default:
 		printf("xl%d: unknown device ID: %x -- "
@@ -2286,8 +2306,17 @@ xl_attach(parent, self, aux)
 	}
 	else {
 		ifmedia_init(&sc->ifmedia, 0, xl_ifmedia_upd, xl_ifmedia_sts);
+		sc->xl_hasmii = 0;
 		ifm = &sc->ifmedia;
 	}
+
+	/*
+	 * Sanity check. If the user has selected "auto" and this isn't
+	 * a 10/100 card of some kind, we need to force the transceiver
+	 * type to something sane.
+	 */
+	if (sc->xl_xcvr == XL_XCVR_AUTO)
+		xl_choose_xcvr(sc, 0);
 
 	if (sc->xl_media & XL_MEDIAOPT_BT) {
 		ifmedia_add(ifm, IFM_ETHER|IFM_10_T, 0, NULL);
