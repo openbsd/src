@@ -1,3 +1,11 @@
+1.74 -> 1.75 (08/22/96)
+	+ Add French to the error message translations.
+	+ Move the UNLICENSED message to the end of the message line.
+	+ Fix bug where wide characters in a file name weren't calculated
+	  correctly in the status message.
+	+ Fix bug where cl_rename was called directly, by the ex shell code.
+	+ Fix bug where splitting a screen resulting in a new screen at the
+	  top of the display resulted in badly displayed status messages.
 1.73 -> 1.74 (08/18/96)
 	+ Fix bug where the status line wasn't redisplayed if the user ran
 	  an ex command that trashed the screen.

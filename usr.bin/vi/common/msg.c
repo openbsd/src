@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)msg.c	10.45 (Berkeley) 8/18/96";
+static const char sccsid[] = "@(#)msg.c	10.46 (Berkeley) 8/19/96";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -146,7 +146,7 @@ retry:		FREE_SPACE(sp, bp, blen);
 		p = msg_cat(sp, "020|Error: ", &len);
 		if (REM < len)
 			goto retry;
-		memmove(mp, p, len);
+		memcpy(mp, p, len);
 		mp += len;
 		mlen += len;
 	}
@@ -525,12 +525,15 @@ msgq_status(sp, lno, flags)
 
 	/* Get sufficient memory. */
 	len = strlen(sp->frp->name);
-	GET_SPACE_GOTO(sp, bp, blen, len + 128);
+	GET_SPACE_GOTO(sp, bp, blen, len * MAX_CHARACTER_COLUMNS + 128);
 	p = bp;
 
 	/* Copy in the filename. */
-	memmove(p, sp->frp->name, len);
-	p += len;
+	for (p = bp, t = sp->frp->name; *t != '\0'; ++t) {
+		len = KEY_LEN(sp, *t);
+		memcpy(p, KEY_NAME(sp, *t), len);
+		p += len;
+	}
 	np = p;
 	*p++ = ':';
 	*p++ = ' ';
@@ -559,13 +562,13 @@ msgq_status(sp, lno, flags)
 	if (F_ISSET(sp->frp, FR_NEWFILE)) {
 		F_CLR(sp->frp, FR_NEWFILE);
 		t = msg_cat(sp, "021|new file", &len);
-		memmove(p, t, len);
+		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
 	} else {
 		if (F_ISSET(sp->frp, FR_NAMECHANGE)) {
 			t = msg_cat(sp, "022|name changed", &len);
-			memmove(p, t, len);
+			memcpy(p, t, len);
 			p += len;
 			needsep = 1;
 		}
@@ -577,7 +580,7 @@ msgq_status(sp, lno, flags)
 			t = msg_cat(sp, "023|modified", &len);
 		else
 			t = msg_cat(sp, "024|unmodified", &len);
-		memmove(p, t, len);
+		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
 	}
@@ -587,7 +590,7 @@ msgq_status(sp, lno, flags)
 			*p++ = ' ';
 		}
 		t = msg_cat(sp, "025|UNLOCKED", &len);
-		memmove(p, t, len);
+		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
 	}
@@ -597,7 +600,7 @@ msgq_status(sp, lno, flags)
 			*p++ = ' ';
 		}
 		t = msg_cat(sp, "026|readonly", &len);
-		memmove(p, t, len);
+		memcpy(p, t, len);
 		p += len;
 		needsep = 1;
 	}
@@ -610,7 +613,7 @@ msgq_status(sp, lno, flags)
 			return;
 		if (last == 0) {
 			t = msg_cat(sp, "028|empty file", &len);
-			memmove(p, t, len);
+			memcpy(p, t, len);
 			p += len;
 		} else {
 			t = msg_cat(sp, "027|line %lu of %lu [%ld%%]", &len);
@@ -635,11 +638,13 @@ msgq_status(sp, lno, flags)
 	 * permission of Keith Bostic.  See the LICENSE file for further
 	 * information.
 	 */
-#define	POISON	"   (UNLICENSED)"
-	if (!poisoned && len + 1 + (sizeof(POISON) - 1) < sp->cols) {
+#define	POISON	"   UNLICENSED"
+	if (!poisoned && len < sp->cols - ((sizeof(POISON) - 1) + 1)) {
+		memset(p, ' ', sp->cols - len);
+		p = (bp + sp->cols) - ((sizeof(POISON) - 1) + 1);
 		memcpy(p, POISON, sizeof(POISON) - 1);
-		p += sizeof(POISON) - 1;
-		len += sizeof(POISON) - 1;
+		p = (bp + sp->cols) - 1;
+		len = p - bp;
 		poisoned = 1;
 	}
 
@@ -662,7 +667,7 @@ msgq_status(sp, lno, flags)
 	 * characters for those screens.  Make it really hard to screw this up.
 	 */
 	s = bp;
-	if (LF_ISSET(MSTAT_TRUNCATE) && len >= sp->cols) {
+	if (LF_ISSET(MSTAT_TRUNCATE) && len > sp->cols) {
 		for (; s < np && (*s != '/' || (p - s) > sp->cols - 3); ++s);
 		if (s == np) {
 			s = p - (sp->cols - 5);

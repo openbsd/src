@@ -8,7 +8,7 @@
 .\"
 .\" See the LICENSE file for redistribution information.
 .\"
-.\"     @(#)vi.ref	8.82 (Berkeley) 8/18/96
+.\"     @(#)vi.ref	8.83 (Berkeley) 8/20/96
 .\"
 .\"
 .so ref.so
@@ -57,11 +57,11 @@ Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996
 Keith Bostic.  All Rights Reserved.
 .sp
 .pp
-The vi program is shareware.  You are welcome to copy, modify and share
-it with others under the conditions listed in the LICENSE file.  If your
-company finds vi sufficiently useful that you would have purchased it,
-or your company wishes to redistribute it, contributions to the authors
-would be appreciated.
+The vi program is freely redistributable.  You are welcome to copy,
+modify and share it with others under the conditions listed in the
+LICENSE file.  If any company (not individual!) finds vi sufficiently
+useful that you would have purchased it, or if any company wishes to
+redistribute it, contributions to the authors would be appreciated.
 .bp 2
 .(l C
 .i Acknowledgements

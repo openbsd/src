@@ -46,9 +46,9 @@
  * 3. For permission to redistribute this program under conditions other
  *    than these, contact Keith Bostic.
  *
- * The vi program is shareware.  You are welcome to copy, modify and share
- * it with others under the conditions listed in the LICENSE file.  If your
- * company finds vi sufficiently useful that you would have purchased it,
- * or your company wishes to redistribute it, contributions to the authors
- * would be appreciated.
+ * The vi program is freely redistributable.  You are welcome to copy,
+ * modify and share it with others under the conditions listed in the
+ * LICENSE file.  If any company (not individual!) finds vi sufficiently
+ * useful that you would have purchased it, or if any company wishes to
+ * redistribute it, contributions to the authors would be appreciated.
  */
