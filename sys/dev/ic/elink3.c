@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.22 1998/02/23 17:36:52 niklas Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.23 1998/02/25 23:56:51 deraadt Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -231,8 +231,7 @@ epconfig(sc, chipset)
 		sc->sc_arpcom.ac_enaddr[(i << 1) + 1] = x;
 	}
 
-	printf("%s: address %s, ", sc->sc_dev.dv_xname,
-		ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * Vortex-based (3c59x pci,eisa) and Boomerang (3c900,3c515?) cards
@@ -505,8 +504,8 @@ ep_vortex_probemedia(sc)
 	medium_name = (default_media > 8)
 		? "(unknown/impossible media)"
 		: ep_vortex_media[default_media].epm_name;
-	printf(" default %s%s\n",
-	       medium_name,  (autoselect)? ", autoselect" : "" );
+	printf(" default %s%s",
+	       medium_name,  (autoselect)? "/autoselect" : "" );
 	sc->sc_media = ep_vortex_media[default_media].epm_ifdata;
 
 #ifdef notyet	
