@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping6.c,v 1.37 2001/11/05 07:50:37 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.38 2001/11/05 07:54:44 itojun Exp $	*/
 /*	$KAME: ping6.c,v 1.129 2001/06/22 13:16:02 itojun Exp $	*/
 
 /*
@@ -140,10 +140,15 @@ static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #include "md5.h"
 #endif
 
+struct ping6_timeval {
+	int32_t	tv_sec;
+	int32_t	tv_usec;
+};
+
 #define MAXPACKETLEN	131072
 #define	IP6LEN		40
 #define ICMP6ECHOLEN	8	/* icmp echo header len excluding time */
-#define ICMP6ECHOTMLEN sizeof(struct timeval)
+#define ICMP6ECHOTMLEN sizeof(struct ping6_timeval)
 #define ICMP6_NIQLEN	(ICMP6ECHOLEN + 8)
 /* FQDN case, 64 bits of nonce + 32 bits ttl */
 #define ICMP6_NIRLEN	(ICMP6ECHOLEN + 12)
@@ -248,11 +253,6 @@ volatile sig_atomic_t seenint;
 #ifdef SIGINFO
 volatile sig_atomic_t seeninfo;
 #endif
-
-struct ping6_timeval {
-	int32_t	tv_sec;
-	int32_t	tv_usec;
-};
 
 int	 main __P((int, char *[]));
 void	 fill __P((char *, char *));
