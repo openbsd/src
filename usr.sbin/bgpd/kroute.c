@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.35 2003/12/26 23:22:27 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.36 2003/12/26 23:46:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -227,12 +227,34 @@ kroute_change(int fd, struct kroute *kroute)
 int
 kroute_insert(struct kroute_node *kr)
 {
+	struct knexthop_node	*h;
+	struct kroute_nexthop	 nh;
+	in_addr_t		 mask, ina;
+
 	if (RB_INSERT(kroute_tree, &krt, kr) != NULL) {
 		logit(LOG_CRIT, "kroute_tree insert failed for %s/%u",
 		    log_ntoa(kr->r.prefix), kr->r.prefixlen);
 		return (-1);
 	}
 
+	if (kr->flags & F_KERNEL) {
+		mask = 0xffffffff << (32 - kr->r.prefixlen);
+		ina = ntohl(kr->r.prefix);
+		RB_FOREACH(h, knexthop_tree, &knt) {
+			if ((ntohl(h->nexthop) & mask) == ina) {
+				if (h->kroute != NULL)
+					continue;	/* XXX */
+				h->kroute = kr;
+				kr->flags |= F_NEXTHOP;
+				bzero(&nh, sizeof(nh));
+				nh.nexthop = h->nexthop;
+				nh.valid = 1;
+				nh.connected = kr->flags & F_CONNECTED;
+				nh.gateway = kr->r.nexthop;
+				send_nexthop_update(&nh);
+			}
+		}
+	}
 	return (0);
 }
 
