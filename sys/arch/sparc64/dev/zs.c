@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.14 2004/09/23 18:00:58 jason Exp $	*/
+/*	$OpenBSD: zs.c,v 1.15 2004/09/24 20:53:12 jason Exp $	*/
 /*	$NetBSD: zs.c,v 1.29 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -288,8 +288,17 @@ zs_attach_fhc(parent, self, aux)
 	struct zsc_softc *zsc = (void *) self;
 	struct fhc_attach_args *fa = aux;
 	int zs_unit = zsc->zsc_dev.dv_unit;
-
 	bus_space_handle_t kvaddr;
+
+	if (fa->fa_nreg < 1) {
+		printf(": no registers\n");
+		return;
+	}
+
+	if (fa->fa_nintr < 1) {
+		printf(": no interrupts\n");
+		return;
+	}
 
 	if (fhc_bus_map(fa->fa_bustag, fa->fa_reg[0].fbr_slot,
 	    fa->fa_reg[0].fbr_offset, fa->fa_reg[0].fbr_size,
@@ -304,10 +313,8 @@ zs_attach_fhc(parent, self, aux)
 	zsc->zsc_dmatag = NULL;
 	zsc->zsc_promunit = getpropint(fa->fa_node, "slave", -2);
 	zsc->zsc_node = fa->fa_node;
-	printf("\n");
-#if 0
-	zs_attach(zsc, zsaddr[zs_unit], sa->sa_pri);
-#endif
+
+	zs_attach(zsc, zsaddr[zs_unit], fa->fa_intr[0]);
 }
 
 /*
