@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.16 2001/06/09 06:43:37 angelos Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.17 2001/07/27 15:48:38 itojun Exp $	*/
 /*	$KAME: in6_gif.c,v 1.43 2001/01/22 07:27:17 itojun Exp $	*/
 
 /*
@@ -218,7 +218,7 @@ int in6_gif_input(mp, offp, proto)
 	ip6 = mtod(m, struct ip6_hdr *);
 
 #define satoin6(sa)	(((struct sockaddr_in6 *)(sa))->sin6_addr)
-	for (i = 0, sc = gif; i < ngif; i++, sc++) {
+	for (i = 0, sc = gif_softc; i < ngif; i++, sc++) {
 		if (sc->gif_psrc == NULL ||
 		    sc->gif_pdst == NULL ||
 		    sc->gif_psrc->sa_family != AF_INET6 ||

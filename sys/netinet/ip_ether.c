@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.34 2001/06/27 03:49:53 angelos Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.35 2001/07/27 15:48:38 itojun Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -228,13 +228,14 @@ etherip_input(m, va_alist)
 #if NGIF > 0
 	/* Find appropriate gif(4) interface */
 	for (i = 0; i < ngif; i++) {
-		if ((gif[i].gif_psrc == NULL) || (gif[i].gif_pdst == NULL) ||
-		    !(gif[i].gif_if.if_flags & (IFF_UP|IFF_RUNNING)))
+		if ((gif_softc[i].gif_psrc == NULL) ||
+		    (gif_softc[i].gif_pdst == NULL) ||
+		    !(gif_softc[i].gif_if.if_flags & (IFF_UP|IFF_RUNNING)))
 			continue;
 
-		if (!bcmp(gif[i].gif_psrc, &sdst, gif[i].gif_psrc->sa_len) &&
-		    !bcmp(gif[i].gif_pdst, &ssrc, gif[i].gif_pdst->sa_len) &&
-		    gif[i].gif_if.if_bridge != NULL)
+		if (!bcmp(gif_softc[i].gif_psrc, &sdst, gif_softc[i].gif_psrc->sa_len) &&
+		    !bcmp(gif_softc[i].gif_pdst, &ssrc, gif_softc[i].gif_pdst->sa_len) &&
+		    gif_softc[i].gif_if.if_bridge != NULL)
 			break;
 	}
 
@@ -252,12 +253,12 @@ etherip_input(m, va_alist)
 	 * NULL if it has consumed the packet.  In the case of gif's,
 	 * bridge_input() returns non-NULL when an error occurs.
 	 */
-	m->m_pkthdr.rcvif = &gif[i].gif_if;
+	m->m_pkthdr.rcvif = &gif_softc[i].gif_if;
 	if (m->m_flags & (M_BCAST|M_MCAST))
-		gif[i].gif_if.if_imcasts++;
+		gif_softc[i].gif_if.if_imcasts++;
 
 	s = splnet();
-	m = bridge_input(&gif[i].gif_if, &eh, m);
+	m = bridge_input(&gif_softc[i].gif_if, &eh, m);
 	splx(s);
 	if (m == NULL)
 		return;
