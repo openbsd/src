@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.8 2002/03/14 01:26:45 millert Exp $	*/
+/*	$OpenBSD: param.h,v 1.9 2002/06/12 01:49:43 art Exp $	*/
 /*	$NetBSD: param.h,v 1.25 2001/05/30 12:28:51 mrg Exp $ */
 
 /*
@@ -252,21 +252,6 @@ extern int nbpg, pgofset, pgshift;
  */
 #ifdef _KERNEL
 #ifndef _LOCORE
-#if 0
-extern vaddr_t	dvma_base;
-extern vaddr_t	dvma_end;
-extern struct map	*dvmamap;
-/*
- * The dvma resource map is defined in page units, which are numbered 1 to N.
- * Use these macros to convert to/from virtual addresses.
- */
-#define rctov(n)		(ctob(((n)-1))+dvma_base)
-#define vtorc(v)		((btoc((v)-dvma_base))+1)
-
-extern caddr_t	kdvma_mapin(caddr_t, int, int);
-extern caddr_t	dvma_malloc(size_t, void *, int);
-extern void	dvma_free(caddr_t, size_t, void *);
-#endif
 
 extern void	delay(unsigned int);
 #define	DELAY(n)	delay(n)
