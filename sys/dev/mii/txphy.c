@@ -1,4 +1,4 @@
-/*	$OpenBSD: txphy.c,v 1.2 2000/08/26 20:04:18 nate Exp $	*/
+/*	$OpenBSD: txphy.c,v 1.3 2000/10/18 15:07:00 chris Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -133,8 +133,7 @@ txphy_service(sc, mii, cmd)
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
-		switch (IFM_SUBTYPE(ife->ifm_media)) {
-		  mii_phy_setmedia(sc);
+		mii_phy_setmedia(sc);
 		break;
 
 	case MII_TICK:
