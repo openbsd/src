@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.2 1996/04/25 21:28:00 niklas Exp $
+#	$OpenBSD: list2sh.awk,v 1.3 1996/05/14 18:30:32 mickey Exp $
 
 BEGIN {
 	printf("cd ${CURDIR}\n");
@@ -10,7 +10,7 @@ BEGIN {
 }
 $1 == "COPY" {
 	printf("echo '%s'\n", $0);
-	printf("rm -f ${TARGDIR}/%s\n", $3);
+	printf("rm -fr ${TARGDIR}/%s\n", $3);
 	printf("cp %s ${TARGDIR}/%s\n", $2, $3);
 	next;
 }
