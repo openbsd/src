@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.110 2004/11/13 10:47:21 espie Exp $
+# $OpenBSD: pkg_add,v 1.111 2004/11/13 11:54:30 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -334,10 +334,30 @@ sub really_add($$)
 
 		OpenBSD::ProgressMeter::set_header("$pkgname (extracting)");
 		OpenBSD::Update::save_old_libraries($plist, $state);
-		$state->{totsize} = $totsize;
-		$state->{donesize} = 0;
-		$plist->visit('extract_with_pm', $state);
+		my $donesize = 0;
+		$plist->{done} = [];
+		for my $item (@{$plist->{items}}) {
+			eval { $item->extract($state); };
+			if ($@) {
+				Warn $@;
+				$errors++;
+				last;
+			}
+			push(@{$plist->{done}}, $item);
+			if (defined $item->{size}) {
+				$donesize += $item->{size};
+				OpenBSD::ProgressMeter::show($donesize, $totsize);
+			}
+			last if $interrupted;
+		}
 		OpenBSD::ProgressMeter::next();
+		if ($interrupted || $errors) {
+			if ($not) {
+				Fatal "Installation of $pkgname failed";
+		    	} else {
+				OpenBSD::Add::borked_installation($plist, $dir);
+			}
+		}
 
 		OpenBSD::ProgressMeter::set_header($plist->{replacing}->pkgname()." (deleting)");
 		$state->set_pkgname($plist->{replacing}->pkgname());
@@ -378,7 +398,7 @@ sub really_add($$)
 	$handle->close();
 	OpenBSD::ProgressMeter::next();
 
-	if (!$interrupted) {
+	if (!($interrupted || $errors)) {
 		eval { do_script($plist, INSTALL, $state, "POST-INSTALL") };
 		if ($@) {
 			Warn $@;
@@ -387,10 +407,14 @@ sub really_add($$)
 	}
 
 	unlink($dir.CONTENTS);
-	if (!$not) {
-		if ($interrupted || $errors) {
+	if ($interrupted || $errors) {
+		if ($not) {
+			Fatal "Installation of $pkgname failed";
+		} else {
 			OpenBSD::Add::borked_installation($plist, $dir);
 		}
+	}
+	if (!$not) {
 		my $dest = installed_info($pkgname);
 		OpenBSD::Add::register_installation($dir, $dest, $plist);
 		if (defined $handle->{solved_dependencies}) {

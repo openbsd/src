@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.27 2004/11/12 21:52:01 espie Exp $
+# $OpenBSD: Update.pm,v 1.28 2004/11/13 11:54:30 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -46,19 +46,6 @@ sub mark_lib
 
 sub unmark_lib
 {
-}
-
-sub extract_with_pm
-{
-	require OpenBSD::ProgressMeter;
-
-	my ($self, $state) = @_;
-
-	$self->extract($state);
-	if (defined $self->{size}) {
-		$state->{donesize} += $self->{size};
-		OpenBSD::ProgressMeter::show($state->{donesize}, $state->{totsize});
-	}
 }
 
 package OpenBSD::PackingElement::FileBase;
@@ -281,11 +268,12 @@ sub split_libs
 		if ($item->isa("OpenBSD::PackingElement::Lib") &&
 		    defined $to_split->{$item->fullname()}) {
 		    	$item->clone()->add_object($splitted);
-		} elsif ($item->isa("OpenBSD::PackingElement::Cwd")) {
-			OpenBSD::PackingElement::Cwd->add($splitted, $item->{name});
-		} else {
-			push(@$items, $item);
+			next;
 		}
+		if ($item->isa("OpenBSD::PackingElement::Cwd")) {
+			$item->clone()->add_object($splitted);
+		}
+		push(@$items, $item);
 	}
 	$plist->{items} = $items;
 	return $splitted;
