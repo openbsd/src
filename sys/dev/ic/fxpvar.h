@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxpvar.h,v 1.7 2001/08/10 15:02:05 jason Exp $	*/
+/*	$OpenBSD: fxpvar.h,v 1.8 2001/08/25 14:55:14 jason Exp $	*/
 /*	$NetBSD: if_fxpvar.h,v 1.1 1997/06/05 02:01:58 thorpej Exp $	*/
 
 /*                  
@@ -53,6 +53,7 @@ struct fxp_txsw {
 	struct fxp_txsw *tx_next;
 	struct mbuf *tx_mbuf;
 	bus_dmamap_t tx_map;
+	bus_addr_t tx_off;
 	struct fxp_cb_tx *tx_cb;
 };
 
@@ -116,3 +117,30 @@ struct fxp_softc {
 extern int fxp_intr __P((void *));
 extern int fxp_attach_common __P((struct fxp_softc *, u_int8_t *, const char *));
 extern int fxp_detach __P((struct fxp_softc *));
+
+#ifdef __HAS_NEW_BUS_DMAMAP_SYNC
+#define	fxp_bus_dmamap_sync(t, m, o, l, p)	\
+    bus_dmamap_sync((t), (m), (o), (l), (p))
+#else
+#define fxp_bus_dmamap_sync(t, m, o, l, p)	\
+    bus_dmamap_sync((t), (m), (p))
+#endif
+
+#define	FXP_TXCB_SYNC(sc, txs, p)					\
+    fxp_bus_dmamap_sync((sc)->sc_dmat, (sc)->tx_cb_map, (txs)->tx_off,	\
+	sizeof(struct fxp_cb_tx), (p))
+
+#define	FXP_MCS_SYNC(sc, p)						\
+    fxp_bus_dmamap_sync((sc)->sc_dmat, (sc)->tx_cb_map,			\
+	offsetof(struct fxp_ctrl, u.mcs), sizeof(struct fxp_cb_mcs), (p))
+
+#define	FXP_IAS_SYNC(sc, p)						\
+    fxp_bus_dmamap_sync((sc)->sc_dmat, (sc)->tx_cb_map,			\
+	offsetof(struct fxp_ctrl, u.ias), sizeof(struct fxp_cb_ias), (p))
+
+#define	FXP_CFG_SYNC(sc, p)						\
+    fxp_bus_dmamap_sync((sc)->sc_dmat, (sc)->tx_cb_map,			\
+	offsetof(struct fxp_ctrl, u.cfg), sizeof(struct fxp_cb_config), (p))
+
+#define	FXP_MBUF_SYNC(sc, m, p)						\
+    fxp_bus_dmamap_sync((sc)->sc_dmat, (m), 0, (m)->dm_mapsize, (p))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fxp.c,v 1.24 2001/08/10 15:02:05 jason Exp $	*/
+/*	$OpenBSD: fxp.c,v 1.25 2001/08/25 14:55:14 jason Exp $	*/
 /*	$NetBSD: if_fxp.c,v 1.2 1997/06/05 02:01:55 thorpej Exp $	*/
 
 /*
@@ -334,6 +334,7 @@ fxp_attach_common(sc, enaddr, intrstr)
 		}
 		sc->txs[i].tx_mbuf = NULL;
 		sc->txs[i].tx_cb = sc->sc_ctrl->tx_cb + i;
+		sc->txs[i].tx_off = offsetof(struct fxp_ctrl, tx_cb[i]);
 		sc->txs[i].tx_next = &sc->txs[(i + 1) & FXP_TXCB_MASK];
 	}
 	bzero(sc->sc_ctrl, sizeof(struct fxp_ctrl));
@@ -685,7 +686,7 @@ fxp_start(ifp)
 			bpf_mtap(ifp->if_bpf, m0);
 #endif
 
-		bus_dmamap_sync(sc->sc_dmat, txs->tx_map, BUS_DMASYNC_PREREAD);
+		FXP_MBUF_SYNC(sc, txs->tx_map, BUS_DMASYNC_PREREAD);
 
 		txc = txs->tx_cb;
 		txc->tbd_number = txs->tx_map->dm_nsegs;
@@ -698,6 +699,8 @@ fxp_start(ifp)
 			txc->tbd[seg].tb_size =
 			    txs->tx_map->dm_segs[seg].ds_len;
 		}
+		FXP_TXCB_SYNC(sc, txs,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 		++cnt;
 		sc->sc_cbt_prod = txs;
@@ -709,11 +712,16 @@ fxp_start(ifp)
 
 		txs = sc->sc_cbt_prod;
 		txs->tx_cb->cb_command |= FXP_CB_COMMAND_I | FXP_CB_COMMAND_S;
-		sc->sc_cbt_prev->tx_cb->cb_command &= ~FXP_CB_COMMAND_S;
-		sc->sc_cbt_prev = txs;
+		FXP_TXCB_SYNC(sc, txs,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
-		bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		FXP_TXCB_SYNC(sc, sc->sc_cbt_prev,
+		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		sc->sc_cbt_prev->tx_cb->cb_command &= ~FXP_CB_COMMAND_S;
+		FXP_TXCB_SYNC(sc, sc->sc_cbt_prev,
+		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+
+		sc->sc_cbt_prev = txs;
 
 		fxp_scb_wait(sc);
 		fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_RESUME);
@@ -763,14 +771,14 @@ fxp_intr(arg)
 			int txcnt = sc->sc_cbt_cnt;
 			struct fxp_txsw *txs = sc->sc_cbt_cons;
 
-			bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
+			FXP_TXCB_SYNC(sc, txs,
 			    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 			while ((txcnt > 0) &&
 			    (txs->tx_cb->cb_status & FXP_CB_STATUS_C)) {
 				if (txs->tx_mbuf != NULL) {
-					bus_dmamap_sync(sc->sc_dmat,
-					    txs->tx_map, BUS_DMASYNC_POSTREAD);
+					FXP_MBUF_SYNC(sc, txs->tx_map,
+					    BUS_DMASYNC_POSTREAD);
 					bus_dmamap_unload(sc->sc_dmat,
 					    txs->tx_map);
 					m_freem(txs->tx_mbuf);
@@ -1145,12 +1153,10 @@ fxp_init(xsc)
 	    offsetof(struct fxp_ctrl, u.cfg));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	FXP_CFG_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	do {
 		DELAY(1);
-		bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		FXP_CFG_SYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	} while ((cbp->cb_status & FXP_CB_STATUS_C) == 0);
 
 	/*
@@ -1171,12 +1177,10 @@ fxp_init(xsc)
 	    offsetof(struct fxp_ctrl, u.ias));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 	/* ...and wait for it to complete. */
-	bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	FXP_IAS_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	do {
 		DELAY(1);
-		bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		FXP_IAS_SYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	} while (!(cb_ias->cb_status & FXP_CB_STATUS_C));
 
 	/* Again, this time really upload the multicast addresses */
@@ -1202,8 +1206,8 @@ fxp_init(xsc)
 	sc->sc_cbt_cnt = 1;
 	sc->sc_ctrl->tx_cb[0].cb_command = FXP_CB_COMMAND_NOP |
 	    FXP_CB_COMMAND_S | FXP_CB_COMMAND_I;
-	bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	fxp_bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map, 0,
+	    sc->tx_cb_map->dm_mapsize, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 
 	fxp_scb_wait(sc);
 	CSR_WRITE_4(sc, FXP_CSR_SCB_GENERAL, sc->tx_cb_map->dm_segs->ds_addr +
@@ -1581,12 +1585,9 @@ fxp_mc_setup(sc, doit)
 	    offsetof(struct fxp_ctrl, u.mcs));
 	fxp_scb_cmd(sc, FXP_SCB_COMMAND_CU_START);
 
-	bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-
+	FXP_MCS_SYNC(sc, BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
 	do {
 		DELAY(1);
-		bus_dmamap_sync(sc->sc_dmat, sc->tx_cb_map,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+		FXP_MCS_SYNC(sc, BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
 	} while (!(mcsp->cb_status & FXP_CB_STATUS_C));
 }
