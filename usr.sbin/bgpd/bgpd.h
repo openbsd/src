@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.145 2004/10/19 12:02:50 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.146 2004/11/11 10:35:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -51,6 +51,8 @@
 #define	BGPD_FLAG_NO_FIB_UPDATE		0x0001
 #define	BGPD_FLAG_NO_EVALUATE		0x0002
 #define	BGPD_FLAG_REFLECTOR		0x0004
+#define	BGPD_FLAG_DECISION_MASK		0x0f00
+#define	BGPD_FLAG_DECISION_ROUTEAGE	0x0100
 
 #define	BGPD_LOG_UPDATES		0x0001
 

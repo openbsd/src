@@ -1,4 +1,4 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.39 2004/11/09 10:37:42 henning Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.40 2004/11/11 10:35:15 claudio Exp $
 .\"
 .\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -221,6 +221,19 @@ network 192.168.7.0/24 set localpref 220
 See also the
 .Sx ATTRIBUTE SET
 section.
+.Pp
+.It Xo
+.Ic rde
+.Ic route-age
+.Pq Ic ignore Ns \&| Ns Ic evaluate
+.Xc
+If set to
+.Ic evaluate ,
+the best path selection will not only be based on the path attributes but
+also on the age of the route.
+In this case the decision process is no longer deterministic.
+The default is
+.Ic ignore .
 .Pp
 .It Xo
 .Ic route-collector

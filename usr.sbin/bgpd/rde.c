@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.145 2004/09/28 12:09:31 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.146 2004/11/11 10:35:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1736,6 +1736,12 @@ int
 rde_noevaluate(void)
 {
 	return (conf->flags & BGPD_FLAG_NO_EVALUATE);
+}
+
+int
+rde_decisionflags(void)
+{
+	return (conf->flags & BGPD_FLAG_DECISION_MASK);
 }
 
 /*

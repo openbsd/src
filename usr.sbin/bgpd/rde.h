@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.58 2004/11/10 12:41:58 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.59 2004/11/11 10:35:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -244,6 +244,7 @@ void		 rde_send_pftable_commit(void);
 void		 rde_generate_updates(struct prefix *, struct prefix *);
 u_int16_t	 rde_local_as(void);
 int		 rde_noevaluate(void);
+int		 rde_decisionflags(void);
 
 /* rde_attr.c */
 int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,

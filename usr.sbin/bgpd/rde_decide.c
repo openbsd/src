@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.39 2004/09/16 04:29:54 henning Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.40 2004/11/11 10:35:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -156,9 +156,13 @@ prefix_cmp(struct prefix *p1, struct prefix *p2)
 
 	/* 7. nexthop costs. NOT YET -> IGNORE */
 
-	/* 8. older route (more stable) wins */
-	if ((p2->lastchange - p1->lastchange) != 0)
-		return (p2->lastchange - p1->lastchange);
+	/*
+	 * 8. older route (more stable) wins but only if route-age
+	 * evaluation is enabled.
+	 */
+	if (rde_decisionflags() & BGPD_FLAG_DECISION_ROUTEAGE)
+		if ((p2->lastchange - p1->lastchange) != 0)
+			return (p2->lastchange - p1->lastchange);
 
 	/* 9. lowest BGP Id wins */
 	if ((p2->peer->remote_bgpid - p1->peer->remote_bgpid) != 0)

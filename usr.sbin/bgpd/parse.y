@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.143 2004/11/05 14:30:54 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.144 2004/11/11 10:35:15 claudio Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -137,6 +137,7 @@ typedef struct {
 %}
 
 %token	AS ROUTERID HOLDTIME YMIN LISTEN ON FIBUPDATE
+%token	RDE EVALUATE IGNORE
 %token	GROUP NEIGHBOR NETWORK
 %token	REMOTEAS DESCR LOCALADDR MULTIHOP PASSIVE MAXPREFIX ANNOUNCE
 %token	ENFORCE NEIGHBORAS CAPABILITIES REFLECTOR DEPEND
@@ -349,6 +350,26 @@ conf_main	: AS asnumber		{
 			free($3);
 		}
 		| mrtdump
+		| RDE STRING EVALUATE		{
+			if (!strcmp($2, "route-age"))
+				conf->flags |= BGPD_FLAG_DECISION_ROUTEAGE;
+			else {
+				yyerror("unknown route decision type");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
+		| RDE STRING IGNORE		{
+			if (!strcmp($2, "route-age"))
+				conf->flags &= ~BGPD_FLAG_DECISION_ROUTEAGE;
+			else {
+				yyerror("unknown route decision type");
+				free($2);
+				YYERROR;
+			}
+			free($2);
+		}
 		;
 
 mrtdump		: DUMP STRING inout STRING optnumber	{
@@ -1232,10 +1253,12 @@ lookup(char *s)
 		{ "dump",		DUMP},
 		{ "enforce",		ENFORCE},
 		{ "esp",		ESP},
+		{ "evaluate",		EVALUATE},
 		{ "fib-update",		FIBUPDATE},
 		{ "from",		FROM},
 		{ "group",		GROUP},
 		{ "holdtime",		HOLDTIME},
+		{ "ignore",		IGNORE},
 		{ "ike",		IKE},
 		{ "in",			IN},
 		{ "ipsec",		IPSEC},
@@ -1265,6 +1288,7 @@ lookup(char *s)
 		{ "prepend-neighbor",	PREPEND_PEER},
 		{ "prepend-self",	PREPEND_SELF},
 		{ "quick",		QUICK},
+		{ "rde",		RDE},
 		{ "reject",		REJECT},
 		{ "remote-as",		REMOTEAS},
 		{ "route-collector",	ROUTECOLL},

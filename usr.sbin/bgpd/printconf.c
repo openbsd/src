@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.32 2004/10/19 14:53:14 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.33 2004/11/11 10:35:15 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -116,6 +116,9 @@ print_mainconf(struct bgpd_config *conf)
 
 	if (conf->flags & BGPD_FLAG_NO_EVALUATE)
 		printf("route-collector yes\n");
+
+	if (conf->flags & BGPD_FLAG_DECISION_ROUTEAGE)
+		printf("rde route-age evaluate\n");
 
 	if (conf->log & BGPD_LOG_UPDATES)
 		printf("log updates\n");
