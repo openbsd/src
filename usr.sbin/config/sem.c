@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.18 2000/11/15 01:47:14 angelos Exp $	*/
+/*	$OpenBSD: sem.c,v 1.19 2001/01/23 06:02:59 angelos Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -731,6 +731,57 @@ newdevi(name, unit, d)
 	if (unit >= d->d_umax)
 		d->d_umax = unit + 1;
 	return (i);
+}
+
+/*
+ * Enable an already declared by disabled device.
+ */
+void
+enabledev(name, at)
+        const char *name, *at;
+{
+	struct devbase *ib, *ab;
+        char atbuf[NAMESIZE];
+	struct attr *attr;
+	struct nvlist *nv;
+	struct devi *i;
+	const char *cp;
+	int atunit;
+
+	i = ht_lookup(devitab, name);
+	if (i == NULL) {
+	        error("invalid device `%s'", name);
+		return;
+	}
+	ib = i->i_base;
+
+	if (split(at, strlen(at), atbuf, sizeof atbuf, &atunit)) {
+	        error("invalid attachment name `%s'", at);
+		return;
+	}
+	cp = intern(atbuf);
+	ab = ht_lookup(devbasetab, cp);
+	if (ab == NULL) {
+	        error("invalid attachment device `%s'", cp);
+		return;
+	}
+	for (nv = ab->d_attrs; nv != NULL; nv = nv->nv_next) {
+	        attr = nv->nv_ptr;
+	        if (onlist(attr->a_devs, ib))
+		  goto foundattachment;
+	}
+	error("%s's cannot attach to %s's", ib->d_name, atbuf);
+	return;
+
+foundattachment:
+	while (i && (i->i_atdev != ab))
+	  i = i->i_alias;
+	if (i == NULL) {
+	        error("%s at %s not found", name, at);
+		return;
+	}
+	else
+	  i->i_disable = 0; /* Enable */
 }
 
 /*

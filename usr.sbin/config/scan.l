@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.13 2000/01/04 14:23:43 angelos Exp $	*/
+/*	$OpenBSD: scan.l,v 1.14 2001/01/23 06:02:59 angelos Exp $	*/
 /*	$NetBSD: scan.l,v 1.13 1997/02/02 21:12:37 thorpej Exp $	*/
 
 /*
@@ -93,6 +93,7 @@ define		return DEFINE;
 defopt		return DEFOPT;
 device		return DEVICE;
 disable		return DISABLE;
+enable		return ENABLE;
 dumps		return DUMPS;
 file		return XFILE;
 flags		return FLAGS;

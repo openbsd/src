@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.10 2000/01/04 14:23:43 angelos Exp $	*/
+/*	$OpenBSD: gram.y,v 1.11 2001/01/23 06:02:58 angelos Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -103,7 +103,7 @@ static	void	check_maxpart __P((void));
 %token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE DISABLE
 %token	DUMPS ENDFILE XFILE XOBJECT FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
 %token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE SWAP
-%token	WITH NEEDS_COUNT NEEDS_FLAG RMOPTIONS
+%token	WITH NEEDS_COUNT NEEDS_FLAG RMOPTIONS ENABLE
 %token	<val> NUMBER
 %token	<str> PATHNAME WORD EMPTY
 
@@ -336,6 +336,7 @@ config_spec:
 	MAXUSERS NUMBER			{ setmaxusers($2); } |
 	CONFIG conf sysparam_list	{ addconf(&conf); } |
 	PSEUDO_DEVICE WORD npseudo	{ addpseudo($2, $3); } |
+	device_instance AT attachment ENABLE { enabledev($1, $3); } |
 	device_instance AT attachment disable locators flags_opt
 					{ adddev($1, $3, $5, $6, $4); };
 

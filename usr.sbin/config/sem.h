@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.h,v 1.6 1997/01/18 02:24:20 briggs Exp $	*/
+/*	$OpenBSD: sem.h,v 1.7 2001/01/23 06:02:59 angelos Exp $	*/
 /*	$NetBSD: sem.h,v 1.6 1996/11/11 23:40:10 gwr Exp $	*/
 
 /*
@@ -61,6 +61,7 @@ void		setmajor __P((struct devbase *d, int n));
 void		addconf __P((struct config *));
 void		setconf __P((struct nvlist **, const char *, struct nvlist *));
 void		adddev __P((const char *, const char *, struct nvlist *, int, int));
+void            enabledev __P((const char *, const char *));
 void		addpseudo __P((const char *name, int number));
 const char     *ref __P((const char *name));
 const char     *starref __P((const char *name));
