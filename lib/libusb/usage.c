@@ -1,4 +1,4 @@
-/*	$OpenBSD: usage.c,v 1.1 2001/09/02 17:50:40 pvalchev Exp $	*/
+/*	$OpenBSD: usage.c,v 1.2 2001/09/03 11:19:05 deraadt Exp $	*/
 /*	$NetBSD: usage.c,v 1.11 2001/01/09 15:59:47 augustss Exp $	*/
 
 /*
@@ -163,7 +163,7 @@ hid_usage_page(int i)
 	for (k = 0; k < npages; k++)
 		if (pages[k].usage == i)
 			return pages[k].name;
-	sprintf(b, "0x%04x", i);
+	snprintf(b, sizeof b, "0x%04x", i);
 	return b;
 }
 
@@ -183,7 +183,7 @@ hid_usage_in_page(unsigned int u)
 	for (j = 0; j < pages[k].pagesize; j++) {
 		us = pages[k].page_contents[j].usage;
 		if (us == -1) {
-			sprintf(b, "%s %d",
+			snprintf(b, sizeof b, "%s %d",
 			    pages[k].page_contents[j].name, i);
 			return b;
 		}
@@ -191,7 +191,7 @@ hid_usage_in_page(unsigned int u)
 			return pages[k].page_contents[j].name;
 	}
  bad:
-	sprintf(b, "0x%04x", i);
+	snprintf(b, sizeof b, "0x%04x", i);
 	return b;
 }
 
