@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rpc_prot.c,v 1.3 1996/08/19 08:31:49 tholo Exp $";
+static char *rcsid = "$OpenBSD: rpc_prot.c,v 1.4 1997/07/16 22:33:45 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -227,7 +227,7 @@ rejected(rjct_stat, error)
 
 	switch (rjct_stat) {
 
-	case RPC_VERSMISMATCH:
+	case RPC_MISMATCH:
 		error->re_status = RPC_VERSMISMATCH;
 		return;
 
