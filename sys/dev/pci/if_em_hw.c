@@ -31,7 +31,7 @@
 
 *******************************************************************************/
 
-/* $OpenBSD: if_em_hw.c,v 1.6 2005/02/17 18:07:36 jfb Exp $ */
+/* $OpenBSD: if_em_hw.c,v 1.7 2005/02/19 18:18:14 jolan Exp $ */
 /* if_em_hw.c
  * Shared functions for accessing and configuring the MAC
  */
@@ -669,7 +669,7 @@ em_adjust_serdes_amplitude(struct em_hw *hw)
  *
  * hw - Struct containing variables accessed by shared code
  *
- * Determines which flow control settings to use. Calls the apropriate media-
+ * Determines which flow control settings to use. Calls the appropriate media-
  * specific link configuration function. Configures the flow control settings.
  * Assuming the adapter has a valid link partner, a valid link should be
  * established. Assumes the hardware has previously been reset and the
