@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1996/03/28 07:31:10 etheisen Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.5 1996/05/13 11:32:48 niklas Exp $
 
 LIB=		stdc++
 CXXFLAGS+=	-fno-implicit-templates -nostdinc++
@@ -41,6 +41,7 @@ LIBIBERTY_OBJDIR!=if [ -d $(LIBIBERTY_DIR)/$(OBJDIR) ]; then \
 # we must first see to that they are really generated.  This is a hack that
 # ensures this.  The echo at the end is because make doesn't like command
 # substitutions to not generate output.
+.ifnmake obj
 PREREQ!=	test ! -f $(IO_OBJDIR)/iostream.list && \
 			(cd $(IO_DIR); \
 			 make -f Makefile.bsd-wrapper iostream.list); \
@@ -48,7 +49,6 @@ PREREQ!=	test ! -f $(IO_OBJDIR)/iostream.list && \
 			(cd $(LIBIBERTY_DIR); \
 			 make -f Makefile.bsd-wrapper needed-list); \
 		echo 'Prerequistes made'
-
 
 IO_OBJS!=	cat $(IO_OBJDIR)/iostream.list
 QIO_OBJS=	$(IO_OBJS:S/^/$(IO_OBJDIR)\//g)
@@ -58,6 +58,7 @@ LIBIBERTY_OBJS=$(LIBIBERTY_SRCS:N*.h:R:S/$/.o/g)
 # XXX why does strerror.o need to be hardwired?
 LIBIBERTY_OBJS+=strerror.o
 QLIBIBERTY_OBJS=$(LIBIBERTY_OBJS:S/^/$(LIBIBERTY_OBJDIR)\//g)
+.endif
 
 STL_OBJDIR!=	if [ -d $(STL_DIR)/$(OBJDIR) ]; then \
 			echo $(STL_DIR)/$(OBJDIR); \
