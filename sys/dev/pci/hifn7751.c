@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.12 2000/03/17 20:31:30 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.13 2000/03/17 21:59:07 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -89,9 +89,6 @@ u_int32_t hifn_next_signature __P((u_int a, u_int cnt));
 /*
  * Used for round robin crypto requests
  */
-int hifn_num_devices = 0;
-struct hifn_softc *hifn_devices[HIFN_MAX_DEVICES];
-
 int
 hifn_probe(parent, match, aux)
 	struct device *parent;
@@ -235,9 +232,6 @@ hifn_attach(parent, self, aux)
 		return;
 	}
 
-	hifn_devices[hifn_num_devices] = sc;
-	hifn_num_devices++;
-
 	hifn_sessions(sc);
 
 	printf(", %dk %cram, %d sessions, %s\n",
@@ -366,13 +360,13 @@ hifn_enable_crypto(sc, pciid)
 	 */
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg | HIFN_PUCNFG_CHIPID);
 
-	encl = READ_REG_0(sc, HIFN_0_PUSTAT);
+	encl = READ_REG_0(sc, HIFN_0_PUSTAT) & HIFN_PUSTAT_CHIPENA;
 
 	/*
 	 * Make sure we don't re-unlock.  Two unlocks kills chip until the
 	 * next reboot.
 	 */
-	if (encl == 0x1020 || encl == 0x1120) {
+	if (encl == HIFN_PUSTAT_ENA_1 || encl == HIFN_PUSTAT_ENA_2) {
 #ifdef HIFN_DEBUG
 		printf("%s: Strong Crypto already enabled!\n",
 		    sc->sc_dv.dv_xname);
@@ -382,7 +376,7 @@ hifn_enable_crypto(sc, pciid)
 		return 0;	/* success */
 	}
 
-	if (encl != 0 && encl != 0x3020) {
+	if (encl != 0 && encl != HIFN_PUSTAT_ENA_0) {
 #ifdef HIFN_DEBUG
 		printf("%: Unknown encryption level\n",  sc->sc_dv.dv_xname);
 #endif
@@ -402,10 +396,10 @@ hifn_enable_crypto(sc, pciid)
 	}
 
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, ramcfg | HIFN_PUCNFG_CHIPID);
-	encl = READ_REG_0(sc, HIFN_0_PUSTAT);
+	encl = READ_REG_0(sc, HIFN_0_PUSTAT) & HIFN_PUSTAT_CHIPENA;
 
 #ifdef HIFN_DEBUG
-	if (encl != 0x1020 && encl != 0x1120)
+	if (encl != HIFN_PUSTAT_ENA_1 && encl != HIFN_PUSTAT_ENA_2)
 		printf("Encryption engine is permanently locked until next system reset.");
 	else
 		printf("Encryption engine enabled successfully!");
@@ -415,13 +409,13 @@ hifn_enable_crypto(sc, pciid)
 	WRITE_REG_1(sc, HIFN_1_DMA_CNFG, dmacfg);
 
 	switch(encl) {
-	case 0x3020:
+	case HIFN_PUSTAT_ENA_0:
 		printf(": no encr/auth");
 		break;
-	case 0x1020:
+	case HIFN_PUSTAT_ENA_1:
 		printf(": DES enabled");
 		break;
-	case 0x1120:
+	case HIFN_PUSTAT_ENA_2:
 		printf(": fully enabled");
 		break;
 	default:
@@ -973,8 +967,8 @@ hifn_crypto(struct hifn_command *cmd)
 
 	/* Pick the hifn board to send the data to.  Right now we use a round
 	 * robin approach. */
-	sc = hifn_devices[current_device++];
-	if (current_device == hifn_num_devices)
+	sc = hifn_cd.cd_devs[current_device];
+	if (++current_device == hifn_cd.cd_ndevs)
 		current_device = 0;
 	dma = sc->sc_dma;
 
