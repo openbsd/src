@@ -1,4 +1,4 @@
-/*	$OpenBSD: core.c,v 1.4 2003/03/28 23:33:27 mickey Exp $	*/
+/*	$OpenBSD: core.c,v 1.5 2003/03/29 00:01:46 mickey Exp $	*/
 /*
  * Copyright (c) 2002 Jean-Francois Brousseau <krapht@secureops.com>
  * All rights reserved. 
@@ -155,9 +155,13 @@ core_read(struct pstate *ps, off_t from, void *to, size_t size)
 
 	for (i = 0; i < ps->ps_core->chdr->c_nseg; i++) {
 		cs = ps->ps_core->segs[i];
-		if ((from >= cs->c_addr) && (from < (cs->c_addr + cs->c_size))) {
+		if ((from >= cs->c_addr) &&
+		    (from < (cs->c_addr + cs->c_size))) {
 			read = size;
-			fp = cs + sizeof(*cs) + ((u_long)from - cs->c_addr);
+			if ((from + size) > (cs->c_addr + cs->c_size))
+				read = (cs->c_addr + cs->c_size) - from;
+			fp = (void *)cs + sizeof(*cs) +
+			    ((u_long)from - cs->c_addr);
 			memcpy(to, fp, read);
 			return (read);
 		}
