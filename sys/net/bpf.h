@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.h,v 1.3 1996/05/07 13:40:26 deraadt Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.4 1996/07/12 07:57:41 mickey Exp $	*/
 /*	$NetBSD: bpf.h,v 1.14 1996/05/02 00:57:28 cgd Exp $	*/
 
 /*
@@ -44,11 +44,16 @@
 #ifndef _NET_BPF_H_
 #define _NET_BPF_H_
 
+/* BSD style release date */ 
+#define BPF_RELEASE 199606
+
+typedef	int32_t	bpf_int32;
+typedef u_int32_t	bpf_u_int32;
 /*
  * Alignment macros.  BPF_WORDALIGN rounds up to the next 
  * even multiple of BPF_ALIGNMENT. 
  */
-#define BPF_ALIGNMENT sizeof(long)
+#define BPF_ALIGNMENT sizeof(u_int32_t)
 #define BPF_WORDALIGN(x) (((x)+(BPF_ALIGNMENT-1))&~(BPF_ALIGNMENT-1))
 
 #define BPF_MAXINSNS 512
@@ -173,6 +178,7 @@ struct bpf_hdr {
 #define DLT_SLIP	8	/* Serial Line IP */
 #define DLT_PPP		9	/* Point-to-point Protocol */
 #define DLT_FDDI	10	/* FDDI */
+#define DLT_ATM_RFC1483	11	/* LLC/SNAP encapsulated atm */
 
 /*
  * The instruction encondings.
