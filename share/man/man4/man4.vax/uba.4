@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uba.4,v 1.2 2003/03/06 23:37:48 mickey Exp $
+.\"	$OpenBSD: uba.4,v 1.3 2003/03/07 05:15:58 jason Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -46,27 +46,17 @@ on MicroVAX systems.
 The following devices are supported on
 .Nm uba .
 .Bl -tag -width mtc(4) -compact -offset indent
-.\" .It Xr de 4
-.\" .Tn DEC DEUNA
-.\" 10 Mb/s Ethernet interface
 .It Xr dhu 4
-.Tn DHU-11
-terminal multiplexor.
+DHU-11 terminal multiplexor.
 .It Xr dz 4
-.Tn DZ-11
-terminal multiplexer.
+DZ-11 terminal multiplexer.
 .It Xr mtc 4
-.Tn MSCP
-tape controller.
-.\" .It Xr qe 4
-.\" .Tn DEC DEQNA
-.\" .Tn Q-bus
-.\" 10 Mb/s Ethernet interface
-.\" .It Xr ts 4
-.\" .Tn TS11/TSV05
-.\" magtape interface
+MSCP tape controller.
 .It Xr uda 4
-.Tn UDA-50
-disk controller interface.
+UDA50 disk controller interface.
 .Sh SEE ALSO
-.Xr intro 4
+.Xr dhu 4 ,
+.Xr dz 4 ,
+.Xr intro 4 ,
+.Xr mtc 4 ,
+.Xr uda 4
