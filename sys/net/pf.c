@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.283 2002/12/26 15:51:51 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.284 2002/12/26 16:21:37 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1463,7 +1463,7 @@ pf_map_addr(u_int8_t af, struct pf_pool *rpool, struct pf_addr *saddr,
 	}
 
 	if (pf_status.debug >= PF_DEBUG_MISC) {
-		printf("pf_map_addr: selected address:");
+		printf("pf_map_addr: selected address: ");
 		pf_print_host(naddr, 0, af);
 		printf("\n");
 	}
