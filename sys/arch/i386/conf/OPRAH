@@ -1,4 +1,4 @@
-#	$OpenBSD: OPRAH,v 1.18 1997/09/26 16:43:00 kstailey Exp $
+#	$OpenBSD: OPRAH,v 1.19 1997/11/11 20:55:41 niklas Exp $
 #
 #	OPRAH -- Niklas Hallqvist's test machine
 #
@@ -21,7 +21,7 @@ option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices
 
 option		DDB		# in-kernel debugger
-makeoptions	DEBUG="-g"	# compile full symbol table
+#makeoptions	DEBUG="-g"	# compile full symbol table
 option		DIAGNOSTIC	# internally consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
 option		BOOT_CONFIG	# User kernel config
