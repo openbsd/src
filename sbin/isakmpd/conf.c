@@ -1,5 +1,5 @@
-/*	$OpenBSD: conf.c,v 1.24 2000/10/27 19:22:36 niklas Exp $	*/
-/*	$EOM: conf.c,v 1.46 2000/10/26 16:17:19 ho Exp $	*/
+/*	$OpenBSD: conf.c,v 1.25 2000/12/12 01:45:55 niklas Exp $	*/
+/*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -410,6 +410,21 @@ conf_load_defaults (int tr)
 
 	  conf_set (tr, sect, "Life", CONF_DFLT_TAG_LIFE_MAIN_MODE, 0, 1);
 	}
+
+  /* Setup a default Phase 1 entry */
+  conf_set (tr, "Phase 1", "Default", "Default-phase-1", 0, 1);
+
+  conf_set (tr, "Default-phase-1", "Phase", "1", 0, 1);
+  conf_set (tr, "Default-phase-1", "Configuration",
+            "Default-phase-1-configuration", 0, 1);
+  dflt = conf_get_str ("General", "Default-phase-1-ID");
+  if (dflt)
+    conf_set (tr, "Default-phase-1", "ID", dflt, 0, 1);
+
+  conf_set (tr, "Default-phase-1-configuration",
+            "EXCHANGE_TYPE", "ID_PROT", 0, 1);
+  conf_set (tr, "Default-phase-1-configuration", "Transforms",
+            "3DES-SHA-RSA_SIG", 0, 1);
 
   /* Quick modes */
   for (enc = 0; qm_enc[enc]; enc ++)
