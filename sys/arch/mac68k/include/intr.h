@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.1 1998/05/03 07:10:45 gene Exp $	*/
+/*	$OpenBSD: intr.h,v 1.2 1999/06/11 04:48:11 downsj Exp $	*/
 /*	$NetBSD: intr.h,v 1.8 1997/11/07 07:33:18 scottr Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
         register int _spl_r;						\
 									\
         __asm __volatile ("clrl %0; movew sr,%0; movew %1,sr" :		\
-                "&=d" (_spl_r) : "di" (s));				\
+                "=&d" (_spl_r) : "di" (s));				\
         _spl_r;								\
 })
 
@@ -60,7 +60,7 @@
 		jle	1f					;	\
 		movw	%1,sr					;	\
 	    1:"							:	\
-		    "&=d" (_spl_r)				:	\
+		    "=&d" (_spl_r)				:	\
 		    "di" (s)					:	\
 		    "d0", "d1");					\
 	_spl_r;								\
