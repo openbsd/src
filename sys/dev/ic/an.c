@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.4 2000/06/18 03:56:07 aaron Exp $	*/
+/*	$OpenBSD: an.c,v 1.5 2000/06/18 18:42:08 tholo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -245,6 +245,9 @@ an_attach(sc)
 
 	sc->an_tx_rate = 0;
 	bzero((char *)&sc->an_stats, sizeof(sc->an_stats));
+#ifdef ANCACHE
+	sc->an_sigitems = sc->an_nextitem = 0;
+#endif
 
 	/*
 	 * Call MI attach routines.
@@ -941,6 +944,9 @@ int an_ioctl(ifp, command, data)
 			break;
 #ifdef ANCACHE
 		if (areq.an_type == AN_RID_ZERO_CACHE) {
+			error = suser(p->p_ucred, &p->p_acflag);
+			if (error)
+				break;
 			sc->an_sigitems = sc->an_nextitem = 0;
 			break;
 		} else if (areq.an_type == AN_RID_READ_CACHE) {
