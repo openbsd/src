@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.126 2002/07/24 00:55:52 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.127 2002/08/08 17:40:27 jason Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -1849,7 +1849,7 @@ ctx_free(pm)
 			newc = pm->pm_ctxnum;
 			CHANGE_CONTEXTS(oldc, newc);
 			cache_flush_context();
-			setcontext(0);
+			setcontext4(0);
 		} else {
 			CHANGE_CONTEXTS(oldc, 0);
 		}
@@ -5560,7 +5560,7 @@ pmap_kenter_pa4m(va, pa, prot)
 
 	ctx = getcontext4m();
 	pmap_enk4m(pmap_kernel(), va, prot, TRUE, pv, pteproto);
-	setcontext(ctx);
+	setcontext4m(ctx);
 }
 
 void
