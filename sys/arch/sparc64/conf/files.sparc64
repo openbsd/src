@@ -1,8 +1,8 @@
-#	$OpenBSD: files.sparc64,v 1.14 2001/09/08 22:33:51 jason Exp $
+#	$OpenBSD: files.sparc64,v 1.15 2001/09/18 21:04:33 jason Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
-maxpartitions 8
+maxpartitions 16
 
 maxusers 2 8 1024
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.h,v 1.1 2001/08/18 16:19:28 jason Exp $	*/
+/*	$OpenBSD: disklabel.h,v 1.2 2001/09/18 21:04:33 jason Exp $	*/
 /*	$NetBSD: disklabel.h,v 1.1.1.1 1998/06/20 04:58:51 eeh Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 
 #define	LABELSECTOR	0			/* sector containing label */
 #define	LABELOFFSET	128			/* offset of label in sector */
-#define	MAXPARTITIONS	8			/* number of partitions */
+#define	MAXPARTITIONS	16			/* number of partitions */
 #define	RAW_PART	2			/* raw partition: xx?c */
 
 struct cpu_disklabel {
