@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.19 1998/08/23 16:53:00 kstailey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.20 2000/03/02 23:02:14 todd Exp $	*/
 /*	$NetBSD: trap.c,v 1.63-1.65ish 1997/01/16 15:41:40 gwr Exp $	*/
 
 /*
@@ -762,11 +762,11 @@ syscall(code, frame)
  */
 void
 child_return(p)
-	struct proc *p;
+	void *p;
 {
 	struct frame *f;
 
-	f = (struct frame *)p->p_md.md_regs;
+	f = (struct frame *)((struct proc *)p)->p_md.md_regs;
 	f->f_regs[D0] = 0;
 	f->f_sr &= ~PSL_C;
 	f->f_format = FMT0;
@@ -775,10 +775,10 @@ child_return(p)
 	 * Old ticks (3rd arg) is zero so we will charge the child
 	 * for any clock ticks that might happen before this point.
 	 */
-	userret(p, f, 0);
+	userret((struct proc *)p, f, 0);
 #ifdef KTRACE
-	if (KTRPOINT(p, KTR_SYSRET))
-		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+	if (KTRPOINT((struct proc *)p, KTR_SYSRET))
+		ktrsysret(((struct proc *)p)->p_tracep, SYS_fork, 0, 0);
 #endif
 }
 

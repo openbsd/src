@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.23 1998/09/25 09:20:54 todd Exp $	*/
+/*	$OpenBSD: conf.c,v 1.24 2000/03/02 23:02:14 todd Exp $	*/
 /*	$NetBSD: conf.c,v 1.51 1996/11/04 16:16:09 gwr Exp $	*/
 
 /*-
@@ -69,6 +69,7 @@ int	ttselect	__P((dev_t, int, struct proc *));
 #include <xfs/nxfs.h>
 cdev_decl(xfs_dev);
 #endif
+#include "ksyms.h"
 
 struct bdevsw	bdevsw[] =
 {
@@ -138,7 +139,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 34: floating point accelerator */
 	cdev_notdef(),			/* 35 */
 	cdev_bpftun_init(NBPFILTER,bpf),/* 36: Berkeley packet filter */
-	cdev_notdef(),			/* 37 */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 37: Kernel symbols device */
 	cdev_notdef(),			/* 38 */
 	cdev_fb_init(NCGFOUR,cg4),	/* 39: cgfour */
 	cdev_notdef(),			/* 40: (sni) */

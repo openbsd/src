@@ -1,4 +1,4 @@
-/*	$OpenBSD: sun3_startup.c,v 1.10 1997/09/07 14:05:21 kstailey Exp $	*/
+/*	$OpenBSD: sun3_startup.c,v 1.11 2000/03/02 23:02:14 todd Exp $	*/
 /*	$NetBSD: sun3_startup.c,v 1.55 1996/11/20 18:57:38 gwr Exp $	*/
 
 /*-
@@ -43,6 +43,7 @@
 #include <sys/reboot.h>
 #include <sys/user.h>
 #include <sys/exec_aout.h>
+#include <sys/msgbuf.h>
 
 #include <vm/vm.h>
 
@@ -89,7 +90,6 @@ int cpu_has_vme = 0;
 vm_offset_t high_segment_free_start = 0;
 vm_offset_t high_segment_free_end = 0;
 
-int msgbufmapped = 0;
 struct msgbuf *msgbufp = NULL;
 extern vm_offset_t tmp_vpages[];
 extern int physmem;
@@ -414,7 +414,7 @@ sun3_vm_init(kehp)
 	set_pte(va, pte);
 	/* offset by half a page to avoid PROM scribbles */
 	msgbufp = (struct msgbuf *)(va + 0x1000);
-	msgbufmapped = 1;
+	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
 	 * Virtual and physical pages for proc[0] u-area (already mapped)

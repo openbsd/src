@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 1999/11/09 14:30:39 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 2000/03/02 23:02:14 todd Exp $	*/
 /*	$NetBSD: machdep.c,v 1.77 1996/10/13 03:47:51 christos Exp $	*/
 
 /*
@@ -103,7 +103,6 @@ extern vm_offset_t vmmap;	/* XXX - poor name.  See mem.c */
 
 int physmem;
 int fputype;
-int msgbufmapped;
 label_t *nofault;
 vm_offset_t vmmap;
 
@@ -711,7 +710,6 @@ dumpsys()
 	daddr_t blkno;
 	int error = 0;
 
-	msgbufmapped = 0;
 	if (dumpdev == NODEV)
 		return;
 	if (dumppage_va == 0)
