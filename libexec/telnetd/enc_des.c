@@ -1,4 +1,4 @@
-/*     $OpenBSD: enc_des.c,v 1.2 2001/05/25 10:23:06 hin Exp $ */
+/*     $OpenBSD: enc_des.c,v 1.1 2003/05/14 01:46:51 hin Exp $ */
 
 /*-
  * Copyright (c) 1991, 1993

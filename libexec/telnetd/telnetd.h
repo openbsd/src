@@ -185,10 +185,10 @@ struct hostent  *gethostbyname(const char *);
 #endif
 
 #ifdef AUTHENTICATION
-#include <libtelnet/auth.h>
-#include <libtelnet/misc.h>
+#include <auth.h>
+#include <misc.h>
 #ifdef ENCRYPTION
-#include <libtelnet/encrypt.h>
+#include <encrypt.h>
 #endif
 #endif
 

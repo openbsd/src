@@ -362,14 +362,8 @@ main(int argc, char **argv)
 	    else
 		port = htons(atoi(*argv));
 	} else {
-#ifdef KRB5
-	    port = krb5_getportbyname (NULL, "telnet", "tcp", 23);
-#elif defined(KRB4)
-	    port = k_getportbyname("telnet", "tcp", htons(23));
-#else
 	    sp = getservbyname ("telnet", "tcp");
 	    port = sp ? sp->s_port : htons(23);
-#endif
 	}
 	mini_inetd (port);
     } else if (argc > 0) {

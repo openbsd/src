@@ -34,7 +34,7 @@
 #ifndef lint
 /* from: static char sccsid[] = "@(#)misc.c    8.1 (Berkeley) 6/4/93"; */
 /* from: static char rcsid[] = "$NetBSD: misc.c,v 1.5 1996/02/24 01:15:25 jtk Exp $"; */
-static char rcsid[] = "$OpenBSD: misc.c,v 1.5 2001/06/29 21:21:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.1 2003/05/14 01:46:51 hin Exp $";
 #endif /* not lint */
 
 /* $KTH: misc.c,v 1.15 2000/01/25 23:24:58 assar Exp $ */

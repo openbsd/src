@@ -1,12 +1,14 @@
-#	$OpenBSD: Makefile,v 1.13 2000/10/11 19:28:02 millert Exp $
+#	$OpenBSD: Makefile,v 1.14 2003/05/14 01:46:51 hin Exp $
 
 .include "../../Makefile.inc"
 
+.PATH:	${.CURDIR}/../../../libexec/telnetd
+
 CFLAGS += -I${.CURDIR} -I.
-CFLAGS +=-I${.CURDIR}/../../../lib
+CFLAGS +=-I${.CURDIR}/../../../libexec/telnetd
 CFLAGS +=-I${.CURDIR}/../../telnet
-LDADD += -lcurses -ltelnet
-DPADD += ${LIBCURSES} ${LIBTELNET}
+LDADD += -lcurses
+DPADD += ${LIBCURSES}
 
 SRCS += apilib.c api_bsd.c api_exch.c asc_ebc.c astosc.c dctype.c
 SRCS += disp_asc.c ebc_disp.c
@@ -15,6 +17,7 @@ SRCS += api.c function.c inbound.c oia.c options.c outbound.c
 SRCS += genbsubs.c globals.c system.c termout.c
 SRCS += commands.c main.c network.c ring.c sys_bsd.c telnet.c terminal.c
 SRCS += tn3270.c utilities.c
+SRCS += auth.c encrypt.c genget.c misc.c
 
 # this and the dependency hacks below to make 'depend' target
 # work right...

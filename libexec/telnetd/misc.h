@@ -29,49 +29,16 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
+ *
+ *     from: @(#)misc.h        8.1 (Berkeley) 6/4/93
+ *     $OpenBSD: misc.h,v 1.1 2003/05/14 01:46:51 hin Exp $
+ *     $NetBSD: misc.h,v 1.4 1996/02/24 01:15:27 jtk Exp $
  */
 
-#ifndef lint
-/* from: static char sccsid[] = "@(#)getent.c	8.2 (Berkeley) 12/15/93"; */
-/* from: static char *rcsid = "$NetBSD: getent.c,v 1.5 1996/02/24 01:15:22 jtk Exp $"; */
-static char *rcsid = "$OpenBSD: getent.c,v 1.4 2002/02/16 21:27:29 millert Exp $";
-#endif /* not lint */
+extern char *UserNameRequested;
+extern const char *LocalHostName;
+extern const char *RemoteHostName;
+extern int ConnectedCount;
+extern int ReservedPort;
 
-#include <stdlib.h>
 #include "misc-proto.h"
-
-static char *area;
-
-int gtgetent(char *, char *);
-char *gtgetstr(char *, char **);
-
-/*ARGSUSED*/
-int
-gtgetent(cp, name)
-char *cp, *name;
-{
-#ifdef	HAS_CGETENT
-	char *dba[2];
-
-	dba[0] = "/etc/gettytab";
-	dba[1] = 0;
-	return((cgetent(&area, dba, name) == 0) ? 1 : 0);
-#else
-	return(0);
-#endif
-}
-
-#ifndef	SOLARIS
-/*ARGSUSED*/
-char *
-gtgetstr(id, cpp)
-char *id, **cpp;
-{
-# ifdef	HAS_CGETENT
-	char *answer;
-	return((cgetstr(area, id, &answer) > 0) ? answer : 0);
-# else
-	return(0);
-# endif
-}
-#endif
