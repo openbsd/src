@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.90 2002/11/07 19:22:56 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.91 2002/12/19 00:16:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -408,8 +408,10 @@ pmap_pv_enter(struct vm_page *pg, struct pv_entry *pve, struct pmap *pm,
 	simple_lock(&pg->mdpage.pvh_lock);	/* lock pv_head */
 	pve->pv_next = pg->mdpage.pvh_list;
 	pg->mdpage.pvh_list = pve;
+#ifdef PMAPDEBUG
 	if (pmap_check_alias(pve, va, 0))
 		Debugger();
+#endif
 	simple_unlock(&pg->mdpage.pvh_lock);	/* unlock, done! */
 }
 
