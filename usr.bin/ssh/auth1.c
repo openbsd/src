@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth1.c,v 1.6 2000/10/11 20:27:23 markus Exp $");
+RCSID("$OpenBSD: auth1.c,v 1.7 2000/11/10 01:04:40 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -248,7 +248,7 @@ do_authloop(struct passwd * pw, char *luser)
 			if (options.skey_authentication == 1) {
 				char *skeyinfo = NULL;
 				if (pw != NULL)
-					skey_keyinfo(pw->pw_name);
+					skeyinfo = skey_keyinfo(pw->pw_name);
 				if (skeyinfo == NULL) {
 					debug("generating fake skeyinfo for %.100s.", luser);
 					skeyinfo = skey_fake_keyinfo(luser);
