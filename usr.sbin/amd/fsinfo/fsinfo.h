@@ -36,19 +36,8 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)fsinfo.h	8.1 (Berkeley) 6/6/93
- *	$Id: fsinfo.h,v 1.4 2002/08/03 08:29:32 pvalchev Exp $
+ *	$Id: fsinfo.h,v 1.5 2002/08/05 01:29:37 pvalchev Exp $
  */
-
-/*
- * Get this in now so that OS_HDR can use it
- */
-#ifdef __STDC__
-#define	P_void void
-#define Const const
-#else
-#define P_void /* as nothing */
-#define Const /* as nothing */
-#endif /* __STDC__ */
 
 #ifdef __GNUC__
 #define INLINE /* __inline */
@@ -61,12 +50,6 @@
  */
 #include "os-defaults.h"
 #include OS_HDR
-
-#ifdef VOIDP
-typedef void *voidp;
-#else
-typedef char *voidp;
-#endif /* VOIDP */
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -89,27 +72,27 @@ typedef char *voidp;
 extern void fatal();
 extern void warning();
 extern void error();
-extern void analyze_automounts P((qelem*));
-extern void analyze_hosts P((qelem*));
-extern void compute_automount_point P((char*, host*, char*));
-extern automount *new_automount P((char*));
-extern auto_tree *new_auto_tree P((char*, qelem*));
-extern host *new_host P((void));
-extern disk_fs *new_disk_fs P((void));
-extern void set_disk_fs P((disk_fs*, int, char*));
-extern ether_if *new_ether_if P((void));
-extern mount *new_mount P((void));
-extern void set_mount P((mount*, int, char*));
-extern fsmount *new_fsmount P((void));
-extern void set_fsmount P((fsmount*, int, char*));
-extern qelem *new_que P((void));
-extern void init_que P((qelem*));
-extern void ins_que P((qelem*, qelem*));
-extern void rem_que P((qelem*));
-extern dict *new_dict P((void));
-extern dict_ent *dict_locate P((dict*, char*));
-extern void dict_add P((dict*, char*, char*));
-extern int dict_iter P((dict*, int (*)()));
+extern void analyze_automounts(qelem *);
+extern void analyze_hosts(qelem *);
+extern void compute_automount_point(char *, size_t, host *, char *);
+extern automount *new_automount(char *);
+extern auto_tree *new_auto_tree(char *, qelem *);
+extern host *new_host(void);
+extern disk_fs *new_disk_fs(void);
+extern void set_disk_fs(disk_fs *, int, char *);
+extern ether_if *new_ether_if(void);
+extern mount *new_mount(void);
+extern void set_mount(mount *, int, char *);
+extern fsmount *new_fsmount(void);
+extern void set_fsmount(fsmount *, int, char *);
+extern qelem *new_que(void);
+extern void init_que(qelem *);
+extern void ins_que(qelem *, qelem *);
+extern void rem_que(qelem *);
+extern dict *new_dict(void);
+extern dict_ent *dict_locate(dict *, char *);
+extern void dict_add(dict *, char *, char *);
+extern int dict_iter(dict *, int (*)());
 extern void info_hdr();
 extern void gen_hdr();
 extern FILE *pref_open();
@@ -139,6 +122,7 @@ extern int verbose;
 
 extern dict *dict_of_hosts;
 extern dict *dict_of_volnames;
+extern char __progname;
 
 extern char *xcalloc();
 extern char *xmalloc();
