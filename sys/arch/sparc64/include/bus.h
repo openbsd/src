@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 2001/09/06 14:04:35 art Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 2001/09/26 21:30:27 jason Exp $	*/
 /*	$NetBSD: bus.h,v 1.28 2001/07/19 15:32:19 thorpej Exp $	*/
 
 /*-
@@ -39,7 +39,7 @@
  */
 
 /*
- * Copyright (c) 1997-1999 Eduardo E. Horvath. All rights reserved.
+ * Copyright (c) 1997-1999, 2001 Eduardo E. Horvath. All rights reserved.
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
  *
@@ -1515,8 +1515,11 @@ struct sparc_bus_dma_tag {
  */
 struct sparc_bus_dmamap {
 	/*
-	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
+	bus_addr_t	_dm_dvmastart;	/* start and size of allocated */
+	bus_size_t	_dm_dvmasize;	/* DVMA segment for this map */
+
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	bus_size_t	_dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	_dm_boundary;	/* don't cross this */
@@ -1527,7 +1530,7 @@ struct sparc_bus_dmamap {
 #define _DM_TYPE_UIO	2
 #define _DM_TYPE_MBUF	3
 	int		_dm_type;	/* type of mapping: raw, uio, mbuf, etc */
-	void		*_dm_source;	/* source mbuf, uio, etc. needed for unload *///////////////////////
+	void		*_dm_source;	/* source mbuf, uio, etc. needed for unload */
 
 	void		*_dm_cookie;	/* cookie for bus-specific functions */
 
