@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.13 2004/10/01 04:15:14 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.14 2004/10/05 02:01:17 jsg Exp $
 #
 # GENERIC machine description file
 #
@@ -147,6 +147,7 @@ xl*	at pci?			# 3C9xx ethernet
 #lmc*	at pci?			# Lan Media Corp SSI/HSSI/DS3
 
 # MII/PHY support
+amphy*	at mii?			# AMD 79C873 PHYs
 exphy*	at mii?			# 3Com internal PHYs
 icsphy* at mii?			# Integrated Circuit Systems ICS189x
 inphy*	at mii?			# Intel 82555 PHYs
@@ -203,6 +204,7 @@ axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 cdce*	at uhub?		# CDC Ethernet
 kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
+udav*	at uhub?		# Davicom DM9601 based Ethernet
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS

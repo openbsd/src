@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.81 2004/09/16 09:35:36 deraadt Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.82 2004/10/05 02:01:17 jsg Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -120,6 +120,7 @@ upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 urio*	at uhub?		# Diamond Multimedia Rio 500
 cdce*	at uhub?		# CDC Ethernet
 upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
+udav*	at uhub?		# Davicom DM9601 based Ethernet
 url*	at uhub?		# Realtek RTL8150L based adapters
 wi*	at uhub?		# WaveLAN IEEE 802.11DS
 #uscanner* at uhub?		# USB Scanners

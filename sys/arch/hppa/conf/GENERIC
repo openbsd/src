@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.59 2004/09/30 19:04:33 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.60 2004/10/05 02:01:17 jsg Exp $
 
 # Machine architecture; required by config(8)
 machine		hppa
@@ -114,6 +114,7 @@ pcmcia*		at cardslot?
 #cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 #kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 #cdce*	at uhub?		# CDC Ethernet
+#udav*	at uhub?		# Davicom DM9601 based Ethernet
 #upl*	at uhub?		# Prolific PL2301/PL2302 host-to-host `network'
 #url*	at uhub?		# Realtek RTL8150L based adapters
 #wi*	at uhub?		# WaveLAN IEEE 802.11DS

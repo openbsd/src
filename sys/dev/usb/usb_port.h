@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_port.h,v 1.50 2004/08/30 03:06:48 drahn Exp $ */
+/*	$OpenBSD: usb_port.h,v 1.51 2004/10/05 02:01:18 jsg Exp $ */
 /*	$NetBSD: usb_port.h,v 1.62 2003/02/15 18:33:30 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_port.h,v 1.21 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -82,6 +82,7 @@ MALLOC_DECLARE(M_USBHC);
 #define AXE_DEBUG 1
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
+#define UDAV_DEBUG 1
 #define URL_DEBUG 1
 #define UMASS_DEBUG 1
 #define UVISOR_DEBUG 1
@@ -222,6 +223,7 @@ int __CONCAT(dname,_detach)(struct device *self, int flags)
 #define AUE_DEBUG 1
 #define CUE_DEBUG 1
 #define KUE_DEBUG 1
+#define UDAV_DEBUG 1
 #define UMASS_DEBUG 1
 #define UVISOR_DEBUG 1
 #define UPL_DEBUG 1

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.35 2004/09/16 09:35:36 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.36 2004/10/05 02:01:18 jsg Exp $
 #
 # PPC GENERIC config file
 #
@@ -69,6 +69,7 @@ an*		at pci?		# Cisco/Aironet 802.11DS
 wi*		at pci?		# WaveLAN IEEE 802.11DS
 
 # how many of these are needed?
+amphy*		at mii?		# AMD 79C873 PHYs
 dcphy*		at mii?		# Digital Clone PHYs
 exphy*		at mii?		# 3Com internal PHYs
 inphy*		at mii?		# Intel 82555 PHYs
@@ -148,6 +149,7 @@ cue*		at uhub?		# CATC USB-EL1201A based Ethernet
 kue*		at uhub?		# Kawasaki KL5KUSB101B based Ethernet
 cdce*		at uhub?		# CDC Ethernet
 upl*		at uhub?		# Prolific PL2301/PL2302 host-to-host
+udav*		at uhub?		# Davicom DM9601 based Ethernet
 url*		at uhub?		# Realtek RTL8150L based adapters
 wi*		at uhub?		# WaveLAN IEEE 802.11DS
 #uscanner*	at uhub?		# USB Scanner driver

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.36 2004/07/20 20:30:09 dhartmei Exp $
+#	$OpenBSD: files.usb,v 1.37 2004/10/05 02:01:18 jsg Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -144,6 +144,11 @@ file	dev/usb/if_kue.c		kue
 device	cdce: ether, ifnet, ifmedia
 attach	cdce at uhub
 file	dev/usb/if_cdce.c		cdce
+
+# Davicom DM9601
+device	udav: ether, ifnet, mii, ifmedia
+attach	udav at uhub
+file	dev/usb/if_udav.c		udav
 
 # Prolific PL2302 host-host
 device	upl: ifnet

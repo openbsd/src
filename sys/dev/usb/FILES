@@ -18,6 +18,8 @@ if_cue.c		USB CATC Ethernet driver
 if_cuereg.h		  and definitions for it
 if_kue.c		USB Kawasaki Ethernet driver
 if_kuereg.h		  and definitions for it
+if_udav.c		USB Davicom Ethernet driver
+if_udavreg.h		  and definitions for it
 if_upl.c		USB Prolofic host-to-host driver
 kue_fw.h		Kawasaki Ethernet firmware
 ohci.c			Host controller driver for OHCI
