@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.20 2001/03/25 06:30:41 drahn Exp $
+#	$OpenBSD: install.md,v 1.21 2001/04/13 01:29:24 krw Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -110,7 +110,7 @@ md_init_mbr() {
 	echo "consult your PowerPC OpenFirmware manual -and- the"
 	echo "PowerPC OpenBSD Installation Guide for doing setup this way."
 	echo
-	echo -n "Do you want to init the MBR and the MSDOS partition? [y]"
+	echo -n "Do you want to init the MBR and the MSDOS partition? [y] "
 	getresp "y"
 	case "$resp" in
 	n*|N*)
@@ -159,7 +159,7 @@ md_checkfordisklabel() {
 	echo "any HFS partitions on the disk, including the partition table."
 	echo "Choose the MBR option carefully, knowing this fact."
 
-	echo -n "Do you want to choose (H)FS labeling or (M)BR labeling [H]"
+	echo -n "Do you want to choose (H)FS labeling or (M)BR labeling [H] "
 	getresp "h"
 	case "$resp" in
 	m*|M*)
@@ -177,8 +177,8 @@ md_checkfordisklabel() {
 }
 md_checkforMBRdisklabel() {
 
-	echo "You have chosen to put a MBR disklabel on the disk.
-	echo -n "Is this correct [n]
+	echo "You have chosen to put a MBR disklabel on the disk."
+	echo -n "Is this correct? [n] "
 	getresp "n"
 	case "$resp" in
 	n*|N*)
@@ -188,7 +188,7 @@ md_checkforMBRdisklabel() {
 		;;
 	esac
 
-	echo -n "Have you initialized an MSDOS partition using OpenFirmware? [n]"
+	echo -n "Have you initialized an MSDOS partition using OpenFirmware? [n] "
 	getresp "n"
 	case "$resp" in
 	n*|N*)
@@ -311,16 +311,16 @@ md_prep_disklabel()
 	md_checkfordisklabel $_disk
 	case $? in
 	0)
-		echo -n "Do you wish to edit the disklabel on $_disk? [y]"
+		echo -n "Do you wish to edit the disklabel on $_disk? [y] "
 		;;
 	1)
 		md_prep_fdisk ${_disk}
 		echo "WARNING: Disk $_disk has no label"
-		echo -n "Do you want to create one with the disklabel editor? [y]"
+		echo -n "Do you want to create one with the disklabel editor? [y] "
 		;;
 	2)
 		echo "WARNING: Label on disk $_disk is corrupted"
-		echo -n "Do you want to try and repair the damage using the disklabel editor? [y]"
+		echo -n "Do you want to try and repair the damage using the disklabel editor? [y] "
 		;;
 
 	esac

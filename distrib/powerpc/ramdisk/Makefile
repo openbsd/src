@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 2001/03/04 22:17:32 drahn Exp $
+#	$OpenBSD: Makefile,v 1.16 2001/04/13 01:29:24 krw Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -26,7 +26,7 @@ NEWFSARGS= -m 0 -o space -c 16 -i 4096
 
 .ifndef DESTDIR
 all ${IMAGE}:
-	@echo setenv DESTDIR before makeing a ramdisk!
+	@echo setenv DESTDIR before making a ramdisk!
 	@false
 .else
 

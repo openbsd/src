@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.5 1998/12/19 18:32:29 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.6 2001/04/13 01:29:25 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -114,7 +114,7 @@ getresp() {
 			valid="true"
 		fi
 		if [ "X$valid" = "Xfalse" ]; then
-			echo "Try again: Enter one of [$@]"
+			echo "Try again: Enter one of [$@] "
 		fi
 	done	
 	set +o noglob
@@ -1668,7 +1668,7 @@ __install_tape_1
 _tape=`basename $TAPE`
 resp=""		# force one iteration
 while [ "X${resp}" = X"" ]; do
-	echo -n "Name of tape device? [${_tape}]"
+	echo -n "Name of tape device? [${_tape}] "
 	getresp "${_tape}"
 done
 _tape=`basename $resp`
