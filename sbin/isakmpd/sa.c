@@ -1,8 +1,8 @@
-/*	$OpenBSD: sa.c,v 1.11 1999/03/31 20:31:05 niklas Exp $	*/
-/*	$EOM: sa.c,v 1.70 1999/03/31 20:19:56 niklas Exp $	*/
+/*	$OpenBSD: sa.c,v 1.12 1999/04/02 01:08:51 niklas Exp $	*/
+/*	$EOM: sa.c,v 1.74 1999/04/02 00:39:59 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -144,7 +144,7 @@ sa_check_name_phase (struct sa *sa, void *v_arg)
   struct name_phase_arg *arg = v_arg;
 
   return sa->name && strcasecmp (sa->name, arg->name) == 0 &&
-    sa->phase == arg->phase;
+    sa->phase == arg->phase && !(sa->flags & SA_FLAG_REPLACED);
 }
 
 /* Lookup an SA by name, case-independent, and phase.  */
@@ -252,7 +252,7 @@ sa_create (struct exchange *exchange, struct transport *t)
   sa = calloc (1, sizeof *sa);
   if (!sa)
     {
-      log_error ("sa_create: calloc (1, %d) failed", sa->doi->sa_size);
+      log_error ("sa_create: calloc (1, %d) failed", sizeof *sa);
       return -1;
     }
   sa->transport = t;
@@ -261,13 +261,16 @@ sa_create (struct exchange *exchange, struct transport *t)
   memcpy (sa->message_id, exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
   sa->doi = exchange->doi;
 
-  /* Allocate the DOI-specific structure and initialize it to zeroes.  */
-  sa->data = calloc (1, sa->doi->sa_size);
-  if (!sa->data)
+  if (sa->doi->sa_size)
     {
-      log_error ("sa_create: calloc (1, %d) failed", sa->doi->sa_size);
-      free (sa);
-      return -1;
+      /* Allocate the DOI-specific structure and initialize it to zeroes.  */
+      sa->data = calloc (1, sa->doi->sa_size);
+      if (!sa->data)
+	{
+	  log_error ("sa_create: calloc (1, %d) failed", sa->doi->sa_size);
+	  free (sa);
+	  return -1;
+	}
     }
 
   TAILQ_INIT (&sa->protos);
@@ -368,7 +371,10 @@ void
 sa_free_aux (struct sa *sa)
 {
   if (sa->last_sent_in_setup)
-    message_free (sa->last_sent_in_setup);
+    {
+      exchange_release (sa->last_sent_in_setup->exchange);
+      message_free (sa->last_sent_in_setup);
+    }
   LIST_REMOVE (sa, link);
   sa_release (sa);
 }
@@ -389,6 +395,8 @@ sa_release (struct sa *sa)
   if (--sa->refcnt)
     return;
 
+  log_debug (LOG_MISC, 80, "sa_release: freeing SA %p", sa);
+
   while ((proto = TAILQ_FIRST (&sa->protos)) != 0)
     proto_free (proto);
   if (sa->data)
@@ -397,6 +405,8 @@ sa_release (struct sa *sa)
 	sa->doi->free_sa_data (sa->data);
       free (sa->data);
     }
+  if (sa->name)
+    free (sa->name);
   free (sa);
 }
 
