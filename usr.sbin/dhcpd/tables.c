@@ -1,6 +1,6 @@
-/* tables.c
+/*	$OpenBSD: tables.c,v 1.2 2004/04/14 01:27:49 henning Exp $	*/
 
-   Tables of information... */
+/* Tables of information... */
 
 /*
  * Copyright (c) 1995, 1996 The Internet Software Consortium.
@@ -42,25 +42,26 @@
 
 #include "dhcpd.h"
 
-/* DHCP Option names, formats and codes, from RFC1533.
-
-   Format codes:
-
-   e - end of data
-   I - IP address
-   l - 32-bit signed integer
-   L - 32-bit unsigned integer
-   s - 16-bit signed integer
-   S - 16-bit unsigned integer
-   b - 8-bit signed integer
-   B - 8-bit unsigned integer
-   t - ASCII text
-   f - flag (true or false)
-   A - array of whatever precedes (e.g., IA means array of IP addresses)
-*/
+/*
+ * DHCP Option names, formats and codes, from RFC1533.
+ *
+ * Format codes:
+ *
+ * e - end of data
+ * I - IP address
+ * l - 32-bit signed integer
+ * L - 32-bit unsigned integer
+ * s - 16-bit signed integer
+ * S - 16-bit unsigned integer
+ * b - 8-bit signed integer
+ * B - 8-bit unsigned integer
+ * t - ASCII text
+ * f - flag (true or false)
+ * A - array of whatever precedes (e.g., IA means array of IP addresses)
+ */
 
 struct universe dhcp_universe;
-struct option dhcp_options [256] = {
+struct option dhcp_options[256] = {
 	{ "pad", "",					&dhcp_universe, 0 },
 	{ "subnet-mask", "I",				&dhcp_universe, 1 },
 	{ "time-offset", "l",				&dhcp_universe, 2 },
@@ -319,9 +320,11 @@ struct option dhcp_options [256] = {
 	{ "option-end", "e",				&dhcp_universe, 255 },
 };
 
-/* Default dhcp option priority list (this is ad hoc and should not be
-   mistaken for a carefully crafted and optimized list). */
-unsigned char dhcp_option_default_priority_list [] = {
+/*
+ * Default dhcp option priority list (this is ad hoc and should not be
+ * mistaken for a carefully crafted and optimized list).
+ */
+unsigned char dhcp_option_default_priority_list[] = {
 	DHO_DHCP_REQUESTED_ADDRESS,
 	DHO_DHCP_OPTION_OVERLOAD,
 	DHO_DHCP_MAX_MESSAGE_SIZE,
@@ -401,10 +404,10 @@ unsigned char dhcp_option_default_priority_list [] = {
 };
 
 int sizeof_dhcp_option_default_priority_list =
-	sizeof dhcp_option_default_priority_list;
+	sizeof(dhcp_option_default_priority_list);
 
 
-char *hardware_types [] = {
+char *hardware_types[] = {
 	"unknown-0",
 	"ethernet",
 	"unknown-2",
@@ -660,28 +663,30 @@ char *hardware_types [] = {
 	"unknown-252",
 	"unknown-253",
 	"unknown-254",
-	"unknown-255" };
+	"unknown-255"
+};
 
 
 
 struct hash_table universe_hash;
 
-void initialize_universes()
+void
+initialize_universes(void)
 {
 	int i;
 
 	dhcp_universe.name = "dhcp";
-	dhcp_universe.hash = new_hash ();
+	dhcp_universe.hash = new_hash();
 	if (!dhcp_universe.hash)
-		error ("Can't allocate dhcp option hash table.");
+		error("Can't allocate dhcp option hash table.");
 	for (i = 0; i < 256; i++) {
-		dhcp_universe.options [i] = &dhcp_options [i];
-		add_hash (dhcp_universe.hash,
-			  (unsigned char *)dhcp_options [i].name, 0,
-			  (unsigned char *)&dhcp_options [i]);
+		dhcp_universe.options[i] = &dhcp_options[i];
+		add_hash(dhcp_universe.hash,
+		    (unsigned char *)dhcp_options[i].name, 0,
+		    (unsigned char *)&dhcp_options[i]);
 	}
 	universe_hash.hash_count = DEFAULT_HASH_SIZE;
-	add_hash (&universe_hash,
-		  (unsigned char *)dhcp_universe.name, 0,
-		  (unsigned char *)&dhcp_universe);
+	add_hash(&universe_hash,
+	    (unsigned char *)dhcp_universe.name, 0,
+	    (unsigned char *)&dhcp_universe);
 }

@@ -1,7 +1,9 @@
-/* convert.c
+/*	$OpenBSD: convert.c,v 1.2 2004/04/14 01:27:49 henning Exp $	*/
 
-   Safe copying of option values into and out of the option buffer, which
-   can't be assumed to be aligned. */
+/*
+ * Safe copying of option values into and out of the option buffer,
+ * which can't be assumed to be aligned.
+ */
 
 /*
  * Copyright (c) 1995, 1996 The Internet Software Consortium.
@@ -43,71 +45,70 @@
 
 #include "dhcpd.h"
 
-u_int32_t getULong (buf)
-	unsigned char *buf;
+u_int32_t
+getULong(unsigned char *buf)
 {
 	u_int32_t ibuf;
 
-	memcpy (&ibuf, buf, sizeof (ibuf));
-	return ntohl (ibuf);
+	memcpy(&ibuf, buf, sizeof(ibuf));
+	return (ntohl(ibuf));
 }
 
-int32_t getLong (buf)
-	unsigned char *buf;
+int32_t
+getLong(unsigned char *(buf))
 {
 	int32_t ibuf;
 
-	memcpy (&ibuf, buf, sizeof (ibuf));
-	return ntohl (ibuf);
+	memcpy(&ibuf, buf, sizeof(ibuf));
+	return (ntohl(ibuf));
 }
 
-u_int16_t getUShort (buf)
-	unsigned char *buf;
+u_int16_t
+getUShort(unsigned char *buf)
 {
 	u_int16_t ibuf;
 
-	memcpy (&ibuf, buf, sizeof (ibuf));
-	return ntohs (ibuf);
+	memcpy(&ibuf, buf, sizeof(ibuf));
+	return (ntohs(ibuf));
 }
 
-int16_t getShort (buf)
-	unsigned char *buf;
+int16_t
+getShort(unsigned char *buf)
 {
 	int16_t ibuf;
 
-	memcpy (&ibuf, buf, sizeof (ibuf));
-	return ntohs (ibuf);
+	memcpy(&ibuf, buf, sizeof(ibuf));
+	return (ntohs(ibuf));
 }
 
-void putULong (obuf, val)
-	unsigned char *obuf;
-	u_int32_t val;
+void
+putULong(unsigned char *obuf, u_int32_t val)
 {
-	u_int32_t tmp = htonl (val);
-	memcpy (obuf, &tmp, sizeof tmp);
+	u_int32_t tmp = htonl(val);
+
+	memcpy(obuf, &tmp, sizeof(tmp));
 }
 
-void putLong (obuf, val)
-	unsigned char *obuf;
-	int32_t val;
+void
+putLong(unsigned char *obuf, int32_t val)
 {
-	int32_t tmp = htonl (val);
-	memcpy (obuf, &tmp, sizeof tmp);
+	int32_t tmp = htonl(val);
+
+	memcpy(obuf, &tmp, sizeof(tmp));
 }
 
-void putUShort (obuf, val)
-	unsigned char *obuf;
-	unsigned int val;
+void
+putUShort(unsigned char *obuf, unsigned int val)
 {
-	u_int16_t tmp = htons (val);
-	memcpy (obuf, &tmp, sizeof tmp);
+	u_int16_t tmp = htons(val);
+
+	memcpy(obuf, &tmp, sizeof(tmp));
 }
 
-void putShort (obuf, val)
-	unsigned char *obuf;
-	int val;
+void
+putShort(unsigned char *obuf, int val)
 {
-	int16_t tmp = htons (val);
-	memcpy (obuf, &tmp, sizeof tmp);
-}
+	int16_t tmp = htons(val);
 
+	memcpy(obuf, &tmp, sizeof(tmp));
+}
