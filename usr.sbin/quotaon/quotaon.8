@@ -1,3 +1,4 @@
+.\"	$OpenBSD: quotaon.8,v 1.2 1999/03/11 19:39:43 aaron Exp $
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -32,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)quotaon.8	8.2 (Berkeley) 12/11/93
-.\"	$Id: quotaon.8,v 1.1.1.1 1995/10/18 08:48:02 deraadt Exp $
+.\"	$Id: quotaon.8,v 1.2 1999/03/11 19:39:43 aaron Exp $
 .\"
 .Dd December 11, 1993
 .Dt QUOTAON 8
@@ -46,34 +47,35 @@
 .Op Fl g
 .Op Fl u
 .Op Fl v
-.Ar filesystem Ar ...
+.Ar filesystem Op Ar ...
 .Nm quotaon
 .Op Fl g
 .Op Fl u
 .Op Fl v
 .Fl a
+.Pp
 .Nm quotaoff
 .Op Fl g
 .Op Fl u
 .Op Fl v
-.Ar filesystem Ar ...
+.Ar filesystem Op Ar ...
 .Nm quotaoff
 .Op Fl g
 .Op Fl u
 .Op Fl v
 .Fl a
 .Sh DESCRIPTION
-.Nm Quotaon
+.Nm quotaon
 announces to the system that disk quotas should be enabled on one or more
 filesystems.
-.Nm Quotaoff
+.Nm quotaoff
 announces to the system that the specified
 filesystems should have any disk quotas
 diskquotas turned off.
 The filesystems specified must have entries in
 .Pa /etc/fstab
 and be mounted.
-.Nm Quotaon
+.Nm quotaon
 expects each filesystem to have quota files named
 .Pa quota.user
 and
@@ -83,7 +85,7 @@ These defaults may be overridden in
 .Pa /etc/fstab .
 By default both user and group quotas are enabled.
 .Pp
-Available options:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 If the
@@ -135,6 +137,8 @@ filesystem table
 .Xr repquota 8
 .Sh HISTORY
 The
-.Nm
-command appeared in
+.Nm quotaon
+and
+.Nm quotaoff
+commands appeared in
 .Bx 4.2 .

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: repquota.8,v 1.2 1999/03/11 19:39:44 aaron Exp $
 .\" Copyright (c) 1983, 1990, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -33,7 +34,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)repquota.8	8.1 (Berkeley) 6/6/93
-.\"	$Id: repquota.8,v 1.1.1.1 1995/10/18 08:48:05 deraadt Exp $
+.\"	$Id: repquota.8,v 1.2 1999/03/11 19:39:44 aaron Exp $
 .\"
 .Dd June 6, 1993
 .Dt REPQUOTA 8
@@ -46,21 +47,21 @@
 .Op Fl g
 .Op Fl u
 .Op Fl v
-.Ar filesystem Ar ...
+.Ar filesystem Op Ar ...
 .Nm repquota
 .Op Fl g
 .Op Fl u
 .Op Fl v
 .Fl a
 .Sh DESCRIPTION
-.Nm Repquota
+.Nm
 prints a summary of the disk usage and quotas for the
-specified file systems.
+specified filesystem(s).
 .Pp
-Available options:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
-Print the quotas of all the filesystems listed in
+Print the quotas of all filesystems listed in
 .Pa /etc/fstab .
 .It Fl g
 Print only group quotas (the default is to print both
@@ -69,7 +70,7 @@ group and user quotas if they exist).
 Print only user quotas (the default is to print both
 group and user quotas if they exist).
 .It Fl v
-Print a header line before printing each filesystem quotas.
+Print a header line before printing each filesystem's quota.
 .El
 .Pp
 For each user or group, the current

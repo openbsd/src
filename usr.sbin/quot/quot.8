@@ -27,7 +27,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: quot.8,v 1.4 1998/06/08 17:28:35 deraadt Exp $
+.\"	$Id: quot.8,v 1.5 1999/03/11 19:39:42 aaron Exp $
 .\"
 .Dd February 8, 1994
 .Dt QUOT 8
@@ -36,14 +36,14 @@
 .Nm quot
 .Nd display disk space occupied by each user
 .Sh SYNOPSIS
-.Nm quot
+.Nm
 .Op Fl acfhknv
 .Op Ar filesystem ...
 .Sh DESCRIPTION
-.Nm Quot
+.Nm
 is used to gather statistics about the disk usage for each local user.
 .Pp
-The following options are available:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl a
 Include statistics for all mounted filesystems.
@@ -83,7 +83,7 @@ not accessed within 30, 60 and 90 days.
 If the environment variable
 .Ev BLOCKSIZE
 is set, and the
-.Gl k
+.Fl k
 option is not specified, the block counts will be displayed in units of that
 size block.
 .El

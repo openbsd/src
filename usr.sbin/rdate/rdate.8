@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdate.8,v 1.6 1997/07/16 01:07:37 deraadt Exp $
+.\"	$OpenBSD: rdate.8,v 1.7 1999/03/11 19:39:44 aaron Exp $
 .\"	$NetBSD: rdate.8,v 1.4 1996/04/08 20:55:17 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
@@ -36,17 +36,17 @@
 .Nm rdate
 .Nd set the system's date from a remote host
 .Sh SYNOPSIS
-.Nm rdate
+.Nm
 .Op Fl psa
 .Ar host 
 .Sh DESCRIPTION
-.Nm Rdate
+.Nm
 displays and sets the local date and time from the
 host name or address given as the argument. It uses the RFC868
 protocol which is usually implemented as a built-in service of
 .Xr inetd 8 .
 .Pp
-Available options:
+The options are as follows:
 .Pp
 .Bl -tag -width indent
 .It Fl p
@@ -61,8 +61,9 @@ remote time rather than just hopping.
 .Sh FILES
 .Bl -tag -width /var/log/wtmp -compact
 .It Pa /var/log/wtmp
-A record of date resets and time changes.
+record of date resets and time changes
 .Sh SEE ALSO
-.Xr inetd 8 ,
 .Xr adjtime 2 ,
-.Xr gettimeofday 2
+.Xr gettimeofday 2 ,
+.Xr inetd 8
+

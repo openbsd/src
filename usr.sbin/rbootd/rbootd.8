@@ -1,3 +1,4 @@
+.\"	$OpenBSD: rbootd.8,v 1.3 1999/03/11 19:39:43 aaron Exp $
 .\"	$NetBSD: rbootd.8,v 1.3 1995/08/21 17:05:16 thorpej Exp $
 .\"
 .\" Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -51,20 +52,20 @@
 .Nm rbootd
 .Nd HP remote boot server
 .Sh SYNOPSIS
-.Nm rbootd
+.Nm
 .Op Fl ad
 .Op Fl i Ar interface
-.Op config_file
+.Op Ar config_file
 .Sh DESCRIPTION
 The
-.Nm rbootd
+.Nm
 utility services boot requests from Hewlett-Packard workstations over a
 local area network.
 All boot files must reside in the boot file directory; further, if a
 client supplies path information in its boot request, it will be silently
 stripped away before processing.
 By default,
-.Nm rbootd
+.Nm
 only responds to requests from machines listed in its configuration file.
 .Pp
 The options are as follows:
@@ -74,13 +75,14 @@ Respond to boot requests from any machine.
 The configuration file is ignored if this option is specified.
 .It Fl d
 Run
-.Nm rbootd
+.Nm
 in debug mode.
 Packets sent and received are displayed to the terminal.
 .It Fl i Ar interface
-Service boot requests on specified interface.
+Service boot requests on specified
+.Ar interface .
 If unspecified,
-.Nm rbootd
+.Nm
 searches the system interface list for the lowest numbered, configured
 ``up'' interface (excluding loopback).
 Ties are broken by choosing the earliest match.
@@ -89,7 +91,7 @@ Ties are broken by choosing the earliest match.
 Specifying
 .Ar config_file
 on the command line causes
-.Nm rbootd
+.Nm
 to use a different configuration file from the default.
 .Pp
 The configuration file is a text file where each line describes a particular
@@ -99,7 +101,7 @@ list of boot file names.
 An Ethernet address is specified in hexadecimal with each of its six octets
 separated by a colon.
 The boot file names come from the boot file directory.
-The ethernet address and boot file(s) must be separated by white-space
+The Ethernet address and boot file(s) must be separated by white-space
 and/or comma characters.
 A pound sign causes the remainder of a line to be ignored.
 .Pp
@@ -113,13 +115,13 @@ Here is a sample configuration file:
 .It 8::9:1:C6:75	SYSHPBSD,SYSHPUX	# jaguar (either)
 .El
 .Pp
-.Nm Rbootd
+.Nm
 logs status and error messages via
 .Xr syslog 3 .
 A startup message is always logged, and in the case of fatal errors (or
 deadly signals) a message is logged announcing the server's termination.
 In general, a non-fatal error is handled by ignoring the event that caused
-it (e.g. an invalid Ethernet address in the config file causes that line
+it (e.g., an invalid Ethernet address in the config file causes that line
 to be invalidated).
 .Pp
 The following signals have the specified effect when sent to the server
@@ -136,23 +138,22 @@ Turn off debugging, do nothing if already off.
 .El
 .Sh "FILES"
 .Bl -tag -width /usr/libexec/rbootd -compact
-.It /dev/bpf#
+.It Pa /dev/bpf#
 packet-filter device
-.It /etc/rbootd.conf
+.It Pa /etc/rbootd.conf
 configuration file
-.It /tmp/rbootd.dbg
+.It Pa /tmp/rbootd.dbg
 debug output
-.It /usr/mdec/rbootd
+.It Pa /usr/mdec/rbootd
 directory containing boot files
-.It /var/run/rbootd.pid
-process id
+.It Pa /var/run/rbootd.pid
+process ID
 .El
 .Sh SEE ALSO
 .Xr kill 1 ,
 .Xr socket 2 ,
 .Xr signal 3 ,
-.Xr syslog 3 ,
-.Xr rmp 4
+.Xr syslog 3
 .Sh BUGS
 If multiple servers are started on the same interface, each will receive
 and respond to the same boot packets.
