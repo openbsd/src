@@ -33,9 +33,10 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"     $OpenBSD: strftime.3,v 1.3 1996/08/19 08:34:17 tholo Exp $
+.\"	from: @(#)strftime.3    5.12 (Berkeley) 6/29/91
+.\"     $OpenBSD: strftime.3,v 1.1 1998/01/19 00:07:41 millert Exp $
 .\"
-.Dd June 29, 1991
+.Dd Jan 18, 1998
 .Dt STRFTIME 3
 .Os
 .Sh NAME
@@ -99,6 +100,10 @@ is replaced by the day of the month as a decimal number (01-31).
 .It Cm \&%e
 is replaced by the day of month as a decimal number (1-31);
 single digits are preceded by a blank.
+.It Cm \&%G
+is replaced by the ISO 8601 year with century as a decimal number.
+.It Cm \&%g
+is replaced by the ISO 8601 year without century as a decimal number (00-99).
 .It Cm \&%H
 is replaced by the hour (24-hour clock) as a decimal number (00-23).
 .It Cm \&%I
@@ -128,16 +133,16 @@ is replaced by the time in the format
 .It Cm \&%r
 is replaced by the locale's representation of 12-hour clock time 
 using AM/PM notation.
+.It Cm \&%S
+is replaced by the second as a decimal number (00-60).
+.It Cm %s
+is replaced by the number of seconds since the Epoch, UTC (see
+.Xr mktime 3 ) .
 .It Cm \&%T
 is replaced by the time in the format
 .Dq Li %H:%M:%S .
 .It Cm \&%t
 is replaced by a tab.
-.It Cm \&%S
-is replaced by the second as a decimal number (00-60).
-.It Cm %s
-is replaced by the number of seconds since the Epoch, UCT (see
-.Xr mktime 3 ) .
 .It Cm \&%U
 is replaced by the week number of the year (Sunday as the first day of
 the week) as a decimal number (00-53).
@@ -168,34 +173,33 @@ is replaced by the time zone name.
 .It Cm %%
 is replaced by
 .Ql % .
+.It Cm %+
+is replaced by the date and time in
+.Xr date 1
+format.
 .El
 .Sh SEE ALSO
 .Xr date 1 ,
-.Xr ctime 3 ,
 .Xr printf 1 ,
-.Xr printf 3
+.Xr ctime 3 ,
+.Xr getenv 3 ,
+.Xr printf 3 ,
+.Xr time 3 ,
+.Xr tzset 3 ,
+.Xr tzfile 5
 .Sh STANDARDS
 The
 .Fn strftime
 function
 conforms to
 .St -ansiC .
+.br
 The
-.Ql \&%C ,
-.Ql \&%D ,
-.Ql \&%e ,
-.Ql \&%h ,
+.Ql \&%G ,
+.Ql \&%g ,
 .Ql \&%k ,
-.Ql \&%l , 
-.Ql \&%n ,
-.Ql \&%r ,
-.Ql \&%R ,
-.Ql \&%s .
-.Ql \&%t , 
-.Ql \&%T , 
-.Ql \&%u ,
 and
-.Ql \&%V
+.Ql \&%l
 conversion specifications are extensions.
 .Sh BUGS
 There is no conversion specification for the phase of the moon.

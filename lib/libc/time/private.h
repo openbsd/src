@@ -1,4 +1,4 @@
-/*	$OpenBSD: private.h,v 1.7 1998/01/18 23:24:55 millert Exp $	*/
+/*	$OpenBSD: private.h,v 1.8 1998/01/19 00:07:39 millert Exp $	*/
 
 #ifndef PRIVATE_H
 
@@ -16,6 +16,7 @@
 #define STD_INSPIRED		1
 #define HAVE_LONG_DOUBLE	1
 #define HAVE_STRERROR		1
+#define NO_RUN_TIME_WARNINGS_ABOUT_YEAR_2000_PROBLEMS_THANK_YOU	1
 
 /*
 ** This header is for use ONLY with the time conversion code.
@@ -67,7 +68,7 @@ static char	privatehid[] = "@(#)private.h	7.46";
 #endif /* !defined HAVE_UTMPX_H */
 
 #ifndef LOCALE_HOME
-#define LOCALE_HOME		"/usr/lib/locale"
+#define LOCALE_HOME		"/usr/share/locale"
 #endif /* !defined LOCALE_HOME */
 
 /*
