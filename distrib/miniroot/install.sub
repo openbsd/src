@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.130 1999/09/23 18:59:02 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.131 1999/09/23 19:02:20 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -74,8 +74,8 @@ VERSION_MAJOR=$(( $VERSION / 10 ))
 VERSION_MINOR=$(( $VERSION % 10 ))
 export VERSION VERSION_MAJOR VERSION_MINOR
 
-ALLSETS="base etc misc comp man game xbase xshare xfont xserv"	# install
-UPGRSETS="base misc comp man game xbase xshare xfont xserv"	# upgrade
+ALLSETS="base etc misc comp man game xbase xshare xfont xserv libssl"	# install
+UPGRSETS="base misc comp man game xbase xshare xfont xserv libssl"	# upgrade
 SNAPSETS="bin dev etc games man misc sbin \
 	  usr.bin usr.binutils usr.games usr.include \
 	  usr.lib usr.libexec usr.misc usr.sbin usr.share var"
@@ -1085,7 +1085,9 @@ while test -n "${_get_files}" ; do
 	echo
 	for _f in $_get_files ; do
 		echo "Getting ${_f} ..."
-		if [ "X${_f}" = "X${_kernel}" ]; then
+		if [ "X${_f}" = "Xlibssl${VERSION}.tar.gz" ]; then
+			( cd /mnt ; ftp ${_ftp_active} -o - -V -m ${_url_base}/${_f} | /mnt/usr/sbin/chroot /mnt /usr/sbin/pkg_add -)
+		elif [ "X${_f}" = "X${_kernel}" ]; then
 			( cd /mnt ; ftp ${_ftp_active} -V -m ${_url_base}/${_f} )
 		else
 			( cd /mnt ; ftp ${_ftp_active} -o - -V -m ${_url_base}/${_f} | tar zxpf - )
@@ -1094,6 +1096,8 @@ while test -n "${_get_files}" ; do
 			# Mark xfer as having failed,.
 			_setsdone=`rmel $_f $_setsdone`
 			_failed_files="${_failed_files} ${_f}"
+		elif [ "X${_f}" = "Xlibssl${VERSION}.tar.gz" ]; then
+			libssl=1
 		fi
 	done
 
@@ -1238,7 +1242,9 @@ while test -n "${_get_files}" ; do
 	echo
 	for _f in $_get_files ; do
 		echo "$1/${_f}:"
-		if [ "X${_f}" = "X${_kernel}" ]; then
+		if [ "X${_f}" = "Xlibssl${VERSION}.tar.gz" ]; then
+			( cd /mnt ; ftp ${_ftp_active} -o - -V -m ${_url_base}/${_f} | /mnt/usr/sbin/chroot /mnt /usr/sbin/pkg_add -)
+		elif [ "X${_f}" = "X${_kernel}" ]; then
 			ftp -V -m -o /mnt/$_f file:$1/$_f
 		else
 			ftp -V -m -o - file:$1/$_f | (cd /mnt; tar -zxpf -)
@@ -1247,6 +1253,8 @@ while test -n "${_get_files}" ; do
 			# Mark xfer as having failed,.
 			_setsdone=`rmel $_f $_setsdone`
 			_failed_files="${_failed_files} ${_f}"
+		elif [ "X${_f}" = "Xlibssl${VERSION}.tar.gz" ]; then
+			libssl=1
 		fi
 	done
 

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.59 1999/09/23 19:00:34 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.60 1999/09/23 19:02:20 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -535,6 +535,48 @@ done
 md_questions
 
 install_sets $THESETS
+
+# XXX
+# XXX should test if network is configured
+# XXX should provide a way to configure the network this late.
+# XXX should re-use more data from previous (ftp) install?
+# XXX should loop until successful install or user abort
+# XXX
+# XXX
+# XXX
+if [ X"$libssl" != X1 ]; then
+	resp=
+	while [ X"${resp}" = X ]; do
+		echo
+		echo "The SSL libraries included with the CD do not contain RSA code"
+		echo "for licencing reasons.  Instead, enhanced SSL shared libraries"
+		echo "with RSA code are available on ftp and http sites.  If you do"
+		echo "not install the SSL+RSA libraries right now, they are easily"
+		echo "installed later."
+		echo -n "Install SSL+RSA libraries now via (f)tp, (h)ttp, or (n)ot? [$resp] "
+		getresp "n"
+		case "$resp" in
+		f*|F*)
+			THESETS=libssl
+			install_url ftp
+			resp=f
+			;;
+		h*|H*)
+			THESETS=libssl
+			install_url http
+			resp=h
+			;;
+		n*|N*)
+			echo "Not installing SSL+RSA shared libraries."
+			;;
+		*)
+			echo "Invalid response: $resp"
+			resp=
+			;;
+		esac
+	done
+	echo
+fi
 
 # Copy in configuration information and make devices in target root.
 echo
