@@ -344,7 +344,7 @@ HINF * gethostpoop (name, numeric)
    Maybe that's why my C code reads like assembler half the time... */
 
 /* If we want to see all the DNS stuff, do the following hair --
-   if inet_addr, do reverse and forward with any warnings; otherwise try
+   if inet_aton, do reverse and forward with any warnings; otherwise try
    to do forward and reverse with any warnings.  In other words, as long
    as we're here, do a complete DNS check on these clowns.  Yes, it slows
    things down a bit for a first run, but once it's cached, who cares? */
@@ -355,11 +355,9 @@ HINF * gethostpoop (name, numeric)
     poop = (HINF *) Hmalloc (sizeof (HINF));
   if (! poop)
     bail ("gethostpoop fuxored");
-  strcpy (poop->name, unknown);		/* preload it */
-/* see wzv:workarounds.c for dg/ux return-a-struct inet_addr lossage */
-  iaddr.s_addr = inet_addr (name);
+  strlcpy (poop->name, unknown, sizeof(poop->name));	/* preload it */
+  if (inet_aton (name, &iaddr) == 0) { /* here's the great split: names... */
 
-  if (iaddr.s_addr == INADDR_NONE) {	/* here's the great split: names... */
     if (numeric)
       bail ("Can't parse %s as an IP address", name);
     hostent = gethostbyname (name);
