@@ -2243,6 +2243,7 @@
 ./var/msgs
 ./var/named
 ./var/named/dev
+./var/named/namedb
 ./var/named/etc
 ./var/named/localhost.rev
 ./var/named/named-xfer
