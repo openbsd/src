@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslimits.h,v 1.2 1996/03/03 12:12:23 niklas Exp $	*/
+/*	$OpenBSD: syslimits.h,v 1.3 1997/12/16 08:07:57 angelos Exp $	*/
 /*	$NetBSD: syslimits.h,v 1.12 1995/10/05 05:26:19 thorpej Exp $	*/
 
 /*
@@ -55,5 +55,7 @@
 #define	COLL_WEIGHTS_MAX	    2	/* max weights for order keyword */
 #define	EXPR_NEST_MAX		   32	/* max expressions nested in expr(1) */
 #define	LINE_MAX		 2048	/* max bytes in an input line */
+#ifndef RE_DUP_MAX
 #define	RE_DUP_MAX		  255	/* max RE's in interval notation */
+#endif
 #endif
