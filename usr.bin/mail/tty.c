@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.5 1997/07/14 00:24:31 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.6 1997/07/14 15:56:25 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: tty.c,v 1.5 1997/07/14 00:24:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.6 1997/07/14 15:56:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -297,9 +297,9 @@ ttystop(s)
 
 	sigemptyset(&nset);
 	sigaddset(&nset, s);
-	sigprocmask(SIG_BLOCK, &nset, NULL);
-	kill(0, s);
 	sigprocmask(SIG_UNBLOCK, &nset, NULL);
+	kill(0, s);
+	sigprocmask(SIG_BLOCK, &nset, NULL);
 	signal(s, old_action);
 	siglongjmp(rewrite, 1);
 }

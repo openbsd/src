@@ -1,4 +1,4 @@
-/*	$OpenBSD: send.c,v 1.5 1997/07/14 00:24:30 millert Exp $	*/
+/*	$OpenBSD: send.c,v 1.6 1997/07/14 15:56:25 millert Exp $	*/
 /*	$NetBSD: send.c,v 1.6 1996/06/08 19:48:39 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)send.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: send.c,v 1.5 1997/07/14 00:24:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: send.c,v 1.6 1997/07/14 15:56:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -381,6 +381,7 @@ mail1(hp, printheaders)
 	}
 	if (pid == 0) {
 		sigset_t nset;
+
 		sigemptyset(&nset);
 		sigaddset(&nset, SIGHUP);
 		sigaddset(&nset, SIGINT);

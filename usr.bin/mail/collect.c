@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.8 1997/07/14 00:24:25 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.9 1997/07/14 15:56:23 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.8 1997/07/14 00:24:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.9 1997/07/14 15:56:23 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -86,7 +86,7 @@ collect(hp, printheaders)
 	char linebuf[LINESIZE], *cp;
 	extern char *tempMail;
 	char getsub;
-	int omask;
+	sigset_t oset, nset;
 	int longline, lastlong, rc;	/* Can deal with lines > LINESIZE */
 
 #if __GNUC__
@@ -102,7 +102,10 @@ collect(hp, printheaders)
 	 * Start catching signals from here, but we're still die on interrupts
 	 * until we're in the main loop.
 	 */
-	omask = sigblock(sigmask(SIGINT) | sigmask(SIGHUP));
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGINT);
+	sigaddset(&nset, SIGHUP);
+	sigprocmask(SIG_BLOCK, &nset, &oset);
 	if ((saveint = signal(SIGINT, SIG_IGN)) != SIG_IGN)
 		signal(SIGINT, collint);
 	if ((savehup = signal(SIGHUP, SIG_IGN)) != SIG_IGN)
@@ -114,7 +117,9 @@ collect(hp, printheaders)
 		rm(tempMail);
 		goto err;
 	}
-	sigsetmask(omask & ~(sigmask(SIGINT) | sigmask(SIGHUP)));
+	sigdelset(&oset, SIGINT);
+	sigdelset(&oset, SIGHUP);
+	sigprocmask(SIG_SETMASK, &oset, NULL);
 
 	noreset++;
 	if ((collf = Fopen(tempMail, "w+")) == NULL) {
@@ -398,13 +403,16 @@ out:
 	if (collf != NULL)
 		rewind(collf);
 	noreset--;
-	sigblock(sigmask(SIGINT) | sigmask(SIGHUP));
+	sigemptyset(&nset);
+	sigaddset(&nset, SIGINT);
+	sigaddset(&nset, SIGHUP);
+	sigprocmask(SIG_BLOCK, &nset, &oset);
 	signal(SIGINT, saveint);
 	signal(SIGHUP, savehup);
 	signal(SIGTSTP, savetstp);
 	signal(SIGTTOU, savettou);
 	signal(SIGTTIN, savettin);
-	sigsetmask(omask);
+	sigprocmask(SIG_SETMASK, &oset, NULL);
 	return(collf);
 }
 

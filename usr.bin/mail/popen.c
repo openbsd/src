@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.8 1997/07/14 00:24:29 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.9 1997/07/14 15:56:24 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.8 1997/07/14 00:24:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.9 1997/07/14 15:56:24 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -274,7 +274,7 @@ prepare_child(nset, infd, outfd)
 	int infd, outfd;
 {
 	int i;
-	sigset_t fset;
+	sigset_t eset;
 
 	/*
 	 * All file descriptors other than 0, 1, and 2 are supposed to be
@@ -293,8 +293,8 @@ prepare_child(nset, infd, outfd)
 	}
 	if (nset == NULL || !sigismember(nset, SIGINT))
 		(void)signal(SIGINT, SIG_DFL);
-	sigfillset(&fset);
-	(void)sigprocmask(SIG_UNBLOCK, &fset, NULL);
+	sigemptyset(&eset);
+	(void)sigprocmask(SIG_SETMASK, &eset, NULL);
 }
 
 int
@@ -370,6 +370,7 @@ wait_child(pid)
 {
 	sigset_t nset, oset;
 	register struct child *cp = findchild(pid);
+
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
@@ -391,6 +392,7 @@ free_child(pid)
 {
 	sigset_t nset, oset;
 	register struct child *cp = findchild(pid);
+
 	sigemptyset(&nset);
 	sigaddset(&nset, SIGCHLD);
 	sigprocmask(SIG_BLOCK, &nset, &oset);
