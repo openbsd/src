@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.73 2004/11/23 19:08:55 miod Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.74 2005/02/24 04:44:25 tedu Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -207,7 +207,7 @@ fork1(struct proc *p1, int exitsig, int flags, void *stack, size_t stacksize,
 	timeout_set(&p2->p_realit_to, realitexpire, p2);
 
 #if defined(__HAVE_CPUINFO)
-	p2->p_cpu = NULL;
+	p2->p_cpu = p1->p_cpu;
 #endif
 
 	/*
