@@ -1,4 +1,4 @@
-/*	$OpenBSD: dart.c,v 1.34 2004/07/02 14:00:43 miod Exp $	*/
+/*	$OpenBSD: dart.c,v 1.35 2004/07/23 21:01:09 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -681,7 +681,7 @@ dartparam(tp, t)
 			dart_sv_reg.sv_imr = dart_sv_reg.sv_imr & ~(ITXRDYA | IRXRDYA);
 		else
 			dart_sv_reg.sv_imr = dart_sv_reg.sv_imr & ~(ITXRDYB | IRXRDYB);
-		addr -> write.wr_imr = dart_sv_reg.sv_imr;
+		addr->write.wr_imr = dart_sv_reg.sv_imr;
 
 		/* hang up on zero baud rate */
 		if (tp->t_ispeed == 0) {
@@ -764,7 +764,7 @@ dartparam(tp, t)
 			dart_sv_reg.sv_imr = dart_sv_reg.sv_imr | ITXRDYA;
 		else
 			dart_sv_reg.sv_imr = dart_sv_reg.sv_imr | ITXRDYB;
-		addr -> write.wr_imr = dart_sv_reg.sv_imr;
+		addr->write.wr_imr = dart_sv_reg.sv_imr;
 	} else {
 		dprintf(("dartparam: not enabling Tx\n"));
 	}
@@ -777,7 +777,7 @@ dartparam(tp, t)
 		dart_sv_reg.sv_imr = dart_sv_reg.sv_imr | IRXRDYA;
 	else
 		dart_sv_reg.sv_imr = dart_sv_reg.sv_imr | IRXRDYB;
-	addr -> write.wr_imr = dart_sv_reg.sv_imr;
+	addr->write.wr_imr = dart_sv_reg.sv_imr;
 
 	return 0;
 }
@@ -814,7 +814,9 @@ dartmodemtrans(sc, ip, ipcr)
 
 	dprintf(("dartmodemtrans: tp=0x%x new DCD state: %s\n",
 		 tp, dcdstate ? "UP" : "DOWN"));
-	(void) ttymodem(tp, dcdstate);
+
+	if (tp != NULL && (tp->t_state & TS_ISOPEN))
+		ttymodem(tp, dcdstate);
 }
 
 int
@@ -1099,46 +1101,46 @@ dartintr(arg)
 	isr = addr->read.rd_isr;
 	isr &= dart_sv_reg.sv_imr;
 
-	if (isr) {     /* interrupt from this duart */
-		sc->sc_intrcnt.ec_count++;
+	if (isr == 0)	/* not interrupt from this duart */
+		return 0;
 
-		if (isr & IIPCHG) {
-			unsigned int ip = addr->read.rd_ip;
-			unsigned int ipcr = addr->read.rd_ipcr;
-			dartmodemtrans(sc, ip, ipcr);
-			return 1;
-		}
+	sc->sc_intrcnt.ec_count++;
 
-		if (isr & (IRXRDYA | ITXRDYA))
-			port = 0;
-		else
-			if (isr & (IRXRDYB | ITXRDYB))
-			port = 1;
-		else {
-			printf("dartintr: spurious interrupt, isr 0x%08x\n", isr);
-			panic("dartintr");
-		}
-
-		dprintf(("dartintr: interrupt from port %d, isr 0x%08x\n",
-			 port, isr));
-
-		if (isr & (IRXRDYA | IRXRDYB)) {
-			dprintf(("dartintr: Rx interrupt\n"));
-			dartrint(sc, port);
-		}
-		if (isr & (ITXRDYA | ITXRDYB)) {
-			dprintf(("dartintr: Tx interrupt\n"));
-			dartxint(sc, port);
-		}
-		if (((port == A_PORT) && (isr & IBRKA))
-		    || ((port == B_PORT) && (isr & IBRKB))) {
-			union dart_pt_io *ptaddr =
-			(union dart_pt_io *)addr + port;
-
-			dprintf(("dartintr: clearing end of BREAK state\n"));
-			ptaddr->write.wr_cr = BRKINTRESET;
-		}
+	if (isr & IIPCHG) {
+		unsigned int ip = addr->read.rd_ip;
+		unsigned int ipcr = addr->read.rd_ipcr;
+		dartmodemtrans(sc, ip, ipcr);
+		return 1;
 	}
+
+	if (isr & (IRXRDYA | ITXRDYA))
+		port = 0;
+	else if (isr & (IRXRDYB | ITXRDYB))
+		port = 1;
+	else {
+		printf("dartintr: spurious interrupt, isr 0x%08x\n", isr);
+		return 1;	/* claim it anyway */
+	}
+
+	dprintf(("dartintr: interrupt from port %d, isr 0x%08x\n",
+		 port, isr));
+
+	if (isr & (IRXRDYA | IRXRDYB)) {
+		dprintf(("dartintr: Rx interrupt\n"));
+		dartrint(sc, port);
+	}
+	if (isr & (ITXRDYA | ITXRDYB)) {
+		dprintf(("dartintr: Tx interrupt\n"));
+		dartxint(sc, port);
+	}
+	if ((port == A_PORT && (isr & IBRKA)) ||
+	    (port == B_PORT && (isr & IBRKB))) {
+		union dart_pt_io *ptaddr = (union dart_pt_io *)addr + port;
+
+		dprintf(("dartintr: clearing end of BREAK state\n"));
+		ptaddr->write.wr_cr = BRKINTRESET;
+	}
+
 	dprintf(("dartintr: ready\n"));
 	return 1;
 }
