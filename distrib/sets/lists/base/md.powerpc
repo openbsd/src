@@ -1,6 +1,9 @@
 ./dev/scan0
 ./dev/scan1
 ./sbin/fdisk
+./usr/bin/addr2line
+./usr/bin/readelf
+./usr/bin/windres
 ./usr/include/powerpc
 ./usr/include/readline
 ./usr/lib/gcc-lib/powerpc-unknown-openbsd2.8
@@ -31,10 +34,7 @@
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/EXTERN.h
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/INTERN.h
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/XSUB.h
-./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/XSlock.h
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/av.h
-./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/bytecode.h
-./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/byterun.h
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/cc_runtime.h
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/config.h
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/cop.h
@@ -53,7 +53,6 @@
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/mg.h
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/nostdio.h
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/objXSUB.h
-./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/objpp.h
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/op.h
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/opcode.h
 ./usr/libdata/perl5/powerpc-openbsd/5.6.0/CORE/opnames.h
@@ -863,7 +862,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/cursslk.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/defalloc.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/deque.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/dummy.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/editbuf.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/etip.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/g++/floatio.ph
@@ -1232,6 +1230,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/pcap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/poll.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/adbsys.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ansi.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/asm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/autoconf.ph
@@ -1605,7 +1604,6 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_stat.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_swap.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_swap_encrypt.ph
-./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_uio.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/uvm/uvm_vnode.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/varargs.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/vis.ph
