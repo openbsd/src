@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc.c,v 1.2 1999/12/09 15:29:26 jason Exp $	*/
+/*	$OpenBSD: if_dc.c,v 1.3 1999/12/14 16:13:05 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_dc.c,v 1.2 1999/12/07 19:18:41 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_dc.c,v 1.3 1999/12/13 21:45:11 wpaul Exp $
  */
 
 /*
@@ -119,6 +119,7 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/device.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -141,8 +142,6 @@
 #include <vm/vm.h>              /* for vtophys */
 #include <vm/pmap.h>            /* for vtophys */
 
-#include <sys/device.h>
-
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
@@ -158,39 +157,18 @@
  * Various supported device vendors/types and their names.
  */
 struct dc_type dc_devs[] = {
-	{ DC_VENDORID_DEC, DC_DEVICEID_21143,
-		"Intel 21143 10/100BaseTX" },
-	{ DC_VENDORID_DAVICOM, DC_DEVICEID_DM9100,
-		"Davicom DM9100 10/100BaseTX" },
-	{ DC_VENDORID_DAVICOM, DC_DEVICEID_DM9102,
-		"Davicom DM9102 10/100BaseTX" },
-	{ DC_VENDORID_ADMTEK, DC_DEVICEID_AL981,
-		"ADMtek AL981 10/100BaseTX" },
-	{ DC_VENDORID_ADMTEK, DC_DEVICEID_AN985,
-		"ADMtek AN985 10/100BaseTX" },
-	{ DC_VENDORID_ASIX, DC_DEVICEID_AX88140A,
-		"ASIX AX88140A 10/100BaseTX" },
-	{ DC_VENDORID_ASIX, DC_DEVICEID_AX88140A,
-		"ASIX AX88141 10/100BaseTX" },
-	{ DC_VENDORID_MX, DC_DEVICEID_98713,
-		"Macronix 98713 10/100BaseTX" },
-	{ DC_VENDORID_MX, DC_DEVICEID_98713,
-		"Macronix 98713A 10/100BaseTX" },
-	{ DC_VENDORID_CP, DC_DEVICEID_98713_CP,
-		"Compex RL100-TX 10/100BaseTX" },
-	{ DC_VENDORID_CP, DC_DEVICEID_98713_CP,
-		"Compex RL100-TX 10/100BaseTX" },
-	{ DC_VENDORID_MX, DC_DEVICEID_987x5,
-		"Macronix 98715/98715A 10/100BaseTX" },
-	{ DC_VENDORID_MX, DC_DEVICEID_987x5,
-		"Macronix 98725 10/100BaseTX" },
-	{ DC_VENDORID_LO, DC_DEVICEID_82C115,
-		"LC82C115 PNIC II 10/100BaseTX" },
-	{ DC_VENDORID_LO, DC_DEVICEID_82C168,
-		"82c168 PNIC 10/100BaseTX" },
-	{ DC_VENDORID_LO, DC_DEVICEID_82C168,
-		"82c169 PNIC 10/100BaseTX" },
-	{ 0, 0, NULL }
+	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_21142 },
+	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9100 },
+	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102 },
+	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981 },
+	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985 },
+	{ PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A },
+	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713 },
+	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98715 },
+	{ PCI_VENDOR_COMPEX, PCI_PRODUCT_COMPEX_98713 },
+	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC },
+	{ PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNICII },
+	{ 0, 0 }
 };
 
 int dc_probe		__P((struct device *, void *, void *));
@@ -649,13 +627,13 @@ int dc_miibus_readreg(self, phy, reg)
 				break;
 			case MII_PHYIDR1:
 				if (DC_IS_PNIC(sc))
-					return(DC_VENDORID_LO);
-				return(DC_VENDORID_DEC);
+					return(PCI_VENDOR_LITEON);
+				return(PCI_VENDOR_DEC);
 				break;
 			case MII_PHYIDR2:
 				if (DC_IS_PNIC(sc))
-					return(DC_DEVICEID_82C168);
-				return(DC_DEVICEID_21143);
+					return(PCI_PRODUCT_LITEON_PNIC);
+				return(PCI_PRODUCT_DEC_21142);
 				break;
 			default:
 				return(0);
@@ -1208,68 +1186,36 @@ void dc_reset(sc)
 	CSR_WRITE_4(sc, DC_BUSCTL, 0x00000000);
 	CSR_WRITE_4(sc, DC_NETCFG, 0x00000000);
 
+	/*
+	 * Bring the SIA out of reset. In some cases, it looks
+	 * like failing to unreset the SIA soon enough gets it
+	 * into a state where it will never come out of reset
+	 * until we reset the whole chip again.
+	 */
+	 if (DC_IS_INTEL(sc))
+		DC_SETBIT(sc, DC_SIARESET, DC_SIA_RESET);
+
         return;
-}
-
-struct dc_type *dc_devtype(aux)
-	void			*aux;
-{
-	struct pci_attach_args	*pa = (struct pci_attach_args *)aux;
-	struct dc_type		*t;
-	pci_chipset_tag_t	pc = pa->pa_pc;
-	u_int32_t		rev;
-
-	t = dc_devs;
-
-	while(t->dc_name != NULL) {
-		if ((PCI_VENDOR(pa->pa_id) == t->dc_vid) &&
-		    (PCI_PRODUCT(pa->pa_id) == t->dc_did)) {
-			/* Check the PCI revision */
-			rev = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFRV) & 0xFF;
-			if (t->dc_did == DC_DEVICEID_98713 &&
-			    rev >= DC_REVISION_98713A)
-				t++;
-			if (t->dc_did == DC_DEVICEID_98713_CP &&
-			    rev >= DC_REVISION_98713A)
-				t++;
-			if (t->dc_did == DC_DEVICEID_987x5 &&
-			    rev >= DC_REVISION_98725)
-				t++;
-			if (t->dc_did == DC_DEVICEID_AX88140A &&
-			    rev >= DC_REVISION_88141)
-				t++;
-			if (t->dc_did == DC_DEVICEID_82C168 &&
-			    rev >= DC_REVISION_82C169)
-				t++;
-			return(t);
-		}
-		t++;
-	}
-
-	return(NULL);
 }
 
 /*
  * Probe for a 21143 or clone chip. Check the PCI vendor and device
  * IDs against our list and return a device name if we find a match.
- * We do a little bit of extra work to identify the exact type of
- * chip. The MX98713 and MX98713A have the same PCI vendor/device ID,
- * but different revision IDs. The same is true for 98715/98715A
- * chips and the 98725, as well as the ASIX and ADMtek chips. In some
- * cases, the exact chip revision affects driver behavior.
  */
-int dc_probe(parent, match, aux)
-	struct device		*parent;
-	void			*match, *aux;
+int
+dc_probe(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	struct dc_type		*t;
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	struct dc_type *t;
 
-	t = dc_devtype(aux);
-
-	if (t != NULL)
-		return(1);
-
-	return(0);
+	for (t = dc_devs; t->dc_vid != 0; t++) {
+		if ((PCI_VENDOR(pa->pa_id) == t->dc_vid) &&
+		    (PCI_PRODUCT(pa->pa_id) == t->dc_did))
+			return (1);
+	}
+	return (0);
 }
 
 void dc_acpi(self, aux)
@@ -1333,7 +1279,7 @@ void dc_attach(parent, self, aux)
 	bus_addr_t		iobase;
 	bus_size_t		iosize;
 	u_int32_t		revision;
-	int			mac_offset;
+	int			mac_offset, found = 0;
 
 	s = splimp();
 	sc->dc_unit = sc->sc_dev.dv_unit;
@@ -1401,70 +1347,104 @@ void dc_attach(parent, self, aux)
 	printf(": %s", intrstr);
 
 	/* Need this info to decide on a chip type. */
-	sc->dc_info = dc_devtype(aux);
 	revision = pci_conf_read(pc, pa->pa_tag, DC_PCI_CFRV) & 0x000000FF;
 
-	switch(sc->dc_info->dc_did) {
-	case DC_DEVICEID_21143:
-		sc->dc_type = DC_TYPE_21143;
-		sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
-		sc->dc_flags |= DC_REDUCED_MII_POLL;
-		break;
-	case DC_DEVICEID_DM9100:
-	case DC_DEVICEID_DM9102:
-		sc->dc_type = DC_TYPE_DM9102;
-		sc->dc_flags |= DC_TX_USE_TX_INTR;
-		sc->dc_flags |= DC_REDUCED_MII_POLL;
-		sc->dc_pmode = DC_PMODE_MII;
-		break;
-	case DC_DEVICEID_AL981:
-		sc->dc_type = DC_TYPE_AL981;
-		sc->dc_flags |= DC_TX_USE_TX_INTR;
-		sc->dc_flags |= DC_TX_ADMTEK_WAR;
-		sc->dc_pmode = DC_PMODE_MII;
-		break;
-	case DC_DEVICEID_AN985:
-		sc->dc_type = DC_TYPE_AN985;
-		sc->dc_flags |= DC_TX_USE_TX_INTR;
-		sc->dc_flags |= DC_TX_ADMTEK_WAR;
-		sc->dc_pmode = DC_PMODE_MII;
-		break;
-	case DC_DEVICEID_98713:
-	case DC_DEVICEID_98713_CP:
-		if (revision < DC_REVISION_98713A) {
-			sc->dc_type = DC_TYPE_98713;
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_DEC:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_21142) {
+			found = 1;
+			sc->dc_type = DC_TYPE_21143;
+			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_REDUCED_MII_POLL;
 		}
-		if (revision >= DC_REVISION_98713A)
-			sc->dc_type = DC_TYPE_98713A;
-		sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
 		break;
-	case DC_DEVICEID_987x5:
-		sc->dc_type = DC_TYPE_987x5;
-		sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
+	case PCI_VENDOR_DAVICOM:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9100 ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DAVICOM_DM9102) {
+			found = 1;
+			sc->dc_type = DC_TYPE_DM9102;
+			sc->dc_flags |= DC_TX_USE_TX_INTR;
+			sc->dc_flags |= DC_REDUCED_MII_POLL;
+			sc->dc_pmode = DC_PMODE_MII;
+		}
 		break;
-	case DC_DEVICEID_82C115:
-		sc->dc_type = DC_TYPE_PNICII;
-		sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
+	case PCI_VENDOR_ADMTEK:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AL981) {
+			found = 1;
+			sc->dc_type = DC_TYPE_AL981;
+			sc->dc_flags |= DC_TX_USE_TX_INTR;
+			sc->dc_flags |= DC_TX_ADMTEK_WAR;
+			sc->dc_pmode = DC_PMODE_MII;
+		}
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AN985) {
+			found = 1;
+			sc->dc_type = DC_TYPE_AN985;
+			sc->dc_flags |= DC_TX_USE_TX_INTR;
+			sc->dc_flags |= DC_TX_ADMTEK_WAR;
+			sc->dc_pmode = DC_PMODE_MII;
+		}
 		break;
-	case DC_DEVICEID_82C168:
-		sc->dc_type = DC_TYPE_PNIC;
-		sc->dc_flags |= DC_TX_STORENFWD|DC_TX_USE_TX_INTR;
-		sc->dc_flags |= DC_PNIC_RX_BUG_WAR;
-		sc->dc_pnic_rx_buf = malloc(DC_RXLEN * 5, M_DEVBUF, M_NOWAIT);
-		if (revision < DC_REVISION_82C169)
-			sc->dc_pmode = DC_PMODE_SYM;
+	case PCI_VENDOR_MACRONIX:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98713) {
+			found = 1;
+			if (revision < DC_REVISION_98713A) {
+				sc->dc_type = DC_TYPE_98713;
+				sc->dc_flags |= DC_REDUCED_MII_POLL;
+			}
+			if (revision >= DC_REVISION_98713A)
+				sc->dc_type = DC_TYPE_98713A;
+			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
+		}
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MACRONIX_MX98715) {
+			found = 1;
+			sc->dc_type = DC_TYPE_987x5;
+			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
+		}
 		break;
-	case DC_DEVICEID_AX88140A:
-		sc->dc_type = DC_TYPE_ASIX;
-		sc->dc_flags |= DC_TX_USE_TX_INTR|DC_TX_INTR_FIRSTFRAG;
-		sc->dc_flags |= DC_REDUCED_MII_POLL;
-		sc->dc_pmode = DC_PMODE_MII;
+	case PCI_VENDOR_COMPEX:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_COMPEX_98713) {
+			found = 1;
+			if (revision < DC_REVISION_98713A) {
+				sc->dc_type = DC_TYPE_98713;
+				sc->dc_flags |= DC_REDUCED_MII_POLL;
+			}
+			if (revision >= DC_REVISION_98713A)
+				sc->dc_type = DC_TYPE_98713A;
+			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
+		}
 		break;
-	default:
-		printf("%d: unknown device: %x\n", sc->dc_unit,
-		    sc->dc_info->dc_did);
+	case PCI_VENDOR_LITEON:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LITEON_PNICII) {
+			found = 1;
+			sc->dc_type = DC_TYPE_PNICII;
+			sc->dc_flags |= DC_TX_POLL|DC_TX_USE_TX_INTR;
+		}
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_LITEON_PNIC) {
+			found = 1;
+			sc->dc_type = DC_TYPE_PNIC;
+			sc->dc_flags |= DC_TX_STORENFWD|DC_TX_INTR_ALWAYS;
+			sc->dc_flags |= DC_PNIC_RX_BUG_WAR;
+			sc->dc_pnic_rx_buf = malloc(DC_RXLEN * 5, M_DEVBUF,
+			    M_NOWAIT);
+			if (revision < DC_REVISION_82C169)
+				sc->dc_pmode = DC_PMODE_SYM;
+		}
 		break;
+	case PCI_VENDOR_ASIX:
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ASIX_AX88140A) {
+			found = 1;
+			sc->dc_type = DC_TYPE_ASIX;
+			sc->dc_flags |= DC_TX_USE_TX_INTR|DC_TX_INTR_FIRSTFRAG;
+			sc->dc_flags |= DC_REDUCED_MII_POLL;
+			sc->dc_pmode = DC_PMODE_MII;
+		}
+		break;
+	}
+	if (found == 0) {
+		/* This shouldn't happen if probe has done it's job... */
+		printf(": unknown device: %x:%x\n",
+		    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id));
+		goto fail;
 	}
 
 	/* Save the cache line size. */
@@ -2151,6 +2131,8 @@ int dc_intr(arg)
 			if (sc->dc_txthresh == DC_TXTHRESH_160BYTES) {
 				printf("using store and forward mode\n");
 				DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_STORENFWD);
+			} else if (sc->dc_flags & DC_TX_STORENFWD) {
+				printf("resetting\n");
 			} else {
 				sc->dc_txthresh += 0x4000;
 				printf("increasing TX threshold\n");
@@ -2233,6 +2215,8 @@ int dc_encap(sc, m_head, txidx)
 	sc->dc_ldata->dc_tx_list[cur].dc_ctl |= DC_TXCTL_LASTFRAG;
 	if (sc->dc_flags & DC_TX_INTR_FIRSTFRAG)
 		sc->dc_ldata->dc_tx_list[*txidx].dc_ctl |= DC_TXCTL_FINT;
+	if (sc->dc_flags & DC_TX_INTR_ALWAYS)
+		sc->dc_ldata->dc_tx_list[cur].dc_ctl |= DC_TXCTL_FINT;
 	if (sc->dc_flags & DC_TX_USE_TX_INTR && sc->dc_cdata.dc_tx_cnt > 64)
 		sc->dc_ldata->dc_tx_list[cur].dc_ctl |= DC_TXCTL_FINT;
 	sc->dc_ldata->dc_tx_list[*txidx].dc_status = DC_TXSTAT_OWN;

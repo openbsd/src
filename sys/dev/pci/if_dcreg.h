@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dcreg.h,v 1.2 1999/12/09 15:29:27 jason Exp $ */
+/*	$OpenBSD: if_dcreg.h,v 1.3 1999/12/14 16:13:05 jason Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_dcreg.h,v 1.1 1999/12/04 17:41:07 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_dcreg.h,v 1.2 1999/12/13 21:45:12 wpaul Exp $
  */
 
 /*
@@ -445,7 +445,6 @@ struct dc_chain_data {
 struct dc_type {
 	u_int16_t		dc_vid;
 	u_int16_t		dc_did;
-	char			*dc_name;
 };
 
 struct dc_mii_frame {
@@ -644,7 +643,6 @@ struct dc_softc {
 	void			*dc_intrhand;
 	struct resource		*dc_irq;
 	struct resource		*dc_res;
-	struct dc_type		*dc_info;	/* adapter info */
 	u_int8_t		dc_unit;	/* interface number */
 	u_int8_t		dc_type;
 	u_int8_t		dc_pmode;
@@ -671,6 +669,7 @@ struct dc_softc {
 #define DC_TX_FIXED_RING	0x00000080
 #define DC_TX_STORENFWD		0x00000100
 #define DC_REDUCED_MII_POLL	0x00000200
+#define DC_TX_INTR_ALWAYS	0x00000400
 
 /*
  * register space access macros
@@ -688,27 +687,6 @@ struct dc_softc {
  * General constants that are fun to know.
  */
 
-/*
- * DEC PCI vendor ID
- */
-#define DC_VENDORID_DEC		0x1011
-
-/*
- * DEC/Intel 21143 PCI device ID
- */
-#define DC_DEVICEID_21143	0x0019
-
-/*
- * Macronix PCI vendor ID
- */
-#define	DC_VENDORID_MX		0x10D9
-
-/*
- * Macronix PMAC device IDs.
- */
-#define DC_DEVICEID_98713	0x0512
-#define DC_DEVICEID_987x5	0x0531
-
 /* Macronix PCI revision codes. */
 #define DC_REVISION_98713	0x00
 #define DC_REVISION_98713A	0x10
@@ -716,67 +694,12 @@ struct dc_softc {
 #define DC_REVISION_98725	0x30
 
 /*
- * Compex PCI vendor ID.
- */
-#define DC_VENDORID_CP		0x11F6
-
-/*
- * Compex PMAC PCI device IDs.
- */
-#define DC_DEVICEID_98713_CP	0x9881
-
-/*
- * Lite-On PNIC PCI vendor ID
- */
-#define DC_VENDORID_LO		0x11AD
-
-/*
  * 82c168/82c169 PNIC device IDs. Both chips have the same device
  * ID but different revisions. Revision 0x10 is the 82c168, and
  * 0x20 is the 82c169.
  */
-#define DC_DEVICEID_82C168	0x0002
-
 #define DC_REVISION_82C168	0x10
 #define DC_REVISION_82C169	0x20
-
-/* 
- * Lite-On PNIC II device ID. Note: this is actually a Macronix 98715A
- * with wake on lan/magic packet support.
- */
-#define DC_DEVICEID_82C115	0xc115
-
-/*
- * Davicom vendor ID.
- */
-#define DC_VENDORID_DAVICOM	0x1282
-
-/*
- * Davicom device IDs.
- */
-#define DC_DEVICEID_DM9100	0x9100
-#define DC_DEVICEID_DM9102	0x9102
-
-/*
- * ADMtek vendor ID.
- */
-#define DC_VENDORID_ADMTEK	0x1317
-
-/*
- * ADMtek device IDs.
- */
-#define DC_DEVICEID_AL981	0x0981
-#define DC_DEVICEID_AN985	0x0985
-
-/*
- * ASIX vendor ID.
- */
-#define DC_VENDORID_ASIX	0x125B
-
-/*
- * ASIX device IDs.
- */
-#define DC_DEVICEID_AX88140A	0x1400
 
 /*
  * The ASIX AX88140 and ASIX AX88141 have the same vendor and
