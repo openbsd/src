@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.14 1998/11/28 02:37:35 kstailey Exp $	*/
+/*	$OpenBSD: machine.c,v 1.15 1999/05/22 21:42:26 weingart Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -20,6 +20,7 @@
  *          Adapted from BSD4.4 by Christos Zoulas <christos@ee.cornell.edu>
  *          Patch for process wait display by Jarl F. Greipsland <jarle@idt.unit.no>
  *	    Patch for -DORDER by Kenneth Stailey <kstailey@disclosure.com>
+ *	    Patch for new swapctl(2) by Tobias Weingartner <weingart@openbsd.org>
  */
 
 #include <sys/types.h>
@@ -46,9 +47,8 @@
 #include <sys/resource.h>
 
 #ifdef DOSWAP
+#include <sys/swap.h>
 #include <err.h>
-#include <sys/map.h>
-#include <sys/conf.h>
 #endif
 
 static int check_nlist __P((struct nlist *));
@@ -82,30 +82,9 @@ struct handle
 #define X_CP_TIME	0
 #define X_HZ		1
 
-#ifdef DOSWAP
-#define	VM_SWAPMAP	2
-#define	VM_NSWAPMAP	3
-#define	VM_SWDEVT	4
-#define	VM_NSWAP	5
-#define	VM_NSWDEV	6
-#define	VM_DMMAX	7
-#define	VM_NISWAP	8
-#define	VM_NISWDEV	9
-#endif
-
 static struct nlist nlst[] = {
     { "_cp_time" },		/* 0 */
     { "_hz" },			/* 1 */
-#ifdef DOSWAP
-    { "_swapmap" },		/* 2 */
-    { "_nswapmap" },		/* 3 */
-    { "_swdevt" },		/* 4 */
-    { "_nswap" },		/* 5 */
-    { "_nswdev" },		/* 6 */
-    { "_dmmax" },		/* 7 */
-    { "_niswap" },		/* 8 */
-    { "_niswdev" },		/* 9 */
-#endif
     { 0 }
 };
 
@@ -214,7 +193,7 @@ struct statics *statics;
     setgid(getgid());
 
     /* get the list of symbols we want to access in the kernel */
-    if (kvm_nlist(kd, nlst) <= 0) {
+    if (kvm_nlist(kd, nlst) < 0) {
 	warnx("nlist failed");
 	return(-1);
     }
@@ -865,143 +844,41 @@ pid_t pid;
 
 #ifdef DOSWAP
 /*
- * swapmode is based on a program called swapinfo written
- * by Kevin Lahey <kml@rokkaku.atl.ga.us>.
+ * swapmode is rewriten by Tobias Weingartner <weingart@openbsd.org>
+ * to be based on the new swapctl(2) system call.
  */
-
-#define	SVAR(var) __STRING(var)	/* to force expansion */
-#define	KGET(idx, var)							\
-	KGET1(idx, &var, sizeof(var), SVAR(var))
-#define	KGET1(idx, p, s, msg)						\
-	KGET2(nlst[idx].n_value, p, s, msg)
-#define	KGET2(addr, p, s, msg)						\
-	if (kvm_read(kd, (u_long)(addr), p, s) != s)			\
-		warnx("cannot read %s: %s", msg, kvm_geterr(kd))
-
 static int
 swapmode(used, total)
 int *used;
 int *total;
 {
-	int nswap, nswdev, dmmax, nswapmap, niswap, niswdev;
-	int s, e, i, l, nfree;
-	struct swdevt *sw;
-	long *perdev;
-	struct map *swapmap, *kswapmap;
-	struct mapent *mp, *freemp;
+	int nswap, rnswap, i;
+	struct swapent *swdev;
 
-	KGET(VM_NSWAP, nswap);
-	KGET(VM_NSWDEV, nswdev);
-	KGET(VM_DMMAX, dmmax);
-	KGET(VM_NSWAPMAP, nswapmap);
-	KGET(VM_SWAPMAP, kswapmap);	/* kernel `swapmap' is a pointer */
-	if (nswap == 0) {
-		*used = 0;
-		*total = 0;
-		return (1);
-	}
-	if ((sw = malloc(nswdev * sizeof(*sw))) == NULL ||
-	    (perdev = malloc(nswdev * sizeof(*perdev))) == NULL ||
-	    (freemp = mp = malloc(nswapmap * sizeof(*mp))) == NULL)
-		err(1, "malloc");
-	KGET1(VM_SWDEVT, sw, nswdev * sizeof(*sw), "swdevt");
-	KGET2((long)kswapmap, mp, nswapmap * sizeof(*mp), "swapmap");
+	nswap = swapctl(SWAP_NSWAP, 0, 0);
+	if (nswap == 0) 
+		return 0;
 
-	/* Supports sequential swap */
-	if (nlst[VM_NISWAP].n_value != 0) {
-		KGET(VM_NISWAP, niswap);
-		KGET(VM_NISWDEV, niswdev);
-	} else {
-		niswap = nswap;
-		niswdev = nswdev;
-	}
+	swdev = malloc(nswap * sizeof(*swdev));
+	if(swdev == NULL)
+		return 0;
 
-	/* First entry in map is `struct map'; rest are mapent's. */
-	swapmap = (struct map *)mp;
-	if (nswapmap != swapmap->m_limit - (struct mapent *)kswapmap)
-		errx(1, "panic: nswapmap goof");
+	rnswap = swapctl(SWAP_STATS, swdev, nswap);
+	if(rnswap == -1)
+		return 0;
 
-	/* Count up swap space. */
-	nfree = 0;
-	memset(perdev, 0, nswdev * sizeof(*perdev));
-	for (mp++; mp->m_addr != 0; mp++) {
-		s = mp->m_addr;			/* start of swap region */
-		e = mp->m_addr + mp->m_size;	/* end of region */
-		nfree += mp->m_size;
+	/* if rnswap != nswap, then what? */
 
-		/*
-		 * Swap space is split up among the configured disks.
-		 *
-		 * For interleaved swap devices, the first dmmax blocks
-		 * of swap space some from the first disk, the next dmmax
-		 * blocks from the next, and so on up to niswap blocks.
-		 *
-		 * Sequential swap devices follow the interleaved devices
-		 * (i.e. blocks starting at niswap) in the order in which
-		 * they appear in the swdev table.  The size of each device
-		 * will be a multiple of dmmax.
-		 *
-		 * The list of free space joins adjacent free blocks,
-		 * ignoring device boundries.  If we want to keep track
-		 * of this information per device, we'll just have to
-		 * extract it ourselves.  We know that dmmax-sized chunks
-		 * cannot span device boundaries (interleaved or sequential)
-		 * so we loop over such chunks assigning them to devices.
-		 */
-		i = -1;
-		while (s < e) {		/* XXX this is inefficient */
-			int bound = roundup(s+1, dmmax);
-
-			if (bound > e)
-				bound = e;
-			if (bound <= niswap) {
-				/* Interleaved swap chunk. */
-				if (i == -1)
-					i = (s / dmmax) % niswdev;
-				perdev[i] += bound - s;
-				if (++i >= niswdev)
-					i = 0;
-			} else {
-				/* Sequential swap chunk. */
-				if (i < niswdev) {
-					i = niswdev;
-					l = niswap + sw[i].sw_nblks;
-				}
-				while (s >= l) {
-					/* XXX don't die on bogus blocks */
-					if (i == nswdev-1)
-						break;
-					l += sw[++i].sw_nblks;
-				}
-				perdev[i] += bound - s;
-			}
-			s = bound;
+	/* Total things up */
+	*total = *used = 0;
+	for (i = 0; i < nswap; i++) {
+		if (swdev[i].se_flags & SWF_ENABLE) {
+			*used += (swdev[i].se_inuse / (1024/DEV_BSIZE));
+			*total += (swdev[i].se_nblks / (1024/DEV_BSIZE));
 		}
 	}
 
-	*total = 0;
-	for (i = 0; i < nswdev; i++) {
-		int xsize, xfree;
-
-		if (sw[i].sw_flags & SW_FREED) {
-			xsize = sw[i].sw_nblks;
-			xfree = perdev[i];
-			*total += xsize;
-		}
-	}
-
-	/* 
-	 * If only one partition has been set up via swapon(8), we don't
-	 * need to bother with totals.
-	 */
-#if DEV_BSHIFT < 10
-	*used = (*total - nfree) >> (10 - DEV_BSHIFT);
-	*total >>= 10 - DEV_BSHIFT;
-#elif DEV_BSHIFT > 10
-	*used = (*total - nfree) >> (DEV_BSHIFT - 10);
-	*total >>= DEV_BSHIFT - 10;
-#endif
-	free (sw); free (freemp); free (perdev);
+	free (swdev);
 	return 1;
 }
 #endif
