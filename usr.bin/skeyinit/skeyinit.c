@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.41 2002/11/16 23:05:36 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.42 2003/04/06 21:07:38 deraadt Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -81,7 +81,7 @@ main(int argc, char **argv)
 
 	if ((pp = getpwuid(getuid())) == NULL)
 		err(1, "no user with uid %u", getuid());
-	(void)strcpy(me, pp->pw_name);
+	(void)strlcpy(me, pp->pw_name, sizeof me);
 
 	if ((pp = getpwnam(me)) == NULL)
 		err(1, "Who are you?");
