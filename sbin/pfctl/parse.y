@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.172 2002/10/22 07:07:35 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.173 2002/10/22 12:28:08 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -94,7 +94,7 @@ struct node_host {
 	struct pf_addr_wrap	 addr;
 	struct pf_addr		 mask;
 	struct pf_addr		 bcast;
-	u_int8_t		 af;
+	sa_family_t		 af;
 	u_int8_t		 not;
 	u_int8_t		 noroute;
 	u_int32_t		 ifindex;	/* link-local IPv6 addrs */
@@ -234,7 +234,7 @@ typedef struct {
 			char		*string;
 			struct pf_addr	*addr;
 			u_int8_t	rt;
-			u_int8_t	af;
+			sa_family_t	af;
 		}			route;
 		struct redirection {
 			struct node_host	*address;
@@ -1913,7 +1913,7 @@ struct keywords {
 	} while (0)
 
 void
-expand_label_addr(const char *name, char *label, u_int8_t af,
+expand_label_addr(const char *name, char *label, sa_family_t af,
     struct node_host *host)
 {
 	char tmp[PF_RULE_LABEL_SIZE];
@@ -2030,7 +2030,7 @@ expand_label_nr(const char *name, char *label)
 }
 
 void
-expand_label(char *label, u_int8_t af,
+expand_label(char *label, sa_family_t af,
     struct node_host *src_host, struct node_port *src_port,
     struct node_host *dst_host, struct node_port *dst_port,
     u_int8_t proto)
@@ -2051,7 +2051,8 @@ expand_rule(struct pf_rule *r,
     struct node_uid *uids, struct node_gid *gids,
     struct node_icmp *icmp_types)
 {
-	int	af = r->af, nomatch = 0, added = 0;
+	sa_family_t	af = r->af;
+	int nomatch = 0, added = 0;
 	char	ifname[IF_NAMESIZE];
 	char	label[PF_RULE_LABEL_SIZE];
 	u_int8_t 	flags, flagset;
@@ -2166,7 +2167,8 @@ expand_nat(struct pf_nat *n,
     struct node_host *dst_hosts, struct node_port *dst_ports)
 {
 	char ifname[IF_NAMESIZE];
-	int af = n->af, added = 0;
+	sa_family_t af = n->af;
+	int added = 0;
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
 	LOOP_THROUGH(struct node_proto, proto, protos,
@@ -2242,7 +2244,8 @@ expand_rdr(struct pf_rdr *r, struct node_if *interfaces,
     struct node_proto *protos, struct node_host *src_hosts,
     struct node_host *dst_hosts)
 {
-	int af = r->af, added = 0;
+	sa_family_t af = r->af;
+	int added = 0;
 	char ifname[IF_NAMESIZE];
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
@@ -2873,7 +2876,7 @@ ifa_lookup(char *ifa_name, enum pfctl_iflookup_mode mode)
 }
 
 struct node_host *
-ifa_pick_ip(struct node_host *nh, u_int8_t af)
+ifa_pick_ip(struct node_host *nh, sa_family_t af)
 {
 	struct node_host *h, *n = NULL;
 
@@ -3045,7 +3048,7 @@ getservice(char *n)
 }
 
 u_int16_t
-parseicmpspec(char *w, u_int8_t af)
+parseicmpspec(char *w, sa_family_t af)
 {
 	const struct icmpcodeent *p;
 	u_long ulval;

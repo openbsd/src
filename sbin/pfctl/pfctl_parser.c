@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.100 2002/10/14 12:58:28 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.101 2002/10/22 12:28:08 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -189,7 +189,7 @@ const struct pf_timeout pf_timeouts[] = {
 };
 
 const struct icmptypeent *
-geticmptypebynumber(u_int8_t type, u_int8_t af)
+geticmptypebynumber(u_int8_t type, sa_family_t af)
 {
 	unsigned int i;
 
@@ -209,7 +209,7 @@ geticmptypebynumber(u_int8_t type, u_int8_t af)
 }
 
 const struct icmptypeent *
-geticmptypebyname(char *w, u_int8_t af)
+geticmptypebyname(char *w, sa_family_t af)
 {
 	unsigned int i;
 
@@ -229,7 +229,7 @@ geticmptypebyname(char *w, u_int8_t af)
 }
 
 const struct icmpcodeent *
-geticmpcodebynumber(u_int8_t type, u_int8_t code, u_int8_t af)
+geticmpcodebynumber(u_int8_t type, u_int8_t code, sa_family_t af)
 {
 	unsigned int i;
 
@@ -251,7 +251,7 @@ geticmpcodebynumber(u_int8_t type, u_int8_t code, u_int8_t af)
 }
 
 const struct icmpcodeent *
-geticmpcodebyname(u_long type, char *w, u_int8_t af)
+geticmpcodebyname(u_long type, char *w, sa_family_t af)
 {
 	unsigned int i;
 
@@ -350,7 +350,7 @@ print_flags(u_int8_t f)
 
 void
 print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
-    u_int8_t af, u_int8_t proto)
+    sa_family_t af, u_int8_t proto)
 {
 	if (PF_AZERO(&src->addr.addr, AF_INET6) &&
 	    PF_AZERO(&src->mask, AF_INET6) &&

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.5 2002/07/31 20:19:15 henning Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.6 2002/10/22 12:28:08 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -134,7 +134,7 @@ print_name(struct pf_addr *addr, struct pf_addr *mask, int af)
 }
 
 void
-print_host(struct pf_state_host *h, u_int8_t af, int opts)
+print_host(struct pf_state_host *h, sa_family_t af, int opts)
 {
 	u_int16_t p = ntohs(h->port);
 
