@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsort.c,v 1.6 1998/05/02 02:41:56 mickey Exp $	*/
+/*	$OpenBSD: fsort.c,v 1.7 1999/05/24 17:57:18 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fsort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fsort.c,v 1.6 1998/05/02 02:41:56 mickey Exp $";
+static char rcsid[] = "$OpenBSD: fsort.c,v 1.7 1999/05/24 17:57:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,11 +93,13 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 	tfield[0].icol.num = 1;
 	weights = ftbl[0].weights;
 	if (!buffer) {
-		buffer = malloc(BUFSIZE + 1);
-		keylist = malloc(MAXNUM * sizeof(u_char *));
-		memset(keylist, 0, MAXNUM * sizeof(u_char *));
-		if (!SINGL_FLD)
-			linebuf = malloc(MAXLLEN);
+		if ((buffer = malloc(BUFSIZE + 1)) == NULL ||
+		    (keylist = calloc(MAXNUM, sizeof(u_char *))) == NULL)
+			errx(2, "cannot allocate memory");
+		if (!SINGL_FLD) {
+			if ((linebuf = malloc(MAXLLEN)) == NULL)
+				errx(2, "cannot allocate memory");
+		}
 	}
 	bufend = buffer + BUFSIZE;
 	if (binno >= 0) {
@@ -150,6 +152,9 @@ fsort(binno, depth, infiles, nfiles, outfp, ftbl)
 					if (mfct == 16 ||(c == EOF && ntfiles)) {
 						tmpbuf = malloc(bufend -
 						    crec->data);
+						if (tmpbuf == NULL)
+							errx(2, "cannot "
+							    "allocate memory");
 						memmove(tmpbuf, crec->data,
 						    bufend - crec->data);
 						fstack[tfiles.top + ntfiles].fp
@@ -255,7 +260,7 @@ onepass(a, depth, n, sizes, tr, fp)
 {
 	int tsizes[NBINS+1];
 	u_char **bin[257], **top[256], ***bp, ***bpmax, ***tp;
-	static histo[256];
+	static int histo[256];
 	int *hp;
 	register int c;
 	u_char **an, *t, **aj;

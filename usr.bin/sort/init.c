@@ -1,4 +1,4 @@
-/*	OpenBSD$	*/
+/*	$OpenBSD: init.c,v 1.3 1999/05/24 17:57:18 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)init.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.2 1997/06/16 02:21:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.3 1999/05/24 17:57:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ static char rcsid[] = "$OpenBSD: init.c,v 1.2 1997/06/16 02:21:56 millert Exp $"
 #include <ctype.h>
 #include <string.h>
 
-extern struct coldesc clist[(ND+1)*2];
+extern struct coldesc *clist;
 extern int ncols;
 u_char gweights[NBINS];
 
@@ -153,11 +153,8 @@ setfield(pos, cur_fld, gflag)
 	struct field *cur_fld;
 	int gflag;
 {
-	static int nfields = 0;
 	int tmp;
 	char *setcolumn();
-	if (++nfields == ND)
-		errx(2, "too many sort keys. (Limit is %d)", ND-1);
 	cur_fld->weights = ascii;
 	cur_fld->mask = alltable;
 	pos = setcolumn(pos, cur_fld, gflag);
@@ -223,8 +220,10 @@ fixit(argc, argv)
 	char **argv;
 {
 	int i, j, v, w, x;
-	static char vbuf[ND*20], *vpos, *tpos;
-	vpos = vbuf;
+	static char *vbuf, *vpos, *tpos;
+
+	if ((vpos = vbuf = calloc(ND*20, sizeof(char))) == NULL)
+		errx(2, "cannot allocate memory");
 
 	for (i = 1; i < *argc; i++) {
 		if (argv[i][0] == '+') {

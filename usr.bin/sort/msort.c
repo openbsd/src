@@ -1,4 +1,4 @@
-/*	$OpenBSD: msort.c,v 1.6 1997/06/30 05:36:17 millert Exp $	*/
+/*	$OpenBSD: msort.c,v 1.7 1999/05/24 17:57:18 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)msort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: msort.c,v 1.6 1997/06/30 05:36:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: msort.c,v 1.7 1999/05/24 17:57:18 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,16 +89,21 @@ fmerge(binno, files, nfiles, get, outfp, fput, ftbl)
 	wts = ftbl->weights;
 	if (!UNIQUE && SINGL_FLD && ftbl->flags & F)
 		wts1 = (ftbl->flags & R) ? Rascii : ascii;
-	if (!cfilebuf)
+	if (!cfilebuf) {
 		cfilebuf = malloc(MAXLLEN + sizeof(TMFILE));
+		if (cfilebuf == NULL)
+			errx(2, "cannot allocate memory");
+	}
 
 	i = min(16, nfiles) * LALIGN(MAXLLEN+sizeof(TMFILE));
 	if (!buffer || i > BUFSIZE) {
 		buffer = buffer ? realloc(buffer, i) : malloc(i);
 		if (!buffer)
-			err(2, NULL);
-		if (!SINGL_FLD)
-			linebuf = malloc(MAXLLEN);
+			errx(2, "cannot allocate memory");
+		if (!SINGL_FLD) {
+			if ((linebuf = malloc(MAXLLEN)) == NULL)
+				errx(2, "cannot allocate memory");
+		}
 	}
 
 	if (binno >= 0)
@@ -262,9 +267,13 @@ order(infile, get, ftbl)
 	int c;
 	RECHEADER *crec, *prec, *trec;
 
-	if (!SINGL_FLD)
-		linebuf = malloc(MAXLLEN);
+	if (!SINGL_FLD) {
+		if ((linebuf = malloc(MAXLLEN)) == NULL)
+			errx(2, "cannot allocate memory");
+	}
 	buffer = malloc(2 * (MAXLLEN + sizeof(TRECHEADER)));
+	if (buffer == NULL)
+		errx(2, "cannot allocate memory");
 	end = buffer + 2 * (MAXLLEN + sizeof(TRECHEADER));
 	crec = (RECHEADER *) buffer;
 	prec = (RECHEADER *) (buffer + MAXLLEN + sizeof(TRECHEADER));
@@ -296,7 +305,7 @@ static int
 cmp(rec1, rec2)
 	RECHEADER *rec1, *rec2;
 {
-	register r;
+	register int r;
 	register u_char *pos1, *pos2, *end;
 	register u_char *cwts;
 	for (cwts = wts; cwts; cwts = (cwts == wts1 ? 0 : wts1)) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fields.c,v 1.3 1997/06/30 05:36:16 millert Exp $	*/
+/*	$OpenBSD: fields.c,v 1.4 1999/05/24 17:57:17 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)fields.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: fields.c,v 1.3 1997/06/30 05:36:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: fields.c,v 1.4 1999/05/24 17:57:17 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ extern u_char *enterfield __P((u_char *, u_char *, struct field *, int));
 
 extern u_char *number __P((u_char *, u_char *, u_char *, u_char *, int));
 
-extern struct coldesc clist[(ND+1)*2];
+extern struct coldesc *clist;
 extern int ncols;
 
 #define DECIMAL '.'

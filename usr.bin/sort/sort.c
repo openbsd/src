@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.c,v 1.11 1998/07/24 00:32:24 deraadt Exp $	*/
+/*	$OpenBSD: sort.c,v 1.12 1999/05/24 17:57:19 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -46,7 +46,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sort.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: sort.c,v 1.11 1998/07/24 00:32:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: sort.c,v 1.12 1999/05/24 17:57:19 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,10 +82,9 @@ u_char ascii[NBINS], Rascii[NBINS], RFtable[NBINS], Ftable[NBINS];
  */
 u_char dtable[NBINS], itable[NBINS], alltable[NBINS];
 int SINGL_FLD = 0, SEP_FLAG = 0, UNIQUE = 0;
-struct coldesc clist[(ND+1)*2];
+struct coldesc *clist;
 int ncols = 0;
-extern struct coldesc clist[(ND+1)*2];
-extern int ncols;
+int ND = 10;			/* limit on number of -k options. */
 
 char devstdin[] = _PATH_STDIN;
 char toutpath[_POSIX_PATH_MAX];
@@ -95,6 +94,15 @@ static void cleanup __P((void));
 static void onsig __P((int));
 static void usage __P((char *));
 
+#define CHECK_NFIELDS						\
+	if (++nfields == ND) {					\
+		ND += 10;					\
+		if ((p = realloc(fldtab, ND)) == NULL)		\
+			errx(2, "cannot allocate memory");	\
+		ftpos = p + (ftpos - fldtab);			\
+		fldtab = p;					\
+	}
+
 int
 main(argc, argv)
 	int argc;
@@ -102,18 +110,20 @@ main(argc, argv)
 {
 	int (*get)();
 	int ch, i, stdinflag = 0, tmp = 0;
-	char cflag = 0, mflag = 0;
+	char nfields = 0, cflag = 0, mflag = 0;
 	char *outfile, *outpath = 0;
-	struct field fldtab[ND+2], *ftpos;
+	struct field *fldtab, *ftpos;
 	union f_handle filelist;
 	FILE *outfp = NULL;
+	void *p;
 
-	memset(fldtab, 0, (ND+2)*sizeof(struct field));
+	if ((clist = calloc((ND+1)*2, sizeof(struct coldesc))) == NULL ||
+	    (ftpos = fldtab = calloc(ND+2, sizeof(struct field))) == NULL)
+		errx(2, "cannot allocate memory");
 	memset(d_mask, 0, NBINS);
 	d_mask[REC_D = '\n'] = REC_D_F;
 	SINGL_FLD = SEP_FLAG = 0;
 	d_mask['\t'] = d_mask[' '] = BLANK | FLD_D;
-	ftpos = fldtab;
 	fixit(&argc, argv);
 	if (!issetugid() && (outfile = getenv("TMPDIR")))
 		tmpdir = outfile;
@@ -138,6 +148,7 @@ main(argc, argv)
 			outpath = optarg;
 			break;
 		case 'k':
+			CHECK_NFIELDS;
 			setfield(optarg, ++ftpos, fldtab->flags);
 			break;
 		case 't':
@@ -212,6 +223,7 @@ main(argc, argv)
 		fldtab[0].icol.num = 1;
 	} else {
 		if (!fldtab[1].icol.num) {
+			CHECK_NFIELDS;
 			fldtab[0].flags &= ~(BI|BT);
 			setfield("1", ++ftpos, fldtab->flags);
 		}

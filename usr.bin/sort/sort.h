@@ -1,4 +1,4 @@
-/*	$OpenBSD: sort.h,v 1.3 1997/06/30 05:36:18 millert Exp $	*/
+/*	$OpenBSD: sort.h,v 1.4 1999/05/24 17:57:19 millert Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -66,8 +66,6 @@
 #define FLD_D 2		/* ' ', '\t' default; from -t otherwise */
 #define REC_D_F 4	/* '\n' default; from -T otherwise */
 
-#define ND 10	/* limit on number of -k options. */
-
 #define min(a, b) ((a) < (b) ? (a) : (b))
 #define max(a, b) ((a) > (b) ? (a) : (b))
 
@@ -78,7 +76,7 @@
 
 #define	EWRITE(ptr, size, n, f) {					\
 	if (!fwrite(ptr, size, n, f))					\
-		 err(2, NULL);						\
+		 err(2, "fwrite");					\
 }
 
 /* length of record is currently limited to 2^16 - 1 */
@@ -142,5 +140,6 @@ extern u_char d_mask[NBINS];
 extern int SINGL_FLD, SEP_FLAG, UNIQUE;
 extern int REC_D;
 extern char *tmpdir;
+extern int ND;		/* limit on number of -k options. */
 
 #include "extern.h"
