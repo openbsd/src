@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.8 2002/04/26 17:26:52 mickey Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.9 2002/08/22 04:21:24 drahn Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -447,6 +447,9 @@ bmac_init(sc)
 		bmac_set_bits(sc, RXCFG, RxPromiscEnable);
 
 	bmac_init_dma(sc);
+
+	/* Configure Media. */
+	mii_mediachg(&sc->sc_mii);
 
 	/* Enable TX/RX */
 	bmac_set_bits(sc, RXCFG, RxMACEnable);
