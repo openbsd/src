@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.269 2002/12/06 00:47:32 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.270 2002/12/13 21:48:30 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4350,7 +4350,10 @@ done:
 		mtag = m_tag_get(PACKET_TAG_PF_QID, sizeof(*atag), M_NOWAIT);
 		if (mtag != NULL) {
 			atag = (struct altq_tag *)(mtag + 1);
-			atag->qid = r->qid;
+			if (pd.tos == IPTOS_LOWDELAY)
+				atag->qid = r->pqid;
+			else
+				atag->qid = r->qid;
 			/* add hints for ecn */
 			atag->af = AF_INET;
 			atag->hdr = h;

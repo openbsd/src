@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.24 2002/12/12 20:24:20 aaron Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.25 2002/12/13 21:48:30 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -847,6 +847,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				break;
 			}
 		}
+#ifdef ALTQ
+		if (rule->qid && !rule->pqid)
+			rule->pqid = rule->qid;
+#endif /* ALTQ */
 
 		if (pf_dynaddr_setup(&rule->src.addr, rule->af))
 			error = EINVAL;
