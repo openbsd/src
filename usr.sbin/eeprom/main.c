@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.3 1996/05/24 09:20:44 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.4 1996/07/22 02:01:50 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1996/05/16 16:00:55 thorpej Exp $	*/
 
 /*-
@@ -161,6 +161,8 @@ main(argc, argv)
 	argv += optind;
 
 #ifdef __sparc__
+	if (system != NULL)
+		setgid(getgid());
 	if (getcputype() != CPU_SUN4)
 		use_openprom = 1;
 #endif /* __sparc__ */
