@@ -40,6 +40,7 @@ struct str_message {
 	int msg_type;
 	pid_t msg_pid;
 	short msg_policy;
+	short reserved;
 	union {
 		struct str_msg_emul msg_emul;
 		struct str_msg_ask msg_ask;
