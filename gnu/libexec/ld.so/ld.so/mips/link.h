@@ -75,6 +75,7 @@ struct link_map
        This is the same format used in SVR4.  */
 
     Elf32_Addr l_addr;		/* Base address shared object is loaded at.  */
+    Elf32_Addr l_offs;		/* Offset to something XXX Added for gdb */
     char *l_name;		/* Absolute file name object was found in.  */
     Elf32_Dyn *l_ld;		/* Dynamic section of the shared object.  */
     struct link_map *l_next, *l_prev; /* Chain of loaded objects.  */
