@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.22 1999/07/18 19:12:59 deraadt Exp $
+#  $OpenBSD: Makefile,v 1.23 2000/11/08 20:43:37 deraadt Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -70,7 +70,6 @@ ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_log.S e_log10.S \
 .PATH:	${.CURDIR}/arch/vax
 NOIEEE_ARCH=n_infnan.S n_argred.S n_sqrt.S
 ARCH_SRCS = n_atan2.S n_cabs.S n_cbrt.S n_sincos.S n_tan.S n_support.S 
-MAN+=infnan.3
 .endif
 
 .if (${MACHINE_ARCH} == "mvme88k")
@@ -147,6 +146,7 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \
 	ieee_test.3 j0.3 lgamma.3 math.3 rint.3 sin.3 sinh.3 sqrt.3 \
 	tan.3 tanh.3
+MAN+=	infnan.3
 
 MLINKS+=erf.3 erfc.3
 MLINKS+=exp.3 expm1.3 exp.3 log.3 exp.3 log10.3 exp.3 log1p.3 exp.3 pow.3
