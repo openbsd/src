@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.4 2001/03/15 00:43:08 deraadt Exp $	*/
+/*	$OpenBSD: ami.c,v 1.5 2001/03/26 22:21:41 mickey Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -482,7 +482,7 @@ ami_quartz_done(sc, mbox)
 		bus_space_write_4(sc->iot, sc->ioh, AMI_QODB, AMI_QODB_READY);
 
 		qodb = sc->sc_mbox_pa | AMI_QIDB_ACK;
-		bus_space_write_4(sc->iot, sc->ioh, AMI_QODB, htole32(qodb));
+		bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, htole32(qodb));
 		return 1;
 	}
 
@@ -974,15 +974,16 @@ ami_scsi_cmd(xs)
 				printf("%s: out of bounds %u-%u >= %u\n",
 				    sc->sc_dev.dv_xname, blockno, blockcnt,
 				    sc->sc_hdr[target].hd_size);
-				scsi_done(xs);
 				xs->error = XS_DRIVER_STUFFUP;
+				scsi_done(xs);
 				return (COMPLETE);
 			}
 		}
 
 		if ((ccb = ami_get_ccb(sc)) == NULL) {
-			scsi_done(xs);
+			AMI_UNLOCK_AMI(sc, lock);
 			xs->error = XS_DRIVER_STUFFUP;
+			scsi_done(xs);
 			return (COMPLETE);
 		}
 
@@ -1023,8 +1024,8 @@ ami_scsi_cmd(xs)
 				xs->error = XS_TIMEOUT;
 				return (TRY_AGAIN_LATER);
 			} else {
-				scsi_done(xs);
 				xs->error = XS_DRIVER_STUFFUP;
+				scsi_done(xs);
 				return (COMPLETE);
 			}
 		}
