@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.7 1996/12/08 15:15:51 niklas Exp $	*/
+/*	$OpenBSD: net.c,v 1.8 1997/05/05 02:49:49 millert Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -230,7 +230,7 @@ readudp(d, pkt, len, tleft)
 	if (uh->uh_sum) {
 		n = ntohs(uh->uh_ulen) + sizeof(*ip);
 		if (n > RECV_SIZE - ETHER_SIZE) {
-			printf("readudp: huge packet, udp len %d\n", n);
+			printf("readudp: huge packet, udp len %ld\n", (long)n);
 			return -1;
 		}
 
