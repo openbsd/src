@@ -1,4 +1,4 @@
-/*	$Id: ipwcontrol.c,v 1.4 2004/10/24 11:50:47 deraadt Exp $	*/
+/*	$Id: ipwcontrol.c,v 1.5 2004/10/27 21:37:40 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: ipwcontrol.c,v 1.4 2004/10/24 11:50:47 deraadt Exp $";
+static char rcsid[] = "$Id: ipwcontrol.c,v 1.5 2004/10/27 21:37:40 damien Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -55,9 +55,6 @@ static char rcsid[] = "$Id: ipwcontrol.c,v 1.4 2004/10/24 11:50:47 deraadt Exp $
 
 extern char *optarg;
 extern int optind;
-extern int optopt;
-extern int opterr;
-extern int optreset;
 
 static void usage(void);
 static int do_req(char *, unsigned long, void *);
@@ -85,6 +82,7 @@ main(int argc, char **argv)
 			if (!ifspecified)
 				iface = optarg;
 			break;
+
 		case 'f':
 			load_firmware(iface, optarg);
 			return EX_OK;
@@ -175,13 +173,8 @@ get_radio_state(char *iface)
 {
 	int radio;
 
-	if (do_req(iface, SIOCGRADIO, &radio) == -1) {
-		if (errno == ENOTTY)
-			errx(EX_OSERR, "Can't retrieve radio transmitter "
-			    "state: No firmware");
-		else
-			err(EX_OSERR, "Can't retrieve radio transmitter state");
-	}
+	if (do_req(iface, SIOCGRADIO, &radio) == -1)
+		err(EX_OSERR, "Can't retrieve radio transmitter state");
 
 	(void)printf("Radio is %s\n", radio ? "ON" : "OFF");
 }
@@ -380,13 +373,8 @@ get_statistics(char *iface)
 	static unsigned long stats[256]; /* XXX */
 	const struct statistic *stat;
 
-	if (do_req(iface, SIOCGTABLE1, stats) == -1) {
-		if (errno == ENOTTY)
-			errx(EX_OSERR, "Can't retrieve statistics: No "
-			    "firmware");
-		else
-			err(EX_OSERR, "Can't retrieve statistics");
-	}
+	if (do_req(iface, SIOCGTABLE1, stats) == -1)
+		err(EX_OSERR, "Can't retrieve statistics");
 
 	for (stat = tbl; stat->index != 0; stat++) {
 		(void)printf("%-60s[", stat->desc);
