@@ -1,4 +1,4 @@
-/*	$OpenBSD: ps.c,v 1.35 2004/01/08 18:18:35 millert Exp $	*/
+/*	$OpenBSD: ps.c,v 1.36 2004/02/04 12:58:27 otto Exp $	*/
 /*	$NetBSD: ps.c,v 1.15 1995/05/18 20:33:25 mycroft Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ps.c	8.4 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: ps.c,v 1.35 2004/01/08 18:18:35 millert Exp $";
+static char rcsid[] = "$OpenBSD: ps.c,v 1.36 2004/02/04 12:58:27 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,7 @@ main(int argc, char *argv[])
 	pid_t pid;
 	uid_t uid;
 	int all, ch, flag, i, fmt, lineno, nentries, mib[6];
-	int prtheader, wflag, kflag, what, xflg;
+	int prtheader, wflag, kflag, what, Uflag, xflg;
 	char *nlistf, *memf, *swapf, errbuf[_POSIX2_LINE_MAX];
 	size_t size;
 
@@ -126,9 +126,9 @@ main(int argc, char *argv[])
 	if (argc > 1)
 		argv[1] = kludge_oldps_options(argv[1]);
 
-	all = fmt = prtheader = wflag = kflag = xflg = 0;
+	all = fmt = prtheader = wflag = kflag = Uflag = xflg = 0;
 	pid = -1;
-	uid = (uid_t) -1;
+	uid = 0;
 	ttydev = NODEV;
 	memf = nlistf = swapf = NULL;
 	while ((ch = getopt(argc, argv,
@@ -225,7 +225,7 @@ main(int argc, char *argv[])
 				errx(1, "%s: no such user", optarg);
 			uid = pwd->pw_uid;
 			endpwent();
-			xflg = 1;
+			Uflag = xflg = 1;
 			break;
 		case 'u':
 			parsefmt(ufmt);
@@ -283,7 +283,7 @@ main(int argc, char *argv[])
 		parsefmt(dfmt);
 
 	/* XXX - should be cleaner */
-	if (!all && ttydev == NODEV && pid == -1 && uid == (uid_t)-1)
+	if (!all && ttydev == NODEV && pid == -1 && !Uflag)
 		uid = getuid();
 
 	/*
@@ -294,7 +294,7 @@ main(int argc, char *argv[])
 	/*
 	 * get proc list
 	 */
-	if (uid != (uid_t) -1) {
+	if (Uflag) {
 		what = KERN_PROC_UID;
 		flag = uid;
 	} else if (ttydev != NODEV) {
