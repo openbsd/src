@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.11 2000/10/13 19:17:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.12 2000/10/13 21:05:07 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -41,7 +41,6 @@ cd: ${BSD_RD}
 	-rm -rf ${.OBJDIR}/cd-dir/
 	-@mkdir -p ${.OBJDIR}/cd-dir/${OSREV}/powerpc/
 	cp bsd.rd ${.OBJDIR}/cd-dir/${OSREV}/powerpc/bsd.rd
-	-rm ${.OBJDIR}/cd-dir/bsd.rd
 	ln ${.OBJDIR}/cd-dir/${OSREV}/powerpc/bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
 	cp ${DESTDIR}/usr/mdec/ofwboot ${.OBJDIR}/cd-dir/
 	mkhybrid -r -part -hfs -o ${.OBJDIR}/cd${OSrev}.fs ${.OBJDIR}/cd-dir
