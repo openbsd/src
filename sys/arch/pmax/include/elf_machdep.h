@@ -1,6 +1,9 @@
+/*	$OpenBSD: elf_machdep.h,v 1.3 2001/01/27 01:21:15 miod Exp $	*/
 /*	$NetBSD: elf_machdep.h,v 1.2 1996/12/17 03:45:05 jonathan Exp $	*/
 
 #define	ELF32_MACHDEP_ID_CASES						\
+		case Elf_em_mips:					\
+			break;
 
 /*
  * pmaxes are mipsel machines
@@ -9,8 +12,6 @@
 #define ELF32_MACHDEP_ENDIANNESS	Elf_ed_2lsb
 
 #define ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
-		case Elf_em_mips:					\
-			break;
 
 #define	ELF64_MACHDEP_ID_CASES						\
 		/* no 64-bit ELF machine types supported */
