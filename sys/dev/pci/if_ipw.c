@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.2 2004/10/27 21:10:22 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.3 2004/10/27 21:12:08 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -73,47 +73,45 @@
 #include <dev/pci/if_ipwreg.h>
 #include <dev/pci/if_ipwvar.h>
 
-static int ipw_match(struct device *, void *, void *);
-static void ipw_attach(struct device *, struct device *, void *);
-static int ipw_detach(struct device *, int);
-static int ipw_media_change(struct ifnet *);
-static int ipw_newstate(struct ieee80211com *, enum ieee80211_state, int);
-static void ipw_command_intr(struct ipw_softc *, struct ipw_soft_buf *);
-static void ipw_newstate_intr(struct ipw_softc *, struct ipw_soft_buf *);
-static void ipw_data_intr(struct ipw_softc *, struct ipw_status *,
+int ipw_match(struct device *, void *, void *);
+void ipw_attach(struct device *, struct device *, void *);
+int ipw_detach(struct device *, int);
+int ipw_media_change(struct ifnet *);
+int ipw_newstate(struct ieee80211com *, enum ieee80211_state, int);
+void ipw_command_intr(struct ipw_softc *, struct ipw_soft_buf *);
+void ipw_newstate_intr(struct ipw_softc *, struct ipw_soft_buf *);
+void ipw_data_intr(struct ipw_softc *, struct ipw_status *,
     struct ipw_soft_bd *, struct ipw_soft_buf *);
-static void ipw_notification_intr(struct ipw_softc *, struct ipw_soft_buf *);
-static void ipw_rx_intr(struct ipw_softc *);
-static void ipw_release_sbd(struct ipw_softc *, struct ipw_soft_bd *);
-static void ipw_tx_intr(struct ipw_softc *);
-static int ipw_intr(void *);
-static int ipw_cmd(struct ipw_softc *, u_int32_t, void *, u_int32_t);
-static int ipw_tx_start(struct ifnet *, struct mbuf *, struct ieee80211_node *);
-static void ipw_start(struct ifnet *);
-static void ipw_watchdog(struct ifnet *);
-static int ipw_get_table1(struct ipw_softc *, u_int32_t *);
-static int ipw_get_radio(struct ipw_softc *, int *);
-static int ipw_ioctl(struct ifnet *, u_long, caddr_t);
-static u_int32_t ipw_read_table1(struct ipw_softc *, u_int32_t);
-static void ipw_write_table1(struct ipw_softc *, u_int32_t, u_int32_t);
-static int ipw_read_table2(struct ipw_softc *, u_int32_t, void *, u_int32_t *);
-static int ipw_tx_init(struct ipw_softc *);
-static void ipw_tx_stop(struct ipw_softc *);
-static int ipw_rx_init(struct ipw_softc *);
-static void ipw_rx_stop(struct ipw_softc *);
-static void ipw_reset(struct ipw_softc *);
-static int ipw_clock_sync(struct ipw_softc *);
-static int ipw_load_ucode(struct ipw_softc *, u_char *, int);
-static int ipw_load_firmware(struct ipw_softc *, u_char *, int);
-static int ipw_firmware_init(struct ipw_softc *, u_char *);
-static int ipw_config(struct ipw_softc *);
-static int ipw_init(struct ifnet *);
-static void ipw_stop(struct ifnet *, int);
-static void ipw_read_mem_1(struct ipw_softc *, bus_size_t, u_int8_t *,
-    bus_size_t);
-static void ipw_write_mem_1(struct ipw_softc *, bus_size_t, u_int8_t *,
-    bus_size_t);
-static void ipw_zero_mem_4(struct ipw_softc *, bus_size_t, bus_size_t);
+void ipw_notification_intr(struct ipw_softc *, struct ipw_soft_buf *);
+void ipw_rx_intr(struct ipw_softc *);
+void ipw_release_sbd(struct ipw_softc *, struct ipw_soft_bd *);
+void ipw_tx_intr(struct ipw_softc *);
+int ipw_intr(void *);
+int ipw_cmd(struct ipw_softc *, u_int32_t, void *, u_int32_t);
+int ipw_tx_start(struct ifnet *, struct mbuf *, struct ieee80211_node *);
+void ipw_start(struct ifnet *);
+void ipw_watchdog(struct ifnet *);
+int ipw_get_table1(struct ipw_softc *, u_int32_t *);
+int ipw_get_radio(struct ipw_softc *, int *);
+int ipw_ioctl(struct ifnet *, u_long, caddr_t);
+u_int32_t ipw_read_table1(struct ipw_softc *, u_int32_t);
+void ipw_write_table1(struct ipw_softc *, u_int32_t, u_int32_t);
+int ipw_read_table2(struct ipw_softc *, u_int32_t, void *, u_int32_t *);
+int ipw_tx_init(struct ipw_softc *);
+void ipw_tx_stop(struct ipw_softc *);
+int ipw_rx_init(struct ipw_softc *);
+void ipw_rx_stop(struct ipw_softc *);
+void ipw_reset(struct ipw_softc *);
+int ipw_clock_sync(struct ipw_softc *);
+int ipw_load_ucode(struct ipw_softc *, u_char *, int);
+int ipw_load_firmware(struct ipw_softc *, u_char *, int);
+int ipw_firmware_init(struct ipw_softc *, u_char *);
+int ipw_config(struct ipw_softc *);
+int ipw_init(struct ifnet *);
+void ipw_stop(struct ifnet *, int);
+void ipw_read_mem_1(struct ipw_softc *, bus_size_t, u_int8_t *, bus_size_t);
+void ipw_write_mem_1(struct ipw_softc *, bus_size_t, u_int8_t *, bus_size_t);
+void ipw_zero_mem_4(struct ipw_softc *, bus_size_t, bus_size_t);
 
 static __inline u_int8_t MEM_READ_1(struct ipw_softc *sc, u_int32_t addr)
 {
@@ -140,7 +138,7 @@ struct cfattach ipw_ca = {
 	sizeof (struct ipw_softc), ipw_match, ipw_attach, ipw_detach
 };
 
-static int
+int
 ipw_match(struct device *parent, void *match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -155,7 +153,7 @@ ipw_match(struct device *parent, void *match, void *aux)
 /* Base Address Register */
 #define IPW_PCI_BAR0	0x10
 
-static void
+void
 ipw_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct ipw_softc *sc = (struct ipw_softc *)self;
@@ -266,7 +264,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 #endif
 }
 
-static int
+int
 ipw_detach(struct device* self, int flags)
 {
 	struct ipw_softc *sc = (struct ipw_softc *)self;
@@ -290,7 +288,7 @@ ipw_detach(struct device* self, int flags)
 	return 0;
 }
 
-static int
+int
 ipw_media_change(struct ifnet *ifp)
 {
 	int error;
@@ -305,7 +303,7 @@ ipw_media_change(struct ifnet *ifp)
 	return 0;
 }
 
-static int
+int
 ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 {
 	struct ipw_softc *sc = ic->ic_softc;
@@ -338,7 +336,7 @@ ipw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	return 0;
 }
 
-static void
+void
 ipw_command_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 {
 	struct ipw_cmd *cmd;
@@ -362,7 +360,7 @@ ipw_command_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 		wakeup(sc->cmd);
 }
 
-static void
+void
 ipw_newstate_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -398,7 +396,7 @@ ipw_newstate_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 	}
 }
 
-static void
+void
 ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
     struct ipw_soft_bd *sbd, struct ipw_soft_buf *sbuf)
 {
@@ -479,13 +477,13 @@ ipw_data_intr(struct ipw_softc *sc, struct ipw_status *status,
 	sbd->bd->physaddr = htole32(sbuf->map->dm_segs[0].ds_addr);
 }
 
-static void
+void
 ipw_notification_intr(struct ipw_softc *sc, struct ipw_soft_buf *sbuf)
 {
 	DPRINTFN(2, ("RX!NOTIFICATION\n"));
 }
 
-static void
+void
 ipw_rx_intr(struct ipw_softc *sc)
 {
 	struct ipw_status *status;
@@ -543,7 +541,7 @@ ipw_rx_intr(struct ipw_softc *sc)
 	CSR_WRITE_4(sc, IPW_CSR_RX_WRITE_INDEX, sc->rxcur);
 }
 
-static void
+void
 ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 {
 	struct ieee80211com *ic;
@@ -576,7 +574,7 @@ ipw_release_sbd(struct ipw_softc *sc, struct ipw_soft_bd *sbd)
 	sbd->type = IPW_SBD_TYPE_NOASSOC;
 }
 
-static void
+void
 ipw_tx_intr(struct ipw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -595,7 +593,7 @@ ipw_tx_intr(struct ipw_softc *sc)
 	(*ifp->if_start)(ifp);
 }
 
-static int
+int
 ipw_intr(void *arg)
 {
 	struct ipw_softc *sc = arg;
@@ -629,7 +627,7 @@ ipw_intr(void *arg)
 	return 0;
 }
 
-static int
+int
 ipw_cmd(struct ipw_softc *sc, u_int32_t type, void *data, u_int32_t len)
 {
 	struct ipw_soft_bd *sbd;
@@ -675,7 +673,7 @@ ipw_cmd(struct ipw_softc *sc, u_int32_t type, void *data, u_int32_t len)
 	return tsleep(sc->cmd, 0, "ipwcmd", 2 * hz);
 }
 
-static int
+int
 ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 {
 	struct ipw_softc *sc = ifp->if_softc;
@@ -816,7 +814,7 @@ ipw_tx_start(struct ifnet *ifp, struct mbuf *m, struct ieee80211_node *ni)
 	return 0;
 }
 
-static void
+void
 ipw_start(struct ifnet *ifp)
 {
 	struct ipw_softc *sc = ifp->if_softc;
@@ -855,7 +853,7 @@ ipw_start(struct ifnet *ifp)
 	}
 }
 
-static void
+void
 ipw_watchdog(struct ifnet *ifp)
 {
 	struct ipw_softc *sc = ifp->if_softc;
@@ -876,7 +874,7 @@ ipw_watchdog(struct ifnet *ifp)
 	ieee80211_watchdog(ifp);
 }
 
-static int
+int
 ipw_get_table1(struct ipw_softc *sc, u_int32_t *tbl)
 {
 	u_int32_t addr, data, size, i;
@@ -899,7 +897,7 @@ ipw_get_table1(struct ipw_softc *sc, u_int32_t *tbl)
 	return 0;
 }
 
-static int
+int
 ipw_get_radio(struct ipw_softc *sc, int *ret)
 {
 	u_int32_t addr;
@@ -925,7 +923,7 @@ ipw_get_radio(struct ipw_softc *sc, int *ret)
 	return 0;
 }
 
-static int
+int
 ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct ipw_softc *sc = ifp->if_softc;
@@ -1003,19 +1001,19 @@ ipw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	return error;
 }
 
-static u_int32_t
+u_int32_t
 ipw_read_table1(struct ipw_softc *sc, u_int32_t off)
 {
 	return MEM_READ_4(sc, MEM_READ_4(sc, sc->table1_base + off));
 }
 
-static void
+void
 ipw_write_table1(struct ipw_softc *sc, u_int32_t off, u_int32_t info)
 {
 	MEM_WRITE_4(sc, MEM_READ_4(sc, sc->table1_base + off), info);
 }
 
-static int
+int
 ipw_read_table2(struct ipw_softc *sc, u_int32_t off, void *buf, u_int32_t *len)
 {
 	u_int32_t addr, info;
@@ -1041,7 +1039,7 @@ ipw_read_table2(struct ipw_softc *sc, u_int32_t off, void *buf, u_int32_t *len)
 	return 0;
 }
 
-static int
+int
 ipw_tx_init(struct ipw_softc *sc)
 {
 	char *errmsg;
@@ -1171,7 +1169,7 @@ fail:	printf("%s: %s\n", sc->sc_dev.dv_xname, errmsg);
 	return error;
 }
 
-static void
+void
 ipw_tx_stop(struct ipw_softc *sc)
 {
 	struct ipw_soft_hdr *shdr;
@@ -1224,7 +1222,7 @@ ipw_tx_stop(struct ipw_softc *sc)
 	}
 }
 
-static int
+int
 ipw_rx_init(struct ipw_softc *sc)
 {
 	char *errmsg;
@@ -1369,7 +1367,7 @@ fail:	printf("%s: %s\n", sc->sc_dev.dv_xname, errmsg);
 	return error;
 }
 
-static void
+void
 ipw_rx_stop(struct ipw_softc *sc)
 {
 	struct ipw_soft_bd *sbd;
@@ -1420,7 +1418,7 @@ ipw_rx_stop(struct ipw_softc *sc)
 	}
 }
 
-static void
+void
 ipw_reset(struct ipw_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
@@ -1453,7 +1451,7 @@ ipw_reset(struct ipw_softc *sc)
 	ifp->if_flags &= ~IFF_UP;
 }
 
-static int
+int
 ipw_clock_sync(struct ipw_softc *sc)
 {
 	int ntries;
@@ -1482,7 +1480,7 @@ ipw_clock_sync(struct ipw_softc *sc)
 	return 0;
 }
 
-static int
+int
 ipw_load_ucode(struct ipw_softc *sc, u_char *uc, int size)
 {
 	int ntries;
@@ -1526,7 +1524,7 @@ ipw_load_ucode(struct ipw_softc *sc, u_char *uc, int size)
 /* set of macros to handle unaligned little endian data in firmware image */
 #define GETLE32(p) ((p)[0] | (p)[1] << 8 | (p)[2] << 16 | (p)[3] << 24)
 #define GETLE16(p) ((p)[0] | (p)[1] << 8)
-static int
+int
 ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 {
 	u_char *p, *end;
@@ -1551,7 +1549,7 @@ ipw_load_firmware(struct ipw_softc *sc, u_char *fw, int size)
 	return 0;
 }
 
-static int
+int
 ipw_firmware_init(struct ipw_softc *sc, u_char *data)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1680,7 +1678,7 @@ fail1:	ipw_reset(sc);
 	return error;
 }
 
-static int
+int
 ipw_config(struct ipw_softc *sc)
 {
 	struct ieee80211com *ic = &sc->sc_ic;
@@ -1877,7 +1875,7 @@ ipw_config(struct ipw_softc *sc)
 	return ipw_cmd(sc, IPW_CMD_ENABLE, NULL, 0);
 }
 
-static int
+int
 ipw_init(struct ifnet *ifp)
 {
 	struct ipw_softc *sc = ifp->if_softc;
@@ -1909,7 +1907,7 @@ fail:	ipw_stop(ifp, 0);
 	return EIO;
 }
 
-static void
+void
 ipw_stop(struct ifnet *ifp, int disable)
 {
 	struct ipw_softc *sc = ifp->if_softc;
@@ -1926,7 +1924,7 @@ ipw_stop(struct ifnet *ifp, int disable)
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
 }
 
-static void
+void
 ipw_read_mem_1(struct ipw_softc *sc, bus_size_t offset, u_int8_t *datap,
     bus_size_t count)
 {
@@ -1936,7 +1934,7 @@ ipw_read_mem_1(struct ipw_softc *sc, bus_size_t offset, u_int8_t *datap,
 	}
 }
 
-static void
+void
 ipw_write_mem_1(struct ipw_softc *sc, bus_size_t offset, u_int8_t *datap,
     bus_size_t count)
 {
@@ -1946,7 +1944,7 @@ ipw_write_mem_1(struct ipw_softc *sc, bus_size_t offset, u_int8_t *datap,
 	}
 }
 
-static void
+void
 ipw_zero_mem_4(struct ipw_softc *sc, bus_size_t offset, bus_size_t count)
 {
 	CSR_WRITE_4(sc, IPW_CSR_AUTOINC_ADDR, offset);
