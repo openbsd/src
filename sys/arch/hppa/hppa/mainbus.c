@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.43 2003/04/04 00:25:34 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.44 2003/04/07 17:01:08 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -74,8 +74,8 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
     bus_space_handle_t *bshp)
 {
 	static u_int32_t bmm[0x4000/32];
-	register u_int64_t spa, epa;
 	int bank, off, flex = HPPA_FLEX(bpa);
+	u_int64_t spa, epa;
 
 #ifdef BTLBDEBUG
 	printf("bus_mem_add_mapping(%x,%x,%scachable,%p)\n",
@@ -131,15 +131,17 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
 				}
 				spa = pa;
 			} else {
-				spa = max(spa, hppa_trunc_page(bpa));
-				epa = min(epa, hppa_round_page(bpa));
+				spa = hppa_trunc_page(bpa);
+				epa = hppa_round_page(bpa + size);
 
 				if (epa - 1 > ~0U)
 					epa = (u_int64_t)~0U + 1;
 
+#ifdef BTLBDEBUG
+				printf("kenter 0x%qx-0x%qx", spa, epa);
+#endif
 				for (; spa < epa; spa += PAGE_SIZE)
 					pmap_kenter_pa(spa, spa, UVM_PROT_RW);
-
 			}
 #ifdef BTLBDEBUG
 			printf("\n");
@@ -595,12 +597,12 @@ mbus_dmamap_create(void *v, bus_size_t size, int nsegments,
 		   bus_size_t maxsegsz, bus_size_t boundary, int flags,
 		   bus_dmamap_t *dmamp)
 {
-	register struct hppa_bus_dmamap *map;
-	register size_t mapsize;
+	struct hppa_bus_dmamap *map;
+	size_t mapsize;
 
 	mapsize = sizeof(struct hppa_bus_dmamap) +
 	    (sizeof(bus_dma_segment_t) * (nsegments - 1));
-	MALLOC(map, struct hppa_bus_dmamap *, mapsize, M_DEVBUF,
+	map = malloc(mapsize, M_DEVBUF,
 		(flags & BUS_DMA_NOWAIT) ? M_NOWAIT : M_WAITOK);
 	if (!map)
 		return (ENOMEM);
@@ -822,7 +824,11 @@ mbattach(parent, self, aux)
 	if (pdc_call((iodcio_t)pdc, 0, PDC_HPA, PDC_HPA_DFLT, &pdc_hpa) < 0)
 		panic("mbattach: PDC_HPA failed");
 
-	if (bus_space_map(&hppa_bustag, pdc_hpa.hpa, IOMOD_HPASIZE, 0, &ioh))
+	printf(" [flex %x]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
+
+	/* map all the way till the end of the memory */
+	if (bus_space_map(&hppa_bustag, pdc_hpa.hpa,
+	    (~0LU - pdc_hpa.hpa + 1), 0, &ioh))
 		panic("mbattach: cannot map mainbus IO space");
 
 	/*
@@ -832,7 +838,6 @@ mbattach(parent, self, aux)
 		(void *)((pdc_hpa.hpa & HPPA_FLEX_MASK) | DMA_ENABLE);
 
 	sc->sc_hpa = pdc_hpa.hpa;
-	printf(" [flex %x]\n", pdc_hpa.hpa & HPPA_FLEX_MASK);
 
 	/* PDC first */
 	bzero (&nca, sizeof(nca));
