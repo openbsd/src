@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.priv.h,v 1.27 2000/06/19 03:53:35 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.28 2000/07/10 03:06:10 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -35,7 +35,7 @@
 
 
 /*
- * $From: curses.priv.h,v 1.161 2000/05/27 23:10:03 tom Exp $
+ * $From: curses.priv.h,v 1.162 2000/06/24 21:06:10 tom Exp $
  *
  *	curses.priv.h
  *
@@ -312,7 +312,7 @@ struct screen {
 	int             _cuu_cost;      /* cost of (parm_cursor_up)         */
 	int             _hpa_cost;      /* cost of (column_address)         */
 	int             _vpa_cost;      /* cost of (row_address)            */
-	/* used in lib_doupdate.c, must be chars */
+	/* used in tty_update.c, must be chars */
 	int             _ed_cost;       /* cost of (clr_eos)                */
 	int             _el_cost;       /* cost of (clr_eol)                */
 	int             _el1_cost;      /* cost of (clr_bol)                */
@@ -324,6 +324,8 @@ struct screen {
 	int             _rep_cost;      /* cost of (repeat_char)            */
 	int             _hpa_ch_cost;   /* cost of (column_address)         */
 	int             _cup_ch_cost;   /* cost of (cursor_address)         */
+	int             _cuf_ch_cost;   /* cost of (parm_cursor_right)      */
+	int             _inline_cost;   /* cost of inline-move              */
 	int             _smir_cost;	/* cost of (enter_insert_mode)      */
 	int             _rmir_cost;	/* cost of (exit_insert_mode)       */
 	int             _ip_cost;       /* cost of (insert_padding)         */

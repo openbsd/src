@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mouse.c,v 1.9 2000/03/26 16:45:03 millert Exp $	*/
+/*	$OpenBSD: lib_mouse.c,v 1.10 2000/07/10 03:06:14 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -86,7 +86,7 @@
 #endif
 #endif
 
-MODULE_ID("$From: lib_mouse.c,v 1.51 2000/03/18 22:11:42 tom Exp $")
+MODULE_ID("$From: lib_mouse.c,v 1.52 2000/06/29 23:02:26 tom Exp $")
 
 #define MY_TRACE TRACE_ICALLS|TRACE_IEVENT
 
@@ -325,7 +325,7 @@ _nc_mouse_event(SCREEN * sp GCC_UNUSED)
     Gpm_Event ev;
 
     if (gpm_fd >= 0
-	&& _nc_timed_wait(2, 0, (int *) 0)
+	&& (_nc_timed_wait(3, 0, (int *) 0) & 2) != 0
 	&& Gpm_GetEvent(&ev) == 1) {
 	eventp->id = 0;		/* there's only one mouse... */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_update.c,v 1.9 2000/06/19 03:53:55 millert Exp $	*/
+/*	$OpenBSD: tty_update.c,v 1.10 2000/07/10 03:06:17 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -72,7 +72,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: tty_update.c,v 1.136 2000/05/20 23:28:00 tom Exp $")
+MODULE_ID("$From: tty_update.c,v 1.141 2000/07/04 21:01:40 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -412,14 +412,14 @@ EmitRange(const chtype * ntext, int num)
 
 	    /*
 	     * The cost expression in the middle isn't exactly right.
-	     * _cup_cost is an upper bound on the cost for moving to the
+	     * _cup_ch_cost is an upper bound on the cost for moving to the
 	     * end of the erased area, but not the cost itself (which we
 	     * can't compute without emitting the move).  This may result
 	     * in erase_chars not getting used in some situations for
 	     * which it would be marginally advantageous.
 	     */
 	    if (erase_chars
-		&& runcount > SP->_ech_cost + SP->_cup_cost
+		&& runcount > SP->_ech_cost + SP->_cup_ch_cost
 		&& can_clear_with(ntext0)) {
 		UpdateAttrs(ntext0);
 		putp(tparm(erase_chars, runcount));
@@ -477,18 +477,17 @@ PutRange(
     int first, int last)
 {
     int j, run;
-    int cost = min(SP->_cup_ch_cost, SP->_hpa_ch_cost);
 
     TR(TRACE_CHARPUT, ("PutRange(%p, %p, %d, %d, %d)",
 	    otext, ntext, row, first, last));
 
     if (otext != ntext
-	&& (last - first + 1) > cost) {
+	&& (last - first + 1) > SP->_inline_cost) {
 	for (j = first, run = 0; j <= last; j++) {
 	    if (otext[j] == ntext[j]) {
 		run++;
 	    } else {
-		if (run > cost) {
+		if (run > SP->_inline_cost) {
 		    int before_run = (j - run);
 		    EmitRange(ntext + first, before_run - first);
 		    GoTo(row, first = j);
@@ -925,53 +924,38 @@ ClrToEOS(chtype blank)
 static int
 ClrBottom(int total)
 {
-    static chtype *tstLine;
-    static size_t lenLine;
-
     int row;
-    size_t col;
+    int col;
     int top = total;
     int last = min(screen_columns, newscr->_maxx + 1);
-    size_t length = sizeof(chtype) * last;
-    chtype blank = newscr->_line[total - 1].text[last - 1];	/* lower right char */
+    chtype blank = ClrBlank(stdscr);
+    bool ok;
 
-    if (!clr_eos || !can_clear_with(blank))
-	return total;
+    if (clr_eos && can_clear_with(blank)) {
 
-    if ((tstLine == 0) || (last > (int) lenLine)) {
-	tstLine = typeRealloc(chtype, last, tstLine);
-	if (tstLine == 0)
-	    return total;
-	lenLine = last;
-	tstLine[0] = ~blank;	/* force the fill below */
-    }
-    if (tstLine[0] != blank) {
-	for (col = 0; col < lenLine; col++)
-	    tstLine[col] = blank;
-    }
+	for (row = total - 1; row >= 0; row--) {
+	    for (col = 0, ok = TRUE; ok && col < last; col++) {
+		ok = (newscr->_line[row].text[col] == blank);
+	    }
+	    if (!ok) break;
 
-    for (row = total - 1; row >= 0; row--) {
-	if (memcmp(tstLine, newscr->_line[row].text, length))
-	    break;
-	if (memcmp(tstLine, curscr->_line[row].text, length))
-	    top = row;
-    }
+	    for (col = 0; ok && col < last; col++) {
+		ok = (curscr->_line[row].text[col] == blank);
+	    }
+	    if (!ok) top = row;
+	}
 
-    /* don't use clr_eos for just one line if clr_eol available */
-    if (top < total - 1 || (top < total && !clr_eol && !clr_bol)) {
-	GoTo(top, 0);
-	ClrToEOS(blank);
-	total = top;
-	if (SP->oldhash && SP->newhash) {
-	    for (row = top; row < screen_lines; row++)
-		SP->oldhash[row] = SP->newhash[row];
+	/* don't use clr_eos for just one line if clr_eol available */
+	if (top < total - 1 || (top < total && !clr_eol && !clr_bol)) {
+	    GoTo(top, 0);
+	    ClrToEOS(blank);
+	    total = top;
+	    if (SP->oldhash && SP->newhash) {
+		for (row = top; row < screen_lines; row++)
+		    SP->oldhash[row] = SP->newhash[row];
+	    }
 	}
     }
-#if NO_LEAKS
-    if (tstLine != 0) {
-	FreeAndNull(tstLine);
-    }
-#endif
     return total;
 }
 
@@ -1007,6 +991,39 @@ TransformLine(int const lineno)
     /* copy new hash value to old one */
     if (SP->oldhash && SP->newhash)
 	SP->oldhash[lineno] = SP->newhash[lineno];
+
+#define ColorOf(n) ((n) & A_COLOR)
+#define unColor(n) ((n) & ALL_BUT_COLOR)
+    /*
+     * If we have colors, there is the possibility of having two color pairs
+     * that display as the same colors.  For instance, Lynx does this.  Check
+     * for this case, and update the old line with the new line's colors when
+     * they are equivalent.
+     */
+    if (SP->_coloron) {
+	chtype oldColor;
+	chtype newColor;
+	int oldPair;
+	int newPair;
+
+	for (n = 0; n < screen_columns; n++) {
+	    if (newLine[n] != oldLine[n]) {
+		oldColor = ColorOf(oldLine[n]);
+		newColor = ColorOf(newLine[n]);
+		if (oldColor != newColor
+		    && unColor(oldLine[n]) == unColor(newLine[n])) {
+		    oldPair = PAIR_NUMBER(oldColor);
+		    newPair = PAIR_NUMBER(newColor);
+		    if (oldPair < COLOR_PAIRS
+			&& newPair < COLOR_PAIRS
+			&& SP->_color_pairs[oldPair] == SP->_color_pairs[newPair]) {
+			oldLine[n] &= ~A_COLOR;
+			oldLine[n] |= ColorOf(newLine[n]);
+		    }
+		}
+	    }
+	}
+    }
 
     if (ceol_standout_glitch && clr_eol) {
 	firstChar = 0;
@@ -1272,18 +1289,18 @@ ClearScreen(chtype blank)
 	} else if (clr_eol) {
 	    SP->_cursrow = SP->_curscol = -1;
 
+	    UpdateAttrs(blank);
 	    for (i = 0; i < screen_lines; i++) {
 		GoTo(i, 0);
-		UpdateAttrs(blank);
 		TPUTS_TRACE("clr_eol");
 		putp(clr_eol);
 	    }
 	    GoTo(0, 0);
 	}
     } else {
+	UpdateAttrs(blank);
 	for (i = 0; i < screen_lines; i++) {
 	    GoTo(i, 0);
-	    UpdateAttrs(blank);
 	    for (j = 0; j < screen_columns; j++)
 		PutChar(blank);
 	}

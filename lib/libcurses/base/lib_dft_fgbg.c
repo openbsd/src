@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_dft_fgbg.c,v 1.5 2000/06/19 03:53:41 millert Exp $	*/
+/*	$OpenBSD: lib_dft_fgbg.c,v 1.6 2000/07/10 03:06:12 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -35,7 +35,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("$From: lib_dft_fgbg.c,v 1.11 2000/05/07 01:26:06 tom Exp $")
+MODULE_ID("$From: lib_dft_fgbg.c,v 1.13 2000/07/07 16:50:27 tom Exp $")
 
 /*
  * Modify the behavior of color-pair 0 so that the library doesn't assume that
@@ -63,7 +63,7 @@ assume_default_colors(int fg, int bg)
     if (initialize_pair)	/* don't know how to handle this */
 	returnCode(ERR);
 
-    SP->_default_color = (fg != COLOR_WHITE) || (bg != COLOR_BLACK);
+    SP->_default_color = (fg < 0 || fg == C_MASK) || (bg < 0 || bg == C_MASK);
     SP->_has_sgr_39_49 = (tigetflag("AX") == TRUE);
     SP->_default_fg = (fg >= 0) ? (fg & C_MASK) : C_MASK;
     SP->_default_bg = (bg >= 0) ? (bg & C_MASK) : C_MASK;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: curses.h,v 1.51 2000/06/19 03:53:35 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.52 2000/07/10 03:06:10 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -33,7 +33,7 @@
  *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
  ****************************************************************************/
 
-/* $From: curses.h.in,v 1.92 2000/04/29 18:52:53 tom Exp $ */
+/* $From: curses.h.in,v 1.93 2000/07/08 11:07:26 tom Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
@@ -49,12 +49,12 @@
 
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 5
-#define NCURSES_VERSION_MINOR 0
-#define NCURSES_VERSION_PATCH 20000617
+#define NCURSES_VERSION_MINOR 1
+#define NCURSES_VERSION_PATCH 20000708
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
-#define NCURSES_VERSION "5.0"
+#define NCURSES_VERSION "5.1"
 
 #ifdef NCURSES_NOMACROS
 #define NCURSES_ATTR_T attr_t
@@ -728,6 +728,8 @@ extern int tigetflag(NCURSES_CONST char *);		/* implemented */
 extern int tigetnum(NCURSES_CONST char *);		/* implemented */
 extern char *tigetstr(NCURSES_CONST char *);		/* implemented */
 extern void timeout(int);				/* generated */
+extern int touchline(WINDOW *, int, int);		/* generated */
+extern int touchwin(WINDOW *);				/* generated */
 extern char *tparm(NCURSES_CONST char *, ...);		/* implemented */
 extern int typeahead(int);				/* implemented */
 extern int ungetch(int);				/* implemented */

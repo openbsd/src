@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_mvcur.c,v 1.7 2000/06/19 03:53:53 millert Exp $	*/
+/*	$OpenBSD: lib_mvcur.c,v 1.8 2000/07/10 03:06:16 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -154,7 +154,7 @@
 #include <term.h>
 #include <ctype.h>
 
-MODULE_ID("$From: lib_mvcur.c,v 1.64 2000/05/14 01:25:28 tom Exp $")
+MODULE_ID("$From: lib_mvcur.c,v 1.67 2000/06/24 21:13:51 tom Exp $")
 
 #define STRLEN(s)       (s != 0) ? strlen(s) : 0
 
@@ -206,7 +206,8 @@ static int
 trace_cost_of(const char *capname, const char *cap, int affcnt)
 {
     int result = _nc_msec_cost(cap, affcnt);
-    TR(TRACE_CHARPUT | TRACE_MOVE, ("CostOf %s %d", capname, result));
+    TR(TRACE_CHARPUT | TRACE_MOVE,
+	("CostOf %s %d %s", capname, result, _nc_visbuf(cap)));
     return result;
 }
 #define CostOf(cap,affcnt) trace_cost_of(#cap,cap,affcnt);
@@ -215,7 +216,8 @@ static int
 trace_normalized_cost(const char *capname, const char *cap, int affcnt)
 {
     int result = normalized_cost(cap, affcnt);
-    TR(TRACE_CHARPUT | TRACE_MOVE, ("NormalizedCost %s %d", capname, result));
+    TR(TRACE_CHARPUT | TRACE_MOVE,
+	("NormalizedCost %s %d %s", capname, result, _nc_visbuf(cap)));
     return result;
 }
 #define NormalizedCost(cap,affcnt) trace_normalized_cost(#cap,cap,affcnt);
@@ -251,7 +253,10 @@ _nc_msec_cost(const char *const cap, int affcnt)
 			number += (*cp - '0') / 10.0;
 		}
 
-		cum_cost += number * 10;
+#ifdef NCURSES_NO_PADDING
+		if (!(SP->_no_padding))
+#endif
+		    cum_cost += number * 10;
 	    } else
 		cum_cost += SP->_char_padding;
 	}
@@ -397,6 +402,10 @@ _nc_mvcur_init(void)
 
     SP->_cup_ch_cost = NormalizedCost(tparm(SP->_address_cursor, 23, 23), 1);
     SP->_hpa_ch_cost = NormalizedCost(tparm(column_address, 23), 1);
+    SP->_cuf_ch_cost = NormalizedCost(tparm(parm_right_cursor, 23), 1);
+    SP->_inline_cost = min(SP->_cup_ch_cost,
+	min(SP->_hpa_ch_cost,
+	    SP->_cuf_ch_cost));
 
     /* pre-compute some capability lengths */
     SP->_carriage_return_length = STRLEN(carriage_return);

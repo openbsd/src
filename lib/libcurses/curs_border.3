@@ -1,7 +1,7 @@
-.\" $OpenBSD: curs_border.3,v 1.9 1999/01/31 20:17:05 millert Exp $
+.\" $OpenBSD: curs_border.3,v 1.10 2000/07/10 03:06:05 millert Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -28,12 +28,14 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_border.3x,v 1.11 1999/01/30 23:11:47 tom Exp $
+.\" $From: curs_border.3x,v 1.14 2000/07/01 19:54:58 tom Exp $
 .TH curs_border 3 ""
 .SH NAME
 \fBborder\fR, \fBwborder\fR, \fBbox\fR,
-\fBhline\fR, \fBwhline\fR, \fBvline\fR, \fBwvline\fR - create
-\fBcurses\fR borders, horizontal and vertical lines
+\fBhline\fR, \fBwhline\fR,
+\fBvline\fR, \fBwvline\fR,
+\fBmvhline\fR, \fBmvwhline\fR,
+\fBmvvline\fR, \fBmvwvline\fR - create \fBcurses\fR borders, horizontal and vertical lines
 .SH SYNOPSIS
 \fB#include <curses.h>\fR
 .br

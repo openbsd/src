@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_set_term.c,v 1.9 2000/06/19 03:53:46 millert Exp $	*/
+/*	$OpenBSD: lib_set_term.c,v 1.10 2000/07/10 03:06:15 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -45,7 +45,7 @@
 #include <term.h>		/* cur_term */
 #include <tic.h>
 
-MODULE_ID("$From: lib_set_term.c,v 1.52 2000/05/27 23:22:36 tom Exp $");
+MODULE_ID("$From: lib_set_term.c,v 1.55 2000/07/02 00:22:18 tom Exp $")
 
 SCREEN *
 set_term(SCREEN * screenp)
@@ -150,24 +150,48 @@ no_mouse_event(SCREEN * sp GCC_UNUSED)
 {
     return FALSE;
 }
+
 static bool
 no_mouse_inline(SCREEN * sp GCC_UNUSED)
 {
     return FALSE;
 }
+
 static bool
 no_mouse_parse(int code GCC_UNUSED)
 {
     return TRUE;
 }
+
 static void
 no_mouse_resume(SCREEN * sp GCC_UNUSED)
 {
 }
+
 static void
 no_mouse_wrap(SCREEN * sp GCC_UNUSED)
 {
 }
+
+#if defined(NCURSES_EXT_FUNCS) && defined(USE_COLORFGBG)
+static char *
+extract_fgbg(char *src, int *result)
+{
+    char *dst = 0;
+    long value = strtol(src, &dst, 0);
+
+    if (dst == 0) {
+	dst = src;
+    } else if (value >= 0) {
+	*result = value % max_colors;
+    }
+    while (*dst != 0 && *dst != ';')
+	dst++;
+    if (*dst == ';')
+	dst++;
+    return dst;
+}
+#endif
 
 int
 _nc_setupscreen(short slines, short const scolumns, FILE * output)
@@ -200,13 +224,28 @@ _nc_setupscreen(short slines, short const scolumns, FILE * output)
     SP->_cursor = -1;		/* cannot know real cursor shape */
 #ifdef NCURSES_NO_PADDING
     SP->_no_padding = getenv("NCURSES_NO_PADDING") != 0;
+    TR(TRACE_CHARPUT | TRACE_MOVE, ("padding will%s be used",
+	    SP->_no_padding ? " not" : ""));
 #endif
 #ifdef NCURSES_EXT_FUNCS
     SP->_default_color = FALSE;
     SP->_has_sgr_39_49 = FALSE;
     SP->_default_fg = COLOR_WHITE;
     SP->_default_bg = COLOR_BLACK;
+#ifdef USE_COLORFGBG
+    /*
+     * If rxvt's $COLORFGBG variable is set, use it to specify the assumed
+     * default colors.  Note that rxvt (mis)uses bold colors, equating a bold
+     * color to that value plus 8.  We'll only use the non-bold color for now -
+     * decide later if it is worth having default attributes as well.
+     */
+    if (getenv("COLORFGBG") != 0) {
+	char *p = getenv("COLORFGBG");
+	p = extract_fgbg(p, &(SP->_default_fg));
+	p = extract_fgbg(p, &(SP->_default_bg));
+    }
 #endif
+#endif /* NCURSES_EXT_FUNCS */
 
     SP->_maxclick = DEFAULT_MAXCLICK;
     SP->_mouse_event = no_mouse_event;

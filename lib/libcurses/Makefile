@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.44 2000/03/29 06:37:26 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.45 2000/07/10 03:06:03 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -58,9 +58,9 @@ MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_insstr.3 curs_instr.3 curs_kernel.3 curs_mouse.3 curs_move.3 \
 	curs_outopts.3 curs_overlay.3 curs_pad.3 curs_print.3 curs_printw.3 \
 	curs_refresh.3 curs_scanw.3 curs_scr_dump.3 curs_scroll.3 curs_slk.3 \
-	curs_termattrs.3 curs_touch.3 curs_util.3 curs_window.3 curses.3 \
-	define_key.3 dft_fgbg.3 keybound.3 keyok.3 resizeterm.3 wresize.3 \
-	termcap.3 terminfo.3 terminfo.5 term.5 term.7
+	curs_termattrs.3 curs_touch.3 curs_util.3 curs_window.3 \
+	curses.3 define_key.3 dft_fgbg.3 keybound.3 keyok.3 resizeterm.3 \
+	wresize.3 termcap.3 terminfo.3 terminfo.5 term.5 term.7
 MLINKS+=curses.3 ncurses.3
 MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_addch.3 mvwaddch.3 curs_addch.3 echochar.3 curs_addch.3 \
@@ -79,7 +79,8 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_attr.3 attr_off.3 curs_attr.3 attr_set.3 curs_attr.3 wattr_get.3 \
 	curs_attr.3 wattr_on.3 curs_attr.3 wattr_off.3 curs_attr.3 attr_set.3 \
 	curs_attr.3 wattr_set.3 curs_attr.3 chgat.3 curs_attr.3 wchgat.3 \
-	curs_attr.3 mvchgat.3 curs_attr.3 mvwchgat.3 curs_beep.3 beep.3 \
+	curs_attr.3 mvchgat.3 curs_attr.3 mvwchgat.3 curs_attr.3 PAIR_NUMBER.3 \
+	curs_beep.3 beep.3 \
 	curs_beep.3 flash.3 curs_bkgd.3 bkgdset.3 curs_bkgd.3 wbkgdset.3 \
 	curs_bkgd.3 bkgd.3 curs_bkgd.3 wbkgd.3 curs_bkgd.3 getbkgd.3 \
 	curs_border.3 border.3 curs_border.3 mvhline.3 curs_border.3 mvvline.3 \
@@ -92,6 +93,7 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_color.3 start_color.3 curs_color.3 init_pair.3 curs_color.3 \
 	init_color.3 curs_color.3 has_colors.3 curs_color.3 can_change_color.3 \
 	curs_color.3 color_content.3 curs_color.3 pair_content.3 \
+	curs_color.3 COLOR_PAIR.3 \
 	curs_delch.3 delch.3 curs_delch.3 wdelch.3 curs_delch.3 mvdelch.3 \
 	curs_delch.3 mvwdelch.3 curs_deleteln.3 deleteln.3 curs_deleteln.3 \
 	wdeleteln.3 curs_deleteln.3 insdelln.3 curs_deleteln.3 winsdelln.3 \
@@ -129,9 +131,9 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	ripoffline.3 curs_kernel.3 curs_set.3 curs_kernel.3 napms.3 \
 	curs_mouse.3 getmouse.3 curs_mouse.3 ungetmouse.3 curs_mouse.3 \
 	mousemask.3 curs_mouse.3 wenclose.3 curs_mouse.3 wmouse_trafo.3 \
-	curs_mouse.3 mouseinterval.3 curs_move.3 move.3 \
-	curs_move.3 wmove.3 curs_outopts.3 clearok.3 curs_outopts.3 idlok.3 \
-	curs_outopts.3 idcok.3 curs_outopts.3 \
+	curs_mouse.3 mouse_trafo.3 curs_mouse.3 mouseinterval.3 curs_move.3 \
+	move.3 curs_move.3 wmove.3 curs_outopts.3 clearok.3 curs_outopts.3 \
+	idlok.3 curs_outopts.3 idcok.3 curs_outopts.3 \
 	immedok.3 curs_outopts.3 leaveok.3 curs_outopts.3 setscrreg.3 \
 	curs_outopts.3 wsetscrreg.3 curs_outopts.3 scrollok.3 curs_outopts.3 \
 	nl.3 curs_outopts.3 nonl.3 curs_overlay.3 overlay.3 curs_overlay.3 \
@@ -139,7 +141,8 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	subpad.3 curs_pad.3 prefresh.3 curs_pad.3 pnoutrefresh.3 curs_pad.3 \
 	pechochar.3 curs_print.3 mcprint.3 curs_printw.3 printw.3 \
 	curs_printw.3 wprintw.3 curs_printw.3 mvprintw.3 curs_printw.3 \
-	mvwprintw.3 curs_printw.3 vwprintw.3 curs_refresh.3 refresh.3 \
+	mvwprintw.3 curs_printw.3 vwprintw.3 curs_printw.3 vw_printw.3 \
+	curs_refresh.3 refresh.3 \
 	curs_refresh.3 wrefresh.3 curs_refresh.3 wnoutrefresh.3 curs_refresh.3 \
 	doupdate.3 curs_refresh.3 redrawwin.3 curs_refresh.3 wredrawln.3 \
 	curs_scanw.3 scanw.3 curs_scanw.3 wscanw.3 curs_scanw.3 mvscanw.3 \
@@ -149,8 +152,9 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_scroll.3 wscrl.3 curs_slk.3 slk_attr.3 curs_slk.3 slk_init.3 \
 	curs_slk.3 slk_set.3 curs_slk.3 slk_refresh.3 curs_slk.3 \
 	slk_noutrefresh.3 curs_slk.3 slk_label.3 curs_slk.3 slk_clear.3 \
-	curs_slk.3 slk_restore.3 curs_slk.3 \
-	slk_touch.3 curs_slk.3 slk_attron.3 curs_slk.3 slk_attrset.3 \
+	curs_slk.3 slk_restore.3 curs_slk.3 slk_touch.3 curs_slk.3 \
+	slk_attr_on.3 curs_slk.3 slk_attr_set.3 curs_slk.3 slk_attr_off.3 \
+	curs_slk.3 slk_attron.3 curs_slk.3 slk_attrset.3 \
 	curs_slk.3 slk_attroff.3 curs_slk.3 slk_color.3 curs_termattrs.3 \
 	baudrate.3 curs_termattrs.3 erasechar.3 curs_termattrs.3 has_ic.3 \
 	curs_termattrs.3 has_il.3 curs_termattrs.3 killchar.3 curs_termattrs.3 \

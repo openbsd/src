@@ -50,7 +50,7 @@
 #include <term_entry.h>
 #include <tic.h>
 
-MODULE_ID("$From: comp_scan.c,v 1.44 2000/06/10 21:59:21 tom Exp $")
+MODULE_ID("$From: comp_scan.c,v 1.45 2000/07/08 00:43:55 tom Exp $")
 
 /*
  * Maximum length of string capability we'll accept before raising an error.
@@ -79,6 +79,10 @@ static bool first_column;	/* See 'next_char()' below */
 static char separator;		/* capability separator */
 static int pushtype;		/* type of pushback token */
 static char pushname[MAX_NAME_SIZE + 1];
+
+#ifdef NCURSES_EXT_FUNCS
+bool _nc_disable_period = FALSE; /* used by tic -a option */
+#endif
 
 static int last_char(void);
 static int next_char(void);

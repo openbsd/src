@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_newterm.c,v 1.8 2000/06/19 03:53:43 millert Exp $	*/
+/*	$OpenBSD: lib_newterm.c,v 1.9 2000/07/10 03:06:15 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -49,7 +49,7 @@
 #include <term.h>		/* clear_screen, cup & friends, cur_term */
 #include <tic.h>
 
-MODULE_ID("$From: lib_newterm.c,v 1.45 2000/05/20 23:45:57 tom Exp $");
+MODULE_ID("$From: lib_newterm.c,v 1.46 2000/07/01 22:26:22 tom Exp $")
 
 #ifndef ONLCR			/* Allows compilation under the QNX 4.2 OS */
 #define ONLCR 0

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_getch.c,v 1.5 2000/06/19 03:53:41 millert Exp $	*/
+/*	$OpenBSD: lib_getch.c,v 1.6 2000/07/10 03:06:13 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_getch.c,v 1.47 2000/05/28 01:12:51 tom Exp $")
+MODULE_ID("$From: lib_getch.c,v 1.48 2000/07/08 11:21:51 tom Exp $")
 
 #include <fifo_defs.h>
 
@@ -165,7 +165,7 @@ fifo_push(void)
 
     if ((n == -1) || (n == 0)) {
 	T(("read(%d,&ch,1)=%d, errno=%d", SP->_ifd, n, errno));
-	return ERR;
+	ch = ERR;
     }
     T(("read %d characters", n));
 

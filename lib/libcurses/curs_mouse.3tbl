@@ -1,8 +1,8 @@
 '\" t
-.\" $OpenBSD: curs_mouse.3tbl,v 1.8 1999/11/28 17:53:40 millert Exp $
+.\" $OpenBSD: curs_mouse.3tbl,v 1.9 2000/07/10 03:06:08 millert Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998,1999 Free Software Foundation, Inc.                   *
+.\" Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,12 +29,13 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.'" $From: curs_mouse.3x,v 1.13 1999/09/11 17:28:28 tom Exp $
+.'" $From: curs_mouse.3x,v 1.15 2000/07/08 12:50:08 tom Exp $
 .TH curs_mouse 3 ""
 .SH NAME
 \fBgetmouse\fR, \fBungetmouse\fR,
 \fBmousemask\fR, \fBwenclose\fR,
-\fBwmouse_trafo\fR, \fBmouseinterval\fR - mouse interface through curses
+\fBmouse_trafo\fR, \fBwmouse_trafo\fR,
+\fBmouseinterval\fR - mouse interface through curses
 .SH SYNOPSIS
 .nf
 \fB#include <curses.h>\fR
@@ -58,7 +59,11 @@ MEVENT;\fR
 .br
 \fBbool wenclose(WINDOW *win, int y, int x);\fR
 .br
-\fBbool wmouse_trafo(const WINDOW* win, int* pY, int* pX, bool to_screen);\fR
+\fBbool mouse_trafo(int* pY, int* pX, bool to_screen);\fR
+.br
+\fBbool wmouse_trafo(const WINDOW* win, int* pY, int* pX,\fR
+.br
+	\fBbool to_screen);\fR
 .br
 \fBint mouseinterval(int erval);\fR
 .br

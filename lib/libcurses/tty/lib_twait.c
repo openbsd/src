@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_twait.c,v 1.4 2000/03/10 01:35:05 millert Exp $	*/
+/*	$OpenBSD: lib_twait.c,v 1.5 2000/07/10 03:06:16 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -61,7 +61,7 @@
 # endif
 #endif
 
-MODULE_ID("$From: lib_twait.c,v 1.36 2000/02/13 01:02:34 tom Exp $")
+MODULE_ID("$From: lib_twait.c,v 1.37 2000/06/29 23:03:09 tom Exp $")
 
 static long _nc_gettime(bool first)
 {
@@ -243,7 +243,6 @@ retry:
 				if ((mode & (1 << count))
 				 && (fds[count].revents & POLLIN)) {
 					result |= (1 << count);
-					count++;
 				}
 			}
 #elif defined(__BEOS__)

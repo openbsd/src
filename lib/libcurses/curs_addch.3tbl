@@ -1,8 +1,8 @@
 '\" t 
-.\" $OpenBSD: curs_addch.3tbl,v 1.8 1999/02/11 00:09:36 millert Exp $
+.\" $OpenBSD: curs_addch.3tbl,v 1.9 2000/07/10 03:06:04 millert Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,12 +29,12 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_addch.3x,v 1.16 1999/02/07 03:47:42 tom Exp $
+.\" $From: curs_addch.3x,v 1.17 2000/07/01 19:53:01 tom Exp $
 .TH curs_addch 3 ""
 .SH NAME
 \fBaddch\fR, \fBwaddch\fR, \fBmvaddch\fR, \fBmvwaddch\fR,
-\fBechochar\fR, \fBwechochar\fR - add a character (with attributes) to a
-\fBcurses\fR window, then advance the cursor
+\fBechochar\fR,
+\fBwechochar\fR - add a character (with attributes) to a \fBcurses\fR window, then advance the cursor
 .SH SYNOPSIS
 \fB#include <curses.h>\fR
 

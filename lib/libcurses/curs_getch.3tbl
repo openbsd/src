@@ -1,8 +1,8 @@
 '\" t 
-.\" $OpenBSD: curs_getch.3tbl,v 1.8 2000/06/19 03:53:34 millert Exp $
+.\" $OpenBSD: curs_getch.3tbl,v 1.9 2000/07/10 03:06:06 millert Exp $
 .\"
 .\"***************************************************************************
-.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
 .\"                                                                          *
 .\" Permission is hereby granted, free of charge, to any person obtaining a  *
 .\" copy of this software and associated documentation files (the            *
@@ -29,12 +29,15 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_getch.3x,v 1.16 2000/05/27 22:48:05 tom Exp $
+.\" $From: curs_getch.3x,v 1.17 2000/07/01 16:45:36 tom Exp $
 .TH curs_getch 3 ""
 .SH NAME
-\fBgetch\fR, \fBwgetch\fR, \fBmvgetch\fR,
-\fBmvwgetch\fR, \fBungetch\fR - get (or push back) characters from
-\fBcurses\fR terminal keyboard
+\fBgetch\fR,
+\fBwgetch\fR,
+\fBmvgetch\fR,
+\fBmvwgetch\fR,
+\fBungetch\fR,
+\fBhas_key\fR \- get (or push back) characters from \fBcurses\fR terminal keyboard
 .SH SYNOPSIS
 \fB#include <curses.h>\fR
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_hline.c,v 1.2 2000/06/19 03:53:42 millert Exp $	*/
+/*	$OpenBSD: lib_hline.c,v 1.3 2000/07/10 03:06:14 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
@@ -42,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("$From: lib_hline.c,v 1.5 2000/04/29 21:14:30 tom Exp $")
+MODULE_ID("$From: lib_hline.c,v 1.6 2000/07/04 14:08:09 Philippe.Blain Exp $")
 
 int
 whline(WINDOW *win, chtype ch, int n)
@@ -71,6 +71,8 @@ whline(WINDOW *win, chtype ch, int n)
 	    line->text[end] = ch;
 	    end--;
 	}
+
+	_nc_synchook(win);
 	code = OK;
     }
     returnCode(code);

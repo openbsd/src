@@ -1,5 +1,5 @@
 '\" t 
-.\" $OpenBSD: curs_attr.3tbl,v 1.8 2000/03/10 01:35:01 millert Exp $
+.\" $OpenBSD: curs_attr.3tbl,v 1.9 2000/07/10 03:06:04 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998,2000 Free Software Foundation, Inc.                   *
@@ -29,13 +29,19 @@
 .\" authorization.                                                           *
 .\"***************************************************************************
 .\"
-.\" $From: curs_attr.3x,v 1.20 2000/02/27 01:46:31 tom Exp $
+.\" $From: curs_attr.3x,v 1.22 2000/07/08 11:59:58 tom Exp $
 .TH curs_attr 3 ""
 .SH NAME
 \fBattroff\fR, \fBwattroff\fR, \fBattron\fR, \fBwattron\fR,
 \fBattrset\fR, \fBwattrset\fR, \fBcolor_set\fR, \fBwcolor_set\fR,
-\fBstandend\fR, \fBwstandend\fR, \fBstandout\fR,
-\fBwstandout\fR - \fBcurses\fR character and window attribute control routines
+\fBstandend\fR, \fBwstandend\fR, \fBstandout\fR, \fBwstandout\fR,
+\fBattr_get\fR, \fBwattr_get\fR,
+\fBattr_off\fR, \fBwattr_off\fR,
+\fBattr_on\fR, \fBwattr_on\fR,
+\fBattr_set\fR, \fBwattr_set\fR,
+\fBchgat\fR, \fBwchgat\fR,
+\fBmvchgat\fR, \fBmvwchgat\fR,
+\fBPAIR_NUMBER\fR - \fBcurses\fR character and window attribute control routines
 .SH SYNOPSIS
 \fB#include <curses.h>\fR
 .br
