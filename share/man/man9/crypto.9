@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.5 2000/06/18 03:10:50 angelos Exp $
+.\"	$OpenBSD: crypto.9,v 1.6 2000/06/20 05:48:41 angelos Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -29,6 +29,8 @@
 .Fn crypto_register "u_int32_t" "int" "int (*)(u_int32_t *, struct cryptoini *)" "int (*)(u_int64_t)" "int (*)(struct cryptop *)"
 .Ft int
 .Fn crypto_unregister "u_int32_t" "int"
+.Ft void
+.Fn crypto_done "struct cryptop *"
 .Ft int
 .Fn crypto_newsession "u_int64_t *" "struct cryptoini *"
 .Ft int
@@ -200,6 +202,9 @@ buffer for the result (or for re-formatting the input).
 .It Fa crp_callback
 This routine is invoked upon completion of the request, whether
 successful or not.
+It is invoked through the
+.Fn crypto_done
+routine.
 If the request was not successful, an error code is set in the
 .Fa crp_etype
 field.
@@ -357,8 +362,9 @@ structure.
 The
 .Fn crypto_get_driverid ,
 .Fn crypto_register ,
+.Fn crypto_unregister ,
 and
-.Fn crypto_unregister
+.Fn crypto_done
 routines are used by drivers that provide support for cryptographic
 primitives to register and unregister with the kernel crypto services
 framework.
@@ -417,8 +423,11 @@ In case of error, the error indication must be placed in the
 .Fa crp_etype
 field of the
 .Fa cryptop
-structure, and the callback routine invoked as well, to perform the
-necessary cleanup or to re-issue the request.
+structure.
+When the request is completed, or an error is detected, the
+.Fn process
+routine should invoked
+.Fn crypto_done .
 Session migration may be performed, as mentioned previously.
 .Pp
 .Sh RETURN VALUES
