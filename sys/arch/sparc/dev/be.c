@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.11 1998/09/08 03:05:52 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.12 1998/09/15 22:36:20 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -78,7 +78,7 @@ void	bestart __P((struct ifnet *));
 void	bestop __P((struct besoftc *));
 void	bewatchdog __P((struct ifnet *));
 int	beioctl __P((struct ifnet *, u_long, caddr_t));
-void	bereset __P((struct besoftc *sc));
+void	bereset __P((struct besoftc *));
 
 int	beintr __P((void *));
 int	berint __P((struct besoftc *));
@@ -89,15 +89,16 @@ int	be_put __P((struct besoftc *, int, struct mbuf *));
 void	be_read __P((struct besoftc *, int, int));
 struct mbuf *	be_get __P((struct besoftc *, int, int));
 
-void	be_tcvr_idle __P((struct besoftc *sc));
-void	be_tcvr_init __P((struct besoftc *sc));
-void	be_tcvr_write __P((struct besoftc *sc, u_int8_t reg, u_int16_t val));
-void	be_tcvr_write_bit __P((struct besoftc *sc, int bit));
-int	be_tcvr_read_bit1 __P((struct besoftc *sc));
-int	be_tcvr_read_bit2 __P((struct besoftc *sc));
-int	be_tcvr_read __P((struct besoftc *sc, u_int8_t reg));
+void	be_tcvr_idle __P((struct besoftc *));
+void	be_tcvr_init __P((struct besoftc *));
+void	be_tcvr_write __P((struct besoftc *, u_int8_t, u_int16_t));
+void	be_tcvr_write_bit __P((struct besoftc *, int));
+int	be_tcvr_read_bit1 __P((struct besoftc *));
+int	be_tcvr_read_bit2 __P((struct besoftc *));
+int	be_tcvr_read __P((struct besoftc *, u_int8_t));
 void	be_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int	be_ifmedia_upd __P((struct ifnet *));
+void	be_mcreset __P((struct besoftc *));
 
 struct cfdriver be_cd = {
 	NULL, "be", DV_IFNET
@@ -662,9 +663,7 @@ beioctl(ifp, cmd, data)
 			 * Multicast list has changed; set the hardware filter
 			 * accordingly.
 			 */
-#if 0
-			mc_reset(sc);
-#endif
+			be_mcreset(sc);
 			error = 0;
 		}
 		break;
@@ -1290,4 +1289,58 @@ be_ifmedia_upd(ifp)
 	}
 
 	return (0);
+}
+
+void
+be_mcreset(sc)
+	struct besoftc *sc;
+{
+	struct arpcom *ac = &sc->sc_arpcom;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct be_bregs *br = sc->sc_br;
+
+	if (ifp->if_flags & IFF_ALLMULTI) {
+		br->htable3 = 0xffff;
+		br->htable2 = 0xffff;
+		br->htable1 = 0xffff;
+		br->htable0 = 0xffff;
+	}
+	else if (ifp->if_flags & IFF_PROMISC) {
+		br->rx_cfg |= BE_BR_RXCFG_PMISC;
+	}
+	else {
+		struct ether_multi *enm;
+		struct ether_multistep step;
+		u_int16_t hash[4];
+		u_int32_t crc = 0xffffffffU;
+
+		br->htable3 = br->htable2 = br->htable1 = br->htable0 = 0;
+		hash[3] = hash[2] = hash[1] = hash[0] = 0;
+
+		ETHER_FIRST_MULTI(step, ac, enm);
+		while (enm != NULL) {
+			int i, j;
+
+			for (i = 0; i < ETHER_ADDR_LEN; i++) {
+				u_int8_t octet = enm->enm_addrlo[i];
+
+				for (j = 0; j < 8; j++) {
+					u_int8_t bit;
+
+					bit = (octet << j) & 1;
+					crc >>= 1;
+					if ((bit ^ crc) & 1)
+						crc = crc ^ MC_POLY_LE;
+				}
+			}
+			crc >>= 26;
+			hash[crc >> 4] |= 1 << (crc & 0x0f);
+			ETHER_NEXT_MULTI(step, enm);
+		}
+		br->htable0 = hash[0];
+		br->htable1 = hash[1];
+		br->htable2 = hash[2];
+		br->htable3 = hash[3];
+
+	}
 }

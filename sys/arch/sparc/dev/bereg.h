@@ -1,4 +1,4 @@
-/*	$OpenBSD: bereg.h,v 1.6 1998/09/04 05:59:19 jason Exp $	*/
+/*	$OpenBSD: bereg.h,v 1.7 1998/09/15 22:36:21 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -260,6 +260,9 @@ struct be_bufs {
 	char	rx_buf[BE_RX_RING_SIZE][BE_PKT_BUF_SZ];
 	char	tx_buf[BE_TX_RING_SIZE][BE_PKT_BUF_SZ];
 };
+
+#define	MC_POLY_BE		0x04c11db7UL	/* mcast crc, big endian */
+#define	MC_POLY_LE		0xedb88320UL	/* mcast crc, little endian */
 
 /* PHY addresses */
 #define BE_PHY_EXTERNAL		0
