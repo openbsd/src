@@ -39,6 +39,13 @@
 #define _DIRENT_H_
 
 /*
+ * POSIX doesn't mandate this, but X/Open XPG 4.2 does.
+ */
+#ifndef _POSIX_SOURCE
+#include <sys/types.h>
+#endif
+
+/*
  * The kernel defines the format of directory entries returned by 
  * the getdirentries(2) system call.
  */
