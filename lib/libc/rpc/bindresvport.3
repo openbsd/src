@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bindresvport.3,v 1.6 1997/07/01 17:42:03 dm Exp $
+.\"	$OpenBSD: bindresvport.3,v 1.7 1997/08/09 23:20:51 millert Exp $
 .\"
 .Dd November 22, 1987
 .Dt BINDRESVPORT 3
@@ -15,17 +15,55 @@
 .Fn bindresvport
 is used to bind a socket descriptor to a privileged
 .Tn IP
-port, that is, a
-port number in the range 0-1023.
-The routine returns 0 if it is successful,
-otherwise -1 is returned and
-.Va errno
-set to reflect the cause of the error.
+port, that is, a port number in the range 0-1023.
+.Fa sd
+is a socket descriptor that was returned by a call to
+.Xr socket 2 .
 .Pp
 Only root can bind to a privileged port; this call will fail for any
 other users.
 .Pp
-If the value of sin->sin_port is non-zero
+If the value of sin->sin_port is non-zero,
 .Fn bindresvport
-otherwise it attempts to use the specified port.  If that fails, it
+attempts to use the specified port.  If that fails, it
 chooses another privileged port number automatically.
+.Sh RETURN VALUES
+.Fn bindresvport
+returns 0 if it is successful, otherwise -1 is returned and
+.Va errno                                                                      
+set to reflect the cause of the error.
+.Sh ERRORS
+The
+.Fn bindresvport
+function fails if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa sd
+is not a valid descriptor.
+.It Bq Er ENOTSOCK
+.Fa sd
+is not a socket.
+.It Bq Er EADDRNOTAVAIL
+The specified address is not available from the local machine.
+.It Bq Er EADDRINUSE
+The specified address is already in use.
+.It Bq Er EINVAL
+The socket is already bound to an address.
+.It Bq Er EACCES
+The requested address is protected, and the current user
+has inadequate permission to access it.
+.It Bq Er EFAULT
+The
+.Fa name
+parameter is not in a valid part of the user
+address space.
+.It Bq Er ENOBUFS
+Insufficient resources were available in the system
+to perform the operation.
+.It Bq Er EPFNOSUPPORT
+The protocol family has not been configured into the
+system or no implementation for it exists.
+.El
+.Sh SEE ALSO
+.Xr bind 2 ,
+.Xr socket 2
