@@ -1,4 +1,4 @@
-/*	$OpenBSD: portmap.c,v 1.29 2003/06/26 19:47:09 deraadt Exp $	*/
+/*	$OpenBSD: portmap.c,v 1.30 2003/08/25 04:56:42 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 Theo de Raadt (OpenBSD). All rights reserved.
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)portmap.c	5.4 (Berkeley) 4/19/91";
 #else
-static char rcsid[] = "$OpenBSD: portmap.c,v 1.29 2003/06/26 19:47:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: portmap.c,v 1.30 2003/08/25 04:56:42 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -101,7 +101,7 @@ static char sccsid[] = "@(#)portmap.c 1.32 87/08/06 Copyr 1984 Sun Micro";
 #include <arpa/inet.h>
 
 void reg_service(struct svc_req *, SVCXPRT *);
-void reap(void);
+void reap(int);
 void callit(struct svc_req *, SVCXPRT *);
 int check_callit(struct sockaddr_in *, u_long, u_long, u_long);
 
@@ -652,7 +652,7 @@ callit(struct svc_req *rqstp, SVCXPRT *xprt)
 }
 
 void
-reap()
+reap(int signo)
 {
 	int save_errno = errno;
 
