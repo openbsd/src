@@ -986,3 +986,5 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/pmax
 ./usr/share/info/dc.info
+./usr/share/man/cat4/mtio.0
+./usr/share/man/cat8/uucpd.0
