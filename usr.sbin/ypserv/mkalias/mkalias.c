@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkalias.c,v 1.4 1998/03/12 08:22:28 deraadt Exp $ */
+/*	$OpenBSD: mkalias.c,v 1.5 1998/07/09 06:33:04 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: mkalias.c,v 1.4 1998/03/12 08:22:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkalias.c,v 1.5 1998/07/09 06:33:04 deraadt Exp $";
 #endif
 
 #include <ctype.h>
@@ -340,7 +340,7 @@ fail:
 	}
 
 	if (new_db != NULL) {
-	  	gethostname(myname, sizeof(myname) - 1);
+	  	gethostname(myname, sizeof(myname));
 		key.dptr = YP_MASTER_KEY;
 		key.dsize = strlen(YP_MASTER_KEY);
 		val.dptr = myname;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: makedbm.c,v 1.10 1998/03/12 08:22:27 deraadt Exp $ */
+/*	$OpenBSD: makedbm.c,v 1.11 1998/07/09 06:33:03 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994-97 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: makedbm.c,v 1.10 1998/03/12 08:22:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: makedbm.c,v 1.11 1998/07/09 06:33:03 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -303,7 +303,7 @@ fail:
 	if (yp_master_name) {
 		add_record(new_db, YP_MASTER_KEY, yp_master_name, FALSE);
 	} else {
-		gethostname(myname, sizeof(myname) - 1);
+		gethostname(myname, sizeof(myname));
 		add_record(new_db, YP_MASTER_KEY, myname, FALSE);
 	}
 	
