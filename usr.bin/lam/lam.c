@@ -1,4 +1,4 @@
-/*	$OpenBSD: lam.c,v 1.6 2003/04/06 02:40:21 krw Exp $	*/
+/*	$OpenBSD: lam.c,v 1.7 2003/04/21 00:42:49 millert Exp $	*/
 /*	$NetBSD: lam.c,v 1.2 1994/11/14 20:27:42 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lam.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: lam.c,v 1.6 2003/04/06 02:40:21 krw Exp $";
+static char rcsid[] = "$OpenBSD: lam.c,v 1.7 2003/04/21 00:42:49 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -178,14 +178,14 @@ char *
 pad(ip)
 	struct openfile *ip;
 {
-	char *p = ip->sepstring;
+	size_t n;
 	char *lp = linep;
 
-	while (*p)
-		*lp++ = *p++;
+	n = strlcpy(lp, ip->sepstring,  line + sizeof(line) - lp);
+	lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
 	if (ip->pad) {
-		sprintf(lp, ip->format, "");
-		lp += strlen(lp);
+		n = snprintf(lp, line + sizeof(line) - lp, ip->format, "");
+		lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
 	}
 	return (lp);
 }
@@ -194,11 +194,12 @@ char *
 gatherline(ip)
 	struct openfile *ip;
 {
+	size_t n;
 	char s[BUFSIZ];
-	int c;
 	char *p;
 	char *lp = linep;
 	char *end = s + BUFSIZ;
+	int c;
 
 	if (ip->eof)
 		return (pad(ip));
@@ -213,11 +214,10 @@ gatherline(ip)
 		morefiles--;
 		return (pad(ip));
 	}
-	p = ip->sepstring;
-	while (*p)
-		*lp++ = *p++;
-	sprintf(lp, ip->format, s);
-	lp += strlen(lp);
+	n = strlcpy(lp, ip->sepstring, line + sizeof(line) - lp);
+	lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
+	n = snprintf(lp, line + sizeof line - lp, ip->format, s);
+	lp += (n < line + sizeof(line) - lp) ? n : strlen(lp);
 	return (lp);
 }
 
