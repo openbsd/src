@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.734 2004/05/12 05:58:28 grange Exp 
+ *	OpenBSD: pcidevs,v 1.735 2004/05/14 16:35:59 henning Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2182,6 +2182,7 @@
 
 /* Syba */
 #define	PCI_PRODUCT_SYBA_4S2P	0x0781		/* 4S2P */
+#define	PCI_PRODUCT_SYBA_4S	0x0786		/* 4S */
 
 /* Symbol */
 #define	PCI_PRODUCT_SYMBOL_LA41X3	0x0001		/* Spectrum24 LA41X3 Series WLAN */

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.734 2004/05/12 05:58:28 grange Exp 
+ *	OpenBSD: pcidevs,v 1.735 2004/05/14 16:35:59 henning Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -6249,6 +6249,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SYBA, PCI_PRODUCT_SYBA_4S2P,
 	    "4S2P",
+	},
+	{
+	    PCI_VENDOR_SYBA, PCI_PRODUCT_SYBA_4S,
+	    "4S",
 	},
 	{
 	    PCI_VENDOR_SYMBOL, PCI_PRODUCT_SYMBOL_LA41X3,
