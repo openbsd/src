@@ -1,0 +1,57 @@
+#
+#	SUMMER - specific config(8) file for summer
+#
+
+machine		pmax
+
+option		CPU_R3000
+option		MIPS1
+option		DS5000_200
+option		HZ=256
+option		NKMEMCLUSTERS=1024
+option		TIMEZONE=0
+option		DST=0
+
+maxusers	64
+
+option		SWAPPAGER
+option		VNODEPAGER
+option		DEVPAGER
+
+option		COMPAT_43
+option		NATIVE_ELF
+option		FFS
+option		FIFO
+option		INET
+option		NFSCLIENT
+option		NFSSERVER
+option		KTRACE
+
+config		bsd	root on rz2a swap on rz2b dumps on rz2b
+
+mainbus0	at root
+cpu*		at mainbus0
+clock0		at mainbus0
+dc0		at mainbus0
+pm0		at mainbus0
+tc*		at mainbus0
+le0		at tc?
+cfb0		at tc?
+ioasic0		at tc?
+dc0		at ioasic?
+asc0		at tc?
+oldscsibus*	at asc?
+rz0		at oldscsibus? target ? drive ?
+rz1		at oldscsibus? target ? drive ?
+rz2		at oldscsibus? target ? drive ?
+rz3		at oldscsibus? target ? drive ?
+rz4		at oldscsibus? target ? drive ?
+rz5		at oldscsibus? target ? drive ?
+tz0		at oldscsibus? target ? drive ?
+
+pseudo-device	loop
+pseudo-device	fb		1
+pseudo-device	rasterconsole	1
+pseudo-device	sl		1
+pseudo-device	bpfilter	8
+pseudo-device	pty		32
