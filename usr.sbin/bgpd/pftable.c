@@ -1,4 +1,4 @@
-/*	$OpenBSD: pftable.c,v 1.2 2004/05/08 19:17:20 henning Exp $ */
+/*	$OpenBSD: pftable.c,v 1.3 2004/09/14 23:08:44 henning Exp $ */
 
 /*
  * Copyright (c) 2004 Damien Miller <djm@openbsd.org>
@@ -76,7 +76,7 @@ pftable_change(struct pf_table *pft)
 	if (ret == -1) {
 		if (errno == EINVAL)
 			return (0);
-		log_warn("%s ioctl %s", __func__, strerror(errno));
+		log_warn("pftable_change ioctl %s", strerror(errno));
 	}
 
 	return (ret);
@@ -95,7 +95,7 @@ pftable_clear(const char *name)
 	    sizeof(tio.pfrio_table.pfrt_name));
 
 	if (ioctl(devpf, DIOCRCLRADDRS, &tio) != 0) {
-		log_warn("%s ioctl %s", __func__, strerror(errno));
+		log_warn("pftable_clear ioctl %s", strerror(errno));
 		return (-1);
 	}
 
@@ -200,7 +200,7 @@ pftable_add_work(const char *table, struct bgpd_addr *addr,
 	tmp = realloc(pft->worklist, sizeof(*tmp) * pft->nalloc);
 	if (tmp == NULL) {
 		if (pft->worklist != NULL) {
-			log_warn("%s: malloc", __func__);
+			log_warn("pftable_add_work: malloc");
 			free(pft->worklist);
 			pft->worklist = NULL;
 		}
