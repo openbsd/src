@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcreg.h,v 1.2 1999/11/17 01:22:56 csapuntz Exp $     */
+/*      $OpenBSD: wdcreg.h,v 1.3 2001/03/23 02:16:41 deraadt Exp $     */
 /*	$NetBSD: wdcreg.h,v 1.22 1999/03/07 14:02:54 bouyer Exp $	*/
 
 /*-
@@ -113,22 +113,39 @@
 #define WDCC_CHECK_PWR	0xe5	/* check power mode */
 
 /* Subcommands for SET_FEATURES (features register ) */
+#define WDSF_8BIT_PIO_EN	0x01 /* Enable 8bit PIO (CFA featureset) */
 #define WDSF_EN_WR_CACHE	0x02
 #define WDSF_SET_MODE    	0x03
-#define WDSF_REASSIGN_EN	0x04
-#define WDSF_RETRY_DS		0x33
-#define WDSF_SET_CACHE_SGMT	0x54
-#define WDSF_READAHEAD_DS	0x55
+#define WDSF_REASSIGN_EN	0x04 /* Obsolete in ATA-6 */
+#define WDSF_APM_EN		0x05 /* Enable Adv. Power Management */
+#define WDSF_PUIS_EN		0x06 /* Enable Power-Up In Standby */
+#define WDSF_PUIS_SPINUP	0x07 /* Power-Up In Standby spin-up */
+#define WDSF_CFA_MODE1_EN	0x0A /* Enable CFA power mode 1 */
+#define WDSF_RMSN_DS		0x31 /* Disable Removable Media Status */
+#define WDSF_RETRY_DS		0x33 /* Obsolete in ATA-6 */
+#define WDSF_AAM_EN		0x42 /* Enable Autom. Acoustic Management */
+#define WDSF_SET_CACHE_SGMT	0x54 /* Obsolete in ATA-6 */
+#define WDSF_READAHEAD_DS	0x55 /* Disable read look-ahead */
+#define WDSF_RLSE_EN		0x5D /* Enable release interrupt */
+#define WDSF_SRV_EN		0x5E /* Enable SERVICE interrupt */
 #define WDSF_POD_DS		0x66
 #define WDSF_ECC_DS		0x77
+#define WDSF_8BIT_PIO_DS	0x81 /* Disable 8bit PIO (CFA featureset) */
 #define WDSF_WRITE_CACHE_DS	0x82
 #define WDSF_REASSIGN_DS	0x84
+#define WDSF_APM_DS		0x85 /* Disable Adv. Power Management */
+#define WDSF_PUIS_DS		0x86 /* Disable Power-Up In Standby */
 #define WDSF_ECC_EN		0x88
-#define WDSF_RETRY_EN		0x99
-#define WDSF_SET_CURRENT	0x9A
+#define WDSF_CFA_MODE1_DS	0x8A /* Disable CFA power mode 1 */
+#define WDSF_RMSN_EN		0x95 /* Enable Removable Media Status */
+#define WDSF_RETRY_EN		0x99 /* Obsolete in ATA-6 */
+#define WDSF_SET_CURRENT	0x9A /* Obsolete in ATA-6 */
 #define WDSF_READAHEAD_EN	0xAA
-#define WDSF_PREFETCH_SET	0xAB
+#define WDSF_PREFETCH_SET	0xAB /* Obsolete in ATA-6 */
+#define WDSF_AAM_DS		0xC2 /* Disable Autom. Acoustic Management */
 #define WDSF_POD_EN             0xCC
+#define WDSF_RLSE_DS		0xDD /* Disable release interrupt */
+#define WDSF_SRV_DS		0xDE /* Disable SERVICE interrupt */
 
 /* parameters uploaded to device/heads register */
 #define	WDSD_IBM	0xa0	/* forced to 512 byte sector, ecc */
@@ -145,6 +162,22 @@
 #define ATAPI_SOFT_RESET	0x08
 #define ATAPI_SLEEP		0xe6
 #define ATAPI_STANDBY_IMMEDIATE	0xe0
+#define ATAPI_SMART		0xB0 /* SMART operations */
+#define ATAPI_SETMAX		0xF9 /* Set Max Address */
+#define ATAPI_WRITEEXT		0x34 /* Write sectors Ext */
+#define ATAPI_SETMAXEXT		0x37 /* Set Max Address Ext */
+#define ATAPI_WRITEMULTIEXT	0x39 /* Write Multi Ext */
+
+/* SubCommands for SMART operations */
+#define ATAPI_SMART_READ	0xD0 /* SMART read data */
+#define ATAPI_SMART_AUTOSAVE	0xD2 /* SMART en-/disable attr. autosave */
+#define ATAPI_SMART_SAVE	0xD3 /* SMART save attributes */
+#define ATAPI_SMART_OFFLINE	0xD4 /* SMART execute offline immediately */
+#define ATAPI_SMART_READLOG	0xD5 /* SMART read log */
+#define ATAPI_SMART_WRITELOG	0xD6 /* SMART write log */
+#define ATAPI_SMART_DS		0xD9 /* SMART disable operations */
+#define ATAPI_SMART_EN		0xD8 /* SMART disable operations */
+#define ATAPI_SMART_STATUS	0xDA /* SMART return status */
 
 /* Bytes used by ATAPI_PACKET_COMMAND ( feature register) */
 #define ATAPI_PKT_CMD_FTRE_DMA 0x01

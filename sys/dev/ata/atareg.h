@@ -1,4 +1,4 @@
-/*	$OpenBSD: atareg.h,v 1.2 1999/09/05 21:45:22 niklas Exp $	*/
+/*	$OpenBSD: atareg.h,v 1.3 2001/03/23 02:16:41 deraadt Exp $	*/
 /*	$NetBSD: atareg.h,v 1.5 1999/01/18 20:06:24 bouyer Exp $	*/
 
 /*
@@ -109,6 +109,15 @@ struct ataparams {
 #define	WDC_VER_ATA3	0x0008
 #define	WDC_VER_ATA4	0x0010
 #define	WDC_VER_ATA5	0x0020
+#define	WDC_VER_ATA6	0x0040
+#define	WDC_VER_ATA7	0x0080
+#define	WDC_VER_ATA8	0x0100
+#define	WDC_VER_ATA9	0x0200
+#define	WDC_VER_ATA10	0x0400
+#define	WDC_VER_ATA11	0x0800
+#define	WDC_VER_ATA12	0x1000
+#define	WDC_VER_ATA13	0x2000
+#define	WDC_VER_ATA14	0x4000
     u_int16_t   atap_ata_minor;  	/* 81: Minor version number */
     u_int16_t	atap_cmd_set1;    	/* 82: command set suported */
 #define WDC_CMD1_NOP	0x4000
@@ -126,17 +135,29 @@ struct ataparams {
 #define WDC_CMD1_SEC	0x0002
 #define WDC_CMD1_SMART	0x0001
     u_int16_t	atap_cmd_set2;    	/* 83: command set suported */
+#define ATAPI_CMD2_FCE	0x2000 /* Flush Cache Ext supported */
+#define ATAPI_CMD2_FC	0x1000 /* Flush Cache supported */
+#define ATAPI_CMD2_DCO	0x0800 /* Device Configuration Overlay supported */
+#define ATAPI_CMD2_48AD	0x0400 /* 48bit address supported */
+#define ATAPI_CMD2_AAM	0x0200 /* Automatic Acoustic Management supported */
+#define ATAPI_CMD2_SM	0x0100 /* Set Max security extension supported */
+#define ATAPI_CMD2_SF	0x0040 /* Set Features subcommand required */
+#define ATAPI_CMD2_PUIS	0x0020 /* Power up in standby supported */
 #define WDC_CMD2_RMSN	0x0010
-#define WDC_CMD2_DM	0x0001
 #define ATA_CMD2_APM	0x0008
 #define ATA_CMD2_CFA	0x0004
 #define ATA_CMD2_RWQ	0x0002
+#define WDC_CMD2_DM	0x0001 /* Download Microcode supported */
     u_int16_t	atap_cmd_ext;		/* 84: command/features supp. ext. */
+#define ATAPI_CMDE_MSER	0x0004 /* Media serial number supported */
+#define ATAPI_CMDE_TEST	0x0002 /* SMART self-test supported */
+#define ATAPI_CMDE_SLOG	0x0001 /* SMART error logging supported */
     u_int16_t	atap_cmd1_en;		/* 85: cmd/features enabled */
 /* bits are the same as atap_cmd_set1 */
     u_int16_t	atap_cmd2_en;		/* 86: cmd/features enabled */
 /* bits are the same as atap_cmd_set2 */
     u_int16_t	atap_cmd_def;		/* 87: cmd/features default */
+/* bits are NOT the same as atap_cmd_ext */
 #if BYTE_ORDER == LITTLE_ENDIAN
     u_int8_t	atap_udmamode_supp; 	/* 88: Ultra-DMA mode supported */
     u_int8_t	atap_udmamode_act; 	/*     Ultra-DMA mode active */
@@ -148,7 +169,28 @@ struct ataparams {
     u_int16_t	atap_seu_time;		/* 89: Sec. Erase Unit compl. time */
     u_int16_t	atap_eseu_time;		/* 90: Enhanced SEU compl. time */
     u_int16_t	atap_apm_val;		/* 91: current APM value */
-    u_int16_t	__reserved6[35];	/* 92-126: reserved */
+    u_int16_t	atap_mpasswd_rev;	/* 92: Master Password revision */
+    u_int16_t	atap_hwreset_res;	/* 93: Hardware reset value */
+#define ATA_HWRES_CBLID    0x2000  /* CBLID above Vih */
+#define ATA_HWRES_D1_PDIAG 0x0800  /* Device 1 PDIAG detect OK */
+#define ATA_HWRES_D1_CSEL  0x0400  /* Device 1 used CSEL for address */
+#define ATA_HWRES_D1_JUMP  0x0200  /* Device 1 jumpered to address */
+#define ATA_HWRES_D0_SEL   0x0040  /* Device 0 responds when Dev 1 selected */
+#define ATA_HWRES_D0_DASP  0x0020  /* Device 0 DASP detect OK */
+#define ATA_HWRES_D0_PDIAG 0x0010  /* Device 0 PDIAG detect OK */
+#define ATA_HWRES_D0_DIAG  0x0008  /* Device 0 diag OK */
+#define ATA_HWRES_D0_CSEL  0x0004  /* Device 0 used CSEL for address */
+#define ATA_HWRES_D0_JUMP  0x0002  /* Device 0 jumpered to address */
+#if BYTE_ORDER == LITTLE_ENDIAN
+    u_int8_t	atap_acoustic_val; 	/* 94: Current acoustic level */
+    u_int8_t	atap_acoustic_def; 	/*     recommended level */
+#else
+    u_int8_t	atap_acoustic_def; 	/*     recommended level */
+    u_int8_t	atap_acoustic_val; 	/* 94: Current acoustic level */
+#endif
+    u_int16_t	__reserved6[5];		/* 95-99: reserved */
+    u_int16_t	atap_max_lba[4];	/* 100-103: Max. user LBA add */
+    u_int16_t	__reserved7[23];	/* 104-126: reserved */
     u_int16_t	atap_rmsn_supp;		/* 127: remov. media status notif. */
 #define WDC_RMSN_SUPP_MASK 0x0003
 #define WDC_RMSN_SUPP 0x0001
@@ -160,4 +202,20 @@ struct ataparams {
 #define WDC_SEC_LOCKED	0x0004
 #define WDC_SEC_EN	0x0002
 #define WDC_SEC_SUPP	0x0001
+    u_int16_t	__reserved8[31];	/* 129-159: vendor specific */
+    u_int16_t	atap_cfa_power;		/* 160: CFA powermode */
+#define	ATAPI_CFA_MAX_MASK 0x0FFF
+#define ATAPI_CFA_MODE1_DIS 0x1000 /* CFA Mode 1 Disabled */
+#define ATAPI_CFA_MODE1_REQ 0x2000 /* CFA Mode 1 Required */
+#define ATAPI_CFA_WORD160   0x8000 /* Word 160 supported */
+    u_int16_t	__reserved9[31];	/* 161-175: reserved for CFA */
+    u_int8_t	atap_media_serial[60];	/* 176-205: media serial number */
+    u_int16_t	__reserved10[49];	/* 206-254: reserved */
+#if BYTE_ORDER == LITTLE_ENDIAN
+    u_int8_t	atap_signature; 	/* 255: Signature */
+    u_int8_t	atap_checksum; 		/*      Checksum */
+#else
+    u_int8_t	atap_checksum; 		/*      Checksum */
+    u_int8_t	atap_signature; 	/* 255: Signature */
+#endif
 };

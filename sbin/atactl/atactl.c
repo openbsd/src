@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.5 2000/07/13 15:12:34 deraadt Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.6 2001/03/23 02:16:42 deraadt Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -82,15 +82,35 @@ void	device_identify __P((int, char *[]));
 void	device_setidle __P((int, char *[]));
 void	device_idle __P((int, char *[]));
 void	device_checkpower __P((int, char *[]));
+void	device_acoustic __P((int, char *[]));
+void	device_apm __P((int, char *[]));
+void	device_feature __P((int, char *[]));
+void	device_smart __P((int, char *[]));
 
 struct command commands[] = {
-	{ "identify",	device_identify },
-	{ "setidle",	device_setidle },
-	{ "setstandby",	device_setidle },
-	{ "idle",	device_idle },
-	{ "standby",	device_idle },
-	{ "sleep",	device_idle },
-	{ "checkpower",	device_checkpower },
+	{ "identify",		device_identify },
+	{ "setidle",		device_setidle },
+	{ "setstandby",		device_setidle },
+	{ "idle",		device_idle },
+	{ "standby",		device_idle },
+	{ "sleep",		device_idle },
+	{ "checkpower",		device_checkpower },
+	{ "acousticdisable",	device_feature },
+	{ "acousticset",	device_acoustic },
+	{ "apmdisable",		device_feature },
+	{ "apmset",		device_apm },
+	{ "poddisable",		device_feature },
+	{ "podenable",		device_feature },
+	{ "puisdisable",	device_feature },
+	{ "puisenable",		device_feature },
+	{ "puisspinup",		device_feature },
+	{ "readaheaddisable",	device_feature },
+	{ "readaheadenable",	device_feature },
+	{ "smartenable", 	device_smart },
+	{ "smartdisable", 	device_smart },
+	{ "smartstatus", 	device_smart },
+	{ "writecachedisable",	device_feature },
+	{ "writecacheenable",	device_feature },
 	{ NULL,		NULL },
 };
 
@@ -107,10 +127,20 @@ struct bitinfo ata_caps[] = {
 };
 
 struct bitinfo ata_vers[] = {
-	{ WDC_VER_ATA1,	"ATA-1" },
-	{ WDC_VER_ATA2,	"ATA-2" },
-	{ WDC_VER_ATA3,	"ATA-3" },
-	{ WDC_VER_ATA4,	"ATA-4" },
+	{ WDC_VER_ATA1,	 "ATA-1" },
+	{ WDC_VER_ATA2,	 "ATA-2" },
+	{ WDC_VER_ATA3,	 "ATA-3" },
+	{ WDC_VER_ATA4,	 "ATA-4" },
+	{ WDC_VER_ATA5,	 "ATA-5" },
+	{ WDC_VER_ATA6,	 "ATA-6" },
+	{ WDC_VER_ATA7,	 "ATA-7" },
+	{ WDC_VER_ATA8,	 "ATA-8" },
+	{ WDC_VER_ATA9,	 "ATA-9" },
+	{ WDC_VER_ATA10, "ATA-10" },
+	{ WDC_VER_ATA11, "ATA-11" },
+	{ WDC_VER_ATA12, "ATA-12" },
+	{ WDC_VER_ATA13, "ATA-13" },
+	{ WDC_VER_ATA14, "ATA-14" },
 	{ NULL, NULL },
 };
 
@@ -122,7 +152,7 @@ struct bitinfo ata_cmd_set1[] = {
 	{ WDC_CMD1_DVRST, "DEVICE RESET command" },
 	{ WDC_CMD1_SRV, "SERVICE interrupt" },
 	{ WDC_CMD1_RLSE, "release interrupt" },
-	{ WDC_CMD1_AHEAD, "look-ahead" },
+	{ WDC_CMD1_AHEAD, "read look-ahead" },
 	{ WDC_CMD1_CACHE, "write cache" },
 	{ WDC_CMD1_PKT, "PACKET command feature set" },
 	{ WDC_CMD1_PM, "Power Management feature set" },
@@ -133,11 +163,26 @@ struct bitinfo ata_cmd_set1[] = {
 };
 
 struct bitinfo ata_cmd_set2[] = {
+	{ ATAPI_CMD2_FCE, "Flush Cache Ext command" },
+	{ ATAPI_CMD2_FC, "Flush Cache command" },
+	{ ATAPI_CMD2_DCO, "Device Configuration Overlay feature set" },
+	{ ATAPI_CMD2_48AD, "48bit address feature set" },
+	{ ATAPI_CMD2_AAM, "Automatic Acoustic Management feature set" },
+	{ ATAPI_CMD2_SM, "Set Max security extension commands" },
+	{ ATAPI_CMD2_SF, "Set Features subcommand required" },
+	{ ATAPI_CMD2_PUIS, "Power-up in standby feature set" },
 	{ WDC_CMD2_RMSN, "Removable Media Status Notification feature set" },
 	{ ATA_CMD2_APM, "Advanced Power Management feature set" },
 	{ ATA_CMD2_CFA, "CFA feature set" },
 	{ ATA_CMD2_RWQ, "READ/WRITE DMA QUEUED commands" },
 	{ WDC_CMD2_DM, "DOWNLOAD MICROCODE command" },
+	{ NULL, NULL },
+};
+
+struct bitinfo ata_cmd_ext[] = {
+	{ ATAPI_CMDE_MSER, "Media serial number" },
+	{ ATAPI_CMDE_TEST, "SMART self-test" },
+	{ ATAPI_CMDE_SLOG, "SMART error logging" },
 	{ NULL, NULL },
 };
 
@@ -237,14 +282,14 @@ ata_command(req)
 	case ATACMD_ERROR:
 		if (req->error & WDCE_ABRT)
 			fprintf(stderr, "ATA device returned Aborted "
-				"Command\n");
+			    "Command\n");
 		else
 			fprintf(stderr, "ATA device returned error register "
-				"%0x\n", req->error);
+			    "%0x\n", req->error);
 		exit(1);
 	default:
 		fprintf(stderr, "ATAIOCCOMMAND returned unknown result code "
-			"%d\n", req->retsts);
+		    "%d\n", req->retsts);
 		exit(1);
 	}
 }
@@ -355,9 +400,9 @@ device_identify(argc, argv)
 	}
 
 	printf("Model: %.*s, Rev: %.*s, Serial #: %.*s\n",
-	       (int) sizeof(inqbuf->atap_model), inqbuf->atap_model,
-	       (int) sizeof(inqbuf->atap_revision), inqbuf->atap_revision,
-	       (int) sizeof(inqbuf->atap_serial), inqbuf->atap_serial);
+	    (int) sizeof(inqbuf->atap_model), inqbuf->atap_model,
+	    (int) sizeof(inqbuf->atap_revision), inqbuf->atap_revision,
+	    (int) sizeof(inqbuf->atap_serial), inqbuf->atap_serial);
 
 	printf("Device type: %s, %s\n", inqbuf->atap_config & WDC_CFG_ATAPI ?
 	       "ATAPI" : "ATA", inqbuf->atap_config & ATA_CFG_FIXED ? "fixed" :
@@ -365,14 +410,14 @@ device_identify(argc, argv)
 
 	if ((inqbuf->atap_config & WDC_CFG_ATAPI_MASK) == 0)
 		printf("Cylinders: %d, heads: %d, sec/track: %d, total "
-		       "sectors: %d\n", inqbuf->atap_cylinders,
-		       inqbuf->atap_heads, inqbuf->atap_sectors,
-		       (inqbuf->atap_capacity[1] << 16) |
-		       inqbuf->atap_capacity[0]);
+		    "sectors: %d\n", inqbuf->atap_cylinders,
+		    inqbuf->atap_heads, inqbuf->atap_sectors,
+		    (inqbuf->atap_capacity[1] << 16) |
+		    inqbuf->atap_capacity[0]);
 
 	if (inqbuf->atap_queuedepth & WDC_QUEUE_DEPTH_MASK)
 		printf("Device supports command queue depth of %d\n",
-		       inqbuf->atap_queuedepth & 0xf);
+		    inqbuf->atap_queuedepth & 0xf);
 
 	printf("Device capabilities:\n");
 	print_bitinfo("\t%s\n", inqbuf->atap_capabilities1, ata_caps);
@@ -385,19 +430,26 @@ device_identify(argc, argv)
 
 	if (inqbuf->atap_cmd_set1 != 0 && inqbuf->atap_cmd_set1 != 0xffff &&
 	    inqbuf->atap_cmd_set2 != 0 && inqbuf->atap_cmd_set2 != 0xffff) {
-		printf("Command set support:\n");
+		printf("Device supports the following command sets:\n");
 		print_bitinfo("\t%s\n", inqbuf->atap_cmd_set1, ata_cmd_set1);
 		print_bitinfo("\t%s\n", inqbuf->atap_cmd_set2, ata_cmd_set2);
+		print_bitinfo("\t%s\n", inqbuf->atap_cmd_ext, ata_cmd_ext);
 	}
 
 	if (inqbuf->atap_cmd_def != 0 && inqbuf->atap_cmd_def != 0xffff) {
-		printf("Command sets/features enabled:\n");
+		printf("Device has enabled the following command sets/features:\n");
+		print_bitinfo("\t%s\n", inqbuf->atap_cmd1_en, ata_cmd_set1);
+		print_bitinfo("\t%s\n", inqbuf->atap_cmd2_en, ata_cmd_set2);
+#if 0
 		print_bitinfo("\t%s\n", inqbuf->atap_cmd_set1 &
-			      (WDC_CMD1_SRV | WDC_CMD1_RLSE | WDC_CMD1_AHEAD |
-			       WDC_CMD1_CACHE | WDC_CMD1_SEC | WDC_CMD1_SMART),
-			       ata_cmd_set1);
+		    (WDC_CMD1_SRV | WDC_CMD1_RLSE | WDC_CMD1_AHEAD |
+		    WDC_CMD1_CACHE | WDC_CMD1_SEC | WDC_CMD1_SMART),
+		    ata_cmd_set1);
 		print_bitinfo("\t%s\n", inqbuf->atap_cmd_set2 &
-			      (WDC_CMD2_RMSN | ATA_CMD2_APM), ata_cmd_set2);
+		    (WDC_CMD2_RMSN | ATA_CMD2_APM | ATAPI_CMD2_PUIS |
+		    ATAPI_CMD2_AAM | ATAPI_CMD2_48AD |
+		    ATAPI_CMD2_DCO), ata_cmd_set2);
+#endif
 	}
 
 	return;
@@ -444,6 +496,213 @@ usage:
 }
 
 /*
+ * SMART.
+ *
+ * issue the SMART ENABLE/DISABLE/STATUS commands to the drive
+ */
+
+void
+device_smart(argc, argv)
+	int argc;
+	char *argv[];
+{
+	struct atareq req;
+
+	/* No arguments. */
+	if (argc != 0)
+		goto usage;
+
+	memset(&req, 0, sizeof(req));
+
+	req.command = ATAPI_SMART;
+	req.cylinder = 0xC24F; /* Cylinders is mapped to LBA Mid/Low */
+	/* XXX: I assume cylinders is correctly mapped w.r.t.
+	 * endianness? */
+
+	if (strcmp(cmdname, "smartenable") == 0)
+		req.features = ATAPI_SMART_EN;
+	else if (strcmp(cmdname, "smartdisable") == 0)
+		req.features = ATAPI_SMART_DS;
+	else if (strcmp(cmdname, "smartstatus") == 0)
+		req.features = ATAPI_SMART_STATUS;
+	else
+		goto usage;
+
+	req.timeout = 1000;
+
+	ata_command(&req);
+
+	if (strcmp(cmdname, "smartstatus") == 0) {
+		if (req.cylinder == 0xC24F)
+			printf("No SMART threshold exceeded\n");
+		else if (req.cylinder == 0x2CF4) {
+			fprintf(stderr,"SMART threshold exceeded!\n");
+			exit(2);
+		} else {
+			fprintf(stderr, "Unknown response %0.2x!\n",
+			    req.cylinder);
+			exit(1);
+		}
+	}
+
+	return;
+usage:
+	fprintf(stderr, "usage: %s device %s\n", __progname, cmdname);
+	exit(1);
+}
+
+/*
+ * Set the automatic acoustic managmement on the disk. 
+ */
+void
+device_acoustic(argc, argv)
+	int argc;
+	char *argv[];
+{
+	unsigned long acoustic;
+	struct atareq req;
+	char *end;
+
+	/* Only one argument */
+	if (argc != 1)
+		goto usage;
+
+	acoustic = strtoul(argv[0], &end, 0);
+
+	if (*end != '\0') {
+		fprintf(stderr, "Invalid acoustic management value: \"%s\""
+		    "(valid values range from 0 to 126)\n", argv[0]);
+		exit(1);
+	}
+
+	if (acoustic > 126) {
+		fprintf(stderr, "Automatic acoustic management has a "
+		    "maximum value of 126\n");
+		exit(1);
+	}
+
+	memset(&req, 0, sizeof(req));
+
+	req.sec_count = acoustic + 0x80;
+
+	req.command = SET_FEATURES ;
+	req.features = WDSF_AAM_EN ;
+	req.timeout = 1000;
+
+	ata_command(&req);
+
+	return;
+
+usage:
+	fprintf(stderr, "usage; %s device %s acoustic-management-value\n",
+	    __progname, cmdname);
+	exit(1);
+}
+
+/*
+ * Set the advanced power managmement on the disk. Power management
+ * levels are translated from user-range 0-253 to ATAPI levels 1-0xFD
+ * to keep a uniform interface to the user.
+ */
+void
+device_apm(argc, argv)
+	int argc;
+	char *argv[];
+{
+	unsigned long power;
+	struct atareq req;
+	char *end;
+
+	/* Only one argument */
+	if (argc != 1)
+		goto usage;
+
+	power = strtoul(argv[0], &end, 0);
+
+	if (*end != '\0') {
+		fprintf(stderr, "Invalid advanced power management value: "
+		    "\"%s\" (valid values range from 0 to 253)\n",
+		    argv[0]);
+		exit(1);
+	}
+
+	if (power > 253) {
+		fprintf(stderr, "Advanced power management has a "
+		    "maximum value of 253\n");
+		exit(1);
+	}
+
+	memset(&req, 0, sizeof(req));
+
+	req.sec_count = power + 0x01;
+
+	req.command = SET_FEATURES ;
+	req.features = WDSF_APM_EN ;
+	req.timeout = 1000;
+
+	ata_command(&req);
+
+	return;
+
+usage:
+	fprintf(stderr, "usage; %s device %s power-management-level\n",
+	    __progname, cmdname);
+	exit(1);
+}
+
+/*
+ * En/disable features (the automatic acoustic managmement, Advanced Power
+ * Management) on the disk. 
+ */
+void
+device_feature(argc, argv)
+	int argc;
+	char *argv[];
+{
+	struct atareq req;
+
+	/* No argument */
+	if (argc != 0)
+		goto usage;
+
+	memset(&req, 0, sizeof(req));
+
+	req.command = SET_FEATURES ;
+
+	if (strcmp(cmdname, "acousticdisable") == 0)
+		req.features = WDSF_AAM_DS;
+	else if (strcmp(cmdname, "readaheadenable") == 0)
+		req.features = WDSF_READAHEAD_EN;
+	else if (strcmp(cmdname, "readaheaddisable") == 0)
+		req.features = WDSF_READAHEAD_DS;
+	else if (strcmp(cmdname, "writecacheenable") == 0)
+		req.features = WDSF_EN_WR_CACHE;
+	else if (strcmp(cmdname, "writecachedisable") == 0)
+		req.features = WDSF_WRITE_CACHE_DS;
+	else if (strcmp(cmdname, "apmdisable") == 0)
+		req.features = WDSF_APM_DS;
+	else if (strcmp(cmdname, "puisenable") == 0)
+		req.features = WDSF_PUIS_EN;
+	else if (strcmp(cmdname, "puisdisable") == 0)
+		req.features = WDSF_PUIS_DS;
+	else if (strcmp(cmdname, "puisspinup") == 0)
+		req.features = WDSF_PUIS_SPINUP;
+	else
+		goto usage;
+
+	req.timeout = 1000;
+
+	ata_command(&req);
+
+	return;
+
+usage:
+	fprintf(stderr, "usage; %s device %s\n", __progname,
+	    cmdname);
+	exit(1);
+}
+
+/*
  * Set the idle timer on the disk.  Set it for either idle mode or
  * standby mode, depending on how we were invoked.
  */
@@ -470,7 +729,7 @@ device_setidle(argc, argv)
 
 	if (idle > 19800) {
 		fprintf(stderr, "Idle time has a maximum value of 5.5 "
-			"hours\n");
+		    "hours\n");
 		exit(1);
 	}
 
@@ -495,7 +754,7 @@ device_setidle(argc, argv)
 
 usage:
 	fprintf(stderr, "usage; %s device %s idle-time\n", __progname,
-		cmdname);
+	    cmdname);
 	exit(1);
 }
 
