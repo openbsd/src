@@ -1,4 +1,4 @@
-/*	$OpenBSD: noctvar.h,v 1.3 2002/06/21 17:45:29 jason Exp $	*/
+/*	$OpenBSD: noctvar.h,v 1.4 2002/06/28 18:31:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -36,6 +36,29 @@
  *
  */
 
+#define	NOCT_RNG_QLEN		15
+#define	NOCT_RNG_ENTRIES	(1 << NOCT_RNG_QLEN)
+#define	NOCT_RNG_BUFSIZE	(NOCT_RNG_ENTRIES * sizeof(u_int64_t))
+
+#define	NOCT_PKH_QLEN		15
+#define	NOCT_PKH_ENTRIES	(1 << NOCT_PKH_QLEN)
+#define	NOCT_PKH_BUFSIZE	(NOCT_PKH_ENTRIES * sizeof(union noct_pkh_cmd))
+
+#define	NOCT_EA_QLEN		15
+#define	NOCT_EA_ENTRIES		(1 << NOCT_EA_QLEN)
+#define	NOCT_EA_BUFSIZE		(NOCT_EA_ENTRIES * sizeof(struct noct_ea_cmd))
+
+#define	NOCT_BN_CACHE_SIZE	((256) * (128 / 8))
+
+struct noct_softc;
+
+struct noct_bnc_sw {
+	u_long bn_off;			/* cache offset */
+	u_long bn_siz;			/* cache size */
+	void (*bn_callback)(struct noct_softc *, u_int32_t, int);
+	struct cryptkop *bn_krp;
+};
+
 struct noct_softc {
 	struct device sc_dv;
 	bus_space_tag_t sc_st;
@@ -43,6 +66,7 @@ struct noct_softc {
 	bus_dma_tag_t sc_dmat;
 	void *sc_ih;
 	u_int sc_ramsize;
+	int32_t sc_cid;			/* cryptodev id */
 
 	u_int64_t *sc_rngbuf;
 	bus_dmamap_t sc_rngmap;
@@ -50,11 +74,13 @@ struct noct_softc {
 	int sc_rngtick;
 
 	bus_dmamap_t sc_pkhmap;		/* pkh buffer map */
+	bus_dmamap_t sc_bnmap;		/* bignumber cache map */
 	union noct_pkh_cmd *sc_pkhcmd;	/* pkh command buffers */
-	struct timeout sc_pkhto;	/* debug */
-	int sc_pkhtick;			/* debug */
-	int sc_pkhbusy;			/* debug */
+	u_int8_t *sc_bncache;		/* bignumber cache buffer */
 	u_int32_t sc_pkhwp;		/* pkh write pointer */
+	u_int32_t sc_pkhrp;		/* pkh read pointer */
+	struct extent *sc_pkh_bn;	/* pkh big number cache usage */
+	struct noct_bnc_sw	sc_pkh_bnsw[NOCT_PKH_ENTRIES];
 
 	bus_dmamap_t sc_eamap;		/* ea buffer map */
 	struct timeout sc_eato;		/* debug */
@@ -70,15 +96,3 @@ struct noct_softc {
 
 #define	NOCT_READ_8(sc,r) noct_read_8(sc, r)
 #define	NOCT_WRITE_8(sc,r,v) noct_write_8(sc, r, v)
-
-#define	NOCT_RNG_QLEN		15
-#define	NOCT_RNG_ENTRIES	(1 << NOCT_RNG_QLEN)
-#define	NOCT_RNG_BUFSIZE	(NOCT_RNG_ENTRIES * sizeof(u_int64_t))
-
-#define	NOCT_PKH_QLEN		15
-#define	NOCT_PKH_ENTRIES	(1 << NOCT_PKH_QLEN)
-#define	NOCT_PKH_BUFSIZE	(NOCT_PKH_ENTRIES * sizeof(union noct_pkh_cmd))
-
-#define	NOCT_EA_QLEN		15
-#define	NOCT_EA_ENTRIES		(1 << NOCT_EA_QLEN)
-#define	NOCT_EA_BUFSIZE		(NOCT_EA_ENTRIES * sizeof(struct noct_ea_cmd))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: noct.c,v 1.4 2002/06/21 17:45:29 jason Exp $	*/
+/*	$OpenBSD: noct.c,v 1.5 2002/06/28 18:31:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -48,6 +48,7 @@
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/device.h>
+#include <sys/extent.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -78,7 +79,11 @@ void noct_pkh_enable(struct noct_softc *);
 void noct_pkh_disable(struct noct_softc *);
 void noct_pkh_init(struct noct_softc *);
 void noct_pkh_intr(struct noct_softc *);
-void noct_pkh_tick(void *);
+void noct_pkh_freedesc(struct noct_softc *, int);
+u_int32_t noct_pkh_nfree(struct noct_softc *);
+int noct_kload(struct noct_softc *, struct crparam *, u_int32_t);
+void noct_kload_cb(struct noct_softc *, u_int32_t, int);
+void noct_modmul_cb(struct noct_softc *, u_int32_t, int);
 
 void noct_ea_enable(struct noct_softc *);
 void noct_ea_disable(struct noct_softc *);
@@ -88,6 +93,11 @@ void noct_ea_tick(void *);
 
 u_int64_t noct_read_8(struct noct_softc *, u_int32_t);
 void noct_write_8(struct noct_softc *, u_int32_t, u_int64_t);
+
+struct noct_softc *noct_kfind(struct cryptkop *);
+int noct_ksigbits(struct crparam *);
+int noct_kprocess(struct cryptkop *);
+int noct_kprocess_modexp(struct noct_softc *, struct cryptkop *);
 
 struct cfattach noct_ca = {
 	sizeof(struct noct_softc), noct_probe, noct_attach,
@@ -146,6 +156,12 @@ noct_attach(parent, self, aux)
 	NOCT_WRITE_4(sc, NOCT_BRDG_ENDIAN, 0);
 
 	sc->sc_dmat = pa->pa_dmat;
+
+	sc->sc_cid = crypto_get_driverid(0);
+	if (sc->sc_cid < 0) {
+		printf(": couldn't register cid\n");
+		goto fail;
+	}
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
@@ -330,6 +346,7 @@ noct_pkh_enable(sc)
 	u_int64_t adr;
 
 	sc->sc_pkhwp = 0;
+	sc->sc_pkhrp = 0;
 
 	adr = sc->sc_pkhmap->dm_segs[0].ds_addr;
 	NOCT_WRITE_4(sc, NOCT_PKH_Q_BASE_HI, (adr >> 32) & 0xffffffff);
@@ -355,8 +372,15 @@ void
 noct_pkh_init(sc)
 	struct noct_softc *sc;
 {
-	bus_dma_segment_t seg;
-	int rseg;
+	bus_dma_segment_t seg, bnseg;
+	int rseg, bnrseg;
+
+	sc->sc_pkh_bn = extent_create("noctbn", 0, 255, M_DEVBUF,
+	    NULL, NULL, EX_NOWAIT | EX_NOCOALESCE);
+	if (sc->sc_pkh_bn == NULL) {
+		printf("%s: failed pkh bn extent\n", sc->sc_dv.dv_xname);
+		goto fail;
+	}
 
 	if (bus_dmamem_alloc(sc->sc_dmat, NOCT_PKH_BUFSIZE,
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
@@ -379,18 +403,46 @@ noct_pkh_init(sc)
 		goto fail_3;
 	}
 
+	/*
+	 * Allocate shadow big number cache.
+	 */
+	if (bus_dmamem_alloc(sc->sc_dmat, NOCT_BN_CACHE_SIZE, PAGE_SIZE, 0,
+	    &bnseg, 1, &bnrseg, BUS_DMA_NOWAIT)) {
+		printf("%s: failed bnc buf alloc\n", sc->sc_dv.dv_xname);
+		goto fail_4;
+	}
+	if (bus_dmamem_map(sc->sc_dmat, &bnseg, bnrseg, NOCT_BN_CACHE_SIZE,
+	    (caddr_t *)&sc->sc_bncache, BUS_DMA_NOWAIT)) {
+		printf("%s: failed bnc buf map\n", sc->sc_dv.dv_xname);
+		goto fail_5;
+	}
+	if (bus_dmamap_create(sc->sc_dmat, NOCT_BN_CACHE_SIZE, bnrseg,
+	    NOCT_BN_CACHE_SIZE, 0, BUS_DMA_NOWAIT, &sc->sc_bnmap)) {
+		printf("%s: failed bnc map create\n", sc->sc_dv.dv_xname);
+		goto fail_6;
+	}
+	if (bus_dmamap_load_raw(sc->sc_dmat, sc->sc_bnmap,
+	    &bnseg, bnrseg, NOCT_BN_CACHE_SIZE, BUS_DMA_NOWAIT)) {
+		printf("%s: failed bnc buf load\n", sc->sc_dv.dv_xname);
+		goto fail_7;
+	}
+
 	noct_pkh_disable(sc);
 	noct_pkh_enable(sc);
 
-	if (hz > 100)
-		sc->sc_pkhtick = hz/100;
-	else
-		sc->sc_pkhtick = 1;
-	timeout_set(&sc->sc_pkhto, noct_pkh_tick, sc);
-	timeout_add(&sc->sc_pkhto, sc->sc_pkhtick);
+	crypto_kregister(sc->sc_cid, CRK_MOD_EXP, 0, noct_kprocess);
 
 	return;
 
+fail_7:
+	bus_dmamap_destroy(sc->sc_dmat, sc->sc_bnmap);
+fail_6:
+	bus_dmamem_unmap(sc->sc_dmat,
+	    (caddr_t)sc->sc_pkhcmd, NOCT_PKH_BUFSIZE);
+fail_5:
+	bus_dmamem_free(sc->sc_dmat, &bnseg, bnrseg);
+fail_4:
+	bus_dmamap_unload(sc->sc_dmat, sc->sc_pkhmap);
 fail_3:
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_pkhmap);
 fail_2:
@@ -399,6 +451,10 @@ fail_2:
 fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, rseg);
 fail:
+	if (sc->sc_pkh_bn != NULL) {
+		extent_destroy(sc->sc_pkh_bn);
+		sc->sc_pkh_bn = NULL;
+	}
 	sc->sc_pkhcmd = NULL;
 	sc->sc_pkhmap = NULL;
 }
@@ -408,6 +464,7 @@ noct_pkh_intr(sc)
 	struct noct_softc *sc;
 {
 	u_int32_t csr;
+	u_int32_t rp;
 
 	csr = NOCT_READ_4(sc, NOCT_PKH_CSR);
 	NOCT_WRITE_4(sc, NOCT_PKH_CSR, csr |
@@ -418,67 +475,56 @@ noct_pkh_intr(sc)
 	    PKHCSR_PKE_B | PKHCSR_PKE_A | PKHCSR_PKE_M | PKHCSR_PKE_R |
 	    PKHCSR_PKEOPCODE);
 
-	if (csr & PKHCSR_CMDSI)
-		sc->sc_pkhbusy = 0;
+	rp = (NOCT_READ_4(sc, NOCT_PKH_Q_PTR) & PKHQPTR_READ_M) >>
+	    PKHQPTR_READ_S;
+
+	while (sc->sc_pkhrp != rp) {
+		if (sc->sc_pkh_bnsw[sc->sc_pkhrp].bn_callback != NULL)
+			(*sc->sc_pkh_bnsw[sc->sc_pkhrp].bn_callback)(sc,
+			    sc->sc_pkhrp, 0);
+		if (++sc->sc_pkhrp == NOCT_PKH_ENTRIES)
+			sc->sc_pkhrp = 0;
+	}
+	sc->sc_pkhrp = rp;
+
+	if (csr & PKHCSR_CMDSI) {
+		/* command completed */
+	}
 
 	if (csr & PKHCSR_SKSWR)
-		printf("%s: sks write error\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: sks write error\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_SKSOFF)
-		printf("%s: sks offset error\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: sks offset error\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_PKHLEN)
-		printf("%s: pkh invalid length\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pkh invalid length\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_PKHOPCODE)
-		printf("%s: pkh bad opcode\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pkh bad opcode\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_BADQBASE)
-		printf("%s: pkh base qbase\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pkh base qbase\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_LOADERR)
-		printf("%s: pkh load error\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pkh load error\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_STOREERR)
-		printf("%s: pkh store error\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pkh store error\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_CMDERR)
-		printf("%s: pkh command error\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pkh command error\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_ILL)
-		printf("%s: pkh illegal access\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pkh illegal access\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_PKERESV)
-		printf("%s: pke reserved error\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pke reserved error\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_PKEWDT)
-		printf("%s: pke watchdog\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pke watchdog\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_PKENOTPRIME)
-		printf("%s: pke not prime\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pke not prime\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_PKE_B)
-		printf("%s: pke bad 'b'\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pke bad 'b'\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_PKE_A)
-		printf("%s: pke bad 'a'\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pke bad 'a'\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_PKE_M)
-		printf("%s: pke bad 'm'\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pke bad 'm'\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_PKE_R)
-		printf("%s: pke bad 'r'\n", sc->sc_dv.dv_xname);
+		printf("%s:%x: pke bad 'r'\n", sc->sc_dv.dv_xname, rp);
 	if (csr & PKHCSR_PKEOPCODE)
-		printf("%s: pke bad opcode\n", sc->sc_dv.dv_xname);
-}
-
-void
-noct_pkh_tick(vsc)
-	void *vsc;
-{
-	struct noct_softc *sc = vsc;
-	struct noct_pkh_cmd_nop *nop;
-	int s;
-
-	s = splnet();
-	if (sc->sc_pkhbusy)
-		goto out;
-	nop = &sc->sc_pkhcmd[sc->sc_pkhwp].nop;
-	nop->op = htole32(PKH_OP_SI | PKH_OP_CODE_NOP);
-	nop->unused[0] = nop->unused[1] = nop->unused[2] = nop->unused[3] = 0;
-	nop->unused[4] = nop->unused[5] = nop->unused[6] = 0;
-	sc->sc_pkhbusy = 1;
-	if (++sc->sc_pkhwp == NOCT_PKH_ENTRIES)
-		sc->sc_pkhwp = 0;
-	NOCT_WRITE_4(sc, NOCT_PKH_Q_PTR, sc->sc_pkhwp);
-out:
-	splx(s);
-	timeout_add(&sc->sc_pkhto, sc->sc_pkhtick);
+		printf("%s:%x: pke bad opcode\n", sc->sc_dv.dv_xname, rp);
 }
 
 void
@@ -864,4 +910,291 @@ noct_read_8(sc, reg)
 	ret <<= 32;
 	ret |= NOCT_READ_4(sc, reg + 4);
 	return (ret);
+}
+
+struct noct_softc *
+noct_kfind(krp)
+	struct cryptkop *krp;
+{
+	struct noct_softc *sc;
+	int i;
+
+	for (i = 0; i < noct_cd.cd_ndevs; i++) {
+		sc = noct_cd.cd_devs[i];
+		if (sc == NULL)
+			continue;
+		if (sc->sc_cid == krp->krp_hid)
+			return (sc);
+	}
+	return (NULL);
+}
+
+int
+noct_kprocess(krp)
+	struct cryptkop *krp;
+{
+	struct noct_softc *sc;
+
+	if (krp == NULL || krp->krp_callback == NULL)
+		return (EINVAL);
+	if ((sc = noct_kfind(krp)) == NULL) {
+		krp->krp_status = EINVAL;
+		crypto_kdone(krp);
+		return (0);
+	}
+
+	switch (krp->krp_op) {
+	case CRK_MOD_EXP:
+		noct_kprocess_modexp(sc, krp);
+		break;
+	default:
+		printf("%s: kprocess: invalid op 0x%x\n",
+		    sc->sc_dv.dv_xname, krp->krp_op);
+		krp->krp_status = EOPNOTSUPP;
+		crypto_kdone(krp);
+		break;
+	}
+	return (0);
+}
+
+u_int32_t
+noct_pkh_nfree(sc)
+	struct noct_softc *sc;
+{
+	if (sc->sc_pkhwp == sc->sc_pkhrp)
+		return (NOCT_PKH_ENTRIES);
+	if (sc->sc_pkhwp < sc->sc_pkhrp)
+		return (sc->sc_pkhrp - sc->sc_pkhwp - 1);
+	return (sc->sc_pkhrp + NOCT_PKH_ENTRIES - sc->sc_pkhwp - 1);
+}
+
+int
+noct_kprocess_modexp(sc, krp)
+	struct noct_softc *sc;
+	struct cryptkop *krp;
+{
+	int s, err;
+	u_long roff;
+	u_int32_t wp, aidx, bidx, midx;
+	u_int64_t adr;
+	union noct_pkh_cmd *cmd;
+	int i;
+
+	s = splnet();
+	if (noct_pkh_nfree(sc) < 5) {
+		/* Need 5 entries: 3 loads, 1 store, and an op */
+		splx(s);
+		return (ENOMEM);
+	}
+
+	wp = sc->sc_pkhwp;
+
+	aidx = wp;
+	if (noct_kload(sc, &krp->krp_param[0], aidx))
+		goto errout;
+	if (++wp == NOCT_PKH_ENTRIES)
+		wp = 0;
+
+	bidx = wp;
+	if (noct_kload(sc, &krp->krp_param[1], bidx))
+		goto errout;
+	if (++wp == NOCT_PKH_ENTRIES)
+		wp = 0;
+
+	midx = wp;
+	if (noct_kload(sc, &krp->krp_param[2], midx))
+		goto errout;
+	if (++wp == NOCT_PKH_ENTRIES)
+		wp = 0;
+
+	/* alloc cache for result */
+	if (extent_alloc(sc->sc_pkh_bn, sc->sc_pkh_bnsw[midx].bn_siz,
+	    EX_NOALIGN, 0, EX_NOBOUNDARY, EX_NOWAIT, &roff)) {
+		err = ENOMEM;
+		goto errout;
+	}
+
+	cmd = &sc->sc_pkhcmd[wp];
+	cmd->arith.op = htole32(PKH_OP_CODE_MUL);
+	cmd->arith.r = htole32(roff);
+	cmd->arith.m = htole32(((sc->sc_pkh_bnsw[midx].bn_siz) << 16) |
+	    sc->sc_pkh_bnsw[midx].bn_off);
+	cmd->arith.a = htole32(((sc->sc_pkh_bnsw[aidx].bn_siz) << 16) |
+	    sc->sc_pkh_bnsw[aidx].bn_off);
+	cmd->arith.b = htole32(((sc->sc_pkh_bnsw[bidx].bn_siz) << 16) |
+	    sc->sc_pkh_bnsw[bidx].bn_off);
+	cmd->arith.c = cmd->arith.unused[0] = cmd->arith.unused[1] = 0;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_pkhmap,
+	    wp * sizeof(union noct_pkh_cmd), sizeof(union noct_pkh_cmd),
+	    BUS_DMASYNC_PREWRITE);
+	sc->sc_pkh_bnsw[wp].bn_callback = NULL;
+	if (++wp == NOCT_PKH_ENTRIES)
+		wp = 0;
+
+	cmd = &sc->sc_pkhcmd[wp];
+	cmd->cache.op = htole32(PKH_OP_CODE_STORE | PKH_OP_SI);
+	cmd->cache.r = htole32(roff);
+	adr = sc->sc_bnmap->dm_segs[0].ds_addr + (roff * 16);
+	cmd->cache.addrhi = htole32((adr >> 32) & 0xffffffff);
+	cmd->cache.addrlo = htole32((adr >> 0 ) & 0xffffffff);
+	cmd->cache.len = htole32(sc->sc_pkh_bnsw[midx].bn_siz * 16);
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_pkhmap,
+	    wp * sizeof(union noct_pkh_cmd), sizeof(union noct_pkh_cmd),
+	    BUS_DMASYNC_PREWRITE);
+	sc->sc_pkh_bnsw[wp].bn_callback = noct_modmul_cb;
+	sc->sc_pkh_bnsw[wp].bn_off = roff;
+	sc->sc_pkh_bnsw[wp].bn_siz = sc->sc_pkh_bnsw[midx].bn_siz;
+	sc->sc_pkh_bnsw[wp].bn_krp = krp;
+	if (++wp == NOCT_PKH_ENTRIES)
+		wp = 0;
+
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_bnmap,
+	    0, sc->sc_bnmap->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+	NOCT_WRITE_4(sc, NOCT_PKH_Q_PTR, wp);
+	sc->sc_pkhwp = wp;
+
+	splx(s);
+
+	return (0);
+
+errout:
+	i = sc->sc_pkhwp;
+	while (i != wp) {
+		noct_pkh_freedesc(sc, i);
+		if (++i == NOCT_PKH_ENTRIES)
+			i = 0;
+	}
+
+	splx(s);
+	krp->krp_status = err;
+	crypto_kdone(krp);
+	return (1);
+}
+
+void
+noct_pkh_freedesc(sc, idx)
+	struct noct_softc *sc;
+	int idx;
+{
+	if (sc->sc_pkh_bnsw[idx].bn_callback != NULL)
+		(*sc->sc_pkh_bnsw[idx].bn_callback)(sc, idx, 0);
+}
+
+/*
+ * Return the number of significant bits of a big number.
+ */
+int
+noct_ksigbits(cr)
+	struct crparam *cr;
+{
+	u_int plen = (cr->crp_nbits + 7) / 8;
+	int i, sig = plen * 8;
+	u_int8_t c, *p = cr->crp_p;
+
+	for (i = plen - 1; i >= 0; i--) {
+		c = p[i];
+		if (c != 0) {
+			while ((c & 0x80) == 0) {
+				sig--;
+				c <<= 1;
+			}
+			break;
+		}
+		sig -= 8;
+	}
+	return (sig);
+}
+
+int
+noct_kload(sc, cr, wp)
+	struct noct_softc *sc;
+	struct crparam *cr;
+	u_int32_t wp;
+{
+	u_int64_t adr;
+	union noct_pkh_cmd *cmd;
+	u_long off;
+	int bits, digits, i;
+	u_int32_t wpnext;
+
+	wpnext = wp + 1;
+	if (wpnext == NOCT_PKH_ENTRIES)
+		wpnext = 0;
+	if (wpnext == sc->sc_pkhrp)
+		return (ENOMEM);
+
+	bits = noct_ksigbits(cr);
+	if (bits > 4096)
+		return (E2BIG);
+
+	digits = (bits + 127) / 128;
+
+	if (extent_alloc(sc->sc_pkh_bn, digits, EX_NOALIGN, 0, EX_NOBOUNDARY,
+	    EX_NOWAIT, &off))
+		return (ENOMEM);
+
+	cmd = &sc->sc_pkhcmd[wp];
+	cmd->cache.op = htole32(PKH_OP_CODE_LOAD);
+	cmd->cache.r = htole32(off);
+	adr = sc->sc_bnmap->dm_segs[0].ds_addr + (off * 16);
+	cmd->cache.addrhi = htole32((adr >> 32) & 0xffffffff);
+	cmd->cache.addrlo = htole32((adr >> 0 ) & 0xffffffff);
+	cmd->cache.len = htole32(digits * 16);
+	cmd->cache.unused[0] = cmd->cache.unused[1] = cmd->cache.unused[2] = 0;
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_pkhmap,
+	    wp * sizeof(union noct_pkh_cmd), sizeof(union noct_pkh_cmd),
+	    BUS_DMASYNC_PREWRITE);
+
+	for (i = 0; i < (digits * 16); i++)
+		sc->sc_bncache[(off * 16) + i] = 0;
+	for (i = 0; i < ((bits + 7) / 8); i++)
+		sc->sc_bncache[(off * 16) + (digits * 16) - 1 - i] =
+		    cr->crp_p[i];
+	bus_dmamap_sync(sc->sc_dmat, sc->sc_bnmap, off * 16, digits * 16,
+	    BUS_DMASYNC_PREWRITE);
+
+	sc->sc_pkh_bnsw[wp].bn_off = off;
+	sc->sc_pkh_bnsw[wp].bn_siz = digits;
+	sc->sc_pkh_bnsw[wp].bn_callback = noct_kload_cb;
+	return (0);
+}
+
+void
+noct_kload_cb(sc, wp, err)
+	struct noct_softc *sc;
+	u_int32_t wp;
+	int err;
+{
+	struct noct_bnc_sw *sw = &sc->sc_pkh_bnsw[wp];
+
+	extent_free(sc->sc_pkh_bn, sw->bn_off, sw->bn_siz, EX_NOWAIT);
+	bzero(&sc->sc_bncache[sw->bn_off * 16], sw->bn_siz * 16);
+}
+
+void
+noct_modmul_cb(sc, wp, err)
+	struct noct_softc *sc;
+	u_int32_t wp;
+	int err;
+{
+	struct noct_bnc_sw *sw = &sc->sc_pkh_bnsw[wp];
+	struct cryptkop *krp = sw->bn_krp;
+	int i, j;
+
+	if (err)
+		goto out;
+
+	i = (sw->bn_off * 16) + (sw->bn_siz * 16) - 1;
+	for (j = 0; j < (krp->krp_param[3].crp_nbits + 7) / 8; j++) {
+		krp->krp_param[3].crp_p[j] = sc->sc_bncache[i];
+		i--;
+	}
+
+out:
+	extent_free(sc->sc_pkh_bn, sw->bn_off, sw->bn_siz, EX_NOWAIT);
+	bzero(&sc->sc_bncache[sw->bn_off * 16], sw->bn_siz * 16);
+	krp->krp_status = err;
+	crypto_kdone(krp);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: noctreg.h,v 1.4 2002/06/21 17:45:29 jason Exp $	*/
+/*	$OpenBSD: noctreg.h,v 1.5 2002/06/28 18:31:29 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -194,6 +194,7 @@
  * public key structures
  */
 /* opcodes/flags */
+#define	PKH_OP_CODE_MASK	0xf0000000	/* opcode mask */
 #define	PKH_OP_CODE_MOD		0x00000000	/* a mod m */
 #define	PKH_OP_CODE_RMOD	0x10000000	/* R mod m */
 #define	PKH_OP_CODE_ADD		0x20000000	/* (a + b) mod m */
