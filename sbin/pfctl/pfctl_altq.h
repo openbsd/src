@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.h,v 1.1 2002/11/18 22:49:15 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.h,v 1.2 2002/11/27 15:49:17 henning Exp $	*/
 /*
  * Copyright (C) 2002
  *	Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -73,6 +73,10 @@
 #define	REDF_ECN6	0x02	/* use packet marking for IPv6 packets */
 #define	REDF_ECN	(REDF_ECN4 | REDF_ECN6)
 #define	REDF_FLOWVALVE	0x04	/* use flowvalve (aka penalty-box) */
+#endif
+
+#ifndef DEFAULT_PRIORITY
+#define DEFAULT_PRIORITY	1
 #endif
 
 struct pf_altq_node {
