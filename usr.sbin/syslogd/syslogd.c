@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.70 2004/01/04 08:28:49 djm Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.71 2004/01/04 18:29:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.70 2004/01/04 08:28:49 djm Exp $";
+static const char rcsid[] = "$OpenBSD: syslogd.c,v 1.71 2004/01/04 18:29:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1358,7 +1358,7 @@ cfline(char *line, struct filed *f, char *prog)
 		/* Parse buffer size (in kb) */
 		errno = 0;
 		rb_len = strtoul(++p, &q, 0);
-		if (*p == '\0' || (errno == ERANGE && rb_len == ULONG_MAX) || 
+		if (*p == '\0' || (errno == ERANGE && rb_len == ULONG_MAX) ||
 		    *q != ':' || rb_len == 0) {
 			f->f_type = F_UNUSED;
 			logerror(p);
