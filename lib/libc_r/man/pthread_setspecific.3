@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_setspecific.3,v 1.6 1999/11/24 05:35:33 d Exp $
+.\" $OpenBSD: pthread_setspecific.3,v 1.7 2001/05/31 03:12:27 deraadt Exp $
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
 .\"
@@ -48,18 +48,18 @@ function associates a thread-specific value with a
 .Fa key
 obtained via a previous call to
 .Fn pthread_key_create .
-Different threads man bind different values to the same key. These values are
+Different threads may bind different values to the same key. These values are
 typically pointers to blocks of dynamically allocated memory that have been
 reserved for use by the calling thread.
 .Pp
 The effect of calling
 .Fn pthread_setspecific
 with a key value not obtained from
-.Fn pthread_key_create
+.Fn pthread_key_create ,
 or after
 .Fa key
 has been deleted with
-.Fn pthread_key_delete
+.Fn pthread_key_delete ,
 is undefined.
 .Pp
 .Fn pthread_setspecific
