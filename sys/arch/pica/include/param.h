@@ -39,7 +39,7 @@
  *
  *
  *	from: @(#)param.h	8.1 (Berkeley) 6/10/93
- *      $Id: param.h,v 1.1.1.1 1995/10/18 10:39:13 deraadt Exp $
+ *      $Id: param.h,v 1.2 1995/10/22 06:26:07 deraadt Exp $
  */
 
 /*
@@ -102,9 +102,9 @@
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
 #endif
 

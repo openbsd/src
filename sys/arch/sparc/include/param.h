@@ -124,9 +124,9 @@ extern int nbpg, pgofset, pgshift;
 
 #ifndef NMBCLUSTERS
 #ifdef GATEWAY
-#define	NMBCLUSTERS	512		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
 #else
-#define	NMBCLUSTERS	256		/* map size, max cluster allocation */
+#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
 #endif
 #endif
 
