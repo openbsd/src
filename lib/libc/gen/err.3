@@ -1,4 +1,4 @@
-.\"	$OpenBSD: err.3,v 1.10 2000/06/29 16:13:59 millert Exp $
+.\"	$OpenBSD: err.3,v 1.11 2000/08/31 13:35:33 aaron Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -154,3 +154,24 @@ and
 .Fn warn
 functions first appeared in
 .Bx 4.4 .
+.Sh CAVEATS
+It is important to never pass a string with user-supplied data as a
+format without using
+.Ql %s .
+An attacker can put format specifiers in the string to mangle your stack,
+leading to a possible security hole.
+This holds true even if you have built the string
+.Dq by hand
+using a function like
+.Fn snprintf ,
+as the resulting string may still contain user-supplied conversion specifiers
+for later interpolation by the
+.Fn err
+and
+.Fn warn
+functions.
+.Pp
+Be sure to always use the proper secure idiom:
+.Bd -literal -offset indent
+err(1, "%s", string);
+.Ed
