@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: parse.h,v 1.5 1999/09/08 08:06:15 millert Exp $
+ * $Sudo: parse.h,v 1.7 2000/01/17 23:46:25 millert Exp $
  */
 
 #ifndef _SUDO_PARSE_H
@@ -109,7 +109,7 @@ extern int top;
  */
 int addr_matches	__P((char *));
 int command_matches	__P((char *, char *, char *, char *));
-int netgr_matches	__P((char *, char *, char *));
+int netgr_matches	__P((char *, char *, char *, char *));
 int usergr_matches	__P((char *, char *));
 
 #endif /* _SUDO_PARSE_H */

@@ -1,6 +1,6 @@
 %{
 /*
- * Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * This code is derived from software contributed by Chris Jepeway
@@ -79,7 +79,7 @@
 #endif /* HAVE_LSEARCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: parse.yacc,v 1.167 1999/12/05 19:06:09 millert Exp $";
+static const char rcsid[] = "$Sudo: parse.yacc,v 1.170 2000/01/17 23:46:25 millert Exp $";
 #endif /* lint */
 
 /*
@@ -90,6 +90,7 @@ int errorlineno = -1;
 int clearaliases = TRUE;
 int printmatches = FALSE;
 int pedantic = FALSE;
+int keepall = FALSE;
 
 /*
  * Alias types
@@ -353,7 +354,7 @@ host		:	ALL {
 			    free($1);
 			}
 		|	NETGROUP {
-			    if (netgr_matches($1, user_host, NULL))
+			    if (netgr_matches($1, user_host, user_shost, NULL))
 				$$ = TRUE;
 			    else
 				$$ = -1;
@@ -411,6 +412,9 @@ cmndspec	:	runasspec nopasswd opcmnd {
 			     * the user was listed in sudoers.  Also, we
 			     * need to be able to tell whether or not a
 			     * user was listed for this specific host.
+			     *
+			     * If keepall is set and the user matches then
+			     * we need to keep entries around too...
 			     */
 			    if (user_matches != -1 && host_matches != -1 &&
 				cmnd_matches != -1 && runas_matches != -1)
@@ -418,6 +422,8 @@ cmndspec	:	runasspec nopasswd opcmnd {
 			    else if (user_matches != -1 && (top == 1 ||
 				(top == 2 && host_matches != -1 &&
 				match[0].host == -1)))
+				pushcp;
+			    else if (user_matches == TRUE && keepall)
 				pushcp;
 			    cmnd_matches = -1;
 			}
@@ -529,7 +535,7 @@ runasuser	:	WORD {
 				    user_matches == TRUE)
 				    append_runas($1, ", ");
 			    }
-			    if (netgr_matches($1, NULL, *user_runas))
+			    if (netgr_matches($1, NULL, NULL, *user_runas))
 				$$ = TRUE;
 			    else
 				$$ = -1;
@@ -783,7 +789,7 @@ user		:	WORD {
 			    free($1);
 			}
 		|	NETGROUP {
-			    if (netgr_matches($1, NULL, user_name))
+			    if (netgr_matches($1, NULL, NULL, user_name))
 				$$ = TRUE;
 			    else
 				$$ = -1;

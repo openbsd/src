@@ -1,4 +1,4 @@
-Known bugs in sudo version 1.6.1
+Known bugs in sudo version 1.6.2
 ================================
 
 1) "make install-man" should substitute correct paths into the

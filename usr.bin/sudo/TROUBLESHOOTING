@@ -10,6 +10,11 @@ A) Sudo must be setuid root to do its work.  You need to do something like
    your $PATH before the directory containing sudo.  If you are going
    to have '.' in your path you should make sure it is at the end.
 
+Q) Sudo never gives me a chance to enter a password using PAM, it just
+   says 'Sorry, try again.' three times and quits.
+A) You didn't setup PAM to work with sudo.  On Linux this generally
+   means installing sample.pam as /etc/pam.d/sudo.
+
 Q) Sudo is setup to log via syslog(3) but I'm not getting any log
    messages.
 A) Make sure you have an entry in your syslog.conf file to save

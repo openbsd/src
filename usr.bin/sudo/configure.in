@@ -1,6 +1,6 @@
 dnl
 dnl Process this file with GNU autoconf to produce a configure script.
-dnl $Sudo: configure.in,v 1.294 1999/12/09 04:04:45 millert Exp $
+dnl $Sudo: configure.in,v 1.299 2000/01/19 19:07:24 millert Exp $
 dnl
 dnl Copyright (c) 1994-1996,1998-1999 Todd C. Miller <Todd.Miller@courtesan.com>
 dnl
@@ -9,7 +9,7 @@ AC_CONFIG_HEADER(config.h pathnames.h)
 dnl
 dnl This won't work before AC_INIT()
 dnl
-echo "Configuring Sudo version 1.6.1"
+echo "Configuring Sudo version 1.6.2"
 dnl
 dnl Variables that get substituted in the Makefile
 dnl
@@ -1033,6 +1033,18 @@ case "$host" in
 		# (XXX - should be an option to configure)
 		#STATIC_SUDO=true
 
+		# If using cc, run in ANSI mode if possible
+		if test -z "$GCC"; then
+		    $CC -Aa 2>&1 | grep 'A option is available only' >conftest.out
+		    if test ! -s conftest.out; then
+			CPPFLAGS="${CPPFLAGS} -Aa"
+		    fi
+		    rm -f conftest.out
+		fi
+
+		# Add -D_HPUX_SOURCE so we don't get strict ANSI headers
+		CPPFLAGS="${CPPFLAGS} -D_HPUX_SOURCE"
+
 		if test "$CHECKSHADOW" = "true"; then
 		    AC_CHECK_LIB(sec, getprpwnam, AC_DEFINE(HAVE_GETPRPWNAM) AC_CHECK_LIB(sec, iscomsec, AC_DEFINE(HAVE_ISCOMSEC)) [SUDO_LIBS="${SUDO_LIBS} -lsec"; LIBS="${LIBS} -lsec"; SECUREWARE=1])
 		    CHECKSHADOW="false"
@@ -1046,15 +1058,6 @@ case "$host" in
 		    fi
 		fi
 
-		# DCE support (requires ANSI C compiler)
-		if test "$with_DCE" = "yes"; then
-		    if test -n "$GCC"; then
-			CPPFLAGS="${CPPFLAGS} -D_HPUX_SOURCE"
-		    else
-			CPPFLAGS="${CPPFLAGS} -Aa -D_HPUX_SOURCE"
-		    fi
-		fi
-
 		# AFS support needs -lBSD
 		if test "$with_AFS" = "yes"; then
 		    AFS_LIBS="-lc -lBSD"
@@ -1064,6 +1067,18 @@ case "$host" in
 		# uncomment this for a statically linked sudo
 		# (XXX - should be an option to configure)
 		#STATIC_SUDO=true
+
+		# If using cc, run in ANSI mode if possible
+		if test -z "$GCC"; then
+		    $CC -Aa 2>&1 | grep 'A option is available only' >conftest.out
+		    if test ! -s conftest.out; then
+			CPPFLAGS="${CPPFLAGS} -Aa"
+		    fi
+		    rm -f conftest.out
+		fi
+
+		# Add -D_HPUX_SOURCE so we don't get strict ANSI headers
+		CPPFLAGS="${CPPFLAGS} -D_HPUX_SOURCE"
 
 		AC_DEFINE(BROKEN_SYSLOG)
 
@@ -1085,12 +1100,7 @@ case "$host" in
 		    # order of libs in 9.X is important. -lc_r must be last
 		    SUDO_LIBS="${SUDO_LIBS} -ldce -lM -lc_r"
 		    LIBS="${LIBS} -ldce -lM -lc_r"
-
-		    if test -n "$GCC"; then
-			CPPFLAGS="${CPPFLAGS} -D_HPUX_SOURCE -D_REENTRANT -I/usr/include/reentrant"
-		    else
-			CPPFLAGS="${CPPFLAGS} -Aa -D_HPUX_SOURCE -D_REENTRANT -I/usr/include/reentrant"
-		    fi
+		    CPPFLAGS="${CPPFLAGS} -D_REENTRANT -I/usr/include/reentrant"
 		fi
 
 		# AFS support needs -lBSD
@@ -1333,7 +1343,7 @@ esac
 dnl
 dnl Function checks
 dnl
-AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf sigaction tzset seteuid ftruncate strftime setrlimit initgroups)
+AC_CHECK_FUNCS(strchr strrchr memchr memcpy memset sysconf sigaction tzset seteuid strftime setrlimit initgroups fstat)
 if test -n "$SECUREWARE"; then
     AC_CHECK_FUNCS(bigcrypt)
     AC_CHECK_FUNCS(set_auth_parameters)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1994-1996,1998-1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1994-1996,1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -86,7 +86,7 @@ extern char *getenv	__P((char *));
 #endif /* STDC_HEADERS */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: sudo.c,v 1.262 1999/12/09 04:04:47 millert Exp $";
+static const char rcsid[] = "$Sudo: sudo.c,v 1.268 2000/01/17 23:46:25 millert Exp $";
 #endif /* lint */
 
 /*
@@ -163,7 +163,7 @@ main(argc, argv)
     int fd;
     int cmnd_status;
     int sudo_mode;
-    int check_cmnd;
+    int sudoers_flags;
 #ifdef POSIX_SIGNALS
     sigset_t set, oset;
 #else
@@ -218,7 +218,7 @@ main(argc, argv)
     /* Setup defaults data structures. */
     init_defaults();
 
-    check_cmnd = 1;
+    sudoers_flags = 0;
     if (sudo_mode & MODE_SHELL)
 	user_cmnd = "shell";
     else
@@ -237,12 +237,12 @@ main(argc, argv)
 		break;
 	    case MODE_VALIDATE:
 		user_cmnd = "validate";
-		check_cmnd = 0;
+		sudoers_flags = def_ival(I_VERIFYPW);
 		break;
 	    case MODE_KILL:
 	    case MODE_INVALIDATE:
 		user_cmnd = "kill";
-		check_cmnd = 0;
+		sudoers_flags = PWCHECK_NEVER;
 		break;
 	    case MODE_LISTDEFS:
 		list_options();
@@ -251,7 +251,7 @@ main(argc, argv)
 	    case MODE_LIST:
 		user_cmnd = "list";
 		printmatches = 1;
-		check_cmnd = 0;
+		sudoers_flags = def_ival(I_LISTPW);
 		break;
 	}
 
@@ -270,7 +270,7 @@ main(argc, argv)
     add_env(!(sudo_mode & MODE_SHELL));	/* add in SUDO_* envariables */
 
     /* Validate the user but don't search for pseudo-commands. */
-    validated = sudoers_lookup(check_cmnd);
+    validated = sudoers_lookup(sudoers_flags);
 
     /* This goes after the sudoers parse since we honor sudoers options. */
     if (sudo_mode == MODE_KILL || sudo_mode == MODE_INVALIDATE) {
@@ -288,6 +288,10 @@ main(argc, argv)
 	    stderr);
 	exit(1);
     }
+
+    /* If no command line args and "set_home" is not set, error out. */
+    if ((sudo_mode & MODE_IMPLIED_SHELL) && !def_flag(I_SHELL_NOARGS))
+	usage(1);
 
     /* May need to set $HOME to target user. */
     if ((sudo_mode & MODE_SHELL) && def_flag(I_SET_HOME))
@@ -543,12 +547,10 @@ parse_args()
     NewArgv = Argv + 1;
     NewArgc = Argc - 1;
 
-#ifdef SHELL_IF_NO_ARGS
     if (NewArgc == 0) {			/* no options and no command */
-	rval |= MODE_SHELL;
+	rval |= (MODE_IMPLIED_SHELL | MODE_SHELL);
 	return(rval);
     }
-#endif
 
     while (NewArgc > 0 && NewArgv[0][0] == '-') {
 	if (NewArgv[0][1] != '\0' && NewArgv[0][2] != '\0') {
@@ -637,10 +639,8 @@ parse_args()
 	    case '-':
 		NewArgc--;
 		NewArgv++;
-#ifdef SHELL_IF_NO_ARGS
 		if (rval == MODE_RUN)
-		    rval |= MODE_SHELL;
-#endif
+		    rval |= (MODE_IMPLIED_SHELL | MODE_SHELL);
 		return(rval);
 	    case '\0':
 		(void) fprintf(stderr, "%s: '-' requires an argument\n",
@@ -766,6 +766,7 @@ check_sudoers()
 	if (chmod(_PATH_SUDOERS, SUDOERS_MODE) == 0) {
 	    (void) fprintf(stderr, "%s: fixed mode on %s\n",
 		Argv[0], _PATH_SUDOERS);
+	    statbuf.st_mode |= SUDOERS_MODE;
 	    if (statbuf.st_gid != SUDOERS_GID) {
 		if (!chown(_PATH_SUDOERS,(uid_t) -1,SUDOERS_GID)) {
 		    (void) fprintf(stderr, "%s: set group on %s\n",
@@ -1008,16 +1009,17 @@ initial_setup()
     /*
      * Close any open fd's other than stdin, stdout and stderr.
      */
-#ifdef RLIMIT_NOFILE
-    if (getrlimit(RLIMIT_NOFILE, &rl) == 0)
-	maxfd = rl.rlim_max - 1;
-    else
-#endif /* RLIMIT_NOFILE */
 #ifdef HAVE_SYSCONF
-	maxfd = sysconf(_SC_OPEN_MAX) - 1;
+    maxfd = sysconf(_SC_OPEN_MAX) - 1;
 #else
-	maxfd = getdtablesize() - 1;
+    maxfd = getdtablesize() - 1;
 #endif /* HAVE_SYSCONF */
+#ifdef RLIMIT_NOFILE
+    if (getrlimit(RLIMIT_NOFILE, &rl) == 0) {
+	if (rl.rlim_max != RLIM_INFINITY && rl.rlim_max <= maxfd)
+	    maxfd = rl.rlim_max - 1;
+    }
+#endif /* RLIMIT_NOFILE */
 
     for (fd = maxfd; fd > STDERR_FILENO; fd--)
 	(void) close(fd);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * This code is derived from software contributed by Chris Jepeway
@@ -77,7 +77,7 @@
 #endif /* HAVE_FNMATCH */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: testsudoers.c,v 1.66 1999/12/09 03:54:57 millert Exp $";
+static const char rcsid[] = "$Sudo: testsudoers.c,v 1.68 2000/01/17 23:46:26 millert Exp $";
 #endif /* lint */
 
 /*
@@ -240,9 +240,10 @@ usergr_matches(group, user)
 }
 
 int
-netgr_matches(netgr, host, user)
+netgr_matches(netgr, host, shost, user)
     char *netgr;
     char *host;
+    char *shost;
     char *user;
 {
 #ifdef HAVE_GETDOMAINNAME
@@ -268,10 +269,13 @@ netgr_matches(netgr, host, user)
 #endif /* HAVE_GETDOMAINNAME */
 
 #ifdef HAVE_INNETGR
-    return(innetgr(netgr, host, user, domain));
-#else
-    return(FALSE);
+    if (innetgr(netgr, host, user, domain))
+	return(TRUE);
+    else if (host != shost && innetgr(netgr, shost, user, domain))
+	return(TRUE);
 #endif /* HAVE_INNETGR */
+
+    return(FALSE);
 }
 
 void

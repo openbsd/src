@@ -1,16 +1,12 @@
 .rn '' }`
-''' $RCSfile: sudoers.5,v $$Revision: 1.2 $$Date: 2000/01/18 21:49:02 $
+''' $RCSfile: sudoers.5,v $$Revision: 1.3 $$Date: 2000/01/24 04:22:53 $
 '''
 ''' $Log: sudoers.5,v $
-''' Revision 1.2  2000/01/18 21:49:02  aaron
-''' Repair duplicate word occurences; (as found by a Perl script sent to us from
-''' Tom Christiansen <tchrist@perl.com>).
+''' Revision 1.3  2000/01/24 04:22:53  millert
+''' sudo 1.6.2
 '''
-''' Revision 1.1.1.1  1999/11/18 16:29:01  millert
-''' sudo 1.6, now with a BSD license
-'''
-''' Revision 1.15  1999/11/16 05:23:41  millert
-''' Add warning about using ALL in a command context.
+''' Revision 1.22  2000/01/24 03:57:49  millert
+''' Add netgroup caveat
 '''
 '''
 .de Sh
@@ -103,7 +99,7 @@
 .nr % 0
 .rr F
 .\}
-.TH sudoers 5 "1.6" "15/Nov/1999" "FILE FORMATS"
+.TH sudoers 5 "1.6.2" "23/Jan/2000" "FILE FORMATS"
 .UC
 .if n .hy 0
 .if n .na
@@ -237,9 +233,9 @@ There are four kinds of aliases: the \f(CWUser_Alias\fR, \f(CWRunas_Alias\fR,
 .PP
 .Vb 4
 \& Alias ::= 'User_Alias' = User_Alias (':' User_Alias)* |
-\&           'Runas_Alias' (':' Runas_Alias)* |
-\&           'Host_Alias' (':' Host_Alias)* |
-\&           'Cmnd_Alias' (':' Cmnd_Alias)*
+\&           'Runas_Alias' = Runas_Alias (':' Runas_Alias)* |
+\&           'Host_Alias' = Host_Alias (':' Host_Alias)* |
+\&           'Cmnd_Alias' = Cmnd_Alias (':' Cmnd_Alias)*
 .Ve
 .Vb 1
 \& User_Alias ::= NAME '=' User_List
@@ -462,6 +458,54 @@ Address to send mail to
 Users in this group are exempt from password and \s-1PATH\s0 requirements
 .Ip "secure_path" 12
 Value to override user's \f(CW$PATH\fR with
+.Ip "verifypw" 12
+This option controls when a password will be required when a
+user runs sudo with the \fB\-v\fR.  It has the following possible values:
+.Sp
+.Vb 3
+\&    all         All the user's sudoers entries for the
+\&                current host must have the C<NOPASSWD>
+\&                flag set to avoid entering a password.
+.Ve
+.Vb 4
+\&    any         At least one of the user's sudoers entries
+\&                for the current host must have the
+\&                C<NOPASSWD> flag set to avoid entering a
+\&                password.
+.Ve
+.Vb 2
+\&    never       The user need never enter a password to use
+\&                the B<-v> flag.
+.Ve
+.Vb 2
+\&    always      The user must always enter a password to use
+\&                the B<-v> flag.
+.Ve
+The default value is `all\*(R'.
+.Ip "listpw" 12
+This option controls when a password will be required when a
+user runs sudo with the \fB\-l\fR.  It has the following possible values:
+.Sp
+.Vb 3
+\&    all         All the user's sudoers entries for the
+\&                current host must have the C<NOPASSWD>
+\&                flag set to avoid entering a password.
+.Ve
+.Vb 4
+\&    any         At least one of the user's sudoers entries
+\&                for the current host must have the
+\&                C<NOPASSWD> flag set to avoid entering a
+\&                password.
+.Ve
+.Vb 2
+\&    never       The user need never enter a password to use
+\&                the B<-l> flag.
+.Ve
+.Vb 2
+\&    always      The user must always enter a password to use
+\&                the B<-l> flag.
+.Ve
+The default value is `any\*(R'.
 .PP
 When logging via \fIsyslog\fR\|(3), sudo accepts the following values for the syslog
 facility (the value of the \fBsyslog\fR Parameter): \fBauthpriv\fR (if your \s-1OS\s0
@@ -471,18 +515,19 @@ syslog priorities are supported: \fBalert\fR, \fBcrit\fR, \fBdebug\fR, \fBemerg\
 \fBerr\fR, \fBinfo\fR, \fBnotice\fR, and \fBwarning\fR.
 .Sh "User Specification"
 .PP
-.Vb 1
-\& Runas_Spec ::= '(' Runas_List ')'
-.Ve
-.Vb 1
-\& Cmnd_Spec ::= Runas_Spec? ('NOPASSWD:' | 'PASSWD:')? Cmnd
+.Vb 2
+\& User_Spec ::= User_list Host_List '=' User_List Cmnd_Spec_List \e
+\&               (':' User_Spec)*
 .Ve
 .Vb 2
 \& Cmnd_Spec_List ::= Cmnd_Spec |
 \&                    Cmnd_Spec ',' Cmnd_Spec_List
 .Ve
 .Vb 1
-\& User_Spec ::= User_list Cmnd_Spec_List (':' User_Spec)*
+\& Cmnd_Spec ::= Runas_Spec? ('NOPASSWD:' | 'PASSWD:')? Cmnd
+.Ve
+.Vb 1
+\& Runas_Spec ::= '(' Runas_List ')'
 .Ve
 A \fBuser specification\fR determines which commands a user may run
 (and as what user) on specified hosts.  By default, commands are
@@ -532,6 +577,15 @@ run \fI/bin/kill\fR without a password the entry would be:
 .Vb 1
 \& ray    rushmore = NOPASSWD: /bin/kill, PASSWD: /bin/ls, /usr/bin/lprm
 .Ve
+Note however, that the \f(CWPASSWD\fR tag has no effect on users who are
+in the group specified by the exempt_group option.
+.PP
+By default, if the \f(CWNOPASSWD\fR tag is applied to any of the entries
+for a user on the current host, he or she will be able to run
+\f(CWsudo -l\fR without a password.  Additionally, a user may only run
+\f(CWsudo -v\fR without a password if the \f(CWNOPASSWD\fR tag is present
+for all a user's entries that pertain to the current host.
+This behavior may be overridden via the verifypw and listpw options.
 .Sh "Wildcards (aka meta characters):"
 \fBsudo\fR allows shell-style \fIwildcards\fR to be used in pathnames
 as well as command line arguments in the \fIsudoers\fR file.  Wildcard
@@ -800,6 +854,12 @@ The \fIsudoers\fR file should \fBalways\fR be edited by the \fBvisudo\fR
 command which locks the file and does grammatical checking. It is
 imperative that \fIsudoers\fR be free of syntax errors since \fBsudo\fR
 will not run with a syntactically incorrect \fIsudoers\fR file.
+.PP
+When using netgroups of machines (as opposed to users), if you
+store fully-qualified hostnames in the netgroup (as is usually the
+case), you either need to have the machine's hostname be fully-qualified
+as returned by the \f(CWhostname\fR command or use the \fIfqdn\fR option in
+\fIsudoers\fR.
 .SH "FILES"
 .PP
 .Vb 3
@@ -902,6 +962,10 @@ will not run with a syntactically incorrect \fIsudoers\fR file.
 
 .IX Item "secure_path"
 
+.IX Item "verifypw"
+
+.IX Item "listpw"
+
 .IX Subsection "User Specification"
 
 .IX Subsection "Runas_Spec"
@@ -922,7 +986,7 @@ will not run with a syntactically incorrect \fIsudoers\fR file.
 
 .IX Subsection "Exceptions to wildcard rules:"
 
-.IX Item "\f(CW""\fR"
+.IX Item \f(CW""\fR
 
 .IX Subsection "Other special characters and reserved words:"
 

@@ -1,12 +1,12 @@
 .rn '' }`
-''' $RCSfile: visudo.8,v $$Revision: 1.1.1.1 $$Date: 1999/11/18 16:29:01 $
+''' $RCSfile: visudo.8,v $$Revision: 1.2 $$Date: 2000/01/24 04:22:53 $
 '''
 ''' $Log: visudo.8,v $
-''' Revision 1.1.1.1  1999/11/18 16:29:01  millert
-''' sudo 1.6, now with a BSD license
+''' Revision 1.2  2000/01/24 04:22:53  millert
+''' sudo 1.6.2
 '''
-''' Revision 1.12  1999/11/16 05:42:28  millert
-''' get rid of references to sudo-bugs.  Now mention the web site or the sudo@ alias
+''' Revision 1.15  2000/01/17 17:28:41  millert
+''' Crank version to 1.6.2
 '''
 '''
 .de Sh
@@ -99,7 +99,7 @@
 .nr % 0
 .rr F
 .\}
-.TH visudo 8 "1.6" "15/Nov/1999" "MAINTENANCE COMMANDS"
+.TH visudo 8 "1.6.2" "4/Dec/1999" "MAINTENANCE COMMANDS"
 .UC
 .if n .hy 0
 .if n .na
@@ -249,13 +249,13 @@ mode these are errors not warnings.
 .SH "ENVIRONMENT"
 The following environment variables are used only if \fBvisudo\fR
 was configured with the \fI--with-env-editor\fR option:
-.Sp
+.PP
 .Vb 2
 \& EDITOR                 Used by visudo as the editor to use
 \& VISUAL                 Used by visudo if EDITOR is not set
 .Ve
 .SH "FILES"
-.Sp
+.PP
 .Vb 2
 \& /etc/sudoers           List of who can run what
 \& /etc/sudoers.tmp       Lock file for visudo
@@ -263,14 +263,14 @@ was configured with the \fI--with-env-editor\fR option:
 .SH "AUTHOR"
 Many people have worked on \fIsudo\fR over the years, this version of
 \fBvisudo\fR was written by:
-.Sp
+.PP
 .Vb 1
 \& Todd Miller            <Todd.Miller@courtesan.com>
 .Ve
 See the HISTORY file in the sudo distribution for more details.
 .SH "BUGS"
 If you feel you have found a bug in sudo, please submit a bug report
-at http://www.courtesan.com/sudo/bugs/.
+at http://www.courtesan.com/sudo/bugs/
 .SH "DISCLAIMER"
 \fBVisudo\fR is provided ``AS IS'\*(R' and any express or implied warranties,
 including, but not limited to, the implied warranties of merchantability

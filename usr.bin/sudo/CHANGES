@@ -1212,3 +1212,33 @@ Sudo 1.6 released.
 
 382) Use our own fnmatch() if there is no fnmatch.h, even if there is an
      fnmatch() in libc.
+
+Sudo 1.6.1 released.
+
+383) Better behavior for -l and -v flags in conjunction with NOPASSWD and
+     added "verifypw" and "listpw" options.
+
+384) For HP-UX with cc, add the -Aa flag along with -D_HPUX_SOURCE.
+
+385) Fix compilation with K&R compilers.
+
+386) For netgroup host matching, match against the short version of the
+     hostname as well as the long one if they are different.
+
+387) Terminate passwd reading on '\r' in addition to '\n'
+
+388) Visudo used to loop endlessly if a user entered ^D at the whatnow
+     prompt.  EOF is now treaded as 'x' (exit w/o saving changes).
+
+389) The 'shell_noargs' runtime option is back based on a patch from
+     bguillory@email.com.
+
+390) Systems that return RLIM_INFINITY for RLIMIT_NOFILE (like AIX)
+     would loop for a very loing time during sudo startup.  A value of
+     RLIM_INFINITY is now ignored (getdtablesize/sysconf is used instead).
+
+391) Locking in visudo was broken.  We now lock the sudoers file, not the
+     sudoers temp file, which should be safe.
+
+392) PAM fixups: custom prompts now work correctly and errors are
+     dealt with more sanely.  Patches from Cloyce D. Spradling.

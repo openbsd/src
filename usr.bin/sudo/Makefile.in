@@ -1,5 +1,5 @@
 #
-# Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+# Copyright (c) 1996, 1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
 # All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #
 # @configure_input@
 #
-# $Sudo: Makefile.in,v 1.190 1999/12/05 02:18:45 millert Exp $
+# $Sudo: Makefile.in,v 1.193 2000/01/17 23:46:24 millert Exp $
 #
 
 #### Start of system configuration section. ####
@@ -138,7 +138,7 @@ TESTOBJS = interfaces.o testsudoers.o $(PARSEOBJS)
 
 LIBOBJS = @LIBOBJS@ @ALLOCA@
 
-VERSION = 1.6.1
+VERSION = 1.6.2
 
 DISTFILES = $(SRCS) $(HDRS) BUGS CHANGES FAQ HISTORY INSTALL INSTALL.configure \
 	    LICENSE Makefile.in PORTING README RUNSON TODO TROUBLESHOOTING \
@@ -294,6 +294,9 @@ install-man:
 	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0444 $(srcdir)/visudo.$(mantype) $(mandir8)/visudo.$(mansect8)
 	$(INSTALL) -o $(install_uid) -g $(install_gid) -m 0444 $(srcdir)/sudoers.$(mantype) $(mandir5)/sudoers.$(mansect5)
 @MAN_POSTINSTALL@
+
+check:
+	@echo nothing to check
 
 tags: $(SRCS)
 	ctags $(SRCS)

@@ -31,7 +31,7 @@
  * OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $Sudo: config.h.in,v 1.141 1999/12/09 04:04:42 millert Exp $
+ * $Sudo: config.h.in,v 1.143 2000/01/19 19:07:23 millert Exp $
  */
 
 /*
@@ -251,8 +251,8 @@
 /* Define if you have flock(2).  */
 #undef HAVE_FLOCK
 
-/* Define if you have ftruncate(2).  */
-#undef HAVE_FTRUNCATE
+/* Define if you have fstat(2).  */
+#undef HAVE_FSTAT
 
 /* Define if you have setrlimit(2).  */
 #undef HAVE_SETRLIMIT

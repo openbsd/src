@@ -1,5 +1,5 @@
-Installation instructions for Sudo 1.6
-======================================
+Installation instructions for Sudo 1.6.2
+========================================
 
 Sudo uses a `configure' script to probe the capabilities and type
 of the system in question.  In this release, `configure' takes many
@@ -228,12 +228,6 @@ Special features/options:
 	security hole as most editors allow a user to get a shell (which would
 	be a root shell and hence, no logging).
 
-  --enable-noargs-shell
-	If sudo is invoked with no arguments it acts as if the "-s" flag had
-	been given.  That is, it runs a shell as root (the shell is determined
-	by the SHELL environment variable, falling back on the shell listed
-	in the invoking user's /etc/passwd entry).
-
 The following options are also configurable at runtime:
 
   --with-otp-only
@@ -422,6 +416,12 @@ The following options are also configurable at runtime:
 
   --enable-log-host
 	Log the hostname in the log file.
+
+  --enable-noargs-shell
+	If sudo is invoked with no arguments it acts as if the "-s" flag had
+	been given.  That is, it runs a shell as root (the shell is determined
+	by the SHELL environment variable, falling back on the shell listed
+	in the invoking user's /etc/passwd entry).
 
   --enable-shell-sets-home
 	If sudo is invoked with the "-s" flag the HOME environment variable

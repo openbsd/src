@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1996, 1998, 1999 Todd C. Miller <Todd.Miller@courtesan.com>
+ * Copyright (c) 1996, 1998-2000 Todd C. Miller <Todd.Miller@courtesan.com>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -78,7 +78,7 @@
 #endif /* TCSASOFT */
 
 #ifndef lint
-static const char rcsid[] = "$Sudo: tgetpass.c,v 1.91 1999/12/05 02:18:47 millert Exp $";
+static const char rcsid[] = "$Sudo: tgetpass.c,v 1.93 2000/01/17 23:46:26 millert Exp $";
 #endif /* lint */
 
 static char *tgetline __P((int, char *, size_t, int));
@@ -216,14 +216,14 @@ tgetline(fd, buf, bufsiz, timeout)
 
 	    /* Read a character, exit loop on error, EOF or EOL */
 	    n = read(fd, &c, 1);
-	    if (n != 1 || c == '\n')
+	    if (n != 1 || c == '\n' || c == '\r')
 		break;
 	    *cp++ = c;
 	}
 	free(readfds);
     } else {
 	/* Keep reading until out of space, EOF, error, or newline */
-	while (--left && (n = read(fd, &c, 1)) == 1 && c != '\n')
+	while (--left && (n = read(fd, &c, 1)) == 1 && (c != '\n' || c != '\r'))
 	    *cp++ = c;
     }
     *cp = '\0';
