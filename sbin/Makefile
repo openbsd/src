@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 1997/03/26 23:14:57 provos Exp $
+#	$OpenBSD: Makefile,v 1.25 1997/04/24 08:17:23 downsj Exp $
 #	$NetBSD: Makefile,v 1.29 1996/05/14 17:39:21 ws Exp $
 
 # Not ported: XNSrouted enpload scsiformat startslip
@@ -15,7 +15,6 @@ SUBDIR+= mount_cd9660
 SUBDIR+= mount_fdesc
 SUBDIR+= mount_ffs	newfs fsck_ffs fsdb dumpfs dump restore clri tunefs fsirand
 SUBDIR+= mount_kernfs
-SUBDIR+= mount_lfs	newlfs dumplfs
 # mount_mfs -> newfs
 SUBDIR+= mount_msdos	newfs_msdos fsck_msdos
 SUBDIR+= mount_nfs
