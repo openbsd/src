@@ -1,4 +1,4 @@
-/*	$OpenBSD: root.c,v 1.14 2004/12/28 21:58:42 jfb Exp $	*/
+/*	$OpenBSD: root.c,v 1.15 2005/02/17 16:09:03 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -102,7 +102,7 @@ cvsroot_parse(const char *str)
 		return (NULL);
 	}
 	memset(root, 0, sizeof(*root));
-	root->cr_ref = 2;
+	root->cr_ref = 1;
 	root->cr_method = CVS_METHOD_NONE;
 	CVS_RSTVR(root);
 
@@ -215,12 +215,10 @@ cvsroot_parse(const char *str)
 
 	/* add to the cache */
 	tmp = realloc(cvs_rcache, (cvs_rcsz + 1) * sizeof(struct cvsroot *));
-	if (tmp == NULL) {
-		/* just forget about the cache and return anyways */
-		root->cr_ref--;
-	} else {
+	if (tmp != NULL) {
 		cvs_rcache = (struct cvsroot **)tmp;
 		cvs_rcache[cvs_rcsz++] = root;
+		root->cr_ref++;
 	}
 
 	return (root);
