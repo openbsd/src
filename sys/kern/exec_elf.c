@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.c,v 1.39 2002/08/22 22:04:42 art Exp $	*/
+/*	$OpenBSD: exec_elf.c,v 1.40 2002/09/18 22:07:50 drahn Exp $	*/
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
@@ -409,6 +409,8 @@ ELFNAME(load_file)(struct proc *p, char *path, struct exec_package *epp,
 			break;
 		}
 	}
+
+	vn_marktext(nd.ni_vp);
 
 bad1:
 	VOP_CLOSE(nd.ni_vp, FREAD, p->p_ucred, p);
