@@ -1,4 +1,4 @@
-/*      $OpenBSD: vm_machdep.c,v 1.11 1997/09/12 09:30:57 maja Exp $       */
+/*      $OpenBSD: vm_machdep.c,v 1.12 1997/10/08 07:15:57 niklas Exp $       */
 /*      $NetBSD: vm_machdep.c,v 1.33 1997/07/06 22:38:22 ragge Exp $       */
 
 /*
@@ -248,7 +248,7 @@ cpu_switch(pp)
 again:	
 	/* First: Search for a queue. */
 	s = splhigh();
-	if ((i = ffs(whichqs) -1 ) < 0)
+	if ((i = ffs(whichqs) - 1) < 0)
 		goto idle;
 
 	/*
