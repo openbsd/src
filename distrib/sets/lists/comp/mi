@@ -11,6 +11,7 @@
 ./usr/bin/fpr
 ./usr/bin/g++
 ./usr/bin/g77
+./usr/bin/f77
 ./usr/bin/gcc
 ./usr/bin/gcov
 ./usr/bin/gprof
