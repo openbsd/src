@@ -1,4 +1,4 @@
-/*	$OpenBSD: banner.c,v 1.2 1996/06/26 05:31:33 deraadt Exp $	*/
+/*	$OpenBSD: banner.c,v 1.3 1998/12/07 20:09:40 deraadt Exp $	*/
 /*	$NetBSD: banner.c,v 1.2 1995/04/09 06:00:15 cgd Exp $	*/
 
 /*
@@ -62,11 +62,14 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)printjob.c	8.2 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: banner.c,v 1.2 1996/06/26 05:31:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: banner.c,v 1.3 1998/12/07 20:09:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "banner.h"
 
@@ -80,7 +83,7 @@ scnline(key, p, c)
 	register char *p;
 	int c;
 {
-	register scnwidth;
+	int scnwidth;
 
 	/*
 	 * <sjg> lpd makes chars out of the letter in question.
@@ -127,8 +130,8 @@ scan_out(scfd, scsp, dlm)
 	int scfd, dlm;
 	char *scsp;
 {
-	register char *strp;
-	register nchrs, j;
+	char *strp;
+	int nchrs, j;
 	char outbuf[LINELEN+1], *sp, c, cc;
 	int d, scnhgt;
 	extern char scnkey[][HEIGHT];	/* in lpdchar.c */
@@ -137,12 +140,13 @@ scan_out(scfd, scsp, dlm)
 		strp = &outbuf[0];
 		sp = scsp;
 		for (nchrs = 0; ; ) {
-			d = dropit(c = TRC(cc = *sp++));
+			c = TRC(cc = *sp++);
+			d = dropit(c);
 			if ((!d && scnhgt > HEIGHT) || (scnhgt <= DROP && d))
 				for (j = WIDTH; --j;)
 					*strp++ = BACKGND;
 			else
-				strp = scnline(scnkey[c][scnhgt-1-d], strp, cc);
+				strp = scnline(scnkey[(int)c][scnhgt-1-d], strp, cc);
 			if (*sp == dlm || *sp == '\0' || nchrs++ >= PW/(WIDTH+1)-1)
 				break;
 			*strp++ = BACKGND;
