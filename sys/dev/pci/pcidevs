@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.312 2000/09/14 09:53:09 niklas Exp $
+	$OpenBSD: pcidevs,v 1.313 2000/09/14 10:08:40 niklas Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -510,6 +510,7 @@ vendor PICTUREEL	0x12c5	Picture Elements
 vendor STB2		0x12d2	NVidia/SGS-Thomson
 vendor AUREAL		0x12eb	Aureal
 vendor ADMTEK		0x1317	ADMtek
+vendor ALTATECH		0x1318	Alta Technology
 vendor FORTEMEDIA	0x1319	Forte Media
 vendor SIIG		0x131f	SIIG
 vendor LMC		0x1376	LAN Media Corp
@@ -697,6 +698,9 @@ product ADVSYS U3W		0x2700	ASP-3940U3W
 /* Alliance products */
 product ALLIANCE AT22		0x6424	AT22
 product ALLIANCE AT24		0x6424	AT24
+
+/* Alta Technology products */
+product ALTATECH GNIC2		0x0911	PMC/GNIC2
 
 /* Alteon products */
 product ALTEON ACENIC		0x0001	Acenic
@@ -917,7 +921,7 @@ product CYCLADES CYCLOMZ_2	0x0201	Cyclom-Z above 1M
 product CYRIX GXMPCI		0x0001  GXm Host-PCI
 product CYRIX GXMISA		0x0002	GXm PCI-ISA
 
-/* Dell Computer */
+/* Dell Computer products */
 product DELL DELL_PERC_2SI	0x0001	PERC 2/Si
 product DELL DELL_PERC_3DI	0x0002	PERC 3/Di
 product DELL DELL_PERC_3SI	0x0003	PERC 3/Si
