@@ -1,4 +1,4 @@
-/*	$OpenBSD: slstats.c,v 1.16 2003/06/26 21:36:39 deraadt Exp $	*/
+/*	$OpenBSD: slstats.c,v 1.17 2003/09/06 17:27:53 jmc Exp $	*/
 /*	$NetBSD: slstats.c,v 1.6.6.1 1996/06/07 01:42:30 thorpej Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: slstats.c,v 1.16 2003/06/26 21:36:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slstats.c,v 1.17 2003/09/06 17:27:53 jmc Exp $";
 #endif
 
 #define INET
@@ -90,7 +90,7 @@ main(int argc, char *argv[])
 
 	(void)strlcpy(interface, "sl0", sizeof(interface));
 
-	while ((ch = getopt(argc, argv, "i:M:N:v")) != -1) {
+	while ((ch = getopt(argc, argv, "i:v")) != -1) {
 		switch (ch) {
 		case 'i':
 			interval = atoi(optarg);
@@ -135,8 +135,8 @@ void
 usage()
 {
 
-	fprintf(stderr, "usage: %s [-i interval] %s",
-	    __progname, "[-v] [unit]\n");
+	fprintf(stderr, "usage: %s [-v] %s",
+	    __progname, "[-i interval] [unit-number]\n");
 	exit(1);
 }
 
