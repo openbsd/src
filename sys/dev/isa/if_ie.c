@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.18 1999/08/17 22:47:16 mickey Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.19 2001/02/03 05:09:48 mickey Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -118,6 +118,7 @@ iomem, and to make 16-pointers, we subtract sc_maddr and and with 0xffff.
 #include <sys/errno.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
+#include <sys/timeout.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -320,7 +321,6 @@ static __inline int check_eh __P((struct ie_softc *, struct ether_header *,
 static __inline int ie_buflen __P((struct ie_softc *, int));
 static __inline int ie_packet_len __P((struct ie_softc *));
 
-static void chan_attn_timeout __P((void *));
 static void run_tdr __P((struct ie_softc *, struct ie_tdr_cmd *));
 
 struct cfattach ie_isa_ca = {
@@ -1817,17 +1817,6 @@ iereset(sc)
 }
 
 /*
- * This is called if we time out.
- */
-static void
-chan_attn_timeout(rock)
-	void *rock;
-{
-
-	*(int *)rock = 1;
-}
-
-/*
  * Send a command to the controller and wait for it to either complete or be
  * accepted, depending on the command.  If the command pointer is null, then
  * pretend that the command is not an action command.  If the command pointer
@@ -1844,8 +1833,7 @@ command_and_wait(sc, cmd, pcmd, mask)
 {
 	volatile struct ie_cmd_common *cc = pcmd;
 	volatile struct ie_sys_ctl_block *scb = sc->scb;
-	volatile int timedout = 0;
-	extern int hz;
+	int i;
 
 	scb->ie_command = (u_short)cmd;
 
@@ -1855,23 +1843,18 @@ command_and_wait(sc, cmd, pcmd, mask)
 		/*
 		 * According to the packet driver, the minimum timeout should
 		 * be .369 seconds, which we round up to .4.
-		 */
-		timeout(chan_attn_timeout, (caddr_t)&timedout, 2 * hz / 5);
-
-		/*
+		 *
 		 * Now spin-lock waiting for status.  This is not a very nice
 		 * thing to do, but I haven't figured out how, or indeed if, we
 		 * can put the process waiting for action to sleep.  (We may
 		 * be getting called through some other timeout running in the
 		 * kernel.)
 		 */
-		for (;;)
-			if ((cc->ie_cmd_status & mask) || timedout)
+		for (i = 36900; i--; DELAY(10))
+			if ((cc->ie_cmd_status & mask))
 				break;
 
-		untimeout(chan_attn_timeout, (caddr_t)&timedout);
-
-		return timedout;
+		return i < 0;
 	} else {
 		/*
 		 * Otherwise, just wait for the command to be accepted.
