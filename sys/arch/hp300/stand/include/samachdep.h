@@ -1,4 +1,4 @@
-/*	$OpenBSD: samachdep.h,v 1.1 1997/07/14 08:14:38 downsj Exp $	*/
+/*	$OpenBSD: samachdep.h,v 1.2 1997/09/14 07:02:03 downsj Exp $	*/
 /*	$NetBSD: samachdep.h,v 1.3 1997/05/12 07:54:45 thorpej Exp $	*/
 
 /*
@@ -96,3 +96,4 @@ extern	int ndevs_general;
 extern	struct fs_ops file_system_rawfs[];
 extern	struct fs_ops file_system_ufs[];
 extern	struct fs_ops file_system_nfs[];
+extern	struct fs_ops file_system_cd9660[];

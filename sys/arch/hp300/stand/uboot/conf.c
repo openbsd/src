@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.1 1997/07/14 08:14:56 downsj Exp $	*/
+/*	$OpenBSD: conf.c,v 1.2 1997/09/14 07:02:05 downsj Exp $	*/
 /*	$NetBSD: conf.c,v 1.12 1996/10/14 07:29:15 thorpej Exp $	*/
 
 /*
@@ -49,6 +49,7 @@
 #include <netinet/in_systm.h>
 
 #include <lib/libsa/nfs.h>
+#include <lib/libsa/cd9660.h>
 #include <lib/libsa/ufs.h>
 #include "rawfs.h"
 
@@ -150,8 +151,13 @@ struct fs_ops file_system_nfs[] = {
 	{ nfs_open, nfs_close, nfs_read, nfs_write, nfs_seek, nfs_stat },
 };
 
-struct fs_ops file_system[1];
-int	nfsys = 1;		/* we always know which one we want */
+struct fs_ops file_system_cd9660[] = {
+	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
+	  cd9660_stat },
+};
+
+struct fs_ops file_system[2];
+int	nfsys = 1;		/* default; changed per device type. */
 
 
 /*

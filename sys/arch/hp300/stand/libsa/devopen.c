@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.1 1997/07/14 08:14:48 downsj Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.2 1997/09/14 07:02:05 downsj Exp $	*/
 /*	$NetBSD: devopen.c,v 1.7 1996/10/14 07:31:47 thorpej Exp $	*/
 
 /*-
@@ -76,8 +76,14 @@ devlookup(d, len)
 		break;
 
 	    case 2:	/* hd */
+		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+		break;
+
 	    case 4:	/* sd */
 		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+		bcopy(file_system_cd9660, &file_system[1],
+		    sizeof(struct fs_ops));
+		nfsys = 2;
 		break;
 
 	    case 6:	/* le */
@@ -228,8 +234,14 @@ devopen(f, fname, file)
 		break;
 
 	case 2:		/* hd */
+		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+		break; 
+
 	case 4:		/* sd */
 		bcopy(file_system_ufs, file_system, sizeof(struct fs_ops));
+		bcopy(file_system_cd9660, &file_system[1],
+		    sizeof(struct fs_ops));
+		nfsys = 2;
 		break; 
 
 	case 6:		/* le */
