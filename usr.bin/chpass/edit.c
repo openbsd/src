@@ -1,4 +1,4 @@
-/*	$OpenBSD: edit.c,v 1.14 1998/05/28 10:17:49 deraadt Exp $	*/
+/*	$OpenBSD: edit.c,v 1.15 1998/05/28 19:13:26 deraadt Exp $	*/
 /*	$NetBSD: edit.c,v 1.6 1996/05/15 21:50:45 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)edit.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: edit.c,v 1.14 1998/05/28 10:17:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: edit.c,v 1.15 1998/05/28 19:13:26 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -76,8 +76,10 @@ edit(tempname, pw)
 			unlink(tempname);
 			pw_error(NULL, 0, 0);
 		}
-		if (verify(tempname, pw))
+		if (verify(tempname, pw)) {
+			unlink(tempname);
 			break;
+		}
 		pw_prompt();
 	}
 }
