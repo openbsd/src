@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.331 2003/04/03 15:27:17 cedric Exp $ */
+/*	$OpenBSD: pf.c,v 1.332 2003/04/05 20:18:23 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2002,26 +2002,27 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PF_STEP_OUT_OF_ANCHOR(r, anchorrule, ruleset,
 			    PF_RULESET_FILTER);
 	}
+	r = *rm;
 
-	if (*rm != NULL) {
-		(*rm)->packets++;
-		(*rm)->bytes += pd->tot_len;
-		if (rs != *rm) {
+	if (r != NULL) {
+		r->packets++;
+		r->bytes += pd->tot_len;
+		if (rs != r) {
 			rs->packets++;
 			rs->bytes += pd->tot_len;
 		}
 		REASON_SET(&reason, PFRES_MATCH);
 
-		if ((*rm)->log) {
+		if (r->log) {
 			if (rewrite)
 				m_copyback(m, off, sizeof(*th), (caddr_t)th);
 			PFLOG_PACKET(ifp, h, m, af, direction, reason, rs);
 		}
 
-		if (((*rm)->action == PF_DROP) &&
-		    (((*rm)->rule_flag & PFRULE_RETURNRST) ||
-		    ((*rm)->rule_flag & PFRULE_RETURNICMP) ||
-		    ((*rm)->rule_flag & PFRULE_RETURN))) {
+		if ((r->action == PF_DROP) &&
+		    ((r->rule_flag & PFRULE_RETURNRST) ||
+		    (r->rule_flag & PFRULE_RETURNICMP) ||
+		    (r->rule_flag & PFRULE_RETURN))) {
 			/* undo NAT/RST changes, if they have taken place */
 			if (nat != NULL) {
 				pf_change_ap(saddr, &th->th_sport, pd->ip_sum,
@@ -2032,31 +2033,31 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 				    &th->th_sum, &baddr, bport, 0, af);
 				rewrite++;
 			}
-			if (((*rm)->rule_flag & PFRULE_RETURNRST) ||
-			    ((*rm)->rule_flag & PFRULE_RETURN))
+			if ((r->rule_flag & PFRULE_RETURNRST) ||
+			    (r->rule_flag & PFRULE_RETURN))
 				pf_send_reset(off, th, pd, af,
-				    (*rm)->return_ttl, *rm);
-			else if ((af == AF_INET) && (*rm)->return_icmp)
-				pf_send_icmp(m, (*rm)->return_icmp >> 8,
-				    (*rm)->return_icmp & 255, af, *rm);
-			else if ((af == AF_INET6) && (*rm)->return_icmp6)
-				pf_send_icmp(m, (*rm)->return_icmp6 >> 8,
-				    (*rm)->return_icmp6 & 255, af, *rm);
+				    r->return_ttl, r);
+			else if ((af == AF_INET) && r->return_icmp)
+				pf_send_icmp(m, r->return_icmp >> 8,
+				    r->return_icmp & 255, af, r);
+			else if ((af == AF_INET6) && r->return_icmp6)
+				pf_send_icmp(m, r->return_icmp6 >> 8,
+				    r->return_icmp6 & 255, af, r);
 		}
 
-		if ((*rm)->action == PF_DROP)
+		if (r->action == PF_DROP)
 			return (PF_DROP);
 	}
 
-	if (((*rm != NULL) && (*rm)->keep_state) ||
+	if ((r != NULL && r->keep_state) ||
 	    nat != NULL || rdr != NULL) {
 		/* create new state */
 		u_int16_t	 len;
 		struct pf_state	*s = NULL;
 
 		len = pd->tot_len - off - (th->th_off << 2);
-		if (*rm == NULL || !(*rm)->max_states ||
-		    (*rm)->states < (*rm)->max_states)
+		if (r == NULL || !r->max_states ||
+		    r->states < r->max_states)
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL) {
 			REASON_SET(&reason, PFRES_MEMORY);
@@ -2073,8 +2074,8 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			s->nat_rule = rdr;
 		if (s->nat_rule != NULL)
 			s->nat_rule->states++;
-		s->allow_opts = *rm && (*rm)->allow_opts;
-		s->log = *rm && ((*rm)->log & 2);
+		s->allow_opts = r && r->allow_opts;
+		s->log = r && (r->log & 2);
 		s->proto = IPPROTO_TCP;
 		s->direction = direction;
 		s->af = af;
@@ -2108,7 +2109,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->src.seqlo = ntohl(th->th_seq);
 		s->src.seqhi = s->src.seqlo + len + 1;
 		if ((th->th_flags & (TH_SYN|TH_ACK)) == TH_SYN &&
-		    *rm != NULL && (*rm)->keep_state == PF_STATE_MODULATE) {
+		    r != NULL && r->keep_state == PF_STATE_MODULATE) {
 			/* Generate sequence number modulator */
 			while ((s->src.seqdiff = arc4random()) == 0)
 				;
@@ -2131,7 +2132,7 @@ pf_test_tcp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->src.state = TCPS_SYN_SENT;
 		s->dst.state = TCPS_CLOSED;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + TIMEOUT(*rm, PFTM_TCP_FIRST_PACKET);
+		s->expire = s->creation + TIMEOUT(r, PFTM_TCP_FIRST_PACKET);
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
@@ -2249,25 +2250,26 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PF_STEP_OUT_OF_ANCHOR(r, anchorrule, ruleset,
 			    PF_RULESET_FILTER);
 	}
+	r = *rm;
 
-	if (*rm != NULL) {
-		(*rm)->packets++;
-		(*rm)->bytes += pd->tot_len;
-		if (rs != *rm) {
+	if (r != NULL) {
+		r->packets++;
+		r->bytes += pd->tot_len;
+		if (rs != r) {
 			rs->packets++;
 			rs->bytes += pd->tot_len;
 		}
 		REASON_SET(&reason, PFRES_MATCH);
 
-		if ((*rm)->log) {
+		if (r->log) {
 			if (rewrite)
 				m_copyback(m, off, sizeof(*uh), (caddr_t)uh);
 			PFLOG_PACKET(ifp, h, m, af, direction, reason, rs);
 		}
 
-		if (((*rm)->action == PF_DROP) &&
-		    (((*rm)->rule_flag & PFRULE_RETURNICMP) ||
-		    ((*rm)->rule_flag & PFRULE_RETURN))) {
+		if ((r->action == PF_DROP) &&
+		    ((r->rule_flag & PFRULE_RETURNICMP) ||
+		    (r->rule_flag & PFRULE_RETURN))) {
 			/* undo NAT/RST changes, if they have taken place */
 			if (nat != NULL) {
 				pf_change_ap(saddr, &uh->uh_sport, pd->ip_sum,
@@ -2278,25 +2280,25 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 				    &uh->uh_sum, &baddr, bport, 1, af);
 				rewrite++;
 			}
-			if ((af == AF_INET) && (*rm)->return_icmp)
-				pf_send_icmp(m, (*rm)->return_icmp >> 8,
-				    (*rm)->return_icmp & 255, af, *rm);
-			else if ((af == AF_INET6) && (*rm)->return_icmp6)
-				pf_send_icmp(m, (*rm)->return_icmp6 >> 8,
-				    (*rm)->return_icmp6 & 255, af, *rm);
+			if ((af == AF_INET) && r->return_icmp)
+				pf_send_icmp(m, r->return_icmp >> 8,
+				    r->return_icmp & 255, af, r);
+			else if ((af == AF_INET6) && r->return_icmp6)
+				pf_send_icmp(m, r->return_icmp6 >> 8,
+				    r->return_icmp6 & 255, af, r);
 		}
 
-		if ((*rm)->action == PF_DROP)
+		if (r->action == PF_DROP)
 			return (PF_DROP);
 	}
 
-	if ((*rm != NULL && (*rm)->keep_state) ||
+	if ((r != NULL && r->keep_state) ||
 	    nat != NULL || rdr != NULL) {
 		/* create new state */
 		struct pf_state	*s = NULL;
 
-		if (*rm == NULL || !(*rm)->max_states ||
-		    (*rm)->states < (*rm)->max_states)
+		if (r == NULL || !r->max_states ||
+		    r->states < r->max_states)
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL)
 			return (PF_DROP);
@@ -2311,8 +2313,8 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			s->nat_rule = rdr;
 		if (s->nat_rule != NULL)
 			s->nat_rule->states++;
-		s->allow_opts = *rm && (*rm)->allow_opts;
-		s->log = *rm && ((*rm)->log & 2);
+		s->allow_opts = r && r->allow_opts;
+		s->log = r && (r->log & 2);
 		s->proto = IPPROTO_UDP;
 		s->direction = direction;
 		s->af = af;
@@ -2352,7 +2354,7 @@ pf_test_udp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->dst.max_win = 0;
 		s->dst.state = PFUDPS_NO_TRAFFIC;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + TIMEOUT(*rm, PFTM_UDP_FIRST_PACKET);
+		s->expire = s->creation + TIMEOUT(r, PFTM_UDP_FIRST_PACKET);
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
@@ -2506,17 +2508,18 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PF_STEP_OUT_OF_ANCHOR(r, anchorrule, ruleset,
 			    PF_RULESET_FILTER);
 	}
+	r = *rm;
 
-	if (*rm != NULL) {
-		(*rm)->packets++;
-		(*rm)->bytes += pd->tot_len;
-		if (rs != *rm) {
+	if (r != NULL) {
+		r->packets++;
+		r->bytes += pd->tot_len;
+		if (rs != r) {
 			rs->packets++;
 			rs->bytes += pd->tot_len;
 		}
 		REASON_SET(&reason, PFRES_MATCH);
 
-		if ((*rm)->log) {
+		if (r->log) {
 #ifdef INET6
 			if (rewrite)
 				m_copyback(m, off, ICMP_MINLEN,
@@ -2525,17 +2528,17 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PFLOG_PACKET(ifp, h, m, af, direction, reason, rs);
 		}
 
-		if ((*rm)->action != PF_PASS)
+		if (r->action != PF_PASS)
 			return (PF_DROP);
 	}
 
-	if (!state_icmp && ((*rm != NULL && (*rm)->keep_state) ||
+	if (!state_icmp && ((r != NULL && r->keep_state) ||
 	    nat != NULL || rdr != NULL)) {
 		/* create new state */
 		struct pf_state	*s = NULL;
 
-		if (*rm == NULL || !(*rm)->max_states ||
-		    (*rm)->states < (*rm)->max_states)
+		if (r == NULL || !r->max_states ||
+		    r->states < r->max_states)
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL)
 			return (PF_DROP);
@@ -2550,8 +2553,8 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 			s->nat_rule = rdr;
 		if (s->nat_rule != NULL)
 			s->nat_rule->states++;
-		s->allow_opts = *rm && (*rm)->allow_opts;
-		s->log = *rm && ((*rm)->log & 2);
+		s->allow_opts = r && r->allow_opts;
+		s->log = r && (r->log & 2);
 		s->proto = pd->proto;
 		s->direction = direction;
 		s->af = af;
@@ -2587,7 +2590,7 @@ pf_test_icmp(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->dst.max_win = 0;
 		s->dst.state = 0;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + TIMEOUT(*rm, PFTM_ICMP_FIRST_PACKET);
+		s->expire = s->creation + TIMEOUT(r, PFTM_ICMP_FIRST_PACKET);
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
@@ -2698,29 +2701,30 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			PF_STEP_OUT_OF_ANCHOR(r, anchorrule, ruleset,
 			    PF_RULESET_FILTER);
 	}
+	r = *rm;
 
-	if (*rm != NULL) {
-		(*rm)->packets++;
-		(*rm)->bytes += pd->tot_len;
-		if (rs != *rm) {
+	if (r != NULL) {
+		r->packets++;
+		r->bytes += pd->tot_len;
+		if (rs != r) {
 			rs->packets++;
 			rs->bytes += pd->tot_len;
 		}
 		REASON_SET(&reason, PFRES_MATCH);
-		if ((*rm)->log)
+		if (r->log)
 			PFLOG_PACKET(ifp, h, m, af, direction, reason, rs);
 
-		if ((*rm)->action != PF_PASS)
+		if (r->action != PF_PASS)
 			return (PF_DROP);
 	}
 
-	if ((*rm != NULL && (*rm)->keep_state) || nat != NULL ||
+	if ((r != NULL && r->keep_state) || nat != NULL ||
 	    rdr != NULL) {
 		/* create new state */
 		struct pf_state	*s = NULL;
 
-		if (*rm == NULL || !(*rm)->max_states ||
-		    (*rm)->states < (*rm)->max_states)
+		if (r == NULL || !r->max_states ||
+		    r->states < r->max_states)
 			s = pool_get(&pf_state_pl, PR_NOWAIT);
 		if (s == NULL)
 			return (PF_DROP);
@@ -2735,8 +2739,8 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 			s->nat_rule = rdr;
 		if (s->nat_rule != NULL)
 			s->nat_rule->states++;
-		s->allow_opts = *rm && (*rm)->allow_opts;
-		s->log = *rm && ((*rm)->log & 2);
+		s->allow_opts = r && r->allow_opts;
+		s->log = r && (r->log & 2);
 		s->proto = pd->proto;
 		s->direction = direction;
 		s->af = af;
@@ -2772,12 +2776,12 @@ pf_test_other(struct pf_rule **rm, struct pf_state **sm, int direction,
 		s->dst.max_win = 0;
 		s->dst.state = PFOTHERS_NO_TRAFFIC;
 		s->creation = time.tv_sec;
-		s->expire = s->creation + TIMEOUT(*rm, PFTM_OTHER_FIRST_PACKET);
+		s->expire = s->creation + TIMEOUT(r, PFTM_OTHER_FIRST_PACKET);
 		s->packets = 1;
 		s->bytes = pd->tot_len;
 		if (pf_insert_state(s)) {
 			REASON_SET(&reason, PFRES_MEMORY);
-			if (*rm && (*rm)->log)
+			if (r && r->log)
 				PFLOG_PACKET(ifp, h, m, af, direction, reason,
 				    rs);
 			pool_put(&pf_state_pl, s);
@@ -2837,21 +2841,22 @@ pf_test_fragment(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			PF_STEP_OUT_OF_ANCHOR(r, anchorrule, ruleset,
 			    PF_RULESET_FILTER);
 	}
+	r = *rm;
 
-	if (*rm != NULL) {
+	if (r != NULL) {
 		u_short	reason;
 
-		(*rm)->packets++;
-		(*rm)->bytes += pd->tot_len;
-		if (rs != *rm) {
+		r->packets++;
+		r->bytes += pd->tot_len;
+		if (rs != r) {
 			rs->packets++;
 			rs->bytes += pd->tot_len;
 		}
 		REASON_SET(&reason, PFRES_MATCH);
-		if ((*rm)->log)
+		if (r->log)
 			PFLOG_PACKET(ifp, h, m, af, direction, reason, rs);
 
-		if ((*rm)->action != PF_PASS)
+		if (r->action != PF_PASS)
 			return (PF_DROP);
 	}
 
