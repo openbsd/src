@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.3 2004/11/09 14:42:26 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.4 2004/11/09 21:08:49 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -36,7 +36,7 @@
  * version 0.5 - 2004-08-03
  *
  * Originally written by Daan Vreeken <Danovitsch @ Vitsch . net>
- *  http://vitsch.net/bsd/atu
+ *  http://vitsch.net/bsd/atuwi
  *
  * Contributed to by :
  *  Chris Whitehouse, Alistair Phillips, Peter Pilka, Martijn van Buul,
