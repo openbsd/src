@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pppoe.8,v 1.16 2004/05/06 12:15:20 jmc Exp $
+.\"	$OpenBSD: pppoe.8,v 1.17 2004/08/03 08:54:08 jmc Exp $
 .\"
 .\" Copyright (c) 2000 Network Security Technologies, Inc.
 .\" (http://www.netsec.net)
@@ -139,6 +139,7 @@ the first thing that must be done is to bring the interface up:
 .Bd -literal -offset indent
 # ifconfig xl0 up
 .Ed
+.Pp
 This can be done automatically during boot with a
 .Pa /etc/hostname.xl0
 file, see
@@ -214,6 +215,7 @@ to adjust the maximum segment size on outgoing SYN packets.
 .Sh SEE ALSO
 .Xr tun 4 ,
 .Xr hostname.if 5 ,
+.Xr ifconfig 8 ,
 .Xr ppp 8
 .Rs
 .%T RFC 2516 A Method for Transmitting PPP Over Ethernet (PPPoE)
