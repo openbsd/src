@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: mdXhl.c,v 1.9 1999/08/17 09:13:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: mdXhl.c,v 1.10 2002/12/23 04:33:31 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -22,32 +22,25 @@ static char rcsid[] = "$OpenBSD: mdXhl.c,v 1.9 1999/08/17 09:13:12 millert Exp $
 
 /* ARGSUSED */
 char *
-MDXEnd(ctx, buf)
-    MDX_CTX *ctx;
-    char *buf;
+MDXEnd(MDX_CTX *ctx, char *buf)
 {
     int i;
-    char *p = buf;
     unsigned char digest[16];
     static const char hex[]="0123456789abcdef";
 
-    if (!p)
-	p = malloc(33);
-    if (!p)
-	return 0;
+    if (buf == NULL && (buf = malloc(33)) == NULL)
+	return(NULL);
     MDXFinal(digest,ctx);
     for (i=0;i<16;i++) {
-	p[i+i] = hex[digest[i] >> 4];
-	p[i+i+1] = hex[digest[i] & 0x0f];
+	buf[i+i] = hex[digest[i] >> 4];
+	buf[i+i+1] = hex[digest[i] & 0x0f];
     }
-    p[i+i] = '\0';
-    return p;
+    buf[i+i] = '\0';
+    return(buf);
 }
 
 char *
-MDXFile (filename, buf)
-    char *filename;
-    char *buf;
+MDXFile(char *filename, char *buf)
 {
     unsigned char buffer[BUFSIZ];
     MDX_CTX ctx;
@@ -63,18 +56,15 @@ MDXFile (filename, buf)
     close(f);
     errno = j;
     if (i < 0) return 0;
-    return MDXEnd(&ctx, buf);
+    return(MDXEnd(&ctx, buf));
 }
 
 char *
-MDXData (data, len, buf)
-    const unsigned char *data;
-    size_t len;
-    char *buf;
+MDXData(const u_char *data, size_t len, char *buf)
 {
     MDX_CTX ctx;
 
     MDXInit(&ctx);
     MDXUpdate(&ctx,data,len);
-    return MDXEnd(&ctx, buf);
+    return(MDXEnd(&ctx, buf));
 }

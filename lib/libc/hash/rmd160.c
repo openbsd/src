@@ -32,23 +32,23 @@
 #include <rmd160.h>
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rmd160.c,v 1.11 2001/10/01 20:36:17 markus Exp $";
+static char rcsid[] = "$OpenBSD: rmd160.c,v 1.12 2002/12/23 04:33:31 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#define PUT_64BIT_LE(cp, value) do { \
-	(cp)[7] = (value) >> 56; \
-	(cp)[6] = (value) >> 48; \
-	(cp)[5] = (value) >> 40; \
-	(cp)[4] = (value) >> 32; \
-	(cp)[3] = (value) >> 24; \
-	(cp)[2] = (value) >> 16; \
-	(cp)[1] = (value) >> 8; \
+#define PUT_64BIT_LE(cp, value) do {                                    \
+	(cp)[7] = (value) >> 56;                                        \
+	(cp)[6] = (value) >> 48;                                        \
+	(cp)[5] = (value) >> 40;                                        \
+	(cp)[4] = (value) >> 32;                                        \
+	(cp)[3] = (value) >> 24;                                        \
+	(cp)[2] = (value) >> 16;                                        \
+	(cp)[1] = (value) >> 8;                                         \
 	(cp)[0] = (value); } while (0)
 
-#define PUT_32BIT_LE(cp, value) do { \
-	(cp)[3] = (value) >> 24; \
-	(cp)[2] = (value) >> 16; \
-	(cp)[1] = (value) >> 8; \
+#define PUT_32BIT_LE(cp, value) do {                                    \
+	(cp)[3] = (value) >> 24;                                        \
+	(cp)[2] = (value) >> 16;                                        \
+	(cp)[1] = (value) >> 8;                                         \
 	(cp)[0] = (value); } while (0)
 
 #define	H0	0x67452301U
@@ -78,10 +78,10 @@ static char rcsid[] = "$OpenBSD: rmd160.c,v 1.11 2001/10/01 20:36:17 markus Exp 
 #define F3(x, y, z) (((x) & (z)) | ((y) & (~z)))
 #define F4(x, y, z) ((x) ^ ((y) | (~z)))
 
-#define R(a, b, c, d, e, Fj, Kj, sj, rj) \
-	do { \
-		a = ROL(sj, a + Fj(b,c,d) + X(rj) + Kj) + e; \
-		c = ROL(10, c); \
+#define R(a, b, c, d, e, Fj, Kj, sj, rj)                                \
+	do {                                                            \
+		a = ROL(sj, a + Fj(b,c,d) + X(rj) + Kj) + e;            \
+		c = ROL(10, c);                                         \
 	} while(0)
 
 #define X(i)	x[i]

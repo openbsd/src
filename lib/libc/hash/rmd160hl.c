@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: rmd160hl.c,v 1.2 1999/08/17 09:13:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: rmd160hl.c,v 1.3 2002/12/23 04:33:31 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <stdlib.h>
@@ -22,31 +22,26 @@ static char rcsid[] = "$OpenBSD: rmd160hl.c,v 1.2 1999/08/17 09:13:12 millert Ex
 
 /* ARGSUSED */
 char *
-RMD160End(ctx, buf)
-    RMD160_CTX *ctx;
-    char *buf;
+RMD160End(RMD160_CTX *ctx, char *buf)
 {
     int i;
-    char *p = buf;
     u_char digest[20];
     static const char hex[]="0123456789abcdef";
 
-    if (p == NULL && (p = malloc(41)) == NULL)
-	return 0;
+    if (buf == NULL && (buf = malloc(41)) == NULL)
+	return(NULL);
 
-    RMD160Final(digest,ctx);
+    RMD160Final(digest, ctx);
     for (i = 0; i < 20; i++) {
-	p[i + i] = hex[digest[i] >> 4];
-	p[i + i + 1] = hex[digest[i] & 0x0f];
+	buf[i + i] = hex[digest[i] >> 4];
+	buf[i + i + 1] = hex[digest[i] & 0x0f];
     }
-    p[i + i] = '\0';
-    return(p);
+    buf[i + i] = '\0';
+    return(buf);
 }
 
 char *
-RMD160File (filename, buf)
-    char *filename;
-    char *buf;
+RMD160File (char *filename, char *buf)
 {
     u_char buffer[BUFSIZ];
     RMD160_CTX ctx;
@@ -67,10 +62,7 @@ RMD160File (filename, buf)
 }
 
 char *
-RMD160Data (data, len, buf)
-    const u_char *data;
-    size_t len;
-    char *buf;
+RMD160Data (const u_char *data, size_t len, char *buf)
 {
     RMD160_CTX ctx;
 
