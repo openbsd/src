@@ -49,7 +49,7 @@ find_call (parent, p_lowpc, p_highpc)
     }
   DBG (CALLDEBUG, printf ("[find_call] %s: 0x%lx to 0x%lx\n",
 			  parent->name, p_lowpc, p_highpc));
-  for (instr = (unsigned int *) (p_lowpc + delta);
+  for (instr = (unsigned int *) (((p_lowpc + delta) + 3) &~ 3);
        instr < (unsigned int *) (p_highpc + delta);
        ++instr)
     {

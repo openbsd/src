@@ -12,7 +12,7 @@ END-INFO-DIR-ENTRY
 @ifinfo
 This file documents the internals of the GNU linker ld.
 
-Copyright (C) 1992 Free Software Foundation, Inc.
+Copyright (C) 1992, 93, 94, 95, 1996 Free Software Foundation, Inc.
 Contributed by Cygnus Support.
 
 Permission is granted to make and distribute verbatim copies of
@@ -37,13 +37,13 @@ regarded as a program in the language TeX).
 @settitle GNU Linker Internals
 @titlepage
 @title{A guide to the internals of the GNU linker}
-@author Per Bothner, Steve Chamberlain
+@author Per Bothner, Steve Chamberlain, Ian Lance Taylor
 @author Cygnus Support
 @page
 
 @tex
 \def\$#1${{#1}}  % Kluge: collect RCS revision info without $...$
-\xdef\manvers{\$Revision: 1.1.1.1 $}  % For use in headers, footers too
+\xdef\manvers{\$Revision: 1.1.1.2 $}  % For use in headers, footers too
 {\parskip=0pt
 \hfill Cygnus Support\par
 \hfill \manvers\par
@@ -52,7 +52,7 @@ regarded as a program in the language TeX).
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1992 Free Software Foundation, Inc.
+Copyright @copyright{} 1992, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 Permission is granted to make and distribute verbatim copies of
 this manual provided the copyright notice and this permission notice
@@ -61,7 +61,8 @@ are preserved on all copies.
 @end titlepage
 @end iftex
 
-@node Top, README, (dir), (dir)
+@node Top
+@top
 
 This file documents the internals of the GNU linker @code{ld}.  It is a
 collection of miscellaneous information with little form at this point.
@@ -71,233 +72,341 @@ GNU @code{ld} as you discover it (or as you design changes to @code{ld}).
 @menu
 * README::			The README File
 * Emulations::			How linker emulations are generated
-* Porting::			Porting the linker
 @end menu
 
-@node README, Emulations, Top, Top
+@node README
 @chapter The @file{README} File
 
 Check the @file{README} file; it often has useful information that does not
 appear anywhere else in the directory.
 
-@node Emulations, Porting, README, Top
+@node Emulations
 @chapter How linker emulations are generated
 
-The linker is controlled by linker scripts written in a linker
-control language.  A linker emulation gives the personality of
-the linker, and is mainly defined by certain linker scripts.
-If you want to understand how these scripts are generated,
-the main file to look at is the @file{genscripts.sh} shell script,
-which is invoked by the @file{Makefile} for each ``emulation''
-to generate a set of 5 linker scripts.
+Each linker target has an @dfn{emulation}.  The emulation includes the
+default linker script, and certain emulations also modify certain types
+of linker behaviour.
 
-For example, for the sun3 emulation used by ld68k, @file{genscripts.sh}
-sources the file @file{emulparams/sun3.sh}, which sets the emulation
-parameters, and specifies that the format is a.out, and to use
-@file{scripttempl/aout.sc} to generate the linker scripts.
+Emulations are created during the build process by the shell script
+@file{genscripts.sh}.
 
-@code{genscripts.sh} generates 5 different linker scripts, one for each
-of the @code{ld} options @samp{-z} (default), @samp{-n}, @samp{-N},
-@samp{-r} and @samp{-Ur}, where each script is slightly different and is
-generated using the template in @file{scripttempl/aout.sc} (for the sun3).
+The @file{genscripts.sh} script starts by reading a file in the
+@file{emulparams} directory.  This is a shell script which sets various
+shell variables used by @file{genscripts.sh} and the other shell scripts
+it invokes.
 
-@node Porting, , Emulations, Top
-@chapter Porting the linker
+The @file{genscripts.sh} script will invoke a shell script in the
+@file{scripttempl} directory in order to create default linker scripts
+written in the linker command language.  The @file{scripttempl} script
+will be invoked 5 (or, in some cases, 6) times, with different
+assignments to shell variables, to create different default scripts.
+The choice of script is made based on the command line options.
 
-Before porting @code{ld} itself, you will need to port the BFD library;
-see @file{../bfd/PORTING}.
+After creating the scripts, @file{genscripts.sh} will invoke yet another
+shell script, this time in the @file{emultempl} directory.  That shell
+script will create the emulation source file, which contains C code.
+This C code permits the linker emulation to override various linker
+behaviours.  Most targets use the generic emulation code, which is in
+@file{emultempl/generic.em}.
 
-The @dfn{host} is the system a tool runs @emph{on}.
-The @dfn{target} is the system a tool runs @emph{for}; i.e.,
-a tool can read and write the binaries of the target.
-Most often, host==target, but @code{ld} supports cross-linking
-(and to some extent the same @code{ld} binary can be used a linker
-for multiple target architectures).
+To summarize, @file{genscripts.sh} reads three shell scripts: an
+emulation parameters script in the @file{emulparams} directory, a linker
+script generation script in the @file{scripttempl} directory, and an
+emulation source file generation script in the @file{emultempl}
+directory.
+
+For example, the Sun 4 linker sets up variables in
+@file{emulparams/sun4.sh}, creates linker scripts using
+@file{scripttempl/aout.sc}, and creates the emulation code using
+@file{emultempl/sunos.em}.
+
+Note that the linker can support several emulations simultaneously,
+depending upon how it is configured.  An emulation can be selected with
+the @code{-m} option.  The @code{-V} option will list all supported
+emulations.
 
 @menu
-* New host:: Porting to a new host
-* New target:: Porting to a new target
-* New emulation:: Porting to a new emulation target
-* Emulation script:: Writing @var{emulation}.sh
-* Linker scripts:: Writing a new @var{script}.sc
-* -n and -N options:: Handling -n and -N style binaries in your linker script
+* emulation parameters::        @file{emulparams} scripts
+* linker scripts::              @file{scripttempl} scripts
+* linker emulations::           @file{emultempl} scripts
 @end menu
 
-@node New host, New target, , Porting
-@section Porting to a new host
+@node emulation parameters
+@section @file{emulparams} scripts
 
-Pick a name for your host. Call that @var{host-type}.
-You need to create the file @file{config/@var{host-type}.mh}.
+Each target selects a particular file in the @file{emulparams} directory
+by setting the shell variable @code{targ_emul} in @file{configure.tgt}.
+This shell variable is used by the @file{configure} script to control
+building an emulation source file.
 
-@node New target, New emulation, New host, Porting
-@section Porting to a new target
+Certain conventions are enforced.  Suppose the @code{targ_emul} variable
+is set to @var{emul} in @file{configure.tgt}.  The name of the emulation
+shell script will be @file{emulparams/@var{emul}.sh}.  The
+@file{Makefile} must have a target named @file{e@var{emul}.c}; this
+target must depend upon @file{emulparams/@var{emul}.sh}, as well as the
+appropriate scripts in the @file{scripttempl} and @file{emultempl}
+directories.  The @file{Makefile} target must invoke @code{GENSCRIPTS}
+with two arguments: @var{emul}, and the value of the make variable
+@code{tdir_@var{emul}}.  The value of the latter variable will be set by
+the @file{configure} script, and is used to set the default target
+directory to search.
 
-Pick a name for your target. Call that @var{target}.
-You need to create at least @file{config/@var{target}.mt}.
-It should contain
+By convention, the @file{emulparams/@var{emul}.sh} shell script should
+only set shell variables.  It may set shell variables which are to be
+interpreted by the @file{scripttempl} and the @file{emultempl} scripts.
+Certain shell variables are interpreted directly by the
+@file{genscripts.sh} script.
 
-@example
-EMUL=@var{emulation}
-@end example
+Here is a list of shell variables interpreted by @file{genscripts.sh},
+as well as some conventional shell variables interpreted by the
+@file{scripttempl} and @file{emultempl} scripts.
 
-An @dfn{emulation} controls the ``personality'' of @code{ld},
-such as the default linker script.  Usually, the
-@var{emulation} will have the same name as the @var{target},
-and you will need to create a new @var{emulation} (see below).
-
-You also need to edit @file{Makefile.in} and possibly @file{configure.in}.
-To see how to do that, search for existing examples (e.g., @code{sun3},
-@code{sun4}, @code{hp300bsd}).
-
-@node New emulation, Emulation script, New target, Porting
-@section Porting to a new emulation target
-
-Pick a name for your target. Call that @var{emulation}.
-Usually, @var{emulation} and @var{target} are the same.
-You need to create at least @file{emulparams/@var{emulation}.sh}.
-You also need to edit @file{Makefile.in}.
-To see how to do that, search for existing examples.
-
-The file @file{emulparams/@var{emulation}.sh} defines a set of
-parameters that are used to generate the emulation.  Its syntax is that
-of a Bourne shell script.  It is ``sourced'' by @file{genscripts.sh}.
-
-@node Emulation script, Linker scripts, New emulation, Porting
-@section Writing @file{@var{emulation}.sh}
-
-Usually, @file{@var{emulation}.sh} contains:
-@example
-EMULATION_NAME=@var{emulation}
-SCRIPT_NAME=@var{script}
-OUTPUT_FORMAT="@var{target-name}"
-TEXT_START_ADDR=@var{text-start-addr}
-TARGET_PAGE_SIZE=@var{page-size}
-SEGMENT_SIZE=@var{segment-size}  # If different from TARGET_PAGE_SIZE.
-ARCH=@var{arch}
-@end example
-
-Here:
 @table @code
-@item @var{target-name}
-Matches the @code{filename} field of the @code{bfd_target} you want
-to use.  (This is a string, and currently the first field.)
-For an a.out target, @var{target-name} matches the @code{TARGETNAME}
-defined in @file{../bfd/@var{target}.c}.
+@item SCRIPT_NAME
+This is the name of the @file{scripttempl} scritp to use.  If
+@code{SCRIPT_NAME} is set to @var{script}, @file{genscripts.sh} will use
+the script @file{scriptteml/@var{script}.sc}.
 
-@item @var{arch}
-The architecture: e.g., @code{m68k}, @code{sparc}, @dots{}.
+@item TEMPLATE_NAME
+This is the name of the @file{emultemlp} script to use.  If
+@code{TEMPLATE_NAME} is set to @var{template}, @file{genscripts.sh} will
+use the script @file{emultempl/@var{template}.em}.  If this variable is
+not set, the default value is @samp{generic}.
 
-@item @var{script}
-The file @file{scripttempl/@var{script}.sc} is a shell script which,
-when evaluated (by @file{genscripts.sh}), writes a linker script file to
-standard output.  You may need to write a new script.  If you use the
-a.out format or something similar, you can probably set
-@example
-SCRIPT_NAME=aout
-@end example
+@item GENERATE_SHLIB_SCRIPT
+If this is set to a nonempty string, @file{genscripts.sh} will invoke
+the @file{scripttempl} script an extra time to create a shared library
+script.  @ref{linker scripts}.
 
-@item @var{text-start-addr}
-@itemx @var{page-size}
-@itemx @var{segment-size}
-These set the shell variables @code{TEXT_START_ADDR}, @code{TARGET_PAGE_SIZE},
-and @code{SEGMENT_SIZE} for use by @file{scripttempl/@var{script}.sc}.
-If @code{SEGMENT_SIZE} is not defined, it defaults to @code{TARGET_PAGE_SIZE},
-if that is defined.  If your script doesn't use these variables, you
-don't have to define them.  For emulations using a.out files, you can
-get these values from @file{../bfd/@var{target}.c}.
-@end table
+@item OUTPUT_FORMAT
+This is normally set to indicate the BFD output format use (e.g.,
+@samp{"a.out-sunos-big"}.  The @file{scripttempl} script will normally
+use it in an @code{OUTPUT_FORMAT} expression in the linker script.
 
-In some cases, you may need more more definitions.
-For example, if you can't use @file{emultempl/generic.em},
-you may need to add:
-@example
-TEMPLATE_NAME=@var{emulation}
-@end example
-and write your own @file{emultempl/@var{emulation}.em} file.
+@item ARCH
+This is normally set to indicate the architecture to use (e.g.,
+@samp{sparc}).  The @file{scripttempl} script will normally use it in an
+@code{OUTPUT_ARCH} expression in the linker script.
 
-@node Linker scripts, -n and -N options, Emulation script, Porting
-@section Writing a new linker script @file{scripttempl/@var{script}.sc}
+@item ENTRY
+Some @file{scripttempl} scripts use this to set the entry address, in an
+@code{ENTRY} expression in the linker script.
 
-You may need to write a new script file for your emulation.
+@item TEXT_START_ADDR
+Some @file{scripttempl} scripts use this to set the start address of the
+@samp{.text} section.
 
-Your script can use the shell variable @code{LD_FLAG}, which has the value:
-@table @code
-@item LD_FLAG=
-when building a script to be used by default
-@item LD_FLAG=n
-when building a script to be used for @samp{ld -n}
-@item LD_FLAG=N
-when building a script to be used for @samp{ld -N}
-@item LD_FLAG=r
-when building a script to be used for @samp{ld -r}
-@item LD_FLAG=u
-when building a script to be used for @samp{ld -Ur}
-@end table
-
-The variable @code{RELOCATING} is only set if relocation is happening
-(i.e., unless the linker is invoked with @samp{-r}).
-Thus your script should has an action @code{@var{ACTION}}
-that should only be done when relocating,
-express that as:
-@example
-$@{RELOCATING+ ACTION@}
-@end example
-This is the case for most assignments, which should look like:
-@example
-$@{RELOCATING+ _end = .@}
-@end example
-
-Also, you should assign absolute addresses to sections only
-when relocating, so:
-@example
-.text $@{RELOCATING+ $@{TEXT_START_ADDR@}@}:
-@end example
-
-The form:
-@example
-	 .section @{ ... @} > section
-@end example
-should be:
-@example
-	 .section @{ ... @} > $@{RELOCATING+ section@}
-@end example
-
-@code{RELOCATING} is set except when @code{LD_FLAG=r} or @code{LD_FLAG=u}.
-@code{CONSTRUCTING} is set except when @code{LD_FLAG=u}.
-
-Alignment of the data segments is controlled by the variables
-@code{DATA_ALIGNMENT_} (note trailing underscore),
-@code{DATA_ALIGNMENT_n}, @code{DATA_ALIGNMENT_N},
-@code{DATA_ALIGNMENT_r}, or @code{DATA_ALIGNMENT_u} depending on the
-value of @code{LD_FLAGS}.  Normally, the default value works (this is
-@code{"ALIGN($@{SEGMENT_SIZE@})"} for the @samp{_n}, and @samp{__}
-(default) variants; @code{"."} for the @samp{_N}, variant; and @code{""}
-for the @samp{_r} and @samp{_u} variants).
-
-@node -n and -N options, , Linker scripts, Porting
-@section Handling @samp{-n} and @samp{-N} style binaries in your linker script
-
-The @samp{-n} linker option requests the linker to create a binary
-with a write-protected text segment, but not demand-pagable (@code{NMAGIC}).
-SunOS starts the text segment for demand-paged binaries at 0x2020
-and other binaries at 0x2000, since the exec header (0x20 bytes)
-is paged in with the text.  Some other Unix variants do the same.
-
-In that case, the @file{emulparams/@var{emulation}.sh} should define:
-@table @code
 @item NONPAGED_TEXT_START_ADDR
-The text start address to use when linking with @samp{-n} or @samp{-N} options.
+If this is defined, the @file{genscripts.sh} script sets
+@code{TEXT_START_ADDR} to its value before running the
+@file{scripttempl} script for the @code{-n} and @code{-N} options
+(@pxref{linker scripts}).
+
+@item SEGMENT_SIZE
+The @file{genscripts.sh} script uses this to set the default value of
+@code{DATA_ALIGNMENT} when running the @file{scripttempl} script.
+
+@item TARGET_PAGE_SIZE
+If @code{SEGMENT_SIZE} is not defined, the @file{genscripts.sh} script
+uses this to define it.
 @end table
 
-For example, on a sun4:
-@example
-TEXT_START_ADDR=0x2020
-NONPAGED_TEXT_START_ADDR=0x2000
-@end example
+@node linker scripts
+@section @file{scripttempl} scripts
 
-The @samp{-N} linker option creates a binary with a non-write-protected
-text segment (@code{NMAGIC}).  This is like @samp{-n}, except that the
-data segment needs not be page-aligned.
+Each linker target uses a @file{scripttempl} script to generate the
+default linker scripts.  The name of the @file{scripttempl} script is
+set by the @code{SCRIPT_NAME} variable in the @file{emulparams} script.
+If @code{SCRIPT_NAME} is set to @var{script}, @code{genscripts.sh} will
+invoke @file{scripttempl/@var{script}.sc}.
+
+The @file{genscripts.sh} script will invoke the @file{scripttempl}
+script 5 or 6 times.  Each time it will set the shell variable
+@code{LD_FLAG} to a different value.  When the linker is run, the
+options used will direct it to select a particular script.  (Script
+selection is controlled by the @code{get_script} emulation entry point;
+this describes the conventional behaviour).
+
+The @file{scripttempl} script should just write a linker script, written
+in the linker command language, to standard output.  If the emulation
+name--the name of the @file{emulparams} file without the @file{.sc}
+extension--is @var{emul}, then the output will be directed to
+@file{ldscripts/@var{emul}.@var{extension}} in the build directory,
+where @var{extension} changes each time the @file{scripttempl} script is
+invoked.
+
+Here is the list of values assigned to @code{LD_FLAG}.
+
+@table @code
+@item (empty)
+The script generated is used by default (when none of the following
+cases apply).  The output has an extension of @file{.x}.
+@item n
+The script generated is used when the linker is invoked with the
+@code{-n} option.  The output has an extension of @file{.xn}.
+@item N
+The script generated is used when the linker is invoked with the
+@code{-N} option.  The output has an extension of @file{.xbn}.
+@item r
+The script generated is used when the linker is invoked with the
+@code{-r} option.  The output has an extension of @file{.xr}.
+@item u
+The script generated is used when the linker is invoked with the
+@code{-Ur} option.  The output has an extension of @file{.xu}.
+@item shared
+The @file{scripttempl} script is only invoked with @code{LD_FLAG} set to
+this value if @code{GENERATE_SHLIB_SCRIPT} is defined in the
+@file{emulparams} file.  The @file{emultempl} script must arrange to use
+this script at the appropriate time, normally when the linker is invoked
+with the @code{-shared} option.  The output has an extension of
+@file{.xs}.
+@end table
+
+Besides the shell variables set by the @file{emulparams} script, and the
+@code{LD_FLAG} variable, the @file{genscripts.sh} script will set
+certain variables for each run of the @file{scripttempl} script.
+
+@table @code
+@item RELOCATING
+This will be set to a non-empty string when the linker is doing a final
+relocation (e.g., all scripts other than @code{-r} and @code{-Ur}).
+
+@item CONSTRUCTING
+This will be set to a non-empty string when the linker is building
+global constructor and destructor tables (e.g., all scripts other than
+@code{-r}).
+
+@item DATA_ALIGNMENT
+This will be set to an @code{ALIGN} expression when the output should be
+page aligned, or to @samp{.} when generating the @code{-N} script.
+
+@item CREATE_SHLIB
+This will be set to a non-empty string when generating a @code{-shared}
+script.
+@end table
+
+The conventional way to write a @file{scripttempl} script is to first
+set a few shell variables, and then write out a linker script using
+@code{cat} with a here document.  The linker script will use variable
+substitutions, based on the above variables and those set in the
+@file{emulparams} script, to control its behaviour.
+
+When there are parts of the @file{scripttempl} script which should only
+be run when doing a final relocation, they should be enclosed within a
+variable substitution based on @code{RELOCATING}.  For example, on many
+targets special symbols such as @code{_end} should be defined when doing
+a final link.  Naturally, those symbols should not be defined when doing
+a relocateable link using @code{-r}.  The @file{scripttempl} script
+could use a construct like this to define those symbols:
+@smallexample
+  $@{RELOCATING+ _end = .;@}
+@end smallexample
+This will do the symbol assignment only if the @code{RELOCATING}
+variable is defined.
+
+The basic job of the linker script is to put the sections in the correct
+order, and at the correct memory addresses.  For some targets, the
+linker script may have to do some other operations.
+
+For example, on most MIPS platforms, the linker is responsible for
+defining the special symbol @code{_gp}, used to initialize the
+@code{$gp} register.  It must be set to the start of the small data
+section plus @code{0x8000}.  Naturally, it should only be defined when
+doing a final relocation.  This will typically be done like this:
+@smallexample
+  $@{RELOCATING+ _gp = ALIGN(16) + 0x8000;@}
+@end smallexample
+This line would appear just before the sections which compose the small
+data section (@samp{.sdata}, @samp{.sbss}).  All those sections would be
+contiguous in memory.
+
+Many COFF systems build constructor tables in the linker script.  The
+compiler will arrange to output the address of each global constructor
+in a @samp{.ctor} section, and the address of each global destructor in
+a @samp{.dtor} section (this is done by defining
+@code{ASM_OUTPUT_CONSTRUCTOR} and @code{ASM_OUTPUT_DESTRUCTOR} in the
+@code{gcc} configuration files).  The @code{gcc} runtime support
+routines expect the constructor table to be named @code{__CTOR_LIST__}.
+They expect it to be a list of words, with the first word being the
+count of the number of entries.  There should be a trailing zero word.
+(Actually, the count may be -1 if the trailing word is present, and the
+trailing word may be omitted if the count is correct, but, as the
+@code{gcc} behaviour has changed slightly over the years, it is safest
+to provide both).  Here is a typical way that might be handled in a
+@file{scripttempl} file.
+@smallexample
+    $@{CONSTRUCTING+ __CTOR_LIST__ = .;@}
+    $@{CONSTRUCTING+ LONG((__CTOR_END__ - __CTOR_LIST__) / 4 - 2)@}
+    $@{CONSTRUCTING+ *(.ctors)@}
+    $@{CONSTRUCTING+ LONG(0)@}
+    $@{CONSTRUCTING+ __CTOR_END__ = .;@}
+    $@{CONSTRUCTING+ __DTOR_LIST__ = .;@}
+    $@{CONSTRUCTING+ LONG((__DTOR_END__ - __DTOR_LIST__) / 4 - 2)@}
+    $@{CONSTRUCTING+ *(.dtors)@}
+    $@{CONSTRUCTING+ LONG(0)@}
+    $@{CONSTRUCTING+ __DTOR_END__ = .;@}
+@end smallexample
+The use of @code{CONSTRUCTING} ensures that these linker script commands
+will only appear when the linker is supposed to be building the
+constructor and destructor tables.  This example is written for a target
+which uses 4 byte pointers.
+
+Embedded systems often need to set a stack address.  This is normally
+best done by using the @code{PROVIDE} construct with a default stack
+address.  This permits the user to easily override the stack address
+using the @code{--defsym} option.  Here is an example:
+@smallexample
+  $@{RELOCATING+ PROVIDE (__stack = 0x80000000);@}
+@end smallexample
+The value of the symbol @code{__stack} would then be used in the startup
+code to initialize the stack pointer.
+
+@node linker emulations
+@section @file{emultempl} scripts
+
+Each linker target uses an @file{emultempl} script to generate the
+emulation code.  The name of the @file{emultempl} script is set by the
+@code{TEMPLATE_NAME} variable in the @file{emulparams} script.  If the
+@code{TEMPLATE_NAME} variable is not set, the default is
+@samp{generic}.  If the value of @code{TEMPLATE_NAME} is @var{template},
+@file{genscripts.sh} will use @file{emultempl/@var{template}.em}.
+
+Most targets use the generic @file{emultempl} script,
+@file{emultempl/generic.em}.  A different @file{emultempl} script is
+only needed if the linker must support unusual actions, such as linking
+against shared libraries.
+
+The @file{emultempl} script is normally written as a simple invocation
+of @code{cat} with a here document.  The document will use a few
+variable substitutions.  Typically each function names uses a
+substitution involving @code{EMULATION_NAME}, for ease of debugging when
+the linker supports multiple emulations.
+
+Every function and variable in the emitted file should be static.  The
+only globally visible object must be named
+@code{ld_@var{EMULATION_NAME}_emulation}, where @var{EMULATION_NAME} is
+the name of the emulation set in @file{configure.tgt} (this is also the
+name of the @file{emulparams} file without the @file{.sh} extension).
+The @file{genscripts.sh} script will set the shell variable
+@code{EMULATION_NAME} before invoking the @file{emultempl} script.
+
+The @code{ld_@var{EMULATION_NAME}_emulation} variable must be a
+@code{struct ld_emulation_xfer_struct}, as defined in @file{ldemul.h}.
+It defines a set of function pointers which are invoked by the linker,
+as well as strings for the emulation name (normally set from the shell
+variable @code{EMULATION_NAME} and the default BFD target name (normally
+set from the shell variable @code{OUTPUT_FORMAT} which is normally set
+by the @file{emulparams} file).
+
+The @file{genscripts.sh} script will set the shell variable
+@code{COMPILE_IN} when it invokes the @file{emultempl} script for the
+default emulation.  In this case, the @file{emultempl} script should
+include the linker scripts directly, and return them from the
+@code{get_scripts} entry point.  When the emulation is not the default,
+the @code{get_scripts} entry point should just return a file name.  See
+@file{emultempl/generic.em} for an example of how this is done.
+
+At some point, the linker emulation entry points should be documented.
 
 @contents
 @bye

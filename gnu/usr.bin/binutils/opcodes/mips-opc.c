@@ -297,12 +297,14 @@ const struct mips_opcode mips_opcodes[] = {
    a source and a destination).  To get the div machine instruction,
    you must use an explicit destination of $0.  */
 {"div",     "z,s,t",	0x0000001a, 0xfc00ffff,	RD_s|RD_t|WR_HI|WR_LO	},
+{"div",     "z,t",	0x0000001a, 0xffe0ffff,	RD_s|RD_t|WR_HI|WR_LO	},
 {"div",     "d,v,t",	0,    (int) M_DIV_3,	INSN_MACRO	},
 {"div",     "d,v,I",	0,    (int) M_DIV_3I,	INSN_MACRO	},
 {"div.d",   "D,V,T",	0x46200003, 0xffe0003f,	WR_D|RD_S|RD_T	},
 {"div.s",   "D,V,T",	0x46000003, 0xffe0003f,	WR_D|RD_S|RD_T	},
 /* For divu, see the comments about div.  */
 {"divu",    "z,s,t",	0x0000001b, 0xfc00ffff,	RD_s|RD_t|WR_HI|WR_LO	},
+{"divu",    "z,t",	0x0000001b, 0xffe0ffff,	RD_s|RD_t|WR_HI|WR_LO	},
 {"divu",    "d,v,t",	0,    (int) M_DIVU_3,	INSN_MACRO	},
 {"divu",    "d,v,I",	0,    (int) M_DIVU_3I,	INSN_MACRO	},
 {"dla",     "t,A(b)",	3,    (int) M_DLA_AB,	INSN_MACRO	},

@@ -22,8 +22,6 @@ Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  *
 #ifndef OPCODE_ALPHA_H
 #define OPCODE_ALPHA_H
 
-#include "bfd.h"		/* for bfd_reloc_code_real_type */
-
 /* The opcode table is an array of struct alpha_opcode.  */
 
 struct alpha_opcode
@@ -41,8 +39,8 @@ struct alpha_opcode
      match (and are presumably filled in by operands).  */
   unsigned mask;
 
-  /* One bit flags for the opcode.  These are primarily used to 
-     indicate specific processors and environments support the 
+  /* One bit flags for the opcode.  These are primarily used to
+     indicate specific processors and environments support the
      instructions.  The defined values are listed below. */
   unsigned flags;
 
@@ -61,11 +59,14 @@ extern const int alpha_num_opcodes;
 /* Values defined for the flags field of a struct alpha_opcode.  */
 
 /* CPU Availability */
-#define AXP_OPCODE_ALL		00001
-#define AXP_OPCODE_EV4		00002
-/* EV45 is not programatically different */
-#define AXP_OPCODE_EV5		00004
-#define AXP_OPCODE_EV56		00010
+#define AXP_OPCODE_BASE  0x0001  /* Base architecture -- all cpus.  */
+#define AXP_OPCODE_EV4   0x0002  /* EV4 specific PALcode insns.  */
+#define AXP_OPCODE_EV5   0x0004  /* EV5 specific PALcode insns.  */
+#define AXP_OPCODE_BWX   0x0100  /* Byte/word extension (amask bit 0).  */
+#define AXP_OPCODE_CIX   0x0200  /* "Count" extension (amask bit 1).  */
+#define AXP_OPCODE_MAX   0x0400  /* Multimedia extension (amask bit 8).  */
+
+#define AXP_OPCODE_NOPAL (~(AXP_OPCODE_EV4|AXP_OPCODE_EV5))
 
 /* A macro to extract the major opcode from an instruction.  */
 #define AXP_OP(i)	(((i) >> 26) & 0x3F)
@@ -85,7 +86,10 @@ struct alpha_operand
   int shift;
 
   /* The default relocation type for this operand.  */
-  bfd_reloc_code_real_type default_reloc;
+  int default_reloc;
+
+  /* One bit syntax flags.  */
+  unsigned flags;
 
   /* Insertion function.  This is used by the assembler.  To insert an
      operand value into an instruction, check this field.
@@ -124,9 +128,6 @@ struct alpha_operand
      this operand (i.e., the instruction does not match).  If the
      operand is valid, *INVALID will not be changed.  */
   int (*extract) PARAMS ((unsigned instruction, int *invalid));
-
-  /* One bit syntax flags.  */
-  unsigned flags;
 };
 
 /* Elements in the table are retrieved by indexing with values from

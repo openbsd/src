@@ -26,6 +26,11 @@ if [istarget a29k*-*-*] {
     set flags "$flags --defsym V_SPILL=0 --defsym V_FILL=0"
 }
 
+# hppa-elf needs a definition for $global$.
+if [istarget hppa*-*-*] {
+    set flags "$flags --defsym '$global$'=0
+}
+
 verbose -log "$ld $flags -o tmpdir/cross1 -T $srcdir/$subdir/cross1.t tmpdir/cross1.o tmpdir/cross2.o"
 
 catch "exec $ld $flags -o tmpdir/cross1 -T $srcdir/$subdir/cross1.t tmpdir/cross1.o tmpdir/cross2.o" exec_output

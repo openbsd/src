@@ -92,14 +92,14 @@ SECTIONS
   .init        ${RELOCATING-0} : { *(.init)	} =${NOP-0}
   .text    ${RELOCATING-0} :
   {
-    ${CREATE_SHLIB-${RELOCATING+${TEXT_START_SYMBOLS}}}
+    ${RELOCATING+${TEXT_START_SYMBOLS}}
     *(.text)
     *(.stub)
     /* .gnu.warning sections are handled specially by elf32.em.  */
     *(.gnu.warning)
   } =${NOP-0}
-  ${CREATE_SHLIB-${RELOCATING+_etext = .;}}
-  ${CREATE_SHLIB-${RELOCATING+PROVIDE (etext = .);}}
+  ${RELOCATING+_etext = .;}
+  ${RELOCATING+PROVIDE (etext = .);}
   .fini    ${RELOCATING-0} : { *(.fini)    } =${NOP-0}
 
   /* Adjust the address for the data segment.  We want to adjust up to
@@ -118,11 +118,11 @@ SECTIONS
      important than losing a page of the virtual address space (note
      that no actual memory is lost; the page which is skipped can not
      be referenced).  */
-  ${CREATE_SHLIB-${RELOCATING+. += ${DATA_ADDR} - ${TEXT_START_ADDR};}}
-  ${CREATE_SHLIB+${RELOCATING+. += 0x10000;}}
+  ${RELOCATING+. += ${DATA_ADDR} - ${TEXT_START_ADDR};}
+  ${RELOCATING+. += 0x10000;}
   .data  ${RELOCATING-0} :
   {
-    ${CREATE_SHLIB-${RELOCATING+${DATA_START_SYMBOLS}}}
+    ${RELOCATING+${DATA_START_SYMBOLS}}
     *(.data)
     ${CONSTRUCTING+CONSTRUCTORS}
   }
@@ -139,10 +139,10 @@ SECTIONS
      we can shorten the on-disk segment size.  */
   .sdata   ${RELOCATING-0} : { *(.sdata) }
   ${RELOCATING+${OTHER_READWRITE_SECTIONS}}
-  ${CREATE_SHLIB-${RELOCATING+_edata  =  .;}}
-  ${CREATE_SHLIB-${RELOCATING+PROVIDE (edata = .);}}
-  ${CREATE_SHLIB-${RELOCATING+__bss_start = .;}}
-  ${CREATE_SHLIB-${RELOCATING+${OTHER_BSS_SYMBOLS}}}
+  ${RELOCATING+_edata  =  .;}
+  ${RELOCATING+PROVIDE (edata = .);}
+  ${RELOCATING+__bss_start = .;}
+  ${RELOCATING+${OTHER_BSS_SYMBOLS}}
   .sbss    ${RELOCATING-0} : { *(.sbss) *(.scommon) }
   .bss     ${RELOCATING-0} :
   {
@@ -150,8 +150,8 @@ SECTIONS
    *(.bss)
    *(COMMON)
   }
-  ${CREATE_SHLIB-${RELOCATING+_end = . ;}}
-  ${CREATE_SHLIB-${RELOCATING+PROVIDE (end = .);}}
+  ${RELOCATING+_end = . ;}
+  ${RELOCATING+PROVIDE (end = .);}
 
   /* These are needed for ELF backends which have not yet been
      converted to the new style linker.  */
@@ -163,6 +163,10 @@ SECTIONS
      section so we begin .debug at 0.  It's not clear yet what needs to happen
      for the others.   */
   .debug          0 : { *(.debug) }
+  .debug_info     0 : { *(.debug_info) }
+  .debug_abbrev   0 : { *(.debug_abbrev) }
+  .debug_line     0 : { *(.debug_line) }
+  .debug_frame    0 : { *(.debug_frame) }
   .debug_srcinfo  0 : { *(.debug_srcinfo) }
   .debug_aranges  0 : { *(.debug_aranges) }
   .debug_pubnames 0 : { *(.debug_pubnames) }
