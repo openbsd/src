@@ -1,4 +1,4 @@
-/*	$OpenBSD: at_extern.h,v 1.1 1997/07/23 03:39:52 denny Exp $	*/
+/*	$OpenBSD: at_extern.h,v 1.2 1997/07/24 03:45:59 denny Exp $	*/
 /*      $NetBSD: at_extern.h,v 1.3 1997/04/03 18:38:23 christos Exp $   */
 
 /*
@@ -92,7 +92,7 @@ int		aarpresolve	__P((struct arpcom *, struct mbuf *,
 void		aarpinput	__P((struct arpcom *, struct mbuf *));
 int		at_broadcast	__P((struct sockaddr_at  *));
 void		aarp_clean	__P((void));
-int		at_control	__P((int, caddr_t, struct ifnet *,
+int		at_control	__P((u_long, caddr_t, struct ifnet *,
 				struct proc *));
 u_int16_t	at_cksum	__P((struct mbuf *, int));
 int		ddp_usrreq	__P((struct socket *, int,
