@@ -1,4 +1,4 @@
-/*	$OpenBSD: pppoe.c,v 1.2 2001/01/16 09:26:08 deraadt Exp $	*/
+/*	$OpenBSD: pppoe.c,v 1.3 2001/02/18 22:52:53 miod Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -253,8 +253,8 @@ setupfilter(ifn, ea, server_mode)
 	filter.bf_len = idx;
 	filter.bf_insns = insns;
 
-	for (i = 0; 1; i++) {
-		snprintf(device, sizeof(device), "/dev/bpf%d", i++);
+	for (i = 0; ; i++) {
+		snprintf(device, sizeof(device), "/dev/bpf%d", i);
 		fd = open(device, O_RDWR);
 		if (fd < 0) {
 			if (errno != EBUSY)
