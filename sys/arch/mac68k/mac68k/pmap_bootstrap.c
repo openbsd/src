@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.26 2004/11/25 18:32:11 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.27 2004/11/27 14:26:32 miod Exp $	*/
 /*	$NetBSD: pmap_bootstrap.c,v 1.50 1999/04/07 06:14:33 scottr Exp $	*/
 
 /* 
@@ -93,7 +93,8 @@ void	bootstrap_mac68k(int);
 #define	RELOC(v, t)	*((t*)((u_int)&(v)))
 #define PA2VA(v, t)	*((t*)((u_int)&(v) - firstpa))
 
-#define	PMAP_MD_RWZERO
+extern caddr_t kernel_start;
+#define	PMAP_MD_RWLOW	m68k_btop(m68k_round_page((vaddr_t)&kernel_start))
 
 /*
  * Present a totally tricky view of the world here...

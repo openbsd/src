@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.7 2004/07/22 19:37:39 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.8 2004/11/27 14:26:30 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -74,7 +74,7 @@
  * PMAP_MD_RELOC3()	general purpose kernel virtual addresses relocation
  * PMAP_MD_MAPIOSPACE()	setup machine-specific internal iospace components
  * PMAP_MD_MEMSIZE()	compute avail_end
- * PMAP_MD_RWZERO	define to NOT make virtual address 0 read only
+ * PMAP_MD_RWLOW	number of pages to keep writeable, starting at address 0
  */
 
 extern char *etext;
@@ -348,23 +348,24 @@ pmap_bootstrap(nextpa, firstpa)
 	 */
 	pte = &(PA2VA(kptpa, u_int *))[m68k_btop(KERNBASE)];
 	epte = &pte[m68k_btop(trunc_page((vaddr_t)&etext))];
-#ifndef	PMAP_MD_RWZERO
-	*pte++ = firstpa | PG_NV;	/* make *NULL fail in the kernel */
-#if defined(KGDB) || defined(DDB)
-	protopte = (firstpa + NBPG) | PG_RW | PG_V | PG_U; /* XXX RW for now */
-#else
-	protopte = (firstpa + NBPG) | PG_RO | PG_V | PG_U;
-#endif
-#else
+
 #if defined(KGDB) || defined(DDB)
 	protopte = firstpa | PG_RW | PG_V | PG_U; /* XXX RW for now */
 #else
 	protopte = firstpa | PG_RO | PG_V | PG_U;
 #endif
+#ifdef	PMAP_MD_RWLOW
+	for (num = PMAP_MD_RWLOW; num != 0; num--) {
+		*pte++ = (protopte & ~PG_RO) | PG_RW;
+		protopte += PAGE_SIZE;
+	}
+#else
+	*pte++ = PG_NV;		/* make *NULL fail in the kernel */
+	protopte += PAGE_SIZE;
 #endif
 	while (pte < epte) {
 		*pte++ = protopte;
-		protopte += NBPG;
+		protopte += PAGE_SIZE;
 	}
 	/*
 	 * Validate PTEs for kernel data/bss, dynamic data allocated
