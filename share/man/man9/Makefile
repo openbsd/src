@@ -1,13 +1,13 @@
-#	$OpenBSD: Makefile,v 1.22 2000/04/28 05:54:07 angelos Exp $
+#	$OpenBSD: Makefile,v 1.23 2000/07/01 14:45:44 aaron Exp $
 #       $NetBSD: Makefile,v 1.4 1996/01/09 03:23:01 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
 MAN=	audio.9 boot.9 copy.9 crypto.9 ctxsw.9 disk.9 disklabel.9 \
-	doshutdownhooks.9 fetch.9 fork1.9 \
+	dopowerhooks.9 doshutdownhooks.9 fetch.9 fork1.9 \
 	extent.9 hz.9 hzto.9 intro.9 inittodr.9 log.9 kthread.9 \
-	malloc.9 md5.9 microtime.9 panic.9 pfind.9 pool.9 printf.9 \
-	psignal.9 ratecheck.9 resettodr.9 \
+	malloc.9 md5.9 microtime.9 panic.9 pfind.9 pool.9 \
+	powerhook_establish.9 printf.9 psignal.9 ratecheck.9 resettodr.9 \
 	random.9 shutdownhook_establish.9 sleep.9 spl.9 store.9 style.9 \
 	time.9 timeout.9 vm_allocate.9 vm_map_copy.9 vm_deallocate.9 \
 	vm_map_inherit.9 vm_map_protect.9
@@ -35,6 +35,7 @@ MLINKS+=pfind.9 pgfind.9
 MLINKS+=pool.9 pool_create.9 pool.9 pool_destroy.9 pool.9 pool_get.9 \
 	pool.9 pool_put.9 pool.9 pool_prime.9 pool.9 pool_sethiwat.9 \
 	pool.9 pool_setlowat.9
+MLINKS+=powerhook_establish.9 powerhook_disestablish.9
 MLINKS+=printf.9 sprintf.9 printf.9 vprintf.9 printf.9 uprintf.9 \
 	printf.9 ttyprintf.9 printf.9 db_printf.9
 MLINKS+=psignal.9 pgsignal.9 psignal.9 gsignal.9
