@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.5 1998/04/06 20:22:23 pefo Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.6 1998/08/22 17:54:29 rahnds Exp $	*/
 /*	$NetBSD: db_machdep.h,v 1.13 1996/04/29 20:50:08 leo Exp $	*/
 
 /* 
@@ -41,58 +41,24 @@
 typedef	vm_offset_t	db_addr_t;	/* address - unsigned */
 typedef	int		db_expr_t;	/* expression - signed */
 struct powerpc_saved_state {
-	u_int32_t	r0;		/* data registers */
-	u_int32_t	r1;
-	u_int32_t	r2;
-	u_int32_t	r3;
-	u_int32_t	r4;
-	u_int32_t	r5;
-	u_int32_t	r6;
-	u_int32_t	r7;
-	u_int32_t	r8;
-	u_int32_t	r9;
-	u_int32_t	r10;
-	u_int32_t	r11;
-	u_int32_t	r12;
-	u_int32_t	r13;
-	u_int32_t	r14;
-	u_int32_t	r15;
-	u_int32_t	r16;
-	u_int32_t	r17;
-	u_int32_t	r18;
-	u_int32_t	r19;
-	u_int32_t	r20;
-	u_int32_t	r21;
-	u_int32_t	r22;
-	u_int32_t	r23;
-	u_int32_t	r24;
-	u_int32_t	r25;
-	u_int32_t	r26;
-	u_int32_t	r27;
-	u_int32_t	r28;
-	u_int32_t	r29;
-	u_int32_t	r30;
-	u_int32_t	r31;
-	u_int32_t	r32;
-	u_int32_t	iar;
-	u_int32_t	msr;
+	struct trapframe tf;
 };
 typedef struct powerpc_saved_state db_regs_t;
 db_regs_t	ddb_regs;		/* register state */
 #define DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->iar)
+#define	PC_REGS(regs)	((regs)->tf.srr0)
 
 #define	BKPT_INST	0x7C810808	/* breakpoint instruction */
 
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->iar -= 4)
+#define	FIXUP_PC_AFTER_BREAK(regs)	((regs)->tf.srr0 -= 4)
 
 #define SR_SINGLESTEP 0x8000
-#define	db_clear_single_step(regs)	((regs)->msr &= ~SR_SINGLESTEP)
-#define	db_set_single_step(regs)	((regs)->msr |=  SR_SINGLESTEP)
+#define	db_clear_single_step(regs)	((regs)->tf.srr1 &= ~SR_SINGLESTEP)
+#define	db_set_single_step(regs)	((regs)->tf.srr1 |=  SR_SINGLESTEP)
 
 #define T_BREAKPOINT	0xffff
 #define	IS_BREAKPOINT_TRAP(type, code)	((type) == T_BREAKPOINT)

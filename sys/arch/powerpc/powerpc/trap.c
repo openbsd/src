@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.9 1998/08/07 02:22:09 rahnds Exp $	*/
+/*	$OpenBSD: trap.c,v 1.10 1998/08/22 17:54:26 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -48,6 +48,7 @@
 #include <machine/pmap.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#include <machine/db_machdep.h>
 
 /* These definitions should probably be somewhere else				XXX */
 #define	FIRSTARG	3		/* first argument is in reg 3 */
@@ -57,30 +58,15 @@
 volatile int want_resched;
 
 #ifdef PPC_WANT_BACKTRACE
-void dumpframe (u_int32_t pframe)
-{
-	u_int32_t nextframe;
-	u_int32_t lr;
-	int error;
-	if (error = copyin ((void *)pframe, &nextframe , 4) ){
-		printf("unable to read next frame @%x\n", pframe);
-		return;
-	}
-	if (error = copyin ((void *)(pframe+4), &lr , 4) ){
-		printf("unable to read lr @%x\n", pframe+4);
-		return;
-	}
-	printf("lr %x fp %x nfp %x\n", lr, pframe, nextframe);
-
-	if (nextframe != 0) {
-		dumpframe(nextframe);
-	}
-	return;
-}
+u_int32_t dumpframe(u_int32_t);
 void
 ppc_dumpbt(struct trapframe *frame)
 {
-	dumpframe(frame->fixreg[1]);
+	/* dumpframe is defined in db_trace.c */
+	addr=frame->fixreg[1];
+	while (addr != 0) {
+		addr = dumpframe(addr);
+	}
 	return;
 }
 #endif
@@ -99,8 +85,11 @@ trap(frame)
 	}
 
 	switch (type) {
-	case EXC_TRC|EXC_USER:		/* Temporarily!					XXX */
-		printf("TRC: %x\n", frame->srr0);
+	case EXC_TRC|EXC_USER:		
+		{
+			sv.sival_int = frame->srr0;
+			trapsignal(p, SIGTRAP, type, TRAP_TRACE, sv);
+		}
 		break;
 	case EXC_DSI:
 		{
@@ -295,10 +284,28 @@ brain_damage:
 /*
 mpc_print_pci_stat();
 */
+
+#ifdef DDB
+		/* set up registers */
+		db_save_regs(frame);
+#endif
 		panic("trap");
+
 
 	case EXC_PGM|EXC_USER:
 printf("pgm iar %x\n", frame->srr0);
+		if (frame->srr1 && (1<<11)) { 
+			/* floating point enabled program exception */
+		}
+		if (frame->srr1 && (1<<12)) {
+			/* illegal instruction program exception */
+		}
+		if (frame->srr1 && (1<<13)) {
+			/* privileged instruction exception */
+		}
+		if (frame->srr1 && (1<<14)) {
+			/* trap instruction exception */
+		}
 		sv.sival_int = frame->srr0;
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 		break;
