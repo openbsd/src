@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 1996/11/11 22:55:57 kstailey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 1997/01/01 15:54:21 briggs Exp $	*/
 /*	$NetBSD: conf.c,v 1.34 1996/06/19 02:20:54 briggs Exp $	*/
 
 /*
@@ -248,6 +248,24 @@ chrtoblk(dev)
 	if (blkmaj == NODEV)
 		return NODEV;
 	return (makedev(blkmaj, minor(dev)));
+}
+
+/*
+ * Convert a character device number to a block device number.
+ */
+dev_t
+blktochr(dev)
+	dev_t dev;
+{
+	int blkmaj = major(dev);
+	int i;
+
+	if (blkmaj >= nblkdev)
+		return (NODEV);
+	for (i = 0; i < sizeof(chrtoblktab)/sizeof(chrtoblktab[0]); i++)
+		if (blkmaj == chrtoblktab[i])
+			return (makedev(i, minor(dev)));
+	return (NODEV);
 }
 
 #define itecnpollc	nullcnpollc
