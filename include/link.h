@@ -1,4 +1,4 @@
-/*	$OpenBSD: link.h,v 1.3 1997/09/21 10:45:40 niklas Exp $	*/
+/*	$OpenBSD: link.h,v 1.4 1999/05/18 15:50:09 espie Exp $	*/
 /*	$NetBSD: link.h,v 1.10 1996/01/09 00:00:11 pk Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #define _LINK_H_
 
 /*
- * A `Shared Object Descriptor' descibes a shared object that is needed
+ * A `Shared Object Descriptor' describes a shared object that is needed
  * to complete the link edit process of the object containing it.
  * A list of such objects (chained through `sod_next') is pointed at
  * by `sdt_sods' in the section_dispatch_table structure.
