@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_object.c,v 1.10 1996/08/18 18:44:46 niklas Exp $	*/
+/*	$OpenBSD: vm_object.c,v 1.11 1996/08/19 10:38:01 niklas Exp $	*/
 /*	$NetBSD: vm_object.c,v 1.34 1996/02/28 22:35:35 gwr Exp $	*/
 
 /* 
@@ -1238,10 +1238,12 @@ vm_object_collapse_aux(object)
 		 *	have given other threads the chance to, via
 		 *	readfaults, page in another page into the
 		 *	resident set.  In this case the outer loop must
-		 *	get reentered.
+		 *	get reentered.  That is also the case if some other
+		 *	thread removes the front pager, a case that has
+		 *	been seen...
 		 */
 		while (backing_object->memq.tqh_first == NULL &&
-		    backing_object->pager != NULL &&
+		    backing_object->pager != NULL && object->pager != NULL &&
 		    (paged_offset = vm_pager_next(backing_object->pager,
 		     paged_offset)) < backing_object->size) {
 			/*
