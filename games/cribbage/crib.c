@@ -1,4 +1,4 @@
-/*	$OpenBSD: crib.c,v 1.8 2001/08/10 23:50:22 pjanzen Exp $	*/
+/*	$OpenBSD: crib.c,v 1.9 2001/11/17 06:29:00 pjanzen Exp $	*/
 /*	$NetBSD: crib.c,v 1.7 1997/07/10 06:47:29 mikel Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)crib.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: crib.c,v 1.8 2001/08/10 23:50:22 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: crib.c,v 1.9 2001/11/17 06:29:00 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -428,6 +428,7 @@ cut(mycrib, pos)
 		addmsg(quiet ? "You cut " : "You cut the ");
 		msgcard(turnover, FALSE);
 		endmsg();
+		prcrib(mycrib, FALSE);
 		if (turnover.rank == JACK) {
 			msg("I get two for his heels");
 			win = chkscr(&cscore, 2);
@@ -438,13 +439,13 @@ cut(mycrib, pos)
 		addmsg(quiet ? "I cut " : "I cut the ");
 		msgcard(turnover, FALSE);
 		endmsg();
+		prcrib(mycrib, FALSE);
 		if (turnover.rank == JACK) {
 			msg("You get two for his heels");
 			win = chkscr(&pscore, 2);
 		}
 	}
 	makeknown(&turnover, 1);
-	prcrib(mycrib, FALSE);
 	return (win);
 }
 
@@ -551,6 +552,9 @@ peg(mycrib)
 					    "I get %d points playing ", k);
 					msgcard(crd, FALSE);
 					endmsg();
+					prhand(ph, pnum, Playwin, FALSE);
+					prhand(ch, cnum, Compwin, TRUE);
+					prtable(sum);
 					if (chkscr(&cscore, k))
 						return TRUE;
 				}
@@ -569,6 +573,9 @@ peg(mycrib)
 					msg(quiet ? "I get one" :
 					    "I get one point");
 					do_wait();
+					prhand(ph, pnum, Playwin, FALSE);
+					prhand(ch, cnum, Compwin, TRUE);
+					prtable(sum);
 					if (chkscr(&cscore, 1))
 						return TRUE;
 					sum = 0;
@@ -601,6 +608,9 @@ peg(mycrib)
 					    "You got %d points", i);
 					if (pnum == 0)
 						do_wait();
+					prhand(ph, pnum, Playwin, FALSE);
+					prhand(ch, cnum, Compwin, TRUE);
+					prtable(sum);
 					if (chkscr(&pscore, i))
 						return TRUE;
 				}
