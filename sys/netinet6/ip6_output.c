@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.47 2001/08/21 06:53:36 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.48 2001/08/22 06:52:01 niklas Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -101,6 +101,7 @@ extern u_int8_t get_sa_require  __P((struct inpcb *));
 extern int ipsec_auth_default_level;
 extern int ipsec_esp_trans_default_level;
 extern int ipsec_esp_network_default_level;
+extern int ipsec_ipcomp_default_level;
 #endif /* IPSEC */
 
 struct ip6_exthdrs {
@@ -1409,6 +1410,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_AUTH_LEVEL:
 			case IPV6_ESP_TRANS_LEVEL:
 			case IPV6_ESP_NETWORK_LEVEL:
+			case IPV6_IPCOMP_LEVEL:
 #ifndef IPSEC
 				error = EINVAL;
 #else
@@ -1425,7 +1427,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 				}
 					
 				switch (optname) {
-				case IP_AUTH_LEVEL:
+				case IPV6_AUTH_LEVEL:
 				        if (optval < ipsec_auth_default_level &&
 					    suser(p->p_ucred, &p->p_acflag)) {
 						error = EACCES;
@@ -1434,7 +1436,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 					inp->inp_seclevel[SL_AUTH] = optval;
 					break;
 
-				case IP_ESP_TRANS_LEVEL:
+				case IPV6_ESP_TRANS_LEVEL:
 				        if (optval < ipsec_esp_trans_default_level &&
 					    suser(p->p_ucred, &p->p_acflag)) {
 						error = EACCES;
@@ -1443,13 +1445,22 @@ ip6_ctloutput(op, so, level, optname, mp)
 					inp->inp_seclevel[SL_ESP_TRANS] = optval;
 					break;
 
-				case IP_ESP_NETWORK_LEVEL:
+				case IPV6_ESP_NETWORK_LEVEL:
 				        if (optval < ipsec_esp_network_default_level &&
 					    suser(p->p_ucred, &p->p_acflag)) {
 						error = EACCES;
 						break;
 					}
 					inp->inp_seclevel[SL_ESP_NETWORK] = optval;
+					break;
+
+				case IPV6_IPCOMP_LEVEL:
+				        if (optval < ipsec_ipcomp_default_level &&
+					    suser(p->p_ucred, &p->p_acflag)) {
+						error = EACCES;
+						break;
+					}
+					inp->inp_seclevel[SL_IPCOMP] = optval;
 					break;
 				}
 				if (!error)
