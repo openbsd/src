@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.207 1999/12/17 11:42:06 fgsch Exp 
+ *		OpenBSD: pcidevs,v 1.208 2000/01/03 23:38:25 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -657,6 +657,7 @@
 #define	PCI_PRODUCT_ADVSYS_1200B	0x1200		/* 1200B */
 #define	PCI_PRODUCT_ADVSYS_ULTRA	0x1300		/* ABP-930/40UA */
 #define	PCI_PRODUCT_ADVSYS_WIDE	0x2300		/* ABP-940UW */
+#define	PCI_PRODUCT_ADVSYS_U2W	0x2300		/* ASP-3940U2W */
 
 /* Alliance products */
 #define	PCI_PRODUCT_ALLIANCE_AT22	0x6424		/* AT22 */

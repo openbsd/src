@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.207 1999/12/17 11:42:06 fgsch Exp 
+ *		OpenBSD: pcidevs,v 1.208 2000/01/03 23:38:25 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -523,6 +523,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Advanced System Products",
 	    "ABP-940UW",
+	},
+	{
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_U2W,
+	    0,
+	    "Advanced System Products",
+	    "ASP-3940U2W",
 	},
 	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT22,
