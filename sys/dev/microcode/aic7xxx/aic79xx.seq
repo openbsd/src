@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.seq,v 1.1 2003/12/24 22:40:16 krw Exp $	*/
+/*	$OpenBSD: aic79xx.seq,v 1.2 2003/12/24 23:27:55 krw Exp $	*/
 /*	$NetBSD: aic79xx.seq,v 1.8 2003/08/29 03:54:06 thorpej Exp $	*/
 
 /*

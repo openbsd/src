@@ -1,9 +1,11 @@
 %{
+/*	$OpenBSD: aicasm_scan.l,v 1.7 2003/12/24 23:27:55 krw Exp $	*/
+/*	$NetBSD: aicasm_scan.l,v 1.3 2003/04/19 19:26:11 fvdl Exp $	*/
 /*
  * Lexical Analyzer for the Aic7xxx SCSI Host adapter sequencer assembler.
  *
  * Copyright (c) 1997, 1998, 2000 Justin T. Gibbs.
- * Copyright (c) 2001 Adaptec Inc.
+ * Copyright (c) 2001, 2002 Adaptec Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -38,17 +40,22 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_scan.l,v 1.18 2002/06/05 22:51:54 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_scan.l,v 1.21 2002/09/27 03:23:02 gibbs Exp $
  */
 
 #include <sys/types.h>
 
+#include <inttypes.h>
 #include <limits.h>
 #include <regex.h>
 #include <stdio.h>
 #include <string.h>
 #include <sysexits.h>
+#ifdef __linux__
+#include "../queue.h"
+#else
 #include <sys/queue.h>
+#endif
 
 #include "aicasm.h"
 #include "aicasm_symbol.h"
@@ -107,44 +114,45 @@ if[ \t]*\(		{
 				}
 			}
 <CEXPR>\n		{ ++yylineno; }
-<CEXPR>[^()\n]+		{
-                                char *yptr;
+<CEXPR>[^()\n]+	{
+				char *yptr;
 
-                                yptr = yytext;
-                                while (*yptr != '\0') {
-                                        /* Remove duplicate spaces */
-                                        if (*yptr == '\t')
-                                                *yptr = ' ';
-                                        if (*yptr == ' '
-                                         && string_buf_ptr != string_buf
-                                         && string_buf_ptr[-1] == ' ')
-                                                yptr++;
-                                        else 
-					*string_buf_ptr++ = *yptr++;
-                                }
-                        }
-
-VERSION                 { return T_VERSION; }
-PATCH_ARG_LIST		{ return T_PATCH_ARG_LIST; }
-\"                      {
-                                string_buf_ptr = string_buf;
-                                BEGIN STRING;
+				yptr = yytext;
+				while (*yptr != '\0') {
+					/* Remove duplicate spaces */
+					if (*yptr == '\t')
+						*yptr = ' ';
+					if (*yptr == ' '
+					 && string_buf_ptr != string_buf
+					 && string_buf_ptr[-1] == ' ')
+						yptr++;
+					else 
+						*string_buf_ptr++ = *yptr++;
+				}
 			}
-<STRING>[^"]+           {
-                                char *yptr;
 
-                                yptr = yytext;
-                                while (*yptr)
-                                        *string_buf_ptr++ = *yptr++;
-                        }
-<STRING>\"              {
-                                /* All done */
-                                BEGIN INITIAL;
-                                *string_buf_ptr = '\0';
-                                yylval.str = string_buf;
-                                return T_STRING;
-                        }
-{SPACE}			;
+VERSION			{ return T_VERSION; }
+PREFIX			{ return T_PREFIX; }
+PATCH_ARG_LIST		{ return T_PATCH_ARG_LIST; }
+\"			{
+				string_buf_ptr = string_buf;
+				BEGIN STRING;
+			}
+<STRING>[^"]+		{
+				char *yptr;
+
+				yptr = yytext;
+				while (*yptr)
+					*string_buf_ptr++ = *yptr++;
+			}
+<STRING>\"		{
+				/* All done */
+				BEGIN INITIAL;
+				*string_buf_ptr = '\0';
+				yylval.str = string_buf;
+				return T_STRING;
+			}
+{SPACE}			 ;
 
 	/* Register/SCB/SRAM definition keywords */
 export			{ return T_EXPORT; }
@@ -163,11 +171,12 @@ RW|RO|WO		{
 					yylval.value = WO;
 				 return T_MODE;
 			}
-BEGIN_CRITICAL          { return T_BEGIN_CS; }
-END_CRITICAL            { return T_END_CS; }
+BEGIN_CRITICAL		{ return T_BEGIN_CS; }
+END_CRITICAL		{ return T_END_CS; }
 SET_SRC_MODE		{ return T_SET_SRC_MODE; }
 SET_DST_MODE		{ return T_SET_DST_MODE; }
-bit			{ return T_BIT; }
+field			{ return T_FIELD; }
+enum			{ return T_ENUM; }
 mask			{ return T_MASK; }
 alias			{ return T_ALIAS; }
 size			{ return T_SIZE; }
@@ -205,7 +214,7 @@ dec			{ return T_DEC; }
 stc			{ return T_STC;	}
 clc			{ return T_CLC; }
 cmp			{ return T_CMP;	}
-not                     { return T_NOT; }
+not			{ return T_NOT;	}
 xor			{ return T_XOR;	}
 test			{ return T_TEST;}
 and			{ return T_AND;	}
@@ -235,30 +244,30 @@ else			{ return T_ELSE; }
 				return T_NUMBER;
 			}
 	/* Include Files */
-#include{SPACE}         {
-                                BEGIN INCLUDE;
-                                quote_count = 0;
-                                return T_INCLUDE;
-                        }
-<INCLUDE>[<]            { return yytext[0]; }
-<INCLUDE>[>]            { BEGIN INITIAL; return yytext[0]; }
-<INCLUDE>[\"]           {
-                                if (quote_count != 0)
-                                        BEGIN INITIAL;
-                                quote_count++;
-                                return yytext[0];
-                        }
+#include{SPACE}		{
+				BEGIN INCLUDE;
+				quote_count = 0;
+				return T_INCLUDE;
+			}
+<INCLUDE>[<]		{ return yytext[0]; }
+<INCLUDE>[>]		{ BEGIN INITIAL; return yytext[0]; }
+<INCLUDE>[\"]		{
+				if (quote_count != 0)
+					BEGIN INITIAL;
+				quote_count++;
+				return yytext[0];
+			}
 <INCLUDE>{PATH}		{
-                                char *yptr;
+				char *yptr;
 
-                                yptr = yytext;
-                                string_buf_ptr = string_buf;
-                                while (*yptr)
-                                        *string_buf_ptr++ = *yptr++;
-                                yylval.str = string_buf;
-                                *string_buf_ptr = '\0';
-                                return T_PATH;
-                        }
+				yptr = yytext;
+				string_buf_ptr = string_buf;
+				while (*yptr)
+					*string_buf_ptr++ = *yptr++;
+				yylval.str = string_buf;
+				*string_buf_ptr = '\0';
+				return T_PATH;
+			}
 <INCLUDE>.		{ stop("Invalid include line", EX_DATAERR); }
 #define{SPACE}		{
 				BEGIN MACRODEF;
@@ -439,7 +448,9 @@ include_file(char *file_name, include_type type)
 
 	if (newfile == NULL && type != SOURCE_FILE) {
                 path_entry_t include_dir;
-		SLIST_FOREACH(include_dir, &search_path, links) {
+                for (include_dir = search_path.slh_first;
+                     include_dir != NULL;                
+                     include_dir = include_dir->links.sle_next) {
 			char fullname[PATH_MAX];
 
 			if ((include_dir->quoted_includes_only == TRUE)
@@ -573,8 +584,8 @@ yywrap()
 	if (yyfilename != NULL)
 		free(yyfilename);
 	yyfilename = NULL;
-	include = SLIST_FIRST(&include_stack);
-	if (include != SLIST_END(&include_stack)) {
+	include = include_stack.slh_first;
+	if (include != NULL) {
 		yy_switch_to_buffer(include->buffer);
 		yylineno = include->lineno;
 		yyfilename = include->filename;

@@ -1,4 +1,4 @@
-/* $OpenBSD: aic7xxx.seq,v 1.14 2003/12/24 22:40:16 krw Exp $ */
+/* $OpenBSD: aic7xxx.seq,v 1.15 2003/12/24 23:27:55 krw Exp $ */
 /*
  * Adaptec 274x/284x/294x device driver firmware for Linux and FreeBSD.
  *

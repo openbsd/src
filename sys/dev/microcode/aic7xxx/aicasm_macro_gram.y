@@ -1,4 +1,7 @@
 %{
+/*	$OpenBSD: aicasm_macro_gram.y,v 1.2 2003/12/24 23:27:55 krw Exp $	*/
+/*	$NetBSD: aicasm_macro_gram.y,v 1.1 2003/04/19 19:26:11 fvdl Exp $	*/
+
 /*
  * Sub-parser for macro invocation in the Aic7xxx SCSI
  * Host adapter sequencer assembler.
@@ -38,9 +41,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aicasm_macro_gram.y,v 1.1 2002/06/30 18:25:58 smurph Exp $
- *
- * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_macro_gram.y,v 1.1 2002/04/24 16:24:43 gibbs Exp $
+ * $FreeBSD: src/sys/dev/aic7xxx/aicasm/aicasm_macro_gram.y,v 1.2 2002/08/31 06:39:40 gibbs Exp $
  */
 
 #include <sys/types.h>
@@ -52,11 +53,15 @@
 #include <string.h>
 #include <sysexits.h>
 
+#ifdef __linux__
+#include "../queue.h"
+#else
 #include <sys/queue.h>
+#endif
 
 #include "aicasm.h"
 #include "aicasm_symbol.h"
-#include "sequencer.h"
+#include "aicasm_insformat.h"
 
 static symbol_t *macro_symbol;
 

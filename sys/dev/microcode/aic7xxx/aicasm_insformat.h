@@ -1,4 +1,4 @@
-/*	$OpenBSD: aicasm_insformat.h,v 1.3 2003/12/24 23:15:00 krw Exp $	*/
+/*	$OpenBSD: aicasm_insformat.h,v 1.4 2003/12/24 23:27:55 krw Exp $	*/
 /*	$NetBSD: aicasm_insformat.h,v 1.1 2003/04/19 19:26:11 fvdl Exp $	*/
 
 /*
