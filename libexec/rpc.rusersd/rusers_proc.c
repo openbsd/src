@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers_proc.c,v 1.16 2002/06/28 22:40:33 deraadt Exp $	*/
+/*	$OpenBSD: rusers_proc.c,v 1.17 2002/06/30 00:21:12 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.16 2002/06/28 22:40:33 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.17 2002/06/30 00:21:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -37,6 +37,7 @@ static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.16 2002/06/28 22:40:33 deraad
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/time.h>
+#include <paths.h>
 #include <utmp.h>
 #include <stdio.h>
 #include <syslog.h>
@@ -47,20 +48,6 @@ static char rcsid[] = "$OpenBSD: rusers_proc.c,v 1.16 2002/06/28 22:40:33 deraad
 #include <rpcsvc/rnusers.h>	/* Old version */
 
 extern int utmp_fd;
-
-#ifndef _PATH_DEV
-#define _PATH_DEV "/dev"
-#endif
-
-#ifndef UT_LINESIZE
-#define UT_LINESIZE sizeof(((struct utmp *)0)->ut_line)
-#endif
-#ifndef UT_NAMESIZE
-#define UT_NAMESIZE sizeof(((struct utmp *)0)->ut_name)
-#endif
-#ifndef UT_HOSTSIZE
-#define UT_HOSTSIZE sizeof(((struct utmp *)0)->ut_host)
-#endif
 
 typedef char ut_line_t[UT_LINESIZE+1];
 typedef char ut_name_t[UT_NAMESIZE+1];
@@ -80,32 +67,29 @@ extern int from_inetd;
 FILE *ufp;
 
 static u_int
-getidle(char *tty, char *display)
+getidle(char *tty)
 {
 	char devname[PATH_MAX];
 	struct stat st;
 	u_long idle;
 	time_t now;
 
-	/*
-	 * If this is an X terminal or console, then try the
-	 * XIdle extension
-	 */
 	idle = 0;
 	if (*tty == 'X') {
 		u_long kbd_idle, mouse_idle;
 #if !defined(__i386__)
-		kbd_idle = getidle("kbd", NULL);
+		kbd_idle = getidle("kbd");
 #else
 		/*
 		 * XXX Icky i386 console hack.
 		 */
-		kbd_idle = getidle("vga", NULL);
+		kbd_idle = getidle("vga");
 #endif
-		mouse_idle = getidle("mouse", NULL);
+		mouse_idle = getidle("mouse");
 		idle = (kbd_idle < mouse_idle) ? kbd_idle : mouse_idle;
 	} else {
-		snprintf(devname, sizeof devname, "%s/%s", _PATH_DEV, tty);
+		snprintf(devname, sizeof devname, "%s/%.*s", _PATH_DEV,
+			sizeof(tty), tty);
 		if (stat(devname, &st) < 0) {
 #ifdef DEBUG
 			printf("%s: %m\n", devname);
@@ -137,7 +121,7 @@ rusers_num_svc(void *arg, struct svc_req *rqstp)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, SEEK_SET, 0);
+	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		syslog(LOG_ERR, "%m");
@@ -169,7 +153,7 @@ do_names_3(int all)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, SEEK_SET, 0);
+	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		syslog(LOG_ERR, "%m");
@@ -182,16 +166,19 @@ do_names_3(int all)
 		if (*usr.ut_name && *usr.ut_line) {
 			utmps[nusers].ut_type = RUSERS_USER_PROCESS;
 			utmps[nusers].ut_time = usr.ut_time;
-			utmps[nusers].ut_idle = getidle(usr.ut_line, usr.ut_host);
+			utmps[nusers].ut_idle = getidle(usr.ut_line);
 			utmps[nusers].ut_line = line[nusers];
 			memset(line[nusers], 0, sizeof(line[nusers]));
-			strlcpy(line[nusers], usr.ut_line, sizeof(line[nusers]));
+			memcpy(line[nusers], usr.ut_line, UT_LINESIZE);
+			line[nusers][UT_LINESIZE] = '\0';
 			utmps[nusers].ut_user = name[nusers];
 			memset(name[nusers], 0, sizeof(name[nusers]));
-			strlcpy(name[nusers], usr.ut_name, sizeof(name[nusers]));
+			memcpy(name[nusers], usr.ut_name, UT_NAMESIZE);
+			name[nusers][UT_NAMESIZE] = '\0';
 			utmps[nusers].ut_host = host[nusers];
 			memset(host[nusers], 0, sizeof(host[nusers]));
-			strlcpy(host[nusers], usr.ut_host, sizeof(host[nusers]));
+			memcpy(host[nusers], usr.ut_host, UT_HOSTSIZE);
+			host[nusers][UT_HOSTSIZE] = '\0';
 			nusers++;
 		}
 	ut.utmp_array_len = nusers;
@@ -229,7 +216,7 @@ do_names_2(int all)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, SEEK_SET, 0);
+	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		syslog(LOG_ERR, "%m");
@@ -242,16 +229,19 @@ do_names_2(int all)
 		if (*usr.ut_name && *usr.ut_line) {
 			utmp_idlep[nusers] = &utmp_idle[nusers];
 			utmp_idle[nusers].ui_utmp.ut_time = usr.ut_time;
-			utmp_idle[nusers].ui_idle = getidle(usr.ut_line, usr.ut_host);
+			utmp_idle[nusers].ui_idle = getidle(usr.ut_line);
 			utmp_idle[nusers].ui_utmp.ut_line = line[nusers];
 			memset(line[nusers], 0, sizeof(line[nusers]));
-			strlcpy(line[nusers], usr.ut_line, sizeof(line[nusers]));
+			memcpy(line[nusers], usr.ut_line, UT_LINESIZE);
+			line[nusers][UT_LINESIZE] = '\0';
 			utmp_idle[nusers].ui_utmp.ut_name = name[nusers];
 			memset(name[nusers], 0, sizeof(name[nusers]));
-			strlcpy(name[nusers], usr.ut_name, sizeof(name[nusers]));
+			memcpy(name[nusers], usr.ut_name, UT_NAMESIZE);
+			name[nusers][UT_NAMESIZE] = '\0';
 			utmp_idle[nusers].ui_utmp.ut_host = host[nusers];
 			memset(host[nusers], 0, sizeof(host[nusers]));
-			strlcpy(host[nusers], usr.ut_host, sizeof(host[nusers]));
+			memcpy(host[nusers], usr.ut_host, UT_HOSTSIZE);
+			host[nusers][UT_HOSTSIZE] = '\0';
 			nusers++;
 		}
 
@@ -289,7 +279,7 @@ do_names_1(int all)
 		syslog(LOG_ERR, "%m");
 		return (0);
 	}
-	lseek(fd, SEEK_SET, 0);
+	lseek(fd, 0, SEEK_SET);
 	ufp = fdopen(fd, "r");
 	if (!ufp) {
 		syslog(LOG_ERR, "%m");
@@ -303,11 +293,14 @@ do_names_1(int all)
 			ru_utmpp[nusers] = &ru_utmp[nusers];
 			ru_utmp[nusers].ut_time = usr.ut_time;
 			ru_utmp[nusers].ut_line = line[nusers];
-			strlcpy(line[nusers], usr.ut_line, sizeof(line[nusers]));
+			memcpy(line[nusers], usr.ut_line, UT_LINESIZE);
+			line[nusers][UT_LINESIZE] = '\0';
 			ru_utmp[nusers].ut_name = name[nusers];
-			strlcpy(name[nusers], usr.ut_name, sizeof(name[nusers]));
+			memcpy(name[nusers], usr.ut_name, UT_NAMESIZE);
+			name[nusers][UT_NAMESIZE] = '\0';
 			ru_utmp[nusers].ut_host = host[nusers];
-			strlcpy(host[nusers], usr.ut_host, sizeof(host[nusers]));
+			memcpy(host[nusers], usr.ut_host, UT_HOSTSIZE);
+			host[nusers][UT_HOSTSIZE] = '\0';
 			nusers++;
 		}
 
