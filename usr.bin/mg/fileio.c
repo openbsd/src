@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.32 2002/07/01 17:20:04 vincent Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.33 2002/07/25 16:37:54 vincent Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -8,6 +8,7 @@
 static FILE	*ffp;
 
 #include <sys/types.h>
+#include <limits.h>
 #include <sys/stat.h>
 #include <sys/dir.h>
 #include <string.h>
@@ -230,127 +231,46 @@ extern char	*wdir;
 char *
 adjustname(const char *fn)
 {
-	char		*cp;
-	static char	fnb[NFILEN];
-	struct passwd	*pwent;
-#ifdef	SYMBLINK
-	struct stat	statbuf;
-	int		i, j;
-	char		linkbuf[NFILEN];
-#endif
-	int n;
+	static char fnb[MAXPATHLEN];
+	const char *cp;
+	char user[LOGIN_NAME_MAX + 1], path[MAXPATHLEN];
+	int len;
 
-	switch (*fn) {
-	case '/':
-		cp = fnb;
-		*cp++ = *fn++;
-		break;
-	case '~':
-		fn++;
-		cp = getenv("HOME");
-		if (cp != NULL && *cp != '\0' &&
-		    (*fn == '/' || *fn == '\0')) {
-			n = strlcpy(fnb, cp, sizeof fnb);
-			if (n >= sizeof fnb)
-				n = sizeof fnb - 1;
-			cp = fnb + n;
-			if (*fn)
-				fn++;
-			break;
-		} else {
-			cp = fnb;
-			while (*fn && *fn != '/')
-				*cp++ = *fn++;
-			*cp = '\0';
-			if ((pwent = getpwnam(fnb)) != NULL) {
-				n = strlcpy(fnb, pwent->pw_dir, sizeof fnb);
-				if (n >= sizeof fnb)
-					n = sizeof fnb - 1;
-				cp = fnb + n;
-				break;
-			} else {
-				fn -= strlen(fnb) + 1;
-				/* can't find ~user, continue to default case */
-			}
+	path[0] = '\0';
+	/* first handle tilde expansion */
+	if (fn[0] == '~') {
+		struct passwd *pw;
+
+		cp = strchr(fn, '/');
+		if (cp == NULL)
+			cp = fn + strlen(fn); /* point to the NUL byte */
+
+		if ((cp - &fn[1]) > LOGIN_NAME_MAX) {
+			ewprintf("login name too long");
+			return (NULL);
 		}
-	default:
-#ifndef	NODIR
-		n = strlcpy(fnb, wdir, sizeof fnb);
-		if (n >= sizeof fnb)
-			n = sizeof fnb - 1;
-		cp = fnb + n;
-		break;
-#else
-		return fn;	/* punt */
-#endif
-	}
-	if (cp != fnb && cp[-1] != '/')
-		*cp++ = '/';
-	while (*fn) {
-		switch (*fn) {
-		case '.':
-			switch (fn[1]) {
-			case '\0':
-				*--cp = '\0';
-				return fnb;
-			case '/':
-				fn += 2;
-				continue;
-			case '.':
-				if (fn[2] != '/' && fn[2] != '\0')
-					break;
-#ifdef SYMBLINK
-				cp[-1] = '\0';
-				for (j = MAXLINK; j-- &&
-				     lstat(fnb, &statbuf) != -1 &&
-				     (statbuf.st_mode & S_IFMT) == S_IFLNK &&
-				     (i = readlink(fnb, linkbuf, sizeof linkbuf))
-				     != -1;) {
-					if (linkbuf[0] != '/') {
-						--cp;
-						while (cp > fnb && *--cp != '/')
-							;
-						++cp;
-						(void) strncpy(cp, linkbuf, i);
-						cp += i;
-					} else {
-						(void) strncpy(fnb, linkbuf, i);
-						cp = fnb + i;
-					}
-					if (cp[-1] != '/')
-						*cp++ = '\0';
-					else
-						cp[-1] = '\0';
-				}
-				cp[-1] = '/';
-#endif
-				--cp;
-				while (cp > fnb && *--cp != '/')
-					;
-				++cp;
-				if (fn[2] == '\0') {
-					*--cp = '\0';
-					return fnb;
-				}
-				fn += 3;
-				continue;
-			default:
-				break;
-			}
-			break;
-		case '/':
+		if (cp == &fn[1]) /* ~/ */
+			strlcpy(user, getlogin(), sizeof user);
+		else
+			strlcpy(user, &fn[1], cp - &fn[1] + 1);
+		pw = getpwnam(user);
+		if (pw == NULL) {
+			ewprintf("unknown user %s", user);
+			return (NULL);
+		}
+		strlcpy(path, pw->pw_dir, sizeof path - 1);
+		len = strlen(path);
+		if (path[len] != '/') {
+			path[len] = '/';
+			path[len + 1] = '\0';
+		}
+		fn = cp;
+		if (*fn == '/')
 			fn++;
-			continue;
-		default:
-			break;
-		}
-		while (*fn && (*cp++ = *fn++) != '/')
-			;
 	}
-	if (cp[-1] == '/')
-		--cp;
-	*cp = '\0';
-	return fnb;
+	strlcat(path, fn, sizeof path);
+
+	return (realpath(path, fnb));
 }
 
 #ifndef NO_STARTUP
@@ -574,6 +494,8 @@ make_file_list(char *buf)
 		buf[len - 1] = '.';
 	} else
 		dir = adjustname(buf);
+	if (dir == NULL)
+		return (FALSE);
 	/*
 	 * If the user typed a trailing / or the empty string
 	 * he wants us to use his file spec as a directory name.

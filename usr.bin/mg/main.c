@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2002/07/03 03:47:59 vincent Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2002/07/25 16:37:54 vincent Exp $	*/
 
 /*
  *	Mainline.
@@ -63,9 +63,11 @@ main(int argc, char **argv)
 #endif	/* !NO_STARTUP */
 	while (--argc > 0) {
 		cp = adjustname(*++argv);
-		curbp = findbuffer(cp);
-		(void)showbuffer(curbp, curwp, 0);
-		(void)readin(cp);
+		if (cp != NULL) {
+			curbp = findbuffer(cp);
+			(void)showbuffer(curbp, curwp, 0);
+			(void)readin(cp);
+		}
 	}
 
 	/* fake last flags */

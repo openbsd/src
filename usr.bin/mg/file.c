@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.21 2002/07/03 03:47:59 vincent Exp $	*/
+/*	$OpenBSD: file.c,v 1.22 2002/07/25 16:37:54 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -16,13 +16,15 @@ int
 fileinsert(int f, int n)
 {
 	int	 s;
-	char	 fname[NFILEN];
+	char	 fname[NFILEN], *adjf;
 
 	s = eread("Insert file: ", fname, NFILEN, EFNEW | EFCR | EFFILE);
 	if (s != TRUE)
 		return (s);
-	return insertfile(adjustname(fname), NULL, FALSE);
-	/* don't set buffer name */
+	adjf = adjustname(fname);
+	if (adjf == NULL)
+		return (FALSE);
+	return insertfile(adjf, NULL, FALSE);
 }
 
 /*
@@ -44,6 +46,8 @@ filevisit(int f, int n)
 	if (s != TRUE)
 		return s;
 	adjf = adjustname(fname);
+	if (adjf == NULL)
+		return (FALSE);
 	if ((bp = findbuffer(adjf)) == NULL)
 		return FALSE;
 	curbp = bp;
@@ -83,6 +87,8 @@ poptofile(int f, int n)
 	    EFNEW | EFCR | EFFILE)) != TRUE)
 		return s;
 	adjf = adjustname(fname);
+	if (adjf == NULL)
+		return (FALSE);
 	if ((bp = findbuffer(adjf)) == NULL)
 		return FALSE;
 	if ((wp = popbuf(bp)) == NULL)
@@ -362,6 +368,8 @@ filewrite(int f, int n)
 	    EFNEW | EFCR | EFFILE)) != TRUE)
 		return (s);
 	adjfname = adjustname(fname);
+	if (adjfname == NULL)
+		return (FALSE);
 	/* old attributes are no longer current */
 	bzero(&curbp->b_fi, sizeof(curbp->b_fi));
 	if ((s = writeout(curbp, adjfname)) == TRUE) {
