@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.95 1998/09/24 06:13:09 millert Exp $
+#	$OpenBSD: install.sub,v 1.96 1998/09/24 06:39:07 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -166,7 +166,7 @@ rmel() {
 }
 
 cutword () {
-# read a line of data, return Nth element.
+# read lines on stdin, return Nth element of each line, like cut(1)
 	local _a
 	local _n
 	local _oifs
@@ -178,10 +178,12 @@ cutword () {
 	esac
 
 	_n=$1
-	read _a; set -- $_a
+	while read _a; do
+		set -- $_a
+		test "$1" = "" && break
+		eval echo \$$_n
+	done
 	IFS="$_oifs"
-	if [ "$1" = "" ]; then return; fi
-	eval echo \$$_n
 }
 
 cutlast () {
@@ -225,7 +227,7 @@ basename () {
 
 get_ifdevs() {
         # return available network devices
-	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|ppp|sl|tun)[[:digit:]])' | cutword -t: 1`
+	/sbin/ifconfig -a | egrep -v '^([[:space:]]|(lo|enc|ppp|sl|tun)[[:digit:]])' | cutword -t: 1
 }
 
 dir_has_sets() {
