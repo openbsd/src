@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.33 2004/10/04 12:30:54 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.34 2004/10/05 10:01:17 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -216,6 +216,8 @@ our @ISA=qw(OpenBSD::PackingElement);
 package OpenBSD::PackingElement::FileObject;
 our @ISA=qw(OpenBSD::PackingElement::Object);
 
+sub NoDuplicateNames() { 1 }
+
 # exec/unexec and friends
 package OpenBSD::PackingElement::Action;
 our @ISA=qw(OpenBSD::PackingElement::Object);
@@ -314,7 +316,6 @@ sub make_hardlink
 
 sub IsFile() { 1 }
 
-sub NoDuplicateNames() { 1 }
 
 package OpenBSD::PackingElement::File;
 our @ISA=qw(OpenBSD::PackingElement::FileBase);
@@ -349,7 +350,6 @@ sub add_object
 package OpenBSD::PackingElement::Sample;
 our @ISA=qw(OpenBSD::PackingElement::FileObject);
 
-sub NoDuplicateNames() { 1 }
 __PACKAGE__->setKeyword('sample');
 sub keyword() { "sample" }
 sub destate
@@ -923,16 +923,12 @@ sub destate
 	$self->compute_fullname($state);
 }
 
-sub NoDuplicateNames() { 1 }
-
 package OpenBSD::PackingElement::DirBase;
 sub stringize($)
 {
 	my $self = $_[0];
 	return $self->{name}."/";
 }
-
-sub NoDuplicateNames() { 1 }
 
 package OpenBSD::PackingElement::Dir;
 our @ISA=qw(OpenBSD::PackingElement::DirBase OpenBSD::PackingElement::FileObject);
