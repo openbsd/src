@@ -1,4 +1,4 @@
-/*	$OpenBSD: arc4random.c,v 1.6 2001/06/05 05:05:38 pvalchev Exp $	*/
+/*	$OpenBSD: arc4random.c,v 1.7 2003/02/14 17:12:54 deraadt Exp $	*/
 
 /*
  * Arc4 random number generator for OpenBSD.
@@ -44,8 +44,9 @@ struct arc4_stream {
 	u_int8_t s[256];
 };
 
-int     rs_initialized;
+static int rs_initialized;
 static struct arc4_stream rs;
+static pid_t arc4_stir_pid;
 
 static inline void
 arc4_init(as)
@@ -113,6 +114,7 @@ arc4_stir(as)
 	/* fd < 0 or failed sysctl ?  Ah, what the heck. We'll just take
 	 * whatever was on the stack... */
 
+	arc4_stir_pid = getpid();
 	arc4_addrandom(as, (void *) &rdat, sizeof(rdat));
 }
 
@@ -166,7 +168,7 @@ arc4random_addrandom(dat, datlen)
 u_int32_t
 arc4random()
 {
-	if (!rs_initialized)
+	if (!rs_initialized || arc4_stir_pid != getpid())
 		arc4random_stir();
 	return arc4_getword(&rs);
 }
