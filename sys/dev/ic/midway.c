@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.16 1996/11/12 22:46:23 niklas Exp $	*/
-/*	(sync'd to midway.c 1.63)	*/
+/*	$NetBSD: midway.c,v 1.21 1996/11/09 03:43:29 chuck Exp $	*/
+/*	(sync'd to midway.c 1.64)	*/
 
 /*
  *
@@ -1039,6 +1039,7 @@ int on;
     sc->rxslot[slot].rxhand = pi->rxhand;
     if (sc->rxslot[slot].indma.ifq_head || sc->rxslot[slot].q.ifq_head)
       panic("en_rxctl: left over mbufs on enable");
+    sc->txspeed[vci] = 0;	/* full speed to start */
     en_loadvc(sc, vci);		/* does debug printf for us */
     return(0);
   }
@@ -1054,7 +1055,7 @@ int on;
     return(EINVAL);
   s = splimp();		/* block out enintr() */
   oldmode = EN_READ(sc, MID_VC(vci));
-  newmode = MIDV_SETMODE(oldmode, MIDV_TRASH);
+  newmode = MIDV_SETMODE(oldmode, MIDV_TRASH) & ~MIDV_INSERVICE;
   EN_WRITE(sc, MID_VC(vci), (newmode | (oldmode & MIDV_INSERVICE)));
 		/* halt in tracks, be careful to preserve inserivce bit */
   DELAY(27);
@@ -1064,7 +1065,6 @@ int on;
   /* if stuff is still going on we are going to have to drain it out */
   if (sc->rxslot[slot].indma.ifq_head || 
 		sc->rxslot[slot].q.ifq_head ||
-		(EN_READ(sc, MID_VC(vci)) & MIDV_INSERVICE) != 0 ||
 		(sc->rxslot[slot].oth_flags & ENOTHER_SWSL) != 0) {
     sc->rxslot[slot].oth_flags |= ENOTHER_DRAIN;
   } else {
@@ -1705,6 +1705,7 @@ again:
    */
 
   EN_COUNT(sc->launch);
+  sc->enif.if_opackets++;
   if ((launch.atm_flags & EN_OBHDR) == 0) {
     EN_COUNT(sc->lheader);
     /* store tbd1/tbd2 in network byte order */
@@ -1868,11 +1869,8 @@ struct en_launch *l;
 
     if (tmp->m_next == NULL) {
       cnt = (need - len) % sizeof(u_int32_t);
-      if (cnt) {
-        cnt = sizeof(u_int32_t) - cnt;	/* # of byte we need to FLUSH */
-        if (M_TRAILINGSPACE(tmp) >= cnt)
-          len += cnt;			/* pad for FLUSH */
-      }
+      if (cnt && M_TRAILINGSPACE(tmp) >= cnt)
+        len += cnt;			/* pad for FLUSH */
     }
       
     /* do we need to do a DMA op to align to word boundary? */
@@ -2022,6 +2020,10 @@ struct en_launch *l;
       EN_WRAPADD(start, stop, cur, pad);
       EN_DTQADD(sc, pad, chan, MIDDMA_BYTE, vtophys(l->t->m_data), 0, 0);
       need -= pad;
+#ifdef EN_DEBUG
+      printf("%s: tx%d: pad/FLUSH dma %d bytes (%d left, cur now 0x%x)\n", 
+		sc->sc_dev.dv_xname, chan, pad, need, cur);
+#endif
     }
 
     /* copy data */
@@ -2234,6 +2236,7 @@ void *arg;
 		sc->sc_dev.dv_xname, slot, sc->rxslot[slot].atm_vci, m,
 		EN_DQ_LEN(drq), sc->rxslot[slot].rxhand);
 #endif
+	  sc->enif.if_ipackets++;
 	  atm_input(&sc->enif, &ah, m, sc->rxslot[slot].rxhand);
 	}
 
@@ -2265,8 +2268,10 @@ void *arg;
       EN_WRAPADD(MID_SLOFF, MID_SLEND, sc->hwslistp, 4);/* advance hw ptr */
       slot = sc->rxvc2slot[vci];
       if (slot == RX_NONE) {
+#ifdef EN_DEBUG
 	printf("%s: unexpected rx interrupt on VCI %d\n", 
 		sc->sc_dev.dv_xname, vci);
+#endif
 	EN_WRITE(sc, MID_VC(vci), MIDV_TRASH);  /* rx off, damn it! */
 	continue;				/* next */
       }
