@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.29 2002/07/15 22:11:21 deraadt Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.30 2002/08/12 02:31:43 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.29 2002/07/15 22:11:21 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.30 2002/08/12 02:31:43 itojun Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -346,6 +346,8 @@ reread:		errno = 0;
 		bp = buf;
 
 rewrite:	FD_ZERO(&rembits);
+		if (rem >= FD_SETSIZE)
+			errx(1, "descriptor too large");
                 FD_SET(rem, &rembits);
 		if (select(rem + 1, 0, &rembits, 0, 0) < 0) {
 			if (errno != EINTR) {
@@ -380,7 +382,11 @@ done:
 
 	sigprocmask(SIG_SETMASK, omask, NULL);
 	FD_ZERO(&readfrom);
+	if (rfd2 >= FD_SETSIZE)
+		errx(1, "descriptor too large");
 	FD_SET(rfd2, &readfrom);
+	if (rem >= FD_SETSIZE)
+		errx(1, "descriptor too large");
 	FD_SET(rem, &readfrom);
 	do {
 		FD_COPY(&readfrom, &ready);
