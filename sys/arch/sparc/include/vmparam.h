@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.6 1998/08/23 23:07:04 marc Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.7 1999/04/22 20:36:21 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.13 1997/07/12 16:20:03 perry Exp $	*/
 
 /*
@@ -143,7 +143,31 @@
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
 #define VM_KMEM_SIZE		(NKMEMCLUSTERS*CLBYTES)
 
+#if defined(UVM)
+#defined MACHINE_NEW_NONCONTIG
+#endif
+
+#ifndef MACHINE_NEW_NONCONTG
 #define MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
+#endif
+
+#ifdef MACHINE_NEW_NONCONTIG
+
+#define VM_PHYSSEG_MAX		32	/* we only have one "hole" */
+#define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
+#define VM_PHYSSEG_NOADD		/* can't add RAM after vm_mem_init */
+
+/*
+ * pmap specific data stored in the vm_physmem[] array
+ */
+struct pmap_physseg {
+	/* NULL */
+};
+
+#define VM_NFREELIST		1
+#define VM_FREELIST_DEFAULT	0
+
+#endif
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 struct vm_map;

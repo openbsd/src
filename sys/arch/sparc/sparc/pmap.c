@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.24 1999/04/22 17:07:30 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.25 1999/04/22 20:36:22 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -346,13 +346,16 @@ int	npmemarr;		/* number of entries in pmemarr */
 int	cpmemarr;		/* pmap_next_page() state */
 /*static*/ vm_offset_t	avail_start;	/* first free physical page */
 /*static*/ vm_offset_t	avail_end;	/* last free physical page */
+#ifdef MACHINE_NONCONTIG
 /*static*/ vm_offset_t	avail_next;	/* pmap_next_page() state:
 					   next free physical page */
+#endif
 /*static*/ vm_offset_t	unavail_start;	/* first stolen free physical page */
 /*static*/ vm_offset_t	unavail_end;	/* last stolen free physical page */
 /*static*/ vm_offset_t	virtual_avail;	/* first free virtual page number */
 /*static*/ vm_offset_t	virtual_end;	/* last free virtual page number */
 
+static void pmap_page_upload __P((void));
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
 
@@ -714,6 +717,7 @@ setpte4m(va, pte)
 } while (0)
 
 
+static void get_phys_mem __P((void));
 static void sortm __P((struct memarr *, int));
 void	ctx_alloc __P((struct pmap *));
 void	ctx_free __P((struct pmap *));
@@ -727,16 +731,42 @@ void	pm_check_u __P((char *, struct pmap *));
 
 
 /*
+ * Grab physical memory list and use it to compute `physmem' and
+ * `avail_end'. The latter is used in conjuction with
+ * `avail_start' and `avail_next' to dispatch left-over
+ * physical pages to the VM system.
+ */
+static void
+get_phys_mem()
+{
+	struct memarr *mp;
+	int j;
+
+	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
+	sortm(pmemarr, npmemarr);
+	if (pmemarr[0].addr != 0) {
+		printf("pmap_bootstrap: no kernel memory?!\n");
+		callrom();
+	}
+	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
+#ifdef MACHINE_NONCONTIG
+	avail_next = avail_start;
+#endif
+	for (physmem = 0, mp = pmemarr, j = npmemarr; --j >= 0; mp++)
+		physmem += btoc(mp->len);
+}
+
+/*
  * Sort a memory array by address.
  */
 static void
 sortm(mp, n)
-	register struct memarr *mp;
-	register int n;
+	struct memarr *mp;
+	int n;
 {
-	register struct memarr *mpj;
-	register int i, j;
-	register u_int addr, len;
+	struct memarr *mpj;
+	int i, j;
+	u_int addr, len;
 
 	/* Insertion sort.  This is O(n^2), but so what? */
 	for (i = 1; i < n; i++) {
@@ -776,6 +806,65 @@ pmap_virtual_space(v_start, v_end)
 }
 
 /*
+ * Helper routine that hands off available physical pages to the VM system.
+ */
+static void
+pmap_page_upload()
+{
+	int	n = 0;
+	vm_offset_t start, end, avail_next;
+
+	avail_next = avail_start;
+	if (unavail_start != 0) {
+		/* First, the gap we created in pmap_bootstrap() */
+		if (avail_next != unavail_start)
+			/* Avoid empty ranges */
+#if defined(UVM)
+			uvm_page_physload(
+				atop(avail_next),
+				atop(unavail_start),
+				atop(avail_next),
+				atop(unavail_start),
+				VM_FREELIST_DEFAULT);
+#else
+			vm_page_physload(
+				atop(avail_next),
+				atop(unavail_start),
+				atop(avail_next),
+				atop(unavail_start));
+#endif
+		avail_next = unavail_end;
+	}
+
+	for (n = 0; n < npmemarr; n++) {
+		/*
+		 * Assume `avail_next' is always in the first segment; we
+		 * already made that assumption in pmap_bootstrap()..
+		 */
+		start = (n == 0) ? avail_next : pmemarr[n].addr;
+		end = pmemarr[n].addr + pmemarr[n].len;
+		if (start == end)
+			continue;
+
+#if defined(UVM)
+		uvm_page_physload(
+			atop(start),
+			atop(end),
+			atop(start),
+			atop(end), VM_FREELIST_DEFAULT);
+#else
+		vm_page_physload(
+			atop(start),
+			atop(end),
+			atop(start),
+			atop(end));
+#endif
+	}
+
+}
+
+#ifdef MACHINE_NONCONTIG
+/*
  * Return the number of page indices in the range of
  * possible return values for pmap_page_index() for
  * all addresses provided by pmap_next_page().  This
@@ -787,7 +876,7 @@ pmap_free_pages()
 {
 	int long bytes;
 	int nmem;
-	register struct memarr *mp;
+	struct memarr *mp;
 
 	bytes = -avail_start;
 	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0; mp++)
@@ -830,6 +919,7 @@ pmap_next_page(paddr)
         avail_next += NBPG;
         return TRUE;
 }
+#endif
 
 /*
  * pmap_page_index()
@@ -2776,19 +2866,7 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	avail_start = (int)p - KERNBASE;
 
-	/*
-	 * Grab physical memory list, so pmap_next_page() can do its bit.
-	 */
-	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
-	sortm(pmemarr, npmemarr);
-	if (pmemarr[0].addr != 0) {
-		printf("pmap_bootstrap: no kernel memory?!\n");
-		callrom();
-	}
-	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
-	avail_next = avail_start;
-	for (physmem = 0, mp = pmemarr, j = npmemarr; --j >= 0; mp++)
-		physmem += btoc(mp->len);
+	get_phys_mem();
 
 	i = (int)p;
 	vpage[0] = p, p += NBPG;
@@ -2968,14 +3046,17 @@ pmap_bootstrap4_4c(nctx, nregion, nsegment)
 	{
 		extern char etext[];
 #ifdef KGDB
-		register int mask = ~PG_NC;	/* XXX chgkprot is busted */
+		int mask = ~PG_NC;	/* XXX chgkprot is busted */
 #else
-		register int mask = ~(PG_W | PG_NC);
+		int mask = ~(PG_W | PG_NC);
 #endif
 
 		for (p = (caddr_t)trapbase; p < etext; p += NBPG)
 			setpte4(p, getpte4(p) & mask);
 	}
+#if defined(MACHINE_NEW_NONCONTIG)
+	pmap_page_upload();
+#endif
 }
 #endif
 
@@ -3072,22 +3153,8 @@ pmap_bootstrap4m(void)
 	 */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	avail_start = (int)p - KERNBASE;
-	/*
-	 * Grab physical memory list use it to compute `physmem' and
-	 * `avail_end'. The latter is used in conjuction with
-	 * `avail_start' and `avail_next' to dispatch left-over
-	 * physical pages to the VM system.
-	 */
-	npmemarr = makememarr(pmemarr, MA_SIZE, MEMARR_AVAILPHYS);
-	sortm(pmemarr, npmemarr);
-	if (pmemarr[0].addr != 0) {
-		printf("pmap_bootstrap: no kernel memory?!\n");
-		callrom();
-	}
-	avail_end = pmemarr[npmemarr-1].addr + pmemarr[npmemarr-1].len;
-	avail_next = avail_start;
-	for (physmem = 0, mp = pmemarr, j = npmemarr; --j >= 0; mp++)
-		physmem += btoc(mp->len);
+
+	get_phys_mem();
 
 	/*
 	 * Reserve memory for MMU pagetables. Some of these have severe
@@ -3110,7 +3177,7 @@ pmap_bootstrap4m(void)
 #endif
 
 	p = (caddr_t) roundup((u_int)p, (0 - DVMA4M_BASE) / 1024);
-	unavail_start = (int)p - KERNBASE;
+	unavail_start = (vm_offset_t)p - KERNBASE;
 
 	kernel_iopte_table = (u_int *)p;
 	kernel_iopte_table_pa = VA2PA((caddr_t)kernel_iopte_table);
@@ -3158,7 +3225,7 @@ pmap_bootstrap4m(void)
 	/* Round to next page and mark end of stolen pages */
 	p = (caddr_t)(((u_int)p + NBPG - 1) & ~PGOFSET);
 	pagetables_end = p;
-	unavail_end = (int)p - KERNBASE;
+	unavail_end = (vm_offset_t)p - KERNBASE;
 
 	/*
 	 * Since we've statically allocated space to map the entire kernel,
@@ -3325,6 +3392,9 @@ pmap_bootstrap4m(void)
 		kvm_uncache(pagetables_start,
 			    (pagetables_end - pagetables_start) >> PGSHIFT);
 
+#if defined(MACHINE_NEW_NONCONTIG)
+	pmap_page_upload();
+#endif
 }
 
 void
