@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc.c,v 1.29 1998/07/05 07:20:02 downsj Exp $	*/
+/*	$OpenBSD: wdc.c,v 1.30 1998/07/07 19:15:31 deraadt Exp $	*/
 /*	$NetBSD: wd.c,v 1.150 1996/05/12 23:54:03 mycroft Exp $ */
 
 /*
@@ -183,15 +183,21 @@ wdcprobe(parent, match, aux)
 	wdc->sc_ioh = ioh;
 
 	/* Check if we have registers that work. */
+	/* Error register not writable, */
+	bus_space_write_1(iot, ioh, wd_error, 0x5a);
+	/* but all of cyl_lo are. */
 	bus_space_write_1(iot, ioh, wd_cyl_lo, 0xa5);
-	if (bus_space_read_1(iot, ioh, wd_cyl_lo) == 0xff) {
+	if (bus_space_read_1(iot, ioh, wd_error) == 0x5a ||
+	    bus_space_read_1(iot, ioh, wd_cyl_lo) != 0xa5) {
 		/*
 		 * Test for a controller with no IDE master, just one
 		 * ATAPI device. Select drive 1, and try again.
 		 */
 		bus_space_write_1(iot, ioh, wd_sdh, WDSD_IBM | 0x10);
+		bus_space_write_1(iot, ioh, wd_error, 0x5a);
 		bus_space_write_1(iot, ioh, wd_cyl_lo, 0xa5);
-		if (bus_space_read_1(iot, ioh, wd_cyl_lo) == 0xff)
+		if (bus_space_read_1(iot, ioh, wd_error) == 0x5a ||
+		    bus_space_read_1(iot, ioh, wd_cyl_lo) != 0xa5)
 			goto nomatch;
 		wdc->sc_flags |= WDCF_ONESLAVE;
 	}
