@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.35 2004/01/05 20:32:50 itojun Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.36 2004/01/05 20:35:52 itojun Exp $	*/
 /*	$KAME: rtsold.c,v 1.75 2004/01/03 00:00:07 itojun Exp $	*/
 
 /*
@@ -655,11 +655,11 @@ static void
 usage(char *progname)
 {
 	if (progname && progname[strlen(progname) - 1] != 'd') {
-		fprintf(stderr, "usage: rtsol [-dD] interfaces...\n");
-		fprintf(stderr, "usage: rtsol [-dD] -a\n");
+		fprintf(stderr, "usage: rtsol [-dDF] interfaces...\n");
+		fprintf(stderr, "usage: rtsol [-dDF] -a\n");
 	} else {
-		fprintf(stderr, "usage: rtsold [-adDfm1] interfaces...\n");
-		fprintf(stderr, "usage: rtsold [-dDfm1] -a\n");
+		fprintf(stderr, "usage: rtsold [-adDfFm1] interfaces...\n");
+		fprintf(stderr, "usage: rtsold [-dDfFm1] -a\n");
 	}
 	exit(1);
 }
