@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.10 2001/06/26 12:47:10 dhartmei Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.11 2001/06/26 15:29:05 wilfried Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -63,6 +63,64 @@ u_int32_t	 rule_mask (u_int8_t);
 
 char *tcpflags = "FSRPAU";
 
+struct icmptypeent {
+	char *name;
+	u_int8_t type;
+};
+
+struct icmpcodeent {
+	char *name;
+	u_int8_t type;
+	u_int8_t code;
+};
+
+struct icmptypeent icmp_type[] = {
+	{ "echoreq",	ICMP_ECHO },
+	{ "echorep",	ICMP_ECHOREPLY },
+	{ "unreach",	ICMP_UNREACH },
+	{ "squench",	ICMP_SOURCEQUENCH },
+	{ "redir",	ICMP_REDIRECT },
+	{ "althost",	ICMP_ALTHOSTADDR },
+	{ "routeradv",	ICMP_ROUTERADVERT },
+	{ "routersol",	ICMP_ROUTERSOLICIT },
+	{ "timex",	ICMP_TIMXCEED },
+	{ "paramprob",	ICMP_PARAMPROB },
+	{ "timereq",	ICMP_TSTAMP },
+	{ "timerep",	ICMP_TSTAMPREPLY },
+	{ "inforeq",	ICMP_IREQ },
+	{ "inforep",	ICMP_IREQREPLY },
+	{ "maskreq",	ICMP_MASKREQ },
+	{ "maskrep",	ICMP_MASKREPLY }
+};
+
+struct icmpcodeent icmp_code[] = {
+	{ "net-unr",		ICMP_UNREACH, 	ICMP_UNREACH_NET },
+	{ "host-unr",		ICMP_UNREACH, 	ICMP_UNREACH_HOST },
+	{ "proto-unr",		ICMP_UNREACH, 	ICMP_UNREACH_PROTOCOL },
+	{ "port-unr",		ICMP_UNREACH, 	ICMP_UNREACH_PORT },
+	{ "needfrag",		ICMP_UNREACH, 	ICMP_UNREACH_NEEDFRAG },
+	{ "srcfail",		ICMP_UNREACH, 	ICMP_UNREACH_SRCFAIL },
+	{ "net-unk",		ICMP_UNREACH, 	ICMP_UNREACH_NET_UNKNOWN },
+	{ "host-unk",		ICMP_UNREACH, 	ICMP_UNREACH_HOST_UNKNOWN },
+	{ "isolate",		ICMP_UNREACH, 	ICMP_UNREACH_ISOLATED },
+	{ "net-prohib",		ICMP_UNREACH, 	ICMP_UNREACH_NET_PROHIB },
+	{ "host-prohib",	ICMP_UNREACH, 	ICMP_UNREACH_HOST_PROHIB },
+	{ "net-tos",		ICMP_UNREACH, 	ICMP_UNREACH_TOSNET },
+	{ "host-tos",		ICMP_UNREACH, 	ICMP_UNREACH_TOSHOST },
+	{ "filter-prohib",	ICMP_UNREACH, 	ICMP_UNREACH_FILTER_PROHIB },
+	{ "host-preced",	ICMP_UNREACH, 	ICMP_UNREACH_HOST_PRECEDENCE },
+	{ "cutoff-preced",	ICMP_UNREACH, 	ICMP_UNREACH_PRECEDENCE_CUTOFF },
+	{ "redir-net",		ICMP_REDIRECT,	ICMP_REDIRECT_NET },
+	{ "redir-host",		ICMP_REDIRECT,	ICMP_REDIRECT_HOST },
+	{ "redir-tos-net",	ICMP_REDIRECT,	ICMP_REDIRECT_TOSNET },
+	{ "redir-tos-host",	ICMP_REDIRECT,	ICMP_REDIRECT_TOSHOST },
+	{ "transit",		ICMP_TIMXCEED,	ICMP_TIMXCEED_INTRANS },
+	{ "reassemb",		ICMP_TIMXCEED,	ICMP_TIMXCEED_REASS },
+	{ "badhead",		ICMP_PARAMPROB,	ICMP_PARAMPROB_ERRATPTR },
+	{ "optmiss",		ICMP_PARAMPROB,	ICMP_PARAMPROB_OPTABSENT },
+	{ "badlen",		ICMP_PARAMPROB,	ICMP_PARAMPROB_LENGTH }
+};
+
 int
 error(int n, char *fmt, ...)
 {
@@ -73,6 +131,54 @@ error(int n, char *fmt, ...)
 	fprintf(stderr, "%s: line %d ", __progname, n);
 	vfprintf(stderr, fmt, ap);
 	va_end(ap);
+	return (0);
+}
+
+struct icmptypeent *
+geticmptypebynumber(u_int8_t type)
+{
+	int i;
+
+	for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
+		if(type == icmp_type[i].type)
+			return (&icmp_type[i]);
+	}
+	return (0);
+}
+
+struct icmptypeent *
+geticmptypebyname(char *w)
+{
+	int i;
+
+	for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
+		if(!strcmp(w, icmp_type[i].name))
+			return (&icmp_type[i]);
+	}
+	return (0);
+}
+
+struct icmpcodeent *
+geticmpcodebynumber(u_int8_t type, u_int8_t code)
+{
+	int i;
+
+	for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
+		if (type == icmp_code[i].type && code == icmp_code[i].code)
+			return (&icmp_code[i]);
+	}
+	return (0);
+}
+
+struct icmpcodeent *
+geticmpcodebyname(u_long type, char *w)
+{
+	int i;
+
+	for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
+		if (type == icmp_code[i].type && !strcmp(w, icmp_code[i].name))
+			return (&icmp_code[i]);
+	}
 	return (0);
 }
 
@@ -344,10 +450,24 @@ print_rule(struct pf_rule *r)
 		print_flags(r->flagset);
 		printf(" ");
 	}
-	if (r->type)
-		printf("icmp-type %u ", r->type-1);
-	if (r->code)
-		printf("code %u ", r->code-1);
+	if (r->type) {
+		struct icmptypeent *p;
+
+		p = geticmptypebynumber(r->type-1);
+		if (p != NULL)
+			printf("icmp-type %s ", p->name);
+		else
+			printf("icmp-type %u ", r->type-1);
+		if (r->code) {
+			struct icmpcodeent *p;
+			
+			p = geticmpcodebynumber(r->type-1, r->code-1);
+			if (p != NULL)
+				printf("code %s ", p->name);
+			else
+				printf("code %u ", r->code-1);
+		}
+	}
 	if (r->keep_state)
 		printf("keep state ");
 	printf("\n");
@@ -677,8 +797,16 @@ parse_rule(int n, char *l, struct pf_rule *r)
 
 			errno = 0;
 			ul = strtoul(w, &ep, 10);
-			if (w[0] == '\0' || *ep != '\0' ||
-			    (errno == ERANGE && ul == ULONG_MAX) ||
+			if (w[0] == '\0' || *ep != '\0') {
+				struct icmptypeent *p;
+
+				p = geticmptypebyname(w);
+				if (p == NULL) {
+					error(n, "unknown icmp-type %s\n", w);
+					return (0);
+				}
+				ul = p->type;
+			} else if ((errno == ERANGE && ul == ULONG_MAX) ||
 			    ul > ICMP_MAXTYPE) {
 				error(n, "icmp-type type wrong\n");
 				return (0);
@@ -691,14 +819,22 @@ parse_rule(int n, char *l, struct pf_rule *r)
 
 				errno = 0;
 				ul = strtoul(w, &ep, 10);
-				if ((w[0] == '\0' || *ep != '\0') ||
-				    (errno == ERANGE && ul == ULONG_MAX) ||
+				if (w[0] == '\0' || *ep != '\0') {
+					struct icmpcodeent *p;
+
+					p = geticmpcodebyname(r->type-1, w);
+					if (p == NULL) {
+						error(n, "unknown code %s\n", w);
+						return (0);
+					}
+					ul = p->code;
+				} else if ((errno == ERANGE && ul == ULONG_MAX) ||
 				    ul > 255) {
 					error(n, "icmp-type code wrong\n");
 					return (0);
 				}
-
 				r->code = ul + 1;
+
 				w = next_word(&l);
 			}
 		}
