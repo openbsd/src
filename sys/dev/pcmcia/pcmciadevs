@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.62 2001/05/22 10:45:15 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.63 2001/05/25 05:05:33 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -320,6 +320,7 @@ vendor SHUTTLE			-1	Shuttle
 vendor SVEC			-1	SVEC/Hawking
 vendor SYNERGY21		-1	Synergy 21
 vendor TEAC			-1	TEAC
+vendor WISECOM			-1	Wisecom
 vendor YEDATA			-1	Y-E DATA
 vendor ZOOM			-1	Zoom
 
@@ -384,3 +385,4 @@ product NANOSPEED PRISM2	{ "NANOSPEED", "HFA384x/IEEE", "Version&sp01.02", NULL 
 product CABLETRON ROAMABOUT	{ "Cabletron", "RoamAbout&sp802.11&spDS", "Version&sp01.01", NULL }
 product GVC NIC2000P		{ "GVC", "NIC-2000p", "ETHERNET", "R01" }
 product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
+product WISECOM T210CT		{ "PCMCIA", "Ethernet&spCard", NULL, NULL }

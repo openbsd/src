@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.46 2001/05/22 10:51:35 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.47 2001/05/25 05:10:21 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -179,6 +179,10 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_GVC_NIC2000P,
       0, 0x0ff0, { 0x00, 0x00, 0xe8 } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_WISECOM_T210CT,
+      0, -1, { 0x00, 0x20, 0x18 } },
 
     /*
      * You have to add new entries which contains
