@@ -1,4 +1,4 @@
-/*	$OpenBSD: pkill.c,v 1.6 2004/07/15 17:15:33 millert Exp $	*/
+/*	$OpenBSD: pkill.c,v 1.7 2004/12/29 19:40:36 deraadt Exp $	*/
 /*	$NetBSD: pkill.c,v 1.5 2002/10/27 11:49:34 kleink Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pkill.c,v 1.6 2004/07/15 17:15:33 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pkill.c,v 1.7 2004/12/29 19:40:36 deraadt Exp $";
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -263,9 +263,13 @@ main(int argc, char **argv)
 
 				j = 0;
 				while (j < sizeof(buf) && *pargv != NULL) {
-					j += snprintf(buf + j, sizeof(buf) - j,
+					int ret;
+
+					ret = snprintf(buf + j, sizeof(buf) - j,
 					    pargv[1] != NULL ? "%s " : "%s",
 					    pargv[0]);
+					if (ret > 0)
+						j += ret;
 					pargv++;
 				}
 
