@@ -1,4 +1,4 @@
-/*	$OpenBSD: eso.c,v 1.2 1999/08/05 05:32:41 deraadt Exp $	*/
+/*	$OpenBSD: eso.c,v 1.3 1999/08/05 17:42:58 niklas Exp $	*/
 /*	$NetBSD: eso.c,v 1.3 1999/08/02 17:37:43 augustss Exp $	*/
 
 /*
@@ -380,11 +380,7 @@ eso_attach(parent, self, aux)
 		DPRINTF(("%s: VC I/O space at 0x%lx not suitable, deferring\n",
 		    sc->sc_dev.dv_xname, (unsigned long)vcbase));
 		sc->sc_pa = *pa;
-#ifdef __OpenBSD__
-		panic("config_defer not implemented");
-#else
 		config_defer(self, eso_defer);
-#endif
 	}
 	
 	audio_attach_mi(&eso_hw_if, sc, &sc->sc_dev);
