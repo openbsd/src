@@ -11,6 +11,8 @@ typedef u_char physlen[3];
 #define WDS_IRQACK		1	/* write */
 #define WDS_HCR			2	/* write */
 
+#define	WDS_IO_PORTS		3	/* size in I/O-space */
+
 /* WDS_STAT (read) defs */
 #define WDSS_IRQ		0x80
 #define WDSS_RDY		0x40
