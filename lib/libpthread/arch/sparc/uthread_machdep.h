@@ -1,7 +1,7 @@
 /*
  * OpenBSD/sparc machine-dependent thread macros
  *
- * $OpenBSD: uthread_machdep.h,v 1.1 1998/11/20 11:15:37 d Exp $
+ * $OpenBSD: uthread_machdep.h,v 1.2 1999/01/17 23:49:49 d Exp $
  */
 
 #include <sys/signal.h>
@@ -37,6 +37,8 @@
  */
 #define	_thread_machdep_longjmp(a,v)	_longjmp(a,v)
 #define	_thread_machdep_setjmp(a)	_setjmp(a)
+
+typedef jmp_buf _machdep_jmp_buf;
 
 struct _machdep_struct {
         /* char            saved_fp[???]; */

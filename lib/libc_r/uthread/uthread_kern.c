@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: uthread_kern.c,v 1.15 1998/11/15 09:58:26 jb Exp $
- * $OpenBSD: uthread_kern.c,v 1.5 1999/01/10 23:16:35 d Exp $
+ * $OpenBSD: uthread_kern.c,v 1.6 1999/01/17 23:49:49 d Exp $
  *
  */
 #include <errno.h>
@@ -100,6 +100,20 @@ _thread_kern_sched(struct sigcontext * scp)
 		 * This is the normal way out of the scheduler.
 		 */
 		_thread_kern_in_sched = 0;
+
+		if (!(_thread_run->flags & PTHREAD_AT_CANCEL_POINT) &&
+		    (_thread_run->canceltype == PTHREAD_CANCEL_ASYNCHRONOUS)) {
+			/* 
+			 * Cancelations override signals.
+			 *
+			 * Stick a cancellation point at the start of
+			 * each async-cancellable thread's resumption.
+			 *
+			 * We allow threads woken at cancel points to do their
+			 * own checks.
+			 */
+			_thread_cancellation_point();
+		}
 
 		/*
 		 * There might be pending signals for this thread, so
