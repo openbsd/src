@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcivar.h,v 1.38 2004/08/09 22:26:24 pefo Exp $	*/
+/*	$OpenBSD: pcivar.h,v 1.39 2004/11/30 22:30:47 mickey Exp $	*/
 /*	$NetBSD: pcivar.h,v 1.23 1997/06/06 23:48:05 thorpej Exp $	*/
 
 /*
@@ -74,6 +74,9 @@ struct pcibus_attach_args;
 #endif
 #if __sparc64__
 #include <sparc64/include/pci_machdep.h>
+#endif
+#if __hppa64__
+#include <hppa64/include/pci_machdep.h>
 #endif
 #if __hppa__
 #include <hppa/include/pci_machdep.h>
