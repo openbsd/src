@@ -1,4 +1,4 @@
-#       $OpenBSD: SUN4M,v 1.13 1997/06/22 21:42:42 downsj Exp $
+#	$OpenBSD: SUN4M,v 1.14 1997/08/08 09:56:05 downsj Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -6,9 +6,12 @@ machine		sparc
 
 include "../../../conf/GENERIC"
 
-# Options for variants of the Sun SPARC architecure.
-# At least one is required.
+# This is a 4m specific kernel.
 option		SUN4M		# sun4m - SS10, SS20, Classic, etc.
+
+#option		KGDB		# support for kernel gdb
+#option		KGDBDEV=0xc01	# kgdb device number (dev_t)
+#option		KGDBRATE=38400	# baud rate
 
 # Options for SPARCstation hardware
 option		RASTERCONSOLE	# fast rasterop console
@@ -30,6 +33,7 @@ iommu0	at mainbus0				# sun4m
 sbus0	at iommu0				# sun4m
 
 audio0	at obio0				# sun4m
+audio0	at sbus0 slot ? offset ?		# sun4m
 
 auxreg0	at obio0				# sun4m
 
@@ -37,7 +41,6 @@ auxreg0	at obio0				# sun4m
 power0	at obio0
 
 # Mostek clock found on 4/300, sun4c, and sun4m systems.
-# The Mostek clock NVRAM is the "eeprom" on sun4/300 systems.
 clock0	at obio0				# sun4m
 
 # Memory error registers.
@@ -65,7 +68,6 @@ zs1	at obio0					# sun4m
 # sun4c or sun4m SCSI - an NCR53c94 or equivalent behind
 # specialized DMA glue
 dma0	at sbus0 slot ? offset ?			# on-board SCSI
-esp0	at sbus0 slot ? offset ? flags 0xff0f		# sun4c
 esp0	at dma0 flags 0xff0f				# sun4m
 
 # FSBE/S SCSI - an NCR53c94 or equivalent behind
@@ -78,9 +80,11 @@ esp*	at dma? flags 0xff0f				# depending on model
 ledma0	at sbus0 slot ? offset ?			# sun4m on-board
 le0	at ledma0					#
 
-# Additional SBus LANCE devices - glued on by lebuffer (not yet implemented)
-#lebuffer*	at sbus0 slot ? offset ?		# sun4m SBus
-#le*	at lebuffer?					#
+# Additional SBus LANCE devices - glued on by lebuffer
+lebuffer0	at sbus0 slot ? offset ?		# sun4m SBus
+lebuffer*	at sbus? slot ? offset ?		# sun4m SBus
+le0	at lebuffer0					#
+le*	at lebuffer?					#
 
 # Sun "bwtwo" black and white framebuffer, found on sun4, sun4c, and sun4m
 # systems.  If your sun4 system has a cgfour installed in the P4 slot,
@@ -98,9 +102,17 @@ cgthree* at sbus? slot ? offset ?
 cgsix0	at sbus? slot ? offset ?
 cgsix*	at sbus? slot ? offset ?
 
+# Sun "tcx" accelerated color framebuffer.
+tcx0	at sbus? slot ? offset ?
+tcx*	at sbus? slot ? offset ?
+
+# Sun "cgfourteen" accelerated 24-bit framebuffer.
+cgfourteen0	at obio0			# sun4m
+
 # SCSI bus layer.  SCSI devices attach to the SCSI bus, which attaches
 # to the underlying hardware controller.
 scsibus* at esp?
+#scsibus* at isp?
 
 # These entries find devices on all SCSI busses and assign
 # unit numers dynamically.
