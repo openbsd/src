@@ -1185,7 +1185,6 @@ xfs_print (struct vop_print_args *v)
 int
 xfs_advlock(struct vop_advlock_args *v)
 {
-#if 0
     struct vop_advlock_args /* {
 	struct vnode *a_vp;
 	caddr_t  a_id;
@@ -1193,30 +1192,12 @@ xfs_advlock(struct vop_advlock_args *v)
 	struct flock *a_fl;
 	int  a_flags;
     } */ *ap = v;
-
-    struct xfs_node *xn = VNODE_TO_XNODE(ap->a_vp);
-    int ret;
-    xfs_locktype_t locktype;
-
-/*     if (NNPFS_TOKEN_GOT(xn,  */
-
-    if (ap->a_fl.l_start != 0 ||
-	ap->a_fl.l_end != 0)
-	printf ("WARN: someone is trying byte-range locking\n");
-    
-    switch (ap->a_op) {
-    case F_SETLCK:
-	locktype = NNPFS_READLOCK;
-	break;
-
-    ret = xfs_advlock_common (xn, );
-
-    return ret;
-#elif defined(HAVE_KERNEL_LF_ADVLOCK) && !defined(__OpenBSD__) && !defined(__APPLE__)
+#if defined(HAVE_KERNEL_LF_ADVLOCK) && !defined(__APPLE__)
     struct xfs_node *xn = VNODE_TO_XNODE(ap->a_vp);
  
-    return lf_advlock(ap, &xn->lockf, xn->attr.va_size);
-  #else
+    return (lf_advlock(&xn->lockf, xn->attr.va_size, ap->a_id, ap->a_op,
+	    ap->a_fl, ap->a_flags));
+#else
      return EOPNOTSUPP;
 #endif
 }
