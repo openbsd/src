@@ -1022,6 +1022,12 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmcioctl.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_lmcvar.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_ngereg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_san_common.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_san_front_end.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_san_obsd.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_san_te1.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_san_xilinx.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_sandrv.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_sfreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_sisreg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/if_skreg.ph

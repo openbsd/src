@@ -471,6 +471,12 @@
 ./usr/include/dev/pci/if_lmcioctl.h
 ./usr/include/dev/pci/if_lmcvar.h
 ./usr/include/dev/pci/if_ngereg.h
+./usr/include/dev/pci/if_san_common.h
+./usr/include/dev/pci/if_san_front_end.h
+./usr/include/dev/pci/if_san_obsd.h
+./usr/include/dev/pci/if_san_te1.h
+./usr/include/dev/pci/if_san_xilinx.h
+./usr/include/dev/pci/if_sandrv.h
 ./usr/include/dev/pci/if_sfreg.h
 ./usr/include/dev/pci/if_sisreg.h
 ./usr/include/dev/pci/if_skreg.h
