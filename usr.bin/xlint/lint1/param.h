@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.9 2002/03/23 23:28:30 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.10 2002/10/04 16:37:58 mickey Exp $	*/
 /*	$NetBSD: param.h,v 1.6 1996/04/01 21:47:57 mark Exp $	*/
 
 /*
@@ -65,6 +65,9 @@
 #define PTRDIFF_IS_LONG		1
 #define SIZEOF_IS_ULONG		1
 #elif __i386__
+#define PTRDIFF_IS_LONG		0
+#define SIZEOF_IS_ULONG		0
+#elif __hppa__
 #define PTRDIFF_IS_LONG		0
 #define SIZEOF_IS_ULONG		0
 #elif __m68k__
