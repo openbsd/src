@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88110.c,v 1.11 2003/12/19 22:30:18 miod Exp $	*/
+/*	$OpenBSD: m88110.c,v 1.12 2003/12/22 20:10:23 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * All rights reserved.
@@ -61,6 +61,7 @@
 #include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/simplelock.h>
+
 #include <machine/board.h>
 #include <machine/cpu_number.h>
 #include <machine/cmmu.h>
@@ -68,6 +69,8 @@
 #include <machine/m88410.h>
 #include <machine/locore.h>
 #include <machine/trap.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef DEBUG
 #define DB_CMMU		0x4000	/* MMU debug */
@@ -578,15 +581,20 @@ m88110_cmmu_inval_cache(paddr_t physaddr, psize_t size)
 void
 m88110_dma_cachectl(vaddr_t va, vsize_t size, int op)
 {
+	paddr_t pa;
+
+	if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
+		return;	/* XXX */
+
 	switch (op) {
 	case DMA_CACHE_SYNC:
-		m88110_cmmu_sync_cache(kvtop(va), size);
+		m88110_cmmu_sync_cache(pa, size);
 		break;
 	case DMA_CACHE_SYNC_INVAL:
-		m88110_cmmu_sync_inval_cache(kvtop(va), size);
+		m88110_cmmu_sync_inval_cache(pa, size);
 		break;
 	default:
-		m88110_cmmu_inval_cache(kvtop(va), size);
+		m88110_cmmu_inval_cache(pa, size);
 		break;
 	}
 }

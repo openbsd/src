@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.24 2003/12/19 22:30:18 miod Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.25 2003/12/22 20:10:23 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -70,6 +70,8 @@
 
 #include <machine/cmmu.h>
 #include <machine/m8820x.h>
+
+#include <uvm/uvm_extern.h>
 
 #ifdef DDB
 #include <ddb/db_output.h>		/* db_printf()		*/
@@ -1475,6 +1477,7 @@ m8820x_cmmu_inval_cache(paddr_t physaddr, psize_t size)
 void
 m8820x_dma_cachectl(vaddr_t va, vsize_t size, int op)
 {
+	paddr_t pa;
 #if !defined(BROKEN_MMU_MASK)
 	psize_t count;
 
@@ -1484,32 +1487,37 @@ m8820x_dma_cachectl(vaddr_t va, vsize_t size, int op)
 		if (size < count)
 			count = size;
 
-		switch (op) {
-		case DMA_CACHE_SYNC:
-			m8820x_cmmu_sync_cache(kvtop(va), count);
-			break;
-		case DMA_CACHE_SYNC_INVAL:
-			m8820x_cmmu_sync_inval_cache(kvtop(va), count);
-			break;
-		default:
-			m8820x_cmmu_inval_cache(kvtop(va), count);
-			break;
+		if (pmap_extract(pmap_kernel(), va, &pa) != FALSE) {
+			switch (op) {
+			case DMA_CACHE_SYNC:
+				m8820x_cmmu_sync_cache(pa, count);
+				break;
+			case DMA_CACHE_SYNC_INVAL:
+				m8820x_cmmu_sync_inval_cache(pa, count);
+				break;
+			default:
+				m8820x_cmmu_inval_cache(pa, count);
+				break;
+			}
 		}
 
 		va += count;
 		size -= count;
 	}
 #else
-	switch (op) {
-	case DMA_CACHE_SYNC:
-		m8820x_cmmu_sync_cache(kvtop(va), size);
-		break;
-	case DMA_CACHE_SYNC_INVAL:
-		m8820x_cmmu_sync_inval_cache(kvtop(va), size);
-		break;
-	default:
-		m8820x_cmmu_inval_cache(kvtop(va), size);
-		break;
+	/* XXX This assumes the space is also physically contiguous */
+	if (pmap_extract(pmap_kernel(), va, &pa) != FALSE) {
+		switch (op) {
+		case DMA_CACHE_SYNC:
+			m8820x_cmmu_sync_cache(pa, size);
+			break;
+		case DMA_CACHE_SYNC_INVAL:
+			m8820x_cmmu_sync_inval_cache(pa, size);
+			break;
+		default:
+			m8820x_cmmu_inval_cache(pa, size);
+			break;
+		}
 	}
 #endif /* !BROKEN_MMU_MASK */
 }
