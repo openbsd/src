@@ -1,10 +1,10 @@
-#	$OpenBSD: Makefile.inc,v 1.3 1997/03/31 23:06:03 mickey Exp $
+#	$OpenBSD: Makefile.inc,v 1.4 1997/04/04 04:47:44 mickey Exp $
 
 #CPPFLAGS+=-nostdinc -I/sys
 CPPFLAGS+=-Wall -Werror -I. -Imachine
 SACFLAGS+=-Wa,-R -fno-common -fpack-struct -fno-builtin -fomit-frame-pointer
 CPPFLAGS+=-D_STANDALONE
-CPPFLAGS+=-DNO_IDTR
+# CPPFLAGS+=-DNO_IDTR
 CPPFLAGS+=-DSAVE_MEMORY
 CPPFLAGS+=-DDEBUG
 # CPPFLAGS+=-DBIOS_DEBUG

@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.3 1997/03/31 23:06:20 mickey Exp $	*/
+/*	$OpenBSD: boot.c,v 1.4 1997/04/04 04:47:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -36,6 +36,7 @@
 #include <sys/reboot.h>
 #include <sys/stat.h>
 #include <libsa.h>
+#include <debug.h>
 #include "cmd.h"
 
 char *kernels[] = { "bsd",     "bsd.gz",
@@ -68,6 +69,7 @@ boot(bootdev)
 	*(u_int16_t*)0xb8148 = 0x4f31;
 #endif
 	cons_probe();
+	debug_init();
 
 	printf("\n>> OpenBSD BOOT: %u/%u k [%s]\n", cnvmem, extmem, version);
 

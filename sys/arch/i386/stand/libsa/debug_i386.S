@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_i386.S,v 1.1 1997/04/01 04:52:46 mickey Exp $	*/
+/*	$OpenBSD: debug_i386.S,v 1.2 1997/04/04 04:47:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -36,66 +36,168 @@
 #include <machine/psl.h>
 #define _LOCORE
 #include <machine/segments.h>
+#include <machine/trap.h>
 #include <debug_md.h>
 #undef _LOCORE
 
 	.data
 #ifndef NO_IDTR
-	.align 3
+
 	.globl	_Idtr_real
+	.align 3
 _Idtr_real:
-	.word	1024
+	.word	1023
 	.long	0
 
-	.align 3
 	.globl	_Idtr_prot
-idt:
-	.long	0, 0
+
+	.align 3
+idt:	/*
+	 * We beleive that all the boot code fits into
+	 * 64k, so no need for high 16 bit of procedure address (;
+	 *
+	 */
+#define IPROC(n)	X/**/n
+#define IDTENTRY(proc) \
+	.word	IPROC(proc)		/* lo offset handler */ ; \
+	.word	0x8			/* handler %cs */ ; \
+	.byte	0			/* reserved */ ; \
+	.byte	0x80 | SDT_SYS386TGT /* present, dpl=0, 32bit trap gate */ ; \
+	.word	0			/* hi offset handler */
+
+	IDTENTRY(de)	/* #DE divide by zero */
+	IDTENTRY(db)	/* #DB debug */
+	IDTENTRY(nmi)	/* NMI */
+	IDTENTRY(bp)	/* #BP breakpoint */
+	IDTENTRY(of)	/* #OF overflow */
+	IDTENTRY(br)	/* #BR BOUND range exceeded */
+	IDTENTRY(ud)	/* #UD invalid opcode */
+	IDTENTRY(nm)	/* #NM device not available */
+	IDTENTRY(df)	/* #DF double fault */
+	IDTENTRY(fo)	/* #FO coprocessor segment overrun */
+	IDTENTRY(ts)	/* #TS innvalid TSS */
+	IDTENTRY(np)	/* #NP segmant not present */
+	IDTENTRY(ss)	/* #SS stack fault */
+	IDTENTRY(gp)	/* #GP general protection */
+	IDTENTRY(pf)	/* #PF page fault */
+	IDTENTRY(xx)	/*	Intel reserved */
+	IDTENTRY(mf)	/* #MF floating point error */
+	IDTENTRY(ac)	/* #AC alignment check */
+	IDTENTRY(mc)	/* #MC machine check */
+			/*	Intel reserved (19-31) */
+	IDTENTRY(xx); IDTENTRY(xx); IDTENTRY(xx); IDTENTRY(xx)
+	IDTENTRY(xx); IDTENTRY(xx); IDTENTRY(xx); IDTENTRY(xx)
+	IDTENTRY(xx); IDTENTRY(xx); IDTENTRY(xx); IDTENTRY(xx)
+	IDTENTRY(xx)
+			/*	Maskable interrupts(32-255) */
 
 _Idtr_prot:
 	.word	. - idt
 	.long	idt
+
+	.text
+
+#define IENTRY(name,type) \
+IPROC(name): \
+	pushl	$type ; \
+	jmp	alltraps
+#define IENTRY_ERR(name,err,type) \
+IPROC(name): \
+	pushl	$err ; \
+	pushl	$type ; \
+	jmp	alltraps
+
+IPROC(xx):
+	pushl	$1
+	pushl	$256
+	jmp	alltraps
+
+IENTRY_ERR(de,0,T_DIVIDE)
+IENTRY_ERR(db,0,T_TRCTRAP)
+IENTRY_ERR(nmi,0,T_NMI)
+IENTRY_ERR(bp,0,T_BPTFLT)
+IENTRY_ERR(of,0,T_OFLOW)
+IENTRY_ERR(br,0,T_BOUND)
+IENTRY_ERR(ud,0,T_PRIVINFLT)
+IENTRY_ERR(nm,0,T_DNA)
+IENTRY(df,T_DOUBLEFLT)
+IENTRY_ERR(fo,0,T_FPOPFLT)
+IENTRY(ts,T_TSSFLT)
+IENTRY(np,T_SEGNPFLT)
+IENTRY(ss,T_STKFLT)
+IENTRY(gp,T_PROTFLT)
+IENTRY(pf,T_PAGEFLT)
+IENTRY_ERR(mf,0,T_ARITHTRAP)
+IENTRY(ac,T_ALIGNFLT)
+IENTRY(mc,T_MACHK)
+
+alltraps:
+#ifdef	DEBUG
+	movl	$0xb8280, %edi
+	movl	$0x47304731, (%edi)
+#endif
+	/* lcall is busted */
+	pushl	$0x8
+	pushl	$1f
+	ljmp	$0x8, $_check_regs
+1:
+	addl	$0x8, %esp
+#ifdef	DEBUG
+	movl	$0xb8290, %edi
+	movl	$0x47384739, (%edi)
+#endif
+	iret
+
 #endif
 
 	.text
 
 ENTRY(check_regs)
+#ifdef	DEBUG
+	movl	$0xb8284, %edi
+	movl	$0x47324733, (%edi)
+#endif
 	pushal		# 8 ones
 	pushl	%ds
 	pushl	%es
 	pushl	%fs
 	pushl	%gs
-	pushfl
 	movl	$0x10, %eax
 	movl	%ax, %ds
 	movl	$_reg, %edi
 	cld
-	movl	0xc*4(%esp), %eax; stosl # %eax
-	movl	0xb*4(%esp), %eax; stosl # %ecx
-	movl	0xa*4(%esp), %eax; stosl # %edx
-	movl	0x9*4(%esp), %eax; stosl # %ebx
-	movl	0x8*4(%esp), %eax; stosl # %esp
-	movl	0x7*4(%esp), %eax; stosl # %ebp
-	movl	0x6*4(%esp), %eax; stosl # %esi
-	movl	0x5*4(%esp), %eax; stosl # %edi
-	movl	0xd*4(%esp), %eax; stosl # %eip
-	movl	0x0*4(%esp), %eax; stosl # %eflags
-	movl	0xe*4(%esp), %eax; stosl # %cs
-	movl		%ss, %eax; stosl # %ss
-	movl	0x4*4(%esp), %eax; stosl # %ds
-	movl	0x3*4(%esp), %eax; stosl # %es
-	movl	0x2*4(%esp), %eax; stosl # %fs
-	movl	0x1*4(%esp), %eax; stosl # %gs
+	movl	0x0b*4(%esp), %eax; stosl # %eax
+	movl	0x0a*4(%esp), %eax; stosl # %ecx
+	movl	0x09*4(%esp), %eax; stosl # %edx
+	movl	0x08*4(%esp), %eax; stosl # %ebx
+	movl	0x07*4(%esp), %eax; stosl # %esp
+	movl	0x06*4(%esp), %eax; stosl # %ebp
+	movl	0x05*4(%esp), %eax; stosl # %esi
+	movl	0x04*4(%esp), %eax; stosl # %edi
+	movl	0x10*4(%esp), %eax; stosl # %eip
+	movl	0x12*4(%esp), %eax; stosl # %eflags
+	movl	0x11*4(%esp), %eax; stosl # %cs
+	movl		%ss,  %eax; stosl # %ss
+	movl	0x03*4(%esp), %eax; stosl # %ds
+	movl	0x02*4(%esp), %eax; stosl # %es
+	movl	0x01*4(%esp), %eax; stosl # %fs
+	movl	0x00*4(%esp), %eax; stosl # %gs
 
+#ifdef	DEBUG
+	movl	$0xb8288, %edi
+	movl	$0x47344735, (%edi)
+#endif
 	call	_C_LABEL(dump_regs)
 
-	popfl
+#ifdef	DEBUG
+	movl	$0xb828c, %edi
+	movl	$0x47364737, (%edi)
+#endif
 	popl	%gs
 	popl	%fs
 	popl	%es
 	popl	%ds
 	popal
 	lret
-
 
 

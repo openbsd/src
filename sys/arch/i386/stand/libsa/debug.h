@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug.h,v 1.1 1997/04/01 04:52:45 mickey Exp $	*/
+/*	$OpenBSD: debug.h,v 1.2 1997/04/04 04:47:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -37,3 +37,6 @@
 
 extern const char  *reg_names[];
 extern const size_t nregs;
+
+int debug_init __P((void));
+

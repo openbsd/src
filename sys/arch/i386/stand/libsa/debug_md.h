@@ -1,4 +1,4 @@
-/*	$OpenBSD: debug_md.h,v 1.1 1997/04/01 04:52:47 mickey Exp $	*/
+/*	$OpenBSD: debug_md.h,v 1.2 1997/04/04 04:47:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -43,9 +43,9 @@
 
 #ifdef	_LOCORE
 	.globl	_reg
-#define DUMP_REGS	pushl %cs; call _check_regs
+#define DUMP_REGS	int $2
 #else
-#define DUMP_REGS	__asm("pushl %cs; call _check_regs")
+#define DUMP_REGS	__asm("int $2")
 extern struct reg reg;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.2 1997/03/31 23:06:23 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.3 1997/04/04 04:47:46 mickey Exp $	*/
 /*	$NetBSD: srt0.c,v 1.3 1994/10/27 04:21:59 cgd Exp $	*/
 
 /*-
@@ -61,7 +61,7 @@ start_boot:
 	movl	$0xb80a0, %ebx
 	movl	$0x07420742, (%ebx)
 #endif
-
+	/* reload new gdt */
 	lgdt	_Gdtr
 	ljmp	$8, $1f
 1:	
@@ -71,6 +71,10 @@ start_boot:
 	movl	%ax, %es
 	movl	%ax, %fs
 	movl	%ax, %gs
+#ifndef NO_IDTR
+	/* load idtr for debugger */
+	lidt	_Idtr_prot
+#endif
 
 #ifdef DEBUG
 	movl	$0xb80a4, %ebx
@@ -110,8 +114,9 @@ __rtt:
 	.data
 
 	.align	3
-gdt:		/* 0x00 : null */
-	.long	0, 0
+gdt:
+null:		/* 0x00 : null */
+	.space	8
 		/* 0x08 : flat code */
 	.word	0xFFFF			# lolimit
 	.word	0			# lobase
@@ -133,7 +138,7 @@ gdt:		/* 0x00 : null */
 	.byte	SDT_MEMERAC | 0 | 0x80	# RWXAC, dpl = 0, present
 	.byte	0xf | 0 | 0 | 0		# hilimit, xx, 16bit, byte granularity
 	.byte	0			# hibase
-_Gdtr:	.word	. - gdt
+_Gdtr:	.word	. - gdt - 1
 	.long	gdt
 	.word	0
 
