@@ -115,6 +115,8 @@
 ./usr/lib/gcc-lib/alpha-unknown-openbsd3.1/2.95.3/libgcc.a
 ./usr/lib/lib45_pic.a
 ./usr/lib/libacl_pic.a
+./usr/lib/libalpha.a
+./usr/lib/libalpha_p.a
 ./usr/lib/libasn1_pic.a
 ./usr/lib/libbfd.a
 ./usr/lib/libc_pic.a
