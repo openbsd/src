@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipmon.c,v 1.14 1998/09/17 03:43:45 pattonme Exp $
+/*	$OpenBSD: ipmon.c,v 1.15 1998/10/29 02:15:21 deraadt Exp $
  * Copyright (C) 1993-1997 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
@@ -7,7 +7,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ipmon.c	1.21 6/5/96 (C)1993-1997 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ipmon.c,v 1.14 1998/09/17 03:43:45 pattonme Exp $";
+static const char rcsid[] = "@(#)$Id: ipmon.c,v 1.15 1998/10/29 02:15:21 deraadt Exp $";
 #endif
 
 #include <stdio.h>
@@ -642,14 +642,19 @@ static void flushlogs(file, log)
 char *file;
 FILE *log;
 {
-	int	fd, flushed = 0;
+	int	fd, cmd, flushed = 0;
+
+	if (strcmp(file, "/dev/ipstate") == 0)
+		cmd = SIOCIPFFL;
+	else
+		cmd = SIOCIPFFB;
 
 	if ((fd = open(file, O_RDWR)) == -1) {
 		(void) fprintf(stderr, "%s: open: %s\n", file,STRERROR(errno));
 		exit(-1);
 	}
 
-	if (ioctl(fd, SIOCIPFFB, &flushed) == 0) {
+	if (ioctl(fd, cmd, &flushed) == 0) {
 		printf("%d bytes flushed from log buffer\n",
 			flushed);
 		fflush(stdout);
