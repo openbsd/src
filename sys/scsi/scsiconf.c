@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.25 1997/02/27 06:19:21 tholo Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.26 1997/03/13 05:30:02 briggs Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -442,6 +442,8 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 
 	{{T_SCANNER, T_FIXED,
 	 "ULTIMA  ", "AT3     1.60    ", ""},     SDEV_NOLUNS},
+	{{T_SCANNER, T_FIXED,
+	 "UMAX    ", "SuperVista S-12 ", "V1.9"}, SDEV_NOLUNS},
 };
 
 /*
