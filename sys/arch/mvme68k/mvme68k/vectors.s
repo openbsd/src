@@ -1,4 +1,4 @@
-/*	$OpenBSD: vectors.s,v 1.3 1996/04/28 10:59:17 deraadt Exp $ */
+/*	$OpenBSD: vectors.s,v 1.4 1996/05/06 21:55:32 deraadt Exp $ */
 
 | Copyright (c) 1995 Theo de Raadt
 |
@@ -123,16 +123,12 @@ _vectab:
 	.long	_illinst	/* 45: TRAP instruction vector */
 	.long	_illinst	/* 46: TRAP instruction vector */
 	.long	_trap15		/* 47: TRAP instruction vector */
-#ifdef FPSP
-	.globl	bsun, inex, dz, unfl, operr, ovfl, snan
-	.long	bsun		/* 48: FPCP branch/set on unordered cond */
-	.long	inex		/* 49: FPCP inexact result */
-	.long	dz		/* 50: FPCP divide by zero */
-	.long	unfl		/* 51: FPCP underflow */
-	.long	operr		/* 52: FPCP operand error */
-	.long	ovfl		/* 53: FPCP overflow */
-	.long	snan		/* 54: FPCP signalling NAN */
-#else
+
+	/*
+	 * 68881/68882: _fpfault zone
+	 */
+	.globl	_fpvect_tab, _fpvect_end
+_fpvect_tab:
 	.globl	_fpfault
 	.long	_fpfault	/* 48: FPCP branch/set on unordered cond */
 	.long	_fpfault	/* 49: FPCP inexact result */
@@ -141,7 +137,7 @@ _vectab:
 	.long	_fpfault	/* 52: FPCP operand error */
 	.long	_fpfault	/* 53: FPCP overflow */
 	.long	_fpfault	/* 54: FPCP signalling NAN */
-#endif
+_fpvect_end:
 
 	.long	_fpunsupp	/* 55: FPCP unimplemented data type */
 	.long	_badtrap	/* 56: unassigned, reserved */
@@ -170,3 +166,20 @@ _vectab:
 	BADTRAP16		/* 208-223: user interrupt vectors */
 	BADTRAP16		/* 224-239: user interrupt vectors */
 	BADTRAP16		/* 240-255: user interrupt vectors */
+
+
+#ifdef FPSP
+	/*
+	 * 68040: this chunk of vectors is copied into the _fpfault zone
+	 */
+	.globl _fpsp_tab
+_fpsp_tab:
+	.globl	bsun, inex, dz, unfl, operr, ovfl, snan
+	.long	bsun		/* 48: FPCP branch/set on unordered cond */
+	.long	inex		/* 49: FPCP inexact result */
+	.long	dz		/* 50: FPCP divide by zero */
+	.long	unfl		/* 51: FPCP underflow */
+	.long	operr		/* 52: FPCP operand error */
+	.long	ovfl		/* 53: FPCP overflow */
+	.long	snan		/* 54: FPCP signalling NAN */
+#endif FPSP

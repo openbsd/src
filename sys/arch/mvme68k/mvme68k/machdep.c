@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.8 1996/05/04 16:07:49 deraadt Exp $ */
+/*	$OpenBSD: machdep.c,v 1.9 1996/05/06 21:55:31 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -493,6 +493,7 @@ identifycpu()
 	char *t, *mc;
 	char speed[6];
 	char suffix[30];
+	extern u_long fpvect_tab, fpvect_end, fpsp_tab;
 	int len;
 
 	bzero(suffix, sizeof suffix);
@@ -536,6 +537,11 @@ identifycpu()
 	    suffix, speed, mc);
 	switch (mmutype) {
 	case MMU_68040:
+#ifdef FPSP
+		bcopy(&fpsp_tab, &fpvect_tab, &fpvect_end - &fpvect_tab);
+#endif
+		strcat(cpu_model, "+MMU");
+		break;
 	case MMU_68030:
 		strcat(cpu_model, "+MMU");
 		break;
