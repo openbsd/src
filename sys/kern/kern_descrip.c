@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.58 2002/06/03 12:04:08 deraadt Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.59 2002/08/23 00:56:04 pvalchev Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -285,6 +285,7 @@ restart:
 		if (new != i)
 			panic("dup2: fdalloc");
 	}
+	/* finishdup() does FRELE */
 	return (finishdup(p, fp, old, new, retval));
 }
 
@@ -511,8 +512,10 @@ finishdup(struct proc *p, struct file *fp, int old, int new, register_t *retval)
 	if (oldfp != NULL)
 		FREF(oldfp);
 
-	if (fp->f_count == LONG_MAX-2)
+	if (fp->f_count == LONG_MAX-2) {
+		FRELE(fp);
 		return (EDEADLK);
+	}
 	fdp->fd_ofiles[new] = fp;
 	fdp->fd_ofileflags[new] = fdp->fd_ofileflags[old] & ~UF_EXCLOSE;
 	fp->f_count++;
