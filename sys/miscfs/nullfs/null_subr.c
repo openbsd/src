@@ -1,4 +1,4 @@
-/*	$OpenBSD: null_subr.c,v 1.5 1997/10/06 15:19:06 csapuntz Exp $	*/
+/*	$OpenBSD: null_subr.c,v 1.6 1997/10/06 20:20:29 deraadt Exp $	*/
 /*	$NetBSD: null_subr.c,v 1.6 1996/05/10 22:50:52 jtk Exp $	*/
 
 /*
@@ -42,7 +42,6 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/proc.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/vnode.h>
@@ -68,6 +67,7 @@
 LIST_HEAD(null_node_hashhead, null_node) *null_node_hashtbl;
 u_long null_node_hash;
 
+void	nullfs_init __P((void));
 static struct vnode *
 	null_node_find __P((struct mount *, struct vnode *));
 static int
@@ -75,17 +75,14 @@ static int
 /*
  * Initialise cache headers
  */
-/*ARGSUSED*/
-int
-nullfs_init(vfsp)
-	struct vfsconf *vfsp;
+void
+nullfs_init()
 {
 
 #ifdef NULLFS_DIAGNOSTIC
 	printf("nullfs_init\n");		/* printed during system boot */
 #endif
 	null_node_hashtbl = hashinit(NNULLNODECACHE, M_CACHE, &null_node_hash);
-	return (0);
 }
 
 /*
@@ -99,7 +96,6 @@ null_node_find(mp, lowervp)
 	struct null_node_hashhead *hd;
 	struct null_node *a;
 	struct vnode *vp;
-	struct proc *p = curproc;
 
 	/*
 	 * Find hash base, and then search the (two-way) linked
@@ -117,7 +113,7 @@ loop:
 			 * stuff, but we don't want to lock
 			 * the lower node.
 			 */
-			if (vget(vp, 0, p)) {
+			if (vget(vp, 0)) {
 				printf ("null_node_find: vget failed.\n");
 				goto loop;
 			};
@@ -145,7 +141,6 @@ null_node_alloc(mp, lowervp, vpp)
 	struct vnode *vp, *nvp;
 	int error;
 	extern int (**dead_vnodeop_p) __P((void *));
-	struct proc *p = curproc;
 
 	if ((error = getnewvnode(VT_NULL, mp, null_vnodeop_p, &vp)) != 0)
 		return (error);
@@ -211,14 +206,14 @@ loop:
 				vgone(cvp);
 				goto loop;
 			}
-			if (vget(cvp, 0, p))	/* can't lock; will die! */
+			if (vget(cvp, 0))	/* can't lock; will die! */
 				goto loop;
 			break;
 		}
 
 		vp->v_hashchain = cvpp;
 		vp->v_specnext = *cvpp;
-		vp->v_specmountpoint = NULL;
+		vp->v_specflags = 0;
 		*cvpp = vp;
 #ifdef DIAGNOSTIC
 		if (cvp == NULLVP)
@@ -254,7 +249,6 @@ null_node_create(mp, lowervp, newvpp, takelock)
 	int takelock;
 {
 	struct vnode *aliasvp;
-	struct proc *p = curproc; /* XXX */
 
 	if ((aliasvp = null_node_find(mp, lowervp)) != NULL) {
 		/*
@@ -303,7 +297,7 @@ null_node_create(mp, lowervp, newvpp, takelock)
 	   upper layer lock */
 	VTONULL(aliasvp)->null_flags |= NULL_LLOCK;
 	if (takelock)
-		vn_lock(aliasvp, LK_EXCLUSIVE | LK_RETRY, p);
+		VOP_LOCK(aliasvp);
 
 	*newvpp = aliasvp;
 	return (0);

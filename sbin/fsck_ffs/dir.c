@@ -1,4 +1,4 @@
-/*	$OpenBSD: dir.c,v 1.6 1997/10/06 15:33:32 csapuntz Exp $	*/
+/*	$OpenBSD: dir.c,v 1.7 1997/10/06 20:22:31 deraadt Exp $	*/
 /*	$NetBSD: dir.c,v 1.20 1996/09/27 22:45:11 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dir.c	8.5 (Berkeley) 12/8/94";
 #else
-static char rcsid[] = "$OpenBSD: dir.c,v 1.6 1997/10/06 15:33:32 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.7 1997/10/06 20:22:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -333,13 +333,12 @@ adjust(idesc, lcnt)
 		pinode(idesc->id_number);
 		printf(" COUNT %d SHOULD BE %d",
 			dp->di_nlink, dp->di_nlink - lcnt);
-		if (preen || usedsoftdep) {
+		if (preen) {
 			if (lcnt < 0) {
 				printf("\n");
 				pfatal("LINK COUNT INCREASING");
 			}
-			if (preen)
-				printf(" (ADJUSTED)\n");
+			printf(" (ADJUSTED)\n");
 		}
 		if (preen || reply("ADJUST") == 1) {
 			dp->di_nlink -= lcnt;
@@ -425,15 +424,13 @@ linkup(orphan, parentdir)
 	lostdir = (dp->di_mode & IFMT) == IFDIR;
 	pwarn("UNREF %s ", lostdir ? "DIR" : "FILE");
 	pinode(orphan);
-	if ((preen || usedsoftdep) && dp->di_size == 0)
+	if (preen && dp->di_size == 0)
 		return (0);
 	if (preen)
 		printf(" (RECONNECTED)\n");
 	else
 		if (reply("RECONNECT") == 0)
 			return (0);
-	if (parentdir != 0)
-		lncntp[parentdir]++;
 	if (lfdir == 0) {
 		dp = ginode(ROOTINO);
 		idesc.id_name = lfname;

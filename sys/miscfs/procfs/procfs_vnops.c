@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.7 1997/10/06 15:19:11 csapuntz Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.8 1997/10/06 20:20:35 deraadt Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -728,7 +728,6 @@ procfs_lookup(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
 	char *pname = cnp->cn_nameptr;
-	struct proc *curp = curproc;
 	struct proc_target *pt;
 	struct vnode *fvp;
 	pid_t pid;
@@ -788,7 +787,7 @@ procfs_lookup(v)
 			fvp = procfs_findtextvp(p);
 			/* We already checked that it exists. */
 			VREF(fvp);
-			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, curp);
+			VOP_LOCK(fvp);
 			*vpp = fvp;
 			return (0);
 		}
@@ -840,6 +839,8 @@ procfs_readdir(v)
 	struct pfsnode *pfs;
 	int i;
 	int error;
+	u_long *cookies = ap->a_cookies;
+	int ncookies = ap->a_ncookies;
 
 	pfs = VTOPFS(ap->a_vp);
 
@@ -879,6 +880,8 @@ procfs_readdir(v)
 
 			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
 				break;
+			if (ncookies-- > 0)
+				*cookies++ = i + 1;
 		}
 
 	    	break;
@@ -940,6 +943,8 @@ procfs_readdir(v)
 
 			if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
 				break;
+			if (ncookies-- > 0)
+				*cookies++ = i + 1;
 		}
 	done:
 

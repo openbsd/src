@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.c,v 1.6 1997/10/06 15:28:53 csapuntz Exp $	*/
+/*	$OpenBSD: vm_map.c,v 1.7 1997/10/06 20:21:20 deraadt Exp $	*/
 /*	$NetBSD: vm_map.c,v 1.23 1996/02/10 00:08:08 christos Exp $	*/
 
 /* 
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_map.c	8.9 (Berkeley) 5/17/95
+ *	@(#)vm_map.c	8.3 (Berkeley) 1/12/94
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -75,6 +75,7 @@
 
 #include <vm/vm.h>
 #include <vm/vm_page.h>
+#include <vm/vm_object.h>
 
 /*
  *	Virtual memory maps provide for the mapping, protection,
@@ -266,7 +267,7 @@ vm_map_init(map, min, max, pageable)
 	map->first_free = &map->header;
 	map->hint = &map->header;
 	map->timestamp = 0;
-	lockinit(&map->lock, PVM, "thrd_sleep", 0, 0);
+	lock_init(&map->lock, TRUE);
 	simple_lock_init(&map->ref_lock);
 	simple_lock_init(&map->hint_lock);
 }
@@ -400,13 +401,11 @@ vm_map_deallocate(map)
 	 *	to it.
 	 */
 
-	vm_map_lock_drain_interlock(map);
+	vm_map_lock(map);
 
 	(void) vm_map_delete(map, map->min_offset, map->max_offset);
 
 	pmap_destroy(map->pmap);
-
-	vm_map_unlock(map);
 
 	FREE(map, M_VMMAP);
 }
@@ -1196,7 +1195,7 @@ vm_map_pageable(map, start, end, new_pageable)
 		 *	If a region becomes completely unwired,
 		 *	unwire its physical pages and mappings.
 		 */
-		vm_map_set_recursive(&map->lock);
+		lock_set_recursive(&map->lock);
 
 		entry = start_entry;
 		while ((entry != &map->header) && (entry->start < end)) {
@@ -1208,7 +1207,7 @@ vm_map_pageable(map, start, end, new_pageable)
 
 		    entry = entry->next;
 		}
-		vm_map_clear_recursive(&map->lock);
+		lock_clear_recursive(&map->lock);
 	}
 
 	else {
@@ -1317,8 +1316,8 @@ vm_map_pageable(map, start, end, new_pageable)
 		    vm_map_unlock(map);		/* trust me ... */
 		}
 		else {
-		    vm_map_set_recursive(&map->lock);
-		    lockmgr(&map->lock, LK_DOWNGRADE, (void *)0, curproc);
+		    lock_set_recursive(&map->lock);
+		    lock_write_to_read(&map->lock);
 		}
 
 		rv = 0;
@@ -1349,7 +1348,7 @@ vm_map_pageable(map, start, end, new_pageable)
 		    vm_map_lock(map);
 		}
 		else {
-		    vm_map_clear_recursive(&map->lock);
+		    lock_clear_recursive(&map->lock);
 		}
 		if (rv) {
 		    vm_map_unlock(map);
@@ -2003,7 +2002,7 @@ vm_map_copy(dst_map, src_map,
 			else {
 			 	new_src_map = src_map;
 				new_src_start = src_entry->start;
-				vm_map_set_recursive(&src_map->lock);
+				lock_set_recursive(&src_map->lock);
 			}
 
 			if (dst_entry->is_a_map) {
@@ -2041,7 +2040,7 @@ vm_map_copy(dst_map, src_map,
 			else {
 			 	new_dst_map = dst_map;
 				new_dst_start = dst_entry->start;
-				vm_map_set_recursive(&dst_map->lock);
+				lock_set_recursive(&dst_map->lock);
 			}
 
 			/*
@@ -2053,9 +2052,9 @@ vm_map_copy(dst_map, src_map,
 				FALSE, FALSE);
 
 			if (dst_map == new_dst_map)
-				vm_map_clear_recursive(&dst_map->lock);
+				lock_clear_recursive(&dst_map->lock);
 			if (src_map == new_src_map)
-				vm_map_clear_recursive(&src_map->lock);
+				lock_clear_recursive(&src_map->lock);
 		}
 
 		/*
@@ -2424,8 +2423,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 			 *	share map to the new object.
 			 */
 
-			if (lockmgr(&share_map->lock, LK_EXCLUPGRADE,
-				    (void *)0, curproc)) {
+			if (lock_read_to_write(&share_map->lock)) {
 				if (share_map != map)
 					vm_map_unlock_read(map);
 				goto RetryLookup;
@@ -2438,8 +2436,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 				
 			entry->needs_copy = FALSE;
 			
-			lockmgr(&share_map->lock, LK_DOWNGRADE,
-				(void *)0, curproc);
+			lock_write_to_read(&share_map->lock);
 		}
 		else {
 			/*
@@ -2456,8 +2453,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 	 */
 	if (entry->object.vm_object == NULL) {
 
-		if (lockmgr(&share_map->lock, LK_EXCLUPGRADE,
-				(void *)0, curproc)) {
+		if (lock_read_to_write(&share_map->lock)) {
 			if (share_map != map)
 				vm_map_unlock_read(map);
 			goto RetryLookup;
@@ -2466,7 +2462,7 @@ vm_map_lookup(var_map, vaddr, fault_type, out_entry,
 		entry->object.vm_object = vm_object_allocate(
 					(vm_size_t)(entry->end - entry->start));
 		entry->offset = 0;
-		lockmgr(&share_map->lock, LK_DOWNGRADE, (void *)0, curproc);
+		lock_write_to_read(&share_map->lock);
 	}
 
 	/*

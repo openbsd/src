@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.19 1997/10/06 15:12:19 csapuntz Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.20 1997/10/06 20:19:54 deraadt Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -689,52 +689,57 @@ _lkm_vfs(lkmtp, cmd)
 	struct lkm_table *lkmtp;
 	int cmd;
 {
-	int error = 0;
-#if 0
 	struct lkm_vfs *args = lkmtp->private.lkm_vfs;
-	struct vfsconf *vfsp, **vfspp;
-#endif
+	int i;
+	int error = 0;
+
 	switch(cmd) {
 	case LKM_E_LOAD:
 		/* don't load twice! */
 		if (lkmexists(lkmtp))
 			return (EEXIST);
 
-		return (EEXIST);
-#if 0
 		/* make sure there's no VFS in the table with this name */
-		for (vfspp = &vfsconf, vfsp = vfsconf; 
-		     vfsp; 
-		     vfspp = &vfsp->vfc_next, vfsp = vfsp->vfc_next)
-			if (strncmp(vfsp->vfc_name,
+		for (i = 0; i < nvfssw; i++)
+			if (vfssw[i] != (struct vfsops *)0 &&
+			    strncmp(vfssw[i]->vfs_name,
 				    args->lkm_vfsops->vfs_name,
 				    MFSNAMELEN) == 0)
 				return (EEXIST);
-		
 
 		/* pick the last available empty slot */
-		MALLOC (vfsp, struct vfsconf *, sizeof (struct vfsconf),
-			M_VFS, M_WAITOK);
-
-		/* Add tot he end of the list */
-		*vfspp = vfsp;
+		for (i = nvfssw - 1; i >= 0; i--)
+			if (vfssw[i] == (struct vfsops *)0)
+				break;
+		if (i == -1) {		/* or if none, punt */
+			error = EINVAL;
+			break;
+		}
 
 		/*
 		 * Set up file system
 		 */
-		/* FIXME (CPS): Setup new vfsconf structure */
+		vfssw[i] = args->lkm_vfsops;
+		vfssw[i]->vfs_refcount = 0;
 
 		/*
 		 * Call init function for this VFS...
 		 */
-	 	(*(vfsp->vfc_vfsops->vfs_init))(vfsp);
+	 	(*(vfssw[i]->vfs_init))();
 
 		/* done! */
-		/* Nope - can't return this */
+		args->lkm_offset = i;	/* slot in vfssw[] */
 		break;
-#endif
 
 	case LKM_E_UNLOAD:
+		/* current slot... */
+		i = args->lkm_offset;
+
+		if (vfssw[i]->vfs_refcount != 0)
+			return (EBUSY);
+
+		/* replace current slot contents with old contents */
+		vfssw[i] = (struct vfsops *)0;
 		break;
 
 	case LKM_E_STAT:	/* no special handling... */

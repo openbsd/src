@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.h,v 1.4 1997/10/06 15:28:54 csapuntz Exp $	*/
+/*	$OpenBSD: vm_map.h,v 1.5 1997/10/06 20:21:21 deraadt Exp $	*/
 /*	$NetBSD: vm_map.h,v 1.11 1995/03/26 20:39:10 jtc Exp $	*/
 
 /* 
@@ -36,7 +36,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)vm_map.h	8.9 (Berkeley) 5/17/95
+ *	@(#)vm_map.h	8.3 (Berkeley) 3/15/94
  *
  *
  * Copyright (c) 1987, 1990 Carnegie-Mellon University.
@@ -162,42 +162,14 @@ typedef struct {
  *		Perform locking on the data portion of a map.
  */
 
-#include <sys/proc.h>	/* XXX for curproc and p_pid */
+#define	vm_map_lock(map) { \
+	lock_write(&(map)->lock); \
+	(map)->timestamp++; \
+}
+#define	vm_map_unlock(map)	lock_write_done(&(map)->lock)
+#define	vm_map_lock_read(map)	lock_read(&(map)->lock)
+#define	vm_map_unlock_read(map)	lock_read_done(&(map)->lock)
 
-#define	vm_map_lock_drain_interlock(map) { \
-	lockmgr(&(map)->lock, LK_DRAIN|LK_INTERLOCK, \
-		&(map)->ref_lock, curproc); \
-	(map)->timestamp++; \
-}
-#ifdef DIAGNOSTIC
-#define	vm_map_lock(map) { \
-	if (lockmgr(&(map)->lock, LK_EXCLUSIVE, (void *)0, curproc) != 0) { \
-		panic("vm_map_lock: failed to get lock"); \
-	} \
-	(map)->timestamp++; \
-}
-#else
-#define	vm_map_lock(map) { \
-	lockmgr(&(map)->lock, LK_EXCLUSIVE, (void *)0, curproc); \
-	(map)->timestamp++; \
-}
-#endif /* DIAGNOSTIC */
-#define	vm_map_unlock(map) \
-		lockmgr(&(map)->lock, LK_RELEASE, (void *)0, curproc)
-#define	vm_map_lock_read(map) \
-		lockmgr(&(map)->lock, LK_SHARED, (void *)0, curproc)
-#define	vm_map_unlock_read(map) \
-		lockmgr(&(map)->lock, LK_RELEASE, (void *)0, curproc)
-#define vm_map_set_recursive(map) { \
-	simple_lock(&(map)->lk_interlock); \
-	(map)->lk_flags |= LK_CANRECURSE; \
-	simple_unlock(&(map)->lk_interlock); \
-}
-#define vm_map_clear_recursive(map) { \
-	simple_lock(&(map)->lk_interlock); \
-	(map)->lk_flags &= ~LK_CANRECURSE; \
-	simple_unlock(&(map)->lk_interlock); \
-}
 /*
  *	Functions implemented as macros
  */

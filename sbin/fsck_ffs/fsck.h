@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsck.h,v 1.5 1997/10/06 15:33:33 csapuntz Exp $	*/
+/*	$OpenBSD: fsck.h,v 1.6 1997/10/06 20:22:32 deraadt Exp $	*/
 /*	$NetBSD: fsck.h,v 1.13 1996/10/11 20:15:46 thorpej Exp $	*/
 
 /*
@@ -176,9 +176,7 @@ int	cvtlevel;		/* convert to newer file system format */
 int	doinglevel1;		/* converting to new cylinder group format */
 int	doinglevel2;		/* converting to new inode format */
 int	newinofmt;		/* filesystem has new inode format */
-char    usedsoftdep;            /* just fix soft dependency inconsistencies */
 int	preen;			/* just fix normal inconsistencies */
-char    resolved;               /* cleared if unresolved changes => not clean */
 char	havesb;			/* superblock has been read */
 char	skipclean;		/* skip clean file systems if preening */
 int	fsmodified;		/* 1 => write done to file system */

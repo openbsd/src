@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_vfsops.c,v 1.8 1997/10/06 15:22:39 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_vfsops.c,v 1.9 1997/10/06 20:20:59 deraadt Exp $	*/
 /*	$NetBSD: msdosfs_vfsops.c,v 1.44 1996/12/22 10:10:32 cgd Exp $	*/
 
 /*-
@@ -75,8 +75,10 @@ int msdosfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
 int msdosfs_start __P((struct mount *, int, struct proc *));
 int msdosfs_unmount __P((struct mount *, int, struct proc *));
 int msdosfs_root __P((struct mount *, struct vnode **));
+int msdosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
 int msdosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
 int msdosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int msdosfs_vget __P((struct mount *, ino_t, struct vnode **));
 int msdosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 		        struct vnode **, int *, struct ucred **));
 int msdosfs_vptofh __P((struct vnode *, struct fid *));
@@ -119,10 +121,10 @@ msdosfs_mount(mp, path, data, ndp, p)
 			flags = WRITECLOSE;
 			if (mp->mnt_flag & MNT_FORCE)
 				flags |= FORCECLOSE;
-			if (vfs_busy(mp, 0, 0, p))
+			if (vfs_busy(mp))
 				return (EBUSY);
 			error = vflush(mp, NULLVP, flags);
-			vfs_unbusy(mp, p);
+			vfs_unbusy(mp);
 		}
 		if (!error && (mp->mnt_flag & MNT_RELOAD))
 			/* not yet implemented */
@@ -136,14 +138,14 @@ msdosfs_mount(mp, path, data, ndp, p)
 			 */
 			if (p->p_ucred->cr_uid != 0) {
 				devvp = pmp->pm_devvp;
-				vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+				VOP_LOCK(devvp);
 				error = VOP_ACCESS(devvp, VREAD | VWRITE,
 						   p->p_ucred, p);
 				if (error) {
-					VOP_UNLOCK(devvp, 0, p);
+					VOP_UNLOCK(devvp);
 					return (error);
 				}
-				VOP_UNLOCK(devvp, 0, p);
+				VOP_UNLOCK(devvp);
 			}
 			pmp->pm_flags &= ~MSDOSFSMNT_RONLY;
 		}
@@ -187,13 +189,13 @@ msdosfs_mount(mp, path, data, ndp, p)
 		accessmode = VREAD;
 		if ((mp->mnt_flag & MNT_RDONLY) == 0)
 			accessmode |= VWRITE;
-		vn_lock(devvp, LK_EXCLUSIVE | LK_RETRY, p);
+		VOP_LOCK(devvp);
 		error = VOP_ACCESS(devvp, accessmode, p->p_ucred, p);
 		if (error) {
 			vput(devvp);
 			return (error);
 		}
-		VOP_UNLOCK(devvp, 0, p);
+		VOP_UNLOCK(devvp);
 	}
 	if ((mp->mnt_flag & MNT_UPDATE) == 0)
 		error = msdosfs_mountfs(devvp, mp, p, &args);
@@ -512,7 +514,7 @@ msdosfs_mountfs(devvp, mp, p, argp)
 	 * in the directory entry where we could put uid's and gid's.
 	 */
 #endif
-	devvp->v_specmountpoint = mp;
+	devvp->v_specflags |= SI_MOUNTEDON;
 
 	return (0);
 
@@ -559,7 +561,7 @@ msdosfs_unmount(mp, mntflags, p)
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 	pmp = VFSTOMSDOSFS(mp);
-	pmp->pm_devvp->v_specmountpoint = NULL;
+	pmp->pm_devvp->v_specflags &= ~SI_MOUNTEDON;
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_umount(): just before calling VOP_CLOSE()\n");
 	printf("flag %08x, usecount %d, writecount %d, holdcnt %d\n",
@@ -603,6 +605,22 @@ msdosfs_root(mp, vpp)
 }
 
 int
+msdosfs_quotactl(mp, cmds, uid, arg, p)
+	struct mount *mp;
+	int cmds;
+	uid_t uid;
+	caddr_t arg;
+	struct proc *p;
+{
+
+#ifdef QUOTA
+	return (EOPNOTSUPP);
+#else
+	return (EOPNOTSUPP);
+#endif
+}
+
+int
 msdosfs_statfs(mp, sbp, p)
 	struct mount *mp;
 	struct statfs *sbp;
@@ -627,7 +645,7 @@ msdosfs_statfs(mp, sbp, p)
 		bcopy(mp->mnt_stat.f_mntonname, sbp->f_mntonname, MNAMELEN);
 		bcopy(mp->mnt_stat.f_mntfromname, sbp->f_mntfromname, MNAMELEN);
 	}
-	strncpy(sbp->f_fstypename, mp->mnt_vfc->vfc_name, MFSNAMELEN);
+	strncpy(sbp->f_fstypename, mp->mnt_op->vfs_name, MFSNAMELEN);
 	return (0);
 }
 
@@ -671,9 +689,9 @@ loop:
 		dep = VTODE(vp);
 		if (((dep->de_flag
 		    & (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0)
-		    && (vp->v_dirtyblkhd.lh_first == NULL || waitfor == MNT_LAZY))
+		    && (vp->v_dirtyblkhd.lh_first == NULL))
 			continue;
-		if (vget(vp, LK_EXCLUSIVE, p))
+		if (vget(vp, 1))
 			goto loop;
 		if ((error = VOP_FSYNC(vp, cred, waitfor, p)) != 0)
 			allerror = error;
@@ -735,16 +753,18 @@ msdosfs_vptofh(vp, fhp)
 	return (0);
 }
 
-#define msdosfs_vget ((int (*) __P((struct mount *, ino_t, struct vnode **))) \
-		      eopnotsupp)
+int
+msdosfs_vget(mp, ino, vpp)
+	struct mount *mp;
+	ino_t ino;
+	struct vnode **vpp;
+{
 
-#define msdosfs_quotactl ((int (*) __P((struct mount *, int, uid_t, caddr_t, \
-					struct proc *)))eopnotsupp)
-
-#define msdosfs_sysctl ((int (*) __P((int *, u_int, void *, size_t *, void *, \
-                                    size_t, struct proc *)))eopnotsupp)
+	return (EOPNOTSUPP);
+}
 
 struct vfsops msdosfs_vfsops = {
+	MOUNT_MSDOS,
 	msdosfs_mount,
 	msdosfs_start,
 	msdosfs_unmount,
@@ -755,6 +775,5 @@ struct vfsops msdosfs_vfsops = {
 	msdosfs_vget,
 	msdosfs_fhtovp,
 	msdosfs_vptofh,
-	msdosfs_init,
-	msdosfs_sysctl
+	msdosfs_init
 };

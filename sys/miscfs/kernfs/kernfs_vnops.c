@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.11 1997/10/06 15:19:05 csapuntz Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.12 1997/10/06 20:20:26 deraadt Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -118,10 +118,11 @@ struct kern_target kern_targets[] = {
 static int nkern_targets = sizeof(kern_targets) / sizeof(kern_targets[0]);
 
 int	kernfs_badop	__P((void *));
+int	kernfs_enotsupp __P((void *));
 
 int	kernfs_lookup	__P((void *));
-#define	kernfs_create	eopnotsupp
-#define	kernfs_mknod	eopnotsupp
+#define	kernfs_create	kernfs_enotsupp
+#define	kernfs_mknod	kernfs_enotsupp
 int	kernfs_open	__P((void *));
 #define	kernfs_close	nullop
 int	kernfs_access	__P((void *));
@@ -129,37 +130,36 @@ int	kernfs_getattr	__P((void *));
 int	kernfs_setattr	__P((void *));
 int	kernfs_read	__P((void *));
 int	kernfs_write	__P((void *));
-#define	kernfs_ioctl	eopnotsupp
-#define	kernfs_select	eopnotsupp
-#define	kernfs_mmap	eopnotsupp
+#define	kernfs_ioctl	kernfs_enotsupp
+#define	kernfs_select	kernfs_enotsupp
+#define	kernfs_mmap	kernfs_enotsupp
 #define	kernfs_fsync	nullop
 #define	kernfs_seek	nullop
-#define	kernfs_remove	eopnotsupp
+#define	kernfs_remove	kernfs_enotsupp
 int	kernfs_link	__P((void *));
-#define	kernfs_rename	eopnotsupp
-#define kernfs_revoke   vop_revoke
-#define	kernfs_mkdir	eopnotsupp
-#define	kernfs_rmdir	eopnotsupp
+#define	kernfs_rename	kernfs_enotsupp
+#define	kernfs_mkdir	kernfs_enotsupp
+#define	kernfs_rmdir	kernfs_enotsupp
 int	kernfs_symlink	__P((void *));
 int	kernfs_readdir	__P((void *));
-#define	kernfs_readlink	eopnotsupp
+#define	kernfs_readlink	kernfs_enotsupp
 int	kernfs_abortop	__P((void *));
 int	kernfs_inactive	__P((void *));
 int	kernfs_reclaim	__P((void *));
-#define	kernfs_lock	vop_nolock
-#define	kernfs_unlock	vop_nounlock
+#define	kernfs_lock	nullop
+#define	kernfs_unlock	nullop
 #define	kernfs_bmap	kernfs_badop
 #define	kernfs_strategy	kernfs_badop
 int	kernfs_print	__P((void *));
-#define	kernfs_islocked	vop_noislocked
+#define	kernfs_islocked	nullop
 int	kernfs_pathconf	__P((void *));
-#define	kernfs_advlock	eopnotsupp
-#define	kernfs_blkatoff	eopnotsupp
-#define	kernfs_valloc	eopnotsupp
+#define	kernfs_advlock	kernfs_enotsupp
+#define	kernfs_blkatoff	kernfs_enotsupp
+#define	kernfs_valloc	kernfs_enotsupp
 int	kernfs_vfree	__P((void *));
-#define	kernfs_truncate	eopnotsupp
-#define	kernfs_update	eopnotsupp
-#define	kernfs_bwrite	eopnotsupp
+#define	kernfs_truncate	kernfs_enotsupp
+#define	kernfs_update	kernfs_enotsupp
+#define	kernfs_bwrite	kernfs_enotsupp
 
 int	kernfs_xread __P((struct kern_target *, int, char **, int));
 int	kernfs_xwrite __P((struct kern_target *, char *, int));
@@ -179,7 +179,6 @@ struct vnodeopv_entry_desc kernfs_vnodeop_entries[] = {
 	{ &vop_write_desc, kernfs_write },	/* write */
 	{ &vop_ioctl_desc, kernfs_ioctl },	/* ioctl */
 	{ &vop_select_desc, kernfs_select },	/* select */
-	{ &vop_revoke_desc, kernfs_revoke },    /* revoke */
 	{ &vop_mmap_desc, kernfs_mmap },	/* mmap */
 	{ &vop_fsync_desc, kernfs_fsync },	/* fsync */
 	{ &vop_seek_desc, kernfs_seek },	/* seek */
@@ -356,7 +355,6 @@ kernfs_lookup(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
 	char *pname = cnp->cn_nameptr;
-	struct proc *p = cnp->cn_proc;
 	struct kern_target *kt;
 	struct vnode *fvp;
 	int error, i;
@@ -375,7 +373,7 @@ kernfs_lookup(v)
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
 		VREF(dvp);
-		vn_lock(dvp, LK_SHARED | LK_RETRY, p);
+		/*VOP_LOCK(dvp);*/
 		return (0);
 	}
 
@@ -383,7 +381,7 @@ kernfs_lookup(v)
 	if (cnp->cn_namelen == 4 && bcmp(pname, "root", 4) == 0) {
 		*vpp = rootdir;
 		VREF(rootdir);
-		vn_lock(rootdir, LK_SHARED | LK_RETRY, p);
+		VOP_LOCK(rootdir);
 		return (0);
 	}
 #endif
@@ -398,7 +396,6 @@ kernfs_lookup(v)
 	printf("kernfs_lookup: i = %d, failed", i);
 #endif
 
-	vn_lock(dvp, LK_SHARED | LK_RETRY, p);
 	return (cnp->cn_nameiop == LOOKUP ? ENOENT : EROFS);
 
 found:
@@ -408,7 +405,7 @@ found:
 		if (*dp == NODEV || !vfinddev(*dp, kt->kt_vtype, &fvp))
 			return (ENOENT);
 		*vpp = fvp;
-		if (vget(fvp, LK_EXCLUSIVE, p))
+		if (vget(fvp, 1))
 			goto loop;
 		return (0);
 	}
@@ -417,16 +414,13 @@ found:
 	printf("kernfs_lookup: allocate new vnode\n");
 #endif
 	error = getnewvnode(VT_KERNFS, dvp->v_mount, kernfs_vnodeop_p, &fvp);
-	if (error) {
-		vn_lock(dvp, LK_SHARED | LK_RETRY, p);
+	if (error)
 		return (error);
-	}
 
 	MALLOC(fvp->v_data, void *, sizeof(struct kernfs_node), M_TEMP,
 	    M_WAITOK);
 	VTOKERN(fvp)->kf_kt = kt;
 	fvp->v_type = kt->kt_vtype;
-	vn_lock(fvp, LK_SHARED | LK_RETRY, p);
 	*vpp = fvp;
 
 #ifdef KERNFS_DIAGNOSTIC
@@ -627,10 +621,13 @@ kernfs_readdir(v)
 		u_long *a_cookies;
 		int a_ncookies;
 	} */ *ap = v;
-	int error, i;
 	struct uio *uio = ap->a_uio;
 	struct dirent d;
 	struct kern_target *kt;
+	int i;
+	int error;
+	u_long *cookies = ap->a_cookies;
+	int ncookies = ap->a_ncookies;
 
 	if (ap->a_vp->v_type != VDIR)
 		return (ENOTDIR);
@@ -666,6 +663,8 @@ kernfs_readdir(v)
 
 		if ((error = uiomove((caddr_t)&d, UIO_MX, uio)) != 0)
 			break;
+		if (ncookies-- > 0)
+			*cookies++ = i + 1;
 	}
 
 	uio->uio_offset = i;
@@ -678,7 +677,6 @@ kernfs_inactive(v)
 {
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-		struct proc *a_p;
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
@@ -689,7 +687,6 @@ kernfs_inactive(v)
 	 * Clear out the v_type field to avoid
 	 * nasty things happening in vgone().
 	 */
-	VOP_UNLOCK(vp, 0, ap->a_p);
 	vp->v_type = VNON;
 	return (0);
 }
@@ -817,6 +814,18 @@ kernfs_abortop(v)
 	if ((ap->a_cnp->cn_flags & (HASBUF | SAVESTART)) == HASBUF)
 		FREE(ap->a_cnp->cn_pnbuf, M_NAMEI);
 	return (0);
+}
+
+/*
+ * /dev/fd vnode unsupported operation
+ */
+/*ARGSUSED*/
+int
+kernfs_enotsupp(v)
+	void *v;
+{
+
+	return (EOPNOTSUPP);
 }
 
 /*

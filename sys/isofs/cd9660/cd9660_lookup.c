@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.3 1997/10/06 15:08:40 csapuntz Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.4 1997/10/06 20:19:42 deraadt Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.14 1996/02/09 21:31:56 christos Exp $	*/
 
 /*-
@@ -130,8 +130,7 @@ cd9660_lookup(v)
 	struct ucred *cred = cnp->cn_cred;
 	int flags = cnp->cn_flags;
 	int nameiop = cnp->cn_nameiop;
-	struct proc *p = cnp->cn_proc;
-
+	
 	bp = NULL;
 	*vpp = NULL;
 	vdp = ap->a_dvp;
@@ -147,10 +146,6 @@ cd9660_lookup(v)
 		return (ENOTDIR);
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred, cnp->cn_proc)) != 0)
 		return (error);
-
-	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
-	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
-		return (EROFS);
 	
 	/*
 	 * We now have a segment name to search for, and a directory to search.
@@ -181,14 +176,14 @@ cd9660_lookup(v)
 			VREF(vdp);
 			error = 0;
 		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(pdp, 0, p);
-			error = vget(vdp, LK_EXCLUSIVE, p);
+			VOP_UNLOCK(pdp);
+			error = vget(vdp, 1);
 			if (!error && lockparent && (flags & ISLASTCN))
-				error = vn_lock(pdp, LK_EXCLUSIVE, p);
+				error = VOP_LOCK(pdp);
 		} else {
-			error = vget(vdp, LK_EXCLUSIVE, p);
+			error = vget(vdp, 1);
 			if (!lockparent || error || !(flags & ISLASTCN))
-				VOP_UNLOCK(pdp, 0, p);
+				VOP_UNLOCK(pdp);
 		}
 		/*
 		 * Check that the capability number did not change
@@ -199,9 +194,9 @@ cd9660_lookup(v)
 				return (0);
 			vput(vdp);
 			if (lockparent && pdp != vdp && (flags & ISLASTCN))
-				VOP_UNLOCK(pdp, 0, p);
+				VOP_UNLOCK(pdp);
 		}
-		if ((error = vn_lock(pdp, LK_EXCLUSIVE, p)) != 0)
+		if ((error = VOP_LOCK(pdp)) != 0)
 			return (error);
 		vdp = pdp;
 		dp = VTOI(pdp);
@@ -424,16 +419,16 @@ found:
 	 * it's a relocated directory.
 	 */
 	if (flags & ISDOTDOT) {
-		VOP_UNLOCK(pdp, 0, p);	/* race to get the inode */
+		VOP_UNLOCK(pdp);	/* race to get the inode */
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
 					     dp->i_ino != ino, ep);
 		brelse(bp);
 		if (error) {
-			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
+			VOP_LOCK(pdp);
 			return (error);
 		}
 		if (lockparent && (flags & ISLASTCN) &&
-		    (error = vn_lock(pdp, LK_EXCLUSIVE, p))) {
+		    (error = VOP_LOCK(pdp))) {
 			vput(tdp);
 			return (error);
 		}
@@ -449,7 +444,7 @@ found:
 		if (error)
 			return (error);
 		if (!lockparent || !(flags & ISLASTCN))
-			VOP_UNLOCK(pdp, 0, p);
+			VOP_UNLOCK(pdp);
 		*vpp = tdp;
 	}
 	

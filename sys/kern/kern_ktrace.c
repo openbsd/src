@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ktrace.c,v 1.4 1997/10/06 15:12:18 csapuntz Exp $	*/
+/*	$OpenBSD: kern_ktrace.c,v 1.5 1997/10/06 20:19:53 deraadt Exp $	*/
 /*	$NetBSD: kern_ktrace.c,v 1.23 1996/02/09 18:59:36 christos Exp $	*/
 
 /*
@@ -293,9 +293,7 @@ sys_ktrace(curp, v, retval)
 			return (error);
 		}
 		vp = nd.ni_vp;
-
-		/* FIXME: Should be curp?? */
-		VOP_UNLOCK(vp, 0, p);
+		VOP_UNLOCK(vp);
 		if (vp->v_type != VREG) {
 			(void) vn_close(vp, FREAD|FWRITE, curp->p_ucred, curp);
 			curp->p_traceflag &= ~KTRFAC_ACTIVE;
@@ -470,9 +468,9 @@ ktrwrite(vp, kth)
 		aiov[1].iov_len = kth->ktr_len;
 		auio.uio_resid += kth->ktr_len;
 	}
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
+	VOP_LOCK(vp);
 	error = VOP_WRITE(vp, &auio, IO_UNIT|IO_APPEND, p->p_ucred);
-	VOP_UNLOCK(vp, 0, p);
+	VOP_UNLOCK(vp);
 	if (!error)
 		return;
 	/*

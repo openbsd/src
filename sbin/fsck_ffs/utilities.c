@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.5 1997/10/06 15:33:36 csapuntz Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.6 1997/10/06 20:22:37 deraadt Exp $	*/
 /*	$NetBSD: utilities.c,v 1.18 1996/09/27 22:45:20 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.5 1997/10/06 15:33:36 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.6 1997/10/06 20:22:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -96,7 +96,6 @@ reply(question)
 	printf("\n");
 	if (!persevere && (nflag || fswritefd < 0)) {
 		printf("%s? no\n\n", question);
-		resolved = 0;
 		return (0);
 	}
 	if (yflag || (persevere && nflag)) {
@@ -107,17 +106,13 @@ reply(question)
 		printf("%s? [yn] ", question);
 		(void) fflush(stdout);
 		c = getc(stdin);
-		while (c != '\n' && getc(stdin) != '\n') {
-			if (feof(stdin)) {
-				resolved = 0;
+		while (c != '\n' && getc(stdin) != '\n')
+			if (feof(stdin))
 				return (0);
-			}
-		}
 	} while (c != 'y' && c != 'Y' && c != 'n' && c != 'N');
 	printf("\n");
 	if (c == 'y' || c == 'Y')
 		return (1);
-	resolved = 0;
 	return (0);
 }
 
@@ -379,8 +374,7 @@ int
 allocblk(frags)
 	long frags;
 {
-	int i, j, k, cg, baseblk;
-	struct cg *cgp = &cgrp;
+	register int i, j, k;
 
 	if (frags <= 0 || frags > sblock.fs_frag)
 		return (0);
@@ -395,21 +389,9 @@ allocblk(frags)
 				j += k;
 				continue;
 			}
-			cg = dtog(&sblock, i + j);
-			getblk(&cgblk, cgtod(&sblock, cg), sblock.fs_cgsize);
-			if (!cg_chkmagic(cgp))
-				pfatal("CG %d: BAD MAGIC NUMBER\n", cg);
-			baseblk = dtogd(&sblock, i + j);
-
-			for (k = 0; k < frags; k++) {
+			for (k = 0; k < frags; k++)
 				setbmap(i + j + k);
-				clrbit(cg_blksfree(cgp), baseblk + k);
-			}
 			n_blks += frags;
-			if (frags == sblock.fs_frag)
-				cgp->cg_cs.cs_nbfree--;
-			else
-				cgp->cg_cs.cs_nffree -= frags;
 			return (i + j);
 		}
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: setup.c,v 1.5 1997/10/06 15:33:35 csapuntz Exp $	*/
+/*	$OpenBSD: setup.c,v 1.6 1997/10/06 20:22:36 deraadt Exp $	*/
 /*	$NetBSD: setup.c,v 1.27 1996/09/27 22:45:19 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.5 (Berkeley) 11/23/94";
 #else
-static char rcsid[] = "$OpenBSD: setup.c,v 1.5 1997/10/06 15:33:35 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: setup.c,v 1.6 1997/10/06 20:22:36 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -336,10 +336,8 @@ setup(dev)
 		    fsbtodb(&sblock, sblock.fs_csaddr + j * sblock.fs_frag),
 		    size) != 0 && !asked) {
 			pfatal("BAD SUMMARY INFORMATION");
-			if (reply("CONTINUE") == 0) {
-				ckfini(0);
+			if (reply("CONTINUE") == 0)
 				errexit("%s", "");
-			}
 			asked++;
 		}
 	}
@@ -384,10 +382,6 @@ setup(dev)
 		goto badsblabel;
 	}
 	bufinit();
-	if (sblock.fs_flags & FS_DOSOFTDEP)
-		usedsoftdep = 1;
-	else
-		usedsoftdep = 0;
 	return (1);
 
 badsblabel:

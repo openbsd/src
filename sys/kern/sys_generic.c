@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.9 1997/10/06 15:12:28 csapuntz Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.10 1997/10/06 20:20:01 deraadt Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -178,12 +178,18 @@ sys_readv(p, v, retval)
 		goto done;
 	auio.uio_resid = 0;
 	for (i = 0; i < SCARG(uap, iovcnt); i++) {
-		if (auio.uio_resid + iov->iov_len < auio.uio_resid) {
+#if 0
+		/* Cannot happen iov_len is unsigned */
+		if (iov->iov_len < 0) {
 			error = EINVAL;
 			goto done;
 		}
-
+#endif
 		auio.uio_resid += iov->iov_len;
+		if (auio.uio_resid < 0) {
+			error = EINVAL;
+			goto done;
+		}
 		iov++;
 	}
 #ifdef KTRACE
@@ -331,12 +337,18 @@ sys_writev(p, v, retval)
 		goto done;
 	auio.uio_resid = 0;
 	for (i = 0; i < SCARG(uap, iovcnt); i++) {
-		if (auio.uio_resid + iov->iov_len < auio.uio_resid) {
+#if 0
+		/* Cannot happen iov_len is unsigned */
+		if (iov->iov_len < 0) {
 			error = EINVAL;
 			goto done;
 		}
-
+#endif
 		auio.uio_resid += iov->iov_len;
+		if (auio.uio_resid < 0) {
+			error = EINVAL;
+			goto done;
+		}
 		iov++;
 	}
 #ifdef KTRACE

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass5.c,v 1.4 1997/10/06 15:33:35 csapuntz Exp $	*/
+/*	$OpenBSD: pass5.c,v 1.5 1997/10/06 20:22:35 deraadt Exp $	*/
 /*	$NetBSD: pass5.c,v 1.16 1996/09/27 22:45:18 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass5.c	8.6 (Berkeley) 11/30/94";
 #else
-static char rcsid[] = "$OpenBSD: pass5.c,v 1.4 1997/10/06 15:33:35 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: pass5.c,v 1.5 1997/10/06 20:22:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -46,6 +46,7 @@ static char rcsid[] = "$OpenBSD: pass5.c,v 1.4 1997/10/06 15:33:35 csapuntz Exp 
 #include <sys/time.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ffs/fs.h>
+#include <ufs/ffs/ffs_extern.h>
 #include <string.h>
 
 #include "fsutil.h"
@@ -56,12 +57,11 @@ void
 pass5()
 {
 	int c, blk, frags, basesize, sumsize, mapsize, savednrpos;
-	int inomapsize, blkmapsize;
 	register struct fs *fs = &sblock;
 	register struct cg *cg = &cgrp;
 	daddr_t dbase, dmax;
-        daddr_t d;
-	long i, j, k;
+	register daddr_t d;
+	register long i, j;
 	struct csum *cs;
 	struct csum cstotal;
 	struct inodesc idesc[3];
@@ -119,8 +119,6 @@ pass5()
 		sumsize = &ocg->cg_iused[0] - (u_int8_t *)(&ocg->cg_btot[0]);
 		mapsize = &ocg->cg_free[howmany(fs->fs_fpg, NBBY)] -
 			(u_char *)&ocg->cg_iused[0];
-		blkmapsize = howmany(fs->fs_fpg, NBBY);
-		inomapsize = &ocg->cg_free[0] - (u_char *)&ocg->cg_iused[0];
 		ocg->cg_magic = CG_MAGIC;
 		savednrpos = fs->fs_nrpos;
 		fs->fs_nrpos = 8;
@@ -135,12 +133,12 @@ pass5()
 		    fs->fs_cpg * fs->fs_nrpos * sizeof(int16_t);
 		newcg->cg_freeoff =
 		    newcg->cg_iusedoff + howmany(fs->fs_ipg, NBBY);
-		inomapsize = newcg->cg_freeoff - newcg->cg_iusedoff;
-		newcg->cg_nextfreeoff = newcg->cg_freeoff +
-		    howmany(fs->fs_cpg * fs->fs_spc / NSPF(fs), NBBY);
-		blkmapsize = newcg->cg_nextfreeoff - newcg->cg_freeoff;
-		if (fs->fs_contigsumsize > 0) {
-			newcg->cg_clustersumoff = newcg->cg_nextfreeoff -
+		if (fs->fs_contigsumsize <= 0) {
+			newcg->cg_nextfreeoff = newcg->cg_freeoff +
+			    howmany(fs->fs_cpg * fs->fs_spc / NSPF(fs), NBBY);
+		} else {
+			newcg->cg_clustersumoff = newcg->cg_freeoff +
+			    howmany(fs->fs_cpg * fs->fs_spc / NSPF(fs), NBBY) -
 			    sizeof(int32_t);
 			newcg->cg_clustersumoff =
 			    roundup(newcg->cg_clustersumoff, sizeof(int32_t));
@@ -157,7 +155,6 @@ pass5()
 		break;
 
 	default:
-		inomapsize = blkmapsize = sumsize = 0; 
 		errexit("UNKNOWN ROTATIONAL TABLE FORMAT %d\n",
 			fs->fs_postblformat);
 	}
@@ -308,6 +305,13 @@ pass5()
 			cgdirty();
 			continue;
 		}
+		if (memcmp(cg_inosused(newcg),
+			   cg_inosused(cg), mapsize) != 0 &&
+		    dofix(&idesc[1], "BLK(S) MISSING IN BIT MAPS")) {
+			memcpy(cg_inosused(cg), cg_inosused(newcg),
+			      (size_t)mapsize);
+			cgdirty();
+		}
 		if ((memcmp(newcg, cg, basesize) != 0 ||
 		     memcmp(&cg_blktot(newcg)[0],
 			    &cg_blktot(cg)[0], sumsize) != 0) &&
@@ -317,41 +321,6 @@ pass5()
 			       &cg_blktot(newcg)[0], (size_t)sumsize);
 			cgdirty();
 		}
-		if (usedsoftdep) {
-			for (i = 0; i < inomapsize; i++) {
-				j = cg_inosused(newcg)[i];
-				if ((cg_inosused(cg)[i] & j) == j)
-					continue;
-				for (k = 0; k < NBBY; k++) {
-					if ((j & (1 << k)) == 0)
-                                               continue;
-					if (cg_inosused(cg)[i] & (1 << k))
-						continue;
-					pwarn("ALLOCATED INODE %d MARKED FREE",
-					      c * fs->fs_ipg + i * 8 + k);
-				}
-			}
-			for (i = 0; i < blkmapsize; i++) {
-				j = cg_blksfree(cg)[i];
-				if ((cg_blksfree(newcg)[i] & j) == j)
-                                       continue;
-				for (k = 0; k < NBBY; k++) {
-					if ((j & (1 << k)) == 0)
-						continue;
-					if (cg_inosused(cg)[i] & (1 << k))
-						continue;
-					pwarn("ALLOCATED FRAG %d MARKED FREE",
-					      c * fs->fs_fpg + i * 8 + k);
-				}
-			}
-		}
-		if (memcmp(cg_inosused(newcg), cg_inosused(cg), 
-			   mapsize) != 0 &&
-		    dofix(&idesc[1], "BLK(S) MISSING IN BIT MAPS")) {
-			memmove(cg_inosused(cg), cg_inosused(newcg),
-				(size_t)mapsize);
-                        cgdirty();
-                }
 	}
 	if (fs->fs_postblformat == FS_42POSTBLFMT)
 		fs->fs_nrpos = savednrpos;

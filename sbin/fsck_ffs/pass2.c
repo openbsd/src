@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.5 1997/10/06 15:33:34 csapuntz Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.6 1997/10/06 20:22:35 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: pass2.c,v 1.5 1997/10/06 15:33:34 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: pass2.c,v 1.6 1997/10/06 20:22:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,10 +75,8 @@ pass2()
 
 	case USTATE:
 		pfatal("ROOT INODE UNALLOCATED");
-		if (reply("ALLOCATE") == 0) {
-			ckfini(0);
+		if (reply("ALLOCATE") == 0)
 			errexit("%s", "");
-		}
 		if (allocdir(ROOTINO, ROOTINO, 0755) != ROOTINO)
 			errexit("CANNOT ALLOCATE ROOT INODE\n");
 		break;
@@ -91,10 +89,8 @@ pass2()
 				errexit("CANNOT ALLOCATE ROOT INODE\n");
 			break;
 		}
-		if (reply("CONTINUE") == 0) {
-			ckfini(0);
+		if (reply("CONTINUE") == 0)
 			errexit("%s", "");
-		}
 		break;
 
 	case FSTATE:
@@ -106,10 +102,8 @@ pass2()
 				errexit("CANNOT ALLOCATE ROOT INODE\n");
 			break;
 		}
-		if (reply("FIX") == 0) {
-			ckfini(0);
+		if (reply("FIX") == 0)
 			errexit("%s", "");
-		}
 		dp = ginode(ROOTINO);
 		dp->di_mode &= ~IFMT;
 		dp->di_mode |= IFDIR;
@@ -151,14 +145,8 @@ pass2()
 			}
 		} else if ((inp->i_isize & (DIRBLKSIZ - 1)) != 0) {
 			getpathname(pathbuf, inp->i_number, inp->i_number);
-			if (usedsoftdep)
-			        pfatal("%s %s: LENGTH %d NOT MULTIPLE of %d",
-				       "DIRECTORY", pathbuf, inp->i_isize,
-				       DIRBLKSIZ);
-			else
-				pwarn("%s %s: LENGTH %d NOT MULTIPLE OF %d",
-				      "DIRECTORY", pathbuf, inp->i_isize,
-				      DIRBLKSIZ);
+			pwarn("DIRECTORY %s: LENGTH %d NOT MULTIPLE OF %d",
+				pathbuf, inp->i_isize, DIRBLKSIZ);
 			if (preen)
 				printf(" (ADJUSTED)\n");
 			inp->i_isize = roundup(inp->i_isize, DIRBLKSIZ);
@@ -408,7 +396,7 @@ again:
 				break;
 			if (statemap[dirp->d_ino] == FCLEAR)
 				errmsg = "DUP/BAD";
-			else if (!preen && !usedsoftdep)
+			else if (!preen)
 				errmsg = "ZERO LENGTH DIRECTORY";
 			else {
 				n = 1;
@@ -433,11 +421,8 @@ again:
 				pwarn("%s %s %s\n", pathbuf,
 				    "IS AN EXTRANEOUS HARD LINK TO DIRECTORY",
 				    namebuf);
-				if (preen) {
-					printf (" (REMOVED)\n");
-					n = 1;
-					break;
-				}
+				if (preen)
+					printf(" (IGNORED)\n");
 				else if ((n = reply("REMOVE")) == 1)
 					break;
 			}

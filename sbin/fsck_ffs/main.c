@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 1997/10/06 15:33:33 csapuntz Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 1997/10/06 20:22:33 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1996/10/11 20:15:48 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 1/23/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 1997/10/06 15:33:33 csapuntz Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 1997/10/06 20:22:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -206,13 +206,6 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	case -1:
 		return (0);
 	}
-
-        /*
-         * Cleared if any questions answered no. Used to decide if
-         * the superblock should be marked clean.
-         */
-        resolved = 1;
-
 	/*
 	 * 1: scan inodes tallying blocks used
 	 */
@@ -228,7 +221,7 @@ checkfilesys(filesys, mntpt, auxdata, child)
 	 * 1b: locate first references to duplicates, if any
 	 */
 	if (duplist) {
-		if (preen || usedsoftdep)
+		if (preen)
 			pfatal("INTERNAL ERROR: dups with -p");
 		printf("** Phase 1b - Rescan For More DUPS\n");
 		pass1b();
@@ -311,19 +304,16 @@ checkfilesys(filesys, mntpt, auxdata, child)
 			bwrite(fswritefd, (char *)&sblock,
 			    fsbtodb(&sblock, cgsblock(&sblock, cylno)), SBSIZE);
 	}
+	ckfini(1);
+	free(blockmap);
+	free(statemap);
+	free((char *)lncntp);
 	if (!fsmodified)
 		return (0);
 	if (!preen)
 		printf("\n***** FILE SYSTEM WAS MODIFIED *****\n");
-	if (rerun) {
-		resolved = 0;
+	if (rerun)
 		printf("\n***** PLEASE RERUN FSCK *****\n");
-	}
-	ckfini(resolved);
-	free(blockmap);
-	free(statemap);
-	free((char *)lncntp);
-
 	if (hotroot()) {
 		struct statfs stfs_buf;
 		/*

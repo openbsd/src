@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.11 1997/10/06 15:12:42 csapuntz Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.12 1997/10/06 20:20:12 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -51,7 +51,6 @@
 #include <sys/mount.h>
 #include <sys/time.h>
 #include <sys/fcntl.h>
-#include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/stat.h>
 #include <sys/namei.h>
@@ -89,28 +88,8 @@ int suid_clear = 1;		/* 1 => clear SUID / SGID on owner change */
 	LIST_REMOVE(bp, b_vnbufs);					\
 	(bp)->b_vnbufs.le_next = NOLIST;				\
 }  
-
-struct freelst vnode_hold_list;   /* list of vnodes referencing buffers */
-struct freelst vnode_free_list;   /* vnode free list */
-
+TAILQ_HEAD(freelst, vnode) vnode_free_list;	/* vnode free list */
 struct mntlist mountlist;			/* mounted filesystem list */
-struct simplelock mountlist_slock;
-static struct simplelock mntid_slock;
-struct simplelock mntvnode_slock;
-struct simplelock vnode_free_list_slock;
-static struct simplelock spechash_slock;
-
-/*
- * The workitem queue.
-  */ 
-#define SYNCER_MAXDELAY       32
-int syncer_maxdelay = SYNCER_MAXDELAY;        /* maximum delay time */
-time_t syncdelay = 30;                        /* time to delay syncing vnodes */
- 
-static int syncer_delayno = 0;
-static long syncer_mask;
-LIST_HEAD(synclist, vnode);
-static struct synclist *syncer_workitem_pending;
 
 int vfs_lock __P((struct mount *));
 void vfs_unlock __P((struct mount *));
@@ -128,16 +107,15 @@ int bdevvp __P((dev_t, struct vnode **));
 int cdevvp __P((dev_t, struct vnode **));
 int getdevvp __P((dev_t, struct vnode **, enum vtype));
 struct vnode *checkalias __P((struct vnode *, dev_t, struct mount *));
+int vget __P((struct vnode *, int));
 void vref __P((struct vnode *));
 void vput __P((struct vnode *));
 void vrele __P((struct vnode *));
-int vunref __P((struct vnode *));
 void vhold __P((struct vnode *));
 void holdrele __P((struct vnode *));
 int vflush __P((struct mount *, struct vnode *, int));
 void vgoneall __P((struct vnode *));
 void vgone __P((struct vnode *));
-void vgonel __P((struct vnode *, struct proc *));
 int vcount __P((struct vnode *));
 void vprint __P((char *, struct vnode *));
 int vfs_mountedon __P((struct vnode *));
@@ -148,10 +126,10 @@ int vaccess __P((mode_t, uid_t, gid_t, mode_t, struct ucred *));
 void vfs_unmountall __P((void));
 void vfs_shutdown __P((void));
 
-int vfs_hang_addrlist __P((struct mount *, struct netexport *,
+static int vfs_hang_addrlist __P((struct mount *, struct netexport *,
 				  struct export_args *));
-int vfs_free_netcred __P((struct radix_node *, void *));
-void vfs_free_addrlist __P((struct netexport *));
+static int vfs_free_netcred __P((struct radix_node *, void *));
+static void vfs_free_addrlist __P((struct netexport *));
 
 #ifdef DEBUG
 void printlockedvnodes __P((void));
@@ -164,191 +142,124 @@ void
 vntblinit()
 {
 
-	simple_lock_init(&mntvnode_slock);
-	simple_lock_init(&mntid_slock);
-	simple_lock_init(&spechash_slock);
-	TAILQ_INIT(&vnode_hold_list);
 	TAILQ_INIT(&vnode_free_list);
-	simple_lock_init(&vnode_free_list_slock);
 	CIRCLEQ_INIT(&mountlist);
-	/*
-	 * Initialize the filesystem syncer.
-	 */
-	syncer_workitem_pending = hashinit(syncer_maxdelay, M_VNODE,
-					   &syncer_mask);
-	syncer_maxdelay = syncer_mask + 1;
-
 }
 
-
 /*
- * Mark a mount point as busy. Used to synchornize access and to delay
- * unmounting. Interlock is not released n failure.
+ * Lock a filesystem.
+ * Used to prevent access to it while mounting and unmounting.
  */
-
 int
-vfs_busy(mp, flags, interlkp, p)
-	struct mount *mp;
-	int flags;
-	struct simplelock *interlkp;
-	struct proc *p;
+vfs_lock(mp)
+	register struct mount *mp;
 {
-	int lkflags;
 
-	if (mp->mnt_flag & MNT_UNMOUNT) {
-		if (flags & LK_NOWAIT)
-			return (ENOENT);
+	while (mp->mnt_flag & MNT_MLOCK) {
 		mp->mnt_flag |= MNT_MWAIT;
-		if (interlkp)
-			simple_unlock(interlkp);
-		/*
-		 * Since all busy locks are shared except the exclusive
-		 * lock granted when unmounting, the only place that a
-		 * wakeup needs to be done is at the release of the
-		 * exclusive lock at the end of dounmount.
-		 */
- 		sleep((caddr_t)mp, PVFS);
-		if (interlkp)
-			simple_lock(interlkp);
-		return (ENOENT);
+		tsleep((caddr_t)mp, PVFS, "vfslock", 0);
 	}
-	lkflags = LK_SHARED;
-	if (interlkp)
-		lkflags |= LK_INTERLOCK;
-	if (lockmgr(&mp->mnt_lock, lkflags, interlkp, p))
-		panic("vfs_busy: unexpected lock failure");
-        return (0);
+	mp->mnt_flag |= MNT_MLOCK;
+	return (0);
 }
 
-
 /*
- * Free a busy file system
+ * Unlock a locked filesystem.
+ * Panic if filesystem is not locked.
  */
 void
-vfs_unbusy(mp, p)
-	struct mount *mp;
-	struct proc *p;
+vfs_unlock(mp)
+	register struct mount *mp;
 {
-	lockmgr(&mp->mnt_lock, LK_RELEASE, NULL, p);
+
+	if ((mp->mnt_flag & MNT_MLOCK) == 0)
+		panic("vfs_unlock: not locked");
+	mp->mnt_flag &= ~MNT_MLOCK;
+	if (mp->mnt_flag & MNT_MWAIT) {
+		mp->mnt_flag &= ~MNT_MWAIT;
+		wakeup((caddr_t)mp);
+	}
 }
 
 /*
- * Lookup a filesystem type, and if found allocate and initialize
- * a mount structure for it.
- *
- * Devname is usually updated by mount(8) after booting.
+ * Mark a mount point as busy.
+ * Used to synchronize access and to delay unmounting.
  */
-
 int
-vfs_rootmountalloc(fstypename, devname, mpp)
-	char *fstypename;
-	char *devname;
-	struct mount **mpp;
- {
-	struct proc *p = curproc;	/* XXX */
-	struct vfsconf *vfsp;
-	struct mount *mp;
- 
-	for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next)
-		if (!strcmp(vfsp->vfc_name, fstypename))
-			break;
-	if (vfsp == NULL)
-		return (ENODEV);
-	mp = malloc((u_long)sizeof(struct mount), M_MOUNT, M_WAITOK);
-	bzero((char *)mp, (u_long)sizeof(struct mount));
-	lockinit(&mp->mnt_lock, PVFS, "vfslock", 0, 0);
-	(void)vfs_busy(mp, LK_NOWAIT, 0, p);
-	LIST_INIT(&mp->mnt_vnodelist);
-	mp->mnt_vfc = vfsp;
-	mp->mnt_op = vfsp->vfc_vfsops;
-	mp->mnt_flag = MNT_RDONLY;
-	mp->mnt_vnodecovered = NULLVP;
-	vfsp->vfc_refcount++;
-	mp->mnt_stat.f_type = vfsp->vfc_typenum;
-	mp->mnt_flag |= vfsp->vfc_flags & MNT_VISFLAGMASK;
-	strncpy(mp->mnt_stat.f_fstypename, vfsp->vfc_name, MFSNAMELEN);
-	mp->mnt_stat.f_mntonname[0] = '/';
-	(void) copystr(devname, mp->mnt_stat.f_mntfromname, MNAMELEN - 1, 0);
-	*mpp = mp;
- 	return (0);
- }
+vfs_busy(mp)
+	register struct mount *mp;
+{
+
+	while(mp->mnt_flag & MNT_MPBUSY) {
+		mp->mnt_flag |= MNT_MPWANT;
+		tsleep((caddr_t)&mp->mnt_flag, PVFS, "vfsbusy", 0);
+	}
+	if (mp->mnt_flag & MNT_UNMOUNT)
+		return (1);
+	mp->mnt_flag |= MNT_MPBUSY;
+	return (0);
+}
 
 /*
- * Find an appropriate filesystem to use for the root. If a filesystem
- * has not been preselected, walk through the list of known filesystems
- * trying those that have mountroot routines, and try them until one
- * works or we have tried them all.
-  */
-int
-vfs_mountroot()
+ * Free a busy filesystem.
+ * Panic if filesystem is not busy.
+ */
+void
+vfs_unbusy(mp)
+	register struct mount *mp;
 {
-	struct vfsconf *vfsp;
-	extern int (*mountroot)(void);
-	int error;
- 
-	if (mountroot != NULL)
-		return ((*mountroot)());
-	for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next) {
-		if (vfsp->vfc_mountroot == NULL)
-			continue;
-		if ((error = (*vfsp->vfc_mountroot)()) == 0)
-			return (0);
-		printf("%s_mountroot failed: %d\n", vfsp->vfc_name, error);
- 	}
-	return (ENODEV);
+
+	if ((mp->mnt_flag & MNT_MPBUSY) == 0)
+		panic("vfs_unbusy: not busy");
+	mp->mnt_flag &= ~MNT_MPBUSY;
+	if (mp->mnt_flag & MNT_MPWANT) {
+		mp->mnt_flag &= ~MNT_MPWANT;
+		wakeup((caddr_t)&mp->mnt_flag);
+	}
 }
- 
+
 /*
  * Lookup a mount point by filesystem identifier.
  */
 struct mount *
-vfs_getvfs(fsid)
+getvfs(fsid)
 	fsid_t *fsid;
 {
 	register struct mount *mp;
 
-	simple_lock(&mountlist_slock);
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
-	     mp = mp->mnt_list.cqe_next) {
+	     mp = mp->mnt_list.cqe_next)
 		if (mp->mnt_stat.f_fsid.val[0] == fsid->val[0] &&
-		    mp->mnt_stat.f_fsid.val[1] == fsid->val[1]) {
-			simple_unlock(&mountlist_slock);
+		    mp->mnt_stat.f_fsid.val[1] == fsid->val[1])
 			return (mp);
-		}
-	}
-	simple_unlock(&mountlist_slock);
 	return ((struct mount *)0);
 }
-
 
 /*
  * Get a new unique fsid
  */
 void
-vfs_getnewfsid(mp)
+getnewfsid(mp, mtype)
 	struct mount *mp;
+	int mtype;
 {
 	static u_short xxxfs_mntid;
 
 	fsid_t tfsid;
-	int mtype;
 
-	simple_lock(&mntid_slock);
-	mtype = mp->mnt_vfc->vfc_typenum;
-	mp->mnt_stat.f_fsid.val[0] = makedev(nblkdev + mtype, 0);
+	mp->mnt_stat.f_fsid.val[0] = makedev(nblkdev + 11, 0);	/* XXX */
 	mp->mnt_stat.f_fsid.val[1] = mtype;
 	if (xxxfs_mntid == 0)
 		++xxxfs_mntid;
-	tfsid.val[0] = makedev(nblkdev + mtype, xxxfs_mntid);
+	tfsid.val[0] = makedev((nblkdev + mtype) & 0xff, xxxfs_mntid);
 	tfsid.val[1] = mtype;
 	if (mountlist.cqh_first != (void *)&mountlist) {
-		while (vfs_getvfs(&tfsid)) {
+		while (getvfs(&tfsid)) {
 			tfsid.val[0]++;
 			xxxfs_mntid++;
 		}
 	}
 	mp->mnt_stat.f_fsid.val[0] = tfsid.val[0];
-	simple_unlock(&mntid_slock);
 }
 
 /*
@@ -407,56 +318,20 @@ getnewvnode(tag, mp, vops, vpp)
 	int (**vops) __P((void *));
 	struct vnode **vpp;
 {
-	struct proc *p = curproc;			/* XXX */
-	struct freelst *listhd;
-	static int toggle;
-	struct vnode *vp;
+	register struct vnode *vp;
 #ifdef DIAGNOSTIC
 	int s;
 #endif
 
-	/*
-	 * We must choose whether to allocate a new vnode or recycle an
-	 * existing one. The criterion for allocating a new one is that
-	 * the total number of vnodes is less than the number desired or
-	 * there are no vnodes on either free list. Generally we only
-	 * want to recycle vnodes that have no buffers associated with
-	 * them, so we look first on the vnode_free_list. If it is empty,
-	 * we next consider vnodes with referencing buffers on the
-	 * vnode_hold_list. The toggle ensures that half the time we
-	 * will use a buffer from the vnode_hold_list, and half the time
-	 * we will allocate a new one unless the list has grown to twice
-	 * the desired size. We are reticent to recycle vnodes from the
-	 * vnode_hold_list because we will lose the identity of all its
-	 * referencing buffers.
-	 */
-	toggle ^= 1;
-	if (numvnodes > 2 * desiredvnodes)
-		toggle = 0;
-
-
-	simple_lock(&vnode_free_list_slock);
-	if ((numvnodes < desiredvnodes) ||
-	    ((TAILQ_FIRST(listhd = &vnode_free_list) == NULL) &&
-	     ((TAILQ_FIRST(listhd = &vnode_hold_list) == NULL) || toggle))) {
-		simple_unlock(&vnode_free_list_slock);
+	if ((vnode_free_list.tqh_first == NULL &&
+	     numvnodes < 2 * desiredvnodes) ||
+	    numvnodes < desiredvnodes) {
 		vp = (struct vnode *)malloc((u_long)sizeof *vp,
 		    M_VNODE, M_WAITOK);
 		bzero((char *)vp, sizeof *vp);
 		numvnodes++;
 	} else {
-		for (vp = TAILQ_FIRST(listhd); vp != NULLVP;
-		     vp = TAILQ_NEXT(vp, v_freelist)) {
-			if (simple_lock_try(&vp->v_interlock))
-				break;
-		}
-		/*
-		 * Unless this is a bad time of the month, at most
-		 * the first NCPUS items on the free list are
-		 * locked, so this is close enough to being empty.
-		 */
-		if (vp == NULLVP) {
-			simple_unlock(&vnode_free_list_slock);
+		if ((vp = vnode_free_list.tqh_first) == NULL) {
 			tablefull("vnode");
 			*vpp = 0;
 			return (ENFILE);
@@ -465,15 +340,12 @@ getnewvnode(tag, mp, vops, vpp)
 			vprint("free vnode", vp);
 			panic("free vnode isn't");
 		}
-		TAILQ_REMOVE(listhd, vp, v_freelist);
+		TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
 		/* see comment on why 0xdeadb is set at end of vgone (below) */
-		vp->v_flag |= VGONEHACK;
-		simple_unlock(&vnode_free_list_slock);
+		vp->v_freelist.tqe_prev = (struct vnode **)0xdeadb;
 		vp->v_lease = NULL;
 		if (vp->v_type != VBAD)
-			vgonel(vp, p);
-		else
-			simple_unlock(&vp->v_interlock);
+			vgone(vp);
 #ifdef DIAGNOSTIC
 		if (vp->v_data) {
 			vprint("cleaned vnode", vp);
@@ -513,19 +385,18 @@ insmntque(vp, mp)
 	register struct vnode *vp;
 	register struct mount *mp;
 {
-	simple_lock(&mntvnode_slock);
+
 	/*
 	 * Delete from old mount point vnode list, if on one.
 	 */
-	
 	if (vp->v_mount != NULL)
 		LIST_REMOVE(vp, v_mntvnodes);
 	/*
 	 * Insert into list of vnodes for the new mount point, if available.
 	 */
-	if ((vp->v_mount = mp) != NULL)
-		LIST_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
-	simple_unlock(&mntvnode_slock);
+	if ((vp->v_mount = mp) == NULL)
+		return;
+	LIST_INSERT_HEAD(&mp->mnt_vnodelist, vp, v_mntvnodes);
 }
 
 /*
@@ -564,15 +435,14 @@ vinvalbuf(vp, flags, cred, p, slpflag, slptimeo)
 	struct buf *nbp, *blist;
 	int s, error;
 
-	if ((flags & V_SAVE) && vp->v_dirtyblkhd.lh_first != NULL) {
+	if (flags & V_SAVE) {
 		if ((error = VOP_FSYNC(vp, cred, MNT_WAIT, p)) != 0)
 			return (error);
 		if (vp->v_dirtyblkhd.lh_first != NULL)
 			panic("vinvalbuf: dirty bufs");
 	}
 	for (;;) {
-		if ((blist = vp->v_cleanblkhd.lh_first) && 
-		    (flags & V_SAVEMETA))
+		if ((blist = vp->v_cleanblkhd.lh_first) && flags & V_SAVEMETA)
 			while (blist && blist->b_lblkno < 0)
 				blist = blist->b_vnbufs.le_next;
 		if (!blist && (blist = vp->v_dirtyblkhd.lh_first) &&
@@ -692,140 +562,30 @@ brelvp(bp)
 	register struct buf *bp;
 {
 	struct vnode *vp;
-	struct buf *wasdirty;
 
-	if ((vp = bp->b_vp) == (struct vnode *) 0)
+	if (bp->b_vp == (struct vnode *) 0)
 		panic("brelvp: NULL");
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
-	wasdirty = vp->v_dirtyblkhd.lh_first;
 	if (bp->b_vnbufs.le_next != NOLIST)
 		bufremvn(bp);
-	if (wasdirty && LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
-		LIST_REMOVE(vp, v_synclist);
+	vp = bp->b_vp;
 	bp->b_vp = (struct vnode *) 0;
 	HOLDRELE(vp);
 }
 
 /*
- * The workitem queue.
- * 
- * It is useful to delay writes of file data and filesystem metadata
- * for tens of seconds so that quickly created and deleted files need
- * not waste disk bandwidth being created and removed. To realize this,
- * we append vnodes to a "workitem" queue. When running with a soft
- * updates implementation, most pending metadata dependencies should
- * not wait for more than a few seconds. Thus, mounted on block devices
- * are delayed only about a half the time that file data is delayed.
- * Similarly, directory updates are more critical, so are only delayed
- * about a third the time that file data is delayed. Thus, there are
- * SYNCER_MAXDELAY queues that are processed round-robin at a rate of
- * one each second (driven off the filesystem syner process). The
- * syncer_delayno variable indicates the next queue that is to be processed.
- * Items that need to be processed soon are placed in this queue:
- *
- *	syncer_workitem_pending[syncer_delayno]
- *
- * A delay of fifteen seconds is done by placing the request fifteen
- * entries later in the queue:
- *
- *	syncer_workitem_pending[(syncer_delayno + 15) & syncer_mask]
- *
- */
-
-/*
- * Add an item to the syncer work queue.
- */
-void
-vn_syncer_add_to_worklist(vp, delay)
-	struct vnode *vp;
-	int delay;
-{
-	int s, slot;
-
-	s = splbio();
-	if (delay > syncer_maxdelay - 2)
-		delay = syncer_maxdelay - 2;
-	slot = (syncer_delayno + delay) & syncer_mask;
-	LIST_INSERT_HEAD(&syncer_workitem_pending[slot], vp, v_synclist);
-	splx(s);
-}
-
-/*
- * System filesystem synchronizer daemon.
- */
-
-extern int lbolt;
-
-void 
-sched_sync(p)
-	struct proc *p;
-{
-	struct synclist *slp;
-	struct vnode *vp;
-	long starttime;
-	int s;
-
-	for (;;) {
-		starttime = time.tv_sec;
-
-		/*
-		 * Push files whose dirty time has expired.
-		 */
-		s = splbio();
-		slp = &syncer_workitem_pending[syncer_delayno];
-		syncer_delayno += 1;
-		if (syncer_delayno == syncer_maxdelay)
-			syncer_delayno = 0;
-		splx(s);
-		while ((vp = LIST_FIRST(slp)) != NULL) {
-			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
-			(void) VOP_FSYNC(vp, p->p_ucred, MNT_LAZY, p);
-			VOP_UNLOCK(vp, 0, p);
-			if (LIST_FIRST(slp) == vp) {
-				if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
-					panic("sched_sync: fsync failed");
-				/*
-				 * Move ourselves to the back of the sync list.
-				 */
-				LIST_REMOVE(vp, v_synclist);
-				vn_syncer_add_to_worklist(vp, syncdelay);
-			}
-		}
-
-		/*
-		 * Do soft update processing.
-		 */
-		if (bioops.io_sync)
-			(*bioops.io_sync)(NULL);
-
-		/*
-		 * If it has taken us less than a second to process the
-		 * current work, then wait. Otherwise start right over
-		 * again. We can still lose time if any single round
-		 * takes more than two seconds, but it does not really
-		 * matter as we are just trying to generally pace the
-		 * filesystem activity.
-		 */
-		if (time.tv_sec == starttime)
-			tsleep(&lbolt, PPAUSE, "syncer", 0);
-	}
-}
-
-/*
- * Reassign a buffer from one vnode to another. Used to assign buffers
- * to the appropriate clean or dirty list and to add newly dirty vnodes
- * to the appropriate filesystem syncer list.
+ * Reassign a buffer from one vnode to another.
+ * Used to assign file specific control information
+ * (indirect blocks) to the vnode to which they belong.
  */
 void
 reassignbuf(bp, newvp)
 	register struct buf *bp;
 	register struct vnode *newvp;
 {
-	struct buflists *listheadp;
-	struct buf *wasdirty;
-	int delay;
+	register struct buflists *listheadp;
 
 	if (newvp == NULL) {
 		printf("reassignbuf: NULL");
@@ -834,36 +594,16 @@ reassignbuf(bp, newvp)
 	/*
 	 * Delete from old vnode list, if on one.
 	 */
-	wasdirty = newvp->v_dirtyblkhd.lh_first;
 	if (bp->b_vnbufs.le_next != NOLIST)
 		bufremvn(bp);
 	/*
 	 * If dirty, put on list of dirty buffers;
 	 * otherwise insert onto list of clean buffers.
 	 */
-	if ((bp->b_flags & B_DELWRI) == 0) {
-		listheadp = &newvp->v_cleanblkhd;
-		if (wasdirty && LIST_FIRST(&newvp->v_dirtyblkhd) == NULL)
-			LIST_REMOVE(newvp, v_synclist);
-	} else {
+	if (bp->b_flags & B_DELWRI)
 		listheadp = &newvp->v_dirtyblkhd;
-		if (LIST_FIRST(listheadp) == NULL) {
-			switch (newvp->v_type) {
-			case VDIR:
-				delay = syncdelay / 3;
-				break;
-			case VBLK:
-				if (newvp->v_specmountpoint != NULL) {
-					delay = syncdelay / 2;
-					break;
-				}
-				/* fall through */
-			default:
-				delay = syncdelay;
-			}
-			vn_syncer_add_to_worklist(newvp, delay);
-		}
-	}
+	else
+		listheadp = &newvp->v_cleanblkhd;
 	bufinsvn(bp, listheadp);
 }
 
@@ -909,10 +649,8 @@ getdevvp(dev, vpp, type)
 	struct vnode *nvp;
 	int error;
 
-	if (dev == NODEV) {
-		*vpp = NULLVP;
+	if (dev == NODEV)
 		return (0);
-	}
 	error = getnewvnode(VT_NON, NULL, spec_vnodeop_p, &nvp);
 	if (error) {
 		*vpp = NULLVP;
@@ -942,7 +680,6 @@ checkalias(nvp, nvp_rdev, mp)
 	dev_t nvp_rdev;
 	struct mount *mp;
 {
-	struct proc *p = curproc;
 	register struct vnode *vp;
 	struct vnode **vpp;
 
@@ -951,23 +688,18 @@ checkalias(nvp, nvp_rdev, mp)
 
 	vpp = &speclisth[SPECHASH(nvp_rdev)];
 loop:
-	simple_lock(&spechash_slock);
 	for (vp = *vpp; vp; vp = vp->v_specnext) {
-		simple_lock(&vp->v_interlock);
 		if (nvp_rdev != vp->v_rdev || nvp->v_type != vp->v_type)
 			continue;
 		/*
 		 * Alias, but not in use, so flush it out.
 		 */
 		if (vp->v_usecount == 0) {
-			simple_unlock(&spechash_slock);
-			vgonel(vp, p);
+			vgone(vp);
 			goto loop;
 		}
-		if (vget(vp, LK_EXCLUSIVE | LK_INTERLOCK, p)) {
-			simple_unlock(&spechash_slock);
+		if (vget(vp, 1))
 			goto loop;
-		}
 		break;
 	}
 	if (vp == NULL || vp->v_tag != VT_NON || vp->v_type != VBLK) {
@@ -976,21 +708,18 @@ loop:
 		nvp->v_rdev = nvp_rdev;
 		nvp->v_hashchain = vpp;
 		nvp->v_specnext = *vpp;
-		nvp->v_specmountpoint = NULL;
+		nvp->v_specflags = 0;
 		nvp->v_speclockf = NULL;
-		simple_unlock(&spechash_slock);
 		*vpp = nvp;
-		if (vp != NULLVP) {
+		if (vp != NULL) {
 			nvp->v_flag |= VALIASED;
 			vp->v_flag |= VALIASED;
 			vput(vp);
 		}
 		return (NULLVP);
 	}
-	simple_unlock(&spechash_slock);
-	VOP_UNLOCK(vp, 0, p);
-	simple_lock(&vp->v_interlock);
-	vclean(vp, 0, p);
+	VOP_UNLOCK(vp);
+	vclean(vp, 0);
 	vp->v_op = nvp->v_op;
 	vp->v_tag = nvp->v_tag;
 	nvp->v_type = VNON;
@@ -1007,202 +736,47 @@ loop:
  * been changed to a new file system type).
  */
 int
-vget(vp, flags, p)
-        struct vnode *vp;
-	int flags;
-	struct proc *p;
+vget(vp, lockflag)
+	register struct vnode *vp;
+	int lockflag;
 {
-	int error;
+
 	/*
 	 * If the vnode is in the process of being cleaned out for
 	 * another use, we wait for the cleaning to finish and then
-	 * return failure. Cleaning is determined by checking that
-	 * the VXLOCK flag is set.
+	 * return failure. Cleaning is determined either by checking
+	 * that the VXLOCK flag is set, or that the use count is
+	 * zero with the back pointer set to show that it has been
+	 * removed from the free list by getnewvnode. The VXLOCK
+	 * flag may not have been set yet because vclean is blocked in
+	 * the VOP_LOCK call waiting for the VOP_INACTIVE to complete.
 	 */
-	if ((flags & LK_INTERLOCK) == 0)
-		simple_lock(&vp->v_interlock);
-	if (vp->v_flag & VXLOCK) {
- 		vp->v_flag |= VXWANT;
-		simple_unlock(&vp->v_interlock);
+	if ((vp->v_flag & VXLOCK) ||
+	    (vp->v_usecount == 0 &&
+	     vp->v_freelist.tqe_prev == (struct vnode **)0xdeadb)) {
+		vp->v_flag |= VXWANT;
 		tsleep((caddr_t)vp, PINOD, "vget", 0);
-		return (ENOENT);
- 	}
-	if (vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
-		if (vp->v_holdcnt > 0)
-			TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
-		else
-			TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
-		simple_unlock(&vnode_free_list_slock);
+		return (1);
 	}
- 	vp->v_usecount++;
-	if (flags & LK_TYPE_MASK) {
-		if ((error = vn_lock(vp, flags | LK_INTERLOCK, p)) != 0) {
-			vunref(vp);
-			simple_unlock(&vp->v_interlock);
-		}
-		return (error);
-	}
-	simple_unlock(&vp->v_interlock);
+	if (vp->v_usecount == 0)
+		TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
+	vp->v_usecount++;
+	if (lockflag)
+		VOP_LOCK(vp);
 	return (0);
 }
 
 /*
- * Stubs to use when there is no locking to be done on the underlying object.
- * A minimal shared lock is necessary to ensure that the underlying object
- * is not revoked while an operation is in progress. So, an active shared
- * count is maintained in an auxillary vnode lock structure.
- */
-int
-vop_nolock(v)
-	void *v;
-{
-	struct vop_lock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-
-#ifdef notyet
-	/*
-	 * This code cannot be used until all the non-locking filesystems
-	 * (notably NFS) are converted to properly lock and release nodes.
-	 * Also, certain vnode operations change the locking state within
-	 * the operation (create, mknod, remove, link, rename, mkdir, rmdir,
-	 * and symlink). Ideally these operations should not change the
-	 * lock state, but should be changed to let the caller of the
-	 * function unlock them. Otherwise all intermediate vnode layers
-	 * (such as union, umapfs, etc) must catch these functions to do
-	 * the necessary locking at their layer. Note that the inactive
-	 * and lookup operations also change their lock state, but this 
-	 * cannot be avoided, so these two operations will always need
-	 * to be handled in intermediate layers.
-	 */
-	struct vnode *vp = ap->a_vp;
-	int vnflags, flags = ap->a_flags;
-
-	if (vp->v_vnlock == NULL) {
-		if ((flags & LK_TYPE_MASK) == LK_DRAIN)
-			return (0);
-		MALLOC(vp->v_vnlock, struct lock *, sizeof(struct lock),
-		    M_VNODE, M_WAITOK);
-		lockinit(vp->v_vnlock, PVFS, "vnlock", 0, 0);
-	}
-	switch (flags & LK_TYPE_MASK) {
-	case LK_DRAIN:
-		vnflags = LK_DRAIN;
-		break;
-	case LK_EXCLUSIVE:
-	case LK_SHARED:
-		vnflags = LK_SHARED;
-		break;
-	case LK_UPGRADE:
-	case LK_EXCLUPGRADE:
-	case LK_DOWNGRADE:
-		return (0);
-	case LK_RELEASE:
-	default:
-		panic("vop_nolock: bad operation %d", flags & LK_TYPE_MASK);
-	}
-	if (flags & LK_INTERLOCK)
-		vnflags |= LK_INTERLOCK;
-	return(lockmgr(vp->v_vnlock, vnflags, &vp->v_interlock, ap->a_p));
-#else /* for now */
-	/*
-	 * Since we are not using the lock manager, we must clear
-	 * the interlock here.
-	 */
-	if (ap->a_flags & LK_INTERLOCK)
-		simple_unlock(&ap->a_vp->v_interlock);
- 	return (0);
-#endif
-}
- 
-/*
- * Decrement the active use count.
- */
-
-int
-vop_nounlock(v)
-	void *v;
-{
-	struct vop_unlock_args /* {
-		struct vnode *a_vp;
-		int a_flags;
-		struct proc *a_p;
-	} */ *ap = v;
-
-	struct vnode *vp = ap->a_vp;
-
-	if (vp->v_vnlock == NULL)
-		return (0);
-	return (lockmgr(vp->v_vnlock, LK_RELEASE, NULL, ap->a_p));
-}
-
-/*
- * Return whether or not the node is in use.
- */
-int
-vop_noislocked(v)
-	void *v;
-{
-	struct vop_islocked_args /* {
-		struct vnode *a_vp;
-	} */ *ap = v;
-
-	struct vnode *vp = ap->a_vp;
-
-	if (vp->v_vnlock == NULL)
-		return (0);
-	return (lockstatus(vp->v_vnlock));
-}
-
-/*
- * Vnode reference.
+ * Vnode reference, just increment the count
  */
 void
 vref(vp)
 	struct vnode *vp;
 {
-	simple_lock(&vp->v_interlock);
+
 	if (vp->v_usecount <= 0)
 		panic("vref used where vget required");
 	vp->v_usecount++;
-	simple_unlock(&vp->v_interlock);
-}
-
-
-int
-vunref(vp)
-	struct vnode *vp;
-{
-#ifdef DIAGNOSTIC
-	if (vp == NULL)
-		panic("vrele: null vp");
-#endif
-	simple_lock (&vp->v_interlock);
-	vp->v_usecount--;
-	if (vp->v_usecount > 0) {
-		simple_unlock(&vp->v_interlock);
-		return (vp->v_usecount);
-	}
-#ifdef DIAGNOSTIC
-	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
-		vprint("vrele: bad ref count", vp);
-		panic("vrele: ref cnt");
-	}
-#endif
-	/*
-	 * insert at tail of LRU list
-	 */
-	simple_lock(&vnode_free_list_slock);
-	if (vp->v_holdcnt > 0)
-		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
-	else
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-	simple_unlock(&vnode_free_list_slock);
-
-	return (0);
 }
 
 /*
@@ -1212,54 +786,40 @@ void
 vput(vp)
 	register struct vnode *vp;
 {
-	struct proc *p = curproc;	/* XXX */
 
-#ifdef DIGANOSTIC
-	if (vp == NULL)
-		panic("vput: null vp");
-#endif
-	simple_lock(&vp->v_interlock);
-	vp->v_usecount--;
-	if (vp->v_usecount > 0) {
-		simple_unlock(&vp->v_interlock);
-		VOP_UNLOCK(vp, 0, p);
-		return;
-	}
-#ifdef DIAGNOSTIC
-	if (vp->v_usecount < 0 || vp->v_writecount != 0) {
-		vprint("vput: bad ref count", vp);
-		panic("vput: ref cnt");
-	}
-#endif
-	/*
-	 * insert at tail of LRU list
-	 */
-	simple_lock(&vnode_free_list_slock);
-	if (vp->v_holdcnt > 0)
-		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
-	else
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-	simple_unlock(&vnode_free_list_slock);
-	simple_unlock(&vp->v_interlock);
-	VOP_INACTIVE(vp, p);
+	VOP_UNLOCK(vp);
+	vrele(vp);
 }
 
 /*
- * Vnode release - use for active VNODES.
+ * Vnode release.
  * If count drops to zero, call inactive routine and return to freelist.
  */
 void
 vrele(vp)
 	register struct vnode *vp;
 {
-	struct proc *p = curproc;
-
-	if (vunref(vp) == 0 &&
-	    vn_lock(vp, LK_EXCLUSIVE |LK_INTERLOCK, p) == 0)
-		VOP_INACTIVE(vp, p);
-}
 
 #ifdef DIAGNOSTIC
+	if (vp == NULL)
+		panic("vrele: null vp");
+#endif
+	vp->v_usecount--;
+	if (vp->v_usecount > 0)
+		return;
+#ifdef DIAGNOSTIC
+	if (vp->v_usecount != 0 || vp->v_writecount != 0) {
+		vprint("vrele: bad ref count", vp);
+		panic("vrele: ref cnt");
+	}
+#endif
+	/*
+	 * insert at tail of LRU list
+	 */
+	TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
+	VOP_INACTIVE(vp);
+}
+
 /*
  * Page or buffer structure gets a reference.
  */
@@ -1268,27 +828,7 @@ vhold(vp)
 	register struct vnode *vp;
 {
 
-	/*
-	 * If it is on the freelist and the hold count is currently
-	 * zero, move it to the hold list.
-	 *
-	 * The VGONEHACK flag reflects a call from getnewvnode,
-	 * which will remove the vnode from the free list, but
-	 * will not increment the ref count until after it calls vgone
-	 * If the ref count we're incremented first, vgone would
-	 * (incorrectly) try to close the previous instance of the
-	 * underlying object.
-	 */
-  	simple_lock(&vp->v_interlock);
-	if (!(vp->v_flag & VGONEHACK) &&
-	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
-		TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
-		TAILQ_INSERT_TAIL(&vnode_hold_list, vp, v_freelist);
-		simple_unlock(&vnode_free_list_slock);
-	}
 	vp->v_holdcnt++;
-	simple_unlock(&vp->v_interlock);
 }
 
 /*
@@ -1299,26 +839,10 @@ holdrele(vp)
 	register struct vnode *vp;
 {
 
-	simple_lock(&vp->v_interlock);
 	if (vp->v_holdcnt <= 0)
 		panic("holdrele: holdcnt");
 	vp->v_holdcnt--;
-	/*
-	 * If it is on the holdlist and the hold count drops to
-	 * zero, move it to the free list. 
-	 *
-	 * See above for VGONEHACK
-	 */
-	if (!(vp->v_flag & VGONEHACK) &&
-	    vp->v_holdcnt == 0 && vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
-		TAILQ_REMOVE(&vnode_hold_list, vp, v_freelist);
-		TAILQ_INSERT_TAIL(&vnode_free_list, vp, v_freelist);
-		simple_unlock(&vnode_free_list_slock);
-	}
-	simple_unlock(&vp->v_interlock);
 }
-#endif /* DIAGNOSTIC */
 
 /*
  * Remove any vnodes in the vnode table belonging to mount point mp.
@@ -1339,11 +863,11 @@ vflush(mp, skipvp, flags)
 	struct vnode *skipvp;
 	int flags;
 {
-	struct proc *p = curproc;
 	register struct vnode *vp, *nvp;
 	int busy = 0;
 
-	simple_lock(&mntvnode_slock);
+	if ((mp->mnt_flag & MNT_MPBUSY) == 0)
+		panic("vflush: not busy");
 loop:
 	for (vp = mp->mnt_vnodelist.lh_first; vp; vp = nvp) {
 		if (vp->v_mount != mp)
@@ -1354,32 +878,24 @@ loop:
 		 */
 		if (vp == skipvp)
 			continue;
-		
-		simple_lock(&vp->v_interlock);
 		/*
 		 * Skip over a vnodes marked VSYSTEM.
 		 */
-		if ((flags & SKIPSYSTEM) && (vp->v_flag & VSYSTEM)) {
-			simple_unlock(&vp->v_interlock);
+		if ((flags & SKIPSYSTEM) && (vp->v_flag & VSYSTEM))
 			continue;
-		}
 		/*
 		 * If WRITECLOSE is set, only flush out regular file
 		 * vnodes open for writing.
 		 */
 		if ((flags & WRITECLOSE) &&
-		    (vp->v_writecount == 0 || vp->v_type != VREG)) {
-			simple_unlock(&vp->v_interlock);
+		    (vp->v_writecount == 0 || vp->v_type != VREG))
 			continue;
-		}
 		/*
 		 * With v_usecount == 0, all we need to do is clear
 		 * out the vnode data structures and we are done.
 		 */
 		if (vp->v_usecount == 0) {
-			simple_unlock(&mntvnode_slock);
-			vgonel(vp, p);
-			simple_lock(&mntvnode_slock);
+			vgone(vp);
 			continue;
 		}
 		/*
@@ -1388,25 +904,21 @@ loop:
 		 * anonymous device. For all other files, just kill them.
 		 */
 		if (flags & FORCECLOSE) {
-			simple_unlock(&mntvnode_slock);
 			if (vp->v_type != VBLK && vp->v_type != VCHR) {
-				vgonel(vp, p);
+				vgone(vp);
 			} else {
-				vclean(vp, 0, p);
+				vclean(vp, 0);
 				vp->v_op = spec_vnodeop_p;
 				insmntque(vp, (struct mount *)0);
 			}
-			simple_lock(&mntvnode_slock);
 			continue;
 		}
 #ifdef DEBUG
 		if (busyprt)
 			vprint("vflush: busy vnode", vp);
 #endif
-		simple_unlock(&vp->v_interlock);
 		busy++;
 	}
-	simple_unlock(&mntvnode_slock);
 	if (busy)
 		return (EBUSY);
 	return (0);
@@ -1414,13 +926,11 @@ loop:
 
 /*
  * Disassociate the underlying file system from a vnode.
- * The vnode interlock is held on entry.
  */
 void
-vclean(vp, flags, p)
+vclean(vp, flags)
 	register struct vnode *vp;
 	int flags;
-	struct proc *p;
 {
 	int active;
 
@@ -1431,17 +941,7 @@ vclean(vp, flags, p)
 	 * race against ourselves to recycle it.
 	 */
 	if ((active = vp->v_usecount) != 0)
-		vp->v_usecount++;
-
-	/*
-	 * Prevent the vnode from being recycled or
-	 * brought into use while we clean it out.
-	 */
-	if (vp->v_flag & VXLOCK)
-		panic("vclean: deadlock");
-	vp->v_flag |= VXLOCK;
-
-	
+		VREF(vp);
 	/*
 	 * Even if the count is zero, the VOP_INACTIVE routine may still
 	 * have the object locked while it cleans it out. The VOP_LOCK
@@ -1449,48 +949,40 @@ vclean(vp, flags, p)
 	 * For active vnodes, it ensures that no other activity can
 	 * occur while the underlying object is being cleaned out.
 	 */
-	VOP_LOCK(vp, LK_DRAIN | LK_INTERLOCK, p);
-
+	VOP_LOCK(vp);
+	/*
+	 * Prevent the vnode from being recycled or
+	 * brought into use while we clean it out.
+	 */
+	if (vp->v_flag & VXLOCK)
+		panic("vclean: deadlock");
+	vp->v_flag |= VXLOCK;
 	/*
 	 * Clean out any buffers associated with the vnode.
 	 */
 	if (flags & DOCLOSE)
-		vinvalbuf(vp, V_SAVE, NOCRED, p, 0, 0);
+		vinvalbuf(vp, V_SAVE, NOCRED, NULL, 0, 0);
+	/*
+	 * Any other processes trying to obtain this lock must first
+	 * wait for VXLOCK to clear, then call the new lock operation.
+	 */
+	VOP_UNLOCK(vp);
 	/*
 	 * If purging an active vnode, it must be closed and
-	 * deactivated before being reclaimed. Note that the
-	 * VOP_INACTIVE will unlock the vnode
+	 * deactivated before being reclaimed.
 	 */
 	if (active) {
 		if (flags & DOCLOSE)
-			VOP_CLOSE(vp, FNONBLOCK, NOCRED, p);
-		VOP_INACTIVE(vp, p);
-	} else {
-		/*
-		 * Any other processes trying to obtain this lock must first
-		 * wait for VXLOCK to clear, then call the new lock operation.
-		 */
-		VOP_UNLOCK(vp, 0, p);
+			VOP_CLOSE(vp, FNONBLOCK, NOCRED, NULL);
+		VOP_INACTIVE(vp);
 	}
-
 	/*
 	 * Reclaim the vnode.
 	 */
-	if (VOP_RECLAIM(vp, p))
+	if (VOP_RECLAIM(vp))
 		panic("vclean: cannot reclaim");
-	if (active) {
-		if (vunref(vp) == 0 &&
-		    vp->v_holdcnt > 0)
-			panic("vclean: not clean");
-		simple_unlock(&vp->v_interlock);
-	}
-	cache_purge(vp);
-	if (vp->v_vnlock) {
-		if ((vp->v_vnlock->lk_flags & LK_DRAINED) == 0)
-			vprint("vclean: lock not drained", vp);
-		FREE(vp->v_vnlock, M_VNODE);
-		vp->v_vnlock = NULL;
-	}
+	if (active)
+		vrele(vp);
 
 	/*
 	 * Done with purge, notify sleepers of the grim news.
@@ -1508,25 +1000,12 @@ vclean(vp, flags, p)
  * Eliminate all activity associated with  the requested vnode
  * and with all vnodes aliased to the requested vnode.
  */
-int
-vop_revoke(v)
-	void *v;
+void
+vgoneall(vp)
+	register struct vnode *vp;
 {
-	struct vop_revoke_args /* {
-	        struct vnode *a_vp;
-		int a_flags;
-	} */ *ap = v;
-	struct vnode *vp, *vq;
-	struct proc *p = curproc;
+	register struct vnode *vq;
 
-#ifdef DIAGNOSTIC
-	if ((ap->a_flags & REVOKEALL) == 0)
-		panic("vop_revoke");
-#endif
-
-	vp = ap->a_vp;
-	simple_lock(&vp->v_interlock);
- 
 	if (vp->v_flag & VALIASED) {
 		/*
 		 * If a vgone (or vclean) is already in progress,
@@ -1534,23 +1013,19 @@ vop_revoke(v)
 		 */
 		if (vp->v_flag & VXLOCK) {
 			vp->v_flag |= VXWANT;
-			simple_unlock(&vp->v_interlock);
-			tsleep((caddr_t)vp, PINOD, "vop_revokeall", 0);
-			return(0);
+			tsleep((caddr_t)vp, PINOD, "vgoneall", 0);
+			return;
 		}
 		/*
 		 * Ensure that vp will not be vgone'd while we
 		 * are eliminating its aliases.
 		 */
 		vp->v_flag |= VXLOCK;
-		simple_unlock(&vp->v_interlock);
 		while (vp->v_flag & VALIASED) {
-			simple_lock(&spechash_slock);
 			for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
 				if (vq->v_rdev != vp->v_rdev ||
 				    vq->v_type != vp->v_type || vp == vq)
 					continue;
-				simple_unlock(&spechash_slock);
 				vgone(vq);
 				break;
 			}
@@ -1560,34 +1035,9 @@ vop_revoke(v)
 		 * really eliminate the vnode after which time
 		 * vgone will awaken any sleepers.
 		 */
-		simple_lock(&vp->v_interlock);
 		vp->v_flag &= ~VXLOCK;
 	}
-	vgonel(vp, p);
-	return (0);
-}
-
-
-/*
- * Recycle an unused vnode to the front of the free list.
- * Release the passed interlock if the vnode will be recycled.
- */
-int
-vrecycle(vp, inter_lkp, p)
-	struct vnode *vp;
-	struct simplelock *inter_lkp;
-	struct proc *p;
-{
-
-	simple_lock(&vp->v_interlock);
-	if (vp->v_usecount == 0) {
-		if (inter_lkp)
-			simple_unlock(inter_lkp);
-		vgonel(vp, p);
-		return (1);
-	}
-	simple_unlock(&vp->v_interlock);
-	return (0);
+	vgone(vp);
 }
 
 /*
@@ -1598,20 +1048,6 @@ void
 vgone(vp)
 	register struct vnode *vp;
 {
-	struct proc *p = curproc;
-
-	simple_lock (&vp->v_interlock);
-	vgonel(vp, p);
-}
-
-/*
- * vgone, with the vp interlock held.
- */
-void
-vgonel(vp, p)
-	struct vnode *vp;
-	struct proc *p;
-{
 	register struct vnode *vq;
 	struct vnode *vx;
 
@@ -1621,25 +1057,21 @@ vgonel(vp, p)
 	 */
 	if (vp->v_flag & VXLOCK) {
 		vp->v_flag |= VXWANT;
-		simple_unlock(&vp->v_interlock);
 		tsleep((caddr_t)vp, PINOD, "vgone", 0);
 		return;
 	}
 	/*
 	 * Clean out the filesystem specific data.
 	 */
-	vclean(vp, DOCLOSE, p);
+	vclean(vp, DOCLOSE);
 	/*
 	 * Delete from old mount point vnode list, if on one.
 	 */
-	if (vp->v_mount != NULL)
-		insmntque(vp, (struct mount *)0);
+	insmntque(vp, (struct mount *)0);
 	/*
-	 * If special device, remove it from special device alias list 
-	 * if it is on one.
+	 * If special device, remove it from special device alias list.
 	 */
-	if ((vp->v_type == VBLK || vp->v_type == VCHR) && vp->v_specinfo != 0) {
-		simple_lock(&spechash_slock);
+	if (vp->v_type == VBLK || vp->v_type == VCHR) {
 		if (*vp->v_hashchain == vp) {
 			*vp->v_hashchain = vp->v_specnext;
 		} else {
@@ -1668,26 +1100,27 @@ vgonel(vp, p)
 				vx->v_flag &= ~VALIASED;
 			vp->v_flag &= ~VALIASED;
 		}
-		simple_unlock(&spechash_slock);
 		FREE(vp->v_specinfo, M_VNODE);
 		vp->v_specinfo = NULL;
 	}
 	/*
 	 * If it is on the freelist and not already at the head,
-	 * move it to the head of the list. 
-	 *
-	 * See above about the VGONEHACK
+	 * move it to the head of the list. The test of the back
+	 * pointer and the reference count of zero is because
+	 * it will be removed from the free list by getnewvnode,
+	 * but will not have its reference count incremented until
+	 * after calling vgone. If the reference count were
+	 * incremented first, vgone would (incorrectly) try to
+	 * close the previous instance of the underlying object.
+	 * So, the back pointer is explicitly set to `0xdeadb' in
+	 * getnewvnode after removing it from the freelist to ensure
+	 * that we do not try to move it here.
 	 */
-	if (vp->v_usecount == 0) {
-		simple_lock(&vnode_free_list_slock);
-		if (vp->v_holdcnt > 0)
-			panic("vgonel: not clean");		
-		if (!(vp->v_flag & VGONEHACK) &&
-		    TAILQ_FIRST(&vnode_free_list) != vp) {
-			TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
-			TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
-		}
-		simple_unlock(&vnode_free_list_slock);
+	if (vp->v_usecount == 0 &&
+	    vp->v_freelist.tqe_prev != (struct vnode **)0xdeadb &&
+	    vnode_free_list.tqh_first != vp) {
+		TAILQ_REMOVE(&vnode_free_list, vp, v_freelist);
+		TAILQ_INSERT_HEAD(&vnode_free_list, vp, v_freelist);
 	}
 	vp->v_type = VBAD;
 }
@@ -1702,18 +1135,14 @@ vfinddev(dev, type, vpp)
 	struct vnode **vpp;
 {
 	register struct vnode *vp;
-	int rc =0;
 
-	simple_lock(&spechash_slock);
 	for (vp = speclisth[SPECHASH(dev)]; vp; vp = vp->v_specnext) {
 		if (dev != vp->v_rdev || type != vp->v_type)
 			continue;
 		*vpp = vp;
-		rc = 1;
-		break;
+		return (1);
 	}
-	simple_unlock(&spechash_slock);
-	return (rc);
+	return (0);
 }
 
 /*
@@ -1721,15 +1150,14 @@ vfinddev(dev, type, vpp)
  */
 int
 vcount(vp)
-	struct vnode *vp;
+	register struct vnode *vp;
 {
-	struct vnode *vq, *vnext;
+	register struct vnode *vq, *vnext;
 	int count;
 
 loop:
 	if ((vp->v_flag & VALIASED) == 0)
 		return (vp->v_usecount);
-	simple_lock(&spechash_slock);
 	for (count = 0, vq = *vp->v_hashchain; vq; vq = vnext) {
 		vnext = vq->v_specnext;
 		if (vq->v_rdev != vp->v_rdev || vq->v_type != vp->v_type)
@@ -1738,13 +1166,11 @@ loop:
 		 * Alias, but not in use, so flush it out.
 		 */
 		if (vq->v_usecount == 0 && vq != vp) {
-			simple_unlock(&spechash_slock);
 			vgone(vq);
 			goto loop;
 		}
 		count += vq->v_usecount;
 	}
-	simple_unlock(&spechash_slock);
 	return (count);
 }
 
@@ -1799,76 +1225,20 @@ vprint(label, vp)
 void
 printlockedvnodes()
 {
-	struct proc *p = curproc;
-	register struct mount *mp, *nmp;
+	register struct mount *mp;
 	register struct vnode *vp;
 
 	printf("Locked vnodes\n");
-	simple_lock(&mountlist_slock);
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist;
-	     mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) { 
-			nmp = mp->mnt_list.cque_next;
-			continue;
-		}
+	     mp = mp->mnt_list.cqe_next) {
 		for (vp = mp->mnt_vnodelist.lh_first;
 		     vp != NULL;
-		     vp = vp->v_mntvnodes.le_next) {
+		     vp = vp->v_mntvnodes.le_next)
 			if (VOP_ISLOCKED(vp))
 				vprint((char *)0, vp);
-		simple_lock(&mountlist_slock);
-		nmp = mp->mnt_list.cqe_next;
-		vfs_unbusy(mp, p);
- 	}
-	simple_unlock(&mountlist_slock);
-
+	}
 }
 #endif
-
-/*
- * Top level filesystem related information gathering.
- */
-int
-vfs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-	int *name;
-	u_int namelen;
-	void *oldp;
-	size_t *oldlenp;
-	void *newp;
-	size_t newlen;
-	struct proc *p;
-{
-	struct vfsconf *vfsp;
-
-	/* all sysctl names at this level are at least name and field */
-	if (namelen < 2)
-		return (ENOTDIR);		/* overloaded */
-	if (name[0] != VFS_GENERIC) {
-		for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next)
-			if (vfsp->vfc_typenum == name[0])
-				break;
-		if (vfsp == NULL)
-			return (EOPNOTSUPP);
-		return ((*vfsp->vfc_vfsops->vfs_sysctl)(&name[1], namelen - 1,
-		    oldp, oldlenp, newp, newlen, p));
-	}
-	switch (name[1]) {
-	case VFS_MAXTYPENUM:
-		return (sysctl_rdint(oldp, oldlenp, newp, maxvfsconf));
-	case VFS_CONF:
-		if (namelen < 3)
-			return (ENOTDIR);	/* overloaded */
-		for (vfsp = vfsconf; vfsp; vfsp = vfsp->vfc_next)
-			if (vfsp->vfc_typenum == name[2])
-				break;
-		if (vfsp == NULL)
-			return (EOPNOTSUPP);
-		return (sysctl_rdstruct(oldp, oldlenp, newp, vfsp,
-		    sizeof(struct vfsconf)));
-	}
-	return (EOPNOTSUPP);
-}
-
 
 int kinfo_vdebug = 1;
 int kinfo_vgetfailed;
@@ -1879,13 +1249,12 @@ int kinfo_vgetfailed;
  */
 /* ARGSUSED */
 int
-sysctl_vnode(where, sizep, p)
+sysctl_vnode(where, sizep)
 	char *where;
 	size_t *sizep;
-	struct proc *p;
 {
 	register struct mount *mp, *nmp;
-	struct vnode *vp, *nvp;
+	struct vnode *vp;
 	register char *bp = where, *savebp;
 	char *ewhere;
 	int error;
@@ -1898,32 +1267,27 @@ sysctl_vnode(where, sizep, p)
 	}
 	ewhere = where + *sizep;
 		
-	simple_lock(&mountlist_slock);
 	for (mp = mountlist.cqh_first; mp != (void *)&mountlist; mp = nmp) {
-		if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, p)) {
-			nmp = mp->mnt_list.cqe_next;
+		nmp = mp->mnt_list.cqe_next;
+		if (vfs_busy(mp))
 			continue;
-		}
 		savebp = bp;
 again:
 		for (vp = mp->mnt_vnodelist.lh_first;
 		     vp != NULL;
-		     vp = nvp) {
+		     vp = vp->v_mntvnodes.le_next) {
 			/*
 			 * Check that the vp is still associated with
 			 * this filesystem.  RACE: could have been
 			 * recycled onto the same filesystem.
 			 */
 			if (vp->v_mount != mp) {
-				simple_unlock(&mntvnode_slock);
 				if (kinfo_vdebug)
 					printf("kinfo: vp changed\n");
 				bp = savebp;
 				goto again;
 			}
-			nvp = vp->v_mntvnodes.le_next;
 			if (bp + VPTRSZ + VNODESZ > ewhere) {
-				simple_unlock(&mntvnode_slock);
 				*sizep = bp - where;
 				return (ENOMEM);
 			}
@@ -1931,16 +1295,9 @@ again:
 			   (error = copyout((caddr_t)vp, bp + VPTRSZ, VNODESZ)))
 				return (error);
 			bp += VPTRSZ + VNODESZ;
-			simple_lock(&mntvnode_slock);
 		}
-
-		simple_unlock(&mntvnode_slock);
-		simple_lock(&mountlist_slock);
-		nmp = mp->mnt_list.cqe_next;
-		vfs_unbusy(mp, p);
+		vfs_unbusy(mp);
 	}
-
-	simple_unlock(&mountlist_slock);
 
 	*sizep = bp - where;
 	return (0);
@@ -1954,31 +1311,26 @@ vfs_mountedon(vp)
 	register struct vnode *vp;
 {
 	register struct vnode *vq;
-	int error = 0;
 
- 	if (vp->v_specmountpoint != NULL)
+	if (vp->v_specflags & SI_MOUNTEDON)
 		return (EBUSY);
 	if (vp->v_flag & VALIASED) {
-		simple_lock(&spechash_slock);
 		for (vq = *vp->v_hashchain; vq; vq = vq->v_specnext) {
 			if (vq->v_rdev != vp->v_rdev ||
 			    vq->v_type != vp->v_type)
 				continue;
-			if (vq->v_specmountpoint != NULL) {
-				error = EBUSY;
-				break;
-			}
- 		}
-		simple_unlock(&spechash_slock);
+			if (vq->v_specflags & SI_MOUNTEDON)
+				return (EBUSY);
+		}
 	}
-	return (error);
+	return (0);
 }
 
 /*
  * Build hash lists of net addresses and hang them off the mount point.
  * Called by ufs_mount() to set up the lists of export addresses.
  */
-int
+static int
 vfs_hang_addrlist(mp, nep, argp)
 	struct mount *mp;
 	struct netexport *nep;
@@ -2052,7 +1404,7 @@ out:
 }
 
 /* ARGSUSED */
-int
+static int
 vfs_free_netcred(rn, w)
 	struct radix_node *rn;
 	void *w;
@@ -2067,7 +1419,7 @@ vfs_free_netcred(rn, w)
 /*
  * Free the net address hash lists that are hanging off the mount points.
  */
-void
+static void
 vfs_free_addrlist(nep)
 	struct netexport *nep;
 {
@@ -2314,161 +1666,3 @@ fs_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 	return (*fn)(name + 1, namelen - 1, oldp, oldlenp, newp, newlen, p);
 }
-
-/*
- * Routine to create and manage a filesystem syncer vnode.
- */
-#define sync_close nullop
-int   sync_fsync __P((void *));
-int   sync_inactive __P((void *));
-#define sync_reclaim nullop
-#define sync_lock vop_nolock
-#define sync_unlock vop_nounlock
-int   sync_print __P((void *));
-#define sync_islocked vop_noislocked
- 
-int (**sync_vnodeop_p) __P((void *));
-struct vnodeopv_entry_desc sync_vnodeop_entries[] = {
-      { &vop_default_desc, vn_default_error },
-      { &vop_close_desc, sync_close },                /* close */
-      { &vop_fsync_desc, sync_fsync },                /* fsync */
-      { &vop_inactive_desc, sync_inactive },          /* inactive */
-      { &vop_reclaim_desc, sync_reclaim },            /* reclaim */
-      { &vop_lock_desc, sync_lock },                  /* lock */
-      { &vop_unlock_desc, sync_unlock },              /* unlock */
-      { &vop_print_desc, sync_print },                /* print */
-      { &vop_islocked_desc, sync_islocked },          /* islocked */
-      { (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
-};
-struct vnodeopv_desc sync_vnodeop_opv_desc =
-      { &sync_vnodeop_p, sync_vnodeop_entries };
-
-/*
- * Create a new filesystem syncer vnode for the specified mount point.
- */
-int
-vfs_allocate_syncvnode(mp)
-      struct mount *mp;
-{
-      struct vnode *vp;
-      static long start, incr, next;
-      int error;
-
-      /* Allocate a new vnode */
-      if ((error = getnewvnode(VT_VFS, mp, sync_vnodeop_p, &vp)) != 0) {
-              mp->mnt_syncer = NULL;
-              return (error);
-      }
-      vp->v_writecount = 1;
-      vp->v_type = VNON;
-      /*
-       * Place the vnode onto the syncer worklist. We attempt to
-       * scatter them about on the list so that they will go off
-       * at evenly distributed times even if all the filesystems
-       * are mounted at once.
-       */
-      next += incr;
-      if (next == 0 || next > syncer_maxdelay) {
-              start /= 2;
-              incr /= 2;
-              if (start == 0) {
-                      start = syncer_maxdelay / 2;
-                      incr = syncer_maxdelay;
-              }
-              next = start;
-      }
-      vn_syncer_add_to_worklist(vp, next);
-      mp->mnt_syncer = vp;
-      return (0);
-}
-
-/*
- * Do a lazy sync of the filesystem.
- */
-int
-sync_fsync(v)
-	void *v;
-{
-      struct vop_fsync_args /* {
-              struct vnode *a_vp;
-              struct ucred *a_cred;
-              int a_waitfor;
-              struct proc *a_p;
-      } */ *ap = v;
-
-      struct vnode *syncvp = ap->a_vp;
-      struct mount *mp = syncvp->v_mount;
-      int asyncflag;
-
-      /*
-       * We only need to do something if this is a lazy evaluation.
-       */
-      if (ap->a_waitfor != MNT_LAZY)
-              return (0);
-
-      /*
-       * Move ourselves to the back of the sync list.
-       */
-      LIST_REMOVE(syncvp, v_synclist);
-      vn_syncer_add_to_worklist(syncvp, syncdelay);
-
-      /*
-       * Walk the list of vnodes pushing all that are dirty and
-       * not already on the sync list.
-       */
-      simple_lock(&mountlist_slock);
-      if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, ap->a_p) == 0) {
-              asyncflag = mp->mnt_flag & MNT_ASYNC;
-              mp->mnt_flag &= ~MNT_ASYNC;
-              VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_p);
-              if (asyncflag)
-                      mp->mnt_flag |= MNT_ASYNC;
-              vfs_unbusy(mp, ap->a_p);
-      }
-      return (0);
-}
-
-/*
- * The syncer vnode is no longer needed and is being decommissioned.
- */
-int
-sync_inactive(v)
-	void *v;
-	
-{
-      struct vop_inactive_args /* {
-               struct vnode *a_vp;
-               struct proc *a_p;
-      } */ *ap = v;
-
-      struct vnode *vp = ap->a_vp;
-
-      if (vp->v_usecount == 0)
-              return (0);
-      vp->v_mount->mnt_syncer = NULL;
-      LIST_REMOVE(vp, v_synclist);
-      vp->v_writecount = 0;
-      vput(vp);
-      return (0);
-}
-
-/*
- * Print out a syncer vnode.
- */
-int
-sync_print(v)
-	void *v;
-
-{
-      struct vop_print_args /* {
-              struct vnode *a_vp;
-      } */ *ap = v;
-      struct vnode *vp = ap->a_vp;
-
-      printf("syncer vnode");
-      if (vp->v_vnlock != NULL)
-              lockmgr_printinfo(vp->v_vnlock);
-      printf("\n");
-      return (0);
-}
-
