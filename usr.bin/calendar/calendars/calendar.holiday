@@ -1,7 +1,7 @@
 /*
  * Holiday
  *
- * $OpenBSD: calendar.holiday,v 1.10 2002/11/09 02:16:50 mickey Exp $
+ * $OpenBSD: calendar.holiday,v 1.11 2002/12/26 15:52:37 mickey Exp $
  */
 
 #ifndef _calendar_holiday_
@@ -456,7 +456,6 @@
 12/18	Republic Day in Niger
 12/23	Victory Day in Egypt
 12/25	Children's Day in Congo
-12/26	Bank Holiday in Canada, Rep. of Ireland, and UK
 12/26	Boxing Day
 12/26	Family Day in South Africa
 12/26	St. Stephen's Day
