@@ -615,5 +615,8 @@ int ssl_ok(SSL *s);
 SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
 
+/* die if we have to */
+void OpenSSLDie(const char *file,int line,const char *assertion);
+#define die(e)	((e) ? (void)0 : OpenSSLDie(__FILE__, __LINE__, #e))
 
 #endif

@@ -89,6 +89,9 @@ extern "C" {
 #define X509_CERT_DIR_EVP        "SSL_CERT_DIR"
 #define X509_CERT_FILE_EVP       "SSL_CERT_FILE"
 
+/* size of string represenations */
+#define DECIMAL_SIZE(type)     ((sizeof(type)*8+2)/3+1)
+
 #ifdef  __cplusplus
 }
 #endif

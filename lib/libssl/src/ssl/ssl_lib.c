@@ -2289,3 +2289,10 @@ void SSL_set_msg_callback(SSL *ssl, void (*cb)(int write_p, int version, int con
 
 IMPLEMENT_STACK_OF(SSL_CIPHER)
 IMPLEMENT_STACK_OF(SSL_COMP)
+
+void OpenSSLDie(const char *file,int line,const char *assertion)
+    {
+    fprintf(stderr,"%s(%d): OpenSSL internal error, assertion failed: %s\n",
+	    file,line,assertion);
+    abort();
+    }
