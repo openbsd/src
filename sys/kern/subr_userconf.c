@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.13 1998/01/04 10:39:04 deraadt Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.14 1998/03/03 05:16:19 ryker Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -544,7 +544,7 @@ userconf_help()
 		}
 		switch (*userconf_cmds[j+1]) {
 		case 'L':
-			printf("[count]             ",
+			printf("[count]             %s",
 			    "number of lines before more");
 			break;
 		case 'a':
