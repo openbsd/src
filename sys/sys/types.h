@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.19 2003/06/02 23:28:22 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.20 2003/06/26 17:07:01 jolan Exp $	*/
 /*	$NetBSD: types.h,v 1.29 1996/11/15 22:48:25 jtc Exp $	*/
 
 /*-
@@ -82,7 +82,7 @@ typedef	int32_t		suseconds_t;	/* microseconds (signed) */
 /*
  * XPG4.2 states that inclusion of <netinet/in.h> must pull these
  * in and that inclusion of <sys/socket.h> must pull in sa_family_t.
- * We put there here because there are other headers that require
+ * We put these here because there are other headers that require
  * these types and <sys/socket.h> and <netinet/in.h> will indirectly
  * include <sys/types.h>.  Thus we are compliant without too many hoops.
  */
