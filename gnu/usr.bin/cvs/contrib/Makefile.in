@@ -98,7 +98,7 @@ install: all $(libdir)/cvs/contrib
 .PHONY: install
 
 $(libdir)/cvs/contrib:
-	$(top_srcdir)/mkinstalldirs $(libdir)/cvs/contrib
+	$(SHELL) $(top_srcdir)/mkinstalldirs $(libdir)/cvs/contrib
 
 tags:
 .PHONY: tags
