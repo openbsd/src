@@ -24,7 +24,7 @@
 .\" OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 .\" ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: cron.8,v 1.19 2003/02/19 22:11:42 millert Exp $
+.\" $OpenBSD: cron.8,v 1.20 2003/02/19 23:45:46 millert Exp $
 .\"
 .Dd July 6, 2002
 .Dt CRON 8
@@ -209,3 +209,15 @@ to check for crontab changes immediately
 .Xr crontab 5
 .Sh AUTHORS
 Paul Vixie <vixie@isc.org>
+.Sh CAVEATS
+All
+.Xr crontab 5
+files must not be readable or writable by any user other than their owner,
+including
+.Pa /etc/crontab .
+In practice this means they should be mode 0600.
+This restriction is enforced automatically by
+.Xr crontab 1
+but if
+.Pa /etc/crontab
+is used, the mode must be set manually on that file.
