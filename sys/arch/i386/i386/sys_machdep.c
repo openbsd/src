@@ -51,7 +51,6 @@
 #include <sys/kernel.h>
 #include <sys/mtio.h>
 #include <sys/buf.h>
-#include <sys/trace.h>
 #include <sys/signal.h>
 
 #include <sys/mount.h>
@@ -84,64 +83,6 @@ int i386_set_ldt __P((struct proc *, char *, register_t *));
 int i386_iopl __P((struct proc *, char *, register_t *));
 int i386_get_ioperm __P((struct proc *, char *, register_t *));
 int i386_set_ioperm __P((struct proc *, char *, register_t *));
-
-#ifdef TRACE
-int	nvualarm;
-
-void
-vdoualarm(arg)
-	int arg;
-{
-	register struct proc *p;
-
-	p = pfind(arg);
-	if (p)
-		psignal(p, 16);
-	nvualarm--;
-}
-
-int
-sys_vtrace(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct sys_vtrace_args /* {
-		syscallarg(int) request;
-		syscallarg(int) value;
-	} */ *uap = v;
-
-	switch (SCARG(uap, request)) {
-
-	case VTR_DISABLE:		/* disable a trace point */
-	case VTR_ENABLE:		/* enable a trace point */
-		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
-			return (EINVAL);
-		*retval = traceflags[SCARG(uap, value)];
-		traceflags[SCARG(uap, value)] = SCARG(uap, request);
-		break;
-
-	case VTR_VALUE:		/* return a trace point setting */
-		if (SCARG(uap, value) < 0 || SCARG(uap, value) >= TR_NFLAGS)
-			return (EINVAL);
-		*retval = traceflags[SCARG(uap, value)];
-		break;
-
-	case VTR_UALARM:	/* set a real-time ualarm, less than 1 min */
-		if (SCARG(uap, value) <= 0 || SCARG(uap, value) > 60 * hz ||
-		    nvualarm > 5)
-			return (EINVAL);
-		nvualarm++;
-		timeout(vdoualarm, (caddr_t)p->p_pid, SCARG(uap, value));
-		break;
-
-	case VTR_STAMP:
-		trace(TR_STAMP, SCARG(uap, value), p->p_pid);
-		break;
-	}
-	return (0);
-}
-#endif
 
 #ifdef USER_LDT
 /*

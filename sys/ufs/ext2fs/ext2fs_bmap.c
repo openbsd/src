@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_bmap.c,v 1.4 1999/04/25 00:36:46 millert Exp $	*/
+/*	$OpenBSD: ext2fs_bmap.c,v 1.5 2000/06/23 02:14:39 mickey Exp $	*/
 /*	$NetBSD: ext2fs_bmap.c,v 1.1 1997/06/11 09:33:46 bouyer Exp $	*/
 
 /*
@@ -50,7 +50,6 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/resourcevar.h>
-#include <sys/trace.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -188,14 +187,13 @@ ext2fs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		xap->in_exists = 1;
 		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, 0);
 		if (bp->b_flags & (B_DONE | B_DELWRI)) {
-			trace(TR_BREADHIT, pack(vp, size), metalbn);
+			;
 		}
 #ifdef DIAGNOSTIC
 		else if (!daddr)
 			panic("ext2fs_bmaparry: indirect block not in cache");
 #endif
 		else {
-			trace(TR_BREADMISS, pack(vp, size), metalbn);
 			bp->b_blkno = blkptrtodb(ump, daddr);
 			bp->b_flags |= B_READ;
 			VOP_STRATEGY(bp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_cluster.c,v 1.16 1999/01/11 05:12:24 millert Exp $	*/
+/*	$OpenBSD: vfs_cluster.c,v 1.17 2000/06/23 02:14:38 mickey Exp $	*/
 /*	$NetBSD: vfs_cluster.c,v 1.12 1996/04/22 01:39:05 christos Exp $	*/
 
 /*-
@@ -41,7 +41,6 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/trace.h>
 #include <sys/malloc.h>
 #include <sys/systm.h>
 #include <sys/resourcevar.h>
@@ -128,14 +127,12 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 		 * Desired block is in cache; do any readahead ASYNC.
 		 * Case 1, 2.
 		 */
-		trace(TR_BREADHIT, pack(vp, size), lblkno);
 		flags |= B_ASYNC;
 		ioblkno = lblkno + (vp->v_ralen ? vp->v_ralen : 1);
 		alreadyincore = incore(vp, ioblkno) != NULL;
 		bp = NULL;
 	} else {
 		/* Block wasn't in cache, case 3, 4, 5. */
-		trace(TR_BREADMISS, pack(vp, size), lblkno);
 		bp->b_flags |= B_READ;
 		ioblkno = lblkno;
 		alreadyincore = 0;
@@ -232,11 +229,8 @@ cluster_read(vp, filesize, lblkno, size, cred, bpp)
 
 		if (rbp == bp)			/* case 4 */
 			rbp = NULL;
-		else if (rbp) {			/* case 2, 5 */
-			trace(TR_BREADMISSRA,
-			    pack(vp, (num_ra + 1) * size), ioblkno);
+		else if (rbp)			/* case 2, 5 */
 			curproc->p_stats->p_ru.ru_inblock++;	/* XXX */
-		}
 	}
 
 	/* XXX Kirk, do we need to make sure the bp has creds? */

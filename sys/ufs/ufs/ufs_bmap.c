@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_bmap.c,v 1.8 2000/03/13 14:07:54 art Exp $	*/
+/*	$OpenBSD: ufs_bmap.c,v 1.9 2000/06/23 02:14:39 mickey Exp $	*/
 /*	$NetBSD: ufs_bmap.c,v 1.3 1996/02/09 22:36:00 christos Exp $	*/
 
 /*
@@ -48,7 +48,6 @@
 #include <sys/vnode.h>
 #include <sys/mount.h>
 #include <sys/resourcevar.h>
-#include <sys/trace.h>
 
 #include <miscfs/specfs/specdev.h>
 
@@ -181,14 +180,13 @@ ufs_bmaparray(vp, bn, bnp, ap, nump, runp)
 		xap->in_exists = 1;
 		bp = getblk(vp, metalbn, mp->mnt_stat.f_iosize, 0, 0);
 		if (bp->b_flags & (B_DONE | B_DELWRI)) {
-			trace(TR_BREADHIT, pack(vp, size), metalbn);
+			;
 		}
 #ifdef DIAGNOSTIC
 		else if (!daddr)
 			panic("ufs_bmaparray: indirect block not in cache");
 #endif
 		else {
-			trace(TR_BREADMISS, pack(vp, size), metalbn);
 			bp->b_blkno = blkptrtodb(ump, daddr);
 			bp->b_flags |= B_READ;
 			VOP_STRATEGY(bp);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.4 2000/06/08 22:25:20 niklas Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.5 2000/06/23 02:14:35 mickey Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.9 1996/05/05 06:18:58 briggs Exp $	*/
 
 /*
@@ -81,66 +81,9 @@
 #include <sys/kernel.h>
 #include <sys/mtio.h>
 #include <sys/buf.h>
-#include <sys/trace.h>
 #include <sys/mount.h>
 
 #include <sys/syscallargs.h>
-
-#ifdef TRACE
-int	nvualarm;
-
-vtrace(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	register struct vtrace_args /* {
-		syscallarg(int) request;
-		syscallarg(int) value;
-	} */ *uap = v;
-	int vdoualarm();
-
-	switch (uap->request) {
-
-	case VTR_DISABLE:		/* disable a trace point */
-	case VTR_ENABLE:		/* enable a trace point */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
-			return (EINVAL);
-		*retval = traceflags[uap->value];
-		traceflags[uap->value] = uap->request;
-		break;
-
-	case VTR_VALUE:		/* return a trace point setting */
-		if (uap->value < 0 || uap->value >= TR_NFLAGS)
-			return (EINVAL);
-		*retval = traceflags[uap->value];
-		break;
-
-	case VTR_UALARM:	/* set a real-time ualarm, less than 1 min */
-		if (uap->value <= 0 || uap->value > 60 * hz || nvualarm > 5)
-			return (EINVAL);
-		nvualarm++;
-		timeout(vdoualarm, (caddr_t)p->p_pid, uap->value);
-		break;
-
-	case VTR_STAMP:
-		trace(TR_STAMP, uap->value, p->p_pid);
-		break;
-	}
-	return (0);
-}
-
-vdoualarm(arg)
-	int arg;
-{
-	register struct proc *p;
-
-	p = pfind(arg);
-	if (p)
-		psignal(p, 16);
-	nvualarm--;
-}
-#endif
 
 #include <machine/cpu.h>
 

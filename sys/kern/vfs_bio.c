@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.26 1999/12/05 08:09:01 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.27 2000/06/23 02:14:38 mickey Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -55,7 +55,6 @@
 #include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/mount.h>
-#include <sys/trace.h>
 #include <sys/malloc.h>
 #include <sys/resourcevar.h>
 #include <sys/conf.h>

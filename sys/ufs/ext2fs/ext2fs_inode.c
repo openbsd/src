@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_inode.c,v 1.8 2000/04/26 23:24:41 jasoni Exp $	*/
+/*	$OpenBSD: ext2fs_inode.c,v 1.9 2000/06/23 02:14:39 mickey Exp $	*/
 /*	$NetBSD: ext2fs_inode.c,v 1.1 1997/06/11 09:33:56 bouyer Exp $	*/
 
 /*
@@ -47,7 +47,6 @@
 #include <sys/vnode.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
-#include <sys/trace.h>
 #include <sys/resourcevar.h>
 
 #include <vm/vm.h>
@@ -441,11 +440,7 @@ ext2fs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	 */
 	vp = ITOV(ip);
 	bp = getblk(vp, lbn, (int)fs->e2fs_bsize, 0, 0);
-	if (bp->b_flags & (B_DONE | B_DELWRI)) {
-		/* Braces must be here in case trace evaluates to nothing. */
-		trace(TR_BREADHIT, pack(vp, fs->e2fs_bsize), lbn);
-	} else {
-		trace(TR_BREADMISS, pack(vp, fs->e2fs_bsize), lbn);
+	if (!(bp->b_flags & (B_DONE | B_DELWRI))) {
 		curproc->p_stats->p_ru.ru_inblock++;	/* pay for read */
 		bp->b_flags |= B_READ;
 		if (bp->b_bcount > bp->b_bufsize)
