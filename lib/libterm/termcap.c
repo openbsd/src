@@ -80,7 +80,7 @@ tgetent(bp, name)
 	char **fname;
 	char  *home;
 	int    i;
-	char   pathbuf[PBUFSIZ+1];	/* holds raw path of filenames */
+	char   pathbuf[MAXPATHLEN];	/* holds raw path of filenames */
 	char  *pathvec[PVECSIZ];	/* to point to names in pathbuf */
 	char **pvec;			/* holds usable tail of path vector */
 	char  *termpath;
@@ -143,7 +143,7 @@ tgetent(bp, name)
 			return (-2);
 
 	dummy = NULL;
-	i = cgetent(&dummy, pathvec, name);      
+	i = cgetent(&dummy, pathvec, name);
 	
 	if (i == 0 && bp != NULL) {
 		strncpy(bp, dummy, 1023);
