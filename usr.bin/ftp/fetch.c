@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.42 2002/12/30 23:04:42 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.43 2003/02/17 18:51:11 millert Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.42 2002/12/30 23:04:42 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.43 2003/02/17 18:51:11 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -468,7 +468,6 @@ again:
 			return (rval);
 		}
 	}
-	free(buf);
 
 	/* Open the output file.  */
 	if (strcmp(savefile, "-") != 0) {
@@ -492,6 +491,8 @@ again:
 	bytes = 0;
 	hashbytes = mark;
 	progressmeter(-1);
+
+	free(buf);
 
 	/* Finally, suck down the file. */
 	if ((buf = malloc(4096)) == NULL)
