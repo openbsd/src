@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.8 1999/08/14 03:21:26 mickey Exp $	*/
+/*	$OpenBSD: asm.h,v 1.9 1999/09/18 20:41:16 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1990,1991,1994 The University of Utah and
@@ -230,45 +230,6 @@ tf2	.reg	%fr10
 tf3	.reg	%fr9
 tf4	.reg	%fr8
 
-/*
- * Frame offsets to procedure status save and return areas
- */
-#define FM_PSP  -4
-#define FM_EP   -8
-#define FM_CLUP	-12
-#define FM_SL	-16
-#define FM_CRP	-20
-#define FM_ERP	-24
-#define FM_ESR4	-28
-#define FM_EDP	-32
-#define FM_SIZE	48
-
-/*
- * frame must be rounded to double word
- */
-#define FR_ROUND 8
-
-#define NARGS		12
-#define ARG_SIZE	(NARGS*4)
-
-/*
- * Offsets from sp/previous_sp for access to procedure arguments
- * A maximum of four args may be passed in registers.
- */
-#define VA_ARG0	-FM_SIZE-4
-#define VA_ARG1	-FM_SIZE-8
-#define VA_ARG2	-FM_SIZE-12
-#define VA_ARG3	-FM_SIZE-16
-
-#define VA_ARG4		-FM_SIZE-20
-#define VA_ARG5		-FM_SIZE-24
-#define VA_ARG6		-FM_SIZE-28
-#define VA_ARG7		-FM_SIZE-32
-#define VA_ARG8		-FM_SIZE-36
-#define VA_ARG9		-FM_SIZE-40
-#define VA_ARG10	-FM_SIZE-44
-#define VA_ARG11	-FM_SIZE-48
-
 #ifdef __STDC__
 #define	__CONCAT(a,b)	a ## b
 #else
@@ -302,11 +263,11 @@ tf4	.reg	%fr8
 
 #ifdef PROF
 #define	_PROF_PROLOGUE !\
-	stw rp, FM_CRP(sr0,sp)	!\
-	ldil L%_mcount,r1	!\
-	ble R%_mcount(sr0,r1)	!\
-	ldo FM_SIZE(sp),sp	!\
-	ldw FM_CRP(sr0,sp),rp
+	stw rp, HPPA_FRAME_CRP(sr0,sp)	!\
+	ldil L%_mcount,r1		!\
+	ble R%_mcount(sr0,r1)		!\
+	ldo HPPA_FRAME_SIZE(sp),sp	!\
+	ldw HPPA_FRAME_CRP(sr0,sp),rp
 #else
 #define	_PROF_PROLOGUE
 #endif
