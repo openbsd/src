@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_puc.c,v 1.2 2001/03/15 17:52:20 deraadt Exp $	*/
+/*	$OpenBSD: com_puc.c,v 1.3 2001/08/08 15:10:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 - 1999, Jason Downs.  All rights reserved.
@@ -125,6 +125,7 @@ com_puc_attach(parent, self, aux)
 	sc->sc_ioh = pa->h;
 	sc->sc_iobase = pa->a;
 	sc->sc_frequency = COM_FREQ;
+
 	if (pa->flags)
 		sc->sc_frequency = pa->flags & PUC_COM_CLOCKMASK;
 
@@ -144,6 +145,9 @@ com_puc_attach2(sc)
 
 	sc->sc_hwflags = 0;
 	sc->sc_swflags = 0;
+
+	timeout_set(&sc->sc_dtr_tmo, com_raisedtr, sc);
+	timeout_set(&sc->sc_diag_tmo, comdiag, sc);
 
 	/*
 	 * Probe for all known forms of UART.
