@@ -78,13 +78,12 @@ C++ c++: cc1plus$(exeext)
 g++spec.o: $(srcdir)/cp/g++spec.c
 	$(CC) -c $(ALL_CFLAGS) $(ALL_CPPFLAGS) $(INCLUDES) $(srcdir)/cp/g++spec.c
 
-$(INTL_TARGETS): $(srcdir)/cp/parse.c
-$(srcdir)/cp/parse.c: $(srcdir)/cp/parse.y
-	@cp_srcdir=`sed -n 's/^srcdir[ 	]*=[	 ]*//p' cp/Makefile` && \
-	echo "cd cp && $(MAKE) $$cp_srcdir/parse.c" && \
+$(INTL_TARGETS): parse.c
+parse.c: $(srcdir)/cp/parse.y
+	@echo "cd cp && $(MAKE) parse.c" && \
 	cd cp && \
 	  $(MAKE) $(SUBDIR_FLAGS_TO_PASS) $(CXX_FLAGS_TO_PASS) \
-	    $$cp_srcdir/parse.c
+	    parse.c
 
 # Create the compiler driver for g++.
 GXX_OBJS = gcc.o g++spec.o intl.o prefix.o version.o 
