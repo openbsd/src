@@ -1,4 +1,4 @@
-/*	$OpenBSD: getaddrinfo.c,v 1.34 2002/06/26 06:01:16 itojun Exp $	*/
+/*	$OpenBSD: getaddrinfo.c,v 1.35 2002/06/27 09:55:49 itojun Exp $	*/
 /*	$KAME: getaddrinfo.c,v 1.31 2000/08/31 17:36:43 itojun Exp $	*/
 
 /*
@@ -1584,7 +1584,7 @@ res_queryN(name, target)
 			rcode = hp->rcode;	/* record most recent error */
 #ifdef DEBUG
 			if (_res.options & RES_DEBUG)
-				printf(";; rcode = %d, ancount=%d\n", hp->rcode,
+				printf(";; rcode = %u, ancount=%u\n", hp->rcode,
 				    ntohs(hp->ancount));
 #endif
 			continue;
