@@ -1,5 +1,35 @@
-/*	$OpenBSD: osf1_ioctl.c,v 1.2 1996/08/02 20:35:26 niklas Exp $	*/
-/*	$NetBSD: osf1_ioctl.c,v 1.3 1995/10/07 06:27:19 mycroft Exp $	*/
+/* 	$OpenBSD: osf1_ioctl.c,v 1.3 2000/08/04 15:47:55 ericj Exp $ */
+/*	$NetBSD: osf1_ioctl.c,v 1.11 1999/05/05 01:51:33 cgd Exp $	*/
+
+/*
+ * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -32,31 +62,21 @@
 #include <sys/systm.h>
 #include <sys/ioctl.h>
 #include <sys/termios.h>
-
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
 
 #ifdef SYSCALL_DEBUG
 extern int scdebug;
 #endif
 
-#define OSF1_IOCPARM_MASK	0x1fff	/* parameter length, at most 13 bits */
-#define	OSF1_IOCPARM_LEN(x)	(((x) >> 16) & OSF1_IOCPARM_MASK)
-#define	OSF1_IOCGROUP(x)	(((x) >> 8) & 0xff)
-
-#define	OSF1_IOCPARM_MAX	NBPG		/* max size of ioctl */
-#define	OSF1_IOC_VOID		0x20000000	/* no parameters */
-#define	OSF1_IOC_OUT		0x40000000	/* copy out parameters */
-#define	OSF1_IOC_IN		0x80000000	/* copy in parameters */
-#define	OSF1_IOC_INOUT		(OSF1_IOC_IN|OSF1_IOC_OUT)
-#define	OSF1_IOC_DIRMASK	0xe0000000	/* mask for IN/OUT/VOID */
-
-#define OSF1_IOCCMD(x)		((x) & 0xff)
-
-int osf1_ioctl_i	__P((struct proc *p, struct sys_ioctl_args *nuap,
+static int osf1_ioctl_f	__P((struct proc *p, struct sys_ioctl_args *nuap,
 			    register_t *retval, int cmd, int dir, int len));
-int osf1_ioctl_t	__P((struct proc *p, struct sys_ioctl_args *nuap,
+static int osf1_ioctl_i	__P((struct proc *p, struct sys_ioctl_args *nuap,
+			    register_t *retval, int cmd, int dir, int len));
+static int osf1_ioctl_t	__P((struct proc *p, struct sys_ioctl_args *nuap,
 			    register_t *retval, int cmd, int dir, int len));
 
 int
@@ -65,16 +85,8 @@ osf1_sys_ioctl(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_ioctl_args /* {
-		syscallarg(int) fd;
-		syscallarg(int) com;
-		syscallarg(caddr_t) data;
-	} */ *uap = v;
-	struct sys_ioctl_args /* {
-		syscallarg(int) fd;
-		syscallarg(u_long) com;
-		syscallarg(caddr_t) data;
-	} */ a;
+	struct osf1_sys_ioctl_args *uap = v;
+	struct sys_ioctl_args a;
 	int op, dir, group, cmd, len;
 #ifdef SYSCALL_DEBUG
 	char *dirstr;
@@ -123,9 +135,11 @@ osf1_sys_ioctl(p, v, retval)
 #endif
 
 	SCARG(&a, fd) = SCARG(uap, fd);
-	SCARG(&a, com) = SCARG(uap, com);
+	SCARG(&a, com) = SCARG(uap, com) & 0xffffffff;		/* XXX */
 	SCARG(&a, data) = SCARG(uap, data);
 	switch (group) {
+	case 'f':
+		return osf1_ioctl_f(p, &a, retval, cmd, dir, len);
 	case 'i':
 		return osf1_ioctl_i(p, &a, retval, cmd, dir, len);
 	case 't':
@@ -135,14 +149,38 @@ osf1_sys_ioctl(p, v, retval)
 	}
 }
 
-int
+static int
+osf1_ioctl_f(p, uap, retval, cmd, dir, len)
+	struct proc *p;
+	struct sys_ioctl_args *uap;
+	register_t *retval;
+	int cmd;
+	int dir;
+	int len;
+{
+
+	switch (cmd) {
+	case 1:				/* OSF/1 FIOCLEX */
+	case 2:				/* OSF/1 FIONCLEX */
+	case 123:			/* OSF/1 FIOGETOWN */
+	case 124:			/* OSF/1 FIOSETOWN */
+	case 125:			/* OSF/1 FIOASYNC */
+	case 126:			/* OSF/1 FIONBIO */
+	case 127:			/* OSF/1 FIONREAD */
+		/* same as in NetBSD */
+		break;
+		
+	default:
+		return (ENOTTY);
+	}
+
+	return sys_ioctl(p, uap, retval);
+}
+
+static int
 osf1_ioctl_i(p, uap, retval, cmd, dir, len)
 	struct proc *p;
-	struct sys_ioctl_args /* {
-		syscallarg(int) fd;
-		syscallarg(int) com;
-		syscallarg(caddr_t) data;
-	} */ *uap;
+	struct sys_ioctl_args *uap;
 	register_t *retval;
 	int cmd;
 	int dir;
@@ -173,14 +211,10 @@ osf1_ioctl_i(p, uap, retval, cmd, dir, len)
 	return sys_ioctl(p, uap, retval);
 }
 
-int
+static int
 osf1_ioctl_t(p, uap, retval, cmd, dir, len)
 	struct proc *p;
-	struct sys_ioctl_args /* {
-		syscallarg(int) fd;
-		syscallarg(int) com;
-		syscallarg(caddr_t) data;
-	} */ *uap;
+	struct sys_ioctl_args *uap;
 	register_t *retval;
 	int cmd;
 	int dir;

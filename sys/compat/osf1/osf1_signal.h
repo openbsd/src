@@ -1,4 +1,7 @@
-/*	$OpenBSD: osf1_signal.h,v 1.3 1998/02/17 01:48:08 millert Exp $	*/
+/* 	$OpenBSD: osf1_signal.h,v 1.4 2000/08/04 15:47:55 ericj Exp $	*/
+/*	$NetBSD: osf1_signal.h,v 1.5 1999/05/01 02:57:11 cgd Exp $	*/
+
+/* XXX OUT OF DATE, some of the non-signal number bits here don't belong */
 
 #ifndef _OSF1_SIGNAL_H
 #define _OSF1_SIGNAL_H
@@ -44,39 +47,5 @@
 #define OSF1_SIG_BLOCK		1
 #define OSF1_SIG_UNBLOCK	2
 #define OSF1_SIG_SETMASK	3
-
-typedef u_long	osf1_sigset_t;
-typedef void	(*osf1_handler_t) __P((int));
-
-struct osf1_sigaction {
-	osf1_handler_t	sa__handler;
-	osf1_sigset_t	sa_mask;
-	int		sa_flags;
-};
-
-struct osf1_sigaltstack {
-	caddr_t		ss_sp;
-	int		ss_flags;
-	size_t		ss_size;
-};
-
-/* sa_flags */
-#define OSF1_SA_ONSTACK		0x00000001
-#define OSF1_SA_RESTART		0x00000002
-#define OSF1_SA_NOCLDSTOP	0x00000004
-#define OSF1_SA_NODEFER		0x00000008
-#define OSF1_SA_RESETHAND	0x00000010
-#define OSF1_SA_NOCLDWAIT	0x00000020
-#define OSF1_SA_SIGINFO		0x00000040
-
-/* ss_flags */
-#define OSF1_SS_ONSTACK		0x00000001
-#define	OSF1_SS_DISABLE		0x00000002
-
-extern int osf1_to_bsd_sig[];
-void bsd_to_osf1_sigaltstack __P((const struct sigaltstack *, struct osf1_sigaltstack *));
-void bsd_to_osf1_sigset __P((const sigset_t *, osf1_sigset_t *));
-void osf1_to_bsd_sigaltstack __P((const struct osf1_sigaltstack *, struct sigaltstack *));
-void osf1_to_bsd_sigset __P((const osf1_sigset_t *, sigset_t *));
 
 #endif /* !_OSF1_SIGNAL_H */

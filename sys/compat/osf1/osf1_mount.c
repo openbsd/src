@@ -1,5 +1,35 @@
-/*	$OpenBSD: osf1_mount.c,v 1.4 1996/10/30 16:37:20 niklas Exp $	*/
-/*	$NetBSD: osf1_mount.c,v 1.6 1996/02/17 23:08:36 jtk Exp $	*/
+/* 	$OpenBSD: osf1_mount.c,v 1.5 2000/08/04 15:47:55 ericj Exp $ */
+/*	$NetBSD: osf1_mount.c,v 1.14 1999/05/05 01:51:34 cgd Exp $	*/
+
+/*
+ * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Christopher G. Demetriou
+ *	for the NetBSD Project.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -33,38 +63,29 @@
 #include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
 #include <sys/kernel.h>
 #include <sys/mount.h>
 #include <sys/vnode.h>
 #include <sys/syscallargs.h>
 
+#include <compat/osf1/osf1.h>
 #include <compat/osf1/osf1_syscallargs.h>
 #include <compat/osf1/osf1_util.h>
+#include <compat/osf1/osf1_cvt.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
 
+#include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
+#include <nfs/nfs.h>
+#include <nfs/nfsmount.h>
+
+#include <ufs/ufs/quota.h>
+#include <ufs/ufs/ufsmount.h>
 
 #include <machine/vmparam.h>
-
-/* File system type numbers. */
-#define	OSF1_MOUNT_NONE		0
-#define	OSF1_MOUNT_UFS		1
-#define	OSF1_MOUNT_NFS		2
-#define	OSF1_MOUNT_MFS		3
-#define	OSF1_MOUNT_PC		4
-#define	OSF1_MOUNT_S5FS		5
-#define	OSF1_MOUNT_CDFS		6
-#define	OSF1_MOUNT_DFS		7
-#define	OSF1_MOUNT_EFS		8
-#define	OSF1_MOUNT_PROCFS	9
-#define	OSF1_MOUNT_MSFS		10
-#define	OSF1_MOUNT_FFM		11
-#define	OSF1_MOUNT_FDFS		12
-#define	OSF1_MOUNT_ADDON	13
-#define	OSF1_MOUNT_NFSV3	14
-#define	OSF1_MOUNT_MAXTYPE	15
 
 #define	OSF1_MNT_WAIT		0x1
 #define	OSF1_MNT_NOWAIT		0x2
@@ -77,154 +98,11 @@
 #define	OSF1_MOUNT_FLAGS	0xffffffff			/* XXX */
 #define	OSF1_UNMOUNT_FLAGS	(OSF1_MNT_FORCE|OSF1_MNT_NOFORCE)
 
-struct osf1_statfs {
-	int16_t	f_type;				/*   0 */
-	int16_t	f_flags;			/*   2 */
-	int32_t	f_fsize;			/*   4 */
-	int32_t	f_bsize;			/*   8 */
-	int32_t	f_blocks;			/*  12 */
-	int32_t	f_bfree;			/*  16 */
-	int32_t	f_bavail;			/*  20 */
-	int32_t	f_files;			/*  24 */
-	int32_t	f_ffree;			/*  28 */
-	int64_t	f_fsid;				/*  32 */
-	int32_t	f_spare[9];			/*  40 (36 bytes) */
-	char	f_mntonname[90];		/*  76 (90 bytes) */
-	char	f_mntfromname[90];		/* 166 (90 bytes) */
-	char	f_xxx[80];			/* 256 (80 bytes) XXX */
-};
 
-/* Arguments to mount() for various FS types. */
-#ifdef notyet /* XXX */
-struct osf1_ufs_args {
-	char		*fspec;
-	int32_t		exflags;
-	u_int32_t	exroot;
-};
-
-struct osf1_cdfs_args {
-	char		*fspec;
-	int32_t		exflags;
-	u_int32_t	exroot;
-	int32_t		flags;
-};
-#endif
-
-struct osf1_mfs_args {
-	char		*name;
-	caddr_t		base;
-	u_int		size;
-};
-
-struct osf1_nfs_args {
-	struct sockaddr_in	*addr;
-	caddr_t			fh;
-	int32_t			flags;
-	int32_t			wsize;
-	int32_t			rsize;
-	int32_t			timeo;
-	int32_t			retrans;
-	char			*hostname;
-	int32_t			acregmin;
-	int32_t			acregmax;
-	int32_t			acdirmin;
-	int32_t			acdirmax;
-	char			*netname;
-	void			*pathconf;
-};
-
-#define	OSF1_NFSMNT_SOFT	0x00001
-#define	OSF1_NFSMNT_WSIZE	0x00002
-#define	OSF1_NFSMNT_RSIZE	0x00004
-#define	OSF1_NFSMNT_TIMEO	0x00008
-#define	OSF1_NFSMNT_RETRANS	0x00010
-#define	OSF1_NFSMNT_HOSTNAME	0x00020
-#define	OSF1_NFSMNT_INT		0x00040
-#define	OSF1_NFSMNT_NOCONN	0x00080
-#define	OSF1_NFSMNT_NOAC	0x00100			/* ??? */
-#define	OSF1_NFSMNT_ACREGMIN	0x00200			/* ??? */
-#define	OSF1_NFSMNT_ACREGMAX	0x00400			/* ??? */
-#define	OSF1_NFSMNT_ACDIRMIN	0x00800			/* ??? */
-#define	OSF1_NFSMNT_ACDIRMAX	0x01000			/* ??? */
-#define	OSF1_NFSMNT_NOCTO	0x02000			/* ??? */
-#define	OSF1_NFSMNT_POSIX	0x04000			/* ??? */
-#define	OSF1_NFSMNT_AUTO	0x08000			/* ??? */
-
-#define OSF1_NFSMNT_FLAGS						\
-	(OSF1_NFSMNT_SOFT|OSF1_NFSMNT_WSIZE|OSF1_NFSMNT_RSIZE|		\
-	OSF1_NFSMNT_TIMEO|OSF1_NFSMNT_RETRANS|OSF1_NFSMNT_HOSTNAME|	\
-	OSF1_NFSMNT_INT|OSF1_NFSMNT_NOCONN)
-
-void bsd2osf_statfs __P((struct statfs *, struct osf1_statfs *));
-int osf1_mount_mfs __P((struct proc *, struct osf1_sys_mount_args *,
-    struct sys_mount_args *));
-int osf1_mount_nfs __P((struct proc *, struct osf1_sys_mount_args *,
-   struct sys_mount_args *));
-
-void
-bsd2osf_statfs(bsfs, osfs)
-	struct statfs *bsfs;
-	struct osf1_statfs *osfs;
-{
-
-	bzero(osfs, sizeof (struct osf1_statfs));
-	if (!strncmp(MOUNT_FFS, bsfs->f_fstypename, MFSNAMELEN))
-		osfs->f_type = OSF1_MOUNT_UFS;
-	else if (!strncmp(MOUNT_NFS, bsfs->f_fstypename, MFSNAMELEN))
-		osfs->f_type = OSF1_MOUNT_NFS;
-	else if (!strncmp(MOUNT_MFS, bsfs->f_fstypename, MFSNAMELEN))
-		osfs->f_type = OSF1_MOUNT_MFS;
-	else
-		/* uh oh...  XXX = PC, CDFS, PROCFS, etc. */
-		osfs->f_type = OSF1_MOUNT_ADDON;
-	osfs->f_flags = bsfs->f_flags;		/* XXX translate */
-	osfs->f_fsize = bsfs->f_bsize;
-	osfs->f_bsize = bsfs->f_iosize;
-	osfs->f_blocks = bsfs->f_blocks;
-	osfs->f_bfree = bsfs->f_bfree;
-	osfs->f_bavail = bsfs->f_bavail;
-	osfs->f_files = bsfs->f_files;
-	osfs->f_ffree = bsfs->f_ffree;
-	bcopy(&bsfs->f_fsid, &osfs->f_fsid,
-	    max(sizeof bsfs->f_fsid, sizeof osfs->f_fsid));
-	/* osfs->f_spare zeroed above */
-	bcopy(bsfs->f_mntonname, osfs->f_mntonname,
-	    max(sizeof bsfs->f_mntonname, sizeof osfs->f_mntonname));
-	bcopy(bsfs->f_mntfromname, osfs->f_mntfromname,
-	    max(sizeof bsfs->f_mntfromname, sizeof osfs->f_mntfromname));
-	/* XXX osfs->f_xxx should be filled in... */
-}
-
-int
-osf1_sys_statfs(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_statfs_args /* {
-		syscallarg(char *) path;
-		syscallarg(struct osf1_statfs *) buf;
-		syscallarg(int) len;
-	} */ *uap = v;
-	struct mount *mp;
-	struct statfs *sp;
-	struct osf1_statfs osfs;
-	int error;
-	struct nameidata nd;
-
-	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
-	if ((error = namei(&nd)) != 0)
-		return (error);
-	mp = nd.ni_vp->v_mount;
-	sp = &mp->mnt_stat;
-	vrele(nd.ni_vp);
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
-		return (error);
-	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	bsd2osf_statfs(sp, &osfs);
-	return copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
-	    SCARG(uap, len)));
-}
+static int	osf1_mount_mfs __P((struct proc *,
+		    struct osf1_sys_mount_args *, struct sys_mount_args *));
+static int	osf1_mount_nfs __P((struct proc *,
+		    struct osf1_sys_mount_args *, struct sys_mount_args *));
 
 int
 osf1_sys_fstatfs(p, v, retval)
@@ -232,27 +110,26 @@ osf1_sys_fstatfs(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_fstatfs_args /* {
-		syscallarg(int) fd;
-		syscallarg(struct osf1_statfs *) buf;   
-		syscallarg(int) len;
-	} */ *uap = v;
+	struct osf1_sys_fstatfs_args *uap = v;
 	struct file *fp;
 	struct mount *mp;
 	struct statfs *sp;
 	struct osf1_statfs osfs;
 	int error;
 
-	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+	/* getvnode() will use the descriptor for us */
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)))
 		return (error);
 	mp = ((struct vnode *)fp->f_data)->v_mount;
 	sp = &mp->mnt_stat;
-	if ((error = VFS_STATFS(mp, sp, p)) != 0)
-		return (error);
+	if ((error = VFS_STATFS(mp, sp, p)))
+		goto out;
 	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-	bsd2osf_statfs(sp, &osfs);
-	return copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
+	osf1_cvt_statfs_from_native(sp, &osfs);
+	error = copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
 	    SCARG(uap, len)));
+ out:
+	return (error);
 }
 
 int
@@ -261,11 +138,7 @@ osf1_sys_getfsstat(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct osf1_sys_getfsstat_args /* {
-		syscallarg(struct osf1_statfs *) buf;
-		syscallarg(long) bufsize;
-		syscallarg(int) flags;
-	} */ *uap = v;
+	struct osf1_sys_getfsstat_args *uap = v;
 	struct mount *mp, *nmp;
 	struct statfs *sp;
 	struct osf1_statfs osfs;
@@ -280,8 +153,7 @@ osf1_sys_getfsstat(p, v, retval)
 	for (count = 0, mp = mountlist.cqh_first; mp != (void *)&mountlist;
 	    mp = nmp) {
 		nmp = mp->mnt_list.cqe_next;
-		if (osf_sfsp && count < maxcount &&
-		    ((mp->mnt_flag & MNT_MLOCK) == 0)) {
+		if (osf_sfsp && count < maxcount) {
 			sp = &mp->mnt_stat;
 			/*
 			 * If OSF1_MNT_NOWAIT is specified, do not refresh the
@@ -293,9 +165,9 @@ osf1_sys_getfsstat(p, v, retval)
 			    (error = VFS_STATFS(mp, sp, p)))
 				continue;
 			sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
-			bsd2osf_statfs(sp, &osfs);
+			osf1_cvt_statfs_from_native(sp, &osfs);
 			if ((error = copyout(&osfs, osf_sfsp,
-			    sizeof (struct osf1_statfs))) != 0)
+			    sizeof (struct osf1_statfs))))
 				return (error);
 			osf_sfsp += sizeof (struct osf1_statfs);
 		}
@@ -309,15 +181,73 @@ osf1_sys_getfsstat(p, v, retval)
 }
 
 int
+osf1_sys_mount(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_mount_args *uap = v;
+	struct sys_mount_args a;
+	int error;
+
+	SCARG(&a, path) = SCARG(uap, path);
+
+	if (SCARG(uap, flags) & ~OSF1_MOUNT_FLAGS)
+		return (EINVAL);
+	SCARG(&a, flags) = SCARG(uap, flags);		/* XXX - xlate */
+
+	switch (SCARG(uap, type)) {
+	case OSF1_MOUNT_NFS:
+		if ((error = osf1_mount_nfs(p, uap, &a)))
+			return error;
+		break;
+
+	case OSF1_MOUNT_MFS:
+		if ((error = osf1_mount_mfs(p, uap, &a)))
+			return error;
+		break;
+
+	default:
+		return (EINVAL);
+	}
+
+	return sys_mount(p, &a, retval);
+}
+
+int
+osf1_sys_statfs(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct osf1_sys_statfs_args *uap = v;
+	struct mount *mp;
+	struct statfs *sp;
+	struct osf1_statfs osfs;
+	int error;
+	struct nameidata nd;
+
+	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
+	if ((error = namei(&nd)))
+		return (error);
+	mp = nd.ni_vp->v_mount;
+	sp = &mp->mnt_stat;
+	vrele(nd.ni_vp);
+	if ((error = VFS_STATFS(mp, sp, p)))
+		return (error);
+	sp->f_flags = mp->mnt_flag & MNT_VISFLAGMASK;
+	osf1_cvt_statfs_from_native(sp, &osfs);
+	return copyout(&osfs, SCARG(uap, buf), min(sizeof osfs,
+	    SCARG(uap, len)));
+}
+
+int
 osf1_sys_unmount(p, v, retval)
 	struct proc *p;
 	void *v;
 	register_t *retval;
 {
-	struct osf1_sys_unmount_args /* {
-		syscallarg(char *) path;
-		syscallarg(int) flags;
-	} */ *uap = v;
+	struct osf1_sys_unmount_args *uap = v;
 	struct sys_unmount_args a;
 
 	SCARG(&a, path) = SCARG(uap, path);
@@ -332,160 +262,97 @@ osf1_sys_unmount(p, v, retval)
 	return sys_unmount(p, &a, retval);
 }
 
-int
-osf1_sys_mount(p, v, retval)
-	struct proc *p;
-	void *v;
-	register_t *retval;
-{
-	struct osf1_sys_mount_args /* {
-		syscallarg(int) type;
-		syscallarg(char *) path;
-		syscallarg(int) flags;
-		syscallarg(caddr_t) data;
-	} */ *uap = v;
-	struct sys_mount_args a;
-	int error;
-
-	SCARG(&a, path) = SCARG(uap, path);
-
-	if (SCARG(uap, flags) & ~OSF1_MOUNT_FLAGS)
-		return (EINVAL);
-	SCARG(&a, flags) = SCARG(uap, flags);		/* XXX - xlate */
-
-	switch (SCARG(uap, type)) {
-	case OSF1_MOUNT_UFS:				/* XXX */
-		return (EINVAL);
-		break;
-
-	case OSF1_MOUNT_NFS:				/* XXX */
-		if ((error = osf1_mount_nfs(p, uap, &a)) != 0)
-			return error;
-		break;
-
-	case OSF1_MOUNT_MFS:				/* XXX */
-		if ((error = osf1_mount_mfs(p, uap, &a)) != 0)
-			return error;
-		break;
-
-	case OSF1_MOUNT_CDFS:				/* XXX */
-		return (EINVAL);
-		break;
-
-	case OSF1_MOUNT_PROCFS:				/* XXX */
-		return (EINVAL);
-		break;
-
-	case OSF1_MOUNT_NONE:
-	case OSF1_MOUNT_PC:
-	case OSF1_MOUNT_S5FS:
-	case OSF1_MOUNT_DFS:
-	case OSF1_MOUNT_EFS:
-	case OSF1_MOUNT_MSFS:
-	case OSF1_MOUNT_FFM:
-	case OSF1_MOUNT_FDFS:
-	case OSF1_MOUNT_ADDON:
-	default:
-		return (EINVAL);
-	}
-
-	return sys_mount(p, &a, retval);
-}
-
-int
+static int
 osf1_mount_mfs(p, osf_argp, bsd_argp)
 	struct proc *p;
 	struct osf1_sys_mount_args *osf_argp;
 	struct sys_mount_args *bsd_argp;
 {
-	struct emul *e = p->p_emul;
 	struct osf1_mfs_args osf_ma;
 	struct mfs_args bsd_ma;
-	caddr_t cp;
-	int error;
+	caddr_t sg = stackgap_init(p->p_emul);
+	int error, len;
+	static const char mfs_name[] = MOUNT_MFS;
 
-	error = copyin(SCARG(osf_argp, data), &osf_ma, sizeof osf_ma);
-	if (error)
+	if ((error = copyin(SCARG(osf_argp, data), &osf_ma, sizeof osf_ma)))
 		return error;
 
-	bzero(&bsd_ma, sizeof bsd_ma);
+	memset(&bsd_ma, 0, sizeof bsd_ma);
 	bsd_ma.fspec = osf_ma.name;
 	/* XXX export args */
 	bsd_ma.base = osf_ma.base;
 	bsd_ma.size = osf_ma.size;
 
-	cp = STACKGAPBASE;
-	SCARG(bsd_argp, data) = cp;
-	if ((error = copyout(&bsd_ma, cp, sizeof bsd_ma)) != 0)
+	SCARG(bsd_argp, data) = stackgap_alloc(&sg, sizeof bsd_ma);
+	if ((error = copyout(&bsd_ma, SCARG(bsd_argp, data), sizeof bsd_ma)))
 		return error;
-	cp += ALIGN(sizeof bsd_ma);
 
-	SCARG(bsd_argp, type) = cp;
-	if ((error = copyout(MOUNT_MFS, cp, strlen(MOUNT_MFS) + 1)) != 0)
+	len = strlen(mfs_name) + 1;
+	SCARG(bsd_argp, type) = stackgap_alloc(&sg, len);
+	if ((error = copyout(mfs_name, (void *)SCARG(bsd_argp, type), len)))
 		return error;
 
 	return 0;
 }
 
-int
+static int
 osf1_mount_nfs(p, osf_argp, bsd_argp)
 	struct proc *p;
 	struct osf1_sys_mount_args *osf_argp;
 	struct sys_mount_args *bsd_argp;
 {
-	struct emul *e = p->p_emul;
 	struct osf1_nfs_args osf_na;
 	struct nfs_args bsd_na;
-	caddr_t cp;
-	int error;
+	caddr_t sg = stackgap_init(p->p_emul);
+	int error, len;
+	static const char nfs_name[] = MOUNT_NFS;
+	unsigned long leftovers;
 
-	error = copyin(SCARG(osf_argp, data), &osf_na, sizeof osf_na);
-	if (error)
+	if ((error = copyin(SCARG(osf_argp, data), &osf_na, sizeof osf_na)))
 		return error;
 
-	bzero(&bsd_na, sizeof bsd_na);
-	bsd_na.version = 2;
+	memset(&bsd_na, 0, sizeof bsd_na);
 	bsd_na.addr = (struct sockaddr *)osf_na.addr;
 	bsd_na.addrlen = sizeof (struct sockaddr_in);
-	bsd_na.sotype = SOCK_DGRAM; 
-	bsd_na.proto = 0; 
-	bsd_na.fh = (char *)osf_na.fh;
+	bsd_na.fh = osf_na.fh;
 
-	if (osf_na.flags & ~OSF1_NFSMNT_FLAGS)
-		return EINVAL;
-	if (osf_na.flags & OSF1_NFSMNT_SOFT)
-		bsd_na.flags |= NFSMNT_SOFT;
-	if (osf_na.flags & OSF1_NFSMNT_WSIZE) {
-		bsd_na.wsize = osf_na.wsize;
-		bsd_na.flags |= NFSMNT_WSIZE;
-	}
-	if (osf_na.flags & OSF1_NFSMNT_RSIZE) {
-		bsd_na.rsize = osf_na.rsize;
-		bsd_na.flags |= NFSMNT_RSIZE;
-	}
-	if (osf_na.flags & OSF1_NFSMNT_TIMEO) {
-		bsd_na.timeo = osf_na.timeo;
-		bsd_na.flags |= NFSMNT_TIMEO;
-	}
-	if (osf_na.flags & OSF1_NFSMNT_RETRANS) {
-		bsd_na.retrans = osf_na.retrans;
-		bsd_na.flags |= NFSMNT_RETRANS;
-	}
-	if (osf_na.flags & OSF1_NFSMNT_HOSTNAME)
+        /* translate flags */
+        bsd_na.flags = emul_flags_translate(osf1_nfs_mount_flags_xtab,
+            osf_na.flags, &leftovers);
+	if (leftovers & OSF1_NFSMNT_HOSTNAME) {
+		leftovers &= ~OSF1_NFSMNT_HOSTNAME;
 		bsd_na.hostname = osf_na.hostname;
-	if (osf_na.flags & OSF1_NFSMNT_INT)
-		bsd_na.flags |= NFSMNT_INT;
-	if (osf_na.flags & OSF1_NFSMNT_NOCONN)
-		bsd_na.flags |= NFSMNT_NOCONN;
+	} else {
+		/* XXX FILL IN HOST NAME WITH IPADDR? */
+	}
+	if (leftovers & OSF1_NFSMNT_TCP) {
+		leftovers &= ~OSF1_NFSMNT_TCP;
+		bsd_na.sotype = SOCK_DGRAM; 
+		bsd_na.proto = 0; 
+	} else {
+		bsd_na.sotype = SOCK_STREAM; 
+		bsd_na.proto = 0; 
+	}
+        if (leftovers != 0)
+                return (EINVAL);
 
-	cp = STACKGAPBASE;
-	SCARG(bsd_argp, data) = cp;
-	if ((error = copyout(&bsd_na, cp, sizeof bsd_na)) != 0)
+	/* copy structure elements based on flags */
+	if (bsd_na.flags & NFSMNT_WSIZE)
+		bsd_na.wsize = osf_na.wsize;
+	if (bsd_na.flags & NFSMNT_RSIZE)
+		bsd_na.rsize = osf_na.rsize;
+	if (bsd_na.flags & NFSMNT_TIMEO)
+		bsd_na.timeo = osf_na.timeo;
+	if (bsd_na.flags & NFSMNT_RETRANS)
+		bsd_na.retrans = osf_na.retrans;
+
+	SCARG(bsd_argp, data) = stackgap_alloc(&sg, sizeof bsd_na);
+	if ((error = copyout(&bsd_na, SCARG(bsd_argp, data), sizeof bsd_na)))
 		return error;
-	cp += ALIGN(sizeof bsd_na);
 
-	SCARG(bsd_argp, type) = cp;
-	if ((error = copyout(MOUNT_NFS, cp, strlen(MOUNT_NFS) + 1)) != 0)
+	len = strlen(nfs_name) + 1;
+	SCARG(bsd_argp, type) = stackgap_alloc(&sg, len);
+	if ((error = copyout(MOUNT_NFS, (void *)SCARG(bsd_argp, type), len)))
 		return error;
 
 	return 0;

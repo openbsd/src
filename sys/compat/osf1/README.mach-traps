@@ -1,4 +1,3 @@
-$OpenBSD: README.mach-traps,v 1.2 1996/08/02 20:35:24 niklas Exp $
 $NetBSD: README.mach-traps,v 1.1 1995/02/13 21:39:02 cgd Exp $
 
 Some Alpha AXP OSF/1 binaries directly use the facilities provided by
@@ -35,15 +34,25 @@ msg_receive_trap		-21	5
 msg_rpc_trap			-22	6
 lw_wire				-30	3
 lw_unwire			-31	1
-inode_swap_preference		-40	3
+nxm_task_init			-33	2
+nxm_sched_thread		-34	1
+nxm_idle			-35	1
+nxm_wakeup_idle			-36	1
+nxm_set_pthid			-37	2
+nxm_thread_kill			-38	2
+nxm_thread_block		-39	1
+nxm_thread_wakeup		-40	1
+inode_swap_preference		-40	3	old call?
 init_process			-41	0
 map_fd				-43	5
+nxm_resched			-44	2
 htg_unix_syscall		-52	3
 host_self			-55	1
 host_priv_self			-56	1
 swtch_pri			-59	1
 swtch				-60	0
 thread_switch			-61	3
+semop_fast			-62	4
 mach_sctimes_0			-70	0	only if MACH_SCTIMES defined
 mach_sctimes_1			-71	1	only if MACH_SCTIMES defined
 mach_sctimes_2			-72	2	only if MACH_SCTIMES defined

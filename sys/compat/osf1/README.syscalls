@@ -1,5 +1,7 @@
-$OpenBSD: README.syscalls,v 1.2 1996/08/02 20:35:25 niklas Exp $
-$NetBSD: README.syscalls,v 1.1 1995/02/13 21:39:03 cgd Exp $
+$NetBSD: README.syscalls,v 1.2 1999/04/27 16:09:28 cgd Exp $
+
+XXX this file should be gutted.  functions' comments should go with
+XXX the functions.  Further, this file is ... very out of date.
 
 Once the new syscall argument-handling method was implemented, most
 OSF/1 syscalls boiled down to their NetBSD equivalents.  The
@@ -16,7 +18,7 @@ but which seem strange enough to merit a bit more explanation.
 OSF/1 compatibility is helped by the fact that the sigcontext
 structure was created for NetBSD/Alpha to be the same as the OSF/1
 sigcontext structure.  Because of this, only one sendsig() function is
-needed, and the the NetBSD sigreturn() function can be used for OSF/1
+needed, and then the NetBSD sigreturn() function can be used for OSF/1
 sigreturn(), as well.
 
 The system calls are split out among the three files:
