@@ -1,5 +1,5 @@
 /* Makeinfo -- convert Texinfo source files into Info files.
-   $Id: makeinfo.c,v 1.3 1997/08/01 22:37:42 kstailey Exp $
+   $Id: makeinfo.c,v 1.4 1997/08/04 15:28:20 kstailey Exp $
 
    Copyright (C) 1987, 92, 93, 94, 95, 96, 97 Free Software Foundation, Inc.
 
@@ -1293,6 +1293,8 @@ find_and_load (filename)
      extra unnecessary work each time it is called (that is a lot of times).
      The SIZE_OF_INPUT_TEXT is one past the actual end of the text. */
   input_text[size_of_input_text] = '\n';
+  /* Strictly necessary. */
+  input_text[size_of_input_text+1] = '\0';
   return (result);
 }
 
