@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_tx.c,v 1.8 1999/09/30 00:12:21 jason Exp $	*/
-/*	$FreeBSD: if_tx.c,v 1.27 1999/05/10 00:20:46 peter Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.9 1999/11/17 05:21:18 jason Exp $	*/
+/* $FreeBSD: src/sys/pci/if_tx.c,v 1.33 1999/10/29 09:56:51 semenu Exp $ */
 
 /*-
  * Copyright (c) 1997 Semen Ustimenko (semen@iclub.nsu.ru)
@@ -25,9 +25,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	$FreeBSD: if_tx.c,v 1.21 1999/03/09 17:30:12 andreas Exp $
- *
  */
 
 /*
@@ -37,8 +34,6 @@
  * Thanks are going to Steve Bauer and Jason Wright.
  *
  * todo:
- *	Deal with bus mastering, i.e. i realy don't know what to do with
- *	    it and how it can improve performance.
  *	Implement FULL IFF_MULTICAST support.
  *	Test, test and test again:-(
  *	
@@ -250,23 +245,50 @@ epic_openbsd_attach(
 	pci_intr_handle_t ih;
 	const char *intrstr = NULL;
 	struct ifnet *ifp;
-	bus_space_tag_t iot = pa->pa_iot;
 	bus_addr_t iobase;
 	bus_size_t iosize; 
 	int i;
+	u_int32_t command;
 #if !defined(EPIC_NOIFMEDIA)
 	int tmp;
 #endif
 
+	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	command |= PCI_COMMAND_IO_ENABLE |
+	    PCI_COMMAND_MEM_ENABLE |
+	    PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
+	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+
+#ifdef EPIC_USEIOSPACE
+	if (!(command & PCI_COMMAND_IO_ENABLE)) {
+		printf(": failed to enable memory mapping\n");
+		return;
+	}
 	if( pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
 		printf(": can't find i/o space\n");
 		return;
 	}
-	if( bus_space_map(iot, iobase, iosize, 0, &sc->sc_sh)) {
+	if( bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->sc_sh)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
-	sc->sc_st = iot;
+	sc->sc_st = pa->pa_iot;
+#else
+	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
+		printf(": failed to enable memory mapping\n");
+		return;
+	}
+	if( pci_mem_find(pc, pa->pa_tag, PCI_CBMA, &iobase, &iosize, NULL)) {
+		printf(": can't find mem space\n");
+		return;
+	}
+	if( bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->sc_sh)) {
+		printf(": can't map i/o space\n");
+		return;
+	}
+	sc->sc_st = pa->pa_memt;
+#endif
 
 	ifp = &sc->sc_if;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname,IFNAMSIZ);
@@ -424,6 +446,7 @@ epic_freebsd_attach(
 #else
 	caddr_t	pmembase;
 #endif
+	u_int32_t command;
 	int i,s,tmp;
 
 	printf("tx%d",unit);
@@ -452,12 +475,34 @@ epic_freebsd_attach(
 
 	/* Get iobase or membase */
 #if defined(EPIC_USEIOSPACE)
+	command = PCI_CONF_READ(PCI_CFCS);
+	command |= PCI_CFCS_IOEN;
+	PCI_CONF_WRITE(PCI_CFCS, command);
+	command = PCI_CONF_READ(PCI_CFCS);
+
+	if (!(command & PCI_CFCS_IOEN)) {
+		printf(": failed to enable memory mapping!\n");
+		free(sc, M_DEVBUF);
+		return;
+	}
+
 	if (!pci_map_port(config_id, PCI_CBIO,(u_short *) &(sc->iobase))) {
 		printf(": cannot map port\n");
 		free(sc, M_DEVBUF);
 		return;
 	}
 #else
+	command = PCI_CONF_READ(PCI_CFCS);
+	command |= PCI_CFCS_MAEN;
+	PCI_CONF_WRITE(PCI_CFCS, command);
+	command = PCI_CONF_READ(PCI_CFCS);
+
+	if (!(command & PCI_CFCS_MAEN)) {
+		printf(": failed to enable memory mapping!\n");
+		free(sc, M_DEVBUF);
+		return;
+	}
+
 	if (!pci_map_mem(config_id, PCI_CBMA,(vm_offset_t *) &(sc->csr),(vm_offset_t *) &pmembase)) {
 		printf(": cannot map memory\n"); 
 		free(sc, M_DEVBUF);
@@ -465,7 +510,12 @@ epic_freebsd_attach(
 	}
 #endif
 
+	/* Do OS independent part, including chip wakeup and reset */
 	if( epic_common_attach(sc) ) return;
+
+	command = PCI_CONF_READ(PCI_CFCS);
+	command |= PCI_CFCS_BMEN;
+	PCI_CONF_WRITE(PCI_CFCS, command);
 
 	/* Display ethernet address ,... */
 	printf(": address %02x:%02x:%02x:%02x:%02x:%02x,",
@@ -733,7 +783,7 @@ epic_common_attach(
 	sc->tx_desc = (void *)pool;
 
 	/* Bring the chip out of low-power mode. */
-	CSR_WRITE_4( sc, GENCTL, 0x0000 );
+	CSR_WRITE_4( sc, GENCTL, GENCTL_SOFT_RESET);
 
 	/* Workaround for Application Note 7-15 */
 	for (i=0; i<16; i++) CSR_WRITE_4(sc, TEST1, TEST1_CLOCK_TEST);

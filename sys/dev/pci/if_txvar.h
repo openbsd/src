@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_txvar.h,v 1.6 1999/06/29 17:13:40 jason Exp $	*/
-/*	$FreeBSD: if_txvar.h,v 1.3 1999/05/22 06:10:14 semenu Exp $	*/
+/*	$OpenBSD: if_txvar.h,v 1.7 1999/11/17 05:21:19 jason Exp $	*/
+/* $FreeBSD: src/sys/pci/if_txvar.h,v 1.5 1999/10/29 09:56:52 semenu Exp $ */
 
 /*-
  * Copyright (c) 1997 Semen Ustimenko
@@ -25,9 +25,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *      $FreeBSD: if_txvar.h,v 1.2 1999/03/14 08:30:23 semenu Exp $
- *
  */
 
 /*
@@ -67,6 +64,10 @@
 #define	PCI_CBMA	0x14	/* Configuration Base Memory Address */
 #define	PCI_CFIT	0x3c	/* Configuration Interrupt */
 #define	PCI_CFDA	0x40	/* Configuration Driver Area */
+
+#define	PCI_CFCS_IOEN	0x0001	/* IO Space Enable */
+#define	PCI_CFCS_MAEN	0x0002	/* Memory Space Enable */
+#define	PCI_CFCS_BMEN	0x0004	/* Bus Master Enable */
 
 #define	PCI_CONF_WRITE(r, v)	pci_conf_write(config_id, (r), (v))
 #define	PCI_CONF_READ(r)	pci_conf_read(config_id, (r))
