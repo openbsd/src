@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.64 2000/07/06 10:11:22 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.65 2000/07/06 10:31:10 fgsch Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -57,6 +57,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/errno.h>
+#include <sys/domain.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -82,10 +83,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #endif /* IPSEC */
 
 #ifdef INET6
-#ifndef INET
-#include <netinet/in.h>
-#endif
-#include <sys/domain.h>
 #include <netinet6/in6_var.h>
 #include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
