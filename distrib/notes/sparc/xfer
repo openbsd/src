@@ -18,7 +18,7 @@ CD-ROM and the current boot images is only known to work on Sun4c
 architecture workstations such as the IPC, SS1 or SS2.  If you can boot
 from the CD-ROM, you are home free and can proceed to the installation
 steps.  If not, you will need to do some setup work to prepare a bootable
-image, either floppies, a hard drive, or a compatible net boot server.
+image, either a floppy, hard drive, or compatible net boot server.
 
 In addition to the bootable image, you also need to consider how to
 access the binary distribution sets to actually install the system.  If
@@ -181,7 +181,7 @@ Creating a bootable hard disk using SunOS or other Un*x-like system:
 Creating a network bootable setup using SunOS or other Un*x-like system:
 
 	The details of setting up a network bootable environment vary
-	considerably, depending on the networks host.  Extract the
+	considerably, depending on the network's host.  Extract the
 	OpenBSD diskless(8) man page from the man{:--:}OSrev.tgz distribution
 	set or see the copy on the OpenBSD web page.  You will also
 	need to reference the relevant man pages or administrators guide
