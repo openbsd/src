@@ -1,4 +1,4 @@
-/*	$OpenBSD: recvjob.c,v 1.13 2001/02/07 20:40:46 todd Exp $	*/
+/*	$OpenBSD: recvjob.c,v 1.14 2001/06/22 15:27:20 lebel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: recvjob.c,v 1.13 2001/02/07 20:40:46 todd Exp $";
+static char rcsid[] = "$OpenBSD: recvjob.c,v 1.14 2001/06/22 15:27:20 lebel Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,10 +178,8 @@ readjob()
 			 * something different than what gethostbyaddr()
 			 * returns
 			 */
-			strncpy(cp + 6, from, sizeof(line) + line - cp - 7);
-			line[sizeof(line) -1 ] = '\0';
-			strncpy(tfname, cp, sizeof tfname-1);
-			tfname[sizeof tfname-1] = '\0';
+			strlcpy(cp + 6, from, sizeof(line) + line - cp - 6);
+			strlcpy(tfname, cp, sizeof tfname);
 			tfname[0] = 't';
 			if (strchr(tfname, '/'))
 				frecverr("readjob: %s: illegal path name",
@@ -211,8 +209,7 @@ readjob()
 				(void) write(1, "\2", 1);
 				continue;
 			}
-			(void) strncpy(dfname, cp, sizeof dfname-1);
-			dfname[sizeof dfname-1] = '\0';
+			(void) strlcpy(dfname, cp, sizeof dfname);
 			if (strchr(dfname, '/'))
 				frecverr("readjob: %s: illegal path name",
 					dfname);

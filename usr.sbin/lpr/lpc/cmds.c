@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.10 2000/11/21 07:22:53 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.11 2001/06/22 15:27:20 lebel Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.10 2000/11/21 07:22:53 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.11 2001/06/22 15:27:20 lebel Exp $";
 #endif
 #endif /* not lint */
 
@@ -347,8 +347,7 @@ cleanpr()
 				n++;
 			}
 			if (n == 0) {
-				strncpy(lp, cp, sizeof(line) - strlen(line) - 1);
-				line[sizeof(line) - 1] = '\0';
+				strlcpy(lp, cp, sizeof(line) - strlen(line));
 				unlinkf(line);
 			}
 		} else {
@@ -357,8 +356,7 @@ cleanpr()
 			 * been skipped above) or a tf file (which can always
 			 * be removed).
 			 */
-			strncpy(lp, cp, sizeof(line) - strlen(line) - 1);
-			line[sizeof(line) - 1] = '\0';
+			strlcpy(lp, cp, sizeof(line) - strlen(line));
 			unlinkf(line);
 		}
      	} while (++i < nitems);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.16 1998/08/03 16:53:16 millert Exp $ */
+/*	$OpenBSD: lpd.c,v 1.17 2001/06/22 15:27:20 lebel Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static char rcsid[] = "$OpenBSD: lpd.c,v 1.16 1998/08/03 16:53:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: lpd.c,v 1.17 2001/06/22 15:27:20 lebel Exp $";
 #endif
 #endif /* not lint */
 
@@ -533,8 +533,7 @@ chkhost(f)
 		fatal("Host name for your address (%s) unknown",
 			inet_ntoa(f->sin_addr));
 
-	(void) strncpy(fromb, hp->h_name, sizeof(fromb)-1);
-	from[sizeof(fromb) - 1] = '\0';
+	(void) strlcpy(fromb, hp->h_name, sizeof(fromb));
 	from = fromb;
 
 	/* Check for spoof, ala rlogind */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.21 2001/02/15 05:20:35 deraadt Exp $ */
+/*	$OpenBSD: printjob.c,v 1.22 2001/06/22 15:27:20 lebel Exp $ */
 /*	$NetBSD: printjob.c,v 1.9.4.3 1996/07/12 22:31:39 jtc Exp $	*/
 
 /*
@@ -376,17 +376,14 @@ printit(file)
 	while (getline(cfp))
 		switch (line[0]) {
 		case 'H':
-			strncpy(fromhost, line+1, sizeof(fromhost)-1);
-			fromhost[sizeof(fromhost)-1] = '\0';
+			strlcpy(fromhost, line+1, sizeof(fromhost));
 			if (class[0] == '\0') {
-				strncpy(class, line+1, sizeof(class)-1);
-				class[sizeof(class)-1] = '\0';
+				strlcpy(class, line+1, sizeof(class));
 			}
 			continue;
 
 		case 'P':
-			strncpy(logname, line+1, sizeof(logname)-1);
-			logname[sizeof(logname)-1] = '\0';
+			strlcpy(logname, line+1, sizeof(logname));
 			if (RS) {			/* restricted */
 				if (getpwnam(logname) == NULL) {
 					bombed = NOACCT;
@@ -411,23 +408,20 @@ printit(file)
 
 		case 'J':
 			if (line[1] != '\0') {
-				strncpy(jobname, line+1, sizeof(jobname)-1);
-				jobname[sizeof(jobname)-1] = '\0';
+				strlcpy(jobname, line+1, sizeof(jobname));
 			} else
 				strcpy(jobname, " ");
 			continue;
 
 		case 'C':
 			if (line[1] != '\0')
-				strncpy(class, line+1, sizeof(class)-1);
+				strlcpy(class, line+1, sizeof(class));
 			else if (class[0] == '\0')
 				gethostname(class, sizeof(class));
-			class[sizeof(class)-1] = '\0';
 			continue;
 
 		case 'T':	/* header title for pr */
-			strncpy(title, line+1, sizeof(title)-1);
-			title[sizeof(title)-1] = '\0';
+			strlcpy(title, line+1, sizeof(title));
 			continue;
 
 		case 'L':	/* identification line */
@@ -440,20 +434,17 @@ printit(file)
 		case '3':
 		case '4':
 			if (line[1] != '\0') {
-				strncpy(fonts[line[0]-'1'], line+1,
-				    50-1);
-				fonts[line[0]-'1'][50-1] = '\0';
+				strlcpy(fonts[line[0]-'1'], line+1,
+				    50);
 			}
 			continue;
 
 		case 'W':	/* page width */
-			strncpy(width+2, line+1, sizeof(width)-3);
-			width[2+sizeof(width)-3] = '\0';
+			strlcpy(width+2, line+1, sizeof(width)-2);
 			continue;
 
 		case 'I':	/* indent amount */
-			strncpy(indent+2, line+1, sizeof(indent)-3);
-			indent[2+sizeof(indent)-3] = '\0';
+			strlcpy(indent+2, line+1, sizeof(indent)-2);
 			continue;
 
 		default:	/* some file to print */
