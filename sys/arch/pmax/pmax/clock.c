@@ -326,7 +326,7 @@ setstatclockrate(newhz)
  * and if it's outside that range, sets it to 1972-01-01.
  */
 #if 1		/* testing, until we write time-of-year code as aboce */
-#define YR_OFFSET	24	/* good til dec 31, 1997 */
+#define YR_OFFSET	26	/* good til dec 31, 1999 */
 #define DAY_OFFSET	/*1*/ 0
 #else
 #define YR_OFFSET	22
