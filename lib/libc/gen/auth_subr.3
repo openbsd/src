@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.4 2001/08/23 14:25:29 millert Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.5 2002/03/16 05:49:26 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -46,6 +46,7 @@
 .Nm auth_clroption ,
 .Nm auth_clroptions ,
 .Nm auth_getitem ,
+.Nm auth_getpwd ,
 .Nm auth_getstate ,
 .Nm auth_getvalue ,
 .Nm auth_set_va_list ,
@@ -81,6 +82,8 @@
 .Fn auth_clroptions "auth_session_t *as"
 .Ft char *
 .Fn auth_getitem "auth_session_t *as" "auth_item_t item"
+.Ft struct passwd *
+.Fn auth_getpwd "auth_session_t *as"
 .Ft int
 .Fn auth_getstate "auth_session_t *as"
 .Ft char *
@@ -132,7 +135,7 @@ The user was authenticated with a root instance.
 The user was authenticated via a mechanism which is not subject to
 eavesdropping attacks (such as provided by token cards).
 .El
-.sp
+.Pp
 The full state of the session is returned by the
 .Fn auth_getstate
 function.
@@ -154,7 +157,7 @@ The user's account has expired.
 .It Li AUTH_PWEXPIRED
 The user's password has expired and needs to be changed.
 .El
-.sp
+.Pp
 A session may be cleaned
 by calling
 .Fn auth_clean .
@@ -165,9 +168,9 @@ It is not necessary to call
 if
 .Fn auth_close
 is called.
-.sp
+.Pp
 The remaining functions are described in alphabetical order.
-.sp
+.Pp
 The fundamental function for doing BSD Authentication is
 .Fn auth_call .
 In addition to the pointer to the BSD Authentication session, it takes
@@ -216,10 +219,10 @@ name) and the second argument with a preceding
 flag.
 The name and value are separated by an
 .Sq = :
-.sp
+.Pp
 .Li Ta Fl v Ar name=value
 
-.sp
+.Pp
 Once the login script has been spawned, any data specified by the
 .Fn auth_setdata
 is written to the back channel.
@@ -238,7 +241,7 @@ If the login script exits with a 0 and does not specify any return state
 on the back channel, the state prior to the call to
 .Fn auth_call
 is retained.
-.sp
+.Pp
 The data read from the back channel is also used by the
 .Fn auth_getvalue
 and
@@ -248,7 +251,7 @@ Subsequent calls to
 .Fn auth_call
 will cause this data to be lost and overwritten with the new data read
 from the new call.
-.sp
+.Pp
 The environment passed to the login script by
 .Fn auth_call
 only contains two values:
@@ -265,7 +268,7 @@ while the
 .Ev SHELL
 is set to the default system shell (
 .Pa /bin/sh ) .
-.sp
+.Pp
 The
 .Fn auth_challenge
 function queries the login script defined by the current
@@ -286,7 +289,7 @@ The challenge can also be extracted by the
 .Fn auth_getchallenge
 function, which simply returns the last challenge generated
 for this session.
-.sp
+.Pp
 The
 .Fn auth_check_change
 and
@@ -306,21 +309,22 @@ If the password or account has not expired they return the number of
 seconds left until the account does expire.
 The return value of -1 can either indicate the password or account
 just expired or that no password entry was set for the current session.
-.sp
+.Pp
 The
 .Fn auth_clrenv
 function clears any requests set by a login script for
 environment variables to be set.
-.sp
+.Pp
 The
 .Fn auth_clroption
 function clears the previously set option
 .Fa name .
-.sp
+.br
+.Pp
 The
 .Fn auth_clroptions
 function clears all previously set options.
-.sp
+.Pp
 The
 .Fn auth_getitem
 function returns the value of of
@@ -359,7 +363,7 @@ The style of authentication being performed, as defined by the
 .Pa /etc/login.conf file.
 The style determines which login script should actually be used.
 .El
-.sp
+.Pp
 The
 .Fn auth_getvalue
 function returns the value, if any, associated with the specified internal
@@ -373,7 +377,7 @@ the values from the previous login script are lost.
 (See
 .Xr login.conf 5
 for details on internal variables.)
-.sp
+.Pp
 The
 .Fn auth_set_va_list
 function establishes a variable argument list to be used by the
@@ -392,7 +396,7 @@ function will call
 .Xr va_end 3
 on
 .Fa ap .
-.sp
+.Pp
 The
 .Fn auth_setdata
 function makes a copy of
@@ -402,12 +406,12 @@ bytes of data pointed to by
 for use by
 .Fn auth_call .
 The data will be passed on the back channel to the next login script called.
-.sp
+.Pp
 The
 .Fn auth_setenv
 function adds/deletes any environment variables requested by the
 login script to the current environment.
-.sp
+.Pp
 The
 .Fn auth_setitem
 function assigns
@@ -426,7 +430,7 @@ and
 is
 .Dv NULL
 then all items are cleared.
-.sp
+.Pp
 The
 .Fn auth_setoption
 function requests that the option
@@ -439,7 +443,7 @@ The actual arguments to the script will be placed at the beginning
 of the argument vector.
 For each option two arguments will be issued:
 .Li -v name=value .
-.sp
+.Pp
 The function
 .Fn auth_setpwd
 establishes the password file entry for the authentication session.
@@ -450,7 +454,25 @@ then the
 argument may be
 .Dv NULL ,
 else it must be the password entry to use.
-.sp
+.br
+.Pp
+The function
+.Fn auth_getpwd
+retrieves the saved password file entry for the authentication session.
+If no entry has been saved (either explicitly via
+.Fn auth_setpwd
+or implicitly via
+.Fn auth_check_expire
+or
+.Fn auth_check_change )
+it returns
+.Dv NULL .
+Note that the memory containing the password file entry is freed by
+a call to
+.Fn auth_close
+or
+.Fn auth_clean .
+.Pp
 The function
 .Fn auth_setstate
 sets the sessions state to
