@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.35 2004/10/05 10:06:14 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.36 2004/10/05 10:09:34 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -131,6 +131,22 @@ sub stringize($)
 	return $_[0]->{name};
 }
 
+sub IsFile() { 0 }
+
+sub NoDuplicateNames() { 0 }
+
+# Basic class hierarchy
+
+# various stuff that's only linked to objects before/after them
+# this class doesn't have real objects: no valid new nor clone...
+package OpenBSD::PackingElement::Annotation;
+our @ISA=qw(OpenBSD::PackingElement);
+sub new { die "Can't create annotation objects" }
+
+# concrete objects
+package OpenBSD::PackingElement::Object;
+our @ISA=qw(OpenBSD::PackingElement);
+
 sub compute_fullname
 {
 	my ($self, $state, $absolute_okay) = @_;
@@ -147,6 +163,11 @@ sub compute_fullname
 	$fullname = File::Spec->canonpath($fullname);
 	$self->{fullname} = $fullname;
 	return $fullname;
+}
+
+sub fullname($)
+{
+	return $_[0]->{fullname};
 }
 
 sub compute_modes
@@ -185,27 +206,6 @@ sub expand
 	}
 	return $_;
 }
-sub IsFile() { 0 }
-
-sub NoDuplicateNames() { 0 }
-
-sub fullname($)
-{
-	return $_[0]->{fullname};
-}
-
-# Basic class hierarchy
-
-# various stuff that's only linked to objects before/after them
-# this class doesn't have real objects: no valid new nor clone...
-package OpenBSD::PackingElement::Annotation;
-our @ISA=qw(OpenBSD::PackingElement);
-sub new { die "Can't create annotation objects" }
-
-# concrete objects
-package OpenBSD::PackingElement::Object;
-our @ISA=qw(OpenBSD::PackingElement);
-
 # concrete objects with file-like behavior
 package OpenBSD::PackingElement::FileObject;
 our @ISA=qw(OpenBSD::PackingElement::Object);
