@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.48 2002/06/09 08:13:08 todd Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.49 2002/06/29 23:19:49 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -167,7 +167,7 @@ void	free_dir(struct dirlist *);
 void	free_exp(struct exportlist *);
 void	free_grp(struct grouplist *);
 void	free_host(struct hostlist *);
-void	new_exportlist(void);
+void	new_exportlist(int signo);
 void	get_exportlist(void);
 int	get_host(char *, struct grouplist *, struct grouplist *);
 int	get_num(char *);
@@ -185,7 +185,7 @@ void	out_of_mem(void);
 void	parsecred(char *, struct ucred *);
 int	put_exlist(struct dirlist *, XDR *, struct dirlist *, int *);
 int	scan_tree(struct dirlist *, in_addr_t);
-void	send_umntall(void);
+void	send_umntall(int signo);
 int	umntall_each(caddr_t, struct sockaddr_in *);
 int	xdr_dir(XDR *, char *);
 int	xdr_explist(XDR *, caddr_t);
@@ -227,9 +227,7 @@ volatile sig_atomic_t gotterm;
  * and "-n" to allow nonroot mount.
  */
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	SVCXPRT *udptransp, *tcptransp;
 	FILE *pidfile;
@@ -365,28 +363,25 @@ mountd_svc_run()
  * The mount rpc service
  */
 void
-mntsrv(rqstp, transp)
-	struct svc_req *rqstp;
-	SVCXPRT *transp;
+mntsrv(struct svc_req *rqstp, SVCXPRT *transp)
 {
+	char rpcpath[RPCMNT_PATHLEN+1], dirpath[MAXPATHLEN];
+	struct hostent *hp = NULL;
 	struct exportlist *ep;
-	struct dirlist *dp;
+	sigset_t sighup_mask;
+	int defset, hostset;
 	struct fhreturn fhr;
-	struct stat stb;
+	struct dirlist *dp;
 	struct statfs fsb;
-	struct hostent *hp;
+	struct stat stb;
 	in_addr_t saddr;
 	u_short sport;
-	char rpcpath[RPCMNT_PATHLEN+1], dirpath[MAXPATHLEN];
 	long bad = 0;
-	int defset, hostset;
-	sigset_t sighup_mask;
 
 	sigemptyset(&sighup_mask);
 	sigaddset(&sighup_mask, SIGHUP);
 	saddr = transp->xp_raddr.sin_addr.s_addr;
 	sport = ntohs(transp->xp_raddr.sin_port);
-	hp = NULL;
 	switch (rqstp->rq_proc) {
 	case NULLPROC:
 		if (!svc_sendreply(transp, xdr_void, NULL))
@@ -394,8 +389,7 @@ mntsrv(rqstp, transp)
 		return;
 	case RPCMNT_MOUNT:
 		if (debug)
-			fprintf(stderr,
-			    "Got mount request from %s\n",
+			fprintf(stderr, "Got mount request from %s\n",
 			    inet_ntoa(transp->xp_raddr.sin_addr));
 		if (sport >= IPPORT_RESERVED && resvport_only) {
 			syslog(LOG_NOTICE,
@@ -532,9 +526,7 @@ mntsrv(rqstp, transp)
  * Xdr conversion for a dirpath string
  */
 int
-xdr_dir(xdrsp, dirp)
-	XDR *xdrsp;
-	char *dirp;
+xdr_dir(XDR *xdrsp, char *dirp)
 {
 	return (xdr_string(xdrsp, &dirp, RPCMNT_PATHLEN));
 }
@@ -543,9 +535,7 @@ xdr_dir(xdrsp, dirp)
  * Xdr routine to generate file handle reply
  */
 int
-xdr_fhs(xdrsp, cp)
-	XDR *xdrsp;
-	caddr_t cp;
+xdr_fhs(XDR *xdrsp, caddr_t cp)
 {
 	struct fhreturn *fhrp = (struct fhreturn *)cp;
 	long ok = 0, len, auth;
@@ -571,13 +561,10 @@ xdr_fhs(xdrsp, cp)
 }
 
 int
-xdr_mlist(xdrsp, cp)
-	XDR *xdrsp;
-	caddr_t cp;
+xdr_mlist(XDR *xdrsp, caddr_t cp)
 {
+	int true = 1, false = 0;
 	struct mountlist *mlp;
-	int true = 1;
-	int false = 0;
 	char *strp;
 
 	mlp = mlhead;
@@ -601,13 +588,10 @@ xdr_mlist(xdrsp, cp)
  * Xdr conversion for export list
  */
 int
-xdr_explist(xdrsp, cp)
-	XDR *xdrsp;
-	caddr_t cp;
+xdr_explist(XDR *xdrsp, caddr_t cp)
 {
 	struct exportlist *ep;
-	int false = 0;
-	int putdef;
+	int false = 0, putdef;
 	sigset_t sighup_mask;
 
 	sigemptyset(&sighup_mask);
@@ -637,17 +621,12 @@ errout:
  * directory paths.
  */
 int
-put_exlist(dp, xdrsp, adp, putdefp)
-	struct dirlist *dp;
-	XDR *xdrsp;
-	struct dirlist *adp;
-	int *putdefp;
+put_exlist(struct dirlist *dp, XDR *xdrsp, struct dirlist *adp,
+    int *putdefp)
 {
+	int true = 1, false = 0, gotalldir = 0;
 	struct grouplist *grp;
 	struct hostlist *hp;
-	int true = 1;
-	int false = 0;
-	int gotalldir = 0;
 	char *strp;
 
 	if (dp) {
@@ -702,7 +681,7 @@ char line[LINESIZ];
 FILE *exp_file;
 
 void
-new_exportlist()
+new_exportlist(int signo)
 {
 	gothup = 1;
 
@@ -712,8 +691,11 @@ new_exportlist()
  * Get the export list
  */
 void
-get_exportlist()
+get_exportlist(void)
 {
+	int len, has_host, exflags, got_nondir, dirplen = 0, num;
+	int lookup_failed, num_hosts, i, netgrp;
+	char *cp, *endcp, *dirp = NULL, *hst, *usr, *dom, savedc;
 	struct exportlist *ep, *ep2;
 	struct grouplist *grp, *tgrp;
 	struct exportlist **epp;
@@ -721,9 +703,6 @@ get_exportlist()
 	struct statfs fsb, *fsp;
 	struct hostent *hpe;
 	struct ucred anon;
-	char *cp, *endcp, *dirp = NULL, *hst, *usr, *dom, savedc;
-	int len, has_host, exflags, got_nondir, dirplen = 0, num, i, netgrp;
-	int lookup_failed, num_hosts;
 
 	/*
 	 * First, get rid of the old list
@@ -1042,7 +1021,7 @@ nextline:
  * Allocate an export list element
  */
 struct exportlist *
-get_exp()
+get_exp(void)
 {
 	struct exportlist *ep;
 
@@ -1072,9 +1051,7 @@ get_grp()
  * Clean up upon an error in get_exportlist().
  */
 void
-getexp_err(ep, grp)
-	struct exportlist *ep;
-	struct grouplist *grp;
+getexp_err(struct exportlist *ep, struct grouplist *grp)
 {
 	struct grouplist *tgrp;
 
@@ -1092,8 +1069,7 @@ getexp_err(ep, grp)
  * Search the export list for a matching fs.
  */
 struct exportlist *
-ex_search(fsid)
-	fsid_t *fsid;
+ex_search(fsid_t *fsid)
 {
 	struct exportlist *ep;
 
@@ -1111,10 +1087,7 @@ ex_search(fsid)
  * Add a directory path to the list.
  */
 char *
-add_expdir(dpp, cp, len)
-	struct dirlist **dpp;
-	char *cp;
-	int len;
+add_expdir(struct dirlist **dpp, char *cp, int len)
 {
 	struct dirlist *dp;
 
@@ -1133,11 +1106,8 @@ add_expdir(dpp, cp, len)
  * and update the entry for host.
  */
 void
-hang_dirp(dp, grp, ep, flags)
-	struct dirlist *dp;
-	struct grouplist *grp;
-	struct exportlist *ep;
-	int flags;
+hang_dirp(struct dirlist *dp, struct grouplist *grp, struct exportlist *ep,
+    int flags)
 {
 	struct hostlist *hp;
 	struct dirlist *dp2;
@@ -1174,11 +1144,8 @@ hang_dirp(dp, grp, ep, flags)
  * for the new directory or adding the new node.
  */
 void
-add_dlist(dpp, newdp, grp, flags)
-	struct dirlist **dpp;
-	struct dirlist *newdp;
-	struct grouplist *grp;
-	int flags;
+add_dlist(struct dirlist **dpp, struct dirlist *newdp, struct grouplist *grp,
+    int flags)
 {
 	struct dirlist *dp;
 	struct hostlist *hp;
@@ -1221,9 +1188,7 @@ add_dlist(dpp, newdp, grp, flags)
  * Search for a dirpath on the export point.
  */
 struct dirlist *
-dirp_search(dp, dirpath)
-	struct dirlist *dp;
-	char *dirpath;
+dirp_search(struct dirlist *dp, char *dirpath)
 {
 	int cmp;
 
@@ -1243,11 +1208,7 @@ dirp_search(dp, dirpath)
  * Scan for a host match in a directory tree.
  */
 int
-chk_host(dp, saddr, defsetp, hostsetp)
-	struct dirlist *dp;
-	in_addr_t saddr;
-	int *defsetp;
-	int *hostsetp;
+chk_host(struct dirlist *dp, in_addr_t saddr, int *defsetp, int *hostsetp)
 {
 	struct hostlist *hp;
 	struct grouplist *grp;
@@ -1289,9 +1250,7 @@ chk_host(dp, saddr, defsetp, hostsetp)
  * Scan tree for a host that matches the address.
  */
 int
-scan_tree(dp, saddr)
-	struct dirlist *dp;
-	in_addr_t saddr;
+scan_tree(struct dirlist *dp, in_addr_t saddr)
 {
 	int defset, hostset;
 
@@ -1310,8 +1269,7 @@ scan_tree(dp, saddr)
  * Traverse the dirlist tree and free it up.
  */
 void
-free_dir(dp)
-	struct dirlist *dp;
+free_dir(struct dirlist *dp)
 {
 
 	if (dp) {
@@ -1328,16 +1286,11 @@ free_dir(dp)
  * -<option> <value>
  */
 int
-do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
-	char **cpp, **endcpp;
-	struct exportlist *ep;
-	struct grouplist *grp;
-	int *has_hostp;
-	int *exflagsp;
-	struct ucred *cr;
+do_opt(char **cpp, char **endcpp, struct exportlist *ep, struct grouplist *grp,
+    int *has_hostp, int *exflagsp, struct ucred *cr)
 {
-	char *cpoptarg, *cpoptend;
 	char *cp, *endcp, *cpopt, savedc, savedc2 = 0;
+	char *cpoptarg, *cpoptend;
 	int allflag, usedarg;
 
 	cpopt = *cpp;
@@ -1427,18 +1380,14 @@ do_opt(cpp, endcpp, ep, grp, has_hostp, exflagsp, cr)
  * addresses for a hostname.
  */
 int
-get_host(cp, grp, tgrp)
-	char *cp;
-	struct grouplist *grp;
-	struct grouplist *tgrp;
+get_host(char *cp, struct grouplist *grp, struct grouplist *tgrp)
 {
+	struct hostent *hp, *nhp, t_host;
 	struct grouplist *checkgrp;
-	struct hostent *hp, *nhp;
 	char **addrp, **naddrp;
-	struct hostent t_host;
-	int i;
 	in_addr_t saddr;
 	char *aptr[2];
+	int i;
 
 	if (grp->gr_type != GT_NULL)
 		return (1);
@@ -1515,8 +1464,7 @@ get_host(cp, grp, tgrp)
  * Free up an exports list component
  */
 void
-free_exp(ep)
-	struct exportlist *ep;
+free_exp(struct exportlist *ep)
 {
 
 	if (ep->ex_defdir) {
@@ -1533,8 +1481,7 @@ free_exp(ep)
  * Free hosts.
  */
 void
-free_host(hp)
-	struct hostlist *hp;
+free_host(struct hostlist *hp)
 {
 	struct hostlist *hp2;
 
@@ -1546,7 +1493,7 @@ free_host(hp)
 }
 
 struct hostlist *
-get_ht()
+get_ht(void)
 {
 	struct hostlist *hp;
 
@@ -1562,7 +1509,7 @@ get_ht()
  * Out of memory, fatal
  */
 void
-out_of_mem()
+out_of_mem(void)
 {
 
 	syslog(LOG_ERR, "Out of memory");
@@ -1575,19 +1522,9 @@ out_of_mem()
  * that only invalidates the specific entry/host.
  */
 int
-do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
-	struct exportlist *ep;
-	struct grouplist *grp;
-	int exflags;
-	struct ucred *anoncrp;
-	char *dirp;
-	int dirplen;
-	struct statfs *fsb;
+do_mount(struct exportlist *ep, struct grouplist *grp, int exflags,
+    struct ucred *anoncrp, char *dirp, int dirplen, struct statfs *fsb)
 {
-	char *cp = NULL;
-	u_int32_t **addrp;
-	int done;
-	char savedc = '\0';
 	struct sockaddr_in sin, imask;
 	union {
 		struct ufs_args ua;
@@ -1596,7 +1533,11 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
 		struct msdosfs_args da;
 		struct adosfs_args aa;
 	} args;
+	char savedc = '\0';
+	u_int32_t **addrp;
+	char *cp = NULL;
 	in_addr_t net;
+	int done;
 
 	args.ua.fspec = 0;
 	args.ua.export_info.ex_flags = exflags;
@@ -1714,14 +1655,11 @@ do_mount(ep, grp, exflags, anoncrp, dirp, dirplen, fsb)
  * Translate a net address.
  */
 int
-get_net(cp, net, maskflg)
-	char *cp;
-	struct netmsk *net;
-	int maskflg;
+get_net(char *cp, struct netmsk *net, int maskflg)
 {
-	struct netent *np;
-	in_addr_t netaddr;
 	struct in_addr inetaddr, inetaddr2;
+	in_addr_t netaddr;
+	struct netent *np;
 	char *name;
 
 	if ((netaddr = inet_network(cp)) != INADDR_NONE) {
@@ -1768,9 +1706,7 @@ get_net(cp, net, maskflg)
  * Parse out the next white space separated field
  */
 void
-nextfield(cp, endcp)
-	char **cp;
-	char **endcp;
+nextfield(char **cp, char **endcp)
 {
 	char *p;
 
@@ -1792,11 +1728,10 @@ nextfield(cp, endcp)
  * continuations.
  */
 int
-get_line()
+get_line(void)
 {
+	int totlen, cont_line, len;
 	char *p, *cp;
-	int len;
-	int totlen, cont_line;
 
 	/*
 	 * Loop around ignoring blank lines and getting all continuation lines.
@@ -1833,16 +1768,13 @@ get_line()
  * Parse a description of a credential.
  */
 void
-parsecred(namelist, cr)
-	char *namelist;
-	struct ucred *cr;
+parsecred(char *namelist, struct ucred *cr)
 {
-	char *name;
-	int cnt;
-	char *names;
+	gid_t groups[NGROUPS + 1];
+	char *name, *names;
 	struct passwd *pw;
 	struct group *gr;
-	int ngroups, groups[NGROUPS + 1];
+	int ngroups, cnt;
 
 	/*
 	 * Set up the unprivileged user.
@@ -1873,7 +1805,7 @@ parsecred(namelist, cr)
 		if (getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups))
 			syslog(LOG_ERR, "Too many groups");
 		/*
-		 * Convert from int's to gid_t's and compress out duplicate
+		 * compress out duplicate
 		 */
 		cr->cr_ngroups = ngroups - 1;
 		cr->cr_gid = groups[0];
@@ -1915,7 +1847,7 @@ parsecred(namelist, cr)
  * Routines that maintain the remote mounttab
  */
 void
-get_mountlist()
+get_mountlist(void)
 {
 	struct mountlist *mlp, **mlpp;
 	char *host, *dirp, *cp;
@@ -1944,8 +1876,7 @@ get_mountlist()
 }
 
 void
-del_mlist(hostp, dirp)
-	char *hostp, *dirp;
+del_mlist(char *hostp, char *dirp)
 {
 	struct mountlist *mlp, **mlpp;
 	struct mountlist *mlp2;
@@ -1982,8 +1913,7 @@ del_mlist(hostp, dirp)
 }
 
 void
-add_mlist(hostp, dirp)
-	char *hostp, *dirp;
+add_mlist(char *hostp, char *dirp)
 {
 	struct mountlist *mlp, **mlpp;
 	FILE *mlfile;
@@ -2010,19 +1940,17 @@ add_mlist(hostp, dirp)
 }
 
 /*
- * This function is called via. SIGTERM when the system is going down.
+ * This function is called via SIGTERM when the system is going down.
  * It sends a broadcast RPCMNT_UMNTALL.
  */
 void
-send_umntall()
+send_umntall(int signo)
 {
 	gotterm = 1;
 }
 
 int
-umntall_each(resultsp, raddr)
-	caddr_t resultsp;
-	struct sockaddr_in *raddr;
+umntall_each(caddr_t resultsp, struct sockaddr_in *raddr)
 {
 	return (1);
 }
@@ -2031,8 +1959,7 @@ umntall_each(resultsp, raddr)
  * Free up a group list.
  */
 void
-free_grp(grp)
-	struct grouplist *grp;
+free_grp(struct grouplist *grp)
 {
 	char **addrp;
 
@@ -2056,8 +1983,7 @@ free_grp(grp)
  * Check options for consistency.
  */
 int
-check_options(dp)
-	struct dirlist *dp;
+check_options(struct dirlist *dp)
 {
 
 	if (dp == NULL)
@@ -2082,12 +2008,11 @@ check_options(dp)
  * if no symbolic links are found.
  */
 int
-check_dirpath(dirp)
-	char *dirp;
+check_dirpath(char *dirp)
 {
-	char *cp;
-	int ret = 1;
 	struct stat sb;
+	int ret = 1;
+	char *cp;
 
 	/* Remove trailing '/' */
 	cp = dirp + strlen(dirp) - 1;
