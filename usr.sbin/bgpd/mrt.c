@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.13 2003/12/26 18:07:32 henning Exp $ */
+/*	$OpenBSD: mrt.c,v 1.14 2004/01/01 21:18:13 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -207,25 +207,25 @@ mrt_dump_header(struct buf *buf, u_int16_t type, u_int16_t subtype,
 }
 
 static int
-mrt_open(struct mrtdump_config *conf)
+mrt_open(struct mrtdump_config *mconf)
 {
 	time_t	now;
 
 	now = time(NULL);
-	if (strftime(conf->file, sizeof(conf->file), conf->name,
+	if (strftime(mconf->file, sizeof(mconf->file), mconf->name,
 		    localtime(&now)) == 0) {
 		logit(LOG_CRIT, "mrt_open strftime failed");
-		conf->msgbuf.sock = -1;
+		mconf->msgbuf.sock = -1;
 		return -1;
 	}
 
-	conf->msgbuf.sock = open(conf->file,
+	mconf->msgbuf.sock = open(mconf->file,
 	    O_WRONLY|O_NONBLOCK|O_CREAT|O_TRUNC, 0644);
-	if (conf->msgbuf.sock == -1)
+	if (mconf->msgbuf.sock == -1)
 		logit(LOG_CRIT, "mrt_open %s: %s",
-		    conf->file, strerror(errno));
+		    mconf->file, strerror(errno));
 
-	return conf->msgbuf.sock;
+	return mconf->msgbuf.sock;
 }
 
 int
@@ -297,14 +297,14 @@ mrt_state(struct mrtdump_config *m, enum imsg_type type,
 }
 
 int
-mrt_usr1(struct mrt_config *conf, struct imsgbuf *buf)
+mrt_usr1(struct mrt_config *mconf, struct imsgbuf *buf)
 {
 	struct mrtdump_config	*m;
 	time_t			 now;
 	int			 interval = INT_MAX;
 
 	now = time(NULL);
-	LIST_FOREACH(m, conf, list) {
+	LIST_FOREACH(m, mconf, list) {
 		if (m->type == MRT_TABLE_DUMP) {
 			switch (m->state) {
 			case MRT_STATE_REOPEN:
@@ -333,14 +333,14 @@ mrt_usr1(struct mrt_config *conf, struct imsgbuf *buf)
 }
 
 int
-mrt_alrm(struct mrt_config *conf, struct imsgbuf *buf)
+mrt_alrm(struct mrt_config *mconf, struct imsgbuf *buf)
 {
 	struct mrtdump_config	*m;
 	time_t			 now;
 	int			 interval = INT_MAX;
 
 	now = time(NULL);
-	LIST_FOREACH(m, conf, list) {
+	LIST_FOREACH(m, mconf, list) {
 		if (m->ReopenTimerInterval == 0)
 			continue;
 		if (m->ReopenTimer <= now) {
@@ -387,14 +387,14 @@ getconf(struct mrt_config *c, struct mrtdump_config *m)
 }
 
 int
-mrt_mergeconfig(struct mrt_config *xconf, struct mrt_config *conf)
+mrt_mergeconfig(struct mrt_config *xconf, struct mrt_config *nconf)
 {
 	struct mrtdump_config	*m, *xm;
 	time_t			 now;
 	int			 interval = INT_MAX;
 
 	now = time(NULL);
-	LIST_FOREACH(m, conf, list)
+	LIST_FOREACH(m, nconf, list)
 		if ((xm = getconf(xconf, m)) == NULL) {
 			/* NEW */
 			if ((xm = calloc(1, sizeof(struct mrtdump_config))) ==
@@ -423,12 +423,12 @@ mrt_mergeconfig(struct mrt_config *xconf, struct mrt_config *conf)
 			xm->state=MRT_STATE_REOPEN;
 		}
 	LIST_FOREACH(xm, xconf, list)
-		if (getconf(conf, xm) == NULL)
+		if (getconf(nconf, xm) == NULL)
 			/* REMOVE */
 			xm->state = MRT_STATE_CLOSE;
 
 	/* free config */
-	for (m = LIST_FIRST(conf); m != LIST_END(conf); m = xm) {
+	for (m = LIST_FIRST(nconf); m != LIST_END(nconf); m = xm) {
 		xm = LIST_NEXT(m, list);
 		free(m);
 	}
