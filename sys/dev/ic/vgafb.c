@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.3 1998/09/28 01:10:34 rahnds Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.4 1998/10/09 02:00:51 rahnds Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -76,27 +76,34 @@ int	vgafb_print __P((void *, const char *));
  * and attachment.
  */
 int
-vgafb_common_probe(iot, memt, iobase, membase, memsize)
+vgafb_common_probe(iot, memt, iobase, iosize, membase, memsize, mmiobase, mmiosize)
 	bus_space_tag_t iot, memt;
-	u_int32_t iobase, membase;
-	size_t memsize;
+	u_int32_t iobase, membase, mmiobase;
+	size_t iosize, memsize, mmiosize;
 {
-	bus_space_handle_t ioh_b, ioh_c, ioh_d, memh;
+	bus_space_handle_t ioh_b, ioh_c, ioh_d, memh, mmioh;
 	u_int16_t vgadata;
-	int gotio_b, gotio_c, gotio_d, gotmem, rv;
+	int gotio_b, gotio_c, gotio_d, gotmem, gotmmio, rv;
 	int width;
 
-	gotio_b = gotio_c = gotio_d = gotmem = rv = 0;
+	gotio_b = gotio_c = gotio_d = gotmem = gotmmio = rv = 0;
 
-	if (bus_space_map(iot, iobase+0x3b0, 0xc, 0, &ioh_b))
-		goto bad;
-	gotio_b = 1;
-	if (bus_space_map(iot, iobase+0x3c0, 0x10, 0, &ioh_c))
-		goto bad;
-	gotio_c = 1;
-	if (bus_space_map(iot, iobase+0x3d0, 0x10, 0, &ioh_d))
-		goto bad;
-	gotio_d = 1;
+	if (iosize != 0) {
+		if (bus_space_map(iot, iobase+0x3b0, 0xc, 0, &ioh_b))
+			goto bad;
+		gotio_b = 1;
+		if (bus_space_map(iot, iobase+0x3c0, 0x10, 0, &ioh_c))
+			goto bad;
+		gotio_c = 1;
+		if (bus_space_map(iot, iobase+0x3d0, 0x10, 0, &ioh_d))
+			goto bad;
+		gotio_d = 1;
+	}
+	if (mmiosize != 0) {
+		if (bus_space_map(iot, mmiobase, mmiosize, 0, &mmioh))
+			goto bad;
+		gotmmio = 1;
+	}
 	if (bus_space_map(memt, membase, memsize, 0, &memh))
 		goto bad;
 	gotmem = 1;
@@ -126,6 +133,8 @@ bad:
 		bus_space_unmap(iot, ioh_c, 0x10);
 	if (gotio_d)
 		bus_space_unmap(iot, ioh_d, 0x10);
+	if (gotmmio)
+		bus_space_unmap(memt, mmioh, mmiosize);
 	if (gotmem)
 		bus_space_unmap(memt, memh, memsize);
 
@@ -133,11 +142,11 @@ bad:
 }
 
 void
-vgafb_common_setup(iot, memt, vc, iobase, membase, memsize)
+vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mmiosize)
 	bus_space_tag_t iot, memt;
 	struct vgafb_config *vc;
-	u_int32_t iobase, membase;
-	size_t memsize;
+	u_int32_t iobase, membase, mmiobase;
+	size_t iosize, memsize, mmiosize;
 {
 	int cpos;
 	int width, height;
@@ -145,53 +154,65 @@ vgafb_common_setup(iot, memt, vc, iobase, membase, memsize)
         vc->vc_iot = iot;
         vc->vc_memt = memt;
 
-        if (bus_space_map(vc->vc_iot, iobase+0x3b0, 0xc, 0, &vc->vc_ioh_b))
-                panic("vgafb_common_setup: couldn't map io b");
-        if (bus_space_map(vc->vc_iot, iobase+0x3c0, 0x10, 0, &vc->vc_ioh_c))
-                panic("vgafb_common_setup: couldn't map io c");
-        if (bus_space_map(vc->vc_iot, iobase+0x3d0, 0x10, 0, &vc->vc_ioh_d))
-                panic("vgafb_common_setup: couldn't map io d");
-        if (bus_space_map(vc->vc_memt, membase, memsize, 0, &vc->vc_memh))
-                panic("vgafb_common_setup: couldn't map memory"); 
-
-	/* CR1 - Horiz. Display End */
-	bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x1);
-	width = bus_space_read_1(iot, vc->vc_ioh_d, 5);
-	/* (stored value + 1) * depth -> pixel width */
-	width = ( width + 1 ) * 8;   
-	vc->vc_ncol = width / FONT_WIDTH;
-
-	/* CR1 - Horiz. Display End */
-	bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x12);
-	{ 
-		u_int8_t t1, t2, t3;
-		bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x12);
-		t1 = bus_space_read_1(iot, vc->vc_ioh_d, 5);
-
-		bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x7);
-		t2 = bus_space_read_1(iot, vc->vc_ioh_d, 5);
-		height = t1 + ((t2&0x40) << 3) 
-			    + ((t2&0x02) << 7) + 1; 
-		bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x17);
-		t3 = bus_space_read_1(iot, vc->vc_ioh_d, 5);
-		if (t3 & 0x04) {
-			height *= 2;
-		}
+	if (iosize != 0) {
+           if (bus_space_map(vc->vc_iot, iobase+0x3b0, 0xc, 0, &vc->vc_ioh_b))
+		panic("vgafb_common_setup: couldn't map io b");
+           if (bus_space_map(vc->vc_iot, iobase+0x3c0, 0x10, 0, &vc->vc_ioh_c))
+		panic("vgafb_common_setup: couldn't map io c");
+           if (bus_space_map(vc->vc_iot, iobase+0x3d0, 0x10, 0, &vc->vc_ioh_d))
+		panic("vgafb_common_setup: couldn't map io d");
 	}
-	vc->vc_nrow = height / FONT_HEIGHT;
+	if (mmiosize != 0) {
+           if (bus_space_map(vc->vc_memt, mmiobase, mmiosize, 0, &vc->vc_mmioh))
+		panic("vgafb_common_setup: couldn't map mmio");
+	}
+        if (bus_space_map(vc->vc_memt, membase, memsize, 0, &vc->vc_memh))
+		panic("vgafb_common_setup: couldn't map memory"); 
 
-#if 0
-	/* assume resolution is 640x480 */
-	vc->vc_nrow = 25;
-	vc->vc_ncol = 80;
+	printf("iosize %x\n", iosize);
+	if (iosize != 0) {
+		/* CR1 - Horiz. Display End */
+		bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x1);
+		width = bus_space_read_1(iot, vc->vc_ioh_d, 5);
+		printf (",w %d", width);
+		/* (stored value + 1) * depth -> pixel width */
+		width = ( width + 1 ) * 8;   
 
-	bus_space_write_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_ADDR, 14); 
-	cpos = bus_space_read_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_DATA) << 8;
-	bus_space_write_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_ADDR, 15);
-	cpos |= bus_space_read_1(iot, vc->vc_ioh_d, VGA_IO_D_6845_DATA);
-	vc->vc_crow = cpos / vc->vc_ncol;
-	vc->vc_ccol = cpos % vc->vc_ncol;
-#endif
+		/* CR1 - Horiz. Display End */
+		bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x12);
+		{ 
+			u_int8_t t1, t2, t3;
+			bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x12);
+			t1 = bus_space_read_1(iot, vc->vc_ioh_d, 5);
+			printf (",t1 %d", t1);
+
+			bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x7);
+			t2 = bus_space_read_1(iot, vc->vc_ioh_d, 5);
+			printf (",t2 %d", t2);
+			height = t1 + ((t2&0x40) << 3) 
+				    + ((t2&0x02) << 7) + 1; 
+			bus_space_write_1(iot, vc->vc_ioh_d, 4, 0x17);
+			t3 = bus_space_read_1(iot, vc->vc_ioh_d, 5);
+			if (t3 & 0x04) {
+				height *= 2;
+			}
+			if (t1 == 0xff && t2 == 0xff && t3 == 0xff) {
+				/* iospace not working??? */
+				/* hope, better guess than 2048x2048 */
+				width = 640;
+				height = 480;
+			}
+		}
+		vc->vc_ncol = width / FONT_WIDTH;
+		vc->vc_nrow = height / FONT_HEIGHT;
+	} else {
+		/* iosize == 0
+		 * default to 640x480 and hope 
+		 */
+		vc->vc_ncol = 640 / FONT_WIDTH;
+		vc->vc_nrow = 480 / FONT_HEIGHT;
+	}
+	printf(", %dx%d", vc->vc_ncol, vc->vc_nrow);
 
 	vc->vc_crow = vc->vc_ccol = 0; /* Has to be some onscreen value */
 	vc->vc_so = 0;
@@ -294,24 +315,38 @@ vgafbmmap(v, offset, prot)
 	bus_space_handle_t h;
 	u_int32_t *port;
 
-	if (offset >= 0x00000 && offset < 0x100000)	/* 1MB of mem */
+	/* memsize... */
+	if (offset >= 0x00000 && offset < 0x800000)	/* 8MB of mem??? */
 		h = vc->vc_memh + offset;
-	else if (offset >= 0x10000 && offset < 0x140000) /* 256KB of iohb */
+	else if (offset >= 0x10000000 && offset < 0x10040000 )
+		/* 256KB of iohb */
 		h = vc->vc_ioh_b;
-	else if (offset >= 0x140000 && offset < 0x180000) /* 256KB of iohc */
+	else if (offset >= 0x10040000 && offset < 0x10080000)
+		/* 256KB of iohc */
 		h = vc->vc_ioh_c;
-	else if (offset >= 0x180000 && offset < 0x1c0000) /* 256KB of iohd */
+	else if (offset >= 0x18880000 && offset < 0x100c0000)
+		/* 256KB of iohd */
 		h = vc->vc_ioh_d;
+	else if (offset >= 0x20000000 && offset < 0x30000000)
+		/* mmiosize... */
+		h = vc->vc_mmioh + (offset - 0x20000000);
 	else
 		return (-1);
 
-	port = (u_int32_t *)(h << 5);
 #ifdef alpha
+	port = (u_int32_t *)(h << 5);
 	return alpha_btop(port);		/* XXX */
 #elif defined(i386)
+	port = (u_int32_t *)(h << 5);
 	return i386_btop(port);
 #elif defined(__powerpc__)
+	{
+	/* huh ??? */
+	return h;
+	/*
 	return powerpc_btop(port);
+	*/
+	}
 #endif
 }
 

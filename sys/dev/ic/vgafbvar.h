@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.1 1998/09/27 03:55:59 rahnds Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.2 1998/10/09 02:00:52 rahnds Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -33,7 +33,7 @@ struct vgafb_config {
 	 * Filled in by front-ends.
 	 */
 	bus_space_tag_t	vc_iot, vc_memt;
-	bus_space_handle_t vc_ioh_b, vc_ioh_c, vc_ioh_d, vc_memh;
+	bus_space_handle_t vc_ioh_b, vc_ioh_c, vc_ioh_d, vc_memh, vc_mmioh;
 
 	/*
 	 * Private to back-end.
@@ -51,10 +51,11 @@ struct vgafb_config {
 	
 };
 
-int	vgafb_common_probe __P((bus_space_tag_t, bus_space_tag_t, u_int32_t, 
-	    u_int32_t, size_t ));
+int	vgafb_common_probe __P((bus_space_tag_t, bus_space_tag_t,
+	u_int32_t, size_t, u_int32_t, size_t, u_int32_t, size_t ));
 void	vgafb_common_setup __P((bus_space_tag_t, bus_space_tag_t,
-	    struct vgafb_config *, u_int32_t, u_int32_t, size_t));
+	    struct vgafb_config *, u_int32_t, size_t, u_int32_t, size_t,
+	    u_int32_t, size_t));
 void	vgafb_wscons_attach __P((struct device *, struct vgafb_config *, int));
 void	vgafb_wscons_console __P((struct vgafb_config *));
 int	vgafbioctl __P((void *, u_long, caddr_t, int, struct proc *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.2 1998/09/27 05:29:59 rahnds Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.3 1998/10/09 02:00:52 rahnds Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -46,6 +46,9 @@
 #include <dev/ic/vgafbvar.h>
 #include <dev/pci/vgafb_pcivar.h>
 
+#define PCI_VENDORID(x) ((x) & 0xFFFF)
+#define PCI_CHIPID(x)   (((x) >> 16) & 0xFFFF)
+
 struct vgafb_pci_softc {
 	struct device sc_dev; 
  
@@ -70,6 +73,127 @@ struct cfattach vgafb_pci_ca = {
 pcitag_t vgafb_pci_console_tag;
 struct vgafb_config vgafb_pci_console_vc;
 
+#if 0
+#define DEBUG_VGAFB
+#endif
+
+int
+vgafb_pci_probe(pa, id, ioaddr, iosize, memaddr, memsize, cacheable, mmioaddr, mmiosize)
+	struct pci_attach_args *pa;
+	int id;
+	u_int32_t *ioaddr, *iosize;
+	u_int32_t *memaddr, *memsize, *cacheable;
+	u_int32_t *mmioaddr, *mmiosize;
+{
+	u_int32_t addr, size, tcacheable;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	int retval;
+	int i;
+
+	*iosize   = 0x0;
+	*memsize  = 0x0;
+	*mmiosize = 0x0;
+	for (i = 0x10; i < 0x18; i += 4) {
+#ifdef DEBUG_VGAFB
+		printf("vgafb confread %x %x\n",
+			i, pci_conf_read(pc, pa->pa_tag, i));
+#endif
+		/* need to check more than just two base addresses? */
+		if (0x1 & pci_conf_read(pc, pa->pa_tag, i) ) {
+			retval = pci_io_find(pc, pa->pa_tag, i,
+				&addr, &size);
+			if (retval) {
+	printf("vgafb_pci_probe: io %x addr %x size %x\n", i, addr, size);
+				return 0;
+			}
+			if (*iosize == 0) {
+				*ioaddr = addr;
+				*iosize = size;
+			}
+
+		} else {
+			retval = pci_mem_find(pc, pa->pa_tag, i,
+				&addr, &size, &tcacheable);
+#ifdef DEBUG_VGAFB
+	printf("vgafb_pci_probe: mem %x addr %x size %x\n", i, addr, size);
+#endif
+
+			if (retval) {
+	printf("vgafb_pci_probe: mem %x addr %x size %x\n", i, addr, size);
+				return 0;
+			}
+			if (size == 0) {
+				/* ignore this entry */
+			}else if (size <= (64 * 1024)) {
+#ifdef DEBUG_VGAFB
+	printf("vgafb_pci_probe: mem %x addr %x size %x iosize %x\n",
+		i, addr, size, *iosize);
+#endif
+				if (*mmiosize == 0) {
+					/* this is mmio, not memory */
+					*mmioaddr = addr;
+					*mmiosize = size;
+					/* need skew in here for io memspace */
+				}
+			} else {
+				if (*memsize == 0) {
+					*memaddr = addr;
+					*memsize = size;
+					*cacheable = tcacheable;
+				}
+			}
+		}
+	}
+#ifdef DEBUG_VGAFB
+	printf("vgafb_pci_probe: id %x ioaddr %x, iosize %x, memaddr %x,\n memsize %x, mmioaddr %x, mmiosize %x\n",
+		id, *ioaddr, *iosize, *memaddr, *memsize, *mmioaddr, *mmiosize);
+#endif
+	if (*iosize == 0) {
+		if (id == 0) {
+#ifdef powerpc
+			/* this is only used if on openfirmware system and
+			 * the device does not have a iobase config register,
+			 * eg CirrusLogic 5434 VGA.  (they hardcode iobase to 0
+			 * thus giving standard PC addresses for the registers) 
+			 */
+			int s;
+			u_int32_t sizedata;
+
+			/*
+			 * Open Firmware (yuck) shuts down devices before
+			 * entering a program so we need to bring them back
+			 * 'online' to respond to bus accesses... so far
+			 * this is true on the power.4e.
+			 */
+			s = splhigh();
+			sizedata = pci_conf_read(pc, pa->pa_tag,
+				PCI_COMMAND_STATUS_REG);
+			sizedata |= (PCI_COMMAND_MASTER_ENABLE |
+				     PCI_COMMAND_IO_ENABLE |
+				     PCI_COMMAND_PARITY_ENABLE |
+				     PCI_COMMAND_SERR_ENABLE);
+			pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+				sizedata);
+			splx(s);
+
+#endif
+			/* if this is the first card, allow it
+			 * to be accessed in vga iospace
+			 */
+			*ioaddr = 0;
+			*iosize = 0x10000; /* 64k, good as any */
+		} else {
+			/* iospace not available, assume 640x480, pray */
+			*ioaddr = 0;
+			*iosize=0;
+		}
+	}
+#ifdef DEBUG_VGAFB
+	printf("vgafb_pci_probe: id %x ioaddr %x, iosize %x, memaddr %x,\n memsize %x, mmioaddr %x, mmiosize %x\n",
+		id, *ioaddr, *iosize, *memaddr, *memsize, *mmioaddr, *mmiosize);
+#endif
+	return 1;
+}
 int
 vgafb_pci_match(parent, match, aux)
 	struct device *parent;
@@ -81,9 +205,15 @@ vgafb_pci_match(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	u_int32_t memaddr, memsize;
+	u_int32_t memaddr, memsize, cacheable;
 	u_int32_t ioaddr, iosize;
+	u_int32_t mmioaddr, mmiosize;
 	int potential;
+	int retval;
+	static int id = 0;
+	int myid;
+
+	myid = id;
 
 	potential = 0;
 
@@ -102,59 +232,41 @@ vgafb_pci_match(parent, match, aux)
 		return (0);
 
 	/* If it's the console, we have a winner! */
-	if (!bcmp(&pa->pa_tag, &vgafb_pci_console_tag, sizeof(pa->pa_tag)))
+	if (!bcmp(&pa->pa_tag, &vgafb_pci_console_tag, sizeof(pa->pa_tag))) {
+		id++;
 		return (1);
+	}
 
-	/*
-	 * If we might match, make sure that the card actually looks OK.
-	 */
-	memaddr=0xb8000; /* default to isa addresses? */
-	ioaddr = 0; 	 /* default to isa addresses? */
-	/* needs to do something like the mem_find
-	 * below in the ifdef powerpc code. 
-	 * should really be done in a machine independant way
-	 */
-#ifdef powerpc
+#ifdef DEBUG_VGAFB
 	{
-		int retval;
-		u_int32_t cacheable;
+	int i;
 		pci_chipset_tag_t pc = pa->pa_pc;
-
-		retval = pci_mem_find(pc, pa->pa_tag, 0x10,
-			&memaddr, &memsize, &cacheable);
-		if (retval) {
-			printf(": couldn't find memory region\n");
-			return 0;
+		for (i = 0x10; i < 0x24; i+=4) {
+			printf("vgafb confread %x %x\n",
+				i, pci_conf_read(pc, pa->pa_tag, i));
 		}
-#if 0
-		printf("vga pci_mem_find returned retval %x A %x S %x C%x\n",
-			retval, memaddr, memsize, cacheable);
-#endif
-
-{
-	int s;
-	u_int32_t sizedata;
-	/*
-	 * Open Firmware (yuck) shuts down devices before entering a
-	 * program so we need to bring them back 'online' to respond
-         * to bus accesses... so far this is true on the power.4e.
-         */
-	s = splhigh();
-	sizedata = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	sizedata |= (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE |
-		     PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE);
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, sizedata);
-	splx(s);
-}
-		ioaddr = 0;
 	}
 #endif
-	if (!vgafb_common_probe(pa->pa_iot, pa->pa_memt,
-		ioaddr, memaddr, memsize))
+
+	memaddr=0xb8000; /* default to isa addresses? */
+	ioaddr = 0; 	 /* default to isa addresses? */
+
+	retval = vgafb_pci_probe(pa, myid, &ioaddr, &iosize,
+		&memaddr, &memsize, &cacheable, &mmioaddr, &mmiosize);
+	if (retval == 0) {
+		return 0;
+	}
+#if 0
+	printf("ioaddr %x, iosize %x, memaddr %x, memsize %x mmioaddr %x mmiosize %x\n",
+		ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
+#endif
+
+	if (!vgafb_common_probe(pa->pa_iot, pa->pa_memt, ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize))
 	{
 		printf("vgafb_pci_match: common_probe failed\n");
 		return (0);
 	}
+	id++;
 
 	return (1);
 }
@@ -167,44 +279,18 @@ vgafb_pci_attach(parent, self, aux)
 	struct pci_attach_args *pa = aux;
 	struct vgafb_pci_softc *sc = (struct vgafb_pci_softc *)self;
 	struct vgafb_config *vc;
-	u_int32_t memaddr, memsize;
+	u_int32_t memaddr, memsize, cacheable;
 	u_int32_t ioaddr, iosize;
+	u_int32_t mmioaddr, mmiosize;
 	int console;
+	static int id = 0;
+	int myid;
 
-	memaddr=0xb8000; /* default to isa addresses? */
-	ioaddr = 0; 	 /* default to isa addresses? */
-#ifdef powerpc
-	{
-		int retval;
-		u_int32_t cacheable;
-		pci_chipset_tag_t pc = pa->pa_pc;
+	myid = id;
 
-		retval = pci_mem_find(pc, pa->pa_tag, 0x10,
-			&memaddr, &memsize, &cacheable);
-		if (retval) {
-			printf(": couldn't find memory region\n");
-			return;
-		}
-	}
-	/* powerpc specific hack */
-{
-	int s;
-	u_int32_t sizedata;
-	pci_chipset_tag_t pc = pa->pa_pc;
-	/*
-	 * Open Firmware (yuck) shuts down devices before entering a
-	 * program so we need to bring them back 'online' to respond
-         * to bus accesses... so far this is true on the power.4e.
-         */
-	s = splhigh();
-	sizedata = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	sizedata |= (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE |
-		     PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE);
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, sizedata);
-	splx(s);
-}
-	ioaddr = 0;
-#endif
+	vgafb_pci_probe(pa, myid, &ioaddr, &iosize,
+		&memaddr, &memsize, &cacheable, &mmioaddr, &mmiosize);
+
 	console = (!bcmp(&pa->pa_tag, &vgafb_pci_console_tag, sizeof(pa->pa_tag)));
 	if (console)
 		vc = sc->sc_vc = &vgafb_pci_console_vc;
@@ -214,16 +300,23 @@ vgafb_pci_attach(parent, self, aux)
 
 		/* set up bus-independent VGA configuration */
 		vgafb_common_setup(pa->pa_iot, pa->pa_memt, vc, 
-		ioaddr, memaddr, memsize);
+		ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
 	}
 	vc->vc_mmap = vgafbpcimmap;
 	vc->vc_ioctl = vgafbpciioctl;
 
 	sc->sc_pcitag = pa->pa_tag;
 
+	if (iosize == 0) {
+		printf (", no io");
+	}
+	if (mmiosize != 0) {
+		printf (", mmio");
+	}
 	printf("\n");
 
 	vgafb_wscons_attach(self, vc, console);
+	id++;
 }
 
 void
@@ -233,47 +326,31 @@ vgafb_pci_console(iot, memt, pc, bus, device, function)
 	int bus, device, function;
 {
 	struct vgafb_config *vc = &vgafb_pci_console_vc;
-	u_int32_t memaddr, memsize;
-	u_int32_t ioaddr, iosize;
+	u_int32_t memaddr, memsize, mmioaddr;
+	u_int32_t ioaddr, iosize, mmiosize;
+	int retval;
+	u_int32_t cacheable;
+	static struct pci_attach_args spa;
+	struct pci_attach_args *pa = &spa;
 
 	/* for later recognition */
 	vgafb_pci_console_tag = pci_make_tag(pc, bus, device, function);
 
+	pa->pa_iot = iot;
+	pa->pa_memt = memt;
+	pa->pa_tag = vgafb_pci_console_tag;
+	/* 
+	pa->pa_pc = XXX;
+	 */
+
 /* XXX probe pci before pci bus config? */
-#if 0
-	int retval;
-	u_int32_t cacheable;
-	pci_chipset_tag_t pc = pa->pa_pc;
 
-	retval = pci_mem_find(pc, pa->pa_tag, 0x10,
-		&memaddr, &memsize, &cacheable);
-	if (retval) {
-		printf(": couldn't find memory region\n");
-		return 0;
-	}
-	printf("vga pci_mem_find returned retval %x A %x S %x C%x\n",
-		retval, memaddr, memsize, cacheable);
+	vgafb_pci_probe(pa, 0, &ioaddr, &iosize,
+		&memaddr, &memsize, &cacheable, mmioaddr, mmiosize);
 
-{
-	int s;
-	u_int32_t sizedata;
-	/*
-	 * Open Firmware (yuck) shuts down devices before entering a
-	 * program so we need to bring them back 'online' to respond
-         * to bus accesses... so far this is true on the power.4e.
-         */
-	s = splhigh();
-	sizedata = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-	sizedata |= (PCI_COMMAND_MASTER_ENABLE | PCI_COMMAND_IO_ENABLE |
-		     PCI_COMMAND_PARITY_ENABLE | PCI_COMMAND_SERR_ENABLE);
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, sizedata);
-	splx(s);
-}
-	ioaddr = 0;
-#endif
 
 	/* set up bus-independent VGA configuration */
-	vgafb_common_setup(iot, memt, vc, ioaddr, memaddr, memsize);
+	vgafb_common_setup(iot, memt, vc, ioaddr, iosize, memaddr, memsize, mmioaddr, mmiosize);
 
 	vgafb_wscons_console(vc);
 }
@@ -288,7 +365,7 @@ vgafbpciioctl(v, cmd, data, flag, p)
 {
 	struct vgafb_pci_softc *sc = v;
 
-	return (vgaioctl(sc->sc_vc, cmd, data, flag, p));
+	return (vgafbioctl(sc->sc_vc, cmd, data, flag, p));
 }
 
 int
@@ -299,5 +376,5 @@ vgafbpcimmap(v, offset, prot)
 {
 	struct vgafb_pci_softc *sc = v;
 
-	return (vgammap(sc->sc_vc, offset, prot));
+	return (vgafbmmap(sc->sc_vc, offset, prot));
 }
