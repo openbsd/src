@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.13 2001/02/27 06:48:28 tholo Exp $	*/
+/*	$OpenBSD: an.c,v 1.14 2001/04/16 00:40:40 tholo Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -262,6 +262,7 @@ an_attach(sc)
 
 	shutdownhook_establish(an_shutdown, sc);
 
+	an_reset(sc);
 	an_init(sc);
 
 	return(0);
@@ -503,7 +504,13 @@ an_cmd(sc, cmd, val)
 	int cmd;
 	int val;
 {
-	int i;
+	int i, stat;
+
+	/* make sure previous command completed */
+	if (CSR_READ_2(sc, AN_COMMAND) & AN_CMD_BUSY) {
+		printf("%s: command busy\n", sc->sc_dev.dv_xname);
+		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CLR_STUCK_BUSY);
+	}
 
 	CSR_WRITE_2(sc, AN_PARAM0, val);
 	CSR_WRITE_2(sc, AN_PARAM1, 0);
@@ -522,29 +529,22 @@ an_cmd(sc, cmd, val)
 			}
 		}
 	}
-/* printf("<<cmd %x,%d>>", cmd, i); */
-#if 0
-	DELAY(100);
-	for (i = AN_TIMEOUT; i--; DELAY(100)) {
-		int s = CSR_READ_2(sc, AN_STATUS);
-		CSR_READ_2(sc, AN_RESP0);
-		CSR_READ_2(sc, AN_RESP1);
-		CSR_READ_2(sc, AN_RESP2);
-		if ((s & AN_STAT_CMD_CODE) == (cmd & AN_STAT_CMD_CODE))
-			break;
-	}
-/*printf("<<resp %d, %x>>", i, s);*/
-#endif
-	/* Ack the command */
-	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CMD);
 
+	stat = CSR_READ_2(sc, AN_STATUS);
+
+	/* clear stuck command busy if needed */
 	if (CSR_READ_2(sc, AN_COMMAND) & AN_CMD_BUSY) {
-/*printf("busy");*/
 		CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CLR_STUCK_BUSY);
 	}
 
+	/* Ack the command */
+	CSR_WRITE_2(sc, AN_EVENT_ACK, AN_EV_CMD);
+
 	if (i <= 0)
 		return(ETIMEDOUT);
+
+	if (stat & AN_STAT_CMD_RESULT)
+		return(EIO);
 
 	return(0);
 }
@@ -955,6 +955,7 @@ an_ioctl(ifp, command, data)
 			    !(ifp->if_flags & IFF_PROMISC) &&
 			    sc->an_if_flags & IFF_PROMISC) {
 				an_promisc(sc, 0);
+				an_reset(sc);
 			}
 			an_init(sc);
 		} else {
@@ -1054,8 +1055,6 @@ an_init(sc)
 
 	if (ifp->if_flags & IFF_RUNNING)
 		an_stop(sc);
-
-	an_reset(sc);
 
 	sc->an_associated = 0;
 
