@@ -1,4 +1,4 @@
-/*	$OpenBSD: adlookup.c,v 1.11 1997/12/18 00:59:01 gene Exp $	*/
+/*	$OpenBSD: adlookup.c,v 1.12 2003/01/31 17:37:49 art Exp $	*/
 /*	$NetBSD: adlookup.c,v 1.17 1996/10/25 23:13:58 cgd Exp $	*/
 
 /*
@@ -90,6 +90,7 @@ adosfs_lookup(v)
 	*vpp = NULL;
 	ucp = cnp->cn_cred;
 	nameiop = cnp->cn_nameiop;
+	cnp->cn_flags &= ~PDIRUNLOCK;
 	flags = cnp->cn_flags;
 	last = flags & ISLASTCN;
 	lockp = flags & LOCKPARENT;
@@ -107,41 +108,17 @@ adosfs_lookup(v)
 		return (ENOTDIR);
 	if ((error = VOP_ACCESS(vdp, VEXEC, ucp, cnp->cn_proc)) != 0)
 		return (error);
-	/*
-	 * cache lookup algorithm borrowed from ufs_lookup()
-	 * its not consistent with otherthings in this function..
-	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) != 0) {
-		if (error == ENOENT)
-			return (error);
+	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
+	    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME))
+		return (EROFS);
 
-		vpid = (*vpp)->v_id;
-		if (vdp == *vpp) {
-			VREF(vdp);
-			error = 0;
-		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(vdp, 0, p);	/* race */
-			error = vget(*vpp, LK_EXCLUSIVE, p);
-			if (error == 0 && lockp && last)
-				error =
-				    vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p);
-		} else {
-			error = vget(*vpp, LK_EXCLUSIVE, p);
-			/* if (lockp == 0 || error || last) */
-			if (lockp == 0 || error || last == 0)
-				VOP_UNLOCK(vdp, 0, p);
-		}
-		if (error == 0) {
-			if (vpid == vdp->v_id)
-				return (0);
-			vput(*vpp);
-			if (lockp && vdp != *vpp && last)
-				VOP_UNLOCK(vdp, 0, p);
-		}
-		*vpp = NULL;
-		if ((error = vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
-			return (error);
-	}
+	/*
+	 * Before tediously performing a linear scan of the directory,
+	 * check the name cache to see if the directory/name pair
+	 * we are looking for is known already.
+	 */
+	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
+		return (error);
 
 	/*
 	 * fake a '.'
@@ -174,12 +151,17 @@ adosfs_lookup(v)
 		 * 
 		 */
 		VOP_UNLOCK(vdp, 0, p); /* race */
+		cnp->cn_flags |= PDIRUNLOCK;
 		if ((error = VFS_VGET(vdp->v_mount, ABLKTOINO(adp->pblock),
-		    vpp)) != 0)
-			vn_lock(vdp, LK_RETRY | LK_EXCLUSIVE, p);
-		else if (last && lockp && 
-			 (error = vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p)))
-			vput(*vpp);
+		    vpp)) != 0) {
+			if (vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+				cnp->cn_flags &= ~PDIRUNLOCK;
+		} else if (last && lockp) {
+			if ((error = vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p)))
+				vput(*vpp);
+			else
+				cnp->cn_flags &= ~PDIRUNLOCK;
+		}
 		if (error) {
 			*vpp = NULL;
 			return (error);
@@ -238,8 +220,10 @@ adosfs_lookup(v)
 #endif
 			return (error);
 		}
-		if (lockp == 0)
+		if (lockp == 0) {
 			VOP_UNLOCK(vdp, 0, p);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		cnp->cn_nameiop |= SAVENAME;
 #ifdef ADOSFS_DIAGNOSTIC
 		printf("EJUSTRETURN)");
@@ -278,8 +262,10 @@ found:
 	}
 	if (vdp == *vpp)
 		VREF(vdp);
-	else if (lockp == 0 || last == 0)
+	else if (lockp == 0 || last == 0) {
 		VOP_UNLOCK(vdp, 0, p);
+		cnp->cn_flags |= PDIRUNLOCK;
+	}
 found_lockdone:
 	if ((cnp->cn_flags & MAKEENTRY) && nocache == 0)
 		cache_enter(vdp, *vpp, cnp);

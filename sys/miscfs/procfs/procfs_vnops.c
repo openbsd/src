@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vnops.c,v 1.26 2002/04/06 23:40:13 miod Exp $	*/
+/*	$OpenBSD: procfs_vnops.c,v 1.27 2003/01/31 17:37:50 art Exp $	*/
 /*	$NetBSD: procfs_vnops.c,v 1.40 1996/03/16 23:52:55 christos Exp $	*/
 
 /*
@@ -751,9 +751,10 @@ procfs_lookup(v)
 	pid_t pid;
 	struct pfsnode *pfs;
 	struct proc *p = NULL;
-	int i, error, iscurproc = 0, isself = 0;
+	int i, error, wantpunlock, iscurproc = 0, isself = 0;
 
 	*vpp = NULL;
+	cnp->cn_flags &= ~PDIRUNLOCK;
 
 	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)
 		return (EROFS);
@@ -761,10 +762,10 @@ procfs_lookup(v)
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
 		VREF(dvp);
-		/*VOP_LOCK(dvp);*/
 		return (0);
 	}
 
+	wantpunlock = (~cnp->cn_flags & (LOCKPARENT | ISLASTCN));
 	pfs = VTOPFS(dvp);
 	switch (pfs->pfs_type) {
 	case Proot:
@@ -777,12 +778,10 @@ procfs_lookup(v)
 		if (iscurproc || isself) {
 			error = procfs_allocvp(dvp->v_mount, vpp, 0,
 			    iscurproc ? Pcurproc : Pself);
-#if 0
 			if ((error == 0) && (wantpunlock)) {
-				VOP_UNLOCK(dvp, 0);
+				VOP_UNLOCK(dvp, 0, curp);
 				cnp->cn_flags |= PDIRUNLOCK;
 			}
-#endif
 			return (error);
 		}
 
@@ -798,12 +797,10 @@ procfs_lookup(v)
 		if (i != nproc_root_targets) {
 			error = procfs_allocvp(dvp->v_mount, vpp, 0,
 			    pt->pt_pfstype);
-#if 0
 			if ((error == 0) && (wantpunlock)) {
-				VOP_UNLOCK(dvp, 0);
+				VOP_UNLOCK(dvp, 0, curp);
 				cnp->cn_flags |= PDIRUNLOCK;
 			}
-#endif
 			return (error);
 		}
 
@@ -815,11 +812,29 @@ procfs_lookup(v)
 		if (p == 0)
 			break;
 
-		return (procfs_allocvp(dvp->v_mount, vpp, pid, Pproc));
+		error = procfs_allocvp(dvp->v_mount, vpp, pid, Pproc);
+		if ((error == 0) && wantpunlock) {
+			VOP_UNLOCK(dvp, 0, curp);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
+		return (error);
 
 	case Pproc:
-		if (cnp->cn_flags & ISDOTDOT)
-			return (procfs_root(dvp->v_mount, vpp));
+		/*
+		 * do the .. dance. We unlock the directory, and then
+		 * get the root dir. That will automatically return ..
+		 * locked. Then if the caller wanted dvp locked, we
+		 * re-lock.
+		 */
+		if (cnp->cn_flags & ISDOTDOT) {
+			VOP_UNLOCK(dvp, 0, p);
+			cnp->cn_flags |= PDIRUNLOCK;
+			error = procfs_root(dvp->v_mount, vpp);
+			if ((error == 0) && (wantpunlock == 0) &&
+			    ((error = vn_lock(dvp, LK_EXCLUSIVE, curp)) == 0))
+				cnp->cn_flags &= ~PDIRUNLOCK;
+			return (error);
+		}
 
 		p = pfind(pfs->pfs_pid);
 		if (p == 0)
@@ -840,12 +855,21 @@ procfs_lookup(v)
 			/* We already checked that it exists. */
 			VREF(fvp);
 			vn_lock(fvp, LK_EXCLUSIVE | LK_RETRY, curp);
+			if (wantpunlock) {
+				VOP_UNLOCK(dvp, 0, curp);
+				cnp->cn_flags |= PDIRUNLOCK;
+			}
 			*vpp = fvp;
 			return (0);
 		}
 
-		return (procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
-		    pt->pt_pfstype));
+		error =  procfs_allocvp(dvp->v_mount, vpp, pfs->pfs_pid,
+		    pt->pt_pfstype);
+		if ((error == 0) && (wantpunlock)) {
+			VOP_UNLOCK(dvp, 0, curp);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
+		return (error);
 
 	default:
 		return (ENOTDIR);

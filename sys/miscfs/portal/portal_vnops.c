@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vnops.c,v 1.12 2002/03/14 01:27:08 millert Exp $	*/
+/*	$OpenBSD: portal_vnops.c,v 1.13 2003/01/31 17:37:50 art Exp $	*/
 /*	$NetBSD: portal_vnops.c,v 1.17 1996/02/13 13:12:57 mycroft Exp $	*/
 
 /*
@@ -187,6 +187,7 @@ portal_lookup(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct vnode *dvp = ap->a_dvp;
 	char *pname = cnp->cn_nameptr;
+	struct proc *p = cnp->cn_proc;
 	struct portalnode *pt;
 	int error;
 	struct vnode *fvp = 0;
@@ -201,7 +202,6 @@ portal_lookup(v)
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
 		VREF(dvp);
-		/*VOP_LOCK(dvp);*/
 		return (0);
 	}
 
@@ -228,7 +228,15 @@ portal_lookup(v)
 	pt->pt_fileid = portal_fileid++;
 
 	*vpp = fvp;
-	/*VOP_LOCK(fvp);*/
+	VOP_LOCK(fvp, LK_EXCLUSIVE, p);
+	/*
+	 * As we are the last component of the path name, fix up
+	 * the locking on the directory node.
+	 */
+	if ((cnp->cn_flags & LOCKPARENT) == 0) {
+		VOP_UNLOCK(dvp, 0, p);
+		cnp->cn_flags |= PDIRUNLOCK;
+	}
 	return (0);
 
 bad:;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_lookup.c,v 1.14 2002/10/12 01:09:45 krw Exp $	*/
+/*	$OpenBSD: ext2fs_lookup.c,v 1.15 2003/01/31 17:37:50 art Exp $	*/
 /*	$NetBSD: ext2fs_lookup.c,v 1.16 2000/08/03 20:29:26 thorpej Exp $	*/
 
 /* 
@@ -317,50 +317,8 @@ ext2fs_lookup(v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) != 0) {
-		int vpid;	/* capability number of vnode */
-
-		if (error == ENOENT)
-			return (error);
-		/*
-		 * Get the next vnode in the path.
-		 * See comment below starting `Step through' for
-		 * an explaination of the locking protocol.
-		 */
-		pdp = vdp;
-		dp = VTOI(*vpp);
-		vdp = *vpp;
-		vpid = vdp->v_id;
-		if (pdp == vdp) {   /* lookup on "." */
-			VREF(vdp);
-			error = 0;
-		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(pdp, 0, p);
-			error = vget(vdp, LK_EXCLUSIVE, p);
-			if (!error && lockparent && (flags & ISLASTCN))
-				error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
-		} else {
-			error = vget(vdp, LK_EXCLUSIVE, p);
-			if (!lockparent || error || !(flags & ISLASTCN))
-				VOP_UNLOCK(pdp, 0, p);
-		}
-		/*
-		 * Check that the capability number did not change
-		 * while we were waiting for the lock.
-		 */
-		if (!error) {
-			if (vpid == vdp->v_id)
-				return (0);
-			vput(vdp);
-			if (lockparent && pdp != vdp && (flags & ISLASTCN))
-				VOP_UNLOCK(pdp, 0, p);
-		}
-		if ((error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
-			return (error);
-		vdp = pdp;
-		dp = VTOI(pdp);
-		*vpp = NULL;
-	}
+	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
+		return (error);
 
 	/*
 	 * Suppress search for slots unless creating
@@ -570,8 +528,10 @@ searchloop:
 		 * information cannot be used.
 		 */
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent)
+		if (!lockparent) {
 			VOP_UNLOCK(vdp, 0, p);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (EJUSTRETURN);
 	}
 	/*
@@ -646,8 +606,10 @@ found:
 			return (EPERM);
 		}
 		*vpp = tdp;
-		if (!lockparent)
+		if (!lockparent) {
 			VOP_UNLOCK(vdp, 0, p);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (0);
 	}
 
@@ -671,8 +633,10 @@ found:
 			return (error);
 		*vpp = tdp;
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent)
+		if (!lockparent) {
 			VOP_UNLOCK(vdp, 0, p);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (0);
 	}
 
@@ -698,14 +662,18 @@ found:
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0, p);	/* race to get the inode */
+		cnp->cn_flags |= PDIRUNLOCK;
 		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0) {
-			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
-		if (lockparent && (flags & ISLASTCN) &&
-			(error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p)) != 0) {
-			vput(tdp);
-			return (error);
+		if (lockparent && (flags & ISLASTCN)) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE, p)) != 0) {
+				vput(tdp);
+				return (error);
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
@@ -714,8 +682,10 @@ found:
 	} else {
 		if ((error = VFS_VGET(vdp->v_mount, dp->i_ino, &tdp)) != 0)
 			return (error);
-		if (!lockparent || !(flags & ISLASTCN))
+		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(pdp, 0, p);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		*vpp = tdp;
 	}
 

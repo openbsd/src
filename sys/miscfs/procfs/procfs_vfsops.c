@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs_vfsops.c,v 1.16 2002/03/14 01:27:08 millert Exp $	*/
+/*	$OpenBSD: procfs_vfsops.c,v 1.17 2003/01/31 17:37:50 art Exp $	*/
 /*	$NetBSD: procfs_vfsops.c,v 1.25 1996/02/09 22:40:53 christos Exp $	*/
 
 /*
@@ -82,6 +82,7 @@ procfs_mount(mp, path, data, ndp, p)
 	size_t size;
 	struct procfsmount *pmnt;
 	struct procfs_args args;
+	struct vnode *rvp;
 	int error;
 
 	if (UIO_MX & (UIO_MX-1)) {
@@ -102,9 +103,17 @@ procfs_mount(mp, path, data, ndp, p)
 	} else
 		args.flags = 0;
 
+	error = procfs_allocvp(mp, &rvp, 0, Proot);
+	if (error)
+		return (error);
+	rvp->v_type = VDIR;
+	rvp->v_flag |= VROOT;
+
 	mp->mnt_flag |= MNT_LOCAL;
 	pmnt = (struct procfsmount *) malloc(sizeof(struct procfsmount),
 	    M_UFSMNT, M_WAITOK);	/* XXX need new malloc type */
+
+	pmnt->rvp = rvp;
 
 	mp->mnt_data = (qaddr_t)pmnt;
 	vfs_getnewfsid(mp);
@@ -134,6 +143,7 @@ procfs_unmount(mp, mntflags, p)
 	int error;
 	extern int doforce;
 	int flags = 0;
+	struct vnode *rvp = VFSTOPROC(mp)->rvp;
 
 	if (mntflags & MNT_FORCE) {
 		/* procfs can never be rootfs so don't check for it */
@@ -142,8 +152,15 @@ procfs_unmount(mp, mntflags, p)
 		flags |= FORCECLOSE;
 	}
 
-	if ((error = vflush(mp, 0, flags)) != 0)
+	vrele(rvp);
+
+	if ((error = vflush(mp, 0, flags)) != 0) {
+		vget(rvp, 0, curproc);
 		return (error);
+	}
+
+	free(VFSTOPROC(mp), M_UFSMNT);
+	mp->mnt_data = 0;
 
 	return (0);
 }
@@ -153,8 +170,13 @@ procfs_root(mp, vpp)
 	struct mount *mp;
 	struct vnode **vpp;
 {
+	struct vnode *vp = VFSTOPROC(mp)->rvp;
 
-	return (procfs_allocvp(mp, vpp, 0, Proot));
+	VREF(vp);
+	vn_lock(vp, LK_EXCLUSIVE, curproc);
+	*vpp = vp;
+
+	return (0);
 }
 
 /* ARGSUSED */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_lookup.c,v 1.11 1999/02/19 17:26:17 art Exp $	*/
+/*	$OpenBSD: msdosfs_lookup.c,v 1.12 2003/01/31 17:37:50 art Exp $	*/
 /*	$NetBSD: msdosfs_lookup.c,v 1.34 1997/10/18 22:12:27 ws Exp $	*/
 
 /*-
@@ -110,12 +110,15 @@ msdosfs_lookup(v)
 	struct buf *bp = 0;
 	struct direntry *dep;
 	u_char dosfilename[12];
-	int flags = cnp->cn_flags;
+	int flags;
 	int nameiop = cnp->cn_nameiop;
 	int wincnt = 1;
 	int chksum = -1;
 	int olddos = 1;
-	
+
+	cnp->cn_flags &= ~PDIRUNLOCK; /* XXX why this ?? */
+	flags = cnp->cn_flags;
+
 #ifdef MSDOSFS_DEBUG
 	printf("msdosfs_lookup(): looking for %s\n", cnp->cn_nameptr);
 #endif
@@ -144,56 +147,8 @@ msdosfs_lookup(v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) != 0) {
-		int vpid;
-
-		if (error == ENOENT)
-			return (error);
-		/*
-		 * Get the next vnode in the path.
-		 * See comment below starting `Step through' for
-		 * an explaination of the locking protocol.
-		 */
-		pdp = vdp;
-		dp = VTODE(*vpp);
-		vdp = *vpp;
-		vpid = vdp->v_id;
-		if (pdp == vdp) {   /* lookup on "." */
-			VREF(vdp);
-			error = 0;
-		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(pdp, 0, p);
-			error = vget(vdp, LK_EXCLUSIVE, p);
-			if (!error && lockparent && (flags & ISLASTCN))
-				error =
-				    vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
-		} else {
-			error = vget(vdp, LK_EXCLUSIVE, p);
-			if (!lockparent || error || !(flags & ISLASTCN))
-				VOP_UNLOCK(pdp, 0, p);
-		}
-		/*
-		 * Check that the capability number did not change
-		 * while we were waiting for the lock.
-		 */
-		if (!error) {
-			if (vpid == vdp->v_id) {
-#ifdef MSDOSFS_DEBUG
-				printf("msdosfs_lookup(): cache hit, vnode %08x, file %s\n",
-				    vdp, dp->de_Name);
-#endif
-				return (0);
-			}
-			vput(vdp);
-			if (lockparent && pdp != vdp && (flags & ISLASTCN))
-				VOP_UNLOCK(pdp, 0, p);
-		}
-		if ((error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p)) != 0)
-			return (error);
-		vdp = pdp;
-		dp = VTODE(vdp);
-		*vpp = NULL;
-	}
+	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
+		return (error);
 
 	/*
 	 * If they are going after the . or .. entry in the root directory,
@@ -415,8 +370,10 @@ notfound:;
 		 * information cannot be used.
 		 */
 		cnp->cn_flags |= SAVENAME;
-		if (!lockparent)
+		if (!lockparent) {
 			VOP_UNLOCK(vdp, 0, p);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (EJUSTRETURN);
 	}
 	/*
@@ -504,8 +461,10 @@ foundroot:;
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
 		*vpp = DETOV(tdp);
-		if (!lockparent)
+		if (!lockparent) {
 			VOP_UNLOCK(vdp, 0, p);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return (0);
 	}
 
@@ -562,14 +521,19 @@ foundroot:;
 	pdp = vdp;
 	if (flags & ISDOTDOT) {
 		VOP_UNLOCK(pdp, 0, p);	/* race to get the inode */
+		cnp->cn_flags |= PDIRUNLOCK;
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0) {
-			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
-		if (lockparent && (flags & ISLASTCN) &&
-		    (error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p))) {
-			vput(DETOV(tdp));
-			return (error);
+		if (lockparent && (flags & ISLASTCN)) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY,
+			    p))) {
+				vput(DETOV(tdp));
+				return (error);
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 		*vpp = DETOV(tdp);
 	} else if (dp->de_StartCluster == scn && isadir) {
@@ -578,8 +542,10 @@ foundroot:;
 	} else {
 		if ((error = deget(pmp, cluster, blkoff, &tdp)) != 0)
 			return (error);
-		if (!lockparent || !(flags & ISLASTCN))
+		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(pdp, 0, p);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		*vpp = DETOV(tdp);
 	}
 

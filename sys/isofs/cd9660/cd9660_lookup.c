@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_lookup.c,v 1.9 2001/06/23 02:14:22 csapuntz Exp $	*/
+/*	$OpenBSD: cd9660_lookup.c,v 1.10 2003/01/31 17:37:49 art Exp $	*/
 /*	$NetBSD: cd9660_lookup.c,v 1.18 1997/05/08 16:19:59 mycroft Exp $	*/
 
 /*-
@@ -129,9 +129,12 @@ cd9660_lookup(v)
 	struct vnode **vpp = ap->a_vpp;
 	struct componentname *cnp = ap->a_cnp;
 	struct ucred *cred = cnp->cn_cred;
-	int flags = cnp->cn_flags;
+	int flags;
 	int nameiop = cnp->cn_nameiop;
 	struct proc *p = cnp->cn_proc;
+
+	cnp->cn_flags &= ~PDIRUNLOCK;
+	flags = cnp->cn_flags;
 
 	bp = NULL;
 	*vpp = NULL;
@@ -158,55 +161,9 @@ cd9660_lookup(v)
 	 * check the name cache to see if the directory/name pair
 	 * we are looking for is known already.
 	 */
-	if ((error = cache_lookup(vdp, vpp, cnp)) != 0) {
-		int vpid;	/* capability number of vnode */
+	if ((error = cache_lookup(vdp, vpp, cnp)) >= 0)
+		return (error);
 
-		if (error == ENOENT)
-			return (error);
-#ifdef PARANOID
-		if ((vdp->v_flag & VROOT) && (flags & ISDOTDOT))
-			panic("cd9660_lookup: .. through root");
-#endif
-		/*
-		 * Get the next vnode in the path.
-		 * See comment below starting `Step through' for
-		 * an explaination of the locking protocol.
-		 */
-		pdp = vdp;
-		dp = VTOI(*vpp);
-		vdp = *vpp;
-		vpid = vdp->v_id;
-		if (pdp == vdp) {
-			VREF(vdp);
-			error = 0;
-		} else if (flags & ISDOTDOT) {
-			VOP_UNLOCK(pdp, 0, p);
-			error = vget(vdp, LK_EXCLUSIVE, p);
-			if (!error && lockparent && (flags & ISLASTCN))
-				error = vn_lock(pdp, LK_EXCLUSIVE, p);
-		} else {
-			error = vget(vdp, LK_EXCLUSIVE, p);
-			if (!lockparent || error || !(flags & ISLASTCN))
-				VOP_UNLOCK(pdp, 0, p);
-		}
-		/*
-		 * Check that the capability number did not change
-		 * while we were waiting for the lock.
-		 */
-		if (!error) {
-			if (vpid == vdp->v_id)
-				return (0);
-			vput(vdp);
-			if (lockparent && pdp != vdp && (flags & ISLASTCN))
-				VOP_UNLOCK(pdp, 0, p);
-		}
-		if ((error = vn_lock(pdp, LK_EXCLUSIVE, p)) != 0)
-			return (error);
-		vdp = pdp;
-		dp = VTOI(pdp);
-		*vpp = NULL;
-	}
-	
 	len = cnp->cn_namelen;
 	name = cnp->cn_nameptr;
 	/*
@@ -426,16 +383,20 @@ found:
 	if (flags & ISDOTDOT) {
 		brelse(bp);
 		VOP_UNLOCK(pdp, 0, p);	/* race to get the inode */
+		cnp->cn_flags |= PDIRUNLOCK;
 		error = cd9660_vget_internal(vdp->v_mount, dp->i_ino, &tdp,
-					     dp->i_ino != ino, NULL);
+			    dp->i_ino != ino, NULL);
 		if (error) {
-			vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p);
+			if (vn_lock(pdp, LK_EXCLUSIVE | LK_RETRY, p) == 0)
+				cnp->cn_flags &= ~PDIRUNLOCK;
 			return (error);
 		}
-		if (lockparent && (flags & ISLASTCN) &&
-		    (error = vn_lock(pdp, LK_EXCLUSIVE, p))) {
-			vput(tdp);
-			return (error);
+		if (lockparent && (flags & ISLASTCN)) {
+			if ((error = vn_lock(pdp, LK_EXCLUSIVE, p))) {
+				vput(tdp);
+				return (error);
+			}
+			cnp->cn_flags &= ~PDIRUNLOCK;
 		}
 		*vpp = tdp;
 	} else if (dp->i_number == dp->i_ino) {
@@ -448,8 +409,10 @@ found:
 		brelse(bp);
 		if (error)
 			return (error);
-		if (!lockparent || !(flags & ISLASTCN))
+		if (!lockparent || !(flags & ISLASTCN)) {
 			VOP_UNLOCK(pdp, 0, p);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		*vpp = tdp;
 	}
 	

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.28 2002/10/12 02:03:46 krw Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.29 2003/01/31 17:37:50 art Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -287,7 +287,6 @@ kernfs_freevp(vp, p)
 	struct kernfs_node *kf = VTOKERN(vp);
 
 	TAILQ_REMOVE(&kfshead, kf, list);
-	VOP_UNLOCK(vp, 0, p);
 	FREE(vp->v_data, M_TEMP);
 	vp->v_data = 0;
 	return(0);
@@ -487,15 +486,16 @@ kernfs_lookup(v)
 	struct proc *p = cnp->cn_proc;
 	struct kern_target *kt;
 	struct vnode *vp;
-	int error;
+	int error, wantpunlock;
 
 #ifdef KERNFS_DIAGNOSTIC
 	printf("kernfs_lookup(%p)\n", ap);
 	printf("kernfs_lookup(dp = %p, vpp = %p, cnp = %p)\n", dvp, vpp, ap->a_cnp);
 	printf("kernfs_lookup(%s)\n", pname);
 #endif
-	VOP_UNLOCK(dvp, 0, p);
+
 	*vpp = NULLVP;
+	cnp->cn_flags &= ~PDIRUNLOCK;
 
 	if (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)
 		return (EROFS);
@@ -503,14 +503,14 @@ kernfs_lookup(v)
 	if (cnp->cn_namelen == 1 && *pname == '.') { 
 		*vpp = dvp;
 		VREF(dvp);
-		vn_lock(dvp, LK_SHARED | LK_RETRY, p);
 		return (0);
 	}
+
+	wantpunlock = (~cnp->cn_flags & (LOCKPARENT | ISLASTCN));
 
 	kt = kernfs_findtarget(pname, cnp->cn_namelen);
 	if (kt == NULL) {
 		/* not found */
-		vn_lock(dvp, LK_SHARED | LK_RETRY, p);
 		return(cnp->cn_nameiop == LOOKUP ? ENOENT : EROFS);
 	}
 
@@ -524,17 +524,25 @@ kernfs_lookup(v)
 		*vpp = vp;
 		if (vget(vp, LK_EXCLUSIVE, p)) 
 			goto loop;
+		if (wantpunlock) {
+			VOP_UNLOCK(dvp, 0, p);
+			cnp->cn_flags |= PDIRUNLOCK;
+		}
 		return(0);
 	}
 
 
 	if ((error = kernfs_allocvp(kt, dvp->v_mount, vpp)) != 0) {
-		vn_lock(dvp, LK_SHARED | LK_RETRY, p);
 		return(error);
 	}
 
 	vn_lock(*vpp, LK_SHARED | LK_RETRY, p);
-	return(error);
+
+	if (wantpunlock) {
+		VOP_UNLOCK(dvp, 0, p);
+		cnp->cn_flags |= PDIRUNLOCK;
+	}
+	return (0);
 }
 		
 /*ARGSUSED*/

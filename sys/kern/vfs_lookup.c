@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_lookup.c,v 1.21 2002/08/27 16:04:42 mickey Exp $	*/
+/*	$OpenBSD: vfs_lookup.c,v 1.22 2003/01/31 17:37:50 art Exp $	*/
 /*	$NetBSD: vfs_lookup.c,v 1.17 1996/02/09 19:00:59 christos Exp $	*/
 
 /*
@@ -289,6 +289,7 @@ lookup(ndp)
 	int wantparent;			/* 1 => wantparent or lockparent flag */
 	int rdonly;			/* lookup read-only flag bit */
 	int error = 0;
+	int dpunlocked = 0;		/* dp has already been unlocked */
 	int slashes;
 	struct componentname *cnp = &ndp->ni_cnd;
 	struct proc *p = cnp->cn_proc;
@@ -439,6 +440,8 @@ dirloop:
 unionlookup:
 	ndp->ni_dvp = dp;
 	ndp->ni_vp = NULL;
+	cnp->cn_flags &= ~PDIRUNLOCK;
+
 	if ((error = VOP_LOOKUP(dp, &ndp->ni_vp, cnp)) != 0) {
 #ifdef DIAGNOSTIC
 		if (ndp->ni_vp != NULL)
@@ -452,7 +455,10 @@ unionlookup:
 		    (dp->v_mount->mnt_flag & MNT_UNION)) {
 			tdp = dp;
 			dp = dp->v_mount->mnt_vnodecovered;
-			vput(tdp);
+			if (cnp->cn_flags & PDIRUNLOCK)
+				vrele(tdp);
+			else
+				vput(tdp);
 			VREF(dp);
 			vn_lock(dp, LK_EXCLUSIVE | LK_RETRY, p);
 			goto unionlookup;
@@ -517,11 +523,14 @@ unionlookup:
 	    (cnp->cn_flags & NOCROSSMOUNT) == 0) {
 		if (vfs_busy(mp, 0, 0, p))
 			continue;
+		VOP_UNLOCK(dp, 0, p);
 		error = VFS_ROOT(mp, &tdp);
 		vfs_unbusy(mp, p);
-		if (error)
+		if (error) {
+			dpunlocked = 1;
 			goto bad2;
-		vput(dp);
+		}
+		vrele(dp);
 		ndp->ni_vp = dp = tdp;
 	}
 
@@ -585,11 +594,15 @@ terminal:
 	return (0);
 
 bad2:
-	if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN))
+	if ((cnp->cn_flags & LOCKPARENT) && (cnp->cn_flags & ISLASTCN) &&
+	    ((cnp->cn_flags & PDIRUNLOCK) == 0))
 		VOP_UNLOCK(ndp->ni_dvp, 0, p);
 	vrele(ndp->ni_dvp);
 bad:
-	vput(dp);
+	if (dpunlocked)
+		vrele(dp);
+	else
+		vput(dp);
 	ndp->ni_vp = NULL;
 	return (error);
 }
