@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.c,v 1.3 2004/08/10 20:15:47 deraadt Exp $	*/
+/*	$OpenBSD: arcbios.c,v 1.4 2004/08/15 10:36:17 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  * Copyright (c) 1996-2004 Opsycon AB.  All rights reserved.
@@ -28,7 +28,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
-#include <sys/user.h>
 #include <lib/libkern/libkern.h>
 #include <machine/pte.h>
 #include <machine/cpu.h>

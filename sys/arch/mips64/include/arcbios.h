@@ -1,4 +1,4 @@
-/*	$OpenBSD: arcbios.h,v 1.3 2004/08/10 20:28:13 deraadt Exp $	*/
+/*	$OpenBSD: arcbios.h,v 1.4 2004/08/15 10:36:17 pefo Exp $	*/
 /*-
  * Copyright (c) 1996 M. Warner Losh.  All rights reserved.
  *
@@ -353,40 +353,40 @@ void bios_display_info(int *, int *, int *, int *);
 /*
  *  Direct ARC-Bios calls.
  */
-int Bios_Load(void);
-int Bios_Invoke(void);
-int Bios_Execute(void);
+int Bios_Load(char *, u_int32_t, u_int32_t, u_int32_t *);
+int Bios_Invoke(uint32_t, uint32_t, uint32_t, char **, char **);
+int Bios_Execute(char *, u_int32_t, char **, char **);
 void Bios_Halt(void);
 void Bios_PowerDown(void);
 void Bios_Restart(void);
 void Bios_Reboot(void);
 void Bios_EnterInteractiveMode(void);
-int Bios_GetPeer(void);
-arc_config_t *Bios_GetChild(arc_config_t *);
-int Bios_GetParent(void);
-int Bios_GetConfigurationData(void);
-int Bios_AddChild(void);
-int Bios_DeleteComponent(void);
-int Bios_GetComponent(void);
+int Bios_GetPeer(void *);
+arc_config_t *Bios_GetChild(void *);
+int Bios_GetParent(void *);
+int Bios_GetConfigurationData(void *, void *);
+int Bios_AddChild(void *, void *);
+int Bios_DeleteComponent(void *);
+int Bios_GetComponent(char *);
 int Bios_SaveConfiguration(void);
 arc_sid_t *Bios_GetSystemId(void);
-arc_mem_t *Bios_GetMemoryDescriptor(arc_mem_t *);
+arc_mem_t *Bios_GetMemoryDescriptor(void *);
 int Bios_GetTime(void);
 int Bios_GetRelativeTime(void);
-int Bios_GetDirectoryEntry(void);
+int Bios_GetDirectoryEntry(u_int32_t, void *, u_int32_t, u_int32_t *);
 int Bios_Open(char *, int, u_int *);
 int Bios_Close(u_int);
 int Bios_Read(int, char *, int, int *);
-int Bios_GetReadStatus(void);
+int Bios_GetReadStatus(u_int);
 int Bios_Write(int, char *, int, int *);
-int Bios_Seek(void);
-int Bios_Mount(void);
+int Bios_Seek(int, int64_t *, int);
+int Bios_Mount(char *, void *);
 char *Bios_GetEnvironmentVariable(const char *);
-int Bios_SetEnvironmentVariable(void);
-int Bios_GetFileInformation(void);
-int Bios_SetFileInformation(void);
+int Bios_SetEnvironmentVariable(char *, char *);
+int Bios_GetFileInformation(u_int32_t, u_int32_t, u_int32_t);
+int Bios_SetFileInformation(u_int32_t, u_int32_t, u_int32_t);
 void Bios_FlushAllCaches(void);
-int Bios_TestUnicodeCharacter(void);
-arc_dsp_stat_t *Bios_GetDisplayStatus(int);
+int Bios_TestUnicodeCharacter(u_int32_t, u_int16_t);
+arc_dsp_stat_t *Bios_GetDisplayStatus(u_int32_t);
 
 
