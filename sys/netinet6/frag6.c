@@ -1,4 +1,4 @@
-/*	$OpenBSD: frag6.c,v 1.5 2000/02/04 18:11:38 itojun Exp $	*/
+/*	$OpenBSD: frag6.c,v 1.6 2000/02/07 06:09:09 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,9 +46,9 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 
 #include <net/net_osdep.h>
 

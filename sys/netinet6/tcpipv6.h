@@ -1,4 +1,4 @@
-/* $OpenBSD: tcpipv6.h,v 1.4 1999/12/10 08:53:18 angelos Exp $ */
+/* $OpenBSD: tcpipv6.h,v 1.5 2000/02/07 06:09:10 itojun Exp $ */
 
 /*
 %%% copyright-nrl-95
@@ -14,7 +14,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #ifndef _NETINET6_TCPIPV6_H
 #define _NETINET6_TCPIPV6_H 1
 
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet/tcp.h>
 
 struct tcpipv6hdr {

@@ -1,4 +1,4 @@
-/* $OpenBSD: in6_cksum.c,v 1.3 1999/12/10 08:53:17 angelos Exp $ */
+/* $OpenBSD: in6_cksum.c,v 1.4 2000/02/07 06:09:09 itojun Exp $ */
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -68,7 +68,7 @@
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 #include <netinet/in.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 
 #include <net/net_osdep.h>
 

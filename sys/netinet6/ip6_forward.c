@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_forward.c,v 1.2 1999/12/10 10:04:28 angelos Exp $	*/
+/*	$OpenBSD: ip6_forward.c,v 1.3 2000/02/07 06:09:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -46,9 +46,9 @@
 
 #include <netinet/in.h>
 #include <netinet/in_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 #include <netinet6/nd6.h>
 
 #undef IPSEC

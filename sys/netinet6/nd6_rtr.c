@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6_rtr.c,v 1.3 2000/01/08 05:49:41 angelos Exp $	*/
+/*	$OpenBSD: nd6_rtr.c,v 1.4 2000/02/07 06:09:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -50,10 +50,10 @@
 
 #include <netinet/in.h>
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 
 #include <net/net_osdep.h>
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_gif.c,v 1.5 2000/01/21 03:15:06 angelos Exp $	*/
+/*	$OpenBSD: in6_gif.c,v 1.6 2000/02/07 06:09:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -53,12 +53,12 @@
 #include <netinet/ip.h>
 #endif
 
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/in6_gif.h>
 
 #ifdef INET6
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #endif
 
 #include <netinet/ip_ecn.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.33 2000/01/27 08:09:08 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.34 2000/02/07 06:09:09 itojun Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -60,8 +60,7 @@
 #include <netinet/ip.h>
 
 #ifdef INET6
-#include <netinet6/in6.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #endif /* INET6 */
 
 #include <netinet/ip_ipsp.h>

@@ -1,4 +1,4 @@
-/* $OpenBSD: in6_pcb.c,v 1.8 1999/12/10 08:53:17 angelos Exp $ */
+/* $OpenBSD: in6_pcb.c,v 1.9 2000/02/07 06:09:10 itojun Exp $ */
 
 /*
 %%% copyright-nrl-95
@@ -66,7 +66,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in_pcb.h>
 
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 
 /*

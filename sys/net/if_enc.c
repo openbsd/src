@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_enc.c,v 1.19 2000/01/25 17:18:59 espie Exp $	*/
+/*	$OpenBSD: if_enc.c,v 1.20 2000/02/07 06:09:08 itojun Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -66,8 +66,10 @@
 #endif
 
 #ifdef INET6
-#include <netinet6/in6.h>
-#include <netinet6/ip6.h>
+#ifndef INET
+#include <netinet/in.h>
+#endif
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #endif /* INET6 */
 

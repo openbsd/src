@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.12 1999/12/08 06:50:18 itojun Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.13 2000/02/07 06:09:08 itojun Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -112,7 +112,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in.h>
 #endif
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #endif
 
 #ifdef NS

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.5 2000/02/04 18:13:36 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.6 2000/02/07 06:09:10 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,11 +61,11 @@
 #include <netinet/if_ether.h>
 
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
 #include <netinet6/nd6.h>
 #include <netinet6/in6_prefix.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 
 #include "loop.h"
 

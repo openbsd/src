@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fddisubr.c,v 1.21 2000/01/11 19:27:53 fgsch Exp $	*/
+/*	$OpenBSD: if_fddisubr.c,v 1.22 2000/02/07 06:09:08 itojun Exp $	*/
 /*	$NetBSD: if_fddisubr.c,v 1.5 1996/05/07 23:20:21 christos Exp $	*/
 
 /*
@@ -114,11 +114,6 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 
 #include <netccitt/dll.h>
 #include <netccitt/llc_var.h>
-
-#ifdef INET6
-#include <netinet6/in6.h>
-#include <netinet6/in6_var.h>
-#endif /* INET6 */
 
 #if defined(CCITT)
 extern struct ifqueue pkintrq;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.33 2000/01/11 19:27:52 fgsch Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.34 2000/02/07 06:09:08 itojun Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -154,11 +154,6 @@ extern u_char	aarp_org_code[ 3 ];
 #if defined(CCITT)
 #include <sys/socketvar.h>
 #endif
-
-#if 0	/*NRL INET6*/
-#include <netinet6/in6.h>
-#include <netinet6/in6_var.h>
-#endif /* INET6 */
 
 u_char	etherbroadcastaddr[6] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 #define senderr(e) { error = (e); goto bad;}

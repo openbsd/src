@@ -1,4 +1,4 @@
-/* $OpenBSD: raw_ipv6.c,v 1.12 2000/01/05 17:30:52 itojun Exp $ */
+/* $OpenBSD: raw_ipv6.c,v 1.13 2000/02/07 06:09:10 itojun Exp $ */
 /*
 %%% copyright-nrl-95
 This software is Copyright 1995-1998 by Randall Atkinson, Ronald Lee,
@@ -43,7 +43,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.12 2000/01/05 17:30:52 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.13 2000/02/07 06:09:10 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -67,9 +67,9 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet/in_pcb.h>
 
 #include <netinet6/in6_var.h>
-#include <netinet6/ip6.h>
+#include <netinet/ip6.h>
 #include <netinet6/ip6_var.h>
-#include <netinet6/icmp6.h>
+#include <netinet/icmp6.h>
 
 #undef IPSEC
 
