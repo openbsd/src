@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.74 2002/08/07 13:19:20 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.75 2002/08/29 12:13:19 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -844,8 +844,20 @@ x509_read_crls_from_dir (X509_STORE *ctx, char *name)
 	}
 
       if (!X509_STORE_add_crl (ctx, crl))
-	LOG_DBG ((LOG_CRYPTO, 50, "x509_read_crls_from_dir: "
-		  "X509_STORE_add_crl failed for %s", file->d_name));
+	{
+	  LOG_DBG ((LOG_CRYPTO, 50, "x509_read_crls_from_dir: "
+		    "X509_STORE_add_crl failed for %s", file->d_name));
+	  continue;
+	}
+
+      /*
+       * XXX This is to make x509_cert_validate set this (and another) flag
+       * XXX when validating certificates. Currently, OpenSSL defaults to
+       * XXX reject an otherwise valid certificate (chain) if these flags
+       * XXX are set but there are no CRLs to check. The current workaround
+       * XXX is to only set the flags if we actually loaded some CRL data.
+       */
+      X509_STORE_set_flags (ctx, X509_V_FLAG_CRL_CHECK);
     }
 
   closedir (dir);
@@ -966,8 +978,12 @@ x509_cert_validate (void *scert)
    */
   X509_STORE_CTX_init (&csc, x509_cas, cert, NULL);
 #if OPENSSL_VERSION_NUMBER >= 0x00907000L
-  X509_STORE_CTX_set_flags (&csc, X509_V_FLAG_CRL_CHECK);
-  X509_STORE_CTX_set_flags (&csc, X509_V_FLAG_CRL_CHECK_ALL);
+  /* XXX See comment in x509_read_crls_from_dir.  */
+  if (x509_cas->flags & X509_V_FLAG_CRL_CHECK)
+    {
+      X509_STORE_CTX_set_flags (&csc, X509_V_FLAG_CRL_CHECK);
+      X509_STORE_CTX_set_flags (&csc, X509_V_FLAG_CRL_CHECK_ALL);
+    }
 #endif
   res = X509_verify_cert (&csc);
   err = csc.error;
