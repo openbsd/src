@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie_gsc.c,v 1.12 2002/03/18 19:13:28 mickey Exp $	*/
+/*	$OpenBSD: if_ie_gsc.c,v 1.13 2002/07/17 22:18:38 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -362,8 +362,10 @@ ie_gsc_attach(parent, self, aux)
 #ifdef PMAPDEBUG
 	pmapdebug = opmapdebug;
 #endif
-	if (!rv)
+	if (!rv) {
+		printf("\n");
 		return;
+	}
 
 	if (pdc_call((iodcio_t)pdc, 0, PDC_LAN_STATION_ID,
 		     PDC_LAN_STATION_ID_READ, &pdc_mac, ga->ga_hpa) < 0)
