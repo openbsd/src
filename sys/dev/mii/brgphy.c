@@ -1,4 +1,4 @@
-/*	$OpenBSD: brgphy.c,v 1.6 2001/10/05 18:26:48 nate Exp $	*/
+/*	$OpenBSD: brgphy.c,v 1.7 2001/10/05 18:30:54 nate Exp $	*/
 
 /*
  * Copyright (c) 2000
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/dev/mii/brgphy.c,v 1.1 2000/04/22 01:58:17 wpaul Exp $
+ * $FreeBSD: src/sys/dev/mii/brgphy.c,v 1.5 2001/09/18 00:31:19 wpaul Exp $
  */
 
 /*
@@ -122,16 +122,11 @@ brgphy_attach(parent, self, aux)
 
 	sc->mii_capabilities =
 	    PHY_READ(sc, MII_BMSR) & ma->mii_capmask;
-	if (sc->mii_capabilities & BMSR_MEDIAMASK)
-		mii_phy_add_media(sc);
-
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, 0, sc->mii_inst),
-	    BRGPHY_BMCR_FDX);
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_1000_TX, IFM_FDX, sc->mii_inst), 0);
-
-#undef ADD
+        if (sc->mii_capabilities & BMSR_EXTSTAT)
+		sc->mii_extcapabilities = PHY_READ(sc, MII_EXTSR);
+        if ((sc->mii_capabilities & BMSR_MEDIAMASK) ||
+            (sc->mii_extcapabilities & EXTSR_MEDIAMASK))
+                mii_phy_add_media(sc);
 }
 
 int
@@ -311,7 +306,8 @@ brgphy_status(sc)
 			return;
 		}
 
-		switch (PHY_READ(sc, BRGPHY_MII_AUXSTS) & BRGPHY_AUXSTS_AN_RES) {
+		switch (PHY_READ(sc, BRGPHY_MII_AUXSTS) &
+			BRGPHY_AUXSTS_AN_RES) {
 		case BRGPHY_RES_1000FD:
 			mii->mii_media_active |= IFM_1000_TX | IFM_FDX;
 			break;
@@ -346,12 +342,20 @@ brgphy_mii_phy_auto(mii, waitfor)
 	struct mii_softc *mii;
 	int waitfor;
 {
-	int bmsr, i;
+	int bmsr, ktcr = 0, i;
 
 	if ((mii->mii_flags & MIIF_DOINGAUTO) == 0) {
-		PHY_WRITE(mii, BRGPHY_MII_1000CTL,
+		mii_phy_reset(mii);
+		PHY_WRITE(mii, BRGPHY_MII_BMCR, 0);
+		DELAY(1000);
+		ktcr = PHY_READ(mii, BRGPHY_MII_1000CTL);
+		PHY_WRITE(mii, BRGPHY_MII_1000CTL, ktcr |
 		    BRGPHY_1000CTL_AFD|BRGPHY_1000CTL_AHD);
-		PHY_WRITE(mii, BRGPHY_MII_ANAR, BRGPHY_SEL_TYPE);
+		ktcr = PHY_READ(mii, BRGPHY_MII_1000CTL);
+		DELAY(1000);
+		PHY_WRITE(mii, BRGPHY_MII_ANAR,
+		    BMSR_MEDIA_TO_ANAR(mii->mii_capabilities) | ANAR_CSMA);
+		DELAY(1000);
 		PHY_WRITE(mii, BRGPHY_MII_BMCR,
 		    BRGPHY_BMCR_AUTOEN | BRGPHY_BMCR_STARTNEG);
 		PHY_WRITE(mii, BRGPHY_MII_IMR, 0xFF00);
