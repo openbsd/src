@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.19 2002/01/07 05:31:27 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.20 2002/01/14 01:56:50 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -151,7 +151,7 @@ void ofw_dbg(char *str);
 caddr_t allocsys __P((caddr_t));
 void dumpsys __P((void));
 void systype __P((char *name));
-void lcsplx __P((int ipl));	/* called from LCore */
+int lcsplx __P((int ipl));	/* called from LCore */
 int power4e_get_eth_addr __P((void));
 void nameinterrupt __P((int replace, char *newstr));
 void ppc_intr_setup __P((intr_establish_t *establish,
@@ -870,11 +870,15 @@ softnet(isr)
 #include <net/netisr_dispatch.h>
 }
 
-void
+int
 lcsplx(ipl)
 	int ipl;
 {
+	int oldcpl;
+
+	oldcpl = cpl;
 	splx(ipl);
+	return oldcpl;
 }
 
 /*
