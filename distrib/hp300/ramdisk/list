@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.37 2003/06/11 03:49:36 miod Exp $
+#	$OpenBSD: list,v 1.38 2004/10/02 14:47:12 krw Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -19,7 +19,6 @@ LINK	instbin					bin/mv
 LINK	instbin					bin/rm
 LINK	instbin					bin/ksh bin/sh
 ARGVLINK ksh					-sh
-LINK	instbin					bin/sleep
 LINK	instbin					bin/stty
 LINK	instbin					bin/sync
 LINK	instbin					sbin/disklabel
