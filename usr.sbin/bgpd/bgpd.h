@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.89 2004/02/01 19:46:05 claudio Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.90 2004/02/05 14:29:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -126,6 +126,7 @@ enum announce_type {
 
 struct peer_config {
 	u_int32_t		 id;
+	u_int32_t		 groupid;
 	char			 group[PEER_DESCR_LEN];
 	char			 descr[PEER_DESCR_LEN];
 	struct bgpd_addr	 remote_addr;

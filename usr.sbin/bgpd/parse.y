@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.47 2004/02/03 22:28:05 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.48 2004/02/05 14:29:09 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -265,6 +265,10 @@ group		: GROUP string optnl '{' optnl {
 			    sizeof(curgroup->conf.group)) {
 				yyerror("group name \"%s\" too long: max %u",
 				    $2, sizeof(curgroup->conf.group) - 1);
+				YYERROR;
+			}
+			if (get_id(curgroup)) {
+				yyerror("get_id failed");
 				YYERROR;
 			}
 		}
@@ -845,6 +849,7 @@ new_peer(void)
 		if (strlcpy(p->conf.descr, curgroup->conf.descr,
 		    sizeof(p->conf.descr)) >= sizeof(p->conf.descr))
 			fatalx("new_peer descr strlcpy");
+		p->conf.groupid = curgroup->conf.id;
 	}
 	p->next = NULL;
 
@@ -892,12 +897,14 @@ get_id(struct peer *newpeer)
 {
 	struct peer	*p;
 
-	for (p = peer_l_old; p != NULL; p = p->next)
-		if (!memcmp(&p->conf.remote_addr, &newpeer->conf.remote_addr,
-		    sizeof(p->conf.remote_addr))) {
-			newpeer->conf.id = p->conf.id;
-			return (0);
-		}
+	if (newpeer->conf.remote_addr.af)
+		for (p = peer_l_old; p != NULL; p = p->next)
+			if (!memcmp(&p->conf.remote_addr,
+			    &newpeer->conf.remote_addr,
+			    sizeof(p->conf.remote_addr))) {
+				newpeer->conf.id = p->conf.id;
+				return (0);
+			}
 
 	/* new one */
 	for (; id < UINT_MAX; id++) {
