@@ -14,6 +14,4 @@ MLINKS+= hosts.equiv.5 .rhosts.5
 MLINKS+= resolv.conf.5 resolver.5
 MLINKS+= hostname.if.5 bridgename.if.5
 
-MLINKS+= inetd.8 inetd.conf.5
-
 .include <bsd.prog.mk>
