@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp_sbus.c,v 1.2 2001/08/21 14:57:56 jason Exp $	*/
+/*	$OpenBSD: esp_sbus.c,v 1.3 2001/09/25 23:58:15 jason Exp $	*/
 /*	$NetBSD: esp_sbus.c,v 1.14 2001/04/25 17:53:37 bouyer Exp $	*/
 
 /*-
@@ -271,13 +271,13 @@ espattach_sbus(parent, self, aux)
 				 sa->sa_reg[1].sbr_size,
 				 BUS_SPACE_MAP_LINEAR, 
 				 0, &esc->sc_reg) != 0) {
-			printf("%s @ sbus: cannot map scsi core registers\n",
+			printf("%s: cannot map scsi core registers\n",
 			       self->dv_xname);
 			return;
 		}
 
 		if (sa->sa_nintr == 0) {
-			printf("\n%s: no interrupt property\n", self->dv_xname);
+			printf("%s: no interrupt property\n", self->dv_xname);
 			return;
 		}
 
@@ -287,6 +287,7 @@ espattach_sbus(parent, self, aux)
 		esc->sc_sd.sd_reset = (void *) ncr53c9x_reset;
 		sbus_establish(&esc->sc_sd, &sc->sc_dev);
 
+		printf("%s", self->dv_xname);
 		espattach(esc, &esp_sbus_glue);
 
 		return;
@@ -313,6 +314,13 @@ espattach_sbus(parent, self, aux)
 		printf("\n");
 		panic("espattach: no dma found");
 	}
+
+	/*
+	 * The `ESC' DMA chip must be reset before we can access
+	 * the esp registers.
+	 */
+	if (esc->sc_dma->sc_rev == DMAREV_ESC)
+		DMA_RESET(esc->sc_dma);
 
 	/*
 	 * Map my registers in, if they aren't already in virtual
@@ -531,7 +539,7 @@ espattach(esc, gluep)
 
 	/* Turn on target selection using the `dma' method */
 	if (sc->sc_rev != NCR_VARIANT_FAS366)
-		ncr53c9x_dmaselect = 1;
+		sc->sc_features |= NCR_F_DMASELECT;
 
 	/* Do the common parts of attachment. */
 	ncr53c9x_attach(sc, &esp_switch, &esp_dev);
