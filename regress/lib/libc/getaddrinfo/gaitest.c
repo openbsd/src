@@ -1,4 +1,4 @@
-/*	$OpenBSD: gaitest.c,v 1.4 2004/02/28 12:20:23 itojun Exp $	*/
+/*	$OpenBSD: gaitest.c,v 1.5 2004/06/21 21:56:19 itojun Exp $	*/
 /*	$NetBSD: gaitest.c,v 1.3 2002/07/05 15:47:43 itojun Exp $	*/
 
 /*
@@ -65,7 +65,7 @@ print1(title, res, h, s)
 {
 	char *start, *end;
 	int error;
-	const int niflag = NI_NUMERICHOST;
+	const int niflag = NI_NUMERICHOST | NI_NUMERICSERV;
 
 	if (res->ai_addr) {
 		error = getnameinfo(res->ai_addr, res->ai_addr->sa_len,
