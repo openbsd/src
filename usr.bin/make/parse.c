@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.17 1998/12/05 00:06:29 espie Exp $	*/
+/*	$OpenBSD: parse.c,v 1.18 1999/05/04 16:09:25 millert Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.17 1998/12/05 00:06:29 espie Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.18 1999/05/04 16:09:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -811,11 +811,25 @@ ParseDoDependency (line)
 
     do {
 	for (cp = line;
-	     *cp && !isspace (*cp) &&
-	     (*cp != '!') && (*cp != ':') && (*cp != '(');
+	     *cp && !isspace (*cp) && (*cp != '(');
 	     cp++)
 	{
-	    if (*cp == '$') {
+	    if (*cp == '!' || *cp == ':') {
+		char *p = cp + 1;
+
+		if (*p == '\0')
+		    break;			/* no chance, not enough room */
+		/*
+		 * Only end the word on ':' or '!' if there is not
+		 * a match later on followed by whitespace.  This
+		 * allows us to have targets with embedded ':' and '!'
+		 * characters.
+		 */
+		while ((p = strchr(p + 1, *cp)) && !isspace(*(p + 1)))
+		    ;
+		if (!p || !isspace(*(p + 1)))
+		    break;
+	    } else if (*cp == '$') {
 		/*
 		 * Must be a dynamic source (would have been expanded
 		 * otherwise), so call the Var module to parse the puppy
