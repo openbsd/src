@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.7 1999/10/26 16:20:43 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.8 1999/12/17 01:58:46 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -43,6 +43,10 @@
  */
 #define	ALIGNBYTES	7
 #define	ALIGN(p)	(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
+
+#define	PAGE_SIZE	4096
+#define	PAGE_MASK	(PAGE_SIZE-1)
+#define	PAGE_SHIFT	12
 
 #define	NBPG		4096		/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
