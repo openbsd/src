@@ -1,4 +1,4 @@
-/*	$OpenBSD: catman.c,v 1.5 2002/06/01 20:15:43 deraadt Exp $	*/
+/*	$OpenBSD: catman.c,v 1.6 2003/04/15 08:32:38 deraadt Exp $	*/
 /*
  * Copyright (c) 1993 Winning Strategies, Inc.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: catman.c,v 1.5 2002/06/01 20:15:43 deraadt Exp $";
+static char rcsid[] = "$Id: catman.c,v 1.6 2003/04/15 08:32:38 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -185,7 +185,7 @@ catman(const char *path, char *section)
 			snprintf(catpage, sizeof catpage, "%s/%s",
 			    catdir, dp->d_name);
 			if ((tmp = strrchr(catpage, '.')) != NULL)
-				strcpy(tmp, ".0");
+				strlcpy(tmp, ".0", catpage + sizeof catpage - tmp);
 			else
 				continue;
 
