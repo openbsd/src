@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_pfsync.c,v 1.16 2004/01/19 19:46:33 mcbride Exp $	*/
+/*	$OpenBSD: if_pfsync.c,v 1.17 2004/01/20 03:36:19 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -241,7 +241,7 @@ pfsync_input(struct mbuf *m, ...)
 	pfsyncstats.pfsyncs_ipackets++;
 
 	/* verify that we have a sync interface configured */
-	if (!sc->sc_sync_ifp)
+	if (!sc->sc_sync_ifp || !pf_status.running)
 		goto done;
 
 	/* verify that the packet came in on the right interface */
