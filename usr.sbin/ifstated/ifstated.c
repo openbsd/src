@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.c,v 1.11 2004/02/16 05:26:58 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.c,v 1.12 2004/02/26 11:52:59 henning Exp $	*/
 
 /*
  * Copyright (c) 2004 Marco Pfatschbacher <mpf@openbsd.org>
@@ -74,6 +74,7 @@ void	state_change(void);
 void	do_action(struct ifsd_action *);
 void	remove_action(struct ifsd_action *, struct ifsd_state *);
 void	remove_expression(struct ifsd_expression *, struct ifsd_state *);
+void	log_init(int);
 void	logit(int level, const char *fmt, ...);
 
 void
@@ -129,6 +130,8 @@ main(int argc, char *argv[])
 		warnx("configuration OK");
 		exit(0);
 	}
+
+	log_init(opt_debug);
 
 	if (!opt_debug) {
 		daemon(0, 0);
@@ -666,6 +669,15 @@ remove_expression(struct ifsd_expression *expression,
 		break;
 	}
 	free(expression);
+}
+
+void
+log_init(int n_debug)
+{
+	extern char	*__progname;
+
+	if (!n_debug)
+		openlog(__progname, LOG_PID | LOG_NDELAY, LOG_DAEMON);
 }
 
 void
