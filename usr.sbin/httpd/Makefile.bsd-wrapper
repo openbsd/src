@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.8 1999/10/07 21:57:34 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.9 1999/10/10 21:50:04 maja Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -73,7 +73,7 @@ INSTALL_MODULES=
 
 # If you support dynamic loading, enable the so module, and build all the 
 # modules that come with apache 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "mips"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "sparc" 
 CONFIG_ARGS+=  ${DSO_MODULE_ARGS}
 INSTALL_MODULES= src/modules/experimental/mod_mmap_static.so \
 src/modules/experimental/mod_auth_digest.so \
