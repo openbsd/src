@@ -1,4 +1,4 @@
-.\"     $OpenBSD: dhcp.8,v 1.14 2004/07/06 02:44:11 henning Exp $
+.\"     $OpenBSD: dhcp.8,v 1.15 2004/08/15 23:06:02 jaredy Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Aaron Campbell
@@ -121,10 +121,8 @@ troubleshooting options have failed.
 .Pp
 See
 .Xr dhcpd 8
-for information on other available options; for example,
-.Fl p ,
-which allows specification of a port to listen on other than the default (67).
-However, most of the flags are useful only for debugging purposes.
+for information on other available options.
+Note, however, that most of the flags are useful only for debugging purposes.
 .Sh FILES
 .Bl -tag -width /etc/dhcpd.interfaces -compact
 .It Pa /etc/dhcpd.conf
