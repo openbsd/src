@@ -1,9 +1,9 @@
-/*	$OpenBSD: exchange.c,v 1.39 2001/01/26 12:12:51 niklas Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.40 2001/01/27 12:03:32 niklas Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
- * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2001 Angelos D. Keromytis.  All rights reserved.
  * Copyright (c) 1999, 2000 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

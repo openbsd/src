@@ -1,8 +1,8 @@
-/*	$OpenBSD: isakmpd.c,v 1.26 2001/01/26 12:12:52 niklas Exp $	*/
+/*	$OpenBSD: isakmpd.c,v 1.27 2001/01/27 12:03:33 niklas Exp $	*/
 /*	$EOM: isakmpd.c,v 1.54 2000/10/05 09:28:22 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
  * Copyright (c) 1999, 2000 Håkan Olsson.  All rights reserved.
  *

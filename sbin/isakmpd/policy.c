@@ -1,9 +1,9 @@
-/*	$OpenBSD: policy.c,v 1.20 2001/01/26 12:12:52 niklas Exp $	*/
+/*	$OpenBSD: policy.c,v 1.21 2001/01/27 12:03:34 niklas Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
- * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
- * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

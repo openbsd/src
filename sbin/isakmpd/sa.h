@@ -1,9 +1,9 @@
-/*	$OpenBSD: sa.h,v 1.19 2001/01/14 23:40:01 angelos Exp $	*/
+/*	$OpenBSD: sa.h,v 1.20 2001/01/27 12:03:36 niklas Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
- * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 1999, 2001 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

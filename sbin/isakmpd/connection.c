@@ -1,8 +1,8 @@
-/*	$OpenBSD: connection.c,v 1.12 2001/01/26 12:12:51 niklas Exp $	*/
+/*	$OpenBSD: connection.c,v 1.13 2001/01/27 12:03:31 niklas Exp $	*/
 /*	$EOM: connection.c,v 1.28 2000/11/23 12:21:18 niklas Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 1999 Hakan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

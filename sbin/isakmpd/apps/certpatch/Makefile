@@ -1,8 +1,9 @@
-#	$OpenBSD: Makefile,v 1.4 2001/01/27 11:24:39 niklas Exp $
+#	$OpenBSD: Makefile,v 1.5 2001/01/27 12:03:37 niklas Exp $
 #	$EOM: Makefile,v 1.6 2000/03/28 21:22:06 ho Exp $
 
 #
 # Copyright (c) 1999 Niels Provos.  All rights reserved.
+# Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions

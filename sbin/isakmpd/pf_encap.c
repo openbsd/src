@@ -1,8 +1,8 @@
-/*	$OpenBSD: pf_encap.c,v 1.19 2001/01/26 12:12:52 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.c,v 1.20 2001/01/27 12:03:34 niklas Exp $	*/
 /*	$EOM: pf_encap.c,v 1.73 2000/12/04 04:46:34 angelos Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

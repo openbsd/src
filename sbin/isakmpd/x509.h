@@ -1,10 +1,10 @@
-/*	$OpenBSD: x509.h,v 1.9 2001/01/26 16:40:52 niklas Exp $	*/
+/*	$OpenBSD: x509.h,v 1.10 2001/01/27 12:03:36 niklas Exp $	*/
 /*	$EOM: x509.h,v 1.11 2000/09/28 12:53:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
  * Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
- * Copyright (c) 2000 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 2000, 2001 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

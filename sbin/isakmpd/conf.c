@@ -1,8 +1,8 @@
-/*	$OpenBSD: conf.c,v 1.26 2001/01/26 12:12:51 niklas Exp $	*/
+/*	$OpenBSD: conf.c,v 1.27 2001/01/27 12:03:31 niklas Exp $	*/
 /*	$EOM: conf.c,v 1.48 2000/12/04 02:04:29 angelos Exp $	*/
 
 /*
- * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
  * Copyright (c) 2000 Håkan Olsson.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without

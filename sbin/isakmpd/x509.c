@@ -1,10 +1,10 @@
-/*	$OpenBSD: x509.c,v 1.38 2001/01/26 16:40:52 niklas Exp $	*/
+/*	$OpenBSD: x509.c,v 1.39 2001/01/27 12:03:36 niklas Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
- * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
- * Copyright (c) 1999, 2000 Angelos D. Keromytis.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1999, 2000, 2001 Angelos D. Keromytis.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,10 +48,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#if MP_FLAVOUR == MP_FLAVOUR_GMP
-#include <gmp.h>
-#endif
-
 #ifdef USE_POLICY
 #include <regex.h>
 #include <keynote.h>
@@ -65,10 +61,11 @@
 #include "exchange.h"
 #include "hash.h"
 #include "ike_auth.h"
-#include "sa.h"
 #include "ipsec.h"
 #include "log.h"
+#include "math_mp.h"
 #include "policy.h"
+#include "sa.h"
 #include "x509.h"
 
 /* 
