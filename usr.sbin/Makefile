@@ -1,14 +1,14 @@
 #	from: @(#)Makefile	5.6.1.2 (Berkeley) 5/8/91
-#	$Id: Makefile,v 1.9 1996/04/29 13:08:37 hvozda Exp $
+#	$Id: Makefile,v 1.10 1996/05/01 13:33:27 deraadt Exp $
 
 # not yet done: catman
 
-SUBDIR=	ac accton arp apm apmd bootpd bootpgw bootpef bootptest \
+SUBDIR=	ac accton arp bootpd bootpgw bootpef bootptest \
 	chown chroot config cron dev_mkdb \
 	diskpart edquota gettable gspa htable inetd iostat \
 	ipftest ipmon ipsend kgmon \
 	kvm_mkdb lpr map-mbone mrinfo mrouted mtrace mtree named \
-	netgroup_mkdb pcmciad portmap pppd pstat pwd_mkdb quot quotaon \
+	netgroup_mkdb portmap pppd pstat pwd_mkdb quot quotaon \
 	rarpd rbootd rdconfig rdate repquota rmt \
 	rpc.bootparamd rpc.pcnfsd rwhod \
 	sa sendmail sliplogin slstats spray sysctl \
@@ -21,8 +21,9 @@ SUBDIR=	ac accton arp apm apmd bootpd bootpgw bootpef bootptest \
 SUBDIR+=amd
 .endif
 
-.if   make(clean) || make(cleandir)
-SUBDIR+=bad144 dbsym eeprom grfinfo hilinfo iteconfig screenblank
+.if   make(clean) || make(cleandir) || make(obj)
+SUBDIR+=apm apmd bad144 config.old dbsym eeprom grfconfig grfinfo \
+	hilinfo iteconfig pcmciad screenblank
 .elif ${MACHINE} == "amiga" 
 SUBDIR+=grfconfig iteconfig videomode
 .elif ${MACHINE} == "atari"
@@ -30,7 +31,7 @@ SUBDIR+=iteconfig
 .elif ${MACHINE} == "hp300"
 SUBDIR+=grfinfo hilinfo config.old
 .elif ${MACHINE} == "i386"
-SUBDIR+=bad144 
+SUBDIR+=bad144 apm apmd pcmciad
 .elif ${MACHINE} == "pmax"
 SUBDIR+=
 .elif ${MACHINE} == "sun3"
