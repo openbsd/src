@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.11 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: clock.c,v 1.12 2002/02/01 19:03:18 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -119,7 +119,7 @@ inittodr(t)
 
 		if (dt < 2 * SECDAY)
 			return;
-		printf("WARNING: clock %s %d days",
+		printf("WARNING: clock %s %ld days",
 		    time.tv_sec < t? "lost" : "gained", dt / SECDAY);
 	}
 
