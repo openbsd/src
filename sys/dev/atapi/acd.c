@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.19 1997/02/23 02:31:43 niklas Exp $	*/
+/*	$OpenBSD: acd.c,v 1.20 1997/02/23 03:08:27 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -1007,13 +1007,11 @@ acdgetdisklabel(acd)
 	 */
 	if (acd_read_toc(acd, 0, 0, hdr, TOC_HEADER_SZ))
 		return;
-	n = ((acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
-	    (hdr[TOC_HEADER_LEN] | hdr[TOC_HEADER_LEN + 1] << 8) :
-	    (hdr[TOC_HEADER_LEN] << 8 | hdr[TOC_HEADER_LEN + 1])) + 1;
+	n = hdr[TOC_HEADER_ENDING_TRACK] - hdr[TOC_HEADER_STARTING_TRACK] + 1;
 	len = TOC_HEADER_SZ + n * TOC_ENTRY_SZ;
 	MALLOC(toc, u_int8_t *, len, M_TEMP, M_WAITOK);
-	if (acd_read_toc (acd, 0, 0, toc, len))
-		return;
+	if (acd_read_toc (acd, CD_LBA_FORMAT, 0, toc, len))
+		goto done;
 
 	if (toc[TOC_HEADER_SZ + TOC_ENTRY_CONTROL_ADDR_TYPE] & 4) {
 		strncpy(lp->d_typename, "ATAPI CD-ROM", 16);
@@ -1028,54 +1026,45 @@ acdgetdisklabel(acd)
 		    acdstrategy, lp, acd->sc_dk.dk_cpulabel);
 		if (errstring) {
 			printf("%s: %s\n", acd->sc_dev.dv_xname, errstring);
-			return;
+			goto done;
 		}
 	} else {
 		strncpy(lp->d_typename, "ATAPI audio CD", 16);
-		lp->d_npartitions = n + 1;
+		lp->d_npartitions = min(n + 1, MAXPARTITIONS);
 		ent = toc + TOC_HEADER_SZ;
 		lba =
-		    (ent[TOC_ENTRY_CONTROL_ADDR_TYPE] >> 4) == CD_LBA_FORMAT ?
 		    (acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
 		    ent[TOC_ENTRY_MSF_LBA] | ent[TOC_ENTRY_MSF_LBA + 1] << 8 :
-		    ent[TOC_ENTRY_MSF_LBA] << 8 | ent[TOC_ENTRY_MSF_LBA + 1] :
-		    msf2lba(ent[TOC_ENTRY_MSF_LBA + 1],
-		    ent[TOC_ENTRY_MSF_LBA + 2], ent[TOC_ENTRY_MSF_LBA + 3]);
+		    ent[TOC_ENTRY_MSF_LBA] << 8 | ent[TOC_ENTRY_MSF_LBA + 1];
 		for (i = 0; i < min(n + 1, MAXPARTITIONS); i++) {
 			if (i == RAW_PART) {
 				lp->d_partitions[i].p_offset = 0;
 				lent = toc + TOC_HEADER_SZ + n * TOC_ENTRY_SZ;
 				lp->d_partitions[i].p_size =
-				    (lent[TOC_ENTRY_CONTROL_ADDR_TYPE] >>
-				    4) == CD_LBA_FORMAT ?
 				    (acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
 				    lent[TOC_ENTRY_MSF_LBA] |
 				    lent[TOC_ENTRY_MSF_LBA + 1] << 8 :
 				    lent[TOC_ENTRY_MSF_LBA] << 8 |
-				    lent[TOC_ENTRY_MSF_LBA + 1] :
-				    msf2lba(lent[TOC_ENTRY_MSF_LBA + 1],
-				    lent[TOC_ENTRY_MSF_LBA + 2],
-				    lent[TOC_ENTRY_MSF_LBA + 3]);
+				    lent[TOC_ENTRY_MSF_LBA + 1];
 				lp->d_partitions[i].p_fstype = FS_UNUSED;
 			} else {
 				lp->d_partitions[i].p_fstype = FS_OTHER;
 				ent += TOC_ENTRY_SZ;
-				nlba = (ent[TOC_ENTRY_CONTROL_ADDR_TYPE] >>
-				    4) == CD_LBA_FORMAT ?
+				nlba =
 				    (acd->ad_link->quirks & AQUIRK_LITTLETOC) ?
 				    ent[TOC_ENTRY_MSF_LBA] |
 				    ent[TOC_ENTRY_MSF_LBA + 1] << 8 :
 				    ent[TOC_ENTRY_MSF_LBA] << 8 |
-				    ent[TOC_ENTRY_MSF_LBA + 1] :
-				    msf2lba(ent[TOC_ENTRY_MSF_LBA + 1],
-				    ent[TOC_ENTRY_MSF_LBA + 2],
-				    ent[TOC_ENTRY_MSF_LBA + 3]);
+				    ent[TOC_ENTRY_MSF_LBA + 1];
 				lp->d_partitions[i].p_offset = lba;
 				lp->d_partitions[i].p_size = nlba - lba;
 				lba = nlba;
 			}
 		}
 	}
+
+done:
+	FREE(toc, M_TEMP);
 }
 
 /*
