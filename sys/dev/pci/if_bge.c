@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bge.c,v 1.46 2004/12/24 23:29:14 brad Exp $	*/
+/*	$OpenBSD: if_bge.c,v 1.47 2004/12/24 23:44:10 deraadt Exp $	*/
 /*
  * Copyright (c) 2001 Wind River Systems
  * Copyright (c) 1997, 1998, 1999, 2001
@@ -2832,7 +2832,7 @@ bge_init(xsc)
 	}
 
 	/* Init jumbo RX ring. */
-	if (sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
+	if ((sc->bge_quirks & BGE_QUIRK_5705_CORE) == 0)
 		bge_init_rx_ring_jumbo(sc);
 
 	/* Init our RX return ring index */
