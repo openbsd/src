@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.47 1998/12/27 02:06:43 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.48 1998/12/27 07:27:17 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -10,6 +10,10 @@
 #	PNP0002	#MCA Interrupt Controller
 #	PNP0003	#APIC
 #	PNP0004	#Cyrix SLiC MP interrupt controller
+
+#--Adaptec SCSI--
+aha	PNP00A0	#Adaptec AHA-154x series
+aic	ADP1520	#Adaptec AHA-152x series
 
 #--Timers--
 #	PNP0100	#AT Timer
