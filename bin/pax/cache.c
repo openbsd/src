@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.6 1997/07/25 18:58:27 mickey Exp $	*/
+/*	$OpenBSD: cache.c,v 1.7 1999/04/08 03:50:58 deraadt Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cache.c,v 1.6 1997/07/25 18:58:27 mickey Exp $";
+static char rcsid[] = "$OpenBSD: cache.c,v 1.7 1999/04/08 03:50:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -393,7 +393,8 @@ uid_name(name, uid)
 	}
 
 	if (ptr == NULL)
-		ptr = (UIDC *)malloc(sizeof(UIDC));
+		ptr = usrtb[st_hash(name, namelen, UNM_SZ)] =
+		  (UIDC *)malloc(sizeof(UIDC));
 
 	/*
 	 * no match, look it up, if no match store it as an invalid entry,
@@ -462,7 +463,8 @@ gid_name(name, gid)
 		++gropn;
 	}
 	if (ptr == NULL)
-		ptr = (GIDC *)malloc(sizeof(GIDC));
+		ptr = grptb[st_hash(name, namelen, GID_SZ)] =
+		  (GIDC *)malloc(sizeof(GIDC));
 
 	/*
 	 * no match, look it up, if no match store it as an invalid entry,
