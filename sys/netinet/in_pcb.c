@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.81 2004/11/23 15:35:36 markus Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.82 2004/12/06 02:41:43 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -155,17 +155,19 @@ in_baddynamic(port, proto)
 	u_int16_t proto;
 {
 
-	if (port < IPPORT_RESERVED/2 || port >= IPPORT_RESERVED)
-		return (0);
 
 	switch (proto) {
 	case IPPROTO_TCP:
+		if (port < IPPORT_RESERVED/2 || port >= IPPORT_RESERVED)
+			return (0);
 		return (DP_ISSET(baddynamicports.tcp, port));
 	case IPPROTO_UDP:
 #ifdef IPSEC
 		if (port == udpencap_port)
 			return (1);
 #endif
+		if (port < IPPORT_RESERVED/2 || port >= IPPORT_RESERVED)
+			return (0);
 		return (DP_ISSET(baddynamicports.udp, port));
 	default:
 		return (0);
