@@ -1,4 +1,4 @@
-/*	$OpenBSD: library.c,v 1.8 2001/08/06 15:09:58 drahn Exp $ */
+/*	$OpenBSD: library.c,v 1.9 2001/08/21 01:19:35 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -55,9 +55,10 @@ char * _dl_findhint(char *name, int major, int minor, char *prefered_path);
 
 /*
  *  Load a shared object. Search order is:
- *	If the name contains a '/' use the name exactly as is.
- *	Otherwise first check DT_RPATH paths,
- *	then try the LD_LIBRARY_PATH specification and
+ *	If the name contains a '/' use the name exactly as is. (only)
+ *	try the LD_LIBRARY_PATH specification (if present)
+ *	check DT_RPATH paths, (if present)
+ *	check /var/run/ld.so.hints cache
  *	last look in /usr/lib.
  */
 
