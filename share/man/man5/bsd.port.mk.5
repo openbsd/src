@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.101 2003/07/12 15:46:21 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.102 2003/07/12 16:09:10 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -48,6 +48,30 @@ Mostly because undocumented stuff has fuzzy semantics, and it hasn't been
 decided yet how to define it.
 .Sh TARGETS
 .Bl -tag -width do-configure
+.It Ar {pre,do,post}-*
+Most standard targets can be specialized according to a given port's needs.
+If defined,
+the
+.Ar pre-*
+hook will be invoked before running the normal action;
+the
+.Ar do-*
+hook will be invoked instead of the normal action;
+the
+.Ar post-*
+hook will be invoked after the normal action.
+Specialization hooks exist for
+.Ar build ,
+.Ar configure ,
+.Ar distpatch ,
+.Ar extract ,
+.Ar fake ,
+.Ar fetch ,
+.Ar install ,
+.Ar package ,
+.Ar patch ,
+.Ar regress .
+See individual targets for exceptions.
 .It Ar addsum
 Complete the ${CHECKSUM_FILE} record of checksums with files that have been
 added since
@@ -118,6 +142,11 @@ Unless overridden, configure creates the ${WRKBUILD}
 directory (see SEPARATE_BUILD), runs ${SCRIPTDIR}/configure if it exists,
 and runs whatever configuration methods are recorded in
 .Ev CONFIGURE_STYLE .
+.It Ar describe
+Prints a one-line index entry of the port, suitable for
+.Pa ${PORTSDIR}/INDEX .
+.It Ar distclean
+Short-hand for make clean=dist.
 .It Ar distpatch
 Apply distribution patches only.
 .It Ar do-patch
@@ -184,6 +213,11 @@ See
 .Ev PATCH_FILES ,
 .Ev SUPDISTFILES ,
 .Ev REFETCH .
+.It Ar install
+Install the port after building.
+See the description of THE FAKE FRAMEWORK
+for the non-intuitive details of the way it is actually used by
+the ports tree.
 .It Ar lib-depends-check
 Verify that the
 .Ev LIB_DEPENDS
