@@ -1,5 +1,5 @@
-/*	$OpenBSD: start.s,v 1.5 1997/05/29 00:04:27 niklas Exp $ */
-/*	$NetBSD: start.s,v 1.8 1996/08/02 11:22:47 ragge Exp $ */
+/*	$OpenBSD: start.s,v 1.6 1998/02/03 11:48:29 maja Exp $ */
+/*	$NetBSD: start.s,v 1.10 1997/03/22 12:47:32 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -181,8 +181,11 @@ relocated:				# now relocation is done !!!
  * hoppabort() is called when jumping to the newly loaded program.
  */
 ENTRY(hoppabort, 0)
-        movl    4(ap),r6
-        movl    8(ap),r11
-        movl    0xc(ap),r10
-        calls   $0,(r6)
+	movl    4(ap),r6
+	movl    8(ap),r11
+	movl    0xc(ap),r10
+	movl	_memsz, r8
+	mnegl	$1, ap		# Hack to figure out boot device.
+	jmp	2(r6)
+#	calls   $0,(r6)
 	halt

@@ -1,27 +1,31 @@
-#	$OpenBSD: Makefile,v 1.7 1997/01/15 23:24:15 maja Exp $
-#	$NetBSD: Makefile,v 1.11 1996/10/18 06:10:18 thorpej Exp $
+#	$OpenBSD: Makefile,v 1.8 1998/02/03 11:48:23 maja Exp $
+#	$NetBSD: Makefile,v 1.14 1997/06/29 21:30:09 ragge Exp $
 #
 
-INCPATH=-I. -I../../.. -I../.. -I../../../lib/libsa
+INCPATH=-I. -I../../../../.. -I../../../.. -I../../.. -I../.. -I../../../lib/libsa
 
 CC=	cc
 AS=	as
 
+BINOWN=	bin
+BINGRP=	bin
 S=      ../../..
 RELOC=	100000
 XXRPB=	0F4240
-CFLAGS+=-O ${INCPATH} -DSTANDALONE -DRELOC=0x${RELOC} \
-	-D_VAX_INLINE_ -DXXRPB=0x$(XXRPB)
+CFLAGS+=-O ${INCPATH} -DSTANDALONE -DRELOC=0x${RELOC} -DXXRPB=0x$(XXRPB)
 
 DEVS=	autoconf.o hp.o ra.o tmscp.o ctu.o mfm.o rom.o romread.o \
-	scsi_low.o scsi_hi.o sd.o
+	scsi_low.o scsi_hi.o sd.o netio.o if_le.o
 
 .include "$S/lib/libsa/Makefile.inc"
-LIBSA=		${SALIB}
+LIBS=	-L. -Llib/sa -lsvax -lsa -lsvax
+
 
 SVAX=	consio.o urem.o udiv.o str.o
 
 all:	${LIBSA} xxboot boot copy edlabel
+
+includes:
 
 libsvax.a: ${SVAX}
 	ar crv $@ $?
@@ -46,29 +50,31 @@ srt0.o:	srt0.s
 
 # 
 
-xxboot:	start.o bootxx.o romread.o libsvax.a 
-	ld -N -Ttext ${RELOC} -o a.out start.o bootxx.o romread.o \
-	${LIBSA} libsvax.a
+xxboot:	start.o bootxx.o romread.o libsvax.a ${SALIB}
+	ld -N -Ttext ${RELOC} -o a.out start.o bootxx.o romread.o ${LIBS}
 	@strip a.out
 	@size a.out
 	@dd if=a.out of=xxboot bs=32 skip=1
 	@rm -f a.out
 
-boot:	boot.o srt0.o devopen.o conf.o ${DEVS} libsvax.a
+boot:	boot.o srt0.o devopen.o conf.o ${DEVS} libsvax.a ${SALIB} vers.o
+	@date '+_vers: .globl _vers; .asciz ">> NetBSD/vax boot [%y%m%d %H:%M] <<"' | as -o vers.o
 	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o boot.o \
-	conf.o ${DEVS} ${LIBSA} libsvax.a
+	conf.o ${DEVS} ${LIBS} vers.o
 	@strip boot
 	@size boot
 
-edlabel: edlabel.o srt0.o devopen.o conf.o ${DEVS} libsvax.a
+edlabel: edlabel.o srt0.o devopen.o conf.o ${DEVS} libsvax.a vers.o
+	@date '+_vers: .globl _vers; .asciz ">> NetBSD/vax boot [%y%m%d %H:%M] <<"' | as -o vers.o
 	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o edlabel.o\
-	conf.o ${DEVS} ${LIBSA} libsvax.a
+	conf.o ${DEVS} ${LIBS} vers.o
 	@strip edlabel
 	@size edlabel
 
-copy:	copy.o srt0.o devopen.o conf.o ${DEVS} libsvax.a
+copy:	copy.o srt0.o devopen.o conf.o ${DEVS} libsvax.a vers.o
+	@date '+_vers: .globl _vers; .asciz ">> NetBSD/vax boot [%y%m%d %H:%M] <<"' | as -o vers.o
 	ld -N -Ttext ${RELOC} -e nisse -o $@ srt0.o devopen.o copy.o \
-	conf.o ${DEVS} ${LIBSA} libsvax.a
+	conf.o ${DEVS} ${LIBS} vers.o
 	@strip copy
 	@size copy
 
@@ -111,11 +117,11 @@ install: boot xxboot
 	rm -f ${DESTDIR}/usr/mdec/hpboot
 	ln ${DESTDIR}/usr/mdec/xxboot ${DESTDIR}/usr/mdec/hpboot
 
-clean::
+clean:
 	rm -f start.o romread.o bootxx.o init.o xxboot boot racopy \
 	libsvax.a udiv.o urem.o consio.o ${DEVS} edlabel edlabel.o
 	rm -f conf.o boot.o rom.o racopy.o srt0.o devopen.o rootcopy.o \
-	copy copy.o init.o
+	copy copy.o init.o str.o
 
 .include <bsd.prog.mk>
 

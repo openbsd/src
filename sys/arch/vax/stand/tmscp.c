@@ -1,5 +1,5 @@
-/*	$OpenBSD: tmscp.c,v 1.4 1997/05/29 00:04:28 niklas Exp $ */
-/*	$NetBSD: tmscp.c,v 1.3 1996/08/02 11:22:53 ragge Exp $ */
+/*	$OpenBSD: tmscp.c,v 1.5 1998/02/03 11:48:30 maja Exp $ */
+/*	$NetBSD: tmscp.c,v 1.4 1997/03/15 13:04:31 ragge Exp $ */
 /*
  * Copyright (c) 1995 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -73,7 +73,6 @@ static volatile struct uda {
 static volatile struct uda *ubauda;
 static volatile struct udadevice *udacsr;
 static struct ra_softc ra_softc;
-static char io_buf[MAXBSIZE];
 
 tmscpopen(f, adapt, ctlr, unit, part)
 	struct open_file *f;

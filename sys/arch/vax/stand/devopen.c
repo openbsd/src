@@ -1,190 +1,55 @@
-/*	$OpenBSD: devopen.c,v 1.4 1997/05/29 00:04:21 niklas Exp $ */
-/*	$NetBSD: devopen.c,v 1.6 1996/08/02 16:18:39 ragge Exp $ */
-/*-
- *  Copyright (c) 1993 John Brezak
- *  All rights reserved.
- * 
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *  1. Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *  2. Redistributions in binary form must reproduce the above copyright
- *     notice, this list of conditions and the following disclaimer in the
- *     documentation and/or other materials provided with the distribution.
- *  3. The name of the author may not be used to endorse or promote products
- *     derived from this software without specific prior written permission.
- * 
- * THIS SOFTWARE IS PROVIDED BY THE AUTHOR `AS IS'' AND ANY EXPRESS OR
- * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
- * DISCLAIMED.	IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT,
- * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
- * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
- * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
- * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
- * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- * ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
+/*	$OpenBSD: devopen.c,v 1.5 1998/02/03 11:48:26 maja Exp $ */
+/*	$NetBSD: devopen.c,v 1.8 1997/06/08 17:49:19 ragge Exp $ */
+/*
+ * Copyright (c) 1997 Ludd, University of Lule}, Sweden.
+ * All rights reserved.
  *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed at Ludd, University of 
+ *      Lule}, Sweden and its contributors.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/param.h>
 #include <sys/reboot.h>
 
 #include "lib/libsa/stand.h"
-/* #include "samachdep.h" */
+#include "samachdep.h"
+#include "vaxstand.h"
 
-u_int opendev;
-
-#define ispart(c)	((c) >= 'a' && (c) <= 'h')
+unsigned int opendev;
 
 int
-atoi(cp)
-	char *cp;
-{
-	int val = 0;
-	while(isdigit(*cp))
-		val = val * 10 + (*cp++ - '0');
-	return(val);
-}
-
-usage()
-{
-	printf("\
-	    Usage: device(adaptor, controller, drive, partition)file\n\
-	    <device><unit><partitonletter>:file\n\
-	    ");
-}
-
-devlookup(d,len)
-	char *d;
-	int len;
-{
-	struct devsw *dp = devsw;
-	int i;
-
-	for (i = 0; i < ndevs; i++, dp++)
-		if (dp->dv_name && strncmp(dp->dv_name, d, len) == 0)
-			return(i);
-
-	printf("No such device - Configured devices are:\n");
-	for (dp = devsw, i = 0; i < ndevs; i++, dp++)
-		if (dp->dv_name)
-			printf(" %s", dp->dv_name);
-	printf("\n");
-	errno = ENODEV;
-	return(-1);
-}
-
-/*
- * Parse a device spec in one of two forms.
- *
- * dev(adapt, ctlr, unit, part)file
- * [A-Za-z]*[0-9]*[A-Za-z]:file
- *    dev   unit  part
- */
-devparse(fname, dev, adapt, ctlr, unit, part, file)
-	char *fname;
-	int *dev, *adapt, *ctlr, *unit, *part;
-	char **file;
-{
-	int *argp, i;
-	char *s, *args[4];
-
-	/* get device name and make lower case */
-	for(s = fname; *s && *s != '/' && *s != ':' && *s != '('; s++)
-		if(isupper(*s))
-			*s = tolower(*s);
-
-	/* first form */
-	if(*s == '('){
-		/* lookup device and get index */
-		if ((*dev = devlookup(fname, s - fname)) < 0)
-			goto baddev;
-
-		/* tokenize device ident */
-		args[0] = ++s;
-		for (args[0] = s, i = 1; *s && *s != ')'; s++)
-			if (*s == ',')
-				args[i++] = ++s;
-		
-
-		switch(i) {
-		case 4:
-			*adapt = atoi(args[0]);
-			*ctlr  = atoi(args[1]);
-			*unit  = atoi(args[2]);
-			*part  = atoi(args[3]);
-			break;
-		case 3:
-			*ctlr  = atoi(args[0]);
-			*unit  = atoi(args[1]);
-			*part  = atoi(args[2]);
-			break;
-		case 2:
-			*unit  = atoi(args[0]);
-			*part  = atoi(args[1]);
-			break;
-		case 1:
-			*part  = atoi(args[0]);
-			break;
-		case 0:
-			break;
-		}
-		*file = ++s;
-
-	/* second form */
-	} else if (*s == ':') {
-
-		/* isolate device */
-		for(s = fname; *s != ':' && !isdigit(*s); s++)
-			;
-	
-		/* lookup device and get index */
-		if ((*dev = devlookup(fname, s - fname)) < 0)
-			goto baddev;
-
-		/* isolate unit */
-		if ((*unit = atoi(s)) > sizeof(char))
-			goto bad;
-		for (; isdigit(*s); s++)
-			;
-	
-		/* translate partition */
-		if(!ispart(*s))
-			goto bad;
-	
-		*part = *s++ - 'a';
-		if(*s != ':')
-			goto bad;
-		*file = ++s;
-
-	/* no device present */
-	} else
-		*file = fname;
-    
-	/* return the remaining unparsed part as the file to boot */
-	return(0);
-    
-bad:
-	usage();
-
-	baddev:
-		return(-1);
-}
-
-extern int bootdev;
-
 devopen(f, fname, file)
 	struct open_file *f;
 	const char *fname;
 	char **file;
 {
-	int n, error;
-	int dev, ctlr, unit, part;
-	int adapt;
-	struct devsw *dp = &devsw[0];
+	int dev, ctlr, unit, part, adapt, i, a[4], x;
+	struct devsw *dp;
+	extern struct fs_ops nfs_system[];
+	extern int cnvtab[];
+	char *s, *c;
 
 	dev   = B_TYPE(bootdev);
 	ctlr  = B_CONTROLLER(bootdev);
@@ -192,23 +57,89 @@ devopen(f, fname, file)
 	part  = B_PARTITION(bootdev);
 	adapt = B_ADAPTOR(bootdev);
 
-	if (error = devparse(fname, &dev, &adapt, &ctlr, &unit, &part, file))
-		return(error);
+	for (i = 0, dp = 0; i < ndevs; i++)
+		if (cnvtab[i] == dev)
+			dp = devsw + i;
 
-	dp = &devsw[dev];
+	x = 0;
+	if ((s = index(fname, '('))) {
+		*s++ = 0;
+
+		for (i = 0, dp = devsw; i < ndevs; i++, dp++)
+			if (dp->dv_name && strcmp(dp->dv_name, fname) == 0)
+				break;
+
+		if (i == ndevs) {
+			printf("No such device - Configured devices are:\n");
+			for (dp = devsw, i = 0; i < ndevs; i++, dp++)
+				if (dp->dv_name)
+					printf(" %s", dp->dv_name);
+			printf("\n");
+			return -1;
+		}
+		dev = cnvtab[i];
+		if ((c = index(s, ')')) == 0)
+			goto usage;
+
+		*c++ = 0;
+
+		if (*s) do {
+			a[x++] = atoi(s);
+			while (*s >= '0' && *s <= '9')
+				s++;
+
+			if (*s != ',' && *s != 0)
+				goto usage;
+		} while (*s++);
+
+		if (x)
+			part = a[x - 1];
+		if (x > 1)
+			unit = a[x - 2];
+		if (x > 2)
+			ctlr = a[x - 3];
+		if (x > 3)
+			adapt = a[0];
+		*file = c;
+	} else
+		*file = (char *)fname;
+
+#ifdef notyet
+	if ((u = index(s, ' '))) {
+		*u++ = 0;
+
+		if (*u != '-')
+			goto usage;
+
+		while (*++u) {
+			if (*u == 'a')
+				bdev |= RB_ASKNAME;
+			else if (*u == 'd')
+				bdev |= RB_DEBUG;
+			else if (*u == 's')
+				bdev |= RB_SINGLE;
+			else
+				goto usage;
+		}
+
+	}
+#endif
 
 	if (!dp->dv_open)
 		return(ENODEV);
+	f->f_dev = dp;
 
 	opendev = MAKEBOOTDEV(dev, adapt, ctlr, unit, part);
-	
-	f->f_dev = dp;
-    
-	if ((error = (*dp->dv_open)(f, adapt, ctlr, unit, part)) == 0)
-		return(0);
-	
-	printf("%s(%d,%d,%d,%d): %s\n", devsw[dev].dv_name,
-		adapt, ctlr, unit, part, strerror(error));
 
-	return(error);
+	if (dev > 95) { /* MOP boot over network, root & swap over NFS */
+		bcopy(nfs_system, file_system, sizeof(struct fs_ops));
+		i = (*dp->dv_open)(f, dp->dv_name);
+	} else
+		i = (*dp->dv_open)(f, adapt, ctlr, unit, part);
+
+	return i;
+
+usage:
+	printf("usage: dev(adapter,controller,unit,partition)file -asd\n");
+	return -1;
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: boot.c,v 1.3 1997/01/15 23:24:16 maja Exp $ */
-/*	$NetBSD: boot.c,v 1.5 1996/08/02 11:21:49 ragge Exp $ */
+/*	$OpenBSD: boot.c,v 1.4 1998/02/03 11:48:24 maja Exp $ */
+/*	$NetBSD: boot.c,v 1.7 1997/06/08 17:49:16 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 char line[100];
-volatile u_int devtype, bootdev;
+volatile int devtype, bootdev;
 extern	unsigned opendev;
 extern  unsigned *bootregs;
 
@@ -59,6 +59,7 @@ Xmain()
 	register howto asm("r11");
 	register bdev  asm("r10");
 	int io, retry, type;
+	extern	char vers[];
 
 	io=0;
 	bootdev=bdev;
@@ -74,7 +75,7 @@ Xmain()
 
 	for (retry = 0;;) {
 		if (io >= 0)
-			printf("\nNboot\n");
+			printf("\n%s\n", vers);
 		if (howto & RB_ASKNAME) {
 			printf(": ");
 			gets(line);

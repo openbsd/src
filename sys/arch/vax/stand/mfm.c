@@ -1,5 +1,5 @@
-/*	$OpenBSD: mfm.c,v 1.2 1997/05/29 00:04:23 niklas Exp $	*/
-/*	$NetBSD: mfm.c,v 1.1 1996/08/02 11:22:16 ragge Exp $	*/
+/*	$OpenBSD: mfm.c,v 1.3 1998/02/03 11:48:27 maja Exp $	*/
+/*	$NetBSD: mfm.c,v 1.2 1997/03/15 13:04:28 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -334,6 +334,7 @@ volatile struct mfm_xbn {
 	short		checksum;	/* checksum over the XBN */
 } mfm_xbn;
 
+#ifdef verbose
 display_xbn(p)
 	struct mfm_xbn *p;
 {
@@ -351,6 +352,7 @@ display_xbn(p)
 	printf("serial: %d, checksum: %d, size: %d, reserved: %32c\n",
 	    p->serial_number, p->checksum, sizeof(*p), p->reserved);
 }
+#endif
 
 mfmopen(f, adapt, ctlr, unit, part)
 	struct open_file *f;
@@ -383,6 +385,7 @@ mfmopen(f, adapt, ctlr, unit, part)
 
 		/* mfmstrategy(msc, F_READ, -16, 8192, io_buf, &i); */
 		mfmstrategy(msc, F_READ, -16, 512, io_buf, &i);
+#ifdef verbose
 		printf("dumping raw disk-block #0:\n");
 		ucp = io_buf;
 		for (k = 0; k < 128; k++) {
@@ -399,33 +402,42 @@ mfmopen(f, adapt, ctlr, unit, part)
 		xp = (void *) io_buf;
 		display_xbn(xp);
 		printf("\n");
-
+#endif
 	}
 
 	if (unit == 2) {	/* floppy! */
 		if (lp->d_ntracks != 2) {
+#ifdef verbose
 			printf("changing number of tracks from %d to %d.\n",
 			       lp->d_ntracks, 2);
+#endif
 			lp->d_ntracks = 2;
 		}
 	} else {		/* hard-disk */
 		unsigned short *usp = (void *) io_buf;
+#ifdef verbose
 		printf("label says: s/t/c = %d/%d/%d\n",
 		       lp->d_nsectors, lp->d_ntracks, lp->d_ncylinders);
-
+#endif
 		if (lp->d_nsectors != usp[13]) {
+#ifdef verbose
 			printf("changing number of sectors from %d to %d.\n",
 			       lp->d_nsectors, usp[13]);
+#endif
 			lp->d_nsectors = usp[13];
 		}
 		if (lp->d_ntracks != usp[14]) {
+#ifdef verbose
 			printf("changing number of heads/tracks from %d to %d.\n",
 			       lp->d_ntracks, usp[14]);
+#endif
 			lp->d_ntracks = usp[14];
 		}
 		if (lp->d_ncylinders != usp[15]) {
+#ifdef verbose
 			printf("changing number of cylinders from %d to %d.\n",
 			       lp->d_ncylinders, usp[15]);
+#endif
 			lp->d_ncylinders = usp[15];
 		}
 		lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
@@ -561,9 +573,11 @@ mfm_rdstrategy(msc, func, dblk, size, buf, rsize)
 		sect = sect % lp->d_nsectors;
 
 		if (dblk < 0) {
+#ifdef verbose
 			printf("using raw diskblock-data!\n");
 			printf("block %d, dblk %d ==> cyl %d, head %d, sect %d\n",
 			       block, dblk, cyl, sect, head);
+#endif
 		} else
 			cyl += 1;	/* first cylinder is reserved for
 					 * controller! */

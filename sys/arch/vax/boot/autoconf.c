@@ -1,5 +1,5 @@
-/*	$OpenBSD: autoconf.c,v 1.4 1997/05/29 00:04:18 niklas Exp $ */
-/*	$NetBSD: autoconf.c,v 1.6 1996/08/02 11:21:46 ragge Exp $ */
+/*	$OpenBSD: autoconf.c,v 1.5 1998/02/03 11:48:24 maja Exp $ */
+/*	$NetBSD: autoconf.c,v 1.9 1997/04/10 21:25:18 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -72,14 +72,17 @@ static int uda630[]={qbdev(0772150),qbdev(0760334)};
 
 autoconf()
 {
+	extern int memsz;
 
 	switch (vax_cputype) {
 
 	default:
 		printf("CPU type %d not supported by boot\n",vax_cputype);
-		asm("halt");
+		printf("trying anyway...\n");
+		break;
 
 	case VAX_8600:
+		memsz = 0;
 		nmba = 8;
 		nuba = 8;
 		nuda = 1;
@@ -91,6 +94,7 @@ autoconf()
 		break;
 
 	case VAX_780:
+		memsz = 0;
 		nmba = 4;
 		nuba = 4;
 		nuda = 1;
@@ -102,6 +106,7 @@ autoconf()
 		break;
 
 	case VAX_750:
+		memsz = 0;
 		nmba = 3;
 		nuba = 2;
 		nuda = 1;
@@ -123,9 +128,28 @@ autoconf()
 		break;
 
 	case VAX_8200:
+		memsz = 0;
 		nbi = 1;
 		biaddr = bi8200;
 		bioaddr = bio8200;
+
+	case VAX_TYP_SOC:
+	case VAX_TYP_RIGEL:
+		break;
+
 	}
 }
 
+/*
+ * Return seconds since sometime...
+ * Some VAXen doesn't have TODR, return a fake value...
+ */
+getsecs()
+{
+	static int fakesecs;
+	int todr = mfpr(PR_TODR);
+
+	if (todr)
+		return todr/100;
+	return ++fakesecs;
+}

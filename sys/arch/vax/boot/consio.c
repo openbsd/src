@@ -1,5 +1,5 @@
-/*	$OpenBSD: consio.c,v 1.3 1997/05/29 00:04:19 niklas Exp $ */
-/*	$NetBSD: consio.c,v 1.4 1996/08/02 11:22:00 ragge Exp $ */
+/*	$OpenBSD: consio.c,v 1.4 1998/02/03 11:48:26 maja Exp $ */
+/*	$NetBSD: consio.c,v 1.8 1997/06/08 17:49:18 ragge Exp $ */
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -96,15 +96,19 @@ setup()
 {
 	vax_cputype = (mfpr(PR_SID) >> 24) & 0xFF;
 
-	put_fp = pr_putchar;
+	put_fp = pr_putchar; /* Default */
 	get_fp = pr_getchar;
 	/*
 	 * according to vax_cputype we initialize vax_boardtype.
 	 */
         switch (vax_cputype) {
 
-	case VAX_650:
-	case VAX_78032:
+	case VAX_TYP_UV2:
+	case VAX_TYP_CVAX:
+	case VAX_TYP_RIGEL:
+	case VAX_TYP_MARIAH:
+	case VAX_TYP_NVAX:
+	case VAX_TYP_SOC:
 		is_mvax = 1;
 		vax_boardtype = (vax_cputype << 24) |
 		    ((*(int*)0x20040004 >> 24) & 0377);
@@ -117,12 +121,12 @@ setup()
 	 * enough to do that) we decide which method/routines to use
 	 * for console I/O. 
 	 * mtpr/mfpr are restricted to serial consoles, ROM-based routines
-	 * support both serial and graphical consoles, thus we use that
-	 * as fallthrough/default.
+	 * support both serial and graphical consoles.
+	 * We default to mtpr routines; so that we don't crash if
+	 * it isn't a supported system.
 	 */
-	switch (vax_boardtype) {	/* ROM-based is default !!! */
+	switch (vax_boardtype) {
 
-	case VAX_BTYP_650:
 	case VAX_BTYP_660:
 	case VAX_BTYP_670:
 	case VAX_BTYP_690:
@@ -137,16 +141,23 @@ setup()
 	case VAX_BTYP_46:
 	case VAX_BTYP_49:
 	case VAX_BTYP_410:	  
+	case VAX_BTYP_420:
+	case VAX_BTYP_440:
 		put_fp = rom_putchar;
 		get_fp = rom_getchar;
 		rom_putc = 0x20040058;		/* 537133144 */
 		rom_getc = 0x20040044;		/* 537133124 */
 		break;
-
-	default:
-		break;
+#ifdef notdef
+	case VAX_BTYP_630:
+	case VAX_BTYP_650:
+	case VAX_BTYP_9CC:
+	case VAX_BTYP_60:
+		put_fp = pr_putchar;
+		get_fp = pr_getchar;
+		break
+#endif
 	}
-
 	return;
 }
 
@@ -200,4 +211,8 @@ asm("
 		ret			# we're done
 ");
 
-
+_rtt()
+{
+	printf("rtt\n");
+bo:	goto bo;
+}

@@ -1,5 +1,5 @@
-/*	$OpenBSD: copy.c,v 1.3 1997/05/29 00:04:20 niklas Exp $ */
-/*	$NetBSD: copy.c,v 1.3 1996/08/02 11:22:03 ragge Exp $ */
+/*	$OpenBSD: copy.c,v 1.4 1998/02/03 11:48:26 maja Exp $ */
+/*	$NetBSD: copy.c,v 1.4 1997/02/12 18:00:42 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -110,7 +110,7 @@ again:
 	printf("Specify the device to read from as xx(N,?), where\n");
 	printf("xx is the device-name, ? is file/partition number\n");
 	printf("and N is the unit-number, e.g.\n");
-	printf("\"tms(0,1)\" for the first TMSCP-tape (TK50),\n");
+	printf("\"mt(0,1)\" for the first TMSCP-tape (TK50),\n");
 	printf("\"ra(2,0)\" for the third MSCP-disk/floppy (RX33/RX50)\n");
 	printf("\n");
 	printf("device to read from ? ");

@@ -1,5 +1,5 @@
-/* $OpenBSD: bootxx.c,v 1.5 1997/05/29 00:04:19 niklas Exp $ */
-/* $NetBSD: bootxx.c,v 1.7 1996/08/02 11:21:53 ragge Exp $ */
+/* $OpenBSD: bootxx.c,v 1.6 1998/02/03 11:48:25 maja Exp $ */
+/* $NetBSD: bootxx.c,v 1.11 1997/06/08 17:49:17 ragge Exp $ */
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -74,11 +74,15 @@ int	command(int, int);
  */
 
 volatile u_int  devtype, bootdev;
-unsigned        opendev, boothowto, bootset;
+unsigned        opendev, boothowto, bootset, memsz;
 
 extern unsigned *bootregs;
 extern struct	rpb *rpb;
 
+/*
+ * The boot block are used by 11/750, 8200, MicroVAX II/III, VS2000,
+ * VS3100/??, VS4000 and VAX6000/???, and only when booting from disk.
+ */
 Xmain()
 {
 	int io;
@@ -88,10 +92,11 @@ Xmain()
 
         switch (vax_cputype) {
 
-        case VAX_78032:
-        case VAX_650:
-		bootdev = rpb->devtyp;
-
+        case VAX_TYP_UV2:
+        case VAX_TYP_CVAX:
+	case VAX_TYP_RIGEL:
+	case VAX_TYP_NVAX:
+	case VAX_TYP_SOC:
 		/*
 		 * now relocate rpb/bqo (which are used by ROM-routines)
 		 */
@@ -102,11 +107,14 @@ Xmain()
 		bcopy ((void*)rpb->iovec, bqo, rpb->iovecsz);
 		rpb->iovec = (int)bqo;
 		bootregs[11] = (int)rpb;
+		bootdev = rpb->devtyp;
+		memsz = rpb->pfncnt << 9;
 
                 break;
 	case VAX_8200:
         case VAX_750:
 		bootdev = bootregs[10];
+		memsz = 0;
 
                 break;
 	default:
@@ -118,7 +126,7 @@ Xmain()
 
 	bootset = getbootdev();
 
-	printf("\nhowto 0x%x, bdev 0x%x, booting...\n", boothowto, bootdev);
+	printf("\nhowto 0x%x, bdev 0x%x, booting...", boothowto, bootdev);
 	io = open(hej, 0);
 
 	if (io >= 0 && io < SOPEN_MAX) {
@@ -140,7 +148,7 @@ copyunix(aio)
 		printf("Bad format\n");
 		return;
 	}
-	printf("%d", x.a_text);
+
 	if (N_GETMAGIC(x) == ZMAGIC && lseek(io, N_TXTADDR(x), SEEK_SET) == -1)
 		goto shread;
 	if (read(io, (char *) 0x10000, x.a_text) != x.a_text)
@@ -149,17 +157,17 @@ copyunix(aio)
 	if (N_GETMAGIC(x) == ZMAGIC || N_GETMAGIC(x) == NMAGIC)
 		while ((int) addr & CLOFSET)
 			*addr++ = 0;
-	printf("+%d", x.a_data);
+
 	if (read(io, addr + 0x10000, x.a_data) != x.a_data)
 		goto shread;
 	addr += x.a_data;
 	bcopy((void *) 0x10000, 0, (int) addr);
-	printf("+%d", x.a_bss);
+
 	for (i = 0; i < x.a_bss; i++)
 		*addr++ = 0;
 	for (i = 0; i < 128 * 512; i++)	/* slop */
 		*addr++ = 0;
-	printf(" start 0x%x\n", x.a_entry);
+	printf("done. (%d+%d)\n", x.a_text + x.a_data, x.a_bss);
 	hoppabort(x.a_entry, boothowto, bootset);
 	(*((int (*) ()) x.a_entry)) ();
 	return;
@@ -170,58 +178,62 @@ shread:
 
 getbootdev()
 {
-	int	i, major, adaptor, controller, unit, partition;
+	int i, adaptor, controller, unit, partition, retval;
 
+	adaptor = controller = unit = partition = 0;
 
 	switch (vax_cputype) {
-	case VAX_78032:
-	case VAX_650:
+	case VAX_TYP_UV2:
+	case VAX_TYP_CVAX:
 		adaptor = 0;
 		controller = ((rpb->csrphy & 017777) == 0xDC)?1:0;
 		unit = rpb->unit;			/* DUC, DUD? */
 		
 		break;
 
-	case VAX_8200:
-	case VAX_750:
+	case VAX_TYP_RIGEL:
+		unit = rpb->unit;
+		if (unit > 99)
+			unit /= 100;		/* DKB300 is target 3 */
+		break;
+
+
+	case VAX_TYP_8SS:
+	case VAX_TYP_750:
 		controller = 0;	/* XXX Actually massbuss can be on 3 ctlr's */
 		unit = bootregs[3];
 		break;
 	}
 
-	partition = 0;
-
-	switch (bootdev) {
-	case BDEV_MBA:			/* massbuss boot */
-		major = 0;	/* hp / ...  */
+	switch (B_TYPE(bootdev)) {
+	case BDEV_HP:			/* massbuss boot */
 		adaptor = (bootregs[1] & 0x6000) >> 17;
 		break;
 
 	case BDEV_UDA:		/* UDA50 boot */
-		major = 9;	/* ra / mscp  */
 		if (vax_cputype == VAX_750)
 			adaptor = (bootregs[1] & 0x40000 ? 0 : 1);
 		break;
 
-	case BDEV_TK50:		/* TK50 boot */
-		major = 15;	/* tms / tmscp  */
+	case BDEV_TK:		/* TK50 boot */
+	case BDEV_CNSL:		/* Console storage boot */
+	case BDEV_RD:		/* RD/RX on HDC9224 (MV2000) */
+		controller = 0; /* They are always on ctlr 0 */
 		break;
 
-	case 36:		/* VS2000/KA410 ST506 disk */
-	case 37:                /* VS2000/KA410 SCSI tape */
-	case 42:                /* VS3100/76 SCSI-floppy(?) */
-		major = 17;     /* 17 is assigned to the ROM-drivers */
-		break;
-
-	case BDEV_CONSOLE:
-		major = 8;
+	case BDEV_ST:		/* SCSI-tape on NCR5380 (MV2000) */
+	case BDEV_SD:		/* SCSI-disk on NCR5380 (3100/76) */
+		/*
+		 * No standalone routines for SCSI support yet.
+		 * Use rom-routines instead!
+		 */
 		break;
 
 	default:
 		printf("Unsupported boot device %d, trying anyway.\n", bootdev);
 		boothowto |= (RB_SINGLE | RB_ASKNAME);
 	}
-	return MAKEBOOTDEV(major, adaptor, controller, unit, partition);
+	return MAKEBOOTDEV(bootdev, adaptor, controller, unit, partition);
 }
 
 struct devsw    devsw[] = {
@@ -261,10 +273,10 @@ devopen(f, fname, file)
 	/*
 	 * On uVAX we need to init [T]MSCP ctlr to be able to use it.
 	 */
-	if (vax_cputype == VAX_78032 || vax_cputype == VAX_650) {
+	if (vax_cputype == VAX_TYP_UV2 || vax_cputype == VAX_TYP_CVAX) {
 		switch (bootdev) {
 		case BDEV_UDA:	/* MSCP */
-		case BDEV_TK50:	/* TMSCP */
+		case BDEV_TK:	/* TMSCP */
 			csr = (struct udadevice *)rpb->csrphy;
 
 			csr->udaip = 0; /* Start init */
@@ -281,7 +293,7 @@ devopen(f, fname, file)
 			    (int) &uda.uda_rsp.mscp_cmdref;
 			uda.uda_ca.ca_cmddsc =
 			    (int) &uda.uda_cmd.mscp_cmdref;
-			if (bootdev == BDEV_TK50)
+			if (bootdev == BDEV_TK)
 				uda.uda_cmd.mscp_vcid = 1;
 			command(M_OP_SETCTLRC, 0);
 			uda.uda_cmd.mscp_unit = rpb->unit;
@@ -295,7 +307,7 @@ devopen(f, fname, file)
 	 * Actually disklabel is only needed when using hp disks,
 	 * but it doesn't hurt to always get it.
 	 */
-	if ((bootdev != BDEV_TK50) && (bootdev != BDEV_CONSOLE)) {
+	if ((bootdev != BDEV_TK) && (bootdev != BDEV_CNSL)) {
 		msg = getdisklabel((void *)LABELOFFSET + RELOC, &lp);
 		if (msg)
 			printf("getdisklabel: %s\n", msg);
@@ -333,9 +345,12 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 	int     nsize = size;
 
 	switch (vax_cputype) {
-
-	case VAX_650:
-	case VAX_78032:
+	/*
+	 * case VAX_TYP_UV2:
+	 * case VAX_TYP_CVAX:
+	 * case VAX_TYP_RIGEL:
+	 */
+	default:
 		switch (bootdev) {
 
 		case BDEV_UDA: /* MSCP */
@@ -346,7 +361,7 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 			command(M_OP_READ, 0);
 			break;
 
-		case BDEV_TK50: /* TMSCP */
+		case BDEV_TK: /* TMSCP */
 			if (dblk < curblock) {
 				uda.uda_cmd.mscp_seq.seq_bytecount =
 				    curblock - dblk;
@@ -366,8 +381,10 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 				command(M_OP_READ, 0);
 			}
 			break;
-		case 36:
-		case 37:
+		case BDEV_RD:
+		case BDEV_ST:
+		case BDEV_SD:
+
 		default:
 			romread_uvax(block, size, buf, bootregs);
 			break;
@@ -377,7 +394,7 @@ romstrategy(sc, func, dblk, size, buf, rsize)
 
 	case VAX_8200:
 	case VAX_750:
-		if (bootdev != BDEV_MBA) {
+		if (bootdev != BDEV_HP) {
 			while (size > 0) {
 				while ((read750(block, bootregs) & 0x01) == 0)
 					printf("Retrying read bn# %d\n", block);
