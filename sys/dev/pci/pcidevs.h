@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.317 2000/09/14 13:18:50 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.318 2000/09/14 18:50:05 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1160,6 +1160,8 @@
 #define	PCI_PRODUCT_LAVA_PARALLEL2A	0x8002		/* Dual Parallel */
 #define	PCI_PRODUCT_LAVA_PARALLELB	0x8003		/* Dual Parallel B */
 #define	PCI_PRODUCT_LAVA_SERIAL	0x0100		/* Dual Serial */
+#define	PCI_PRODUCT_LAVA_SERIAL1	0x0110		/* Serial */
+#define	PCI_PRODUCT_LAVA_SERIAL2	0x0111		/* Serial */
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */

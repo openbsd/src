@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.317 2000/09/14 13:18:50 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.318 2000/09/14 18:50:05 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -2671,6 +2671,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Lava",
 	    "Dual Serial",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_SERIAL1,
+	    0,
+	    "Lava",
+	    "Serial",
+	},
+	{
+	    PCI_VENDOR_LAVA, PCI_PRODUCT_LAVA_SERIAL2,
+	    0,
+	    "Lava",
+	    "Serial",
 	},
 	{
 	    PCI_VENDOR_LEADTEK, PCI_PRODUCT_LEADTEK_S3_805,
