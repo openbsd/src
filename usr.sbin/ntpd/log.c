@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.2 2004/06/01 20:28:19 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.3 2004/06/17 19:15:27 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -154,4 +154,16 @@ fatalx(const char *emsg)
 {
 	errno = 0;
 	fatal(emsg);
+}
+
+const char *
+log_sockaddr(struct sockaddr *sa)
+{
+	static char	buf[NI_MAXHOST];
+
+	if (getnameinfo(sa, sa->sa_len, buf, sizeof(buf), NULL, 0,
+	    NI_NUMERICHOST))
+		return ("(unknown)");
+	else
+		return (buf);
 }
