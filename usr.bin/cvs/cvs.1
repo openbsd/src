@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.3 2004/07/26 15:55:27 jfb Exp $
+.\"	$OpenBSD: cvs.1,v 1.4 2004/11/12 03:06:53 jfb Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -83,13 +83,16 @@ Adding a file does not actually publish the contents of the
 file, so you must commit the first revision in order to let other users
 see the file with the
 .Sy update
-command.
+or
+.Sy checkout
+commands.
 .Pp
 .It Xo Sy commit
 .Op Fl flnR
 .Op Fl m Ar msg
 .Op Fl F Ar logfile
 .Op Fl r Ar rev
+.Op Ar file ...
 .Xc
 The
 .Sy commit
@@ -99,6 +102,7 @@ repository's information to reflect the changes.
 .It Xo Sy diff Op Fl cilu
 .Op Fl D Ar date
 .Op Fl r Ar rev
+.Op Ar file ...
 .Xc
 The
 .Sy diff
@@ -108,6 +112,7 @@ program, except that the differential comparations that it generates are
 between local or remote revisions of files stored in the CVS repository.
 .It Xo Sy update
 .Op Fl ACdP
+.Op Ar file ...
 .Xc
 The
 .Sy update
