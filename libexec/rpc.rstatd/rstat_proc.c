@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.8 1997/07/23 20:36:32 kstailey Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.9 1997/08/05 23:48:14 angelos Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.8 1997/07/23 20:36:32 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.9 1997/08/05 23:48:14 angelos Exp $";
 #endif
 
 /*
@@ -202,7 +202,7 @@ void
 updatestat()
 {
 	long off;
-	int i;
+	int i, save_errno = errno;
 	struct vmmeter cnt;
 	struct ifnet ifnet;
 	double avrun[3];
@@ -319,6 +319,7 @@ updatestat()
 	gettimeofday((struct timeval *)&stats_all.s3.curtime,
 		(struct timezone *) 0);
 	alarm(1);
+	errno = save_errno;
 }
 
 setup()
