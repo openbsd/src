@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.37 2003/05/10 17:53:57 miod Exp $
+	$OpenBSD: syscalls.master,v 1.38 2003/07/03 00:00:04 tedu Exp $
 ;	$NetBSD: syscalls.master,v 1.15 1995/12/18 14:35:10 fvdl Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
@@ -316,7 +316,9 @@
 190	STD		{ int sys_vfork(void); }
 191	STD		{ int linux_sys_ugetrlimit(u_int which, \
 			    struct linux_rlimit *rlp); }
-192     STD		{ int linux_sys_mmap2(void); }
+192     STD		{ linux_off_t linux_sys_mmap2(unsigned long addr, \
+			   size_t len, int prot, int flags, int fd, \
+			   linux_off_t offset); }
 193     STD        	{ int linux_sys_truncate64(char *path, \
 			    off_t length); }
 194	NOARGS		linux_ftruncate64 { int sys_ftruncate(int fd, off_t length); }

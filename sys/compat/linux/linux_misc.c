@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_misc.c,v 1.49 2003/06/21 00:42:58 tedu Exp $	*/
+/*	$OpenBSD: linux_misc.c,v 1.50 2003/07/03 00:00:04 tedu Exp $	*/
 /*	$NetBSD: linux_misc.c,v 1.27 1996/05/20 01:59:21 fvdl Exp $	*/
 
 /*
@@ -86,6 +86,8 @@ static void bsd_to_linux_statfs(struct statfs *, struct linux_statfs *);
 int	linux_select1(struct proc *, register_t *, int, fd_set *,
      fd_set *, fd_set *, struct timeval *);
 static int getdents_common(struct proc *, void *, register_t *, int);
+static void linux_to_bsd_mmap_args(struct sys_mmap_args *,
+    const struct linux_sys_mmap2_args *);
 
 /*
  * The information on a terminated (or stopped) process needs
@@ -607,29 +609,82 @@ linux_sys_mmap(p, v, retval)
 		syscallarg(struct linux_mmap *) lmp;
 	} */ *uap = v;
 	struct linux_mmap lmap;
+	struct linux_sys_mmap2_args nlmap;
 	struct sys_mmap_args cma;
-	int error, flags;
+	int error;
 
 	if ((error = copyin(SCARG(uap, lmp), &lmap, sizeof lmap)))
 		return error;
 
-	flags = 0;
-	flags |= cvtto_bsd_mask(lmap.lm_flags, LINUX_MAP_SHARED, MAP_SHARED);
-	flags |= cvtto_bsd_mask(lmap.lm_flags, LINUX_MAP_PRIVATE, MAP_PRIVATE);
-	flags |= cvtto_bsd_mask(lmap.lm_flags, LINUX_MAP_FIXED, MAP_FIXED);
-	flags |= cvtto_bsd_mask(lmap.lm_flags, LINUX_MAP_ANON, MAP_ANON);
+	if (lmap.lm_pos & PAGE_MASK)
+		return EINVAL;
 
-	SCARG(&cma,addr) = lmap.lm_addr;
-	SCARG(&cma,len) = lmap.lm_len;
-	if (lmap.lm_prot & VM_PROT_WRITE)	/* XXX */
-		lmap.lm_prot |= VM_PROT_READ;
- 	SCARG(&cma,prot) = lmap.lm_prot;
-	SCARG(&cma,flags) = flags;
-	SCARG(&cma,fd) = flags & MAP_ANON ? -1 : lmap.lm_fd;
-	SCARG(&cma,pad) = 0;
-	SCARG(&cma,pos) = lmap.lm_pos;
+	/* repackage into something sane */
+	SCARG(&nlmap,addr) = (unsigned long)lmap.lm_addr;
+	SCARG(&nlmap,len) = lmap.lm_len;
+	SCARG(&nlmap,prot) = lmap.lm_prot;
+	SCARG(&nlmap,flags) = lmap.lm_flags;
+	SCARG(&nlmap,fd) = lmap.lm_fd;
+	SCARG(&nlmap,offset) = (unsigned)lmap.lm_pos;
+
+	linux_to_bsd_mmap_args(&cma, &nlmap);
+	SCARG(&cma, pos) = (off_t)SCARG(&nlmap, offset);
 
 	return sys_mmap(p, &cma, retval);
+}
+
+/*
+ * Guts of most architectures' mmap64() implementations.  This shares
+ * its list of arguments with linux_sys_mmap().
+ *
+ * The difference in linux_sys_mmap2() is that "offset" is actually
+ * (offset / pagesize), not an absolute byte count.  This translation
+ * to pagesize offsets is done inside glibc between the mmap64() call
+ * point, and the actual syscall.
+ */
+int
+linux_sys_mmap2(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	struct linux_sys_mmap2_args /* {
+		syscallarg(unsigned long) addr;
+		syscallarg(size_t) len;
+		syscallarg(int) prot;
+		syscallarg(int) flags;
+		syscallarg(int) fd;
+		syscallarg(linux_off_t) offset;
+	} */ *uap = v;
+	struct sys_mmap_args cma;
+
+	linux_to_bsd_mmap_args(&cma, uap);
+	SCARG(&cma, pos) = ((off_t)SCARG(uap, offset)) << PAGE_SHIFT;
+
+	return sys_mmap(p, &cma, retval);
+}
+
+static void
+linux_to_bsd_mmap_args(cma, uap)
+	struct sys_mmap_args *cma;
+	const struct linux_sys_mmap2_args *uap;
+{
+	int flags = MAP_TRYFIXED, fl = SCARG(uap, flags);
+	
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_SHARED, MAP_SHARED);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_PRIVATE, MAP_PRIVATE);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_FIXED, MAP_FIXED);
+	flags |= cvtto_bsd_mask(fl, LINUX_MAP_ANON, MAP_ANON);
+	/* XXX XAX ERH: Any other flags here?  There are more defined... */
+
+	SCARG(cma, addr) = (void *)SCARG(uap, addr);
+	SCARG(cma, len) = SCARG(uap, len);
+	SCARG(cma, prot) = SCARG(uap, prot);
+	if (SCARG(cma, prot) & VM_PROT_WRITE) /* XXX */
+		SCARG(cma, prot) |= VM_PROT_READ;
+	SCARG(cma, flags) = flags;
+	SCARG(cma, fd) = flags & MAP_ANON ? -1 : SCARG(uap, fd);
+	SCARG(cma, pad) = 0;
 }
 
 int
