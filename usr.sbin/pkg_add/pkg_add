@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.65 2004/10/11 12:13:46 espie Exp $
+# $OpenBSD: pkg_add,v 1.66 2004/10/11 12:25:18 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -342,43 +342,44 @@ if ($opt_P) {
 
 $opt_L = '/usr/local' unless defined $opt_L;
 
-my $destdir;
+my $state = {};
+$state->{cache} = {};
 if (defined $opt_B) {
-	$destdir = $opt_B;
+	$state->{destdir} = $opt_B;
 } elsif (defined $ENV{'PKG_PREFIX'}) {
-	$destdir = $ENV{'PKG_PREFIX'};
+	$state->{destdir} = $ENV{'PKG_PREFIX'};
 }
-if (defined $destdir) {
-	$destdir.='/';
-	$ENV{'PKG_DESTDIR'} = $destdir;
+if (defined $state->{destdir}) {
+	$state->{destdir}.='/';
+	$ENV{'PKG_DESTDIR'} = $state->{destdir};
 } else {
-	$destdir = '';
+	$state->{destdir} = '';
 }
 
 if ($< && !$forced{nonroot}) {
 	Fatal "$0 must be run as root";
 }
 
-my $conflict_list = {};
+$state->{conflict_list} = {};
 
 # first, find all possible potential conflicts
 for my $pkg (installed_packages()) {
 	my $dir = installed_info($pkg);
 	my $plist = OpenBSD::PackingList->fromfile($dir.CONTENTS, \&OpenBSD::PackingList::ConflictOnly);
 	next unless defined $plist;
-	$conflict_list->{$plist->pkgname()} = OpenBSD::PkgCfl->make_conflict_list($plist);
+	$state->{conflict_list}->{$plist->pkgname()} = OpenBSD::PkgCfl->make_conflict_list($plist);
 }
 
-sub can_install($)
+sub can_install($$)
 {
-	my $pkgname = shift;
+	my ($pkgname, $state) = @_;
 
 	if (is_installed $pkgname) {
 		print "package $pkgname is already installed\n";
 		return undef unless $forced{installed};
 	}
 
-	while (my ($name, $l) = each %$conflict_list) {
+	while (my ($name, $l) = each %{$state->{conflict_list}}) {
 		if ($l->conflicts_with($pkgname)) {
 			print "package $pkgname conflicts with installed package $name\n";
 			$errors++;
@@ -391,16 +392,16 @@ sub can_install($)
 
 
 # This does pre_add a package: finding it and reading its package information
-sub pre_add($$)
+sub pre_add($$$)
 {
-	my ($pkg, $not) = @_;
+	my ($pkg, $state, $not) = @_;
 	my $pkgname1;
 	my $operation = $not ? "Pretending to add" : "Adding";
 	
 	if ($pkg ne '-') {
 		print "$operation $pkg\n";
 		$pkgname1 = OpenBSD::PackageName::url2pkgname($pkg);
-		return undef unless can_install($pkgname1);
+		return undef unless can_install($pkgname1, $state);
 	}
 
 	my $handle = OpenBSD::PackageLocator->find($pkg);
@@ -431,7 +432,7 @@ sub pre_add($$)
 		}
 	} else {
 		print "$operation $pkgname\n";
-		return undef unless can_install($pkgname);
+		return undef unless can_install($pkgname, $state);
 	}
 	# second handling of conflicts
 	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
@@ -768,7 +769,7 @@ sub install_package
 	my $cache = $state->{cache};
 
 	if (!defined $cache->{$pkg}) {
-		$cache->{$pkg} = pre_add($pkg, $opt_n);
+		$cache->{$pkg} = pre_add($pkg, $state, $opt_n);
 	}
 
 	my $handle = $cache->{$pkg};
@@ -816,14 +817,12 @@ sub install_package
 	for my $dep (@{$handle->{solved_dependencies}}) {
 		OpenBSD::PackingElement::PkgDep->add($plist, $dep);
 	}
-	really_add($handle, $destdir);
-	$conflict_list->{$plist->pkgname()} = $handle->{conflicts};
+	really_add($handle, $state->{destdir});
+	$state->{conflict_list}->{$plist->pkgname()} = $handle->{conflicts};
 	return ();
 }
 
 my @todo = (@ARGV);
-my $state = {};
-$state->{cache} = {};
 
 eval {
 while (my $pkg = shift @todo) {
