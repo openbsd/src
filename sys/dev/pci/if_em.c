@@ -32,7 +32,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 /*$FreeBSD: if_em.c,v 1.38 2004/03/17 17:50:31 njl Exp $*/
-/* $OpenBSD: if_em.c,v 1.28 2004/09/23 17:45:16 brad Exp $ */
+/* $OpenBSD: if_em.c,v 1.29 2004/09/30 21:19:31 jason Exp $ */
 
 #include "bpfilter.h"
 #include "vlan.h"
@@ -2036,7 +2036,7 @@ em_allocate_pci_resources(struct em_softc * sc)
 		rid = EM_MMBA;
 		for (i = 0; i < 5; i++) {
 			val = pci_conf_read(pa->pa_pc, pa->pa_tag, rid);
-			if (val & 0x00000001) {
+			if (PCI_MAPREG_TYPE(val) == PCI_MAPREG_TYPE_IO) {
 				sc->io_rid = rid;
 				break;
 			}
