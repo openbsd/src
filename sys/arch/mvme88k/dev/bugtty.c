@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugtty.c,v 1.17 2003/10/11 22:08:57 miod Exp $ */
+/*	$OpenBSD: bugtty.c,v 1.18 2003/12/22 11:54:48 miod Exp $ */
 
 /* Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1995 Dale Rahn.
@@ -77,17 +77,6 @@ char bug_obuffer[BUGBUF+1];
 
 struct tty *bugtty_tty[NBUGTTY];
 int needprom = 1;
-/*
-	int	ca_bustype;
-	void	*ca_vaddr;
-	void	*ca_paddr;
-	int	ca_offset;
-	int	ca_len;
-	int	ca_ipl;
-	int	ca_vec;
-	char	*ca_name;
-	void	*ca_master;	 points to bus-dependent data
-*/
 
 int
 bugttymatch(parent, self, aux)
@@ -97,13 +86,17 @@ bugttymatch(parent, self, aux)
 {
 	struct confargs *ca = aux;
 
+	/*
+	 * Do not attach if a suitable console driver has been attached.
+	 * XXX but bugtty is probed first!
+	 */
 	if (needprom == 0)
 		return (0);
+
 	ca->ca_paddr = (void *)0xfff45000;
 	ca->ca_vaddr = (void *)0xfff45000;
-	ca->ca_len = 0x200;
 	ca->ca_ipl = IPL_TTY;
-	ca->ca_name = "bugtty\0";
+	ca->ca_name = "bugtty";
 	return (1);
 }
 

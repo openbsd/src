@@ -1,4 +1,4 @@
-/*	$OpenBSD: vx.c,v 1.24 2003/11/09 00:31:59 miod Exp $ */
+/*	$OpenBSD: vx.c,v 1.25 2003/12/22 11:54:48 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * All rights reserved.
@@ -161,9 +161,6 @@ struct cfdriver vx_cd = {
 #define VX_UNIT(x) (int)(minor(x) / 9)
 #define VX_PORT(x) (int)(minor(x) % 9)
 
-struct envelope *bpp_wait;
-unsigned int board_addr;
-
 struct tty * vxtty(dev)
 	dev_t dev;
 {
@@ -187,17 +184,14 @@ vxmatch(parent, self, aux)
 	struct vxreg *vx_reg;
 	struct confargs *ca = aux;
 
-#ifdef OLD_MAPPINGS
-	ca->ca_vaddr = ca->ca_paddr;
-#endif
-	ca->ca_len = 0x10000; /* we know this. */
 	ca->ca_ipl = 3;	/* we need interrupts for this board to work */
+	ca->ca_len = 0x10000;	/* we know this */
 
 	vx_reg = (struct vxreg *)ca->ca_vaddr;
-	board_addr = (unsigned int)ca->ca_vaddr;
 	if (badvaddr((unsigned)&vx_reg->ipc_cr, 1))
 			return (0);
-		return (1);
+
+	return (1);
 }
 
 void

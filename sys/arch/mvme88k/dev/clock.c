@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.27 2003/12/12 21:51:29 miod Exp $ */
+/*	$OpenBSD: clock.c,v 1.28 2003/12/22 11:54:48 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -173,8 +173,6 @@ clockmatch(struct device *parent, void *vcf, void *args)
 	 * a message if it is different from what ioconf.c says.
 	 */
 	ca->ca_ipl = IPL_CLOCK;
-	/* set size to 0 - see pcctwo.c:match for details */
-	ca->ca_len = 0;
 	return (1);
 }
 

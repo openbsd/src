@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.24 2003/12/19 22:30:18 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.25 2003/12/22 11:54:48 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -60,8 +60,9 @@ void vme2chip_init(struct vmesoftc *);
 u_long vme2chip_map(u_long, int, int);
 int vme2abort(void *);
 int sysconabort(void *);
-void vmeunmap(void *, int);
 int vmeprint(void *, const char *);
+void *vmemap(struct vmesoftc *sc, off_t vmeaddr, int len, int bustype);
+void vmeunmap(void *, int);
 
 void vmesyscon_init(struct vmesoftc *);
 
@@ -249,6 +250,7 @@ vmescan(parent, child, args, bustype)
 	struct cfdata *cf = child;
 	struct vmesoftc *sc = (struct vmesoftc *)parent;
 	struct confargs oca;
+	size_t len;
 
 	if (parent->dv_cfdata->cf_driver->cd_indirect) {
 		printf(" indirect devices not supported\n");
@@ -264,24 +266,37 @@ vmescan(parent, child, args, bustype)
 	if (oca.ca_ipl > 0 && oca.ca_vec == -1)
 		oca.ca_vec = vme_findvec();
 	if (oca.ca_len == -1)
-		oca.ca_len = 4096;
+		oca.ca_len = PAGE_SIZE;
+	len = oca.ca_len;
 
 	oca.ca_offset = (u_int)oca.ca_paddr;
 	oca.ca_vaddr = vmemap(sc, (vaddr_t)oca.ca_paddr, oca.ca_len,
 	    oca.ca_bustype);
-	if (!oca.ca_vaddr)
-		oca.ca_vaddr = (void *)-1;
+	if (oca.ca_vaddr == NULL)
+		oca.ca_vaddr = (void *)-1;	/* XXX */
 	oca.ca_master = (void *)sc;
 	oca.ca_name = cf->cf_driver->cd_name;
 	if ((*cf->cf_attach->ca_match)(parent, cf, &oca) == 0) {
 		if (oca.ca_vaddr != (void *)-1)
-			vmeunmap(oca.ca_vaddr, oca.ca_len);
+			vmeunmap(oca.ca_vaddr, len);
 		return (0);
 	}
+
 	/*
-	 * If match works, the driver is responsible for
-	 * vmunmap()ing if it does not need the mapping.
+	 * Map the whole space the driver is interested in.
 	 */
+	if (len != oca.ca_len) {
+		vmeunmap(oca.ca_vaddr, len);
+		if (oca.ca_len != 0) {
+			if (vmemap(sc, (vaddr_t)oca.ca_paddr, oca.ca_len,
+			    oca.ca_bustype) == NULL) {
+				printf("%s: can't map VME space\n",
+				    oca.ca_name);
+				return (0);
+			}
+		}
+	}
+
 	config_attach(parent, cf, &oca, vmeprint);
 	return (1);
 }
