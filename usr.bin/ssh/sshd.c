@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.147 2001/01/10 19:43:20 deraadt Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.148 2001/01/11 22:14:20 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -909,7 +909,7 @@ main(int ac, char **av)
 				sighup_restart();
 			if (fdset != NULL)
 				xfree(fdset);
-			fdsetsz = howmany(maxfd, NFDBITS) * sizeof(fd_mask);
+			fdsetsz = howmany(maxfd+1, NFDBITS) * sizeof(fd_mask);
 			fdset = (fd_set *)xmalloc(fdsetsz);
 			memset(fdset, 0, fdsetsz);
 
@@ -920,7 +920,7 @@ main(int ac, char **av)
 					FD_SET(startup_pipes[i], fdset);
 
 			/* Wait in select until there is a connection. */
-			if (select(maxfd + 1, fdset, NULL, NULL, NULL) < 0) {
+			if (select(maxfd+1, fdset, NULL, NULL, NULL) < 0) {
 				if (errno != EINTR)
 					error("select: %.100s", strerror(errno));
 				continue;
