@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.88 2002/11/01 00:14:43 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.89 2002/11/08 01:59:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -1299,6 +1299,7 @@ sys_sigreturn(p, v, retval)
 	} */ *uap = v;
 	struct sigcontext *scp, ksc;
 	struct trapframe *tf = p->p_md.md_regs;
+	int error;
 
 	scp = SCARG(uap, sigcntxp);
 #ifdef DEBUG
@@ -1306,9 +1307,8 @@ sys_sigreturn(p, v, retval)
 		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
 #endif
 
-	if (uvm_useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
-	    copyin((caddr_t)scp, (caddr_t)&ksc, sizeof ksc))
-		return (EINVAL);
+	if ((error = copyin((caddr_t)scp, (caddr_t)&ksc, sizeof ksc)))
+		return (error);
 
 #define PSL_MBS (PSL_C|PSL_Q|PSL_P|PSL_D|PSL_I)
 #define PSL_MBZ (PSL_Y|PSL_Z|PSL_S|PSL_X|PSL_M|PSL_R)
