@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.34 1999/12/16 21:53:03 deraadt Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.35 1999/12/16 22:15:45 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -887,6 +887,7 @@ xl_probe(parent, match, aux)
 	case PCI_PRODUCT_3COM_3C980TX:
 	case PCI_PRODUCT_3COM_3C980CTX:
 	case PCI_PRODUCT_3COM_3C905CTX:
+	case PCI_PRODUCT_3COM_3C450:
 		return (1);
 	}
 					

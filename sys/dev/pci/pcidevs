@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.205 1999/12/16 21:53:03 deraadt Exp $
+	$OpenBSD: pcidevs,v 1.206 1999/12/16 22:15:45 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -546,7 +546,7 @@ product 2MICRO OZ6832		0x6832	OZ6832 CardBus
 
 
 /* 3COM Products */
-product 3COM 3c450		0x4500	3c450
+product 3COM 3C450		0x4500	3c450
 product 3COM 3C590		0x5900	3c590 10Mbps
 product 3COM 3C595TX		0x5950	3c595 100Base-TX
 product 3COM 3C595T4		0x5951	3c595 100Base-T4
