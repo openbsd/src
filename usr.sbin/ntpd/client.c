@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.3 2004/07/04 11:01:49 alexander Exp $ */
+/*	$OpenBSD: client.c,v 1.4 2004/07/04 19:52:24 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -100,7 +100,6 @@ client_dispatch(struct ntp_peer *p)
 	ssize_t			 size;
 	struct ntp_msg		 msg;
 	double			 T1, T2, T3, T4;
-	double			 offset, error;
 
 	fsa_len = sizeof(fsa);
 	if ((size = recvfrom(p->query->fd, &buf, sizeof(buf), 0,
@@ -136,16 +135,14 @@ client_dispatch(struct ntp_peer *p)
 	T2 = lfp_to_d(msg.rectime);
 	T3 = lfp_to_d(msg.xmttime);
 
-	offset = ((T2 - T1) + (T3 - T4)) / 2;
-	error = (T2 - T1) - (T3 - T4);
+	p->offset = ((T2 - T1) + (T3 - T4)) / 2;
+	p->error = (T2 - T1) - (T3 - T4);
 
 	p->state = STATE_REPLY_RECEIVED;
 	p->next = time(NULL) + QUERY_INTERVAL;
 	p->deadline = 0;
-	p->offset = offset;
-	p->error = error;
 
-	log_debug("reply received: offset %f error %f", offset, error);
+	log_debug("reply received: offset %f error %f", p->offset, p->error);
 
 	return (0);
 }
