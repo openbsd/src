@@ -1,4 +1,4 @@
-/*	$OpenBSD: master.c,v 1.4 1996/11/01 06:10:41 deraadt Exp $	*/
+/*	$OpenBSD: master.c,v 1.5 2001/03/31 19:40:58 fgsch Exp $	*/
 
 /*-
  * Copyright (c) 1985, 1993 The Regents of the University of California.
@@ -38,7 +38,7 @@ static char sccsid[] = "@(#)master.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include "globals.h"
@@ -50,6 +50,7 @@ static char sccsid[] = "@(#)master.c	5.1 (Berkeley) 5/11/93";
 #include <sys/schedctl.h>
 #include <utmpx.h>	/* includes utmp.h */
 #else
+#include <util.h>
 #include <utmp.h>
 #endif /* sgi */
 

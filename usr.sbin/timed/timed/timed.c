@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.7 $"
+#ident "$Revision: 1.8 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -55,6 +55,9 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #include <math.h>
 #include <sys/types.h>
 #include <sys/times.h>
+#ifdef HAVENIS
+#include <netgroup.h>
+#endif /* HAVENIS */
 #ifdef sgi
 #include <unistd.h>
 #include <sys/syssgi.h>
@@ -167,9 +170,7 @@ main(int argc, char **argv)
 #endif /* HAVENIS */
 #endif /* sgi */
 
-#ifdef lint
 	ntip = NULL;
-#endif
 
 	on = 1;
 	nflag = OFF;
@@ -477,7 +478,7 @@ main(int argc, char **argv)
 			if (ntohl(ntp->net.s_addr) == nt->net)
 				break;
 		}
-		if (nflag && !nt || iflag && nt)
+		if ((nflag && !nt) || (iflag && nt))
 			continue;
 
 		ntp->next = NULL;
@@ -591,9 +592,7 @@ main(int argc, char **argv)
 		slave();
 	}
 	/* NOTREACHED */
-#ifdef lint
 	return(0);
-#endif
 }
 
 
@@ -780,8 +779,8 @@ setstatus()
 	status &= ~IGNORE;
 	if (trace)
 		fprintf(fd,
-			"\tnets=%d masters=%d slaves=%d ignored=%d delay2=%d\n",
-			nnets, nmasternets, nslavenets, nignorednets, delay2);
+		    "\tnets=%d masters=%d slaves=%d ignored=%d delay2=%ld\n",
+		    nnets, nmasternets, nslavenets, nignorednets, delay2);
 }
 
 void
@@ -920,9 +919,11 @@ get_goodgroup(int force)
 # define NG_DELAY (30*60*CLK_TCK)	/* 30 minutes */
 	static unsigned long last_update = -NG_DELAY;
 	unsigned long new_update;
+#ifdef HAVENIS
 	struct hosttbl *htp;
 	struct goodhost *ghp, **ghpp;
 	char *mach, *usr, *dom;
+#endif
 	struct tms tm;
 
 

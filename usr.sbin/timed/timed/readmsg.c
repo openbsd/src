@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)readmsg.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.4 $"
+#ident "$Revision: 1.5 $"
 #endif
 
 #include "globals.h"
@@ -487,7 +487,7 @@ struct sockaddr_in *addr;
 		break;
 
 	case TSP_ADJTIME:
-		fprintf(fd, "%s %d %-6u (%ld,%ld) %-15s %s\n",
+		fprintf(fd, "%s %d %-6u (%d,%d) %-15s %s\n",
 			tsptype[msg->tsp_type],
 			msg->tsp_vers,
 			msg->tsp_seq,

@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)correct.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.3 $"
+#ident "$Revision: 1.4 $"
 #endif
 
 #include "globals.h"
@@ -169,7 +169,7 @@ adjclock(struct timeval *corr)
 		}
 	} else {
 		syslog(LOG_WARNING,
-		       "clock correction %d sec too large to adjust",
+		       "clock correction %ld sec too large to adjust",
 		       adj.tv_sec);
 		(void) gettimeofday(&now, 0);
 		timeradd(&now, corr, &now);
