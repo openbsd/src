@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.7 1997/10/20 07:06:04 downsj Exp $
+#	$OpenBSD: install.sub,v 1.8 1997/10/31 05:41:29 downsj Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -40,16 +40,16 @@
 #	OpenBSD installation/upgrade script - common subroutines.
 
 ROOTDISK=""				# filled in below
-VERSION=2.2
+VERSION=22
 VERSION_MAJOR=$(( $VERSION / 10 ))
 VERSION_MINOR=$(( $VERSION % 10 ))
 export VERSION VERSION_MAJOR VERSION_MINOR
 
-ALLSETS="base etc misc comp text man game"	# default install sets
-UPGRSETS="base misc comp text man game"		# default upgrade sets
+ALLSETS="base etc misc comp text man game kernel"	# default install sets
+UPGRSETS="base misc comp text man game kernel"		# default upgrade sets
 SNAPSETS="bin dev etc games man misc sbin text \
 	  usr.bin usr.binutils usr.games usr.include \
-	  usr.lib usr.libexec usr.misc usr.sbin usr.share var"
+	  usr.lib usr.libexec usr.misc usr.sbin usr.share var kernel"
 THESETS=					# one of the above
 
 local_sets_dir=""			# Path searched for sets by install_sets
@@ -474,6 +474,7 @@ configure_ifs() {
 	done
 
 	# Get netmask
+	resp=""
 	if [ "X${_interface_mask}" = X"" ]; then
 		_interface_mask=255.255.255.0
 	fi
@@ -975,7 +976,7 @@ install_from_mounted_fs() {
 		else
 			resp=y
 		fi
-		echo -n "Continue extraction [$resp]?"
+		echo -n "Continue extraction in this directory [$resp]?"
 		getresp "$resp"
 		if [ "$resp" = "n" ]; then
 			break

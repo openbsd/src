@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$OpenBSD: install.md,v 1.6 1997/09/30 17:52:41 deraadt Exp $
+#	$OpenBSD: install.md,v 1.7 1997/10/31 05:41:28 downsj Exp $
 #	$NetBSD: install.md,v 1.1.2.4 1996/08/26 15:45:14 gwr Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -261,7 +261,7 @@ __scsi_label_1
 	# edit the partition table.  It's horrible, I know.  Bleh.
 
 	disklabel -W ${1}
-	if ! disklabel -w -r ${1} ${_cur_disk_name}; then
+	if ! disklabel -r -w ${1} ${_cur_disk_name}; then
 		echo ""
 		echo "ERROR: can't bootstrap disklabel!"
 		rval="1"
@@ -279,7 +279,7 @@ __scsi_label_1
 	getresp ""
 
 	disklabel -W ${1}
-	if ! disklabel -r -E /dev/r${1}a; then
+	if ! disklabel -r -e /dev/r${1}a; then
 		echo ""
 		echo "ERROR: can't fixup geometry!"
 		rval="1"
@@ -375,7 +375,7 @@ md_labeldisk() {
 		0)
 			# Go ahead and just edit the disklabel.
 			disklabel -W $1
-			disklabel -r -E $1
+			disklabel -E $1
 			;;
 
 		*)
@@ -410,7 +410,7 @@ md_labeldisk() {
 			# We have some defaults installed.  Pop into
 			# the disklabel editor.
 			disklabel -W $1
-			if ! disklabel -r -E $1; then
+			if ! disklabel -E $1; then
 				echo ""
 				echo "ERROR: couldn't set partition map for $1"
 				echo ""
@@ -458,6 +458,13 @@ of sectors per cylinder should be given as the offset) and partition
 `c' must have an fstype of `unused'.  Non-boot disks may start filesystems
 at offset 0.
 
+If there is no existing label on the disk, you MUST EDIT THE DISK GEOMETRY.
+Please have information on your disk at hand in order to do so.  Failure
+to correct the disk geometry will result in your system being unable to
+boot from the disk you are installing on to.  Be sure `cylinders',
+`total sectors' and `rpm' are set to something reasonable; this may be
+accomplished with the `e' command from within the disklabel editor.
+
 [Example]
 16 partitions:
 #        size   offset    fstype   [fsize bsize   cpg]
@@ -471,7 +478,14 @@ __md_prep_disklabel_1
 	echo -n "Press [Enter] to continue "
 	getresp ""
 	disklabel -W ${_disk}
-	disklabel -r -E ${_disk}
+	disklabel -E ${_disk}
+
+	# We need to edit the disklabel, again, due to problems with using
+	# disklabel -E (currently) on this arch.  XXX
+	disklabel ${_disk} | sed -e 's/interleave: 0/interleave: 1/' \
+	    -e 's/rpm: 0/rpm: 3600/' > /tmp/disklabelfixup
+	disklabel -R ${_disk} /tmp/disklabelfixup
+	rm /tmp/disklabelfixup
 }
 
 md_copy_kernel() {
@@ -484,7 +498,7 @@ md_copy_kernel() {
 md_welcome_banner() {
 (
 	echo	""
-	echo	"Welcome to the OpenBSD/hp300 ${VERSION} installation program."
+	echo	"Welcome to the OpenBSD/hp300 ${VERSION_MAJOR}.${VERSION_MINOR} installation program."
 	cat << \__welcome_banner_1
 
 This program is designed to help you install OpenBSD on your system in a
@@ -512,7 +526,7 @@ prompt, you may have to hit return.  Also, quitting in the middle of
 installation may leave your system in an inconsistent state.
 
 __welcome_banner_1
-) | less
+) | less -E
 }
 
 md_not_going_to_install() {
