@@ -1,4 +1,4 @@
-/* $Id: sectok.h,v 1.3 2001/06/08 15:04:05 rees Exp $ */
+/* $Id: sectok.h,v 1.4 2001/06/25 19:59:38 rees Exp $ */
 
 /*
 copyright 1997, 2000
@@ -115,6 +115,13 @@ void print_r1r2(int r1, int r2);
 char *get_r1r2s(int r1, int r2);
 char *scr1r2s(int r1, int r2);
 char *lookup_cmdname(int ins);
+
+/* Common card routines */
+void sectok_fmt_fid(char *fname, int f0, int f1);
+int sectok_selectfile(int fd, int cla, unsigned char *fid, int verbose);
+
+/* Cyberflex */
+int cyberflex_load_rsa_priv(int fd, int cla, unsigned char *key_fid, int nkey_elems, int keylen, unsigned char *key_elems[]);
 
 /* SCPERF - performance evaluation */
 #ifdef SCPERF
