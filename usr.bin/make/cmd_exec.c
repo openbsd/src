@@ -1,5 +1,5 @@
 /*	$OpenPackages$ */
-/*	$OpenBSD: cmd_exec.c,v 1.2 2002/07/31 19:29:20 mickey Exp $ */
+/*	$OpenBSD: cmd_exec.c,v 1.3 2002/08/05 17:04:36 millert Exp $ */
 /*
  * Copyright (c) 2001 Marc Espie.
  *
@@ -79,9 +79,10 @@ Cmd_Exec(cmd, err)
 	 * stream: user can use redirection to grab it as this goes
 	 * through /bin/sh.
 	 */
-	(void)dup2(fds[1], 1);
-	if (fds[1] != 1)
+	if (fds[1] != 1) {
+	    (void)dup2(fds[1], 1);
 	    (void)close(fds[1]);
+	}
 
 	(void)execv(_PATH_BSHELL, args);
 	_exit(1);
