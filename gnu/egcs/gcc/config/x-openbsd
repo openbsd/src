@@ -4,3 +4,6 @@ BISON=yacc
 # There is a linker bug on i386 that prevents cc1 from linking correctly
 # with a dynamic library
 #LIBIBERTY=-liberty
+
+# avoid making /usr/i386-unknown-openbsd2.5
+gcc_tooldir=/tmp

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/05/26 15:47:00 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/05/28 01:20:53 espie Exp $
 
 MAN=		cccp.1 gcc.1 
 MLINKS+=	gcc.1 cc.1
@@ -62,7 +62,8 @@ config: .FORCE
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
-		--prefix=/usr --with-local-prefix=/usr ${CF} \
+		--prefix=/usr -mandir='$$(prefix)/share/man' \
+		--with-local-prefix=/usr ${CF} \
 		${LANGUAGES} --enable-cpp --disable-nls \
 		--with-gxx-include-dir=${GPP_INC_DIR} ${GCCARCH}
 
@@ -70,7 +71,8 @@ config.status: Makefile.in configure c-parse.in
 	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
 	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
 	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
-		--prefix=/usr --with-local-prefix=/usr ${CF} \
+		--prefix=/usr --mandir='$$(prefix)/share/man' \
+		--with-local-prefix=/usr ${CF} \
 		${LANGUAGES} --enable-cpp --disable-nls \
 		--with-gxx-include-dir=${GPP_INC_DIR} ${GCCARCH} && touch config.status
 
@@ -106,10 +108,9 @@ install:	maninstall target_path
 		LIBIBERTY=-liberty \
 		INSTALL_TARGET='install-common $$(INSTALL_HEADERS) \
 		     $$(INSTALL_LIBGCC) install-info \
-		     intl.install lang.install-normal install-driver' \
+		     intl.install lang.install-normal' \
 		NO_TARGET_GCC=true bindir=${DESTDIR}/usr/bin \
 		install
-	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
 	chown -R ${BINOWN}.${BINGRP} ${DESTDIR}/usr/lib/gcc-lib
 	chmod -R a+rX ${DESTDIR}/usr/lib/gcc-lib
 #	if [ -e ${DESTDIR}/usr/lib/libf2c.a ]; then \
@@ -122,6 +123,11 @@ install:	maninstall target_path
 	fi
 	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 xcpp \
 	   ${DESTDIR}/usr/libexec/cpp
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 xgcc \
+	   ${DESTDIR}/usr/bin/gcc
+	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
+	[ -f ${DESTDIR}/usr/bin/g77 ] && \
+		ln -f ${DESTDIR}/usr/bin/g77 ${DESTDIR}/usr/bin/f77
 #	ln -fs `cat target-path`/cpp \
 #		${DESTDIR}/usr/libexec
 
