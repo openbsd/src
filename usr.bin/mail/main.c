@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2000/06/30 16:00:19 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2001/09/07 01:19:15 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.12 2000/06/30 16:00:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.13 2001/09/07 01:19:15 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -114,6 +114,8 @@ main(argc, argv)
 			/*
 			 * Next argument is person to pretend to be.
 			 */
+			if (strlen(optarg) >= MAXLOGNAME)
+				errx(1, "username `%s' too long");
 			unsetenv("MAIL");
 			myname = optarg;
 			uflag = 1;
