@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	MOpenBSD: pcidevs,v 1.197 1999/11/14 01:21:54 downsj Exp 
+ *	MOpenBSD: pcidevs,v 1.198 1999/11/26 22:46:11 niklas Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -3771,10 +3771,232 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "RhineII",
 	},
 	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_60x0,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6000/6020/6050",
+	},
+	{
 	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6000B,
 	    0,
 	    "Vortex Computer Systems",
-	    "GDT 6000b",
+	    "GDT6000B/6010",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x10,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6110/6510",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x20,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6120/6520",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6530,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6530",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6550,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6550",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6117/6517",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6127/6527",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6537",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6557/6557-ECC",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x15,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6115/6515",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x25,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6125/6525",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6535,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6535",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6555,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6555/6555-ECC",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RP,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6117RP/GDT6517RP",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RP,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6127RP/GDT6527RP",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RP,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6537RP",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557RP,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6557RP",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RP,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6111RP/GDT6511RP",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RP,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6121RP/GDT6521RP",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x17RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6117RD/GDT6517RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x27RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6127RD/GDT6527RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6537RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6537RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6557RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6557RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x11RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6111RD/GDT6511RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x21RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6121RD/GDT6521RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x18RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6118RD/GDT6518RD/GDT6618RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x28RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6128RD/GDT6528RD/GDT6628RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x38RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6538RD/GDT6638RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x58RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6558RD/GDT6658RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x18RN,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT7118RN/GDT7518RN/GDT7618RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x28RN,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT7128RN/GDT7528RN/GDT7628RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x38RN,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT7538RN/GDT7638RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x58RN,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT7558RN/GDT7658RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x19RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6519RD/GDT6619RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_6x29RD,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT6529RD/GDT6629RD",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x19RN,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT7519RN/GDT7619RN",
+	},
+	{
+	    PCI_VENDOR_VORTEX, PCI_PRODUCT_VORTEX_GDT_7x29RN,
+	    0,
+	    "Vortex Computer Systems",
+	    "GDT7529RN/GDT7629RN",
 	},
 	{
 	    PCI_VENDOR_VLSI, PCI_PRODUCT_VLSI_82C592,
