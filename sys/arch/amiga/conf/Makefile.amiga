@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.amiga,v 1.17 1997/01/16 09:23:38 niklas Exp $
+#	$OpenBSD: Makefile.amiga,v 1.18 1997/02/21 11:17:38 niklas Exp $
 #	$NetBSD: Makefile.amiga,v 1.52 1996/12/01 12:10:07 veego Exp $
 
 # Makefile for OpenBSD
@@ -35,8 +35,8 @@ S!=	cd ../../../..; pwd
 .endif
 AMIGA=	$S/arch/amiga
 
-INCLUDES=	-I. -I$S/arch -I$S -nostdinc
-CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dmc68020 -Damiga
+INCLUDES=	-nostdinc -I. -I$S/arch -I$S
+CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Damiga
 
 CWARNFLAGS=	-Werror -Wall -Wstrict-prototypes -Wno-uninitialized \
 		-Wno-format
@@ -85,7 +85,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 
-HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
+HOSTED_C=	${HOSTCC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} ${PARAM} -c $<
 
 DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
 DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
@@ -144,7 +144,7 @@ param.c: $S/conf/param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${NORMAL_C}
+	${NORMAL_C_C}
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
