@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.271 2002/11/09 04:41:56 krw Exp $
+#	$OpenBSD: install.sub,v 1.272 2002/11/09 06:16:06 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -377,49 +377,6 @@ cd "$4"
 ls
 quit
 __EOT
-}
-
-# $1 is the mountpoint the local directory will be relative to.
-# $2 is the default directory
-get_setsdir() {
-	local _mp=$1 _dir=$2 _mounted
-	
-	SETSDIR=
-
-	_mounted=`mount | sed -ne "/\(.*\)\/\(${_mp#/}\)\/*\(.*\) type.*/s//\/\3/p"`
-
-	if [ -z "$_mounted" ]; then
-		echo "No filesystems mounted at or below ${_mp}."
-		return
-	fi
-
-	while : ; do
-		ask "Enter the pathname where the sets are stored (or '?')" "$_dir"
-		case $resp in
-		"?")	cat << __EOT
-Sets could be stored on:
-
-${_mounted}
-
-__EOT
-			continue
-			;;
-		"")	;;
-		*)	if [ -d "${_mp}/${resp}" ]; then
-				SETSDIR=${_mp}/${resp}
-				return
-			fi
-			echo "The directory '${resp}' does not exist."
-			;;
-		esac
-
-		ask "Re-enter pathname?" y
-		case $resp in
-		y*|Y*)	;;
-		*)	break
-			;;
-		esac
-	done
 }
 
 makedev() {
@@ -904,6 +861,9 @@ __EOT
 install_get_files () {
 	local _f _src=$1
 
+	# User may have selected no files
+	[[ -n $GET_FILES ]] || return
+
 	ask "Ready to ${MODE} sets?" y
 	case $resp in 
 	n*|N*)	return ;;
@@ -1101,27 +1061,33 @@ install_url() {
 
 	get_get_files "$_file_list" "`eval echo \\$_${_url_type}_server_dir`"
 
-	# User may have selected no files
-	[ "$GET_FILES" ] || return
-
 	install_get_files "$_url_base"
 }
 
 # $1 - mount point directory is relative to
 # $2 - default directory
 install_mounted_fs() {
-	local _f
+	local _mp=$1 _dir=$2
+	
+	while : ; do
+		ask "Specify pathname to the sets: (or 'done')" "$_dir"
+		case $resp in
+		done)	return
+			;;
+		"")	;;
+		*)	if [[ -d $_mp/$resp ]]; then
+				_dir=$_mp/$resp
+				break
+			else
+				echo "The directory '$resp' does not exist."
+			fi
+			;;
+		esac
+	done
 
-	get_setsdir "$1" "$2"
+	get_get_files "`ls -l $_dir`" "$_dir"
 
-	[ -d "$SETSDIR" ] || return
-
-	get_get_files "`ls -l ${SETSDIR}`" "$SETSDIR"
-
-	# User may have selected no files
-	[ "$GET_FILES" ] || return
-
-	install_get_files "file:$SETSDIR"
+	install_get_files "file:$_dir"
 }
 
 install_cdrom() {
@@ -1937,7 +1903,6 @@ for _set in base etc misc comp man game xbase xshare xfont xserv site ; do
 done
 
 # Global variable using during sets installation
-SETSDIR=
 SETSDONE=
 GET_FILES=
 
