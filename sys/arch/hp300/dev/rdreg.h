@@ -1,4 +1,4 @@
-/*	$NetBSD: rdreg.h,v 1.5 1994/10/26 07:24:54 cgd Exp $	*/
+/*	$NetBSD: rdreg.h,v 1.6 1995/12/31 04:11:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -270,7 +270,14 @@ struct rd_describe {
 #define	C_SREL		0x3b
 #define	C_SSM		0x3e
 #define	C_SRAM		0x48
+/*
+ * XXX XXX XXX THIS IS SUPPOSED TO FIT IN A 1-BYTE SPACE?!
+ */
+#if 0
 #define	C_REL		0x140
+#else
+#define C_REL		0x40	/* what ended up happening */
+#endif
 
 #define	C_CMD		0x05
 #define	C_EXEC		0x0e
