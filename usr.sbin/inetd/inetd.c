@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.25 1997/02/24 12:48:06 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.26 1997/06/04 11:03:15 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.25 1997/02/24 12:48:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.26 1997/06/04 11:03:15 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1256,6 +1256,7 @@ bump_nofile()
 		return -1;
 	}
 	rl.rlim_cur = MIN(rl.rlim_max, rl.rlim_cur + FD_CHUNK);
+	rl.rlim_cur = MIN(FD_SETSIZE, rl.rlim_cur + FD_CHUNK);
 	if (rl.rlim_cur <= rlim_ofile_cur) {
 		syslog(LOG_ERR,
 			"bump_nofile: cannot extend file limit, max = %d",
