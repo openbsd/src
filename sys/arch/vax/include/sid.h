@@ -1,4 +1,4 @@
-/*	$OpenBSD: sid.h,v 1.10 2001/03/16 22:46:25 hugh Exp $	*/
+/*	$OpenBSD: sid.h,v 1.11 2001/10/01 12:53:37 hugh Exp $	*/
 /*	$NetBSD: sid.h,v 1.12 1999/12/11 17:55:13 ragge Exp $	*/
 
 /*
@@ -149,7 +149,10 @@
  
 #define VAX_BTYP_690	0x12000001	/* VAX 4000 model 400 */
 #define VAX_BTYP_1202	0x12000002	/* VAX 6000 model 510-560 */
+
 #define VAX_BTYP_46	0x12000004	/* VAXstation 4000/60, 3100/80 */
+#define VAX_VTYP_47	0x00000001	/* MicroVAX 3100/80 */
+#define VAX_VTYP_46	0x00000002	/* VAXstation 4000/60 */
  
 /*
  * NVAX chip series (1991)
