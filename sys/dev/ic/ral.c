@@ -1,4 +1,4 @@
-/*	$OpenBSD: ral.c,v 1.22 2005/03/11 20:01:54 damien Exp $  */
+/*	$OpenBSD: ral.c,v 1.23 2005/03/11 20:11:00 damien Exp $  */
 
 /*-
  * Copyright (c) 2005
@@ -99,6 +99,8 @@ void		ral_decryption_intr(struct ral_softc *);
 void		ral_rx_intr(struct ral_softc *);
 void		ral_beacon_expire(struct ral_softc *);
 void		ral_wakeup_expire(struct ral_softc *);
+int		ral_ack_rate(int);
+uint16_t	ral_txtime(int, int, uint32_t);
 uint8_t		ral_plcp_signal(int);
 #if 0
 int		ral_tx_bcn(struct ral_softc *, struct mbuf *,
@@ -118,6 +120,7 @@ void		ral_set_chan(struct ral_softc *, struct ieee80211_channel *);
 void		ral_disable_rf_tune(struct ral_softc *);
 void		ral_enable_tsf_sync(struct ral_softc *);
 void		ral_update_plcp(struct ral_softc *);
+void		ral_update_slot(struct ral_softc *);
 void		ral_update_led(struct ral_softc *, int, int);
 void		ral_set_bssid(struct ral_softc *, uint8_t *);
 void		ral_set_macaddr(struct ral_softc *, uint8_t *);
@@ -155,8 +158,6 @@ static const struct {
 	{ RAL_TIMECSR,   0x00003f21 },
 	{ RAL_CSR9,      0x00000780 },
 	{ RAL_CSR11,     0x07041483 },
-	{ RAL_CSR18,     0x00140000 },
-	{ RAL_CSR19,     0x016C0028 },
 	{ RAL_CNT3,      0x00000000 },
 	{ RAL_TXCSR1,    0x07614562 },
 	{ RAL_TXCSR8,    0x8c8d8b8a },
@@ -903,6 +904,7 @@ ral_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	case IEEE80211_S_RUN:
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
 			ral_set_bssid(sc, ic->ic_bss->ni_bssid);
+			ral_update_slot(sc);
 			ral_enable_tsf_sync(sc);
 		}
 
@@ -1425,6 +1427,88 @@ ral_intr(void *arg)
 	return 1;
 }
 
+/* quickly determine if a given rate is CCK or OFDM */
+#define RAL_RATE_IS_OFDM(rate) ((rate) >= 12 && (rate) != 22)
+
+#define RAL_ACK_SIZE	14	/* 10 + 4(FCS) */
+#define RAL_CTS_SIZE	14	/* 10 + 4(FCS) */
+#define RAL_SIFS	10
+
+/*
+ * Return the expected ack rate for a frame transmitted at rate `rate'.
+ * XXX: this should depend on the destination node basic rate set.
+ */
+int
+ral_ack_rate(int rate)
+{
+	switch (rate) {
+	/* CCK rates */
+	case 2:
+		return 2;
+	case 4:
+	case 11:
+	case 22:
+		return 4;
+
+	/* OFDM rates */
+	case 12:
+	case 18:
+		return 12;
+	case 24:
+	case 36:
+		return 24;
+	case 48:
+	case 72:
+	case 96:
+	case 108:
+		return 48;
+	}
+
+	/* default to 1Mbps */
+	return 2;
+}
+
+/*
+ * Compute the duration (in us) needed to transmit `len' bytes at rate `rate'.
+ * The function automatically determines the operating mode depending on the
+ * given rate. `flags' indicates whether short preamble is in use or not.
+ */
+uint16_t
+ral_txtime(int len, int rate, uint32_t flags)
+{
+	uint16_t txtime;
+	int ceil, dbps;
+
+	if (RAL_RATE_IS_OFDM(rate)) {
+		/*
+		 * OFDM TXTIME calculation.
+		 * From IEEE Std 802.11a-1999, pp. 37.
+		 */
+		dbps = rate * 2; /* data bits per OFDM symbol */
+
+		ceil = (16 + 8 * len + 6) / dbps;
+		if ((16 + 8 * len + 6) % dbps != 0)
+			ceil++;
+
+		txtime = 16 + 4 + 4 * ceil + 6;
+	} else {
+		/*
+		 * High Rate TXTIME calculation.
+		 * From IEEE Std 802.11b-1999, pp. 28.
+		 */
+		ceil = (8 * len * 2) / rate;
+		if ((8 * len * 2) % rate != 0)
+			ceil++;
+
+		if (rate != 2 && (flags & IEEE80211_F_SHPREAMBLE))
+			txtime =  72 + 24 + ceil;
+		else
+			txtime = 144 + 48 + ceil;
+	}
+
+	return txtime;
+}
+
 uint8_t
 ral_plcp_signal(int rate)
 {
@@ -1449,13 +1533,6 @@ ral_plcp_signal(int rate)
 	default:	return 0xff;
 	}
 }
-
-#if 0
-#define RAL_RATE_IS_OFDM(rate) (((rate) % 3) == 0)
-#else
-/* quickly determine if a rate is CCK or OFDM */
-#define RAL_RATE_IS_OFDM(rate) ((rate) >= 12 && (rate) != 22)
-#endif
 
 #if 0
 int
@@ -2204,6 +2281,40 @@ ral_update_plcp(struct ral_softc *sc)
 	    (ic->ic_flags & IEEE80211_F_SHPREAMBLE) ? "short" : "long"));
 }
 
+/*
+ * IEEE 802.11a uses short slot time. Refer to IEEE Std 802.11-1999 pp. 85 to
+ * know how these values are computed.
+ */
+void
+ral_update_slot(struct ral_softc *sc)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	uint8_t slottime;
+	uint16_t sifs, pifs, difs, eifs;
+	uint32_t tmp;
+
+	slottime = (ic->ic_curmode == IEEE80211_MODE_11A) ? 9 : 20;
+
+	/* define the MAC slot boundaries */
+	sifs = RAL_SIFS;
+	pifs = sifs + slottime;
+	difs = sifs + 2 * slottime;
+	eifs = sifs + ral_txtime(RAL_ACK_SIZE,
+	    (ic->ic_curmode == IEEE80211_MODE_11A) ? 12 : 2, 0) + difs;
+
+	tmp = RAL_READ(sc, RAL_CSR11);
+	tmp = (tmp & ~0x1f00) | slottime << 8;
+	RAL_WRITE(sc, RAL_CSR11, tmp);
+
+	tmp = pifs << 16 | sifs;
+	RAL_WRITE(sc, RAL_CSR18, tmp);
+
+	tmp = eifs << 16 | difs;
+	RAL_WRITE(sc, RAL_CSR19, tmp);
+
+	DPRINTF(("setting slottime to %uus\n", slottime));
+}
+
 void
 ral_update_led(struct ral_softc *sc, int led1, int led2)
 {
@@ -2399,6 +2510,7 @@ ral_init(struct ifnet *ifp)
 	/* set supported basic rates (1, 2, 6, 12, 24) */
 	RAL_WRITE(sc, RAL_ARCSR1, 0x153);
 
+	ral_update_slot(sc);
 	ral_update_plcp(sc);
 	ral_update_led(sc, 0, 0);
 
