@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.3 2003/10/20 17:29:56 espie Exp $
+# $OpenBSD: pkg_add,v 1.4 2003/10/26 11:09:27 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -109,8 +109,8 @@ for my $pkg (installed_packages()) {
 
 
 
-# This does preadd a package: finding it and reading its package information
-sub preadd
+# This does pre_add a package: finding it and reading its package information
+sub pre_add
 {
 	my $pkg = shift;
 	my $pkgname1 = OpenBSD::PackageName->new($pkg);
@@ -151,7 +151,7 @@ sub preadd
 	return $handle;
 }
 
-sub reallyadd
+sub really_add
 {
 	my $handle = shift;
 	my $plist = $handle->{plist};
@@ -216,7 +216,7 @@ MAINLOOP:
 while (my $pkg = shift @todo) {
 	print "Trying to add $pkg\n";
 	if (!defined $cache->{$pkg}) {
-		$cache->{$pkg} = preadd($pkg);
+		$cache->{$pkg} = pre_add($pkg);
 	}
 	my $handle = $cache->{$pkg};
 	next unless defined $handle;
@@ -278,6 +278,6 @@ while (my $pkg = shift @todo) {
 		push(@{$handle->{solved_dependencies}}, @done_deps, @deps);
 		next;
 	}
-	reallyadd($handle);
+	really_add($handle);
 	$conflict_list->{$plist->pkgname()} = $handle->{conflicts};
 }
