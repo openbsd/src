@@ -553,7 +553,7 @@ API_EXPORT(int) ap_scan_script_header_err_core(request_rec *r, char *buffer,
 	    char malformed[(sizeof MALFORMED_MESSAGE) + 1
 			   + MALFORMED_HEADER_LENGTH_TO_SHOW];
 
-	    strcpy(malformed, MALFORMED_MESSAGE);
+	    strlcpy(malformed, MALFORMED_MESSAGE, sizeof(malformed));
 	    strncat(malformed, w, MALFORMED_HEADER_LENGTH_TO_SHOW);
 
 	    if (!buffer) {
