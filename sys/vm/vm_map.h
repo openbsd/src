@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_map.h,v 1.14 2001/05/10 14:51:21 art Exp $	*/
+/*	$OpenBSD: vm_map.h,v 1.15 2001/06/27 04:52:39 art Exp $	*/
 /*	$NetBSD: vm_map.h,v 1.11 1995/03/26 20:39:10 jtc Exp $	*/
 
 /* 
@@ -72,9 +72,7 @@
 #ifndef	_VM_MAP_
 #define	_VM_MAP_
 
-#ifdef UVM
 #include <uvm/uvm_anon.h>
-#endif
 
 /*
  *	Types defined:
@@ -93,14 +91,8 @@
  */
 
 union vm_map_object {
-#ifdef UVM
 	struct uvm_object	*uvm_obj;	/* UVM OBJECT */
 	struct vm_map		*sub_map;	/* belongs to another map */
-#else
-	struct vm_object	*vm_object;	/* object object */
-	struct vm_map		*sub_map;	/* belongs to another map */
-	struct vm_map		*share_map;	/* share map */
-#endif /* UVM */
 };
 
 /*
@@ -116,30 +108,19 @@ struct vm_map_entry {
 	vaddr_t			end;		/* end address */
 	union vm_map_object	object;		/* object I point to */
 	vsize_t			offset;		/* offset into object */
-#if defined(UVM)
 	/* etype is a bitmap that replaces the following 4 items */
 	int			etype;		/* entry type */
-#else
-	boolean_t		is_a_map;	/* Is "object" a map? */
-	boolean_t		is_sub_map;	/* Is "object" a submap? */
-		/* Only in sharing maps: */
-	boolean_t		copy_on_write;	/* is data copy-on-write */
-	boolean_t		needs_copy;	/* does object need to be copied */
-#endif
 		/* Only in task maps: */
 	vm_prot_t		protection;	/* protection code */
 	vm_prot_t		max_protection;	/* maximum protection */
 	vm_inherit_t		inheritance;	/* inheritance */
 	int			wired_count;	/* can be paged if == 0 */
-#ifdef UVM
 	struct vm_aref		aref;		/* anonymous overlay */
 	int			advice;		/* madvise advice */
 #define uvm_map_entry_stop_copy flags
 	u_int8_t		flags;		/* flags */
 
 #define UVM_MAP_STATIC		0x01		/* static map entry */
-
-#endif /* UVM */
 };
 
 #define		VM_MAPENT_ISWIRED(entry)	((entry)->wired_count != 0)
@@ -149,7 +130,6 @@ struct vm_map_entry {
  *	by address.  A single hint is provided to start
  *	searches again from the last successful search,
  *	insertion, or removal.
-#if defined(UVM)
  *
  *	LOCKING PROTOCOL NOTES:
  *	-----------------------
@@ -196,7 +176,6 @@ struct vm_map_entry {
  *					is busy, and thread is attempting
  *					to write-lock.  must be tested
  *					while `flags_lock' is asserted.
-#endif
  */
 struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
@@ -204,26 +183,18 @@ struct vm_map {
 	struct vm_map_entry	header;		/* List of entries */
 	int			nentries;	/* Number of entries */
 	vsize_t			size;		/* virtual size */
-#ifndef UVM
-	boolean_t		is_main_map;	/* Am I a main map? */
-#endif
 	int			ref_count;	/* Reference count */
 	simple_lock_data_t	ref_lock;	/* Lock for ref_count field */
 	vm_map_entry_t		hint;		/* hint for quick lookups */
 	simple_lock_data_t	hint_lock;	/* lock for hint storage */
 	vm_map_entry_t		first_free;	/* First free space hint */
-#ifdef UVM
 	int			flags;		/* flags */
 	simple_lock_data_t	flags_lock;	/* Lock for flags field */
-#else
-	boolean_t		entries_pageable; /* map entries pageable?? */
-#endif
 	unsigned int		timestamp;	/* Version number */
 #define	min_offset		header.start
 #define max_offset		header.end
 };
 
-#ifdef UVM
 /* vm_map flags */
 #define VM_MAP_PAGEABLE		0x01		/* ro: entries are pageable*/
 #define VM_MAP_INTRSAFE		0x02		/* ro: interrupt safe map */
@@ -276,26 +247,6 @@ vmi_list_unlock(s)
 	splx(s);
 }
 #endif /* _KERNEL */
-#endif /* UVM */
-
-#ifndef UVM	/* version handled elsewhere in uvm */
-/*
- *	Map versions are used to validate a previous lookup attempt.
- *
- *	Since lookup operations may involve both a main map and
- *	a sharing map, it is necessary to have a timestamp from each.
- *	[If the main map timestamp has changed, the share_map and
- *	associated timestamp are no longer valid; the map version
- *	does not include a reference for the imbedded share_map.]
- */
-typedef struct {
-	int		main_timestamp;
-	vm_map_t	share_map;
-	int		share_timestamp;
-} vm_map_version_t;
-#endif /* UVM */
-
-#ifdef UVM
 
 /*
  * VM map locking operations:
@@ -448,50 +399,6 @@ do {									\
 		wakeup(&(map)->flags);					\
 } while (0)
 #endif /* _KERNEL */
-#else /* UVM */
-/*
- *	Macros:		vm_map_lock, etc.
- *	Function:
- *		Perform locking on the data portion of a map.
- */
-
-#include <sys/proc.h>	/* XXX for curproc and p_pid */
-
-#define	vm_map_lock_drain_interlock(map) { \
-	lockmgr(&(map)->lock, LK_DRAIN|LK_INTERLOCK, \
-		&(map)->ref_lock, curproc); \
-	(map)->timestamp++; \
-}
-#ifdef DIAGNOSTIC
-#define	vm_map_lock(map) { \
-	if (lockmgr(&(map)->lock, LK_EXCLUSIVE, NULL, curproc) != 0) { \
-		panic("vm_map_lock: failed to get lock"); \
-	} \
-	(map)->timestamp++; \
-}
-#else
-#define	vm_map_lock(map) { \
-	lockmgr(&(map)->lock, LK_EXCLUSIVE, NULL, curproc); \
-	(map)->timestamp++; \
-}
-#endif /* DIAGNOSTIC */
-#define	vm_map_unlock(map) \
-		lockmgr(&(map)->lock, LK_RELEASE, NULL, curproc)
-#define	vm_map_lock_read(map) \
-		lockmgr(&(map)->lock, LK_SHARED, NULL, curproc)
-#define	vm_map_unlock_read(map) \
-		lockmgr(&(map)->lock, LK_RELEASE, NULL, curproc)
-#define vm_map_set_recursive(map) { \
-	simple_lock(&(map)->lk_interlock); \
-	(map)->lk_flags |= LK_CANRECURSE; \
-	simple_unlock(&(map)->lk_interlock); \
-}
-#define vm_map_clear_recursive(map) { \
-	simple_lock(&(map)->lk_interlock); \
-	(map)->lk_flags &= ~LK_CANRECURSE; \
-	simple_unlock(&(map)->lk_interlock); \
-}
-#endif /* UVM */
 
 /*
  *	Functions implemented as macros
@@ -512,53 +419,4 @@ do {									\
 #endif
 #endif
 
-#if defined(_KERNEL) && !defined(UVM)
-boolean_t	 vm_map_check_protection __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, vm_prot_t));
-int		 vm_map_copy __P((vm_map_t, vm_map_t, vm_offset_t,
-		    vm_size_t, vm_offset_t, boolean_t, boolean_t));
-void		 vm_map_copy_entry __P((vm_map_t,
-		    vm_map_t, vm_map_entry_t, vm_map_entry_t));
-struct pmap;
-vm_map_t	 vm_map_create __P((struct pmap *,
-		    vm_offset_t, vm_offset_t, boolean_t));
-void		 vm_map_deallocate __P((vm_map_t));
-int		 vm_map_delete __P((vm_map_t, vm_offset_t, vm_offset_t));
-vm_map_entry_t	 vm_map_entry_create __P((vm_map_t));
-void		 vm_map_entry_delete __P((vm_map_t, vm_map_entry_t));
-void		 vm_map_entry_dispose __P((vm_map_t, vm_map_entry_t));
-void		 vm_map_entry_unwire __P((vm_map_t, vm_map_entry_t));
-int		 vm_map_find __P((vm_map_t, vm_object_t,
-		    vm_offset_t, vm_offset_t *, vm_size_t, boolean_t));
-int		 vm_map_findspace __P((vm_map_t,
-		    vm_offset_t, vm_size_t, vm_offset_t *));
-int		 vm_map_inherit __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, vm_inherit_t));
-void		 vm_map_init __P((struct vm_map *,
-		    vm_offset_t, vm_offset_t, boolean_t));
-int		 vm_map_insert __P((vm_map_t,
-		    vm_object_t, vm_offset_t, vm_offset_t, vm_offset_t));
-int		 vm_map_lookup __P((vm_map_t *, vm_offset_t, vm_prot_t,
-		    vm_map_entry_t *, vm_object_t *, vm_offset_t *, vm_prot_t *,
-		    boolean_t *, boolean_t *));
-void		 vm_map_lookup_done __P((vm_map_t, vm_map_entry_t));
-boolean_t	 vm_map_lookup_entry __P((vm_map_t,
-		    vm_offset_t, vm_map_entry_t *));
-int		 vm_map_pageable __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, boolean_t));
-int		 vm_map_clean __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, boolean_t, boolean_t));
-void		 vm_map_print __P((vm_map_t, boolean_t));
-void		 _vm_map_print __P((vm_map_t, boolean_t,
-		    int (*)(const char *, ...)));
-int		 vm_map_protect __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, vm_prot_t, boolean_t));
-void		 vm_map_reference __P((vm_map_t));
-int		 vm_map_remove __P((vm_map_t, vm_offset_t, vm_offset_t));
-void		 vm_map_simplify __P((vm_map_t, vm_offset_t));
-void		 vm_map_simplify_entry __P((vm_map_t, vm_map_entry_t));
-void		 vm_map_startup __P((void));
-int		 vm_map_submap __P((vm_map_t,
-		    vm_offset_t, vm_offset_t, vm_map_t));
-#endif /* _KERNEL & !UVM */
 #endif /* _VM_MAP_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_param.h,v 1.21 2001/05/05 21:26:47 art Exp $	*/
+/*	$OpenBSD: vm_param.h,v 1.22 2001/06/27 04:52:40 art Exp $	*/
 /*	$NetBSD: vm_param.h,v 1.12 1995/03/26 20:39:16 jtc Exp $	*/
 
 /* 
@@ -105,22 +105,11 @@ typedef	int	boolean_t;
 #undef PAGE_SIZE
 #undef PAGE_MASK
 #undef PAGE_SHIFT
-#if defined(UVM)
 #define	PAGE_SIZE	uvmexp.pagesize		/* size of page */
 #define	PAGE_MASK	uvmexp.pagemask		/* size of page - 1 */
 #define	PAGE_SHIFT	uvmexp.pageshift	/* bits to shift for pages */
-#else
-#define	PAGE_SIZE	cnt.v_page_size		/* size of page */
-#define	PAGE_MASK	page_mask		/* size of page - 1 */
-#define	PAGE_SHIFT	page_shift		/* bits to shift for pages */
-#endif /* UVM */
 #endif /* !PAGE_SIZE */
 #endif /* _KERNEL */
-
-#if defined(_KERNEL) && !defined(UVM)
-extern vsize_t		page_mask;
-extern int		page_shift;
-#endif
 
 /*
  * CTL_VM identifiers
@@ -128,18 +117,6 @@ extern int		page_shift;
 #define	VM_METER	1		/* struct vmmeter */
 #define	VM_LOADAVG	2		/* struct loadavg */
 #define	VM_PSSTRINGS	3		/* PSSTRINGS */
-#if !defined(UVM)
-#define	VM_MAXID	4		/* number of valid vm ids */
-
-#define	CTL_VM_NAMES { \
-	{ 0, 0 }, \
-	{ "vmmeter", CTLTYPE_STRUCT }, \
-	{ "loadavg", CTLTYPE_STRUCT }, \
-	{ "psstrings", CTLTYPE_STRUCT }, \
-}
-
-#else
-
 #define VM_UVMEXP	4		/* struct uvmexp */
 #define VM_SWAPENCRYPT	5		/* int */
 #define	VM_MAXID	6		/* number of valid vm ids */
@@ -152,7 +129,6 @@ extern int		page_shift;
 	{ "uvmexp", CTLTYPE_STRUCT }, \
 	{ "swapencrypt", CTLTYPE_NODE }, \
 }
-#endif
 
 struct _ps_strings {
 	void	*val;
@@ -191,10 +167,6 @@ struct _ps_strings {
 	(((x) + PAGE_MASK) & ~PAGE_MASK)
 #define	trunc_page(x) \
 	((x) & ~PAGE_MASK)
-#if !defined(UVM)
-#define	num_pages(x) \
-	((vaddr_t)((((vaddr_t)(x)) + PAGE_MASK) >> PAGE_SHIFT))
-#endif
 
 #else
 /* out-of-kernel versions of round_page and trunc_page */
