@@ -1,6 +1,6 @@
-.\"	$OpenBSD: rmd160.1,v 1.7 2000/11/09 17:51:56 aaron Exp $
+.\"	$OpenBSD: rmd160.1,v 1.8 2001/06/03 17:51:29 millert Exp $
 .\"
-.Dd July 16, 1997
+.Dd June 4, 2001
 .Dt RMD160 1
 .Os
 .Sh NAME
@@ -8,9 +8,10 @@
 .Nd calculate a message-digest fingerprint (checksum) for a file
 .Sh SYNOPSIS
 .Nm rmd160
-.Op Fl ptx
-.Op Fl s Ar string
-.Op Ar file ...
+.Oo
+.Fl p | Fl t | Fl x |
+.Fl s Ar string | Ar file ...
+.Oc
 .Sh DESCRIPTION
 .Nm
 takes as input a message of arbitrary length and produces
@@ -42,9 +43,8 @@ Runs a built-in time trial.
 Runs a built-in test script.
 .El
 .Pp
-The RMD-160
-sum of each file listed on the command line is printed after the options
-are processed.
+The RMD-160 sum of each file listed on the command line is printed after
+the options are processed.
 .Sh SEE ALSO
 .Xr cksum 1 ,
 .Xr md5 1 ,
@@ -53,6 +53,3 @@ are processed.
 RMD-160 is part of the ISO draft standard
 .St "ISO/IEC DIS 10118-3"
 on dedicated hash functions.
-.Sh ACKNOWLEDGEMENTS
-This program is placed in the public domain for free general use by
-RSA Data Security.

@@ -1,6 +1,6 @@
-.\"	$OpenBSD: sha1.1,v 1.8 2000/11/09 17:51:56 aaron Exp $
+.\"	$OpenBSD: sha1.1,v 1.9 2001/06/03 17:51:29 millert Exp $
 .\"
-.Dd July 12, 1997
+.Dd June 4, 2001
 .Dt SHA1 1
 .Os
 .Sh NAME
@@ -8,9 +8,10 @@
 .Nd calculate a message-digest fingerprint (checksum) for a file
 .Sh SYNOPSIS
 .Nm sha1
-.Op Fl ptx
-.Op Fl s Ar string
-.Op Ar file ...
+.Oo
+.Fl p | Fl t | Fl x |
+.Fl s Ar string | Ar file ...
+.Oc
 .Sh DESCRIPTION
 .Nm
 takes as input a message of arbitrary length and produces
@@ -51,6 +52,3 @@ are processed.
 .Xr rmd160 1
 .Pp
 NIST FIPS PUB 180-1 describes the SHA-1 message-digest algorithm in detail.
-.Sh ACKNOWLEDGEMENTS
-This program is placed in the public domain for free general use by
-RSA Data Security.
