@@ -1,4 +1,4 @@
-.\"	$OpenBSD: an.4,v 1.26 2005/02/21 10:22:43 jmc Exp $
+.\"	$OpenBSD: an.4,v 1.27 2005/02/24 15:14:55 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ee.columbia.edu>. All rights reserved.
@@ -85,17 +85,18 @@ selectable between 1Mbps, 2Mbps, 5.5Mbps, 11Mbps or
 .Pp
 By default, the
 .Nm
-driver configures the Aironet card for IBSS operation with an SSID
-of "".
-In this mode,
-stations can communicate among each other without the aid of an access
-point.
-To join a service set, the driver must be set for BSS mode using
-the
-.Xr ancontrol 8
-utility.
+driver configures the card for BSS operation (aka infrastructure mode).
+This mode requires the use of an access point (base station).
+.Pp
+The
+.Nm
+driver also supports the standard IBSS point-to-point mode,
+where stations can communicate amongst themselves
+without the aid of an access point.
 .Pp
 For more information on configuring this device, see
+.Xr ancontrol 8
+and
 .Xr ifconfig 8 .
 .Sh DIAGNOSTICS
 .Bl -diag
