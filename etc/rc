@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.204 2002/09/06 21:30:22 deraadt Exp $
+#	$OpenBSD: rc,v 1.205 2002/09/12 18:21:48 millert Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -203,13 +203,6 @@ if [ "X${named_flags}" != X"NO" ]; then
 		named_flags="-u ${named_user} ${named_flags}"
 	fi
 	if [ "X${named_chroot}" != "X" ]; then
-		if [ ! -c "${named_chroot}/dev/null" ]; then
-			( cd /dev ; pax -rw -pe null ${named_chroot}/dev )
-		fi
-		if [ -f /etc/localtime -a -d "${named_chroot}/etc" ]; then
-			cmp -s /etc/localtime "${named_chroot}/etc/localtime" \
-			|| cp -p /etc/localtime "${named_chroot}/etc/localtime"
-		fi
 		named_flags="-t ${named_chroot} ${named_flags}"
 	fi
 	echo 'starting named';		named $named_flags
