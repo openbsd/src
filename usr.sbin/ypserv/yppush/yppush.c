@@ -30,7 +30,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: yppush.c,v 1.1 1996/03/02 03:01:43 dm Exp $";
+static char rcsid[] = "$Id: yppush.c,v 1.2 1996/03/02 04:55:00 dm Exp $";
 #endif /* not lint */
 
 /*
@@ -342,7 +342,7 @@ char **argv;
 		printf("Contacting master for ypservers (%s).\n", master);
 	  }
 
-	  client = yp_bind_host(master, YPPROG, YPVERS, 0);
+	  client = yp_bind_host(master, YPPROG, YPVERS, 0, 1);
 
 	  ypcb.foreach = pushit;
 	  ypcb.data = NULL;

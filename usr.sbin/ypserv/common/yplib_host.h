@@ -53,7 +53,7 @@ int	yp_maplist_host	__P((CLIENT *client, char *indomain,
 			    struct ypmaplist **outmaplist));
 CLIENT *yp_bind_local	__P((u_long program, u_long version));
 CLIENT *yp_bind_host	__P((char *server, u_long program, u_long version,
-			    u_short port));
+			    u_short port, int usetcp));
 
 #endif /* _YPLIB_HOST_H_ */
 
