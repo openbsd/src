@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.17 1999/12/15 05:33:06 deraadt Exp $	*/
+/*	$OpenBSD: at.c,v 1.18 2000/01/21 04:22:54 millert Exp $	*/
 /*	$NetBSD: at.c,v 1.4 1995/03/25 18:13:31 glass Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ enum { ATQ, ATRM, AT, BATCH, CAT };	/* what program we want to run */
 
 /* File scope variables */
 #ifndef lint
-static char rcsid[] = "$OpenBSD: at.c,v 1.17 1999/12/15 05:33:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: at.c,v 1.18 2000/01/21 04:22:54 millert Exp $";
 #endif
 
 char *no_export[] =
@@ -280,8 +280,8 @@ writefile(runtimer, queue)
 		panic("Cannot reopen atjob file");
 
 	/*
-	 * Get the userid to mail to, first by trying getlogin(), which reads
-	 * /etc/utmp, then from $LOGNAME or $USER, finally from getpwuid().
+	 * Get the userid to mail to, first by trying getlogin(), which asks
+	 * the kernel, then from $LOGNAME or $USER, finally from getpwuid().
 	 */
 	mailname = getlogin();
 	if (mailname == NULL && (mailname = getenv("LOGNAME")) == NULL)
@@ -361,8 +361,10 @@ writefile(runtimer, queue)
 	 * Cd to the directory at the time and write out all the
 	 * commands the user supplies from stdin.
 	 */
+	if ((ap = cwdname()) == NULL)
+		perr("Cannot get current working directory");
 	(void)fputs("cd ", fp);
-	for (ap = cwdname(); *ap != '\0'; ap++) {
+	for (; *ap != '\0'; ap++) {
 		if (*ap == '\n')
 			fprintf(fp, "\"\n\"");
 		else {
