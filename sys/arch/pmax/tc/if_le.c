@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.3 1995/11/25 01:23:51 cgd Exp $	*/
+/*	$NetBSD: if_le.c,v 1.4 1995/12/17 04:46:00 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -77,7 +77,6 @@ extern u_long asic_base;
 #include <pmax/tc/tc.h>
 #include <pmax/pmax/asic.h>
 #include <pmax/tc/if_levar.h>
-#define LEINTR_UNIT	1	/* pmax interrupts take a unit as arg */
 #else /* Alpha */
 
 typedef  u_int64 word_t;
@@ -116,11 +115,8 @@ extern caddr_t le_iomem;
 int lematch __P((struct device *, void *, void *));
 void leattach __P((struct device *, struct device *, void *));
 
-#ifdef LEINTR_UNIT
-int leintr __P((int unit));
-#else
 int leintr __P((void *sc));
-#endif
+
 
 struct cfdriver lecd = {
 	NULL, "le", lematch, leattach, DV_IFNET, sizeof (struct le_softc)
@@ -275,11 +271,9 @@ leattach(parent, self, aux)
 	sc->sc_arpcom.ac_if.if_name = lecd.cd_name;
 	leconfig(sc);
 
-#ifdef LEINTR_UNIT
-	BUS_INTR_ESTABLISH(ca, leintr, self->dv_unit);
-#else
+
 	BUS_INTR_ESTABLISH(ca, leintr, sc);
-#endif
+
 	if (SYSTEM_HAS_ASIC()) {
 		/* XXX YEECH!!! */
 		*(volatile u_int *)ASIC_REG_IMSK(asic_base) |= ASIC_INTR_LANCE;

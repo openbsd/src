@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.pmax,v 1.17 1995/11/25 05:55:38 mellon Exp $
+#	$NetBSD: Makefile.pmax,v 1.18 1995/12/17 09:09:42 jonathan Exp $
 
 #	@(#)Makefile.pmax	8.2 (Berkeley) 2/16/94
 #
@@ -56,7 +56,7 @@ LIBCOMPAT=	${COMPATLIB_PROF}
 
 TARGET_MACHINE = pmax
 TARGET_ARCH = mips
-.if (${MACHINE_ARCH} != pmax)
+.if (${MACHINE} != pmax)
 CC=	/usr/local/mips-dec-netbsd/bin/gcc
 LD=	/usr/local/mips-dec-netbsd/bin/ld
 AS=	/usr/local/mips-dec-netbsd/bin/as
