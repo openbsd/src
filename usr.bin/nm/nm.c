@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.23 2004/01/14 04:23:26 millert Exp $	*/
+/*	$OpenBSD: nm.c,v 1.24 2004/04/29 13:34:37 miod Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: nm.c,v 1.23 2004/01/14 04:23:26 millert Exp $";
+static const char rcsid[] = "$OpenBSD: nm.c,v 1.24 2004/04/29 13:34:37 miod Exp $";
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -247,6 +247,7 @@ process_file(int count, const char *fname)
 	union hdr exec_head;
 	FILE *fp;
 	int retval;
+	size_t bytes;
 	char magic[SARMAG];
     
 	if (!(fp = fopen(fname, "r"))) {
@@ -261,10 +262,14 @@ process_file(int count, const char *fname)
 	 * first check whether this is an object file - read a object
 	 * header, and skip back to the beginning
 	 */
-	if (fread((char *)&exec_head, sizeof(exec_head), (size_t)1, fp) != 1) {
-		warnx("%s: bad format", fname);
-		(void)fclose(fp);
-		return(1);
+	bzero(&exec_head, sizeof(exec_head));
+	bytes = fread((char *)&exec_head, 1, sizeof(exec_head), fp);
+	if (bytes < sizeof(exec_head)) {
+		if (bytes < sizeof(exec_head.aout) || IS_ELF(exec_head.elf)) {
+			warnx("%s: bad format", fname);
+			(void)fclose(fp);
+			return(1);
+		}
 	}
 	rewind(fp);
 
