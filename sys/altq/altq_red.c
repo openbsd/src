@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_red.c,v 1.5 2002/06/14 21:34:58 todd Exp $	*/
+/*	$OpenBSD: altq_red.c,v 1.6 2002/10/11 09:30:30 kjc Exp $	*/
 /*	$KAME: altq_red.c,v 1.10 2002/04/03 05:38:51 kjc Exp $	*/
 
 /*
@@ -84,6 +84,7 @@
 #include <netinet/ip6.h>
 #endif
 
+#include <net/pfvar.h>
 #include <altq/altq.h>
 #include <altq/altq_conf.h>
 #include <altq/altq_red.h>
@@ -817,29 +818,50 @@ mark_ecn(m, pktattr, flags)
 	int flags;
 {
 	struct mbuf *m0;
+	struct m_tag *t;
+	struct altq_tag *at;
+	void *hdr;
+	int af;
 
-	if (pktattr == NULL ||
-	    (pktattr->pattr_af != AF_INET && pktattr->pattr_af != AF_INET6))
+	if (PFALTQ_IS_ACTIVE()) {
+		t = m_tag_find(m, PACKET_TAG_PF_QID, NULL);
+		if (t == NULL)
+			return (0);
+		at = (struct altq_tag *)(t + 1);
+
+		if (at == NULL)
+			return (0);
+
+		af = at->af;
+		hdr = at->hdr;
+	} else {
+		if (pktattr == NULL)
+			return (0);
+
+		af = pktattr->pattr_af;
+		hdr = pktattr->pattr_hdr;
+	}
+
+	if (af != AF_INET && af != AF_INET6)
 		return (0);
 
 	/* verify that pattr_hdr is within the mbuf data */
 	for (m0 = m; m0 != NULL; m0 = m0->m_next)
-		if ((pktattr->pattr_hdr >= m0->m_data) &&
-		    (pktattr->pattr_hdr < m0->m_data + m0->m_len))
+		if (((caddr_t)hdr >= m0->m_data) &&
+		    ((caddr_t)hdr < m0->m_data + m0->m_len))
 			break;
 	if (m0 == NULL) {
-		/* ick, pattr_hdr is stale */
-		pktattr->pattr_af = AF_UNSPEC;
+		/* ick, tag info is stale */
 		return (0);
 	}
 
-	switch (pktattr->pattr_af) {
+	switch (af) {
 	case AF_INET:
 		if (flags & REDF_ECN4) {
-			struct ip *ip = (struct ip *)pktattr->pattr_hdr;
+			struct ip *ip = hdr;
 			u_int8_t otos;
 			int sum;
-	    
+
 			if (ip->ip_v != 4)
 				return (0);	/* version mismatch! */
 
@@ -869,7 +891,7 @@ mark_ecn(m, pktattr, flags)
 #ifdef INET6
 	case AF_INET6:
 		if (flags & REDF_ECN6) {
-			struct ip6_hdr *ip6 = (struct ip6_hdr *)pktattr->pattr_hdr;
+			struct ip6_hdr *ip6 = hdr;
 			u_int32_t flowlabel;
 
 			flowlabel = ntohl(ip6->ip6_flow);

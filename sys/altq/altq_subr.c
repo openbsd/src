@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.8 2002/10/08 05:12:08 kjc Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.9 2002/10/11 09:30:30 kjc Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -140,10 +140,15 @@ altq_attach(ifq, type, discipline, enqueue, dequeue, request, clfier, classify)
 {
 	if (!ALTQ_IS_READY(ifq))
 		return ENXIO;
-	if (ALTQ_IS_ENABLED(ifq))
-		return EBUSY;
-	if (ALTQ_IS_ATTACHED(ifq))
-		return EEXIST;
+
+	if (PFALTQ_IS_ACTIVE()) {
+		/* pfaltq can override the existing discipline */
+	} else {
+		if (ALTQ_IS_ENABLED(ifq))
+			return EBUSY;
+		if (ALTQ_IS_ATTACHED(ifq))
+			return EEXIST;
+	}
 	ifq->altq_type     = type;
 	ifq->altq_disc     = discipline;
 	ifq->altq_enqueue  = enqueue;
@@ -151,7 +156,11 @@ altq_attach(ifq, type, discipline, enqueue, dequeue, request, clfier, classify)
 	ifq->altq_request  = request;
 	ifq->altq_clfier   = clfier;
 	ifq->altq_classify = classify;
-	ifq->altq_flags &= ALTQF_CANTCHANGE;
+	if (PFALTQ_IS_ACTIVE())
+		ifq->altq_flags &= (ALTQF_CANTCHANGE|ALTQF_ENABLED);
+	else
+		ifq->altq_flags &= ALTQF_CANTCHANGE;
+
 #ifdef ALTQ_KLD
 	altq_module_incref(type);
 #endif
@@ -434,9 +443,7 @@ altq_pfattach(struct pf_altq *a)
 	case ALTQT_NONE:
 		break;
 	case ALTQT_CBQ:
-#if 0 /* notyet */
 		error = cbq_pfattach(a);
-#endif
 		break;
 	default:
 		error = EINVAL;
@@ -496,9 +503,7 @@ altq_add(struct pf_altq *a)
 
 	switch (a->scheduler) {
 	case ALTQT_CBQ:
-#if 0 /* notyet */
 		error = cbq_add_altq(a);
-#endif
 		break;
 	default:
 		error = EINVAL;
@@ -520,9 +525,7 @@ altq_remove(struct pf_altq *a)
 
 	switch (a->scheduler) {
 	case ALTQT_CBQ:
-#if 0 /* notyet */
 		error = cbq_remove_altq(a);
-#endif
 		break;
 	default:
 		error = EINVAL;
@@ -541,9 +544,7 @@ altq_add_queue(struct pf_altq *a)
 
 	switch (a->scheduler) {
 	case ALTQT_CBQ:
-#if 0 /* notyet */
 		error = cbq_add_queue(a);
-#endif
 		break;
 	default:
 		error = EINVAL;
@@ -562,9 +563,7 @@ altq_remove_queue(struct pf_altq *a)
 
 	switch (a->scheduler) {
 	case ALTQT_CBQ:
-#if 0 /* notyet */
 		error = cbq_remove_queue(a);
-#endif
 		break;
 	default:
 		error = EINVAL;
@@ -583,9 +582,7 @@ altq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
 
 	switch (a->scheduler) {
 	case ALTQT_CBQ:
-#if 0 /* notyet */
 		error = cbq_getqstats(a, ubuf, nbytes);
-#endif
 		break;
 	default:
 		error = EINVAL;
@@ -1065,6 +1062,10 @@ acc_discard_filters(classifier, class, all)
 	struct acc_filter *afp;
 	int	i, s;
 
+#if 1 /* PFALTQ */
+	if (classifier == NULL)
+		return (0);
+#endif
 	s = splimp();
 	for (i = 0; i < ACC_FILTER_TABLESIZE; i++) {
 		do {
@@ -1528,6 +1529,7 @@ ip4f_free(fp)
 	fp->ip4f_valid = 0;
 	TAILQ_INSERT_TAIL(&ip4f_list, fp, ip4f_chain);
 }
+
 
 /*
  * read and write diffserv field in IPv4 or IPv6 header
