@@ -1,7 +1,7 @@
 #
-#	GANDALF -- Dual Tyan P5/133 PCI/EISA bus
+#	GANDALF -- Dual Tyan P5/166 PCI/EISA bus
 #
-#	$OpenBSD: GANDALF,v 1.29 1999/01/02 00:32:55 niklas Exp $
+#	$OpenBSD: GANDALF,v 1.30 1999/03/16 19:26:50 tholo Exp $
 #
 
 machine		i386		# architecture, used by config; REQUIRED
@@ -16,19 +16,17 @@ option		EISAVERBOSE	# verbose EISA device information
 
 option		DUMMY_NOPS	# speed hack; recommended
 option		XSERVER		# diddle with console driver
-#option		INSECURE	# insecure; allow /dev/mem writing for X
+option		APERTURE
 
 maxusers	32		# estimated number of users
-option		TIMEZONE=480	# time zone to adjust RTC time by
-option		DST=0		# daylight savings time used by RTC
 option		NTP		# High precision timekeeping support
-option		PPS_SYNC	# include support for PPS
+#option		PPS_SYNC	# include support for PPS
 
 option		SWAPPAGER	# paging; REQUIRED
 option		DEVPAGER	# mmap() of devices
 
-#option		DDB		# in-kernel debugger
-#makeoptions	DEBUG="-g"	# compile full symbol table
+option		DDB		# in-kernel debugger
+makeoptions	DEBUG="-g"	# compile full symbol table
 option		DIAGNOSTIC	# internally consistency checks
 option		KTRACE		# system call tracing, a la ktrace(1)
 
@@ -82,7 +80,7 @@ option		"NMBCLUSTERS=1024"
 option		PPP_BSDCOMP
 option		PPP_DEFLATE
 
-config		bsd	root on sd0a swap on sd0b and sd1b and sd3b dumps on sd3b
+config		bsd	root on sd0a swap on sd0b and sd1b and sd3b dumps on sd0b
 
 mainbus0 at root
 
@@ -91,15 +89,20 @@ isa0	at mainbus0
 eisa0	at mainbus0
 pci0	at mainbus0 bus ?
 
+pchb*	at pci? dev ? function ?	# PCI-Host bridges
+
 npx0	at isa?	port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
+isapnp0	at isa?
 
-pc0	at isa? port 0x60 irq 1		# generic PC console device
-#vt0	at isa? port 0x60 irq 1
+vt0	at isa? port 0x60 irq 1
 
-com0	at isa? port 0x3f8 irq 4	# standard PC serial ports
-com1	at isa? port 0x2f8 irq 3
-com2	at isa? port 0x3e8 irq 5
+pcppi0	at isa?
+sysbeep0	at pcppi?
+
+pccom0	at isa? port 0x3f8 irq 4	# standard PC serial ports
+pccom1	at isa? port 0x2f8 irq 3
+pccom2	at isa? port 0x3e8 irq 5
 
 lpt0	at isa? port 0x378		# standard PC parallel ports
 
@@ -108,8 +111,8 @@ joy0	at isa? port 0x201		# Game port
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controller
 fd*	at fdc? drive ?
 
-ahb*	at eisa? slot ?			# Adaptec 174[024] SCSI controller
-scsibus* at ahb?
+ahc*	at pci? dev ? function ?	# Adaptec 2940 SCSI controllers
+scsibus* at ahc?
 
 ncr*	at pci? dev ? function ?
 scsibus* at ncr?
@@ -130,16 +133,32 @@ acd*	at atapibus? drive?
 
 ep*	at eisa? slot ?			# 3C579 ethernet card
 
+# OPL[23] FM syntheziers
+#opl0	at isa? port 0x388	# use only if not attached to sound card
+#opl*	at sb?
+
 gus0	at isa? port 0x220 irq 12 drq 5 drq2 6 # Gravis UltraSound (drq2 is record drq)
 
+# MIDI support
+midi*	at pcppi?		# MIDI interface to the PC speaker
+#midi*	at opl?			# OPL FM synth
+
+# The spkr driver provides a simple tone interface to the built in speaker.
+spkr0	at pcppi?		# PC speaker
+
+#Audio Support
+#audio*	at gus?
+
 pseudo-device	loop		1	# network loopback
+pseudo-device	sequencer	1	# midi sequencer
 pseudo-device	bpfilter	8	# packet filter
-#pseudo-device	sl		2	# CSLIP
-pseudo-device	ppp		1	# PPP
-#pseudo-device	tun		2	# network tunneling over tty
-pseudo-device	enc		4	# encryption device
+pseudo-device	sl		2	# CSLIP
+pseudo-device	ppp		2	# PPP
+pseudo-device	tun		2	# network tunneling over tty
+pseudo-device	enc		1	# encryption device
 
 pseudo-device	pty		64	# pseudo-terminals
 #pseudo-device	tb		1	# tablet line discipline
 pseudo-device	vnd		4	# paging to files
 pseudo-device	pctr		1	# performance counters
+pseudo-device	ksyms		1	# kernel symbols device
