@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.3 1999/10/03 13:06:30 jason Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.4 1999/10/25 19:39:19 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1114,6 +1114,7 @@ struct ti_softc {
 	struct ifmedia		ifmedia;	/* media info */
 	u_int8_t		ti_hwrev;	/* Tigon rev (1 or 2) */
 	u_int8_t		ti_linkstat;	/* Link state */
+	bus_dma_tag_t		sc_dmatag;
 	struct ti_ring_data	*ti_rdata;	/* rings */
 	struct ti_chain_data	ti_cdata;	/* mbufs */
 #define ti_ev_prodidx		ti_rdata->ti_ev_prodidx_r
