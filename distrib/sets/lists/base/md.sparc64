@@ -9,6 +9,8 @@
 ./etc/firmware/atu-rfmd2958smc-int
 ./etc/firmware/eprimsym
 ./etc/firmware/esecsym
+./etc/firmware/kue
+./etc/firmware/kue-license
 ./etc/firmware/symbol-license
 ./etc/firmware/tigon1
 ./etc/firmware/tigon2

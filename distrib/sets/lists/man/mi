@@ -1738,6 +1738,7 @@
 ./usr/share/man/cat5/man.conf.0
 ./usr/share/man/cat5/map3270.0
 ./usr/share/man/cat5/master.passwd.0
+./usr/share/man/cat5/mixerctl.conf.0
 ./usr/share/man/cat5/mk.conf.0
 ./usr/share/man/cat5/moduli.0
 ./usr/share/man/cat5/motd.0
