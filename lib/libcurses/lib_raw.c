@@ -1,25 +1,37 @@
-/*	$OpenBSD: lib_raw.c,v 1.4 1998/01/17 16:27:35 millert Exp $	*/
+/*	$OpenBSD: lib_raw.c,v 1.5 1998/07/23 21:19:14 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 
 /*
@@ -27,12 +39,8 @@
  *
  *	Routines:
  *		raw()
- *		echo()
- *		nl()
  *		cbreak()
  *		noraw()
- *		noecho()
- *		nonl()
  *		nocbreak()
  *		qiflush()
  *		noqiflush()
@@ -43,7 +51,7 @@
 #include <curses.priv.h>
 #include <term.h>	/* cur_term */
 
-MODULE_ID("Id: lib_raw.c,v 1.22 1998/01/03 21:59:22 tom Exp $")
+MODULE_ID("$From: lib_raw.c,v 1.26 1998/04/11 23:00:07 tom Exp $")
 
 #if defined(SVR4_TERMIO) && !defined(_POSIX_SOURCE)
 #define _POSIX_SOURCE
@@ -234,25 +242,28 @@ cflags[] =
 int raw(void)
 {
 	T((T_CALLED("raw()")));
+	if (SP != 0 && cur_term != 0) {
 
-	SP->_raw = TRUE;
-	SP->_cbreak = TRUE;
+		SP->_raw = TRUE;
+		SP->_cbreak = TRUE;
 
 #ifdef __EMX__
-	setmode(SP->_ifd, O_BINARY);
+		setmode(SP->_ifd, O_BINARY);
 #endif
 
 #ifdef TERMIOS
-	BEFORE("raw");
-	cur_term->Nttyb.c_lflag &= ~(ICANON|ISIG);
-	cur_term->Nttyb.c_iflag &= ~(COOKED_INPUT);
-	cur_term->Nttyb.c_cc[VMIN] = 1;
-	cur_term->Nttyb.c_cc[VTIME] = 0;
-	AFTER("raw");
+		BEFORE("raw");
+		cur_term->Nttyb.c_lflag &= ~(ICANON|ISIG);
+		cur_term->Nttyb.c_iflag &= ~(COOKED_INPUT);
+		cur_term->Nttyb.c_cc[VMIN] = 1;
+		cur_term->Nttyb.c_cc[VTIME] = 0;
+		AFTER("raw");
 #else
-	cur_term->Nttyb.sg_flags |= RAW;
+		cur_term->Nttyb.sg_flags |= RAW;
 #endif
-	returnCode(_nc_set_curterm(&cur_term->Nttyb));
+		returnCode(_nc_set_curterm(&cur_term->Nttyb));
+	}
+	returnCode(ERR);
 }
 
 int cbreak(void)
@@ -279,32 +290,7 @@ int cbreak(void)
 	returnCode(_nc_set_curterm( &cur_term->Nttyb));
 }
 
-int echo(void)
-{
-	T((T_CALLED("echo()")));
-
-	SP->_echo = TRUE;
-
-	returnCode(OK);
-}
-
-
-int nl(void)
-{
-	T((T_CALLED("nl()")));
-
-	SP->_nl = TRUE;
-
-#ifdef __EMX__
-	fflush(SP->_ofp);
-	_fsetmode(SP->_ofp, "t");
-#endif
-
-	returnCode(OK);
-}
-
-
-int qiflush(void)
+void qiflush(void)
 {
 	T((T_CALLED("qiflush()")));
 
@@ -317,9 +303,8 @@ int qiflush(void)
 	BEFORE("qiflush");
 	cur_term->Nttyb.c_lflag &= ~(NOFLSH);
 	AFTER("qiflush");
-	returnCode(_nc_set_curterm( &cur_term->Nttyb));
-#else
-	returnCode(ERR);
+	(void)_nc_set_curterm( &cur_term->Nttyb);
+	returnVoid;
 #endif
 }
 
@@ -368,29 +353,7 @@ int nocbreak(void)
 	returnCode(_nc_set_curterm( &cur_term->Nttyb));
 }
 
-int noecho(void)
-{
-	T((T_CALLED("noecho()")));
-	SP->_echo = FALSE;
-	returnCode(OK);
-}
-
-
-int nonl(void)
-{
-	T((T_CALLED("nonl()")));
-
-	SP->_nl = FALSE;
-
-#ifdef __EMX__
-	fflush(SP->_ofp);
-	_fsetmode(SP->_ofp, "b");
-#endif
-
-	returnCode(OK);
-}
-
-int noqiflush(void)
+void noqiflush(void)
 {
 	T((T_CALLED("noqiflush()")));
 
@@ -403,9 +366,8 @@ int noqiflush(void)
 	BEFORE("noqiflush");
 	cur_term->Nttyb.c_lflag |= NOFLSH;
 	AFTER("noqiflush");
-	returnCode(_nc_set_curterm( &cur_term->Nttyb));
-#else
-	returnCode(ERR);
+	(void)_nc_set_curterm( &cur_term->Nttyb);
+	returnVoid;
 #endif
 }
 

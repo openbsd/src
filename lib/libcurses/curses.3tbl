@@ -1,6 +1,34 @@
+.\"***************************************************************************
+.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\"                                                                          *
+.\" Permission is hereby granted, free of charge, to any person obtaining a  *
+.\" copy of this software and associated documentation files (the            *
+.\" "Software"), to deal in the Software without restriction, including      *
+.\" without limitation the rights to use, copy, modify, merge, publish,      *
+.\" distribute, distribute with modifications, sublicense, and/or sell       *
+.\" copies of the Software, and to permit persons to whom the Software is    *
+.\" furnished to do so, subject to the following conditions:                 *
+.\"                                                                          *
+.\" The above copyright notice and this permission notice shall be included  *
+.\" in all copies or substantial portions of the Software.                   *
+.\"                                                                          *
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+.\" OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+.\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+.\" IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+.\" DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+.\" OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+.\" THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+.\"                                                                          *
+.\" Except as contained in this notice, the name(s) of the above copyright   *
+.\" holders shall not be used in advertising or otherwise to promote the     *
+.\" sale, use or other dealings in this Software without prior written       *
+.\" authorization.                                                           *
+.\"***************************************************************************
+.\"
 '\" t
-.\" $OpenBSD: curses.3tbl,v 1.5 1998/07/18 19:10:49 millert Exp $
-.\" Id: ncurses.3x,v 1.22 1997/12/14 02:03:01 tom Exp $
+.\" $From: ncurses.3x,v 1.24 1998/03/11 21:12:53 juergen Exp $
+.\" $OpenBSD: curses.3tbl,v 1.6 1998/07/23 21:18:09 millert Exp $
 .TH curses 3 ""
 .ds n 5
 .ds d /usr/share/terminfo
@@ -15,8 +43,8 @@ of updating character screens with reasonable optimization.  This
 implementation is ``new curses'' (ncurses) and is the approved replacement for
 4.4BSD classic curses, which has been discontinued.
 
-The \fBcurses\fR routines emulate the \fBcurses\fR(3) library of System V
-Release 4 UNIX, and the XPG4 curses standard (XSI curses) but the \fBcurses\fR
+The \fBncurses\fR routines emulate the \fBcurses\fR(3) library of System V
+Release 4 UNIX, and the XPG4 curses standard (XSI curses) but the \fBncurses\fR
 library is freely redistributable in source form.  Differences from the SVr4
 curses are summarized under the EXTENSIONS and BUGS sections below and
 described in detail in the EXTENSIONS and BUGS sections of individual man
@@ -59,7 +87,7 @@ default window called \fBstdscr\fR, which is the size of the terminal
 screen, is supplied.  Others may be created with \fBnewwin\fR.
 
 Note that \fBcurses\fR does not handle overlapping windows, that's done by
-the \fBpanel(3)\fR library. This means that you can either use
+the \fBpanel\fR(3) library. This means that you can either use
 \fBstdscr\fR or divide the screen into tiled windows and not using
 \fBstdscr\fR at all. Mixing the two will result in unpredictable, and
 undesired, effects.
@@ -186,10 +214,12 @@ clearok/\fBcurs_outopts\fR(3)
 clrtobot/\fBcurs_clear\fR(3)
 clrtoeol/\fBcurs_clear\fR(3)
 color_content/\fBcurs_color\fR(3)
+color_set/\fBcurs_attr\fR(3)
 copywin/\fBcurs_overlay\fR(3)
 curs_set/\fBcurs_kernel\fR(3)
 def_prog_mode/\fBcurs_kernel\fR(3)
 def_shell_mode/\fBcurs_kernel\fR(3)
+define_key/\fBdefine_key\fR(3)*
 del_curterm/\fBterminfo\fR(3)
 delay_output/\fBcurs_util\fR(3)
 delch/\fBcurs_delch\fR(3)
@@ -243,6 +273,7 @@ is_linetouched/\fBcurs_touch\fR(3)
 is_wintouched/\fBcurs_touch\fR(3)
 isendwin/\fBcurs_initscr\fR(3)
 keyname/\fBcurs_util\fR(3)
+keyok/\fBkeyok\fR(3)*
 keypad/\fBcurs_inopts\fR(3)
 killchar/\fBcurs_termattrs\fR(3)
 leaveok/\fBcurs_outopts\fR(3)
@@ -342,6 +373,7 @@ slk_attroff/\fBcurs_slk\fR(3)
 slk_attron/\fBcurs_slk\fR(3)
 slk_attrset/\fBcurs_slk\fR(3)
 slk_clear/\fBcurs_slk\fR(3)
+slk_color/\fBcurs_slk\fR(3)
 slk_init/\fBcurs_slk\fR(3)
 slk_label/\fBcurs_slk\fR(3)
 slk_noutrefresh/\fBcurs_slk\fR(3)
@@ -376,6 +408,7 @@ unctrl/\fBcurs_util\fR(3)
 ungetch/\fBcurs_getch\fR(3)
 ungetmouse/\fBcurs_mouse\fR(3)*
 untouchwin/\fBcurs_touch\fR(3)
+use_default_colors/\fBdft_fgbg\fR(3)*
 use_env/\fBcurs_util\fR(3)
 vidattr/\fBterminfo\fR(3)
 vidputs/\fBterminfo\fR(3)
@@ -396,6 +429,7 @@ wborder/\fBcurs_border\fR(3)
 wclear/\fBcurs_clear\fR(3)
 wclrtobot/\fBcurs_clear\fR(3)
 wclrtoeol/\fBcurs_clear\fR(3)
+wcolor_set/\fBcurs_attr\fR(3)
 wcursyncup/\fBcurs_window\fR(3)
 wdelch/\fBcurs_delch\fR(3)
 wdeleteln/\fBcurs_deleteln\fR(3)
@@ -446,7 +480,7 @@ right-hand side of assignment statements).
 
 Routines that return pointers return \fBNULL\fR on error.
 .SH SEE ALSO
-\fBterminfo\fR(\*n) and 3 pages whose names begin "curs_" for detailed routine
+\fBterminfo\fR(\*n) and 3X pages whose names begin "curs_" for detailed routine
 descriptions.
 .SH EXTENSIONS
 The \fBcurses\fR library can be compiled with an option (\fB-DTERMCAP_FILE\fR)

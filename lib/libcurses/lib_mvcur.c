@@ -1,25 +1,37 @@
-/*	$OpenBSD: lib_mvcur.c,v 1.9 1998/05/14 11:17:26 niklas Exp $	*/
+/*	$OpenBSD: lib_mvcur.c,v 1.10 1998/07/23 21:19:03 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 
 /*
@@ -143,7 +155,7 @@
 #include <term.h>
 #include <ctype.h>
 
-MODULE_ID("Id: lib_mvcur.c,v 1.48 1997/10/25 23:34:11 tom Exp $")
+MODULE_ID("$From: lib_mvcur.c,v 1.50 1998/02/11 12:13:56 tom Exp $")
 
 #define STRLEN(s)       (s != 0) ? strlen(s) : 0
 
@@ -152,7 +164,7 @@ MODULE_ID("Id: lib_mvcur.c,v 1.48 1997/10/25 23:34:11 tom Exp $")
 #define CURRENT_COLUMN	SP->_curscol		/* phys cursor column */
 #define REAL_ATTR	SP->_current_attr	/* phys current attribute */
 #define WANT_CHAR(y, x)	SP->_newscr->_line[y].text[x]	/* desired state */
-#define BAUDRATE	SP->_baudrate		/* bits per second */
+#define BAUDRATE	cur_term->_baudrate	/* bits per second */
 
 #if defined(MAIN) || defined(NCURSES_TEST)
 #include <sys/time.h>
@@ -915,7 +927,7 @@ int _nc_outch(int ch)
     return OK;
 }
 
-static char	tname[BUFSIZ];
+static char	tname[MAX_ALIAS];
 
 static void load_term(void)
 {
@@ -934,10 +946,7 @@ static int roll(int n)
 
 int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 {
-    char *p;
-
-    (void) strncpy(tname, getenv("TERM"), sizeof(tname) - 1);
-    tname[sizeof(tname) - 1] = '\0';
+    (void) strcpy(tname, termname());
     load_term();
     _nc_setupscreen(lines, columns, stdout);
     baudrate();
@@ -948,15 +957,10 @@ int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
      * Undo the effects of our optimization hack, otherwise our interactive
      * prompts don't flush properly.
      */
-    if ((p = malloc(BUFSIZ)) == NULL) {
-	fprintf(stderr, "Can't allocate memory\n");
-	exit(1);
-    }
-
 #if HAVE_SETVBUF
-    (void) setvbuf(SP->_ofp, p, _IOLBF, BUFSIZ);
+    (void) setvbuf(SP->_ofp, malloc(BUFSIZ), _IOLBF, BUFSIZ);
 #elif HAVE_SETBUFFER
-    (void) setbuffer(SP->_ofp, p, BUFSIZ);
+    (void) setbuffer(SP->_ofp, malloc(BUFSIZ), BUFSIZ);
 #endif
 #endif /* HAVE_SETVBUF || HAVE_SETBUFFER */
 
@@ -969,10 +973,6 @@ int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
     {
 	int	fy, fx, ty, tx, n, i;
 	char	buf[BUFSIZ], capname[BUFSIZ];
-	char	tparsebuf[20], cparsebuf[20];
-
-	snprintf(tparsebuf, sizeof tparsebuf, "l %%%ds", sizeof tname-1);
-	snprintf(cparsebuf, sizeof cparsebuf, "d %%%ds", sizeof capname-1);
 
 	(void) fputs("> ", stdout);
 	(void) fgets(buf, sizeof(buf), stdin);
@@ -982,8 +982,7 @@ int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 (void) puts("?                -- display this help message");
 (void) puts("fy fx ty tx      -- (4 numbers) display (fy,fx)->(ty,tx) move");
 (void) puts("s[croll] n t b m -- display scrolling sequence");
-(void) printf("r[eload]         -- reload terminal info for %s\n",
-	      getenv("TERM"));
+(void) printf("r[eload]         -- reload terminal info for %s\n", termname());
 (void) puts("l[oad] <term>    -- load terminal info for type <term>");
 (void) puts("d[elete] <cap>   -- delete named capability");
 (void) puts("i[nspect]        -- display terminal capabilities");
@@ -1020,15 +1019,14 @@ int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
 	}
 	else if (buf[0] == 'r')
 	{
-	    (void) strncpy(tname, getenv("TERM"), sizeof(tname) - 1);
-	    tname[sizeof(tname) - 1] = '\0';
+	    (void) strcpy(tname, termname());
 	    load_term();
 	}
-	else if (sscanf(buf, tparsebuf, tname) == 1)
+	else if (sscanf(buf, "l %s", tname) == 1)
 	{
 	    load_term();
 	}
-	else if (sscanf(buf, cparsebuf, capname) == 1)
+	else if (sscanf(buf, "d %s", capname) == 1)
 	{
 	    struct name_table_entry const	*np = _nc_find_entry(capname,
 							 _nc_info_hash_table);
@@ -1191,7 +1189,7 @@ int main(int argc GCC_UNUSED, char *argv[] GCC_UNUSED)
     _nc_mvcur_wrap();
     putchar('\n');
 
-    exit(0);
+    return(0);
 }
 
 #endif /* MAIN */

@@ -1,25 +1,37 @@
-/*	$OpenBSD: lib_options.c,v 1.4 1998/01/17 16:27:34 millert Exp $	*/
+/*	$OpenBSD: lib_options.c,v 1.5 1998/07/23 21:19:08 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 
 /*
@@ -34,11 +46,9 @@
 #include <term.h>	/* keypad_xmit, keypad_local, meta_on, meta_off */
 			/* cursor_visible,cursor_normal,cursor_invisible */
 
-MODULE_ID("Id: lib_options.c,v 1.26 1997/09/20 15:02:34 juergen Exp $")
+MODULE_ID("$From: lib_options.c,v 1.31 1998/04/11 23:40:51 tom Exp $")
 
-static void add_to_try(char *, short);
-
-int has_ic(void)
+bool has_ic(void)
 {
 	T((T_CALLED("has_ic()")));
 	returnCode((insert_character || parm_ich
@@ -46,7 +56,7 @@ int has_ic(void)
 	   &&  (delete_character || parm_dch));
 }
 
-int has_il(void)
+bool has_il(void)
 {
 	T((T_CALLED("has_il()")));
 	returnCode((insert_line || parm_insert_line)
@@ -74,59 +84,6 @@ void idcok(WINDOW *win, bool flag)
 	  _nc_idcok = win->_idcok = flag && has_ic();
 
 	returnVoid;
-}
-
-
-int clearok(WINDOW *win, bool flag)
-{
-	T((T_CALLED("clearok(%p,%d)"), win, flag));
-
-	if (win) {
-	  win->_clear = flag;
-	  returnCode(OK);
-	}
-	else
-	  returnCode(ERR);
-}
-
-
-void immedok(WINDOW *win, bool flag)
-{
-	T((T_CALLED("immedok(%p,%d)"), win, flag));
-
-	if (win)
-	  win->_immed = flag;
-
-	returnVoid;
-}
-
-int leaveok(WINDOW *win, bool flag)
-{
-	T((T_CALLED("leaveok(%p,%d)"), win, flag));
-
-	if (win) {
-	  win->_leaveok = flag;
-	  if (flag == TRUE)
-	    curs_set(0);
-	  else
-	    curs_set(1);
-	  returnCode(OK);
-	}
-	else
-	  returnCode(ERR);
-}
-
-
-int scrollok(WINDOW *win, bool flag)
-{
-	T((T_CALLED("scrollok(%p,%d)"), win, flag));
-
-	if (win) {
-	  win->_scroll = flag;
-	  returnCode(OK);
-	}
-	else
-	  returnCode(ERR);
 }
 
 int halfdelay(int t)
@@ -167,16 +124,13 @@ int notimeout(WINDOW *win, bool f)
 	  returnCode(ERR);
 }
 
-int wtimeout(WINDOW *win, int delay)
+void wtimeout(WINDOW *win, int delay)
 {
 	T((T_CALLED("wtimeout(%p,%d)"), win, delay));
 
 	if (win) {
 	  win->_delay = delay;
-	  returnCode(OK);
 	}
-	else
-	  returnCode(ERR);
 }
 
 int keypad(WINDOW *win, bool flag)
@@ -194,7 +148,7 @@ int keypad(WINDOW *win, bool flag)
 
 int meta(WINDOW *win GCC_UNUSED, bool flag)
 {
-	/* Ok, we stay relaxed and don't signal an error if win is NULL */
+        /* Ok, we stay relaxed and don't signal an error if win is NULL */
 	T((T_CALLED("meta(%p,%d)"), win, flag));
 
 	SP->_use_meta = flag;
@@ -275,16 +229,16 @@ int typeahead(int fd)
 **
 */
 
-
+#ifdef NCURSES_EXT_FUNCS
 static int has_key_internal(int keycode, struct tries *tp)
 {
     if (tp == 0)
-        return(FALSE);
+	return(FALSE);
     else if (tp->value == keycode)
-        return(TRUE);
+	return(TRUE);
     else
-        return(has_key_internal(keycode, tp->child)
-               || has_key_internal(keycode, tp->sibling));
+	return(has_key_internal(keycode, tp->child)
+	       || has_key_internal(keycode, tp->sibling));
 }
 
 int has_key(int keycode)
@@ -292,6 +246,7 @@ int has_key(int keycode)
     T((T_CALLED("has_key(%d)"), keycode));
     returnCode(has_key_internal(keycode, SP->_keytry));
 }
+#endif /* NCURSES_EXT_FUNCS */
 
 /*
 **      init_keytry()
@@ -300,112 +255,25 @@ int has_key(int keycode)
 **
 */
 
-
-static struct  tries *newtry;
-
 static void init_keytry(void)
 {
-	newtry = 0;
-
 /* LINT_PREPRO
 #if 0*/
 #include <keys.tries>
 /* LINT_PREPRO
 #endif*/
+	size_t n;
 
-	SP->_keytry = newtry;
-}
+	/* The SP->_keytry value is initialized in newterm(), where the SP
+	 * structure is created, because we can not tell where keypad() or
+	 * mouse_activate() (which will call keyok()) are first called.
+	 */
 
-
-static void add_to_try(char *str, short code)
-{
-static bool     out_of_memory = FALSE;
-struct tries    *ptr, *savedptr;
-
-	if (! str  ||  out_of_memory)
-		return;
-
-	if (newtry != 0) {
-		ptr = savedptr = newtry;
-
-		for (;;) {
-			while (ptr->ch != (unsigned char) *str
-			       &&  ptr->sibling != 0)
-				ptr = ptr->sibling;
-	
-			if (ptr->ch == (unsigned char) *str) {
-				if (*(++str)) {
-					if (ptr->child != 0)
-						ptr = ptr->child;
-					else
-						break;
-				} else {
-					ptr->value = code;
-					return;
-				}
-			} else {
-				if ((ptr->sibling = typeCalloc(struct tries,1)) == 0) {
-					out_of_memory = TRUE;
-					return;
-				}
-
-				savedptr = ptr = ptr->sibling;
-				if (*str == '\200')
-					ptr->ch = '\0';
-				else
-					ptr->ch = (unsigned char) *str;
-				str++;
-				ptr->value = 0;
-
-				break;
-			}
-		} /* end for (;;) */
-	} else {   /* newtry == 0 :: First sequence to be added */
-		savedptr = ptr = newtry = typeCalloc(struct tries,1);
-
-		if (ptr == 0) {
-			out_of_memory = TRUE;
-				return;
-		}
-
-		if (*str == '\200')
-			ptr->ch = '\0';
-		else
-			ptr->ch = (unsigned char) *str;
-		str++;
-		ptr->value = 0;
-	}
-
-	    /* at this point, we are adding to the try.  ptr->child == 0 */
-
-	while (*str) {
-		ptr->child = typeCalloc(struct tries,1);
-
-		ptr = ptr->child;
-
-		if (ptr == 0) {
-			out_of_memory = TRUE;
-
-			ptr = savedptr;
-			while (ptr != 0) {
-				savedptr = ptr->child;
-				free(ptr);
-				ptr = savedptr;
-			}
-
-			return;
-		}
-
-		if (*str == '\200')
-			ptr->ch = '\0';
-		else
-			ptr->ch = (unsigned char) *str;
-		str++;
-		ptr->value = 0;
-	}
-
-	ptr->value = code;
-	return;
+	for (n = 0; n < SIZEOF(table); n++)
+		if (table[n].offset < STRCOUNT)
+		_nc_add_to_try(&(SP->_keytry),
+			CUR Strings[table[n].offset],
+			table[n].code);
 }
 
 /* Turn the keypad on/off
@@ -430,7 +298,9 @@ int _nc_keypad(bool flag)
 	    (void) fflush(SP->_ofp);
 	}
 
-	if (SP->_keytry == UNINITIALISED)
+	if (!SP->_tried) {
 	    init_keytry();
+	    SP->_tried = TRUE;
+	}
 	return(OK);
 }

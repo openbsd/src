@@ -1,0 +1,19 @@
+For discussion of the package internals, see hackguide.html in the misc
+directory.
+
+Here are some -D options you might need to compile with.
+The 'configure' script gets most other definitions right automatically.
+  
+-DHAVE_SIGACTION	if the sigaction function is present
+
+-DHAVE_USLEEP		if the usleep function is present
+
+-DSVR4_ACTION		if (e.g., svr4) you need _POSIX_SOURCE to have sigaction
+
+-DSVR4_TERMIO		if (e.g., svr4) you need _POSIX_SOURCE to have termio
+
+-DOPT_MVCUR		if you want mvcur() to cost its actions or you have a
+			terminal that doesn't have direct cursor addressing.
+
+There are several problems with strict POSIX systems so extra flags
+or #define's may be needed.

@@ -1,4 +1,33 @@
-.\" $OpenBSD: curs_kernel.3,v 1.5 1997/12/14 23:15:40 millert Exp $
+.\"***************************************************************************
+.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\"                                                                          *
+.\" Permission is hereby granted, free of charge, to any person obtaining a  *
+.\" copy of this software and associated documentation files (the            *
+.\" "Software"), to deal in the Software without restriction, including      *
+.\" without limitation the rights to use, copy, modify, merge, publish,      *
+.\" distribute, distribute with modifications, sublicense, and/or sell       *
+.\" copies of the Software, and to permit persons to whom the Software is    *
+.\" furnished to do so, subject to the following conditions:                 *
+.\"                                                                          *
+.\" The above copyright notice and this permission notice shall be included  *
+.\" in all copies or substantial portions of the Software.                   *
+.\"                                                                          *
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+.\" OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+.\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+.\" IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+.\" DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+.\" OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+.\" THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+.\"                                                                          *
+.\" Except as contained in this notice, the name(s) of the above copyright   *
+.\" holders shall not be used in advertising or otherwise to promote the     *
+.\" sale, use or other dealings in this Software without prior written       *
+.\" authorization.                                                           *
+.\"***************************************************************************
+.\"
+.\" $From: curs_kernel.3x,v 1.11 1998/06/27 21:56:38 tom Exp $
+.\" $OpenBSD: curs_kernel.3,v 1.6 1998/07/23 21:17:50 millert Exp $
 .TH curs_kernel 3 ""
 .SH NAME
 \fBdef_prog_mode\fR, \fBdef_shell_mode\fR,
@@ -103,7 +132,7 @@ requested \fIvisibility\fR is not supported.
 Note that \fBgetsyx\fR is a macro, so \fB&\fR is not necessary before
 the variables \fIy\fR and \fIx\fR.
 
-The SVr4 man pages warn that the return value of \fBcurs_set\fR "is currently
+Older SVr4 man pages warn that the return value of \fBcurs_set\fR "is currently
 incorrect".  This implementation gets it right, but it may be unwise to count
 on the correctness of the return value anywhere else.
 .SH PORTABILITY

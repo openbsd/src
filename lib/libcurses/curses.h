@@ -1,36 +1,45 @@
-/*	$OpenBSD: curses.h,v 1.7 1998/01/17 16:27:31 millert Exp $	*/
+/*	$OpenBSD: curses.h,v 1.8 1998/07/23 21:18:11 millert Exp $	*/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/* Id: curses.h.in,v 1.59 1997/11/15 22:02:42 tom Exp $ */
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
+
+/* $From: curses.h.in,v 1.67 1998/07/11 20:17:07 dnelson Exp $ */
 
 #ifndef __NCURSES_H
 #define __NCURSES_H
 
 #define CURSES 1
 #define CURSES_H 1
-
-#ifdef __OpenBSD__
-#define	EXTERN_TERMINFO
-#endif
 
 /* This should be defined for the enhanced functionality to be visible.
  * However, none of the wide-character (enhanced) functionality is implemented.
@@ -40,12 +49,12 @@
 
 /* These are defined only in curses.h, and are used for conditional compiles */
 #define NCURSES_VERSION_MAJOR 4
-#define NCURSES_VERSION_MINOR 1
-#define NCURSES_VERSION_PATCH 980103
+#define NCURSES_VERSION_MINOR 2
+#define NCURSES_VERSION_PATCH 980718
 
 /* This is defined in more than one ncurses header, for identification */
 #undef  NCURSES_VERSION
-#define NCURSES_VERSION "4.1"
+#define NCURSES_VERSION "4.2"
 
 #ifdef NCURSES_NOMACROS
 #define NCURSES_ATTR_T attr_t
@@ -56,17 +65,10 @@
 #endif
 
 #ifndef NCURSES_CONST
-#define NCURSES_CONST /* nothing */
+#define NCURSES_CONST 
 #endif
 
-#ifdef EXTERN_TERMINFO
-#ifndef _CHTYPE_T_
-#define _CHTYPE_T_	unsigned long
-typedef _CHTYPE_T_	chtype;
-#endif
-#else
 typedef unsigned long chtype;
-#endif
 
 #include <stdio.h>
 #include <unctrl.h>
@@ -319,7 +321,6 @@ extern int	TABSIZE;
  */
 extern int ESCDELAY;	/* ESC expire time in milliseconds */
 
-/* non-XSI extensions (dickey@clark.net) */
 extern int define_key (char *, int);
 extern int keyok (int, bool);
 extern int resizeterm (int, int);
@@ -384,25 +385,25 @@ extern int add_wchstr(const cchar_t *);			/* missing */
 extern int attroff(NCURSES_ATTR_T);			/* generated */
 extern int attron(NCURSES_ATTR_T);			/* generated */
 extern int attrset(NCURSES_ATTR_T);			/* generated */
-extern int attr_get(void);				/* generated */
-extern int attr_off(NCURSES_ATTR_T);			/* generated */
-extern int attr_on(NCURSES_ATTR_T);			/* generated */
-extern int attr_set(NCURSES_ATTR_T);			/* generated */
+extern int attr_get(attr_t *, short *, void *);		/* generated */
+extern int attr_off(attr_t, void *);			/* generated */
+extern int attr_on(attr_t, void *);			/* generated */
+extern int attr_set(attr_t, short, void *);		/* generated */
 extern int baudrate(void);				/* implemented */
 extern int beep(void);					/* implemented */
 extern int bkgd(chtype);				/* generated */
 extern void bkgdset(chtype);				/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int bkgrndset(const cchar_t *);			/* missing */
+extern void bkgrndset(const cchar_t *);			/* missing */
 extern int bkgrnd(const cchar_t *);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int border(chtype,chtype,chtype,chtype,chtype,chtype,chtype,chtype);	/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int border_set(cchar_t,cchar_t,cchar_t,cchar_t,cchar_t,cchar_t,cchar_t,cchar_t);	/* missing */
+extern int border_set(cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int box(WINDOW *, chtype, chtype);		/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int box_set(WINDOW *, cchar_t, cchar_t);		/* missing */
+extern int box_set(WINDOW *, const cchar_t *, const cchar_t *);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern bool can_change_color(void);			/* implemented */
 extern int cbreak(void);				/* implemented */
@@ -412,7 +413,7 @@ extern int clearok(WINDOW *,bool);			/* implemented */
 extern int clrtobot(void);				/* generated */
 extern int clrtoeol(void);				/* generated */
 extern int color_content(short,short*,short*,short*);	/* implemented */
-extern int color_set(short,void*);			/* missing */
+extern int color_set(short,void*);			/* generated */
 extern int COLOR_PAIR(int);				/* generated */
 extern int copywin(const WINDOW*,WINDOW*,int,int,int,int,int,int,int);	/* implemented */
 extern int curs_set(int);				/* implemented */
@@ -460,8 +461,8 @@ extern int get_wstr(wint_t *);				/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int halfdelay(int);				/* implemented */
 extern bool has_colors(void);				/* implemented */
-extern int has_ic(void);				/* implemented */
-extern int has_il(void);				/* implemented */
+extern bool has_ic(void);				/* implemented */
+extern bool has_il(void);				/* implemented */
 extern int hline(chtype, int);				/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int hline_set(const cchar_t *, int);		/* missing */
@@ -493,16 +494,16 @@ extern int ins_wstr(const wchar_t *);			/* missing */
 extern int intrflush(WINDOW *,bool);			/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int inwstr(wchar_t *);				/* missing */
-extern int in_wch(const cchar_t *);			/* missing */
-extern int in_wchstr(const cchar_t *);			/* missing */
-extern int in_wchntr(const cchar_t *, int);		/* missing */
+extern int in_wch(NCURSES_CONST cchar_t *);		/* missing */
+extern int in_wchstr(NCURSES_CONST cchar_t *);		/* missing */
+extern int in_wchntr(NCURSES_CONST cchar_t *, int);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern int isendwin(void);				/* implemented */
-extern int is_linetouched(WINDOW *,int);		/* implemented */
-extern int is_wintouched(WINDOW *);			/* implemented */
-extern const char *keyname(int);			/* implemented */
+extern bool isendwin(void);				/* implemented */
+extern bool is_linetouched(WINDOW *,int);		/* implemented */
+extern bool is_wintouched(WINDOW *);			/* implemented */
+extern NCURSES_CONST char *keyname(int);		/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int key_name(wchar_t *);				/* missing */
+extern char *key_name(wchar_t);				/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int keypad(WINDOW *,bool);			/* implemented */
 extern char killchar(void);				/* implemented */
@@ -561,13 +562,13 @@ extern int mvins_nwstr(int, int, const wchar_t *, int);	/* missing */
 extern int mvins_wch(int, int, const cchar_t *);	/* missing */
 extern int mvins_wstr(int, int, const wchar_t *);	/* missing */
 extern int mvinwstr(int, int, wchar_t *);		/* missing */
-extern int mvin_wch(int, int, const cchar_t *);		/* missing */
-extern int mvin_wchstr(int, int, const cchar_t *);	/* missing */
-extern int mvin_wchntr(int, int, const cchar_t *, int);	/* missing */
+extern int mvin_wch(int, int, NCURSES_CONST cchar_t *);	/* missing */
+extern int mvin_wchstr(int, int, NCURSES_CONST cchar_t *);	/* missing */
+extern int mvin_wchntr(int, int, NCURSES_CONST cchar_t *, int);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern int mvprintw(int,int,const char *,...)		/* implemented */
+extern int mvprintw(int,int, NCURSES_CONST char *,...)	/* implemented */
 		GCC_PRINTFLIKE(3,4);
-extern int mvscanw(int,int,const char *,...)		/* implemented */
+extern int mvscanw(int,int, NCURSES_CONST char *,...)	/* implemented */
 		GCC_SCANFLIKE(3,4);
 extern int mvvline(int, int, chtype, int);		/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
@@ -620,13 +621,13 @@ extern int mvwins_nwstr(WINDOW *, int,int, const wchar_t *,int); /* missing */
 extern int mvwins_wch(WINDOW *, int, int, const cchar_t *);	/* missing */
 extern int mvwins_wstr(WINDOW *, int, int, const wchar_t *);	/* missing */
 extern int mvwinwstr(WINDOW *, int, int, wchar_t *);		/* missing */
-extern int mvwin_wch(WINDOW *, int, int, const cchar_t *);	/* missing */
-extern int mvwin_wchnstr(WINDOW *, int,int,const cchar_t *,int); /* missing */
-extern int mvwin_wchstr(WINDOW *, int, int, const cchar_t *);	/* missing */
+extern int mvwin_wch(WINDOW *, int, int, NCURSES_CONST cchar_t *);	/* missing */
+extern int mvwin_wchnstr(WINDOW *, int,int, NCURSES_CONST cchar_t *,int); /* missing */
+extern int mvwin_wchstr(WINDOW *, int, int, NCURSES_CONST cchar_t *);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern int mvwprintw(WINDOW*,int,int,const char *,...)	/* implemented */
+extern int mvwprintw(WINDOW*,int,int, NCURSES_CONST char *,...)	/* implemented */
 		GCC_PRINTFLIKE(4,5);
-extern int mvwscanw(WINDOW *,int,int,const char *,...)	/* implemented */
+extern int mvwscanw(WINDOW *,int,int, NCURSES_CONST char *,...)	/* implemented */
 		GCC_SCANFLIKE(4,5);
 extern int mvwvline(WINDOW *,int, int, chtype, int);	/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
@@ -634,14 +635,14 @@ extern int mvwvline_set(WINDOW *, int,int, const cchar_t *,int); /* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int napms(int);					/* implemented */
 extern WINDOW *newpad(int,int);				/* implemented */
-extern SCREEN *newterm(const char *,FILE *,FILE *);	/* implemented */
+extern SCREEN *newterm(NCURSES_CONST char *,FILE *,FILE *);	/* implemented */
 extern WINDOW *newwin(int,int,int,int);			/* implemented */
 extern int nl(void);					/* implemented */
 extern int nocbreak(void);				/* implemented */
 extern int nodelay(WINDOW *,bool);			/* implemented */
 extern int noecho(void);				/* implemented */
 extern int nonl(void);					/* implemented */
-extern int noqiflush(void);				/* implemented */
+extern void noqiflush(void);				/* implemented */
 extern int noraw(void);					/* implemented */
 extern int notimeout(WINDOW *,bool);			/* implemented */
 extern int overlay(const WINDOW*,WINDOW *);		/* implemented */
@@ -654,13 +655,11 @@ extern int pecho_wchar(WINDOW *, const cchar_t *);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int pnoutrefresh(WINDOW*,int,int,int,int,int,int);/* implemented */
 extern int prefresh(WINDOW *,int,int,int,int,int,int);	/* implemented */
-extern int printw(const char *,...)			/* implemented */
+extern int printw(NCURSES_CONST char *,...)		/* implemented */
 		GCC_PRINTFLIKE(1,2);
-#ifndef EXTERN_TERMINFO
 extern int putp(const char *);				/* implemented */
-#endif
 extern int putwin(WINDOW *, FILE *);			/* implemented */
-extern int qiflush(void);				/* implemented */
+extern void qiflush(void);				/* implemented */
 extern int raw(void);					/* implemented */
 extern int redrawwin(WINDOW *);				/* generated */
 extern int refresh(void);				/* generated */
@@ -669,7 +668,7 @@ extern int reset_prog_mode(void);			/* implemented */
 extern int reset_shell_mode(void);			/* implemented */
 extern int ripoffline(int, int (*init)(WINDOW *, int));	/* implemented */
 extern int savetty(void);				/* implemented */
-extern int scanw(const char *,...)			/* implemented */
+extern int scanw(NCURSES_CONST char *,...)		/* implemented */
 		GCC_SCANFLIKE(1,2);
 extern int scr_dump(const char *);			/* implemented */
 extern int scr_init(const char *);			/* implemented */
@@ -679,18 +678,19 @@ extern int scrollok(WINDOW *,bool);			/* implemented */
 extern int scr_restore(const char *);			/* implemented */
 extern int scr_set(const char *);			/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int setcchar(cchar_t *, wchar_t *, attr_t, short, const void *);	/* missing */
+extern int setcchar(cchar_t *, const wchar_t *, const attr_t, short, const void *);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int setscrreg(int,int);				/* generated */
 extern SCREEN *set_term(SCREEN *);			/* implemented */
-extern int slk_attroff(const attr_t);			/* implemented */
-extern int slk_attr_off(attr_t);			/* generated:WIDEC */
-extern int slk_attron(const attr_t);			/* implemented */
-extern int slk_attr_on(attr_t);				/* generated:WIDEC */
-extern int slk_attrset(const attr_t);			/* implemented */
-extern attr_t slk_attr(void);                           /* implemented */
-extern int slk_attr_set(attr_t);			/* generated:WIDEC */
+extern int slk_attroff(const chtype);			/* implemented */
+extern int slk_attr_off(const attr_t, void *);		/* generated:WIDEC */
+extern int slk_attron(const chtype);			/* implemented */
+extern int slk_attr_on(attr_t,void*);			/* generated:WIDEC */
+extern int slk_attrset(const chtype);			/* implemented */
+extern attr_t slk_attr(void);				/* implemented */
+extern int slk_attr_set(const attr_t,short,void*);	/* implemented */
 extern int slk_clear(void);				/* implemented */
+extern int slk_color(short);				/* implemented */
 extern int slk_init(int);				/* implemented */
 extern char *slk_label(int);				/* implemented */
 extern int slk_noutrefresh(void);			/* implemented */
@@ -699,7 +699,7 @@ extern int slk_restore(void);				/* implemented */
 extern int slk_set(int,const char *,int);		/* implemented */
 extern int slk_touch(void);				/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int slk_wset(int, wchar_t *, int);		/* missing */
+extern int slk_wset(int, const wchar_t *, int);		/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int standout(void);				/* generated */
 extern int standend(void);				/* generated */
@@ -710,33 +710,31 @@ extern int syncok(WINDOW *, bool);			/* implemented */
 extern chtype termattrs(void);				/* implemented */
 extern attr_t term_attrs(void);				/* missing */
 extern char *termname(void);				/* implemented */
-extern int tigetflag(const char *);			/* implemented */
-extern int tigetnum(const char *);			/* implemented */
-extern char *tigetstr(const char *);			/* implemented */
-extern int timeout(int);				/* generated */
+extern int tigetflag(NCURSES_CONST char *);		/* implemented */
+extern int tigetnum(NCURSES_CONST char *);		/* implemented */
+extern char *tigetstr(NCURSES_CONST char *);		/* implemented */
+extern void timeout(int);				/* generated */
 extern int typeahead(int);				/* implemented */
 extern int ungetch(int);				/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int unget_wch(const wchar_t *);			/* missing */
+extern int unget_wch(const wchar_t);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int untouchwin(WINDOW *);			/* generated */
-#ifndef EXTERN_TERMINFO
 extern void use_env(bool);				/* implemented */
 extern int vidattr(chtype);				/* implemented */
-#endif
-extern int vid_attr(attr_t);				/* generated:WIDEC */
+extern int vid_attr(attr_t, short, void *);		/* generated:WIDEC */
 extern int vidputs(chtype, int (*)(int));		/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int vid_puts(attr_t, int (*)(int));		/* missing */
+extern int vid_puts(attr_t, short, void *, int (*)(int)); /* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int vline(chtype, int);				/* generated */
 #ifdef _XOPEN_SOURCE_EXTENDED
 extern int vline_set(const cchar_t *, int);		/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
-extern int vwprintw(WINDOW *,const char *,va_list);	/* implemented */
-extern int vw_printw(WINDOW *,const char *,va_list);	/* generated */
-extern int vwscanw(WINDOW *,const char *,va_list);	/* implemented */
-extern int vw_scanw(WINDOW *,const char *,va_list);	/* generated */
+extern int vwprintw(WINDOW *, NCURSES_CONST char *,va_list);	/* implemented */
+extern int vw_printw(WINDOW *, NCURSES_CONST char *,va_list);	/* generated */
+extern int vwscanw(WINDOW *, NCURSES_CONST char *,va_list);	/* implemented */
+extern int vw_scanw(WINDOW *, NCURSES_CONST char *,va_list);	/* generated */
 extern int waddch(WINDOW *, const chtype);		/* implemented */
 extern int waddchnstr(WINDOW *,const chtype *const,int); /* implemented */
 extern int waddchstr(WINDOW *,const chtype *);		/* generated */
@@ -751,25 +749,25 @@ extern int wadd_wchstr(WINDOW *,const cchar_t *);	/* missing */
 extern int wattron(WINDOW *, int);			/* generated */
 extern int wattroff(WINDOW *, int);			/* generated */
 extern int wattrset(WINDOW *, int);			/* generated */
-extern attr_t wattr_get(WINDOW *);			/* generated */
-extern int wattr_on(WINDOW *, const attr_t);		/* implemented */
-extern int wattr_off(WINDOW *, const attr_t);		/* implemented */
-extern int wattr_set(WINDOW *, attr_t);			/* generated */
+extern int wattr_get(WINDOW *, attr_t *, short *, void *);	/* generated */
+extern int wattr_on(WINDOW *, NCURSES_CONST attr_t, void *);	/* implemented */
+extern int wattr_off(WINDOW *, NCURSES_CONST attr_t, void *);	/* implemented */
+extern int wattr_set(WINDOW *, attr_t, short, void *);		/* generated */
 extern int wbkgd(WINDOW *,const chtype);		/* implemented */
 extern void wbkgdset(WINDOW *,chtype);			/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int wbkgrndset(WINDOW *,const cchar_t *);	/* missing */
+extern void wbkgrndset(WINDOW *,const cchar_t *);	/* missing */
 extern int wbkgrnd(WINDOW *,const cchar_t *);		/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int wborder(WINDOW *,chtype,chtype,chtype,chtype,chtype,chtype,chtype,chtype);	/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern int wborder_set(WINDOW *,cchar_t,cchar_t,cchar_t,cchar_t,cchar_t,cchar_t,cchar_t,cchar_t);	/* missing */
+extern int wborder_set(WINDOW *,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*,cchar_t*);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int wchgat(WINDOW *, int, attr_t, short, const void *);/* implemented */
 extern int wclear(WINDOW *);				/* implemented */
 extern int wclrtobot(WINDOW *);				/* implemented */
 extern int wclrtoeol(WINDOW *);				/* implemented */
-extern int wcolor_set(WINDOW*,short,void*);		/* missing */
+extern int wcolor_set(WINDOW*,short,void*);		/* implemented */
 extern void wcursyncup(WINDOW *);			/* implemented */
 extern int wdelch(WINDOW *);				/* implemented */
 extern int wdeleteln(WINDOW *);				/* generated */
@@ -813,17 +811,17 @@ extern int wins_nwstr(WINDOW *, const wchar_t *, int);	/* missing */
 extern int wins_wch(WINDOW *, const cchar_t *);		/* missing */
 extern int wins_wstr(WINDOW *, const wchar_t *);	/* missing */
 extern int winwstr(WINDOW *, wchar_t *);		/* missing */
-extern int win_wch(WINDOW *, const cchar_t *);		/* missing */
-extern int win_wchnstr(WINDOW *, const cchar_t *, int);	/* missing */
-extern int win_wchstr(WINDOW *, const cchar_t *);	/* missing */
+extern int win_wch(WINDOW *, NCURSES_CONST cchar_t *);	/* missing */
+extern int win_wchnstr(WINDOW *, NCURSES_CONST cchar_t *, int);	/* missing */
+extern int win_wchstr(WINDOW *, NCURSES_CONST cchar_t *);	/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int wmove(WINDOW *,int,int);			/* implemented */
 extern int wnoutrefresh(WINDOW *);			/* implemented */
-extern int wprintw(WINDOW *,const char *,...)		/* implemented */
+extern int wprintw(WINDOW *, NCURSES_CONST char *,...)	/* implemented */
 		GCC_PRINTFLIKE(2,3);
 extern int wredrawln(WINDOW *,int,int);			/* implemented */
 extern int wrefresh(WINDOW *);				/* implemented */
-extern int wscanw(WINDOW *,const char *,...)		/* implemented */
+extern int wscanw(WINDOW *, NCURSES_CONST char *,...)	/* implemented */
 		GCC_SCANFLIKE(2,3);
 extern int wscrl(WINDOW *,int);				/* implemented */
 extern int wsetscrreg(WINDOW *,int,int);		/* implemented */
@@ -831,10 +829,10 @@ extern int wstandout(WINDOW *);				/* generated */
 extern int wstandend(WINDOW *);				/* generated */
 extern void wsyncdown(WINDOW *);			/* implemented */
 extern void wsyncup(WINDOW *);				/* implemented */
-extern int wtimeout(WINDOW *,int);			/* implemented */
+extern void wtimeout(WINDOW *,int);			/* implemented */
 extern int wtouchln(WINDOW *,int,int,int);		/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
-extern wchar_t wunctrl(cchar_t *);			/* missing */
+extern wchar_t *wunctrl(cchar_t *);			/* missing */
 #endif /* _XOPEN_SOURCE_EXTENDED */
 extern int wvline(WINDOW *,chtype,int);			/* implemented */
 #ifdef _XOPEN_SOURCE_EXTENDED
@@ -901,8 +899,12 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define getbegyx(win,y,x)	(y = (win)?(win)->_begy:ERR, x = (win)?(win)->_begx:ERR)
 #define getmaxyx(win,y,x)	(y = (win)?((win)->_maxy + 1):ERR, x = (win)?((win)->_maxx + 1):ERR)
 #define getparyx(win,y,x)	(y = (win)?(win)->_pary:ERR, x = (win)?(win)->_parx:ERR)
-#define getsyx(y,x)		getyx(stdscr, y, x)
-#define setsyx(y,x)		(stdscr->_cury = y, stdscr->_curx = x)
+#define getsyx(y,x) do { if(newscr->_leaveok) (y)=(x)=-1; \
+			 else getyx(newscr,(y),(x)); \
+		    } while(0)
+#define setsyx(y,x) do { if((y)==-1 && (x)==-1) newscr->_leaveok=TRUE; \
+			 else {newscr->_leaveok=FALSE;wmove(newscr,(y),(x));} \
+		    } while(0)
 
 /* It seems older SYSV curses versions define these */
 #define getattrs(win)		((win)?(win)->_attrs:A_NORMAL)
@@ -916,13 +918,13 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define getpary(win)		((win)?(win)->_pary:ERR)
 
 #define winch(win)       	((win)?(win)->_line[(win)->_cury].text[(win)->_curx]:0)
-#define wstandout(win)      	(wattr_set(win,A_STANDOUT))
-#define wstandend(win)      	(wattr_set(win,A_NORMAL))
-#define wattr_set(win,at)    	((win)?((win)->_attrs = (at)):0)
+#define wstandout(win)      	(wattrset(win,A_STANDOUT))
+#define wstandend(win)      	(wattrset(win,A_NORMAL))
+#define wattr_set(win,a,p,opts) ((win)->_attrs = (((a) & ~A_COLOR) | COLOR_PAIR(p)), OK)
 
-#define wattron(win,at)		wattr_on(win, at)
-#define wattroff(win,at)	wattr_off(win, at)
-#define wattrset(win,at)    	wattr_set(win, at)
+#define wattron(win,at)		wattr_on(win, at, (void *)0)
+#define wattroff(win,at)	wattr_off(win, at, (void *)0)
+#define wattrset(win,at)    	((win)->_attrs = (at))
 
 #define scroll(win)		wscrl(win,1)
 
@@ -960,6 +962,7 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define clear()        		wclear(stdscr)
 #define clrtobot()     		wclrtobot(stdscr)
 #define clrtoeol()     		wclrtoeol(stdscr)
+#define color_set(c,o)		wcolor_set(stdscr,c,o)
 #define delch()        		wdelch(stdscr)
 #define deleteln()     		winsdelln(stdscr,-1)
 #define echochar(c)		wechochar(stdscr,c)
@@ -1041,10 +1044,10 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define add_wch(c)			wadd_wch(stsdscr,c)
 #define addnwstr(wstr,n)		waddnwstr(stdscr,wstr,n)
 #define addwstr(wstr,n)			waddnwstr(stdscr,wstr,-1)
-#define attr_get()			wattr_get(stdscr)
-#define attr_off(a)			wattr_off(stdscr,a)
-#define attr_on(a)			wattr_on(stdscr,a)
-#define attr_set(a)			wattr_set(stdscr,a)
+#define attr_get(a,pair,opts)		wattr_get(stdscr,a,pair,opts)
+#define attr_off(a,opts)		wattr_off(stdscr,a,opts)
+#define attr_on(a,opts)			wattr_on(stdscr,a,opts)
+#define attr_set(a,pair,opts)		wattr_set(stdscr,a,pair,opts)
 #define box_set(w,v,h)			wborder_set(w,v,v,h,h,0,0,0,9)
 #define chgat(n,a,c,o)			wchgat(stdscr,n,a,c,o)
 #define echo_wchar(c)			wecho_wchar(stdscr,c)
@@ -1098,13 +1101,15 @@ extern int wvline_set(WINDOW *, const cchar_t *, int);	/* missing */
 #define mvwinwstr(win,y,x,c)		(wmove(win,y,x) == ERR ? ERR : winnwstr(stdscr,c,-1))
 #define mvwvline_set(win,y,x,c,n)	(wmove(win,y,x) == ERR ? ERR : wvline_set(win,c,n))
 
-#define slk_attr_off(a)			slk_attroff(a)
-#define slk_attr_on(a)			slk_attron(a)
-#define slk_attr_set(a)			slk_attrset(a)
-#define vid_attr(a)			vidattr(a)
+#define slk_attr_off(a,v)		((v) ? ERR : slk_attroff(a))
+#define slk_attr_on(a,v)		((v) ? ERR : slk_attron(a))
+
+#define vid_attr(a,pair,opts)		vidattr(a)
 #define vline_set(c,n)			vhline_set(stdscr,c,n)
 #define waddwstr(win,wstr,n)		waddnwstr(win,wstr,-1)
-#define wattr_get(win)			((win)->_attrs)
+#define wattr_get(win,a,p,opts)		((void)((a) != 0 && (*(a) = (win)->_attrs)), \
+					 (void)((p) != 0 && (*(p) = PAIR_NUMBER((win)->_attrs))), \
+					 OK)
 #define wget_wstr(w,t)			wgetn_wstr(w,t,-1)
 #define win_wchstr(w,c)			win_wchnstr(w,c,-1)
 #define wins_wstr(w,t)			wins_nwstr(w,t,-1)

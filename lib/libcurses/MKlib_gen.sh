@@ -2,7 +2,8 @@
 #
 # MKlib_gen.sh -- generate sources from curses.h macro definitions
 #
-# (Id: MKlib_gen.sh,v 1.10 1997/07/26 22:12:20 tom Exp $)
+# $OpenBSD: MKlib_gen.sh,v 1.4 1998/07/23 21:17:22 millert Exp $
+# ($From: MKlib_gen.sh,v 1.11 1998/01/17 14:16:52 Juan.Jose.Garcia.Ripoll Exp $)
 #
 # The XSI Curses standard requires all curses entry points to exist as
 # functions, even though many definitions would normally be shadowed
@@ -31,8 +32,9 @@ AWK="$2"
 ED1=sed1$$.sed
 ED2=sed2$$.sed
 ED3=sed3$$.sed
+AW1=awk1$$.awk
 TMP=gen$$.c
-trap "rm -f $ED1 $ED2 $ED3 $TMP" 0 1 2 5 15
+trap "rm -f $ED1 $ED2 $ED3 $AW1 $TMP" 0 1 2 5 15
 
 (cat <<EOF
 #include <ncurses_cfg.h>
@@ -94,8 +96,7 @@ cat >$ED3 <<EOF3
 :done
 EOF3
 
-sed -n -f $ED1 | sed -f $ED2 \
-| $AWK '
+cat >$AW1 <<\EOF1
 BEGIN	{
 		skip=0;
 	}
@@ -219,7 +220,10 @@ BEGIN	{
 		print "%%returnVoid;"
 	print "}";
 }
-' ) \
+EOF1
+
+sed -n -f $ED1 | sed -f $ED2 \
+| $AWK -f $AW1 ) \
 | sed \
 	-e '/^\([a-z_][a-z_]*\) /s//\1 gen_/' >$TMP
   $preprocessor $TMP 2>/dev/null \

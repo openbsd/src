@@ -1,25 +1,37 @@
-/*	$OpenBSD: lib_clreol.c,v 1.3 1997/12/03 05:21:14 millert Exp $	*/
+/*	$OpenBSD: lib_clreol.c,v 1.4 1998/07/23 21:18:35 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 
 /*
@@ -31,54 +43,51 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_clreol.c,v 1.13 1997/09/20 15:02:34 juergen Exp $")
+MODULE_ID("$From: lib_clreol.c,v 1.15 1998/06/28 00:32:20 tom Exp $")
 
 int  wclrtoeol(WINDOW *win)
 {
 int     code = ERR;
-chtype	blank;
-chtype	*ptr, *end;
-short	y, x;
 
 	T((T_CALLED("wclrtoeol(%p)"), win));
 
 	if (win) {
+		chtype	blank;
+		chtype	*ptr, *end;
+		struct ldat *line;
+		short y = win->_cury;
+		short x = win->_curx;
 
-	  y = win->_cury;
-	  x = win->_curx;
+		/*
+		 * If we have just wrapped the cursor, the clear applies to the
+		 * new line, unless we are at the lower right corner.
+		 */
+		if (win->_flags & _WRAPPED
+		 && y < win->_maxy) {
+			win->_flags &= ~_WRAPPED;
+		}
 
-	  /*
-	   * If we have just wrapped the cursor, the clear applies to the new
-	   * line, unless we are at the lower right corner.
-	   */
-	  if (win->_flags & _WRAPPED
-	      && y < win->_maxy) {
-	    win->_flags &= ~_WRAPPED;
-	  }
-	  
-	  /*
-	   * There's no point in clearing if we're not on a legal position,
-	   * either.
-	   */
-	  if (win->_flags & _WRAPPED
-	      || y > win->_maxy
-	      || x > win->_maxx)
-	    returnCode(ERR);
-	  
-	  blank = _nc_background(win);
-	  end = &win->_line[y].text[win->_maxx];
-	  
-	  for (ptr = &win->_line[y].text[x]; ptr <= end; ptr++)
-	    *ptr = blank;
-	  
-	  if (win->_line[y].firstchar > win->_curx
-	      || win->_line[y].firstchar == _NOCHANGE)
-	    win->_line[y].firstchar = win->_curx;
-	  
-	  win->_line[y].lastchar = win->_maxx;
-	  
-	  _nc_synchook(win);
-	  code = OK;
+		/*
+		 * There's no point in clearing if we're not on a legal
+		 * position, either.
+		 */
+		if (win->_flags & _WRAPPED
+		 || y > win->_maxy
+		 || x > win->_maxx)
+			returnCode(ERR);
+
+		blank = _nc_background(win);
+		line = &win->_line[y];
+		CHANGED_TO_EOL(line, x, win->_maxx);
+
+		ptr = &(line->text[x]);
+		end = &(line->text[win->_maxx]);
+
+		while (ptr <= end)
+			*ptr++ = blank;
+
+		_nc_synchook(win);
+		code = OK;
 	}
 	returnCode(code);
 }

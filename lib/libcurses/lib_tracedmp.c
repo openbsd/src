@@ -1,38 +1,47 @@
-/*	$OpenBSD: lib_tracedmp.c,v 1.2 1997/12/03 05:21:37 millert Exp $	*/
+/*	$OpenBSD: lib_tracedmp.c,v 1.3 1998/07/23 21:19:42 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 /*
  *	lib_tracedmp.c - Tracing/Debugging routines
  */
 
-#ifndef TRACE
-#define TRACE			/* turn on internal defs for this module */
-#endif
-
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_tracedmp.c,v 1.9 1997/01/15 00:39:27 tom Exp $")
+MODULE_ID("$From: lib_tracedmp.c,v 1.13 1998/03/21 18:39:44 tom Exp $")
 
+#ifdef TRACE
 void _tracedump(const char *name, WINDOW *win)
 {
     int	i, j, n, width;
@@ -69,7 +78,7 @@ void _tracedump(const char *name, WINDOW *win)
 	}
 	ep[j] = '\'';
 	ep[j+1] = '\0';
-	_tracef(buf);
+	_tracef("%s", buf);
 
 	/* dump A_COLOR part, will screw up if there are more than 96 */
 	havecolors = FALSE;
@@ -87,7 +96,7 @@ void _tracedump(const char *name, WINDOW *win)
 		ep[j] = ((win->_line[n].text[j] >> 8) & 0xff) + ' ';
 	    ep[j] = '\'';
 	    ep[j+1] = '\0';
-	    _tracef(buf);
+	    _tracef("%s", buf);
 	}
 
 	for (i = 0; i < 4; i++)
@@ -110,8 +119,12 @@ void _tracedump(const char *name, WINDOW *win)
 		    ep[j] = hex[(win->_line[n].text[j] & mask) >> ((i + 4) * 4)];
 		ep[j] = '\'';
 		ep[j+1] = '\0';
-		_tracef(buf);
+		_tracef("%s", buf);
 	    }
 	}
     }
 }
+#else
+extern	void _nc_lib_tracedmp(void);
+	void _nc_lib_tracedmp(void) { }
+#endif /* TRACE */

@@ -1,25 +1,37 @@
-/*	$OpenBSD: lib_addstr.c,v 1.3 1997/12/03 05:21:11 millert Exp $	*/
+/*	$OpenBSD: lib_addstr.c,v 1.4 1998/07/23 21:18:26 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 /*
 **	lib_addstr.c
@@ -30,7 +42,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_addstr.c,v 1.13 1997/09/20 15:02:34 juergen Exp $")
+MODULE_ID("$From: lib_addstr.c,v 1.16 1998/06/28 00:38:29 tom Exp $")
 
 int
 waddnstr(WINDOW *win, const char *const astr, int n)
@@ -66,11 +78,12 @@ waddchnstr(WINDOW *win, const chtype *const astr, int n)
 short y = win->_cury;
 short x = win->_curx;
 int code = OK;
+struct ldat *line;
 
 	T((T_CALLED("waddchnstr(%p,%p,%d)"), win, astr, n));
 
 	if (!win)
-	  returnCode(ERR);
+		returnCode(ERR);
 
 	if (n < 0) {
 		const chtype *str;
@@ -83,20 +96,9 @@ int code = OK;
 	if (n == 0)
 		returnCode(code);
 
-	if (win->_line[y].firstchar == _NOCHANGE)
-	{
-		win->_line[y].firstchar = x;
-		win->_line[y].lastchar = x+n-1;
-	}
-	else
-	{
-		if (x < win->_line[y].firstchar)
-			win->_line[y].firstchar = x;
-		if (x+n-1 > win->_line[y].lastchar)
-			win->_line[y].lastchar = x+n-1;
-	}
-	
-	memcpy(win->_line[y].text+x, astr, n*sizeof(*astr));
+	line = &(win->_line[y]);
+	memcpy(line->text+x, astr, n*sizeof(*astr));
+	CHANGED_RANGE(line, x, x+n-1);
 
 	_nc_synchook(win);
 	returnCode(code);

@@ -1,25 +1,37 @@
-/*	$OpenBSD: lib_delch.c,v 1.3 1997/12/03 05:21:15 millert Exp $	*/
+/*	$OpenBSD: lib_delch.c,v 1.4 1998/07/23 21:18:38 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 /*
 **	lib_delch.c
@@ -30,35 +42,29 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_delch.c,v 1.6 1997/09/20 15:02:34 juergen Exp $")
+MODULE_ID("$From: lib_delch.c,v 1.8 1998/06/28 00:28:17 tom Exp $")
 
 int wdelch(WINDOW *win)
 {
 int     code = ERR;
-chtype	*temp1, *temp2;
-chtype	*end;
-chtype	blank = _nc_background(win);
 
 	T((T_CALLED("wdelch(%p)"), win));
 
 	if (win) {
-	  end = &win->_line[win->_cury].text[win->_maxx];
-	  temp2 = &win->_line[win->_cury].text[win->_curx + 1];
-	  temp1 = temp2 - 1;
-	  
-	  while (temp1 < end)
-	    *temp1++ = *temp2++;
-	  
-	  *temp1 = blank;
-	  
-	  win->_line[win->_cury].lastchar = win->_maxx;
-	  
-	  if (win->_line[win->_cury].firstchar == _NOCHANGE
-	      || win->_line[win->_cury].firstchar > win->_curx)
-	    win->_line[win->_cury].firstchar = win->_curx;
-	  
-	  _nc_synchook(win);
-	  code = OK;
+		chtype	blank = _nc_background(win);
+		struct ldat *line = &(win->_line[win->_cury]);
+		chtype *end   = &(line->text[win->_maxx]);
+		chtype *temp2 = &(line->text[win->_curx + 1]);
+		chtype *temp1 = temp2 - 1;
+
+		CHANGED_TO_EOL(line, win->_curx, win->_maxx);
+		while (temp1 < end)
+			*temp1++ = *temp2++;
+
+		*temp1 = blank;
+
+		_nc_synchook(win);
+		code = OK;
 	}
 	returnCode(code);
 }

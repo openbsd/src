@@ -1,25 +1,37 @@
-/*	$OpenBSD: lib_set_term.c,v 1.5 1998/01/17 16:27:36 millert Exp $	*/
+/*	$OpenBSD: lib_set_term.c,v 1.6 1998/07/23 21:19:22 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 
 
@@ -34,13 +46,13 @@
 
 #include <term.h>	/* cur_term */
 
-MODULE_ID("Id: lib_set_term.c,v 1.36 1997/12/20 22:21:48 tom Exp $")
+MODULE_ID("$From: lib_set_term.c,v 1.39 1998/05/30 23:44:18 Todd.Miller Exp $")
 
 /*
  * If the output file descriptor is connected to a tty (the typical case) it
  * will probably be line-buffered.  Keith Bostic pointed out that we don't want
  * this; it hoses people running over networks by forcing out a bunch of small
- * packets instead of one big one, so screen updates on ptys look jerky. 
+ * packets instead of one big one, so screen updates on ptys look jerky.
  * Restore block buffering to prevent this minor lossage.
  *
  * The buffer size is a compromise.  Ideally we'd like a buffer that can hold
@@ -68,7 +80,7 @@ MODULE_ID("Id: lib_set_term.c,v 1.36 1997/12/20 22:21:48 tom Exp $")
 void _nc_set_buffer(FILE *ofp, bool buffered)
 {
 	/* optional optimization hack -- do before any output to ofp */
-#if HAVE_SETVBUF || HAVE_SETBUFFER  
+#if HAVE_SETVBUF || HAVE_SETBUFFER
 	unsigned buf_len;
 	char *buf_ptr;
 
@@ -191,13 +203,13 @@ int _nc_setupscreen(short slines, short const scolumns, FILE *output)
 int	bottom_stolen = 0;
 size_t	i;
 
-        assert(SP==0); /* has been reset in newterm() ! */ 
+        assert(SP==0); /* has been reset in newterm() ! */
 	if (!_nc_alloc_screen())
 		return ERR;
 
 	SP->_next_screen = _nc_screen_chain;
 	_nc_screen_chain = SP;
-	
+
 	_nc_set_buffer(output, TRUE);
 	SP->_term        = cur_term;
 	SP->_lines       = slines;
@@ -213,6 +225,9 @@ size_t	i;
 	SP->_endwin      = TRUE;
 	SP->_ofp         = output;
 	SP->_cursor      = -1;	/* cannot know real cursor shape */
+#ifdef NCURSES_NO_PADDING
+	SP->_no_padding  = getenv("NCURSES_NO_PADDING") != 0;
+#endif
 
 	SP->_maxclick     = DEFAULT_MAXCLICK;
 	SP->_mouse_event  = no_mouse_event;
@@ -264,7 +279,7 @@ size_t	i;
 
 	_nc_idcok = TRUE;
 	_nc_idlok = FALSE;
-	
+
 	_nc_windows = 0; /* no windows yet */
 
 	T(("creating newscr"));

@@ -1,10 +1,39 @@
+.\"***************************************************************************
+.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\"                                                                          *
+.\" Permission is hereby granted, free of charge, to any person obtaining a  *
+.\" copy of this software and associated documentation files (the            *
+.\" "Software"), to deal in the Software without restriction, including      *
+.\" without limitation the rights to use, copy, modify, merge, publish,      *
+.\" distribute, distribute with modifications, sublicense, and/or sell       *
+.\" copies of the Software, and to permit persons to whom the Software is    *
+.\" furnished to do so, subject to the following conditions:                 *
+.\"                                                                          *
+.\" The above copyright notice and this permission notice shall be included  *
+.\" in all copies or substantial portions of the Software.                   *
+.\"                                                                          *
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+.\" OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+.\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+.\" IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+.\" DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+.\" OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+.\" THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+.\"                                                                          *
+.\" Except as contained in this notice, the name(s) of the above copyright   *
+.\" holders shall not be used in advertising or otherwise to promote the     *
+.\" sale, use or other dealings in this Software without prior written       *
+.\" authorization.                                                           *
+.\"***************************************************************************
+.\"
 '\" t
-.\" $OpenBSD: curs_attr.3tbl,v 1.4 1997/12/14 23:15:37 millert Exp $
-.\" Id: curs_attr.3x,v 1.14 1997/12/13 22:38:46 tom Exp $
+.\" $From: curs_attr.3x,v 1.16 1998/06/13 22:59:17 tom Exp $
+.\" $OpenBSD: curs_attr.3tbl,v 1.5 1998/07/23 21:17:29 millert Exp $
 .TH curs_attr 3 ""
 .SH NAME
 \fBattroff\fR, \fBwattroff\fR, \fBattron\fR, \fBwattron\fR,
-\fBattrset\fR, \fBwattrset\fR, \fBstandend\fR, \fBwstandend\fR, \fBstandout\fR,
+\fBattrset\fR, \fBwattrset\fR, \fBcolor_set\fR, \fBwcolor_set\fR,
+\fBstandend\fR, \fBwstandend\fR, \fBstandout\fR,
 \fBwstandout\fR - \fBcurses\fR character and window attribute control routines
 .SH SYNOPSIS
 \fB#include <curses.h>\fR
@@ -21,6 +50,11 @@
 .br
 \fBint wattrset(WINDOW *win, int attrs);\fR
 .br
+\fBint color_set(short color_pair_number, void* opts);\fR
+.br
+\fBint wcolor_set(WINDOW *win, short color_pair_number,
+      void* opts);\fR
+.br
 \fBint standend(void);\fR
 .br
 \fBint wstandend(WINDOW *win);\fR
@@ -29,32 +63,34 @@
 .br
 \fBint wstandout(WINDOW *win);\fR
 .br
-\fBattr_t attr_get(void);\fR
+\fBint attr_get(attr_t *attrs, short *pair, void *opts);\fR
 .br
-\fBattr_t wattr_get(WINDOW *);\fR
+\fBint wattr_get(WINDOW *win, attr_t *attrs, short *pair,
+       void *opts);\fR
 .br
-\fBint attr_off(attr_t attrs);\fR
+\fBint attr_off(attr_t attrs, void *opts);\fR
 .br
-\fBint wattr_off(WINDOW *, attr_t attrs);\fR
+\fBint wattr_off(WINDOW *win, attr_t attrs, void *opts);\fR
 .br
-\fBint attr_on(attr_t attrs);\fR
+\fBint attr_on(attr_t attrs, void *opts);\fR
 .br
-\fBint wattr_on(WINDOW *, attr_t attrs);\fR
+\fBint wattr_on(WINDOW *win, attr_t attrs, void *opts);\fR
 .br
-\fBint attr_set(attr_t attrs);\fR
+\fBint attr_set(attr_t attrs, void *opts);\fR
 .br
-\fBint wattr_set(WINDOW *, attr_t attrs);\fR
+\fBint wattr_set(WINDOW *win, attr_t attrs, void *opts);\fR
 .br
-\fBint chgat(int n, attr_t attr, short color, const void *opts)\fR
+\fBint chgat(int n, attr_t attr, short color,
+      const void *opts)\fR
 .br
-\fBint wchgat(WINDOW *, int n, attr_t attr,
+\fBint wchgat(WINDOW *win, int n, attr_t attr,
       short color, const void *opts)\fR
 .br
 \fBint mvchgat(int y, int x, int n, attr_t attr,
       short color, const void *opts)\fR
 .br
-\fBint mvwchgat(WINDOW *, int y, int x, int n, attr_t attr,
-      short color, const void *opts)\fR
+\fBint mvwchgat(WINDOW *win, int y, int x, int n,
+      attr_t attr, short color, const void *opts)\fR
 .br
 .SH DESCRIPTION
 These routines manipulate the current attributes of the named window.  The
@@ -73,8 +109,14 @@ the same as \fBattron(A_STANDOUT)\fR.  The routine \fBstandend\fR is the same
 as \fBattrset(A_NORMAL)\fR or \fBattrset(0)\fR, that is, it turns off all
 attributes.
 
-The routine \fBwattr_get\fR returns the current attribute for the given
-window; \fBattr_get\fR returns the current attribute for \fBstdscr\fR.
+The routine \fBcolor_set\fR sets the current color of the given window to the
+foreground/background combination described by the color_pair_number. The
+parameter opts is reserved for future use, applications must supply a null
+pointer.
+
+The routine \fBwattr_get\fR returns the current attribute and color pair for
+the given window; \fBattr_get\fR returns the current attribute and color pair
+for \fBstdscr\fR.
 The remaining \fBattr_\fR* functions operate exactly like the corresponding
 \fBattr\fR* functions, except that they take arguments of type \fBattr_t\fR
 rather than \fBint\fR.

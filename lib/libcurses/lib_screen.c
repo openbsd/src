@@ -1,25 +1,37 @@
-/*	$OpenBSD: lib_screen.c,v 1.4 1998/01/17 16:27:36 millert Exp $	*/
+/*	$OpenBSD: lib_screen.c,v 1.5 1998/07/23 21:19:19 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 
 #include <curses.priv.h>
@@ -28,7 +40,7 @@
 #include <time.h>
 #include <term.h>	/* exit_ca_mode, non_rev_rmcup */
 
-MODULE_ID("Id: lib_screen.c,v 1.10 1997/12/27 19:48:58 tom Exp $")
+MODULE_ID("$From: lib_screen.c,v 1.11 1998/02/11 12:13:56 tom Exp $")
 
 static time_t	dumptime;
 
@@ -119,7 +131,7 @@ int scr_restore(const char *file)
 
 	T((T_CALLED("scr_restore(%s)"), _nc_visbuf(file)));
 
-	if ((fp = fopen(file, "r")) == 0)
+	if ((fp = fopen(file, "rb")) == 0)
 	    returnCode(ERR);
 	else
 	{
@@ -136,7 +148,7 @@ int scr_dump(const char *file)
 
 	T((T_CALLED("scr_dump(%s)"), _nc_visbuf(file)));
 
-	if ((fp = fopen(file, "w")) == 0)
+	if ((fp = fopen(file, "wb")) == 0)
 	    returnCode(ERR);
 	else
 	{
@@ -159,7 +171,7 @@ int scr_init(const char *file)
 	    returnCode(ERR);
 #endif /* exit_ca_mode */
 
-	if ((fp = fopen(file, "r")) == 0)
+	if ((fp = fopen(file, "rb")) == 0)
 	    returnCode(ERR);
 	else if (fstat(STDOUT_FILENO, &stb) || stb.st_mtime > dumptime)
 	    returnCode(ERR);

@@ -1,52 +1,65 @@
-/*	$OpenBSD: lib_trace.c,v 1.2 1997/12/03 05:21:36 millert Exp $	*/
+/*	$OpenBSD: lib_trace.c,v 1.3 1998/07/23 21:19:38 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 /*
  *	lib_trace.c - Tracing/Debugging routines
  */
 
-#ifndef TRACE
-#define TRACE			/* turn on internal defs for this module */
-#endif
-
 #include <curses.priv.h>
+#include <tic.h>
 
-MODULE_ID("Id: lib_trace.c,v 1.24 1997/11/30 00:47:42 tom Exp $")
+MODULE_ID("$From: lib_trace.c,v 1.27 1998/07/18 02:18:45 tom Exp $")
 
 #include <ctype.h>
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
 
-unsigned _nc_tracing = 0;
+unsigned _nc_tracing = 0;	/* always define this */
+
+#ifdef TRACE
 const char *_nc_tputs_trace = "";
 long _nc_outchars;
 int _nc_optimize_enable = OPTIMIZE_ALL;
 
 static FILE *	tracefp;	/* default to writing to stderr */
+#endif
 
-void trace(const unsigned int tracelevel)
+void trace(const unsigned int tracelevel GCC_UNUSED)
 {
+#ifdef TRACE
 static bool	been_here = FALSE;
 
    	_nc_tracing = tracelevel;
@@ -69,6 +82,7 @@ static bool	been_here = FALSE;
 		_tracef("TRACING NCURSES version %s (%d)",
 			NCURSES_VERSION, NCURSES_VERSION_PATCH);
 	}
+#endif
 }
 
 const char *_nc_visbuf2(int bufnum, const char *buf)
@@ -80,6 +94,8 @@ int c;
 
 	if (buf == 0)
 	    return("(null)");
+	if (buf == CANCELLED_STRING)
+	    return("(cancelled)");
 
 	tp = vbuf = _nc_trace_buf(bufnum, (strlen(buf) * 4) + 5);
 	*tp++ = '"';
@@ -113,6 +129,7 @@ const char *_nc_visbuf(const char *buf)
 	return _nc_visbuf2(0, buf);
 }
 
+#ifdef TRACE
 void
 _tracef(const char *fmt, ...)
 {
@@ -181,3 +198,4 @@ WINDOW *_nc_retrace_win(WINDOW *code)
 	T((T_RETURN("%p"), code));
 	return code;
 }
+#endif /* TRACE */

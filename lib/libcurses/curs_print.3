@@ -1,5 +1,33 @@
-.\" $OpenBSD: curs_print.3,v 1.5 1998/06/15 17:55:33 mickey Exp $
-.\" Id: curs_print.3x,v 1.2 1997/12/06 22:07:19 tom Exp $
+.\"***************************************************************************
+.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\"                                                                          *
+.\" Permission is hereby granted, free of charge, to any person obtaining a  *
+.\" copy of this software and associated documentation files (the            *
+.\" "Software"), to deal in the Software without restriction, including      *
+.\" without limitation the rights to use, copy, modify, merge, publish,      *
+.\" distribute, distribute with modifications, sublicense, and/or sell       *
+.\" copies of the Software, and to permit persons to whom the Software is    *
+.\" furnished to do so, subject to the following conditions:                 *
+.\"                                                                          *
+.\" The above copyright notice and this permission notice shall be included  *
+.\" in all copies or substantial portions of the Software.                   *
+.\"                                                                          *
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+.\" OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+.\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+.\" IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+.\" DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+.\" OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+.\" THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+.\"                                                                          *
+.\" Except as contained in this notice, the name(s) of the above copyright   *
+.\" holders shall not be used in advertising or otherwise to promote the     *
+.\" sale, use or other dealings in this Software without prior written       *
+.\" authorization.                                                           *
+.\"***************************************************************************
+.\"
+.'" $From: curs_print.3x,v 1.3 1998/03/11 21:12:53 juergen Exp $
+.'" $OpenBSD: curs_print.3,v 1.6 1998/07/23 21:17:57 millert Exp $
 .TH curs_print 3 ""
 .SH NAME
 \fBmcprint\fR - ship binary data to printer
@@ -32,10 +60,8 @@ Couldn't allocate sufficient memory to buffer the printer write.
 When \fBmcprint\fR succeeds, it returns the number of characters actually
 sent to the printer.
 .SH PORTABILITY
-The \fBmcprint\fR call was designed for \fBcurses\fR(3), and is not found
-in SVr4 curses,
-.Bx 4.4
-curses, or any other previous version of curses.
+The \fBmcprint\fR call was designed for \fBncurses\fR, and is not found
+in SVr4 curses, 4.4BSD curses, or any other previous version of curses.
 .SH BUGS
 Padding in the \fBmc5p\fR, \fBmc4\fR and \fBmc5\fR capabilities will not be
 interpreted.

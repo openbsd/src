@@ -1,25 +1,37 @@
-/*	$OpenBSD: lib_color.c,v 1.4 1997/12/03 05:21:14 millert Exp $	*/
+/*	$OpenBSD: lib_color.c,v 1.5 1998/07/23 21:18:36 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 /* lib_color.c
  *
@@ -31,13 +43,7 @@
 
 #include <term.h>
 
-MODULE_ID("Id: lib_color.c,v 1.21 1997/11/30 00:19:33 tom Exp $")
-
-/*
- * Only 8 ANSI colors are defined; the ISO 6429 control sequences work only
- * for 8 values (0-7).
- */
-#define MAX_ANSI_COLOR 8
+MODULE_ID("$From: lib_color.c,v 1.30 1998/06/28 00:10:19 tom Exp $")
 
 /*
  * These should be screen structure members.  They need to be globals for
@@ -79,33 +85,82 @@ static const color_t hls_palette[] =
 	{0,	50,	100},	/* COLOR_WHITE */
 };
 
+/*
+ * SVr4 curses is known to interchange color codes (1,4) and (3,6), possibly
+ * to maintain compatibility with a pre-ANSI scheme.  The same scheme is
+ * also used in the FreeBSD syscons.
+ */
+static int toggled_colors(int c)
+{
+    if (c < 16) {
+	static const int table[] =
+		{ 0,  4,  2,  6,  1,  5,  3,  7,
+		  8, 12, 10, 14,  9, 13, 11, 15};
+	c = table[c];
+    }
+    return c;
+}
+
+static void set_background_color(int bg, int  (*outc)(int))
+{
+	if (set_a_background)
+	{
+	    TPUTS_TRACE("set_a_background");
+	    tputs(tparm(set_a_background, bg), 1, outc);
+	}
+	else
+	{
+	    TPUTS_TRACE("set_background");
+	    tputs(tparm(set_background, toggled_colors(bg)), 1, outc);
+	}
+}
+
+static void set_foreground_color(int fg, int  (*outc)(int))
+{
+	if (set_a_foreground)
+	{
+	    TPUTS_TRACE("set_a_foreground");
+	    tputs(tparm(set_a_foreground, fg), 1, outc);
+	}
+	else
+	{
+	    TPUTS_TRACE("set_foreground");
+	    tputs(tparm(set_foreground, toggled_colors(fg)), 1, outc);
+	}
+}
+
+static bool set_original_colors(void)
+{
+	if (orig_pair != 0) {
+		TPUTS_TRACE("orig_pair");
+		putp(orig_pair);
+		return TRUE;
+	}
+	else if (orig_colors != NULL)
+	{
+		TPUTS_TRACE("orig_colors");
+		putp(orig_colors);
+		return TRUE;
+	}
+	return FALSE;
+}
+
 int start_color(void)
 {
 	T((T_CALLED("start_color()")));
 
-#ifdef orig_pair
-	if (orig_pair != NULL)
+	if (set_original_colors() != TRUE)
 	{
-		TPUTS_TRACE("orig_pair");
-		putp(orig_pair);
+		set_foreground_color(COLOR_WHITE, _nc_outch);
+		set_background_color(COLOR_BLACK, _nc_outch);
 	}
-#endif /* orig_pair */
-#ifdef orig_colors
-	if (orig_colors != NULL)
-	{
-		TPUTS_TRACE("orig_colors");
-		putp(orig_colors);
-	}
-#endif /* orig_colors */
-#if defined(orig_pair) && defined(orig_colors)
-	if (!orig_pair && !orig_colors)
-		returnCode(ERR);
-#endif /* defined(orig_pair) && defined(orig_colors) */
+
 	if (max_pairs != -1)
 		COLOR_PAIRS = SP->_pair_count = max_pairs;
 	else
 		returnCode(ERR);
-	SP->_color_pairs = typeCalloc(unsigned short, max_pairs);
+	if ((SP->_color_pairs = typeCalloc(unsigned short, max_pairs)) == 0)
+		returnCode(ERR);
 	SP->_color_pairs[0] = PAIR_OF(COLOR_WHITE, COLOR_BLACK);
 	if (max_colors != -1)
 		COLORS = SP->_color_count = max_colors;
@@ -113,35 +168,24 @@ int start_color(void)
 		returnCode(ERR);
 	SP->_coloron = 1;
 
-	if ((SP->_color_table = malloc(sizeof(color_t) * COLORS)) == NULL) {
-		errno = ENOMEM;
+	if ((SP->_color_table = malloc(sizeof(color_t) * COLORS)) == 0)
 		returnCode(ERR);
-	}
-#ifdef hue_lightness_saturation
 	if (hue_lightness_saturation)
 	    memcpy(SP->_color_table, hls_palette, sizeof(color_t) * COLORS);
 	else
-#endif /* hue_lightness_saturation */
 	    memcpy(SP->_color_table, cga_palette, sizeof(color_t) * COLORS);
-
-	if (orig_colors)
-	{
-	    TPUTS_TRACE("orig_colors");
-	    putp(orig_colors);
-	}
 
 	T(("started color: COLORS = %d, COLOR_PAIRS = %d", COLORS, COLOR_PAIRS));
 
 	returnCode(OK);
 }
 
-#ifdef hue_lightness_saturation
 /* This function was originally written by Daniel Weaver <danw@znyx.com> */
 static void rgb2hls(short r, short g, short b, short *h, short *l, short *s)
 /* convert RGB to HLS system */
 {
     short min, max, t;
-    
+
     if ((min = g < r ? g : r) > b) min = b;
     if ((max = g > r ? g : r) < b) max = b;
 
@@ -171,7 +215,6 @@ static void rgb2hls(short r, short g, short b, short *h, short *l, short *s)
 
     *h = t % 360;
 }
-#endif /* hue_lightness_saturation */
 
 /*
  * Extension (1997/1/18) - Allow negative f/b values to set default color
@@ -179,6 +222,8 @@ static void rgb2hls(short r, short g, short b, short *h, short *l, short *s)
  */
 int init_pair(short pair, short f, short b)
 {
+	unsigned result;
+
 	T((T_CALLED("init_pair(%d,%d,%d)"), pair, f, b));
 
 	if ((pair < 1) || (pair >= COLOR_PAIRS))
@@ -200,16 +245,31 @@ int init_pair(short pair, short f, short b)
 		returnCode(ERR);
 
 	/*
-	 * FIXME: when a pair's content is changed, replace its colors
-	 * (if pair was initialized before a screen update is performed
-	 * replacing original pair colors with the new ones)
+	 * When a pair's content is changed, replace its colors (if pair was
+	 * initialized before a screen update is performed replacing original
+	 * pair colors with the new ones).
 	 */
+	result = PAIR_OF(f,b);
+	if (SP->_color_pairs[pair] != 0
+	 && SP->_color_pairs[pair] != result) {
+	    int y, x;
+	    attr_t z = COLOR_PAIR(pair);
 
-	SP->_color_pairs[pair] = PAIR_OF(f,b);
+	    for (y = 0; y <= curscr->_maxy; y++) {
+		struct ldat *ptr = &(curscr->_line[y]);
+		for (x = 0; x <= curscr->_maxx; x++) {
+		    if ((ptr->text[x] & A_COLOR) == z) {
+			ptr->text[x] &= ~A_COLOR;
+			CHANGED_CELL(ptr,x);
+		    }
+		}
+	    }
+	}
+	SP->_color_pairs[pair] = result;
 
 	if (initialize_pair)
 	{
-	    const color_t	*tp = hue_lightness_saturation ? hls_palette : cga_palette;
+	    const color_t *tp = hue_lightness_saturation ? hls_palette : cga_palette;
 
 	    T(("initializing pair: pair = %d, fg=(%d,%d,%d), bg=(%d,%d,%d)",
 	       pair,
@@ -232,37 +292,32 @@ int init_pair(short pair, short f, short b)
 int init_color(short color, short r, short g, short b)
 {
 	T((T_CALLED("init_color(%d,%d,%d,%d)"), color, r, g, b));
-#ifdef initialize_color
+
 	if (initialize_color == NULL)
 		returnCode(ERR);
-#endif /* initialize_color */
 
 	if (color < 0 || color >= COLORS)
 		returnCode(ERR);
 	if (r < 0 || r > 1000 || g < 0 ||  g > 1000 || b < 0 || b > 1000)
 		returnCode(ERR);
 
-#ifdef hue_lightness_saturation
 	if (hue_lightness_saturation)
 	    rgb2hls(r, g, b,
 		      &SP->_color_table[color].red,
 		      &SP->_color_table[color].green,
 		      &SP->_color_table[color].blue);
 	else
-#endif /* hue_lightness_saturation */
 	{
 		SP->_color_table[color].red = r;
 		SP->_color_table[color].green = g;
 		SP->_color_table[color].blue = b;
 	}
 
-#ifdef initialize_color
 	if (initialize_color)
 	{
 		TPUTS_TRACE("initialize_color");
 		putp(tparm(initialize_color, color, r, g, b));
 	}
-#endif /* initialize_color */
 	returnCode(OK);
 }
 
@@ -275,8 +330,7 @@ bool can_change_color(void)
 bool has_colors(void)
 {
 	T((T_CALLED("has_colors()")));
-	returnCode (((orig_pair != NULL || orig_colors != NULL)
-		     && (max_colors != -1) && (max_pairs != -1)
+	returnCode (((max_colors != -1) && (max_pairs != -1)
 		     && (((set_foreground != NULL)
 			  && (set_background != NULL))
 			 || ((set_a_foreground != NULL)
@@ -308,25 +362,12 @@ int pair_content(short pair, short *f, short *b)
 	returnCode(OK);
 }
 
-/*
- * SVr4 curses is known to interchange color codes (1,4) and (3,6), possibly
- * to maintain compatibility with a pre-ANSI scheme.  The same scheme is
- * also used in the FreeBSD syscons.
- */
-static int toggled_colors(int c)
-{
-    if (c < 16) {
-	static const int table[] =
-		{ 0,  4,  2,  6,  1,  5,  3,  7,
-		  8, 12, 10, 14,  9, 13, 11, 15};
-	c = table[c];
-    }
-    return c;
-}
-
-void _nc_do_color(int pair, int  (*outc)(int))
+void _nc_do_color(int pair, bool reverse, int (*outc)(int))
 {
     short fg, bg;
+
+    if (reverse)
+    	pair = -pair;
 
     if (pair == 0)
     {
@@ -334,6 +375,16 @@ void _nc_do_color(int pair, int  (*outc)(int))
 	{
 	    TPUTS_TRACE("orig_pair");
 	    tputs(orig_pair, 1, outc);
+	}
+	else if (set_color_pair)
+	{
+	    TPUTS_TRACE("set_color_pair");
+	    tputs(tparm(set_color_pair, pair), 1, outc);
+	}
+	else
+	{
+	    set_foreground_color(COLOR_WHITE, outc);
+	    set_background_color(COLOR_BLACK, outc);
 	}
     }
     else
@@ -346,47 +397,31 @@ void _nc_do_color(int pair, int  (*outc)(int))
 	else
 	{
 	    pair_content(pair, &fg, &bg);
+	    if (reverse) {
+		short xx = fg;
+		fg = bg;
+		bg = xx;
+	    }
 
 	    T(("setting colors: pair = %d, fg = %d, bg = %d", pair, fg, bg));
 
 	    if (fg == C_MASK || bg == C_MASK)
 	    {
-		if (orig_pair)
+		if (set_original_colors() != TRUE)
 		{
-		    TPUTS_TRACE("orig_pair");
-		    tputs(orig_pair, 1, outc);
-		}
-		else
-		{
-		    TPUTS_TRACE("orig_colors");
-		    tputs(orig_colors, 1, outc);
+			if (fg == C_MASK)
+				set_foreground_color(COLOR_WHITE, outc);
+			if (bg == C_MASK)
+				set_background_color(COLOR_BLACK, outc);
 		}
 	    }
 	    if (fg != C_MASK)
 	    {
-		if (set_a_foreground && fg <= MAX_ANSI_COLOR)
-		{
-		    TPUTS_TRACE("set_a_foreground");
-		    tputs(tparm(set_a_foreground, fg), 1, outc);
-		}
-		else
-		{
-		    TPUTS_TRACE("set_foreground");
-		    tputs(tparm(set_foreground, toggled_colors(fg)), 1, outc);
-		}
+		set_foreground_color(fg, outc);
 	    }
 	    if (bg != C_MASK)
 	    {
-		if (set_a_background && bg <= MAX_ANSI_COLOR)
-		{
-		    TPUTS_TRACE("set_a_background");
-		    tputs(tparm(set_a_background, bg), 1, outc);
-		}
-		else
-		{
-		    TPUTS_TRACE("set_background");
-		    tputs(tparm(set_background, toggled_colors(bg)), 1, outc);
-		}
+		set_background_color(bg, outc);
 	    }
 	}
     }

@@ -1,25 +1,37 @@
-/*	$OpenBSD: lib_initscr.c,v 1.3 1997/12/03 05:21:20 millert Exp $	*/
+/*	$OpenBSD: lib_initscr.c,v 1.4 1998/07/23 21:18:51 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 /*
 **	lib_initscr.c
@@ -29,24 +41,28 @@
 */
 
 #include <curses.priv.h>
+#include <tic.h>	/* for MAX_ALIAS */
 
 #if HAVE_SYS_TERMIO_H
 #include <sys/termio.h>	/* needed for ISC */
 #endif
 
-MODULE_ID("Id: lib_initscr.c,v 1.19 1997/06/28 17:41:12 tom Exp $")
+MODULE_ID("$From: lib_initscr.c,v 1.22 1998/04/18 21:51:33 tom Exp $")
 
 WINDOW *initscr(void)
 {
 static	bool initialized = FALSE;
-const char *name;
+NCURSES_CONST char *name;
+char *p;
+long l;
 
 	T((T_CALLED("initscr()")));
 	/* Portable applications must not call initscr() more than once */
 	if (!initialized) {
 		initialized = TRUE;
 
-		if ((name = getenv("TERM")) == 0)
+		if ((name = getenv("TERM")) == 0
+		 || *name == '\0')
 			name = "unknown";
 		if (newterm(name, stdout, stdin) == 0) {
 			fprintf(stderr, "Error opening terminal: %s.\n", name);
@@ -54,8 +70,12 @@ const char *name;
 		}
 
 		/* allow user to set maximum escape delay from the environment */
-		if ((name = getenv("ESCDELAY")) != 0)
-			ESCDELAY = atoi(getenv("ESCDELAY"));
+		if ((name = getenv("ESCDELAY")) != 0) {
+			l = strtol(name, &p, 10);
+			if (p != name && *p == '\0' && l != LONG_MIN &&
+			    l <= INT_MAX)
+				ESCDELAY = (int)l;
+		}
 
 		/* def_shell_mode - done in newterm/_nc_setupscreen */
 		def_prog_mode();
@@ -66,12 +86,12 @@ const char *name;
 char *termname(void)
 {
 char	*term = getenv("TERM");
-static char	ret[15];
+static char	ret[MAX_ALIAS];
 
 	T(("termname() called"));
 
 	if (term != 0) {
-		(void) strncpy(ret, term, sizeof(ret) - 1);
+		(void) strlcpy(ret, term, sizeof(ret));
 		term = ret;
 	}
 	return term;

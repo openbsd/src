@@ -1,29 +1,41 @@
-/*	$OpenBSD: curses.priv.h,v 1.5 1998/01/17 16:27:32 millert Exp $	*/
+/*	$OpenBSD: curses.priv.h,v 1.6 1998/07/23 21:18:12 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 
 /*
- * Id: curses.priv.h,v 1.97 1998/01/03 19:57:54 tom Exp $
+ * $From: curses.priv.h,v 1.105 1998/06/28 00:11:47 tom Exp $
  *
  *	curses.priv.h
  *
@@ -100,7 +112,15 @@ extern int errno;
 #define USE_GPM_SUPPORT 0
 #endif
 
+/* QNX mouse support */
+#if defined(__QNX__) && !defined(__QNXNTO__)
+#define USE_QNX_MOUSE 1
+#else
+#define USE_QNX_MOUSE 0
+#endif
+
 #define DEFAULT_MAXCLICK 166
+#define EV_MAX		8	/* size of mouse circular event queue */
 
 /*
  * If we don't have signals to support it, don't add a sigwinch handler.
@@ -206,11 +226,7 @@ struct screen {
 	FILE            *_ofp;          /* output file ptr for screen       */
 	char            *_setbuf;       /* buffered I/O for output          */
 	int             _checkfd;       /* filedesc for typeahead check     */
-#ifdef EXTERN_TERMINFO
-	struct _terminal *_term;         /* terminal type information        */
-#else
 	struct term     *_term;         /* terminal type information        */
-#endif
 	short           _lines;         /* screen lines                     */
 	short           _columns;       /* screen columns                   */
 	short           _lines_avail;   /* lines available for stdscr       */
@@ -222,6 +238,7 @@ struct screen {
 
 	struct tries    *_keytry;       /* "Try" for use with keypad mode   */
 	struct tries    *_key_ok;       /* Disabled keys via keyok(,FALSE)  */
+	int             _tried;         /* keypad mode was initialized      */
 
 	unsigned int    _fifo[FIFO_SIZE];       /* input push-back buffer   */
 	short           _fifohead,      /* head of fifo queue               */
@@ -242,7 +259,6 @@ struct screen {
 	int             _echo;          /* True if echo on                  */
 	int             _use_meta;      /* use the meta key?                */
 	SLK             *_slk;          /* ptr to soft key struct / NULL    */
-	int		_baudrate;	/* used to compute padding          */
 
 	/* cursor movement costs; units are 10ths of milliseconds */
 	int             _char_padding;  /* cost of character put            */
@@ -404,6 +420,28 @@ typedef	struct {
 
 #define CHANGED     -1
 
+#define CHANGED_CELL(line,col) \
+	if (line->firstchar == _NOCHANGE) \
+		line->firstchar = line->lastchar = col; \
+	else if ((col) < line->firstchar) \
+		line->firstchar = col; \
+	else if ((col) > line->lastchar) \
+		line->lastchar = col
+
+#define CHANGED_RANGE(line,start,end) \
+	if (line->firstchar == _NOCHANGE \
+	 || line->firstchar > (start)) \
+		line->firstchar = start; \
+	if (line->lastchar == _NOCHANGE \
+	 || line->lastchar < (end)) \
+		line->lastchar = end
+
+#define CHANGED_TO_EOL(line,start,end) \
+	if (line->firstchar == _NOCHANGE \
+	 || line->firstchar > (start)) \
+		line->firstchar = start; \
+	line->lastchar = end
+
 #define SIZEOF(v) (sizeof(v)/sizeof(v[0]))
 #define typeCalloc(type,elts) (type *)calloc(elts,sizeof(type))
 #define FreeIfNeeded(p)  if(p != 0) free(p)
@@ -435,8 +473,6 @@ extern WINDOW * _nc_retrace_win(WINDOW *);
 extern attr_t _nc_retrace_attr_t(attr_t);
 extern char *_nc_retrace_ptr(char *);
 extern const char *_nc_tputs_trace;
-extern const char *_nc_visbuf(const char *);
-extern const char *_nc_visbuf2(int, const char *);
 extern int _nc_retrace_int(int);
 extern long _nc_outchars;
 extern void _nc_fifo_dump(void);
@@ -450,6 +486,9 @@ extern void _nc_fifo_dump(void);
 #define returnVoid       return
 #define returnWin(code)  return code
 #endif
+
+extern const char *_nc_visbuf(const char *);
+extern const char *_nc_visbuf2(int, const char *);
 
 #define _trace_key(ch) ((ch > KEY_MIN) ? keyname(ch) : _tracechar((unsigned char)ch))
 
@@ -607,14 +646,11 @@ extern char *_nc_trace_buf(int, size_t);
 extern chtype _nc_background(WINDOW *);
 extern chtype _nc_render(WINDOW *, chtype);
 extern int _nc_keypad(bool);
-#ifdef EXTERN_TERMINFO
-#define	_nc_outch _ti_outc
-#endif
 extern int _nc_outch(int);
 extern int _nc_setupscreen(short, short const, FILE *);
 extern int _nc_timed_wait(int, int, int *);
 extern int _nc_waddch_nosync(WINDOW *, const chtype);
-extern void _nc_do_color(int, int (*)(int));
+extern void _nc_do_color(int, bool, int (*)(int));
 extern void _nc_free_and_exit(int);
 extern void _nc_freeall(void);
 extern void _nc_freewin(WINDOW *win);
@@ -650,20 +686,6 @@ extern SCREEN *SP;
 #define _nc_set_screen(sp) SP = sp
 #endif
 
-#if !HAVE_USLEEP
-extern int _nc_usleep(unsigned int);
-#define usleep(msecs) _nc_usleep(msecs)
-#endif
-
-/*
- * ncurses' terminfo defines these but since we use our own terminfo
- * we need to fake it here.
- */
-#ifdef EXTERN_TERMINFO
-#define	_nc_get_curterm(buf) tcgetattr(cur_term->Filedes, buf)
-#define	_nc_set_curterm(buf) tcsetattr(cur_term->Filedes, TCSADRAIN, buf)
-#endif
-
 /*
  * We don't want to use the lines or columns capabilities internally,
  * because if the application is running multiple screens under
@@ -676,8 +698,8 @@ extern int _nc_usleep(unsigned int);
 extern int _nc_slk_format;  /* != 0 if slk_init() called */
 extern int _nc_slk_initialize(WINDOW *, int);
 
-/*
- * Some constants related to SLK's
+/* 
+ * Some constants related to SLK's 
  */
 #define MAX_SKEY_OLD	   8	/* count of soft keys */
 #define MAX_SKEY_LEN_OLD   8	/* max length of soft key text */
@@ -693,8 +715,6 @@ extern int _nc_slk_initialize(WINDOW *, int);
 #define SLK_LINES  (SLK_STDFMT ? 1 : (_nc_slk_format - 2))
 
 extern int _nc_ripoffline(int line, int (*init)(WINDOW *,int));
-
-#define UNINITIALISED ((struct tries * ) -1)
 
 #ifdef __cplusplus
 }

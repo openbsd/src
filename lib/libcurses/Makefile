@@ -1,33 +1,45 @@
-#	$OpenBSD: Makefile,v 1.21 1998/01/17 16:27:30 millert Exp $
+#	$OpenBSD: Makefile,v 1.22 1998/07/23 21:17:23 millert Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
 
+# This is used to compile terminal info directly into the library
+FALLBACK_LIST=
+
+# XXX - should be defined elsewhere
+AWK?=	/usr/bin/awk
+
 LIB=    curses
-SRCS=	define_key.c hardscroll.c hashmap.c keyok.c lib_acs.c lib_addch.c \
-	lib_addstr.c lib_baudrate.c lib_beep.c lib_bkgd.c lib_box.c \
-	lib_clear.c lib_clrbot.c lib_clreol.c lib_color.c lib_data.c \
-	lib_delch.c lib_delwin.c lib_dft_fgbg.c lib_doupdate.c lib_endwin.c \
-	lib_erase.c lib_flash.c lib_getch.c lib_getstr.c lib_hline.c \
-	lib_inchstr.c lib_initscr.c lib_insch.c lib_insdel.c lib_insstr.c \
-	lib_instr.c lib_isendwin.c lib_kernel.c lib_longname.c lib_mouse.c \
-	lib_move.c lib_mvcur.c lib_mvwin.c lib_newterm.c lib_newwin.c \
-	lib_options.c lib_overlay.c lib_pad.c lib_print.c lib_printw.c \
-	lib_raw.c lib_redrawln.c lib_refresh.c lib_scanw.c lib_screen.c \
-	lib_scroll.c lib_scrreg.c lib_set_term.c lib_slk.c lib_slkatrof.c \
-	lib_slkatron.c lib_slkatrset.c lib_slkattr.c lib_slkclear.c \
-	lib_slkinit.c lib_slklab.c lib_slkrefr.c lib_slkset.c lib_slktouch.c \
-	lib_touch.c lib_tstp.c lib_twait.c lib_ungetch.c lib_vidattr.c \
-	lib_vline.c lib_wattroff.c lib_wattron.c lib_window.c nc_panel.c \
-	resizeterm.c safe_sprintf.c screensize.c softscroll.c tries.c unctrl.c \
-	wresize.c
-SRCS+=	expanded.c lib_gen.c lib_keyname.c
-.if defined(${CURSESTRACE})
-SRCS+=	lib_trace.c lib_traceatr.c lib_tracechr.c lib_tracedmp.c \
-	lib_tracemse.c trace_buf.c
-.endif
+SRCS=   alloc_entry.c captoinfo.c codes.c comp_captab.c comp_error.c \
+        comp_expand.c comp_hash.c comp_parse.c comp_scan.c define_key.c \
+        expanded.c fallback.c hardscroll.c hashmap.c keyok.c lib_acs.c \
+        lib_adabind.c lib_addch.c lib_addstr.c lib_baudrate.c \
+        lib_beep.c lib_bkgd.c lib_box.c lib_chgat.c lib_clear.c \
+        lib_clearok.c lib_clrbot.c lib_clreol.c lib_color.c \
+        lib_colorset.c lib_cur_term.c lib_data.c lib_delch.c \
+        lib_delwin.c lib_dft_fgbg.c lib_doupdate.c lib_echo.c \
+        lib_endwin.c lib_erase.c lib_flash.c lib_freeall.c lib_gen.c \
+        lib_getch.c lib_getstr.c lib_hline.c lib_immedok.c lib_inchstr.c \
+        lib_initscr.c lib_insch.c lib_insdel.c lib_insstr.c lib_instr.c \
+        lib_isendwin.c lib_kernel.c lib_keyname.c lib_leaveok.c \
+        lib_longname.c lib_mouse.c lib_move.c lib_mvcur.c lib_mvwin.c \
+        lib_napms.c lib_newterm.c lib_newwin.c lib_nl.c lib_options.c \
+        lib_overlay.c lib_pad.c lib_print.c lib_printw.c lib_raw.c \
+        lib_redrawln.c lib_refresh.c lib_restart.c lib_scanw.c \
+        lib_screen.c lib_scroll.c lib_scrollok.c lib_scrreg.c \
+        lib_set_term.c lib_setup.c lib_slk.c lib_slkatr_set.c \
+        lib_slkatrof.c lib_slkatron.c lib_slkatrset.c lib_slkattr.c \
+        lib_slkclear.c lib_slkcolor.c lib_slkinit.c lib_slklab.c \
+        lib_slkrefr.c lib_slkset.c lib_slktouch.c lib_termcap.c \
+        lib_ti.c lib_touch.c lib_tparm.c lib_tputs.c lib_trace.c \
+        lib_traceatr.c lib_tracechr.c lib_tracedmp.c lib_tracemse.c \
+        lib_tstp.c lib_twait.c lib_ungetch.c lib_vidattr.c lib_vline.c \
+        lib_wattroff.c lib_wattron.c lib_window.c name_match.c names.c \
+	nc_panel.c parse_entry.c read_bsd_terminfo.c read_entry.c \
+	read_termcap.c resizeterm.c safe_sprintf.c sigaction.c softscroll.c \
+	trace_buf.c tries.c unctrl.c wresize.c write_entry.c
 CFLAGS+= -I. -I${.CURDIR} -DTERMIOS ${CURSESTRACE}
-LDADD+=  -ltermlib
+# XXX - missing stuff here
 MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_bkgd.3 curs_border.3 curs_clear.3 curs_color.3 curs_delch.3 \
 	curs_deleteln.3 curs_getch.3 curs_getstr.3 curs_getyx.3 curs_inch.3 \
@@ -36,7 +48,7 @@ MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_overlay.3 curs_pad.3 curs_print.3 curs_printw.3 curs_refresh.3 \
 	curs_scanw.3 curs_scr_dmp.3 curs_scroll.3 curs_slk.3 curs_termattrs.3 \
 	curs_touch.3 curs_util.3 curs_window.3 curses.3 define_key.3 \
-	dft_fgbg.3 keyok.3 wresize.3
+	dft_fgbg.3 keyok.3 wresize.3 termcap.3 terminfo.3 terminfo.5
 MLINKS+=curses.3 ncurses.3
 MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_addch.3 mvwaddch.3 curs_addch.3 echochar.3 curs_addch.3 \
@@ -128,30 +140,71 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_window.3 subwin.3 curs_window.3 derwin.3 curs_window.3 mvderwin.3 \
 	curs_window.3 dupwin.3 curs_window.3 wsyncup.3 curs_window.3 syncok.3 \
 	curs_window.3 wcursyncup.3 curs_window.3 wsyncdown.3
-CLEANFILES+= lib_gen.c lib_keyname.c keys.tries expanded.c
+MLINKS+= terminfo.3 setupterm.3 terminfo.3 setterm.3 terminfo.3 set_curterm.3 \
+	terminfo.3 del_curterm.3 terminfo.3 restartterm.3 terminfo.3 tparm.3 \
+	terminfo.3 tparam.3 terminfo.3 tputs.3 terminfo.3 putp.3 \
+	terminfo.3 vidputs.3 terminfo.3 vidattr.3 terminfo.3 mvcur.3 \
+	terminfo.3 tigetflag.3 terminfo.3 tigetnum.3 terminfo.3 tigetstr.3
+MLINKS+= termcap.3 tgetent.3 termcap.3 tgetflag.3 termcap.3 tgetnum.3 \
+	termcap.3 tgetstr.3 termcap.3 tgoto.3 termcap.3 tputs.3
 
-beforedepend: keys.tries
+CLEANFILES+= nomacros.h codes.c comp_captab.c expanded.c fallback.c lib_gen.c \
+	lib_keyname.c names.c unctrl.c keys.tries make_hash make_keys
+
+beforedepend: nomacros.h codes.c comp_captab.c expanded.c fallback.c lib_gen.c \
+	lib_keyname.c names.c unctrl.c keys.tries make_hash make_keys
 
 includes:
-	@cd ${.CURDIR}; for i in unctrl.h; do \
+	@cmp -s ${DESTDIR}/usr/include/ncurses.h ${.CURDIR}/curses.h || \
+	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) \
+	  ${.CURDIR}/curses.h ${DESTDIR}/usr/include/ncurses.h
+	@cd ${.CURDIR}; for i in unctrl.h term.h; do \
 	  cmp -s $$i ${DESTDIR}/usr/include/$$i || \
 	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) $$i \
 	  ${DESTDIR}/usr/include; done
-	@cd ${.CURDIR}; cmp -s curses.h ${DESTDIR}/usr/include/curses.h || \
-	  ${INSTALL} ${INSTALL_COPY} -m 444 -o $(BINOWN) -g $(BINGRP) curses.h \
-	  ${DESTDIR}/usr/include
 
-keys.tries: ${.CURDIR}/keys.list ${.CURDIR}/MKkeys.awk
-	awk -f ${.CURDIR}/MKkeys.awk ${.CURDIR}/keys.list > keys.tries
-
-lib_keyname.c: ${.CURDIR}/keys.list ${.CURDIR}/MKkeyname.awk
-	awk -f ${.CURDIR}/MKkeyname.awk ${.CURDIR}/keys.list > lib_keyname.c
+fallback.c: ${.CURDIR}/term.h ${.CURDIR}/curses.priv.h ${.CURDIR}/MKfallback.sh
+	sh ${.CURDIR}/MKfallback.sh $(FALLBACK_LIST) > ${.TARGET}
 
 lib_gen.c: ${.CURDIR}/curses.h ${.CURDIR}/MKlib_gen.sh
-	sh ${.CURDIR}/MKlib_gen.sh "${CPP}" "awk" < ${.CURDIR}/curses.h > lib_gen.c
+	sh ${.CURDIR}/MKlib_gen.sh "${CPP} -I${.CURDIR}" "${AWK}" < ${.CURDIR}/curses.h > lib_gen.c
 
-expanded.c: ${.CURDIR}/curses.h ${.CURDIR}/MKexpanded.sh
+nomacros.h: ${.CURDIR}/MKlib_gen.sh lib_gen.c
+	fgrep undef lib_gen.c > ${.TARGET}
+
+keys.tries: make_keys ${.CURDIR}/keys.list
+	./make_keys ${.CURDIR}/keys.list > ${.TARGET}
+
+make_keys: ${.CURDIR}/make_keys.c names.c
+	${CC} ${CFLAGS} ${LDFLAGS} -o ${.TARGET} ${.CURDIR}/make_keys.c ${LDADD}
+
+make_hash: ${.CURDIR}/comp_hash.c ${.CURDIR}/hashsize.h
+	${CC} ${CFLAGS} -DMAIN_PROGRAM ${LDFLAGS} -o ${.TARGET} ${.CURDIR}/comp_hash.c ${LDADD}
+
+expanded.c: ${.CURDIR}/term.h ${.CURDIR}/curses.priv.h ${.CURDIR}/MKexpanded.sh
 	sh ${.CURDIR}/MKexpanded.sh "${CPP}" ${CPPFLAGS}
+
+comp_captab.c: make_hash ${.CURDIR}/ncurses_cfg.h ${.CURDIR}/tic.h ${.CURDIR}/term.h
+	sh ${.CURDIR}/MKcaptab.awk ${AWK} ${.CURDIR}/Caps > ${.TARGET}
+
+lib_keyname.c: ${.CURDIR}/ncurses_cfg.h ${.CURDIR}/curses.h ${.CURDIR}/term.h  ${.CURDIR}/keys.list ${.CURDIR}/MKkeyname.awk
+	${AWK} -f ${.CURDIR}/MKkeyname.awk ${.CURDIR}/keys.list > ${.TARGET}
+
+names.c codes.c: ${.CURDIR}/MKnames.awk
+	${AWK} -f ${.CURDIR}/MKnames.awk ${.CURDIR}/Caps
+	cat namehdr boolnames boolfnames numnames numfnames strnames strfnames nameftr > names.c
+	cat namehdr boolcodes numcodes strcodes codeftr > codes.c
+	-rm -f namehdr nameftr codeftr boolnames boolfnames boolcodes numnames numfnames numcodes strnames strfnames strcodes
+
+unctrl.c: ${.CURDIR}/MKunctrl.awk
+	echo | ${AWK} -f ${.CURDIR}/MKunctrl.awk > ${.TARGET}
+
+# Link libtermlib to libcurses (eww)
+afterinstall:
+	-cd ${DESTDIR}/usr/lib; \
+	for i in ${_LIBS}; do \
+	    ln -f $$i `echo $$i | sed 's/curses/termlib/'`; \
+	done
 
 .include <bsd.lib.mk>
 

@@ -1,25 +1,37 @@
-/*	$OpenBSD: lib_refresh.c,v 1.4 1998/01/17 16:27:35 millert Exp $	*/
+/*	$OpenBSD: lib_refresh.c,v 1.5 1998/07/23 21:19:16 millert Exp $	*/
 
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 
 
@@ -32,7 +44,7 @@
 
 #include <curses.priv.h>
 
-MODULE_ID("Id: lib_refresh.c,v 1.18 1997/12/19 17:04:06 xtang Exp $")
+MODULE_ID("$From: lib_refresh.c,v 1.23 1998/06/28 00:10:14 tom Exp $")
 
 int wrefresh(WINDOW *win)
 {
@@ -60,6 +72,7 @@ int code;
 
 int wnoutrefresh(WINDOW *win)
 {
+short	limit_x;
 short	i, j;
 short	begx;
 short	begy;
@@ -120,6 +133,13 @@ bool	wide;
 	 * common-subexpression chunking to make it really tense,
 	 * so we'll force the issue.
 	 */
+
+	/* limit(n) */
+	limit_x = win->_maxx;
+	/* limit(j) */
+	if (limit_x > win->_maxx)
+		limit_x = win->_maxx;
+
 	for (i = 0, m = begy + win->_yoffset;
 	     i <= win->_maxy && m <= newscr->_maxy;
 	     i++, m++) {
@@ -129,23 +149,13 @@ bool	wide;
 		if (oline->firstchar != _NOCHANGE) {
 			int last = oline->lastchar;
 
-			/* limit(j) */
-			if (last > win->_maxx)
-				last = win->_maxx;
-			/* limit(n) */
-			if (last > newscr->_maxx - begx)
-				last = newscr->_maxx - begx;
+			if (last > limit_x)
+				last = limit_x;
 
 			for (j = oline->firstchar, n = j + begx; j <= last; j++, n++) {
 				if (oline->text[j] != nline->text[n]) {
 					nline->text[n] = oline->text[j];
-
-					if (nline->firstchar == _NOCHANGE)
-						nline->firstchar = nline->lastchar = n;
-					else if (n < nline->firstchar)
-						nline->firstchar = n;
-					else if (n > nline->lastchar)
-						nline->lastchar = n;
+					CHANGED_CELL(nline, n);
 				}
 			}
 
@@ -172,6 +182,8 @@ bool	wide;
 		newscr->_cury = win->_cury + win->_begy + win->_yoffset;
 		newscr->_curx = win->_curx + win->_begx;
 	}
+	newscr->_leaveok = win->_leaveok;
+	
 #ifdef TRACE
 	if (_nc_tracing & TRACE_UPDATE)
 	    _tracedump("newscr", newscr);

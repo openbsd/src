@@ -1,24 +1,37 @@
-/*	$OpenBSD: lib_doupdate.c,v 1.5 1998/01/17 16:27:32 millert Exp $	*/
+/*	$OpenBSD: lib_doupdate.c,v 1.6 1998/07/23 21:18:42 millert Exp $	*/
 
-/***************************************************************************
-*                            COPYRIGHT NOTICE                              *
-****************************************************************************
-*                ncurses is copyright (C) 1992-1995                        *
-*                          Zeyd M. Ben-Halim                               *
-*                          zmbenhal@netcom.com                             *
-*                          Eric S. Raymond                                 *
-*                          esr@snark.thyrsus.com                           *
-*                                                                          *
-*        Permission is hereby granted to reproduce and distribute ncurses  *
-*        by any means and for any fee, whether alone or as part of a       *
-*        larger distribution, in source or in binary form, PROVIDED        *
-*        this notice is included with any such distribution, and is not    *
-*        removed from any of its header files. Mention of ncurses in any   *
-*        applications linked with it is highly appreciated.                *
-*                                                                          *
-*        ncurses comes AS IS with no warranty, implied or expressed.       *
-*                                                                          *
-***************************************************************************/
+/****************************************************************************
+ * Copyright (c) 1998 Free Software Foundation, Inc.                        *
+ *                                                                          *
+ * Permission is hereby granted, free of charge, to any person obtaining a  *
+ * copy of this software and associated documentation files (the            *
+ * "Software"), to deal in the Software without restriction, including      *
+ * without limitation the rights to use, copy, modify, merge, publish,      *
+ * distribute, distribute with modifications, sublicense, and/or sell       *
+ * copies of the Software, and to permit persons to whom the Software is    *
+ * furnished to do so, subject to the following conditions:                 *
+ *                                                                          *
+ * The above copyright notice and this permission notice shall be included  *
+ * in all copies or substantial portions of the Software.                   *
+ *                                                                          *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+ * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+ * IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+ * DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+ * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+ * THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+ *                                                                          *
+ * Except as contained in this notice, the name(s) of the above copyright   *
+ * holders shall not be used in advertising or otherwise to promote the     *
+ * sale, use or other dealings in this Software without prior written       *
+ * authorization.                                                           *
+ ****************************************************************************/
+
+/****************************************************************************
+ *  Author: Zeyd M. Ben-Halim <zmbenhal@netcom.com> 1992,1995               *
+ *     and: Eric S. Raymond <esr@snark.thyrsus.com>                         *
+ ****************************************************************************/
 
 
 /*-----------------------------------------------------------------
@@ -56,9 +69,15 @@
 #endif
 #endif
 
+#ifdef __BEOS__
+/* BeOS select() only works on sockets.  Use the tty hack instead */
+#include <socket.h>
+#define select check_select
+#endif
+
 #include <term.h>
 
-MODULE_ID("Id: lib_doupdate.c,v 1.95 1997/12/27 23:43:53 tom Exp $")
+MODULE_ID("$From: lib_doupdate.c,v 1.102 1998/05/30 23:37:01 Todd.Miller Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -684,8 +703,8 @@ struct tms before, after;
 
 		nonempty = min(screen_lines, newscr->_maxy+1);
 
-		if (!SP->_scrolling) {
-#if USE_HASHMAP		/* still 5% slower 960928 */
+		if (SP->_scrolling) {
+#if USE_HASHMAP
 #if defined(TRACE) || defined(NCURSES_TEST)
 		if (_nc_optimize_enable & OPTIMIZE_HASHMAP)
 #endif /*TRACE */
@@ -744,10 +763,13 @@ struct tms before, after;
 	for (i = nonempty; i <= curscr->_maxy; i++)
 		MARK_NOCHANGE(curscr,i)
 
-	curscr->_curx = newscr->_curx;
-	curscr->_cury = newscr->_cury;
+	if (!newscr->_leaveok)
+	{
+		curscr->_curx = newscr->_curx;
+		curscr->_cury = newscr->_cury;
 
-	GoTo(curscr->_cury, curscr->_curx);
+		GoTo(curscr->_cury, curscr->_curx);
+	}
 
     cleanup:
 	/*
@@ -937,7 +959,7 @@ chtype	blank  = newscr->_line[total-1].text[last-1]; /* lower right char */
 	}
 #if NO_LEAKS
 	if (tstLine != 0)
-	    FreeAndNull(tstLine);
+		FreeAndNull(tstLine);
 #endif
 	return total;
 }
@@ -1125,8 +1147,9 @@ bool	attrchanged = FALSE;
 			if(newLine[firstChar] != blank )
 				PutChar(newLine[firstChar]);
 			ClrToEOL(blank);
-		} else if( newLine[nLastChar] != oldLine[oLastChar]
-				|| !(_nc_idcok && has_ic()) ) {
+		} else if( (nLastChar != oLastChar)
+			&& (newLine[nLastChar] != oldLine[oLastChar]
+				|| !(_nc_idcok && has_ic())) ) {
 			GoTo(lineno, firstChar);
 			if ((oLastChar - nLastChar) > SP->_el_cost) {
 				if(PutRange(oldLine, newLine, lineno, firstChar, nLastChar))
@@ -1156,10 +1179,10 @@ bool	attrchanged = FALSE;
 				GoTo(lineno, firstChar);
 				PutRange(oldLine, newLine, lineno, firstChar, n);
 			}
-			GoTo(lineno, n+1);
 
 			if (oLastChar < nLastChar) {
 				int m = max(nLastNonblank, oLastNonblank);
+				GoTo(lineno, n+1);
 				if (InsCharCost(nLastChar - oLastChar)
 				 > (m - n)) {
 					PutRange(oldLine, newLine, lineno, n+1, m);
@@ -1167,6 +1190,7 @@ bool	attrchanged = FALSE;
 					InsStr(&newLine[n+1], nLastChar - oLastChar);
 				}
 			} else if (oLastChar > nLastChar ) {
+				GoTo(lineno, n+1);
 				if (DelCharCost(oLastChar - nLastChar)
 				    > SP->_el_cost + nLastNonblank - (n+1)) {
 					if(PutRange(oldLine, newLine, lineno,
@@ -1636,17 +1660,17 @@ int _nc_scrolln(int n, int top, int bot, int maxy)
 	if (res == ERR && change_scroll_region)
 	{
 	    if (top != 0 && (SP->_cursrow == top || SP->_cursrow == top-1)
-	        && save_cursor && restore_cursor)
+		&& save_cursor && restore_cursor)
 	    {
 		cursor_saved=TRUE;
-	    	TPUTS_TRACE("save_cursor");
+		TPUTS_TRACE("save_cursor");
 		tputs(save_cursor, 0, _nc_outch);
 	    }
 	    TPUTS_TRACE("change_scroll_region");
 	    tputs(tparm(change_scroll_region, top, bot), 0, _nc_outch);
 	    if (cursor_saved)
 	    {
-	    	TPUTS_TRACE("restore_cursor");
+		TPUTS_TRACE("restore_cursor");
 		tputs(restore_cursor, 0, _nc_outch);
 	    }
 	    else

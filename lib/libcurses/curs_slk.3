@@ -1,9 +1,38 @@
-.\" $OpenBSD: curs_slk.3,v 1.4 1997/12/03 05:45:05 millert Exp $
+.\"***************************************************************************
+.\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
+.\"                                                                          *
+.\" Permission is hereby granted, free of charge, to any person obtaining a  *
+.\" copy of this software and associated documentation files (the            *
+.\" "Software"), to deal in the Software without restriction, including      *
+.\" without limitation the rights to use, copy, modify, merge, publish,      *
+.\" distribute, distribute with modifications, sublicense, and/or sell       *
+.\" copies of the Software, and to permit persons to whom the Software is    *
+.\" furnished to do so, subject to the following conditions:                 *
+.\"                                                                          *
+.\" The above copyright notice and this permission notice shall be included  *
+.\" in all copies or substantial portions of the Software.                   *
+.\"                                                                          *
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS  *
+.\" OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF               *
+.\" MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.   *
+.\" IN NO EVENT SHALL THE ABOVE COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,   *
+.\" DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR    *
+.\" OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR    *
+.\" THE USE OR OTHER DEALINGS IN THE SOFTWARE.                               *
+.\"                                                                          *
+.\" Except as contained in this notice, the name(s) of the above copyright   *
+.\" holders shall not be used in advertising or otherwise to promote the     *
+.\" sale, use or other dealings in this Software without prior written       *
+.\" authorization.                                                           *
+.\"***************************************************************************
+.\"
+.\" $From: curs_slk.3x,v 1.9 1998/03/11 21:12:53 juergen Exp $
+.\" $OpenBSD: curs_slk.3,v 1.5 1998/07/23 21:18:04 millert Exp $
 .TH curs_slk 3 ""
 .SH NAME
 \fBslk_init\fR, \fBslk_set\fR, \fBslk_refresh\fR,
 \fBslk_noutrefresh\fR, \fBslk_label\fR, \fBslk_clear\fR, \fBslk_restore\fR,
-\fBslk_touch\fR, \fBslk_attron\fR, \fBslk_attrset\fR, \fBslk_attroff\fR -
+\fBslk_touch\fR, \fBslk_attron\fR, \fBslk_attrset\fR, \fBslk_attroff\fR, \fBslk_color\fR -
 \fBcurses\fR soft label routines
 .SH SYNOPSIS
 \fB#include <curses.h>\fR
@@ -24,20 +53,22 @@
 .br
 \fBint slk_touch(void);\fR
 .br
-\fBint slk_attron(attr_t attrs);\fR
+\fBint slk_attron(const chtype attrs);\fR
 .br
-\fBint slk_attrset(attr_t attrs);\fR
+\fBint slk_attrset(const chtype attrs);\fR
 .br
 \fBattr_t slk_attr(void);\fR
 .br
-\fBint slk_attroff(attr_t attrs);\fR
+\fBint slk_attroff(const chtype attrs);\fR
+.br
+\fBint slk_color(short color_pair_number);\fR
 .br
 .SH DESCRIPTION
 The slk* functions manipulate the set of soft function-key labels that exist on
 many terminals.  For those terminals that do not have soft labels,
 \fBcurses\fR takes over the bottom line of \fBstdscr\fR, reducing the size of
 \fBstdscr\fR and the variable \fBLINES\fR.  \fBcurses\fR standardizes on eight
-labels of up to eight characters each. In addition to this, the curses 
+labels of up to eight characters each. In addition to this, this curses 
 implementation supports a mode where it simulates 12 labels of up to five
 characters each. This is most common for todays PC like enduser devices.
 Please note that curses simulates this mode by taking over up to two lines at
@@ -80,6 +111,10 @@ routines correspond to \fBattron\fR, \fBattrset\fR, \fBattroff\fR and \fBattr_ge
 They have an effect only if soft labels are simulated on the bottom line of
 the screen.  The default highlight for soft keys is A_STANDOUT (as in 
 System V curses, which does not document this fact).
+
+The \fBslk_color\fR routine corresponds to \fBcolor_set\fR. It has an effect only
+if soft labels are simulated on the bottom line of the screen.
+
 .SH RETURN VALUE
 These routines return \fBERR\fR upon failure and OK (SVr4 specifies only "an
 integer value other than \fBERR\fR") upon successful completion. \fBslk_attr\fR
@@ -94,7 +129,7 @@ The XSI Curses standard, Issue 4, describes these functions.  It changes the
 argument type of the attribute-manipulation functions \fBslk_attron\fR,
 \fBslk_attroff\fR, \fBslk_attrset\fR to be \fBattr_t\fR, and adds \fBconst\fR
 qualifiers. The format codes \fB2\fR and \fB3\fR for \fBslk_init()\fR and the
-function \fBslk_attr\fR are specific to curses.
+function \fBslk_attr\fR are specific to ncurses.
 .SH SEE ALSO
 \fBcurses\fR(3), \fBcurs_attr\fR(3), \fBcurs_initscr\fR(3), \fBcurs_refresh\fR(3)
 .\"#
