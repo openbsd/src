@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.49 2001/04/04 07:02:51 csapuntz Exp $     */
+/*      $OpenBSD: pciide.c,v 1.50 2001/04/04 18:25:07 csapuntz Exp $     */
 /*	$NetBSD: pciide.c,v 1.110 2001/03/20 17:56:46 bouyer Exp $	*/
 
 /*
@@ -373,14 +373,12 @@ const struct pciide_product_desc pciide_sis_products[] =  {
 	}
 };
 
-#ifdef notyet
 const struct pciide_product_desc pciide_acer_products[] =  {
 	{ PCI_PRODUCT_ALI_M5229,	/* Acer Labs M5229 UDMA IDE */
 	  0,
 	  acer_chip_map
 	}
 };
-#endif
 
 const struct pciide_product_desc pciide_triones_products[] =  {
 	{ PCI_PRODUCT_TRIONES_HPT366,	/* Highpoint HPT36x/37x IDE */
@@ -431,10 +429,8 @@ const struct pciide_vendor_desc pciide_vendors[] = {
 	  sizeof(pciide_cypress_products)/sizeof(pciide_cypress_products[0]) },
 	{ PCI_VENDOR_SIS, pciide_sis_products,
 	  sizeof(pciide_sis_products)/sizeof(pciide_sis_products[0]) },
-#ifdef notyet
 	{ PCI_VENDOR_ALI, pciide_acer_products,
 	  sizeof(pciide_acer_products)/sizeof(pciide_acer_products[0]) },
-#endif
 	{ PCI_VENDOR_TRIONES, pciide_triones_products,
 	  sizeof(pciide_triones_products)/sizeof(pciide_triones_products[0]) },
 	{ PCI_VENDOR_PROMISE, pciide_promise_products,
@@ -1066,8 +1062,8 @@ pciide_dma_finish(v, channel, drive)
 	/* stop DMA channel */
 	bus_space_write_1(sc->sc_dma_iot, sc->sc_dma_ioh,
 	    IDEDMA_CMD + IDEDMA_SCH_OFFSET * channel,
-	    bus_space_read_1(sc->sc_dma_iot, sc->sc_dma_ioh,
-		IDEDMA_CMD + IDEDMA_SCH_OFFSET * channel) & ~IDEDMA_CMD_START);
+	    (dma_maps->dma_flags & WDC_DMA_READ) ?
+	    0x00 : IDEDMA_CMD_WRITE);
 
 	/* Unload the map of the data buffer */
 #ifndef __OpenBSD__
@@ -2844,6 +2840,10 @@ acer_chip_map(sc, pa)
 	pciide_mapreg_dma(sc, pa);
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
+
+	if (rev < 0xC4)
+		sc->sc_wdcdev.cap |= WDC_CAPABILITY_NO_ATAPI_DMA;
+
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		if (rev >= 0x20)
@@ -3042,6 +3042,7 @@ hpt_chip_map(sc, pa)
 
 	printf(": DMA");
 	pciide_mapreg_dma(sc, pa);
+	printf("\n");
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
 	    WDC_CAPABILITY_MODE;
 	if (sc->sc_dma_ok) {
@@ -3259,7 +3260,7 @@ pdc202xx_chip_map(sc, pa)
 	pciide_mapreg_dma(sc, pa);
 
 	sc->sc_wdcdev.cap = WDC_CAPABILITY_DATA16 | WDC_CAPABILITY_DATA32 |
-	    WDC_CAPABILITY_MODE;
+	    WDC_CAPABILITY_MODE | WDC_CAPABILITY_NO_ATAPI_DMA;
 	if (sc->sc_dma_ok) {
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA | WDC_CAPABILITY_UDMA;
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_IRQACK;
