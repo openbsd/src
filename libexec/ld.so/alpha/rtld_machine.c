@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.2 2001/05/31 13:26:51 art Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.3 2001/05/31 13:49:27 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -37,6 +37,7 @@
 
 #include <sys/types.h>
 #include <sys/cdefs.h>
+#include <sys/mman.h>
 
 #include <machine/elf_machdep.h>
 
@@ -67,6 +68,7 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 	long	fails = 0;
 	Elf64_Addr loff;
 	Elf64_Rela  *relas;
+	load_list_t *llist;
 
 	loff   = object->load_offs;
 	numrela = object->Dyn.info[relasz] / sizeof(Elf64_Rela);
@@ -74,6 +76,20 @@ _dl_md_reloc(elf_object_t *object, int rel, int relasz)
 
 	if ((object->status & STAT_RELOC_DONE) || !relas) {
 		return(0);
+	}
+
+	/*
+	 * unprotect some segments if we need it.
+	 * XXX - we unprotect waay to much. only the text can have cow
+	 *       relocations.
+	 */
+	if ((rel == DT_REL || rel == DT_RELA)) {
+		for (llist = object->load_list; llist != NULL; llist = llist->next) {
+			if (!(llist->prot & PROT_WRITE)) {
+				_dl_mprotect(llist->start, llist->size,
+					llist->prot|PROT_WRITE);
+			}
+		}
 	}
 
 	for (i = 0; i < numrela; i++, relas++) {
@@ -188,7 +204,18 @@ resolve_failed:
 		fails++;
 	}
 	__asm __volatile("imb" : : : "memory");
-	return(fails);
+
+	/* reprotect the unprotected segments */
+	if ((rel == DT_REL || rel == DT_RELA)) {
+		for (llist = object->load_list; llist != NULL; llist = llist->next) {
+			if (!(llist->prot & PROT_WRITE)) {
+				_dl_mprotect(llist->start, llist->size,
+					llist->prot);
+			}
+		}
+	}
+
+	return (fails);
 }
 
 /*
