@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.77 2004/02/09 01:38:55 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.78 2004/02/09 23:10:04 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -219,8 +219,7 @@ main(int argc, char *argv[])
 	if ((rfd = kr_init(!(conf.flags & BGPD_FLAG_NO_FIB_UPDATE))) == -1)
 		quit = 1;
 
-	for (net = TAILQ_FIRST(&net_l); net != TAILQ_END(&net_l);
-	    net = TAILQ_FIRST(&net_l)) {
+	while ((net = TAILQ_FIRST(&net_l)) != NULL) {
 		TAILQ_REMOVE(&net_l, net, network_l);
 		free(net);
 	}
