@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.3 2000/03/20 07:26:51 rahnds Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.4 2000/03/31 04:49:35 rahnds Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.4 1999/06/14 08:53:06 tsubai Exp $	*/
 
 /*-
@@ -182,7 +182,6 @@ wdc_obio_attach(parent, self, aux)
 			sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
-printf ("wdc_obio cmd_ioh %x ctl_ioh %x\n", chp->cmd_ioh, chp->ctl_ioh); 
 	chp->data32iot = chp->cmd_iot;
 	chp->data32ioh = chp->cmd_ioh;
 
