@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.35 2000/11/17 04:53:57 angelos Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.59 2000/10/16 18:16:59 provos Exp $	*/
+/*      $OpenBSD: pf_key_v2.c,v 1.36 2000/11/17 05:16:36 angelos Exp $  */
+/*	$EOM: pf_key_v2.c,v 1.67 2000/11/17 05:10:14 angelos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -51,6 +51,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <pwd.h>
 #include <errno.h>
 
 #include "sysdep.h"
@@ -451,7 +452,7 @@ pf_key_v2_write (struct pf_key_v2_msg *pmsg)
   n = writev (pf_key_v2_socket, iov, cnt);
   if (n == -1)
     {
-      log_error ("pf_key_v2_write: writev (%d, 0x%p, %d) failed",
+      log_error ("pf_key_v2_write: writev (%d, %p, %d) failed",
 		 pf_key_v2_socket, iov, cnt);
       goto cleanup;
     }
@@ -806,7 +807,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 	  break;
 
 	case IPSEC_AUTH_HMAC_SHA:
-#ifdef SADB_AALG_SHA1HMAC96 
+#ifdef SADB_AALG_SHA1HMAC96
 	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC96;
 #else
 	  ssa.sadb_sa_auth = SADB_AALG_SHA1HMAC;
@@ -818,7 +819,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 #ifdef SADB_X_AALG_RIPEMD160HMAC96
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC96;
 #else
-	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC;
+	  ssa.sadb_sa_auth = SADB_AALG_RIPEMD160HMAC;
 #endif
 	  break;
 #endif
@@ -863,7 +864,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming)
 #ifdef SADB_X_AALG_RIPEMD160HMAC96
 	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC96;
 #else
-	  ssa.sadb_sa_auth = SADB_X_AALG_RIPEMD160HMAC;
+	  ssa.sadb_sa_auth = SADB_AALG_RIPEMD160HMAC;
 #endif
 	  break;
 #endif
@@ -1513,7 +1514,9 @@ pf_key_v2_enable_sa (struct sa *sa)
   struct sockaddr *dst, *src;
   int dstlen, srclen, error;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
+#ifndef SADB_X_EXT_FLOW_TYPE
   in_addr_t hostmask = 0xffffffff; /* XXX IPv4 specific */
+#endif /* SADB_X_EXT_FLOW_TYPE */
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
   sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
@@ -1526,7 +1529,8 @@ pf_key_v2_enable_sa (struct sa *sa)
   if (error)
     return error;
 
-  /* Ingress flows */
+#ifndef SADB_X_EXT_FLOW_TYPE
+  /* Ingress flows, handling SA bundles */
   while (TAILQ_NEXT (proto, link))
     {
       error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
@@ -1540,7 +1544,9 @@ pf_key_v2_enable_sa (struct sa *sa)
 	return error;
       proto = TAILQ_NEXT (proto, link);
     }
+#endif /* SADB_X_EXT_FLOW_TYPE */
 
+#if 0 /* This should not be needed -- but there's some weird implementations */
   /* The remote gateway is also allowed to talk to the subnet */
   error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
 			  hostmask, isa->src_net, isa->src_mask,
@@ -1549,7 +1555,9 @@ pf_key_v2_enable_sa (struct sa *sa)
 			  ((struct sockaddr_in *)dst)->sin_addr.s_addr, 0, 1);
   if (error)
     return error;
+#endif /* 0 */
 
+#ifndef SADB_X_EXT_FLOW_TYPE
   /* The remote gateway is also allowed to talk to the local gateway */
   error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
 			  hostmask,
@@ -1560,6 +1568,7 @@ pf_key_v2_enable_sa (struct sa *sa)
 			  0, 1);
   if (error)
     return error;
+#endif /* SADB_X_EXT_FLOW_TYPE */
 
   return pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
 			 isa->src_mask, proto->spi[1], proto->proto,
@@ -1573,9 +1582,12 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 {
   struct ipsec_sa *isa = sa->data;
   struct sockaddr *dst, *src;
-  int dstlen, srclen, error;
+  int dstlen, srclen;
   struct proto *proto = TAILQ_FIRST (&sa->protos);
+#ifndef SADB_X_EXT_FLOW_TYPE
   in_addr_t hostmask = 0xffffffff; /* XXX IPv4 specific */
+  int error;
+#endif /* SADB_X_EXT_FLOW_TYPE */
 
   sa->transport->vtbl->get_dst (sa->transport, &dst, &dstlen);
   sa->transport->vtbl->get_src (sa->transport, &src, &srclen);
@@ -1588,7 +1600,8 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 
   else
     {
-      /* Ingress flow */
+#ifndef SADB_X_EXT_FLOW_TYPE
+      /* Ingress flow --- SA bundles */
       while (TAILQ_NEXT (proto, link))
 	{
           error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
@@ -1612,7 +1625,9 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 			      1, 1);
       if (error)
 	return error;
+#endif /* SADB_X_EXT_FLOW_TYPE */
 
+#if 0
       error = pf_key_v2_flow (((struct sockaddr_in *)dst)->sin_addr.s_addr,
 			      hostmask, isa->src_net, isa->src_mask,
 			      proto->spi[1], proto->proto,
@@ -1621,6 +1636,7 @@ pf_key_v2_disable_sa (struct sa *sa, int incoming)
 			      1, 1);
       if (error)
 	return error;
+#endif /* 0 */
 
       return pf_key_v2_flow (isa->dst_net, isa->dst_mask, isa->src_net,
 			     isa->src_mask, proto->spi[1], proto->proto,
@@ -1914,6 +1930,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   char lname[90], dname[90], configname[30];
   int shostflag = 0, dhostflag = 0;
   struct pf_key_v2_node *ext;
+  struct passwd *pwd = NULL;
 
   msg = (struct sadb_msg *)TAILQ_FIRST (pmsg)->seg;
 
@@ -2147,9 +2164,41 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  slen = (srcident->sadb_ident_len * sizeof (u_int64_t))
 	    - sizeof (struct sadb_ident);
 	  if (!prefstring)
-	    prefstring = "USER_FQDN";
+	    {
+	      prefstring = "USER_FQDN";
 
-	  srcid = malloc (slen + strlen (prefstring) + 1 + strlen ("ID:/"));
+	      /*
+	       * Check whether there is a string following the header;
+	       * if no, that there is a user ID (and acquire the login
+	       * name). If there is both a string and a user ID, check
+	       * that they match.
+	       */
+	      if ((slen == 0) && (srcident->sadb_ident_id == 0))
+	        {
+		  log_error ("pf_key_v2_acquire: no user FQDN or ID provided");
+		  goto fail;
+		} 
+
+	      if (srcident->sadb_ident_id)
+	        {
+		  pwd = getpwuid (srcident->sadb_ident_id);
+		  if (pwd == NULL)
+		    {
+		      log_error ("pf_key_v2_acquire: could not acquire username from provided ID %d", srcident->sadb_ident_id);
+		      goto fail;
+		    }
+
+		  if (slen != 0)
+		    if (strcmp (pwd->pw_name, (char *)(srcident + 1)) != 0)
+		      {
+			log_error ("pf_key_v2_acquire: provided user name and ID do not match (%s != %s)", (char *)(srcident + 1), pwd->pw_name);
+			goto fail;
+		      }
+		}
+	    }
+
+	  srcid = malloc ((slen ? slen : strlen (pwd->pw_name)) +
+			  strlen (prefstring) + 1 + strlen ("ID:/"));
 	  if (!srcid)
 	    {
 	      log_error ("pf_key_v2_acquire: malloc (%d) failed",
@@ -2158,9 +2207,15 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	    }
 
 	  sprintf (srcid, "ID:%s/", prefstring);
-	  strlcat (srcid + strlen ("ID:/") + strlen (prefstring),
-		   (char *)(srcident + 1),
-		   slen + strlen (prefstring) + 1 + strlen ("ID:/"));
+	  if (slen != 0)
+	    strlcat (srcid + strlen ("ID:/") + strlen (prefstring),
+		     (char *)(srcident + 1),
+		     slen + strlen (prefstring) + 1 + strlen ("ID:/"));
+	  else
+	    strlcat (srcid + strlen ("ID:/") + strlen (prefstring),
+		     pwd->pw_name,
+		     strlen (prefstring) + 1 + strlen ("ID:/"));
+	  pwd = NULL;
 
 	  /* Set the section if it doesn't already exist */
 	  if (!conf_get_str (srcid, "ID-type"))
@@ -2210,9 +2265,41 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	  slen = (dstident->sadb_ident_len * sizeof (u_int64_t))
 	    - sizeof (struct sadb_ident);
 	  if (!prefstring)
-	    prefstring = "USER_FQDN";
+	    {
+	      prefstring = "USER_FQDN";
 
-	  dstid = malloc (slen + strlen (prefstring) + 1 + strlen ("ID:/"));
+	      /*
+	       * Check whether there is a string following the header;
+	       * if no, that there is a user ID (and acquire the login
+	       * name). If there is both a string and a user ID, check
+	       * that they match.
+	       */
+	      if ((slen == 0) && (dstident->sadb_ident_id == 0))
+	        {
+		  log_error ("pf_key_v2_acquire: no user FQDN or ID provided");
+		  goto fail;
+		} 
+
+	      if (dstident->sadb_ident_id)
+	        {
+		  pwd = getpwuid (dstident->sadb_ident_id);
+		  if (pwd == NULL)
+		    {
+		      log_error ("pf_key_v2_acquire: could not acquire username from provided ID %d", dstident->sadb_ident_id);
+		      goto fail;
+		    }
+
+		  if (slen != 0)
+		    if (strcmp (pwd->pw_name, (char *)(dstident + 1)) != 0)
+		      {
+			log_error ("pf_key_v2_acquire: provided user name and ID do not match (%s != %s)", (char *)(dstident + 1), pwd->pw_name);
+			goto fail;
+		      }
+		}
+	    }
+
+	  dstid = malloc ((slen ? slen : strlen (pwd->pw_name))
+			  + strlen (prefstring) + 1 + strlen ("ID:/"));
 	  if (!dstid)
 	    {
 	      log_error ("pf_key_v2_acquire: malloc (%d) failed",
@@ -2221,9 +2308,15 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	    }
 
 	  sprintf (dstid, "ID:%s/", prefstring);
-	  strlcat (dstid + strlen ("ID:/") + strlen (prefstring),
-		   (char *) (dstident + 1),
-		   slen + strlen (prefstring) + 1 + strlen ("ID:/"));
+	  if (slen != 0)
+	    strlcat (dstid + strlen ("ID:/") + strlen (prefstring),
+		     (char *)(dstident + 1),
+		     slen + strlen (prefstring) + 1 + strlen ("ID:/"));
+	  else
+	    strlcat (dstid + strlen ("ID:/") + strlen (prefstring),
+		     pwd->pw_name,
+		     strlen (prefstring) + 1 + strlen ("ID:/"));
+	  pwd = NULL;
 
 	  /* Set the section if it doesn't already exist */
 	  if (!conf_get_str (dstid, "ID-type"))
@@ -2281,7 +2374,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
    * - Phase
    * - ID (if provided)
    * - Remote-ID (if provided)
-   * - Listen-address (if provided)
+   * - Local-address (if provided)
    * - Address
    * - Configuration (if an entry "ISAKMP-configuration-dstaddr(/srcaddr)"
    *                  exists -- otherwise use the defaults)
@@ -2289,7 +2382,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
   peer = malloc (strlen (dstbuf) + strlen (srcbuf) +
                  (srcid ? strlen (srcid) : 0) +
-                (dstid ? strlen (dstid) : 0) + strlen ("Peer-/-/") + 1);
+		 (dstid ? strlen (dstid) : 0) + strlen ("Peer-/-/") + 1);
   if (!peer)
     goto fail;
 
@@ -2339,7 +2432,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	}
       else
         {
-	  if (conf_set (af, lname, "ID-type", "IPV4_SUBNET", 0, 0)
+	  if (conf_set (af, lname, "ID-type", "IPV4_ADDR_SUBNET", 0, 0)
 	      || conf_set (af, lname, "Network", ssflow, 0, 0)
 	      || conf_set (af, lname, "Netmask", ssmask, 0, 0))
 	    {
@@ -2370,7 +2463,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 	}
       else
         {
-	  if (conf_set (af, dname, "ID-type", "IPV4_SUBNET", 0, 0)
+	  if (conf_set (af, dname, "ID-type", "IPV4_ADDR_SUBNET", 0, 0)
 	      || conf_set (af, dname, "Network", sdflow, 0, 0)
 	      || conf_set (af, dname, "Netmask", sdmask, 0, 0))
 	    {
@@ -2427,9 +2520,9 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
       /* XXX Default transform set should be settable */
       /* Phase 1 configuration */
-      if (!conf_get_str (confname, "Exchange_Type"))
+      if (!conf_get_str (confname, "exchange_type"))
         {
-	  if (conf_set (af, confname, "exchange_type", "ID_PROT", 0, 0)
+	  if (conf_set (af, confname, "Exchange_Type", "ID_PROT", 0, 0)
 	      || conf_set (af, confname, "DOI", "IPSEC", 0, 0)
 	      || conf_set (af, confname, "Transforms", "3DES-SHA-RSA_SIG", 0,
 			   0))
