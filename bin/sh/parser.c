@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.7 1996/12/14 12:18:23 mickey Exp $	*/
+/*	$OpenBSD: parser.c,v 1.8 1997/06/18 19:15:51 kstailey Exp $	*/
 /*	$NetBSD: parser.c,v 1.31 1996/11/25 20:22:00 christos Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-static char rcsid[] = "$OpenBSD: parser.c,v 1.7 1996/12/14 12:18:23 mickey Exp $";
+static char rcsid[] = "$OpenBSD: parser.c,v 1.8 1997/06/18 19:15:51 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -842,7 +842,7 @@ xxreadtoken() {
 		}
 	}
 breakloop:
-	return readtoken1(c, BASESYNTAX, (char *)NULL, 0);
+	return readtoken1(c, BASESYNTAX, NULL, 0);
 #undef RETURN
 }
 
@@ -1500,7 +1500,7 @@ synerror(msg)
 	if (commandname)
 		outfmt(&errout, "%s: %d: ", commandname, startlinno);
 	outfmt(&errout, "Syntax error: %s\n", msg);
-	error((char *)NULL);
+	error(NULL);
 }
 
 STATIC void

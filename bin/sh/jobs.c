@@ -1,4 +1,4 @@
-/*	$OpenBSD: jobs.c,v 1.4 1996/11/02 05:18:26 millert Exp $	*/
+/*	$OpenBSD: jobs.c,v 1.5 1997/06/18 19:15:50 kstailey Exp $	*/
 /*	$NetBSD: jobs.c,v 1.17 1995/07/04 16:26:45 pk Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: jobs.c,v 1.4 1996/11/02 05:18:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: jobs.c,v 1.5 1997/06/18 19:15:50 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -284,7 +284,7 @@ showjobs(change)
 	char s[64];
 
 	TRACE(("showjobs(%d) called\n", change));
-	while (dowait(0, (struct job *)NULL) > 0);
+	while (dowait(0, NULL) > 0);
 	for (jobno = 1, jp = jobtab ; jobno <= njobs ; jobno++, jp++) {
 		if (! jp->used)
 			continue;
@@ -406,7 +406,7 @@ waitcmd(argc, argv)
 					break;
 			}
 		}
-		dowait(1, (struct job *)NULL);
+		dowait(1, NULL);
 	}
 }
 
@@ -879,7 +879,7 @@ waitproc(block, status)
 #endif
 	if (block == 0)
 		flags |= WNOHANG;
-	return wait3(status, flags, (struct rusage *)NULL);
+	return wait3(status, flags, NULL);
 #else
 #ifdef SYSV
 	int (*save)();

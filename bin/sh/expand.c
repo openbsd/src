@@ -1,4 +1,4 @@
-/*    $OpenBSD: expand.c,v 1.6 1996/11/02 16:00:04 millert Exp $     */
+/*    $OpenBSD: expand.c,v 1.7 1997/06/18 19:15:50 kstailey Exp $     */
 /*    $NetBSD: expand.c,v 1.20 1996/02/12 15:11:41 christos Exp $     */
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-static char rcsid[] = "$OpenBSD: expand.c,v 1.6 1996/11/02 16:00:04 millert Exp $";
+static char rcsid[] = "$OpenBSD: expand.c,v 1.7 1997/06/18 19:15:50 kstailey Exp $";
 #endif
 #endif /* not lint */
 
@@ -123,7 +123,7 @@ expandhere(arg, fd)
 	int fd;			/* where to write the expanded version */
 	{
 	herefd = fd;
-	expandarg(arg, (struct arglist *)NULL, 0);
+	expandarg(arg, NULL, 0);
 	xwrite(fd, stackblock(), expdest - stackblock());
 }
 
@@ -462,7 +462,7 @@ subevalvar(p, str, strloc, subtype, startloc, varflags)
 	case VSQUESTION:
 		if (*p != CTLENDVAR) {
 			outfmt(&errout, "%s\n", startp);
-			error((char *)NULL);
+			error(NULL);
 		}
 		error("%.*s: parameter %snot set", p - str - 1,
 		      str, (varflags & VSNUL) ? "null or "
