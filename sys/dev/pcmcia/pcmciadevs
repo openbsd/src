@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.23 1999/08/25 21:54:57 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.24 1999/10/01 04:04:01 downsj Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -187,6 +187,7 @@ product NEWMEDIA BUSTOASTER	0xc102 NewMedia BusToaster SCSI
 
 /* Standard Microsystems Corporation */
 product SMC 8016		0x0105 SMC 8016
+product SMC 8020		0x0001 SMC EtherEZ 8020
 product SMC EZCARD		0x8022 SMC EXCard 10 PCMCIA
 
 /* Cards we know only by their cis */
