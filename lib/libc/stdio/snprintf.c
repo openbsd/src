@@ -35,9 +35,10 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: snprintf.c,v 1.4 1997/11/29 19:28:29 millert Exp $";
+static char rcsid[] = "$OpenBSD: snprintf.c,v 1.5 1998/01/12 06:14:31 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
+#include <limits.h>
 #include <stdio.h>
 #ifdef __STDC__
 #include <stdarg.h>
@@ -60,18 +61,21 @@ snprintf(str, n, fmt, va_alist)
 	va_list ap;
 	FILE f;
 
-	if ((int)n < 1)
-		return (-1);
+	/* While snprintf(3) specifies size_t stdio uses an int internally */
+	if (n > INT_MAX)
+		n = INT_MAX;
 #ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
 #endif
+	f._file = -1;
 	f._flags = __SWR | __SSTR;
 	f._bf._base = f._p = (unsigned char *)str;
-	f._bf._size = f._w = n - 1;
+	f._bf._size = f._w = n ? n - 1 : 0;
 	ret = vfprintf(&f, fmt, ap);
-	*f._p = 0;
+	if (n)
+		*f._p = 0;
 	va_end(ap);
 	return (ret);
 }
