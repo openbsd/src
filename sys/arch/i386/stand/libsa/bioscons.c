@@ -1,4 +1,4 @@
-/*	$OpenBSD: bioscons.c,v 1.9 1997/09/20 22:40:42 flipk Exp $	*/
+/*	$OpenBSD: bioscons.c,v 1.10 1997/09/24 06:02:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -35,7 +35,6 @@
 #include <sys/types.h>
 #include <machine/biosvar.h>
 #include <machine/pio.h>
-#include <machine/bus.h>
 #include <dev/isa/isareg.h>
 #include <dev/ic/mc146818reg.h>
 #include <dev/ic/comreg.h>
@@ -212,14 +211,10 @@ com_setsp(sp)
 			   user change the terminal */
 			for (tt = getsecs() + 5; getsecs() < tt;);
 		}
-		bus_space_write_1(I386_BUS_SPACE_IO, comports[unit],
-				  com_cfcr, LCR_DLAB);
-		bus_space_write_1(I386_BUS_SPACE_IO, comports[unit],
-				  com_dlbl, newsp);
-		bus_space_write_1(I386_BUS_SPACE_IO, comports[unit],
-				  com_dlbh, newsp>>8);
-		bus_space_write_1(I386_BUS_SPACE_IO, comports[unit], 
-				  com_cfcr, LCR_8BITS);
+		outb(comports[unit] + com_cfcr, LCR_DLAB);
+		outb(comports[unit] + com_dlbl, newsp);
+		outb(comports[unit] + com_dlbh, newsp>>8);
+		outb(comports[unit] + com_cfcr, LCR_8BITS);
 		printf("using com%d console at %d baud\n", unit, sp);
 	} else {
 		printf("speed on next com device will be %d\n"
