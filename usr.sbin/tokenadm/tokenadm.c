@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenadm.c,v 1.1 2000/12/20 02:08:09 millert Exp $	*/
+/*	$OpenBSD: tokenadm.c,v 1.2 2001/05/30 20:43:02 markus Exp $	*/
 
 /*-
  * Copyright (c) 1995 Migration Associates Corp. All Rights Reserved
@@ -236,7 +236,7 @@ usage:
 				goto modech;
 			break;
 		case ENABLE:
-			if (process_record(*argv, ~TOKEN_ENABLED, 0)) {
+			if (process_record(*argv, ~TOKEN_ENABLED, TOKEN_ENABLED)) {
 				warnx("%s: could not enable", *argv);
 				++errors;
 			}
