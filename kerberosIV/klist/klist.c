@@ -1,8 +1,15 @@
-/*	$OpenBSD: klist.c,v 1.4 1998/02/18 11:53:56 art Exp $	*/
+/*	$OpenBSD: klist.c,v 1.5 1998/02/25 15:51:02 art Exp $	*/
 /* $KTH: klist.c,v 1.28 1997/05/26 17:33:50 bg Exp $ */
 
 /*
- * This software may now be redistributed outside the US.
+ * This source code is no longer held under any constraint of USA
+ * `cryptographic laws' since it was exported legally.  The cryptographic
+ * functions were removed from the code and a "Bones" distribution was
+ * made.  A Commodity Jurisdiction Request #012-94 was filed with the
+ * USA State Department, who handed it to the Commerce department.  The
+ * code was determined to fall under General License GTDA under ECCN 5D96G,
+ * and hence exportable.  The cryptographic interfaces were re-added by Eric
+ * Young, and then KTH proceeded to maintain the code in the free world.
  */
 
 /*-

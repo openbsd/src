@@ -1,8 +1,15 @@
-/*	$OpenBSD: get_svc_in_tkt.c,v 1.4 1997/12/22 15:02:06 art Exp $	*/
+/*	$OpenBSD: get_svc_in_tkt.c,v 1.5 1998/02/25 15:51:11 art Exp $	*/
 /* $KTH: get_svc_in_tkt.c,v 1.8 1997/03/23 03:53:09 joda Exp $ */
 
 /*
- * This software may now be redistributed outside the US.
+ * This source code is no longer held under any constraint of USA
+ * `cryptographic laws' since it was exported legally.  The cryptographic
+ * functions were removed from the code and a "Bones" distribution was
+ * made.  A Commodity Jurisdiction Request #012-94 was filed with the
+ * USA State Department, who handed it to the Commerce department.  The
+ * code was determined to fall under General License GTDA under ECCN 5D96G,
+ * and hence exportable.  The cryptographic interfaces were re-added by Eric
+ * Young, and then KTH proceeded to maintain the code in the free world.
  *
  */
 

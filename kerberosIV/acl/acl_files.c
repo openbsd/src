@@ -1,8 +1,15 @@
-/*	$OpenBSD: acl_files.c,v 1.7 1997/12/22 16:27:44 art Exp $	*/
+/*	$OpenBSD: acl_files.c,v 1.8 1998/02/25 15:50:30 art Exp $	*/
 /* $KTH: acl_files.c,v 1.10 1997/05/02 14:28:56 assar Exp $ */
 
 /*
- * This software may now be redistributed outside the US.
+ * This source code is no longer held under any constraint of USA
+ * `cryptographic laws' since it was exported legally.  The cryptographic
+ * functions were removed from the code and a "Bones" distribution was
+ * made.  A Commodity Jurisdiction Request #012-94 was filed with the
+ * USA State Department, who handed it to the Commerce department.  The
+ * code was determined to fall under General License GTDA under ECCN 5D96G,
+ * and hence exportable.  The cryptographic interfaces were re-added by Eric
+ * Young, and then KTH proceeded to maintain the code in the free world.
  *
  */
 

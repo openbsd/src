@@ -1,8 +1,15 @@
-/*	$OpenBSD: kprop.c,v 1.5 1998/02/18 12:55:17 art Exp $	*/
+/*	$OpenBSD: kprop.c,v 1.6 1998/02/25 15:51:03 art Exp $	*/
 /* $KTH: kprop.c,v 1.30 1997/12/05 01:34:49 assar Exp $ */
 
 /*
- * This software may now be redistributed outside the US.
+ * This source code is no longer held under any constraint of USA
+ * `cryptographic laws' since it was exported legally.  The cryptographic
+ * functions were removed from the code and a "Bones" distribution was
+ * made.  A Commodity Jurisdiction Request #012-94 was filed with the
+ * USA State Department, who handed it to the Commerce department.  The
+ * code was determined to fall under General License GTDA under ECCN 5D96G,
+ * and hence exportable.  The cryptographic interfaces were re-added by Eric
+ * Young, and then KTH proceeded to maintain the code in the free world.
  */
 
 /*-

@@ -1,8 +1,15 @@
-/*	$OpenBSD: tkt_string.c,v 1.6 1997/12/22 15:02:16 art Exp $	*/
+/*	$OpenBSD: tkt_string.c,v 1.7 1998/02/25 15:51:46 art Exp $	*/
 /* $KTH: tkt_string.c,v 1.11 1997/10/24 10:18:07 assar Exp $ */
 
 /*
- * This software may now be redistributed outside the US.
+ * This source code is no longer held under any constraint of USA
+ * `cryptographic laws' since it was exported legally.  The cryptographic
+ * functions were removed from the code and a "Bones" distribution was
+ * made.  A Commodity Jurisdiction Request #012-94 was filed with the
+ * USA State Department, who handed it to the Commerce department.  The
+ * code was determined to fall under General License GTDA under ECCN 5D96G,
+ * and hence exportable.  The cryptographic interfaces were re-added by Eric
+ * Young, and then KTH proceeded to maintain the code in the free world.
  *
  */
 

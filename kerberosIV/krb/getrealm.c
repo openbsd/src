@@ -1,8 +1,15 @@
-/*	$OpenBSD: getrealm.c,v 1.9 1997/12/22 15:02:07 art Exp $	*/
+/*	$OpenBSD: getrealm.c,v 1.10 1998/02/25 15:51:15 art Exp $	*/
 /* $KTH: getrealm.c,v 1.26 1997/10/08 22:51:13 joda Exp $ */
 
 /*
- * This software may now be redistributed outside the US.
+ * This source code is no longer held under any constraint of USA
+ * `cryptographic laws' since it was exported legally.  The cryptographic
+ * functions were removed from the code and a "Bones" distribution was
+ * made.  A Commodity Jurisdiction Request #012-94 was filed with the
+ * USA State Department, who handed it to the Commerce department.  The
+ * code was determined to fall under General License GTDA under ECCN 5D96G,
+ * and hence exportable.  The cryptographic interfaces were re-added by Eric
+ * Young, and then KTH proceeded to maintain the code in the free world.
  *
  */
 

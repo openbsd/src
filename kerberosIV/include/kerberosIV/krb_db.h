@@ -1,8 +1,15 @@
-/*	$OpenBSD: krb_db.h,v 1.3 1998/02/18 11:53:43 art Exp $	*/
+/*	$OpenBSD: krb_db.h,v 1.4 1998/02/25 15:50:42 art Exp $	*/
 /* $KTH: krb_db.h,v 1.15 1996/12/17 20:34:32 assar Exp $ */
 
 /*
- * This software may now be redistributed outside the US.
+ * This source code is no longer held under any constraint of USA
+ * `cryptographic laws' since it was exported legally.  The cryptographic
+ * functions were removed from the code and a "Bones" distribution was
+ * made.  A Commodity Jurisdiction Request #012-94 was filed with the
+ * USA State Department, who handed it to the Commerce department.  The
+ * code was determined to fall under General License GTDA under ECCN 5D96G,
+ * and hence exportable.  The cryptographic interfaces were re-added by Eric
+ * Young, and then KTH proceeded to maintain the code in the free world.
  */
 
 /*-
