@@ -1,4 +1,4 @@
-.\"	$OpenBSD: nat.conf.5,v 1.3 2001/07/02 17:02:22 millert Exp $
+.\"	$OpenBSD: nat.conf.5,v 1.4 2001/07/06 21:19:53 chris Exp $
 .\"
 .\" Copyright (c) 2001 Ian Darwin.  All rights reserved.
 .\"
@@ -49,6 +49,9 @@ rdr|nat ifname ipspec '->' ipspec
 .Pp
 .Li ifname
 is a network name such as fxp4, ne0, ep1.
+An
+.Li ifname
+can be preceded with the character `!' to negate it.
 .Li ipspec
 is a host number or a network number with netmask bits after a slash,
 and optionally the word 'port' and a port number.
@@ -86,6 +89,15 @@ doesn't have permission to bind to port 80).
 .Bd -literal
 # map tomcat on 8080 to appear to be on 80
 rdr ne3 0.0.0.0/0 port 80 -> 127.0.0.1 port 8080
+.Ed
+.Pp
+In the example below, lo0 is the system loopback; the machine translates
+all packets coming from 192.168.168.0/24 to 204.92.77.111 going out any
+interface except the loopback.  This has the net effect of making traffic
+traffic from the 192.168.168.0/24 network appear as though it is part of the
+Internet routeable 204.92.77.111 to nodes behind any interface on the router.
+.Bd -literal
+nat ! lo0 192.168.168.0/24 -> 204.92.77.111
 .Ed
 .Pp
 In the example below, fxp1 is the outside interface; the machine sits between a

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.30 2001/07/06 08:26:57 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.31 2001/07/06 21:19:56 chris Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -126,6 +126,7 @@ struct pf_nat {
 	u_int32_t	 daddr;
 	u_int8_t	 proto;
 	u_int8_t	 not;
+	u_int8_t	 ifnot;
 };
 
 struct pf_rdr {
@@ -140,6 +141,7 @@ struct pf_rdr {
 	u_int16_t	 rport;
 	u_int8_t	 proto;
 	u_int8_t	 not;
+	u_int8_t	 ifnot;
 	u_int8_t	 opts;
 };
 

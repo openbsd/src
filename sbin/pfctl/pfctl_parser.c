@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.27 2001/07/04 23:45:40 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.28 2001/07/06 21:19:54 chris Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -262,7 +262,10 @@ print_flags(u_int8_t f)
 void
 print_nat(struct pf_nat *n)
 {
-	printf("nat %s ", n->ifname);
+	printf("nat ");
+	if (n->ifnot)
+		printf("! ");
+	printf("%s ", n->ifname);
 	if (n->not)
 		printf("! ");
 	print_addr(n->saddr);
@@ -289,7 +292,10 @@ print_nat(struct pf_nat *n)
 void
 print_rdr(struct pf_rdr *r)
 {
-	printf("rdr %s ", r->ifname);
+	printf("rdr ");
+	if (r->ifnot)
+		printf("! ");
+	printf("%s ", r->ifname);
 	if (r->not)
 		printf("! ");
 	print_addr(r->daddr);
@@ -977,6 +983,10 @@ parse_nat(int n, char *l, struct pf_nat *nat)
 	w = next_word(&l);
 
 	/* if */
+	if (!strcmp(w, "!")) {
+		nat->ifnot = 1;
+		w = next_word(&l);
+	}
 	strncpy(nat->ifname, w, 16);
 	w = next_word(&l);
 
@@ -1048,6 +1058,10 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 	w = next_word(&l);
 
 	/* if */
+	if (!strcmp(w, "!")) {
+		rdr->ifnot = 1;
+		w = next_word(&l);
+	}
 	strncpy(rdr->ifname, w, 16);
 	w = next_word(&l);
 
