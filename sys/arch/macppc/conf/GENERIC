@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.50 2004/01/11 16:33:01 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.51 2004/04/11 19:44:11 deraadt Exp $g
 #
 # PPC GENERIC config file
 #
@@ -196,6 +196,8 @@ cardbus*	at cardslot?
 pcmcia*		at cardslot?
 cbb*		at pci? dev ? function ?
 cardslot*	at cbb?
+ep*		at pcmcia? function ?		# PCMCIA based 3C5xx ethernet
+an*		at pcmcia? function ?		# Cisco/Aironet
 wi*		at pcmcia? function ?		# WaveLAN IEEE 802.11DS
 dc*		at cardbus? dev ? function ?	# 21143, "tulip" clone ethernet
 #fxp*		at cardbus? dev ? function ?	# Intel PRO/100 ethernet
