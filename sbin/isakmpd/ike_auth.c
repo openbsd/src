@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_auth.c,v 1.93 2004/06/22 18:22:18 hshoexer Exp $	 */
+/* $OpenBSD: ike_auth.c,v 1.94 2004/06/23 03:01:52 hshoexer Exp $	 */
 /* $EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	 */
 
 /*
@@ -148,6 +148,7 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 {
 	char	*key, *buf;
 #if defined (USE_X509) || defined (USE_KEYNOTE)
+	int	 fd;
 	char	*keyfile;
 #if defined (USE_X509)
 	FILE	*keyfp;
@@ -204,7 +205,7 @@ ike_auth_get_key(int type, char *id, char *local_id, size_t *keylen)
 			struct stat     sb;
 			struct keynote_deckey dc;
 			char           *privkeyfile, *buf2;
-			int             fd, pkflen;
+			int             pkflen;
 			size_t          size;
 
 			pkflen = strlen(keyfile) + strlen(local_id) +
@@ -284,13 +285,21 @@ ignorekeynote:
 		/* Otherwise, try X.509 */
 		keyfile = conf_get_str("X509-certificates", "Private-key");
 
-		if (check_file_secrecy(keyfile, &fsize))
-			return 0;
-
-		keyfp = monitor_fopen(keyfile, "r");
-		if (!keyfp) {
+		fd = monitor_open(keyfile, O_RDONLY, 0);
+		if (fd < 0) {
 			log_print("ike_auth_get_key: failed opening \"%s\"",
 			    keyfile);
+			return 0;
+		}
+
+		if (check_file_secrecy_fd(fd, keyfile, &fsize) < 0) {
+			close(fd);
+			return 0;
+		}
+
+		if ((keyfp = fdopen(fd, "r")) == NULL) {
+			log_print("ike_auth_get_key: fdopen failed");
+			close(fd);
 			return 0;
 		}
 #if SSLEAY_VERSION_NUMBER >= 0x00904100L

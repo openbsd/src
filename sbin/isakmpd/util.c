@@ -1,4 +1,4 @@
-/* $OpenBSD: util.c,v 1.44 2004/06/23 01:17:29 ho Exp $	 */
+/* $OpenBSD: util.c,v 1.45 2004/06/23 03:01:53 hshoexer Exp $	 */
 /* $EOM: util.c,v 1.23 2000/11/23 12:22:08 niklas Exp $	 */
 
 /*
@@ -505,32 +505,6 @@ util_ntoa(char **buf, int af, u_int8_t *addr)
  * Returns -1 on failure, 0 otherwise.
  * Also, if FILE_SIZE is a not a null pointer, store file size here.
  */
-int
-check_file_secrecy(char *name, size_t *file_size)
-{
-	struct stat st;
-
-	if (monitor_stat(name, &st) == -1) {
-		log_error("check_file_secrecy: stat (\"%s\") failed", name);
-		return -1;
-	}
-	if (st.st_uid != 0 && st.st_uid != getuid()) {
-		log_print("check_file_secrecy: "
-		    "not loading %s - file owner is not process user", name);
-		errno = EPERM;
-		return -1;
-	}
-	if ((st.st_mode & (S_IRWXG | S_IRWXO)) != 0) {
-		log_print("check_file_secrecy: not loading %s - too open "
-		    "permissions", name);
-		errno = EPERM;
-		return -1;
-	}
-	if (file_size)
-		*file_size = (size_t)st.st_size;
-
-	return 0;
-}
 
 int
 check_file_secrecy_fd(int fd, char *name, size_t *file_size)
