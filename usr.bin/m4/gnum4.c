@@ -1,4 +1,4 @@
-/* $OpenBSD: gnum4.c,v 1.24 2003/06/30 22:11:38 espie Exp $ */
+/* $OpenBSD: gnum4.c,v 1.25 2003/06/30 22:13:32 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie
@@ -159,24 +159,26 @@ fopen_trypath(struct input_file *i, const char *filename)
 void 
 doindir(const char *argv[], int argc)
 {
+	ndptr n;
 	struct macro_definition *p;
 
-	p = lookup_macro_definition(argv[2]);
-	if (p == NULL)
+	n = lookup(argv[2]);
+	if (n == NULL || (p = macro_getdef(n)) == NULL)
 		errx(1, "undefined macro %s", argv[2]);
 	argv[1] = p->defn;
 	
-	eval(argv+1, argc-1, p->type, traced_macros && is_traced(argv[2]));
+	eval(argv+1, argc-1, p->type, is_traced(n));
 }
 
 void 
 dobuiltin(const char *argv[], int argc)
 {
 	ndptr p;
+
 	argv[1] = NULL;
 	p = macro_getbuiltin(argv[2]);
 	if (p != NULL)
-		eval(argv+1, argc-1, macro_builtin_type(p), traced_macros && is_traced(argv[2]));
+		eval(argv+1, argc-1, macro_builtin_type(p), is_traced(p));
 	else
 		errx(1, "unknown builtin %s", argv[2]);
 } 

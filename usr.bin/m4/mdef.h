@@ -1,4 +1,4 @@
-/*	$OpenBSD: mdef.h,v 1.27 2003/06/30 22:10:21 espie Exp $	*/
+/*	$OpenBSD: mdef.h,v 1.28 2003/06/30 22:13:33 espie Exp $	*/
 /*	$NetBSD: mdef.h,v 1.7 1996/01/13 23:25:27 pk Exp $	*/
 
 /*
@@ -142,11 +142,14 @@ struct macro_definition {
 	unsigned int	type;	/* type of the entry..        */
 };
 
-struct keyblk {
-        char    *knam;          /* keyword name */
-        int     ktyp;           /* keyword type */
-};
 
+struct ndblock {			/* hashtable structure         */
+	unsigned int 		builtin_type;
+	unsigned int		trace_flags;
+	struct macro_definition *d;
+	char		name[1];	/* entry name..               */
+};
+ 
 typedef union {			/* stack structure */
 	int	sfra;		/* frame entry  */
 	char 	*sstr;		/* string entry */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: look.c,v 1.14 2003/06/30 22:11:38 espie Exp $	*/
+/*	$OpenBSD: look.c,v 1.15 2003/06/30 22:13:32 espie Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -52,15 +52,9 @@ static char sccsid[] = "@(#)look.c	8.1 (Berkeley) 6/6/93";
 #include "stdd.h"
 #include "extern.h"
 
-struct ndblock {			/* hashtable structure         */
-	unsigned int 		builtin_type;
-	struct macro_definition *d;
-	char		name[1];	/* entry name..               */
-};
- 
-extern void *hash_alloc(size_t, void *);
-extern void hash_free(void *, size_t, void *);
-extern void *element_alloc(size_t, void *);
+static void *hash_alloc(size_t, void *);
+static void hash_free(void *, size_t, void *);
+static void *element_alloc(size_t, void *);
 static void setup_definition(struct macro_definition *, const char *, 
     const char *);
 
@@ -68,12 +62,41 @@ static struct ohash_info macro_info = {
 	offsetof(struct ndblock, name),
 	NULL, hash_alloc, hash_free, element_alloc };
 
-static struct ohash macros;
+struct ohash macros;
+
+/* Support routines for hash tables.  */
+void *
+hash_alloc(s, u)
+	size_t s;
+	void *u 	UNUSED;
+{
+	void *storage = xalloc(s);
+	if (storage)
+		memset(storage, 0, s);
+	return storage;
+}
+
+void
+hash_free(p, s, u)
+	void *p;
+	size_t s	UNUSED;
+	void *u 	UNUSED;
+{
+	free(p);
+}
+
+void *
+element_alloc(s, u)
+	size_t s;
+	void *u 	UNUSED;
+{
+	return xalloc(s);
+}
 
 void
 init_macros()
 {
-	ohash_init(&macros, 7, &macro_info);
+	ohash_init(&macros, 10, &macro_info);
 }
 
 /*
@@ -90,7 +113,7 @@ lookup_macro_definition(const char *name)
 {
 	ndptr p;
 
-	p = lookup(name);
+	p = ohash_find(&macros, ohash_qlookup(&macros, name));
 	if (p)
 		return p->d;
 	else
@@ -129,6 +152,7 @@ create_entry(const char *name)
 	if (n == NULL) {
 		n = ohash_create_entry(&macro_info, name, &end);
 		ohash_insert(&macros, i, n);
+		n->trace_flags = FLAG_NO_TRACE;
 		n->builtin_type = MACRTYPE;
 		n->d = NULL;
 	}
@@ -219,16 +243,24 @@ setup_builtin(const char *name, unsigned int type)
 	n->d->next = NULL;
 }
 
-const char *
-macro_name(ndptr p)
+void
+mark_traced(const char *name, int on)
 {
-	return p->name;
-}
+	ndptr p;
+	unsigned int i;
 
-struct macro_definition *
-macro_getdef(ndptr p)
-{
-	return p->d;
+	if (name == NULL) {
+		if (on)
+			trace_flags |= TRACE_ALL;
+		else
+			trace_flags &= ~TRACE_ALL;
+		for (p = ohash_first(&macros, &i); p != NULL; 
+		    p = ohash_next(&macros, &i))
+		    	p->trace_flags = FLAG_NO_TRACE;
+	} else {
+		p = create_entry(name);
+		p->trace_flags = on;
+	}
 }
 
 ndptr 
@@ -241,11 +273,5 @@ macro_getbuiltin(const char *name)
 		return NULL;
 	else
 		return p;
-}
-
-int
-macro_builtin_type(ndptr p)
-{
-	return p->builtin_type;
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.37 2003/06/30 22:11:38 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.38 2003/06/30 22:13:32 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -58,8 +58,15 @@ extern void doesyscmd(const char *);
  
 
 /* look.c */
+
+#define FLAG_UNTRACED 0
+#define FLAG_TRACED 1
+#define FLAG_NO_TRACE 2
+
 extern void	init_macros(void);
 extern ndptr	lookup(const char *);
+extern void mark_traced(const char *, int);
+extern struct ohash macros;
 
 extern struct macro_definition *lookup_macro_definition(const char *);
 extern void 	macro_define(const char *, const char *);
@@ -68,10 +75,12 @@ extern void 	macro_popdef(const char *);
 extern void 	macro_undefine(const char *);
 extern void 	setup_builtin(const char *, unsigned int);
 extern void 	macro_for_all(void (*)(const char *, struct macro_definition *));
-extern const char *macro_name(ndptr);
-extern struct macro_definition *macro_getdef(ndptr);
+#define macro_getdef(p) 	((p)->d)
+#define macro_name(p)		((p)->name)
+#define macro_builtin_type(p)	((p)->builtin_type)
+#define is_traced(p) ((p)->trace_flags == FLAG_NO_TRACE ? (trace_flags & TRACE_ALL) : (p)->trace_flags)
+
 extern ndptr macro_getbuiltin(const char *);
-extern int macro_builtin_type(ndptr);
 
 /* main.c */
 extern void outputstr(const char *);
@@ -123,15 +132,13 @@ extern char *endpbb;
 extern char *endest;
 
 /* trace.c */
-extern void mark_traced(const char *, int);
-extern int is_traced(const char *);
+extern unsigned int trace_flags;
+#define TRACE_ALL	512
 extern void trace_file(const char *);
 extern ssize_t trace(const char **, int, struct input_file *);
 extern void finish_trace(size_t);
-extern int traced_macros;
 extern void set_trace_flags(const char *);
 extern FILE *traceout;
-extern void init_trace(void);
 
 extern ndptr hashtab[];		/* hash table for macros etc. */
 extern stae *mstack;		/* stack of m4 machine */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.62 2003/06/30 22:11:38 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.63 2003/06/30 22:13:32 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.62 2003/06/30 22:11:38 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.63 2003/06/30 22:13:32 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,6 +63,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.62 2003/06/30 22:11:38 espie Exp $";
 #include <string.h>
 #include <stddef.h>
 #include <stdlib.h>
+#include <ohash.h>
 #include <err.h>
 #include "mdef.h"
 #include "stdd.h"
@@ -88,6 +89,11 @@ char rquote[MAXCCHARS+1] = {RQUOTE};	/* right quote character (')   */
 char scommt[MAXCCHARS+1] = {SCOMMT};	/* start character for comment */
 char ecommt[MAXCCHARS+1] = {ECOMMT};	/* end character for comment   */
 int  synch_lines = 0;		/* line synchronisation for C preprocessor */
+
+struct keyblk {
+        char    *knam;          /* keyword name */
+        int     ktyp;           /* keyword type */
+};
 
 struct keyblk keywrds[] = {	/* m4 keywords to be installed */
 	{ "include",      INCLTYPE },
@@ -180,7 +186,6 @@ main(int argc, char *argv[])
 	if (signal(SIGINT, SIG_IGN) != SIG_IGN)
 		signal(SIGINT, onintr);
 
-	init_trace();
 	init_macros();
 	initkwds();
 	initspaces();
@@ -329,10 +334,7 @@ macro(void)
 		 */
 				pushf(fp);	/* previous call frm */
 				pushf(macro_getdef(p)->type); /* type of the call  */
-				if (traced_macros && is_traced(macro_name(p)))
-					pushf(1);
-				else
-					pushf(0);
+				pushf(is_traced(p));
 				pushf(0);	/* parenthesis level */
 				fp = sp;	/* new frame pointer */
 		/*
@@ -564,7 +566,7 @@ inspect(int c, char *tp)
 		return NULL;
 	}
 
-	p = lookup(name);
+	p = ohash_find(&macros, ohash_qlookupi(&macros, name, (const char **)&tp));
 	if (p == NULL)
 		return NULL;
 	if (macro_getdef(p) == NULL)
