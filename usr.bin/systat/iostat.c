@@ -1,4 +1,4 @@
-/*	$OpenBSD: iostat.c,v 1.19 2002/12/16 01:57:04 tdeval Exp $	*/
+/*	$OpenBSD: iostat.c,v 1.20 2003/02/02 18:20:41 henning Exp $	*/
 /*	$NetBSD: iostat.c,v 1.5 1996/05/10 23:16:35 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)iostat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: iostat.c,v 1.19 2002/12/16 01:57:04 tdeval Exp $";
+static char rcsid[] = "$OpenBSD: iostat.c,v 1.20 2003/02/02 18:20:41 henning Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -293,23 +293,19 @@ stat1(int row, int o)
 static void
 histogram(double val, int colwidth, double scale)
 {
-	char buf[10];
-	int k;
-	int v = (int)(val * scale) + 0.5;
+	int v = (int)(val * scale + 0.5);
+	int factor = 1;
+	int y, x;
 
-	k = MIN(v, colwidth);
-	if (v > colwidth) {
-		snprintf(buf, sizeof buf, "%4.1f", val);
-		k -= strlen(buf);
-		while (k--)
-			waddch(wnd, 'X');
-		waddstr(wnd, buf);
-		wclrtoeol(wnd);
-		return;
+	while (v > colwidth) {
+		v = (v + 5) / 10;
+		factor *= 10;
 	}
-	while (k--)
-		waddch(wnd, 'X');
+	getyx(wnd, y, x);
 	wclrtoeol(wnd);
+	whline(wnd, 'X', v);
+	if (factor != 1)
+		mvwprintw(wnd, y, x + colwidth + 1, "* %d ", factor);
 }
 
 int
