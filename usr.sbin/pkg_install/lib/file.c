@@ -1,7 +1,7 @@
-/*	$OpenBSD: file.c,v 1.22 2003/07/04 17:31:19 avsm Exp $	*/
+/*	$OpenBSD: file.c,v 1.23 2003/07/30 17:03:55 tedu Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: file.c,v 1.22 2003/07/04 17:31:19 avsm Exp $";
+static const char rcsid[] = "$OpenBSD: file.c,v 1.23 2003/07/30 17:03:55 tedu Exp $";
 #endif
 
 /*
@@ -401,11 +401,15 @@ fileFindByPath(char *base, char *fname)
 	}
 
 	cp = getenv("PKG_PATH");
+	/* Check for ftp://... paths */
+	if (isURL(cp)) {
+		snprintf(tmp, sizeof(tmp), "%s/%s", cp, ensure_tgz(fname));
+		return tmp;
+	}
 	while (cp) {
 		char *cp2 = strsep(&cp, ":");
 
-		snprintf(tmp, sizeof(tmp), "%s/%s", cp2 ? cp2 : cp,
-		    ensure_tgz(fname));
+		snprintf(tmp, sizeof(tmp), "%s/%s", cp2, ensure_tgz(fname));
 		if (ispkgpattern(tmp)) {
 			char *s;
 			s = findbestmatchingname(dirname_of(tmp),
