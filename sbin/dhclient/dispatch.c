@@ -1,4 +1,4 @@
-/*	$OpenBSD: dispatch.c,v 1.15 2004/02/24 17:26:43 henning Exp $	*/
+/*	$OpenBSD: dispatch.c,v 1.16 2004/03/02 12:19:14 henning Exp $	*/
 
 /* Network input dispatcher... */
 
@@ -93,17 +93,8 @@ discover_interfaces(void)
 			if (!strcmp(tmp->name, ifa->ifa_name))
 				break;
 
-		if (!tmp) {
-			tmp = dmalloc(sizeof(*tmp), "discover_interfaces");
-			if (!tmp)
-				error("Insufficient memory to %s %s",
-				    "record interface", ifa->ifa_name);
-			strlcpy(tmp->name, ifa->ifa_name, sizeof(tmp->name));
-			tmp->next = interfaces;
-			tmp->flags = 0;
-			tmp->noifmedia = tmp->dead = tmp->errors = 0;
-			interfaces = tmp;
-		}
+		if (!tmp)
+			break;
 
 		/*
 		 * If we have the capability, extract link information
