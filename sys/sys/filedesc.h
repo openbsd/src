@@ -1,5 +1,5 @@
-/*	$OpenBSD: filedesc.h,v 1.3 1996/03/03 12:11:46 niklas Exp $	*/
-/*	$NetBSD: filedesc.h,v 1.12 1996/02/09 18:25:11 christos Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.4 1996/04/18 21:40:55 niklas Exp $	*/
+/*	$NetBSD: filedesc.h,v 1.13 1996/03/14 18:59:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1993
@@ -96,7 +96,6 @@ struct filedesc0 {
  */
 int	dupfdopen __P((struct filedesc *fdp, int indx, int dfd, int mode,
 	    int error));
-int	fdopen __P((dev_t, int, int, struct proc *));
 int	fdalloc __P((struct proc *p, int want, int *result));
 int	fdavail __P((struct proc *p, int n));
 int	falloc __P((struct proc *p, struct file **resultfp, int *resultfd));

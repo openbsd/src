@@ -1,5 +1,5 @@
-/*	$OpenBSD: types.h,v 1.6 1996/03/24 18:07:58 tholo Exp $	*/
-/*	$NetBSD: types.h,v 1.24 1995/12/29 01:15:13 jtc Exp $	*/
+/*	$OpenBSD: types.h,v 1.7 1996/04/18 21:41:17 niklas Exp $	*/
+/*	$NetBSD: types.h,v 1.25 1996/03/15 19:54:53 jtc Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -50,13 +50,16 @@
 #include <machine/ansi.h>
 #include <machine/endian.h>
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 typedef	unsigned char	u_char;
 typedef	unsigned short	u_short;
 typedef	unsigned int	u_int;
 typedef	unsigned long	u_long;
+
+typedef unsigned char	unchar;		/* Sys V compatibility */
 typedef	unsigned short	ushort;		/* Sys V compatibility */
 typedef	unsigned int	uint;		/* Sys V compatibility */
+typedef unsigned long	ulong;		/* Sys V compatibility */
 #endif
 
 typedef	u_int64_t	u_quad_t;	/* quads */
@@ -90,7 +93,7 @@ typedef	int	boolean_t;
  * long arguments will be promoted to off_t if the program fails to 
  * include that header or explicitly cast them to off_t.
  */
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 #ifndef _KERNEL
 #include <sys/cdefs.h>
 __BEGIN_DECLS
@@ -99,9 +102,9 @@ int	 ftruncate __P((int, off_t));
 int	 truncate __P((const char *, off_t));
 __END_DECLS
 #endif /* !_KERNEL */
-#endif /* !_POSIX_SOURCE */
+#endif /* !defined(_POSIX_SOURCE) ... */
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 /* Major, minor numbers, dev_t's. */
 #define	major(x)	((int32_t)(((u_int32_t)(x) >> 8) & 0xff))
 #define	minor(x)	((int32_t)((x) & 0xff))
@@ -128,7 +131,7 @@ typedef	_BSD_TIME_T_	time_t;
 #undef	_BSD_TIME_T_
 #endif
 
-#ifndef _POSIX_SOURCE
+#if !defined(_POSIX_SOURCE) && !defined(_XOPEN_SOURCE)
 #define	NBBY	8		/* number of bits in a byte */
 
 /*
@@ -181,5 +184,5 @@ struct	tty;
 struct	uio;
 #endif
 
-#endif /* !_POSIX_SOURCE */
+#endif /* !defined(_POSIX_SOURCE) ... */
 #endif /* !_SYS_TYPES_H_ */

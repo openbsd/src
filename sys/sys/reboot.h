@@ -1,5 +1,5 @@
-/*	$OpenBSD: reboot.h,v 1.2 1996/03/03 12:12:11 niklas Exp $	*/
-/*	$NetBSD: reboot.h,v 1.7 1994/12/13 15:01:22 mycroft Exp $	*/
+/*	$OpenBSD: reboot.h,v 1.3 1996/04/18 21:41:07 niklas Exp $	*/
+/*	$NetBSD: reboot.h,v 1.8 1996/02/22 20:30:16 scottr Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988, 1993, 1994
@@ -37,8 +37,8 @@
  */
 
 /*
- * Arguments to reboot system call.  These are passed to boot program
- * in r11, and on to init.
+ * Arguments to reboot system call.  These are passed to the boot program,
+ * and then on to init.
  */
 #define	RB_AUTOBOOT	0	/* flags for system auto-booting itself */
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: systm.h,v 1.2 1996/02/29 13:57:30 niklas Exp $	*/
-/*	$NetBSD: systm.h,v 1.40 1996/02/10 00:13:28 christos Exp $	*/
+/*	$OpenBSD: systm.h,v 1.3 1996/04/18 21:41:14 niklas Exp $	*/
+/*	$NetBSD: systm.h,v 1.43 1996/03/14 18:59:12 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -192,12 +192,13 @@ void	doshutdownhooks __P((void));
 
 int	uiomove __P((caddr_t, int, struct uio *));
 
+int	setjmp	__P((label_t *));
+void	longjmp	__P((label_t *));
+
 #include <lib/libkern/libkern.h>
 
 #ifdef DDB
 /* debugger entry points */
-#ifdef notyet	/* XXX: Lots of local decls assume int Debugger */
 void	Debugger __P((void));	/* in DDB only */
-#endif
 int	read_symtab_from_file __P((struct proc *,struct vnode *,const char *));
 #endif

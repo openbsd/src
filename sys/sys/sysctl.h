@@ -1,5 +1,5 @@
-/*	$OpenBSD: sysctl.h,v 1.3 1996/03/30 04:51:33 mickey Exp $	*/
-/*	$NetBSD: sysctl.h,v 1.11 1996/02/09 18:25:39 christos Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.4 1996/04/18 21:41:13 niklas Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.14 1996/03/12 00:22:43 jonathan Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -135,7 +135,9 @@ struct ctlname {
 #define	KERN_DOMAINNAME		22	/* string: (YP) domainname */
 #define	KERN_MAXPARTITIONS	23	/* int: number of partitions/disk */
 #define KERN_RAWPARTITION	24	/* int: raw partition number */
-#define	KERN_MAXID		25	/* number of valid kern ids */
+#define	KERN_NTPTIME		25	/* struct: extended-precision time */
+#define	KERN_TIMEX		26	/* struct: ntp timekeeping state */
+#define	KERN_MAXID		27	/* number of valid kern ids */
 
 #define CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -163,6 +165,8 @@ struct ctlname {
 	{ "domainname", CTLTYPE_STRING }, \
 	{ "maxpartitions", CTLTYPE_INT }, \
 	{ "rawpartition", CTLTYPE_INT }, \
+	{ "ntptime", CTLTYPE_STRUCT }, \
+	{ "timex", CTLTYPE_STRUCT }, \
 }
 
 /* 
@@ -346,6 +350,7 @@ int sysctl_clockrate __P((char *, size_t *));
 int sysctl_rdstring __P((void *, size_t *, void *, char *));
 int sysctl_rdstruct __P((void *, size_t *, void *, void *, int));
 int sysctl_vnode __P((char *, size_t *));
+int sysctl_ntptime __P((char *, size_t *));
 
 void fill_eproc __P((struct proc *, struct eproc *));
 

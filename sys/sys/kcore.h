@@ -1,8 +1,9 @@
-/*	$OpenBSD: cpu.h,v 1.4 1996/04/18 21:40:49 niklas Exp $	*/
-/*	$NetBSD: cpu.h,v 1.4 1996/02/16 17:25:46 gwr Exp $	*/
+/*	$OpenBSD: kcore.h,v 1.1 1996/04/18 21:40:57 niklas Exp $	*/
+/*	$NetBSD: kcore.h,v 1.1 1996/03/10 21:56:00 leo Exp $	*/
 
 /*
- * Copyright (c) 1996 Christos Zoulas.  All rights reserved.
+ * Copyright (c) 1996 Leo Weppelman.
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -14,9 +15,9 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by Christos Zoulas.
+ *      This product includes software developed by Leo Weppelman.
  * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -29,33 +30,36 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#ifndef _SYS_KCORE_H_
+#define	_SYS_KCORE_H_
 
-#ifdef _KERNEL
-struct proc;
-struct vnode;
-struct code;
-struct ucred;
-struct core;
-struct buf;
-struct disklabel;
-struct device;
-struct disk;
-__BEGIN_DECLS
+/*
+ * Definitions for the kernel crash-dump format. The structure of
+ * the files and headers is borrowed from the 'regular' core files
+ * as described in <sys/core.h>.
+ */
+#define	KCORE_MAGIC	0x8fca
+#define	KCORESEG_MAGIC	0x8fac
 
-void	consinit __P((void));
-void	boot __P((int));
-void	pagemove __P((caddr_t, caddr_t, size_t));
-/* delay() is declared in <machine/param.h> */
-int	bounds_check_with_label __P((struct buf *, struct disklabel *, int));
-int	dk_establish __P((struct disk *, struct device *));
+/*
+ * Description of a memory segment. To make this suitable for sharing
+ * between all architectures, u_quad_t seems to be the necessary type...
+ */
+typedef struct {
+	u_quad_t	start;		/* Physical start address	*/
+	u_quad_t	size;		/* Size in bytes		*/
+} phys_ram_seg_t;
 
+typedef struct kcore_hdr {
+	u_int32_t	c_midmag;	/* Magic, id, flags		*/
+	u_int16_t	c_hdrsize;	/* Aligned header size		*/
+	u_int16_t	c_seghdrsize;	/* Aligned seg-header size	*/
+	u_int32_t	c_nseg;		/* Number of segments		*/
+} kcore_hdr_t;
 
-void	cpu_exit __P((struct proc *));
-void	cpu_startup __P((void));
-void	cpu_initclocks __P((void));
-void	cpu_switch __P((struct proc *));
-int	cpu_coredump __P((struct proc *, struct vnode *, struct ucred *,
-			  struct core *));
-__END_DECLS
+typedef struct kcore_seg {
+	u_int32_t	c_midmag;	/* Magic, id, flags		*/
+	u_int32_t	c_size;		/* Sizeof this segment		*/
+} kcore_seg_t;
 
-#endif /* _KERNEL */
+#endif /* _SYS_KCORE_H_ */

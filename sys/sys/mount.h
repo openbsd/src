@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.6 1996/03/31 13:16:47 mickey Exp $	*/
+/*	$OpenBSD: mount.h,v 1.7 1996/04/18 21:41:00 niklas Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -371,9 +371,10 @@ struct msdosfs_args {
 	struct	export_args export;	/* network export information */
 	uid_t	uid;		/* uid that owns msdosfs files */
 	gid_t	gid;		/* gid that owns msdosfs files */
-	mode_t	mask;		/* mask to be applied for msdosfs perms */
+	mode_t  mask;		/* mask to be applied for msdosfs perms */
 	int	flags;		/* see below */
 };
+
 /*
  * Msdosfs mount options:
  */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: exec_ecoff.h,v 1.2 1996/03/03 12:11:42 niklas Exp $	*/
-/*	$NetBSD: exec_ecoff.h,v 1.7 1995/06/16 02:07:56 mellon Exp $	*/
+/*	$OpenBSD: exec_ecoff.h,v 1.3 1996/04/18 21:40:54 niklas Exp $	*/
+/*	$NetBSD: exec_ecoff.h,v 1.8 1996/03/07 14:29:44 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Adam Glass
@@ -101,5 +101,7 @@ struct ecoff_scnhdr {		/* needed for size info */
 
 #ifdef _KERNEL
 int	exec_ecoff_makecmds __P((struct proc *, struct exec_package *));
+int	cpu_exec_ecoff_hook __P((struct proc *, struct exec_package *,
+				 struct ecoff_aouthdr *));
 #endif /* _KERNEL */
 #endif /* !_SYS_EXEC_ECOFF_H_ */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: device.h,v 1.2 1996/03/03 12:11:30 niklas Exp $	*/
-/*	$NetBSD: device.h,v 1.9 1996/02/09 18:25:04 christos Exp $	*/
+/*	$OpenBSD: device.h,v 1.3 1996/04/18 21:40:51 niklas Exp $	*/
+/*	$NetBSD: device.h,v 1.11 1996/03/05 22:14:58 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -136,15 +136,20 @@ struct pdevinit {
 	int	pdev_count;
 };
 
+#ifdef _KERNEL
 struct	device *alldevs;	/* head of list of all devices */
 struct	evcnt *allevents;	/* head of list of all events */
 
 void *config_search __P((cfmatch_t, struct device *, void *));
 void *config_rootsearch __P((cfmatch_t, char *, void *));
-int config_found __P((struct device *, void *, cfprint_t));
+int config_found_sm __P((struct device *, void *, cfprint_t, cfmatch_t));
 int config_rootfound __P((char *, void *));
 void config_scan __P((cfscan_t, struct device *));
 void config_attach __P((struct device *, void *, void *, cfprint_t));
 void evcnt_attach __P((struct device *, const char *, struct evcnt *));
+
+/* compatibility definitions */
+#define config_found(d, a, p)	config_found_sm((d), (a), (p), NULL)
+#endif /* _KERNEL */
 
 #endif /* !_SYS_DEVICE_H_ */
