@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.108 2005/03/02 13:27:12 hshoexer Exp $	 */
+/* $OpenBSD: exchange.c,v 1.109 2005/03/04 13:33:32 markus Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -1773,6 +1773,7 @@ exchange_establish(char *name, void (*finalize)(struct exchange *, void *,
 				log_print("exchange_establish: "
 				    "[%s]:ISAKMP-peer's (%s) phase is not 1",
 				    name, peer);
+				free(name);
 				return;
 			}
 			/*
@@ -1794,8 +1795,10 @@ exchange_establish(char *name, void (*finalize)(struct exchange *, void *,
 			if (exchange)
 				exchange_add_finalization(exchange, finalize,
 				    arg);
-			else
+			else {
 				finalize(0, arg, 1);	/* Indicate failure */
+				free(name);
+			}
 			return;
 		} else
 			exchange_establish_p2(isakmp_sa, 0, name, 0, finalize,
