@@ -1,4 +1,4 @@
-/*	$OpenBSD: date.c,v 1.5 1997/06/23 19:34:57 deraadt Exp $	*/
+/*	$OpenBSD: date.c,v 1.6 1997/06/23 19:37:06 deraadt Exp $	*/
 /*	$NetBSD: date.c,v 1.11 1995/09/07 06:21:05 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)date.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: date.c,v 1.5 1997/06/23 19:34:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: date.c,v 1.6 1997/06/23 19:37:06 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -154,6 +154,7 @@ setthetime(p)
 	register struct tm *lt;
 	struct timeval tv;
 	char *dot, *t;
+	int bigyear = 0;
 
 	for (t = p, dot = NULL; *t; ++t) {
 		if (isdigit(*t))
