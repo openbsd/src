@@ -244,9 +244,9 @@ $(PARSE_C) : $(srcdir)/parse.y
 # We used to try to protect people from having to rerun gperf.  But,
 # the C front-end already requires this if c-parse.gperf is changed,
 # so we should be consistent.
-$(srcdir)/hash.h: $(srcdir)/gxx.gperf
-	gperf -L C -F ', 0, 0' -p -j1 -g -o -t -N is_reserved_word \
-		'-k1,4,7,$$' $(srcdir)/gxx.gperf >$(srcdir)/hash.h
+#$(srcdir)/hash.h: $(srcdir)/gxx.gperf
+#	gperf -L C -F ', 0, 0' -p -j1 -g -o -t -N is_reserved_word \
+#		'-k1,4,7,$$' $(srcdir)/gxx.gperf >$(srcdir)/hash.h
 
 spew.o : spew.c $(CONFIG_H) $(CXX_TREE_H) $(PARSE_H) $(srcdir)/../flags.h \
   lex.h $(srcdir)/../system.h $(srcdir)/../toplev.h
