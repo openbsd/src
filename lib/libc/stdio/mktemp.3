@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.3,v 1.17 1999/08/11 02:32:08 todd Exp $
+.\"	$OpenBSD: mktemp.3,v 1.18 1999/09/14 06:21:23 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -59,26 +59,31 @@ to create a file name.
 This file name is unique and suitable for use
 by the application.
 The template may be any file name with some number of
-.Ql X Ns s
+.So Li X
+.Sc Ns s
 appended
 to it, for example
 .Pa /tmp/temp.XXXX .
 The trailing
-.Ql X Ns s
+.So Li X
+.Sc Ns s
 are replaced with the current process number and/or a
 unique letter combination.
 The number of unique file names
 .Fn mktemp
 can return depends on the number of
-.Ql X Ns s
+.So Li X
+.Sc Ns s
 provided; six
-.Ql X Ns s
+.So Li X
+.Sc Ns s
 will
 result in
 .Fn mktemp
 testing roughly 26 ** 6 combinations.
 At least 6
-.Ql X Ns s
+.So Li X
+.Sc Ns s
 should be used, though 10 is much better.
 .Pp
 The
@@ -97,7 +102,7 @@ except it permits a suffix to exist in the template.  The template
 should be of the form
 .Pa /tmp/tmpXXXXXXsuffix .
 .Fn mkstemps
-is told the length of the suffix string, ie. strlen("suffix");
+is told the length of the suffix string, i.e., strlen("suffix");
 .Pp
 The
 .Fn mkdtemp
@@ -218,7 +223,7 @@ usually to avoid the problems described above.
 Doing this correctly requires a good understanding of the
 code in question.
 .Pp
-For instance code of this form
+For instance, code of this form:
 .Bd -literal -offset indent
 char sfn[15] = "";
 FILE *sfp;
@@ -266,8 +271,8 @@ will mean that the flags
 .Dv O_EXCL
 are not given to
 .Xr open 2 ,
-and thus a symbolic link race becomes possible; hence making
-neccessary the use of
+and thus a symbolic link race becomes possible, hence making
+necessary the use of
 .Xr fdopen 3
 as seen above).
 Furthermore, one must be careful about code which opens, closes, and then
@@ -276,14 +281,14 @@ Finally, one must ensure that upon error the temporary file is
 removed correctly.
 .Pp
 There are also cases where modifying the code to use
-.Fn mktemp
+.Fn mktemp ,
 in concert with
 .Xr open 2
 using the flags
 .Dv O_CREAT
 |
-.Dv O_EXCL
-is better, as long as the code retries a new template when
+.Dv O_EXCL ,
+is better, as long as the code retries a new template if
 .Xr open 2
 fails with an errno of
 .Dv EEXIST .

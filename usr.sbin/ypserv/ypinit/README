@@ -1,10 +1,10 @@
- $OpenBSD: README,v 1.1 1997/04/20 10:00:24 maja Exp $
+ $OpenBSD: README,v 1.2 1999/09/14 06:21:24 pjanzen Exp $
 
 The files Makefile.yp.dist and Makefile.main.dist should NEVER be changed,
-they will be overwritten by eg make build.
+since they will be overwritten by, for example, 'make build'.
 
-Local changes can be done in Makefile.yp and Makefile.main. They are replace
-by make in /usr/src/etc which normaly isn't done.
+Local changes can be done in Makefile.yp and Makefile.main. They are replaced
+by 'make' in /usr/src/etc, which normally isn't done.
 
 -moj
 

@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.5 1999/09/07 13:44:15 d Exp $
+.\"	$OpenBSD: style.9,v 1.6 1999/09/14 06:21:23 pjanzen Exp $
 .\"
 .Dd August 19, 1999
 .Dt STYLE 9
@@ -56,9 +56,16 @@ to break precedents in the existing code and use the current style guidelines.
  */
 .Ed
 .Pp
-Kernel include files (i.e. sys/*.h) come first; normally, you'll need
-<sys/types.h>
-OR <sys/param.h>, but not both!  <sys/types.h> includes <sys/cdefs.h>,
+Kernel include files (i.e.
+.Pa Aq sys/*.h )
+come first; normally, you'll need
+.Pa Aq sys/types.h
+OR
+.Pa Aq sys/param.h ,
+but not both!
+.Pa Aq sys/types.h
+includes
+.Pa Aq sys/cdefs.h ,
 and it's okay to depend on that.
 .Bd -literal -offset 0i
 #include <sys/types.h>		/* Non-local includes in brackets. */
@@ -73,14 +80,21 @@ If it's a network program, put the network include files next.
 #include <protocols/rwhod.h>
 .Ed
 .Pp
-Then there's a blank line, followed by the /usr include files.
-The /usr include files should be sorted!
+Then there's a blank line, followed by the
+.Pa /usr
+include files.
+The
+.Pa /usr
+include files should be sorted!
 .Bd -literal -offset 0i
 #include <stdio.h>
 .Ed
 .Pp
-Global pathnames are defined in /usr/include/paths.h.  Pathnames local
-to the program go in pathnames.h in the local directory.
+Global pathnames are defined in
+.Pa /usr/include/paths.h .
+Pathnames local to the program go in
+.Pa pathnames.h
+in the local directory.
 .Bd -literal -offset 0i
 #include <paths.h>
 .Ed
@@ -106,13 +120,15 @@ Functions that are used locally in more than one module go into a
 separate header file, e.g.
 .Pa extern.h .
 .Pp
-When declaring a prototype, use the __P macro from the include file
-<sys/cdefs.h>.  Only the kernel has a name associated with the types,
-i.e. in the kernel use:
+When declaring a prototype, use the
+.Li __P
+macro from the include file
+.Pa Aq sys/cdefs.h .
+Only the kernel has a name associated with the types; i.e., in the kernel use:
 .Bd -literal -offset 0i
 void	function __P((int a));
 .Ed
-in user land use:
+and in user land use:
 .Bd -literal -offset 0i
 void	function __P((int));
 .Ed
@@ -124,24 +140,28 @@ static char	*function __P((int, const char *));
 static void	 usage __P((void));
 .Ed
 .Pp
-Use __dead from <sys/cdefs.h> for functions that don't return, e.g.
+Use
+.Li __dead
+from
+.Pa Aq sys/cdefs.h
+for functions that don't return, e.g.
 .Bd -literal -offset 0i
 __dead void	abort __P((void));
 .Ed
 .Pp
-In header files, put function prototypes within 
-__BEGIN_DECLS/__END_DECLS matching pairs.  This makes the header file
-usable from C++.
+In header files, put function prototypes within
+.Dv __BEGIN_DECLS / __END_DECLS
+matching pairs.  This makes the header file usable from C++.
 .Pp
-Macros are capitalized, parenthesized, and should avoid side-effects.
+Macros are capitalized and parenthesized, and should avoid side-effects.
 If they are an inline expansion of a function, the function is defined
-all in lowercase, the macro has the same name all in uppercase.  If the
+all in lowercase; the macro has the same name all in uppercase.  If the
 macro needs more than a single line, use braces.  Right-justify the
 backslashes, as the resulting definition is easier to read.
 If the macro encapsulates a compound statement, enclose it in a
 .Dq Li do
 loop,
-so that it can safely be used in 
+so that it can safely be used in
 .Dq Li if
 statements.
 Any final statement-terminating semicolon should be
@@ -170,7 +190,9 @@ and
 Major structures should be declared at the top of the file in which they
 are used, or in separate header files if they are used in multiple
 source files.  Use of the structures should be by separate declarations
-and should be "extern" if they are declared in a header file.
+and should be
+.Dq Li extern
+if they are declared in a header file.
 .Bd -literal -offset 0i
 struct foo {
 	struct	foo *next;	/* List of active foo */
@@ -226,8 +248,12 @@ main(int argc, char *argv[])
 
 .Ed
 .Pp
-For consistency, getopt should be used to parse options.  Options
-should be sorted in the getopt call and the switch statement, unless
+For consistency,
+.Xr getopt 3
+should be used to parse options.  Options
+should be sorted in the
+.Xr getopt 3
+call and the switch statement, unless
 parts of the switch cascade.  Elements in a switch statement that
 cascade should have a FALLTHROUGH comment.  Numerical arguments
 should be checked for accuracy.  Code that cannot be reached should
@@ -259,10 +285,19 @@ have a NOTREACHED comment.
 
 .Ed
 .Pp
-Use space after keywords (if, while, for, return, switch).  No braces are
+Use space after keywords (
+.Li if ,
+.Li while ,
+.Li for ,
+.Li return ,
+.Li switch ) .
+No braces are
 used for control statements with zero or only a single statement unless that
-statement is more than a single line in which case they are permitted.
-Forever loops are done with for's, not while's.
+statement is more than a single line, in which case they are permitted.
+Forever loops are done with
+.Li for ,
+not
+.Li while .
 .Bd -literal -offset 0i
 	for (p = buf; *p != '\e0'; ++p)
 		;	/* nothing */
@@ -315,7 +350,7 @@ a compiler warning.
 		stmt;
 .Ed
 .Pp
-Do not use spaces after function names.  Commas have a space after them.  
+Do not use spaces after function names.  Commas have a space after them.
 Do not use spaces
 after
 .Sq \&(
@@ -333,7 +368,7 @@ characters.
 .Pp
 Unary operators don't require spaces, binary operators do.  Don't
 use parentheses unless they're required for precedence, the statement
-is confusing without them, or the compiler generates a waring without
+is confusing without them, or the compiler generates a warning without
 them.  Remember that other people may be confused more easily than you.
 Do YOU understand the following?
 .Bd -literal -offset 0i
@@ -357,7 +392,7 @@ preceding the function.
 .Bd -literal -offset 0i
 static char *
 function(a1, a2, fl, a4)
-	int a1, a2, a4;	/* Declare ints, too, don't default them. */
+	int a1, a2, a4;	/* Declare ints too, don't default them. */
 	float fl;	/* List in order declared, as much as possible. */
 {
 .Ed
@@ -365,7 +400,8 @@ function(a1, a2, fl, a4)
 When declaring variables in functions declare them sorted by size,
 then in alphabetical order; multiple ones per line are okay.  Old
 style function declarations can go on the same line.  ANSI style
-function declarations should go in the include file "extern.h".
+function declarations should go in the include file
+.Dq Pa extern.h .
 If a line overflows reuse the type keyword.
 .Pp
 Be careful to not obfuscate the code by initializing variables in
@@ -384,24 +420,25 @@ Do not declare functions inside other functions; ANSI C says that
 such declarations have file scope regardless of the nesting of the
 declaration.  Hiding file declarations in what appears to be a local
 scope is undesirable and will elicit complaints from a good compiler,
-such as "gcc -Wtraditional".
+such as
+.Dq Li gcc -Wtraditional .
 .Pp
 Casts and sizeof's are not followed by a space.  Note that
 .Xr indent 1
 does not understand this rule.
 .Pp
-.Dv NULL 
-is the preferred null pointer constant.  Use 
-.Dv NULL 
-instead of 
-(type *)0 or (type *)NULL in contexts where the compiler knows the
-type, e.g., in assignments.  Use (type *)NULL in other contexts,
+.Dv NULL
+is the preferred null pointer constant.  Use
+.Dv NULL
+instead of
+(type\ *)0 or (type\ *)NULL in contexts where the compiler knows the
+type, e.g., in assignments.  Use (type\ *)NULL in other contexts,
 in particular for all function args.  (Casting is essential for
 variadic args and is necessary for other args if the function prototype
 might not be in scope.)
 Test pointers
-against 
-.Dv NULL , 
+against
+.Dv NULL ,
 e.g., use:
 .Bd -literal -offset 0i
 (p = f()) == NULL
@@ -412,7 +449,9 @@ not:
 !(p = f())
 .Ed
 .Pp
-Don't use '!' for tests unless it's a boolean, e.g. use
+Don't use
+.Ql \&!
+for tests unless it's a boolean, e.g. use
 .Bd -literal -offset 0i
 if (*p == '\e0')
 .Ed
@@ -422,8 +461,9 @@ not
 if (!*p)
 .Ed
 .Pp
-Routines returning void * should not have their return values cast
-to any pointer type.
+Routines returning
+.Li void *
+should not have their return values cast to any pointer type.
 .Pp
 Use
 .Xr err 3
@@ -491,9 +531,9 @@ usage()
 Use
 .Xr printf 3 ,
 not fputs/puts/putchar/whatever; it's faster and usually cleaner, not
-to mention avoiding stupid bugs.
+to mention helpful in avoiding stupid bugs.
 .Pp
-Usage statements should look like the manual pages.  Options w/o
+Usage statements should look like the manual pages.  Options without
 operands come first, in alphabetical order inside a single set of
 braces, followed by options with operands, in alphabetical order,
 each in braces, followed by required arguments in the order they
@@ -528,7 +568,8 @@ approximately KNF compliant in the repository must not diverge from
 compliance.
 .Pp
 Whenever possible, code should be run through a code checker
-(e.g., "gcc -Wall -W -Wtraditional -Wpointer-arith -Wbad-function-cast ...",
+(e.g.,
+.Dq Li gcc -Wall -W -Wtraditional -Wpointer-arith -Wbad-function-cast ... ,
 .Xr lint 1
 or lclint from the ports tree) and produce minimal warnings.
 
@@ -540,8 +581,8 @@ or lclint from the ports tree) and produce minimal warnings.
 .Xr warn 3
 .Sh HISTORY
 This man page is largely based on the src/admin/style/style file from
-the 
-.Tn BSD 
+the
+.Tn BSD
 4.4-Lite2 release, with updates to reflect the current practice and
 desire of the
 .Tn OpenBSD
