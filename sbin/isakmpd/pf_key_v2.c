@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.57 2001/06/05 01:03:40 itojun Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.58 2001/06/05 01:29:05 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -2324,10 +2324,10 @@ pf_key_v2_stayalive (struct exchange *exchange, void *vconn, int fail)
    * Remove failed configuration entry -- call twice because it is
    * created with a Refcount of 2.
    */
-  if (fail && exchange->name)
+  if (fail && (!exchange || exchange->name))
     {
-      pf_key_v2_remove_conf (exchange->name);
-      pf_key_v2_remove_conf (exchange->name);
+      pf_key_v2_remove_conf (conn);
+      pf_key_v2_remove_conf (conn);
     }
 }
 
@@ -2451,7 +2451,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
   struct sadb_comb *scmb = 0;
   struct sadb_prop *sprp = 0;
   struct sadb_ident *srcident = 0, *dstident = 0;
-  char dstbuf[ADDRESS_MAX], srcbuf[ADDRESS_MAX], *peer = 0, conn[22];
+  char dstbuf[ADDRESS_MAX], srcbuf[ADDRESS_MAX], *peer = 0, *conn = 0;
   char confname[120];
   char *srcid = 0, *dstid = 0, *prefstring = 0;
   int slen, af;
@@ -2469,6 +2469,14 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 #ifdef SADB_X_CREDTYPE_NONE
   struct sadb_x_cred *cred = 0, *sauth = 0;
 #endif
+
+  /* This needs to be dynamically allocated */
+  conn = malloc (22);
+  if (!conn)
+    {
+      log_error ("pf_key_v2_acquire: malloc (22) failed");
+      return;
+    }
 
   msg = (struct sadb_msg *)TAILQ_FIRST (pmsg)->seg;
 
@@ -3383,6 +3391,7 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
 
   /* Let's rock */
   pf_key_v2_connection_check (conn);
+  conn = 0;
 
   /* Fall-through to cleanup */
  fail:
@@ -3396,6 +3405,8 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
     free (dstid);
   if (peer)
     free (peer);
+  if (conn)
+    free (conn);
   return;
 #endif
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.47 2001/05/31 20:25:10 angelos Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.48 2001/06/05 01:29:05 angelos Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -1707,6 +1707,20 @@ exchange_establish (char *name,
 	   * done. This is the case with dynamic SAs and PFKEY.
 	   */
 	  exchange_establish (peer, exchange_establish_finalize, name);
+	  exchange = exchange_lookup_by_name (peer, 1);
+	  /*
+	   * If the exchange was correctly initialized, add the original
+	   * finalization routine; otherwise, call it directly.
+	   */
+	  if (exchange)
+	    {
+	      exchange_add_finalization (exchange, finalize, arg);
+	    }
+	  else
+	    {
+	      finalize (0, arg, 1); /* Indicate failure */
+	    }
+      return;
 	}
       else
 	exchange_establish_p2 (isakmp_sa, 0, name, 0, finalize, arg);
