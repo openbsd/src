@@ -1,4 +1,4 @@
-/*	$OpenBSD: vga.c,v 1.7 1997/08/22 22:25:59 deraadt Exp $	*/
+/*	$OpenBSD: vga.c,v 1.8 1997/08/25 08:26:43 deraadt Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -233,18 +233,22 @@ vgammap(v, offset, prot)
 	int prot;
 {
 	struct vga_config *vc = v;
+	bus_space_handle_t h;
+	u_int32_t *port;
 
-	if (offset >= 0xb8000 && offset < 0xc0000) {
-		printf("%p\n", alpha_btop(ALPHA_K0SEG_TO_PHYS(vc->vc_memh) + offset - 0xb8000));
-		return alpha_btop(ALPHA_K0SEG_TO_PHYS(vc->vc_memh) + offset - 0xb8000);
-	}
-	if (offset >= 0x0000 && offset < 0x2000)
-		return alpha_btop(ALPHA_K0SEG_TO_PHYS(vc->vc_ioh_b));
-	if (offset >= 0x2000 && offset < 0x4000)
-		return alpha_btop(ALPHA_K0SEG_TO_PHYS(vc->vc_ioh_c));
-	if (offset >= 0x4000 && offset < 0x6000)
-		return alpha_btop(ALPHA_K0SEG_TO_PHYS(vc->vc_ioh_d));
-	return -1;
+	if (offset >= 0x00000 && offset < 0x100000)	/* 1MB of mem */
+		h = vc->vc_memh + offset;
+	else if (offset >= 0x10000 && offset < 0x140000) /* 256KB of iohb */
+		h = vc->vc_ioh_b;
+	else if (offset >= 0x140000 && offset < 0x180000) /* 256KB of iohc */
+		h = vc->vc_ioh_c;
+	else if (offset >= 0x180000 && offset < 0x1c0000) /* 256KB of iohd */
+		h = vc->vc_ioh_d;
+	else
+		return (-1);
+
+	port = (u_int32_t *)(h << 5);
+	return alpha_btop(port);
 }
 
 /*
