@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.17 2004/03/19 14:04:43 hshoexer Exp $	*/
+/*	$OpenBSD: if.c,v 1.18 2004/04/13 21:48:15 hshoexer Exp $	*/
 /*	$EOM: if.c,v 1.12 1999/10/01 13:45:20 niklas Exp $	*/
 
 /*
@@ -42,6 +42,7 @@
 #include "sysdep.h"
 
 #include "log.h"
+#include "monitor.h"
 #include "if.h"
 
 #ifndef HAVE_GETIFADDRS
