@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.59 2001/09/21 01:18:52 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.60 2001/09/23 02:54:27 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -105,6 +105,8 @@
 #include "ksyms.h"
 #if DDB
 #include <machine/db_machdep.h>
+#include <ddb/db_extern.h>
+#include <ddb/db_interface.h>
 #include <ddb/db_output.h>		/* db_printf()		*/
 #endif /* DDB */
 
@@ -128,7 +130,6 @@ void setupiackvectors __P((void));
 void regdump __P((struct trapframe *f));
 void dumpsys __P((void));
 void consinit __P((void));
-void kdb_init __P((void));
 vm_offset_t size_memory __P((void));
 int getcpuspeed __P((void));
 int getscsiid __P((void));
@@ -188,7 +189,7 @@ int longformat = 1;  /* for regdump() */
  * safepri is a safe priority for sleep to set for a spin-wait
  * during autoconfiguration or after a panic.
  */
-int   safepri = 0;
+int   safepri = PSR_SUPERVISOR;
 
 vm_map_t exec_map = NULL;
 vm_map_t mb_map = NULL;
@@ -264,18 +265,23 @@ extern struct user *proc0paddr;
  *  XXX this is to fake out the console routines, while 
  *  booting. New and improved! :-) smurph
  */
-int  bootcnprobe __P((struct consdev *));
-int  bootcninit __P((struct consdev *));
-void bootcnputc __P((dev_t, char));
+void bootcnprobe __P((struct consdev *));
+void bootcninit __P((struct consdev *));
+void bootcnputc __P((dev_t, int));
 int  bootcngetc __P((dev_t));
 extern void nullcnpollc __P((dev_t, int));
+
 #define bootcnpollc nullcnpollc
+
 static struct consdev bootcons = {
-	(void (*))NULL, 
-	(void (*))NULL, 
+	NULL, 
+	NULL, 
 	bootcngetc, 
-	(void (*))bootcnputc,
-	bootcnpollc, NULL, makedev(14,0), 1};
+	bootcnputc,
+	bootcnpollc,
+	NULL,
+	makedev(14,0),
+	1};
 
 /*
  * Console initialization: called early on from main,
@@ -286,15 +292,16 @@ void
 consinit()
 {
 	extern struct consdev *cn_tab;
+
 	/*
 	 * Initialize the console before we print anything out.
 	 */
-
 	cn_tab = NULL;
 	cninit();
 
 #if defined(DDB)
-	kdb_init();
+	db_machine_init();
+	ddb_init();
 	if (boothowto & RB_KDB)
 		Debugger();
 #endif
@@ -466,19 +473,18 @@ cpu_startup()
 
 	/*
 	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in mvme_bootstrap().
+	 * avail_end was pre-decremented in mvme_bootstrap() to compensate.
 	 */
-
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(kernel_pmap, (vm_offset_t)msgbufp,
-			   avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE,
-			   VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
+		pmap_kenter_pa((vm_offset_t)msgbufp, 
+			   avail_end + i * NBPG, VM_PROT_READ|VM_PROT_WRITE);
 	initmsgbuf((caddr_t)msgbufp, round_page(MSGBUFSIZE));
 
 	/*
 	 * Good {morning,afternoon,evening,night}.
 	 */
-	printf("%s",version);
+	printf(version);
+	identifycpu();
 	printf("real mem  = %d\n", ctob(physmem));
 
 	/*
@@ -633,18 +639,14 @@ cpu_startup()
 	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   16*NCARGS, VM_MAP_PAGEABLE, FALSE, NULL);
 	
-#ifdef DEBUG
-	printf("exe_map from 0x%x to 0x%x\n", (unsigned)minaddr, (unsigned)maxaddr);
-#endif 
 	/*
 	 * Allocate map for physio.
 	 */
-
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 				   VM_PHYS_SIZE, 0, FALSE, NULL);
 
 	/* 
-	 * Allocate map for external I/O
+	 * Allocate map for external I/O.
 	 */
 	iomap_map = uvm_km_suballoc(kernel_map, &iomapbase, &maxaddr,
 				   IOMAP_SIZE, 0, FALSE, NULL);
@@ -770,9 +772,6 @@ setregs(p, pack, stack, retval)
 {
 	register struct trapframe *tf = USER_REGS(p);
 
-/*	printf("stack at %x\n", stack);
-   printf("%x - %x\n", USRSTACK - MAXSSIZ, USRSTACK);
-*/
 	/*
 	 * The syscall will ``return'' to snip; set it.
 	 * argc, argv, envp are placed on the stack by copyregs.
@@ -801,8 +800,8 @@ setregs(p, pack, stack, retval)
 	}
 #endif /* 0 */
 	bzero((caddr_t)tf, sizeof *tf);
-	tf->epsr = 0x3f0;  /* user mode, interrupts enabled, fp enabled */
-/*	tf->epsr = 0x3f4;*/  /* user mode, interrupts enabled, fp enabled, MXM Mask */
+	tf->epsr = PSR_USER;  /* user mode, interrupts enabled, fp enabled */
+/*	tf->epsr = PSR_USER | PSR_MXM;*/  /* user mode, interrupts enabled, fp enabled, MXM Mask */
 
 	/*
 	 * We want to start executing at pack->ep_entry. The way to
@@ -1056,7 +1055,6 @@ register_t *retval;
 	tf->fprl = scp->sc_fprl;
 	tf->fpit = scp->sc_fpit;
 
-	tf->epsr = scp->sc_ps;
 	/*
 	 * Restore the user supplied information
 	 */
@@ -1852,22 +1850,18 @@ struct exec_package *epp;
 
 int
 sys_sysarch(p, v, retval)
-struct proc *p;
-void *v;
-register_t *retval;
+	struct proc *p;
+	void *v;
+	register_t *retval;
 {
+#if 0
 	struct sys_sysarch_args	/* {
 	   syscallarg(int) op;
 	   syscallarg(char *) parm;
 	} */ *uap = v;
-	int error = 0;
+#endif
 
-	switch ((int)SCARG(uap, op)) {
-	default:
-		error = EINVAL;
-		break;
-	}
-	return (error);
+	return (ENOSYS);
 }
 
 /*
@@ -1876,20 +1870,28 @@ register_t *retval;
 
 int
 cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
-int *name;
-u_int namelen;
-void *oldp;
-size_t *oldlenp;
-void *newp;
-size_t newlen;
-struct proc *p;
+	int *name;
+	u_int namelen;
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	struct proc *p;
 {
+	dev_t consdev;
 
 	/* all sysctl names are this level are terminal */
 	if (namelen != 1)
 		return (ENOTDIR); /* overloaded */
 
 	switch (name[0]) {
+	case CPU_CONSDEV:
+		if (cn_tab != NULL)
+			consdev = cn_tab->cn_dev;
+		else
+			consdev = NODEV;
+		return (sysctl_rdstruct(oldp, oldlenp, newp, &consdev,
+		    sizeof consdev));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -2238,7 +2240,6 @@ mvme_bootstrap()
 	last_addr = size_memory();
 	cmmu_parity_enable();
 
-	identifycpu();
 	setup_board_config();
 	cmmu_init();
 	master_cpu = cmmu_cpu_number();
@@ -2301,21 +2302,19 @@ mvme_bootstrap()
  * Boot console routines: 
  * Enables printing of boot messages before consinit().
  */
-int
+void
 bootcnprobe(cp)
 	struct consdev *cp;
 {
 	cp->cn_dev = makedev(14, 0);
 	cp->cn_pri = CN_NORMAL;
-	return (1);
 }
 
-int
+void
 bootcninit(cp)
 	struct consdev *cp;
 {
 	/* Nothing to do */
-	return (1);
 }
 
 int
@@ -2328,9 +2327,9 @@ bootcngetc(dev)
 void
 bootcnputc(dev, c)
 	dev_t dev;
-	char c;
+	int c;
 {
-	if (c == '\n')
+	if ((char)c == '\n')
 		bugoutchr('\r');
-	bugoutchr(c);
+	bugoutchr((char)c);
 }
