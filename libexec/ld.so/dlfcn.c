@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn.c,v 1.43 2005/03/07 20:50:11 kettenis Exp $ */
+/*	$OpenBSD: dlfcn.c,v 1.44 2005/03/08 20:01:59 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -84,15 +84,17 @@ dlopen(const char *libname, int flags)
 		elf_object_t *tmpobj = dynobj;
 
 		for (dynp = dynobj->load_dyn; dynp->d_tag; dynp++) {
-			const char *libname;
+			const char *deplibname;
 			elf_object_t *depobj;
 
 			if (dynp->d_tag != DT_NEEDED)
 				continue;
 
-			libname = dynobj->dyn.strtab + dynp->d_un.d_val;
+			deplibname = dynobj->dyn.strtab + dynp->d_un.d_val;
+			DL_DEB(("dlopen: loading: %s required by %s\n",
+			    deplibname, libname));
 			_dl_thread_kern_stop();
-			depobj = _dl_load_shlib(libname, dynobj, OBJTYPE_LIB,
+			depobj = _dl_load_shlib(deplibname, dynobj, OBJTYPE_LIB,
 				flags|RTLD_GLOBAL);
 			if (!depobj)
 				_dl_exit(4);
