@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.8 1997/02/28 07:09:08 millert Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.9 1997/11/04 07:58:38 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.8 1997/02/28 07:09:08 millert Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.9 1997/11/04 07:58:38 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,6 +74,8 @@ struct ktr_header ktr_header;
 
 #include <sys/syscall.h>
 
+#include "../../sys/compat/bsdos/bsdos_syscall.h"
+#include "../../sys/compat/freebsd/freebsd_syscall.h"
 #include "../../sys/compat/hpux/hpux_syscall.h"
 #include "../../sys/compat/ibcs2/ibcs2_syscall.h"
 #include "../../sys/compat/linux/linux_syscall.h"
@@ -92,6 +94,8 @@ struct ktr_header ktr_header;
 #define NTP
 #include "../../sys/kern/syscalls.c"
 
+#include "../../sys/compat/bsdos/bsdos_syscalls.c"
+#include "../../sys/compat/freebsd/freebsd_syscalls.c"
 #include "../../sys/compat/hpux/hpux_syscalls.c"
 #include "../../sys/compat/ibcs2/ibcs2_syscalls.c"
 #include "../../sys/compat/linux/linux_syscalls.c"
@@ -115,15 +119,17 @@ struct emulation {
 };
 
 static struct emulation emulations[] = {
-	{ "native",	     syscallnames,        SYS_MAXSYSCALL },
-	{ "hpux",	hpux_syscallnames,   HPUX_SYS_MAXSYSCALL },
-	{ "ibcs2",     ibcs2_syscallnames,  IBCS2_SYS_MAXSYSCALL },
-	{ "linux",     linux_syscallnames,  LINUX_SYS_MAXSYSCALL },
-	{ "osf1",       osf1_syscallnames,   OSF1_SYS_MAXSYSCALL },
-	{ "sunos",     sunos_syscallnames,  SUNOS_SYS_MAXSYSCALL },
-	{ "svr4",       svr4_syscallnames,   SVR4_SYS_MAXSYSCALL },
-	{ "ultrix",   ultrix_syscallnames, ULTRIX_SYS_MAXSYSCALL },
-	{ NULL,			     NULL,		    NULL }
+	{ "native",	syscallnames,		SYS_MAXSYSCALL },
+	{ "hpux",	hpux_syscallnames,	HPUX_SYS_MAXSYSCALL },
+	{ "ibcs2",	ibcs2_syscallnames,	IBCS2_SYS_MAXSYSCALL },
+	{ "linux",	linux_syscallnames,	LINUX_SYS_MAXSYSCALL },
+	{ "osf1",	osf1_syscallnames,	OSF1_SYS_MAXSYSCALL },
+	{ "sunos",	sunos_syscallnames,	SUNOS_SYS_MAXSYSCALL },
+	{ "svr4",	svr4_syscallnames,	SVR4_SYS_MAXSYSCALL },
+	{ "ultrix",	ultrix_syscallnames,	ULTRIX_SYS_MAXSYSCALL },
+	{ "bsdos",	bsdos_syscallnames,	BSDOS_SYS_MAXSYSCALL },
+	{ "freebsd",	freebsd_syscallnames,	FREEBSD_SYS_MAXSYSCALL },
+	{ NULL,		NULL,			NULL }
 };
 
 struct emulation *current;
