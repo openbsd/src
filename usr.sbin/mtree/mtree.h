@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtree.h,v 1.3 1996/12/10 08:26:09 deraadt Exp $	*/
+/*	$OpenBSD: mtree.h,v 1.4 1996/12/20 18:13:43 millert Exp $	*/
 /*	$NetBSD: mtree.h,v 1.7 1995/03/07 21:26:27 cgd Exp $	*/
 
 /*-
@@ -58,23 +58,24 @@ typedef struct _node {
 	mode_t	st_mode;			/* mode */
 	nlink_t	st_nlink;			/* link count */
 
-#define	F_CKSUM	0x0001				/* check sum */
-#define	F_DONE	0x0002				/* directory done */
-#define	F_GID	0x0004				/* gid */
-#define	F_GNAME	0x0008				/* group name */
-#define	F_IGN	0x0010				/* ignore */
-#define	F_MAGIC	0x0020				/* name has magic chars */
-#define	F_MODE	0x0040				/* mode */
-#define	F_NLINK	0x0080				/* number of links */
-#define	F_SIZE	0x0100				/* size */
-#define	F_SLINK	0x0200				/* link count */
-#define	F_TIME	0x0400				/* modification time */
-#define	F_TYPE	0x0800				/* file type */
-#define	F_UID	0x1000				/* uid */
-#define	F_UNAME	0x2000				/* user name */
-#define	F_VISIT	0x4000				/* file visited */
-#define 	F_MD5	0x8000				/* MD5 digest */
-	u_short	flags;				/* items set */
+#define	F_CKSUM	0x00001				/* check sum */
+#define	F_DONE	0x00002				/* directory done */
+#define	F_GID	0x00004				/* gid */
+#define	F_GNAME	0x00008				/* group name */
+#define	F_IGN	0x00010				/* ignore */
+#define	F_MAGIC	0x00020				/* name has magic chars */
+#define	F_MD5	0x00040				/* MD5 digest */
+#define	F_MODE	0x00080				/* mode */
+#define	F_NLINK	0x00100				/* number of links */
+#define F_OPT	0x00200				/* existence optional */
+#define	F_SIZE	0x00400				/* size */
+#define	F_SLINK	0x00800				/* link count */
+#define	F_TIME	0x01000				/* modification time */
+#define	F_TYPE	0x02000				/* file type */
+#define	F_UID	0x04000				/* uid */
+#define	F_UNAME	0x08000				/* user name */
+#define	F_VISIT	0x10000				/* file visited */
+	u_int32_t flags;			/* items set */
 
 #define	F_BLOCK	0x001				/* block special */
 #define	F_CHAR	0x002				/* char special */

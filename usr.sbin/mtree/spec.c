@@ -1,5 +1,5 @@
 /*	$NetBSD: spec.c,v 1.6 1995/03/07 21:12:12 cgd Exp $	*/
-/*	$OpenBSD: spec.c,v 1.3 1996/12/10 08:26:10 deraadt Exp $	*/
+/*	$OpenBSD: spec.c,v 1.4 1996/12/20 18:13:44 millert Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1993
@@ -218,7 +218,7 @@ set(t, ip)
 				err("invalid link count %s", val);
 			break;
 		case F_SIZE:
-			ip->st_size = strtoq(val, &ep, 10);
+			ip->st_size = strtouq(val, &ep, 10);
 			if (*ep)
 				err("invalid size %s", val);
 			break;

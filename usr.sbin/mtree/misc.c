@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.3 1996/12/10 08:26:08 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.4 1996/12/20 18:13:42 millert Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/07 21:26:23 cgd Exp $	*/
 
 /*-
@@ -63,6 +63,7 @@ static KEY keylist[] = {
 	{"md5digest",	F_MD5,		NEEDVALUE},
 	{"mode",	F_MODE,		NEEDVALUE},
 	{"nlink",	F_NLINK,	NEEDVALUE},
+	{"optional",	F_OPT,		0},
 	{"size",	F_SIZE,		NEEDVALUE},
 	{"time",	F_TIME,		NEEDVALUE},
 	{"type",	F_TYPE,		NEEDVALUE},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: verify.c,v 1.3 1996/12/10 08:26:10 deraadt Exp $	*/
+/*	$OpenBSD: verify.c,v 1.4 1996/12/20 18:13:44 millert Exp $	*/
 /*	$NetBSD: verify.c,v 1.10 1995/03/07 21:26:28 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)verify.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: verify.c,v 1.3 1996/12/10 08:26:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: verify.c,v 1.4 1996/12/20 18:13:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,6 +164,8 @@ miss(p, tail)
 	register char *tp;
 
 	for (; p; p = p->next) {
+		if ((p->flags & F_OPT) && !(p->flags & F_VISIT))
+			continue;
 		if (p->type != F_DIR && (dflag || p->flags & F_VISIT))
 			continue;
 		(void)strcpy(tail, p->name);
