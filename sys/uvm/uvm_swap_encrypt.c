@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_swap_encrypt.c,v 1.8 2001/08/06 22:34:44 mickey Exp $	*/
+/*	$OpenBSD: uvm_swap_encrypt.c,v 1.9 2001/08/24 15:59:42 markus Exp $	*/
 
 /*
  * Copyright 1999 Niels Provos <provos@citi.umich.edu>
@@ -140,7 +140,7 @@ swap_encrypt(struct swap_key *key, caddr_t src, caddr_t dst,
 	count /= sizeof(u_int32_t);
 
 	iv[0] = block >> 32; iv[1] = block; iv[2] = ~iv[0]; iv[3] = ~iv[1];
-	rijndael_encrypt(&swap_key, iv, iv); 
+	rijndael_encrypt(&swap_key, (u_char *)iv, (u_char *)iv); 
 	iv1 = iv[0]; iv2 = iv[1]; iv3 = iv[2]; iv4 = iv[3];
 
 	for (; count > 0; count -= 4) {
@@ -152,7 +152,7 @@ swap_encrypt(struct swap_key *key, caddr_t src, caddr_t dst,
 		 * Do not worry about endianess, it only needs to decrypt
 		 * on this machine
 		 */
-		rijndael_encrypt(&swap_key, ddst, ddst);
+		rijndael_encrypt(&swap_key, (u_char *)ddst, (u_char *)ddst);
 		iv1 = ddst[0];
 		iv2 = ddst[1];
 		iv3 = ddst[2];
@@ -185,7 +185,7 @@ swap_decrypt(struct swap_key *key, caddr_t src, caddr_t dst,
 	count /= sizeof(u_int32_t);
 
 	iv[0] = block >> 32; iv[1] = block; iv[2] = ~iv[0]; iv[3] = ~iv[1];
-	rijndael_encrypt(&swap_key, iv, iv); 
+	rijndael_encrypt(&swap_key, (u_char *)iv, (u_char *)iv); 
 	iv1 = iv[0]; iv2 = iv[1]; iv3 = iv[2]; iv4 = iv[3];
 
 	for (; count > 0; count -= 4) {
@@ -193,7 +193,7 @@ swap_decrypt(struct swap_key *key, caddr_t src, caddr_t dst,
 		ddst[1] = niv2 = dsrc[1];
 		ddst[2] = niv3 = dsrc[2];
 		ddst[3] = niv4 = dsrc[3];
-		rijndael_decrypt(&swap_key, ddst, ddst);
+		rijndael_decrypt(&swap_key, (u_char *)ddst, (u_char *)ddst);
 		ddst[0] ^= iv1;
 		ddst[1] ^= iv2;
 		ddst[2] ^= iv3;
@@ -219,7 +219,7 @@ swap_key_prepare(struct swap_key *key, int encrypt)
 	if (kcur == key && (encrypt || swap_key.decrypt))
 		return;
 
-	rijndael_set_key(&swap_key, key->key,
+	rijndael_set_key(&swap_key, (u_char *)key->key,
 			 sizeof(key->key) * 8,
 			 encrypt);
 
