@@ -26,7 +26,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.3 2001/06/16 22:53:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: readpassphrase.c,v 1.4 2001/06/18 17:41:39 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <ctype.h>
@@ -48,7 +48,8 @@ readpassphrase(prompt, buf, bufsiz, flags)
 	int flags;
 {
 	struct termios term;
-	char ch, status, *p, *end;
+	char ch, *p, *end;
+	u_char status;
 	int echo, input, output;
 	sigset_t oset, nset;
 
