@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: vis.c,v 1.5 2000/07/19 15:25:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: vis.c,v 1.6 2000/11/21 00:47:28 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -41,6 +41,13 @@ static char rcsid[] = "$OpenBSD: vis.c,v 1.5 2000/07/19 15:25:13 deraadt Exp $";
 #include <vis.h>
 
 #define	isoctal(c)	(((u_char)(c)) >= '0' && ((u_char)(c)) <= '7')
+#define isvisible(c)	(((u_int)(c) <= UCHAR_MAX && isascii((u_char)(c)) && \
+				isgraph((u_char)(c))) ||		     \
+				((flag & VIS_SP) == 0 && (c) == ' ') ||	     \
+				((flag & VIS_TAB) == 0 && (c) == '\t') ||    \
+				((flag & VIS_NL) == 0 && (c) == '\n') ||     \
+				((flag & VIS_SAFE) &&			     \
+				((c) == '\b' || (c) == '\007' || (c) == '\r')))
 
 /*
  * vis - visually encode characters
@@ -51,12 +58,7 @@ vis(dst, c, flag, nextc)
 	int c, nextc;
 	register int flag;
 {
-	if (((u_int)c <= UCHAR_MAX && isascii((u_char)c) &&
-	    isgraph((u_char)c)) ||
-	   ((flag & VIS_SP) == 0 && c == ' ') ||
-	   ((flag & VIS_TAB) == 0 && c == '\t') ||
-	   ((flag & VIS_NL) == 0 && c == '\n') ||
-	   ((flag & VIS_SAFE) && (c == '\b' || c == '\007' || c == '\r'))) {
+	if (isvisible(c)) {
 		*dst++ = c;
 		if (c == '\\' && (flag & VIS_NOSLASH) == 0)
 			*dst++ = '\\';
@@ -141,11 +143,14 @@ done:
 }
 
 /*
- * strvis, strvisx - visually encode characters from src into dst
+ * strvis, strnvis, strvisx - visually encode characters from src into dst
  *	
  *	Dst must be 4 times the size of src to account for possible
  *	expansion.  The length of dst, not including the trailing NULL,
  *	is returned. 
+ *
+ *	Strnvis will write no more than siz-1 bytes (and will NULL terminate).
+ *	The number of bytes needed to fully encode the string is returned.
  *
  *	Strvisx encodes exactly len bytes from src into dst.
  *	This is useful for encoding a block of data.
@@ -161,7 +166,48 @@ strvis(dst, src, flag)
 
 	for (start = dst; (c = *src);)
 		dst = vis(dst, c, flag, *++src);
+	return (dst - start);
+}
+
+int
+strnvis(dst, src, siz, flag)
+	register char *dst;
+	register const char *src;
+	size_t siz;
+	int flag;
+{
+	register char c;
+	char *start, *end;
+
+	for (start = dst, end = start + siz - 1; (c = *src) && dst < end; ) {
+		if (isvisible(c)) {
+			*dst++ = c;
+			if (c == '\\' && (flag & VIS_NOSLASH) == 0) {
+				/* need space for the extra '\\' */
+				if (dst < end)
+					*dst++ = '\\';
+				else {
+					dst--;
+					break;
+				}
+			}
+			src++;
+		} else {
+			/* vis(3) requires up to 4 chars */
+			if (dst + 3 < end)
+				dst = vis(dst, c, flag, *++src);
+			else
+				break;
+		}
+	}
 	*dst = '\0';
+	if (dst >= end) {
+		char tbuf[5];
+
+		/* adjust return value for truncation */
+		while ((c = *src))
+			dst += vis(tbuf, c, flag, *++src) - tbuf;
+	}
 	return (dst - start);
 }
 
@@ -181,7 +227,5 @@ strvisx(dst, src, len, flag)
 	}
 	if (len)
 		dst = vis(dst, *src, flag, '\0');
-	*dst = '\0';
-
 	return (dst - start);
 }
