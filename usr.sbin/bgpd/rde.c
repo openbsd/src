@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.153 2004/11/23 13:07:01 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.154 2005/03/24 10:28:39 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -286,7 +286,7 @@ rde_dispatch_imsg_session(struct imsgbuf *ibuf)
 	if ((n = imsg_read(ibuf)) == -1)
 		fatal("rde_dispatch_imsg_session: imsg_read error");
 	if (n == 0)	/* connection closed */
-		fatal("rde_dispatch_imsg_session: pipe closed");
+		fatalx("rde_dispatch_imsg_session: pipe closed");
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -457,7 +457,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 	if ((n = imsg_read(ibuf)) == -1)
 		fatal("rde_dispatch_imsg_parent: imsg_read error");
 	if (n == 0)	/* connection closed */
-		fatal("rde_dispatch_imsg_parent: pipe closed");
+		fatalx("rde_dispatch_imsg_parent: pipe closed");
 
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
@@ -527,7 +527,7 @@ rde_dispatch_imsg_parent(struct imsgbuf *ibuf)
 			break;
 		case IMSG_FILTER_SET:
 			if (parent_set == NULL) {
-				log_warnx("rde_dispatch: "
+				log_warnx("rde_dispatch_imsg_parent: "
 				    "IMSG_FILTER_SET unexpected");
 				break;
 			}
