@@ -2025,9 +2025,14 @@ check_bound_info (info, params)
       int array_size, length, elem_size, type_size;
       tree array_size_expr = TYPE_MAX_VALUE (TYPE_DOMAIN (TREE_TYPE (buf_expr)));
       tree array_type = TREE_TYPE (TREE_TYPE (buf_expr));
+      tree array_type_size_expr = TYPE_SIZE (array_type);
+
+      /* Can't deal with variable-sized arrays yet */
+      if (TREE_CODE (array_type_size_expr) != INTEGER_CST)
+	  return;
 
       /* Get the size of the type of the array and sanity check it */
-      type_size = TREE_INT_CST_LOW (TYPE_SIZE (array_type));
+      type_size = TREE_INT_CST_LOW (array_type_size_expr);
       if ((type_size % 8) != 0)
 	{
 	  error ("found non-byte aligned type while checking bounds");
