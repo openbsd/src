@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.454 2001/10/07 22:25:34 jason Exp 
+ *		OpenBSD: pcidevs,v 1.455 2001/10/24 03:46:01 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3769,6 +3769,22 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_SMC, PCI_PRODUCT_SMC_83C170,
 	    "83C170 (EPIC/100)",
+	},
+	{
+	    PCI_VENDOR_SNI, PCI_PRODUCT_SNI_PIRAHNA,
+	    "Pirahna 2-port",
+	},
+	{
+	    PCI_VENDOR_SNI, PCI_PRODUCT_SNI_TCPMSE,
+	    "Tulip, power, switch extender",
+	},
+	{
+	    PCI_VENDOR_SNI, PCI_PRODUCT_SNI_FPGAIBUS,
+	    "FPGA I-Bus Tracer for MBD",
+	},
+	{
+	    PCI_VENDOR_SNI, PCI_PRODUCT_SNI_SZB6120,
+	    "SZB6120",
 	},
 	{
 	    PCI_VENDOR_SONY, PCI_PRODUCT_SONY_CXD1947A,

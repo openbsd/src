@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.454 2001/10/07 22:25:34 jason Exp 
+ *		OpenBSD: pcidevs,v 1.455 2001/10/24 03:46:01 mickey Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1798,6 +1798,12 @@
 #define	PCI_PRODUCT_SMC_37C665	0x1000		/* FDC 37C665 */
 #define	PCI_PRODUCT_SMC_37C922	0x1001		/* FDC 37C922 */
 #define	PCI_PRODUCT_SMC_83C170	0x0005		/* 83C170 (EPIC/100) */
+
+/* SNC products */
+#define	PCI_PRODUCT_SNI_PIRAHNA	0x0002		/* Pirahna 2-port */
+#define	PCI_PRODUCT_SNI_TCPMSE	0x0005		/* Tulip, power, switch extender */
+#define	PCI_PRODUCT_SNI_FPGAIBUS	0x4942		/* FPGA I-Bus Tracer for MBD */
+#define	PCI_PRODUCT_SNI_SZB6120	0x6120		/* SZB6120 */
 
 /* Sony products */
 #define	PCI_PRODUCT_SONY_CXD1947A	0x8009		/* CXD1947A FireWire */
