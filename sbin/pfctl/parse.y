@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.465 2004/12/07 09:38:04 deraadt Exp $	*/
+/*	$OpenBSD: parse.y,v 1.466 2004/12/07 09:39:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
