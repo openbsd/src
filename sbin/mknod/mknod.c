@@ -1,4 +1,4 @@
-/*	$OpenBSD: mknod.c,v 1.4 1997/06/18 09:59:36 deraadt Exp $	*/
+/*	$OpenBSD: mknod.c,v 1.5 1997/10/04 19:30:16 deraadt Exp $	*/
 /*	$NetBSD: mknod.c,v 1.8 1995/08/11 00:08:18 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mknod.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: mknod.c,v 1.4 1997/06/18 09:59:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mknod.c,v 1.5 1997/10/04 19:30:16 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,12 +85,12 @@ main(argc, argv)
 		/* NOTREACHED */
 	}
 
-	major = (long)strtoul(argv[3], &endp, 0);
+	major = (long)strtoul(argv[3], &endp, 10);
 	if (endp == argv[3] || *endp != '\0') {
 		errx(1, "non-numeric major number.");
 		/* NOTREACHED */
 	}
-	minor = (long)strtoul(argv[4], &endp, 0);
+	minor = (long)strtoul(argv[4], &endp, 10);
 	if (endp == argv[4] || *endp != '\0') {
 		errx(1, "non-numeric minor number.");
 		/* NOTREACHED */
