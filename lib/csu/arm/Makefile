@@ -9,7 +9,7 @@ ELFDIR=		${.CURDIR}/../common_elf
 .PATH:		${ELFDIR}
 CFLAGS+=	-I${ELFDIR} -I${.CURDIR}
 
-PICFLAG?=-fpic
+PICFLAG?=-fpic -DPIC
 
 all: ${OBJS}
 

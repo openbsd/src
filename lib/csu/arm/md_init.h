@@ -1,4 +1,4 @@
-/* $OpenBSD: md_init.h,v 1.1 2004/02/01 05:28:20 drahn Exp $ */
+/* $OpenBSD: md_init.h,v 1.2 2004/02/09 02:40:49 drahn Exp $ */
 
 /*-
  * Copyright (c) 2001 Ross Harvey
@@ -33,7 +33,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX */
+#ifdef PIC
+	/* This nastyness derived from gcc3 output */
+#define MD_SECT_CALL_FUNC(section, func) \
+	__asm (".section "#section", \"ax\"		\n" \
+	"	bl " #func "(PLT)			\n" \
+	"	.previous")
+#else
 #define MD_SECT_CALL_FUNC(section, func) \
 	__asm (".section "#section", \"ax\"	\n" \
 	"	adr r0, 1f			\n" \
@@ -43,6 +49,7 @@
 	"1:	.word " #func "			\n" \
 	"2:					\n" \
 	"	.previous")
+#endif
 
 #define MD_SECTION_PROLOGUE(sect, entry_pt)	\
 	__asm (					\
@@ -52,7 +59,7 @@
 	"	.align 4			\n" \
 	#entry_pt":				\n" \
 	"	mov ip, sp			\n" \
-	"	stmfd sp!, {fp, lr, pc}		\n" \
+	"	stmfd sp!, {fp, ip, lr, pc}	\n" \
 	"	sub fp, ip, #4			\n" \
 	"	/* fall thru */			\n" \
 	"	.previous")
