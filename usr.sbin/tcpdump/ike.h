@@ -1,4 +1,4 @@
-/* $OpenBSD: ike.h,v 1.9 2004/07/29 10:29:44 ho Exp $ */
+/* $OpenBSD: ike.h,v 1.10 2005/02/15 09:57:40 ho Exp $ */
 
 /*
  * Copyright (c) 2001 Håkan Olsson.  All rights reserved.
@@ -439,6 +439,13 @@ static const struct vendor_id
 			/* Last "0x01, 0x00" means major v1, minor v0 */
 		},
 		"DPD v1.0"
+	},
+	{
+		{
+			0x4a, 0x13, 0x1c, 0x81, 0x07, 0x03, 0x58, 0x45,
+			0x5c, 0x57, 0x28, 0xf2, 0x0e, 0x95, 0x45, 0x2f,
+		},
+		"NAT-T, RFC 3947"
 	}
 };
 
