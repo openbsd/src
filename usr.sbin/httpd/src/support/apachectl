@@ -161,7 +161,9 @@ do
 	fi
 	;;
     *)
-	echo "usage: $0 (start|stop|restart|fullstatus|status|graceful|configtest|help)"
+	BNAME=`basename $0`
+	echo "usage: $BNAME [ start | startssl | stop | restart | graceful | "
+	echo "                   status | fullstatus | configtest | help ]"
 	cat <<EOF
 
 start      - start httpd
@@ -169,9 +171,9 @@ startssl   - start httpd with SSL enabled
 stop       - stop httpd
 restart    - restart httpd if running by sending a SIGHUP or start if 
              not running
-fullstatus - dump a full status screen; requires lynx and mod_status enabled
-status     - dump a short status screen; requires lynx and mod_status enabled
 graceful   - do a graceful restart by sending a SIGUSR1 or start if not running
+status     - dump a short status screen; requires lynx and mod_status enabled
+fullstatus - dump a full status screen; requires lynx and mod_status enabled
 configtest - do a configuration syntax test
 help       - this screen
 
