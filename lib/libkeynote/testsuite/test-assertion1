@@ -3,6 +3,9 @@ comment: The weird looking string test in the conditions field is for
 	 verifying correctness of string grammar
 # comment inside comment field, no problem
 #authorizer: $$$$foo 	# Don't try this at home
+# testing # testing # testing
+# "
+#
 authorizer: "POLICY"
 licensees:  (MYKEY) && ((("Key3") || "Key4") && (MYKEY)) || TWOKEY
 local-constants: MYKEY = "Key3"

@@ -1,5 +1,5 @@
 %{
-/* $OpenBSD: keynote.l,v 1.6 1999/10/26 22:31:38 angelos Exp $ */
+/* $OpenBSD: keynote.l,v 1.7 2000/02/12 00:26:16 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -66,11 +66,10 @@ static int    first_tok = 0;
 %}
 digit		[0-9]
 specnumber      [1-9][0-9]*
-number		({digit}+)
-flt		({digit}+"."{digit}+)
+number		{digit}+
+flt		{digit}+"."{digit}+
 vstring		[a-zA-Z_][a-zA-Z0-9_]*
-white           ((\\[\n][[:space:]]*))
-litstring	\"(([^\"\n])|(\\[\"\n\f\r\t.]))*\"
+litstring	\"(([^\"\n])|(\\[\"\n.]))*\"
 variable	{vstring}
 comment		"#"[^\n]*
 %s ACTIONSTRING LOCALINIT KEYPREDICATE SIGNERINIT KEYNOTEVERSION
@@ -208,6 +207,7 @@ comment		"#"[^\n]*
 [ \t\n]
 .                             { keynote_errno = ERROR_SYNTAX; 
                                 return -1;
+				REJECT; /* Avoid -Wall warning. Not reached */
                               }
 %%
 
@@ -750,6 +750,13 @@ keynote_get_envlist(char *buf, char *bufend, int whichfield)
 	  en = keynote_init_list;
 
     	keynote_init_list = (struct environment *) NULL;
+    }
+
+    /* Avoid compiler (-Wall) warnings. Never reached. */
+    if (0)
+    {
+	yyunput(0, NULL);
+	yy_flex_realloc(0, NULL);
     }
 
     return en;
