@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.36 2001/10/27 10:31:27 heko Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.37 2001/11/14 07:59:28 heko Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.36 2001/10/27 10:31:27 heko Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.37 2001/11/14 07:59:28 heko Exp $";
 #endif /* not lint */
 
 /*
@@ -72,7 +72,8 @@ static char rcsid[] = "$OpenBSD: fetch.c,v 1.36 2001/10/27 10:31:27 heko Exp $";
 static int	url_get __P((const char *, const char *, const char *));
 void		aborthttp __P((int));
 void		abortfile __P((int));
-
+char    	hextochar __P((const char *));
+char   		*urldecode __P((const char *));
 
 #define	FTP_URL		"ftp://"	/* ftp URL prefix */
 #define	HTTP_URL	"http://"	/* http URL prefix */
@@ -82,6 +83,9 @@ void		abortfile __P((int));
 
 
 #define EMPTYSTRING(x)	((x) == NULL || (*(x) == '\0'))
+
+static const char *at_encoding_warning =
+   "Extra `@' characters in usernames and passwords should be encoded as %%40";
 
 jmp_buf	httpabort;
 
@@ -644,7 +648,7 @@ auto_fetch(argc, argv, outfile)
 		 */
 		host = line;
 		if (strncasecmp(line, FTP_URL, sizeof(FTP_URL) - 1) == 0) {
-			char *passend, *userend;
+			char *passend, *passagain, *userend;
 
 			if (ftpproxy) {
 				if (url_get(line, ftpproxy, outfile) == -1)
@@ -657,14 +661,20 @@ auto_fetch(argc, argv, outfile)
 			/* Look for [user:pass@]host[:port] */
 
 			/* check if we have "user:pass@" */
-			passend = strchr(host, '@');
 			userend = strchr(host, ':');
+			passend = strchr(host, '@');
 			if (passend && userend && userend < passend &&
 			    (!dir || passend < dir)) {
 				user = host;
 				pass = userend + 1;
 				host = passend + 1;
 				*userend = *passend = '\0';
+				passagain = strchr(host, '@');
+				if (strchr(pass, '@') != NULL || 
+				    (passagain != NULL && passagain < dir)) {
+					warnx(at_encoding_warning);
+					goto bad_ftp_url;
+				}	
 
 				if (EMPTYSTRING(user) || EMPTYSTRING(pass)) {
 bad_ftp_url:
@@ -672,6 +682,8 @@ bad_ftp_url:
 					rval = argpos + 1;
 					continue;
 				}
+				user = urldecode(user);
+				pass = urldecode(pass);
 			}
 
 #ifdef INET6
@@ -852,6 +864,61 @@ bad_ftp_url:
 	if (connected && rval != -1)
 		disconnect(0, NULL);
 	return (rval);
+}
+
+char *
+urldecode(str) 
+        const char *str;
+{
+        char *ret;
+        char c;
+        int i, reallen;
+
+        if (str == NULL) 
+                return NULL;
+        if ((ret = malloc(strlen(str)+1)) == NULL)
+                err(1, "Can't allocate memory for URL decoding");
+        for (i = 0, reallen = 0; str[i] != '\0'; i++, reallen++, ret++) {
+                c = str[i];
+                if (c == '+') {
+                        *ret = ' ';
+                        continue;
+                }
+                /* Can't use strtol here because next char after %xx may be
+                 * a digit. */
+                if (c == '%' && isxdigit(str[i+1]) && isxdigit(str[i+2])) {
+                        *ret = hextochar(&str[i+1]);
+                        i+=2;
+                        continue;
+                }
+                *ret = c;
+        }
+        *ret = '\0';
+
+        return ret-reallen;
+}
+
+char
+hextochar(str)
+        const char *str;
+{
+        char c, ret;
+
+        c = str[0];
+        ret = c;
+        if (isalpha(c))
+                ret -= isupper(c) ? 'A' - 10 : 'a' - 10;
+        else
+                ret -= '0';
+        ret *= 16;
+
+        c = str[1];
+        ret += c;
+        if (isalpha(c))
+                ret -= isupper(c) ? 'A' - 10 : 'a' - 10;
+        else
+                ret -= '0';
+        return ret;
 }
 
 int
