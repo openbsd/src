@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.7 1997/05/05 06:01:48 millert Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.8 1997/05/20 05:41:30 millert Exp $	*/
 /*	$NetBSD: installboot.c,v 1.2 1997/04/06 08:41:12 cgd Exp $	*/
 
 /*
@@ -34,6 +34,7 @@
 
 #include <sys/param.h>
 #include <sys/mount.h>
+#include <sys/ioctl.h>
 #include <sys/time.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>
@@ -53,6 +54,10 @@
 
 #include "bbinfo.h"
 
+#ifndef	ISO_DEFAULT_BLOCK_SIZE
+#define	ISO_DEFAULT_BLOCK_SIZE	2048
+#endif
+
 int	verbose, nowrite, hflag;
 char	*boot, *proto, *dev;
 
@@ -67,12 +72,15 @@ static void	devread __P((int, void *, daddr_t, size_t, char *));
 static void	usage __P((void));
 int 		main __P((int, char *[]));
 
+int	isofsblk = 0;
+int	isofseblk = 0;
 
 static void
 usage()
 {
 	(void)fprintf(stderr,
-		"usage: installboot [-n] [-v] <boot> <proto> <device>\n");
+		"usage: installboot [-n] [-v] [-s isofsblk -e isofseblk]"
+		"<boot> <proto> <device>\n");
 	exit(1);
 }
 
@@ -85,13 +93,11 @@ main(argc, argv)
 	int	devfd;
 	char	*protostore;
 	long	protosize;
-	int	mib[2];
-	size_t	size;
 	struct stat disksb, bootsb;
 	struct disklabel dl;
 	unsigned long partoffset;
 
-	while ((c = getopt(argc, argv, "vn")) != EOF) {
+	while ((c = getopt(argc, argv, "vns:e:")) != -1) {
 		switch (c) {
 		case 'n':
 			/* Do not actually write the bootblock to disk */
@@ -101,14 +107,19 @@ main(argc, argv)
 			/* Chat */
 			verbose = 1;
 			break;
+		case 's':
+			isofsblk = atoi(optarg);
+			break;
+		case 'e':
+			isofseblk = atoi(optarg);
+			break;
 		default:
 			usage();
 		}
 	}
 
-	if (argc - optind < 3) {
+	if (argc - optind < 3)
 		usage();
-	}
 
 	boot = argv[optind];
 	proto = argv[optind + 1];
@@ -234,8 +245,6 @@ loadprotoblocks(fname, size)
 	int	fd, sz;
 	char	*bp;
 	struct	stat statbuf;
-	struct	exec *hp;
-	long	off;
 	u_int64_t *matchp;
 
 	/*
@@ -343,6 +352,32 @@ loadblocknums(boot, devfd, partoffset)
 
 	if (fstatfs(fd, &statfsbuf) != 0)
 		err(1, "statfs: %s", boot);
+
+	if (isofsblk) {
+		bbinfop->bsize = ISO_DEFAULT_BLOCK_SIZE;
+		bbinfop->nblocks = isofseblk - isofsblk + 1;
+		if (bbinfop->nblocks > max_block_count)
+			errx(1, "%s: Too many blocks", boot);
+		if (verbose)
+			(void)printf("%s: starting block %d (%d total):\n\t",
+			    boot, isofsblk, bbinfop->nblocks);
+		for (i = 0; i < bbinfop->nblocks; i++) {
+			blk = (isofsblk + i) * (bbinfop->bsize / DEV_BSIZE);
+			bbinfop->blocks[i] = blk;
+			if (verbose)
+				(void)printf("%d ", blk);
+		}
+		if (verbose)
+			(void)printf("\n");
+
+		cksum = 0;
+		for (i = 0; i < bbinfop->nblocks +
+		    (sizeof(*bbinfop) / sizeof(bbinfop->blocks[0])) - 1; i++)
+			cksum += ((int32_t *)bbinfop)[i];
+		bbinfop->cksum = -cksum;
+
+		return 0;
+	}
 
 	if (strncmp(statfsbuf.f_fstypename, MOUNT_FFS, MFSNAMELEN))
 		errx(1, "%s: must be on a FFS filesystem", boot);
