@@ -1,4 +1,4 @@
-/* $OpenBSD: pmap.c,v 1.8 2000/11/08 19:16:59 ericj Exp $ */
+/* $OpenBSD: pmap.c,v 1.9 2001/03/04 13:37:44 art Exp $ */
 /* $NetBSD: pmap.c,v 1.132 2000/05/23 05:12:54 thorpej Exp $ */
 
 /*-
@@ -392,7 +392,7 @@ struct simplelock pmap_all_pmaps_slock;
 
 #ifdef __OpenBSD__
 #define spinlockinit(lock, name, flags)  lockinit(lock, 0, name, 0, flags)
-#define sinlockmgr(lock, flags, slock) lockmgr(lock, flags, slock, curproc)
+#define spinlockmgr(lock, flags, slock) lockmgr(lock, flags, slock, curproc)
 #endif
 
 #if defined(MULTIPROCESSOR) || defined(LOCKDEBUG)
