@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.22 1998/02/05 16:49:29 deraadt Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.23 1998/04/04 18:36:32 deraadt Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -110,7 +110,7 @@ const	char *panicstr; /* arg to first call to panic (used as a flag
 			   to indicate that panic has already been called). */
 #ifdef DDB
 int	db_panic = 1;
-int	db_console = 1;
+int	db_console = 0;
 #endif
 
 /*
