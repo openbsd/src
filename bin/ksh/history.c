@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.23 2004/07/16 14:47:31 miod Exp $	*/
+/*	$OpenBSD: history.c,v 1.24 2004/08/03 12:44:59 danh Exp $	*/
 
 /*
  * command history
@@ -86,7 +86,7 @@ c_fc(wp)
 	char *first = (char *) 0, *last = (char *) 0;
 	char **hfirst, **hlast, **hp;
 
-	if (!Flag(FTALKING)) {
+	if (!Flag(FTALKING_I)) {
 		bi_errorf("history functions not available");
 		return 1;
 	}
