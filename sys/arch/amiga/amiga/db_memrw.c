@@ -112,7 +112,7 @@ db_write_text(dst, ch)
 
 	*pte = oldpte;
 	TBIS(dst);
-	cachectl (4, dst, 1);
+	dma_cachectl (dst, 1);
 }
 
 /*
