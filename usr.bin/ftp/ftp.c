@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp.c,v 1.35 2000/05/03 19:50:41 deraadt Exp $	*/
+/*	$OpenBSD: ftp.c,v 1.36 2000/06/21 19:22:54 itojun Exp $	*/
 /*	$NetBSD: ftp.c,v 1.27 1997/08/18 10:20:23 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)ftp.c	8.6 (Berkeley) 10/27/94";
 #else
-static char rcsid[] = "$OpenBSD: ftp.c,v 1.35 2000/05/03 19:50:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftp.c,v 1.36 2000/06/21 19:22:54 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -137,6 +137,8 @@ hookup(host, port)
 	struct addrinfo hints, *res, *res0;
 	char hbuf[MAXHOSTNAMELEN];
 	char *cause = "unknown";
+
+	epsv4bad = 0;
 
 	memset((char *)&hisctladdr, 0, sizeof (hisctladdr));
 	memset(&hints, 0, sizeof(hints));
@@ -1217,12 +1219,22 @@ reinit:
 			warn("setsockopt (ignored)");
 		switch (data_addr.su_family) {
 		case AF_INET:
-			result = command(pasvcmd = "EPSV");
-			if (code / 10 == 22 && code != 229) {
-				fputs(
+			if (epsv4 && !epsv4bad) {
+				result = command(pasvcmd = "EPSV");
+				if (code / 10 == 22 && code != 229) {
+					fputs(
 "wrong server: return code must be 229\n",
-					ttyout);
-				result = COMPLETE + 1;
+						ttyout);
+					result = COMPLETE + 1;
+				}
+				if (result != COMPLETE) {
+					epsv4bad = 1;
+					if (debug) {
+						fputs(
+"disabling epsv4 for this connection\n",
+						    ttyout);
+					}
+				}
 			}
 			if (result != COMPLETE)
 				result = command(pasvcmd = "PASV");
@@ -1464,6 +1476,11 @@ noport:
 
 		switch (data_addr.su_family) {
 		case AF_INET:
+			if (!epsv4 || epsv4bad) {
+				result = COMPLETE +1;
+				break;
+			}
+			/*FALLTHROUGH*/
 		case AF_INET6:
 			af = (data_addr.su_family == AF_INET) ? 1 : 2;
 			if (getnameinfo((struct sockaddr *)&data_addr,
@@ -1473,6 +1490,14 @@ noport:
 			} else {
 				result = command("EPRT |%d|%s|%d|",
 					af, hname, ntohs(data_addr.su_port));
+				if (result != COMPLETE) {
+					epsv4bad = 1;
+					if (debug) {
+						fputs(
+"disabling epsv4 for this connection\n",
+						    ttyout);
+					}
+				}
 			}
 			break;
 		default:

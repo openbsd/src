@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftp_var.h,v 1.18 1999/12/08 12:57:06 itojun Exp $	*/
+/*	$OpenBSD: ftp_var.h,v 1.19 2000/06/21 19:22:54 itojun Exp $	*/
 /*	$NetBSD: ftp_var.h,v 1.18 1997/08/18 10:20:25 lukem Exp $	*/
 
 /*
@@ -152,6 +152,8 @@ int	anonftp;		/* automatic anonymous login */
 int	dirchange;		/* remote directory changed by cd command */
 unsigned int retry_connect;	/* retry connect if failed */
 int	ttywidth;		/* width of tty */
+int	epsv4;			/* use EPSV/EPRT on IPv4 connections */
+int	epsv4bad;		/* EPSV doesn't work on the current server */
 
 #ifndef SMALL
 int	  editing;		/* command line editing enabled */

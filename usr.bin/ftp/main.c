@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.46 2000/06/11 09:03:32 fgsch Exp $	*/
+/*	$OpenBSD: main.c,v 1.47 2000/06/21 19:22:54 itojun Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -73,7 +73,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.46 2000/06/11 09:03:32 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.47 2000/06/21 19:22:54 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,6 +129,12 @@ main(argc, argv)
 #endif
 	mark = HASHBYTES;
 	marg_sl = sl_init();
+#ifdef INET6
+	epsv4 = 1;
+#else
+	epsv4 = 0;
+#endif
+	epsv4bad = 0;
 
 	/* Set default operation mode based on FTPMODE environment variable */
 	if ((cp = getenv("FTPMODE")) != NULL) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.33 2000/06/13 21:28:38 millert Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.34 2000/06/21 19:22:54 itojun Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.33 2000/06/13 21:28:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.34 2000/06/21 19:22:54 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -709,6 +709,8 @@ status(argc, argv)
 	fprintf(ttyout, "Hash mark printing: %s; Mark count: %d; Progress bar: %s.\n",
 	    onoff(hash), mark, onoff(progress));
 	fprintf(ttyout, "Use of PORT/LPRT cmds: %s.\n", onoff(sendport));
+	fprintf(ttyout, "Use of EPSV/EPRT cmds for IPv4: %s%s.\n", onoff(epsv4),
+	    epsv4bad ? " (disabled for this connection)" : "");
 #ifndef SMALL
 	fprintf(ttyout, "Command line editing: %s.\n", onoff(editing));
 #endif /* !SMALL */
@@ -774,6 +776,20 @@ setedit(argc, argv)
 	controlediting();
 }
 #endif /* !SMALL */
+
+/*
+ * Toggle use of IPv4 EPSV/EPRT
+ */
+/*VARARGS*/
+void
+setepsv4(argc, argv)
+	int argc;
+	char *argv[];
+{
+
+	code = togglevar(argc, argv, &epsv4, "EPSV/EPRT on IPv4");
+	epsv4bad = 0;
+}
 
 /*
  * Turn on packet tracing.

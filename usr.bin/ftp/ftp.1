@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.30 2000/06/13 21:28:38 millert Exp $
+.\" 	$OpenBSD: ftp.1,v 1.31 2000/06/21 19:22:54 itojun Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -298,6 +298,8 @@ Toggle command line editing, and context sensitive command and file
 completion.
 This is automatically enabled if input is from a terminal, and
 disabled otherwise.
+.It Ic epsv4
+Toggle use of EPSV/EPRT command on IPv4 connection.
 .It Ic exit
 A synonym for
 .Ic bye .

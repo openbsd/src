@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.19 1999/12/08 12:57:06 itojun Exp $	*/
+/*	$OpenBSD: extern.h,v 1.20 2000/06/21 19:22:54 itojun Exp $	*/
 /*	$NetBSD: extern.h,v 1.17 1997/08/18 10:20:19 lukem Exp $	*/
 
 /*
@@ -162,6 +162,7 @@ void	setcase __P((int, char **));
 void	setcr __P((int, char **));
 void	setdebug __P((int, char **));
 void	setedit __P((int, char **));
+void	setepsv4 __P((int, char **));
 void	setform __P((int, char **));
 void	setftmode __P((int, char **));
 void	setgate __P((int, char **));
