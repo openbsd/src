@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_fd.c,v 1.18 2003/02/05 05:51:51 marc Exp $	*/
+/*	$OpenBSD: uthread_fd.c,v 1.19 2003/02/05 06:19:09 marc Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -228,24 +228,27 @@ _thread_fd_table_dup(int from_fd, int to_fd)
 	struct fd_table_entry	*entry;
 	int ret;
 
-	/* release any existing to_fd table entry */
-	entry = _thread_fd_table[to_fd];
-	if (entry != NULL) {
-		ret = _FD_LOCK(to_fd, FD_RDWR, NULL);
+	if (from_fd != too_fd) {
+		/* release any existing to_fd table entry */
+		entry = _thread_fd_table[to_fd];
+		if (entry != NULL) {
+			ret = _FD_LOCK(to_fd, FD_RDWR, NULL);
+			if (ret != -1) {
+				if (--entry->refcnt == 0)
+					free(entry);
+			}
+		} else
+			ret = 0;
+
+		/* to_fd is a copy of from_fd */
 		if (ret != -1) {
-			if (--entry->refcnt == 0)
-				free(entry);
+			_SPINLOCK(&fd_table_lock);
+			_thread_fd_table[to_fd] = _thread_fd_table[from_fd];
+			_thread_fd_table[to_fd]->refcnt += 1;
+			_SPINUNLOCK(&fd_table_lock);
 		}
 	} else
 		ret = 0;
-
-	/* to_fd is a copy of from_fd */
-	if (ret != -1) {
-		_SPINLOCK(&fd_table_lock);
-		_thread_fd_table[to_fd] = _thread_fd_table[from_fd];
-		_thread_fd_table[to_fd]->refcnt += 1;
-		_SPINUNLOCK(&fd_table_lock);
-	}
 
 	return (ret);
 }
