@@ -1,4 +1,4 @@
-.\" $OpenBSD: gm.4,v 1.2 2001/08/21 20:05:05 drahn Exp $
+.\" $OpenBSD: ams.4,v 1.1 2001/09/01 16:58:45 drahn Exp $
 .\"
 .\" Copyright (c) 2001 Peter Philipp
 .\" All rights reserved.
@@ -26,29 +26,41 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd July 30, 2001
-.Dt GM 4 powerpc
+.Dt AMS 4 powerpc
 .Os 
+
 .Sh NAME
-.Nm gm
-.Nd apple GMAC ethernet
+.Nm ams
+.Nd Apple Mouse Support
 .Sh SYNOPSIS
-.Cd "gm* at pci? dev ? function ?"
+.Cd "ams* at adb?"
 .Sh DESCRIPTION
 The 
-.Nm
-device driver supports Apple GMAC and compatible Ethernet devices.
-.Sh DIAGNOSTICS
-.Bl -diag
-.It "gm0: reset timeout"
-driver was not able to be reset the device after 10 tries.
-.It "gm0: device timeout"
-watchdog timeout.
+.Nm 
+driver supports a series of 
+.Xr adb 4
+mice, trackballs, trackpads and tablets.
+.Pp
+.Bl -bullet -compact
+.It
+Extended Mouse Protocol
+.It
+Mouse Systems A^3 Mouse
+.It
+MicroSpeed Mouse Deluxe
+.It
+Contour mouse
+.It
+Kensington Turbo Mouse
+.It
+Logitech non-EMP Mouseman
+.It
+TrackMan trackball
 .El
-.Sh AUTHOR
-The
+.Sh SEE ALSO
+.Xr adb 4
+.Sh AUTHORS
+The 
 .Nm
-Ethernet driver was written by Tsubai Masanari.
-.Sh HISTORY
-Support for newer ``GMAC2'' cards found in newer Apple iBooks was added in
-.Ox
-3.0.
+driver was written by
+.Sy Colin Wood.

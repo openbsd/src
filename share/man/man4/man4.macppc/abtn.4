@@ -1,4 +1,4 @@
-.\" $OpenBSD: adb.4,v 1.1 2001/08/21 19:58:03 drahn Exp $
+.\" $OpenBSD: abtn.4,v 1.1 2001/09/01 16:58:45 drahn Exp $
 .\"
 .\" Copyright (c) 2001 Peter Philipp
 .\" All rights reserved.
@@ -25,24 +25,27 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
+.\"
 .Dd July 30, 2001
-.Dt ADB 4 powerpc
+.Dt ABTN 4 powerpc
 .Os 
-
 .Sh NAME
-.Nm adb
-.Nd Apple Desktop Bus driver
+.Nm abtn 
+.Nd apple brightness/volume button control
 .Sh SYNOPSIS
-.Cd "adb at macobio?"
+.Cd "abtn at adb?"
 .Sh DESCRIPTION
-The Apple Desktop Bus driver handles I/O devices such as ADB Keyboard, pointing
-devices such as trackball or mouse, and special function buttons.
+The 
+.Nm
+driver allows you to dim the brightness of your display.  This driver only
+currently recognizes the dim and brightness button.  Sound, numlock and
+eject buttons are also handled by this driver but are silently ignored.
 .Sh SEE ALSO
-.Xr abtn 4,
-.Xr aed 4,
-.Xr ams 4
-.Sh AUTHORS
-The direct ADB routines were written by
-.Sy John P. Wittkoski.
-The autoconf and attach routines seem to be written by 
-.Sy Bradley A. Grantham.
+.Xr adb 4, 
+.Xr aed 4
+.Sh AUTHOR
+abtn was written by Tsubai Masanari for
+.Nx .
+.Sh BUGS
+The bright/dim buttons currently don't work on new 2001 iBooks.  It's best
+to just disable the driver to avoid freeze ups when pressing these buttons.

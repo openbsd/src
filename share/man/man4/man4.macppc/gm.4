@@ -1,4 +1,4 @@
-.\" $OpenBSD: bm.4,v 1.1 2001/08/21 19:58:03 drahn Exp $
+.\" $OpenBSD: gm.4,v 1.1 2001/09/01 16:58:45 drahn Exp $
 .\"
 .\" Copyright (c) 2001 Peter Philipp
 .\" All rights reserved.
@@ -26,18 +26,29 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd July 30, 2001
-.Dt BM 4 powerpc
+.Dt GM 4 powerpc
 .Os 
 .Sh NAME
-.Nm bm
-.Nd Apple BMAC Ethernet driver
+.Nm gm
+.Nd apple GMAC ethernet
 .Sh SYNOPSIS
-.Cd "bm* at macobio?"
+.Cd "gm* at pci? dev ? function ?"
 .Sh DESCRIPTION
 The 
 .Nm
-device driver supports Apple BMAC and compatible Ethernet devices.
+device driver supports Apple GMAC and compatible Ethernet devices.
+.Sh DIAGNOSTICS
+.Bl -diag
+.It "gm0: reset timeout"
+driver was not able to be reset the device after 10 tries.
+.It "gm0: device timeout"
+watchdog timeout.
+.El
 .Sh AUTHOR
 The
 .Nm
 Ethernet driver was written by Tsubai Masanari.
+.Sh HISTORY
+Support for newer ``GMAC2'' cards found in newer Apple iBooks was added in
+.Ox
+3.0.

@@ -1,6 +1,6 @@
-.\" $OpenBSD: abtn.4,v 1.2 2001/08/21 20:05:05 drahn Exp $
+.\"	$OpenBSD: autoconf.4,v 1.1 2001/09/01 16:58:45 drahn Exp $
 .\"
-.\" Copyright (c) 2001 Peter Philipp
+.\" Copyright (c) 1994 Christopher G. Demetriou
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -11,6 +11,9 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Christopher G. Demetriou.
 .\" 3. The name of the author may not be used to endorse or promote products
 .\"    derived from this software without specific prior written permission
 .\"
@@ -25,27 +28,36 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"
-.Dd July 30, 2001
-.Dt ABTN 4 powerpc
-.Os 
+.Dd August 15, 2001
+.Dt AUTOCONF 4 powerpc
+.Os
 .Sh NAME
-.Nm abtn 
-.Nd apple brightness/volume button control
-.Sh SYNOPSIS
-.Cd "abtn at adb?"
+.Nm autoconf
+.Nd diagnostics from the autoconfiguration code
 .Sh DESCRIPTION
-The 
-.Nm
-driver allows you to dim the brightness of your display.  This driver only
-currently recognizes the dim and brightness button.  Sound, numlock and
-eject buttons are also handled by this driver but are silently ignored.
+When
+.Ox
+bootstraps it probes the innards of the machine
+on which it is running
+and locates controllers, drives, and other devices, printing out
+what it finds on the console.
+This procedure is driven by a system configuration table which is processed by
+.Xr config 8
+and compiled into each kernel.
+Devices which exist in the machine but are not configured into the
+kernel are not detected.
+.Sh DIAGNOSTICS
+.Bl -diag
+.It CPU class not configured.
+You tried to boot
+.Ox
+on a class of
+.Tn CPU
+type which it doesn't
+(or at least this compiled version of
+.Ox
+doesn't) understand.
+.El
 .Sh SEE ALSO
-.Xr adb 4, 
-.Xr aed 4
-.Sh AUTHOR
-abtn was written by Tsubai Masanari for
-.Nx .
-.Sh BUGS
-The bright/dim buttons currently don't work on new 2001 iBooks.  It's best
-to just disable the driver to avoid freeze ups when pressing these buttons.
+.Xr intro 4 ,
+.Xr config 8

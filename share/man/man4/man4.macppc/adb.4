@@ -1,4 +1,4 @@
-.\" $OpenBSD: aed.4,v 1.1 2001/08/21 19:58:03 drahn Exp $
+.\" $OpenBSD: adb.4,v 1.1 2001/09/01 16:58:45 drahn Exp $
 .\"
 .\" Copyright (c) 2001 Peter Philipp
 .\" All rights reserved.
@@ -26,24 +26,23 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .Dd July 30, 2001
-.Dt AED 4 powerpc
+.Dt ADB 4 powerpc
 .Os 
 
 .Sh NAME
-.Nm aed
-.Nd Apple Event Device
+.Nm adb
+.Nd Apple Desktop Bus driver
 .Sh SYNOPSIS
-.Cd "aed* at adb?"
+.Cd "adb at macobio?"
 .Sh DESCRIPTION
-The 
-.Nm
-driver handles events on the 
-.Xr adb 4 
-Desktop Bus.
+The Apple Desktop Bus driver handles I/O devices such as ADB Keyboard, pointing
+devices such as trackball or mouse, and special function buttons.
 .Sh SEE ALSO
-.Xr adb 4
+.Xr abtn 4,
+.Xr aed 4,
+.Xr ams 4
 .Sh AUTHORS
-The 
-.Nm
-driver was written by
+The direct ADB routines were written by
+.Sy John P. Wittkoski.
+The autoconf and attach routines seem to be written by 
 .Sy Bradley A. Grantham.
