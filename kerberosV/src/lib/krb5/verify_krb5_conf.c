@@ -449,8 +449,8 @@ struct entry log_strings[] = {
 
 #if 0
 struct entry kdcdefaults_entries[] = {
-    { "kdc_ports, krb5_config_string, mit_entry },
-    { "v4_mode, krb5_config_string, mit_entry },
+    { "kdc_ports", krb5_config_string, mit_entry },
+    { "v4_mode", krb5_config_string, mit_entry },
     { NULL }
 };
 #endif
