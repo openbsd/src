@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_cue.c,v 1.15 2002/07/10 18:08:13 deraadt Exp $ */
+/*	$OpenBSD: if_cue.c,v 1.16 2002/07/25 02:18:10 nate Exp $ */
 /*	$NetBSD: if_cue.c,v 1.39 2002/07/08 17:46:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -96,7 +96,7 @@
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
 #endif /* defined(__NetBSD__) */
@@ -203,7 +203,7 @@ cue_csr_read_1(struct cue_softc *sc, int reg)
 		return (0);
 	}
 
-	DPRINTFN(10,("%s: cue_csr_read_1 reg=0x%x val=0x%x\n", 
+	DPRINTFN(10,("%s: cue_csr_read_1 reg=0x%x val=0x%x\n",
 		     USBDEVNAME(sc->cue_dev), reg, val));
 
 	return (val);
@@ -227,7 +227,7 @@ cue_csr_read_2(struct cue_softc *sc, int reg)
 
 	err = usbd_do_request(sc->cue_udev, &req, &val);
 
-	DPRINTFN(10,("%s: cue_csr_read_2 reg=0x%x val=0x%x\n", 
+	DPRINTFN(10,("%s: cue_csr_read_2 reg=0x%x val=0x%x\n",
 		     USBDEVNAME(sc->cue_dev), reg, UGETW(val)));
 
 	if (err) {
@@ -248,7 +248,7 @@ cue_csr_write_1(struct cue_softc *sc, int reg, int val)
 	if (sc->cue_dying)
 		return (0);
 
-	DPRINTFN(10,("%s: cue_csr_write_1 reg=0x%x val=0x%x\n", 
+	DPRINTFN(10,("%s: cue_csr_write_1 reg=0x%x val=0x%x\n",
 		     USBDEVNAME(sc->cue_dev), reg, val));
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -265,7 +265,7 @@ cue_csr_write_1(struct cue_softc *sc, int reg, int val)
 		return (-1);
 	}
 
-	DPRINTFN(20,("%s: cue_csr_write_1, after reg=0x%x val=0x%x\n", 
+	DPRINTFN(20,("%s: cue_csr_write_1, after reg=0x%x val=0x%x\n",
 		     USBDEVNAME(sc->cue_dev), reg, cue_csr_read_1(sc, reg)));
 
 	return (0);
@@ -283,7 +283,7 @@ cue_csr_write_2(struct cue_softc *sc, int reg, int aval)
 	if (sc->cue_dying)
 		return (0);
 
-	DPRINTFN(10,("%s: cue_csr_write_2 reg=0x%x val=0x%x\n", 
+	DPRINTFN(10,("%s: cue_csr_write_2 reg=0x%x val=0x%x\n",
 		     USBDEVNAME(sc->cue_dev), reg, aval));
 
 	USETW(val, aval);
@@ -388,7 +388,7 @@ cue_setmulti(struct cue_softc *sc)
 
 	ifp = GET_IFP(sc);
 
-	DPRINTFN(2,("%s: cue_setmulti if_flags=0x%x\n", 
+	DPRINTFN(2,("%s: cue_setmulti if_flags=0x%x\n",
 		    USBDEVNAME(sc->cue_dev), ifp->if_flags));
 
 	if (ifp->if_flags & IFF_PROMISC) {
@@ -417,7 +417,7 @@ allmulti:
 			goto allmulti;
 
 		h = cue_crc(enm->enm_addrlo);
-		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);		
+		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 
@@ -429,7 +429,7 @@ allmulti:
 	 */
 	if (ifp->if_flags & IFF_BROADCAST) {
 		h = cue_crc(etherbroadcastaddr);
-		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);		
+		sc->cue_mctab[h >> 3] |= 1 << (h & 0x7);
 	}
 
 	cue_mem(sc, CUE_CMD_WRITESRAM, CUE_MCAST_TABLE_ADDR,

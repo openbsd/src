@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.5 2002/07/10 03:02:50 nate Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.6 2002/07/25 02:18:11 nate Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.27 2002/03/16 16:10:19 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -188,7 +188,7 @@ USB_ATTACH(uplcom)
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	
+
 	char devinfo[1024];
 	char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
@@ -203,7 +203,7 @@ USB_ATTACH(uplcom)
 
 	DPRINTF(("\n\nuplcom attach: sc=%p\n", sc));
 
-	/* initialize endpoints */ 
+	/* initialize endpoints */
 	uca.bulkin = uca.bulkout = -1;
 	sc->sc_intr_number = -1;
 	sc->sc_intr_pipe = NULL;
@@ -228,7 +228,7 @@ USB_ATTACH(uplcom)
 	}
 
 	/* get the (first/common) interface */
-	err = usbd_device2interface_handle(dev, UPLCOM_IFACE_INDEX, 
+	err = usbd_device2interface_handle(dev, UPLCOM_IFACE_INDEX,
 							&sc->sc_iface);
 	if (err) {
 		printf("\n%s: failed to get interface, err=%s\n",
@@ -255,7 +255,7 @@ USB_ATTACH(uplcom)
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_INTERRUPT) {
 			sc->sc_intr_number = ed->bEndpointAddress;
 			sc->sc_isize = UGETW(ed->wMaxPacketSize);
-		} 
+		}
 	}
 
 	if (sc->sc_intr_number== -1) {
@@ -277,11 +277,11 @@ USB_ATTACH(uplcom)
 	 *  Interrupt(0x81) | Interrupt(0x81)
 	 * -----------------+ BulkIN(0x02)
 	 * Interface 1	    | BulkOUT(0x83)
-	 *   BulkIN(0x02)   | 
+	 *   BulkIN(0x02)   |
 	 *   BulkOUT(0x83)  |
 	 */
 	if (cdesc->bNumInterface == 2) {
-		err = usbd_device2interface_handle(dev, 
+		err = usbd_device2interface_handle(dev,
 				UPLCOM_SECOND_IFACE_INDEX, &sc->sc_iface);
 		if (err) {
 			printf("\n%s: failed to get second interface, err=%s\n",
@@ -289,7 +289,7 @@ USB_ATTACH(uplcom)
 			sc->sc_dying = 1;
 			USB_ATTACH_ERROR_RETURN;
 		}
-	} 
+	}
 
 	/* Find the bulk{in,out} endpoints */
 
@@ -416,9 +416,9 @@ uplcom_reset(struct uplcom_softc *sc)
         req.bRequest = UPLCOM_SET_REQUEST;
         USETW(req.wValue, 0);
         USETW(req.wIndex, sc->sc_iface_number);
-        USETW(req.wLength, 0); 
- 
-        err = usbd_do_request(sc->sc_udev, &req, 0); 
+        USETW(req.wLength, 0);
+
+        err = usbd_do_request(sc->sc_udev, &req, 0);
 	if (err)
 		return (EIO);
 
@@ -619,7 +619,7 @@ uplcom_open(void *addr, int portno)
 {
 	struct uplcom_softc *sc = addr;
 	int err;
-	
+
 	if (sc->sc_dying)
 		return (EIO);
 
@@ -643,7 +643,7 @@ uplcom_open(void *addr, int portno)
 }
 
 void
-uplcom_close(void *addr, int portno) 
+uplcom_close(void *addr, int portno)
 {
 	struct uplcom_softc *sc = addr;
 	int err;

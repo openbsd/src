@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.20 2002/07/10 18:08:13 deraadt Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.21 2002/07/25 02:18:10 nate Exp $ */
 /*	$NetBSD: if_kue.c,v 1.48 2002/07/08 17:46:24 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -106,7 +106,7 @@
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
 #endif /* defined (__NetBSD__) */
@@ -281,7 +281,7 @@ kue_load_fw(struct kue_softc *sc)
 	       USBDEVNAME(sc->kue_dev));
 
 	/* Load code segment */
-	DPRINTFN(1,("%s: kue_load_fw: download code_seg\n", 
+	DPRINTFN(1,("%s: kue_load_fw: download code_seg\n",
 		    USBDEVNAME(sc->kue_dev)));
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
 	    0, (void *)kue_code_seg, sizeof(kue_code_seg));
@@ -292,7 +292,7 @@ kue_load_fw(struct kue_softc *sc)
 	}
 
 	/* Load fixup segment */
-	DPRINTFN(1,("%s: kue_load_fw: download fix_seg\n", 
+	DPRINTFN(1,("%s: kue_load_fw: download fix_seg\n",
 		    USBDEVNAME(sc->kue_dev)));
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
 	    0, (void *)kue_fix_seg, sizeof(kue_fix_seg));
@@ -303,7 +303,7 @@ kue_load_fw(struct kue_softc *sc)
 	}
 
 	/* Send trigger command. */
-	DPRINTFN(1,("%s: kue_load_fw: download trig_seg\n", 
+	DPRINTFN(1,("%s: kue_load_fw: download trig_seg\n",
 		    USBDEVNAME(sc->kue_dev)));
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
 	    0, (void *)kue_trig_seg, sizeof(kue_trig_seg));
@@ -754,7 +754,7 @@ kue_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	usbd_get_xfer_status(xfer, NULL, NULL, &total_len, NULL);
 
 	DPRINTFN(10,("%s: %s: total_len=%d len=%d\n", USBDEVNAME(sc->kue_dev),
-		     __func__, total_len, 
+		     __func__, total_len,
 		     UGETW(mtod(c->kue_mbuf, u_int8_t *))));
 
 	if (total_len <= 1)

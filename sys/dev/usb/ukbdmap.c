@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukbdmap.c,v 1.11 2002/05/07 18:29:18 nate Exp $ */
+/*	$OpenBSD: ukbdmap.c,v 1.12 2002/07/25 02:18:10 nate Exp $ */
 /*	$NetBSD: ukbdmap.c,v 1.6 2001/04/04 05:31:57 toshii Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ Static const keysym_t ukbd_keydesc_us[] = {
     KC(70),			KS_Print_Screen,
     KC(71), 			KS_Hold_Screen,
     KC(72),			KS_Pause,
-    KC(73),			KS_Insert, 
+    KC(73),			KS_Insert,
     KC(74),			KS_Home,
     KC(75), KS_Cmd_ScrollBack,	KS_Prior,
     KC(76),			KS_Delete,
@@ -304,7 +304,7 @@ Static const keysym_t ukbd_keydesc_fr[] = {
     KC(39),  KS_agrave,		KS_0,		KS_at,
     KC(45),  KS_parenright,	KS_degree,	KS_bracketright,
     KC(46),  KS_equal,		KS_plus,	KS_braceright,
-    KC(47),  KS_dead_circumflex, KS_dead_diaeresis, 
+    KC(47),  KS_dead_circumflex, KS_dead_diaeresis,
     KC(48),  KS_dollar,		KS_sterling,	KS_currency,
     KC(50),  KS_asterisk,	KS_mu,
     KC(51),  KS_m,

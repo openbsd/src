@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_quirks.c,v 1.13 2002/05/07 20:06:28 nate Exp $ */
+/*	$OpenBSD: usb_quirks.c,v 1.14 2002/07/25 02:18:11 nate Exp $ */
 /*	$NetBSD: usb_quirks.c,v 1.39 2001/11/13 06:24:56 lukem Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.13 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -41,7 +41,7 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
- 
+
 #include <dev/usb/usb.h>
 
 #include <dev/usb/usbdevs.h>
@@ -60,7 +60,7 @@ Static const struct usbd_quirk_entry {
 	struct usbd_quirks quirks;
 } usb_quirks[] = {
  { USB_VENDOR_KYE, USB_PRODUCT_KYE_NICHE,	    0x100, { UQ_NO_SET_PROTO}},
- { USB_VENDOR_INSIDEOUT, USB_PRODUCT_INSIDEOUT_EDGEPORT4, 
+ { USB_VENDOR_INSIDEOUT, USB_PRODUCT_INSIDEOUT_EDGEPORT4,
    						    0x094, { UQ_SWAP_UNICODE}},
  { USB_VENDOR_BTC, USB_PRODUCT_BTC_BTC7932,	    0x100, { UQ_NO_STRINGS }},
  { USB_VENDOR_ADS, USB_PRODUCT_ADS_UBS10BT,	    0x002, { UQ_NO_STRINGS }},
@@ -110,7 +110,7 @@ usbd_find_quirk(usb_device_descriptor_t *d)
 	}
 #ifdef USB_DEBUG
 	if (usbdebug && t->quirks.uq_flags)
-		logprintf("usbd_find_quirk 0x%04x/0x%04x/%x: %d\n", 
+		logprintf("usbd_find_quirk 0x%04x/0x%04x/%x: %d\n",
 			  UGETW(d->idVendor), UGETW(d->idProduct),
 			  UGETW(d->bcdDevice), t->quirks.uq_flags);
 #endif

@@ -1,11 +1,11 @@
-/*	$OpenBSD: uftdireg.h,v 1.6 2002/07/10 02:56:53 nate Exp $ 	*/
+/*	$OpenBSD: uftdireg.h,v 1.7 2002/07/25 02:18:10 nate Exp $ 	*/
 /*	$NetBSD: uftdireg.h,v 1.5 2002/05/08 18:10:19 scw Exp $ */
 
 /*
- * Definitions for the FTDI USB Single Port Serial Converter - 
- * known as FTDI_SIO (Serial Input/Output application of the chipset) 
+ * Definitions for the FTDI USB Single Port Serial Converter -
+ * known as FTDI_SIO (Serial Input/Output application of the chipset)
  *
- * The device is based on the FTDI FT8U100AX chip. It has a DB25 on one side, 
+ * The device is based on the FTDI FT8U100AX chip. It has a DB25 on one side,
  * USB on the other.
  *
  * Thanx to FTDI (http://www.ftdi.co.uk) for so kindly providing details
@@ -41,7 +41,7 @@ enum uftdi_type {
 /*
  * BmRequestType:  0100 0000B
  * bRequest:       FTDI_SIO_RESET
- * wValue:         Control Value 
+ * wValue:         Control Value
  *                   0 = Reset SIO
  *                   1 = Purge RX buffer
  *                   2 = Purge TX buffer
@@ -79,8 +79,8 @@ enum uftdi_type {
  */
 /* FTDI_SIO_SET_BAUDRATE */
 enum {
-	ftdi_sio_b300 = 0, 
-	ftdi_sio_b600 = 1, 
+	ftdi_sio_b300 = 0,
+	ftdi_sio_b600 = 1,
 	ftdi_sio_b1200 = 2,
 	ftdi_sio_b2400 = 3,
 	ftdi_sio_b4800 = 4,
@@ -108,7 +108,7 @@ enum {
 };
 
 /*
- * BmRequestType:  0100 0000B 
+ * BmRequestType:  0100 0000B
  * bRequest:       FTDI_SIO_SET_DATA
  * wValue:         Data characteristics (see below)
  * wIndex:         Port
@@ -144,7 +144,7 @@ enum {
 #define FTDI_SIO_SET_BREAK (0x1 << 14)
 
 
-/* 
+/*
  * BmRequestType:   0100 0000B
  * bRequest:        FTDI_SIO_MODEM_CTRL
  * wValue:          ControlValue (see below)
@@ -186,7 +186,7 @@ enum {
  *   bRequest:       FTDI_SIO_SET_FLOW_CTRL
  *   wValue:         Xoff/Xon
  *   wIndex:         Protocol/Port - hIndex is protocl / lIndex is port
- *   wLength:        0 
+ *   wLength:        0
  *   Data:           None
  *
  * hIndex protocol is:
@@ -204,15 +204,15 @@ enum {
  *
  * If Xon/Xoff handshaking is specified, the hValue field should contain the
  * XOFF character and the lValue field contains the XON character.
- */  
+ */
 /* FTDI_SIO_SET_FLOW_CTRL */
-#define FTDI_SIO_DISABLE_FLOW_CTRL 0x0 
+#define FTDI_SIO_DISABLE_FLOW_CTRL 0x0
 #define FTDI_SIO_RTS_CTS_HS 0x1
 #define FTDI_SIO_DTR_DSR_HS 0x2
 #define FTDI_SIO_XON_XOFF_HS 0x4
 
- 
-/* 
+
+/*
  *  BmRequestType:   0100 0000b
  *  bRequest:        FTDI_SIO_SET_EVENT_CHAR
  *  wValue:          Event Char
@@ -227,7 +227,7 @@ enum {
  *             1 = enabled
  *   B9..15  Reserved
  *
- * FTDI_SIO_SET_EVENT_CHAR 
+ * FTDI_SIO_SET_EVENT_CHAR
  *
  * Set the special event character for the specified communications port.
  * If the device sees this character it will immediately return the
@@ -236,8 +236,8 @@ enum {
  */
 
 
-          
-/* 
+
+/*
  *  BmRequestType:  0100 0000b
  *  bRequest:       FTDI_SIO_SET_ERROR_CHAR
  *  wValue:         Error Char
@@ -259,15 +259,15 @@ enum {
  */
 
 
-/* 
+/*
  *   BmRequestType:   1100 0000b
  *   bRequest:        FTDI_SIO_GET_MODEM_STATUS
  *   wValue:          zero
  *   wIndex:          Port
  *   wLength:         1
  *   Data:            Status
- * 
- * One byte of data is returned 
+ *
+ * One byte of data is returned
  * B0..3 0
  * B4    CTS
  *         0 = inactive
@@ -280,7 +280,7 @@ enum {
  *         1 = active
  * B7    Receive Line Signal Detect (RLSD)
  *         0 = inactive
- *         1 = active 
+ *         1 = active
  *
  * FTDI_SIO_GET_MODEM_STATUS
  * Retrieve the current value of the modem status register.
@@ -293,29 +293,29 @@ enum {
 
 
 /*
- *     
+ *
  * DATA FORMAT
- * 
+ *
  * IN Endpoint
- * 
+ *
  * The device reserves the first two bytes of data on this endpoint to contain
  * the current values of the modem and line status registers. In the absence of
  * data, the device generates a message consisting of these two status bytes
  * every 40 ms.
- * 
+ *
  * Byte 0: Modem Status
  *   NOTE: 4 upper bits have same layout as the MSR register in a 16550
- * 
+ *
  * Offset	Description
  * B0..3	Port
  * B4		Clear to Send (CTS)
  * B5		Data Set Ready (DSR)
  * B6		Ring Indicator (RI)
  * B7		Receive Line Signal Detect (RLSD)
- * 
+ *
  * Byte 1: Line Status
  *   NOTE: same layout as the LSR register in a 16550
- * 
+ *
  * Offset	Description
  * B0	Data Ready (DR)
  * B1	Overrun Error (OE)
@@ -328,17 +328,17 @@ enum {
  *
  *
  * OUT Endpoint
- * 
+ *
  * This device reserves the first bytes of data on this endpoint contain the
  * length and port identifier of the message. For the FTDI USB Serial converter
  * the port identifier is always 1.
- * 
+ *
  * Byte 0: Port & length
- * 
+ *
  * Offset	Description
  * B0..1	Port
  * B2..7	Length of message - (not including Byte 0)
- * 
+ *
  */
 #define FTDI_PORT_MASK 0x0f
 #define FTDI_MSR_MASK 0xf0

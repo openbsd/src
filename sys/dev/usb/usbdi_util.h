@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi_util.h,v 1.10 2002/05/07 18:29:19 nate Exp $ */
+/*	$OpenBSD: usbdi_util.h,v 1.11 2002/07/25 02:18:11 nate Exp $ */
 /*	$NetBSD: usbdi_util.h,v 1.23 2001/10/26 17:58:22 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi_util.h,v 1.9 1999/11/17 22:33:50 n_hibma Exp $	*/
 
@@ -39,15 +39,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-usbd_status	usbd_get_desc(usbd_device_handle dev, int type, 
+usbd_status	usbd_get_desc(usbd_device_handle dev, int type,
 			      int index, int len, void *desc);
-usbd_status	usbd_get_config_desc(usbd_device_handle, int, 
+usbd_status	usbd_get_config_desc(usbd_device_handle, int,
 				     usb_config_descriptor_t *);
 usbd_status	usbd_get_config_desc_full(usbd_device_handle, int, void *, int);
 usbd_status	usbd_get_device_desc(usbd_device_handle dev,
 				     usb_device_descriptor_t *d);
 usbd_status	usbd_set_address(usbd_device_handle dev, int addr);
-usbd_status	usbd_get_port_status(usbd_device_handle, 
+usbd_status	usbd_get_port_status(usbd_device_handle,
 				     int, usb_port_status_t *);
 usbd_status	usbd_set_hub_feature(usbd_device_handle dev, int);
 usbd_status	usbd_clear_hub_feature(usbd_device_handle, int);

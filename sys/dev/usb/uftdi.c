@@ -1,4 +1,4 @@
-/*	$OpenBSD: uftdi.c,v 1.7 2002/07/10 02:56:53 nate Exp $ 	*/
+/*	$OpenBSD: uftdi.c,v 1.8 2002/07/25 02:18:10 nate Exp $ 	*/
 /*	$NetBSD: uftdi.c,v 1.10 2002/05/08 18:10:19 scw Exp $	*/
 
 /*
@@ -128,7 +128,7 @@ USB_DECLARE_DRIVER(uftdi);
 USB_MATCH(uftdi)
 {
 	USB_MATCH_START(uftdi, uaa);
-	
+
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
@@ -206,7 +206,7 @@ USB_ATTACH(uftdi)
 			       ": %s\n", devname, usbd_errstr(err));
 			goto bad;
 		}
-		
+
 		addr = ed->bEndpointAddress;
 		dir = UE_GET_DIR(ed->bEndpointAddress);
 		attr = ed->bmAttributes & UE_XFERTYPE;
@@ -229,7 +229,7 @@ USB_ATTACH(uftdi)
 		       USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
-	
+
 	uca.portno = FTDI_PIT_SIOA;
 	/* bulkin, bulkout set above */
 	uca.ibufsize = UFTDIIBUFSIZE;
@@ -546,7 +546,7 @@ uftdi_break(void *vsc, int portno, int onoff)
 	int data;
 
 	DPRINTF(("uftdi_break: sc=%p, port=%d onoff=%d\n", vsc, portno,
-		  onoff)); 
+		  onoff));
 
 	if (onoff) {
 		data = sc->last_lcr | FTDI_SIO_SET_BREAK;

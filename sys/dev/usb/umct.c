@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.3 2002/06/11 06:42:17 nate Exp $	*/
+/*	$OpenBSD: umct.c,v 1.4 2002/07/25 02:18:11 nate Exp $	*/
 /*	$NetBSD: umct.c,v 1.7 2001/12/17 14:19:39 ichiro Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -172,7 +172,7 @@ USB_ATTACH(umct)
 	usb_config_descriptor_t *cdesc;
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
-	
+
 	char devinfo[1024];
 	char *devname = USBDEVNAME(sc->sc_dev);
 	usbd_status err;
@@ -188,7 +188,7 @@ USB_ATTACH(umct)
 
 	DPRINTF(("\n\numct attach: sc=%p\n", sc));
 
-	/* initialize endpoints */ 
+	/* initialize endpoints */
 	uca.bulkin = uca.bulkout = -1;
 	sc->sc_intr_number = -1;
 	sc->sc_intr_pipe = NULL;
@@ -213,7 +213,7 @@ USB_ATTACH(umct)
 	}
 
 	/* get the interface */
-	err = usbd_device2interface_handle(dev, UMCT_IFACE_INDEX, 
+	err = usbd_device2interface_handle(dev, UMCT_IFACE_INDEX,
 							&sc->sc_iface);
 	if (err) {
 		printf("\n%s: failed to get interface, err=%s\n",
@@ -531,7 +531,7 @@ umct_open(void *addr, int portno)
 {
 	struct umct_softc *sc = addr;
 	int err, lcr_data;
-	
+
 	if (sc->sc_dying)
 		return (EIO);
 
@@ -540,7 +540,7 @@ umct_open(void *addr, int portno)
 	/* initialize LCR */
         lcr_data = LCR_DATA_BITS_8 | LCR_PARITY_NONE |
 	    LCR_STOP_BITS_1;
-        umct_set_lcr(sc, lcr_data);  
+        umct_set_lcr(sc, lcr_data);
 
 	if (sc->sc_intr_number != -1 && sc->sc_intr_pipe == NULL) {
 		sc->sc_status = 0; /* clear status bit */
@@ -560,7 +560,7 @@ umct_open(void *addr, int portno)
 }
 
 void
-umct_close(void *addr, int portno) 
+umct_close(void *addr, int portno)
 {
 	struct umct_softc *sc = addr;
 	int err;
@@ -589,7 +589,7 @@ umct_intr(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 {
 	struct umct_softc *sc = priv;
 	u_char *buf = sc->sc_intr_buf;
-	u_char mstatus, lstatus; 
+	u_char mstatus, lstatus;
 
 	if (sc->sc_dying)
 		return;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhub.c,v 1.17 2002/07/10 13:15:58 nate Exp $ */
+/*	$OpenBSD: uhub.c,v 1.18 2002/07/25 02:18:10 nate Exp $ */
 /*	$NetBSD: uhub.c,v 1.52 2001/10/26 17:53:59 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 
@@ -90,7 +90,7 @@ Static bus_child_detached_t uhub_child_detached;
 #endif
 
 
-/* 
+/*
  * We need two attachment points:
  * hub to usb and hub to hub
  * Every other driver only connects to hubs
@@ -107,7 +107,7 @@ struct cfattach uhub_uhub_ca = {
 #elif defined(__FreeBSD__)
 USB_DECLARE_DRIVER_INIT(uhub,
 			DEVMETHOD(bus_child_detached, uhub_child_detached));
-			
+
 /* Create the driver instance for the hub connected to usb case. */
 devclass_t uhubroot_devclass;
 
@@ -130,9 +130,9 @@ USB_MATCH(uhub)
 {
 	USB_MATCH_START(uhub, uaa);
 	usb_device_descriptor_t *dd = usbd_get_device_descriptor(uaa->device);
-	
+
 	DPRINTFN(5,("uhub_match, dd=%p\n", dd));
-	/* 
+	/*
 	 * The subclass for hubs seems to be 0 for some and 1 for others,
 	 * so we just ignore the subclass.
 	 */
@@ -153,7 +153,7 @@ USB_ATTACH(uhub)
 	int p, port, nports, nremov, pwrdly;
 	usbd_interface_handle iface;
 	usb_endpoint_descriptor_t *ed;
-	
+
 	DPRINTFN(1,("uhub_attach\n"));
 	sc->sc_hub = dev;
 	usbd_devinfo(dev, 1, devinfo);
@@ -207,11 +207,11 @@ USB_ATTACH(uhub)
 	dev->hub->hubsoftc = sc;
 	hub->explore = uhub_explore;
 	hub->hubdesc = hubdesc;
-	
+
 	DPRINTFN(1,("usbhub_init_hub: selfpowered=%d, parent=%p, "
 		    "parent->selfpowered=%d\n",
 		 dev->self_powered, dev->powersrc->parent,
-		 dev->powersrc->parent ? 
+		 dev->powersrc->parent ?
 		 dev->powersrc->parent->self_powered : 0));
 
 	if (!dev->self_powered && dev->powersrc->parent != NULL &&
@@ -238,10 +238,10 @@ USB_ATTACH(uhub)
 	}
 
 	err = usbd_open_pipe_intr(iface, ed->bEndpointAddress,
-		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_status, 
+		  USBD_SHORT_XFER_OK, &sc->sc_ipipe, sc, sc->sc_status,
 		  sizeof(sc->sc_status), uhub_intr, UHUB_INTR_INTERVAL);
 	if (err) {
-		printf("%s: cannot open interrupt pipe\n", 
+		printf("%s: cannot open interrupt pipe\n",
 		       USBDEVNAME(sc->sc_dev));
 		goto bad;
 	}
@@ -297,7 +297,7 @@ USB_ATTACH(uhub)
 		/* Turn the power on. */
 		err = usbd_set_port_feature(dev, port, UHF_PORT_POWER);
 		if (err)
-			printf("%s: port %d power on failed, %s\n", 
+			printf("%s: port %d power on failed, %s\n",
 			       USBDEVNAME(sc->sc_dev), port,
 			       usbd_errstr(err));
 		DPRINTF(("usb_init_port: turn on port %d power\n", port));
@@ -376,7 +376,7 @@ uhub_explore(usbd_device_handle dev)
 			if (up->device != NULL && up->device->hub != NULL)
 				up->device->hub->explore(up->device);
 #if 0 && defined(DIAGNOSTIC)
-			if (up->device == NULL && 
+			if (up->device == NULL &&
 			    (status & UPS_CURRENT_CONNECT_STATUS))
 				printf("%s: connected, no device\n",
 				       USBDEVNAME(sc->sc_dev));
@@ -403,7 +403,7 @@ uhub_explore(usbd_device_handle dev)
 			DPRINTF(("uhub_explore: device addr=%d disappeared "
 				 "on port %d\n", up->device->address, port));
 			usb_disconnect_port(up, USBDEV(sc->sc_dev));
-			usbd_clear_port_feature(dev, port, 
+			usbd_clear_port_feature(dev, port,
 						UHF_C_PORT_CONNECTION);
 		}
 		if (!(status & UPS_CURRENT_CONNECT_STATUS)) {
@@ -447,8 +447,8 @@ uhub_explore(usbd_device_handle dev)
 		}
 
 		/* Get device info and set its address. */
-		err = usbd_new_device(USBDEV(sc->sc_dev), dev->bus, 
-			  dev->depth + 1, status & UPS_LOW_SPEED, 
+		err = usbd_new_device(USBDEV(sc->sc_dev), dev->bus,
+			  dev->depth + 1, status & UPS_LOW_SPEED,
 			  port, up);
 		/* XXX retry a few times? */
 		if (err) {
@@ -457,7 +457,7 @@ uhub_explore(usbd_device_handle dev)
 			/* Avoid addressing problems by disabling. */
 			/* usbd_reset_port(dev, port, &up->status); */
 
-			/* 
+			/*
 			 * The unit refused to accept a new address, or had
 			 * some other serious problem.  Since we cannot leave
 			 * at 0 we have to disable the port instead.
@@ -536,7 +536,7 @@ USB_DETACH(uhub)
 		if (rup->device)
 			usb_disconnect_port(rup, self);
 	}
-	
+
 	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->sc_hub,
 			   USBDEV(sc->sc_dev));
 
@@ -558,7 +558,7 @@ uhub_child_detached(device_t self, device_t child)
        int port;
        int i;
 
-       if (!devhub->hub)  
+       if (!devhub->hub)
                /* should never happen; children are only created after init */
                panic("hub not fully initialised, but child deleted?");
 

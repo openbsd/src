@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidivar.h,v 1.3 2002/06/11 07:49:57 nate Exp $	*/
+/*	$OpenBSD: umidivar.h,v 1.4 2002/07/25 02:18:11 nate Exp $	*/
 /*	$NetBSD: umidivar.h,v 1.3 2001/02/03 18:50:32 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -60,8 +60,8 @@ struct umidi_packet {
  * <-- parent	       child -->
  *
  * umidi(sc) -> endpoint -> jack   <- (dynamically assignable) - mididev
- *	   ^	 |    ^	    | 
- *	   +-----+    +-----+ 
+ *	   ^	 |    ^	    |
+ *	   +-----+    +-----+
  */
 
 /* midi device */

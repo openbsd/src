@@ -1,4 +1,4 @@
-/*	$OpenBSD: usscanner.c,v 1.5 2002/05/07 18:29:19 nate Exp $	*/
+/*	$OpenBSD: usscanner.c,v 1.6 2002/07/25 02:18:11 nate Exp $	*/
 /*	$NetBSD: usscanner.c,v 1.6 2001/01/23 14:04:14 augustss Exp $	*/
 
 /*
@@ -243,7 +243,7 @@ USB_ATTACH(usscanner)
 			sc->sc_out_addr = ed->bEndpointAddress;
 		}
 	}
-	if (sc->sc_in_addr == -1 || sc->sc_intr_addr == -1 || 
+	if (sc->sc_in_addr == -1 || sc->sc_intr_addr == -1 ||
 	    sc->sc_out_addr == -1) {
 		printf("%s: missing endpoint\n", USBDEVNAME(sc->sc_dev));
 		USB_ATTACH_ERROR_RETURN;
@@ -285,7 +285,7 @@ USB_ATTACH(usscanner)
 	}
 
 	/* XXX too big */
-	sc->sc_cmd_buffer = usbd_alloc_buffer(sc->sc_cmd_xfer, 
+	sc->sc_cmd_buffer = usbd_alloc_buffer(sc->sc_cmd_xfer,
 					     USSCANNER_MAX_TRANSFER_SIZE);
 	if (sc->sc_cmd_buffer == NULL) {
 		printf("%s: alloc cmd buffer failed, err=%d\n",
@@ -309,7 +309,7 @@ USB_ATTACH(usscanner)
 		usscanner_cleanup(sc);
 		USB_ATTACH_ERROR_RETURN;
 	}
-	sc->sc_data_buffer = usbd_alloc_buffer(sc->sc_data_xfer, 
+	sc->sc_data_buffer = usbd_alloc_buffer(sc->sc_data_xfer,
 					      USSCANNER_MAX_TRANSFER_SIZE);
 	if (sc->sc_data_buffer == NULL) {
 		printf("%s: alloc data buffer failed, err=%d\n",
@@ -323,7 +323,7 @@ USB_ATTACH(usscanner)
 	 */
 	sc->sc_adapter.scsipi_cmd = usscanner_scsipi_cmd;
 	sc->sc_adapter.scsipi_minphys = usscanner_scsipi_minphys;
-	
+
 	/*
 	 * fill in the prototype scsipi_link.
 	 */
@@ -346,7 +346,7 @@ USB_ATTACH(usscanner)
 	sc->sc_link.scsipi_scsi.max_target = USSCANNER_SCSIID_DEVICE;
 	sc->sc_link.scsipi_scsi.max_lun = 0;
 #endif
-	
+
 	sc->sc_child = config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH, sc->sc_udev,
@@ -462,7 +462,7 @@ usscanner_sense(struct usscanner_softc *sc)
 	sc->sc_state = UAS_SENSECMD;
 	memcpy(sc->sc_cmd_buffer, &sense_cmd, sizeof sense_cmd);
 	usbd_setup_xfer(sc->sc_cmd_xfer, sc->sc_out_pipe, sc, sc->sc_cmd_buffer,
-	    sizeof sense_cmd, USBD_NO_COPY, USSCANNER_TIMEOUT, 
+	    sizeof sense_cmd, USBD_NO_COPY, USSCANNER_TIMEOUT,
 	    usscanner_sensecmd_cb);
 	err = usbd_transfer(sc->sc_cmd_xfer);
 	if (err == USBD_IN_PROGRESS)
@@ -492,7 +492,7 @@ usscanner_intr_cb(usbd_xfer_handle xfer, usbd_private_handle priv,
 	/* XXX what should we do on non-0 status */
 
 	sc->sc_state = UAS_IDLE;
-		
+
 	sc->sc_xs->xs_status |= XS_STS_DONE;
 	s = splbio();
 	scsipi_done(sc->sc_xs);

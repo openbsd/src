@@ -1,4 +1,4 @@
-/*	$OpenBSD: umodem.c,v 1.10 2002/06/11 02:59:15 nate Exp $ */
+/*	$OpenBSD: umodem.c,v 1.11 2002/07/25 02:18:11 nate Exp $ */
 /*	$NetBSD: umodem.c,v 1.41 2001/11/13 06:24:56 lukem Exp $	*/
 
 /*
@@ -234,8 +234,8 @@ USB_ATTACH(umodem)
 		goto bad;
 	}
 
-	/* 
-	 * Find the bulk endpoints. 
+	/*
+	 * Find the bulk endpoints.
 	 * Iterate over all endpoints in the data interface and take note.
 	 */
 	uca.bulkin = uca.bulkout = -1;
@@ -463,7 +463,7 @@ umodem_get_caps(usbd_device_handle dev, int *cm, int *acm)
 		return;
 	}
 	*acm = cad->bmCapabilities;
-} 
+}
 
 void
 umodem_get_status(void *addr, int portno, u_char *lsr, u_char *msr)
@@ -531,7 +531,7 @@ umodem_ioctl(void *addr, int portno, u_long cmd, caddr_t data, int flag,
 
 	if (sc->sc_dying)
 		return (EIO);
- 
+
 	DPRINTF(("umodemioctl: cmd=0x%08lx\n", cmd));
 
 	switch (cmd) {
@@ -658,7 +658,7 @@ umodem_set_line_coding(struct umodem_softc *sc, usb_cdc_line_state_t *state)
 
 	err = usbd_do_request(sc->sc_udev, &req, state);
 	if (err) {
-		DPRINTF(("umodem_set_line_coding: failed, err=%s\n", 
+		DPRINTF(("umodem_set_line_coding: failed, err=%s\n",
 			 usbd_errstr(err)));
 		return (err);
 	}

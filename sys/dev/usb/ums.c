@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.9 2002/05/09 15:06:29 nate Exp $ */
+/*	$OpenBSD: ums.c,v 1.10 2002/07/25 02:18:11 nate Exp $ */
 /*	$NetBSD: ums.c,v 1.55 2001/12/31 12:15:22 augustss Exp $	*/
 
 /*
@@ -132,7 +132,7 @@ USB_MATCH(ums)
 	struct uhidev_attach_arg *uha = (struct uhidev_attach_arg *)uaa;
 	int size;
 	void *desc;
-	
+
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	if (!hid_is_collection(desc, size, uha->reportid,
 			       HID_USAGE2(HUP_GENERIC_DESKTOP, HUG_MOUSE)))
@@ -223,12 +223,12 @@ USB_ATTACH(ums)
 
 #ifdef USB_DEBUG
 	DPRINTF(("ums_attach: sc=%p\n", sc));
-	DPRINTF(("ums_attach: X\t%d/%d\n", 
+	DPRINTF(("ums_attach: X\t%d/%d\n",
 		 sc->sc_loc_x.pos, sc->sc_loc_x.size));
-	DPRINTF(("ums_attach: Y\t%d/%d\n", 
+	DPRINTF(("ums_attach: Y\t%d/%d\n",
 		 sc->sc_loc_y.pos, sc->sc_loc_y.size));
 	if (sc->flags & UMS_Z)
-		DPRINTF(("ums_attach: Z\t%d/%d\n", 
+		DPRINTF(("ums_attach: Z\t%d/%d\n",
 			 sc->sc_loc_z.pos, sc->sc_loc_z.size));
 	for (i = 1; i <= sc->nbuttons; i++) {
 		DPRINTF(("ums_attach: B%d\t%d/%d\n",

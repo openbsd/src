@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.24 2002/07/10 18:08:13 deraadt Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.25 2002/07/25 02:18:10 nate Exp $ */
 /*	$NetBSD: if_aue.c,v 1.78 2002/07/08 17:46:23 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -118,7 +118,7 @@
 #if defined(__NetBSD__)
 #include <net/if_ether.h>
 #ifdef INET
-#include <netinet/in.h> 
+#include <netinet/in.h>
 #include <netinet/if_inarp.h>
 #endif
 #endif /* defined(__NetBSD__) */
@@ -567,7 +567,7 @@ aue_miibus_statchg(device_ptr_t dev)
 #define AUE_POLY	0xEDB88320
 #define AUE_BITS	6
 
-Static u_int32_t 
+Static u_int32_t
 aue_crc(caddr_t addr)
 {
 	u_int32_t		idx, bit, data, crc;
@@ -677,10 +677,10 @@ aue_reset(struct aue_softc *sc)
   	 */
 	if (sc->aue_flags & LSYS) {
 		/* Grrr. LinkSys has to be different from everyone else. */
-		aue_csr_write_1(sc, AUE_GPIO0, 
+		aue_csr_write_1(sc, AUE_GPIO0,
 		    AUE_GPIO_SEL0 | AUE_GPIO_SEL1);
 	} else {
-		aue_csr_write_1(sc, AUE_GPIO0, 
+		aue_csr_write_1(sc, AUE_GPIO0,
 		    AUE_GPIO_OUT0 | AUE_GPIO_SEL0);
 	}
   	aue_csr_write_1(sc, AUE_GPIO0,
@@ -904,7 +904,7 @@ USB_DETACH(aue)
 	}
 	splx(s);
 
-	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->aue_udev, 
+	usbd_add_drv_event(USB_EVENT_DRIVER_DETACH, sc->aue_udev,
 			   USBDEV(sc->aue_dev));
 
 	return (0);
@@ -968,7 +968,7 @@ aue_newbuf(struct aue_softc *sc, struct aue_chain *c, struct mbuf *m)
 	return (0);
 }
 
-Static int 
+Static int
 aue_rx_list_init(struct aue_softc *sc)
 {
 	struct aue_cdata	*cd;
@@ -1465,7 +1465,7 @@ aue_openpipes(struct aue_softc *sc)
 	}
 	err = usbd_open_pipe_intr(sc->aue_iface, sc->aue_ed[AUE_ENDPT_INTR],
 	    USBD_EXCLUSIVE_USE, &sc->aue_ep[AUE_ENDPT_INTR], sc,
-	    &sc->aue_cdata.aue_ibuf, AUE_INTR_PKTLEN, aue_intr, 
+	    &sc->aue_cdata.aue_ibuf, AUE_INTR_PKTLEN, aue_intr,
 	    AUE_INTR_INTERVAL);
 	if (err) {
 		printf("%s: open intr pipe failed: %s\n",

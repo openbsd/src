@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.12 2002/05/09 15:06:29 nate Exp $ */
+/*	$OpenBSD: hid.c,v 1.13 2002/07/25 02:18:10 nate Exp $ */
 /*	$NetBSD: hid.c,v 1.22 2002/01/12 17:11:03 tsutsui Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
@@ -45,7 +45,7 @@
 #include <sys/kernel.h>
 #endif
 #include <sys/malloc.h>
- 
+
 #include <dev/usb/usb.h>
 #include <dev/usb/usbhid.h>
 
@@ -199,7 +199,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 			printf("BAD LENGTH %d\n", bSize);
 			continue;
 		}
-		
+
 		DPRINTFN(5,("hid_get_item: bType=%d bTag=%d dval=%d\n",
 			 bType, bTag, dval));
 		switch (bType) {
@@ -221,8 +221,8 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 					s->multi = 0;
 					c->loc.count = 1;
 					if (s->minset) {
-						for (i = c->usage_minimum; 
-						     i <= c->usage_maximum; 
+						for (i = c->usage_minimum;
+						     i <= c->usage_maximum;
 						     i++) {
 							s->usages[s->nu] = i;
 							if (s->nu < MAXUSAGE-1)
@@ -235,7 +235,7 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 					c->usage = c->_usage_page; /* XXX */
 					*h = *c;
 					h->next = NULL;
-					c->loc.pos += 
+					c->loc.pos +=
 					    c->loc.size * c->loc.count;
 					s->minset = 0;
 					s->nu = 0;
@@ -320,9 +320,9 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 		case 2:		/* Local */
 			switch (bTag) {
 			case 0:
-				if (bSize == 1) 
+				if (bSize == 1)
 					dval = c->_usage_page | (dval&0xff);
-				else if (bSize == 2) 
+				else if (bSize == 2)
 					dval = c->_usage_page | (dval&0xffff);
 				c->usage = dval;
 				if (s->nu < MAXUSAGE)
@@ -331,16 +331,16 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 				break;
 			case 1:
 				s->minset = 1;
-				if (bSize == 1) 
+				if (bSize == 1)
 					dval = c->_usage_page | (dval&0xff);
-				else if (bSize == 2) 
+				else if (bSize == 2)
 					dval = c->_usage_page | (dval&0xffff);
 				c->usage_minimum = dval;
 				break;
 			case 2:
-				if (bSize == 1) 
+				if (bSize == 1)
 					dval = c->_usage_page | (dval&0xff);
-				else if (bSize == 2) 
+				else if (bSize == 2)
 					dval = c->_usage_page | (dval&0xffff);
 				c->usage_maximum = dval;
 				break;
@@ -421,7 +421,7 @@ hid_locate(void *desc, int size, u_int32_t u, u_int8_t id, enum hid_kind k,
 	for (d = hid_start_parse(desc, size, k); hid_get_item(d, &h); ) {
 		DPRINTFN(5,("hid_locate: usage=0x%x kind=%d id=%d flags=0x%x\n",
 			    h.usage, h.kind, h.report_ID, h.flags));
-		if (h.kind == k && !(h.flags & HIO_CONST) && 
+		if (h.kind == k && !(h.flags & HIO_CONST) &&
 		    h.usage == u && h.report_ID == id) {
 			if (loc != NULL)
 				*loc = h.loc;
@@ -450,7 +450,7 @@ hid_get_data(u_char *buf, struct hid_location *loc)
 		return (0);
 
 	data = 0;
-	s = hpos / 8; 
+	s = hpos / 8;
 	for (i = hpos; i < hpos+hsize; i += 8)
 		data |= buf[i / 8] << ((i / 8 - s) * 8);
 	data >>= hpos % 8;
@@ -458,7 +458,7 @@ hid_get_data(u_char *buf, struct hid_location *loc)
 	hsize = 32 - hsize;
 	/* Sign extend */
 	data = ((int32_t)data << hsize) >> hsize;
-	DPRINTFN(10,("hid_get_data: loc %d/%d = %lu\n", 
+	DPRINTFN(10,("hid_get_data: loc %d/%d = %lu\n",
 		    loc->pos, loc->size, (long)data));
 	return (data);
 }
@@ -479,7 +479,7 @@ hid_is_collection(void *desc, int size, u_int8_t id, u_int32_t usage)
 		DPRINTFN(2,("hid_is_collection: kind=%d id=%d usage=0x%x"
 			    "(0x%x)\n",
 			    hi.kind, hi.report_ID, hi.usage, coll_usage));
-		if (hi.kind == hid_collection && 
+		if (hi.kind == hid_collection &&
 		    hi.collection == HCOLL_APPLICATION)
 			coll_usage = hi.usage;
 		if (hi.kind == hid_endcollection &&

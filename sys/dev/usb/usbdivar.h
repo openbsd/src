@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdivar.h,v 1.16 2002/05/07 18:29:19 nate Exp $ */
+/*	$OpenBSD: usbdivar.h,v 1.17 2002/07/25 02:18:11 nate Exp $ */
 /*	$NetBSD: usbdivar.h,v 1.63 2001/01/21 19:00:06 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdivar.h,v 1.11 1999/11/17 22:33:51 n_hibma Exp $	*/
 
@@ -237,9 +237,9 @@ usbd_status	usbd_setup_pipe(usbd_device_handle dev,
 				usbd_interface_handle iface,
 				struct usbd_endpoint *, int,
 				usbd_pipe_handle *pipe);
-usbd_status	usbd_new_device(device_ptr_t parent, 
+usbd_status	usbd_new_device(device_ptr_t parent,
 				usbd_bus_handle bus, int depth,
-				int lowspeed, int port, 
+				int lowspeed, int port,
 				struct usbd_port *);
 void		usbd_remove_device(usbd_device_handle, struct usbd_port *);
 int		usbd_printBCD(char *cp, int bcd);

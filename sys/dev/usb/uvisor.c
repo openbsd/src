@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvisor.c,v 1.10 2002/07/09 17:41:02 nate Exp $	*/
+/*	$OpenBSD: uvisor.c,v 1.11 2002/07/25 02:18:11 nate Exp $	*/
 /*	$NetBSD: uvisor.c,v 1.15 2002/06/16 15:01:31 augustss Exp $	*/
 
 /*
@@ -172,7 +172,7 @@ USB_DECLARE_DRIVER(uvisor);
 USB_MATCH(uvisor)
 {
 	USB_MATCH_START(uvisor, uaa);
-	
+
 	if (uaa->iface != NULL)
 		return (UMATCH_NONE);
 
@@ -416,6 +416,6 @@ uvisor_close(void *addr, int portno)
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, UVISOR_CONNECTION_INFO_SIZE);
-	(void)usbd_do_request_flags(sc->sc_udev, &req, &coninfo, 
+	(void)usbd_do_request_flags(sc->sc_udev, &req, &coninfo,
 		  USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
 }

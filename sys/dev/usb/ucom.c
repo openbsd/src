@@ -1,4 +1,4 @@
-/*	$OpenBSD: ucom.c,v 1.14 2002/07/11 03:11:17 nate Exp $ */
+/*	$OpenBSD: ucom.c,v 1.15 2002/07/25 02:18:10 nate Exp $ */
 /*	$NetBSD: ucom.c,v 1.42 2002/03/17 19:41:04 atatat Exp $	*/
 
 /*
@@ -217,7 +217,7 @@ USB_DETACH(ucom)
 	int maj, mn;
 	int s;
 
-	DPRINTF(("ucom_detach: sc=%p flags=%d tp=%p, pipe=%d,%d\n", 
+	DPRINTF(("ucom_detach: sc=%p flags=%d tp=%p, pipe=%d,%d\n",
 		 sc, flags, tp, sc->sc_bulkin_no, sc->sc_bulkout_no));
 
 	sc->sc_dying = 1;
@@ -311,7 +311,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 	struct tty *tp;
 	int s;
 	int error;
- 
+
 	if (unit >= ucom_cd.cd_ndevs)
 		return (ENXIO);
 	sc = ucom_cd.cd_devs[unit];
@@ -346,7 +346,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 		return (EIO);
 	}
 	sc->sc_opening = 1;
-	
+
 #if defined(__NetBSD__)
 	if (!ISSET(tp->t_state, TS_ISOPEN) && tp->t_wopen == 0) {
 #else
@@ -412,7 +412,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 				     &sc->sc_bulkin_pipe);
 		if (err) {
 			DPRINTF(("%s: open bulk out error (addr %d), err=%s\n",
-				 USBDEVNAME(sc->sc_dev), sc->sc_bulkin_no, 
+				 USBDEVNAME(sc->sc_dev), sc->sc_bulkin_no,
 				 usbd_errstr(err)));
 			error = EIO;
 			goto fail_0;
@@ -426,7 +426,7 @@ ucomopen(dev_t dev, int flag, int mode, usb_proc_ptr p)
 			error = EIO;
 			goto fail_1;
 		}
-		
+
 		/* Allocate a request and an input buffer and start reading. */
 		sc->sc_ixfer = usbd_alloc_xfer(sc->sc_udev);
 		if (sc->sc_ixfer == NULL) {
@@ -545,7 +545,7 @@ ucomclose(dev_t dev, int flag, int mode, usb_proc_ptr p)
 
 	return (0);
 }
- 
+
 int
 ucomread(dev_t dev, struct uio *uio, int flag)
 {
@@ -555,14 +555,14 @@ ucomread(dev_t dev, struct uio *uio, int flag)
 
 	if (sc->sc_dying)
 		return (EIO);
- 
+
 	sc->sc_refcnt++;
 	error = (*LINESW(tp, l_read))(tp, uio, flag);
 	if (--sc->sc_refcnt < 0)
 		usb_detach_wakeup(USBDEV(sc->sc_dev));
 	return (error);
 }
- 
+
 int
 ucomwrite(dev_t dev, struct uio *uio, int flag)
 {
@@ -572,7 +572,7 @@ ucomwrite(dev_t dev, struct uio *uio, int flag)
 
 	if (sc->sc_dying)
 		return (EIO);
- 
+
 	sc->sc_refcnt++;
 	error = (*LINESW(tp, l_write))(tp, uio, flag);
 	if (--sc->sc_refcnt < 0)
@@ -590,7 +590,7 @@ ucompoll(dev_t dev, int events, usb_proc_ptr p)
 
 	if (sc->sc_dying)
 		return (EIO);
- 
+
 	sc->sc_refcnt++;
 	error = (*LINESW(tp, l_poll))(tp, events, p);
 	if (--sc->sc_refcnt < 0)
@@ -631,7 +631,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 
 	if (sc->sc_dying)
 		return (EIO);
- 
+
 	DPRINTF(("ucomioctl: cmd=0x%08lx\n", cmd));
 
 	error = (*LINESW(tp, l_ioctl))(tp, cmd, data, flag, p);
@@ -676,7 +676,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, caddr_t data,
 		break;
 
 	case TIOCSFLAGS:
-		error = suser(p->p_ucred, &p->p_acflag); 
+		error = suser(p->p_ucred, &p->p_acflag);
 		if (error)
 			break;
 		sc->sc_swflags = *(int *)data;
@@ -712,7 +712,7 @@ tiocm_to_ucom(struct ucom_softc *sc, u_long how, int ttybits)
 		SET(combits, UMCR_DTR);
 	if (ISSET(ttybits, TIOCM_RTS))
 		SET(combits, UMCR_RTS);
- 
+
 	switch (how) {
 	case TIOCMBIC:
 		CLR(sc->sc_mcr, combits);
@@ -783,7 +783,7 @@ ucom_dtr(struct ucom_softc *sc, int onoff)
 	DPRINTF(("ucom_dtr: onoff=%d\n", onoff));
 
 	if (sc->sc_methods->ucom_set != NULL)
-		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno, 
+		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno,
 		    UCOM_SET_DTR, onoff);
 }
 
@@ -793,7 +793,7 @@ ucom_rts(struct ucom_softc *sc, int onoff)
 	DPRINTF(("ucom_rts: onoff=%d\n", onoff));
 
 	if (sc->sc_methods->ucom_set != NULL)
-		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno, 
+		sc->sc_methods->ucom_set(sc->sc_parent, sc->sc_portno,
 		    UCOM_SET_RTS, onoff);
 }
 
@@ -962,7 +962,7 @@ ucomstart(struct tty *tp)
 		memcpy(sc->sc_obuf, data, cnt);
 
 	DPRINTFN(4,("ucomstart: %d chars\n", cnt));
-	usbd_setup_xfer(sc->sc_oxfer, sc->sc_bulkout_pipe, 
+	usbd_setup_xfer(sc->sc_oxfer, sc->sc_bulkout_pipe,
 			(usbd_private_handle)sc, sc->sc_obuf, cnt,
 			USBD_NO_COPY, USBD_NO_TIMEOUT, ucomwritecb);
 	/* What can we do on error? */
@@ -1052,8 +1052,8 @@ ucomstartread(struct ucom_softc *sc)
 	usbd_status err;
 
 	DPRINTFN(5,("ucomstartread: start\n"));
-	usbd_setup_xfer(sc->sc_ixfer, sc->sc_bulkin_pipe, 
-			(usbd_private_handle)sc, 
+	usbd_setup_xfer(sc->sc_ixfer, sc->sc_bulkin_pipe,
+			(usbd_private_handle)sc,
 			sc->sc_ibuf, sc->sc_ibufsize,
 			USBD_SHORT_XFER_OK | USBD_NO_COPY,
 			USBD_NO_TIMEOUT, ucomreadcb);
@@ -1064,7 +1064,7 @@ ucomstartread(struct ucom_softc *sc)
 	}
 	return (USBD_NORMAL_COMPLETION);
 }
- 
+
 Static void
 ucomreadcb(usbd_xfer_handle xfer, usbd_private_handle p, usbd_status status)
 {

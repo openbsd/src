@@ -1,4 +1,4 @@
-/*	$OpenBSD: umidi.c,v 1.4 2002/07/09 15:22:08 nate Exp $	*/
+/*	$OpenBSD: umidi.c,v 1.5 2002/07/25 02:18:11 nate Exp $	*/
 /*	$NetBSD: umidi.c,v 1.15 2002/06/19 13:51:34 tshiozak Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -150,7 +150,7 @@ USB_MATCH(umidi)
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
 
 	id = usbd_get_interface_descriptor(uaa->iface);
-	if (id!=NULL && 
+	if (id!=NULL &&
 	    id->bInterfaceClass==UICLASS_AUDIO &&
 	    id->bInterfaceSubClass==UISUBCLASS_MIDISTREAM)
 		return UMATCH_IFACECLASS_IFACESUBCLASS;
@@ -218,7 +218,7 @@ USB_ATTACH(umidi)
 
 	usbd_add_drv_event(USB_EVENT_DRIVER_ATTACH,
 			   sc->sc_udev, USBDEV(sc->sc_dev));
-	
+
 	USB_ATTACH_SUCCESS_RETURN;
 error:
 	printf("%s: disabled.\n", USBDEVNAME(sc->sc_dev));
@@ -690,7 +690,7 @@ alloc_all_endpoints_genuine(struct umidi_softc *sc)
 		p->num_open = 0;
 		p++;
 	}
-	
+
 	sc->sc_out_ep = sc->sc_out_num_endpoints ? sc->sc_endpoints : NULL;
 	sc->sc_in_ep =
 	    sc->sc_in_num_endpoints ?

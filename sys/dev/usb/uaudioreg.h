@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudioreg.h,v 1.8 2002/05/06 23:07:26 nate Exp $ */
+/*	$OpenBSD: uaudioreg.h,v 1.9 2002/07/25 02:18:10 nate Exp $ */
 /*	$NetBSD: uaudioreg.h,v 1.8 2002/03/07 14:37:03 kent Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ typedef struct {
 	uByte		bmAttributes;
 	uWord		wMaxPacketSize;
 	uByte		bInterval;
-	/* 
+	/*
 	 * The following two entries are only used by the Audio Class.
 	 * And according to the specs the Audio Class is the only one
 	 * allowed to extend the endpoint descriptor.

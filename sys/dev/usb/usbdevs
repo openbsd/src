@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.52 2002/07/25 00:07:08 nate Exp $
+$OpenBSD: usbdevs,v 1.53 2002/07/25 02:18:11 nate Exp $
 /* $NetBSD: usbdevs,v 1.257 2002/06/20 09:20:36 augustss Exp $ */
 
 /*
@@ -1236,7 +1236,7 @@ product TANGTOP USBPS2		0x0001	USBPS2
 
 /* Taugagreining products */
 product TAUGA CAMERAMATE	0x0005	CameraMate (DPCM_USB)
- 
+
 /* TDK products */
 product TDK UPA9664		0x0115	USB-PDC Adapter UPA9664
 product TDK UCA1464		0x0116	USB-cdmaOne Adapter UCA1464

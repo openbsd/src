@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_upl.c,v 1.10 2002/06/30 13:04:36 itojun Exp $ */
+/*	$OpenBSD: if_upl.c,v 1.11 2002/07/25 02:18:10 nate Exp $ */
 /*	$NetBSD: if_upl.c,v 1.15 2001/06/14 05:44:27 itojun Exp $	*/
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -80,8 +80,8 @@
 
 #if defined(__NetBSD__)
 #ifdef INET
-#include <netinet/in.h> 
-#include <netinet/in_var.h> 
+#include <netinet/in.h>
+#include <netinet/in_var.h>
 #include <netinet/if_inarp.h>
 #else
 #error upl without INET?
@@ -816,7 +816,7 @@ upl_openpipes(struct upl_softc *sc)
 	}
 	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ed[UPL_ENDPT_INTR],
 	    USBD_EXCLUSIVE_USE, &sc->sc_ep[UPL_ENDPT_INTR], sc,
-	    &sc->sc_ibuf, UPL_INTR_PKTLEN, upl_intr, 
+	    &sc->sc_ibuf, UPL_INTR_PKTLEN, upl_intr,
 	    UPL_INTR_INTERVAL);
 	if (err) {
 		printf("%s: open intr pipe failed: %s\n",

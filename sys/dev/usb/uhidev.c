@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhidev.c,v 1.3 2002/05/09 15:06:29 nate Exp $	*/
+/*	$OpenBSD: uhidev.c,v 1.4 2002/07/25 02:18:10 nate Exp $	*/
 /*	$NetBSD: uhidev.c,v 1.5 2002/02/27 01:30:50 augustss Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ USB_MATCH(uhidev)
 {
 	USB_MATCH_START(uhidev, uaa);
 	usb_interface_descriptor_t *id;
-	
+
 	if (uaa->iface == NULL)
 		return (UMATCH_NONE);
 	id = usbd_get_interface_descriptor(uaa->iface);
@@ -116,7 +116,7 @@ USB_ATTACH(uhidev)
 	void *desc;
 	usbd_status err;
 	char devinfo[1024];
-	
+
 	sc->sc_udev = uaa->device;
 	sc->sc_iface = iface;
 	id = usbd_get_interface_descriptor(iface);
@@ -145,7 +145,7 @@ USB_ATTACH(uhidev)
 	DPRINTFN(10,("uhidev_attach: bLength=%d bDescriptorType=%d "
 		     "bEndpointAddress=%d-%s bmAttributes=%d wMaxPacketSize=%d"
 		     " bInterval=%d\n",
-		     ed->bLength, ed->bDescriptorType, 
+		     ed->bLength, ed->bDescriptorType,
 		     ed->bEndpointAddress & UE_ADDR,
 		     UE_GET_DIR(ed->bEndpointAddress)==UE_DIR_IN? "in" : "out",
 		     ed->bmAttributes & UE_XFERTYPE,
@@ -182,7 +182,7 @@ USB_ATTACH(uhidev)
 		sc->sc_dying = 1;
 		USB_ATTACH_ERROR_RETURN;
 	}
-	
+
 	sc->sc_repdesc = desc;
 	sc->sc_repdesc_size = size;
 
@@ -362,7 +362,7 @@ uhidev_intr(usbd_xfer_handle xfer, usbd_private_handle addr, usbd_status status)
 #ifdef UHIDEV_DEBUG
 	if (uhidevdebug > 5) {
 		u_int32_t i;
-		
+
 		DPRINTF(("uhidev_intr: status=%d cc=%d\n", status, cc));
 		DPRINTF(("uhidev_intr: data ="));
 		for (i = 0; i < cc; i++)
@@ -433,8 +433,8 @@ uhidev_open(struct uhidev *scd)
 	/* Set up interrupt pipe. */
 	DPRINTF(("uhidev_open: isize=%d, ep=0x%02x\n", sc->sc_isize,
 		 sc->sc_ep_addr));
-	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr, 
-		  USBD_SHORT_XFER_OK, &sc->sc_intrpipe, sc, sc->sc_ibuf, 
+	err = usbd_open_pipe_intr(sc->sc_iface, sc->sc_ep_addr,
+		  USBD_SHORT_XFER_OK, &sc->sc_intrpipe, sc, sc->sc_ibuf,
 		  sc->sc_isize, uhidev_intr, USBD_DEFAULT_INTERVAL);
 	if (err) {
 		DPRINTF(("uhidopen: usbd_open_pipe_intr failed, "
@@ -485,7 +485,7 @@ uhidev_set_report(struct uhidev *scd, int type, void *data, int len)
 		data = buf;
 	}
 
-	return usbd_set_report(scd->sc_parent->sc_iface, type, 
+	return usbd_set_report(scd->sc_parent->sc_iface, type,
 			       scd->sc_report_id, data, len);
 }
 
@@ -501,13 +501,13 @@ uhidev_set_report_async(struct uhidev *scd, int type, void *data, int len)
 		data = buf;
 	}
 
-	usbd_set_report_async(scd->sc_parent->sc_iface, type, 
+	usbd_set_report_async(scd->sc_parent->sc_iface, type,
 			      scd->sc_report_id, data, len);
 }
 
 usbd_status
 uhidev_get_report(struct uhidev *scd, int type, void *data, int len)
 {
-	return usbd_get_report(scd->sc_parent->sc_iface, type, 
+	return usbd_get_report(scd->sc_parent->sc_iface, type,
 			       scd->sc_report_id, data, len);
 }

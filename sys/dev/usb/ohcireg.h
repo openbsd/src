@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcireg.h,v 1.9 2000/11/08 18:10:37 aaron Exp $ */
+/*	$OpenBSD: ohcireg.h,v 1.10 2002/07/25 02:18:10 nate Exp $ */
 /*	$NetBSD: ohcireg.h,v 1.18 2000/04/27 15:26:47 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohcireg.h,v 1.8 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -226,7 +226,7 @@ typedef struct {
 } ohci_itd_t;
 /* #define OHCI_ITD_SIZE 32 */
 #define OHCI_ITD_ALIGN 32
-	
+
 
 #define OHCI_CC_NO_ERROR		0
 #define OHCI_CC_CRC			1
