@@ -1,4 +1,4 @@
-/*	$OpenBSD: fix_options.c,v 1.4 2002/02/24 02:24:37 deraadt Exp $	*/
+/*	$OpenBSD: fix_options.c,v 1.5 2003/04/05 00:49:25 tdeval Exp $	*/
 
  /*
   * Routine to disable IP-level socket options. This code was taken from 4.4BSD
@@ -11,7 +11,7 @@
 #if 0
 static char sccsid[] = "@(#) fix_options.c 1.4 97/02/12 02:13:22";
 #else
-static char rcsid[] = "$OpenBSD: fix_options.c,v 1.4 2002/02/24 02:24:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fix_options.c,v 1.5 2003/04/05 00:49:25 tdeval Exp $";
 #endif
 #endif
 
@@ -45,10 +45,11 @@ struct request_info *request;
     struct ipoption optbuf;
     char    lbuf[BUFFER_SIZE], *lp, *cp;
     int     optsize = sizeof(optbuf), ipproto;
+    size_t  lps;
     struct protoent *ip;
     int     fd = request->fd;
     unsigned int opt;
-    int     optlen, i;
+    int     i;
     struct sockaddr_storage ss;
     int sslen;
 
@@ -91,9 +92,10 @@ struct request_info *request;
 	}
 
 	lp = lbuf;
-	for (cp = (char *)&optbuf; optsize > 0 && lp < &lbuf[sizeof lbuf-1];
-	    cp++, optsize--, lp += 3)
-		sprintf(lp, " %2.2x", *cp);
+	lps = sizeof(lbuf);
+	for (cp = (char *)&optbuf; optsize > 0 && lps > 0;
+	     cp++, optsize--, lp += 3, lps -= 3)
+		snprintf(lp, lps, " %2.2x", *cp);
 	syslog(LOG_NOTICE,
 	       "connect from %s with IP options (ignored):%s",
 	       eval_client(request), lbuf);
