@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.22 2002/06/10 19:57:35 espie Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.23 2002/09/10 05:31:17 deraadt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -139,7 +139,7 @@ static int nd6_options(struct nd_opt_hdr *, int,
 static void free_ndopts(union nd_opts *);
 static void ra_output(struct rainfo *);
 static void rtmsg_input(void);
-static void rtadvd_set_dump_file(void);
+static void rtadvd_set_dump_file(int);
 
 int
 main(argc, argv)
@@ -252,8 +252,8 @@ main(argc, argv)
 	if (rtsock >= 0)
 		FD_SET(rtsock, fdsetp);
 
-	signal(SIGTERM, (void *)set_die);
-	signal(SIGUSR1, (void *)rtadvd_set_dump_file);
+	signal(SIGTERM, set_die);
+	signal(SIGUSR1, rtadvd_set_dump_file);
 
 	while (1) {
 		memcpy(selectfdp, fdsetp, fdmasks); /* reinitialize */
@@ -302,14 +302,13 @@ main(argc, argv)
 }
 
 static void
-rtadvd_set_dump_file()
+rtadvd_set_dump_file(int signo)
 {
 	do_dump = 1;
 }
 
 static void
-set_die(sig)
-	int sig;
+set_die(int signo)
 {
 	do_die = 1;
 }
