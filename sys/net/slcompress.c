@@ -1,5 +1,5 @@
-/*	$OpenBSD: slcompress.c,v 1.5 1996/07/25 14:20:52 joshd Exp $	*/
-/*	$NetBSD: slcompress.c,v 1.15 1996/03/15 02:28:12 paulus Exp $	*/
+/*	$OpenBSD: slcompress.c,v 1.6 1997/09/05 04:27:04 millert Exp $	*/
+/*	$NetBSD: slcompress.c,v 1.17 1997/05/17 21:12:10 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -67,17 +67,43 @@
 #define ovbcopy bcopy
 #endif
 
+
 void
-sl_compress_init(comp, max_state)
+sl_compress_init(comp)
 	struct slcompress *comp;
-	int max_state;
+{
+	register u_int i;
+	register struct cstate *tstate = comp->tstate;
+
+	bzero((char *)comp, sizeof(*comp));
+	for (i = MAX_STATES - 1; i > 0; --i) {
+		tstate[i].cs_id = i;
+		tstate[i].cs_next = &tstate[i - 1];
+	}
+	tstate[0].cs_next = &tstate[MAX_STATES - 1];
+	tstate[0].cs_id = 0;
+	comp->last_cs = &tstate[0];
+	comp->last_recv = 255;
+	comp->last_xmit = 255;
+	comp->flags = SLF_TOSS;
+}
+
+
+/*
+ * Like sl_compress_init, but we get to specify the maximum connection
+ * ID to use on transmission.
+ */
+void
+sl_compress_setup(comp, max_state)
+ 	struct slcompress *comp;
+ 	int max_state;
 {
 	register u_int i;
 	register struct cstate *tstate = comp->tstate;
 
 	if (max_state == -1) {
 		max_state = MAX_STATES - 1;
-	bzero((char *)comp, sizeof(*comp));
+		bzero((char *)comp, sizeof(*comp));
 	} else {
 		/* Don't reset statistics */
 		bzero((char *)comp->tstate, sizeof(comp->tstate));
@@ -478,17 +504,16 @@ sl_uncompress_tcp_core(buf, buflen, total_len, type, comp, hdrp, hlenp)
 		cs = &comp->rstate[comp->last_recv = ip->ip_p];
 		comp->flags &=~ SLF_TOSS;
 		ip->ip_p = IPPROTO_TCP;
-                /*
-                 * Calculate the size of the TCP/IP header and make sure that
-                 * we don't overflow the space we have available for it.
-                 */
-                hlen = ip->ip_hl << 2;
-                if (hlen + sizeof(struct tcphdr) > buflen)
-                        goto bad;
-                hlen += ((struct tcphdr *)&((char *)ip)[hlen])->th_off << 2;
-                if (hlen > MAX_HDR || hlen > buflen)
-                        goto bad;
-
+		/*
+		 * Calculate the size of the TCP/IP header and make sure that
+		 * we don't overflow the space we have available for it.
+		 */
+		hlen = ip->ip_hl << 2;
+		if (hlen + sizeof(struct tcphdr) > buflen)
+			goto bad;
+		hlen += ((struct tcphdr *)&((char *)ip)[hlen])->th_off << 2;
+		if (hlen > MAX_HDR || hlen > buflen)
+			goto bad;
 		BCOPY(ip, &cs->cs_ip, hlen);
 		cs->cs_hlen = hlen;
 		INCR(sls_uncompressedin)

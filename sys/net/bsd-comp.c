@@ -1,5 +1,5 @@
-/*	$OpenBSD: bsd-comp.c,v 1.3 1996/04/21 22:28:28 deraadt Exp $	*/
-/*	$NetBSD: bsd-comp.c,v 1.4 1996/03/15 02:28:00 paulus Exp $	*/
+/*	$OpenBSD: bsd-comp.c,v 1.4 1997/09/05 04:26:57 millert Exp $	*/
+/*	$NetBSD: bsd-comp.c,v 1.6 1996/10/13 02:10:58 christos Exp $	*/
 
 /* Because this code is derived from the 4.3BSD compress source:
  *
@@ -42,8 +42,6 @@
 
 /*
  * This version is for use with mbufs on BSD-derived systems.
- *
- * $Id: bsd-comp.c,v 1.3 1996/04/21 22:28:28 deraadt Exp $
  */
 
 #include <sys/param.h>

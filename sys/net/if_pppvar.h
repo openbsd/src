@@ -1,5 +1,5 @@
-/*	$OpenBSD: if_pppvar.h,v 1.5 1997/02/24 13:34:00 niklas Exp $	*/
-/*	$NetBSD: if_pppvar.h,v 1.4 1996/05/07 02:40:39 thorpej Exp $	*/
+/*	$OpenBSD: if_pppvar.h,v 1.6 1997/09/05 04:27:00 millert Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.5 1997/01/03 07:23:29 mikel Exp $	*/
 /*
  * if_pppvar.h - private structures and declarations for PPP.
  *
@@ -82,7 +82,7 @@ struct ppp_softc {
 #ifdef	VJC
 	struct	slcompress *sc_comp; 	/* vjc control buffer */
 #endif
-	
+
 	/* Device-dependent part for async lines. */
 	ext_accm sc_asyncmap;		/* async control character map */
 	u_int32_t sc_rasyncmap;		/* receive async control char map */
@@ -97,6 +97,7 @@ struct ppp_softc {
 	int	sc_rawin_count;		/* # in sc_rawin */
 };
 
+#ifdef _KERNEL
 struct	ppp_softc ppp_softc[NPPP];
 
 struct	ppp_softc *pppalloc __P((pid_t pid));
@@ -106,3 +107,6 @@ int	pppioctl __P((struct ppp_softc *sc, u_long cmd, caddr_t data,
 void	ppppktin __P((struct ppp_softc *sc, struct mbuf *m, int lost));
 struct	mbuf *ppp_dequeue __P((struct ppp_softc *sc));
 void	ppp_restart __P((struct ppp_softc *sc));
+int	pppoutput __P((struct ifnet *, struct mbuf *,
+		       struct sockaddr *, struct rtentry *));
+#endif /* _KERNEL */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.7 1996/08/22 00:35:52 deraadt Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.8 1997/09/05 04:27:01 millert Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -238,7 +238,7 @@ slinit(sc)
 	}
 	sc->sc_buf = sc->sc_ep - SLMAX;
 	sc->sc_mp = sc->sc_buf;
-	sl_compress_init(&sc->sc_comp, -1);
+	sl_compress_init(&sc->sc_comp);
 	return (1);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.h,v 1.3 1996/04/21 22:28:33 deraadt Exp $	*/
+/*	$OpenBSD: if_ppp.h,v 1.4 1997/09/05 04:26:59 millert Exp $	*/
 /*	$NetBSD: if_ppp.h,v 1.11 1996/03/15 02:28:05 paulus Exp $	*/
 
 /*
@@ -132,7 +132,6 @@ struct ifpppcstatsreq {
 
 #ifdef _KERNEL
 void pppattach __P((void));
-int pppsioctl __P((struct ifnet *, u_long, caddr_t));
 int pppoutput __P((struct ifnet *, struct mbuf *, struct sockaddr *,
 		   struct rtentry *));
 void pppintr __P((void));
