@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.18 2002/02/07 08:57:28 miod Exp $
+dnl	$OpenBSD: contents,v 1.19 2002/03/23 23:58:50 miod Exp $
 TopPart
 
 OpenBSDminiroot
@@ -54,7 +54,7 @@ OpenBSDbase(25.0,73.6,shared)
 
 OpenBSDcomp(21.2,81.0,shared)
 
-OpenBSDetc(1.1,3.3)
+OpenBSDetc(1.1,3.3,noupgrade)
 
 OpenBSDgame(2.9,6.6)
 

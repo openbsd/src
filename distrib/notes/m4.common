@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.28 2001/12/02 00:15:42 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.29 2002/03/23 23:58:48 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -94,7 +94,7 @@ define({:-OpenBSDcomp-:},
 		 call and library manual pages.showsize($1,$2)-:})dnl
 dnl
 dnl
-dnl OpenBSDetc( compressed size, uncompressed size )
+dnl OpenBSDetc( compressed size, uncompressed size [, noupgrade])
 dnl Describes etcXX.tgz.
 dnl
 define({:-OpenBSDetc-:},
@@ -102,10 +102,10 @@ define({:-OpenBSDetc-:},
 		 files that reside in /etc and in several other places.
 		 This set MUST be installed if you are installing the
 		 system from scratch, but should NOT be used if you are
-		 upgrading.  (If you are upgrading, it's recommended that
+		 upgrading.{:--:}ifelse(X$3,X,{:-(If you are upgrading, it's recommended that
 		 you get a copy of this set and CAREFULLY upgrade your
 		 configuration files by hand, see the section named "Upgrading
-		 a previously-installed OpenBSD System" below.)showsize($1,$2)-:})dnl
+		 a previously-installed OpenBSD System" below.)-:})showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDgame( compressed size, uncompressed size )
@@ -175,10 +175,10 @@ define({:-OpenBSDcdrom-:},
 				2.88mb floppy image that contains almost all
 				OpenBSD drivers; see below.-:})dnl
 dnl
-dnl OpenBSDfloppydesc(number of floppies, Article, optional plural 's')
+dnl OpenBSDfloppydesc(number of floppies, Article, plural)
 dnl
 dnl Describe what the boot floppy/ies contain and how they may be used.
-dnl Use as: OpenBSDfloppydesc(single, The) or OpenBSDfloppydesc(three, Each, s)
+dnl Use as: OpenBSDfloppydesc(single,The) or OpenBSDfloppydesc(three,Each,s)
 define({:-OpenBSDfloppydesc-:},
 {:-Bootable installation/upgrade floppy image$3:
 

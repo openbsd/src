@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.18 2002/03/23 23:29:16 krw Exp $
+dnl	$OpenBSD: install,v 1.19 2002/03/23 23:58:50 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
@@ -401,7 +401,9 @@ filesystem for `/usr' with your diskless setup, make sure the "./usr" base
 files in base{:--:}OSrev.tgz end up in the correct location. One way to do this is
 to temporarily use a loopback mount on the server, re-routing <root>/usr to
 your server's exported OpenBSD "/usr" directory. Also put the kernel and
-the install/upgrade scripts into the root directory.
+dnl put back after 3.2
+dnl the install/upgrade scripts into the root directory.
+the install script into the root directory.
 
 A few configuration files need to be edited:
 

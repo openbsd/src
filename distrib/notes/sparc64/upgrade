@@ -1,7 +1,6 @@
-dnl	$OpenBSD: upgrade,v 1.8 2002/02/07 08:57:28 miod Exp $
-Since OpenBSD OSREV is the first release for MACHINE systems, upgrades
-are not expected.
-If you have been using an old OpenBSD/MACHINE snapshot, you can follow the
-following instructions.
-
-OpenBSDUpgrade({:-CDROM, the miniroot, or the installation floppy-:})
+dnl	$OpenBSD: upgrade,v 1.9 2002/03/23 23:58:50 miod Exp $
+Due to the youth of the MACHINE port, upgrades to OpenBSD OSREV are not
+supported.
+You are strongly advised to reinstall your existing machines from scratch.
+dnl
+dnl OpenBSDUpgrade({:-CDROM, the miniroot, or the installation floppy-:})
