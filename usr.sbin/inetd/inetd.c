@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.39 1997/08/31 18:04:37 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.40 1997/09/19 12:21:27 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.39 1997/08/31 18:04:37 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.40 1997/09/19 12:21:27 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -378,6 +378,8 @@ main(argc, argv, envp)
 	sigvec(SIGTERM, &sv, NULL);
 	sv.sv_handler = goaway;
 	sigvec(SIGINT, &sv, NULL);
+	sv.sv_handler = SIG_IGN;
+	sigvec(SIGPIPE, &sv, NULL);
 
 	{
 		/* space for daemons to overwrite environment for ps */
