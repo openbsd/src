@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.1 1999/07/11 16:31:08 niklas Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.2 2000/01/02 07:33:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -65,7 +65,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wicontrol.c,v 1.1 1999/07/11 16:31:08 niklas Exp $";
+	"@(#) $Id: wicontrol.c,v 1.2 2000/01/02 07:33:01 deraadt Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -425,22 +425,12 @@ static void wi_dumpstats(iface)
 static void usage(p)
 	char			*p;
 {
-	fprintf(stderr, "usage:  %s -i iface\n", p);
-	fprintf(stderr, "\t%s -i iface -o\n", p);
-	fprintf(stderr, "\t%s -i iface -t tx rate\n", p);
-	fprintf(stderr, "\t%s -i iface -n network name\n", p);
-	fprintf(stderr, "\t%s -i iface -s station name\n", p);
-	fprintf(stderr, "\t%s -i iface -c 0|1\n", p);
-	fprintf(stderr, "\t%s -i iface -q SSID\n", p);
-	fprintf(stderr, "\t%s -i iface -p port type\n", p);
-	fprintf(stderr, "\t%s -i iface -a access point density\n", p);
-	fprintf(stderr, "\t%s -i iface -m mac address\n", p);
-	fprintf(stderr, "\t%s -i iface -d max data length\n", p);
-	fprintf(stderr, "\t%s -i iface -r RTS threshold\n", p);
-	fprintf(stderr, "\t%s -i iface -f frequency\n", p);
-	fprintf(stderr, "\t%s -i iface -P 0|1t\n", p);
-	fprintf(stderr, "\t%s -i iface -S max sleep duration\n", p);
-
+	fprintf(stderr,
+	    "usage: wiconfig interface "
+	    "[-o] [-t tx rate] [-n network name] [-s station name]\n"
+	    "       [-c 0|1] [-q SSID] [-p port type] [-a access point density]\n"
+	    "       [-m MAC address] [-d max data length] [-r RTS threshold]\n"
+	    "       [-f frequency] [-P 0|1] [-S max sleep duration]\n");
 	exit(1);
 }
 
@@ -452,15 +442,22 @@ int main(argc, argv)
 	char			*iface = NULL;
 	char			*p = argv[0];
 
+	if (argc > 1 && argv[1][0] != '-') {
+		iface = argv[1];
+		memcpy(&argv[1], &argv[2], argc * sizeof(char *));
+		argc--;
+	}
+
 	while((ch = getopt(argc, argv,
-	    "hoc:d:f:i:p:r:q:t:n:s:m:P:S:")) != -1) {
+	    "hoc:d:f:p:r:q:t:n:s:i:m:P:S:")) != -1) {
 		switch(ch) {
 		case 'o':
 			wi_dumpstats(iface);
 			exit(0);
 			break;
 		case 'i':
-			iface = optarg;
+			if (iface == NULL)
+				iface = optarg;
 			break;
 		case 'c':
 			wi_setword(iface, WI_RID_CREATE_IBSS, atoi(optarg));

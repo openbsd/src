@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.4 1999/12/16 02:56:55 deraadt Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.5 2000/01/02 07:33:01 deraadt Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -40,33 +40,21 @@
 .Nd configure WaveLAN/IEEE devices
 .Sh SYNOPSIS
 .Nm wicontrol
-.Fl i Ar iface Op Fl o
-.Nm wicontrol
-.Fl i Ar iface Fl t Ar tx rate
-.Nm wicontrol
-.Fl i Ar iface Fl n Ar network name
-.Nm wicontrol
-.Fl i Ar iface Fl s Ar station name
-.Nm wicontrol
-.Fl i Ar iface Fl c Ar 0|1
-.Nm wicontrol
-.Fl i Ar iface Fl q Ar SSID
-.Nm wicontrol
-.Fl i Ar iface Fl p Ar port type
-.Nm wicontrol
-.Fl i Ar iface Fl a Ar access point density
-.Nm wicontrol
-.Fl i Ar iface Fl m Ar mac address
-.Nm wicontrol
-.Fl i Ar iface Fl d Ar max data length
-.Nm wicontrol
-.Fl i Ar iface Fl r Ar RTS threshold
-.Nm wicontrol
-.Fl i Ar iface Fl f Ar frequency
-.Nm wicontrol
-.Fl i Ar iface Fl P Ar 0|1
-.Nm wicontrol
-.Fl i Ar iface Fl S Ar max_sleep_duration
+.Ar interface
+.Op Fl o
+.Op Fl t Ar tx rate
+.Op Fl n Ar network name
+.Op Fl s Ar station name
+.Op Fl c Ar 0|1
+.Op Fl q Ar SSID
+.Op Fl p Ar port type
+.Op Fl a Ar access point density
+.Op Fl m Ar MAC address
+.Op Fl d Ar max data length
+.Op Fl r Ar RTS threshold
+.Op Fl f Ar frequency
+.Op Fl P Ar 0|1
+.Op Fl S Ar max sleep duration
 .Sh DESCRIPTION
 The
 .Nm
@@ -92,8 +80,9 @@ should be the logical interface name associated with the WaveLAN/IEEE
 device (wi0, wi1, etc...).
 .Sh OPTIONS
 The options are as follows:
+.Pp
 .Bl -tag -width Fl
-.It Fl i Ar iface Op Fl o
+.It Fl o
 Display the current settings of the specified WaveLAN/IEEE interface.
 This retrieves the current card settings from the driver and prints them
 out. Using the additional
@@ -101,7 +90,7 @@ out. Using the additional
 flag will cause
 .Nm
 to print out the statistics counters instead of the card settings.
-.It Fl i Ar iface Fl t Ar tx rate
+.It Fl t Ar tx rate
 Set the transmit rate of the specified interface. The legal values
 for the transmit rate vary depending on whether the interface is a
 standard WaveLAN/IEEE or a WaveLAN/IEEE Turbo adapter. The standard
@@ -124,7 +113,7 @@ legal transmit rate settings and the corresponding transmit speeds:
 The standard NICs support only settings 1 through 3. Turbo NICs support
 all the above listed speed settings.
 The default driver setting is 3 (auto rate select).
-.It Fl i Ar iface Fl n Ar network name
+.It Fl n Ar network name
 Set the name of the service set (IBSS) that this station wishes to
 join. The
 .Ar network name
@@ -134,21 +123,21 @@ available access point. The interface should be set for BSS mode using
 the
 .Fl p
 flag in order for this to work.
-.It Fl i Ar iface Fl s Ar station name
+.It Fl s Ar station name
 Sets the
 .Ar station name
 for the specified interface. The
 .Ar station name
 is used for diagnostic purposes. The Lucent WaveMANAGER sofware can
 poll the names of remote hosts.
-.It Fl i Ar iface Fl c Ar 0|1
+.It Fl c Ar 0|1
 Allow the station to create a service set (IBSS). Permitted values
 are 0 (don't create IBSS) and 1 (enable creation of IBSS). The default
 is 0.
 .Pp
 Note: this option is provided for experimental purposes only: enabling
 the creation of an IBSS on a host system doesn't appear to actually work.
-.It Fl i Ar iface Fl q Ar SSID
+.It Fl q Ar SSID
 Specify the name of an IBSS (SSID) to create on a given interface.
 The
 .Ar SSID
@@ -156,7 +145,7 @@ can be any text string up to 30 characters long.
 .Pp
 Note: this option is provided for experimental purposes only: enabling
 the creation of an IBSS on a host system doesn't appear to actually work.
-.It Fl i Ar iface Fl p Ar port type
+.It Fl p Ar port type
 Set the
 .Ar port type
 for a specified interface. The legal values for
@@ -167,28 +156,28 @@ communicate directly with any other stations within direct radio range
 hosts must associate with a service set controlled by an access point,
 which relays traffic between end stations. The default setting is 3
 (ad-hoc mode).
-.It Fl i Ar iface Fl a Ar access_point_density
+.It Fl a Ar access_point_density
 Specify the
 .Ar access point density
 for a given interface. Legal values are 1 (low), 2 (medium) and 3 (high).
 This setting influences some of the radio modem threshold settings.
-.It Fl i Ar iface Fl m Ar mac address
+.It Fl m Ar MAC address
 Set the station address for the specified interface. The
-.Ar mac address
+.Ar MAC address
 is specified as a series of six hexadecimal values separated by colons,
 e.g.: 00:60:1d:12:34:56. This programs the new address into the card
 and updates the interface as well.
-.It Fl i Ar iface Fl d Ar max_data_length
+.It Fl d Ar max_data_length
 Set the maximum receive and transmit frame size for a specified interface.
 The
 .Ar max data length
 can be any number from 350 to 2304. The default is 2304.
-.It Fl i Ar iface Fl r Ar RTS threshold
+.It Fl r Ar RTS threshold
 Set the RTS/CTS threshold for a given interface. This controls the
 number of bytes used for the RTS/CTS handshake boundary. The
 .Ar RTS threshold
 can be any value between 0 and 2047. The default is 2347.
-.It Fl i Ar iface Fl f Ar frequency
+.It Fl f Ar frequency
 Set the radio frequency of a given interface. The
 .Ar frequency
 should be specfied as a channel ID as shown in the table below. The
@@ -222,7 +211,7 @@ and Europe, the default channel is 3. For NICs sold in France, the default
 channel is 11. For NICs sold in Japan, the only available channel is 14.
 Note that two stations must be set to the same channel in order to
 communicate.
-.It Fl i Ar iface Fl P Ar 0|1
+.It Fl P Ar 0|1
 Enable or disable power management on a given interface. Enabling
 power management uses an alternating sleep/wake protocol to help
 conserve power on mobile stations, at the cost of some increased
@@ -233,7 +222,7 @@ is only implemented in Lucent WavePOINT firmware version 2.03 or
 later, and in WaveLAN PCMCIA adapter firmware 2.00 or later. Older
 revisions will silently ignore the power management setting. Legal
 values for this parameter are 0 (off) and 1 (on).
-.It Fl i Ar iface Fl S Ar max_sleep_interval
+.It Fl S Ar max sleep interval
 Specify the sleep interval to use when power management is enabled.
 The
 .Are max sleep interval
