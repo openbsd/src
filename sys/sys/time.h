@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.16 2003/08/11 05:37:59 kevlo Exp $	*/
+/*	$OpenBSD: time.h,v 1.17 2003/08/14 05:34:47 kevlo Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -138,6 +138,15 @@ struct timezone {
 struct	itimerval {
 	struct	timeval it_interval;	/* timer interval */
 	struct	timeval it_value;	/* current value */
+};
+
+/*
+ * Structure defined by POSIX 1003.1b to be like a itimerval,
+ * but with timespecs. Used in the timer_*() system calls.
+ */
+struct  itimerspec {
+	struct  timespec it_interval;	/* timer interval */
+	struct  timespec it_value;	/* timer expiration */
 };
 
 /*
