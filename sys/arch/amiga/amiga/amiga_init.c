@@ -1,4 +1,4 @@
-/*	$OpenBSD: amiga_init.c,v 1.17 2000/05/27 19:45:17 art Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.18 2001/04/20 11:01:55 art Exp $	*/
 /*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
@@ -70,6 +70,7 @@ extern u_int	virtual_avail;
 #if defined(M68040) || defined(M68060)
 extern int	protostfree;
 #endif
+vaddr_t		amiga_uptbase;
 
 extern char *esym;
 
@@ -704,6 +705,15 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	RELOC(lowram, u_int)  = fphystart;
 	RELOC(physmem, u_int) = fphysize >> PGSHIFT;
 
+	/*
+	 * Put user page tables starting at next 16MB boundary, to make kernel
+	 * dumps more readable, with guaranteed 16MB of.
+	 * XXX depends on Sysmap being last.
+	 * XXX 16 MB instead of 256 MB should be enough, but...
+	 * we need to fix the fastmem loading first. (see comment at line 375)
+	 */
+	RELOC(amiga_uptbase, vaddr_t) =
+	    roundup(RELOC(Sysmap, u_int) + 0x10000000, 0x10000000);
 	/*
 	 * get the pmap module in sync with reality.
 	 */
