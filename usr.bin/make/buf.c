@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.c,v 1.9 1999/12/16 16:27:12 espie Exp $	*/
+/*	$OpenBSD: buf.c,v 1.10 1999/12/16 16:41:41 espie Exp $	*/
 /*	$NetBSD: buf.c,v 1.9 1996/12/31 17:53:21 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)buf.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: buf.c,v 1.9 1999/12/16 16:27:12 espie Exp $";
+static char rcsid[] = "$OpenBSD: buf.c,v 1.10 1999/12/16 16:41:41 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -149,30 +149,6 @@ Buf_AddChars(bp, numBytes, bytesPtr)
 
 /*-
  *-----------------------------------------------------------------------
- * Buf_GetAll --
- *	Get all the available data at once.
- *
- * Results:
- *	A pointer to the data and the number of chars available.
- *
- *-----------------------------------------------------------------------
- */
-char *
-Buf_GetAll(bp, numBytesPtr)
-    Buffer 	bp;
-    size_t	*numBytesPtr;
-{
-
-    if (numBytesPtr != NULL) {
-	*numBytesPtr = bp->inPtr - bp->outPtr;
-    }
-
-    *bp->inPtr = 0;
-    return (bp->outPtr);
-}
-
-/*-
- *-----------------------------------------------------------------------
  * Buf_Reset -
  *	Throw away all chars in a buffer.
  *
@@ -188,24 +164,6 @@ Buf_Reset(bp)
 
     bp->inPtr = bp->outPtr = bp->buffer;
     bp->left = bp->size;
-}
-
-/*-
- *-----------------------------------------------------------------------
- * Buf_Size --
- *	Returns the number of chars in the given buffer. Doesn't include
- *	the null-terminating char.
- *
- * Results:
- *	The number of chars.
- *
- *-----------------------------------------------------------------------
- */
-int
-Buf_Size(buf)
-    Buffer  buf;
-{
-    return (buf->inPtr - buf->outPtr);
 }
 
 /*-

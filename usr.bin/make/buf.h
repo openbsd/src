@@ -1,4 +1,4 @@
-/*	$OpenBSD: buf.h,v 1.8 1999/12/16 16:27:12 espie Exp $	*/
+/*	$OpenBSD: buf.h,v 1.9 1999/12/16 16:41:41 espie Exp $	*/
 /*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $	*/
 
 /*
@@ -81,10 +81,14 @@ void Buf_AddChars __P((Buffer, size_t, const char *));
 /* Buf_AddInterval -- Add characters between pointers s and e to buffer.  */
 #define Buf_AddInterval(b, s, e) 	Buf_AddChars((b), (e) - (s), (s))
 
+/* Buf_Retrieve -- Retrieve data from a buffer, as a NULL terminated string.  */
+#define Buf_Retrieve(bp)	(*(bp)->inPtr = '\0', (bp)->outPtr)
 
-char *Buf_GetAll __P((Buffer, size_t *));
+/* Buf_Size -- Return the number of chars in the given buffer. 
+ *	Doesn't include the null-terminating char.  */
+#define Buf_Size(bp)	((size_t)((bp)->inPtr - (bp)->outPtr))
+
 void Buf_Reset __P((Buffer));
-int Buf_Size __P((Buffer));
 Buffer Buf_Init __P((size_t));
 void Buf_Destroy __P((Buffer, Boolean));
 void Buf_ReplaceLastChar __P((Buffer, char));

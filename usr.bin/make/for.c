@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.8 1999/12/09 18:18:24 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.9 1999/12/16 16:41:41 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -65,7 +65,7 @@
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: for.c,v 1.8 1999/12/09 18:18:24 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.9 1999/12/16 16:41:41 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -278,7 +278,7 @@ ForExec(namep, argp)
     Var_Set(arg->var, name, VAR_GLOBAL);
     if (DEBUG(FOR))
 	(void) fprintf(stderr, "--- %s = %s\n", arg->var, name);
-    Parse_FromString(Var_Subst(arg->var, Buf_GetAll(arg->buf, NULL),
+    Parse_FromString(Var_Subst(arg->var, Buf_Retrieve(arg->buf),
 			       VAR_GLOBAL, FALSE), arg->lineno);
     Var_Delete(arg->var, VAR_GLOBAL);
 

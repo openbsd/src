@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.20 1999/12/16 16:27:13 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.21 1999/12/16 16:41:42 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -70,7 +70,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.20 1999/12/16 16:27:13 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.21 1999/12/16 16:41:42 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -544,7 +544,7 @@ Var_Append (name, val, ctxt)
 
 	if (DEBUG(VAR)) {
 	    printf("%s:%s = %s\n", ctxt->name, name,
-		   Buf_GetAll(v->val, NULL));
+		   Buf_Retrieve(v->val));
 	}
 
     }
@@ -597,11 +597,10 @@ Var_Value(name, ctxt)
 {
     Var            *v;
 
-    v = VarFind (name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
-    if (v != (Var *) NIL) {
-	char *p = Buf_GetAll(v->val, NULL);
-	return p;
-    } else
+    v = VarFind(name, ctxt, FIND_ENV | FIND_GLOBAL | FIND_CMD);
+    if (v != NULL) 
+	return Buf_Retrieve(v->val);
+    else
 	return NULL;
 }
 
@@ -1280,7 +1279,7 @@ VarModify (str, modProc, datum)
     free(as);
     free(av);
     Buf_AddChar(buf, '\0');
-    str = Buf_GetAll(buf, NULL);
+    str = Buf_Retrieve(buf);
     Buf_Destroy(buf, FALSE);
     return (str);
 }
@@ -1379,7 +1378,8 @@ VarGetPattern(ctxt, err, tstr, delim, flags, length, pattern)
     }
     else {
 	*tstr = ++cp;
-	cp = Buf_GetAll(buf, length);
+	cp = Buf_Retrieve(buf);
+	*length = Buf_Size(buf);
 	*length -= 1;	/* Don't count the NULL */
 	Buf_Destroy(buf, FALSE);
 	return cp;
@@ -1415,7 +1415,7 @@ VarQuote(str)
 	Buf_AddChar(buf, *str);
     }
     Buf_AddChar(buf, '\0');
-    str = Buf_GetAll(buf, NULL);
+    str = Buf_Retrieve(buf);
     Buf_Destroy(buf, FALSE);
     return str;
 }
@@ -1575,7 +1575,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 			 * the only one who sets these things and we sure don't
 			 * but nested invocations in them...
 			 */
-			val = Buf_GetAll(v->val, NULL);
+			val = Buf_Retrieve(v->val);
 
 			if (str[3] == 'D') {
 			    val = VarModify(val, VarHead, (ClientData)0);
@@ -1679,7 +1679,7 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
      * been dynamically-allocated, so it will need freeing when we
      * return.
      */
-    str = Buf_GetAll(v->val, NULL);
+    str = Buf_Retrieve(v->val);
     if (strchr (str, '$') != (char *)NULL) {
 	str = Var_Subst(NULL, str, ctxt, err);
 	*freePtr = TRUE;
@@ -2258,7 +2258,7 @@ Var_Subst (var, str, ctxt, undefErr)
     }
 
     Buf_AddChar(buf, '\0');
-    str = Buf_GetAll(buf, NULL);
+    str = Buf_Retrieve(buf);
     Buf_Destroy(buf, FALSE);
     return (str);
 }
@@ -2343,7 +2343,7 @@ VarPrintVar (vp, dummy)
     ClientData dummy;
 {
     Var    *v = (Var *) vp;
-    printf ("%-16s = %s\n", v->name, Buf_GetAll(v->val, NULL));
+    printf ("%-16s = %s\n", v->name, Buf_Retrieve(v->val));
     return (dummy ? 0 : 0);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.20 1999/12/09 18:20:06 espie Exp $	*/
+/*	$OpenBSD: main.c,v 1.21 1999/12/16 16:41:41 espie Exp $	*/
 /*	$NetBSD: main.c,v 1.34 1997/03/24 20:56:36 gwr Exp $	*/
 
 /*
@@ -49,7 +49,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.20 1999/12/09 18:20:06 espie Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.21 1999/12/16 16:41:41 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -1004,7 +1004,8 @@ Cmd_Exec(cmd, err)
 	while(((pid = wait(&status)) != cpid) && (pid >= 0))
 	    continue;
 
-	res = Buf_GetAll(buf, &length);
+	res = Buf_Retrieve(buf);
+	length = Buf_Size(buf);
 	Buf_Destroy(buf, FALSE);
 
 	if (cc == -1)
