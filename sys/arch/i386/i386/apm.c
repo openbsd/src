@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.37 2000/04/21 16:29:58 mickey Exp $	*/
+/*	$OpenBSD: apm.c,v 1.38 2000/05/30 03:39:34 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1998-2000 Michael Shalayeff. All rights reserved.
@@ -301,7 +301,7 @@ apm_power_print (sc, regs)
 			if (BATT_FLAGS(regs) & APM_BATT_FLAG_CHARGING)
 				printf(", charging");
 			if (BATT_REM_VALID(regs))
-				printf(", estimated %d:%02d minutes",
+				printf(", estimated %d:%02d hours",
 				    BATT_REMAINING(regs) / 60,
 				    BATT_REMAINING(regs) % 60);
 		}
