@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getrpcent.3,v 1.6 2000/04/18 03:01:33 aaron Exp $
+.\"	$OpenBSD: getrpcent.3,v 1.7 2000/12/17 21:30:39 millert Exp $
 .\"
 .Dd December 14, 1987
 .Dt GETRPCENT 3
@@ -30,7 +30,7 @@ and
 each return a pointer to an object with the
 following structure
 containing the broken-out
-fields of a line in the rpc program number data base,
+fields of a line in the rpc program number database,
 .Pa /etc/rpc :
 .Bd -literal -offset indent
 struct rpcent {
@@ -58,7 +58,7 @@ opens and rewinds the file.
 If the
 .Fa stayopen
 flag is non-zero,
-the net data base will not be closed after each call to
+the net database will not be closed after each call to
 .Fn getrpcent
 (either directly, or indirectly through one of
 the other

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: otermcap.3,v 1.3 1999/07/09 13:35:27 aaron Exp $
+.\"	$OpenBSD: otermcap.3,v 1.4 2000/12/17 21:29:51 millert Exp $
 .\"	$NetBSD: termcap.3,v 1.5 1995/06/05 19:45:48 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -107,7 +107,7 @@ The
 function
 returns \-1 if none of the
 .Nm termcap
-data base files could be opened,
+database files could be opened,
 0 if the terminal name given does not have an entry,
 and 1 if all goes well.
 It will look in the environment for a
@@ -258,9 +258,9 @@ is inappropriate.
 .Fl l Ar lotermcap
 library
 .It Pa /usr/share/misc/termcap
-standard terminal capability data base
+standard terminal capability database
 .It Pa $HOME/.termcap
-user's terminal capability data base
+user's terminal capability database
 .El
 .Sh SEE ALSO
 .Xr ex 1 ,

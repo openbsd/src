@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getservent.3,v 1.9 2000/04/18 03:01:32 aaron Exp $
+.\"	$OpenBSD: getservent.3,v 1.10 2000/12/17 21:30:38 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -63,7 +63,7 @@ functions
 each return a pointer to an object with the
 following structure
 containing the broken-out
-fields of a line in the network services data base,
+fields of a line in the network services database,
 .Pa /etc/services .
 .Bd -literal -offset indent
 struct	servent {
@@ -100,7 +100,7 @@ opens and rewinds the file.
 If the
 .Fa stayopen
 flag is non-zero,
-the net data base will not be closed after each call to
+the net database will not be closed after each call to
 .Fn getservbyname
 or
 .Fn getservbyport .
