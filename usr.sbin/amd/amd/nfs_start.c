@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.1.1.1 1995/10/18 08:47:11 deraadt Exp $
+ *	$Id: nfs_start.c,v 1.2 1997/01/31 14:42:01 graichen Exp $
  */
 
 #include "am.h"
@@ -92,10 +92,10 @@ static char *max_mem = 0;
 	/*if (max_mem == 0) {
 		max_mem = next_mem;
 	} else*/ if (max_mem < next_mem) {
-		dlog("%#x bytes of memory allocated; total is %#x (%d pages)",
-			next_mem - max_mem,
-			next_mem,
-			((int)next_mem+getpagesize()-1)/getpagesize());
+		dlog("%#lx bytes of memory allocated; total is %#lx (%ld pages)",
+			(unsigned long)(next_mem - max_mem),
+			(unsigned long)next_mem,
+			((unsigned long)next_mem+getpagesize()-1)/getpagesize());
 		max_mem = next_mem;
 	}
 }

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)srvr_nfs.c	8.1 (Berkeley) 6/6/93
- *	$Id: srvr_nfs.c,v 1.1.1.1 1995/10/18 08:47:12 deraadt Exp $
+ *	$Id: srvr_nfs.c,v 1.2 1997/01/31 14:42:02 graichen Exp $
  */
 
 /*
@@ -275,7 +275,8 @@ struct sockaddr_in *tsp;
 voidp idv;
 int done;
 {
-	int xid = (int) idv;
+	/* XXX EVIL! XXX */
+	int xid = (int) ((long)idv);
 	fserver *fs;
 #ifdef DEBUG
 	int found_map = 0;
@@ -461,8 +462,12 @@ fserver *fs;
 	/*
 	 * Queue the packet...
 	 */
+	/*
+	 * XXX EVIL!  We cast xid to a pointer, then back to an int when
+	 * XXX we get the reply.
+	 */
 	error = fwd_packet(MK_RPC_XID(RPC_XID_NFSPING, np->np_xid), (voidp) ping_buf,
-		ping_len, fs->fs_ip, (struct sockaddr_in *) 0, (voidp) np->np_xid, nfs_pinged);
+		ping_len, fs->fs_ip, (struct sockaddr_in *) 0, (voidp) ((long)np->np_xid), nfs_pinged);
 
 	/*
 	 * See if a hard error occured

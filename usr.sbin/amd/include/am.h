@@ -1,4 +1,4 @@
-/*	$OpenBSD: am.h,v 1.2 1996/03/25 15:54:54 niklas Exp $	*/
+/*	$OpenBSD: am.h,v 1.3 1997/01/31 14:42:18 graichen Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -49,6 +49,8 @@
 #include <sys/socket.h>
 #include <rpc/rpc.h>
 #include <sys/mount.h>
+#include <string.h>
+#include <stdlib.h>
 #ifdef MNTENT_HDR
 #include MNTENT_HDR
 #endif /* MNTENT_HDR */
@@ -257,11 +259,11 @@ extern char *hasmntopt P((struct mntent*, char*));
 #endif /* NEED_MNTOPT_PARSER */
 extern int hasmntval P((struct mntent*, char*));
 extern void host_normalize P((char **));
-extern char *inet_dquad P((char*, unsigned long));
+extern char *inet_dquad P((char*, u_int32_t));
 extern void init_map P((am_node*, char*));
 extern void insert_am P((am_node*, am_node*));
 extern void ins_que P((qelem*, qelem*));
-extern int islocalnet P((unsigned long));
+extern int islocalnet P((u_int32_t));
 extern int make_nfs_auth P((void));
 extern void make_root_node(P_void);
 extern int make_rpc_packet P((char*, int, u_long, struct rpc_msg*, voidp, xdrproc_t, AUTH*));
@@ -311,7 +313,6 @@ extern char* str3cat P((char*, char*, char*, char*));
 extern char* strcat P((char*, Const char*)); /* C */
 extern int strcmp P((Const char*, Const char*)); /* C */
 extern char* strdup P((Const char*));
-extern int strlen P((Const char*)); /* C */
 extern char* strnsave P((Const char*, int));
 extern char* strrchr P((Const char*, int)); /* C */
 extern char* strealloc P((char*, char *));

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_hes.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_hes.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $
+ *	$Id: info_hes.c,v 1.2 1997/01/31 14:41:58 graichen Exp $
  */
 
 /*
@@ -423,7 +423,7 @@ char *msg, *eom;
 	int qdcount, ancount;
 	char key[PACKETSZ];
 	char *key_cpy, *value, *hs_make_value();
-	short type;
+	int16_t type;
 
 	hp = (HEADER *)msg;
 	if (hp->rcode != NOERROR || hp->opcode != QUERY) {
@@ -452,9 +452,9 @@ char *msg, *eom;
 		if ((type = _getshort(cp)) == T_SOA) {
 			soacnt++;
 		}
-		cp += 2*sizeof(u_short) + sizeof(u_long);
+		cp += 2*sizeof(u_int16_t) + sizeof(u_int32_t);
 		len = _getshort(cp);
-		cp += sizeof(u_short);
+		cp += sizeof(u_int16_t);
 		/* Check to see if key is in our domain */
 		if (type == T_TXT && hs_strip_our_domain(key)) {
 			value = hs_make_value(cp, len);

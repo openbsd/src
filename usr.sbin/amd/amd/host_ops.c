@@ -1,4 +1,4 @@
-/*	$OpenBSD: host_ops.c,v 1.2 1996/03/25 15:54:46 niklas Exp $	*/
+/*	$OpenBSD: host_ops.c,v 1.3 1997/01/31 14:41:58 graichen Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -154,10 +154,11 @@ mntfs *mf;
 	return mount_nfs_fh(fhp, dir, fs_name, opts, mf);
 }
 
-static int sortfun P((exports *a, exports *b));
-static int sortfun(a, b)
-exports *a,*b;
+static int sortfun P((const void *arg1, const void *arg2));
+static int sortfun(arg1, arg2)
+const void *arg1, *arg2;
 {
+	const exports *a = arg1, *b = arg2;
 	return strcmp((*a)->ex_dir, (*b)->ex_dir);
 }
 

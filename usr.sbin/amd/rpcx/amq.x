@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.x	8.1 (Berkeley) 6/6/93
- *	$Id: amq.x,v 1.1.1.1 1995/10/18 08:47:22 deraadt Exp $
+ *	$Id: amq.x,v 1.2 1997/01/31 14:42:22 graichen Exp $
  *
  */
 
@@ -53,8 +53,9 @@ typedef string amq_string<AMQ_STRLEN>;
 
 /*
  * The type time_type should correspond to the system time_t
+ * XXX int/long time_t garbage; this needs to be a 32-bit integer
  */
-typedef long time_type;
+typedef int time_type;
 
 /*
  * A tree of what is mounted
