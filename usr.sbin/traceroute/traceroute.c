@@ -400,7 +400,8 @@ main(argc, argv)
 			errx(1, "unknown host %s", *argv);
 		to.sin_family = hp->h_addrtype;
 		memcpy(&to.sin_addr, hp->h_addr, hp->h_length);
-		hostname = strdup(hp->h_name);
+		if ((hostname = strdup(hp->h_name)) == NULL)
+			err(1, "malloc");
 	}
 	if (*++argv)
 		datalen = atoi(*argv);
