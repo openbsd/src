@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.28 1999/12/06 22:56:03 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.29 1999/12/06 23:02:08 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -205,7 +205,7 @@ ah_input(m, va_alist)
 
     if ((m = m_pullup(m, ipn.ip_hl << 2)) == 0)
     {
-	ahstat.esps_hdrops++;
+	ahstat.ahs_hdrops++;
 	return;
     }
 
