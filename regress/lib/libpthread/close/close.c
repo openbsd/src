@@ -1,4 +1,4 @@
-/*	$OpenBSD: close.c,v 1.4 2003/07/31 21:48:04 deraadt Exp $	*/
+/*	$OpenBSD: close.c,v 1.5 2004/01/08 04:19:19 marc Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -107,8 +107,10 @@ new_thread(void* arg)
 	printf("child: writing some garbage to fd %d\n", fd);
 	CHECKe(write(fd, garbage, sizeof garbage));
 	printf("child: calling select() with fd %d\n", fd);
-	CHECKe(ret = select(fd + 1, &r, NULL, NULL, NULL));
-	printf("child: select() returned %d\n", ret);
+	ASSERT((ret = select(fd + 1, &r, NULL, NULL, NULL)) == -1);
+	ASSERT(errno == EBADF);
+	printf("child: select() returned %d, errno %d = %s [correct]\n", ret,
+	       errno, strerror(errno));
 	return NULL;
 }
 
