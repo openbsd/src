@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_intr_fixup.c,v 1.35 2004/07/14 21:46:49 mickey Exp $	*/
+/*	$OpenBSD: pci_intr_fixup.c,v 1.36 2004/09/26 20:17:42 mickey Exp $	*/
 /*	$NetBSD: pci_intr_fixup.c,v 1.10 2000/08/10 21:18:27 soda Exp $	*/
 
 /*
@@ -671,17 +671,14 @@ pci_intr_header_fixup(pc, tag, ihp)
 		p = " fixed up";
 		ihp->line = l->irq;
 
-	} else {
+	} else if (pcibios_flags & PCIBIOS_FIXUP_FORCE) {
 		/* routed by BIOS, but inconsistent */
-#ifdef PCIBIOS_INTR_FIXUP_FORCE
 		/* believe PCI IRQ Routing table */
 		p = " WARNING: overriding";
 		ihp->line = l->irq;
-#else
+	} else
 		/* believe PCI Interrupt Configuration Register (default) */
 		p = " WARNING: preserving";
-#endif
-	}
 
 	if (pcibios_flags & PCIBIOS_INTRDEBUG) {
 		register pcireg_t id = pci_conf_read(pc, tag, PCI_ID_REG);

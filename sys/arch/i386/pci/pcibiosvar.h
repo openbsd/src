@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.13 2004/06/22 09:47:01 mickey Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.14 2004/09/26 20:17:42 mickey Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -36,6 +36,7 @@
 #define	PCIBIOS_INTR_GUESS	0x008
 #define	PCIBIOS_VERBOSE		0x010
 #define	PCIBIOS_INTRDEBUG	0x020
+#define	PCIBIOS_FIXUP_FORCE	0x040
 
 /*
  * PCI BIOS return codes.
