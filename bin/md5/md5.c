@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: md5.c,v 1.1 1996/06/11 10:37:38 deraadt Exp $
+ * $OpenBSD: md5.c,v 1.2 1996/11/12 23:33:02 niklas Exp $
  *
  * Derived from:
  */
@@ -159,11 +159,11 @@ MDFilter(int pipe)
 {
 	MD5_CTX context;
 	int     len;
-	unsigned char buffer[BUFSIZ], digest[16];
+	unsigned char buffer[BUFSIZ];
 	char buf[33];
 
 	MD5Init(&context);
-	while (len = fread(buffer, 1, BUFSIZ, stdin)) {
+	while ((len = fread(buffer, 1, BUFSIZ, stdin)) > 0) {
 		if(pipe && (len != fwrite(buffer, 1, len, stdout))) {
 			perror("stdout");
 			exit(1);
