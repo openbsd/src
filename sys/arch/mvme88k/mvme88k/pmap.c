@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.58 2001/12/22 10:22:13 smurph Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.59 2001/12/24 00:25:17 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -4414,7 +4414,9 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 
 	template.pte.wired = 1;
 
+	invalidate_pte(pte);
 	*(int *)pte = template.bits;
+	flush_atc_entry(users, va, TRUE);
 
 	PMAP_UNLOCK(kernel_pmap, spl);
 }
@@ -4439,6 +4441,7 @@ pmap_kremove(vaddr_t va, vsize_t len)
 	for (len >>= PAGE_SHIFT; len > 0; len--, va += PAGE_SIZE) {
 		vaddr_t e = va + PAGE_SIZE;
 		sdt_entry_t *sdt;
+		pt_entry_t *pte;
 
 		sdt = SDTENT(kernel_pmap, va);
 
@@ -4457,6 +4460,8 @@ pmap_kremove(vaddr_t va, vsize_t len)
 		kernel_pmap->stats.resident_count--;
 		kernel_pmap->stats.wired_count--;
 
+		pte = pmap_pte(kernel_pmap, va);
+		invalidate_pte(pte);
 		flush_atc_entry(users, va, TRUE);
 	}
 	PMAP_UNLOCK(map, spl);
