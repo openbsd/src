@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";*/
-static char rcsid[] = "$Id: mail.local.c,v 1.6 1996/08/29 07:21:58 deraadt Exp $";
+static char rcsid[] = "$Id: mail.local.c,v 1.7 1996/08/30 12:04:13 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -258,7 +258,7 @@ getlock(name, pw)
 	    _PATH_MAILDIR, name);
 
 	if (stat(_PATH_MAILDIR, &sb) != -1 &&
-	    (sb.st_mode & 7) == 7) {
+	    (sb.st_mode & S_IWOTH) == S_IWOTH) {
 		/*
 		 * We have a writeable spool, deal with it as
 		 * securely as possible.
