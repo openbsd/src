@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.3 1996/07/29 23:01:50 niklas Exp $
-#	$NetBSD: Makefile,v 1.4 1995/11/23 02:40:29 cgd Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/10/30 22:40:48 niklas Exp $
+#	$NetBSD: Makefile,v 1.6 1996/10/18 06:02:02 thorpej Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
 
@@ -12,7 +12,7 @@ BOOT_OBJS = ${BOOT_SRCS:N*.h:R:S/$/.o/g}
 HEADERSIZE_PROG = headersize
 
 AFLAGS += -DASSEMBLER
-CPPFLAGS += -I${.CURDIR}/../.. -DPRIMARY_BOOTBLOCK
+CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR}/../../../.. -DPRIMARY_BOOTBLOCK
 CFLAGS = -Werror -mno-fp-regs -g
 
 .PATH: ${.CURDIR}/../../../../lib/libkern
@@ -20,22 +20,22 @@ CFLAGS = -Werror -mno-fp-regs -g
 all: ${BOOT_PROG}
 
 ${BOOT_PROG}: ${BOOT_OBJS} ${HEADERSIZE_PROG}
-	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${BOOT_PROG}.coff \
+	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${BOOT_PROG}.hdr \
 	    ${BOOT_OBJS}
-	size ${BOOT_PROG}.coff
-	strip ${BOOT_PROG}.coff
-	dd if=${BOOT_PROG}.coff of=${BOOT_PROG}.nohdr \
-	    bs=`./${HEADERSIZE_PROG} < ${BOOT_PROG}.coff` skip=1
+	size ${BOOT_PROG}.hdr
+	strip ${BOOT_PROG}.hdr
+	dd if=${BOOT_PROG}.hdr of=${BOOT_PROG}.nohdr \
+	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${BOOT_PROG}.hdr` skip=1
 	dd if=${BOOT_PROG}.nohdr of=${BOOT_PROG} bs=`expr 15 \* 512` conv=sync
 
 install:
-	install -c -o bin -g bin -m 444 ${BOOT_PROG} \
+	${INSTALL} -c -o bin -g bin -m 444 ${BOOT_PROG} \
 	    ${DESTDIR}${BINDIR}/${BOOT_PROG}
 
 clean: _SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    ${BOOT_PROG} ${BOOT_OBJS} ${CLEANFILES} \
-	    ${BOOT_PROG}.coff ${BOOT_PROG}.nohdr ${HEADERSIZE_PROG}
+	    ${BOOT_PROG}.hdr ${BOOT_PROG}.nohdr ${HEADERSIZE_PROG}
 
 cleandir: _SUBDIRUSE clean
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ciavar.h,v 1.3 1996/07/29 23:00:24 niklas Exp $	*/
-/*	$NetBSD: ciavar.h,v 1.3.4.1 1996/06/10 00:04:12 cgd Exp $	*/
+/*	$OpenBSD: ciavar.h,v 1.4 1996/10/30 22:39:58 niklas Exp $	*/
+/*	$NetBSD: ciavar.h,v 1.4 1996/06/10 00:03:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

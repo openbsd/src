@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpb.h,v 1.4 1996/07/29 22:59:15 niklas Exp $	*/
+/*	$OpenBSD: rpb.h,v 1.5 1996/10/30 22:39:26 niklas Exp $	*/
 /*	$NetBSD: rpb.h,v 1.7 1996/04/29 16:23:11 cgd Exp $	*/
 
 /*
@@ -136,11 +136,15 @@ struct rpb {
 	vm_offset_t	rpb_memdat_off;		/*  C8: memory data offset */
 	vm_offset_t	rpb_condat_off;		/*  D0: config data offset */
 	vm_offset_t	rpb_fru_off;		/*  D8: FRU table offset */
-	long		(*rpb_save_term)();	/*  E0: terminal save */
+	/* XXX Are the protos below correct?  */
+	long		(*rpb_save_term) __P((long));
+  						/*  E0: terminal save */
 	long		rpb_save_term_val;	/*  E8: */
-	long		(*rpb_rest_term)();	/*  F0: terminal restore */
+	long		(*rpb_rest_term) __P((long));
+						/*  F0: terminal restore */
 	long		rpb_rest_term_val;	/*  F8: */
-	long		(*rpb_restart)();	/* 100: restart */
+	long		(*rpb_restart) __P((long));
+						/* 100: restart */
 	long		rpb_restart_val;	/* 108: */
 	u_int64_t	rpb_reserve_os;		/* 110: */
 	u_int64_t	rpb_reserve_hw;		/* 118: */
@@ -313,7 +317,7 @@ struct ctb {
  */
 struct crd {
 	int64_t	descriptor;
-	int	(*code)();
+	int	(*code) __P((struct crd *));
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecoff.h,v 1.5 1996/07/29 22:58:39 niklas Exp $	*/
+/*	$OpenBSD: ecoff.h,v 1.6 1996/10/30 22:39:00 niklas Exp $	*/
 /*	$NetBSD: ecoff.h,v 1.3 1996/05/09 23:47:25 cgd Exp $	*/
 
 /*
@@ -43,10 +43,10 @@
         u_long	gp_value
 
 #define ECOFF_MAGIC_ALPHA		0603
-#define ECOFF_MAGIC_NETBSD_ALPHA	0605
+#define ECOFF_MAGIC_NATIVE_ALPHA	0605
 #define ECOFF_BADMAG(ep)						\
 	((ep)->f.f_magic != ECOFF_MAGIC_ALPHA &&			\
-	    (ep)->f.f_magic != ECOFF_MAGIC_NETBSD_ALPHA)
+	    (ep)->f.f_magic != ECOFF_MAGIC_NATIVE_ALPHA)
 
 #define ECOFF_FLAG_EXEC			0002
 #define ECOFF_SEGMENT_ALIGNMENT(ep) \
@@ -93,3 +93,8 @@ struct ecoff_extsym {
 	unsigned	:29;
 	int		es_indexfld;
 };
+
+#ifdef _KERNEL
+void cpu_exec_ecoff_setregs
+     __P((struct proc *, struct exec_package *, u_long, register_t *));
+#endif

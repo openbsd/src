@@ -1,97 +1,10 @@
-/*	$OpenBSD: psl.h,v 1.5 1996/10/17 22:19:45 niklas Exp $	*/
-/*	$NetBSD: psl.h,v 1.5 1996/04/23 15:24:09 cgd Exp $	*/
+/*	$OpenBSD: psl.h,v 1.6 1996/10/30 22:39:22 niklas Exp $	*/
+/*	$NetBSD: psl.h,v 1.6 1996/07/09 00:37:51 cgd Exp $	*/
 
 /*
- * Copyright (c) 1994, 1995 Carnegie-Mellon University.
- * All rights reserved.
- *
- * Author: Chris G. Demetriou
- * 
- * Permission to use, copy, modify and distribute this software and
- * its documentation is hereby granted, provided that both the copyright
- * notice and this permission notice appear in all copies of the
- * software, derivative works or modified versions, and any portions
- * thereof, and that both notices appear in supporting documentation.
- * 
- * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS" 
- * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND 
- * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
- * 
- * Carnegie Mellon requests users of this software to return to
- *
- *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
- *  School of Computer Science
- *  Carnegie Mellon University
- *  Pittsburgh PA 15213-3890
- *
- * any improvements or extensions that they make and grant Carnegie the
- * rights to redistribute these changes.
+ * Everything which would be defined here is defined in
+ * alpha_cpu.h, and this file is no longer necessary for the
+ * Alpha.  However, some machine-independent code (e.g.
+ * /sys/compat/common/kern_exit_43.c) still wants a file with
+ * this name to be around.
  */
-
-#ifndef __ALPHA_PSL_H__
-#define	__ALPHA_PSL_H__
-
-/*
- * Processor Status register definitions.
- */
-#define	PSL_U		0x08		/* PS<3> == 1 -> User mode */
-#define	PSL_IPL		0x07		/* PS<2:0> -> Interrupt mask */
-
-/*
- * The interrupt priority levels.
- * Other IPL's are configured in software, and are listed below.
- */
-#define	PSL_IPL_0	0		/* all interrupts enabled */
-#define PSL_IPL_SOFT	1		/* block software interrupts */
-#define	PSL_IPL_IO	4		/* block I/O device interrupts */
-#define	PSL_IPL_CLOCK	5		/* block clock interrupts */
-#define	PSL_IPL_HIGH	6		/* block everything except mchecks */
-
-/*
- * Miscellaneous PSL definitions
- */
-#define	PSL_MBZ		(0xfffffffffffffff0)	/* Must be always zero */
-#define	PSL_USERSET	(PSL_U)			/* Must be set for user-mode */
-#define	PSL_USERCLR	(PSL_MBZ|PSL_IPL)	/* Must be clr for user-mode */
-#define	USERMODE(ps)	((ps & PSL_U) != 0)	/* Is it user-mode? */
-
-#ifdef _KERNEL
-/*
- * Translation buffer invalidation macro definitions.
- */
-#define	TBI_A		-2		/* Flush all TB entries */
-#define	TBI_AP		-1		/* Flush all per-process TB entries */
-#define	TBI_SI		1		/* Invalidate ITB entry for va */
-#define	TBI_SD		2		/* Invalidate DTB entry for va */
-#define	TBI_S		3		/* Invalidate all entries for va */
-
-#define	TBIA()		pal_tbi(TBI_A, NULL)
-#define	TBIAP()		pal_tbi(TBI_AP, NULL)
-#define	TBISI(va)	pal_tbi(TBI_SI, va)
-#define	TBISD(va)	pal_tbi(TBI_SD, va)
-#define	TBIS(va)	pal_tbi(TBI_S, va)
-
-/*
- * Cache invalidation/flush routines.
- */
-
-/* Flush all write buffers */
-static __inline void wbflush __P((void));
-static __inline void
-wbflush()
-{
-	/* XXX? wmb */
-	__asm __volatile("mb" : : : "memory");
-}
-
-#define	IMB()		pal_imb()	/* Sync instruction cache w/data */
-
-void alpha_mb __P((void));		/* Flush all write buffers */
-void pal_imb __P((void));		/* Sync instruction cache */
-u_int64_t pal_swpipl __P((u_int64_t));	/* write new IPL, return old */
-u_int64_t profile_swpipl __P((u_int64_t));	/* pal_swpipl w/o profiling */
-void pal_tbi __P((u_int64_t, void *));	/* Invalidate TLB entries */
-void pal_halt __P((void)) __attribute__((__noreturn__)); /* halt/reboot */
-#endif /* _KERNEL */
-
-#endif /* !__ALPHA_PSL_H__ */

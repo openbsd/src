@@ -1,5 +1,5 @@
-/*	$OpenBSD: db_machdep.h,v 1.2 1996/07/29 22:58:35 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.1 1995/11/23 02:35:54 cgd Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.3 1996/10/30 22:38:58 niklas Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.2 1996/07/11 05:31:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -46,12 +46,12 @@ typedef struct trapframe db_regs_t;
 db_regs_t		ddb_regs;	/* register state */
 #define	DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_pc)
+#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_regs[FRAME_PC])
 
 #define	BKPT_INST	0x00000080	/* breakpoint instruction */
 #define	BKPT_SIZE	(4)		/* size of breakpoint inst */
 #define	BKPT_SET(inst)	(BKPT_INST)
 
-#define	FIXUP_PC_AFTER_BREAK	ddb_regs.tf_pc -= BKPT_SIZE;
+#define	FIXUP_PC_AFTER_BREAK	ddb_regs.tf_regs[FRAME_PC] -= BKPT_SIZE;
 
 #endif	/* _ALPHA_DB_MACHDEP_H_ */

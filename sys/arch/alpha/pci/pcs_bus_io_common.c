@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcs_bus_io_common.c,v 1.2 1996/07/29 23:00:50 niklas Exp $	*/
-/*	$NetBSD: pcs_bus_io_common.c,v 1.2.4.2 1996/06/13 18:16:59 cgd Exp $	*/
+/*	$OpenBSD: pcs_bus_io_common.c,v 1.3 1996/10/30 22:40:12 niklas Exp $	*/
+/*	$NetBSD: pcs_bus_io_common.c,v 1.8 1996/10/13 03:00:15 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -123,14 +123,14 @@ __C(CHIP,_io_map)(v, ioaddr, iosize, iohp)
 #ifdef CHIP_IO_W1_START
 	if (ioaddr >= CHIP_IO_W1_START(v) &&
 	    ioaddr <= CHIP_IO_W1_END(v)) {
-		*iohp = (phystok0seg(CHIP_IO_W1_BASE(v)) >> 5) +
+		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W1_BASE(v)) >> 5) +
 		    (ioaddr & CHIP_IO_W1_MASK(v));
 	} else
 #endif
 #ifdef CHIP_IO_W2_START
 	if (ioaddr >= CHIP_IO_W2_START(v) &&
 	    ioaddr <= CHIP_IO_W2_END(v)) {
-		*iohp = (phystok0seg(CHIP_IO_W2_BASE(v)) >> 5) +
+		*iohp = (ALPHA_PHYS_TO_K0SEG(CHIP_IO_W2_BASE(v)) >> 5) +
 		    (ioaddr & CHIP_IO_W2_MASK(v));
 	} else
 #endif
@@ -185,7 +185,7 @@ __C(CHIP,_io_read_1)(v, ioh, off)
 	register u_int8_t rval;
 	register int offset;
 
-	wbflush();
+	alpha_mb();
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
@@ -207,7 +207,7 @@ __C(CHIP,_io_read_2)(v, ioh, off)
 	register u_int16_t rval;
 	register int offset;
 
-	wbflush();
+	alpha_mb();
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
@@ -229,7 +229,7 @@ __C(CHIP,_io_read_4)(v, ioh, off)
 	register u_int32_t rval;
 	register int offset;
 
-	wbflush();
+	alpha_mb();
 
 	tmpioh = ioh + off;
 	offset = tmpioh & 3;
@@ -266,7 +266,7 @@ __C(CHIP,_io_read_multi_1)(v, ioh, off, addr, count)
 	register u_int32_t *port, val;
 	register int offset;
 
-	wbflush();
+	alpha_mb();
 
 	while (count--) {
 		tmpioh = ioh + off;
@@ -289,7 +289,7 @@ __C(CHIP,_io_read_multi_2)(v, ioh, off, addr, count)
 	register u_int32_t *port, val;
 	register int offset;
 
-	wbflush();
+	alpha_mb();
 
 	while (count--) {
 		tmpioh = ioh + off;
@@ -312,7 +312,7 @@ __C(CHIP,_io_read_multi_4)(v, ioh, off, addr, count)
 	register u_int32_t *port, val;
 	register int offset;
 
-	wbflush();
+	alpha_mb();
 
 	while (count--) {
 		tmpioh = ioh + off;
@@ -356,7 +356,7 @@ __C(CHIP,_io_write_1)(v, ioh, off, val)
         nval = val << (8 * offset);
         port = (u_int32_t *)((tmpioh << 5) | (0 << 3));
         *port = nval;
-        wbflush();
+        alpha_mb();
 }
 
 void
@@ -375,7 +375,7 @@ __C(CHIP,_io_write_2)(v, ioh, off, val)
         nval = val << (8 * offset);
         port = (u_int32_t *)((tmpioh << 5) | (1 << 3));
         *port = nval;
-        wbflush();
+        alpha_mb();
 }
 
 void
@@ -394,7 +394,7 @@ __C(CHIP,_io_write_4)(v, ioh, off, val)
         nval = val /*<< (8 * offset)*/;
         port = (u_int32_t *)((tmpioh << 5) | (3 << 3));
         *port = nval;
-        wbflush();
+        alpha_mb();
 }
 
 void
@@ -407,7 +407,7 @@ __C(CHIP,_io_write_8)(v, ioh, off, val)
 
 	/* XXX XXX XXX */
 	panic("%s not implemented\n", __S(__C(CHIP,_io_write_8)));
-	wbflush();
+	alpha_mb();
 }
 
 void
@@ -429,7 +429,7 @@ __C(CHIP,_io_write_multi_1)(v, ioh, off, addr, count)
 		*port = nval;
 		off++;
 	}
-	wbflush();
+	alpha_mb();
 }
 
 void
@@ -451,7 +451,7 @@ __C(CHIP,_io_write_multi_2)(v, ioh, off, addr, count)
 		*port = nval;
 		off++;
 	}
-	wbflush();
+	alpha_mb();
 }
 
 void
@@ -473,7 +473,7 @@ __C(CHIP,_io_write_multi_4)(v, ioh, off, addr, count)
 		*port = nval;
 		off++;
 	}
-	wbflush();
+	alpha_mb();
 }
 
 void

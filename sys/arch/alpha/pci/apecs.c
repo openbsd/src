@@ -1,5 +1,5 @@
-/*	$OpenBSD: apecs.c,v 1.4 1996/07/29 23:00:01 niklas Exp $	*/
-/*	$NetBSD: apecs.c,v 1.7 1996/04/12 06:08:01 cgd Exp $	*/
+/*	$OpenBSD: apecs.c,v 1.5 1996/10/30 22:39:46 niklas Exp $	*/
+/*	$NetBSD: apecs.c,v 1.12 1996/10/13 03:00:00 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -45,7 +45,10 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/apecsvar.h>
+#include <alpha/pci/apecs_lca.h>
+#if defined(DEC_2100_A50)
 #include <alpha/pci/pci_2100_a50.h>
+#endif
 
 int	apecsmatch __P((struct device *, void *, void *));
 void	apecsattach __P((struct device *, struct device *, void *));
@@ -58,7 +61,7 @@ struct cfdriver apecs_cd = {
 	NULL, "apecs", DV_DULL,
 };
 
-static int	apecsprint __P((void *, char *pnp));
+int	apecsprint __P((void *, /* const */ char *pnp));
 
 /* There can be only one. */
 int apecsfound;
@@ -69,7 +72,6 @@ apecsmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for an APECS. */
@@ -107,7 +109,7 @@ apecs_init(acp)
 
 	/* Turn off DMA window enables in PCI Base Reg 1. */
 	REGVAL(EPIC_PCI_BASE_1) = 0;
-	wbflush();
+	alpha_mb();
 
 	/* XXX SGMAP? */
 }
@@ -161,10 +163,10 @@ apecsattach(parent, self, aux)
 	config_found(self, &pba, apecsprint);
 }
 
-static int
+int
 apecsprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	/* const */ char *pnp;
 {
         register struct pcibus_attach_args *pba = aux;
 

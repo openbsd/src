@@ -1,5 +1,5 @@
-/*	$OpenBSD: bus.h,v 1.2 1996/07/29 22:58:29 niklas Exp $	*/
-/*	$NetBSD: bus.h,v 1.2.4.2 1996/06/13 17:44:45 cgd Exp $	*/
+/*	$OpenBSD: bus.h,v 1.3 1996/10/30 22:38:55 niklas Exp $	*/
+/*	$NetBSD: bus.h,v 1.4 1996/06/11 21:16:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.

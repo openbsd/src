@@ -1,5 +1,5 @@
-/*	$OpenBSD: prom.h,v 1.3 1996/07/29 22:59:07 niklas Exp $	*/
-/*	$NetBSD: prom.h,v 1.2 1996/04/23 15:23:18 cgd Exp $	*/
+/*	$OpenBSD: prom.h,v 1.4 1996/10/30 22:39:21 niklas Exp $	*/
+/*	$NetBSD: prom.h,v 1.4 1996/10/15 23:52:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -30,7 +30,7 @@
 
 #ifndef	ASSEMBLER
 struct prom_vec {
-	int	(*routine)();
+	int	(*routine) __P((struct crd *));
 	struct crd *routine_arg;
 };
 
@@ -55,6 +55,11 @@ void	putchar __P((int));
 
 void	prom_halt __P((int)) __attribute__((__noreturn__));
 int	prom_getenv __P((int, char *, int));
+
+void	init_prom_interface __P((void));
+void	hwrbp_restart_setup __P((void));
+int	prom_dispatch __P((int, int, u_char *, int));
+int	promcnlookc __P((dev_t, char *));
 #endif
 
 /* Prom operation values. */
@@ -64,6 +69,7 @@ int	prom_getenv __P((int, char *, int));
 #define	PROM_R_OPEN		0x10
 #define	PROM_R_PUTS		0x02
 #define	PROM_R_READ		0x13
+#define	PROM_R_WRITE		0x14
 
 /* Environment variable values. */
 #define	PROM_E_BOOTED_DEV	0x4
@@ -80,3 +86,5 @@ int	prom_getenv __P((int, char *, int));
 #define	prom_close(chan)	prom_dispatch(PROM_R_CLOSE, chan)
 #define	prom_read(chan, len, buf, blkno) \
 	prom_dispatch(PROM_R_READ, chan, len, buf, blkno)
+#define	prom_write(chan, len, buf, blkno) \
+	prom_dispatch(PROM_R_WRITE, chan, len, buf, blkno)

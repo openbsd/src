@@ -1,5 +1,5 @@
-/*	$OpenBSD: param.h,v 1.5 1996/07/29 22:58:58 niklas Exp $	*/
-/*	$NetBSD: param.h,v 1.12 1996/03/04 05:04:10 cgd Exp $	*/
+/*	$OpenBSD: param.h,v 1.6 1996/10/30 22:39:13 niklas Exp $	*/
+/*	$NetBSD: param.h,v 1.13 1996/07/09 00:33:23 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,9 +52,7 @@
 #define	MACHINE_ARCH	"alpha"
 #define	MID_MACHINE	MID_ALPHA
 
-#ifdef _KERNEL				/* XXX */
-#include <machine/cpu.h>		/* XXX */
-#endif					/* XXX */
+#include <machine/alpha_cpu.h>
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
@@ -64,9 +62,9 @@
 #define	ALIGNBYTES	7
 #define	ALIGN(p)	(((u_long)(p) + ALIGNBYTES) &~ ALIGNBYTES)
 
-#define	NBPG		8192				/* bytes/page */
+#define	NBPG		(1 << ALPHA_PGSHIFT)		/* bytes/page */
 #define	PGOFSET		(NBPG-1)			/* byte off. into pg */
-#define	PGSHIFT		13				/* LOG2(NBPG) */
+#define	PGSHIFT		ALPHA_PGSHIFT			/* LOG2(NBPG) */
 #define	NPTEPG		(1 << (PGSHIFT-PTESHIFT))	/* pte's/page */
 
 #define	SEGSHIFT	(PGSHIFT + (PGSHIFT-PTESHIFT))	/* LOG2(NBSEG) */
@@ -145,34 +143,17 @@
 #define	alpha_btop(x)		((unsigned long)(x) >> PGSHIFT)
 #define	alpha_ptob(x)		((unsigned long)(x) << PGSHIFT)
 
-#include <machine/psl.h>
-
-#define	splx(s)                 (s == PSL_IPL_0 ? spl0() : pal_swpipl(s))
-#define	splsoft()		pal_swpipl(PSL_IPL_SOFT)
-#define	splsoftclock()		splsoft()
-#define	splsoftnet()		splsoft()
-#define	splnet()                pal_swpipl(PSL_IPL_IO)
-#define	splbio()                pal_swpipl(PSL_IPL_IO)
-#define	splimp()                pal_swpipl(PSL_IPL_IO)
-#define	spltty()                pal_swpipl(PSL_IPL_IO)
-#define	splclock()              pal_swpipl(PSL_IPL_CLOCK)
-#define	splstatclock()		pal_swpipl(PSL_IPL_CLOCK)
-#define	splhigh()               pal_swpipl(PSL_IPL_HIGH)
+#include <machine/intr.h>
 
 #ifdef _KERNEL
 #ifndef _LOCORE
 
-/* This was calibrated empirically */
-extern	u_int64_t cycles_per_usec;
-int delay __P((int));
+void	delay __P((unsigned long));
 #define	DELAY(n)	delay(n)
 
+/* XXX ALL OF THE FOLLOWING BELONG IN INTR.H */
 int spl0 __P((void));					/* drop ipl to zero */
+/* XXX END INTR.H */
 
 #endif
 #endif /* !_KERNEL */
-
-int prtloc;
-extern int ticks;
-#define	LOC()	do { if (prtloc) printf("(%ld:%ld) %s: %d\n", curproc ? curproc->p_pid : -1, (long)ticks, __FILE__, __LINE__); } while (0)
-#define	PLOC(str) panic("XXX: (%ld:%ld) %s at %s: %d\n", curproc ? curproc->p_pid : -1, (long)ticks, str, __FILE__, __LINE__);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcasic.c,v 1.3 1996/07/29 23:02:32 niklas Exp $	*/
-/*	$NetBSD: tcasic.c,v 1.5 1996/05/17 23:58:43 cgd Exp $	*/
+/*	$OpenBSD: tcasic.c,v 1.4 1996/10/30 22:41:24 niklas Exp $	*/
+/*	$NetBSD: tcasic.c,v 1.10 1996/10/13 03:00:39 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,6 +29,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
@@ -49,7 +50,7 @@ struct cfdriver tcasic_cd = {
 	NULL, "tcasic", DV_DULL,
 };
 
-int	tcasicprint __P((void *, char *));
+int	tcasicprint __P((void *, /* const */ char *));
 
 extern int cputype;
 
@@ -86,7 +87,7 @@ tcasicattach(parent, self, aux)
 {
 	struct tcbus_attach_args tba;
 	void (*intr_setup) __P((void));
-	void (*iointr) __P((void *, int));
+	void (*iointr) __P((void *, unsigned long));
 	struct alpha_bus_chipset bc;
 
 	printf("\n");
@@ -144,7 +145,7 @@ tcasicattach(parent, self, aux)
 int
 tcasicprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	/* const */ char *pnp;
 {
 
 	/* only TCs can attach to tcasics; easy. */

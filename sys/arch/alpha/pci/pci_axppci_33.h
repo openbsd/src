@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_axppci_33.h,v 1.3 1996/07/29 23:00:39 niklas Exp $	*/
+/*	$OpenBSD: pci_axppci_33.h,v 1.4 1996/10/30 22:40:05 niklas Exp $	*/
 /*	$NetBSD: pci_axppci_33.h,v 1.3 1996/04/12 06:08:47 cgd Exp $	*/
 
 /*

@@ -1,5 +1,5 @@
-/*	$OpenBSD: ioasic.c,v 1.3 1996/07/29 23:02:06 niklas Exp $	*/
-/*	$NetBSD: ioasic.c,v 1.4.4.1 1996/06/05 00:39:05 cgd Exp $	*/
+/*	$OpenBSD: ioasic.c,v 1.4 1996/10/30 22:41:08 niklas Exp $	*/
+/*	$NetBSD: ioasic.c,v 1.9 1996/10/13 03:00:32 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -54,7 +54,7 @@ struct ioasic_softc {
 /* Definition of the driver for autoconfig. */
 int	ioasicmatch __P((struct device *, void *, void *));
 void	ioasicattach __P((struct device *, struct device *, void *));
-int     ioasicprint(void *, char *);
+int     ioasicprint(void *, /* const */ char *);
 
 struct cfattach ioasic_ca = {
 	sizeof(struct ioasic_softc), ioasicmatch, ioasicattach,
@@ -190,7 +190,7 @@ ioasicattach(parent, self, aux)
 int
 ioasicprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	/* const */ char *pnp;
 {
 	struct ioasicdev_attach_args *d = aux;
 
@@ -288,10 +288,10 @@ ioasic_intr(val)
 	void *val;
 {
 	register struct ioasic_softc *sc = val;
-	register int i, ifound;
+	register int ifound;
 	int gifound;
-	u_int32_t sir, junk;
-	volatile u_int32_t *sirp, *junkp;
+	u_int32_t sir;
+	volatile u_int32_t *sirp;
 
 	sirp = (volatile u_int32_t *)IOASIC_REG_INTR(sc->sc_base);
 

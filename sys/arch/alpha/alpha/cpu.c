@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.c,v 1.4 1996/07/29 22:57:18 niklas Exp $	*/
-/*	$NetBSD: cpu.c,v 1.9 1996/04/29 16:36:19 cgd Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.5 1996/10/30 22:38:01 niklas Exp $	*/
+/*	$NetBSD: cpu.c,v 1.12 1996/10/13 02:59:26 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,14 +29,15 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
 #include <machine/rpb.h>
 
 /* Definition of the driver for autoconfig. */
-static int	cpumatch(struct device *, void *, void *);
-static void	cpuattach(struct device *, struct device *, void *);
+int	cpumatch __P((struct device *, void *, void *));
+void	cpuattach __P((struct device *, struct device *, void *));
 
 struct cfattach cpu_ca = {
 	sizeof(struct device), cpumatch, cpuattach
@@ -46,15 +47,12 @@ struct cfdriver cpu_cd = {
 	NULL, "cpu", DV_DULL
 };
 
-static int	cpuprint __P((void *, char *pnp));
-
-static int
+int
 cpumatch(parent, cfdata, aux)
 	struct device *parent;
 	void *cfdata;
 	void *aux;
 {
-	struct cfdata *cf = cfdata;
 	struct confargs *ca = aux;
 
 	/* make sure that we're looking for a CPU. */
@@ -64,7 +62,7 @@ cpumatch(parent, cfdata, aux)
 	return (1);
 }
 
-static void
+void
 cpuattach(parent, dev, aux)
 	struct device *parent;
 	struct device *dev;
@@ -88,7 +86,7 @@ cpuattach(parent, dev, aux)
 	int ndc21064_cpu_minor =
 	    sizeof(dc21064_cpu_minor) / sizeof(dc21064_cpu_minor[0]);
 	u_int32_t major, minor;
-	int needcomma, needrev, i;
+	int needcomma;
 
         p = (struct pcs*)((char *)hwrpb + hwrpb->rpb_pcs_off +
 	    (dev->dv_unit * hwrpb->rpb_pcs_size));
@@ -159,16 +157,4 @@ cpuattach(parent, dev, aux)
 	 * the bus attachment code is easier to understand
 	 * and more compact if done the 'normal' way.
 	 */
-}
-
-static int
-cpuprint(aux, pnp)
-	void *aux;
-	char *pnp;
-{
-	register struct confargs *ca = aux;
-
-	if (pnp)
-		printf("%s at %s", ca->ca_name, pnp);
-	return (UNCONF);
 }

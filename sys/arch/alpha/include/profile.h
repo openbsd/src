@@ -1,5 +1,5 @@
-/*	$OpenBSD: profile.h,v 1.3 1996/07/29 22:59:05 niklas Exp $	*/
-/*	$NetBSD: profile.h,v 1.3 1995/11/23 02:36:28 cgd Exp $	*/
+/*	$OpenBSD: profile.h,v 1.4 1996/10/30 22:39:20 niklas Exp $	*/
+/*	$NetBSD: profile.h,v 1.6 1996/09/15 22:33:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -92,8 +92,8 @@ LEAF(_mcount,0)			/* XXX */
 	stq	t12, OFFSET_T12(sp)
 	stq	gp, OFFSET_GP(sp)
 
-	br	pv, 1f	
-1:	SETGP(pv)
+	br	pv, LX99
+LX99:	SETGP(pv)
 	mov	ra, a0
 	mov	at_reg, a1
 	CALL(mcount)
@@ -118,8 +118,9 @@ LEAF(_mcount,0)			/* XXX */
 	ldq	t9, OFFSET_T9(sp)
 	ldq	t10, OFFSET_T10(sp)
 	ldq	t11, OFFSET_T11(sp)
-	ldq	gp, OFFSET_GP(sp)
 	ldq	ra, OFFSET_RA(sp)
+	stq	t12, OFFSET_T12(sp)
+	ldq	gp, OFFSET_GP(sp)
 
 	ldq	at_reg, OFFSET_AT(sp)
 
@@ -164,8 +165,8 @@ _mcount:;			\
 	stq	$27, 176($30);	\
 	stq	$29, 184($30);	\
 				\
-	br	$27, 1f;	\
-1:	ldgp	$29,0($27);	\
+	br	$27, LX98;	\
+LX98:	ldgp	$29,0($27);	\
 	mov	$26, $16;	\
 	mov	$28, $17;	\
 	jsr	$26,mcount;	\
@@ -191,10 +192,10 @@ _mcount:;			\
 	ldq	$23, 144($30);	\
 	ldq	$24, 152($30);	\
 	ldq	$25, 160($30);	\
-	ldq	$29, 184($30);	\
+	ldq	$25, 160($30);	\
 	ldq	$26, 168($30);	\
-				\
-	ldq	$28, 0($30);	\
+	ldq	$27, 176($30);	\
+	ldq	$29, 184($30);	\
 				\
 	lda	$30, 192($30);	\
 	ret	$31, ($28), 1;	\
@@ -204,13 +205,13 @@ _mcount:;			\
 #ifdef _KERNEL
 /*
  * The following two macros do splhigh and splx respectively.
- * profile_swpipl is a special version of pal_swpipl which
+ * _alpha_pal_swpipl is a special version of alpha_pal_swpipl which
  * doesn't include profiling support.
  *
  * XXX These macros should probably use inline assembly.
  */
 #define MCOUNT_ENTER \
-	s = profile_swpipl(PSL_IPL_HIGH)
+	s = _alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH)
 #define MCOUNT_EXIT \
-	(void)profile_swpipl(s);
+	(void)_alpha_pal_swpipl(s);
 #endif

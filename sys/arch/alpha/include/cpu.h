@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.4 1996/07/29 22:58:33 niklas Exp $	*/
-/*	$NetBSD: cpu.h,v 1.7.4.1 1996/06/14 20:42:44 cgd Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.5 1996/10/30 22:38:58 niklas Exp $	*/
+/*	$NetBSD: cpu.h,v 1.12 1996/07/14 04:15:10 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -66,9 +66,11 @@
 struct clockframe {
 	struct trapframe	cf_tf;
 };
-#define	CLKF_USERMODE(framep)	(((framep)->cf_tf.tf_ps & PSL_U) != 0)
-#define	CLKF_BASEPRI(framep)	(((framep)->cf_tf.tf_ps & PSL_IPL) == 0)
-#define	CLKF_PC(framep)		((framep)->cf_tf.tf_pc)
+#define	CLKF_USERMODE(framep)						\
+	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_USERMODE) != 0)
+#define	CLKF_BASEPRI(framep)						\
+	(((framep)->cf_tf.tf_regs[FRAME_PS] & ALPHA_PSL_IPL_MASK) == 0)
+#define	CLKF_PC(framep)		((framep)->cf_tf.tf_regs[FRAME_PC])
 /*
  * XXX No way to accurately tell if we were in interrupt mode before taking
  * clock interrupt.
@@ -101,28 +103,22 @@ u_int64_t want_resched;		/* resched() was called */
 
 
 /*
- * simulated software interrupt register
- */
-extern u_int64_t ssir;
-
-#define	SIR_NET		0x1
-#define	SIR_CLOCK	0x2
-
-#define	siroff(x)	ssir &= ~(x)
-#define	setsoftnet()	ssir |= SIR_NET
-#define	setsoftclock()	ssir |= SIR_CLOCK
-
-/*
  * CTL_MACHDEP definitions.
  */
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_ROOT_DEVICE		2	/* string: root device name */
-#define	CPU_MAXID		3	/* number of valid machdep ids */
+#define	CPU_UNALIGNED_PRINT	3	/* int: print unaligned accesses */
+#define	CPU_UNALIGNED_FIX	4	/* int: fix unaligned accesses */
+#define	CPU_UNALIGNED_SIGBUS	5	/* int: SIGBUS unaligned accesses */
+#define	CPU_MAXID		6	/* 5 valid machdep IDs */
 
 #define	CTL_MACHDEP_NAMES { \
 	{ 0, 0 }, \
 	{ "console_device", CTLTYPE_STRUCT }, \
 	{ "root_device", CTLTYPE_STRING }, \
+	{ "unaligned_print", CTLTYPE_INT }, \
+	{ "unaligned_fix", CTLTYPE_INT }, \
+	{ "unaligned_sigbus", CTLTYPE_INT }, \
 }
 
 #endif /* _ALPHA_CPU_H_ */

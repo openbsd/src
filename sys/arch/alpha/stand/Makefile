@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.3 1996/07/29 23:01:13 niklas Exp $
-#	$NetBSD: Makefile,v 1.3 1995/11/23 02:38:45 cgd Exp $
+#	$OpenBSD: Makefile,v 1.4 1996/10/30 22:40:26 niklas Exp $
+#	$NetBSD: Makefile,v 1.4 1996/09/23 04:28:23 cgd Exp $
 
-SUBDIR=	boot bootxx installboot
+SUBDIR=	boot bootxx installboot netboot
 
 .include <bsd.subdir.mk>

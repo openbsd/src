@@ -1,4 +1,4 @@
-/*	$OpenBSD: devopen.c,v 1.2 1996/07/29 23:01:36 niklas Exp $	*/
+/*	$OpenBSD: devopen.c,v 1.3 1996/10/30 22:40:41 niklas Exp $	*/
 /*	$NetBSD: devopen.c,v 1.1 1995/11/23 02:39:37 cgd Exp $	*/
 
 /*-

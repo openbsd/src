@@ -1,17 +1,16 @@
-$OpenBSD: STATUS,v 1.4 1996/07/29 22:57:07 niklas Exp $
-$NetBSD: STATUS,v 1.3.4.1 1996/06/13 20:49:04 cgd Exp $
+$OpenBSD: STATUS,v 1.5 1996/10/30 22:37:54 niklas Exp $
+$NetBSD: STATUS,v 1.5 1996/09/06 04:01:37 cgd Exp $
 
-NetBSD/Alpha's Status
+OpenBSD/Alpha's Status
 
 If you find an inaccuracy in this file, can clarify it in any place,
-etc., please send mail to me (cgd@cs.cmu.edu).
+etc., please send mail to me (niklas@appli.se).
 
 
 Supported hardware:
 
-	DEC 3000/[456789]00 (I've only tested it on the 400 and
-	600, but the rest should "just work) using the following
-	peripherals:
+	DEC 3000/[456789]00 (I've not tested them, but they should
+	"just work") using the following peripherals:
 
 		Supported hardware:
 			Built-in serial ports
@@ -58,12 +57,11 @@ Supported hardware:
 			DEC ZLXp-E2 and ZLXp-E3 PCI video boards.
 			Other PCI boards.
 
-	AlphaStation 600 systems, with the same supported hardware
-	list as the AlphaStation {200,250,255,400} systems.  (NOTE
-	THAT THAT MEANS THE AlphaStation 600's BUILT-IN SCSI
+	AlphaStation 500 and 600 systems, with the same supported
+	hardware list as the AlphaStation {200,250,255,400} systems.
+	(NOTE THAT THAT MEANS THE AlphaStation 600's BUILT-IN SCSI
 	CONTROLLERS DO NOT WORK.  You'll need to get a 53c810 board,
-	or run diskless.)  AlphaStation 500 systems may work, but
-	have not been tested.
+	or run diskless.)
 
 	AXPpci systems (including Multia), with the same supported
 	hardware list as the AlphaStation {200,250,255,400} systems.
@@ -75,16 +73,9 @@ At this time none of the following systems are supported:
 	    in disguise).
 	Multiprocessor Alpha systems
 
-I was hoping to get a DECpc AXP port working "for free" based on
-the PCI work, but the DECpc AXP is a very different (and, in my
-opinion, very alien) piece of hardware.  If somebody wants to make
-NetBSD/Alpha run on the DECpc AXP system, get in touch and I'll do
-what I can to help you get started.
-
-
 Console frame buffers & keyboard are supported only with the frame
 buffers and keyboards mentioned as supported above.  On other systems
-(including all TurboChannel-based machines), NetBSD/Alpha _must_ be used
+(including all TurboChannel-based machines), OpenBSD/Alpha _must_ be used
 with a serial console.  To configure various Alpha systems to use a serial
 console, do the following depending on the model:
 
@@ -108,10 +99,13 @@ See the file src/sys/arch/alpha/README to find out how to get the
 latest sources and binaries.
 
 Please see the file src/sys/arch/alpha/TODO.users for a list of things
-that users can do to help NetBSD/Alpha improve.  If you're interested
+that users can do to help OpenBSD/Alpha improve.  If you're interested
 in doing any of them, or porting to new hardware, get in touch and
 I'll do what I can to help.
 
 
-Chris Demetriou
-cgd@cs.cmu.edu
+This document was derived from the NetBSD version originally written by
+Chris Demetriou <cgd@cs.cmu.edu>.
+
+Niklas Hallqvist
+niklas@openbsd.org

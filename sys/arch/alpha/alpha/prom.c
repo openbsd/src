@@ -1,5 +1,5 @@
-/*	$OpenBSD: prom.c,v 1.3 1996/07/29 22:57:57 niklas Exp $	*/
-/*	$NetBSD: prom.c,v 1.5.4.2 1996/06/13 18:35:21 cgd Exp $	*/
+/*	$OpenBSD: prom.c,v 1.4 1996/10/30 22:38:23 niklas Exp $	*/
+/*	$NetBSD: prom.c,v 1.11 1996/10/16 00:00:40 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1992, 1994, 1995, 1996 Carnegie Mellon University
@@ -27,16 +27,25 @@
  */
 
 #include <sys/param.h>
+#include <sys/proc.h>
+#include <sys/user.h>
+#include <sys/systm.h>
 
 #include <machine/rpb.h>
 #include <machine/prom.h>
-#include <machine/pte.h>
+#ifdef NEW_PMAP
+#include <vm/vm.h>
+#include <vm/pmap.h>
+#endif
 
 #include <dev/cons.h>
 
 /* XXX this is to fake out the console routines, while booting. */
 void promcnputc __P((dev_t, int));
 int promcngetc __P((dev_t));
+u_int64_t hwrpb_checksum __P((void));
+long console_restart __P((u_int64_t, u_int64_t, u_int64_t));
+
 struct consdev promcons = { NULL, NULL, promcngetc, promcnputc,
 			    nullcnpollc, makedev(23,0), 1 };
 
@@ -47,6 +56,10 @@ int		prom_mapped = 1;	/* Is PROM still mapped? */
 extern struct prom_vec prom_dispatch_v;
 
 pt_entry_t	*rom_ptep, rom_pte, saved_pte;	/* XXX */
+
+#ifdef NEW_PMAP
+#define	rom_ptep   (curproc ? &curproc->p_vmspace->vm_pmap.dir[0] : rom_ptep)
+#endif
 
 void
 init_prom_interface()
@@ -82,7 +95,7 @@ promcnputc(dev, c)
 	int c;
 {
         prom_return_t ret;
-	unsigned char *to = (unsigned char *)0x20000000;
+	u_char *to = (u_char *)0x20000000;
 	int s;
 
 #ifdef notdef /* XXX */
@@ -94,7 +107,7 @@ promcnputc(dev, c)
 	if (!prom_mapped) {					/* XXX */
 		saved_pte = *rom_ptep;				/* XXX */
 		*rom_ptep = rom_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
 	*to = c;
 
@@ -104,7 +117,7 @@ promcnputc(dev, c)
 
 	if (!prom_mapped) {					/* XXX */
 		*rom_ptep = saved_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
 	splx(s);
 }
@@ -131,12 +144,12 @@ promcngetc(dev)
 		if (!prom_mapped) {				/* XXX */
 			saved_pte = *rom_ptep;			/* XXX */
 			*rom_ptep = rom_pte;			/* XXX */
-			TBIA();					/* XXX */
+			ALPHA_TBIA();				/* XXX */
 		}						/* XXX */
-                ret.bits = prom_dispatch(PROM_R_GETC, alpha_console);
+                ret.bits = prom_dispatch(PROM_R_GETC, alpha_console, 0, 0);
 		if (!prom_mapped) {				/* XXX */
 			*rom_ptep = saved_pte;			/* XXX */
-			TBIA();					/* XXX */
+			ALPHA_TBIA();				/* XXX */
 		}						/* XXX */
 		splx(s);
                 if (ret.u.status == 0 || ret.u.status == 1)
@@ -166,12 +179,12 @@ promcnlookc(dev, cp)
 	if (!prom_mapped) {					/* XXX */
 		saved_pte = *rom_ptep;				/* XXX */
 		*rom_ptep = rom_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
-	ret.bits = prom_dispatch(PROM_R_GETC, alpha_console);
+	ret.bits = prom_dispatch(PROM_R_GETC, alpha_console, 0, 0);
 	if (!prom_mapped) {					/* XXX */
 		*rom_ptep = saved_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}
 	splx(s);
 	if (ret.u.status == 0 || ret.u.status == 1) {
@@ -199,13 +212,13 @@ prom_getenv(id, buf, len)
 	if (!prom_mapped) {					/* XXX */
 		saved_pte = *rom_ptep;				/* XXX */
 		*rom_ptep = rom_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
 	ret.bits = prom_dispatch(PROM_R_GETENV, id, to, len);
 	bcopy(to, buf, len);
 	if (!prom_mapped) {					/* XXX */
 		*rom_ptep = saved_pte;				/* XXX */
-		TBIA();						/* XXX */
+		ALPHA_TBIA();					/* XXX */
 	}							/* XXX */
 	splx(s);
 
@@ -232,8 +245,7 @@ prom_halt(halt)
 	 * we want to happen when we halt.
 	 */
 	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
-	/* XXX BIP should have been cleared long ago. */
-	p->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ | PCS_BIP);
+	p->pcs_flags &= ~(PCS_RC | PCS_HALT_REQ);
 	if (halt)
 		p->pcs_flags |= PCS_HALT_STAY_HALTED;
 	else
@@ -242,5 +254,66 @@ prom_halt(halt)
 	/*
 	 * Halt the machine.
 	 */
-	pal_halt();
+	alpha_pal_halt();
+}
+
+u_int64_t
+hwrpb_checksum()
+{
+	u_int64_t *p, sum;
+	int i;
+
+#define	offsetof(type, member)	((size_t)(&((type *)0)->member)) /* XXX */
+
+	for (i = 0, p = (u_int64_t *)hwrpb, sum = 0;
+	    i < (offsetof(struct rpb, rpb_checksum) / sizeof (u_int64_t));
+	    i++, p++)
+		sum += *p;
+
+	return (sum);
+}
+
+void XentRestart __P((void));
+
+void
+hwrbp_restart_setup()
+{
+	struct pcs *p;
+
+	/* Clear bootstrap-in-progress flag since we're done bootstrapping */
+	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
+	p->pcs_flags &= ~PCS_BIP;
+
+	bcopy(&proc0.p_addr->u_pcb.pcb_hw, p->pcs_hwpcb,
+	    sizeof proc0.p_addr->u_pcb.pcb_hw);
+	hwrpb->rpb_vptb = VPTBASE;
+
+	/* when 'c'ontinuing from console halt, do a dump */
+	hwrpb->rpb_rest_term = (long (*) __P((long)))&XentRestart;
+	hwrpb->rpb_rest_term_val = 0x1;
+
+#if 0
+	/* don't know what this is really used by, so don't mess with it. */
+	hwrpb->rpb_restart = (long (*) __P((long)))&XentRestart;
+	hwrpb->rpb_restart_val = 0x2;
+#endif
+
+	hwrpb->rpb_checksum = hwrpb_checksum();
+
+	p->pcs_flags |= (PCS_RC | PCS_CV);
+}
+
+long
+console_restart(ra, ai, pv)
+	u_int64_t ra, ai, pv;
+{
+	struct pcs *p;
+
+	/* Clear restart-capable flag, since we can no longer restart. */
+	p = (struct pcs *)((char *)hwrpb + hwrpb->rpb_pcs_off);
+	p->pcs_flags &= ~PCS_RC;
+
+	panic("user requested console halt");
+
+	return (1);
 }

@@ -1,5 +1,5 @@
-/*	$OpenBSD: lca.c,v 1.3 1996/07/29 23:00:26 niklas Exp $	*/
-/*	$NetBSD: lca.c,v 1.5 1996/04/23 14:00:53 cgd Exp $	*/
+/*	$OpenBSD: lca.c,v 1.4 1996/10/30 22:39:59 niklas Exp $	*/
+/*	$NetBSD: lca.c,v 1.10 1996/10/13 03:00:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -45,6 +45,10 @@
 #include <dev/pci/pcivar.h>
 #include <alpha/pci/lcareg.h>
 #include <alpha/pci/lcavar.h>
+#include <alpha/pci/apecs_lca.h>
+#if defined(DEC_AXPPCI_33)
+#include <alpha/pci/pci_axppci_33.h>
+#endif
 
 int	lcamatch __P((struct device *, void *, void *));
 void	lcaattach __P((struct device *, struct device *, void *));
@@ -57,7 +61,7 @@ struct cfdriver lca_cd = {
 	NULL, "lca", DV_DULL,
 };
 
-static int	lcaprint __P((void *, char *pnp));
+int	lcaprint __P((void *, /* const */ char *pnp));
 
 /* There can be only one. */
 int lcafound;
@@ -68,7 +72,6 @@ lcamatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for a LCA. */
@@ -125,7 +128,7 @@ lca_init(lcp)
 	/* Turn off DMA window enables in Window Base Registers */
 /*	REGVAL(LCA_IOC_W_BASE0) = 0;
 	REGVAL(LCA_IOC_W_BASE1) = 0; */
-	wbflush();
+	alpha_mb();
 }
 
 #ifdef notdef
@@ -139,7 +142,7 @@ lca_init_sgmap(lcp)
 	bzero(lcp->lc_sgmap, 1024 * 8);		/* clear all entries. */
 
 	REGVAL(LCA_IOC_W_BASE0) = 0;
-	wbflush();
+	alpha_mb();
 
 	/* Set up Translated Base Register 1; translate to sybBus addr 0. */
 	/* check size against APEC XXX JH */
@@ -150,7 +153,7 @@ lca_init_sgmap(lcp)
 
         /* Enable window 1; from PCI address 8MB, direct mapped. */
         REGVAL(LCA_IOC_W_BASE0) = 0x300800000;
-        wbflush();
+        alpha_mb();
 }
 #endif
 
@@ -197,10 +200,10 @@ lcaattach(parent, self, aux)
 	config_found(self, &pba, lcaprint);
 }
 
-static int
+int
 lcaprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	/* const */ char *pnp;
 {
         register struct pcibus_attach_args *pba = aux;
 

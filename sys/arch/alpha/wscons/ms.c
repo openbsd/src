@@ -1,5 +1,5 @@
-/*	$OpenBSD: ms.c,v 1.2 1996/07/29 23:02:53 niklas Exp $ */
-/*	$NetBSD: ms.c,v 1.1 1996/04/12 02:00:47 cgd Exp $ */
+/*	$OpenBSD: ms.c,v 1.3 1996/10/30 22:41:43 niklas Exp $ */
+/*	$NetBSD: ms.c,v 1.2 1996/09/15 17:15:29 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -54,6 +54,7 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -61,6 +62,7 @@
 #include <machine/vuid_event.h>
 #include <alpha/wscons/event_var.h>
 #include <alpha/wscons/wsconsvar.h>
+#include <alpha/wscons/ms.h>
 
 struct ms_softc {
 	struct device *ms_dev;
@@ -177,7 +179,7 @@ msopen(dev, flags, mode, p)
 	int flags, mode;
 	struct proc *p;
 {
-	int s, error;
+	int error;
 
 	if (ms_softc.ms_dev == NULL)	/* never attached! */
 		return (ENXIO);
@@ -246,8 +248,6 @@ msioctl(dev, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-	int s;
-
 	switch (cmd) {
 
 	case FIONBIO:		/* we will remove this someday (soon???) */
@@ -275,12 +275,22 @@ msioctl(dev, cmd, data, flag, p)
 	return (ENOTTY);
 }
 
+#ifdef notyet
+int
+mspoll(dev, events, p)
+	dev_t dev;
+	int events;
+	struct proc *p;
+{
+	return (ev_poll(&ms_softc.ms_events, events, p));
+}
+#else
 int
 msselect(dev, rw, p)
 	dev_t dev;
 	int rw;
 	struct proc *p;
 {
-
 	return (ev_select(&ms_softc.ms_events, rw, p));
 }
+#endif

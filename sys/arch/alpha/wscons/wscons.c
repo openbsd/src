@@ -1,5 +1,5 @@
-/*	$OpenBSD: wscons.c,v 1.2 1996/07/29 23:02:55 niklas Exp $	*/
-/*	$NetBSD: wscons.c,v 1.3.4.1 1996/06/03 18:54:35 cgd Exp $	*/
+/*	$OpenBSD: wscons.c,v 1.3 1996/10/30 22:41:46 niklas Exp $	*/
+/*	$NetBSD: wscons.c,v 1.7 1996/10/13 03:00:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -42,6 +42,7 @@
 #include <dev/cons.h>
 #include <alpha/wscons/wsconsvar.h>
 #include <alpha/wscons/wscons_emul.h>
+#include <alpha/wscons/kbd.h>
 #include <machine/wsconsio.h>
 
 cdev_decl(wscons);
@@ -432,6 +433,7 @@ wsconsstop(tp, flag)
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	splx(s);
+	return 0;
 }
 
 /*
@@ -492,5 +494,5 @@ wscons_cnpollc(dev, i)
 	int i;
 {
 
-	kbd_cngetc(dev, i);		/* XXX XXX */
+	kbd_cnpollc(dev, i);		/* XXX XXX */
 }

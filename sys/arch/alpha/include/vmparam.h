@@ -1,5 +1,5 @@
-/*	$OpenBSD: vmparam.h,v 1.3 1996/07/29 22:59:31 niklas Exp $	*/
-/*	$NetBSD: vmparam.h,v 1.2 1995/11/23 02:36:46 cgd Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.4 1996/10/30 22:39:34 niklas Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.3 1996/07/09 00:28:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -84,15 +84,6 @@
 #define	DMMIN	32			/* smallest swap allocation */
 #define	DMMAX	4096			/* largest potential swap allocation */
 
-#ifdef THESE_ARE_WRONG
-/*
- * Sizes of the system and user portions of the system page table.
- */
-/* SYSPTSIZE IS SILLY; (really number of buffers for I/O) */
-#define	SYSPTSIZE	1228
-#define	USRPTSIZE 	1024
-#endif /* WRONG */
-
 /*
  * PTEs for mapping user space into the kernel for phyio operations.
  * 64 pte's are enough to cover 8 disks * MAXBSIZE.
@@ -138,31 +129,21 @@
  * swapped in you deserve some resources.  We protect the last SAFERSS
  * pages against paging and will just swap you out rather than paging you.
  * Note that each process has at least UPAGES+CLSIZE pages which are not
- * paged anyways (this is currently 8+2=10 pages or 5k bytes), so this
- * number just means a swapped in process is given around 25k bytes.
- * Just for fun: current memory prices are 4600$ a megabyte on VAX (4/22/81),
- * so we loan each swapped in process memory worth 100$, or just admit
- * that we don't consider it worthwhile and swap it out to disk which costs
- * $30/mb or about $0.75.
+ * paged anyways, in addition to SAFERSS.
  */
-#define	SAFERSS		4		/* nominal ``small'' resident set size
+#define	SAFERSS		10		/* nominal ``small'' resident set size
 					   protected against replacement */
-
-#ifdef THESE_ARE_WRONG
-#define	mapin(pte, v, pfnum, prot) \
-	(*(int *)(pte) = ((pfnum) << PG_SHIFT) | (prot), MachTLBFlushAddr(v))
-#endif /* WRONG */
 
 /*
  * Mach derived constants
  */
 
 /* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vm_offset_t)0x0000000000000000) /* 0 */
-#define VM_MAXUSER_ADDRESS	((vm_offset_t)0x0000000200000000) /* 8G */
+#define VM_MIN_ADDRESS		((vm_offset_t)ALPHA_USEG_BASE) /* 0 */
+#define VM_MAXUSER_ADDRESS	((vm_offset_t)0x0000000200000000) /* 8G XXX */
 #define VM_MAX_ADDRESS		VM_MAXUSER_ADDRESS
-#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)0xfffffe0000000000)
-#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)0xffffffffffffffff)
+#define VM_MIN_KERNEL_ADDRESS	((vm_offset_t)ALPHA_K1SEG_BASE)
+#define VM_MAX_KERNEL_ADDRESS	((vm_offset_t)ALPHA_K1SEG_END)
 
 /* virtual sizes (bytes) for various kernel submaps */
 #define VM_MBUF_SIZE		(NMBCLUSTERS*MCLBYTES)
@@ -171,8 +152,3 @@
 
 /* some Alpha-specific constants */
 #define	VPTBASE		((vm_offset_t)0xfffffffc00000000) /* Virt. pg table */
-
-#ifdef THESE_ARE_WRONG
-/* pcb base */
-#define	pcbb(p)		((u_int)(p)->p_addr)
-#endif /* WRONG */

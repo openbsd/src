@@ -1,9 +1,9 @@
-#	$OpenBSD: files.alpha,v 1.5 1996/07/29 20:01:27 niklas Exp $
-#	$NetBSD: files.alpha,v 1.19.4.2 1996/05/30 23:20:37 cgd Exp $
+#	$OpenBSD: files.alpha,v 1.6 1996/10/30 22:38:45 niklas Exp $
+#	$NetBSD: files.alpha,v 1.26 1996/09/27 17:14:35 cgd Exp $
 #
 # alpha-specific configuration info
 
-# maxpartitions must be first item in files.${ARCH}.newconf
+# maxpartitions must be first item in files.${ARCH}
 maxpartitions 8
 
 maxusers 2 8 64
@@ -25,18 +25,23 @@ file	arch/alpha/alpha/cpu.c		cpu
 # Machine-independent SCSI drivers
 #
 
-include "../../../scsi/files.scsi"
+include "scsi/files.scsi"
 major { st = 2 }
 major { cd = 3 }
 major { sd = 8 }
 
+# RAM Disk
+pseudo-device rd
+file	dev/ramdisk.c			rd		needs-flag
+file	arch/alpha/alpha/rd_root.c	ramdisk_hooks
+major { rd = 6 }
 
 #
 # raster console routines
 #
 
 define	raster
-include "../../../dev/rcons/files.rcons"
+include "dev/rcons/files.rcons"
 file	arch/alpha/wscons/wscons_rinit.c	raster
 file	arch/alpha/wscons/wscons_rops.c		raster
 
@@ -59,7 +64,7 @@ file	arch/alpha/wscons/ms.c		wscons
 # TurboChannel Devices
 #
 
-include "../../../dev/tc/files.tc"
+include "dev/tc/files.tc"
 
 device	tcasic: tcbus
 attach	tcasic at mainbus
@@ -114,13 +119,13 @@ file	dev/tc/if_le_tc.c		le_tc
 #
 # Machine-independent ATAPI drivers
 #
-include "../../../dev/atapi/files.atapi"
+include "dev/atapi/files.atapi"
 
 # XXX Dummy bus needed for some multi-homed devices specified in files.isa
 define	pcmcia {}
 
-include "../../../dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
-include "../../../dev/isa/files.isa"
+include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
+include "dev/isa/files.isa"
 
 #file	arch/alpha/isa/isafcns_jensen.c	dec_2000_300
 
@@ -145,14 +150,14 @@ file    arch/alpha/isa/pms.c             pms needs-flag
 # EISA Bus support
 #
 
-include "../../../dev/eisa/files.eisa"
+include "dev/eisa/files.eisa"
 
 
 #
 # PCI Bus support
 #
 
-# include "../../../dev/pci/files.pci" XXX SEE ABOVE
+# include "dev/pci/files.pci" XXX SEE ABOVE
 
 device	apecs: pcibus
 attach	apecs at mainbus
@@ -227,10 +232,11 @@ file	arch/alpha/alpha/interrupt.c
 file	arch/alpha/alpha/machdep.c
 file	arch/alpha/alpha/mainbus.c
 file	arch/alpha/alpha/mem.c
-file	arch/alpha/alpha/pmap.c
+file	arch/alpha/alpha/pmap.c			new_pmap
+file	arch/alpha/alpha/pmap.old.c		!new_pmap
 file	arch/alpha/alpha/process_machdep.c
 file	arch/alpha/alpha/prom.c
-file	arch/alpha/alpha/support.c
+#file	arch/alpha/alpha/support.c
 file	arch/alpha/alpha/sys_machdep.c
 file	arch/alpha/alpha/trap.c
 file	arch/alpha/alpha/vm_machdep.c
@@ -242,7 +248,8 @@ file	dev/cons.c
 # Optional/miscellaneous files
 #
 
-file	arch/alpha/alpha/in_cksum.c		inet
+file	arch/alpha/alpha/in_cksum.c		inet & !generic_in_cksum
+file	netinet/in_cksum.c			inet & generic_in_cksum
 file	netns/ns_cksum.c			ns
 
 # XXX
@@ -257,4 +264,4 @@ file	arch/alpha/alpha/dec_axppci_33.c	dec_axppci_33
 file	arch/alpha/alpha/dec_21000.c		dec_21000
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
-include "../../../compat/osf1/files.osf1"
+include "compat/osf1/files.osf1"

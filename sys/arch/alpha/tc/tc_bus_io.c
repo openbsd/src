@@ -1,5 +1,5 @@
-/*	$OpenBSD: tc_bus_io.c,v 1.2 1996/07/29 23:02:26 niklas Exp $	*/
-/*	$NetBSD: tc_bus_io.c,v 1.1.4.1 1996/06/13 17:41:51 cgd Exp $	*/
+/*	$OpenBSD: tc_bus_io.c,v 1.3 1996/10/30 22:41:20 niklas Exp $	*/
+/*	$NetBSD: tc_bus_io.c,v 1.3 1996/07/09 00:55:31 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -34,12 +34,14 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
 #include <vm/vm.h>
 
 #include <machine/bus.h>
+#include <dev/tc/tcvar.h>
 
 int		tc_io_map __P((void *, bus_io_addr_t, bus_io_size_t,
 		    bus_io_handle_t *));

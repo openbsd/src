@@ -1,4 +1,4 @@
-/*	$OpenBSD: vuid_event.h,v 1.2 1996/07/29 22:59:33 niklas Exp $ */
+/*	$OpenBSD: vuid_event.h,v 1.3 1996/10/30 22:39:35 niklas Exp $ */
 /*	$NetBSD: vuid_event.h,v 1.1 1996/04/12 01:45:47 cgd Exp $ */
 
 /*

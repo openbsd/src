@@ -1,5 +1,5 @@
-/*	$OpenBSD: sio.c,v 1.4 1996/07/29 23:00:53 niklas Exp $	*/
-/*	$NetBSD: sio.c,v 1.8 1996/04/13 00:23:34 cgd Exp $	*/
+/*	$OpenBSD: sio.c,v 1.5 1996/10/30 22:40:14 niklas Exp $	*/
+/*	$NetBSD: sio.c,v 1.11 1996/10/13 03:00:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -72,7 +72,7 @@ union sio_attach_args {
 	struct eisabus_attach_args sa_eba;
 };
 
-int	sioprint __P((void *, char *pnp));
+int	sioprint __P((void *, /* const */ char *pnp));
 void	sio_isa_attach_hook __P((struct device *, struct device *,
 	    struct isabus_attach_args *));
 void	sio_eisa_attach_hook __P((struct device *, struct device *,
@@ -85,7 +85,6 @@ siomatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
@@ -100,7 +99,6 @@ pcebmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
@@ -172,7 +170,7 @@ sioattach(parent, self, aux)
 int
 sioprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	/* const */ char *pnp;
 {
         register union sio_attach_args *sa = aux;
 

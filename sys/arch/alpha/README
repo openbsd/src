@@ -1,16 +1,19 @@
-$OpenBSD: README,v 1.4 1996/07/29 22:57:06 niklas Exp $
-$NetBSD: README,v 1.8.4.1 1996/06/13 20:49:01 cgd Exp $
+$OpenBSD: README,v 1.5 1996/10/30 22:37:53 niklas Exp $
+$NetBSD: README,v 1.10 1996/07/09 22:08:28 cgd Exp $
 
-Obtaining NetBSD/Alpha sources and binaries:
+[ Don't trust this file yet, it contains a lot of inaccuracies.  When it's
+  ready, this notice will be removed.  -NH ]
 
-	NetBSD/Alpha's sources, with the exceptions of the GNU
-	toolchain and X11 code, are integrated into NetBSD-current,
+Obtaining OpenBSD/Alpha sources and binaries:
+
+	OpenBSD/Alpha's sources, with the exceptions of the GNU
+	toolchain and X11 code, are integrated into OpenBSD-current,
 	and are available from:
-		ftp://ftp.netbsd.org/pub/NetBSD/NetBSD-current/
+		ftp://ftp.openbsd.org/pub/OpenBSD/
 
-	The latest NetBSD/Alpha binary snapshot, and source snapshots
+	The latest OpenBSD/Alpha binary snapshot, and source snapshots
 	for the toolchain and X11 code, can be found at:
-		ftp://ftp.netbsd.org/pub/NetBSD/arch/alpha
+		ftp://ftp.openbsd.org/pub/OpenBSD/arch/alpha
 
 	Binary snapshots include two different set of system binaries:
 		(1) an rz25 disk image, for first-time installation
@@ -25,24 +28,24 @@ Obtaining NetBSD/Alpha sources and binaries:
 	Binary snapshots include a kernel image which is the same
 	as the one on the rz25 disk image.
 
-	The sources provided seperately from the normal NetBSD-current
+	The sources provided seperately from the normal OpenBSD-current
 	distribution are:
 		(1) complete compiler toolchain sources
 		(2) diffs against the XFree86 3.1.2 distribution to
-		    make X work with NetBSD/Alpha.  (Note that
+		    make X work with OpenBSD/Alpha.  (Note that
 		    at this time, the diffs are against 3.1.2,
 		    i.e. not against 3.1.2D, etc.)
 	
-	If you are using or are interested in the NetBSD/Alpha port, I
-	suggest that you subscribe to the NetBSD "port-alpha" mailing list
-	by sending an email message to majordomo@netbsd.org with no
+	If you are using or are interested in the OpenBSD/Alpha port, I
+	suggest that you subscribe to the OpenBSD "port-alpha" mailing list
+	by sending an email message to majordomo@openbsd.org with no
 	subject and with a body of "subscribe port-alpha" (without the
 	quotes).  For help on using majordomo, send it mail with an empty
-	subject and body.  In general, questions about NetBSD/Alpha
+	subject and body.  In general, questions about OpenBSD/Alpha
 	are best asked on that mailing list (rather than by sending me
 	mail directly).
 
-Installing the NetBSD/Alpha distribution:
+Installing the OpenBSD/Alpha distribution:
 
 	[ Note that these instructions are minimal; it's assumed that if
 	  you're going to be installing this, you're knowledgeable about
@@ -51,7 +54,7 @@ Installing the NetBSD/Alpha distribution:
 	  good enough to get you running, get in touch with me and I'll try
 	  to help you. ]
 
-	To install the NetBSD/Alpha distribution, you'll need a disk at
+	To install the OpenBSD/Alpha distribution, you'll need a disk at
 	least the size of an RZ25 -- about 406Mb.  Once you've gotten the
 	binary distribution, gunzip it and dd it to the raw disk.  The binary
 	distribution includes a disklabel and boot block, so you don't need
@@ -60,7 +63,7 @@ Installing the NetBSD/Alpha distribution:
 	Berkeley Fast File System format, so that you can mount, read, and
 	write them under Digital UNIX.
 
-	If your are using one of the supported systems that includes a
+	If you are using one of the supported systems that includes a
 	PCI bus, and have either a PCI VGA frame buffer of any type or
 	a ZLXp-E1 frame buffer, you may use it as console.  (If you
 	are using your frame buffer as the console, you should use the
@@ -68,8 +71,8 @@ Installing the NetBSD/Alpha distribution:
 	Alpha or have a different kind of frame buffer, you have to use
 	a serial console.)
 	
-	Boot the Alpha with the NetBSD disk, supplying the boot flag "-s".
-	It should print something like "NetBSD/Alpha Boot program", load
+	Boot the Alpha with the OpenBSD disk, supplying the boot flag "-s".
+	It should print something like "OpenBSD/Alpha Boot program", load
 	the kernel, print a copyright, and print various startup messages.
 
 	After a short while, you should be asked for the name of a shell
@@ -109,12 +112,16 @@ Installing the NetBSD/Alpha distribution:
 
 	Once those files are created, you should be able to boot the system
 	multi-user.  To do so, halt the system and boot again from the
-	NetBSD disk, this time supplying the boot flag "-a".
+	OpenBSD disk, this time supplying the boot flag "-a".
 
 	If you used a disk other than an RZ25, you may want to edit the
 	disk's disklabel, and create one or more partitions after the
 	existing partitions to use the extra space.
 
 
-Chris Demetriou
-cgd@cs.cmu.edu
+This document was derived from the NetBSD version originally written by
+Chris Demetriou <cgd@cs.cmu.edu>,
+
+Niklas Hallqvist
+niklas@openbsd.org
+

@@ -1,5 +1,5 @@
-/*	$OpenBSD: start.S,v 1.2 1996/07/29 23:01:28 niklas Exp $	*/
-/*	$NetBSD: start.S,v 1.1 1995/11/23 02:39:15 cgd Exp $	*/
+/*	$OpenBSD: start.S,v 1.3 1996/10/30 22:40:36 niklas Exp $	*/
+/*	$NetBSD: start.S,v 1.4 1996/10/17 02:50:40 cgd Exp $	*/
 
 /*  
  * Mach Operating System
@@ -45,21 +45,27 @@
 #define ENTRY_FRAME	32
 
 NESTED(start, 1, ENTRY_FRAME, ra, 0, 0)
-	br	pv,1f
-1:	SETGP(pv)
+	br	pv,Lstartgp
+Lstartgp:
+	LDGP(pv)
 
 #ifndef PRIMARY_BOOTBLOCK
 	lda	sp,start		/* start stack below text */
 	lda	sp,-ENTRY_FRAME(sp)
 #endif
 
+#ifdef ECOFF_COMPAT
 	lda	a0,_EDATA
+#else
+	lda	a0,_edata
+#endif
 	lda	a1,_end
 	subq	a1,a0,a1
 	CALL(bzero)
 
 	CALL(main)			/* transfer to C */
 
+XLEAF(_rtt, 0)
 XLEAF(halt, 0)
 	call_pal PAL_halt		/* halt if we ever return */
 END(start)

@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcivga.c,v 1.6 1996/07/29 23:00:46 niklas Exp $	*/
-/*	$NetBSD: pcivga.c,v 1.8 1996/04/17 21:49:58 cgd Exp $	*/
+/*	$OpenBSD: pcivga.c,v 1.7 1996/10/30 22:40:10 niklas Exp $	*/
+/*	$NetBSD: pcivga.c,v 1.11 1996/10/13 03:00:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -49,7 +49,7 @@
 
 int	pcivgamatch __P((struct device *, void *, void *));
 void	pcivgaattach __P((struct device *, struct device *, void *));
-int	pcivgaprint __P((void *, char *));
+int	pcivgaprint __P((void *, /* const */ char *));
 
 struct cfattach pcivga_ca = {
 	sizeof(struct pcivga_softc), pcivgamatch, pcivgaattach,
@@ -89,7 +89,6 @@ pcivgamatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
 
 	/*
@@ -222,7 +221,7 @@ pcivgaattach(parent, self, aux)
 int
 pcivgaprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	/* const */ char *pnp;
 {
 
 	if (pnp)
@@ -248,7 +247,9 @@ pcivgammap(dev, offset, prot)
 	off_t offset;
 	int prot;
 {
+#if 0
 	struct pcivga_softc *sc = (struct pcivga_softc *)dev;
+#endif
 	int rv;
 
 	rv = -1;
@@ -335,7 +336,6 @@ pcivga_putstr(id, row, col, cp, len)
 	struct pcivga_devconfig *dc = id;
 	bus_chipset_tag_t bc = dc->dc_bc;
 	bus_mem_handle_t memh = dc->dc_memh;
-	char *dcp;
 	int i, off;
 
 	off = (row * dc->dc_ncol + col) * 2;

@@ -1,5 +1,5 @@
-/*	$OpenBSD: apecs_lca_bus_mem.c,v 1.2 1996/07/29 23:00:06 niklas Exp $	*/
-/*	$NetBSD: apecs_lca_bus_mem.c,v 1.2.4.2 1996/06/13 18:14:58 cgd Exp $	*/
+/*	$OpenBSD: apecs_lca_bus_mem.c,v 1.3 1996/10/30 22:39:48 niklas Exp $	*/
+/*	$NetBSD: apecs_lca_bus_mem.c,v 1.5 1996/08/27 16:29:24 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -29,6 +29,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
@@ -38,6 +39,7 @@
 
 #include <alpha/pci/apecsreg.h>
 #include <alpha/pci/lcareg.h>
+#include <alpha/pci/apecs_lca.h>
 
 #if (APECS_PCI_SPARSE != LCA_PCI_SPARSE) || (APECS_PCI_DENSE != LCA_PCI_DENSE)
 #error Memory addresses do not match up?

@@ -1,5 +1,5 @@
-/*	$OpenBSD: cfb.c,v 1.2 1996/07/29 23:01:56 niklas Exp $	*/
-/*	$NetBSD: cfb.c,v 1.1 1996/05/01 23:25:03 cgd Exp $	*/
+/*	$OpenBSD: cfb.c,v 1.3 1996/10/30 22:41:01 niklas Exp $	*/
+/*	$NetBSD: cfb.c,v 1.5 1996/10/13 03:00:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -57,7 +57,7 @@
 
 int	cfbmatch __P((struct device *, void *, void *));
 void	cfbattach __P((struct device *, struct device *, void *));
-int	cfbprint __P((void *, char *));
+int	cfbprint __P((void *, /* const */ char *));
 
 struct cfattach cfb_ca = {
 	sizeof(struct cfb_softc), cfbmatch, cfbattach,
@@ -89,7 +89,6 @@ cfbmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct tc_attach_args *ta = aux;
 
 	if (strncmp("PMAG-BA ", ta->ta_modname, TC_ROM_LLEN) != 0)
@@ -109,7 +108,7 @@ cfb_getdevconfig(dense_addr, dc)
 	int i;
 
 	dc->dc_vaddr = dense_addr;
-	dc->dc_paddr = k0segtophys(dc->dc_vaddr);		/* XXX */
+	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
 	dc->dc_size = CFB_SIZE;
 
 	ramdacregp = (char *)dc->dc_vaddr + CFB_RAMDAC_OFFSET;
@@ -169,7 +168,6 @@ cfbattach(parent, self, aux)
 	struct wscons_attach_args waa;
 	struct wscons_odev_spec *wo;
 	int console;
-	char *x;
 
 	console = 0;					/* XXX */
 	if (console)
@@ -208,7 +206,7 @@ cfbattach(parent, self, aux)
 int
 cfbprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	/* const */ char *pnp;
 {
 
 	if (pnp)

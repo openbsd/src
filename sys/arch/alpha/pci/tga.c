@@ -1,5 +1,5 @@
-/*	$OpenBSD: tga.c,v 1.4 1996/07/29 23:01:00 niklas Exp $	*/
-/*	$NetBSD: tga.c,v 1.6 1996/04/12 06:09:08 cgd Exp $	*/
+/*	$OpenBSD: tga.c,v 1.5 1996/10/30 22:40:19 niklas Exp $	*/
+/*	$NetBSD: tga.c,v 1.10 1996/10/13 03:00:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -57,7 +57,7 @@
 
 int	tgamatch __P((struct device *, void *, void *));
 void	tgaattach __P((struct device *, struct device *, void *));
-int	tgaprint __P((void *, char *));
+int	tgaprint __P((void *, /* const */ char *));
 
 struct cfattach tga_ca = {
 	sizeof(struct tga_softc), tgamatch, tgaattach,
@@ -94,7 +94,6 @@ tgamatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_DEC ||
@@ -132,7 +131,7 @@ tga_getdevconfig(bc, pc, tag, dc)
 	/* XXX XXX XXX */
 	if (bus_mem_map(bc, dc->dc_pcipaddr, pcisize, 1, &dc->dc_vaddr))
 		return;
-	dc->dc_paddr = k0segtophys(dc->dc_vaddr);		/* XXX */
+	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
 
 	dc->dc_regs = (tga_reg_t *)(dc->dc_vaddr + TGA_MEM_CREGS);
 	dc->dc_tga_type = tga_identify(dc->dc_regs);
@@ -242,6 +241,7 @@ tgaattach(parent, self, aux)
 	}
 
 	/* XXX say what's going on. */
+	intrstr = NULL;
 	if (sc->sc_dc->dc_tgaconf->tgac_ramdac->tgar_intr != NULL) {
 		if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 		    pa->pa_intrline, &intrh)) {
@@ -312,7 +312,7 @@ tgaattach(parent, self, aux)
 int
 tgaprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	/* const */ char *pnp;
 {
 
 	if (pnp)
@@ -465,7 +465,10 @@ tga_builtin_set_cursor(dc, fbc)
 	struct tga_devconfig *dc;
 	struct fbcursor *fbc;
 {
-	int v, count;
+	int v;
+#if 0
+	int count;
+#endif
 
 	v = fbc->set;
 #if 0
@@ -544,6 +547,7 @@ tga_builtin_set_curpos(dc, fbp)
 
 	dc->dc_regs[TGA_REG_CXYR] =
 	    ((fbp->y & 0xfff) << 12) | (fbp->x & 0xfff);
+	return (0);
 }
 
 int
@@ -554,6 +558,7 @@ tga_builtin_get_curpos(dc, fbp)
 
 	fbp->x = dc->dc_regs[TGA_REG_CXYR] & 0xfff;
 	fbp->y = (dc->dc_regs[TGA_REG_CXYR] >> 12) & 0xfff;
+	return (0);
 }
 
 int
@@ -563,4 +568,5 @@ tga_builtin_get_curmax(dc, fbp)
 {
 
 	fbp->x = fbp->y = 64;
+	return (0);
 }

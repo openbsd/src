@@ -1,5 +1,5 @@
-/*	$OpenBSD: tc_conf.h,v 1.2 1996/07/29 23:02:29 niklas Exp $	*/
-/*	$NetBSD: tc_conf.h,v 1.1 1995/12/20 00:43:32 cgd Exp $	*/
+/*	$OpenBSD: tc_conf.h,v 1.3 1996/10/30 22:41:22 niklas Exp $	*/
+/*	$NetBSD: tc_conf.h,v 1.2 1996/07/14 04:06:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -34,7 +34,7 @@
 
 #ifdef DEC_3000_500
 extern void	tc_3000_500_intr_setup __P((void));
-extern void	tc_3000_500_iointr __P((void *, int));
+extern void	tc_3000_500_iointr __P((void *, unsigned long));
 
 extern void	tc_3000_500_intr_establish __P((struct device *, void *,
 		    tc_intrlevel_t, int (*)(void *), void *));
@@ -48,7 +48,7 @@ extern struct tc_builtin tc_3000_500_builtins[];
 
 #ifdef DEC_3000_300
 extern void	tc_3000_300_intr_setup __P((void));
-extern void	tc_3000_300_iointr __P((void *, int));
+extern void	tc_3000_300_iointr __P((void *, unsigned long));
 
 extern void	tc_3000_300_intr_establish __P((struct device *, void *,
 		    tc_intrlevel_t, int (*)(void *), void *));

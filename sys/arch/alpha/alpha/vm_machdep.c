@@ -1,5 +1,5 @@
-/*	$OpenBSD: vm_machdep.c,v 1.4 1996/07/29 22:58:08 niklas Exp $	*/
-/*	$NetBSD: vm_machdep.c,v 1.9 1996/04/23 15:26:10 cgd Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.5 1996/10/30 22:38:30 niklas Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.20 1996/10/13 02:59:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -45,9 +45,13 @@
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
 
+extern void exception_return __P((void));
+extern void child_return __P((struct proc *));
+
 /*
  * Dump the machine specific header information at the start of a core dump.
  */
+int
 cpu_coredump(p, vp, cred, chdr)
 	struct proc *p;
 	struct vnode *vp;
@@ -55,11 +59,7 @@ cpu_coredump(p, vp, cred, chdr)
 	struct core *chdr;
 {
 	int error;
-	register struct user *up = p->p_addr;
-	struct cpustate {
-		struct trapframe regs;
-		struct fpreg fpstate;
-	} cpustate;
+	struct md_coredump cpustate;
 	struct coreseg cseg;
 	extern struct proc *fpcurproc;
 
@@ -68,16 +68,17 @@ cpu_coredump(p, vp, cred, chdr)
 	chdr->c_seghdrsize = ALIGN(sizeof(cseg));
 	chdr->c_cpusize = sizeof(cpustate);
 
-	cpustate.regs = *p->p_md.md_tf;
+	cpustate.md_tf = *p->p_md.md_tf;
+	cpustate.md_tf.tf_regs[FRAME_SP] = alpha_pal_rdusp();	/* XXX */
 	if (p->p_md.md_flags & MDP_FPUSED)
 		if (p == fpcurproc) {
-			pal_wrfen(1);
-			savefpstate(&cpustate.fpstate);
-			pal_wrfen(0);
+			alpha_pal_wrfen(1);
+			savefpstate(&cpustate.md_fpstate);
+			alpha_pal_wrfen(0);
 		} else
-			cpustate.fpstate = p->p_addr->u_pcb.pcb_fp;
+			cpustate.md_fpstate = p->p_addr->u_pcb.pcb_fp;
 	else
-		bzero(&cpustate.fpstate, sizeof(cpustate.fpstate));
+		bzero(&cpustate.md_fpstate, sizeof(cpustate.md_fpstate));
 
 	CORE_SETMAGIC(cseg, CORESEGMAGIC, MID_ALPHA, CORE_CPU);
 	cseg.c_addr = 0;
@@ -139,7 +140,6 @@ cpu_fork(p1, p2)
 	pt_entry_t *ptep;
 	int i;
 	extern struct proc *fpcurproc;
-	extern void proc_trampoline(), rei(), child_return();
 
 	p2->p_md.md_tf = p1->p_md.md_tf;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
@@ -148,9 +148,15 @@ cpu_fork(p1, p2)
 	 * Cache the physical address of the pcb, so we can
 	 * swap to it easily.
 	 */
+#ifndef NEW_PMAP
 	ptep = kvtopte(up);
 	p2->p_md.md_pcbpaddr =
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
+#else
+	p2->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
+	printf("process %d pcbpaddr = 0x%lx, pmap = %p\n",
+	    p2->p_pid, p2->p_md.md_pcbpaddr, &p2->p_vmspace->vm_pmap);
+#endif
 
 	/*
 	 * Simulate a write to the process's U-area pages,
@@ -167,9 +173,9 @@ cpu_fork(p1, p2)
 	 * if this process has state stored there.
 	 */
 	if (p1 == fpcurproc) {
-		pal_wrfen(1);
+		alpha_pal_wrfen(1);
 		savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-		pal_wrfen(0);
+		alpha_pal_wrfen(0);
 	}
 
 	/*
@@ -178,7 +184,12 @@ cpu_fork(p1, p2)
 	 * part of the stack.  The stack and pcb need to agree;
 	 */
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
+	p2->p_addr->u_pcb.pcb_hw.apcb_usp = alpha_pal_rdusp();
+#ifndef NEW_PMAP
 	PMAP_ACTIVATE(&p2->p_vmspace->vm_pmap, 0);
+#else
+printf("NEW PROCESS %d USP = %p\n", p2->p_pid, p2->p_addr->u_pcb.pcb_hw.apcb_usp);
+#endif
 
 	/*
 	 * Arrange for a non-local goto when the new process
@@ -187,7 +198,7 @@ cpu_fork(p1, p2)
 #ifdef DIAGNOSTIC
 	if (p1 != curproc)
 		panic("cpu_fork: curproc");
-	if (up->u_pcb.pcb_fen != 0)
+	if ((up->u_pcb.pcb_hw.apcb_flags & ALPHA_PCB_FLAGS_FEN) != 0)
 		printf("DANGER WILL ROBINSON: FEN SET IN cpu_fork!\n");
 #endif
 
@@ -196,7 +207,6 @@ cpu_fork(p1, p2)
 	 */
 	{
 		struct trapframe *p2tf;
-		extern void rei();
 
 		/*
 		 * Pick a stack pointer, leaving room for a trapframe;
@@ -208,6 +218,9 @@ cpu_fork(p1, p2)
 		bcopy(p1->p_md.md_tf, p2->p_md.md_tf,
 		    sizeof(struct trapframe));
 
+#ifdef NEW_PMAP
+printf("FORK CHILD: pc = %p, ra = %p\n", p2tf->tf_regs[FRAME_PC], p2tf->tf_regs[FRAME_RA]);
+#endif
 		/*
 		 * Set up return-value registers as fork() libc stub expects.
 		 */
@@ -217,18 +230,18 @@ cpu_fork(p1, p2)
 
 		/*
 		 * Arrange for continuation at child_return(), which
-		 * will return to rei().  Note that the child process
-		 * doesn't stay in the kernel for long!
+		 * will return to exception_return().  Note that the child
+		 * process doesn't stay in the kernel for long!
 		 * 
 		 * This is an inlined version of cpu_set_kpc.
 		 */
-		up->u_pcb.pcb_ksp = (u_int64_t)p2tf;	
+		up->u_pcb.pcb_hw.apcb_ksp = (u_int64_t)p2tf;	
 		up->u_pcb.pcb_context[0] =
 		    (u_int64_t)child_return;		/* s0: pc */
 		up->u_pcb.pcb_context[1] =
-		    (u_int64_t)rei;			/* s1: ra */
+		    (u_int64_t)exception_return;	/* s1: ra */
 		up->u_pcb.pcb_context[7] =
-		    (u_int64_t)proc_trampoline;		/* ra: assembly magic */
+		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
 	}
 }
 
@@ -239,8 +252,8 @@ cpu_fork(p1, p2)
  * named pc, as if the code at that address were called as a function
  * with argument, the current process's process pointer.
  *
- * Note that it's assumed that when the named process returns, rei()
- * should be invoked, to return to user mode.
+ * Note that it's assumed that when the named process returns,
+ * exception_return() should be invoked, to return to user mode.
  *
  * (Note that cpu_fork(), above, uses an open-coded version of this.)
  */
@@ -250,14 +263,12 @@ cpu_set_kpc(p, pc)
 	void (*pc) __P((struct proc *));
 {
 	struct pcb *pcbp;
-	extern void proc_trampoline();
-	extern void rei();
 
 	pcbp = &p->p_addr->u_pcb;
 	pcbp->pcb_context[0] = (u_int64_t)pc;	/* s0 - pc to invoke */
-	pcbp->pcb_context[1] = (u_int64_t)rei;	/* s1 - return address */
+	pcbp->pcb_context[1] = (u_int64_t)exception_return; /* s1 - return address */
 	pcbp->pcb_context[7] =
-	    (u_int64_t)proc_trampoline;		/* ra - assembly magic */
+	    (u_int64_t)switch_trampoline;	/* ra - assembly magic */
 }
 
 /*
@@ -277,9 +288,13 @@ cpu_swapin(p)
 	 * Cache the physical address of the pcb, so we can swap to
 	 * it easily.
 	 */
+#ifndef NEW_PMAP
 	ptep = kvtopte(up);
 	p->p_md.md_pcbpaddr =
 	    &((struct user *)(PG_PFNUM(*ptep) << PGSHIFT))->u_pcb;
+#else
+	p->p_md.md_pcbpaddr = (void *)vtophys((vm_offset_t)&up->u_pcb);
+#endif
 
 	/*
 	 * Simulate a write to the process's U-area pages,
@@ -308,9 +323,9 @@ cpu_swapout(p)
 	if (p != fpcurproc)
 		return;
 
-	pal_wrfen(1);
+	alpha_pal_wrfen(1);
 	savefpstate(&fpcurproc->p_addr->u_pcb.pcb_fp);
-	pal_wrfen(0);
+	alpha_pal_wrfen(0);
 	fpcurproc = NULL;
 }
 
@@ -329,11 +344,16 @@ pagemove(from, to, size)
 
 	if (size % CLBYTES)
 		panic("pagemove");
+#ifndef NEW_PMAP
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
+#else
+	fpte = pmap_pte(kernel_pmap, (vm_offset_t)from);
+	tpte = pmap_pte(kernel_pmap, (vm_offset_t)to);
+#endif
 	todo = size;			/* if testing > 0, need sign... */
 	while (todo > 0) {
-		TBIS(from);
+		ALPHA_TBIS((vm_offset_t)from);
 		*tpte++ = *fpte;
 		*fpte = 0;
 		fpte++;

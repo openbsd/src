@@ -1,5 +1,5 @@
-/*	$OpenBSD: endian.h,v 1.2 1996/07/29 22:58:40 niklas Exp $	*/
-/*	$NetBSD: endian.h,v 1.1 1995/02/13 23:07:36 cgd Exp $	*/
+/*	$OpenBSD: endian.h,v 1.3 1996/10/30 22:39:03 niklas Exp $	*/
+/*	$NetBSD: endian.h,v 1.3 1996/10/13 19:57:59 cgd Exp $	*/
 
 /*
  * Copyright (c) 1987, 1991, 1993
@@ -58,11 +58,14 @@
 
 #include <sys/cdefs.h>
 
+typedef u_int32_t in_addr_t;
+typedef u_int16_t in_port_t;
+
 __BEGIN_DECLS
-unsigned long	htonl __P((unsigned long));
-unsigned short	htons __P((unsigned short));
-unsigned long	ntohl __P((unsigned long));
-unsigned short	ntohs __P((unsigned short));
+in_addr_t	htonl __P((in_addr_t));
+in_port_t	htons __P((in_port_t));
+in_addr_t	ntohl __P((in_addr_t));
+in_port_t	ntohs __P((in_port_t));
 __END_DECLS
 
 /*
@@ -81,10 +84,10 @@ __END_DECLS
 
 #else
 
-#define	NTOHL(x)	(x) = ntohl((u_long)x)
-#define	NTOHS(x)	(x) = ntohs((u_short)x)
-#define	HTONL(x)	(x) = htonl((u_long)x)
-#define	HTONS(x)	(x) = htons((u_short)x)
+#define	NTOHL(x)	(x) = ntohl((in_addr_t)x)
+#define	NTOHS(x)	(x) = ntohs((in_port_t)x)
+#define	HTONL(x)	(x) = htonl((in_addr_t)x)
+#define	HTONS(x)	(x) = htons((in_port_t)x)
 #endif
 #endif /* !_POSIX_SOURCE */
 #endif /* !_ENDIAN_H_ */

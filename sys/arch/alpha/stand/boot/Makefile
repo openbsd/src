@@ -1,12 +1,13 @@
-#	$OpenBSD: Makefile,v 1.4 1996/07/29 23:01:31 niklas Exp $
-#	$NetBSD: Makefile,v 1.6 1996/04/12 01:35:15 cgd Exp $
+#	$OpenBSD: Makefile,v 1.5 1996/10/30 22:40:38 niklas Exp $
+#	$NetBSD: Makefile,v 1.10 1996/10/18 06:01:41 thorpej Exp $
 
 .PATH: ${.CURDIR}/.. ${.CURDIR}/../../../../lib/libsa
 
 BOOT_PROG = boot
 BOOT_RELOC = ${SECONDARY_LOAD_ADDRESS}
 
-BOOT_SRCS = start.S boot.c disk.c conf.c prom.c prom_disp.S OSFpal.c
+BOOT_SRCS = start.S boot.c loadfile.c disk.c conf.c prom.c prom_disp.S OSFpal.c
+
 BOOT_SRCS+= alloc.c bzero.c close.c dev.c devopen.c disklabel.c dkcksum.c
 BOOT_SRCS+= getfile.c gets.c ioctl.c lseek.c open.c printf.c read.c
 BOOT_SRCS+= strcmp.c ufs.c write.c bcopy.c filesystem.c strlen.c
@@ -15,9 +16,11 @@ BOOT_OBJS = ${BOOT_SRCS:N*.h:R:S/$/.o/g}
 
 HEADERSIZE_PROG = headersize
 
-AFLAGS += -DASSEMBLER
+DEFNS= -DCOMPAT_UFS -DALPHA_BOOT_ECOFF -DALPHA_BOOT_ELF
+
+AFLAGS += -DASSEMBLER ${DEFNS}
 CPPFLAGS += -I${.CURDIR}/../.. -I${.CURDIR}/../../../..
-CFLAGS = -Werror -mno-fp-regs -g -DCOMPAT_UFS
+CFLAGS = -Werror -mno-fp-regs -g ${DEFNS}
 
 CLEANFILES+= vers.c vers.o
 
@@ -28,21 +31,21 @@ all: ${BOOT_PROG}
 ${BOOT_PROG}: ${BOOT_OBJS} ${HEADERSIZE_PROG}
 	sh ${.CURDIR}/newvers.sh ${.CURDIR}/version
 	${COMPILE.c} vers.c
-	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${BOOT_PROG}.coff \
+	${LD} -Ttext ${BOOT_RELOC} -N -e start -o ${BOOT_PROG}.hdr \
 	     ${BOOT_OBJS} vers.o -lc # XXX
-	size ${BOOT_PROG}.coff
-	strip ${BOOT_PROG}.coff
-	dd if=${BOOT_PROG}.coff of=${BOOT_PROG} \
-	    bs=`./${HEADERSIZE_PROG} < ${BOOT_PROG}.coff` skip=1
+	size ${BOOT_PROG}.hdr
+	strip ${BOOT_PROG}.hdr
+	dd if=${BOOT_PROG}.hdr of=${BOOT_PROG} \
+	    bs=`./${HEADERSIZE_PROG} ${BOOT_RELOC} ${BOOT_PROG}.hdr` skip=1
 
 install:
-	install -c -o bin -g bin -m 444 ${BOOT_PROG} \
+	${INSTALL} -c -o bin -g bin -m 444 ${BOOT_PROG} \
 	    ${DESTDIR}${BINDIR}/${BOOT_PROG}
 
 clean: _SUBDIRUSE
 	rm -f a.out [Ee]rrs mklog core *.core \
 	    ${BOOT_PROG} ${BOOT_OBJS} ${CLEANFILES} \
-	    ${BOOT_PROG}.coff ${HEADERSIZE_PROG}
+	    ${BOOT_PROG}.hdr ${HEADERSIZE_PROG}
 
 cleandir: _SUBDIRUSE clean
 

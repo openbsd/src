@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_2100_a50.c,v 1.6 1996/07/29 23:00:34 niklas Exp $	*/
-/*	$NetBSD: pci_2100_a50.c,v 1.7 1996/04/23 14:15:55 cgd Exp $	*/
+/*	$OpenBSD: pci_2100_a50.c,v 1.7 1996/10/30 22:40:03 niklas Exp $	*/
+/*	$NetBSD: pci_2100_a50.c,v 1.10 1996/10/13 03:00:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,6 +36,7 @@
 #include <sys/device.h>
 #include <vm/vm.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -191,8 +192,6 @@ dec_2100_a50_intr_string(acv, ih)
 	void *acv;
 	pci_intr_handle_t ih;
 {
-	struct apecs_config *acp = acv;
-
 	return sio_intr_string(NULL /*XXX*/, ih);
 }
 
@@ -204,8 +203,6 @@ dec_2100_a50_intr_establish(acv, ih, level, func, arg, name)
 	int (*func) __P((void *));
 	char *name;
 {
-	struct apecs_config *acp = acv;
-
 	return sio_intr_establish(NULL /*XXX*/, ih, IST_LEVEL, level, func,
 	    arg, name);
 }
@@ -214,7 +211,5 @@ void
 dec_2100_a50_intr_disestablish(acv, cookie)
 	void *acv, *cookie;
 {
-	struct apecs_config *acp = acv;
-
 	sio_intr_disestablish(NULL /*XXX*/, cookie);
 }

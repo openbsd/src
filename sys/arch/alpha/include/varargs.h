@@ -1,5 +1,5 @@
-/*	$OpenBSD: varargs.h,v 1.3 1996/07/29 22:59:29 niklas Exp $	*/
-/*	$NetBSD: varargs.h,v 1.4 1995/12/26 01:16:24 mycroft Exp $	*/
+/*	$OpenBSD: varargs.h,v 1.4 1996/10/30 22:39:33 niklas Exp $	*/
+/*	$NetBSD: varargs.h,v 1.5 1996/10/09 21:13:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -57,6 +57,6 @@
 
 #undef va_start
 #define	va_start(ap) \
-	((ap) = *(va_list *)__builtin_saveregs())
+	((ap) = *(va_list *)__builtin_saveregs(), (ap).pad = 0)
 
 #endif /* !_ALPHA_VARARGS_H_ */

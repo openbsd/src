@@ -1,5 +1,5 @@
-/*	$OpenBSD: tga_bt485.c,v 1.2 1996/07/29 23:01:04 niklas Exp $	*/
-/*	$NetBSD: tga_bt485.c,v 1.2 1996/04/12 06:09:16 cgd Exp $	*/
+/*	$OpenBSD: tga_bt485.c,v 1.3 1996/10/30 22:40:21 niklas Exp $	*/
+/*	$NetBSD: tga_bt485.c,v 1.3 1996/07/09 00:55:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -33,6 +33,9 @@
 #include <sys/buf.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
+#include <sys/systm.h>
+#include <vm/vm.h>
+#include <vm/vm_extern.h>
 
 #include <dev/pci/pcivar.h>
 #include <machine/tgareg.h>
@@ -199,7 +202,7 @@ tga_bt485_set_cmap(dc, fbc)
 	struct fbcmap *fbc;
 {
 	struct bt485data *data = dc->dc_ramdac_private;
-	int error, count, index, s;
+	int count, index, s;
 
 	if ((u_int)fbc->index >= 256 ||
 	    ((u_int)fbc->index + (u_int)fbc->count) > 256)
@@ -256,7 +259,7 @@ tga_bt485_set_cursor(dc, fbc)
 	struct fbcursor *fbc;
 {
 	struct bt485data *data = dc->dc_ramdac_private;
-	int error, count, index, v, s;
+	int count, index, v, s;
 
 	v = fbc->set;
 
@@ -398,8 +401,6 @@ tga_bt485_get_curmax(dc, fbp)
 	struct tga_devconfig *dc;
 	struct fbcurpos *fbp;
 {
-	struct bt485data *data = dc->dc_ramdac_private;
-
 	fbp->x = fbp->y = CURSOR_MAX_SIZE;
 	return (0);
 }
@@ -434,7 +435,7 @@ tga_bt485_wr_d(tgaregs, btreg, val)
 		panic("tga_bt485_wr_d: reg %d out of range\n", btreg);
 
 	tgaregs[TGA_REG_EPDR] = (btreg << 9) | (0 << 8 ) | val; /* XXX */
-	wbflush();
+	alpha_mb();
 }
 
 inline u_int8_t
@@ -448,7 +449,7 @@ tga_bt485_rd_d(tgaregs, btreg)
 		panic("tga_bt485_rd_d: reg %d out of range\n", btreg);
 
 	tgaregs[TGA_REG_EPSR] = (btreg << 1) | 0x1;		/* XXX */
-	wbflush();
+	alpha_mb();
 
 	rdval = tgaregs[TGA_REG_EPDR];
 	return (rdval >> 16) & 0xff;				/* XXX */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: disksubr.c,v 1.4 1996/07/29 22:57:35 niklas Exp $	*/
-/*	$NetBSD: disksubr.c,v 1.6 1996/04/29 16:34:50 cgd Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.5 1996/10/30 22:38:10 niklas Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.8 1996/10/13 02:59:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -77,7 +77,7 @@ dk_establish(dk, dev)
 char *
 readdisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P ((struct buf *));
 	struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
@@ -113,7 +113,7 @@ readdisklabel(dev, strat, lp, clp)
 	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);
 	if (dlp->d_magic == DISKMAGIC) {
 		if (dkcksum(dlp)) {
-			msg = "NetBSD disk label corrupted";
+			msg = "OpenBSD disk label corrupted";
 			goto done;
 		}
 		*lp = *dlp;
@@ -190,13 +190,13 @@ setdisklabel(olp, nlp, openmask, clp)
 int
 writedisklabel(dev, strat, lp, clp)
 	dev_t dev;
-	void (*strat)();
+	void (*strat) __P((struct buf *));
 	register struct disklabel *lp;
 	struct cpu_disklabel *clp;
 {
 	struct buf *bp; 
 	struct disklabel *dlp;
-	int error = 0, cyl, i;
+	int error = 0;
 
 	bp = geteblk((int)lp->d_secsize);
 	bp->b_dev = dev;
@@ -205,7 +205,7 @@ writedisklabel(dev, strat, lp, clp)
 	bp->b_bcount = lp->d_secsize;
 	bp->b_flags = B_READ;           /* get current label */
 	(*strat)(bp);
-	if (error = biowait(bp))
+	if ((error = biowait(bp)) != 0)
 		goto done;
 
 	dlp = (struct disklabel *)(bp->b_un.b_addr + LABELOFFSET);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: intr.h,v 1.2 1996/07/29 22:58:52 niklas Exp $	*/
-/*	$NetBSD: intr.h,v 1.1 1996/04/12 01:42:17 cgd Exp $	*/
+/*	$OpenBSD: intr.h,v 1.3 1996/10/30 22:39:09 niklas Exp $	*/
+/*	$NetBSD: intr.h,v 1.2 1996/07/09 00:33:25 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,6 +28,9 @@
  * rights to redistribute these changes.
  */
 
+#ifndef _ALPHA_INTR_H_
+#define _ALPHA_INTR_H_
+
 #define	IPL_NONE	0	/* disable only this interrupt */
 #define	IPL_BIO		1	/* disable block I/O interrupts */
 #define	IPL_NET		2	/* disable network interrupts */
@@ -39,3 +42,30 @@
 #define	IST_PULSE	1	/* pulsed */
 #define	IST_EDGE	2	/* edge-triggered */
 #define	IST_LEVEL	3	/* level-triggered */
+
+#define splx(s)								\
+	    (s == ALPHA_PSL_IPL_0 ? spl0() : alpha_pal_swpipl(s))
+#define splsoft()               alpha_pal_swpipl(ALPHA_PSL_IPL_SOFT)
+#define splsoftclock()          splsoft()
+#define splsoftnet()            splsoft()
+#define splnet()                alpha_pal_swpipl(ALPHA_PSL_IPL_IO)
+#define splbio()                alpha_pal_swpipl(ALPHA_PSL_IPL_IO)
+#define splimp()                alpha_pal_swpipl(ALPHA_PSL_IPL_IO)
+#define spltty()                alpha_pal_swpipl(ALPHA_PSL_IPL_IO)
+#define splclock()              alpha_pal_swpipl(ALPHA_PSL_IPL_CLOCK)
+#define splstatclock()          alpha_pal_swpipl(ALPHA_PSL_IPL_CLOCK)
+#define splhigh()               alpha_pal_swpipl(ALPHA_PSL_IPL_HIGH)
+
+/*
+ * simulated software interrupt register
+ */
+extern u_int64_t ssir;
+
+#define	SIR_NET		0x1
+#define	SIR_CLOCK	0x2
+
+#define	siroff(x)	ssir &= ~(x)
+#define	setsoftnet()	ssir |= SIR_NET
+#define	setsoftclock()	ssir |= SIR_CLOCK
+
+#endif

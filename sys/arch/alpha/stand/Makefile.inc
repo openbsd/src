@@ -1,5 +1,7 @@
-#	$OpenBSD: Makefile.inc,v 1.2 1996/07/29 23:01:14 niklas Exp $
-#	$NetBSD: Makefile.inc,v 1.1 1995/11/23 02:38:48 cgd Exp $
+#	$OpenBSD: Makefile.inc,v 1.3 1996/10/30 22:40:27 niklas Exp $
+#	$NetBSD: Makefile.inc,v 1.3 1996/10/06 18:32:22 cgd Exp $
+
+.include <bsd.own.mk>			# for ELF_TOOLCHAIN definition
 
 BINDIR=			/usr/mdec
 
@@ -8,3 +10,8 @@ SECONDARY_LOAD_ADDRESS=	20020000
 
 CPPFLAGS+=		-DPRIMARY_LOAD_ADDRESS="0x${PRIMARY_LOAD_ADDRESS}"
 CPPFLAGS+=		-DSECONDARY_LOAD_ADDRESS="0x${SECONDARY_LOAD_ADDRESS}"
+
+.if !defined(ELF_TOOLCHAIN)
+CPPFLAGS+=	-DECOFF_COMPAT
+.endif
+

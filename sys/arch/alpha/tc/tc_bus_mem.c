@@ -1,5 +1,5 @@
-/*	$OpenBSD: tc_bus_mem.c,v 1.2 1996/07/29 23:02:27 niklas Exp $	*/
-/*	$NetBSD: tc_bus_mem.c,v 1.2.4.2 1996/06/13 17:42:51 cgd Exp $	*/
+/*	$OpenBSD: tc_bus_mem.c,v 1.3 1996/10/30 22:41:21 niklas Exp $	*/
+/*	$NetBSD: tc_bus_mem.c,v 1.7 1996/07/09 00:55:33 cgd Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -33,6 +33,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/malloc.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
@@ -105,9 +106,9 @@ tc_mem_map(v, memaddr, memsize, cacheable, memhp)
 	if (memaddr & 0x7)
 		panic("tc_mem_map needs 8 byte alignment");
 	if (cacheable)
-		*memhp = phystok0seg(memaddr);
+		*memhp = ALPHA_PHYS_TO_K0SEG(memaddr);
 	else
-		*memhp = phystok0seg(TC_DENSE_TO_SPARSE(memaddr));
+		*memhp = ALPHA_PHYS_TO_K0SEG(TC_DENSE_TO_SPARSE(memaddr));
 	return (0);
 }
 
@@ -148,7 +149,7 @@ tc_mem_read_1(v, memh, off)
 {
 	volatile u_int8_t *p;
 
-	wbflush();
+	alpha_mb();
 
 	if ((memh & TC_SPACE_SPARSE) != 0)
 		panic("tc_mem_read_1 not implemented for sparse space");
@@ -165,7 +166,7 @@ tc_mem_read_2(v, memh, off)
 {
 	volatile u_int16_t *p;
 
-	wbflush();
+	alpha_mb();
 
 	if ((memh & TC_SPACE_SPARSE) != 0)
 		panic("tc_mem_read_2 not implemented for sparse space");
@@ -182,7 +183,7 @@ tc_mem_read_4(v, memh, off)
 {
 	volatile u_int32_t *p;
 
-	wbflush();
+	alpha_mb();
 
 	if ((memh & TC_SPACE_SPARSE) != 0)
 		/* Nothing special to do for 4-byte sparse space accesses */
@@ -200,7 +201,7 @@ tc_mem_read_8(v, memh, off)
 {
 	volatile u_int64_t *p;
 
-	wbflush();
+	alpha_mb();
 
 	if ((memh & TC_SPACE_SPARSE) != 0)
 		panic("tc_mem_read_8 not implemented for sparse space");
@@ -236,7 +237,7 @@ tc_mem_write_1(v, memh, off, val)
 		p = (u_int8_t *)(memh + off);
 		*p = val;
 	}
-        wbflush();
+        alpha_mb();
 }
 
 void
@@ -266,7 +267,7 @@ tc_mem_write_2(v, memh, off, val)
 		p = (u_int16_t *)(memh + off);
 		*p = val;
 	}
-        wbflush();
+        alpha_mb();
 }
 
 void
@@ -284,7 +285,7 @@ tc_mem_write_4(v, memh, off, val)
 	else
 		p = (u_int32_t *)(memh + off);
 	*p = val;
-        wbflush();
+        alpha_mb();
 }
 
 void
@@ -301,7 +302,7 @@ tc_mem_write_8(v, memh, off, val)
 
 	p = (u_int64_t *)(memh + off);
 	*p = val;
-        wbflush();
+        alpha_mb();
 }
 
 /* XXX DOES NOT BELONG */
@@ -310,5 +311,5 @@ tc_XXX_dmamap(addr)
 	void *addr;
 {
 
-	return (vtophys(addr));
+	return (vtophys((vm_offset_t)addr));
 }

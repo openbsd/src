@@ -1,5 +1,5 @@
-/*	$OpenBSD: in_cksum.c,v 1.2 1996/07/29 22:57:37 niklas Exp $	*/
-/*	$NetBSD: in_cksum.c,v 1.2.4.1 1996/05/30 23:12:50 cgd Exp $	*/
+/*	$OpenBSD: in_cksum.c,v 1.3 1996/10/30 22:38:11 niklas Exp $	*/
+/*	$NetBSD: in_cksum.c,v 1.3 1996/05/30 23:08:36 cgd Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992, 1993
@@ -42,6 +42,8 @@
 #include <sys/mbuf.h>
 #include <sys/systm.h>
 #include <netinet/in.h>
+
+u_int64_t in_cksumdata __P((caddr_t, int));
 
 /*
  * Checksum routine for Internet Protocol family headers
@@ -93,7 +95,6 @@ in_cksumdata(buf, len)
 	u_int64_t prefilled;
 	int offset;
 	union q_util q_util;
-	union l_util l_util;
 
 	if ((3 & (long) lw) == 0 && len == 20) {
 	     sum = (u_int64_t) lw[0] + lw[1] + lw[2] + lw[3] + lw[4];

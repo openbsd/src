@@ -1,5 +1,5 @@
-/*	$OpenBSD: dec_kn20aa.c,v 1.3 1996/07/29 22:57:32 niklas Exp $	*/
-/*	$NetBSD: dec_kn20aa.c,v 1.4.4.2 1996/06/14 20:42:25 cgd Exp $	*/
+/*	$OpenBSD: dec_kn20aa.c,v 1.4 1996/10/30 22:38:08 niklas Exp $	*/
+/*	$NetBSD: dec_kn20aa.c,v 1.12 1996/10/13 02:59:33 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,6 +29,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/termios.h>
 #include <dev/cons.h>
@@ -82,9 +83,7 @@ dec_kn20aa_consinit()
 		/* serial console ... */
 		/* XXX */
 		{
-			extern bus_chipset_tag_t comconsbc;	/* set */
-			extern bus_io_handle_t comcomsioh;	/* set */
-			extern int comconsaddr, comconsinit;	/* set */
+			extern int comconsinit;	/* set */
 			extern int comdefaultrate;
 			extern int comcngetc __P((dev_t));
 			extern void comcnputc __P((dev_t, int));
@@ -131,7 +130,7 @@ dec_kn20aa_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	static int found;
+	static int found, initted, scsiboot, netboot;
 	static struct device *pcidev, *scsidev;
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
@@ -140,6 +139,15 @@ dec_kn20aa_device_register(dev, aux)
 
 	if (found)
 		return;
+
+	if (!initted) {
+		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+#if 0
+		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
+#endif
+		initted =1;
+	}
 
 	if (pcidev == NULL) {
 		if (strcmp(cd->cd_name, "pci"))
@@ -158,7 +166,7 @@ dec_kn20aa_device_register(dev, aux)
 		}
 	}
 
-	if (scsidev == NULL) {
+	if (scsiboot && (scsidev == NULL)) {
 		if (parent != pcidev)
 			return;
 		else {
@@ -177,9 +185,10 @@ dec_kn20aa_device_register(dev, aux)
 		}
 	}
 
-	if (!strcmp(cd->cd_name, "sd") ||
-	    !strcmp(cd->cd_name, "st") ||
-	    !strcmp(cd->cd_name, "cd")) {
+	if (scsiboot &&
+	    (!strcmp(cd->cd_name, "sd") ||
+	     !strcmp(cd->cd_name, "st") ||
+	     !strcmp(cd->cd_name, "cd"))) {
 		struct scsibus_attach_args *sa = aux;
 
 		if (parent->dv_parent != scsidev)
@@ -210,5 +219,25 @@ dec_kn20aa_device_register(dev, aux)
 		printf("\nbooted_device = %s\n", booted_device->dv_xname);
 #endif
 		found = 1;
+	}
+
+	if (netboot) {
+		if (parent != pcidev)
+			return;
+		else {
+			struct pci_attach_args *pa = aux;
+
+			if (b->slot != pa->pa_device)
+				return;
+
+			/* XXX function? */
+	
+			booted_device = dev;
+#if 0
+			printf("\nbooted_device = %s\n", booted_device->dv_xname);
+#endif
+			found = 1;
+			return;
+		}
 	}
 }

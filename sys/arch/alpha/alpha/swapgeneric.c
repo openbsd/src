@@ -1,5 +1,5 @@
-/*	$OpenBSD: swapgeneric.c,v 1.3 1996/07/29 22:58:03 niklas Exp $	*/
-/*	$NetBSD: swapgeneric.c,v 1.4.4.1 1996/06/13 18:02:37 cgd Exp $	*/
+/*	$OpenBSD: swapgeneric.c,v 1.4 1996/10/30 22:38:27 niklas Exp $	*/
+/*	$NetBSD: swapgeneric.c,v 1.5 1996/06/12 01:26:37 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1994

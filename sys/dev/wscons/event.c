@@ -1,5 +1,5 @@
-/*	$OpenBSD: event.c,v 1.2 1996/07/29 23:02:48 niklas Exp $ */
-/*	$NetBSD: event.c,v 1.1.4.1 1996/05/29 22:26:54 cgd Exp $ */
+/*	$OpenBSD: event.c,v 1.3 1996/10/30 22:41:36 niklas Exp $ */
+/*	$NetBSD: event.c,v 1.3 1996/09/15 17:15:26 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,6 +55,10 @@
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/vnode.h>
+#include <sys/select.h>
+#ifdef notyet
+#include <sys/poll.h>
+#endif
 
 #include <machine/vuid_event.h>
 #include <alpha/wscons/event_var.h>
@@ -85,7 +89,7 @@ ev_fini(ev)
 }
 
 /*
- * User-level interface: read, select.
+ * User-level interface: read, poll.
  * (User cannot write an event queue.)
  */
 int
@@ -145,6 +149,26 @@ ev_read(ev, uio, flags)
 	return (error);
 }
 
+#ifdef notyet
+int
+ev_poll(ev, events, p)
+	register struct evvar *ev;
+	int events;
+	struct proc *p;
+{
+	int revents = 0;
+	int s = splev();
+
+        if (events & (POLLIN | POLLRDNORM))
+		if (ev->ev_get != ev->ev_put)
+                        revents |= events & (POLLIN | POLLRDNORM);
+                else
+                        selrecord(p, &ev->ev_sel);
+
+	splx(s);
+	return (revents);
+}
+#else
 int
 ev_select(ev, rw, p)
 	register struct evvar *ev;
@@ -171,3 +195,4 @@ ev_select(ev, rw, p)
 	splx(s);
 	return (0);
 }
+#endif

@@ -1,5 +1,5 @@
-/*	$OpenBSD: process_machdep.c,v 1.3 1996/07/29 22:57:56 niklas Exp $	*/
-/*	$NetBSD: process_machdep.c,v 1.3 1995/11/23 02:34:29 cgd Exp $	*/
+/*	$OpenBSD: process_machdep.c,v 1.4 1996/10/30 22:38:23 niklas Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.7 1996/07/11 20:14:21 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -64,7 +64,8 @@
 #include <machine/frame.h>
 
 #define	process_frame(p)	((p)->p_md.md_tf)
-#define	process_fpframe(p)	(&(p)->p_addr->u_pcb.pcb_fp)
+#define	process_pcb(p)		(&(p)->p_addr->u_pcb)
+#define	process_fpframe(p)	(&(process_pcb(p)->pcb_fp))
 
 int
 process_read_regs(p, regs)
@@ -73,7 +74,8 @@ process_read_regs(p, regs)
 {
 
 	frametoreg(process_frame(p), regs);
-	regs->r_regs[R_ZERO] = process_frame(p)->tf_pc;
+	regs->r_regs[R_ZERO] = process_frame(p)->tf_regs[FRAME_PC];
+	regs->r_regs[R_SP] = process_pcb(p)->pcb_hw.apcb_usp;
 	return (0);
 }
 
@@ -83,8 +85,9 @@ process_write_regs(p, regs)
 	struct reg *regs;
 {
 
-	process_frame(p)->tf_pc = regs->r_regs[R_ZERO];
 	regtoframe(regs, process_frame(p));
+	process_frame(p)->tf_regs[FRAME_PC] = regs->r_regs[R_ZERO];
+	process_pcb(p)->pcb_hw.apcb_usp = regs->r_regs[R_SP];
 	return (0);
 }
 
@@ -107,7 +110,7 @@ process_set_pc(p, addr)
 {
 	struct trapframe *frame = process_frame(p);
 
-	frame->tf_pc = (u_int64_t)addr;
+	frame->tf_regs[FRAME_PC] = (u_int64_t)addr;
 	return (0);
 }
 
@@ -119,9 +122,9 @@ process_read_fpregs(p, regs)
 	extern struct proc *fpcurproc;
 
 	if (p == fpcurproc) {
-		pal_wrfen(1);
+		alpha_pal_wrfen(1);
 		savefpstate(process_fpframe(p));
-		pal_wrfen(0);
+		alpha_pal_wrfen(0);
 	}
 
 	bcopy(process_fpframe(p), regs, sizeof(struct fpreg));

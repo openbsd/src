@@ -1,5 +1,5 @@
-/*	$OpenBSD: tc_machdep.h,v 1.2 1996/07/29 23:02:31 niklas Exp $	*/
-/*	$NetBSD: tc_machdep.h,v 1.1 1995/12/20 00:09:29 cgd Exp $	*/
+/*	$OpenBSD: tc_machdep.h,v 1.3 1996/10/30 22:41:23 niklas Exp $	*/
+/*	$NetBSD: tc_machdep.h,v 1.2 1996/07/09 00:55:35 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -61,8 +61,8 @@
 typedef u_int64_t	tc_addr_t;
 typedef int32_t		tc_offset_t;
 
-#define	tc_mb()		wbflush()
-#define	tc_wmb()	wbflush()
+#define	tc_mb()		alpha_mb()
+#define	tc_wmb()	alpha_wmb()
 
 /*
  * A junk address to read from, to make sure writes are complete.  See
@@ -73,7 +73,7 @@ typedef int32_t		tc_offset_t;
     do {								\
 	volatile u_int32_t no_optimize;					\
 	no_optimize =	 						\
-	    *(volatile u_int32_t *)phystok0seg(0x00000001f0080220);	\
+	    *(volatile u_int32_t *)ALPHA_PHYS_TO_K0SEG(0x00000001f0080220); \
     } while (0)
 
 #define	tc_badaddr(tcaddr)						\
@@ -91,3 +91,6 @@ typedef int32_t		tc_offset_t;
 		
 #define	TC_PHYS_TO_UNCACHED(addr)					\
     (addr)
+
+void tc_bus_io_init __P((bus_chipset_tag_t bc, void *iov));;
+void tc_bus_mem_init __P((bus_chipset_tag_t bc, void *memv));;

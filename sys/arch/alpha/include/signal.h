@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.2 1996/07/29 22:59:20 niklas Exp $	*/
+/*	$OpenBSD: signal.h,v 1.3 1996/10/30 22:39:29 niklas Exp $	*/
 /*	$NetBSD: signal.h,v 1.2 1995/02/16 03:08:08 cgd Exp $	*/
 
 /*

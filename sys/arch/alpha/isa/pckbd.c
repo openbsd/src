@@ -1,5 +1,5 @@
-/*	$OpenBSD: pckbd.c,v 1.5 1996/07/29 22:59:49 niklas Exp $	*/
-/*	$NetBSD: pckbd.c,v 1.7 1996/05/05 01:41:53 thorpej Exp $	*/
+/*	$OpenBSD: pckbd.c,v 1.6 1996/10/30 22:39:40 niklas Exp $	*/
+/*	$NetBSD: pckbd.c,v 1.9 1996/10/13 02:59:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.  All rights reserved.
@@ -64,6 +64,7 @@
 #include <machine/wsconsio.h>
 
 #include <alpha/wscons/wsconsvar.h>
+#include <alpha/wscons/kbd.h>
 #include "wscons.h"
 
 static volatile u_char ack, nak;	/* Don't ask. */
@@ -126,6 +127,15 @@ struct wscons_idev_spec pckbd_wscons_idev = {
 
 void	pckbd_bell_stop __P((void *));
 
+static __inline int kbd_wait_output __P((void));
+static __inline int kbd_wait_input __P((void));
+static __inline void kbd_flush_input __P((void));
+u_char kbc_get8042cmd __P((void));
+int kbc_put8042cmd __P((u_char));
+int kbd_cmd __P((u_char, u_char));
+void do_async_update __P((void *));
+void async_update __P((void));
+
 /*
  * DANGER WIL ROBINSON -- the values of SCROLL, NUM, CAPS, and ALT are
  * important.
@@ -142,12 +152,14 @@ void	pckbd_bell_stop __P((void *));
 #define	NONE		0x0400	/* no function */
 
 #define	KBD_DELAY \
-	{ u_char x = bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); } \
-	{ u_char x = bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); } \
-	{ u_char x = bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); } \
-	{ u_char x = bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); }
+	do { \
+		bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); \
+		bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); \
+		bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); \
+		bus_io_read_1(pckbd_bc, pckbd_delay_ioh, 0); \
+	} while(0)
 
-static inline int
+static __inline int
 kbd_wait_output()
 {
 	u_int i;
@@ -161,7 +173,7 @@ kbd_wait_output()
 	return 0;
 }
 
-static inline int
+static __inline int
 kbd_wait_input()
 {
 	u_int i;
@@ -175,7 +187,7 @@ kbd_wait_input()
 	return 0;
 }
 
-static inline void
+static __inline void
 kbd_flush_input()
 {
 	u_int i;
@@ -193,7 +205,7 @@ kbd_flush_input()
 /*
  * Get the current command byte.
  */
-static u_char
+u_char
 kbc_get8042cmd()
 {
 
@@ -209,7 +221,7 @@ kbc_get8042cmd()
 /*
  * Pass command byte to keyboard controller (8042).
  */
-static int
+int
 kbc_put8042cmd(val)
 	u_char val;
 {
@@ -416,7 +428,6 @@ int
 pckbdintr(arg)
 	void *arg;
 {
-	struct pckbd_softc *sc = arg;
 	u_char data;
 	static u_char last;
 
@@ -450,11 +461,10 @@ pckbdintr(arg)
 }
 
 void
-do_async_update(poll)
-	u_char poll;
+do_async_update(vp)
+	void *vp;
 {
-	int pos;
-	static int old_pos = -1;
+	int poll = *(int *)vp;
 
 	async = 0;
 
@@ -479,16 +489,18 @@ do_async_update(poll)
 void
 async_update()
 {
+	static int nopoll = 0;
+	static int poll = 1;
 
 	if (kernel || polling) {
 		if (async)
-			untimeout(do_async_update, NULL);
-		do_async_update(1);
+			untimeout(do_async_update, &nopoll);
+		do_async_update(&poll);
 	} else {
 		if (async)
 			return;
 		async = 1;
-		timeout(do_async_update, NULL, 1);
+		timeout(do_async_update, &nopoll, 1);
 	}
 }
 
@@ -582,134 +594,134 @@ typedef struct {
 } Scan_def;
 
 static Scan_def	scan_codes[] = {
-	NONE,	"",		"",		"",		/* 0 unused */
-	ASCII,	"\033",		"\033",		"\033",		/* 1 ESCape */
-	ASCII,	"1",		"!",		"!",		/* 2 1 */
-	ASCII,	"2",		"@",		"\000",		/* 3 2 */
-	ASCII,	"3",		"#",		"#",		/* 4 3 */
-	ASCII,	"4",		"$",		"$",		/* 5 4 */
-	ASCII,	"5",		"%",		"%",		/* 6 5 */
-	ASCII,	"6",		"^",		"\036",		/* 7 6 */
-	ASCII,	"7",		"&",		"&",		/* 8 7 */
-	ASCII,	"8",		"*",		"\010",		/* 9 8 */
-	ASCII,	"9",		"(",		"(",		/* 10 9 */
-	ASCII,	"0",		")",		")",		/* 11 0 */
-	ASCII,	"-",		"_",		"\037",		/* 12 - */
-	ASCII,	"=",		"+",		"+",		/* 13 = */
-	ASCII,	"\177",		"\177",		"\010",		/* 14 backspace */
-	ASCII,	"\t",		"\177\t",	"\t",		/* 15 tab */
-	ASCII,	"q",		"Q",		"\021",		/* 16 q */
-	ASCII,	"w",		"W",		"\027",		/* 17 w */
-	ASCII,	"e",		"E",		"\005",		/* 18 e */
-	ASCII,	"r",		"R",		"\022",		/* 19 r */
-	ASCII,	"t",		"T",		"\024",		/* 20 t */
-	ASCII,	"y",		"Y",		"\031",		/* 21 y */
-	ASCII,	"u",		"U",		"\025",		/* 22 u */
-	ASCII,	"i",		"I",		"\011",		/* 23 i */
-	ASCII,	"o",		"O",		"\017",		/* 24 o */
-	ASCII,	"p",		"P",		"\020",		/* 25 p */
-	ASCII,	"[",		"{",		"\033",		/* 26 [ */
-	ASCII,	"]",		"}",		"\035",		/* 27 ] */
-	ASCII,	"\r",		"\r",		"\n",		/* 28 return */
-	CTL,	"",		"",		"",		/* 29 control */
-	ASCII,	"a",		"A",		"\001",		/* 30 a */
-	ASCII,	"s",		"S",		"\023",		/* 31 s */
-	ASCII,	"d",		"D",		"\004",		/* 32 d */
-	ASCII,	"f",		"F",		"\006",		/* 33 f */
-	ASCII,	"g",		"G",		"\007",		/* 34 g */
-	ASCII,	"h",		"H",		"\010",		/* 35 h */
-	ASCII,	"j",		"J",		"\n",		/* 36 j */
-	ASCII,	"k",		"K",		"\013",		/* 37 k */
-	ASCII,	"l",		"L",		"\014",		/* 38 l */
-	ASCII,	";",		":",		";",		/* 39 ; */
-	ASCII,	"'",		"\"",		"'",		/* 40 ' */
-	ASCII,	"`",		"~",		"`",		/* 41 ` */
-	SHIFT,	"",		"",		"",		/* 42 shift */
-	ASCII,	"\\",		"|",		"\034",		/* 43 \ */
-	ASCII,	"z",		"Z",		"\032",		/* 44 z */
-	ASCII,	"x",		"X",		"\030",		/* 45 x */
-	ASCII,	"c",		"C",		"\003",		/* 46 c */
-	ASCII,	"v",		"V",		"\026",		/* 47 v */
-	ASCII,	"b",		"B",		"\002",		/* 48 b */
-	ASCII,	"n",		"N",		"\016",		/* 49 n */
-	ASCII,	"m",		"M",		"\r",		/* 50 m */
-	ASCII,	",",		"<",		"<",		/* 51 , */
-	ASCII,	".",		">",		">",		/* 52 . */
-	ASCII,	"/",		"?",		"\037",		/* 53 / */
-	SHIFT,	"",		"",		"",		/* 54 shift */
-	KP,	"*",		"*",		"*",		/* 55 kp * */
-	ALT,	"",		"",		"",		/* 56 alt */
-	ASCII,	" ",		" ",		"\000",		/* 57 space */
-	CAPS,	"",		"",		"",		/* 58 caps */
-	FUNC,	"\033[M",	"\033[Y",	"\033[k",	/* 59 f1 */
-	FUNC,	"\033[N",	"\033[Z",	"\033[l",	/* 60 f2 */
-	FUNC,	"\033[O",	"\033[a",	"\033[m",	/* 61 f3 */
-	FUNC,	"\033[P",	"\033[b",	"\033[n",	/* 62 f4 */
-	FUNC,	"\033[Q",	"\033[c",	"\033[o",	/* 63 f5 */
-	FUNC,	"\033[R",	"\033[d",	"\033[p",	/* 64 f6 */
-	FUNC,	"\033[S",	"\033[e",	"\033[q",	/* 65 f7 */
-	FUNC,	"\033[T",	"\033[f",	"\033[r",	/* 66 f8 */
-	FUNC,	"\033[U",	"\033[g",	"\033[s",	/* 67 f9 */
-	FUNC,	"\033[V",	"\033[h",	"\033[t",	/* 68 f10 */
-	NUM,	"",		"",		"",		/* 69 num lock */
-	SCROLL,	"",		"",		"",		/* 70 scroll lock */
-	KP,	"7",		"\033[H",	"7",		/* 71 kp 7 */
-	KP,	"8",		"\033[A",	"8",		/* 72 kp 8 */
-	KP,	"9",		"\033[I",	"9",		/* 73 kp 9 */
-	KP,	"-",		"-",		"-",		/* 74 kp - */
-	KP,	"4",		"\033[D",	"4",		/* 75 kp 4 */
-	KP,	"5",		"\033[E",	"5",		/* 76 kp 5 */
-	KP,	"6",		"\033[C",	"6",		/* 77 kp 6 */
-	KP,	"+",		"+",		"+",		/* 78 kp + */
-	KP,	"1",		"\033[F",	"1",		/* 79 kp 1 */
-	KP,	"2",		"\033[B",	"2",		/* 80 kp 2 */
-	KP,	"3",		"\033[G",	"3",		/* 81 kp 3 */
-	KP,	"0",		"\033[L",	"0",		/* 82 kp 0 */
-	KP,	".",		"\177",		".",		/* 83 kp . */
-	NONE,	"",		"",		"",		/* 84 0 */
-	NONE,	"100",		"",		"",		/* 85 0 */
-	NONE,	"101",		"",		"",		/* 86 0 */
-	FUNC,	"\033[W",	"\033[i",	"\033[u",	/* 87 f11 */
-	FUNC,	"\033[X",	"\033[j",	"\033[v",	/* 88 f12 */
-	NONE,	"102",		"",		"",		/* 89 0 */
-	NONE,	"103",		"",		"",		/* 90 0 */
-	NONE,	"",		"",		"",		/* 91 0 */
-	NONE,	"",		"",		"",		/* 92 0 */
-	NONE,	"",		"",		"",		/* 93 0 */
-	NONE,	"",		"",		"",		/* 94 0 */
-	NONE,	"",		"",		"",		/* 95 0 */
-	NONE,	"",		"",		"",		/* 96 0 */
-	NONE,	"",		"",		"",		/* 97 0 */
-	NONE,	"",		"",		"",		/* 98 0 */
-	NONE,	"",		"",		"",		/* 99 0 */
-	NONE,	"",		"",		"",		/* 100 */
-	NONE,	"",		"",		"",		/* 101 */
-	NONE,	"",		"",		"",		/* 102 */
-	NONE,	"",		"",		"",		/* 103 */
-	NONE,	"",		"",		"",		/* 104 */
-	NONE,	"",		"",		"",		/* 105 */
-	NONE,	"",		"",		"",		/* 106 */
-	NONE,	"",		"",		"",		/* 107 */
-	NONE,	"",		"",		"",		/* 108 */
-	NONE,	"",		"",		"",		/* 109 */
-	NONE,	"",		"",		"",		/* 110 */
-	NONE,	"",		"",		"",		/* 111 */
-	NONE,	"",		"",		"",		/* 112 */
-	NONE,	"",		"",		"",		/* 113 */
-	NONE,	"",		"",		"",		/* 114 */
-	NONE,	"",		"",		"",		/* 115 */
-	NONE,	"",		"",		"",		/* 116 */
-	NONE,	"",		"",		"",		/* 117 */
-	NONE,	"",		"",		"",		/* 118 */
-	NONE,	"",		"",		"",		/* 119 */
-	NONE,	"",		"",		"",		/* 120 */
-	NONE,	"",		"",		"",		/* 121 */
-	NONE,	"",		"",		"",		/* 122 */
-	NONE,	"",		"",		"",		/* 123 */
-	NONE,	"",		"",		"",		/* 124 */
-	NONE,	"",		"",		"",		/* 125 */
-	NONE,	"",		"",		"",		/* 126 */
-	NONE,	"",		"",		"",		/* 127 */
+	{ NONE,		"",		"",		"" },		/* 0 unused */
+	{ ASCII,	"\033",		"\033",		"\033" },	/* 1 ESCape */
+	{ ASCII,	"1",		"!",		"!" },		/* 2 1 */
+	{ ASCII,	"2",		"@",		"\000" },	/* 3 2 */
+	{ ASCII,	"3",		"#",		"#" },		/* 4 3 */
+	{ ASCII,	"4",		"$",		"$" },		/* 5 4 */
+	{ ASCII,	"5",		"%",		"%" },		/* 6 5 */
+	{ ASCII,	"6",		"^",		"\036" },	/* 7 6 */
+	{ ASCII,	"7",		"&",		"&" },		/* 8 7 */
+	{ ASCII,	"8",		"*",		"\010" },	/* 9 8 */
+	{ ASCII,	"9",		"(",		"(" },		/* 10 9 */
+	{ ASCII,	"0",		")",		")" },		/* 11 0 */
+	{ ASCII,	"-",		"_",		"\037" },	/* 12 - */
+	{ ASCII,	"=",		"+",		"+" },		/* 13 = */
+	{ ASCII,	"\177",		"\177",		"\010" },	/* 14 backspace */
+	{ ASCII,	"\t",		"\177\t",	"\t" },		/* 15 tab */
+	{ ASCII,	"q",		"Q",		"\021" },	/* 16 q */
+	{ ASCII,	"w",		"W",		"\027" },	/* 17 w */
+	{ ASCII,	"e",		"E",		"\005" },	/* 18 e */
+	{ ASCII,	"r",		"R",		"\022" },	/* 19 r */
+	{ ASCII,	"t",		"T",		"\024" },	/* 20 t */
+	{ ASCII,	"y",		"Y",		"\031" },	/* 21 y */
+	{ ASCII,	"u",		"U",		"\025" },	/* 22 u */
+	{ ASCII,	"i",		"I",		"\011" },	/* 23 i */
+	{ ASCII,	"o",		"O",		"\017" },	/* 24 o */
+	{ ASCII,	"p",		"P",		"\020" },	/* 25 p */
+	{ ASCII,	"[",		"{",		"\033" },	/* 26 [ */
+	{ ASCII,	"]",		"}",		"\035" },	/* 27 ] */
+	{ ASCII,	"\r",		"\r",		"\n" },		/* 28 return */
+	{ CTL,		"",		"",		"" },		/* 29 control */
+	{ ASCII,	"a",		"A",		"\001" },	/* 30 a */
+	{ ASCII,	"s",		"S",		"\023" },	/* 31 s */
+	{ ASCII,	"d",		"D",		"\004" },	/* 32 d */
+	{ ASCII,	"f",		"F",		"\006" },	/* 33 f */
+	{ ASCII,	"g",		"G",		"\007" },	/* 34 g */
+	{ ASCII,	"h",		"H",		"\010" },	/* 35 h */
+	{ ASCII,	"j",		"J",		"\n" },		/* 36 j */
+	{ ASCII,	"k",		"K",		"\013" },	/* 37 k */
+	{ ASCII,	"l",		"L",		"\014" },	/* 38 l */
+	{ ASCII,	";",		":",		";" },		/* 39 ; */
+	{ ASCII,	"'",		"\"",		"'" },		/* 40 ' */
+	{ ASCII,	"`",		"~",		"`" },		/* 41 ` */
+	{ SHIFT,	"",		"",		"" },		/* 42 shift */
+	{ ASCII,	"\\",		"|",		"\034" },	/* 43 \ */
+	{ ASCII,	"z",		"Z",		"\032" },	/* 44 z */
+	{ ASCII,	"x",		"X",		"\030" },	/* 45 x */
+	{ ASCII,	"c",		"C",		"\003" },	/* 46 c */
+	{ ASCII,	"v",		"V",		"\026" },	/* 47 v */
+	{ ASCII,	"b",		"B",		"\002" },	/* 48 b */
+	{ ASCII,	"n",		"N",		"\016" },	/* 49 n */
+	{ ASCII,	"m",		"M",		"\r" },		/* 50 m */
+	{ ASCII,	",",		"<",		"<" },		/* 51 , */
+	{ ASCII,	".",		">",		">" },		/* 52 . */
+	{ ASCII,	"/",		"?",		"\037" },	/* 53 / */
+	{ SHIFT,	"",		"",		"" },		/* 54 shift */
+	{ KP,		"*",		"*",		"*" },		/* 55 kp * */
+	{ ALT,		"",		"",		"" },		/* 56 alt */
+	{ ASCII,	" ",		" ",		"\000" },	/* 57 space */
+	{ CAPS,		"",		"",		"" },		/* 58 caps */
+	{ FUNC,		"\033[M",	"\033[Y",	"\033[k" },	/* 59 f1 */
+	{ FUNC,		"\033[N",	"\033[Z",	"\033[l" },	/* 60 f2 */
+	{ FUNC,		"\033[O",	"\033[a",	"\033[m" },	/* 61 f3 */
+	{ FUNC,		"\033[P",	"\033[b",	"\033[n" },	/* 62 f4 */
+	{ FUNC,		"\033[Q",	"\033[c",	"\033[o" },	/* 63 f5 */
+	{ FUNC,		"\033[R",	"\033[d",	"\033[p" },	/* 64 f6 */
+	{ FUNC,		"\033[S",	"\033[e",	"\033[q" },	/* 65 f7 */
+	{ FUNC,		"\033[T",	"\033[f",	"\033[r" },	/* 66 f8 */
+	{ FUNC,		"\033[U",	"\033[g",	"\033[s" },	/* 67 f9 */
+	{ FUNC,		"\033[V",	"\033[h",	"\033[t" },	/* 68 f10 */
+	{ NUM,		"",		"",		"" },		/* 69 num lock */
+	{ SCROLL,	"",		"",		"" },		/* 70 scroll lock */
+	{ KP,		"7",		"\033[H",	"7" },		/* 71 kp 7 */
+	{ KP,		"8",		"\033[A",	"8" },		/* 72 kp 8 */
+	{ KP,		"9",		"\033[I",	"9" },		/* 73 kp 9 */
+	{ KP,		"-",		"-",		"-" },		/* 74 kp - */
+	{ KP,		"4",		"\033[D",	"4" },		/* 75 kp 4 */
+	{ KP,		"5",		"\033[E",	"5" },		/* 76 kp 5 */
+	{ KP,		"6",		"\033[C",	"6" },		/* 77 kp 6 */
+	{ KP,		"+",		"+",		"+" },		/* 78 kp + */
+	{ KP,		"1",		"\033[F",	"1" },		/* 79 kp 1 */
+	{ KP,		"2",		"\033[B",	"2" },		/* 80 kp 2 */
+	{ KP,		"3",		"\033[G",	"3" },		/* 81 kp 3 */
+	{ KP,		"0",		"\033[L",	"0" },		/* 82 kp 0 */
+	{ KP,		".",		"\177",		"." },		/* 83 kp . */
+	{ NONE,		"",		"",		"" },		/* 84 0 */
+	{ NONE,		"100",		"",		"" },		/* 85 0 */
+	{ NONE,		"101",		"",		"" },		/* 86 0 */
+	{ FUNC,		"\033[W",	"\033[i",	"\033[u" },	/* 87 f11 */
+	{ FUNC,		"\033[X",	"\033[j",	"\033[v" },	/* 88 f12 */
+	{ NONE,		"102",		"",		"" },		/* 89 0 */
+	{ NONE,		"103",		"",		"" },		/* 90 0 */
+	{ NONE,		"",		"",		"" },		/* 91 0 */
+	{ NONE,		"",		"",		"" },		/* 92 0 */
+	{ NONE,		"",		"",		"" },		/* 93 0 */
+	{ NONE,		"",		"",		"" },		/* 94 0 */
+	{ NONE,		"",		"",		"" },		/* 95 0 */
+	{ NONE,		"",		"",		"" },		/* 96 0 */
+	{ NONE,		"",		"",		"" },		/* 97 0 */
+	{ NONE,		"",		"",		"" },		/* 98 0 */
+	{ NONE,		"",		"",		"" },		/* 99 0 */
+	{ NONE,		"",		"",		"" },		/* 100 */
+	{ NONE,		"",		"",		"" },		/* 101 */
+	{ NONE,		"",		"",		"" },		/* 102 */
+	{ NONE,		"",		"",		"" },		/* 103 */
+	{ NONE,		"",		"",		"" },		/* 104 */
+	{ NONE,		"",		"",		"" },		/* 105 */
+	{ NONE,		"",		"",		"" },		/* 106 */
+	{ NONE,		"",		"",		"" },		/* 107 */
+	{ NONE,		"",		"",		"" },		/* 108 */
+	{ NONE,		"",		"",		"" },		/* 109 */
+	{ NONE,		"",		"",		"" },		/* 110 */
+	{ NONE,		"",		"",		"" },		/* 111 */
+	{ NONE,		"",		"",		"" },		/* 112 */
+	{ NONE,		"",		"",		"" },		/* 113 */
+	{ NONE,		"",		"",		"" },		/* 114 */
+	{ NONE,		"",		"",		"" },		/* 115 */
+	{ NONE,		"",		"",		"" },		/* 116 */
+	{ NONE,		"",		"",		"" },		/* 117 */
+	{ NONE,		"",		"",		"" },		/* 118 */
+	{ NONE,		"",		"",		"" },		/* 119 */
+	{ NONE,		"",		"",		"" },		/* 120 */
+	{ NONE,		"",		"",		"" },		/* 121 */
+	{ NONE,		"",		"",		"" },		/* 122 */
+	{ NONE,		"",		"",		"" },		/* 123 */
+	{ NONE,		"",		"",		"" },		/* 124 */
+	{ NONE,		"",		"",		"" },		/* 125 */
+	{ NONE,		"",		"",		"" },		/* 126 */
+	{ NONE,		"",		"",		"" }		/* 127 */
 };
 
 /*

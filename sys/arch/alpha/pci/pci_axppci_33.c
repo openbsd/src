@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_axppci_33.c,v 1.5 1996/07/29 23:00:37 niklas Exp $	*/
-/*	$NetBSD: pci_axppci_33.c,v 1.5 1996/04/23 14:15:28 cgd Exp $	*/
+/*	$OpenBSD: pci_axppci_33.c,v 1.6 1996/10/30 22:40:05 niklas Exp $	*/
+/*	$NetBSD: pci_axppci_33.c,v 1.8 1996/10/13 03:00:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,6 +36,7 @@
 #include <sys/device.h>
 #include <vm/vm.h>
 
+#include <machine/autoconf.h>
 #include <machine/bus.h>
 #include <machine/intr.h>
 
@@ -195,8 +196,6 @@ dec_axppci_33_intr_string(lcv, ih)
 	void *lcv;
 	pci_intr_handle_t ih;
 {
-	struct lca_config *lcp = lcv;
-
 	return sio_intr_string(NULL /*XXX*/, ih);
 }
 
@@ -208,8 +207,6 @@ dec_axppci_33_intr_establish(lcv, ih, level, func, arg, name)
 	int (*func) __P((void *));
 	char *name;
 {
-	struct lca_config *lcp = lcv;
-
 	return sio_intr_establish(NULL /*XXX*/, ih, IST_LEVEL, level, func,
 	    arg, name);
 }
@@ -218,7 +215,5 @@ void
 dec_axppci_33_intr_disestablish(lcv, cookie)
 	void *lcv, *cookie;
 {
-	struct lca_config *lcp = lcv;
-
 	sio_intr_disestablish(NULL /*XXX*/, cookie);
 }

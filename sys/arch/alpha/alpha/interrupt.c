@@ -1,5 +1,5 @@
-/*	$OpenBSD: interrupt.c,v 1.4 1996/07/29 22:57:39 niklas Exp $	*/
-/*	$NetBSD: interrupt.c,v 1.5 1996/04/23 13:54:32 cgd Exp $	*/
+/*	$OpenBSD: interrupt.c,v 1.5 1996/10/30 22:38:12 niklas Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.12 1996/10/13 19:57:49 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -35,6 +35,7 @@
 
 #include <machine/autoconf.h>
 #include <machine/reg.h>
+#include <machine/frame.h>
 
 #ifdef EVCNT_COUNTERS
 #include <sys/device.h>
@@ -49,47 +50,55 @@ struct logout {
 	/* Unspecified. */
 };
 
-void		machine_check __P((struct trapframe *, struct logout *,
-		    u_int64_t));
-static void	nullintr __P((void *, int));
+void		interrupt __P((u_long, u_long, u_long, struct trapframe *));
+void		machine_check __P((struct trapframe *, u_long, u_long));
+void		real_clockintr __P((void *, u_long));
+void		nullintr __P((void *, u_long));
 
-static void	(*iointr) __P((void *, int)) = nullintr;
-static void	(*clockintr) __P((void *, int)) = nullintr;
-static int	mc_expected, mc_received;
+static void	(*iointr) __P((void *, u_long)) = nullintr;
+static void	(*clockintr) __P((void *, u_long)) = nullintr;
+static volatile int mc_expected, mc_received;
 
 #ifdef EVCNT_COUNTERS
 struct evcnt	clock_intr_evcnt;	/* event counter for clock intrs. */
 #endif
 
 void
-interrupt(framep, type, vec, logoutp)
+interrupt(a0, a1, a2, framep)
+	u_long a0, a1, a2;
 	struct trapframe *framep;
-	u_int64_t type, vec;
-	struct logout *logoutp;
 {
 
-	if (type == 1)			/* clock interrupt */
-		(*clockintr)(framep, vec);
-	else if (type == 3)		/* I/O device interrupt */
-		(*iointr)(framep, vec);
-	else if (type == 2)
-		machine_check(framep, logoutp, vec);
-	else
-		panic("unexpected interrupt: type %ld, vec %ld\n",
-		    (long)type, (long)vec);
+	if (a0 == 1) {			/* clock interrupt */
+		cnt.v_intr++;
+		(*clockintr)(framep, a1);
+	} else if (a0 == 3) {		/* I/O device interrupt */
+		cnt.v_intr++;
+		(*iointr)(framep, a1);
+	} else if (a0 == 2)		/* machine check or correctable error */
+		machine_check(framep, a1, a2);
+	else {
+		/*
+		 * Not expected or handled:
+		 *	0	Interprocessor interrupt
+		 *	4	Performance counter
+		 */
+		panic("unexpected interrupt: type 0x%lx, vec 0x%lx\n",
+		    a0, a1);
+	}
 }
 
-static void
+void
 nullintr(framep, vec)
 	void *framep;
-	int vec;
+	u_long vec;
 {
 }
 
-static void
+void
 real_clockintr(framep, vec)
 	void *framep;
-	int vec;
+	u_long vec;
 {
 
 #ifdef EVCNT_COUNTERS
@@ -112,7 +121,7 @@ set_clockintr()
 
 void
 set_iointr(niointr)
-	void (*niointr) __P((void *, int));
+	void (*niointr) __P((void *, u_long));
 {
 
 	if (iointr != nullintr)
@@ -122,59 +131,91 @@ set_iointr(niointr)
 }
 
 void
-machine_check(framep, logoutp, vec)
+machine_check(framep, vector, param)
 	struct trapframe *framep;
-	struct logout *logoutp;
-	u_int64_t vec;
+	u_long vector, param;
 {
+	u_long mces;
+	const char *type;
 
-	if (!mc_expected)
-		panic("machine check: vec 0x%lx, pc = 0x%lx, ra = 0x%lx",
-		    vec, framep->tf_pc, framep->tf_regs[FRAME_RA]);
+	mces = alpha_pal_rdmces();
+
+	/* If not a machine check, we have no clue ho we got here. */
+	if ((mces & ALPHA_MCES_MIP) == 0) {
+		type = "fatal machine check or error (unknown type)";
+		goto fatal;
+	}
+
+	/* If we weren't expecting it, then we punt. */
+	if (!mc_expected) {
+		type = "unexpected machine check";
+		goto fatal;
+	}
 
 	mc_expected = 0;
 	mc_received = 1;
 
-	logoutp->q1 &= ~LOGOUT_RETRY;		/* XXX: Necessary? */
-	pal_mtpr_mces(0x19);			/* XXX: VMS PAL! */
+	/* Clear pending machine checks and correctable errors */
+	alpha_pal_wrmces(mces);
+	return;
+
+fatal:
+	printf("\n");
+	printf("%s:\n", type);
+	printf("\n");
+	printf("    mces    = 0x%lx\n", mces);
+	printf("    vector  = 0x%lx\n", vector);
+	printf("    param   = 0x%lx\n", param);
+	printf("    pc      = 0x%lx\n", framep->tf_regs[FRAME_PC]);
+	printf("    ra      = 0x%lx\n", framep->tf_regs[FRAME_RA]);
+	printf("    curproc = %p\n", curproc);
+	if (curproc != NULL)
+		printf("        pid = %d, comm = %s\n", curproc->p_pid,
+		    curproc->p_comm);
+	printf("\n");
+	panic("machine check");
 }
 
 int
 badaddr(addr, size)
 	void *addr;
-	u_int64_t size;
+	size_t size;
 {
-	int rv;
-	volatile long rcpt;
+	long rcpt;
+
+	/* Get rid of any stale machine checks that have been waiting.  */
+	alpha_pal_draina();
 
 	/* Tell the trap code to expect a machine check. */
 	mc_received = 0;
 	mc_expected = 1;
 
 	/* Read from the test address, and make sure the read happens. */
-	wbflush();
+	alpha_mb();
 	switch (size) {
 	case sizeof (u_int8_t):
-		rcpt = *(u_int8_t *)addr;
+		rcpt = *(volatile u_int8_t *)addr;
 		break;
 
 	case sizeof (u_int16_t):
-		rcpt = *(u_int16_t *)addr;
+		rcpt = *(volatile u_int16_t *)addr;
 		break;
 
 	case sizeof (u_int32_t):
-		rcpt = *(u_int32_t *)addr;
+		rcpt = *(volatile u_int32_t *)addr;
 		break;
 
 	case sizeof (u_int64_t):
-		rcpt = *(u_int64_t *)addr;
+		rcpt = *(volatile u_int64_t *)addr;
 		break;
 
 	default:
 		panic("badaddr: invalid size (%ld)\n", size);
 	}
-	wbflush();
-	pal_draina();
+	alpha_mb();
+
+	/* Make sure we took the machine check, if we caused one. */
+	alpha_pal_draina();
 
 	/* disallow further machine checks */
 	mc_expected = 0;

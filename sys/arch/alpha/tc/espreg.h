@@ -1,9 +1,8 @@
-/*	$OpenBSD: espreg.h,v 1.3 1996/07/29 23:02:02 niklas Exp $	*/
-/*	$NetBSD: espreg.h,v 1.2 1995/12/20 00:40:25 cgd Exp $	*/
+/*	$OpenBSD: espreg.h,v 1.4 1996/10/30 22:41:06 niklas Exp $	*/
+/*	$NetBSD: espreg.h,v 1.3 1996/09/09 18:10:37 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
- *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -132,10 +131,8 @@
 #define	ESP_TEST	0x0a		/* WO - Test (Chip Test Only)	*/
 
 #define	ESP_CFG2	0x0b		/* RW - Configuration #2	*/
-#if 0
-#define  ESPCFG2_RSVD	0xa0		/*	reserved		*/
+#define	 ESPCFG2_RSVD	0xa0		/*	reserved		*/
 #define  ESPCFG2_FE	0x40		/* 	Features Enable		*/
-#endif
 #define  ESPCFG2_DREQ	0x10		/* 	DREQ High Impedance	*/
 #define  ESPCFG2_SCSI2	0x08		/* 	SCSI-2 Enable		*/
 #define  ESPCFG2_BPA	0x04		/* 	Target Bad Parity Abort	*/
@@ -144,11 +141,9 @@
 
 /* Config #3 only on 53C9X */
 #define	ESP_CFG3	0x0c		/* RW - Configuration #3	*/
-#if 0
 #define	 ESPCFG3_RSVD	0xe0		/*	reserved		*/
 #define  ESPCFG3_IDM	0x10		/*	ID Message Res Check	*/
 #define  ESPCFG3_QTE	0x08		/*	Queue Tag Enable	*/
 #define  ESPCFG3_CDB	0x04		/*	CDB 10-bytes OK		*/
 #define  ESPCFG3_FSCSI	0x02		/*	Fast SCSI		*/
 #define  ESPCFG3_FCLK	0x01		/*	Fast Clock (>25Mhz)	*/
-#endif

@@ -1,0 +1,5 @@
+$OpenBSD: version,v 1.1 1996/10/30 22:41:00 niklas Exp $
+$NetBSD: version,v 1.2 1996/10/02 21:26:17 cgd Exp $
+
+1.1	Initial version
+1.2	Cleaned and polished a bit

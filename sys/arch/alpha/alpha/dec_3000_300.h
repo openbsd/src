@@ -1,5 +1,5 @@
-/*	$OpenBSD: dec_3000_300.h,v 1.3 1996/07/29 22:57:24 niklas Exp $	*/
-/*	$NetBSD: dec_3000_300.h,v 1.2.6.2 1996/06/13 18:35:13 cgd Exp $	*/
+/*	$OpenBSD: dec_3000_300.h,v 1.4 1996/10/30 22:38:04 niklas Exp $	*/
+/*	$NetBSD: dec_3000_300.h,v 1.6 1996/06/13 18:32:00 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

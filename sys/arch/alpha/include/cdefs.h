@@ -1,8 +1,8 @@
-/*	$OpenBSD: cdefs.h,v 1.4 1996/07/29 22:58:30 niklas Exp $	*/
-/*	$NetBSD: cdefs.h,v 1.2 1995/05/03 00:13:55 cgd Exp $	*/
+/*	$OpenBSD: cdefs.h,v 1.5 1996/10/30 22:38:56 niklas Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.5 1996/10/12 18:08:12 cgd Exp $	*/
 
 /*
- * Copyright (c) 1995 Carnegie-Mellon University.
+ * Copyright (c) 1995, 1996 Carnegie-Mellon University.
  * All rights reserved.
  *
  * Author: Chris G. Demetriou
@@ -33,7 +33,35 @@
 
 #define	_C_LABEL(x)	_STRING(x)
 
-#define	__indr_references(sym,msg)	/* nothing */
+#ifdef __ELF__
+
+#define	__indr_reference(sym,alias)	/* nada, since we do weak refs */
+
+#ifdef __STDC__
+
+#define	__weak_alias(alias,sym)						\
+    __asm__(".weak " #alias " ; " #alias " = " #sym)
+#define	__warn_references(sym,msg)					\
+    __asm__(".section .gnu.warning." #sym " ; .ascii \"" msg "\" ; .text")
+
+#else /* !__STDC__ */
+
+#define	__weak_alias(alias,sym)						\
+    __asm__(".weak alias ; alias = sym")
+#define	__warn_references(sym,msg)					\
+    __asm__(".section .gnu.warning.sym ; .ascii msg ; .text")
+
+#endif /* !__STDC__ */
+
+#else /* !__ELF__ */
+
+/*
+ * Very little to do if not ELF: we support neither indirect or
+ * weak references, and don't do anything with warnings.
+ */
+
 #define	__warn_references(sym,msg)	/* nothing */
+
+#endif /* !__ELF__ */
 
 #endif /* !_MACHINE_CDEFS_H_ */

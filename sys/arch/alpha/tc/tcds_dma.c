@@ -1,5 +1,5 @@
-/*	$OpenBSD: tcds_dma.c,v 1.3 1996/07/29 23:02:36 niklas Exp $	*/
-/*	$NetBSD: tcds_dma.c,v 1.6 1995/12/20 00:40:32 cgd Exp $	*/
+/*	$OpenBSD: tcds_dma.c,v 1.4 1996/10/30 22:41:28 niklas Exp $	*/
+/*	$NetBSD: tcds_dma.c,v 1.13 1996/10/13 03:00:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Peter Galbavy.  All rights reserved.
@@ -61,15 +61,6 @@ tcds_dma_reset(sc)
 	sc->sc_active = 0;			/* and of course we aren't */
 }
 
-
-void
-tcds_dma_enintr(sc)
-	struct tcds_slotconfig *sc;
-{
-
-	/* XXX */
-}
-
 int
 tcds_dma_isintr(sc)
 	struct tcds_slotconfig *sc;
@@ -83,79 +74,6 @@ tcds_dma_isintr(sc)
 
 	/* XXX */
 	return x;
-}
-
-#define ESPMAX		(64 * 1024)
-#define DMAMAX(a)	(0x02000 - ((a) & 0x1fff))
-
-/*
- * start a dma transfer or keep it going
- */
-void
-tcds_dma_start(sc, addr, len, datain)
-	struct tcds_slotconfig *sc;
-	caddr_t *addr;
-	size_t *len;
-	int datain;				/* DMA into main memory */
-{
-	u_int32_t dic;
-	size_t size;
-
-	sc->sc_dmaaddr = addr;
-	sc->sc_dmalen = len;
-	sc->sc_iswrite = datain;
-
-	ESP_DMA(("tcds_dma %d: start %d@0x%lx,%d\n", sc->sc_slot, *sc->sc_dmalen, *sc->sc_dmaaddr, sc->sc_iswrite));
-
-	/*
-	 * the rules say we cannot transfer more than the limit
-	 * of this DMA chip (64k) and we cannot cross a 8k boundary.
-	 */
-	size = min(*sc->sc_dmalen, ESPMAX);
-	size = min(size, DMAMAX((size_t) *sc->sc_dmaaddr));
-	sc->sc_dmasize = size;
-
-	ESP_DMA(("dma_start: dmasize = %d\n", sc->sc_dmasize));
-
-	/* Load address, set/clear unaligned transfer and read/write bits. */
-	/* XXX PICK AN ADDRESS TYPE, AND STICK TO IT! */
-	if ((u_long)*addr > VM_MIN_KERNEL_ADDRESS) {
-		*sc->sc_sda = vatopa((u_long)*addr) >> 2;
-	} else {
-		*sc->sc_sda = k0segtophys((u_long)*addr) >> 2;
-	}
-	wbflush();
-	dic = *sc->sc_dic;
-	dic &= ~TCDS_DIC_ADDRMASK;
-	dic |= (vm_offset_t)*addr & TCDS_DIC_ADDRMASK;
-	if (datain)
-		dic |= TCDS_DIC_WRITE;
-	else
-		dic &= ~TCDS_DIC_WRITE;
-	*sc->sc_dic = dic;
-	wbflush();
-
-	/* Program the SCSI counter */
-	ESP_WRITE_REG(sc->sc_esp, ESP_TCL, size);
-	ESP_WRITE_REG(sc->sc_esp, ESP_TCM, size >> 8);
-	if (sc->sc_esp->sc_rev == ESP200) {
-		ESP_WRITE_REG(sc->sc_esp, ESP_TCH, size >> 16);
-	}
-	/* load the count in */
-	ESPCMD(sc->sc_esp, ESPCMD_NOP|ESPCMD_DMA);
-
-	/*
-	 * Note that if `size' is 0, we've already transceived all
-	 * the bytes we want but we're still in the DATA PHASE.
-	 * Apparently, the device needs padding. Also, a transfer
-	 * size of 0 means "maximum" to the chip DMA logic.
-	 */
-	ESPCMD(sc->sc_esp, (size==0?ESPCMD_TRPAD:ESPCMD_TRANS)|ESPCMD_DMA);
-
-	sc->sc_active = 1;
-
-	/* Start DMA */
-	tcds_dma_enable(sc, 1);
 }
 
 /*
@@ -246,7 +164,7 @@ tcds_dma_intr(sc)
 #endif
 			ESP_DMA(("dud0 at 0x%lx dudmask 0x%x\n",
 			    addr, dudmask));
-			addr = (u_int32_t *)phystok0seg(addr);
+			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG((vm_offset_t)addr);
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
 		}
 		dud = *sc->sc_dud1;
@@ -267,7 +185,7 @@ tcds_dma_intr(sc)
 #endif
 			ESP_DMA(("dud1 at 0x%lx dudmask 0x%x\n",
 			    addr, dudmask));
-			addr = (u_int32_t *)phystok0seg(addr);
+			addr = (u_int32_t *)ALPHA_PHYS_TO_K0SEG((vm_offset_t)addr);
 			*addr = (*addr & ~dudmask) | (dud & dudmask);
 		}
 		/* XXX deal with saved residual byte? */
@@ -286,4 +204,76 @@ tcds_dma_intr(sc)
 	return 1;
 #endif
 	return 0;
+}
+
+#define DMAMAX(a)	(0x02000 - ((a) & 0x1fff))
+
+/*
+ * start a dma transfer or keep it going
+ */
+int
+tcds_dma_setup(sc, addr, len, datain, dmasize)
+	struct tcds_slotconfig *sc;
+	caddr_t *addr;
+	size_t *len, *dmasize;
+	int datain;				/* DMA into main memory */
+{
+	u_int32_t dic;
+	size_t size;
+
+	sc->sc_dmaaddr = addr;
+	sc->sc_dmalen = len;
+	sc->sc_iswrite = datain;
+
+	ESP_DMA(("tcds_dma %d: start %d@0x%lx,%d\n", sc->sc_slot, *sc->sc_dmalen, *sc->sc_dmaaddr, sc->sc_iswrite));
+
+	/*
+	 * the rules say we cannot transfer more than the limit
+	 * of this DMA chip (64k) and we cannot cross a 8k boundary.
+	 */
+	
+	size = min(*dmasize, DMAMAX((size_t) *sc->sc_dmaaddr));
+	*dmasize = sc->sc_dmasize = size;
+
+	ESP_DMA(("dma_start: dmasize = %d\n", sc->sc_dmasize));
+
+	/* Load address, set/clear unaligned transfer and read/write bits. */
+	/* XXX PICK AN ADDRESS TYPE, AND STICK TO IT! */
+	if ((u_long)*addr > VM_MIN_KERNEL_ADDRESS) {
+		*sc->sc_sda = vatopa((u_long)*addr) >> 2;
+	} else {
+		*sc->sc_sda = ALPHA_K0SEG_TO_PHYS((u_long)*addr) >> 2;
+	}
+	alpha_mb();
+	dic = *sc->sc_dic;
+	dic &= ~TCDS_DIC_ADDRMASK;
+	dic |= (vm_offset_t)*addr & TCDS_DIC_ADDRMASK;
+	if (datain)
+		dic |= TCDS_DIC_WRITE;
+	else
+		dic &= ~TCDS_DIC_WRITE;
+	*sc->sc_dic = dic;
+	alpha_mb();
+
+	return (0);
+}
+
+void
+tcds_dma_go(sc)
+	struct tcds_slotconfig *sc;
+{
+
+	/* mark unit as DMA-active */
+	sc->sc_active = 1;
+
+	/* Start DMA */
+	tcds_dma_enable(sc, 1);
+}
+
+int
+tcds_dma_isactive(sc)
+	struct tcds_slotconfig *sc;
+{
+
+	return (sc->sc_active);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt485reg.h,v 1.3 1996/07/29 23:00:13 niklas Exp $	*/
+/*	$OpenBSD: bt485reg.h,v 1.4 1996/10/30 22:39:52 niklas Exp $	*/
 /*	$NetBSD: bt485reg.h,v 1.4 1996/04/12 06:08:17 cgd Exp $	*/
 
 /*

@@ -1,5 +1,5 @@
-/*	$OpenBSD: siovar.h,v 1.3 1996/07/29 23:00:58 niklas Exp $	*/
-/*	$NetBSD: siovar.h,v 1.3 1996/04/12 06:09:06 cgd Exp $	*/
+/*	$OpenBSD: siovar.h,v 1.4 1996/10/30 22:40:17 niklas Exp $	*/
+/*	$NetBSD: siovar.h,v 1.4 1996/07/14 04:08:42 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
  */
 
 void	sio_intr_setup __P((bus_chipset_tag_t));
-void	sio_iointr __P((void *framep, int vec));
+void	sio_iointr __P((void *framep, unsigned long vec));
 
 const char *sio_intr_string __P((void *, int));
 void	*sio_intr_establish __P((void *, int, int, int, int (*)(void *),

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.4 1996/07/29 23:00:45 niklas Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.5 1996/10/30 22:40:09 niklas Exp $	*/
 /*	$NetBSD: pci_machdep.h,v 1.4 1996/04/12 06:08:52 cgd Exp $	*/
 
 /*
@@ -86,3 +86,8 @@ struct alpha_pci_chipset {
     (*(c)->pc_intr_establish)((c)->pc_intr_v, (ih), (l), (h), (a), (nm))
 #define	pci_intr_disestablish(c, iv)					\
     (*(c)->pc_intr_disestablish)((c)->pc_intr_v, (iv))
+
+#ifdef _KERNEL
+void pci_display_console
+    __P((bus_chipset_tag_t, pci_chipset_tag_t, int, int, int));
+#endif /* _KERNEL */

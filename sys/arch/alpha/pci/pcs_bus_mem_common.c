@@ -1,5 +1,5 @@
-/*	$OpenBSD: pcs_bus_mem_common.c,v 1.2 1996/07/29 23:00:51 niklas Exp $	*/
-/*	$NetBSD: pcs_bus_mem_common.c,v 1.1.4.4 1996/06/13 18:17:01 cgd Exp $	*/
+/*	$OpenBSD: pcs_bus_mem_common.c,v 1.3 1996/10/30 22:40:13 niklas Exp $	*/
+/*	$NetBSD: pcs_bus_mem_common.c,v 1.9 1996/10/13 03:00:17 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -106,7 +106,7 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, cacheable, memhp)
 #ifdef CHIP_D_MEM_W1_START
                 if (memaddr >= CHIP_D_MEM_W1_START(v) &&
                     memaddr <= CHIP_D_MEM_W1_END(v)) {
-                        *memhp = phystok0seg(CHIP_D_MEM_W1_BASE(v)) +
+                        *memhp = ALPHA_PHYS_TO_K0SEG(CHIP_D_MEM_W1_BASE(v)) +
                             (memaddr & CHIP_D_MEM_W1_MASK(v));
                 } else
 #endif
@@ -124,21 +124,21 @@ __C(CHIP,_mem_map)(v, memaddr, memsize, cacheable, memhp)
 #ifdef CHIP_S_MEM_W1_START
 		if (memaddr >= CHIP_S_MEM_W1_START(v) &&
 		    memaddr <= CHIP_S_MEM_W1_END(v)) {
-			*memhp = (phystok0seg(CHIP_S_MEM_W1_BASE(v)) >> 5) +
+			*memhp = (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W1_BASE(v)) >> 5) +
 			    (memaddr & CHIP_S_MEM_W1_MASK(v));
 		} else
 #endif
 #ifdef CHIP_S_MEM_W2_START
 		if (memaddr >= CHIP_S_MEM_W2_START(v) &&
 		    memaddr <= CHIP_S_MEM_W2_END(v)) {
-			*memhp = (phystok0seg(CHIP_S_MEM_W2_BASE(v)) >> 5) +
+			*memhp = (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W2_BASE(v)) >> 5) +
 			    (memaddr & CHIP_S_MEM_W2_MASK(v));
 		} else
 #endif
 #ifdef CHIP_S_MEM_W3_START
 		if (memaddr >= CHIP_S_MEM_W3_START(v) &&
 		    memaddr <= CHIP_S_MEM_W3_END(v)) {
-			*memhp = (phystok0seg(CHIP_S_MEM_W3_BASE(v)) >> 5) +
+			*memhp = (ALPHA_PHYS_TO_K0SEG(CHIP_S_MEM_W3_BASE(v)) >> 5) +
 			    (memaddr & CHIP_S_MEM_W3_MASK(v));
 		} else
 #endif
@@ -199,7 +199,7 @@ __C(CHIP,_mem_read_1)(v, memh, off)
 	register u_int8_t rval;
 	register int offset;
 
-	wbflush();
+	alpha_mb();
 
 	if ((memh >> 63) != 0)
 		return (*(u_int8_t *)(memh + off));
@@ -224,7 +224,7 @@ __C(CHIP,_mem_read_2)(v, memh, off)
 	register u_int16_t rval;
 	register int offset;
 
-	wbflush();
+	alpha_mb();
 
 	if ((memh >> 63) != 0)
 		return (*(u_int16_t *)(memh + off));
@@ -249,7 +249,7 @@ __C(CHIP,_mem_read_4)(v, memh, off)
 	register u_int32_t rval;
 	register int offset;
 
-	wbflush();
+	alpha_mb();
 
 	if ((memh >> 63) != 0)
 		return (*(u_int32_t *)(memh + off));
@@ -274,7 +274,7 @@ __C(CHIP,_mem_read_8)(v, memh, off)
 	bus_mem_size_t off;
 {
 
-	wbflush();
+	alpha_mb();
 
         if ((memh >> 63) != 0)
                 return (*(u_int64_t *)(memh + off));
@@ -303,7 +303,7 @@ __C(CHIP,_mem_write_1)(v, memh, off, val)
 		port = (u_int32_t *)((tmpmemh << 5) | (0 << 3));
 		*port = nval;
 	}
-        wbflush();
+        alpha_mb();
 }
 
 void
@@ -326,7 +326,7 @@ __C(CHIP,_mem_write_2)(v, memh, off, val)
 	        port = (u_int32_t *)((tmpmemh << 5) | (1 << 3));
 	        *port = nval;
 	}
-        wbflush();
+        alpha_mb();
 }
 
 void
@@ -349,7 +349,7 @@ __C(CHIP,_mem_write_4)(v, memh, off, val)
 	        port = (u_int32_t *)((tmpmemh << 5) | (3 << 3));
 	        *port = nval;
 	}
-        wbflush();
+        alpha_mb();
 }
 
 void
@@ -367,7 +367,7 @@ __C(CHIP,_mem_write_8)(v, memh, off, val)
 		panic("%s not implemented\n",
 		    __S(__C(CHIP,_mem_write_8)));
 	}
-	wbflush();
+	alpha_mb();
 }
 
 vm_offset_t
@@ -375,5 +375,5 @@ __C(CHIP,_XXX_dmamap)(addr)
 	void *addr;
 {
 
-	return (vtophys(addr) | 0x40000000);
+	return (vtophys((vm_offset_t)addr) | 0x40000000);
 }

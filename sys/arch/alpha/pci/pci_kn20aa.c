@@ -1,5 +1,5 @@
-/*	$OpenBSD: pci_kn20aa.c,v 1.6 1996/10/04 03:06:04 deraadt Exp $	*/
-/*	$NetBSD: pci_kn20aa.c,v 1.3.4.2 1996/06/13 18:35:31 cgd Exp $	*/
+/*	$OpenBSD: pci_kn20aa.c,v 1.7 1996/10/30 22:40:06 niklas Exp $	*/
+/*	$NetBSD: pci_kn20aa.c,v 1.18 1996/10/13 03:00:12 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -39,6 +39,8 @@
 
 #include <vm/vm.h>
 
+#include <machine/autoconf.h>
+
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
 
@@ -69,7 +71,7 @@ void	dec_kn20aa_intr_disestablish __P((void *, void *));
 
 struct kn20aa_intrhand {
 	TAILQ_ENTRY(kn20aa_intrhand) ih_q;
-        int     (*ih_fun)();
+        int     (*ih_fun) __P((void *));
         void    *ih_arg;
         u_long  ih_count;
         int     ih_level;
@@ -83,7 +85,7 @@ struct evcnt kn20aa_intr_evcnt;
 #endif
 
 void	kn20aa_pci_strayintr __P((int irq));
-void	kn20aa_iointr __P((void *framep, int vec));
+void	kn20aa_iointr __P((void *framep, unsigned long vec));
 void	kn20aa_enable_intr __P((int irq));
 void	kn20aa_disable_intr __P((int irq));
 struct kn20aa_intrhand *kn20aa_attach_intr __P((struct kn20aa_intrchain *,
@@ -94,7 +96,6 @@ pci_kn20aa_pickintr(ccp)
 	struct cia_config *ccp;
 {
 	int i;
-	struct kn20aa_intrhand *nintrhand;
 	bus_chipset_tag_t bc = &ccp->cc_bc;
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 
@@ -132,7 +133,6 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 	pci_chipset_tag_t pc = &ccp->cc_pc;
 	int device;
 	int kn20aa_irq;
-	void *ih;
 
         if (buspin == 0) {
                 /* No IRQ used. */
@@ -174,6 +174,12 @@ dec_kn20aa_intr_map(ccv, bustag, buspin, line, ihp)
 		break;
 
 	default:
+#ifdef KN20AA_BOGUS_IRQ_FROB
+		*ihp = 0xdeadbeef;
+		printf("\n\n BOGUS INTERRUPT MAPPING: dev %d, pin %d\n",
+		    device, buspin);
+		return (0);
+#endif
 		panic("pci_kn20aa_map_int: invalid device number %d\n",
 		    device);
 	}
@@ -192,9 +198,14 @@ dec_kn20aa_intr_string(ccv, ih)
 	void *ccv;
 	pci_intr_handle_t ih;
 {
-	struct cia_config *ccp = ccv;
         static char irqstr[15];          /* 11 + 2 + NULL + sanity */
 
+#ifdef KN20AA_BOGUS_IRQ_FROB
+	if (ih == 0xdeadbeef) {
+		sprintf(irqstr, "BOGUS");
+		return (irqstr);
+	}
+#endif
         if (ih > KN20AA_MAX_IRQ)
                 panic("dec_kn20aa_a50_intr_string: bogus kn20aa IRQ 0x%x\n",
 		    ih);
@@ -211,9 +222,24 @@ dec_kn20aa_intr_establish(ccv, ih, level, func, arg, name)
         int (*func) __P((void *));
 	char *name;
 {           
-        struct cia_config *ccp = ccv;
 	void *cookie;
 
+#ifdef KN20AA_BOGUS_IRQ_FROB
+	if (ih == 0xdeadbeef) {
+		int i;
+		char chars[10];
+
+		printf("dec_kn20aa_intr_establish: BOGUS IRQ\n");
+		do {
+			printf("IRQ to enable? ");
+			getstr(chars, 10);
+			i = atoi(chars);
+		} while (i < 0 || i > 32);
+		printf("ENABLING IRQ %d\n", i);
+		kn20aa_enable_intr(i);
+		return ((void *)0xbabefacedeadbeef);
+	}
+#endif
         if (ih > KN20AA_MAX_IRQ)
                 panic("dec_kn20aa_intr_establish: bogus kn20aa IRQ 0x%x\n",
 		    ih);
@@ -227,8 +253,6 @@ void
 dec_kn20aa_intr_disestablish(ccv, cookie)
         void *ccv, *cookie;
 {
-	struct cia_config *ccp = ccv;
-
 	panic("dec_kn20aa_intr_disestablish not implemented"); /* XXX */
 }
 
@@ -252,7 +276,7 @@ kn20aa_pci_strayintr(irq)
 void
 kn20aa_iointr(framep, vec)
 	void *framep;
-	int vec;
+	unsigned long vec;
 {
 	struct kn20aa_intrhand *ih;
 	int irq, handled;
@@ -303,9 +327,9 @@ kn20aa_enable_intr(irq)
 	 * "blech."  I'd give valuable body parts for better docs or
 	 * for a good decompiler.
 	 */
-	wbflush();
+	alpha_mb();
 	REGVAL(0x8780000000L + 0x40L) |= (1 << irq);	/* XXX */
-	wbflush();
+	alpha_mb();
 }
 
 void
@@ -313,9 +337,9 @@ kn20aa_disable_intr(irq)
 	int irq;
 {
 
-	wbflush();
+	alpha_mb();
 	REGVAL(0x8780000000L + 0x40L) &= ~(1 << irq);	/* XXX */
-	wbflush();
+	alpha_mb();
 }
 
 struct kn20aa_intrhand *

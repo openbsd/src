@@ -1,4 +1,4 @@
-/*	$OpenBSD: puts.c,v 1.2 1996/07/29 23:01:27 niklas Exp $	*/
+/*	$OpenBSD: puts.c,v 1.3 1996/10/30 22:40:35 niklas Exp $	*/
 
 
 void

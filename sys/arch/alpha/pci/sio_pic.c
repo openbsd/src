@@ -1,5 +1,5 @@
-/*	$OpenBSD: sio_pic.c,v 1.5 1996/07/29 23:00:55 niklas Exp $	*/
-/*	$NetBSD: sio_pic.c,v 1.7.4.3 1996/06/05 22:50:23 cgd Exp $	*/
+/*	$OpenBSD: sio_pic.c,v 1.6 1996/10/30 22:40:15 niklas Exp $	*/
+/*	$NetBSD: sio_pic.c,v 1.13 1996/10/13 03:00:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -70,7 +70,7 @@ bus_io_handle_t sio_ioh_icu1, sio_ioh_icu2, sio_ioh_elcr;
  * the list.  The handler is called with its (single) argument.
  */
 struct intrhand {
-	int	(*ih_fun)();
+	int	(*ih_fun) __P((void *));
 	void	*ih_arg;
 	u_long	ih_count;
 	struct	intrhand *ih_next;
@@ -114,6 +114,8 @@ u_int8_t initial_elcr[2];
 #define	INITIALLY_ENABLED(irq)		((irq) == 2 ? 1 : 0)
 #define	INITIALLY_LEVEL_TRIGGERED(irq)	0
 #endif
+
+void sio_setirqstat __P((int, int, int));
 
 void
 sio_setirqstat(irq, enabled, type)
@@ -358,16 +360,27 @@ sio_strayintr(irq)
 	int irq;
 {
 
-	if (++sio_strayintrcnt[irq] <= STRAY_MAX)
-		log(LOG_ERR, "stray interrupt %d%s\n", irq,
+        sio_strayintrcnt[irq]++;
+
+#ifdef notyet
+        if (sio_strayintrcnt[irq] == STRAY_MAX)
+                sio_disable_intr(irq);
+
+        log(LOG_ERR, "stray isa irq %d\n", irq);
+        if (sio_strayintrcnt[irq] == STRAY_MAX)
+                log(LOG_ERR, "disabling interrupts on isa irq %d\n", irq);
+#else
+	if (sio_strayintrcnt[irq] <= STRAY_MAX)
+		log(LOG_ERR, "stray isa irq %d%s\n", irq,
 		    sio_strayintrcnt[irq] >= STRAY_MAX ?
 			"; stopped logging" : "");
+#endif
 }
 
 void
 sio_iointr(framep, vec)
 	void *framep;
-	int vec;
+	unsigned long vec;
 {
 	int irq, handled;
 	struct intrhand *ih;

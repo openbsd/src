@@ -1,5 +1,5 @@
-/*	$OpenBSD: tc_3000_500.c,v 1.4 1996/07/29 23:02:23 niklas Exp $	*/
-/*	$NetBSD: tc_3000_500.c,v 1.4.4.3 1996/06/13 18:35:35 cgd Exp $	*/
+/*	$OpenBSD: tc_3000_500.c,v 1.5 1996/10/30 22:41:18 niklas Exp $	*/
+/*	$NetBSD: tc_3000_500.c,v 1.11 1996/10/13 03:00:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -29,6 +29,7 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/device.h>
 
 #include <machine/autoconf.h>
@@ -45,12 +46,12 @@ void	tc_3000_500_intr_setup __P((void));
 void	tc_3000_500_intr_establish __P((struct device *, void *,
 	    tc_intrlevel_t, int (*)(void *), void *));
 void	tc_3000_500_intr_disestablish __P((struct device *, void *));
-void	tc_3000_500_iointr __P((void *, int));
+void	tc_3000_500_iointr __P((void *, unsigned long));
 
 int	tc_3000_500_intrnull __P((void *));
 
 #define C(x)	((void *)(u_long)x)
-#define	KV(x)	(phystok0seg(x))
+#define	KV(x)	(ALPHA_PHYS_TO_K0SEG(x))
 
 struct tc_slotdesc tc_3000_500_slots[] = {
 	{ KV(0x100000000), C(TC_3000_500_DEV_OPT0), },	/* 0 - opt slot 0 */
@@ -175,7 +176,7 @@ tc_3000_500_intrnull(val)
 void
 tc_3000_500_iointr(framep, vec)
         void *framep;
-        int vec;
+        unsigned long vec;
 {
         u_int32_t ir;
 	int ifound;
@@ -183,10 +184,11 @@ tc_3000_500_iointr(framep, vec)
 #ifdef DIAGNOSTIC
 	int s;
 	if (vec != 0x800)
-		panic("INVALID ASSUMPTION: vec %x, not 0x800", vec);
+		panic("INVALID ASSUMPTION: vec 0x%lx, not 0x800", vec);
 	s = splhigh();
-	if (s != PSL_IPL_IO)
-		panic("INVALID ASSUMPTION: IPL %d, not %d", s, PSL_IPL_IO);
+	if (s != ALPHA_PSL_IPL_IO)
+		panic("INVALID ASSUMPTION: IPL %d, not %d", s,
+		    ALPHA_PSL_IPL_IO);
 	splx(s);
 #endif
 
@@ -248,6 +250,7 @@ tc_3000_500_iointr(framep, vec)
 	} while (ifound);
 }
 
+#if 0
 /*
  * tc_3000_500_ioslot --
  *	Set the PBS bits for devices on the TC.
@@ -273,3 +276,4 @@ tc_3000_500_ioslot(slot, flags, set)
 	tc_mb();
 	splx(s);
 }
+#endif

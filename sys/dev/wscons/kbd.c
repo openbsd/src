@@ -1,5 +1,5 @@
-/*	$OpenBSD: kbd.c,v 1.2 1996/07/29 23:02:51 niklas Exp $ */
-/*	$NetBSD: kbd.c,v 1.1 1996/04/12 02:00:46 cgd Exp $ */
+/*	$OpenBSD: kbd.c,v 1.3 1996/10/30 22:41:39 niklas Exp $ */
+/*	$NetBSD: kbd.c,v 1.2 1996/09/15 17:15:28 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -57,6 +57,7 @@
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/signalvar.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
@@ -68,6 +69,7 @@
 #include <machine/wsconsio.h>			/* XXX for bell ioctls */
 #include <alpha/wscons/event_var.h>
 #include <alpha/wscons/wsconsvar.h>
+#include <alpha/wscons/kbd.h>
 
 struct kbd_softc {
 	struct device *k_idev;		/* the input device */
@@ -169,9 +171,6 @@ kbd_input(register int c)
 int
 kbdopen(dev_t dev, int flags, int mode, struct proc *p)
 {
-	int s;
-	struct tty *tp;
-
 	if (kbd_softc.k_events.ev_io)
 		return (EBUSY);
 	kbd_softc.k_events.ev_io = p;
@@ -286,12 +285,19 @@ kbdioctl(dev_t dev, u_long cmd, register caddr_t data, int flag, struct proc *p)
 	return (rv);
 }
 
+#ifdef notyet
+int
+kbdpoll(dev_t dev, int events, struct proc *p)
+{
+	return (ev_poll(&kbd_softc.k_events, events, p));
+}
+#else
 int
 kbdselect(dev_t dev, int rw, struct proc *p)
 {
-
 	return (ev_select(&kbd_softc.k_events, rw, p));
 }
+#endif
 
 /* Ring the console bell.  (For wscons terminal emulator and other code) */
 void

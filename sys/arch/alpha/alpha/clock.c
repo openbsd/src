@@ -1,5 +1,5 @@
-/*	$OpenBSD: clock.c,v 1.5 1996/07/29 22:57:13 niklas Exp $	*/
-/*	$NetBSD: clock.c,v 1.10 1996/04/23 15:26:06 cgd Exp $	*/
+/*	$OpenBSD: clock.c,v 1.6 1996/10/30 22:37:58 niklas Exp $	*/
+/*	$NetBSD: clock.c,v 1.13 1996/10/13 02:59:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,6 +49,7 @@
 #include <sys/device.h>
 
 #include <machine/rpb.h>
+#include <machine/autoconf.h>
 
 #include <alpha/alpha/clockvar.h>
 
@@ -105,8 +106,6 @@ void
 cpu_initclocks()
 {
 	extern int tickadj;
-	struct clock_softc *csc;
-	int fractick;
 
 	if (clockfns == NULL)
 		panic("cpu_initclocks: no clock attached");
@@ -160,8 +159,8 @@ inittodr(base)
 {
 	register int days, yr;
 	struct clocktime ct;
-	long deltat;
-	int badbase, s;
+	time_t deltat;
+	int badbase;
 
 	if (base < 5*SECYR) {
 		printf("WARNING: preposterous time in file system");
@@ -227,7 +226,6 @@ resettodr()
 {
 	register int t, t2;
 	struct clocktime ct;
-	int s;
 
 	if (!clockinitted)
 		return;
@@ -238,6 +236,7 @@ resettodr()
 
 	/* compute the year */
 	ct.year = 69;
+	t = t2;			/* XXX ? */
 	while (t2 >= 0) {	/* whittle off years */
 		t = t2;
 		ct.year++;

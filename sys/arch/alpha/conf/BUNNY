@@ -1,12 +1,12 @@
-#	$OpenBSD: BUNNY,v 1.6 1996/09/20 06:44:50 deraadt Exp $
-#	$NetBSD: BUNNY,v 1.5.4.1 1996/06/13 19:22:03 cgd Exp $
+#	$OpenBSD: BUNNY,v 1.7 1996/10/30 22:38:38 niklas Exp $
+#	$NetBSD: BUNNY,v 1.9 1996/09/27 17:08:35 cgd Exp $
 #
 # Kernel for bunnahabhain.pdl.cs.cmu.edu.
 #
 # Trimmed down kernel for AlphaStation [24]xx systems, with lots
 # of buffer cache.
 
-include	"std.alpha"
+include	"arch/alpha/conf/std.alpha"
 
 maxusers 8
 
@@ -42,6 +42,7 @@ options		COMPAT_43
 #options	COMPAT_09
 options		COMPAT_10
 options		COMPAT_11
+options		COMPAT_12
 
 # Loadable Kernel Modules
 options		LKM
@@ -50,7 +51,8 @@ options		LKM
 #options	INSECURE
 
 # Misc. options
-options		PCIVERBOSE	# recognize "unknown" PCI devices
+options		PCIVERBOSE		# recognize "unknown" PCI devices
+options		UCONSOLE		# users can use TIOCCONS (for xconsole)
 
 config		bsd	swap generic
 

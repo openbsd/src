@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.3 1996/07/29 22:58:05 niklas Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.4 1996/10/30 22:38:28 niklas Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.3 1995/11/23 02:34:35 cgd Exp $	*/
 
 /*
@@ -40,10 +40,12 @@ sys_sysarch(p, v, retval)
 	void *v;
 	register_t *retval;
 {
+#if 0
 	struct sys_sysarch_args /* {
 		syscallarg(int) op;
 		syscallarg(char *) parms;
 	} */ *uap = v;
+#endif
 
 	return (ENOSYS);
 }

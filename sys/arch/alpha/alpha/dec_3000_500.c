@@ -1,5 +1,5 @@
-/*	$OpenBSD: dec_3000_500.c,v 1.3 1996/07/29 22:57:26 niklas Exp $	*/
-/*	$NetBSD: dec_3000_500.c,v 1.1.6.2 1996/06/13 18:35:15 cgd Exp $	*/
+/*	$OpenBSD: dec_3000_500.c,v 1.4 1996/10/30 22:38:05 niklas Exp $	*/
+/*	$NetBSD: dec_3000_500.c,v 1.8 1996/10/13 02:59:31 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -41,6 +41,10 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
+
+char *dec_3000_500_modelname __P((void));
+void dec_3000_500_consinit __P((void));
+void dec_3000_500_device_register __P((struct device *, void *));
 
 char *
 dec_3000_500_modelname()
@@ -87,7 +91,6 @@ systype_flamingo:
 void
 dec_3000_500_consinit()
 {
-
 }
 
 void
@@ -95,7 +98,7 @@ dec_3000_500_device_register(dev, aux)
 	struct device *dev;
 	void *aux;
 {
-	static int found;
+	static int found, initted, scsiboot, netboot;
 	static struct device *scsidev;
 	struct bootdev_data *b = bootdev_data;
 	struct device *parent = dev->dv_parent;
@@ -105,7 +108,16 @@ dec_3000_500_device_register(dev, aux)
 	if (found)
 		return;
 
-	if (strcmp(cd->cd_name, "esp") == 0) {
+	if (!initted) {
+		scsiboot = (strcmp(b->protocol, "SCSI") == 0);
+		netboot = (strcmp(b->protocol, "BOOTP") == 0);
+#if 0
+		printf("scsiboot = %d, netboot = %d\n", scsiboot, netboot);
+#endif
+		initted =1;
+	}
+
+	if (scsiboot && (strcmp(cd->cd_name, "esp") == 0)) {
 		if (b->slot == 6 &&
 		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "tcds")
 		      == 0) {
@@ -118,9 +130,12 @@ dec_3000_500_device_register(dev, aux)
 #endif
 			}
 		}
-	} else if (strcmp(cd->cd_name, "sd") == 0 ||
-	    strcmp(cd->cd_name, "st") == 0 ||
-	    strcmp(cd->cd_name, "cd") == 0) {
+	}
+
+	if (scsiboot &&
+	    (strcmp(cd->cd_name, "sd") == 0 ||
+	     strcmp(cd->cd_name, "st") == 0 ||
+	     strcmp(cd->cd_name, "cd") == 0)) {
 		struct scsibus_attach_args *sa = aux;
 
 		if (scsidev == NULL)
@@ -155,4 +170,26 @@ dec_3000_500_device_register(dev, aux)
 #endif
 		found = 1;
 	}
+
+	if (netboot) {
+                if (b->slot == 7 && strcmp(cd->cd_name, "le") == 0 &&
+		    strcmp(parent->dv_cfdata->cf_driver->cd_name, "ioasic")
+		     == 0) {
+			/*
+			 * no need to check ioasic_attach_args, since only
+			 * one le on ioasic.
+			 */
+
+			booted_device = dev;
+#if 0
+			printf("\nbooted_device = %s\n", booted_device->dv_xname);
+#endif
+			found = 1;
+			return;
+		}
+
+		/*
+		 * XXX GENERIC SUPPORT FOR TC NETWORK BOARDS
+		 */
+        }
 }

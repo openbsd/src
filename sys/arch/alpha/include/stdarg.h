@@ -1,5 +1,5 @@
-/*	$OpenBSD: stdarg.h,v 1.3 1996/07/29 22:59:21 niklas Exp $	*/
-/*	$NetBSD: stdarg.h,v 1.3 1995/12/26 00:15:47 mycroft Exp $	*/
+/*	$OpenBSD: stdarg.h,v 1.4 1996/10/30 22:39:30 niklas Exp $	*/
+/*	$NetBSD: stdarg.h,v 1.4 1996/10/09 21:13:05 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -47,7 +47,7 @@ typedef _BSD_VA_LIST_	va_list;
 	(((sizeof(type) + sizeof(long) - 1) / sizeof(long)) * sizeof(long))
 
 #define	va_start(ap, last) \
-	(__builtin_next_arg(last), (ap) = *(va_list *)__builtin_saveregs())
+	(__builtin_next_arg(last), (ap) = *(va_list *)__builtin_saveregs(), (ap).pad = 0)
 
 #define	__REAL_TYPE_CLASS	8
 #define	__va_arg_offset(ap, type)					\

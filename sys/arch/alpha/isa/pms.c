@@ -1,5 +1,5 @@
-/*	$OpenBSD: pms.c,v 1.2 1996/07/29 22:59:53 niklas Exp $	*/
-/*	$NetBSD: pms.c,v 1.1 1996/04/12 01:53:06 cgd Exp $	*/
+/*	$OpenBSD: pms.c,v 1.3 1996/10/30 22:39:42 niklas Exp $	*/
+/*	$NetBSD: pms.c,v 1.3 1996/10/13 02:59:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994 Charles Hannum.
@@ -53,6 +53,7 @@
 #include <machine/intr.h>
 #include <dev/isa/isavar.h>
 #include <alpha/wscons/wsconsvar.h>
+#include <alpha/wscons/ms.h>
 
 #define	PMS_DATA	0x60	/* offset for data port, read-write */
 #define	PMS_CNTRL	0x64	/* offset for control port, write-only */
@@ -126,12 +127,17 @@ struct wscons_mdev_spec pms_mdev_spec = {
 	pms_disable,
 };
 
-static inline void
+static __inline void pms_flush __P((void));
+static __inline void pms_dev_cmd __P((u_char));
+static __inline void pms_aux_cmd __P((u_char));
+static __inline void pms_pit_cmd __P((u_char));
+
+static __inline void
 pms_flush()
 {
 	u_char c;
 
-	while (c = bus_io_read_1(pms_bc, pms_status_ioh, 0) & 0x03)
+	while ((c = bus_io_read_1(pms_bc, pms_status_ioh, 0)) & 0x03)
 		if ((c & PMS_OBUF_FULL) == PMS_OBUF_FULL) {
 			/* XXX - delay is needed to prevent some keyboards from
 			   wedging when the system boots */
@@ -140,7 +146,7 @@ pms_flush()
 		}
 }
 
-static inline void
+static __inline void
 pms_dev_cmd(value)
 	u_char value;
 {
@@ -151,7 +157,7 @@ pms_dev_cmd(value)
 	bus_io_write_1(pms_bc, pms_data_ioh, 0, value);
 }
 
-static inline void
+static __inline void
 pms_aux_cmd(value)
 	u_char value;
 {
@@ -160,7 +166,7 @@ pms_aux_cmd(value)
 	bus_io_write_1(pms_bc, pms_cntrl_ioh, 0, value);
 }
 
-static inline void
+static __inline void
 pms_pit_cmd(value)
 	u_char value;
 {
@@ -288,7 +294,6 @@ pmsintr(arg)
 	static u_char buttons;
 	u_char changed;
 	static char dx, dy;
-	u_char buffer[5];
 
 	if ((sc->sc_state & PMS_OPEN) == 0) {
 		/* Interrupts are not expected.  Discard the byte. */

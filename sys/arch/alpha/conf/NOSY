@@ -1,10 +1,10 @@
-#	$OpenBSD: NOSY,v 1.4 1996/09/20 06:44:51 deraadt Exp $
-#	$NetBSD: NOSY,v 1.5.4.2 1996/06/13 19:22:15 cgd Exp $
+#	$OpenBSD: NOSY,v 1.5 1996/10/30 22:38:42 niklas Exp $
+#	$NetBSD: NOSY,v 1.9 1996/09/27 17:08:34 cgd Exp $
 #
 # Jason's DEC 3000/400 in the lab...
 #
 
-include	"std.alpha"
+include	"arch/alpha/conf/std.alpha"
 
 maxusers 8
 
@@ -38,6 +38,7 @@ options		COMPAT_43
 #options	COMPAT_09
 options		COMPAT_10
 options		COMPAT_11
+options		COMPAT_12
 
 # OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
 #options	COMPAT_OSF1

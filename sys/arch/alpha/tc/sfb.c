@@ -1,5 +1,5 @@
-/*	$OpenBSD: sfb.c,v 1.2 1996/07/29 23:02:16 niklas Exp $	*/
-/*	$NetBSD: sfb.c,v 1.1 1996/05/01 21:15:50 cgd Exp $	*/
+/*	$OpenBSD: sfb.c,v 1.3 1996/10/30 22:41:14 niklas Exp $	*/
+/*	$NetBSD: sfb.c,v 1.5 1996/10/13 03:00:35 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -57,7 +57,7 @@
 
 int	sfbmatch __P((struct device *, void *, void *));
 void	sfbattach __P((struct device *, struct device *, void *));
-int	sfbprint __P((void *, char *));
+int	sfbprint __P((void *, /* const */ char *));
 
 struct cfattach sfb_ca = {
 	sizeof(struct sfb_softc), sfbmatch, sfbattach,
@@ -92,7 +92,6 @@ sfbmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct tc_attach_args *ta = aux;
 
 	if (strncmp("PMAGB-BA", ta->ta_modname, TC_ROM_LLEN) != 0)
@@ -112,7 +111,7 @@ sfb_getdevconfig(dense_addr, dc)
 	int i;
 
 	dc->dc_vaddr = dense_addr;
-	dc->dc_paddr = k0segtophys(dc->dc_vaddr);		/* XXX */
+	dc->dc_paddr = ALPHA_K0SEG_TO_PHYS(dc->dc_vaddr);	/* XXX */
 	dc->dc_size = SFB_SIZE;
 
 	regp = (char *)dc->dc_vaddr + SFB_ASIC_OFFSET;
@@ -209,7 +208,6 @@ sfbattach(parent, self, aux)
 	struct wscons_attach_args waa;
 	struct wscons_odev_spec *wo;
 	int console;
-	char *x;
 
 	console = 0;					/* XXX */
 	if (console)
@@ -253,7 +251,7 @@ sfbattach(parent, self, aux)
 int
 sfbprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	/* const */ char *pnp;
 {
 
 	if (pnp)

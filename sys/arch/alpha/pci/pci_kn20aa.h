@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_kn20aa.h,v 1.3 1996/07/29 23:00:42 niklas Exp $	*/
+/*	$OpenBSD: pci_kn20aa.h,v 1.4 1996/10/30 22:40:07 niklas Exp $	*/
 /*	$NetBSD: pci_kn20aa.h,v 1.2 1996/04/13 00:24:35 cgd Exp $	*/
 
 /*

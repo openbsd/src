@@ -1,5 +1,5 @@
-/*	$OpenBSD: prom_swpal.S,v 1.2 1996/07/29 23:01:44 niklas Exp $	*/
-/*	$NetBSD: prom_swpal.S,v 1.2 1995/02/16 02:32:58 cgd Exp $	*/
+/*	$OpenBSD: prom_swpal.S,v 1.3 1996/10/30 22:40:45 niklas Exp $	*/
+/*	$NetBSD: prom_swpal.S,v 1.4 1996/10/17 02:50:41 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -61,13 +61,13 @@
 #define	PALSW_FRAME_SIZE	(14*8)
 #define	PALSW_REGS		IM_RA|IM_S0|IM_S1|IM_S2|IM_S3|IM_S4|IM_S5
 
-	.comm	ptbr_save	 8
+	.comm	ptbr_save,8
 
 	.text
 	.align	4
 
 NESTED(switch_palcode, 0, PALSW_FRAME_SIZE, ra, PALSW_REGS, 0)
-	SETGP(pv)
+	LDGP(pv)
 /*	ldgp	gp, 0(pv)*/
 
 	lda 	sp, -PALSW_FRAME_SIZE(sp)
@@ -105,8 +105,7 @@ NESTED(switch_palcode, 0, PALSW_FRAME_SIZE, ra, PALSW_REGS, 0)
 
 	call_pal PAL_VMS_mfpr_vptb
 	mov 	v0, a3
-/*	movi	PAL_OSF, a0 */
-	CONST(PAL_OSF, a0)
+	ldiq	a0, PAL_OSF
 	lda	a1, contin
 	ldq 	a2, 16(sp)
 

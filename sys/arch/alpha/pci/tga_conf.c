@@ -1,4 +1,4 @@
-/*	$OpenBSD: tga_conf.c,v 1.2 1996/07/29 23:01:05 niklas Exp $	*/
+/*	$OpenBSD: tga_conf.c,v 1.3 1996/10/30 22:40:22 niklas Exp $	*/
 /*	$NetBSD: tga_conf.c,v 1.2 1996/04/12 06:09:18 cgd Exp $	*/
 
 /*

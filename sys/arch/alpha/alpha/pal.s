@@ -1,5 +1,5 @@
-/*	$OpenBSD: pal.s,v 1.3 1996/07/29 22:57:51 niklas Exp $	*/
-/*	$NetBSD: pal.s,v 1.2 1995/11/23 02:34:23 cgd Exp $	*/
+/*	$OpenBSD: pal.s,v 1.4 1996/10/30 22:38:18 niklas Exp $	*/
+/*	$NetBSD: pal.s,v 1.5 1996/07/14 04:21:53 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -37,166 +37,89 @@
  */
 
 /*
- * pal_bpt: Breakpoint trap [UNPRIVILEGED]
+ * alpha_rpcc: read process cycle counter (XXX INSTRUCTION, NOT PALcode OP)
  */
-	.text
-LEAF(pal_bpt,0)
-	call_pal PAL_bpt
-	RET
-	END(pal_bpt)
+        .text
+LEAF(alpha_rpcc,1)
+        rpcc    v0
+        RET
+        END(alpha_rpcc)
 
 /*
- * pal_bugchk: Bugcheck trap [UNPRIVILEGED]
+ * alpha_mb: memory barrier (XXX INSTRUCTION, NOT PALcode OP)
  */
 	.text
-LEAF(pal_bugchk,0)
-	call_pal PAL_bugchk
+LEAF(alpha_mb,0)
+	mb
 	RET
-	END(pal_bugchk)
+	END(alpha_mb)
 
-#ifdef ILLEGAL	/* ILLEGAL FROM KERNEL MODE */
 /*
- * pal_callsys: System call [UNPRIVILEGED]
+ * alpha_wmb: write memory barrier (XXX INSTRUCTION, NOT PALcode OP)
  */
 	.text
-LEAF(pal_callsys,0)
-	call_pal PAL_OSF1_callsys
+LEAF(alpha_wmb,0)
+	/* wmb XXX */
+	mb /* XXX */
 	RET
-	END(pal_callsys)
-#endif /* ILLEGAL */
+	END(alpha_wmb)
 
 /*
- * pal_gentrap: Generate trap [UNPRIVILEGED]
- */
-	.text
-LEAF(pal_gentrap,0)
-	call_pal PAL_gentrap
-	RET
-	END(pal_gentrap)
-
-/*
- * pal_imb: I-Stream memory barrier. [UNPRIVILEGED]
+ * alpha_pal_imb: I-Stream memory barrier. [UNPRIVILEGED]
  * (Makes instruction stream coherent with data stream.)
  */
 	.text
-LEAF(pal_imb,0)
+LEAF(alpha_pal_imb,0)
 	call_pal PAL_imb
 	RET
-	END(pal_imb)
+	END(alpha_pal_imb)
 
 /*
- * pal_rdunique: Read process unique value. [UNPRIVILEGED]
- *
- * Return:
- *	v0	current process unique value
+ * alpha_pal_draina: Drain aborts. [PRIVILEGED]
  */
 	.text
-LEAF(pal_rdunique,0)
-	call_pal PAL_rdunique
-	RET
-	END(pal_rdunique)
-
-/*
- * pal_wrunique: Write process unique value. [UNPRIVILEGED]
- * Arguments:
- *	a0	new process unique value
- */
-	.text
-LEAF(pal_wrunique,1)
-	call_pal PAL_wrunique
-	RET
-	END(pal_wrunique)
-
-/*
- * pal_draina: Drain aborts. [PRIVILEGED]
- */
-	.text
-LEAF(pal_draina,0)
+LEAF(alpha_pal_draina,0)
 	call_pal PAL_draina
 	RET
-	END(pal_draina)
+	END(alpha_pal_draina)
 
 /*
- * pal_halt: Halt the processor. [PRIVILEGED]
+ * alpha_pal_halt: Halt the processor. [PRIVILEGED]
  */
 	.text
-LEAF(pal_halt,0)
+LEAF(alpha_pal_halt,0)
 	call_pal PAL_halt
-	br	zero,pal_halt	/* Just in case */
+	br	zero,alpha_pal_halt	/* Just in case */
 	RET
-	END(pal_halt)
+	END(alpha_pal_halt)
 
 /*
- * pal_rdps: Read processor status. [PRIVILEGED]
+ * alpha_pal_rdmces: Read MCES processor register. [PRIVILEGED]
  *
  * Return:
- *	v0	current processor status
+ *	v0	current MCES value
  */
 	.text
-LEAF(pal_rdps,0)
-	call_pal PAL_OSF1_rdps
+LEAF(alpha_pal_rdmces,1)
+	call_pal PAL_OSF1_rdmces
 	RET
-	END(pal_rdps)
+	END(alpha_pal_rdmces)
 
 /*
- * pal_rdusp: Read user stack pointer. [PRIVILEGED]
+ * alpha_pal_rdusp: Read user stack pointer. [PRIVILEGED]
  *
  * Return:
  *	v0	current user stack pointer
  */
 	.text
-LEAF(pal_rdusp,0)
+LEAF(alpha_pal_rdusp,0)
 	call_pal PAL_OSF1_rdusp
 	RET
-	END(pal_rdusp)
+	END(alpha_pal_rdusp)
 
 /*
- * pal_rdval: Read system value. [PRIVILEGED]
- *
- * Return:
- *	v0	current system value
- */
-	.text
-LEAF(pal_rdval,0)
-	call_pal PAL_OSF1_rdval
-	RET
-	END(pal_rdval)
-
-/*
- * pal_retsys: Return from system call. [PRIVILEGED]
- */
-	.text
-LEAF(pal_retsys,0)
-	call_pal PAL_OSF1_retsys
-	RET
-	END(pal_retsys)
-
-/*
- * pal_rti: Return from trap, fault, or interrupt. [PRIVILEGED]
- */
-	.text
-LEAF(pal_rti,0)
-	call_pal PAL_OSF1_rti
-	RET
-	END(pal_rti)
-
-/*
- * pal_swpctx: Swap process context. [PRIVILEGED] 
- *
- * Arguments:
- *	a0	new PCB
- *
- * Return:
- *	v0	old PCB
- */
-	.text
-LEAF(pal_swpctx,1)
-	call_pal PAL_OSF1_swpctx
-	RET
-	END(pal_swpctx)
-
-/*
- * pal_swpipl: Swap Interrupt priority level. [PRIVILEGED]
+ * alpha_pal_swpipl: Swap Interrupt priority level. [PRIVILEGED]
+ * _alpha_pal_swpipl: Same, from profiling code. [PRIVILEGED]
  *
  * Arguments:
  *	a0	new IPL
@@ -205,122 +128,98 @@ LEAF(pal_swpctx,1)
  *	v0	old IPL
  */
 	.text
-LEAF(pal_swpipl,1)
+LEAF(alpha_pal_swpipl,1)
 	call_pal PAL_OSF1_swpipl
 	RET
-	END(pal_swpipl)
+	END(alpha_pal_swpipl)
 
-LEAF_NOPROFILE(profile_swpipl,1)
+LEAF_NOPROFILE(_alpha_pal_swpipl,1)
 	call_pal PAL_OSF1_swpipl
 	RET
-	END(profile_swpipl)
+	END(_alpha_pal_swpipl)
 
 /*
- * pal_tbi: Translation buffer invalidate. [PRIVILEGED]
+ * alpha_pal_tbi: Translation buffer invalidate. [PRIVILEGED]
  *
  * Arguments:
  *	a0	operation selector
  *	a1	address to operate on (if necessary)
  */
 	.text
-LEAF(pal_tbi,2)
+LEAF(alpha_pal_tbi,2)
 	call_pal PAL_OSF1_tbi
 	RET
-	END(pal_tbi)
+	END(alpha_pal_tbi)
 
 /*
- * pal_whami: Who am I? [PRIVILEGED]
+ * alpha_pal_whami: Who am I? [PRIVILEGED]
  *
  * Return:
  *	v0	processor number
  */
 	.text
-LEAF(pal_whami,0)
+LEAF(alpha_pal_whami,0)
 	call_pal PAL_OSF1_whami
 	RET
-	END(pal_whami)
+	END(alpha_pal_whami)
 
 /*
- * pal_wrent: Write system entry address. [PRIVILEGED]
+ * alpha_pal_wrent: Write system entry address. [PRIVILEGED]
  *
  * Arguments:
  *	a0	new vector
  *	a1	vector selector
  */
 	.text
-LEAF(pal_wrent,2)
+LEAF(alpha_pal_wrent,2)
 	call_pal PAL_OSF1_wrent
 	RET
-	END(pal_wrent)
+	END(alpha_pal_wrent)
 
 /*
- * pal_wrfen: Write floating-point enable. [PRIVILEGED]
+ * alpha_pal_wrfen: Write floating-point enable. [PRIVILEGED]
  *
  * Arguments:
  *	a0	new enable value (val & 0x1 -> enable).
  */
 	.text
-LEAF(pal_wrfen,1)
+LEAF(alpha_pal_wrfen,1)
 	call_pal PAL_OSF1_wrfen
 	RET
-	END(pal_wrfen)
+	END(alpha_pal_wrfen)
 
 /*
- * pal_wrkgp: Write kernel global pointer. [PRIVILEGED]
- *
- * Arguments:
- *	a0	new kernel global pointer
- */
-	.text
-LEAF(pal_wrkgp,1)
-	call_pal PAL_OSF1_wrkgp
-	RET
-	END(pal_wrkgp)
-
-/*
- * pal_wrusp: Write user stack pointer. [PRIVILEGED]
+ * alpha_pal_wrusp: Write user stack pointer. [PRIVILEGED]
  *
  * Arguments:
  *	a0	new user stack pointer
  */
 	.text
-LEAF(pal_wrusp,1)
+LEAF(alpha_pal_wrusp,1)
 	call_pal PAL_OSF1_wrusp
 	RET
-	END(pal_wrusp)
+	END(alpha_pal_wrusp)
 
 /*
- * pal_wrval: Write system value. [PRIVILEGED]
- *
- * Arguments:
- *	a0	new system value
- */
-	.text
-LEAF(pal_wrval,1)
-	call_pal PAL_OSF1_wrval
-	RET
-	END(pal_wrval)
-
-/*
- * pal_wrvptptr: Write virtual page table pointer. [PRIVILEGED]
+ * alpha_pal_wrvptptr: Write virtual page table pointer. [PRIVILEGED]
  *
  * Arguments:
  *	a0	new virtual page table pointer
  */
 	.text
-LEAF(pal_wrvptptr,1)
+LEAF(alpha_pal_wrvptptr,1)
 	call_pal PAL_OSF1_wrvptptr
 	RET
-	END(pal_wrvptptr)
+	END(alpha_pal_wrvptptr)
 
 /*
- * pal_mtpr_mces: Write MCES processor register. [PRIVILEGED, VMS, XXX!]
+ * alpha_pal_wrmces: Write MCES processor register. [PRIVILEGED]
  *
  * Arguments:
  *	a0	value to write to MCES
  */
 	.text
-LEAF(pal_mtpr_mces,1)
-	call_pal PAL_VMS_mtpr_mces
+LEAF(alpha_pal_wrmces,1)
+	call_pal PAL_OSF1_wrmces
 	RET
-	END(pal_mtpr_mces)
+	END(alpha_pal_wrmces)

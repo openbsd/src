@@ -1,5 +1,5 @@
-/*	$OpenBSD: wscons_raster.h,v 1.2 1996/07/29 23:03:00 niklas Exp $ */
-/*	$NetBSD: wscons_raster.h,v 1.1 1996/04/12 02:00:51 cgd Exp $ */
+/*	$OpenBSD: wscons_raster.h,v 1.3 1996/10/30 22:41:50 niklas Exp $ */
+/*	$NetBSD: wscons_raster.h,v 1.2 1996/07/09 00:55:47 cgd Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -75,7 +75,9 @@ struct rcons {
 };
 
 #define RC_STANDOUT	0x001		/* standout mode */
-/* #define RC_BOLD	0x?		/* boldface mode */
+#if 0
+#define	RC_BOLD		0x?		/* boldface mode */
+#endif
 #define RC_INVERT	0x002		/* inverted screen colors */
 #define	RC_CURSOR	0x004		/* cursor currently displayed */
 

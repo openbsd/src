@@ -1,5 +1,5 @@
-/*	$OpenBSD: isafcns_jensen.c,v 1.3 1996/07/29 22:59:46 niklas Exp $	*/
-/*	$NetBSD: isafcns_jensen.c,v 1.2 1996/04/12 01:54:04 cgd Exp $	*/
+/*	$OpenBSD: isafcns_jensen.c,v 1.4 1996/10/30 22:39:38 niklas Exp $	*/
+/*	$NetBSD: isafcns_jensen.c,v 1.4 1996/10/13 02:59:54 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.

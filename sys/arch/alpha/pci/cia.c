@@ -1,5 +1,5 @@
-/*	$OpenBSD: cia.c,v 1.3 1996/07/29 23:00:15 niklas Exp $	*/
-/*	$NetBSD: cia.c,v 1.5.4.1 1996/06/10 00:02:39 cgd Exp $	*/
+/*	$OpenBSD: cia.c,v 1.4 1996/10/30 22:39:53 niklas Exp $	*/
+/*	$NetBSD: cia.c,v 1.11 1996/10/13 03:00:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -60,9 +60,7 @@ struct cfdriver cia_cd = {
 	NULL, "cia", DV_DULL,
 };
 
-static int	ciaprint __P((void *, char *pnp));
-
-#define	REGVAL(r)	(*(int32_t *)phystok0seg(r))
+int	ciaprint __P((void *, /* const */ char *pnp));
 
 /* There can be only one. */
 int ciafound;
@@ -73,7 +71,6 @@ ciamatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct confargs *ca = aux;
 
 	/* Make sure that we're looking for a CIA. */
@@ -111,7 +108,6 @@ ciaattach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct confargs *ca = aux;
 	struct cia_softc *sc = (struct cia_softc *)self;
 	struct cia_config *ccp;
 	struct pcibus_attach_args pba;
@@ -149,10 +145,10 @@ ciaattach(parent, self, aux)
 	config_found(self, &pba, ciaprint);
 }
 
-static int
+int
 ciaprint(aux, pnp)
 	void *aux;
-	char *pnp;
+	/* const */ char *pnp;
 {
 	register struct pcibus_attach_args *pba = aux;
 

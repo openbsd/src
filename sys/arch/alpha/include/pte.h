@@ -1,5 +1,5 @@
-/*	$OpenBSD: pte.h,v 1.4 1996/07/29 22:59:10 niklas Exp $	*/
-/*	$NetBSD: pte.h,v 1.4 1996/02/01 22:28:56 mycroft Exp $	*/
+/*	$OpenBSD: pte.h,v 1.5 1996/10/30 22:39:23 niklas Exp $	*/
+/*	$NetBSD: pte.h,v 1.7 1996/10/01 20:21:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -41,42 +41,53 @@
 /*
  * Alpha Page Table Entry
  */
-typedef u_int64_t	pt_entry_t;
+
+#include <machine/alpha_cpu.h>
+
+typedef	alpha_pt_entry_t	pt_entry_t;
+
 #define	PT_ENTRY_NULL	((pt_entry_t *) 0)
 #define	PTESHIFT	3			/* pte size == 1 << PTESHIFT */
 
-#define	PG_V		0x0000000000000001	/* PFN Valid */
-#define	PG_NV		0x0000000000000000	/* PFN NOT Valid */
-#define	PG_FOR		0x0000000000000002	/* Fault on read */
-#define	PG_FOW		0x0000000000000004	/* Fault on write */
-#define	PG_FOE		0x0000000000000008	/* Fault on execute */
-#define	PG_ASM		0x0000000000000010	/* Address space match */
-#define	PG_GH		0x0000000000000060	/* Granularity hint */
-#define	PG_KRE		0x0000000000000100	/* Kernel read enable */
-#define	PG_URE		0x0000000000000200	/* User	read enable */
-#define	PG_KWE		0x0000000000001000	/* Kernel write enable */
-#define	PG_UWE		0x0000000000002000	/* User write enable */
-#define	PG_PROT		0x000000000000ff00
+#define	PG_V		ALPHA_PTE_VALID
+#define	PG_NV		0
+#define	PG_FOR		ALPHA_PTE_FAULT_ON_READ
+#define	PG_FOW		ALPHA_PTE_FAULT_ON_WRITE
+#define	PG_FOE		ALPHA_PTE_FAULT_ON_EXECUTE
+#define	PG_ASM		ALPHA_PTE_ASM
+#define	PG_GH		ALPHA_PTE_GRANULARITY
+#define	PG_KRE		ALPHA_PTE_KR
+#define	PG_URE		ALPHA_PTE_UR
+#define	PG_KWE		ALPHA_PTE_KW
+#define	PG_UWE		ALPHA_PTE_UW
+#define	PG_PROT		ALPHA_PTE_PROT
 #define	PG_RSVD		0x000000000000cc80	/* Reserved fpr hardware */
 #define	PG_WIRED	0x0000000000010000	/* Wired. [SOFTWARE] */
-#define	PG_FRAME	0xffffffff00000000
+#define	PG_FRAME	ALPHA_PTE_RAME
 #define	PG_SHIFT	32
-#define	PG_PFNUM(x)	(((x) & PG_FRAME) >> PG_SHIFT)
+#define	PG_PFNUM(x)	ALPHA_PTE_TO_PFN(x)
 
+#if 0 /* XXX NOT HERE */
 #define	K0SEG_BEGIN	0xfffffc0000000000	/* unmapped, cached */
 #define	K0SEG_END	0xfffffe0000000000
 #define PHYS_UNCACHED	0x0000000040000000
+#endif
 
 #ifndef _LOCORE
+#if 0 /* XXX NOT HERE */
 #define	k0segtophys(x)	((vm_offset_t)(x) & 0x00000003ffffffff)
 #define	phystok0seg(x)	((vm_offset_t)(x) | K0SEG_BEGIN)
 
 #define phystouncached(x) ((vm_offset_t)(x) | PHYS_UNCACHED)
 #define uncachedtophys(x) ((vm_offset_t)(x) & ~PHYS_UNCACHED)
+#endif
 
 #define	PTEMASK		(NPTEPG - 1)
 #define	vatopte(va)	(((va) >> PGSHIFT) & PTEMASK)
 #define	vatoste(va)	(((va) >> SEGSHIFT) & PTEMASK)
+#define kvtol1pte(va) \
+	(((vm_offset_t)(va) >> (PGSHIFT + 2*(PGSHIFT-PTESHIFT))) & PTEMASK)
+
 #define	vatopa(va) \
 	((PG_PFNUM(*kvtopte(va)) << PGSHIFT) | ((vm_offset_t)(va) & PGOFSET))
 
@@ -92,15 +103,9 @@ typedef u_int64_t	pt_entry_t;
 #define	ptetokv(pte) \
 	((((pt_entry_t *)(pte) - Sysmap) << PGSHIFT) + VM_MIN_KERNEL_ADDRESS)
 
-/*
- * Kernel virtual address to Lev1map entry index.
- */
-#define kvtol1pte(va) \
-	(((vm_offset_t)(va) >> (PGSHIFT + 2*(PGSHIFT-PTESHIFT))) & PTEMASK)
-
 #define loadustp(stpte) {					\
 	Lev1map[kvtol1pte(VM_MIN_ADDRESS)] = stpte;		\
-	TBIAP();						\
+	ALPHA_TBIAP();						\
 }
 
 extern	pt_entry_t *Lev1map;		/* Alpha Level One page table */

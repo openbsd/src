@@ -1,5 +1,5 @@
-/*	$OpenBSD: bootxx.c,v 1.4 1996/07/31 10:38:46 niklas Exp $	*/
-/*	$NetBSD: bootxx.c,v 1.2 1996/04/12 06:09:36 cgd Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.5 1996/10/30 22:40:29 niklas Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.3 1996/06/14 20:04:45 cgd Exp $	*/
 
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
@@ -136,7 +136,7 @@ main()
 	/* Init prom callback vector. */
 	init_prom_calls();
 
-	puts("\nOpenBSD/Alpha primary boot...\n");
+	puts("\nOpenBSD/Alpha Primary Boot\n");
 
 	bbinfop = (struct bbinfo *)&_end;
 	loadaddr = (char *)SECONDARY_LOAD_ADDRESS;

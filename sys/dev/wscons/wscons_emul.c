@@ -1,5 +1,5 @@
-/*	$OpenBSD: wscons_emul.c,v 1.2 1996/07/29 23:02:57 niklas Exp $	*/
-/*	$NetBSD: wscons_emul.c,v 1.2 1996/04/12 06:10:29 cgd Exp $	*/
+/*	$OpenBSD: wscons_emul.c,v 1.3 1996/10/30 22:41:47 niklas Exp $	*/
+/*	$NetBSD: wscons_emul.c,v 1.4 1996/10/13 03:00:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996 Carnegie-Mellon University.
@@ -36,7 +36,17 @@
 #include <sys/systm.h>
 #include <alpha/wscons/wsconsvar.h>
 #include <alpha/wscons/wscons_emul.h>
+#include <alpha/wscons/kbd.h>
 #include <alpha/wscons/ascii.h>
+
+static __inline int wscons_emul_input_normal
+    __P((struct wscons_emul_data *, char));
+static __inline int wscons_emul_input_haveesc
+    __P((struct wscons_emul_data *, char));
+static __inline void wscons_emul_docontrol
+    __P((struct wscons_emul_data *, char));
+static __inline int wscons_emul_input_control
+    __P((struct wscons_emul_data *, char));
 
 void
 wscons_emul_attach(we, wo)
@@ -74,7 +84,7 @@ wscons_emul_attach(we, wo)
 	(*we->ac_ef->wef_cursor)(we->ac_efa, 1, we->ac_crow, we->ac_ccol);
 }
 
-static inline int
+static __inline int
 wscons_emul_input_normal(we, c)
 	struct wscons_emul_data *we;
 	char c;
@@ -195,7 +205,7 @@ wscons_emul_input_normal(we, c)
 	return newstate;
 }
 
-static inline int
+static __inline int
 wscons_emul_input_haveesc(we, c)
 	struct wscons_emul_data *we;
 	char c;
@@ -219,7 +229,7 @@ wscons_emul_input_haveesc(we, c)
 	return newstate;
 }
 
-static inline void
+static __inline void
 wscons_emul_docontrol(we, c)
 	struct wscons_emul_data *we;
 	char c;
@@ -349,7 +359,7 @@ wscons_emul_docontrol(we, c)
 	}
 }
 
-static inline int
+static __inline int
 wscons_emul_input_control(we, c)
 	struct wscons_emul_data *we;
 	char c;

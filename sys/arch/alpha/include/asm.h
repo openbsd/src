@@ -1,5 +1,5 @@
-/*	$OpenBSD: asm.h,v 1.4 1996/07/29 22:58:25 niklas Exp $	*/
-/*	$NetBSD: asm.h,v 1.4 1996/04/12 01:36:51 cgd Exp $	*/
+/*	$OpenBSD: asm.h,v 1.5 1996/10/30 22:38:52 niklas Exp $	*/
+/*	$NetBSD: asm.h,v 1.10 1996/10/17 18:33:53 cgd Exp $	*/
 
 /* 
  * Copyright (c) 1991,1990,1989,1994,1995,1996 Carnegie Mellon University
@@ -130,6 +130,22 @@
 #define ai	$25	/* (T)		argument information	*/
 #define pv	$27	/* (T)		procedure value		*/
 
+
+/*
+ * Useful stuff.
+ */
+#ifdef __STDC__
+#define	__CONCAT(a,b)	a ## b
+#else
+#define	__CONCAT(a,b)	a/**/b
+#endif
+#define ___CONCAT(a,b)	__CONCAT(a,b)
+
+/*
+ * Macro to make a local label name.
+ */
+#define	LLABEL(name,num)	___CONCAT(___CONCAT(L,name),num)
+
 /*
  *
  * Debuggers need symbol table information to be able to properly
@@ -203,18 +219,9 @@
 #define MCOUNT	/* nothing */
 #else
 #define MCOUNT							\
-	lda	sp, -16(sp);					\
-	stq	pv, 0(sp);					\
-								\
-	br	pv, 1f;						\
-1:	ldgp	gp, 0(pv);					\
-	lda	pv, _mcount;					\
-	jsr	at_reg, (pv);					\
-	br	pv, 2f;						\
-2:	ldgp	gp, 0(pv);					\
-								\
-	ldq	pv, 0(sp);					\
-	lda	sp, 16(sp)
+	.set noat;						\
+	jsr	at_reg,_mcount;					\
+	.set at
 #endif
 
 /*
@@ -434,26 +441,26 @@ _name_:;							\
  *	Allocate space for a message (a read-only ascii string)
  */
 #define	ASCIZ	.asciz
-#define	MSG(msg,reg)						\
-	lda reg, 9f;						\
+#define	MSG(msg,reg,label)					\
+	lda reg, label;						\
 	.data;							\
-9:	ASCIZ msg;						\
+label:	ASCIZ msg;						\
 	.text;
 
 /*
  * PRINTF
  *	Print a message
  */
-#define	PRINTF(msg)						\
-	MSG(msg,a0);						\
+#define	PRINTF(msg,label)					\
+	MSG(msg,a0,label);					\
 	CALL(printf)
 
 /*
  * PANIC
  *	Fatal error (KERNEL)
  */
-#define	PANIC(msg)						\
-	MSG(msg,a0);						\
+#define	PANIC(msg,label)					\
+	MSG(msg,a0,label);					\
 	CALL(panic)
 
 /*
@@ -541,9 +548,10 @@ _name_:;							\
  * are unprivileged.
  */
 
-/* Common PAL codes. */
+/* Common PAL function codes. */
 #define	PAL_halt		0x0000			/* P */
 #define	PAL_draina		0x0002			/* P */
+#define	PAL_cserve		0x0009			/* P */
 #define	PAL_swppal		0x000a			/* P */
 #define	PAL_bpt			0x0080			/* U */
 #define	PAL_bugchk		0x0081			/* U */
@@ -552,7 +560,7 @@ _name_:;							\
 #define	PAL_wrunique		0x009f			/* U */
 #define	PAL_gentrap		0x00aa			/* U */
 
-/* VMS PAL codes. */
+/* VMS PAL function codes. */
 #define	PAL_VMS_ldqp		0x0003			/* P */
 #define	PAL_VMS_stqp		0x0004			/* P */
 #define	PAL_VMS_mtpr_fen	0x000c			/* P */
@@ -575,7 +583,9 @@ _name_:;							\
 #define	PAL_VMS_mfpr_whami	0x003f			/* P */
 #define	PAL_VMS_rei		0x0092			/* U */
 
-/* OSF/1 PAL codes. */
+/* OSF/1 PAL function codes. */
+#define	PAL_OSF1_rdmces		0x0010			/* P */
+#define	PAL_OSF1_wrmces		0x0011			/* P */
 #define	PAL_OSF1_wrfen		0x002b			/* P */
 #define	PAL_OSF1_wrvptptr	0x002d			/* P */
 #define	PAL_OSF1_swpctx		0x0030			/* P */
@@ -594,13 +604,28 @@ _name_:;							\
 #define	PAL_OSF1_callsys	0x0083			/* U */
 #define	PAL_OSF1_imb		0x0086			/* U */
 
+
 /*
- * Defintions to make things portable between gcc and OSF/1 cc.
+ * System call glue.
  */
-#define	SETGP(pv)	ldgp	gp,0(pv)
+#define	SYSCALLNUM(name)					\
+	___CONCAT(SYS_,name)
 
-#define	MF_FPCR(x)	mf_fpcr x
-#define	MT_FPCR(x)	mt_fpcr x
-#define	JMP(loc)	jmp	zero,loc
-#define	CONST(c,reg)	ldiq	reg, c
+#define	CALLSYS_NOERROR(name)					\
+	ldiq	v0, SYSCALLNUM(name);				\
+	call_pal PAL_OSF1_callsys
 
+/*
+ * Load the global pointer.
+ */
+#define	LDGP(reg)						\
+	ldgp	gp, 0(reg)
+
+/*
+ * WEAK_ALIAS: create a weak alias (ELF only).
+ */
+#ifdef __ELF__
+#define WEAK_ALIAS(alias,sym)					\
+	.weak alias;						\
+	alias = sym
+#endif

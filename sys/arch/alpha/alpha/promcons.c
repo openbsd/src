@@ -1,5 +1,5 @@
-/*	$OpenBSD: promcons.c,v 1.3 1996/07/29 22:58:00 niklas Exp $	*/
-/*	$NetBSD: promcons.c,v 1.2.6.1 1996/06/03 18:54:31 cgd Exp $	*/
+/*	$OpenBSD: promcons.c,v 1.4 1996/10/30 22:38:25 niklas Exp $	*/
+/*	$NetBSD: promcons.c,v 1.3 1996/05/30 18:44:30 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -43,10 +43,18 @@
 #include <sys/types.h>
 #include <sys/device.h>
 
+#include <dev/cons.h>
+
+#include <machine/rpb.h>
+#include <machine/prom.h>
+
 static struct  tty *prom_tty[1];
 
-void promstart(), promtimeout();
-int promparam();
+void promstart __P((struct tty *));
+void promtimeout __P((void *));
+int promparam __P((struct tty *, struct termios *));
+cdev_decl(prom);
+cons_decl(prom);
 
 int
 promopen(dev, flag, mode, p)
@@ -55,7 +63,6 @@ promopen(dev, flag, mode, p)
 	struct proc *p;
 {
 	int unit = minor(dev);
-	u_short iobase;
 	struct tty *tp;
 	int s;
 	int error = 0, setuptimeout = 0;
@@ -193,9 +200,10 @@ out:
 /*
  * Stop output on a line.
  */
-void
+int
 promstop(tp, flag)
 	struct tty *tp;
+	int flag;
 {
 	int s;
 
@@ -204,12 +212,14 @@ promstop(tp, flag)
 		if ((tp->t_state & TS_TTSTOP) == 0)
 			tp->t_state |= TS_FLUSH;
 	splx(s);
+	return 0;
 }
 
 void
-promtimeout(tp)
-	struct tty *tp;
+promtimeout(v)
+	void *v;
 {
+	struct tty *tp = v;
 	u_char c;
 
 	while (promcnlookc(tp->t_dev, &c)) {

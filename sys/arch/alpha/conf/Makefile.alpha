@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.alpha,v 1.7 1996/07/29 20:01:25 niklas Exp $
-#	$NetBSD: Makefile.alpha,v 1.16 1996/05/19 21:16:51 cgd Exp $
+#	$OpenBSD: Makefile.alpha,v 1.8 1996/10/30 22:38:41 niklas Exp $
+#	$NetBSD: Makefile.alpha,v 1.25 1996/09/27 17:33:04 cgd Exp $
 
-# Makefile for NetBSD
+# Makefile for OpenBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -22,22 +22,32 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld
-STRIP?=	strip -g -X -x
-TOUCH?=	touch -f -c
+MKDEP?=	mkdep
+STRIP?=	strip
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-ALPHA=	../..
+.ifndef S
+S!=	cd ../../../..; pwd
+.endif
+ALPHA=	$S/arch/alpha
 
-INCLUDES=	-I. -I$S/arch -I$S
-CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dalpha
-CFLAGS=		${DEBUG} -O2 -Werror -mno-fp-regs
-AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
+INCLUDES=	-I. -I$S/arch -I$S -nostdinc
+CPPFLAGS=	${INCLUDES} ${IDENT} ${PARAM} -D_KERNEL -Dalpha
+
+CDIAGFLAGS?=	-Werror -Wall -Wstrict-prototypes -Wmissing-prototypes \
+		-Wno-uninitialized -Wno-format
+
+CMACHFLAGS=	-mno-fp-regs
+CFLAGS=		${DEBUG} -O2 ${CDIAGFLAGS} ${CMACHFLAGS} ${COPTS}
+AFLAGS=		-traditional -D_LOCORE
 LINKFLAGS=	-N -Ttext fffffc0000230000 -e __start -G 4
+STRIPFLAGS=	-g -X -x
+
+HOSTED_CC=	${CC}
+HOSTED_CPPFLAGS=${CPPFLAGS:S/^-nostdinc$//}
+HOSTED_CFLAGS=	${CFLAGS}
 
 ### find out what to use for libkern
 .include "$S/lib/libkern/Makefile.inc"
@@ -55,19 +65,13 @@ LIBCOMPAT=	${COMPATLIB}
 LIBCOMPAT=	${COMPATLIB_PROF}
 .endif
 
-# compile rules: rules are named ${TYPE}_${SUFFIX}${CONFIG_DEP}
-# where TYPE is NORMAL, DRIVER, or PROFILE}; SUFFIX is the file suffix,
-# capitalized (e.g. C for a .c file), and CONFIG_DEP is _C if the file
-# is marked as config-dependent.
+# compile rules: rules are named ${TYPE}_${SUFFIX} where TYPE is NORMAL or
+# HOSTED}, and SUFFIX is the file suffix, capitalized (e.g. C for a .c file).
 
 NORMAL_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-NORMAL_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
+NORMAL_S=	${CPP} ${AFLAGS} ${CPPFLAGS} $< | sed -e 's,^\#.*,,' | ${AS} -o ${.TARGET}
 
-DRIVER_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} -c $<
-DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
-
-NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
-NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
+HOSTED_C=	${HOSTED_CC} ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} -c $<
 
 %OBJS
 
@@ -93,9 +97,9 @@ DEBUG?=
 LINKFLAGS+=	-X
 SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
-		echo ${STRIP} $@; ${STRIP} $@
+		echo ${STRIP} ${STRIPFLAGS} $@; ${STRIP} ${STRIPFLAGS} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD
@@ -107,14 +111,14 @@ genassym: genassym.o
 	${CC} -o $@ genassym.o
 
 genassym.o: ${ALPHA}/alpha/genassym.c
-	${NORMAL_C_C}
+	${HOSTED_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c
 	cp $S/conf/param.c .
 
 param.o: param.c Makefile
-	${NORMAL_C_C}
+	${NORMAL_C}
 
 ioconf.o: ioconf.c
 	${NORMAL_C}
@@ -125,11 +129,11 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 
 clean::
-	rm -f eddep *bsd netbsd.gdb tags *.[io] [a-z]*.s \
+	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
-	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} ${PARAM} -UKGDB \
+	@lint -hbxncez -DGENERIC -Dvolatile= ${CPPFLAGS} -UKGDB \
 	    ${ALPHA}/alpha/Locore.c ${CFILES} ${ALPHA}/alpha/swapgeneric.c \
 	    ioconf.c param.c | \
 	    grep -v 'static function .* unused'
@@ -149,10 +153,11 @@ SRCS=	${ALPHA}/alpha/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${ALPHA}/alpha/genassym.c
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${ALPHA}/alpha/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} -a ${HOSTED_CFLAGS} ${HOSTED_CPPFLAGS} \
+	    ${ALPHA}/alpha/genassym.c
 
 
 # depend on root or device configuration

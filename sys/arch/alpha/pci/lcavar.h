@@ -1,4 +1,4 @@
-/*	$OpenBSD: lcavar.h,v 1.3 1996/07/29 23:00:32 niklas Exp $	*/
+/*	$OpenBSD: lcavar.h,v 1.4 1996/10/30 22:40:02 niklas Exp $	*/
 /*	$NetBSD: lcavar.h,v 1.3 1996/04/12 06:08:35 cgd Exp $	*/
 
 /*
