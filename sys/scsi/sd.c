@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.85 1996/01/12 22:43:33 thorpej Exp $	*/
+/*	$NetBSD: sd.c,v 1.87 1996/02/14 21:47:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -50,7 +50,6 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
-#include <sys/conf.h>
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/ioctl.h>
@@ -61,10 +60,13 @@
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+#include <sys/proc.h>
+#include <sys/cpu.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
 #include <scsi/scsiconf.h>
+#include <scsi/scsi_conf.h>
 
 #define	SDOUTSTANDING	2
 #define	SDRETRIES	4
@@ -96,19 +98,21 @@ struct sd_softc {
 	struct buf buf_queue;
 };
 
-int sdmatch __P((struct device *, void *, void *));
-void sdattach __P((struct device *, struct device *, void *));
+int	sdmatch __P((struct device *, void *, void *));
+void	sdattach __P((struct device *, struct device *, void *));
+int	sdlock __P((struct sd_softc *));
+void	sdunlock __P((struct sd_softc *));
+void	sdminphys __P((struct buf *));
+void	sdgetdisklabel __P((struct sd_softc *));
+void	sdstart __P((void *));
+int	sddone __P((struct scsi_xfer *, int));
+u_long	sd_size __P((struct sd_softc *, int));
+int	sd_reassign_blocks __P((struct sd_softc *, u_long));
+int	sd_get_parms __P((struct sd_softc *, int));
 
 struct cfdriver sdcd = {
 	NULL, "sd", sdmatch, sdattach, DV_DISK, sizeof(struct sd_softc)
 };
-
-void sdgetdisklabel __P((struct sd_softc *));
-int sd_get_parms __P((struct sd_softc *, int));
-void sdstrategy __P((struct buf *));
-void sdstart __P((struct sd_softc *));
-int sddone __P((struct scsi_xfer *, int));
-void sdminphys __P((struct buf *));
 
 struct dkdriver sddkdriver = { sdstrategy };
 
@@ -135,7 +139,6 @@ sdmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct cfdata *cf = match;
 	struct scsibus_attach_args *sa = aux;
 	int priority;
 
@@ -243,9 +246,10 @@ sdunlock(sd)
  * open the device. Make sure the partition info is a up-to-date as can be.
  */
 int
-sdopen(dev, flag, fmt)
+sdopen(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
+	struct proc *p;
 {
 	struct sd_softc *sd;
 	struct scsi_link *sc_link;
@@ -265,7 +269,7 @@ sdopen(dev, flag, fmt)
 	    ("sdopen: dev=0x%x (unit %d (of %d), partition %d)\n", dev, unit,
 	    sdcd.cd_ndevs, part));
 
-	if (error = sdlock(sd))
+	if ((error = sdlock(sd)) != 0)
 		return error;
 
 	if (sd->sc_dk.dk_openmask != 0) {
@@ -279,20 +283,27 @@ sdopen(dev, flag, fmt)
 		}
 	} else {
 		/* Check that it is still responding and ok. */
-		if (error = scsi_test_unit_ready(sc_link,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_IGNORE_NOT_READY))
+		error = scsi_test_unit_ready(sc_link,
+					     SCSI_IGNORE_ILLEGAL_REQUEST |
+					     SCSI_IGNORE_MEDIA_CHANGE |
+					     SCSI_IGNORE_NOT_READY);
+		if (error)
 			goto bad3;
 
 		/* Start the pack spinning if necessary. */
-		if (error = scsi_start(sc_link, SSS_START,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT))
+		error = scsi_start(sc_link, SSS_START,
+				   SCSI_IGNORE_ILLEGAL_REQUEST |
+				   SCSI_IGNORE_MEDIA_CHANGE | SCSI_SILENT);
+		if (error)
 			goto bad3;
 
 		sc_link->flags |= SDEV_OPEN;
 
 		/* Lock the pack in. */
-		if (error = scsi_prevent(sc_link, PR_PREVENT,
-		    SCSI_IGNORE_ILLEGAL_REQUEST | SCSI_IGNORE_MEDIA_CHANGE))
+		error = scsi_prevent(sc_link, PR_PREVENT,
+				     SCSI_IGNORE_ILLEGAL_REQUEST |
+				     SCSI_IGNORE_MEDIA_CHANGE);
+		if (error)
 			goto bad;
 
 		if ((sc_link->flags & SDEV_MEDIA_LOADED) == 0) {
@@ -355,16 +366,17 @@ bad3:
  * close the device.. only called if we are the LAST occurence of an open
  * device.  Convenient now but usually a pain.
  */
-int
-sdclose(dev, flag, fmt)
+int 
+sdclose(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
+	struct proc *p;
 {
 	struct sd_softc *sd = sdcd.cd_devs[SDUNIT(dev)];
 	int part = SDPART(dev);
 	int error;
 
-	if (error = sdlock(sd))
+	if ((error = sdlock(sd)) != 0)
 		return error;
 
 	switch (fmt) {
@@ -475,10 +487,11 @@ done:
  * must be called at the correct (highish) spl level
  * sdstart() is called at splbio from sdstrategy and scsi_done
  */
-void
-sdstart(sd)
-	register struct sd_softc *sd;
+void 
+sdstart(v)
+	register void *v;
 {
+	register struct sd_softc *sd = v;
 	register struct	scsi_link *sc_link = sd->sc_link;
 	struct buf *bp = 0;
 	struct buf *dp;
@@ -630,18 +643,20 @@ sdminphys(bp)
 }
 
 int
-sdread(dev, uio)
+sdread(dev, uio, ioflag)
 	dev_t dev;
 	struct uio *uio;
+	int ioflag;
 {
 
 	return (physio(sdstrategy, NULL, dev, B_READ, sdminphys, uio));
 }
 
 int
-sdwrite(dev, uio)
+sdwrite(dev, uio, ioflag)
 	dev_t dev;
 	struct uio *uio;
+	int ioflag;
 {
 
 	return (physio(sdstrategy, NULL, dev, B_WRITE, sdminphys, uio));
@@ -686,7 +701,7 @@ sdioctl(dev, cmd, addr, flag, p)
 		if ((flag & FWRITE) == 0)
 			return EBADF;
 
-		if (error = sdlock(sd))
+		if ((error = sdlock(sd)) != 0)
 			return error;
 		sd->flags |= SDF_LABELLING;
 
@@ -712,6 +727,14 @@ sdioctl(dev, cmd, addr, flag, p)
 		else
 			sd->flags &= ~SDF_WLABEL;
 		return 0;
+
+	case DIOCLOCK:
+		return scsi_prevent(sd->sc_link,
+		    (*(int *)addr) ? PR_PREVENT : PR_ALLOW, 0);
+
+	case DIOCEJECT:
+		return ((sd->sc_link->flags & SDEV_REMOVABLE == 0) ? ENOTTY :
+		    scsi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0));
 
 	default:
 		if (SDPART(dev) != RAW_PART)
@@ -768,8 +791,9 @@ sdgetdisklabel(sd)
 	/*
 	 * Call the generic disklabel extraction routine
 	 */
-	if (errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit,
-	    RAW_PART), sdstrategy, lp, sd->sc_dk.dk_cpulabel)) {
+	errstring = readdisklabel(MAKESDDEV(0, sd->sc_dev.dv_unit, RAW_PART),
+				  sdstrategy, lp, sd->sc_dk.dk_cpulabel);
+	if (errstring) {
 		printf("%s: %s\n", sd->sc_dev.dv_xname, errstring);
 		return;
 	}
@@ -930,7 +954,7 @@ sdsize(dev)
 	int part;
 	int size;
 
-	if (sdopen(dev, 0, S_IFBLK) != 0)
+	if (sdopen(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
 	sd = sdcd.cd_devs[SDUNIT(dev)];
 	part = SDPART(dev);
@@ -938,7 +962,7 @@ sdsize(dev)
 		size = -1;
 	else
 		size = sd->sc_dk.dk_label->d_partitions[part].p_size;
-	if (sdclose(dev, 0, S_IFBLK) != 0)
+	if (sdclose(dev, 0, S_IFBLK, NULL) != 0)
 		return -1;
 	return size;
 }
