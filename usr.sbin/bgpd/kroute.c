@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.69 2004/01/17 15:00:29 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.70 2004/01/17 15:35:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -803,6 +803,8 @@ if_change(u_short ifindex, int flags)
 		    ifindex);
 		return;
 	}
+
+	kif->flags = flags;
 
 	LIST_FOREACH(kkr, &kif->kroute_l, entry) {
 		if (flags & IFF_UP)
