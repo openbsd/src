@@ -4,7 +4,7 @@
 # generated from:
 #
 #	OpenBSD: etc.macppc/MAKEDEV.md,v 1.10 2002/12/05 04:30:21 kjc Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.56 2003/01/06 17:19:16 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.59 2003/05/21 18:48:59 jason Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
 #
@@ -146,7 +146,7 @@ dodisk()
 		M r$1$2$d	c $4 $(($n+$count)) 640
 		let count=count+1
 	done
-	MKlist="$MKlist;chown root.operator $1$2? r$1$2?"
+	MKlist="$MKlist;chown root:operator $1$2? r$1$2?"
 }
 
 dodisk2()
@@ -178,7 +178,7 @@ M() {
 	mklist="$mklist $1"
 	G=${6:-wheel}
 	[ "$7" ] && {
-		MKlist="$MKlist;chown $7.$G $1"
+		MKlist="$MKlist;chown $7:$G $1"
 	} || {
 		case $G in
 		wheel)g=0;;kmem)g=2;;operator)g=5;;tty)g=4;;dialer)g=117;;_lkm)g=61;;
