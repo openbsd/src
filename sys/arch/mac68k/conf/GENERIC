@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.32 2004/04/01 22:15:55 xsa Exp $
+#	$OpenBSD: GENERIC,v 1.33 2004/08/04 20:14:40 miod Exp $
 #	$NetBSD: GENERIC,v 1.52 1997/01/13 23:34:07 scottr Exp $
 #
 # GENERIC - an all-in-one kernel for the mac68k
@@ -20,7 +20,7 @@ option		DISABLE_ADB_WITH_SERIAL_CONSOLE
 #option		MRG_ADB		  # Use ROM-based ADB driver
 
 config		bsd	swap generic
-maxusers	16
+maxusers	32
 
 mainbus0 at root
 
