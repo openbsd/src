@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.37 1999/12/17 22:47:04 itojun Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.38 1999/12/19 01:51:32 angelos Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -810,6 +810,11 @@ in_pcblookup(table, faddrp, fport_arg, laddrp, lport_arg, flags)
 		} else
 #endif /* INET6 */
 		{
+#ifdef INET6
+		        if (inp->inp_flags & INP_IPV6)
+			        continue;
+#endif /* INET6 */
+
 			if (inp->inp_faddr.s_addr != INADDR_ANY) {
 				if (faddr.s_addr == INADDR_ANY)
 					wildcard++;
