@@ -1,4 +1,4 @@
-/*      $OpenBSD: criov.c,v 1.8 2001/11/06 19:53:18 miod Exp $	*/
+/*      $OpenBSD: criov.c,v 1.9 2002/01/29 15:48:29 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -38,66 +38,6 @@
 #include <uvm/uvm_extern.h>
 
 #include <crypto/cryptodev.h>
-
-int
-iov2pages(uio, np, pp, lp, maxp, nicep)
-	struct uio *uio;
-	int *np;
-	long *pp;
-	int *lp;
-	int maxp;
-	int *nicep;
-{
-	int npa = 0, tlen = 0;
-	int i;
-
-	for (i = 0; i < uio->uio_iovcnt; i++) {
-		vaddr_t va, off;
-		paddr_t pa;
-		int len;
-
-		if ((len = uio->uio_iov[i].iov_len) == 0)
-			continue;
-		tlen += len;
-		va = (vaddr_t)uio->uio_iov[i].iov_base;
-		off = va & PAGE_MASK;
-		va -= off;
-
-next_page:
-		
-		if (pmap_extract(pmap_kernel(), va, &pa) == FALSE)
-			panic("iov2pages: unmapped pages");
-
-		pa += off;
-
-		lp[npa] = len;
-		pp[npa] = pa;
-
-		if (++npa > maxp)
-			return (0);
-
-		if (len + off > PAGE_SIZE) {
-			lp[npa - 1] = PAGE_SIZE - off;
-			va += PAGE_SIZE;
-			len -= PAGE_SIZE;
-			goto next_page;
-		}
-	}
-			
-	if (nicep) {
-		int nice = 1;
-		int i;
-
-		/* see if each [pa,len] entry is long-word aligned */
-		for (i = 0; i < npa; i++)
-			if ((lp[i] & 3) || (pp[i] & 3))
-				nice = 0;
-		*nicep = nice;
-	}
-
-	*np = npa;
-	return (tlen);
-}
 
 void
 cuio_copydata(uio, off, len, cp)

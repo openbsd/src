@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.15 2001/11/09 03:11:38 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.16 2002/01/29 15:48:29 jason Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -370,9 +370,6 @@ int	crypto_invoke(struct cryptop *);
 void	crypto_done(struct cryptop *);
 int	crypto_check_alg(struct cryptoini *);
 
-struct mbuf;
-int	mbuf2pages __P((struct mbuf *, int *, long *, int *, int, int *));
-int	iov2pages __P((struct uio *, int *, long *, int *, int, int *));
 void	cuio_copydata __P((struct uio *, int, int, caddr_t));
 void	cuio_copyback __P((struct uio *, int, int, caddr_t));
 
