@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wivar.h,v 1.1 2001/05/15 02:40:36 millert Exp $	*/
+/*	$OpenBSD: if_wivar.h,v 1.2 2001/06/07 05:07:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -56,9 +56,13 @@ struct wi_softc	{
 	u_int16_t		wi_channel;
 	u_int16_t		wi_pm_enabled;
 	u_int16_t		wi_max_sleep;
+	u_int16_t		wi_authtype;
+	u_int16_t		wi_roaming;
+
 	char			wi_node_name[32];
 	char			wi_net_name[32];
 	char			wi_ibss_name[32];
+
 	u_int8_t		wi_txbuf[1596];
 	int			wi_has_wep;
 	int			wi_use_wep;
@@ -68,6 +72,7 @@ struct wi_softc	{
 	void			*sc_ih;
 	struct timeout		sc_timo;
 	int			sc_prism2;
+	int			sc_prism2_ver;
 };
 
 #define WI_PRT_FMT "%s"

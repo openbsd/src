@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.2 2001/06/06 18:53:50 millert Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.3 2001/06/07 05:07:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,6 +69,10 @@
 #define WI_DEFAULT_IBSS		"IBSS"
 
 #define WI_DEFAULT_CHAN		3
+
+#define	WI_DEFAULT_ROAMING	1
+
+#define	WI_DEFAULT_AUTHTYPE	1
 
 /*
  * register space access macros
@@ -318,6 +322,25 @@ struct wi_ltv_memsz {
 	u_int16_t		wi_type;
 	u_int16_t		wi_mem_ram;
 	u_int16_t		wi_mem_nvram;
+};
+
+/*
+ * NIC Identification (0xFD0B)
+ */
+#define	WI_RID_CARDID	0xFD0B
+#define	WI_RID_IDENT	0xFD20
+struct wi_ltv_ver {
+	u_int16_t	wi_len;
+	u_int16_t	wi_type;
+	u_int16_t	wi_ver[4];
+#define	WI_NIC_EVB2	0x8000
+#define	WI_NIC_HWB3763	0x8001
+#define	WI_NIC_HWB3163	0x8002
+#define	WI_NIC_HWB3163B	0x8003
+#define	WI_NIC_EVB3	0x8004
+#define	WI_NIC_HWB1153	0x8007
+#define	WI_NIC_P2_SST	0x8008  /* Prism2 with SST flush */
+#define	WI_NIC_PRISM2_5	0x800C
 };
 
 /*
