@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.18 2002/01/18 08:37:08 art Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.19 2002/01/18 09:40:07 art Exp $	*/
 
 /*
  *		Buffer handling.
@@ -176,6 +176,26 @@ savebuffers(f, n)
 }
 
 /*
+ * Listing buffers.
+ */
+static int listbuf_ncol;
+
+static int	listbuf_goto_buffer(int f, int n);
+
+static PF listbuf_pf[] = {
+	listbuf_goto_buffer,
+};
+
+static struct KEYMAPE (1 + IMAPEXT) listbufmap = {
+	1,
+	1 + IMAPEXT,
+	rescan,
+	{
+		{ CCHR('M'), CCHR('M'), listbuf_pf, NULL },
+	}
+};
+
+/*
  * Display the buffer list. This is done
  * in two parts. The "makelist" routine figures out
  * the text, and puts it in a buffer. "popbuf"
@@ -187,13 +207,24 @@ int
 listbuffers(f, n)
 	int f, n;
 {
+	static int initialized = 0;
 	BUFFER *bp;
 	MGWIN  *wp;
+
+	if (!initialized) {
+		maps_add((KEYMAP *)&listbufmap, "listbufmap");
+		initialized = 1;
+	}
+
 
 	if ((bp = makelist()) == NULL || (wp = popbuf(bp)) == NULL)
 		return FALSE;
 	wp->w_dotp = bp->b_dotp;/* fix up if window already on screen */
 	wp->w_doto = bp->b_doto;
+	bp->b_modes[0] = name_mode("fundamental");
+	bp->b_modes[1] = name_mode("listbufmap");
+	bp->b_nmodes = 1;
+
 	return TRUE;
 }
 
@@ -210,11 +241,14 @@ makelist()
 	BUFFER *bp, *blp;
 	LINE   *lp;
 
+
 	if ((blp = bfind("*Buffer List*", TRUE)) == NULL)
 		return NULL;
 	if (bclear(blp) != TRUE)
 		return NULL;
 	blp->b_flag &= ~BFCHG;		/* Blow away old.	 */
+
+	listbuf_ncol = ncol;		/* cache ncol for listbuf_goto_buffer */
 
 	if (addlinef(blp, "%-*s%s", w, " MR Buffer", "Size   File") == FALSE ||
 	    addlinef(blp, "%-*s%s", w, " -- ------", "----   ----") == FALSE)
@@ -234,12 +268,14 @@ makelist()
 				nbytes--;	/* no bonus newline	 */
 		}
 
-		if (addlinef(blp, "%c%c%c %-*s%-6d %-*s",
+		if (addlinef(blp, "%c%c%c %-*.*s%c%-6d %-*s",
 		    (bp == curbp) ? '.' : ' ',	/* current buffer ? */
 		    ((bp->b_flag & BFCHG) != 0) ? '*' : ' ',	/* changed ? */
 		    ' ',			/* no readonly buffers yet */
-		    w - 4,		/* four chars already written */
+		    w - 5,		/* four chars already written */
+		    w - 5,		/* four chars already written */
 		    bp->b_bname,	/* buffer name */
+		    strlen(bp->b_bname) < w - 5 ? ' ' : '$', /* truncated? */
 		    nbytes,		/* buffer size */
 		    w - 7,		/* seven chars already written */
 		    bp->b_fname) == FALSE)
@@ -249,6 +285,48 @@ makelist()
 						 * buffer */
 	blp->b_doto = 0;
 	return blp;				/* All done		 */
+}
+
+static int
+listbuf_goto_buffer(int f, int n)
+{
+	BUFFER *bp;
+	MGWIN *wp;
+	char *line;
+	int i;
+
+	if (curwp->w_dotp->l_text[listbuf_ncol/2 - 1] == '$') {
+		ewprintf("buffer name truncated");
+		return FALSE;
+	}
+
+	if ((line = malloc(listbuf_ncol/2)) == NULL)
+		return FALSE;
+
+	memcpy(line, curwp->w_dotp->l_text + 4, listbuf_ncol/2 - 5);
+	for (i = listbuf_ncol/2 - 6; i > 0; i--) {
+		if (line[i] != ' ') {
+			line[i + 1] = '\0';
+			break;
+		}
+	}
+	if (i == 0) {
+		return FALSE;
+	}
+
+	for (bp = bheadp; bp != NULL; bp = bp->b_bufp) {
+		if (strcmp(bp->b_bname, line) == 0)
+			break;
+	}
+	if (bp == NULL) {
+		return FALSE;
+	}
+	if ((wp = popbuf(bp)) == NULL)
+		return FALSE;
+	curbp = bp;
+	curwp = wp;
+
+	return TRUE;
 }
 
 /*
