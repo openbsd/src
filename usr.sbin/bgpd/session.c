@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.109 2004/02/16 12:53:15 claudio Exp $ */
+/*	$OpenBSD: session.c,v 1.110 2004/02/16 13:17:31 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1555,7 +1555,7 @@ session_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			data = imsg.data;
 			errcode = *data++;
 			subcode = *data++;
-			
+
 			if (imsg.hdr.len == IMSG_HEADER_SIZE + 2)
 				data = NULL;
 
