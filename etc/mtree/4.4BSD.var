@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.var,v 1.2 1996/05/26 10:26:16 deraadt Exp $
+#	$OpenBSD: 4.4BSD.var,v 1.3 1996/08/10 20:54:47 deraadt Exp $
 #	$NetBSD: 4.4BSD.var,v 1.3 1996/05/12 23:30:47 thorpej Exp $
 #
 #	   user: bostic
@@ -417,7 +417,7 @@ XTMP            type=dir
 
 
 # ./spool/uucppublic
-uucppublic      type=dir mode=0777
+uucppublic      type=dir mode=0775
 # ./spool/uucppublic
 ..
 
