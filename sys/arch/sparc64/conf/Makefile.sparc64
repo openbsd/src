@@ -7,6 +7,7 @@ CC?=	cc
 CPP?=	cpp
 LD?=	ld
 MKDEP?=	mkdep
+SIZE?=	size
 STRIP?=	strip
 
 # source tree is located via $S relative to the compilation directory
