@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_synch.c,v 1.22 2000/03/23 14:44:37 art Exp $	*/
+/*	$OpenBSD: kern_synch.c,v 1.23 2000/03/23 16:54:43 art Exp $	*/
 /*	$NetBSD: kern_synch.c,v 1.37 1996/04/22 01:38:37 christos Exp $	*/
 
 /*-
@@ -378,10 +378,8 @@ tsleep(ident, priority, wmesg, timo)
 	else
 		*qp->sq_tailp = p;
 	*(qp->sq_tailp = &p->p_forw) = 0;
-	if (timo) {
-		timeout_set(&p->p_sleep_to, endtsleep, p);
+	if (timo)
 		timeout_add(&p->p_sleep_to, timo);
-	}
 	/*
 	 * We put ourselves on the sleep queue and start our timeout
 	 * before calling CURSIG, as we could stop there, and a wakeup

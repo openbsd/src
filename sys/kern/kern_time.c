@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_time.c,v 1.18 2000/03/23 15:55:52 art Exp $	*/
+/*	$OpenBSD: kern_time.c,v 1.19 2000/03/23 16:54:44 art Exp $	*/
 /*	$NetBSD: kern_time.c,v 1.20 1996/02/18 11:57:06 fvdl Exp $	*/
 
 /*
@@ -489,7 +489,6 @@ sys_setitimer(p, v, retval)
 		timeout_del(&p->p_realit_to);
 		if (timerisset(&aitv.it_value)) {
 			timeradd(&aitv.it_value, &time, &aitv.it_value);
-			timeout_set(&p->p_realit_to, realitexpire, p);
 			timeout_add(&p->p_realit_to, hzto(&aitv.it_value));
 		}
 		p->p_realtimer = aitv;

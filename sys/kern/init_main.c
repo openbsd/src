@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.51 2000/03/23 10:13:58 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.52 2000/03/23 16:54:44 art Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -190,6 +190,8 @@ main(framep)
 	extern struct pdevinit pdevinit[];
 	extern void scheduler_start __P((void));
 	extern void disk_init __P((void));
+	extern void endtsleep __P((void *));
+	extern void realitexpire __P((void *));
 
 	/*
 	 * Initialize the current process pointer (curproc) before
@@ -243,6 +245,10 @@ main(framep)
 	p->p_nice = NZERO;
 	p->p_emul = &emul_native;
 	bcopy("swapper", p->p_comm, sizeof ("swapper"));
+
+	/* Init timeouts. */
+	timeout_set(&p->p_sleep_to, endtsleep, p);
+	timeout_set(&p->p_realit_to, realitexpire, p);
 
 	/* Create credentials. */
 	cred0.p_refcnt = 1;
