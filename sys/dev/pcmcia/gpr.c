@@ -1,4 +1,4 @@
-/*	$OpenBSD: gpr.c,v 1.2 2002/06/15 06:43:19 fgsch Exp $	*/
+/*	$OpenBSD: gpr.c,v 1.3 2002/06/17 18:44:15 fgsch Exp $	*/
 
 /*
  * Copyright (c) 2002, Federico G. Schwindt
@@ -48,6 +48,8 @@
 #include <dev/pcmcia/pcmciareg.h>
 #include <dev/pcmcia/pcmciadevs.h>
 
+#include <dev/pcmcia/gprio.h>
+
 /* Registers in I/O space (32 bytes) */
 #define GPR400_HAP_CTRL		0x00	/* Handshake and PRG Control	*/
 #define  GPR400_RESET		  0x01	/* Master reset			*/
@@ -84,19 +86,6 @@
 
 #define GPRUNIT(x)		(minor(x) & 0x0f)
 
-/*
- * gpr device operations.
- */
-#define GPR_CLOSE		_IO('g', 1)
-#define GPR_CMD			_IO('g', 2)
-#define GPR_OPEN		_IO('g', 3)
-#define GPR_POWER		_IOW('g', 4, int)
-#define GPR_RAM			_IO('g', 5)
-#define GPR_RESET		_IO('g', 6)
-#define GPR_SELECT		_IO('g', 7)
-#define GPR_STATUS		_IO('g', 8)
-#define GPR_TLV			_IO('g', 9)
-
 #ifdef GPRDEBUG
 int gprdebug;
 #define DPRINTF(x)		if (gprdebug) printf x
@@ -130,12 +119,13 @@ void	gpr_attach(struct device *, struct device *, void *);
 int	gpr_detach(struct device *, int);
 int	gpr_activate(struct device *, enum devact);
 
-int	gpr_open(dev_t, int, int, struct proc *);
-int	gpr_close(dev_t, int, int, struct proc *);
-int	gpr_ioctl(dev_t, u_long, caddr_t, int, struct proc *);
+int	gpropen(dev_t, int, int, struct proc *);
+int	gprclose(dev_t, int, int, struct proc *);
+int	gprioctl(dev_t, u_long, caddr_t, int, struct proc *);
+
 int	gpr_intr(void *);
 
-int	tlvput(struct gpr_softc *, u_long, u_int8_t *, int);
+int	tlvput(struct gpr_softc *, int, u_int8_t *, int);
 
 struct cfattach gpr_ca = {
 	sizeof(struct gpr_softc), gpr_match, gpr_attach, gpr_detach,
@@ -273,11 +263,10 @@ gpr_activate(struct device *dev, enum devact act)
 }
 
 int
-gpr_open(dev_t dev, int flags, int mode, struct proc *p)
+gpropen(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = GPRUNIT(dev);
 	struct gpr_softc *sc;
-	int error;
 
 	DPRINTF(("%s: flags %d, mode %d\n", __func__, flags, mode));
 
@@ -285,29 +274,24 @@ gpr_open(dev_t dev, int flags, int mode, struct proc *p)
 	    (sc = gpr_cd.cd_devs[unit]) == NULL)
 		return (ENXIO);
 
-	if ((error = tlvput(sc, GPR_SELECT, "\x02", 1)) < 0)
-		return (error);
-
-	return (0);
+	return (tlvput(sc, GPR_SELECT, "\x02", 1));
 }
 
 int
-gpr_close(dev_t dev, int flags, int mode, struct proc *p)
+gprclose(dev_t dev, int flags, int mode, struct proc *p)
 {
 	int unit = GPRUNIT(dev);
 	struct gpr_softc *sc = gpr_cd.cd_devs[unit];
-	int error;
 
 	DPRINTF(("%s: flags %d, mode %d\n", __func__, flags, mode));
 
-	if ((error = tlvput(sc, GPR_CLOSE, "", 0)) < 0)
-		return (error);
+	(void)tlvput(sc, GPR_CLOSE, (u_int8_t *)0, 0);
 
 	return (0);
 }
 
 int
-gpr_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
+gprioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 {
 	int unit = GPRUNIT(dev);
 	struct gpr_softc *sc = gpr_cd.cd_devs[unit];
@@ -325,13 +309,11 @@ gpr_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		    GPR400_RESET);
 		delay(10);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, GPR400_HAP_CTRL, 0);
-		delay(20 * 1000);
+		tsleep(sc, PWAIT, "gpreset", hz / 40);
 		/* FALLTHROUGH */
 
 	case GPR_SELECT:
-		if ((error = tlvput(sc, GPR400_SELECT, "\x02", 1)) < 0)
-			return (error);
-		error = 0;
+		error = tlvput(sc, GPR400_SELECT, "\x02", 1);
 		break;
 
 	case GPR_POWER:
@@ -343,21 +325,26 @@ gpr_ioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			else
 				mode = "\x00";	/* Power down	*/
 
-			if ((error = tlvput(sc, GPR400_POWER, mode, 1)) < 0)
-				return (error);
-			error = 0;
+			error = tlvput(sc, GPR400_POWER, mode, 1);
 		}
 		break;
 
 	case GPR_CLOSE:
-		if ((error = tlvput(sc, GPR400_CLOSE, "", 0)) < 0)
-			return (error);
-		error = 0;
+		error = tlvput(sc, GPR400_CLOSE, (u_int8_t *)0, 0);
+		break;
+
+	case GPR_RAM:
+		{
+			struct gpr400_ram r;
+
+			bus_space_read_region_1(sc->sc_memt, sc->sc_memh,
+		    	    sc->sc_offset, &r, sizeof(struct gpr400_ram));
+			error = copyout(&r, addr, sizeof(struct gpr400_ram));
+		}
 		break;
 
 	case GPR_CMD:
 	case GPR_OPEN:
-	case GPR_RAM:
 	case GPR_STATUS:
 	case GPR_TLV:
 	default:
@@ -387,15 +374,15 @@ gpr_intr(void *arg)
 }
 
 int
-tlvput(struct gpr_softc *sc, u_long cmd, u_int8_t *data, int len)
+tlvput(struct gpr_softc *sc, int cmd, u_int8_t *data, int len)
 {
-	int i, resid = 1;
+	int i, resid;
 
 	DPRINTF(("%s: cmd 0x%x, data %p, len %d\n", __func__,
 	    cmd, data, len));
 
-	for (i = 0; resid || i < len; i += 28) {
-		int j, ret;
+	for (i = 0, resid = 1; resid || i < len; i += 28) {
+		u_int8_t ret;
 		int s;
 
 		resid = len - i - 28;
@@ -413,10 +400,9 @@ tlvput(struct gpr_softc *sc, u_long cmd, u_int8_t *data, int len)
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0x02, cmd);
 		bus_space_write_1(sc->sc_iot, sc->sc_ioh, 0x03, len - resid);
 
-		for (j = 0; j < len - resid; j++) {
-			bus_space_write_1(sc->sc_iot, sc->sc_ioh,
-			    0x04 + j, *data++);
-		}
+		bus_space_write_region_1(sc->sc_iot, sc->sc_ioh,
+		    0x04, data, len - resid);
+		data += len - resid;
 
 		s = spltty();
 
