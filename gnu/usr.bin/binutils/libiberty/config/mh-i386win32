@@ -1,5 +1,0 @@
-HDEFINES=-DHAVE_GETRUSAGE
-CC=i386-win32-gcc -O2 
-AR=i386-win32-ar
-RANLIB=i386-win32-ranlib
-CFLAGS=
