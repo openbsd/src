@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.118 2003/01/03 21:37:44 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.119 2003/01/03 22:47:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -95,6 +95,8 @@ int	 loadopt = PFCTL_FLAG_ALL;
 int	 altqsupport;
 char	 anchorname[PF_ANCHOR_NAME_SIZE];
 char	 rulesetname[PF_RULESET_NAME_SIZE];
+
+int dev = -1;
 
 const char *infile;
 
@@ -1242,7 +1244,6 @@ int
 main(int argc, char *argv[])
 {
 	int error = 0;
-	int dev = -1;
 	int ch;
 	int mode = O_RDONLY;
 	int opts = 0;
@@ -1390,7 +1391,6 @@ main(int argc, char *argv[])
 		if (dev == -1)
 			err(1, "open(\"/dev/pf\")");
 		altqsupport = pfctl_test_altqsupport(dev);
-		pfr_set_fd(dev);
 	} else {
 		/* turn off options */
 		opts &= ~ (PF_OPT_DISABLE | PF_OPT_ENABLE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_radix.c,v 1.4 2003/01/03 22:31:15 cedric Exp $ */
+/*	$OpenBSD: pfctl_radix.c,v 1.5 2003/01/03 22:47:51 deraadt Exp $ */
 
 /*
  * Copyright (c) 2002 Cedric Berger
@@ -45,27 +45,7 @@
 
 #include "pfctl_radix.h"
 
-static int pfr_dev = -1;
-
-static int
-pfr_ioctl(unsigned long op, void *buf)
-{
-	if (pfr_dev < 0)
-		return (pfr_dev);
-	return (ioctl(pfr_dev, op, buf));
-}
-
-void
-pfr_set_fd(int fd)
-{
-	pfr_dev = fd;
-}
-
-int
-pfr_get_fd(void)
-{
-	return pfr_dev;
-}
+extern int dev;
 
 int
 pfr_clr_tables(int *ndel, int flags)
@@ -74,7 +54,7 @@ pfr_clr_tables(int *ndel, int flags)
 
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
-	if (pfr_ioctl(DIOCRCLRTABLES, &io))
+	if (ioctl(dev, DIOCRCLRTABLES, &io))
 		return (-1);
 	if (ndel != NULL)
 		*ndel = io.pfrio_ndel;
@@ -94,7 +74,7 @@ pfr_add_tables(struct pfr_table *tbl, int size, int *nadd, int flags)
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
 	io.pfrio_size = size;
-	if (pfr_ioctl(DIOCRADDTABLES, &io))
+	if (ioctl(dev, DIOCRADDTABLES, &io))
 		return (-1);
 	if (nadd != NULL)
 		*nadd = io.pfrio_nadd;
@@ -114,7 +94,7 @@ pfr_del_tables(struct pfr_table *tbl, int size, int *ndel, int flags)
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
 	io.pfrio_size = size;
-	if (pfr_ioctl(DIOCRDELTABLES, &io))
+	if (ioctl(dev, DIOCRDELTABLES, &io))
 		return (-1);
 	if (ndel != NULL)
 		*ndel = io.pfrio_ndel;
@@ -134,7 +114,7 @@ pfr_get_tables(struct pfr_table *tbl, int *size, int flags)
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
 	io.pfrio_size = *size;
-	if (pfr_ioctl(DIOCRGETTABLES, &io))
+	if (ioctl(dev, DIOCRGETTABLES, &io))
 		return (-1);
 	*size = io.pfrio_size;
 	return (0);
@@ -153,7 +133,7 @@ pfr_get_tstats(struct pfr_tstats *tbl, int *size, int flags)
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
 	io.pfrio_size = *size;
-	if (pfr_ioctl(DIOCRGETTSTATS, &io))
+	if (ioctl(dev, DIOCRGETTSTATS, &io))
 		return (-1);
 	*size = io.pfrio_size;
 	return (0);
@@ -171,7 +151,7 @@ pfr_clr_addrs(struct pfr_table *tbl, int *ndel, int flags)
 	bzero(&io, sizeof io);
 	io.pfrio_flags = flags;
 	io.pfrio_table = *tbl;
-	if (pfr_ioctl(DIOCRSETADDRS, &io))
+	if (ioctl(dev, DIOCRSETADDRS, &io))
 		return (-1);
 	if (ndel != NULL)
 		*ndel = io.pfrio_ndel;
@@ -193,7 +173,7 @@ pfr_add_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
 	io.pfrio_size = size;
-	if (pfr_ioctl(DIOCRADDADDRS, &io))
+	if (ioctl(dev, DIOCRADDADDRS, &io))
 		return (-1);
 	if (nadd != NULL)
 		*nadd = io.pfrio_nadd;
@@ -215,7 +195,7 @@ pfr_del_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
 	io.pfrio_size = size;
-	if (pfr_ioctl(DIOCRDELADDRS, &io))
+	if (ioctl(dev, DIOCRDELADDRS, &io))
 		return (-1);
 	if (ndel != NULL)
 		*ndel = io.pfrio_ndel;
@@ -238,7 +218,7 @@ pfr_set_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_buffer = addr;
 	io.pfrio_size = size;
 	io.pfrio_size2 = (size2 != NULL) ? *size2 : 0;
-	if (pfr_ioctl(DIOCRSETADDRS, &io))
+	if (ioctl(dev, DIOCRSETADDRS, &io))
 		return (-1);
 	if (nadd != NULL)
 		*nadd = io.pfrio_nadd;
@@ -266,7 +246,7 @@ pfr_get_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int *size,
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
 	io.pfrio_size = *size;
-	if (pfr_ioctl(DIOCRGETADDRS, &io))
+	if (ioctl(dev, DIOCRGETADDRS, &io))
 		return (-1);
 	*size = io.pfrio_size;
 	return (0);
@@ -287,7 +267,7 @@ pfr_get_astats(struct pfr_table *tbl, struct pfr_astats *addr, int *size,
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
 	io.pfrio_size = *size;
-	if (pfr_ioctl(DIOCRGETASTATS, &io))
+	if (ioctl(dev, DIOCRGETASTATS, &io))
 		return (-1);
 	*size = io.pfrio_size;
 	return (0);
@@ -308,7 +288,7 @@ pfr_clr_astats(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
 	io.pfrio_size = size;
-	if (pfr_ioctl(DIOCRCLRTSTATS, &io))
+	if (ioctl(dev, DIOCRCLRTSTATS, &io))
 		return (-1);
 	if (nzero != NULL)
 		*nzero = io.pfrio_nzero;
@@ -328,7 +308,7 @@ pfr_clr_tstats(struct pfr_table *tbl, int size, int *nzero, int flags)
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = tbl;
 	io.pfrio_size = size;
-	if (pfr_ioctl(DIOCRCLRTSTATS, &io))
+	if (ioctl(dev, DIOCRCLRTSTATS, &io))
 		return (-1);
 	if (nzero)
 		*nzero = io.pfrio_nzero;
@@ -351,7 +331,7 @@ pfr_tst_addrs(struct pfr_table *tbl, struct pfr_addr *addr, int size,
 	io.pfrio_table = *tbl;
 	io.pfrio_buffer = addr;
 	io.pfrio_size = size;
-	if (pfr_ioctl(DIOCRTSTADDRS, &io))
+	if (ioctl(dev, DIOCRTSTADDRS, &io))
 		return (-1);
 	if (nmatch)
 		*nmatch = io.pfrio_nmatch;
@@ -374,7 +354,7 @@ pfr_wrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap,
 	io.pfrio_buffer = wrap;
 	io.pfrio_size = wrap ? 1 : 0;
 	io.pfrio_exists = exists ? 1 : 0;
-	if (pfr_ioctl(DIOCRWRAPTABLE, &io))
+	if (ioctl(dev, DIOCRWRAPTABLE, &io))
 		return (-1);
 	if (exists)
 		*exists = io.pfrio_exists;
@@ -394,7 +374,7 @@ pfr_unwrap_table(struct pfr_table *tbl, struct pf_addr_wrap *wrap, int flags)
 	io.pfrio_flags = flags;
 	io.pfrio_buffer = wrap;
 	io.pfrio_size = 1;
-	if (pfr_ioctl(DIOCRUNWRTABLE, &io))
+	if (ioctl(dev, DIOCRUNWRTABLE, &io))
 		return (-1);
 	if (tbl != NULL)
 		*tbl = io.pfrio_table;
