@@ -65,6 +65,12 @@ static char rcsid[] = "$NetBSD: vmstat.c,v 1.5 1996/05/10 23:16:40 thorpej Exp $
 #include <utmp.h>
 #include <unistd.h>
 
+#if defined(i386)
+#define	_KERNEL
+#include <machine/psl.h>
+#undef _KERNEL
+#endif
+
 #include "systat.h"
 #include "extern.h"
 
@@ -161,6 +167,10 @@ static struct nlist namelist[] = {
 	{ "_intrcnt" },
 #define	X_EINTRCNT	12
 	{ "_eintrcnt" },
+#if defined(i386)
+#define	X_INTRHAND	13
+	{ "_intrhand" },
+#endif
 	{ "" },
 };
 
@@ -226,6 +236,36 @@ initkre()
 #undef allocate
 	}
 	if (nintr == 0) {
+#if defined(i386)
+		struct intrhand *intrhand[16], *ihp, ih;
+		char iname[16];
+		int namelen, n;
+
+		NREAD(X_INTRHAND, intrhand, sizeof(intrhand));
+		for (namelen = 0, i = 0; i < 16; i++) {
+			ihp = intrhand[i];
+			while (ihp) {
+				nintr++;
+				KREAD(ihp, &ih, sizeof(ih));
+				KREAD(ih.ih_what, iname, 16);
+				namelen += 1 + strlen(iname);
+				ihp = ih.ih_next;
+			}
+		}
+		intrloc = calloc(nintr, sizeof (long));
+		intrname = calloc(nintr, sizeof (char *));
+		cp = intrnamebuf = malloc(namelen);
+		for (namelen = 0, i = 0, n = 0; i < 16; i++) {
+			ihp = intrhand[i];
+			while (ihp) {
+				KREAD(ihp, &ih, sizeof(ih));
+				KREAD(ih.ih_what, iname, 16);
+				strcpy(intrname[n++] = intrnamebuf + namelen, iname);
+				namelen += 1 + strlen(iname);
+				ihp = ih.ih_next;
+			}
+		}
+#else
 		nintr = (namelist[X_EINTRCNT].n_value -
 			namelist[X_INTRCNT].n_value) / sizeof (long);
 		intrloc = calloc(nintr, sizeof (long));
@@ -249,6 +289,7 @@ initkre()
 			intrname[i] = cp;
 			cp += strlen(cp) + 1;
 		}
+#endif
 		nextintsrow = INTSROW + 2;
 		allocinfo(&s);
 		allocinfo(&s1);
@@ -611,12 +652,28 @@ getinfo(s, st)
 	int mib[2];
 	size_t size;
 	extern int errno;
+#if defined(i386)
+	struct intrhand *intrhand[16], *ihp, ih;
+	int i, n;
+#endif
 
 	dkreadstats();
 	NREAD(X_CPTIME, s->time, sizeof s->time);
 	NREAD(X_CNT, &s->Cnt, sizeof s->Cnt);
 	NREAD(X_NCHSTATS, &s->nchstats, sizeof s->nchstats);
+#if defined(i386)
+	NREAD(X_INTRHAND, intrhand, sizeof(intrhand));
+	for (i = 0, n = 0; i < 16; i++) {
+		ihp = intrhand[i];
+		while (ihp) {
+			KREAD(ihp, &ih, sizeof(ih));
+			s->intrcnt[n++] = ih.ih_count;
+			ihp = ih.ih_next;
+		}
+	}
+#else
 	NREAD(X_INTRCNT, s->intrcnt, nintr * LONG);
+#endif
 	size = sizeof(s->Total);
 	mib[0] = CTL_VM;
 	mib[1] = VM_METER;
