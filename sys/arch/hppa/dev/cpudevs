@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.3 1998/10/30 19:06:06 mickey Exp $
+$OpenBSD: cpudevs,v 1.4 1998/11/23 04:24:30 mickey Exp $
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -47,15 +47,18 @@ board	HP715_33	0x311	715/33 (Scorpio)
 board	HP715_50	0x310	715/50 (Scorpio)
 board	HP715T_50	0x312	715T/50 (Scorpio (4XXt up))
 board	HP715S_50	0x314	715S/50 (Scorpio (4XXs up))
+board	HP715_64	0x60A	715/64 (Scorpio)
 board	HP715_75	0x316	715/75 (Scorpio)
+board	HP715_99	0x60B	715/99 (Scorpio)
 
 #board	HP720		0x200	720 (Cobra)
-board	HP725		0x318	725/50 (Scorpio)
-#board	HP725		0xFFF	725 (Scorpio ?)
+board	HP725_50	0x318	725/50
+board	HP725_75	0x319	725/75
+board	HP725_100	0x60D	725/100
 
 #board	HP730		0x202	730 (King Cobra)
-#board	HP735		0x203	735 (Hardball)
-#board	HP735_125	0x206	735/125 (Hardball)
+board	HP735_99	0x203	735/99 (Hardball)
+board	HP735_135	0x206	735/135 (Hardball)
 
 #board	HP743i_1	0x603	743i1
 #board	HP743i_2	0x604	743i2
@@ -63,17 +66,17 @@ board	HP725		0x318	725/50 (Scorpio)
 #board	HP743v_1	0x617	743v1
 #board	HP743v_2	0x618	743v2
 
-#board	HP750		0x201	750 (Coral)
+board	HP750		0x201	750 (Coral)
 #board	HP755		0xFFD	755 (Coral II ?)
 
 #board	HP7GL_1		0x606	7GL1
 #board	HP7GL_2		0x607	7GL2
 #board	HP7GL_3		0x608	7GL3
 
-#board	HP770_100	0x585   J-class J200 
-#board	HP770_120	0x586   J-class J210
-#board	HP777_100	0x592   C-class C200
-#board	HP777_120	0x58E   C-class C210
+#board	HP770_100	0x585   770/100 (J-class J200)
+#board	HP770_120	0x586   770/120 (J-class J210)
+#board	HP777_100	0x592   777/100 (C-class C200)
+#board	HP777_120	0x58E   777/120 (C-class C210)
 
 #board	HP810		0x100	810 (Burgundy)
 #board	HP815		0x103	808/815
@@ -82,14 +85,14 @@ board	HP725		0x318	725/50 (Scorpio)
 #board	HP827		0x102	827/832
 #board	HP835		0x00a	83[456]
 #board	HP840		0x004	840 (Indigo)
-#board	HP842		0x104
+#board	HP842		0x104	842
 #board	HP845		0x00b	84[456]
 #board	HP850		0x080	850 (Cheetah)
 #board	HP850_OPDC	0x00C	850 (Cheetah)
-#board	HP852		0x105
+#board	HP852		0x105	852
 #board	HP855		0x081	855 (Jaguar)
 #board	HP860		0x082	PN10C
-#board	HP870		0x083
+#board	HP870		0x083	870
 
 /*
  * CORE devices
