@@ -593,6 +593,16 @@ struct type **const (cplus_builtin_types[]) =
   0
 };
 
+/* without this stub function, alpha attempts to generate a
+ * text relocation for the function pointer instead of a PLT reference.
+ */
+static char *call_cplus_demangle (const char *mangled, int options);
+static char *
+call_cplus_demangle (const char *mangled, int options)
+{
+	return cplus_demangle(mangled, options);
+}
+
 const struct language_defn cplus_language_defn =
 {
   "c++",			/* Language name */
@@ -615,7 +625,7 @@ const struct language_defn cplus_language_defn =
   value_of_this,		/* value_of_this */
   cp_lookup_symbol_nonlocal,	/* lookup_symbol_nonlocal */
   cp_lookup_transparent_type,   /* lookup_transparent_type */
-  cplus_demangle,		/* Language specific symbol demangler */
+  call_cplus_demangle,		/* Language specific symbol demangler */
   {"", "", "", ""},		/* Binary format info */
   {"0%lo", "0", "o", ""},	/* Octal format info */
   {"%ld", "", "d", ""},		/* Decimal format info */
