@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_mroute.c,v 1.39 2003/06/24 07:47:54 itojun Exp $	*/
+/*	$OpenBSD: ip6_mroute.c,v 1.40 2003/07/08 10:23:32 itojun Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.45 2001/03/25 08:38:51 itojun Exp $	*/
 
 /*
@@ -545,6 +545,38 @@ ip6_mrouter_done()
 	return 0;
 }
 
+void
+ip6_mrouter_detach(ifp)
+	struct ifnet *ifp;
+{
+	struct rtdetq *rte;
+	struct mf6c *mfc;
+	mifi_t mifi;
+	int i;
+
+	/*
+	 * Delete a mif which points to ifp.
+	 */
+	for (mifi = 0; mifi < nummifs; mifi++)
+		if (mif6table[mifi].m6_ifp == ifp)
+			del_m6if(&mifi);
+
+	/*
+	 * Clear rte->ifp of cache entries received on ifp.
+	 */
+	for (i = 0; i < MF6CTBLSIZ; i++) {
+		if (n6expire[i] == 0)
+			continue;
+
+		for (mfc = mf6ctable[i]; mfc != NULL; mfc = mfc->mf6c_next) {
+			for (rte = mfc->mf6c_stall; rte != NULL; rte = rte->next) {
+				if (rte->ifp == ifp)
+					rte->ifp = NULL;
+			}
+		}
+	}
+}
+
 static struct sockaddr_in6 sin6 = { sizeof(sin6), AF_INET6 };
 
 /*
@@ -768,7 +800,9 @@ add_m6fc(mfccp)
 			/* free packets Qed at the end of this entry */
 			for (rte = rt->mf6c_stall; rte != NULL; ) {
 				struct rtdetq *n = rte->next;
-				ip6_mdq(rte->m, rte->ifp, rt);
+				if (rte->ifp) {
+					ip6_mdq(rte->m, rte->ifp, rt);
+				}
 				m_freem(rte->m);
 #ifdef UPCALL_TIMING
 				collate(&(rte->t));
@@ -1313,7 +1347,8 @@ ip6_mdq(m, ifp, rt)
 			log(LOG_DEBUG,
 			    "wrong if: ifid %d mifi %d mififid %x\n",
 			    ifp->if_index, mifi,
-			    mif6table[mifi].m6_ifp->if_index);
+			    mif6table[mifi].m6_ifp ?
+			    mif6table[mifi].m6_ifp->if_index : -1); 
 #endif
 		mrt6stat.mrt6s_wrong_if++;
 		rt->mf6c_wrong_if++;
