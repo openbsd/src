@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.9 1996/05/10 12:31:07 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.10 1996/06/29 18:54:08 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -78,8 +78,8 @@ struct ifaddr **ifnet_addrs;
  * Attach an interface to the
  * list of "active" interfaces.
  */
-void
-if_attach(ifp)
+static void
+if_attachsetup(ifp)
 	struct ifnet *ifp;
 {
 	unsigned socksize, ifasize;
@@ -88,10 +88,6 @@ if_attach(ifp)
 	register struct ifaddr *ifa;
 	static int if_indexlim = 8;
 
-	if (if_index == 0)
-		TAILQ_INIT(&ifnet);
-	TAILQ_INIT(&ifp->if_addrlist);
-	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
 	ifp->if_index = ++if_index;
 	if (ifnet_addrs == 0 || if_index >= if_indexlim) {
 		unsigned n = (if_indexlim <<= 1) * sizeof(ifa);
@@ -135,6 +131,29 @@ if_attach(ifp)
 	while (namelen != 0)
 		sdl->sdl_data[--namelen] = 0xff;
 }
+
+void
+if_attachhead(ifp)
+	struct ifnet *ifp;
+{
+	if (if_index == 0)
+		TAILQ_INIT(&ifnet);
+	TAILQ_INIT(&ifp->if_addrlist);
+	TAILQ_INSERT_HEAD(&ifnet, ifp, if_list);
+	if_attachsetup(ifp);
+}
+
+void
+if_attach(ifp)
+	struct ifnet *ifp;
+{
+	if (if_index == 0)
+		TAILQ_INIT(&ifnet);
+	TAILQ_INIT(&ifp->if_addrlist);
+	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
+	if_attachsetup(ifp);
+}
+
 /*
  * Locate an interface based on a complete address.
  */
