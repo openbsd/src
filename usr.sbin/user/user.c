@@ -1,4 +1,4 @@
-/* $OpenBSD: user.c,v 1.41 2003/04/03 16:03:06 millert Exp $ */
+/* $OpenBSD: user.c,v 1.42 2003/05/13 01:12:31 millert Exp $ */
 /* $NetBSD: user.c,v 1.45 2001/08/17 08:29:00 joda Exp $ */
 
 /*
@@ -550,6 +550,10 @@ static int
 valid_login(char *login)
 {
 	char	*cp;
+
+	/* The first character cannot be a hyphen */
+	if (*login == '-')
+		return 0;
 
 	for (cp = login ; *cp ; cp++) {
 		/* We allow '$' as the last character for samba */
