@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.92 2000/06/18 05:54:37 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.93 2000/06/18 19:05:46 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -35,10 +35,6 @@
  * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
- */
-
-/*
- * IPSP Processing
  */
 
 #include <sys/param.h>
@@ -332,7 +328,7 @@ check_ipsec_policy(struct inpcb *inp, void *daddr)
 
 #ifdef INET6
 	    case SENT_IP6:
-		DPRINTF(("ipsec: send SA request (%d), remote IPv6 address: %s, SA type: %d\n", i + 1, inet6_ntoa4(dst->sen_ip6_dst), sa_require));
+		DPRINTF(("ipsec: send SA request (%d), remote IPv6 address: %s, SA type: %d\n", i + 1, ip6_sprintf(dst->sen_ip6_dst), sa_require));
 		break;
 #endif /* INET6 */
 
@@ -1619,22 +1615,6 @@ inet_ntoa4(struct in_addr ina)
     return (buf[i]);
 }
 
-#ifdef INET6
-char *
-inet6_ntoa4(struct in6_addr ina)
-{
-    static char buf[4][8 * sizeof "abcd" + 8];
-    unsigned char *ucp = (unsigned char *) &ina;
-    static int i = 3;
-
-    i = (i + 1) % 4;
-    sprintf(buf[i], "%02x:%02x:%02x:%02x:%02x:%02x:%02x:%02x",
-	    ucp[0] & 0xff, ucp[1] & 0xff, ucp[2] & 0xff, ucp[3] & 0xff,
-	    ucp[4] & 0xff, ucp[5] & 0xff, ucp[6] & 0xff, ucp[7] & 0xff);
-    return (buf[i]);
-}
-#endif /* INET6 */
-
 char *
 ipsp_address(union sockaddr_union sa)
 {
@@ -1645,7 +1625,7 @@ ipsp_address(union sockaddr_union sa)
 
 #if INET6
 	case AF_INET6:
-	    return inet6_ntoa4(sa.sin6.sin6_addr);
+	    return ip6_sprintf(sa.sin6.sin6_addr);
 #endif /* INET6 */
 
 	default:
@@ -2181,7 +2161,7 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error)
 #ifdef INET6
 	if (gw->sen_type == SENT_IPSP6)
 	  DPRINTF(("ipsp_spd_lookup(): non-existant TDB for SA %s/%08x/%u\n",
-		   inet6_ntoa4(gw->sen_ipsp6_dst), ntohl(gw->sen_ipsp6_spi),
+		   ip6_sprintf(gw->sen_ipsp6_dst), ntohl(gw->sen_ipsp6_spi),
 		   gw->sen_ipsp6_sproto));
 #endif /* INET6 */	  
 
