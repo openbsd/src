@@ -1,4 +1,4 @@
-/*	$OpenBSD: uperf_sbus.c,v 1.4 2002/04/08 17:49:42 jason Exp $	*/
+/*	$OpenBSD: uperf_sbus.c,v 1.5 2003/03/27 17:41:43 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -136,8 +136,8 @@ uperf_sbus_attach(parent, self, aux)
 	}
 
 	if (sbus_bus_map(sc->sc_bus_t, sa->sa_reg[0].sbr_slot,
-	    sa->sa_reg[0].sbr_offset, sa->sa_reg[0].sbr_size,
-	    BUS_SPACE_MAP_LINEAR, 0, &sc->sc_bus_h) != 0) {
+	    sa->sa_reg[0].sbr_offset, sa->sa_reg[0].sbr_size, 0, 0,
+	    &sc->sc_bus_h) != 0) {
 		printf(": couldn't map registers\n");
 		return;
 	}
