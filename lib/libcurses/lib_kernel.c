@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_kernel.c,v 1.3 1997/12/03 05:21:22 millert Exp $	*/
+/*	$OpenBSD: lib_kernel.c,v 1.4 1997/12/09 01:23:04 millert Exp $	*/
 
 
 /***************************************************************************
@@ -53,7 +53,6 @@ int napms(int ms)
 	returnCode(OK);
 }
 
-#ifndef EXTERN_TERMINFO
 int reset_prog_mode(void)
 {
 	T((T_CALLED("reset_prog_mode()")));
@@ -79,7 +78,6 @@ int reset_shell_mode(void)
 	_nc_set_curterm(&cur_term->Ottyb);
 	returnCode(OK);
 }
-#endif /* EXTERN_TERMINFO */
 
 /*
  *	erasechar()
