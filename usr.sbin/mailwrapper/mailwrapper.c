@@ -1,4 +1,4 @@
-/*	$OpenBSD: mailwrapper.c,v 1.14 2003/03/08 23:19:32 millert Exp $	*/
+/*	$OpenBSD: mailwrapper.c,v 1.15 2003/03/09 01:24:26 millert Exp $	*/
 /*	$NetBSD: mailwrapper.c,v 1.2 1999/02/20 22:10:07 thorpej Exp $	*/
 
 /*
@@ -94,8 +94,13 @@ main(int argc, char *argv[], char *envp[])
 {
 	FILE *config;
 	char *line, *cp, *from, *to, *ap;
+	const char *progname;
 	size_t len, lineno = 0;
 	struct arglist al;
+
+	/* change __progname to mailwrapper so we get sensible error messages */
+	progname = __progname;
+	__progname = "mailwrapper";
 
 	initarg(&al);
 	for (len = 0; len < argc; len++)
@@ -103,7 +108,7 @@ main(int argc, char *argv[], char *envp[])
 
 	if ((config = fopen(_PATH_MAILERCONF, "r")) == NULL) {
 		addarg(&al, NULL, 0);
-		openlog("mailwrapper", LOG_PID, LOG_MAIL);
+		openlog(__progname, LOG_PID, LOG_MAIL);
 		syslog(LOG_INFO, "cannot open %s, using %s as default MTA",
 		    _PATH_MAILERCONF, _PATH_DEFAULTMTA);
 		closelog();
@@ -137,7 +142,7 @@ main(int argc, char *argv[], char *envp[])
 		if ((to = strsep(&cp, WS)) == NULL)
 			goto parse_error;
 
-		if (strcmp(from, __progname) == 0) {
+		if (strcmp(from, progname) == 0) {
 			for (ap = strsep(&cp, WS); ap != NULL;
 			    ap = strsep(&cp, WS))
 				if (*ap)
