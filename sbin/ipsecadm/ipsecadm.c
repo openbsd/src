@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.43 2000/09/21 02:38:20 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.44 2000/09/29 19:06:53 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -653,6 +653,14 @@ main(int argc, char **argv)
 	    i++;
 	    continue;
 	}
+
+        if (!strcmp(argv[i] + 1, "spi") && iscmd(mode, FLOW))
+        {
+            fprintf(stderr, "%s: use of flag \"-spi\" is deprecated with"
+                    "flow creation or deletion\n", argv[0]);
+            i++;
+            continue;
+        }
 
 	if (!strcmp(argv[i] + 1, "spi") && spi == SPI_LOCAL_USE &&
 	    (i + 1 < argc) && !bypass && !deny)
@@ -1644,14 +1652,6 @@ main(int argc, char **argv)
 		     smsg.sadb_msg_len += sad2.sadb_address_len;
 		 }
 
-                 if (sa.sadb_sa_spi != 0)
-                 {
-		     /* SA header */
-		     iov[cnt].iov_base = &sa;
-		     iov[cnt++].iov_len = sizeof(sa);
-		     smsg.sadb_msg_len += sa.sadb_sa_len;
-                 }
-
 	         if ((sad1.sadb_address_exttype) &&
                      (smsg.sadb_msg_type != SADB_X_DELFLOW))
 	         {
@@ -1741,7 +1741,8 @@ main(int argc, char **argv)
 		 iov[cnt++].iov_len = ROUNDUP(odmask->sa.sa_len);
 		 smsg.sadb_msg_len += sad7.sadb_address_len;
 
-		 if (srcid)
+		 if ((srcid) &&
+                     (smsg.sadb_msg_type != SADB_X_DELFLOW))
 		 {
 		     iov[cnt].iov_base = &sid1;
 		     iov[cnt++].iov_len = sizeof(sid1);
@@ -1751,7 +1752,8 @@ main(int argc, char **argv)
 		     smsg.sadb_msg_len += sid1.sadb_ident_len;
 		 }
 
-		 if (dstid)
+		 if ((dstid) &&
+                     (smsg.sadb_msg_type != SADB_X_DELFLOW))
 		 {
 		     iov[cnt].iov_base = &sid2;
 		     iov[cnt++].iov_len = sizeof(sid2);
