@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.94 2004/04/28 01:13:18 deraadt Exp $ */
+/*	$OpenBSD: kroute.c,v 1.95 2004/05/08 06:04:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -98,6 +98,7 @@ void			 kroute_detach_nexthop(struct knexthop_node *);
 int		protect_lo(void);
 u_int8_t	prefixlen_classful(in_addr_t);
 u_int8_t	mask2prefixlen(in_addr_t);
+in_addr_t	prefixlen2mask(u_int8_t);
 void		get_rtaddrs(int, struct sockaddr *, struct sockaddr **);
 void		if_change(u_short, int, struct if_data *);
 void		if_announce(void *);
@@ -455,7 +456,7 @@ kroute_insert(struct kroute_node *kr)
 		if (!(kr->r.flags & F_CONNECTED))
 			kr->r.flags |= F_STATIC;
 
-		mask = 0xffffffff << (32 - kr->r.prefixlen);
+		mask = prefixlen2mask(kr->r.prefixlen);
 		ina = ntohl(kr->r.prefix.s_addr);
 		RB_FOREACH(h, knexthop_tree, &knt)
 			if (h->nexthop.af == AF_INET &&
@@ -718,8 +719,8 @@ kroute_match(in_addr_t key)
 
 	/* we will never match the default route */
 	for (i = 32; i > 0; i--)
-		if ((kr = kroute_find(
-		    htonl(ina & (0xffffffff << (32 - i))), i)) != NULL)
+		if ((kr =
+		    kroute_find(htonl(ina & prefixlen2mask(i)), i)) != NULL)
 			return (kr);
 
 	/* if we don't have a match yet, try to find a default route */
@@ -808,6 +809,12 @@ mask2prefixlen(in_addr_t ina)
 		return (0);
 	else
 		return (33 - ffs(ntohl(ina)));
+}
+
+in_addr_t
+prefixlen2mask(u_int8_t prefixlen)
+{
+	return (0xffffffff << (32 - prefixlen));
 }
 
 #define	ROUNDUP(a, size)	\
@@ -941,7 +948,7 @@ send_rtmsg(int fd, int action, struct kroute *kroute)
 	r.nexthop.sin_addr.s_addr = kroute->nexthop.s_addr;
 	r.mask.sin_len = sizeof(r.mask);
 	r.mask.sin_family = AF_INET;
-	r.mask.sin_addr.s_addr = htonl(0xffffffff << (32 - kroute->prefixlen));
+	r.mask.sin_addr.s_addr = htonl(prefixlen2mask(kroute->prefixlen));
 
 retry:
 	if (write(fd, &r, sizeof(r)) == -1) {
