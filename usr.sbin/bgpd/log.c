@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.18 2004/01/22 19:07:33 henning Exp $ */
+/*	$OpenBSD: log.c,v 1.19 2004/01/22 19:13:56 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -218,6 +218,26 @@ log_warn(const char *emsg, ...)
 		}
 		va_end(ap);
 	}
+}
+
+void
+log_warnx(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	va_start(ap, emsg);
+	vlog(LOG_CRIT, emsg, ap);
+	va_end(ap);
+}
+
+void
+log_info(const char *emsg, ...)
+{
+	va_list	 ap;
+
+	va_start(ap, emsg);
+	vlog(LOG_INFO, emsg, ap);
+	va_end(ap);
 }
 
 void
