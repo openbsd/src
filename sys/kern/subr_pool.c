@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_pool.c,v 1.43 2004/06/24 19:35:24 tholo Exp $	*/
+/*	$OpenBSD: subr_pool.c,v 1.44 2004/07/20 23:47:08 art Exp $	*/
 /*	$NetBSD: subr_pool.c,v 1.61 2001/09/26 07:14:56 chs Exp $	*/
 
 /*-
@@ -171,8 +171,10 @@ int	pool_chk_page(struct pool *, const char *, struct pool_item_header *);
 void	*pool_allocator_alloc(struct pool *, int);
 void	pool_allocator_free(struct pool *, void *);
 
+#ifdef DDB
 void pool_print_pagelist(struct pool_pagelist *, int (*)(const char *, ...));
 void pool_print1(struct pool *, const char *, int (*)(const char *, ...));
+#endif
 
 
 /*
@@ -1367,6 +1369,7 @@ pool_drain(void *arg)
 	splx(s);
 }
 
+#ifdef DDB
 /*
  * Diagnostic helpers.
  */
@@ -1573,6 +1576,7 @@ out:
 	simple_unlock(&pp->pr_slock);
 	return (r);
 }
+#endif
 
 /*
  * pool_cache_init:

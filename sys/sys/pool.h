@@ -1,4 +1,4 @@
-/*	$OpenBSD: pool.h,v 1.16 2004/06/02 22:17:22 tedu Exp $	*/
+/*	$OpenBSD: pool.h,v 1.17 2004/07/20 23:47:08 art Exp $	*/
 /*	$NetBSD: pool.h,v 1.27 2001/06/06 22:00:17 rafal Exp $	*/
 
 /*-
@@ -227,13 +227,14 @@ void		pool_sethiwat(struct pool *, int);
 int		pool_sethardlimit(struct pool *, unsigned, const char *, int);
 void		pool_drain(void *);
 
+#ifdef DDB
 /*
  * Debugging and diagnostic aides.
  */
-void		pool_print(struct pool *, const char *);
 void		pool_printit(struct pool *, const char *,
 		    int (*)(const char *, ...));
 int		pool_chk(struct pool *, const char *);
+#endif
 
 /*
  * Pool cache routines.
