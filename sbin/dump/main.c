@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2002/02/16 21:27:33 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2003/04/25 23:51:01 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -645,6 +645,7 @@ obsolete(argcp, argvp)
 {
 	int argc, flags;
 	char *ap, **argv, *flagsp, **nargv, *p;
+	size_t len;
 
 	/* Setup. */
 	argv = *argvp;
@@ -676,11 +677,12 @@ obsolete(argcp, argvp)
 				warnx("option requires an argument -- %c", *ap);
 				usage();
 			}
-			if ((nargv[0] = malloc(strlen(*argv) + 2 + 1)) == NULL)
+			len = 2 + strlen(*argv) + 1;
+			if ((nargv[0] = malloc(len)) == NULL)
 				err(1, NULL);
 			nargv[0][0] = '-';
 			nargv[0][1] = *ap;
-			(void)strcpy(&nargv[0][2], *argv);
+			(void)strlcpy(&nargv[0][2], *argv, len - 2);
 			++argv;
 			++nargv;
 			break;
