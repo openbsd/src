@@ -1,9 +1,8 @@
-#	$OpenBSD: Makefile,v 1.4 2000/05/18 16:46:37 espie Exp $
+#	$OpenBSD: Makefile,v 1.5 2000/09/21 14:59:40 mickey Exp $
 
 .if ${MACHINE} == "i386"
 SRCS=	apmd.c apmsubr.c
 
-CFLAGS+=	-g  -O2 -Wmissing-prototypes -Wall
 PROG=	apmd
 .else
 NOPROG=yes

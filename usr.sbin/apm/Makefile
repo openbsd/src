@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2000/05/18 16:46:36 espie Exp $
+#	$OpenBSD: Makefile,v 1.6 2000/09/21 14:59:40 mickey Exp $
 
 
 .if ${MACHINE} == "i386"
@@ -6,7 +6,7 @@ SRCS=	apm.c apmsubr.c
 
 .PATH:	${.CURDIR}/../apmd
 
-CFLAGS+=	-g  -O2 -Wmissing-prototypes -Wall -I${.CURDIR}/../apmd
+CFLAGS+=	-I${.CURDIR}/../apmd
 PROG=	apm
 LINKS=	${BINDIR}/apm ${BINDIR}/zzz
 .else
