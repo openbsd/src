@@ -1,4 +1,4 @@
-/* $OpenBSD: locore.s,v 1.18 2002/04/28 20:55:14 pvalchev Exp $ */
+/* $OpenBSD: locore.s,v 1.19 2002/05/02 23:05:27 millert Exp $ */
 /* $NetBSD: locore.s,v 1.94 2001/04/26 03:10:44 ross Exp $ */
 
 /*-
@@ -1780,16 +1780,20 @@ XLEAF(suswintr, 2)				/* XXX what is a 'word'? */
 
 	.data
 EXPORT(intrnames)
+	.type intrnames,@object
 #ifndef EVCNT_COUNTERS
 	INTRNAMES_DEFINITION
 #endif
 EXPORT(eintrnames)
+	.type eintrnames,@object
 	.align 3
 EXPORT(intrcnt)
+	.type intrcnt,@object
 #ifndef EVCNT_COUNTERS
 	INTRCNT_DEFINITION
 #endif
 EXPORT(eintrcnt)
+	.type eintrcnt,@object
 	.text
 
 /**************************************************************************/
