@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS) 
 	.text
-	.asciz "$OpenBSD: ldexp.S,v 1.4 2004/10/02 15:30:33 pefo Exp $"
+	.asciz "$OpenBSD: ldexp.S,v 1.5 2004/10/18 18:41:06 pefo Exp $"
 #endif /* LIBC_SCCS */
 
 #define DEXP_INF	0x7ff
@@ -130,7 +130,7 @@ LEAF(ldexp, 0)
 	dmtc1	t0, $f0			# save result
 	j	ra
 4:
-	li	v0, 0x8000000000000000
+	dli	v0, 0x8000000000000000
 	ble	t1, -52, 7f		# is result too small for denorm?
 	dsll	t2, t3, 63 - 52		# clear exponent, extract fraction
 	or	t2, t2, v0		# set implied one bit
@@ -158,7 +158,7 @@ LEAF(ldexp, 0)
 1:
 	j	ra
 8:
-	li	t1, 0x7ff0000000000000	# result is infinity (MSW)
+	dli	t1, 0x7ff0000000000000	# result is infinity (MSW)
 	dmtc1	t1, $f0	
 	bge	v1, zero, 1f		# should result be negative infinity?
 	neg.d	$f0, $f0		# result is negative infinity
