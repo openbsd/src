@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.7 1998/12/31 02:40:21 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.8 1999/02/27 19:05:43 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_tl.c,v 1.24 1998/12/29 15:39:35 wpaul Exp $
+ *	$FreeBSD: if_tl.c,v 1.26 1999/02/01 21:25:51 wpaul Exp $
  */
 
 /*
@@ -248,7 +248,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static char rcsid[] =
-	"$FreeBSD: if_tl.c,v 1.24 1998/12/29 15:39:35 wpaul Exp $";
+	"$FreeBSD: if_tl.c,v 1.26 1999/02/01 21:25:51 wpaul Exp $";
 #endif
 
 #ifdef TL_DEBUG
@@ -1739,7 +1739,7 @@ tl_attach(config_id, unit)
 
 	sc->tl_unit = unit;
 	sc->tl_dinfo = t;
-	if (t->tl_vid == COMPAQ_VENDORID)
+	if (t->tl_vid == COMPAQ_VENDORID || t->tl_vid == TI_VENDORID)
 		sc->tl_eeaddr = TL_EEPROM_EADDR;
 	if (t->tl_vid == OLICOM_VENDORID)
 		sc->tl_eeaddr = TL_EEPROM_EADDR_OC;
@@ -1797,6 +1797,7 @@ tl_attach(config_id, unit)
 	ifp->if_watchdog = tl_watchdog;
 	ifp->if_init = tl_init;
 	ifp->if_mtu = ETHERMTU;
+	ifp->if_snd.ifq_maxlen = TL_TX_LIST_CNT - 1;
 	callout_handle_init(&sc->tl_stat_ch);
 
 	/* Reset the adapter again. */
@@ -3138,7 +3139,8 @@ tl_attach(parent, self, aux)
 	sc->tl_ldata = (struct tl_list_data *)roundptr;
 
 	sc->tl_unit = sc->sc_dev.dv_unit;
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_COMPAQ)
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_COMPAQ ||
+	    PCI_VENDOR(pa->pa_id) == PCI_VENDOR_TI)
 		sc->tl_eeaddr = TL_EEPROM_EADDR;
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_OLICOM)
 		sc->tl_eeaddr = TL_EEPROM_EADDR_OC;
@@ -3181,6 +3183,7 @@ tl_attach(parent, self, aux)
 	ifp->if_start = tl_start;
 	ifp->if_watchdog = tl_watchdog;
 	ifp->if_baudrate = 10000000;
+	ifp->if_snd.ifq_maxlen = TL_TX_LIST_CNT - 1;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*
