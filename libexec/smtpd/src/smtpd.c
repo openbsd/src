@@ -2,7 +2,7 @@
  * smtpd, Obtuse SMTP daemon, storing agent. does simple collection of
  * mail messages, for later forwarding by smtpfwdd.
  *
- * $Id: smtpd.c,v 1.2 1997/12/14 01:42:28 beck Exp $
+ * $Id: smtpd.c,v 1.3 1998/01/14 08:20:22 beck Exp $
  * 
  * Copyright (c) 1996, 1997 Obtuse Systems Corporation. All rights
  * reserved.
@@ -40,7 +40,7 @@
 
 char *obtuse_copyright =
 "Copyright 1996 - Obtuse Systems Corporation - All rights reserved.";
-char *obtuse_rcsid = "$Id: smtpd.c,v 1.2 1997/12/14 01:42:28 beck Exp $";
+char *obtuse_rcsid = "$Id: smtpd.c,v 1.3 1998/01/14 08:20:22 beck Exp $";
 
 #include <stdarg.h>
 #include <stdlib.h>
@@ -634,6 +634,8 @@ smtp_open_spoolfile()
   strncat(spoolfile, "/smtpdXXXXXX", 12);
   if ((fd = mkstemp(spoolfile)) < 0) {
     syslog(LOG_CRIT, "Couldn't create spool file %s!", spoolfile);
+    free(spoolfile);
+    spoolfile=NULL;
     smtp_exit(EX_CONFIG);
   }
 #else /* USE_MKSTEMP */
