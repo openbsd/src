@@ -1,4 +1,4 @@
-/*	$OpenBSD: chat.c,v 1.17 2002/05/29 19:23:34 deraadt Exp $	*/
+/*	$OpenBSD: chat.c,v 1.18 2002/07/02 22:22:56 millert Exp $	*/
 
 /*
  *	Chat -- a program for automatic session establishment (i.e. dial
@@ -83,7 +83,7 @@
 #if 0
 static char rcsid[] = "Id: chat.c,v 1.19 1998/03/24 23:57:48 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: chat.c,v 1.17 2002/05/29 19:23:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: chat.c,v 1.18 2002/07/02 22:22:56 millert Exp $";
 #endif
 #endif
 
@@ -664,6 +664,8 @@ int sending;  /* set to 1 when sending (putting) this string. */
     new_length += 3;	/* \r and two nuls */
 
     ret = (char *)malloc(new_length);
+    if (ret == NULL)
+	    fatal(2, "cannot allocate memory");
 
     s1 = ret;
     while (*s) {
