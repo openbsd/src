@@ -1,9 +1,5 @@
-#	$OpenBSD: Makefile,v 1.3 1996/12/08 14:32:39 downsj Exp $
+#	$OpenBSD: Makefile,v 1.4 1997/02/21 18:34:57 millert Exp $
 
-MAN=	which.1
-
-beforeinstall:
-	${INSTALL} ${COPY} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
-	    ${.CURDIR}/which.csh ${DESTDIR}${BINDIR}/which
+PROG=	which
 
 .include <bsd.prog.mk>
