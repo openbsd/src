@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.62 2002/09/10 18:29:43 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.63 2002/09/11 22:39:00 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.91 2000/06/02 17:46:37 thorpej Exp $	*/
 
 /*
@@ -416,6 +416,8 @@ static void		pmap_unmap_ptes(struct pmap *);
 
 void			pmap_pinit(pmap_t);
 void			pmap_release(pmap_t);
+
+void			pmap_zero_phys(paddr_t);
 
 /*
  * p m a p   i n l i n e   h e l p e r   f u n c t i o n s
@@ -2040,6 +2042,26 @@ pmap_zero_page(struct vm_page *pg)
 }
 
 /*
+ * pmap_zero_phys: same as pmap_zero_page, but for use before vm_pages are
+ * initialized.
+ */
+void
+pmap_zero_phys(paddr_t pa)
+{
+	simple_lock(&pmap_zero_page_lock);
+#ifdef DIAGNOSTIC
+	if (*zero_pte)
+		panic("pmap_zero_page: lock botch");
+#endif
+
+	*zero_pte = (pa & PG_FRAME) | PG_V | PG_RW;	/* map in */
+	bzero(zerop, NBPG);				/* zero */
+	*zero_pte = 0;				/* zap! */
+	pmap_update_pg((vaddr_t)zerop);		/* flush TLB */
+	simple_unlock(&pmap_zero_page_lock);
+}
+
+/*
  * pmap_zero_page_uncached: the same, except uncached.
  */
 
@@ -3613,7 +3635,7 @@ pmap_growkernel(maxkvaddr)
 
 			if (uvm_page_physget(&ptaddr) == FALSE)
 				panic("pmap_growkernel: out of memory");
-			pmap_zero_page(PHYS_TO_VM_PAGE(ptaddr));
+			pmap_zero_phys(ptaddr);
 
 			kpm->pm_pdir[PDSLOT_KERN + nkpde] =
 				ptaddr | PG_RW | PG_V;
