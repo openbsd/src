@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.22 2002/06/12 20:09:43 vincent Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.23 2002/06/25 08:14:38 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -802,5 +802,34 @@ pfctl_add_rdr(struct pfctl *pf, struct pf_rdr *r)
 int
 pfctl_add_binat(struct pfctl *pf, struct pf_binat *b)
 {
-	return 0;
+	return (0);
 }
+
+int
+pfctl_set_timeout(struct pfctl *pf, const char *opt, int seconds)
+{
+	fprintf(stderr, "set timeout not supported in authpf\n");
+	return (1);
+}
+
+int
+pfctl_set_optimization(struct pfctl *pf, const char *opt)
+{
+	fprintf(stderr, "set optimization not supported in authpf\n");
+	return (1);
+}
+
+int
+pfctl_set_limit(struct pfctl *pf, const char *opt, unsigned int limit)
+{
+	fprintf(stderr, "set limit not supported in authpf\n");
+	return (1);
+}
+
+int
+pfctl_set_logif(struct pfctl *pf, char *ifname)
+{
+	fprintf(stderr, "set loginterface not supported in authpf\n");
+	return (1);
+}
+
