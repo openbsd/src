@@ -163,13 +163,15 @@ busattach(parent, child, args, bustype)
 		return (0);
 
 	/*
-	 * check if XXmatch() replaced the temporary
-	 * mapping with a real mapping.
+	 * check if XXmatch() replaced the temporary mapping with 
+	 * a real mapping.  If not, then make sure we don't pass the
+ 	 * tmp mapping to the attach routine.
 	 */
-	if (tmp == oca.ca_ra.ra_vaddr)
-		oca.ca_ra.ra_vaddr = NULL;
+	if (oca.ca_ra.ra_vaddr == tmp)
+		oca.ca_ra.ra_vaddr = NULL; /* wipe out tmp address */
 	/*
-	 * or if it has asked us to create a mapping..
+	 * the match routine will set "ra_len" if it wants us to 
+	 * establish a mapping for it.
 	 * (which won't be seen on future XXmatch calls,
 	 * so not as useful as it seems.)
 	 */
@@ -368,7 +370,8 @@ bus_map(pa, len, bustype)
 			pte = getpte(va);
 			if ((pte & PG_V) != 0 && (pte & PG_TYPE) == pgtype &&
 			    (pte & PG_PFNUM) == pf)
-				return ((void *)va);
+				return ((void *)(va | ((u_long)pa & PGOFSET)));
+					/* note: preserve page offset */
 		}
 	}
 	rr.rr_paddr = pa;
@@ -386,7 +389,7 @@ bus_tmp(pa, bustype)
 	pmap_enter(pmap_kernel(), TMPMAP_VA,
 	    addr | pmtype | PMAP_NC,
 	    VM_PROT_READ | VM_PROT_WRITE, 1);
-	return ((void *)TMPMAP_VA);
+	return ((void *)(TMPMAP_VA | ((u_long) pa & PGOFSET)) );
 }
 
 void
