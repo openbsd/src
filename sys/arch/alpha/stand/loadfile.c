@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadfile.c,v 1.9 2000/12/14 13:47:47 art Exp $	*/
+/*	$OpenBSD: loadfile.c,v 1.10 2001/01/16 15:34:22 art Exp $	*/
 /*	$NetBSD: loadfile.c,v 1.3 1997/04/06 08:40:59 cgd Exp $	*/
 
 /*
@@ -240,7 +240,10 @@ elf_exec(fd, elf, entryp)
 	u_int64_t *entryp;
 {
 	int i;
-	int first = 1;
+	int first = 1, havesyms;
+	Elf64_Shdr *shp;
+	Elf64_Off off;
+	size_t sz;
 
 	for (i = 0; i < elf->e_phnum; i++) {
 		Elf64_Phdr phdr;
@@ -273,6 +276,72 @@ elf_exec(fd, elf, entryp)
 		first = 0;
 	}
 
+	ffp_save = roundup(ffp_save, sizeof(long));
+
+	/*
+	 * Retreive symbols.
+	 */
+	ssym = ffp_save;
+	ffp_save += sizeof(Elf64_Ehdr);
+
+	if (lseek(fd, elf->e_shoff, SEEK_SET) == -1)  {
+		printf("seek to section headers: %s\n", strerror(errno));
+		return (1);
+	}
+
+	sz = elf->e_shnum * sizeof(Elf64_Shdr);
+	shp = (Elf64_Shdr *)ffp_save;
+	ffp_save += roundup(sz, sizeof(long));
+
+	if (read(fd, shp, sz) != sz) {
+		printf("read section headers: %d\n", strerror(errno));
+		return (1);
+	}
+
+	/*
+	 * Now load the symbol sections themselves.  Make sure the
+	 * sections are aligned. Don't bother with string tables if
+	 * there are no symbol sections.
+	 */
+	off = roundup((sizeof(Elf64_Ehdr) + sz), sizeof(long));
+
+	for (havesyms = i = 0; i < elf->e_shnum; i++)
+		if (shp[i].sh_type == SHT_SYMTAB)
+			havesyms = 1;
+
+	if (!havesyms)
+		goto no_syms;
+
+	for (first = 1, i = 0; i < elf->e_shnum; i++) {
+		if (shp[i].sh_type == SHT_SYMTAB ||
+		    shp[i].sh_type == SHT_STRTAB) {
+			printf("%s%ld", first ? " [" : "+",
+			       (u_long)shp[i].sh_size);
+			if (lseek(fd, shp[i].sh_offset, SEEK_SET) == -1) {
+				printf("lseek symbols: %s\n", strerror(errno));
+				return (1);
+			}
+			if (read(fd, (void *)ffp_save, shp[i].sh_size) != shp[i].sh_size) {
+				printf("read symbols: %s\n", strerror(errno));
+				return (1);
+			}
+			ffp_save += roundup(shp[i].sh_size, sizeof(long));
+			shp[i].sh_offset = off;
+			off += roundup(shp[i].sh_size, sizeof(long));
+			first = 0;
+		}
+	}
+	if (havesyms && first == 0)
+		printf("]");
+
+	elf->e_phoff = 0;
+	elf->e_shoff = sizeof(Elf64_Ehdr);
+	elf->e_phentsize = 0;
+	elf->e_phnum = 0;
+	bcopy(elf, (void *)ssym, sizeof(*elf));
+
+no_syms:
+	esym = ffp_save;
 	ffp_save = ALPHA_K0SEG_TO_PHYS((ffp_save + PGOFSET & ~PGOFSET)) >> PGSHIFT;
 	ffp_save += 2;		/* XXX OSF/1 does this, no idea why. */
 
