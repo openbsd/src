@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.65 2001/06/26 22:56:02 dugsong Exp $ */
+/*	$OpenBSD: pf.c,v 1.66 2001/06/26 23:26:24 provos Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1218,6 +1218,20 @@ get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
 	return (rm);
 }
 
+#define ACTION_SET(a, x) \
+	do { \
+		if ((a) != NULL) \
+			*(a) = (x); \
+	} while (0)
+
+#define REASON_SET(a, x) \
+	do { \
+		if ((a) != NULL) \
+			*(a) = (x); \
+		if (x < PFRES_MAX) \
+			pf_status.counters[x]++; \
+	} while (0)
+
 int
 pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
     int ipoff, int off, struct ip *h, struct tcphdr *th)
@@ -1227,6 +1241,7 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	u_int32_t baddr;
 	u_int16_t bport;
 	struct pf_rule *r, *rm = NULL;
+	u_short reason;
 	int rewrite = 0;
 
 	if (direction == PF_OUT) {
@@ -1272,9 +1287,11 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 		r = TAILQ_NEXT(r, entries);
 	}
 
+	REASON_SET(&reason, PFRES_MATCH);
+
 	/* XXX will log packet before rewrite */
 	if ((rm != NULL) && rm->log)
-		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, rm);
+		PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
 
 	if ((rm != NULL) && (rm->action == PF_DROP_RST)) {
 		/* undo NAT/RST changes, if they have taken place */
@@ -1372,6 +1389,7 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 	u_int32_t baddr;
 	u_int16_t bport;
 	struct pf_rule *r, *rm = NULL;
+	u_short reason;
 	int rewrite = 0;
 
 	if (direction == PF_OUT) {
@@ -1415,9 +1433,11 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 		r = TAILQ_NEXT(r, entries);
 	}
 
+	REASON_SET(&reason, PFRES_MATCH);
+
 	/* XXX will log packet before rewrite */
 	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, rm);
+		PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
 
 	if (rm != NULL && rm->action != PF_PASS)
 		return (PF_DROP);
@@ -1493,6 +1513,7 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 	struct pf_nat *nat = NULL;
 	u_int32_t baddr;
 	struct pf_rule *r, *rm = NULL;
+	u_short reason;
 	int rewrite = 0;
 
 	if (direction == PF_OUT) {
@@ -1522,9 +1543,11 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 		r = TAILQ_NEXT(r, entries);
 	}
 
+	REASON_SET(&reason, PFRES_MATCH);
+
 	/* XXX will log packet before rewrite */
 	if (rm != NULL && rm->log)
-		PFLOG_PACKET(h, m, AF_INET, direction, PFRES_MATCH, rm);
+		PFLOG_PACKET(h, m, AF_INET, direction, reason, rm);
 
 	if (rm != NULL && rm->action != PF_PASS)
 		return (PF_DROP);
@@ -2019,21 +2042,6 @@ pf_test_state_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	}
 }
-
-
-#define ACTION_SET(a, x) \
-	do { \
-		if ((a) != NULL) \
-			*(a) = (x); \
-	} while (0)
-
-#define REASON_SET(a, x) \
-	do { \
-		if ((a) != NULL) \
-			*(a) = (x); \
-		if (x < PFRES_MAX) \
-			pf_status.counters[x]++; \
-	} while (0)
 
 /*
  * ipoff and off are measured from the start of the mbuf chain.
