@@ -1,4 +1,4 @@
-/*	$OpenBSD: pflogd.c,v 1.16 2002/11/30 23:02:10 deraadt Exp $	*/
+/*	$OpenBSD: pflogd.c,v 1.17 2003/03/01 06:11:20 cloder Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -70,15 +70,22 @@ char *filter = NULL;
 char errbuf[PCAP_ERRBUF_SIZE];
 
 int log_debug = 0;
-int delay = FLUSH_DELAY;
+unsigned int delay = FLUSH_DELAY;
 
 char *copy_argv(char * const *argv);
-void logmsg(int priority, const char *message, ...);
+int   init_pcap(void);
+void  logmsg(int priority, const char *message, ...);
+int   reset_dump(void);
+void  sig_alrm(int);
+void  sig_close(int);
+void  sig_hup(int);
+void  usage(void);
+
 
 char *
 copy_argv(char * const *argv)
 {
-	int len = 0, n;
+	size_t len = 0, n;
 	char *buf;
 
 	if (argv == NULL)
@@ -86,7 +93,7 @@ copy_argv(char * const *argv)
 
 	for (n = 0; argv[n]; n++)
 		len += strlen(argv[n])+1;
-	if (len <= 0)
+	if (len == 0)
 		return (NULL);
 
 	buf = malloc(len);
@@ -115,7 +122,7 @@ logmsg(int pri, const char *message, ...)
 	va_end(ap);
 }
 
-void
+__dead void
 usage(void)
 {
 	fprintf(stderr, "usage: pflogd [-D] [-d delay] [-f filename] ");
@@ -124,19 +131,19 @@ usage(void)
 }
 
 void
-sig_close(int signal)
+sig_close(int sig)
 {
 	gotsig_close = 1;
 }
 
 void
-sig_hup(int signal)
+sig_hup(int sig)
 {
 	gotsig_hup = 1;
 }
 
 void
-sig_alrm(int signal)
+sig_alrm(int sig)
 {
 	gotsig_alrm = 1;
 }
@@ -252,7 +259,7 @@ reset_dump(void)
 		    hdr.version_minor == PCAP_VERSION_MINOR &&
 		    hdr.snaplen != snaplen) {
 			logmsg(LOG_WARNING,
-			    "Existing file specifies a snaplen of %d, using it",
+			    "Existing file specifies a snaplen of %u, using it",
 			    hdr.snaplen);
 			tmpsnap = snaplen;
 			snaplen = hdr.snaplen;
@@ -261,8 +268,8 @@ reset_dump(void)
 				if (hpcap == 0)
 					return (-1);
 				logmsg(LOG_NOTICE,
-					"Using old settings, offset: %d",
-					st.st_size);
+					"Using old settings, offset: %llu",
+					(unsigned long long)st.st_size);
 			}
 			snaplen = tmpsnap;
 		}
@@ -358,8 +365,16 @@ main(int argc, char **argv)
 		}
 
 		if (gotsig_alrm) {
-			if (dpcap)
-				fflush((FILE *)dpcap);		/* XXX */
+			/* XXX pcap_dumper is an incomplete type which libpcap
+			 * casts to a FILE* currently.  For now it is safe to
+			 * make the same assumption, however this may change
+			 * in the future.
+			 */
+			if (dpcap) {
+				if (fflush((FILE *)dpcap) == EOF) {
+					break;
+				}
+			}
 			gotsig_alrm = 0;
 			alarm(delay);
 		}
@@ -372,7 +387,7 @@ main(int argc, char **argv)
 	if (pcap_stats(hpcap, &pstat) < 0)
 		logmsg(LOG_WARNING, "Reading stats: %s", pcap_geterr(hpcap));
 	else
-		logmsg(LOG_NOTICE, "%d packets received, %d dropped",
+		logmsg(LOG_NOTICE, "%u packets received, %u dropped",
 		    pstat.ps_recv, pstat.ps_drop);
 
 	pcap_close(hpcap);
