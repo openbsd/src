@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.80 2004/10/18 10:51:03 espie Exp $
+# $OpenBSD: pkg_add,v 1.81 2004/10/18 11:12:21 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -477,18 +477,15 @@ sub pre_add($$)
 {
 	my ($pkg, $state) = @_;
 	my $pkgname1;
-	my $operation = $state->{not} ? "Pretending to add" : "Adding";
-	if (defined $state->{deptree}->{$pkg}) {
-		$operation = $state->{deptree}->{$pkg}.":$operation";
-	}
 	
 	if ($pkg ne '-') {
 		my $more = "";
-		if ($state->{do_faked}) {
-			$more = " under ".$state->{destdir};
+		if ($state->{verbose}) {
+			if (defined $state->{deptree}->{$pkg}) {
+			    print $state->{deptree}->{$pkg},":";
+			}
+			print "parsing $pkg\n";
 		}
-
-		print "$operation $pkg$more\n";
 		$pkgname1 = OpenBSD::PackageName::url2pkgname($pkg);
 		return undef unless can_install($pkgname1, $state);
 	}
@@ -520,12 +517,12 @@ sub pre_add($$)
 			return undef;
 		}
 	} else {
-		my $modifier = "";
-		if ($state->{do_faked}) {
-			$modifier = " under ".$state->{destdir};
+		if ($state->{verbose}) {
+			if (defined $state->{deptree}->{$pkg}) {
+			    print $state->{deptree}->{$pkg},":";
+			}
+			print "parsing $pkgname\n";
 		}
-			
-		print "$operation $pkgname$modifier\n";
 		return undef unless can_install($pkgname, $state);
 	}
 	# second handling of conflicts
@@ -652,10 +649,10 @@ sub borked_installation
 
 sub check_lib_specs
 {
-	my $base = shift;
+	my ($verbose, $base, $specs) = @_;
 	my $dir;
-	for my $spec (split(/,/, shift)) {
-		print "checking libspec $spec " if $opt_v;
+	for my $spec (split(/,/, $specs)) {
+		print "checking libspec $spec " if $verbose;
 		if ($spec =~ m|.*/|) {
 			$dir = "$base/$&";
 			$spec = $';
@@ -669,13 +666,13 @@ sub check_lib_specs
 			    	&& $1 >= $minor } 
 			    OpenBSD::Vstat::vreaddir($dir);
 			if (@candidates == 0) {
-				print "not found\n" if $opt_v;
+				print "not found\n" if $verbose;
 				return undef;
 			} else {
-			    print "found ", $candidates[0], "\n" if $opt_v;
+			    print "found ", $candidates[0], "\n" if $verbose;
 			}
 		} else {
-			print "bad spec\n" if $opt_v;
+			print "bad spec\n" if $verbose;
 			return undef;
 		}
 	}
@@ -791,6 +788,15 @@ sub really_add($$)
 	$state->{dir} = $dir;
 	$state->{pkgname} = $pkgname;
 
+	if (defined $state->{deptree}->{$pkgname}) {
+	    print $state->{deptree}->{$pkgname},":";
+	}
+	print $state->{not} ? "Pretending to add " : "Adding ";
+	print $pkgname;
+	if ($state->{do_faked}) {
+		print " under ", $state->{destdir};
+	}
+	print "\n";
 	validate_plist($plist, $destdir) unless $state->{do_faked};
 
 	if (!defined $handle) {
@@ -918,7 +924,8 @@ sub install_package
 	for my $dep (@{$plist->{libdepend}}) {
 		# can't check libspecs yet
 		return () if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
-		if (!check_lib_specs($plist->pkgbase(), $dep->{libspec})) {
+		if (!check_lib_specs($state->{very_verbose}, 
+		    $plist->pkgbase(), $dep->{libspec})) {
 			Warn "Can't install $pkg: incorrect libspec: ",
 			    $dep->{libspec}, "\n";
 			return () unless $forced{libdepends};
