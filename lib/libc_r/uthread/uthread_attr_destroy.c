@@ -29,6 +29,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $OpenBSD: uthread_attr_destroy.c,v 1.2 1999/01/10 23:05:18 d Exp $
  */
 #include <stdlib.h>
 #include <errno.h>
