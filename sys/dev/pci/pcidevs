@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.610 2003/03/28 18:42:35 grange Exp $
+	$OpenBSD: pcidevs,v 1.611 2003/04/02 22:25:41 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -2237,6 +2237,7 @@ product SUN FIREWIRE		0x1102	FireWire
 product SUN USB			0x1103	USB
 product SUN GEMNETWORK		0x2bad	GEM
 product SUN SIMBA		0x5000	Simba PCI-PCI
+product SUN SCA1K2		0x5454	Crypto 1K2
 product SUN SCA1K		0x5455	Crypto 1K
 product SUN PSYCHO		0x8000	Psycho PCI
 product SUN MS_IIep		0x9000	microSPARC IIep PCI
