@@ -1,4 +1,4 @@
-.\"	$OpenBSD: httpd.8,v 1.25 2004/12/31 15:52:19 jmc Exp $
+.\"	$OpenBSD: httpd.8,v 1.26 2005/01/02 18:20:10 jmc Exp $
 .\" Copyright (c) 1995-1997 David Robinson. All rights reserved.
 .\" Copyright (c) 1997-1999 The Apache Group. All rights reserved.
 .\" Copyright (c) 1998-1999 Bob Beck. All rights reserved.
@@ -89,6 +89,16 @@ may be invoked by the Internet daemon
 .Xr inetd 8
 each
 time a connection to the HTTP service is made.
+.Pp
+.Nm
+can be made to support HTTPS transactions
+if RSA certificates are generated
+and the utility is started with the
+.Va -DSSL
+flag.
+See
+.Xr ssl 8
+for further information.
 .Pp
 By default,
 .Nm
