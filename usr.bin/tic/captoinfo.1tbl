@@ -1,4 +1,4 @@
-.\" $OpenBSD: captoinfo.1tbl,v 1.1 1998/07/24 19:37:34 millert Exp $
+.\" $OpenBSD: captoinfo.1tbl,v 1.2 1998/07/24 19:52:55 millert Exp $
 .\"
 .\"***************************************************************************
 .\" Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -179,7 +179,7 @@ This utility is actually a link to \fItic\fR(1), running in \fI-I\fR mode.
 The trace option isn't identical to SVr4's.  Under SVr4, instead of following
 the -v with a trace level n, you repeat it n times.
 .SH SEE ALSO
-\fBcurses\fR(3), \fBinfocmp\fR(1), \fBterminfo\fR(\*n)
+\fBcurses\fR(3), \fBtic\fR(1), \fBterminfo\fR(\*n)
 .SH AUTHOR
 Eric S. Raymond <esr@snark.thyrsus.com>
 .\"#
