@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.20 2003/11/04 18:10:41 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.21 2003/11/04 21:30:44 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -146,6 +146,7 @@ void	carp_hmac_generate(struct carp_softc *, u_int32_t *,
 	    unsigned char *);
 int	carp_hmac_verify(struct carp_softc *, u_int32_t *,
 	    unsigned char *);
+void	carp_setroute(struct carp_softc *, int);
 void	carp_input_c(struct mbuf *, struct carp_softc *,
 	    struct carp_header *, sa_family_t);
 void	carpattach(int);
@@ -242,6 +243,20 @@ carp_hmac_verify(struct carp_softc *sc, u_int32_t counter[2],
 	carp_hmac_generate(sc, counter, md2);
 
 	return (bcmp(md, md2, sizeof(md2)));
+}
+
+void
+carp_setroute(struct carp_softc *sc, int cmd)
+{
+	struct ifaddr *ifa;
+	int s;
+
+	s = splnet();
+	TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist, ifa_list) {
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			rtinit(ifa, cmd, RTF_UP | RTF_HOST);
+	}
+	splx(s);
 }
 
 /*
@@ -467,6 +482,7 @@ carp_input_c(struct mbuf *m, struct carp_softc *sc,
 			timeout_del(&sc->sc_ad_tmo);
 			sc->sc_state = BACKUP;
 			carp_setrun(sc, 0);
+			carp_setroute(sc, RTM_DELETE);
 		}
 		break;
 	case BACKUP:
@@ -975,6 +991,7 @@ carp_master_down(void *v)
 		carp_send_na(sc);
 #endif /* INET6 */
 		carp_setrun(sc, 0);
+		carp_setroute(sc, RTM_ADD);
 		break;
 	}
 }
@@ -994,6 +1011,7 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 		sc->sc_ac.ac_if.if_flags |= IFF_RUNNING;
 	else {
 		sc->sc_ac.ac_if.if_flags &= ~IFF_RUNNING;
+		carp_setroute(sc, RTM_DELETE);
 		return;
 	}
 
@@ -1006,8 +1024,10 @@ carp_setrun(struct carp_softc *sc, sa_family_t af)
 			carp_send_na(sc);
 #endif
 			sc->sc_state = MASTER;
+			carp_setroute(sc, RTM_ADD);
 		} else {
 			sc->sc_state = BACKUP;
+			carp_setroute(sc, RTM_DELETE);
 #ifdef INET
 			TAILQ_FOREACH(ifa, &sc->sc_ac.ac_if.if_addrlist,
 			    ifa_list) {
@@ -1409,6 +1429,8 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 #ifdef INET
 		case AF_INET:
 			sc->if_flags |= IFF_UP;
+			bcopy(ifa->ifa_addr, ifa->ifa_dstaddr,
+			    sizeof(struct sockaddr));
 			error = carp_set_addr(sc, satosin(ifa->ifa_addr));
 			break;
 #endif /* INET */
@@ -1429,6 +1451,8 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, caddr_t addr)
 #ifdef INET
 		case AF_INET:
 			sc->if_flags |= IFF_UP;
+			bcopy(ifa->ifa_addr, ifa->ifa_dstaddr,
+			    sizeof(struct sockaddr));
 			error = carp_set_addr(sc, satosin(&ifra->ifra_addr));
 			break;
 #endif /* INET */
