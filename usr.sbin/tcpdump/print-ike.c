@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ike.c,v 1.18 2004/02/14 11:33:45 ho Exp $	*/
+/*	$OpenBSD: print-ike.c,v 1.19 2004/02/14 11:36:55 ho Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -29,7 +29,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.18 2004/02/14 11:33:45 ho Exp $ (XXX)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ike.c,v 1.19 2004/02/14 11:36:55 ho Exp $ (XXX)";
 #endif
 
 #include <sys/param.h>
@@ -361,9 +361,9 @@ ike_pl_proposal_print (u_int8_t *buf, int len, u_int8_t doi)
 
 	/* Reset to sane value. */
 	if (p_id == PROTO_ISAKMP)
-	  doi = ISAKMP_DOI;
+		doi = ISAKMP_DOI;
 	else
-	  doi = IPSEC_DOI;
+		doi = IPSEC_DOI;
 
 	if ((char)buf[3] > 0)
 		ike_pl_print(PAYLOAD_TRANSFORM, buf + 4 + buf[2], doi);
