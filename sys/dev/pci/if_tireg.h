@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.1 1999/07/25 16:51:55 jason Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.2 1999/09/26 03:22:40 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_tireg.h,v 1.5 1999/07/05 20:19:41 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_tireg.h,v 1.11 1999/09/22 06:43:16 wpaul Exp $
  */
 
 /*
@@ -130,7 +130,7 @@
  */
 #define TI_FIRMWARE_MAJOR		0xc
 #define TI_FIRMWARE_MINOR		0x3
-#define TI_FIRMWARE_FIX			0xa
+#define TI_FIRMWARE_FIX			0xf
 
 /*
  * Miscelaneous Local Control register.
@@ -803,17 +803,10 @@ struct ti_tx_desc {
  * boundary.
  */
 
-#ifdef __alpha__
 #define ETHER_ALIGN 2
-#endif
-
-#ifdef __i386__
-#define ETHER_ALIGN 0
-#endif
-
 
 #define TI_FRAMELEN		1518
-#define TI_JUMBO_FRAMELEN	9018 + ETHER_ALIGN
+#define TI_JUMBO_FRAMELEN	9018
 #define TI_JUMBO_MTU		(TI_JUMBO_FRAMELEN-ETHER_HDR_LEN-ETHER_CRC_LEN)
 #define TI_PAGE_SIZE		PAGE_SIZE
 #define TI_MIN_FRAMELEN		60
@@ -1037,7 +1030,7 @@ struct ti_event_desc {
 #define TI_MSLOTS	256
 #define TI_JSLOTS	256
 
-#define TI_JRAWLEN (TI_JUMBO_FRAMELEN + sizeof(u_int64_t))
+#define TI_JRAWLEN (TI_JUMBO_FRAMELEN + ETHER_ALIGN + sizeof(u_int64_t))
 #define TI_JLEN (TI_JRAWLEN + (sizeof(u_int64_t) - \
 	(TI_JRAWLEN % sizeof(u_int64_t))))
 #define TI_JPAGESZ PAGE_SIZE
@@ -1115,14 +1108,13 @@ struct ti_jpool_entry {
 
 struct ti_softc {
 	struct device		sc_dv;
-	void *			sc_ih;
 	struct arpcom		arpcom;		/* interface info */
 	bus_space_handle_t	ti_bhandle;
 	bus_space_tag_t		ti_btag;
+	void *			ti_intrhand;
 	struct ifmedia		ifmedia;	/* media info */
 	u_int8_t		ti_hwrev;	/* Tigon rev (1 or 2) */
 	u_int8_t		ti_linkstat;	/* Link state */
-	caddr_t			ti_rdata_ptr;	/* Raw ring data */
 	struct ti_ring_data	*ti_rdata;	/* rings */
 	struct ti_chain_data	ti_cdata;	/* mbufs */
 #define ti_ev_prodidx		ti_rdata->ti_ev_prodidx_r
@@ -1179,8 +1171,7 @@ struct ti_softc {
 
 #ifdef __alpha__
 #undef vtophys
-#define vtophys(va)     (pmap_kextract(((vm_offset_t) (va))) \
-                         + 1*1024*1024*1024)
+#define vtophys(va)	alpha_XXX_dmamap((vm_offset_t)va)
 #endif
 
 #ifndef ETHER_CRC_LEN
