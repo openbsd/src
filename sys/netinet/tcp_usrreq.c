@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.39 1999/12/21 17:49:28 provos Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.40 2000/06/03 13:04:39 itojun Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -415,7 +415,15 @@ tcp_usrreq(so, req, m, nam, control)
 	 * After a receive, possibly send window update to peer.
 	 */
 	case PRU_RCVD:
-		(void) tcp_output(tp);
+		/*
+		 * soreceive() calls this function when a user receives
+		 * ancillary data on a listening socket. We don't call
+		 * tcp_output in such a case, since there is no header
+		 * template for a listening socket and hence the kernel
+		 * will panic.
+		 */
+		if ((so->so_state & (SS_ISCONNECTED|SS_ISCONNECTING)) != 0)
+			(void) tcp_output(tp);
 		break;
 
 	/*

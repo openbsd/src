@@ -1,4 +1,4 @@
-/*	$OpenBSD: in6_pcb.c,v 1.13 2000/05/28 23:58:51 itojun Exp $	*/
+/*	$OpenBSD: in6_pcb.c,v 1.14 2000/06/03 13:04:39 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -171,21 +171,23 @@ in6_pcbbind(inp, nam)
 	{
 	  struct sockaddr_in sin;
 
+	  bzero(&sin, sizeof(sin));
 	  sin.sin_port = 0;
 	  sin.sin_len = sizeof(sin);
 	  sin.sin_family = AF_INET;
 	  sin.sin_addr.s_addr = sin6->sin6_addr.s6_addr32[3];
-	  bzero(&sin.sin_zero,8);
 
 	  sin6->sin6_port = 0;  /* Yechhhh, because of upcoming call to
 				   ifa_ifwithaddr(), which does bcmp's
 				   over the PORTS as well.  (What about flow?)
 				   */
 	  sin6->sin6_flowinfo = 0;
-	  if (ifa_ifwithaddr((struct sockaddr *)sin6) == 0)
+	  if (ifa_ifwithaddr((struct sockaddr *)sin6) == 0) {
 	    if (!IN6_IS_ADDR_V4MAPPED(&sin6->sin6_addr) ||
-		ifa_ifwithaddr((struct sockaddr *)&sin) == 0)
+		ifa_ifwithaddr((struct sockaddr *)&sin) == 0) {
 	      return EADDRNOTAVAIL;
+	    }
+	  }
 	}
       if (lport)
 	{
@@ -215,6 +217,7 @@ in6_pcbbind(inp, nam)
 
 	      t = in_pcblookup(head, (struct in_addr *)&fa, 0,
 			       (struct in_addr *)&la, lport, wild);
+
 	    }
 	  else
 #endif
@@ -534,10 +537,11 @@ in6_pcbnotify(head, dst, fport_arg, la, lport_arg, cmd, notify)
      int cmd;
      void (*notify) __P((struct inpcb *, int));
 {
-  register struct inpcb *inp, *oinp;
+  register struct inpcb *inp, *ninp;
   struct in6_addr *faddr,laddr = *la;
   u_short fport = fport_arg, lport = lport_arg;
-  int errno;
+  int errno, nmatch = 0;
+  int do_rtchange = (notify == in_rtchange);
 
   if ((unsigned)cmd > PRC_NCMDS || dst->sa_family != AF_INET6)
     return 1;
@@ -551,45 +555,64 @@ in6_pcbnotify(head, dst, fport_arg, la, lport_arg, cmd, notify)
   
   /*
    * Redirects go to all references to the destination,
-   * and use in_rtchange to invalidate the route cache.
-   * Dead host indications: notify all references to the destination.
+   * and use in6_rtchange to invalidate the route cache.
+   * Dead host indications: also use in6_rtchange to invalidate
+   * the cache, and deliver the error to all the sockets.
    * Otherwise, if we have knowledge of the local port and address,
    * deliver only to that socket.
    */
-
   if (PRC_IS_REDIRECT(cmd) || cmd == PRC_HOSTDEAD)
     {
       fport = 0;
       lport = 0;
       laddr = in6addr_any;
-      if (cmd != PRC_HOSTDEAD)
-	notify = in_rtchange;
+
+      notify = in_rtchange;
     }
   errno = inet6ctlerrmap[cmd];
 
   for (inp = head->inpt_queue.cqh_first;
-       inp != (struct inpcb *)&head->inpt_queue;)
+       inp != (struct inpcb *)&head->inpt_queue; inp = ninp)
     {
+      ninp = inp->inp_queue.cqe_next;
 #ifdef INET6
-      if (!(inp->inp_flags & INP_IPV6)) {
-	  inp = inp->inp_queue.cqe_next;
+      if (!(inp->inp_flags & INP_IPV6))
 	  continue;
-      }
 #endif
+      if (do_rtchange)
+	{
+	  /*
+	   * Since a non-connected PCB might have a cached route,
+	   * we always call in_rtchange without matching
+	   * the PCB to the src/dst pair.
+	   *
+	   * XXX: we assume in_rtchange does not free the PCB.
+	   */
+	  if (IN6_ARE_ADDR_EQUAL(&inp->inp_route6.ro_dst.sin6_addr, faddr))
+	    {
+	      in_rtchange(inp, errno);
+	    }
+
+	  if (notify == in_rtchange)
+	    {
+	      continue;		/* there's nothing to do any more */
+	    }
+	}
       if (!IN6_ARE_ADDR_EQUAL(&inp->inp_faddr6, faddr) ||
 	  !inp->inp_socket ||
 	  (lport && inp->inp_lport != lport) ||
 	  (!IN6_IS_ADDR_UNSPECIFIED(&laddr) && !IN6_ARE_ADDR_EQUAL(&inp->inp_laddr6, &laddr)) ||
 	  (fport && inp->inp_fport != fport))
 	{
-	  inp = inp->inp_queue.cqe_next;
 	  continue;
 	}
-      oinp = inp;
 
-      inp = inp->inp_queue.cqe_next;
+      nmatch++;
+
       if (notify)
-	  (*notify)(oinp, errno);
+	{
+	  (*notify)(inp, errno);
+	}
     }
    return 0;
 }

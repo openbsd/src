@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.25 2000/03/21 04:53:13 angelos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.26 2000/06/03 13:04:39 itojun Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -79,6 +79,8 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include <netinet6/ip6_var.h>
 #include <netinet6/tcpipv6.h>
 #include <sys/domain.h>
+#include <netinet6/in6_var.h>
+#include <netinet6/ip6protosw.h>
 #endif /* INET6 */
 
 #ifdef TCP_SIGNATURE
@@ -703,7 +705,74 @@ tcp6_ctlinput(cmd, sa, d)
 	struct sockaddr *sa;
 	void *d;
 {
-	(void)tcp_ctlinput(cmd, sa, NULL);	/*XXX*/
+	register struct tcphdr *thp;
+	struct tcphdr th;
+	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
+	struct sockaddr_in6 sa6;
+	struct mbuf *m;
+	struct ip6_hdr *ip6;
+	int off;
+	
+	if (sa->sa_family != AF_INET6 ||
+	    sa->sa_len != sizeof(struct sockaddr_in6))
+		return;
+	if (cmd == PRC_QUENCH)
+		notify = tcp_quench;
+#if 0
+	else if (cmd == PRC_MSGSIZE)
+		notify = tcp_mtudisc;
+#endif
+	else if (!PRC_IS_REDIRECT(cmd) &&
+		 ((unsigned)cmd > PRC_NCMDS || inet6ctlerrmap[cmd] == 0))
+		return;
+
+	/* if the parameter is from icmp6, decode it. */
+	if (d != NULL) {
+		struct ip6ctlparam *ip6cp = (struct ip6ctlparam *)d;
+		m = ip6cp->ip6c_m;
+		ip6 = ip6cp->ip6c_ip6;
+		off = ip6cp->ip6c_off;
+	} else {
+		m = NULL;
+		ip6 = NULL;
+	}
+
+	/* translate addresses into internal form */
+	sa6 = *(struct sockaddr_in6 *)sa;
+	if (IN6_IS_ADDR_LINKLOCAL(&sa6.sin6_addr) && m && m->m_pkthdr.rcvif)
+		sa6.sin6_addr.s6_addr16[1] = htons(m->m_pkthdr.rcvif->if_index);
+	if (ip6) {
+		/*
+		 * XXX: We assume that when IPV6 is non NULL,
+		 * M and OFF are valid.
+		 */
+		struct ip6_hdr ip6_tmp;
+
+		/* translate addresses into internal form */
+		ip6_tmp = *ip6;
+		if (IN6_IS_ADDR_LINKLOCAL(&ip6_tmp.ip6_src))
+			ip6_tmp.ip6_src.s6_addr16[1] =
+				htons(m->m_pkthdr.rcvif->if_index);
+		if (IN6_IS_ADDR_LINKLOCAL(&ip6_tmp.ip6_dst))
+			ip6_tmp.ip6_dst.s6_addr16[1] =
+				htons(m->m_pkthdr.rcvif->if_index);
+
+		if (m->m_len < off + sizeof(th)) {
+			/*
+			 * this should be rare case,
+			 * so we compromise on this copy...
+			 */
+			m_copydata(m, off, sizeof(th), (caddr_t)&th);
+			thp = &th;
+		} else
+			thp = (struct tcphdr *)(mtod(m, caddr_t) + off);
+		(void)in6_pcbnotify(&tcbtable, (struct sockaddr *)&sa6,
+				    thp->th_dport, &ip6_tmp.ip6_src,
+				    thp->th_sport, cmd, notify);
+	} else {
+		(void)in6_pcbnotify(&tcbtable, (struct sockaddr *)&sa6, 0,
+				    &zeroin6_addr, 0, cmd, notify);
+	}
 }
 #endif
 
@@ -719,6 +788,9 @@ tcp_ctlinput(cmd, sa, v)
 	void (*notify) __P((struct inpcb *, int)) = tcp_notify;
 	int errno;
 
+	if (sa->sa_family != AF_INET)
+		return NULL;
+
 	if ((unsigned)cmd >= PRC_NCMDS)
 		return NULL;
 	errno = inetctlerrmap[cmd];
@@ -731,32 +803,13 @@ tcp_ctlinput(cmd, sa, v)
 	else if (errno == 0)
 		return NULL;
 
-#ifdef INET6
-	if (sa->sa_family == AF_INET6) {
-		if (ip) {
-			struct ip6_hdr *ipv6 = (struct ip6_hdr *)ip;
-
-			th = (struct tcphdr *)(ipv6 + 1);
-#if 0 /*XXX*/
-			in6_pcbnotify(&tcbtable, sa, th->th_dport,
-			    &ipv6->ip6_src, th->th_sport, cmd, notify);
-#endif
-		} else {
-#if 0 /*XXX*/
-			in6_pcbnotify(&tcbtable, sa, 0,
-			    (struct in6_addr *)&in6addr_any, 0, cmd, notify);
-#endif
-		}
+	if (ip) {
+		th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
+		in_pcbnotify(&tcbtable, sa, th->th_dport, ip->ip_src,
+			     th->th_sport, errno, notify);
 	} else
-#endif /* INET6 */
-	{
-		if (ip) {
-			th = (struct tcphdr *)((caddr_t)ip + (ip->ip_hl << 2));
-			in_pcbnotify(&tcbtable, sa, th->th_dport, ip->ip_src,
-			    th->th_sport, errno, notify);
-		} else
-			in_pcbnotifyall(&tcbtable, sa, errno, notify);
-	}
+		in_pcbnotifyall(&tcbtable, sa, errno, notify);
+
 	return NULL;
 }
 
