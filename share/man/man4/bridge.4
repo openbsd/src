@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.36 2001/10/05 14:45:53 mpech Exp $
+.\"	$OpenBSD: bridge.4,v 1.37 2001/10/07 12:24:39 dhartmei Exp $
 .\"
 .\" Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -87,10 +87,6 @@ or
 datagram; if so, the datagram is run through the
 .Xr pf 4
 interface so that it can be filtered.
-The datagram is only checked against the
-.Xr pf 4
-input rules for the source interface;
-output rules have no effect.
 .Sh IOCTLS
 A
 .Nm
@@ -515,6 +511,20 @@ request points outside of the process's allocated address space.
 .It Bq Eq ESRCH
 No such member interface in the bridge.
 .El
+.Sh NOTES
+Bridged packets pass through
+.Xr pf 4
+twice.
+They can be filtered on any interface, in both directions.
+For stateful filtering, filtering on only one interface (using
+'keep state') and passing all traffic on the other interfaces is
+recommended.
+A state entry only permits outgoing packets from initial source to
+destination and incoming packets from initial destination to source.
+Since bridged packets pass through the filter twice with the source
+and destination addresses reversed between interfaces, two state
+entries (one for each direction) are required when all interfaces
+are filtered statefully.
 .Sh SEE ALSO
 .Xr errno 2 ,
 .Xr ioctl 2 ,
@@ -540,8 +550,3 @@ command and the
 .Xr bridge 4
 kernel interface first appeared in
 .Ox 2.5 .
-.Sh BUGS
-Incoming packets are only checked against
-.Xr pf 4
-input rules.
-There is no easy way to handle output rules.
