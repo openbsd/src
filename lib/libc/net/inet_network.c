@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_network.c,v 1.2 1996/03/19 23:15:08 niklas Exp $	*/
+/*	$OpenBSD: inet_network.c,v 1.3 1996/03/19 23:26:49 niklas Exp $	*/
 /*	$NetBSD: inet_network.c,v 1.5 1996/02/17 15:35:41 hpeyerl Exp $	*/
 
 /*
@@ -38,8 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)inet_network.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: inet_network.c,v 1.2 1996/03/19 23:15:08 niklas Exp $";
-static char rcsid[] = "$NetBSD: inet_network.c,v 1.5 1996/02/17 15:35:41 hpeyerl Exp $";
+static char rcsid[] = "$OpenBSD: inet_network.c,v 1.3 1996/03/19 23:26:49 niklas Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 

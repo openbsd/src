@@ -1,4 +1,4 @@
-/*	$OpenBSD: xdr_float.c,v 1.2 1996/03/19 23:15:09 niklas Exp $	*/
+/*	$OpenBSD: xdr_float.c,v 1.3 1996/03/19 23:30:28 niklas Exp $	*/
 /*	$NetBSD: xdr_float.c,v 1.10 1996/02/16 21:14:03 mark Exp $	*/
 
 /*
@@ -33,8 +33,7 @@
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char *sccsid = "from: @(#)xdr_float.c 1.12 87/08/11 Copyr 1984 Sun Micro";*/
 /*static char *sccsid = "from: @(#)xdr_float.c	2.1 88/07/29 4.0 RPCSRC";*/
-static char *rcsid = "$OpenBSD: xdr_float.c,v 1.2 1996/03/19 23:15:09 niklas Exp $";
-static char *rcsid = "$NetBSD: xdr_float.c,v 1.10 1996/02/16 21:14:03 mark Exp $";
+static char *rcsid = "$OpenBSD: xdr_float.c,v 1.3 1996/03/19 23:30:28 niklas Exp $";
 #endif
 
 /*
