@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.16 2003/12/16 15:08:50 jason Exp $	*/
+/*	$OpenBSD: sab.c,v 1.17 2004/07/17 21:27:30 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -426,7 +426,12 @@ sabtty_attach(parent, self, aux)
 			break;
 		}
 
-		t.c_ispeed= 0;
+		if (sc->sc_flags & SABTTYF_CONS_OUT) {
+			/* Let current output drain */
+			DELAY(100000);
+		}
+
+		t.c_ispeed = 0;
 		t.c_ospeed = 9600;
 		t.c_cflag = CREAD | CS8 | HUPCL;
 		sc->sc_tty->t_ospeed = 0;
