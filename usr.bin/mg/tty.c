@@ -110,6 +110,8 @@ ttinit() {
 
 	if (enter_ca_mode)
 		putpad(enter_ca_mode, 1);	/* init the term */
+
+	setttysize();
 }
 
 /*
@@ -380,8 +382,8 @@ ttresize() {
 
 #ifdef NO_RESIZE
 static setttysize() {
-	nrow = tgetnum("li");
-	ncol = tgetnum("co");
+	nrow = lines;
+	ncol = columns;
 }
 #endif
 

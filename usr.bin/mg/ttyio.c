@@ -1,21 +1,16 @@
 /*
- * Name:	MicroEMACS
- *		POSIX terminal I/O.
- * Version:	0
- * Last edit:	Tue Aug 26 23:57:57 PDT 1986
- * By:		gonzo!daveb
- *		{sun, amdahl, mtxinu}!rtech!gonzo!daveb
+ * POSIX terminal I/O.
  *
  * The functions in this file
  * negotiate with the operating system for
  * keyboard characters, and write characters to
  * the display in a barely buffered fashion.
- *
- * This version goes along with the terminfo tty.c.
  */
 #include	"def.h"
 
 #include	<sys/types.h>
+#include	<sys/time.h>
+#include	<sys/ioctl.h>
 #include	<fcntl.h>
 #include	<termios.h>
 #include	<term.h>
@@ -33,13 +28,6 @@ static int ttysavedp = FALSE;		/* terminal state saved?	*/
 
 int	nrow;				/* Terminal size, rows.		*/
 int	ncol;				/* Terminal size, columns.	*/
-
-/* These are used to implement typeahead on System V */
-
-int kbdflgs;			/* saved keyboard fd flags	*/
-int kbdpoll;			/* in O_NDELAY mode			*/
-int kbdqp;			/* there is a char in kbdq	*/
-char kbdq;			/* char we've already read	*/
 
 /*
  * This function gets called once, to set up
@@ -68,15 +56,11 @@ ttopen()
 		nt.c_cflag &= ~PARENB;	/* Don't check parity		*/
 		nt.c_lflag &= ~( ECHO | ICANON | ISIG );
 
-		kbdpoll = (((kbdflgs = fcntl(0, F_GETFL, 0)) & O_NDELAY) != 0);
-	
 		ttysavedp = TRUE;
 	}
 	
 	if (tcsetattr(0, TCSAFLUSH, &nt) < 0)
 		abort();
-
-	setttysize();
 
 	ttyactivep = TRUE;
 }
@@ -91,8 +75,7 @@ ttclose()
 	if(!ttysavedp || !ttyactivep)
 		return;
 	ttflush();
-	if (tcsetattr(0, TCSAFLUSH, &ot) < 0 ||
-	    fcntl( 0, F_SETFL, kbdflgs ) < 0)
+	if (tcsetattr(0, TCSAFLUSH, &ot) < 0)
 		abort();
 	ttyactivep = FALSE;
 }
@@ -104,6 +87,7 @@ ttclose()
  */
 ttputc(c)
 {
+
 	if (nobuf >= NOBUF)
 		ttflush();
 	obuf[nobuf++] = c;
@@ -114,6 +98,7 @@ ttputc(c)
  */
 ttflush()
 {
+
 	if (nobuf != 0) {
 		write(1, obuf, nobuf);
 		nobuf = 0;
@@ -131,36 +116,21 @@ ttflush()
  */
 ttgetc()
 {
-	if( kbdqp )
-		kbdqp = FALSE;
-	else
-	{
-		if( kbdpoll && fcntl( 0, F_SETFL, kbdflgs ) < 0 )
-			abort();
-		kbdpoll = FALSE;
-		while (read(0, &kbdq, 1) != 1)
-			;
-	}
-	return ( kbdq & 0xff );
+	int    c;
+
+	while (read(0, &c, 1) != 1)
+		;
+	return (c & 0xFF);
 }
 
 /*
- * Return non-FALSE if typeahead is pending.
- *
- * If already got unread typeahead, do nothing.
- * Otherwise, set keyboard to O_NDELAY if not already, and try
- * a one character read.
+ * Return TRUE if there are characters waiting to be read.
  */
 typeahead()
 {
-	if( !kbdqp )
-	{
-		if( !kbdpoll && fcntl( 0, F_SETFL, kbdflgs | O_NDELAY ) < 0 )
-			abort();
-		kbdpoll = TRUE;
-		kbdqp = (1 == read( 0, &kbdq, 1 ));
-	}
-	return ( kbdqp );
+	int x;
+
+	return((ioctl(0, FIONREAD, (char *) &x) < 0) ? 0 : x);
 }
 
 
@@ -171,8 +141,11 @@ typeahead()
 panic(s)
 char *s;
 {
-	fprintf(stderr, "%s\r\n", s);
-	abort();
+
+	(void) fputs("panic: ", stderr);
+	(void) fputs(s, stderr);
+	(void) fputc('\n', stderr);
+	abort();		/* To leave a core image. */
 }
 
 
@@ -184,9 +157,10 @@ setttysize()
 {
 #ifdef	TIOCGWINSZ
         struct winsize winsize;
+
 	if (ioctl(0, TIOCGWINSZ, (char *) &winsize) == 0) {
-		nrow = winsize . ws_row;
-		ncol = winsize . ws_col;
+		nrow = winsize.ws_row;
+		ncol = winsize.ws_col;
 	} else
 #endif
 	if ((nrow = lines) <= 0 || (ncol = columns) <= 0) {
@@ -202,29 +176,22 @@ setttysize()
 }
 
 #ifndef NO_DPROMPT
-#include <signal.h>
-#include <setjmp.h>
-
-static jmp_buf tohere;
-
-static void alrm()
-{
-	longjmp(tohere, -1);
-}
-
 /*
  * Return TRUE if we wait without doing anything, else return FALSE.
  */
-
 ttwait()
 {
-	if (kbdqp)
-		return FALSE;		/* already pending input	*/
-	if (setjmp(tohere))
-		return TRUE;		/* timeout on read if here	*/
-	signal(SIGALRM, alrm); alarm(2);
-	kbdqp = (1 == read(0, &kbdq, 1));
-	alarm(0);
-	return FALSE;			/* successful read if here	*/
+	fd_set readfds;
+	struct timeval tmout;
+
+	FD_ZERO(&readfds);
+	FD_SET(0, &readfds);
+
+	tmout.tv_sec = 2;
+	tmout.tv_usec = 0;
+
+	if ((select(1, &readfds, NULL, NULL, &tmout)) == 0)
+		return(TRUE);
+	return(FALSE);
 }
 #endif NO_DPROMPT
