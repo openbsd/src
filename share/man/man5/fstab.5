@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstab.5,v 1.10 1999/09/03 09:07:03 millert Exp $
+.\"	$OpenBSD: fstab.5,v 1.11 2000/04/13 13:28:49 deraadt Exp $
 .\"	$NetBSD: fstab.5,v 1.5.2.1 1995/11/16 20:11:11 pk Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
@@ -261,6 +261,24 @@ is to use the routines
 .Xr getfstype 3 ,
 and
 .Xr getfsfile 3 .
+.Sh EXAMPLES
+Here is a sample
+.Pa /etc/fstab
+file:
+.Bd -literal -offset indent
+/dev/sd0a / ffs rw 1 1
+/dev/sd0b none swap sw 0 0
+/dev/sd0e /var ffs rw 1 2
+#/dev/sd0f /tmp ffs rw 1 3
+/dev/sd0g /usr ffs rw 1 4
+/dev/sd0h /usr/local ffs rw 1 5
+/dev/sd0i /home ffs rw 1 6
+
+/dev/sd1b none swap sw 0 0
+/dev/cd0a /cdrom cd9660 ro 0 0 
+.Ed
+.Pp
+
 .Sh FILES
 .Bl -tag -width /etc/fstab -compact
 .It Pa /etc/fstab
