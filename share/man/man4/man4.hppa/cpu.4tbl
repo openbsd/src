@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.16 2003/12/29 16:56:17 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.17 2003/12/30 10:47:13 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -191,8 +191,8 @@ The following restrictions are placed upon the superscalar execution:
 .Bl -bullet -compact
 .It
 An instruction that modifies a register will not be bundled with another
-instruction that takes this register as operand. Exception: a flop can
-be bundled with an FP store of the flop's result register.
+instruction that takes this register as operand.
+Exception: a flop can be bundled with an FP store of the flop's result register.
 .It
 An FP load to one word of a doubleword register will not be bundled with
 a flop that uses the other doubleword of this register.
@@ -211,8 +211,8 @@ An instruction which is at an odd word address and executed as a target
 of a taken branch is never bundled.
 .It
 An instruction which might nullify its successor is never bundled with
-this successor. Only if the successor is a flop instruction is this bundle
-allowed.
+this successor.
+Only if the successor is a flop instruction is this bundle allowed.
 .El
 .Sh PERFORMANCE MONITOR COPROCESSOR
 The performance monitor coprocessor is an optional,

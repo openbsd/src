@@ -1,4 +1,4 @@
-.\" $OpenBSD: intro.4tbl,v 1.16 2003/12/29 16:56:17 mickey Exp $
+.\" $OpenBSD: intro.4tbl,v 1.17 2003/12/30 10:47:13 jmc Exp $
 .\"
 .\" Copyright (c) 2002,2003 Paul Weissmann
 .\" All rights reserved.
@@ -56,8 +56,8 @@ The networking support is introduced in
 This section describes the hardware supported on the
 .Tn HP PA-RISC
 platform.
-Software support for these devices comes in two forms.  A hardware
-device may be supported with a character or block
+Software support for these devices comes in two forms.
+A hardware device may be supported with a character or block
 .Em device driver ,
 or it may be used within the networking subsystem and have a
 .Em network interface driver .
@@ -70,9 +70,10 @@ communication facilities provided by the system; see
 .Pp
 A hardware device is identified to the system at configuration time
 and the appropriate device or network interface driver is then compiled
-into the system.  When the resultant system is booted, the
-autoconfiguration facilities in the system probe for the device
-and, if found, enable the software support for it.
+into the system.
+When the resultant system is booted, the autoconfiguration facilities
+in the system probe for the device and, if found,
+enable the software support for it.
 If a device does not respond at autoconfiguration
 time it is not accessible at any time afterwards.
 To enable a device which did not autoconfigure, the system must be rebooted.
@@ -207,7 +208,8 @@ RDI:180:7300LC:64/64(+1024):2 CardBus
 .in -\n(dIu
 .Sh LIST OF DEVICES
 The devices listed below are supported in this incarnation of
-the system.  Devices are indicated by their functional interface.
+the system.
+Devices are indicated by their functional interface.
 Not all supported devices are listed.
 .Bl -tag -width le/lebuffer
 .It Xr asp 4
@@ -225,12 +227,14 @@ CS4215/AD1849 audio.
 Human Interface Loop, sporting several input devices,
 e.g. keyboards, mice, tablets and such.
 .It Xr ie 4
-i82596 CA/DX LAN coprocessor. Found in every 700, either included in the MBA
+i82596 CA/DX LAN coprocessor.
+Found in every 700, either included in the MBA
 or on an external chip on mainboard.
 .It Xr lasi 4
 LSI?, found in almost all
 .Tn HP 9000/700
-workstations. Integrates most of the bus and I/O functions into one chip.
+workstations.
+Integrates most of the bus and I/O functions into one chip.
 .It Xr lpt 4
 The Centronics printer port.
 .It Xr mongoose 4
