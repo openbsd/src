@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.4 2000/02/03 09:55:19 angelos Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.5 2000/02/24 17:09:55 ho Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -66,7 +66,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $Id: wicontrol.c,v 1.4 2000/02/03 09:55:19 angelos Exp $";
+	"@(#) $Id: wicontrol.c,v 1.5 2000/02/24 17:09:55 ho Exp $";
 #endif
 
 static void wi_getval		__P((char *, struct wi_req *));
@@ -625,6 +625,7 @@ int main(argc, argv)
 	char			*p = argv[0];
 	char                    *key = NULL;
 	int                     modifier = 0;
+	int                     ok_to_exit = 0;
 
 	if (argc > 1 && argv[1][0] != '-') {
 		iface = argv[1];
@@ -645,63 +646,63 @@ int main(argc, argv)
 			break;
 		case 'c':
 			wi_setword(iface, WI_RID_CREATE_IBSS, atoi(optarg));
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'd':
 			wi_setword(iface, WI_RID_MAX_DATALEN, atoi(optarg));
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'f':
 			wi_setword(iface, WI_RID_OWN_CHNL, atoi(optarg));
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'p':
 			wi_setword(iface, WI_RID_PORTTYPE, atoi(optarg));
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'r':
 			wi_setword(iface, WI_RID_RTS_THRESH, atoi(optarg));
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 't':
 			wi_setword(iface, WI_RID_TX_RATE, atoi(optarg));
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'n':
 			wi_setstr(iface, WI_RID_DESIRED_SSID, optarg);
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 's':
 			wi_setstr(iface, WI_RID_NODENAME, optarg);
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'm':
 			wi_sethex(iface, WI_RID_MAC_NODE, optarg);
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'q':
 			wi_setstr(iface, WI_RID_OWN_SSID, optarg);
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'S':
 			wi_setword(iface, WI_RID_MAX_SLEEP, atoi(optarg));
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'P':
 			wi_setword(iface, WI_RID_PM_ENABLED, atoi(optarg));
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'T':
 			wi_setword(iface, WI_RID_TX_CRYPT_KEY,
 				   atoi(optarg) - 1);
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'k':
 		        key = optarg;
 			break;
 		case 'e':
 		        wi_setword(iface, WI_RID_ENCRYPTION, atoi(optarg));
-			exit(0);
+			ok_to_exit ++;
 			break;
 		case 'v':
 		        modifier = atoi(optarg);
@@ -713,6 +714,9 @@ int main(argc, argv)
 			break;
 		}
 	}
+
+	if (ok_to_exit)
+	        exit(0);
 
 	if (iface == NULL)
 		usage(p);
