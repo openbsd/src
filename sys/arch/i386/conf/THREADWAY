@@ -1,7 +1,7 @@
 #
 #	THREADWAY: threadway.teeny.org
 #
-#	$OpenBSD: THREADWAY,v 1.4 1996/07/05 01:03:51 downsj Exp $
+#	$OpenBSD: THREADWAY,v 1.5 1996/07/05 03:14:20 downsj Exp $
 #
 
 machine		i386
@@ -70,7 +70,7 @@ option		UNION
 option		GATEWAY
 option		INET
 
-config		bsd root on wd0 swap on wd0 and wd2
+config		bsd root on wd0 swap on wd0 and wd1 and wd2
 
 mainbus0 at root
 
