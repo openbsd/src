@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.43 2002/05/18 18:33:42 art Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.44 2002/05/20 22:16:36 art Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -234,12 +234,16 @@ splassert_fail(int wantipl, int haveipl, const char *func)
 {
 
 	printf("splassert: %s: want %d have %d\n", func, wantipl, haveipl);
-	if (splassert_ctl > 1) {
-		panic("spl assertion failure in %s", func);
-	} else {
+	switch (splassert_ctl) {
+	case 1:
+		break;
+	case 2:
 #ifdef DDB
 		db_stack_dump();
 #endif
+		break;
+	default:
+		panic("spl assertion failure in %s", func);
 	}
 }
 
