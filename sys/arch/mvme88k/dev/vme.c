@@ -1,4 +1,4 @@
-/*	$OpenBSD: vme.c,v 1.25 2003/12/22 11:54:48 miod Exp $ */
+/*	$OpenBSD: vme.c,v 1.26 2003/12/27 23:56:41 miod Exp $ */
 /*
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1995 Theo de Raadt
@@ -135,7 +135,7 @@ vmepmap(sc, vmeaddr, len, bustype)
 			    vmeaddr, base, len);
 #endif
 			base = vme2chip_map(base, len, 16);
-			if (base == NULL){
+			if (base == NULL) {
 				printf("%s: cannot map pa 0x%x len 0x%x\n",
 				    sc->sc_dev.dv_xname, base, len);
 				return (NULL);
@@ -147,7 +147,7 @@ vmepmap(sc, vmeaddr, len, bustype)
 			    vmeaddr, base, len);
 #endif
 			base = vme2chip_map(base, len, 32);
-			if (base == NULL){
+			if (base == NULL) {
 				printf("%s: cannot map pa 0x%x len 0x%x\n",
 				    sc->sc_dev.dv_xname, base, len);
 				return (NULL);
@@ -233,7 +233,7 @@ vmeprint(args, bus)
 {
 	struct confargs *ca = args;
 
-	printf(" addr 0x%x vaddr %p", ca->ca_offset, ca->ca_vaddr);
+	printf(" addr 0x%x", ca->ca_offset);
 	if (ca->ca_vec > 0)
 		printf(" vec 0x%x", ca->ca_vec);
 	if (ca->ca_ipl > 0)
