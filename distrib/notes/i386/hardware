@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.94 2002/11/21 05:30:37 jason Exp $
+dnl	$OpenBSD: hardware,v 1.95 2002/11/26 04:40:34 nate Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -491,13 +491,14 @@ Supported hardware {:-include-:}:
 		    D-Link DGE-500SX
 		Broadcom BCM570x (Tigon3) based PCI adapters, including: [A]
 		  [B] [C]
-		    3Com 3c996-T (10/100/1000baseTX)
-		    3Com 3c996-SX (1000baseSX)
-		    3Com 3c996B-T (10/100/1000baseTX)
+		    3Com 3c996-T
+		    3Com 3c996-SX
+		    3Com 3c996B-T
 		    Dell PowerEdge 2550 integrated BCM5700 NIC
-		      (10/100/1000baseTX)
-		    SysKonnect SK-9D21 (10/100/1000baseTX)
-		    SysKonnect SK-9D41 (1000baseSX)
+		    IBM xSeries 305 integrated BCM5703X NIC
+		    Netgear GA302T
+		    SysKonnect SK-9D21
+		    SysKonnect SK-9D41
 		Sundance/Tamarack TC9021 based PCI adapters, including: [G]
 		    D-Link DGE-550T (10/100/1000baseTX)
 		    Antares Microsystems Gigabit Ethernet board

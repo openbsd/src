@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.28 2002/10/20 21:17:58 henning Exp $
+dnl	$OpenBSD: hardware,v 1.29 2002/11/26 04:40:34 nate Exp $
 OpenBSD/MACHINE OSREV is expected to run on the following hardware.
 If you have hardware that is listed here and are unable to run
 OpenBSD, or if you are able to run OpenBSD on hardware not listed
@@ -265,11 +265,15 @@ Supported Peripherals:
 		    Intel PRO/1000MF Server Adapter (LX Fiber) (PWLA8490LX)
 		Broadcom BCM570x (a.k.a. Tigon3) based PCI adapters (bge),
 		  including: [-]
-			3Com 3c996-T (10/100/1000baseTX)
-			3Com 3c996-SX (1000baseSX)
-			3Com 3c996B-T (10/100/1000baseTX)
-			SysKonnect SK-9D21 (10/100/1000baseTX)
-			SysKonnect SK-9D41 (1000baseSX)
+			3Com 3c996-T
+			3Com 3c996-SX
+			3Com 3c996B-T
+			Dell PowerEdge 2550 integrated BCM5700 NIC
+			IBM xSeries 235 integrated BCM5703X NIC
+			IBM xSeries 305 integrated BCM5703X NIC
+			Netgear GA302T
+			SysKonnect SK-9D21
+			SysKonnect SK-9D41
 		Sundance/Tamarack TC9021 based PCI adapters (stge),
 		  including: [-]
 			D-Link DGE-550T (10/100/1000baseTX)
