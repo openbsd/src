@@ -1,4 +1,4 @@
-/*	$OpenBSD: checknr.c,v 1.11 2003/06/25 21:09:09 deraadt Exp $	*/
+/*	$OpenBSD: checknr.c,v 1.12 2004/07/01 19:20:23 mickey Exp $	*/
 /*	$NetBSD: checknr.c,v 1.4 1995/03/26 04:10:19 glass Exp $	*/
 
 /*
@@ -31,16 +31,16 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1980, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
+static const char sccsid[] = "@(#)checknr.c	8.1 (Berkeley) 6/6/93";
 #else 
-static char rcsid[] = "$OpenBSD: checknr.c,v 1.11 2003/06/25 21:09:09 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: checknr.c,v 1.12 2004/07/01 19:20:23 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: checknr.c,v 1.11 2003/06/25 21:09:09 deraadt Ex
 #include <stdlib.h>
 #include <unistd.h>
 #include <ctype.h>
+#include <err.h>
 
 #define MAXSTK	100	/* Stack size */
 #define MAXBR	100	/* Max number of bracket pairs known */
@@ -258,7 +259,7 @@ main(int argc, char *argv[])
 			cfilename = argv[i];
 			f = fopen(cfilename, "r");
 			if (f == NULL)
-				perror(cfilename);
+				warn(cfilename);
 			else
 				process(f);
 		}
@@ -272,9 +273,10 @@ main(int argc, char *argv[])
 void
 usage(void)
 {
+	extern char *__progname;
 	(void)fprintf(stderr,
-	    "usage: checknr [-fs] [-a.x1.y1.x2.y2. ... .xn.yn] "
-	    "[-c.x1.x2.x3. ... .xn] [file]\n");
+	    "usage: %s [-fs] [-a.x1.y1.x2.y2. ... .xn.yn] "
+	    "[-c.x1.x2.x3. ... .xn] [file]\n", __progname);
 	exit(1);
 }
 
