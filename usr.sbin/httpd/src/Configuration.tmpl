@@ -244,7 +244,7 @@ Rule EXPAT=default
 #  either to 'truerand' (to use the library) or to a device or file
 #  (e.g. '/dev/urandom'). If the truerand library is selected, Configure
 #  will assume "-L/usr/local/lib -lrand".
-Rule DEV_RANDOM=default
+Rule DEV_RANDOM=/dev/arandom
 
 # The following rules should be set automatically by Configure. However, if
 # they are not set by Configure (because we don't know the correct value for

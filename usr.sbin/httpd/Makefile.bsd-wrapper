@@ -1,5 +1,5 @@
 # Build wrapper for Apache 
-# $OpenBSD: Makefile.bsd-wrapper,v 1.2 1999/09/30 21:26:45 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/10/01 05:30:27 beck Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -40,22 +40,60 @@ HTTPD_HTDOCSDIR= /var/www/htdocs
 HTTPD_ICONSDIR=	/var/www/icons
 HTTPD_INCLUDEDIR=	/usr/lib/apache/include
 
-CONFIG_ARGS=	--with-layout=OpenBSD --enable-module=ssl
+CONFIG_ARGS=	--with-layout=OpenBSD --enable-module=ssl \
+	--enable-suexec --enable-module=ssl \
+	--suexec-caller=www --suexec-docroot=/var/www/htdocs \
+	--suexec-logfile=/var/log/suexec_log --suexec-userdir=public_html\
+	--suexec-uidmin=1000 --suexec-gidmin=1000 \
+	--suexec-safepath=/usr/bin:/bin:/usr/local/bin
 
-# If you support dynamic loading, enable the so module
-.if ${MACHINE_ARCH} == "i386"
-CONFIG_ARGS+= --enable-module=so
-.endif
-.if ${MACHINE_ARCH} == "m68k"
-CONFIG_ARGS+= --enable-module=so
-.endif
-.if ${MACHINE_ARCH} == "sparc"
-CONFIG_ARGS+= --enable-module=so
-.endif
-.if ${MACHINE_ARCH} == "mips"
-CONFIG_ARGS+= --enable-module=so
-.endif
+# This is stupid - to build a DSO module for apache you not only need to
+# --enable-shared, you need to --enable-module or --enable-shared doesn't
+# do anything   
 
+DSO_MODULE_ARGS= --enable-module=so --enable-shared=auth_anon \
+	--enable-shared=auth_db --enable-shared=auth_dbm \
+	--enable-shared=auth_digest --enable-shared=cern_meta \
+	--enable-shared=define --enable-shared=digest --enable-shared=info \
+	--enable-shared=log_agent --enable-shared=log_referer \
+	--enable-shared=mime_magic --enable-shared=mmap_static \
+	--enable-shared=proxy --enable-shared=rewrite --enable-shared=speling \
+	--enable-shared=unique_id --enable-shared=usertrack \
+	--enable-shared=vhost_alias --enable-module=auth_anon \
+	--enable-module=auth_db --enable-module=auth_dbm \
+	--enable-module=auth_digest --enable-module=cern_meta \
+	--enable-module=define --enable-module=digest --enable-module=info \
+	--enable-module=log_agent --enable-module=log_referer \
+	--enable-module=mime_magic --enable-module=mmap_static \
+	--enable-module=proxy --enable-module=rewrite --enable-module=speling \
+	--enable-module=unique_id --enable-module=usertrack  \
+	--enable-module=vhost_alias 
+
+INSTALL_MODULES=
+
+# If you support dynamic loading, enable the so module, and build all the 
+# modules that come with apache 
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "sparc" || ${MACHINE_ARCH} == "mips"
+CONFIG_ARGS+=  ${DSO_MODULE_ARGS}
+INSTALL_MODULES= src/modules/experimental/mod_mmap_static.so \
+src/modules/experimental/mod_auth_digest.so \
+src/modules/extra/mod_define.so \
+src/modules/proxy/libproxy.so \
+src/modules/standard/mod_vhost_alias.so \
+src/modules/standard/mod_log_agent.so \
+src/modules/standard/mod_info.so \
+src/modules/standard/mod_log_referer.so \
+src/modules/standard/mod_mime_magic.so \
+src/modules/standard/mod_speling.so \
+src/modules/standard/mod_rewrite.so \
+src/modules/standard/mod_auth_dbm.so \
+src/modules/standard/mod_auth_anon.so \
+src/modules/standard/mod_auth_db.so \
+src/modules/standard/mod_digest.so \
+src/modules/standard/mod_cern_meta.so \
+src/modules/standard/mod_usertrack.so \
+src/modules/standard/mod_unique_id.so
+.endif
 
 PERLPATH= /usr/bin/perl
 
@@ -79,7 +117,7 @@ BINFILES= src/support/htdigest src/support/htpasswd \
 
 SBINFILES= \
 	src/httpd src/support/ab \
-	src/support/logresolve src/support/rotatelogs
+	src/support/logresolve src/support/rotatelogs src/support/suexec
 
 MAN1SRCS= \
 	src/support/dbmmanage.1 src/support/htdigest.1 src/support/htpasswd.1
@@ -427,6 +465,12 @@ install:
 		echo "Installing ${DESTDIR}${HTTPD_SBINDIR}/$$j"; \
 		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 555 \
 		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_SBINDIR}; \
+	done
+	@-for i in ${INSTALL_MODULES}; do \
+		j=`basename $$i`; \
+		echo "Installing ${DESTDIR}${HTTPD_LIBEXECDIR}/$$j"; \
+		${INSTALL} ${INSTALL_COPY} -g ${BINGRP} -m 444 \
+		    ${.OBJDIR}/$$i ${DESTDIR}${HTTPD_LIBEXECDIR}; \
 	done
 	@d=`mktemp -d /tmp/httpdXXXXXXXXXX`; \
 	echo "Installing ${DESTDIR}${HTTPD_BINDIR}/apxs"; \
