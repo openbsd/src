@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.42 2000/09/04 03:46:51 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.43 2000/09/17 14:40:39 aaron Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -192,6 +192,7 @@ product MOTOROLA MONTANA_336	0x0505 Motorola Montana 33.6
 /* NewMedia */
 product NEWMEDIA BASICS		0x0019 NewMedia BASICS
 product NEWMEDIA LANSURFER	0x0021 NewMedia LANSurfer
+product NEWMEDIA LIVEWIRE	0x1004 NewMedia LiveWire Ethernet LAN Adapter
 product NEWMEDIA MULTIMEDIA	0x100b NewMedia Multimedia
 product NEWMEDIA BUSTOASTER	0xc102 NewMedia BusToaster
 product NEWMEDIA WAVJAMMER	0xe005 NewMedia .WAVjammer
