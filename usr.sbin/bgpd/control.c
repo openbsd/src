@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.39 2004/11/23 13:07:01 claudio Exp $ */
+/*	$OpenBSD: control.c,v 1.40 2004/12/23 17:26:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -186,6 +186,7 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 	int			 n;
 	struct peer		*p;
 	struct bgpd_addr	*addr;
+	struct ctl_neighbor	*neighbor;
 
 	if ((c = control_connbyfd(pfd->fd)) == NULL) {
 		log_warn("control_dispatch_msg: fd %d: not found", pfd->fd);
@@ -242,9 +243,12 @@ control_dispatch_msg(struct pollfd *pfd, u_int *ctl_cnt)
 		case IMSG_CTL_NEIGHBOR_DOWN:
 		case IMSG_CTL_NEIGHBOR_CLEAR:
 			if (imsg.hdr.len == IMSG_HEADER_SIZE +
-			    sizeof(struct bgpd_addr)) {
-				addr = imsg.data;
-				p = getpeerbyaddr(addr);
+			    sizeof(struct ctl_neighbor)) {
+				neighbor = imsg.data;
+				neighbor->descr[PEER_DESCR_LEN - 1] = 0;
+				p = getpeerbyaddr(&neighbor->addr);
+				if (p == NULL)
+					p = getpeerbydesc(neighbor->descr);
 				if (p == NULL) {
 					log_warnx("IMSG_CTL_NEIGHBOR_ "
 					    "with unknown neighbor");

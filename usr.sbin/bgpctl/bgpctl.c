@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.70 2004/11/18 16:57:28 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.71 2004/12/23 17:26:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -87,6 +87,7 @@ main(int argc, char *argv[])
 	struct imsg		 imsg;
 	struct network_config	 net;
 	struct parse_result	*res;
+	struct ctl_neighbor	 neighbor;
 
 	while ((ch = getopt(argc, argv, "n")) != -1) {
 		switch (ch) {
@@ -104,6 +105,9 @@ main(int argc, char *argv[])
 
 	if ((res = parse(argc, argv)) == NULL)
 		exit(1);
+
+	memcpy(&neighbor.addr, &res->addr, sizeof(neighbor.addr));
+	strlcpy(neighbor.descr, res->peerdesc, sizeof(neighbor.descr));
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
 		err(1, "control_init: socket");
@@ -195,19 +199,19 @@ main(int argc, char *argv[])
 		break;
 	case NEIGHBOR_UP:
 		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_UP, 0, 0, -1,
-		    &res->addr, sizeof(res->addr));
+		    &neighbor, sizeof(neighbor));
 		printf("request sent.\n");
 		done = 1;
 		break;
 	case NEIGHBOR_DOWN:
 		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_DOWN, 0, 0, -1,
-		    &res->addr, sizeof(res->addr));
+		    &neighbor, sizeof(neighbor));
 		printf("request sent.\n");
 		done = 1;
 		break;
 	case NEIGHBOR_CLEAR:
 		imsg_compose(ibuf, IMSG_CTL_NEIGHBOR_CLEAR, 0, 0, -1,
-		    &res->addr, sizeof(res->addr));
+		    &neighbor, sizeof(neighbor));
 		printf("request sent.\n");
 		done = 1;
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.9 2004/10/26 13:12:22 henning Exp $ */
+/*	$OpenBSD: parser.c,v 1.10 2004/12/23 17:26:51 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -33,7 +33,8 @@ enum token_type {
 	FLAG,
 	ASNUM,
 	ASTYPE,
-	PREFIX
+	PREFIX,
+	PEERDESC
 };
 
 struct token {
@@ -121,6 +122,7 @@ static const struct token t_fib[] = {
 
 static const struct token t_neighbor[] = {
 	{ ADDRESS,	"",		NONE,		t_neighbor_modifiers},
+	{ PEERDESC,	"",		NONE,		t_neighbor_modifiers},
 	{ ENDTOKEN,	"",		NONE,		NULL}
 };
 
@@ -265,6 +267,16 @@ match_token(const char *word, const struct token table[])
 				t = &table[i];
 			}
 			break;
+		case PEERDESC:
+			if (word != NULL && strlen(word) > 0) {
+				if (strlcpy(res.peerdesc, word,
+				    sizeof(res.peerdesc)) >=
+				    sizeof(res.peerdesc))
+					err(1, "neighbor description too long");
+				match++;
+				t = &table[i];
+			}
+			break;
 		case ENDTOKEN:
 			break;
 		}
@@ -304,6 +316,9 @@ show_valid_args(const struct token table[])
 			break;
 		case ASNUM:
 			fprintf(stderr, "  <asnum>\n");
+			break;
+		case PEERDESC:
+			fprintf(stderr, "  <neighbor description>\n");
 			break;
 		case ENDTOKEN:
 			break;
@@ -379,4 +394,3 @@ parse_asnum(const char *word, u_int16_t *asnum)
 	*asnum = (u_int16_t)ulval;
 	return (1);
 }
-
