@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.41 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.42 2005/04/02 01:00:38 mickey Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -848,7 +848,7 @@ nfs_request(vp, mrest, procnum, procp, cred, mrp, mdp, dposp)
 	NFSKERBKEY_T key;		/* save session key */
 
 	nmp = VFSTONFS(vp->v_mount);
-	MALLOC(rep, struct nfsreq *, sizeof(struct nfsreq), M_NFSREQ, M_WAITOK);
+	rep = pool_get(&nfsreqpl, PR_WAITOK);
 	rep->r_nmp = nmp;
 	rep->r_vp = vp;
 	rep->r_procp = procp;
@@ -876,7 +876,7 @@ kerbauth:
 			error = nfs_getauth(nmp, rep, cred, &auth_str,
 				&auth_len, verf_str, &verf_len, key);
 			if (error) {
-				free((caddr_t)rep, M_NFSREQ);
+				pool_put(&nfsreqpl, rep);
 				m_freem(mrest);
 				return (error);
 			}
@@ -988,7 +988,7 @@ tryagain:
 	dpos = rep->r_dpos;
 	if (error) {
 		m_freem(rep->r_mreq);
-		free((caddr_t)rep, M_NFSREQ);
+		pool_put(&nfsreqpl, rep);
 		return (error);
 	}
 
@@ -1012,7 +1012,7 @@ tryagain:
 			error = EACCES;
 		m_freem(mrep);
 		m_freem(rep->r_mreq);
-		free((caddr_t)rep, M_NFSREQ);
+		pool_put(&nfsreqpl, rep);
 		return (error);
 	}
 
@@ -1061,7 +1061,7 @@ tryagain:
 			} else
 				m_freem(mrep);
 			m_freem(rep->r_mreq);
-			free((caddr_t)rep, M_NFSREQ);
+			pool_put(&nfsreqpl, rep);
 			return (error);
 		}
 
@@ -1069,14 +1069,14 @@ tryagain:
 		*mdp = md;
 		*dposp = dpos;
 		m_freem(rep->r_mreq);
-		FREE((caddr_t)rep, M_NFSREQ);
+		pool_put(&nfsreqpl, rep);
 		return (0);
 	}
 	m_freem(mrep);
 	error = EPROTONOSUPPORT;
 nfsmout:
 	m_freem(rep->r_mreq);
-	free((caddr_t)rep, M_NFSREQ);
+	pool_put(&nfsreqpl, rep);
 	return (error);
 }
 #endif /* NFSCLIENT */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_subs.c,v 1.53 2005/03/31 21:47:49 deraadt Exp $	*/
+/*	$OpenBSD: nfs_subs.c,v 1.54 2005/04/02 01:00:38 mickey Exp $	*/
 /*	$NetBSD: nfs_subs.c,v 1.27.4.3 1996/07/08 20:34:24 jtc Exp $	*/
 
 /*
@@ -534,6 +534,8 @@ extern u_long nfsnodehash;
 
 LIST_HEAD(nfsnodehashhead, nfsnode);
 
+struct pool nfsreqpl;
+
 /*
  * Create the header for an rpc request packet
  * The hsiz is the size of the rest of the nfs request header.
@@ -1063,6 +1065,9 @@ nfs_init()
 	nfsrv_init(0);			/* Init server data structures */
 	nfsrv_initcache();		/* Init the server request cache */
 #endif /* NFSSERVER */
+
+	pool_init(&nfsreqpl, sizeof(struct nfsreq), 0, 0, 0, "nfsreqpl",
+	    &pool_allocator_nointr);
 
 	/*
 	 * Initialize reply list and start timer
