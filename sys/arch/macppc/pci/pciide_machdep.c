@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide_machdep.c,v 1.1 2001/06/26 21:26:45 drahn Exp $	*/
+/*	$OpenBSD: pciide_machdep.c,v 1.1 2001/09/01 15:55:17 drahn Exp $	*/
 /*	$NetBSD: pciide_machdep.c,v 1.2 1999/02/19 18:01:27 mycroft Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #include <dev/pci/pciidereg.h>
 #include <dev/pci/pciidevar.h>
 
-#include <powerpc/autoconf.h>
+#include <machine/autoconf.h>
 
 void *
 pciide_machdep_compat_intr_establish(dev, pa, chan, func, arg)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpc106reg.h,v 1.6 2000/03/20 07:10:50 rahnds Exp $ */
+/*	$OpenBSD: mpc106reg.h,v 1.1 2001/09/01 15:55:17 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom

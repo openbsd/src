@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb_pci.c,v 1.5 2001/07/09 03:54:40 mickey Exp $	*/
+/*	$OpenBSD: vgafb_pci.c,v 1.1 2001/09/01 15:55:18 drahn Exp $	*/
 /*	$NetBSD: vga_pci.c,v 1.4 1996/12/05 01:39:38 cgd Exp $	*/
 
 /*
@@ -49,8 +49,8 @@
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/wscons/wscons_raster.h>
 
-#include <arch/powerpc/pci/vgafbvar.h>
-#include <arch/powerpc/pci/vgafb_pcivar.h>
+#include <arch/macppc/pci/vgafbvar.h>
+#include <arch/macppc/pci/vgafb_pcivar.h>
 
 #define PCI_VENDORID(x) ((x) & 0xFFFF)
 #define PCI_CHIPID(x)   (((x) >> 16) & 0xFFFF)
