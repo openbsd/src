@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.84 2004/06/24 20:47:50 henning Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.85 2004/06/25 18:58:38 pb Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -82,6 +82,10 @@
 .Ar vlan-tag
 .Cm vlandev
 .Ar parent-interface
+.Nm
+.Ar interface
+.Cm group
+.Ar group-name
 .Sh DESCRIPTION
 The
 .Nm
@@ -323,6 +327,13 @@ the system will not attempt to
 transmit messages through that interface.
 If possible, the interface will be reset to disable reception as well.
 This action automatically disables routes using the interface.
+.It Cm group Ar group-name
+Assign the interface to a
+.Dq group .
+Any interface can be in multiple groups.
+.It Cm -group Ar group-name
+Remove the interface from the given
+.Dq group .
 .It Cm eui64
 (inet6 only)
 Fill the interface index
