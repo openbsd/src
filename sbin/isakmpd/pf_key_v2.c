@@ -1,4 +1,4 @@
-/* $OpenBSD: pf_key_v2.c,v 1.148 2004/08/10 15:59:10 ho Exp $  */
+/* $OpenBSD: pf_key_v2.c,v 1.149 2004/08/12 11:08:54 ho Exp $  */
 /* $EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	 */
 
 /*
@@ -2312,21 +2312,21 @@ cleanup:
 	ipsecrequest->sadb_x_ipsecrequest_reqid = 0;	/* XXX */
 
 	/* Add source and destination addresses. */
-	saddr = (struct sockaddr *) (ipsecrequest + 1);
+	saddr = (struct sockaddr *)(ipsecrequest + 1);
 	pf_key_v2_setup_sockaddr(saddr, src, 0, 0, 0);
 	switch (src->sa_family) {
 	case AF_INET:
-		saddr =
-		    (struct sockaddr *) ((struct sockaddr_in *) saddr + 1);
+		saddr = (struct sockaddr *)((struct sockaddr_in *)saddr + 1);
 		break;
 	case AF_INET6:
-		saddr =
-		    (struct sockaddr *) ((struct sockaddr_in6 *) saddr + 1);
+		saddr = (struct sockaddr *)((struct sockaddr_in6 *)saddr + 1);
 		break;
 	}
 	pf_key_v2_setup_sockaddr(saddr, dst, 0, 0, 0);
-	if (pf_key_v2_msg_add(flow, (struct sadb_ext *) policy, 0) == -1)
+	if (pf_key_v2_msg_add(flow, (struct sadb_ext *)policy,
+	    PF_KEY_V2_NODE_MALLOCED) == -1)
 		goto cleanup;
+	policy = 0;
 
 #ifdef USE_DEBUG
 	if (sockaddr2text(laddr, &laddr_str, 0))
