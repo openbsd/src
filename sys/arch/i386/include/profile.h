@@ -35,10 +35,10 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/11/93
  */
 
-#define	_MCOUNT_DECL static inline void _mcount
+#define	_MCOUNT_DECL static __inline void _mcount
 
 #define	MCOUNT \
-extern void mcount() asm("mcount");					\
+extern void mcount() __asm("mcount");					\
 void									\
 mcount()								\
 {									\
@@ -49,11 +49,11 @@ mcount()								\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	asm("movl 4(%%ebp),%0" : "=r" (selfpc));			\
+	__asm("movl 4(%%ebp),%0" : "=r" (selfpc));			\
 	/*								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	asm("movl (%%ebp),%0;movl 4(%0),%0" : "=r" (frompcindex));	\
+	__asm("movl (%%ebp),%0;movl 4(%0),%0" : "=r" (frompcindex));	\
 	_mcount(frompcindex, selfpc);					\
 }
 

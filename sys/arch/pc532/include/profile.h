@@ -38,10 +38,10 @@
 /*	pc532 version, 5/15/94.
  */
 
-#define	_MCOUNT_DECL static inline void _mcount
+#define	_MCOUNT_DECL static __inline void _mcount
 
 #define	MCOUNT \
-extern void mcount() asm("mcount");					\
+extern void mcount() __asm("mcount");					\
 void									\
 mcount()								\
 {									\
@@ -52,11 +52,11 @@ mcount()								\
 	 *								\
 	 * selfpc = pc pushed by mcount call				\
 	 */								\
-	asm("movd 4(fp),%0" : "=r" (selfpc));			\
+	__asm("movd 4(fp),%0" : "=r" (selfpc));			\
 	/*								\
 	 * frompcindex = pc pushed by call into self.			\
 	 */								\
-	asm("movd 4(0(fp)),%0" : "=r" (frompcindex));	\
+	__asm("movd 4(0(fp)),%0" : "=r" (frompcindex));	\
 	_mcount(frompcindex, selfpc);					\
 }
 

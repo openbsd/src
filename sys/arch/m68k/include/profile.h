@@ -35,13 +35,13 @@
  *	@(#)profile.h	8.1 (Berkeley) 6/10/93
  */
 
-#define	_MCOUNT_DECL static inline void _mcount
+#define	_MCOUNT_DECL static __inline void _mcount
 
 #define	MCOUNT \
-extern void mcount() asm("mcount"); void mcount() { \
+extern void mcount() __asm("mcount"); void mcount() { \
 	int selfpc, frompcindex; \
-	asm("movl a6@(4),%0" : "=r" (selfpc)); \
-	asm("movl a6@(0)@(4),%0" : "=r" (frompcindex)); \
+	__asm("movl a6@(4),%0" : "=r" (selfpc)); \
+	__asm("movl a6@(0)@(4),%0" : "=r" (frompcindex)); \
 	_mcount(frompcindex, selfpc); \
 }
 
@@ -53,9 +53,9 @@ extern void mcount() asm("mcount"); void mcount() { \
  * recursively.
  */
 #define MCOUNT_ENTER \
-	asm("movw	sr,%0" : "=g" (s)); \
-	asm("movw	#0x2700,sr")
+	__asm("movw	sr,%0" : "=g" (s)); \
+	__asm("movw	#0x2700,sr")
 
 #define MCOUNT_EXIT \
-	asm("movw	%0,sr" : : "g" (s))
+	__asm("movw	%0,sr" : : "g" (s))
 #endif /* _KERNEL */

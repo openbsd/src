@@ -31,13 +31,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)profile.h	8.1 (Berkeley) 6/11/93
- *	$Id: profile.h,v 1.1.1.1 1995/10/18 10:54:24 deraadt Exp $
+ *	$Id: profile.h,v 1.2 1996/03/24 16:52:34 tholo Exp $
  */
 
 #define	_MCOUNT_DECL static inline void _mcount
 
 #define	MCOUNT \
-extern void mcount() asm("mcount");					\
+extern void mcount() __asm("mcount");					\
 void									\
 mcount()								\
 {									\
@@ -48,7 +48,7 @@ mcount()								\
 	 *								\
 	 * selfret = ret pushed by mcount call				\
 	 */								\
-	asm volatile("ld %0,r31,36" : "=r" (selfret));			\
+	__asm volatile("ld %0,r31,36" : "=r" (selfret));			\
 	/*								\
 	 * callerret = ret pushed by call into self.			\
 	 */								\
@@ -56,8 +56,8 @@ mcount()								\
 	 * This may not be right. It all depends on where the		\
 	 * caller stores the return address. XXX			\
 	 */								\
-	asm volatile("addu	 r10,r31,48");				\
-	asm volatile("ld %0,r10,36" : "=r" (callerret));		\
+	__asm volatile("addu	 r10,r31,48");				\
+	__asm volatile("ld %0,r10,36" : "=r" (callerret));		\
 	_mcount(callerret, selfret);					\
 }
 
