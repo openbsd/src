@@ -1,4 +1,4 @@
-/*	$OpenBSD: npx.c,v 1.32 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: npx.c,v 1.33 2004/07/13 20:43:13 art Exp $	*/
 /*	$NetBSD: npx.c,v 1.57 1996/05/12 23:12:24 mycroft Exp $	*/
 
 #if 0
@@ -775,14 +775,13 @@ npxsave_cpu(struct cpu_info *ci, int save)
 /*
  * Save p's FPU state, which may be on this processor or another processor.
  */
- void
+void
 npxsave_proc(struct proc *p, int save)
 {
 	struct cpu_info *ci = curcpu();
 	struct cpu_info *oci;
 
 	KDASSERT(p->p_addr != NULL);
-	KDASSERT(p->p_flag & P_INMEM);
 
 	oci = p->p_addr->u_pcb.pcb_fpcpu;
 	if (oci == NULL)
