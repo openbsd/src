@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.8 2000/09/17 00:48:30 aaron Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.9 2000/10/13 04:42:10 aaron Exp $ */
 /*	$NetBSD: if_aue.c,v 1.38 2000/04/04 20:16:19 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -198,6 +198,7 @@ Static struct aue_type aue_devs[] = {
   { USB_VENDOR_SMC,		USB_PRODUCT_SMC_2202USB,	0 },
   { USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB_TX, 0 },
   { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_USBETTX,	0 },
+  { USB_VENDOR_KINGSTON,	USB_PRODUCT_KINGSTON_KNU101TX,	0 },
   { 0, 0, 0 }
 };
 
