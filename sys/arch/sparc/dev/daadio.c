@@ -1,4 +1,4 @@
-/*	$OpenBSD: daadio.c,v 1.5 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: daadio.c,v 1.6 2004/09/29 07:35:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -134,7 +134,7 @@ daadioattach(parent, self, aux)
 	sc->sc_ih.ih_fun = daadiointr;
 	sc->sc_ih.ih_arg = sc;
 	fvmeintrestablish(parent, ca->ca_ra.ra_intr[0].int_vec,
-	    ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih);
+	    ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, self->dv_xname);
 	daadio_ier_setbit(sc, IER_PIOEVENT);
 	daadio_ier_setbit(sc, IER_CONVERSION);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.22 2004/08/06 22:39:14 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.23 2004/09/29 07:35:13 miod Exp $	*/
 /*	$NetBSD: cpu.h,v 1.24 1997/03/15 22:25:15 pk Exp $ */
 
 /*
@@ -66,6 +66,7 @@
  * Exported definitions unique to SPARC cpu support.
  */
 
+#include <sys/evcount.h>
 #include <machine/psl.h>
 #include <sparc/sparc/intreg.h>
 
@@ -159,11 +160,13 @@ struct intrhand {
 	int	(*ih_fun)(void *);
 	void	*ih_arg;
 	int	ih_ipl;
+	int	ih_vec;			/* human readable ipl for vmstat */
+	struct	evcount ih_count;
 	struct	intrhand *ih_next;
 };
 extern struct intrhand *intrhand[15];
-void	intr_establish(int level, struct intrhand *, int);
-void	vmeintr_establish(int vec, int level, struct intrhand *, int);
+void	intr_establish(int level, struct intrhand *, int, const char *);
+void	vmeintr_establish(int vec, int level, struct intrhand *, int, const char *);
 
 /*
  * intr_fasttrap() is a lot like intr_establish, but is used for ``fast''
@@ -182,6 +185,7 @@ int isbad(struct dkbad *bt, int, int, int);
 /* machdep.c */
 int	ldcontrolb(caddr_t);
 void	dumpconf(void);
+void	intr_init(void);
 caddr_t	reserve_dumppages(caddr_t);
 /* clock.c */
 struct timeval;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: magma.c,v 1.17 2003/10/03 16:44:50 miod Exp $	*/
+/*	$OpenBSD: magma.c,v 1.18 2004/09/29 07:35:11 miod Exp $	*/
 /*
  * magma.c
  *
@@ -465,11 +465,12 @@ void *base;
 	 */
 	sc->ms_hardint.ih_fun = magma_hard;
 	sc->ms_hardint.ih_arg = sc;
-	intr_establish(ra->ra_intr[0].int_pri, &sc->ms_hardint, -1);
+	intr_establish(ra->ra_intr[0].int_pri, &sc->ms_hardint, -1,
+	    dev->dv_xname);
 
 	sc->ms_softint.ih_fun = magma_soft;
 	sc->ms_softint.ih_arg = sc;
-	intr_establish(IPL_TTY, &sc->ms_softint, IPL_TTY);
+	intr_establish(IPL_TTY, &sc->ms_softint, IPL_TTY, dev->dv_xname);
 }
 
 /*

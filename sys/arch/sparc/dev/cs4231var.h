@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231var.h,v 1.8 2003/06/02 18:40:59 jason Exp $	*/
+/*	$OpenBSD: cs4231var.h,v 1.9 2004/09/29 07:35:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -60,7 +60,6 @@ struct cs4231_softc {
 	struct	sbusdev sc_sd;		/* sbus device */
 	struct	intrhand sc_ih;		/* hardware interrupt vectoring */
 	struct	cs4231_regs *sc_regs;	/* CS4231/APC registers */
-	struct	evcnt sc_intrcnt;	/* statistics */
 	int	sc_node;		/* which sbus node */
 	int	sc_burst;		/* XXX: DMA burst size in effect */
 	int	sc_open;		/* already open? */

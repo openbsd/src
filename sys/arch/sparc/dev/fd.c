@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.37 2004/09/22 22:12:57 miod Exp $	*/
+/*	$OpenBSD: fd.c,v 1.38 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -148,7 +148,6 @@ enum fdc_state {
 struct fdc_softc {
 	struct device	sc_dev;		/* boilerplate */
 	struct intrhand sc_sih;
-	struct intrhand sc_hih;
 	caddr_t		sc_reg;
 	struct fd_softc *sc_fd[4];	/* pointers to children */
 	TAILQ_HEAD(drivehead, fd_softc) sc_drives;
@@ -172,13 +171,13 @@ struct fdc_softc {
 #define sc_tc		sc_io.fdcio_tc
 #define sc_nstat	sc_io.fdcio_nstat
 #define sc_status	sc_io.fdcio_status
-#define sc_intrcnt	sc_io.fdcio_intrcnt
+#define	sc_hih		sc_io.fdcio_ih
 	struct timeout	fdctimeout_to;
 	struct timeout	fdcpseudointr_to;
 };
 
 #ifndef FDC_C_HANDLER
-extern	struct fdcio	*fdciop;
+extern	struct fdcio *fdciop;
 #endif
 
 /* controller driver configuration */
@@ -447,14 +446,17 @@ fdcattach(parent, self, aux)
 #ifdef FDC_C_HANDLER
 	fdc->sc_hih.ih_fun = (void *)fdc_c_hwintr;
 	fdc->sc_hih.ih_arg = fdc;
-	intr_establish(pri, &fdc->sc_hih, IPL_FD);
+	intr_establish(pri, &fdc->sc_hih, IPL_FD, self->dv_xname);
 #else
 	fdciop = &fdc->sc_io;
+	fdc->sc_hih.ih_vec = pri;
+	evcount_attach(&fdc->sc_hih.ih_count, self->dv_xname,
+	    &fdc->sc_hih.ih_vec, &evcount_intr);
 	intr_fasttrap(pri, fdchwintr);
 #endif
 	fdc->sc_sih.ih_fun = (void *)fdcswintr;
 	fdc->sc_sih.ih_arg = fdc;
-	intr_establish(IPL_FDSOFT, &fdc->sc_sih, IPL_BIO);
+	intr_establish(IPL_FDSOFT, &fdc->sc_sih, IPL_BIO, self->dv_xname);
 
 	/* Assume a 82077 */
 	fdc->sc_reg_msr = &((struct fdreg_77 *)fdc->sc_reg)->fd_msr;
@@ -498,8 +500,6 @@ fdcattach(parent, self, aux)
 		if (fdcresult(fdc) != 1)
 			printf(" CFGLOCK: unexpected response");
 	}
-
-	evcnt_attach(&fdc->sc_dev, "intr", &fdc->sc_intrcnt);
 
 	printf(" pri %d, softpri %d: chip 8207%c\n", pri, IPL_FDSOFT, code);
 
@@ -1239,7 +1239,6 @@ fdc_c_hwintr(fdc)
 		}
 	}
 done:
-	fdc->sc_intrcnt.ev_count++;
 	return (1);
 }
 #endif

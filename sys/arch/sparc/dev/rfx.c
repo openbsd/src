@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfx.c,v 1.4 2004/03/01 22:27:09 miod Exp $	*/
+/*	$OpenBSD: rfx.c,v 1.5 2004/09/29 07:35:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2004, Miodrag Vallat.
@@ -266,7 +266,8 @@ rfxattach(struct device *parent, struct device *self, void *args)
 #if 0	/* not yet */
 	sc->sc_ih.ih_fun = rfx_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB);
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
+	    self->dv_xname);
 #endif
 
 	/*

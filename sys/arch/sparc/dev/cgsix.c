@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.28 2003/06/28 17:05:33 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.29 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -319,7 +319,8 @@ cgsixattach(parent, self, args)
 
 	sc->sc_ih.ih_fun = cgsix_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB);
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
+	    self->dv_xname);
 
 	/* reset cursor & frame buffer controls */
 	cgsix_reset(sc, fhcrev);

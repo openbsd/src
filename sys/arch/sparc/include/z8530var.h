@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530var.h,v 1.2 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: z8530var.h,v 1.3 2004/09/29 07:35:13 miod Exp $	*/
 /*	$NetBSD: z8530var.h,v 1.1 1997/10/18 00:01:30 gwr Exp $	*/
 
 /*
@@ -46,8 +46,6 @@
 struct zsc_softc {
 	struct	device zsc_dev;		/* required first: base device */
 	struct	zs_chanstate zsc_cs[2];	/* channel A and B soft state */
-	/* Machine-dependent part follows... */
-	struct	evcnt zsc_intrcnt;		/* count interrupts */
 };
 
 /*

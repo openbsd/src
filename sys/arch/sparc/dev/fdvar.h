@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdvar.h,v 1.6 2004/09/22 22:12:58 miod Exp $	*/
+/*	$OpenBSD: fdvar.h,v 1.7 2004/09/29 07:35:11 miod Exp $	*/
 /*
  *	$NetBSD: fdvar.h,v 1.5 1996/12/08 23:40:34 pk Exp $
  *
@@ -61,10 +61,7 @@ struct fdcio {
 	u_char	fdcio_status[FDC_NSTATUS];	/* copy of registers */
 	int	fdcio_nstat;		/* # of valid status bytes */
 
-	/*
-	 * Statictics.
-	 */
-	struct	evcnt fdcio_intrcnt;
+	struct	intrhand fdcio_ih;
 };
 #endif /* _LOCORE */
 

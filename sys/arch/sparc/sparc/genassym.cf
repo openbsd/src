@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.16 2004/09/22 22:12:59 miod Exp $
+#	$OpenBSD: genassym.cf,v 1.17 2004/09/29 07:35:13 miod Exp $
 #	$NetBSD: genassym.cf,v 1.2 1997/06/28 19:59:04 pk Exp $
 
 #
@@ -159,6 +159,7 @@ member	ih_fun
 member	ih_arg
 member	ih_ipl
 member	ih_next
+member	IH_COUNT	ih_count.ec_count
 
 ifdef notyet
 # ZSCC interrupt fields
@@ -181,7 +182,7 @@ member	au_rdata
 member	au_rend
 member	au_pdata
 member	au_pend
-define	AU_EVCNT	offsetof(struct auio, au_intrcnt.ev_count)
+member	AU_COUNT	au_ih.ih_count.ec_count
 
 struct	amd7930		AMD_
 member	ir
@@ -214,4 +215,4 @@ member	FDC_STATUS	fdcio_status
 member	FDC_NSTAT	fdcio_nstat
 member	FDC_DATA	fdcio_data
 member	FDC_TC		fdcio_tc
-member	FDC_EVCNT	fdcio_intrcnt.ev_count
+member	FDC_COUNT	fdcio_ih.ih_count.ec_count

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isp_sbus.c,v 1.23 2002/10/12 01:09:43 krw Exp $	*/
+/*	$OpenBSD: isp_sbus.c,v 1.24 2004/09/29 07:35:11 miod Exp $	*/
 /*
  * SBus specific probe and attach routines for Qlogic ISP SCSI adapters.
  *
@@ -218,7 +218,7 @@ isp_sbus_attach(struct device *parent, struct device *self, void *aux)
 	/* Establish interrupt channel */
 	sbc->sbus_ih.ih_fun = (void *) isp_sbus_intr;
 	sbc->sbus_ih.ih_arg = sbc;
-	intr_establish(sbc->sbus_pri, &sbc->sbus_ih, IPL_BIO);
+	intr_establish(sbc->sbus_pri, &sbc->sbus_ih, IPL_BIO, self->dv_xname);
 
 	/*
 	 * Set up logging levels.

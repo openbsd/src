@@ -1,4 +1,4 @@
-/*	$OpenBSD: vigra.c,v 1.9 2003/06/28 17:05:33 miod Exp $	*/
+/*	$OpenBSD: vigra.c,v 1.10 2004/09/29 07:35:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, Miodrag Vallat.
@@ -293,7 +293,8 @@ vigraattach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih.ih_fun = vigra_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB);
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
+	    self->dv_xname);
 
 	/* enable video */
 	vigra_burner(sc, 1, 0);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_en_sbus.c,v 1.5 2002/04/30 01:12:29 art Exp $	*/
+/*	$OpenBSD: if_en_sbus.c,v 1.6 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: if_en_sbus.c,v 1.4 1997/05/24 20:16:22 pk Exp $	*/
 
 /*
@@ -161,7 +161,7 @@ void *aux;
   }
   scs->sc_ih.ih_fun = en_intr;
   scs->sc_ih.ih_arg = sc;
-  intr_establish(EN_IPL, &scs->sc_ih, IPL_NET);
+  intr_establish(EN_IPL, &scs->sc_ih, IPL_NET, self->dv_xname);
 
   /*
    * done SBUS specific stuff

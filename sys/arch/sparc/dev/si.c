@@ -1,4 +1,4 @@
-/*	$OpenBSD: si.c,v 1.19 2003/11/14 19:05:36 miod Exp $	*/
+/*	$OpenBSD: si.c,v 1.20 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: si.c,v 1.38 1997/08/27 11:24:20 bouyer Exp $	*/
 
 /*-
@@ -448,7 +448,8 @@ si_attach(parent, self, args)
 		/*
 		 * This will be an "sw" controller.
 		 */
-		intr_establish(ra->ra_intr[0].int_pri, &sc->sc_ih, IPL_BIO);
+		intr_establish(ra->ra_intr[0].int_pri, &sc->sc_ih, IPL_BIO,
+		    self->dv_xname);
 		break;
 
 	case BUS_VME16:
@@ -456,7 +457,8 @@ si_attach(parent, self, args)
 		 * This will be an "si" controller.
 		 */
 		vmeintr_establish(ra->ra_intr[0].int_vec,
-		    ra->ra_intr[0].int_pri, &sc->sc_ih, IPL_BIO);
+		    ra->ra_intr[0].int_pri, &sc->sc_ih, IPL_BIO,
+		    self->dv_xname);
 		sc->sc_adapter_iv_am =
 		    VME_SUPV_DATA_24 | (ra->ra_intr[0].int_vec & 0xFF);
 		break;

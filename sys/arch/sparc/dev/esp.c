@@ -1,4 +1,4 @@
-/*	$OpenBSD: esp.c,v 1.21 2003/06/05 12:27:02 deraadt Exp $	*/
+/*	$OpenBSD: esp.c,v 1.22 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: esp.c,v 1.69 1997/08/27 11:24:18 bouyer Exp $	*/
 
 /*
@@ -371,8 +371,7 @@ espattach(parent, self, aux)
 	/* and the interuppts */
 	esc->sc_ih.ih_fun = (void *) ncr53c9x_intr;
 	esc->sc_ih.ih_arg = sc;
-	intr_establish(esc->sc_pri, &esc->sc_ih, IPL_BIO);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	intr_establish(esc->sc_pri, &esc->sc_ih, IPL_BIO, self->dv_xname);
 
 	/*
 	 * If the boot path is "esp" at the moment and it's me, then

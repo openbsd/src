@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4231.c,v 1.20 2003/12/20 00:49:45 miod Exp $	*/
+/*	$OpenBSD: cs4231.c,v 1.21 2004/09/29 07:35:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -241,11 +241,10 @@ cs4231_attach(parent, self, aux)
 
 	sc->sc_ih.ih_fun = cs4231_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_AUHARD);
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_AUHARD,
+	    self->dv_xname);
 
 	printf(" pri %d, softpri %d\n", pri, IPL_AUSOFT);
-
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
 
 	audio_attach_mi(&cs4231_sa_hw_if, sc, &sc->sc_dev);
 

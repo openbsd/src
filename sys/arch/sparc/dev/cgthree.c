@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgthree.c,v 1.24 2003/08/01 19:24:49 miod Exp $	*/
+/*	$OpenBSD: cgthree.c,v 1.25 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: cgthree.c,v 1.33 1997/05/24 20:16:11 pk Exp $ */
 
 /*
@@ -287,7 +287,8 @@ cgthreeattach(parent, self, args)
 
 	sc->sc_ih.ih_fun = cgthree_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB);
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
+	    self->dv_xname);
 
 	/* grab initial (current) color map */
 	bt = &sc->sc_fbc->fbc_dac;

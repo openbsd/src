@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcx.c,v 1.19 2003/06/28 17:05:33 miod Exp $	*/
+/*	$OpenBSD: tcx.c,v 1.20 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: tcx.c,v 1.8 1997/07/29 09:58:14 fair Exp $ */
 
 /*
@@ -273,7 +273,8 @@ tcxattach(parent, self, args)
 
 	sc->sc_ih.ih_fun = tcx_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB);
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
+	    self->dv_xname);
 
 	if (isconsole) {
 		fbwscons_console_init(&sc->sc_sunfb, &tcx_stdscreen, -1,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.39 2003/01/22 18:59:36 miod Exp $	*/
+/*	$OpenBSD: zs.c,v 1.40 2004/09/29 07:35:12 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.50 1997/10/18 00:00:40 gwr Exp $	*/
 
 /*-
@@ -344,11 +344,10 @@ zs_attach(parent, self, aux)
 	if (!didintr) {
 		didintr = 1;
 		prevpri = pri;
-		intr_establish(pri, &levelhard, IPL_ZS);
-		intr_establish(IPL_TTY, &levelsoft, IPL_TTY);
+		intr_establish(pri, &levelhard, IPL_ZS, self->dv_xname);
+		intr_establish(IPL_TTY, &levelsoft, IPL_TTY, self->dv_xname);
 	} else if (pri != prevpri)
 		panic("broken zs interrupt scheme");
-	evcnt_attach(&zsc->zsc_dev, "intr", &zsc->zsc_intrcnt);
 
 	/*
 	 * Set the master interrupt enable and interrupt vector.
@@ -414,7 +413,6 @@ zshard(arg)
 		/* Count up the interrupts. */
 		if (rr3) {
 			rval |= rr3;
-			zsc->zsc_intrcnt.ev_count++;
 		}
 		softreq |= zsc->zsc_cs[0].cs_softreq;
 		softreq |= zsc->zsc_cs[1].cs_softreq;

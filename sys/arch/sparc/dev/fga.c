@@ -1,4 +1,4 @@
-/*	$OpenBSD: fga.c,v 1.13 2003/06/04 07:18:16 miod Exp $	*/
+/*	$OpenBSD: fga.c,v 1.14 2004/09/29 07:35:11 miod Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -90,7 +90,7 @@ int	fgaioctl(dev_t, u_long, caddr_t, int, struct proc *);
 int	fga_vmerangemap(struct fga_softc *, u_int32_t, u_int32_t,
     int, int, u_int32_t, struct confargs *);
 int	fga_intr_establish(struct fga_softc *, int, int,
-    struct intrhand *);
+    struct intrhand *, const char *);
 int	fga_hwintr_establish(struct fga_softc *, u_int8_t);
 
 int	fga_hwintr1(void *);
@@ -480,8 +480,10 @@ fga_intrvec(sc, vec)
 
 	for (ih = sc->sc_vmevec[vec]; ih; ih = ih->ih_next) {
 		r = (*ih->ih_fun)(ih->ih_arg);
-		if (r > 0)
+		if (r > 0) {
+			ih->ih_count.ec_count++;
 			return (r);
+		}
 		s |= r;
 	}
 
@@ -492,10 +494,11 @@ fga_intrvec(sc, vec)
  * Establish a VME level/vector interrupt.
  */
 int
-fga_intr_establish(sc, vec, level, ih)
+fga_intr_establish(sc, vec, level, ih, name)
 	struct fga_softc *sc;
 	int vec, level;
 	struct intrhand *ih;
+	const char *name;
 {
 	struct intrhand *ihs;
 	u_int8_t level_to_sint[] = {
@@ -530,6 +533,9 @@ fga_intr_establish(sc, vec, level, ih)
 		ih->ih_next = ih;
 	}
 
+	ih->ih_vec = level;
+	evcount_attach(&ih->ih_count, name, &ih->ih_vec, &evcount_intr);
+
 	/* setup hardware handler */
 	fga_hwintr_establish(sc, level_to_sint[level]);
 
@@ -558,37 +564,37 @@ fga_hwintr_establish(sc, sint)
 	case 1:
 		sc->sc_ih1.ih_fun = fga_hwintr1;
 		sc->sc_ih1.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih1, -1);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih1, -1, NULL);
 		break;
 	case 2:
 		sc->sc_ih2.ih_fun = fga_hwintr2;
 		sc->sc_ih2.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih2, -1);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih2, -1, NULL);
 		break;
 	case 3:
 		sc->sc_ih3.ih_fun = fga_hwintr3;
 		sc->sc_ih3.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih3, -1);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih3, -1, NULL);
 		break;
 	case 4:
 		sc->sc_ih4.ih_fun = fga_hwintr4;
 		sc->sc_ih4.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih4, -1);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih4, -1, NULL);
 		break;
 	case 5:
 		sc->sc_ih5.ih_fun = fga_hwintr5;
 		sc->sc_ih5.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih5, -1);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih5, -1, NULL);
 		break;
 	case 6:
 		sc->sc_ih6.ih_fun = fga_hwintr6;
 		sc->sc_ih6.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih6, -1);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih6, -1, NULL);
 		break;
 	case 7:
 		sc->sc_ih7.ih_fun = fga_hwintr7;
 		sc->sc_ih7.ih_arg = sc;
-		intr_establish(sint_to_pri[sint], &sc->sc_ih7, -1);
+		intr_establish(sint_to_pri[sint], &sc->sc_ih7, -1, NULL);
 		break;
 	default:
 		panic("fga_sint");
@@ -803,12 +809,13 @@ fvmeprint(args, name)
 }
 
 int
-fvmeintrestablish(dsc, vec, level, ih)
+fvmeintrestablish(dsc, vec, level, ih, name)
 	struct device *dsc;
 	int vec, level;
 	struct intrhand *ih;
+	const char *name;
 {
 	struct fga_softc *fsc = (struct fga_softc *)dsc->dv_parent;
 
-	return (fga_intr_establish(fsc, vec, level, ih));
+	return (fga_intr_establish(fsc, vec, level, ih, name));
 }

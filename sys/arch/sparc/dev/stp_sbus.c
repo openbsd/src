@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp_sbus.c,v 1.3 2004/03/02 23:10:14 miod Exp $	*/
+/*	$OpenBSD: stp_sbus.c,v 1.4 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -175,13 +175,13 @@ stpattach(parent, self, aux)
 	ssc->sc_ih[1].ih_fun = stp4020_statintr;
 	ssc->sc_ih[1].ih_arg = sc;
 	intr_establish(ca->ca_ra.ra_intr[1].int_pri,
-	    &ssc->sc_ih[1], -1);
+	    &ssc->sc_ih[1], -1, self->dv_xname);
 	printf(" pri %d", ca->ca_ra.ra_intr[1].int_pri);
 
 	ssc->sc_ih[0].ih_fun = stp4020_iointr;
 	ssc->sc_ih[0].ih_arg = sc;
 	intr_establish(ca->ca_ra.ra_intr[0].int_pri,
-	    &ssc->sc_ih[0], -1);
+	    &ssc->sc_ih[0], -1, self->dv_xname);
 	printf(" and %d", ca->ca_ra.ra_intr[0].int_pri);
 
 	stpattach_common(sc, ((struct sbus_softc *)parent)->sc_clockfreq);

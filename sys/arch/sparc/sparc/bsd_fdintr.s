@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_fdintr.s,v 1.10 2004/09/22 22:12:59 miod Exp $	*/
+/*	$OpenBSD: bsd_fdintr.s,v 1.11 2004/09/29 07:35:13 miod Exp $	*/
 /*	$NetBSD: bsd_fdintr.s,v 1.11 1997/04/07 21:00:36 pk Exp $ */
 
 /*
@@ -179,9 +179,10 @@ _C_LABEL(fdchwintr):
 	ld	[%l7 + %lo(_C_LABEL(fdciop))], R_fdc
 
 	! tally interrupt
-	ld	[R_fdc + FDC_EVCNT], %l6
-	inc	%l6
-	st	%l6, [R_fdc + FDC_EVCNT]
+	ldd	[R_fdc + FDC_COUNT], %l4
+	inccc	%l4
+	addx	%l4, 0, %l4
+	std	%l4, [R_fdc + FDC_COUNT]
 
 	! load chips register addresses
 	ld	[R_fdc + FDC_REG_MSR], R_msr	! get chip MSR reg addr

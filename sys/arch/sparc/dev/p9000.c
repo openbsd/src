@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.8 2004/05/12 16:26:11 deraadt Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.9 2004/09/29 07:35:11 miod Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -257,7 +257,8 @@ p9000attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih.ih_fun = p9000_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB);
+	intr_establish(ca->ca_ra.ra_intr[0].int_pri, &sc->sc_ih, IPL_FB,
+	    self->dv_xname);
 
 	/* Disable frame buffer interrupts */
 	P9000_SELECT_SCR(sc);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tctrl.c,v 1.6 2004/05/10 09:05:52 miod Exp $	*/
+/*	$OpenBSD: tctrl.c,v 1.7 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: tctrl.c,v 1.2 1999/08/11 00:46:06 matt Exp $	*/
 
 /*-
@@ -100,8 +100,6 @@ struct tctrl_softc {
 	u_int8_t sc_cmdlen;
 	u_int8_t sc_rspoff;
 	u_int8_t sc_rsplen;
-
-	struct evcnt sc_intrcnt;	/* interrupt counting */
 };
 
 int tctrl_match(struct device *, void *, void *);
@@ -188,8 +186,7 @@ tctrl_attach(parent, self, aux)
 
 	sc->sc_ih.ih_fun = tctrl_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(pri, &sc->sc_ih, -1);
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	intr_establish(pri, &sc->sc_ih, -1, self->dv_xname);
 
 	/* See what the external status is
 	 */

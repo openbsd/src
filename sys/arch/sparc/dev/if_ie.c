@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.27 2003/11/14 19:05:36 miod Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.28 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.33 1997/07/29 17:55:38 fair Exp $	*/
 
 /*-
@@ -669,14 +669,14 @@ ieattach(parent, self, aux)
 	case BUS_OBIO:
 		sc->sc_ih.ih_fun = ieintr;
 		sc->sc_ih.ih_arg = sc;
-		intr_establish(pri, &sc->sc_ih, IPL_NET);
+		intr_establish(pri, &sc->sc_ih, IPL_NET, self->dv_xname);
 		break;
 	case BUS_VME16:
 	case BUS_VME32:
 		sc->sc_ih.ih_fun = ieintr;
 		sc->sc_ih.ih_arg = sc;
 		vmeintr_establish(ca->ca_ra.ra_intr[0].int_vec, pri,
-		    &sc->sc_ih, IPL_NET);
+		    &sc->sc_ih, IPL_NET, self->dv_xname);
 		break;
 #endif /* SUN4 */
 	}

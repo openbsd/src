@@ -1,4 +1,4 @@
-/*	$OpenBSD: ts102.c,v 1.12 2004/05/09 22:02:38 miod Exp $	*/
+/*	$OpenBSD: ts102.c,v 1.13 2004/09/29 07:35:11 miod Exp $	*/
 /*
  * Copyright (c) 2003, 2004, Miodrag Vallat.
  *
@@ -241,7 +241,7 @@ tslot_attach(struct device *parent, struct device *self, void *args)
 
 	sc->sc_ih.ih_fun = tslot_intr;
 	sc->sc_ih.ih_arg = sc;
-	intr_establish(ra->ra_intr[0].int_pri, &sc->sc_ih, -1);
+	intr_establish(ra->ra_intr[0].int_pri, &sc->sc_ih, -1, self->dv_xname);
 	printf(" pri %d", ra->ra_intr[0].int_pri);
 
 	sbus_establish(&sc->sc_sd, self);

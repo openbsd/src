@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.59 2004/06/13 21:49:20 niklas Exp $	*/
+/*	$OpenBSD: locore.s,v 1.60 2004/09/29 07:35:14 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -2374,7 +2374,13 @@ softintr_common:
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0
 2:	jmpl	%o1, %o7		!	(void)(*ih->ih_fun)(...)
-	 ld	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
+	 nop
+	mov	%l4, %l3
+	ldd	[%l3 + IH_COUNT], %l4
+	inccc	%l5
+	addx	%l4, 0, %l4
+	std	%l4, [%l3 + IH_COUNT]
+	ld	[%l3 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	tst	%l4			! while ih != NULL
 	bnz	1b
 	 nop
@@ -2449,26 +2455,34 @@ _C_LABEL(sparc_interrupt_common):
 	bz,a	2f
 	 add	%sp, CCFSZ, %o0
 2:	jmpl	%o1, %o7		!	handled = (*ih->ih_fun)(...)
-	 ld	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
+	 nop
 	cmp	%o0, 1
 	bge	4f			!	if (handled >= 1) break
 	 or	%o0, %l5, %l5		! 	and %l5 |= handled
+	ld	[%l4 + IH_NEXT], %l4	!	and ih = ih->ih_next
 3:	tst	%l4
 	bnz	1b			! while (ih)
 	 nop
 	tst	%l5			! if (handled) break
-	bnz	4f
+	bnz	5f
 	 nop
 	call	_C_LABEL(strayintr)	!	strayintr(&intrframe)
 	 add	%sp, CCFSZ, %o0
-	/* all done: restore registers and go return */
-4:	mov	%l7, %g1
+5:	/* all done: restore registers and go return */
+	mov	%l7, %g1
 	wr	%l6, 0, %y
 	ldd	[%sp + CCFSZ + 24], %g2
 	ldd	[%sp + CCFSZ + 32], %g4
 	ldd	[%sp + CCFSZ + 40], %g6
 	b	return_from_trap
 	 wr	%l0, 0, %psr
+4:
+	mov	%l4, %l3
+	ldd	[%l3 + IH_COUNT], %l4
+	inccc	%l5
+	addx	%l4, 0, %l4
+	b	5b
+	 std	%l4, [%l3 + IH_COUNT]
 
 #ifdef notyet
 /*

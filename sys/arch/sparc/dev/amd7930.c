@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930.c,v 1.27 2003/11/03 07:01:33 david Exp $	*/
+/*	$OpenBSD: amd7930.c,v 1.28 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: amd7930.c,v 1.37 1998/03/30 14:23:40 pk Exp $	*/
 
 /*
@@ -64,7 +64,6 @@ int     amd7930debug = 0;
  */
 struct amd7930_softc {
 	struct	device sc_dev;		/* base device */
-	struct	intrhand sc_hwih;	/* hardware interrupt vector */
 	struct	intrhand sc_swih;	/* software interrupt vector */
 
 	int	sc_open;		/* single use device */
@@ -84,7 +83,7 @@ struct amd7930_softc {
 
         /* sc_au is special in that the hardware interrupt handler uses it */
         struct  auio sc_au;		/* recv and xmit buffers, etc */
-#define sc_intrcnt	sc_au.au_intrcnt	/* statistics */
+#define	sc_hwih	sc_au.au_ih		/* hardware interrupt vector */
 };
 
 /* interrupt interfaces */
@@ -300,17 +299,19 @@ amd7930attach(parent, self, args)
 
 #ifndef AUDIO_C_HANDLER
 	auiop = &sc->sc_au;
+	sc->sc_hwih.ih_vec = pri;
+	evcount_attach(&sc->sc_hwih.ih_count, sc->sc_dev.dv_xname,
+	    &sc->sc_hwih.ih_vec, &evcount_intr);
 	intr_fasttrap(pri, amd7930_trap);
 #else
 	sc->sc_hwih.ih_fun = amd7930hwintr;
 	sc->sc_hwih.ih_arg = &sc->sc_au;
-	intr_establish(pri, &sc->sc_hwih, IPL_AUHARD);
+	intr_establish(pri, &sc->sc_hwih, IPL_AUHARD, sc->sc_dev.dv_xname);
 #endif
 	sc->sc_swih.ih_fun = amd7930swintr;
 	sc->sc_swih.ih_arg = sc;
-	intr_establish(IPL_AUSOFT, &sc->sc_swih, IPL_AUSOFT);
-
-	evcnt_attach(&sc->sc_dev, "intr", &sc->sc_intrcnt);
+	intr_establish(IPL_AUSOFT, &sc->sc_swih, IPL_AUSOFT,
+	    sc->sc_dev.dv_xname);
 
 	audio_attach_mi(&sa_hw_if, sc, &sc->sc_dev);
 	amd7930_commit_settings(sc);
@@ -811,7 +812,6 @@ amd7930hwintr(au0)
 		}
 	}
 
-	au->au_intrcnt.ev_count++;
 	return (-1);
 }
 #endif /* AUDIO_C_HANDLER */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.26 2003/11/06 21:09:35 mickey Exp $ */
+/*	$OpenBSD: intr.c,v 1.27 2004/09/29 07:35:14 miod Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -206,6 +206,20 @@ nmi_hard()
 
 static struct intrhand level01 = { soft01intr, NULL, (IPL_SOFTINT << 8) };
 
+void
+intr_init()
+{
+	level01.ih_vec = level01.ih_ipl >> 8;
+	evcount_attach(&level01.ih_count, "softintr", &level01.ih_vec,
+	    &evcount_intr);
+	level10.ih_vec = level10.ih_ipl >> 8;
+	evcount_attach(&level10.ih_count, "clock", &level10.ih_vec,
+	    &evcount_intr);
+	level14.ih_vec = level14.ih_ipl >> 8;
+	evcount_attach(&level14.ih_count, "prof", &level14.ih_vec,
+	    &evcount_intr);
+}
+
 /*
  * Level 15 interrupts are special, and not vectored here.
  * Only `prewired' interrupts appear here; boot-time configured devices
@@ -240,10 +254,11 @@ extern int sparc_interrupt44c[];
  * This is not possible if it has been taken away as a fast vector.
  */
 void
-intr_establish(level, ih, ipl_block)
+intr_establish(level, ih, ipl_block, name)
 	int level;
 	struct intrhand *ih;
 	int ipl_block;
+	const char *name;
 {
 	struct intrhand **p, *q;
 #ifdef DIAGNOSTIC
@@ -273,7 +288,10 @@ intr_establish(level, ih, ipl_block)
 	 * We store the ipl pre-shifted so that we can avoid one instruction
 	 * in the interrupt handlers.
 	 */
+	ih->ih_vec = ipl_block;
 	ih->ih_ipl = (ipl_block << 8);
+	if (name != NULL)
+		evcount_attach(&ih->ih_count, name, &ih->ih_vec, &evcount_intr);
 
 	s = splhigh();
 	if (fastvec & (1 << level))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: xd.c,v 1.28 2004/02/15 02:45:46 tedu Exp $	*/
+/*	$OpenBSD: xd.c,v 1.29 2004/09/29 07:35:11 miod Exp $	*/
 /*	$NetBSD: xd.c,v 1.37 1997/07/29 09:58:16 fair Exp $	*/
 
 /*
@@ -488,9 +488,8 @@ xdcattach(parent, self, aux)
 	xdc->sc_ih.ih_fun = xdcintr;
 	xdc->sc_ih.ih_arg = xdc;
 	vmeintr_establish(ca->ca_ra.ra_intr[0].int_vec,
-			  ca->ca_ra.ra_intr[0].int_pri, &xdc->sc_ih, IPL_BIO);
-	evcnt_attach(&xdc->sc_dev, "intr", &xdc->sc_intrcnt);
-
+	    ca->ca_ra.ra_intr[0].int_pri, &xdc->sc_ih, IPL_BIO,
+	    self->dv_xname);
 
 	/* now we must look for disks using autoconfig */
 	xa.dvmabuf = (char *)dvma_malloc(XDFM_BPS, &xa.buf, M_NOWAIT);
@@ -1140,10 +1139,6 @@ xdcintr(v)
 
 {
 	struct xdc_softc *xdcsc = v;
-
-	/* kick the event counter */
-
-	xdcsc->sc_intrcnt.ev_count++;
 
 	/* remove as many done IOPBs as possible */
 

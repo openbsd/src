@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd7930intr.s,v 1.8 2003/06/02 23:27:55 millert Exp $	*/
+/*	$OpenBSD: amd7930intr.s,v 1.9 2004/09/29 07:35:13 miod Exp $	*/
 /*	$NetBSD: amd7930intr.s,v 1.10 1997/03/11 01:03:07 pk Exp $	*/
 /*
  * Copyright (c) 1995 Rolf Grossmann.
@@ -104,9 +104,10 @@ _C_LABEL(amd7930_trap):
 	sethi	%hi(_C_LABEL(auiop)), %l7
 	ld	[%l7 + %lo(_C_LABEL(auiop))], %l7
 
-	ld	[%l7 + AU_EVCNT], %l6
-	inc	%l6
-	st	%l6, [%l7 + AU_EVCNT]
+	ldd	[%l7 + AU_COUNT], %l2
+	inccc	%l3
+	addx	%l2, 0, %l2
+	std	%l2, [%l7 + AU_COUNT]
 
 	ld	[%l7 + AU_AMD], R_amd
 	ldub    [R_amd + AMD_IR], %g0		! clear interrupt
