@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.3 2002/01/07 05:03:23 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.4 2002/02/23 16:59:36 matthieu Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -60,4 +60,15 @@ syncicache(void *from, int len)
 	__asm__ __volatile__ ("isync");
 }
 
+/* 
+ * CTL_MACHDEP definitions.
+ */
+#define CPU_ALLOWAPERTURE	1	/* allow mmap of /dev/xf86 */
+#define	CPU_MAXID		2	/* number of valid machdep ids */
+
+
+#define	CTL_MACHDEP_NAMES { \
+	{ 0, 0 }, \
+	{ "allowaperture", CTLTYPE_INT }, \
+}
 #endif	/* _MACHINE_CPU_H_ */

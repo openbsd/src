@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci.c,v 1.25 2002/02/18 23:23:46 matthieu Exp $	*/
+/*	$OpenBSD: pci.c,v 1.26 2002/02/23 16:59:36 matthieu Exp $	*/
 /*	$NetBSD: pci.c,v 1.31 1997/06/06 23:48:04 thorpej Exp $	*/
 
 /*
@@ -52,6 +52,10 @@ struct pci_softc {
 	pci_chipset_tag_t sc_pc;
 	int sc_bus;		/* PCI configuration space bus # */
 };
+#endif
+
+#ifdef APERTURE
+extern int allowaperture;
 #endif
 
 struct cfattach pci_ca = {
@@ -386,9 +390,15 @@ pciopen(dev_t dev, int oflags, int devtype, struct proc *p)
 {
 	PCIDEBUG(("pciopen ndevs: %d\n" , pci_cd.cd_ndevs));
 
+#ifndef APERTURE
 	if ((oflags & FWRITE) && securelevel > 0) {
 		return EPERM;
 	}
+#else
+	if ((oflags & FWRITE) && securelevel > 0 && allowaperture == 0) {
+		return EPERM;
+	}
+#endif
 	return 0;
 }
 

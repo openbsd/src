@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.25 2002/02/17 22:59:52 maja Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.26 2002/02/23 16:59:36 matthieu Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -148,6 +148,14 @@ struct firmware *fw = NULL;
 
 #ifdef DDB
 void * startsym, *endsym;
+#endif
+
+#ifdef APERTURE
+#ifdef INSECURE
+int allowaperture = 1;
+#else
+int allowaperture = 0;
+#endif
 #endif
 
 void ofw_dbg(char *str);
@@ -823,6 +831,17 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	if (namelen != 1)
 		return ENOTDIR;
 	switch (name[0]) {
+		case CPU_ALLOWAPERTURE:
+#ifdef APERTURE
+		if (securelevel > 0) 
+			return (sysctl_rdint(oldp, oldlenp, newp, 
+			    allowaperture));
+		else
+			return (sysctl_int(oldp, oldlenp, newp, newlen, 
+			    &allowaperture));
+#else
+		return (sysctl_rdint(oldp, oldlenp, newp, 0));
+#endif
 	default:
 		return EOPNOTSUPP;
 	}
