@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.12 2001/11/28 00:45:40 art Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.13 2001/11/30 00:32:58 art Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -101,7 +101,9 @@ ufs_inactive(v)
 		if (getinoquota(ip) != 0)
 			(void)ufs_quota_free_inode(ip, NOCRED);
 
-		(void) UFS_TRUNCATE(ip, (off_t)0, 0, NOCRED);
+		if (ip->i_ffs_size != 0) {
+			(void) UFS_TRUNCATE(ip, (off_t)0, 0, NOCRED);
+		}
 		ip->i_ffs_rdev = 0;
 		mode = ip->i_ffs_mode;
 		ip->i_ffs_mode = 0;
@@ -292,9 +294,10 @@ out:
 		 * We need to flush pages to the new disk locations.
 		 */
 
-		(uobj->pgops->pgo_flush)(uobj, oldeof & ~(bsize - 1),
-		    MIN((oldeof + bsize) & ~(bsize - 1), neweof),
-		    PGO_CLEANIT | PGO_SYNCIO);
+		if ((flags & B_SYNC) == 0)
+			(*uobj->pgops->pgo_flush)(uobj, oldeof & ~(bsize - 1),
+			    MIN((oldeof + bsize) & ~(bsize - 1), neweof),
+			    PGO_CLEANIT | PGO_SYNCIO);
 	}
 	if (pgs2[0] != NULL) {
 		for (i = 0; i < npages2; i++) {
