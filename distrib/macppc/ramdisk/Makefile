@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.12 2003/03/04 20:24:49 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.13 2003/03/05 01:43:45 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -47,8 +47,12 @@ cd: ${BSD_RD}
 	strip ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
 	gzip -9 ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
 	mv ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd.gz ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd
+	# On HFS, doing the following means COPIES of the files.. therefore
+	# we skip doing so.
+	# ln ${.OBJDIR}/cd-dir/${OSREV}/macppc/bsd.rd ${.OBJDIR}/cd-dir/bsd.rd
+	# ln ${.OBJDIR}/cd-dir/bsd.rd ${.OBJDIR}/cd-dir/bsd
 	cp ${DESTDIR}/usr/mdec/ofwboot ${.OBJDIR}/cd-dir/
-	mkhybrid -r -part -hfs \
+	mkhybrid -v -v -r -part -hfs \
 	    -A "OpenBSD ${OSREV} macppc bootonly CD" \
 	    -P "Copyright (c) 2003 Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
