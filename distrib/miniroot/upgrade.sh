@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.51 2003/08/16 20:37:24 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.52 2003/08/17 21:11:35 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -122,6 +122,18 @@ if ! umount /mnt; then
 	exit
 fi
 mount_fs
+
+# Prior to 3.4, /usr/include/ssl was a directory and /usr/include/openssl was a
+# link to it. With 3.4, /usr/include/openssl is the directory and
+# /usr/include/ssl is the link. This change causes the upgrade of comp34 to
+# fail, so adjust a normal pre-3.4 setup to the new setup.
+( cd /mnt/usr/include
+if [[ -d ssl && -L openssl ]]; then
+	rm openssl
+	mv ssl openssl
+	ln -s openssl ssl
+fi
+)
 
 # Install sets.
 install_sets
