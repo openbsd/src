@@ -4,7 +4,7 @@
 #
 #	  Originally written by Toshiharu OHNO
 #
-# $OpenBSD: ppp.conf.sample,v 1.19 2001/07/02 12:24:44 brian Exp $
+# $OpenBSD: ppp.conf.sample,v 1.20 2001/09/12 19:35:31 brian Exp $
 #
 #################################################################
 
@@ -502,7 +502,6 @@ dialback:
 # same time.  The `dial' command may also be prefixed with a specific
 # link that should do the dialing.
 #
-
 mloop:
  load loop
  set mode interactive
@@ -520,3 +519,13 @@ mloop-in:
  allow mode direct
  set mrru 1500
  set mru 1504			# Room for the MP header
+
+# A PPPoE (PPP over Ethernet) setup may look like this:
+#
+pppoe:
+ set device "!/usr/sbin/pppoe"
+ set mtu max 1492
+ set mru max 1492
+ set speed sync
+ disable acfcomp protocomp
+ deny acfcomp
