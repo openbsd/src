@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.26 2001/01/13 18:21:48 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.27 2001/01/13 18:56:48 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -298,7 +298,7 @@ userauth_log(Authctxt *authctxt, int authenticated, char *method)
 	if (authctxt->valid) {
 		user = authctxt->pw->pw_uid == 0 ? "ROOT" : authctxt->user;
 	} else {
-		user = "NOUSER";
+		user = authctxt->user ? authctxt->user : "NOUSER";
 	}
 
 	authlog("%s %s for %.200s from %.200s port %d ssh2",
