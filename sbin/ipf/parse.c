@@ -1,5 +1,5 @@
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * (C)opyright 1993-1996 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -32,7 +32,7 @@
 #include <ctype.h>
 
 #ifndef	lint
-static	char	sccsid[] ="@(#)parse.c	1.33 1/14/96 (C) 1993 Darren Reed";
+static	char	sccsid[] ="@(#)parse.c	1.41 4/10/96 (C) 1993-1996 Darren Reed";
 #endif
 
 extern	struct	ipopt_names	ionames[], secclass[];
@@ -352,7 +352,7 @@ char	*line;
 	/*
 	 * Keep something...
 	 */
-	if (*cpp && !strcasecmp(*cpp, "keep"))
+	while (*cpp && !strcasecmp(*cpp, "keep"))
 		if (addkeep(&cpp, &fil))
 			return NULL;
 
@@ -375,7 +375,14 @@ char	*line;
 			"no protocol given for TCP/UDP comparisons\n");
 		return NULL;
 	}
-
+/*
+	if ((fil.fr_flags & FR_KEEPFRAG) &&
+	    (!(fil.fr_ip.fi_fl & FI_FRAG) || !(fil.fr_ip.fi_fl & FI_FRAG))) {
+		(void)fprintf(stderr,
+			"must use 'with frags' with 'keep frags'\n");
+		return NULL;
+	}
+*/
 	return &fil;
 }
 
@@ -401,7 +408,7 @@ u_char	*cp;
 			return -1;
 		if (index(s, '.'))
 			*msk = inet_addr(s);
-		else {
+		if (!index(s, '.') && !index(s, 'x')) {
 			/*
 			 * set x most significant bits
 			 */
@@ -410,6 +417,9 @@ u_char	*cp;
 				*msk |= ntohl(inet_addr("128.0.0.0"));
 			}
 			*msk = htonl(*msk);
+		} else {
+			if (inet_aton(s, (struct in_addr *)msk) == -1)
+				return -1;
 		}
 		*sa = hostnum(**seg, &resolved) & *msk;
 		if (resolved == -1)
@@ -427,10 +437,8 @@ u_char	*cp;
 			return -1;
 		(*seg)++;
 		(*seg)++;
-		if (index(**seg, '.'))
-			*msk = inet_addr(**seg);
-		else
-			*msk = (u_long)strtol(**seg, NULL, 0);
+		if (inet_aton(**seg, (struct in_addr *)msk) == -1)
+			return -1;
 		(*seg)++;
 		*sa &= *msk;
 		return ports(seg, pp, cp, tp);
@@ -490,9 +498,9 @@ u_char	*cp;
 
 	if (!*seg || !**seg || !***seg)
 		return 0;
-	if (!strcasecmp(**seg, "port") && *(*seg + 1) && *(seg + 2)) {
+	if (!strcasecmp(**seg, "port") && *(*seg + 1) && *(*seg + 2)) {
 		(*seg)++;
-		if (isdigit(***seg) && *(seg + 2)) {
+		if (isdigit(***seg) && *(*seg + 2)) {
 			*pp = portnum(**seg);
 			(*seg)++;
 			if (!strcmp(**seg, "<>"))
@@ -539,13 +547,13 @@ char	*name;
 	u_short	p1 = 0;
 
 	if (isdigit(*name))
-		return htons((u_short)atoi(name));
+		return (u_short)atoi(name);
 	if (!proto)
 		proto = "tcp/udp";
 	if (strcasecmp(proto, "tcp/udp")) {
 		sp = getservbyname(name, proto);
 		if (sp)
-			return sp->s_port;
+			return ntohs(sp->s_port);
 		(void) fprintf(stderr, "unknown service \"%s\".\n", name);
 		return 0;
 	}
@@ -564,7 +572,7 @@ char	*name;
 		(void) fprintf(stderr, "%s %d/udp\n", name, sp->s_port);
 		return 0;
 	}
-	return p1;
+	return ntohs(p1);
 }
 
 
@@ -616,13 +624,21 @@ struct	frentry	*fr;
 	       !strncasecmp(**cp, "not", 3) || !strncasecmp(**cp, "opt", 4) ||
 	       !strncasecmp(**cp, "frag", 3) || !strncasecmp(**cp, "no", 2) ||
 	       !strncasecmp(**cp, "short", 5))) {
-		if (***cp == 'n')
+		if (***cp == 'n') {
 			notopt = 1;
-		else if (***cp == 'i')
-			oflags = FI_OPTIONS;
-		else if (***cp == 'f')
-			oflags = FI_FRAG;
-		else if (***cp == 'o') {
+			(*cp)++;
+			continue;
+		} else if (***cp == 'i') {
+			if (!notopt)
+				fr->fr_ip.fi_fl |= FI_OPTIONS;
+			fr->fr_mip.fi_fl |= FI_OPTIONS;
+			goto nextopt;
+		} else if (***cp == 'f') {
+			if (!notopt)
+				fr->fr_ip.fi_fl |= FI_FRAG;
+			fr->fr_mip.fi_fl |= FI_FRAG;
+			goto nextopt;
+		} else if (***cp == 'o') {
 			if (!*(*cp + 1)) {
 				(void)fprintf(stderr,
 					"opt missing arguements\n");
@@ -638,12 +654,23 @@ struct	frentry	*fr;
 				    "short cannot be used with TCP flags\n");
 				return -1;
 			}
-			oflags = FI_SHORT;
+
+			if (!notopt)
+				fr->fr_ip.fi_fl |= FI_SHORT;
+			fr->fr_mip.fi_fl |= FI_SHORT;
+			goto nextopt;
 		} else
 			return -1;
 
-		fr->fr_mip.fi_fl |= oflags;
-		fr->fr_mip.fi_optmsk |= opts;
+		if (!notopt || !opts)
+			fr->fr_mip.fi_fl |= oflags;
+		if (notopt)
+			if (!secmsk)
+				fr->fr_mip.fi_optmsk |= opts;
+			else
+				fr->fr_mip.fi_optmsk |= (opts & ~0x0100);
+		else
+				fr->fr_mip.fi_optmsk |= opts;
 		fr->fr_mip.fi_secmsk |= secmsk;
 
 		if (notopt) {
@@ -655,6 +682,8 @@ struct	frentry	*fr;
 			fr->fr_ip.fi_optmsk |= opts;
 			fr->fr_ip.fi_secmsk |= secmsk;
 		}
+nextopt:
+		notopt = 0;
 		opts = 0;
 		oflags = 0;
 		secmsk = 0;
@@ -714,25 +743,71 @@ u_short *sp;
 }
 
 
-void optprint(optmsk, secmsk)
-u_char optmsk, secmsk;
+void optprint(secmsk, secbits, optmsk, optbits)
+u_short secmsk, secbits;
+u_long optmsk, optbits;
 {
 	struct ipopt_names *io, *so;
-	char *s = "", *t = "";
+	char *s;
+	int secflag = 0;
 
-	printf("opt ");
+	s = "opt ";
 	for (io = ionames; io->on_name; io++)
-		if (io->on_bit & optmsk) {
-			printf("%s%s", s, io->on_name);
-			s = ",";
+		if ((io->on_bit & optmsk) &&
+		    ((io->on_bit & optmsk) == (io->on_bit & optbits))) {
+			if ((io->on_value != IPOPT_SECURITY) ||
+			    (!secmsk && !secbits)) {
+				printf("%s%s", s, io->on_name);
+				if (io->on_value == IPOPT_SECURITY)
+					io++;
+				s = ",";
+			} else
+				secflag = 1;
 		}
-	if (secmsk) {
-		putchar(' ');
+
+
+	if (secmsk & secbits) {
+		printf("%ssec-class", s);
+		s = " ";
 		for (so = secclass; so->on_name; so++)
-			if (secmsk & so->on_bit) {
-				printf("%s%s", t, so->on_name);
-				t = ",";
+			if ((secmsk & so->on_bit) &&
+			    ((io->on_bit & secmsk) == (io->on_bit & secbits))) {
+				printf("%s%s", s, so->on_name);
+				s = ",";
 			}
+	}
+
+	if (strcmp(s, "opt "))
+		putchar(' ');
+	if ((optmsk && (optmsk != optbits)) ||
+	    (secmsk && (secmsk != secbits))) {
+		s = " ";
+		printf("not opt");
+		if (optmsk != optbits) {
+			for (io = ionames; io->on_name; io++)
+				if ((io->on_bit & optmsk) &&
+				    ((io->on_bit & optmsk) !=
+				     (io->on_bit & optbits))) {
+					if ((io->on_value != IPOPT_SECURITY) ||
+					    (!secmsk && !secbits)) {
+						printf("%s%s", s, io->on_name);
+						s = ",";
+					} else
+						io++;
+				}
+		}
+
+		if (secmsk != secbits) {
+			printf("%ssec-class", s);
+			s = " ";
+			for (so = secclass; so->on_name; so++)
+				if ((so->on_bit & secmsk) &&
+				    ((so->on_bit & secmsk) !=
+				     (so->on_bit & secbits))) {
+					printf("%s%s", s, so->on_name);
+					s = ",";
+				}
+		}
 	}
 }
 
@@ -890,15 +965,17 @@ int	pr, port;
 	struct	servent	*sv = NULL, *sv1 = NULL;
 
 	if (pr == -1) {
-		if ((sv = getservbyport(htons(port), "tcp"))) {
+		if ((sv = getservbyport(port, "tcp"))) {
 			strncpy(buf, sv->s_name, sizeof(buf)-1);
 			buf[sizeof(buf)-1] = '\0';
-			sv1 = getservbyport(htons(port), "udp");
-			if (sv1 && !strcasecmp(buf, sv->s_name))
-				return buf;
+			sv1 = getservbyport(port, "udp");
+			sv = strncasecmp(buf, sv->s_name, strlen(buf)) ?
+			     NULL : sv1;
 		}
+		if (sv)
+			return buf;
 	} else if (pr && (p = getprotobynumber(pr))) {
-		if ((sv = getservbyport(htons(port), p->p_name))) {
+		if ((sv = getservbyport(port, p->p_name))) {
 			strncpy(buf, sv->s_name, sizeof(buf)-1);
 			buf[sizeof(buf)-1] = '\0';
 			return buf;
@@ -937,7 +1014,8 @@ struct	frentry	*fp;
 			(void)printf(" return-icmp");
 			if (fp->fr_icode)
 				if (fp->fr_icode <= MAX_ICMPCODE)
-					printf("(%s)",icmpcodes[fp->fr_icode]);
+					printf("(%s)",
+						icmpcodes[(int)fp->fr_icode]);
 				else
 					printf("(%d)", fp->fr_icode);
 		}
@@ -972,7 +1050,7 @@ struct	frentry	*fp;
 	if (fp->fr_ip.fi_fl & FI_TCPUDP) {
 			(void)printf("proto tcp/udp ");
 			pr = -1;
-	} else if ((pr = fp->fr_proto)) {
+	} else if ((pr = fp->fr_mip.fi_p)) {
 		if ((p = getprotobynumber(fp->fr_proto)))
 			(void)printf("proto %s ", p->p_name);
 		else
@@ -988,13 +1066,13 @@ struct	frentry	*fp;
 		else
 			(void)printf("/%d ", ones);
 	}
-	if (fp->fr_sport)
+	if (fp->fr_scmp)
 		if (fp->fr_scmp == FR_INRANGE || fp->fr_scmp == FR_OUTRANGE)
-			(void)printf("port %d %s %d ", ntohs(fp->fr_sport),
-				     pcmp1[fp->fr_scmp], ntohs(fp->fr_stop));
+			(void)printf("port %d %s %d ", fp->fr_sport,
+				     pcmp1[fp->fr_scmp], fp->fr_stop);
 		else
 			(void)printf("port %s %s ", pcmp1[fp->fr_scmp],
-				     portname(pr, ntohs(fp->fr_sport)));
+				     portname(pr, fp->fr_sport));
 	if (!fp->fr_dst.s_addr & !fp->fr_dmsk.s_addr)
 		(void)printf("to any ");
 	else {
@@ -1004,25 +1082,29 @@ struct	frentry	*fp;
 		else
 			(void)printf("/%d ", ones);
 	}
-	if (fp->fr_dport) {
+	if (fp->fr_dcmp) {
 		if (fp->fr_dcmp == FR_INRANGE || fp->fr_dcmp == FR_OUTRANGE)
-			(void)printf("port %d %s %d ", ntohs(fp->fr_dport),
-				     pcmp1[fp->fr_dcmp], ntohs(fp->fr_dtop));
+			(void)printf("port %d %s %d ", fp->fr_dport,
+				     pcmp1[fp->fr_dcmp], fp->fr_dtop);
 		else
 			(void)printf("port %s %s ", pcmp1[fp->fr_dcmp],
-				     portname(pr, ntohs(fp->fr_dport)));
+				     portname(pr, fp->fr_dport));
 	}
-	if (fp->fr_mip.fi_fl & (FI_SHORT|FI_OPTIONS|FI_FRAG)) {
+	if ((fp->fr_ip.fi_fl & ~FI_TCPUDP) ||
+	    (fp->fr_mip.fi_fl & ~FI_TCPUDP) ||
+	    fp->fr_ip.fi_optmsk || fp->fr_mip.fi_optmsk ||
+	    fp->fr_ip.fi_secmsk || fp->fr_mip.fi_secmsk) {
 		(void)printf("with ");
-		if (fp->fr_mip.fi_fl & FI_OPTIONS) {
-			if (fp->fr_ip.fi_optmsk)
-				optprint(fp->fr_ip.fi_optmsk,
-					 fp->fr_ip.fi_secmsk);
-			else {
-				if (!(fp->fr_ip.fi_fl & FI_OPTIONS))
-					(void)printf("not ");
-				(void)printf("ipopt ");
-			}
+		if (fp->fr_ip.fi_optmsk || fp->fr_mip.fi_optmsk ||
+		    fp->fr_ip.fi_secmsk || fp->fr_mip.fi_secmsk)
+			optprint(fp->fr_mip.fi_secmsk,
+				 fp->fr_ip.fi_secmsk,
+				 fp->fr_mip.fi_optmsk,
+				 fp->fr_ip.fi_optmsk);
+		else if (fp->fr_mip.fi_fl & FI_OPTIONS) {
+			if (!(fp->fr_ip.fi_fl & FI_OPTIONS))
+				(void)printf("not ");
+			(void)printf("ipopt ");
 		}
 		if (fp->fr_mip.fi_fl & FI_SHORT) {
 			if (!(fp->fr_ip.fi_fl & FI_SHORT))

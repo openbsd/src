@@ -5,7 +5,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * @(#)ip_frag.h	1.3 1/12/96
+ * @(#)ip_frag.h	1.5 3/24/96
  */
 
 #ifndef	__IP_FRAG_H_
@@ -18,9 +18,10 @@ typedef	struct	ipfr	{
 	struct	in_addr	ipfr_src;
 	struct	in_addr	ipfr_dst;
 	u_short	ipfr_id;
-	u_short	ipfr_ttl;
 	u_char	ipfr_p;
 	u_char	ipfr_tos;
+	u_short	ipfr_off;
+	u_short	ipfr_ttl;
 	u_char	ipfr_pass;
 } ipfr_t;
 

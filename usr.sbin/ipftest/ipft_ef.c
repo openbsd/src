@@ -46,7 +46,7 @@ etherfind -n -t
 #include "ipt.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)ipft_ef.c	1.5 10/15/95 (C)1995 Darren Reed";
+static char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
 #endif
 
 static	int	etherf_open(), etherf_close(), etherf_readip();
@@ -140,13 +140,8 @@ int	cnt, *dir;
 		break;
 	}
 
-#ifdef	NEED_INET_ATON
-	ip->ip_src.s_addr = inet_aton(src);
-	ip->ip_dst.s_addr = inet_aton(dst);
-#else
 	(void) inet_aton(src, &ip->ip_src);
 	(void) inet_aton(dst, &ip->ip_dst);
-#endif
 	ip->ip_len = atoi(len);
 	ip->ip_hl = sizeof(struct ip);
 

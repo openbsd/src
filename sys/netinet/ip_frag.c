@@ -6,10 +6,13 @@
  * to the original author and the contributors.
  */
 #ifndef	lint
-static	char	sccsid[] = "@(#)ip_frag.c	1.5 1/14/96 (C) 1993-1995 Darren Reed";
+static	char	sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
 #endif
 
-#include <string.h>
+#if !defined(_KERNEL) && !defined(KERNEL)
+# include <string.h>
+# include <stdlib.h>
+#endif
 #include <sys/errno.h>
 #include <sys/types.h>
 #include <sys/param.h>
@@ -75,8 +78,9 @@ ipfrstat_t *ipfr_fragstats()
  * add a new entry to the fragment cache, registering it as having come
  * through this box, with the result of the filter operation.
  */
-int ipfr_newfrag(ip, pass)
+int ipfr_newfrag(ip, fin, pass)
 ip_t *ip;
+fr_info_t *fin;
 int pass;
 {
 	ipfr_t	**fp, *fr, frag;
@@ -117,7 +121,8 @@ int pass;
 	ipfr_heads[idx] = fr;
 	bcopy((char *)&frag.ipfr_src, (char *)&fr->ipfr_src, IPFR_CMPSZ);
 	fr->ipfr_ttl = 120;	/* 60 seconds */
-	fr->ipfr_pass = pass;
+	fr->ipfr_pass = pass & ~(FR_LOGFIRST|FR_LOG);
+	fr->ipfr_off = (ip->ip_off & 0x1fff) + (fin->fin_dlen >> 3);
 	*fp = fr;
 	ipfr_stats.ifs_new++;
 	ipfr_inuse++;
@@ -130,11 +135,13 @@ int pass;
  * check the fragment cache to see if there is already a record of this packet
  * with its filter result known.
  */
-int ipfr_knownfrag(ip)
+int ipfr_knownfrag(ip, fin)
 ip_t *ip;
+fr_info_t *fin;
 {
 	ipfr_t	*f, frag;
 	u_int	idx;
+	int	ret;
 
 	/*
 	 * For fragments, we record protocol, packet id, TOS and both IP#'s
@@ -156,6 +163,8 @@ ip_t *ip;
 	for (f = ipfr_heads[idx]; f; f = f->ipfr_next)
 		if (!bcmp((char *)&frag.ipfr_src, (char *)&f->ipfr_src,
 			  IPFR_CMPSZ)) {
+			u_short	atoff, off;
+
 			if (f != ipfr_heads[idx]) {
 				/*
 				 * move fragment info. to the top of the list
@@ -168,8 +177,22 @@ ip_t *ip;
 				f->ipfr_prev = NULL;
 				ipfr_heads[idx] = f;
 			}
+			ret = f->ipfr_pass;
+			off = ip->ip_off;
+			atoff = (off & 0x1fff) - (fin->fin_dlen >> 3);
+			/*
+			 * If we've follwed the fragments, and this is the
+			 * last (in order), shrink expiration time.
+			 */
+			if (atoff == f->ipfr_off) {
+				if (!(off & IP_MF))
+					f->ipfr_ttl = 1;
+				else
+					f->ipfr_off = off;
+			}
 			ipfr_stats.ifs_hits++;
-			return f->ipfr_pass;
+			MUTEX_EXIT(&ipf_frag);
+			return ret;
 		}
 	MUTEX_EXIT(&ipf_frag);
 	return 0;
@@ -183,7 +206,7 @@ void ipfr_unload()
 {
 	ipfr_t	**fp, *fr;
 	int	idx;
-#if	!SOLARIS
+#if	!SOLARIS && defined(_KERNEL)
 	int	s;
 #endif
 

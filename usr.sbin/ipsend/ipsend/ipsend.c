@@ -15,7 +15,7 @@
  * This was written and tested (successfully) on SunOS 4.1.x.
  */
 #ifndef	lint
-static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
+static	char	sccsid[] = "@(#)ipsend.c	1.5 12/10/95 (C)1995 Darren Reed";
 #endif
 #include <stdio.h>
 #include <netdb.h>
@@ -40,16 +40,10 @@ static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
 #endif
 #include "ipt.h"
 
-#if defined (__OpenBSD__) || defined (__NetBSD__)
-/* XXX - ipftest already has a pcap.h file, so just declare this here */
-char *pcap_lookupdev (char *);
-#endif
 
 extern	char	*optarg;
 extern	int	optind;
-extern	struct	ipread	snoop, pcap;
 
-struct	ipread	*readers[] = { &snoop, &pcap, NULL };
 char	options[68];
 #ifdef	linux
 char	default_device[] = "eth0";
@@ -63,7 +57,7 @@ char	default_device[] = "ln0";
 #   ifdef	__bsdi__
 char	default_device[] = "ef0";
 #   else
-char	default_device[] = "le0";
+char	default_device[] = "lan0";
 #   endif
 #  endif
 # endif
@@ -85,22 +79,6 @@ char	*prog;
 \t\t-T\t\tSet TCP protocol\n\
 \t\t-t port\t\tdestination port\n\
 \t\t-U\t\tSet UDP protocol\n\
-", prog);
-	fprintf(stderr, "Usage: %s [options] -g gateway\n\
-\toptions:\n\
-\t\t-r filename\tsnoop data file to resend\n\
-\t\t-R filename\tlibpcap data file to resend\n\
-", prog);
-	fprintf(stderr, "Usage: %s [options] destination\n\
-\toptions:\n\
-\t\t-d device\tSend out on this device\n\
-\t\t-m mtu\t\tfake MTU to use when sending out\n\
-\t\t-s src\t\tsource address for IP packet\n\
-\t\t-1 \t\tPerform test 1 (IP header)\n\
-\t\t-2 \t\tPerform test 2 (IP options)\n\
-\t\t-3 \t\tPerform test 3 (ICMP)\n\
-\t\t-4 \t\tPerform test 4 (UDP)\n\
-\t\t-5 \t\tPerform test 5 (TCP)\n\
 ", prog);
 	exit(1);
 }
@@ -180,12 +158,11 @@ char	**argv;
 {
 	struct	tcpiphdr *ti;
 	struct	in_addr	gwip;
-	struct	ipread	*ipr = NULL;
 	tcphdr_t	*tcp;
 	ip_t	*ip;
 	char	*name =  argv[0], host[64], *gateway = NULL, *dev = NULL;
-	char	*src = NULL, *dst, c, *s, *resend = NULL;
-	int	mtu = 1500, olen = 0, tests = 0, pointtest = 0;
+	char	*src = NULL, *dst, c, *s;
+	int	mtu = 1500, olen = 0;
 
 	/*
 	 * 65535 is maximum packet size...you never know...
@@ -196,16 +173,9 @@ char	**argv;
 	ip->ip_len = sizeof(*ip);
 	ip->ip_hl = sizeof(*ip) >> 2;
 
-	while ((c = getopt(argc, argv, "12345IP:R:TUd:f:g:m:o:p:r:s:t:")) != -1)
+	while ((c = getopt(argc, argv, "IP:TUd:f:g:m:o:s:t:")) != -1)
 		switch (c)
 		{
-		case '1' :
-		case '2' :
-		case '3' :
-		case '4' :
-		case '5' :
-			tests = c - '0';
-			break;
 		case 'I' :
 			if (ip->ip_p)
 			    {
@@ -232,10 +202,6 @@ char	**argv;
 					optarg);
 			break;
 		    }
-		case 'R' :
-			resend = optarg;
-			ipr = &pcap;
-			break;
 		case 'T' :
 			if (ip->ip_p)
 			    {
@@ -276,13 +242,6 @@ char	**argv;
 		case 'o' :
 			olen = optname(optarg, options);
 			break;
-		case 'p' :
-			pointtest = atoi(optarg);
-			break;
-		case 'r' :
-			resend = optarg;
-			ipr = &pcap;
-			break;
 		case 's' :
 			src = optarg;
 			break;
@@ -301,18 +260,9 @@ char	**argv;
 			usage(name);
 		}
 
-	if (ipr)
-	    {
-		if (!gateway)
-			usage(name);
-		dst = gateway;
-	    }
-	else
-	    {
-		if (argc - optind < 2 && !tests)
-			usage(name);
-		dst = argv[optind++];
-	    }
+	if (argc - optind < 2)
+		usage(name);
+	dst = argv[optind++];
 
 	if (!src)
 	    {
@@ -336,11 +286,11 @@ char	**argv;
 		gwip = ip->ip_dst;
 	else if (resolve(gateway, (char *)&gwip) == -1)
 	    {
-		fprintf(stderr,"Cant resolve %s\n", src);
+		fprintf(stderr,"Cant resolve %s\n", gateway);
 		exit(2);
 	    }
 
-	if (!ipr && ip->ip_p == IPPROTO_TCP)
+	if (ip->ip_p == IPPROTO_TCP)
 		for (s = argv[optind]; c = *s; s++)
 			switch(c)
 			{
@@ -364,17 +314,8 @@ char	**argv;
 				break;
 			}
 
-	if (!dev) {
-#if defined (__OpenBSD__) || defined (__NetBSD__)
-		char errbuf[160];
-		if (! (dev = pcap_lookupdev(errbuf))) {
-			fprintf (stderr, "%s", errbuf);
-			dev = default_device;
-		}
-#else
+	if (!dev)
 		dev = default_device;
-#endif
-	}
 	printf("Device:  %s\n", dev);
 	printf("Source:  %s\n", inet_ntoa(ip->ip_src));
 	printf("Dest:    %s\n", inet_ntoa(ip->ip_dst));
@@ -395,25 +336,6 @@ char	**argv;
 		tcp = (tcphdr_t *)((char *)(ip + 1) + olen);
 		ip->ip_len += olen;
 	    }
-
-	switch (tests)
-	{
-	case 1 :
-		return ip_test1(dev, mtu, ti, gwip, pointtest);
-	case 2 :
-		return ip_test2(dev, mtu, ti, gwip, pointtest);
-	case 3 :
-		return ip_test3(dev, mtu, ti, gwip, pointtest);
-	case 4 :
-		return ip_test4(dev, mtu, ti, gwip, pointtest);
-	case 5 :
-		return ip_test5(dev, mtu, ti, gwip, pointtest);
-	default :
-		break;
-	}
-
-	if (ipr)
-		return ip_resend(dev, mtu, ipr, gwip, resend);
 
 #ifdef	DOSOCKET
 	if (tcp->th_dport)

@@ -6,7 +6,7 @@
  * for the use of this software.  I hate legaleese, don't you ?
  */
 #ifndef	lint
-static	char	sccsid[] = "@(#)opt.c	1.1 8/19/95 (C)1995 Darren Reed";
+static	char	sccsid[] = "@(#)ipsopt.c	1.2 1/11/96 (C)1995 Darren Reed";
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -34,7 +34,7 @@ struct ipopt_names ionames[] = {
 	{ IPOPT_LSRR,	0x10,	7, "lsrr" },	/* 1 route */
 	{ IPOPT_SATID,	0x20,	4, "satid" },
 	{ IPOPT_SSRR,	0x40,	7, "ssrr" },	/* 1 route */
-	{ 0, NULL }	/* must be last */
+	{ 0, 0, 0, NULL }	/* must be last */
 };
 
 struct	ipopt_names secnames[] = {

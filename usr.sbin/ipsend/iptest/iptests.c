@@ -12,9 +12,32 @@ static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/param.h>
+#if !defined(solaris)
+# define _KERNEL
+# define KERNEL
+# include <sys/file.h>
+# undef  _KERNEL
+# undef  KERNEL
+# include <nlist.h>
+# include <sys/user.h>
+# include <sys/proc.h>
+#endif
+#include <kvm.h>
+#include <sys/socket.h>
+#include <sys/socketvar.h>
+#ifdef sun
+#include <sys/systm.h>
+#include <sys/session.h>
+#endif
+#if BSD >= 199103
+#include <sys/sysctl.h>
+#include <sys/filedesc.h>
+#include <paths.h>
+#endif
 #include <netinet/in_systm.h>
 #include <sys/socket.h>
 #include <net/if.h>
+#include <net/route.h>
 #include <netinet/in.h>
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
@@ -22,13 +45,14 @@ static	char	sccsid[] = "%W% %G% (C)1995 Darren Reed";
 #include <netinet/ip_icmp.h>
 #include <netinet/if_ether.h>
 #include <netinet/ip_var.h>
-#include <netinet/tcpip.h>
+#include <netinet/in_pcb.h>
+#include <netinet/tcp_timer.h>
+#include <netinet/tcp_var.h>
 #include "ip_compat.h"
-#ifndef	sun
-#if !defined (__OpenBSD__) && !defined (__NetBSD__)
+#ifdef linux
 #include "tcpip.h"
-#endif
 #else
+#include <netinet/tcpip.h>
 # if defined(__SVR4) || defined(__svr4__)
 #include <sys/sysmacros.h>
 # endif
@@ -75,7 +99,7 @@ int	ptest;
 		printf("1.1. sending packets with ip_hl < ip_len\n");
 		for (i = 0; i < ((sizeof(*ip) + u->uh_ulen) >> 2); i++) {
 			ip->ip_hl = i >> 2;
-			(void) send_ip(nfd, 1500, ip, gwip);
+			(void) send_ip(nfd, 1500, ip, gwip, 1);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -91,7 +115,7 @@ int	ptest;
 		printf("1.2. sending packets with ip_hl > ip_len\n");
 		for (; i < ((sizeof(*ip) * 2 + u->uh_ulen) >> 2); i++) {
 			ip->ip_hl = i >> 2;
-			(void) send_ip(nfd, 1500, ip, gwip);
+			(void) send_ip(nfd, 1500, ip, gwip, 1);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -108,7 +132,7 @@ int	ptest;
 		ip->ip_hl = sizeof(*ip) >> 2;
 		for (i = 0; i < 4; i++) {
 			ip->ip_v = i;
-			(void) send_ip(nfd, 1500, ip, gwip);
+			(void) send_ip(nfd, 1500, ip, gwip, 1);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -124,7 +148,7 @@ int	ptest;
 		printf("1.4. ip_v > 4\n");
 		for (i = 5; i < 16; i++) {
 			ip->ip_v = i;
-			(void) send_ip(nfd, 1500, ip, gwip);
+			(void) send_ip(nfd, 1500, ip, gwip, 1);
 			printf("%d\r", i);
 			fflush(stdout);
 			PAUSE();
@@ -205,7 +229,7 @@ int	ptest;
 		ip->ip_id = 0;
 		ip->ip_len = sizeof(*ip);
 		ip->ip_off = htons(IP_MF);
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 
@@ -213,7 +237,7 @@ int	ptest;
 		ip->ip_id = 0;
 		ip->ip_len = sizeof(*ip);
 		ip->ip_off = htons(IP_MF);
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 
@@ -221,7 +245,7 @@ int	ptest;
 		ip->ip_id = 0;
 		ip->ip_len = sizeof(*ip);
 		ip->ip_off = htons(0xa000);
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 
@@ -229,7 +253,7 @@ int	ptest;
 		ip->ip_id = 0;
 		ip->ip_len = sizeof(*ip);
 		ip->ip_off = htons(0x0100);
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 	}
@@ -248,7 +272,7 @@ int	ptest;
 		printf("1.8. 63k packet + 1k fragment at offset 0x1ffe\n");
 		ip->ip_len = 768 + 20 + 8;
 		if ((rand() & 0x1f) != 0) {
-			(void) send_ip(nfd, mtu, ip, gwip);
+			(void) send_ip(nfd, mtu, ip, gwip, 1);
 			printf("%d\r", i);
 		} else
 			printf("skip 0\n");
@@ -258,7 +282,7 @@ int	ptest;
 		for (; i < (63 * 1024 + 768); i += 768) {
 			ip->ip_off = IP_MF | (i >> 3);
 			if ((rand() & 0x1f) != 0) {
-				(void) send_ip(nfd, mtu, ip, gwip);
+				(void) send_ip(nfd, mtu, ip, gwip, 1);
 				printf("%d\r", i);
 			} else
 				printf("skip %d\n", i);
@@ -268,7 +292,7 @@ int	ptest;
 		ip->ip_len = 896 + 20;
 		ip->ip_off = IP_MF | (i >> 3);
 		if ((rand() & 0x1f) != 0) {
-			(void) send_ip(nfd, mtu, ip, gwip);
+			(void) send_ip(nfd, mtu, ip, gwip, 1);
 			printf("%d\r", i);
 		} else
 			printf("skip\n");
@@ -285,7 +309,7 @@ int	ptest;
 		ip->ip_id = 0;
 		ip->ip_off = 0x8000;
 		printf("1.9. ip_off & 0x8000 == 0x8000\n");
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 	}
@@ -299,19 +323,19 @@ int	ptest;
 		ip->ip_id = 0;
 		ip->ip_ttl = 255;
 		printf("1.10.0 ip_ttl = 255\n");
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 
 		ip->ip_ttl = 128;
 		printf("1.10.1 ip_ttl = 128\n");
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 
 		ip->ip_ttl = 0;
 		printf("1.10.2 ip_ttl = 0\n");
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 	}
@@ -349,7 +373,7 @@ int	ptest;
 		s[IPOPT_OFFSET] = IPOPT_MINOFF;
 		ip->ip_p = IPPROTO_IP;
 		printf("2.1 option length > packet length\n");
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 	}
@@ -363,42 +387,42 @@ int	ptest;
 		printf("2.2.1 option length = 0, RR\n");
 		s[IPOPT_OPTVAL] = IPOPT_RR;
 		s[IPOPT_OLEN] = 0;
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 
 		printf("2.2.2 option length = 0, TS\n");
 		s[IPOPT_OPTVAL] = IPOPT_TS;
 		s[IPOPT_OLEN] = 0;
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 
 		printf("2.2.3 option length = 0, SECURITY\n");
 		s[IPOPT_OPTVAL] = IPOPT_SECURITY;
 		s[IPOPT_OLEN] = 0;
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 
 		printf("2.2.4 option length = 0, LSRR\n");
 		s[IPOPT_OPTVAL] = IPOPT_LSRR;
 		s[IPOPT_OLEN] = 0;
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 
 		printf("2.2.5 option length = 0, SATID\n");
 		s[IPOPT_OPTVAL] = IPOPT_SATID;
 		s[IPOPT_OLEN] = 0;
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 
 		printf("2.2.6 option length = 0, SSRR\n");
 		s[IPOPT_OPTVAL] = IPOPT_SSRR;
 		s[IPOPT_OLEN] = 0;
-		(void) send_ip(nfd, mtu, ip, gwip);
+		(void) send_ip(nfd, mtu, ip, gwip, 1);
 		fflush(stdout);
 		PAUSE();
 	}
@@ -913,19 +937,84 @@ int	ptest;
 		PAUSE();
 	}
 
+#if !defined(linux) && !defined(__SVR4) && !defined(__svr4__)
+	{
+	struct tcpcb *t, tcb;
+	struct tcpiphdr ti;
+	struct sockaddr_in sin;
+	int fd, slen;
+
+	bzero((char *)&sin, sizeof(sin));
+
+	for (i = 1; i < 63; i++) {
+		fd = socket(AF_INET, SOCK_STREAM, 0);
+		sin.sin_addr.s_addr = ip->ip_dst.s_addr;
+		sin.sin_port = htons(i);
+		if (!connect(fd, (struct sockaddr *)&sin, sizeof(sin)))
+			break;
+	}
+
+	if (i == 63) {
+		printf("Couldn't open a TCP socket between ports 1 and 63\n");
+		printf("to host %s for test 5 and 6 - skipping.\n",
+			inet_ntoa(ip->ip_dst));
+		goto skip_five_and_six;
+	}
+
+	bcopy((char *)ip, (char *)&ti, sizeof(*ip));
+	ti.ti_dport = i;
+	slen = sizeof(sin);
+	if (!getsockname(fd, (struct sockaddr *)&sin, &slen))
+		ti.ti_sport = sin.sin_port;
+	if (!(t = (struct tcpcb *)find_tcp(fd, &ti))) {
+		printf("Can't find PCB\n");
+		goto skip_five_and_six;
+	}
+	kmemcpy((char*)&tcb, (void *)t, sizeof(tcb));
+	ti.ti_win = tcb.rcv_adv;
+	ti.ti_seq = tcb.snd_nxt - 1;
+	ti.ti_ack = tcb.rcv_nxt;
+
 	if (!ptest || (ptest == 5)) {
-		t->th_win = 4096;
 		/*
-		 * Test 5: urp, urp = 0, urp > packetlen, urp < header
+		 * Test 5: urp
 		 */
+		printf("5.1 TCP Urgent pointer\n");
+		ti.ti_urp = 1;
+		(void) send_tcp(nfd, mtu, ip, gwip);
+		PAUSE();
+		ti.ti_urp = 0x7fff;
+		(void) send_tcp(nfd, mtu, ip, gwip);
+		PAUSE();
+		ti.ti_urp = 0x8000;
+		(void) send_tcp(nfd, mtu, ip, gwip);
+		PAUSE();
+		ti.ti_urp = 0xffff;
+		(void) send_tcp(nfd, mtu, ip, gwip);
+		PAUSE();
 	}
 
 	if (!ptest || (ptest == 6)) {
 		/*
 		 * Test 6: data offset, off = 0, off is inside, off is outside
 		 */
-		;
+		printf("6.1 TCP off = 0-15, len = 40\n");
+		for (i = 0; i < 16; i++) {
+			ti.ti_off = ntohs(i);
+			(void) send_tcp(nfd, mtu, ip, gwip);
+			printf("%d\r", i);
+			fflush(stdout);
+			PAUSE();
+		}
+		putchar('\n');
 	}
+
+	(void) close(fd);
+	}
+skip_five_and_six:
+#endif
+	t->th_seq = 1;
+	t->th_ack = 1;
 
 	if (!ptest || (ptest == 7)) {
 		t->th_off = 0;
@@ -1001,4 +1090,132 @@ int	ptest;
 		fflush(stdout);
 		PAUSE();
 	}
+}
+
+
+/* Perform test 6 (exhaust mbuf test) */
+
+void	ip_test6(dev, mtu, ip, gwip, ptest)
+char	*dev;
+int	mtu;
+ip_t	*ip;
+struct	in_addr	gwip;
+int	ptest;
+{
+	struct	timeval	tv;
+	udphdr_t *u;
+	int	nfd, i, j, k, len, id = getpid();
+
+	ip->ip_v = IPVERSION;
+	ip->ip_tos = 0;
+	ip->ip_off = 0;
+	ip->ip_ttl = 60;
+	ip->ip_p = IPPROTO_UDP;
+	ip->ip_sum = 0;
+	u = (udphdr_t *)(ip + 1);
+	u->uh_sport = 1;
+	u->uh_dport = 9;
+	u->uh_sum = 0;
+
+	nfd = initdevice(dev, u->uh_sport, 1);
+	u->uh_sport = htons(u->uh_sport);
+	u->uh_dport = htons(u->uh_dport);
+	u->uh_ulen = 7168;
+
+	for (i = 0; i < 65536; i++) {
+		/*
+		 * First send the entire packet in 768 byte chunks.
+		 */
+		ip->ip_len = sizeof(*ip) + 768 + sizeof(*u);
+		ip->ip_hl = sizeof(*ip) >> 2;
+		ip->ip_off = IP_MF;
+		(void) send_ip(nfd, 1500, ip, gwip, 1);
+		printf("%d %d\r", i, 0);
+		fflush(stdout);
+		PAUSE();
+		/*
+		 * And again using 128 byte chunks.
+		 */
+		ip->ip_len = sizeof(*ip) + 128 + sizeof(*u);
+		ip->ip_off = IP_MF;
+		(void) send_ip(nfd, 1500, ip, gwip, 1);
+		printf("%d %d\r", i, 0);
+		fflush(stdout);
+		PAUSE();
+
+		for (j = 768; j < 3584; j += 768) {
+			ip->ip_len = sizeof(*ip) + 768;
+			ip->ip_off = IP_MF|(j>>3);
+			(void) send_ip(nfd, 1500, ip, gwip, 1);
+			printf("%d %d\r", i, j);
+			fflush(stdout);
+			PAUSE();
+
+			ip->ip_len = sizeof(*ip) + 128;
+			for (k = j - 768; k < j; k += 128) {
+				ip->ip_off = IP_MF|(k>>3);
+				(void) send_ip(nfd, 1500, ip, gwip, 1);
+				printf("%d %d\r", i, k);
+				fflush(stdout);
+				PAUSE();
+			}
+		}
+	}
+	putchar('\n');
+}
+
+
+/* Perform test 7 (random packets) */
+
+static	u_long	tbuf[64];
+
+void	ip_test7(dev, mtu, ip, gwip, ptest)
+char	*dev;
+int	mtu;
+ip_t	*ip;
+struct	in_addr	gwip;
+int	ptest;
+{
+	ip_t	*pip;
+	struct	timeval	tv;
+	int	nfd, i, j;
+	u_char	*s;
+
+	nfd = initdevice(dev, 0, 1);
+	pip = (ip_t *)tbuf;
+
+	srand(time(NULL) ^ (getpid() * getppid()));
+
+	printf("7. send 1024 random IP packets.\n");
+
+	for (i = 0; i < 512; i++) {
+		for (s = (u_char *)pip, j = 0; j < sizeof(tbuf); j++, s++)
+			*s = (rand() >> 13) & 0xff;
+		pip->ip_v = IPVERSION;
+		bcopy((char *)&ip->ip_dst, (char *)&pip->ip_dst,
+		      sizeof(struct in_addr));
+		pip->ip_sum = 0;
+		pip->ip_len &= 0xff;
+		(void) send_ip(nfd, mtu, pip, gwip, 0);
+		printf("%d\r", i);
+		fflush(stdout);
+		PAUSE();
+	}
+	putchar('\n');
+
+	for (i = 0; i < 512; i++) {
+		for (s = (u_char *)pip, j = 0; j < sizeof(tbuf); j++, s++)
+			*s = (rand() >> 13) & 0xff;
+		pip->ip_v = IPVERSION;
+		pip->ip_off &= 0xc000;
+		bcopy((char *)&ip->ip_dst, (char *)&pip->ip_dst,
+		      sizeof(struct in_addr));
+		pip->ip_sum = 0;
+		pip->ip_len &= 0xff;
+		(void) send_ip(nfd, mtu, pip, gwip, 0);
+		printf("%d\r", i);
+		fflush(stdout);
+		PAUSE();
+	}
+	putchar('\n');
 }

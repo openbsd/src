@@ -1,0 +1,29 @@
+.TH IPFNAT 1
+.SH NAME
+ipnat - user interface to the NAT
+.SH SYNOPSIS
+ipnat [-lnrsv] -f <\fIfilename\fP>
+.SH DESCRIPTION
+.PP
+\fBipnat\fP opens the filename given (treating "-" as stdin) and parses the
+file for a set of rules which are to be added or removed from the IP NAT.
+.PP
+Each rule processed by \fBipnat\fP
+is added to the kernels internal lists if there are no parsing problems.
+Rules are added to the end of the internal lists, matching the order in
+which they appear when given to \fBipnat\fP.
+.SH OPTIONS
+.IP -l
+Show the list of current NAT table entry mappings.
+.IP -n
+This flag (no-change) prevents \fBipf\fP from actually making any ioctl
+calls or doing anything which would alter the currently running kernel.
+.IP -s
+retrieve and display NAT statistics
+.IP -r
+remove matching NAT rules rather than add them to the internal lists
+.IP -v
+turn verbose mode on.  Displays information relating to rule processing.
+.DT
+.SH SEE ALSO
+ipfstat(1), ipftest(1), ipf(1), ipnat(5)

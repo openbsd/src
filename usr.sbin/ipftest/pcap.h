@@ -1,5 +1,5 @@
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * (C)opyright 1993-1996 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -21,6 +21,8 @@ typedef	struct	pcap_filehdr	{
 	u_int	pc_slen;
 	u_int	pc_type;
 } pcaphdr_t;
+
+#define	TCPDUMP_MAGIC		0xa1b2c3d4
 
 #define	PCAP_VERSION_MAJ	2
 

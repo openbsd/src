@@ -75,7 +75,7 @@ struct	in_addr	gwip;
 		free(buf);
 		return -2;
 	    }
-	eh->ether_type = htons((u_short)ETHERTYPE_IP);
+	eh->ether_type = ETHERTYPE_IP;
 	last_gw.s_addr = gwip.s_addr;
 	err = sendip(nfd, s, sizeof(*eh) + len);
 	free(buf);
@@ -85,10 +85,11 @@ struct	in_addr	gwip;
 
 /*
  */
-int	send_ip(nfd, mtu, ip, gwip)
+int	send_ip(nfd, mtu, ip, gwip, frag)
 int	nfd, mtu;
 ip_t	*ip;
 struct	in_addr	gwip;
+int	frag;
 {
 	static	struct	in_addr	last_gw;
 	static	char	last_arp[6] = { 0, 0, 0, 0, 0, 0};
@@ -102,14 +103,15 @@ struct	in_addr	gwip;
 	eh = (ether_header_t *)ipbuf;
 
 	bzero(&eh->ether_shost, sizeof(eh->ether_shost));
-	if (gwip.s_addr == last_gw.s_addr)
+	if (last_gw.s_addr && (gwip.s_addr == last_gw.s_addr))
 		bcopy(last_arp, eh->ether_dhost, 6);
 	else if (arp((char *)&gwip, &eh->ether_dhost) == -1)
 	    {
 		perror("arp");
 		return -2;
 	    }
-	eh->ether_type = htons((u_short)ETHERTYPE_IP);
+	bcopy(eh->ether_dhost, last_arp, sizeof(last_arp));
+	eh->ether_type = ETHERTYPE_IP;
 
 	bcopy((char *)ip, (char *)&ipsv, sizeof(*ip));
 	last_gw.s_addr = gwip.s_addr;
@@ -122,7 +124,7 @@ struct	in_addr	gwip;
 	if (!ip->ip_ttl)
 		ip->ip_ttl = 60;
 
-	if (sizeof(*eh) + ntohs(ip->ip_len) < mtu)
+	if (!frag || (sizeof(*eh) + ntohs(ip->ip_len) < mtu))
 	    {
 		ip->ip_sum = 0;
 		ip->ip_sum = chksum(ip, ip->ip_hl << 2);
@@ -268,7 +270,7 @@ struct	in_addr	gwip;
 
 	bcopy((char *)&ti->ti_sport,
 	      (char *)ip + (ip->ip_hl << 2), thlen);
-	return send_ip(nfd, mtu, ip, gwip);
+	return send_ip(nfd, mtu, ip, gwip, 1);
 }
 
 
@@ -300,7 +302,7 @@ struct	in_addr	gwip;
 
 	bcopy((char *)&ti->ti_sport,
 	      (char *)ip + (ip->ip_hl << 2), sizeof(udphdr_t));
-	return send_ip(nfd, mtu, ip, gwip);
+	return send_ip(nfd, mtu, ip, gwip, 1);
 }
 
 
@@ -319,7 +321,7 @@ struct	in_addr	gwip;
 	ic->icmp_cksum = 0;
 	ic->icmp_cksum = chksum((char *)ic, sizeof(struct icmp));
 
-	return send_ip(nfd, mtu, ip, gwip);
+	return send_ip(nfd, mtu, ip, gwip, 1);
 }
 
 
@@ -337,6 +339,6 @@ struct	in_addr	gwip;
         case IPPROTO_ICMP :
                 return send_icmp(nfd, mtu, ip, gwip);
         default :
-                return send_ip(nfd, mtu, ip, gwip);
+                return send_ip(nfd, mtu, ip, gwip, 1);
         }
 }

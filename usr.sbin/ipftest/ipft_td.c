@@ -55,7 +55,7 @@ tcpdump -nqte
 #include "ipt.h"
 
 #ifndef lint
-static char sccsid[] = "@(#)ipft_td.c	1.7 1/12/96 (C)1995 Darren Reed";
+static char sccsid[] = "@(#)ipft_td.c	1.8 2/4/96 (C)1995 Darren Reed";
 #endif
 
 static	int	tcpd_open(), tcpd_close(), tcpd_readip();
@@ -141,32 +141,19 @@ int	cnt, *dir;
 	if ((dots = count_dots(dst)) == 4) {
 		s = strrchr(src, '.');
 		*s++ = '\0';
-#ifdef	NEED_INET_ATON
-		ip->ip_src.s_addr = inet_aton(src);
-#else
 		(void) inet_aton(src, &ip->ip_src);
-#endif
 		pkt.ti_sport = htons(atoi(s));
 		*--s = '.';
 		s = strrchr(dst, '.');
 	
 		*s++ = '\0';
-#ifdef	NEED_INET_ATON
-		ip->ip_dst.s_addr = inet_aton(dst);
-#else
 		(void) inet_aton(src, &ip->ip_dst);
-#endif
 		pkt.ti_dport = htons(atoi(s));
 		*--s = '.';
 	
 	} else {
-#ifdef	NEED_INET_ATON
-		ip->ip_src.s_addr = inet_aton(src);
-		ip->ip_dst.s_addr = inet_aton(dst);
-#else
 		(void) inet_aton(src, &ip->ip_src);
 		(void) inet_aton(src, &ip->ip_dst);
-#endif
 	}
 	ip->ip_len = ip->ip_hl = sizeof(struct ip);
 

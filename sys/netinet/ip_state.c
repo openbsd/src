@@ -6,10 +6,13 @@
  * to the original author and the contributors.
  */
 #ifndef	lint
-static	char	sccsid[] = "@(#)ip_state.c	1.3 1/12/96 (C) 1993-1995 Darren Reed";
+static	char	sccsid[] = "@(#)ip_state.c	1.6 3/24/96 (C) 1993-1995 Darren Reed";
 #endif
 
-#include <string.h>
+#if !defined(_KERNEL) && !defined(KERNEL)
+# include <stdlib.h>
+# include <string.h>
+#endif
 #ifndef	linux
 #include <sys/errno.h>
 #include <sys/types.h>
@@ -172,7 +175,7 @@ u_int pass;
 	MUTEX_ENTER(&ipf_state);
 	is->is_next = ips_table[hv];
 	ips_table[hv] = is;
-	is->is_pass = pass;
+	is->is_pass = pass & ~(FR_LOGFIRST|FR_LOG);
 	ips_num++;
 	MUTEX_EXIT(&ipf_state);
 	return 0;
@@ -182,17 +185,21 @@ u_int pass;
 /*
  * Check if a packet has a registered state.
  */
-int fr_checkstate(ip, hlen)
+int fr_checkstate(ip, fin)
 ip_t *ip;
-int hlen;
+fr_info_t *fin;
 {
 	register struct in_addr dst, src;
 	register ipstate_t *is, **isp;
 	register u_char pr;
 	struct icmp *ic;
 	tcphdr_t *tcp;
-	u_int hv;
+	u_int hv, hlen;
 
+	if ((ip->ip_off & 0x1fff) && !(fin->fin_fi.fi_fl & FI_SHORT))
+		return 0;
+
+	hlen = fin->fin_hlen;
 	tcp = (tcphdr_t *)((char *)ip + hlen);
 	ic = (struct icmp *)tcp;
 	hv = (pr = ip->ip_p);

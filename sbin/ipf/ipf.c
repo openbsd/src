@@ -34,7 +34,7 @@ extern	char	*index();
 #include "ipf.h"
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipf.c	1.21 1/14/96 (C) 1993-1995 Darren Reed";
+static	char	sccsid[] = "@(#)ipf.c	1.22 2/3/96 (C) 1993-1995 Darren Reed";
 #endif
 
 #if	SOLARIS
@@ -138,6 +138,8 @@ char	*file;
 	}
 	if (opts & OPT_DEBUG)
 		printf("add %x del %x\n", add, del);
+
+	initparse();
 
 	if (!strcmp(file, "-"))
 		fp = stdin;

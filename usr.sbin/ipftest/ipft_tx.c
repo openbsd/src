@@ -30,15 +30,15 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcpip.h>
 #include <net/if.h>
-#include "ip_fil.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
+#include "ip_fil.h"
 #include "ipf.h"
 #include "ipt.h"
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipft_tx.c	1.5 1/12/96 (C) 1993 Darren Reed";
+static	char	sccsid[] = "@(#)ipft_tx.c	1.6 2/4/96 (C) 1993 Darren Reed";
 #endif
 
 extern	int	opts;
@@ -185,7 +185,7 @@ int	*out;
 			return 1;
 		}
 		*last++ = '\0';
-		tcp->th_sport = portnum(last);
+		tcp->th_sport = htons(portnum(last));
 	}
 	ip->ip_src.s_addr = hostnum(*cpp, &r);
 	cpp++;
@@ -201,7 +201,7 @@ int	*out;
 			return 1;
 		}
 		*last++ = '\0';
-		tcp->th_dport = portnum(last);
+		tcp->th_dport = htons(portnum(last));
 	}
 	ip->ip_dst.s_addr = hostnum(*cpp, &r);
 	cpp++;

@@ -1,9 +1,5 @@
-PROG=	ipsend
-NOMAN=		
-SRCS=	iptests.c ip.c ipsend.c ipsopt.c resend.c sbpf.c sock.c 44arp.c ipft_sn.c ipft_pc.c
-.PATH:	${.CURDIR}/../../usr.sbin/ipftest
-CFLAGS+=  -DDOSOCKET -I${.CURDIR}/../../usr.sbin/ipftest -I${.CURDIR}/../../sbin/ipf -I${.CURDIR}/../../sys/netinet
-LDADD+= -lpcap
+#	$Id: Makefile,v 1.3 1996/05/10 21:40:48 dm Exp $
 
+SUBDIR= ipsend ipresend iptest
 
-.include <bsd.prog.mk>
+.include <bsd.subdir.mk>

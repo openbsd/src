@@ -5,7 +5,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * @(#)ip_nat.h	1.3 1/12/96
+ * @(#)ip_nat.h	1.5 2/4/96
  */
 
 #ifndef	__IP_NAT_H_
@@ -19,10 +19,12 @@
 #define	SIOCADNAT	_IOW('r', 80, struct ipnat)
 #define	SIOCRMNAT	_IOW('r', 81, struct ipnat)
 #define	SIOCGNATS	_IOR('r', 82, struct natstat)
+#define	SIOCGNATL	_IOWR('r', 83, struct natlookup)
 #else
 #define	SIOCADNAT	_IOW(r, 80, struct ipnat)
 #define	SIOCRMNAT	_IOW(r, 81, struct ipnat)
 #define	SIOCGNATS	_IOR(r, 82, struct natstat)
+#define	SIOCGNATL	_IOWR(r, 83, struct natlookup)
 #endif
 
 #define	NAT_SIZE	367
@@ -34,6 +36,8 @@ typedef	struct	nat	{
 	u_long	nat_sumd;
 	struct	in_addr	nat_inip;
 	struct	in_addr	nat_outip;
+	struct	in_addr	nat_oip;	/* other ip */
+	u_short	nat_oport;	/* other port */
 	u_short	nat_inport;
 	u_short	nat_outport;
 } nat_t;
@@ -48,10 +52,11 @@ typedef	struct	ipnat	{
 	struct	in_addr	in_out[2];
 	struct	in_addr	in_nextip;
 	int	in_space;
+	int	in_redir; /* 0 if it's a mapping, 1 if it's a hard redir */
 	char	in_ifname[IFNAMSIZ];
 } ipnat_t;
 
-#define	in_pmin		in_port[0]
+#define	in_pmin		in_port[0]	/* Also holds static redir port */
 #define	in_pmax		in_port[1]
 #define	in_nip		in_nextip.s_addr
 #define	in_inip		in_in[0].s_addr
@@ -59,7 +64,20 @@ typedef	struct	ipnat	{
 #define	in_outip	in_out[0].s_addr
 #define	in_outmsk	in_out[1].s_addr
 
+#define	NAT_INBOUND	0
+#define	NAT_OUTBOUND	1
+
+#define	NAT_MAP		0
+#define	NAT_REDIRECT	1
+
 #define	IPN_CMPSIZ	(sizeof(struct in_addr) * 4 + sizeof(u_short) * 2)
+
+typedef	struct	natlookup {
+	struct	in_addr	nl_inip;
+	struct	in_addr	nl_outip;
+	u_short	nl_inport;
+	u_short	nl_outport;
+} natlookup_t;
 
 typedef	struct	natstat	{
 	u_long	ns_mapped[2];
@@ -76,6 +94,6 @@ typedef	struct	natstat	{
 #define	IPN_TCPUDP	3
 
 extern int nat_ioctl();
-extern nat_t *nat_lookupoutip(), *nat_lookupinip();
+extern nat_t *nat_lookupoutip(), *nat_lookupinip(), *nat_lookupredir();
 extern void ip_natout(), ip_natin(), ip_natunload(), ip_natexpire();
 #endif /* __IP_NAT_H__ */

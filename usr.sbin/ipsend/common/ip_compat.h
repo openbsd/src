@@ -5,7 +5,7 @@
  * and is not changed in any way.  The author accepts no responsibility
  * for the use of this software.  I hate legaleese, don't you ?
  *
- * @(#)ip_compat.h	1.1 9/14/95
+ * @(#)ip_compat.h	1.2 12/7/95
  */
 
 /*
@@ -194,7 +194,7 @@ typedef	struct	ether_header	ether_header_t;
 
 #endif
 
-#ifdef	solaris
+#if defined(__SVR4) || defined(__svr4__)
 # define	bcopy(a,b,c)	memmove(b,a,c)
 # define	bcmp(a,b,c)	memcmp(a,b,c)
 # define	bzero(a,b)	memset(a,0,b)

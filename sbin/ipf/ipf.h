@@ -5,7 +5,7 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * @(#)ipf.h	1.9 1/7/96
+ * @(#)ipf.h	1.11 4/10/96
  */
 
 #define	OPT_REMOVE	0x0001
@@ -22,10 +22,11 @@
 #define	OPT_FRSTATES	FR_KEEPFRAG	/* 0x1000 */
 #define	OPT_IPSTATES	FR_KEEPSTATE	/* 0x2000 */
 #define	OPT_INACTIVE	FR_INACTIVE	/* 0x4000 */
+#define	OPT_SHOWLINENO	0x8000
 
 extern	struct	frentry	*parse();
 
-extern	void	printfr(), binprint();
+extern	void	printfr(), binprint(), initparse();
 
 #if defined(__SVR4) || defined(__svr4__)
 #define	index	strchr

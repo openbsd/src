@@ -8,7 +8,7 @@
  *
  */
 #ifndef	lint
-static	char	sccsid[] = "@(#)resend.c	1.2 8/25/95 (C)1995 Darren Reed";
+static	char	sccsid[] = "@(#)resend.c	1.3 1/11/96 (C)1995 Darren Reed";
 #endif
 #include <stdio.h>
 #include <netdb.h>
@@ -91,7 +91,7 @@ char	*datain;
 	eh = (ether_header_t *)malloc(sizeof(*eh));
 
 	bzero(&eh->ether_shost, sizeof(eh->ether_shost));
-	if (arp((char *)&gwip, dhost) == -1)
+	if (gwip.s_addr && (arp((char *)&gwip, dhost) == -1))
 	    {
 		perror("arp");
 		return -2;
@@ -102,7 +102,14 @@ char	*datain;
 		len = ntohs(ip->ip_len);
 		eh = (ether_header_t *)realloc((char *)eh, sizeof(*eh) + len);
 		eh->ether_type = htons((u_short)ETHERTYPE_IP);
-		bcopy(dhost, (char *)&eh->ether_dhost, sizeof(dhost));
+		if (!gwip.s_addr) {
+			if (arp((char *)&gwip,
+				(char *)&eh->ether_dhost) == -1) {
+				perror("arp");
+				continue;
+			}
+		} else
+			bcopy(dhost, (char *)&eh->ether_dhost, sizeof(dhost));
 		bcopy(ip, (char *)(eh + 1), len);
 		printpacket(ip);
 

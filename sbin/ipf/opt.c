@@ -21,7 +21,7 @@
 #include "ipf.h"
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)opt.c	1.6 11/11/95 (C) 1993-1995 Darren Reed";
+static	char	sccsid[] = "@(#)opt.c	1.8 4/10/96 (C) 1993-1995 Darren Reed";
 #endif
 
 extern	int	opts;
@@ -58,7 +58,7 @@ struct	ipopt_names	secclass[] = {
 	{ IPSO_CLASS_CONF,	0x10,	0, "confid" },
 	{ IPSO_CLASS_UNCL,	0x20,	0, "unclass" },
 	{ IPSO_CLASS_RES2,	0x40,	0, "reserv-2" },
-	{ IPSO_CLASS_RES1,	0x40,	0, "reserv-1" },
+	{ IPSO_CLASS_RES1,	0x80,	0, "reserv-1" },
 	{ 0, 0, 0, NULL }	/* must be last */
 };
 
@@ -107,7 +107,7 @@ char *cp, *op;
 
 				if (t && !strcasecmp(s, "sec-class")) {
 					lvl = seclevel(t);
-					*op = lvl;
+					*(op - 1) = lvl;
 				}
 				op += io->on_siz - 3;
 				if (len & 3) {

@@ -39,17 +39,18 @@
 #include <ctype.h>
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipt.c	1.15 1/7/96 (C) 1993-1996 Darren Reed";
+static	char	sccsid[] = "@(#)ipt.c	1.17 3/9/96 (C) 1993-1996 Darren Reed";
 #endif
 
 extern	int	fr_check();
 extern	char	*optarg;
 extern	struct	frentry	*ipfilter[2][2];
-extern	struct	ipread	snoop, etherf, tcpd, pcap, iptext;
+extern	struct	ipread	snoop, etherf, tcpd, pcap, iptext, iphex;
 extern	void	debug(), verbose();
 
 struct frentry	*ft_in  = NULL, *ft_out = NULL;
-struct	ipread 	*readers[] = { &iptext, &etherf, &tcpd, &snoop, &pcap, NULL };
+struct	ipread 	*readers[] = { &iptext, &etherf, &tcpd, &snoop, &pcap, &iphex,
+				NULL };
 
 int	opts = 0;
 
@@ -65,7 +66,7 @@ char *argv[];
 	char	*rules = NULL, *datain = NULL, *iface = NULL;
 	int	fd, i, dir = 0;
 
-	while ((c = getopt(argc, argv, "I:PSTEbdi:r:v")) != -1)
+	while ((c = getopt(argc, argv, "bdEHi:I:Pr:STv")) != -1)
 		switch (c)
 		{
 		case 'b' :
@@ -89,6 +90,11 @@ char *argv[];
 		case 'E' :
 			for (i = 0, r = readers; *r; i++, r++)
 				if (*r == &etherf)
+					break;
+			break;
+		case 'H' :
+			for (i = 0, r = readers; *r; i++, r++)
+				if (*r == &iphex)
 					break;
 			break;
 		case 'P' :
@@ -172,6 +178,8 @@ char *argv[];
 
 	ip = (struct ip *)buf;
 	while ((i = (*(*r)->r_readip)(buf, sizeof(buf), &iface, &dir)) > 0) {
+		ip->ip_off = ntohs(ip->ip_off);
+		ip->ip_len = ntohs(ip->ip_len);
 		switch (fr_check(ip, ip->ip_hl << 2, iface, dir))
 		{
 		case -1 :

@@ -1,5 +1,5 @@
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * (C)opyright 1993-1996 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -58,10 +58,25 @@ static	struct	llc	llcs[DLT_MAX+1] = {
 
 static	int	pcap_open(), pcap_close(), pcap_readip();
 
-static	int	pfd = -1, s_type = -1;
+static	int	pfd = -1, s_type = -1, swapped = 0;
 
 struct	ipread	pcap = { pcap_open, pcap_close, pcap_readip };
 
+#define	SWAPLONG(y)	\
+	((((y)&0xff)<<24) | (((y)&0xff00)<<8) | (((y)&0xff0000)>>8) | (((y)>>24)&0xff))
+#define	SWAPSHORT(y)	\
+	( (((y)&0xff)<<8) | (((y)&0xff00)>>8) )
+
+static	void	swap_hdr(p)
+pcaphdr_t	*p;
+{
+	p->pc_v_maj = SWAPSHORT(p->pc_v_maj);
+	p->pc_v_min = SWAPSHORT(p->pc_v_min);
+	p->pc_zone = SWAPLONG(p->pc_zone);
+	p->pc_sigfigs = SWAPLONG(p->pc_sigfigs);
+	p->pc_slen = SWAPLONG(p->pc_slen);
+	p->pc_type = SWAPLONG(p->pc_type);
+}
 
 static	int	pcap_open(fname)
 char	*fname;
@@ -79,6 +94,15 @@ char	*fname;
 
 	if (read(fd, (char *)&ph, sizeof(ph)) != sizeof(ph))
 		return -2;
+
+	if (ph.pc_id != TCPDUMP_MAGIC) {
+		if (SWAPLONG(ph.pc_id) != TCPDUMP_MAGIC) {
+			(void) close(fd);
+			return -2;
+		}
+		swapped = 1;
+		swap_hdr(&ph);
+	}
 
 	if (ph.pc_v_maj != PCAP_VERSION_MAJ || ph.pc_type > DLT_MAX) {
 		(void) close(fd);
@@ -113,6 +137,12 @@ struct	pcap_pkthdr *rec;
 	if (read(pfd, (char *)rec, sizeof(*rec)) != sizeof(*rec))
 		return -2;
 
+	if (swapped) {
+		rec->ph_clen = SWAPLONG(rec->ph_clen);
+		rec->ph_len = SWAPLONG(rec->ph_len);
+		rec->ph_ts.tv_sec = SWAPLONG(rec->ph_ts.tv_sec);
+		rec->ph_ts.tv_usec = SWAPLONG(rec->ph_ts.tv_usec);
+	}
 	p = rec->ph_clen;
 	n = MIN(p, rec->ph_len);
 	if (!n || n < 0)

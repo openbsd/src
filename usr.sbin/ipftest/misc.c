@@ -38,7 +38,7 @@
 #include "ipt.h"
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)misc.c	1.2 1/12/96 (C) 1995 Darren Reed";
+static	char	sccsid[] = "@(#)misc.c	1.3 2/4/96 (C) 1995 Darren Reed";
 #endif
 
 void	debug(), verbose();
@@ -66,26 +66,6 @@ struct	ip	*ip;
 			(void)printf(",%d", ntohs(tcp->th_dport));
 	putchar('\n');
 }
-
-
-#ifdef	NEED_INET_ATON
-u_long	inet_aton(buf)
-char *buf;
-{
-	u_long	n;
-	char	*s = (char *)&n;
-	int	a, b, c, d;
-
-	if (sscanf(buf, "%d.%d.%d.%d", &a, &b, &c, &d) != 4)
-		return -1;
-
-	*s++ = (u_char)a;
-	*s++ = (u_char)b;
-	*s++ = (u_char)c;
-	*s++ = (u_char)d;
-	return n;
-}
-#endif
 
 
 void	verbose(fmt, p1, p2, p3, p4, p5, p6, p7, p8, p9)

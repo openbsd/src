@@ -1,5 +1,5 @@
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * (C)opyright 1993-1996 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -39,7 +39,7 @@
 #include <arpa/inet.h>
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)ipmon.c	1.16 1/12/96 (C)1995 Darren Reed";
+static	char	sccsid[] = "@(#)ipmon.c	1.20 3/24/96 (C)1993-1996 Darren Reed";
 #endif
 
 #include "ip_fil.h"
@@ -96,6 +96,34 @@ u_short	port;
 }
 
 
+static	void	dumphex(log, ip, lp)
+FILE	*log;
+struct	ip	*ip;
+struct	ipl_ci	*lp;
+{
+	int	i, j, k;
+	u_char	*s = (u_char *)ip;
+
+	for (i = lp->plen + lp->hlen, j = 0; i; i--, j++, s++) {
+		if (j && !(j & 0xf))
+			putchar('\n');
+		printf("%02x", *s);
+		if (!((j + 1) & 0xf)) {
+			s -= 16;
+			printf("        ");
+			for (k = 16; k; k--, s++)
+				putchar(isprint(*s) ? *s : '.');
+		}
+			
+		if ((j + 1) & 0xf)
+			putchar(' ');
+	}
+
+	if ((j - 1) & 0xf)
+		putchar('\n');
+}
+
+
 static	void	printpacket(log, ip, lp, opts)
 FILE	*log;
 struct	ip	*ip;
@@ -122,9 +150,15 @@ int	opts;
 			tm->tm_mday, tm->tm_mon + 1, tm->tm_year + 1900);
 		t += strlen(t);
 	}
+#if !defined (__OpenBSD__) && !defined (__NetBSD__)
 	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld %c%c%ld @%hd ",
 		tm->tm_hour, tm->tm_min, tm->tm_sec, lp->usec,
 		lp->ifname[0], lp->ifname[1], lp->unit, lp->rule);
+#else /* OpenBSD or NetBSD */
+	(void) sprintf(t, "%02d:%02d:%02d.%-.6ld %s @%hd ",
+		tm->tm_hour, tm->tm_min, tm->tm_sec, lp->usec,
+		lp->ifname, lp->rule);
+#endif /* OpenBSD or NetBSD */
 	pr = getprotobynumber((int)p);
 	if (!pr) {
 		proto = pname;
@@ -158,10 +192,6 @@ int	opts;
 	c[2] = '\0';
 	(void) strcat(line, c);
 	t = line + strlen(line);
-#if	SOLARIS
-	ip->ip_off = ntohs(ip->ip_off);
-	ip->ip_len = ntohs(ip->ip_len);
-#endif
 
 	if ((p == IPPROTO_TCP || p == IPPROTO_UDP) && !(ip->ip_off & 0x1fff)) {
 		tp = (struct tcphdr *)((char *)ip + hl);
@@ -236,6 +266,17 @@ int	opts;
 				ip->ip_len - hl, (ip->ip_off & 0x1fff) << 3);
 	}
 	t += strlen(t);
+
+	if (lp->flags & FR_KEEPSTATE) {
+		(void) strcpy(t, " K-S");
+		t += strlen(t);
+	}
+
+	if (lp->flags & FR_KEEPFRAG) {
+		(void) strcpy(t, " K-F");
+		t += strlen(t);
+	}
+
 	*t++ = '\n';
 	*t++ = '\0';
 	if (opts & 1)
@@ -243,14 +284,17 @@ int	opts;
 	else
 		(void) fprintf(log, "%s", line);
 	fflush(log);
+	if (opts & 4)
+		dumphex(log, ip, lp);
 }
 
-main(argc, argv)
+int main(argc, argv)
 int argc;
 char *argv[];
 {
 	FILE		*log;
 	int		fd, flushed = 0, opts = 0;
+	u_int		len;
 	char		buf[512], c;
 	struct ipl_ci 	iplci;
 	extern	int	optind;
@@ -261,7 +305,7 @@ char *argv[];
 		exit(-1);
 	}
 
-	while ((c = getopt(argc, argv, "Nfs")) != -1)
+	while ((c = getopt(argc, argv, "Nfsx")) != -1)
 		switch (c)
 		{
 		case 'f' :
@@ -273,6 +317,9 @@ char *argv[];
 			break;
 		case 'N' :
 			opts |= 2;
+			break;
+		case 'x' :
+			opts |= 4;
 			break;
 		case 's' :
 			openlog(argv[0], LOG_NDELAY|LOG_PID, LOGFAC);
@@ -289,7 +336,8 @@ char *argv[];
 		assert(read(fd, &iplci, sizeof(struct ipl_ci)) ==
 			sizeof(struct ipl_ci));
 		assert(iplci.hlen > 0 && iplci.hlen <= 92);
-		assert((u_char)iplci.plen <= 128);
+		len = (u_int)iplci.plen;
+		assert(len <= 128);
 		assert(read(fd, buf, iplci.hlen + iplci.plen) ==
 			(iplci.hlen + iplci.plen));
 		printpacket(log, buf, &iplci, opts);

@@ -1,5 +1,5 @@
 /*
- * (C)opyright 1993,1994,1995 by Darren Reed.
+ * (C)opyright 1993-1996 by Darren Reed.
  *
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
@@ -39,7 +39,7 @@
 #endif
 
 #ifndef	lint
-static	char	sccsid[] = "@(#)fils.c	1.18 1/12/96 (C) 1993 Darren Reed";
+static	char	sccsid[] = "@(#)fils.c	1.20 3/24/96 (C) 1993-1996 Darren Reed";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -96,6 +96,9 @@ char *argv[];
 			break;
 		case 'i' :
 			opts |= OPT_INQUE|OPT_SHOWLIST;
+			break;
+		case 'n' :
+			opts |= OPT_SHOWLINENO;
 			break;
 		case 'I' :
 			opts |= OPT_INACTIVE;
@@ -199,6 +202,8 @@ struct	friostat	*fp;
 			fp->f_st[1].fr_ads, fp->f_st[1].fr_bads);
 	PRINTF("ICMP replies:\t%lu\tTCP RSTs sent:\t%lu\n",
 			fp->f_st[0].fr_ret, fp->f_st[1].fr_ret);
+	PRINTF("Result cache hits(in):\t%lu\t(out):\t%lu\n",
+			fp->f_st[0].fr_chit, fp->f_st[1].fr_chit);
 
 	PRINTF("Packet log flags set: (%#x)\n", frf);
 	if (frf & FF_LOGPASS)
@@ -217,7 +222,7 @@ struct	friostat	*fiop;
 {
 	struct	frentry	fb;
 	struct	frentry	*fp = NULL;
-	int	i, set;
+	int	i, set, n;
 
 	set = fiop->f_active;
 	if (opts & OPT_INACTIVE)
@@ -248,7 +253,8 @@ struct	friostat	*fiop;
 			(opts & OPT_INACTIVE) ? "inactive " : "", filters[i]);
 		return;
 	}
-	while (fp) {
+
+	for (n = 1; fp; n++) {
 		if (kmemcpy((char *)&fb, (u_long)fp, sizeof(fb)) == -1) {
 			perror("kmemcpy");
 			return;
@@ -260,6 +266,8 @@ struct	friostat	*fiop;
 			PRINTF("%ld ", fp->fr_hits);
 		if (opts & (OPT_ACCNT|OPT_VERBOSE))
 			PRINTF("%ld ", fp->fr_bytes);
+		if (opts & OPT_SHOWLINENO)
+			PRINTF("@%d ", n);
 		printfr(fp);
 		if (opts & OPT_VERBOSE)
 			binprint(fp);
