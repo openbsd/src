@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.h,v 1.2 1997/10/20 19:52:43 pefo Exp $	*/
+/*	$OpenBSD: pci_machdep.h,v 1.3 1998/04/06 20:24:22 pefo Exp $	*/
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -60,7 +60,7 @@ struct p4e_pci_chipset {
 	void		*(*pc_intr_establish) __P((void *, pci_intr_handle_t,
 			    int, int (*)(void *), void *, char *));
 	void		(*pc_intr_disestablish) __P((void *, void *));
-	void		(*pc_ether_hw_addr) __P((u_int8_t *));
+	int		(*pc_ether_hw_addr) __P((u_int8_t *));
 };
 
 /*
