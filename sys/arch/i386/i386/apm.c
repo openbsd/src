@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.8 1997/09/22 12:07:45 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.9 1997/09/22 14:55:13 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -185,7 +185,7 @@ struct apmregs *regs;
 		    sc->sc_dev.dv_xname,
 		    BATT_LIFE(regs));
 	}
-	printf("%s: A/C state: ", sc->sc_dev.dv_xname);
+	printf("%s: AC state: ", sc->sc_dev.dv_xname);
 	switch (AC_STATE(regs)) {
 	case APM_AC_OFF:
 		printf("off\n");
