@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wireg.h,v 1.18 2002/04/06 23:48:38 millert Exp $	*/
+/*	$OpenBSD: if_wireg.h,v 1.19 2002/05/01 04:31:07 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -458,12 +458,13 @@ struct wi_ltv_pcf {
  * Connection control characteristics (0xFC00 == WI_RID_PORTTYPE).
  * 1 == Basic Service Set (BSS)
  * 2 == Wireless Distribudion System (WDS)
- * 3 == Pseudo IBSS
+ * 3 == Pseudo IBSS (aka ad-hoc demo)
+ * 4 == IBSS
  */
-#define WI_PORTTYPE_IBSS	0x0
 #define WI_PORTTYPE_BSS		0x1
 #define WI_PORTTYPE_WDS		0x2
 #define WI_PORTTYPE_ADHOC	0x3
+#define WI_PORTTYPE_IBSS	0x4
 #define WI_PORTTYPE_AP		0x6
 
 /*
