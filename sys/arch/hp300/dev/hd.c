@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.6 1997/07/13 09:47:59 downsj Exp $	*/
+/*	$OpenBSD: hd.c,v 1.7 1998/03/27 08:37:06 millert Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -476,38 +476,60 @@ hdgetinfo(dev)
 	int unit = hdunit(dev);
 	struct hd_softc *rs = hd_cd.cd_devs[unit];
 	struct disklabel *lp = rs->sc_dkdev.dk_label;
-	struct partition *pi;
-	char *msg;
+	char *errstring;
 
 	/*
-	 * Set some default values to use while reading the label
-	 * or to use if there isn't a label.
+	 * Create a default disk label based on geometry.
+	 * This will get overridden if there is a real label on the disk.
 	 */
 	bzero((caddr_t)lp, sizeof *lp);
 	lp->d_type = DTYPE_HPIB;
+	strncpy(lp->d_typename, hdidentinfo[rs->sc_type].ri_desc,
+	    sizeof(lp->d_typename) - 1);
+	strcpy(lp->d_packname, "fictitious");
 	lp->d_secsize = DEV_BSIZE;
-	lp->d_nsectors = 32;
-	lp->d_ntracks = 20;
-	lp->d_ncylinders = 1;
-	lp->d_secpercyl = 32*20;
-	lp->d_npartitions = 3;
-	lp->d_partitions[2].p_offset = 0;
-	lp->d_partitions[2].p_size = LABELSECTOR+1;
+	lp->d_rpm = 3600;
+	lp->d_interleave = 1;
+
+	if (rs->sc_type > -1) {
+		lp->d_nsectors = hdidentinfo[rs->sc_type].ri_nbpt;
+		lp->d_ntracks = hdidentinfo[rs->sc_type].ri_ntpc;
+		lp->d_ncylinders = hdidentinfo[rs->sc_type].ri_ncyl;
+		lp->d_secperunit = hdidentinfo[rs->sc_type].ri_nblocks;
+	} else {
+		lp->d_nsectors = 32;
+		lp->d_ntracks = 20;
+		lp->d_ncylinders = 1;
+	}
+	lp->d_secpercyl = lp->d_nsectors * lp->d_ntracks;
+
+	lp->d_partitions[RAW_PART].p_offset = 0;
+	lp->d_partitions[RAW_PART].p_size =
+	    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+	lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+	lp->d_npartitions = RAW_PART + 1;
+
+	lp->d_magic = DISKMAGIC;
+	lp->d_magic2 = DISKMAGIC;
+	lp->d_checksum = dkcksum(lp);
 
 	/*
 	 * Now try to read the disklabel
 	 */
-	msg = readdisklabel(hdlabdev(dev), hdstrategy, lp, NULL);
-	if (msg == NULL)
-		return (0);
+	errstring = readdisklabel(hdlabdev(dev), hdstrategy, lp, NULL);
+	if (errstring) {
+		printf("%s: WARNING: %s, defining `c' partition as entire disk\n",
+		    rs->sc_dev.dv_xname, errstring);
+		/* XXX reset partition info as readdisklabel screws with it */
+		lp->d_partitions[0].p_size = 0;
+		lp->d_partitions[RAW_PART].p_offset = 0;
+		lp->d_partitions[RAW_PART].p_size =
+		    lp->d_secperunit * (lp->d_secsize / DEV_BSIZE);
+		lp->d_partitions[RAW_PART].p_fstype = FS_UNUSED;
+		lp->d_npartitions = RAW_PART + 1;
+		lp->d_checksum = dkcksum(lp);
+	}
 
-	pi = lp->d_partitions;
-	printf("%s: WARNING: %s, defining `c' partition as entire disk\n",
-	    rs->sc_dev.dv_xname, msg);
-	pi[2].p_size = hdidentinfo[rs->sc_type].ri_nblocks;
-	/* XXX reset other info since readdisklabel screws with it */
-	lp->d_npartitions = 3;
-	pi[0].p_size = 0;
 	return(0);
 }
 
