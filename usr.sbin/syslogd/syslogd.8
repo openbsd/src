@@ -1,4 +1,4 @@
-.\"	$OpenBSD: syslogd.8,v 1.13 2001/05/03 21:12:25 deraadt Exp $
+.\"	$OpenBSD: syslogd.8,v 1.14 2002/11/21 07:46:48 cloder Exp $
 .\"
 .\" Copyright (c) 1983, 1986, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@
 .Nd log systems messages
 .Sh SYNOPSIS
 .Nm syslogd
-.Op Fl du
+.Op Fl dnu
 .Op Fl f Ar config_file
 .Op Fl m Ar mark_interval
 .Op Fl a Ar path
@@ -65,6 +65,13 @@ the default is
 Select the number of minutes between
 .Dq mark
 messages; the default is 20 minutes.
+.It Fl n
+Print source addresses numerically rather than symbolically.
+This saves an address-to-name lookup for each incoming message,
+which can useful when combined with the
+.Fl u
+option on a loghost with no DNS cache.  Messages from the local
+host will still be logged with the symbolic local host name.
 .It Fl u
 Select the historical
 .Dq insecure

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.57 2002/09/06 19:46:52 deraadt Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.58 2002/11/21 07:46:48 cloder Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.57 2002/09/06 19:46:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.58 2002/11/21 07:46:48 cloder Exp $";
 #endif
 #endif /* not lint */
 
@@ -193,12 +193,12 @@ int	Initialized = 0;	/* set when we have initialized ourselves */
 
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
+int	SecureMode = 1;		/* when true, speak only unix domain socks */
+int	NoDNS = 0;		/* when true, will refrain from doing DNS lookups */
 
 volatile sig_atomic_t MarkSet;
 volatile sig_atomic_t WantDie;
 volatile sig_atomic_t DoInit;
-
-int	SecureMode = 1;		/* when true, speak only unix domain socks */
 
 void	cfline(char *, struct filed *, char *);
 char   *cvthname(struct sockaddr_in *);
@@ -237,7 +237,7 @@ main(int argc, char *argv[])
 	char *p, *line;
 	FILE *fp;
 
-	while ((ch = getopt(argc, argv, "duf:m:p:a:")) != -1)
+	while ((ch = getopt(argc, argv, "dnuf:m:p:a:")) != -1)
 		switch (ch) {
 		case 'd':		/* debug */
 			Debug++;
@@ -247,6 +247,9 @@ main(int argc, char *argv[])
 			break;
 		case 'm':		/* mark interval */
 			MarkInterval = atoi(optarg) * 60;
+			break;
+		case 'n':		/* don't do DNS lookups */
+			NoDNS = 1;
 			break;
 		case 'p':		/* path */
 			funixn[0] = optarg;
@@ -469,7 +472,7 @@ usage(void)
 {
 
 	(void)fprintf(stderr,
-	    "usage: syslogd [-du] [-f config_file] [-m mark_interval] "
+	    "usage: syslogd [-dnu] [-f config_file] [-m mark_interval] "
 	    "[-a path] [-p log_socket]\n");
 	exit(1);
 }
@@ -884,13 +887,18 @@ cvthname(struct sockaddr_in *f)
 	struct hostent *hp;
 	sigset_t omask, nmask;
 	char *p;
-
-	dprintf("cvthname(%s)\n", inet_ntoa(f->sin_addr));
+	char *ip;
 
 	if (f->sin_family != AF_INET) {
 		dprintf("Malformed from address\n");
 		return ("???");
 	}
+
+	ip = inet_ntoa(f->sin_addr);
+	dprintf("cvthname(%s)\n", ip);
+	if (NoDNS)
+		return (ip);
+
 	sigemptyset(&nmask);
 	sigaddset(&nmask, SIGHUP);
 	sigprocmask(SIG_BLOCK, &nmask, &omask);
@@ -898,9 +906,8 @@ cvthname(struct sockaddr_in *f)
 	    sizeof(struct in_addr), f->sin_family);
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 	if (hp == 0) {
-		dprintf("Host name for your address (%s) unknown\n",
-			inet_ntoa(f->sin_addr));
-		return (inet_ntoa(f->sin_addr));
+		dprintf("Host name for your address (%s) unknown\n", ip);
+		return (ip);
 	}
 	if ((p = strchr(hp->h_name, '.')) && strcmp(p + 1, LocalDomain) == 0)
 		*p = '\0';
