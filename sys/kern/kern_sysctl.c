@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.89 2003/08/23 20:02:59 tedu Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.90 2003/10/24 19:05:21 tedu Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -244,7 +244,7 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	size_t newlen;
 	struct proc *p;
 {
-	int error, level, inthostid, oldsgap;
+	int error, level, inthostid, stackgap;
 	extern int somaxconn, sominconn;
 	extern int usermount, nosuidcoredump;
 	extern long cp_time[CPUSTATES];
@@ -439,19 +439,18 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	case KERN_POOL:
 		return (sysctl_dopool(name + 1, namelen - 1, oldp, oldlenp));
 	case KERN_STACKGAPRANDOM:
-		oldsgap = stackgap_random;
-
-		error = sysctl_int(oldp, oldlenp, newp, newlen, &stackgap_random);
+		stackgap = stackgap_random;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &stackgap);
+		if (error)
+			return (error);
 		/*
 		 * Safety harness.
 		 */
-		if ((stackgap_random < ALIGNBYTES && stackgap_random != 0) ||
-		    !powerof2(stackgap_random) ||
-		    stackgap_random > PAGE_SIZE * 2) {
-			stackgap_random = oldsgap;
+		if ((stackgap < ALIGNBYTES && stackgap != 0) ||
+		    !powerof2(stackgap))
 			return (EINVAL);
-		}
-		return (error);
+		stackgap_random = stackgap;
+		return (0);
 #if defined(SYSVMSG) || defined(SYSVSEM) || defined(SYSVSHM)  
 	case KERN_SYSVIPC_INFO:
 		return (sysctl_sysvipc(name + 1, namelen - 1, oldp, oldlenp));
