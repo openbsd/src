@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.123 2004/03/05 13:19:00 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.124 2004/03/05 13:30:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -495,12 +495,11 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			change_state(peer, STATE_IDLE, event);
 			break;
 		case EVNT_RCVD_OPEN:
+			/* parse_open calls change_state itself on failure */
 			if (parse_open(peer))
-				change_state(peer, STATE_IDLE, event);
-			else {
-				session_keepalive(peer);
-				change_state(peer, STATE_OPENCONFIRM, event);
-			}
+				break;
+			session_keepalive(peer);
+			change_state(peer, STATE_OPENCONFIRM, event);
 			break;
 		case EVNT_RCVD_NOTIFICATION:
 			parse_notification(peer);
@@ -1346,7 +1345,7 @@ int
 parse_open(struct peer *peer)
 {
 	u_char		*p, *op_val;
-	u_int8_t	 version;
+	u_int8_t	 version, rversion;
 	u_int16_t	 as, msglen;
 	u_int16_t	 holdtime, oholdtime, myholdtime;
 	u_int32_t	 bgpid;
@@ -1365,11 +1364,15 @@ parse_open(struct peer *peer)
 	p += sizeof(version);
 
 	if (version != BGP_VERSION) {
+		log_peer_warnx(&peer->conf,
+		    "peer wants unrecognized version %u", version);
 		if (version > BGP_VERSION)
-			log_peer_warnx(&peer->conf,
-			    "peer wants unrecognized version %u", version);
-			session_notification(peer, ERR_OPEN,
-			    ERR_OPEN_VERSION, &version, sizeof(version));
+			rversion = version - BGP_VERSION;
+		else
+			rversion = BGP_VERSION;
+		session_notification(peer, ERR_OPEN, ERR_OPEN_VERSION,
+		    &rversion, sizeof(rversion));
+		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 		return (-1);
 	}
 
@@ -1379,6 +1382,7 @@ parse_open(struct peer *peer)
 	if (peer->conf.remote_as != ntohs(as)) {
 		log_peer_warnx(&peer->conf, "peer sent wrong AS %u", ntohs(as));
 		session_notification(peer, ERR_OPEN, ERR_OPEN_AS, NULL, 0);
+		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 		return (-1);
 	}
 
@@ -1391,6 +1395,7 @@ parse_open(struct peer *peer)
 		    "peer requests unacceptable holdtime %u", holdtime);
 		session_notification(peer, ERR_OPEN, ERR_OPEN_HOLDTIME,
 		    NULL, 0);
+		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 		return (-1);
 	}
 
@@ -1411,6 +1416,7 @@ parse_open(struct peer *peer)
 		    ntohl(bgpid));
 		session_notification(peer, ERR_OPEN, ERR_OPEN_BGPID,
 		    NULL, 0);
+		change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 		return (-1);
 	} */
 	peer->remote_bgpid = bgpid;
@@ -1420,6 +1426,7 @@ parse_open(struct peer *peer)
 
 	if (optparamlen > msglen - MSGSIZE_OPEN_MIN) {
 			session_notification(peer, ERR_OPEN, 0, NULL, 0);
+			change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 			return (-1);
 	}
 
@@ -1427,6 +1434,7 @@ parse_open(struct peer *peer)
 	while (plen > 0) {
 		if (plen < 2) {
 			session_notification(peer, ERR_OPEN, 0, NULL, 0);
+			change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 			return (-1);
 		}
 		memcpy(&op_type, p, sizeof(op_type));
@@ -1439,6 +1447,7 @@ parse_open(struct peer *peer)
 			if (plen < op_len) {
 				session_notification(peer, ERR_OPEN, 0,
 				    NULL, 0);
+				change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
 				return (-1);
 			}
 			op_val = p;
@@ -1458,6 +1467,9 @@ parse_open(struct peer *peer)
 			 */
 			session_notification(peer, ERR_OPEN, ERR_OPEN_OPT,
 				NULL, 0);
+			change_state(peer, STATE_IDLE, EVNT_RCVD_OPEN);
+			peer->IdleHoldTimer = time(NULL);	/* no punish */
+			peer->IdleHoldTime /= 2;
 			return (-1);
 			/* not reached */			
 		}
