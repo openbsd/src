@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.7 1999/06/05 01:21:28 aaron Exp $
+.\"	$OpenBSD: ktrace.1,v 1.8 2000/03/04 15:53:40 aaron Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -53,8 +53,11 @@
 .Sh DESCRIPTION
 .Nm ktrace
 enables kernel trace logging for the specified processes.
-Kernel trace data is logged to the file
-.Pa ktrace.out .
+By default, kernel trace data is logged to the file
+.Pa ktrace.out ,
+unless overridden by the
+.Fl f
+option.
 The kernel operations that are traced include system calls, namei
 translations, signal processing, and
 .Tn I/O .
@@ -62,7 +65,7 @@ translations, signal processing, and
 Once tracing is enabled on a process, trace data will be logged until
 either the process exits or the trace point is cleared.
 A traced process can generate enormous amounts of log data quickly;
-It is strongly suggested that users memorize how to disable tracing before
+it is strongly suggested that users memorize how to disable tracing before
 attempting to trace a process.
 The following command is sufficient to disable tracing on all user owned
 processes, and, if executed by root, all processes:
@@ -159,6 +162,11 @@ on process 67
 .Pp
 # disable tracing of all processes owned by the user
 .Dl $ ktrace -C
+.Sh FILES
+.Bl -tag -width ktrace.out -compact
+.It Pa ktrace.out
+default ktrace dump file
+.El
 .Sh SEE ALSO
 .Xr kdump 1
 .Sh HISTORY
