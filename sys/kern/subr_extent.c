@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_extent.c,v 1.9 2000/03/15 15:58:40 mickey Exp $	*/
+/*	$OpenBSD: subr_extent.c,v 1.10 2000/09/20 17:30:56 niklas Exp $	*/
 /*	$NetBSD: subr_extent.c,v 1.7 1996/11/21 18:46:34 cgd Exp $	*/
 
 /*-
@@ -644,7 +644,7 @@ extent_alloc_subregion1(ex, substart, subend, size, alignment, skew, boundary,
 		 * Check from the current starting point to the
 		 * end of the subregion.
 		 */
-		if (LE_OV(newstart, size, subend) == 0)
+		if (!LE_OV(newstart, size - 1, subend))
 			goto fail;
 
 		/*
