@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.2 1997/07/12 14:57:01 provos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.3 1997/07/14 08:48:45 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -587,6 +587,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     /* Update the counters */
     tdb->tdb_cur_packets++;
     tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2);
+    ahstat.ahs_ibytes += ntohs(ip->ip_len) - (ip->ip_hl << 2);
 
     return m;
 }
@@ -889,6 +890,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     /* Update the counters */
     tdb->tdb_cur_packets++;
     tdb->tdb_cur_bytes += ip->ip_len - (ip->ip_hl << 2) - AH_NEW_FLENGTH;
+    ahstat.ahs_obytes += ip->ip_len - (ip->ip_hl << 2) - AH_NEW_FLENGTH;
 
     return 0;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.11 1997/07/11 23:37:58 provos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.12 1997/07/14 08:48:47 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -120,7 +120,9 @@ ip4_input(register struct mbuf *m, int iphlen)
     }
 
     ipi = (struct ip *) ((caddr_t) ipo + iphlen);
-	
+
+    ip4stat.ip4s_ibytes += ntohs(ipi->ip_len);
+
     /*
      * RFC 1853 specifies that the inner TTL should not be touched on
      * decapsulation. There's no reason this comment should be here, but
@@ -237,6 +239,8 @@ ipe4_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	tdb->tdb_cur_packets++;
 	tdb->tdb_cur_bytes += ntohs(ipo->ip_len) - (ipo->ip_hl << 2);
     }
+
+    ip4stat.ip4s_obytes += ntohs(ipo->ip_len) - (ipo->ip_hl << 2);
 
     return 0;
 

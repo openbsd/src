@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.1 1997/07/11 23:37:57 provos Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.2 1997/07/14 08:48:46 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -480,6 +480,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     /* Update the counters */
     tdb->tdb_cur_packets++;
     tdb->tdb_cur_bytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + blk[6] + 2;
+    espstat.esps_ibytes += ntohs(ip->ip_len) - (ip->ip_hl << 2) + blk[6] + 2;
 
     return m;
 }
@@ -726,6 +727,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     /* Update the counters */
     tdb->tdb_cur_packets++;
     tdb->tdb_cur_bytes += rlen + padding;
+    espstat.esps_obytes += rlen + padding;
 
     return 0;
 }	
@@ -748,7 +750,13 @@ m_pad(struct mbuf *m, int n)
     u_int8_t dat;
 	
     if (n <= 0)			/* no stupid arguments */
-      return NULL;
+    {
+#ifdef ENCDEBUG
+	if (encdebug)
+	  printf("m_pad(): pad length invalid (%d)\n", n);
+#endif /* ENCDEBUG */
+        return NULL;
+    }
 
     len = m->m_pkthdr.len;
     pad = n;
