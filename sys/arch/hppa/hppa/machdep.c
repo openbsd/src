@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.53 2002/02/03 03:25:46 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.54 2002/02/06 19:39:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -173,6 +173,7 @@ void delay_init __P((void));
 static __inline void fall __P((int, int, int, int, int));
 void dumpsys __P((void));
 void hpmc_dump __P((void));
+void hppa_user2frame __P((struct trapframe *sf, struct trapframe *tf));
 
 /*
  * wide used hardware params
@@ -1135,8 +1136,10 @@ setregs(p, pack, stack, retval)
 #ifdef DEBUG
 	/*extern int pmapdebug;*/
 	/*pmapdebug = 13;*/
+	/*
 	printf("setregs(%p, %p, %x, %p), ep=%x, cr30=%x\n",
 	    p, pack, stack, retval, pack->ep_entry, tf->tf_cr30);
+	*/
 #endif
 
 	tf->tf_iioq_tail = 4 +
@@ -1146,6 +1149,7 @@ setregs(p, pack, stack, retval)
 	tf->tf_arg1 = tf->tf_arg2 = 0; /* XXX dynload stuff */
 
 	/* setup terminal stack frame */
+	stack = hppa_round_page(stack);
 	stack += HPPA_FRAME_SIZE;
 	suword((caddr_t)(stack + HPPA_FRAME_PSP), 0);
 	tf->tf_sp = stack;
@@ -1165,8 +1169,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	union sigval val;
 {
 	struct proc *p = curproc;
-	struct trapframe sf, *tf = p->p_md.md_regs;
-	register_t sp = tf->tf_sp;
+	struct sigcontext *scp, ksc;
+	struct trapframe *tf = p->p_md.md_regs;
+	struct sigacts *psp = p->p_sigacts;
+	siginfo_t ksi, *sip = NULL;
+	int sss;
 
 #ifdef DEBUG
 	if ((sigdebug | SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
@@ -1174,11 +1181,62 @@ sendsig(catcher, sig, mask, code, type, val)
 		    p->p_comm, p->p_pid, sig, catcher);
 #endif
 
-	sf = *tf;
-	/* TODO send signal */
+	/*
+	 * Allocate space for the signal handler context.
+	 */
+	if ((psp->ps_flags & SAS_ALTSTACK) && !ksc.sc_onstack &&
+	    (psp->ps_sigonstack & sigmask(sig))) {
+		scp = (struct sigcontext *)psp->ps_sigstk.ss_sp;
+		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
+	} else
+		scp = (struct sigcontext *)tf->tf_sp;
 
-	if (copyout(&sf, (void *)sp, sizeof(sf)))
+	sss = sizeof(*scp);
+	if (psp->ps_siginfo & sigmask(sig)) {
+		initsiginfo(&ksi, sig, code, type, val);
+		sip = (void *)(scp + 1);
+		if (copyout((caddr_t)&ksi, sip, sizeof(*sip)))
+			sigexit(p, SIGILL);
+		sss += sizeof(*sip);
+	}
+
+	ksc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
+	ksc.sc_mask = mask;
+	ksc.sc_sp = tf->tf_sp;
+	ksc.sc_fp = (register_t)scp + sss;
+	ksc.sc_ps = tf->tf_ipsw;
+	ksc.sc_pcoqh = tf->tf_iioq_head;
+	ksc.sc_pcoqt = tf->tf_iioq_tail;
+	bcopy(tf, &ksc.sc_tf, sizeof(ksc.sc_tf));
+	if (copyout((caddr_t)&ksc, scp, sizeof(*scp)))
 		sigexit(p, SIGILL);
+
+	if (suword((caddr_t)scp + sss + HPPA_FRAME_SIZE - HPPA_FRAME_PSP, 0))
+		sigexit(p, SIGILL);
+	sss += HPPA_FRAME_SIZE;
+
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sendsig(%d): sig %d scp %p fp %p sp %x\n",
+		    p->p_pid, sig, scp, ksc.sc_fp, ksc.sc_sp);
+#endif
+
+	tf->tf_arg0 = sig;
+	tf->tf_arg1 = (register_t)sip;
+	tf->tf_arg2 = tf->tf_r3 = (register_t)scp;
+	tf->tf_arg3 = (register_t)catcher;
+	tf->tf_sp = (register_t)scp + sss;
+	tf->tf_iioq_head = HPPA_PC_PRIV_USER |
+	    ((register_t)PS_STRINGS + sizeof(struct ps_strings));
+	tf->tf_iioq_tail = tf->tf_iioq_head + 4;
+
+	/* TODO FPU */
+
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sendsig(%d): pc %x, catcher %x\n", p->p_pid,
+		    tf->tf_iioq_head, tf->tf_arg3);
+#endif
 }
 
 int
@@ -1187,8 +1245,87 @@ sys_sigreturn(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* TODO sigreturn */
-	return EINVAL;
+	struct sys_sigreturn_args /* {
+		syscallarg(struct sigcontext *) sigcntxp;
+	} */ *uap = v;
+	struct sigcontext *scp, ksc;
+	struct trapframe *tf = p->p_md.md_regs;
+
+	scp = SCARG(uap, sigcntxp);
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sigreturn: pid %d, scp %p\n", p->p_pid, scp);
+#endif
+
+	if (uvm_useracc((caddr_t)scp, sizeof (*scp), B_WRITE) == 0 ||
+	    copyin((caddr_t)scp, (caddr_t)&ksc, sizeof ksc))
+		return (EINVAL);
+
+#define PSW_MBS (PSW_C|PSW_Q|PSW_P|PSW_D|PSW_I)
+#define PSW_MBZ (PSW_Y|PSW_Z|PSW_S|PSW_X|PSW_M|PSW_R)
+	if ((ksc.sc_ps & (PSW_MBS|PSW_MBZ)) != PSW_MBS)
+		return (EINVAL);
+
+	if (ksc.sc_onstack)
+		p->p_sigacts->ps_sigstk.ss_flags |= SS_ONSTACK;
+	else
+		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
+	p->p_sigmask = ksc.sc_mask &~ sigcantmask;
+
+	hppa_user2frame((struct trapframe *)&ksc.sc_tf, tf);
+
+	tf->tf_sp = ksc.sc_sp;
+	tf->tf_iioq_head = ksc.sc_pcoqh | HPPA_PC_PRIV_USER;
+	tf->tf_iioq_tail = ksc.sc_pcoqt | HPPA_PC_PRIV_USER;
+	tf->tf_ipsw = ksc.sc_ps;
+
+	/* TODO FPU */
+
+#ifdef DEBUG
+	if (sigdebug & SDB_FOLLOW)
+		printf("sigreturn(%d): returns\n", p->p_pid);
+#endif
+	return (EJUSTRETURN);
+}
+
+void
+hppa_user2frame(sf, tf)
+	struct trapframe *sf, *tf;
+{
+	/* only restore r1-r31, sar */
+	tf->tf_t1 = sf->tf_t1;		/* r22 */
+	tf->tf_t2 = sf->tf_t2;		/* r21 */
+	tf->tf_sp = sf->tf_sp;
+	tf->tf_t3 = sf->tf_t3;		/* r20 */
+
+	tf->tf_sar = sf->tf_sar;
+	tf->tf_r1 = sf->tf_r1;
+	tf->tf_rp = sf->tf_rp;
+	tf->tf_r3 = sf->tf_r3;
+	tf->tf_r4 = sf->tf_r4;
+	tf->tf_r5 = sf->tf_r5;
+	tf->tf_r6 = sf->tf_r6;
+	tf->tf_r7 = sf->tf_r7;
+	tf->tf_r8 = sf->tf_r8;
+	tf->tf_r9 = sf->tf_r9;
+	tf->tf_r10 = sf->tf_r10;
+	tf->tf_r11 = sf->tf_r11;
+	tf->tf_r12 = sf->tf_r12;
+	tf->tf_r13 = sf->tf_r13;
+	tf->tf_r14 = sf->tf_r14;
+	tf->tf_r15 = sf->tf_r15;
+	tf->tf_r16 = sf->tf_r16;
+	tf->tf_r17 = sf->tf_r17;
+	tf->tf_r18 = sf->tf_r18;
+	tf->tf_t4 = sf->tf_t4;		/* r19 */
+	tf->tf_arg3 = sf->tf_arg3;	/* r23 */
+	tf->tf_arg2 = sf->tf_arg2;	/* r24 */
+	tf->tf_arg1 = sf->tf_arg1;	/* r25 */
+	tf->tf_arg0 = sf->tf_arg0;	/* r26 */
+	tf->tf_dp = sf->tf_dp;
+	tf->tf_ret0 = sf->tf_ret0;
+	tf->tf_ret1 = sf->tf_ret1;
+	tf->tf_r31 = sf->tf_r31;
 }
 
 /*

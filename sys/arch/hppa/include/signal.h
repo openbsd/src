@@ -1,4 +1,4 @@
-/*	$OpenBSD: signal.h,v 1.1 1998/06/23 19:45:27 mickey Exp $	*/
+/*	$OpenBSD: signal.h,v 1.2 2002/02/06 19:39:20 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1994, The University of Utah and
@@ -43,12 +43,11 @@ typedef int sig_atomic_t;
 struct	sigcontext {
 	int	sc_onstack;		/* sigstack state to restore */
 	int	sc_mask;		/* signal mask to restore */
+	int	sc_ps;			/* psl to restore */
 	int	sc_sp;			/* sp to restore */
 	int	sc_fp;			/* fp to restore */
-	int	sc_ap;			/* ap to restore */
-	int	sc_pcsqh;		/* pc space queue (head) to restore */
 	int	sc_pcoqh;		/* pc offset queue (head) to restore */
-	int	sc_pcsqt;		/* pc space queue (tail) to restore */
 	int	sc_pcoqt;		/* pc offset queue (tail) to restore */
-	int	sc_ps;			/* psl to restore */
+	int	sc_resv[5];
+	int	sc_tf[64];
 };
