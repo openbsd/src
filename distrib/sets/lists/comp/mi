@@ -3558,8 +3558,6 @@
 ./usr/share/man/cat3/islower.0
 ./usr/share/man/cat3/isnan.0
 ./usr/share/man/cat3/isnanf.0
-./usr/share/man/cat3/iso_addr.0
-./usr/share/man/cat3/iso_ntoa.0
 ./usr/share/man/cat3/isprint.0
 ./usr/share/man/cat3/ispunct.0
 ./usr/share/man/cat3/isspace.0
@@ -4150,7 +4148,6 @@
 ./usr/share/man/cat3/pw_edit.0
 ./usr/share/man/cat3/pw_error.0
 ./usr/share/man/cat3/pw_file.0
-./usr/share/man/cat3/pw_getconf.0
 ./usr/share/man/cat3/pw_init.0
 ./usr/share/man/cat3/pw_lock.0
 ./usr/share/man/cat3/pw_mkdb.0

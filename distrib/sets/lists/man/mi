@@ -1714,7 +1714,6 @@
 ./usr/share/man/cat5/newsyslog.conf.0
 ./usr/share/man/cat5/ntpd.conf.0
 ./usr/share/man/cat5/passwd.0
-./usr/share/man/cat5/passwd.conf.0
 ./usr/share/man/cat5/pf.conf.0
 ./usr/share/man/cat5/pf.os.0
 ./usr/share/man/cat5/phones.0
