@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Ustar.pm,v 1.13 2004/12/11 14:05:13 espie Exp $
+# $OpenBSD: Ustar.pm,v 1.14 2004/12/13 18:50:23 espie Exp $
 #
 # Copyright (c) 2002-2004 Marc Espie <espie@openbsd.org>
 #
@@ -223,20 +223,22 @@ START:
 	if (defined $bs) {
 		for (my $i = 0; $i + $bs <= length($buffer); $i+= $bs) {
 			if (substr($buffer, $i, $bs) eq $zeroes) {
-				syswrite($fh, $buffer, $i) or return 0;
+				defined(syswrite($fh, $buffer, $i)) or return 0;
 				$i+=$bs;
 				my $seek_forward = $bs;
 				while (substr($buffer, $i, $bs) eq $zeroes) {
 					$i += $bs;
 					$seek_forward += $bs;
 				}
-				sysseek($fh, $seek_forward, 1) or return 0;
+				defined(sysseek($fh, $seek_forward, 1)) 
+				    or return 0;
 				$buffer = substr($buffer, $i);
 				goto START;
 			}
 		}
 	}
-	syswrite($fh, $buffer) or return 0;
+	defined(syswrite($fh, $buffer)) or return 0;
+	return 1;
 }
 
 sub create
