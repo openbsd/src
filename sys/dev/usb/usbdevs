@@ -1,4 +1,4 @@
-	$OpenBSD: usbdevs,v 1.12 2000/03/26 08:34:10 aaron Exp $
+	$OpenBSD: usbdevs,v 1.13 2000/03/26 18:43:37 aaron Exp $
 /*	$NetBSD: usbdevs,v 1.56 1999/10/28 06:41:13 augustss Exp $	*/
 
 /*
@@ -209,6 +209,7 @@ product EPSON PRINTER3		0x0003	ISD USB Smart Cable
 /* 3Com products */
 product 3COM HOMECONN		0x009d	HomeConnect USB Camera
 product 3COM 3C19250		0x03e8	3C19250 Ethernet adapter
+product 3COM 3C460		0x11f8	HomeConnect Ethernet USB Adapter
 product 3COM USR56K		0x3021	U.S.Robotics 56000 Voice Faxmodem Pro
 
 /* Konica Corp. Products */
