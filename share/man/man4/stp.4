@@ -1,4 +1,4 @@
-.\"	$OpenBSD: stp.4,v 1.4 2002/09/26 07:55:40 miod Exp $
+.\"	$OpenBSD: stp.4,v 1.5 2003/04/02 20:56:19 jmc Exp $
 .\"	$NetBSD: nell.4,v 1.2 2002/03/29 16:23:50 wiz Exp $
 .\"
 .\" Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 .Os
 .Sh NAME
 .Nm stp
-.Nd sbus pcmcia bridge
+.Nd sbus PCMCIA bridge
 .Sh SYNOPSIS
 .Cd "stp* at sbus? slot ? offset ?"
 .Cd "pcmcia* at stp? socket ?"
@@ -58,7 +58,7 @@ It uses the STP4020 chipset and it is SUN part number 501-2367.
 .Xr pcmcia 4 ,
 .Xr sbus 4
 .Sh BUGS
-Unlike other pcmcia adapters which are little-endian, this bridge
+Unlike other PCMCIA adapters which are little-endian, this bridge
 provides a big-endian
 .Xr pcmcia 4
 bus.
