@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wi.4,v 1.2 2000/09/09 17:15:56 deraadt Exp $
+.\"	$OpenBSD: wi.4,v 1.3 2000/12/17 02:38:52 mickey Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -45,6 +45,8 @@ The
 .Nm
 driver provides support for WaveLAN/IEEE PCCARD adapters (also known
 as WaveLAN II cards) which support IEEE 802.11 Direct Sequence.
+The driver also supports Adtron AWP-100 cards, which just show up
+with the same product id as the WaveLAN cards.
 Note that while Lucent sells both ISA and PCMCIA
 WaveLAN/IEEE devices, the ISA product is actually a PCMCIA card in an
 ISA to PCMCIA bridge adapter. Consequently, the
@@ -110,3 +112,12 @@ The
 driver was written by Bill Paul <wpaul@ctr.columbia.edu> and ported to
 .Ox
 by Niklas Hallqvist <niklas@appli.se>.
+.Sh CAVEATS
+Lucent WaveLAN cards are usually default to channel 3 for operation,
+while some non-Lucent cards have different default channel (11 for
+Adtron cards, for example). See
+.Xr wicontrol 8
+for information on how to change the channel.
+.Sh BUGS
+Adtron cards do not seem to work in infrastructure mode with
+Lucent base station with current driver source.
