@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.19 2002/06/04 05:13:42 itojun Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.20 2002/06/07 00:42:14 itojun Exp $	*/
 /*	$KAME: rtadvd.c,v 1.66 2002/05/29 14:18:36 itojun Exp $	*/
 
 /*
@@ -146,7 +146,8 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	fd_set fdset;
+	fd_set *fdsetp, *selectfdp;
+	int fdmasks;
 	int maxfd = 0;
 	struct timeval *timeout;
 	int i, ch;
@@ -229,22 +230,33 @@ main(argc, argv)
 		    __FUNCTION__);
 	}
 
-	FD_ZERO(&fdset);
-	FD_SET(sock, &fdset);
 	maxfd = sock;
 	if (sflag == 0) {
 		rtsock_open();
-		FD_SET(rtsock, &fdset);
 		if (rtsock > sock)
 			maxfd = rtsock;
 	} else
 		rtsock = -1;
 
+	fdmasks = howmany(maxfd + 1, NFDBITS) * sizeof(fd_mask);
+	if ((fdsetp = malloc(fdmasks)) == NULL) {
+		err(1, "malloc");
+		/*NOTREACHED*/
+	}
+	if ((selectfdp = malloc(fdmasks)) == NULL) {
+		err(1, "malloc");
+		/*NOTREACHED*/
+	}
+	memset(fdsetp, 0, fdmasks);
+	FD_SET(sock, fdsetp);
+	if (rtsock >= 0)
+		FD_SET(rtsock, fdsetp);
+
 	signal(SIGTERM, (void *)set_die);
 	signal(SIGUSR1, (void *)rtadvd_set_dump_file);
 
 	while (1) {
-		struct fd_set select_fd = fdset; /* reinitialize */
+		memcpy(selectfdp, fdsetp, fdmasks); /* reinitialize */
 
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;
@@ -271,8 +283,8 @@ main(argc, argv)
 			    __FUNCTION__);
 		}
 
-		if ((i = select(maxfd + 1, &select_fd,
-				NULL, NULL, timeout)) < 0) {
+		if ((i = select(maxfd + 1, selectfdp, NULL, NULL,
+		    timeout)) < 0) {
 			/* EINTR would occur upon SIGUSR1 for status dump */
 			if (errno != EINTR)
 				syslog(LOG_ERR, "<%s> select: %s",
@@ -281,9 +293,9 @@ main(argc, argv)
 		}
 		if (i == 0)	/* timeout */
 			continue;
-		if (rtsock != -1 && FD_ISSET(rtsock, &select_fd))
+		if (rtsock != -1 && FD_ISSET(rtsock, selectfdp))
 			rtmsg_input();
-		if (FD_ISSET(sock, &select_fd))
+		if (FD_ISSET(sock, selectfdp))
 			rtadvd_input();
 	}
 	exit(0);		/* NOTREACHED */
