@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.193 2002/02/26 07:25:33 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.194 2002/03/08 11:32:52 mpech Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -2748,10 +2748,10 @@ pf_get_sport(u_int8_t proto, u_int16_t low, u_int16_t high, u_int16_t *port)
 		return (1);
 	} else if (low < high) {
 		step = 1;
-		cut = arc4random() % (high - low) + low;
+		cut = arc4random() % (1 + high - low) + low;
 	} else {
 		step = -1;
-		cut = arc4random() % (low - high) + high;
+		cut = arc4random() % (1 + low - high) + high;
 	}
 
 	*port = cut - step;
