@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.313 2000/09/14 10:08:40 niklas Exp 
+ *		OpenBSD: pcidevs,v 1.314 2000/09/14 11:04:51 niklas Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -766,6 +766,7 @@
 #define	PCI_PRODUCT_ATI_MACH64_GV	0x4756		/* Mach64 GV */
 #define	PCI_PRODUCT_ATI_MACH64_GW	0x4757		/* Mach64 GW */
 #define	PCI_PRODUCT_ATI_MACH64_GX	0x4758		/* Mach64 GX */
+#define	PCI_PRODUCT_ATI_MACH64_GY	0x4759		/* Mach64 GY */
 #define	PCI_PRODUCT_ATI_MACH64_GZ	0x475A		/* Mach64 GZ */
 #define	PCI_PRODUCT_ATI_MACH64_LB	0x4C42		/* Mach64 LB */
 #define	PCI_PRODUCT_ATI_MACH64_LD	0x4c44		/* Mach64 LD */
