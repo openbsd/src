@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.13 1998/08/21 22:40:02 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.14 1999/01/08 11:00:53 art Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -621,13 +621,14 @@ msdosfs_inactive(v)
 	if (prtactive && vp->v_usecount != 0)
 		vprint("msdosfs_inactive(): pushing active", vp);
 
+	error = 0;
+
 	/*
 	 * Get rid of denodes related to stale file handles.
 	 */
 	if (dep->de_Name[0] == SLOT_DELETED) 
 		goto out;
 
-	error = 0;
 	/*
 	 * If the file has been deleted and it is on a read/write
 	 * filesystem, then truncate the file, and mark the directory slot
