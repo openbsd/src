@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.2 1996/06/26 05:39:32 deraadt Exp $	*/
+/*	$OpenBSD: strip.c,v 1.3 1996/09/03 06:54:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.2 1996/06/26 05:39:32 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.3 1996/09/03 06:54:43 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -113,7 +113,7 @@ main(argc, argv)
 			(void)close(fd);
 			ERROR(errno);
 		}
-		if (N_BADMAG(*ep)) {
+		if (N_BADMAG(*ep) || N_GETMID(*ep) != MID_MACHINE) {
 			munmap((caddr_t)ep, sb.st_size);
 			(void)close(fd);
 			ERROR(EFTYPE);
