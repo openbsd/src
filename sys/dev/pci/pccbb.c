@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.1 2000/04/08 05:50:51 aaron Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.2 2000/04/20 21:15:23 aaron Exp $ */
 /*	$NetBSD: pccbb.c,v 1.37 2000/03/23 07:01:40 thorpej Exp $	*/
 
 /*
@@ -96,7 +96,7 @@ static int pccbbintr_function __P((struct pccbb_softc *));
 
 static int pccbb_detect_card __P((struct pccbb_softc *));
 
-static void pccbb_pcmcia_write __P((struct pcic_handle *, int, u_int8_t));
+static void pccbb_pcmcia_write __P((struct pcic_handle *, int, int));
 static u_int8_t pccbb_pcmcia_read __P((struct pcic_handle *, int));
 #define Pcic_read(ph, reg) ((ph)->ph_read((ph), (reg)))
 #define Pcic_write(ph, reg, val) ((ph)->ph_write((ph), (reg), (val)))
@@ -2423,11 +2423,6 @@ pccbb_pcmcia_do_mem_map(ph, win)
 	u_int8_t mem_window;
 	int reg;
 
-	int kind = ph->mem[win].kind & ~PCMCIA_WIDTH_MEM_MASK;
-	int mem8 =
-	    (ph->mem[win].kind & PCMCIA_WIDTH_MEM_MASK) == PCMCIA_WIDTH_MEM8
-	    || (kind == PCMCIA_MEM_ATTR);
-
 	regbase_win = 0x10 + win * 0x08;
 
 	phys_addr = ph->mem[win].addr;
@@ -2444,7 +2439,7 @@ pccbb_pcmcia_do_mem_map(ph, win)
 	start_low = (phys_addr >> PCIC_MEMREG_LSB_SHIFT) & 0xff;
 	/* bit 23:20 and bit 7 on */
 	start_high = ((phys_addr >> PCIC_MEMREG_MSB_SHIFT) & 0x0f)
-	    |(mem8 ? 0 : PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_16BIT);
+	    | PCIC_SYSMEM_ADDRX_START_MSB_DATASIZE_16BIT; /* bit 7 on */
 	/* bit 31:24, for 32-bit address */
 	mem_window = (phys_addr >> PCIC_MEMREG_WIN_SHIFT) & 0xff;
 
@@ -2467,7 +2462,7 @@ pccbb_pcmcia_do_mem_map(ph, win)
 	off_low = (ph->mem[win].offset >> PCIC_CARDMEM_ADDRX_SHIFT) & 0xff;
 	off_high = ((ph->mem[win].offset >> (PCIC_CARDMEM_ADDRX_SHIFT + 8))
 	    & PCIC_CARDMEM_ADDRX_MSB_ADDR_MASK)
-	    | ((kind == PCMCIA_MEM_ATTR) ?
+	    | ((ph->mem[win].kind == PCMCIA_MEM_ATTR) ?
 	    PCIC_CARDMEM_ADDRX_MSB_REGACTIVE_ATTR : 0);
 
 	Pcic_write(ph, regbase_win + PCIC_CMA_LOW, off_low);
