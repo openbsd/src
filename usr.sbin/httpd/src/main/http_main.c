@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.28 2003/02/16 17:16:12 cloder Exp $ */
+/* $OpenBSD: http_main.c,v 1.29 2003/04/08 20:13:08 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -5643,7 +5643,7 @@ int REALMAIN(int argc, char *argv[])
         memcpy(tpf_server_name, input_parms.parent.servname,
                INETD_SERVNAME_LENGTH);
         tpf_server_name[INETD_SERVNAME_LENGTH + 1] = '\0';
-        sprintf(tpf_mutex_key, "%.*x", TPF_MUTEX_KEY_SIZE - 1, getpid());
+        snprintf(tpf_mutex_key, sizeof(tpf_mutex_key), "%.*x", TPF_MUTEX_KEY_SIZE - 1, getpid());
         ap_open_logs(server_conf, plog);
         ap_tpf_zinet_checks(ap_standalone, tpf_server_name, server_conf);
         ap_tpf_save_argv(argc, argv);    /* save argv parms for children */
