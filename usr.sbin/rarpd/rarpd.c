@@ -1,4 +1,4 @@
-/*	$OpenBSD: rarpd.c,v 1.13 1997/09/12 04:07:20 millert Exp $ */
+/*	$OpenBSD: rarpd.c,v 1.14 1997/09/17 21:10:10 niklas Exp $ */
 /*	$NetBSD: rarpd.c,v 1.12 1996/03/21 18:28:23 jtc Exp $	*/
 
 /*
@@ -28,7 +28,7 @@ char    copyright[] =
 #endif				/* not lint */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rarpd.c,v 1.13 1997/09/12 04:07:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: rarpd.c,v 1.14 1997/09/17 21:10:10 niklas Exp $";
 #endif
 
 
@@ -261,11 +261,14 @@ init_all()
 	ifr = ifc.ifc_req;
 	for (i = 0; i < ifc.ifc_len;
 	     i += len, ifr = (struct ifreq *)((caddr_t)ifr + len)) {
-		len = sizeof(ifr->ifr_name) + ifr->ifr_addr.sa_len;
+		len = sizeof(ifr->ifr_name) +
+		      (ifr->ifr_addr.sa_len > sizeof(struct sockaddr) ?
+		       ifr->ifr_addr.sa_len : sizeof(struct sockaddr));
+
 		if (ioctl(fd, SIOCGIFFLAGS, (caddr_t)ifr) < 0) {
 			free(inbuf);
-			err(FATAL, "init_all: SIOCGIFFLAGS: %s",
-			    strerror(errno));
+			err(FATAL, "init_all: SIOCGIFFLAGS %s: %s",
+			    ifr->ifr_name, strerror(errno));
 			/* NOTREACHED */
 		}
 		if ((ifr->ifr_flags &
