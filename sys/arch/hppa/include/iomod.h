@@ -1,4 +1,4 @@
-/*	$OpenBSD: iomod.h,v 1.4 1999/01/11 18:14:52 mickey Exp $	*/
+/*	$OpenBSD: iomod.h,v 1.5 1999/02/25 17:25:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1990 mt Xinu, Inc.  All rights reserved.
@@ -277,7 +277,6 @@ struct iomod {
 	caddr_t	io_spa;		/* (WO) SPA space; 0-20:addr, 24-31:iodc_spa */
 	int	resv1[2];	/* (reserved) */
 	u_int	io_command;	/* (WO) module commands (see below) */
-#define	iomod_command	(4*12)
 	u_int	io_status;	/* (RO) error returns (see below) */
 	u_int	io_control;	/* memory err logging (bit-9), bc forwarding */
 	u_int	io_test;	/* (RO) self-test information */
@@ -303,6 +302,9 @@ struct iomod {
 	int	hvrs[512];	/* HVRSes (HVERSION-dependent Register Sets) */
 };
 #endif	/* !_LOCORE */
+
+/* primarily for a "reboot" and "_rtt" routines */
+#define	iomod_command	(4*12)
 
 /* io_flex */
 #define	DMA_ENABLE	0x1	/* flex register enable DMA bit */
