@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_san_obsd.c,v 1.4 2004/07/16 15:11:45 alex Exp $	*/
+/*	$OpenBSD: if_san_obsd.c,v 1.5 2004/11/28 23:39:45 canacar Exp $	*/
 
 /*-
  * Copyright (c) 2001-2004 Sangoma Technologies (SAN)
@@ -126,6 +126,7 @@ wanpipe_generic_register(sdla_t *card, struct ifnet *ifp, char *ifname)
 	ifp->if_flags = IFF_POINTOPOINT | IFF_MULTICAST;
 	((struct sppp *)ifp)->pp_flags |= PP_CISCO;
 	((struct sppp *)ifp)->pp_flags |= PP_KEEPALIVE;
+	((struct sppp *)ifp)->pp_framebytes = 3;
 	ifp->if_ioctl = wanpipe_generic_ioctl;	/* Will set from new_if() */
 	ifp->if_start = wanpipe_generic_start;
 	ifp->if_watchdog = wanpipe_generic_watchdog;

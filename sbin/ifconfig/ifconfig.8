@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.90 2004/11/06 00:54:19 reyk Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.91 2004/11/28 23:39:45 canacar Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -88,6 +88,20 @@
 .Ar interface
 .Cm group
 .Ar group-name
+.Nm
+.Ar pppoe-interface
+.Oo
+.Cm pppoedev
+.Ar parent-interface
+.Oc
+.Oo
+.Cm pppoesvc
+.Ar service
+.Oc
+.Oo
+.Cm pppoeac
+.Ar access-concentrator
+.Oc
 .Sh DESCRIPTION
 The
 .Nm
@@ -555,6 +569,17 @@ Disable 802.11 power saving mode.
 .It Cm powersavesleep Ar duration
 (IEEE 802.11 devices only)
 Set the receiver sleep duration (in milliseconds) for 802.11 power saving mode.
+.It Cm pppoedev Ar parent-interface
+Set the name of the interface through which the pppoe packets
+will be transmitted and received.
+.It Cm pppoesvc Ar service
+Set the service name of the pppoe interface.
+.It Fl pppoesvc
+Clear a previously set service name.
+.It Cm pppoeac Ar access-concentrator
+Set the name of the access-concentrator for pppoe interface.
+.It Fl pppoeac
+Clear a previously set access-concentrator name.
 .It Cm prefixlen Ar n
 (inet and inet6 only)
 Effect is similar to
@@ -756,6 +781,7 @@ tried to alter an interface's configuration.
 .Xr netintro 4 ,
 .Xr pfsync 4 ,
 .Xr ppp 4 ,
+.Xr pppoe 4 ,
 .Xr sl 4 ,
 .Xr tun 4 ,
 .Xr vlan 4 ,

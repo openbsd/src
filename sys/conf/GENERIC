@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.111 2004/11/24 18:53:15 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.112 2004/11/28 23:39:45 canacar Exp $
 #
 #	Machine-independent option; used by all architectures for their
 #	GENERIC kernel
@@ -103,5 +103,7 @@ pseudo-device	vlan 		# IEEE 802.1Q VLAN
 
 # for IPv6
 #pseudo-device	faith	1	# IPv[46] tcp relay translation i/f
+
+pseudo-device	pppoe	1	# PPP over Ethernet (RFC 2516)
 
 option		BOOT_CONFIG	# add support for boot -c

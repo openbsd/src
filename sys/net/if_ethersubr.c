@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.80 2004/10/09 19:55:29 brad Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.81 2004/11/28 23:39:45 canacar Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -120,6 +120,11 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
 #include "carp.h"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
+#endif
+
+#include "pppoe.h"
+#if NPPPOE > 0
+#include <net/if_pppoe.h>
 #endif
 
 #ifdef INET6
@@ -575,6 +580,9 @@ ether_input(ifp, eh, m)
 	int s, llcfound = 0;
 	struct llc *l;
 	struct arpcom *ac;
+#if NPPPOE > 0
+	struct ether_header *eh_tmp;
+#endif
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
 		m_freem(m);
@@ -717,6 +725,37 @@ decapsulate:
 		aarpinput((struct arpcom *)ifp, m);
 		return;
 #endif
+#if NPPPOE > 0
+	case ETHERTYPE_PPPOEDISC:
+	case ETHERTYPE_PPPOE:
+		/* XXX we dont have this flag */
+		/*
+		if (m->m_flags & M_PROMISC) {
+			m_freem(m);
+			return;
+		}
+		*/
+#ifndef PPPOE_SERVER
+		if (m->m_flags & (M_MCAST | M_BCAST)) {
+			m_freem(m);
+			return;
+		}
+#endif
+		M_PREPEND(m, sizeof(*eh), M_DONTWAIT);
+		if (m == NULL)
+			return;
+		
+		eh_tmp = mtod(m, struct ether_header *);
+		bcopy(eh, eh_tmp, sizeof(struct ether_header));
+		
+		if (etype == ETHERTYPE_PPPOEDISC) 
+			inq = &ppoediscinq;
+		else
+			inq = &ppoeinq;
+
+		schednetisr(NETISR_PPPOE);
+		break;
+#endif /* NPPPOE > 0 */
 	default:
 		if (llcfound || etype > ETHERMTU)
 			goto dropanyway;

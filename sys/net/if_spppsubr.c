@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_spppsubr.c,v 1.24 2004/07/16 15:01:09 henning Exp $	*/
+/*	$OpenBSD: if_spppsubr.c,v 1.25 2004/11/28 23:39:45 canacar Exp $	*/
 /*
  * Synchronous PPP/Cisco link level subroutines.
  * Keepalive protocol implemented in both Cisco and PPP modes.
@@ -456,15 +456,15 @@ spppattach(struct ifnet *ifp)
 void
 sppp_input(struct ifnet *ifp, struct mbuf *m)
 {
-	struct ppp_header *h;
+	struct ppp_header *h, ht;
 	struct ifqueue *inq = 0;
 	int s;
 	struct sppp *sp = (struct sppp *)ifp;
 	int debug = ifp->if_flags & IFF_DEBUG;
 
 	if (ifp->if_flags & IFF_UP)
-		/* Count received bytes, add FCS and one flag */
-		ifp->if_ibytes += m->m_pkthdr.len + 3;
+		/* Count received bytes, add hardware framing */
+		ifp->if_ibytes += m->m_pkthdr.len + sp->pp_framebytes;
 
 	if (m->m_pkthdr.len <= PPP_HEADER_LEN) {
 		/* Too small packet, drop it. */
@@ -479,9 +479,17 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 		return;
 	}
 
-	/* Get PPP header. */
-	h = mtod (m, struct ppp_header*);
-	m_adj (m, PPP_HEADER_LEN);
+	if (sp->pp_flags & PP_NOFRAMING) {
+		memcpy(&ht.protocol, mtod(m, void *), 2);
+		m_adj(m, 2);
+		ht.control = PPP_UI;
+		ht.address = PPP_ALLSTATIONS;
+		h = &ht;
+	} else {
+		/* Get PPP header. */
+		h = mtod (m, struct ppp_header*);
+		m_adj (m, PPP_HEADER_LEN);
+	}
 
 	switch (h->address) {
 	case PPP_ALLSTATIONS:
@@ -639,6 +647,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	struct ppp_header *h;
 	struct ifqueue *ifq = NULL;
 	int s, len, rv = 0;
+	u_int16_t protocol;
 
 	s = splimp();
 
@@ -666,10 +675,18 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	 * in front of the queue.
 	 */
 	if (dst->sa_family == AF_INET) {
-		/* XXX Check mbuf length here? */
-		struct ip *ip = mtod (m, struct ip*);
-		struct tcphdr *tcp = (struct tcphdr*) ((long*)ip + ip->ip_hl);
+		struct ip *ip = NULL;
+		struct tcphdr *th = NULL;
 
+		if (m->m_len >= sizeof(struct ip)) {
+			ip = mtod(m, struct ip *);
+			if (ip->ip_p == IPPROTO_TCP &&
+			    m->m_len >= sizeof(struct ip) + (ip->ip_hl << 2) +
+			    sizeof(struct tcphdr)) {
+				th = (struct tcphdr *)
+				    ((caddr_t)ip + (ip->ip_hl << 2));
+			}
+		}
 		/*
 		 * When using dynamic local IP address assignment by using
 		 * 0.0.0.0 as a local address, the first TCP session will
@@ -681,32 +698,32 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		 * - we flag TCP packets with src ip 0 as an error
 		 */
 
-		if(ip->ip_src.s_addr == INADDR_ANY)     /* -hm */
-		{
+		if(ip && ip->ip_src.s_addr == INADDR_ANY) {
+			u_int8_t proto = ip->ip_p;
+
 			m_freem(m);
 			splx(s);
-			if(ip->ip_p == IPPROTO_TCP)
+			if(proto == IPPROTO_TCP)
 				return (EADDRNOTAVAIL);
 			else
 				return (0);
 		}
 
-
-		if (! IF_QFULL (&sp->pp_fastq) &&
-		    ((ip->ip_tos & IPTOS_LOWDELAY) ||
-	    	     (ip->ip_p == IPPROTO_TCP &&
-	    	      m->m_len >= sizeof (struct ip) + sizeof (struct tcphdr) &&
-	    	      (INTERACTIVE (ntohs (tcp->th_sport)) ||
-	    	       INTERACTIVE (ntohs (tcp->th_dport))))))
+		if (!IF_QFULL(&sp->pp_fastq) &&
+		    ((ip && (ip->ip_tos & IPTOS_LOWDELAY)) ||
+	    	      (th && (INTERACTIVE(ntohs(th->th_sport)) ||
+	    	       INTERACTIVE(ntohs(th->th_dport))))))
 			ifq = &sp->pp_fastq;
 	}
 #endif
 
+	if (sp->pp_flags & PP_NOFRAMING)
+		goto skip_header;
 	/*
 	 * Prepend general data packet PPP header. For now, IP only.
 	 */
 	M_PREPEND (m, PPP_HEADER_LEN, M_DONTWAIT);
-	if (! m) {
+	if (!m) {
 		if (ifp->if_flags & IFF_DEBUG)
 			log(LOG_DEBUG, SPP_FMT "no memory for transmit header\n",
 				SPP_ARGS(ifp));
@@ -727,11 +744,12 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 		h->control = PPP_UI;                 /* Unnumbered Info */
 	}
 
+ skip_header:
 	switch (dst->sa_family) {
 #ifdef INET
 	case AF_INET:   /* Internet Protocol */
 		if (sp->pp_flags & PP_CISCO)
-			h->protocol = htons (ETHERTYPE_IP);
+			protocol = htons (ETHERTYPE_IP);
 		else {
 			/*
 			 * Don't choke with an ENETDOWN early.  It's
@@ -742,7 +760,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			 * not ready to carry IP packets, and return
 			 * ENETDOWN, as opposed to ENOBUFS.
 			 */
-			h->protocol = htons(PPP_IP);
+			protocol = htons(PPP_IP);
 			if (sp->state[IDX_IPCP] != STATE_OPENED)
 				rv = ENETDOWN;
 		}
@@ -750,22 +768,37 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 #endif
 #ifdef NS
 	case AF_NS:     /* Xerox NS Protocol */
-		h->protocol = htons ((sp->pp_flags & PP_CISCO) ?
+		protocol = htons ((sp->pp_flags & PP_CISCO) ?
 			ETHERTYPE_NS : PPP_XNS);
 		break;
 #endif
 #ifdef IPX
 	case AF_IPX:     /* Novell IPX Protocol */
-		h->protocol = htons ((sp->pp_flags & PP_CISCO) ?
+		protocol = htons ((sp->pp_flags & PP_CISCO) ?
 			ETHERTYPE_IPX : PPP_IPX);
 		break;
 #endif
 	default:
-		m_freem (m);
+		m_freem(m);
 		++ifp->if_oerrors;
-		splx (s);
+		splx(s);
 		return (EAFNOSUPPORT);
 	}
+
+	if (sp->pp_flags & PP_NOFRAMING) {
+		M_PREPEND(m, 2, M_DONTWAIT);
+		if (m == NULL) {
+			if (ifp->if_flags & IFF_DEBUG)
+				log(LOG_DEBUG, SPP_FMT
+				    "no memory for transmit header\n",
+				    SPP_ARGS(ifp));
+			++ifp->if_oerrors;
+			splx(s);
+			return (ENOBUFS);
+		}
+		*mtod(m, u_int16_t *) = protocol;
+	} else
+		h->protocol = protocol;
 
 	/*
 	 * Queue message on interface, and start output if interface
@@ -782,17 +815,18 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			m_freem (m);
 			if (rv == 0)
 				rv = ENOBUFS;
-		}
-		IF_ENQUEUE (ifq, m);
+		} else
+			IF_ENQUEUE (ifq, m);
 	} else
 		IFQ_ENQUEUE(&ifp->if_snd, m, NULL, rv);
+
 	if (rv != 0) {
 		++ifp->if_oerrors;
 		splx (s);
 		return (rv);
 	}
 
-	if (! (ifp->if_flags & IFF_OACTIVE))
+	if (!(ifp->if_flags & IFF_OACTIVE))
 		(*ifp->if_start) (ifp);
 
 	/*
@@ -800,7 +834,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	 * The packet length includes header, FCS and 1 flag,
 	 * according to RFC 1333.
 	 */
-	ifp->if_obytes += len + 3;
+	ifp->if_obytes += len + sp->pp_framebytes;
 	splx (s);
 	return (0);
 }
@@ -811,13 +845,14 @@ sppp_attach(struct ifnet *ifp)
 	struct sppp *sp = (struct sppp*) ifp;
 
 	/* Initialize keepalive handler. */
-	if (! spppq)
+	if (! spppq) {
 #if defined (__FreeBSD__)
 		keepalive_ch = timeout(sppp_keepalive, 0, hz * 10);
 #elif defined(__OpenBSD__)
 		timeout_set(&keepalive_ch, sppp_keepalive, NULL);
 		timeout_add(&keepalive_ch, hz * 10);
 #endif
+	}
 
 	/* Insert new entry into the keepalive list. */
 	sp->pp_next = spppq;
@@ -1163,7 +1198,7 @@ sppp_cisco_send(struct sppp *sp, int type, long par1, long par2)
 	if (! (ifp->if_flags & IFF_OACTIVE))
 		(*ifp->if_start) (ifp);
 	if (m != NULL)
-		ifp->if_obytes += m->m_pkthdr.len + 3;
+		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
 /*
@@ -1181,21 +1216,28 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 	struct ppp_header *h;
 	struct lcp_header *lh;
 	struct mbuf *m;
+	size_t pkthdrlen;
 
-	if (len > MHLEN - PPP_HEADER_LEN - LCP_HEADER_LEN)
-		len = MHLEN - PPP_HEADER_LEN - LCP_HEADER_LEN;
+	pkthdrlen = (sp->pp_flags & PP_NOFRAMING) ? 2 : PPP_HEADER_LEN;
+
+	if (len > MHLEN - pkthdrlen - LCP_HEADER_LEN)
+		len = MHLEN - pkthdrlen - LCP_HEADER_LEN;
 	MGETHDR (m, M_DONTWAIT, MT_DATA);
 	if (! m)
 		return;
-	m->m_pkthdr.len = m->m_len = PPP_HEADER_LEN + LCP_HEADER_LEN + len;
+	m->m_pkthdr.len = m->m_len = pkthdrlen + LCP_HEADER_LEN + len;
 	m->m_pkthdr.rcvif = 0;
 
-	h = mtod (m, struct ppp_header*);
-	h->address = PPP_ALLSTATIONS;        /* broadcast address */
-	h->control = PPP_UI;                 /* Unnumbered Info */
-	h->protocol = htons (proto);         /* Link Control Protocol */
-
-	lh = (struct lcp_header*) (h + 1);
+	if (sp->pp_flags & PP_NOFRAMING) {
+		*mtod(m, u_int16_t *) = htons(proto);
+		lh = (struct lcp_header *)(mtod(m, u_int8_t *) + 2);
+	} else {	
+		h = mtod (m, struct ppp_header*);
+		h->address = PPP_ALLSTATIONS;	/* broadcast address */
+		h->control = PPP_UI;		/* Unnumbered Info */
+		h->protocol = htons (proto);	/* Link Control Protocol */
+		lh = (struct lcp_header*) (h + 1);
+	}
 	lh->type = type;
 	lh->ident = ident;
 	lh->len = htons (LCP_HEADER_LEN + len);
@@ -1220,10 +1262,10 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 		m = NULL;
 	} else
 		IF_ENQUEUE (&sp->pp_cpq, m);
-	if (! (ifp->if_flags & IFF_OACTIVE))
+	if (!(ifp->if_flags & IFF_OACTIVE))
 		(*ifp->if_start) (ifp);
 	if (m != NULL)
-		ifp->if_obytes += m->m_pkthdr.len + 3;
+		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
 /*
@@ -2241,11 +2283,7 @@ sppp_lcp_RCN_nak(struct sppp *sp, struct lcp_header *h, int len)
 				if (magic == ~sp->lcp.magic) {
 					if (debug)
 						addlog("magic glitch ");
-#if defined (__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
-					sp->lcp.magic = random();
-#else
-					sp->lcp.magic = time.tv_sec + time.tv_usec;
-#endif
+					sp->lcp.magic = arc4random();
 				} else {
 					sp->lcp.magic = magic;
 					if (debug)
@@ -3708,7 +3746,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp, u_char type, u_char id,
 	struct mbuf *m;
 	u_char *p;
 	int len;
-	size_t mlen;
+	size_t mlen, pkthdrlen;
 	const char *msg;
 	va_list ap;
 
@@ -3717,12 +3755,19 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp, u_char type, u_char id,
 		return;
 	m->m_pkthdr.rcvif = 0;
 
-	h = mtod (m, struct ppp_header*);
-	h->address = PPP_ALLSTATIONS;		/* broadcast address */
-	h->control = PPP_UI;			/* Unnumbered Info */
-	h->protocol = htons(cp->proto);
+	if (sp->pp_flags & PP_NOFRAMING) {
+		*mtod(m, u_int16_t *) = htons(cp->proto);
+		pkthdrlen = 2;
+		lh = (struct lcp_header *)(mtod(m, u_int8_t *) + 2);
+	} else {
+		h = mtod (m, struct ppp_header*);
+		h->address = PPP_ALLSTATIONS;	/* broadcast address */
+		h->control = PPP_UI;		/* Unnumbered Info */
+		h->protocol = htons(cp->proto);
+		pkthdrlen = PPP_HEADER_LEN;
+		lh = (struct lcp_header*)(h + 1);
+	}
 
-	lh = (struct lcp_header*)(h + 1);
 	lh->type = type;
 	lh->ident = id;
 	p = (u_char*) (lh+1);
@@ -3733,7 +3778,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp, u_char type, u_char id,
 	while ((mlen = va_arg(ap, size_t)) != 0) {
 		msg = va_arg(ap, const char *);
 		len += mlen;
-		if (len > MHLEN - PPP_HEADER_LEN - LCP_HEADER_LEN) {
+		if (len > MHLEN - pkthdrlen - LCP_HEADER_LEN) {
 			va_end(ap);
 			m_freem(m);
 			return;
@@ -3744,7 +3789,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp, u_char type, u_char id,
 	}
 	va_end(ap);
 
-	m->m_pkthdr.len = m->m_len = PPP_HEADER_LEN + LCP_HEADER_LEN + len;
+	m->m_pkthdr.len = m->m_len = pkthdrlen + LCP_HEADER_LEN + len;
 	lh->len = htons (LCP_HEADER_LEN + len);
 
 	if (debug) {
@@ -3767,7 +3812,7 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp, u_char type, u_char id,
 	if (! (ifp->if_flags & IFF_OACTIVE))
 		(*ifp->if_start) (ifp);
 	if (m != NULL)
-		ifp->if_obytes += m->m_pkthdr.len + 3;
+		ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
 }
 
 /*

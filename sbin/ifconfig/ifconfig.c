@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.119 2004/11/17 01:47:20 itojun Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.120 2004/11/28 23:39:45 canacar Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.119 2004/11/17 01:47:20 itojun Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.120 2004/11/28 23:39:45 canacar Exp $";
 #endif
 #endif /* not lint */
 
@@ -100,6 +100,7 @@ static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.119 2004/11/17 01:47:20 it
 #include <net80211/ieee80211_ioctl.h>
 #include <net/pfvar.h>
 #include <net/if_pfsync.h>
+#include <net/if_pppoe.h>
 
 #include <netatalk/at.h>
 
@@ -208,6 +209,10 @@ void	unsetpfsync_syncif(const char *, int);
 void	setpfsync_syncpeer(const char *, int);
 void	unsetpfsync_syncpeer(const char *, int);
 void	pfsync_status(void);
+void	setpppoe_dev(const char *,int);
+void	setpppoe_svc(const char *,int);
+void	setpppoe_ac(const char *,int);
+void	pppoe_status(void);
 int	main(int, char *[]);
 int	prefix(void *val, int);
 
@@ -328,6 +333,11 @@ const struct	cmd {
 	{ "timeslot",	NEXTARG,	0,		settimeslot },
 	{ "description", NEXTARG,	0,		setifdesc },
 	{ "descr",	NEXTARG,	0,		setifdesc },
+	{ "pppoedev",	NEXTARG,	0,		setpppoe_dev },
+	{ "pppoesvc",	NEXTARG,	0,		setpppoe_svc },
+	{ "-pppoesvc",	1,		0,		setpppoe_svc },
+	{ "pppoeac",	NEXTARG,	0,		setpppoe_ac },
+	{ "-pppoeac",	1,		0,		setpppoe_ac },
 	{ NULL, /*src*/	0,		0,		setifaddr },
 	{ NULL, /*dst*/	0,		0,		setifdstaddr },
 	{ NULL, /*illegal*/0,		0,		NULL },
@@ -1938,6 +1948,7 @@ status(int link, struct sockaddr_dl *sdl)
 	carp_status();
 	pfsync_status();
 	ieee80211_status();
+	pppoe_status();
 	getifgroups();
 
 	(void) memset(&ifmr, 0, sizeof(ifmr));
@@ -2734,6 +2745,7 @@ vlan_status(void)
 		    "<none>" : vreq.vlr_parent);
 }
 
+
 /* ARGSUSED */
 void
 setvlantag(const char *val, int d)
@@ -3111,6 +3123,135 @@ pfsync_status(void)
 		printf("maxupd: %d\n", preq.pfsyncr_maxupdates);
 	}
 }
+
+
+void
+pppoe_status(void)
+{
+	struct pppoediscparms parms;
+	struct pppoeconnectionstate state;
+	struct timeval temp_time;
+	long diff_time;
+	unsigned long day, hour, min, sec;
+	int e;
+		
+	day = hour = min = sec = 0; /* XXX make gcc happy */
+		
+	memset(&state, 0, sizeof(state));
+	memset(&temp_time, 0, sizeof(temp_time));
+
+	strlcpy(parms.ifname, name, sizeof(parms.ifname));
+	if (ioctl(s, PPPOEGETPARMS, &parms))
+		return;
+
+	printf("\tdev: %s ", parms.eth_ifname);
+
+	if (*parms.ac_name)
+		printf("ac: %s ", parms.ac_name);
+	if (*parms.service_name)
+		printf("svc: %s ", parms.service_name);
+
+	strlcpy(state.ifname, name, sizeof(state.ifname));
+	if (ioctl(s, PPPOEGETSESSION, &state))
+		err(1, "PPPOEGETSESSION");
+
+	printf("state: ");
+	switch(state.state) {
+	case PPPOE_STATE_INITIAL:
+		printf("initial"); break;
+	case PPPOE_STATE_PADI_SENT:
+		printf("PADI sent"); break;
+	case PPPOE_STATE_PADR_SENT:
+		printf("PADR sent"); break;
+	case PPPOE_STATE_SESSION:
+		printf("session"); break;
+	case PPPOE_STATE_CLOSING:
+		printf("closing"); break;
+	}
+	printf("\n\tsid: 0x%x", state.session_id);
+	printf(" PADI retries: %d", state.padi_retry_no);
+	printf(" PADR retries: %d", state.padr_retry_no);
+
+	if (state.state == PPPOE_STATE_SESSION) {
+		if (state.session_time.tv_sec != 0) {
+			gettimeofday(&temp_time, NULL);
+			diff_time = temp_time.tv_sec -
+			    state.session_time.tv_sec;
+
+			day = diff_time / (60 * 60 * 24);
+			diff_time %= (60 * 60 * 24);
+
+			hour = diff_time / (60 * 60);
+			diff_time %= (60 * 60);
+
+			min = diff_time / 60;
+			diff_time %= 60;
+
+			sec = diff_time;
+		}     
+		printf(" time: ");
+		if (day != 0) printf("%ldd ", day);
+		printf("%ld:%ld:%ld", hour, min, sec);
+	}
+	putchar('\n');
+}
+
+
+/* ARGSUSED */
+void
+setpppoe_dev(const char *val, int d)
+{
+	struct pppoediscparms parms;
+
+	strlcpy(parms.ifname, name, sizeof(parms.ifname));
+	if (ioctl(s, PPPOEGETPARMS, &parms))
+		return;
+	
+	strlcpy(parms.eth_ifname, val, sizeof(parms.eth_ifname));
+
+	if (ioctl(s, PPPOESETPARMS, &parms))
+		err(1, "PPPOESETPARMS");
+}
+
+
+/* ARGSUSED */
+void
+setpppoe_svc(const char *val, int d)
+{
+	struct pppoediscparms parms;
+
+	strlcpy(parms.ifname, name, sizeof(parms.ifname));
+	if (ioctl(s, PPPOEGETPARMS, &parms))
+		return;
+
+	if (d == 0)
+		strlcpy(parms.service_name, val, sizeof(parms.service_name));
+	else
+		memset(parms.service_name, 0, sizeof(parms.service_name));
+
+	if (ioctl(s, PPPOESETPARMS, &parms))
+		err(1, "PPPOESETPARMS");
+}
+
+/* ARGSUSED */
+void
+setpppoe_ac(const char *val, int d)
+{
+	struct pppoediscparms parms;
+
+	strlcpy(parms.ifname, name, sizeof(parms.ifname));
+	if (ioctl(s, PPPOEGETPARMS, &parms))
+		return;
+
+	if (d == 0)
+		strlcpy(parms.ac_name, val, sizeof(parms.ac_name));
+	else
+		memset(parms.ac_name, 0, sizeof(parms.ac_name));
+
+	if (ioctl(s, PPPOESETPARMS, &parms))
+		err(1, "PPPOESETPARMS");
+}
+
 
 #ifdef INET6
 char *

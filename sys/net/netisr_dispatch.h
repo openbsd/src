@@ -1,4 +1,4 @@
-/*	$OpenBSD: netisr_dispatch.h,v 1.6 2004/10/17 20:17:30 grange Exp $	*/
+/*	$OpenBSD: netisr_dispatch.h,v 1.7 2004/11/28 23:39:45 canacar Exp $	*/
 /* $NetBSD: netisr_dispatch.h,v 1.2 2000/07/02 04:40:47 cgd Exp $ */
 
 /*
@@ -25,6 +25,7 @@
 #include "ether.h"
 #include "ppp.h"
 #include "bridge.h"
+#include "pppoe.h"
 #endif
 
 /*
@@ -64,4 +65,7 @@
 #endif
 #if NBRIDGE > 0
         DONETISR(NETISR_BRIDGE,bridgeintr);
+#endif
+#if NPPPOE > 0
+	DONETISR(NETISR_PPPOE,pppoeintr);
 #endif

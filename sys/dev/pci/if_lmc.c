@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_lmc.c,v 1.17 2004/05/12 06:35:11 tedu Exp $ */
+/*	$OpenBSD: if_lmc.c,v 1.18 2004/11/28 23:39:45 canacar Exp $ */
 /*	$NetBSD: if_lmc.c,v 1.1 1999/03/25 03:32:43 explorer Exp $	*/
 
 /*-
@@ -1451,6 +1451,7 @@ lmc_attach(lmc_softc_t * const sc)
 #if defined(__NetBSD__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 	sppp_attach((struct ifnet *)&sc->lmc_sppp);
 	sc->lmc_sppp.pp_flags = PP_CISCO | PP_KEEPALIVE;
+	sc->lmc_sppp.pp_framebytes = 3;
 #endif
 #if defined(__bsdi__)
 	sc->lmc_p2pcom.p2p_mdmctl = lmc_mdmctl;
