@@ -57,6 +57,7 @@ static char rcsid[] = "$NetBSD: worm.c,v 1.7 1995/04/29 01:12:41 mycroft Exp $";
 #include <signal.h>
 #include <stdlib.h>
 #include <termios.h>
+#include <unistd.h>
 
 #define newlink() (struct body *) malloc(sizeof (struct body));
 #define HEAD '@'
@@ -81,8 +82,19 @@ int start_len = LENGTH;
 char lastch;
 char outbuf[BUFSIZ];
 
-void leave(), wake(), suspend();
+void	crash __P((void));
+void	display __P((struct body *, char));
+void	leave __P((int));
+void	life __P((void));
+void	newpos __P((struct body *));
+void	process __P((char));
+void	prize __P((void));
+int	rnd __P((int));
+void	setup __P((void));
+void	suspend __P((int));
+void	wake __P((int));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -93,12 +105,8 @@ main(argc, argv)
 	setegid(getgid());
 	setgid(getgid());
 
-	if (argc == 2)
-		start_len = atoi(argv[1]);
-	if ((start_len <= 0) || (start_len > 500))
-		start_len = LENGTH;
 	setbuf(stdout, outbuf);
-	srand(getpid());
+	srandom(getpid());
 	signal(SIGALRM, wake);
 	signal(SIGINT, leave);
 	signal(SIGQUIT, leave);
@@ -108,6 +116,10 @@ main(argc, argv)
 	noecho();
 	slow = (baudrate() <= 1200);
 	clear();
+	if (argc == 2)
+		start_len = atoi(argv[1]);
+	if ((start_len <= 0) || (start_len > ((LINES-3) * (COLS-2)) / 3))
+		start_len = LENGTH;
 	stw = newwin(1, COLS-1, 0, 0);
 	tv = newwin(LINES-1, COLS-1, 1, 0);
 	box(tv, '*', '*');
@@ -136,28 +148,36 @@ main(argc, argv)
 	}
 }
 
+void
 life()
 {
 	register struct body *bp, *np;
-	register int i;
+	register int i,j = 1;
 
 	head = newlink();
-	head->x = start_len+2;
-	head->y = 12;
+	head->x = start_len % (COLS-5) + 2;
+	head->y = LINES / 2;
 	head->next = NULL;
 	display(head, HEAD);
 	for (i = 0, bp = head; i < start_len; i++, bp = np) {
 		np = newlink();
 		np->next = bp;
 		bp->prev = np;
-		np->x = bp->x - 1;
-		np->y = bp->y;
+		if (((bp->x <= 2) && (j == 1)) || ((bp->x >= COLS-4)) && (j == -1)) {
+			j *= -1;
+			np->x = bp->x;
+			np->y = bp->y + 1;
+		} else {
+			np->x = bp->x - j;
+			np->y = bp->y;
+		}
 		display(np, BODY);
 	}
 	tail = np;
 	tail->prev = NULL;
 }
 
+void
 display(pos, chr)
 struct body *pos;
 char chr;
@@ -167,25 +187,30 @@ char chr;
 }
 
 void
-leave()
+leave(dummy)
+int dummy;
 {
 	endwin();
 	exit(0);
 }
 
 void
-wake()
+wake(dummy)
+int dummy;
 {
 	signal(SIGALRM, wake);
 	fflush(stdout);
 	process(lastch);
 }
 
+int
 rnd(range)
+int range;
 {
-	return abs((rand()>>5)+(rand()>>5)) % range;
+	return random() % range;
 }
 
+void
 newpos(bp)
 struct body * bp;
 {
@@ -196,6 +221,7 @@ struct body * bp;
 	} while(winch(tv) != ' ');
 }
 
+void
 prize()
 {
 	int value;
@@ -206,6 +232,7 @@ prize()
 	wrefresh(tv);
 }
 
+void
 process(ch)
 char ch;
 {
@@ -226,7 +253,7 @@ char ch;
 		case 'K': y--; running = RUNLEN/2; ch = tolower(ch); break;
 		case 'L': x++; running = RUNLEN; ch = tolower(ch); break;
 		case '\f': setup(); return;
-		case CNTRL('Z'): suspend(); return;
+		case CNTRL('Z'): suspend(0); return;
 		case CNTRL('C'): crash(); return;
 		case CNTRL('D'): crash(); return;
 		default: if (! running) alarm(1);
@@ -250,7 +277,7 @@ char ch;
 		prize();
 		score += growing;
 		running = 0;
-		wmove(stw, 0, 68);
+		wmove(stw, 0, COLS - 12);
 		wprintw(stw, "Score: %3d", score);
 		wrefresh(stw);
 	}
@@ -269,22 +296,21 @@ char ch;
 		alarm(1);
 }
 
+void
 crash()
 {
 	sleep(2);
 	clear();
-	move(23, 0);
-	refresh();
+	endwin();
 	printf("Well, you ran into something and the game is over.\n");
 	printf("Your final score was %d\n", score);
-	leave();
+	exit(0);  /* leave() calls endwin(), which would hose the printf()'s */
 }
 
 void
-suspend()
+suspend(dummy)
+int dummy;
 {
-	char *sh;
-
 	move(LINES-1, 0);
 	refresh();
 	endwin();
@@ -296,6 +322,7 @@ suspend()
 	setup();
 }
 
+void
 setup()
 {
 	clear();
