@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.35 2005/01/14 18:02:04 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.36 2005/01/24 16:12:56 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -102,7 +102,7 @@ static struct cvs_cmd {
 		NULL,
 	},
 	{
-		-1, "admin",    { "adm", "rcs" }, NULL,
+		CVS_OP_ADMIN, "admin",    { "adm", "rcs" }, NULL,
 		"",
 		"",
 		"Administration front end for rcs",
@@ -137,21 +137,21 @@ static struct cvs_cmd {
 		NULL,
 	},
 	{
-		-1, "edit",     {              }, NULL,
+		CVS_OP_EDIT, "edit",     {              }, NULL,
 		"",
 		"",
 		"Get ready to edit a watched file",
 		NULL,
 	},
 	{
-		-1, "editors",  {              }, NULL,
+		CVS_OP_EDITORS, "editors",  {              }, NULL,
 		"",
 		"",
 		"See who is editing a watched file",
 		NULL,
 	},
 	{
-		-1, "export",   { "ex",  "exp" }, NULL,
+		CVS_OP_EXPORT, "export",   { "ex",  "exp" }, NULL,
 		"",
 		"",
 		"Export sources from CVS, similar to checkout",
@@ -210,14 +210,14 @@ static struct cvs_cmd {
 		NULL,
 	},
 	{
-		-1, "rdiff",    {}, NULL,
+		CVS_OP_RDIFF, "rdiff",    {}, NULL,
 		"",
 		"",
 		"Create 'patch' format diffs between releases",
 		NULL,
 	},
 	{
-		-1, "release",  {}, NULL,
+		CVS_OP_RELEASE, "release",  {}, NULL,
 		"",
 		"",
 		"Indicate that a Module is no longer in use",
@@ -231,14 +231,14 @@ static struct cvs_cmd {
 		NULL,
 	},
 	{
-		-1, "rlog",     {}, NULL,
+		CVS_OP_RLOG, "rlog",     {}, NULL,
 		"",
 		"",
 		"Print out history information for a module",
 		NULL,
 	},
 	{
-		-1, "rtag",     {}, NULL,
+		CVS_OP_RTAG, "rtag",     {}, NULL,
 		"",
 		"",
 		"Add a symbolic tag to a module",
@@ -266,7 +266,7 @@ static struct cvs_cmd {
 		NULL,
 	},
 	{
-		-1, "unedit",   {}, NULL,
+		CVS_OP_UNEDIT, "unedit",   {}, NULL,
 		"",
 		"",
 		"Undo an edit command",
@@ -286,14 +286,14 @@ static struct cvs_cmd {
 		NULL,
 	},
 	{
-		-1, "watch",    {}, NULL,
+		CVS_OP_WATCH, "watch",    {}, NULL,
 		"",
 		"",
 		"Set watches",
 		NULL,
 	},
 	{
-		-1, "watchers", {}, NULL,
+		CVS_OP_WATCHERS, "watchers", {}, NULL,
 		"",
 		"",
 		"See who is watching a file",

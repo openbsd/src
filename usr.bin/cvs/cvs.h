@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.42 2005/01/13 17:53:34 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.43 2005/01/24 16:12:56 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -49,20 +49,32 @@
 /* operations */
 #define CVS_OP_UNKNOWN      0
 #define CVS_OP_ADD          1
-#define CVS_OP_ANNOTATE     2
-#define CVS_OP_CHECKOUT     3
-#define CVS_OP_COMMIT       4
-#define CVS_OP_DIFF         5
-#define CVS_OP_HISTORY      6
-#define CVS_OP_IMPORT       7
-#define CVS_OP_INIT         8
-#define CVS_OP_LOG          9
-#define CVS_OP_REMOVE      10
-#define CVS_OP_SERVER      11
-#define CVS_OP_STATUS      12
-#define CVS_OP_TAG         13
-#define CVS_OP_UPDATE      14
-#define CVS_OP_VERSION     15
+#define CVS_OP_ADMIN        2
+#define CVS_OP_ANNOTATE     3
+#define CVS_OP_CHECKOUT     4
+#define CVS_OP_COMMIT       5
+#define CVS_OP_DIFF         6
+#define CVS_OP_EDIT         7
+#define CVS_OP_EDITORS      8
+#define CVS_OP_EXPORT       9
+#define CVS_OP_HISTORY     10 
+#define CVS_OP_IMPORT      11
+#define CVS_OP_INIT        12
+#define CVS_OP_LOG         13
+#define CVS_OP_RANNOTATE   14
+#define CVS_OP_RDIFF       15
+#define CVS_OP_RELEASE     16
+#define CVS_OP_REMOVE      17
+#define CVS_OP_RLOG        18
+#define CVS_OP_RTAG        19
+#define CVS_OP_SERVER      20
+#define CVS_OP_STATUS      21
+#define CVS_OP_TAG         22
+#define CVS_OP_UNEDIT      23
+#define CVS_OP_UPDATE      24
+#define CVS_OP_VERSION     25
+#define CVS_OP_WATCH       26
+#define CVS_OP_WATCHERS    27
 
 #define CVS_OP_ANY         64     /* all operations */
 
