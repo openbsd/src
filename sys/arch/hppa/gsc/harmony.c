@@ -1,4 +1,4 @@
-/*	$OpenBSD: harmony.c,v 1.4 2003/01/27 01:38:21 jason Exp $	*/
+/*	$OpenBSD: harmony.c,v 1.5 2003/01/27 02:32:36 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -158,7 +158,7 @@ struct harmony_softc {
 	int sc_empty_rseg;
 	struct harmony_empty *sc_empty_kva;
 	struct harmony_dma *sc_dmas;
-	int sc_playing, sc_capturing, sc_intr_enable;
+	int sc_playing, sc_capturing;
 	struct harmony_channel sc_playback;
 };
 
@@ -326,6 +326,14 @@ harmony_attach(parent, self, aux)
 	    ((0x2 << GAINCTL_MONITOR_S) & GAINCTL_MONITOR_M) |
 	    0x0f000000;
 
+	/* reset codec */
+	harmony_set_gainctl(sc, GAINCTL_OUTPUT_LEFT_M |
+	    GAINCTL_OUTPUT_RIGHT_M | GAINCTL_MONITOR_M);
+	harmony_wait(sc);
+	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_RESET, 1);
+	DELAY(50000);
+	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_RESET, 0);
+
 	printf("\n");
 
 	audio_attach_mi(&harmony_sa_hw_if, sc, &sc->sc_dv);
@@ -342,20 +350,20 @@ harmony_intr(vsc)
 	u_int32_t dstatus;
 	int r = 0;
 
-	if (sc->sc_intr_enable == 0)
-		return (0);
-
 	harmony_intr_disable(sc);
+
 	harmony_wait(sc);
 
-	dstatus = bus_space_read_4(sc->sc_bt, sc->sc_bh, HARMONY_DSTATUS) &
-	    (DSTATUS_PLAYNXT | DSTATUS_CAPTNXT);
+	dstatus = bus_space_read_4(sc->sc_bt, sc->sc_bh, HARMONY_DSTATUS);
 
 	if (dstatus & DSTATUS_PLAYNXT) {
 		r = 1;
 		if (sc->sc_playing == 0) {
 			bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_PLAYNXT,
 			    sc->sc_playback_paddrs[sc->sc_playback_empty]);
+			bus_space_barrier(sc->sc_bt, sc->sc_bh,
+			    HARMONY_PLAYNXT, sizeof(u_int32_t),
+			    BUS_SPACE_BARRIER_WRITE);
 			if (++sc->sc_playback_empty == PLAYBACK_EMPTYS)
 				sc->sc_playback_empty = 0;
 		} else {
@@ -382,6 +390,9 @@ harmony_intr(vsc)
 
 			bus_space_write_4(sc->sc_bt, sc->sc_bh,
 			    HARMONY_PLAYNXT, nextaddr);
+			bus_space_barrier(sc->sc_bt, sc->sc_bh,
+			    HARMONY_PLAYNXT, sizeof(u_int32_t),
+			    BUS_SPACE_BARRIER_WRITE);
 			c->c_lastaddr = nextaddr + togo;
 
 			if (c->c_intr != NULL)
@@ -406,9 +417,10 @@ void
 harmony_intr_enable(struct harmony_softc *sc)
 {
 	harmony_wait(sc);
-	sc->sc_intr_enable = 1;
 	bus_space_write_4(sc->sc_bt, sc->sc_bh,
 	    HARMONY_DSTATUS, DSTATUS_INTRENA);
+	bus_space_barrier(sc->sc_bt, sc->sc_bh, HARMONY_DSTATUS,
+	    sizeof(u_int32_t), BUS_SPACE_BARRIER_WRITE);
 }
 
 void
@@ -416,7 +428,8 @@ harmony_intr_disable(struct harmony_softc *sc)
 {
 	harmony_wait(sc);
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_DSTATUS, 0);
-	sc->sc_intr_enable = 0;
+	bus_space_barrier(sc->sc_bt, sc->sc_bh, HARMONY_DSTATUS,
+	    sizeof(u_int32_t), BUS_SPACE_BARRIER_WRITE);
 }
 
 void
@@ -446,16 +459,6 @@ harmony_open(void *vsc, int flags)
 	if (sc->sc_open)
 		return (EBUSY);
 	sc->sc_open = 1;
-
-	/* silence */
-	harmony_set_gainctl(sc, GAINCTL_OUTPUT_LEFT_M |
-	    GAINCTL_OUTPUT_RIGHT_M | GAINCTL_MONITOR_M);
-
-	/* reset codec */
-	harmony_wait(sc);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_RESET, 1);
-	DELAY(50000);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_RESET, 0);
 
 	harmony_set_gainctl(sc, sc->sc_gainctl);
 
@@ -625,7 +628,6 @@ harmony_halt_output(void *vsc)
 {
 	struct harmony_softc *sc = vsc;
 
-	harmony_intr_disable(sc);
 	sc->sc_playing = 0;
 	return (0);
 }
@@ -635,7 +637,6 @@ harmony_halt_input(void *vsc)
 {
 	struct harmony_softc *sc = vsc;
 
-	harmony_intr_disable(sc);
 	sc->sc_capturing = 0;
 	return (0);
 }
@@ -940,14 +941,16 @@ harmony_trigger_output(void *vsc, void *start, void *end, int blksize,
 	if (n > c->c_blksz)
 		n = c->c_blksz;
 	c->c_cnt = n;
+	c->c_lastaddr = d->d_map->dm_segs[0].ds_addr + c->c_blksz;
 
+	sc->sc_playing = 1;
 	bus_dmamap_sync(sc->sc_dmat, d->d_map, 0, c->c_blksz,
 	    BUS_DMASYNC_PREWRITE);
 	bus_space_write_4(sc->sc_bt, sc->sc_bh, HARMONY_PLAYNXT,
 	    d->d_map->dm_segs[0].ds_addr);
-	c->c_lastaddr = d->d_map->dm_segs[0].ds_addr + n;
+	bus_space_barrier(sc->sc_bt, sc->sc_bh, HARMONY_PLAYNXT,
+	    sizeof(u_int32_t), BUS_SPACE_BARRIER_WRITE);
 
-	sc->sc_playing = 1;
 	harmony_intr_enable(sc);
 	return (0);
 }
