@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.85 2000/11/23 10:00:01 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.86 2000/11/23 23:37:44 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -284,8 +284,14 @@ utty*)
 	;;
 
 ttyC*)
+	unit=${i##ttyC}
+	case $unit in
+	[0123456789abcdef])	;;
+	*)			echo bad unit $unit for $i; exit 1;;
+	esac
+	num=$(( 16#$unit ))
 	rm -f ttyC$unit
-	mknod ttyC$unit c 12 $unit
+	mknod ttyC$unit c 12 $num
 	chown root.wheel ttyC$unit
 	;;
 
