@@ -22,7 +22,7 @@
 .Op Fl -help
 .Sh DESCRIPTION
 .Nm
-reads and displays the current tickets in the crential cache (also
+reads and displays the current tickets in the credential cache (also
 known as the ticket file).
 .Pp
 Options supported:
@@ -31,7 +31,7 @@ Options supported:
 .Fl c Ar cache Ns ,
 .Fl -cache= Ns Ar cache
 .Xc
-credentials cache to list
+credential cache to list
 .It Xo
 .Fl s Ns ,
 .Fl t Ns ,
@@ -55,7 +55,7 @@ display AFS tokens
 .Xc
 display v5 cred cache (this is the default)
 .It Fl f
-Include ticket flags in short form, each charcted stands for a
+Include ticket flags in short form, each character stands for a
 specific flag, as follows:
 .Bl -tag -width  XXX -compact -offset indent
 .It F
@@ -92,9 +92,9 @@ option, but in a more verbose way.
 Verbose output. Include all possible information:
 .Bl -tag -width XXXX -offset indent
 .It Server
-the princial the ticket is for
+the principal the ticket is for
 .It Ticket etype
-the encryption type use in the ticket, followed by the key version of
+the encryption type used in the ticket, followed by the key version of
 the ticket, if it is available
 .It Session key
 the encryption type of the session key, if it's different from the
@@ -102,7 +102,7 @@ encryption type of the ticket
 .It Auth time
 the time the authentication exchange took place
 .It Start time
-the time that this tickets is valid from (only printed if it's
+the time that this ticket is valid from (only printed if it's
 different from the auth time)
 .It End time
 when the ticket expires, if it has already expired this is also noted
