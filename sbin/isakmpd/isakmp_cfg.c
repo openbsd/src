@@ -95,7 +95,7 @@ int (*isakmp_cfg_responder[]) (struct message *) = {
 };
 
 /*
- * As "the server", this starts SET/ACK mode 
+ * As "the server", this starts SET/ACK mode
  * As "the client", this starts REQ/REPLY mode
  * XXX A lot can be shared with responder_send_ATTR.
  */
@@ -189,7 +189,7 @@ cfg_initiator_send_ATTR (struct message *msg)
       /* XXX REQ/REPLY  */
       ie->cfg_type = ISAKMP_CFG_REQUEST;
 
-      LOG_DBG ((LOG_NEGOTIATION, 10, 
+      LOG_DBG ((LOG_NEGOTIATION, 10,
 		"cfg_initiator_send_ATTR: REQ/REPLY mode"));
     }
   
@@ -224,7 +224,7 @@ cfg_initiator_send_ATTR (struct message *msg)
   off = ISAKMP_ATTRIBUTE_SZ;
 
   /*
-   * Use the bitstring built previously to collect the right 
+   * Use the bitstring built previously to collect the right
    * parameters for attrp.
    */
   for (bit = 0; bit < CFG_ATTR_BIT_MAX; bit++)
@@ -362,7 +362,7 @@ cfg_initiator_recv_ATTR (struct message *msg)
 	  log_print ("cfg_initiator_recv_ATTR: bad packet type REPLY");
 	  message_drop (msg, ISAKMP_NOTIFY_PAYLOAD_MALFORMED, 0, 1, 0);
 	  return -1;
-	} 
+	}
       break;
 
     default:
@@ -485,7 +485,7 @@ cfg_responder_recv_ATTR (struct message *msg)
 	/*
 	 * XXX Here's the place to add code to walk through each attribute
 	 * XXX and send them along to dhclient or whatever. Each attribute
-	 * XXX that we act upon (such as setting a netmask), should be 
+	 * XXX that we act upon (such as setting a netmask), should be
 	 * XXX marked like this for us to send the proper ACK response:
 	 * XXX   attr->attr_used++;
 	 */
@@ -873,7 +873,7 @@ cfg_encode_attributes (struct isakmp_cfg_attr_head *attrs, u_int32_t type,
 	  if (sa->sa_family != family)
 	    {
 	      log_print ("cfg_responder_send_ATTR: attribute %s - expected %s "
-			 "got %s data", field, 
+			 "got %s data", field,
 			 (family == AF_INET ? "IPv4" : "IPv6"),
 			 (sa->sa_family == AF_INET ? "IPv4" : "IPv6"));
 	      free (sa);
