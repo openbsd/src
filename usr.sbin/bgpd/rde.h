@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.6 2003/12/23 15:59:02 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.7 2003/12/25 23:22:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org> and
@@ -131,7 +131,7 @@ struct attr_flags {
 	enum origins			 origin;
 	struct aspath			*aspath;
 	struct astags			*astags;
-	struct in_addr			 nexthop;
+	struct in_addr			 nexthop;	/* exit nexthop */
 	u_int32_t			 med;		/* multi exit disc */
 	u_int32_t			 lpref;		/* local pref */
 	u_int8_t			 aggr_atm;	/* atomic aggregate */
@@ -140,6 +140,7 @@ struct attr_flags {
 };
 
 enum nexthop_state {
+	NEXTHOP_LOOKUP,
 	NEXTHOP_UNREACH,
 	NEXTHOP_REACH
 };
@@ -193,6 +194,7 @@ struct prefix {
 /* prototypes */
 /* rde.c */
 void		 rde_send_kroute(struct prefix *, struct prefix *);
+void		 rde_send_nexthop(in_addr_t, int);
 
 /* rde_rib.c */
 int		 attr_equal(struct attr_flags *, struct attr_flags *);
@@ -234,8 +236,7 @@ void		 prefix_destroy(struct prefix *);
 void		 nexthop_init(u_long);
 void		 nexthop_add(struct rde_aspath *);
 void		 nexthop_remove(struct rde_aspath *);
-void		 nexthop_invalidate(struct in_addr, int);
-void		 nexthop_validate(struct in_addr, int);
+void		 nexthop_update(struct kroute_nexthop *);
 
 /* rde_decide.c */
 void		 prefix_evaluate(struct prefix *, struct pt_entry *);

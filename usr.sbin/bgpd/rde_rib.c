@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.6 2003/12/24 11:39:43 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.7 2003/12/25 23:22:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -60,8 +60,7 @@ struct rib_stats {
 	u_int64_t	prefix_free;
 	u_int64_t	nexthop_add;
 	u_int64_t	nexthop_remove;
-	u_int64_t	nexthop_invalidate;
-	u_int64_t	nexthop_validate;
+	u_int64_t	nexthop_update;
 	u_int64_t	nexthop_get;
 	u_int64_t	nexthop_alloc;
 	u_int64_t	nexthop_free;
@@ -887,21 +886,29 @@ prefix_free(struct prefix *pref)
  * hash table has more benefits and the table walk should not happen too often.
  */
 
-static struct nexthop	*nexthop_get(struct in_addr);
-static void		 nexthop_updateall(struct in_addr, int,
-			    enum nexthop_state);
-static inline void	 nexthop_update(struct nexthop *, enum nexthop_state);
+static struct nexthop	*nexthop_get(in_addr_t);
 static struct nexthop	*nexthop_alloc(void);
 static void		 nexthop_free(struct nexthop *);
 
+/*
+ * In BGP there exist two nexthops: the exit nexthop which was announced via
+ * BGP and the true nexthop which is used in the FIB -- forward information
+ * base a.k.a kernel routing table. When sending updates it is even more
+ * confusing. In IBGP we pass the unmodified exit nexthop to the neighbors
+ * while in EBGP normaly the address of the router is sent. The exit nexthop
+ * may be passed to the external neighbor if the neighbor and the exit nexthop
+ * reside in the same subnet -- directly connected.
+ */
 struct nexthop {
+	LIST_ENTRY(nexthop)	nexthop_l;
 	enum nexthop_state	state;
 #if 0
 	u_int32_t		costs;
 #endif
 	struct aspath_head	path_h;
-	struct in_addr		nexthop;
-	LIST_ENTRY(nexthop)	nexthop_l;
+	struct in_addr		exit_nexthop;
+	struct in_addr		true_nexthop;
+	u_int8_t		connected;
 };
 
 struct nexthop_table {
@@ -910,7 +917,7 @@ struct nexthop_table {
 } nexthoptable;
 
 #define NEXTHOP_HASH(x)					\
-	&nexthoptable.nexthop_hashtbl[x.s_addr & nexthoptable.nexthop_hashmask]
+	&nexthoptable.nexthop_hashtbl[(x) & nexthoptable.nexthop_hashmask]
 
 void
 nexthop_init(u_long hashsize)
@@ -938,21 +945,17 @@ nexthop_add(struct rde_aspath *asp)
 	ENSURE(asp != NULL);
 
 	if ((nh = asp->nexthop) == NULL)
-		nh = nexthop_get(asp->flags.nexthop);
+		nh = nexthop_get(asp->flags.nexthop.s_addr);
 	if (nh == NULL) {
 		nh = nexthop_alloc();
-		/*
-		 * XXX nexthop_lookup()
-		 * currently I assume that the nexthop is reachable.
-		 * Getting that info could end with a big pain in the ass.
-		 */
+		//nh->state = NEXTHOP_LOOKUP;
 		nh->state = NEXTHOP_REACH;
-		nh->nexthop = asp->flags.nexthop;
-		LIST_INSERT_HEAD(NEXTHOP_HASH(asp->flags.nexthop), nh,
+		nh->exit_nexthop = asp->flags.nexthop;
+		LIST_INSERT_HEAD(NEXTHOP_HASH(asp->flags.nexthop.s_addr), nh,
 		    nexthop_l);
+		rde_send_nexthop(nh->exit_nexthop.s_addr, 1);
 	}
 	asp->nexthop = nh;
-	asp->state = nh->state;
 	LIST_INSERT_HEAD(&nh->path_h, asp, nexthop_l);
 }
 
@@ -971,68 +974,50 @@ nexthop_remove(struct rde_aspath *asp)
 
 	if (LIST_EMPTY(&nh->path_h)) {
 		LIST_REMOVE(nh, nexthop_l);
+		rde_send_nexthop(nh->exit_nexthop.s_addr, 0);
 		nexthop_free(nh);
 	}
 }
 
-void
-nexthop_invalidate(struct in_addr prefix, int prefixlen)
-{
-	RIB_STAT(nexthop_invalidate);
-
-	nexthop_updateall(prefix, prefixlen, NEXTHOP_UNREACH);
-}
-
-void
-nexthop_validate(struct in_addr prefix, int prefixlen)
-{
-	RIB_STAT(nexthop_validate);
-
-	nexthop_updateall(prefix, prefixlen, NEXTHOP_REACH);
-}
-
 static struct nexthop *
-nexthop_get(struct in_addr nexthop)
+nexthop_get(in_addr_t nexthop)
 {
 	struct nexthop	*nh;
 
 	RIB_STAT(nexthop_get);
 
 	LIST_FOREACH(nh, NEXTHOP_HASH(nexthop), nexthop_l) {
-		if (nh->nexthop.s_addr == nexthop.s_addr)
+		if (nh->exit_nexthop.s_addr == nexthop)
 			return nh;
 	}
 	return NULL;
 }
 
-static void
-nexthop_updateall(struct in_addr prefix, int prefixlen,
-    enum nexthop_state state)
+void
+nexthop_update(struct kroute_nexthop *msg)
 {
-	struct nexthop	*nh;
-	u_long		 ul;
-
-	/* XXX probably I get shot for this code ... (: */
-	prefix.s_addr >>= (32-prefixlen);
-
-	for (ul = nexthoptable.nexthop_hashmask; ul >= 0; ul--) {
-		LIST_FOREACH(nh, &nexthoptable.nexthop_hashtbl[ul], nexthop_l) {
-			if (prefix.s_addr ==
-			    nh->nexthop.s_addr >> (32-prefixlen)) {
-				nh->state = state;
-				nexthop_update(nh, state);
-			}
-		}
-	}
-}
-
-static inline void
-nexthop_update(struct nexthop *nh, enum nexthop_state mode)
-{
+	struct nexthop		*nh;
 	struct rde_aspath	*asp;
 
+	RIB_STAT(nexthop_update);
+
+	nh = nexthop_get(msg->nexthop);
+	if (nh == NULL) {
+		logit(LOG_INFO, "nexthop_update: non-existent nexthop");
+		return;
+	}
+	ENSURE(nh->exit_nexthop.s_addr == msg->nexthop);
+
+	if (msg->valid)
+		nh->state = NEXTHOP_REACH;
+	else
+		nh->state = NEXTHOP_UNREACH;
+
+	nh->true_nexthop.s_addr = msg->gateway;
+	nh->connected = msg->connected;
+
 	LIST_FOREACH(asp, &nh->path_h, nexthop_l) {
-		path_updateall(asp, mode);
+		path_updateall(asp, nh->state);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.29 2003/12/25 02:24:26 henning Exp $ */
+/*	$OpenBSD: rde.c,v 1.30 2003/12/25 23:22:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -237,6 +237,10 @@ rde_dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			if (idx != PFD_PIPE_SESSION)
 				fatal("session msg not from session engine", 0);
 			peer_down(imsg.hdr.peerid);
+			break;
+		case IMSG_NEXTHOP_UPDATE:
+			if (idx != PFD_PIPE_MAIN)
+				fatal("nexthop response not from parent", 0);
 			break;
 		case IMSG_MRT_REQ:
 			if (idx != PFD_PIPE_MAIN)
@@ -528,6 +532,20 @@ rde_send_kroute(struct prefix *new, struct prefix *old)
 	kr.nexthop = p->aspath->flags.nexthop.s_addr;
 
 	imsg_compose(&ibuf_main, type, 0, &kr, sizeof(kr));
+}
+
+/*
+ * nexthop specific functions
+ */
+void
+rde_send_nexthop(in_addr_t next, int valid)
+{
+	if (valid)
+		imsg_compose(&ibuf_main, IMSG_NEXTHOP_ADD, 0,
+		    &next, sizeof(next));
+	else
+		imsg_compose(&ibuf_main, IMSG_NEXTHOP_REMOVE, 0,
+		    &next, sizeof(next));
 }
 
 /*
