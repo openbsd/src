@@ -1,4 +1,4 @@
-.\"	$OpenBSD: auth_subr.3,v 1.12 2003/05/30 14:00:32 jmc Exp $
+.\"	$OpenBSD: auth_subr.3,v 1.13 2003/07/07 14:58:17 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -220,7 +220,7 @@ flag.
 The name and value are separated by an
 .Sq = :
 .Pp
-.Li Ta Fl v Ar name=value
+.D1 Fl v Ar name=value
 .Pp
 Once the login script has been spawned, any data specified by the
 .Fn auth_setdata
@@ -318,7 +318,6 @@ The
 .Fn auth_clroption
 function clears the previously set option
 .Fa name .
-.br
 .Pp
 The
 .Fn auth_clroptions
@@ -363,6 +362,7 @@ The style of authentication being performed, as defined by the
 file.
 The style determines which login script should actually be used.
 .El
+.Pp
 The value returned points to private memory and should not be
 freed by the caller.
 .Pp
@@ -464,7 +464,6 @@ then the
 argument may be
 .Dv NULL ,
 else it must be the password entry to use.
-.br
 .Pp
 The function
 .Fn auth_getpwd
