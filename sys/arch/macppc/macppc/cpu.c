@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.16 2003/10/30 03:17:32 itojun Exp $ */
+/*	$OpenBSD: cpu.c,v 1.17 2003/12/24 00:25:42 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -99,6 +99,17 @@ cpumatch(parent, cfdata, aux)
 	return (1);
 }
 
+extern int (*cpu_cpuspeed)(void *, size_t *, void *, size_t);
+static u_int32_t ppc_curfreq;
+
+
+int
+ppc_cpuspeed(void *oldp, size_t *oldlenp, void *newp, size_t newlen)
+{
+	return (sysctl_rdint(oldp, oldlenp, newp, ppc_curfreq));
+}
+
+
 void
 cpuattach(struct device *parent, struct device *dev, void *aux)
 {
@@ -181,7 +192,8 @@ cpuattach(struct device *parent, struct device *dev, void *aux)
 		/* Openfirmware stores clock in Hz, not MHz */
 		clock_freq /= 1000000;
 		printf(": %d MHz", clock_freq);
-
+		ppc_curfreq = clock_freq;
+		cpu_cpuspeed = ppc_cpuspeed;
 	}
 	/* power savings mode */
 	hid0 = ppc_mfhid0();
