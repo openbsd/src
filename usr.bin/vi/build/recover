@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# $OpenBSD: recover,v 1.6 2000/04/21 17:06:13 millert Exp $
+# $OpenBSD: recover,v 1.7 2001/01/11 04:56:52 millert Exp $
 #
 # Script to (safely) recover nvi edit sessions.
 #
@@ -90,17 +90,22 @@ foreach $file (readdir(RECDIR)) {
 	#
 	@recfile = <RECFILE>;
 	close(RECFILE);
-	@backups = grep(s/^X-vi-recover-path:\s*(.*)[\r\n]*$/$1/, @recfile);
 
 	#
-	# Delete any recovery files that are zero length, corrupted,
-	# or that have no corresponding backup file.  Else send mail
-	# to the user.
+	# Delete any recovery files that have no (or more than one)
+	# corresponding backup file.
 	#
-	if ($#backups != 0) {
-		unlink($file);
-	} elsif (! -s $backups[0]) {
-		unlink($file, $backups[0]);
+	@backups = grep(/^X-vi-recover-path:/, @recfile);
+	unlink($file) unless $#backups == 0;
+
+	#
+	# If recovery file is zero length, remove it.
+	# Else send mail to the user.
+	#
+	$backups[0] =~ /^X-vi-recover-path:\s*(.*)[\r\n]*$/;
+	$backup = $1;
+	if (! -s $backup) {
+		unlink($file, $backup);
 	} else {
 		open(SENDMAIL, "|$sendmail -t") ||
 		    die "$0: can't run $sendmail -t: $!\n";
