@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.44 1999/04/20 02:20:12 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.45 2000/01/12 19:50:25 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Michael Shalayeff
@@ -334,7 +334,7 @@ Xecho()
 {
 	register int i;
 	for (i = 1; i < cmd.argc; i++)
-		printf(cmd.argv[i]), putchar(' ');
+		printf("%s ", cmd.argv[i]);
 	putchar('\n');
 	return 0;
 }
