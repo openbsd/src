@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.67 2004/06/06 17:08:23 cedric Exp $	*/
+/*	$OpenBSD: route.c,v 1.68 2004/06/09 19:32:08 cedric Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.67 2004/06/06 17:08:23 cedric Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.68 2004/06/09 19:32:08 cedric Exp $";
 #endif
 #endif /* not lint */
 
@@ -69,6 +69,7 @@ static const char rcsid[] = "$OpenBSD: route.c,v 1.67 2004/06/06 17:08:23 cedric
 #include <stdlib.h>
 #include <string.h>
 #include <paths.h>
+#include <err.h>
 
 #include "keywords.h"
 
@@ -888,6 +889,7 @@ inet_makenetandmask(u_int32_t net, struct sockaddr_in *sin, int bits, int which)
 		else
 			mask = -1;
 	}
+	addr &= mask;
 	sin->sin_addr.s_addr = htonl(addr);
 	sin = (which == RTA_DST) ? &so_mask.sin : &so_srcmask.sin;
 	sin->sin_addr.s_addr = htonl(mask);
@@ -940,15 +942,14 @@ getaddr(int which, char *s, struct hostent **hpp)
 	struct ccitt_addr *ccitt_addr(char *, struct sockaddr_x25 *);
 	struct hostent *hp;
 	struct netent *np;
-	u_long val;
-	char *q, qs;
-	int afamily;
+	int afamily, bits;
 
 	if (af == 0) {
 		af = AF_INET;
 		aflen = sizeof(struct sockaddr_in);
 	}
 	afamily = af;	/* local copy of af so we can change it */
+
 	rtm_addrs |= which;
 	switch (which) {
 	case RTA_DST:
@@ -969,7 +970,6 @@ getaddr(int which, char *s, struct hostent **hpp)
 		break;
 	case RTA_IFA:
 		su = &so_ifa;
-		su->sa.sa_family = af;
 		break;
 	case RTA_SRC:
 		su = &so_src;
@@ -978,16 +978,16 @@ getaddr(int which, char *s, struct hostent **hpp)
 		su = &so_srcmask;
 		break;
 	default:
-		usage("Internal Error");
-		/*NOTREACHED*/
+		errx(1, "internal error");
 	}
 	su->sa.sa_len = aflen;
-	su->sa.sa_family = afamily; /* cases that don't want it have left already */
+	su->sa.sa_family = afamily;
+
 	if (strcmp(s, "default") == 0) {
 		switch (which) {
 		case RTA_DST:
 			forcenet++;
-			(void) getaddr(RTA_NETMASK, s, 0);
+			getaddr(RTA_NETMASK, s, 0);
 			break;
 		case RTA_NETMASK:
 		case RTA_GENMASK:
@@ -995,6 +995,7 @@ getaddr(int which, char *s, struct hostent **hpp)
 		}
 		return (0);
 	}
+
 	switch (afamily) {
 #ifdef INET6
 	case AF_INET6:
@@ -1093,53 +1094,45 @@ getaddr(int which, char *s, struct hostent **hpp)
 		return (1);
 
 	case AF_INET:
-	default:
-		break;
-	}
-
-	if (hpp == NULL)
-		hpp = &hp;
-	*hpp = NULL;
-
-	q = strchr(s,'/');
-	if (q && (which == RTA_DST || which == RTA_SRC)) {
-		qs = *q;
-		*q = '\0';
-		val = inet_addr(s);
-		if (val != INADDR_NONE) {
-			inet_makenetandmask(htonl(val), &su->sin,
-			    strtoul(q+1, 0, 0), which);
-			return (0);
+		if (hpp != NULL)
+			*hpp = NULL;
+		if ((which == RTA_DST || which == RTA_SRC) && !forcehost) {
+			bits = inet_net_pton(AF_INET, s, &su->sin.sin_addr,
+			    sizeof(su->sin.sin_addr));
+			if (bits == 32) {
+				if (forcenet)
+					errx(1, "%s: not a network", s);
+				return (1);
+			}
+			if (bits >= 0) {
+				inet_makenetandmask(ntohl(
+				    su->sin.sin_addr.s_addr),
+				    &su->sin, bits, which);
+				return (0);
+			}
+			np = getnetbyname(s);
+			if (np != NULL && np->n_net != 0) {
+				inet_makenetandmask(np->n_net, &su->sin, 0,
+				    which);
+				return (0);
+			}
+			if (forcenet)
+				errx(1, "%s: not a network", s);
 		}
-		*q =qs;
-	}
-	if (((val = inet_addr(s)) != INADDR_NONE) &&
-	    ((which != RTA_DST && which != RTA_SRC) || forcenet == 0)) {
-		su->sin.sin_addr.s_addr = val;
-		if (inet_lnaof(su->sin.sin_addr) != INADDR_ANY)
+		if (inet_pton(AF_INET, s, &su->sin.sin_addr) == 1)
 			return (1);
-		else {
-			val = ntohl(val);
-			goto netdone;
+		hp = gethostbyname(s);
+		if (hp != NULL) {
+			if (hpp != NULL)
+				*hpp = hp;
+			su->sin.sin_addr = *(struct in_addr *)hp->h_addr;
+			return (1);
 		}
+		errx(1, "%s: bad address", s);
+
+	default:
+		errx(1, "%d: bad address family", afamily);
 	}
-	if ((val = inet_network(s)) != INADDR_NONE ||
-	    (forcehost == 0 && (np = getnetbyname(s)) != NULL &&
-	    (val = np->n_net) != 0)) {
-netdone:
-		if (which == RTA_DST || which == RTA_SRC)
-			inet_makenetandmask(val, &su->sin, 0, which);
-		return (0);
-	}
-	hp = gethostbyname(s);
-	if (hp) {
-		*hpp = hp;
-		su->sin.sin_family = hp->h_addrtype;
-		memcpy(&su->sin.sin_addr, hp->h_addr, hp->h_length);
-		return (1);
-	}
-	(void) fprintf(stderr, "route: %s: bad value\n", s);
-	exit(1);
 }
 
 int
@@ -1368,7 +1361,7 @@ rtmsg(int cmd, int flags)
 #define NEXTADDR(w, u) \
 	if (rtm_addrs & (w)) {\
 	    l = ROUNDUP(u.sa.sa_len); memcpy(cp, &(u), l); cp += l;\
-	    if (verbose) sodump(&(u),"u");\
+	    if (verbose) sodump(&(u),#u);\
 	}
 
 	errno = 0;
