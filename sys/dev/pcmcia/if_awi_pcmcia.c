@@ -1,5 +1,5 @@
 /* $NetBSD: if_awi_pcmcia.c,v 1.5 1999/11/06 16:43:54 sommerfeld Exp $ */
-/* $OpenBSD: if_awi_pcmcia.c,v 1.1 1999/12/16 02:56:57 deraadt Exp $ */
+/* $OpenBSD: if_awi_pcmcia.c,v 1.2 2000/02/11 10:29:36 niklas Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ awi_pcmcia_find (psc, pa, cfe)
 	sc->sc_chip.sc_ioh = psc->sc_pcioh.ioh;
 	am79c930_chip_init(&sc->sc_chip, 0);
 
-	DELAY(100);
+	DELAY(1000);
 
 	awi_read_bytes (sc, AWI_BANNER, version, AWI_BANNER_LEN);
 
@@ -245,12 +245,14 @@ awi_pcmcia_attach(parent, self, aux)
 	struct awi_softc *sc = &psc->sc_awi;
 	struct pcmcia_attach_args *pa = aux;
 	struct pcmcia_config_entry *cfe;
-	struct pcmcia_mem_handle memh;
 	struct awi_pcmcia_get_enaddr_args pgea;
+#if 0
+	struct pcmcia_mem_handle memh;
 	bus_addr_t memoff;
 	int memwin;
+#endif
 
-#if 1
+#if 0
 	int i, j;
 
 	for (cfe = pa->pf->cfe_head.sqh_first, i=0;
@@ -295,11 +297,12 @@ awi_pcmcia_attach(parent, self, aux)
 		printf(": no suitable CIS info found\n");
 		return;
 	}
-	
+
 	sc->sc_enabled = 1;
 	sc->sc_state = AWI_ST_SELFTEST;
 	printf(": BayStack 650 Wireless (802.11)\n");
-	
+
+#if 0
 	if (pcmcia_mem_alloc(psc->sc_pf, AM79C930_MEM_SIZE, &memh) != 0) {
 		printf("%s: unable to allocate memory space; using i/o only\n",
 		    sc->sc_dev.dv_xname);
@@ -314,6 +317,7 @@ awi_pcmcia_attach(parent, self, aux)
 		sc->sc_chip.sc_memh = memh.memh;
 		am79c930_chip_init(&sc->sc_chip, 1);
 	}
+#endif
 
 	sc->sc_chip.sc_bustype = AM79C930_BUS_PCMCIA;
 	
