@@ -1,4 +1,4 @@
-.\"	$OpenBSD: authenticate.3,v 1.3 2000/12/24 00:30:46 aaron Exp $
+.\"	$OpenBSD: authenticate.3,v 1.4 2002/03/16 18:30:35 millert Exp $
 .\"
 .\" Copyright (c) 1997 Berkeley Software Design, Inc. All rights reserved.
 .\"
@@ -275,5 +275,35 @@ when it is no longer needed.
 A value of
 .Dv NULL
 is returned if no memory was available for the new copy of the string.
+.Sh CAVEATS
+The
+.Fn auth_approval ,
+.Fn auth_usercheck ,
+.Fn auth_userokay ,
+and
+.Fn auth_userchallenge
+functions call
+.Fn getpwnam
+or
+.Fn getpwuid ,
+overwriting the static storage used by the
+.Xr getpwent 3
+family of routines.
+The calling program must either make a local copy of the passwd struct
+pointer via the
+.Xr pw_dup 3
+function or, for
+.Fn auth_approval
+and
+.Fn auth_usercheck
+only, use the
+.Xr auth_setpwd 3
+function to copy the passwd struct into a BSD Authentication session structure
+which can then be passed to
+.Fn auth_approval
+or
+.Fn auth_usercheck .
 .Sh SEE ALSO
-.Xr auth_subr 3
+.Xr auth_subr 3 ,
+.Xr getpwent 3 ,
+.Xr pw_dup 3
