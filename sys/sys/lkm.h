@@ -1,4 +1,4 @@
-/*	$OpenBSD: lkm.h,v 1.7 1997/05/29 22:01:25 mickey Exp $	*/
+/*	$OpenBSD: lkm.h,v 1.8 1999/02/19 17:17:49 art Exp $	*/
 /*	$NetBSD: lkm.h,v 1.12 1996/02/09 18:25:13 christos Exp $	*/
 
 /*
@@ -85,7 +85,7 @@ struct lkm_vfs {
 	int	lkm_ver;
 	char	*lkm_name;
 	u_long	lkm_offset;
-	struct vfsops	*lkm_vfsops;
+	struct vfsconf	*lkm_vfsconf;
 };
 
 /*

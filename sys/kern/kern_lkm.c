@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_lkm.c,v 1.23 1998/03/18 22:47:27 art Exp $	*/
+/*	$OpenBSD: kern_lkm.c,v 1.24 1999/02/19 17:17:49 art Exp $	*/
 /*	$NetBSD: kern_lkm.c,v 1.31 1996/03/31 21:40:27 christos Exp $	*/
 
 /*
@@ -690,71 +690,18 @@ _lkm_vfs(lkmtp, cmd)
 	int cmd;
 {
 	int error = 0;
-	struct lkm_vfs *args = lkmtp->private.lkm_vfs;
-	struct vfsconf *vfsp, **vfspp;
+	struct vfsconf *vfs = lkmtp->private.lkm_vfs->lkm_vfsconf;
 
 	switch(cmd) {
 	case LKM_E_LOAD:
 		/* don't load twice! */
 		if (lkmexists(lkmtp))
 			return (EEXIST);
-
-		/* make sure there's no VFS in the table with this name */
-		for (vfspp = &vfsconf, vfsp = vfsconf; vfsp; 
-		    vfspp = &vfsp->vfc_next, vfsp = vfsp->vfc_next)
-			if (strncmp(vfsp->vfc_name, args->lkm_name,
-			    MFSNAMELEN) == 0)
-				return (EEXIST);
-		
-		/* pick the last available empty slot */
-		MALLOC (vfsp, struct vfsconf *, sizeof (struct vfsconf),
-		    M_VFS, M_WAITOK);
-
-		/* Add tot he end of the list */
-		*vfspp = vfsp;
-
-		/*
-		 * Set up file system
-		 */
-#ifndef min
-#define min(a,b) (a < b ? a : b)
-#endif
-		vfsp->vfc_vfsops = args->lkm_vfsops;
-		bcopy(args->lkm_name, vfsp->vfc_name, 
-		    min(strlen(args->lkm_name) + 1, MFSNAMELEN));
-#undef min
-
-		vfsp->vfc_typenum = 0;
-		vfsp->vfc_refcount = 0;
-		vfsp->vfc_flags = 0; /* XXX - should be configurable */
-		vfsp->vfc_mountroot = 0;
-		vfsp->vfc_next = NULL;
-
-		maxvfsconf++;
-
-		/* Call init function for this VFS... */
-	 	(*(vfsp->vfc_vfsops->vfs_init))(vfsp);
-
-		/* Nope - can't return this */
-		return 0;
+		error = vfs_register(vfs);
 		break;
 
 	case LKM_E_UNLOAD:
-		for (vfspp = &vfsconf, vfsp = vfsconf; vfsp &&
-		    strncmp(vfsp->vfc_name, args->lkm_name, MFSNAMELEN) != 0;
-		    vfsp = vfsp->vfc_next)
-			;
-
-		if (!vfsp)
-			return EEXIST;
-
-		if (vfsp->vfc_refcount)
-			return EBUSY;
-		
-		*vfspp = vfsp->vfc_next;
-		FREE(vfsp, M_VFS);
-		maxvfsconf--;
-		return 0;
+		error = vfs_unregister(vfs);
 		break;
 
 	case LKM_E_STAT:	/* no special handling... */
