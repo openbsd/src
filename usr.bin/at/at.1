@@ -1,35 +1,27 @@
-.\" $OpenBSD: at.1,v 1.24 2002/05/13 18:43:53 millert Exp $
+.\" $OpenBSD: at.1,v 1.25 2002/05/14 18:05:39 millert Exp $
 .\" $FreeBSD: at.man,v 1.6 1997/02/22 19:54:05 peter Exp $
-.Dd April 12, 1995
+.Dd May 13, 2002
 .Dt AT 1
 .Os
 .Sh NAME
 .Nm at ,
-.Nm atq ,
-.Nm atrm ,
 .Nm batch
 .Nd queue, examine or delete jobs for later execution
 .Sh SYNOPSIS
 .Nm at
-.Op Fl blmrv
+.Op Fl blmr
 .Op Fl f Ar file
 .Op Fl q Ar queue
 .Fl t Ar time_arg
 .Nm at
-.Op Fl blmrv
+.Op Fl blmr
 .Op Fl f Ar file
 .Op Fl q Ar queue
 .Ar timespec
 .Nm at
 .Fl c Ar job Op Ar job ...
-.Nm atq
-.Op Fl q Ar queue
-.Op Fl v
-.Nm atrm
-.Ar job
-.Op Ar job ...
 .Nm batch
-.Op Fl mv
+.Op Fl m
 .Op Fl f Ar file
 .Op Fl q Ar queue
 .Op Ar timespec
@@ -54,11 +46,6 @@ The related programs are as follows:
 .Bl -tag -width Ds
 .It Nm at
 Executes commands at a specified time.
-.It Nm atq
-Lists the user's pending jobs, unless the user is the superuser.
-In that case, all users' jobs are listed.
-.It Nm atrm
-Deletes jobs.
 .It Nm batch
 Executes commands when system load levels permit.
 In other words, when
@@ -78,8 +65,9 @@ Reads the job from
 .Ar file
 rather than standard input.
 .It Fl l
-An alias for
-.Nm atq .
+Lists the user's pending jobs, unless the user is the superuser.
+In that case, all users' jobs are listed.
+.\" XXX - should document that user names may be specified (like atq)
 .It Fl m
 Send mail to the user when the job has completed, even if there was no
 output.
@@ -105,12 +93,15 @@ queue for
 Queues with higher letters run with increased niceness.
 If a job is submitted to a queue designated with an uppercase letter, it
 is treated as if it had been submitted to batch at that time.
-If
-.Nm atq
-is given a specific queue, it will only show jobs pending in that queue.
+If the user specified the
+.Fl l
+option and
+.Nm at
+is given a specific queue, only jobs pending in that queue will be shown.
 .It Fl r
-An alias for
-.Nm atrm .
+Remove the specified job(s) from the
+.Nm at
+queue.
 .It Fl t Ar time_arg
 Specify the job time using the format specified by
 .Xr touch 1 .
@@ -145,10 +136,9 @@ If the
 .Ar SS
 letter pair is not specified, the value defaults to 0.
 .It Fl v
-For
-.Nm atq ,
-shows completed but not yet deleted jobs in the queue.
-Otherwise shows the time the job will be executed.
+When used in conjuction with the
+.Fl l
+option, shows completed but not yet deleted jobs in the queue.
 .El
 .Pp
 .Nm at

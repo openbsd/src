@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.20 2002/05/11 23:11:59 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.21 2002/05/14 18:05:39 millert Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -27,41 +27,36 @@
 
 /* System Headers */
 
-#include <sys/types.h>
 #include <sys/fcntl.h>
+#include <sys/param.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <sys/wait.h>
-#include <sys/param.h>
 #include <ctype.h>
 #include <dirent.h>
 #include <errno.h>
-#include <pwd.h>
 #include <grp.h>
 #include <limits.h>
+#include <paths.h>
+#include <pwd.h>
 #include <signal.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <time.h>
 #include <unistd.h>
-#include <syslog.h>
 #include <utmp.h>
 
-#include <paths.h>
 #include <login_cap.h>
 #include <bsd_auth.h>
-
-/* Local headers */
 
 #define MAIN
 #include "privs.h"
 #include "pathnames.h"
 #include "atrun.h"
-
-/* File scope defines */
 
 #if (MAXLOGNAME-1) > UT_NAMESIZE
 #define LOGNAMESIZE UT_NAMESIZE
@@ -69,12 +64,8 @@
 #define LOGNAMESIZE (MAXLOGNAME-1)
 #endif
 
-/* File scope variables */
-
-static const char rcsid[] = "$OpenBSD: atrun.c,v 1.20 2002/05/11 23:11:59 millert Exp $";
+static const char rcsid[] = "$OpenBSD: atrun.c,v 1.21 2002/05/14 18:05:39 millert Exp $";
 static int debug = 0;
-
-/* Local functions */
 
 static void
 perr(const char *a)
@@ -105,14 +96,14 @@ write_string(int fd, const char *a)
 	return(write(fd, a, strlen(a)));
 }
 
+/*
+ * Run a file by spawning off a process which redirects I/O,
+ * spawns a subshell, then waits for it to complete and spawns
+ * another process to send mail to the user.
+ */
 static void
 run_file(const char *filename, uid_t uid, gid_t gid)
 {
-	/*
-	 * Run a file by spawning off a process which redirects I/O,
-	 * spawns a subshell, then waits for it to complete and spawns another
-	 * process to send mail to the user.
-	 */
 	pid_t pid;
 	int fd_out, fd_in;
 	int queue;
@@ -120,7 +111,7 @@ run_file(const char *filename, uid_t uid, gid_t gid)
 	char *mailname = NULL;
 	FILE *stream;
 	int send_mail = 0;
-	struct stat buf, lbuf;
+	struct stat stbuf;
 	off_t size;
 	struct passwd *pw;
 	int fflags;
@@ -147,7 +138,6 @@ run_file(const char *filename, uid_t uid, gid_t gid)
 	 * command file; if not, send it to the owner, or, failing that, to
 	 * root.
 	 */
-
 	pw = getpwuid(uid);
 	if (pw == NULL) {
 		syslog(LOG_ERR,"Userid %u not found - aborting job %s",
@@ -170,37 +160,31 @@ run_file(const char *filename, uid_t uid, gid_t gid)
 
 	PRIV_START;
 
-	fd_in = open(filename, O_RDONLY|O_NONBLOCK|O_NOFOLLOW, 0);
+	fd_in = open(filename, O_RDONLY | O_NONBLOCK | O_NOFOLLOW, 0);
 
 	PRIV_END;
 
 	if (fd_in < 0)
 		perr("Cannot open input file");
 
-	if (fstat(fd_in, &buf) == -1)
+	if (fstat(fd_in, &stbuf) == -1)
 		perr("Error in fstat of input file descriptor");
 
-	PRIV_START;
-
-	if (lstat(filename, &lbuf) == -1)
-		perr("Error in lstat of input file");
-
-	PRIV_END;
-
-	if (S_ISLNK(lbuf.st_mode)) {
-		syslog(LOG_ERR, "Symbolic link encountered in job %s - aborting",
+	if (!S_ISREG(stbuf.st_mode)) {
+		syslog(LOG_ERR, "Job %s is not a regular file - aborting",
 		    filename);
 		exit(EXIT_FAILURE);
 	}
-	if ((lbuf.st_dev != buf.st_dev) || (lbuf.st_ino != buf.st_ino) ||
-	    (lbuf.st_uid != buf.st_uid) || (lbuf.st_gid != buf.st_gid) ||
-	    (lbuf.st_size!=buf.st_size)) {
-		syslog(LOG_ERR, "Somebody changed files from under us for job %s - aborting", filename);
+	if (stbuf.st_uid != uid) {
+		syslog(LOG_ERR, "Uid mismatch for job %s", filename);
 		exit(EXIT_FAILURE);
 	}
-	if (buf.st_nlink > 1) {
-		syslog(LOG_ERR, "Somebody is trying to run a linked script for job %s",
-		    filename);
+	if (stbuf.st_nlink != 1) {
+		syslog(LOG_ERR, "Bad link count for job %s", filename);
+		exit(EXIT_FAILURE);
+	}
+	if ((stbuf.st_mode & ALLPERMS) != S_IRUSR) {
+		syslog(LOG_ERR, "Bad file mode for job %s", filename);
 		exit(EXIT_FAILURE);
 	}
 	if ((fflags = fcntl(fd_in, F_GETFD)) < 0)
@@ -261,9 +245,9 @@ run_file(const char *filename, uid_t uid, gid_t gid)
 	write_string(fd_out, "\nSubject: Output from your job ");
 	write_string(fd_out, filename);
 	write_string(fd_out, "\n\n");
-	if (fstat(fd_out, &buf) == -1)
+	if (fstat(fd_out, &stbuf) == -1)
 		perr("Error in fstat of output file descriptor");
-	size = buf.st_size;
+	size = stbuf.st_size;
 
 	(void)close(STDIN_FILENO);
 	(void)close(STDOUT_FILENO);
@@ -337,16 +321,16 @@ run_file(const char *filename, uid_t uid, gid_t gid)
 	 */
 	PRIV_START;
 
-	if (stat(filename, &buf) == -1)
+	if (stat(filename, &stbuf) == -1)
 		perr("Error in stat of output file");
-	if (open(filename, O_RDONLY) != STDIN_FILENO)
+	if (open(filename, O_RDONLY | O_NOFOLLOW) != STDIN_FILENO)
 		perr("Open of jobfile failed");
 
 	(void)unlink(filename);
 
 	PRIV_END;
 
-	if ((buf.st_size != size) || send_mail) {
+	if ((stbuf.st_size != size) || send_mail) {
 		/* Fork off a child for sending mail */
 
 		PRIV_START;
@@ -366,35 +350,31 @@ run_file(const char *filename, uid_t uid, gid_t gid)
 	exit(EXIT_SUCCESS);
 }
 
-/* Global functions */
 
 int
 main(int argc, char **argv)
 {
 	/*
-	 * Browse through  _PATH_ATJOBS, checking all the jobfiles wether
-	 * they should be executed and or deleted. The queue is coded into
-	 * the first byte of the job filename, the date (in minutes since
-	 * Eon) as a hex number in the following eight bytes, followed by
-	 * a dot and a serial number.  A file which has not been executed
-	 * yet is denoted by its execute - bit set.  For those files which
-	 * are to be executed, run_file() is called, which forks off a
-	 * child which takes care of I/O redirection, forks off another
-	 * child for execution and yet another one, optionally, for sending
-	 * mail.  Files which already have run are removed during the
-	 * next invocation.
+	 * Browse through  _PATH_ATJOBS, looking for jobs that should be
+	 * be executed and/or deleted.  The filename consists of the date
+	 * (in seconds since the epoch) followed by a '.' and then the
+	 * queue (a letter).  A file which has not been executed yet will
+	 * have its execute bit set.  For each file which is to be executed,
+	 * run_file() is called, which forks off a child to take care of
+	 * I/O redirection, forking off another child for execution and
+	 * yet another one, optionally, for sending mail.  Files which
+	 * have already run are removed during the next invocation.
 	 */
 	DIR *spool;
 	struct dirent *dirent;
-	struct stat buf;
-	unsigned long ctm;
-	int jobno;
+	struct stat stbuf;
 	char queue;
 	char *ep;
 	time_t now, run_time;
-	char batch_name[] = "Z2345678901234";
+	char batch_name[FILENAME_MAX];
 	uid_t batch_uid;
 	gid_t batch_gid;
+	long l;
 	int c;
 	int run_batch;
 	double la, load_avg = ATRUN_MAXLOAD;
@@ -407,7 +387,6 @@ main(int argc, char **argv)
 
 	openlog("atrun", LOG_PID, LOG_CRON);
 
-	opterr = 0;
 	errno = 0;
 	while ((c = getopt(argc, argv, "dl:")) != -1) {
 		switch (c) {
@@ -436,7 +415,6 @@ main(int argc, char **argv)
 	if (chdir(_PATH_ATJOBS) != 0)
 		perr2("Cannot change to ", _PATH_ATJOBS);
 
-
 	/*
 	 * Main loop. Open spool directory for reading and look over all
 	 * the files in there. If the filename indicates that the job
@@ -458,42 +436,45 @@ main(int argc, char **argv)
 	run_batch = 0;
 	batch_uid = (uid_t) -1;
 	batch_gid = (gid_t) -1;
+	batch_name[0] = '\0';
 
 	while ((dirent = readdir(spool)) != NULL) {
 		PRIV_START;
 
-		if (stat(dirent->d_name, &buf) != 0)
+		if (stat(dirent->d_name, &stbuf) != 0)
 			perr2("Cannot stat in ", _PATH_ATJOBS);
 
 		PRIV_END;
 
 		/* We don't want directories */
-		if (!S_ISREG(buf.st_mode))
+		if (!S_ISREG(stbuf.st_mode))
 			continue;
 
-		if (sscanf(dirent->d_name, "%c%5x%8lx", &queue, &jobno, &ctm) != 3)
+		l = strtol(dirent->d_name, &ep, 10);
+		if (*ep != '.' || !isalpha(*(ep + 1)) || l < 0 || l >= INT_MAX)
 			continue;
+		run_time = (time_t)l;
+		queue = *(ep + 1);
 
-		run_time = (time_t) ctm * 60;
-
-		if ((S_IXUSR & buf.st_mode) && (run_time <= now)) {
+		if ((S_IXUSR & stbuf.st_mode) && (run_time <= now)) {
 			if (isupper(queue) &&
 			    (strcmp(batch_name, dirent->d_name) > 0)) {
 				run_batch = 1;
-				(void)strncpy(batch_name, dirent->d_name,
+				(void)strlcpy(batch_name, dirent->d_name,
 				    sizeof(batch_name));
-				batch_uid = buf.st_uid;
-				batch_gid = buf.st_gid;
+				batch_uid = stbuf.st_uid;
+				batch_gid = stbuf.st_gid;
 			}
 
 			/* The file is executable and old enough */
 			if (islower(queue))
-				run_file(dirent->d_name, buf.st_uid, buf.st_gid);
+				run_file(dirent->d_name, stbuf.st_uid,
+				    stbuf.st_gid);
 		}
 
 		/* Delete older files */
-		if ((run_time < now) && !(S_IXUSR & buf.st_mode) &&
-		    (S_IRUSR & buf.st_mode)) {
+		if ((run_time < now) && !(S_IXUSR & stbuf.st_mode) &&
+		    (S_IRUSR & stbuf.st_mode)) {
 			PRIV_START;
 
 			(void)unlink(dirent->d_name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parsetime.c,v 1.10 2002/05/11 23:16:44 millert Exp $	*/
+/*	$OpenBSD: parsetime.c,v 1.11 2002/05/14 18:05:39 millert Exp $	*/
 /*	$NetBSD: parsetime.c,v 1.3 1995/03/25 18:13:36 glass Exp $	*/
 
 /* 
@@ -36,20 +36,16 @@
  *                                   \PLUS NUMBER MINUTES|HOURS|DAYS|WEEKS/
  */
 
-/* System Headers */
-
 #include <sys/types.h>
+#include <err.h>
 #include <errno.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
-#include <ctype.h>
-#include <err.h>
-
-/* Local headers */
 
 #include "at.h"
 #include "panic.h"
@@ -138,23 +134,18 @@ struct {
 	{ "sat", SAT, 0 },
 };
 
-/* File scope variables */
-
 static char **scp;	/* scanner - pointer at arglist */
 static char scc;	/* scanner - count of remaining arguments */
 static char *sct;	/* scanner - next char pointer in current argument */
 static int need;	/* scanner - need to advance to next argument */
-
 static char *sc_token;	/* scanner - token buffer */
 static size_t sc_len;   /* scanner - lenght of token buffer */
 static int sc_tokid;	/* scanner - token id */
 static int sc_tokplur;	/* scanner - is token plural? */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.10 2002/05/11 23:16:44 millert Exp $";
+static const char rcsid[] = "$OpenBSD: parsetime.c,v 1.11 2002/05/14 18:05:39 millert Exp $";
 #endif
-
-/* Local functions */
 
 /*
  * parse a token, checking if it's something special to us
@@ -173,7 +164,7 @@ parse_token(char *arg)
 
 	/* not special - must be some random id */
 	return (ID);
-} /* parse_token */
+}
 
 
 /*
@@ -191,7 +182,7 @@ init_scanner(int argc, char **argv)
 
 	if ((sc_token = (char *) malloc(sc_len)) == NULL)
 		panic("Insufficient virtual memory");
-} /* init_scanner */
+}
 
 /*
  * token() fetches a token from the input stream
@@ -259,8 +250,8 @@ token(void)
 			return ((sc_tokid = SLASH));
 		else
 			return ((sc_tokid = JUNK));
-	} /* while (1) */
-} /* token */
+	}
+}
 
 
 /*
@@ -270,7 +261,7 @@ static void
 plonk(int tok)
 {
 	panic((tok == EOF) ? "incomplete time" : "garbled time");
-} /* plonk */
+}
 
 
 /* 
@@ -281,7 +272,7 @@ expect(int desired)
 {
 	if (token() != desired)
 		plonk(sc_tokid);	/* and we die here... */
-} /* expect */
+}
 
 
 /*
@@ -321,7 +312,7 @@ dateadd(int minutes, struct tm *tm)
 			tm->tm_hour = 0;
 		}
 	}
-} /* dateadd */
+}
 
 
 /*
@@ -356,7 +347,7 @@ plus(struct tm *tm)
 	}
 
 	plonk(sc_tokid);
-} /* plus */
+}
 
 
 /*
@@ -423,7 +414,7 @@ tod(struct tm *tm)
 		tm->tm_hour = 0;
 		tm->tm_mday++;
 	}
-} /* tod */
+}
 
 
 /*
@@ -460,7 +451,7 @@ assign_date(struct tm *tm, int mday, int mon, int year)
 
 	if (year >= 0)
 		tm->tm_year = year;
-} /* assign_date */
+}
 
 
 /* 
@@ -575,10 +566,8 @@ month(struct tm *tm)
 		assign_date(tm, mday, mon, year);
 		break;
 	} /* case */
-} /* month */
+}
 
-
-/* Global functions */
 
 time_t
 parsetime(int argc, char **argv)
@@ -599,10 +588,10 @@ parsetime(int argc, char **argv)
 	runtime.tm_sec = 0;
 	runtime.tm_isdst = 0;
 
-	if (argc <= optind)
+	if (argc == 0)
 		usage();
 
-	init_scanner(argc - optind, argv + optind);
+	init_scanner(argc, argv);
 
 	switch (token()) {
 	case NOW:	/* now is optional prefix for PLUS tree */
@@ -666,4 +655,4 @@ parsetime(int argc, char **argv)
 		panic("Trying to travel back in time");
 
 	return (runtimer);
-} /* parsetime */
+}

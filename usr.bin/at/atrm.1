@@ -1,0 +1,93 @@
+.\"	$OpenBSD: atrm.1,v 1.1 2002/05/14 18:05:39 millert Exp $
+.\"
+.\" Copyright (c) 1985, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)atrm.1	8.1 (Berkeley) 6/6/93
+.\"
+.Dd May 13, 2002
+.Dt ATRM 1
+.Os
+.Sh NAME
+.Nm atrm
+.Nd remove jobs spooled by
+.Xr at 1
+.Sh SYNOPSIS
+.Nm atrm
+.Op Fl afi
+.Oo Op Ar job
+.Op Ar name ... Oc
+.Sh DESCRIPTION
+.Nm atrm
+removes jobs that were created with the
+.Xr at 1
+command.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl a
+Remove all jobs belonging to the user invoking
+.Nm atrm .
+If the user is the superuser, remove all jobs.
+.It Fl f
+All information regarding the removal of the specified jobs is suppressed.
+.It Fl i
+.Nm atrm
+asks whether a job should be removed.
+If the user responds with
+.Ql y ,
+the job will be removed.
+.El
+.Pp
+If one or more
+.Ar job
+ids are specified,
+.Nm atrm
+attempts to remove only those
+.Ar job s.
+.Pp
+If one or more user names are specified, all jobs belonging to those users 
+are removed.
+Only the superuser may remove other users' jobs.
+.Sh FILES
+.Bl -tag -width /var/at/jobs -compact
+.It Pa /var/at/jobs
+directory containing job files
+.El
+.Sh SEE ALSO
+.Xr at 1 ,
+.Xr atq 1 ,
+.Xr cron 8
+.Sh HISTORY
+The
+.Nm
+command appeared in 
+.Bx 4.3 .

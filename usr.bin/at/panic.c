@@ -1,4 +1,4 @@
-/*	$OpenBSD: panic.c,v 1.9 2002/05/13 16:12:07 millert Exp $	*/
+/*	$OpenBSD: panic.c,v 1.10 2002/05/14 18:05:39 millert Exp $	*/
 /*	$NetBSD: panic.c,v 1.2 1995/03/25 18:13:33 glass Exp $	*/
 
 /*
@@ -26,35 +26,25 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* System Headers */
-
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 
-/* Local headers */
-
-#include "panic.h"
 #include "at.h"
+#include "panic.h"
 #include "privs.h"
 
-/* File scope variables */
-
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: panic.c,v 1.9 2002/05/13 16:12:07 millert Exp $";
+static const char rcsid[] = "$OpenBSD: panic.c,v 1.10 2002/05/14 18:05:39 millert Exp $";
 #endif
 
-/* External variables */
-
-/* Global functions */
-
+/*
+ * Something fatal has happened, print error message and exit.
+ */
 __dead void
 panic(const char *a)
 {
-	/*
-	 * Something fatal has happened, print error message and exit.
-	 */
 	(void)fprintf(stderr, "%s: %s\n", __progname, a);
 	if (fcreated) {
 		PRIV_START;
@@ -65,13 +55,14 @@ panic(const char *a)
 	exit(EXIT_FAILURE);
 }
 
+/*
+ * Some operating system error; print error message and exit.
+ */
 __dead void
 perr(const char *a)
 {
-	/*
-	 * Some operating system error; print error message and exit.
-	 */
-	perror(a);
+	if (!force)
+		perror(a);
 	if (fcreated) {
 		PRIV_START;
 		unlink(atfile);
@@ -81,10 +72,14 @@ perr(const char *a)
 	exit(EXIT_FAILURE);
 }
 
+/*
+ * Two-parameter version of perr().
+ */
 __dead void 
 perr2(const char *a, const char *b)
 {
-	(void)fputs(a, stderr);
+	if (!force)
+		(void)fputs(a, stderr);
 	perr(b);
 }
 
@@ -96,19 +91,23 @@ usage(void)
 	case AT:
 	case CAT:
 		(void)fprintf(stderr,
-		    "Usage: at [-blmrv] [-f file] [-q queue] -t time_arg\n"
-		    "       at [-blmrv] [-f file] [-q queue] timespec\n"
-		    "       at -c job [job ...]\n");
+		    "usage: at [-bm] [-f file] [-q queue] -t time_arg\n"
+		    "       at [-bm] [-f file] [-q queue] timespec\n"
+		    "       at -c job [job ...]\n"
+		    "       at -l [-q queue] [job ...]\n"
+		    "       at -r job [job ...]\n");
 		break;
 	case ATQ:
-		(void)fprintf(stderr, "Usage: atq [-q queue] [-v]\n");
+		(void)fprintf(stderr,
+		    "usage: atq [-cnv] [-q queue] [name...]\n");
 		break;
 	case ATRM:
-		(void)fprintf(stderr, "Usage: atrm job [job ...]\n");
+		(void)fprintf(stderr,
+		    "usage: atrm [-afi] [[job] [name] ...]\n");
 		break;
 	case BATCH:
 		(void)fprintf(stderr,
-		    "Usage: batch [-mv] [-f file] [-q queue] [timespec]\n");
+		    "usage: batch [-m] [-f file] [-q queue] [timespec]\n");
 		break;
 	}
 	exit(EXIT_FAILURE);

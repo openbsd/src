@@ -1,0 +1,107 @@
+.\"	$OpenBSD: atq.1,v 1.1 2002/05/14 18:05:39 millert Exp $
+.\"
+.\" Copyright (c) 1985, 1990, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\"     @(#)atq.1	8.1 (Berkeley) 6/6/93
+.\"
+.Dd May 13, 2002
+.Dt ATQ 1
+.Os
+.Sh NAME
+.Nm atq
+.Nd display the
+.Xr at 1
+job queue
+.Sh SYNOPSIS
+.Nm atq
+.Op Fl cnv
+.Op Fl q Ar queue
+.Op Ar name ...
+.Sh DESCRIPTION
+.Nm atq
+displays the queue of jobs, created by the
+.Xr at 1
+command, which are currently awaiting execution.
+Unless the user is the superuser, only the user's own jobs will be displayed.
+With no flags, the queue is sorted in the order that
+the jobs will be executed.
+.Pp
+The options are as follows:
+.Bl -tag -width "-q queueX"
+.It Fl c
+Sort the queue by the time that the jobs were submitted (created).
+By default,
+.Nm
+will sort the queue by the time that the jobs will run.
+.It Fl n
+Only print the total number of files that are currently in the queue.
+.It Fl q Ar queue
+Restrict output to jobs in the specified
+.Ar queue .
+.Sy a
+to
+.Sy z
+and
+.Sy A
+to
+.Sy Z .
+The
+.Sy c
+queue is the default for
+.Xr at 1
+and the
+.Sy E
+queue for
+.Xr batch 1 .
+By default,
+.Nm
+will display jobs in all queues.
+.It Fl v
+Jobs that have completed but have not yet been removed are also displayed.
+.El
+.Pp
+If a name(s) is provided, only those files belonging to that user(s) are
+displayed.
+.Sh FILES
+.Bl -tag -width /var/at/jobs -compact
+.It Pa /var/at/jobs
+directory containing job files
+.El
+.Sh SEE ALSO
+.Xr at 1 ,
+.Xr atrm 1 ,
+.Xr cron 8
+.Sh HISTORY
+The
+.Nm
+command appeared in 
+.Bx 4.3 .

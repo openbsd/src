@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.h,v 1.6 2002/05/13 16:12:07 millert Exp $	*/
+/*	$OpenBSD: at.h,v 1.7 2002/05/14 18:05:39 millert Exp $	*/
 /*	$NetBSD: at.h,v 1.2 1995/03/25 18:13:32 glass Exp $	*/
 
 /*
@@ -30,9 +30,17 @@ extern int fcreated;
 extern char *__progname;
 extern int program;
 extern char atfile[];
-extern char atverify;
+extern char vflag;
+extern char force;
+extern char interactive;
 
 enum { ATQ, ATRM, AT, BATCH, CAT };	/* what are we running as? */
+
+struct atjob {
+	time_t runtimer;
+	time_t ctime;
+	char queue;
+};
 
 #define AT_MAXJOBS	255	/* max jobs outstanding per user */
 
