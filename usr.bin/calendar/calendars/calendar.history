@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.23 2003/02/17 13:15:47 mickey Exp $
+ * $OpenBSD: calendar.history,v 1.24 2003/02/26 03:39:55 david Exp $
  */
 
 #ifndef _calendar_history_
@@ -34,7 +34,7 @@
 01/24	A B-52 bomber carrying two 24 megaton bombs crashes at Goldsboro,
 	North Carolina; 5 of 6 safety devices failed on one of them, 1961
 01/26	Sydney Aust. settled, 1788
-01/27	Grissom, White and Chaffe burned to death in Apollo 1, 1967
+01/27	Grissom, White and Chaffee burned to death in Apollo 1, 1967
 01/27	Vietnam War cease-fire signed, 1973
 01/28	First ski tow, Woodstock VT, 1914
 01/28	Space Shuttle Challenger (51-L) explodes 74 seconds after liftoff
@@ -71,6 +71,7 @@
 02/29	French and Indian raid on Deerfield MA, 1704
 03/01	Sarah Goode, Sarah Osborne, and Tituba arrested for witchcraft
 	in Salem, Massachusetts, 1692
+03/03	Gemini III launched with Virgil Grissom and John Young on board, 1965
 03/04	First meeting of Congress, 1789, in N.Y.C.
 03/06	Hindenburg explodes and burns upon landing at Lakehurst, NJ, 1939
 03/13	"Striptease" introduced, Paris, 1894
@@ -106,6 +107,7 @@
 04/12	Yuri Gagarin becomes the first man in space, 1961
 04/12	Space Shuttle Columbia launched, 1981
 04/13	Laotian New Year (3 days) in Laos
+04/13	Apollo 13 aborts moon landing due to oxygen tank explosion, 1970
 04/14	Lincoln shot,  1865
 04/14	Titanic hits iceberg and sinks, 1912
 04/15	Ray Kroc opens first McDonalds in Des Plaines, IL, 1955
@@ -127,6 +129,7 @@
 05/03	Anti-war protest disrupts business in Washington, 1971
 05/04	Four Kent State students are shot down by the National Guard, 1970
 05/05	John Scopes arrested for teaching evolution, Dayton, TN, 1925
+05/05	Alan Shepard becomes the first American in space, 1961
 05/07	Germany surrenders after WWII, 1945
 05/08	US institutes mining of Haiphong Harbor, 1972
 05/09	94 degrees, New York, 1979
@@ -134,6 +137,7 @@
 05/10	Nazi bookburning, 1933
 05/14	Beginning of Lewis and Clark Expedition, 1804
 05/14	Nation of Israel proclaimed, 1948
+05/14	Skylab (first U.S. space station) launched, 1972
 05/15	Asylum for Inebriates founded, Binghamton NY, 1854
 05/17	24" rain in 11 hours, Pearl River, S. China, 1982
 05/17	Six SLA members killed in televised gun fight, 1974
@@ -156,6 +160,7 @@
 	of a Soviet missile attack by the NORAD system. About a 100 B-52
 	bombers were readied for take off along with the President's
 	airborne command post before the error is detected, 1980
+06/03	Edward White becomes the first American to perform a "Space Walk", 1965
 06/05	Robert Kennedy assassinated, 1968
 06/05	US leaves the Gold Standard, 1933
 06/06	First drive-in movie, 1933
@@ -204,13 +209,14 @@
 07/08	Liberty Bell cracks while being rung at funeral of John Marshall, 1835
 07/09	10-hour working day set by law, NH, 1847
 07/10	134 degrees in Death Valley, 1913
+07/11	Skylab enters Earth's atmosphere and is destroyed, 1979
 07/12	Minimum wages established: 40 cents/hour, 1933
 07/13	Women first compete in Olympic games, 1908
 07/16	Detonation of the first atomic bomb at Alamagordo, NM, 1945
 07/17	Disneyland opens, 1955
 07/18	Ty Cobb gets 4000th base hit, 1927
 07/19	Five Massachusetts women executed for witchcraft, 1692
-07/20	Armstrong and Aldrin land on moon, 1969
+07/20	Neil Armstrong and Edwin "Buzz" Aldrin land on moon, 1969
 07/21	First Train Robbery, Jesse James gets $3000 near Adair, Iowa, 1873
 07/21	Vietnam divided at 17th parallel, 1954
 07/23	Ice cream cone introduced, St. Louis MO, 1904
@@ -451,6 +457,7 @@
 12/15	Sitting Bull shot in head while submitting to arrest, 1890
 12/20	U.S. buys ~1,000,000 sq. miles of Louisiana for ~$20/sq.mi.
 12/24	KKK formed in Pulaski, Tenn, 1865
+12/24	Apollo 8 first manned lunar orbit, 1968
 12/26	DPMA founded, 1951
 12/27	APT report published, 1956
 12/27	Ether first used as anesthetic in childbirth, 1845
