@@ -1,4 +1,4 @@
-dnl	$OpenBSD: upgrade,v 1.17 2003/09/06 22:22:43 miod Exp $
+dnl	$OpenBSD: upgrade,v 1.18 2003/09/07 00:21:47 miod Exp $
 dnl OpenBSDUpgrade({:-the CD-ROM or an installation floppy as you would do for
 dnl a new installation-:})
 Due to the change in binary format from a.out to ELF in OpenBSD OSREV,
@@ -18,7 +18,7 @@ setup. It needs to be put inside a /emul/a.out hierarchy. This directory can,
 however, be a symbolic link, should the available space in the root partition
 not be enough.
 
-The /emul/a.out should be populated by the a.out shared libraries.
+The /emul/a.out hierarchy should be populated by the a.out shared libraries.
 An easy way to do it is to run the following commands as root:
 
    mkdir -p /emul/a.out/sbin /emul/a.out/var/run
