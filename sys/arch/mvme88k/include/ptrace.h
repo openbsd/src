@@ -1,4 +1,4 @@
-/*	$OpenBSD: ptrace.h,v 1.9 2004/01/11 23:52:45 miod Exp $ */
+/*	$OpenBSD: ptrace.h,v 1.10 2004/01/14 07:25:16 miod Exp $ */
 /*
  * Copyright (c) 1999, Steve Murphree, Jr.
  * Copyright (c) 1992, 1993
@@ -55,6 +55,8 @@
 #define	PT_GETFPREGS	(PT_FIRSTMACH + 3)
 #define	PT_SETFPREGS	(PT_FIRSTMACH + 4)
 
+#ifdef _KERNEL
 int cpu_singlestep(struct proc *);
+#endif
 
 #endif /* __MACHINE_PTRACE_H__ */
