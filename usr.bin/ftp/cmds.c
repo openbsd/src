@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmds.c,v 1.9 1996/12/24 21:22:10 deraadt Exp $      */
+/*      $OpenBSD: cmds.c,v 1.10 1997/01/25 21:42:27 deraadt Exp $      */
 /*      $NetBSD: cmds.c,v 1.8 1995/09/08 01:06:05 tls Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.9 1996/12/24 21:22:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.10 1997/01/25 21:42:27 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -1075,7 +1075,7 @@ setdebug(argc, argv)
  * on remote machine.
  */
 int
-cd(argc, argv)
+mcd(argc, argv)
 	int argc;
 	char *argv[];
 {
@@ -1083,7 +1083,7 @@ cd(argc, argv)
 	if (argc < 2 && !another(&argc, &argv, "remote-directory")) {
 		printf("usage: %s remote-directory\n", argv[0]);
 		code = -1;
-		return;
+		return (-1);
 	}
 	if (command("CWD %s", argv[1]) == ERROR) {
 		if (code == 500) {
@@ -1096,6 +1096,14 @@ cd(argc, argv)
 			return(-1);
 	}
 	return(0);
+}
+
+void
+cd(argc, argv)
+	int argc;
+	char *argv[];
+{
+	mcd(argc, argv);
 }
 
 /*

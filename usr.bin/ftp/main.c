@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.14 1997/01/15 23:42:31 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.15 1997/01/25 21:42:33 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.14 1997/01/15 23:42:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.15 1997/01/25 21:42:33 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -237,7 +237,7 @@ main(argc, argv)
 				xargc = 2;
 				tmp = verbose;
 				verbose = -1;
-				if (cd(xargc, xargv) == 0) {
+				if (mcd(xargc, xargv) == 0) {
 					verbose = tmp;
 					goto CLINE_CD;
 				}
