@@ -197,32 +197,28 @@ cvsclient.info: cvsclient.texi $(cvsclient_TEXINFOS)
 cvsclient.dvi: cvsclient.texi $(cvsclient_TEXINFOS)
 
 .texi.info:
-	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	cd $(srcdir) \
-	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
+	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+	$(MAKEINFO) -I $(srcdir) $(srcdir)/`echo $< | sed 's,.*/,,'` -o $@
 
 .texi.dvi:
 	TEXINPUTS=$(srcdir):$$TEXINPUTS \
 	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
 
 .texi:
-	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	cd $(srcdir) \
-	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
+	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+	$(MAKEINFO) -I $(srcdir) $(srcdir)/`echo $< | sed 's,.*/,,'` -o $@
 
 .texinfo.info:
-	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	cd $(srcdir) \
-	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
+	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+	$(MAKEINFO) -I $(srcdir) $(srcdir)/`echo $< | sed 's,.*/,,'` -o $@
 
 .texinfo.dvi:
 	TEXINPUTS=$(srcdir):$$TEXINPUTS \
 	  MAKEINFO='$(MAKEINFO) -I $(srcdir)' $(TEXI2DVI) $<
 
 .texinfo:
-	@cd $(srcdir) && rm -f $@ $@-[0-9] $@-[0-9][0-9]
-	cd $(srcdir) \
-	  && $(MAKEINFO) `echo $< | sed 's,.*/,,'`
+	@rm -f $@ $@-[0-9] $@-[0-9][0-9]
+	$(MAKEINFO) -I $(srcdir) $(srcdir)/`echo $< | sed 's,.*/,,'` -o $@
 
 DVIPS = dvips
 .dvi.ps:
@@ -358,11 +354,10 @@ install-info-am: $(INFO_DEPS)
 	$(mkinstalldirs) $(DESTDIR)$(infodir)
 	@list='$(INFO_DEPS)'; \
 	for file in $$list; do \
-	  d=$(srcdir); \
-	  for ifile in `CDPATH=: && cd $$d && echo $$file $$file-[0-9] $$file-[0-9][0-9]`; do \
-	    if test -f $$d/$$ifile; then \
-	      echo " $(INSTALL_DATA) $$d/$$ifile $(DESTDIR)$(infodir)/$$ifile"; \
-	      $(INSTALL_DATA) $$d/$$ifile $(DESTDIR)$(infodir)/$$ifile; \
+	  for ifile in `CDPATH=: && echo $$file $$file-[0-9] $$file-[0-9][0-9]`; do \
+	    if test -f $$ifile; then \
+	      echo " $(INSTALL_DATA) $$ifile $(DESTDIR)$(infodir)/$$ifile"; \
+	      $(INSTALL_DATA) $$ifile $(DESTDIR)$(infodir)/$$ifile; \
 	    else : ; fi; \
 	  done; \
 	done
