@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.5 2005/03/14 18:21:29 norby Exp $ */
+/*	$OpenBSD: parser.c,v 1.6 2005/03/15 22:09:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "ospfd.h"
+
 #include "parser.h"
 
 enum token_type {
@@ -54,6 +56,7 @@ static const struct token t_show_db[];
 static const struct token t_show_area[];
 static const struct token t_show_nbr[];
 static const struct token t_show_rib[];
+static const struct token t_show_fib[];
 
 static const struct token t_main[] = {
 /*	{KEYWORD,	"reload",	RELOAD,		NULL}, */
@@ -67,6 +70,7 @@ static const struct token t_show[] = {
 	{KEYWORD,	"database",	SHOW_DB,	t_show_db},
 	{KEYWORD,	"neighbor",	SHOW_NBR,	t_show_nbr},
 	{KEYWORD,	"rib",		SHOW_RIB,	t_show_rib},
+	{KEYWORD,	"fib",		SHOW_FIB,	t_show_fib},
 	{KEYWORD,	"summary",	SHOW_SUM,	NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
 };
@@ -100,6 +104,15 @@ static const struct token t_show_rib[] = {
 	{NOTOKEN,	"",		NONE,		NULL},
 	{KEYWORD,	"detail",	SHOW_RIB_DTAIL,	NULL},
 	{ENDTOKEN,	"",		NONE,		NULL}
+};
+
+static const struct token t_show_fib[] = {
+	{NOTOKEN,	"",		NONE,			NULL},
+	{FLAG,		"connected",	F_CONNECTED,		t_show_fib},
+	{FLAG,		"static",	F_STATIC,		t_show_fib},
+	{FLAG,		"ospf",		F_OSPFD_INSERTED,	t_show_fib},
+	{ADDRESS,	"",		NONE,			NULL},
+	{ENDTOKEN,	"",		NONE,			NULL}
 };
 
 static struct parse_result	res;

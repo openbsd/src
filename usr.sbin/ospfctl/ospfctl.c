@@ -1,4 +1,4 @@
-/*	$OpenBSD: ospfctl.c,v 1.7 2005/03/14 18:21:29 norby Exp $ */
+/*	$OpenBSD: ospfctl.c,v 1.8 2005/03/15 22:09:43 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -23,6 +23,8 @@
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <net/if_media.h>
+#include <net/if_types.h>
 
 #include <err.h>
 #include <stdio.h>
@@ -57,6 +59,13 @@ int		 show_nbr_detail_msg(struct imsg *);
 int		 show_rib_msg(struct imsg *);
 void		 show_rib_head(struct in_addr, u_int8_t, u_int8_t);
 int		 show_rib_detail_msg(struct imsg *);
+void		 show_fib_head(void);
+int		 show_fib_msg(struct imsg *);
+void		 show_interface_head(void);
+const char *	 get_media_descr(int);
+const char *	 get_linkstate(int, int);
+void		 print_baudrate(u_long);
+int		 show_fib_interface_msg(struct imsg *);
 
 struct imsgbuf	*ibuf;
 
@@ -141,6 +150,19 @@ main(int argc, char *argv[])
 	case SHOW_RIB_DTAIL:
 		imsg_compose(ibuf, IMSG_CTL_SHOW_RIB, 0, 0, -1, NULL, 0);
 		break;
+	case SHOW_FIB:
+		if (!res->addr.s_addr)
+			imsg_compose(ibuf, IMSG_CTL_KROUTE, 0, 0, -1,
+			    &res->flags, sizeof(res->flags));
+		else
+			imsg_compose(ibuf, IMSG_CTL_KROUTE_ADDR, 0, 0, -1,
+			    &res->addr, sizeof(res->addr));
+		show_fib_head();
+		break;
+	case SHOW_FIB_IFACE:
+		imsg_compose(ibuf, IMSG_CTL_IFINFO, 0, 0, -1, NULL, 0);
+		show_interface_head();
+		break;
 	case RELOAD:
 		imsg_compose(ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
 		printf("reload request sent.\n");
@@ -186,6 +208,12 @@ main(int argc, char *argv[])
 				break;
 			case SHOW_RIB_DTAIL:
 				done = show_rib_detail_msg(&imsg);
+				break;
+			case SHOW_FIB:
+				done = show_fib_msg(&imsg);
+				break;
+			case SHOW_FIB_IFACE:
+				done = show_fib_interface_msg(&imsg);
 				break;
 			case NONE:
 			case RELOAD:
@@ -748,3 +776,174 @@ show_rib_detail_msg(struct imsg *imsg)
 
 	return (0);
 }
+
+void
+show_fib_head(void)
+{
+	printf("flags: * = valid, O = OSPF, C = Connected, S = Static\n");
+	printf("%-6s %-20s %-17s\n", "Flags", "Destination", "Nexthop");
+}
+
+int
+show_fib_msg(struct imsg *imsg)
+{
+	struct kroute		*k;
+	char			*p;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_KROUTE:
+		if (imsg->hdr.len < IMSG_HEADER_SIZE + sizeof(struct kroute))
+			errx(1, "wrong imsg len");
+		k = imsg->data;
+
+		if (k->flags & F_DOWN)
+			printf(" ");
+		else
+			printf("*");
+
+		if (k->flags & F_OSPFD_INSERTED)
+			printf("O");
+		else if (k->flags & F_CONNECTED)
+			printf("C");
+		else if (k->flags & F_KERNEL)
+			printf("S");
+		else
+			printf(" ");
+
+		printf("     ");
+		if (asprintf(&p, "%s/%u", inet_ntoa(k->prefix), k->prefixlen) ==
+		    -1)
+			err(1, NULL);
+		printf("%-20s ", p);
+		free(p);
+
+		if (k->nexthop.s_addr)
+			printf("%s", inet_ntoa(k->nexthop));
+		else if (k->flags & F_CONNECTED)
+			printf("link#%u", k->ifindex);
+		printf("\n");
+
+		break;
+	case IMSG_CTL_END:
+		printf("\n");
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
+void
+show_interface_head(void)
+{
+	printf("%-15s%-15s%-15s%s\n", "Interface", "Nexthop state", "Flags",
+	    "Link state");
+}
+
+const int	ifm_status_valid_list[] = IFM_STATUS_VALID_LIST;
+const struct ifmedia_status_description
+		ifm_status_descriptions[] = IFM_STATUS_DESCRIPTIONS;
+const struct ifmedia_description
+		ifm_type_descriptions[] = IFM_TYPE_DESCRIPTIONS;
+
+const char *
+get_media_descr(int media_type)
+{
+	const struct ifmedia_description	*p;
+
+	for (p = ifm_type_descriptions; p->ifmt_string != NULL; p++)
+		if (media_type == p->ifmt_word)
+			return (p->ifmt_string);
+
+	return ("unknown media");
+}
+
+const char *
+get_linkstate(int media_type, int link_state)
+{
+	const struct ifmedia_status_description	*p;
+	int					 i;
+
+	if (link_state == LINK_STATE_UNKNOWN)
+		return ("unknown");
+
+	for (i = 0; ifm_status_valid_list[i] != 0; i++)
+		for (p = ifm_status_descriptions; p->ifms_valid != 0; p++) {
+			if (p->ifms_type != media_type ||
+			    p->ifms_valid != ifm_status_valid_list[i])
+				continue;
+			return (p->ifms_string[link_state == LINK_STATE_UP]);
+		}
+
+	return ("unknown link state");
+}
+
+void
+print_baudrate(u_long baudrate)
+{
+	if (baudrate > IF_Gbps(1))
+		printf("%lu GBit/s", baudrate / IF_Gbps(1));
+	else if (baudrate > IF_Mbps(1))
+		printf("%lu MBit/s", baudrate / IF_Mbps(1));
+	else if (baudrate > IF_Kbps(1))
+		printf("%lu KBit/s", baudrate / IF_Kbps(1));
+	else
+		printf("%lu Bit/s", baudrate);
+}
+
+
+int
+show_fib_interface_msg(struct imsg *imsg)
+{
+	struct kif	*k;
+	int		 ifms_type;
+
+	switch (imsg->hdr.type) {
+	case IMSG_CTL_SHOW_INTERFACE:
+		k = imsg->data;
+		printf("%-15s", k->ifname);
+		printf("%-15s", k->nh_reachable ? "ok" : "invalid");
+		printf("%-15s", k->flags & IFF_UP ? "UP" : "");
+		switch (k->media_type) {
+		case IFT_ETHER:
+			ifms_type = IFM_ETHER;
+			break;
+		case IFT_FDDI:
+			ifms_type = IFM_FDDI;
+			break;
+		case IFT_ISO88025:
+			ifms_type = IFM_TOKEN;
+			break;
+		case IFT_CARP:
+			ifms_type = IFM_CARP;
+			break;
+		default:
+			ifms_type = 0;
+			break;
+		}
+
+		if (ifms_type)
+			printf("%s, %s", get_media_descr(ifms_type),
+			    get_linkstate(ifms_type, k->link_state));
+		else if (k->link_state == LINK_STATE_UNKNOWN)
+			printf("unknown");
+		else
+			printf("link state %u", k->link_state);
+
+		if (k->link_state != LINK_STATE_DOWN && k->baudrate > 0) {
+			printf(", ");
+			print_baudrate(k->baudrate);
+		}
+		printf("\n");
+		break;
+	case IMSG_CTL_END:
+		printf("\n");
+		return (1);
+	default:
+		break;
+	}
+
+	return (0);
+}
+
