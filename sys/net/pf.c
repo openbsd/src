@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.460 2004/09/29 10:32:33 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.461 2004/11/07 01:16:52 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -4109,20 +4109,13 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct pfi_kif *kif,
 		if ((*state)->dst.state == TCPS_SYN_SENT &&
 		    (*state)->src.state == TCPS_SYN_SENT) {
 			/* Send RST for state mismatches during handshake */
-			if (!(th->th_flags & TH_RST)) {
-				u_int32_t ack = ntohl(th->th_seq) + pd->p_len;
-
-				if (th->th_flags & TH_SYN)
-					ack++;
-				if (th->th_flags & TH_FIN)
-					ack++;
+			if (!(th->th_flags & TH_RST))
 				pf_send_tcp((*state)->rule.ptr, pd->af,
 				    pd->dst, pd->src, th->th_dport,
-				    th->th_sport, ntohl(th->th_ack), ack,
-				    TH_RST|TH_ACK, 0, 0,
+				    th->th_sport, ntohl(th->th_ack), 0,
+				    TH_RST, 0, 0,
 				    (*state)->rule.ptr->return_ttl, 1,
 				    pd->eh, kif->pfik_ifp);
-			}
 			src->seqlo = 0;
 			src->seqhi = 1;
 			src->max_win = 1;
