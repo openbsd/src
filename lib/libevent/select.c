@@ -1,4 +1,4 @@
-/*	$OpenBSD: select.c,v 1.3 2002/09/15 18:58:20 itojun Exp $	*/
+/*	$OpenBSD: select.c,v 1.4 2003/06/19 18:52:12 mickey Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -80,7 +80,7 @@ int select_del		(void *, struct event *);
 int select_recalc	(void *, int);
 int select_dispatch	(void *, struct timeval *);
 
-struct eventop selectops = {
+const struct eventop selectops = {
 	"select",
 	select_init,
 	select_add,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.c,v 1.2 2002/06/25 15:50:15 mickey Exp $	*/
+/*	$OpenBSD: event.c,v 1.3 2003/06/19 18:52:12 mickey Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -53,14 +53,14 @@
 #include "event.h"
 
 #ifdef HAVE_SELECT
-extern struct eventop selectops;
+extern const struct eventop selectops;
 #endif
 #ifdef HAVE_WORKING_KQUEUE
-extern struct eventop kqops;
+extern const struct eventop kqops;
 #endif
 
 /* In order of preference */
-struct eventop *eventops[] = {
+const struct eventop *eventops[] = {
 #ifdef HAVE_WORKING_KQUEUE
 	&kqops,
 #endif
@@ -70,7 +70,7 @@ struct eventop *eventops[] = {
 	NULL
 };
 
-struct eventop *evsel;
+const struct eventop *evsel;
 void *evbase;
 
 /* Handle signals */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kqueue.c,v 1.8 2003/06/03 20:26:44 deraadt Exp $	*/
+/*	$OpenBSD: kqueue.c,v 1.9 2003/06/19 18:52:12 mickey Exp $	*/
 
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
@@ -73,7 +73,7 @@ int kq_del	(void *, struct event *);
 int kq_recalc	(void *, int);
 int kq_dispatch	(void *, struct timeval *);
 
-struct eventop kqops = {
+const struct eventop kqops = {
 	"kqueue",
 	kq_init,
 	kq_add,
