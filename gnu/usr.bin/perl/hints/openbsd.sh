@@ -76,6 +76,11 @@ case "$openbsd_distribution" in
 	libpth='/usr/lib'
 	locincpth=''
 	loclibpth=''
+	# Link perl with shared libperl
+	if [ "$usedl" = "$define" -a -r shlib_version ]; then
+		useshrplib=true
+		libperl=`. ./shlib_version; echo libperl.so.${major}.${minor}`
+	fi
 	;;
 esac
 
