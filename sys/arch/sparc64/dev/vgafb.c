@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.33 2003/06/16 20:47:04 miod Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.34 2003/06/16 21:46:23 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -77,11 +77,6 @@ struct vgafb_softc {
 
 struct wsscreen_descr vgafb_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in -- XXX shouldn't, it's global. */
-	NULL,
-	0, 0,
-	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
-	WSSCREEN_REVERSE | WSSCREEN_WSCOLORS
 };
 
 const struct wsscreen_descr *vgafb_scrlist[] = {
@@ -158,7 +153,6 @@ vgafbattach(parent, self, aux)
 	struct vgafb_softc *sc = (struct vgafb_softc *)self;
 	struct pci_attach_args *pa = aux;
 	struct wsemuldisplaydev_attach_args waa;
-	long defattr;
 
 	sc->sc_mem_t = pa->pa_memt;
 	sc->sc_io_t = pa->pa_iot;
@@ -192,8 +186,6 @@ vgafbattach(parent, self, aux)
 	vgafb_stdscreen.nrows = sc->sc_sunfb.sf_ro.ri_rows;
 	vgafb_stdscreen.ncols = sc->sc_sunfb.sf_ro.ri_cols;
 	vgafb_stdscreen.textops = &sc->sc_sunfb.sf_ro.ri_ops;
-	sc->sc_sunfb.sf_ro.ri_ops.alloc_attr(&sc->sc_sunfb.sf_ro,
-	    WSCOL_BLACK, WSCOL_WHITE, WSATTR_WSCOLORS, &defattr);
 
 	if (sc->sc_console) {
 		sc->sc_ofhandle = OF_stdout();
