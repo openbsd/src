@@ -62,11 +62,11 @@ Supported devices {:-include-:}:
 		Xylogics 450/451 VME disk controller ("xy")
 		[note: VME/IPI disks are not supported]
 
-	Sun floppy disk drive on sun4c machines.
-
-	Sun keyboard and mouse.
-
-	sun4c audio.
+	Miscellaneous devices:
+		Sun floppy disk drive on sun4c machines.
+		Sun keyboard and mouse.
+		sun4c/Classic audio.
+		Sun SBus Expansion Subsystem (SUNW,xbox)
 
 
 Hardware the we do NOT currently support, but get many questions about:
