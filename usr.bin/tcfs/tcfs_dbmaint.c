@@ -1,3 +1,5 @@
+/*	$OpenBSD: tcfs_dbmaint.c,v 1.6 2000/06/19 20:35:47 fgsch Exp $	*/
+
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
  *	Author and mantainer: 	Luigi Catuogno [luicat@tcfs.unisa.it]

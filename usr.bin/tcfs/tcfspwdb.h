@@ -1,3 +1,5 @@
+/*	$OpenBSD: tcfspwdb.h,v 1.3 2000/06/19 20:35:48 fgsch Exp $	*/
+
 /*
  *	Transparent Cryptographic File System (TCFS) for NetBSD 
  *	Author and mantainer: 	Luigi Catuogno [luicat@tcfs.unisa.it]

@@ -1,3 +1,5 @@
+/*	$OpenBSD: tcfsmng.c,v 1.2 2000/06/19 20:35:48 fgsch Exp $	*/
+
 /*
  * Copyright 2000 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
