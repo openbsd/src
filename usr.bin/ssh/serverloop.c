@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: serverloop.c,v 1.36 2000/12/05 20:34:10 markus Exp $");
+RCSID("$OpenBSD: serverloop.c,v 1.37 2000/12/11 20:16:22 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -577,7 +577,7 @@ server_loop(pid_t pid, int fdin_arg, int fdout_arg, int fderr_arg)
 
 	/* Wait for the child to exit.  Get its exit status. */
 	wait_pid = wait(&wait_status);
-	if (wait_pid < 0) {
+	if (wait_pid == -1) {
 		/*
 		 * It is possible that the wait was handled by SIGCHLD
 		 * handler.  This may result in either: this call
