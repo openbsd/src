@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Add.pm,v 1.27 2004/12/18 13:48:23 espie Exp $
+# $OpenBSD: Add.pm,v 1.28 2004/12/18 13:58:43 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -288,7 +288,10 @@ sub install
 	my $destdir = $state->{destdir};
 
 	if ($state->{replacing}) {
-		return if $state->{not};
+		if ($state->{not}) {
+			print "moving tempfile -> $destdir$fullname\n";
+			return;
+		}
 		File::Path::mkpath(dirname($destdir.$fullname));
 		if (defined $self->{link}) {
 			link($destdir.$self->{link}, $destdir.$fullname);
@@ -297,7 +300,7 @@ sub install
 		} else {
 			rename($self->{tempname}, $destdir.$fullname) or 
 			    Fatal "Can't move ", $self->{tempname}, " to $fullname: $!";
-			print "moving ", $self->{tempname}, " -> $destdir$fullname\n" if $state->{beverbose};
+			print "moving ", $self->{tempname}, " -> $destdir$fullname\n" if $state->{very_verbose};
 			undef $self->{tempname};
 		}
 	} else {
