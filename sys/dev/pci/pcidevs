@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.778 2004/10/10 05:04:29 brad Exp $
+$OpenBSD: pcidevs,v 1.779 2004/10/15 08:43:28 jsg Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -134,6 +134,7 @@ vendor	NEWBRIDGE	0x10e3	Newbridge
 vendor	AMCIRCUITS	0x10e8	Applied Micro Circuits
 vendor	REALTEK		0x10ec	Realtek
 vendor	NKK		0x10f5	NKK
+vendor	IODATA		0x10fc	IO Data Device Inc
 vendor	INITIO		0x1101	Initio
 vendor	CREATIVELABS	0x1102	Creative Labs
 vendor	TRIONES		0x1103	HighPoint
@@ -1485,6 +1486,9 @@ product INTERSIL MINI_PCI_WLAN	0x3873	PRISM2.5
 
 /* Invertex */
 product INVERTEX AEON		0x0005	AEON
+
+/* IO Data Device Inc products */
+product IODATA GV_BCTV3		0x4020	GV-BCTV3
 
 /* I. T. T. products */
 product ITT AGX016		0x0001	AGX016
