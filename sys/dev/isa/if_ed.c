@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.17 1996/07/31 01:51:49 niklas Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.18 1996/08/02 11:15:52 niklas Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.100 1996/05/12 23:52:19 mycroft Exp $	*/
 
 /*
@@ -2769,8 +2769,8 @@ ed_shared_writemem(sc, from, card, len)
 	 * have to be careful.
 	 */
 	if (sc->isa16bit) {
-		word = from[0] + from[1] * 256;
 		while (len > 1) {
+			word = (u_int8_t)from[0] | (u_int8_t)from[1] << 8;
 			bus_mem_write_2(bc, memh, card, word);
 			from += 2;
 			card += 2;
