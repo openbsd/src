@@ -1,4 +1,4 @@
-/*	$OpenBSD: qec.c,v 1.11 1999/07/05 21:55:09 deraadt Exp $	*/
+/*	$OpenBSD: qec.c,v 1.12 1999/07/05 22:30:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -227,11 +227,10 @@ qec_translate(sc, ca)
 	struct qec_softc *sc;
 	struct confargs *ca;
 {
-	static int dev = 0;
 	register int i;
 
 	ca->ca_slot = ca->ca_ra.ra_iospace;
-	ca->ca_offset = sc->sc_range[dev++].poffset - (long)sc->sc_paddr;
+	ca->ca_offset = sc->sc_range[ca->ca_slot].poffset - (long)sc->sc_paddr;
 
 	/* Translate into parent address spaces */
 	for (i = 0; i < ca->ca_ra.ra_nreg; i++) {
