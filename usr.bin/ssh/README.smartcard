@@ -37,11 +37,27 @@ need to:
 	In spite of the name, this does not generate a key.
 	It just loads an already existing key on to the card.
 
-(5) tell the ssh client to use the card reader:
+(5) optional:
+
+	Change the card password so that only you can
+	read the private key:
+
+	$ sectok
+	sectok> login -d
+	sectok> setpass
+	sectok> quit
+
+	This prevents reading the key but not use of the
+	key by the card applet.
+
+	Do not forget the passphrase.  There is no way to
+	recover if you do.
+
+(6) tell the ssh client to use the card reader:
 
 	$ ssh -I 1 otherhost
 
-(6) or tell the agent (don't forget to restart) to use the smartcard:
+(7) or tell the agent (don't forget to restart) to use the smartcard:
 
 	$ ssh-add -s 1
 
