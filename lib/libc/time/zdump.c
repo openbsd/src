@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
-static char elsieid[] = "@(#)zdump.c	7.28";
-static char rcsid[] = "$OpenBSD: zdump.c,v 1.7 1999/01/29 07:04:05 d Exp $";
+static char elsieid[] = "@(#)zdump.c	7.29";
+static char rcsid[] = "$OpenBSD: zdump.c,v 1.8 2001/03/26 15:25:51 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -262,9 +262,8 @@ _("%s: usage is %s [ -v ] [ -c cutoff ] zonename ...\n"),
 		show(argv[i], t, TRUE);
 	}
 	if (fflush(stdout) || ferror(stdout)) {
-		(void) fprintf(stderr, _("%s: Error writing "),
-			argv[0]);
-		(void) perror(_("standard output"));
+		(void) fprintf(stderr, "%s: ", argv[0]);
+		(void) perror(_("Error writing standard output"));
 		(void) exit(EXIT_FAILURE);
 	}
 	exit(EXIT_SUCCESS);

@@ -1,4 +1,4 @@
-@(#)Theory	7.10
+@(#)Theory	7.12
 
 
 ----- Outline -----
@@ -194,9 +194,13 @@ and `Pacific/Honolulu'.
 Here are the general rules used for choosing location names,
 in decreasing order of importance:
 
-	Use only valid Posix file names.  Use only Ascii letters, digits, `.',
-		`-' and `_'.  Do not exceed 14 characters or start with `-'.
-		E.g. prefer `Brunei' to `Bandar_Seri_Begawan'.
+	Use only valid POSIX file name components (i.e., the parts of
+		names other than `/').  Within a file name component,
+		use only ASCII letters, `.', `-' and `_'.  Do not use
+		digits, as that might create an ambiguity with POSIX
+		TZ strings.  A file name component must not exceed 14
+		characters or start with `-'.  E.g., prefer `Brunei'
+		to `Bandar_Seri_Begawan'.
 	Include at least one location per time zone rule set per country.
 		One such location is enough.  Use ISO 3166 (see the file
 		iso3166.tab) to help decide whether something is a country.
@@ -211,9 +215,9 @@ in decreasing order of importance:
 		or regions, so that any future time zone changes do not split
 		locations into different time zones.  E.g. prefer `Paris'
 		to `France', since France has had multiple time zones.
-	Use traditional English spelling, e.g. prefer `Rome' to `Roma', and
+	Use mainstream English spelling, e.g. prefer `Rome' to `Roma', and
 		prefer `Athens' to the true name (which uses Greek letters).
-		The Posix file name restrictions encourage this rule.
+		The POSIX file name restrictions encourage this rule.
 	Use the most populous among locations in a country's time zone,
 		e.g. prefer `Shanghai' to `Beijing'.  Among locations with
 		similar populations, pick the best-known location,
@@ -227,13 +231,19 @@ in decreasing order of importance:
 	Use `_' to represent a space.
 	Omit `.' from abbreviations in names, e.g. prefer `St_Helena'
 		to `St._Helena'.
+	Do not change established names if they only marginally
+		violate the above rules.  For example, don't change
+		the existing name `Rome' to `Milan' merely because
+		Milan's population has grown to be somewhat greater
+		than Rome's.
+	If a name is changed, put its old spelling in the `backward' file.
 
 The file `zone.tab' lists the geographical locations used to name
 time zone rule files.
 
 Older versions of this package used a different naming scheme,
 and these older names are still supported.
-See the file `backwards' for most of these older names
+See the file `backward' for most of these older names
 (e.g. `US/Eastern' instead of `America/New_York').
 The other old-fashioned names still supported are
 `WET', `CET', `MET', `EET' (see the file `europe'),
@@ -247,25 +257,39 @@ like `EST' to be compatible with human tradition and POSIX.1.
 Here are the general rules used for choosing time zone abbreviations,
 in decreasing order of importance:
 
-	Use abbreviations that consist of 3 or more upper-case Ascii letters,
-		except use "___" for locations while uninhabited.
-		Posix.1 requires at least 3 characters, and the restriction to
-		upper-case Ascii letters follows most traditions.
+	Use abbreviations that consist of three or more ASCII letters.
 		Previous editions of this database also used characters like
 		' ' and '?', but these characters have a special meaning to
 		the shell and cause commands like
 			set `date`
-		to have unexpected effects.  In theory, the character set could
-		be !%./@A-Z^_a-z{}, but these tables use only upper-case
-		Ascii letters (and "___").
+		to have unexpected effects.
+		Previous editions of this rule required upper-case letters,
+		but the Congressman who introduced Chamorro Standard Time
+		preferred "ChST", so the rule has been relaxed.
+
+		This rule guarantees that all abbreviations could have
+		been specified by a POSIX.1 TZ string.  POSIX.1
+		requires at least three characters for an
+		abbreviation.  POSIX.1-1996 says that an abbreviation
+		cannot start with ':', and cannot contain ',', '-',
+		'+', NUL, or a digit.  Draft 5 of POSIX 1003.1-200x
+		changes this rule to say that an abbreviation can
+		contain only '-', '+', and alphanumeric characters in
+		the current locale.  To be portable to both sets of
+		rules, an abbreviation must therefore use only ASCII
+		letters, as these are the only letters that are
+		alphabetic in all locales.
+
 	Use abbreviations that are in common use among English-speakers,
 		e.g. `EST' for Eastern Standard Time in North America.
 		We assume that applications translate them to other languages
 		as part of the normal localization process; for example,
 		a French application might translate `EST' to `HNE'.
+
 	For zones whose times are taken from a city's longitude, use the
 		traditional xMT notation, e.g. `PMT' for Paris Mean Time.
 		The only name like this in current use is `GMT'.
+
 	If there is no common English abbreviation, abbreviate the English
 		translation of the usual phrase used by native speakers.
 		If this is not available or is a phrase mentioning the country
@@ -279,6 +303,9 @@ in decreasing order of importance:
 			letters of an English place name identifying each zone
 			and then append `T', `ST', etc. as before;
 			e.g. `VLAST' for VLAdivostok Summer Time.
+
+	Use "zzz" for locations while uninhabited.  The mnemonic is that
+		these locations are, in some sense, asleep.
 
 Application writers should note that these abbreviations are ambiguous
 in practice: e.g. `EST' has a different meaning in Australia than
