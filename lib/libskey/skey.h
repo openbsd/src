@@ -10,7 +10,7 @@
  *
  * Main client header
  *
- * $OpenBSD: skey.h,v 1.14 2001/06/20 22:14:20 millert Exp $
+ * $OpenBSD: skey.h,v 1.15 2001/06/23 21:09:11 millert Exp $
  */
 
 #ifndef _SKEY_H_
@@ -81,7 +81,6 @@ int skey_authenticate __P((char *));
 int skey_passcheck __P((char *, char *));
 char *skey_keyinfo __P((char *));
 int skey_haskey __P((char *));
-int getskeyprompt __P((struct skey *, char *, char *));
 int atob8 __P((char *, char *));
 int btoa8 __P((char *, char *));
 int htoi __P((int));
