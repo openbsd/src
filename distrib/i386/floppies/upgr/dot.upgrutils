@@ -27,7 +27,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 # THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
-#	$Id: dot.upgrutils,v 1.2 1995/11/06 21:27:45 deraadt Exp $
+#	$Id: dot.upgrutils,v 1.3 1995/12/15 12:14:51 deraadt Exp $
 
 # Upgrade cleanup utilites (functions), to make sure a recently-upgraded
 # system is safely runnable.  These are meant to be invoked from the shell
@@ -45,6 +45,7 @@ Cleanup()
 	mv $upgrade_dir/etc/rc.bak $upgrade_dir/etc/rc
 	chroot $upgrade_dir /usr/sbin/pwd_mkdb -p /etc/master.passwd
 	chroot $upgrade_dir /bin/rm /etc/sendmail.fc > /dev/null 2>&1
+	mv $upgrade_dir/.profile.bak $upgrade_dir/.profile
 	sync
 	echo	"Done."
 
