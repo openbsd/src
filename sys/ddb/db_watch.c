@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_watch.c,v 1.7 2001/12/08 02:24:07 art Exp $ */
+/*	$OpenBSD: db_watch.c,v 1.8 2002/02/27 17:37:05 pefo Exp $ */
 /*	$NetBSD: db_watch.c,v 1.9 1996/03/30 22:30:12 christos Exp $	*/
 
 /* 
@@ -219,7 +219,7 @@ db_set_watchpoints()
 {
 	register db_watchpoint_t	watch;
 
-	if (!db_watchpoints_inserted) {
+	if (!db_watchpoints_inserted && db_watchpoint_list != NULL) {
 	    for (watch = db_watchpoint_list;
 	         watch != 0;
 	         watch = watch->link)
