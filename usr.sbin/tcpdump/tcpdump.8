@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.26 2001/03/21 16:27:00 aaron Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.27 2001/07/20 19:09:49 mpech Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -825,7 +825,6 @@ Generally, if the expression contains shell metacharacters, it is
 easier to pass it as a single, quoted argument.
 Multiple arguments are concatenated with spaces before being parsed.
 .Sh EXAMPLES
-.Pp
 To print all packets arriving at or departing from sundown:
 .Bd -ragged -offset indent
 .Nm
@@ -938,7 +937,6 @@ packets that are not echo requests/replies (i.e., not ping packets):
 .Ed
 .El
 .Sh OUTPUT FORMAT
-.Pp
 The output of
 .Nm
 is protocol dependent.
