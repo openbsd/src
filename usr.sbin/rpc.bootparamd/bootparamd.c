@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparamd.c,v 1.14 2002/07/19 02:18:06 deraadt Exp $	*/
+/*	$OpenBSD: bootparamd.c,v 1.15 2003/07/06 21:34:03 deraadt Exp $	*/
 
 /*
  * This code is not copyright, and is placed in the public domain.
@@ -54,7 +54,7 @@ char   *bootpfile = _PATH_BOOTPARAMS;
 extern char *optarg;
 extern int optind;
 
-void
+static void
 usage(void)
 {
 	fprintf(stderr,
