@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_ipc_10.c,v 1.7 2001/11/06 19:53:17 miod Exp $	*/
+/*	$OpenBSD: kern_ipc_10.c,v 1.8 2004/05/05 05:18:17 mickey Exp $	*/
 /*	$NetBSD: kern_ipc_10.c,v 1.4 1995/10/07 06:26:25 mycroft Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
  * there are other COMPAT_* options that need these old functions.
  */
 
-#ifdef SYSVSEM
+#if defined(SYSVSEM) && !defined(__LP64__)
 int
 compat_10_sys_semsys(p, v, retval)
 	struct proc *p;
