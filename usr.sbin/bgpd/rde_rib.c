@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.42 2004/03/11 14:22:23 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.43 2004/04/28 07:05:27 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -373,6 +373,7 @@ prefix_move(struct rde_aspath *asp, struct prefix *p)
 	np->aspath = asp;
 	/* peer and prefix pointers are still equal */
 	np->prefix = p->prefix;
+	np->peer = p->peer;
 	np->lastchange = time(NULL);
 
 	/* add to new as path */
@@ -557,6 +558,7 @@ prefix_link(struct prefix *pref, struct pt_entry *pte, struct rde_aspath *asp)
 
 	pref->aspath = asp;
 	pref->prefix = pte;
+	pref->peer = asp->peer;
 	pref->lastchange = time(NULL);
 
 	/* make route decision */
