@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.19 2002/03/15 21:44:18 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.20 2002/04/22 06:31:28 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -92,8 +92,6 @@ extern struct pmap kernel_pmap_store;
 extern int pmap_hptsize;
 extern struct pdc_hwtlb pdc_hwtlb;
 #endif
-
-#define	PMAP_STEAL_MEMORY	/* we have some memory to steal */
 
 /*
  * according to the parisc manual aliased va's should be
