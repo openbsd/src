@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)timed.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.6 $"
+#ident "$Revision: 1.7 $"
 #endif /* sgi */
 
 #define TSPTYPES
@@ -386,12 +386,17 @@ main(int argc, char **argv)
 		    nt->net <<= 8;
 	}
 	while (1) {
+		char *ninbuf;
+
 		ifc.ifc_len = inlen;
-		ifc.ifc_buf = inbuf = realloc(inbuf, inlen);
-		if (inbuf == NULL) {
+		ninbuf = realloc(inbuf, inlen);
+		if (ninbuf == NULL) {
+			if (inbuf)
+				free(inbuf);
 			close(sock);
 			return (-1);
 		}
+		ifc.ifc_buf = inbuf = ninbuf;
 		if (ioctl(sock, SIOCGIFCONF, (char *)&ifc) < 0) {
 			(void) close(sock);
 			free(inbuf);
