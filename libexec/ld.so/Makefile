@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.20 2003/06/26 17:55:42 drahn Exp $
+#	$OpenBSD: Makefile,v 1.21 2003/06/27 01:13:00 deraadt Exp $
 
 SUBDIR=ldconfig ldd
 VPATH=${.CURDIR}/../../lib/libc/string:${.CURDIR}/../../sys/lib/libsa
@@ -12,7 +12,7 @@ SRCS+=	library.c
 .endif
 
 PROG=	ld.so
-MAN=	ld.so.8
+MAN=	ld.so.1
 
 .include "${.CURDIR}/${MACHINE_ARCH}/Makefile.inc"
 .PATH:	${.CURDIR}/${MACHINE_ARCH}
