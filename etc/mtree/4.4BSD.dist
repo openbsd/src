@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.157 2003/10/31 04:04:05 drahn Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.158 2004/01/28 18:00:22 deraadt Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1065,6 +1065,12 @@ sparc
 ..
 sparc64
 ..
+amd64
+..
+pegosos
+..
+cats
+..
 vax
 ..
 
@@ -1114,6 +1120,12 @@ sparc
 ..
 sparc64
 ..
+amd64
+..
+pegosos
+..
+cats
+..
 vax
 ..
 
@@ -1152,6 +1164,12 @@ sparc
 ..
 sparc64
 ..
+amd64
+..
+pegosos
+..
+cats
+..
 vax
 ..
 
@@ -1182,6 +1200,12 @@ mvmeppc
 sparc
 ..
 sparc64
+..
+amd64
+..
+pegosos
+..
+cats
 ..
 vax
 ..
@@ -1226,6 +1250,12 @@ sparc
 ..
 sparc64
 ..
+amd64
+..
+pegosos
+..
+cats
+..
 vax
 ..
 
@@ -1259,6 +1289,12 @@ sparc
 ..
 sparc64
 ..
+amd64
+..
+pegosos
+..
+cats
+..
 vax
 ..
 
@@ -1291,6 +1327,12 @@ pegasos
 sparc
 ..
 sparc64
+..
+amd64
+..
+pegosos
+..
+cats
 ..
 vax
 ..
@@ -1343,6 +1385,12 @@ sparc
 ..
 sparc64
 ..
+amd64
+..
+pegosos
+..
+cats
+..
 vax
 ..
 
@@ -1381,6 +1429,12 @@ sparc
 ..
 sparc64
 ..
+amd64
+..
+pegosos
+..
+cats
+..
 vax
 ..
 
@@ -1413,6 +1467,12 @@ pegasos
 sparc
 ..
 sparc64
+..
+amd64
+..
+pegosos
+..
+cats
 ..
 vax
 ..
@@ -1457,6 +1517,12 @@ sparc
 ..
 sparc64
 ..
+amd64
+..
+pegosos
+..
+cats
+..
 vax
 ..
 
@@ -1490,6 +1556,12 @@ sparc
 ..
 sparc64
 ..
+amd64
+..
+pegosos
+..
+cats
+..
 vax
 ..
 
@@ -1522,6 +1594,12 @@ pegasos
 sparc
 ..
 sparc64
+..
+amd64
+..
+pegosos
+..
+cats
 ..
 vax
 ..
@@ -1571,6 +1649,12 @@ sparc
 ..
 sparc64
 ..
+amd64
+..
+pegosos
+..
+cats
+..
 vax
 ..
 
@@ -1618,6 +1702,12 @@ pegasos
 sparc
 ..
 sparc64
+..
+amd64
+..
+pegosos
+..
+cats
 ..
 vax
 ..
