@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.25 2003/08/16 00:24:51 deraadt Exp $	*/
+/*	$OpenBSD: file.c,v 1.26 2003/10/13 02:29:29 vincent Exp $	*/
 
 /*
  *	File commands.
@@ -373,7 +373,7 @@ filewrite(int f, int n)
 {
 	int	 s;
 	char	 fname[NFILEN];
-	char	*adjfname;
+	char	*adjfname, *p;
 
 	if ((s = eread("Write file: ", fname, NFILEN,
 	    EFNEW | EFCR | EFFILE)) != TRUE)
@@ -385,6 +385,14 @@ filewrite(int f, int n)
 	bzero(&curbp->b_fi, sizeof(curbp->b_fi));
 	if ((s = writeout(curbp, adjfname)) == TRUE) {
 		(void)strlcpy(curbp->b_fname, adjfname, sizeof curbp->b_fname);
+		p = strrchr(curbp->b_fname, '/');
+		if (p)
+			p++;
+		else
+			p = curbp->b_fname;
+		if (curbp->b_bname)
+			free((char *)curbp->b_bname);
+		curbp->b_bname = strdup(p);
 #ifndef NO_BACKUP
 		curbp->b_flag &= ~(BFBAK | BFCHG);
 #else /* !NO_BACKUP */
