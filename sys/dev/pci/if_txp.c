@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.29 2001/05/15 14:57:28 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.30 2001/05/16 02:01:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -1228,7 +1228,7 @@ txp_start(ifp)
 	struct txp_tx_ring *r = &sc->sc_txhir;
 	struct txp_tx_desc *txd;
 	struct txp_frag_desc *fxd;
-	struct mbuf *m;
+	struct mbuf *m, *mnew;
 	struct txp_swdesc *sd;
 	u_int32_t firstprod, firstcnt, prod, cnt, i;
 #if NVLAN > 0
@@ -1258,10 +1258,25 @@ txp_start(ifp)
 			goto oactive1;
 
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, m,
-		    BUS_DMA_NOWAIT))
-			goto oactive2;
-
-		/* XXX should copy if it doesn't currently fit. */
+		    BUS_DMA_NOWAIT)) {
+			MGETHDR(mnew, M_DONTWAIT, MT_DATA);
+			if (mnew == NULL)
+				goto oactive2;
+			if (m->m_pkthdr.len > MHLEN) {
+				MCLGET(mnew, M_DONTWAIT);
+				if ((mnew->m_flags & M_EXT) == 0) {
+					m_freem(mnew);
+					goto oactive2;
+				}
+			}
+			m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, caddr_t));
+			mnew->m_pkthdr.len = mnew->m_len = m->m_pkthdr.len;
+			m_freem(m);
+			m = mnew;
+			if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, m,
+			    BUS_DMA_NOWAIT))
+				goto oactive2;
+		}
 
 		if ((TX_ENTRIES - cnt) < 4)
 			goto oactive;
