@@ -36,7 +36,7 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 /*static char sccsid[] = "from: @(#)ldexp.c	5.1 (Berkeley) 4/23/90";*/
-static char rcsid[] = "$Id: ldexp.c,v 1.1.1.1 1995/10/18 08:41:24 deraadt Exp $";
+static char rcsid[] = "$Id: ldexp.c,v 1.2 1996/03/25 22:57:38 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -48,11 +48,11 @@ ldexp (double value, int exp)
 {
 	double temp;
 #if __GNUC__ >= 2
-	asm ("fscale"
+	__asm ("fscale"
 		: "=t" (temp)
 		: "0" (value), "u" ((double)exp));
 #else
-	asm ("fscale; fstp %%st(1)"
+	__asm ("fscale; fstp %%st(1)"
 		: "=f" (temp)
 		: "f" (value), "0" ((double)exp));
 #endif
