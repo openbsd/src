@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.11 1996/06/21 15:29:56 chuck Exp 
+ *	OpenBSD: pcidevs,v 1.12 1996/10/14 09:00:53 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.8 1996/05/07 01:59:45 thorpej Exp $ */
 
@@ -411,8 +411,14 @@
  */
 
 /* 3COM Products */
-#define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 */
-#define	PCI_PRODUCT_3COM_3C595	0x5950		/* 3c595 */
+#define	PCI_PRODUCT_3COM_3C590	0x5900		/* 3c590 10Mbps */
+#define	PCI_PRODUCT_3COM_3C595	0x5950		/* 3c595 100Base-TX */
+#define	PCI_PRODUCT_3COM_3C595	0x5951		/* 3c595 100Base-T4 */
+#define	PCI_PRODUCT_3COM_3C595	0x5952		/* 3c595 100Base-T/MII */
+#define	PCI_PRODUCT_3COM_3C900	0x9000		/* 3c900 10Base-T */
+#define	PCI_PRODUCT_3COM_3C900	0x9001		/* 3c900 10Mbps-Combo */
+#define	PCI_PRODUCT_3COM_3C905	0x9050		/* 3c905 100Base-TX */
+#define	PCI_PRODUCT_3COM_3C905	0x9051		/* 3c905 100Base-T4 */
 
 /* Acer products */
 #define	PCI_PRODUCT_ACER_M1435	0x1435		/* M1435 */
