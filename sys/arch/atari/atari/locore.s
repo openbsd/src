@@ -53,6 +53,8 @@
 #include <atari/atari/vectors.s>
 
 	.text
+_C_LABEL(kernel_text):
+
 /*
  * This is where we wind up if the kernel jumps to location 0.
  * (i.e. a bogus PC)  This is known to immediately follow the vector

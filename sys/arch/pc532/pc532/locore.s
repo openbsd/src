@@ -80,6 +80,8 @@ __have_fpu:	.long 0
 
 .text
 .globl start
+.globl _C_LABEL(kernel_text)
+_C_LABEL(kernel_text) = start
 start:
 	br here_we_go
 
