@@ -1,4 +1,4 @@
-/*	$OpenBSD: resolve.h,v 1.22 2003/02/15 22:39:13 drahn Exp $ */
+/*	$OpenBSD: resolve.h,v 1.23 2003/04/17 03:40:45 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -39,9 +39,11 @@
 
 struct load_list {
 	struct load_list *next;
-	char	*start;
-	size_t	size;
-	int	prot;
+	void		*start;
+	size_t		size;
+	int		prot;
+	Elf_Addr	moff;
+	long		foff;
 };
 
 /*
