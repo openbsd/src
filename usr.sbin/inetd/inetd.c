@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.120 2004/09/06 07:03:08 otto Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.121 2004/09/14 22:28:41 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static const char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static const char rcsid[] = "$OpenBSD: inetd.c,v 1.120 2004/09/06 07:03:08 otto Exp $";
+static const char rcsid[] = "$OpenBSD: inetd.c,v 1.121 2004/09/14 22:28:41 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -176,7 +176,6 @@ int	 toomany = TOOMANY;
 int	 options;
 int	 timingout;
 struct	 servent *sp;
-char	*curdom;
 uid_t	 uid;
 sigset_t blockmask;
 sigset_t emptymask;
@@ -187,7 +186,7 @@ sigset_t emptymask;
 
 /* Reserve some descriptors, 3 stdio + at least: 1 log, 1 conf. file */
 #define FD_MARGIN	(8)
-__typeof(((struct rlimit *)0)->rlim_cur)	rlim_nofile_cur = OPEN_MAX;
+rlim_t	rlim_nofile_cur = OPEN_MAX;
 
 struct rlimit	rlim_nofile;
 
@@ -612,6 +611,7 @@ dg_broadcast(struct in_addr *in)
 	return (0);
 }
 
+/* ARGSUSED */
 void
 reap(int sig)
 {
@@ -658,6 +658,7 @@ doreap(void)
 	}
 }
 
+/* ARGSUSED */
 void
 config(int sig)
 {
@@ -892,6 +893,7 @@ doconfig(void)
 	sigprocmask(SIG_SETMASK, &omask, NULL);
 }
 
+/* ARGSUSED */
 void
 retry(int sig)
 {
@@ -919,6 +921,7 @@ doretry(void)
 	}
 }
 
+/* ARGSUSED */
 void
 die(int sig)
 {
