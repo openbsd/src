@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.2 1997/10/02 00:02:55 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.3 1997/10/02 00:51:58 millert Exp $	*/
 
 /*
  * Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.2 1997/10/02 00:02:55 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.3 1997/10/02 00:51:58 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -128,6 +128,7 @@ editor(lp, f)
 			puts("\tm [part]  - modify existing partition.");
 			puts("\tu         - undo last change.");
 			puts("\ts [path]  - save label to file.");
+			puts("\tw         - write label to disk.");
 			puts("\tq         - quit and save changes.");
 			puts("\tx         - exit without saving changes.");
 			puts("\t?         - this message.\n");
@@ -218,6 +219,15 @@ editor(lp, f)
 				lastlabel = tmplabel;
 				puts("Last change undone.");
 			}
+			break;
+
+		case 'w':
+			if (donothing)
+				puts("In no change mode, not writing label.");
+			else if (memcmp(lp, &label, sizeof(label)) == 0)
+				puts("No changes.");
+			else if (writelabel(f, bootarea, &label) != 0)
+				warnx("unable to write label");
 			break;
 
 		case 'x':
