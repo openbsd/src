@@ -1,4 +1,4 @@
-/*	$OpenBSD: simm13.c,v 1.4 2003/08/19 19:17:54 jason Exp $	*/
+/*	$OpenBSD: simm13.c,v 1.5 2003/08/19 19:24:07 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -68,7 +68,7 @@ a_popc_imm(void *v, int i)
 		err(1, "mprotect");
 	gen_simm(v, i);
 
-	if (mprotect(v, 2 * sizeof(union instr), PROT_EXEC) == -1)
+	if (mprotect(v, 2 * sizeof(union instr), PROT_READ|PROT_EXEC) == -1)
 		err(1, "mprotect");
 	r = (*func)();
 
