@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.21 1997/09/13 12:24:49 deraadt Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.22 1997/09/29 19:31:05 millert Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -857,14 +857,18 @@ get_exportlist()
 				}
 				if (netgrp) {
 				    if (get_host(hst, grp, tgrp)) {
-					syslog(LOG_ERR, "Bad netgroup %s", cp);
-					getexp_err(ep, tgrp);
-					endnetgrent();
-					goto nextline;
+					syslog(LOG_ERR,
+					    "Unknown host (%s) in netgroup %s",
+					    hst, cp);
+					has_host = FALSE;
+					continue;
 				    }
 				} else if (get_host(cp, grp, tgrp)) {
-				    getexp_err(ep, tgrp);
-				    goto nextline;
+				    syslog(LOG_ERR,
+					"Unknown host (%s) in line %s",
+					cp, line);
+				    has_host = FALSE;
+				    continue;
 				}
 				has_host = TRUE;
 			    } while (netgrp && getnetgrent((const char **)&hst,
