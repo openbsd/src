@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.4 1999/02/17 22:29:19 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.5 1999/02/25 19:22:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -75,6 +75,7 @@
 	.import pdc, data
 	.import	boothowto, data
 	.import	bootdev, data
+	.import	esym, data
 	.import istackptr, data
 /*
  * Declare data sections
@@ -152,6 +153,8 @@ ENTRY(__start)
 	stw	arg1,R%boothowto(r1)
 	ldil	L%bootdev,r1
 	stw	arg2,R%bootdev(r1)
+	ldil	L%esym,r1
+	stw	arg3,R%esym(r1)
 
 	/*
 	 * disable interrupts and turn off all bits in the psw so that
