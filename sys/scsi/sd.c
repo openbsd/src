@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.44 2000/09/20 00:58:03 mickey Exp $	*/
+/*	$OpenBSD: sd.c,v 1.45 2000/09/21 17:57:19 mickey Exp $	*/
 /*	$NetBSD: sd.c,v 1.111 1997/04/02 02:29:41 mycroft Exp $	*/
 
 /*-
@@ -82,12 +82,8 @@
 
 #include <sys/vnode.h>
 
-#ifndef	SDOUTSTANDING
-#define	SDOUTSTANDING	4
-#endif
-
 #define	SDUNIT(dev)			DISKUNIT(dev)
-#define SDMINOR(unit, part)             DISKMINOR(unit, part)
+#define	SDMINOR(unit, part)		DISKMINOR(unit, part)
 #define	SDPART(dev)			DISKPART(dev)
 #define	MAKESDDEV(maj, unit, part)	MAKEDISKDEV(maj, unit, part)
 
@@ -95,16 +91,16 @@
 
 int	sdmatch __P((struct device *, void *, void *));
 void	sdattach __P((struct device *, struct device *, void *));
-int     sdactivate __P((struct device *, enum devact));
-int     sddetach __P((struct device *, int));
-void    sdzeroref __P((struct device *));
+int	sdactivate __P((struct device *, enum devact));
+int	sddetach __P((struct device *, int));
+void	sdzeroref __P((struct device *));
 
 void	sdminphys __P((struct buf *));
 void	sdgetdisklabel __P((dev_t, struct sd_softc *, struct disklabel *,
 			    struct cpu_disklabel *, int));
 void	sdstart __P((void *));
 void	sddone __P((struct scsi_xfer *));
-void    sd_shutdown __P((void *));
+void	sd_shutdown __P((void *));
 int	sd_reassign_blocks __P((struct sd_softc *, u_long));
 int	sd_interpret_sense __P((struct scsi_xfer *));
 
@@ -184,8 +180,6 @@ sdattach(parent, self, aux)
 	sd->type = (sa->sa_inqbuf->device & SID_TYPE);
 	sc_link->device = &sd_switch;
 	sc_link->device_softc = sd;
-	if (sc_link->openings > SDOUTSTANDING)
-		sc_link->openings = SDOUTSTANDING;
 
 	/*
 	 * Initialize and attach the disk structure.
@@ -206,7 +200,7 @@ sdattach(parent, self, aux)
 	/*
 	 * Note if this device is ancient.  This is used in sdminphys().
 	 */
-	if (!(sc_link->flags & SDEV_ATAPI) && 
+	if (!(sc_link->flags & SDEV_ATAPI) &&
 	    (sa->sa_inqbuf->version & SID_ANSII) == 0)
 		sd->flags |= SDF_ANCIENT;
 
@@ -238,9 +232,9 @@ sdattach(parent, self, aux)
 	printf("%s: ", sd->sc_dev.dv_xname);
 	switch (result) {
 	case SDGP_RESULT_OK:
-                printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec, %ld sec total",
-                    dp->disksize / (1048576 / dp->blksize), dp->cyls,
-                    dp->heads, dp->sectors, dp->blksize, dp->disksize);
+		printf("%ldMB, %d cyl, %d head, %d sec, %d bytes/sec, %ld sec total",
+		    dp->disksize / (1048576 / dp->blksize), dp->cyls,
+		    dp->heads, dp->sectors, dp->blksize, dp->disksize);
 		break;
 
 	case SDGP_RESULT_OFFLINE:
@@ -275,53 +269,53 @@ sdattach(parent, self, aux)
 
 int
 sdactivate(self, act)
-        struct device *self;
-        enum devact act;
+	struct device *self;
+	enum devact act;
 {
-        int rv = 0;
+	int rv = 0;
 
-        switch (act) {
-        case DVACT_ACTIVATE:
-                break;
+	switch (act) {
+	case DVACT_ACTIVATE:
+		break;
 
-        case DVACT_DEACTIVATE:
-                /*
-                 * Nothing to do; we key off the device's DVF_ACTIVATE.
-                 */
-                break;
-        }
-        return (rv);
+	case DVACT_DEACTIVATE:
+		/*
+		 * Nothing to do; we key off the device's DVF_ACTIVATE.
+		 */
+		break;
+	}
+	return (rv);
 }
 
 
 int
 sddetach(self, flags)
-        struct device *self;
-        int flags;
+	struct device *self;
+	int flags;
 {
-        struct sd_softc *sc = (struct sd_softc *)self;
-        struct buf *dp, *bp;
-        int s, bmaj, cmaj, mn;
+	struct sd_softc *sc = (struct sd_softc *)self;
+	struct buf *dp, *bp;
+	int s, bmaj, cmaj, mn;
 
 	/* Remove unprocessed buffers from queue */
 	s = splbio();
 	for (dp = &sc->buf_queue; (bp = dp->b_actf) != NULL; ) {
 		dp->b_actf = bp->b_actf;
-		
+
 		bp->b_error = ENXIO;
 		bp->b_flags |= B_ERROR;
 		biodone(bp);
 	}
 	splx(s);
 
-        /* locate the major number */
-        mn = SDMINOR(self->dv_unit, 0);
+	/* locate the major number */
+	mn = SDMINOR(self->dv_unit, 0);
 
-        for (bmaj = 0; bmaj < nblkdev; bmaj++)
-                if (bdevsw[bmaj].d_open == sdopen)
+	for (bmaj = 0; bmaj < nblkdev; bmaj++)
+		if (bdevsw[bmaj].d_open == sdopen)
 			vdevgone(bmaj, mn, mn + MAXPARTITIONS - 1, VBLK);
-        for (cmaj = 0; cmaj < nchrdev; cmaj++)
-                if (cdevsw[cmaj].d_open == sdopen)
+	for (cmaj = 0; cmaj < nchrdev; cmaj++)
+		if (cdevsw[cmaj].d_open == sdopen)
 			vdevgone(cmaj, mn, mn + MAXPARTITIONS - 1, VCHR);
 
 	/* Get rid of the shutdown hook. */
@@ -329,21 +323,21 @@ sddetach(self, flags)
 		shutdownhook_disestablish(sc->sc_sdhook);
 
 #if NRND > 0
-        /* Unhook the entropy source. */
-        rnd_detach_source(&sc->rnd_source);
+	/* Unhook the entropy source. */
+	rnd_detach_source(&sc->rnd_source);
 #endif
 
-        return (0);
+	return (0);
 }
 
 void
 sdzeroref(self)
-        struct device *self;
+	struct device *self;
 {
-        struct sd_softc *sd = (struct sd_softc *)self;
+	struct sd_softc *sd = (struct sd_softc *)self;
 
-        /* Detach disk. */
-        disk_detach(&sd->sc_dk);
+	/* Detach disk. */
+	disk_detach(&sd->sc_dk);
 }
 
 /*
@@ -477,7 +471,7 @@ bad3:
  * close the device.. only called if we are the LAST occurence of an open
  * device.  Convenient now but usually a pain.
  */
-int 
+int
 sdclose(dev, flag, fmt, p)
 	dev_t dev;
 	int flag, fmt;
@@ -514,9 +508,9 @@ sdclose(dev, flag, fmt, p)
 		sd->sc_link->flags &= ~(SDEV_OPEN|SDEV_MEDIA_LOADED);
 
 		if (sd->sc_link->flags & SDEV_EJECTING) {
-		    scsi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0);
+			scsi_start(sd->sc_link, SSS_STOP|SSS_LOEJ, 0);
 
-		    sd->sc_link->flags &= ~SDEV_EJECTING;
+			sd->sc_link->flags &= ~SDEV_EJECTING;
 		}
 	}
 
@@ -626,7 +620,7 @@ done:
  * must be called at the correct (highish) spl level
  * sdstart() is called at splbio from sdstrategy and scsi_done
  */
-void 
+void
 sdstart(v)
 	register void *v;
 {
