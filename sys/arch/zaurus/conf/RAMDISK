@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.7 2005/01/10 05:20:20 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.8 2005/01/10 22:16:08 deraadt Exp $
 # $NetBSD: GENERIC,v 1.27.4.1 2002/08/01 04:18:06 lukem Exp $
 #
 # GENERIC machine description file
@@ -32,7 +32,7 @@ option		INET		# IP + ICMP + TCP + UDP
 option		INET6		# IPv6 (needs INET)
 option		DDB		# kernel debugger
 option		EXT2FS		# Second Extended Filesystem
-option          FIFO            # FIFOs; RECOMMENDED
+option		FIFO		# FIFOs; RECOMMENDED
 
 options		ARM32
 #options 	ARM_INTR_IMPL="<arch/arm/xscale/pxa2x0_intr.h>"
@@ -114,16 +114,16 @@ wi*		at uhub?		# WaveLAN IEEE 802.11DS
 umass*		at uhub?		# USB Mass Storage devices
 scsibus*	at umass?
 
-sd*             at scsibus?
-#st*             at scsibus?
-cd*             at scsibus?
-#ch*             at scsibus?
-#ss*             at scsibus?
-#uk*             at scsibus?
+sd*		at scsibus?
+#st*		at scsibus?
+cd*		at scsibus?
+#ch*		at scsibus?
+#ss*		at scsibus?
+#uk*		at scsibus?
 
 # cotulla integrated 16550 UARTs
 options COM_PXA2X0
-com0	at pxaip?  addr 0x40100000 intr 22      # Full Function UART
+com0	at pxaip?  addr 0x40100000 intr 22	# Full Function UART
 com1	at pxaip?  addr 0x40200000 intr 21 	# BlueTootth UART
 #com2	at pxaip?  addr 0x40700000 intr 20	# Standard UART (for IrDA)
 options FFUARTCONSOLE
@@ -132,7 +132,6 @@ options KGDB_DEVNAME="\"btuart\""   # ffuart or btuart
 options KGDB_DEVRATE=115200
 
 #aupxa0	at pxaip?		# AC97 interface
-
 
 # pcic
 pxapcic0	at pxaip?
@@ -151,7 +150,7 @@ iophy*	at mii?			# Intel 82553 PHYs
 icsphy*	at mii?			# ICS 1890 PHYs
 lxtphy*	at mii?			# Level1 LXT970 PHYs
 nsphy*	at mii?			# NS and compatible PHYs
-nsphyter*	at mii?		# NS and compatible PHYs
+nsphyter* at mii?		# NS and compatible PHYs
 qsphy*	at mii?			# Quality Semi QS6612 PHYs
 sqphy*	at mii?			# Seeq 8x220 PHYs
 rlphy* at mii?			# RealTek 8139 internal PHYs
@@ -161,7 +160,7 @@ acphy*	at mii?			# Altima AC101 PHYs
 amphy*	at mii?			# AMD 79C873 PHYs
 tqphy*	at mii?			# TDK 78Q212x PHYs
 bmtphy*	at mii?			# Broadcom 10/100 PHYs
-#brgphy* at mii?			# Broadcom Gigabit PHYs
+#brgphy* at mii?		# Broadcom Gigabit PHYs
 #eephy* at mii?			# Marvell 88E1000 series PHY
 #xmphy*	at mii?			# XaQti XMAC-II PHYs
 nsgphy*	at mii?			# NS gigabit PHYs
@@ -180,7 +179,6 @@ lcd0		at obio?
 wsdisplay*	at lcd? console ?
 options 	WSEMUL_VT100		# VT100 / VT220 emulation
 
-
 # Pseudo-Devices
 pseudo-device	wsmux		2	# mouse & keyboard multiplexor
 #pseudo-device	crypto		1
@@ -193,4 +191,3 @@ option		BOOT_CONFIG	# boot-time kernel config
 # RAMDISK stuff
 option		MINIROOTSIZE=5120
 option		RAMDISK_HOOKS
-

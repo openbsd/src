@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.6 2005/01/10 05:20:20 deraadt Exp $
+#	$OpenBSD: GENERIC,v 1.7 2005/01/10 22:16:08 deraadt Exp $
 #
 # GENERIC machine description file
 #
@@ -106,12 +106,12 @@ wi*		at uhub?		# WaveLAN IEEE 802.11DS
 umass*		at uhub?		# USB Mass Storage devices
 scsibus*	at umass?
 
-sd*             at scsibus?
-#st*             at scsibus?
-cd*             at scsibus?
-#ch*             at scsibus?
-#ss*             at scsibus?
-#uk*             at scsibus?
+sd*		at scsibus?
+#st*		at scsibus?
+cd*		at scsibus?
+#ch*		at scsibus?
+#ss*		at scsibus?
+#uk*		at scsibus?
 
 # cotulla integrated 16550 UARTs
 options COM_PXA2X0
@@ -143,7 +143,7 @@ iophy*	at mii?			# Intel 82553 PHYs
 icsphy*	at mii?			# ICS 1890 PHYs
 lxtphy*	at mii?			# Level1 LXT970 PHYs
 nsphy*	at mii?			# NS and compatible PHYs
-nsphyter*	at mii?		# NS and compatible PHYs
+nsphyter* at mii?		# NS and compatible PHYs
 qsphy*	at mii?			# Quality Semi QS6612 PHYs
 sqphy*	at mii?			# Seeq 8x220 PHYs
 rlphy* at mii?			# RealTek 8139 internal PHYs
@@ -153,12 +153,12 @@ acphy*	at mii?			# Altima AC101 PHYs
 amphy*	at mii?			# AMD 79C873 PHYs
 tqphy*	at mii?			# TDK 78Q212x PHYs
 bmtphy*	at mii?			# Broadcom 10/100 PHYs
-#brgphy* at mii?			# Broadcom Gigabit PHYs
+#brgphy* at mii?		# Broadcom Gigabit PHYs
 #eephy* at mii?			# Marvell 88E1000 series PHY
 #xmphy*	at mii?			# XaQti XMAC-II PHYs
 nsgphy*	at mii?			# NS gigabit PHYs
 urlphy*	at mii?			# Realtek RTL8150L internal PHY
-#rgephy* at mii?			# Realtek 8169S/8110S PHY
+#rgephy* at mii?		# Realtek 8169S/8110S PHY
 #ciphy* at mii?			# Cicada CS8201 10/100/1000 copper PHY
 ukphy*	at mii?			# "unknown" PHYs
 
