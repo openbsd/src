@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.3 2001/09/12 19:48:11 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.4 2001/11/27 02:33:15 jason Exp $	*/
 /*	$NetBSD: qe.c,v 1.16 2001/03/30 17:30:18 christos Exp $	*/
 
 /*-
@@ -143,9 +143,6 @@ struct qe_softc {
 
 	struct  qec_ring	sc_rb;	/* Packet Ring Buffer */
 
-	/* MAC address */
-	u_int8_t sc_enaddr[6];
-
 #ifdef QEDEBUG
 	int	sc_debug;
 #endif
@@ -252,7 +249,7 @@ qeattach(parent, self, aux)
 
 	/* Note: no interrupt level passed */
 	(void)bus_intr_establish(sa->sa_bustag, 0, IPL_NET, 0, qeintr, sc);
-	myetheraddr(sc->sc_enaddr);
+	myetheraddr(sc->sc_arpcom.ac_enaddr);
 
 	/*
 	 * Allocate descriptor ring and buffers.
@@ -330,7 +327,7 @@ qeattach(parent, self, aux)
 	if_attach(ifp);
 	ether_ifattach(ifp);
 
-	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
+	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 }
 
 /*
@@ -947,7 +944,7 @@ qeioctl(ifp, cmd, data)
 					*(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				      sizeof(sc->sc_enaddr));
+				      sizeof(sc->sc_arpcom.ac_enaddr));
 			/* Set new address. */
 			qeinit(sc);
 			break;
@@ -1094,7 +1091,7 @@ qeinit(sc)
 	/*
 	 * Station address
 	 */
-	ea = sc->sc_enaddr;
+	ea = sc->sc_arpcom.ac_enaddr;
 	bus_space_write_1(t, mr, QE_MRI_IAC,
 			  QE_MR_IAC_ADDRCHG | QE_MR_IAC_PHYADDR);
 	bus_space_write_multi_1(t, mr, QE_MRI_PADR, ea, 6);

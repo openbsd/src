@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.3 2001/09/12 19:48:11 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.4 2001/11/27 02:33:15 jason Exp $	*/
 /*	$NetBSD: be.c,v 1.26 2001/03/20 15:39:20 pk Exp $	*/
 
 /*-
@@ -151,9 +151,6 @@ struct be_softc {
 	int	sc_burst;
 
 	struct  qec_ring	sc_rb;	/* Packet Ring Buffer */
-
-	/* MAC address */
-	u_int8_t sc_enaddr[6];
 };
 
 int	bematch __P((struct device *, void *, void *));
@@ -303,8 +300,8 @@ beattach(parent, self, aux)
 		(void)bus_intr_establish(sa->sa_bustag, sa->sa_pri, IPL_NET,
 					 0, beintr, sc);
 
-	myetheraddr(sc->sc_enaddr);
-	printf(" address %s\n", ether_sprintf(sc->sc_enaddr));
+	myetheraddr(sc->sc_arpcom.ac_enaddr);
+	printf(" address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	/*
 	 * Allocate descriptor ring and buffers.
@@ -1005,7 +1002,7 @@ beioctl(ifp, cmd, data)
 					*(union ns_host *)LLADDR(ifp->if_sadl);
 			else
 				bcopy(ina->x_host.c_host, LLADDR(ifp->if_sadl),
-				      sizeof(sc->sc_enaddr));
+				      sizeof(sc->sc_arpcom.ac_enaddr));
 			/* Set new address. */
 			beinit(sc);
 			break;
@@ -1097,7 +1094,7 @@ beinit(sc)
 
 	bestop(sc);
 
-	ea = sc->sc_enaddr;
+	ea = sc->sc_arpcom.ac_enaddr;
 	bus_space_write_4(t, br, BE_BRI_MACADDR0, (ea[0] << 8) | ea[1]);
 	bus_space_write_4(t, br, BE_BRI_MACADDR1, (ea[2] << 8) | ea[3]);
 	bus_space_write_4(t, br, BE_BRI_MACADDR2, (ea[4] << 8) | ea[5]);
