@@ -1,4 +1,4 @@
-/*	$OpenBSD: strcmp.c,v 1.1 1996/09/18 13:56:08 mickey Exp $ */
+/*	$OpenBSD: strcmp.c,v 1.2 1996/10/16 11:32:07 mickey Exp $ */
 
 /*-
  * Copyright (c) 1996 Michael Shalayeff
@@ -37,11 +37,10 @@
 
 int
 strcmp(s1, s2)
-	const char *s1;
-	const char *s2;
+	register const char *s1;
+	register const char *s2;
 {
-	register int i = 0, j = 0;
-	while(s1[i] && s2[j] && (s1[i] != s2[j]) != 0)
-		i++, j++;
-	return s1[i] - s2[j];
+	while(*s1 && *s2 && *s1 == *s2)
+		s1++, s2++;
+	return *s1 - *s2;
 }

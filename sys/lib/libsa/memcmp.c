@@ -1,9 +1,8 @@
-/*	$OpenBSD: memcpy.c,v 1.3 1996/10/16 11:32:07 mickey Exp $	*/
-/*	$NetBSD: bcopy.c,v 1.5 1995/04/22 13:46:50 cgd Exp $	*/
+/*	$OpenBSD: memcmp.c,v 1.1 1996/10/16 11:32:06 mickey Exp $	*/
 
 /*-
- * Copyright (c) 1993
- *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1996 Michael Shalayeff
+ * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -15,15 +14,13 @@
  *    documentation and/or other materials provided with the distribution.
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
- *    may be used to endorse or promote products derived from this software
- *    without specific prior written permission.
+ *	This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
  *
- * THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
- * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
- * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR 
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED 
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
  * ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
  * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
  * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
@@ -33,31 +30,18 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)bcopy.c	8.1 (Berkeley) 6/11/93
  */
 
 #include <sys/types.h>
 #include "stand.h"
 
-/*
- * This is designed to be small, not fast.
- */
-void *
-memcpy(s1, s2, n)
-	void *s1;
+int
+memcmp(s1, s2, n)
+	const void *s1;
 	const void *s2;
-	size_t n;
+	size_t	n;
 {
-	register const char *f = s2;
-	register char *t = s1;
-
-	if (f < t) {
-		f += n;
-		t += n;
-		while (n-- > 0)
-			*--t = *--f;
-	} else
-		while (n-- > 0)
-			*t++ = *f++;
-	return s1;
+	while(n-- && *(char*)s1 == *(char*)s2)
+		((char*)s1)++, ((char*)s2)++;
+	return *(char*)s1 - *(char*)s2;
 }

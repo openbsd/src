@@ -1,4 +1,4 @@
-/*	$OpenBSD: stand.h,v 1.8 1996/10/15 09:58:40 mickey Exp $	*/
+/*	$OpenBSD: stand.h,v 1.9 1996/10/16 11:32:08 mickey Exp $	*/
 /*	$NetBSD: stand.h,v 1.13 1996/01/13 22:25:42 leo Exp $	*/
 
 /*-
@@ -50,6 +50,13 @@
 struct open_file;
 
 /*
+ * Useful macros
+ */
+#define NENTS(x)	sizeof(x)/sizeof(x[0])
+#define	max(a,b)	(((a)>(b))? (a) : (b))
+#define	min(a,b)	(((a)>(b))? (b) : (a))
+
+/*
  * This structure is used to define file system operations in a file system
  * independent way.
  */
@@ -62,6 +69,7 @@ struct fs_ops {
 			     size_t size, size_t *resid));
 	off_t	(*seek) __P((struct open_file *f, off_t offset, int where));
 	int	(*stat) __P((struct open_file *f, struct stat *sb));
+	int	(*readdir) __P((struct open_file *f, char *));
 };
 
 extern struct fs_ops file_system[];
@@ -125,10 +133,16 @@ void	twiddle __P((void));
 void	gets __P((char *));
 __dead void	panic __P((const char *, ...)) __attribute__((noreturn));
 __dead void	_rtt __P((void)) __attribute__((noreturn));
-void	bcopy __P((const void *, void *, size_t));
+#define	bzero(s,n)	((void)memset((s),0,(n)))
+#define bcmp(s1,s2,n)	(memcmp((s2),(s1),(n)))
+#define	bcopy(s1,s2,n)	((void)memcpy((s2),(s1),(n)))
 void	*memcpy __P((void *, const void *, size_t));
+int	memcmp __P((const void *, const void*, size_t));
+char	*strncpy __P((char *, const char *, size_t));
+char	*strcpy __P((char *, const char *));
 void	*memset __P((void *, int, size_t));
-void	exec __P((char *, char *, int));
+void	exec __P((char *, void *, int));
+void	execz __P((void *, void *, int));
 int	open __P((const char *, int));
 int	close __P((int));
 void	closeall __P((void));
@@ -148,8 +162,11 @@ ssize_t	null_write __P((struct open_file *f, void *buf,
 			size_t size, size_t *resid));
 off_t	null_seek __P((struct open_file *f, off_t offset, int where));
 int	null_stat __P((struct open_file *f, struct stat *sb));
+int	null_readdir __P((struct open_file *f, char *name));
 
 /* Machine dependent functions */
 void	machdep_start __P((char *, int, char *, char *, char *));
 int	getchar __P((void));
 void	putchar __P((int));    
+time_t	getsecs __P((void));
+
