@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.48 2002/02/05 18:29:54 jason Exp $
+#	$OpenBSD: GENERIC,v 1.49 2002/02/18 17:52:07 jason Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -75,10 +75,16 @@ beeper*	at ebus?
 sab*	at ebus?
 sabtty* at sab?
 
-# NS16550
+# NS16550 based serial ports
 com*	at ebus?
 comkbd*	at ebus?
 wskbd* at comkbd?
+
+# i8042 based serial ports (PS/2 ports)
+pckbc*	at ebus?				# controller
+pckbd*	at pckbc?				#  ps2 keyboard
+wskbd*	at pckbd? console ?			#   generic keyboard layer
+#pms*	at pckbc?				#  ps2 mouse
 
 audioce*	at ebus?
 audio*		at audioce?
