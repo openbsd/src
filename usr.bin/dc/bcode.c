@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.2 2003/09/19 19:00:36 deraadt Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.3 2003/09/19 20:58:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.2 2003/09/19 19:00:36 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.3 2003/09/19 20:58:58 deraadt Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -191,7 +191,7 @@ init_bmachine(void)
 {
 	int i;
 
-	for (i = 0; i < UCHAR_MAX;  i++)
+	for (i = 0; i < UCHAR_MAX; i++)
 		jump_table[i] = unknown;
 	for (i = 0; i < JUMP_TABLE_DATA_SIZE; i++)
 		jump_table[jump_table_data[i].ch] = jump_table_data[i].f;
