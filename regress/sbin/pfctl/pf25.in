@@ -1,2 +1,6 @@
 antispoof for lo0
 antispoof log quick for lo0 inet
+antispoof for (lo0)
+antispoof log quick for (lo0) inet
+antispoof for (lo)
+antispoof log quick for (lo) inet
