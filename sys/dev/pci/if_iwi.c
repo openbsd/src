@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_iwi.c,v 1.30 2005/03/14 13:21:42 damien Exp $	*/
+/*	$OpenBSD: if_iwi.c,v 1.31 2005/03/17 20:08:13 damien Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2005
@@ -1256,7 +1256,9 @@ int
 iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
 	struct iwi_softc *sc = ifp->if_softc;
+	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifaddr *ifa;
+	struct ifreq *ifr;
 	int s, error = 0;
 
 	s = splnet();
@@ -1268,9 +1270,8 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 		case AF_INET:
-			if (!(ifp->if_flags & IFF_UP))
-				iwi_init(ifp);
-			arp_ifinit(&sc->sc_ic.ic_ac, ifa);
+			arp_ifinit(&ic->ic_ac, ifa);
+			iwi_init(ifp);
 			break;
 #endif
 		default:
@@ -1286,6 +1287,17 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			if (ifp->if_flags & IFF_RUNNING)
 				iwi_stop(ifp, 1);
 		}
+		break;
+
+	case SIOCADDMULTI:
+	case SIOCDELMULTI:
+		ifr = (struct ifreq *)data;
+		error = (cmd == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &ic->ic_ac) :
+		    ether_delmulti(ifr, &ic->ic_ac);
+
+		if (error == ENETRESET)
+			error = 0;
 		break;
 
 	case SIOCG80211TXPOWER:
@@ -1315,7 +1327,7 @@ iwi_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ieee80211_ioctl(ifp, cmd, data);
 	}
 
-	if (error == ENETRESET && cmd != SIOCADDMULTI) {
+	if (error == ENETRESET) {
 		if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) ==
 		    (IFF_UP | IFF_RUNNING))
 			iwi_init(ifp);
