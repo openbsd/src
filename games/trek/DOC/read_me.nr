@@ -1,4 +1,4 @@
-.\"	$OpenBSD: read_me.nr,v 1.3 2001/01/05 15:11:39 todd Exp $
+.\"	$OpenBSD: read_me.nr,v 1.4 2001/01/08 05:08:43 pjanzen Exp $
 .\"	$NetBSD: read_me.nr,v 1.2 1995/04/22 10:59:44 cgd Exp $
 .de @h
 'sp 4
@@ -45,101 +45,11 @@ with the trek source code.
 Please read them carefully.
 .s1
 MAINTENANCE
-.s2
-There are a number of shell files
-which you may use to maintain the system.
-"Prtrek" produces a copy of the source code.
-It pipes its output to lpr
-and runs in background.
-"Comp" compiles up to nine source modules
-and leaves them in .o files.
-"Compile" is the same as "comp"
-except that it loads after compiling.
-If stated without any arguments,
-it loads from .o files.
-"Compall" compiles all the .c files
-into .o files,
-but does not load.
-It redirects its output to the file "output".
-To recompile the entire system,
-type
-.ti +8
-compall
-.ti +8
-compile
-.br
-.s2
-Main.c contains a variable called "Mother".
-This is initialized to the result of the
-"getuid()" call for the maintainer of trek
-at your installation.
-Only Mother is allowed to set trace flags
-and run the game at other than the default priority.
-.s2
-Speaking of priorities,
-trek eats up a lot of system resources.
-Hence, it normally runs at a very low priority.
-This makes it almost impossible to play
-if the system is loaded.
-However,
-the -pN flag sets the priority to N,
-which makes it possible to debug
-when the system is loaded.
-The default priority is set by a #define of
-PRIO,
-which is set to 10 in the default system.
-.s2
-Trace information is provided
-which may be useful in debugging things in the system.
-If you are in a bad way for space,
-comment out the #define xTRACE
-which appears in trek.h.
-This will cause the trace stuff to not occur
-in the object.
-.s2
-The version of trek released to you
-is compiled with the -f flag (for no floating point)
-and should work without problems on your machine.
-You can edit out the -f flag
-in "compile" if you have floating point hardware
-on your machine
-so that it will take less space.
-.s1
-THE PORTABLE C LIBRARY
 .pp
-The portable C library was used
-to do I/O in trek.
-Unfortunately,
-the version which we had at Berkeley
-had a number of small bugs
-which caused trek to do bad things at times.
-For some unknown reason
-(temporary insanity perhaps)
-I rewrote the portable C library.
-This version is much smaller than the old version
-and has cleaner code.
-It also works right
-(???).
-However, there are a few minor differences
-which you should be aware of.
-.s2
-Scanf no longer ignores the noise characters "\\n",
-"\\t", and space in the format string;
-i.e.,
-these characters now require a match
-in the input stream.
-.s2
-A variable
-f_log
-has been added
-which is the file descriptor
-of a "log" file.
-If f_log is greater than zero
-a copy of everything read from
-the standard input
-and written to
-the standard output
-is written in the file f_log.
+There is a compilation option xTRACE which must be set for any
+trace information to be generated
+(the -t option must also be set on the command line).
+It is no longer defined by default.
 .s1
 DISCLAIMERS
 .s2
@@ -209,15 +119,6 @@ If you happen to have more energy than I do,
 you may want to examine the following areas.
 These are things that I may get to,
 but don't hold your breath.
-.s2
-Frankly,
-making the portable C library work
-(even without bugs)
-was a bitch.
-I should have done the I/O in a more
-ad hoc manner.
-It is my intent to rewrite the I/O
-routines to bypass the portable C library entirely.
 .s2
 The routine "capture" is quite unclean.
 First, it should have a manner of selecting Klingons
