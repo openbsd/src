@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.26 2001/07/03 07:41:53 hugh Exp $	*/
+/*	$OpenBSD: audio.c,v 1.27 2001/07/27 15:26:16 art Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -801,10 +801,10 @@ audiommap(dev, off, prot)
 
         if (unit >= audio_cd.cd_ndevs ||
             (sc = audio_cd.cd_devs[unit]) == NULL)
-                return ENXIO;
+                return (-1);
 
         if (sc->sc_dying)
-                return (EIO);
+                return (-1);
 
 	sc->sc_refcnt ++;
 	switch (AUDIODEV(dev)) {
