@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile.c,v 1.5 1998/01/18 22:01:53 millert Exp $	*/
+/*	$OpenBSD: compile.c,v 1.6 1998/01/21 03:51:49 millert Exp $	*/
 
 /*-
  * Copyright (c) 1992 Diomidis Spinellis.
@@ -39,7 +39,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)compile.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: compile.c,v 1.5 1998/01/18 22:01:53 millert Exp $";
+static char *rcsid = "$OpenBSD: compile.c,v 1.6 1998/01/21 03:51:49 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -427,7 +427,7 @@ compile_re(p, repp)
 		return (p);
 	}
 	*repp = xmalloc(sizeof(regex_t));
-	if (p && (eval = regcomp(*repp, re, REG_EXTENDED)) != 0)
+	if (p && (eval = regcomp(*repp, re, 0)) != 0)
 		err(COMPILE, "RE error: %s", strregerror(eval, *repp));
 	if (maxnsub < (*repp)->re_nsub)
 		maxnsub = (*repp)->re_nsub;
