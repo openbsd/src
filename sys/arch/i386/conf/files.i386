@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.50 1999/01/20 18:28:46 niklas Exp $
+#	$OpenBSD: files.i386,v 1.51 1999/01/21 08:26:48 niklas Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -266,12 +266,12 @@ file	dev/isa/i82365_isa.c		pcic_isa
 # Code common to ISA and ISAPnP attachments
 file	dev/isa/i82365_isasubr.c	pcic_isa | pcic_isapnp
 
-# this wants to be probed as late as possible.
+# PCMCIA wants to be probed as late as possible.
+
 #
 # Machine-independent PCMCIA drivers
 #
 include "dev/pcmcia/files.pcmcia"
 
 # i386-specific PCMCIA drivers
-attach	pccom at pcmcia with com_pcmcia
-file	dev/pcmcia/com_pcmcia.c			com_pcmcia
+attach	pccom at pcmcia with pccom_pcmcia
