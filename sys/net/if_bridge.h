@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.20 2002/12/09 10:11:52 markus Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.21 2003/05/30 20:08:34 henning Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -113,7 +113,7 @@ struct ifbrparam {
 	char			ifbrp_name[IFNAMSIZ];
 	union {
 		u_int32_t	ifbrpu_csize;		/* cache size */
-		u_int32_t	ifbrpu_ctime;		/* cache time (sec) */
+		int		ifbrpu_ctime;		/* cache time (sec) */
 		u_int16_t	ifbrpu_prio;		/* bridge priority */
 		u_int8_t	ifbrpu_hellotime;	/* hello time (sec) */
 		u_int8_t	ifbrpu_fwddelay;	/* fwd delay (sec) */
@@ -256,7 +256,7 @@ struct bridge_softc {
 	struct bridge_timer		sc_tcn_timer;
 	u_int32_t			sc_brtmax;	/* max # addresses */
 	u_int32_t			sc_brtcnt;	/* current # addrs */
-	u_int32_t			sc_brttimeout;	/* timeout ticks */
+	int				sc_brttimeout;	/* timeout ticks */
 	u_int32_t			sc_hashkey;	/* hash key */
 	struct timeout			sc_brtimeout;	/* timeout state */
 	struct timeout			sc_bstptimeout;	/* stp timeout */
