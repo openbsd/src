@@ -34,7 +34,7 @@
 #include "krb5_locl.h"
 #include <resolve.h>
 
-RCSID("$Id: krbhst.c,v 1.4 2003/05/11 03:40:00 hin Exp $");
+RCSID("$KTH: krbhst.c,v 1.43.2.1 2003/04/22 15:00:38 lha Exp $");
 
 static int
 string_to_proto(const char *string)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2000, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -32,7 +32,7 @@
  */
 
 #include "kuser_locl.h"
-RCSID("$KTH: kdestroy.c,v 1.14 2003/03/10 00:28:22 lha Exp $");
+RCSID("$KTH: kdestroy.c,v 1.14.2.1 2003/05/08 18:59:17 lha Exp $");
 
 static const char *cache;
 static int help_flag;
@@ -118,11 +118,11 @@ main (int argc, char **argv)
 #if KRB4
     if(dest_tkt_flag && dest_tkt ())
 	exit_val = 1;
+#endif
     if (unlog_flag && k_hasafs ()) {
 	if (k_unlog ())
 	    exit_val = 1;
     }
-#endif
 
     return exit_val;
 }
