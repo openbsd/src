@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm_i386.c,v 1.4 1997/02/26 16:46:30 niklas Exp $ */
+/*	$OpenBSD: kvm_i386.c,v 1.5 1998/08/24 05:46:12 millert Exp $ */
 /*	$NetBSD: kvm_i386.c,v 1.9 1996/03/18 22:33:38 thorpej Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_hp300.c	8.1 (Berkeley) 6/4/93";
 #else
-static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.4 1997/02/26 16:46:30 niklas Exp $";
+static char *rcsid = "$OpenBSD: kvm_i386.c,v 1.5 1998/08/24 05:46:12 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -114,8 +114,8 @@ _kvm_initvtop(kd)
 
 	vm->PTD = 0;
 
-	if (lseek(kd->pmfd, (off_t)(nlist[0].n_value - KERNBASE), 0) == -1 &&
-	    errno != 0) {
+	if (lseek(kd->pmfd, (off_t)(nlist[0].n_value - KERNBASE), SEEK_SET)
+	    == -1 && errno != 0) {
 		_kvm_syserr(kd, kd->program, "kvm_lseek");
 		goto invalid;
 	}
@@ -126,10 +126,8 @@ _kvm_initvtop(kd)
 
 	vm->PTD = (pd_entry_t *)_kvm_malloc(kd, NBPG);
 
-	if (lseek(kd->pmfd, (off_t)pa, 0) == -1 && errno != 0) {
-		_kvm_syserr(kd, kd->program, "kvm_lseek");
-		goto invalid;
-	}
+	if (lseek(kd->pmfd, (off_t)pa, SEEK_SET) == -1 && errno != 0) { _kvm_syserr(kd, kd->program, "kvm_lseek");
+		goto invalid; }
 	if (read(kd->pmfd, vm->PTD, NBPG) != NBPG) {
 		_kvm_syserr(kd, kd->program, "kvm_read");
 		goto invalid;
@@ -180,7 +178,8 @@ _kvm_kvatop(kd, va, pa)
 	    (ptei(va) * sizeof(pt_entry_t));
 	/* XXX READ PHYSICAL XXX */
 	{
-		if (lseek(kd->pmfd, (off_t)pte_pa, 0) == -1 && errno != 0) {
+		if (lseek(kd->pmfd, (off_t)pte_pa, SEEK_SET) == -1 &&
+		    errno != 0) {
 			_kvm_syserr(kd, kd->program, "kvm_lseek");
 			goto invalid;
 		}
@@ -196,4 +195,16 @@ _kvm_kvatop(kd, va, pa)
 invalid:
 	_kvm_err(kd, 0, "invalid address (%lx)", va);
 	return (0);
+}
+
+/*
+ * Translate a physical address to a file-offset in the crash dump.
+ * XXX - just a stub for now.
+ */
+off_t
+_kvm_pa2off(kd, pa)
+	kvm_t *kd;
+	u_long pa;
+{
+	return((off_t)pa);
 }
