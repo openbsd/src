@@ -1,4 +1,4 @@
-.\"	$OpenBSD: top.1,v 1.18 2001/11/11 01:48:58 fgsch Exp $
+.\"	$OpenBSD: top.1,v 1.19 2002/04/21 18:53:43 hugh Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -145,6 +145,7 @@ The default is 1 for dumb terminals.
 Set the delay between screen updates to
 .Ar time
 seconds.
+The value may be fractional, to permit delays of less than 1 second.
 The default delay between updates is 5 seconds.
 .It Fl o Ar field
 Sort the process display area using the specified field as the primary key.
