@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.15 2003/04/27 11:22:53 ho Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.16 2004/10/23 16:06:07 brad Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -70,6 +70,7 @@ const struct pci_class pci_subclass_mass_storage[] = {
 	{ "IPI",		PCI_SUBCLASS_MASS_STORAGE_IPI,		},
 	{ "RAID",		PCI_SUBCLASS_MASS_STORAGE_RAID,		},
 	{ "ATA",		PCI_SUBCLASS_MASS_STORAGE_ATA,		},
+	{ "SATA",		PCI_SUBCLASS_MASS_STORAGE_SATA,		},
 	{ "miscellaneous",	PCI_SUBCLASS_MASS_STORAGE_MISC,		},
 	{ 0 },
 };
@@ -130,12 +131,14 @@ const struct pci_class pci_subclass_communications[] = {
 	{ "parallel",		PCI_SUBCLASS_COMMUNICATIONS_PARALLEL,	},
 	{ "multi-port serial",	PCI_SUBCLASS_COMMUNICATIONS_MPSERIAL,	},
 	{ "modem",		PCI_SUBCLASS_COMMUNICATIONS_MODEM,	},
+	{ "GPIB",		PCI_SUBCLASS_COMMUNICATIONS_GPIB,	},
+	{ "smartcard",		PCI_SUBCLASS_COMMUNICATIONS_SMARTCARD,	},
 	{ "miscellaneous",	PCI_SUBCLASS_COMMUNICATIONS_MISC,	},
 	{ 0 },
 };
 
 const struct pci_class pci_subclass_system[] = {
-	{ "8259 PIC",		PCI_SUBCLASS_SYSTEM_PIC,		},
+	{ "interrupt",		PCI_SUBCLASS_SYSTEM_PIC,		},
 	{ "8237 DMA",		PCI_SUBCLASS_SYSTEM_DMA,		},
 	{ "8254 timer",		PCI_SUBCLASS_SYSTEM_TIMER,		},
 	{ "RTC",		PCI_SUBCLASS_SYSTEM_RTC,		},
@@ -190,6 +193,10 @@ const struct pci_class pci_subclass_wireless[] = {
 	{ "IrDA",		PCI_SUBCLASS_WIRELESS_IRDA,		},
 	{ "Consumer IR",	PCI_SUBCLASS_WIRELESS_CONSUMERIR,	},
 	{ "RF",			PCI_SUBCLASS_WIRELESS_RF,		},
+	{ "bluetooth",		PCI_SUBCLASS_WIRELESS_BLUETOOTH,	},
+	{ "broadband",		PCI_SUBCLASS_WIRELESS_BROADBAND,	},
+	{ "802.11a (5 GHz)",	PCI_SUBCLASS_WIRELESS_802_11A,		},
+	{ "802.11b (2.4 GHz)",	PCI_SUBCLASS_WIRELESS_802_11B,		},
 	{ "miscellaneous",	PCI_SUBCLASS_WIRELESS_MISC,		},
 	{ 0 },
 };
@@ -217,6 +224,8 @@ const struct pci_class pci_subclass_crypto[] = {
 const struct pci_class pci_subclass_dasp[] = {
 	{ "DPIO",		PCI_SUBCLASS_DASP_DPIO,			},
 	{ "Time and Frequency",	PCI_SUBCLASS_DASP_TIMEFREQ,		},
+	{ "synchronization",	PCI_SUBCLASS_DASP_SYNC,			},
+	{ "management",		PCI_SUBCLASS_DASP_MGMT,			},
 	{ "miscellaneous",	PCI_SUBCLASS_DASP_MISC,			},
 	{ 0 },
 };
