@@ -1,4 +1,4 @@
-/*	$OpenBSD: quota.h,v 1.5 2002/09/06 19:38:19 deraadt Exp $	*/
+/*	$OpenBSD: quota.h,v 1.6 2002/09/06 21:48:58 deraadt Exp $	*/
 /*	$NetBSD: quota.h,v 1.6 1995/03/26 20:38:17 jtc Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
 	"user",		/* USRQUOTA */ \
 	"group",	/* GRPQUOTA */ \
 	"undefined", \
-};
+}
 #define	QUOTAFILENAME	"quota"
 #define	QUOTAGROUP	"operator"
 
