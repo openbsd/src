@@ -1,4 +1,4 @@
-/*	$OpenBSD: shutdown.c,v 1.14 1998/04/25 04:45:38 millert Exp $	*/
+/*	$OpenBSD: shutdown.c,v 1.15 1999/04/29 22:25:04 alex Exp $	*/
 /*	$NetBSD: shutdown.c,v 1.9 1995/03/18 15:01:09 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)shutdown.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: shutdown.c,v 1.14 1998/04/25 04:45:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: shutdown.c,v 1.15 1999/04/29 22:25:04 alex Exp $";
 #endif
 #endif /* not lint */
 
@@ -422,6 +422,7 @@ getoffset(timearg)
 	register struct tm *lt;
 	register char *p;
 	time_t now;
+	int this_year;
 
 	if (!strcasecmp(timearg, "now")) {		/* now */
 		offset = 0;
@@ -453,7 +454,17 @@ getoffset(timearg)
 
 	switch(strlen(timearg)) {
 	case 10:
+		this_year = lt->tm_year;
 		lt->tm_year = ATOI2(timearg);
+		/*
+		 * check if the specified year is in the next century.
+		 * allow for one year of user error as many people will
+		 * enter n - 1 at the start of year n.
+		 */
+		if (lt->tm_year < (this_year % 100) - 1)
+			lt->tm_year += 100;
+		/* adjust for the year 2000 and beyond */
+		lt->tm_year += (this_year - (this_year % 100));
 		/* FALLTHROUGH */
 	case 8:
 		lt->tm_mon = ATOI2(timearg);
