@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.9 1997/08/06 06:43:43 deraadt Exp $	*/
+/*	$OpenBSD: script.c,v 1.10 1998/12/19 23:52:03 deraadt Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.9 1997/08/06 06:43:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.10 1998/12/19 23:52:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -157,10 +157,10 @@ finish(signo)
 {
 	register int die, pid;
 	int save_errno = errno;
-	union wait status;
+	int status;
 
 	die = 0;
-	while ((pid = wait3((int *)&status, WNOHANG, 0)) > 0)
+	while ((pid = wait3(&status, WNOHANG, 0)) > 0)
 		if (pid == child)
 			die = 1;
 
