@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.6 1997/02/13 17:28:40 deraadt Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.7 1997/02/14 11:05:11 niklas Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.6 1997/02/13 17:28:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.7 1997/02/14 11:05:11 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,6 +49,7 @@ static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.6 1997/02/13 17:28:40 deraadt Exp $
 #include <time.h>
 #include <pwd.h>
 #include <errno.h>
+#include <stdlib.h>
 #include <rpc/rpc.h>
 #include <rpcsvc/yp_prot.h>
 #include <rpcsvc/ypclnt.h>
