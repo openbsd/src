@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncheck_ffs.c,v 1.3 1996/06/30 05:45:55 tholo Exp $	*/
+/*	$OpenBSD: ncheck_ffs.c,v 1.4 1996/08/14 06:41:37 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.3 1996/06/30 05:45:55 tholo Exp $";
+static char rcsid[] = "$OpenBSD: ncheck_ffs.c,v 1.4 1996/08/14 06:41:37 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -64,6 +64,7 @@ int	ninodes;	/* number of inodes in list */
 int	sflag;		/* only suid and special files */
 int	aflag;		/* print the . and .. entries too */
 int	mflag;		/* verbose output */
+int	iflag;		/* specific inode */
 
 struct icache_s {
 	ino_t		ino;
@@ -168,9 +169,10 @@ findinodes(maxino)
 			continue;
 		if (mode == IFDIR)
 			cacheino(ino, dp);
-		if (sflag &&
-		    (((dp->di_mode & (ISGID | ISUID)) == 0) &&
-		     ((mode == IFREG) || (mode == IFDIR) || (mode == IFLNK))))
+		if (iflag ||
+		    (sflag &&
+		     (((dp->di_mode & (ISGID | ISUID)) == 0) &&
+		      ((mode == IFREG) || (mode == IFDIR) || (mode == IFLNK)))))
 			continue;
 		addinode(ino);
 	}
@@ -385,13 +387,13 @@ searchdir(ino, blkno, size, filesize, path)
 			if (mflag)
 				printf("mode %-6o uid %-5lu gid %-5lu ino ", di->di_mode, di->di_uid, di->di_gid);
 			printf("%-7lu %s/%s%s\n", dp->d_ino, path, dp->d_name, mode == IFDIR ? "/." : "");
+		}
+		if (mode == IFDIR) {
 			if (dp->d_name[0] == '.') {
 				if (dp->d_name[1] == '\0' ||
 				    (dp->d_name[1] == '.' && dp->d_name[2] == '\0'))
 				continue;
 			}
-		}
-		if (mode == IFDIR) {
 			npath = malloc(strlen(path) + strlen(dp->d_name) + 2);
 			strcpy(npath, path);
 			strcat(npath, "/");
@@ -433,7 +435,7 @@ main(argc, argv)
 {
 	struct stat stblock;
 	struct fstab *fsp;
-	int c, iflag = 0;
+	int c;
 	ino_t ino;
 
 	while ((c = getopt(argc, argv, "ai:ms")) != EOF)
@@ -485,8 +487,7 @@ main(argc, argv)
 	dev_bshift = ffs(dev_bsize) - 1;
 	if (dev_bsize != (1 << dev_bshift))
 		errx(2, "blocksize (%d) not a power of 2", dev_bsize);
-	if (!iflag)
-		findinodes(sblock->fs_ipg * sblock->fs_ncg);
+	findinodes(sblock->fs_ipg * sblock->fs_ncg);
 	printf("%s:\n", disk);
 	scanonedir(ROOTINO, "");
 	close(diskfd);
