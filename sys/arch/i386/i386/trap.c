@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2003/05/02 21:07:48 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.55 2003/05/04 04:58:16 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -327,6 +327,8 @@ trap(frame)
 #endif
 		if (ftype == VM_PROT_READ)
 			ftype |= VM_PROT_EXECUTE;
+		/* force %cr2 register have fault address */
+		__asm __volatile("movl %0,%%cr2" :: "r" (frame.tf_eip));
 		goto page_fault;
 
 	case T_TSSFLT|T_USER:
