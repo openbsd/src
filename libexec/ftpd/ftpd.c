@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.28 1996/12/14 23:09:46 deraadt Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.29 1997/01/02 21:33:33 deraadt Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -1708,6 +1708,7 @@ void
 dologout(status)
 	int status;
 {
+	transflag = 0;
 
 	if (logged_in) {
 		(void) seteuid((uid_t)0);
