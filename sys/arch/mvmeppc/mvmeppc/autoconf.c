@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 2004/10/23 08:21:27 mjc Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 2004/11/17 20:26:38 miod Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -37,7 +37,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.10 2004/10/23 08:21:27 mjc Exp $
+ *      $Id: autoconf.c,v 1.11 2004/11/17 20:26:38 miod Exp $
  */
 
 /*
@@ -65,8 +65,8 @@ void	swapconf(void);
 extern void	dumpconf(void);
 int findblkmajor(struct device *);
 char *findblkname(int);
-struct device * getdisk(char *, int, int, dev_t *);
-struct device * getdevunit(char *, int);
+struct device *getdisk(char *, int, int, dev_t *);
+struct device *getdevunit(char *, int);
 void diskconf(void);
 void calc_delayconst(void);	/* clock.c */
 
@@ -91,41 +91,25 @@ cpu_configure()
 
 	if (config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
-	(void)spl0();
+
+	ppc_intr_enable(1);
+	spl0();
 
 	/*
-	 * We can not know which is our root disk, defer
-	 * until we can checksum blocks to figure it out.
+	 * We can not select the root device yet, because we use bugtty
+	 * as the console for now, and it requires the clock to be ticking
+	 * for proper operation (think boot -a ...)
 	 */
 	md_diskconf = diskconf;
+
 	cold = 0;
 }
-/*
- * Now that we are fully operational, we can checksum the
- * disks, and using some heuristics, hopefully are able to
- * always determine the correct root disk.
- */
+
 void
 diskconf()
 {
-	/*
-	 * Configure root, swap, and dump area.  This is
-	 * currently done by running the same checksum
-	 * algorithm over all known disks, as was done in
-	 * /boot.  Then we basically fixup the *dev vars
-	 * from the info we gleaned from this.
-	dkcsumattach();
-	 * - XXX
-	 */
-
-#if 0
-	rootconf();
-#endif
 	setroot();
 	swapconf();
-#if 0
-	dumpconf();
-#endif
 }
 
 /*
