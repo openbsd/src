@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_nat.c,v 1.18 1999/01/29 07:01:46 d Exp $       */
+/*       $OpenBSD: ip_nat.c,v 1.19 1999/02/01 07:45:53 d Exp $       */
 /*
  * Copyright (C) 1995-1997 by Darren Reed.
  *
@@ -10,7 +10,7 @@
  */
 #if !defined(lint)
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
-static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.18 1999/01/29 07:01:46 d Exp $";
+static const char rcsid[] = "@(#)$Id: ip_nat.c,v 1.19 1999/02/01 07:45:53 d Exp $";
 #endif
 
 #if defined(__FreeBSD__) && defined(KERNEL) && !defined(_KERNEL)
@@ -517,12 +517,8 @@ struct in_addr *inp;
 		if (ifa)
 			sin = (SOCKADDR_IN *)ifa->ifa_addr;
 	}
-	if (!ifa)
-		sin = NULL;
-	if (!sin) {
-		KFREE(nat);
+	if (!ifa || !sin)
 		return -1;
-	}
 #  endif /* (BSD < 199306) && (!__sgi && IFF_DRVLOCK) */
 	in = sin->sin_addr;
 	in.s_addr = ntohl(in.s_addr);
@@ -580,8 +576,10 @@ int direction;
 			in.s_addr = np->in_nip;
 			if (!in.s_addr && (np->in_outmsk == 0xffffffff)) {
 				if ((l > 1) ||
-				    nat_ifpaddr(nat, fin->fin_ifp, &in) == -1)
+				    nat_ifpaddr(nat, fin->fin_ifp, &in) == -1) {
+					KFREE(nat);
 					return NULL;
+				}
 			} else if (!in.s_addr && !np->in_outmsk) {
 				if (l > 1) {
 					KFREE(nat);
@@ -1336,7 +1334,7 @@ void *ifp;
 				 */
 				sum1 = nat->nat_outip.s_addr;
 				if (nat_ifpaddr(nat, ifp, &in) == -1)
-				nat->nat_outip.s_addr = htonl(in.s_addr);
+				    nat->nat_outip.s_addr = htonl(in.s_addr);
 				sum2 = nat->nat_outip.s_addr;
 
 				/*
