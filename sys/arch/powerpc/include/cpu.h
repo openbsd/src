@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.13 2002/09/15 09:01:59 deraadt Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.14 2003/07/02 21:23:35 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -100,4 +100,28 @@ invdcache(void *from, int len)
 	__asm__ __volatile__ ("sync");
 }
 
+/*
+ * General functions to enable and disable interrupts
+ * without having inlined assembly code in many functions.
+ */
+static __inline void
+ppc_intr_enable(int enable)
+{
+	u_int32_t msr;
+	if (enable != 0)  {
+		__asm__ volatile("mfmsr %0" : "=r"(msr));
+		msr |= PSL_EE;
+		__asm__ volatile("mtmsr %0" :: "r"(msr));
+	}
+}
+
+static __inline int
+ppc_intr_disable(void)
+{
+	u_int32_t emsr, dmsr;
+	__asm__ volatile("mfmsr %0" : "=r"(emsr));
+	dmsr = emsr & ~PSL_EE;
+	__asm__ volatile("mtmsr %0" :: "r"(dmsr));
+	return (emsr & PSL_EE);
+}
 #endif	/* _POWERPC_CPU_H_ */
