@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.10 2001/09/14 19:49:03 espie Exp $	*/
+/*	$OpenBSD: read.c,v 1.11 2004/08/05 19:12:32 miod Exp $	*/
 
 /* read.c - read a source file -
 
@@ -21,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.10 2001/09/14 19:49:03 espie Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.11 2004/08/05 19:12:32 miod Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -376,7 +376,8 @@ char *name;
 			 * If input_line_pointer[-1] == '\n' then we just
 			 * scanned another line: so bump line counters.
 			 */
-			if (input_line_pointer[-1] == '\n') {
+			if (input_line_pointer > buffer &&
+			    input_line_pointer[-1] == '\n') {
 				bump_line_counters();
 			} /* just passed a newline */
 			
