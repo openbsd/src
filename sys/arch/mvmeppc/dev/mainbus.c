@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.7 2004/01/29 21:28:54 miod Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.8 2004/01/29 21:33:10 miod Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -65,6 +65,7 @@ mbattach(struct device *parent, struct device *self, void *aux)
 	extern vaddr_t isaspace_va;
 
 	/* Pretty print the system type */
+	printf(": ");
 	switch ((systype = *(u_int8_t *)(isaspace_va + MVME_STATUS_REG))) {
 	default:
 		printf("unknown system type %x", systype);
