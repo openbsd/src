@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.20 2002/06/09 02:11:47 jsyn Exp $ */
+/*	$OpenBSD: siop.c,v 1.21 2002/07/20 11:22:27 art Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -1394,8 +1394,11 @@ siop_scsicmd(xs)
 		splx(s);
 		if (i == 0) {
 			siop_timeout(siop_cmd);
-			while ((xs->flags & ITSDONE) == 0)
+			while ((xs->flags & ITSDONE) == 0) {
+				s = splbio();
 				siop_intr(sc);
+				splx(s);
+			}
 		}
 		return (COMPLETE);
 	}
