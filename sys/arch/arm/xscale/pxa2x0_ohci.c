@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.11 2005/02/18 16:42:09 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.12 2005/02/19 00:45:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -121,8 +121,6 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc.iot, sc->sc.ioh, OHCI_INTERRUPT_DISABLE,
 	    OHCI_MIE);
 
-	/* XXX splusb? */
-
 	strlcpy(sc->sc.sc_vendor, "PXA27x", sizeof(sc->sc.sc_vendor));
 
 	r = ohci_init(&sc->sc);
@@ -136,14 +134,9 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 		pxa2x0_clkman_config(CKEN_USBHC, 0);
 		return;
 	}
-	/* XXX splx(s) usb? */
 
 	sc->sc_ih = pxa2x0_intr_establish(sc->sc_intr, IPL_USB, ohci_intr, sc,
 	    sc->sc.sc_bus.bdev.dv_xname);
-
-	pxa2x0_gpio_set_function(35, GPIO_ALT_FN_2_IN);
-	pxa2x0_gpio_set_function(37, GPIO_ALT_FN_1_OUT);
-	pxa2x0_gpio_set_function(41, GPIO_ALT_FN_2_IN);
 
 	sc->sc.sc_child = config_found((void *) sc, &sc->sc.sc_bus,
 	    usbctlprint);

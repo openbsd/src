@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa27x_udc.c,v 1.2 2005/02/18 16:42:09 dlg Exp $ */
+/*	$OpenBSD: pxa27x_udc.c,v 1.3 2005/02/19 00:45:14 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -82,6 +82,10 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, 0, sc->sc_size,
 	    BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE);
 
+	pxa2x0_gpio_set_function(35, GPIO_ALT_FN_2_IN); /* USB_P2_1 */
+	pxa2x0_gpio_set_function(37, GPIO_ALT_FN_1_OUT); /* USB_P2_8 */
+	pxa2x0_gpio_set_function(41, GPIO_ALT_FN_2_IN); /* USB_P2_7 */
+
 	pxa2x0_clkman_config(CKEN_USBDC, 0);
 
 	/* disable the controller */
@@ -104,7 +108,7 @@ pxaudc_attach(struct device *parent, struct device *self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, USBDC_UP2OCR,
 	    hr | USBDC_UP2OCR_DPPDE|USBDC_UP2OCR_DMPDE);
 
-	pxa2x0_gpio_set_bit(37);
+	pxa2x0_gpio_set_bit(37); /* USB_P2_8 */
 }
 
 int
