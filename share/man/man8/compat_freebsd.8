@@ -1,0 +1,273 @@
+.\"	$OpenBSD: compat_freebsd.8,v 1.1 1996/08/09 16:43:27 deraadt Exp $
+.\"	$NetBSD: compat_linux.8,v 1.1 1995/03/05 23:30:36 fvdl Exp $
+.\"
+.\" Copyright (c) 1995 Frank van der Linden
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed for the NetBSD Project
+.\"      by Frank van der Linden
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd June 4, 1995
+.Dt COMPAT_FREEBSD 8
+.Os
+.Sh NAME
+.Nm COMPAT_FREEBSD
+.Nd setup procedure for running FreeBSD binaries
+.Sh DESCRIPTION
+OpenBSD supports running FreeBSD binaries. Most binaries should work,
+except programs that use FreeBSD-specific features. These include
+i386-specific calls, such as syscons utilities, and audio devices. 
+The FreeBSD compatibility feature is active for kernels compiled 
+with the
+.Nm COMPAT_FREEBSD
+option enabled.
+
+A lot of programs are dynamically linked. This means, that you will
+also need the FreeBSD shared libraries that the program depends on, and
+the runtime linker. Also, you will need to create a "shadow root"
+directory for FreeBSD binaries on your OpenBSD system. This directory
+is named /emul/freebsd. Any file operations done by FreeBSD programs
+run under OpenBSD will look in this directory first. So, if a FreeBSD
+program opens, for example, /etc/passwd, OpenBSD will
+first try to open /emul/freebsd/etc/passwd, and if that does not exist
+open the 'real' /etc/passwd file. It is recommended that you install
+FreeBSD packages that include configuration files, etc under /emul/freebsd,
+to avoid naming conflicts with possible OpenBSD counterparts. Shared
+libraries should also be installed in the shadow tree.
+.Pp
+Generally, you will need to look for the shared libraries that FreeBSD
+binaries depend on only the first few times that you install a FreeBSD
+program on your OpenBSD system. After a while, you will have a sufficient
+set of FreeBSD shared libraries on your system to be able to run newly
+imported FreeBSD binaries without any extra work.
+
+.Ss Setting up shared libraries
+How to get to know which shared libraries FreeBSD binaries need, and where
+to get them? Basically, there are 2 possibilities (when following
+these instructions: you will need to be root on your OpenBSD system to
+do the necessary installation steps).
+
+.Bl -tag -width 123 -compact
+.It 1.
+You have access to a FreeBSD system. In this case you can
+temporarily install the binary there, see what shared libraries
+it needs, and copy them to your OpenBSD system. Example: you have
+just ftp-ed the FreeBSD binary of SimCity. Put it on the FreeBSD
+system you have access to, and check which shared libraries it
+needs by running `ldd sim':
+.Pp
+.Bl -tag -width 123 -compact -offset indent
+.It me@freebsd% ldd /usr/local/lib/SimCity/res/sim
+.nf
+/usr/local/lib/SimCity/res/sim:
+	-lXext.6 => /usr/X11R6/lib/libXext.so.6.0 (0x100c1000)
+	-lX11.6 => /usr/X11R6/lib/libX11.so.6.0 (0x100c9000)
+	-lc.2 => /usr/lib/libc.so.2.1 (0x10144000)
+	-lm.2 => /usr/lib/libm.so.2.0 (0x101a7000)
+	-lgcc.261 => /usr/lib/libgcc.so.261.0 (0x101bf000)
+.fi
+.El
+.Pp
+You would need go get all the files from the last column, and
+put them under /emul/freebsd. This means you eventually have
+these files on your OpenBSD system:
+.Pp
+.nf
+/emul/freebsd/usr/X11R6/lib/libXext.so.6.0
+/emul/freebsd/usr/X11R6/lib/libX11.so.6.0
+/emul/freebsd/usr/lib/libc.so.2.1
+/emul/freebsd/usr/lib/libm.so.2.0
+/emul/freebsd/usr/lib/libgcc.so.261.0
+.fi
+.Pp
+Note that if you already have a FreeBSD shared library with a
+matching major revision number to the first column of the 'ldd'
+output, you won't need to copy the file named in the last column
+to your system, the one you already have should work. It is
+advisable to copy the shared library anyway if it is a newer version,
+though. You can remove the old one. So, if you have these libraries
+on your system:
+.Pp
+.nf
+/emul/freebsd/usr/lib/libc.so.2.0
+.fi
+.Pp
+and you find that the ldd output for a new binary you want to
+install is:
+.nf
+.Pp
+	-lc.2 => /usr/lib/libc.so.2.1 (0x10144000)
+.fi
+.Pp
+you won't need to worry about copying /usr/lib/libc.so.2.1 too,
+because the program should work fine with the slightly older version.
+You can decide to replace the libc.so anyway, and that should leave
+you with:
+.Pp
+.nf
+/emul/freebsd/usr/lib/libc.so.2.1
+.fi
+.Pp
+Finally, you must make sure that you have the FreeBSD runtime linker
+and its config files on your system. You should copy these
+files from the FreeBSD system to their appropriate place on your
+OpenBSD system (in the /emul/freebsd tree):
+.Pp
+.nf
+usr/libexec/ld.so
+var/run/ld.so.hints
+.fi
+.Pp
+.It 2.
+You don't have access to a FreeBSD system. In that case, you
+should get the extra files you need from various ftp sites.
+Information on where to look for the various files is appended
+below. For now, let's assume you know where to get the files.
+.Pp
+Retrieve the following files (from _one_ ftp site to avoid
+any version mismatches), and install them under /emul/freebsd
+(i.e. foo/bar is installed as /emul/freebsd/foo/bar):
+.Pp
+.nf
+sbin/ldconfig
+usr/bin/ldd
+usr/lib/libc.so.x.y.z
+usr/libexec/ld.so
+.fi
+.Pp
+ldconfig and ldd don't necessarily need to be under /emul/freebsd,
+you can install them elsewhere in the system too. Just make sure
+they don't conflict with their OpenBSD counterparts. A good idea
+would be to install them in /usr/local/bin as ldconfig-freebsd and
+ldd-freebsd.
+.Pp
+Run the FreeBSD ldconfig program with directory arguments in 
+which the FreeBSD runtime linker should look for shared libs. 
+/usr/lib are standard, you could run like the following:
+.Pp
+.Bl -tag -width 123 -compact -offset indent
+.It me@openbsd% mkdir -p /emul/freebsd/var/run
+.It me@openbsd% touch /emul/freebsd/var/run/ld.so.hints
+.It me@openbsd% ldconfig-freebsd /usr/X11R6/lib /usr/local/lib
+.El
+.Pp
+Note that argument directories of ldconfig are 
+mapped to /emul/freebsd/XXXX by
+OpenBSD's compat code, and should exist as such on your system.
+Make sure /emul/freebsd/var/run/ld.so.hints is exist when you run 
+FreeBSD's ldconfig, if not, you may lose OpenBSD's /var/run/ld.so.hints.
+
+FreeBSD ldconfig should be statically
+linked, so it doesn't need any shared libraries by itself.
+It will create the file /emul/freebsd/var/run/ld.so.hints.
+You should rerun the FreeBSD version of the ldconfig program
+each time you add a new shared library.
+.Pp
+You should now be set up for FreeBSD binaries which only need
+a shared libc. You can test this by running the FreeBSD ldd
+on itself. Suppose that you have it installed as ldd-freebsd, it
+should produce something like:
+.Pp
+.Bl -tag -width 123 -compact -offset indent
+.It me@openbsd% ldd-freebsd `which ldd-freebsd`
+.nf
+/usr/local/bin/ldd-freebsd:
+	-lc.2 => /usr/lib/libc.so.2.1 (0x1001a000)
+.fi
+.El
+.Pp
+This being done, you are ready to install new FreeBSD binaries.
+Whenever you install a new FreeBSD program, you should check
+if it needs shared libraries, and if so, whether you have
+them installed in the /emul/freebsd tree. To do this, you run
+the FreeBSD version ldd on the new program, and watch its output.
+ldd (see also the manual page for ldd(1)) will print a list
+of shared libraries that the program depends on, in the
+form -l<majorname> => <fullname>.
+.Pp
+If it prints "not found" in stead of <fullname> it means that
+you need an extra library. Which library this is, is shown
+in <majorname>, which will be of the form XXXX.<N>
+You will need to find a libXXXX.so.<N>.<mm> on a FreeBSD ftp site,
+and install it on your system. The XXXX (name) and <N> (major
+revision number) should match; the minor number(s) <mm> are
+less important, though it is advised to take the most
+recent version.
+.El
+
+.Ss Finding the necessary files.
+.Nm Note:
+the information below is valid as of the time this
+document was written (Jun, 1995), but certain details
+such as names of ftp sites, directories and distribution names
+may have changed by the time you read this.
+.Pp
+FreeBSD distribution is
+available on a lot of ftp sites. Sometimes the files are unpacked,
+and you can get the individual files you need, but mostly they
+are stored in distribution sets, usually consisting of subdirectories
+with gzipped tar files in them. The primary ftp sites for the
+distributions are:
+.Pp
+.nf
+ftp.freebsd.org:/pub/FreeBSD
+.fi
+.Pp
+Mirror sites are described on:
+.Pp
+.nf
+ftp.freebsd.org:/pub/FreeBSD/MIRROR.SITES
+.fi
+.Pp
+This distribution consists of a number of tar-ed and gzipped files,
+Normally, they're controlled by an install program, but you can
+retrieve files "by hand" too. The way to look something up is to retrieve all
+the files in the distribution, and ``tar ztvf'' through them for the file
+you need. Here is an example of a list of files that you might need.
+.Pp
+.Bd -unfilled -offset indent
+Needed                 Files
+
+ld.so                  2.0-RELEASE/bindist/bindist.??
+ldconfig               2.0-RELEASE/bindist/bindist.??
+ldd                    2.0-RELEASE/bindist/bindist.??
+libc.so.2              2.0-RELEASE/bindist/bindist.??
+libX11.so.6.0          2.0-RELEASE/XFree86-3.1/XFree86-3.1-bin.tar.gz
+libX11.so.6.0          XFree86-3.1.1/X311bin.tgz
+libXt.so.6.0           2.0-RELEASE/XFree86-3.1/XFree86-3.1-bin.tar.gz
+libXt.so.6.0           XFree86-3.1.1/X311bin.tgz
+.\" libX11.so.3            oldlibs
+.\" libXt.so.3             oldlibs
+.Ed
+.Pp
+The Files called ``bindist.??'' are tar-ed, gzipped and split, 
+so you can extract contents by ``cat bindist.?? | tar zpxf -''.
+.Pp
+Extract the files from these gzipped tarfiles in your /emul/freebsd directory
+(possibly omitting or afterwards removing files you don't need), and you
+are done.
+.Sh BUGS
+The information about FreeBSD distributions may become outdated.
