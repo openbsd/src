@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.12 2001/11/16 22:02:05 mickey Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.13 2001/11/16 22:04:45 mickey Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.20 1997/02/05 05:10:25 scottr Exp $	*/
 
 /* 
@@ -542,7 +542,7 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 		}
 		db_printf("%s", name);
 		if (pos.k_entry != MAXINT && name) {
-			const char *	entry_name;
+			char *	entry_name;
 			long	e_val;
 
 			db_find_sym_and_offset(pos.k_entry, &entry_name,
