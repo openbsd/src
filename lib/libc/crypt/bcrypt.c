@@ -1,4 +1,4 @@
-/* $OpenBSD: bcrypt.c,v 1.3 1997/02/16 20:58:15 provos Exp $ */
+/* $OpenBSD: bcrypt.c,v 1.4 1997/03/27 01:09:38 provos Exp $ */
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
  * All rights reserved.
@@ -49,7 +49,6 @@
 #endif
 
 #include <stdlib.h>
-#include <time.h>
 #include <sys/types.h>
 #include <string.h>
 #include <pwd.h>
@@ -161,10 +160,10 @@ bcrypt_gensalt(log_rounds)
 	u_int8_t csalt[BCRYPT_MAXSALT];
 	u_int16_t i;
 	u_int32_t seed = 0;
-	(void) srandom((int) time((time_t *) NULL));
+
 	for (i = 0; i < BCRYPT_MAXSALT; i++) {
 		if (i % 4 == 0)
-			seed = random();
+			seed = arc4random();
 		csalt[i] = seed & 0xff;
 		seed = seed >> 8;
 	}
