@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.78 2001/07/18 20:48:33 markus Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.79 2001/07/25 11:42:06 markus Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1148,6 +1148,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
       key = 0;
     }
 
+#ifndef KAME
   /* Setup identity extensions. */
   if (isakmp_sa->id_i)
     {
@@ -1222,6 +1223,7 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
 	free (sid);
       sid = 0;
     }
+#endif /* KAME */
 
 #ifdef SADB_X_CREDTYPE_NONE
   /*
