@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.3 2004/09/14 22:49:36 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.4 2004/09/18 08:14:40 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -17,7 +17,9 @@
 
 use strict;
 use warnings;
+
 package OpenBSD::PkgCfl;
+use OpenBSD::PackageName;
 
 sub glob2re
 {
@@ -35,12 +37,18 @@ sub make_conflict_list($)
 	my $l = [];
 
 	unless (defined $plist->{'no-default-conflict'}) {
-		my $stem = (OpenBSD::PackageName::splitname$plist->pkgname())[0];
-		push(@$l, "^\Q$stem\E-\\d.*\$");
+		my $stem = (OpenBSD::PackageName::splitname $plist->pkgname())[0];
+		push(@$l, sub { grep { m/^\Q$stem\E-\d.*$/ } @_; });
 	}
 	if (defined $plist->{pkgcfl}) {
 		for my $cfl (@{$plist->{pkgcfl}}) {
-			push(@$l, glob2re($cfl->{name}));
+			my $re = glob2re($cfl->{name});
+			push(@$l, sub { grep { m/$re/ } @_; });
+		}
+	}
+	if (defined $plist->{conflict}) {
+		for my $cfl (@{$plist->{conflict}}) {
+		    push(@$l, sub { OpenBSD::PackageName::pkgspec_match($cfl->{name}, @_); });
 		}
 	}
 	bless $l, $class;
@@ -50,8 +58,9 @@ sub conflicts_with
 {
 	my ($self, @pkgnames) = @_;
 	for my $cfl (@$self) {
-		if (grep { m/$cfl/ } @pkgnames) {
-			return grep { m/$cfl/ } @pkgnames;
+		my @l = &$cfl(@pkgnames);
+		if (@l) {
+			return @l;
 		}
 	}
 	return 0;
