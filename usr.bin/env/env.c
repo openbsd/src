@@ -1,4 +1,4 @@
-/*	$OpenBSD: env.c,v 1.5 2000/09/15 07:13:48 deraadt Exp $	*/
+/*	$OpenBSD: env.c,v 1.6 2001/03/01 20:21:10 aaron Exp $	*/
 
 /*
  * Copyright (c) 1988, 1993, 1994
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-static char rcsid[] = "$OpenBSD: env.c,v 1.5 2000/09/15 07:13:48 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: env.c,v 1.6 2001/03/01 20:21:10 aaron Exp $";
 #endif /* not lint */
 
 #include <err.h>
@@ -104,6 +104,7 @@ main(argc, argv)
 void
 usage()
 {
-	(void) fprintf(stderr, "usage: env [-i] [name=value ...] [command]\n");
+	(void)fprintf(stderr, "usage: env [-i] [name=value ...] "
+	    "[utility [argument ...]]\n");
 	exit (1);
 }
