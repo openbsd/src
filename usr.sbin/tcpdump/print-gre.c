@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-gre.c,v 1.4 2002/09/18 19:39:35 jason Exp $	*/
+/*	$OpenBSD: print-gre.c,v 1.5 2002/09/18 20:40:06 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -32,7 +32,8 @@
  */
 
 /*
- * tcpdump filter for GRE - Generic Routing Encapsulation (RFC1701 and RFC1702)
+ * tcpdump filter for GRE - Generic Routing Encapsulation
+ * RFC1701 (GRE), RFC1702 (GRE IPv4), and RFC2637 (Enhanced GRE)
  */
 
 #include <sys/param.h>
@@ -58,14 +59,18 @@
 #define	GRE_SP		0x1000		/* sequence# present */
 #define	GRE_sP		0x0800		/* source routing */
 #define	GRE_RECRS	0x0700		/* recursion count */
+#define	GRE_AP		0x0080		/* acknowledgment# present */
 #define	GRE_VERS	0x0007		/* protocol version */
 
 #define	GREPROTO_IP	0x0800		/* IP */
+#define	GREPROTO_PPP	0x880b		/* PPTP */
 
 /* source route entry types */
 #define	GRESRE_IP	0x0800		/* IP */
 #define	GRESRE_ASN	0xfffe		/* ASN */
 
+void gre_print_0(const u_char *, u_int);
+void gre_print_1(const u_char *, u_int);
 void gre_sre_print(u_int16_t, u_int8_t, u_int8_t, const u_char *, u_int);
 void gre_sre_ip_print(u_int8_t, u_int8_t, const u_char *, u_int);
 void gre_sre_asn_print(u_int8_t, u_int8_t, const u_char *, u_int);
@@ -73,16 +78,31 @@ void gre_sre_asn_print(u_int8_t, u_int8_t, const u_char *, u_int);
 void
 gre_print(const u_char *bp, u_int length)
 {
+	u_int len = length, vers;
+
+	if (len < 2) {
+		printf("[|gre]");
+		return;
+	}
+	vers = EXTRACT_16BITS(bp) & 7;
+
+	if (vers == 0)
+		gre_print_0(bp, len);
+	else if (vers == 1)
+		gre_print_1(bp, len);
+	else
+		printf("gre-unknown-version=%u", vers);
+	return;
+
+}
+
+void
+gre_print_0(const u_char *bp, u_int length)
+{
 	u_int len = length;
 	u_int16_t flags, prot;
 
-	if (len < 2)
-		goto trunc;
 	flags = EXTRACT_16BITS(bp);
-	if ((flags & 7) != 0) {
-		printf("gre: unknown version %u", flags & 7);
-		return;
-	}
 	if (vflag) {
 		printf("[%s%s%s%s%s] ",
 		    (flags & GRE_CP) ? "C" : "",
@@ -91,6 +111,7 @@ gre_print(const u_char *bp, u_int length)
 		    (flags & GRE_SP) ? "S" : "",
 		    (flags & GRE_sP) ? "s" : "");
 	}
+
 	len -= 2;
 	bp += 2;
 
@@ -132,7 +153,6 @@ gre_print(const u_char *bp, u_int length)
 	}
 
 	if (flags & GRE_RP) {
-		/* Just skip over routing info */
 		for (;;) {
 			u_int16_t af;
 			u_int8_t sreoff;
@@ -164,6 +184,95 @@ gre_print(const u_char *bp, u_int length)
 		break;
 	default:
 		printf("gre-proto-0x%x", prot);
+	}
+	return;
+
+trunc:
+	printf("[|gre]");
+}
+
+void
+gre_print_1(const u_char *bp, u_int length)
+{
+	u_int len = length;
+	u_int16_t flags, prot;
+
+	flags = EXTRACT_16BITS(bp);
+	len -= 2;
+	bp += 2;
+
+	if (vflag) {
+		printf("[%s%s%s%s%s%s] ",
+		    (flags & GRE_CP) ? "C" : "",
+		    (flags & GRE_RP) ? "R" : "",
+		    (flags & GRE_KP) ? "K" : "",
+		    (flags & GRE_SP) ? "S" : "",
+		    (flags & GRE_sP) ? "s" : "",
+		    (flags & GRE_AP) ? "A" : "");
+	}
+
+	if (len < 2)
+		goto trunc;
+	prot = EXTRACT_16BITS(bp);
+	len -= 2;
+	bp += 2;
+
+	if (flags & GRE_CP) {
+		printf("cpset! ");
+		return;
+	}
+	if (flags & GRE_RP) {
+		printf("rpset! ");
+		return;
+	}
+	if ((flags & GRE_KP) != 0) {
+		printf("kpunset! ");
+		return;
+	}
+	if (flags & GRE_sP) {
+		printf("spset! ");
+		return;
+	}
+
+	if (flags & GRE_KP) {
+		u_int32_t k;
+
+		if (len < 4)
+			goto trunc;
+		k = EXTRACT_32BITS(bp);
+		printf("key=0x%x call=0x%x ", (k >> 16) & 0xffff, k & 0xffff);
+		len -= 4;
+		bp += 4;
+	}
+
+	if (flags & GRE_SP) {
+		if (len < 4)
+			goto trunc;
+		printf("seq=0x%x ", EXTRACT_32BITS(bp));
+		bp += 4;
+		len -= 4;
+	}
+
+	if (flags & GRE_AP) {
+		if (len < 4)
+			goto trunc;
+		printf("ack=0x%x ", EXTRACT_32BITS(bp));
+		bp += 4;
+		len -= 4;
+	}
+
+	if ((flags & GRE_SP) == 0) {
+		printf("no-payload ");
+		return;
+	}
+
+	switch (prot) {
+	case GREPROTO_PPP:
+		printf("gre-ppp-payload ");
+		break;
+	default:
+		printf("gre-proto-0x%x ", prot);
+		break;
 	}
 	return;
 
