@@ -1,4 +1,4 @@
-.\"	@(#) $OpenBSD: m4.1,v 1.27 2003/01/07 18:34:13 mpech Exp $
+.\"	@(#) $OpenBSD: m4.1,v 1.28 2003/02/16 17:16:45 espie Exp $
 .\"
 .\"
 .Dd January 26, 1993
@@ -11,6 +11,7 @@
 .Nm m4
 .Op Fl d Ar flags
 .Op Fl t Ar name
+.Op Fl o Ar filename
 .Op Fl g
 .Op Fl s
 .Oo
@@ -96,6 +97,9 @@ turn on all options.
 .Pp
 By default, trace is set to 
 .Qq eq .
+.It Fl o Ar filename
+Send trace output to
+.Ar filename .
 .It Fl t Ar macro
 Turn tracing on for 
 .Ar macro .
