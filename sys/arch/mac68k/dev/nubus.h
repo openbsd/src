@@ -1,4 +1,4 @@
-/*	$OpenBSD: nubus.h,v 1.11 1997/04/09 14:30:49 briggs Exp $	*/
+/*	$OpenBSD: nubus.h,v 1.12 1997/04/10 20:34:33 briggs Exp $	*/
 /*	$NetBSD: nubus.h,v 1.17 1997/02/24 06:20:07 scottr Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #define   NUBUS_DRSW_APPLE	0x0001
 #define    NUBUS_DRHW_TFB	0x0001	/* Apple Toby Frame Buffer */
 #define    NUBUS_DRHW_WVC	0x0006	/* Apple Workstation Video Card */
+#define    NUBUS_DRHW_SE30	0x0009
 #define    NUBUS_DRHW_M2HRVC	0x0013	/* Apple Mac II High-Res Video Card */
 #define    NUBUS_DRHW_CB264	0x013B	/* RasterOps ColorBoard 264 */
 #define    NUBUS_DRHW_MICRON	0x0146

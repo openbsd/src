@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf_mv.c,v 1.11 1997/04/01 13:52:34 briggs Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.12 1997/04/10 20:34:33 briggs Exp $	*/
 /*	$NetBSD: grf_mv.c,v 1.17 1997/02/24 06:20:06 scottr Exp $	*/
 
 /*
@@ -230,6 +230,9 @@ grfmv_attach(parent, self, aux)
 		break;
 	case NUBUS_DRHW_CB264:
 		add_nubus_intr(sc->sc_slot.slot, grfmv_intr_cb264, sc);
+		break;
+	case NUBUS_DRHW_SE30:
+		/* Do nothing--SE/30 interrupts are disabled */
 		break;
 	case NUBUS_DRHW_MICRON:
 		/* What do we know about this one? */
