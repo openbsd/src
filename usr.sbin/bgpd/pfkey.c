@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.14 2004/03/15 16:00:59 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.15 2004/03/31 10:25:35 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -75,6 +75,9 @@ pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
 		ssrc.ss_len = sizeof(struct sockaddr_in6);
 		ssrc.ss_family = AF_INET6;
 		break;
+	case 0:
+		ssrc.ss_len = sizeof(struct sockaddr);
+		break;
 	default:
 		return (-1);
 		/* not reached */
@@ -92,6 +95,9 @@ pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
 		    &dst->v6, sizeof(struct in6_addr));
 		sdst.ss_len = sizeof(struct sockaddr_in6);
 		sdst.ss_family = AF_INET6;
+		break;
+	case 0:
+		sdst.ss_len = sizeof(struct sockaddr);
 		break;
 	default:
 		return (-1);
