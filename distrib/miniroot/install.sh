@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.33 1998/09/26 21:41:23 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.34 1998/09/28 12:34:06 deraadt Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -159,8 +159,10 @@ if [ "`df /`" = "`df /mnt`" ]; then
 				getrootdisk
 			done
 			DISK=$ROOTDISK
+			iter=ROOT
 		else
 			DISK=""
+			iter=""
 			while [ "X${DISK}" = "X" ]; do
 				getanotherdisk
 			done
@@ -169,6 +171,7 @@ if [ "`df /`" = "`df /mnt`" ]; then
 			fi
 		fi
 
+		if [ "${DISK}" != "nfs" ]; then
 		# Deal with disklabels, including editing the root disklabel
 		# and labeling additional disks.  This is machine-dependent since
 		# some platforms may not be able to provide this functionality.
@@ -185,7 +188,7 @@ You will be prompted for the mount point (full path, including the prepending
 partition or "done" when you are finished.
 __get_filesystems_1
 
-		if [ "${DISK}" = "${ROOTDISK}" ]; then
+		if [ "${DISK}" = "${ROOTDISK}" -a "${ROOTDISK}" != "nfs"]; then
 			echo
 			echo	"The following partitions will be used for the root filesystem and swap:"
 			echo	"	${ROOTDISK}a	/"
@@ -247,6 +250,47 @@ __get_filesystems_1
 			fi
 			_i=$(( ${_i} + 1 ))
 		done
+		else # above was for non nfs, this is nfs
+			while :; do
+				echo -n "nfs server: [$_nfs_server] "
+				getresp "$_nfs_server"
+				if [ "X$resp" = "X" ]; then
+					continue
+				fi
+				_nfs_server="$resp"
+				break
+			done
+			while :; do
+				echo -n "subdir on nfs server: [$_nfs_dir] "
+				getresp "$_nfs_dir"
+				if [ "X$resp" = "X" ]; then
+					continue
+				fi
+				_nfs_dir="$resp"
+				break
+			done
+			# Get the mount point from the user
+			while : ; do
+				if [ "${iter}" = "ROOT" ]; then
+					_mp="/"
+					break
+				fi
+				echo -n "Mount point for ${_nfs_server}:${_nfs_dir} [$_mp, RET, none, or done]? "
+				getresp "$_mp"
+				case "X${resp}" in
+					X/*)	_mp=$resp
+						break ;;
+					Xdone|X)
+						break ;;
+					Xnone)	_mp=
+						break;;
+					*)	echo "mount point must be an absolute path!";;
+				esac
+			done
+			if [ -n "${_mp}" ]; then
+				echo "${_nfs_server}:${_nfs_dir} ${_mp}" >> ${FILESYSTEMS}
+			fi
+		fi
 	done
 
 	echo	""
@@ -267,15 +311,20 @@ __get_filesystems_1
 	esac
 	echo
 	echo "============================================================"
+	tmpfslist=""
+	while read _device_name _junk; do
+		# nfs is special
+		if [ "`echo $_device_name|sed '/^[^ ]*:/!d'`" ]; then
+			continue
+		fi
+		tmpfslist="${tmpfslist} ${_device_name}"
+	done < ${FILESYSTEMS}
+
+	# if it is all spaces aka all nfs
+	if [ "X${tmpfslist## *}" != "X" ]; then
+	
 	echo "The next step will overwrite any existing data on:"
-	(
-		echo -n "	"
-		while read _device_name _junk; do
-			echo -n "${_device_name} "
-		done
-		echo ""
-	) < ${FILESYSTEMS}
-	echo	""
+	echo "	${tmpfslist}"
 
 	echo -n	"Are you really sure that you're ready to proceed? [n] "
 	getresp "n"
@@ -290,11 +339,12 @@ __get_filesystems_1
 
 	# Loop though the file, place filesystems on each device.
 	echo	"Creating filesystems..."
-	(
-		while read _device_name _junk; do
-			newfs /dev/r${_device_name}
-		done
-	) < ${FILESYSTEMS}
+
+	for _device_name in ${tmpfslist}; do
+		newfs /dev/r${_device_name}
+	done
+
+	fi # if [ "${tmpfslist...
 else
 	# Get the root device
 	ROOTDISK=`df /mnt | sed -e '/^\//!d' -e 's/\/dev\/\([^ ]*\)[a-p] .*/\1/'`
@@ -463,6 +513,12 @@ if [ "`df /`" = "`df /mnt`" ]; then
 	# fstab.
 	(
 		while read _dev _mp; do
+			# nfs is special
+			if [ "`echo $_dev|sed '/^[^ ]*:/!d'`" ]; then
+				echo $_dev $_mp nfs rw 0 0
+				continue
+			fi
+			
 			if [ "$_mp" = "/" ]; then
 				echo /dev/$_dev $_mp ffs rw 1 1
 			else
@@ -577,8 +633,9 @@ else
 	echo "done."
 fi
 
-
-md_installboot ${ROOTDISK}
+if [ "${ROOTDISK}" != "nfs" ]; then
+	md_installboot ${ROOTDISK}
+fi
 
 if [ ! -x /mnt/dev/MAKEDEV ]; then
 	echo "No /dev/MAKEDEV installed, something is wrong here..."

@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.97 1998/09/24 21:55:08 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.98 1998/09/28 12:34:06 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -129,7 +129,7 @@ isin() {
 		if [ "$_a" = "$1" ]; then return 0; fi
 		shift
 	done
-	return 1
+	return
 }
 
 addel() {
@@ -363,14 +363,12 @@ Now you can select another disk to initialize.  (Do not re-select a disk
 you have already entered information for).  Available disks are:
 
 __getanotherdisk_1
-	_DKDEVS=`md_get_diskdevs`
+	_DKDEVS=`md_get_diskdevs; echo nfs`
 	echo	"$_DKDEVS"
 	echo	""
 	echo -n	"Which one? [done] "
 	getresp ""
-	if [ "X${resp}" = "X" ]; then
-		DISK=done
-	elif [ "X${resp}" = "Xdone" ]; then
+	if [ "X${resp}" = "X" -o "X${resp}" = "Xdone" ]; then
 		DISK=done
 	elif isin $resp $_DKDEVS ; then
 		DISK="$resp"
@@ -392,7 +390,7 @@ Available disks are:
 __getrootdisk_1
 	local _defdsk;
 
-	_DKDEVS=`md_get_diskdevs`
+	_DKDEVS=`md_get_diskdevs; echo nfs`
 	_defdsk=`echo $_DKDEVS | cutlast`
 	if [ "${_defdsk}" != "${_DKDEVS}" ]; then
 		_defdsk=""
@@ -1601,7 +1599,7 @@ mkdir /mnt2 > /dev/null 2>&1
 if ! mount_nfs $_nfs_tcp ${_nfs_server_ip}:${_nfs_server_path} \
     /mnt2 ; then
 	echo "Cannot mount NFS server.  Aborting."
-	return
+	return 1
 fi
 
 # Get the directory where the file lives
