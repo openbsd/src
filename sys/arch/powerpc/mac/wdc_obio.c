@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.1 1999/11/08 23:46:01 rahnds Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.2 1999/11/23 01:25:29 rahnds Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.4 1999/06/14 08:53:06 tsubai Exp $	*/
 
 /*-
@@ -69,6 +69,25 @@ struct wdc_obio_softc {
 	struct channel_softc wdc_channel;
 	dbdma_regmap_t *sc_dmareg;
 	dbdma_command_t	*sc_dmacmd;
+};
+
+u_int8_t wdc_obio_read_reg __P((struct channel_softc *, enum wdc_regs));
+void wdc_obio_write_reg __P((struct channel_softc *, enum wdc_regs, u_int8_t));
+void wdc_default_read_raw_multi_2 __P((struct channel_softc *, 
+    void *, unsigned int));
+void wdc_default_write_raw_multi_2 __P((struct channel_softc *, 
+    void *, unsigned int));
+void wdc_default_read_raw_multi_4 __P((struct channel_softc *, 
+    void *, unsigned int));
+void wdc_default_write_raw_multi_4 __P((struct channel_softc *, 
+    void *, unsigned int));
+struct channel_softc_vtbl wdc_obio_vtbl = {
+	wdc_obio_read_reg,
+	wdc_obio_write_reg,
+	wdc_default_read_raw_multi_2,
+	wdc_default_write_raw_multi_2,
+	wdc_default_read_raw_multi_4,
+	wdc_default_write_raw_multi_4
 };
 
 int	wdc_obio_probe	__P((struct device *, void *, void *));
@@ -150,6 +169,8 @@ wdc_obio_attach(parent, self, aux)
 	printf("\n");
 
 	chp->cmd_iot = chp->ctl_iot = ca->ca_iot;
+	chp->_vtbl = &wdc_obio_vtbl;
+
 	cmdbase = ca->ca_reg[0];
 	cmdsize = ca->ca_reg[1];
 
@@ -267,4 +288,49 @@ wdc_obio_dma_finish(v, channel, drive, read)
 
 	dbdma_stop(sc->sc_dmareg);
 	return 0;
+}
+
+/* read register code
+ * this allows the registers to be spaced by 0x10, instead of 0x1.
+ * mac hardware (obio) requires this.
+ */ 
+
+u_int8_t
+wdc_obio_read_reg(chp, reg)
+	struct channel_softc *chp;
+	enum wdc_regs reg;
+{
+#ifdef DIAGNOSTIC	
+	if (reg & _WDC_WRONLY) {
+		printf ("wdc_obio_read_reg: reading from a write-only register %d\n", reg);
+	}
+#endif
+
+	if (reg & _WDC_AUX) 
+		return (bus_space_read_1(chp->ctl_iot, chp->ctl_ioh,
+		    (reg & _WDC_REGMASK) << 4));
+	else
+		return (bus_space_read_1(chp->cmd_iot, chp->cmd_ioh,
+		    (reg & _WDC_REGMASK) << 4));
+}
+
+
+void
+wdc_obio_write_reg(chp, reg, val)
+	struct channel_softc *chp;
+	enum wdc_regs reg;
+	u_int8_t val;
+{
+#ifdef DIAGNOSTIC	
+	if (reg & _WDC_RDONLY) {
+		printf ("wdc_obio_write_reg: writing to a read-only register %d\n", reg);
+	}
+#endif
+
+	if (reg & _WDC_AUX) 
+		bus_space_write_1(chp->ctl_iot, chp->ctl_ioh,
+		    (reg & _WDC_REGMASK) << 4, val);
+	else
+		bus_space_write_1(chp->cmd_iot, chp->cmd_ioh,
+		    (reg & _WDC_REGMASK) << 4, val);
 }
