@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.368 2001/02/21 23:44:13 chris Exp $
+	$OpenBSD: pcidevs,v 1.369 2001/02/22 01:34:29 chris Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -982,15 +982,15 @@ product DAVICOM DM9102		0x9102	DM9102
 
 /* DEC products */
 product DEC 21050		0x0001	DECchip 21050 PCI-PCI
-product DEC 21040		0x0002	DECchip 21040		/* Tulip */
-product DEC 21030		0x0004	DECchip 21030		/* TGA */
+product DEC 21040		0x0002	DECchip 21040
+product DEC 21030		0x0004	DECchip 21030
 product DEC NVRAM		0x0007	Zephyr NV-RAM
 product DEC KZPSA		0x0008	KZPSA
-product DEC 21140		0x0009	DECchip 21140		/* FasterNet */
+product DEC 21140		0x0009	DECchip 21140
 product DEC PBXGB		0x000d	TGA2
 product DEC DEFPA		0x000f	DEFPA
 /* product DEC ???		0x0010	??? VME Interface */
-product DEC 21041		0x0014	DECchip 21041	     /* Tulip Pass 3 */
+product DEC 21041		0x0014	DECchip 21041
 product DEC DGLPB		0x0016	DGLPB (OPPO)
 product DEC 21142		0x0019	DECchip 21142/3
 /* Farallon apparently used DEC's vendor ID by mistake */
