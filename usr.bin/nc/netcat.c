@@ -1,4 +1,4 @@
-/* $OpenBSD: netcat.c,v 1.69 2004/03/03 06:45:54 tedu Exp $ */
+/* $OpenBSD: netcat.c,v 1.70 2004/03/03 06:50:13 deraadt Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
  *
@@ -168,7 +168,7 @@ main(int argc, char *argv[])
 		case 'v':
 			vflag = 1;
 			break;
-		case 'w': 
+		case 'w':
 			timeout = (int)strtoul(optarg, &endp, 10);
 			if (timeout < 0 || *endp != '\0')
 				errx(1, "timeout cannot be negative");
@@ -522,7 +522,7 @@ local_listen(char *host, char *port, struct addrinfo hints)
 		hints.ai_family = AF_INET;
 
 	if ((error = getaddrinfo(host, port, &hints, &res)))
-                errx(1, "getaddrinfo: %s", gai_strerror(error));
+		errx(1, "getaddrinfo: %s", gai_strerror(error));
 
 	res0 = res;
 	do {
@@ -615,7 +615,7 @@ readwrite(int nfd)
 				pfd[1].fd = -1;
 				pfd[1].events = 0;
 			} else {
-				if((ret = atomicio(
+				if ((ret = atomicio(
 				    (ssize_t (*)(int, void *, size_t))write,
 				    nfd, buf, n)) != n)
 					return;
