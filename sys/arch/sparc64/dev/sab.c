@@ -1,4 +1,4 @@
-/*	$OpenBSD: sab.c,v 1.3 2002/01/17 19:30:07 jason Exp $	*/
+/*	$OpenBSD: sab.c,v 1.4 2002/01/17 21:23:24 jason Exp $	*/
 
 /*
  * Copyright (c) 2001 Jason L. Wright (jason@thought.net)
@@ -139,7 +139,7 @@ void sabtty_flush __P((struct sabtty_softc *));
 int sabtty_speed __P((int));
 void sabtty_console_flags __P((struct sabtty_softc *));
 void sabtty_cnpollc __P((struct sabtty_softc *, int));
-void sabtty_ddb __P((struct sabtty_softc *));
+void sabtty_shutdown __P((void *));
 
 int sabttyopen __P((dev_t, int, int, struct proc *));
 int sabttyclose __P((dev_t, int, int, struct proc *));
@@ -272,7 +272,7 @@ sab_attach(parent, self, aux)
 	/* Disable port interrupts */
 	SAB_WRITE(sc, SAB_PIM, 0xff);
 	SAB_WRITE(sc, SAB_PVR, SAB_PVR_DTR_A | SAB_PVR_DTR_B | SAB_PVR_MAGIC);
-	SAB_WRITE(sc, SAB_IPC, SAB_IPC_ICPL | SAB_IPC_VIS);
+	SAB_WRITE(sc, SAB_IPC, SAB_IPC_ICPL);
 
 	for (i = 0; i < SAB_NCHAN; i++) {
 		struct sabtty_attach_args sta;
@@ -420,6 +420,7 @@ sabtty_attach(parent, self, aux)
 			cn_tab->cn_pollc = sab_cnpollc;
 			cn_tab->cn_getc = sab_cngetc;
 			cn_tab->cn_dev = makedev(77/*XXX*/, self->dv_unit);
+			shutdownhook_establish(sabtty_shutdown, sc);
 		}
 
 		if (sc->sc_flags & SABTTYF_CONS_OUT) {
@@ -903,6 +904,7 @@ sabtty_param(tp, t)
 	struct sab_softc *bc = sab_cd.cd_devs[SAB_CARD(tp->t_dev)];
 	struct sabtty_softc *sc = bc->sc_child[SAB_PORT(tp->t_dev)];
 	int s, ospeed;
+	tcflag_t cflag;
 	u_int8_t dafo, r;
 
 	ospeed = sabtty_speed(t->c_ospeed);
@@ -917,13 +919,19 @@ sabtty_param(tp, t)
 
 	dafo = SAB_READ(sc, SAB_DAFO);
 
-	if (t->c_cflag & CSTOPB)
+	cflag = t->c_cflag;
+	if (sc->sc_flags & (SABTTYF_CONS_IN | SABTTYF_CONS_OUT)) {
+		cflag |= CLOCAL;
+		cflag &= ~HUPCL;
+	}
+
+	if (cflag & CSTOPB)
 		dafo |= SAB_DAFO_STOP;
 	else
 		dafo &= ~SAB_DAFO_STOP;
 
 	dafo &= ~SAB_DAFO_CHL_CSIZE;
-	switch (t->c_cflag & CSIZE) {
+	switch (cflag & CSIZE) {
 	case CS5:
 		dafo |= SAB_DAFO_CHL_CS5;
 		break;
@@ -939,8 +947,8 @@ sabtty_param(tp, t)
 	}
 
 	dafo &= ~SAB_DAFO_PARMASK;
-	if (t->c_cflag & PARENB) {
-		if (tp->t_cflag & PARODD)
+	if (cflag & PARENB) {
+		if (cflag & PARODD)
 			dafo |= SAB_DAFO_PAR_ODD;
 		else
 			dafo |= SAB_DAFO_PAR_EVEN;
@@ -957,7 +965,7 @@ sabtty_param(tp, t)
 
 	r = SAB_READ(sc, SAB_MODE);
 	r |= SAB_MODE_RAC;
-	if (t->c_cflag & CRTSCTS) {
+	if (cflag & CRTSCTS) {
 		r &= ~(SAB_MODE_RTS | SAB_MODE_FCTS);
 		r |= SAB_MODE_FRTS;
 		sc->sc_imr1 &= ~SAB_IMR1_CSC;
@@ -968,6 +976,8 @@ sabtty_param(tp, t)
 	}
 	SAB_WRITE(sc, SAB_MODE, r);
 	SAB_WRITE(sc, SAB_IMR1, sc->sc_imr1);
+
+	tp->t_cflag = cflag;
 
 	splx(s);
 	return (0);
@@ -1154,6 +1164,7 @@ sabtty_cnpollc(sc, on)
 		SAB_WRITE(sc, SAB_RFC, r);
 		sabtty_cec_wait(sc);
 		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
+		SAB_WRITE(sc, SAB_IPC, SAB_READ(sc, SAB_IPC) | SAB_IPC_VIS);
 		sc->sc_polling = 1;
 	} else {
 		if (!sc->sc_polling)
@@ -1161,6 +1172,7 @@ sabtty_cnpollc(sc, on)
 		SAB_WRITE(sc, SAB_RFC, sc->sc_pollrfc);
 		sabtty_cec_wait(sc);
 		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
+		SAB_WRITE(sc, SAB_IPC, SAB_READ(sc, SAB_IPC) & ~SAB_IPC_VIS);
 		sc->sc_polling = 0;
 	}
 }
@@ -1243,45 +1255,36 @@ sabtty_console_flags(sc)
 	}
 }
 
-#ifdef DDB
-void
-sabtty_ddb(sc)
-	struct sabtty_softc *sc;
-{
-	extern int db_active, db_console;
-
-	if (db_console == 0)
-		return;
-	if (db_active == 0)
-		Debugger();
-	else
-		callrom();	/* Debugger is probably hosed */
-}
-#endif
-
 void
 sabtty_abort(sc)
 	struct sabtty_softc *sc;
 {
+
 	if (sc->sc_flags & SABTTYF_CONS_IN) {
-		u_int8_t oldrfc, r;
-
-		/* Set FIFO for single character mode */
-		r = oldrfc = SAB_READ(sc, SAB_RFC);
-		r &= ~(SAB_RFC_RFDF);
-		SAB_WRITE(sc, SAB_RFC, r);
-		sabtty_cec_wait(sc);
-		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
-
 #ifdef DDB
-		sabtty_ddb(sc);
+		extern int db_active, db_console;
+
+		if (db_console == 0)
+			return;
+		if (db_active == 0)
+			Debugger();
+		else
+			callrom();
 #else
 		callrom();
 #endif
-
-		/* Reset FIFO to character + status mode */
-		SAB_WRITE(sc, SAB_RFC, oldrfc);
-		sabtty_cec_wait(sc);
-		SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
 	}
+}
+
+void
+sabtty_shutdown(vsc)
+	void *vsc;
+{
+	struct sabtty_softc *sc = vsc;
+
+	/* Have to put the chip back into single char mode */
+	SAB_WRITE(sc, SAB_RFC, SAB_READ(sc, SAB_RFC) & ~SAB_RFC_RFDF);
+	sabtty_cec_wait(sc);
+	SAB_WRITE(sc, SAB_CMDR, SAB_CMDR_RRES);
+	sabtty_cec_wait(sc);
 }
