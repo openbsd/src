@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs.c,v 1.3 1996/05/22 12:00:44 deraadt Exp $	*/
+/*	$OpenBSD: nfs.c,v 1.4 1996/09/27 07:13:48 mickey Exp $	*/
 /*	$NetBSD: nfs.c,v 1.15 1996/05/14 10:28:26 leo Exp $	*/
 
 /*-
@@ -38,8 +38,8 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 
-#include "rpcv2.h"
-#include "nfsv2.h"
+#include <nfs/rpcv2.h>
+#include <nfs/nfsv2.h>
 
 #include "stand.h"
 #include "net.h"

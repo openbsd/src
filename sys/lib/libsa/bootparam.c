@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparam.c,v 1.3 1996/04/19 16:09:49 niklas Exp $	*/
+/*	$OpenBSD: bootparam.c,v 1.4 1996/09/27 07:13:47 mickey Exp $	*/
 /*	$NetBSD: bootparam.c,v 1.7 1996/02/26 23:05:14 gwr Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 
 #include <string.h>
 
-#include "rpcv2.h"
+#include <nfs/rpcv2.h>
 
 #include "stand.h"
 #include "net.h"
