@@ -1,4 +1,4 @@
-/* $OpenBSD: spc.c,v 1.3 2004/08/21 17:58:34 miod Exp $ */
+/* $OpenBSD: spc.c,v 1.4 2004/08/21 18:00:26 miod Exp $ */
 /* $NetBSD: spc.c,v 1.2 2003/11/17 14:37:59 tsutsui Exp $ */
 
 /*
@@ -107,7 +107,7 @@ spc_dio_attach(struct device *parent, struct device *self, void *aux)
 	struct spc_softc *sc = &dsc->sc_spc;
 	struct dio_attach_args *da = aux;
 	int ipl;
-	u_int8_t id;
+	u_int8_t id, hconf;
 
 	dsc->sc_dregs = (u_int8_t *)iomap(dio_scodetopa(da->da_scode),
 	    da->da_size);
@@ -123,12 +123,20 @@ spc_dio_attach(struct device *parent, struct device *self, void *aux)
 	hpspc_write(HPSCSI_ID, 0xff);
 	DELAY(100);
 	id = hpspc_read(HPSCSI_ID);
+	hconf = hpspc_read(HPSCSI_HCONF);
+
 	if ((id & ID_WORD_DMA) == 0) {
 		printf(", 32-bit DMA");
 		dsc->sc_dflags |= SCSI_DMA32;
 	}
+	if ((hconf & HCONF_PARITY) == 0)
+		printf(", no parity");
+
 	id &= ID_MASK;
 	printf(", SCSI ID %d\n", id);
+
+	if ((hconf & HCONF_PARITY) != 0)
+		sc->sc_ctlflags = SCTL_PARITY_ENAB;
 
 	sc->sc_initiator = id;
 
@@ -179,7 +187,6 @@ spc_dio_dmago(void *arg)
 	u_int8_t cmd;
 
 	hpspc_write(HPSCSI_HCONF, 0);
-
 	cmd = CSR_IE;
 	dmaflags = DMAGO_NOINT;
 	chan = dsc->sc_dq.dq_chan;

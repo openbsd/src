@@ -1,4 +1,4 @@
-/*	$OpenBSD: mb89352.c,v 1.5 2004/08/21 17:58:34 miod Exp $	*/
+/*	$OpenBSD: mb89352.c,v 1.6 2004/08/21 18:00:26 miod Exp $	*/
 /*	$NetBSD: mb89352.c,v 1.5 2000/03/23 07:01:31 thorpej Exp $	*/
 /*	NecBSD: mb89352.c,v 1.4 1998/03/14 07:31:20 kmatsuda Exp	*/
 
@@ -222,8 +222,6 @@ spc_attach(struct spc_softc *sc)
 /*
  * Initialize MB89352 chip itself
  * The following conditions should hold:
- * spc_isa_probe should have succeeded, i.e. the iobase address in spc_softc
- * must be valid.
  */
 void
 spc_reset(struct spc_softc *sc)
@@ -241,8 +239,8 @@ spc_reset(struct spc_softc *sc)
 	spc_write(TCM, 0);
 	spc_write(TCL, 0);
 	spc_write(INTS, 0);
-	spc_write(SCTL,
-	    SCTL_DISABLE | SCTL_ABRT_ENAB | SCTL_PARITY_ENAB | SCTL_RESEL_ENAB);
+	spc_write(SCTL, sc->sc_ctlflags |
+	    SCTL_DISABLE | SCTL_ABRT_ENAB | SCTL_SEL_ENAB | SCTL_RESEL_ENAB);
 	spc_write(BDID, sc->sc_initiator);
 	delay(400);
 	spc_write(SCTL, spc_read(SCTL) & ~SCTL_DISABLE);
