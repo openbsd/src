@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_userconf.c,v 1.4 1996/07/02 06:52:00 niklas Exp $	*/
+/*	$OpenBSD: subr_userconf.c,v 1.5 1996/07/27 11:27:43 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,6 @@
  * SUCH DAMAGE.
  */
 
-#ifdef BOOT_CONFIG
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
@@ -838,10 +837,3 @@ user_config()
 	}
 	printf("Continuing...\n");
 }
-#else BOOT_CONFIG
-void
-user_config()
-{
-	printf("User Kernel Config isn't supported in this kernel\n");
-}
-#endif
