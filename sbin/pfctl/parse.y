@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.148 2002/09/12 12:43:23 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.149 2002/09/14 17:50:17 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1274,9 +1274,11 @@ natrule		: no NAT interface af proto fromto redirection
 			nat.af = $4;
 
 			if (!nat.af) {
-				if ($6.src.host && $6.src.host->af)
+				if ($6.src.host && $6.src.host->af
+				    && !$6.src.host->ifindex)
 					nat.af = $6.src.host->af;
-				else if ($6.dst.host && $6.dst.host->af)
+				else if ($6.dst.host && $6.dst.host->af
+				    && !$6.dst.host->ifindex)
 					nat.af = $6.dst.host->af;
 			}
 
@@ -1294,6 +1296,8 @@ natrule		: no NAT interface af proto fromto redirection
 					    "address'");
 					YYERROR;
 				}
+				if (!nat.af && !$7->address->ifindex)
+					nat.af = $7->address->af;
 				n = ifa_pick_ip($7->address, nat.af);
 				if (n == NULL)
 					YYERROR;
@@ -1447,7 +1451,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				memcpy(&rdr.smask, &$7->mask,
 				    sizeof(rdr.smask));
 				rdr.snot  = $7->not;
-				if (!rdr.af)
+				if (!rdr.af && !$7->ifindex)
 					rdr.af = $7->af;
 			}
 			if ($9 != NULL) {
@@ -1456,7 +1460,7 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 				memcpy(&rdr.dmask, &$9->mask,
 				    sizeof(rdr.dmask));
 				rdr.dnot  = $9->not;
-				if (!rdr.af)
+				if (!rdr.af && !$9->ifindex)
 					rdr.af = $9->af;
 			}
 
@@ -1477,6 +1481,8 @@ rdrrule		: no RDR interface af proto FROM ipspec TO ipspec dport redirection
 					    "address'");
 					YYERROR;
 				}
+				if (!rdr.af && !$11->address->ifindex)
+					rdr.af = $11->address->af;
 				n = ifa_pick_ip($11->address, rdr.af);
 				if (n == NULL)
 					YYERROR;
