@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ep_isa.c,v 1.17 1998/09/19 10:08:05 maja Exp $	*/
+/*	$OpenBSD: if_ep_isa.c,v 1.18 1999/04/23 08:21:05 deraadt Exp $	*/
 /*	$NetBSD: if_ep_isa.c,v 1.5 1996/05/12 23:52:36 mycroft Exp $	*/
 
 /*
@@ -143,8 +143,8 @@ ep_isa_probe(parent, match, aux)
 {
 	struct isa_attach_args *ia = aux;
 	bus_space_tag_t iot = ia->ia_iot;
-	bus_space_handle_t ioh, ioh2;
-	int slot, iobase, irq, i;
+	bus_space_handle_t ioh;
+	int slot, iobase, irq, i, pnp;
 	u_int16_t vendor, model;
 	struct ep_isa_done_probe *er;
 	int bus = parent->dv_unit;
@@ -208,8 +208,13 @@ ep_isa_probe(parent, match, aux)
 		irq = epreadeeprom(iot, ioh, EEPROM_RESOURCE_CFG);
 		irq >>= 12;
 
+		pnp = epreadeeprom(iot, ioh, EEPROM_PNP) & 8;
+
 		/* so card will not respond to contention again */
 		bus_space_write_1(iot, ioh, 0, TAG_ADAPTER + 1);
+
+		if ((model & 0xfff0) == PROD_ID_3C509 && pnp != 0)
+			continue;
 
 		/*
 		 * XXX: this should probably not be done here
@@ -218,20 +223,6 @@ ep_isa_probe(parent, match, aux)
 		 * we have checked for irq/drq collisions?
 		 */
 		bus_space_write_1(iot, ioh, 0, ACTIVATE_ADAPTER_TO_CONFIG);
-		/*
-		 * Don't attach a 3c509 in PnP mode.
-		 */
-		if ((model & 0xfff0) == PROD_ID_3C509) {
-			if (bus_space_map(iot, iobase, 1, 0, &ioh2)) {
-				printf("ep_isa_probe: can't map Etherlink iobase\n");
-				return 0;
-			}
-			if (bus_space_read_2(iot, ioh2,
-			    EP_W0_EEPROM_COMMAND) & EEPROM_TST_MODE) {
-				continue;
-			}
-			bus_space_unmap(iot, ioh2, 1);
-		}
 		epaddcard(bus, iobase, irq, model);
 	}
 	/* XXX should we sort by ethernet address? */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3reg.h,v 1.7 1997/07/30 11:12:23 niklas Exp $	*/
+/*	$OpenBSD: elink3reg.h,v 1.8 1999/04/23 08:21:04 deraadt Exp $	*/
 /*	$NetBSD: elink3reg.h,v 1.13 1997/04/27 09:42:34 veego Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #define EEPROM_MFG_ID		0x7	/* 0x6d50 */
 #define EEPROM_ADDR_CFG		0x8	/* Base addr */
 #define EEPROM_RESOURCE_CFG	0x9     /* IRQ. Bits 12-15 */
+#define EEPROM_PNP		0x19	/* PNP mode and such? */
 
 /*
  * These are the registers for the 3Com 3c509 and their bit patterns when
