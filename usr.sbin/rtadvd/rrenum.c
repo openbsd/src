@@ -1,5 +1,5 @@
-/*	$OpenBSD: rrenum.c,v 1.6 2001/01/15 11:06:27 itojun Exp $	*/
-/*	$KAME: rrenum.c,v 1.8 2000/11/11 16:37:07 itojun Exp $	*/
+/*	$OpenBSD: rrenum.c,v 1.7 2001/01/21 15:42:36 itojun Exp $	*/
+/*	$KAME: rrenum.c,v 1.10 2001/01/21 15:32:16 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
