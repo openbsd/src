@@ -1,4 +1,4 @@
-/*	$OpenBSD: netbsd_stat.c,v 1.7 2001/05/14 11:04:05 art Exp $	*/
+/*	$OpenBSD: netbsd_stat.c,v 1.8 2001/05/14 11:05:38 art Exp $	*/
 /*
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -212,7 +212,7 @@ netbsd_sys___fstat13(p, v, retval)
 #endif
 
 	default:
-		panic("fstat");
+		panic("netbsd_sys___fstat13");
 		/*NOTREACHED*/
 	}
 	if (error)
