@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.15 2002/07/24 00:48:25 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.16 2002/08/20 19:28:55 jason Exp $	*/
 /*	$NetBSD: pmap.c,v 1.107 2001/08/31 16:47:41 eeh Exp $	*/
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 /*
@@ -303,7 +303,7 @@ int memsize;
 
 static int memh = 0, vmemh = 0;	/* Handles to OBP devices */
 
-int avail_start, avail_end;	/* These are used by ps & family */
+paddr_t avail_start, avail_end;
 
 static int ptelookup_va(vaddr_t va); /* sun4u */
 #if notyet
@@ -1286,7 +1286,7 @@ remap_data:
 		pmap_kernel()->pm_segs=(int64_t *)(u_long)newp;
 		pmap_kernel()->pm_physaddr = newp;
 		/* mark kernel context as busy */
-		((paddr_t*)ctxbusy)[0] = (int)pmap_kernel()->pm_physaddr;
+		((paddr_t*)ctxbusy)[0] = pmap_kernel()->pm_physaddr;
 	}
 	/*
 	 * finish filling out kernel pmap.
@@ -2515,18 +2515,20 @@ pmap_extract(pm, va, pap)
 		pa = (pseg_get(pm, va)&TLB_PA_MASK)+(va&PGOFSET);
 #ifdef DEBUG
 		if (pmapdebug & PDB_EXTRACT) {
-			pa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
-			printf("pmap_extract: va=%p segs[%ld]=%llx", (void *)(u_long)va, (long)va_to_seg(va), (unsigned long long)pa);
-			if (pa) {
-				pa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)pa)[va_to_dir(va)], ASI_PHYS_CACHED);
-				printf(" segs[%ld][%ld]=%lx", (long)va_to_seg(va), (long)va_to_dir(va), (long)pa);
+			paddr_t npa;
+
+			npa = ldxa((vaddr_t)&pm->pm_segs[va_to_seg(va)], ASI_PHYS_CACHED);
+			printf("pmap_extract: va=%p segs[%ld]=%llx", (void *)(u_long)va, (long)va_to_seg(va), (unsigned long long)npa);
+			if (npa) {
+				npa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)npa)[va_to_dir(va)], ASI_PHYS_CACHED);
+				printf(" segs[%ld][%ld]=%lx", (long)va_to_seg(va), (long)va_to_dir(va), (long)npa);
 			}
-			if (pa)	{
-				pa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)pa)[va_to_pte(va)], ASI_PHYS_CACHED);
+			if (npa) {
+				npa = (paddr_t)ldxa((vaddr_t)&((paddr_t*)(u_long)npa)[va_to_pte(va)], ASI_PHYS_CACHED);
 				printf(" segs[%ld][%ld][%ld]=%lx", (long)va_to_seg(va), 
-				       (long)va_to_dir(va), (long)va_to_pte(va), (long)pa);
+				       (long)va_to_dir(va), (long)va_to_pte(va), (long)npa);
 			}
-			printf(" pseg_get: %lx\n", (long)pa);
+			printf(" pseg_get: %lx\n", (long)npa);
 		}
 #endif
 		simple_unlock(&pm->pm_lock);
