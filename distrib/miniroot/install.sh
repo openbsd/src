@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.82 2001/12/23 16:54:04 krw Exp $
+#	$OpenBSD: install.sh,v 1.83 2002/03/03 00:43:37 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2001 Todd Miller, Theo de Raadt, Ken Westerback
@@ -77,8 +77,6 @@ FILESYSTEMS="/tmp/filesystems"
 # The Fully Qualified Domain Name
 FQDN=
 
-trap "umount /tmp > /dev/null 2>&1" 0
-
 MODE="install"
 
 # include machine-dependent functions
@@ -100,10 +98,14 @@ MODE="install"
 # include common subroutines
 . install.sub
 
+# Cleanup when the script exits.
+trap 'cleanup_on_exit' EXIT
+trap 'exit 2' HUP INT QUIT TERM
+
 # which sets?
 THESETS="$ALLSETS $MDSETS"
 
-if [ "`df /`" = "`df /mnt`" ]; then
+if [ ! -f /etc/fstab ]; then
 	# Good {morning,afternoon,evening,night}.
 	echo ==================================================
 	md_welcome_banner
@@ -137,7 +139,7 @@ md_set_term
 # Get timezone info
 get_timezone
 
-if [ "`df /`" = "`df /mnt`" ]; then
+if [ ! -f /etc/fstab ]; then
 	# Install the shadowed disktab file; lets us write to it for temporary
 	# purposes without mounting the miniroot read-write.
 	if [ -f /etc/disktab.shadow ]; then
@@ -307,7 +309,7 @@ case "$resp" in
 		;;
 esac
 
-if [ "`df /`" = "`df /mnt`" ]; then
+if [ ! -f /etc/fstab ]; then
 	# Now that the network has been configured, it is safe to configure the
 	# fstab.
 	(
@@ -320,9 +322,10 @@ if [ "`df /`" = "`df /mnt`" ]; then
 		done
 	) < ${FILESYSTEMS} > /tmp/fstab
 
-	munge_fstab /tmp/fstab /tmp/fstab.shadow
-	mount_fs /tmp/fstab.shadow "-o async"
+	munge_fstab < /tmp/fstab
 fi
+
+mount_fs "-o async"
 
 mount | while read line; do
 	set -- $line
@@ -411,7 +414,7 @@ sh MAKEDEV all
 echo "... done."
 cd /
 
-remount_fs /tmp/fstab.shadow
+remount_fs
 md_installboot ${ROOTDISK}
 
 _encr=`/mnt/usr/bin/encrypt -b 7 "${_password}"`
@@ -425,7 +428,11 @@ chmod 600 /mnt/var/db/host.random >/dev/null 2>&1
 populateusrlocal
 test -x /mnt/install.site && /mnt/usr/sbin/chroot /mnt /install.site
 
-unmount_fs /tmp/fstab.shadow
+# Unmount filesystems, etc. and disable trap that would do same on exit.
+# Do this manually rather than through the trap so md_congrats is
+# the last message printed.
+trap - HUP INT QUIT TERM EXIT
+cleanup_on_exit
 
 # Pat on the back.
 md_congrats

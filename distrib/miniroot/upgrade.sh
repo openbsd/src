@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.20 2001/11/25 21:43:08 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.21 2002/03/03 00:43:37 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2001 Todd Miller, Theo de Raadt, Ken Westerback
@@ -44,8 +44,6 @@
 #	In a perfect world, this would be a nice C program, with a reasonable
 #	user interface.
 
-trap "unmount_fs -check /tmp/fstab.shadow > /dev/null 2>&1; rm -f /tmp/fstab.shadow" 0
-
 MODE="upgrade"
 
 # include machine-dependent functions
@@ -64,6 +62,10 @@ MODE="upgrade"
 
 # include common subroutines
 . install.sub
+
+# Make sure to cleanup when the script terminates:
+trap 'cleanup_on_exit' EXIT
+trap 'exit 2' HUP INT QUIT TERM
 
 # which sets?
 THESETS="$UPGRSETS $MDSETS"
@@ -202,7 +204,7 @@ esac
 echo	""
 
 # Create a fstab containing only ffs filesystems w/o 'noauto'.
-munge_fstab /tmp/fstab /tmp/fstab.shadow
+munge_fstab < /tmp/fstab
 
 if ! umount /mnt; then
 	echo	"ERROR: can't unmount previously mounted root!"
@@ -210,10 +212,20 @@ if ! umount /mnt; then
 fi
 
 # Check filesystems.
-check_fs /tmp/fstab.shadow
+echo "Checking filesystem integrity..."
+if ! check_fs; then
+	# Prevent check_fs() invocation in cleanup_on_exit from fsck'ing.
+	# Remember /etc/fstab is a link, /tmp/fstab.shadow is the file!
+	rm /tmp/fstab.shadow
+fi
+echo "...Done."
 
-# Mount filesystems.
-mount_fs /tmp/fstab.shadow
+if [ ! -f /etc/fstab ]; then
+	exit 2
+else
+	# Mount filesystems.
+	mount_fs
+fi
 
 # If Xfree86 v3 directories that would prevent upgrading to XFree86 v4
 # are found, move them and replace them with links that the upgrade
@@ -274,7 +286,11 @@ __rc_edit
 populateusrlocal
 test -x /mnt/upgrade.site && /mnt/usr/sbin/chroot /mnt /upgrade.site
 
-unmount_fs /tmp/fstab.shadow
+# Unmount filesystems, etc. and disable trap to do same on exit.
+# Do this manually rather than through the trap so md_congrats is
+# the last message printed.
+trap - HUP INT QUIT TERM EXIT
+cleanup_on_exit
 
 # Pat on the back.
 md_congrats

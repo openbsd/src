@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.183 2002/01/24 23:01:18 millert Exp $
+#	$OpenBSD: install.sub,v 1.184 2002/03/03 00:43:37 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -2094,148 +2094,120 @@ done
 }
 
 munge_fstab() {
-local _fstab _fstab_shadow _dev _mp _fstype _dev _options
+	# Create a fstab to use for fsck'ing, mounting and unmounting all
+	# of the target filesystems relative to /mnt.
 
-# Create a 'shadow' fstab to use for mounting and unmounting all
-# of the target filesystems relative to /mnt.
-_fstab=$1
-_fstab_shadow=$2
-( while read _dev _mp _fstype _options _rest; do
-	# Skip comment lines, non-ffs filesystems and
-	# 'noauto' filesystems.
-	case "$_dev" in
-		\#*)	continue;;
-		*)	;;
-	esac
-	case "$_fstype" in
-		ffs)	;;
-		*)	continue;;
-	esac
-	case "$_options" in
-		*noauto*)    continue;;
-		*)	;;
-	esac
-	# Don't use soft updates
-	_options="$(echo ${_options} | sed 's/,softdep,/,/; s/,softdep//; s/softdep,//')"
-	if [ "$_mp" = "/" ]; then
-		_mp=""
-	fi
-	echo $_dev /mnt$_mp $_fstype $_options $_rest
-    done ) < $_fstab > $_fstab_shadow
+	local _dev _mp _fstype _opt _rest
+
+	while read _dev _mp _fstype _opt _rest; do
+		# Skip comment lines, non-ffs filesystems and
+		# 'noauto' filesystems.
+		case "$_dev" in
+			\#*)	continue;;
+			*)	;;
+		esac
+		case "$_fstype" in
+			ffs)	;;
+			*)	continue;;
+		esac
+		case "$_opt" in
+			*noauto*)    continue;;
+			*)	;;
+		esac
+
+		# Don't use soft updates
+		_opt="$(echo ${_opt} | sed 's/,softdep,/,/; s/,softdep//; s/softdep,//')"
+
+		if [ "$_mp" = "/" ]; then
+			_mp=""
+		fi
+
+		echo $_dev /mnt$_mp $_fstype $_opt $_rest
+	    done > /etc/fstab
 }
 
 mount_fs() {
-# Must mount filesystems manually, one at a time, so we can make
-# sure the mount points exist.
-# $1 is a file in fstab format
-local _fstab=$1
-local _async=$2
+	# Must mount filesystems manually, one at a time, so we can make
+	# sure the mount points exist.
+	local _async=$1 _dev _mp _fstype _opt _rest
 
-( while read line; do
-	set -- $line
-	_dev=$1
-	_mp=$2
-	_fstype=$3
-	_opt=$4
+	while read _dev _mp _fstype _opt _rest; do
+		# If not the root filesystem, make sure the mount
+		# point is present.
+		if [ "X{$_mp}" != X"/mnt" ]; then
+			mkdir -p $_mp
+		fi
 
-	# If not the root filesystem, make sure the mount
-	# point is present.
-	if [ "X{$_mp}" != X"/mnt" ]; then
-		mkdir -p $_mp
-	fi
+		# Mount the filesystem. If the mount fails, exit.
+		if ! mount -v -t $_fstype $_async -o $_opt $_dev $_mp ; then
+			# In addition to the error message displayed by mount ...
+			cat << __EOT
 
-	# Mount the filesystem.  If the mount fails, exit
-	# with an error condition to tell the outer
-	# later to bail.
-	if ! mount -v -t $_fstype $_async -o $_opt $_dev $_mp ; then
-		# error message displayed by mount
-		exit 1
-	fi
-done ) < $_fstab
+FATAL ERROR:	Cannot mount filesystems.  Double-check your configuration
+		and restart the ${MODE}.
 
-if [ "X${?}" != X"0" ]; then
-	cat << __EOT
-
-FATAL ERROR:  Cannot mount filesystems.  Double-check your configuration
-and restart the installation process.
 __EOT
-	exit
-fi
+			exit
+		fi
+	done < /etc/fstab
 }
 
-unmount_fs() {
-	# Unmount all filesystems and check their integrity.
-	# Usage: [-check] <fstab file>
-	local _check _fstab _pid _devs=	_mps=
+cleanup_on_exit() {
+	# Script is exiting. Clean up as much as possible.
+	local _bad_devs
 
-	if [ "$1" = "-check" ]; then
-		_check=1
-		_fstab=$2
-	else
-		_check=0
-		_fstab=$1
+	echo "\nCleaning up..."
+
+	# Kill any running dhclient, so a restart will not
+	# find /dev/bpf0 busy. Do this first so a user who
+	# interrupts out of any fsck'ing will not be stuck
+	# with an active dhclient.
+
+	if [ -f /var/run/dhclient.pid ]; then
+		echo "Stopping dhclient"
+		kill -HUP `sed -ne "1p" /var/run/dhclient.pid` > /dev/null 2>&1
+		rm -f /var/run/dhclient.pid
 	fi
 
-	if [ ! \( -f $_fstab -a -s $_fstab \) ]; then
-		echo "fstab empty" > /dev/tty
-		return
+	if [ -f /etc/fstab ]; then
+		umount -av
+		check_fs
+	elif [ ! "`df /`" = "`df /mnt`" ]; then
+		umount -v /mnt
 	fi
 
-	# maintain reverse order
-	while read line; do
-		set -- $line
-		_devs="$1 ${_devs}"
-		_mps="$2 ${_mps}"
-	done < $_fstab
-
-	echo -n "Unmounting filesystems... "
-	for _mp in ${_mps}; do
-		echo -n "${_mp} "
-		umount ${_mp}
-	done
-	echo "... Done."
-
-	if [ $_check = 1 ]; then
-		echo "Checking filesystem integrity..."
-		for _dev in ${_devs}; do
-			echo  "${_dev}"
-			fsck -f ${_dev}
-		done
-		echo "... Done."
-	fi
+	echo "Done."
 }
 
 remount_fs() {
-( while read line; do
-	set -- $line
-	_dev=$1
-	_mp=$2
-	_fstype=$3
-	_opt=$4
+	# Remount all filesystems in /etc/fstab with the options from
+	# /etc/fstab, i.e. without any options such as async which
+	# may have been used in the first mount.
+	local _dev _mp _fstype _opt _rest
 
-	if ! mount -u -o $_opt $_dev $_mp ; then
-		# error message displayed by mount
-		exit 1
-	fi
-done ) < $1
+	while read _dev _mp _fstype _opt _rest; do
+		if ! mount -u -o $_opt $_dev $_mp ; then
+			# error message displayed by mount
+			exit 1
+		fi
+	done < /etc/fstab
 }
 
 check_fs() {
-	# Check filesystem integrity.
-	# $1 is a file in fstab format
-	local _fstab=$1 _devs= _dev
+	# Preen all filesystems in /etc/fstab, showing individual results.
+	local _dev _rest _badfsck=0
 
-	while read line; do
-		set -- $line
-		_devs="$1 ${_devs}"
-	done < $_fstab
+	while read _dev _rest; do
+		echo -n "fsck -p ${_dev}..."
+		if ! fsck -fp ${_dev} > /dev/null 2>&1; then
+			echo "FAILED. You must fsck this device manually."
+			_badfsck=1
+		else
+			echo "OK."
+		fi
+	done < /etc/fstab
 
-	echo "Checking filesystem integrity..."
-	for _dev in ${_devs}; do
-		echo  "${_dev}"
-		fsck -f ${_dev}
-	done
-	echo "Done."
+	return $_badfsck
 }
 
 get_fqdn() {
