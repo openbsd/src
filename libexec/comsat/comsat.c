@@ -1,4 +1,4 @@
-/*	$OpenBSD: comsat.c,v 1.28 2003/06/19 22:35:34 deraadt Exp $	*/
+/*	$OpenBSD: comsat.c,v 1.29 2003/09/24 20:38:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)comsat.c	8.1 (Berkeley) 6/4/93";*/
-static char rcsid[] = "$OpenBSD: comsat.c,v 1.28 2003/06/19 22:35:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: comsat.c,v 1.29 2003/09/24 20:38:14 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/limits.h>
@@ -186,11 +186,18 @@ doreadutmp(void)
 			exit(1);
 		}
 		if (statbf.st_size > utmpsize) {
-			utmpsize = statbf.st_size + 10 * sizeof(struct utmp);
-			if ((utmp = realloc(utmp, utmpsize)) == NULL) {
+			u_int nutmpsize = statbf.st_size + 10 *
+			    sizeof(struct utmp);
+			struct utmp *u;
+
+			if ((u = realloc(utmp, nutmpsize)) == NULL) {
+				if (utmp)
+					free(utmp);
 				syslog(LOG_ERR, "%s", strerror(errno));
 				exit(1);
 			}
+			u = utmp;
+			utmpsize = nutmpsize;
 		}
 		(void)lseek(uf, (off_t)0, SEEK_SET);
 		nutmp = read(uf, utmp, (int)statbf.st_size)/sizeof(struct utmp);
