@@ -81,9 +81,17 @@ OpenBSDBootMsgs
 	partitions defined on the disk, these will usually show up
 	as partition 'h', 'i' and so on.  It is recommended that
 	you create separate partitions for /usr, /tmp, and /var, and
-	if you have room for it, one for /home.  For help in the
-	disk label editor, enter '?' or 'M' to view the manual
-	page (see the info on the ``-E'' flag).
+	if you have room for it, one for /home.  In doing this, remember
+	to skip 'c', leaving it as type "unused".  Create your next
+	partition as 'd' and continue from there with any additional
+	partitions.  If you have DOS or Linux partitions defined on the
+	disk, these will usually show up as partition 'h', 'i', and
+	so on.
+
+	When you are finished with disklabel you will be prompted for
+	the mount points for the partitions in the current label.
+	For help in the disk label editor, enter '?' or 'M' to view
+	the manual page (see the info on the ``-E'' flag).
 
 	Note that all OpenBSD partitions in the disk label must have an
 	offset that makes it start within the OpenBSD part of the disk,
