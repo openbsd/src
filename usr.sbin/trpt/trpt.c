@@ -1,4 +1,4 @@
-/*	$OpenBSD: trpt.c,v 1.13 2002/06/19 08:45:52 deraadt Exp $	*/
+/*	$OpenBSD: trpt.c,v 1.14 2002/11/18 05:15:39 itojun Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -149,6 +149,7 @@ main(argc, argv)
 {
 	int ch, i, jflag, npcbs;
 	char *system, *core, *cp, errbuf[_POSIX2_LINE_MAX];
+	unsigned long l;
 
 	system = core = NULL;
 
@@ -169,9 +170,12 @@ main(argc, argv)
 			if (npcbs >= TCP_NDEBUG)
 				errx(1, "too many pcbs specified");
 			errno = 0;
-			tcp_pcbs[npcbs++] = (caddr_t)strtoul(optarg, &cp, 16);
-			if (*cp != '\0' || errno == ERANGE)
+			l = strtoul(optarg, &cp, 16);
+			tcp_pcbs[npcbs] = (caddr_t)l;
+			if (*optarg == '\0' || *cp != '\0' || errno ||
+			    (unsigned long)tcp_pcbs[npcbs] != l)
 				errx(1, "invalid address: %s", optarg);
+			npcbs++;
 			break;
 		case 's':
 			++sflag;
