@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.150 2004/07/30 19:28:22 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.151 2004/07/30 20:44:09 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -1450,7 +1450,7 @@ intr_establish(int vec, struct intrhand *ihand, const char *name)
 	intrhand_t *list;
 
 	if (vec < 0 || vec >= NVMEINTR) {
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 		panic("intr_establish: vec (0x%x) not between 0x00 and 0xff",
 		      vec);
 #endif /* DIAGNOSTIC */
@@ -1461,7 +1461,7 @@ intr_establish(int vec, struct intrhand *ihand, const char *name)
 	if (!SLIST_EMPTY(list)) {
 		intr = SLIST_FIRST(list);
 		if (intr->ih_ipl != ihand->ih_ipl) {
-#if DIAGNOSTIC
+#ifdef DIAGNOSTIC
 			panic("intr_establish: there are other handlers with "
 			    "vec (0x%x) at ipl %x, but you want it at %x",
 			      intr->ih_ipl, vec, ihand->ih_ipl);
