@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.52 2003/11/19 03:29:31 mickey Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.53 2003/12/17 02:43:25 tedu Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -350,6 +350,8 @@ ufs_setattr(v)
 	struct ucred *cred = ap->a_cred;
 	struct proc *p = ap->a_p;
 	int error;
+	long hint = NOTE_ATTRIB;
+	u_quad_t oldsize;
 
 	/*
 	 * Check for unsettable attributes.
@@ -395,6 +397,7 @@ ufs_setattr(v)
 			return (error);
 	}
 	if (vap->va_size != VNOVAL) {
+		oldsize = ip->i_ffs_size;
 		/*
 		 * Disallow write attempts on read-only file systems;
 		 * unless the file is a socket, fifo, or a block or
@@ -413,6 +416,8 @@ ufs_setattr(v)
 		}
  		if ((error = UFS_TRUNCATE(ip, vap->va_size, 0, cred)) != 0)
  			return (error);
+		if (vap->va_size < oldsize)
+			hint |= NOTE_TRUNCATE;
 	}
 	if (vap->va_atime.tv_sec != VNOVAL || vap->va_mtime.tv_sec != VNOVAL) {
 		if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -436,7 +441,7 @@ ufs_setattr(v)
 			return (EROFS);
 		error = ufs_chmod(vp, (int)vap->va_mode, cred, p);
 	}
-	VN_KNOTE(vp, NOTE_ATTRIB);
+	VN_KNOTE(vp, hint);
 	return (error);
 }
 
@@ -2215,9 +2220,13 @@ filt_ufsread(struct knote *kn, long hint)
 	}
 
         kn->kn_data = ip->i_ffs_size - kn->kn_fp->f_offset;
+	if (kn->kn_data == 0 && kn->kn_sfflags & NOTE_EOF) {
+		kn->kn_fflags |= NOTE_EOF;
+		return (1);
+	}
+
         return (kn->kn_data != 0);
 }
-
 
 int
 filt_ufswrite(struct knote *kn, long hint)
@@ -2238,7 +2247,6 @@ filt_ufswrite(struct knote *kn, long hint)
 int
 filt_ufsvnode(struct knote *kn, long hint)
 {
-
 	if (kn->kn_sfflags & hint)
 		kn->kn_fflags |= hint;
 	if (hint == NOTE_REVOKE) {
@@ -2247,6 +2255,3 @@ filt_ufsvnode(struct knote *kn, long hint)
 	}
 	return (kn->kn_fflags != 0);
 }
-
-
-

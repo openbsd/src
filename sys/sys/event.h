@@ -1,4 +1,4 @@
-/*	$OpenBSD: event.h,v 1.7 2003/07/22 01:05:07 tedu Exp $	*/
+/*	$OpenBSD: event.h,v 1.8 2003/12/17 02:43:25 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -79,6 +79,7 @@ struct kevent {
  * data/hint flags for EVFILT_{READ|WRITE}, shared with userspace
  */
 #define NOTE_LOWAT	0x0001			/* low water mark */
+#define NOTE_EOF	0x0002			/* return on EOF */
 
 /*
  * data/hint flags for EVFILT_VNODE, shared with userspace
@@ -90,6 +91,7 @@ struct kevent {
 #define	NOTE_LINK	0x0010			/* link count changed */
 #define	NOTE_RENAME	0x0020			/* vnode was renamed */
 #define	NOTE_REVOKE	0x0040			/* vnode access was revoked */
+#define	NOTE_TRUNCATE   0x0080			/* vnode was truncated */
 
 /*
  * data/hint flags for EVFILT_PROC, shared with userspace
