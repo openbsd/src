@@ -1,4 +1,4 @@
-/*	$OpenBSD: pch.c,v 1.32 2003/10/31 20:20:45 millert Exp $	*/
+/*	$OpenBSD: pch.c,v 1.33 2004/01/28 08:31:07 otto Exp $	*/
 
 /*
  * patch - a program to apply diffs to original files
@@ -27,7 +27,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: pch.c,v 1.32 2003/10/31 20:20:45 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pch.c,v 1.33 2004/01/28 08:31:07 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -228,12 +228,12 @@ there_is_another_patch(void)
 			filearg[0] = fetchname(buf, &exists, 0);
 		}
 		if (!exists) {
-			free(filearg[0]);
 			ask("No file found--skip this patch? [n] ");
 			if (*buf != 'y')
 				continue;
 			if (verbose)
 				say("Skipping patch...\n");
+			free(filearg[0]);
 			filearg[0] = fetchname(bestguess, &exists, 0);
 			skip_rest_of_patch = true;
 			return true;
