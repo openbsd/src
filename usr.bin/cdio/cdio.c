@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.35 2004/09/14 22:21:30 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.36 2005/01/04 18:30:38 moritz Exp $	*/
 
 /*  Copyright (c) 1995 Serge V. Vakulenko
  * All rights reserved.
@@ -263,7 +263,7 @@ main(int argc, char **argv)
 			len = snprintf(p, buf + sizeof buf - p,
 			   "%s%s", (p > buf) ? " " : "", *argv);
 
-			if (len >= buf + sizeof buf - p)
+			if (len == -1 || len >= buf + sizeof buf - p)
 				errx(1, "argument list too long.");
 
 			p += len;
