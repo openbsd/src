@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn.c,v 1.12 1997/03/17 04:20:54 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.13 1997/03/17 04:26:15 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -357,7 +357,7 @@ outloop:
 		len = m->m_pkthdr.len;
 		m_freem(m);
 	} else {
-		IF_PREPEND(ifp->if_snd, m);
+		IF_PREPEND(&ifp->if_snd, m);
 		return;
 	}
 
