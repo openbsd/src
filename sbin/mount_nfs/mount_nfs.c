@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_nfs.c,v 1.27 2002/02/16 21:27:36 millert Exp $	*/
+/*	$OpenBSD: mount_nfs.c,v 1.28 2002/03/21 21:16:07 millert Exp $	*/
 /*	$NetBSD: mount_nfs.c,v 1.12.4.1 1996/05/25 22:48:05 fvdl Exp $	*/
 
 /*
@@ -195,7 +195,7 @@ main(argc, argv)
 	nfsargs = nfsdefargs;
 	nfsargsp = &nfsargs;
 	while ((c = getopt(argc, argv,
-	    "23a:bcdD:g:I:iL:l:o:PpqR:r:sTt:w:x:U")) != EOF)
+	    "23a:bcdD:g:I:iL:lo:PpqR:r:sTt:w:x:U")) != -1)
 		switch (c) {
 		case '3':
 			if (force2)
@@ -625,9 +625,9 @@ __dead void
 usage()
 {
 	(void)fprintf(stderr, "usage: mount_nfs %s\n%s\n%s\n%s\n",
-"[-23bcdiklMPsT] [-a maxreadahead] [-D deadthresh]",
-"\t[-g maxgroups] [-L leaseterm] [-o options] [-R retrycnt]",
-"\t[-r readsize] [-t timeout] [-w writesize] [-x retrans]",
+"[-23PTUbcdilqs] [-a maxreadahead] [-D deadthresh]",
+"\t[-I readdirsize] [-g maxgroups] [-L leaseterm] [-o options]",
+"\t[-R retrycnt] [-r readsize] [-t timeout] [-w writesize] [-x retrans]",
 "\trhost:path node");
 	exit(1);
 }
