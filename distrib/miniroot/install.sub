@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.250 2002/07/27 04:05:08 krw Exp $
+#	$OpenBSD: install.sub,v 1.251 2002/07/28 01:14:58 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -95,6 +95,7 @@ set_term() {
 
 welcome_banner() {
 	cat << __EOT
+
 
 As with anything that modifies your disk's contents, this program can
 cause SIGNIFICANT data loss, and you are advised to make sure your

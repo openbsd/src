@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.108 2002/07/21 04:57:01 hugh Exp $
+#	$OpenBSD: install.sh,v 1.109 2002/07/28 01:14:58 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -137,12 +137,12 @@ __EOT
 		# XXX - allow the user to name mount points on disks other than ROOTDISK
 		#	also allow a way to enter non-BSD partitions (but don't newfs!)
 		# Get the list of BSD partitions and store sizes
-		_npartitions=0
 
 		# XXX - It would be nice to just pipe the output of sed to a
 		#       'while read _pp _ps' loop, but our 'sh' runs the last
 		#       element of a pipeline in a subshell and the required side
-		#       effects to _partitions, _npartitions, etc. would be lost.
+		#       effects to _partitions, etc. would be lost.
+		_i=0
 		for _p in $(disklabel ${DISK} 2>&1 | sed -ne '/^ *\([a-p]\): *\([0-9][0-9]*\).*BSD.*/s//\1\2/p'); do
 			# All characters after the initial [a-p] are the partition size
 			_ps=${_p#?}
@@ -151,58 +151,68 @@ __EOT
 
 			[ "${DISK}${_pp}" = "$ROOTDEV" ] && continue
 
-			_partitions[$_npartitions]=$_pp
-			_psizes[$_npartitions]=$_ps
+			_partitions[$_i]=$_pp
+			_psizes[$_i]=$_ps
 			# If the user assigned a mount point, use it.
-			if [ -f /tmp/fstab.$DISK ]; then
-				_mount_points[$_npartitions]=`sed -n "s:^/dev/${DISK}${_pp}[ 	]*\([^ 	]*\).*:\1:p" < /tmp/fstab.${DISK}`
-			fi
-			: $(( _npartitions += 1 ))
+			: $(( _i += 1 ))
 		done
 
-		# Now prompt the user for the mount points. Loop until "done"
+		# If there are no partitions, go on to next disk.
+		[ $_i -gt 0 ] || continue
+		
+		# Now prompt the user for the mount points. Loop until "done" entered.
 		echo
 		_i=0
-		resp=
-		while [ $_npartitions -gt 0 -a "$resp" != "done" ]; do
-			_pp=${_partitions[${_i}]}
-			_ps=$(( ${_psizes[${_i}]} / 2 ))
-			_mp=${_mount_points[${_i}]}
+		while : ; do
+			_pp=${_partitions[$_i]}
+			_ps=$(( ${_psizes[$_i]} / 2 ))
+			_mp=${_mount_points[$_i]}
 
 			# Get the mount point from the user
-			while : ; do
-				ask "Mount point for ${DISK}${_pp} (size=${_ps}k), RET, none or done?" "$_mp"
-				case $resp in
-				/*)	_mount_points[${_i}]=$resp
-					break
-					;;
-				done|"")break
-					;;
-				none)	_mount_points[${_i}]=
-					break
-					;;
-				*)	echo "mount point must be an absolute path!"
-					break
-					;;
-				esac
-			done
-			_i=$(( $_i + 1 ))
-			[ $_i -ge $_npartitions ] && _i=0
+			ask "Mount point for ${DISK}${_pp} (size=${_ps}k), RET, none or done?" "$_mp"
+			case $resp in
+			"")	;;
+			none)	_mount_points[$_i]=
+				;;
+			done)	break
+				;;
+			/*)	if [ "$resp" != "$_mp" ]; then	
+					# Try to ensure we don't mount something already mounted
+					_pp=`cat $FILESYSTEMS | grep " $resp" | cutword 1`
+					_j=0
+					for _mp in ${_mount_points[*]}; do
+						[ "$_mp" = "$resp" ] && \
+							_pp=${DISK}${_partitions[$_j]}
+						: $(( _j += 1 ))
+					done
+					if [ "$_pp" ]; then
+						echo "Invalid response: $_pp is already being mounted at $resp."
+						continue
+					fi
+					_mount_points[$_i]=$resp
+				fi
+				;;
+			*)	echo "mount point must be an absolute path!"
+				continue
+				;;
+			esac
+
+			: $(( _i += 1 ))
+			[ $_i -ge ${#_partitions[*]} ] && _i=0
 		done
 
 		# Now write it out, sorted by mount point
 		for _mp in `bsort ${_mount_points[*]}`; do
 			_i=0
-			while [ $_i -lt $_npartitions ] ; do
-				if [ $_mp = "${_mount_points[${_i}]}" ]; then
-					echo "${DISK}${_partitions[${_i}]} ${_mount_points[${_i}]}" >> ${FILESYSTEMS}
-					_mount_points[${_i}]=
+			while [ $_i -lt ${#_partitions[*]} ] ; do
+				if [ $_mp = "${_mount_points[$_i]}" ]; then
+					echo "${DISK}${_partitions[$_i]} ${_mount_points[$_i]}" >> ${FILESYSTEMS}
+					_mount_points[$_i]=
 					break
 				fi
-				_i=$(( ${_i} + 1 ))
+				: $(( _i += 1 ))
 			done
 		done
-		rm -f /tmp/fstab.${DISK}
 	done
 
 	cat << __EOT
