@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_old.c,v 1.17 1998/11/25 09:56:50 niklas Exp $	*/
+/*	$OpenBSD: ip_ah_old.c,v 1.18 1999/01/11 22:52:09 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -68,7 +68,6 @@
 
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
-#include <sys/syslog.h>
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -132,8 +131,7 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     em = mtod(m, struct encap_msghdr *);
     if (em->em_msglen - EMT_SETSPI_FLEN <= AH_OLD_XENCAP_LEN)
     {
-	if (encdebug)
-	  log(LOG_WARNING, "ah_old_init(): initialization failed\n");
+	DPRINTF(("ah_old_init(): initialization failed\n"));
 	return EINVAL;
     }
 
@@ -146,21 +144,19 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	      break;
     if (i < 0) 
     {
-	if (encdebug)
-	  log(LOG_WARNING, "ah_old_init(): unsupported authentication algorithm %d specified\n",
-	      xenc.amx_hash_algorithm);
+	DPRINTF(("ah_old_init(): unsupported authentication algorithm %d specified\n", xenc.amx_hash_algorithm));
 	m_freem(m);
 	return EINVAL;
     }
+
     DPRINTF(("ah_old_init(): initalized TDB with hash algorithm %d: %s\n",
 	     xenc.amx_hash_algorithm, ah_old_hash[i].name));
     thash = &ah_old_hash[i];
 
     if (xenc.amx_keylen + EMT_SETSPI_FLEN + AH_OLD_XENCAP_LEN != em->em_msglen)
     {
-	if (encdebug)
-	  log(LOG_WARNING, "ah_old_init(): message length (%d) doesn't match\n",
-	    em->em_msglen);
+	DPRINTF(("ah_old_init(): message length (%d) doesn't match\n",
+		 em->em_msglen));
 	return EINVAL;
     }
 
@@ -336,7 +332,12 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     while (off > 0)
     {
 	if (m0 == 0)
-	  panic("ah_old_input(): m_copydata (off)");
+	{
+	    DPRINTF(("ah_old_input(): bad mbuf chain for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	    ahstat.ahs_hdrops++;
+	    m_freem(m);
+	    return NULL;
+	}
 
 	if (off < m0->m_len)
 	  break;
@@ -348,8 +349,13 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     while (len > 0)
     {
 	if (m0 == 0)
-	  panic("ah_old_input(): m_copydata (copy)");
-
+	{
+	    DPRINTF(("ah_old_input(): bad mbuf chain for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	    ahstat.ahs_hdrops++;
+	    m_freem(m);
+	    return NULL;
+	}
+	
 	count = min(m0->m_len - off, len);
 
 	xd->amx_hash->Update(&ctx, mtod(m0, unsigned char *) + off, count);
@@ -364,8 +370,6 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 
     if (bcmp(aho->ah_data, ah->ah_data, alen))
     {
-	if (encdebug)
-	  log(LOG_ALERT, "ah_old_input(): authentication failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi));
 	ahstat.ahs_badauth++;
 	m_freem(m);
 	return NULL;
@@ -459,6 +463,7 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     {
 	DPRINTF(("ah_old_output(): m_pullup() failed, SA %x/%08x\n",
 		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	ahstat.ahs_hdrops++;
       	return ENOBUFS;
     }
 
@@ -489,10 +494,8 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
     ohlen = AH_OLD_FLENGTH + alen;
     if (ohlen + ilen > IP_MAXPACKET) {
-	if (encdebug)
-            log(LOG_ALERT,
-		"ah_old_output(): packet in SA %x/%0x8 got too big\n",
-		tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	DPRINTF(("ah_old_output(): packet in SA %x/%0x8 got too big\n",
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 	m_freem(m);
 	ahstat.ahs_toobig++;
         return EMSGSIZE;
@@ -573,7 +576,12 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     while (len > 0)
     {
 	if (m0 == 0)
-	  panic("ah_old_output(): m_copydata()");
+	{
+	    DPRINTF(("ah_old_output(): M_PREPEND() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	    m_freem(m);
+	    return NULL;
+	}
+	
 	count = min(m0->m_len - off, len);
 
 	xd->amx_hash->Update(&ctx, mtod(m0, unsigned char *) + off, count);
@@ -602,6 +610,7 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     if (m == NULL)
     {
 	DPRINTF(("ah_old_output(): m_pullup() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	ahstat.ahs_hdrops++;
         return ENOBUFS;
     }
 

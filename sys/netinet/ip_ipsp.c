@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.30 1998/11/16 08:02:59 niklas Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.31 1999/01/11 22:52:10 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -70,6 +70,12 @@
 
 #include <dev/rndvar.h>
 #include <sys/syslog.h>
+
+#ifdef ENCDEBUG
+#define DPRINTF(x)	if (encdebug) printf x
+#else
+#define DPRINTF(x)
+#endif
 
 int		tdb_init __P((struct tdb *, struct mbuf *));
 int		ipsp_kern __P((int, char **, int));
@@ -216,11 +222,7 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
 
 	/* If necessary try to notify keymanagement three times */
 	while (i < 3) {
-#ifdef ENCDEBUG
-	        if (encdebug)
-		        printf("ipsec: send SA request (%d), remote ip: %0x, SA type: %d\n",
-			       i+1, dst->sen_ip_dst, sa_require);
-#endif /* ENCDEBUG */
+	        DPRINTF(("ipsec: send SA request (%d), remote ip: %0x, SA type: %d\n", i+1, dst->sen_ip_dst, sa_require));
 
 		/* Send notify */
 		bzero((caddr_t) &tmptdb, sizeof(tmptdb));
@@ -242,10 +244,7 @@ check_ipsec_policy(struct inpcb *inp, u_int32_t daddr)
 		 */
 		error = tsleep((caddr_t)inp, PSOCK|PCATCH, "ipsecnotify", 30*hz);
 
-#ifdef ENCDEBUG
-		if (encdebug)
-		        printf("check_ipsec: sleep %d\n", error);
-#endif /* ENCDEBUG */
+	        DPRINTF(("check_ipsec: sleep %d\n", error));
 
 		if (error && error != EWOULDBLOCK)
 			break;
@@ -481,10 +480,7 @@ put_expiration(struct expiration *exp)
     
     if (exp == (struct expiration *) NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  log(LOG_WARNING, "put_expiration(): NULL argument\n");
-#endif /* ENCDEBUG */	
+	DPRINTF(("put_expiration(): NULL argument\n"));
 	return;
     }
     
@@ -690,9 +686,8 @@ tdb_init(struct tdb *tdbp, struct mbuf *m)
       if (xsp->xf_type == alg)
 	return (*(xsp->xf_init))(tdbp, xsp, m);
 
-    if (encdebug)
-      log(LOG_ERR, "tdb_init(): no alg %d for spi %08x, addr %x, proto %d\n", 
-	  alg, ntohl(tdbp->tdb_spi), tdbp->tdb_dst.s_addr, tdbp->tdb_sproto);
+    DPRINTF(("tdb_init(): no alg %d for spi %08x, addr %x, proto %d\n", 
+	    alg, ntohl(tdbp->tdb_spi), tdbp->tdb_dst.s_addr, tdbp->tdb_sproto));
     
     return EINVAL;
 }

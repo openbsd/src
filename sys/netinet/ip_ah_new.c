@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.20 1998/11/25 09:56:50 niklas Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.21 1999/01/11 22:52:09 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -69,7 +69,6 @@
 
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
-#include <sys/syslog.h>
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -142,8 +141,7 @@ ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     em = mtod(m, struct encap_msghdr *);
     if (em->em_msglen - EMT_SETSPI_FLEN <= AH_NEW_XENCAP_LEN)
     {
-	if (encdebug)
-	  log(LOG_WARNING, "ah_new_init() initialization failed\n");
+	DPRINTF(("ah_new_init() initialization failed\n"));
 	return EINVAL;
     }
 
@@ -156,8 +154,7 @@ ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	      break;
     if (i < 0) 
     {
-	if (encdebug)
-	  log(LOG_WARNING, "ah_new_init(): unsupported authentication algorithm %d specified\n", txd.amx_hash_algorithm);
+	DPRINTF(("ah_new_init(): unsupported authentication algorithm %d specified\n", txd.amx_hash_algorithm));
 	return EINVAL;
     }
     DPRINTF(("ah_new_init(): initalized TDB with hash algorithm %d: %s\n",
@@ -167,9 +164,8 @@ ah_new_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 
     if (txd.amx_keylen + EMT_SETSPI_FLEN + AH_NEW_XENCAP_LEN != em->em_msglen)
     {
-	if (encdebug)
-	  log(LOG_WARNING, "ah_new_init(): message length (%d) doesn't match\n",
-	      em->em_msglen);
+	DPRINTF(("ah_new_init(): message length (%d) doesn't match\n",
+		 em->em_msglen));
 	return EINVAL;
     }
 
@@ -330,15 +326,13 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
 	    switch(errc)
 	    {
 		case 1:
-		    if (encdebug)
-		      log(LOG_ERR, "ah_new_input(): replay counter wrapped for packets from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
+		    DPRINTF(("ah_new_input(): replay counter wrapped for packets from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi)));
 		    ahstat.ahs_wrap++;
 		    break;
 
 		case 2:
 	        case 3:
-		    if (encdebug)
-		      log(LOG_WARNING, "ah_new_input(): duplicate packet received, %x->%x spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
+		    DPRINTF(("ah_new_input(): duplicate packet received, %x->%x spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi)));
 		    ahstat.ahs_replay++;
 		    break;
 	    }
@@ -413,7 +407,12 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     while (off > 0)
     {
 	if (m0 == 0)
-	  panic("ah_new_input(): m_copydata (off)");
+	{
+	    DPRINTF(("ah_new_input(): bad mbuf chain for packet from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi)));
+	    ahstat.ahs_hdrops++;
+	    m_freem(m);
+	    return NULL;
+	}
 
 	if (off < m0->m_len)
 	  break;
@@ -425,7 +424,12 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
     while (len > 0)
     {
 	if (m0 == 0)
-	  panic("ah_new_input(): m_copydata (copy)");
+	{
+	    DPRINTF(("ah_new_input(): bad mbuf chain for packet from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi)));
+	    ahstat.ahs_hdrops++;
+	    m_freem(m);
+	    return NULL;
+	}
 
 	count = min(m0->m_len - off, len);
 
@@ -444,8 +448,7 @@ ah_new_input(struct mbuf *m, struct tdb *tdb)
 
     if (bcmp(aho->ah_data, ah->ah_data, AH_HMAC_HASHLEN))
     {
-	if (encdebug)
-	  log(LOG_ALERT, "ah_new_input(): authentication failed for packet from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi));
+	DPRINTF(("ah_new_input(): authentication failed for packet from %x to %x, spi %08x\n", ip->ip_src, ip->ip_dst, ntohl(ah->ah_spi)));
 #ifdef ENCDEBUG
 	if (encdebug)
 	{
@@ -554,6 +557,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     {
 	DPRINTF(("ah_new_output(): m_pullup() failed, SA %x/%08x\n",
 		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	ahstat.ahs_hdrops++;
       	return ENOBUFS;
     }
 	
@@ -584,10 +588,8 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
     ohlen = AH_NEW_FLENGTH;
     if (ohlen + ilen > IP_MAXPACKET) {
-	if (encdebug)
-            log(LOG_ALERT,
-		"ah_new_output(): packet in SA %x/%0x8 got too big\n",
-		tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	DPRINTF(("ah_new_output(): packet in SA %x/%0x8 got too big\n",
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 	m_freem(m);
 	ahstat.ahs_toobig++;
         return EMSGSIZE;
@@ -614,9 +616,8 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
     if (xd->amx_rpl == 0)
     {
-	if (encdebug)
-          log(LOG_ALERT, "ah_new_output(): SA %x/%0x8 should have expired\n",
-	      tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	DPRINTF(("ah_new_output(): SA %x/%0x8 should have expired\n",
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 	m_freem(m);
 	ahstat.ahs_wrap++;
 	return NULL;
@@ -680,7 +681,13 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     while (len > 0)
     {
 	if (m0 == 0)
-	  panic("ah_new_output(): m_copydata");
+	{
+	    DPRINTF(("ah_new_output(): bad mbuf chain for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	    ahstat.ahs_hdrops++;
+	    m_freem(m);
+	    return EMSGSIZE;
+	}
+
 	count = min(m0->m_len - off, len);
 
 	xd->amx_hash->Update(&ctx, mtod(m0, unsigned char *) + off, count);
@@ -707,6 +714,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     if (m == NULL)
     {
 	DPRINTF(("ah_new_output(): m_pullup() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
+	ahstat.ahs_hdrops++;
         return ENOBUFS;
     }
 	

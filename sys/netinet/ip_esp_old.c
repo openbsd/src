@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.25 1999/01/11 05:12:30 millert Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.26 1999/01/11 22:52:10 deraadt Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -69,7 +69,6 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_esp.h>
 #include <dev/rndvar.h>
-#include <sys/syslog.h>
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
@@ -170,8 +169,7 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     em = mtod(m, struct encap_msghdr *);
     if (em->em_msglen - EMT_SETSPI_FLEN <= ESP_OLD_XENCAP_LEN)
     {
-	if (encdebug)
-	  log(LOG_WARNING, "esp_old_init(): initialization failed\n");
+	DPRINTF(("esp_old_init(): initialization failed\n"));
 	return EINVAL;
     }
 
@@ -184,8 +182,7 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	      break;
     if (i < 0) 
     {
-	if (encdebug)
-	  log(LOG_WARNING, "esp_old_init(): unsupported encryption algorithm %d specified\n", xenc.edx_enc_algorithm);
+	DPRINTF(("esp_old_init(): unsupported encryption algorithm %d specified\n", xenc.edx_enc_algorithm));
         return EINVAL;
     }
 
@@ -196,8 +193,8 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     if (xenc.edx_ivlen + xenc.edx_keylen + EMT_SETSPI_FLEN +
 	ESP_OLD_XENCAP_LEN != em->em_msglen)
     {
-	if (encdebug)
-	  log(LOG_WARNING, "esp_old_init(): message length (%d) doesn't match\n", em->em_msglen);
+	DPRINTF(("esp_old_init(): message length (%d) doesn't match\n",
+		 em->em_msglen));
 	return EINVAL;
     }
 
@@ -207,18 +204,15 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	     !(xenc.edx_ivlen & txform->ivmask) ||
 	     (xenc.edx_ivlen & (xenc.edx_ivlen-1)))))
     {
-	if (encdebug)
-	  log(LOG_WARNING, "esp_old_init(): unsupported IV length %d\n",
-	      xenc.edx_ivlen);
+	DPRINTF(("esp_old_init(): unsupported IV length %d\n",
+		 xenc.edx_ivlen));
 	return EINVAL;
     }
 
     /* Check the key length */
     if (xenc.edx_keylen < txform->minkey || xenc.edx_keylen > txform->maxkey)
     {
-	if (encdebug)
-	  log(LOG_WARNING, "esp_old_init(): bad key length %d\n",
-	      xenc.edx_keylen);
+	DPRINTF(("esp_old_init(): bad key length %d\n", xenc.edx_keylen));
 	return EINVAL;
     }
 
@@ -321,7 +315,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	if ((m = m_pullup(m, ohlen + blks)) == NULL)
 	{
             DPRINTF(("esp_old_input(): m_pullup() failed\n"));
-            espstat.esps_hdrops++;
+	    espstat.esps_hdrops++;
             return NULL;
 	}
 
@@ -404,15 +398,20 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	    do {
 		mi = (mo = mi)->m_next;
 		if (mi == NULL)
-		    panic("esp_old_input(): bad chain (i)");
+		{
+		    DPRINTF(("esp_old_input(): bad mbuf chain, SA %x/%08x\n",
+			     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+		    m_freem(m);
+		    espstat.esps_hdrops++;
+		    return NULL;
+		}
 	    } while (mi->m_len == 0);
 
 	    if (mi->m_len < blks - rest)
 	    {
 		if ((mi = m_pullup(mi, blks - rest)) == NULL)
 		{
-		    DPRINTF(("esp_old_input(): m_pullup() failed, SA %x/%08x\n",
-			     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+		    DPRINTF(("esp_old_input(): m_pullup() failed, SA %x/%08x\n", tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 		    espstat.esps_hdrops++;
 		    return NULL;
 		}
@@ -506,6 +505,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	if (m == NULL)
 	{
 	    DPRINTF(("esp_old_input(): m_pullup() failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	    espstat.esps_hdrops++;
 	    return NULL;
 	}
     }
@@ -593,6 +593,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     {
         DPRINTF(("esp_old_output(): m_pullup() failed for SA %x/%08x\n",
 		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	espstat.esps_hdrops++;
         return ENOBUFS;
     }
 
@@ -610,6 +611,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
         {
 	    DPRINTF(("esp_old_output(): m_pullup() failed for SA %x/%08x\n",
 		     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	    espstat.esps_hdrops++;
 	    return ENOBUFS;
 	}
 
@@ -630,10 +632,8 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     rlen = ilen - iphlen;
     padding = ((blks - ((rlen + 2) % blks)) % blks) + 2;
     if (iphlen + ohlen + rlen + padding > IP_MAXPACKET) {
-	if (encdebug)
-            log(LOG_ALERT,
-		"esp_old_output(): packet in SA %x/%0x8 got too big\n",
-		tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	DPRINTF(("esp_old_output(): packet in SA %x/%0x8 got too big\n",
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 	m_freem(m);
 	espstat.esps_toobig++;
         return EMSGSIZE;
@@ -700,15 +700,21 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	    do {
 		mi = (mo = mi)->m_next;
 		if (mi == NULL)
-		    panic("esp_old_output(): bad chain (i)");
+		{
+		    DPRINTF(("esp_old_output(): bad mbuf chain, SA %x/%08x\n",
+			     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+		    m_freem(m);
+		    return EINVAL;
+		}
 	    } while (mi->m_len == 0);
 
 	    if (mi->m_len < blks - rest)
 	    {
 		if ((mi = m_pullup(mi, blks - rest)) == NULL)
 		{
-		    DPRINTF(("esp_old_output(): m_pullup() failed, SA %x/%08x\n",
-			     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+		    DPRINTF(("esp_old_output(): m_pullup() failed, SA %x/%08x\n", tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+		    m_freem(m);
+		    espstat.esps_hdrops++;
 		    return ENOBUFS;
 		}
 		/* 
@@ -775,6 +781,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     {
         DPRINTF(("esp_old_output(): m_pullup() failed, SA %x/%08x\n",
 		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
+	espstat.esps_hdrops++;
         return ENOBUFS;
     }
 
