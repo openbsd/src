@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.21 1999/08/16 16:51:19 deraadt Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.22 1999/10/26 12:04:35 downsj Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -132,7 +132,7 @@ void com_pcmcia_disable __P((struct com_softc *));
 int com_pcmcia_enable1 __P((struct com_softc *));
 void com_pcmcia_disable1 __P((struct com_softc *));
 
-void com_attach __P((struct com_softc *));
+void com_pcmcia_attach2 __P((struct com_softc *));
 
 struct com_pcmcia_softc {
 	struct com_softc sc_com;		/* real "com" softc */
@@ -287,7 +287,7 @@ found:
 	if (psc->sc_ih == NULL)
 		printf(", couldn't establish interrupt");
 
-	com_attach(sc);
+	com_pcmcia_attach2(sc);
 
 #ifdef notyet
 	sc->enabled = 0;
@@ -383,7 +383,7 @@ com_pcmcia_disable1(sc)
  * XXX This should be handled by a generic attach
  */
 void
-com_attach(sc)
+com_pcmcia_attach2(sc)
 	struct com_softc *sc;
 {
 	bus_space_tag_t iot = sc->sc_iot;
