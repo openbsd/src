@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.47 2000/01/10 13:58:15 jason Exp $
+#	$OpenBSD: GENERIC,v 1.48 2000/07/03 17:57:24 niklas Exp $
 #	$NetBSD: GENERIC,v 1.31 1996/12/03 17:25:29 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -66,7 +66,7 @@ pci*	at	lca?
 pci*	at	ppb?
 
 # PCI devices
-ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI
+#ahc*	at	pci? dev ? function ?		# AHA-28xx SCSI
 de*	at	pci? dev ? function ?		# 21x4[012]-based Ethernet
 ne*	at	pci? dev ? function ?		# NE2000-compat ethernet cards
 fxp*	at 	pci? dev ? function ?		# EtherExpress 10/100B ethernet
@@ -144,7 +144,7 @@ scsibus* at atapiscsi?
 # SCSI bus support
 scsibus* at	esp?
 scsibus* at	ncr?
-scsibus* at	ahc?
+#scsibus* at	ahc?
 #scsibus* at	aic?
 
 # SCSI devices
