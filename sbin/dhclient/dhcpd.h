@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.25 2004/03/02 18:49:21 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.26 2004/03/05 23:57:16 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -412,7 +412,6 @@ void client_location_changed(void);
 
 void bootp(struct packet *);
 void dhcp(struct packet *);
-void cleanup(void);
 
 /* packet.c */
 void assemble_hw_header(struct interface_info *, unsigned char *,

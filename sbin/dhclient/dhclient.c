@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.30 2004/03/02 18:49:21 deraadt Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.31 2004/03/05 23:57:16 deraadt Exp $	*/
 
 /* DHCP Client. */
 
@@ -301,11 +301,6 @@ usage(void)
 	fprintf(stderr, "usage: %s [-dDqu] ", __progname);
 	fprintf(stderr, "[-c conffile] [-l leasefile] interface\n");
 	exit(1);
-}
-
-void
-cleanup(void)
-{
 }
 
 /*
