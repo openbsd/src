@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.52 2001/05/30 16:46:33 angelos Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.53 2001/05/30 18:49:16 angelos Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -1215,9 +1215,6 @@ pf_key_v2_set_spi (struct sa *sa, struct proto *proto, int incoming,
       if (sid)
 	free (sid);
     }
-
-  printf("%p %p %p %p\n",isakmp_sa->recv_cert, isakmp_sa->sent_cert,
-	 isakmp_sa->sent_key, isakmp_sa->recv_key);
 
 #ifdef SADB_CREDTYPE_NONE
   /* Setup credentials */
