@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.138 1999/12/08 06:50:17 itojun Exp $
+#	$OpenBSD: files,v 1.139 1999/12/09 14:55:37 provos Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -490,9 +490,8 @@ file netinet/ip_log.c			ipfilter
 file netinet/ip_ipsp.c			inet & (ipsec | tcp_signature)
 file netinet/ip_ip4.c			inet & (ipsec | mrouting)
 file netinet/ip_ether.c			inet & ipsec
-file netinet/ip_ah.c			inet & ipsec
-file netinet/ip_esp.c			inet & ipsec
 file netinet/ip_xform.c			inet & ipsec
+file netinet/ipsec_input.c		inet & ipsec
 file netinet/ip_esp_old.c		inet & ipsec
 file netinet/ip_esp_new.c		inet & ipsec
 file netinet/ip_ah_old.c		inet & ipsec
