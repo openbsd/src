@@ -34,11 +34,11 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: setjmp.S,v 1.6 2003/06/02 20:18:30 millert Exp $"
+	.asciz "$OpenBSD: setjmp.S,v 1.7 2005/04/01 08:08:15 hshoexer Exp $"
 #endif
 
 /*
- * C library -- _setjmp, _longjmp
+ * C library -- setjmp, longjmp
  *
  *	longjmp(a,v)
  * will generate a "return(v)" from the last call to
