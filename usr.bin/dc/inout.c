@@ -1,4 +1,4 @@
-/*	$OpenBSD: inout.c,v 1.6 2003/10/18 20:34:26 otto Exp $	*/
+/*	$OpenBSD: inout.c,v 1.7 2003/10/22 12:03:54 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: inout.c,v 1.6 2003/10/18 20:34:26 otto Exp $";
+static const char rcsid[] = "$OpenBSD: inout.c,v 1.7 2003/10/22 12:03:54 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -115,9 +115,14 @@ src_getcharstring(struct source *src)
 static int
 src_ungetcharstring(struct source *src)
 {
-	if (src->u.string.pos > 0)
-		return src->u.string.buf[--src->u.string.pos];
-	else
+	int ch;
+
+	if (src->u.string.pos > 0) {
+		if (src->lastchar != '\0')
+			--src->u.string.pos;
+		ch = src->u.string.buf[src->u.string.pos];
+		return ch == '\0' ? EOF : ch;
+	} else
 		return EOF;
 }
 
