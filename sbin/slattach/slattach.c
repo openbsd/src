@@ -1,4 +1,4 @@
-/*	$OpenBSD: slattach.c,v 1.4 1996/08/13 07:12:12 deraadt Exp $	*/
+/*	$OpenBSD: slattach.c,v 1.5 1996/11/13 07:17:20 downsj Exp $	*/
 /*	$NetBSD: slattach.c,v 1.17 1996/05/19 21:57:39 jonathan Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)slattach.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: slattach.c,v 1.4 1996/08/13 07:12:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: slattach.c,v 1.5 1996/11/13 07:17:20 downsj Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ static char rcsid[] = "$OpenBSD: slattach.c,v 1.4 1996/08/13 07:12:12 deraadt Ex
 #include <netinet/in.h>
 
 #include <err.h>
+#include <errno.h>
 #include <fcntl.h>
 #include <netdb.h>
 #include <paths.h>
@@ -67,6 +68,7 @@ static char rcsid[] = "$OpenBSD: slattach.c,v 1.4 1996/08/13 07:12:12 deraadt Ex
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <syslog.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -75,10 +77,15 @@ int	slipdisc = SLIPDISC;
 
 char	devicename[32];
 
+static char pidfilename[MAXPATHLEN];    /* name of pid file */
+static pid_t pid;               /* Our pid */
+static FILE *pidfile;
+
 void	usage __P((void));
 
 int ttydisc __P((char *));
 
+void handler __P((int));
 
 int
 main(argc, argv)
@@ -91,6 +98,7 @@ main(argc, argv)
 	tcflag_t cflag = HUPCL;
 	int ch;
 	sigset_t sigset;
+	int i;
 
 	while ((ch = getopt(argc, argv, "hms:t:")) != -1) {
 		switch (ch) {
@@ -143,10 +151,49 @@ main(argc, argv)
 
 	if (fork() > 0)
 		exit(0);
+
+	/* set up a signal handler to delete the PID file. */
+	signal(SIGHUP, handler);
+	signal(SIGTERM, handler);
+
+	/* write PID to a file */
+	pid = getpid();
+	
+	for(i = strlen(dev); (dev[i] != '/') && i > 0; i--)
+		;
+	if(dev[i] == '/')
+		i++;
+	(void) sprintf(pidfilename, "%sslip.%s.pid", _PATH_VARRUN, dev + i);
+	truncate(pidfilename, 0);    /* If this fails, so will the next one... */
+	if ((pidfile = fopen(pidfilename, "w")) != NULL) {
+		fprintf(pidfile, "%d\n", pid);
+		(void) fclose(pidfile);
+	} else {
+		syslog(LOG_ERR, "Failed to create pid file %s: %m", pidfilename);
+		pidfilename[0] = 0;
+	}
+
 	sigemptyset(&sigset);
 	for (;;)
 		sigsuspend(&sigset);
 }
+
+void
+handler(useless)
+int useless;
+{
+
+	/*  delete the pid file.  */
+	if (pidfilename[0] != 0) {
+		if (unlink(pidfilename) < 0 && errno != ENOENT) 
+			syslog(LOG_WARNING, "unable to delete pid file: %m");
+		pidfilename[0] = 0;
+	}
+
+	/* terminate gracefully */
+	exit(0);
+}
+
 
 int
 ttydisc(name)
