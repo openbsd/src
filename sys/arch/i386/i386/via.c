@@ -1,4 +1,4 @@
-/*	$OpenBSD: via.c,v 1.1 2004/04/11 18:12:10 deraadt Exp $	*/
+/*	$OpenBSD: via.c,v 1.2 2004/06/15 19:19:03 deraadt Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -112,7 +112,7 @@ viac3_crypto_setup(void)
 
 	crypto_register(vc3_sc->sc_cid, algs, viac3_crypto_newsession,
 	    viac3_crypto_freesession, viac3_crypto_process);
-	i386_has_xcrypt = 1;
+	i386_has_xcrypt = viac3_crypto_present;
 }
 
 int
