@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.223 2003/03/20 16:04:37 sturm Exp $
+#	$OpenBSD: rc,v 1.224 2003/03/21 20:33:24 todd Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -204,7 +204,7 @@ if [ X"${pf}" != X"NO" -a X"${pflogd_flags}" != X"NO" ]; then
 	pflogd ${pflogd_flags}
 fi
 
-# $named_flags are imported from /etc/rc.conf;
+# $named_flags is imported from /etc/rc.conf;
 # if $named_flags != NO, named is run.
 if [ "X${named_flags}" != X"NO" ]; then
 	if ! cmp -s /etc/rndc.key /var/named/etc/rndc.key ; then
