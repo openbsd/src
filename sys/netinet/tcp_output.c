@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.28 1999/12/21 17:49:28 provos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.29 2000/01/07 00:57:54 itojun Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -807,7 +807,7 @@ send:
 		union sockaddr_union sa;
 		struct tdb *tdb;
 
-		memset(&sa, 0, sizeof(union sockaddr_union));
+		bzero(&sa, sizeof(union sockaddr_union));
 
 		switch (tp->pf) {
 		case 0:	/*default to PF_INET*/

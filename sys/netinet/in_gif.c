@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.4 1999/12/28 07:17:38 itojun Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.5 2000/01/07 00:57:54 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -110,8 +110,8 @@ in_gif_output(ifp, family, m, rt)
 	}
 
 	/* setup dummy tdb.  it highly depends on ipe4_output() code. */
-	memset(&tdb, 0, sizeof(tdb));
-	memset(&xfs, 0, sizeof(xfs));
+	bzero(&tdb, sizeof(tdb));
+	bzero(&xfs, sizeof(xfs));
 	tdb.tdb_src.sin.sin_family = AF_INET;
 	tdb.tdb_src.sin.sin_len = sizeof(struct sockaddr_in);
 	tdb.tdb_src.sin.sin_addr = sin_src->sin_addr;
