@@ -1,4 +1,4 @@
-.\"	$OpenBSD: atactl.8,v 1.27 2004/03/18 16:03:51 jmc Exp $
+.\"	$OpenBSD: atactl.8,v 1.28 2005/03/28 18:52:38 kurt Exp $
 .\"	$NetBSD: atactl.8,v 1.5 1999/02/24 18:49:14 jwise Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -89,12 +89,11 @@ Typically the
 driver performs this reset automatically, but this should still be
 used with caution.
 .Pp
-.It Li setidle Ar standby-timer
-Places the specified device into Idle mode, and sets the Standby timer
-to
-.Ar standby-timer
+.It Li setidle Ar idle-timer
+Places the specified device into Idle mode, and sets the Idle timer to
+.Ar idle-timer
 seconds.
-A value of 0 will disable the Standby timer.
+A value of 0 will disable the Idle timer.
 .Pp
 .It Li setstandby Ar standby-timer
 Places the specified device into Standby mode, and sets the Standby timer
