@@ -1,4 +1,4 @@
-/*	$OpenBSD: dol.c,v 1.5 2000/10/30 17:16:46 millert Exp $	*/
+/*	$OpenBSD: dol.c,v 1.6 2001/06/25 04:41:25 art Exp $	*/
 /*	$NetBSD: dol.c,v 1.8 1995/09/27 00:38:38 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)dol.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: dol.c,v 1.5 2000/10/30 17:16:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: dol.c,v 1.6 2001/06/25 04:41:25 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -607,11 +607,12 @@ Dgetdol()
 	    stderror(ERR_SYNTAX);
     }
     else {
-	if (subscr > 0)
+	if (subscr > 0) {
 	    if (subscr > upb)
 		lwb = 1, upb = 0;
 	    else
 		lwb = upb = subscr;
+	}
 	unDredc(c);
     }
     if (dimen) {
