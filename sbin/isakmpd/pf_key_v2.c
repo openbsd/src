@@ -1,4 +1,4 @@
-/*      $OpenBSD: pf_key_v2.c,v 1.89 2001/08/27 18:26:16 ho Exp $  */
+/*      $OpenBSD: pf_key_v2.c,v 1.90 2001/10/12 15:47:49 ho Exp $  */
 /*	$EOM: pf_key_v2.c,v 1.79 2000/12/12 00:33:19 niklas Exp $	*/
 
 /*
@@ -3036,9 +3036,11 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
       /* Check for valid type. */
       switch (srcident->sadb_ident_type)
         {
+#ifdef SADB_X_IDENTTYPE_CONNECTION
 	case SADB_X_IDENTTYPE_CONNECTION:
 	  /* XXX */
 	  break;
+#endif
 
 	case SADB_IDENTTYPE_PREFIX:
 	  /* Determine what the address family is. */
@@ -3201,9 +3203,11 @@ pf_key_v2_acquire (struct pf_key_v2_msg *pmsg)
       /* Check for valid type. */
       switch (dstident->sadb_ident_type)
         {
+#ifdef SADB_X_IDENTTYPE_CONNECTION
 	case SADB_X_IDENTTYPE_CONNECTION:
 	  /* XXX */
 	  break;
+#endif
 
 	case SADB_IDENTTYPE_PREFIX:
 	  /* Determine what the address family is. */
