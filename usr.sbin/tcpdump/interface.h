@@ -18,7 +18,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.8 1998/06/11 00:01:23 provos Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.9 1998/06/25 19:42:45 mickey Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -50,6 +50,7 @@ extern int packettype;		/* as specified by -T */
 #define PT_RPC		3	/* Remote Procedure Call */
 #define PT_RTP		4	/* Real-Time Applications protocol */
 #define PT_RTCP		5	/* Real-Time Applications control protocol */
+#define	PT_CNFP		6	/* Cisco NetFlow protocol */
 
 #ifndef min
 #define min(a,b) ((a)>(b)?(b):(a))
