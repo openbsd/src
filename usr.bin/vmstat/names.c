@@ -1,4 +1,4 @@
-/*	$NetBSD: names.c,v 1.17 1995/07/23 18:09:27 ragge Exp $	*/
+/*	$NetBSD: names.c,v 1.18 1995/12/17 05:30:05 jonathan Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -210,8 +210,8 @@ read_names()
 	register char *p;
 	register u_long sp;
 	static char buf[BUFSIZ];
-	struct scsi_device sdev;
-	struct driver hdrv;
+	struct pmax_scsi_device sdev;
+	struct pmax_driver hdrv;
 	char name[10];
 
 	sp = namelist[X_SCSI_DINIT].n_value;
