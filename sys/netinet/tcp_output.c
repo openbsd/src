@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.39 2001/06/23 05:36:08 angelos Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.40 2001/06/23 06:03:12 angelos Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.16 1997/06/03 16:17:09 kml Exp $	*/
 
 /*
@@ -960,6 +960,7 @@ send:
 			ifp = ro->ro_rt->rt_ifp;
 			if (ifp->if_capabilities & IFCAP_CSUM_TCPv4) {
 				m->m_pkthdr.csum |= M_TCPV4_CSUM_OUT;
+				tcpstat.tcps_outhwcsum++;
 				th->th_sum = in_cksum(m, (int)hdrlen);
 				break;
 			}

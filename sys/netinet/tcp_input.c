@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.95 2001/06/23 02:27:10 angelos Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.96 2001/06/23 06:03:11 angelos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -512,12 +512,17 @@ tcp_input(m, va_alist)
 		ti->ti_len = (u_int16_t)tlen;
 		HTONS(ti->ti_len);
 		if ((m->m_pkthdr.csum & M_TCP_CSUM_IN_OK) == 0) {
-			if (m->m_pkthdr.csum & M_TCP_CSUM_IN_BAD ||
-			    (ti->ti_sum = in_cksum(m, len)) != 0) {
+			if (m->m_pkthdr.csum & M_TCP_CSUM_IN_BAD) {
+				tcpstat.tcps_inhwcsum++;
 				tcpstat.tcps_rcvbadsum++;
 				goto drop;
 			}
-		}
+			if ((ti->ti_sum = in_cksum(m, len)) != 0) {
+				tcpstat.tcps_rcvbadsum++;
+				goto drop;
+			}
+		} else
+			tcpstat.tcps_inhwcsum++;
 		break;
 	    }
 #ifdef INET6
