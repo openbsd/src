@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ef.4,v 1.4 1999/09/23 04:12:04 alex Exp $
+.\"	$OpenBSD: ef.4,v 1.5 2000/05/28 19:51:44 jason Exp $
 .\"
 .\" Copyright (c) 1998 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -44,7 +44,10 @@ device driver supports the 3Com Fast EtherLink ISA family
 of Ethernet cards, and embedded controllers based on the 3Com
 .Dq corkscrew
 EtherLink chips.
-This includes the 3C515 adapter(s).
+This includes the 3C515 adapter(s) with National Semiconduction
+.Tn DP83840
+PHYs, see
+.Xr nsphy 4 .
 Other models of 3Com network cards are supported by the
 .Xr ec 4 ,
 .Xr eg 4 ,
@@ -75,6 +78,7 @@ the network connection (cable).
 .Xr ep 4 ,
 .Xr ie 4 ,
 .Xr ifmedia 4 ,
+.Xr nsphy 4 ,
 .Xr ifconfig 8
 .Sh HISTORY
 The
@@ -86,6 +90,3 @@ The
 .Nm
 driver was written by
 .An Jason L. Wright Aq jason@thought.net .
-.Sh BUGS
-The media handling assumes that there an external physical layer device (PHY),
-and that it will autonegotiate correctly.
