@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.10 1997/05/14 18:38:50 niklas Exp $
+#	$OpenBSD: Makefile,v 1.11 1997/07/05 23:10:06 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -6,7 +6,6 @@ TOP=		${.CURDIR}/..
 IMAGE=		ramdisk${REV}.fs
 CRUNCHCONF?=    ${TOP}/ramdisk/${CBIN}.conf
 BASE=		ramdisk
-KERNEL=		${TOP}/../../sys/arch/${MACHINE}/compile/RAMDISK/bsd
 
 MOUNT_POINT=	/mnt
 
@@ -65,20 +64,26 @@ ${FLOPPY}:	bsd.gz
 	    rm -f ${REALIMAGE} ; \
 	fi
 
-bsd.gz: ${KERNEL} ${IMAGE} ecoffrdsetroot
-	cp ${KERNEL} bsd
-	${.OBJDIR}/ecoffrdsetroot bsd < ${IMAGE}
-	${STRIP} bsd
-	${GZIP} ${GZIPFLAGS} bsd
+bsd.gz:	bsd.rd
+	cp bsd.rd bsd.strip
+	${STRIP} bsd.strip
+	${GZIP} -c ${GZIPFLAGS} bsd.strip > bsd.gz
+
+bsd.rd: bsd ${IMAGE} ecoffrdsetroot
+	cp bsd bsd.rd
+	${.OBJDIR}/ecoffrdsetroot bsd.rd < ${IMAGE}
+
+bsd:
+	cd ${.CURDIR}/../../../sys/arch/alpha/conf && config RAMDISK
+	cd ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISK && \
+	    make clean && make depend && make
+	cp ${.CURDIR}/../../../sys/arch/alpha/compile/RAMDISK/bsd bsd
 
 ${IMAGE}:	do_prep do_mount do_files do_umount
 	mv -f ${REALIMAGE} ${IMAGE}
 
 ecoffrdsetroot:	${TOP}/ecoffrdsetroot.c
 	${HOSTCC} ${HOSTCFLAGS} -o ecoffrdsetroot ${TOP}/ecoffrdsetroot.c
-
-bsd:	${KERNEL}
-	cp ${KERNEL} bsd
 
 do_prep:
 	dd if=/dev/zero of=${REALIMAGE} count=${NBLKS}
@@ -101,4 +106,4 @@ unconfig:
 	-vnconfig -u ${VND}
 
 beforeinstall:
-	cp ${FLOPPY} ${DESTDIR}/snapshot
+	cp ${FLOPPY} bsd.rd ${DESTDIR}/snapshot
