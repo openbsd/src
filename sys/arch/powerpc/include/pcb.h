@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.3 1998/08/07 02:22:03 rahnds Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.4 1998/08/25 07:44:21 pefo Exp $	*/
 /*	$NetBSD: pcb.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -35,7 +35,15 @@
 #define	_MACHINE_PCB_H_
 
 #include <machine/reg.h>
-typedef int faultbuf[24];
+
+
+typedef struct __faultbuf {
+	int	pc;
+	int	sr;
+	int	sp;
+	int	cr;
+	int	regs[20];
+} faultbuf;
 
 struct pcb {
 	struct pmap *pcb_pm;	/* pmap of our vmspace */
