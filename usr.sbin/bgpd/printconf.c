@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.3 2004/02/09 01:46:34 henning Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.4 2004/02/09 23:16:46 henning Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -23,6 +23,7 @@
 
 void		 print_op(enum comp_ops);
 void		 print_mainconf(struct bgpd_config *);
+void		 print_network(struct network_config *);
 void		 print_peer(struct peer_config *);
 void		 print_rule(struct peer *, struct filter_rule *);
 
@@ -77,6 +78,12 @@ print_mainconf(struct bgpd_config *conf)
 
 	if (conf->listen_addr.sin_addr.s_addr != INADDR_ANY)
 		printf("listen-on %s\n", inet_ntoa(conf->listen_addr.sin_addr));
+}
+
+void
+print_network(struct network_config *n)
+{
+	printf("network %s/%u\n", log_addr(&n->prefix), n->prefixlen);
 }
 
 void
@@ -208,13 +215,17 @@ print_rule(struct peer *peer_l, struct filter_rule *r)
 }
 
 void
-print_config(struct bgpd_config *conf, struct peer *peer_l,
-    struct filter_head *rules_l)
+print_config(struct bgpd_config *conf, struct network_head *net_l,
+    struct peer *peer_l, struct filter_head *rules_l)
 {
 	struct peer		*p;
 	struct filter_rule	*r;
+	struct network		*n;
 
 	print_mainconf(conf);
+	printf("\n");
+	TAILQ_FOREACH(n, net_l, network_l)
+		print_network(&n->net);
 	printf("\n");
 	for (p = peer_l; p != NULL; p = p->next)
 		print_peer(&p->conf);
