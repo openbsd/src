@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.115 2001/10/04 21:50:35 gluk Exp $
+#	$OpenBSD: files.pci,v 1.116 2001/10/05 18:57:28 nate Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -407,3 +407,8 @@ file	dev/pci/cz.c			cz		needs-flag
 device	lge: ether, ifnet, mii, ifmedia, mii_phy
 attach	lge at pci
 file	dev/pci/if_lge.c		lge
+
+# Broadcom BCM570x gigabit ethernet
+device	bge: ether, ifnet, mii, ifmedia, mii_phy
+attach	bge at pci
+file	dev/pci/if_bge.c		bge
