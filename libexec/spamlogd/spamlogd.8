@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamlogd.8,v 1.1 2004/02/26 07:28:55 beck Exp $
+.\"	$OpenBSD: spamlogd.8,v 1.2 2004/02/27 18:25:49 beck Exp $
 .\"
 .\" Copyright (c) 2004 Bob Beck.  All rights reserved.
 .\"
@@ -22,6 +22,7 @@
 .Nd spamd whitelist updating daemon
 .Sh SYNOPSIS
 .Nm spamlogd
+.Op Fl I
 .Op Fl i Ar interface
 .Sh DESCRIPTION
 .Nm
@@ -38,16 +39,35 @@ updates the
 whitelist entries whenever a connection
 to port 25 is logged to the
 .Xr pflog 4
-interface.
+interface. The source addresses of inbound connections are whitelisted
+when seen by
+.Nm
+to ensure that their entries in
+.Pa /var/db/spamd
+do not expire if the connecting host continues to send legitimate mail.
+The destination addresses of outbound connections are whitelisted
+when seen by
+.Nm
+so that replies to outbound mail may be received without initial
+greylisting delays (see GREYLISTING in
+.Xr spamd 8 ).
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
+.It Fl I
+Specify that
+.Nm
+is only to whitelist inbound smtp connections.
+By default
+.Nm
+will whitelist the source of inbound smtp connections, and the
+target of outbound smtp connections.
 .It Fl i Ar interface
 Specify a network interface on which packets must arrive.
 The default is to watch for connections logged from any interfaces.
 .El
 .Pp
-It is important to be sure to log any connections to your real
+It is important to be sure to log any connections to and from your real
 MTA in order for
 .Nm
 to update the whitelist entries.
@@ -59,7 +79,19 @@ $EXT_IF = "fxp0"
 $MAILHOSTS = "{129.128.11.10, 129.128.11.43}"
 pass in log on $EXT_IF inet proto tcp to $MAILHOSTS \e
 	port smtp keep state
+pass out log on $EXT_IF inet proto tcp from $MAILHOSTS \e
+	to any port smtp keep state
 .Ed
+.Pp
+.Nm
+sends log messages to
+.Xr syslogd 8
+using
+.Em facility
+daemon.
+.Nm
+will log each connection it sees at level
+.Em LOG_DEBUG .
 .Sh FILES
 /var/db/spamd
 .Sh SEE ALSO

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamlogd.c,v 1.2 2004/02/26 08:18:56 deraadt Exp $	*/
+/*	$OpenBSD: spamlogd.c,v 1.3 2004/02/27 18:25:49 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -34,6 +34,7 @@
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <syslog.h>
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
@@ -45,14 +46,11 @@ extern struct passwd *pw;
 extern FILE * grey;
 extern int debug;
 
+struct syslog_data sdata = SYSLOG_DATA_INIT;
 size_t whitecount, whitealloc;
 char **whitelist;
+int inbound; /* do we only whitelist inbound smtp? */
 int pfdev;
-
-DB		*db;
-DBT		dbk, dbd;
-BTREEINFO	btreeinfo;
-
 
 /* borrowed from dhartmei.. */
 static int
@@ -71,9 +69,12 @@ address_valid_v4(const char *a)
 int
 dbupdate(char *dbname, char *ip)
 {
-	struct gdata gd;
-	time_t now;
-	int r;
+	BTREEINFO	btreeinfo;
+	DBT		dbk, dbd;
+	DB		*db;
+	struct gdata 	gd;
+	time_t 		now;
+	int 		r;
 
 	now = time(NULL);
 	memset(&btreeinfo, 0, sizeof(btreeinfo));
@@ -81,7 +82,7 @@ dbupdate(char *dbname, char *ip)
 	if (db == NULL)
 		return(-1);
 	if (!address_valid_v4(ip)) {
-		warnx("invalid ip address %s\n", ip);
+		syslog_r(LOG_NOTICE, &sdata, "invalid ip address %s", ip);
 		goto bad;
 	}
 	memset(&dbk, 0, sizeof(dbk));
@@ -91,7 +92,7 @@ dbupdate(char *dbname, char *ip)
 	/* add or update whitelist entry */
 	r = db->get(db, &dbk, &dbd, 0);
 	if (r == -1) {
-		warn("db->get failed");
+		syslog_r(LOG_NOTICE, &sdata, "db->get failed (%m)");
 		goto bad;
 	}
 	if (r) {
@@ -109,7 +110,7 @@ dbupdate(char *dbname, char *ip)
 		dbd.data = &gd;
 		r = db->put(db, &dbk, &dbd, 0);
 		if (r) {
-			warn("db->put failed");
+			syslog_r(LOG_NOTICE, &sdata, "db->put failed (%m)");
 			goto bad;
 		}
 	} else {
@@ -129,7 +130,7 @@ dbupdate(char *dbname, char *ip)
 		dbd.data = &gd;
 		r = db->put(db, &dbk, &dbd, 0);
 		if (r) {
-			warn("db->put failed");
+			syslog_r(LOG_NOTICE, &sdata, "db->put failed (%m)");
 			goto bad;
 		}
 	}
@@ -147,13 +148,13 @@ dbupdate(char *dbname, char *ip)
 static int
 usage(void)
 {
-	fprintf(stderr, "usage: spamlogd [-i netif]\n");
+	fprintf(stderr, "usage: spamlogd [-I] [-i netif]\n");
 	exit(1);
 }
 
-char *targv[19] = {
+char *targv[17] = {
 	"tcpdump", "-l",  "-n", "-e", "-i", "pflog0", "-q",
-	"-t", "inbound", "and", "port", "25", "and", "action", "pass",
+	"-t", "port", "25", "and", "action", "pass",
 	NULL, NULL, NULL, NULL
 };
 
@@ -166,14 +167,18 @@ main(int argc, char **argv)
 	pid_t pid;
 	FILE *f;
 
-	while ((ch = getopt(argc, argv, "i:")) != -1) {
+
+	while ((ch = getopt(argc, argv, "i:I")) != -1) {
 		switch (ch) {
 		case 'i':
-			if (targv[17])	/* may only set once */
+			if (targv[15])	/* may only set once */
 				usage();
-			targv[15] = "and";
-			targv[16] = "on";
-			targv[17] = optarg;
+			targv[13] = "and";
+			targv[14] = "on";
+			targv[15] = optarg;
+			break;
+		case 'I':
+			inbound = 1;
 			break;
 		default:
 			usage();
@@ -207,31 +212,70 @@ main(int argc, char **argv)
 	f = fdopen(p[0], "r");
 	if (f == NULL)
 		err(1, "fdopen");
+	tzset();
+	openlog_r("spamlogd", LOG_PID | LOG_NDELAY, LOG_DAEMON, &sdata);
+	
 	lbuf = NULL;
 	while ((buf = fgetln(f, &len))) {
-		char *cp;
+		char *cp = NULL;
+		char buf2[len + 1];
 
 		if (buf[len - 1] == '\n')
 			buf[len - 1] = '\0';
 		else {
-			if ((lbuf = (char *)malloc(len + 1)) == NULL)
-				err(1, NULL);
+			if ((lbuf = (char *)malloc(len + 1)) == NULL) {
+				syslog_r(LOG_ERR, &sdata, "malloc failed");
+				exit(1);
+			}
 			memcpy(lbuf, buf, len);
 			lbuf[len] = '\0';
 			buf = lbuf;
 		}
-		if ((cp = (strchr(buf, '>'))) != NULL) {
-			/* XXX replace this grot with an sscanf */
-			while (*cp != '.' && cp >= buf) {
-				*cp = '\0';
-				cp--;
+
+		if (!inbound && strstr(buf, "pass out") != NULL) {
+			/* 
+			 * this is outbound traffic - we whitelist
+			 * the destination address, because we assume
+			 * that a reply may come to this outgoing mail
+			 * we are sending.
+			 */
+			if ((cp = (strchr(buf, '>'))) != NULL) {
+				if (sscanf(cp, "> %s", buf2) == 1) {
+					cp = strrchr(buf2, '.');
+					if (cp != NULL) {
+						*cp = '\0';
+						cp = buf2;
+						syslog_r(LOG_DEBUG, &sdata, 
+							 "outbound %s\n", cp);
+					}
+				}
+				else
+					cp = NULL;
 			}
-			*cp ='\0';
-			while (*cp != ' ' && cp >= buf)
-				cp--;
-			cp++;
-			dbupdate(PATH_SPAMD_DB, cp);
+
+		} else {
+			/* 
+			 * this is inbound traffic - we whitelist
+			 * the source address, because this is 
+			 * traffic presumably to our real MTA
+			 */
+			if ((cp = (strchr(buf, '>'))) != NULL) {
+				while (*cp != '.' && cp >= buf) {
+					*cp = '\0';
+					cp--;
+				}
+				*cp ='\0';
+				while (*cp != ' ' && cp >= buf)
+					cp--;
+				cp++;
+				syslog_r(LOG_DEBUG, &sdata, 
+					 "inbound %s\n", cp);
+				
+			}
 		}
+		if (cp != NULL)
+			dbupdate(PATH_SPAMD_DB, cp);
+
 		if (lbuf != NULL) {
 			free(lbuf);
 			lbuf = NULL;
