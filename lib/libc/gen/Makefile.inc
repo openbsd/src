@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.17 1998/07/04 08:52:34 deraadt Exp $
+#	$OpenBSD: Makefile.inc,v 1.18 1998/08/29 21:11:21 deraadt Exp $
 
 # gen sources
 .PATH: ${.CURDIR}/arch/${MACHINE_ARCH}/gen ${.CURDIR}/gen
@@ -98,5 +98,7 @@ MLINKS+=sigsetops.3 sigemptyset.3 sigsetops.3 sigfillset.3 \
 	sigsetops.3 sigismember.3
 MLINKS+=syslog.3 closelog.3 syslog.3 openlog.3 syslog.3 setlogmask.3 \
 	syslog.3 vsyslog.3
+MLINKS+=tolower.3 _tolower.3
+MLINKS+=toupper.3 _toupper.3
 MLINKS+=ttyname.3 isatty.3 ttyname.3 ttyslot.3
 MLINKS+=vis.3 strvis.3 vis.3 strvisx.3 unvis.3 strunvis.3

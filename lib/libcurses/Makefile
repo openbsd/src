@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.25 1998/08/14 23:02:33 millert Exp $
+#	$OpenBSD: Makefile,v 1.26 1998/08/29 21:12:07 deraadt Exp $
 
 # Uncomment this to enable tracing in libcurses
 #CURSESTRACE=-DTRACE
@@ -48,7 +48,8 @@ MAN=	curs_addch.3 curs_addchstr.3 curs_addstr.3 curs_attr.3 curs_beep.3 \
 	curs_overlay.3 curs_pad.3 curs_print.3 curs_printw.3 curs_refresh.3 \
 	curs_scanw.3 curs_scr_dmp.3 curs_scroll.3 curs_slk.3 curs_termattrs.3 \
 	curs_touch.3 curs_util.3 curs_window.3 curses.3 define_key.3 \
-	dft_fgbg.3 keyok.3 wresize.3 termcap.3 terminfo.3 terminfo.5
+	dft_fgbg.3 keyok.3 resizeterm.3 wresize.3 termcap.3 terminfo.3 \
+	terminfo.5
 MLINKS+=curses.3 ncurses.3
 MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_addch.3 mvwaddch.3 curs_addch.3 echochar.3 curs_addch.3 \
@@ -127,19 +128,20 @@ MLINKS+=curs_addch.3 addch.3 curs_addch.3 waddch.3 curs_addch.3 mvaddch.3 \
 	curs_slk.3 slk_refresh.3 curs_slk.3 slk_noutrefresh.3 curs_slk.3 \
 	slk_label.3 curs_slk.3 slk_clear.3 curs_slk.3 slk_restore.3 curs_slk.3 \
 	slk_touch.3 curs_slk.3 slk_attron.3 curs_slk.3 slk_attrset.3 \
-	curs_slk.3 slk_attroff.3 curs_termattrs.3 baudrate.3 curs_termattrs.3 \
-	erasechar.3 curs_termattrs.3 has_ic.3 curs_termattrs.3 has_il.3 \
-	curs_termattrs.3 killchar.3 curs_termattrs.3 longname.3 \
-	curs_termattrs.3 termattrs.3 curs_termattrs.3 termname.3 curs_touch.3 \
-	touchwin.3 curs_touch.3 touchline.3 curs_touch.3 untouchwin.3 \
-	curs_touch.3 wtouchln.3 curs_touch.3 is_linetouched.3 curs_touch.3 \
-	is_wintouched.3 curs_util.3 unctrl.3 curs_util.3 keyname.3 curs_util.3 \
-	filter.3 curs_util.3 use_env.3 curs_util.3 putwin.3 curs_util.3 \
-	getwin.3 curs_util.3 delay_output.3 curs_util.3 flushinp.3 \
-	curs_window.3 newwin.3 curs_window.3 delwin.3 curs_window.3 mvwin.3 \
-	curs_window.3 subwin.3 curs_window.3 derwin.3 curs_window.3 mvderwin.3 \
-	curs_window.3 dupwin.3 curs_window.3 wsyncup.3 curs_window.3 syncok.3 \
-	curs_window.3 wcursyncup.3 curs_window.3 wsyncdown.3
+	curs_slk.3 slk_attroff.3 curs_slk.3 slk_color.3 curs_termattrs.3 \
+	baudrate.3 curs_termattrs.3 erasechar.3 curs_termattrs.3 has_ic.3 \
+	curs_termattrs.3 has_il.3 curs_termattrs.3 killchar.3 curs_termattrs.3 \
+	longname.3 curs_termattrs.3 termattrs.3 curs_termattrs.3 termname.3 \
+	curs_touch.3 touchwin.3 curs_touch.3 touchline.3 curs_touch.3 \
+	untouchwin.3 curs_touch.3 wtouchln.3 curs_touch.3 is_linetouched.3 \
+	curs_touch.3 is_wintouched.3 curs_util.3 unctrl.3 curs_util.3 \
+	keyname.3 curs_util.3 filter.3 curs_util.3 use_env.3 curs_util.3 \
+	putwin.3 curs_util.3 getwin.3 curs_util.3 delay_output.3 curs_util.3 \
+	flushinp.3 curs_window.3 newwin.3 curs_window.3 delwin.3 curs_window.3 \
+	mvwin.3 curs_window.3 subwin.3 curs_window.3 derwin.3 curs_window.3 \
+	mvderwin.3 curs_window.3 dupwin.3 curs_window.3 wsyncup.3 \
+	curs_window.3 syncok.3 curs_window.3 wcursyncup.3 curs_window.3 \
+	wsyncdown.3
 MLINKS+= terminfo.3 setupterm.3 terminfo.3 setterm.3 terminfo.3 set_curterm.3 \
 	terminfo.3 del_curterm.3 terminfo.3 restartterm.3 terminfo.3 tparm.3 \
 	terminfo.3 tparam.3 terminfo.3 tputs.3 terminfo.3 putp.3 \

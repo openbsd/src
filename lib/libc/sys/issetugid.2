@@ -1,4 +1,4 @@
-.\"	$OpenBSD: issetugid.2,v 1.12 1998/07/11 23:22:01 deraadt Exp $
+.\"	$OpenBSD: issetugid.2,v 1.13 1998/08/29 21:11:59 deraadt Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -51,14 +51,14 @@ system calls.
 Otherwise it returns 0.
 .Pp
 This system call exists so that library routines (inside libtermlib, libc,
-or other libraries) can gaurantee safe behavior when used inside
+or other libraries) can guarantee safe behavior when used inside
 setuid or setgid programs.
 Some library routines may be passed insufficient information and hence
 not know whether the current program was started setuid or setgid
 because higher level calling code may have made changes to the uid, euid,
 gid, or egid.
 Hence these low-level library routines are unable to determine if they
-are being run with elevated or normal priveledges.
+are being run with elevated or normal privileges.
 .Pp
 In particular, it is wise to use this call to determine if a
 pathname returned from a

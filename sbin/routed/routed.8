@@ -1,4 +1,4 @@
-.\"	$OpenBSD: routed.8,v 1.13 1998/06/23 11:42:32 deraadt Exp $
+.\"	$OpenBSD: routed.8,v 1.14 1998/08/29 21:11:09 deraadt Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -72,7 +72,7 @@ If the host is a router,
 .Nm
 periodically supplies copies
 of its routing tables to any directly connected hosts and networks.
-It also advertise or solicits default routes using Router Discovery
+It also advertises or solicits default routes using Router Discovery
 ICMP messages.
 .Pp
 When started (or when a network interface is later turned on),
@@ -86,7 +86,7 @@ Soon after being first started, and provided there is at least one
 interface on which RIP has not been disabled,
 .Nm
 deletes all pre-existing
-non-static routes in kernel table.
+non-static routes in the kernel table.
 Static routes in the kernel table are preserved and
 included in RIP responses if they have a valid RIP metric
 (see
@@ -224,7 +224,7 @@ See the
 facility described below to support "legacy" systems
 that can handle neither RIPv2 nor Router Discovery.
 .Pp
-By default, neither Router Discovery advertisements nor solicications
+By default, neither Router Discovery advertisements nor solicitations
 are sent over point to point links (e.g. PPP).
 
 .Pp
@@ -257,7 +257,7 @@ A better choice is
 on the command line or
 .Cm pm_rdisc in the
 .Pa /etc/gateways
-file.
+file,
 since a larger metric
 will be used, reducing the spread of the potentially dangerous
 default route.
@@ -265,7 +265,7 @@ This is typically used on a gateway to the Internet,
 or on a gateway that uses another routing protocol whose routes
 are not reported to other local routers.
 Notice that because a metric of 1 is used, this feature is
-dangerous.  It is more commonly accidently used to create chaos with routing
+dangerous.  It is more commonly accidentally used to create chaos with routing
 loop than to solve problems.
 .It Fl h
 This causes host or point-to-point routes to not be advertised,
@@ -400,7 +400,7 @@ are also passive, but are not placed in the kernel
 routing table nor are they included in routing updates.
 The function of external entries is to indicate
 that another routing process
-will install such a route if ncessary,
+will install such a route if necessary,
 and that alternate routes to that destination should not be installed
 by
 .Nm routed .
@@ -447,7 +447,7 @@ specified in "dot" notation (see
 or
 .Pa /etc/hosts ,
 or
-.Xr named 8 ,
+.Xr named 8 
 must have been started before
 .Nm routed Ns .)
 .Pp
@@ -526,7 +526,7 @@ or
 .Fl s
 causes
 .Nm routed
-to act as a client router discovery daemon, not adveritising.
+to act as a client router discovery daemon, not advertising.
 .It Cm no_ripv1_in
 causes RIPv1 received responses to be ignored.
 .It Cm no_ripv2_in
@@ -543,11 +543,11 @@ specifies that Router Discovery solicitations should be sent,
 even on point-to-point links,
 which by default only listen to Router Discovery messages.
 .It Cm no_rdisc_adv
-disables the transmission of Router Discovery Advertisements
+disables the transmission of Router Discovery Advertisements.
 .It Cm rdisc_adv
 specifies that Router Discovery advertisements should be sent,
 even on point-to-point links,
-which by default only listen to Router Discovery messages
+which by default only listen to Router Discovery messages.
 .It Cm bcast_rdisc
 specifies that Router Discovery packets should be broadcast instead of
 multicast.
@@ -560,7 +560,7 @@ are transmitted to N seconds and their lifetime to 3*N.
 .It Cm fake_default Ns \&= Ns Ar metric
 has an identical effect to
 .Fl F Ar net[/mask][,metric]
-with the network and mask coming from the sepcified interface.
+with the network and mask coming from the specified interface.
 .It Cm pm_rdisc
 is similar to
 .Cm fake_default .

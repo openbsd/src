@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 1997/06/29 10:41:29 provos Exp $
+#	$OpenBSD: Makefile,v 1.3 1998/08/29 21:12:17 deraadt Exp $
 
 LIB=	des
 SRCS=	cbc_cksm.c cbc_enc.c cbc3_enc.c cfb_enc.c cfb64ede.c cfb64enc.c \
@@ -34,7 +34,7 @@ MAN=	des_crypt.3
 MLINKS+=des_crypt.3 des_read_password.3 des_crypt.3 des_read_2password.3 \
 	des_crypt.3 des_string_to_key.3 des_crypt.3 des_string_to_2key.3 \
 	des_crypt.3 des_read_pw_string.3 des_crypt.3 des_random_key.3 \
-	des_crypt.3 des_set_key.3 \
+	des_crypt.3 des_set_key.3 des_crypt.3 des_key_sched.3 \
 	des_crypt.3 des_ecb_encrypt.3 des_crypt.3 des_3ecb_encrypt.3 \
 	des_crypt.3 des_cbc_encrypt.3 des_crypt.3 des_3cbc_encrypt.3 \
 	des_crypt.3 des_pcbc_encrypt.3 des_crypt.3 des_cfb_encrypt.3 \

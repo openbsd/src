@@ -1,4 +1,4 @@
-.\"	$OpenBSD: adduser.8,v 1.2 1997/05/29 04:26:55 gene Exp $
+.\"	$OpenBSD: adduser.8,v 1.3 1998/08/29 21:11:15 deraadt Exp $
 .\"
 .\" Copyright (c) 1995-1996 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" All rights reserved.
@@ -46,9 +46,8 @@
 .Nm Adduser 
 is a simple program for adding new users. Adduser first performs consistency
 checks on the passwd, group, and shell databases. It creates passwd/group
-entries, a HOME-directory, and dotfiles for a new user, and sends
-him or her a welcome message at the discretion of the person creating
-the account.
+entries, a HOME-directory, dotfiles for a new user, and sends him or her a
+welcome message at the discretion of the person creating the account.
 
 .Sh RESTRICTIONS
 .Bl -tag -width Ds -compact
@@ -71,20 +70,20 @@ you can define an alias in
 .It Sy fullname
 This should contain the user's firstname and surname.  The 
 .Ql Pa \:
-is not permitted..
+is not permitted.
 .It Sy shell
 Only valid entries from the 
 .Xr shells 5
 database or entries corresponding to sliplogin and pppd are permitted.
 .It Sy uid
-This value is automatically generated or assigend at the invoker's 
+This value is automatically generated or assigned at the invoker's 
 discretion; however, it must be less than 32000.
 .It Sy gid/login group
 This value is generated automatically, but it can be specified at the
 discretion of the person invoking the program. 
 .It Sy password
 If not empty, the password is encrypted according to 
-.Xr passwd.conf 5
+.Xr passwd.conf 5 .
 If empty, the account will be automatically disabled to prevent spurious
 access to it.
 .
@@ -123,7 +122,7 @@ straightforward.
 .Sh OPTIONS
 .Bl -tag -width Ds
 .It Sy -batch username [group[,group]...] [fullname] [password]
-Enter batch mode in which multiple users are specified on the command line
+Enter batch mode in which multiple users are specified on the command-line
 in a compact format.
 
 .It Sy -check_only
@@ -162,7 +161,7 @@ means that the username is to be used as the login group.
 Print a summary of options and exit.
 
 .It Sy -home Ar partition
-Specify the default home partition where all users home directories
+Specify the default home partition where all users' home directories
 are to be located.
 
 .It Sy -message Ar file
@@ -189,7 +188,7 @@ Use uid's from
 up when automatically generating uid's.
 
 .It Sy -verbose,-v
-Causes the program to print many warnings and question.
+Causes the program to print many warnings and questions.
 This option is recommended for novice users.
 
 .\" .Sh FORMAT
