@@ -918,7 +918,8 @@ parseopts(root)
     char path[PATH_MAX];
     int save_errno;
     char buf[1024];
-    char *p;
+    const char *p;
+    char *q;
     FILE *fp;
 
     if (root == NULL) {
@@ -939,9 +940,9 @@ parseopts(root)
 	while (fgets(buf, sizeof buf, fp) != NULL) {
 	    if (buf[0] == '#')
 		continue;
-	    p = strrchr(buf, '\n');
-	    if (p)
-		*p = '\0';
+	    q = strrchr(buf, '\n');
+	    if (q)
+		*q = '\0';
 
 	    if (!strncmp(buf, "tag=", 4)) {
 		char *RCS_citag = strdup(buf+4);
