@@ -1,4 +1,4 @@
-.\"	$OpenBSD: altq.9,v 1.6 2001/07/13 05:00:14 kjc Exp $
+.\"	$OpenBSD: altq.9,v 1.7 2002/05/31 09:52:58 kjc Exp $
 .\"
 .\" Copyright (C) 2001
 .\" Sony Computer Science Laboratories Inc.  All rights reserved.
@@ -62,7 +62,7 @@ The
 .Nm
 system is a framework to manage queueing disciplines on network
 interfaces.
-.Nm 
+.Nm
 introduces new macros to manipulate output queues.
 The output queue macros are used to abstract queue operations and not to
 touch the internal fields of the output queue structure.
@@ -234,7 +234,7 @@ queue a packet
 drop (and free) a packet if the enqueue operation fails
 .El
 If the enqueue operation fails,
-.Fa error 
+.Fa error
 is set to
 .Dv ENOBUFS .
 .Fa mbuf
@@ -268,7 +268,7 @@ looks as follows:
                                        |                 error);
          IF_DROP(&ifp->if_snd);        |     if (error != 0) {
          splx(s);                      |         splx(s);
-         senderr(ENOBUFS);             |         retuen (error);
+         senderr(ENOBUFS);             |         return (error);
      }                                 |     }
      IF_ENQUEUE(&ifp->if_snd, m);      |
      ifp->if_obytes +=                 |     ifp->if_obytes += len;
