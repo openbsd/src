@@ -1,4 +1,4 @@
-/*	$OpenBSD: ch.c,v 1.9 2000/04/08 19:19:33 csapuntz Exp $	*/
+/*	$OpenBSD: ch.c,v 1.10 2001/03/15 20:08:43 mjacob Exp $	*/
 /*	$NetBSD: ch.c,v 1.26 1997/02/21 22:06:52 thorpej Exp $	*/
 
 /*
@@ -86,7 +86,7 @@ struct ch_softc {
 	/*
 	 * Quirks; see below.
 	 */
-	int		sc_settledelay;	/* delay for settle */
+	int             sc_settledelay; /* delay for settle */
 
 };
 
@@ -170,49 +170,10 @@ chattach(parent, self, aux)
 	printf("\n");
 
 	/*
-	 * Find out our device's quirks.
+	 * Store our our device's quirks.
 	 */
 	ch_get_quirks(sc, sa->sa_inqbuf);
 
-	/*
-	 * Some changers require a long time to settle out, to do
-	 * tape inventory, for instance.
-	 */
-	if (sc->sc_settledelay) {
-		printf("%s: waiting %d seconds for changer to settle...\n",
-		    sc->sc_dev.dv_xname, sc->sc_settledelay);
-		delay(1000000 * sc->sc_settledelay);
-	}
-
-	/*
-	 * Get information about the device.  Note we can't use
-	 * interrupts yet.
-	 */
-	if (ch_get_params(sc, scsi_autoconf))
-		printf("%s: offline\n", sc->sc_dev.dv_xname);
-	else {
-#define PLURAL(c)	(c) == 1 ? "" : "s"
-		printf("%s: %d slot%s, %d drive%s, %d picker%s, %d portal%s\n",
-		    sc->sc_dev.dv_xname,
-		    sc->sc_counts[CHET_ST], PLURAL(sc->sc_counts[CHET_ST]),
-		    sc->sc_counts[CHET_DT], PLURAL(sc->sc_counts[CHET_DT]),
-		    sc->sc_counts[CHET_MT], PLURAL(sc->sc_counts[CHET_MT]),
-		    sc->sc_counts[CHET_IE], PLURAL(sc->sc_counts[CHET_IE]));
-#undef PLURAL
-#ifdef CHANGER_DEBUG
-		printf("%s: move mask: 0x%x 0x%x 0x%x 0x%x\n",
-		    sc->sc_dev.dv_xname,
-		    sc->sc_movemask[CHET_MT], sc->sc_movemask[CHET_ST],
-		    sc->sc_movemask[CHET_IE], sc->sc_movemask[CHET_DT]);
-		printf("%s: exchange mask: 0x%x 0x%x 0x%x 0x%x\n",
-		    sc->sc_dev.dv_xname,
-		    sc->sc_exchangemask[CHET_MT], sc->sc_exchangemask[CHET_ST],
-		    sc->sc_exchangemask[CHET_IE], sc->sc_exchangemask[CHET_DT]);
-#endif /* CHANGER_DEBUG */
-	}
-
-	/* Default the current picker. */
-	sc->sc_picker = sc->sc_firsts[CHET_MT];
 }
 
 int
@@ -222,7 +183,8 @@ chopen(dev, flags, fmt, p)
 	struct proc *p;
 {
 	struct ch_softc *sc;
-	int unit, error = 0;
+	int oldcounts[4];
+	int i, unit, error = 0;
 
 	unit = CHUNIT(dev);
 	if ((unit >= ch_cd.cd_ndevs) ||
@@ -248,10 +210,46 @@ chopen(dev, flags, fmt, p)
 		goto bad;
 
 	/*
-	 * Make sure our parameters are up to date.
+	 * Get information about the device. Save old information
+	 * so we can decide whether to be verbose about new parameters.
 	 */
-	if ((error = ch_get_params(sc, 0)) != 0)
+	for (i = 0; i < 4; i++) {
+		oldcounts[i] = sc->sc_counts[i];
+	}
+	error = ch_get_params(sc, scsi_autoconf);
+	if (error) {
+		printf("%s: offline\n", sc->sc_dev.dv_xname);
 		goto bad;
+	}
+
+	for (i = 0; i < 4; i++) {
+		if (oldcounts[i] != sc->sc_counts[i]) {
+			break;
+		}
+	}
+	if (i < 4) {
+#define PLURAL(c)	(c) == 1 ? "" : "s"
+		printf("%s: %d slot%s, %d drive%s, %d picker%s, %d portal%s\n",
+		    sc->sc_dev.dv_xname,
+		    sc->sc_counts[CHET_ST], PLURAL(sc->sc_counts[CHET_ST]),
+		    sc->sc_counts[CHET_DT], PLURAL(sc->sc_counts[CHET_DT]),
+		    sc->sc_counts[CHET_MT], PLURAL(sc->sc_counts[CHET_MT]),
+		    sc->sc_counts[CHET_IE], PLURAL(sc->sc_counts[CHET_IE]));
+#undef PLURAL
+#ifdef CHANGER_DEBUG
+		printf("%s: move mask: 0x%x 0x%x 0x%x 0x%x\n",
+		    sc->sc_dev.dv_xname,
+		    sc->sc_movemask[CHET_MT], sc->sc_movemask[CHET_ST],
+		    sc->sc_movemask[CHET_IE], sc->sc_movemask[CHET_DT]);
+		printf("%s: exchange mask: 0x%x 0x%x 0x%x 0x%x\n",
+		    sc->sc_dev.dv_xname,
+		    sc->sc_exchangemask[CHET_MT], sc->sc_exchangemask[CHET_ST],
+		    sc->sc_exchangemask[CHET_IE], sc->sc_exchangemask[CHET_DT]);
+#endif /* CHANGER_DEBUG */
+	}
+
+	/* Default the current picker. */
+	sc->sc_picker = sc->sc_firsts[CHET_MT];
 
 	return (0);
 
