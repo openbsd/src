@@ -1,4 +1,4 @@
-/*	$OpenBSD: mtd8xx.c,v 1.4 2004/05/26 19:56:31 brad Exp $	*/
+/*	$OpenBSD: mtd8xx.c,v 1.5 2004/06/05 20:25:15 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2003 Oleg Safiullin <form@pdp11.org.ru>
@@ -323,6 +323,7 @@ mtd_setmulti(struct mtd_softc *sc)
 	struct ether_multi *enm;
 	int mcnt = 0;
 
+allmulti:
 	rxfilt = CSR_READ_4(MTD_TCRRCR) & ~RCR_AM;
 	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
 		rxfilt |= RCR_AM;
@@ -339,6 +340,10 @@ mtd_setmulti(struct mtd_softc *sc)
 	/* Now program new ones. */
 	ETHER_FIRST_MULTI(step, &sc->sc_arpcom, enm);
 	while (enm != NULL) {
+		if (bcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto allmulti;
+		}
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
 		hash[crc >> 5] |= 1 << (crc & 0xf);
 		++mcnt;
