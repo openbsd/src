@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.17 1998/08/14 21:39:24 deraadt Exp $	*/
+/*	$OpenBSD: fts.c,v 1.18 1998/08/15 08:10:15 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.17 1998/08/14 21:39:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.18 1998/08/15 08:10:15 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -998,10 +998,10 @@ fts_palloc(sp, more)
 		if (sp->fts_path)
 			free(sp->fts_path);
 		sp->fts_path = NULL;
-		return (0);
+		return (1);
 	}
 	sp->fts_path = p;
-	return (1);
+	return (0);
 }
 
 /*
