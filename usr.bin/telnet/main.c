@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.2 1996/03/27 19:33:03 niklas Exp $	*/
+/*	$OpenBSD: main.c,v 1.3 1996/07/03 14:01:56 niklas Exp $	*/
 /*	$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 static char sccsid[] = "@(#)main.c	8.3 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: main.c,v 1.5 1996/02/28 21:04:05 thorpej Exp $";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.2 1996/03/27 19:33:03 niklas Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.3 1996/07/03 14:01:56 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,10 +90,10 @@ usage()
 	    prompt,
 #ifdef	AUTHENTICATION
 	    "[-8] [-E] [-K] [-L] [-S tos] [-X atype] [-a] [-c] [-d] [-e char]",
-	    "\n\t[-k realm] [-l user] [-f/-F] [-n tracefile] ",
+	    "\n\t[-k realm] [-l user] [-f/-F] [-n tracefile] [-b hostalias ]",
 #else
 	    "[-8] [-E] [-L] [-S tos] [-a] [-c] [-d] [-e char] [-l user]",
-	    "\n\t[-n tracefile]",
+	    "\n\t[-n tracefile] [-b hostalias ]",
 #endif
 #if defined(TN3270) && defined(unix)
 # ifdef AUTHENTICATION
@@ -121,7 +121,7 @@ main(argc, argv)
 	extern char *optarg;
 	extern int optind;
 	int ch;
-	char *user, *strrchr();
+	char *user, *alias, *strrchr();
 #ifdef	FORWARD
 	extern int forward_flags;
 #endif	/* FORWARD */
@@ -138,12 +138,12 @@ main(argc, argv)
 	else
 		prompt = argv[0];
 
-	user = NULL;
+	user = alias = NULL;
 
 	rlogin = (strncmp(prompt, "rlog", 4) == 0) ? '~' : _POSIX_VDISABLE;
 	autologin = -1;
 
-	while ((ch = getopt(argc, argv, "8EKLS:X:acde:fFk:l:n:rt:x")) != EOF) {
+	while ((ch = getopt(argc, argv, "8EKLS:X:ab:cde:fFk:l:n:rt:x")) != EOF) {
 		switch(ch) {
 		case '8':
 			eight = 3;	/* binary output and input */
@@ -241,6 +241,9 @@ main(argc, argv)
 			autologin = 1;
 			user = optarg;
 			break;
+		case 'b':
+			alias = optarg;
+			break;
 		case 'n':
 #if defined(TN3270) && defined(unix)
 			/* distinguish between "-n oasynch" and "-noasynch" */
@@ -296,6 +299,10 @@ main(argc, argv)
 		if (user) {
 			*argp++ = "-l";
 			*argp++ = user;
+		}
+		if (alias) {
+			*argp++ = "-b";
+			*argp++ = alias;
 		}
 		*argp++ = argv[0];		/* host */
 		if (argc > 1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.4 1996/04/21 23:44:11 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.5 1996/07/03 14:01:55 niklas Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 static char sccsid[] = "@(#)commands.c	8.4 (Berkeley) 5/30/95";
 static char rcsid[] = "$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $";
 #else
-static char rcsid[] = "$OpenBSD: commands.c,v 1.4 1996/04/21 23:44:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: commands.c,v 1.5 1996/07/03 14:01:55 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -2084,8 +2084,9 @@ tn(argc, argv)
     int argc;
     char *argv[];
 {
-    register struct hostent *host = 0;
+    register struct hostent *host = 0, *alias = 0;
     struct sockaddr_in sin;
+    struct sockaddr_in ladr;
     struct servent *sp = 0;
     unsigned long temp;
     extern char *inet_ntoa();
@@ -2093,7 +2094,7 @@ tn(argc, argv)
     char *srp = 0, *strrchr();
     unsigned long sourceroute(), srlen;
 #endif
-    char *cmd, *hostp = 0, *portp = 0, *user = 0;
+    char *cmd, *hostp = 0, *portp = 0, *user = 0, *aliasp = 0;
 
     /* clear the socket address prior to use */
     memset((char *)&sin, 0, sizeof(sin));
@@ -2121,6 +2122,14 @@ tn(argc, argv)
 	    if (argc == 0)
 		goto usage;
 	    user = *argv++;
+	    --argc;
+	    continue;
+	}
+	if (strcmp(*argv, "-b") == 0) {
+	    --argc; ++argv;
+	    if (argc == 0)
+		goto usage;
+	    aliasp = *argv++;
 	    --argc;
 	    continue;
 	}
@@ -2242,7 +2251,38 @@ tn(argc, argv)
 	    perror("telnet: socket");
 	    return 0;
 	}
-#if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
+	if (aliasp) {
+	    memset ((caddr_t)&ladr, 0, sizeof (ladr));
+	    temp = inet_addr(aliasp);
+	    if (temp != INADDR_NONE) {
+	        ladr.sin_addr.s_addr = temp;
+	        ladr.sin_family = AF_INET;
+	        alias = gethostbyaddr((char *)&temp, sizeof(temp), AF_INET);
+	    } else {
+	        alias = gethostbyname(aliasp);
+	        if (alias) {
+		    ladr.sin_family = alias->h_addrtype;
+#if	defined(h_addr)		/* In 4.3, this is a #define */
+		    memmove((caddr_t)&ladr.sin_addr,
+			alias->h_addr_list[0], alias->h_length);
+#else	/* defined(h_addr) */
+		    memmove((caddr_t)&ladr.sin_addr, alias->h_addr,
+			alias->h_length);
+#endif	/* defined(h_addr) */
+	        } else {
+		    herror(aliasp);
+		    return 0;
+	        }
+	    }
+            ladr.sin_port = htons(0);
+  
+            if (bind (net, (struct sockaddr *)&ladr, sizeof(ladr)) < 0) {
+                perror(aliasp);; 
+                (void) close(net);   /* dump descriptor */
+		return 0;
+            }
+        }
+ #if	defined(IP_OPTIONS) && defined(IPPROTO_IP)
 	if (srp && setsockopt(net, IPPROTO_IP, IP_OPTIONS, (char *)srp, srlen) < 0)
 		perror("setsockopt (IP_OPTIONS)");
 #endif
