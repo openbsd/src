@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.26 2001/10/04 10:28:20 wilfried Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.27 2002/02/08 00:56:41 deraadt Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -194,10 +194,11 @@ The literal string
 .Dq rtsol
 if the interface is to be configured using
 IPv6 stateless address autoconfiguration.
-This should be used on single interface host only,
-as IPv6 specifications are silent about the behavior on multi-interface case.
-Also note that the kernel must be configured to accept
-IPv6 router advertisement, and configured as host (non-router).
+This should be used on single interface hosts only,
+since the IPv6 specifications are silent about the
+behavior on multi-interface hosts.
+Also note that the kernel must be configured to accept IPv6
+router advertisement, and configured as a host (ie. non-router).
 Add the following lines into
 .Xr sysctl.conf 5 :
 .Bd -literal -offset xxxx
