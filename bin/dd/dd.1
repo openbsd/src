@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dd.1,v 1.9 1999/08/16 18:40:02 aaron Exp $
+.\"	$OpenBSD: dd.1,v 1.10 1999/09/23 10:29:09 aaron Exp $
 .\"	$NetBSD: dd.1,v 1.5 1995/03/21 09:04:04 cgd Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -49,7 +49,8 @@
 .Sh DESCRIPTION
 The
 .Nm
-utility copies the standard input to the standard output.
+utility copies the standard input to the standard output, applying any
+specified conversions.
 Input data is read and written in 512-byte blocks.
 If input reads are short, input from multiple reads are aggregated
 to form the output block.
@@ -60,48 +61,10 @@ and truncated input records to the standard error output.
 .Pp
 The following operands are available:
 .Bl -tag -width of=file
-.It Cm bs= Ns Ar n
-Set both input and output block size to
-.Va n
-bytes, superseding the
-.Cm ibs
-and
-.Cm obs
-operands.
-If no conversion values other than
-.Cm noerror ,
-.Cm notrunc
-or
-.Cm sync
-are specified, then each input block is copied to the output as a
-single block without any aggregation of short blocks.
-.It Cm cbs= Ns Ar n
-Set the conversion record size to
-.Va n
-bytes.
-The conversion record size is required by the record oriented conversion
-values.
-.It Cm count= Ns Ar n
-Copy only
-.Va n
-input blocks.
-.It Cm files= Ns Ar n
-Copy
-.Va n
-input files before terminating.
-This operand is only applicable when the input device is a tape.
-.It Cm ibs= Ns Ar n
-Set the input block size to
-.Va n
-bytes instead of the default 512.
 .It Cm if= Ns Ar file
 Read input from
 .Ar file
 instead of the standard input.
-.It Cm obs= Ns Ar n
-Set the output block size to
-.Va n
-bytes instead of the default 512.
 .It Cm of= Ns Ar file
 Write output to
 .Ar file
@@ -113,9 +76,47 @@ If an initial portion of the output file is skipped (see the
 .Cm seek
 operand),
 the output file is truncated at that point.
+.It Cm ibs= Ns Ar n
+Set the input block size to
+.Ar n
+bytes instead of the default 512.
+.It Cm obs= Ns Ar n
+Set the output block size to
+.Ar n
+bytes instead of the default 512.
+.It Cm bs= Ns Ar n
+Set both the input and output block size to
+.Ar n
+bytes, superseding the
+.Cm ibs
+and
+.Cm obs
+operands.
+If no conversion values other than
+.Cm noerror ,
+.Cm notrunc ,
+or
+.Cm sync
+are specified, then each input block is copied to the output as a
+single block without any aggregation of short blocks.
+.It Cm cbs= Ns Ar n
+Set the conversion record size to
+.Ar n
+bytes.
+The conversion record size is required by the record oriented conversion
+values.
+.It Cm count= Ns Ar n
+Copy only
+.Ar n
+input blocks.
+.It Cm files= Ns Ar n
+Copy
+.Ar n
+input files before terminating.
+This operand is only applicable when the input device is a tape.
 .It Cm seek= Ns Ar n
 Seek
-.Va n
+.Ar n
 blocks from the beginning of the output before copying.
 On non-tape devices, an
 .Xr lseek 2
@@ -131,7 +132,7 @@ end of file to the specified offset is filled with blocks of
 bytes.
 .It Cm skip= Ns Ar n
 Skip
-.Va n
+.Ar n
 blocks from the beginning of the input before copying.
 On input which supports seeks, an
 .Xr lseek 2
@@ -141,11 +142,13 @@ For pipes, the correct number of bytes is read.
 For all other devices, the correct number of blocks is read without
 distinguishing between a partial or complete block being read.
 .It Xo
-.Cm conv=
-.Ns Cm value Ns Op \&, Cm value \&...
+.Sm off
+.Cm conv= Ar value Oo ,
+.Sm on
+.Ar value ... Oc
 .Xc
 Where
-.Cm value
+.Ar value
 is one of the symbols from the following list.
 .Bl -tag -width unblock
 .It Cm ascii , oldascii
@@ -281,11 +284,11 @@ Where sizes are specified, a decimal number of bytes is expected.
 If the number ends with a
 .Sq b ,
 .Sq k ,
-.Sq m
+.Sq m ,
 or
 .Sq w ,
 the number
-is multiplied by 512, 1024 (1K), 1048576 (1M) or the number of bytes
+is multiplied by 512, 1024 (1K), 1048576 (1M), or the number of bytes
 in an integer, respectively.
 Two or more numbers may be separated by an
 .Sq x
@@ -294,7 +297,7 @@ to indicate a product.
 When finished,
 .Nm
 displays the number of complete and partial input and output blocks,
-truncated input records and odd-length byte-swapping blocks to the
+truncated input records, and odd-length byte-swapping blocks to the
 standard error output.
 A partial input block is one where less than the input block size
 was read.
@@ -355,7 +358,7 @@ operand and the
 .Cm ebcdic ,
 .Cm ibm ,
 .Cm oldascii ,
-.Cm oldebcdic
+.Cm oldebcdic ,
 and
 .Cm oldibm
 values are extensions to the
