@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.32 1999/07/17 22:11:15 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.33 1999/08/16 19:06:15 art Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -815,20 +815,20 @@ dointr()
 	while (evptr) {
 		if (kvm_read(kd, (long)evptr, (void *)&evcnt,
 		    sizeof evcnt) != sizeof evcnt) {
-			(void)fprintf(stderr, "vmstat: event chain trashed\n",
+			(void)fprintf(stderr, "vmstat: event chain trashed: %s\n",
 			    kvm_geterr(kd));
 			exit(1);
 		}
 		if (strcmp(evcnt.ev_name, "intr") == 0) {
 			if (kvm_read(kd, (long)evcnt.ev_dev, (void *)&dev,
 			    sizeof dev) != sizeof dev) {
-				(void)fprintf(stderr, "vmstat: event chain trashed\n",
+				(void)fprintf(stderr, "vmstat: event chain trashed: %s\n",
 				    kvm_geterr(kd));
 				exit(1);
 			}
 			if (evcnt.ev_count)
-				(void)printf("%-14s %12ld %8ld\n", dev.dv_xname,
-				    evcnt.ev_count, evcnt.ev_count / uptime);
+				(void)printf("%-14s %12d %8ld\n", dev.dv_xname,
+				    evcnt.ev_count, (long)(evcnt.ev_count / uptime));
 			inttotal += evcnt.ev_count++;
 		}
 		evptr = evcnt.ev_list.tqe_next;
