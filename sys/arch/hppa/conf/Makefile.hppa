@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.hppa,v 1.21 2003/07/22 19:39:50 otto Exp $
+#	$OpenBSD: Makefile.hppa,v 1.22 2003/10/31 01:58:57 mickey Exp $
 
 # Makefile for OpenBSD
 #
@@ -43,7 +43,7 @@ CMACHFLAGS=	-mfast-indirect-calls -mportable-runtime -mno-space-regs \
 COPTS?=		-Os
 CFLAGS=		${DEBUG} ${COPTS} ${CWARNFLAGS} ${CMACHFLAGS} ${PIPE}
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
-LINKFLAGS=	-X -T ${HPPA}/conf/ld.script -Ttext 80000 -Map bsd.map
+LINKFLAGS=	-X -T ${HPPA}/conf/ld.script -Ttext 80000 --warn-common
 STRIPFLAGS=	-g -x
 
 .if ${IDENT:M-DDDB} != ""
