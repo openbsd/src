@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap.h,v 1.10 2003/05/12 21:02:10 tedu Exp $ */
+/*	$OpenBSD: umap.h,v 1.11 2003/05/12 23:39:14 tedu Exp $ */
 /*	$NetBSD: umap.h,v 1.9 1999/07/08 01:19:06 wrstuden Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ struct umap_args {
 #define	umap_export	la.export
 	int 		unentries;       /* # of entries in user map array */
 	int 		gnentries;	/* # of entries in group map array */
-	u_long 		(*mapdata)[2];	/* pointer to array of user mappings */
+	u_long 		(*umapdata)[2];	/* pointer to array of user mappings */
 	u_long 		(*gmapdata)[2];	/* pointer to array of group mappings */
 };
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vnops.c,v 1.16 2003/05/12 21:02:10 tedu Exp $ */
+/*	$OpenBSD: umap_vnops.c,v 1.17 2003/05/12 23:39:14 tedu Exp $ */
 /*	$NetBSD: umap_vnops.c,v 1.22 2002/01/04 07:19:34 chs Exp $	*/
 
 /*
@@ -416,7 +416,7 @@ umap_getattr(v)
 	uid_t uid;
 	gid_t gid;
 	int error, tmpid, unentries, gnentries, flags;
-	u_long (*mapdata)[2];
+	u_long (*umapdata)[2];
 	u_long (*gmapdata)[2];
 	struct vnode **vp1p;
 	const struct vnodeop_desc *descp = ap->a_desc;
@@ -448,14 +448,14 @@ umap_getattr(v)
 
 	vp1p = VOPARG_OFFSETTO(struct vnode**, descp->vdesc_vp_offsets[0], ap);
 	unentries =  MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_unentries;
-	mapdata =  (MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_umapdata);
+	umapdata =  (MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_umapdata);
 	gnentries =  MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_gnentries;
 	gmapdata =  (MOUNTTOUMAPMOUNT((*vp1p)->v_mount)->info_gmapdata);
 
 	/* Reverse map the uid for the vnode.  Since it's a reverse
 		map, we can't use umap_mapids() to do it. */
 
-	tmpid = umap_reverse_findid(uid, mapdata, unentries);
+	tmpid = umap_reverse_findid(uid, umapdata, unentries);
 
 	if (tmpid != -1) {
 		ap->a_vap->va_uid = (uid_t) tmpid;

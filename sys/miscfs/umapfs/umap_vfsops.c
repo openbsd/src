@@ -1,4 +1,4 @@
-/*	$OpenBSD: umap_vfsops.c,v 1.20 2003/05/12 21:02:10 tedu Exp $	*/
+/*	$OpenBSD: umap_vfsops.c,v 1.21 2003/05/12 23:39:14 tedu Exp $	*/
 /*	$NetBSD: umap_vfsops.c,v 1.35 2002/09/21 18:09:31 christos Exp $	*/
 
 /*
@@ -164,7 +164,7 @@ umapfs_mount(mp, path, data, ndp, p)
 
 	amp->info_unentries = args.unentries;
 	amp->info_gnentries = args.gnentries;
-	error = copyin(args.mapdata, (caddr_t)amp->info_umapdata, 
+	error = copyin(args.umapdata, (caddr_t)amp->info_umapdata, 
 	    2*sizeof(u_long)*args.unentries);
 	if (error) {
 		vput(lowerrootvp);
