@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.77 2001/11/27 18:11:05 mickey Exp $
+$NetBSD: pcmciadevs,v 1.150 2001/11/27 03:25:16 enami Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -411,3 +411,4 @@ product SYNERGY21 S21810	{ "PCMCIA", "Ethernet", "A", "004743118001" }
 product WISECOM T210CT		{ "PCMCIA", "Ethernet&spCard", NULL, NULL }
 product WISECOM IPORT		{ "iPort", "10/100&spEthernet&spCard", NULL, NULL }
 product GEMTEK WLAN		{ "Intersil", "PRISM&sp2_5&spPCMCIA&spADAPTER", "ISL37300P", "Eval-RevA" }
+product SIMPLETECH SPECTRUM24_ALT	{ "Symbol&spTechnologies", "LA4111&spSpectrum24&spWireless&spLAN&spPC&spCard", NULL, NULL }
