@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_yp.c,v 1.16 2002/06/27 19:02:40 deraadt Exp $	*/
+/*	$OpenBSD: pw_yp.c,v 1.17 2003/04/17 07:37:04 pvalchev Exp $	*/
 /*	$NetBSD: pw_yp.c,v 1.5 1995/03/26 04:55:33 glass Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)pw_yp.c	1.0 2/2/93";
 #else
-static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.16 2002/06/27 19:02:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: pw_yp.c,v 1.17 2003/04/17 07:37:04 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -66,7 +66,7 @@ static char *domain;
 int
 pw_yp(struct passwd *pw, uid_t uid)
 {
-	char buf[10], *master, *p;
+	char buf[11], *master, *p;
 	int r, rpcport, status, alen;
 	struct yppasswd yppasswd;
 	struct timeval tv;
