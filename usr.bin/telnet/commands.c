@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.37 2001/07/12 05:17:22 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.38 2001/09/03 05:28:51 itojun Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2370,10 +2370,12 @@ tn(argc, argv)
 	hints.ai_flags = AI_CANONNAME;
 	if (portp == NULL) {
 	    portp = "telnet";
+	    telnetport = 1;
 	} else if (*portp == '-') {
 	    portp++;
 	    telnetport = 1;
-	}
+	} else
+	    telnetport = 0;
 	h_errno = 0;
 	error = getaddrinfo(hostp, portp, &hints, &res0);
 	if (error) {
