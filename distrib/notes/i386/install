@@ -83,7 +83,7 @@ process again from scratch.
 	drives or "sd0" for SCSI drives.  Reply with the name of your
 	disk.
 
-	Next you will have to edit or create a disklabel for the disk
+	Next you will have to edit or create a disk label for the disk
 	OpenBSD is being installed on.  If there are any existing
 	partitions defined (for any operating system), and a disk label
 	is not found, you will first be given an opportunity to run
@@ -97,16 +97,19 @@ process again from scratch.
 	correct this.  Note that you should make OpenBSD be the active
 	partition at least until the install has been completed.
 
-	Next the disk label which defines the layout of the OpenBSD file
-	systems must be set up.  The installation script will invoke an
-	editor allowing you to do this.  Note that partition 'c' inside
-	this disk label should ALWAYS reflect the entire disk, including
-	any non-OpenBSD portions.  The root file system should be in
-	partition 'a', and swap is usually in partition 'b'.  If you have
-	DOS or Linux partitions defined on the disk, these will usually
-	show up as partition 'h', 'i' and so on.  It is recommended that
-	you create separate partitions for /usr and /var, and if you have
-	room for it, also for /home.
+	Next the disk label which defines the layout of the OpenBSD
+	file systems must be set up.  The installation script will
+	invoke an interactive editor allowing you to do this.  Note
+	that partition 'c' inside this disk label should ALWAYS
+	reflect the entire disk, including any non-OpenBSD portions.
+	The root file system should be in partition 'a', and swap
+	is usually in partition 'b'.  If you have DOS or Linux
+	partitions defined on the disk, these will usually show up
+	as partition 'h', 'i' and so on.  It is recommended that
+	you create separate partitions for /usr and /var, and if
+	you have room for it, one for /home.  For help in the
+	diskl label editor, enter '?' or 'M' to view the manual
+	page (see the info on the ``-E'' flag).
 
 	Note that all OpenBSD partitions in the disk label must have an
 	offset that makes it start within the OpenBSD part of the disk,
