@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.5 1996/05/16 02:55:36 chuck Exp $ */
+/*	$OpenBSD: boot.c,v 1.6 1997/04/22 16:01:21 gvf Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -82,7 +82,7 @@ char	line[80];
 main()
 {
 	char *cp, *file;
-	int ask = 0, howto;
+	int ask = 0, howto, ret;
 
 	printf(">> OpenBSD MVME%x netboot [%s]\n", bugargs.cputyp, version);
 	/* cycle in the correct args */
@@ -90,7 +90,7 @@ main()
 	bugargs.arg_end   = bugargs.nbarg_end;
 	*bugargs.arg_end = 0; /* ensure */
 
-	parse_args(&file, &howto);
+	ret = parse_args(&file, &howto);
 
 	for (;;) {
 		if (ask) {
@@ -102,8 +102,12 @@ main()
 				while (cp < (line + sizeof(line) - 1) && *cp) 
 					cp++;
 				bugargs.arg_end = cp;
-				parse_args(&file, &howto);
+				ret =parse_args(&file, &howto);
 			}
+		}
+		if (ret) {
+			printf("boot: -q returning to MVME-Bug\n");
+			break;
 		}
 		exec_mvme(file, howto);
 		printf("boot: %s: %s\n", file, strerror(errno));

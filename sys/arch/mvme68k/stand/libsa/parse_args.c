@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse_args.c,v 1.3 1997/04/17 19:16:42 gvf Exp $ */
+/*	$OpenBSD: parse_args.c,v 1.4 1997/04/22 16:01:20 gvf Exp $ */
 
 /*-
  * Copyright (c) 1995 Theo de Raadt
@@ -73,7 +73,7 @@ int *flagp;
 			while (c == ' ')
 				c = *++ptr;
 			if (c == '\0')
-				return;
+				return (0);
 			if (c != '-') {
 				name = ptr;
 				while ((c = *++ptr) && c != ' ')
@@ -84,7 +84,7 @@ int *flagp;
 			}
 			while ((c = *++ptr) && c != ' ') {
 				if (c == 'q')
-					return (-1);
+					return (1);
 				for (i = 0; i < sizeof(bf)/sizeof(bf[0]); i++)
 					if (bf[i].c == c) {
 						howto |= bf[i].bit;
