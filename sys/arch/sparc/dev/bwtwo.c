@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.15 1998/11/20 15:57:21 deraadt Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.16 1999/12/08 01:35:44 jason Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -515,7 +515,7 @@ bwtwo_set_video(sc, enable)
 #endif
 
 	if (enable)
-		sc->sc_reg->fbc_ctrl |= FBC_VENAB;
+		sc->sc_reg->fbc_ctrl |= FBC_VENAB | FBC_TIMING;
 	else
 		sc->sc_reg->fbc_ctrl &= ~FBC_VENAB;
 }
