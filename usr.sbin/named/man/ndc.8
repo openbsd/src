@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ndc.8,v 1.5 2000/04/17 02:32:49 aaron Exp $
+.\"	$OpenBSD: ndc.8,v 1.6 2000/08/18 22:12:44 brad Exp $
 .\" Copyright (c) 1994
 .\"    The Regents of the University of California.  All rights reserved.
 .\"
@@ -53,7 +53,7 @@ as shown by
 Causes
 .B named
 to dump its database and cache to
-.B /etc/namedb/tmp/named_dump.db
+.B /var/named/namedb/named_dump.db
 (uses the INT signal).
 .TP
 .B reload
@@ -66,7 +66,7 @@ and to reload those that have changed (uses the HUP signal).
 Causes
 .B named
 to dump its statistics to
-.B /etc/namedb/tmp/named.stats
+.B /var/named/namedb/named.stats
 (uses the IOT or ABRT signal).
 .TP
 .B trace
@@ -74,7 +74,7 @@ Causes
 .B named
 to increment its ``tracing level'' by one.  Whenever the tracing level
 is nonzero, trace information will be written to
-.BR /etc/namedb/tmp/named.run .
+.BR /var/named/namedb/named.run .
 Higher tracing levels result in more detailed information
 (uses the USR1 signal).
 .TP
@@ -82,7 +82,7 @@ Higher tracing levels result in more detailed information
 Causes
 .B named
 to set its ``tracing level'' to zero, closing
-.B /etc/namedb/tmp/named.run
+.B /var/named/namedb/named.run
 if it is open (uses the USR2 signal).
 .TP
 .B querylog
