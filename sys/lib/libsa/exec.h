@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec.h,v 1.1 1998/07/14 03:29:08 mickey Exp $	*/
+/*	$OpenBSD: exec.h,v 1.2 1998/07/14 17:21:44 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -53,7 +53,7 @@ union x_header {
 	struct exec		x_aout;
 #endif
 #ifdef	EXEC_ECOFF
-	struct ecoff_filehdr	x_ecoff;
+	struct ecoff_exechdr	x_ecoff;
 #endif
 #ifdef	EXEC_ELF
 	struct elfhdr		x_elf;
