@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.13 2001/02/20 19:39:44 mickey Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.14 2001/03/25 06:34:51 csapuntz Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -723,21 +723,21 @@ vr_attach(parent, self, aux)
 	if (bus_dmamem_alloc(sc->sc_dmat, sizeof(struct vr_list_data),
 	    PAGE_SIZE, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) {
 		printf("%s: can't alloc list\n", sc->sc_dev.dv_xname);
-		return;
+		goto fail;
 	}
 	if (bus_dmamem_map(sc->sc_dmat, &seg, rseg, sizeof(struct vr_list_data),
 	    &kva, BUS_DMA_NOWAIT)) {
 		printf("%s: can't map dma buffers (%d bytes)\n",
 		    sc->sc_dev.dv_xname, sizeof(struct vr_list_data));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		return;
+		goto fail;
 	}
 	if (bus_dmamap_create(sc->sc_dmat, sizeof(struct vr_list_data), 1,
 	    sizeof(struct vr_list_data), 0, BUS_DMA_NOWAIT, &dmamap)) {
 		printf("%s: can't create dma map\n", sc->sc_dev.dv_xname);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct vr_list_data));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		return;
+		goto fail;
 	}
 	if (bus_dmamap_load(sc->sc_dmat, dmamap, kva,
 	    sizeof(struct vr_list_data), NULL, BUS_DMA_NOWAIT)) {
@@ -745,7 +745,7 @@ vr_attach(parent, self, aux)
 		bus_dmamap_destroy(sc->sc_dmat, dmamap);
 		bus_dmamem_unmap(sc->sc_dmat, kva, sizeof(struct vr_list_data));
 		bus_dmamem_free(sc->sc_dmat, &seg, rseg);
-		return;
+		goto fail;
 	}
 	sc->vr_ldata = (struct vr_list_data *)kva;
 	bzero(sc->vr_ldata, sizeof(struct vr_list_data));
