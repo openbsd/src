@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_kue.c,v 1.6 2000/12/05 21:37:39 deraadt Exp $ */
+/*	$OpenBSD: if_kue.c,v 1.7 2001/01/28 09:43:41 aaron Exp $ */
 /*	$NetBSD: if_kue.c,v 1.28 2000/04/02 21:25:41 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -173,7 +173,7 @@ int	kuedebug = 0;
 /*
  * Various supported device vendors/products.
  */
-Static struct kue_type kue_devs[] = {
+Static const struct kue_type kue_devs[] = {
 	{ USB_VENDOR_AOX, USB_PRODUCT_AOX_USB101 },
 	{ USB_VENDOR_ADS, USB_PRODUCT_ADS_UBS10BT },
 	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC10T },
@@ -307,7 +307,7 @@ kue_ctl(sc, rw, breq, val, data, len)
 	USETW(req.wLength, len);
 
 	s = splusb();
-	err = KUE_DO_REQUEST(sc->kue_udev, &req, data);
+	err = KUE_DO_REQUEST(sc->kue_udev, &req, (void *)data);
 	splx(s);
 
 	return (err);
@@ -365,7 +365,7 @@ kue_load_fw(sc)
 	DPRINTFN(1,("%s: kue_load_fw: download code_seg\n", 
 		    USBDEVNAME(sc->kue_dev)));
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
-	    0, kue_code_seg, sizeof(kue_code_seg));
+	    0, (void *)kue_code_seg, sizeof(kue_code_seg));
 	if (err) {
 		printf("%s: failed to load code segment: %s\n",
 		    USBDEVNAME(sc->kue_dev), usbd_errstr(err));
@@ -376,7 +376,7 @@ kue_load_fw(sc)
 	DPRINTFN(1,("%s: kue_load_fw: download fix_seg\n", 
 		    USBDEVNAME(sc->kue_dev)));
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
-	    0, kue_fix_seg, sizeof(kue_fix_seg));
+	    0, (void *)kue_fix_seg, sizeof(kue_fix_seg));
 	if (err) {
 		printf("%s: failed to load fixup segment: %s\n",
 		    USBDEVNAME(sc->kue_dev), usbd_errstr(err));
@@ -387,7 +387,7 @@ kue_load_fw(sc)
 	DPRINTFN(1,("%s: kue_load_fw: download trig_seg\n", 
 		    USBDEVNAME(sc->kue_dev)));
 	err = kue_ctl(sc, KUE_CTL_WRITE, KUE_CMD_SEND_SCAN,
-	    0, kue_trig_seg, sizeof(kue_trig_seg));
+	    0, (void *)kue_trig_seg, sizeof(kue_trig_seg));
 	if (err) {
 		printf("%s: failed to load trigger segment: %s\n",
 		    USBDEVNAME(sc->kue_dev), usbd_errstr(err));
@@ -515,7 +515,7 @@ kue_reset(sc)
 USB_MATCH(kue)
 {
 	USB_MATCH_START(kue, uaa);
-	struct kue_type			*t;
+	const struct kue_type		*t;
 
 	DPRINTFN(25,("kue_match: enter\n"));
 

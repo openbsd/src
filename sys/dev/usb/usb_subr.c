@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_subr.c,v 1.15 2001/01/27 04:02:10 deraadt Exp $ */
+/*	$OpenBSD: usb_subr.c,v 1.16 2001/01/28 09:43:42 aaron Exp $ */
 /*	$NetBSD: usb_subr.c,v 1.72 2000/04/14 14:13:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
@@ -76,7 +76,8 @@ extern int usbdebug;
 #define DPRINTFN(n,x)
 #endif
 
-Static usbd_status	usbd_set_config(usbd_device_handle, int);
+Static usbd_status usbd_set_config(usbd_device_handle, int);
+Static void usbd_devinfo_vp(usbd_device_handle, char *, char *, int);
 Static char *usbd_get_string(usbd_device_handle, int, char *);
 Static int usbd_getnewaddr(usbd_bus_handle bus);
 #if defined(__NetBSD__)
@@ -114,7 +115,7 @@ struct usb_known_product {
 #include <dev/usb/usbdevs_data.h>
 #endif /* USBVERBOSE */
 
-Static const char *usbd_error_strs[] = {
+Static const char * const usbd_error_strs[] = {
 	"NORMAL_COMPLETION",
 	"IN_PROGRESS",
 	"PENDING_REQUESTS",
@@ -212,14 +213,26 @@ usbd_get_string(usbd_device_handle dev, int si, char *buf)
 	return (buf);
 }
 
+static void
+usbd_trim_trailings_spaces(char *p)
+{
+	char *q;
+
+	if (p == NULL)
+		return;
+	q = p + strlen(p);
+	while (--q >= p && *q == ' ')
+		*q = 0;
+}
+
 void
-usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p)
+usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p, int usedev)
 {
 	usb_device_descriptor_t *udd = &dev->ddesc;
 	char *vendor = 0, *product = 0;
 #ifdef USBVERBOSE
-	struct usb_known_vendor *ukv;
-	struct usb_known_product *ukp;
+	const struct usb_known_vendor *ukv;
+	const struct usb_known_product *ukp;
 #endif
 
 	if (dev == NULL) {
@@ -227,8 +240,15 @@ usbd_devinfo_vp(usbd_device_handle dev, char *v, char *p)
 		return;
 	}
 
-	vendor = usbd_get_string(dev, udd->iManufacturer, v);
-	product = usbd_get_string(dev, udd->iProduct, p);
+	if (usedev) {
+		vendor = usbd_get_string(dev, udd->iManufacturer, v);
+		usbd_trim_trailings_spaces(vendor);
+		product = usbd_get_string(dev, udd->iProduct, p);
+		usbd_trim_trailings_spaces(product);
+	} else {
+		vendor = NULL;
+		product = NULL;
+	}
 #ifdef USBVERBOSE
 	if (vendor == NULL || product == NULL) {
 		for(ukv = usb_known_vendors;
@@ -276,7 +296,7 @@ usbd_devinfo(usbd_device_handle dev, int showclass, char *cp)
 	char product[USB_MAX_STRING_LEN];
 	int bcdDevice, bcdUSB;
 
-	usbd_devinfo_vp(dev, vendor, product);
+	usbd_devinfo_vp(dev, vendor, product, 1);
 	cp += sprintf(cp, "%s%s%s", vendor, *vendor ? " " : "", product);
 	if (showclass)
 		cp += sprintf(cp, ", class %d/%d",
@@ -1157,7 +1177,8 @@ usbd_submatch(struct device *parent, void *match, void *aux)
 #endif
 
 void
-usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di)
+usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di,
+		     int usedev)
 {
 	struct usbd_port *p;
 	int i, err, s;
@@ -1165,7 +1186,7 @@ usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di)
 	di->bus = USBDEVUNIT(dev->bus->bdev);
 	di->addr = dev->address;
 	di->cookie = dev->cookie;
-	usbd_devinfo_vp(dev, di->vendor, di->product);
+	usbd_devinfo_vp(dev, di->vendor, di->product, usedev);
 	usbd_printBCD(di->release, UGETW(dev->ddesc.bcdDevice));
 	di->vendorNo = UGETW(dev->ddesc.idVendor);
 	di->productNo = UGETW(dev->ddesc.idProduct);

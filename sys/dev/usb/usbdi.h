@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.h,v 1.10 2000/11/08 18:10:39 aaron Exp $ */
+/*	$OpenBSD: usbdi.h,v 1.11 2001/01/28 09:43:43 aaron Exp $ */
 /*	$NetBSD: usbdi.h,v 1.44 2000/09/23 21:02:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -153,7 +153,7 @@ usb_device_descriptor_t *usbd_get_device_descriptor(usbd_device_handle dev);
 usbd_status usbd_set_interface(usbd_interface_handle, int);
 int usbd_get_no_alts(usb_config_descriptor_t *, int);
 usbd_status  usbd_get_interface(usbd_interface_handle iface, u_int8_t *aiface);
-void usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di);
+void usbd_fill_deviceinfo(usbd_device_handle dev, struct usb_device_info *di, int);
 int usbd_get_interface_altindex(usbd_interface_handle iface);
 
 usb_interface_descriptor_t *usbd_find_idesc(usb_config_descriptor_t *cd,
@@ -171,7 +171,7 @@ void usbd_add_dev_event(int, usbd_device_handle);
 void usbd_add_drv_event(int, usbd_device_handle, device_ptr_t);
 
 void usbd_devinfo(usbd_device_handle, int, char *);
-struct usbd_quirks *usbd_get_quirks(usbd_device_handle);
+const struct usbd_quirks *usbd_get_quirks(usbd_device_handle);
 usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 			(usbd_interface_handle iface, u_int8_t address);
 

@@ -38,7 +38,7 @@
  */
 
 /*
- * HID spec: http://www.usb.org/developers/data/usbhid10.pdf
+ * HID spec: http://www.usb.org/developers/data/devclass/hid1_1.pdf
  */
 
 #include <sys/param.h>
@@ -77,7 +77,7 @@
 #include "opt_wsdisplay_compat.h"
 #endif
 
-#ifdef USB_DEBUG
+#ifdef UKBD_DEBUG
 #define DPRINTF(x)	if (ukbddebug) logprintf x
 #define DPRINTFN(n,x)	if (ukbddebug>(n)) logprintf x
 int	ukbddebug = 0;
@@ -138,13 +138,13 @@ Static u_int8_t ukbd_trtab[256] = {
 	  22,  47,  17,  45,  21,  44,   2,   3, /* 18 - 1F */
 	   4,   5,   6,   7,   8,   9,  10,  11, /* 20 - 27 */
 	  28,   1,  14,  15,  57,  12,  13,  26, /* 28 - 2F */
-	  27,  43,  NN,  39,  40,  41,  51,  52, /* 30 - 37 */
+	  27,  43,  43,  39,  40,  41,  51,  52, /* 30 - 37 */
 	  53,  58,  59,  60,  61,  62,  63,  64, /* 38 - 3F */
 	  65,  66,  67,  68,  87,  88, 170,  70, /* 40 - 47 */
 	 127, 210, 199, 201, 211, 207, 209, 205, /* 48 - 4F */
 	 203, 208, 200,  69, 181,  55,  74,  78, /* 50 - 57 */
 	 156,  79,  80,  81,  75,  76,  77,  71, /* 58 - 5F */
-          72,  73,  82,  83,  NN, 221,  NN,  NN, /* 60 - 67 */
+          72,  73,  82,  83,  86, 221,  NN,  NN, /* 60 - 67 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 68 - 6F */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 70 - 77 */
           NN,  NN,  NN,  NN,  NN,  NN,  NN,  NN, /* 78 - 7F */
@@ -185,6 +185,10 @@ struct ukbd_softc {
 
 	int sc_console_keyboard;	/* we are the console keyboard */
 
+	char sc_debounce;		/* for quirk handling */
+	struct callout sc_delay;	/* for quirk handling */
+	struct ukbd_data sc_data;	/* for quirk handling */
+
 	int sc_leds;
 
 #if defined(__OpenBSD__)
@@ -211,12 +215,38 @@ struct ukbd_softc {
 	u_char sc_dying;
 };
 
+#ifdef UKBD_DEBUG
+#define UKBDTRACESIZE 64
+struct ukbdtraceinfo {
+	int unit;
+	struct timeval tv;
+	struct ukbd_data ud;
+};
+struct ukbdtraceinfo ukbdtracedata[UKBDTRACESIZE];
+int ukbdtraceindex = 0;
+int ukbdtrace = 0;
+void ukbdtracedump(void);
+void
+ukbdtracedump(void)
+{
+	int i;
+	for (i = 0; i < UKBDTRACESIZE; i++) {
+		struct ukbdtraceinfo *p = 
+		    &ukbdtracedata[(i+ukbdtraceindex)%UKBDTRACESIZE];
+		printf("%lu.%06lu: mod=0x%02x key0=0x%02x key1=0x%02x "
+		       "key2=0x%02x key3=0x%02x\n",
+		       p->tv.tv_sec, p->tv.tv_usec,
+		       p->ud.modifiers, p->ud.keycode[0], p->ud.keycode[1],
+		       p->ud.keycode[2], p->ud.keycode[3]);
+	}
+}
+#endif
+
 #define	UKBDUNIT(dev)	(minor(dev))
 #define	UKBD_CHUNK	128	/* chunk size for read */
 #define	UKBD_BSIZE	1020	/* buffer size */
 
-Static int	ukbd_is_console = 0;
-
+Static int	ukbd_is_console;
 
 Static void	ukbd_cngetc(void *, u_int *, int *);
 Static void	ukbd_cnpollc(void *, int);
@@ -229,6 +259,8 @@ const struct wskbd_consops ukbd_consops = {
 #endif
 
 Static void	ukbd_intr(usbd_xfer_handle, usbd_private_handle, usbd_status);
+Static void	ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud);
+Static void	ukbd_delayed_decode(void *addr);
 
 Static int	ukbd_enable(void *, int);
 Static void	ukbd_set_leds(void *, int);
@@ -279,6 +311,7 @@ USB_ATTACH(ukbd)
 	usb_interface_descriptor_t *id;
 	usb_endpoint_descriptor_t *ed;
 	usbd_status err;
+	u_int32_t qflags;
 	char devinfo[1024];
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct wskbddev_attach_args a;
@@ -317,7 +350,8 @@ USB_ATTACH(ukbd)
 		USB_ATTACH_ERROR_RETURN;
 	}
 
-	if ((usbd_get_quirks(uaa->device)->uq_flags & UQ_NO_SET_PROTO) == 0) {
+	qflags = usbd_get_quirks(uaa->device)->uq_flags;
+	if ((qflags & UQ_NO_SET_PROTO) == 0) {
 		err = usbd_set_protocol(iface, 0);
 		DPRINTFN(5, ("ukbd_attach: protocol set\n"));
 		if (err) {
@@ -326,9 +360,10 @@ USB_ATTACH(ukbd)
 			USB_ATTACH_ERROR_RETURN;
 		}
 	}
+	sc->sc_debounce = (qflags & UQ_SPUR_BUT_UP) != 0;
 
 	/* Ignore if SETIDLE fails since it is not crucial. */
-	usbd_set_idle(iface, 0, 0);
+	(void)usbd_set_idle(iface, 0, 0);
 
 	sc->sc_ep_addr = ed->bEndpointAddress;
 
@@ -358,10 +393,12 @@ USB_ATTACH(ukbd)
 
 #if defined(__OpenBSD__) && defined(WSDISPLAY_COMPAT_RAWKBD)
 	timeout_set(&sc->sc_rawrepeat_ch, ukbd_rawrepeat, sc);
+	timeout_set(&sc->sc_delay, ukbd_delayed_decode, sc);
 #endif
 
 #if defined(__NetBSD__)
 	callout_init(&sc->sc_rawrepeat_ch);
+	callout_init(&sc->sc_delay);
 #endif
 
 	/* Flash the leds; no real purpose, just shows we're alive. */
@@ -483,12 +520,6 @@ ukbd_intr(xfer, addr, status)
 {
 	struct ukbd_softc *sc = addr;
 	struct ukbd_data *ud = &sc->sc_ndata;
-	int mod, omod;
-	u_int16_t ibuf[MAXKEYS];	/* chars events */
-	int s;
-	int nkeys, i, j;
-	int key;
-#define ADDKEY(c) ibuf[nkeys++] = (c)
 
 	DPRINTFN(5, ("ukbd_intr: status=%d\n", status));
 	if (status == USBD_CANCELLED)
@@ -500,8 +531,65 @@ ukbd_intr(xfer, addr, status)
 		return;
 	}
 
-	DPRINTFN(5, ("          mod=0x%02x key0=0x%02x key1=0x%02x\n",
-		     ud->modifiers, ud->keycode[0], ud->keycode[1]));
+	if (sc->sc_debounce) {
+		/*
+		 * Some keyboards have a peculiar quirk.  They sometimes
+		 * generate a key up followed by a key down for the same
+		 * key after about 10 ms.
+		 * We avoid this bug by holding off decoding for 20 ms.
+		 */
+		sc->sc_data = *ud;
+#if defined(__OpenBSD__)
+		timeout_add(&sc->sc_delay, hz / 50);
+#else
+		callout_reset(&sc->sc_delay, hz / 50, ukbd_delayed_decode, sc);
+#endif
+	} else {
+		ukbd_decode(sc, ud);
+	}
+}
+
+void
+ukbd_delayed_decode(void *addr)
+{
+	struct ukbd_softc *sc = addr;
+
+	ukbd_decode(sc, &sc->sc_data);
+}
+
+void
+ukbd_decode(struct ukbd_softc *sc, struct ukbd_data *ud)
+{
+	int mod, omod;
+	u_int16_t ibuf[MAXKEYS];	/* chars events */
+	int s;
+	int nkeys, i, j;
+	int key;
+#define ADDKEY(c) ibuf[nkeys++] = (c)
+
+#ifdef UKBD_DEBUG
+	/* 
+	 * Keep a trace of the last events.  Using printf changes the
+	 * timing, so this can be useful sometimes.
+	 */
+	if (ukbdtrace) {
+		struct ukbdtraceinfo *p = &ukbdtracedata[ukbdtraceindex];
+		p->unit = sc->sc_dev.dv_unit;
+		microtime(&p->tv);
+		p->ud = *ud;
+		if (++ukbdtraceindex >= UKBDTRACESIZE)
+			ukbdtraceindex = 0;
+	}
+	if (ukbddebug > 5) {
+		struct timeval tv;
+		microtime(&tv);
+		DPRINTF((" at %lu.%06lu  mod=0x%02x key0=0x%02x key1=0x%02x "
+			 "key2=0x%02x key3=0x%02x\n",
+			 tv.tv_sec, tv.tv_usec,
+			 ud->modifiers, ud->keycode[0], ud->keycode[1],
+			 ud->keycode[2], ud->keycode[3]));
+	}
+#endif
 
 	if (ud->keycode[0] == KEY_ERROR) {
 		DPRINTF(("ukbd_intr: KEY_ERROR\n"));
@@ -526,6 +614,7 @@ ukbd_intr(xfer, addr, status)
 			for (j = 0; j < NKEYCODE; j++)
 				if (key == ud->keycode[j])
 					goto rfound;
+			DPRINTFN(3,("ukbd_intr: relse key=0x%02x\n", key));
 			ADDKEY(key | RELEASE);
 		rfound:
 			;

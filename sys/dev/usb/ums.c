@@ -1,4 +1,4 @@
-/*	$OpenBSD: ums.c,v 1.3 2000/11/08 18:10:38 aaron Exp $ */
+/*	$OpenBSD: ums.c,v 1.4 2001/01/28 09:43:42 aaron Exp $ */
 /*	$NetBSD: ums.c,v 1.45 2000/10/08 20:52:18 augustss Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 /*
- * HID spec: http://www.usb.org/developers/data/usbhid10.pdf
+ * HID spec: http://www.usb.org/developers/data/devclass/hid1_1.pdf
  */
 
 /* XXX complete SPUR_UP change */

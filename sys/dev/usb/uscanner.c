@@ -1,5 +1,5 @@
-/*	$OpenBSD: uscanner.c,v 1.1 2000/11/16 19:40:17 aaron Exp $ */
-/*	$NetBSD: uscanner.c,v 1.9 2000/11/14 13:57:16 augustss Exp $	*/
+/*	$OpenBSD: uscanner.c,v 1.2 2001/01/28 09:43:43 aaron Exp $ */
+/*	$NetBSD: uscanner.c,v 1.11 2001/01/07 14:46:32 augustss Exp $	*/
 /*	$FreeBSD$	*/
 
 /*
@@ -102,14 +102,18 @@ static const struct scanner_id {
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_4200C },
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_S20 },
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_5200C },
+#if 0
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_5300C },
+#endif
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_6200C },
 	{ USB_VENDOR_HP, USB_PRODUCT_HP_6300C },
 
 	/* Avision */
 	{ USB_VENDOR_AVISION, USB_PRODUCT_AVISION_1200U },
 
+#if 0
 	/* Microtek */
+	{ USB_VENDOR_SCANLOGIC, USB_PRODUCT_SCANLOGIC_336CX },
 	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_X6U },
 	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_336CX },
 	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_336CX2 },
@@ -117,6 +121,7 @@ static const struct scanner_id {
 	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_V6USL },
 	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_V6USL2 },
 	{ USB_VENDOR_MICROTEK, USB_PRODUCT_MICROTEK_V6UL },
+#endif
 
 	/* Mustek */
 	{ USB_VENDOR_MUSTEK, USB_PRODUCT_MUSTEK_1200CU },
@@ -144,6 +149,7 @@ static const struct scanner_id {
 	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_610 },
 	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1200 },
 	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1600 },
+	{ USB_VENDOR_EPSON, USB_PRODUCT_EPSON_1640 },
 
 	/* UMAX */
 	{ USB_VENDOR_UMAX, USB_PRODUCT_UMAX_ASTRA1220U },
@@ -632,11 +638,7 @@ USB_DETACH(uscanner)
 }
 
 int
-#if defined(__OpenBSD__)
-uscannerselect(dev, events, p)
-#else
 uscannerpoll(dev, events, p)
-#endif
 	dev_t dev;
 	int events;
 	struct proc *p;

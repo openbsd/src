@@ -1,4 +1,4 @@
-/*	$OpenBSD: uhci.c,v 1.17 2000/12/11 04:23:20 ho Exp $	*/
+/*	$OpenBSD: uhci.c,v 1.18 2001/01/28 09:43:41 aaron Exp $	*/
 /*	$NetBSD: uhci.c,v 1.125 2000/09/23 21:00:10 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhci.c,v 1.33 1999/11/17 22:33:41 n_hibma Exp $	*/
 
@@ -43,8 +43,8 @@
  * USB Universal Host Controller driver.
  * Handles e.g. PIIX3 and PIIX4.
  *
- * UHCI spec: http://www.intel.com/design/usb/uhci11d.pdf
- * USB spec: http://www.usb.org/developers/data/usb11.pdf
+ * UHCI spec: http://developer.intel.com/design/USB/UHCI11D.htm
+ * USB spec: http://www.usb.org/developers/data/usbspec.zip
  * PIIXn spec: ftp://download.intel.com/design/intarch/datashts/29055002.pdf
  *             ftp://download.intel.com/design/intarch/datashts/29056201.pdf
  */
@@ -108,6 +108,20 @@ int uhcinoloop = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
+#endif
+
+/*
+ * The UHCI controller is little endian, so on big endian machines
+ * the data strored in memory needs to be swapped.
+ */
+#if defined(__FreeBSD__)
+#if BYTE_ORDER == BIG_ENDIAN
+#define htole32(x) (bswap32(x))
+#define le32toh(x) (bswap32(x))
+#else
+#define htole32(x) (x)
+#define le32toh(x) (x)
+#endif
 #endif
 
 struct uhci_pipe {
@@ -681,7 +695,9 @@ uhci_power(int why, void *v)
 	DPRINTF(("uhci_power: sc=%p, why=%d (was %d), cmd=0x%x\n", 
 		 sc, why, sc->sc_suspend, cmd));
 
-	if (why != PWR_RESUME) {
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
 #ifdef UHCI_DEBUG
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
@@ -701,7 +717,8 @@ uhci_power(int why, void *v)
 		sc->sc_suspend = why;
 		sc->sc_bus.use_polling--;
 		DPRINTF(("uhci_power: cmd=0x%x\n", UREAD2(sc, UHCI_CMD)));
-	} else {
+		break;
+	case PWR_RESUME:
 #ifdef DIAGNOSTIC
 		if (sc->sc_suspend == PWR_RESUME)
 			printf("uhci_power: weird, resume without suspend.\n");
@@ -730,6 +747,13 @@ uhci_power(int why, void *v)
 #ifdef UHCI_DEBUG
 		if (uhcidebug > 2)
 			uhci_dumpregs(sc);
+#endif
+		break;
+#if defined(__NetBSD__)
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
 #endif
 	}
 	splx(s);
@@ -1139,15 +1163,15 @@ uhci_intr(void *arg)
 	}
 #endif
 
+	status = UREAD2(sc, UHCI_STS);
+	if (status == 0)	/* The interrupt was not for us. */
+		return (0);
+
 	if (sc->sc_suspend != PWR_RESUME) {
 		printf("%s: interrupt while not operating ignored\n",
 		       USBDEVNAME(sc->sc_bus.bdev));
 		return (0);
 	}
-
-	status = UREAD2(sc, UHCI_STS);
-	if (status == 0)	/* The interrupt was not for us. */
-		return (0);
 
 #if defined(DIAGNOSTIC) && defined(__NetBSD__)
 	if (sc->sc_suspend != PWR_RESUME)
@@ -1178,7 +1202,7 @@ uhci_intr(void *arg)
 		/* no acknowledge needed */
 		if (!sc->sc_dying)
 			printf("%s: host controller halted\n", 
-			       USBDEVNAME(sc->sc_bus.bdev));
+			    USBDEVNAME(sc->sc_bus.bdev));
 		sc->sc_dying = 1;
 #ifdef UHCI_DEBUG
 		uhci_dump_all(sc);
@@ -1317,7 +1341,7 @@ uhci_idone(uhci_intr_info_t *ii)
 	if (xfer->nframes != 0) {
 		/* Isoc transfer, do things differently. */
 		uhci_soft_td_t **stds = upipe->u.iso.stds;
-		int i, n, nframes;
+		int i, n, nframes, len;
 
 		DPRINTFN(5,("uhci_idone: ii=%p isoc ready\n", ii));
 
@@ -1335,7 +1359,9 @@ uhci_idone(uhci_intr_info_t *ii)
 			if (++n >= UHCI_VFRAMELIST_COUNT)
 				n = 0;
 			status = le32toh(std->td.td_status);
-			actlen += UHCI_TD_GET_ACTLEN(status);
+			len = UHCI_TD_GET_ACTLEN(status);
+			xfer->frlengths[i] = len;
+			actlen += len;
 		}
 		upipe->u.iso.inuse -= nframes;
 		xfer->actlen = actlen;
@@ -2348,7 +2374,7 @@ uhci_device_isoc_abort(usbd_xfer_handle xfer)
 	for (i = 0; i < nframes; i++) {
 		std = stds[n];
 		std->td.td_status &= htole32(~(UHCI_TD_ACTIVE | UHCI_TD_IOC));
-		len = UHCI_TD_GET_MAXLEN(std->td.td_token);
+		len = UHCI_TD_GET_MAXLEN(le32toh(std->td.td_token));
 		if (len > maxlen)
 			maxlen = len;
 		if (++n >= UHCI_VFRAMELIST_COUNT)

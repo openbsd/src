@@ -1,4 +1,4 @@
-/*	$OpenBSD: uaudioreg.h,v 1.5 2000/11/08 18:10:37 aaron Exp $ */
+/*	$OpenBSD: uaudioreg.h,v 1.6 2001/01/28 09:43:41 aaron Exp $ */
 /*	$NetBSD: uaudioreg.h,v 1.6 2000/05/30 10:10:17 augustss Exp $	*/
 
 /*
@@ -239,7 +239,70 @@ struct usb_audio_extension_unit_1 {
 	/*uByte		iExtension;*/
 } UPACKED;
 
-#define UAT_STREAM 0x0101
+/* USB terminal types */
+#define UAT_UNDEFINED		0x0100
+#define UAT_STREAM		0x0101
+#define UAT_VENDOR		0x01ff
+/* input terminal types */
+#define UATI_UNDEFINED		0x0200
+#define UATI_MICROPHONE		0x0201
+#define UATI_DESKMICROPHONE	0x0202
+#define UATI_PERSONALMICROPHONE	0x0203
+#define UATI_OMNIMICROPHONE	0x0204
+#define UATI_MICROPHONEARRAY	0x0205
+#define UATI_PROCMICROPHONEARR	0x0206
+/* output terminal types */
+#define UATO_UNDEFINED		0x0300
+#define UATO_SPEAKER		0x0301
+#define UATO_HEADPHONES		0x0302
+#define UATO_DISPLAYAUDIO	0x0303
+#define UATO_DESKTOPSPEAKER	0x0304
+#define UATO_ROOMSPEAKER	0x0305
+#define UATO_COMMSPEAKER	0x0306
+#define UATO_SUBWOOFER		0x0307
+/* bidir terminal types */
+#define UATB_UNDEFINED		0x0400
+#define UATB_HANDSET		0x0401
+#define UATB_HEADSET		0x0402
+#define UATB_SPEAKERPHONE	0x0403
+#define UATB_SPEAKERPHONEESUP	0x0404
+#define UATB_SPEAKERPHONEECANC	0x0405
+/* telephony terminal types */
+#define UATT_UNDEFINED		0x0500
+#define UATT_PHONELINE		0x0501
+#define UATT_TELEPHONE		0x0502
+#define UATT_DOWNLINEPHONE	0x0503
+/* external terminal types */
+#define UATE_UNDEFINED		0x0600
+#define UATE_ANALOGCONN		0x0601
+#define UATE_DIGITALAUIFC	0x0602
+#define UATE_LINECONN		0x0603
+#define UATE_LEGACYCONN		0x0604
+#define UATE_SPDIF		0x0605
+#define UATE_1394DA		0x0606
+#define UATE_1394DV		0x0607
+/* embedded function terminal types */
+#define UATF_UNDEFINED		0x0700
+#define UATF_CALIBNOISE		0x0701
+#define UATF_EQUNOISE		0x0702
+#define UATF_CDPLAYER		0x0703
+#define UATF_DAT		0x0704
+#define UATF_DCC		0x0705
+#define UATF_MINIDISK		0x0706
+#define UATF_ANALOGTAPE		0x0707
+#define UATF_PHONOGRAPH		0x0708
+#define UATF_VCRAUDIO		0x0709
+#define UATF_VIDEODISCAUDIO	0x070a
+#define UATF_DVDAUDIO		0x070b
+#define UATF_TVTUNERAUDIO	0x070c
+#define UATF_SATELLITE		0x070d
+#define UATF_CABLETUNER		0x070e
+#define UATF_DSS		0x070f
+#define UATF_RADIORECV		0x0710
+#define UATF_RADIOXMIT		0x0711
+#define UATF_MULTITRACK		0x0712
+#define UATF_SYNTHESIZER	0x0713
+
 
 #define SET_CUR 0x01
 #define GET_CUR 0x81

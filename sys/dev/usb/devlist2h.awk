@@ -1,5 +1,5 @@
 #! /usr/bin/awk -f
-#	$OpenBSD: devlist2h.awk,v 1.5 2001/01/27 04:02:10 deraadt Exp $
+#	$OpenBSD: devlist2h.awk,v 1.6 2001/01/28 09:43:41 aaron Exp $
 #	$NetBSD: devlist2h.awk,v 1.8 1999/11/18 23:32:25 augustss Exp $
 #
 # Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -175,7 +175,7 @@ END {
 
 	printf("\n") > dfile
 
-	printf("struct usb_known_product usb_known_products[] = {\n") > dfile
+	printf("const struct usb_known_product usb_known_products[] = {\n") > dfile
 	for (i = 1; i <= nproducts; i++) {
 		printf("\t{\n") > dfile
 		printf("\t    USB_VENDOR_%s, USB_PRODUCT_%s_%s,\n",
@@ -198,7 +198,7 @@ END {
 	printf("\t{ 0, 0, NULL }\n") > dfile
 	printf("};\n\n") > dfile
 
-	printf("struct usb_known_vendor usb_known_vendors[] = {\n") > dfile
+	printf("const struct usb_known_vendor usb_known_vendors[] = {\n") > dfile
 	for (i = 1; i <= nvendors; i++) {
 		printf("\t{\n") > dfile
 		printf("\t    USB_VENDOR_%s,\n", vendors[i, 1]) \

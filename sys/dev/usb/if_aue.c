@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aue.c,v 1.10 2000/11/07 21:03:01 aaron Exp $ */
+/*	$OpenBSD: if_aue.c,v 1.11 2001/01/28 09:43:41 aaron Exp $ */
 /*	$NetBSD: if_aue.c,v 1.38 2000/04/04 20:16:19 augustss Exp $	*/
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -187,7 +187,8 @@ struct aue_type {
 
 Static struct aue_type aue_devs[] = {
   { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB100,	0 },
-  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX, 	0 },
+  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX1, 	0 },
+  { USB_VENDOR_MELCO, 		USB_PRODUCT_MELCO_LUATX5, 	0 },
   { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100TX,	1 },
   { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB100H1,	1 },
   { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_USB10TA,	1 },

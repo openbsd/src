@@ -1,4 +1,4 @@
-/*	$OpenBSD: urio.c,v 1.4 2000/11/08 18:10:38 aaron Exp $	*/
+/*	$OpenBSD: urio.c,v 1.5 2001/01/28 09:43:42 aaron Exp $	*/
 /*	$NetBSD: urio.c,v 1.5 2000/10/24 14:53:59 augustss Exp $	*/
 
 /*
@@ -274,9 +274,7 @@ USB_DETACH(urio)
 
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 int
-urio_activate(self, act)
-	device_ptr_t self;
-	enum devact act;
+urio_activate(device_ptr_t self, enum devact act)
 {
 	struct urio_softc *sc = (struct urio_softc *)self;
 
@@ -294,11 +292,7 @@ urio_activate(self, act)
 #endif
 
 int
-urioopen(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+urioopen(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct urio_softc *sc;
 	usbd_status err;
@@ -331,11 +325,7 @@ urioopen(dev, flag, mode, p)
 }
 
 int
-urioclose(dev, flag, mode, p)
-	dev_t dev;
-	int flag;
-	int mode;
-	struct proc *p;
+urioclose(dev_t dev, int flag, int mode, struct proc *p)
 {
 	struct urio_softc *sc;
 	USB_GET_SC(urio, URIOUNIT(dev), sc);
@@ -358,10 +348,7 @@ urioclose(dev, flag, mode, p)
 }
 
 int
-urioread(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+urioread(dev_t dev, struct uio *uio, int flag)
 {
 	struct urio_softc *sc;
 	usbd_xfer_handle xfer;
@@ -418,10 +405,7 @@ urioread(dev, uio, flag)
 }
 
 int
-uriowrite(dev, uio, flag)
-	dev_t dev;
-	struct uio *uio;
-	int flag;
+uriowrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct urio_softc *sc;
 	usbd_xfer_handle xfer;
@@ -483,12 +467,7 @@ uriowrite(dev, uio, flag)
 
 
 int
-urioioctl(dev, cmd, addr, flag, p)
-	dev_t dev;
-	u_long cmd;
-	caddr_t addr; 
-	int flag;
-	struct proc *p;
+urioioctl(dev_t dev, u_long cmd, caddr_t addr, int flag, struct proc *p)
 {
 	struct urio_softc * sc;
 	int unit = URIOUNIT(dev);
@@ -583,10 +562,7 @@ ret:
 }
 
 int
-uriopoll(dev, events, p)
-	dev_t dev;
-	int events;
-	struct proc *p;
+uriopoll(dev_t dev, int events, struct proc *p)
 {
 	return (0);
 }

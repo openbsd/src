@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.17 2001/01/22 23:24:32 deraadt Exp $ */
+/*	$OpenBSD: ohci.c,v 1.18 2001/01/28 09:43:41 aaron Exp $ */
 /*	$NetBSD: ohci.c,v 1.93 2000/08/17 23:18:56 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ohci.c,v 1.22 1999/11/17 22:33:40 n_hibma Exp $	*/
 
@@ -42,8 +42,8 @@
 /*
  * USB Open Host Controller driver.
  *
- * OHCI spec: ftp://ftp.compaq.com/pub/supportinformation/papers/hcir1_0a.exe
- * USB spec: http://www.usb.org/developers/data/usb11.pdf
+ * OHCI spec: http://www.compaq.com/productinfo/development/openhci.html
+ * USB spec: http://www.usb.org/developers/data/usbspec.zip
  */
 
 #include <sys/param.h>
@@ -99,6 +99,20 @@ int ohcidebug = 0;
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n,x)
+#endif
+
+/*
+ * The OHCI controller is little endian, so on big endian machines
+ * the data strored in memory needs to be swapped.
+ */
+#if defined(__FreeBSD__)
+#if BYTE_ORDER == BIG_ENDIAN
+#define htole32(x) (bswap32(x))
+#define le32toh(x) (bswap32(x))
+#else
+#define htole32(x) (x)
+#define le32toh(x) (x)
+#endif
 #endif
 
 struct ohci_pipe;
@@ -929,13 +943,45 @@ ohci_shutdown(void *v)
 void
 ohci_power(int why, void *v)
 {
-#ifdef OHCI_DEBUG
 	ohci_softc_t *sc = v;
+	u_int32_t ctl;
+	int s;
 
+#ifdef OHCI_DEBUG
 	DPRINTF(("ohci_power: sc=%p, why=%d\n", sc, why));
-	/* XXX should suspend/resume */
 	ohci_dumpregs(sc);
 #endif
+
+	s = splusb();
+	switch (why) {
+	case PWR_SUSPEND:
+	case PWR_STANDBY:
+		sc->sc_bus.use_polling++;
+		ctl = OREAD4(sc, OHCI_CONTROL);
+		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_SUSPEND;
+		OWRITE4(sc, OHCI_CONTROL, ctl);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_WAIT);
+		sc->sc_bus.use_polling--;
+		break;
+	case PWR_RESUME:
+		sc->sc_bus.use_polling++;
+		ctl = OREAD4(sc, OHCI_CONTROL);
+		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_RESUME;
+		OWRITE4(sc, OHCI_CONTROL, ctl);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_DELAY);
+		ctl = (ctl & ~OHCI_HCFS_MASK) | OHCI_HCFS_OPERATIONAL;
+		OWRITE4(sc, OHCI_CONTROL, ctl);
+		usb_delay_ms(&sc->sc_bus, USB_RESUME_RECOVERY);
+		sc->sc_bus.use_polling--;
+		break;
+#if defined(__NetBSD__)
+	case PWR_SOFTSUSPEND:
+	case PWR_SOFTSTANDBY:
+	case PWR_SOFTRESUME:
+		break;
+#endif
+	}
+	splx(s);
 }
 
 #ifdef OHCI_DEBUG
@@ -1275,6 +1321,7 @@ ohci_softintr(struct usbd_bus *bus)
 				(struct ohci_pipe *)xfer->pipe;
 			if (sitd->flags & OHCI_CALL_DONE) {
 				opipe->u.iso.inuse -= xfer->nframes;
+				/* XXX update frlengths with actual length */
 				/* XXX xfer->actlen = actlen; */
 				xfer->status = USBD_NORMAL_COMPLETION;
 				usb_transfer_complete(xfer);

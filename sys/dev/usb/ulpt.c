@@ -1,4 +1,4 @@
-/*	$OpenBSD: ulpt.c,v 1.5 2000/11/08 18:10:38 aaron Exp $ */
+/*	$OpenBSD: ulpt.c,v 1.6 2001/01/28 09:43:42 aaron Exp $ */
 /*	$NetBSD: ulpt.c,v 1.38 2000/06/01 14:29:00 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/ulpt.c,v 1.24 1999/11/17 22:33:44 n_hibma Exp $	*/
 
@@ -40,7 +40,7 @@
  */
 
 /*
- * Printer Class spec: http://www.usb.org/developers/data/usbprn10.pdf
+ * Printer Class spec: http://www.usb.org/developers/data/devclass/usbprint109.PDF
  */
 
 #include <sys/param.h>
@@ -369,7 +369,17 @@ ulpt_reset(struct ulpt_softc *sc)
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, sc->sc_ifaceno);
 	USETW(req.wLength, 0);
-	(void)usbd_do_request(sc->sc_udev, &req, 0);
+
+	/*
+	 * There was a mistake in the USB printer 1.0 spec that gave the
+	 * request type as UT_WRITE_CLASS_OTHER, it should have been
+	 * UT_WRITE_CLASS_INTERFACE.  Many printers use the old one,
+	 * so we try both.
+	 */
+	if (usbd_do_request(sc->sc_udev, &req, 0)) {
+		req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+		(void)usbd_do_request(sc->sc_udev, &req, 0);
+	}
 }
 
 /*
@@ -403,33 +413,48 @@ ulptopen(dev_t dev, int flag, int mode, struct proc *p)
 #endif
 
 
+	error = 0;
+	sc->sc_refcnt++;
+
 	if ((flags & ULPT_NOPRIME) == 0)
 		ulpt_reset(sc);
 
 	for (spin = 0; (ulpt_status(sc) & LPS_SELECT) == 0; spin += STEP) {
 		if (spin >= TIMEOUT) {
+			error = EBUSY;
 			sc->sc_state = 0;
-			return (EBUSY);
+			goto done;
 		}
 
 		/* wait 1/4 second, give up if we get a signal */
 		error = tsleep((caddr_t)sc, LPTPRI | PCATCH, "ulptop", STEP);
 		if (error != EWOULDBLOCK) {
 			sc->sc_state = 0;
-			return (error);
+			goto done;
+		}
+
+		if (sc->sc_dying) {
+			error = ENXIO;
+			sc->sc_state = 0;
+			goto done;
 		}
 	}
 
 	err = usbd_open_pipe(sc->sc_iface, sc->sc_bulk, 0, &sc->sc_bulkpipe);
 	if (err) {
 		sc->sc_state = 0;
-		return (EIO);
+		error = EIO;
+		goto done;
 	}
 
 	sc->sc_state = ULPT_OPEN;
 
-	DPRINTF(("ulptopen: done\n"));
-	return (0);
+ done:
+	if (--sc->sc_refcnt < 0)
+		usb_detach_wakeup(USBDEV(sc->sc_dev));
+
+	DPRINTF(("ulptopen: done, error=%d\n", error));
+	return (error);
 }
 
 int

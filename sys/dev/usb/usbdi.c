@@ -1,4 +1,4 @@
-/*	$OpenBSD: usbdi.c,v 1.12 2000/11/08 18:10:39 aaron Exp $ */
+/*	$OpenBSD: usbdi.c,v 1.13 2001/01/28 09:43:42 aaron Exp $ */
 /*	$NetBSD: usbdi.c,v 1.77 2000/09/23 21:02:04 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.c,v 1.28 1999/11/17 22:33:49 n_hibma Exp $	*/
 
@@ -1012,7 +1012,7 @@ usbd_do_request_async(usbd_device_handle dev, usb_device_request_t *req,
 	return (USBD_NORMAL_COMPLETION);
 }
 
-struct usbd_quirks *
+const struct usbd_quirks *
 usbd_get_quirks(usbd_device_handle dev)
 {
 	return (dev->quirks);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb.h,v 1.11 2000/11/08 18:10:39 aaron Exp $ */
+/*	$OpenBSD: usb.h,v 1.12 2001/01/28 09:43:42 aaron Exp $ */
 /*	$NetBSD: usb.h,v 1.50 2000/06/01 15:43:32 augustss Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb.h,v 1.14 1999/11/17 22:33:46 n_hibma Exp $	*/
 
@@ -561,6 +561,7 @@ struct usb_event {
 #define USB_EVENT_DEVICE_DETACH 4
 #define USB_EVENT_DRIVER_ATTACH 5
 #define USB_EVENT_DRIVER_DETACH 6
+#define USB_EVENT_IS_ATTACH(n) ((n) == USB_EVENT_CTRLR_ATTACH || (n) == USB_EVENT_DEVICE_ATTACH || (n) == USB_EVENT_DRIVER_ATTACH)
 	struct timespec		ue_time;
 	union {
 		struct {
