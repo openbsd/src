@@ -1,4 +1,4 @@
-/*	$OpenBSD: atactl.c,v 1.31 2004/02/02 08:37:56 grange Exp $	*/
+/*	$OpenBSD: atactl.c,v 1.32 2004/02/19 21:17:41 grange Exp $	*/
 /*	$NetBSD: atactl.c,v 1.4 1999/02/24 18:49:14 jwise Exp $	*/
 
 /*-
@@ -55,6 +55,7 @@
 
 #include <dev/ata/atareg.h>
 #include <dev/ic/wdcreg.h>
+#include <dev/ic/wdcevent.h>
 #include <sys/ataio.h>
 
 #include "atasec.h"
@@ -473,6 +474,17 @@ device_dump(int argc, char *argv[])
 	unsigned char buf[131072];
 	int error;
 	atagettrace_t agt;
+	int total;
+	int p;
+	int type;
+	const char *types[] = { NULL, "status", "error", "ATAPI",
+	    "ATAPI done", "ATA cmd", "ATA", "select slave",
+	    "select master", "register read", "ATA LBA48" };
+	int num_types = sizeof(types) / sizeof(types[0]);
+	int info;
+	int entrysize;
+	int i;
+	int flags;
 
 	if (argc != 1)
 		goto usage;
@@ -484,8 +496,237 @@ device_dump(int argc, char *argv[])
 	if ((error = ioctl(fd, ATAIOGETTRACE, &agt)) == -1)
 		err(1, "ATAIOGETTRACE failed");
 
-	write(STDOUT_FILENO, agt.buf, agt.bytes_copied);
-	fprintf(stderr, "%d bytes written\n", agt.bytes_copied);
+	total = agt.bytes_copied;
+
+	/* Parse entries */
+	while (p < total) {
+		type = buf[p++];
+		if (p >= total)
+			return;
+		if (type <= 0 || type >= num_types)
+			return;
+
+		info = buf[p++];
+		if (p >= total)
+			return;
+		entrysize = (info & 0x1f);
+
+		printf ("ch %d", (info >> 5) & 0x7);
+		printf(": %s", types[type]);
+
+		switch (type) {
+		case WDCEVENT_STATUS:
+			if (entrysize != 1)
+				return;
+
+			printf(": 0x%x", buf[p]);
+			if (buf[p] & WDCS_BSY)
+				printf(" BSY");
+			if (buf[p] & WDCS_DRDY)
+				printf(" DRDY");
+			if (buf[p] & WDCS_DWF)
+				printf(" DWF");
+			if (buf[p] & WDCS_DSC)
+				printf(" DSC");
+			if (buf[p] & WDCS_DRQ)
+				printf(" DRQ");
+			if (buf[p] & WDCS_CORR)
+				printf(" CORR");
+			if (buf[p] & WDCS_IDX)
+				printf(" IDX");
+			if (buf[p] & WDCS_ERR)
+				printf(" ERR");
+
+			p++;
+			entrysize = 0;
+			break;
+		case WDCEVENT_ERROR:
+			if (entrysize != 1)
+				return;
+
+			printf(": 0x%x", buf[p]);
+			if (buf[p] & WDCE_BBK)
+				printf(" BBK/CRC");
+			if (buf[p] & WDCE_UNC)
+				printf(" UNC");
+			if (buf[p] & WDCE_MC)
+				printf(" MC");
+			if (buf[p] & WDCE_IDNF)
+				printf(" IDNF");
+			if (buf[p] & WDCE_MCR)
+				printf(" MCR");
+			if (buf[p] & WDCE_ABRT)
+				printf(" ABRT");
+			if (buf[p] & WDCE_TK0NF)
+				printf(" TK0NF");
+			if (buf[p] & WDCE_AMNF)
+				printf(" AMNF");
+
+			p++;
+			entrysize = 0;
+			break;
+		case WDCEVENT_ATAPI_CMD:
+			if (entrysize < 2 || p + 2 > total)
+				return;
+
+			flags = (buf[p] << 8) + buf[p + 1];
+			printf(": flags 0x%x", flags);
+			if (flags & 0x0100)
+				printf(" MEDIA");
+			if (flags & 0x0080)
+				printf(" SENSE");
+			if (flags & 0x0040)
+				printf(" DMA");
+			if (flags & 0x0020)
+				printf(" POLL");
+			if (flags & 0x0004)
+				printf(" TIMEOUT");
+			if (flags & 0x0002)
+				printf(" ATAPI");
+
+			p += 2;
+			entrysize -= 2;
+			break;
+		case WDCEVENT_ATAPI_DONE:
+			if (entrysize != 3 || p + 3 > total)
+				return;
+
+			flags = (buf[p] << 8) + buf[p + 1];
+			printf(": flags 0x%x", flags);
+			if (flags & 0x0100)
+				printf(" MEDIA");
+			if (flags & 0x0080)
+				printf(" SENSE");
+			if (flags & 0x0040)
+				printf(" DMA");
+			if (flags & 0x0020)
+				printf(" POLL");
+			if (flags & 0x0004)
+				printf(" TIMEOUT");
+			if (flags & 0x0002)
+				printf(" ATAPI");
+
+			printf(", error 0x%x", buf[p + 2]);
+			switch (buf[p + 2]) {
+			case 1:
+				printf(" (sense)");
+				break;
+			case 2:
+				printf(" (driver failure)");
+				break;
+			case 3:
+				printf(" (timeout)");
+				break;
+			case 4:
+				printf(" (busy)");
+				break;
+			case 5:
+				printf(" (ATAPI sense)");
+				break;
+			case 8:
+				printf(" (reset)");
+				break;
+			}
+
+			p += 3;
+			entrysize  = 0;
+			break;
+		case WDCEVENT_ATA_LONG:
+			if (entrysize != 7 || p + 7 > total)
+				return;
+
+			printf(": ");
+			switch (buf[p + 6]) {
+			case WDCC_READDMA:
+				printf("READ DMA");
+				break;
+			case WDCC_WRITEDMA:
+				printf("WRITE DMA");
+				break;
+			default:
+				printf("CMD 0x%x");
+			}
+			printf(" head %d, precomp %d, cyl_hi %d, "
+			    "cyl_lo %d, sec %d, cnt %d",
+			    buf[p], buf[p + 1], buf[p + 2], buf[p + 3],
+			    buf[p + 4], buf[p + 5]);
+
+			p += 7;
+			entrysize = 0;
+			break;
+		case WDCEVENT_REG:
+			if (entrysize != 3 || p + 3 > total)
+				return;
+
+			switch (buf[p]) {
+			case 1:
+				printf(": error");
+				break;
+			case 2:
+				printf(": ireason");
+				break;
+			case 3:
+				printf(": lba_lo");
+				break;
+			case 4:
+				printf(": lba_mi");
+				break;
+			case 5:
+				printf(": lba_hi");
+				break;
+			case 6:
+				printf(": sdh");
+				break;
+			case 7:
+				printf(": status");
+				break;
+			case 8:
+				printf(": altstatus");
+				break;
+			default:
+				printf(": unknown register %d", buf[p]);
+			}
+			printf(": 0x%x", (buf[p + 1] << 8) + buf[p + 2]);
+
+			p += 3;
+			entrysize = 0;
+			break;
+		case WDCEVENT_ATA_EXT:
+			if (entrysize != 9 || p + 9 > total)
+				return;
+
+			printf(": ");
+			switch (buf[p + 8]) {
+			case WDCC_READDMA_EXT:
+				printf("READ DMA EXT");
+				break;
+			case WDCC_WRITEDMA_EXT:
+				printf("WRITE DMA EXT");
+				break;
+			default:
+				printf("CMD 0x%x");
+			}
+			printf(" lba_hi1 %d, lba_hi2 %d, "
+			    "lba_mi1 %d, lba_mi2 %d, lba_lo1 %d, lba_lo2 %d, "
+			    "count1 %d, count2 %d",
+			    buf[p], buf[p + 1], buf[p + 2], buf[p + 3],
+			    buf[p + 4], buf[p + 5], buf[p + 6],
+			    buf[p + 7]);
+
+			p += 9;
+			entrysize = 0;
+			break;
+		}
+
+		if (entrysize > 0)
+			printf(":");
+		for (i = 0; i < entrysize; i++) {
+			printf (" 0x%02x", buf[p]);
+			if (++p >= total)
+				break;
+		}
+		printf("\n");
+	}
 
 	return;
 
