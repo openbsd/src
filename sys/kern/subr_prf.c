@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_prf.c,v 1.42 2002/05/18 18:24:21 art Exp $	*/
+/*	$OpenBSD: subr_prf.c,v 1.43 2002/05/18 18:33:42 art Exp $	*/
 /*	$NetBSD: subr_prf.c,v 1.45 1997/10/24 18:14:25 chuck Exp $	*/
 
 /*-
@@ -238,7 +238,7 @@ splassert_fail(int wantipl, int haveipl, const char *func)
 		panic("spl assertion failure in %s", func);
 	} else {
 #ifdef DDB
-		/* Will print stack trace RSN. */
+		db_stack_dump();
 #endif
 	}
 }
