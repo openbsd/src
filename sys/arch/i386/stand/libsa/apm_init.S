@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm_init.S,v 1.1 1997/07/17 23:23:14 mickey Exp $	*/
+/*	$OpenBSD: apm_init.S,v 1.2 1997/07/28 23:03:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -74,6 +74,7 @@
 #include <machine/biosvar.h>
 #include <machine/apmvar.h>
 #undef _LOCORE
+#include <assym.h>
 	
 	.globl	_C_LABEL(BIOS_regs)
 	.text
@@ -95,7 +96,7 @@ ENTRY(apm_init)
 	shll	$16, %eax
 	orw	%cx, %ax
 	rorl	$16, %eax
-	movl	_C_LABEL(BIOS_regs)+BIOSR_BX, %ebx
+	movl	_C_LABEL(BIOS_regs)+biosr_bx, %ebx
 	cmpb	$'P', %bh
 	jne	1f
 	cmpb	$'M', %bl

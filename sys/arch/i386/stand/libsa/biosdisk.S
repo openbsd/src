@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdisk.S,v 1.10 1997/07/18 00:29:08 mickey Exp $	*/
+/*	$OpenBSD: biosdisk.S,v 1.11 1997/07/28 23:03:30 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -37,6 +37,7 @@
 #include <machine/biosvar.h>
 #include "debug_md.h"
 #undef	_LOCORE
+#include <assym.h>
 
 
 	.globl	_C_LABEL(errno)	/* XXX used for bios errors */
@@ -67,7 +68,7 @@ ENTRY(biosread)
 	movl	%ebx, %edi	# split off for seg:off pair
 	andl	$0xf, %ebx	# atomic read for up to 64k
 	shrl	$4, %edi
-	movl	%edi, _C_LABEL(BIOS_regs)+BIOSR_ES
+	movl	%edi, _C_LABEL(BIOS_regs)+biosr_es
 
 	DOINT(0x13)
 	movb	$0, %al
