@@ -1,4 +1,4 @@
-/*	$OpenBSD: queue.h,v 1.14 1999/09/08 08:20:04 espie Exp $	*/
+/*	$OpenBSD: queue.h,v 1.15 2000/04/15 00:20:13 deraadt Exp $	*/
 /*	$NetBSD: queue.h,v 1.11 1996/05/16 05:17:14 mycroft Exp $	*/
 
 /*
@@ -94,7 +94,7 @@ struct name {								\
 	struct type *slh_first;	/* first element */			\
 }
  
-#define	SLIST_HEAD_INITIALIZER(head) 					\
+#define	SLIST_HEAD_INITIALIZER(head)					\
 	{ NULL }
  
 #define SLIST_ENTRY(type)						\
@@ -111,8 +111,8 @@ struct {								\
 #define	SLIST_NEXT(elm, field)	((elm)->field.sle_next)
 
 #define	SLIST_FOREACH(var, head, field)					\
-	for((var) = SLIST_FIRST(head); 					\
-	    (var) != SLIST_END(head); 					\
+	for((var) = SLIST_FIRST(head);					\
+	    (var) != SLIST_END(head);					\
 	    (var) = SLIST_NEXT(var, field))
 
 /*
@@ -158,12 +158,12 @@ struct {								\
  */
 #define	LIST_FIRST(head)		((head)->lh_first)
 #define	LIST_END(head)			NULL
-#define	LIST_EMPTY(head) 		(LIST_FIRST(head) == LIST_END(head))
+#define	LIST_EMPTY(head)		(LIST_FIRST(head) == LIST_END(head))
 #define	LIST_NEXT(elm, field)		((elm)->field.le_next)
 
 #define LIST_FOREACH(var, head, field)					\
-	for((var) = LIST_FIRST(head); 					\
-	    (var)!= LIST_END(head); 					\
+	for((var) = LIST_FIRST(head);					\
+	    (var)!= LIST_END(head);					\
 	    (var) = LIST_NEXT(var, field))
 
 /*
@@ -197,7 +197,7 @@ struct {								\
 
 #define LIST_REMOVE(elm, field) do {					\
 	if ((elm)->field.le_next != NULL)				\
-		(elm)->field.le_next->field.le_prev = 			\
+		(elm)->field.le_next->field.le_prev =			\
 		    (elm)->field.le_prev;				\
 	*(elm)->field.le_prev = (elm)->field.le_next;			\
 } while (0)
@@ -236,8 +236,8 @@ struct {								\
 #define	SIMPLEQ_NEXT(elm, field)    ((elm)->field.sqe_next)
 
 #define SIMPLEQ_FOREACH(var, head, field)				\
-	for((var) = SIMPLEQ_FIRST(head); 				\
-	    (var) != SIMPLEQ_END(head); 				\
+	for((var) = SIMPLEQ_FIRST(head);				\
+	    (var) != SIMPLEQ_END(head);					\
 	    (var) = SIMPLEQ_NEXT(var, field))
 
 /*
@@ -295,18 +295,23 @@ struct {								\
 #define	TAILQ_FIRST(head)		((head)->tqh_first)
 #define	TAILQ_END(head)			NULL
 #define	TAILQ_NEXT(elm, field)		((elm)->field.tqe_next)
-#define TAILQ_LAST(head, headname) 					\
+#define TAILQ_LAST(head, headname)					\
 	(*(((struct headname *)((head)->tqh_last))->tqh_last))
 /* XXX */
-#define TAILQ_PREV(elm, headname, field) 				\
+#define TAILQ_PREV(elm, headname, field)				\
 	(*(((struct headname *)((elm)->field.tqe_prev))->tqh_last))
 #define	TAILQ_EMPTY(head)						\
 	(TAILQ_FIRST(head) == TAILQ_END(head))
 
 #define TAILQ_FOREACH(var, head, field)					\
-	for((var) = TAILQ_FIRST(head); 					\
-	    (var) != TAILQ_END(head); 					\
+	for((var) = TAILQ_FIRST(head);					\
+	    (var) != TAILQ_END(head);					\
 	    (var) = TAILQ_NEXT(var, field))
+
+#define TAILQ_FOREACH_REVERSE(var, head, field)				\
+	for((var) = TAILQ_LAST(head);					\
+	    (var) != TAILQ_END(head);					\
+	    (var) = TAILQ_PREV(var, field))
 
 /*
  * Tail queue functions.
@@ -335,7 +340,7 @@ struct {								\
 
 #define TAILQ_INSERT_AFTER(head, listelm, elm, field) do {		\
 	if (((elm)->field.tqe_next = (listelm)->field.tqe_next) != NULL)\
-		(elm)->field.tqe_next->field.tqe_prev = 		\
+		(elm)->field.tqe_next->field.tqe_prev =			\
 		    &(elm)->field.tqe_next;				\
 	else								\
 		(head)->tqh_last = &(elm)->field.tqe_next;		\
@@ -352,7 +357,7 @@ struct {								\
 
 #define TAILQ_REMOVE(head, elm, field) do {				\
 	if (((elm)->field.tqe_next) != NULL)				\
-		(elm)->field.tqe_next->field.tqe_prev = 		\
+		(elm)->field.tqe_next->field.tqe_prev =			\
 		    (elm)->field.tqe_prev;				\
 	else								\
 		(head)->tqh_last = (elm)->field.tqe_prev;		\
@@ -362,9 +367,9 @@ struct {								\
 #define TAILQ_REPLACE(head, elm, elm2, field) do {			\
 	if (((elm2)->field.tqe_next = (elm)->field.tqe_next) != NULL)	\
 		(elm2)->field.tqe_next->field.tqe_prev =		\
-		    &(elm2)->field.le_next;				\
+		    &(elm2)->field.tqe_next;				\
 	else								\
-		(head).tqh_last = &(elm2)->field.tqe_next;		\
+		(head)->tqh_last = &(elm2)->field.tqe_next;		\
 	(elm2)->field.tqe_prev = (elm)->field.tqe_prev;			\
 	*(elm2)->field.tqe_prev = (elm2);				\
 } while (0)
@@ -399,13 +404,13 @@ struct {								\
 	(CIRCLEQ_FIRST(head) == CIRCLEQ_END(head))
 
 #define CIRCLEQ_FOREACH(var, head, field)				\
-	for((var) = CIRCLEQ_FIRST(head); 				\
-	    (var) != CIRCLEQ_END(head); 				\
+	for((var) = CIRCLEQ_FIRST(head);				\
+	    (var) != CIRCLEQ_END(head);					\
 	    (var) = CIRCLEQ_NEXT(var, field))
 
 #define CIRCLEQ_FOREACH_REVERSE(var, head, field)			\
-	for((var) = CIRCLEQ_LAST(head); 				\
-	    (var) != CIRCLEQ_END(head); 				\
+	for((var) = CIRCLEQ_LAST(head);					\
+	    (var) != CIRCLEQ_END(head);					\
 	    (var) = CIRCLEQ_PREV(var, field))
 
 /*
