@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_spd.c,v 1.25 2001/06/25 05:11:59 angelos Exp $ */
+/* $OpenBSD: ip_spd.c,v 1.26 2001/06/26 03:52:42 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -49,9 +49,9 @@
 #include <net/pfkeyv2.h>
 
 #ifdef ENCDEBUG
-#define DPRINTF(x)	if (encdebug) printf x
+#define	DPRINTF(x)	if (encdebug) printf x
 #else
-#define DPRINTF(x)
+#define	DPRINTF(x)
 #endif
 
 /*
@@ -71,491 +71,481 @@
  */
 struct tdb *
 ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
-		struct tdb *tdbp, struct inpcb *inp)
+    struct tdb *tdbp, struct inpcb *inp)
 {
-    struct route_enc re0, *re = &re0;
-    union sockaddr_union sdst, ssrc;
-    struct sockaddr_encap *ddst;
-    struct ipsec_policy *ipo;
-    int signore = 0, dignore = 0;
+	struct route_enc re0, *re = &re0;
+	union sockaddr_union sdst, ssrc;
+	struct sockaddr_encap *ddst;
+	struct ipsec_policy *ipo;
+	int signore = 0, dignore = 0;
 
-    /*
-     * If there are no flows in place, there's no point
-     * continuing with the SPD lookup.
-     */
-    if (!ipsec_in_use && inp == NULL)
-    {
-	*error = 0;
-	return NULL;
-    }
+	/*
+	 * If there are no flows in place, there's no point
+	 * continuing with the SPD lookup.
+	 */
+	if (!ipsec_in_use && inp == NULL) {
+		*error = 0;
+		return NULL;
+	}
 
-    /* If an input packet is destined to a BYPASS socket, just accept it */
-    if ((inp != NULL) && (direction == IPSP_DIRECTION_IN) &&
-	(inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
-	(inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS) &&
-	(inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS))
-    {
-	*error = 0;
-	return NULL;
-    }
+	/* If an input packet is destined to a BYPASS socket, just accept it. */
+	if ((inp != NULL) && (direction == IPSP_DIRECTION_IN) &&
+	    (inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
+	    (inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS) &&
+	    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)) {
+		*error = 0;
+		return NULL;
+	}
 
-    bzero((caddr_t) re, sizeof(struct route_enc));
-    bzero((caddr_t) &sdst, sizeof(union sockaddr_union));
-    bzero((caddr_t) &ssrc, sizeof(union sockaddr_union));
-    ddst = (struct sockaddr_encap *) &re->re_dst;
-    ddst->sen_family = PF_KEY;
-    ddst->sen_len = SENT_LEN;
+	bzero((caddr_t) re, sizeof(struct route_enc));
+	bzero((caddr_t) &sdst, sizeof(union sockaddr_union));
+	bzero((caddr_t) &ssrc, sizeof(union sockaddr_union));
+	ddst = (struct sockaddr_encap *) &re->re_dst;
+	ddst->sen_family = PF_KEY;
+	ddst->sen_len = SENT_LEN;
 
-    switch (af)
-    {
+	switch (af) {
 #ifdef INET
 	case AF_INET:
-	    ddst->sen_direction = direction;
-	    ddst->sen_type = SENT_IP4;
+		ddst->sen_direction = direction;
+		ddst->sen_type = SENT_IP4;
 
-	    m_copydata(m, offsetof(struct ip, ip_src),
-		       sizeof(struct in_addr), (caddr_t) &(ddst->sen_ip_src));
-	    m_copydata(m, offsetof(struct ip, ip_dst),
-		       sizeof(struct in_addr), (caddr_t) &(ddst->sen_ip_dst));
-	    m_copydata(m, offsetof(struct ip, ip_p), sizeof(u_int8_t),
-		       (caddr_t) &(ddst->sen_proto));
+		m_copydata(m, offsetof(struct ip, ip_src),
+		    sizeof(struct in_addr), (caddr_t) &(ddst->sen_ip_src));
+		m_copydata(m, offsetof(struct ip, ip_dst),
+		    sizeof(struct in_addr), (caddr_t) &(ddst->sen_ip_dst));
+		m_copydata(m, offsetof(struct ip, ip_p), sizeof(u_int8_t),
+		    (caddr_t) &(ddst->sen_proto));
 
-	    sdst.sin.sin_family = ssrc.sin.sin_family = AF_INET;
-	    sdst.sin.sin_len = ssrc.sin.sin_len = sizeof(struct sockaddr_in);
-	    ssrc.sin.sin_addr = ddst->sen_ip_src;
-	    sdst.sin.sin_addr = ddst->sen_ip_dst;
+		sdst.sin.sin_family = ssrc.sin.sin_family = AF_INET;
+		sdst.sin.sin_len = ssrc.sin.sin_len =
+		    sizeof(struct sockaddr_in);
+		ssrc.sin.sin_addr = ddst->sen_ip_src;
+		sdst.sin.sin_addr = ddst->sen_ip_dst;
 
-	    /* If TCP/UDP, extract the port numbers to use in the lookup */
-	    switch (ddst->sen_proto)
-	    {
+		/* If TCP/UDP, extract the port numbers to use in the lookup */
+		switch (ddst->sen_proto) {
 		case IPPROTO_UDP:
 		case IPPROTO_TCP:
-		    /* Make sure there's enough data in the packet */
-		    if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t))
-		    {
-			*error = EINVAL;
-			return NULL;
-		    }
+			/* Make sure there's enough data in the packet */
+			if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t)) {
+				*error = EINVAL;
+				return NULL;
+			}
 
-		    /*
-		     * Luckily, the offset of the src/dst ports in both the UDP
-		     * and TCP headers is the same (first two 16-bit values
-		     * in the respective headers), so we can just copy them.
-		     */
-		    m_copydata(m, hlen, sizeof(u_int16_t),
-			       (caddr_t) &(ddst->sen_sport));
-		    m_copydata(m, hlen + sizeof(u_int16_t), sizeof(u_int16_t),
-			       (caddr_t) &(ddst->sen_dport));
-		    break;
+			/*
+			 * Luckily, the offset of the src/dst ports in
+			 * both the UDP and TCP headers is the same (first
+			 * two 16-bit values in the respective headers),
+			 * so we can just copy them.
+			 */
+			m_copydata(m, hlen, sizeof(u_int16_t),
+			    (caddr_t) &(ddst->sen_sport));
+			m_copydata(m, hlen + sizeof(u_int16_t), sizeof(u_int16_t),
+			    (caddr_t) &(ddst->sen_dport));
+			break;
 
 		default:
-		    ddst->sen_sport = 0;
-		    ddst->sen_dport = 0;
-	    }
+			ddst->sen_sport = 0;
+			ddst->sen_dport = 0;
+		}
 
-	    break;
+		break;
 #endif /* INET */
 
 #ifdef INET6
 	case AF_INET6:
-	    ddst->sen_type = SENT_IP6;
-	    ddst->sen_ip6_direction = direction;
+		ddst->sen_type = SENT_IP6;
+		ddst->sen_ip6_direction = direction;
 
-	    m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
-		       sizeof(struct in6_addr),
-		       (caddr_t) &(ddst->sen_ip6_src));
-	    m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
-		       sizeof(struct in6_addr),
-		       (caddr_t) &(ddst->sen_ip6_dst));
-	    m_copydata(m, offsetof(struct ip6_hdr, ip6_nxt), sizeof(u_int8_t),
-		       (caddr_t) &(ddst->sen_ip6_proto));
+		m_copydata(m, offsetof(struct ip6_hdr, ip6_src),
+		    sizeof(struct in6_addr),
+		    (caddr_t) &(ddst->sen_ip6_src));
+		m_copydata(m, offsetof(struct ip6_hdr, ip6_dst),
+		    sizeof(struct in6_addr),
+		    (caddr_t) &(ddst->sen_ip6_dst));
+		m_copydata(m, offsetof(struct ip6_hdr, ip6_nxt),
+		    sizeof(u_int8_t),
+		    (caddr_t) &(ddst->sen_ip6_proto));
 
-	    sdst.sin6.sin6_family = ssrc.sin6.sin6_family = AF_INET6;
-	    sdst.sin6.sin6_len = ssrc.sin6.sin6_family =
-				sizeof(struct sockaddr_in6);
-	    ssrc.sin6.sin6_addr = ddst->sen_ip6_src;
-	    sdst.sin6.sin6_addr = ddst->sen_ip6_dst;
+		sdst.sin6.sin6_family = ssrc.sin6.sin6_family = AF_INET6;
+		sdst.sin6.sin6_len = ssrc.sin6.sin6_family =
+		    sizeof(struct sockaddr_in6);
+		ssrc.sin6.sin6_addr = ddst->sen_ip6_src;
+		sdst.sin6.sin6_addr = ddst->sen_ip6_dst;
 
-	    /* If TCP/UDP, extract the port numbers to use in the lookup */
-	    switch (ddst->sen_ip6_proto)
-	    {
+		/* If TCP/UDP, extract the port numbers to use in the lookup */
+		switch (ddst->sen_ip6_proto) {
 		case IPPROTO_UDP:
 		case IPPROTO_TCP:
-		    /* Make sure there's enough data in the packet */
-		    if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t))
-		    {
-			*error = EINVAL;
-			return NULL;
-		    }
+			/* Make sure there's enough data in the packet */
+			if (m->m_pkthdr.len < hlen + 2 * sizeof(u_int16_t)) {
+				*error = EINVAL;
+				return NULL;
+			}
 
-		    /*
-		     * Luckily, the offset of the src/dst ports in both the UDP
-		     * and TCP headers is the same (first two 16-bit values
-		     * in the respective headers), so we can just copy them.
-		     */
-		    m_copydata(m, hlen, sizeof(u_int16_t),
-			       (caddr_t) &(ddst->sen_ip6_sport));
-		    m_copydata(m, hlen + sizeof(u_int16_t), sizeof(u_int16_t),
-			       (caddr_t) &(ddst->sen_ip6_dport));
-		    break;
+			/*
+			 * Luckily, the offset of the src/dst ports in
+			 * both the UDP and TCP headers is the same
+			 * (first two 16-bit values in the respective
+			 * headers), so we can just copy them.
+			 */
+			m_copydata(m, hlen, sizeof(u_int16_t),
+			    (caddr_t) &(ddst->sen_ip6_sport));
+			m_copydata(m, hlen + sizeof(u_int16_t), sizeof(u_int16_t),
+			    (caddr_t) &(ddst->sen_ip6_dport));
+			break;
 
 		default:
-		    ddst->sen_ip6_sport = 0;
-		    ddst->sen_ip6_dport = 0;
-	    }
+			ddst->sen_ip6_sport = 0;
+			ddst->sen_ip6_dport = 0;
+		}
 
-	    break;
+		break;
 #endif /* INET6 */
 
 	default:
-	    *error = EAFNOSUPPORT;
-	    return NULL;
-    }
+		*error = EAFNOSUPPORT;
+		return NULL;
+	}
 
-    /* Actual SPD lookup */
-    rtalloc((struct route *) re);
-    if (re->re_rt == NULL)
-    {
-	*error = 0;
-	return NULL; /* Nothing found -- means no IPsec needed */
-    }
+	/* Actual SPD lookup */
+	rtalloc((struct route *) re);
+	if (re->re_rt == NULL) {
+		/*
+		 * Return whatever the socket requirements are, there are no
+		 * system-wide policies.
+		 */
+		*error = 0;
+		return ipsp_spd_inp(m, af, hlen, error, direction,
+		    tdbp, inp, NULL);
+	}
 
-    /* Sanity check */
-    if ((re->re_rt->rt_gateway == NULL) ||
-	(((struct sockaddr_encap *) re->re_rt->rt_gateway)->sen_type !=
-	 SENT_IPSP))
-    {
+	/* Sanity check */
+	if ((re->re_rt->rt_gateway == NULL) ||
+	    (((struct sockaddr_encap *) re->re_rt->rt_gateway)->sen_type !=
+		SENT_IPSP)) {
+		RTFREE(re->re_rt);
+		*error = EHOSTUNREACH;
+		return NULL;
+	}
+
+	ipo = ((struct sockaddr_encap *) (re->re_rt->rt_gateway))->sen_ipsp;
 	RTFREE(re->re_rt);
-	*error = EHOSTUNREACH;
-	return NULL;
-    }
+	if (ipo == NULL) {
+		*error = EHOSTUNREACH;
+		return NULL;
+	}
 
-    ipo = ((struct sockaddr_encap *) (re->re_rt->rt_gateway))->sen_ipsp;
-    RTFREE(re->re_rt);
-    if (ipo == NULL)
-    {
-	*error = EHOSTUNREACH;
-	return NULL;
-    }
-
-    switch (ipo->ipo_type)
-    {
+	switch (ipo->ipo_type) {
 	case IPSP_PERMIT:
-	    *error = 0;
-	    return NULL;
+		*error = 0;
+		return ipsp_spd_inp(m, af, hlen, error, direction, tdbp,
+		    inp, ipo);
 
 	case IPSP_DENY:
-	    *error = EHOSTUNREACH;
-	    return NULL;
+		*error = EHOSTUNREACH;
+		return NULL;
 
 	case IPSP_IPSEC_USE:
 	case IPSP_IPSEC_ACQUIRE:
 	case IPSP_IPSEC_REQUIRE:
 	case IPSP_IPSEC_DONTACQ:
-	    /* Nothing more needed here */
-	    break;
+		/* Nothing more needed here */
+		break;
 
 	default:
-	    *error = EINVAL;
-	    return NULL;
-    }
-
-    /* Check for non-specific destination in the policy. */
-    switch (ipo->ipo_dst.sa.sa_family)
-    {
-#ifdef INET
-	case AF_INET:
-	    if ((ipo->ipo_dst.sin.sin_addr.s_addr == INADDR_ANY) ||
-		(ipo->ipo_dst.sin.sin_addr.s_addr == INADDR_BROADCAST))
-	      dignore = 1;
-	    break;
-#endif /* INET */
-
-#ifdef INET6
-	case AF_INET6:
-	    if ((IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_dst.sin6.sin6_addr)) ||
-		(bcmp(&ipo->ipo_dst.sin6.sin6_addr, &in6mask128,
-		       sizeof(in6mask128))))
-	      dignore = 1;
-	    break;
-#endif /* INET6 */
-    }
-
-    /* Likewise for source. */
-    switch (ipo->ipo_src.sa.sa_family)
-    {
-#ifdef INET
-	case AF_INET:
-	    if (ipo->ipo_src.sin.sin_addr.s_addr == INADDR_ANY)
-	      signore = 1;
-	    break;
-#endif /* INET */
-
-#ifdef INET6
-	case AF_INET6:
-	    if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_src.sin6.sin6_addr))
-	      signore = 1;
-	    break;
-#endif /* INET6 */
-    }
-
-    /* Do we have a cached entry ? If so, check if it's still valid. */
-    if ((ipo->ipo_tdb) && (ipo->ipo_tdb->tdb_flags & TDBF_INVALID))
-    {
-	TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo, ipo_tdb_next);
-	ipo->ipo_tdb = NULL;
-    }
-
-    /* Outgoing packet SPD lookup */
-    if (direction == IPSP_DIRECTION_OUT)
-    {
-	/*
-	 * If the packet is destined for the policy-specified gateway/endhost,
-	 * and the socket has the BYPASS option set, skip IPsec processing.
-	 */
-	if ((inp != NULL) &&
-	    (inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
-	    (inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS) &&
-	    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS))
-	{
-	    /* Direct match */
-	    if (!bcmp(&sdst, &ipo->ipo_dst, sdst.sa.sa_len) || dignore)
-	    {
-		*error = 0;
+		*error = EINVAL;
 		return NULL;
-	    }
 	}
 
-	/* Check that the cached TDB (if present), is appropriate */
-	if (ipo->ipo_tdb)
-	{
-	    if ((ipo->ipo_last_searched <= ipsec_last_added) ||
-		(ipo->ipo_sproto != ipo->ipo_tdb->tdb_sproto) ||
-		bcmp(dignore ? &sdst : &ipo->ipo_dst, &ipo->ipo_tdb->tdb_dst,
-		     ipo->ipo_tdb->tdb_dst.sa.sa_len))
-	      goto nomatchout;
+	/* Check for non-specific destination in the policy. */
+	switch (ipo->ipo_dst.sa.sa_family) {
+#ifdef INET
+	case AF_INET:
+		if ((ipo->ipo_dst.sin.sin_addr.s_addr == INADDR_ANY) ||
+		    (ipo->ipo_dst.sin.sin_addr.s_addr == INADDR_BROADCAST))
+			dignore = 1;
+		break;
+#endif /* INET */
 
-	    /* Match source ID */
-	    if (ipo->ipo_srcid)
-	    {
-		if (ipo->ipo_tdb->tdb_srcid == NULL ||
-		    !ipsp_ref_match(ipo->ipo_srcid, ipo->ipo_tdb->tdb_srcid))
-		  goto nomatchout;
-	    }
+#ifdef INET6
+	case AF_INET6:
+		if ((IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_dst.sin6.sin6_addr)) ||
+		    (bcmp(&ipo->ipo_dst.sin6.sin6_addr, &in6mask128,
+			sizeof(in6mask128))))
+			dignore = 1;
+		break;
+#endif /* INET6 */
+	}
 
-	    /* Match destination ID */
-	    if (ipo->ipo_dstid)
-	    {
-		if (ipo->ipo_tdb->tdb_dstid == NULL ||
-		    !ipsp_ref_match(ipo->ipo_dstid, ipo->ipo_tdb->tdb_dstid))
-		  goto nomatchout;
-	    }
+	/* Likewise for source. */
+	switch (ipo->ipo_src.sa.sa_family) {
+#ifdef INET
+	case AF_INET:
+		if (ipo->ipo_src.sin.sin_addr.s_addr == INADDR_ANY)
+			signore = 1;
+		break;
+#endif /* INET */
 
-	    /* Match local credentials used */
-	    if (ipo->ipo_local_cred)
-	    {
-		if (ipo->ipo_tdb->tdb_local_cred == NULL ||
-		    !ipsp_ref_match(ipo->ipo_local_cred, 
-				    ipo->ipo_tdb->tdb_local_cred))
-		  goto nomatchout;
-	    }
+#ifdef INET6
+	case AF_INET6:
+		if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_src.sin6.sin6_addr))
+			signore = 1;
+		break;
+#endif /* INET6 */
+	}
 
-	    return ipo->ipo_tdb; /* Cached entry is good, we're done */
+	/* Do we have a cached entry ? If so, check if it's still valid. */
+	if ((ipo->ipo_tdb) && (ipo->ipo_tdb->tdb_flags & TDBF_INVALID)) {
+		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
+		    ipo_tdb_next);
+		ipo->ipo_tdb = NULL;
+	}
+
+	/* Outgoing packet SPD lookup. */
+	if (direction == IPSP_DIRECTION_OUT) {
+		/*
+		 * If the packet is destined for the policy-specified
+		 * gateway/endhost, and the socket has the BYPASS
+		 * option set, skip IPsec processing.
+		 */
+		if ((inp != NULL) &&
+		    (inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
+		    (inp->inp_seclevel[SL_ESP_NETWORK] ==
+			IPSEC_LEVEL_BYPASS) &&
+		    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS)) {
+			/* Direct match */
+			if (!bcmp(&sdst, &ipo->ipo_dst, sdst.sa.sa_len) ||
+			    dignore) {
+				*error = 0;
+				return ipsp_spd_inp(m, af, hlen, error,
+				    direction, tdbp, inp, ipo);
+			}
+		}
+
+		/* Check that the cached TDB (if present), is appropriate. */
+		if (ipo->ipo_tdb) {
+			if ((ipo->ipo_last_searched <= ipsec_last_added) ||
+			    (ipo->ipo_sproto != ipo->ipo_tdb->tdb_sproto) ||
+			    bcmp(dignore ? &sdst : &ipo->ipo_dst,
+				&ipo->ipo_tdb->tdb_dst,
+				ipo->ipo_tdb->tdb_dst.sa.sa_len))
+				goto nomatchout;
+
+			/* Match source ID. */
+			if (ipo->ipo_srcid) {
+				if (ipo->ipo_tdb->tdb_srcid == NULL ||
+				    !ipsp_ref_match(ipo->ipo_srcid,
+					ipo->ipo_tdb->tdb_srcid))
+					goto nomatchout;
+			}
+
+			/* Match destination ID. */
+			if (ipo->ipo_dstid) {
+				if (ipo->ipo_tdb->tdb_dstid == NULL ||
+				    !ipsp_ref_match(ipo->ipo_dstid,
+					ipo->ipo_tdb->tdb_dstid))
+					goto nomatchout;
+			}
+
+			/* Match local credentials used */
+			if (ipo->ipo_local_cred) {
+				if (ipo->ipo_tdb->tdb_local_cred == NULL ||
+				    !ipsp_ref_match(ipo->ipo_local_cred, 
+					ipo->ipo_tdb->tdb_local_cred))
+					goto nomatchout;
+			}
+
+			/* Cached entry is good */
+			return ipsp_spd_inp(m, af, hlen, error, direction,
+			    tdbp, inp, ipo);
 
   nomatchout:
-	    /* Cached TDB was not good */
-	    TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo, ipo_tdb_next);
-	    ipo->ipo_tdb = NULL;
-	    ipo->ipo_last_searched = 0;
-	}
+			/* Cached TDB was not good */
+			TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
+			    ipo_tdb_next);
+			ipo->ipo_tdb = NULL;
+			ipo->ipo_last_searched = 0;
+		}
 
-	/*
-	 * If no SA has been added since the last time we did a
-	 * lookup, there's no point searching for one. However, if the
-	 * destination gateway is left unspecified (or is all-1's),
-	 * always lookup since this is a generic-match rule
-	 * (otherwise, we can have situations where SAs to some
-	 * destinations exist but are not used, possibly leading to an
-	 * explosion in the number of acquired SAs).
-	 */
-	if (ipo->ipo_last_searched <= ipsec_last_added)
-	{
-	    ipo->ipo_last_searched = time.tv_sec; /* "touch" the entry */
+		/*
+		 * If no SA has been added since the last time we did a
+		 * lookup, there's no point searching for one. However, if the
+		 * destination gateway is left unspecified (or is all-1's),
+		 * always lookup since this is a generic-match rule
+		 * (otherwise, we can have situations where SAs to some
+		 * destinations exist but are not used, possibly leading to an
+		 * explosion in the number of acquired SAs).
+		 */
+		if (ipo->ipo_last_searched <= ipsec_last_added)	{
+			/* "Touch" the entry. */
+			ipo->ipo_last_searched = time.tv_sec;
 
-	    /* Find an appropriate SA from among the existing SAs */
-	    ipo->ipo_tdb = gettdbbyaddr(dignore ? &sdst : &ipo->ipo_dst,
-					ipo, m, af);
-	    if (ipo->ipo_tdb)
-	    {
-		TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head, ipo,
-				  ipo_tdb_next);
-		*error = 0;
-		return ipo->ipo_tdb;
-	    }
-	}
+			/* Find an appropriate SA from the existing ones. */
+			ipo->ipo_tdb =
+			    gettdbbyaddr(dignore ? &sdst : &ipo->ipo_dst,
+				ipo, m, af);
+			if (ipo->ipo_tdb) {
+				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,
+				    ipo, ipo_tdb_next);
+				*error = 0;
+				return ipsp_spd_inp(m, af, hlen, error,
+				    direction, tdbp, inp, ipo);
+			}
+		}
 
-	/* So, we don't have an SA -- just a policy */
-	switch (ipo->ipo_type)
-	{
-	    case IPSP_IPSEC_REQUIRE:
-		/* Acquire SA through key management */
-		if (ipsp_acquire_sa(ipo, dignore ? &sdst : &ipo->ipo_dst,
-				    signore ? NULL : &ipo->ipo_src,
-				    ddst, m) != 0)
-                {
-                    *error = EACCES;
-		    return NULL;
-                }
+		/* So, we don't have an SA -- just a policy. */
+		switch (ipo->ipo_type) {
+		case IPSP_IPSEC_REQUIRE:
+			/* Acquire SA through key management. */
+			if (ipsp_acquire_sa(ipo, dignore ? &sdst : &ipo->ipo_dst,
+			    signore ? NULL : &ipo->ipo_src, ddst, m) != 0) {
+				*error = EACCES;
+				return NULL;
+			}
 
-		/* Fall through */
-	    case IPSP_IPSEC_DONTACQ:
-		*error = -EINVAL; /* Silently drop packet */
-		return NULL;
+			/* Fall through */
+		case IPSP_IPSEC_DONTACQ:
+			*error = -EINVAL; /* Silently drop packet. */
+			return NULL;
 
-	    case IPSP_IPSEC_ACQUIRE:
-		/* Acquire SA through key management */
-		if (ipsp_acquire_sa(ipo, dignore ? &sdst : &ipo->ipo_dst,
-				    signore ? NULL : &ipo->ipo_src,
-				    ddst, NULL) != 0)
-                {
-                    *error = EACCES;
-		    return NULL;
-                }
+		case IPSP_IPSEC_ACQUIRE:
+			/* Acquire SA through key management. */
+			if (ipsp_acquire_sa(ipo, dignore ? &sdst : &ipo->ipo_dst,
+			    signore ? NULL : &ipo->ipo_src, ddst, NULL) != 0) {
+				*error = EACCES;
+				return NULL;
+			}
 
-		/* Fall through */
-	    case IPSP_IPSEC_USE:
-		*error = 0;  /* Let packet through */
-		return NULL;
-	}
-    }
-    else /* IPSP_DIRECTION_IN */
-    {
-	if (tdbp != NULL)
-	{
-	    if (ipo->ipo_tdb == tdbp)
-	    {
-		*error = 0; /* Accept packet */
-		return NULL;
-	    }
+			/* Fall through */
+		case IPSP_IPSEC_USE:
+			*error = 0;
+			return ipsp_spd_inp(m, af, hlen, error, direction,
+			    tdbp, inp, ipo);
+		}
+	} else { /* IPSP_DIRECTION_IN */
+		if (tdbp != NULL) {
+			/* Direct match in the cache. */
+			if (ipo->ipo_tdb == tdbp) {
+				*error = 0;
+				return ipsp_spd_inp(m, af, hlen, error,
+				    direction, tdbp, inp, ipo);
+			}
 
-	    if (bcmp(dignore ? &ssrc : &ipo->ipo_dst, &tdbp->tdb_src,
-		     tdbp->tdb_src.sa.sa_len) ||
-		(ipo->ipo_sproto != tdbp->tdb_sproto))
-	      goto nomatchin;
+			if (bcmp(dignore ? &ssrc : &ipo->ipo_dst,
+			    &tdbp->tdb_src, tdbp->tdb_src.sa.sa_len) ||
+			    (ipo->ipo_sproto != tdbp->tdb_sproto))
+				goto nomatchin;
 
-	    /* Match source ID */
-	    if (ipo->ipo_srcid)
-	    {
-		if (tdbp->tdb_dstid == NULL ||
-		    !ipsp_ref_match(ipo->ipo_srcid, tdbp->tdb_dstid))
-		  goto nomatchin;
-	    }
+			/* Match source ID. */
+			if (ipo->ipo_srcid) {
+				if (tdbp->tdb_dstid == NULL ||
+				    !ipsp_ref_match(ipo->ipo_srcid,
+					tdbp->tdb_dstid))
+					goto nomatchin;
+			}
 
-	    /* Match destination ID */
-	    if (ipo->ipo_dstid)
-	    {
-		if (tdbp->tdb_srcid == NULL ||
-		    !ipsp_ref_match(ipo->ipo_dstid, tdbp->tdb_srcid))
-		  goto nomatchin;
-	    }
+			/* Match destination ID. */
+			if (ipo->ipo_dstid) {
+				if (tdbp->tdb_srcid == NULL ||
+				    !ipsp_ref_match(ipo->ipo_dstid,
+					tdbp->tdb_srcid))
+					goto nomatchin;
+			}
 
-	    /* Add it to the cache */
-	    if (ipo->ipo_tdb)
-	      TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo, ipo_tdb_next);
-	    ipo->ipo_tdb = tdbp;
-	    TAILQ_INSERT_TAIL(&tdbp->tdb_policy_head, ipo, ipo_tdb_next);
-	    *error = 0;
-	    return NULL;
+			/* Add it to the cache. */
+			if (ipo->ipo_tdb)
+				TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head,
+				    ipo, ipo_tdb_next);
+			ipo->ipo_tdb = tdbp;
+			TAILQ_INSERT_TAIL(&tdbp->tdb_policy_head, ipo,
+			    ipo_tdb_next);
+			*error = 0;
+			return ipsp_spd_inp(m, af, hlen, error, direction,
+			    tdbp, inp, ipo);
 
   nomatchin: /* Nothing needed here, falling through */
-	}
+		}
 
-	/* Check whether cached entry applies */
-	if (ipo->ipo_tdb)
-	{
-	    /*
-	     * We only need to check that the correct security protocol and
-	     * security gateway are set; credentials/IDs will be the same,
-	     * since the cached entry is linked on this policy.
-	     */
-	    if (ipo->ipo_sproto == ipo->ipo_tdb->tdb_sproto &&
-		!bcmp(&ipo->ipo_tdb->tdb_src, dignore ? &ssrc : &ipo->ipo_dst,
-		      ipo->ipo_tdb->tdb_src.sa.sa_len))
-	      goto skipinputsearch;
+		/* Check whether cached entry applies. */
+		if (ipo->ipo_tdb) {
+			/*
+			 * We only need to check that the correct
+			 * security protocol and security gateway are
+			 * set; credentials/IDs will be the same,
+			 * since the cached entry is linked on this
+			 * policy.
+			 */
+			if (ipo->ipo_sproto == ipo->ipo_tdb->tdb_sproto &&
+			    !bcmp(&ipo->ipo_tdb->tdb_src, dignore ? &ssrc : &ipo->ipo_dst,
+				ipo->ipo_tdb->tdb_src.sa.sa_len))
+				goto skipinputsearch;
 
-	    /* Not applicable, unlink */
-	    TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo, ipo_tdb_next);
-	    ipo->ipo_tdb = NULL;
-	}
+			/* Not applicable, unlink. */
+			TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo,
+			    ipo_tdb_next);
+			ipo->ipo_tdb = NULL;
+		}
 
-	/* Find whether there exists an appropriate SA */
-	if (ipo->ipo_last_searched <= ipsec_last_added)
-	{
-	    ipo->ipo_last_searched = time.tv_sec; /* "touch" */
+		/* Find whether there exists an appropriate SA. */
+		if (ipo->ipo_last_searched <= ipsec_last_added)	{
+			ipo->ipo_last_searched = time.tv_sec; /* "touch" */
 
-	    ipo->ipo_tdb = gettdbbysrc(dignore ? &ssrc : &ipo->ipo_dst,
-				       ipo, m, af);
-	    if (ipo->ipo_tdb)
-	      TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head, ipo,
-				ipo_tdb_next);
-	}
+			ipo->ipo_tdb =
+			    gettdbbysrc(dignore ? &ssrc : &ipo->ipo_dst,
+				ipo, m, af);
+			if (ipo->ipo_tdb)
+				TAILQ_INSERT_TAIL(&ipo->ipo_tdb->tdb_policy_head,
+				    ipo, ipo_tdb_next);
+		}
   skipinputsearch:
 
-	switch (ipo->ipo_type)
-	{
-	    case IPSP_IPSEC_REQUIRE:
-	        /* If an appropriate SA exists, don't acquire another */
-		if (ipo->ipo_tdb)
-		{
-		    *error = -EINVAL;
-		    return NULL;
+		switch (ipo->ipo_type) {
+		case IPSP_IPSEC_REQUIRE:
+			/* If appropriate SA exists, don't acquire another. */
+			if (ipo->ipo_tdb) {
+				*error = -EINVAL;
+				return NULL;
+			}
+
+			/* Acquire SA through key management. */
+			if ((*error = ipsp_acquire_sa(ipo,
+			    dignore ? &ssrc : &ipo->ipo_dst,
+			    signore ? NULL : &ipo->ipo_src, ddst, m)) != 0)
+				return NULL;
+
+			/* Fall through */
+		case IPSP_IPSEC_DONTACQ:
+			/* Drop packet. */
+			*error = -EINVAL;
+			return NULL;
+
+		case IPSP_IPSEC_ACQUIRE:
+			/* If appropriate SA exists, don't acquire another. */
+			if (ipo->ipo_tdb) {
+				*error = 0;
+				return ipsp_spd_inp(m, af, hlen, error,
+				    direction, tdbp, inp, ipo);
+			}
+
+			/* Acquire SA through key management. */
+			if ((*error = ipsp_acquire_sa(ipo,
+			    dignore ? &ssrc : &ipo->ipo_dst,
+			    signore ? NULL : &ipo->ipo_src, ddst, NULL)) != 0)
+				return NULL;
+
+			/* Fall through */
+		case IPSP_IPSEC_USE:
+			*error = 0;
+			return ipsp_spd_inp(m, af, hlen, error, direction,
+			    tdbp, inp, ipo);
 		}
-
-		/* Acquire SA through key management */
-		if ((*error = ipsp_acquire_sa(ipo,
-					      dignore ? &ssrc : &ipo->ipo_dst,
-					      signore ? NULL : &ipo->ipo_src,
-					      ddst, m)) != 0)
-		  return NULL;
-
-		/* Fall through */
-	    case IPSP_IPSEC_DONTACQ:
-		/* Drop packet */
-		*error = -EINVAL;
-		return NULL;
-
-	    case IPSP_IPSEC_ACQUIRE:
-	        /* If an appropriate SA exists, don't acquire another */
-		if (ipo->ipo_tdb)
-		{
-		    *error = 0;
-		    return NULL;
-		}
-
-		/* Acquire SA through key management */
-		if ((*error = ipsp_acquire_sa(ipo,
-					      dignore ? &ssrc : &ipo->ipo_dst,
-					      signore ? NULL : &ipo->ipo_src,
-					      ddst, NULL)) != 0)
-		  return NULL;
-
-		/* Fall through */
-	    case IPSP_IPSEC_USE:
-		/*
-		 * It doesn't matter what protection it had (if any),
-		 * just accept it -- equivalent to PERMIT for input.
-		 * This means we can't say that we want in incoming
-		 * packet to be unprotected -- at least not directly;
-		 * we can always have a DENY policy for ESP/AH packets.
-		 */
-		*error = 0;
-		return NULL;
 	}
-    }
 
-    /* Shouldn't ever get this far */
-    *error = EINVAL;
-    return NULL;
+	/* Shouldn't ever get this far. */
+	*error = EINVAL;
+	return NULL;
 }
 
 /*
@@ -564,34 +554,34 @@ ipsp_spd_lookup(struct mbuf *m, int af, int hlen, int *error, int direction,
 int
 ipsec_delete_policy(struct ipsec_policy *ipo)
 {
-    int err = 0;
+	int err = 0;
 
-    /* Delete */
-    if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET))
-      err = rtrequest(RTM_DELETE, (struct sockaddr *) &ipo->ipo_addr,
-		      (struct sockaddr *) 0,
-		      (struct sockaddr *) &ipo->ipo_mask,
-		      0, (struct rtentry **) 0);
+	/* Delete */
+	if (!(ipo->ipo_flags & IPSP_POLICY_SOCKET))
+		err = rtrequest(RTM_DELETE, (struct sockaddr *) &ipo->ipo_addr,
+		    (struct sockaddr *) 0,
+		    (struct sockaddr *) &ipo->ipo_mask,
+		    0, (struct rtentry **) 0);
 
-    if (ipo->ipo_tdb)
-      TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo, ipo_tdb_next);
+	if (ipo->ipo_tdb)
+		TAILQ_REMOVE(&ipo->ipo_tdb->tdb_policy_head, ipo, ipo_tdb_next);
 
-    TAILQ_REMOVE(&ipsec_policy_head, ipo, ipo_list);
+	TAILQ_REMOVE(&ipsec_policy_head, ipo, ipo_list);
 
-    if (ipo->ipo_srcid)
-      ipsp_reffree(ipo->ipo_srcid);
-    if (ipo->ipo_dstid)
-      ipsp_reffree(ipo->ipo_dstid);
-    if (ipo->ipo_local_cred)
-      ipsp_reffree(ipo->ipo_local_cred);
-    if (ipo->ipo_local_auth)
-      ipsp_reffree(ipo->ipo_local_cred);
+	if (ipo->ipo_srcid)
+		ipsp_reffree(ipo->ipo_srcid);
+	if (ipo->ipo_dstid)
+		ipsp_reffree(ipo->ipo_dstid);
+	if (ipo->ipo_local_cred)
+		ipsp_reffree(ipo->ipo_local_cred);
+	if (ipo->ipo_local_auth)
+		ipsp_reffree(ipo->ipo_local_cred);
 
-    FREE(ipo, M_IPSEC_POLICY);
+	FREE(ipo, M_IPSEC_POLICY);
 
-    ipsec_in_use--;
+	ipsec_in_use--;
 
-    return err;
+	return err;
 }
 
 /*
@@ -601,43 +591,42 @@ struct ipsec_policy *
 ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
 		 union sockaddr_union *sdst, int type, int sproto)
 {
-    struct sockaddr_encap encapgw;
-    struct ipsec_policy *ipon;
+	struct sockaddr_encap encapgw;
+	struct ipsec_policy *ipon;
 
-    MALLOC(ipon, struct ipsec_policy *, sizeof(struct ipsec_policy),
-	   M_IPSEC_POLICY, M_NOWAIT);
-    if (ipon == NULL)
-      return NULL;
+	MALLOC(ipon, struct ipsec_policy *, sizeof(struct ipsec_policy),
+	    M_IPSEC_POLICY, M_NOWAIT);
+	if (ipon == NULL)
+		return NULL;
 
-    bzero(ipon, sizeof(struct ipsec_policy));
-    bzero((caddr_t) &encapgw, sizeof(struct sockaddr_encap));
+	bzero(ipon, sizeof(struct ipsec_policy));
+	bzero((caddr_t) &encapgw, sizeof(struct sockaddr_encap));
 
-    encapgw.sen_len = SENT_LEN;
-    encapgw.sen_family = PF_KEY;
-    encapgw.sen_type = SENT_IPSP;
-    encapgw.sen_ipsp = ipon;
+	encapgw.sen_len = SENT_LEN;
+	encapgw.sen_family = PF_KEY;
+	encapgw.sen_type = SENT_IPSP;
+	encapgw.sen_ipsp = ipon;
 
-    if (rtrequest(RTM_ADD, (struct sockaddr *) dst,
-		  (struct sockaddr *) &encapgw, (struct sockaddr *) mask,
-		  RTF_UP | RTF_GATEWAY | RTF_STATIC,
-		  (struct rtentry **) 0) != 0)
-    {
-        DPRINTF(("ipsec_add_policy: failed to add policy\n"));
-	FREE(ipon, M_IPSEC_POLICY);
-	return NULL;
-    }
+	if (rtrequest(RTM_ADD, (struct sockaddr *) dst,
+	    (struct sockaddr *) &encapgw, (struct sockaddr *) mask,
+	    RTF_UP | RTF_GATEWAY | RTF_STATIC,
+	    (struct rtentry **) 0) != 0) {
+	    DPRINTF(("ipsec_add_policy: failed to add policy\n"));
+	    FREE(ipon, M_IPSEC_POLICY);
+	    return NULL;
+	}
 
-    ipsec_in_use++;
+	ipsec_in_use++;
 
-    bcopy(dst, &ipon->ipo_addr, sizeof(struct sockaddr_encap));
-    bcopy(mask, &ipon->ipo_mask, sizeof(struct sockaddr_encap));
-    bcopy(sdst, &ipon->ipo_dst, sizeof(union sockaddr_union));
-    ipon->ipo_sproto = sproto;
-    ipon->ipo_type = type;
+	bcopy(dst, &ipon->ipo_addr, sizeof(struct sockaddr_encap));
+	bcopy(mask, &ipon->ipo_mask, sizeof(struct sockaddr_encap));
+	bcopy(sdst, &ipon->ipo_dst, sizeof(union sockaddr_union));
+	ipon->ipo_sproto = sproto;
+	ipon->ipo_type = type;
 
-    TAILQ_INSERT_HEAD(&ipsec_policy_head, ipon, ipo_list);
+	TAILQ_INSERT_HEAD(&ipsec_policy_head, ipon, ipo_list);
 
-    return ipon;
+	return ipon;
 }
 
 /*
@@ -646,13 +635,13 @@ ipsec_add_policy(struct sockaddr_encap *dst, struct sockaddr_encap *mask,
 void
 ipsp_delete_acquire(void *v)
 {
-    struct ipsec_acquire *ipa = v;
+	struct ipsec_acquire *ipa = v;
 
-    timeout_del(&ipa->ipa_timeout);
-    TAILQ_REMOVE(&ipsec_acquire_head, ipa, ipa_next);
-    if (ipa->ipa_packet)
-      m_freem(ipa->ipa_packet);
-    FREE(ipa, M_IPSEC_POLICY);
+	timeout_del(&ipa->ipa_timeout);
+	TAILQ_REMOVE(&ipsec_acquire_head, ipa, ipa_next);
+	if (ipa->ipa_packet)
+		m_freem(ipa->ipa_packet);
+	FREE(ipa, M_IPSEC_POLICY);
 }
 
 /*
@@ -661,92 +650,94 @@ ipsp_delete_acquire(void *v)
 void
 ipsp_clear_acquire(struct tdb *tdb)
 {
-    struct ipsec_acquire *ipa;
-    struct ifqueue *ifq;
-    int s;
+	struct ipsec_acquire *ipa;
+	struct ifqueue *ifq;
+	int s;
 
-    while ((ipa = ipsp_pending_acquire(&tdb->tdb_dst)) != NULL)
-    {
-
-	/* Retransmit */
-	if (ipa->ipa_packet)
-	{
-	    switch (ipa->ipa_info.sen_type)
-	    {
+	while ((ipa = ipsp_pending_acquire(&tdb->tdb_dst)) != NULL) {
+		/* Retransmit */
+		if (ipa->ipa_packet) {
+			switch (ipa->ipa_info.sen_type) {
 #ifdef INET
-		case SENT_IP4:
-		{
-		    struct ip *ip;
+			case SENT_IP4:
+			{
+				struct ip *ip;
 
-		    switch (ipa->ipa_info.sen_direction)
-		    {
-			case IPSP_DIRECTION_OUT:
-			    ip = mtod(ipa->ipa_packet, struct ip *);
-			    if (ipa->ipa_packet->m_len < sizeof(struct ip))
-			      break;
+				switch (ipa->ipa_info.sen_direction) {
+				case IPSP_DIRECTION_OUT:
+					ip = mtod(ipa->ipa_packet,
+					    struct ip *);
 
-			    /* Same as in ip_output() -- massage the header */
-			    ip->ip_len = htons((u_short) ip->ip_len);
-			    ip->ip_off = htons((u_short) ip->ip_off);
-			    ipa->ipa_packet->m_flags &= ~(M_MCAST | M_BCAST);
+					if (ipa->ipa_packet->m_len <
+					    sizeof(struct ip))
+						break;
 
-			    ipsp_process_packet(ipa->ipa_packet, tdb,
-						AF_INET, 0);
-			    ipa->ipa_packet = NULL;
-			    break;
+					/* Same as in ip_output() --
+                                         *  massage the header.
+					 */
 
-			case IPSP_DIRECTION_IN:
-			    ifq = &ipintrq;
-			    s = splimp();
-			    if (IF_QFULL(ifq))
-			    {
-				IF_DROP(ifq);
-				splx(s);
-				break;
-			    }
-			    IF_ENQUEUE(ifq, ipa->ipa_packet);
-			    ipa->ipa_packet = NULL;
-			    schednetisr(NETISR_IP);
-			    splx(s);
-			    break;
-		    }
-		}
-		 break;
+					ip->ip_len =
+					    htons((u_short) ip->ip_len);
+					ip->ip_off =
+					    htons((u_short) ip->ip_off);
+					ipa->ipa_packet->m_flags &=
+					    ~(M_MCAST | M_BCAST);
+
+					ipsp_process_packet(ipa->ipa_packet,
+					    tdb, AF_INET, 0);
+					ipa->ipa_packet = NULL;
+					break;
+
+				case IPSP_DIRECTION_IN:
+					ifq = &ipintrq;
+					s = splimp();
+					if (IF_QFULL(ifq)) {
+						IF_DROP(ifq);
+						splx(s);
+						break;
+					}
+					IF_ENQUEUE(ifq, ipa->ipa_packet);
+					ipa->ipa_packet = NULL;
+					schednetisr(NETISR_IP);
+					splx(s);
+					break;
+				}
+			}
+			break;
 #endif /* INET */
 
 #ifdef INET6
-		case SENT_IP6:
-		    switch (ipa->ipa_info.sen_ip6_direction)
-		    {
-			case IPSP_DIRECTION_OUT:
-			    ipa->ipa_packet->m_flags &= ~(M_BCAST | M_MCAST);
-			    ipsp_process_packet(ipa->ipa_packet, tdb,
-						AF_INET6, 0);
-			    ipa->ipa_packet = NULL;
-			    break;
+			case SENT_IP6:
+				switch (ipa->ipa_info.sen_ip6_direction) {
+				case IPSP_DIRECTION_OUT:
+					ipa->ipa_packet->m_flags &=
+					    ~(M_BCAST | M_MCAST);
+					ipsp_process_packet(ipa->ipa_packet,
+					    tdb, AF_INET6, 0);
+					ipa->ipa_packet = NULL;
+					break;
 
-			case IPSP_DIRECTION_IN:
-			    ifq = &ip6intrq;
-			    s = splimp();
-			    if (IF_QFULL(ifq))
-			    {
-				IF_DROP(ifq);
-				splx(s);
+				case IPSP_DIRECTION_IN:
+					ifq = &ip6intrq;
+					s = splimp();
+					if (IF_QFULL(ifq)) {
+						IF_DROP(ifq);
+						splx(s);
+						break;
+					}
+					IF_ENQUEUE(ifq, ipa->ipa_packet);
+					ipa->ipa_packet = NULL;
+					schednetisr(NETISR_IPV6);
+					splx(s);
+					break;
+				}
 				break;
-			    }
-			    IF_ENQUEUE(ifq, ipa->ipa_packet);
-			    ipa->ipa_packet = NULL;
-			    schednetisr(NETISR_IPV6);
-			    splx(s);
-			    break;
-		    }
-		    break;
 #endif /* INET6 */
-	    }
-	}
+			}
+		}
 
-	ipsp_delete_acquire(ipa);
-    }
+		ipsp_delete_acquire(ipa);
+	}
 }
 
 /*
@@ -756,17 +747,15 @@ ipsp_clear_acquire(struct tdb *tdb)
 struct ipsec_acquire *
 ipsp_pending_acquire(union sockaddr_union *gw)
 {
-    struct ipsec_acquire *ipa;
+	struct ipsec_acquire *ipa;
 
-    for (ipa = TAILQ_FIRST(&ipsec_acquire_head);
-	 ipa;
-	 ipa = TAILQ_NEXT(ipa, ipa_next))
-    {
-	if (!bcmp(gw, &ipa->ipa_addr, gw->sa.sa_len))
-	  return ipa;
-    }
+	for (ipa = TAILQ_FIRST(&ipsec_acquire_head); ipa;
+	     ipa = TAILQ_NEXT(ipa, ipa_next)) {
+		if (!bcmp(gw, &ipa->ipa_addr, gw->sa.sa_len))
+			return ipa;
+	}
 
-    return NULL;
+	return NULL;
 }
 
 /*
@@ -778,149 +767,139 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 		union sockaddr_union *laddr, struct sockaddr_encap *ddst,
 		struct mbuf *m)
 {
-    struct ipsec_acquire *ipa;
+	struct ipsec_acquire *ipa;
 #ifdef INET6
-    int i;
+	int i;
 #endif
 
-    /* Check whether request has been made already. */
-    if ((ipa = ipsp_pending_acquire(gw)) != NULL)
-    {
-	if (ipa->ipa_packet && m)
-	{
-	    m_freem(ipa->ipa_packet);
-	    ipa->ipa_packet = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
+	/* Check whether request has been made already. */
+	if ((ipa = ipsp_pending_acquire(gw)) != NULL) {
+		if (ipa->ipa_packet && m) {
+			m_freem(ipa->ipa_packet);
+			ipa->ipa_packet = m_copym2(m, 0, M_COPYALL,
+			    M_DONTWAIT);
+		}
+
+		return 0;
 	}
 
-	return 0;
-    }
+	/* Add request in cache and proceed */
+	MALLOC(ipa, struct ipsec_acquire *, sizeof(struct ipsec_acquire),
+	    M_IPSEC_POLICY, M_DONTWAIT);
+	if (ipa == NULL)
+		return ENOMEM;
 
-    /* Add request in cache and proceed */
-    MALLOC(ipa, struct ipsec_acquire *, sizeof(struct ipsec_acquire),
-	   M_IPSEC_POLICY, M_DONTWAIT);
-    if (ipa == NULL)
-      return ENOMEM;
+	bzero(ipa, sizeof(struct ipsec_acquire));
+	bcopy(gw, &ipa->ipa_addr, sizeof(union sockaddr_union));
+	timeout_set(&ipa->ipa_timeout, ipsp_delete_acquire, ipa);
 
-    bzero(ipa, sizeof(struct ipsec_acquire));
-    bcopy(gw, &ipa->ipa_addr, sizeof(union sockaddr_union));
-    timeout_set(&ipa->ipa_timeout, ipsp_delete_acquire, ipa);
+	ipa->ipa_info.sen_len = ipa->ipa_mask.sen_len = SENT_LEN;
+	ipa->ipa_info.sen_family = ipa->ipa_mask.sen_family = PF_KEY;
 
-    ipa->ipa_info.sen_len = ipa->ipa_mask.sen_len = SENT_LEN;
-    ipa->ipa_info.sen_family = ipa->ipa_mask.sen_family = PF_KEY;
-
-    /* Just copy the right information */
-    switch (ipo->ipo_addr.sen_type)
-    {
+	/* Just copy the right information */
+	switch (ipo->ipo_addr.sen_type) {
 #ifdef INET
 	case SENT_IP4:
-	    ipa->ipa_info.sen_type = ipa->ipa_mask.sen_type = SENT_IP4;
-	    ipa->ipa_info.sen_direction = ipo->ipo_addr.sen_direction;
-	    ipa->ipa_mask.sen_direction = ipo->ipo_mask.sen_direction;
+		ipa->ipa_info.sen_type = ipa->ipa_mask.sen_type = SENT_IP4;
+		ipa->ipa_info.sen_direction = ipo->ipo_addr.sen_direction;
+		ipa->ipa_mask.sen_direction = ipo->ipo_mask.sen_direction;
 
-	    if (ipo->ipo_mask.sen_ip_src.s_addr == INADDR_ANY ||
-		ipo->ipo_addr.sen_ip_src.s_addr == INADDR_ANY ||
-		ipsp_is_unspecified(ipo->ipo_dst))
-	    {
-		ipa->ipa_info.sen_ip_src = ddst->sen_ip_src;
-		ipa->ipa_mask.sen_ip_src.s_addr = INADDR_BROADCAST;
-	    }
-	    else
-	    {
-		ipa->ipa_info.sen_ip_src = ipo->ipo_addr.sen_ip_src;
-		ipa->ipa_mask.sen_ip_src = ipo->ipo_mask.sen_ip_src;
-	    }
+		if (ipo->ipo_mask.sen_ip_src.s_addr == INADDR_ANY ||
+		    ipo->ipo_addr.sen_ip_src.s_addr == INADDR_ANY ||
+		    ipsp_is_unspecified(ipo->ipo_dst)) {
+			ipa->ipa_info.sen_ip_src = ddst->sen_ip_src;
+			ipa->ipa_mask.sen_ip_src.s_addr = INADDR_BROADCAST;
+		} else {
+			ipa->ipa_info.sen_ip_src = ipo->ipo_addr.sen_ip_src;
+			ipa->ipa_mask.sen_ip_src = ipo->ipo_mask.sen_ip_src;
+		}
 
-	    if (ipo->ipo_mask.sen_ip_dst.s_addr == INADDR_ANY ||
-		ipo->ipo_addr.sen_ip_dst.s_addr == INADDR_ANY ||
-		ipsp_is_unspecified(ipo->ipo_dst))
-	    {
-		ipa->ipa_info.sen_ip_dst = ddst->sen_ip_dst;
-		ipa->ipa_mask.sen_ip_dst.s_addr = INADDR_BROADCAST;
-	    }
-	    else
-	    {
-		ipa->ipa_info.sen_ip_dst = ipo->ipo_addr.sen_ip_dst;
-		ipa->ipa_mask.sen_ip_dst = ipo->ipo_mask.sen_ip_dst;
-	    }
+		if (ipo->ipo_mask.sen_ip_dst.s_addr == INADDR_ANY ||
+		    ipo->ipo_addr.sen_ip_dst.s_addr == INADDR_ANY ||
+		    ipsp_is_unspecified(ipo->ipo_dst)) {
+			ipa->ipa_info.sen_ip_dst = ddst->sen_ip_dst;
+			ipa->ipa_mask.sen_ip_dst.s_addr = INADDR_BROADCAST;
+		} else {
+			ipa->ipa_info.sen_ip_dst = ipo->ipo_addr.sen_ip_dst;
+			ipa->ipa_mask.sen_ip_dst = ipo->ipo_mask.sen_ip_dst;
+		}
 
-	    ipa->ipa_info.sen_proto = ipo->ipo_addr.sen_proto;
-	    ipa->ipa_mask.sen_proto = ipo->ipo_mask.sen_proto;
+		ipa->ipa_info.sen_proto = ipo->ipo_addr.sen_proto;
+		ipa->ipa_mask.sen_proto = ipo->ipo_mask.sen_proto;
 
-	    if (ipo->ipo_addr.sen_proto)
-	    {
-		ipa->ipa_info.sen_sport = ipo->ipo_addr.sen_sport;
-		ipa->ipa_mask.sen_sport = ipo->ipo_mask.sen_sport;
+		if (ipo->ipo_addr.sen_proto) {
+			ipa->ipa_info.sen_sport = ipo->ipo_addr.sen_sport;
+			ipa->ipa_mask.sen_sport = ipo->ipo_mask.sen_sport;
 
-		ipa->ipa_info.sen_dport = ipo->ipo_addr.sen_dport;
-		ipa->ipa_mask.sen_dport = ipo->ipo_mask.sen_dport;
-	    }
-	    break;
+			ipa->ipa_info.sen_dport = ipo->ipo_addr.sen_dport;
+			ipa->ipa_mask.sen_dport = ipo->ipo_mask.sen_dport;
+		}
+		break;
 #endif /* INET */
 
 #ifdef INET6
 	case SENT_IP6:
-	    ipa->ipa_info.sen_type = ipa->ipa_mask.sen_type = SENT_IP6;
-	    ipa->ipa_info.sen_ip6_direction = ipo->ipo_addr.sen_ip6_direction;
-	    ipa->ipa_mask.sen_ip6_direction = ipo->ipo_mask.sen_ip6_direction;
+		ipa->ipa_info.sen_type = ipa->ipa_mask.sen_type = SENT_IP6;
+		ipa->ipa_info.sen_ip6_direction =
+		    ipo->ipo_addr.sen_ip6_direction;
+		ipa->ipa_mask.sen_ip6_direction =
+		    ipo->ipo_mask.sen_ip6_direction;
 
-	    if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_mask.sen_ip6_src) ||
-		IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_src) ||
-		ipsp_is_unspecified(ipo->ipo_dst))
-	    {
-		ipa->ipa_info.sen_ip6_src = ddst->sen_ip6_src;
-		for (i = 0; i < 16; i++)
-		  ipa->ipa_mask.sen_ip6_src.s6_addr8[i] = 0xff;
-	    }
-	    else
-	    {
-		ipa->ipa_info.sen_ip6_src = ipo->ipo_addr.sen_ip6_src;
-		ipa->ipa_mask.sen_ip6_src = ipo->ipo_mask.sen_ip6_src;
-	    }
+		if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_mask.sen_ip6_src) ||
+		    IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_src) ||
+		    ipsp_is_unspecified(ipo->ipo_dst)) {
+			ipa->ipa_info.sen_ip6_src = ddst->sen_ip6_src;
+			for (i = 0; i < 16; i++)
+				ipa->ipa_mask.sen_ip6_src.s6_addr8[i] = 0xff;
+		} else {
+			ipa->ipa_info.sen_ip6_src = ipo->ipo_addr.sen_ip6_src;
+			ipa->ipa_mask.sen_ip6_src = ipo->ipo_mask.sen_ip6_src;
+		}
 
-	    if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_mask.sen_ip6_dst) ||
-		IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_dst) ||
-		ipsp_is_unspecified(ipo->ipo_dst))
-	    {
-		ipa->ipa_info.sen_ip6_dst = ddst->sen_ip6_dst;
-		for (i = 0; i < 16; i++)
-		  ipa->ipa_mask.sen_ip6_dst.s6_addr8[i] = 0xff;
-	    }
-	    else
-	    {
-		ipa->ipa_info.sen_ip6_dst = ipo->ipo_addr.sen_ip6_dst;
-		ipa->ipa_mask.sen_ip6_dst = ipo->ipo_mask.sen_ip6_dst;
-	    }
+		if (IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_mask.sen_ip6_dst) ||
+		    IN6_IS_ADDR_UNSPECIFIED(&ipo->ipo_addr.sen_ip6_dst) ||
+		    ipsp_is_unspecified(ipo->ipo_dst)) {
+			ipa->ipa_info.sen_ip6_dst = ddst->sen_ip6_dst;
+			for (i = 0; i < 16; i++)
+				ipa->ipa_mask.sen_ip6_dst.s6_addr8[i] = 0xff;
+		} else {
+			ipa->ipa_info.sen_ip6_dst = ipo->ipo_addr.sen_ip6_dst;
+			ipa->ipa_mask.sen_ip6_dst = ipo->ipo_mask.sen_ip6_dst;
+		}
 
-	    ipa->ipa_info.sen_ip6_proto = ipo->ipo_addr.sen_ip6_proto;
-	    ipa->ipa_mask.sen_ip6_proto = ipo->ipo_mask.sen_ip6_proto;
+		ipa->ipa_info.sen_ip6_proto = ipo->ipo_addr.sen_ip6_proto;
+		ipa->ipa_mask.sen_ip6_proto = ipo->ipo_mask.sen_ip6_proto;
 
-	    if (ipo->ipo_mask.sen_ip6_proto)
-	    {
-		ipa->ipa_info.sen_ip6_sport = ipo->ipo_addr.sen_ip6_sport;
-		ipa->ipa_mask.sen_ip6_sport = ipo->ipo_mask.sen_ip6_sport;
-		ipa->ipa_info.sen_ip6_dport = ipo->ipo_addr.sen_ip6_dport;
-		ipa->ipa_mask.sen_ip6_dport = ipo->ipo_mask.sen_ip6_dport;
-	    }
-	    break;
+		if (ipo->ipo_mask.sen_ip6_proto) {
+			ipa->ipa_info.sen_ip6_sport =
+			    ipo->ipo_addr.sen_ip6_sport;
+			ipa->ipa_mask.sen_ip6_sport =
+			    ipo->ipo_mask.sen_ip6_sport;
+			ipa->ipa_info.sen_ip6_dport =
+			    ipo->ipo_addr.sen_ip6_dport;
+			ipa->ipa_mask.sen_ip6_dport =
+			    ipo->ipo_mask.sen_ip6_dport;
+		}
+		break;
 #endif /* INET6 */
 
 	default:
-	    FREE(ipa, M_IPSEC_POLICY);
-	    return 0;
-    }
+		FREE(ipa, M_IPSEC_POLICY);
+		return 0;
+	}
 
-    /*
-     * Store the packet for eventual retransmission -- failure is not
-     * catastrophic.
-     */
-    if (m)
-      ipa->ipa_packet = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
+	/*
+	 * Store the packet for eventual retransmission -- failure is not
+	 * catastrophic.
+	 */
+	if (m)
+		ipa->ipa_packet = m_copym2(m, 0, M_COPYALL, M_DONTWAIT);
 
-    timeout_add(&ipa->ipa_timeout, ipsec_expire_acquire * hz);
-    TAILQ_INSERT_TAIL(&ipsec_acquire_head, ipa, ipa_next);
+	timeout_add(&ipa->ipa_timeout, ipsec_expire_acquire * hz);
+	TAILQ_INSERT_TAIL(&ipsec_acquire_head, ipa, ipa_next);
 
-    /* PF_KEYv2 notification message */
-    return pfkeyv2_acquire(ipo, gw, laddr, &ipa->ipa_seq, ddst);
+	/* PF_KEYv2 notification message */
+	return pfkeyv2_acquire(ipo, gw, laddr, &ipa->ipa_seq, ddst);
 }
 
 /*
@@ -930,13 +909,26 @@ ipsp_acquire_sa(struct ipsec_policy *ipo, union sockaddr_union *gw,
 struct ipsec_acquire *
 ipsec_get_acquire(u_int32_t seq)
 {
-    struct ipsec_acquire *ipa;
+	struct ipsec_acquire *ipa;
 
-    for (ipa = TAILQ_FIRST(&ipsec_acquire_head);
-	 ipa;
-	 ipa = TAILQ_NEXT(ipa, ipa_next))
-      if (ipa->ipa_seq == seq)
-	return ipa;
+	for (ipa = TAILQ_FIRST(&ipsec_acquire_head); ipa;
+	     ipa = TAILQ_NEXT(ipa, ipa_next))
+		if (ipa->ipa_seq == seq)
+			return ipa;
 
-    return NULL;
+	return NULL;
+}
+
+/*
+ * Deal with PCB security requirements.
+ */
+struct tdb *
+ipsp_spd_inp(struct mbuf *m, int af, int hlen, int *error, int direction,
+    struct tdb *tdbp, struct inpcb *inp, struct ipsec_policy *ipo)
+{
+	/* XXX */
+	if (ipo)
+		return ipo->ipo_tdb;
+	else
+		return NULL;
 }
