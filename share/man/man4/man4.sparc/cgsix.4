@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cgsix.4,v 1.13 2002/07/22 07:01:03 miod Exp $
+.\"	$OpenBSD: cgsix.4,v 1.14 2002/08/12 10:48:21 miod Exp $
 .\"	$NetBSD: cgsix.4,v 1.4 1998/06/11 08:32:20 fair Exp $
 .\"
 .\" Copyright 1994
@@ -37,7 +37,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)cgsix.4	8.1 (Berkeley) 2/16/94
-.\"	$Id: cgsix.4,v 1.13 2002/07/22 07:01:03 miod Exp $
+.\"	$Id: cgsix.4,v 1.14 2002/08/12 10:48:21 miod Exp $
 .\"
 .Dd February 16, 1994
 .Dt CGSIX 4 sparc
@@ -49,24 +49,30 @@
 .Cd "cgsix* at sbus? slot ? offset ?" Pq "sun4c and sun4m"
 .Cd "cgsix0 at obio0 addr 0xfb000000 level 4" Pq sun4/300 P4
 .Cd "cgsix0 at obio0 addr 0x0b000000 level 4" Pq sun4/100 P4
+.Cd "wsdisplay* at cgsix?"
 .Sh DESCRIPTION
 The
-.Nm cgsix
-is a memory based color frame buffer.
-It supports the minimal
-.Xr ioctl 2 Ns s
-needed to run
-.Xr X 7 .
+.Nm
+is a memory based color frame buffer for the
+.Xr wscons 4
+console framework.
+It does not provide direct device driver entry points
+but makes its functions available via the internal
+.Xr wsdisplay 4
+interface.
 .Sh SEE ALSO
 .Xr bwtwo 4 ,
 .Xr cgeight 4 ,
 .Xr cgfour 4 ,
 .Xr cgfourteen 4 ,
 .Xr cgthree 4 ,
+.Xr cgtwelve 4 ,
 .Xr cgtwo 4 ,
 .Xr pnozz 4 ,
 .Xr sbus 4 ,
-.Xr tcx 4
+.Xr tcx 4 ,
+.Xr wscons 4 ,
+.Xr wsdisplay 4
 .Sh BUGS
 Several firmware revisions of the
 .Nm cgsix ,

@@ -1,7 +1,5 @@
-.\"     $OpenBSD: pnozz.4,v 1.7 2002/08/12 10:48:21 miod Exp $
-.\"
-.\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
-.\" All rights reserved.
+.\"	$OpenBSD: cgtwelve.4,v 1.1 2002/08/12 10:48:21 miod Exp $
+.\" Copyright (c) 2002 Miodrag Vallat.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
 .\" modification, are permitted provided that the following conditions
@@ -11,11 +9,6 @@
 .\" 2. Redistributions in binary form must reproduce the above copyright
 .\"    notice, this list of conditions and the following disclaimer in the
 .\"    documentation and/or other materials provided with the distribution.
-.\" 3. All advertising materials mentioning features or use of this software
-.\"    must display the following acknowledgement:
-.\"      This product includes software developed by Jason L. Wright
-.\" 4. The name of the author may not be used to endorse or promote products
-.\"    derived from this software without specific prior written permission.
 .\"
 .\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
 .\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -29,39 +22,26 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd September 8, 1999
-.Dt PNOZZ 4 sparc
+.Dd July 22, 2002
+.Dt CGTWELVE 4 sparc
 .Os
 .Sh NAME
-.Nm pnozz
-.Nd Tadpole Weitek p9100 frame buffer
+.Nm cgtwelve
+.Nd accelerated 8/24-bit color frame buffer
 .Sh SYNOPSIS
-.Cd "pnozz0 at sbus0 slot ? offset ?"
-.Cd "wsdisplay* at pnozz?"
+.Cd "cgtwelve* at sbus? slot ? offset ?"
+.Cd "wsdisplay* at cgtwelve?"
 .Sh DESCRIPTION
 The
 .Nm
-is a memory based color frame buffer for the
+is a memory based color frame buffer, with graphics acceleration
+and overlay capabilities, for the
 .Xr wscons 4
-console framework, and found on
-.Tn "Tadpole SPARCbook 3GS and 3GX"
-laptops.
-It is based on the
-.Tn "Weitek Power 9100"
-and an
-.Tn "IBM RGB528"
-RAMDAC.
+console framework.
 It does not provide direct device driver entry points
 but makes its functions available via the internal
 .Xr wsdisplay 4
 interface.
-.Pp
-If the
-.Xr tctrl 4
-device is also configured, the
-.Nm pnozz
-will be powered down when the lid of the laptop
-is closed or the screen is blanked.
 .Sh SEE ALSO
 .Xr bwtwo 4 ,
 .Xr cgeight 4 ,
@@ -69,14 +49,11 @@ is closed or the screen is blanked.
 .Xr cgfourteen 4 ,
 .Xr cgsix 4 ,
 .Xr cgthree 4 ,
-.Xr cgtwelve 4 ,
 .Xr cgtwo 4 ,
+.Xr pnozz 4 ,
 .Xr sbus 4 ,
-.Xr tctrl 4 ,
 .Xr tcx 4 ,
 .Xr wscons 4 ,
 .Xr wsdisplay 4
-.Sh BUGS
-There is currently no way to switch back and forth from
-the onboard display to the external connector.
-It is not possible to change resolutions or color depth.
+.Sh CAVEATS
+Vertical scrolling in console mode is abysmally slow.

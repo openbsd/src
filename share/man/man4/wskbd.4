@@ -1,4 +1,4 @@
-.\" $OpenBSD: wskbd.4,v 1.5 2001/06/08 04:08:26 aaron Exp $
+.\" $OpenBSD: wskbd.4,v 1.6 2002/08/12 10:48:18 miod Exp $
 .\" $NetBSD: wskbd.4,v 1.5 2000/03/20 11:51:59 pk Exp $
 .\"
 .Dd March 20, 1999
@@ -8,9 +8,15 @@
 .Nm wskbd
 .Nd generic keyboard support in wscons
 .Sh SYNOPSIS
-.Cd "wskbd* at pckbd? console ? mux 1"
-.Cd "wskbd* at ukbd? console ? mux 1"
-.Cd "wskbd0 at akbd? console ? mux 1"
+.Cd wskbd* at pckbd? console ? mux 1
+(PS/2 keyboard)
+.Cd wskbd* at ukbd? console ? mux 1
+(USB keyboard)
+.Cd wskbd* at akbd? console ? mux 1
+(Apple ADB keyboard)
+.Cd wskbd* at comkbd? console ? mux 1
+.Cd wskbd* at zskbd? console ? mux 1
+(Sun serial keyboard)
 .Sh DESCRIPTION
 The
 .Nm
@@ -108,8 +114,11 @@ driver supports it.
 .It Pa /usr/include/dev/wscons/wsconsio.h
 .El
 .Sh SEE ALSO
+.Xr akbd 4 ,
+.Xr comkbd 4 ,
 .Xr wscons 4 ,
 .Xr wsmux 4 ,
 .Xr pckbd 4 ,
 .Xr ukbd 4 ,
+.Xr zskbd 4 ,
 .Xr wsconsctl 8

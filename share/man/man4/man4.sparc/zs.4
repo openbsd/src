@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.8 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: zs.4,v 1.9 2002/08/12 10:48:21 miod Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project
 .\" All rights reserved.
@@ -20,16 +20,27 @@
 .Cd "zs1 at obio0 addr 0xf0000000 level 12 flags 0x103" Pq sun4/[23]00
 .Cd "zs1 at obio0 addr 0x00000000 level 12 flags 0x103" Pq sun4/100
 .Cd "zs2 at obio0 addr 0xe0000000 level 12 flags 0x103" Pq sun4/300
+.Cd zstty* at zs? channel ?
+.Cd zskbd* at zs? channel ?
+.Cd wskbd* at zskbd? console ?
 .Sh DESCRIPTION
 The
 .Nm
-is a Zilog 8530 serial interface chip used in Sun workstations.
+is a Zilog 8530 serial interface chip used in
+.Tn Sun
+workstations.
 The Zilog 8530 provides two input/output channels per instance.
-Most Sun workstations include two of these interfaces.
+Most
+.Tn Sun
+workstations include two of these interfaces.
 One of the interfaces is hardwired for use by the keyboard and mouse
 attached to the workstation console.
+The
+.Nm zskbd
+devices connect keyboard devices to the generic keyboard driver
+.Nm wskbd .
 The remaining additional
-.Nm
+.Nm zs
 interfaces provide RS-423
 and RS-232 serial ports for general purpose use.
 .Pp
@@ -54,9 +65,8 @@ connections fail, apparently due to a getty hang.
 The hung getty apparently prevents the cua device from being re-opened.
 .Sh SEE ALSO
 .Xr ioctl 2 ,
-.Xr kbd 4 ,
-.Xr ms 4 ,
-.Xr tty 4
+.Xr tty 4 ,
+.Xr wskbd 4
 .Sh HISTORY
 The
 .Nm
