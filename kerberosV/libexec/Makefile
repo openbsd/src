@@ -1,5 +1,5 @@
-# $OpenBSD: Makefile,v 1.1 2001/05/25 08:19:38 hin Exp $
+# $OpenBSD: Makefile,v 1.2 2001/06/22 16:08:36 hin Exp $
 
-SUBDIR=	kdc
+SUBDIR=	kdc kadmind
 
 .include <bsd.subdir.mk>
