@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.25 2002/03/05 20:31:10 vincent Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.26 2002/03/11 13:02:56 vincent Exp $	*/
 
 /*
  *		Buffer handling.
@@ -18,8 +18,7 @@ static BUFFER  *makelist(void);
  */
 /* ARGSUSED */
 int
-usebuffer(f, n)
-	int     f, n;
+usebuffer(int f, int n)
 {
 	BUFFER *bp;
 	int     s;
@@ -50,8 +49,7 @@ usebuffer(f, n)
  */
 /* ARGSUSED */
 int
-poptobuffer(f, n)
-	int     f, n;
+poptobuffer(int f, int n)
 {
 	BUFFER *bp;
 	MGWIN  *wp;
@@ -90,8 +88,7 @@ poptobuffer(f, n)
  */
 /* ARGSUSED */
 int
-killbuffer(f, n)
-	int     f, n;
+killbuffer(int f, int n)
 {
 	BUFFER *bp;
 	BUFFER *bp1;
@@ -165,7 +162,7 @@ killbuffer(f, n)
 		rec = next;
 	}
 
-	free(bp->b_bname);			/* Release name block	 */
+	free((char *)bp->b_bname);		/* Release name block	 */
 	free(bp);				/* Release buffer block */
 	return TRUE;
 }
@@ -175,8 +172,7 @@ killbuffer(f, n)
  */
 /* ARGSUSED */
 int
-savebuffers(f, n)
-	int f, n;
+savebuffers(int f, int n)
 {
 	if (anycb(f) == ABORT)
 		return ABORT;
@@ -212,8 +208,7 @@ static struct KEYMAPE (1 + IMAPEXT) listbufmap = {
  */
 /* ARGSUSED */
 int
-listbuffers(f, n)
-	int f, n;
+listbuffers(int f, int n)
 {
 	static int initialized = 0;
 	BUFFER *bp;
@@ -223,7 +218,6 @@ listbuffers(f, n)
 		maps_add((KEYMAP *)&listbufmap, "listbufmap");
 		initialized = 1;
 	}
-
 
 	if ((bp = makelist()) == NULL || (wp = popbuf(bp)) == NULL)
 		return FALSE;
@@ -243,7 +237,7 @@ listbuffers(f, n)
  * is an error (if there is no memory).
  */
 static BUFFER *
-makelist()
+makelist(void)
 {
 	int	w = ncol / 2;
 	BUFFER *bp, *blp;
@@ -382,8 +376,7 @@ addlinef(BUFFER *bp, char *fmt, ...)
  * no changed buffers.
  */
 int
-anycb(f)
-	int     f;
+anycb(int f)
 {
 	BUFFER *bp;
 	int     s = FALSE, save = FALSE;
@@ -418,9 +411,7 @@ anycb(f)
  * block for the buffer.
  */
 BUFFER *
-bfind(bname, cflag)
-	char *bname;
-	int   cflag;
+bfind(const char *bname, int cflag)
 {
 	BUFFER	*bp;
 	LINE	*lp;
@@ -445,7 +436,7 @@ bfind(bname, cflag)
 		return NULL;
 	}
 	if ((lp = lalloc(0)) == NULL) {
-		free(bp->b_bname);
+		free((char *) bp->b_bname);
 		free((char *) bp);
 		return NULL;
 	}
@@ -483,8 +474,7 @@ bfind(bname, cflag)
  * looks good.
  */
 int
-bclear(bp)
-	BUFFER *bp;
+bclear(BUFFER *bp)
 {
 	LINE  *lp;
 	int    s;
@@ -507,10 +497,7 @@ bclear(bp)
  * action on redisplay.
  */
 int
-showbuffer(bp, wp, flags)
-	BUFFER *bp;
-	MGWIN  *wp;
-	int     flags;
+showbuffer(BUFFER *bp, MGWIN *wp, int flags)
 {
 	BUFFER *obp;
 	MGWIN  *owp;
@@ -555,8 +542,7 @@ showbuffer(bp, wp, flags)
  * Returns a status.
  */
 MGWIN *
-popbuf(bp)
-	BUFFER *bp;
+popbuf(BUFFER *bp)
 {
 	MGWIN  *wp;
 
@@ -579,7 +565,7 @@ popbuf(bp)
  */
 /* ARGSUSED */
 int
-bufferinsert(f, n)
+bufferinsert(int f, int n)
 {
 	BUFFER *bp;
 	LINE   *clp;
@@ -638,7 +624,7 @@ bufferinsert(f, n)
  */
 /* ARGSUSED */
 int
-notmodified(f, n)
+notmodified(int f, int n)
 {
 	MGWIN *wp;
 
@@ -659,8 +645,7 @@ notmodified(f, n)
  * help functions.
  */
 int
-popbuftop(bp)
-	BUFFER *bp;
+popbuftop(BUFFER *bp)
 {
 	MGWIN *wp;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.35 2002/02/26 00:45:45 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.36 2002/03/11 13:02:56 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -156,7 +156,7 @@ typedef struct LIST {
 		struct BUFFER	*x_bp;	/* l_bp is used by LINE */
 		struct LIST	*l_nxt;
 	} l_p;
-	char *l_name;
+	const char *l_name;
 } LIST;
 
 /*
@@ -363,7 +363,7 @@ int	 delwind(int, int);
 MGWIN   *wpopup(void);
 
 /* buffer.c */
-BUFFER  *bfind(char *, int);
+BUFFER  *bfind(const char *, int);
 int	 poptobuffer(int, int);
 int	 killbuffer(int, int);
 int	 savebuffers(int, int);
@@ -387,8 +387,8 @@ void	update(void);
 
 /* echo.c X */
 void	 eerase(void);
-int	 eyorn(char *);
-int	 eyesno(char *);
+int	 eyorn(const char *);
+int	 eyesno(const char *);
 void	 ewprintf(const char *fmt, ...);
 int	 ereply(const char *, char *, int, ...);
 int	 eread(const char *, char *, int, int, ...);
@@ -396,13 +396,13 @@ int	 getxtra(LIST *, LIST *, int, int);
 void	 free_file_list(LIST *);
 
 /* fileio.c */
-int	 ffropen(char *, BUFFER *);
-int	 ffwopen(char *, BUFFER *);
+int	 ffropen(const char *, BUFFER *);
+int	 ffwopen(const char *, BUFFER *);
 int	 ffclose(BUFFER *);
 int	 ffputbuf(BUFFER *);
 int	 ffgetline(char *, int, int *);
-int	 fbackupfile(char *);
-char	*adjustname(char *);
+int	 fbackupfile(const char *);
+char	*adjustname(const char *);
 char	*startupfile(char *);
 int	 copy(char *, char *);
 BUFFER  *dired_(char *);
@@ -480,7 +480,7 @@ int	 extend(int, int);
 int	 evalexpr(int, int);
 int	 evalbuffer(int, int);
 int	 evalfile(int, int);
-int	 load(char *);
+int	 load(const char *);
 int	 excline(char *);
 
 /* help.c X */

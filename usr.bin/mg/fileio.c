@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.24 2002/02/22 00:18:37 deraadt Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.25 2002/03/11 13:02:56 vincent Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -18,9 +18,7 @@ static FILE	*ffp;
  * Open a file for reading.
  */
 int
-ffropen(fn, bp)
-	char	*fn;
-	BUFFER	*bp;
+ffropen(const char *fn, BUFFER *bp)
 {
 	struct stat	statbuf;
 
@@ -41,9 +39,7 @@ ffropen(fn, bp)
  * FALSE on error (cannot create).
  */
 int
-ffwopen(fn, bp)
-	char   *fn;
-	BUFFER *bp;
+ffwopen(const char *fn, BUFFER *bp)
 {
 	int fd;
 	mode_t mode = DEFFILEMODE;
@@ -84,8 +80,7 @@ ffwopen(fn, bp)
  */
 /* ARGSUSED */
 int
-ffclose(bp)
-	BUFFER *bp;
+ffclose(BUFFER *bp)
 {
 
 	(void) fclose(ffp);
@@ -100,8 +95,7 @@ ffclose(bp)
  * end of buffer.
  */
 int
-ffputbuf(bp)
-	BUFFER *bp;
+ffputbuf(BUFFER *bp)
 {
 	char   *cp;
 	char   *cpend;
@@ -137,10 +131,7 @@ ffputbuf(bp)
  * of data without the normally implied \n.
  */
 int
-ffgetline(buf, nbuf, nbytes)
-	char	*buf;
-	int	nbuf;
-	int	*nbytes;
+ffgetline(char *buf, int nbuf, int *nbytes)
 {
 	int	c, i;
 
@@ -168,8 +159,7 @@ ffgetline(buf, nbuf, nbytes)
  * a problem when using mg with things like crontab and vipw.
  */
 int
-fbackupfile(fn)
-	char  *fn;
+fbackupfile(const char *fn)
 {
 	struct stat	sb;
 	int		from, to, serrno;
@@ -238,8 +228,7 @@ extern char	*wdir;
 #endif
 
 char *
-adjustname(fn)
-	char	*fn;
+adjustname(const char *fn)
 {
 	char		*cp;
 	static char	fnb[NFILEN];
@@ -511,8 +500,7 @@ struct filelist {
  */
 
 LIST *
-make_file_list(buf)
-	char	*buf;
+make_file_list(char *buf)
 {
 	char		*dir, *file, *cp;
 	int		len, preflen;

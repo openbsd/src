@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.22 2002/03/10 13:22:56 ho Exp $	*/
+/*	$OpenBSD: extend.c,v 1.23 2002/03/11 13:02:56 vincent Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -24,18 +24,17 @@
 static int	 remap(KEYMAP *, int, PF, KEYMAP *);
 static KEYMAP	*realocmap(KEYMAP *);
 static void	 fixmap(KEYMAP *, KEYMAP *, KEYMAP *);
-static int	 dobind(KEYMAP *, char *, int);
+static int	 dobind(KEYMAP *, const char *, int);
 static char	*skipwhite(char *);
 static char	*parsetoken(char *);
-static int	 bindkey(KEYMAP **, char *, KCHAR *, int);
+static int	 bindkey(KEYMAP **, const char *, KCHAR *, int);
 
 /*
  * Insert a string, mainly for use from macros (created by selfinsert)
  */
 /* ARGSUSED */
 int
-insert(f, n)
-	int f, n;
+insert(int f, int n)
 {
 	char	*cp;
 	char	 buf[128];
@@ -84,12 +83,12 @@ insert(f, n)
  * the keymap in a usable state.
  */
 static int
-remap(curmap, c, funct, pref_map)
-	KEYMAP	*curmap;	/* pointer to the map being changed */
-	int	c;		/* character being changed */
-	PF	funct;		/* function being changed to */
-	KEYMAP	*pref_map;	/* if funct==NULL, map to bind to or
+remap(KEYMAP *curmap,		/* pointer to the map being changed */
+      int c,			/* character being changed */
+      PF funct,			/* function being changed to */
+      KEYMAP *pref_map		/* if funct==NULL, map to bind to or
 				   NULL for new */
+      )
 {
 	int		 i, n1, n2, nold;
 	KEYMAP		*mp;
@@ -260,8 +259,7 @@ remap(curmap, c, funct, pref_map)
  * Reallocate a keymap, used above.
  */
 static KEYMAP *
-realocmap(curmap)
-	KEYMAP *curmap;
+realocmap(KEYMAP *curmap)
 {
 	MAPS *mps;
 	KEYMAP	*mp;
@@ -296,10 +294,7 @@ realocmap(curmap)
  * Fix references to a reallocated keymap (recursive).
  */
 static void
-fixmap(curmap, mp, mt)
-	KEYMAP *mt;
-	KEYMAP *curmap;
-	KEYMAP *mp;
+fixmap(KEYMAP *curmap, KEYMAP *mp, KEYMAP *mt)
 {
 	int	 i;
 
@@ -318,10 +313,7 @@ fixmap(curmap, mp, mt)
  * then call remap to do the work.
  */
 static int
-dobind(curmap, p, unbind)
-	KEYMAP	*curmap;
-	char	*p;
-	int	unbind;
+dobind(KEYMAP *curmap, const char *p, int unbind)
 {
 	KEYMAP	*pref_map = NULL;
 	PF	 funct;
@@ -390,11 +382,7 @@ dobind(curmap, p, unbind)
  */
 #ifdef	BINDKEY
 static int
-bindkey(mapp, fname, keys, kcount)
-	KEYMAP	**mapp;
-	char	*fname;
-	KCHAR	*keys;
-	int	kcount;
+bindkey(KEYMAP **mapp, const char *fname, KCHAR *keys, int kcount)
 {
 	KEYMAP	*curmap = *mapp;
 	KEYMAP	*pref_map = NULL;
@@ -428,10 +416,7 @@ bindkey(mapp, fname, keys, kcount)
  * Wrapper for bindkey() that converts escapes.
  */
 int
-dobindkey(map, func, str)
-	KEYMAP *map;
-	char   *func;
-	char   *str;
+dobindkey(KEYMAP *map, const char *func, const char *str)
 {
 	int	 i;
 
@@ -472,8 +457,7 @@ dobindkey(map, func, str)
  */
 /* ARGSUSED */
 int
-bindtokey(f, n)
-	int f, n;
+bindtokey(int f, int n)
 {
 	return dobind(fundamental_map, "Global set key: ", FALSE);
 }
@@ -483,8 +467,7 @@ bindtokey(f, n)
  */
 /* ARGSUSED */
 int
-localbind(f, n)
-	int f, n;
+localbind(int f, int n)
 {
 	return dobind(curbp->b_modes[curbp->b_nmodes]->p_map,
 	    "Local set key: ", FALSE);
@@ -515,8 +498,7 @@ define_key(int f, int n)
 }
 
 int
-unbindtokey(f, n)
-	int f, n;
+unbindtokey(int f, int n)
 {
 	return dobind(fundamental_map, "Global unset key: ", TRUE);
 }
@@ -536,8 +518,7 @@ localunbind(f, n)
  * error if there is anything wrong.
  */
 int
-extend(f, n)
-	int f, n;
+extend(int f, int n)
 {
 	PF	 funct;
 	int	 s;
@@ -586,8 +567,7 @@ extend(f, n)
  */
 /* ARGSUSED */
 int
-evalexpr(f, n)
-	int f, n;
+evalexpr(int f, int n)
 {
 	int	 s;
 	char	 exbuf[128];
@@ -603,8 +583,7 @@ evalexpr(f, n)
  */
 /* ARGSUSED */
 int
-evalbuffer(f, n)
-	int f, n;
+evalbuffer(int f, int n)
 {
 	LINE		*lp;
 	BUFFER		*bp = curbp;
@@ -630,8 +609,7 @@ evalbuffer(f, n)
  */
 /* ARGSUSED */
 int
-evalfile(f, n)
-	int f, n;
+evalfile(int f, int n)
 {
 	int	 s;
 	char	 fname[NFILEN];
@@ -645,8 +623,7 @@ evalfile(f, n)
  * load - go load the file name we got passed.
  */
 int
-load(fname)
-	char *fname;
+load(const char *fname)
 {
 	int	 s = TRUE;
 	int	 nbytes = 0;
@@ -680,8 +657,7 @@ load(fname)
  * have to fit in type char.
  */
 int
-excline(line)
-	char *line;
+excline(char *line)
 {
 	PF	 fp;
 	LINE	*lp, *np;
@@ -932,8 +908,7 @@ cleanup:
  * a pair of utility functions for the above
  */
 static char *
-skipwhite(s)
-	char *s;
+skipwhite(char *s)
 {
 	while (*s == ' ' || *s == '\t' || *s == ')' || *s == '(')
 		s++;
@@ -943,8 +918,7 @@ skipwhite(s)
 }
 
 static char *
-parsetoken(s)
-	char  *s;
+parsetoken(char *s)
 {
 	if (*s != '"') {
 		while (*s && *s != ' ' && *s != '\t' && *s != ')' && *s != '(')

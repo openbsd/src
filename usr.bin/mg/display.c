@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.10 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: display.c,v 1.11 2002/03/11 13:02:56 vincent Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -68,7 +68,7 @@ typedef struct {
 void	vtmove(int, int);
 void	vtputc(int);
 void	vtpute(int);
-int	vtputs(char *);
+int	vtputs(const char *);
 void	vteeol(void);
 void	updext(int, int);
 void	modeline(MGWIN *);
@@ -221,7 +221,7 @@ vtresize(int force, int newrow, int newcol)
  * on the first call to redisplay.
  */
 void
-vtinit()
+vtinit(void)
 {
 	int	i;
 
@@ -246,7 +246,7 @@ vtinit()
  * close the terminal channel.
  */
 void
-vttidy()
+vttidy(void)
 {
 
 	ttcolor(CTEXT);
@@ -266,8 +266,7 @@ vttidy()
  * more efficient. No checking for errors.
  */
 void
-vtmove(row, col)
-	int row, col;
+vtmove(int row, int col)
 {
 	vtrow = row;
 	vtcol = col;
@@ -286,8 +285,7 @@ vtmove(row, col)
  * Three guesses how we found this.
  */
 void
-vtputc(c)
-	int	c;
+vtputc(int c)
 {
 	VIDEO	*vp;
 
@@ -317,8 +315,7 @@ vtputc(c)
  * margin.
  */
 void
-vtpute(c)
-	int	c;
+vtpute(int c)
 {
 	VIDEO *vp;
 
@@ -351,7 +348,7 @@ vtpute(c)
  * hardware erase to end of line command should be used to display this.
  */
 void
-vteeol()
+vteeol(void)
 {
 	VIDEO *vp;
 
@@ -370,7 +367,7 @@ vteeol()
  * virtual and physical screens the same.
  */
 void
-update()
+update(void)
 {
 	LINE	*lp;
 	MGWIN	*wp;
@@ -610,9 +607,7 @@ update()
  * display has done an update.
  */
 void
-ucopy(vvp, pvp)
-	VIDEO *vvp;
-	VIDEO *pvp;
+ucopy(VIDEO *vvp, VIDEO *pvp)
 {
 
 	vvp->v_flag &= ~VFCHG;		/* Changes done.	 */
@@ -629,8 +624,7 @@ ucopy(vvp, pvp)
  * left to let the user see where the cursor is
  */
 void
-updext(currow, curcol)
-	int	currow, curcol;
+updext(int currow, int curcol)
 {
 	LINE	*lp;			/* pointer to current line */
 	int	j;			/* index into line */
@@ -662,20 +656,18 @@ updext(currow, curcol)
  * reverse video works on most terminals.
  */
 void
-uline(row, vvp, pvp)
-	int	row;
-	VIDEO	*vvp;
-	VIDEO	*pvp;
+uline(int row, VIDEO *vvp, VIDEO *pvp)
 {
-#ifdef	MEMMAP
-	putline(row + 1, 1, &vvp->v_text[0]);
-#else
 	char  *cp1;
 	char  *cp2;
 	char  *cp3;
 	char  *cp4;
 	char  *cp5;
 	int	nbflag;
+
+#ifdef	MEMMAP
+	putline(row + 1, 1, &vvp->v_text[0]);
+#else
 
 	if (vvp->v_color != pvp->v_color) {	/* Wrong color, do a	 */
 		ttmove(row, 0);			/* full redraw.		 */
@@ -759,8 +751,7 @@ uline(row, vvp, pvp)
  * characters may never be seen.
  */
 void
-modeline(wp)
-	MGWIN  *wp;
+modeline(MGWIN *wp)
 {
 	int	n;
 	BUFFER *bp;
@@ -791,7 +782,7 @@ modeline(wp)
 	}
 	vtputc('(');
 	++n;
-	for (mode = 0;;) {
+	for (mode = 0; ; ) {
 		n += vtputs(bp->b_modes[mode]->p_name);
 		if (++mode > bp->b_nmodes)
 			break;
@@ -809,10 +800,9 @@ modeline(wp)
  * output a string to the mode line, report how long it was.
  */
 int
-vtputs(s)
-	char  *s;
+vtputs(const char *s)
 {
-	int	n = 0;
+	int n = 0;
 
 	while (*s != '\0') {
 		vtputc(*s++);
@@ -831,8 +821,7 @@ vtputs(s)
  * just about any machine.
  */
 void
-hash(vp)
-	VIDEO *vp;
+hash(VIDEO *vp)
 {
 	int	i;
 	int	n;
@@ -881,9 +870,7 @@ hash(vp)
  * bit better; but it looks ugly.
  */
 void
-setscores(offs, size)
-	int offs;
-	int size;
+setscores(int offs, int size)
 {
 	SCORE	*sp;
 	SCORE	*sp1;
@@ -970,11 +957,7 @@ setscores(offs, size)
  * intensive then the code that builds the score matrix!
  */
 void
-traceback(offs, size, i, j)
-	int	offs;
-	int	size;
-	int	i;
-	int	j;
+traceback(int offs, int size, int i, int j)
 {
 	int	itrace;
 	int	jtrace;

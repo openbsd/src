@@ -1,4 +1,4 @@
-/*	$OpenBSD: funmap.c,v 1.5 2002/02/20 22:30:54 vincent Exp $	*/
+/*	$OpenBSD: funmap.c,v 1.6 2002/03/11 13:02:56 vincent Exp $	*/
 /*
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>.  All rights reserved.
  *
@@ -32,8 +32,8 @@
  */
 
 struct funmap {
-	PF		fn_funct;
-	char		*fn_name;
+	PF		 fn_funct;
+	const		 char *fn_name;
 	struct funmap	*fn_next;
 };
 
@@ -239,7 +239,7 @@ funmap_init(void)
 }
 
 int
-funmap_add(PF fun, char *fname)
+funmap_add(PF fun, const char *fname)
 {
 	struct funmap *fn;
 
@@ -258,7 +258,7 @@ funmap_add(PF fun, char *fname)
  * Translate from function name to function pointer.
  */
 PF
-name_function(char *fname)
+name_function(const char *fname)
 {
 	struct funmap *fn;
 
@@ -269,7 +269,7 @@ name_function(char *fname)
 	return NULL;
 }
 
-char *
+const char *
 function_name(PF fun)
 {
 	struct funmap *fn;
@@ -285,7 +285,7 @@ function_name(PF fun)
  * list possible function name completions.
  */
 LIST *
-complete_function_list(char *fname, int c)
+complete_function_list(const char *fname, int c)
 {
 	struct funmap *fn;
 	LIST *head, *el;

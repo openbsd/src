@@ -1,4 +1,4 @@
-/*	$OpenBSD: cinfo.c,v 1.7 2002/02/14 02:50:10 vincent Exp $	*/
+/*	$OpenBSD: cinfo.c,v 1.8 2002/03/11 13:02:56 vincent Exp $	*/
 
 /*
  *		Character class tables.
@@ -90,12 +90,9 @@ const char cinfo[256] = {
  * '\0'.
  */
 char *
-keyname(cp, len, k)
-	char	*cp;
-	size_t	len;
-	int	k;
+keyname(char *cp, size_t len, int k)
 {
-	char  *np;
+	const char  *np;
 
 	if (k < 0)
 		k = CHARMASK(k);/* sign extended char */

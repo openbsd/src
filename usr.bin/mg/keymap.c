@@ -1,4 +1,4 @@
-/*	$OpenBSD: keymap.c,v 1.18 2002/03/01 19:05:40 deraadt Exp $	*/
+/*	$OpenBSD: keymap.c,v 1.19 2002/03/11 13:02:56 vincent Exp $	*/
 
 /*
  * Keyboard maps.  This is character set dependent.  The terminal specific
@@ -593,7 +593,7 @@ maps_init(void)
 }
 
 int
-maps_add(KEYMAP *map, char *name)
+maps_add(KEYMAP *map, const char *name)
 {
 	MAPS *mp;
 
@@ -608,7 +608,7 @@ maps_add(KEYMAP *map, char *name)
 	return TRUE;
 }
 
-char *
+const char *
 map_name(KEYMAP *map)
 {
 	MAPS *mp;
@@ -620,7 +620,7 @@ map_name(KEYMAP *map)
 }
 
 MAPS *
-name_mode(char *name)
+name_mode(const char *name)
 {
 	MAPS *mp;
 
@@ -631,7 +631,7 @@ name_mode(char *name)
 }
 
 KEYMAP *
-name_map(char *name)
+name_map(const char *name)
 {
 	MAPS	*mp;
 	return (mp = name_mode(name)) == NULL ? NULL : mp->p_map;

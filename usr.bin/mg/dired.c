@@ -1,4 +1,4 @@
-/*	$OpenBSD: dired.c,v 1.9 2002/02/15 01:04:59 vincent Exp $	*/
+/*	$OpenBSD: dired.c,v 1.10 2002/03/11 13:02:56 vincent Exp $	*/
 
 /* dired module for mg 2a	 */
 /* by Robert A. Larson		 */
@@ -23,8 +23,7 @@ static struct KEYMAPE (1 + IMAPEXT) diredmap = {
 
 /* ARGSUSED */
 int
-dired(f, n)
-	int	f, n;
+dired(int f, int n)
 {
 	static int inited = 0;
 	char	dirname[NFILEN];
@@ -49,8 +48,7 @@ dired(f, n)
 
 /* ARGSUSED */
 int
-d_otherwindow(f, n)
-	int	f, n;
+d_otherwindow(int f, int n)
 {
 	char	dirname[NFILEN];
 	BUFFER	*bp;
@@ -70,10 +68,8 @@ d_otherwindow(f, n)
 
 /* ARGSUSED */
 int
-d_del(f, n)
-	int f, n;
+d_del(int f, int n)
 {
-
 	if (n < 0)
 		return FALSE;
 	while (n--) {
@@ -89,8 +85,7 @@ d_del(f, n)
 
 /* ARGSUSED */
 int
-d_undel(f, n)
-	int f, n;
+d_undel(int f, int n)
 {
 	if (n < 0)
 		return d_undelbak(f, -n);
@@ -107,10 +102,8 @@ d_undel(f, n)
 
 /* ARGSUSED */
 int
-d_undelbak(f, n)
-	int f, n;
+d_undelbak(int f, int n)
 {
-
 	if (n < 0)
 		return d_undel(f, -n);
 	while (n--) {
@@ -126,8 +119,7 @@ d_undelbak(f, n)
 
 /* ARGSUSED */
 int
-d_findfile(f, n)
-	int f, n;
+d_findfile(int f, int n)
 {
 	BUFFER *bp;
 	int	s;
@@ -147,8 +139,7 @@ d_findfile(f, n)
 
 /* ARGSUSED */
 int
-d_ffotherwindow(f, n)
-	int	f, n;
+d_ffotherwindow(int f, int n)
 {
 	char	fname[NFILEN];
 	int	s;
@@ -170,8 +161,7 @@ d_ffotherwindow(f, n)
 
 /* ARGSUSED */
 int
-d_expunge(f, n)
-	int	f, n;
+d_expunge(int f, int n)
 {
 	LINE	*lp, *nlp;
 	char	fname[NFILEN];
@@ -206,8 +196,7 @@ d_expunge(f, n)
 
 /* ARGSUSED */
 int
-d_copy(f, n)
-	int	f, n;
+d_copy(int f, int n)
 {
 	char	frname[NFILEN], toname[NFILEN];
 	int	stat;
@@ -224,8 +213,7 @@ d_copy(f, n)
 
 /* ARGSUSED */
 int
-d_rename(f, n)
-	int	f, n;
+d_rename(int f, int n)
 {
 	char	frname[NFILEN], toname[NFILEN];
 	int	stat;

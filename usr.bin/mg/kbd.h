@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd.h,v 1.13 2002/02/16 21:27:49 millert Exp $	*/
+/*	$OpenBSD: kbd.h,v 1.14 2002/03/11 13:02:56 vincent Exp $	*/
 
 /*
  * kbd.h: type definitions for symbol.c and kbd.c for mg experimental
@@ -37,7 +37,7 @@ typedef struct keymap_s KEYMAPE(1) KEYMAP;
 
 typedef struct MAPS_S {
 	KEYMAP	*p_map;
-	char	*p_name;
+	const char *p_name;
 	struct MAPS_S *p_next;
 } MAPS;
 
@@ -45,13 +45,13 @@ extern MAPS	*maps;
 extern MAPS	fundamental_mode;
 #define		fundamental_map (fundamental_mode.p_map)
 
-int	dobindkey(KEYMAP *, char *, char *);
-KEYMAP	*name_map(char *);
-MAPS	*name_mode(char *);
-PF	doscan(KEYMAP *, int, KEYMAP **);
-char	*map_name(KEYMAP *);
-void	maps_init(void);
-int	maps_add(KEYMAP *, char *);
+int	 dobindkey(KEYMAP *, const char *, const char *);
+KEYMAP	*name_map(const char *);
+MAPS	*name_mode(const char *);
+PF	 doscan(KEYMAP *, int, KEYMAP **);
+const	 char *map_name(KEYMAP *);
+void	 maps_init(void);
+int	 maps_add(KEYMAP *, const char *);
 
 extern MAP_ELEMENT	*ele;
 extern MAPS		*defb_modes[];
