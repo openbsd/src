@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.12 2002/05/29 20:43:43 maja Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.13 2002/11/29 01:00:49 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -407,8 +407,20 @@ zskbd_attach(parent, self, aux)
 	a.console = console;
 	if (ISTYPE5(zst->zst_layout)) {
 		a.keymap = &sunkbd5_keymapdata;
+#ifndef	SUNKBD5_LAYOUT
+		if (zst->zst_layout < MAXSUNLAYOUT &&
+		    sunkbd_layouts[zst->zst_layout] != -1)
+			sunkbd5_keymapdata.layout =
+			    sunkbd_layouts[zst->zst_layout];
+#endif
 	} else {
 		a.keymap = &sunkbd_keymapdata;
+#ifndef	SUNKBD_LAYOUT
+		if (zst->zst_layout < MAXSUNLAYOUT &&
+		    sunkbd_layouts[zst->zst_layout] != -1)
+			sunkbd_keymapdata.layout =
+			    sunkbd_layouts[zst->zst_layout];
+#endif
 	}
 	a.accessops = &zskbd_accessops;
 	a.accesscookie = zst;

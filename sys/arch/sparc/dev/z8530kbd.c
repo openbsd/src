@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530kbd.c,v 1.1 2002/08/12 10:44:04 miod Exp $	*/
+/*	$OpenBSD: z8530kbd.c,v 1.2 2002/11/29 01:00:46 miod Exp $	*/
 /*	$NetBSD: z8530tty.c,v 1.77 2001/05/30 15:24:24 lukem Exp $	*/
 
 /*-
@@ -425,11 +425,23 @@ zskbd_attach(parent, self, aux)
 	if (ISTYPE5(zst->zst_layout)) {
 		printf(": keyboard, type 5, layout 0x%x", zst->zst_layout);
 		a.keymap = &sunkbd5_keymapdata;
+#ifndef	SUNKBD5_LAYOUT
+		if (zst->zst_layout < MAXSUNLAYOUT &&
+		    sunkbd_layouts[zst->zst_layout] != -1)
+			sunkbd5_keymapdata.layout =
+			    sunkbd_layouts[zst->zst_layout];
+#endif
 	} else {
 		printf(": keyboard, type %d", zst->zst_id);
 		if (zst->zst_id >= KB_SUN4)
 			printf(", layout 0x%x", zst->zst_layout);
 		a.keymap = &sunkbd_keymapdata;
+#ifndef	SUNKBD_LAYOUT
+		if (zst->zst_layout < MAXSUNLAYOUT &&
+		    sunkbd_layouts[zst->zst_layout] != -1)
+			sunkbd_keymapdata.layout =
+			    sunkbd_layouts[zst->zst_layout];
+#endif
 	}
 	a.accessops = &zskbd_accessops;
 	a.accesscookie = zst;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbd.c,v 1.11 2002/11/23 23:49:13 miod Exp $	*/
+/*	$OpenBSD: sunkbd.c,v 1.12 2002/11/29 01:00:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -883,6 +883,81 @@ const struct wscons_keydesc sunkbd5_keydesctab[] = {
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	sunkbd_keydesc_sv_nodead),
 	KBD_MAP(KB_UK,			KB_US,	sunkbd5_keydesc_uk),
 	{0, 0, 0, 0},
+};
+
+/*
+ * Keyboard layout to ID table
+ * References: Sun Type 5 Keyboard Supplement Installation Guide, May 1992
+ *        and  http://docs.sun.com/db/doc/806-6642/6jfipqu57?a=view
+ */
+const int sunkbd_layouts[MAXSUNLAYOUT] = {
+	/* Type 4 layouts */
+	KB_US,	/* 000 USA */
+	KB_US,	/* 001 same as 000 */
+	KB_BE,	/* 002 Belgium/French */
+	-1,	/* 003 Canada */
+	KB_DK,	/* 004 Denmark */
+	KB_DE,	/* 005 Germany */
+	KB_IT,	/* 006 Italy */
+	KB_NL,	/* 007 The Netherlands */
+	KB_NO,	/* 008 Norway */
+	KB_PT,	/* 009 Portugal */
+	KB_ES,	/* 00a Latin America/Spanish */
+	KB_SV,	/* 00b Sweden */
+	KB_SF,	/* 00c Switzerland/French */
+	KB_SG,	/* 00d Switzerland/German */
+	KB_UK,	/* 00e Great Britain */
+	-1,	/* 00f unaffected */
+	-1,	/* 010 Korea */
+	-1,	/* 011 Taiwan */
+	-1,	/* 012 unaffected */
+	-1,	/* 013 unaffected */
+	-1,	/* 014 VT220 */
+	-1,	/* 015 VT220 Switzerland/French */
+	-1,	/* 016 VT220 Switzerland/German */
+	-1,	/* 017 VT220 Switzerland/Italian */
+	-1,	/* 018 unaffected */
+	-1,	/* 019 Belgium */
+	-1,	/* 01a unaffected */
+	-1,	/* 01b unaffected */
+	-1,	/* 01c unaffected */
+	-1,	/* 01d unaffected */
+	-1,	/* 01e unaffected */
+	-1,	/* 01f unaffected */
+	-1,	/* 020 Japan */
+
+	/* Type 5 layouts */
+	KB_US,	/* 021 USA */
+	KB_US,	/* 022 UNIX */
+	KB_FR,	/* 023 France */
+	KB_DK,	/* 024 Denmark */
+	KB_DE,	/* 025 Germany */
+	KB_IT,	/* 026 Italy */
+	KB_NL,	/* 027 The Netherlands */
+	KB_NO,	/* 028 Norway */
+	KB_PT,	/* 029 Portugal */
+	KB_ES,	/* 02a Spain */
+	KB_SV,	/* 02b Sweden */
+	KB_SF,	/* 02c Switzerland/French */
+	KB_SG,	/* 02d Switzerland/German */
+	KB_UK,	/* 02e Great Britain */
+	-1,	/* 02f Korea */
+	-1,	/* 030 Taiwan */
+	-1,	/* 031 Japan */
+	-1,	/* 032 Canada/French */
+	-1,	/* 033 Hungary */
+	-1,	/* 034 Poland */
+	-1,	/* 035 Czech */
+	-1,	/* 036 Russia */
+	-1,	/* 037 Latvia */
+	-1,	/* 038 Turkey-Q5 */
+	-1,	/* 039 Greece */
+	-1	/* 03a Arabic */
+	-1,	/* 03b Lithuania */
+	-1,	/* 03c Belgium */
+	-1,	/* 03d unaffected */
+	-1,	/* 03e Turkey-F5 */
+	-1,	/* 03f Canada/French */
 };
 
 struct wskbd_mapdata sunkbd_keymapdata = {

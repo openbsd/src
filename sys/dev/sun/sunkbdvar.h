@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunkbdvar.h,v 1.4 2002/08/12 10:43:56 miod Exp $	*/
+/*	$OpenBSD: sunkbdvar.h,v 1.5 2002/11/29 01:00:51 miod Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -47,3 +47,6 @@ extern struct wskbd_mapdata sunkbd5_keymapdata;
  * here's a way to distinct types 5 and 6 from type 4.
  */
 #define ISTYPE5(layout) ((layout) > 0x20)
+
+#define	MAXSUNLAYOUT	0x040
+extern const int sunkbd_layouts[MAXSUNLAYOUT];
