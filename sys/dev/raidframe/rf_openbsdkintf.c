@@ -1,4 +1,4 @@
-/*	$OpenBSD: rf_openbsdkintf.c,v 1.3 1999/07/30 14:45:32 peter Exp $	*/
+/*	$OpenBSD: rf_openbsdkintf.c,v 1.4 1999/08/02 12:33:43 peter Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -192,7 +192,7 @@ decl_simple_lock_data(, recon_queue_mutex)
 
 /* prototypes */
 void	rf_KernelWakeupFunc __P((struct buf *));
-void	rf_InitBP __P((struct buf *, struct vnode *, unsigned, dev_t,
+static void	rf_InitBP __P((struct buf *, struct vnode *, unsigned, dev_t,
 	    RF_SectorNum_t, RF_SectorCount_t, caddr_t, void (*)(struct buf *),
 	    void *, int, struct proc *));
 
@@ -213,7 +213,7 @@ int	raidsize __P((dev_t));
 
 void	rf_DiskIOComplete(RF_DiskQueue_t *, RF_DiskQueueData_t *, int);
 void	rf_CopybackReconstructedData(RF_Raid_t *raidPtr);
-int	raidinit __P((dev_t,RF_Raid_t *,int));
+static int	raidinit __P((dev_t,RF_Raid_t *,int));
 
 int	raidopen __P((dev_t, int, int, struct proc *));
 int	raidclose __P((dev_t, int, int, struct proc *));
@@ -279,12 +279,12 @@ static int numraid = 0;
 /* declared here, and made public, for the benefit of KVM stuff.. */
 struct raid_softc *raid_softc;
 
-void	raidgetdefaultlabel
+static void	raidgetdefaultlabel
 	     __P((RF_Raid_t *, struct raid_softc *, struct disklabel *));
-void	raidgetdisklabel __P((dev_t));
-void	raidmakedisklabel __P((struct raid_softc *));
+static void	raidgetdisklabel __P((dev_t));
+static void	raidmakedisklabel __P((struct raid_softc *));
 
-int	raidlock __P((struct raid_softc *));
+static int	raidlock __P((struct raid_softc *));
 void	raidunlock __P((struct raid_softc *));
 int	raidlookup __P((char *, struct proc *p, struct vnode **));
 
@@ -510,6 +510,9 @@ raidclose(dev, flags, fmt, p)
 		rs->sc_dkdev.dk_bopenmask &= ~(1 << part);
 		break;
 	}
+	rs->sc_dkdev.dk_openmask =
+	    rs->sc_dkdev.dk_copenmask | rs->sc_dkdev.dk_bopenmask;
+
 	if ((rs->sc_dkdev.dk_openmask == 0) &&
 	    ((rs->sc_flags & RAIDF_INITED) != 0)) {
 	        /* Last one... device is not unconfigured yet.
@@ -518,9 +521,6 @@ raidclose(dev, flags, fmt, p)
 	           mark things as clean... */
 	        rf_update_component_labels( raidPtrs[unit] );
 	}
-
-	rs->sc_dkdev.dk_openmask =
-	    rs->sc_dkdev.dk_copenmask | rs->sc_dkdev.dk_bopenmask;
 
 	raidunlock(rs);
 	return (0);
@@ -1306,7 +1306,7 @@ raidioctl(dev, cmd, data, flag, p)
  * raidinit -- complete the rest of the initialization for the
  * RAIDframe device.
  */
-int
+static int
 raidinit(dev, raidPtr, unit)
 	dev_t dev;
 	RF_Raid_t *raidPtr;
@@ -1776,7 +1776,7 @@ rf_KernelWakeupFunc(vbp)
 /*
  * Initialize a buf structure for doing an I/O in the kernel.
  */
-void
+static void
 rf_InitBP(bp, b_vp, rw_flag, dev, startSect, numSect, buf, cbFunc, cbArg,
     logBytesPerSector, b_proc)
 	struct buf *bp;
@@ -1835,7 +1835,7 @@ rf_GetSpareTableFromDaemon(req)
 }
 #endif
 
-void
+static void
 raidgetdefaultlabel(raidPtr, rs, lp)
 	RF_Raid_t *raidPtr;
 	struct raid_softc *rs;
@@ -1874,7 +1874,7 @@ raidgetdefaultlabel(raidPtr, rs, lp)
  * Read the disklabel from the raid device.  If one is not present, fake one
  * up.
  */
-void
+static void
 raidgetdisklabel(dev)
 	dev_t dev;
 {
@@ -1931,7 +1931,7 @@ raidgetdisklabel(dev)
  * Take care of things one might want to take care of in the event
  * that a disklabel isn't present.
  */
-void
+static void
 raidmakedisklabel(rs)
 	struct raid_softc *rs;
 {
@@ -2001,7 +2001,7 @@ raidlookup(path, p, vpp)
  * Several drivers do this; it should be abstracted and made MP-safe.
  * (Hmm... where have we seen this warning before :->  GO )
  */
-int
+static int
 raidlock(rs)
 	struct raid_softc *rs;
 {
