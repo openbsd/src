@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_swap.c,v 1.4 1997/04/10 13:48:51 deraadt Exp $	*/
+/*	$OpenBSD: vm_swap.c,v 1.5 1997/05/22 07:26:53 deraadt Exp $	*/
 /*	$NetBSD: vm_swap.c,v 1.32 1996/02/05 01:54:09 christos Exp $	*/
 
 /*
@@ -479,9 +479,9 @@ swfree(p, index)
 #endif
 		if (rootblks > nblks)
 			panic("swfree miniroot size");
-		/* First ctod(CLSIZE) blocks are not in the map. */
-		firstblk = rmalloc(swapmap, rootblks - ctod(CLSIZE));
-		if (firstblk != ctod(CLSIZE))
+		/* First ctod(btoc(SWAPSKIPBYTES)) blocks are not in the map. */
+		firstblk = rmalloc(swapmap, rootblks - ctod(btoc(SWAPSKIPBYTES)));
+		if (firstblk != ctod(btoc(SWAPSKIPBYTES)))
 			panic("swfree miniroot save");
 		printf("Preserved %d blocks of miniroot leaving %d pages of swap\n",
 		       rootblks, dtoc(nblks - rootblks));
