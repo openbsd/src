@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.19 1998/03/16 09:38:43 pefo Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.20 1998/03/16 09:54:01 pefo Exp $	*/
 /*	$NetBSD: pccons.c,v 1.89 1995/05/04 19:35:20 cgd Exp $	*/
 
 /*-
@@ -1758,12 +1758,12 @@ top:
 		goto loop;
 	}
 
-#ifdef DEBUG
+#ifdef DDB
 	/*
 	 * Check for cntl-alt-esc.
 	 */
 	if ((dt == 1) && (shift_state & (KB_CTL | KB_ALT)) == (KB_CTL | KB_ALT)) {
-		mdbpanic();
+		Debugger();
 		dt |= 0x80;	/* discard esc (ddb discarded ctl-alt) */
 	}
 #endif
