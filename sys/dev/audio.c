@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.12 1998/04/26 21:03:06 provos Exp $	*/
+/*	$OpenBSD: audio.c,v 1.13 1998/07/24 01:59:38 downsj Exp $	*/
 /*	$NetBSD: audio.c,v 1.71 1997/09/06 01:14:48 augustss Exp $	*/
 
 /*
@@ -2022,7 +2022,6 @@ int
 audio_check_params(p)
 	struct audio_params *p;
 {
-#if defined(COMPAT_12)
 	if (p->encoding == AUDIO_ENCODING_PCM16) {
 		if (p->precision == 8)
 			p->encoding = AUDIO_ENCODING_ULINEAR;
@@ -2034,7 +2033,6 @@ audio_check_params(p)
 		else
 			return EINVAL;
 	}
-#endif
 
 	if (p->encoding == AUDIO_ENCODING_SLINEAR)
 #if BYTE_ORDER == LITTLE_ENDIAN
