@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.15 2001/05/16 05:32:42 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.16 2001/05/16 08:19:21 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -283,7 +283,7 @@ const struct ac97_codecid {
 	u_int8_t mask;
 	u_int8_t rev;
 	u_int8_t shift;	/* no use yet */
-	char *const name;
+	char * const name;
 }  ac97_ad[] = {
 	{ 0x40, 0xff, 0, 0,	"AD1881" },
 	{ 0x60, 0xff, 0, 0,	"AD1885" },
@@ -329,7 +329,7 @@ const struct ac97_codecid {
 const struct ac97_vendorid {
 	u_int32_t id;
 	char * const name;
-	const struct ac97_codecid *const codecs;
+	const struct ac97_codecid * const codecs;
 	u_int8_t num;
 } ac97_vendors[] = {
 	{ 0x41445300, "Analog Devices",		cl(ac97_ad) },
@@ -363,7 +363,7 @@ const char * const ac97enhancement[] = {
 	"Harman International VMAx",
 	"Nvidea 3D",
 	"Philips Incredible Sound",
-	"Texas Instruments' 3D",
+	"Texas Instruments 3D",
 	"VLSI Technology 3D",
 	"TriTech 3D",
 	"Realtek 3D",
