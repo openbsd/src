@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.71 2003/08/14 19:00:12 jason Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.72 2003/08/21 19:12:08 frantzen Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -1211,6 +1211,10 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 		else if (r->dst.port_op && !pf_match_port(r->dst.port_op,
 			    r->dst.port[0], r->dst.port[1], th->th_dport))
 			r = r->skip[PF_SKIP_DST_PORT].ptr;
+		else if (r->os_fingerprint != PF_OSFP_ANY && !pf_osfp_match(
+			    pf_osfp_fingerprint(pd, m, off, th),
+			    r->os_fingerprint))
+			r = TAILQ_NEXT(r, entries);
 		else {
 			rm = r;
 			break;

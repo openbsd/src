@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.408 2003/08/20 16:27:36 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.409 2003/08/21 19:12:08 frantzen Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -231,9 +231,9 @@ void	expand_label(char *, const char *, u_int8_t, struct node_host *,
 	    struct node_port *, struct node_host *, struct node_port *,
 	    u_int8_t);
 void	expand_rule(struct pf_rule *, struct node_if *, struct node_host *,
-	    struct node_proto *, struct node_host *, struct node_port *,
-	    struct node_host *, struct node_port *, struct node_uid *,
-	    struct node_gid *, struct node_icmp *);
+	    struct node_proto *, struct node_os*, struct node_host *,
+	    struct node_port *, struct node_host *, struct node_port *,
+	    struct node_uid *, struct node_gid *, struct node_icmp *);
 int	expand_altq(struct pf_altq *, struct node_if *, struct node_queue *,
 	    struct node_queue_bw bwspec, struct node_queue_opt *);
 int	expand_queue(struct pf_altq *, struct node_if *, struct node_queue *,
@@ -297,6 +297,7 @@ typedef struct {
 		struct node_proto	*proto;
 		struct node_icmp	*icmp;
 		struct node_host	*host;
+		struct node_os		*os;
 		struct node_port	*port;
 		struct node_uid		*uid;
 		struct node_gid		*gid;
@@ -304,6 +305,7 @@ typedef struct {
 		struct peer		 peer;
 		struct {
 			struct peer	 src, dst;
+			struct node_os	*src_os;
 		}			 fromto;
 		struct pf_poolhashkey	*hashkey;
 		struct {
@@ -357,14 +359,14 @@ typedef struct {
 
 %}
 
-%token	PASS BLOCK SCRUB RETURN IN OUT LOG LOGALL QUICK ON FROM TO FLAGS
+%token	PASS BLOCK SCRUB RETURN IN OS OUT LOG LOGALL QUICK ON FROM TO FLAGS
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token	ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL ERROR ALLOWOPTS FASTROUTE FILENAME ROUTETO DUPTO REPLYTO NO LABEL
 %token	NOROUTE FRAGMENT USER GROUP MAXMSS MAXIMUM TTL TOS DROP TABLE
 %token	REASSEMBLE FRAGDROP FRAGCROP ANCHOR NATANCHOR RDRANCHOR BINATANCHOR
 %token	SET OPTIMIZATION TIMEOUT LIMIT LOGINTERFACE BLOCKPOLICY RANDOMID
-%token	REQUIREORDER SYNPROXY
+%token	REQUIREORDER SYNPROXY FINGERPRINTS
 %token	ANTISPOOF FOR
 %token	BITMASK RANDOM SOURCEHASH ROUNDROBIN STATICPORT
 %token	ALTQ CBQ PRIQ HFSC BANDWIDTH TBRSIZE LINKSHARE REALTIME UPPERLIMIT
@@ -391,6 +393,7 @@ typedef struct {
 %type	<v.host>		ipspec xhost host dynaddr host_list
 %type	<v.host>		redir_host_list redirspec
 %type	<v.host>		route_host route_host_list routespec
+%type	<v.os>			os xos os_list
 %type	<v.port>		portspec port_list port_item
 %type	<v.uid>			uids uid_list uid_item
 %type	<v.gid>			gids gid_list gid_item
@@ -476,6 +479,16 @@ option		: SET OPTIMIZATION STRING		{
 				    $3 == 1 ? "yes" : "no");
 			require_order = $3;
 		}
+		| SET FINGERPRINTS STRING {
+			if (pf->opts & PF_OPT_VERBOSE)
+				printf("fingerprints %s\n", $3);
+			if (check_rulestate(PFCTL_STATE_OPTION))
+				YYERROR;
+			if (pfctl_file_fingerprints(pf->dev, pf->opts, $3)) {
+				yyerror("error loading fingerprints %s", $3);
+				YYERROR;
+			}
+		}
 		;
 
 string		: string STRING				{
@@ -508,7 +521,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			decide_address_family($7.src.host, &r.af);
 			decide_address_family($7.dst.host, &r.af);
 
-			expand_rule(&r, $4, NULL, $6,
+			expand_rule(&r, $4, NULL, $6, $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
 			    0, 0, 0);
 		}
@@ -525,7 +538,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 			decide_address_family($6.src.host, &r.af);
 			decide_address_family($6.dst.host, &r.af);
 
-			expand_rule(&r, $3, NULL, $5,
+			expand_rule(&r, $3, NULL, $5, $6.src_os,
 			    $6.src.host, $6.src.port, $6.dst.host, $6.dst.port,
 			    0, 0, 0);
 		}
@@ -563,7 +576,7 @@ anchorrule	: ANCHOR string	dir interface af proto fromto {
 				r.dst.port_op = $6.dst.port->op;
 			}
 
-			expand_rule(&r, $3, NULL, $5,
+			expand_rule(&r, $3, NULL, $5, $6.src_os,
 			    $6.src.host, $6.src.port, $6.dst.host, $6.dst.port,
 			    0, 0, 0);
 		}
@@ -682,7 +695,7 @@ scrubrule	: SCRUB dir logquick interface af proto fromto scrub_opts
 			if ($8.fragcache)
 				r.rule_flag |= $8.fragcache;
 
-			expand_rule(&r, $4, NULL, $6,
+			expand_rule(&r, $4, NULL, $6, $7.src_os,
 			    $7.src.host, $7.src.port, $7.dst.host, $7.dst.port,
 			    NULL, NULL, NULL);
 		}
@@ -795,8 +808,8 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 				j->not = 1;
 				h = ifa_lookup(j->ifname, PFCTL_IFLOOKUP_NET);
 
-				expand_rule(&r, j, NULL, NULL, h, NULL, NULL,
-				    NULL, NULL, NULL, NULL);
+				expand_rule(&r, j, NULL, NULL, NULL, h, NULL,
+				    NULL, NULL, NULL, NULL, NULL);
 
 				if ((i->ifa_flags & IFF_LOOPBACK) == 0) {
 					bzero(&r, sizeof(r));
@@ -810,8 +823,9 @@ antispoof	: ANTISPOOF logquick antispoof_ifspc af antispoof_opts {
 						YYERROR;
 					h = ifa_lookup(i->ifname,
 					    PFCTL_IFLOOKUP_HOST);
-					expand_rule(&r, NULL, NULL, NULL, h,
-					    NULL, NULL, NULL, NULL, NULL, NULL);
+					expand_rule(&r, NULL, NULL, NULL, NULL,
+					    h, NULL, NULL, NULL, NULL, NULL,
+					    NULL);
 				}
 			}
 			free($5.label);
@@ -1353,15 +1367,29 @@ pfrule		: action dir logquick interface route af proto fromto
 			if (rule_label(&r, $9.label))
 				YYERROR;
 			free($9.label);
-			if ($9.flags.b1 || $9.flags.b2) {
+			if ($9.flags.b1 || $9.flags.b2 || $8.src_os) {
 				for (proto = $7; proto != NULL &&
 				    proto->proto != IPPROTO_TCP;
 				    proto = proto->next)
 					;	/* nothing */
 				if (proto == NULL && $7 != NULL) {
-					yyerror("flags only apply to tcp");
+					if ($9.flags.b1 || $9.flags.b2)
+						yyerror(
+						    "flags only apply to tcp");
+					if ($8.src_os)
+						yyerror(
+						    "OS fingerprinting only "
+						    "apply to tcp");
 					YYERROR;
 				}
+#if 0
+				if (($9.flags.b1 & parse_flags("S")) == 0 &&
+				    $8.src_os) {
+					yyerror("OS fingerprinting requires "
+					     "the SYN TCP flag (flags S/SA)");
+					YYERROR;
+				}
+#endif
 			}
 
 			r.tos = $9.tos;
@@ -1452,7 +1480,7 @@ pfrule		: action dir logquick interface route af proto fromto
 				free($9.queues.pqname);
 			}
 
-			expand_rule(&r, $4, $5.host, $7,
+			expand_rule(&r, $4, $5.host, $7, $8.src_os,
 			    $8.src.host, $8.src.port, $8.dst.host, $8.dst.port,
 			    $9.uid, $9.gid, $9.icmpspec);
 		}
@@ -1716,10 +1744,34 @@ fromto		: ALL				{
 			$$.src.port = NULL;
 			$$.dst.host = NULL;
 			$$.dst.port = NULL;
+			$$.src_os = NULL;
 		}
-		| from to			{
+		| from os to			{
 			$$.src = $1;
-			$$.dst = $2;
+			$$.src_os = $2;
+			$$.dst = $3;
+		}
+		;
+
+os		: /* empty */			{ $$ = NULL; }
+		| OS xos			{ $$ = $2; }
+		| OS '{' os_list '}'		{ $$ = $3; }
+		;
+
+xos		: STRING {
+			$$ = calloc(1, sizeof(struct node_os));
+			if ($$ == NULL)
+				err(1, "os: calloc");
+			$$->os = $1;
+			$$->tail = $$;
+		}
+		;
+
+os_list		: xos				{ $$ = $1; }
+		| os_list comma xos		{
+			$1->tail->next = $3;
+			$1->tail = $3;
+			$$ = $1;
 		}
 		;
 
@@ -2690,8 +2742,8 @@ natrule		: nataction interface af proto fromto tag redirpool pooltype
 			}
 
 			expand_rule(&r, $2, $7 == NULL ? NULL : $7->host, $4,
-			    $5.src.host, $5.src.port, $5.dst.host, $5.dst.port,
-			    0, 0, 0);
+			    $5.src_os, $5.src.host, $5.src.port, $5.dst.host,
+			    $5.dst.port, 0, 0, 0);
 			free($7);
 		}
 		;
@@ -3654,10 +3706,10 @@ expand_queue(struct pf_altq *a, struct node_if *interfaces,
 void
 expand_rule(struct pf_rule *r,
     struct node_if *interfaces, struct node_host *rpool_hosts,
-    struct node_proto *protos, struct node_host *src_hosts,
-    struct node_port *src_ports, struct node_host *dst_hosts,
-    struct node_port *dst_ports, struct node_uid *uids,
-    struct node_gid *gids, struct node_icmp *icmp_types)
+    struct node_proto *protos, struct node_os *src_oses,
+    struct node_host *src_hosts, struct node_port *src_ports,
+    struct node_host *dst_hosts, struct node_port *dst_ports,
+    struct node_uid *uids, struct node_gid *gids, struct node_icmp *icmp_types)
 {
 	sa_family_t		 af = r->af;
 	int			 added = 0, error = 0;
@@ -3677,6 +3729,7 @@ expand_rule(struct pf_rule *r,
 	LOOP_THROUGH(struct node_icmp, icmp_type, icmp_types,
 	LOOP_THROUGH(struct node_host, src_host, src_hosts,
 	LOOP_THROUGH(struct node_port, src_port, src_ports,
+	LOOP_THROUGH(struct node_os, src_os, src_oses,
 	LOOP_THROUGH(struct node_host, dst_host, dst_hosts,
 	LOOP_THROUGH(struct node_port, dst_port, dst_ports,
 	LOOP_THROUGH(struct node_uid, uid, uids,
@@ -3749,6 +3802,17 @@ expand_rule(struct pf_rule *r,
 			error++;
 		}
 
+		if (src_os && src_os->os) {
+			r->os_fingerprint = pfctl_get_fingerprint(src_os->os);
+			if ((pf->opts & PF_OPT_VERBOSE2) &&
+			    r->os_fingerprint == PF_OSFP_NOMATCH)
+				fprintf(stderr,
+				    "warning: unknown '%s' OS fingerprint\n",
+				    src_os->os);
+		} else {
+			r->os_fingerprint = PF_OSFP_ANY;
+		}
+
 		TAILQ_INIT(&r->rpool.list);
 		for (h = rpool_hosts; h != NULL; h = h->next) {
 			pa = calloc(1, sizeof(struct pf_pooladdr));
@@ -3773,12 +3837,13 @@ expand_rule(struct pf_rule *r,
 			added++;
 		}
 
-	)))))))));
+	))))))))));
 
 	FREE_LIST(struct node_if, interfaces);
 	FREE_LIST(struct node_proto, protos);
 	FREE_LIST(struct node_host, src_hosts);
 	FREE_LIST(struct node_port, src_ports);
+	FREE_LIST(struct node_os, src_oses);
 	FREE_LIST(struct node_host, dst_hosts);
 	FREE_LIST(struct node_port, dst_ports);
 	FREE_LIST(struct node_uid, uids);
@@ -3836,6 +3901,7 @@ lookup(char *s)
 		{ "dup-to",		DUPTO},
 		{ "fastroute",		FASTROUTE},
 		{ "file",		FILENAME},
+		{ "fingerprints",	FINGERPRINTS},
 		{ "flags",		FLAGS},
 		{ "for",		FOR},
 		{ "fragment",		FRAGMENT},
@@ -3866,6 +3932,7 @@ lookup(char *s)
 		{ "no-route",		NOROUTE},
 		{ "on",			ON},
 		{ "optimization",	OPTIMIZATION},
+		{ "os",			OS},
 		{ "out",		OUT},
 		{ "pass",		PASS},
 		{ "port",		PORT},

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.h,v 1.66 2003/07/31 22:25:54 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.h,v 1.67 2003/08/21 19:12:09 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -32,6 +32,8 @@
 
 #ifndef _PFCTL_PARSER_H_
 #define _PFCTL_PARSER_H_
+
+#define PF_OSFP_FILE		"/etc/pf.os"
 
 #define PF_OPT_DISABLE		0x0001
 #define PF_OPT_ENABLE		0x0002
@@ -95,6 +97,13 @@ struct node_host {
 	u_int			 ifa_flags;
 	struct node_host	*next;
 	struct node_host	*tail;
+};
+
+struct node_os {
+	char			*os;
+	pf_osfp_t		 fingerprint;
+	struct node_os		*next;
+	struct node_os		*tail;
 };
 
 struct node_queue_bw {
@@ -167,6 +176,14 @@ void	 print_queue(const struct pf_altq *, unsigned, struct node_queue_bw *,
 
 int	pfctl_define_table(char *, int, int, const char *, const char *,
 	    struct pfr_buffer *, u_int32_t);
+
+void		 pfctl_clear_fingerprints(int, int);
+int		 pfctl_file_fingerprints(int, int, const char *);
+pf_osfp_t	 pfctl_get_fingerprint(const char *);
+int		 pfctl_load_fingerprints(int, int);
+char		*pfctl_lookup_fingerprint(pf_osfp_t, char *, size_t);
+void		 pfctl_show_fingerprints(int);
+
 
 struct icmptypeent {
 	const char *name;

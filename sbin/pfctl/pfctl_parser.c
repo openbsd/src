@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.172 2003/07/29 19:47:22 cedric Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.173 2003/08/21 19:12:08 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -58,8 +58,8 @@ void		 print_op (u_int8_t, const char *, const char *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, const char *);
 void		 print_ugid (u_int8_t, unsigned, unsigned, const char *, unsigned);
 void		 print_flags (u_int8_t);
-void		 print_fromto(struct pf_rule_addr *, struct pf_rule_addr *,
-		    u_int8_t, u_int8_t, int);
+void		 print_fromto(struct pf_rule_addr *, pf_osfp_t,
+		    struct pf_rule_addr *, u_int8_t, u_int8_t, int);
 
 struct node_host	*host_if(const char *, int);
 struct node_host	*host_v4(const char *, int);
@@ -349,9 +349,10 @@ print_flags(u_int8_t f)
 }
 
 void
-print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
+print_fromto(struct pf_rule_addr *src, pf_osfp_t osfp, struct pf_rule_addr *dst,
     sa_family_t af, u_int8_t proto, int verbose)
 {
+	char buf[PF_OSFP_LEN*3];
 	if (src->addr.type == PF_ADDR_ADDRMASK &&
 	    dst->addr.type == PF_ADDR_ADDRMASK &&
 	    PF_AZERO(&src->addr.v.a.addr, AF_INET6) &&
@@ -359,7 +360,8 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 	    PF_AZERO(&dst->addr.v.a.addr, AF_INET6) &&
 	    PF_AZERO(&dst->addr.v.a.mask, AF_INET6) &&
 	    !src->not && !dst->not &&
-	    !src->port_op && !dst->port_op)
+	    !src->port_op && !dst->port_op &&
+	    osfp == PF_OSFP_ANY)
 		printf(" all");
 	else {
 		printf(" from ");
@@ -370,6 +372,9 @@ print_fromto(struct pf_rule_addr *src, struct pf_rule_addr *dst,
 			print_port(src->port_op, src->port[0],
 			    src->port[1],
 			    proto == IPPROTO_TCP ? "tcp" : "udp");
+		if (osfp != PF_OSFP_ANY)
+			printf(" os \"%s\"", pfctl_lookup_fingerprint(osfp, buf,
+			    sizeof(buf)));
 
 		printf(" to ");
 		if (dst->not)
@@ -651,7 +656,8 @@ print_rule(struct pf_rule *r, int verbose)
 		else
 			printf(" proto %u", r->proto);
 	}
-	print_fromto(&r->src, &r->dst, r->af, r->proto, verbose);
+	print_fromto(&r->src, r->os_fingerprint, &r->dst, r->af, r->proto,
+	    verbose);
 	if (r->uid.op)
 		print_ugid(r->uid.op, r->uid.uid[0], r->uid.uid[1], "user",
 		    UID_MAX);

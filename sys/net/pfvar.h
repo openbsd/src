@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.166 2003/08/09 14:56:48 cedric Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.167 2003/08/21 19:12:08 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -41,6 +41,8 @@
 #include <netinet/ip_ipsp.h>
 #include <netinet/tcp_fsm.h>
 
+struct ip;
+
 #define	PF_TCPS_PROXY_SRC	((TCP_NSTATES)+0)
 #define	PF_TCPS_PROXY_DST	((TCP_NSTATES)+1)
 
@@ -51,7 +53,7 @@ enum	{ PF_RULESET_SCRUB, PF_RULESET_FILTER, PF_RULESET_NAT,
 	  PF_RULESET_BINAT, PF_RULESET_RDR, PF_RULESET_MAX };
 enum	{ PF_OP_NONE, PF_OP_IRG, PF_OP_EQ, PF_OP_NE, PF_OP_LT,
 	  PF_OP_LE, PF_OP_GT, PF_OP_GE, PF_OP_XRG, PF_OP_RRG };
-enum	{ PF_DEBUG_NONE, PF_DEBUG_URGENT, PF_DEBUG_MISC };
+enum	{ PF_DEBUG_NONE, PF_DEBUG_URGENT, PF_DEBUG_MISC, PF_DEBUG_NOISY };
 enum	{ PF_CHANGE_NONE, PF_CHANGE_ADD_HEAD, PF_CHANGE_ADD_TAIL,
 	  PF_CHANGE_ADD_BEFORE, PF_CHANGE_ADD_AFTER,
 	  PF_CHANGE_REMOVE, PF_CHANGE_GET_TICKET };
@@ -322,6 +324,108 @@ struct pf_pool {
 	u_int8_t		 opts;
 };
 
+
+/* A packed Operating System description for fingerprinting */
+typedef u_int32_t pf_osfp_t;
+#define PF_OSFP_ANY	((pf_osfp_t)0)
+#define PF_OSFP_UNKNOWN	((pf_osfp_t)-1)
+#define PF_OSFP_NOMATCH	((pf_osfp_t)-2)
+
+struct pf_osfp_entry {
+	SLIST_ENTRY(pf_osfp_entry) fp_entry;
+	pf_osfp_t		fp_os;
+	int			fp_enflags;
+#define PF_OSFP_EXPANDED	0x001		/* expanded entry */
+#define PF_OSFP_GENERIC		0x002		/* generic signature */
+#define PF_OSFP_NODETAIL	0x004		/* no p0f details */
+#define PF_OSFP_LEN	32
+	char			fp_class_nm[PF_OSFP_LEN];
+	char			fp_version_nm[PF_OSFP_LEN];
+	char			fp_subtype_nm[PF_OSFP_LEN];
+};
+#define PF_OSFP_ENTRY_EQ(a, b) \
+    ((a)->fp_os == (b)->fp_os && \
+    memcmp((a)->fp_class_nm, (b)->fp_class_nm, PF_OSFP_LEN) == 0 && \
+    memcmp((a)->fp_version_nm, (b)->fp_version_nm, PF_OSFP_LEN) == 0 && \
+    memcmp((a)->fp_subtype_nm, (b)->fp_subtype_nm, PF_OSFP_LEN) == 0)
+
+/* handle pf_osfp_t packing */
+#define _FP_RESERVED_BIT	1  /* For the special negative #defines */
+#define _FP_UNUSED_BITS		1
+#define _FP_CLASS_BITS		10 /* OS Class (Windows, Linux) */
+#define _FP_VERSION_BITS	10 /* OS version (95, 98, NT, 2.4.54, 3.2) */
+#define _FP_SUBTYPE_BITS	10 /* patch level (NT SP4, SP3, ECN patch) */
+#define PF_OSFP_UNPACK(osfp, class, version, subtype) do { \
+	(class) = ((osfp) >> (_FP_VERSION_BITS+_FP_SUBTYPE_BITS)) & \
+	    ((1 << _FP_CLASS_BITS) - 1); \
+	(version) = ((osfp) >> _FP_SUBTYPE_BITS) & \
+	    ((1 << _FP_VERSION_BITS) - 1);\
+	(subtype) = (osfp) & ((1 << _FP_SUBTYPE_BITS) - 1); \
+} while(0)
+#define PF_OSFP_PACK(osfp, class, version, subtype) do { \
+	(osfp) = ((class) & ((1 << _FP_CLASS_BITS) - 1)) << (_FP_VERSION_BITS \
+	    + _FP_SUBTYPE_BITS); \
+	(osfp) |= ((version) & ((1 << _FP_VERSION_BITS) - 1)) << \
+	    _FP_SUBTYPE_BITS; \
+	(osfp) |= (subtype) & ((1 << _FP_SUBTYPE_BITS) - 1); \
+} while(0)
+
+/* the fingerprint of an OSes TCP SYN packet */
+typedef u_int64_t	pf_tcpopts_t;
+struct pf_os_fingerprint {
+	SLIST_HEAD(pf_osfp_enlist, pf_osfp_entry) fp_oses; /* list of matches */
+	pf_tcpopts_t		fp_tcpopts;	/* packed TCP options */
+	u_int16_t		fp_wsize;	/* TCP window size */
+	u_int16_t		fp_psize;	/* ip->ip_len */
+	u_int16_t		fp_mss;		/* TCP MSS */
+	u_int16_t		fp_flags;
+#define PF_OSFP_WSIZE_MOD	0x0001		/* Window modulus */
+#define PF_OSFP_WSIZE_DC	0x0002		/* Window don't care */
+#define PF_OSFP_WSIZE_MSS	0x0004		/* Window multiple of MSS */
+#define PF_OSFP_WSIZE_MTU	0x0008		/* Window multiple of MTU */
+#define PF_OSFP_PSIZE_MOD	0x0010		/* packet size modulus */
+#define PF_OSFP_PSIZE_DC	0x0020		/* packet size don't care */
+#define PF_OSFP_WSCALE		0x0040		/* TCP window scaling */
+#define PF_OSFP_WSCALE_MOD	0x0080		/* TCP window scale modulus */
+#define PF_OSFP_WSCALE_DC	0x0100		/* TCP window scale dont-care */
+#define PF_OSFP_MSS		0x0200		/* TCP MSS */
+#define PF_OSFP_MSS_MOD		0x0400		/* TCP MSS modulus */
+#define PF_OSFP_MSS_DC		0x0800		/* TCP MSS dont-care */
+#define PF_OSFP_DF		0x1000		/* IPv4 don't fragment bit */
+#define PF_OSFP_TS0		0x2000		/* Zero timestamp */
+	u_int8_t		fp_optcnt;	/* TCP option count */
+	u_int8_t		fp_wscale;	/* TCP window scaling */
+	u_int8_t		fp_ttl;		/* IPv4 TTL */
+#define PF_OSFP_MAXTTL_OFFSET	40
+/* TCP options packing */
+#define PF_OSFP_TCPOPT_NOP	0x0		/* TCP NOP option */
+#define PF_OSFP_TCPOPT_WSCALE	0x1		/* TCP window scaling option */
+#define PF_OSFP_TCPOPT_MSS	0x2		/* TCP max segment size opt */
+#define PF_OSFP_TCPOPT_SACK	0x3		/* TCP SACK OK option */
+#define PF_OSFP_TCPOPT_TS	0x4		/* TCP timestamp option */
+#define PF_OSFP_TCPOPT_BITS	3		/* bits used by each option */
+#define PF_OSFP_MAX_OPTS \
+    (sizeof(((struct pf_os_fingerprint *)0)->fp_tcpopts) * 8) \
+    / PF_OSFP_TCPOPT_BITS
+
+	SLIST_ENTRY(pf_os_fingerprint)	fp_next;
+};
+
+struct pf_osfp_ioctl {
+	struct pf_osfp_entry 	fp_os;
+	pf_tcpopts_t		fp_tcpopts;	/* packed TCP options */
+	u_int16_t		fp_wsize;	/* TCP window size */
+	u_int16_t		fp_psize;	/* ip->ip_len */
+	u_int16_t		fp_mss;		/* TCP MSS */
+	u_int16_t		fp_flags;
+	u_int8_t		fp_optcnt;	/* TCP option count */
+	u_int8_t		fp_wscale;	/* TCP window scaling */
+	u_int8_t		fp_ttl;		/* IPv4 TTL */
+
+	int			fp_getnum;	/* DIOCOSFPGET number */
+};
+
+
 union pf_rule_ptr {
 	struct pf_rule		*ptr;
 	u_int32_t		 nr;
@@ -363,6 +467,7 @@ struct pf_rule {
 	struct ifnet		*ifp;
 	struct pf_anchor	*anchor;
 
+	pf_osfp_t		 os_fingerprint;
 	u_int32_t		 states;
 	u_int32_t		 max_states;
 	u_int32_t		 qid;
@@ -993,6 +1098,9 @@ struct pfioc_table {
 #define DIOCRINABEGIN	_IOWR('D', 75, struct pfioc_table)
 #define DIOCRINACOMMIT	_IOWR('D', 76, struct pfioc_table)
 #define DIOCRINADEFINE	_IOWR('D', 77, struct pfioc_table)
+#define DIOCOSFPFLUSH	_IO('D', 78)
+#define DIOCOSFPADD	_IOWR('D', 79, struct pf_osfp_ioctl)
+#define DIOCOSFPGET	_IOWR('D', 80, struct pf_osfp_ioctl)
 
 #ifdef _KERNEL
 RB_HEAD(pf_state_tree, pf_tree_node);
@@ -1135,5 +1243,20 @@ struct pf_pool_limit {
 extern struct pf_pool_limit	pf_pool_limits[PF_LIMIT_MAX];
 
 #endif /* _KERNEL */
+
+/* The fingerprint functions can be linked into userland programs (tcpdump) */
+int	pf_osfp_add(struct pf_osfp_ioctl *);
+struct pf_osfp_enlist *
+	pf_osfp_fingerprint(struct pf_pdesc *, struct mbuf *, int,
+	    const struct tcphdr *);
+struct pf_osfp_enlist *
+	pf_osfp_fingerprint_hdr(const struct ip *, const struct tcphdr *);
+void	pf_osfp_flush(void);
+int	pf_osfp_get(struct pf_osfp_ioctl *);
+void	pf_osfp_initialize(void);
+int	pf_osfp_match(struct pf_osfp_enlist *, pf_osfp_t);
+struct pf_os_fingerprint *
+	pf_osfp_validate(void);
+
 
 #endif /* _NET_PFVAR_H_ */

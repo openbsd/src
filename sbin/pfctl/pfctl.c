@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.185 2003/08/04 17:29:44 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.186 2003/08/21 19:12:08 frantzen Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -156,12 +156,12 @@ static const struct {
 };
 
 static const char *clearopt_list[] = {
-	"nat", "queue", "rules", "state", "info", "Tables", "all", NULL
+	"nat", "queue", "rules", "state", "info", "Tables", "osfp", "all", NULL
 };
 
 static const char *showopt_list[] = {
 	"nat", "queue", "rules", "Anchors", "state", "info", "labels",
-	"timeouts", "memory", "Tables", "all", NULL
+	"timeouts", "memory", "Tables", "osfp", "all", NULL
 };
 
 static const char *tblcmdopt_list[] = {
@@ -170,7 +170,7 @@ static const char *tblcmdopt_list[] = {
 };
 
 static const char *debugopt_list[] = {
-	"none", "urgent", "misc", NULL
+	"none", "urgent", "misc", "loud", NULL
 };
 
 
@@ -1197,6 +1197,9 @@ pfctl_debug(int dev, u_int32_t level, int opts)
 		case PF_DEBUG_MISC:
 			fprintf(stderr, "misc");
 			break;
+		case PF_DEBUG_NOISY:
+			fprintf(stderr, "loud");
+			break;
 		default:
 			fprintf(stderr, "<invalid>");
 			break;
@@ -1486,14 +1489,17 @@ main(int argc, char *argv[])
 			pfctl_show_anchors(dev, opts, anchorname);
 			break;
 		case 'r':
+			pfctl_load_fingerprints(dev, opts);
 			pfctl_show_rules(dev, opts, 0, anchorname,
 			    rulesetname);
 			break;
 		case 'l':
+			pfctl_load_fingerprints(dev, opts);
 			pfctl_show_rules(dev, opts, 1, anchorname,
 			    rulesetname);
 			break;
 		case 'n':
+			pfctl_load_fingerprints(dev, opts);
 			pfctl_show_nat(dev, opts, anchorname, rulesetname);
 			break;
 		case 'q':
@@ -1512,6 +1518,8 @@ main(int argc, char *argv[])
 			pfctl_show_limits(dev);
 			break;
 		case 'a':
+			pfctl_load_fingerprints(dev, opts);
+
 			pfctl_show_rules(dev, opts, 0, anchorname,
 			    rulesetname);
 			pfctl_show_nat(dev, opts, anchorname, rulesetname);
@@ -1522,9 +1530,14 @@ main(int argc, char *argv[])
 			pfctl_show_timeouts(dev);
 			pfctl_show_limits(dev);
 			pfctl_show_tables(anchorname, rulesetname, opts);
+			pfctl_show_fingerprints(opts);
 			break;
 		case 'T':
 			pfctl_show_tables(anchorname, rulesetname, opts);
+			break;
+		case 'o':
+			pfctl_load_fingerprints(dev, opts);
+			pfctl_show_fingerprints(opts);
 			break;
 		}
 	}
@@ -1553,6 +1566,10 @@ main(int argc, char *argv[])
 			pfctl_clear_states(dev, opts);
 			pfctl_clear_stats(dev, opts);
 			pfctl_clear_tables(anchorname, rulesetname, opts);
+			pfctl_clear_fingerprints(dev, opts);
+			break;
+		case 'o':
+			pfctl_clear_fingerprints(dev, opts);
 			break;
 		case 'T':
 			pfctl_clear_tables(anchorname, rulesetname, opts);
@@ -1561,6 +1578,9 @@ main(int argc, char *argv[])
 	}
 	if (state_killers)
 		pfctl_kill_states(dev, opts);
+
+	if (rulesopt && pfctl_file_fingerprints(dev, opts, PF_OSFP_FILE))
+		error = 1;
 
 	if (tblcmdopt != NULL) {
 		error = pfctl_command_tables(argc, argv, tableopt,
@@ -1586,6 +1606,9 @@ main(int argc, char *argv[])
 			break;
 		case 'm':
 			pfctl_debug(dev, PF_DEBUG_MISC, opts);
+			break;
+		case 'l':
+			pfctl_debug(dev, PF_DEBUG_NOISY, opts);
 			break;
 		}
 	}

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.97 2003/05/24 17:50:16 jmc Exp $
+.\" $OpenBSD: pfctl.8,v 1.98 2003/08/21 19:12:08 frantzen Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -160,6 +160,8 @@ Flush the state table (NAT and filter).
 Flush the filter information (statistics that are not bound to rules).
 .It Fl F Ar Tables
 Flush the tables.
+.It Fl F Ar osfp
+Flush the passive operating system fingerprints.
 .It Fl F Ar all
 Flush all of the above.
 .El
@@ -252,6 +254,13 @@ Show the current global timeouts.
 Show the current pool memory hard limits.
 .It Fl s Ar Tables
 Show the list of tables.
+.It Fl s Ar osfp
+Show the list of operating system fingerprints.
+Can be used in combination with
+.Fl o Ar file
+to list the fingerprints in a
+.Xr pf.os 5
+file.
 .It Fl s Ar all
 Show all of the above.
 .El
@@ -435,7 +444,7 @@ tables of the same name in sub-rulesets (anchors).
 Produce more verbose output.
 A second use of
 .Fl v
-will produce even more verbose output.
+will produce even more verbose output including ruleset warnings.
 See previous section for its effect on table commands.
 .It Fl x Ar level
 Set the debug
@@ -448,6 +457,8 @@ Don't generate debug messages.
 Generate debug messages only for serious errors.
 .It Fl x Ar misc
 Generate debug messages for various errors.
+.It Fl x Ar loud
+Generate debug messages for common conditons.
 .El
 .It Fl z
 Clear per-rule statistics.
@@ -460,6 +471,7 @@ Packet filter rules file.
 .Sh SEE ALSO
 .Xr pf 4 ,
 .Xr pf.conf 5 ,
+.Xr pf.os 5
 .Xr sysctl.conf 5 ,
 .Xr ftp-proxy 8 ,
 .Xr rc 8 ,
