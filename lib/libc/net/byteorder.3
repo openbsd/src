@@ -1,4 +1,4 @@
-.\"	$OpenBSD: byteorder.3,v 1.11 2003/09/21 18:11:27 fgsch Exp $
+.\"	$OpenBSD: byteorder.3,v 1.12 2003/09/26 16:50:14 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,6 @@
 .Nd convert values between different byte orderings
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
-.Fd #include <machine/endian.h>
 .Ft u_int32_t
 .Fn htonl "u_int32_t host32"
 .Ft u_int16_t
@@ -168,12 +167,23 @@ and
 .Sh SEE ALSO
 .Xr gethostbyname 3 ,
 .Xr getservent 3
+.Sh STANDARDS
+The
+.Fn htonl ,
+.Fn htons ,
+.Fn ntohl ,
+and
+.Fn ntohs
+functions conform to
+.St -p1003.1 .
+The other functions are extensions that should not be used when portability
+is required.
 .Sh HISTORY
 The
 .Nm byteorder
 functions appeared in
 .Bx 4.2 .
 .Sh BUGS
-On the vax, alpha, i386, and so far mips,
+On the vax, alpha, i386, and some mips architectures,
 bytes are handled backwards from most everyone else in the world.
 This is not expected to be fixed in the near future.
