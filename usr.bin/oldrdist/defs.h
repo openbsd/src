@@ -1,4 +1,4 @@
-/* *	$OpenBSD: defs.h,v 1.11 2003/06/03 02:56:14 millert Exp $*/
+/* *	$OpenBSD: defs.h,v 1.12 2004/01/16 01:12:35 espie Exp $*/
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -164,7 +164,7 @@ void	 fatal(const char *, ...);
 int	 inlist(struct namelist *, char *);
 void	 insert(char *, struct namelist *, struct namelist *, struct subcmd *);
 void	 install(char *, char *, int, int);
-void	 log(FILE *, const char *, ...);
+void	 logit(FILE *, const char *, ...);
 struct namelist *
 	 lookup(char *, int, struct namelist *);
 void	 lostconn(int);
