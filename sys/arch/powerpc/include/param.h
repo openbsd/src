@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.21 2002/03/21 02:08:40 drahn Exp $	*/
+/*	$OpenBSD: param.h,v 1.22 2002/11/21 03:59:16 drahn Exp $	*/
 /*	$NetBSD: param.h,v 1.1 1996/09/30 16:34:28 ws Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
 #define	MACHINE_ARCH	"powerpc"
 #define	_MACHINE_ARCH	powerpc
 
-#define	MID_MACHINE	0	/* None but has to be defined */
+#define	MID_MACHINE	MID_POWERPC
 
 #define	ALIGNBYTES	(sizeof(double) - 1)
 #define	ALIGN(p)	(((u_int)(p) + ALIGNBYTES) & ~ALIGNBYTES)
