@@ -2,11 +2,12 @@
 .SH NAME
 ipf \- packet filtering kernel interface
 .SH SYNOPSIS
-#include <sys/ip_fil.h>
+#include <netinet/ip_fil_compat.h>
+#include <netinet/ip_fil.h>
 .SH IOCTLS
 .PP
 To add and delete rules to the filter list, three 'basic' ioctls are provided
-for use.  The ioctl's are called as:
+for use.  The ioctls are called as:
 .LP
 .nf
 	ioctl(fd, SIOCADDFR, struct frentry *)
@@ -27,7 +28,7 @@ However, the full complement is as follows:
 .fi
 .PP
 The variations, SIOCADAFR vs. SIOCADIFR, allow operation on the two lists,
-active and inactive, respectively.  All of these ioctl's are implemented
+active and inactive, respectively.  All of these ioctls are implemented
 as being routing ioctls and thus the same rules for the various routing
 ioctls and the file descriptor are employed, mainly being that the fd must
 be that of the device associated with the module (i.e., /dev/ipl).
@@ -73,12 +74,12 @@ typedef struct  frentry {
 .fi
 .PP
 When adding a new rule, all unused fields (in the filter rule) should be
-initialised to be zero.  To insert a rule, at a particular position in the
+initialized to be zero.  To insert a rule, at a particular position in the
 filter list, the number of the rule which it is to be inserted before must
 be put in the "fr_hits" field (the first rule is number 0).
 .LP
 .PP
-Flags which are recognised in fr_pass:
+Flags which are recognized in fr_pass:
 .nf
 
 	FR_BLOCK        0x00001    /* do not allow packet to pass */
@@ -92,7 +93,7 @@ Flags which are recognised in fr_pass:
         FR_LOGFIRST     0x00040    /* log only the first packet to match */
 	FR_RETRST       0x00080    /* return a TCP RST packet if blocked */
 	FR_RETICMP      0x00100    /* return an ICMP packet if blocked */
-        FR_NOMATCH      0x00200    /* no match occured */
+        FR_NOMATCH      0x00200    /* no match occurred */
         FR_ACCOUNT      0x00400    /* count packet bytes */
         FR_KEEPFRAG     0x00800
         FR_KEEPSTATE    0x01000    /* keep packet flow state information */
@@ -122,11 +123,11 @@ comparisons) :
 .PP
 The third ioctl, SIOCIPFFL, flushes either the input filter list, the
 output filter list or both and it returns the number of filters removed
-from the list(s).  The values which it will take and recognise are FR_INQUE
+from the list(s).  The values which it will take and recognize are FR_INQUE
 and FR_OUTQUE (see above).
 
 \fBGeneral Logging Flags\fP
-There are two flags which can be set to log packets independantly of the
+There are two flags which can be set to log packets independently of the
 rules used.  These allow for packets which are either passed or blocked
 to be logged.  To set (and clear)/get these flags, two ioctls are
 provided:
