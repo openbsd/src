@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.13 2002/07/19 03:20:17 deraadt Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.14 2002/08/04 00:51:14 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.13 2002/07/19 03:20:17 deraadt Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.14 2002/08/04 00:51:14 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -215,7 +215,7 @@ main(int argc, char *argv[])
 		usage();
 
 	if (host != NULL)
-		client = yp_bind_host(host,YPPROG,YPVERS,0,1);
+		client = yp_bind_host(host, YPPROG, YPVERS, 0, 1);
 
 	if (argv[0]) {
 		map = argv[0];
