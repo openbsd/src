@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.19 2004/04/08 16:17:09 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.20 2004/08/29 08:18:34 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -36,7 +36,7 @@
 The following table lists the
 .Tn PA-RISC
 CPU types and their characteristics, such as TLB, maximum
-cache sizes and
+cache sizes (where * character means on-chip) and
 .Tn HP 9000/700
 machines they were used in (see also
 .Xr intro 4
@@ -47,34 +47,44 @@ for the reverse list).
 tab (:) ;   
 l l l l l l l
 l l l l l l l
-l l l l l l l
 _ _ _ _ _ _ _
 l l l l l l l .
-CPU:PA:Clock:Caches:TLB:BTLB:Models
-   :  :(max):(max) :   :    :
-   :  : MHz : KB   :   :    :
-7000:1.1a:66 : 256 L1I:96I:4 I:705,710,720
-    :    :   : 256 L1D:96D:4 D:730,750
+CPU:PA:Clock  :Caches:TLB:BAT:Models
+   :  :MHz max:KB max:   :   :
+7000:1.1a:66 : 256 L1I:96I:4I:705,710,720
+    :    :   : 256 L1D:96D:4D:730,750
 7100:1.1b:100:1024 L1I:120:16:715/33/50/75
     :    :   :2048 L1D:   :  :725/50/75
     :    :   :        :   :  :{735,755}/100
     :    :   :        :   :  :742i, 745i, 747i
 7150:1.1b:125:1024 L1I:120:16:{735,755}/125
     :    :   :2048 L1D:   :  :
-7100LC:1.1c:100:   1 L1I:64:8:712/60/80/100
+7100LC:1.1c:100:   1 L1I*:64:8:712/60/80/100
       :    :   :1024 L2I:  : :715/64/80/100
       :    :   :1024 L2D:  : :715/100XC
       :    :   :        :  : :725/64/100
       :    :   :        :  : :743i, 748i
       :    :   :        :  : :SAIC
-7200:1.1d:140:   2 L1 :120:16:C100,C110
+7200:1.1d:140:   2 L1*:120:16:C100,C110
     :    :   :1024 L2I:   :  :J200,J210
     :    :   :1024 L2D:   :  :
-7300LC:1.1e:180:  64 L1I:96:8:A180,A180C
-       :    :  :  64 L1D:  : :B132,B160,B180
+7300LC:1.1e:180:  64 L1I*:96:8:A180,A180C
+       :    :  :  64 L1D*:  : :B132,B160,B180
        :    :  :8192 L2:  : :C132L,C160L
        :    :  :       :  : :744, 745, 748
        :    :  :       :  : :RDI PrecisioBook
+8000:2.0:180:1024 L1I:96:  :C160, C180
+    :   :   :1024 L1D:  :  :J280, J282
+8200:2.0:300:2048 L1I:120:  :C200, C240
+    :   :   :2048 L1D:   :  :J2240
+8500:2.0:440: 512 L1I*:160:  :A400,A500,C360
+    :   :   :1024 L1D*:   :  :B1000,B2000
+    :   :   :         :   :  :J5000,J7000
+8600:2.0:550: 512 L1I*:160:  :A400,A500,C3600
+    :   :   :1024 L1D*:   :  :B2000,B2600
+    :   :   :         :   :  :J5600,J6000,J7600
+8700:2.0:875: 768 L1I*:240:  :A400,A500,J6700
+    :   :   :1536 L1D*:   :  :C3650,C3700,C3750
 .TE
 .in -\n(dIu
 .Sh FLOATING-POINT COPROCESSOR
@@ -132,6 +142,11 @@ CPU:Units:Bundles
       :1 FP         :load-store/fp
       :        :int/fp
       :        :branch/*
+8x00:2 integer ALU:4-way superscalar
+    :2 shift/merge:
+    :2 load/store:
+    :2 FPU mul/add:
+    :2 FPU div/sqrt:
 .TE
 .in -\n(dIu
 .Pp
