@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/10/93
-#	     $Id: Makefile,v 1.1.1.1 1995/10/18 10:44:45 deraadt Exp $
+#	     $Id: Makefile,v 1.2 1995/10/23 03:38:29 deraadt Exp $
 
 RELOC=0x3F0000 
 
@@ -23,7 +23,7 @@ LIBS=	${LIBSA} ${LIBBUG}
 
 OBJS= ${SRCS:N*.h:R:S/$/.o/g}
 
-BOOTS=	bootst sdboot
+BOOTS=	bootst stboot
 ALL=	${BOOTS} 
 
 all: ${ALL}
@@ -32,7 +32,7 @@ bootst.bug:	${OBJS} ${BUGCRT} ${LIBS}
 	${LD} -s -N -T ${RELOC} ${BUGCRT} ${OBJS} ${LIBS} -o $@
 	@size bootst.bug
 
-bootst sdboot: bootst.bug ${WRTVID}
+bootst stboot: bootst.bug ${WRTVID}
 	${WRTVID} bootst.bug
 
 install:
