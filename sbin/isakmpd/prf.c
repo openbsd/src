@@ -1,5 +1,5 @@
-/*	$OpenBSD: prf.c,v 1.3 1998/11/17 11:10:19 niklas Exp $	*/
-/*	$EOM: prf.c,v 1.3 1998/07/23 09:00:47 niklas Exp $	*/
+/*	$OpenBSD: prf.c,v 1.4 1999/02/26 03:49:27 niklas Exp $	*/
+/*	$EOM: prf.c,v 1.4 1999/02/25 11:39:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -37,6 +37,8 @@
 #include <sys/param.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "sysdep.h"
 
 #include "hash.h"
 #include "log.h"
