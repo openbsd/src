@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.54 2005/02/03 15:58:44 henning Exp $
+#	$OpenBSD: GENERIC,v 1.55 2005/02/12 07:18:58 pvalchev Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -376,13 +376,14 @@ audio*	at uaudio?
 audio*	at yds?
 audio*	at emu?
 
-#bktr0	at pci?
+bktr0	at pci?
 
 # FM-Radio devices
 #gtp*	at pci?			# Gemtek/Guillemot Radio PCI Radio Card
 
 # FM-Radio support
 #radio*	at gtp?
+radio*	at bktr?
 
 #wdt0	at pci?			# Ind Computer Source PCI-WDT50x driver
 
