@@ -4,10 +4,10 @@
 # generated from:
 #
 #	OpenBSD: etc.sparc64/MAKEDEV.md,v 1.4 2002/01/04 16:59:18 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.5 2002/01/07 06:25:32 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.2 2002/01/07 06:06:40 todd Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.7 2002/01/07 07:20:50 todd Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.4 2002/01/07 06:54:10 todd Exp 
 #
-#	$Open{--}BSD$
+#	$OpenBSD: MAKEDEV,v 1.33 2002/01/07 07:21:53 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -427,7 +427,6 @@ ttyC*)
 	cfg) M ttyCcfg c 78 255 ;;
 	*) echo bad unit $U for $i; exit 1;;
 	esac
- 
 	;;
 
 wscons)
@@ -511,12 +510,11 @@ all)
 
 sd*|ccd*|raid*|wd*)
 	case $i in
-	sd*) n=sd b=7 c=17;;
-	ccd*) n=ccd b=9 c=23;;
-	raid*) n=raid b=25 c=121;;
-	wd*) n=wd b=12 c=26;;
+	sd*) dodisk sd $U 7 17 $U 0;;
+	ccd*) dodisk ccd $U 9 23 $U 0;;
+	raid*) dodisk raid $U 25 121 $U 0;;
+	wd*) dodisk wd $U 12 26 $U 0;;
 	esac
-	dodisk $n $U $b $c $U 0
 	;;
 
 *)
