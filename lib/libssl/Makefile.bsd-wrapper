@@ -1,5 +1,5 @@
 # Build wrapper for OpenSSL
-# $OpenBSD: Makefile.bsd-wrapper,v 1.46 2002/05/15 03:16:55 beck Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.47 2002/05/15 03:26:49 deraadt Exp $
 
 # Our lndir is hacked; specify a full path to avoid potential conflicts
 # with the one installed with X11.
@@ -8,6 +8,7 @@ LNDIR=	/usr/bin/lndir
 # Figure out what flag we use to OpenSSL's configure. This
 # needs to be tested on all architectures.
 
+SSL_SRC=src
 OPENSSLDIR=	/etc/ssl
 SSLCONF=	--openssldir="${OPENSSLDIR}" OpenBSD-${MACHINE_ARCH}
 
@@ -672,8 +673,6 @@ maninstall:
 	( cd `dirname ${.ALLSRC}` && pod2man --section=1 --official \
 	  --center='OpenSSL' --release="OpenBSD `uname -r`" \
 	  `basename ${.ALLSRC}` ) | nroff -Tps -man > ${.TARGET}
-
-SSL_SRC=src
 
 all: 	prereq ${MANALL} ${PSALL}
 # egcs bombs optimising this file on vax
