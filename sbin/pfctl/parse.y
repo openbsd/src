@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.310 2003/02/09 12:49:48 camield Exp $	*/
+/*	$OpenBSD: parse.y,v 1.311 2003/02/09 13:50:44 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1179,7 +1179,7 @@ pfrule		: action dir logquick interface route af proto fromto
 				decide_address_family($5.host, &r.af);
 				remove_invalid_hosts(&$5.host, &r.af);
 				if ($5.host == NULL) {
- 					yyerror("no routing address with matching address family "
+					yyerror("no routing address with matching address family "
 					    "found.");
 					YYERROR;
 				}
