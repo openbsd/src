@@ -1,5 +1,5 @@
-/*	$OpenBSD: main.c,v 1.16 1997/04/16 04:09:21 millert Exp $	*/
-/*	$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $	*/
+/*	$OpenBSD: main.c,v 1.17 1997/07/05 05:35:56 millert Exp $	*/
+/*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -49,6 +49,8 @@ static char rcsid[] = "$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
+#include <sys/mount.h>
+#include <sys/stat.h>
 #include <sys/time.h>
 #ifdef sunos
 #include <sys/vnode.h>
@@ -72,6 +74,7 @@ static char rcsid[] = "$NetBSD: main.c,v 1.8 1996/03/15 22:39:32 scottr Exp $";
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "dump.h"
@@ -96,20 +99,22 @@ static long numarg __P((char *, long, long));
 static void obsolete __P((int *, char **[]));
 static void usage __P((void));
 
-
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
 	register ino_t ino;
-	register int dirty; 
+	register int dirty;
 	register struct dinode *dp;
 	register struct	fstab *dt;
 	register char *map;
 	register int ch;
 	int i, anydirskipped, bflag = 0, Tflag = 0, honorlevel = 1;
 	ino_t maxino;
+	time_t tnow;
+	int dirlist;
+	char *toplevel;
 
 	spcl.c_date = 0;
 	(void)time((time_t *)&spcl.c_date);
@@ -209,14 +214,68 @@ main(argc, argv)
 		(void)fprintf(stderr, "Must specify disk or filesystem\n");
 		exit(X_ABORT);
 	}
-	disk = *argv++;
-	argc--;
-	if (argc >= 1) {
-		(void)fprintf(stderr, "Unknown arguments to dump:");
-		while (argc--)
-			(void)fprintf(stderr, " %s", *argv++);
-		(void)fprintf(stderr, "\n");
-		exit(X_ABORT);
+
+	/*
+	 *	determine if disk is a subdirectory, and setup appropriately
+	 */
+	dirlist = 0;
+	toplevel = NULL;
+	for (i = 0; i < argc; i++) {
+		struct stat sb;
+		struct statfs fsbuf;
+
+		if (lstat(argv[i], &sb) == -1) {
+			msg("Cannot lstat %s: %s\n", argv[i], strerror(errno));
+			exit(X_ABORT);
+		}
+		if (!S_ISDIR(sb.st_mode) && !S_ISREG(sb.st_mode))
+			break;
+		if (statfs(argv[i], &fsbuf) == -1) {
+			msg("Cannot statfs %s: %s\n", argv[i], strerror(errno));
+			exit(X_ABORT);
+		}
+		if (strcmp(argv[i], fsbuf.f_mntonname) == 0) {
+			if (dirlist != 0) {
+				msg("Can't dump a mountpoint and a filelist\n");
+				exit(X_ABORT);
+			}
+			break;		/* exit if sole mountpoint */
+		}
+		if (!disk) {
+			if ((toplevel = strdup(fsbuf.f_mntonname)) == NULL) {
+				msg("Cannot malloc diskname\n");
+				exit(X_ABORT);
+			}
+			disk = toplevel;
+			if (uflag) {
+				msg("Ignoring u flag for subdir dump\n");
+				uflag = 0;
+			}
+			if (level > '0') {
+				msg("Subdir dump is done at level 0\n");
+				level = '0';
+			}
+			msg("Dumping sub files/directories from %s\n", disk);
+		} else {
+			if (strcmp(disk, fsbuf.f_mntonname) != 0) {
+				msg("%s is not on %s\n", argv[i], disk);
+				exit(X_ABORT);
+			}
+		}
+		msg("Dumping file/directory %s\n", argv[i]);
+		dirlist++;
+	}
+	if (dirlist == 0) {
+		disk = *argv++;
+		if (argc != 1) {
+			(void)fputs("Excess arguments to dump:", stderr);
+			while (--argc) {
+				(void)putc(' ', stderr);
+				(void)fputs(*argv++, stderr);
+			}
+			(void)putc('\n', stderr);
+			exit(X_ABORT);
+		}
 	}
 	if (Tflag && uflag) {
 	        (void)fprintf(stderr,
@@ -275,6 +334,7 @@ main(argc, argv)
 		signal(SIGINT, SIG_IGN);
 
 	getfstab();		/* /etc/fstab snarfed */
+
 	/*
 	 *	disk can be either the full special file name,
 	 *	the suffix of the special file name,
@@ -284,15 +344,26 @@ main(argc, argv)
 	dt = fstabsearch(disk);
 	if (dt != NULL) {
 		disk = rawname(dt->fs_spec);
-		(void)strncpy(spcl.c_dev, dt->fs_spec, NAMELEN);
-		(void)strncpy(spcl.c_filesys, dt->fs_file, NAMELEN);
+		(void)strncpy(spcl.c_dev, dt->fs_spec, sizeof(spcl.c_dev) - 1);
+		spcl.c_dev[sizeof(spcl.c_dev) - 1] = '\0';
+		if (dirlist != 0) {
+			(void)snprintf(spcl.c_filesys, sizeof(spcl.c_filesys),
+			    "a subset of %s", dt->fs_file);
+		} else {
+			(void)strncpy(spcl.c_filesys, dt->fs_file,
+			    sizeof(spcl.c_filesys) - 1);
+			spcl.c_filesys[sizeof(spcl.c_filesys) - 1] = '\0';
+		}
 	} else {
-		(void)strncpy(spcl.c_dev, disk, NAMELEN);
+		(void)strncpy(spcl.c_dev, disk, sizeof(spcl.c_dev) - 1);
+		spcl.c_dev[sizeof(spcl.c_dev) - 1] = '\0';
 		(void)strncpy(spcl.c_filesys, "an unlisted file system",
-		    NAMELEN);
+		    sizeof(spcl.c_filesys) - 1);
+		spcl.c_filesys[sizeof(spcl.c_filesys) - 1] = '\0';
 	}
-	(void)strcpy(spcl.c_label, "none");
-	(void)gethostname(spcl.c_host, NAMELEN);
+	(void)strncpy(spcl.c_label, "none", sizeof(spcl.c_label) - 1);
+	spcl.c_label[sizeof(spcl.c_label) - 1] = '\0';
+	(void)gethostname(spcl.c_host, sizeof(spcl.c_host));
 	spcl.c_level = level - '0';
 	spcl.c_type = TS_TAPE;
 	if (!Tflag)
@@ -339,8 +410,11 @@ main(argc, argv)
 
 	nonodump = spcl.c_level < honorlevel;
 
+	(void)signal(SIGINFO, statussig);
+
 	msg("mapping (Pass I) [regular files]\n");
-	anydirskipped = mapfiles(maxino, &tapesize);
+	anydirskipped = mapfiles(maxino, &tapesize, toplevel,
+	    (dirlist ? argv : NULL));
 
 	msg("mapping (Pass II) [directories]\n");
 	while (anydirskipped) {
@@ -360,7 +434,7 @@ main(argc, argv)
 			   the end of each block written, and not in mid-block.
 			   Assume no erroneous blocks; this can be compensated
 			   for with an artificially low tape size. */
-			fetapes = 
+			fetapes =
 			(	  tapesize	/* blocks */
 				* TP_BSIZE	/* bytes/block */
 				* (1.0/density)	/* 0.1" / byte */
@@ -401,6 +475,7 @@ main(argc, argv)
 
 	startnewtape(1);
 	(void)time((time_t *)&(tstart_writing));
+	xferrate = 0;
 	dumpmap(usedinomap, TS_CLRI, maxino - 1);
 
 	msg("dumping (Pass III) [directories]\n");
@@ -449,7 +524,12 @@ main(argc, argv)
 	else
 		msg("%ld tape blocks on %d volume%s\n",
 		    spcl.c_tapea, spcl.c_volume,
-		    spcl.c_volume > 1 ? "s" : "");
+		    (spcl.c_volume == 1) ? "" : "s");
+	tnow = do_stats();
+	msg("Date of this level %c dump: %s", level,
+	    spcl.c_date == 0 ? "the epoch\n" : ctime(&spcl.c_date));
+	msg("Date this dump completed:  %s", ctime(&tnow));
+	msg("Average transfer rate: %ld KB/s\n", xferrate / tapeno);
 	putdumptime();
 	trewind();
 	broadcast("DUMP IS DONE!\7\7\n");
@@ -524,11 +604,8 @@ rawname(cp)
 	if (dp == NULL)
 		return (NULL);
 	*dp = '\0';
-	(void)strncpy(rawbuf, cp, MAXPATHLEN-1);
-	rawbuf[MAXPATHLEN-1] = '\0';
+	(void)snprintf(rawbuf, sizeof(rawbuf), "%s/r%s", cp, dp + 1);
 	*dp = '/';
-	(void)strncat(rawbuf, "/r", MAXPATHLEN - strlen(rawbuf));
-	(void)strncat(rawbuf, dp + 1, MAXPATHLEN - strlen(rawbuf));
 	return (rawbuf);
 }
 

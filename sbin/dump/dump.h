@@ -1,5 +1,5 @@
-/*	$OpenBSD: dump.h,v 1.4 1997/02/03 11:53:25 deraadt Exp $	*/
-/*	$NetBSD: dump.h,v 1.9 1995/03/18 14:54:57 cgd Exp $	*/
+/*	$OpenBSD: dump.h,v 1.5 1997/07/05 05:35:54 millert Exp $	*/
+/*	$NetBSD: dump.h,v 1.11 1997/06/05 11:13:20 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -83,6 +83,7 @@ int	notify;		/* notify operator flag */
 int	blockswritten;	/* number of blocks written on current tape */
 int	tapeno;		/* current tape number */
 time_t	tstart_writing;	/* when started writing the first tape block */
+long	xferrate;	/* averaged transfer rate of all volumes */
 struct	fs *sblock;	/* the file system super block */
 char	sblock_buf[MAXBSIZE];
 long	dev_bsize;	/* block size of underlying disk device */
@@ -95,19 +96,22 @@ int	tp_bshift;	/* log2(TP_BSIZE) */
 
 /* operator interface functions */
 void	broadcast __P((char *message));
+time_t	do_stats __P((void));
 void	lastdump __P((int arg));	/* int should be char */
 void	msg __P((const char *fmt, ...));
 void	msgtail __P((const char *fmt, ...));
 int	query __P((char *question));
 void	quit __P((const char *fmt, ...));
-void	set_operators __P((void));
+void	statussig __P((int));
 void	timeest __P((void));
 time_t	unctime __P((char *str));
 
-/* mapping rouintes */
+/* mapping routines */
 struct	dinode;
 long	blockest __P((struct dinode *dp));
-int	mapfiles __P((ino_t maxino, long *tapesize));
+void	mapfileino __P((ino_t, long *, int *));
+int	mapfiles __P((ino_t maxino, long *tapesize, char *disk,
+		    char * const *dirv));
 int	mapdirs __P((ino_t maxino, long *tapesize));
 
 /* file dumping routines */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: unctime.c,v 1.2 1996/06/23 14:30:14 deraadt Exp $	*/
-/*	$NetBSD: unctime.c,v 1.9 1995/03/18 14:55:11 cgd Exp $	*/
+/*	$OpenBSD: unctime.c,v 1.3 1997/07/05 05:36:00 millert Exp $	*/
+/*	$NetBSD: unctime.c,v 1.10 1997/04/15 01:09:55 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)unctime.c	8.2 (Berkeley) 6/14/94";
 #else
-static char rcsid[] = "$OpenBSD: unctime.c,v 1.2 1996/06/23 14:30:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: unctime.c,v 1.3 1997/07/05 05:36:00 millert Exp $";
 #endif
 #endif /* not lint */
 

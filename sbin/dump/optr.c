@@ -1,5 +1,5 @@
-/*	$OpenBSD: optr.c,v 1.13 1997/06/25 18:07:57 kstailey Exp $	*/
-/*	$NetBSD: optr.c,v 1.4 1996/05/18 16:16:17 jtk Exp $	*/
+/*	$OpenBSD: optr.c,v 1.14 1997/07/05 05:35:57 millert Exp $	*/
+/*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1988, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.13 1997/06/25 18:07:57 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.14 1997/07/05 05:35:57 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -70,7 +70,6 @@ static char rcsid[] = "$OpenBSD: optr.c,v 1.13 1997/06/25 18:07:57 kstailey Exp 
 
 void	alarmcatch __P((/* int, int */));
 int	datesort __P((const void *, const void *));
-static	void sendmes __P((char *, char *));
 
 /*
  *	Query the operator; This previously-fascist piece of code
@@ -179,21 +178,20 @@ interrupt(signo)
 		dumpabort(0);
 }
 
-/*              
+/*
  *	We now use wall(1) to do the actual broadcasting.
- */         
+ */
 void
 broadcast(message)
 	char	*message;
 {
 	FILE *fp;
-	char buf[sizeof(_PATH_WALL) + 12];
+	char buf[sizeof(_PATH_WALL) + sizeof(OPGRENT) + 3];
 
 	if (!notify)
 		return;
 
-	(void) strcpy(buf, _PATH_WALL);
-	(void) strcpy(buf + sizeof(_PATH_WALL) - 1, " -g operator");
+	(void)snprintf(buf, sizeof(buf), "%s -g %s", _PATH_WALL, OPGRENT);
 	if ((fp = popen(buf, "w")) == NULL)
 		return;
 
@@ -315,7 +313,7 @@ allocfsent(fs)
 {
 	register struct fstab *new;
 
-	new = (struct fstab *)malloc(sizeof (*fs));
+	new = (struct fstab *)malloc(sizeof(*fs));
 	if (new == NULL ||
 	    (new->fs_file = strdup(fs->fs_file)) == NULL ||
 	    (new->fs_type = strdup(fs->fs_type)) == NULL ||
@@ -353,7 +351,7 @@ getfstab()
 		    strcmp(fs->fs_type, FSTAB_RQ))
 			continue;
 		fs = allocfsent(fs);
-		if ((pf = (struct pfstab *)malloc(sizeof (*pf))) == NULL)
+		if ((pf = (struct pfstab *)malloc(sizeof(*pf))) == NULL)
 			quit("%s\n", strerror(errno));
 		pf->pf_fstab = fs;
 		pf->pf_next = table;

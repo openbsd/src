@@ -1,5 +1,5 @@
-/*	$OpenBSD: itime.c,v 1.2 1996/06/23 14:30:11 deraadt Exp $	*/
-/*	$NetBSD: itime.c,v 1.3 1995/03/18 14:55:01 cgd Exp $	*/
+/*	$OpenBSD: itime.c,v 1.3 1997/07/05 05:35:56 millert Exp $	*/
+/*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: itime.c,v 1.2 1996/06/23 14:30:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: itime.c,v 1.3 1997/07/05 05:35:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,7 +117,7 @@ readdumptimes(df)
 	register struct	dumptime *dtwalk;
 
 	for (;;) {
-		dtwalk = (struct dumptime *)calloc(1, sizeof (struct dumptime));
+		dtwalk = (struct dumptime *)calloc(1, sizeof(struct dumptime));
 		if (getrecord(df, &(dtwalk->dt_value)) < 0)
 			break;
 		nddates++;
@@ -131,7 +131,7 @@ readdumptimes(df)
 	 *	record that we may have to add to the ddate structure
 	 */
 	ddatev = (struct dumpdates **)
-		calloc((unsigned) (nddates + 1), sizeof (struct dumpdates *));
+		calloc((unsigned) (nddates + 1), sizeof(struct dumpdates *));
 	dtwalk = dthead;
 	for (i = nddates - 1; i >= 0; i--, dtwalk = dtwalk->dt_next)
 		ddatev[i] = &dtwalk->dt_value;
@@ -158,7 +158,7 @@ getdumptime()
 	 *	and older date
 	 */
 	ITITERATE(i, ddp) {
-		if (strncmp(fname, ddp->dd_name, sizeof (ddp->dd_name)) != 0)
+		if (strncmp(fname, ddp->dd_name, sizeof(ddp->dd_name)) != 0)
 			continue;
 		if (ddp->dd_level >= level)
 			continue;
@@ -196,7 +196,7 @@ putdumptime()
 	spcl.c_ddate = 0;
 	ITITERATE(i, dtwalk) {
 		if (strncmp(fname, dtwalk->dd_name,
-				sizeof (dtwalk->dd_name)) != 0)
+				sizeof(dtwalk->dd_name)) != 0)
 			continue;
 		if (dtwalk->dd_level != level)
 			continue;
@@ -207,10 +207,11 @@ putdumptime()
 	 *	Enough room has been allocated.
 	 */
 	dtwalk = ddatev[nddates] =
-		(struct dumpdates *)calloc(1, sizeof (struct dumpdates));
+		(struct dumpdates *)calloc(1, sizeof(struct dumpdates));
 	nddates += 1;
   found:
-	(void) strncpy(dtwalk->dd_name, fname, sizeof (dtwalk->dd_name));
+	(void) strncpy(dtwalk->dd_name, fname, sizeof(dtwalk->dd_name) - 1);
+	dtwalk->dd_name[sizeof(dtwalk->dd_name) - 1] = '\0';
 	dtwalk->dd_level = level;
 	dtwalk->dd_ddate = spcl.c_date;
 
@@ -249,7 +250,7 @@ getrecord(df, ddatep)
 	char tbuf[BUFSIZ];
 
 	recno = 0;
-	if ( (fgets(tbuf, sizeof (tbuf), df)) != tbuf)
+	if (fgets(tbuf, sizeof(tbuf), df) == NULL)
 		return(-1);
 	recno++;
 	if (makedumpdate(ddatep, tbuf) < 0)

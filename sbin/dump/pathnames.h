@@ -1,5 +1,5 @@
-/*	$OpenBSD: pathnames.h,v 1.4 1997/04/16 04:09:22 millert Exp $	*/
-/*	$NetBSD: pathnames.h,v 1.8 1995/03/18 14:55:06 cgd Exp $	*/
+/*	$OpenBSD: pathnames.h,v 1.5 1997/07/05 05:35:57 millert Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.9 1997/04/15 07:00:47 lukem Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
