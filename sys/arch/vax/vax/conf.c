@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.35 2002/06/12 12:36:14 hugh Exp $ */
+/*	$OpenBSD: conf.c,v 1.36 2002/06/24 10:41:13 hugh Exp $ */
 /*	$NetBSD: conf.c,v 1.44 1999/10/27 16:38:54 ragge Exp $	*/
 
 /*-
@@ -435,6 +435,8 @@ struct cdevsw	cdevsw[] =
 	cdev_tty_init(NDL,dl),		/* 66: DL11 */
     cdev_random_init(1,random), /* 67: random data source */
 	cdev_wsdisplay_init(NWSDISPLAY, wsdisplay),	/* 68: workstation console */
+	cdev_notdef(),			/* 69 */
+	cdev_notdef(),			/* 70 */
 	cdev_disk_init(NRY,ry),		/* 71: VS floppy */
 	cdev_notdef(),		/* 72: was: SCSI bus */
 	cdev_disk_init(NRAID,raid),	/* 73: RAIDframe disk driver */
