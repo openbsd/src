@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.108 2004/05/08 20:50:29 henning Exp $ */
+/*	$OpenBSD: parse.y,v 1.109 2004/05/08 20:56:10 henning Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -552,7 +552,13 @@ peeropts	: REMOTEAS asnumber	{
 			u_int32_t	auth_alg;
 			u_int8_t	keylen;
 
-			if (curpeer->conf.auth.method) {
+			if (curpeer->conf.auth.method &&
+			    (((curpeer->conf.auth.spi_in && $3 == 1) ||
+			    (curpeer->conf.auth.spi_out && $3 == 0)) ||
+			    ($2 == 1 && curpeer->conf.auth.method !=
+			    AUTH_IPSEC_MANUAL_ESP) ||
+			    ($2 == 0 && curpeer->conf.auth.method !=
+			    AUTH_IPSEC_MANUAL_AH))) {
 				yyerror("auth method cannot be redefined");
 				YYERROR;
 			}
