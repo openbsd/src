@@ -33,7 +33,9 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 
+#ifndef i386
 #include <machine/autoconf.h>
+#endif
 #include <machine/pte.h>
 
 #include <dev/pci/pcireg.h>
@@ -61,7 +63,7 @@ int	vgapcimmap __P((void *, off_t, int));
 int	vgapciioctl __P((void *, u_long, caddr_t, int, struct proc *));
 
 struct cfattach vga_pci_ca = {
-	sizeof(struct vga_pci_softc), vga_pci_match, vga_pci_attach,
+	sizeof(struct vga_pci_softc), (cfmatch_t)vga_pci_match, vga_pci_attach,
 };
 
 pcitag_t vga_pci_console_tag;
@@ -97,7 +99,7 @@ vga_pci_match(parent, match, aux)
 		return (0);
 
 	/* If it's the console, we have a winner! */
-	if (pa->pa_tag == vga_pci_console_tag)
+	if (!bcmp(&pa->pa_tag, &vga_pci_console_tag, sizeof(pa->pa_tag)))
 		return (1);
 
 	/*
@@ -120,7 +122,7 @@ vga_pci_attach(parent, self, aux)
 	char devinfo[256];
 	int console;
 
-	console = (pa->pa_tag == vga_pci_console_tag);
+	console = (!bcmp(&pa->pa_tag, &vga_pci_console_tag, sizeof(pa->pa_tag)));
 	if (console)
 		vc = sc->sc_vc = &vga_pci_console_vc;
 	else {
