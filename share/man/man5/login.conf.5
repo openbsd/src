@@ -30,7 +30,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: login.conf.5,v 1.17 2002/05/06 23:34:33 millert Exp $
+.\" $OpenBSD: login.conf.5,v 1.18 2002/06/13 23:22:17 millert Exp $
 .\" BSDI $From: login.conf.5,v 2.20 2000/06/26 14:50:38 prb Exp $
 .\"
 .Dd June 18, 2001
@@ -156,7 +156,10 @@ Possible values are:
 .Dq newsalt,<rounds> ,
 .Dq md5 ,
 and
-.Dq blowfish,<rounds> .
+.Dq blowfish,<rounds>
+where
+.Dq old
+means classic 56-bit DES.
 For
 .Dq newsalt
 the value of rounds is a 24-bit integer with a minimum of 7250 rounds.
