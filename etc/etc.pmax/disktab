@@ -47,10 +47,10 @@ simpleroot:\
 	:dt=SCSI:\
 	:ns#32:\
 	:nt#64:\
-	:nc#96:\
-	:pa#65536:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
-	:pb#131072:ob#65536:tb=swap:\
-	:pc#196608:oc#0:
+	:nc#104:\
+	:pa#81920:oa#0:ba#8192:fa#1024:ta=4.2BSD:\
+	:pb#131072:ob#81920:tb=swap:\
+	:pc#212992:oc#0:
 
 rz22|RZ22|DEC RZ22 Winchester:\
 	:dt=SCSI:ty=winchester:ns#33:nt#4:nc#776:\
