@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.42 1999/12/21 09:00:52 itojun Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.43 1999/12/21 20:26:13 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -119,12 +119,13 @@ ip4_input(m, va_alist)
 #ifdef INET6
     register struct sockaddr_in6 *sin6;
     struct ip6_hdr *ip6 = NULL;
+    u_int8_t itos;
 #endif
     u_int8_t nxt;
     int s, iphlen;
     va_list ap;
     int isr;
-    u_int8_t otos, itos;
+    u_int8_t otos;
     u_int8_t v;
     int hlen;
 
@@ -278,6 +279,7 @@ ip4_input(m, va_alist)
 			return;
 		    }
 		}
+#ifdef INET6
 		else if (ip6)
 		{
 		    if (ifa->ifa_addr->sa_family != AF_INET6)
@@ -293,6 +295,7 @@ ip4_input(m, va_alist)
 		    }
 
 		}
+#endif
 	    }
 	}
     }
@@ -318,11 +321,13 @@ ip4_input(m, va_alist)
 	ifq = &ipintrq;
 	isr = NETISR_IP;
     }
+#ifdef INET6
     else if (ip6)
     {
 	ifq = &ip6intrq;
 	isr = NETISR_IPV6;
     }
+#endif
     else
     {
 	/* just in case */
