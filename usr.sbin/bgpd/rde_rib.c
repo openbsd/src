@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.10 2003/12/26 21:30:20 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.11 2003/12/26 21:51:57 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Claudio Jeker <claudio@openbsd.org>
@@ -1000,7 +1000,11 @@ nexthop_update(struct kroute_nexthop *msg)
 	else
 		nh->state = NEXTHOP_UNREACH;
 
-	nh->true_nexthop.s_addr = msg->gateway;
+	if (msg->connected)
+		nh->true_nexthop.s_addr = nh->exit_nexthop.s_addr;
+	else
+		nh->true_nexthop.s_addr = msg->gateway;
+
 	nh->connected = msg->connected;
 
 	LIST_FOREACH(asp, &nh->path_h, nexthop_l) {
