@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timed.ms,v 1.2 2003/06/02 23:36:55 millert Exp $
+.\"	$OpenBSD: timed.ms,v 1.3 2003/11/04 14:07:48 jmc Exp $
 .\"
 .\" Copyright (c) 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -174,10 +174,10 @@ the networks belonging to the local administrative control.
 There are some limitations to the current
 implementation of the time daemon.
 It is expected that these limitations will be removed in future releases.
-The constant NHOSTS in /usr/src/etc/timed/globals.h limits the
+The constant NHOSTS in /usr/src/usr.sbin/timed/timed/globals.h limits the
 maximum number of machines that may be directly controlled by one
 master time daemon.
-The current maximum is 29 (NHOSTS \- 1).
+The current maximum is 1013.
 The constant  must be changed and the program recompiled if a site wishes to
 run \fItimed\fP on a larger (inter)network.
 .PP
@@ -205,19 +205,15 @@ Installation
 .PP
 In order to start the time daemon on a given machine,
 the following lines should be
-added to the \fIlocal daemons\fP section in the file \fI/etc/rc.local\fP:
+added to \fI/etc/rc.conf.local\fP:
 .sp 2
 .in 1i
 .nf
-if [ -f /etc/timed ]; then
-	/etc/timed \fIflags\fP & echo -n ' timed' >/dev/console
-fi
+timed_flags=""
 .fi
 .in -1i
 .sp
 .LP
-In any case, they must appear after the network
-is configured via ifconfig(8).
 .PP
 Also, the file \fI/etc/services\fP should contain the following
 line:
@@ -226,30 +222,32 @@ line:
 timed		525/udp		timeserver
 .sp
 .LP
-The \fIflags\fP are:
+Some of the most commonly used \fIflags\fP are:
 .IP "-n network" 13
-to consider the named network.
+to add network to the list of allowed networks.
 .IP "-i network"
 to ignore the named network.
 .IP -t
-to place tracing information in \fI/usr/adm/timed.log\fP.
+to place tracing information in \fI/var/log/timed.log\fP.
 .IP -M
 to allow this time daemon to become a master.
 A time daemon run without this option will be forced in the state of
 slave during an election.
+.LP
+See the timed(8) manual page for more information on the various flags.
 .SH
 Daily Operation
 .PP
 \fITimedc(8)\fP is used to control the operation of the time daemon.
 It may be used to:
 .IP \(bu
-measure the differences between machines' clocks,
+measure the differences between machines' clocks
 .IP \(bu
-find the location where the master \fItimed\fP is running,
+find the location where the master \fItimed\fP is running
 .IP \(bu
-cause election timers on several machines to expire at the same time,
+enable or disable tracing of messages received by \fItimed\fP
 .IP \(bu
-enable or  disable  tracing  of  messages  received  by \fItimed\fP.
+perform various debugging actions
 .LP
 See the manual page on \fItimed\fP\|(8) and \fItimedc\fP\|(8)
 for more detailed information.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timed.ms,v 1.2 2003/06/02 23:36:55 millert Exp $
+.\"	$OpenBSD: timed.ms,v 1.3 2003/11/04 14:07:48 jmc Exp $
 .\"
 .\" Copyright (c) 1986, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -334,27 +334,17 @@ In all cases, the recipient time daemon will become a slave.
 This message requires an acknowledgement.
 .sp 1
 .SH
-Set Date Message
-.so date
+Date Command
 .LP
-Type: TSP_SETDATE (22)
-.sp 1
-.PP
-The program \fIdate\fP\|(1) sends this message to the local time daemon
-when a super-user wants to set the network date.
-If the local time daemon is the master, it will set the date;
-if it is a slave, it will communicate the desired date to the master.
-.sp 1
+Type: TSP_DATE (14)
+.LP
+Currently unused.
 .SH
-Set Date Request Message
-.so date
+Date Command (remote)
 .LP
-Type: TSP_SETDATEREQ (23)
-.sp 1
-.PP
-A slave that has received a Set Date message will communicate the
-desired date to the master using this message.
-.sp 1
+Type: TSP_DATEREQ (15)
+.LP
+Currently unused.
 .SH
 Set Date Acknowledgement Message
 .so unused
@@ -422,6 +412,28 @@ Type: TSP_TEST (21)
 For testing purposes, \fItimedc\fP sends this message to a slave
 to cause its election timer to expire.  NOTE: \fItimed\fP
 is not normally compiled to support this.
+.sp 1
+.SH
+Set Date Message
+.so date
+.LP
+Type: TSP_SETDATE (22)
+.sp 1
+.PP
+The program \fIdate\fP\|(1) sends this message to the local time daemon
+when a super-user wants to set the network date.
+If the local time daemon is the master, it will set the date;
+if it is a slave, it will communicate the desired date to the master.
+.sp 1
+.SH
+Set Date Request Message
+.so date
+.LP
+Type: TSP_SETDATEREQ (23)
+.sp 1
+.PP
+A slave that has received a Set Date message will communicate the
+desired date to the master using this message.
 .sp 1
 .SH
 Loop Detection Message
