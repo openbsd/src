@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.1 2003/10/31 03:54:34 drahn Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.2 2003/11/14 20:12:04 drahn Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -186,8 +186,6 @@ int
 read_mac_label(struct of_dev *devp, char *buf, struct disklabel *lp)
 {
 	struct part_map_entry *part;
-	struct buf *bp;
-	int err;
 	size_t read;
 	int part_cnt;
 	int i;
@@ -248,15 +246,75 @@ read_mac_label(struct of_dev *devp, char *buf, struct disklabel *lp)
 }
 
 /*
+ * Search for RDB OpenBSD paritition.
+ */
+int
+read_rdb_label(struct of_dev *devp, char *buf, struct disklabel *lp)
+{
+	struct rdblock *rdp;
+	struct partblock *pbp;
+	struct partition *pp;
+	size_t read;
+	int part_cnt;
+	int nextb;
+	int rdbpart;
+	int i;
+	char *s;
+
+	for (nextb = 0; nextb < RDB_MAXBLOCKS; nextb++) {
+		if ((strategy(devp, F_READ, nextb, DEV_BSIZE, buf, &read)
+		    != 0) || (read != DEV_BSIZE))
+			return ERDLAB;
+		rdp = (struct rdblock *)buf;
+
+		/* skips checksum */
+		if (rdp->id == RDBLOCK_ID)
+			break;
+	}
+	if (nextb == RDB_MAXBLOCKS)
+		return ERDLAB;
+	for (nextb = rdp->partbhead; nextb != RDBNULL; nextb = pbp->next) {
+		if ((strategy(devp, F_READ, nextb, DEV_BSIZE, buf, &read)
+		    != 0) || (read != DEV_BSIZE))
+			return ERDLAB;
+		pbp = (struct partblock *)buf;
+		if (pbp->id != PARTBLOCK_ID)
+			return ERDLAB;
+		/* skips checksum */
+		if (pbp->e.dostype == DOST_OBSD) {
+			rdbpart = pbp->e.lowcyl * pbp->e.secpertrk;
+			break;
+		}
+	}
+	if (nextb == RDBNULL)
+		return ERDLAB;
+
+	printf("found OpenBSD RDB partition\n");
+	if(strategy(devp, F_READ, rdbpart, DEV_BSIZE, buf, &read) == 0
+		&& read == DEV_BSIZE)
+	{
+		if (!getdisklabel(buf, lp))
+			return 0;
+
+		/* If we have an OpenBSD region
+		 * but no valid parition table,
+		 * we cannot load a kernel from
+		 * it, punt.
+		 * should not have more than one
+		 * RDB of OpenBSD type.
+		 */
+		return ERDLAB;
+	}
+
+	return ERDLAB;
+}
+
+/*
  * Find a valid disklabel.
  */
 static int
-search_label(devp, off, buf, lp, off0)
-	struct of_dev *devp;
-	u_long off;
-	char *buf;
-	struct disklabel *lp;
-	u_long off0;
+search_label(struct of_dev *devp, u_long off, char *buf, struct disklabel *lp,
+    u_long off0)
 {
 	size_t read;
 	struct dos_partition *p;
@@ -372,7 +430,11 @@ devopen(struct open_file *of, const char *name, char **file)
 		    read != DEV_BSIZE ||
 		    getdisklabel(buf, &label)) {
 			/* Else try MBR partitions */
-			error = read_mac_label(&ofdev, buf, &label);
+
+			error = read_rdb_label(&ofdev, buf, &label);
+			if (error == ERDLAB)
+				error = read_mac_label(&ofdev, buf, &label);
+
 			if (error == ERDLAB)
 				error = search_label(&ofdev, 0, buf, &label, 0);
 
