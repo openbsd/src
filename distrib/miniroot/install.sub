@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.38 1997/07/16 22:33:03 pefo Exp $
+#	$OpenBSD: install.sub,v 1.39 1997/09/25 05:16:43 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -1661,7 +1661,7 @@ unmount_fs()
 		done
 		echo "Done."
 
-		if [ $_check = 1]; then
+		if [ $_check = 1 ]; then
 			echo "Checking filesystem integrity..."
 			for _dev in ${_devs}; do
 				echo  "${_dev}"
