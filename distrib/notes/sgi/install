@@ -1,107 +1,68 @@
-dnl	$OpenBSD: install,v 1.3 2004/08/26 18:46:22 pefo Exp $
+dnl	$OpenBSD: install,v 1.4 2004/08/26 20:45:00 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD ramdisk kernel that
 can be booted via BOOTP. Booting from CD is not yet supported.
 
+Booting over the network:
+dnl XXX provide more details!!!
 
-Installing using the OpenBSD ramdisk kernel.
+First, a bootp or dhcpd server needs to be set up. The bootpd(8) or
+dhcpd(8) manual page on your server should provide detailed information
+on how to set up the server.
 
-The ramdisk kernel is a self-contained OpenBSD filesystem including all
-utilities necessary to install OpenBSD on a local disk, embedded in a
-GENERIC kernel image. It is distributed as a plain ELF executable file
-designed to be loaded into the system by the ARCS firmware.
+The bootp or dhcp server needs to know the ethernet address of the
+system. This address can be found by using the ``printenv'' command
+in the Maintenance Console, looking for the ``eaddr'' variable.
 
-Booting the ramdisk kernel can be done from the ARCS graphic console
-although it might be more convenient to use the serial console since
-the kernel currently only supports the serial console. Some systems
-come with the serial console but enabled by default but sometimes this
-must be changed.
+The server should also provide a tftp location, where the bsd.rd file
+should be available.
 
-To change to serial console, go into the ARCS Maintenance console. When
-the system starts up, press the ESC key or use the the mouse and click
-the STOP FOR MAINTENANCE button. Once in the System maintenance meny,
-select '5' to go into the Command monitor. If the installed disk does
-not contain a valid Volume Header and is bootable the Maintenance
-console will be entered by default.
+Once the server is set up, boot with the following command in the
+Maintenance Console:
 
-It may be necessary to do a reset of the environment to its default setting
-by entering the command:
-
-> resetenv
+> boot bootp()/bsd.rd
 
 
-To switch the console to serial mode, change the console environment
-variable:
+Installing the system:
 
-> setenv console d
+OpenBSDInstallPart2
 
-and reboot the system. A serial console at 9600B8N1 and no flow control
-should be attached to the serial port marked (1).
+	Boot your machine from the installation media as described above.
 
-If changing back to the graphics console is required do:
+	It will take a while to load the kernel especially from a slow
+	network connection, most likely more than a minute.  If some action
+	doesn't eventually happen, or the spinning cursor has stopped and
+	nothing further has happened, either your boot media is bad, your
+	diskless setup isn't correct, or you may have a hardware or
+	configuration problem.
 
-> setenv console g
+OpenBSDBootMsgs
 
-After reboot, when the message:
-        To perform system maintenance instead, press <Esc>
-is displayed, press the ESCAPE key to get into maintenance mode. Again,
-select '5' to get to the Command monitor.
+	You will next be asked for your terminal type.
+dnl XXX needs extra text here once graphics console is available
+	Just hit return to select the default (vt100).
 
-When setting up the system to boot from disk, one environment variable
-needs to be changed. Set 'OSLoader' to 'boot'. By default it is set to
-'sash' which is the IRIX stand alone shell and loader. It may be convenient
-to do this setup now so the system will diskboot once the 'reboot' command
-is entered after the installation is complete.
+OpenBSDInstallPart3
 
-To be able to boot, a bootp/dhcpd server needs to be set up. See the dhcpd(8)
-man page for information on how to set up the dhcp server to respond to
-a bootp client. The dhcp server needs to know the ethernet address of the
-system. This address can be found by using the 'printenv' command and looking
-for the 'eaddr' variable.
+OpenBSDInstallPart4
 
-Loading the ramdisk kernel into your system is done with the appropriate
-ARCS boot command on Your system. Usually this is done by typing in the
-following string at the ARCS prompt:
+OpenBSDInstallPart5(sd0)
 
-	bootp()/bsd.rd
-
-to boot from Your TFTP server.
-
-This will cause the ramdisk kernel to be booted. After the initial probe
-messages you'll will see the question:
-
-TBD.
-
-The script will do most of the work of transferring the system from the
-tar files onto your disk. You will frequently be asked for confirmation
-before the script proceeds with each phase of the installation process.
-Occasionally, you'll have to provide a piece of information such as the
-name of the disk you want to install on or IP addresses and domain names
-you want to assign.
-
-The installation script goes through the following phases:
-
-	- determination of the disk to install OpenBSD on
-	- checking of the OpenBSD partition information on the disk
-	- creating and mounting the OpenBSD filesystems
-	- setup of IP configuration
-	- extraction of the distribution tar files
-	- installation of kernel and the bootable kernel
-
-The installation program will guide you through the installation.
-
+OpenBSDInstallNet({:-CD-ROM, NFS, -:})
 
 OpenBSDFTPInstall
 
 OpenBSDHTTPInstall
 
+OpenBSDTAPEInstall
+
 OpenBSDCDROMInstall
 
 OpenBSDNFSInstall
 
-OpenBSDCommonFS
+OpenBSDCommonFS(NFS)
 
 OpenBSDCommonURL
 

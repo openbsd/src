@@ -1,19 +1,48 @@
-Before you start you should familiarize yourself with the ARCS setup
-and how to run programs from the Command monitor prompt.
+dnl	$OpenBSD: prep,v 1.2 2004/08/26 20:45:00 miod Exp $
+Before you install your system, you should familiarize yourself with the
+ARCS setup and how to run programs from the Command monitor prompt.
 
-If you're installing OpenBSD/sgi for the first time it's a very good
-idea to look at the partition sizes of disk you intend installing OpenBSD on.
-Changing the size of partitions after you've installed is difficult. If
-you do not have a spare bootable disk, it may be simpler to re-install
-OpenBSD again from scratch.
+Accessing the Maintenance Console:
 
-Assuming a classic partition scheme with root (`/') and /usr filesystems,
-a comfortable size for the OpenBSD root filesystem partition (a) is about
-64Mb. The install will take ~30Mb of that. However it has shown that 256M
-is not a bad choice when more packages are to be installed. A good initial
-size for the swap (b) partition is twice the amount of physical memory in
-your machine or at least 128M. A minimum /usr partition (e) is ~256M but
-with that you will likely run into trouble later. A minimum size of 1G is
-recommended. A full binary installation, without X11 or any other additional
-software, takes about 170M in `/usr'.
+    When the system starts up, press the ESC key or use the the mouse
+    and click the ``stop for maintenance'' button. Once in the System
+    Maintenance menu, select '5' (or click the appropriate icon if in
+    graphics console) to go into the Command Monitor.
 
+    If the internal disk with the lowest SCSI ID does not contain a
+    valid Volume Header, but is bootable, the Maintenance Console will
+    be entered by default.
+
+    The first time the Maintenance Console is entered, it may be
+    necessary to force a reset of the environment to its default
+    settings by entering the ``resetenv'' command and the chevron
+    prompt.
+
+Switching from serial to graphics console and vice versa:
+
+    Booting the ramdisk kernel can be done from the ARCS graphic console
+    although it might be more convenient to use the serial console since
+    the kernel currently only supports the serial console. Some systems
+    come with the serial console but enabled by default but sometimes
+    this must be changed.
+
+    To change to serial console, go into the ARCS Maintenance Console
+    and change the ``console'' environment variable, and power-cycle
+    the machine.
+
+    > setenv console d
+
+    will select 9600 8N1, no flow control, serial console on the first
+    serial port (labeled ``(1)''), while
+
+    > setenv console g
+
+    will select the graphics console.
+
+Setting the environment:
+
+    When setting up the system to boot from disk, the ``OSLoader''
+    environment variable will need to be changed.
+
+    Its default value is ``sash'', which is IRIX' standalone
+    shell and loader. Set it to ``boot'', the OpenBSD boot loader.

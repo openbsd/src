@@ -1,2 +1,3 @@
-Because this is the first release of OpenBSD for the SGI - there is no
-upgrade option in this release.
+dnl	$OpenBSD: upgrade,v 1.2 2004/08/26 20:45:00 miod Exp $
+Since OpenBSD/OSREV is the first MACHINE release, there is no upgrade
+functionality.
