@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.3 2005/02/02 19:47:20 norby Exp $ */
+/*	$OpenBSD: parse.y,v 1.4 2005/02/02 21:02:25 norby Exp $ */
 
 /*
  * Copyright (c) 2004 Esben Norby <norby@openbsd.org>
@@ -457,7 +457,7 @@ lookup(char *s)
 		{"area",		AREA},
 		{"auth-key",		AUTHKEY},
 		{"auth-type",		AUTHTYPE},
-		{"fibupdate",		FIBUPDATE},
+		{"fib-update",		FIBUPDATE},
 		{"hello-interval",	HELLOINTERVAL},
 		{"interface",		INTERFACE},
 		{"metric",		METRIC},
