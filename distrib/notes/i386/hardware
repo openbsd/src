@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.172 2004/12/11 08:40:38 henning Exp $
+dnl	$OpenBSD: hardware,v 1.173 2004/12/30 16:43:30 krw Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -105,7 +105,7 @@ Supported hardware {:-include-:}:
 		    this chip are likely to be bootable, consequently.)
 		Adaptec AIC-7770, AIC-7850, AIC-7860, AIC-7870, AIC-7880,
 		    AIC-7890, AIC-7891, AIC-7892, AIC-7895, AIC-7896, AIC-7897
-		    and AIC-7899 based host adapters [C] including the
+		    and AIC-7899 based host adapters [B] [C] including the
 		    Adaptec cards
 			AHA-274X[W,T]
 			AHA-284X
@@ -122,6 +122,10 @@ Supported hardware {:-include-:}:
 			AHA-19160B
 			AHA-29160[B,N]
 			AHA-39160
+		Adaptec AIC-7901, AIC-7901A, and AIC-7902 based host
+		    adapters [A] [C] including the Adaptec cards
+			AHA-29320
+			AHA-39320
 		AdvanSys 'U', 'UW', 'U2W' and 'U160' PCI SCSI
 		    controllers including the ABP940U[AW],
 		    ASB3940U[AW]-00, ASB3940U2W-00 and ASB3950U160 [A] [B] [C]

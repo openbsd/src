@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.27 2004/12/11 08:40:38 henning Exp $
+dnl	$OpenBSD: hardware,v 1.28 2004/12/30 16:43:30 krw Exp $
 OpenBSD/MACHINE OSREV should work on all Athlon 64-based and
 compatible designs.
 
@@ -69,6 +69,10 @@ dnl		YENTA-compatible PCI-CardBus bridges
 			AHA-19160B
 			AHA-29160[B,N]
 			AHA-39160
+		Adaptec AIC-7901, AIC-7901A, and AIC-7902 based host
+		    adapters [A] [C] including the Adaptec cards
+			AHA-29320
+			AHA-39320
 		AdvanSys 'U', 'UW', 'U2W' and 'U160' PCI SCSI
 		    controllers including the ABP940U[AW],
 		    ASB3940U[AW]-00, ASB3940U2W-00 and ASB3950U160
