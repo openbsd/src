@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic7xxx_cam.h,v 1.2 2004/08/01 01:36:23 krw Exp $	*/
+/*	$OpenBSD: aic7xxx_cam.h,v 1.3 2004/10/24 01:36:49 krw Exp $	*/
 /*	$NetBSD: aic7xxx_cam.h,v 1.3 2003/04/20 11:17:20 fvdl Exp $	*/
 
 /*
@@ -69,6 +69,8 @@
 #define XS_CTL_NOSLEEP		SCSI_NOSLEEP
 #define XS_CTL_RESET		SCSI_RESET
 
+#define MSG_EXT_PPR_QAS_REQ	MSG_EXT_PPR_PROT_QAS
+#define MSG_EXT_PPR_IU_REQ	MSG_EXT_PPR_PROT_IUS
 #define MSG_EXT_PPR_DT_REQ	MSG_EXT_PPR_PROT_DT
 #define MSG_ORDERED_TASK	MSG_ORDERED_Q_TAG
 #define MSG_SIMPLE_TASK		MSG_SIMPLE_Q_TAG

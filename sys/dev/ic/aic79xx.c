@@ -1,4 +1,4 @@
-/*	$OpenBSD: aic79xx.c,v 1.9 2004/09/24 14:56:56 henning Exp $	*/
+/*	$OpenBSD: aic79xx.c,v 1.10 2004/10/24 01:36:49 krw Exp $	*/
 
 /*
  * Copyright (c) 2004 Milos Urbanek, Kenneth R. Westerback & Marco Peereboom
@@ -1679,11 +1679,11 @@ ahd_handle_scsiint(struct ahd_softc *ahd, u_int intstat)
 			 * also revert us to async/narrow transfers until
 			 * we can renegotiate with the device.
 			 */
-			 ahd_handle_devreset(ahd, &devinfo,
-			 		     CAM_LUN_WILDCARD,
-			 		     CAM_SEL_TIMEOUT,
-			 		     "Selection Timeout",
-			 		     /*verbose_level*/1);
+			ahd_handle_devreset(ahd, &devinfo,
+					    CAM_LUN_WILDCARD,
+					    CAM_SEL_TIMEOUT,
+					    "Selection Timeout",
+					    /*verbose_level*/1);
 		}
 		ahd_outb(ahd, CLRINT, CLRSCSIINT);
 		ahd_iocell_first_selection(ahd);
@@ -2707,7 +2707,6 @@ ahd_clear_intstat(struct ahd_softc *ahd)
 #ifdef AHD_DEBUG
 uint32_t ahd_debug = AHD_DEBUG_OPTS;
 #endif
-
 void
 ahd_print_scb(struct scb *scb)
 {
@@ -2863,7 +2862,7 @@ ahd_devlimited_syncrate(struct ahd_softc *ahd,
 	} else {
 		maxsync = AHD_SYNCRATE_ULTRA;
 		/* Can't do DT related options on an SE bus */
-		*ppr_options &= MSG_EXT_PPR_PROT_QAS;
+		*ppr_options &= MSG_EXT_PPR_QAS_REQ;
 	}
 	/*
 	 * Never allow a value higher than our current goal
@@ -2879,10 +2878,10 @@ ahd_devlimited_syncrate(struct ahd_softc *ahd,
 		transinfo = &tinfo->user;
 	else 
 		transinfo = &tinfo->goal;
-	*ppr_options &= (transinfo->ppr_options|0x80);
+	*ppr_options &= (transinfo->ppr_options|MSG_EXT_PPR_PCOMP_EN);
 	if (transinfo->width == MSG_EXT_WDTR_BUS_8_BIT) {
 		maxsync = MAX(maxsync, AHD_SYNCRATE_ULTRA2);
-		*ppr_options &= ~MSG_EXT_PPR_PROT_DT;
+		*ppr_options &= ~MSG_EXT_PPR_DT_REQ;
 	}
 	if (transinfo->period == 0) {
 		*period = 0;
@@ -2905,30 +2904,30 @@ ahd_find_syncrate(struct ahd_softc *ahd, u_int *period,
 	if (*period < maxsync)
 		*period = maxsync;
 
-	if ((*ppr_options & MSG_EXT_PPR_PROT_DT) != 0
+	if ((*ppr_options & MSG_EXT_PPR_DT_REQ) != 0
 	 && *period > AHD_SYNCRATE_MIN_DT)
-		*ppr_options &= ~MSG_EXT_PPR_PROT_DT;
+		*ppr_options &= ~MSG_EXT_PPR_DT_REQ;
 		
 	if (*period > AHD_SYNCRATE_MIN)
 		*period = 0;
 
 	/* Honor PPR option conformance rules. */
 	if (*period > AHD_SYNCRATE_PACED)
-		*ppr_options &= ~0x40;
+		*ppr_options &= ~MSG_EXT_PPR_RTI;
 
-	if ((*ppr_options & MSG_EXT_PPR_PROT_IUS) == 0)
-		*ppr_options &= (MSG_EXT_PPR_PROT_DT|MSG_EXT_PPR_PROT_QAS);
+	if ((*ppr_options & MSG_EXT_PPR_IU_REQ) == 0)
+		*ppr_options &= (MSG_EXT_PPR_DT_REQ|MSG_EXT_PPR_QAS_REQ);
 
-	if ((*ppr_options & MSG_EXT_PPR_PROT_DT) == 0)
-		*ppr_options &= MSG_EXT_PPR_PROT_QAS;
+	if ((*ppr_options & MSG_EXT_PPR_DT_REQ) == 0)
+		*ppr_options &= MSG_EXT_PPR_QAS_REQ;
 
 	/* Skip all PACED only entries if IU is not available */
-	if ((*ppr_options & MSG_EXT_PPR_PROT_IUS) == 0
+	if ((*ppr_options & MSG_EXT_PPR_IU_REQ) == 0
 	 && *period < AHD_SYNCRATE_DT)
 		*period = AHD_SYNCRATE_DT;
 
 	/* Skip all DT only entries if DT is not available */
-	if ((*ppr_options & MSG_EXT_PPR_PROT_DT) == 0
+	if ((*ppr_options & MSG_EXT_PPR_DT_REQ) == 0
 	 && *period < AHD_SYNCRATE_ULTRA2)
 		*period = AHD_SYNCRATE_ULTRA2;
 }
@@ -3104,23 +3103,23 @@ ahd_set_syncrate(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 				       ahd_name(ahd), devinfo->target,
 				       period, offset);
 				options = 0;
-				if ((ppr_options & 0x20) != 0) {
+				if ((ppr_options & MSG_EXT_PPR_RD_STRM) != 0) {
 					printf("(RDSTRM");
 					options++;
 				}
-				if ((ppr_options & MSG_EXT_PPR_PROT_DT) != 0) {
+				if ((ppr_options & MSG_EXT_PPR_DT_REQ) != 0) {
 					printf("%s", options ? "|DT" : "(DT");
 					options++;
 				}
-				if ((ppr_options & MSG_EXT_PPR_PROT_IUS) != 0) {
+				if ((ppr_options & MSG_EXT_PPR_IU_REQ) != 0) {
 					printf("%s", options ? "|IU" : "(IU");
 					options++;
 				}
-				if ((ppr_options & 0x40) != 0) {
+				if ((ppr_options & MSG_EXT_PPR_RTI) != 0) {
 					printf("%s", options ? "|RTI" : "(RTI");
 					options++;
 				}
-				if ((ppr_options & MSG_EXT_PPR_PROT_QAS) != 0) {
+				if ((ppr_options & MSG_EXT_PPR_QAS_REQ) != 0) {
 					printf("%s", options ? "|QAS" : "(QAS");
 					options++;
 				}
@@ -3132,7 +3131,7 @@ ahd_set_syncrate(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 				printf("%s: target %d using "
 				       "asynchronous transfers%s\n",
 				       ahd_name(ahd), devinfo->target,
-				       (ppr_options & MSG_EXT_PPR_PROT_QAS) != 0
+				       (ppr_options & MSG_EXT_PPR_QAS_REQ) != 0
 				     ?  "(QAS)" : "");
 			}
 		}
@@ -3152,8 +3151,8 @@ ahd_set_syncrate(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 		if (!paused)
 			ahd_unpause(ahd);
 		if (ahd->msg_type != MSG_TYPE_NONE) {
-			if ((old_ppr & MSG_EXT_PPR_PROT_IUS)
-			 != (ppr_options & MSG_EXT_PPR_PROT_IUS)) {
+			if ((old_ppr & MSG_EXT_PPR_IU_REQ)
+			 != (ppr_options & MSG_EXT_PPR_IU_REQ)) {
 #ifdef AHD_DEBUG
 				if ((ahd_debug & AHD_SHOW_MESSAGES) != 0) {
 					ahd_print_devinfo(ahd, devinfo);
@@ -3163,7 +3162,7 @@ ahd_set_syncrate(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 				ahd->msg_flags |= MSG_FLAG_EXPECT_PPR_BUSFREE
 					       |  MSG_FLAG_IU_REQ_CHANGED;
 			}
-			if ((old_ppr & MSG_EXT_PPR_PROT_IUS) != 0) {
+			if ((old_ppr & MSG_EXT_PPR_IU_REQ) != 0) {
 #ifdef AHD_DEBUG
 				if ((ahd_debug & AHD_SHOW_MESSAGES) != 0)
 					printf("PPR with IU_REQ outstanding\n");
@@ -3275,9 +3274,8 @@ ahd_update_neg_table(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 	period = tinfo->period;
 	offset = tinfo->offset;
 	memcpy(iocell_opts, ahd->iocell_opts, sizeof(ahd->iocell_opts)); 
-	ppr_opts = tinfo->ppr_options &
-	       	(MSG_EXT_PPR_PROT_QAS|MSG_EXT_PPR_PROT_DT
-		|MSG_EXT_PPR_PROT_IUS|0x40);
+	ppr_opts = tinfo->ppr_options & (MSG_EXT_PPR_QAS_REQ|MSG_EXT_PPR_DT_REQ
+					|MSG_EXT_PPR_IU_REQ|MSG_EXT_PPR_RTI);
 	con_opts = 0;
 	if (period == 0)
 		period = AHD_SYNCRATE_ASYNC;
@@ -3306,7 +3304,7 @@ ahd_update_neg_table(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 			 */
 			period = AHD_SYNCRATE_REVA_160;
 		}
-		if ((tinfo->ppr_options & 0x80) == 0)
+		if ((tinfo->ppr_options & MSG_EXT_PPR_PCOMP_EN) == 0)
 			iocell_opts[AHD_PRECOMP_SLEW_INDEX] &=
 			    ~AHD_PRECOMP_MASK;
 	} else {
@@ -3316,8 +3314,8 @@ ahd_update_neg_table(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 		iocell_opts[AHD_PRECOMP_SLEW_INDEX] &= ~AHD_PRECOMP_MASK;
 
 		if ((ahd->features & AHD_NEW_IOCELL_OPTS) != 0
-		 && (ppr_opts & MSG_EXT_PPR_PROT_DT) != 0
-		 && (ppr_opts & MSG_EXT_PPR_PROT_IUS) == 0) {
+		 && (ppr_opts & MSG_EXT_PPR_DT_REQ) != 0
+		 && (ppr_opts & MSG_EXT_PPR_IU_REQ) == 0) {
 			/*
 			 * Slow down our CRC interval to be
 			 * compatible with non-packetized
@@ -3354,7 +3352,7 @@ ahd_update_neg_table(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 	 * give us the oportunity to send command packets
 	 * without us asserting attention.
 	 */
-	if ((tinfo->ppr_options & MSG_EXT_PPR_PROT_IUS) == 0)
+	if ((tinfo->ppr_options & MSG_EXT_PPR_IU_REQ) == 0)
 		con_opts |= ENAUTOATNO;
 	ahd_outb(ahd, NEGCONOPTS, con_opts);
 	ahd_outb(ahd, NEGOADDR, saved_negoaddr);
@@ -3430,7 +3428,7 @@ ahd_update_pending_scbs(struct ahd_softc *ahd)
 	saved_modes = ahd_save_modes(ahd);
 	ahd_set_modes(ahd, AHD_MODE_SCSI, AHD_MODE_SCSI);
 	if ((ahd_inb(ahd, SCSISIGI) & BSYI) != 0
-	  && (ahd_inb(ahd, SSTAT0) & (SELDO|SELINGO)) == 0)
+	 && (ahd_inb(ahd, SSTAT0) & (SELDO|SELINGO)) == 0)
 		ahd_outb(ahd, SCSISEQ0, ahd_inb(ahd, SCSISEQ0) & ~ENSELO);
 	saved_scbptr = ahd_get_scbptr(ahd);
 	/* Ensure that the hscbs down on the card match the new information */
@@ -3825,7 +3823,7 @@ ahd_construct_ppr(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 	 * at paced syncrates.
 	 */
 	if (period <= AHD_SYNCRATE_PACED)
-		ppr_options |= 0x80;
+		ppr_options |= MSG_EXT_PPR_PCOMP_EN;
 	if (offset == 0)
 		period = AHD_ASYNC_XFER_PERIOD;
 	ahd->msgout_buf[ahd->msgout_index++] = MSG_EXTENDED;
@@ -3839,7 +3837,7 @@ ahd_construct_ppr(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 	ahd->msgout_len += 8;
 	if (bootverbose) {
 		printf("(%s:%c:%d:%d): Sending PPR bus_width %x, period %x, "
-		       "offset 0x%x, ppr_options 0x%x\n", ahd_name(ahd),
+		       "offset %x, ppr_options %x\n", ahd_name(ahd),
 		       devinfo->channel, devinfo->target, devinfo->lun,
 		       bus_width, period, offset, ppr_options);
 	}
@@ -4521,7 +4519,7 @@ ahd_parse_msg(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 			 * period factor with no DT option
 			 * set implies async.
 			 */
-			if ((ppr_options & MSG_EXT_PPR_PROT_DT) == 0
+			if ((ppr_options & MSG_EXT_PPR_DT_REQ) == 0
 			 && period <= 9)
 				offset = 0;
 			saved_ppr_options = ppr_options;
@@ -4532,7 +4530,7 @@ ahd_parse_msg(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 			 * are negotiating wide.
 			 */
 			if (bus_width == 0)
-				ppr_options &= MSG_EXT_PPR_PROT_QAS;
+				ppr_options &= MSG_EXT_PPR_QAS_REQ;
 
 			ahd_validate_width(ahd, tinfo, &bus_width,
 					   devinfo->role);
@@ -4722,9 +4720,9 @@ ahd_handle_msg_reject(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 				       devinfo->target, devinfo->lun);
 			}
 			tinfo->goal.period = AHD_SYNCRATE_DT;
-			tinfo->goal.ppr_options &= MSG_EXT_PPR_PROT_IUS
-						|  MSG_EXT_PPR_PROT_QAS
-						|  MSG_EXT_PPR_PROT_DT;
+			tinfo->goal.ppr_options &= MSG_EXT_PPR_IU_REQ
+						|  MSG_EXT_PPR_QAS_REQ
+						|  MSG_EXT_PPR_DT_REQ;
 		} else {
 			/*
 			 * Target does not support the PPR message.
@@ -4796,7 +4794,7 @@ ahd_handle_msg_reject(struct ahd_softc *ahd, struct ahd_devinfo *devinfo)
 			printf("(%s:%c:%d:%d): refuses %s tagged commands.  "
 			       "Performing simple queue tagged I/O only\n",
 			       ahd_name(ahd), devinfo->channel, devinfo->target,
-			       devinfo->lun, tag_type == MSG_ORDERED_Q_TAG
+			       devinfo->lun, tag_type == MSG_ORDERED_TASK
 			       ? "ordered" : "head of queue");
 			ahd_set_tags(ahd, devinfo, AHD_QUEUE_BASIC);
 			mask = ~0x03;
@@ -5143,7 +5141,7 @@ ahd_handle_devreset(struct ahd_softc *ahd, struct ahd_devinfo *devinfo,
 #if 0
 	if (status != CAM_SEL_TIMEOUT)
 		ahd_send_async(ahd, devinfo->channel, devinfo->target,
-		       lun, AC_SENT_BDR, NULL);
+			       lun, AC_SENT_BDR, NULL);
 #endif
 
 	if (message != NULL
@@ -6709,12 +6707,14 @@ ahd_default_config(struct ahd_softc *ahd)
 		tinfo->user.period = AHD_SYNCRATE_160;
 #endif
 		tinfo->user.offset = MAX_OFFSET;
-		tinfo->user.ppr_options = 0x20 | 0x10 | 0x08
-					| MSG_EXT_PPR_PROT_IUS
-					| MSG_EXT_PPR_PROT_QAS
-					| MSG_EXT_PPR_PROT_DT;
+		tinfo->user.ppr_options = MSG_EXT_PPR_RD_STRM
+					| MSG_EXT_PPR_WR_FLOW
+					| MSG_EXT_PPR_HOLD_MCS
+					| MSG_EXT_PPR_IU_REQ
+					| MSG_EXT_PPR_QAS_REQ
+					| MSG_EXT_PPR_DT_REQ;
 		if ((ahd->features & AHD_RTI) != 0)
-			tinfo->user.ppr_options |= 0x40;
+			tinfo->user.ppr_options |= MSG_EXT_PPR_RTI;
 
 		tinfo->user.width = MSG_EXT_WDTR_BUS_16_BIT;
 
@@ -6798,7 +6798,7 @@ ahd_parse_cfgdata(struct ahd_softc *ahd, struct seeprom_config *sc)
 		user_tinfo->period = (sc->device_flags[targ] & CFXFER);
 		if (user_tinfo->period < CFXFER_ASYNC) {
 			if (user_tinfo->period <= AHD_PERIOD_10MHz)
-				user_tinfo->ppr_options |= MSG_EXT_PPR_PROT_DT;
+				user_tinfo->ppr_options |= MSG_EXT_PPR_DT_REQ;
 			user_tinfo->offset = MAX_OFFSET;
 		} else  {
 			user_tinfo->offset = 0;
@@ -6810,14 +6810,16 @@ ahd_parse_cfgdata(struct ahd_softc *ahd, struct seeprom_config *sc)
 #endif
 
 		if ((sc->device_flags[targ] & CFPACKETIZED) != 0) {
-			user_tinfo->ppr_options |= 0x20 | 0x10 | 0x08
-						|  MSG_EXT_PPR_PROT_IUS;
+			user_tinfo->ppr_options |= MSG_EXT_PPR_RD_STRM
+						|  MSG_EXT_PPR_WR_FLOW
+						|  MSG_EXT_PPR_HOLD_MCS
+						|  MSG_EXT_PPR_IU_REQ;
 			if ((ahd->features & AHD_RTI) != 0)
-				user_tinfo->ppr_options |= 0x40;
+				user_tinfo->ppr_options |= MSG_EXT_PPR_RTI;
 		}
 
 		if ((sc->device_flags[targ] & CFQAS) != 0)
-			user_tinfo->ppr_options |= MSG_EXT_PPR_PROT_QAS;
+			user_tinfo->ppr_options |= MSG_EXT_PPR_QAS_REQ;
 
 		if ((sc->device_flags[targ] & CFWIDEB) != 0)
 			user_tinfo->width = MSG_EXT_WDTR_BUS_16_BIT;
@@ -7521,6 +7523,7 @@ ahd_rem_wscb(struct ahd_softc *ahd, u_int scbid,
 	if (SCBID_IS_NULL(next)
 	 && ahd_inw(ahd, tail_offset) == scbid)
 		ahd_outw(ahd, tail_offset, prev);
+
 	ahd_add_scb_to_free_list(ahd, scbid);
 	return (next);
 }
@@ -9300,32 +9303,31 @@ ahd_other_scb_timeout(struct ahd_softc *ahd, struct scb *scb,
 	if (other_scb != NULL) {
 		if ((other_scb->flags
 		   & (SCB_OTHERTCL_TIMEOUT|SCB_TIMEDOUT)) == 0
-		   || (other_scb->flags & SCB_RECOVERY_SCB) != 0) {
+		 || (other_scb->flags & SCB_RECOVERY_SCB) != 0) {
 			found++;
 			newtimeout = MAX(aic_get_timeout(other_scb),
-					newtimeout);
+					 newtimeout);
 		}
 	} else {
 		LIST_FOREACH(other_scb, &ahd->pending_scbs, pending_links) {
 			if ((other_scb->flags
-		  	  & (SCB_OTHERTCL_TIMEOUT|SCB_TIMEDOUT)) == 0
-		  	  || (other_scb->flags & SCB_RECOVERY_SCB) != 0) {
+			   & (SCB_OTHERTCL_TIMEOUT|SCB_TIMEDOUT)) == 0
+			 || (other_scb->flags & SCB_RECOVERY_SCB) != 0) {
 				found++;
 				newtimeout = MAX(aic_get_timeout(other_scb),
-					newtimeout);
+						 newtimeout);
 			}
 		}
 	}
-		
+
 	if (found != 0)
 		aic_scb_timer_reset(scb, newtimeout);
 	else {
 		ahd_print_path(ahd, scb);
 		printf("No other SCB worth waiting for...\n");
 	}
-		
-	return (found != 0);
 
+	return (found != 0);
 }
 #endif
 /**************************** Flexport Logic **********************************/
