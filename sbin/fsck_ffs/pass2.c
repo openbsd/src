@@ -1,4 +1,4 @@
-/*	$OpenBSD: pass2.c,v 1.14 2002/08/23 09:09:04 gluk Exp $	*/
+/*	$OpenBSD: pass2.c,v 1.15 2003/04/16 02:57:51 deraadt Exp $	*/
 /*	$NetBSD: pass2.c,v 1.17 1996/09/27 22:45:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)pass2.c	8.6 (Berkeley) 10/27/94";
 #else
-static const char rcsid[] = "$OpenBSD: pass2.c,v 1.14 2002/08/23 09:09:04 gluk Exp $";
+static const char rcsid[] = "$OpenBSD: pass2.c,v 1.15 2003/04/16 02:57:51 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -297,7 +297,7 @@ pass2check(struct inodesc *idesc)
 	else
 		proto.d_type = 0;
 	proto.d_namlen = 1;
-	(void)strcpy(proto.d_name, ".");
+	(void)strlcpy(proto.d_name, ".", sizeof proto.d_name);
 #	if BYTE_ORDER == LITTLE_ENDIAN
 		if (!newinofmt) {
 			u_char tmp;
@@ -340,7 +340,7 @@ chk1:
 	else
 		proto.d_type = 0;
 	proto.d_namlen = 2;
-	(void)strcpy(proto.d_name, "..");
+	(void)strlcpy(proto.d_name, "..", sizeof proto.d_name);
 #	if BYTE_ORDER == LITTLE_ENDIAN
 		if (!newinofmt) {
 			u_char tmp;

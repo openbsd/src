@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsutil.c,v 1.8 2002/09/06 21:16:16 deraadt Exp $	*/
+/*	$OpenBSD: fsutil.c,v 1.9 2003/04/16 02:57:51 deraadt Exp $	*/
 /*	$NetBSD: fsutil.c,v 1.2 1996/10/03 20:06:31 christos Exp $	*/
 
 /*
@@ -160,7 +160,7 @@ unrawname(char *name)
 		return (name);
 	if (dp[1] != 'r')
 		return (name);
-	(void)strcpy(&dp[1], &dp[2]);
+	(void)memmove(&dp[1], &dp[2], strlen(&dp[2]) + 1);
 	return (name);
 }
 
