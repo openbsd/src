@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.57 2001/06/14 23:55:02 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.58 2001/06/14 23:56:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -703,6 +703,7 @@ ubsec_process(crp)
 					else
 						bcopy(crp->crp_iv,
 						    (caddr_t)ctx.pc_iv, 8);
+				}
 			}
 		} else {
 			ctx.pc_flags |= UBS_PKTCTX_INBOUND;
