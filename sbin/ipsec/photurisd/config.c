@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.8 1998/05/19 16:31:11 provos Exp $";
+static char rcsid[] = "$Id: config.c,v 1.9 1998/06/03 16:17:26 deraadt Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -783,7 +783,8 @@ init_signals(void)
      struct sigaction sa, osa;
 
      bzero(&sa, sizeof(sa));
-     sa.sa_mask = sigmask(SIGHUP);
+     sigemptyset(&sa.sa_mask);
+     sigaddset(&sa.sa_mask, SIGHUP);
      sa.sa_handler = reconfig;
      sigaction(SIGHUP, &sa, &osa);
 
