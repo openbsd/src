@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.48 2001/05/31 20:27:50 angelos Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.49 2001/06/07 04:45:42 angelos Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -153,31 +153,12 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
         }
     }
 
-  if (x509_policy_asserts_num)
-    {
-      x509_ids = calloc (x509_policy_asserts_num, sizeof *x509_ids);
-      if (!x509_ids)
-        {
-          log_error ("check_policy: "
-		     "failed to allocate %d bytes for book keeping",
-		     x509_policy_asserts_num * sizeof *x509_ids);
-          free (keynote_ids);
-          return 0;
-        }
-    }
-
   /* Add the policy assertions */
   for (i = 0; i < keynote_policy_asserts_num; i++)
     keynote_ids[i] = LK (kn_add_assertion, (isakmp_sa->policy_id,
 					    keynote_policy_asserts[i],
 					    strlen (keynote_policy_asserts[i]),
 					    ASSERT_FLAG_LOCAL));
-
-  for (i = 0; i < x509_policy_asserts_num; i++)
-    x509_ids[i] = LK (kn_add_assertion, (isakmp_sa->policy_id,
-					 x509_policy_asserts[i],
-					 strlen (x509_policy_asserts[i]),
-					 ASSERT_FLAG_LOCAL));
 
   /* Initialize -- we'll let the callback do all the work.  */
   policy_exchange = exchange;
@@ -417,12 +398,6 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
     {
       if (keynote_ids[i] != -1)
 	LK (kn_remove_assertion, (isakmp_sa->policy_id, keynote_ids[i]));
-    }
-
-  for (i = 0; i < x509_policy_asserts_num; i++)
-    {
-      if (x509_ids[i] != -1)
-	LK (kn_remove_assertion, (isakmp_sa->policy_id, x509_ids[i]));
     }
 
   if (keynote_ids)
