@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.50 2001/07/03 04:26:37 angelos Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.51 2001/07/18 00:18:51 marc Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -431,6 +431,7 @@ tcp_respond(tp, template, m, ack, seq, flags)
 		 * here, as we only send a minimal TCP packet whose checksum
 		 * we need to compute in any case.
 		 */
+		th->th_sum = 0;
 		th->th_sum = in_cksum(m, tlen);
 		((struct ip *)ti)->ip_len = tlen;
 		((struct ip *)ti)->ip_ttl = ip_defttl;
