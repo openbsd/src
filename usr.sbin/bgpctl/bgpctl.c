@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.44 2004/03/02 20:00:14 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.45 2004/03/11 14:49:08 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -699,7 +699,8 @@ show_rib_summary_msg(struct imsg *imsg)
 			aspath = NULL;
 		}
 
-		rib = malloc(imsg->hdr.len - IMSG_HEADER_SIZE);
+		if ((rib = malloc(imsg->hdr.len - IMSG_HEADER_SIZE)) == NULL)
+			err(1, NULL);
 		memcpy(rib, imsg->data, imsg->hdr.len - IMSG_HEADER_SIZE);
 
 		print_prefix(&rib->prefix, rib->prefixlen, rib->flags);
