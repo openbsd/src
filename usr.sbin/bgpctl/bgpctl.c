@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.61 2004/08/20 15:49:35 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.62 2004/09/16 17:40:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -108,37 +108,38 @@ main(int argc, char *argv[])
 		/* not reached */
 	case SHOW:
 	case SHOW_SUMMARY:
-		imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
+		imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1, NULL, 0);
 		show_summary_head();
 		break;
 	case SHOW_FIB:
 		if (!res->addr.af)
-			imsg_compose(&ibuf, IMSG_CTL_KROUTE, 0, &res->flags,
-			    sizeof(res->flags));
+			imsg_compose(&ibuf, IMSG_CTL_KROUTE, 0, 0, -1,
+			    &res->flags, sizeof(res->flags));
 		else
-			imsg_compose(&ibuf, IMSG_CTL_KROUTE_ADDR, 0, &res->addr,
-			    sizeof(res->addr));
+			imsg_compose(&ibuf, IMSG_CTL_KROUTE_ADDR, 0, 0, -1,
+			    &res->addr, sizeof(res->addr));
 		show_fib_head();
 		break;
 	case SHOW_NEXTHOP:
-		imsg_compose(&ibuf, IMSG_CTL_SHOW_NEXTHOP, 0, NULL, 0);
+		imsg_compose(&ibuf, IMSG_CTL_SHOW_NEXTHOP, 0, 0, -1, NULL, 0);
 		show_nexthop_head();
 		break;
 	case SHOW_INTERFACE:
-		imsg_compose(&ibuf, IMSG_CTL_SHOW_INTERFACE, 0, NULL, 0);
+		imsg_compose(&ibuf, IMSG_CTL_SHOW_INTERFACE, 0, 0, -1, NULL, 0);
 		show_interface_head();
 		break;
 	case SHOW_NEIGHBOR:
 	case SHOW_NEIGHBOR_TIMERS:
 		if (res->addr.af)
-			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0,
+			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
 			    &res->addr, sizeof(res->addr));
 		else
-			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, NULL, 0);
+			imsg_compose(&ibuf, IMSG_CTL_SHOW_NEIGHBOR, 0, 0, -1,
+			    NULL, 0);
 		break;
 	case SHOW_RIB:
 		if (res->as.type != AS_NONE)
-			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB_AS, 0,
+			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB_AS, 0, 0, -1,
 			    &res->as, sizeof(res->as));
 		else if (res->addr.af) {
 			struct ctl_show_rib_prefix	msg;
@@ -147,14 +148,15 @@ main(int argc, char *argv[])
 			memcpy(&msg.prefix, &res->addr, sizeof(res->addr));
 			msg.prefixlen = res->prefixlen;
 			msg.flags = res->flags;
-			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB_PREFIX, 0,
+			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB_PREFIX, 0, 0, -1,
 			    &msg, sizeof(msg));
 		} else
-			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB, 0, NULL, 0);
+			imsg_compose(&ibuf, IMSG_CTL_SHOW_RIB, 0, 0, -1,
+			    NULL, 0);
 		show_rib_summary_head();
 		break;
 	case RELOAD:
-		imsg_compose(&ibuf, IMSG_CTL_RELOAD, 0, NULL, 0);
+		imsg_compose(&ibuf, IMSG_CTL_RELOAD, 0, 0, -1, NULL, 0);
 		printf("reload request sent.\n");
 		done = 1;
 		break;
@@ -162,12 +164,12 @@ main(int argc, char *argv[])
 		errx(1, "action==FIB");
 		break;
 	case FIB_COUPLE:
-		imsg_compose(&ibuf, IMSG_CTL_FIB_COUPLE, 0, NULL, 0);
+		imsg_compose(&ibuf, IMSG_CTL_FIB_COUPLE, 0, 0, -1, NULL, 0);
 		printf("couple request sent.\n");
 		done = 1;
 		break;
 	case FIB_DECOUPLE:
-		imsg_compose(&ibuf, IMSG_CTL_FIB_DECOUPLE, 0, NULL, 0);
+		imsg_compose(&ibuf, IMSG_CTL_FIB_DECOUPLE, 0, 0, -1, NULL, 0);
 		printf("decouple request sent.\n");
 		done = 1;
 		break;
@@ -175,19 +177,19 @@ main(int argc, char *argv[])
 		errx(1, "action==NEIGHBOR");
 		break;
 	case NEIGHBOR_UP:
-		imsg_compose(&ibuf, IMSG_CTL_NEIGHBOR_UP, 0,
+		imsg_compose(&ibuf, IMSG_CTL_NEIGHBOR_UP, 0, 0, -1,
 		    &res->addr, sizeof(res->addr));
 		printf("request sent.\n");
 		done = 1;
 		break;
 	case NEIGHBOR_DOWN:
-		imsg_compose(&ibuf, IMSG_CTL_NEIGHBOR_DOWN, 0,
+		imsg_compose(&ibuf, IMSG_CTL_NEIGHBOR_DOWN, 0, 0, -1,
 		    &res->addr, sizeof(res->addr));
 		printf("request sent.\n");
 		done = 1;
 		break;
 	case NEIGHBOR_CLEAR:
-		imsg_compose(&ibuf, IMSG_CTL_NEIGHBOR_CLEAR, 0,
+		imsg_compose(&ibuf, IMSG_CTL_NEIGHBOR_CLEAR, 0, 0, -1,
 		    &res->addr, sizeof(res->addr));
 		printf("request sent.\n");
 		done = 1;
@@ -199,21 +201,21 @@ main(int argc, char *argv[])
 		net.prefixlen = res->prefixlen;
 		/* attribute sets are not supported */
 		if (res->action == NETWORK_ADD)
-			imsg_compose(&ibuf, IMSG_NETWORK_ADD, 0,
+			imsg_compose(&ibuf, IMSG_NETWORK_ADD, 0, 0, -1,
 			    &net, sizeof(net));
 		else
-			imsg_compose(&ibuf, IMSG_NETWORK_REMOVE, 0,
+			imsg_compose(&ibuf, IMSG_NETWORK_REMOVE, 0, 0, -1,
 			    &net, sizeof(net));
 		printf("request sent.\n");
 		done = 1;
 		break;
 	case NETWORK_FLUSH:
-		imsg_compose(&ibuf, IMSG_NETWORK_FLUSH, 0, NULL, 0);
+		imsg_compose(&ibuf, IMSG_NETWORK_FLUSH, 0, 0, -1, NULL, 0);
 		printf("request sent.\n");
 		done = 1;
 		break;
 	case NETWORK_SHOW:
-		imsg_compose(&ibuf, IMSG_CTL_SHOW_NETWORK, 0, NULL, 0);
+		imsg_compose(&ibuf, IMSG_CTL_SHOW_NETWORK, 0, 0, -1, NULL, 0);
 		show_network_head();
 		break;
 	}
@@ -321,7 +323,7 @@ show_summary_msg(struct imsg *imsg)
 		    p->wbuf.queued,
 		    fmt_timeframe(p->stats.last_updown));
 		if (p->state == STATE_ESTABLISHED) {
-			printf("%u", p->stats.prefix_cnt);
+			printf("%06u", p->stats.prefix_cnt);
 			if (p->conf.max_prefix != 0)
 				printf("/%u", p->conf.max_prefix);
 		} else
