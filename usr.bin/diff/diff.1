@@ -1,4 +1,5 @@
-.\" $OpenBSD: diff.1,v 1.5 2003/06/25 18:52:46 jmc Exp $
+.\" $OpenBSD: diff.1,v 1.6 2003/06/26 04:53:02 millert Exp $
+.\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -28,7 +29,7 @@
 .\"
 .\"     @(#)diff.1	8.1 (Berkeley) 6/30/93
 .\"
-.Dd June 30, 1993
+.Dd June 25, 2003
 .Dt DIFF 1
 .Os
 .Sh NAME
@@ -36,20 +37,34 @@
 .Nd differential file and directory comparator
 .Sh SYNOPSIS
 .Nm diff
-.Op Fl cefhn
 .Op Fl bitw
+.Oo
+.Fl c | Fl e | Fl f |
+.Fl h | Fl n | Fl u
+.Oc
 .Ar file1 file2
 .Nm diff
-.Op Fl D Ns Ar string
-.Op Fl biw
+.Op Fl bitw
+.Op Fl C Ar number
 .Ar file1 file2
 .Nm diff
+.Op Fl bitw
+.Op Fl D Ar string
+.Ar file1 file2
+.Nm diff
+.Op Fl bitw
+.Op Fl U Ar number
+.Ar file1 file2
+.Nm diff
+.Op Fl bitw
+.Oo
+.Fl c | Fl e | Fl f |
+.Fl h | Fl n | Fl u
+.Oc
 .Op Fl l
 .Op Fl r
 .Op Fl s
-.Op Fl cefhn
-.Op Fl bitw
-.Op Fl S Ns Ar name
+.Op Fl S Ar name
 .Ar dir1 dir2
 .Sh DESCRIPTION
 The
@@ -65,10 +80,7 @@ No output is produced if the files are identical.
 Output options (mutually exclusive):
 .Bl -tag -width Ds
 .It Fl c
-Produces a diff with lines of context.
-The default is to present 3 lines of context and may be changed, e.g., to 10,
-by
-.Fl c10 .
+Produces a diff with 3 lines of context.
 With
 .Fl c
 the output format is modified slightly:
@@ -86,12 +98,7 @@ are marked
 Lines which are changed from one file to the other are marked in
 both files with
 .Sq !\ \& .
-Changes which lie within
-.Aq context
-lines of each other are grouped together on output.
-(This is a change from the previous
-.Dq diff -c
-but the resulting output is usually much easier to interpret.)
+Changes which lie within 3 lines of each other are grouped together on output.
 .It Fl e
 Produces output in a form suitable as input for the editor utility,
 .Xr ed 1 ,
@@ -124,7 +131,24 @@ but in the opposite order and with a count of changed lines on each
 insert or delete command.
 This is the form used by
 .Xr rcsdiff 1 .
-.It Fl D Ns Ar string
+.It Fl u
+Produces a
+.Em unified
+diff with 3 lines of context.
+A unified diff is similar to the context diff produced by the
+.Fl c
+option.
+However, unlike with
+.Fl c ,
+all lines to be changed (added and/or removed) are present in
+a single section.
+.It Fl C Ar number
+Like
+.Fl c
+but produces a diff with
+.Ar number
+lines of context.
+.It Fl D Ar string
 Creates a merged version of
 .Ar file1
 and
@@ -138,6 +162,12 @@ while defining
 .Ar string
 will yield
 .Ar file2 .
+.It Fl U Ar number
+Like
+.Fl u
+but produces a diff with
+.Ar number
+lines of context.
 .El
 .Pp
 Comparison options:
@@ -187,7 +217,7 @@ recursively to common subdirectories encountered.
 Causes
 .Nm
 to report files which are the same, which are otherwise not mentioned.
-.It Fl S Ns Ar name
+.It Fl S Ar name
 Re-starts a directory
 .Nm
 in the middle, beginning with file
@@ -334,13 +364,20 @@ will use the directory specified by
 as the temporary directory.
 .El
 .Sh FILES
-.Bl -tag -width /usr/bin/diffh -compact
-.It Pa /tmp/d?????
+.Bl -tag -width /tmp/diff1.XXXXXXXX -compact
+.It Pa /tmp/diff1.XXXXXXXX
+Temporary file used when
+.Ar file1
+is a device or stdin.
+.It Pa /tmp/diff2.XXXXXXXX
+Temporary file used when
+.Ar file2
+is a device or stdin.
+.It Pa /usr/bin/diff
+For directory diffs.
 .It Pa /usr/bin/diffh
 Alternate algorithm version (used by option
 .Fl h ) .
-.It Pa /usr/bin/diff
-For directory diffs.
 .It Pa /usr/bin/pr
 Used by the
 .Fl l
