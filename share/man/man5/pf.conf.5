@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.181 2003/02/13 08:23:40 jmc Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.182 2003/02/13 09:33:53 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -46,7 +46,8 @@ There are seven types of statement in
 .Bl -tag -width xxxx
 .It Cm Macros
 User-defined variables may be defined and used later, simplifying
-the configuration file. Macros must be defined before they are referenced in
+the configuration file.
+Macros must be defined before they are referenced in
 .Nm pf.conf .
 .It Cm Tables
 Tables provide a mechanism for increasing the performance and flexibility of
@@ -73,7 +74,8 @@ and
 the types of statement should be grouped and appear in
 .Nm pf.conf
 in the order shown above, as this matches the operation of the underlying
-packet filtering engine. By default
+packet filtering engine.
+By default
 .Xr pfctl 8
 enforces this order (see
 .Ar set require-order
@@ -131,7 +133,8 @@ filter rules.
 .Pp
 Tables can be defined with any of the following
 .Xr pfctl 8
-mechanisms. As with macros, reserved words may not be used as table names.
+mechanisms.
+As with macros, reserved words may not be used as table names.
 .Bl -tag -width "manually"
 .It Ar manually
 Persistent tables can be manually created with the
@@ -220,7 +223,7 @@ IP addresses can also be entered in a table by specifying a valid interface
 name or the
 .Em self
 keyword, in which case all addresses assigned to the interface(s) will be
-added to the table. 
+added to the table.
 .Sh OPTIONS
 .Xr pf 4
 may be tuned for various situations using the
@@ -406,7 +409,8 @@ Setting this option to
 .Ar no
 disables this enforcement.
 There may be non-trivial and non-obvious implications to an out of
-order ruleset. Consider carefully before disabling the order enforcement.
+order ruleset.
+Consider carefully before disabling the order enforcement.
 .El
 .Pp
 .Sh TRAFFIC NORMALIZATION
@@ -501,7 +505,8 @@ the
 .Ar altq on
 declaration.
 The
-scheduler type is required. Currently
+scheduler type is required.
+Currently
 .Ar cbq
 and
 .Ar priq
@@ -581,7 +586,8 @@ Enable RED (Random Early Detection) on this queue.
 RED drops packets with a probability proportional to the average
 queue length.
 .It Ar rio
-Enables RIO on this queue. RIO is RED with IN/OUT, thus running
+Enables RIO on this queue.
+RIO is RED with IN/OUT, thus running
 RED two times more than RIO would achieve the same effect.
 RIO is currently not supported in the GENERIC kernel.
 .It Ar ecn
@@ -650,11 +656,13 @@ below).
 .Pp
 .Sh TRANSLATION
 Translation rules modify either the source or destination address of the
-packets associated with a stateful connection. A stateful connection is
-automatically created to track packets matching such a rule.
+packets associated with a stateful connection.
+A stateful connection is automatically created to track packets matching
+such a rule.
 The translation engine modifies the specified address and/or port in the
 packet, recalculates IP, TCP and UDP checksums as necessary, and passes it to
-the packet filter for evaluation. Translation occurs before filtering.
+the packet filter for evaluation.
+Translation occurs before filtering.
 .Pp
 The state entry created permits
 .Xr pf 4
@@ -767,7 +775,8 @@ The following actions can be used in the filter:
 The packet is blocked.
 There are a number of ways in which a
 .Ar block
-rule can behave when blocking a packet. The default behaviour is to
+rule can behave when blocking a packet.
+The default behaviour is to
 .Ar drop
 packets silently, however this can be overridden or made
 explicit either globally, by setting the
@@ -831,7 +840,8 @@ All packets for that connection are logged, unless the
 or
 .Ar modulate state
 options are specified, in which case only the
-packet that establishes the state is logged. (See
+packet that establishes the state is logged.
+(See
 .Ar keep state
 and
 .Ar modulate state
@@ -914,7 +924,8 @@ in the kernel.
 Surrounding the interface name in parentheses changes this behaviour.
 When the interface name is surrounded by parentheses, the rule is
 automatically updated whenever the interface changes its address.
-The ruleset does not need to be reloaded. This is especially
+The ruleset does not need to be reloaded.
+This is especially
 useful with
 .Ar nat .
 .Pp
@@ -942,7 +953,8 @@ Ports and ranges of ports are specified by using these operators:
 and
 .Cm <>
 are binary operators (they take two arguments), and the range
-does not include the limits. For instance:
+does not include the limits.
+For instance:
 .Bl -tag -width Fl
 .It Ar port 2000 >< 2004
 means
@@ -991,8 +1003,8 @@ when a process creates a listening socket as root (for instance, by
 binding to a privileged port) and subsequently changes to another
 user ID (to drop privileges), the credentials will remain root.
 .Pp
-User and group IDs can be specified as either numbers or names. The
-syntax is similar to the one for ports.
+User and group IDs can be specified as either numbers or names.
+The syntax is similar to the one for ports.
 The value
 .Em unknown
 matches packets of forwarded connections.
@@ -1195,9 +1207,9 @@ option selects an address at random within the defined block of addresses.
 The
 .Ar source-hash
 option uses a hash of the source address to determine the redirection address,
-ensuring that the redirection address is always the same for a given source. An
-optional key can be specified after this keyword either in hex or as a string;
-by default
+ensuring that the redirection address is always the same for a given source.
+An optional key can be specified after this keyword either in hex or as a
+string; by default
 .Xr pfctl 8
 randomly generates a key for source-hash every time the
 ruleset is reloaded.
@@ -1224,8 +1236,8 @@ from modifying the source port on tcp and udp packets.
 is a stateful packet filter, which means it can track the state of
 a connection.
 Instead of passing all traffic to port 25, for instance, it is possible
-to pass only the initial packet, and then begin to keep state.  Subsequent
-traffic will flow because the filter is aware of the connection.
+to pass only the initial packet, and then begin to keep state.
+Subsequent traffic will flow because the filter is aware of the connection.
 .Pp
 If a packet matches a
 .Ar pass ... keep state
@@ -1504,8 +1516,8 @@ modifier.
 The memory allocated for fragment caching can be limited using
 .Xr pfctl 8 .
 Once this limit is reached, fragments that would have to be cached
-are dropped until other entries time out. The timeout value can
-also be adjusted.
+are dropped until other entries time out.
+The timeout value can also be adjusted.
 .Pp
 Currently, only IPv4 fragments are supported and IPv6 fragments
 are blocked unconditionally.
