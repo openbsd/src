@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.2 2000/01/08 23:23:37 d Exp $ */
+/*	$OpenBSD: cmd.c,v 1.3 2000/02/27 21:10:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 1999 Mats O Jansson.  All rights reserved.
@@ -30,19 +30,22 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmd.c,v 1.2 2000/01/08 23:23:37 d Exp $";
+static char rcsid[] = "$OpenBSD: cmd.c,v 1.3 2000/02/27 21:10:01 deraadt Exp $";
 #endif
 
+#include <sys/types.h>
+#include <sys/device.h>
+#include <sys/time.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <limits.h>
 #include <nlist.h>
-#include <sys/device.h>
-#include <sys/time.h>
+#include <string.h>
 #include "misc.h"
 #define	CMD_NOEXTERN
 #include "cmd.h"
 #include "ukc.h"
+#include "exec.h"
 
 /* Our command table */
 cmd_table_t cmd_table[] = {
@@ -262,10 +265,11 @@ int
 Xtimezone(cmd)
 	cmd_t *cmd;
 {
+	struct timezone *tz;
 	int	num;
 	char	*c;
-	struct timezone *tz = 
-	    (struct timezone *)adjust((caddr_t)nl[TZ_TZ].n_value);
+
+	tz = (struct timezone *)adjust((caddr_t)(nl[TZ_TZ].n_value));
 
 	if (strlen(cmd->args) == 0) {
 		printf("timezone = %d, dst = %d\n", 
