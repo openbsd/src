@@ -21,7 +21,7 @@ the size of the OpenBSD area of the disk and its offset from the
 beginning of the disk.  You will need this information when setting up
 your OpenBSD partitions.  If you BIOS uses translated geometry, you
 should use this geometry for the remainder of the install.  This is
-only neccecary if you are sharing the disk with other operating systems
+only necessary if you are sharing the disk with other operating systems
 that use the translated geometry.
 
 You should now be ready to install OpenBSD.  It might be handy for you
@@ -93,7 +93,7 @@ process again from scratch.
 	displaying the current partitions defined and then allow you
 	to modify this information, add new partitions and change
 	which partition to boot from by default.  If you make a mistake,
-	you will be allowed to repeat this procedure as neccecary to
+	you will be allowed to repeat this procedure as necessary to
 	correct this.  Note that you should make OpenBSD be the active
 	partition at least until the install has been completed.
 
@@ -105,7 +105,7 @@ process again from scratch.
 	partition 'a', and swap is usually in partition 'b'.  If you have
 	DOS or Linux partitions defined on the disk, these will usually
 	show up as partition 'h', 'i' and so on.  It is recommended that
-	you create seperate partitions for /usr and /var, and if you have
+	you create separate partitions for /usr and /var, and if you have
 	room for it, also for /home.
 
 	Note that all OpenBSD partitions in the disk label must have an
@@ -130,7 +130,7 @@ process again from scratch.
 	to be mounted, eg. /usr.  This process will be repeated until
 	you just hit return.
 
-	At this poing you will be asked to confirm that the file system
+	At this point you will be asked to confirm that the file system
 	information you have entered is correct, and given an opportunity
 	to change the file system table.  Next it will create the new file
 	systems as specified, OVERWRITING ANY EXISTING DATA.  This is the
@@ -178,11 +178,59 @@ process again from scratch.
 	images.  Note that installation from floppies are not currently
 	supported.
 
-	To install from FTP:
-		To be done.
+	To install via FTP:
+		To begin an FTP install you will need the following
+		pieces of information.  Don't be daunted by this list;
+		the defaults are sufficient for most people.
+		    1) Proxy server URL if you are using a URL-based
+		       ftp proxy (squid, CERN ftp, Apache 1.2 or higher).
+		       You need to define a proxy if you are behind a
+		       firewall that blocks outgoing ftp (assuming you
+		       have a proxy available to use).
+		    2) Do you need to use passive mode ftp?  Most modern
+		       ftp servers are capable of dealing with passive
+		       ftp connections.  You only need to enable this
+		       option if you are behind a firewall that allows
+		       outgoing ftp but blocks incoming tcp ports > 1023.
+		       If in doubt say yes to this option.
+		       Note that you will not be asked about passive
+		       ftp if you are using a proxy.
+		    3) The IP address (or hostname if you enabled
+		       DNS earlier in the install) of an ftp server
+		       carrying the OpenBSD 2.1 distribution.
+		       If you don't know, just hit return when
+		       asked if you want to see a list of such hosts.
+		    4) The ftp directory holding the distribution sets.
+		       The default value of pub/OpenBSD/2.1/i386
+		       is almost always correct.
+		    5) The login and password for the ftp account.
+		       The default will be correct unless you are
+		       doing non-anonymous ftp.
 
-	To install from HTTP:
-		To be done.
+		For instructions on how to complete the installation via
+		ftp, see the section named "Common URL installations" below.
+
+	To install via HTTP:
+		To begin an HTTP install you will need the following
+		pieces of information:
+		    1) Proxy server URL if you are using a URL-based
+		       http proxy (squid, CERN ftp, Apache 1.2 or higher).
+		       You need to define a proxy if you are behind a
+		       firewall that blocks outgoing http connections
+		       (assuming you have a proxy available to use).
+		    3) The IP address (or hostname if you enabled
+		       DNS earlier in the install) of an http server
+		       carrying the OpenBSD 2.1 distribution.
+		       If you don't know, just hit return when
+		       asked if you want to see a list of such hosts.
+		    4) The directory holding the distribution sets.
+		       There is no standard location for this;
+		       You should use the directory specified
+		       along with the server in the list of official
+		       http mirror sites that you received in step 3.
+
+		For instructions on how to complete the installation via
+		http, see the section named "Common URL installations" below.
 
 	To install from tape:
 		In order to install from tape, the distribution sets to be
@@ -208,7 +256,7 @@ process again from scratch.
 		partition on the CD-ROM the distribution is to be loaded
 		from.  This is normally partition "a".
 
-		Next you will have to identift the file system type that
+		Next you will have to identify the file system type that
 		has been used to create the distribution on the CD-ROM,
 		this can be either FFS or ISO CD9660.  The OpenBSD CD
 		distribution uses the CD9660 format.
@@ -275,6 +323,30 @@ process again from scratch.
 		with an X.  Enter the name of one distribution set at a
 		time, until all desired distribution sets has been
 		installed on your system.
+
+	Common URL installations:
+		Once you have entered the required information, the
+		install program will fetch a file list and present
+		a list of all the distribution sets that were found
+		in the specified directory.  (If no valid sets were found,
+		you will be notified and given the option of unpacking
+		any gzipped tar files found or getting a file list if
+		none were found.)
+
+		At this point you may individually select distribution
+		sets to install or enter ``all'' to install all of
+		the sets (which is what most users will want to do).
+		You may also enter ``list'' to get a file list or
+		``done'' when you are done selecting distribution sets.
+		(It is also possible to enter an arbitrary filename
+		and have it treated as a file set).
+
+		Once you have selected the file sets you want to install
+		and entered ``done'' you will be prompted to verify that
+		you really do want to download and install the files.
+		Assuming you acquiesce, the files will begin to download
+		and unpack.  If not, you will be given the option of
+		installing sets via one of the other install methods.
 
 
 	When all the selected distribution sets has been extracted, you
