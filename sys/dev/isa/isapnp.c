@@ -1,4 +1,4 @@
-/*	$OpenBSD: isapnp.c,v 1.21 1998/11/30 10:44:55 deraadt Exp $	*/
+/*	$OpenBSD: isapnp.c,v 1.22 1998/12/28 09:38:48 deraadt Exp $	*/
 /*	$NetBSD: isapnp.c,v 1.9.4.3 1997/10/29 00:40:43 thorpej Exp $	*/
 
 /*
@@ -201,6 +201,7 @@ isapnp_free_region(t, r)
 #ifdef _KERNEL
 	bus_space_unmap(t, r->h, r->length);
 #endif
+	r->h = NULL;
 }
 
 
@@ -217,6 +218,7 @@ isapnp_alloc_region(t, r)
 	if (r->length == 0)
 		return 0;
 
+	r->h = NULL;
 	for (r->base = r->minbase; r->base <= r->maxbase;
 	     r->base += r->align) {
 #ifdef _KERNEL
@@ -871,8 +873,10 @@ isapnp_attach(parent, self, aux)
 	if (isapnp_map(sc))
 		panic("%s: bus map failed\n", sc->sc_dev.dv_xname);
 
-	if (!isapnp_find(sc, 1))
-		panic("%s: no cards found\n", sc->sc_dev.dv_xname);
+	if (!isapnp_find(sc, 1)) {
+		printf(": no cards found\n", sc->sc_dev.dv_xname);
+		return;
+	}
 
 	printf(": read port 0x%x\n", sc->sc_read_port);
 
