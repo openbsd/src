@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.21 2004/08/06 20:34:04 mickey Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.22 2004/09/15 01:02:31 mickey Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
@@ -74,6 +74,7 @@ ramdisk)
 	;;
 
 _std(1, 2, 25, 3, 6)
+	M pdc		c 22 0 640 operator
 	;;
 dnl
 dnl *** hppa specific devices
