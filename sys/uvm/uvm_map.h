@@ -1,5 +1,5 @@
-/*	$OpenBSD: uvm_map.h,v 1.10 2001/08/12 22:41:15 mickey Exp $	*/
-/*	$NetBSD: uvm_map.h,v 1.17 2000/03/29 04:05:47 simonb Exp $	*/
+/*	$OpenBSD: uvm_map.h,v 1.11 2001/11/06 00:27:01 art Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.19 2000/06/26 17:18:40 mrg Exp $	*/
 
 /* 
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -146,9 +146,7 @@ struct vm_map_entry {
 	vaddr_t			end;		/* end address */
 	union vm_map_object	object;		/* object I point to */
 	voff_t			offset;		/* offset into object */
-	/* etype is a bitmap that replaces the following 4 items */
 	int			etype;		/* entry type */
-		/* Only in task maps: */
 	vm_prot_t		protection;	/* protection code */
 	vm_prot_t		max_protection;	/* maximum protection */
 	vm_inherit_t		inheritance;	/* inheritance */
@@ -159,9 +157,10 @@ struct vm_map_entry {
 	u_int8_t		flags;		/* flags */
 
 #define UVM_MAP_STATIC		0x01		/* static map entry */
+
 };
 
-#define		VM_MAPENT_ISWIRED(entry)	((entry)->wired_count != 0)
+#define	VM_MAPENT_ISWIRED(entry)	((entry)->wired_count != 0)
 
 /*
  *	Maps are doubly-linked lists of map entries, kept sorted
@@ -234,11 +233,22 @@ struct vm_map {
 };
 
 /* vm_map flags */
-#define VM_MAP_PAGEABLE		0x01		/* ro: entries are pageable*/
-#define VM_MAP_INTRSAFE		0x02		/* ro: interrupt safe map */
-#define VM_MAP_WIREFUTURE	0x04		/* rw: wire future mappings */
+#define	VM_MAP_PAGEABLE		0x01		/* ro: entries are pageable */
+#define	VM_MAP_INTRSAFE		0x02		/* ro: interrupt safe map */
+#define	VM_MAP_WIREFUTURE	0x04		/* rw: wire future mappings */
 #define	VM_MAP_BUSY		0x08		/* rw: map is busy */
 #define	VM_MAP_WANTLOCK		0x10		/* rw: want to write-lock */
+
+/* XXX: number of kernel maps and entries to statically allocate */
+#define MAX_KMAP	10
+
+#if !defined(MAX_KMAPENT)
+#if (50 + (2 * NPROC) > 1000)
+#define MAX_KMAPENT (50 + (2 * NPROC))
+#else
+#define	MAX_KMAPENT	1000  /* XXXCDC: no crash */
+#endif
+#endif	/* !defined MAX_KMAPENT */
 
 #ifdef _KERNEL
 #define	vm_map_modflags(map, set, clear)				\
@@ -250,11 +260,11 @@ do {									\
 #endif /* _KERNEL */
 
 /*
- *     Interrupt-safe maps must also be kept on a special list,
- *     to assist uvm_fault() in avoiding locking problems.
+ *	Interrupt-safe maps must also be kept on a special list,
+ *	to assist uvm_fault() in avoiding locking problems.
  */
 struct vm_map_intrsafe {
-	struct vm_map   vmi_map;
+	struct vm_map	vmi_map;
 	LIST_ENTRY(vm_map_intrsafe) vmi_list;
 };
 
@@ -284,6 +294,61 @@ vmi_list_unlock(s)
 	simple_unlock(&vmi_list_slock);
 	splx(s);
 }
+#endif /* _KERNEL */
+
+/*
+ * handle inline options
+ */
+
+#ifdef UVM_MAP_INLINE
+#define MAP_INLINE static __inline
+#else 
+#define MAP_INLINE /* nothing */
+#endif /* UVM_MAP_INLINE */
+
+/*
+ * globals:
+ */
+
+#ifdef _KERNEL
+
+#ifdef PMAP_GROWKERNEL
+extern vaddr_t	uvm_maxkaddr;
+#endif
+
+/*
+ * protos: the following prototypes define the interface to vm_map
+ */
+
+MAP_INLINE
+void		uvm_map_deallocate __P((vm_map_t));
+
+int		uvm_map_clean __P((vm_map_t, vaddr_t, vaddr_t, int));
+void		uvm_map_clip_start __P((vm_map_t, vm_map_entry_t, vaddr_t));
+void		uvm_map_clip_end __P((vm_map_t, vm_map_entry_t, vaddr_t));
+MAP_INLINE
+vm_map_t	uvm_map_create __P((pmap_t, vaddr_t, vaddr_t, int));
+int		uvm_map_extract __P((vm_map_t, vaddr_t, vsize_t, 
+			vm_map_t, vaddr_t *, int));
+vm_map_entry_t	uvm_map_findspace __P((vm_map_t, vaddr_t, vsize_t, vaddr_t *,
+			struct uvm_object *, voff_t, boolean_t));
+int		uvm_map_inherit __P((vm_map_t, vaddr_t, vaddr_t, vm_inherit_t));
+int		uvm_map_advice __P((vm_map_t, vaddr_t, vaddr_t, int));
+void		uvm_map_init __P((void));
+boolean_t	uvm_map_lookup_entry __P((vm_map_t, vaddr_t, vm_map_entry_t *));
+MAP_INLINE
+void		uvm_map_reference __P((vm_map_t));
+int		uvm_map_replace __P((vm_map_t, vaddr_t, vaddr_t,
+			vm_map_entry_t, int));
+int		uvm_map_reserve __P((vm_map_t, vsize_t, vaddr_t, vaddr_t *));
+void		uvm_map_setup __P((vm_map_t, vaddr_t, vaddr_t, int));
+int		uvm_map_submap __P((vm_map_t, vaddr_t, vaddr_t, vm_map_t));
+MAP_INLINE
+int		uvm_unmap __P((vm_map_t, vaddr_t, vaddr_t));
+void		uvm_unmap_detach __P((vm_map_entry_t,int));
+int		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
+				      vm_map_entry_t *));
+
 #endif /* _KERNEL */
 
 /*
@@ -377,7 +442,7 @@ vm_map_lock(map)
 #endif
 		goto try_again;
 	}
- 
+
 	(map)->timestamp++;
 }
 
@@ -444,72 +509,5 @@ do {									\
 #define		vm_map_min(map)		((map)->min_offset)
 #define		vm_map_max(map)		((map)->max_offset)
 #define		vm_map_pmap(map)	((map)->pmap)
-
-/* XXX: number of kernel maps and entries to statically allocate */
-#ifndef	MAX_KMAP
-#define	MAX_KMAP	20
-#endif
-#ifndef	MAX_KMAPENT
-#if (50 + (2 * NPROC) > 1000)
-#define MAX_KMAPENT (50 + (2 * NPROC))
-#else
-#define	MAX_KMAPENT	1000  /* XXXCDC: no crash */
-#endif
-#endif
-
-/*
- * handle inline options
- */
-
-#ifdef UVM_MAP_INLINE
-#define MAP_INLINE static __inline
-#else 
-#define MAP_INLINE /* nothing */
-#endif /* UVM_MAP_INLINE */
-
-/*
- * globals:
- */
-
-#ifdef _KERNEL
-
-#ifdef PMAP_GROWKERNEL
-extern vaddr_t	uvm_maxkaddr;
-#endif
-
-/*
- * protos: the following prototypes define the interface to vm_map
- */
-
-MAP_INLINE
-void		uvm_map_deallocate __P((vm_map_t));
-
-int		uvm_map_clean __P((vm_map_t, vaddr_t, vaddr_t, int));
-void		uvm_map_clip_start __P((vm_map_t, vm_map_entry_t, vaddr_t));
-void		uvm_map_clip_end __P((vm_map_t, vm_map_entry_t, vaddr_t));
-MAP_INLINE
-vm_map_t	uvm_map_create __P((pmap_t, vaddr_t, vaddr_t, int));
-int		uvm_map_extract __P((vm_map_t, vaddr_t, vsize_t, 
-			vm_map_t, vaddr_t *, int));
-vm_map_entry_t	uvm_map_findspace __P((vm_map_t, vaddr_t, vsize_t, vaddr_t *,
-			struct uvm_object *, voff_t, boolean_t));
-int		uvm_map_inherit __P((vm_map_t, vaddr_t, vaddr_t, vm_inherit_t));
-int		uvm_map_advice __P((vm_map_t, vaddr_t, vaddr_t, int));
-void		uvm_map_init __P((void));
-boolean_t	uvm_map_lookup_entry __P((vm_map_t, vaddr_t, vm_map_entry_t *));
-MAP_INLINE
-void		uvm_map_reference __P((vm_map_t));
-int		uvm_map_replace __P((vm_map_t, vaddr_t, vaddr_t,
-			vm_map_entry_t, int));
-int		uvm_map_reserve __P((vm_map_t, vsize_t, vaddr_t, vaddr_t *));
-void		uvm_map_setup __P((vm_map_t, vaddr_t, vaddr_t, int));
-int		uvm_map_submap __P((vm_map_t, vaddr_t, vaddr_t, vm_map_t));
-MAP_INLINE
-int		uvm_unmap __P((vm_map_t, vaddr_t, vaddr_t));
-void		uvm_unmap_detach __P((vm_map_entry_t,int));
-int		uvm_unmap_remove __P((vm_map_t, vaddr_t, vaddr_t,
-				      vm_map_entry_t *));
-
-#endif /* _KERNEL */
 
 #endif /* _UVM_UVM_MAP_H_ */
