@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fea.c,v 1.6 1997/11/07 08:06:39 niklas Exp $	*/
+/*	$OpenBSD: if_fea.c,v 1.7 1999/11/23 04:49:29 jason Exp $	*/
 /*	$NetBSD: if_fea.c,v 1.9 1996/10/21 22:31:05 thorpej Exp $	*/
 
 /*-
@@ -515,10 +515,6 @@ pdq_eisa_attach(
 	return;
     }
 
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
-
-    pdq_ifattach(sc, pdq_eisa_ifwatchdog);
-
     if (eisa_intr_map(ea->ea_ec, irq, &ih)) {
 	printf("%s: couldn't map interrupt (%d)\n", sc->sc_dev.dv_xname, irq);
 	return;
@@ -533,6 +529,13 @@ pdq_eisa_attach(
 	printf("\n");
 	return;
     }
+    if (intrstr != NULL)
+	printf(": interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+
+    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+
+    pdq_ifattach(sc, pdq_eisa_ifwatchdog);
+
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
     if (sc->sc_ats == NULL)
 	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
@@ -540,8 +543,6 @@ pdq_eisa_attach(
     printf("%s: using iomem 0x%x-0x%x\n", sc->sc_dev.dv_xname, maddr,
 	maddr + msize - 1);
 #endif
-    if (intrstr != NULL)
-	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
 }
 
 struct cfattach fea_ca = {

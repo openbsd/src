@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdq.c,v 1.8 1998/03/01 12:45:18 niklas Exp $	*/
+/*	$OpenBSD: pdq.c,v 1.9 1999/11/23 04:49:29 jason Exp $	*/
 /*	$NetBSD: pdq.c,v 1.9 1996/10/13 01:37:26 christos Exp $	*/
 
 /*-
@@ -169,17 +169,8 @@ pdq_print_fddi_chars(
 {
     const char hexchars[] = "0123456789abcdef";
 
-    printf(
-#if !defined(__bsdi__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
-	   PDQ_OS_PREFIX
-#else
-	   ": "
-#endif
-	   "DEC %s FDDI %s Controller\n",
-#if !defined(__bsdi__) && !defined(__NetBSD__) && !defined(__OpenBSD__)
-	   PDQ_OS_PREFIX_ARGS,
-#endif
-	   pdq_descriptions[pdq->pdq_type],
+    printf(PDQ_OS_PREFIX "DEC %s FDDI %s Controller\n",
+	   PDQ_OS_PREFIX_ARGS, pdq_descriptions[pdq->pdq_type],
 	   pdq_station_types[rsp->status_chars_get.station_type]);
 
     printf(PDQ_OS_PREFIX "FDDI address %c%c:%c%c:%c%c:%c%c:%c%c:%c%c, FW=%c%c%c%c, HW=%c",

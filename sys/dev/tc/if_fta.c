@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fta.c,v 1.3 1997/11/07 08:07:46 niklas Exp $	*/
+/*	$OpenBSD: if_fta.c,v 1.4 1999/11/23 04:49:30 jason Exp $	*/
 /*	$NetBSD: if_fta.c,v 1.7 1996/10/22 21:37:26 cgd Exp $	*/
 
 /*-
@@ -110,6 +110,7 @@ pdq_tc_attach(
 	return;
     }
     bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    printf("\n");
     pdq_ifattach(sc, NULL);
 
     tc_intr_establish(parent, ta->ta_cookie, TC_IPL_NET,

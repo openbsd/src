@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_fpa.c,v 1.11 1998/01/07 11:03:28 deraadt Exp $	*/
+/*	$OpenBSD: if_fpa.c,v 1.12 1999/11/23 04:49:30 jason Exp $	*/
 /*	$NetBSD: if_fpa.c,v 1.15 1996/10/21 22:56:40 thorpej Exp $	*/
 
 /*-
@@ -427,17 +427,6 @@ pdq_pci_attach(
 	return;
     }
 
-    sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_csrhandle,
-				sc->sc_if.if_xname, 0,
-				(void *) sc, PDQ_DEFPA);
-    if (sc->sc_pdq == NULL) {
-	printf(": initialization failed\n");
-	return;
-    }
-
-    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
-    pdq_ifattach(sc, pdq_pci_ifwatchdog);
-
     if (pci_intr_map(pa->pa_pc, pa->pa_intrtag, pa->pa_intrpin,
 		     pa->pa_intrline, &intrhandle)) {
 	printf(": couldn't map interrupt\n");
@@ -453,12 +442,23 @@ pdq_pci_attach(
 	printf("\n");
 	return;
     }
+    if (intrstr != NULL)
+	printf(": %s\n", intrstr);
+
+    sc->sc_pdq = pdq_initialize(sc->sc_csrtag, sc->sc_csrhandle,
+				sc->sc_if.if_xname, 0,
+				(void *) sc, PDQ_DEFPA);
+    if (sc->sc_pdq == NULL) {
+	printf(": initialization failed\n");
+	return;
+    }
+
+    bcopy((caddr_t) sc->sc_pdq->pdq_hwaddr.lanaddr_bytes, sc->sc_ac.ac_enaddr, 6);
+    pdq_ifattach(sc, pdq_pci_ifwatchdog);
 
     sc->sc_ats = shutdownhook_establish((void (*)(void *)) pdq_hwreset, sc->sc_pdq);
     if (sc->sc_ats == NULL)
 	printf("%s: warning: couldn't establish shutdown hook\n", self->dv_xname);
-    if (intrstr != NULL)
-	printf(": %s\n", intrstr);
 }
 
 struct cfattach fpa_ca = {
