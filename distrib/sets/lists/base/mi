@@ -818,6 +818,7 @@
 ./usr/libexec/safe_finger
 ./usr/libexec/sendmail
 ./usr/libexec/sendmail/sendmail
+./usr/libexec/smrsh
 ./usr/libexec/smtpd
 ./usr/libexec/smtpfwdd
 ./usr/libexec/tcpd
@@ -981,7 +982,6 @@
 ./usr/sbin/sendmail
 ./usr/sbin/sliplogin
 ./usr/sbin/slstats
-./usr/sbin/smrsh
 ./usr/sbin/spray
 ./usr/sbin/sshd
 ./usr/sbin/stdethers
