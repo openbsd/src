@@ -1,4 +1,6 @@
-#	$OpenBSD: Makefile,v 1.1 2001/03/18 17:37:36 millert Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/09/10 21:21:12 jason Exp $
+
+.include <bsd.own.mk>
 
 INFO=	readline.info history.info rluserman.info
 RLSRC = rlman.texinfo rluser.texinfo rltech.texinfo manvers.texinfo \
@@ -34,7 +36,6 @@ install: ${INFO} maninstall
 cleandir:
 	-rm -f ${INFO}
 
-.include <bsd.own.mk>
 .if !defined(NOMAN)
 .include <bsd.man.mk>
 .endif
