@@ -1,5 +1,5 @@
-/*	$OpenBSD: x509.c,v 1.22 2000/02/07 01:32:54 niklas Exp $	*/
-/*	$EOM: x509.c,v 1.33 2000/02/07 01:30:36 angelos Exp $	*/
+/*	$OpenBSD: x509.c,v 1.23 2000/02/11 10:21:54 niklas Exp $	*/
+/*	$EOM: x509.c,v 1.34 2000/02/10 16:25:01 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niels Provos.  All rights reserved.
@@ -107,7 +107,7 @@ x509_generate_kn (X509 *cert)
 {
   char *fmt = "Authorizer: \"rsa-hex:%s\"\nLicensees: \"rsa-hex:%s\"\n";
   char *ikey, *skey, *buf, isname[256], subname[256], *buf2;
-  char *fmt2 = "Authorizer: \"CN:%s\"\nLicensees: \"CN:%s\"\n";
+  char *fmt2 = "Authorizer: \"DN:%s\"\nLicensees: \"DN:%s\"\n";
   X509_NAME *issuer, *subject;
   struct keynote_deckey dc;
   X509_STORE_CTX csc;
