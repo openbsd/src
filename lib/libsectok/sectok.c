@@ -1,4 +1,4 @@
-/* $Id: sectok.c,v 1.5 2001/07/17 16:14:25 rees Exp $ */
+/* $Id: sectok.c,v 1.6 2001/07/17 16:57:17 rees Exp $ */
 
 /*
 copyright 2000
@@ -420,8 +420,10 @@ sectok_apdu(int fd, int cla, int ins, int p1, int p2,
 	if (le)
 	    cmd[ilen++] = le;
 	n = obuf ? sizeof rsp : 2;
-	if (reader->data(garbage, cmd, ilen, rsp, &n, NULL) || n < 2)
+	if (reader->data(garbage, cmd, ilen, rsp, &n, NULL) || n < 2) {
+	    *swp = STECOMM;
 	    return -1;
+	}
 	if (rsp[n-2] == 0x61 && olen && obuf) {
 	    /* Response available; get it (driver should do this but some don't) */
 	    cmd[1] = 0xc0;
@@ -446,6 +448,9 @@ sectok_apdu(int fd, int cla, int ins, int p1, int p2,
     if (n >= 2) {
 	*swp = sectok_mksw(rsp[n-2], rsp[n-1]);
 	n -= 2;
+    } else {
+	/* This shouldn't happen; apdu ok but no status available */
+	*swp = STEOK;
     }
 
     if (n && olen)
