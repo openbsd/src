@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.30 1997/06/20 20:25:27 mickey Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.31 1997/08/01 07:40:10 deraadt Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -496,8 +496,7 @@ ed_pci_attach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	/* Print additional info when attached. */
-	printf("\n%s: address %s, ", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	if (sc->type_str)
 		printf("type %s ", sc->type_str);
@@ -1669,8 +1668,7 @@ edattach(parent, self, aux)
 	ether_ifattach(ifp);
 
 	/* Print additional info when attached. */
-	printf("\n%s: address %s, ", sc->sc_dev.dv_xname,
-	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+	printf(": address %s, ", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
 	if (sc->type_str)
 		printf("type %s ", sc->type_str);
