@@ -1,4 +1,4 @@
-.\"	$OpenBSD: recv.2,v 1.10 1998/08/17 17:35:14 deraadt Exp $
+.\"	$OpenBSD: recv.2,v 1.11 1999/02/05 00:40:23 deraadt Exp $
 .\"	$NetBSD: recv.2,v 1.6 1995/02/27 12:36:08 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1991, 1993
@@ -206,21 +206,28 @@ set to
 .Pp
 The
 .Fa msg_flags
-field is set on return according to the message received.
-.Dv MSG_EOR
-indicates end-of-record;
+field is set on return according to the message received.  It will contain
+zero or more of the following values:
+.Bl -column MSG_CTRUNC -offset indent
+.It Dv MSG_EOR Ta
+Indicates end-of-record;
 the data returned completed a record (generally used with sockets of type
 .Dv SOCK_SEQPACKET ) .
-.Dv MSG_TRUNC
-indicates that
+.It Dv MSG_TRUNC Ta
+Indicates that
 the trailing portion of a datagram was discarded because the datagram
 was larger than the buffer supplied.
-.Dv MSG_CTRUNC
-indicates that some
+.It Dv MSG_CTRUNC Ta
+Indicates that some
 control data were discarded due to lack of space in the buffer
 for ancillary data.
-.Dv MSG_OOB
-is returned to indicate that expedited or out-of-band data were received.
+.It Dv MSG_OOB Ta
+Returned to indicate that expedited or out-of-band data was received.
+.It Dv MSG_BCAST Ta
+Indicates that the packet was received as broadcast.
+.It Dv MSG_MCAST Ta
+Indicates that the packet was received as multicast.
+.El
 .Pp
 .Sh RETURN VALUES
 These calls return the number of bytes received, or -1

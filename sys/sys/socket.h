@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.h,v 1.20 1999/01/10 02:44:33 deraadt Exp $	*/
+/*	$OpenBSD: socket.h,v 1.21 1999/02/05 00:40:22 deraadt Exp $	*/
 /*	$NetBSD: socket.h,v 1.14 1996/02/09 18:25:36 christos Exp $	*/
 
 /*
@@ -286,6 +286,8 @@ struct msghdr {
 #define	MSG_CTRUNC	0x20		/* control data lost before delivery */
 #define	MSG_WAITALL	0x40		/* wait for full request or error */
 #define	MSG_DONTWAIT	0x80		/* this message should be nonblocking */
+#define	MSG_BCAST	0x100		/* this message rec'd as broadcast */
+#define	MSG_MCAST	0x200		/* this message rec'd as multicast */
 
 /*
  * Header for ancillary data objects in msg_control buffer.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.23 1999/01/21 03:27:42 millert Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.24 1999/02/05 00:40:22 deraadt Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -545,8 +545,7 @@ soreceive(so, paddr, uio, mp0, controlp, flagsp)
 	if (flags & MSG_OOB) {
 		m = m_get(M_WAIT, MT_DATA);
 		error = (*pr->pr_usrreq)(so, PRU_RCVOOB, m,
-					(struct mbuf *)(long)(flags & MSG_PEEK),
-					NULL);
+		    (struct mbuf *)(long)(flags & MSG_PEEK), NULL);
 		if (error)
 			goto bad;
 		do {
@@ -688,6 +687,10 @@ dontblock:
 		type = m->m_type;
 		if (type == MT_OOBDATA)
 			flags |= MSG_OOB;
+		if (m->m_flags & M_BCAST)
+			flags |= MSG_BCAST;
+		if (m->m_flags & M_MCAST)
+			flags |= MSG_MCAST;
 	}
 	moff = 0;
 	offset = 0;
