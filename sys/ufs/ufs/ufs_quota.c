@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_quota.c,v 1.8 2001/11/21 21:23:56 csapuntz Exp $	*/
+/*	$OpenBSD: ufs_quota.c,v 1.9 2001/11/22 04:41:38 csapuntz Exp $	*/
 /*	$NetBSD: ufs_quota.c,v 1.8 1996/02/09 22:36:09 christos Exp $	*/
 
 /*
@@ -69,7 +69,7 @@ struct dquot {
 	u_int16_t dq_spare;		/* unused spare padding */
 	u_int16_t dq_type;		/* quota type of this dquot */
 	u_int32_t dq_id;		/* identifier this applies to */
-	struct	ufsmount *dq_ump;	/* filesystem that this is taken from */
+	struct  vnode *dq_vp;           /* file backing this quota */
 	struct	dqblk dq_dqb;		/* actual usage & quotas */
 };
 /*
@@ -100,15 +100,6 @@ struct dquot {
  */
 #define	NODQUOT		NULL
 
-/*
- * Macros to avoid subroutine calls to trivial functions.
- */
-#ifdef DIAGNOSTIC
-#define	DQREF(dq)	dqref(dq)
-#else
-#define	DQREF(dq)	(dq)->dq_cnt++
-#endif
-
 void	dqref __P((struct dquot *));
 void	dqrele __P((struct vnode *, struct dquot *));
 int	dqsync __P((struct vnode *, struct dquot *));
@@ -127,7 +118,6 @@ int	chkiqchg __P((struct inode *, long, struct ucred *, int));
 
 int dqget __P((struct vnode *, u_long, struct ufsmount *, int,
 	       struct dquot **));
-void	dqflush __P((struct vnode *));
 
 int     quotaon_vnode(struct vnode *, void *);
 int     quotaoff_vnode(struct vnode *, void *);
@@ -137,6 +127,18 @@ int     qsync_vnode(struct vnode *, void *);
  * Quota name to error message mapping.
  */
 static char *quotatypes[] = INITQFNAMES;
+
+/*
+ * Obtain a reference to a dquot.
+ */
+void
+dqref(dq)
+	struct dquot *dq;
+{
+
+	dq->dq_cnt++;
+}
+
 
 /*
  * Set up the quotas for an inode.
@@ -605,8 +607,6 @@ quotaoff(p, mp, type)
 	qa.type = type;
 	vfs_mount_foreach_vnode(mp, quotaoff_vnode, &qa);
 
-	dqflush(qvp);
-	qvp->v_flag &= ~VSYSTEM;
 	error = vn_close(qvp, FREAD|FWRITE, p->p_ucred, p);
 	ump->um_quotas[type] = NULLVP;
 	crfree(ump->um_cred[type]);
@@ -856,7 +856,7 @@ dqget(vp, id, ump, type, dqp)
 	dqh = DQHASH(dqvp, id);
 	for (dq = dqh->lh_first; dq; dq = dq->dq_hash.le_next) {
 		if (dq->dq_id != id ||
-		    dq->dq_ump->um_quotas[dq->dq_type] != dqvp)
+		    dq->dq_vp != dqvp)
 			continue;
 		/*
 		 * Cache hit with no references.  Take
@@ -864,7 +864,7 @@ dqget(vp, id, ump, type, dqp)
 		 */
 		if (dq->dq_cnt == 0)
 			TAILQ_REMOVE(&dqfreelist, dq, dq_freelist);
-		DQREF(dq);
+		dqref(dq);
 		*dqp = dq;
 		return (0);
 	}
@@ -895,10 +895,10 @@ dqget(vp, id, ump, type, dqp)
 	if (vp != dqvp)
 		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY, p);
 	LIST_INSERT_HEAD(dqh, dq, dq_hash);
-	DQREF(dq);
+	dqref(dq);
 	dq->dq_flags = DQ_LOCK;
 	dq->dq_id = id;
-	dq->dq_ump = ump;
+	dq->dq_vp = dqvp;
 	dq->dq_type = type;
 	auio.uio_iov = &aiov;
 	auio.uio_iovcnt = 1;
@@ -945,17 +945,6 @@ dqget(vp, id, ump, type, dqp)
 }
 
 /*
- * Obtain a reference to a dquot.
- */
-void
-dqref(dq)
-	struct dquot *dq;
-{
-
-	dq->dq_cnt++;
-}
-
-/*
  * Release a reference to a dquot.
  */
 void
@@ -990,12 +979,13 @@ dqsync(vp, dq)
 	struct iovec aiov;
 	struct uio auio;
 	int error;
+	struct ufsmount *ump = VFSTOUFS(vp->v_mount);
 
 	if (dq == NODQUOT)
 		panic("dqsync: dquot");
 	if ((dq->dq_flags & DQ_MOD) == 0)
 		return (0);
-	if ((dqvp = dq->dq_ump->um_quotas[dq->dq_type]) == NULLVP)
+	if ((dqvp = dq->dq_vp) == NULLVP)
 		panic("dqsync: file");
 	if (vp != dqvp)
 		vn_lock(dqvp, LK_EXCLUSIVE | LK_RETRY, p);
@@ -1018,7 +1008,7 @@ dqsync(vp, dq)
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_rw = UIO_WRITE;
 	auio.uio_procp = (struct proc *)0;
-	error = VOP_WRITE(dqvp, &auio, 0, dq->dq_ump->um_cred[dq->dq_type]);
+	error = VOP_WRITE(dqvp, &auio, 0, ump->um_cred[dq->dq_type]);
 	if (auio.uio_resid && error == 0)
 		error = EIO;
 	if (dq->dq_flags & DQ_WANT)
@@ -1027,34 +1017,6 @@ dqsync(vp, dq)
 	if (vp != dqvp)
 		VOP_UNLOCK(dqvp, 0, p);
 	return (error);
-}
-
-/*
- * Flush all entries from the cache for a particular vnode.
- */
-void
-dqflush(vp)
-	struct vnode *vp;
-{
-	struct dquot *dq, *nextdq;
-	struct dqhash *dqh;
-
-	/*
-	 * Move all dquot's that used to refer to this quota
-	 * file off their hash chains (they will eventually
-	 * fall off the head of the free list and be re-used).
-	 */
-	for (dqh = &dqhashtbl[dqhash]; dqh >= dqhashtbl; dqh--) {
-		for (dq = dqh->lh_first; dq; dq = nextdq) {
-			nextdq = dq->dq_hash.le_next;
-			if (dq->dq_ump->um_quotas[dq->dq_type] != vp)
-				continue;
-			if (dq->dq_cnt)
-				panic("dqflush: stray dquot");
-			LIST_REMOVE(dq, dq_hash);
-			dq->dq_ump = (struct ufsmount *)0;
-		}
-	}
 }
 
 int
