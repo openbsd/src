@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsec.4,v 1.29 2000/04/22 01:05:29 angelos Exp $
+.\" $OpenBSD: ipsec.4,v 1.30 2000/04/22 01:07:01 angelos Exp $
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -378,7 +378,13 @@ and
 .Tn ESP
 usage, using the
 .Fl p
-flag.
+flag.  Using the
+.Fl r
+flag,
+.Xr netstat 1
+displays information about
+.Tn IPsec
+flows.
 .Pp
 .Xr vmstat 8
 displays information about memory use by IPsec with the
@@ -403,9 +409,9 @@ At the moment the socket options are not fully implemented.
 .Sh ACKNOWLEDGMENTS
 The authors of the
 .Tn IPsec
-code proper are John Ioannidis, Angelos D. Keromytis and Niels Provos.
+code proper are John Ioannidis, Angelos D. Keromytis, and Niels Provos.
 .Pp
-Niklas Hallqvist & Niels Provos are the authors of
+Niklas Hallqvist and Niels Provos are the authors of
 .Xr isakmpd 8 .
 .Pp
 Eric Young's libdeslite was used in this implementation for the
