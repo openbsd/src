@@ -840,6 +840,8 @@ c_sizeof (type)
   t = size_binop (CEIL_DIV_EXPR, TYPE_SIZE (type), 
 		  size_int (TYPE_PRECISION (char_type_node)));
   t = convert (sizetype, t);
+  if (code == POINTER_TYPE)
+    SIZEOF_PTR_DERIVED (t) = 1;
   /* size_binop does not put the constant in range, so do it now.  */
   if (TREE_CODE (t) == INTEGER_CST && force_fit_type (t, 0))
     TREE_CONSTANT_OVERFLOW (t) = TREE_OVERFLOW (t) = 1;
@@ -864,6 +866,8 @@ c_sizeof_nowarn (type)
   t = size_binop (CEIL_DIV_EXPR, TYPE_SIZE (type), 
 		  size_int (TYPE_PRECISION (char_type_node)));
   t = convert (sizetype, t);
+  if (code == POINTER_TYPE)
+    SIZEOF_PTR_DERIVED (t) = 1;
   force_fit_type (t, 0);
   return t;
 }
@@ -1579,6 +1583,9 @@ build_function_call (function, params)
 
   if (warn_format && (name || assembler_name))
     check_function_format (name, assembler_name, coerced_params);
+
+  if (warn_bounded && (name || assembler_name))
+    check_function_bounds (name, assembler_name, coerced_params);
 
   /* Recognize certain built-in functions so we can make tree-codes
      other than CALL_EXPR.  We do this when it enables fold-const.c

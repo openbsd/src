@@ -180,6 +180,7 @@ extern void declare_function_name               PROTO((void));
 extern void decl_attributes                     PROTO((tree, tree, tree));
 extern void init_function_format_info		PROTO((void));
 extern void check_function_format		PROTO((tree, tree, tree));
+extern void check_function_bounds		PROTO((tree, tree, tree));
 extern int c_get_alias_set                      PROTO((tree));
 extern void c_apply_type_quals_to_decl          PROTO((int, tree));
 /* Print an error message for invalid operands to arith operation CODE.
@@ -444,6 +445,10 @@ extern int flag_hosted;
 /* Nonzero means warn about implicit declarations.  */
 
 extern int warn_implicit;
+
+/* Nonzero means warn about static buffer abuse.  */
+
+extern int warn_bounded;
 
 /* Nonzero means give string constants the type `const char *'
    to get extra warnings from them.  These warnings will be too numerous

@@ -25,6 +25,16 @@ Boston, MA 02111-1307, USA.  */
 struct rtx_def;
 #endif
 
+/* Usage of TREE_LANG_FLAG_?:
+   0: Not Used.
+   1: Not Used.
+   2: Not Used.
+   3: Not Used.
+   4: Not Used.
+   5: Not Used.
+   6: SIZEOF_PTR_DERIVED
+*/
+
 /* Codes of tree nodes */
 
 #define DEFTREECODE(SYM, STRING, TYPE, NARGS)   SYM,
@@ -547,6 +557,10 @@ struct tree_common
 #define TREE_LANG_FLAG_4(NODE) ((NODE)->common.lang_flag_4)
 #define TREE_LANG_FLAG_5(NODE) ((NODE)->common.lang_flag_5)
 #define TREE_LANG_FLAG_6(NODE) ((NODE)->common.lang_flag_6)
+
+/* Used to track constants derived from sizeof(pointer) operations */
+#define SIZEOF_PTR_DERIVED(NODE) (TREE_LANG_FLAG_6((NODE)))
+
 
 /* Define additional fields and accessors for nodes representing constants.  */
 

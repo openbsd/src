@@ -1064,6 +1064,8 @@ documented_lang_options[] =
   { "-Wno-conversion", "" },
   { "-Wformat", "Warn about printf format anomalies" },
   { "-Wno-format", "" },
+  { "-Wbounded", "Warn about potential overruns in static buffers" },
+  { "-Wno-bounded", "" },
   { "-Wimplicit-function-declaration",
     "Warn about implicit function declarations" },
   { "-Wno-implicit-function-declaration", "" },

@@ -559,6 +559,10 @@ int warn_nested_externs = 0;
 
 int warn_format;
 
+/* Warn about potential overruns in static buffers.  */
+
+int warn_bounded;
+
 /* Warn about a subscript that has type char.  */
 
 int warn_char_subscripts = 0;
@@ -828,6 +832,10 @@ c_decode_option (argc, argv)
     warn_format = 1;
   else if (!strcmp (p, "-Wno-format"))
     warn_format = 0;
+  else if (!strcmp (p, "-Wbounded"))
+    warn_bounded = 1;
+  else if (!strcmp (p, "-Wno-bounded"))
+    warn_bounded = 0;
   else if (!strcmp (p, "-Wchar-subscripts"))
     warn_char_subscripts = 1;
   else if (!strcmp (p, "-Wno-char-subscripts"))
@@ -899,6 +907,7 @@ c_decode_option (argc, argv)
       warn_unused = 1;
       warn_switch = 1;
       warn_format = 1;
+      warn_bounded = 1;
       warn_char_subscripts = 1;
       warn_parentheses = 1;
       warn_missing_braces = 1;

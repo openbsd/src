@@ -1305,6 +1305,10 @@ int_const_binop (code, arg1, arg2, notrunc, forsize)
   int uns = TREE_UNSIGNED (TREE_TYPE (arg1));
   int overflow = 0;
   int no_overflow = 0;
+  int sizeof_flag = 0;
+
+  if (SIZEOF_PTR_DERIVED (arg1) == 1 || SIZEOF_PTR_DERIVED (arg2) == 1) 
+    sizeof_flag = 1;
 
   int1l = TREE_INT_CST_LOW (arg1);
   int1h = TREE_INT_CST_HIGH (arg1);
@@ -1476,6 +1480,10 @@ int_const_binop (code, arg1, arg2, notrunc, forsize)
   TREE_CONSTANT_OVERFLOW (t) = (TREE_OVERFLOW (t)
 				| TREE_CONSTANT_OVERFLOW (arg1)
 				| TREE_CONSTANT_OVERFLOW (arg2));
+
+  if (sizeof_flag == 1)
+    SIZEOF_PTR_DERIVED (t) = 1;
+
   return t;
 }
 
@@ -4664,6 +4672,9 @@ fold (expr)
 		   | force_fit_type (t, overflow && !TREE_UNSIGNED (type)));
 	      TREE_CONSTANT_OVERFLOW (t)
 		= TREE_OVERFLOW (t) | TREE_CONSTANT_OVERFLOW (arg0);
+	      /* If arg0 was calculated from sizeof(ptr), record this */
+	      if (SIZEOF_PTR_DERIVED (arg0))
+		SIZEOF_PTR_DERIVED (t) = 1;
 	    }
 	  else if (TREE_CODE (arg0) == REAL_CST)
 	    t = build_real (type, REAL_VALUE_NEGATE (TREE_REAL_CST (arg0)));
@@ -4697,6 +4708,9 @@ fold (expr)
 		       | force_fit_type (t, overflow));
 		  TREE_CONSTANT_OVERFLOW (t)
 		    = TREE_OVERFLOW (t) | TREE_CONSTANT_OVERFLOW (arg0);
+		  /* If arg0 was calculated from sizeof(ptr), record this */
+		  if (SIZEOF_PTR_DERIVED (arg0))
+		    SIZEOF_PTR_DERIVED (t) = 1;
 		}
 	    }
 	  else if (TREE_CODE (arg0) == REAL_CST)

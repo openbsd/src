@@ -57,10 +57,13 @@ enum attrs {A_PACKED, A_NOCOMMON, A_COMMON, A_NORETURN, A_CONST, A_T_UNION,
 	    A_NO_CHECK_MEMORY_USAGE, A_NO_INSTRUMENT_FUNCTION,
 	    A_CONSTRUCTOR, A_DESTRUCTOR, A_MODE, A_SECTION, A_ALIGNED,
 	    A_UNUSED, A_FORMAT, A_FORMAT_ARG, A_WEAK, A_ALIAS, A_NONNULL,
-	    A_SENTINEL };
+	    A_SENTINEL, A_BOUNDED};
 
 enum format_type { printf_format_type, scanf_format_type,
 		   strftime_format_type, syslog_format_type };
+
+enum bounded_type { buffer_bound_type, string_bound_type, 
+		    minbytes_bound_type, size_bound_type };
 
 static void declare_hidden_char_array	PROTO((const char *, const char *));
 static void add_attribute		PROTO((enum attrs, const char *,
@@ -393,6 +396,7 @@ init_attributes ()
   add_attribute (A_FORMAT_ARG, "format_arg", 1, 1, 1);
   add_attribute (A_NONNULL, "nonnull", 0, -1, 1);
   add_attribute (A_SENTINEL, "sentinel", 0, 0, 1);
+  add_attribute (A_BOUNDED, "bounded", 3, 4, 1);
   add_attribute (A_WEAK, "weak", 0, 0, 1);
   add_attribute (A_ALIAS, "alias", 1, 1, 1);
   add_attribute (A_NO_INSTRUMENT_FUNCTION, "no_instrument_function", 0, 0, 1);
@@ -438,6 +442,8 @@ static function_attribute_info *new_function_format
 static function_attribute_info *new_international_format PROTO((int));
 static function_attribute_info *new_nonnull_info PROTO((int));
 static function_attribute_info *new_sentinel_info PROTO((int));
+static function_attribute_info *new_bound_check_info 
+  PROTO((enum bounded_type, int, int, int));
 static function_attributes_info *insert_function_attribute
   PROTO((function_attributes_info *, tree, tree, function_attribute_info *));
 
@@ -849,6 +855,183 @@ decl_attributes (node, attributes, prefix_attributes)
 	    break;
 	  }
 
+	case A_BOUNDED:
+	  {
+	    tree bounded_type_id = TREE_VALUE (args);
+	    tree bounded_buf_expr = TREE_VALUE (TREE_CHAIN (args));
+	    tree bounded_num_expr = TREE_VALUE (TREE_CHAIN (TREE_CHAIN (args)));
+	    tree bounded_size_expr = TREE_CHAIN (TREE_CHAIN (TREE_CHAIN (args)));
+	    int bounded_num, bounded_buf, bounded_size, arg_num;
+	    enum bounded_type bounded_type = string_bound_type;
+	    tree argument, arg_iterate;
+
+	    if (TREE_CODE (decl) != FUNCTION_DECL)
+	      {
+		error_with_decl (decl,
+			 "attribute bounded specified for non-function `%s'");
+		continue;
+	      }
+
+	    if (TREE_CODE (bounded_type_id) != IDENTIFIER_NODE)
+	      {
+		error ("unrecognized bounded type specifier");
+		continue;
+	      }
+	    else
+	      {
+		const char *p = IDENTIFIER_POINTER (bounded_type_id);
+
+		if (!strcmp (p, "string") || !strcmp (p, "__string__"))
+		  bounded_type = string_bound_type;
+		else if (!strcmp (p, "buffer") || !strcmp (p, "__buffer__"))
+		  bounded_type = buffer_bound_type;
+		else if (!strcmp (p, "minbytes") || !strcmp (p, "__minbytes__"))
+		  bounded_type = minbytes_bound_type;
+		else if (!strcmp (p, "size") || !strcmp (p, "__size__"))
+		  bounded_type = size_bound_type;
+		else
+		  {
+		    warning ("`%s' is an unrecognized bounded function type", p);
+		    continue;
+		  }
+	      }
+
+	    /* Extract the third argument if its appropriate */
+	    switch (bounded_type)
+	      {
+	      case string_bound_type:
+		if (bounded_size_expr)
+		  warning ("`string' bound type only takes 2 parameters");
+		bounded_size_expr = size_int (0);
+		break;
+	      case buffer_bound_type:
+		if (bounded_size_expr)
+		  warning ("`buffer' bound type only takes 2 parameters");
+		bounded_size_expr = size_int (0);
+		break;
+	      case minbytes_bound_type:
+		if (bounded_size_expr)
+		  warning("`minbytes' bound type only takes 2 parameters");
+		bounded_size_expr = size_int (0);
+		break;
+	      case size_bound_type:
+		if (bounded_size_expr)
+		  bounded_size_expr = TREE_VALUE (bounded_size_expr);
+		else
+		  {
+		    error ("parameter 3 not specified for `size' bounded function");
+		    continue;
+		  }
+		break;
+	      }
+
+	   /* Strip any conversions from the buffer parameters and verify they
+	      are constants */
+	    while (TREE_CODE (bounded_num_expr) == NOP_EXPR
+		   || TREE_CODE (bounded_num_expr) == CONVERT_EXPR
+		   || TREE_CODE (bounded_num_expr) == NON_LVALUE_EXPR)
+		bounded_num_expr = TREE_OPERAND (bounded_num_expr, 0);
+
+	    while (TREE_CODE (bounded_buf_expr) == NOP_EXPR
+		   || TREE_CODE (bounded_buf_expr) == CONVERT_EXPR
+		   || TREE_CODE (bounded_buf_expr) == NON_LVALUE_EXPR)
+		bounded_buf_expr = TREE_OPERAND (bounded_buf_expr, 0);
+
+	    while (TREE_CODE (bounded_size_expr) == NOP_EXPR
+		   || TREE_CODE (bounded_size_expr) == CONVERT_EXPR
+		   || TREE_CODE (bounded_size_expr) == NON_LVALUE_EXPR)
+		bounded_size_expr = TREE_OPERAND (bounded_size_expr, 0);
+
+	    if (TREE_CODE (bounded_num_expr) != INTEGER_CST)
+	      {
+		error ("bound length operand number is not an integer constant");
+		continue;
+	      }
+
+	    if (TREE_CODE (bounded_buf_expr) != INTEGER_CST)
+	      {
+		error ("bound buffer operand number is not an integer constant");
+		continue;
+	      }
+
+	    if (TREE_CODE (bounded_size_expr) != INTEGER_CST)
+	      {
+		error ("bound element size operand number is not an integer constant");
+		continue;
+	      }
+
+	    bounded_num = TREE_INT_CST_LOW (bounded_num_expr);
+	    bounded_buf = TREE_INT_CST_LOW (bounded_buf_expr);
+	    bounded_size = TREE_INT_CST_LOW (bounded_size_expr);
+	    argument =  TYPE_ARG_TYPES (type);
+
+	    /* `min_size' directly specifies the minimum buffer length */
+	    if (bounded_type == minbytes_bound_type && bounded_num <= 0)
+	      {
+		error ("`minbytes' bound size must be a positive integer value");
+		continue;
+	      }
+
+	    /* Check the function arguments for correct types */
+	    if (argument)
+	      {
+		arg_iterate = argument;
+		for (arg_num = 1; ; ++arg_num)
+		  {
+		    if (arg_iterate == 0 || arg_num == bounded_buf)
+			break;
+		    arg_iterate = TREE_CHAIN (arg_iterate);
+		  }
+		if (! arg_iterate
+		    || (TREE_CODE (TREE_VALUE (arg_iterate)) != POINTER_TYPE
+			&& TREE_CODE (TREE_VALUE (arg_iterate)) != ARRAY_TYPE))
+		  {
+		    error ("bound buffer argument not an array or pointer type");
+		    continue;
+		  }
+
+		if (bounded_type == size_bound_type 
+		    || bounded_type == string_bound_type 
+		    || bounded_type == buffer_bound_type)
+		  {
+		    arg_iterate = argument;
+		    for (arg_num = 1; ; ++arg_num)
+		      {
+			if (arg_iterate == 0 || arg_num == bounded_num)
+			  break;
+			arg_iterate = TREE_CHAIN (arg_iterate);
+		      }
+		    if (! arg_iterate
+			|| TREE_CODE (TREE_VALUE (arg_iterate)) != INTEGER_TYPE)
+		      {
+			error ("bound length argument not an integer type");
+			continue;
+		      }
+		  }
+
+		if (bounded_type == size_bound_type)
+		  {
+		    arg_iterate = argument;
+		    for (arg_num = 1; ; ++arg_num)
+		      {
+			if (arg_iterate == 0 || arg_num == bounded_size)
+			  break;
+			arg_iterate = TREE_CHAIN (arg_iterate);
+		      }
+		    if (! arg_iterate
+			|| TREE_CODE (TREE_VALUE (arg_iterate)) != INTEGER_TYPE)
+		      {
+			error ("bound element size argument not an integer type");
+			continue;
+		      }
+		  }
+	       }
+
+	    list = insert_function_attribute (list, DECL_NAME (decl),
+	      DECL_ASSEMBLER_NAME (decl),
+	      new_bound_check_info (bounded_type, bounded_buf, bounded_num, bounded_size));
+	    break;
+	  }
 	case A_FORMAT_ARG:
 	  {
 	    tree format_num_expr = TREE_VALUE (args);
@@ -1331,12 +1514,23 @@ typedef struct sentinel_info
   int argument_num;		/* number of non-null argument */
 } sentinel_info;
 
+typedef struct bound_check_info
+{
+  struct function_attribute_info *next;
+  enum attrs type;
+  enum bounded_type bounded_type; /* type of bound (string, minsize, etc) */
+  int argument_buf;		/* number of buffer pointer arg */
+  int argument_num;		/* number of buffer length arg || min size */
+  int argument_size;		/* number of buffer element size arg */
+} bound_check_info;
+
 static function_attribute_info *find_function_attribute
   PROTO((tree, tree, enum attrs));
 
 static void check_format_info		PROTO((function_format_info *, tree));
 static void check_nonnull_info 		PROTO((nonnull_info *, tree));
 static void check_sentinel_info 	PROTO((sentinel_info *, tree));
+static void check_bound_info		PROTO((bound_check_info *, tree));
 
 /* Helper function for setting up initial attribute for printf-like
    functions, since the format argument is also non-null checked for
@@ -1467,6 +1661,27 @@ new_sentinel_info (argument_num)
   return (function_attribute_info *) (info);
 }
 
+/* Create information record for functions with bounded parameters
+   ARGUMENT_BUF is the number of the buffer pointer argument. 
+   ARGUMENT_NUM is the number of the buffer length argument.  */
+
+static function_attribute_info *
+new_bound_check_info (argument_type, argument_buf, argument_num, argument_size)
+      enum bounded_type argument_type;
+      int argument_buf, argument_num, argument_size;
+{
+  bound_check_info *info;
+  info = (bound_check_info *)
+	  xmalloc (sizeof (bound_check_info));
+  info->next = NULL;
+  info->type = A_BOUNDED;
+  info->bounded_type = argument_type;
+  info->argument_buf = argument_buf;
+  info->argument_num = argument_num;
+  info->argument_size = argument_size;
+  return (function_attribute_info *) (info);
+}
+
 /* Record attribute information for the names of function.  Used as:
  * newlist = insert_function_attribute (old, name, asm, new_xxx (...) );
  * In reality, newlist == old if old != NULL, but clients don't need to
@@ -1562,6 +1777,39 @@ check_function_format (name, assembler_name, params)
 		    check_sentinel_info ((sentinel_info *)ck, params);
 		    break;
 		}
+	    }
+	  break;
+	}
+    }
+}
+
+/* Check the argument list of a call to strlcpy, strcat, etc.
+   NAME is the function identifier.
+   ASSEMBLER_NAME is the function's assembler identifier.
+   (Either NAME or ASSEMBLER_NAME, but not both, may be NULL_TREE.)
+   PARAMS is the list of argument values.  */
+
+void
+check_function_bounds (name, assembler_name, params)
+     tree name;
+     tree assembler_name;
+     tree params;
+{
+  function_attributes_info *info;
+  function_attribute_info *ck;
+
+  /* See if this function has attributes.  */
+  for (info = function_attributes_list; info; info = info->next)
+    {
+      if (info->assembler_name
+	  ? (info->assembler_name == assembler_name)
+	  : (info->name == name))
+	{
+	  /* Yup; check those attributes.  */
+	  for (ck = info->first; ck; ck = ck->next)
+	    {
+	      if (ck->type == A_BOUNDED)
+		check_bound_info ((bound_check_info *)ck, params);
 	    }
 	  break;
 	}
@@ -1674,6 +1922,144 @@ check_nonnull_info (info, params)
     {
       warning ("null argument #%d", arg_num);
       return;
+    }
+}
+
+/* Given two arguments (a buffer and buffer length), check
+   that the buffer length was not derived from the size of 
+   a pointer, and that the length arg is not greater than
+   the static buffer size. */
+
+static void
+check_bound_info (info, params)
+     bound_check_info *info;
+     tree params;
+{
+  tree buf_expr, length_expr, record_expr, size_expr;
+  int arg_num;
+
+  /* Extract the buffer expression from the arguments */
+  buf_expr = params;
+  for (arg_num = 1; ; ++arg_num)
+    {
+	if (buf_expr == 0)
+	  return;
+	if (arg_num == info->argument_buf)
+	  break;
+	buf_expr = TREE_CHAIN (buf_expr);
+    }
+  buf_expr = TREE_VALUE (buf_expr);
+
+  /* Get the buffer length, either directly from the function attribute
+     info, or from the parameter pointed to */
+  if (info->bounded_type == minbytes_bound_type)
+    length_expr = size_int (info->argument_num);
+  else
+    {
+      /* Extract the buffer length expression from the arguments */
+      length_expr = params;
+      for (arg_num = 1; ; ++arg_num)
+	{
+	  if (length_expr == 0)
+	    return;
+	  if (arg_num == info->argument_num)
+	    break;
+	  length_expr = TREE_CHAIN (length_expr);
+	}
+      length_expr = TREE_VALUE (length_expr);
+    }
+
+  /* If the bound type is `size', resolve the third parameter */
+  if (info->bounded_type == size_bound_type)
+    {
+      size_expr = params;
+      for (arg_num = 1; ; ++arg_num)
+	{
+	  if (size_expr == 0)
+	    return;
+	  if (arg_num == info->argument_size)
+	    break;
+	  size_expr = TREE_CHAIN (size_expr);
+	}
+      size_expr = TREE_VALUE (size_expr);
+    }
+  else
+    size_expr = size_int (0);
+
+  STRIP_NOPS (buf_expr);
+
+  /* Check for a possible sizeof(pointer) error in string functions */
+  if (info->bounded_type == string_bound_type
+      && SIZEOF_PTR_DERIVED (length_expr))
+    warning("sizeof(pointer) possibly incorrect in argument %d", 
+	info->argument_num);
+
+  /* We only need to check if the buffer expression is a static
+   * array (which is inside an ADDR_EXPR) */
+  if (TREE_CODE (buf_expr) != ADDR_EXPR)
+    return;
+  buf_expr = TREE_OPERAND (buf_expr, 0);
+
+  if (TREE_CODE (TREE_TYPE (buf_expr)) == ARRAY_TYPE 
+      && TYPE_DOMAIN (TREE_TYPE (buf_expr)))
+    {
+      int array_size, length, elem_size, type_size;
+      tree array_size_expr = TYPE_MAX_VALUE (TYPE_DOMAIN (TREE_TYPE (buf_expr)));
+      tree array_type = TREE_TYPE (TREE_TYPE (buf_expr));
+
+      /* Get the size of the type of the array and sanity check it */
+      type_size = TREE_INT_CST_LOW (TYPE_SIZE (array_type));
+      if ((type_size % 8) != 0)
+	{
+	  error ("found non-byte aligned type while checking bounds");
+	  return;
+	}
+      type_size /= 8;
+
+      /* Both the size of the static buffer and the length should be
+       * integer constants by now */
+      if (TREE_CODE (array_size_expr) != INTEGER_CST
+	  || TREE_CODE (length_expr) != INTEGER_CST
+	  || TREE_CODE (size_expr) != INTEGER_CST)
+	return;
+
+      /* array_size_expr contains maximum array index, so add one for size */
+      array_size = (TREE_INT_CST_LOW (array_size_expr) + 1) * type_size;
+      length = TREE_INT_CST_LOW (length_expr);
+
+      /* XXX - warn about a too-small buffer? */
+      if (array_size < 1)
+	return;
+
+      switch (info->bounded_type)
+	{
+	case string_bound_type:
+	case buffer_bound_type:
+	  /* warn about illegal bounds value */
+	  if (length < 1)
+	    warning ("non-positive bounds length (%d) detected", length);
+	  /* check if the static buffer is smaller than bound length */
+	  if (array_size < length)
+	    warning("array size (%d) smaller than bound length (%d)",
+		array_size, length);
+	  break;
+	case minbytes_bound_type:
+	  /* check if array is smaller than the minimum allowed */
+	  if (array_size < length)
+	    warning ("array size (%d) is smaller than minimum required (%d)",
+		array_size, length);
+	  break;
+	case size_bound_type:
+	  elem_size = TREE_INT_CST_LOW (size_expr);
+	  /* warn about illegal bounds value */
+	  if (length < 1)
+	    warning ("non-positive bounds length (%d) detected", length);
+	  /* check if the static buffer is smaller than bound length */
+	  if (array_size < (length * elem_size))
+	    warning("array size (%d) smaller than required length (%d * %d)",
+		array_size, length, elem_size);
+	  break;
+	}
     }
 }
 
@@ -1793,6 +2179,7 @@ check_format_info (info, params)
   while (1)
     {
       int aflag;
+      int format_num = 0;
       if (*format_chars == 0)
 	{
 	  if (format_chars - TREE_STRING_POINTER (format_tree) != format_length)
@@ -1817,11 +2204,17 @@ check_format_info (info, params)
       suppressed = wide = precise = FALSE;
       if (info->format_type == scanf_format_type)
 	{
+	  char format_num_str[33];
 	  suppressed = *format_chars == '*';
 	  if (suppressed)
 	    ++format_chars;
-	  while (ISDIGIT (*format_chars))
+	  while (ISDIGIT (*format_chars)) {
+	    if (format_num < sizeof(format_num_str)-1)
+		format_num_str[format_num++] = *format_chars;
 	    ++format_chars;
+	  }
+	  format_num_str[format_num] = '\0';
+	  format_num = atoi(format_num_str);
 	}
       else if (info->format_type == strftime_format_type)
         {
@@ -2195,6 +2588,31 @@ check_format_info (info, params)
 		     arg_num);
 	  break;
 	}
+
+      /* Test static string bounds for scanf if -Wbounded is on as well */
+      if (warn_bounded
+	  && info->format_type == scanf_format_type
+	  && format_char == 's'
+	  && i == fci->pointer_count + aflag
+	  && cur_param != 0
+	  && TREE_CODE (cur_type) != ERROR_MARK
+	  && TREE_CODE (TREE_TYPE (cur_param)) == ARRAY_TYPE
+	  && TREE_CODE (TREE_TYPE (TREE_TYPE (cur_param))) == INTEGER_TYPE) {
+	tree array_size_expr = TYPE_MAX_VALUE (TYPE_DOMAIN (TREE_TYPE (cur_param)));
+	if (array_size_expr != 0) {
+	    int array_size = TREE_INT_CST_LOW (array_size_expr) + 1;
+
+#if 0  /* Gives false positives at the moment */
+	    if (format_num == 0)
+		warning("Unbounded string written into a static array[%d]",
+		    array_size);
+#endif
+	    /* Need extra slot for the '\0' */
+	    if (array_size < (format_num + 1))
+		warning("Array size (%d) smaller than format string size (%d)",
+		    array_size, format_num + 1);
+	}
+      }
 
       /* See if this is an attempt to write into a const type with
 	 scanf or with printf "%n".  */

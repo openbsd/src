@@ -3391,6 +3391,10 @@ build_over_call (cand, args, flags)
     check_function_format (DECL_NAME (fn), DECL_ASSEMBLER_NAME (fn),
 			   converted_args); 
 
+  if (warn_bounded && (DECL_NAME (fn) || DECL_ASSEMBLER_NAME (fn)))
+    check_function_bounds (DECL_NAME (fn), DECL_ASSEMBLER_NAME (fn),
+			   converted_args);
+
   /* Avoid actually calling copy constructors and copy assignment operators,
      if possible.  */
 

@@ -289,6 +289,10 @@ int warn_sign_compare;
 
 int warn_format;
 
+/* Warn about potential overruns in static buffers.  */
+
+int warn_bounded;
+
 /* Warn about a subscript that has type char.  */
 
 int warn_char_subscripts;
@@ -750,6 +754,8 @@ lang_decode_option (argc, argv)
 	warn_sign_compare = setting;
       else if (!strcmp (p, "format"))
 	warn_format = setting;
+      else if (!strcmp (p, "bounded"))
+	warn_bounded = setting;
       else if (!strcmp (p, "conversion"))
 	warn_conversion = setting;
       else if (!strcmp (p, "parentheses"))
@@ -797,6 +803,7 @@ lang_decode_option (argc, argv)
 	  warn_implicit = setting;
 	  warn_switch = setting;
 	  warn_format = setting;
+	  warn_bounded = setting;
 	  warn_parentheses = setting;
 	  warn_missing_braces = setting;
 	  warn_sign_compare = setting;

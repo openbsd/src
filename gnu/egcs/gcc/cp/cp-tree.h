@@ -53,7 +53,7 @@ Boston, MA 02111-1307, USA.  */
       TREE_HAS_CONSTRUCTOR (in INDIRECT_REF, SAVE_EXPR, CONSTRUCTOR,
           or FIELD_DECL).
    5: TYPE_USES_PVBASES (in a class TYPE).
-   6: Not used.
+   6: SIZEOF_PTR_DERIVED (for the bounds checker, string types)
 
    Usage of TYPE_LANG_FLAG_?:
    0: C_TYPE_FIELDS_READONLY (in RECORD_TYPE or UNION_TYPE).
@@ -457,6 +457,10 @@ extern int warn_cast_qual;
 /* Warn about *printf or *scanf format/argument anomalies.  */
 
 extern int warn_format;
+
+/* Nonzero means warn about static buffer abuse.  */
+
+extern int warn_bounded;
 
 /* Nonzero means warn about non virtual destructors in classes that have
    virtual functions.  */
@@ -893,6 +897,9 @@ struct lang_type
 /* Nonzero means that this _CLASSTYPE uses polymorphic virtual bases.
    This flag is set only when we use vtable thunks.  */
 #define TYPE_USES_PVBASES(NODE) (TREE_LANG_FLAG_5(NODE))
+
+/* Used to track constants derived from sizeof(pointer) operations */
+#define SIZEOF_PTR_DERIVED(NODE) (TREE_LANG_FLAG_6((NODE)))
 
 /* Vector member functions defined in this class.  Each element is
    either a FUNCTION_DECL, a TEMPLATE_DECL, or an OVERLOAD.  All
@@ -2137,6 +2144,7 @@ extern void decl_attributes                     PROTO((tree, tree, tree));
 extern void init_function_format_info		PROTO((void));
 extern void record_function_format		PROTO((tree, tree, int, int, int));
 extern void check_function_format		PROTO((tree, tree, tree));
+extern void check_function_bounds		PROTO((tree, tree, tree));
 /* Print an error message for invalid operands to arith operation CODE.
    NOP_EXPR is used as a special case (see truthvalue_conversion).  */
 extern void binary_op_error                     PROTO((enum tree_code));
