@@ -1,6 +1,7 @@
-/*	$OpenBSD: kern_timeout.c,v 1.11 2001/09/12 15:48:45 art Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.12 2001/12/22 16:41:51 nordin Exp $	*/
 /*
- * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
+ * Copyright (c) 2001 Thomas Nordin <nordin@openbsd.org>
+ * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -41,146 +42,154 @@
 #endif
 
 /*
- * Timeouts are kept on a queue. The to_time is the value of the global
- * variable "ticks" when the timeout should be called.
- *
- * In the future we might want to build a timer wheel to improve the speed
- * of timeout_add (right now it's linear). See "Redesigning the BSD Callout 
- * and Timer Facilities" by Adam M. Costello and Geroge Varghese.
+ * Timeouts are kept in a hierarchical timing wheel. The to_time is the value
+ * of the global variable "ticks" when the timeout should be called. There are
+ * four levels with 256 buckets each. See 'Scheme 7' in
+ * "Hashed and Hierarchical Timing Wheels: Efficient Data Structures for
+ * Implementing a Timer Facility" by George Varghese and Tony Lauck.
  */
+#define BUCKETS 1024
+#define WHEELSIZE 256
+#define WHEELMASK 255
+#define WHEELBITS 8
 
-TAILQ_HEAD(,timeout) timeout_todo;	/* Queue of timeouts. */
+struct circq timeout_wheel[BUCKETS];	/* Queues of timeouts */
+struct circq timeout_todo;		/* Worklist */
+
+#define MASKWHEEL(wheel, time) (((time) >> ((wheel)*WHEELBITS)) & WHEELMASK)
+
+#define BUCKET(rel, abs)						\
+    (((rel) <= (1 << (2*WHEELBITS)))					\
+    	? ((rel) <= (1 << WHEELBITS))					\
+            ? timeout_wheel[MASKWHEEL(0, (abs))]			\
+            : timeout_wheel[MASKWHEEL(1, (abs)) + WHEELSIZE]		\
+        : ((rel) <= (1 << (3*WHEELBITS)))				\
+            ? timeout_wheel[MASKWHEEL(2, (abs)) + 2*WHEELSIZE]		\
+            : timeout_wheel[MASKWHEEL(3, (abs)) + 3*WHEELSIZE])
+
+#define MOVEBUCKET(wheel, time)						\
+    CIRCQ_APPEND(&timeout_todo,						\
+        &timeout_wheel[MASKWHEEL((wheel), (time)) + (wheel)*WHEELSIZE])
 
 /*
- * All lists are locked with the same lock (which must also block out all
+ * All wheels are locked with the same lock (which must also block out all
  * interrupts).
  */
 struct simplelock _timeout_lock;
 
-#define timeout_list_lock(s) \
+#define timeout_wheel_lock(s) \
 	do { *(s) = splhigh(); simple_lock(&_timeout_lock); } while (0)
-#define timeout_list_unlock(s) \
+#define timeout_wheel_unlock(s) \
 	do { simple_unlock(&_timeout_lock); splx(s); } while (0)
+
+/*
+ * Circular queue definitions.
+ */
+
+#define CIRCQ_INIT(elem) do {                   \
+        (elem)->next = (elem);                  \
+        (elem)->prev = (elem);                  \
+} while (0)
+
+#define CIRCQ_INSERT(elem, list) do {           \
+        (elem)->prev = (list)->prev;            \
+        (elem)->next = (list);                  \
+        (list)->prev->next = (elem);            \
+        (list)->prev = (elem);                  \
+} while (0)
+
+#define CIRCQ_APPEND(fst, snd) do {             \
+        if (!CIRCQ_EMPTY(snd)) {                \
+                (fst)->prev->next = (snd)->next;\
+                (snd)->next->prev = (fst)->prev;\
+                (snd)->prev->next = (fst);      \
+                (fst)->prev = (snd)->prev;      \
+                CIRCQ_INIT(snd);                \
+        }                                       \
+} while (0)
+
+#define CIRCQ_REMOVE(elem) do {                 \
+        (elem)->next->prev = (elem)->prev;      \
+        (elem)->prev->next = (elem)->next;      \
+} while (0)
+
+#define CIRCQ_FIRST(elem) ((elem)->next)
+
+#define CIRCQ_EMPTY(elem) (CIRCQ_FIRST(elem) == (elem))
 
 /*
  * Some of the "math" in here is a bit tricky.
  *
  * We have to beware of wrapping ints.
- * We use the fact that any element added to the list must be added with a
- * positive time. That means that any element `to' on the list cannot be
+ * We use the fact that any element added to the queue must be added with a
+ * positive time. That means that any element `to' on the queue cannot be
  * scheduled to timeout further in time than INT_MAX, but to->to_time can
  * be positive or negative so comparing it with anything is dangerous.
  * The only way we can use the to->to_time value in any predictable way
- * is when we caluculate how far in the future `to' will timeout - 
- *"to->to_time - ticks". The result will always be positive for future
+ * is when we caluculate how far in the future `to' will timeout -
+ * "to->to_time - ticks". The result will always be positive for future
  * timeouts and 0 or negative for due timeouts.
  */
 extern int ticks;		/* XXX - move to sys/X.h */
 
 void
-timeout_startup()
+timeout_startup(void)
 {
+	int b;
 
-	TAILQ_INIT(&timeout_todo);
+	CIRCQ_INIT(&timeout_todo);
+	for (b = 0; b < BUCKETS; b++)
+		CIRCQ_INIT(&timeout_wheel[b]);
 	simple_lock_init(&_timeout_lock);
 }
 
 void
-timeout_set(new, fn, arg)
-	struct timeout *new;
-	void (*fn)(void *);
-	void *arg;
+timeout_set(struct timeout *new, void (*fn)(void *), void *arg)
 {
-
-#ifdef DIAGNOSTIC
-	struct timeout *to;
-	int s;
-
-	/*
-	 * Be careful. We could be called with random non-zero memory, but
-	 * on the other hand we could be called with a timeout that's
-	 * already queued.
-	 * XXX - this is expensive.
-	 */
-	timeout_list_lock(&s);
-	if (new->to_flags & TIMEOUT_ONQUEUE) {
-		TAILQ_FOREACH(to, &timeout_todo, to_list)
-			if (to == new)
-				panic("timeout_set: on queue");
-	}
-	timeout_list_unlock(s);
-#endif
-
 	new->to_func = fn;
 	new->to_arg = arg;
 	new->to_flags = TIMEOUT_INITIALIZED;
 }
 
+
 void
-timeout_add(new, to_ticks)
-	struct timeout *new;
-	int to_ticks;
+timeout_add(struct timeout *new, int to_ticks)
 {
-	struct timeout *to;
 	int s;
 
-	/*
-	 * You are supposed to understand this function before you fiddle.
-	 */
-
+	timeout_wheel_lock(&s);
 #ifdef DIAGNOSTIC
 	if (!(new->to_flags & TIMEOUT_INITIALIZED))
 		panic("timeout_add: not initialized");
 	if (to_ticks < 0)
 		panic("timeout_add: to_ticks < 0");
 #endif
-
-	timeout_list_lock(&s);
-
-	/*
-	 * First we prepare the new timeout so that we can return right
-	 * after the insertion in the queue (makes the code simpler).
-	 */
-
 	/* If this timeout was already on a queue we remove it. */
 	if (new->to_flags & TIMEOUT_ONQUEUE)
-		TAILQ_REMOVE(&timeout_todo, new, to_list);
+		CIRCQ_REMOVE(&new->to_list);
 	else
 		new->to_flags |= TIMEOUT_ONQUEUE;
+
 	/* Initialize the time here, it won't change. */
 	new->to_time = to_ticks + ticks;
 	new->to_flags &= ~TIMEOUT_TRIGGERED;
 
-	/*
-	 * Walk the list of pending timeouts and find an entry which
-	 * will timeout after we do, insert the new timeout there.
-	 */
-	TAILQ_FOREACH(to, &timeout_todo, to_list) {
-		if (to->to_time - ticks > to_ticks) {
-			TAILQ_INSERT_BEFORE(to, new, to_list);
-			goto out;
-		}
-	}
-
-	/* We can only get here if we're the last (or only) entry */
-	TAILQ_INSERT_TAIL(&timeout_todo, new, to_list);
-out:
-	timeout_list_unlock(s);
+	CIRCQ_INSERT(&new->to_list, &timeout_todo);
+	timeout_wheel_unlock(s);
 }
 
 void
-timeout_del(to)
-	struct timeout *to;
+timeout_del(struct timeout *to)
 {
 	int s;
 
-	timeout_list_lock(&s);
+	timeout_wheel_lock(&s);
 	if (to->to_flags & TIMEOUT_ONQUEUE) {
-		TAILQ_REMOVE(&timeout_todo, to, to_list);
+		CIRCQ_REMOVE(&to->to_list);
 		to->to_flags &= ~TIMEOUT_ONQUEUE;
 	}
 	to->to_flags &= ~TIMEOUT_TRIGGERED;
-	timeout_list_unlock(s);
+	timeout_wheel_unlock(s);
 }
 
 /*
@@ -190,74 +199,94 @@ timeout_del(to)
  * We don't need locking in here.
  */
 int
-timeout_hardclock_update()
+timeout_hardclock_update(void)
 {
-	struct timeout *to;
-
-	to = TAILQ_FIRST(&timeout_todo);
-
-	if (to == NULL)
-		return 0;
-
-	return (to->to_time - ticks <= 0);
+	MOVEBUCKET(0, ticks);
+	if (MASKWHEEL(0, ticks) == 0) {
+		MOVEBUCKET(1, ticks);
+		if (MASKWHEEL(1, ticks) == 0) {
+			MOVEBUCKET(2, ticks);
+			if (MASKWHEEL(2, ticks) == 0)
+				MOVEBUCKET(3, ticks);
+		}
+	}
+	return (!CIRCQ_EMPTY(&timeout_todo));
 }
 
 void
-softclock()
+softclock(void)
 {
-	int s;
 	struct timeout *to;
-	void (*fn) __P((void *));
+	int s;
+	void (*fn)(void *);
 	void *arg;
 
-	timeout_list_lock(&s);
-	while ((to = TAILQ_FIRST(&timeout_todo)) != NULL &&
-	       to->to_time - ticks <= 0) {
-#ifdef DIAGNOSTIC
-		if (!(to->to_flags & TIMEOUT_ONQUEUE))
-			panic("softclock: not onqueue");
+	timeout_wheel_lock(&s);
+	while (!CIRCQ_EMPTY(&timeout_todo)) {
+
+		to = (struct timeout *)CIRCQ_FIRST(&timeout_todo); /* XXX */
+		CIRCQ_REMOVE(&to->to_list);
+
+		/* If due run it, otherwise insert it into the right bucket. */
+		if (to->to_time - ticks > 0) {
+			CIRCQ_INSERT(&to->to_list,
+			    &BUCKET((to->to_time - ticks), to->to_time));
+		} else {
+#ifdef DEBUG
+			if (to->to_time - ticks < 0)
+				printf("timeout delayed %d\n", to->to_time -
+				    ticks);
 #endif
-		TAILQ_REMOVE(&timeout_todo, to, to_list);
-		to->to_flags &= ~TIMEOUT_ONQUEUE;
-		to->to_flags |= TIMEOUT_TRIGGERED;
+			to->to_flags &= ~TIMEOUT_ONQUEUE;
+			to->to_flags |= TIMEOUT_TRIGGERED;
 
-		fn = to->to_func;
-		arg = to->to_arg;
+			fn = to->to_func;
+			arg = to->to_arg;
 
-		timeout_list_unlock(s);
-		fn(arg);
-		timeout_list_lock(&s);
+			timeout_wheel_unlock(s);
+			fn(arg);
+			timeout_wheel_lock(&s);
+		}
 	}
-	timeout_list_unlock(s);
+	timeout_wheel_unlock(s);
 }
 
 #ifdef DDB
+void db_show_callout_bucket __P((struct circq *));
+
 void
-db_show_callout(addr, haddr, count, modif)
-	db_expr_t addr; 
-	int haddr; 
-	db_expr_t count;
-	char *modif;
+db_show_callout_bucket(struct circq *bucket)
 {
 	struct timeout *to;
-	int s;
+	struct circq *p;
 	db_expr_t offset;
 	char *name;
 
-	db_printf("ticks now: %d\n", ticks);
-	db_printf("    ticks      arg  func\n");
-
-	timeout_list_lock(&s);
-
-	TAILQ_FOREACH(to, &timeout_todo, to_list) {
+	for (p = CIRCQ_FIRST(bucket); p != bucket; p = CIRCQ_FIRST(p)) {
+		to = (struct timeout *)p; /* XXX */
 		db_find_sym_and_offset((db_addr_t)to->to_func, &name, &offset);
-
 		name = name ? name : "?";
-
-		db_printf("%9d %8x  %s\n", to->to_time, to->to_arg, name);
+		db_printf("%9d %2d/%-4d %8x  %s\n", to->to_time - ticks,
+		    (bucket - timeout_wheel) / WHEELSIZE,
+		    bucket - timeout_wheel, to->to_arg, name);
 	}
+}
 
-	timeout_list_unlock(s);
-		
+void
+db_show_callout(db_expr_t addr, int haddr, db_expr_t count, char *modif)
+{
+	int s;
+	int b;
+
+	db_printf("ticks now: %d\n", ticks);
+	db_printf("    ticks  wheel       arg  func\n");
+
+	timeout_wheel_lock(&s);
+
+	/* XXX: Show timeout_todo? */
+	for (b = 0; b < BUCKETS; b++)
+		db_show_callout_bucket(&timeout_wheel[b]);
+
+	timeout_wheel_unlock(s);
 }
 #endif

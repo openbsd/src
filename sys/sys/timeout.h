@@ -1,6 +1,6 @@
-/*	$OpenBSD: timeout.h,v 1.11 2001/09/12 15:48:45 art Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.12 2001/12/22 16:41:51 nordin Exp $	*/
 /*
- * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
+ * Copyright (c) 2000-2001 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
  *
  * Redistribution and use in source and binary forms, with or without 
@@ -30,8 +30,6 @@
 #ifndef _SYS_TIMEOUT_H_
 #define _SYS_TIMEOUT_H_
 
-#include <sys/queue.h>
-
 /*
  * Interface for handling time driven events in the kernel.
  *
@@ -56,8 +54,13 @@
  * These functions may be called in interrupt context (anything below splhigh).
  */
 
+struct circq {
+	struct circq *next;		/* next element */
+	struct circq *prev;		/* previous element */
+};
+
 struct timeout {
-	TAILQ_ENTRY(timeout) to_list;		/* timeout queue */
+	struct circq to_list;			/* timeout queue, don't move */
 	void (*to_func) __P((void *));		/* function to call */
 	void *to_arg;				/* function argument */
 	int to_time;				/* ticks on event */
@@ -70,9 +73,9 @@ struct timeout {
 #define TIMEOUT_ONQUEUE		2	/* timeout is on the todo queue */
 #define TIMEOUT_INITIALIZED	4	/* timeout is initialized */
 #define TIMEOUT_TRIGGERED       8       /* timeout is running or ran */
-void timeout_set __P((struct timeout *, void (*)(void *), void *));
-void timeout_add __P((struct timeout *, int));
-void timeout_del __P((struct timeout *));
+void timeout_set(struct timeout *, void (*)(void *), void *);
+void timeout_add(struct timeout *, int);
+void timeout_del(struct timeout *);
 
 /*
  * special macros
@@ -84,12 +87,12 @@ void timeout_del __P((struct timeout *));
 #define timeout_initialized(to) ((to)->to_flags & TIMEOUT_INITIALIZED)
 #define timeout_triggered(to) ((to)->to_flags & TIMEOUT_TRIGGERED)
 
-void timeout_startup __P((void));
+void timeout_startup(void);
 
 /*
  * called once every hardclock. returns non-zero if we need to schedule a
  * softclock.
  */
-int timeout_hardclock_update __P((void));
+int timeout_hardclock_update(void);
 
 #endif	/* _SYS_TIMEOUT_H_ */

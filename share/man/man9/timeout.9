@@ -1,4 +1,4 @@
-.\"	$OpenBSD: timeout.9,v 1.16 2001/11/07 10:23:33 art Exp $
+.\"	$OpenBSD: timeout.9,v 1.17 2001/12/22 16:41:51 nordin Exp $
 .\"
 .\" Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved.
@@ -155,10 +155,3 @@ These functions are implemented in the file
 .Xr hzto 9 ,
 .Xr sleep 9 ,
 .Xr splclock 9
-.Sh BUGS
-The
-.Fn timeout_add
-function executes in linear time depending on the number of pending timeouts.
-It will also block all interrupts while inserting the timeout
-to the timeout queue.
-Thus it is not recommended to use a large number of timeouts in the system.
