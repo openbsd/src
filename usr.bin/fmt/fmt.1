@@ -1,4 +1,4 @@
-.\" $OpenBSD: fmt.1,v 1.4 1998/04/25 23:02:26 millert Exp $
+.\" $OpenBSD: fmt.1,v 1.5 1998/09/26 19:54:44 aaron Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -53,14 +53,14 @@
 .Oc
 .Op name ...
 .Sh DESCRIPTION
-.Nm Fmt
+.Nm fmt
 is a simple text formatter which reads the concatenation of input
 files (or standard input if none are given) and produces on standard
 output a version of its input with lines as close to the
 .Ar goal
 length
 as possible without exceeding the
-.Ar maximum.
+.Ar maximum .
 The
 .Ar goal
 length defaults
@@ -104,7 +104,7 @@ Assume that the input files' tabs assume
 spaces per tab stop. The default is 8.
 .El
 .Pp
-.Nm Fmt
+.Nm fmt
 is meant to format mail messages prior to sending, but may also be useful
 for other simple tasks.
 For instance,
@@ -128,7 +128,6 @@ command appeared in
 .Bx 3 .
 .Pp
 The version described herein is a complete rewrite and appeared in
-.\" .Ox 2.4 .
 .Bx Open
 2.4.
 .\" .Sh AUTHOR

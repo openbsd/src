@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lock.1,v 1.3 1996/09/06 01:57:15 downsj Exp $
+.\"	$OpenBSD: lock.1,v 1.4 1998/09/26 19:55:00 aaron Exp $
 .\"	$NetBSD: lock.1,v 1.4 1994/12/22 01:16:21 jtc Exp $
 .\"
 .\" Copyright (c) 1987, 1990, 1993
@@ -46,13 +46,13 @@
 .Op Fl p
 .Op Fl t Ar timeout
 .Sh DESCRIPTION
-.Nm Lock
+.Nm lock
 requests a password from the user, reads it again for verification
 and then will normally not relinquish the terminal until the password is
 repeated.
 There are two other conditions under which it will terminate: it
 will timeout after some interval of time and it may be killed by someone
-with the appropriate permission.
+with the appropriate privileges.
 .Pp
 Options:
 .Pp

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkstr.1,v 1.2 1996/06/26 05:37:13 deraadt Exp $
+.\"	$OpenBSD: mkstr.1,v 1.3 1998/09/26 19:55:09 aaron Exp $
 .\"	$NetBSD: mkstr.1,v 1.3 1995/09/28 06:22:19 tls Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -44,9 +44,9 @@
 .Nm mkstr
 .Op Fl
 .Ar messagefile
-.Ar prefix file ...
+.Ar prefix file Op Ar ...
 .Sh DESCRIPTION
-.Nm Mkstr
+.Nm mkstr
 creates files containing error messages extracted from C source,
 and restructures the same C source, to utilize the created error message
 file.
@@ -57,7 +57,7 @@ reduce swapping (see
 .Sx BUGS
 section below).
 .Pp
-.Nm Mkstr
+.Nm mkstr
 processes each of the specified
 .Ar files ,
 placing a restructured version of the input in a file whose name
@@ -73,18 +73,18 @@ mkstr pistrings xx *.c
 .Pp
 This command causes all the error messages from the C source
 files in the current directory to be placed in the file
-.Ar pistrings
+.Dq pistrings
 and restructured copies of the sources to be placed in
 files whose names are prefixed with
-.Ar \&xx .
+.Dq \&xx .
 .Pp
 Options:
 .Bl -tag -width indent
 .It Fl
 Error messages are placed at the end of the specified
-message file for recompiling part of a large
-.Nm mkstr
-ed
+.Ar messagefile
+for recompiling part of a large
+.Nm mkstr Ns ed
 program.
 .El
 .Pp
@@ -96,7 +96,7 @@ in the input stream.
 Each time it occurs, the C string starting at the
 .Sq \&"\&
 is stored
-in the message file followed by a null character and a new-line character;
+in the message file followed by a null character and a newline character.
 The new source is restructured with
 .Xr lseek 2
 pointers into the error message file for retrieval.
@@ -122,19 +122,19 @@ oops:
 }
 .Ed
 .Sh SEE ALSO
-.Xr lseek 2 ,
-.Xr xstr 1
+.Xr xstr 1 ,
+.Xr lseek 2
 .Sh HISTORY
-.Nm Mkstr
+.Nm mkstr
 appeared in
 .Bx 3.0 .
 .Sh BUGS
 .Nm mkstr
 was intended for the limited architecture of the PDP 11 family.
 Very few programs actually use it. The pascal interpreter,
-.Xr \&pi 1
+.Xr \&pi 1 ,
 and the editor,
-.Xr \&ex 1
+.Xr \&ex 1 ,
 are two programs that are built this way.
 It is not an efficient method, the error messages
 should be stored in the program text.

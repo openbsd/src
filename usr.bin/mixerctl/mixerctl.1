@@ -1,4 +1,4 @@
-.\" $OpenBSD: mixerctl.1,v 1.7 1998/09/01 16:38:24 deraadt Exp $
+.\" $OpenBSD: mixerctl.1,v 1.8 1998/09/26 19:55:07 aaron Exp $
 .\" $NetBSD: mixerctl.1,v 1.8 1998/05/09 12:41:16 augustss Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -51,13 +51,13 @@
 .Op Fl f Ar file
 .Op Fl n
 .Op Fl v
-.Ar name ...
+.Ar name Op Ar ...
 .br
 .Nm
 .Op Fl f Ar file
 .Op Fl n
 .Fl w
-.Ar name=value ...
+.Ar name=value Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm
@@ -112,7 +112,7 @@ indicating that the control affects the input resp. output to the
 mixer.  The
 .Va name
 indicates what part of the mixer the control affects.
-Continous mixer values, e.g., volume, have numeric values
+Continuous mixer values, e.g., volume, have numeric values
 in the range 0-255.  If value can be set for each channel independently
 the values are printed separated by commas.  Discrete mixer values, e.g.,
 the recording source, have symbolic names.  Depending on the mixer it
@@ -139,7 +139,7 @@ mixer audio device
 .El
 .Sh ENVIRONMENT
 .Bl -tag -width MIXERDEVICE
-.It Pa MIXERDEVICE
+.It Ev MIXERDEVICE
 the mixer device to use.
 .Sh SEE ALSO
 .Xr audioctl 1 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hexdump.1,v 1.4 1997/09/02 15:31:51 kstailey Exp $
+.\"	$OpenBSD: hexdump.1,v 1.5 1998/09/26 19:54:51 aaron Exp $
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -47,10 +47,12 @@
 .Bk -words
 .Op Fl s Ar skip
 .Ek
-.Ar file  ...
+.Ar file Op Ar ...
 .Sh DESCRIPTION
-The hexdump utility is a filter which displays the specified files, or
-the standard input, if no files are specified, in a user specified
+The
+.Nm hexdump
+utility is a filter which displays the specified files, or
+the standard input, if no files are specified, in a user-specified
 format.
 .Pp
 The options are as follows:
@@ -66,7 +68,7 @@ Display the input offset in hexadecimal, followed by sixteen
 space-separated, three column, space-filled, characters of input
 data per line.
 .It Fl d
-.Em Two-byte decimal display.
+.Em Two-byte decimal display .
 Display the input offset in hexadecimal, followed by eight
 space-separated, five column, zero-filled, two-byte units
 of input data, in unsigned decimal, per line.
@@ -75,7 +77,7 @@ Specify a format string to be used for displaying data.
 .It Fl f Ar format_file 
 Specify a file that contains one or more newline separated format strings.
 Empty lines and lines whose first non-blank character is a hash mark
-.Pf ( Cm \&# )
+.Pq Dq \&#
 are ignored.
 .It Fl n Ar length 
 Interpret only
@@ -162,7 +164,7 @@ Any whitespace before or after the slash is ignored.
 .Pp
 The format is required and must be surrounded by double quote
 (" ") marks.
-It is interpreted as a fprintf-style format string (see
+It is interpreted as an fprintf-style format string (see
 .Xr fprintf 3 ) ,
 with the
 following exceptions:
@@ -196,7 +198,8 @@ described in the C standard are supported:
 .Ed
 .El
 .Pp
-Hexdump also supports the following additional conversion strings:
+.Nm hexdump
+also supports the following additional conversion strings:
 .Bl -tag -width Fl
 .It Cm \&_a Ns Op Cm dox 
 Display the input offset, cumulative across input files, of the
@@ -307,7 +310,7 @@ to specifying the
 option.
 .Pp
 .Nm hexdump
-exits 0 on success and >0 if an error occurred.
+exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
 Display the input in perusal format:
 .Bd -literal -offset indent

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.15 1997/11/13 08:30:33 deraadt Exp $
+.\"	$OpenBSD: find.1,v 1.16 1998/09/26 19:54:43 aaron Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -48,7 +48,7 @@
 .Op Ar file ...
 .Ar expression
 .Sh DESCRIPTION
-.Nm Find
+.Nm find
 recursively descends the directory tree for each
 .Ar file
 listed, evaluating an
@@ -60,19 +60,15 @@ The options are as follows:
 .Pp
 .Bl -tag -width Ds
 .It Fl H
-The
-.Fl H
-option causes the file information and file type (see
-.Xr stat  2  ) ,
+Causes the file information and file type (see
+.Xr stat  2  )
 returned for each symbolic link encountered on the command line to be 
 those of the file referenced by the link, not the link itself.
 If the referenced file does not exist, the file information and type will
 be for the link itself.  File information of all symbolic links not on 
 the command line is that of the link itself.
 .It Fl d
-The
-.Fl d
-option causes
+Causes
 .Nm find
 to perform a depth\-first traversal, i.e. directories
 are visited in post\-order and all entries in a directory will be acted
@@ -83,27 +79,21 @@ visits directories in pre\-order, i.e. before their contents.
 Note, the default is
 .Ar not
 a breadth\-first traversal.
-.It Fl f
-The
-.Fl f
-option specifies a file hierarchy for
+.It Fl f Ar file
+Specifies a file hierarchy for
 .Nm find
 to traverse.
 File hierarchies may also be specified as the operands immediately
 following the options.
 .It Fl h
-The
-.Fl h
-option causes the file information and file type (see
+Causes the file information and file type (see
 .Xr stat  2  ) ,
 returned for each symbolic link to be those of the file referenced by the
 link, not the link itself.
 If the referenced file does not exist, the file information and type will
 be for the link itself.
 .It Fl X
-The
-.Fl X
-option is a modification to permit
+Permit
 .Nm
 to be safely used in conjunction with
 .Xr xargs 1 .
@@ -111,18 +101,16 @@ If a file name contains any of the delimiting characters used by
 .Xr xargs ,
 a diagnostic message is displayed on standard error, and the file
 is skipped.
-The delimiting characters include single (`` ' '') and double (`` " '')
-quotes, backslash (``\e''), space, tab and newline characters.
+The delimiting characters include single (``''') and double (``"'')
+quotes, backslash (``\e''), space, tab and newline (``\en'') characters.
 As an alternative, the
 .Fl print0
 function may be used safely in conjunction with the
 .Fl 0
 argument to
-.Xr xargs 1
+.Xr xargs 1 .
 .It Fl x
-The
-.Fl x
-option prevents
+Prevents
 .Nm find
 from descending into directories that have a device number different
 than that of the file from which the descent began.
@@ -162,10 +150,10 @@ True if the program named
 .Ar utility
 returns a zero value as its exit status.
 Optional arguments may be passed to the utility.
-The expression must be terminated by a semicolon (``;'').
+The expression must be terminated by a semicolon (`;').
 If the string ``{}'' appears anywhere in the utility name or the
 arguments it is replaced by the pathname of the current file.
-.Ar Utility
+.Ar utility
 will be executed from the directory from which
 .Nm find
 was executed.
@@ -175,7 +163,7 @@ The
 primary is identical to the
 .Ic -exec
 primary with the exception that
-.Ar Utility
+.Ar utility
 will be executed from the directory that holds
 the current file.  The filename substituted for
 the string ``{}'' is not qualified.
@@ -187,7 +175,6 @@ True if the file is contained in a file system of type
 Two special file system types are recognized: ``local'' and ``rdonly''.
 These do not describe actual file system types;
 the former matches any file system physically mounted on the system where
-the
 .Nm find
 is being executed, and the latter matches any file system which is
 mounted read-only.
@@ -198,7 +185,7 @@ If
 .Ar gname
 is numeric and there is no such group name, then
 .Ar gname
-is treated as a group id.
+is treated as a group ID.
 .It Ic -inum Ar n 
 True if the file has inode number
 .Ar n  .
@@ -241,11 +228,13 @@ primary is identical to the
 .Ic -exec
 primary with the exception that
 .Nm find
-requests user affirmation for the execution of the utility by printing
+requests user affirmation for the execution of
+.Ar utility
+by printing
 a message to the terminal and reading a response.
 If the response is other than ``y'' the command is not executed and the
 value of the
-.Ar \&ok
+.Ic \&ok
 expression is false.
 .It Ic -name Ar pattern 
 True if the last component of the pathname being examined matches
@@ -254,7 +243,7 @@ Special shell pattern matching characters (``['', ``]'', ``*'', and ``?'')
 may be used as part of
 .Ar pattern  .
 These characters may be matched explicitly by escaping them with a
-backslash (``\e'').
+backslash (`\e').
 .It Ic -newer Ar file 
 True if the current file has a more recent last modification time than
 .Ar file  .
@@ -269,8 +258,8 @@ Special shell pattern matching characters (``['', ``]'', ``*'', and ``?'')
 may be used as part of
 .Ar pattern  .
 These characters may be matched explicitly by escaping them with a
-backslash (``\e'').
-Slashes (``/'') are treated as normal characters and do not have to be
+backslash (`\e').
+Slashes (`/') are treated as normal characters and do not have to be
 matched explicitly.
 .It Ic -perm Op Fl Ns Ar mode 
 The
@@ -279,7 +268,7 @@ may be either symbolic (see
 .Xr chmod  1  )
 or an octal number.
 If the mode is symbolic, a starting value of zero is assumed and the
-mode sets or clears permissions without regard to the process' file mode
+mode sets or clears permissions without regard to the process's file mode
 creation mask.
 If the mode is octal, only bits 07777
 .Pf ( Dv S_ISUID
@@ -297,13 +286,13 @@ of the file's mode bits participate
 in the comparison.
 If the mode is preceded by a dash (``\-''), this primary evaluates to true
 if at least all of the bits in the mode are set in the file's mode bits.
-If the mode is not preceded by a dash, this primary evaluates to true if
-the bits in the mode exactly match the file's mode bits.
+If the mode is not preceded by a dash (``\-''), this primary evaluates to
+true if the bits in the mode exactly match the file's mode bits.
 Note, the first character of a symbolic mode may not be a dash (``\-'').
 .It Ic -print
 This primary always evaluates to true.
 It prints the pathname of the current file to standard output, followed
-by a newline character.
+by a newline (``\en'') character.
 If neither
 .Ic -exec ,
 .Ic -ls ,
@@ -366,13 +355,13 @@ If
 .Ar uname
 is numeric and there is no such user name, then
 .Ar uname
-is treated as a user id.
+is treated as a user ID.
 .El
 .Pp
 All primaries which take a numeric argument allow the number to be
 preceded by a plus sign (``+'') or a minus sign (``\-'').
 A preceding plus sign means ``more than n'', a preceding minus sign means
-``less than n'' and neither means ``exactly n'' .
+``less than n'', and neither means ``exactly n'' .
 .Sh OPERATORS
 The primaries may be combined using the following operators.
 The operators are listed in order of decreasing precedence.
@@ -416,7 +405,6 @@ Primaries which themselves take arguments expect each argument
 to be a separate argument to
 .Nm find  .
 .Sh EXAMPLES
-.Pp
 The following examples are shown as given to the shell:
 .Bl -tag -width findx
 .It Li "find  /  \e!  -name  \*q*.c\*q  -print"
@@ -436,8 +424,8 @@ that are newer than ``ttt''.
 .Xr locate 1 ,
 .Xr stat 2 ,
 .Xr fts 3 ,
-.Xr getpwent 3 ,
 .Xr getgrent 3 ,
+.Xr getpwent 3 ,
 .Xr strmode 3 ,
 .Xr symlink 7
 .Sh STANDARDS

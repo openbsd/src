@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.updatedb.8,v 1.4 1998/08/12 07:27:09 deraadt Exp $
+.\"	$OpenBSD: locate.updatedb.8,v 1.5 1998/09/26 19:54:59 aaron Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -44,7 +44,7 @@
 .Op Fl -prunepaths='dir1 dir2...'
 .Op Fl -filesystems='type1 type2...'
 .Sh DESCRIPTION
-.Nm Locate.updatedb
+.Nm locate.updatedb
 updates the database used by
 .Xr locate 1 .
 It is typically run once a week by the
@@ -73,13 +73,13 @@ A list of filesystem types to be traversed by
 .Sh FILES
 .Bl -tag -width /var/db/locate.database -compact
 .It Pa /var/db/locate.database
-the default database
+default database
 .It Pa /etc/locate.rc
-the configuration file
+configuration file
 .El
 .Sh SEE ALSO
-.Xr locate 1 ,
-.Xr find 1 
+.Xr find 1 ,
+.Xr locate 1
 .Rs
 .%A Woods, James A.
 .%D 1983

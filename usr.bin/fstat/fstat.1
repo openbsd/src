@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fstat.1,v 1.9 1998/09/08 18:59:00 deraadt Exp $
+.\"	$OpenBSD: fstat.1,v 1.10 1998/09/26 19:54:46 aaron Exp $
 .\" Copyright (c) 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -47,7 +47,7 @@
 .Op Fl u Ar user
 .Op Ar filename...
 .Sh DESCRIPTION
-.Nm Fstat
+.Nm fstat
 identifies open files.
 A file is considered open by a process if it was explicitly opened,
 is the working directory, root directory, active pure text, or kernel
@@ -103,11 +103,11 @@ Restrict reports to the specified files.
 The following fields are printed:
 .Bl -tag -width MOUNT
 .It Li USER
-The username of the owner of the process (effective uid).
+The username of the owner of the process (effective UID).
 .It Li CMD
 The command name of the process.
 .It Li PID
-The process id.
+The process ID.
 .It Li FD
 The file number in the per-process open file table or one of the following
 special names:
@@ -148,7 +148,7 @@ using a symbolic format (see
 otherwise, the mode is printed
 as an octal number.
 .It Li SZ\&|DV
-If the file is not a character or block special, prints the size of
+If the file is not a character or block special file, prints the size of
 the file in bytes.  Otherwise, if the
 .Fl n
 flag is not specified, prints
@@ -164,7 +164,7 @@ This column describes the access mode that the file allows.
 The letter ``r'' indicates open for reading;
 the letter ``w'' indicates open for writing.
 This field is useful when trying to find the processes that are
-preventing a filesystem from being down graded to read-only.
+preventing a filesystem from being downgraded to read-only.
 .It Li NAME
 If filename arguments are specified and the
 .Fl f
@@ -184,8 +184,8 @@ In all cases the first field is the domain name, the second field
 is the socket type (stream, dgram, etc), and the third is the socket
 flags field (in hex).
 The remaining fields are protocol dependent.
-For tcp, it is the address of the tcpcb, and for udp, the inpcb (socket pcb).
-For unix domain sockets, it's the address of the socket pcb and the address
+For TCP, it is the address of the tcpcb, and for UDP, the inpcb (socket pcb).
+For Unix domain sockets, it's the address of the socket pcb and the address
 of the connected pcb (if connected).
 Otherwise the protocol number and address of the socket itself are printed.
 The attempt is to make enough information available to 
@@ -194,10 +194,10 @@ permit further analysis without duplicating
 .Pp
 For example, the addresses mentioned above are the addresses which the
 .Dq Li netstat -A
-command would print for tcp, udp, and unixdomain.
+command would print for TCP, UDP, and Unix domain.
 Note that since pipes are implemented using sockets, a pipe appears as a
-connected unix domain stream socket.
-A unidirectional unix domain socket indicates the direction of flow with
+connected Unix domain stream socket.
+A unidirectional Unix domain socket indicates the direction of flow with
 an arrow (``<-'' or ``->''), and a full duplex socket shows a double arrow
 (``<->'').
 .Pp

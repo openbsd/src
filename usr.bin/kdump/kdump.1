@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kdump.1,v 1.3 1996/07/08 22:09:41 ccappuc Exp $
+.\"	$OpenBSD: kdump.1,v 1.4 1998/09/26 19:54:56 aaron Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -46,10 +46,10 @@
 .Op Fl m Ar maxdata
 .Op Fl t Op cenis
 .Sh DESCRIPTION
-.Nm Kdump
+.Nm kdump
 displays the kernel trace files produced with
 .Xr ktrace 1
-in human readable format.
+in human-readable format.
 By default, the file
 .Pa ktrace.out
 in the current directory is displayed.
@@ -75,7 +75,7 @@ bytes when decoding
 Suppress ad hoc translations.
 Normally
 .Nm kdump
-tries to decode many system calls into a more human readable format.
+tries to decode many system calls into a more human-readable format.
 For example,
 .Xr ioctl 2
 values are replaced with the macro name and
@@ -100,5 +100,5 @@ option of
 .Sh HISTORY
 The
 .Nm kdump
-command appears in
+command appeared in
 .Bx 4.4 .

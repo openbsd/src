@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getopt.1,v 1.2 1996/06/26 05:33:44 deraadt Exp $	-*- nroff -*-
+.\"	$OpenBSD: getopt.1,v 1.3 1998/09/26 19:54:50 aaron Exp $	-*- nroff -*-
 .Dd June 21, 1993
 .Dt GETOPT 1
 .Os
@@ -8,7 +8,7 @@
 .Sh SYNOPSIS
 .Nm set \-\- \`getopt optstring $*\`
 .Sh DESCRIPTION
-.Nm Getopt
+.Nm getopt
 is used to break up options in command lines for easy parsing by
 shell procedures, and to check for legal options.
 .Op Optstring
@@ -21,7 +21,7 @@ separated from it by white space.
 The special option
 .Dq \-\-
 is used to delimit the end of the options.
-.Nm Getopt
+.Nm getopt
 will place
 .Dq \-\-
 in the arguments at the end of the options,
@@ -75,7 +75,7 @@ cmd \-a \-oarg \-\- file file
 .Xr sh 1 ,
 .Xr getopt 3
 .Sh DIAGNOSTICS
-.Nm Getopt
+.Nm getopt
 prints an error message on the standard error output when it
 encounters an option letter not included in
 .Op optstring .

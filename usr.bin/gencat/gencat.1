@@ -1,4 +1,4 @@
-.\"	$OpenBSD: gencat.1,v 1.3 1997/06/11 15:39:54 kstailey Exp $
+.\"	$OpenBSD: gencat.1,v 1.4 1998/09/26 19:54:49 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Ken Stailey
 .\"
@@ -33,8 +33,8 @@
 .Nd NLS catalog compiler
 .Sh SYNOPSIS
 .Nm gencat
-.Ar "output-file"
-.Ar "input-file..."
+.Ar output-file
+.Ar input-file Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm gencat
@@ -48,7 +48,7 @@ functions.
 .Pp
 The
 .Nm gencat
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr catclose 3 ,
 .Xr catgets 3 ,

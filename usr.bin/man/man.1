@@ -1,4 +1,4 @@
-.\"	$OpenBSD: man.1,v 1.7 1998/09/14 05:43:47 deraadt Exp $
+.\"	$OpenBSD: man.1,v 1.8 1998/09/26 19:55:06 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 .Op Fl s Ar section
 .Op Fl S Ar subsection
 .Op Ar section
-.Ar name Ar ...
+.Ar name Op Ar ...
 .Nm man
 .Fl k Ar keyword
 .Nm man
@@ -65,7 +65,7 @@ manual pages entitled
 The options are as follows:
 .Bl -tag -width indent
 .It Fl k
-Locate manpages matching
+Locate man pages matching
 .Ar keyword
 in much the same way as
 .Xr apropos 1
@@ -92,7 +92,7 @@ and
 .Ar name
 combination.
 (Normally, only the first manual page found is displayed.)
-.It Fl C
+.It Fl C Ar file
 Use the specified 
 .Ar file
 instead of the default configuration file.
@@ -109,7 +109,7 @@ This is done by default if the standard output is not a terminal device.
 Display only the
 .Dq Tn SYNOPSIS
 lines of the requested manual pages.
-.It Fl M
+.It Fl M Ar path
 Override the list of standard directories which
 .Nm man
 searches for manual pages.
@@ -122,7 +122,7 @@ The subdirectories to be searched, and their search order,
 is specified by the ``_subdir'' line in the
 .Nm man
 configuration file.
-.It Fl m
+.It Fl m Ar path
 Augment the list of standard directories which
 .Nm man
 searches for manual pages.
@@ -139,11 +139,11 @@ The subdirectories to be searched, and their search order,
 is specified by the ``_subdir'' line in the
 .Nm man
 configuration file.
-.It Fl s
+.It Fl s Ar section
 Another way of specifying the section, for compatibility with
 .Nm man
 on other operating systems.
-.It Fl S
+.It Fl S Ar subsection
 Specifies the machine-dependent subsection.  This overrides the
 .Ev MACHINE
 environment variable.  See the ``ENVIRONMENT'' section below.
@@ -156,7 +156,7 @@ and
 .Ar name
 combination.
 .It Fl f
-Locate manpages matching the
+Locate man pages matching the
 .Ar command
 in much the same way
 .Xr whatis 1
@@ -213,7 +213,7 @@ will be used instead of the standard pagination program,
 .Sh FILES
 .Bl -tag -width /etc/man.conf -compact
 .It Pa /etc/man.conf
-default man configuration file.
+default man configuration file
 .El
 .Sh SEE ALSO
 .Xr apropos 1 ,

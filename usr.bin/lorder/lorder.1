@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lorder.1,v 1.2 1996/06/26 05:36:08 deraadt Exp $
+.\"	$OpenBSD: lorder.1,v 1.3 1998/09/26 19:55:02 aaron Exp $
 .\"	$NetBSD: lorder.1,v 1.5 1995/08/31 22:42:44 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -42,7 +42,7 @@
 .Nd list dependencies for object files
 .Sh SYNOPSIS
 .Nm lorder
-.Ar
+.Ar file Op Ar ...
 .Sh DESCRIPTION
 The
 .Nm lorder
@@ -50,7 +50,7 @@ utility uses
 .Xr nm 1
 to determine interdependencies in the list of object files
 specified on the command line.
-.Nm Lorder
+.Nm lorder
 outputs a list of file names where the first file contains a symbol
 which is defined by the second file.
 .Pp

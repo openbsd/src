@@ -1,4 +1,4 @@
-.\"	$OpenBSD: finger.1,v 1.5 1997/06/02 13:52:43 kstailey Exp $
+.\"	$OpenBSD: finger.1,v 1.6 1998/09/26 19:54:44 aaron Exp $
 .\"
 .\" Copyright (c) 1989, 1990 The Regents of the University of California.
 .\" All rights reserved.
@@ -47,12 +47,12 @@
 .Sh DESCRIPTION
 The
 .Nm finger
-displays information about the system users.
+utility displays information about the system users.
 .Pp
 Options are:
 .Bl -tag -width flag
 .It Fl s
-.Nm Finger
+.Nm finger
 displays the user's login name, real name, terminal name and write
 status (as a ``*'' before the terminal name if write permission is
 denied), idle time, login time, and either office location and office
@@ -163,7 +163,7 @@ If no arguments are specified,
 .Nm finger
 will print an entry for each user currently logged into the system.
 .Pp
-.Nm Finger
+.Nm finger
 may be used to look up users on a remote machine.
 The format is to specify a
 .Ar user

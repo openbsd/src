@@ -1,4 +1,4 @@
-.\" 	$OpenBSD: ftp.1,v 1.21 1998/09/19 20:47:16 millert Exp $
+.\" 	$OpenBSD: ftp.1,v 1.22 1998/09/26 19:54:48 aaron Exp $
 .\" 	$NetBSD: ftp.1,v 1.22 1997/08/18 10:20:22 lukem Exp $
 .\"
 .\" Copyright (c) 1985, 1989, 1990, 1993
@@ -44,21 +44,10 @@
 file transfer program
 .Sh SYNOPSIS
 .Nm
-.Op Fl A
-.Op Fl a
-.Op Fl d
-.Op Fl e
-.Op Fl g
-.Op Fl i
-.Op Fl m
-.Op Fl n
+.Op Fl AVadegimnptu
 .Op Fl o Ar output
-.Op Fl p
 .Op Fl P Ar port
 .Op Fl r Ar seconds
-.Op Fl t
-.Op Fl v
-.Op Fl V
 .Op Ar host Op Ar port
 .Nm ftp
 ftp://[\fIuser\fR:\fIpassword\fR@]\fIhost\fR[:\fIport\fR]/\fIfile\fR[/]
@@ -67,7 +56,7 @@ http://\fIhost\fR[:\fIport\fR]/\fIfile\fR
 .Nm ftp
 \fIhost\fR:[/\fIpath\fR/]\fIfile\fR[/]
 .Sh DESCRIPTION
-.Nm Ftp
+.Nm ftp
 is the user interface to the
 .Tn ARPANET
 standard File Transfer Protocol.
@@ -94,7 +83,7 @@ to very old servers that do not implement passive mode properly.
 .It Fl a
 Causes
 .Nm
-to bypass normal login procedure, and use an anonymous login instead.
+to bypass the normal login procedure and use an anonymous login instead.
 .It Fl d
 Enables debugging.
 .It Fl e
@@ -129,10 +118,9 @@ and an account with which to login.
 .It Fl o Ar output
 When fetching a single file or url, save the contents in
 .Ar output .
-To make the contents go to
-.Ar stdout ,
+To make the contents go to stdout,
 use
-.Qq -
+.Dq -
 for
 .Ar output .
 .It Fl p
@@ -175,12 +163,12 @@ will enter its command interpreter and await instructions
 from the user.
 When
 .Nm
-is awaiting commands from the user the prompt
+is awaiting commands the prompt
 .Ql ftp>
 is provided to the user.
 The following commands are recognized
 by
-.Nm ftp  :
+.Nm ftp :
 .Bl -tag -width Fl
 .It Ic \&! Op Ar command Op Ar args
 Invoke an interactive shell on the local machine.
@@ -233,7 +221,7 @@ Terminate the
 session with the remote server
 and exit
 .Nm ftp .
-An end of file will also terminate the session and exit.
+An end-of-file will also terminate the session and exit.
 .It Ic case
 Toggle remote computer file name case mapping during
 .Ic mget
@@ -259,14 +247,14 @@ system to
 .It Ic close
 Terminate the
 .Tn FTP
-session with the remote server, and
+session with the remote server and
 return to the command interpreter.
 Any defined macros are erased.
 .It Ic \&cr
 Toggle carriage return stripping during
-ascii type file retrieval.
+ASCII type file retrieval.
 Records are denoted by a carriage return/linefeed sequence
-during ascii type file transfer.
+during ASCII type file transfer.
 When
 .Ic \&cr
 is on (the default), carriage returns are stripped from this
@@ -277,7 +265,7 @@ delimiter.
 Records on
 .Pf non\- Ns Ux
 remote systems may contain single linefeeds;
-when an ascii type transfer is made, these linefeeds may be
+when an ASCII type transfer is made, these linefeeds may be
 distinguished from a record delimiter only when
 .Ic \&cr
 is off.
@@ -399,7 +387,7 @@ Expansion of a directory name is likely to be
 different from expansion of the name of an ordinary file:
 the exact result depends on the foreign operating system and ftp server,
 and can be previewed by doing
-.Ql mls remote-files \-
+.Dq mls remote-files \- .
 Note:
 .Ic mget
 and
@@ -473,7 +461,7 @@ command is executed.
 The macro processor interprets `$' and `\e' as special characters.
 A `$' followed by a number (or numbers) is replaced by the
 corresponding argument on the macro invocation command line.
-A `$' followed by an `i' signals that macro processor that the
+A `$' followed by an `i' tells the macro processor that the
 executing macro is to be looped.
 On the first pass `$i' is
 replaced by the first argument on the macro invocation command line,
@@ -559,7 +547,7 @@ A synonym for
 .Ic mput .
 .It Ic newer Ar file-name
 Get the file only if the modification time of the remote file is more
-recent that the file on the current system.
+recent than the file on the current system.
 If the file does not
 exist on the current system, the remote file is considered
 .Ic newer .
@@ -589,7 +577,7 @@ The mapping follows the pattern set by
 .Ar inpattern
 and
 .Ar outpattern .
-.Op Ar Inpattern
+.Ar inpattern
 is a template for incoming filenames (which may have already been
 processed according to the
 .Ic ntrans
@@ -602,7 +590,7 @@ sequences `$1', `$2', ..., `$9' in
 Use `\\' to prevent this special treatment of the `$' character.
 All other characters are treated literally, and are used to determine the
 .Ic nmap
-.Op Ar inpattern
+.Ar inpattern
 variable values.
 For example, given
 .Ar inpattern
@@ -615,7 +603,7 @@ The sequences `$1', `$2', ...., `$9' are replaced by any value resulting
 from the
 .Ar inpattern
 template.
-The sequence `$0' is replace by the original filename.
+The sequence `$0' is replaced by the original filename.
 Additionally, the sequence
 .Ql Op Ar seq1 , Ar seq2
 is replaced by
@@ -673,8 +661,8 @@ Establish a connection to the specified
 .Ar host
 .Tn FTP
 server.
-An optional port number may be supplied,
-in which case,
+An optional port number may be supplied
+in which case
 .Nm
 will attempt to contact an
 .Tn FTP
@@ -747,21 +735,21 @@ When prompting is on, the following commands are available at a prompt:
 Do not transfer the file.
 .It Ic a
 Answer
-.Sq yes
-to the current file, and automatically answer
-.Sq yes
+.Dq yes
+to the current file and automatically answer
+.Dq yes
 to any remaining files for the current command.
 .It Ic p
 Answer
-.Sq yes
-to the current file, and turn off prompt mode
-(as is
+.Dq yes
+to the current file and turn off prompt mode
+(as if
 .Dq prompt off
 had been given).
 .El
 .Pp
 Any other reponse will answer
-.Sq yes
+.Dq yes
 to the current file.
 .It Ic proxy Ar ftp-command
 Execute an ftp command on a secondary control connection.
@@ -857,7 +845,7 @@ on remote machine.
 .It Ic rename Op Ar from Op Ar to
 Rename the file
 .Ar from
-on the remote machine, to the file
+on the remote machine to the file
 .Ar to .
 .It Ic reset
 Clear reply queue.
@@ -875,7 +863,9 @@ indicated
 .Ar marker .
 On
 .Ux
-systems, marker is usually a byte
+systems,
+.Ar marker
+is usually a byte
 offset into the file.
 .It Ic rmdir Ar directory-name
 Delete a directory on the remote machine.
@@ -1119,7 +1109,7 @@ Otherwise, the remote name is used as the local name.
 To abort a file transfer, use the terminal interrupt key
 (usually Ctrl-C).
 Sending transfers will be immediately halted.
-Receiving transfers will be halted by sending a ftp protocol
+Receiving transfers will be halted by sending an ftp protocol
 .Dv ABOR
 command to the remote server, and discarding any further data received.
 The speed at which this is accomplished depends upon the remote
@@ -1151,10 +1141,8 @@ commands are processed according to the following rules.
 .It
 If the file name
 .Sq Fl
-is specified, the
-.Ar stdin
-(for reading) or
-.Ar stdout
+is specified, the stdin
+(for reading) or stdout
 (for writing) is used.
 .It
 If the first character of the file name is
@@ -1365,7 +1353,7 @@ command
 By default, this is bound to the TAB key.
 .Sh ENVIRONMENT
 .Nm
-utilizes the following environment variables.
+utilizes the following environment variables:
 .Bl -tag -width "FTPSERVERPORT"
 .It Ev FTPMODE
 Overrides the default operation mode.  Recognized values are:
@@ -1426,10 +1414,10 @@ by the remote server.
 An error in the treatment of carriage returns
 in the
 .Bx 4.2
-ascii-mode transfer code
+ASCII-mode transfer code
 has been corrected.
 This correction may result in incorrect transfers of binary files
 to and from
 .Bx 4.2
-servers using the ascii type.
+servers using the ASCII type.
 Avoid this problem by using the binary image type.

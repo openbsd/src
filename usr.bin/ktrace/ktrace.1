@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ktrace.1,v 1.5 1997/06/18 09:44:08 deraadt Exp $
+.\"	$OpenBSD: ktrace.1,v 1.6 1998/09/26 19:54:56 aaron Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -49,9 +49,9 @@
 .Op Fl adi
 .Op Fl f Ar trfile
 .Op Fl t Ar trstr
-command
+.Ar command
 .Sh DESCRIPTION
-.Nm Ktrace
+.Nm ktrace
 enables kernel trace logging for the specified processes.
 Kernel trace data is logged to the file
 .Pa ktrace.out .
@@ -69,7 +69,7 @@ processes, and, if executed by root, all processes:
 .Pp
 .Dl \&$ ktrace -C
 .Pp
-The trace file is not human readable; use
+The trace file is not human-readable; use
 .Xr kdump 1
 to decode it.
 .Pp
@@ -98,7 +98,7 @@ flag is permitted).
 Inherit; pass the trace flags to all future children of the designated
 processes.
 .It Fl p Ar pid 
-Enable (disable) tracing on the indicated process id (only one
+Enable (disable) tracing on the indicated process ID (only one
 .Fl p
 flag is permitted).
 .It Fl t Ar trstr 
@@ -164,5 +164,5 @@ on process 67
 .Sh HISTORY
 The
 .Nm ktrace
-command appears in
+command appeared in
 .Bx 4.4 .

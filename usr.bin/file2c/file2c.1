@@ -5,7 +5,7 @@
 .\" this stuff is worth it, you can buy me a beer in return.  Poul-Henning Kamp
 .\" ---------------------------------------------------------------------------
 .\"
-.\" $Id: file2c.1,v 1.1 1996/08/26 07:47:06 downsj Exp $
+.\" $Id: file2c.1,v 1.2 1998/09/26 19:54:43 aaron Exp $
 .\"
 .Dd Jan 28, 1995
 .Dt FILE2C 1
@@ -15,8 +15,8 @@
 .Nd convert file to c-source.
 .Sh SYNOPSIS
 .Nm file2c
-.Op "string"
-.Op "string"
+.Op Ar string
+.Op Ar string
 .Sh DESCRIPTION
 The
 .Nm file2c
@@ -25,11 +25,11 @@ byte to its decimal representation on the fly.
 .Pp
 If the first 
 .Op string
-is present, it is printed before the data, if the second 
+is present, it is printed before the data. If the second 
 .Op string 
 is present, it is printed after the data.
 .Pp
-This program is used to embedd binary or other files into C source files,
+This program is used to embed binary or other files into C source files,
 for instance as a char[].
 .Sh EXAMPLE
 The command:

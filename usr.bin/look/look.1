@@ -1,4 +1,4 @@
-.\"	$OpenBSD: look.1,v 1.2 1996/06/26 05:36:06 deraadt Exp $
+.\"	$OpenBSD: look.1,v 1.3 1998/09/26 19:55:01 aaron Exp $
 .\"	$NetBSD: look.1,v 1.3 1994/12/23 01:10:59 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -64,7 +64,7 @@ If
 .Ar file
 is not specified, the file
 .Pa /usr/share/dict/words
-is used, only alphanumeric characters are compared and the case of
+is used. Only alphanumeric characters are compared and the case of
 alphabetic characters is ignored.
 .Pp
 Options:
@@ -74,7 +74,7 @@ Dictionary character set and order, i.e. only alphanumeric characters
 are compared.
 .It Fl f
 Ignore the case of alphabetic characters.
-.It Fl t
+.It Fl t Ar termchar
 Specify a string termination character, i.e. only the characters
 in
 .Ar string
@@ -103,5 +103,5 @@ option was specified.
 This was incorrect and the current man page matches the historic
 implementation.
 .Sh HISTORY
-.Nm Look
+.Nm look
 appeared in Version 7 AT&T Unix.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lastcomm.1,v 1.7 1998/07/26 11:08:24 pjanzen Exp $
+.\"	$OpenBSD: lastcomm.1,v 1.8 1998/09/26 19:54:57 aaron Exp $
 .\"	$NetBSD: lastcomm.1,v 1.5 1995/10/22 01:43:41 ghudson Exp $
 .\"
 .\" Copyright (c) 1980, 1990, 1993
@@ -47,7 +47,7 @@
 .Op Ar user ...
 .Op Ar terminal ...
 .Sh DESCRIPTION
-.Nm Lastcomm
+.Nm lastcomm
 gives information on previously executed commands.
 With no arguments,
 .Nm lastcomm
@@ -86,21 +86,21 @@ by user
 on the terminal
 .Ar ttyd0  .
 .Pp
-For each process entry, the following are printed.
+For each process entry, the following are printed:
 .Pp
 .Bl -bullet -offset indent -compact
 .It
-The name of the user who ran the process.
+Name of the user who ran the process.
 .It
 Flags, as accumulated by the accounting facilities in the system.
 .It
-The command name under which the process was called.
+Command name under which the process was called.
 .It
-The amount of cpu time used by the process (in seconds).
+Amount of cpu time used by the process (in seconds).
 .It
-The time the process started.
+Time the process started.
 .It
-The elapsed time of the process.
+Elapsed time of the process.
 .El
 .Pp
 The flags are encoded as follows: ``S'' indicates the command was
@@ -115,7 +115,7 @@ file, and ``X'' indicates the command was terminated with a signal.
 .Sh FILES
 .Bl -tag -width /var/account/acct -compact
 .It Pa /var/account/acct
-Default accounting file.
+default accounting file
 .El
 .Sh SEE ALSO
 .Xr last 1 ,

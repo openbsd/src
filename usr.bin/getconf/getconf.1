@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getconf.1,v 1.3 1996/06/26 05:33:42 deraadt Exp $
+.\"	$OpenBSD: getconf.1,v 1.4 1998/09/26 19:54:50 aaron Exp $
 .\"	$NetBSD: getconf.1,v 1.2 1996/04/20 01:15:12 jtc Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@ option variable to the standard output.
 .Pp
 The
 .Ar name
-argument specifies the system variable to be queried .
+argument specifies the system variable to be queried.
 The 
 .Ar pathname 
 argument must be supplied for system variables associated with a
@@ -59,7 +59,7 @@ pathname.
 .Sh RETURN VALUE
 The
 .Nm getconf 
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr pathconf 2 ,
 .Xr confstr 3 ,

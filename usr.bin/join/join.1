@@ -93,9 +93,7 @@ section.)
 Replace empty output fields with
 .Ar string .
 .It Fl o Ar list
-The
-.Fl o
-option specifies the fields that will be output from each file for
+Specifies the fields that will be output from each file for
 each line with matching join fields.
 Each element of
 .Ar list
@@ -161,7 +159,7 @@ is ``-'', the standard input is used.
 .Pp
 The
 .Nm join
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh COMPATIBILITY
 For compatibility with historic versions of
 .Nm join ,
@@ -199,7 +197,7 @@ option.
 This has obvious difficulties in the presence of files named ``1.2''.
 .El
 .Pp
-These options are available only so historic shellscripts don't require
+These options are available only so historic shell scripts don't require
 modification and should not be used.
 .Sh STANDARDS
 The

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsplit.1,v 1.2 1996/06/26 05:33:29 deraadt Exp $
+.\"	$OpenBSD: fsplit.1,v 1.3 1998/09/26 19:54:45 aaron Exp $
 .\"	$NetBSD: fsplit.1,v 1.3 1995/09/28 05:15:06 perry Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -44,11 +44,10 @@
 .Nd split a multi-routine Fortran file into individual files
 .Sh SYNOPSIS
 .Nm fsplit
-.Op Fl e Ar efile
-\&...
+.Op Fl e Ar efile Op Ar ...
 .Op Ar file
 .Sh DESCRIPTION
-.Nm Fsplit
+.Nm fsplit
 takes as input either a file or standard input containing Fortran source code.
 It attempts to split the input into separate routine files of the
 form
@@ -95,7 +94,7 @@ appeared in
 .Sh AUTHORS
 Asa Romberger and Jerry Berkman
 .Sh BUGS
-.Nm Fsplit
+.Nm fsplit
 assumes the subprogram name is on the first noncomment line of the subprogram
 unit.  Nonstandard source formats may confuse
 .Nm fsplit .

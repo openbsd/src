@@ -1,4 +1,4 @@
-.\"	$OpenBSD: logger.1,v 1.2 1996/06/26 05:35:58 deraadt Exp $
+.\"	$OpenBSD: logger.1,v 1.3 1998/09/26 19:55:00 aaron Exp $
 .\"	$NetBSD: logger.1,v 1.4 1994/12/22 06:26:59 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
@@ -48,7 +48,7 @@
 .Op Fl t Ar tag
 .Op Ar message ...
 .Sh DESCRIPTION
-.Nm Logger
+.Nm logger
 provides a shell command interface to the
 .Xr syslog  3
 system log module.
@@ -57,7 +57,7 @@ Options:
 .Pp
 .Bl -tag -width "message"
 .It Fl i
-Log the process id of the logger process
+Log the process ID of the logger process
 with each line.
 .It Fl s
 Log the message to standard error, as well as the system log.
@@ -85,7 +85,7 @@ provided, standard input is logged.
 .Pp
 The
 .Nm logger
-utility exits 0 on success, and >0 if an error occurs.
+utility exits 0 on success or >0 if an error occurred.
 .Sh EXAMPLES
 .Bd -literal -offset indent -compact
 logger System rebooted

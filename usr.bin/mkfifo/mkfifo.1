@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mkfifo.1,v 1.5 1998/07/24 00:43:55 espie Exp $
+.\"	$OpenBSD: mkfifo.1,v 1.6 1998/09/26 19:55:08 aaron Exp $
 .\"	$NetBSD: mkfifo.1,v 1.4 1994/12/23 07:16:54 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -42,14 +42,14 @@
 .Os BSD 4.4
 .Sh NAME
 .Nm mkfifo
-.Nd make fifos
+.Nd make FIFOs
 .Sh SYNOPSIS
 .Nm mkfifo
 .Op Fl m Ar mode
 .Ar fifo_name  ...
 .Sh DESCRIPTION
-.Nm Mkfifo
-creates the fifos requested, in the order specified,
+.Nm mkfifo
+creates the FIFOs requested, in the order specified,
 using mode
 .Li \&0666 
 modified by the current
@@ -57,7 +57,7 @@ modified by the current
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl m
+.It Fl m Ar mode
 Set the file permission bits of newly-created directories to
 .Ar mode .
 The mode is specified as in 
@@ -67,19 +67,20 @@ In symbolic mode strings, the
 and 
 .Dq -
 operators are interpreted relative to an assumed initial mode of 
-.Dq a=rw
+.Dq a=rw .
 .El
 .Pp
-.Nm Mkfifo
+.Nm mkfifo
 requires write permission in the parent directory.
 .Pp
-.Nm Mkfifo
-exits 0 if successful, and >0 if an error occurred.
+The
+.Nm mkfifo
+utility exits 0 on success or >0 if an error occurred.
 .Sh SEE ALSO
 .Xr mkdir 1 ,
-.Xr mknod 8 ,
 .Xr rm 1 ,
-.Xr mkfifo 2
+.Xr mkfifo 2 ,
+.Xr mknod 8
 .Sh STANDARDS
 The
 .Nm mkfifo
@@ -87,6 +88,7 @@ utility is expected to be
 .St -p1003.2-92
 compliant.
 .Sh HISTORY
+The
 .Nm
-command appears in
+command appeared in
 .Bx 4.4 .
