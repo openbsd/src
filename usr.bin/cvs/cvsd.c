@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvsd.c,v 1.5 2004/08/06 20:09:22 jfb Exp $	*/
+/*	$OpenBSD: cvsd.c,v 1.6 2004/09/24 12:19:21 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -140,12 +140,13 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-dfpv] [-c config] [-r root] [-s path]\n"
+	    "Usage: %s [-dfhpv] [-c config] [-r root] [-s path]\n"
 	    "\t-d\t\tStart the server in debugging mode (very verbose)\n"
 	    "\t-f\t\tStay in foreground instead of becoming a daemon\n"
-	    "\t-p\t\tPerform permission and ownership check on the repository\n"
-	    "\t-r root\tUse <root> as the root directory of the repository\n"
-	    "\t-s path\tUse <path> as the path for the CVS server socket\n"
+	    "\t-h\t\tPrint the usage and exit\n"
+	    "\t-p\t\tPerform repository sanity check on startup\n"
+	    "\t-r root\t\tUse <root> as the root directory of the repository\n"
+	    "\t-s path\t\tUse <path> as the path for the CVS server socket\n"
 	    "\t-v\t\tBe verbose\n",
 	    __progname);
 }
@@ -164,7 +165,7 @@ main(int argc, char **argv)
 	if (cvs_log_init(LD_STD|LD_SYSLOG, LF_PID) < 0)
 		err(1, "failed to initialize logging mechanism");
 
-	while ((ret = getopt(argc, argv, "a:c:dfpr:s:v")) != -1) {
+	while ((ret = getopt(argc, argv, "a:c:dfhpr:s:v")) != -1) {
 		switch (ret) {
 		case 'c':
 			cvsd_conffile = optarg;
@@ -175,6 +176,11 @@ main(int argc, char **argv)
 			break;
 		case 'f':
 			foreground = 1;
+			break;
+		case 'h':
+			usage();
+			exit(0);
+			/* NOTREACHED */
 			break;
 		case 'p':
 			checkrepo = 1;
