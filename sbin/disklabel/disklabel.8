@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.8,v 1.15 1998/03/01 06:43:27 johns Exp $
+.\"	$OpenBSD: disklabel.8,v 1.16 1998/04/08 03:00:44 millert Exp $
 .\"	$NetBSD: disklabel.8,v 1.9 1995/03/18 14:54:38 cgd Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1991, 1993
@@ -275,6 +275,9 @@ the ``Size'' prompt to indicate the entire size of the disk (minus
 the starting sector).  This is useful for large disks where the
 fdisk partition table is incapable if storing the real size.
 .\" What is this limit?  [somewhere between 8 and 9 gig]
+.It r
+Recalculate free space.  This option should really not be necessary
+under normal circumstances.
 .It a Op part
 Add new partition.  This option adds a new BSD partition.  If no
 partion letter is specified (a-p), the user will be prompted for
