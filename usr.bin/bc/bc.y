@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.15 2003/11/11 09:15:36 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.16 2003/11/11 19:49:02 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.15 2003/11/11 09:15:36 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.16 2003/11/11 19:49:02 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -266,22 +266,13 @@ statement	: expression
 				fflush(stdout);
 				exit(0);
 			}
-		| RETURN
+		| RETURN return_expression
 			{
 				if (nesting == 0) {
 					warning("return must be in a function");
 					YYERROR;
 				}
-				$$ = node(cs("0"), epilogue,
-				    numnode(nesting), cs("Q"), END_NODE);
-			}
-		| RETURN LPAR return_expression RPAR
-			{
-				if (nesting == 0) {
-					warning("return must be in a function");
-					YYERROR;
-				}
-				$$ = $3;
+				$$ = $2;
 			}
 		| FOR LPAR alloc_macro opt_expression SEMICOLON
 		     opt_relational_expression SEMICOLON
@@ -362,11 +353,11 @@ pop_nesting	: /* empty */
 			}
 		;
 
-function	: function_header opt_parameter_list RPAR
+function	: function_header opt_parameter_list RPAR opt_newline
 		  LBRACE NEWLINE opt_auto_define_list
 		  statement_list RBRACE
 			{
-				int n = node(prologue, $7, epilogue,
+				int n = node(prologue, $8, epilogue,
 				    cs("0"), numnode(nesting),
 				    cs("Q"), END_NODE);
 				emit_macro($1, n);
@@ -385,6 +376,10 @@ function_header : DEFINE LETTER LPAR
 				breaksp = 0;
 				breakstack[breaksp] = 0;
 			}
+		;
+
+opt_newline	: /* empty */
+		| NEWLINE
 		;
 
 opt_parameter_list
@@ -509,6 +504,11 @@ return_expression
 		| expression
 			{
 				$$ = node($1, epilogue,
+				    numnode(nesting), cs("Q"), END_NODE);
+			}
+		| LPAR RPAR
+			{
+				$$ = node(cs("0"), epilogue,
 				    numnode(nesting), cs("Q"), END_NODE);
 			}
 		;
