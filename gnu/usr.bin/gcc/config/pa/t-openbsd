@@ -21,4 +21,4 @@ ee_fp.asm: $(srcdir)/config/pa/ee_fp.asm
 	rm -f ee_fp.asm
 	cp $(srcdir)/config/pa/ee_fp.asm .
 
-TARGET_LIBGCC2_CFLAGS = -fPIC
+#TARGET_LIBGCC2_CFLAGS = -fPIC
