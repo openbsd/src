@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcrypt.c,v 1.11 1998/02/18 16:10:53 provos Exp $	*/
+/*	$OpenBSD: bcrypt.c,v 1.12 1998/08/10 18:33:07 provos Exp $	*/
 
 /*
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -45,7 +45,7 @@
  *
  */
 
-#ifdef TEST
+#if 0
 #include <stdio.h>
 #endif
 
@@ -289,7 +289,7 @@ bcrypt(key, salt)
 
 	encode_base64((u_int8_t *) encrypted + i + 3, csalt, BCRYPT_MAXSALT);
 	encode_base64((u_int8_t *) encrypted + strlen(encrypted), ciphertext,
-	    4 * BCRYPT_BLOCKS);
+	    4 * BCRYPT_BLOCKS - 1);
 	return encrypted;
 }
 
@@ -311,26 +311,26 @@ encode_base64(buffer, data, len)
 		c1 = *p++;
 		*bp++ = Base64Code[(c1 >> 2)];
 		c1 = (c1 & 0x03) << 4;
-		c2 = *p++;
 		if (p >= data + len) {
 			*bp++ = Base64Code[c1];
 			break;
 		}
+		c2 = *p++;
 		c1 |= (c2 >> 4) & 0x0f;
 		*bp++ = Base64Code[c1];
 		c1 = (c2 & 0x0f) << 2;
-		c2 = *p++;
 		if (p >= data + len) {
 			*bp++ = Base64Code[c1];
 			break;
 		}
+		c2 = *p++;
 		c1 |= (c2 >> 6) & 0x03;
 		*bp++ = Base64Code[c1];
 		*bp++ = Base64Code[c2 & 0x3f];
 	}
 	*bp = '\0';
 }
-#ifdef TEST
+#if 0
 void
 main()
 {
