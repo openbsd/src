@@ -1,4 +1,4 @@
-/*	$OpenBSD: loader.c,v 1.33 2002/05/28 00:30:50 deraadt Exp $ */
+/*	$OpenBSD: loader.c,v 1.34 2002/05/28 00:31:37 deraadt Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -117,26 +117,18 @@ _dl_boot(const char **argv, char **envp, const long loff,
 	_dl_traceld = _dl_getenv("LD_TRACE_LOADED_OBJECTS", envp);
 	_dl_debug = _dl_getenv("LD_DEBUG", envp);
 
-	_dl_progname = argv[0];
-	if (dl_data[AUX_pagesz] != 0)
-		_dl_pagesz = dl_data[AUX_pagesz];
-	else
-		_dl_pagesz = 4096;
-
-	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
-
 	/*
 	 *  Don't allow someone to change the search paths if he runs
 	 *  a suid program without credentials high enough.
 	 */
 	if (_dl_issetugid()) {	/* Zap paths if s[ug]id... */
-		if (_dl_preload) {
-			_dl_preload = NULL;
-			_dl_unsetenv("LD_PRELOAD", envp);
-		}
 		if (_dl_libpath) {
 			_dl_libpath = NULL;
 			_dl_unsetenv("LD_LIBRARY_PATH", envp);
+		}
+		if (_dl_preload) {
+			_dl_preload = NULL;
+			_dl_unsetenv("LD_PRELOAD", envp);
 		}
 		if (_dl_bindnow) {
 			_dl_bindnow = NULL;
@@ -148,6 +140,14 @@ _dl_boot(const char **argv, char **envp, const long loff,
 		}
 
 	}
+
+	_dl_progname = argv[0];
+	if (dl_data[AUX_pagesz] != 0)
+		_dl_pagesz = dl_data[AUX_pagesz];
+	else
+		_dl_pagesz = 4096;
+
+	DL_DEB(("rtld loading: '%s'\n", _dl_progname));
 
 	/*
 	 *  Examine the user application and set up object information.
