@@ -1,4 +1,4 @@
-	$OpenBSD: syscalls.master,v 1.9 1996/05/18 08:53:10 deraadt Exp $
+	$OpenBSD: syscalls.master,v 1.10 1996/08/25 09:51:34 deraadt Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -455,3 +455,4 @@
 251	STD		{ int sys_rfork(int flags); }
 252	STD		{ int sys_poll(struct pollfd *fds, unsigned long nfds, \
 			    int timeout); }
+253	STD		{ int sys_issetugid(void); }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.8 1996/05/28 12:16:27 deraadt Exp $	*/
+/*	$OpenBSD: proc.h,v 1.9 1996/08/25 09:51:47 deraadt Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -231,6 +231,7 @@ struct	proc {
 /* XXX Not sure what to do with these, yet. */
 #define	P_FSTRACE	0x10000	/* tracing via file system (elsewhere?) */
 #define	P_SSTEP		0x20000	/* process needs single-step fixup ??? */
+#define	P_SUGIDEXEC	0x40000	/* last execve() was a setuid/setgid execve() */
 
 /*
  * MOVE TO ucred.h?
