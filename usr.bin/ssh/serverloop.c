@@ -380,7 +380,7 @@ drain_output()
 void
 process_buffered_input_packets()
 {
-	dispatch_run(DISPATCH_NONBLOCK, NULL);
+	dispatch_run(DISPATCH_NONBLOCK, NULL, NULL);
 }
 
 /*
@@ -673,7 +673,7 @@ server_loop2(void)
 }
 
 void
-server_input_stdin_data(int type, int plen)
+server_input_stdin_data(int type, int plen, void *ctxt)
 {
 	char *data;
 	unsigned int data_len;
@@ -690,7 +690,7 @@ server_input_stdin_data(int type, int plen)
 }
 
 void
-server_input_eof(int type, int plen)
+server_input_eof(int type, int plen, void *ctxt)
 {
 	/*
 	 * Eof from the client.  The stdin descriptor to the
@@ -703,7 +703,7 @@ server_input_eof(int type, int plen)
 }
 
 void
-server_input_window_size(int type, int plen)
+server_input_window_size(int type, int plen, void *ctxt)
 {
 	int row = packet_get_int();
 	int col = packet_get_int();
@@ -749,7 +749,7 @@ input_direct_tcpip(void)
 }
 
 void
-server_input_channel_open(int type, int plen)
+server_input_channel_open(int type, int plen, void *ctxt)
 {
 	Channel *c = NULL;
 	char *ctype;

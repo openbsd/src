@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.14 2000/09/07 20:27:49 deraadt Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.15 2000/09/21 11:25:32 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -59,9 +59,9 @@ extern int session_id2_len;
 
 /* protocol */
 
-void	input_service_request(int type, int plen);
-void	input_userauth_request(int type, int plen);
-void	protocol_error(int type, int plen);
+void	input_service_request(int type, int plen, void *ctxt);
+void	input_userauth_request(int type, int plen, void *ctxt);
+void	protocol_error(int type, int plen, void *ctxt);
 
 /* auth */
 int	ssh2_auth_none(struct passwd *pw);
@@ -99,12 +99,12 @@ do_authentication2()
 
 	dispatch_init(&protocol_error);
 	dispatch_set(SSH2_MSG_SERVICE_REQUEST, &input_service_request);
-	dispatch_run(DISPATCH_BLOCK, &userauth_success);
+	dispatch_run(DISPATCH_BLOCK, &userauth_success, NULL);
 	do_authenticated2();
 }
 
 void
-protocol_error(int type, int plen)
+protocol_error(int type, int plen, void *ctxt)
 {
 	log("auth: protocol error: type %d plen %d", type, plen);
 	packet_start(SSH2_MSG_UNIMPLEMENTED);
@@ -114,7 +114,7 @@ protocol_error(int type, int plen)
 }
 
 void
-input_service_request(int type, int plen)
+input_service_request(int type, int plen, void *ctxt)
 {
 	unsigned int len;
 	int accept = 0;
@@ -143,7 +143,7 @@ input_service_request(int type, int plen)
 }
 
 void
-input_userauth_request(int type, int plen)
+input_userauth_request(int type, int plen, void *ctxt)
 {
 	static void (*authlog) (const char *fmt,...) = verbose;
 	static int attempt = 0;
