@@ -1,4 +1,4 @@
-/*	$OpenBSD: interactive.c,v 1.10 2000/01/10 03:08:05 deraadt Exp $	*/
+/*	$OpenBSD: interactive.c,v 1.11 2001/01/19 17:57:41 deraadt Exp $	*/
 /*	$NetBSD: interactive.c,v 1.10 1997/03/19 08:42:52 lukem Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)interactive.c	8.3 (Berkeley) 9/13/94";
 #else
-static char rcsid[] = "$OpenBSD: interactive.c,v 1.10 2000/01/10 03:08:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: interactive.c,v 1.11 2001/01/19 17:57:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -795,8 +795,8 @@ onintr(signo)
 	int save_errno = errno;
 
 	if (command == 'i' && runshell)
-		longjmp(reset, 1);
-	if (reply("restore interrupted, continue") == FAIL)
-		exit(1);
+		longjmp(reset, 1);	/* XXX signal/longjmp reentrancy */
+	if (reply("restore interrupted, continue") == FAIL)	/* XXX signal race */
+		_exit(1);
 	errno = save_errno;
 }

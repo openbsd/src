@@ -1,4 +1,4 @@
-/*	$OpenBSD: dumprmt.c,v 1.13 2000/01/22 20:24:54 deraadt Exp $	*/
+/*	$OpenBSD: dumprmt.c,v 1.14 2001/01/19 17:57:34 deraadt Exp $	*/
 /*	$NetBSD: dumprmt.c,v 1.17 1997/06/05 16:10:47 mrg Exp $	*/
 
 /*-
@@ -113,7 +113,7 @@ rmthost(host)
 static void
 rmtconnaborted()
 {
-
+	/* XXX signal race */
 	errx(X_ABORT, "Lost connection to remote host.");
 }
 

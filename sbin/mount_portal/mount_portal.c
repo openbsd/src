@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_portal.c,v 1.13 1997/08/20 05:10:25 millert Exp $	*/
+/*	$OpenBSD: mount_portal.c,v 1.14 2001/01/19 17:57:39 deraadt Exp $	*/
 /*	$NetBSD: mount_portal.c,v 1.8 1996/04/13 01:31:54 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_portal.c	8.6 (Berkeley) 4/26/95";
 #else
-static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.13 1997/08/20 05:10:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: mount_portal.c,v 1.14 2001/01/19 17:57:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,7 +93,7 @@ sigchld(sig)
 	while ((pid = waitpid((pid_t) -1, NULL, WNOHANG)) > 0)
 		;
 	if (pid < 0 && errno != ECHILD)
-		syslog(LOG_WARNING, "waitpid: %m");
+		syslog(LOG_WARNING, "waitpid: %m");	/* XXX signal race */
 	errno = save_errno;
 }
 
@@ -109,7 +109,7 @@ static void
 sigterm(sig)
 	int sig;
 {
-
+	/* XXX signal races */
 	if (unmount(mountpt, MNT_FORCE) < 0)
 		syslog(LOG_WARNING, "sigterm: unmounting %s failed: %m",
 		       mountpt);

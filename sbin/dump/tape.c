@@ -1,4 +1,4 @@
-/*	$OpenBSD: tape.c,v 1.10 1999/02/28 06:50:14 deraadt Exp $	*/
+/*	$OpenBSD: tape.c,v 1.11 2001/01/19 17:57:35 deraadt Exp $	*/
 /*	$NetBSD: tape.c,v 1.11 1997/06/05 11:13:26 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tape.c	8.2 (Berkeley) 3/17/94";
 #else
-static char rcsid[] = "$OpenBSD: tape.c,v 1.10 1999/02/28 06:50:14 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: tape.c,v 1.11 2001/01/19 17:57:35 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -272,6 +272,7 @@ do_stats()
  * statussig --
  *	information message upon receipt of SIGINFO
  *	(derived from optr.c::timeest())
+ * XXX not safe
  */
 void
 statussig(notused)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.20 2000/08/20 18:42:39 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.21 2001/01/19 17:57:37 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.20 2000/08/20 18:42:39 millert Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.21 2001/01/19 17:57:37 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -637,7 +637,7 @@ single_user()
 			    SHREQUEST, sizeof(SHREQUEST) - 1);
 			while ((num = read(STDIN_FILENO, cp, 1)) != -1 &&
 			    num != 0 && *cp != '\n' && cp < &altshell[127])
-					cp++;
+				cp++;
 			*cp = '\0';
 
 			/* Copy in alternate shell */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfsd.c,v 1.11 2000/01/22 20:25:03 deraadt Exp $	*/
+/*	$OpenBSD: nfsd.c,v 1.12 2001/01/19 17:57:40 deraadt Exp $	*/
 /*	$NetBSD: nfsd.c,v 1.19 1996/02/18 23:18:56 mycroft Exp $	*/
 
 /*
@@ -616,7 +616,7 @@ void
 nonfs(signo)
 	int signo;
 {
-
+	/* XXX signal race */
 	syslog(LOG_ERR, "missing system call: NFS not available.");
 }
 
