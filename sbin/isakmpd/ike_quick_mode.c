@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.64 2002/06/10 20:45:35 ho Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.65 2002/06/11 18:56:07 ho Exp $	*/
 /*	$EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	*/
 
 /*
@@ -440,7 +440,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
   size_t *transforms_len = 0, *new_transforms_len;
   int *transform_cnt = 0, *new_transform_cnt;
   int i, suite_no, prop_no, prot_no, xf_no, value, update_nextp, protocol_num;
-  int prop_cnt = 0;
+  int prop_cnt = 0, proto_id;
   struct proto *proto;
   struct conf_list *suite_conf, *prot_conf = 0, *xf_conf = 0, *life_conf;
   struct conf_list_node *suite, *prot, *xf, *life;
@@ -542,12 +542,28 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	  if (!protocol_id)
 	    goto bail_out;
 
-	  /* XXX Not too beautiful, but do we have a choice?  */
-	  id_map = strcasecmp (protocol_id, "IPSEC_AH") == 0 ? ipsec_ah_cst
-	    : strcasecmp (protocol_id, "IPSEC_ESP") == 0 ? ipsec_esp_cst
-	    : strcasecmp (protocol_id, "IPCOMP") == 0 ? ipsec_ipcomp_cst : 0;
-	  if (!id_map)
-	    goto bail_out;
+	  proto_id = constant_value (ipsec_proto_cst, protocol_id);
+	  switch (proto_id)
+	    {
+	    case IPSEC_PROTO_IPSEC_AH:
+	      id_map = ipsec_ah_cst;
+	      break;
+
+	    case IPSEC_PROTO_IPSEC_ESP:
+	      id_map = ipsec_esp_cst;
+	      break;
+
+	    case IPSEC_PROTO_IPCOMP:
+	      id_map = ipsec_ipcomp_cst;
+	      break;
+
+	    default:
+	      {
+		log_print ("initiator_send_HASH_SA_NONCE: invalid PROTCOL_ID: "
+			   "%s", protocol_id);
+		goto bail_out;
+	      }
+	    }
 
 	  /* Now get each transform we offer for this protocol.  */
 	  xf_conf = conf_get_list (prot->field, "Transforms");
@@ -648,59 +664,66 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 				      ipsec_encap_cst,
 				      IPSEC_ATTR_ENCAPSULATION_MODE, &attr);
 
-	      attribute_set_constant (xf->field, "AUTHENTICATION_ALGORITHM",
-				      ipsec_auth_cst,
-				      IPSEC_ATTR_AUTHENTICATION_ALGORITHM,
-				      &attr);
+	      if (proto_id != IPSEC_PROTO_IPCOMP)
+		{
+		  attribute_set_constant (xf->field,
+					  "AUTHENTICATION_ALGORITHM",
+					  ipsec_auth_cst,
+					  IPSEC_ATTR_AUTHENTICATION_ALGORITHM,
+					  &attr);
 
-	      attribute_set_constant (xf->field, "GROUP_DESCRIPTION",
-				      ike_group_desc_cst,
-				      IPSEC_ATTR_GROUP_DESCRIPTION, &attr);
+		  attribute_set_constant (xf->field, "GROUP_DESCRIPTION",
+					  ike_group_desc_cst,
+					  IPSEC_ATTR_GROUP_DESCRIPTION, &attr);
 
+		  value = conf_get_num (xf->field, "KEY_LENGTH", 0);
+		  if (value)
+		    attr = attribute_set_basic (attr, IPSEC_ATTR_KEY_LENGTH,
+						value);
 
-	      value = conf_get_num (xf->field, "KEY_LENGTH", 0);
-	      if (value)
-		attr = attribute_set_basic (attr, IPSEC_ATTR_KEY_LENGTH,
-					    value);
+		  value = conf_get_num (xf->field, "KEY_ROUNDS", 0);
+		  if (value)
+		    attr = attribute_set_basic (attr, IPSEC_ATTR_KEY_ROUNDS,
+						value);
+		}
+	      else
+		{
+		  value = conf_get_num (xf->field, "COMPRESS_DICTIONARY_SIZE",
+					0);
+		  if (value)
+		    attr = attribute_set_basic (attr,
+						IPSEC_ATTR_COMPRESS_DICTIONARY_SIZE,
+						value);
 
-	      value = conf_get_num (xf->field, "KEY_ROUNDS", 0);
-	      if (value)
-		attr = attribute_set_basic (attr, IPSEC_ATTR_KEY_ROUNDS,
-					    value);
-
-	      value = conf_get_num (xf->field, "COMPRESS_DICTIONARY_SIZE", 0);
-	      if (value)
-		attr
-		  = attribute_set_basic (attr,
-					 IPSEC_ATTR_COMPRESS_DICTIONARY_SIZE,
-					 value);
-
-	      value
-		= conf_get_num (xf->field, "COMPRESS_PRIVATE_ALGORITHM", 0);
-	      if (value)
-		attr
-		  = attribute_set_basic (attr,
-					 IPSEC_ATTR_COMPRESS_PRIVATE_ALGORITHM,
-					 value);
+		  value = conf_get_num (xf->field,
+					"COMPRESS_PRIVATE_ALGORITHM", 0);
+		  if (value)
+		    attr = attribute_set_basic (attr,
+						IPSEC_ATTR_COMPRESS_PRIVATE_ALGORITHM,
+						value);
+		}
 
 	      /* Record the real transform size.  */
 	      transforms_len[prop_no] += (transform_len[prop_no][xf_no]
 					  = attr - transform[prop_no][xf_no]);
 
-	      /*
-	       * Make sure that if a group description is specified, it is
-	       * specified for all transforms equally.
-	       */
-	      attr = conf_get_str (xf->field, "GROUP_DESCRIPTION");
-	      new_group_desc
-		= attr ? constant_value (ike_group_desc_cst, attr) : 0;
-	      if (group_desc == -1)
-		group_desc = new_group_desc;
-	      else if (group_desc != new_group_desc)
+	      if (proto_id != IPSEC_PROTO_IPCOMP)
 		{
-		  log_print ("initiator_send_HASH_SA_NONCE: "
-			     "differing group descriptions in a proposal");
-		  goto bail_out;
+		  /*
+		   * Make sure that if a group description is specified, it is
+		   * specified for all transforms equally.
+		   */
+		  attr = conf_get_str (xf->field, "GROUP_DESCRIPTION");
+		  new_group_desc
+		    = attr ? constant_value (ike_group_desc_cst, attr) : 0;
+		  if (group_desc == -1)
+		    group_desc = new_group_desc;
+		  else if (group_desc != new_group_desc)
+		    {
+		      log_print ("initiator_send_HASH_SA_NONCE: "
+				 "differing group descriptions in a proposal");
+		      goto bail_out;
+		    }
 		}
 	    }
 	  conf_free_list (xf_conf);
@@ -735,8 +758,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	  proto = calloc (1, sizeof *proto);
 	  if (!proto)
 	    {
-	      log_error ("initiator_send_HASH_SA_NONCE: calloc (1, %lu) failed",
-			 (unsigned long)sizeof *proto);
+	      log_error ("initiator_send_HASH_SA_NONCE: calloc (1, %lu) "
+			 "failed", (unsigned long)sizeof *proto);
 	      goto bail_out;
 	    }
 
@@ -745,9 +768,8 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	      proto->data = calloc (1, doi->proto_size);
 	      if (!proto->data)
 		{
-		  log_error ("initiator_send_HASH_SA_NONCE: "
-			     "calloc (1, %lu) failed",
-			     (unsigned long)doi->proto_size);
+		  log_error ("initiator_send_HASH_SA_NONCE: calloc (1, %lu) "
+			     "failed", (unsigned long)doi->proto_size);
 		  goto bail_out;
 		}
 	    }
@@ -838,7 +860,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
     return -1;
 
   /* Generate optional KEY_EXCH payload.  */
-  if (group_desc)
+  if (group_desc > 0)
     {
       ie->group = group_get (group_desc);
       ie->g_x_len = dh_getlen (ie->group);
@@ -932,7 +954,7 @@ initiator_send_HASH_SA_NONCE (struct message *msg)
 	  return -1;
 	}
 
-    /* Send supplied remote_id */
+      /* Send supplied remote_id */
       id = ipsec_build_id (remote_id, &sz);
       if (!id)
 	return -1;
@@ -1318,6 +1340,9 @@ post_quick_mode (struct message *msg)
       for (proto = TAILQ_FIRST (&sa->protos); proto;
 	   proto = TAILQ_NEXT (proto, link))
 	{
+	  if (proto->proto == IPSEC_PROTO_IPCOMP)
+	    continue;
+
 	  iproto = proto->data;
 
 	  /*
