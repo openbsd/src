@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.25 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.26 2001/11/30 22:08:13 miod Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/05/19 10:14:50 veego Exp $	*/
 
 /*
@@ -48,17 +48,16 @@
 #include <sys/proc.h>
 #include <sys/signalvar.h>
 #include <sys/malloc.h>
-#include <sys/vnode.h>
 #include <sys/buf.h>
-#include <sys/core.h>
-#include <sys/exec_aout.h>
-#include <m68k/reg.h>
+#include <sys/vnode.h>
+#include <sys/user.h>
+#include <sys/exec.h>
 
 #include <machine/cpu.h>
-
-#include <sys/user.h>
-#include <uvm/uvm_extern.h>
 #include <machine/pte.h>
+#include <machine/reg.h>
+
+#include <uvm/uvm_extern.h>
 
 /*
  * Finish a fork operation, with process p2 nearly set up.
@@ -183,7 +182,7 @@ physaccess(vaddr, paddr, size, prot)
 	register u_int page;
 
 	/* if cache not inhibited, set cacheable & copyback */
-	if (mmutype == MMU_68040 && (prot & PG_CI) == 0)
+	if (mmutype <= MMU_68040 && (prot & PG_CI) == 0)
 		prot |= PG_CCB;
 	else if (cputype == CPU_68060 && (prot & PG_CI))
                 prot |= PG_CIN;

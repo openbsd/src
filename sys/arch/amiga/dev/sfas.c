@@ -1,4 +1,4 @@
-/*    $OpenBSD: sfas.c,v 1.13 2001/11/06 01:47:02 art Exp $  */
+/*    $OpenBSD: sfas.c,v 1.14 2001/11/30 22:08:16 miod Exp $  */
 /*	$NetBSD: sfas.c,v 1.12 1996/10/13 03:07:33 christos Exp $	*/
 
 /*
@@ -345,7 +345,7 @@ sfas_scsicmd(struct scsi_xfer *xs)
  */
 	if (!(flags & SCSI_POLL) && (
 #if defined(M68040) || defined(M68060)
-	    ((mmutype == MMU_68040) && ((vm_offset_t)xs->data >= 0xFFFC0000)) &&
+	    ((mmutype <= MMU_68040) && ((vm_offset_t)xs->data >= 0xFFFC0000)) &&
 #endif
 		       ((vm_offset_t)xs->data >= 0xFF000000))) {
 		vm_offset_t	 sva;
@@ -913,7 +913,7 @@ sfas_setup_nexus(dev, nexus, pendp, cbuf, clen, buf, len, mode)
 	}
 
 /* Flush the caches. (If needed) */
-	if ((mmutype == MMU_68040) && len && !(mode & SFAS_SELECT_I))
+	if ((mmutype <= MMU_68040) && len && !(mode & SFAS_SELECT_I))
 		dma_cachectl(buf, len);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bztzsc.c,v 1.4 2001/11/06 01:47:02 art Exp $	*/
+/*	$OpenBSD: bztzsc.c,v 1.5 2001/11/30 22:08:16 miod Exp $	*/
 /*	$NetBSD: bztzsc.c,v 1.2 1996/12/23 09:09:54 veego Exp $	*/
 
 /*
@@ -344,7 +344,7 @@ do { chain[n].ptr = (p); chain[n].len = (l); chain[n++].flg = (f); } while(0)
 		set_link(n, (vm_offset_t)p, l, SFAS_CHAIN_BUMP);
 	else if ((p >= (void *)0xFF000000)
 #if defined(M68040) || defined(M68060)
-		 && ((mmutype == MMU_68040) && (p >= (void *)0xFFFC0000))
+		 && ((mmutype <= MMU_68040) && (p >= (void *)0xFFFC0000))
 #endif
 		 ) {
 		while(l != 0) {

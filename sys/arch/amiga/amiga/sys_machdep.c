@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_machdep.c,v 1.11 2001/11/06 19:53:14 miod Exp $	*/
+/*	$OpenBSD: sys_machdep.c,v 1.12 2001/11/30 22:08:13 miod Exp $	*/
 /*	$NetBSD: sys_machdep.c,v 1.16 1997/05/19 10:14:47 veego Exp $	*/
 
 /*
@@ -71,7 +71,7 @@ cachectl(req, addr, len)
 {
 	int error = 0;
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
+	if (mmutype <= MMU_68040) {
 		register int inc = 0;
 		int doall = 0;
 		caddr_t end = 0;
@@ -182,7 +182,7 @@ dma_cachectl(addr, len)
 	int len;
 {
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
+	if (mmutype <= MMU_68040) {
 		register int inc = 0;
 		int pa = 0;
 		caddr_t end;

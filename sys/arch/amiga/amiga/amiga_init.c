@@ -1,4 +1,4 @@
-/*	$OpenBSD: amiga_init.c,v 1.20 2001/11/06 19:53:13 miod Exp $	*/
+/*	$OpenBSD: amiga_init.c,v 1.21 2001/11/30 22:08:13 miod Exp $	*/
 /*	$NetBSD: amiga_init.c,v 1.56 1997/06/10 18:22:24 veego Exp $	*/
 
 /*
@@ -174,8 +174,6 @@ alloc_z2mem(amount)
  *
  */
 
-int kernel_copyback = 1;
-
 void
 start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	int id;
@@ -326,7 +324,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	avail -= vstart;
 
 #if defined(M68040) || defined(M68060)
-	if (RELOC(mmutype, int) == MMU_68040)
+	if (RELOC(mmutype, int) <= MMU_68040)
 		kstsize = MAXKL2SIZE / (NPTEPG/SG4_LEV2SIZE);
 	else
 #endif
@@ -400,7 +398,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	 * initialize segment table and page table map
 	 */
 #if defined(M68040) || defined(M68060)
-	if (RELOC(mmutype, int) == MMU_68040) {
+	if (RELOC(mmutype, int) <= MMU_68040) {
 		/*
 		 * First invalidate the entire "segment table" pages
 		 * (levels 1 and 2 have the same "invalid" values).
@@ -568,16 +566,13 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	 * these machines (for the 68040 not strictly necessary, but
 	 * recommended by Motorola; for the 68060 mandatory)
 	 */
-	if (RELOC(mmutype, int) == MMU_68040) {
-
-		if (RELOC(kernel_copyback, int))
-			pg_proto |= PG_CCB;
-
+	if (RELOC(mmutype, int) <= MMU_68040) {
 		/*
 		 * ASSUME: segment table and statically allocated page tables
 		 * of the kernel are contiguously allocated, start at
 		 * Sysseg and end at the current value of vstart.
 		 */
+		pg_proto |= PG_CCB;
 		for (; i<RELOC(Sysseg, u_int); i+= NBPG, pg_proto += NBPG)
 			*pg++ = pg_proto;
 
@@ -586,8 +581,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 			*pg++ = pg_proto;
 
 		pg_proto = (pg_proto & ~PG_CI);
-		if (RELOC(kernel_copyback, int))
-			pg_proto |= PG_CCB;
+		pg_proto |= PG_CCB;
 	}
 #endif
 	/*
@@ -599,7 +593,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	/*
 	 * invalidate remainder of kernel PT
 	 */
-	while (pg < (u_int *) (ptpa + ptsize))
+	while (pg < (paddr_t) (ptpa + ptsize))
 		*pg++ = PG_NV;
 
 	/*
@@ -805,7 +799,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 	 * prepare to enable the MMU
 	 */
 #if defined(M68040) || defined(M68060)
-	if (RELOC(mmutype, int) == MMU_68040) {
+	if (RELOC(mmutype, int) <= MMU_68040) {
 		/*
 		 * movel Sysseg_pa,a0;
 		 * movec a0,SRP;
@@ -814,7 +808,7 @@ start_c(id, fphystart, fphysize, cphysize, esym_addr, flags, inh_sync)
 		 * movec d0,TC
 		 */
 
-		if (id & AMIGA_68060) {
+		if (RELOC(mmutype, int) <= MMU_68060) {
 			/* do i need to clear the branch cache? */
 			asm volatile (	".word 0x4e7a,0x0002;" 
 					"orl #0x400000,d0;" 

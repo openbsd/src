@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.28 2001/11/28 16:13:27 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.29 2001/11/30 22:08:13 miod Exp $	*/
 /*	$NetBSD: trap.c,v 1.56 1997/07/16 00:01:47 is Exp $	*/
 
 /*
@@ -307,9 +307,9 @@ trapmmufault(type, code, v, fp, p, sticks)
 	if (v < NBPG)					/* XXX PAGE0 */
 		mmudebug |= 0x100;			/* XXX PAGE0 */
 #endif
-	if (mmudebug && mmutype == MMU_68040) {
+	if (mmudebug && mmutype <= MMU_68040) {
 #ifdef M68060
-		if (machineid & AMIGA_68060) {
+		if (mmutype == MMU_68060) {
 			if (--donomore == 0 || mmudebug & 1)
 				printf ("68060 access error: pc %x, code %b,"
 				     " ea %x\n", fp->f_pc, 
@@ -347,7 +347,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 	if (type == T_MMUFLT && 
 	    (!p || !p->p_addr || p->p_addr->u_pcb.pcb_onfault == 0 || (
 #ifdef M68060
-	     machineid & AMIGA_68060 ? code & FSLW_TM_SV :
+	     mmutype == MMU_68060 ? code & FSLW_TM_SV :
 #endif
 	     mmutype == MMU_68040 ? (code & SSW_TMMASK) == FC_SUPERD :
 	     (code & (SSW_DF|FC_SUPERD)) == (SSW_DF|FC_SUPERD))))
@@ -357,7 +357,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 
 	if (
 #ifdef M68060
-	    machineid & AMIGA_68060 ? code & FSLW_RW_W :
+	    mmutype == MMU_68060 ? code & FSLW_RW_W :
 #endif
 	    mmutype == MMU_68040 ? (code & SSW_RW040) == 0 :
 	    (code & (SSW_DF|SSW_RW)) == SSW_DF) {	/* what about RMW? */
@@ -398,11 +398,7 @@ trapmmufault(type, code, v, fp, p, sticks)
 		printf("vmfault %s %lx returned %d\n",
 		    map == kernel_map ? "kernel" : "user", va, rv);
 #endif
-#ifdef M68060
-	if ((machineid & AMIGA_68060) == 0 && mmutype == MMU_68040) {
-#else
-	if (mmutype == MMU_68040) {
-#endif
+	if (mmutype == MMU_68040) {	/* explicitely NOT MMU_68060 */
 		if (rv) {
 			goto nogo;
 		}

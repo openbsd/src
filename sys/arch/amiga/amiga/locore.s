@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.31 2001/08/12 23:52:59 miod Exp $	*/
+/*	$OpenBSD: locore.s,v 1.32 2001/11/30 22:08:13 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.89 1997/07/17 16:22:54 is Exp $	*/
 
 /*
@@ -297,7 +297,7 @@ _fpemuli:
 _fpunsupp:
 #if defined(M68040)
 	cmpl	#MMU_68040,_mmutype	| 68040?
-	jne	_illinst		| no, treat as illinst
+	jgt	_illinst		| no, treat as illinst
 #ifdef FPSP
 	.globl	fpsp_unsupp
 	jmp	fpsp_unsupp		| yes, go handle it
@@ -953,6 +953,7 @@ Lsetcpu040:
 #ifndef BB060STUPIDROM
 	btst	#7,sp@(3)
 	jeq	Lstartnot040
+	movl	#MMU_68060,a0@
 	movl	#CPU_68060,a1@		| set cputype
 	orl	#IC60_CABC,d0		| XXX and clear all 060 branch cache
 #else
@@ -963,6 +964,7 @@ Lsetcpu040:
 	tstl	d0
 	jeq	Lstartnot040
 	bset	#7,sp@(3)		| note it is '60 family in machineid
+	movl	#MMU_68060,a0@
 	movl	#CPU_68060,a1@		| and in the cputype
 	orl	#IC60_CABC,d0		| XXX and clear all 060 branch cache 
 	.word	0x4e7a,0x1808		| movc	pcr,d1
@@ -1019,8 +1021,8 @@ Lunshadow:
 	.word	0xf4f8			| cpusha bc - push & invalidate caches
 	movl	#CACHE40_ON,d0
 #ifdef M68060
-	btst	#7,_machineid+3
-	jeq	Lcacheon
+	cmpl	#MMU_68060,_mmutype
+	jne	Lcacheon
 	movl	#CACHE60_ON,d0
 #endif
 Lcacheon:
@@ -1063,15 +1065,17 @@ Lcacheon:
 	addql	#4,sp			| pop args
 
 	cmpl	#MMU_68040,_mmutype	| 68040?
-	jne	Lnoflush		| no, skip
+	jgt	Lnoflush		| no, skip
 	.word	0xf478			| cpusha dc
 	.word	0xf498			| cinva ic
+#ifdef M68060
 | XXX dont need these; the cinva ic also clears the branch cache.
-|	btst	#7,_machineid+3
-|	jeq	Lnoflush
+|	cmpl	#MMU_68060,_mmutype
+|	jne	Lnoflush
 |	movc	cacr,d0
 |	orl	#IC60_CUBC,d0
 |	movc	d0,cacr
+#endif
 Lnoflush:
 	movl	sp@(FR_SP),a0		| grab and load
 	movl	a0,usp			|   user SP
@@ -1293,8 +1297,8 @@ Lsw2:
 	fsave	a2@			| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
-	btst	#7,_machineid+3
-	jne	Lsavfp60
+	cmpl	#MMU_68060,_mmutype	| is 68060?
+	jeq	Lsavfp60
 #endif
 	tstb	a2@			| null state frame?
 	jeq	Lswnofpsave		| yes, all done
@@ -1353,8 +1357,8 @@ Lresnonofpatall:
 	lea	a1@(PCB_FPCTX),a0	| pointer to FP save area
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
-	btst	#7,_machineid+3
-	jne	Lresfp60rest1
+	cmpl	#MMU_68060,_mmutype
+	jeq	Lresfp60rest1
 #endif
 	tstb	a0@			| null state frame?
 	jeq	Lresfprest2		| yes, easy
@@ -1401,8 +1405,8 @@ ENTRY(savectx)
 	fsave	a0@			| save FP state
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
-	btst	#7,_machineid+3
-	jne	Lsavctx60
+	cmpl	#MMU_68060,_mmutype
+	jeq	Lsavctx60
 #endif
 	tstb	a0@			| null state frame?
 	jeq	Lsavedone		| yes, all done
@@ -1515,7 +1519,7 @@ Lclrloop:
 ENTRY(TBIA)
 __TBIA:
 	cmpl	#MMU_68040,_mmutype
-	jeq	Ltbia040
+	jle	Ltbia040
 	pflusha				| flush entire TLB
 	tstl	_mmutype
 	jpl	Lmc68851a		| 68851 implies no d-cache
@@ -1526,8 +1530,8 @@ Lmc68851a:
 Ltbia040:
 	.word	0xf518			| pflusha
 #ifdef M68060
-	btst	#7,_machineid+3
-	jeq	Ltbiano60
+	cmpl	#MMU_68060,_mmutype
+	jne	Ltbiano60
 	movc	cacr,d0
 	orl	#IC60_CABC,d0		| and clear all branch cache entries
 	movc	d0,cacr
@@ -1545,7 +1549,7 @@ ENTRY(TBIS)
 #endif
 	movl	sp@(4),a0		| get addr to flush
 	cmpl	#MMU_68040,_mmutype
-	jeq	Ltbis040
+	jle	Ltbis040
 	tstl	_mmutype
 	jpl	Lmc68851b		| is 68851?
 	pflush	#0,#0,a0@		| flush address from both sides
@@ -1563,8 +1567,8 @@ Ltbis040:
 	movc	d0,dfc
 	.word	0xf508			| pflush a0@
 #ifdef M68060
-	btst	#7,_machineid+3
-	jeq	Ltbisno60
+	cmpl	#MMU_68060,_mmutype
+	jne	Ltbisno60
 	movc	cacr,d0
 	orl	#IC60_CABC,d0		| and clear all branch cache entries
 	movc	d0,cacr
@@ -1581,7 +1585,7 @@ ENTRY(TBIAS)
 	jne	__TBIA			| yes, flush everything
 #endif
 	cmpl	#MMU_68040,_mmutype
-	jeq	Ltbias040
+	jle	Ltbias040
 	tstl	_mmutype
 	jpl	Lmc68851c		| 68851?
 	pflush #4,#4			| flush supervisor TLB entries
@@ -1595,8 +1599,8 @@ Ltbias040:
 | 68040 cannot specify supervisor/user on pflusha, so we flush all
 	.word	0xf518			| pflusha
 #ifdef M68060
-	btst	#7,_machineid+3
-	jeq	Ltbiasno60
+	cmpl	#MMU_68060,_mmutype
+	jne	Ltbiasno60
 	movc	cacr,d0
 	orl	#IC60_CABC,d0		| and clear all branch cache entries
 	movc	d0,cacr
@@ -1613,7 +1617,7 @@ ENTRY(TBIAU)
 	jne	__TBIA			| yes, flush everything
 #endif
 	cmpl	#MMU_68040,_mmutype
-	jeq	Ltbiau040
+	jle	Ltbiau040
 	tstl	_mmutype
 	jpl	Lmc68851d		| 68851?
 	pflush	#0,#4			| flush user TLB entries
@@ -1627,8 +1631,8 @@ Ltbiau040:
 | 68040 cannot specify supervisor/user on pflusha, so we flush all
 	.word	0xf518			| pflusha
 #ifdef M68060
-	btst	#7,_machineid+3
-	jeq	Ltbiauno60
+	cmpl	#MMU_68060,_mmutype
+	jne	Ltbiauno60
 	movc	cacr,d0
 	orl	#IC60_CUBC,d0		| but only user branch cache entries
 	movc	d0,cacr
@@ -1644,7 +1648,7 @@ ENTRY(ICPA)
 #if defined(M68030) || defined(M68020)
 #if defined(M68040) || defined(M68060)
 	cmpl	#MMU_68040,_mmutype
-	jeq	Licia040
+	jle	Licia040
 #endif
 	movl	#IC_CLEAR,d0
 	movc	d0,cacr			| invalidate i-cache
@@ -1666,7 +1670,7 @@ Licia040:
 ENTRY(DCIA)
 __DCIA:
 	cmpl	#MMU_68040,_mmutype
-	jne	Ldciax
+	jgt	Ldciax
 	.word	0xf478		| cpusha dc
 Ldciax:
 	rts
@@ -1674,7 +1678,7 @@ Ldciax:
 ENTRY(DCIS)
 __DCIS:
 	cmpl	#MMU_68040,_mmutype
-	jne	Ldcisx
+	jgt	Ldcisx
 	.word	0xf478		| cpusha dc
 	nop
 Ldcisx:
@@ -1683,7 +1687,7 @@ Ldcisx:
 ENTRY(DCIU)
 __DCIU:
 	cmpl	#MMU_68040,_mmutype
-	jne	Ldciux
+	jgt	Ldciux
 	.word	0xf478		| cpusha dc
 Ldciux:
 	rts
@@ -1692,7 +1696,7 @@ Ldciux:
 ENTRY(DCIAS)
 __DCIAS:
 	cmpl	#MMU_68040,_mmutype
-	jne	Ldciasx
+	jle	Ldciasx
 	movl	sp@(4),a0
 	.word	0xf468		| cpushl dc,a0@
 Ldciasx:
@@ -1731,7 +1735,7 @@ ENTRY(PCIA)
 #if defined(M68030) || defined(M68030)
 #if defined(M68040) || defined(M68060)
 	cmpl	#MMU_68040,_mmutype
-	jeq	Lpcia040
+	jle	Lpcia040
 #endif
 	movl	#DC_CLEAR,d0
 	movc	d0,cacr			| invalidate on-chip d-cache
@@ -1788,8 +1792,8 @@ ENTRY(loadustp)
 	moveq	#PGSHIFT,d1
 	lsll	d1,d0			| convert to addr
 #ifdef M68060
-	btst	#7,_machineid+3
-	jne	Lldustp060
+	cmpl	#MMU_68060,_mmutype
+	jeq	Lldustp060
 #endif
 	cmpl	#MMU_68040,_mmutype
 	jeq	Lldustp040
@@ -1821,8 +1825,8 @@ ENTRY(m68881_save)
 	fsave	a0@			| save state
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #ifdef M68060
-	btst	#7,_machineid+3
-	jne	Lm68060fpsave
+	cmpl	#MMU_68060,_mmutype
+	jeq	Lm68060fpsave
 #endif
 	tstb	a0@			| null state frame?
 	jeq	Lm68881sdone		| yes, all done
@@ -1848,8 +1852,8 @@ ENTRY(m68881_restore)
 	movl	sp@(4),a0		| save area pointer
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
-	btst	#7,_machineid+3
-	jne	Lm68060fprestore
+	cmpl	#MMU_68060,_mmutype
+	jeq	Lm68060fprestore
 #endif
 	tstb	a0@			| null state frame?
 	jeq	Lm68881rdone		| yes, easy
@@ -1881,7 +1885,7 @@ Lm68060fprdone:
 _doboot:
 	movl	#CACHE_OFF,d0
 	cmpl	#MMU_68040,_mmutype	| is it 68040
-	jne	Ldoboot0
+	jgt	Ldoboot0
 	.word	0xf4f8		| cpusha bc - push and invalidate caches
 	nop
 	movl	#CACHE40_OFF,d0
@@ -1923,7 +1927,7 @@ Ldb2:
 	| ok, turn off MMU..
 Ldoreboot:
 	cmpl	#MMU_68040,_mmutype	| is it 68040
- 	jeq	Lmmuoff040
+ 	jle	Lmmuoff040
 	lea	zero,a0
 	pmove	a0@,tc			| Turn off MMU
 	lea	nullrp,a0
@@ -2021,7 +2025,7 @@ Lreload_ok:
 
 	movl	#CACHE_OFF,d0
 	cmpl	#MMU_68040,_mmutype
-	jne	Lreload1
+	jgt	Lreload1
 	.word	0xf4f8		| cpusha bc - push and invalidate caches
 	nop
 	movl	#CACHE40_OFF,d0
@@ -2052,7 +2056,7 @@ Lreload_copy:
 
 	| ok, turn off MMU..
 	cmpl	#MMU_68040,_mmutype
-	jeq	Lreload040
+	jle	Lreload040
 	lea	zero,a3
 	pmove	a3@,tc			| Turn off MMU
 	lea	nullrp,a3
