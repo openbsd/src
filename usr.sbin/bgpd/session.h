@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.17 2004/01/09 13:47:08 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.18 2004/01/11 01:04:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -17,6 +17,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/socket.h>
 #include <time.h>
 
 #define	MAX_BACKLOG			5
@@ -144,6 +145,8 @@ struct peer {
 	u_int			 IdleHoldTime;
 	int			 sock;
 	int			 events;
+	struct sockaddr_storage	 sa_local;
+	struct sockaddr_storage	 sa_remote;
 	struct msgbuf		 wbuf;
 	struct buf_read		*rbuf;
 	struct peer		*next;

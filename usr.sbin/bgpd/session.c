@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.82 2004/01/10 22:25:58 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.83 2004/01/11 01:04:43 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,6 +63,7 @@ void	change_state(struct peer *, enum session_state, enum session_events);
 int	session_setup_socket(struct peer *);
 void	session_accept(int);
 int	session_connect(struct peer *);
+void	session_tcp_established(struct peer *);
 void	session_open(struct peer *);
 void	session_keepalive(struct peer *);
 void	session_update(u_int32_t, void *, size_t);
@@ -399,6 +400,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			/* ignore */
 			break;
 		case EVNT_CON_OPEN:
+			session_tcp_established(peer);
 			session_open(peer);
 			peer->ConnectRetryTimer = 0;
 			change_state(peer, STATE_OPENSENT, event);
@@ -425,6 +427,7 @@ bgp_fsm(struct peer *peer, enum session_events event)
 			/* ignore */
 			break;
 		case EVNT_CON_OPEN:
+			session_tcp_established(peer);
 			session_open(peer);
 			peer->ConnectRetryTimer = 0;
 			peer->holdtime = INTERVAL_HOLD_INITIAL;
@@ -819,14 +822,26 @@ session_socket_blockmode(int fd, enum blockmodes bm)
 }
 
 void
+session_tcp_established(struct peer *peer)
+{
+	socklen_t	len;
+
+	session_socket_blockmode(peer->sock, BM_NORMAL);
+	if (getsockname(peer->sock, (struct sockaddr *)&peer->sa_local,
+	    &len) == -1)
+		log_err("getsockname");
+	if (getpeername(peer->sock, (struct sockaddr *)&peer->sa_remote,
+	    &len) == -1)
+		log_err("getpeername");
+}
+
+void
 session_open(struct peer *peer)
 {
 	struct msg_open	 msg;
 	struct buf	*buf;
 	u_int16_t	 len;
 	int		 errs = 0, n;
-
-	session_socket_blockmode(peer->sock, BM_NORMAL);
 
 	len = MSGSIZE_OPEN_MIN;
 
