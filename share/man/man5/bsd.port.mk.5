@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.62 2002/02/18 20:57:07 pvalchev Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.63 2002/03/02 13:41:02 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -815,6 +815,11 @@ PATCH_LIST=${PORTSDIR}/x11/kde/libs2/patches/p-* patch-*
 .It Ev PATCH_STRIP
 Patch option used to strip directory levels while applying port's patches.
 Defaults to -p0 .
+.It Ev PORTHOME
+Setting of env variable
+.Ev HOME
+for most shell invocations.
+Default will trip ports that try to write into $HOME while building.
 .It Ev PORTPATH
 Path used by most shell invocations.
 Don't override unless really needed.
