@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.12 2001/06/25 18:04:22 drahn Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.13 2001/06/25 19:33:09 drahn Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -120,7 +120,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.12 2001/06/25 18:04:22 drahn Exp $";
+	"$OpenBSD: if_wi.c,v 1.13 2001/06/25 19:33:09 drahn Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -642,9 +642,8 @@ wi_read_record(sc, ltv)
 
 	/* Now read the data. */
 	ptr = (u_int8_t *)&ltv->wi_val;
-	if (ltv->wi_len > 1) {
+	if (ltv->wi_len > 1)
 		CSR_READ_RAW_2(sc, WI_DATA1, ptr, (ltv->wi_len-1)*2);
-	}
 
 	if (sc->sc_prism2) {
 		int v;
@@ -697,7 +696,6 @@ wi_write_record(sc, ltv)
 	struct wi_ltv_gen	*ltv;
 {
 	u_int8_t		*ptr;
-	int			i;
 	struct wi_ltv_gen	p2ltv;
 
 	if (sc->sc_prism2) {
@@ -771,9 +769,8 @@ wi_write_record(sc, ltv)
 	CSR_WRITE_2(sc, WI_DATA1, ltv->wi_type);
 
 	ptr = (u_int8_t *)&ltv->wi_val;
-	if (ltv->wi_len > 1)  {
+	if (ltv->wi_len > 1)
 		CSR_WRITE_RAW_2(sc, WI_DATA1, ptr, (ltv->wi_len-1) *2);
-	}
 
 	if (wi_cmd(sc, WI_CMD_ACCESS|WI_ACCESS_WRITE, ltv->wi_type))
 		return(EIO);
