@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.24 1999/08/18 05:29:48 d Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.25 1999/08/18 05:53:31 fgsch Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.21 1999/08/15 19:10:32 fgsch Exp 
+ *		OpenBSD: pcmciadevs,v 1.22 1999/08/18 05:29:48 d Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
