@@ -1,9 +1,34 @@
-dnl	$OpenBSD: install,v 1.10 2004/05/04 23:59:39 deraadt Exp $
+dnl	$OpenBSD: install,v 1.11 2005/03/25 22:18:00 mickey Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
-Currently, the only way to bootstrap the installation procedure is
-to boot the miniroot over the network.
+Bootstrapping the installation ramdisk kernel is supported
+from both network and CD-ROM.
+
+
+Booting from CD-ROM installation media:
+
+You can burn a bootable CD-ROM and boot from it.
+To boot from SCSI CD-ROM, simply insert the CD into the drive before power
+up, then during the computer's self-test cycle, press the space bar.
+Subsequently at the PROM prompt issue a command:
+
+	BOOT_ADMIN> search
+
+to initiate a search for all bootable devices available.  This procedure
+may take a few minutes and should you have configured network boot services
+present may find those too.  A sample output might be:
+
+   Path Number        Device Path              Device Type
+   -----------        -----------------        -----------
+   P0                 SESCSI.2.0               TOSHIBA CD-ROM XM-6201TA
+   P1                 LAN.10.0.0.5.3.254       lucifier
+   P2                 FWSCSI.5.0               IBM     DDRS-34560WS
+   P3                 FWSCSI.0.0               SEAGATE ST318436LW
+
+To boot from your CD-ROM type:
+
+	BOOT_ADMIN> boot p0
 
 
 Booting from Network:
@@ -79,16 +104,12 @@ OpenBSDInstallPart2
 
 	Boot your machine from the installation media as described above.
 
-dnl mention slow cdrom someday
 	It will take a while to load the miniroot image, especially from
-	a slow network connection, most likely more than a minute.
+	a slow network connection or a CD-ROM, most likely more than a minute.
 	If some action doesn't eventually happen, or the spinning cursor
 	has stopped and nothing further has happened, either your boot
 	media is bad, your diskless setup is incorrect, or you may have
 	a hardware or configuration problem.
-
-	When presented with the boot prompt, simply press enter, or wait
-	for the kernel to autoboot after 5 seconds.
 
 OpenBSDBootMsgs
 
