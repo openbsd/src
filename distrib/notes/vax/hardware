@@ -1,18 +1,19 @@
-OpenBSD/MACHINE OSREV runs on a wide variety of VAX hardware, although only
-the following systems have been tested:
-	- VAXstation/MicroVAX 2000
+OpenBSD/MACHINE OSREV runs on a wide variety of VAX hardware.
+The following systems have been tested:
+	- VAXstation 2000
 	- VAXstation 3100/{30,40}
 	- VAXstation 3100/{38,48}
 	- VAXstation 3100/76
 	- VAXstation 4000/60
 	- VAXstation 4000/VLC
+	- MicroVAX 2000
 	- MicroVAX 3100/{10,20}{,e}
 	- MicroVAX 3100/80
 	- MicroVAX 3100/90
 	- MicroVAX 3300
-	- VAX 4000/100
-	- VAX 4000/105
+	- VAX 4000/10{0,5}
 	- VAX 4000/300
+	- VAX 4000/{4,5,6}00{,A}
 
 Ethernet devices:
 	- on-board MicroVAX or VAXstation LANCE 
