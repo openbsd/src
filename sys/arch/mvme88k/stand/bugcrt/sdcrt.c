@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugcrt.c,v 1.4 1998/12/15 06:12:50 smurph Exp $ */
+/*	$OpenBSD: sdcrt.c,v 1.1 1998/12/15 06:12:50 smurph Exp $ */
 #include <sys/types.h>
 #include <machine/prom.h>
 
@@ -6,7 +6,7 @@ struct mvmeprom_args bugargs = { 1 };		/* not BSS */
 
 	asm (".text");
 	/* pseudo reset vector */
-	asm (".long 0x00Af0000"); /* initial sp value */
+	asm (".long 0x003f0000"); /* initial sp value */
 	asm (".long _start");     /* initial ip value */
 start()
 {
@@ -22,13 +22,6 @@ start()
 	register char *nbarg_end asm (MVMEPROM_REG_NBARGEND);
 	extern int edata, end;
 	struct mvmeprom_brdid *id, *mvmeprom_brdid();
-
-	/* Do not use r10 to enable the SFU1. This wipes out 
-	   the netboot args.  Not cool at all... r25 seems free. */
-asm	("|	enable SFU1");
-asm	("	ldcr	r25,cr1");
-asm	("	xor	r25,r25,0x8");
-asm	("	stcr	r25,cr1");
 
 	bugargs.dev_lun = dev_lun;
 	bugargs.ctrl_lun = ctrl_lun;
