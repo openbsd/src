@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.1 2004/12/31 00:14:07 drahn Exp $
+#	$OpenBSD: install.md,v 1.2 2005/01/16 19:24:55 deraadt Exp $
 #
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -49,147 +49,81 @@ md_set_term() {
 md_installboot() {
 }
 
-md_prep_disk() {
-	local _disk=$1 _resp
-	typeset -l _resp
+# $1 is the disk to check
+md_checkfordisklabel() {
+	local rval=0
 
-	cat << __EOT
+	disklabel -r $1 >/dev/null 2>/tmp/checkfordisklabel
 
-$_disk must be partitioned using an BSD or an MBR partition table.
+	if grep "disk label corrupted" /tmp/checkfordisklabel; then
+		rval=2
+	fi >/dev/null 2>&1
 
-BSD partition table or MBR partition tables can be created by openbsd.
-It is more a question of firmware compatiblity disk portability.
-(Once we can figure out what filesystems ABLE can boot)
-__EOT
-
-	while : ; do
-		ask "Use BSD or MBR partition table?" BSD
-		_resp=$resp
-		case $_resp in
-		m|mbr)	export disklabeltype=MBR
-			md_prep_MBR $_disk
-			break
-			;;
-		b|bsd)	export disklabeltype=BSD
-			md_prep_BSD $_disk
-			break
-			;;
-		esac
-	done
+	rm -f /tmp/checkfordisklabel
+	return $rval
 }
 
-md_prep_MBR() {
+md_prep_fdisk() {
 	local _disk=$1
 
-	if [[ -n $(disklabel -c $_disk 2>/dev/null | grep ' BSD ') ]]; then
-		cat << __EOT
-
-WARNING: putting an MBR partition table on $_disk will DESTROY the existing BSD
-         partitions and BSD partition table.
-
-__EOT
-		ask_yn "Are you *sure* you want an MBR partition table on $_disk?"
-		[[ $resp == n ]] && exit
-	fi
-
-	ask_yn "Use *all* of $_disk for OpenBSD?"
+	ask_yn "Do you want to use *all* of $_disk for OpenBSD?"
 	if [[ $resp == y ]]; then
-		echo -n "Creating Master Boot Record (MBR)..."
-		fdisk -e $_disk  >/dev/null 2>&1 << __EOT
+		echo -n "Putting all of $_disk into an active OpenBSD MBR partition (type 'A6')..."
+		fdisk -e ${_disk} << __EOT > /dev/null
 reinit
 update
 write
 quit
 __EOT
 		echo "done."
-
-		echo -n "Formatting 1MB MSDOS boot partition..."
-		gunzip < /usr/mdec/msdos1mb.gz | \
-		    dd of=/dev/r${_disk}c bs=512 seek=1 >/dev/null 2>&1
-		echo "done."
-
 		return
 	fi
 
-	# Manual MBR setup. The user is basically on their own. Give a few
-	# hints and let the user rip.
+	# Manually configure the MBR.
 	cat << __EOT
 
-**** NOTE ****
+You will now create a single MBR partition to contain your OpenBSD data. This
+partition must have an id of 'A6'; must *NOT* overlap other partitions; and
+must be marked as the only active partition.
 
-XXX
+The 'manual' command describes all the fdisk commands in detail.
 
-**************
-
-Current partition information is:
-
-$(fdisk $_disk)
-
+$(fdisk ${_disk})
 __EOT
-
-	fdisk -e $_disk
+	fdisk -e ${_disk}
 
 	cat << __EOT
-Here is the MBR configuration you chose:
+Here is the partition information you chose:
 
-$(fdisk $_disk)
-
-Please take note of the offsets and sizes of the DOS partition, the OpenBSD
-partition, and any other partitions you want to access from OpenBSD. You will
-need this information to fill in the OpenBSD disklabel.
-
+$(fdisk ${_disk})
 __EOT
-}
-
-md_prep_BSD() {
-	local _disk=$1
-
-	cat << __EOT
-
-No special setup should be required to label using BSD disklabel.
-however if the disk has previously been partitioned in another
-manner, it may be necessary to wipe existing partition tables
-before proceeding.
-
-dd if=/dev/zero of=/${_disk} bs=512 count=10
-disklabel -c ${_disk}
-
-
-__EOT
-
 }
 
 md_prep_disklabel() {
-	local _disk=$1 _q
+	local _disk=$1
 
-	md_prep_disk $_disk
+	md_prep_fdisk $_disk
 
-	case $disklabeltype in
-	BSD)	;;
-	MBR)	cat << __EOT
+	cat << __EOT
 
-You *MUST* setup the OpenBSD disklabel to include the MSDOS-formatted boot
-partition as the 'i' partition. If the 'i' partition is missing or not the
-MSDOS-formatted boot partition, then the kernel required to boot
-OpenBSD cannot be installed.
+You will now create an OpenBSD disklabel inside the OpenBSD MBR
+partition. The disklabel defines how OpenBSD splits up the MBR partition
+into OpenBSD partitions in which filesystems and swap space are created.
+
+The offsets used in the disklabel are ABSOLUTE, i.e. relative to the
+start of the disk, NOT the start of the OpenBSD MBR partition.
 
 __EOT
-		;;
-	*)	echo "Disk label type ('$disklabeltype') is not 'BSD' or 'MBR'."
-		exit
+
+	md_checkfordisklabel $_disk
+	case $? in
+	2)	echo "WARNING: Label on disk $_disk is corrupted. You will be repairing it.\n"
 		;;
 	esac
 
 	disklabel -W $_disk >/dev/null 2>&1
-	disklabel -c -f /tmp/fstab.$_disk -E $_disk
+	disklabel -f /tmp/fstab.$_disk -E $_disk
 }
 
 md_congrats() {
-	cat << __EOT
-
-Once the machine has rebooted use OpenFirmware to boot into OpenBSD, as
-described in the INSTALL.$ARCH document. The command to boot OpenBSD will be
-something like 'boot (hd0)bsd'.
-
-__EOT
 }
