@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.39 1997/02/10 11:40:59 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.40 1997/04/08 02:45:10 millert Exp $
 #	$NetBSD: Makefile,v 1.62 1996/03/10 05:45:43 thorpej Exp $
 #	from: @(#)Makefile	5.8.1.1 (Berkeley) 5/8/91
 
@@ -21,7 +21,7 @@ SUBDIR= apply apropos arch asa at aucat awk banner basename bdes biff cal \
 	su sup systat tail talk tcopy tee telnet tftp time \
 	tip tn3270 touch tput tr true tset tsort tty ul uname unexpand \
 	unifdef uniq units unvis users uudecode uuencode \
-	vacation vgrind vi vim vis vmstat w wall wc what whatis whereis \
+	vacation vgrind vi vim vis vmstat w wall wc what whatis \
 	which who whois window write \
 	xargs xinstall xlint xstr yacc yes \
 	gprof
