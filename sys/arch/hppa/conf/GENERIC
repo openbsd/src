@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.4 1999/02/25 16:59:24 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.5 1999/02/25 17:18:34 mickey Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -35,10 +35,9 @@ config	bsd swap generic
 
 mainbus0 at root		# root "bus"
 
-mem*	at mainbus0
-cpu*	at mainbus0
-pdc0	at mainbus0
-
+mem*	at mainbus0		# /dev/*mem and memory controller (Viper)
+pdc0	at mainbus0		# PDC/IODC wrapper for boot console
+cpu*	at mainbus0 #irq 31	# HP PA-RISC cpu
 lasi*	at mainbus0 irq 28	# LASI host adapter (LSI PN???)
 asp*	at mainbus0 irq 28	# this one comes w/ Viper and leds
 #wax*	at mainbus0 irq 28	# Wax may host EISA as well
@@ -71,16 +70,16 @@ com0	at gsc? irq 5	# RS/232 serial port
 com1	at gsc? irq 6	# RS/232 serial port
 lpt0	at gsc? irq 7	# LPT centronics iface
 ie0	at gsc? irq 8	# 82C5[89]6 ether
-#siop0	at gsc? irq 9	# NCR 53C7xx
-#siop1	at gsc? irq 3	# NCR 53C7xx (Fast/Wide)
-#scsibus* at siop?
+siop0	at gsc? irq 9	# NCR 53C7xx
+siop1	at gsc? irq 3	# NCR 53C7xx (Fast/Wide)
+scsibus* at siop?
 #aone*	at gsc? irq 13	# Audio Type 1 (PSB 2160-N)
 #audio* at aone?
 #atwo*	at gsc?	irq 13	# Audio Type 2 (CS4215)
 #audio* at atwo?
 pckbc*	at gsc? irq 27
 pckbd*	at pckbc?	# PS/2 keyboard
-#pms*	at pckbc?	# PS/2 mouse
+pms*	at pckbc?	# PS/2 mouse
 #fdc*	at gsc?		# PC floppy controller (WD37C65C)
 #option	FD_DEBUG
 
@@ -105,10 +104,10 @@ scsibus* at bha?
 # MI devices
 option	WSEMUL_DUMB
 #wsdisplay*	at vgafb?
-#wsdisplay*	at sti?
+wsdisplay*	at sti?
 wskbd*		at pckbd?
 #wskbd*		at hkbd?
-#wsmouse*	at pms?
+wsmouse*	at pms?
 #wsmouse*	at hms?
 
 #fd*	at fdc?	drive ?	# floppy drives

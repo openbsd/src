@@ -1,4 +1,4 @@
-#	$OpenBSD: GECKO,v 1.3 1999/02/25 16:35:17 mickey Exp $
+#	$OpenBSD: GECKO,v 1.4 1999/02/25 17:18:34 mickey Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
@@ -29,12 +29,13 @@ config	bsd swap generic
 
 mainbus0	at root		# root "bus"
 
-mem0	at mainbus0
+mem0	at mainbus0		# /dev/*mem, and memory controller
 pdc0	at mainbus0		# PDC/IODC wrapper for boot console
 cpu0	at mainbus0 #irq 31	# HP PA7100LC processor
-lasi*	at mainbus0 irq 28	# LASI host adapter (LSI ???)
-sti0	at mainbus0 		# STI graphics
-#sti1	at mainbus0 		# STI graphics (add-in card)
+lasi0	at mainbus0 irq 28	# LASI host adapter (LSI ???)
+#lasi1	at mainbus0 irq ?	# LASI host adapter in the GIO slot
+sti0	at mainbus0 		# onboard HCRX-8 graphics
+#sti1	at mainbus0 		# GIO slot HCRX-8 graphics
 
 # internal I/O space
 gsc*	at lasi?
@@ -55,10 +56,10 @@ fdc0	at gsc?	irq ?	# PC floppy controller (WD37C65C)
 # MI devices
 wsdisplay*	at sti?
 wskbd*		at pckbd?
-#wsmouse*	at pms?
+wsmouse*	at pms?
 
 option	FD_DEBUG
-fd0	at fdc0	drive 0	# floppy drives
+fd0	at fdc0	drive ?	# floppy drives
 
 sd*	at scsibus? target ? lun ?
 st*	at scsibus? target ? lun ?
