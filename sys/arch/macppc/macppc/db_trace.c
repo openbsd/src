@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_trace.c,v 1.3 2001/09/05 20:49:55 drahn Exp $	*/
+/*	$OpenBSD: db_trace.c,v 1.4 2001/09/09 23:56:40 drahn Exp $	*/
 /*	$NetBSD: db_trace.c,v 1.15 1996/02/22 23:23:41 gwr Exp $	*/
 
 /*
@@ -100,11 +100,13 @@ int
 db_read32(u_int32_t paddr, u_int32_t *value)
 {
 	faultbuf env;
+	faultbuf *old_onfault = curpcb->pcb_onfault;
 	if (setfault(env)) {
-		curpcb->pcb_onfault = 0;
+		curpcb->pcb_onfault = old_onfault;
 		return EFAULT;
 	}
 	*value = *(u_int32_t *)paddr;
+	curpcb->pcb_onfault = old_onfault;
 	return 0;
 }
 
