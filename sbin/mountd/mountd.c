@@ -1,4 +1,4 @@
-/*	$OpenBSD: mountd.c,v 1.19 1997/08/09 12:59:14 niklas Exp $	*/
+/*	$OpenBSD: mountd.c,v 1.20 1997/08/13 18:59:26 deraadt Exp $	*/
 /*	$NetBSD: mountd.c,v 1.31 1996/02/18 11:57:53 fvdl Exp $	*/
 
 /*
@@ -714,6 +714,7 @@ get_exportlist()
 
 		if (!strncmp(fsp->f_fstypename, MOUNT_MFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_FFS, MFSNAMELEN) ||
+		    !strncmp(fsp->f_fstypename, MOUNT_EXT2FS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_MSDOS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_ADOSFS, MFSNAMELEN) ||
 		    !strncmp(fsp->f_fstypename, MOUNT_CD9660, MFSNAMELEN)) {
