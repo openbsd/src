@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.11 2000/10/10 13:36:48 itojun Exp $	*/
+/*	$OpenBSD: time.h,v 1.12 2001/03/09 02:18:00 millert Exp $	*/
 /*	$NetBSD: time.h,v 1.18 1996/04/23 10:29:33 mycroft Exp $	*/
 
 /*
@@ -183,7 +183,6 @@ int	clock_settime __P((clockid_t, const struct timespec *));
 int	futimes __P((int, const struct timeval *));
 int	getitimer __P((int, struct itimerval *));
 int	gettimeofday __P((struct timeval *, struct timezone *));
-int	nanosleep __P((const struct timespec *, struct timespec *));
 int	setitimer __P((int, const struct itimerval *, struct itimerval *));
 int	settimeofday __P((const struct timeval *, const struct timezone *));
 int	utimes __P((const char *, const struct timeval *));

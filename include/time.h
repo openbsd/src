@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.9 2000/08/22 13:59:44 millert Exp $	*/
+/*	$OpenBSD: time.h,v 1.10 2001/03/09 02:18:00 millert Exp $	*/
 /*	$NetBSD: time.h,v 1.9 1994/10/26 00:56:35 cgd Exp $	*/
 
 /*
@@ -89,6 +89,7 @@ struct tm {
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+struct timespec;
 char *asctime __P((const struct tm *));
 clock_t clock __P((void));
 char *ctime __P((const time_t *));
@@ -103,6 +104,7 @@ char *asctime_r __P((const struct tm *, char *));
 char *ctime_r __P((const time_t *, char *));
 struct tm *gmtime_r __P((const time_t *, struct tm *));
 struct tm *localtime_r __P((const time_t *, struct tm *));
+int nanosleep __P((const struct timespec *, struct timespec *));
 
 #if !defined(_ANSI_SOURCE)
 #define CLK_TCK		100
