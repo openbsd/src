@@ -39,6 +39,7 @@
 ./bin/sha1
 ./bin/sleep
 ./bin/stty
+./bin/sum
 ./bin/sync
 ./bin/systrace
 ./bin/tar
@@ -429,7 +430,6 @@
 ./usr/bin/strings
 ./usr/bin/su
 ./usr/bin/sudo
-./usr/bin/sum
 ./usr/bin/sup
 ./usr/bin/systat
 ./usr/bin/tail
