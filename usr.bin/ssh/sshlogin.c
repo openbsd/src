@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshlogin.c,v 1.1 2001/03/04 01:46:30 djm Exp $");
+RCSID("$OpenBSD: sshlogin.c,v 1.2 2001/03/24 16:43:27 stevesk Exp $");
 
 #include <util.h>
 #include <utmp.h>
@@ -50,11 +50,6 @@ RCSID("$OpenBSD: sshlogin.c,v 1.1 2001/03/04 01:46:30 djm Exp $");
  * Returns the time when the user last logged in.  Returns 0 if the
  * information is not available.  This must be called before record_login.
  * The host the user logged in from will be returned in buf.
- */
-
-/*
- * Returns the time when the user last logged in (or 0 if no previous login
- * is found).  The name of the host used last time is returned in buf.
  */
 
 u_long
@@ -97,7 +92,6 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 	struct lastlog ll;
 	char *lastlog;
 	struct utmp u;
-	const char *utmp, *wtmp;
 
 	/* Construct an utmp/wtmp entry. */
 	memset(&u, 0, sizeof(u));
@@ -105,10 +99,6 @@ record_login(pid_t pid, const char *ttyname, const char *user, uid_t uid,
 	u.ut_time = time(NULL);
 	strncpy(u.ut_name, user, sizeof(u.ut_name));
 	strncpy(u.ut_host, host, sizeof(u.ut_host));
-
-	/* Figure out the file names. */
-	utmp = _PATH_UTMP;
-	wtmp = _PATH_WTMP;
 
 	login(&u);
 	lastlog = _PATH_LASTLOG;
