@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.138 2002/12/06 00:47:32 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.139 2002/12/07 22:58:40 deraadt Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -40,7 +40,7 @@ packet filter modifies, drops or passes packets according to rules or
 definitions specified in
 .Nm pf.conf .
 .Pp
-There are six types of statement in 
+There are six types of statement in
 .Nm pf.conf :
 .Bl -tag -width xxxx
 .It Macros
@@ -54,7 +54,7 @@ in Internet protocols and implementations.
 .It Queueing
 Queuing provides rule-based bandwidth control.
 .It Translation (Various forms of NAT)
-Translation rules specify how addresses are to be mapped or redirected to 
+Translation rules specify how addresses are to be mapped or redirected to
 other addresses.
 .It Packet filtering
 Stateful and stateless packet filtering provides rule-based blocking or
@@ -63,11 +63,11 @@ passing of packets.
 .Pp
 The types of statement should be grouped and appear in
 .Nm pf.conf
-in the order shown above as this matches the operation of the underlying 
+in the order shown above as this matches the operation of the underlying
 packet filtering engine. By default
 .Xr pfctl 8
-enforces this order (see 
-.Pa set require-order 
+enforces this order (see
+.Pa set require-order
 below).
 .Pp
 .Sh MACROS
@@ -110,7 +110,7 @@ Seconds before an unassembled fragment is expired.
 .El
 .Pp
 When a packet matches a stateful connection, the seconds to live for the
-connection will be updated to that of the proto.modifier which 
+connection will be updated to that of the proto.modifier which
 corresponds to the connection state.
 Each packet which matches this state will reset the TTL.
 Tuning these values may improve the performance of the
@@ -272,7 +272,7 @@ filter.
 Setting this option to
 .Pa no
 disables this enforcement.
-There may be non-trivial and non-obvious implications to an out of 
+There may be non-trivial and non-obvious implications to an out of
 order ruleset. Consider carefully before disabling the order enforcement.
 .El
 .Pp
@@ -287,7 +287,7 @@ Packet normalization is invoked with the
 .Pa scrub
 directive.
 .Pp
-.Pa scrub 
+.Pa scrub
 has the following options:
 .Bl -tag -width xxxx
 .It Pa no-df
@@ -366,7 +366,7 @@ The
 type is required but currently only
 .Pa cbq
 is supported.
-The maximum rate for all queues on this interface is specified using the 
+The maximum rate for all queues on this interface is specified using the
 .Pa bandwidth
 directive; if not specified the interface's bandwidth is used.
 The value must not exceed the interface bandwidth and can be specified
@@ -450,7 +450,7 @@ Furthermore, child queues can be specified as in an
 declaration, thus building a tree of queues using a part of
 their parent's bandwidth.
 .Pp
-To continue the previous example, the examples below would specify the 
+To continue the previous example, the examples below would specify the
 four referenced
 queues, plus a few child queues. The
 .Pa tos
@@ -459,8 +459,8 @@ field is used to give interactive
 sessions priority over bulk transfers like
 .Xr scp 1
 and
-.Xr sftp 1 Ns . 
-The queues may then be referenced by filtering rules (see 
+.Xr sftp 1 Ns .
+The queues may then be referenced by filtering rules (see
 .Em Packet Filtering
 below).
 .Pp
@@ -490,7 +490,7 @@ below).
 .Pp
 .Sh TRANSLATION
 Translation rules modify either the source or destination address of the
-packets associated with a stateful connection. A stateful connection is 
+packets associated with a stateful connection. A stateful connection is
 automatically created to track packets matching such a rule.
 The translation engine modifies the specified address and/or port in the
 packet, recalculates IP, TCP and UDP checksums as necessary, and passes it to
@@ -591,9 +591,9 @@ and layer 3 (see
 .Xr udp 4 ,
 .Xr icmp 4 ,
 and
-.Xr icmp6 4 Ns ) 
-headers. 
-In addition, packets may also be 
+.Xr icmp6 4 Ns )
+headers.
+In addition, packets may also be
 assigned to queues for the purpose of bandwidth control.
 .Pp
 For each packet processed by the packet filter, the filter rules are
@@ -609,7 +609,7 @@ There are a number of ways in which a
 .Pa block
 rule can behave when blocking a packet. The default behaviour is to
 .Pa drop
-packets silently, however this can be overridden or made 
+packets silently, however this can be overridden or made
 explicit either globally, by setting the
 .Pa block-policy
 option, or on a per-rule basis with one of the following options:
@@ -668,7 +668,7 @@ must be specified.
 To cover both directions, two rules are needed.
 .It Em log
 In addition to the action specified, a log message is generated.
-All packets for that connection are logged, unless the `keep state' 
+All packets for that connection are logged, unless the `keep state'
 or `modulate state' options are specified, in which case only the
 packet that establishes the state is logged. (See `keep state' and
 `modulate state' below.)
@@ -1514,134 +1514,134 @@ option         = set ( [ "timeout" ( timeout | "{" timeout-list "}" ) ] |
                  [ "limit" ( limit | "{" limit-list "}" ) ] |
                  [ "loginterface" ( interface-name | "none" ) ] |
                  [ "block-policy" ( "drop" | "return" ) ] |
-                 [ "require-order" ( "yes" | "no" ) ] ).
+                 [ "require-order" ( "yes" | "no" ) ] )
 
 pf_rule        = action ( "in" | "out" )
                  [ "log" | "log-all" ] [ "quick" ]
                  [ "on" ifspec ] [ route ] [ af ] [ protospec ]
-                 hosts
-                 [ user ] [ group ] [ flags ]
-                 [ icmp-type | ipv6-icmp-type ] [ tos ]
-                 [ ( "keep" | "modulate" ) "state" [ "(" state-opts ")" ] ]
-                 [ "fragment" ] [ "no-df" ] [ "min-ttl" number ]
-                 [ "max-mss" number ] [ fragmentation ] [ "allow-opts" ]
-                 [ "label" string ] .
+                 hosts [filteropt-list]
+
+filteropt-list = filteropt-list filteropt | filteropt
+filteropt      = [ user ] | [ group ] | [ flags ] |
+                 [ icmp-type | ipv6-icmp-type ] | [ tos ] |
+                 [ ( "keep" | "modulate" ) "state" [ "(" state-opts ")" ] ] |
+                 [ "fragment" ] [ "no-df" ] [ "min-ttl" number ] |
+                 [ "max-mss" number ] [ fragmentation ] [ "allow-opts" ] |
+                 [ "label" string ] | [ "queue" string ]
 
 nat_rule       = [ "no" ] "nat" "on" ifspec  [ af ] [ protospec ] hosts
 		 "from" ipspec "to" ipspec [ portspec ]
 		 [ "->" ( redirhost | "{" redirhost-list "}" )
-		 [ portspec ] ] [ pooltype ] [ "static-port" ].
+		 [ portspec ] ] [ pooltype ] [ "static-port" ]
 
 binat_rule     = [ "no" ] "binat" "on" interface-name [ af ]
 		 [ "proto" ( proto-name | proto-number ) ]
 		 "from" address [ "/" mask-bits ] "to" ipspec
-		 [ "->" address [ "/" mask-bits ] ] .
+		 [ "->" address [ "/" mask-bits ] ]
 
 rdr_rule       = [ "no" ] "rdr" "on" ifspec [ af ] [ protospec ]
 		 "from" ipspec "to" ipspec [ portspec ]
 		 [ "->" ( redirhost | "{" redirhost-list "}" )
-		 [ portspec ] ] [ pooltype ] .
+		 [ portspec ] ] [ pooltype ]
 
 antispoof_rule = "antispoof" [ "log" ] [ "quick" ]
 		 "for" ( interface-name | "{" interface-list "}" )
-		 [ af ] .
+		 [ af ]
 
 altq_rule      = "altq" "on" interface-name "scheduler" "cbq"
 		 [ "bandwidth" number ( "b" | "Kb" | "Mb" | "Gb" ) ]
 		 [ "qlimit" number ] [ "tbrsize" number ]
-		 "queue" ( string | "{" queue-list "}" ) .
+		 "queue" ( string | "{" queue-list "}" )
 
 queue_rule     = "queue" string "bandwidth" number
 		 ( "b" | "Kb" | "Mb" | "Gb" | "%" )
 		 [ "priority" number ] [ "qlimit" number ] [ cbq-def ]
-	         [ string | "{" queue-list "}" ] .
+	         [ string | "{" queue-list "}" ]
 
-action         = "pass" | "block" [ return ] | "scrub" .
-return         = "drop" |
-                 "return" |
-                 "return-rst" [ "(" "ttl" number ")" ] |
+action         = "pass" | "block" [ return ] | "scrub"
+return         = "drop" | "return" | "return-rst" [ "(" "ttl" number ")" ] |
                  "return-icmp" [ "(" icmpcode ["," icmp6code ] ")" ] |
-                 "return-icmp6" [ "(" icmp6code ")" ] .
-icmpcode	= ( icmp-code-name | icmp-code-number ) .
-icmp6code	= ( icmp6-code-name | icmp6-code-number ) .
+                 "return-icmp6" [ "(" icmp6code ")" ]
+icmpcode	= ( icmp-code-name | icmp-code-number )
+icmp6code	= ( icmp6-code-name | icmp6-code-number )
 
 ifspec         = ( [ "!" ] interface-name ) | "{" interface-list "}"
-interface-list = [ "!" ] interface-name [ [ "," ] interface-list ] .
+interface-list = [ "!" ] interface-name [ [ "," ] interface-list ]
 route          = "fastroute" |
                  ( "route-to" | "reply-to" | "dup-to" )
 		 ( routehost | "{" routehost-list "}" )
-		 [ pooltype ] .
-af	       = "inet" | "inet6" .
+		 [ pooltype ]
+af	       = "inet" | "inet6"
 
 protospec      = "proto" ( proto-name | proto-number |
-		 "{" proto-list "}" ) .
-proto-list     = ( proto-name | proto-number ) [ [ "," ] proto-list ] .
+		 "{" proto-list "}" )
+proto-list     = ( proto-name | proto-number ) [ [ "," ] proto-list ]
 
 hosts          = "all" |
                  "from" ( "any" | "no-route" | "self" | host |
                  "{" host-list "}" ) [ port ]
                  "to"   ( "any" | "no-route" | "self" | host |
-                 "{" host-list "}" ) [ port ] .
+                 "{" host-list "}" ) [ port ]
 
-ipspec         = "any" | host | "{" host-list "}" .
-host           = [ "!" ] address [ "/" mask-bits ] .
-redirhost      = address [ "/" mask-bits ] .
+ipspec         = "any" | host | "{" host-list "}"
+host           = [ "!" ] address [ "/" mask-bits ]
+redirhost      = address [ "/" mask-bits ]
 routehost      = ( interface-name [ address [ "/" mask-bits ] ] )
 address        = ( interface-name | "(" interface-name ")" | host-name |
-                 ipv4-dotted-quad | ipv6-coloned-hex ) .
-host-list      = host [ [ "," ] host-list ] .
-redirost-list  = redirhost [ [","] redirhost-list ] .
-routehost-list = routehost [ [","] routehost-list ] .
+                 ipv4-dotted-quad | ipv6-coloned-hex )
+host-list      = host [ [ "," ] host-list ]
+redirost-list  = redirhost [ [","] redirhost-list ]
+routehost-list = routehost [ [","] routehost-list ]
 
-port           = "port" ( unary-op | binary-op | "{" op-list "}" ) .
-portspec       = "port" ( number | name ) [ ":" ( "*" | number | name ) ] .
-user           = "user" ( unary-op | binary-op | "{" op-list "}" ) .
-group          = "group" ( unary-op | binary-op | "{" op-list "}" ) .
+port           = "port" ( unary-op | binary-op | "{" op-list "}" )
+portspec       = "port" ( number | name ) [ ":" ( "*" | number | name ) ]
+user           = "user" ( unary-op | binary-op | "{" op-list "}" )
+group          = "group" ( unary-op | binary-op | "{" op-list "}" )
 
 unary-op       = [ "=" | "!=" | "<" | "<=" | ">" | ">=" ]
-                 ( name | number ) .
-binary-op      = number ( "<>" | "><" ) number .
-op-list        = ( unary-op | binary-op ) [ [ "," ] op-list ] .
+                 ( name | number )
+binary-op      = number ( "<>" | "><" ) number
+op-list        = ( unary-op | binary-op ) [ [ "," ] op-list ]
 
 flags          = "flags" ( flag-set | flag-set "/" flag-set |
-                           "/" flag-set ) .
+                 "/" flag-set )
 flag-set       = [ "F" ] [ "S" ] [ "R" ] [ "P" ] [ "A" ] [ "U" ] [ "E" ]
-                 [ "W" ] .
+                 [ "W" ]
 
-icmp-type      = "icmp-type" ( icmp-type-code | "{" icmp-list "}" ) .
-ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" ) .
+icmp-type      = "icmp-type" ( icmp-type-code | "{" icmp-list "}" )
+ipv6-icmp-type = "ipv6-icmp-type" ( icmp-type-code | "{" icmp-list "}" )
 icmp-type-code = ( icmp-type-name | icmp-type-number )
-                 [ "code" ( icmp-code-name | icmp-code-number ) ] .
-icmp-list      = icmp-type-code [ [ "," ] icmp-list ] .
+                 [ "code" ( icmp-code-name | icmp-code-number ) ]
+icmp-list      = icmp-type-code [ [ "," ] icmp-list ]
 
 tos            = "tos" ( "lowdelay" | "throughput" | "reliability" |
-                 [ "0x" ] number ) .
+                 [ "0x" ] number )
 
-state-opts     = state-opt [ [ "," ] state-opts ] .
-state-opt      = ( "max" number ) | ( timeout seconds ) .
+state-opts     = state-opt [ [ "," ] state-opts ]
+state-opt      = ( "max" number ) | ( timeout seconds )
 
 fragmentation  = [ "fragment reassemble" | "fragment crop" |
-                 "fragment drop-ovl" ] .
+                 "fragment drop-ovl" ]
 
-timeout-list   = timeout [ [ "," ] timeout-list ] .
+timeout-list   = timeout [ [ "," ] timeout-list ]
 timeout        = ( "tcp.first" | "tcp.opening" | "tcp.established" |
                  "tcp.closing" | "tcp.finwait" | "tcp.closed" |
                  "udp.first" | "udp.single" | "udp.multiple" |
                  "icmp.first" | "icmp.error" |
-                 "other.first" | "other.multiple" ) seconds .
-seconds        = number .
+                 "other.first" | "other.multiple" ) seconds
+seconds        = number
 
-limit-list     = limit [ [ "," ] limit-list ] .
-limit          = ( "states" | "frags" ) number .
+limit-list     = limit [ [ "," ] limit-list ]
+limit          = ( "states" | "frags" ) number
 
 pooltype       = ( "bitmask" | "random" |
 		 "source-hash" [ ( hex-key | string-key ) ] |
-		 "round-robin" ) .
+		 "round-robin" )
 
-queue-list     = string [ [ "," ] string ] .
-cbq-def        = "cbq" [ "(" cbq-type [ [ "," ] cbq-type ] ")" ] .
+queue-list     = string [ [ "," ] string ]
+cbq-def        = "cbq" [ "(" cbq-type [ [ "," ] cbq-type ] ")" ]
 cbq-type       = ( "default" | "control" | "borrow" |
-		 "red" | "ecn" | "rio" ) .
+		 "red" | "ecn" | "rio" )
 
 .Ed
 .Sh FILES
