@@ -1,0 +1,16 @@
+#	$NetBSD: files.tc,v 1.1 1995/12/20 00:54:18 cgd Exp $
+#
+# Config.new file and device description for machine-independent
+# TurboChannel code.  Included by ports that need it.
+
+# ports should define "chipsets" which have the tcbus attribute
+# and attach their TC bus subdevices
+
+define	tcbus { }
+
+device	tc at tcbus {[slot = -1], [offset = -1]}
+file	dev/tc/tc.c			tc	needs-flag
+
+# XXX conflicts with ISA if_le.c
+#device le at ioasic, tc: ether, ifnet		# XXX PMAX BASEBOARD OPTIONS
+#file	dev/tc/if_le.c			le	needs-flag	# for le_iomem
