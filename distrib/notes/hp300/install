@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.17 2002/02/06 00:58:07 miod Exp $
+dnl	$OpenBSD: install,v 1.18 2002/03/18 22:40:04 miod Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 The file `HP-IB.geometry' has geometry information for several HP-IB
@@ -7,7 +7,7 @@ disks, but may be incomplete.  Geometry may be calculated from an HP-UX
 1024 byte sectors, while OpenBSD's is based on 512 byte sectors.
 
 The ramdisk kernel may be loaded from the network, from CD-ROM, or other
-SCSI devices (such as Zip(tm) disk).  Note that loading from HPIB or SCSI
+SCSI devices (such as Zip(tm) disk).  Note that loading from HP-IB or SCSI
 cartridge tape is possible, but not currently supported.
 
 
@@ -121,6 +121,10 @@ OpenBSDBootMsgs
 	should use.  The name of the disk is typically "hd0" for
 	HPIB/CS80 drives or "sd0" for SCSI drives.  Reply with the
 	name of your disk.
+
+	Please note that, if you choose to have your root (/) filesystem
+	on a SCSI drive, that only device ID 4, 5 and 6 (that is, sd4,
+	sd5 and sd6 from OpenBSD's point of view) are bootable.
 
 	Next the disk label which defines the layout of the OpenBSD
 	file systems must be set up.  The installation script will

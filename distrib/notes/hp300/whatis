@@ -1,3 +1,4 @@
-OpenBSD OSREV is a port of OpenBSD for the HP 9000/300 series of
-computers, featuring a wide range of supported hardware, and with all
-the usual OpenBSD stability and security.
+dnl	$OpenBSD: whatis,v 1.6 2002/03/18 22:40:04 miod Exp $
+OpenBSD OSREV is a port of OpenBSD for the HP 9000/300 and 400 series
+of computers, featuring a wide range of supported hardware, and with
+all the usual OpenBSD stability and security.
