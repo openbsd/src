@@ -247,7 +247,7 @@ pthread_mutex_lock(pthread_mutex_t * mutex)
 		   on attempts to get a lock you already own. */
 		case PTHREAD_MUTEX_NORMAL:
 			if ((*mutex)->m_owner == _thread_run) {
-				/* Intetionally deadlock */
+				/* Intentionally deadlock: */
 				for (;;)
 					_thread_kern_sched_state(PS_MUTEX_WAIT, __FILE__, __LINE__);
 			}
