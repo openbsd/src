@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.397 2003/07/04 11:05:44 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.398 2003/07/10 05:25:27 cedric Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1742,13 +1742,12 @@ ipspec		: ANY				{ $$ = NULL; }
 
 host_list	: xhost				{ $$ = $1; }
 		| host_list comma xhost		{
-			/* $3 may be a list, so use its tail pointer */
 			if ($3 == NULL)
 				$$ = $1;
 			else if ($1 == NULL)
 				$$ = $3;
 			else {
-				$1->tail->next = $3->tail;
+				$1->tail->next = $3;
 				$1->tail = $3->tail;
 				$$ = $1;
 			}
@@ -2397,8 +2396,7 @@ redirspec	: host				{ $$ = $1; }
 
 redir_host_list	: host				{ $$ = $1; }
 		| redir_host_list comma host	{
-			/* $3 may be a list, so use its tail pointer */
-			$1->tail->next = $3->tail;
+			$1->tail->next = $3;
 			$1->tail = $3->tail;
 			$$ = $1;
 		}
@@ -2869,8 +2867,7 @@ route_host_list	: route_host				{ $$ = $1; }
 				    "same address family");
 				YYERROR;
 			}
-			/* $3 may be a list, so use its tail pointer */
-			$1->tail->next = $3->tail;
+			$1->tail->next = $3;
 			$1->tail = $3->tail;
 			$$ = $1;
 		}
