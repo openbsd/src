@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.39 1998/05/30 01:48:31 mickey Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.40 1998/05/31 23:41:47 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Michael Shalayeff
@@ -287,7 +287,8 @@ nextword(p)
 }
 
 static void
-print_help(register const struct cmd_table *ct)
+print_help(ct)
+	register const struct cmd_table *ct;
 {
 	for (; ct->cmd_name != NULL; ct++)
 		printf(" %s", ct->cmd_name);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: net.c,v 1.9 1998/02/23 20:32:27 niklas Exp $	*/
+/*	$OpenBSD: net.c,v 1.10 1998/05/31 23:39:15 mickey Exp $	*/
 /*	$NetBSD: net.c,v 1.14 1996/10/13 02:29:02 christos Exp $	*/
 
 /*
@@ -278,10 +278,10 @@ readudp(d, pkt, len, tleft)
 ssize_t
 sendrecv(d, sproc, sbuf, ssize, rproc, rbuf, rsize)
 	register struct iodesc *d;
-	register ssize_t (*sproc)(struct iodesc *, void *, size_t);
+	register ssize_t (*sproc) __P((struct iodesc *, void *, size_t));
 	register void *sbuf;
 	register size_t ssize;
-	register ssize_t (*rproc)(struct iodesc *, void *, size_t, time_t);
+	register ssize_t (*rproc) __P((struct iodesc *, void *, size_t, time_t));
 	register void *rbuf;
 	register size_t rsize;
 {

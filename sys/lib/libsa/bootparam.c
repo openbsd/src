@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootparam.c,v 1.7 1996/12/08 15:15:47 niklas Exp $	*/
+/*	$OpenBSD: bootparam.c,v 1.8 1998/05/31 23:39:16 mickey Exp $	*/
 /*	$NetBSD: bootparam.c,v 1.10 1996/10/14 21:16:55 thorpej Exp $	*/
 
 /*
@@ -54,7 +54,7 @@
 #ifdef DEBUG_RPC
 #define RPC_PRINTF(a)	printf a
 #else
-#define RPC_PRINTF(a)
+#define RPC_PRINTF(a)	/* printf a */
 #endif
 
 struct in_addr	bp_server_addr;	/* net order */
