@@ -68,7 +68,8 @@ static const char *talk[] = {
 	"Fine software takes time to prepare.  Give a little slack.",
 	"I need a vax!",
 	"Now you don't love me anymore",
-	"I'll let you know when I need to floss my teeth"
+	"I'll let you know when I need to floss my teeth",
+	"If you can't figure out yourself, you're lacking some mental faculties"
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
