@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-pflog.c,v 1.8 2001/09/03 13:27:14 jakob Exp $	*/
+/*	$OpenBSD: print-pflog.c,v 1.9 2001/09/18 14:52:53 jakob Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.8 2001/09/03 13:27:14 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-pflog.c,v 1.9 2001/09/18 14:52:53 jakob Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -63,9 +63,11 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	u_int length = h->len;
 	u_int caplen = h->caplen;
 	const struct ip *ip;
+	const struct ip6_hdr *ip6;
 	const struct pfloghdr *hdr;
 	u_short res;
 	char reason[128], *why;
+	u_int8_t af;
 
 	ts_print(&h->ts);
 
@@ -82,9 +84,8 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 	packetp = p;
 	snapend = p + caplen;
 
+	hdr = (struct pfloghdr *)p;
 	if (eflag) {
-		hdr = (struct pfloghdr *)p;
-
 		res = ntohs(hdr->reason);
 		why = (res < PFRES_MAX) ? pf_reasons[res] : "unkn";
 
@@ -96,12 +97,22 @@ pflog_if_print(u_char *user, const struct pcap_pkthdr *h,
 		    ntohs(hdr->dir) == PF_OUT ? "out" : "in",
 		    hdr->ifname);
 	}
+	af = ntohl(hdr->af);
 	length -= PFLOG_HDRLEN;
-	ip = (struct ip *)(p + PFLOG_HDRLEN);
-	ip_print((const u_char *)ip, length);
+	if (af == AF_INET) {
+		ip = (struct ip *)(p + PFLOG_HDRLEN);
+		ip_print((const u_char *)ip, length);
+		if (xflag)
+			default_print((const u_char *)ip,
+			    caplen - PFLOG_HDRLEN);
+	} else {
+		ip6 = (struct ip6_hdr *)(p + PFLOG_HDRLEN);
+		ip6_print((const u_char *)ip6, length);
+		if (xflag)
+			default_print((const u_char *)ip6,
+			    caplen - PFLOG_HDRLEN);
+	}
 
-	if (xflag)
-		default_print((const u_char *)ip, caplen - PFLOG_HDRLEN);
 out:
 	putchar('\n');
 }
