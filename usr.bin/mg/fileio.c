@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.16 2001/05/24 03:05:22 mickey Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.17 2001/05/24 10:19:51 art Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -453,7 +453,7 @@ dired_(dirname)
 	bp->b_dotp = lforw(bp->b_linep);	/* go to first line */
 	(void) strncpy(bp->b_fname, dirname, NFILEN);
 	if ((bp->b_modes[0] = name_mode("dired")) == NULL) {
-		bp->b_modes[0] = &map_table[0];
+		bp->b_modes[0] = name_mode("fundamental");
 		ewprintf("Could not find mode dired");
 		return NULL;
 	}
