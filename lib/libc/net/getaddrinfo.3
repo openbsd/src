@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.3 1999/07/05 04:40:59 aaron Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.4 2000/01/06 22:00:17 deraadt Exp $
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     From: @(#)gethostbyname.3	8.4 (Berkeley) 5/25/95
-.\"     $Id: getaddrinfo.3,v 1.3 1999/07/05 04:40:59 aaron Exp $
+.\"     $Id: getaddrinfo.3,v 1.4 2000/01/06 22:00:17 deraadt Exp $
 .\"
 .Dd May 25, 1995
 .Dt GETADDRINFO 3
@@ -42,6 +42,7 @@
 .Nm gai_strerror
 .Nd nodename-to-address translation in protocol-independent manner
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Fd #include <netdb.h>
 .Ft int

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     From: @(#)gethostbyname.3	8.4 (Berkeley) 5/25/95
-.\"     $Id: getnameinfo.3,v 1.2 1999/07/05 04:40:59 aaron Exp $
+.\"     $Id: getnameinfo.3,v 1.3 2000/01/06 22:00:18 deraadt Exp $
 .\"
 .Dd May 25, 1995
 .Dt GETNAMEINFO 3
@@ -39,6 +39,7 @@
 .Nm getnameinfo
 .Nd address-to-nodename translation in protocol-independent manner
 .Sh SYNOPSIS
+.Fd #include <sys/types.h>
 .Fd #include <sys/socket.h>
 .Fd #include <netdb.h>
 .Ft int
