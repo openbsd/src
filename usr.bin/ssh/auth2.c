@@ -27,7 +27,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.2 2000/04/27 08:01:25 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.3 2000/04/27 15:23:02 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -140,13 +140,14 @@ input_service_request(int type, int plen)
 void
 input_userauth_request(int type, int plen)
 {
-	static int try = 0;
+	static void (*authlog) (const char *fmt,...) = verbose;
+	static int attempt = 0;
 	unsigned int len, rlen;
 	int authenticated = 0;
-	char *raw, *user, *service, *method;
+	char *raw, *user, *service, *method, *authmsg = NULL;
 	struct passwd *pw;
 
-	if (++try == AUTH_FAIL_MAX)
+	if (++attempt == AUTH_FAIL_MAX)
 		packet_disconnect("too many failed userauth_requests");
 
 	raw = packet_get_raw(&rlen);
@@ -168,9 +169,15 @@ input_userauth_request(int type, int plen)
 			authenticated =	ssh2_auth_pubkey(pw, raw, rlen);
 		}
 	}
-	/* XXX check if other auth methods are needed */
+	if (authenticated && pw && pw->pw_uid == 0 && !options.permit_root_login) {
+		authenticated = 0;
+		log("ROOT LOGIN REFUSED FROM %.200s",
+		    get_canonical_hostname());
+	}
+
+	/* XXX todo: check if multiple auth methods are needed */
 	if (authenticated == 1) {
-		log("userauth success for %s method %s", user, method);
+		authmsg = "Accepted";
 		/* turn off userauth */
 		dispatch_set(SSH2_MSG_USERAUTH_REQUEST, &protocol_error);
 		packet_start(SSH2_MSG_USERAUTH_SUCCESS);
@@ -179,15 +186,28 @@ input_userauth_request(int type, int plen)
 		/* now we can break out */
 		userauth_success = 1;
 	} else if (authenticated == 0) {
-		log("userauth failure for %s method %s", user, method);
+		authmsg = "Failed";
 		packet_start(SSH2_MSG_USERAUTH_FAILURE);
 		packet_put_cstring("publickey,password");	/* XXX dynamic */
 		packet_put_char(0);				/* XXX partial success, unused */
 		packet_send();
 		packet_write_wait();
 	} else {
-		log("userauth postponed for %s method %s", user, method);
+		authmsg = "Postponed";
 	}
+	/* Raise logging level */
+	if (authenticated == 1||
+	    attempt == AUTH_FAIL_LOG ||
+	    strcmp(method, "password") == 0)
+		authlog = log;
+
+	authlog("%s %s for %.200s from %.200s port %d ssh2",
+		authmsg,
+		method,
+		pw && pw->pw_uid == 0 ? "ROOT" : user,
+		get_remote_ipaddr(),
+		get_remote_port());
+
 	xfree(service);
 	xfree(user);
 	xfree(method);
@@ -211,13 +231,13 @@ ssh2_auth_password(struct passwd *pw)
 		log("password change not supported");
 	password = packet_get_string(&len);
 	packet_done();
-	if (auth_password(pw, password))
+	if (options.password_authentication &&
+	    auth_password(pw, password) == 1)
 		authenticated = 1;
 	memset(password, 0, len);
 	xfree(password);
 	return authenticated;
 }
-
 int
 ssh2_auth_pubkey(struct passwd *pw, unsigned char *raw, unsigned int rlen)
 {
@@ -228,6 +248,10 @@ ssh2_auth_pubkey(struct passwd *pw, unsigned char *raw, unsigned int rlen)
 	int have_sig;
 	int authenticated = 0;
 
+	if (options.rsa_authentication == 0) {
+		debug("pubkey auth disabled");
+		return 0;
+	}
 	have_sig = packet_get_char();
 	pkalg = packet_get_string(&alen);
 	if (strcmp(pkalg, KEX_DSS) != 0) {
@@ -298,7 +322,7 @@ auth_set_user(char *u, char *s)
 		setproctitle("%s", u);
 		pw = getpwnam(u);
 		if (!pw || !allowed_user(pw)) {
-			log("auth_set_user: bad user %s", u);
+			log("auth_set_user: illegal user %s", u);
 			return NULL;
 		}
 		copy = &authctxt->pw;
@@ -351,8 +375,6 @@ user_dsa_key_allowed(struct passwd *pw, Key *key)
 	if (!f) {
 		/* Restore the privileged uid. */
 		restore_uid();
-		packet_send_debug("Could not open %.900s for reading.", file);
-		packet_send_debug("If your home is on an NFS volume, it may need to be world-readable.");
 		return 0;
 	}
 	if (options.strict_modes) {
