@@ -1,4 +1,4 @@
-/*	$OpenBSD: crontab.c,v 1.45 2004/06/22 03:15:33 avsm Exp $	*/
+/*	$OpenBSD: crontab.c,v 1.46 2004/09/16 18:34:05 deraadt Exp $	*/
 
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
@@ -22,7 +22,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char const rcsid[] = "$OpenBSD: crontab.c,v 1.45 2004/06/22 03:15:33 avsm Exp $";
+static char const rcsid[] = "$OpenBSD: crontab.c,v 1.46 2004/09/16 18:34:05 deraadt Exp $";
 #endif
 
 /* crontab - install and manage per-user crontab files
@@ -542,7 +542,7 @@ replace_cmd(void) {
 	Set_LineNum(1)
 	while (EOF != (ch = get_char(NewCrontab)))
 		putc(ch, tmp);
-	ftruncate(fileno(tmp), ftell(tmp));	/* XXX redundant with "w+"? */
+	ftruncate(fileno(tmp), ftello(tmp));	/* XXX redundant with "w+"? */
 	fflush(tmp);  rewind(tmp);
 
 	if (ferror(tmp)) {
