@@ -44,47 +44,21 @@
 #include <sys/conf.h>
 #include <sys/vnode.h>
 
+#include <machine/conf.h>
+
 int	ttselect	__P((dev_t, int, struct proc *));
 
-#include "cd.h"
-bdev_decl(cd);
-cdev_decl(cd);
-
+#include "bpfilter.h"
 #include "ccd.h"
-bdev_decl(ccd);
-cdev_decl(ccd);
-
+#include "cd.h"
+#include "pty.h"
 #include "rd.h"
-bdev_decl(rd);
-/* no cdev for rd */
-
 #include "sd.h"
-bdev_decl(sd);
-cdev_decl(sd);
-
+#include "ss.h"
 #include "st.h"
-bdev_decl(st);
-cdev_decl(st);
-
-/* swap device (required) */
-bdev_decl(sw);
-cdev_decl(sw);
-
+#include "tun.h"
+#include "uk.h"
 #include "vnd.h"
-bdev_decl(vnd);
-cdev_decl(vnd);
-
-#include "xd.h"
-bdev_decl(xd);
-cdev_decl(xd);
-
-#define	NXT 0	/* XXX */
-bdev_decl(xt);
-cdev_decl(xt);
-
-#include "xy.h"
-bdev_decl(xy);
-cdev_decl(xy);
 
 struct bdevsw	bdevsw[] =
 {
@@ -114,59 +88,6 @@ struct bdevsw	bdevsw[] =
 	bdev_notdef(),			/* 23: Sun IPI disks... */
 };
 int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
-
-/*
- * Devices that have only CHR nodes are declared below.
- */
-
-cdev_decl(cn);
-cdev_decl(ctty);
-#define	mmread	mmrw
-#define	mmwrite	mmrw
-cdev_decl(mm);
-
-#define NZS 2 /* XXX: temporary hack */
-cdev_decl(zs);
-cdev_decl(kd);
-cdev_decl(ms);
-cdev_decl(kbd);
-
-/* XXX - Should make keyboard/mouse real children of zs. */
-#if NZS > 1
-#define NKD 1
-#else
-#define NKD 0
-#endif
-
-#include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-
-/* frame-buffer devices */
-cdev_decl(fb);
-#include "bwtwo.h"
-cdev_decl(bw2);
-#include "cgtwo.h"
-cdev_decl(cg2);
-#include "cgfour.h"
-cdev_decl(cg4);
-
-cdev_decl(log);
-cdev_decl(fd);
-
-#include "bpfilter.h"
-cdev_decl(bpf);
-
-#include "tun.h"
-cdev_decl(tun);
-
-dev_decl(filedesc,open);
-cdev_decl(random);
-
 
 struct cdevsw	cdevsw[] =
 {
@@ -243,6 +164,8 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 70: open prom */
 	cdev_notdef(),			/* 71: (sg?) */
 	cdev_init_random(1,random),	/* 72: randomness source */
+	cdev_uk_init(NUK,uk),		/* 73: unknown SCSI */
+	cdev_ss_init(NSS,ss),           /* 74: SCSI scanner */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 

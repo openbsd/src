@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.9 1996/09/18 22:03:47 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.10 1996/11/11 23:51:38 kstailey Exp $
 #	$NetBSD: MAKEDEV,v 1.8 1996/03/03 16:54:17 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -59,6 +59,8 @@
 #	tun*	network tunnel driver
 #	rd*	RAM-disk
 #	*random	random data source
+#	uk*	unknown SCSI
+#	ss*	SCSI scanners
 
 # XXX - Keep /usr/etc so SunOS can find chown
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/etc
@@ -84,7 +86,7 @@ unit=`expr $arg : '[a-z][a-z]*\([0-9][0-9]*\)'`
 case $arg in
 
 all)
-      sh MAKEDEV std fd sd0 sd1 sd2 sd3 st0 st1 pty0 random
+      sh MAKEDEV std fd sd0 sd1 sd2 sd3 st0 st1 pty0 random ss0 uk0
 	;;
 
 std)
@@ -219,6 +221,25 @@ random|srandom|urandom|prandom|arandom)
 	chmod 644 random srandom urandom prandom arandom
 	;;
 
+uk*)
+	unit=`expr $i : 'uk\(.*\)'`
+	rm -f uk$unit
+	mknod uk$unit c 98 $unit
+	chown root.operator uk$unit
+	chmod 640 uk$unit
+	;;
+
+ss*)
+	unit=`expr $i : 'ss\(.*\)'`
+	rm -f ss$unit
+	mknod ss$unit c 99 $unit
+	chown root.operator ss$unit
+	chmod 440 ss$unit
+#	backwards compatibility with older PINTs
+	rm -f scan$unit
+	ln -s ss$unit scan$unit
+	;;
+
 local)
 	umask 0
 	sh MAKEDEV.local
@@ -229,4 +250,3 @@ local)
 
 esac
 done
-

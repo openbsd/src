@@ -154,7 +154,9 @@ st* at scsibus? target ? lun ?
 cd0 at scsibus? target 6 lun 0
 cd* at scsibus? target ? lun ?
 
-#ch* at scsibus? target ? lun ?
+ch* at scsibus? target ? lun ?
+ss* at scsibus? target ? lun ?
+uk* at scsibus? target ? lun ?
 
 # RAM-disk drivers
 pseudo-device	rd	2
