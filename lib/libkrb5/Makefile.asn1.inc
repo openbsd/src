@@ -1,12 +1,10 @@
-# $OpenBSD: Makefile.asn1.inc,v 1.4 2003/05/17 21:17:39 mho Exp $
-
-.PATH:	${KRB5SRC}/lib/asn1
+# $OpenBSD: Makefile.asn1.inc,v 1.5 2003/06/23 14:39:14 mho Exp $
 
 DIR_ASN1=	${KRB5SRC}/lib/asn1
-HDR_ASN1=	der.h #asn1-common.h
+HDR_ASN1=	der.h asn1-common.h
 HDR_GEN+=	krb5_asn1.h asn1_err.h
 
-.PATH:	${KRB5SRC}/lib/asn1
+.PATH:	${DIR_ASN1}
 
 gen_files_asn1= \
 	krb5_asn1.h \
@@ -75,11 +73,11 @@ SRCS+=	der_get.c \
 	${gen_files_asn1}
 
 
-CFLAGS+=	-I${KRB5SRC}/lib/asn1
+CFLAGS+=	-I${DIR_ASN1}
 
 regen_asn1:
-	cd ${GENDIR}; compile_et ${KRB5SRC}/lib/asn1/asn1_err.et
-	cd ${GENDIR}; asn1_compile ${KRB5SRC}/lib/asn1/k5.asn1 krb5_asn1; \
+	cd ${GENDIR}; compile_et ${DIR_ASN1}/asn1_err.et
+	cd ${GENDIR}; asn1_compile ${DIR_ASN1}/k5.asn1 krb5_asn1; \
 		for f in *.x; do mv $$f `echo $$f | sed s,.x$$,.c,g`; done
 
 regen: regen_asn1

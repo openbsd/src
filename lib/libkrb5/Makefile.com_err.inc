@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile.com_err.inc,v 1.1 2003/06/03 09:12:25 hin Exp $
+# $OpenBSD: Makefile.com_err.inc,v 1.2 2003/06/23 14:39:14 mho Exp $
 
-CFLAGS += -I${KRB5SRC}/lib/com_err
+DIR_COM_ERR=	${KRB5SRC}/lib/com_err
+HDR_COM_ERR=	com_err.h com_right.h
 
-.PATH:	${KRB5SRC}/lib/com_err
+.PATH:	${DIR_COM_ERR}
 
-SRCS+=	com_err.c error.c
+SRCS+=	com_err.c \
+	error.c
 
-foo:
-	echo ${KRB5SRC}/lib/com_err
-
+CFLAGS+=	-I${DIR_COM_ERR}

@@ -1,11 +1,11 @@
-# $OpenBSD: Makefile.kafs.inc,v 1.4 2003/05/17 20:07:23 mho Exp $
+# $OpenBSD: Makefile.kafs.inc,v 1.5 2003/06/23 14:39:14 mho Exp $
 
 DIR_KAFS=	${KRB5SRC}/lib/kafs
 HDR_KAFS=	kafs.h
 
-CFLAGS += -I${KRB5SRC}/lib/kafs
+CFLAGS += -I${DIR_KAFS}
 
-.PATH:	${KRB5SRC}/lib/kafs ${KRB5SRC}/man
+.PATH:	${DIR_KAFS} ${KRB5SRC}/man
 
 SRCS+=	afssys_openbsd.c \
 	afskrb5.c \
@@ -22,6 +22,6 @@ MLINKS+=kafs.3 k_hasafs.3 \
 	kafs.3 krb_afslog.3 \
 	kafs.3 krb_afslog_uid.3
 
-kafs_common.c:	${KRB5SRC}/lib/kafs/common.c
-	ln -sf ${KRB5SRC}/lib/kafs/common.c kafs_common.c
+kafs_common.c:	${DIR_KAFS}/common.c
+	ln -sf ${DIR_KAFS}/common.c kafs_common.c
 CLEANFILES+=kafs_common.c

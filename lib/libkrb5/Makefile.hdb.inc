@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile.hdb.inc,v 1.4 2003/05/17 21:17:39 mho Exp $
+# $OpenBSD: Makefile.hdb.inc,v 1.5 2003/06/23 14:39:14 mho Exp $
 
 DIR_HDB=	${KRB5SRC}/lib/hdb
 HDR_HDB=	hdb.h hdb-protos.h hdb-private.h
 HDR_GEN+=	hdb_err.h hdb_asn1.h
 
-.PATH:	${KRB5SRC}/lib/hdb
+.PATH:	${DIR_HDB}
 
 gen_files_hdb= \
 	hdb_asn1.h \
@@ -28,11 +28,11 @@ SRCS+=	keytab.c \
 	print.c \
 	${gen_files_hdb}
 
-CFLAGS+=	-I${KRB5SRC}/lib/hdb -I${KRB5SRC}/lib/asn1
+CFLAGS+=	-I${DIR_HDB} #-I${DIR_ASN1}
 
 regen_hdb:
-	cd ${GENDIR}; compile_et ${KRB5SRC}/lib/hdb/hdb_err.et
-	cd ${GENDIR}; asn1_compile ${KRB5SRC}/lib/hdb/hdb.asn1 hdb_asn1; \
+	cd ${GENDIR}; compile_et ${DIR_HDB}/hdb_err.et
+	cd ${GENDIR}; asn1_compile ${DIR_HDB}/hdb.asn1 hdb_asn1; \
 		for f in *.x; do mv $$f `echo $$f | sed s,.x$$,.c,g`; done
 
 regen:		regen_hdb

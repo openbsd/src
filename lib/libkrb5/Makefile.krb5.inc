@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.krb5.inc,v 1.5 2003/05/17 21:17:39 mho Exp $
+# $OpenBSD: Makefile.krb5.inc,v 1.6 2003/06/23 14:39:14 mho Exp $
 
 DIR_KRB5INC=	${.CURDIR}/../../kerberosV/include
 DIR_KRB5LIB=	${KRB5SRC}/lib/krb5
@@ -132,7 +132,7 @@ MAN+=	krb5_unparse_name.3
 MAN+=	krb5_verify_user.3
 MLINKS+=krb5_verify_user.3 krb5_verify_user_lrealm.3
 
-.PATH:	${KRB5SRC}/lib/krb5
+.PATH:	${DIR_KRB5LIB}
 
 gen_files_krb5= \
 	heim_err.h \
@@ -237,29 +237,29 @@ SRCS+=	add_et_list.c \
 	k524_err.c \
 	${gen_files_krb5}
 
-CFLAGS+=-I${KRB5SRC}/lib/krb5 -I${KRB5SRC}/lib/ \
-	-I${KRB5SRC}/lib/asn1 -I../asn1 -I. \
+CFLAGS+=-I${DIR_KRB5LIB} -I${KRB5SRC}/lib/ \
+	-I../asn1 -I. \
 	-DSHA1_CTX=SHA_CTX
 
 regen_krb5:
-	cd ${GENDIR}; compile_et ${KRB5SRC}/lib/krb5/heim_err.et
-	cd ${GENDIR}; compile_et ${KRB5SRC}/lib/krb5/k524_err.et
-	cd ${GENDIR}; compile_et ${KRB5SRC}/lib/krb5/krb5_err.et
+	cd ${GENDIR}; compile_et ${DIR_KRB5LIB}/heim_err.et
+	cd ${GENDIR}; compile_et ${DIR_KRB5LIB}/k524_err.et
+	cd ${GENDIR}; compile_et ${DIR_KRB5LIB}/krb5_err.et
 
 regen:	regen_krb5
 
 # There is a warn.c both in lib/roken and lib/krb5.
 krb5_warn.c:
-	ln -sf ${KRB5SRC}/lib/krb5/warn.c krb5_warn.c
+	ln -sf ${DIR_KRB5LIB}/warn.c krb5_warn.c
 CLEANFILES+=krb5_warn.c
 
 # There is a net_write.c and net_read.c both in lib/roken and lib/krb5.
-krb5_net_write.c:      ${KRB5SRC}/lib/krb5/net_write.c
-	ln -sf ${KRB5SRC}/lib/krb5/net_write.c krb5_net_write.c
-krb5_net_read.c:       ${KRB5SRC}/lib/krb5/net_read.c
-	ln -sf ${KRB5SRC}/lib/krb5/net_read.c krb5_net_read.c
+krb5_net_write.c:      ${DIR_KRB5LIB}/net_write.c
+	ln -sf ${DIR_KRB5LIB}/net_write.c krb5_net_write.c
+krb5_net_read.c:       ${DIR_KRB5LIB}/net_read.c
+	ln -sf ${DIR_KRB5LIB}/net_read.c krb5_net_read.c
 
-krb5_keytab.c:       ${KRB5SRC}/lib/krb5/keytab.c
-	ln -sf ${KRB5SRC}/lib/krb5/keytab.c krb5_keytab.c
+krb5_keytab.c:       ${DIR_KRB5LIB}/keytab.c
+	ln -sf ${DIR_KRB5LIB}/keytab.c krb5_keytab.c
 
 CLEANFILES+=krb5_net_{read,write}.c krb5_keytab.c
