@@ -678,6 +678,9 @@
 ./usr/sbin/eeprom
 ./usr/sbin/fdformat
 ./usr/sbin/screenblank
-./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_sppp.p
 ./usr/libdata/perl5/site_perl/sparc-openbsd/pcap-int.ph
 ./usr/libdata/perl5/site_perl/sparc-openbsd/sys/ataio.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/machine/bppioctl.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/machine/fgaio.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/machine/scfio.ph
+./usr/libdata/perl5/site_perl/sparc-openbsd/net/if_sppp.ph
