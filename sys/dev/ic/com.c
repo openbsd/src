@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.52 1999/11/09 04:00:08 rahnds Exp $	*/
+/*	$OpenBSD: com.c,v 1.53 1999/11/28 12:26:05 downsj Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -509,19 +509,19 @@ comattach(parent, self, aux)
 		}
 	}
 
-#ifdef notyet
 	if (sc->sc_uarttype == COM_UART_16550A) { /* Probe for TI16750s */
 		bus_space_write_1(iot, ioh, com_lcr, lcr | LCR_DLAB);
 		bus_space_write_1(iot, ioh, com_fifo,
 		    FIFO_ENABLE | FIFO_ENABLE_64BYTE);
 		if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 7) {
+#if 0
 			bus_space_write_1(iot, ioh, com_lcr, 0);
 			if ((bus_space_read_1(iot, ioh, com_iir) >> 5) == 6)
+#endif
 				sc->sc_uarttype = COM_UART_TI16750;
 		}
 		bus_space_write_1(iot, ioh, com_fifo, FIFO_ENABLE);
 	}
-#endif
 
 	bus_space_write_1(iot, ioh, com_lcr, lcr);
 	if (sc->sc_uarttype == COM_UART_16450) { /* Probe for 8250 */
