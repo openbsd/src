@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.13 2001/10/02 18:04:36 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.14 2001/11/06 03:11:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.13 2001/10/02 18:04:36 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/util.c,v 1.14 2001/11/06 03:11:40 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -134,7 +134,7 @@ ts_print(register const struct bpf_timeval *tvp)
 	case -1:
 		/* Unix timeval style */
 		(void)printf("%u.%06u ",
-		(u_int32_t)tvp->tv_sec, (u_int32_t)tvp->tv_usec);
+		    (u_int32_t)tvp->tv_sec, (u_int32_t)tvp->tv_usec);
 		break;
 	case -2:
 		t=tvp->tv_sec;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-snmp.c,v 1.9 2001/08/11 22:26:39 jakob Exp $	*/
+/*	$OpenBSD: print-snmp.c,v 1.10 2001/11/06 03:11:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
@@ -57,7 +57,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-snmp.c,v 1.9 2001/08/11 22:26:39 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-snmp.c,v 1.10 2001/11/06 03:11:40 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -149,7 +149,7 @@ char *ErrorStatus[] = {
 };
 #define DECODE_ErrorStatus(e) \
 	( e >= 0 && e <= sizeof(ErrorStatus)/sizeof(ErrorStatus[0]) \
-	? ErrorStatus[e] : (sprintf(errbuf, "err=%u", e), errbuf))
+	? ErrorStatus[e] : (snprintf(errbuf, sizeof(errbuf), "err=%u", e), errbuf))
 
 /*
  * generic-trap values in the SNMP Trap-PDU
@@ -166,7 +166,7 @@ char *GenericTrap[] = {
 };
 #define DECODE_GenericTrap(t) \
 	( t >= 0 && t <= sizeof(GenericTrap)/sizeof(GenericTrap[0]) \
-	? GenericTrap[t] : (sprintf(buf, "gt=%d", t), buf))
+	? GenericTrap[t] : (snprintf(buf, sizeof(buf), "gt=%d", t), buf))
 
 /*
  * ASN.1 type class table

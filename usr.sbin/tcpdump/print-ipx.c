@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-ipx.c,v 1.7 2000/10/03 14:31:57 ho Exp $	*/
+/*	$OpenBSD: print-ipx.c,v 1.8 2001/11/06 03:11:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995, 1996
@@ -26,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipx.c,v 1.7 2000/10/03 14:31:57 ho Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ipx.c,v 1.8 2001/11/06 03:11:40 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -90,7 +90,7 @@ ipxaddr_string(u_int32_t net, const u_char *node)
 {
     static char line[256];
 
-    sprintf(line, "%x.%02x:%02x:%02x:%02x:%02x:%02x",
+    snprintf(line, sizeof(line), "%x.%02x:%02x:%02x:%02x:%02x:%02x",
 	    net, node[0], node[1], node[2], node[3], node[4], node[5]);
 
     return line;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-cnfp.c,v 1.3 2000/10/03 14:21:56 ho Exp $	*/
+/*	$OpenBSD: print-cnfp.c,v 1.4 2001/11/06 03:11:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -117,15 +117,19 @@ cnfp_print(register const u_char *cp, u_int len, register const u_char *bp)
 
 		asbuf[0] = buf[0] = '\0';
 		if (ver == 5) {
-			sprintf(buf, "/%d", (ntohl(nr->masks) >> 24) & 0xff);
-			sprintf(asbuf, "%d:", (ntohl(nr->asses) >> 16) & 0xffff);
+			snprintf(buf, sizeof buf, "/%d",
+			    (ntohl(nr->masks) >> 24) & 0xff);
+			snprintf(asbuf, sizeof asbuf, "%d:",
+			    (ntohl(nr->asses) >> 16) & 0xffff);
 		}
 		printf("\n    %s%s%s:%u ", inet_ntoa(nr->src_ina), buf, asbuf,
 			ntohl(nr->ports) >> 16);
 
 		if (ver == 5) {
-			sprintf(buf, "/%d", (ntohl(nr->masks) >> 16) & 0xff);
-			sprintf(asbuf, "%d:", ntohl(nr->asses) & 0xffff);
+			snprintf(buf, sizeof buf, "/%d",
+			    (ntohl(nr->masks) >> 16) & 0xff);
+			snprintf(asbuf, sizeof asbuf, "%d:",
+			    ntohl(nr->asses) & 0xffff);
 		}
 		printf("> %s%s%s:%u ", inet_ntoa(nr->dst_ina), buf, asbuf,
 			ntohl(nr->ports) & 0xffff);

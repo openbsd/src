@@ -1,4 +1,4 @@
-/*	$OpenBSD: print-atalk.c,v 1.17 2001/10/30 12:30:04 ho Exp $	*/
+/*	$OpenBSD: print-atalk.c,v 1.18 2001/11/06 03:11:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -25,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.17 2001/10/30 12:30:04 ho Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-atalk.c,v 1.18 2001/11/06 03:11:40 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -640,7 +640,7 @@ ddpskt_string(register int skt)
 	static char buf[10];
 
 	if (nflag) {
-		(void)sprintf(buf, "%d", skt);
+		(void)snprintf(buf, sizeof buf, "%d", skt);
 		return (buf);
 	}
 	return (tok2str(skt2str, "%d", skt));
