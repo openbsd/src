@@ -9,7 +9,8 @@ OpenBSD/MACHINE OSREV runs on the following classes of machines:
 		Ultra 5
 		Ultra 10
 		Ultra 30
-		SPARCengineAX
+		SPARCengineUltra AX
+		SPARCengineUltra AXi
 	- faithful clones of the above Sun systems.
 
 If your machine is not listed above, it is very likely that OpenBSD/MACHINE
