@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.174 2001/11/19 01:09:43 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.175 2001/11/20 01:02:49 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -935,6 +935,17 @@ OOF
 	fi
 }
 
+encode_for_url() {
+    # Encode $1 as specified for usercodes and passwords in RFC 1738
+    # section 3.1, and now supported by our in-tree ftp:
+    #
+    #    ':' -> '%3a'
+    #    '@' -> '%40'
+    #    '/' -> '%2f'
+
+    echo $1 | sed -e 's/:/%3a/g' -e 's/@/%40/g' -e 's/\//%2f/g'
+}
+
 install_url() {
 # Get several parameters from the user, and xfer
 # files from the server.
@@ -942,7 +953,7 @@ install_url() {
 #	_ftp_server_password, and _ftp_active must be global.
 
 local _sets _kernel _f _file_list _get_files _failed_files _osetsdone
-local _url_type _url_base _reuse _minpat
+local _url_type _url_base _url_login _url_pass _reuse _minpat
 
 # Parse arguments, shell style
 while test $# != 0; do
@@ -1111,7 +1122,9 @@ fi
 
 # Build up the base url since it is so nasty...
 if [ "${_url_type}" = "ftp" -a "${_ftp_server_login}" != "anonymous" ]; then
-	_url_base=ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}
+	_url_login=`encode_for_url ${_ftp_server_login}`
+	_url_pass=`encode_for_url ${_ftp_server_password}`
+	_url_base=ftp://${_url_login}:${_url_pass}@${_ftp_server_ip}/${_ftp_server_dir}
 else
 	eval _url_base=${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
 fi
