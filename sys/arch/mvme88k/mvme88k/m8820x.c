@@ -1,4 +1,4 @@
-/*	$OpenBSD: m8820x.c,v 1.1 2001/12/13 08:55:52 smurph Exp $	*/
+/*	$OpenBSD: m8820x.c,v 1.2 2001/12/13 19:59:17 miod Exp $	*/
 /*
  * Copyright (c) 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -426,7 +426,8 @@ m8820x_setup_cmmu_config()
 			union cpupid id;
 
 			id.cpupid = m8820x_cmmu[cmmu_num].cmmu_regs->idr;
-			if (id.m88200.type != M88200 && id.m88200.type != M88204) {
+			if (id.m88200.type != M88200_ID &&
+			    id.m88200.type != M88204_ID) {
 				printf("WARNING: non M8820x circuit found at CMMU address 0x%08x\n",
 				       m8820x_cmmu[cmmu_num].cmmu_regs);
 				continue;
@@ -455,7 +456,7 @@ m8820x_setup_cmmu_config()
 		cpu_sets[num] = 1;   /* This cpu installed... */
 		id.cpupid = m8820x_cmmu[num*cpu_cmmu_ratio].cmmu_regs->idr;
 
-		if (id.m88200.type == M88204)
+		if (id.m88200.type == M88204_ID)
 			printf("CPU%d is attached with %d MC88204 CMMUs\n",
 			       num, cpu_cmmu_ratio);
 		else
@@ -846,7 +847,7 @@ m8820x_cmmu_init()
 			}
 
 			/* 88204 has additional cache to clear */
-			if (id.m88200.type == M88204) {
+			if (id.m88200.type == M88204_ID) {
 				for (tmp = 0; tmp < 255; tmp++) {
 					m8820x_cmmu[cmmu_num].cmmu_regs->sar = tmp<<4;
 					m8820x_cmmu[cmmu_num].cmmu_regs->cssp1 = 0x3f0ff000;
