@@ -1,4 +1,4 @@
-/*	$OpenBSD: gen.c,v 1.9 2002/05/31 22:49:29 deraadt Exp $	*/
+/*	$OpenBSD: gen.c,v 1.10 2003/06/04 17:34:44 millert Exp $	*/
 
 /* gen - actual generation (writing) of flex scanners */
 
@@ -14,21 +14,26 @@
  * Department of Energy and the University of California.
  *
  * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that: (1) source distributions
- * retain this entire copyright notice and comment, and (2) distributions
- * including binaries display the following acknowledgement:  ``This product
- * includes software developed by the University of California, Berkeley
- * and its contributors'' in the documentation or other materials provided
- * with the distribution and in all advertising materials mentioning
- * features or use of this software. Neither the name of the University nor
- * the names of its contributors may be used to endorse or promote products
- * derived from this software without specific prior written permission.
- * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR IMPLIED
- * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * Neither the name of the University nor the names of its contributors
+ * may be used to endorse or promote products derived from this software
+ * without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED ``AS IS'' AND WITHOUT ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE.
  */
 
-/* $Header: /home/cvs/src/usr.bin/lex/gen.c,v 1.9 2002/05/31 22:49:29 deraadt Exp $ */
+/* $Header: /home/cvs/src/usr.bin/lex/gen.c,v 1.10 2003/06/04 17:34:44 millert Exp $ */
 
 #include "flexdef.h"
 
