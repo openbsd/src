@@ -1,4 +1,4 @@
-/* *      $OpenBSD: extern.h,v 1.14 2003/06/26 07:27:29 deraadt Exp $*/
+/* *      $OpenBSD: extern.h,v 1.15 2004/09/15 18:43:45 deraadt Exp $*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -86,4 +86,4 @@ PLAN	*c_mtime(char *, char ***, int);
 PLAN	*c_not(char *, char ***, int);
 PLAN	*c_or(char *, char ***, int);
 
-extern int ftsoptions, isdeprecated, isdepth, isoutput, isxargs;
+extern int ftsoptions, isdepth, isoutput, isxargs;
