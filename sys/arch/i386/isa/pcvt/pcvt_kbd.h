@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.h,v 1.3 1996/05/07 07:22:31 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_kbd.h,v 1.4 1996/08/01 23:23:27 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -377,7 +377,7 @@ static Keycap_def	key2ascii[] =
 /*  6*/ { KBD_ASCII, I, {S, { "5" }},     {S, { "%" }},     {S, { "5" }} },
 /*  7*/ { KBD_ASCII, I, {S, { "6" }},     {S, { "^" }},     {S, { "\036" }} },
 /*  8*/ { KBD_ASCII, I, {S, { "7" }},     {S, { "&" }},     {S, { "7" }} },
-/*  9*/ { KBD_ASCII, I, {S, { "8" }},     {S, { "*" }},     {S, { "9" }} },
+/*  9*/ { KBD_ASCII, I, {S, { "8" }},     {S, { "*" }},     {S, { "8" }} },
 /* 10*/ { KBD_ASCII, I, {S, { "9" }},     {S, { "(" }},     {S, { "9" }} },
 /* 11*/ { KBD_ASCII, I, {S, { "0" }},     {S, { ")" }},     {S, { "0" }} },
 /* 12*/ { KBD_ASCII, I, {S, { "-" }},     {S, { "_" }},     {S, { "\037" }} },
