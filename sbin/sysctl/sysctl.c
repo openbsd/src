@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.15 1997/08/09 23:36:31 millert Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.16 1997/08/19 05:32:57 millert Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.15 1997/08/09 23:36:31 millert Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.16 1997/08/19 05:32:57 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -354,8 +354,10 @@ parse(string, flags)
 			len = sysctl_inet(string, &bufp, mib, flags, &type);
 			if (len < 0)
 				return;
-			if (mib[3] == TCPCTL_BADDYNAMIC ||
-			    mib[3] == UDPCTL_BADDYNAMIC) {
+			if ((mib[2] == IPPROTO_TCP &&
+			     mib[3] == TCPCTL_BADDYNAMIC) ||
+			    (mib[2] == IPPROTO_UDP &&
+			     mib[3] == UDPCTL_BADDYNAMIC)) {
 				u_int32_t newbaddynamic[DP_MAPSIZE];
 				in_port_t port;
 
