@@ -1,4 +1,4 @@
-/*	$OpenBSD: path.c,v 1.5 2001/05/04 22:16:15 millert Exp $	*/
+/*	$OpenBSD: path.c,v 1.6 2003/04/15 07:21:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -64,8 +64,10 @@
 #include "supextern.h"
 
 void
-path(original, direc, file, filen)
-	char *original, *direc, *file;
+path(original, direc, direclen, file, filen)
+	char *original, *direc;
+	int direclen;
+	char *file;
 	int filen;
 {
 	char *y;
@@ -99,12 +101,12 @@ path(original, direc, file, filen)
 	if (*y)
 		strlcpy(file, y, filen);
 	else
-		strcpy(file, ".");
+		strlcpy(file, ".", filen);
 
 	/* find directory part */
 	if (direc == y)
-		strcpy(direc, ".");
+		strlcpy(direc, ".", direclen);
 	else if (*direc == 0)
-		strcpy(direc, "/");
+		strlcpy(direc, "/", direclen);
 	/* else direc already has proper value */
 }

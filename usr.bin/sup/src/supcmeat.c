@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.17 2002/06/12 06:07:16 mpech Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.18 2003/04/15 07:21:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1027,7 +1027,7 @@ recvreg(t, new, statp)			/* receive file from network */
 			    t->Tname);
 			return (TRUE);		/* mark upgrade as nogood */
 		}
-		path(t->Tname, dirpart, filepart, sizeof filepart);
+		path(t->Tname, dirpart, sizeof dirpart, filepart, sizeof filepart);
 		(void) snprintf(filename, sizeof filename, FILEBACKUP,
 		    dirpart, filepart);
 		fout = fopen(filename, "w");
@@ -1174,7 +1174,7 @@ copyfile(to, from)
 	/* Now try hard to find a temp file name.  Try VERY hard. */
 	for (;;) {
 	/* try destination directory */
-		path(to, dpart, fpart, sizeof fpart);
+		path(to, dpart, sizeof dpart, fpart, sizeof fpart);
 		(void) snprintf(tname, sizeof tname, "%s/#%ld.sup",
 		    dpart, (long)thispid);
 		tof = open(tname, (O_WRONLY|O_CREAT|O_TRUNC), 0600);

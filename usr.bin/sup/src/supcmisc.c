@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmisc.c,v 1.14 2002/04/30 01:59:47 deraadt Exp $	*/
+/*	$OpenBSD: supcmisc.c,v 1.15 2003/04/15 07:21:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -109,7 +109,7 @@ establishdir(fname)
 {
 	char dpart[STRINGLENGTH], fpart[STRINGLENGTH];
 
-	path(fname, dpart, fpart, sizeof fpart);
+	path(fname, dpart, sizeof dpart, fpart, sizeof fpart);
 	return (estabd(fname, dpart));
 }
 
@@ -141,7 +141,7 @@ estabd(fname, dname)
 
 	if (stat(dname, &sbuf) >= 0)
 		return (FALSE); /* exists */
-	path(dname, dpart, fpart, sizeof fpart);
+	path(dname, dpart, sizeof dpart, fpart, sizeof fpart);
 	if (strcmp(fpart,".") == 0) {		/* dname is / or . */
 		notify("SUP: Can't create directory %s for %s\n", dname, fname);
 		return (TRUE);
