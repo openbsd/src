@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.32 1999/12/08 06:16:56 angelos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.33 1999/12/08 07:07:27 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -454,10 +454,10 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 			  {
 			      /* Calculate immutables */
 			      ahx->Update(&ctx, ptr + last,
-					  count + sizeof(struct ip6e_ext) -
+					  count + sizeof(struct ip6_ext) -
 					  last);
 			      last = count + ptr[count + 1] +
-				     sizeof(struct ip6e_ext);
+				     sizeof(struct ip6_ext);
 
 			      /* Calculate "zeroed-out" immutables */
 			      ahx->Update(&ctx, ipseczeroes, ptr[count + 1] -
