@@ -1,4 +1,4 @@
-	$OpenBSD: na.phone,v 1.29 2004/04/14 17:49:18 jason Exp $
+	$OpenBSD: na.phone,v 1.30 2004/04/14 17:52:57 jason Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -874,9 +874,9 @@
 850:Panama City:Florida:FL
 850:Pensacola:Florida:FL
 850:Tallahassee:Florida:FL
-856:Camden:Jersey:NJ
-856:Cherry Hill:Jersey:NJ
-856:Vineland:Jersey:NJ
+856:Camden:New Jersey:NJ
+856:Cherry Hill:New Jersey:NJ
+856:Vineland:New Jersey:NJ
 858:Del Mar:California:CA
 858:La Jolla:California:CA
 858:Rancho Santa Fe:California:CA
