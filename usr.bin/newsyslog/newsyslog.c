@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.18 1999/03/08 03:16:34 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.19 1999/06/08 15:42:54 kstailey Exp $	*/
 
 /*
  * Copyright (c) 1997, Jason Downs.  All rights reserved.
@@ -61,7 +61,7 @@ provided "as is" without express or implied warranty.
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.18 1999/03/08 03:16:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: newsyslog.c,v 1.19 1999/06/08 15:42:54 kstailey Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -193,12 +193,9 @@ void do_entry(ent)
 		(void)fclose(f);
 	}
         
-        if (verbose) {
-                if (ent->flags & CE_COMPACT)
-                        printf("%s <%dZ>: ",ent->log,ent->numlogs);
-                else
-                        printf("%s <%d>: ",ent->log,ent->numlogs);
-        }
+	if (verbose)
+		printf("%s <%d%s>: ", ent->log, ent->numlogs,
+			(ent->flags & CE_COMPACT) ? "Z" : "");
         size = sizefile(ent->log);
         modtime = age_old_log(ent->log);
         if (size < 0) {
@@ -216,14 +213,9 @@ void do_entry(ent)
                                         || (modtime < 0)))) {
                         if (verbose)
                                 printf("--> trimming log....\n");
-                        if (noaction && !verbose) {
-                                if (ent->flags & CE_COMPACT)
-                                        printf("%s <%dZ>: trimming",
-                                               ent->log,ent->numlogs);
-                                else
-                                        printf("%s <%d>: trimming",
-                                               ent->log,ent->numlogs);
-                        }
+			if (noaction && !verbose)
+				printf("%s <%d%s>: ", ent->log, ent->numlogs,
+					(ent->flags & CE_COMPACT) ? "Z" : "");
                         dotrim(ent->log, ent->numlogs, ent->flags,
                                ent->permissions, ent->uid, ent->gid, pid);
                 } else {
