@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.25 1998/02/26 10:38:58 johns Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.26 1998/03/09 09:15:28 deraadt Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.73 1997/07/29 09:41:53 fair Exp $ */
 
 /*
@@ -1061,8 +1061,8 @@ mainbus_attach(parent, dev, aux)
 {
 	struct confargs oca;
 	register const char *const *ssp, *sp = NULL;
-#if defined(SUN4C) || defined(SUN4M)
 	struct confargs *ca = aux;
+#if defined(SUN4C) || defined(SUN4M)
 	register int node0, node;
 	const char *const *openboot_special;
 #define L1A_HACK		/* XXX hack to allow L1-A during autoconf */
@@ -1126,13 +1126,10 @@ mainbus_attach(parent, dev, aux)
 #define openboot_special4m	((void *)0)
 #endif
 
-#if defined(SUN4M)
 	if (CPU_ISSUN4)
 		printf(": SUN-4/%d series\n", cpuinfo.classlvl);
 	else
 		printf(": %s\n", getpropstring(ca->ca_ra.ra_node, "name"));
-#endif
-	printf("\n");
 
 	/*
 	 * Locate and configure the ``early'' devices.  These must be

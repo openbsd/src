@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.12 1998/02/26 10:39:01 johns Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.13 1998/03/09 09:15:32 deraadt Exp $	*/
 /*	$NetBSD: cpu.c,v 1.56 1997/09/15 20:52:36 pk Exp $ */
 
 /*
@@ -76,6 +76,7 @@
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 char	cpu_model[100];
+char	cpu_hotfix[40];
 
 /* The CPU configuration driver. */
 void cpu_attach __P((struct device *, struct device *, void *));
@@ -206,7 +207,10 @@ cpu_attach(parent, self, aux)
 
 	sprintf(cpu_model, "%s @ %s MHz, %s FPU", sc->cpu_name,
 	    clockfreq(sc->hz), fpuname);
-	printf(": %s\n", cpu_model);
+	printf(": %s", cpu_model);
+	if (cpu_hotfix[0])
+		printf("; %s", cpu_hotfix);
+	printf("\n");
 
 	if (sc->cacheinfo.c_totalsize != 0)
 		cache_print(sc);
@@ -573,7 +577,7 @@ sun4_hotfix(sc)
 {
 	if ((sc->flags & CPUFLG_SUN4CACHEBUG) != 0) {
 		kvm_uncache((caddr_t)trapbase, 1);
-		printf(": cache chip bug; trap page uncached");
+		sprintf(cpu_hotfix, "cache chip bug - trap page uncached");
 	}
 
 }
