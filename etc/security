@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.47 2001/04/05 18:47:00 millert Exp $
+#	$OpenBSD: security,v 1.48 2001/04/06 17:13:37 brad Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -39,8 +39,8 @@ awk -F: '{
 		printf("Line %d has an empty login field:\n%s\n", NR, $0);
 	else if ($1 !~ /^[A-Za-z0-9][A-Za-z0-9_-]*$/)
 		printf("Login %s has non-alphanumeric characters.\n", $1);
-	if (length($1) > 32)
-		printf("Login %s has more than 32 characters.\n", $1);
+	if (length($1) > 31)
+		printf("Login %s has more than 31 characters.\n", $1);
 	if ($2 == "")
 		printf("Login %s has no password.\n", $1);
 	if ($2 != "" && length($2) != 13 && ($10 ~ /.*sh$/ || $10 == "") &&
@@ -114,8 +114,8 @@ awk -F: '{
 		printf("Line %d has the wrong number of fields:\n%s\n", NR, $0);
 	if ($1 !~ /^[A-za-z0-9][A-za-z0-9_-]*$/)
 		printf("Group %s has non-alphanumeric characters.\n", $1);
-	if (length($1) > 8)
-		printf("Group %s has more than 8 characters.\n", $1);
+	if (length($1) > 31)
+		printf("Group %s has more than 31 characters.\n", $1);
 	if ($3 !~ /[0-9]*/)
 		printf("Login %s has a negative group ID.\n", $1);
 }' < $GRP > $OUTPUT
