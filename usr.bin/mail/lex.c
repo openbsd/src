@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.23 2001/06/23 23:04:23 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.24 2001/11/17 19:10:25 deraadt Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.23 2001/06/23 23:04:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.24 2001/11/17 19:10:25 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,11 +185,15 @@ incfile()
 	if (ibuf == NULL)
 		return(-1);
 	holdsigs();
-	if (!spool_lock())
+	if (!spool_lock()) {
+		(void)Fclose(ibuf);
+		relsesigs();
 		return(-1);
+	}
 	newsize = fsize(ibuf);
 	/* make sure mail box has grown and is non-empty */
 	if (newsize == 0 || newsize <= mailsize) {
+		(void)Fclose(ibuf);
 		spool_unlock();
 		relsesigs();
 		return(newsize == mailsize ? 0 : -1);
