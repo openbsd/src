@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.99 2002/07/10 22:21:30 mickey Exp $	*/
+/*	$OpenBSD: conf.c,v 1.100 2002/11/08 19:00:37 mickey Exp $	*/
 /*	$NetBSD: conf.c,v 1.75 1996/05/03 19:40:20 christos Exp $	*/
 
 /*
@@ -116,13 +116,6 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
         (dev_type_stop((*))) enodev, 0,  dev_init(c,n,select), \
         (dev_type_mmap((*))) enodev, 0 }
 
-/* open, close, read, ioctl, mmap */
-#define	cdev_bktr_init(c, n) { \
-        dev_init(c,n,open), dev_init(c,n,close), dev_init(c,n,read), \
-        (dev_type_write((*))) enodev, dev_init(c,n,ioctl), \
-	(dev_type_stop((*))) enodev, 0, seltrue, \
-        dev_init(c,n,mmap) }
-
 /* open, close, read, ioctl */
 #define	cdev_wdt_init(c, n) { \
 	dev_init(c,n,open), dev_init(c,n,close), (dev_type_read((*))) enodev, \
@@ -180,7 +173,6 @@ cdev_decl(music);
 cdev_decl(xfs_dev);
 #endif
 #include "bktr.h"
-cdev_decl(bktr);
 #include "wdt.h"
 cdev_decl(wdt);
 #include "ksyms.h"
