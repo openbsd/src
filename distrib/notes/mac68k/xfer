@@ -7,11 +7,11 @@ desire, and knowledge, please feel free to add that functionality.
 
 You will also need to collect the MacOS tools:
 	Mkfs,
-	MacBSD Install Utility, and
-	MacBSD Booter.
+	BSD Install Utility, and
+	BSD/Mac68k Booter.
 
-These three are compacted and in binhex form as mkfs.cpt.hqx,
-installer.1.0.cpt.hqx, and booter.1.9.cpt.hqx, respectively.
+These three are compacted and in binhex form as mkfs.sit.hqx,
+installer.sit.hqx, and booter.sit.hqx, respectively.
 
 Extract them as you would any other Macintosh applications.  The
 source code for these utilities should be in the same directory with the
