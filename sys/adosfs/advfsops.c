@@ -1,5 +1,5 @@
-/*	$OpenBSD: advfsops.c,v 1.8 1996/08/23 19:11:00 niklas Exp $	*/
-/*	$NetBSD: advfsops.c,v 1.19.4.1 1996/05/27 10:21:30 is Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.9 1997/01/20 15:49:53 niklas Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -39,30 +39,32 @@
 #include <sys/time.h>
 #include <sys/malloc.h>
 #include <sys/disklabel.h>
-#include <miscfs/specfs/specdev.h> /* XXX */
 #include <sys/fcntl.h>
 #include <sys/namei.h>
 #include <sys/ioctl.h>
 #include <sys/queue.h>
 #include <sys/buf.h>
+
+#include <miscfs/specfs/specdev.h> /* XXX */
 #include <adosfs/adosfs.h>
 
-void adosfs_init __P((void));
-int adosfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
-		      struct proc *));
-int adosfs_start __P((struct mount *, int, struct proc *));
-int adosfs_unmount __P((struct mount *, int, struct proc *));
-int adosfs_root __P((struct mount *, struct vnode **));
-int adosfs_quotactl __P((struct mount *, int, uid_t, caddr_t, struct proc *));
-int adosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
-int adosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
-int adosfs_vget __P((struct mount *, ino_t, struct vnode **));
-int adosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
-		       struct vnode **, int *, struct ucred **));
-int adosfs_vptofh __P((struct vnode *, struct fid *));
+void	 adosfs_init __P((void));
+int	 adosfs_mount __P((struct mount *, char *, caddr_t, struct nameidata *,
+    struct proc *));
+int	 adosfs_start __P((struct mount *, int, struct proc *));
+int	 adosfs_unmount __P((struct mount *, int, struct proc *));
+int	 adosfs_root __P((struct mount *, struct vnode **));
+int	 adosfs_quotactl __P((struct mount *, int, uid_t, caddr_t,
+    struct proc *));
+int	 adosfs_statfs __P((struct mount *, struct statfs *, struct proc *));
+int	 adosfs_sync __P((struct mount *, int, struct ucred *, struct proc *));
+int	 adosfs_vget __P((struct mount *, ino_t, struct vnode **));
+int	 adosfs_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
+    struct vnode **, int *, struct ucred **));
+int	 adosfs_vptofh __P((struct vnode *, struct fid *));
 
-int adosfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
-int adosfs_loadbitmap __P((struct adosfsmount *));
+int	 adosfs_mountfs __P((struct vnode *, struct mount *, struct proc *));
+int	 adosfs_loadbitmap __P((struct adosfsmount *));
 
 int
 adosfs_mount(mp, path, data, ndp, p)
@@ -188,7 +190,7 @@ adosfs_mountfs(devvp, mp, p)
 
 	parp = &dl.d_partitions[part];
 	amp = malloc(sizeof(struct adosfsmount), M_ADOSFSMNT, M_WAITOK);
-	bzero((char *)amp, (u_long)sizeof(struct adosfsmount));
+	bzero((char *)amp, sizeof(struct adosfsmount));
 	amp->mp = mp;
 	if (dl.d_type == DTYPE_FLOPPY) {
 		amp->bsize = dl.d_secsize;
@@ -219,7 +221,7 @@ adosfs_mountfs(devvp, mp, p)
 	amp->devvp = devvp;
 	
 	mp->mnt_data = (qaddr_t)amp;
-        mp->mnt_stat.f_fsid.val[0] = (long)devvp->v_rdev;
+        mp->mnt_stat.f_fsid.val[0] = (int32_t)devvp->v_rdev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_ADOSFS);
 	mp->mnt_flag |= MNT_LOCAL;
 	devvp->v_specflags |= SI_MOUNTEDON;
@@ -304,7 +306,8 @@ adosfs_root(mp, vpp)
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)VFSTOADOSFS(mp)->rootb, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, ABLKTOINO(VFSTOADOSFS(mp)->rootb), &nvp)) !=
+	    0)
 		return (error);
 	/* XXX verify it's a root block? */
 	*vpp = nvp;
@@ -374,12 +377,12 @@ adosfs_vget(mp, an, vpp)
 	bzero(ap, sizeof(struct anode));
 	ap->vp = vp;
 	ap->amp = amp;
-	ap->block = an;
+	ap->block = AINOTOBLK(an);
 	ap->nwords = amp->nwords;
 	adosfs_ainshash(amp, ap);
 
-	if ((error = bread(amp->devvp, an * amp->secsperblk,
-			   amp->bsize, NOCRED, &bp)) != 0) {
+	if ((error = bread(amp->devvp, an * amp->secsperblk, amp->bsize,
+	    NOCRED, &bp)) != 0) {
 		vput(vp);
 		return (error);
 	}
@@ -413,7 +416,7 @@ adosfs_vget(mp, an, vpp)
 		 * convert from BCPL string and
 		 * from: "part:dir/file" to: "/part/dir/file"
 		 */
-		nam = bp->b_data + (6 * sizeof(long));
+		nam = bp->b_data + (6 * sizeof(u_int32_t));
 		namlen = strlen(nam);
 		tmp = nam;
 		while (*tmp && *tmp != ':')
@@ -468,21 +471,22 @@ adosfs_vget(mp, an, vpp)
 	if (vp->v_type == VDIR) {
 		int i;
 
-		ap->tab = malloc(ANODETABSZ(ap) * 2, M_ANODE, M_WAITOK);
 		ap->ntabent = ANODETABENT(ap);
+		ap->tab = malloc(ap->ntabent * (sizeof(daddr_t) + sizeof(int)),
+		    M_ANODE, M_WAITOK);
 		ap->tabi = (int *)&ap->tab[ap->ntabent];
-		bzero(ap->tabi, ANODETABSZ(ap));
+		bzero(ap->tabi, ANODETABENT(ap) * sizeof(int));
 		for (i = 0; i < ap->ntabent; i++)
-			ap->tab[i] = adoswordn(bp, i + 6);
+			ap->tab[i] = (daddr_t)adoswordn(bp, i + 6);
 	}
 
 	/*
 	 * misc.
 	 */
-	ap->pblock = adoswordn(bp, ap->nwords - 3);
-	ap->hashf = adoswordn(bp, ap->nwords - 4);
-	ap->linknext = adoswordn(bp, ap->nwords - 10);
-	ap->linkto = adoswordn(bp, ap->nwords - 11);
+	ap->pblock = (daddr_t)adoswordn(bp, ap->nwords - 3);
+	ap->hashf = (daddr_t)adoswordn(bp, ap->nwords - 4);
+	ap->linknext = (daddr_t)adoswordn(bp, ap->nwords - 10);
+	ap->linkto = (daddr_t)adoswordn(bp, ap->nwords - 11);
 
 	/*
 	 * setup last indirect block cache.
@@ -553,9 +557,9 @@ adosfs_loadbitmap(amp)
 	struct adosfsmount *amp;
 {
 	struct buf *bp, *mapbp;
-	u_long bits, bn, n;
-	int blkix, endix, mapix;
-	int bmsize;
+	u_int32_t bits;
+	daddr_t bn;
+	int blkix, endix, mapix, bmsize, n;
 	int error;
 
 	bp = mapbp = NULL;
@@ -579,7 +583,7 @@ adosfs_loadbitmap(amp)
 		if (adoscksum(mapbp, amp->nwords)) {
 #ifdef DIAGNOSTIC
 			printf("adosfs: loadbitmap - cksum of blk %d failed\n",
-				adoswordn(bp, blkix));
+			    adoswordn(bp, blkix));
 #endif
 			/* XXX Force read-only?  Set free space 0? */
 			break;
@@ -598,7 +602,7 @@ adosfs_loadbitmap(amp)
 		}
 		++blkix;
 		if (mapix < bmsize && blkix == endix) {
-			bn = adoswordn(bp, blkix);
+			bn = (daddr_t)adoswordn(bp, blkix);
 			brelse(bp);
 			if ((error = bread(amp->devvp, bn * amp->secsperblk,
 			    amp->bsize, NOCRED, &bp)) != 0)
@@ -628,11 +632,15 @@ adosfs_loadbitmap(amp)
  * - check that the generation number matches
  */
 
+/*
+ * This is using the same layout as struct fid from mount.h for the first two
+ * fields.
+ */
 struct ifid {
-	ushort	ifid_len;
-	ushort	ifid_pad;
-	int	ifid_ino;
-	long	ifid_start;
+	u_short	ifid_len;
+	u_short	ifid_pad;
+	ino_t	ifid_ino;
+	daddr_t	ifid_start;
 };
 
 int
@@ -693,7 +701,7 @@ adosfs_vptofh(vp, fhp)
 	ifhp = (struct ifid *)fhp;
 	ifhp->ifid_len = sizeof(struct ifid);
 	
-	ifhp->ifid_ino = ap->block;
+	ifhp->ifid_ino = ABLKTOINO(ap->block);
 	ifhp->ifid_start = ap->block;
 	
 #ifdef ADOSFS_DIAGNOSTIC

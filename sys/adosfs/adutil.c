@@ -1,5 +1,5 @@
-/*	$OpenBSD: adutil.c,v 1.7 1996/08/10 03:24:36 deraadt Exp $	*/
-/*	$NetBSD: adutil.c,v 1.10.4.2 1996/05/27 10:21:29 is Exp $	*/
+/*	$OpenBSD: adutil.c,v 1.8 1997/01/20 15:49:52 niklas Exp $	*/
+/*	$NetBSD: adutil.c,v 1.15 1996/10/13 02:52:07 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -46,7 +46,8 @@
  * look for anode in the mount's hash table, return locked.
  */
 #define AHASH(an) ((an) & (ANODEHASHSZ - 1))
-static int CapitalChar __P((int, int));
+
+static __inline char	CapitalChar __P((char, int));
 
 struct vnode * 
 adosfs_ahashget(mp, an)
@@ -60,7 +61,7 @@ adosfs_ahashget(mp, an)
 
 start_over:
 	for (ap = hp->lh_first; ap != NULL; ap = ap->link.le_next) {
-		if (ap->block != an)
+		if (ABLKTOINO(ap->block) != an)
 			continue;
 		if (ap->flags & ALOCKED) {
 			ap->flags |= AWANT;
@@ -82,7 +83,8 @@ adosfs_ainshash(amp, ap)
 	struct adosfsmount *amp;
 	struct anode *ap;
 {
-	LIST_INSERT_HEAD(&amp->anodetab[AHASH(ap->block)], ap, link);
+	LIST_INSERT_HEAD(&amp->anodetab[AHASH(ABLKTOINO(ap->block))], ap,
+	    link);
 	ap->flags |= ALOCKED;
 }
 
@@ -101,7 +103,7 @@ adosfs_getblktype(amp, bp)
 	if (adoscksum(bp, amp->nwords)) {
 #ifdef DIAGNOSTIC
 		printf("adosfs: aget: cksum of blk %ld failed\n",
-		       bp->b_blkno / amp->secsperblk);
+		    bp->b_blkno / amp->secsperblk);
 #endif
 		return (-1);
 	}
@@ -112,7 +114,7 @@ adosfs_getblktype(amp, bp)
 	if (adoswordn(bp, 0) != BPT_SHORT) {
 #ifdef DIAGNOSTIC
 		printf("adosfs: aget: bad primary type blk %ld\n",
-		       bp->b_blkno / amp->secsperblk);
+		    bp->b_blkno / amp->secsperblk);
 #endif
 		return (-1);
 	}
@@ -150,12 +152,13 @@ adunixprot(adprot)
 	}
 }
 
-static int
+static __inline char
 CapitalChar(ch, inter)
-	int ch, inter;
+	char ch;
+	int inter;
 {
 	if ((ch >= 'a' && ch <= 'z') || 
-	    (inter && ch >= 0xe0 && ch <= 0xfe && ch != 0xf7))
+	    (inter && ch >= '\xe0' && ch <= '\xfe' && ch != '\xf7'))
 		return(ch - ('a' - 'A'));
 	return(ch);
 }
@@ -177,7 +180,7 @@ adoscksum(bp, n)
 
 int
 adoscaseequ(name1, name2, len, inter)
-	const u_char *name1, *name2;
+	const char *name1, *name2;
 	int len, inter;
 {
 	while (len-- > 0) 
@@ -190,14 +193,15 @@ adoscaseequ(name1, name2, len, inter)
 
 int
 adoshash(nam, namlen, nelt, inter)
-	const u_char *nam;
+	const char *nam;
 	int namlen, nelt, inter;
 {
 	int val;
 
 	val = namlen;
 	while (namlen--)
-		val = ((val * 13) + CapitalChar(*nam++, inter)) & 0x7ff;
+		val = ((val * 13) + (u_char)CapitalChar(*nam++, inter)) &
+		    0x7ff;
 	return(val % nelt);
 }
 
@@ -220,18 +224,5 @@ tvtods(tvp, dsp)
 	struct timeval *tvp;
 	struct datestamp *dsp;
 {
-}
-#endif
-
-#ifndef m68k
-u_int32_t
-adoswordn(bp, wn)
-	struct buf *bp;
-	int wn;
-{
-	/*
-	 * ados stored in network (big endian) order
-	 */
-	return(ntohl(*((u_int32_t *)bp->b_data + wn)));
 }
 #endif

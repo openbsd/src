@@ -1,5 +1,5 @@
-/*	$OpenBSD: adlookup.c,v 1.6 1996/08/23 19:10:57 niklas Exp $	*/
-/*	$NetBSD: adlookup.c,v 1.13.4.1 1996/05/27 09:53:50 is Exp $	*/
+/*	$OpenBSD: adlookup.c,v 1.7 1997/01/20 15:49:51 niklas Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.17 1996/10/25 23:13:58 cgd Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -75,8 +75,9 @@ adosfs_lookup(v)
 	struct vnode *vdp;	/* vnode of search dir */
 	struct anode *adp;	/* anode of search dir */
 	struct ucred *ucp;	/* lookup credentials */
-	u_long bn, plen, hval, vpid;
-	u_char *pelt;
+	u_int32_t plen, hval, vpid;
+	daddr_t bn;
+	char *pelt;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
@@ -92,7 +93,7 @@ adosfs_lookup(v)
 	last = flags & ISLASTCN;
 	lockp = flags & LOCKPARENT;
 	wantp = flags & (LOCKPARENT | WANTPARENT);
-	pelt = (u_char *)cnp->cn_nameptr;
+	pelt = cnp->cn_nameptr;
 	plen = cnp->cn_namelen;
 	nocache = 0;
 	
@@ -170,8 +171,8 @@ adosfs_lookup(v)
 		 * 
 		 */
 		VOP_UNLOCK(vdp); /* race */
-		if ((error = VFS_VGET(vdp->v_mount, 
-				      (ino_t)adp->pblock, vpp)) != 0)
+		if ((error = VFS_VGET(vdp->v_mount, ABLKTOINO(adp->pblock),
+		    vpp)) != 0)
 			VOP_LOCK(vdp);
 		else if (last && lockp && (error = VOP_LOCK(vdp)))
 			vput(*vpp);
@@ -191,7 +192,8 @@ adosfs_lookup(v)
 	bn = adp->tab[hval];
 	i = min(adp->tabi[hval], 0);
 	while (bn != 0) {
-		if ((error = VFS_VGET(vdp->v_mount, (ino_t)bn, vpp)) != 0) {
+		if ((error = VFS_VGET(vdp->v_mount, ABLKTOINO(bn), vpp)) !=
+		    0) {
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[aget] %d)", error);
 #endif

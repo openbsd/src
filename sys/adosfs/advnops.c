@@ -1,5 +1,5 @@
-/*	$OpenBSD: advnops.c,v 1.7 1996/10/13 21:17:39 niklas Exp $	*/
-/*	$NetBSD: advnops.c,v 1.28 1996/04/23 05:18:32 veego Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.8 1997/01/20 15:49:54 niklas Exp $	*/
+/*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -44,6 +44,7 @@
 #include <sys/stat.h>
 #include <sys/unistd.h>
 #include <sys/proc.h>
+
 #include <miscfs/specfs/specdev.h>
 #include <adosfs/adosfs.h>
 
@@ -100,48 +101,48 @@ int	lease_check __P((void *));
 #define adosfs_valloc 		adenotsup
 
 struct vnodeopv_entry_desc adosfs_vnodeop_entries[] = {
-	{ &vop_default_desc,	vn_default_error },
-	{ &vop_lookup_desc,	adosfs_lookup },	/* lookup */
-	{ &vop_create_desc,	adosfs_create },	/* create */
-	{ &vop_mknod_desc,	adosfs_mknod },		/* mknod */
-	{ &vop_open_desc,	adosfs_open },		/* open */
-	{ &vop_close_desc,	adosfs_close },		/* close */
-	{ &vop_access_desc,	adosfs_access },	/* access */
-	{ &vop_getattr_desc,	adosfs_getattr },	/* getattr */
-	{ &vop_setattr_desc,	adosfs_setattr },	/* setattr */
-	{ &vop_read_desc,	adosfs_read },		/* read */
-	{ &vop_write_desc,	adosfs_write },		/* write */
-	{ &vop_lease_desc,	adosfs_lease_check },	/* lease */
-	{ &vop_ioctl_desc,	adosfs_ioctl },		/* ioctl */
-	{ &vop_select_desc,	adosfs_select },	/* select */
-	{ &vop_mmap_desc,	adosfs_mmap },		/* mmap */
-	{ &vop_fsync_desc,	adosfs_fsync },		/* fsync */
-	{ &vop_seek_desc,	adosfs_seek },		/* seek */
-	{ &vop_remove_desc,	adosfs_remove },	/* remove */
-	{ &vop_link_desc,	adosfs_link },		/* link */
-	{ &vop_rename_desc,	adosfs_rename },	/* rename */
-	{ &vop_mkdir_desc,	adosfs_mkdir },		/* mkdir */
-	{ &vop_rmdir_desc,	adosfs_rmdir },		/* rmdir */
-	{ &vop_symlink_desc,	adosfs_symlink },	/* symlink */
-	{ &vop_readdir_desc,	adosfs_readdir },	/* readdir */
-	{ &vop_readlink_desc,	adosfs_readlink },	/* readlink */
-	{ &vop_abortop_desc,	adosfs_abortop },	/* abortop */
-	{ &vop_inactive_desc,	adosfs_inactive },	/* inactive */
-	{ &vop_reclaim_desc,	adosfs_reclaim },	/* reclaim */
-	{ &vop_lock_desc,	adosfs_lock },		/* lock */
-	{ &vop_unlock_desc,	adosfs_unlock },	/* unlock */
-	{ &vop_bmap_desc,	adosfs_bmap },		/* bmap */
-	{ &vop_strategy_desc,	adosfs_strategy },	/* strategy */
-	{ &vop_print_desc,	adosfs_print },		/* print */
-	{ &vop_islocked_desc,	adosfs_islocked },	/* islocked */
-	{ &vop_pathconf_desc,	adosfs_pathconf },	/* pathconf */
-	{ &vop_advlock_desc,	adosfs_advlock },	/* advlock */
-	{ &vop_blkatoff_desc,	adosfs_blkatoff },	/* blkatoff */
-	{ &vop_valloc_desc,	adosfs_valloc },	/* valloc */
-	{ &vop_vfree_desc,	adosfs_vfree },		/* vfree */
-	{ &vop_truncate_desc,	adosfs_truncate },	/* truncate */
-	{ &vop_update_desc,	adosfs_update },	/* update */
-	{ &vop_bwrite_desc,	adosfs_bwrite },	/* bwrite */
+	{ &vop_default_desc, vn_default_error },
+	{ &vop_lookup_desc, adosfs_lookup },		/* lookup */
+	{ &vop_create_desc, adosfs_create },		/* create */
+	{ &vop_mknod_desc, adosfs_mknod },		/* mknod */
+	{ &vop_open_desc, adosfs_open },		/* open */
+	{ &vop_close_desc, adosfs_close },		/* close */
+	{ &vop_access_desc, adosfs_access },		/* access */
+	{ &vop_getattr_desc, adosfs_getattr },		/* getattr */
+	{ &vop_setattr_desc, adosfs_setattr },		/* setattr */
+	{ &vop_read_desc, adosfs_read },		/* read */
+	{ &vop_write_desc, adosfs_write },		/* write */
+	{ &vop_lease_desc, adosfs_lease_check },	/* lease */
+	{ &vop_ioctl_desc, adosfs_ioctl },		/* ioctl */
+	{ &vop_select_desc, adosfs_select },		/* select */
+	{ &vop_mmap_desc, adosfs_mmap },		/* mmap */
+	{ &vop_fsync_desc, adosfs_fsync },		/* fsync */
+	{ &vop_seek_desc, adosfs_seek },		/* seek */
+	{ &vop_remove_desc, adosfs_remove },		/* remove */
+	{ &vop_link_desc, adosfs_link },		/* link */
+	{ &vop_rename_desc, adosfs_rename },		/* rename */
+	{ &vop_mkdir_desc, adosfs_mkdir },		/* mkdir */
+	{ &vop_rmdir_desc, adosfs_rmdir },		/* rmdir */
+	{ &vop_symlink_desc, adosfs_symlink },		/* symlink */
+	{ &vop_readdir_desc, adosfs_readdir },		/* readdir */
+	{ &vop_readlink_desc, adosfs_readlink },	/* readlink */
+	{ &vop_abortop_desc, adosfs_abortop },		/* abortop */
+	{ &vop_inactive_desc, adosfs_inactive },	/* inactive */
+	{ &vop_reclaim_desc, adosfs_reclaim },		/* reclaim */
+	{ &vop_lock_desc, adosfs_lock },		/* lock */
+	{ &vop_unlock_desc, adosfs_unlock },		/* unlock */
+	{ &vop_bmap_desc, adosfs_bmap },		/* bmap */
+	{ &vop_strategy_desc, adosfs_strategy },	/* strategy */
+	{ &vop_print_desc, adosfs_print },		/* print */
+	{ &vop_islocked_desc, adosfs_islocked },	/* islocked */
+	{ &vop_pathconf_desc, adosfs_pathconf },	/* pathconf */
+	{ &vop_advlock_desc, adosfs_advlock },		/* advlock */
+	{ &vop_blkatoff_desc, adosfs_blkatoff },	/* blkatoff */
+	{ &vop_valloc_desc, adosfs_valloc },		/* valloc */
+	{ &vop_vfree_desc, adosfs_vfree },		/* vfree */
+	{ &vop_truncate_desc, adosfs_truncate },	/* truncate */
+	{ &vop_update_desc, adosfs_update },		/* update */
+	{ &vop_bwrite_desc, adosfs_bwrite },		/* bwrite */
 	{ (struct vnodeop_desc*)NULL, (int(*) __P((void *)))NULL }
 };
 
@@ -178,7 +179,7 @@ adosfs_getattr(v)
 	struct vattr *vap;
 	struct adosfsmount *amp;
 	struct anode *ap;
-	u_long fblks;
+	u_int32_t fblks;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
@@ -197,7 +198,7 @@ adosfs_getattr(v)
 	vap->va_gen = 0;
 	vap->va_flags = 0;
 	vap->va_rdev = NODEV;
-	vap->va_fileid = ap->block;
+	vap->va_fileid = (long)ap->block;
 	vap->va_type = sp->a_vp->v_type;
 	vap->va_mode = amp->mask & adunixprot(ap->adprot);
 	if (sp->a_vp->v_type == VDIR) {
@@ -219,7 +220,7 @@ adosfs_getattr(v)
 		fblks = howmany(ap->fsize, amp->dbsize);
 		fblks += howmany(fblks, ANODENDATBLKENT(ap));
 		vap->va_bytes = fblks * amp->dbsize;
-		vap->va_size = ap->fsize;
+		vap->va_size = (off_t)ap->fsize;
 
 		vap->va_blocksize = amp->dbsize;
 	}
@@ -247,8 +248,9 @@ adosfs_read(v)
 	struct uio *uio;
 	struct buf *bp;
 	daddr_t lbn;
-	int size, diff, error;
-	long n, on;
+	int size, error, n, on;
+	u_int32_t off;
+	int64_t diff;
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
@@ -266,16 +268,17 @@ adosfs_read(v)
 	}
 	if (uio->uio_resid == 0)
 		goto reterr;
-	if (uio->uio_offset < 0) {
+	if (uio->uio_offset < 0 || uio->uio_offset > UINT_MAX) { /* XXX */
 		error = EINVAL;
 		goto reterr;
 	}
+	off = (u_int32_t)uio->uio_offset;
 
 	/*
 	 * to expensive to let general algorithm figure out that 
 	 * we are beyond the file.  Do it now.
 	 */
-	if (uio->uio_offset >= ap->fsize)
+	if (off >= ap->fsize)
 		goto reterr;
 
 	/*
@@ -287,24 +290,24 @@ adosfs_read(v)
 		 * (which have data blocks without headers)
 		 */
 		size = amp->dbsize;
-		lbn = uio->uio_offset / size;
-		on = uio->uio_offset % size;
-		n = min((u_int)(size - on), uio->uio_resid);
-		diff = ap->fsize - uio->uio_offset;
+		lbn = off / size;
+		on = off % size;
+		n = min((u_int32_t)(size - on), uio->uio_resid);
+		diff = ap->fsize - off;
 		/* 
 		 * check for EOF
 		 */
 		if (diff <= 0)
 			return(0);
 		if (diff < n)
-			n = diff;
+			n = (int)diff;
 		/*
 		 * read ahead could possibly be worth something
 		 * but not much as ados makes little attempt to 
 		 * make things contigous
 		 */
-		error = bread(sp->a_vp, lbn * amp->secsperblk,
-			      amp->bsize, NOCRED, &bp);
+		error = bread(sp->a_vp, lbn * amp->secsperblk, amp->bsize,
+		    NOCRED, &bp);
 		sp->a_vp->v_lastr = lbn;
 
 		if (!IS_FFS(amp)) {
@@ -313,14 +316,14 @@ adosfs_read(v)
 			else if (adoswordn(bp, 0) != BPT_DATA) {
 #ifdef DIAGNOSTIC
 				printf("adosfs: bad primary type blk %ld\n",
-				       bp->b_blkno / amp->secsperblk);
+				    bp->b_blkno / amp->secsperblk);
 #endif
 				error=EINVAL;
 			}
-			else if ( adoscksum(bp, ap->nwords)) {
+			else if (adoscksum(bp, ap->nwords)) {
 #ifdef DIAGNOSTIC
-				printf("adosfs: blk %ld failed cksum.\n",
-				       bp->b_blkno / amp->secsperblk);
+				printf("adosfs: blk %u failed cksum.\n",
+				    bp->b_blkno / amp->secsperblk);
 #endif
 				error=EINVAL;
 			}
@@ -331,12 +334,13 @@ adosfs_read(v)
 			goto reterr;
 		}
 #ifdef ADOSFS_DIAGNOSTIC
-	printf(" %d+%d-%d+%d", lbn, on, lbn, n);
+		printf(" %u+%u-%u+%u", lbn, on, lbn, n);
 #endif
-		n = min(n, (u_int)size - bp->b_resid);
-		error = uiomove(bp->b_un.b_addr + on +
-				amp->bsize - amp->dbsize, (int)n, uio);
+		n = min(n, size - bp->b_resid);	/* XXX check types */
+		error = uiomove(bp->b_un.b_addr + on + amp->bsize -
+		    amp->dbsize, n, uio);
 		brelse(bp);
+		off = (u_int32_t)uio->uio_offset;
 	} while (error == 0 && uio->uio_resid > 0 && n != 0);
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
@@ -443,11 +447,13 @@ adosfs_strategy(v)
 			goto reterr;
 		}
 	}
-	if ((long)bp->b_blkno == -1) {
+#if 0
+	if (bp->b_blkno == UINT_MAX) {	/* XXX huh? (was (long)... == -1 */
 		biodone(bp);
 		error = 0;
 		goto reterr;
 	}
+#endif
 	vp = ap->amp->devvp;
 	bp->b_dev = vp->v_rdev;
 	VOCALL(vp->v_op, VOFFSET(vop_strategy), sp);
@@ -586,10 +592,8 @@ adosfs_bmap(v)
 	} */ *sp = v;
 	struct anode *ap;
 	struct buf *flbp;
-	long nb, fcnt, flblk, flblkoff;
-	daddr_t *bnp;
-	daddr_t bn;
-	int error; 
+	daddr_t *bnp, bn, nb, flblk, fcnt;
+	int error, flblkoff; 
 
 #ifdef ADOSFS_DIAGNOSTIC
 	advopprint(sp);
@@ -631,14 +635,14 @@ adosfs_bmap(v)
 	/*
 	 * check last indirect block cache
 	 */
-	if (flblk < (long)ap->lastlindblk) 
+	if (flblk < ap->lastlindblk) 
 		fcnt = 0;
 	else {
 		flblk -= ap->lastlindblk;
 		fcnt = ap->lastlindblk;
 		nb = ap->lastindblk;
 	}
-	while (flblk >= 0) {
+	while (1) {
 		if (flbp)
 			brelse(flbp);
 		if (nb == 0) {
@@ -654,7 +658,7 @@ adosfs_bmap(v)
 			goto reterr;
 		if (adoscksum(flbp, ap->nwords)) {
 #ifdef DIAGNOSTIC
-			printf("adosfs: blk %ld failed cksum.\n", nb);
+			printf("adosfs: blk %u failed cksum.\n", nb);
 #endif
 			brelse(flbp);
 			error = EINVAL;
@@ -666,7 +670,9 @@ adosfs_bmap(v)
 		ap->lastlindblk = fcnt++;
 		ap->lastindblk = nb;
 
-		nb = adoswordn(flbp, ap->nwords - 2);
+		nb = (daddr_t)adoswordn(flbp, ap->nwords - 2);
+		if (flblk == 0)
+			break;
 		flblk--;
 	}
 	/* 
@@ -675,13 +681,13 @@ adosfs_bmap(v)
 	 * valid table entries stored at offset ADBI_NBLKTABENT.
 	 */
 	flblkoff = bn % ANODENDATBLKENT(ap);
-	if (flblkoff < (long)adoswordn(flbp, 2 /* ADBI_NBLKTABENT */)) {
+	if (flblkoff < adoswordn(flbp, 2 /* ADBI_NBLKTABENT */)) {
 		flblkoff = (ap->nwords - 51) - flblkoff;
 		*bnp = adoswordn(flbp, flblkoff) * ap->amp->secsperblk;
 	} else {
 #ifdef DIAGNOSTIC
-		printf("flblk offset %ld too large in lblk %ld blk %d\n", 
-		    flblkoff, bn / ap->amp->secsperblk , flbp->b_blkno);
+		printf("flblk offset %d too large in lblk %u blk %u\n", 
+		    flblkoff, bn / ap->amp->secsperblk, flbp->b_blkno);
 #endif
 		error = EINVAL;
 	}
@@ -689,7 +695,7 @@ adosfs_bmap(v)
 reterr:
 #ifdef ADOSFS_DIAGNOSTIC
 	if (error == 0 && bnp)
-		printf(" %d => %d", bn, *bnp);
+		printf(" %u => %u", bn, *bnp);
 	printf(" %d)", error);
 #endif
 	return(error);
@@ -711,15 +717,17 @@ adosfs_print(v)
 	return(0);
 }
 
+/* This is laid out like a standard dirent, except that it is shorter.  */
 struct adirent {
-	u_long  fileno;
-	u_short reclen;
-	char    type;
-	char    namlen;
-	char    name[32];	/* maxlen of 30 plus 2 NUL's */
+	u_int32_t fileno;
+	u_int16_t reclen;
+	u_int8_t type;
+	u_int8_t namlen;
+	char name[32];	/* maxlen of 30 plus 2 NUL's */
 };
-	
-int 
+
+/* XXX look over the off_t usage below wrt type safety */	
+int
 adosfs_readdir(v)
 	void *v;
 {
@@ -737,7 +745,7 @@ adosfs_readdir(v)
 	struct adosfsmount *amp;
 	struct vnode *vp;
 	struct uio *uio;
-	u_long nextbn;
+	daddr_t nextbn;
 	off_t uoff;
 
 #ifdef ADOSFS_DIAGNOSTIC
@@ -801,7 +809,7 @@ adosfs_readdir(v)
 		 */
 		ap = NULL;
 		do {
-			error = VFS_VGET(amp->mp, (ino_t)nextbn, &vp);
+			error = VFS_VGET(amp->mp, ABLKTOINO(nextbn), &vp);
 			if (error)
 				goto reterr;
 			ap = VTOA(vp);
@@ -835,7 +843,7 @@ adosfs_readdir(v)
 		 * Fill in dirent record
 		 */
 		bzero(adp, sizeof(struct adirent));
-		adp->fileno = ap->block;
+		adp->fileno = (u_int32_t)ap->block;
 		/*
 		 * this deserves an function in kern/vfs_subr.c
 		 */
@@ -858,11 +866,11 @@ adosfs_readdir(v)
 		bcopy(ap->name, adp->name, adp->namlen);
 		vput(vp);
 
-		error = uiomove((caddr_t) adp, sizeof(struct adirent), uio);
+		error = uiomove((caddr_t)adp, sizeof(struct adirent), uio);
 		if (error)
 			break;
 		if (sp->a_cookies) {
-			*sp->a_cookies++ = uoff;
+			*sp->a_cookies++ = (u_long)uoff;
 			sp->a_ncookies--;
 		}
 		uoff += sizeof(struct adirent);
