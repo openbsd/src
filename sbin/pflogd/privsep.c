@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.12 2004/07/14 19:07:03 henning Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.13 2004/12/22 09:21:02 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -112,10 +112,12 @@ priv_init(void)
 	}
 
 	/* Father */
-	/* Pass ALRM/TERM/HUP through to child, and accept CHLD */
+	/* Pass ALRM/TERM/HUP/INT/QUIT through to child, and accept CHLD */
 	signal(SIGALRM, sig_pass_to_chld);
 	signal(SIGTERM, sig_pass_to_chld);
 	signal(SIGHUP,  sig_pass_to_chld);
+	signal(SIGINT,  sig_pass_to_chld);
+	signal(SIGQUIT,  sig_pass_to_chld);
 	signal(SIGCHLD, sig_chld);
 
 	setproctitle("[priv]");
