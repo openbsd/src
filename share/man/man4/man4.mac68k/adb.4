@@ -1,0 +1,279 @@
+.\"
+.\" Copyright (c) 1997 Colin Wood              
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Colin Wood
+.\"      for the NetBSD Project.              
+.\" 4. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$OpenBSD: adb.4,v 1.1 1998/02/04 00:21:51 gene Exp $
+.\"	$NetBSD: adb.4,v 1.1 1997/07/18 02:13:42 ender Exp $
+.\"
+.Dd July 17, 1997
+.Os OpenBSD
+.Dt ADB 4 mac68k
+.Sh NAME
+.Nm adb
+.Nd Apple Desktop Bus event interface
+.Sh SYNOPSIS
+.Cd "adb0 at obio?"
+.Cd "option MRG_ADB"
+.Cd "#include <machine/adbsys.h>"
+.Sh DESCRIPTION
+The Apple Desktop Bus
+.Pq Tn ADB
+is the single-master, multiple-slave, low-speed serial bus
+interface used by Macintosh computers to connect input devices
+such as keyboards, mice, trackballs, and graphics tablets
+to the machine.
+.Pp
+The
+.Nm
+device is the sole interface to user input.
+It combines both keyboard and mouse drivers into one event driver.
+All user input is obtained by doing a
+.Xr read 2
+on the
+.Nm
+device.
+Since most Macintosh mice have only one button, the
+.Nm
+driver will emulate a second and third mouse button with
+the keyboard.
+The
+.Nm
+device only supports being opened by one process at a time.
+.Pp
+There are two interfaces to the
+.Tn ADB
+hardware supported by the
+.Nm
+driver.
+The older of the two relies on information in the Macintosh
+.Tn ROM
+to interface with the hardware.
+This method is only available if the
+.Dv MRG_ADB
+option is defined in the kernel configuration file.
+The newer method interfaces directly with the
+.Tn VIA
+hardware and with the Power Manager hardware if it is
+present
+.Pq i.e. on the PowerBooks .
+The default configuration currently uses the
+Macintosh
+.Tn ROM
+Glue
+.Pq Tn MRG
+method.
+.Pp
+The
+.Xr ioctl 2
+call is used to control the
+.Tn ADB
+event device.
+The following is a list of available 
+.Xr ioctl
+commands:
+.Bl -tag -width ADBIOC_GETREPEAT
+.It Dv ADBIOC_DEVSINFO
+Get
+.Tn ADB
+Device Info
+.Pp
+The
+.Nm 
+event device will return an array of information containing an entry
+for each device connected to the bus.  Each entry contains the
+current address, default address, and handler ID for the corresponding
+.Tn ADB
+device.
+.It Dv ADBIOC_GETREPEAT
+Get Keyboard Repeat Info
+.Pp
+Returns a structure containing the current keyboard repeat delay
+and keyboard repeat interval.
+.It Dv ADBIOC_SETREPEAT
+Set Keyboard Repeat Rate
+.Pp
+Sets the keyboard repeat delay and interval to the values specified
+by
+.Ar argp .
+.It Dv ADBIOC_RESET
+.Tn ADB
+Reset
+.Pp
+Perform a reset of the
+.Tn ADB
+which will reinitialize all of the devices attached to the bus.
+.It Dv ADBIOC_LISTENCMD
+ADB Listen Command
+.Pp
+Send data to the register of the
+.Tn ADB
+device specified by
+.Ar argp .
+This command is not fully implemented at this time.
+.El
+.Sh HARDWARE
+The
+.Nm
+device supports the ADB hardware of most m68k-based
+Macintosh models,
+including the II-series, Centris- and Quadra-series, PowerBook-
+and Duo-series, LC-series, and Performa-series models.
+.Pp
+Most standard
+.Tn ADB
+devices are supported by the
+.Nm
+driver, including mice which follow Apple's
+Extended Mouse Protocol.
+Many multi-button mice which follow a proprietary protocol are
+not currently supported in multi-button mode.
+The following is a partial list of supported
+.Tn ADB
+devices:
+.Bd -filled -offset indent
+.Bl -item -compact
+.It
+Apple Standard Keyboard
+.It
+Apple Extended Keyboard
+.It
+Apple Adjustable Keyboard
+.It
+Apple Desktop Bus Mouse
+.It
+Logitech TrackMan
+.It
+Logitech MouseMan
+.It
+Microspeed Mouse Deluxe
+.It
+Mouse Systems A3 Mouse
+.El
+.Ed
+.Sh DIAGNOSTICS
+.Bl -diag -compact
+.It adb0 at obio0 (ADB event device).
+This is a normal autoconfiguration message noting the presence of the
+.Nm
+event device.
+.It adb: bus subsystem.
+A standard autoconfiguration message indicating the initialization
+of the
+.Tn ADB
+subsystem.
+.It adb: no devices found.
+No
+.Tn ADB
+devices were found to be connected to the bus during autoconfiguration.
+.It adb: using %s series hardware support.
+Indicates the class of
+.Tn ADB
+hardware support the machine uses.
+.It adb: hardware type unknown for this machine.
+The
+.Tn ADB
+hardware in this machine is currently unsupported.
+.It "adb: no ROM ADB driver in this kernel for this machine."
+The kernel lacks the necessary Macintosh ROM Glue
+.Pq Tn MRG
+support for accessing the
+.Tn ADB
+hardware on this machine.
+.It adb: using serial console.
+A serial console will be used for user input rather than the
+.Tn ADB
+event device.
+.It adb: %s at %d.
+An
+.Tn ADB
+device of the type specified by
+.Em %s
+has been found at location
+.Em %d .
+.El
+.Sh ERRORS
+.Bl -tag -width Er
+.It Bq Er ENXIO
+No such
+.Tn ADB
+event device.
+.It Bq Er EBUSY
+Another process has the device open.
+.It Bq Er EINVAL
+Invalid
+.Xr ioctl
+specification.
+.It Bq Er EMSGSIZE
+The size of the
+.Tn ADB
+event being read is too large to fit into the buffer
+allocated to it.
+.El
+.Sh FILES
+.Bl -tag -width /dev/adb -compact
+.It Pa /dev/adb
+The
+.Tn ADB
+event device.
+.El
+.Sh HISTORY
+The
+.Nm
+interface first appeared in
+.Nx 0.9 .
+It has been under development ever since.
+.Sh AUTHORS
+Bradley A. Grantham wrote the original
+.Nm
+driver, including the
+.Tn MRG
+support.
+The hardware direct interface was written by
+John P. Wittkowski.
+The PowerManager interface was written by Takashi Hamada.
+.Sh BUGS
+.Bl -bullet
+.It
+Not every class of
+.Tn ADB
+hardware is supported yet.
+.It
+The talk command is currently unimplemented.
+.It
+The listen command is not implemented yet.
+.It
+Not all multi-button mice are currently supported.
+.It
+Only mapped and relative-position
+.Tn ADB
+devices
+.Pq i.e. keyboards and mice
+are supported.
+Thus absolute-position and other exotic devices will not work.
+.El

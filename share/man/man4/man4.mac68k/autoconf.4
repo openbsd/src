@@ -1,0 +1,102 @@
+.\"
+.\" Copyright (c) 1997 Colin Wood
+.\" Copyright (c) 1995 Mark Brinicombe
+.\" Copyright (c) 1994 Christopher G. Demetriou
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Christopher G. Demetriou.
+.\" 3. The name of the author may not be used to endorse or promote products
+.\"    derived from this software without specific prior written permission
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+.\" NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+.\" DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+.\" THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+.\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+.\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	$OpenBSD: autoconf.4,v 1.1 1998/02/04 00:21:51 gene Exp $
+.\"	$NetBSD: autoconf.4,v 1.2 1997/10/13 11:23:30 lukem Exp $
+.\"
+.Dd July 17, 1997
+.Dt AUTOCONF 4 mac68k
+.Os OpenBSD
+.Sh NAME
+.Nm autoconf
+.Nd diagnostics from the autoconfiguration code
+.Sh DESCRIPTION
+When
+.Tn OpenBSD
+bootstraps it probes the innards of the machine
+on which it is running
+and locates controllers, drives, and other devices, printing out
+what it finds on the console.  This procedure is driven by a system
+configuration table which is processed by
+.Xr config 8
+and compiled into each kernel.
+Devices which exist in the machine but are not configured into the
+kernel are usually not detected.
+The exception to this is the case of
+.Tn NuBus
+expansion boards.
+All
+.Tn NuBus 
+slots are probed,
+and information about any cards found is reported even if the card
+is not currently configured.
+.Sh DIAGNOSTICS
+.Bl -diag
+.\"
+.\" The following doesn't seem to happen on the mac68k port, but
+.\" keep here waiting until I know for sure --Colin
+.\"
+.\".It CPU class not configured.
+.\"You tried to boot
+.\".Tn OpenBSD
+.\"on a class of
+.\".Tn CPU
+.\"type which it doesn't
+.\"(or at least this compiled version of
+.\".Tn OpenBSD
+.\"doesn't) understand.a
+.It %s%d at obio0: %s.
+The system is configuring an onboard I/O controller.
+.It  addr %x not configured.
+An onboard I/O controller was encountered that is not configured into the
+kernel.
+.It %s at nubus%d slot %x.
+The system is configuring a NuBus expansion card in slot %x.
+.It %s at nubus%d slot %x: %s (Vendor: %s, Part: %s Type: %x %x %x %x) not configured.
+A NuBus expansion card was encountered that is not configured into the
+kernel.
+.Sq Vendor
+is the manufacturer of the board,
+.Sq Part
+is the name of the board, and
+.Sq Type
+is the Apple-defined type.
+.It %s: channel %d not configured.
+A serial device channel was encountered that is not configured into the
+kernel.
+.It %s at %s not configured.
+A device which was configured into the kernel was unable to properly
+initialize itself.
+.El
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr boot 8 ,
+.Xr config 8
