@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.26 2004/12/21 18:15:55 xsa Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.27 2004/12/21 18:47:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -31,6 +31,7 @@
 #include <pwd.h>
 #include <errno.h>
 #include <stdio.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <signal.h>
@@ -68,6 +69,8 @@ char *cvs_msg = NULL;
 /* hierarchy of all the files affected by the command */
 CVSFILE *cvs_files;
 
+
+static TAILQ_HEAD(, cvs_var) cvs_variables;
 
 /*
  * Command dispatch table
@@ -318,7 +321,8 @@ void
 usage(void)
 {
 	fprintf(stderr,
-	    "Usage: %s [-flQqtv] [-d root] [-e editor] [-z level] command [...]\n", __progname);
+	    "Usage: %s [-flQqtv] [-d root] [-e editor] [-s var=val] [-z level] "
+	    "command [...]\n", __progname);
 }
 
 
@@ -328,6 +332,8 @@ main(int argc, char **argv)
 	char *envstr, *cmd_argv[CVS_CMD_MAXARG], **targv;
 	int i, ret, cmd_argc;
 	struct cvs_cmd *cmdp;
+
+	TAILQ_INIT(&cvs_variables);
 
 	if (cvs_log_init(LD_STD, 0) < 0)
 		err(1, "failed to initialize logging");
@@ -437,7 +443,7 @@ cvs_getopt(int argc, char **argv)
 	int ret;
 	char *ep;
 
-	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqrtvz:")) != -1) {
+	while ((ret = getopt(argc, argv, "b:d:e:fHlnQqrs:tvz:")) != -1) {
 		switch (ret) {
 		case 'b':
 			/*
@@ -471,6 +477,16 @@ cvs_getopt(int argc, char **argv)
 			break;
 		case 'r':
 			cvs_readonly = 1;
+			break;
+		case 's':
+			ep = strchr(optarg, '=');
+			if (ep == NULL) {
+				cvs_log(LP_ERR, "no = in variable assignment");
+				exit(EX_USAGE);
+			}
+			*(ep++) = '\0';
+			if (cvs_var_set(optarg, ep) < 0)
+				exit(EX_USAGE);
 			break;
 		case 't':
 			(void)cvs_log_filter(LP_FILTER_UNSET, LP_TRACE);
@@ -622,4 +638,115 @@ cvs_read_rcfile(void)
 	}
 
 	(void)fclose(fp);
+}
+
+
+/*
+ * cvs_var_set()
+ *
+ * Set the value of the variable <var> to <val>.  If there is no such variable,
+ * a new entry is created, otherwise the old value is overwritten.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+cvs_var_set(const char *var, const char *val)
+{
+	char *valcp;
+	const char *cp;
+	struct cvs_var *vp;
+
+	if ((var == NULL) || (*var == '\0')) {
+		cvs_log(LP_ERR, "no variable name");
+		return (-1);
+	}
+
+	/* sanity check on the name */
+	for (cp = var; *cp != '\0'; cp++)
+		if (!isalnum(*cp) && (*cp != '_')) {
+			cvs_log(LP_ERR,
+			    "variable name `%s' contains invalid characters",
+			    var);
+			return (-1);
+		}
+
+	TAILQ_FOREACH(vp, &cvs_variables, cv_link)
+		if (strcmp(vp->cv_name, var) == 0)
+			break;
+
+	valcp = strdup(val);
+	if (valcp == NULL) {
+		cvs_log(LP_ERRNO, "failed to allocate variable");
+		return (-1);
+	}
+
+	if (vp == NULL) {
+		vp = (struct cvs_var *)malloc(sizeof(*vp));
+		if (vp == NULL) {
+			cvs_log(LP_ERRNO, "failed to allocate variable");
+			free(valcp);
+			return (-1);
+		}
+		memset(vp, 0, sizeof(*vp));
+
+		vp->cv_name = strdup(var);
+		if (vp->cv_name == NULL) {
+			cvs_log(LP_ERRNO, "failed to allocate variable");
+			free(valcp);
+			free(vp);
+			return (-1);
+		}
+
+		TAILQ_INSERT_TAIL(&cvs_variables, vp, cv_link);
+
+	} else	/* free the previous value */
+		free(vp->cv_val);
+
+	vp->cv_val = valcp;
+
+	return (0);
+}
+
+
+/*
+ * cvs_var_set()
+ *
+ * Remove any entry for the variable <var>.
+ * Returns 0 on success, or -1 on failure.
+ */
+int
+cvs_var_unset(const char *var)
+{
+	struct cvs_var *vp;
+
+	TAILQ_FOREACH(vp, &cvs_variables, cv_link)
+		if (strcmp(vp->cv_name, var) == 0) {
+			TAILQ_REMOVE(&cvs_variables, vp, cv_link);
+			free(vp->cv_name);
+			free(vp->cv_val);
+			free(vp);
+			return (0);
+		}
+
+	return (-1);
+
+}
+
+
+/*
+ * cvs_var_get()
+ *
+ * Get the value associated with the variable <var>.  Returns a pointer to the
+ * value string on success, or NULL if the variable does not exist.
+ */
+
+const char*
+cvs_var_get(const char *var)
+{
+	struct cvs_var *vp;
+
+	TAILQ_FOREACH(vp, &cvs_variables, cv_link)
+		if (strcmp(vp->cv_name, var) == 0)
+			return (vp->cv_val);
+
+	return (NULL);
 }

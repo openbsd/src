@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.40 2004/12/21 18:15:55 xsa Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.41 2004/12/21 18:47:59 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -118,6 +118,14 @@
 struct cvs_file;
 struct cvs_dir;
 struct cvs_flist;
+
+struct cvs_var {
+	char   *cv_name;
+	char   *cv_val;
+	TAILQ_ENTRY(cvs_var) cv_link;
+};
+
+
 
 struct cvs_op {
 	u_int             co_op;
@@ -255,6 +263,11 @@ int  cvs_status   (int, char **);
 int  cvs_tag      (int, char **);
 int  cvs_update   (int, char **);
 int  cvs_version  (int, char **);
+
+
+int         cvs_var_set   (const char *, const char *);
+int         cvs_var_unset (const char *);
+const char* cvs_var_get   (const char *);
 
 
 /* from root.c */
