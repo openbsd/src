@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_proc.c,v 1.6 1996/09/30 20:50:24 maja Exp $ */
+/*	$OpenBSD: ypserv_proc.c,v 1.7 1996/09/30 21:03:56 deraadt Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.6 1996/09/30 20:50:24 maja Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_proc.c,v 1.7 1996/09/30 21:03:56 deraadt Exp $";
 #endif
 
 #include <rpc/rpc.h>
@@ -258,13 +258,8 @@ ypproc_xfr_2_svc(argp, rqstp)
 	YPLOG("       ipadd=%s, port=%d, map=%s", inet_ntoa(caller->sin_addr),
 	  argp->port, argp->map_parms.map);
 
-	if (ok) {
-		if (caller->sin_family != AF_INET ||
-		    caller->sin_port >= IPPORT_RESERVED ||
-		    caller->sin_port < IPPORT_RESERVED/2) {
-			ok = FALSE;
-		}
-	}
+	if (ntohs(caller->sin_port) >= IPPORT_RESERVED)
+		ok = FALSE;
 
 	if (!ok) {
 		svcerr_auth(rqstp->rq_xprt, AUTH_FAILED);
@@ -280,21 +275,19 @@ ypproc_xfr_2_svc(argp, rqstp)
 	}
 
 	if (pid == 0) {
-		
 		snprintf(tid, sizeof(tid), "%d",argp->transid);
 		snprintf(prog, sizeof(prog), "%d", argp->prog);
 		snprintf(port, sizeof(port), "%d", argp->port);
 		ipadd = inet_ntoa(caller->sin_addr);
 
 		execl(ypxfr_proc, "ypxfr", "-d", argp->map_parms.domain,
-		      "-C",tid, prog, ipadd, port, argp->map_parms.map, NULL);
-		exit(1);
+		    "-C",tid, prog, ipadd, port, argp->map_parms.map, NULL);
+		_exit(1);
 	}
 	
 	/*
 	 * XXX: fill in res
 	 */
-
 	return (&res);
 }
 
