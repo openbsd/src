@@ -1,4 +1,4 @@
-# $OpenBSD: krb5.conf.example,v 1.1 2001/09/20 22:17:01 hin Exp $
+# $OpenBSD: krb5.conf.example,v 1.2 2002/02/21 21:13:11 hin Exp $
 #
 # Example Kerberos 5 configuration file. You need to change the defaults
 # in this file to match your environment.
@@ -22,9 +22,12 @@
 	# Get Kerberos 4 tickets in kauth, login et al.
 	krb4_get_tickets = yes
 
+	# Uncomment this if you run NAT on the client side of kauth.
+	# This may be considered a security issue though.
+	# no-addresses = yes
 
 [realms]
-	HIN.NU = {
+	MY.REALM = {
 		# Specify KDC here
 		kdc = kerberos.my.domain
 
@@ -67,8 +70,8 @@
 
 	# For a k5 realm with k4 nodes and AFS, this should work.
 	# Remember to set your cell name here - used for salting the password
-#	default_keys = v5 v4 des:afs3-salt:hin.nu
+#	default_keys = v5 v4 des:afs3-salt:my.afs.cell
 
 [logging]
-	# The KDC logs by default, but i like to have a kadmin log as well.
+	# The KDC logs by default, but it's nice to have a kadmind log as well.
 	kadmind = FILE:/var/heimdal/kadmind.log
