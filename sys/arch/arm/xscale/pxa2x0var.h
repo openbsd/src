@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0var.h,v 1.2 2005/01/02 19:52:37 drahn Exp $ */
+/*	$OpenBSD: pxa2x0var.h,v 1.3 2005/01/12 17:14:37 uwe Exp $ */
 /* $NetBSD: pxa2x0var.h,v 1.2 2003/06/05 13:48:28 scw Exp $ */
 
 /*
@@ -86,5 +86,10 @@ extern void pxa2x0_probe_sdram(vaddr_t, paddr_t *, psize_t *);
  * CKEN register.
  */
 extern void pxa2x0_clkman_config(u_int, int);
+
+/*
+ * Force a watchdog reset to occur.
+ */
+extern void pxa2x0_watchdog_boot(void);
 
 #endif /* _ARM_XSCALE_PXA2X0VAR_H_ */

@@ -289,6 +289,7 @@ boot(int howto)
 			cngetc();
 		}
 		printf("rebooting...\n");
+		pxa2x0_watchdog_boot();
 		cpu_reset();
 		/*NOTREACHED*/
 	}
@@ -326,6 +327,7 @@ boot(int howto)
 	}
 
 	printf("rebooting...\n");
+	pxa2x0_watchdog_boot();
 	cpu_reset();
 	/*NOTREACHED*/
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0.c,v 1.2 2005/01/02 19:52:36 drahn Exp $ */
+/*	$OpenBSD: pxa2x0.c,v 1.3 2005/01/12 17:14:37 uwe Exp $ */
 /*	$NetBSD: pxa2x0.c,v 1.5 2003/12/12 16:42:44 thorpej Exp $ */
 
 /*
@@ -391,4 +391,39 @@ pxa2x0_clkman_config(u_int clk, int enable)
 		rv |= clk;
 
 	bus_space_write_4(sc->sc_bust, sc->sc_bush_clk, CLKMAN_CKEN, rv);
+}
+
+void
+pxa2x0_watchdog_boot(void)
+{
+	struct pxaip_softc *sc;
+	bus_space_handle_t bush_pow;
+	bus_space_handle_t bush_ost;
+	int rv;
+
+	KDASSERT(pxaip_sc != NULL);
+	sc = pxaip_sc;
+
+	if (bus_space_map(sc->sc_bust, PXA2X0_POWMAN_BASE, PXA2X0_POWMAN_SIZE,
+	    0, &bush_pow))
+		panic("pxa2x0_watchdog_boot: failed to map POWMAN");
+
+	if (bus_space_map(sc->sc_bust, PXA2X0_OST_BASE, PXA2X0_OST_SIZE,
+	    0, &bush_ost))
+		panic("pxa2x0_watchdog_boot: failed to map OST");
+
+	bus_space_write_4(sc->sc_bust, bush_pow, POWMAN_RCSR,
+	    RCSR_GPR | RCSR_SMR | RCSR_WDR | RCSR_HWR);
+
+	rv = bus_space_read_4(sc->sc_bust, bush_ost, OST_OSCR0);
+	bus_space_write_4(sc->sc_bust, bush_ost, OST_OSMR3,
+	    rv + 0x100);
+	bus_space_write_4(sc->sc_bust, bush_ost, OST_OWER,
+	    OWER_WME);
+	rv = bus_space_read_4(sc->sc_bust, bush_ost, OST_OIER);
+	bus_space_write_4(sc->sc_bust, bush_ost, OST_OIER,
+	    rv | OIER_E3);
+
+        for (rv = 0; rv < 0x20000000; rv++)
+		/* wait for watchdog reset */;
 }

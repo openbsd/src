@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0reg.h,v 1.7 2005/01/10 23:42:22 drahn Exp $ */
+/*	$OpenBSD: pxa2x0reg.h,v 1.8 2005/01/12 17:14:37 uwe Exp $ */
 /* $NetBSD: pxa2x0reg.h,v 1.4 2003/06/11 20:43:01 scw Exp $ */
 
 /*
@@ -99,6 +99,7 @@
 #define PXA2X0_RTC_BASE 	0x40900000
 #define PXA2X0_RTC_SIZE 	0x10
 #define PXA2X0_OST_BASE 	0x40a00000 /* OS Timer */
+#define PXA2X0_OST_SIZE		0x24
 #define PXA2X0_PWM0_BASE	0x40b00000
 #define PXA2X0_PWM1_BASE	0x40c00000
 #define PXA2X0_INTCTL_BASE	0x40d00000 /* Interrupt controller */
@@ -106,6 +107,7 @@
 #define PXA2X0_GPIO_BASE	0x40e00000
 #define PXA2X0_GPIO_SIZE  	0x70
 #define PXA2X0_POWMAN_BASE  	0x40f00000 /* Power management */
+#define PXA2X0_POWMAN_SIZE	0x100
 #define PXA2X0_SSP_BASE 	0x41000000
 #define PXA2X0_MMC_BASE 	0x41100000 /* MultiMediaCard */
 #define PXA2X0_MMC_SIZE		0x48
@@ -214,6 +216,13 @@ struct pxa2x0_dma_desc {
 #define  ICR_MA  	(1<<4)
 #define I2C_ISR  	0x1698		/* Status register */
 #define I2C_ISAR	0x16a0		/* Slave address */
+
+/* Power Manager */
+#define POWMAN_RCSR	0x30	/* Reset Controller Status Register */
+#define  RCSR_GPR	 (1<<3)
+#define  RCSR_SMR	 (1<<2)
+#define  RCSR_WDR	 (1<<1)
+#define  RCSR_HWR	 (1<<0)
 
 /* Clock Manager */
 #define CLKMAN_CCCR	0x00	/* Core Clock Configuration */
@@ -694,5 +703,16 @@ struct pxa2x0_dma_desc {
     USBHC_HIT_IRQT | USBHC_HIT_TAT | USBHC_HIT_UPS1T | USBHC_HIT_UPS2T | \
     USBHC_HIT_UPRT | USBHC_HIT_STAT | USBHC_HIT_SMAT | USBHC_HIT_UPS3T)
 #define USBHC_RST_WAIT	10	/* ms to wait for reset */
+
+/* OS Timer */
+#define OST_OSMR0	0x0000	/* Match 0 */
+#define OST_OSMR1	0x0004	/* Match 1 */
+#define OST_OSMR2	0x0008	/* Match 2 */
+#define OST_OSMR3	0x000c	/* Match 3 */
+#define OST_OSCR0	0x0010	/* Counter 0 */
+#define OST_OWER	0x0018	/* Watchdog Enable */
+#define  OWER_WME	 (1<<0)
+#define OST_OIER	0x001c	/* Interrupt Enable */
+#define  OIER_E3	 (1<<3)
 
 #endif /* _ARM_XSCALE_PXA2X0REG_H_ */
