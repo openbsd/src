@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.164 2004/05/06 11:57:55 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.165 2004/05/06 12:09:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1037,7 +1037,6 @@ session_open(struct peer *p)
 		errs += buf_add(buf, &op_type, sizeof(op_type));
 		errs += buf_add(buf, &op_len, sizeof(op_len));
 
-
 		if (p->capa.ann_mp) {
 			/* multiprotocol extensions, RFC 2858 */
 			capa_code = CAPA_MP;
@@ -1729,8 +1728,12 @@ parse_notification(struct peer *peer)
 	log_notification(peer, errcode, subcode, p, datalen);
 
 	if (errcode == ERR_OPEN && subcode == ERR_OPEN_CAPA) {
-		if (datalen == 0)	/* zebra likes to send those.. humbug */
+		if (datalen == 0) {	/* zebra likes to send those.. humbug */
+			log_peer_warnx(&peer->conf, "received \"unsupported "
+			    "capability\" notification without data part, "
+			    "disabling capability announcements alltogether");
 			peer->capa.announce = 0;
+		}
 
 		while (datalen > 0) {
 			if (datalen < 2) {
@@ -1765,6 +1768,11 @@ parse_notification(struct peer *peer)
 				    "disabling route refresh capability");
 				break;
 			default:	/* should not happen... */
+				log_peer_warnx(&peer->conf, "received "
+				    "\"unsupported capability\" notification "
+				    "for unknown capability %u, disabling "
+				    "capability announcements alltogether",
+				    capa_code);
 				peer->capa.announce = 0;
 				break;
 			}
