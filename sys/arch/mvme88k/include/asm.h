@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.14 2001/09/21 02:19:31 miod Exp $	*/
+/*	$OpenBSD: asm.h,v 1.15 2001/10/28 00:58:29 miod Exp $	*/
 
 /*
  * Mach Operating System
@@ -136,11 +136,14 @@
  * will never actually take the trap).
  */
 #if 0
-#define FLUSH_PIPELINE	tcnd	ne0, r0, 0
+#define	FLUSH_PIPELINE		tcnd	ne0, r0, 0
+#define	FLUSH_PIPELINE_STRING	"tcnd	ne0, r0, 0"
 #else
-#define FLUSH_PIPELINE	tb1 0, r0, 0
+#define	FLUSH_PIPELINE		tb1	0, r0, 0
+#define	FLUSH_PIPELINE_STRING	"tb1	0, r0, 0"
 #endif
-#define NOP		or r0, r0, r0
+#define	NOP			or	r0, r0, r0
+#define	NOP_STRING		"or	r0, r0, r0"
 
 /*
  * Useful in some situations.

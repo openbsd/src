@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm_macro.h,v 1.14 2001/08/12 12:03:02 heko Exp $ */
+/*	$OpenBSD: asm_macro.h,v 1.15 2001/10/28 00:58:29 miod Exp $ */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -35,6 +35,16 @@
  */
 
 /*
+ * Flushes the data pipeline.
+ */
+static __inline__ void flush_pipeline(void)
+{
+	__asm__ __volatile__ (FLUSH_PIPELINE_STRING);
+}
+
+#define db_flush_pipeline flush_pipeline
+
+/*
  * PSR_TYPE is the type of the Process Status Register.
  */
 typedef unsigned long m88k_psr_type;
@@ -63,7 +73,7 @@ static __inline__ m88k_psr_type disable_interrupts_return_psr(void)
 	__asm__ __volatile__ ("ldcr %0, cr1" : "=r" (oldpsr));
 	__asm__ __volatile__ ("set  %1, %0, 1<1>" : "=r" (oldpsr), "=r" (temp));
 	__asm__ __volatile__ ("stcr %0, cr1" : "=r" (temp));
-	__asm__ __volatile__ ("tcnd ne0, r0, 0");
+	__asm__ __volatile__ (FLUSH_PIPELINE_STRING);
 	return oldpsr;
 }
 #define disable_interrupt() (void)disable_interrupts_return_psr()
@@ -74,7 +84,7 @@ static __inline__ m88k_psr_type disable_interrupts_return_psr(void)
 static __inline__ void set_psr(m88k_psr_type psr)
 {
 	__asm__ __volatile__ ("stcr %0, cr1" :: "r" (psr));
-	__asm__ __volatile__ ("tcnd ne0, r0, 0");
+	__asm__ __volatile__ (FLUSH_PIPELINE_STRING);
 }
 
 /*
@@ -86,7 +96,7 @@ static __inline__ m88k_psr_type enable_interrupts_return_psr(void)
 	__asm__ __volatile__ ("ldcr %0, cr1" : "=r" (oldpsr));
 	__asm__ __volatile__ ("clr  %1, %0, 1<1>" : "=r" (oldpsr), "=r" (temp));
 	__asm__ __volatile__ ("stcr %0, cr1" : "=r" (temp));
-	__asm__ __volatile__ ("tcnd ne0, r0, 0");
+	__asm__ __volatile__ (FLUSH_PIPELINE_STRING);
 	return oldpsr;
 }
 #define enable_interrupt() (void)enable_interrupts_return_psr()
@@ -95,22 +105,13 @@ static __inline__ m88k_psr_type enable_interrupts_return_psr(void)
 #define db_disable_interrupt disable_interrupt
 
 /*
- * Flushes the data pipeline.
- */
-static __inline__ void flush_pipeline(void)
-{
-	__asm__ __volatile__ ("tcnd ne0, r0, 0");
-}
-#define db_flush_pipeline flush_pipeline
-
-/*
  * Gets the current stack pointer.
  */
 static __inline__ unsigned long stack_pointer(void)
 {
 	register unsigned long sp;
 	__asm__ __volatile__ ("or %0,r0,r31" : "=r" (sp));
-	return(sp);
+	return sp;
 }
 
 /*
