@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcap.h,v 1.1 2001/04/09 21:21:58 ho Exp $	*/
+/*	$OpenBSD: pcap.h,v 1.2 2002/05/10 15:09:00 ho Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1997
@@ -32,7 +32,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * @(#) $Header: /home/cvs/src/sbin/isakmpd/sysdep/common/Attic/pcap.h,v 1.1 2001/04/09 21:21:58 ho Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/sbin/isakmpd/sysdep/common/Attic/pcap.h,v 1.2 2002/05/10 15:09:00 ho Exp $ (LBL)
  */
 
 #ifndef lib_pcap_h
@@ -43,7 +43,7 @@
 
 #define PCAP_VERSION_MAJOR	2
 #define PCAP_VERSION_MINOR	4
-#define DLT_NULL		0
+#define DLT_LOOP		12	/* from /usr/include/net/bpf.h */
 
 struct pcap_file_header {
 	u_int32_t magic;
