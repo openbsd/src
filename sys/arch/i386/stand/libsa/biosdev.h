@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.h,v 1.10 1997/05/30 23:06:29 mickey Exp $	*/
+/*	$OpenBSD: biosdev.h,v 1.11 1997/07/18 00:49:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -32,14 +32,6 @@
  *
  */
 
-
-#define	BIOSNHEADS(d)	(((d)>>8)+1)
-#define	BIOSNSECTS(d)	((d)&0xff)	/* sectors are 1-based */
-
-#ifdef _LOCORE
-#define	BIOSINT(n)	int	$0x20+(n)
-#else
-#define	BIOSINT(n)	__asm ((int $0x20+(n)))
 
 /* biosdev.c */
 extern const char *biosdevs[];
@@ -85,4 +77,3 @@ time_t getsecs __P((void));
 /* biostime.S */
 int biostime __P((char *));
 int biosdate __P((char *));
-#endif
