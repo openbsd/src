@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipip.c,v 1.2 2000/01/21 03:16:24 angelos Exp $ */
+/*	$OpenBSD: ip_ipip.c,v 1.3 2000/06/20 04:19:11 itojun Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -404,7 +404,7 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 #endif /* INET */
 
 #ifdef INET6    
-    struct ip6_hdr *ip6o;
+    struct ip6_hdr *ip6, *ip6o;
 #endif /* INET6 */
 
     /* Deal with empty TDB source/destination addresses */
@@ -509,6 +509,13 @@ ipip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		*mp = NULL;
 		return ENOBUFS;
 	    }
+
+	    /* scoped address handling */
+	    ip6 = mtod(m, struct ip6_hdr *);
+	    if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
+		ip6->ip6_src.s6_addr16[1] = 0;
+	    if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_dst))
+		ip6->ip6_dst.s6_addr16[1] = 0;
 
 	    M_PREPEND(m, sizeof(struct ip6_hdr), M_DONTWAIT);
 	    if (m == 0)
