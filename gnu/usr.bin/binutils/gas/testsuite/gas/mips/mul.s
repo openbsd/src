@@ -1,5 +1,6 @@
 # Source file used to test the mul macro.
 	
+foo:
 	mul	$4,$5
 	mul	$4,$5,$6
 	mul	$4,$5,0

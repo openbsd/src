@@ -196,7 +196,6 @@ evax_initialize (abfd)
   PRIV(buf_size) = 0;
   PRIV(rec_length) = 0;
   PRIV(file_format) = FF_UNKNOWN;
-  PRIV(filename) = NULL;
   PRIV(fixup_done) = false;
   PRIV(sections) = NULL;
 
@@ -529,12 +528,6 @@ evax_close_and_cleanup (abfd)
       PRIV(evax_buf) = NULL;
     }
   PRIV(buf_size) = 0;
-
-  if (PRIV(filename) != NULL)
-    {
-      free (PRIV(filename));
-      PRIV(filename) = NULL;
-    }
 
   if (PRIV(output_buf) != 0)
     {
@@ -1010,9 +1003,9 @@ evax_get_symtab (abfd, symbols)
   PRIV(symcache) = symbols;
   bfd_hash_traverse(PRIV(evax_symbol_table), copy_symbols, (PTR)abfd);
 
-  symbols[bfd_get_symcount(abfd)] = NULL;
+  symbols[PRIV(egsd_sym_count)] = NULL;
 
-  return bfd_get_symcount(abfd);
+  return PRIV(egsd_sym_count);
 }
 
 

@@ -71,9 +71,6 @@ typedef void *object_headers;
 #define S_GET_TYPE(S)	0
 #define S_GET_DESC(S)	0
 
-#undef AXP_REG_GP
-#define AXP_REG_GP AXP_REG_PV
-
 #define PDSC_S_K_KIND_FP_STACK 9
 #define PDSC_S_K_KIND_FP_REGISTER 10
 #define PDSC_S_K_KIND_NULL 8
@@ -87,23 +84,6 @@ typedef void *object_headers;
 #define PDSC_S_M_NO_JACKET 0x20		/* high byte */
 
 #define LKP_S_K_SIZE 16
-
-struct evaxProc {
-  symbolS *symbol;	/* proc pdesc symbol */
-  int pdsckind;
-  int framereg;		/* register for frame pointer */
-  int framesize;	/* size of frame */
-  int rsa_offset;
-  int ra_save;
-  int fp_save;
-  long imask;
-  long fmask;
-  int type;
-  int prologue;
-};
-
-typedef struct evaxProc evaxProcT;
-typedef struct evaxProc *evaxProcP;
 
 /*
  * Local Variables:

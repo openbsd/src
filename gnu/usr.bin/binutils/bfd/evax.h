@@ -279,7 +279,6 @@ struct location_struct {
 #define EVAX_SECTION_COUNT 32
 
 struct evax_private_data_struct {
-  char *filename;			/* Filename of object file   */
   boolean fixup_done;			/* Flag to indicate if all
 					   section pointers and PRIV(sections)
 					   are set up correctly  */
@@ -328,6 +327,11 @@ struct evax_private_data_struct {
 
   int evax_linkage_index;
 
+  /* see tc-alpha.c of gas for a description.  */
+  int flag_hash_long_names;	/* -+ */
+  int flag_show_after_trunc;	/* -H */
+  int flag_no_hash_mixed_case;	/* -h NUM */
+  char vms_name_mapping;
 };
 
 #define PRIV(name)	((struct evax_private_data_struct *)abfd->tdata.any)->name
@@ -373,7 +377,6 @@ extern void _bfd_evax_output_counted PARAMS ((bfd *abfd, char *value));
 extern void _bfd_evax_output_dump PARAMS ((bfd *abfd, unsigned char *data,
 					   int length));
 extern void _bfd_evax_output_fill PARAMS ((bfd *abfd, int value, int length));
-extern char *_bfd_get_vms_time_string PARAMS ((void));
-extern char *_bfd_evax_basename PARAMS ((char *name));
+extern char *_bfd_evax_case_hack_symbol PARAMS ((bfd *abfd, const char *in));
 
 #endif /* EVAX_H */

@@ -1,5 +1,6 @@
 # Source file used to test the add macro.
 	
+foo:
 	add	$4,$4,0
 	add	$4,$4,1
 	add	$4,$4,0x8000

@@ -46,6 +46,7 @@ static char *		netbsd_core_core_file_failing_command PARAMS ((bfd *abfd));
 static int 		netbsd_core_core_file_failing_signal PARAMS ((bfd *abfd));
 static boolean		netbsd_core_core_file_matches_executable_p
 			 PARAMS ((bfd *core_bfd, bfd *exec_bfd));
+static void		swap_abort PARAMS ((void));
 
 /* Handle NetBSD-style core dump file.  */
 

@@ -50,6 +50,7 @@ struct format_ops {
   unsigned emit_section_symbols : 1;
   void (*frob_symbol) PARAMS ((symbolS *, int *));
   void (*frob_file) PARAMS ((void));
+  void (*frob_file_after_relocs) PARAMS ((void));
   bfd_vma (*s_get_size) PARAMS ((symbolS *));
   void (*s_set_size) PARAMS ((symbolS *, bfd_vma));
   bfd_vma (*s_get_align) PARAMS ((symbolS *));

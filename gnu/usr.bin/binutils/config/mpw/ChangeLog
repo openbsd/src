@@ -1,3 +1,7 @@
+Mon Sep 16 14:42:52 1996  Stan Shebs  <shebs@andros.cygnus.com>
+
+	* g-mpw-make.sed (HLDENV): Edit out all references.
+
 Thu Aug 15 19:49:23 1996  Stan Shebs  <shebs@andros.cygnus.com>
 
 	* true: New script, identical to mpw-true.

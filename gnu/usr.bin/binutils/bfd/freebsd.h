@@ -25,11 +25,11 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #define TEXT_START_ADDR		0
 
 #define N_GETMAGIC_NET(exec) \
-	(ntohl ((exec).a_info) & 0xffff)
+	((exec).a_info & 0xffff)
 #define N_GETMID_NET(exec) \
-	((ntohl ((exec).a_info) >> 16) & 0x3ff)
+	(((exec).a_info >> 16) & 0x3ff)
 #define N_GETFLAG_NET(ex) \
-	((ntohl ((exec).a_info) >> 26) & 0x3f)
+	(((exec).a_info >> 26) & 0x3f)
 
 #define N_MACHTYPE(exec) \
 	((enum machine_type) \
@@ -55,8 +55,9 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #include "libbfd.h"
 #include "libaout.h"
 
-/* On FreeBSD, the magic number is always in correct endian format */
-#define NO_SWAP_MAGIC
+/* On FreeBSD, the magic number is always in ntohl's "network" (big-endian)
+   format.  I think.  */
+#define SWAP_MAGIC(ext) bfd_getb32 (ext)
 
 
 #define MY_write_object_contents MY(write_object_contents)

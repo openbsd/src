@@ -1,7 +1,7 @@
 #objdump: -d
 #name: fmoveml
 
-# Test handling of fmoveml instruction.
+# Test handling of fmoveml and fmovemx instructions.
 
 .*: +file format .*
 
@@ -35,3 +35,26 @@ Disassembly of section .text:
 0+078 <foo\+78> fmoveml #1,%fpiar/%fpcr
 0+080 <foo\+80> fmoveml #1,%fpiar/%fpsr
 0+088 <foo\+88> fmoveml #1,%fpiar/%fpsr/%fpcr
+0+090 <foo\+90> fmovemx %fp1,%a0@
+0+094 <foo\+94> fmovemx %fp4,%a0@
+0+098 <foo\+98> fmovemx %fp7,%a0@
+0+09c <foo\+9c> fmovemx %fp1/%fp3,%a0@
+0+0a0 <foo\+a0> fmovemx %fp1-%fp4,%a0@
+0+0a4 <foo\+a4> fmovemx %fp0/%fp7,%a0@
+0+0a8 <foo\+a8> fmovemx %fp0-%fp7,%a0@
+0+0ac <foo\+ac> fmovemx %a0@,%fp0
+0+0b0 <foo\+b0> fmovemx %a0@,%fp1
+0+0b4 <foo\+b4> fmovemx %a0@,%fp7
+0+0b8 <foo\+b8> fmovemx %a0@,%fp0/%fp3
+0+0bc <foo\+bc> fmovemx %a0@,%fp0/%fp4
+0+0c0 <foo\+c0> fmovemx %a0@,%fp2-%fp4
+0+0c4 <foo\+c4> fmovemx %a0@,%fp1-%fp7
+0+0c8 <foo\+c8> fmovemx %fp0,%a0@-
+0+0cc <foo\+cc> fmovemx %fp0-%fp7,%a0@-
+0+0d0 <foo\+d0> fmovemx %fp0/%fp4,%a0@-
+0+0d4 <foo\+d4> fmovemx %a0@\+,%fp7
+0+0d8 <foo\+d8> fmovemx %a0@\+,%fp0-%fp7
+0+0dc <foo\+dc> fmovemx %a0@\+,%fp3/%fp7
+0+0e0 <foo\+e0> fmovemx %d0,%a0@-
+0+0e4 <foo\+e4> fmovemx %a0@\+,%d0
+0+0e8 <foo\+e8> fmovemx %fp1/%fp5,%a0@-

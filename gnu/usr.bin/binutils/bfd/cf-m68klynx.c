@@ -1,5 +1,5 @@
 /* BFD back-end for Motorola M68K COFF LynxOS files.
-   Copyright 1993, 1994, 1995 Free Software Foundation, Inc.
+   Copyright 1993, 1994, 1995, 1996 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
 This file is part of BFD, the Binary File Descriptor library.
@@ -201,6 +201,9 @@ coff_m68k_lynx_rtype_to_howto (abfd, sec, rel, h, sym, addendp)
   RTYPE2HOWTO (&relent, rel);
 
   howto = relent.howto;
+
+  if (howto->pc_relative)
+    *addendp += sec->vma;
 
   if (sym != NULL && sym->n_scnum == 0 && sym->n_value != 0)
     {

@@ -3,6 +3,13 @@
 #include <machine/param.h>
 #include <machine/vmparam.h>
 
+/* Recent versions of FreeBSD don't define NBPG.  */
+#ifndef NBPG
+#ifdef PAGE_SIZE
+#define NBPG PAGE_SIZE
+#endif
+#endif
+
 #define	HOST_PAGE_SIZE		NBPG
 #define	HOST_MACHINE_ARCH	bfd_arch_i386
 #define	HOST_TEXT_START_ADDR		USRTEXT

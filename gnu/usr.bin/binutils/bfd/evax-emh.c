@@ -124,13 +124,62 @@ _bfd_evax_slurp_emh (abfd)
 }
 
 
+/*-----------------------------------------------------------------------------*/
+/* Output routines.  */
+
+
+/* Manufacure a VMS like time on a unix based system.
+   stolen from obj-vms.c  */
+
+static unsigned char *
+get_vms_time_string ()
+{
+  static unsigned char tbuf[18];
+#ifndef VMS
+#include <sys/types.h>
+#include <time.h>
+
+  char *pnt;
+  time_t timeb;
+  time (&timeb);
+  pnt = ctime (&timeb);
+  pnt[3] = 0;
+  pnt[7] = 0;
+  pnt[10] = 0;
+  pnt[16] = 0;
+  pnt[24] = 0;
+  sprintf (tbuf, "%2s-%3s-%s %s", pnt + 8, pnt + 4, pnt + 20, pnt + 11);
+#else
+#include <starlet.h>
+  struct
+  {
+    int Size;
+    unsigned char *Ptr;
+  } Descriptor;
+  Descriptor.Size = 17;
+  Descriptor.Ptr = tbuf;
+  sys$asctim (0, &Descriptor, 0, 0);
+#endif /* not VMS */
+
+#if EVAX_DEBUG
+  evax_debug (6, "vmstimestring:'%s'\n", tbuf);
+#endif
+
+  return tbuf;
+}
+
+
 /* write object header for bfd abfd  */
 
 int
 _bfd_evax_write_emh (abfd)
      bfd *abfd;
 {
-  char *name;
+  asymbol *symbol;
+  int symnum;
+  int had_case = 0;
+  int had_file = 0;
+
 
 #if EVAX_DEBUG
   evax_debug (2, "evax_write_emh(%p)\n", abfd);
@@ -145,16 +194,14 @@ _bfd_evax_write_emh (abfd)
   _bfd_evax_output_long (abfd, 0);
   _bfd_evax_output_long (abfd, 0);
   _bfd_evax_output_long (abfd, MAX_OUTREC_SIZE);
-  if (bfd_get_filename (abfd) != NULL)
-    {
-      name = strdup (bfd_get_filename (abfd));
-      _bfd_evax_output_counted (abfd, _bfd_evax_basename (name));
-    }
+
+  if (bfd_get_filename (abfd) != 0)
+    _bfd_evax_output_counted (abfd, bfd_get_filename (abfd));
   else
     _bfd_evax_output_counted (abfd, "NONAME");
+
   _bfd_evax_output_counted (abfd, BFD_VERSION);
-  _bfd_evax_output_dump (abfd, (unsigned char *)_bfd_get_vms_time_string (),
-			 17);
+  _bfd_evax_output_dump (abfd, get_vms_time_string (), 17);
   _bfd_evax_output_fill (abfd, 0, 17);
   _bfd_evax_output_flush (abfd);
 
@@ -167,10 +214,38 @@ _bfd_evax_write_emh (abfd)
   /* SRC */
 
   _bfd_evax_output_begin (abfd, EOBJ_S_C_EMH, EMH_S_C_SRC);
-  if (PRIV(filename) != 0)
-    _bfd_evax_output_dump (abfd, (unsigned char *)PRIV(filename), strlen (PRIV(filename)));
-  else
-    _bfd_evax_output_dump (abfd, (unsigned char *)"noname", 6);
+
+  for (symnum = 0; symnum < abfd->symcount; symnum++)
+    {
+      symbol = abfd->outsymbols[symnum];
+
+      if (symbol->flags & BSF_FILE)
+	{
+	  char *s;
+
+	  if (strncmp ((char *)symbol->name, "<CASE:", 6) == 0)
+	    {
+	      PRIV(flag_hash_long_names) = symbol->name[6] - '0';
+	      PRIV(flag_show_after_trunc) = symbol->name[7] - '0';
+	      PRIV(flag_no_hash_mixed_case) = symbol->name[8] - '0';
+	      PRIV(vms_name_mapping) = symbol->name[9] - '0';
+
+	      if (had_file)
+		break;
+	      had_case = 1;
+	      continue;
+	    }
+
+	  _bfd_evax_output_dump (abfd, (char *)symbol->name, strlen (symbol->name));
+	  if (had_case)
+	    break;
+	  had_file = 1;
+	}
+    }
+
+  if (symnum == abfd->symcount)
+    _bfd_evax_output_dump (abfd, "noname", 6);
+
   _bfd_evax_output_flush (abfd);
 
   /* TTL */

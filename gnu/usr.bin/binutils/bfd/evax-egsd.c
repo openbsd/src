@@ -318,11 +318,12 @@ _bfd_evax_slurp_egsd (abfd)
 	      }
 	    else	/* symbol reference */
 	      {
-#if EVAX_DEBUG
-		evax_debug(3, "egsd sym ref #%d (%s, %04x=%s)\n", abfd->symcount, evax_rec+9, old_flags, flag2str(gsyflagdesc, old_flags));
-#endif
                 symbol->name =
 		  _bfd_evax_save_counted_string ((char *)evax_rec+8);
+#if EVAX_DEBUG
+		evax_debug(3, "egsd sym ref #%d (%s, %04x=%s)\n", abfd->symcount,
+			   symbol->name, old_flags, flag2str(gsyflagdesc, old_flags));
+#endif
                 symbol->section = bfd_make_section (abfd, BFD_UND_SECTION_NAME);
 	      }
 
@@ -496,6 +497,9 @@ _bfd_evax_write_egsd (abfd)
 	}
       old_flags = symbol->flags;
 
+      if (old_flags & BSF_FILE)
+	continue;
+
       if (((old_flags & BSF_GLOBAL) == 0)		/* not xdef */
 	  && (!bfd_is_und_section (symbol->section)))	/* and not xref */
 	continue;					/* dont output */
@@ -551,24 +555,7 @@ _bfd_evax_write_egsd (abfd)
 	      _bfd_evax_output_long (abfd, symbol->section->index);/* L_PSINDX, FIXME */
 	    }
 	}
-      if (strlen ((char *)symbol->name) > 198)
-	{
-	  (*_bfd_error_handler) ("Name '%s' too long\n", symbol->name);
-	  abort ();
-	}
-      nptr = (char *)symbol->name;
-      uptr = uname;
-      while (*nptr)
-	{
-	  if (islower (*nptr))
-	    *uptr = toupper (*nptr);
-	  else
-	    *uptr = *nptr;
-	  uptr++;
-	  nptr++;
-	}
-      *uptr = 0;
-      _bfd_evax_output_counted (abfd, uname);
+      _bfd_evax_output_counted (abfd, _bfd_evax_case_hack_symbol (abfd, symbol->name));
 
       _bfd_evax_output_flush (abfd);
 

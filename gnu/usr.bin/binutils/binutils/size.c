@@ -1,5 +1,5 @@
 /* size.c -- report size of various sections of an executable file.
-   Copyright 1991, 92, 93, 94 Free Software Foundation, Inc.
+   Copyright 1991, 92, 93, 94, 95, 1996 Free Software Foundation, Inc.
 
 This file is part of GNU Binutils.
 
@@ -51,7 +51,6 @@ int show_help = 0;
 int return_code = 0;
 
 /* IMPORTS */
-extern char *program_version;
 extern char *target;
 
 /* Forward declarations */
@@ -76,6 +75,8 @@ Usage: %s [-ABdoxV] [--format=berkeley|sysv] [--radix=8|10|16]\n\
   fputs ("default is --format=sysv\n", stream);
 #endif
   list_supported_targets (program_name, stream);
+  if (status == 0)
+    fprintf (stream, "Report bugs to bug-gnu-utils@prep.ai.mit.edu\n");
   exit (status);
 }
 
@@ -175,10 +176,7 @@ main (argc, argv)
       }
 
   if (show_version)
-    {
-      printf ("GNU %s version %s\n", program_name, program_version);
-      exit (0);
-    }
+    print_version ("size");
   if (show_help)
     usage (stdout, 0);
 

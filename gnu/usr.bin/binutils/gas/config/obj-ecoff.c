@@ -286,6 +286,7 @@ const struct format_ops ecoff_format_ops =
   1,
   obj_ecoff_frob_symbol,
   ecoff_frob_file,
+  0,
   0, 0,
   0, 0,
   0,

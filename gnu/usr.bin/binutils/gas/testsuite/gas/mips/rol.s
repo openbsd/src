@@ -1,5 +1,6 @@
 # Source file used to test the rol and ror macros.
-	
+
+foo:
 	rol	$4,$5
 	rol	$4,$5,$6
 	rol	$4,1

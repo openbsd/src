@@ -61,7 +61,7 @@ objdump.exe: $(OBJDUMPOBJS)
 
 
 version.obj: version.c
-	$(CC) $(CFLAGS)/define=(VERSION="""960723""") $<
+	$(CC) $(CFLAGS)/define=(VERSION="""960814""") $<
 
 config.h: config.h-vms
 	$(CP) $< $@

@@ -33,6 +33,9 @@
 
 /=/s/ = \.$/ = :/
 
+# Make these go away so that later edits not confused.
+/HLDENV/s/{HLDENV}//
+
 # Comment out any explicit srcdir setting.
 /srcdir/s/^srcdir/# srcdir/
 

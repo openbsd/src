@@ -513,17 +513,20 @@ do_formals (macro, idx, in)
 }
 
 /* Define a new macro.  Returns NULL on success, otherwise returns an
-   error message.  */
+   error message.  If NAMEP is not NULL, *NAMEP is set to the name of
+   the macro which was defined.  */
 
 const char *
-define_macro (idx, in, label, get_line)
+define_macro (idx, in, label, get_line, namep)
      int idx;
      sb *in;
      sb *label;
      int (*get_line) PARAMS ((sb *));
+     const char **namep;
 {
   macro_entry *macro;
   sb name;
+  const char *namestr;
 
   macro = (macro_entry *) xmalloc (sizeof (macro_entry));
   sb_new (&macro->sub);
@@ -562,9 +565,13 @@ define_macro (idx, in, label, get_line)
   for (idx = 0; idx < name.len; idx++)
     if (isupper (name.ptr[idx]))
       name.ptr[idx] = tolower (name.ptr[idx]);
-  hash_jam (macro_hash, sb_terminate (&name), (PTR) macro);
+  namestr = sb_terminate (&name);
+  hash_jam (macro_hash, namestr, (PTR) macro);
 
   macro_defined = 1;
+
+  if (namep != NULL)
+    *namep = namestr;
 
   return NULL;
 }

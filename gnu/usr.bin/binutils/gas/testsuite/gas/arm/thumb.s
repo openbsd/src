@@ -183,3 +183,9 @@ forwardonly:
 	bhi	wombat
 	blo	wombat
 	bul	wombat
+
+back:
+	bl	local
+	.space	(1 << 11)	@ leave space to force long offsets
+local:
+	bl	back

@@ -565,7 +565,7 @@ add_new_contents (abfd, section)
   newptr = (evax_section *) bfd_malloc (sizeof (evax_section));
   if (newptr == (evax_section *) NULL)
     return NULL;
-  newptr->contents = (unsigned char *) bfd_alloc (abfd, section->_raw_size);
+  newptr->contents = (unsigned char *) bfd_alloc (abfd, (int)section->_raw_size);
   if (newptr->contents == (unsigned char *)NULL)
     return NULL;
   newptr->offset = 0;
@@ -952,98 +952,195 @@ _bfd_evax_output_fill (abfd, value, count)
   return;
 }
 
-/*-----------------------------------------------------------------------------*/
+/* this hash routine borrowed from GNU-EMACS, and strengthened slightly  ERY*/
 
-/* Return basename (stripped of directory information) of filename  */
-
-char *
-_bfd_evax_basename (name)
-     char *name;
+static int
+hash_string (ptr)
+     const char *ptr;
 {
-  char *ptr;
+  register const unsigned char *p = (unsigned char *) ptr;
+  register const unsigned char *end = p + strlen (ptr);
+  register unsigned char c;
+  register int hash = 0;
+
+  while (p != end)
+    {
+      c = *p++;
+      hash = ((hash << 3) + (hash << 15) + (hash >> 28) + c);
+    }
+  return hash;
+}
+
+/* Generate a Case-Hacked VMS symbol name (limited to 64 chars).  */
+char *
+_bfd_evax_case_hack_symbol (abfd, in)
+     bfd *abfd;
+     const char *in;
+{
+  long int init;
+  long int result;
+  char *pnt = 0;
+  char *new_name;
+  const char *old_name;
+  int i;
+  int destructor = 0;		/*hack to allow for case sens in a destructor*/
+  int truncate = 0;
+  int case_hack_bits = 0;
+  int saw_dollar = 0;
+  static char hex_table[16] =
+  {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F'};
+
+  static char outbuf[65];
+  char *out = outbuf;
 
 #if EVAX_DEBUG
-  evax_debug (6, "_bfd_evax_basename %s -> ", name);
+  evax_debug(4, "_bfd_evax_case_hack_symbol \"%s\"\n", in);
 #endif
 
-#ifndef VMS
-  /* assume unix host */
-  ptr = strrchr (name, '.');
-  if (ptr)
-    *ptr = 0;
-  ptr = strrchr (name, '/');
-  if (ptr)
-    *ptr++ = 0;
-  else
-    ptr = name;
-#else
-  /* assume vms host */
-  ptr = strrchr (name, '.');
-  if (ptr)
+#if 0
+  /* Kill any leading "_".  */	/* Why ? FIXME ! */
+
+  if ((in[0] == '_') && ((in[1] > '9') || (in[1] < '0')))
+    in++;
+#endif
+
+  new_name = out;		/* save this for later.  */
+
+  /* We may need to truncate the symbol, save the hash for later.  */
+
+  result = (strlen (in) > 56) ? hash_string (in) : 0;
+
+  old_name = in;
+
+  /* Do the case conversion.  */
+
+  i = 56;			/* Maximum of 56 chars */
+
+  while (*in && (--i >= 0))
     {
-      *ptr = 0;
-      ptr = name;
-    }
-  else
-    {
-      ptr = strrchr (name, ']');
-      if (ptr)
-	*ptr++ = 0;
-      else
+      case_hack_bits <<= 1;
+      if (*in == '$')
+	saw_dollar = 1;
+      if ((destructor == 1) && (i == 54))
+	saw_dollar = 0;
+      switch (PRIV(vms_name_mapping))
 	{
-	  ptr = strrchr (name, ':');
-	  if (ptr)
-	    *ptr++ = 0;
-	  else
-	    ptr = name;
+	case 0:
+	  if (isupper (*in)) {
+	    *out++ = *in++;
+	    case_hack_bits |= 1;
+	  } else {
+	    *out++ = islower (*in) ? toupper (*in++) : *in++;
+	  }
+	  break;
+	case 3: *out++ = *in++;
+	  break;
+	case 2:
+	  if (islower (*in)) {
+	    *out++ = *in++;
+	  } else {
+	    *out++ = isupper (*in) ? tolower (*in++) : *in++;
+	  }
+	  break;
 	}
     }
-#endif
 
-#if EVAX_DEBUG
-  evax_debug (6, "%s\n", ptr);
-#endif
+  /* if we saw a dollar sign, we don't do case hacking.  */
 
-  return ptr;
+  if (PRIV(flag_no_hash_mixed_case) || saw_dollar)
+    case_hack_bits = 0;
+
+  /* if we have more than 56 characters and everything is lowercase
+     we can insert the full 64 characters.  */
+
+  if (*in)
+    {
+      /* We have more than 56 characters
+	 If we must add the case hack, then we have truncated the str.  */
+      pnt = out;
+      truncate = 1;
+      if (case_hack_bits == 0)
+	{
+	  /* And so far they are all lower case:
+	       Check up to 8 more characters
+	       and ensure that they are lowercase.  */
+
+	  for (i = 0; (in[i] != 0) && (i < 8); i++)
+	    if (isupper (in[i]) && !saw_dollar && !PRIV(flag_no_hash_mixed_case))
+	      break;
+
+	  if (in[i] == 0)
+	    truncate = 0;
+
+	  if ((i == 8) || (in[i] == 0))
+	    {
+	      /* They are:  Copy up to 64 characters
+			    to the output string.  */
+
+	      i = 8;
+	      while ((--i >= 0) && (*in))
+		{
+		  switch (PRIV(vms_name_mapping))
+		    {
+		      case 0:
+			*out++ = islower (*in) ? toupper (*in++) : *in++;
+			break;
+		      case 3:
+			*out++ = *in++;
+			break;
+		      case 2:
+			*out++ = isupper (*in) ? tolower (*in++) : *in++;
+			break;
+		    }
+		}
+	    }
+	}
 }
 
+  /* If there were any uppercase characters in the name we
+     take on the case hacking string.  */
 
-/* Manufacure a VMS like time on a unix based system.
-   stolen from obj-vms.c  */
+  /* Old behavior for regular GNU-C compiler */
 
-char *
-_bfd_get_vms_time_string ()
-{
-  static char tbuf[18];
-#ifndef VMS
-#include <sys/types.h>
-#include <time.h>
+  if (!PRIV(flag_hash_long_names))
+    truncate = 0;
 
-  char *pnt;
-  time_t timeb;
-  time (&timeb);
-  pnt = ctime (&timeb);
-  pnt[3] = 0;
-  pnt[7] = 0;
-  pnt[10] = 0;
-  pnt[16] = 0;
-  pnt[24] = 0;
-  sprintf (tbuf, "%2s-%3s-%s %s", pnt + 8, pnt + 4, pnt + 20, pnt + 11);
-#else
-#include <starlet.h>
-  struct
-  {
-    int Size;
-    char *Ptr;
-  } Descriptor;
-  Descriptor.Size = 17;
-  Descriptor.Ptr = tbuf;
-  sys$asctim (0, &Descriptor, 0, 0);
-#endif /* not VMS */
+  if ((case_hack_bits != 0) || (truncate == 1))
+    {
+      if (truncate == 0)
+	{
+	  *out++ = '_';
+	  for (i = 0; i < 6; i++)
+	    {
+	      *out++ = hex_table[case_hack_bits & 0xf];
+	      case_hack_bits >>= 4;
+	    }
+	  *out++ = 'X';
+	}
+      else
+	{
+	  out = pnt;		/* Cut back to 56 characters maximum */
+	  *out++ = '_';
+	  for (i = 0; i < 7; i++)
+	    {
+	      init = result & 0x01f;
+	      *out++ = (init < 10) ? ('0' + init) : ('A' + init - 10);
+	      result = result >> 5;
+	    }
+	}
+    }
+
+  *out = 0;
 
 #if EVAX_DEBUG
-  evax_debug (6, "vmstimestring:'%s'\n", tbuf);
+  evax_debug(4, "--> [%d]\"%s\"\n", strlen (outbuf), outbuf);
 #endif
 
-  return tbuf;
+  if (truncate == 1
+	&& PRIV(flag_hash_long_names)
+	&& PRIV(flag_show_after_trunc))
+    printf ("Symbol %s replaced by %s\n", old_name, new_name);
+
+  return outbuf;
 }
+

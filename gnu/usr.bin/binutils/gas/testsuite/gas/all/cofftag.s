@@ -39,7 +39,7 @@ _token:
 	.endef
 .globl _what
 .data
-	.align 2
+	.p2align 2
 _what:
 	.long 0
 .text

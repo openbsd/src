@@ -1,2 +1,0 @@
-CFLAGS_FOR_TARGET = $(CFLAGS) -mrelocatable-lib -mno-eabi
-CXXFLAGS_FOR_TARGET = $(CXXFLAGS) -mrelocatable-lib -mno-eabi

@@ -1,5 +1,6 @@
 # Source file used to test the and macro.
 	
+foo:
 	and	$4,$4,0
 	and	$4,$4,1
 	and	$4,$4,0x8000

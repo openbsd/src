@@ -5,5 +5,7 @@ h8300s_mac:
 	ldmac er0,mach
 	ldmac er1,macl
 	mac @er0+,@er1+
+	stmac mach,er0
+	stmac macl,er1
 	
 

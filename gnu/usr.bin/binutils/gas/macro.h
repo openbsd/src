@@ -38,7 +38,8 @@ extern void macro_init
   PARAMS ((int alternate, int mri, int strip_at,
 	   int (*) PARAMS ((const char *, int, sb *, int *))));
 extern const char *define_macro
-  PARAMS ((int idx, sb *in, sb *label, int (*get_line) PARAMS ((sb *))));
+  PARAMS ((int idx, sb *in, sb *label, int (*get_line) PARAMS ((sb *)),
+	   const char **namep));
 extern int check_macro PARAMS ((const char *, sb *, int, const char **));
 extern void delete_macro PARAMS ((const char *));
 extern const char *expand_irp

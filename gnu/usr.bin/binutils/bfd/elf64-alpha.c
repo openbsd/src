@@ -301,13 +301,13 @@ static reloc_howto_type elf64_alpha_howto_table[] =
 	 0,			/* bitpos */
 	 complain_overflow_signed, /* complain_on_overflow */
 	 0,			/* special_function */
-	 "LITERAL",		/* name */
+	 "ELF_LITERAL",		/* name */
 	 false,			/* partial_inplace */
 	 0xffff,		/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
-  /* This reloc only appears immediately following a LITERAL reloc.
+  /* This reloc only appears immediately following an ELF_LITERAL reloc.
      It identifies a use of the literal.  The symbol index is special:
      1 means the literal address is in the base register of a memory
      format instruction; 2 means the literal address is in the byte
@@ -508,7 +508,7 @@ static reloc_howto_type elf64_alpha_howto_table[] =
 	 "COPY",
 	 false,
 	 0,
-	 0, 
+	 0,
 	 true),
 
   HOWTO (R_ALPHA_GLOB_DAT,
@@ -522,7 +522,7 @@ static reloc_howto_type elf64_alpha_howto_table[] =
 	 "GLOB_DAT",
 	 false,
 	 0,
-	 0, 
+	 0,
 	 true),
 
   HOWTO (R_ALPHA_JMP_SLOT,
@@ -547,7 +547,7 @@ static reloc_howto_type elf64_alpha_howto_table[] =
 	 0,
 	 complain_overflow_dont,
 	 bfd_elf_generic_reloc,
-	 "RELATIVE", 
+	 "RELATIVE",
 	 false,
 	 0,
 	 0,
@@ -635,7 +635,7 @@ elf64_alpha_reloc_gpdisp (abfd, reloc_entry, sym, data, input_section,
       reloc_entry->address + reloc_entry->addend > input_section->_cooked_size)
     return bfd_reloc_outofrange;
 
-  /* The gp used in the portion of the output object to which this 
+  /* The gp used in the portion of the output object to which this
      input object belongs is cached on the input bfd.  */
   gp = _bfd_get_gp_value (abfd);
 
@@ -743,7 +743,7 @@ elf64_alpha_reloc_op_store (abfd, reloc_entry, sym, data, input_section,
 
   value = bfd_get_64 (abfd, data + reloc_entry->address);
   value &= ~((((bfd_vma)1 << size) - 1) << offset);
-  value |= (elf64_alpha_op_stack[--elf64_alpha_op_tos] 
+  value |= (elf64_alpha_op_stack[--elf64_alpha_op_tos]
 	    & (((bfd_vma)1 << size) - 1)) << offset;
   bfd_put_64 (abfd, value, data + reloc_entry->address);
 
@@ -836,14 +836,14 @@ static const struct elf_reloc_map elf64_alpha_reloc_map[] =
   {BFD_RELOC_64,		R_ALPHA_REFQUAD},
   {BFD_RELOC_CTOR,		R_ALPHA_REFQUAD},
   {BFD_RELOC_GPREL32,		R_ALPHA_GPREL32},
-  {BFD_RELOC_ALPHA_LITERAL,	R_ALPHA_LITERAL},
+  {BFD_RELOC_ALPHA_ELF_LITERAL,	R_ALPHA_LITERAL},
   {BFD_RELOC_ALPHA_LITUSE,	R_ALPHA_LITUSE},
   {BFD_RELOC_ALPHA_GPDISP,	R_ALPHA_GPDISP},
-  {BFD_RELOC_23_PCREL_S2,	R_ALPHA_BRADDR},  
-  {BFD_RELOC_ALPHA_HINT,	R_ALPHA_HINT},  
-  {BFD_RELOC_16_PCREL,		R_ALPHA_SREL16},  
-  {BFD_RELOC_32_PCREL,		R_ALPHA_SREL32},  
-  {BFD_RELOC_64_PCREL,		R_ALPHA_SREL64},  
+  {BFD_RELOC_23_PCREL_S2,	R_ALPHA_BRADDR},
+  {BFD_RELOC_ALPHA_HINT,	R_ALPHA_HINT},
+  {BFD_RELOC_16_PCREL,		R_ALPHA_SREL16},
+  {BFD_RELOC_32_PCREL,		R_ALPHA_SREL32},
+  {BFD_RELOC_64_PCREL,		R_ALPHA_SREL64},
 #if 0
   {BFD_RELOC_ALPHA_OP_PUSH,	R_ALPHA_OP_PUSH},
   {BFD_RELOC_ALPHA_OP_STORE,	R_ALPHA_OP_STORE},
@@ -1435,7 +1435,7 @@ elf64_alpha_output_extsym (h, data)
          else
            {
              name = bfd_section_name (output_section->owner, output_section);
-       
+
              if (strcmp (name, ".text") == 0)
                h->esym.asym.sc = scText;
              else if (strcmp (name, ".data") == 0)
@@ -1501,7 +1501,7 @@ elf64_alpha_output_extsym (h, data)
 #if 0 /* FIXME?  */
       h->esym.ifd = 0;
 #endif
-    }      
+    }
 
   if (! bfd_ecoff_debug_one_external (einfo->abfd, einfo->debug, einfo->swap,
                                      h->root.root.root.string,
@@ -1572,17 +1572,17 @@ elf64_alpha_check_relocs (abfd, info, sec, relocs)
 	case R_ALPHA_LITERAL:
 	  /* If this is a load of a function symbol and we are building a
 	     shared library or calling a shared library, then we need a
-	     .plt entry as well. 
+	     .plt entry as well.
 
 	     We can tell if it is a function either by noticing the
 	     type of the symbol, or, if the type is undefined, by
 	     noticing that we have a LITUSE(3) reloc next.
 
 	     Note that it is not fatal to be wrong guessing that a symbol
-	     is an object, but it is fatal to be wrong guessing that a 
+	     is an object, but it is fatal to be wrong guessing that a
 	     symbol is a function.
 
-	     Furthermore, the .plt trampoline does not give constant 
+	     Furthermore, the .plt trampoline does not give constant
 	     function addresses, so if we ever see a function's address
 	     taken, we cannot do lazy binding on that function. */
 
@@ -1605,7 +1605,7 @@ elf64_alpha_check_relocs (abfd, info, sec, relocs)
 		h->flags |= ALPHA_ELF_LINK_HASH_LU_ADDR;
 
 	      if (h->root.root.type != bfd_link_hash_undefweak
-		  && (info->shared 
+		  && (info->shared
 		      || !(h->root.elf_link_hash_flags
 			   & ELF_LINK_HASH_DEF_REGULAR))
 		  && (h->root.type == STT_FUNC
@@ -1750,11 +1750,11 @@ elf64_alpha_adjust_dynamic_symbol (info, h)
 {
   bfd *dynobj;
   asection *s;
-  
+
   dynobj = elf_hash_table(info)->dynobj;
 
   /* If this is a function, put it in the procedure linkage table.  We
-     will fill in the contents of the procedure linkage table later, 
+     will fill in the contents of the procedure linkage table later,
      though we could actually do it here.  */
 
   if (h->elf_link_hash_flags & ELF_LINK_HASH_NEEDS_PLT)
@@ -1935,6 +1935,18 @@ elf64_alpha_size_dynamic_sections (output_bfd, info)
 		  /* These symbols will have no names, so we don't need to
 		     fiddle with dynstr_index.  */
 		}
+	    }
+
+	  /* For now, bitch a lot if we exceed the .got size limit.  We
+	     should eventually allocate multiple independent .got
+	     subsections as necessary.  */
+	  if (s->_raw_size > 64*1024)
+	    {
+	      (*_bfd_error_handler)
+		("%s: .got segment overflow (size %lu, max %lu)",
+		 bfd_get_filename (output_bfd), s->_raw_size, 64*1024);
+	      bfd_set_error (bfd_error_file_too_big);
+	      return false;
 	    }
 	}
       else if (strcmp (name, ".plt") != 0)
@@ -2273,7 +2285,7 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 	  }
 	  /* overflow handled by _bfd_final_link_relocate */
 	  goto default_reloc;
-	  
+
 	case R_ALPHA_GPREL32:
 	  BFD_ASSERT(gp != 0);
 	  relocation -= gp;
@@ -2285,11 +2297,14 @@ elf64_alpha_relocate_section (output_bfd, info, input_bfd, input_section,
 	     the instruction rather than the end.  */
 	  addend -= 4;
 	  goto default_reloc;
-	  
+
 	case R_ALPHA_REFLONG:
 	case R_ALPHA_REFQUAD:
 	  if (info->shared
-	      || (h && !(h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)))
+	      || (h && !(h->elf_link_hash_flags & ELF_LINK_HASH_DEF_REGULAR)
+		  /* Undef weak symbols in static executables shouldn't
+		     trigger a dynamic reloc.  */
+		  && elf_hash_table(info)->dynamic_sections_created))
 	    {
 	      asection *srel;
 	      const char *name;
@@ -2401,7 +2416,7 @@ elf64_alpha_finish_dynamic_symbol (output_bfd, info, h, sym)
       BFD_ASSERT(sgot != NULL);
 
       got_addr = (sgot->output_section->vma
-		  + sgot->output_offset 
+		  + sgot->output_offset
 		  + h->got_offset);
       plt_addr = (splt->output_section->vma
 		  + splt->output_offset
@@ -2422,7 +2437,7 @@ elf64_alpha_finish_dynamic_symbol (output_bfd, info, h, sym)
 	insn1 = PLT_ENTRY_WORD1 | (hi & 0xffff);
 	insn2 = PLT_ENTRY_WORD2 | (lo & 0xffff);
 	insn3 = PLT_ENTRY_WORD3 | ((-(h->plt_offset + 12) >> 2) & 0x1fffff);
-	
+
 	bfd_put_32 (output_bfd, insn1, splt->contents + h->plt_offset);
 	bfd_put_32 (output_bfd, insn2, splt->contents + h->plt_offset + 4);
 	bfd_put_32 (output_bfd, insn3, splt->contents + h->plt_offset + 8);
@@ -2534,8 +2549,8 @@ elf64_alpha_finish_dynamic_sections (output_bfd, info)
 	    case DT_RELASZ:
 	      /* My interpretation of the TIS v1.1 ELF document indicates
 		 that RELASZ should not include JMPREL.  This is not what
-		 the rest of the BFD does.  It is, however, what the 
-		 glibc ld.so wants.  Do this fixup here until we found 
+		 the rest of the BFD does.  It is, however, what the
+		 glibc ld.so wants.  Do this fixup here until we found
 		 out who is right.  */
 	      s = bfd_get_section_by_name (output_bfd, ".rela.plt");
 	      if (s)
@@ -2567,12 +2582,12 @@ elf64_alpha_finish_dynamic_sections (output_bfd, info)
 	  bfd_put_32 (output_bfd, PLT_HEADER_WORD2, splt->contents + 4);
 	  bfd_put_32 (output_bfd, PLT_HEADER_WORD3, splt->contents + 8);
 	  bfd_put_32 (output_bfd, PLT_HEADER_WORD4, splt->contents + 12);
-	  
+
 	  /* The next two words will be filled in by ld.so */
 	  bfd_put_64 (output_bfd, 0, splt->contents + 16);
 	  bfd_put_64 (output_bfd, 0, splt->contents + 24);
 
-	  elf_section_data (splt->output_section)->this_hdr.sh_entsize = 
+	  elf_section_data (splt->output_section)->this_hdr.sh_entsize =
 	    PLT_HEADER_SIZE;
 	}
     }
@@ -2589,7 +2604,7 @@ elf64_alpha_finish_dynamic_sections (output_bfd, info)
 		    sdyn->output_section->vma + sdyn->output_offset,
 		    sgot->contents);
 
-      elf_section_data (sgot->output_section)->this_hdr.sh_entsize = 
+      elf_section_data (sgot->output_section)->this_hdr.sh_entsize =
 	8 * RESERVED_GOT_ENTRIES;
     }
 
@@ -2801,7 +2816,7 @@ elf64_alpha_final_link (abfd, info)
 		    }
 		  else
 		    esym.asym.value = last;
-		
+
 		  if (! bfd_ecoff_debug_one_external (abfd, &debug, swap,
 						      name[i], &esym))
 		    return false;
@@ -3292,7 +3307,7 @@ elf64_alpha_ecoff_debug_swap =
   elf64_alpha_info_to_howto
 
 #define elf_backend_object_p \
-  elf64_alpha_object_p 
+  elf64_alpha_object_p
 #define elf_backend_section_from_shdr \
   elf64_alpha_section_from_shdr
 #define elf_backend_fake_sections \

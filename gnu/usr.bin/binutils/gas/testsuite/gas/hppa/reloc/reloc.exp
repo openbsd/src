@@ -507,7 +507,7 @@ proc do_function_reloc_bug {} {
 	set testname "funcrelocbug.s: Test for reloc bug in non-plabel function reference (part3)"
 	set x 0
 
-	objdump_start_no_subdir "a.out" "-d"
+	objdump_start_no_subdir "a.out" "--prefix-addresses -d"
 	# Make sure we didn't put anything in the instruction itself!
 	while 1 {
 	    expect {

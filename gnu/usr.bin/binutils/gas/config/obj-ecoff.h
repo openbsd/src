@@ -1,5 +1,5 @@
 /* ECOFF object file format header file.
-   Copyright (C) 1993 Free Software Foundation, Inc.
+   Copyright (C) 1993, 94, 95, 1996 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
@@ -16,8 +16,9 @@
    GNU General Public License for more details.
 
    You should have received a copy of the GNU General Public License
-   along with GAS; see the file COPYING.  If not, write to
-   the Free Software Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.  */
+   along with GAS; see the file COPYING.  If not, write to the Free
+   Software Foundation, 59 Temple Place - Suite 330, Boston, MA
+   02111-1307, USA.  */
 
 #define OBJ_ECOFF 1
 
@@ -51,6 +52,9 @@ extern void ecoff_frob_file PARAMS ((void));
 /* We use the ECOFF functions as our hooks.  */
 #define obj_read_begin_hook ecoff_read_begin_hook
 #define obj_symbol_new_hook ecoff_symbol_new_hook
+
+/* Record file switches in the ECOFF symbol table.  */
+#define obj_app_file(name) ecoff_new_file (name)
 
 /* At the moment we don't want to do any stabs processing in read.c.  */
 #define OBJ_PROCESS_STAB(seg, what, string, type, other, desc) \
