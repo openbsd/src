@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.4 1996/07/29 22:59:08 niklas Exp $	*/
+/*	$OpenBSD: psl.h,v 1.5 1996/10/17 22:19:45 niklas Exp $	*/
 /*	$NetBSD: psl.h,v 1.5 1996/04/23 15:24:09 cgd Exp $	*/
 
 /*
@@ -76,8 +76,14 @@
  */
 
 /* Flush all write buffers */
-static __inline int wbflush() \
-	{ __asm __volatile("mb" : : : "memory"); }	/* XXX? wmb */
+static __inline void wbflush __P((void));
+static __inline void
+wbflush()
+{
+	/* XXX? wmb */
+	__asm __volatile("mb" : : : "memory");
+}
+
 #define	IMB()		pal_imb()	/* Sync instruction cache w/data */
 
 void alpha_mb __P((void));		/* Flush all write buffers */
