@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dino.4,v 1.2 2004/01/14 09:58:27 mickey Exp $
+.\"	$OpenBSD: dino.4,v 1.3 2004/02/13 20:56:26 mickey Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\" All rights reserved.
@@ -31,6 +31,7 @@
 .Nd Dino and Cujo Host/PCI bridges
 .Sh SYNOPSIS
 .Cd "dino* at phantomas?"
+.Cd "com1 at dino? irq 11"
 .Cd "pci* at dino?"
 .Sh DESCRIPTION
 This driver supports
@@ -41,7 +42,14 @@ Host/PCI bridges found on the A, B, and C models of workstations.
 .Tn Cujo
 is a 64 bit datapath version of
 .Tn Dino .
+.Pp
+On some machines it may also provide an additional serial port through
+.Xr com 4
+driver or a
+.Tn PS/2
+keyboard and mouse ports though later not yet supported.
 .Sh SEE ALSO
+.Xr com 4 ,
 .Xr intro 4 ,
 .Xr pci 4 ,
 .Xr phantomas 4
