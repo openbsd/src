@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_pager.c,v 1.33 2002/10/29 18:30:21 art Exp $	*/
+/*	$OpenBSD: uvm_pager.c,v 1.34 2003/03/29 01:13:57 mickey Exp $	*/
 /*	$NetBSD: uvm_pager.c,v 1.36 2000/11/27 18:26:41 chs Exp $	*/
 
 /*
@@ -432,7 +432,7 @@ uvm_pager_put(uobj, pg, ppsp_ptr, npages, flags, start, stop)
 	int result;
 	daddr_t swblk;
 	struct vm_page **ppsp = *ppsp_ptr;
-	UVMHIST_FUNC("uvm_pager_put"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC("uvm_pager_put"); UVMHIST_CALLED(pdhist);
 
 	/*
 	 * note that uobj is null  if we are doing a swap-backed pageout.
@@ -484,7 +484,7 @@ ReTry:
 	if (uobj) {
 		/* object is locked */
 		result = uobj->pgops->pgo_put(uobj, ppsp, *npages, flags);
-		UVMHIST_LOG(ubchist, "put -> %d", result, 0,0,0);
+		UVMHIST_LOG(pdhist, "put -> %d", result, 0,0,0);
 		/* object is now unlocked */
 	} else {
 		/* nothing locked */
@@ -796,8 +796,8 @@ uvm_aio_aiodone(bp)
 	struct uvm_object *uobj;
 	int i, error;
 	boolean_t write, swap;
-	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(ubchist);
-	UVMHIST_LOG(ubchist, "bp %p", bp, 0,0,0);
+	UVMHIST_FUNC("uvm_aio_aiodone"); UVMHIST_CALLED(pdhist);
+	UVMHIST_LOG(pdhist, "bp %p", bp, 0,0,0);
 
 	splassert(IPL_BIO);
 
@@ -813,7 +813,7 @@ uvm_aio_aiodone(bp)
 	uobj = NULL;
 	for (i = 0; i < npages; i++) {
 		pgs[i] = uvm_pageratop((vaddr_t)bp->b_data + (i << PAGE_SHIFT));
-		UVMHIST_LOG(ubchist, "pgs[%d] = %p", i, pgs[i],0,0);
+		UVMHIST_LOG(pdhist, "pgs[%d] = %p", i, pgs[i],0,0);
 	}
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
 #ifdef UVM_SWAP_ENCRYPT

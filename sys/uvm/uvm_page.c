@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.46 2002/10/12 01:09:45 krw Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.47 2003/03/29 01:13:57 mickey Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.44 2000/11/27 08:40:04 chs Exp $	*/
 
 /* 
@@ -1227,19 +1227,19 @@ uvm_page_unbusy(pgs, npgs)
 	struct vm_page *pg;
 	struct uvm_object *uobj;
 	int i;
-	UVMHIST_FUNC("uvm_page_unbusy"); UVMHIST_CALLED(ubchist);
+	UVMHIST_FUNC("uvm_page_unbusy"); UVMHIST_CALLED(pdhist);
 
 	for (i = 0; i < npgs; i++) {
 		pg = pgs[i];
 
-		if (pg == NULL) {
+		if (pg == NULL || pg == PGO_DONTCARE) {
 			continue;
 		}
 		if (pg->flags & PG_WANTED) {
 			wakeup(pg);
 		}
 		if (pg->flags & PG_RELEASED) {
-			UVMHIST_LOG(ubchist, "releasing pg %p", pg,0,0,0);
+			UVMHIST_LOG(pdhist, "releasing pg %p", pg,0,0,0);
 			uobj = pg->uobject;
 			if (uobj != NULL) {
 				uobj->pgops->pgo_releasepg(pg, NULL);
@@ -1249,7 +1249,7 @@ uvm_page_unbusy(pgs, npgs)
 				uvm_anfree(pg->uanon);
 			}
 		} else {
-			UVMHIST_LOG(ubchist, "unbusying pg %p", pg,0,0,0);
+			UVMHIST_LOG(pdhist, "unbusying pg %p", pg,0,0,0);
 			pg->flags &= ~(PG_WANTED|PG_BUSY);
 			UVM_PAGE_OWN(pg, NULL);
 		}
