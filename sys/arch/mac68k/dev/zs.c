@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.9 1997/03/12 13:36:59 briggs Exp $	*/
+/*	$OpenBSD: zs.c,v 1.10 1997/06/20 22:32:10 gene Exp $	*/
 /*	$NetBSD: zs.c,v 1.12 1996/12/18 05:04:22 scottr Exp $	*/
 
 /*
@@ -804,7 +804,7 @@ zs_abort(zst)
 		if (zst != NULL) zst->zst_hwflags &= ~ZS_HWFLAG_CONABRT;
 	/* If we time out, turn off the abort ability! */
 	}
-
-	/* XXX - Always available, but may be the PROM monitor. */
+#ifdef DDB
 	Debugger();
+#endif
 }
