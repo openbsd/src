@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.8 1996/09/02 05:01:12 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.9 1996/11/14 06:51:48 etheisen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -118,7 +118,7 @@ clntudp_bufcreate(raddr, program, version, wait, sockp, sendsz, recvsz)
 	static u_int32_t disrupt;
 
 	if (disrupt == 0)
-		disrupt = (u_int32_t)raddr;
+		disrupt = (u_int32_t)(long)raddr;
 
 	cl = (CLIENT *)mem_alloc(sizeof(CLIENT));
 	if (cl == NULL) {
