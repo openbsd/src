@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami_pci.c,v 1.20 2004/11/22 21:09:18 deraadt Exp $	*/
+/*	$OpenBSD: ami_pci.c,v 1.21 2004/12/26 00:11:24 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -62,6 +62,7 @@
 #define		AMI_SGL_LHC	0x00000299
 #define		AMI_SGL_HLC	0x00000199
 
+int	ami_pci_find_device(void *);
 int	ami_pci_match(struct device *, void *, void *);
 void	ami_pci_attach(struct device *, struct device *, void *);
 
@@ -77,12 +78,13 @@ struct	ami_pci_device {
 #define	AMI_CHECK_SIGN	0x001
 } ami_pci_devices[] = {
 	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID,	0 },
-	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID428,	0 },
-	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID434,	0 },
+	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID428,	AMI_BROKEN },
+	{ PCI_VENDOR_AMI,	PCI_PRODUCT_AMI_MEGARAID434,	AMI_BROKEN },
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_4DI,	0 },
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_4DI_2,	0 },
 	{ PCI_VENDOR_DELL,	PCI_PRODUCT_DELL_PERC_4EDI,	0 },	
-	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80960RP_ATU, AMI_CHECK_SIGN },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_80960RP_ATU,
+	    AMI_CHECK_SIGN | AMI_BROKEN },
 	{ PCI_VENDOR_SYMBIOS,	PCI_PRODUCT_SYMBIOS_MEGARAID,	0 },
 	{ 0 }
 };
@@ -117,6 +119,25 @@ struct ami_pci_vendor {
 	{ 0 }
 };
 
+int ami_pci_find_device(aux)
+	void *aux;
+{
+	int i;
+	struct pci_attach_args *pa = aux;
+
+	for (i = 0; ami_pci_devices[i].vendor; i++) {
+		if (ami_pci_devices[i].vendor == PCI_VENDOR(pa->pa_id) &&
+		    ami_pci_devices[i].product == PCI_PRODUCT(pa->pa_id)) {
+#ifdef AMI_DEBUG
+		    	printf(" ami_pci_find_device() %i ", i);
+#endif /* AMI_DEBUG */
+			return (i);
+		}
+	}
+
+	return (-1);
+}
+
 int
 ami_pci_match(parent, match, aux)
 	struct device *parent;
@@ -124,25 +145,29 @@ ami_pci_match(parent, match, aux)
 	void *aux;
 {
 	struct pci_attach_args *pa = aux;
-	const struct ami_pci_device *pami;
+	int i;
 	pcireg_t sig;
 
 	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_I2O)
 		return (0);
 
-	for (pami = ami_pci_devices; pami->vendor; pami++) {
-		if (pami->vendor == PCI_VENDOR(pa->pa_id) &&
-		    pami->product == PCI_PRODUCT(pa->pa_id)) {
-			if (!(pami->flags & AMI_CHECK_SIGN))
-				return (1);
-			/* some cards have 0x11223344, but some only 16bit */
-			sig = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    AMI_PCI_SIG) & 0xffff;
-			if (sig == AMI_SIGNATURE_1 ||
-			    sig == AMI_SIGNATURE_2)
-				return (1);
-		}
+	if ((i = ami_pci_find_device(aux)) != -1) {
+#ifdef AMI_DEBUG
+		printf("\nvendor: %04x  product: %04x\n",
+			ami_pci_devices[i].vendor,
+			ami_pci_devices[i].product);
+#endif /* AMI_DEBUG */
+
+		if (!(ami_pci_devices[i].flags & AMI_CHECK_SIGN))
+			return (1);
+		/* some cards have 0x11223344, but some only 16bit */
+		sig = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    AMI_PCI_SIG) & 0xffff;
+		if (sig == AMI_SIGNATURE_1 ||
+		    sig == AMI_SIGNATURE_2)
+			return (1);
 	}
+
 	return (0);
 }
 
@@ -158,6 +183,7 @@ ami_pci_attach(parent, self, aux)
 	const struct ami_pci_subsys *ssp;
 	bus_size_t size;
 	pcireg_t csr;
+	int i;
 #if 0
 	/* reset */
 	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_EBCR,
@@ -245,6 +271,17 @@ ami_pci_attach(parent, self, aux)
 	case AMI_SGL_LHC:	lhc = "64b/lhc";	break;
 	case AMI_SGL_HLC:	lhc = "64b/hlc";	break;
 	default:		lhc = "32b";
+	}
+
+	if ((i = ami_pci_find_device(aux)) != -1) {
+		if (ami_pci_devices[i].flags & AMI_BROKEN)
+			sc->sc_quirks = AMI_BROKEN;
+		else
+			sc->sc_quirks = 0x0000;
+	}
+	else {
+		/* this device existed at _match() should never happen */
+		panic("ami device dissapeared between match() and attach()\n");
 	}
 
 	printf(" %s/%s\n%s", model, lhc, sc->sc_dev.dv_xname);

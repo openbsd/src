@@ -1,4 +1,4 @@
-/*	$OpenBSD: amivar.h,v 1.6 2003/06/02 19:24:22 mickey Exp $	*/
+/*	$OpenBSD: amivar.h,v 1.7 2004/12/26 00:11:24 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -86,6 +86,10 @@ struct ami_softc {
 	struct timeout	sc_requeue_tmo;
 	struct timeout	sc_poll_tmo;
 
+/* don't use 0x0001 */
+#define AMI_BROKEN 0x0002
+	u_int16_t sc_quirks;
+
 	char	sc_fwver[16];
 	char	sc_biosver[16];
 	int	sc_maxcmds;
@@ -122,3 +126,6 @@ int ami_schwartz_init(struct ami_softc *sc);
 int ami_schwartz_exec(struct ami_softc *sc, struct ami_iocmd *);
 int ami_schwartz_done(struct ami_softc *sc, struct ami_iocmd *);
 
+#ifdef AMI_DEBUG
+void ami_print_mbox(struct ami_iocmd *);
+#endif /* AMI_DEBUG */

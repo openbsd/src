@@ -1,4 +1,4 @@
-/*	$OpenBSD: ami.c,v 1.24 2004/01/09 21:32:23 brad Exp $	*/
+/*	$OpenBSD: ami.c,v 1.25 2004/12/26 00:11:24 marco Exp $	*/
 
 /*
  * Copyright (c) 2001 Michael Shalayeff
@@ -103,8 +103,14 @@ struct scsi_device ami_raw_dev = {
 	NULL, NULL, NULL, NULL
 };
 
-static __inline struct ami_ccb *ami_get_ccb(struct ami_softc *sc);
-static __inline void ami_put_ccb(struct ami_ccb *ccb);
+struct ami_ccb *ami_get_ccb(struct ami_softc *sc);
+void ami_put_ccb(struct ami_ccb *ccb);
+
+void ami_write_inbound_db(struct ami_softc *, u_int32_t);
+void ami_write_outbound_db(struct ami_softc *, u_int32_t);
+u_int32_t ami_read_inbound_db(struct ami_softc *);
+u_int32_t ami_read_outbound_db(struct ami_softc *);
+
 void ami_copyhds(struct ami_softc *sc, const u_int32_t *sizes,
 	const u_int8_t *props, const u_int8_t *stats);
 void *ami_allocmem(bus_dma_tag_t dmat, bus_dmamap_t *map,
@@ -121,7 +127,7 @@ void ami_copy_internal_data(struct scsi_xfer *xs, void *v, size_t size);
 int  ami_inquire(struct ami_softc *sc, u_int8_t op);
 
 
-static __inline struct ami_ccb *
+struct ami_ccb *
 ami_get_ccb(sc)
 	struct ami_softc *sc;
 {
@@ -135,7 +141,7 @@ ami_get_ccb(sc)
 	return ccb;
 }
 
-static __inline void
+void
 ami_put_ccb(ccb)
 	struct ami_ccb *ccb;
 {
@@ -143,6 +149,58 @@ ami_put_ccb(ccb)
 
 	ccb->ccb_state = AMI_CCB_FREE;
 	TAILQ_INSERT_TAIL(&sc->sc_free_ccb, ccb, ccb_link);
+}
+
+void
+ami_write_inbound_db(sc, v)
+	struct ami_softc *sc;
+	u_int32_t v;
+{
+	AMI_DPRINTF(AMI_D_CMD, ("ami_write_inbound_db(%x)", v));
+
+	bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, v);
+	bus_space_barrier(sc->iot, sc->ioh,
+	    AMI_QIDB, 4, BUS_SPACE_BARRIER_WRITE);
+}
+
+u_int32_t
+ami_read_inbound_db(sc)
+	struct ami_softc *sc;
+{
+	u_int32_t rv;
+	
+	bus_space_barrier(sc->iot, sc->ioh,
+	    AMI_QIDB, 4, BUS_SPACE_BARRIER_READ);
+	rv = bus_space_read_4(sc->iot, sc->ioh, AMI_QIDB);
+	AMI_DPRINTF(AMI_D_CMD, ("ami_read_inbound_db(%x)", rv));
+
+	return (rv);
+}
+
+void
+ami_write_outbound_db(sc, v)
+	struct ami_softc *sc;
+	u_int32_t v;
+{
+	AMI_DPRINTF(AMI_D_CMD, ("ami_write_outbound_db(%x)", v));
+
+	bus_space_write_4(sc->iot, sc->ioh, AMI_QODB, v);
+	bus_space_barrier(sc->iot, sc->ioh,
+	    AMI_QODB, 4, BUS_SPACE_BARRIER_WRITE);
+}
+
+u_int32_t
+ami_read_outbound_db(sc)
+	struct ami_softc *sc;
+{
+	u_int32_t rv;
+
+	bus_space_barrier(sc->iot, sc->ioh,
+	    AMI_QODB, 4, BUS_SPACE_BARRIER_READ);
+	rv = bus_space_read_4(sc->iot, sc->ioh, AMI_QODB);
+	AMI_DPRINTF(AMI_D_CMD, ("ami_read_outbound_db(%x)", rv));
+
+	return (rv);
 }
 
 void *
@@ -414,8 +472,22 @@ ami_attach(sc)
 
 		AMI_UNLOCK_AMI(sc, lock);
 
-		if (sc->sc_maxcmds > AMI_MAXCMDS)
-			sc->sc_maxcmds = 1 /* AMI_MAXCMDS */;
+		if (sc->sc_quirks & AMI_BROKEN) {
+			sc->sc_link.openings = 1;
+			sc->sc_maxcmds = 1;
+			sc->sc_maxunits = 1;
+		}
+		else {
+			sc->sc_maxunits = AMI_BIG_MAX_LDRIVES;
+			if (sc->sc_maxcmds > AMI_MAXCMDS)
+				sc->sc_maxcmds = AMI_MAXCMDS;
+
+			if (sc->sc_nunits)
+				sc->sc_link.openings =
+				    sc->sc_maxcmds / sc->sc_nunits;
+			else
+				sc->sc_link.openings = sc->sc_maxcmds;
+		}
 	}
 	ami_freemem(sc->dmat, &idatamap, idataseg, NBPG, 1, "init data");
 
@@ -431,21 +503,34 @@ ami_attach(sc)
 		    sc->sc_biosver[2], sc->sc_biosver[1], sc->sc_biosver[0]);
 	}
 
+	/* TODO: fetch & print cache strategy */
+	/* TODO: fetch & print scsi and raid info */
+
+	sc->sc_link.device = &ami_dev;
+	sc->sc_link.adapter_softc = sc;
+	sc->sc_link.adapter = &ami_switch;
+	sc->sc_link.adapter_target = sc->sc_maxunits;
+	sc->sc_link.adapter_buswidth = sc->sc_maxunits;
+
+#ifdef AMI_DEBUG
+	printf(": FW %s, BIOS v%s, %dMB RAM\n"
+	     "%s: %d channels, %d %ss, %d logical drives, "
+	     "openings %d, max commands %d, quirks: %04x\n",
+	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory,
+	    sc->sc_dev.dv_xname,
+	    sc->sc_channels, sc->sc_targets, p, sc->sc_nunits,
+	    sc->sc_link.openings, sc->sc_maxcmds, sc->sc_quirks);
+#else
 	printf(": FW %s, BIOS v%s, %dMB RAM\n"
 	     "%s: %d channels, %d %ss, %d logical drives\n",
 	    sc->sc_fwver, sc->sc_biosver, sc->sc_memory,
 	    sc->sc_dev.dv_xname,
 	    sc->sc_channels, sc->sc_targets, p, sc->sc_nunits);
+#endif /* AMI_DEBUG */
 
-	/* TODO: fetch & print cache strategy */
-	/* TODO: fetch & print scsi and raid info */
-
-	sc->sc_link.device = &ami_dev;
-	sc->sc_link.openings = sc->sc_maxcmds;
-	sc->sc_link.adapter_softc = sc;
-	sc->sc_link.adapter = &ami_switch;
-	sc->sc_link.adapter_target = sc->sc_maxunits;
-	sc->sc_link.adapter_buswidth = sc->sc_maxunits;
+	if (sc->sc_quirks & AMI_BROKEN && sc->sc_nunits > 1)
+		printf("%s: firmware buggy, limiting access to first logical "
+		    "disk\n", sc->sc_dev.dv_xname);
 
 	config_found(&sc->sc_dev, &sc->sc_link, scsiprint);
 #if 0
@@ -483,9 +568,7 @@ int
 ami_quartz_init(sc)
 	struct ami_softc *sc;
 {
-	bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, 0);
-	bus_space_barrier(sc->iot, sc->ioh,
-		    AMI_QIDB, 4, BUS_SPACE_BARRIER_WRITE);
+	ami_write_inbound_db(sc, 0);
 
 	return 0;
 }
@@ -495,31 +578,32 @@ ami_quartz_exec(sc, cmd)
 	struct ami_softc *sc;
 	struct ami_iocmd *cmd;
 {
-	u_int32_t qidb;
+	u_int32_t qidb, i;
 
-	bus_space_barrier(sc->iot, sc->ioh,
-	    AMI_QIDB, 4, BUS_SPACE_BARRIER_READ);
-	qidb = bus_space_read_4(sc->iot, sc->ioh, AMI_QIDB);
-	if (qidb & (AMI_QIDB_EXEC | AMI_QIDB_ACK)) {
-		AMI_DPRINTF(AMI_D_CMD, ("qidb1=%x ", qidb));
-		return (EBUSY);
+	AMI_DPRINTF(AMI_D_CMD, ("ami_quartz_exec() "));
+
+	i = 0;
+	while (sc->sc_mbox->acc_busy && (i < AMI_MAX_BUSYWAIT)) {
+		delay(1);
+		i++;
 	}
-
-	/* do not scramble the busy mailbox */
 	if (sc->sc_mbox->acc_busy) {
 		AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
 		return (EBUSY);
 	}
 
-	*sc->sc_mbox = *cmd;
-	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, sizeof(*cmd),
+	memcpy((struct ami_iocmd *)sc->sc_mbox, cmd, 16);
+	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 16,
 	    BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
 
+	sc->sc_mbox->acc_busy = 1;
+	sc->sc_mbox->acc_poll = 0;
+	sc->sc_mbox->acc_ack = 0;
+
 	qidb = sc->sc_mbox_pa | AMI_QIDB_EXEC;
-	AMI_DPRINTF(AMI_D_CMD, ("qidb2=%x ", qidb));
-	bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, qidb);
-	bus_space_barrier(sc->iot, sc->ioh,
-	    AMI_QIDB, 4, BUS_SPACE_BARRIER_WRITE);
+	ami_write_inbound_db(sc, qidb);
+
+	AMI_DPRINTF(AMI_D_CMD, ("ami_quartz_exec() returning "));
 	return (0);
 }
 
@@ -528,46 +612,72 @@ ami_quartz_done(sc, mbox)
 	struct ami_softc *sc;
 	struct ami_iocmd *mbox;
 {
-	u_int32_t qdb;
+	u_int32_t qdb, i, n;
+	u_int8_t nstat, status;
+	u_int8_t completed[AMI_MAXSTATACK];
 
-	bus_space_barrier(sc->iot, sc->ioh,
-	    AMI_QIDB, 4, BUS_SPACE_BARRIER_READ);
-	qdb = bus_space_read_4(sc->iot, sc->ioh, AMI_QIDB);
-	if (qdb & (AMI_QIDB_EXEC | AMI_QIDB_ACK)) {
-		AMI_DPRINTF(AMI_D_CMD, ("qidb3=%x ", qdb));
-		return (0);
+	AMI_DPRINTF(AMI_D_CMD, ("ami_quartz_done() "));
+
+	qdb = ami_read_outbound_db(sc);
+	if (qdb != AMI_QODB_READY)
+		return (0); /* nothing to do */
+
+	ami_write_outbound_db(sc, AMI_QODB_READY);
+
+	/*
+	 * The following sequence is not supposed to have a timeout clause
+	 * since the firmware has a "guarantee" that all commands will
+	 * complete.  The choice is either panic or hoping for a miracle
+	 * and that the IOs will complete much later.
+	 */
+	i = 0;
+	while ((nstat = sc->sc_mbox->acc_nstat) == 0xff) {
+		delay(1);
+		if (i++ > 1000000)
+			return (0); /* nothing to do */
+	}
+	sc->sc_mbox->acc_nstat = 0xff;
+
+	/* wait until fw wrote out all completions */
+	i = 0;
+	AMI_DPRINTF(AMI_D_CMD, ("ami_quartz_done() nstat %d ", nstat));
+	for (n = 0; n < nstat; n++) {
+		while ((completed[n] = sc->sc_mbox->acc_cmplidl[n]) ==
+		    0xff) {
+			delay(1);
+			if (i++ > 1000000)
+				return (0); /* nothing to do */
+		}
+		sc->sc_mbox->acc_cmplidl[n] = 0xff;
 	}
 
-	/* do not scramble the busy mailbox */
-	if (sc->sc_mbox->acc_busy) {
-		AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
-		return (0);
+	/* this should never happen, someone screwed up the completion status */
+	if ((status = sc->sc_mbox->acc_status) == 0xff)
+		panic("%s: status 0xff from the firmware", sc->sc_dev.dv_xname);
+
+	sc->sc_mbox->acc_status = 0xff;
+
+	/* ack interrupt */
+	ami_write_inbound_db(sc, AMI_QIDB_ACK);
+
+	i = 0;
+	while(ami_read_inbound_db(sc) & AMI_QIDB_ACK) {
+		delay(1);
+		if (i++ > 1000000)
+			return (0); /* nothing to do */
 	}
 
-	bus_space_barrier(sc->iot, sc->ioh,
-	    AMI_QODB, 4, BUS_SPACE_BARRIER_READ);
-	qdb = bus_space_read_4(sc->iot, sc->ioh, AMI_QODB);
-	if (qdb == AMI_QODB_READY) {
-
-		bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, sizeof(*mbox),
-		    BUS_DMASYNC_POSTWRITE);
-		*mbox = *sc->sc_mbox;
-
-		/* ack interrupt */
-		bus_space_write_4(sc->iot, sc->ioh, AMI_QODB, AMI_QODB_READY);
-		bus_space_barrier(sc->iot, sc->ioh,
-		    AMI_QODB, 4, BUS_SPACE_BARRIER_WRITE);
-
-		qdb = sc->sc_mbox_pa | AMI_QIDB_ACK;
-		bus_space_write_4(sc->iot, sc->ioh, AMI_QIDB, qdb);
-		bus_space_barrier(sc->iot, sc->ioh,
-		    AMI_QIDB, 4, BUS_SPACE_BARRIER_WRITE);
-		return (1);
+	/* copy mailbox to temporary one and fixup other changed values */
+	bus_dmamap_sync(sc->dmat, sc->sc_cmdmap, 0, 16,
+	    BUS_DMASYNC_POSTWRITE);
+	memcpy(mbox, (struct ami_iocmd *)sc->sc_mbox, 16);
+	mbox->acc_nstat = nstat;
+	mbox->acc_status = status;
+	for (n = 0; n < nstat; n++) {
+		mbox->acc_cmplidl[n] = completed[n];
 	}
 
-	AMI_DPRINTF(AMI_D_CMD, ("qodb=%x ", qdb));
-
-	return (0);
+	return (1); /* ready to complete all IOs in acc_cmplidl */
 }
 
 int
@@ -575,6 +685,8 @@ ami_schwartz_init(sc)
 	struct ami_softc *sc;
 {
 	u_int32_t a = (u_int32_t)sc->sc_mbox_pa;
+
+	AMI_DPRINTF(AMI_D_CMD, ("ami_schwartz_init() "));
 
 	bus_space_write_4(sc->iot, sc->ioh, AMI_SMBADDR, a);
 	/* XXX 40bit address ??? */
@@ -592,10 +704,18 @@ ami_schwartz_exec(sc, cmd)
 	struct ami_softc *sc;
 	struct ami_iocmd *cmd;
 {
-	if (bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY)
-		return EBUSY;
+	AMI_DPRINTF(AMI_D_CMD, ("ami_schwartz_exec() "));
 
-	*sc->sc_mbox = *cmd;
+	if (bus_space_read_1(sc->iot, sc->ioh, AMI_SMBSTAT) & AMI_SMBST_BUSY) {
+		AMI_DPRINTF(AMI_D_CMD, ("mbox_busy "));
+		return EBUSY;
+	}
+
+	memcpy((struct ami_iocmd *)sc->sc_mbox, cmd, 16);
+	sc->sc_mbox->acc_busy = 1;
+	sc->sc_mbox->acc_poll = 0;
+	sc->sc_mbox->acc_ack = 0;
+
 	bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_EXEC);
 	return 0;
 }
@@ -606,6 +726,8 @@ ami_schwartz_done(sc, mbox)
 	struct ami_iocmd *mbox;
 {
 	u_int8_t stat;
+
+	AMI_DPRINTF(AMI_D_CMD, ("ami_schwartz_done() "));
 #if 0
 	/* do not scramble the busy mailbox */
 	if (sc->sc_mbox->acc_busy)
@@ -619,6 +741,8 @@ ami_schwartz_done(sc, mbox)
 		bus_space_write_1(sc->iot, sc->ioh, AMI_ISTAT, stat);
 
 		*mbox = *sc->sc_mbox;
+		AMI_DPRINTF(AMI_D_CMD, ("ami_schwartz_done() acc_nstat %d ",
+		    mbox->acc_nstat));
 
 		bus_space_write_1(sc->iot, sc->ioh, AMI_SCMD, AMI_SCMD_ACK);
 
@@ -734,10 +858,6 @@ ami_start(ccb, wait)
 	}
 
 	AMI_DPRINTF(AMI_D_CMD, ("exec "));
-
-	cmd->acc_busy = 1;
-	cmd->acc_poll = 0;
-	cmd->acc_ack = 0;
 
 	if (!(i = (sc->sc_exec)(sc, cmd))) {
 		ccb->ccb_state = AMI_CCB_QUEUED;
@@ -1301,7 +1421,6 @@ ami_intr(v)
 	lock = AMI_LOCK_AMI(sc);
 	s = splimp();	/* XXX need to do this to mask timeouts */
 	while ((sc->sc_done)(sc, &mbox)) {
-		AMI_DPRINTF(AMI_D_CMD, ("got#%d ", mbox.acc_nstat));
 		for (i = 0; i < mbox.acc_nstat; i++ ) {
 			int ready = mbox.acc_cmplidl[i];
 
@@ -1324,3 +1443,24 @@ ami_intr(v)
 	AMI_DPRINTF(AMI_D_INTR, ("exit "));
 	return (rv);
 }
+
+#ifdef AMI_DEBUG
+void
+ami_print_mbox(mbox)
+	struct ami_iocmd *mbox;
+{
+	int i;
+
+	printf("acc_cmd: %d  aac_id: %d  acc_busy: %d  acc_nstat: %d",
+	    mbox->acc_cmd, mbox->acc_id, mbox->acc_busy, mbox->acc_nstat);
+	printf("acc_status: %d  acc_poll: %d  acc_ack: %d\n",
+	    mbox->acc_status, mbox->acc_poll, mbox->acc_ack);
+
+	printf("acc_cmplidl: ");
+	for (i = 0; i < AMI_MAXSTATACK; i++) {
+		printf("[%d] = %d  ", i, mbox->acc_cmplidl[i]);
+	}
+
+	printf("\n");
+}
+#endif /* AMI_DEBUG */
