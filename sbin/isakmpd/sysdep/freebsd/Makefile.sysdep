@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.sysdep,v 1.7 2002/06/09 08:13:07 todd Exp $
+#	$OpenBSD: Makefile.sysdep,v 1.8 2002/11/21 12:15:45 ho Exp $
 
 #
 # Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -35,6 +35,9 @@
 
 # Override default features
 FEATURES=	tripledes des blowfish cast x509 ec aggressive debug
+FEATURES+=	rawkey
+# Not yet
+#FEATURES+=	policy isakmp_cfg
 
 .if defined(TOPDIR)
 LIBSYSDEPDIR=	${TOPDIR}/sysdep/common/libsysdep
