@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tireg.h,v 1.4 1999/10/25 19:39:19 jason Exp $	*/
+/*	$OpenBSD: if_tireg.h,v 1.5 2000/01/18 05:26:25 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_tireg.h,v 1.11 1999/09/22 06:43:16 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_tireg.h,v 1.12 2000/01/18 00:26:29 wpaul Exp $
  */
 
 /*
@@ -80,6 +80,13 @@
  */
 #define SGI_VENDORID			0x10A9
 #define SGI_DEVICEID_TIGON		0x0009
+
+/*
+ * DEC vendor ID, Farallon device ID. Apparently, Farallon used
+ * the DEC vendor ID in their cards by mistake.
+ */
+#define DEC_VENDORID			0x1011
+#define DEC_DEVICEID_FARALLON_PN9000SX	0x001a
 
 /*
  * Tigon configuration and control registers.

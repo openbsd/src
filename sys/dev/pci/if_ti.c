@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.8 1999/10/28 03:26:33 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.9 2000/01/18 05:26:25 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_ti.c,v 1.24 1999/09/23 03:32:54 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_ti.c,v 1.25 2000/01/18 00:26:29 wpaul Exp $
  */
 
 /*
@@ -1501,6 +1501,11 @@ ti_probe(parent, match, aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SGI &&
 	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SGI_TIGON)
+		return (1);
+
+	/* This is really a Farallon board, they used the wrong vendorid */
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_DEC &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_DEC_PN9000SX)
 		return (1);
 
 	return (0);
