@@ -38,7 +38,7 @@ OPTIONS AND ARGUMENTS
 DESCRIPTION
     pod2usage will read the given input file looking for pod documentation
     and will print the corresponding usage message. If no input file is
-    specifed than standard input is read.
+    specified then standard input is read.
 
     pod2usage invokes the pod2usage() function in the Pod::Usage module.
     Please see the pod2usage() entry in the Pod::Usage manpage.
