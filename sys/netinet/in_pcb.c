@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.6 1996/07/29 04:47:21 downsj Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.7 1996/07/29 05:03:33 downsj Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -192,7 +192,13 @@ in_pcbbind(v, nam)
 			if ((error = suser(p->p_ucred, &p->p_acflag)))
 				return (EACCES);
 			first = IPPORT_RESERVED - 1;	/* 1023 */
+#if 0
+			/* traditional way */
 			last = IPPORT_RESERVED / 2;	/* traditional - 512 */
+#else
+			/* our way */
+			last = 600;
+#endif
 			*lastport = first;		/* restart each time */
 		} else {
 			first = ipport_firstauto;	/* sysctl */
