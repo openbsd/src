@@ -1,4 +1,4 @@
-/* $OpenBSD: environment.c,v 1.10 2000/05/18 07:58:45 angelos Exp $ */
+/* $OpenBSD: environment.c,v 1.11 2000/05/18 17:22:44 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -970,7 +970,7 @@ kn_get_authorizer(int sessid, int assertid, int *algorithm)
     struct assertion *as;
     int i;
 
-    keynote_errno = 0;
+    keynote_errno = *algorithm = 0;
     if ((keynote_current_session == (struct keynote_session *) NULL) ||
 	(keynote_current_session->ks_id != sessid))
     {
@@ -988,13 +988,18 @@ kn_get_authorizer(int sessid, int assertid, int *algorithm)
 	   as != (struct assertion *) NULL;
 	   as = as->as_next)
 	if (as->as_id == assertid)
-	  break;
+	  goto out;
 
+ out:
     if (as == (struct assertion *) NULL)
     {
 	keynote_errno = ERROR_NOTFOUND;
 	return (void *) NULL;
     }
+
+    if (as->as_authorizer == NULL)
+      if (keynote_evaluate_authorizer(as, 1) != RESULT_TRUE)
+	return NULL;
 
     *algorithm = as->as_signeralgorithm;
     return as->as_authorizer;
@@ -1027,8 +1032,9 @@ kn_get_licensees(int sessid, int assertid)
 	   as != (struct assertion *) NULL;
 	   as = as->as_next)
 	if (as->as_id == assertid)
-	  break;
+	  goto out;
 
+ out:
     if (as == (struct assertion *) NULL)
     {
 	keynote_errno = ERROR_NOTFOUND;
