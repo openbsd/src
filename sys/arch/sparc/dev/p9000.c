@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9000.c,v 1.7 2004/05/10 09:05:52 miod Exp $	*/
+/*	$OpenBSD: p9000.c,v 1.8 2004/05/12 16:26:11 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2003, Miodrag Vallat.
@@ -554,12 +554,13 @@ p9000_ras_init(struct p9000_softc *sc)
 {
 	sc->sc_sunfb.sf_ro.ri_ops.copycols = p9000_ras_copycols;
 	sc->sc_sunfb.sf_ro.ri_ops.copyrows = p9000_ras_copyrows;
+#if NTCTRL > 0
 	if (tadpole_get_video() & TV_ACCEL) {
 		sc->sc_sunfb.sf_ro.ri_ops.erasecols = p9000_ras_erasecols;
 		sc->sc_sunfb.sf_ro.ri_ops.eraserows = p9000_ras_eraserows;
 		sc->sc_sunfb.sf_ro.ri_do_cursor = p9000_ras_do_cursor;
 	}
-
+#endif
 	/*
 	 * Setup safe defaults for the parameter and drawing engines, in
 	 * order to minimize the operations to do for ri_ops.
