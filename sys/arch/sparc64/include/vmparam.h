@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.11 2003/06/02 23:27:56 millert Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.12 2004/01/23 21:20:54 millert Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.18 2001/05/01 02:19:19 thorpej Exp $ */
 
 /*
@@ -114,7 +114,7 @@
  * Size of shared memory map
  */
 #ifndef SHMMAXPGS
-#define SHMMAXPGS	1024
+#define SHMMAXPGS	4096			/* 32mb */
 #endif
 
 /*
