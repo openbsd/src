@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.83 2002/03/14 01:26:54 millert Exp $	*/
+/*	$OpenBSD: com.c,v 1.84 2002/04/09 15:08:43 pefo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*
@@ -379,8 +379,10 @@ com_enable_debugport(sc)
 
 	/* Turn on line break interrupt, set carrier. */
 	s = splhigh();
+#ifdef KGDB
 	SET(sc->sc_ier, IER_ERXRDY);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_ier, sc->sc_ier);
+#endif
 	SET(sc->sc_mcr, MCR_DTR | MCR_RTS | MCR_IENABLE);
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, com_mcr, sc->sc_mcr);
 
@@ -1472,7 +1474,7 @@ cominit(iot, ioh, rate)
 	bus_space_write_1(iot, ioh, com_dlbh, rate >> 8);
 	bus_space_write_1(iot, ioh, com_lcr, LCR_8BITS);
 	bus_space_write_1(iot, ioh, com_mcr, MCR_DTR | MCR_RTS);
-	bus_space_write_1(iot, ioh, com_ier, IER_ERXRDY | IER_ETXRDY);
+	bus_space_write_1(iot, ioh, com_ier, 0);  /* Make sure they are off */
 	bus_space_write_1(iot, ioh, com_fifo,
 	    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
 	stat = bus_space_read_1(iot, ioh, com_iir);
