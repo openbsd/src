@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.312 2004/12/08 18:49:47 dhartmei Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.313 2004/12/10 22:17:02 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -1259,9 +1259,16 @@ addresses and ports.
 Addresses can be specified in CIDR notation (matching netblocks), as
 symbolic host names or interface names, or as any of the following keywords:
 .Pp
-.Bl -tag -width xxxxxxxxxxxx -compact
+.Bl -tag -width xxxxxxxxxxxxxx -compact
 .It Ar any
 Any address.
+.It Ar route <label>
+Any address whose matching route's label is equal to
+.Ar <label> .
+See
+.Xr route 4
+and
+.Xr route 8 .
 .It Ar no-route
 Any address which is not currently routable.
 .It Ar <table>
@@ -1355,6 +1362,7 @@ pass in proto tcp from any to any port 25
 pass in proto tcp from 10.0.0.0/8 port > 1024 \e
       to ! 10.1.2.3 port != ssh
 pass in proto tcp from any os "OpenBSD" flags S/SA
+pass in proto tcp from route "DTAG"
 .Ed
 .It Ar all
 This is equivalent to "from any to any".
@@ -2663,9 +2671,9 @@ proto-list     = ( proto-name | proto-number ) [ [ "," ] proto-list ]
 
 hosts          = "all" |
                  "from" ( "any" | "no-route" | "self" | host |
-                 "{" host-list "}" ) [ port ] [ os ]
+                 "{" host-list "}" | "route" string ) [ port ] [ os ]
                  "to"   ( "any" | "no-route" | "self" | host |
-                 "{" host-list "}" ) [ port ]
+                 "{" host-list "}" | "route" string ) [ port ]
 
 ipspec         = "any" | host | "{" host-list "}"
 host           = [ "!" ] ( address [ "/" mask-bits ] | "<" string ">" )
@@ -2769,6 +2777,7 @@ Example rulesets.
 .Xr ip6 4 ,
 .Xr pf 4 ,
 .Xr pfsync 4 ,
+.Xr route 4 ,
 .Xr tcp 4 ,
 .Xr udp 4 ,
 .Xr hosts 5 ,
@@ -2777,7 +2786,8 @@ Example rulesets.
 .Xr services 5 ,
 .Xr ftp-proxy 8 ,
 .Xr pfctl 8 ,
-.Xr pflogd 8
+.Xr pflogd 8 ,
+.Xr route 8
 .Sh HISTORY
 The
 .Nm
