@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1999/06/18 00:21:57 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1999/07/18 18:19:17 espie Exp $
 
 IO_DIR=		$(.CURDIR)/../libio
 LIBIBERTY_DIR=	$(.CURDIR)/../libiberty
@@ -51,7 +51,7 @@ IO_OBJS!=	cat $(IO_OBJDIR)/iostream.list
 QIO_OBJS=	$(IO_OBJS:S/^/$(IO_OBJDIR)\//g)
 
 LIBIBERTY_SRCS!=cat $(LIBIBERTY_OBJDIR)/needed-list
-LIBIBERTY_OBJS=$(LIBIBERTY_SRCS:N*.h:R:S/$/.o/g)
+LIBIBERTY_OBJS=$(LIBIBERTY_SRCS:N*.h:S/.c$/.o/g)
 # XXX why does strerror.o need to be hardwired?
 LIBIBERTY_OBJS+=strerror.o
 QLIBIBERTY_OBJS=$(LIBIBERTY_OBJS:S/^/$(LIBIBERTY_OBJDIR)\//g)
