@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_ohci.c,v 1.7 2005/02/12 05:23:35 dlg Exp $ */
+/*	$OpenBSD: pxa2x0_ohci.c,v 1.8 2005/02/14 13:55:20 dlg Exp $ */
 
 /*
  * Copyright (c) 2005 David Gwynne <dlg@openbsd.org>
@@ -16,12 +16,9 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/cdefs.h>
-
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
-#include <sys/termios.h>
 #include <sys/kernel.h>
 
 #include <machine/intr.h>
@@ -40,7 +37,7 @@
 
 int	pxaohci_match(struct device *, void *, void *);
 void	pxaohci_attach(struct device *, struct device *, void *);
-int	pxaohci_detach(device_ptr_t, int);
+int	pxaohci_detach(struct device *, int);
 
 struct pxaohci_softc {
 	ohci_softc_t	sc;
@@ -144,7 +141,7 @@ pxaohci_attach(struct device *parent, struct device *self, void *aux)
 }
 
 int
-pxaohci_detach(device_ptr_t self, int flags)
+pxaohci_detach(struct device *self, int flags)
 {
 	struct pxaohci_softc		*sc = (struct pxaohci_softc *)self;
 	u_int32_t			hr;
