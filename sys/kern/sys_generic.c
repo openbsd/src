@@ -1,4 +1,4 @@
-/*	$OpenBSD: sys_generic.c,v 1.14 1998/07/28 19:47:07 millert Exp $	*/
+/*	$OpenBSD: sys_generic.c,v 1.15 1998/07/28 22:36:42 millert Exp $	*/
 /*	$NetBSD: sys_generic.c,v 1.24 1996/03/29 00:25:32 cgd Exp $	*/
 
 /*
@@ -294,7 +294,7 @@ sys_writev(p, v, retval)
 	register struct sys_writev_args /* {
 		syscallarg(int) fd;
 		syscallarg(struct iovec *) iovp;
-		syscallarg(u_int) iovcnt;
+		syscallarg(int) iovcnt;
 	} */ *uap = v;
 	register struct file *fp;
 	register struct filedesc *fdp = p->p_fd;
