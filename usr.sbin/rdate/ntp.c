@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.5 2002/05/16 21:05:24 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.6 2002/05/16 22:00:37 ho Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -257,22 +257,34 @@ read_packet(int fd, struct ntp_data *data, double *off, double *error,
 {
 	u_char	receive[NTP_PACKET_MAX+1];
 	double	delay1, delay2, x, y;
-	int	length;
-	fd_set	rfds;
+	int	length, r;
+	fd_set	*rfds;
 	struct	timeval tv;
 
+	rfds = (fd_set *)calloc(howmany(fd + 1, NFDBITS), sizeof(fd_mask));
+	if (!rfds) {
+		warnx("calloc() failed");
+		return 1;
+	}
+
+	FD_SET(fd, rfds);
+
+retry:
 	tv.tv_sec = 0;
 	tv.tv_usec = 1000000 * MAX_DELAY / MAX_QUERIES;
 
-	/* XXX potential fdset overflow */
-	FD_ZERO(&rfds);
-	FD_SET(fd, &rfds);
-
-	if (select (fd + 1, &rfds, NULL, NULL, &tv) < 1)
-		return 1; /* failure or timeout */
-		/* XXX does not deal with all possible return values */
-
-	/* XXX assumes fd was ready */
+	r = select(fd + 1, rfds, NULL, NULL, &tv);
+	if (r < 1 || !FD_ISSET(fd, rfds)) {
+		if (r < 0) {
+			if (errno == EINTR)
+				goto retry;
+			else
+				warnx("select() failed");
+		}
+		free(rfds);
+		return 1;
+	}
+	free(rfds);
 
 	length = recvfrom(fd, receive, NTP_PACKET_MAX + 1, 0, NULL, 0);
 	if (length < 0) {
