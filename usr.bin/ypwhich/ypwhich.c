@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.1.1.1 1995/10/18 08:47:08 deraadt Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.2 1996/04/24 21:39:56 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -43,7 +43,7 @@ static char rcsid[] = "$Id: ypwhich.c,v 1.1.1.1 1995/10/18 08:47:08 deraadt Exp 
 #include <netdb.h>
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
-#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 
 extern bool_t xdr_domainname();
@@ -98,7 +98,7 @@ struct sockaddr_in *sin;
 	tv.tv_sec = 5;
 	tv.tv_usec = 0;
 	r = clnt_call(client, YPBINDPROC_DOMAIN,
-		xdr_domainname, dom, xdr_ypbind_resp, &ypbr, tv);
+		xdr_domainname, &dom, xdr_ypbind_resp, &ypbr, tv);
 	if( r != RPC_SUCCESS) {
 		fprintf(stderr, "can't clnt_call: %s\n",
 			yperr_string(YPERR_YPBIND));
@@ -114,7 +114,8 @@ struct sockaddr_in *sin;
 	}
 	clnt_destroy(client);
 
-	ss_addr = ypbr.ypbind_respbody.ypbind_bindinfo.ypbind_binding_addr.s_addr;
+	bcopy(&ypbr.ypbind_resp_u.ypbind_bindinfo.ypbind_binding_addr,
+	    &ss_addr, sizeof (ss_addr));
 	/*printf("%08x\n", ss_addr);*/
 	hent = gethostbyaddr((char *)&ss_addr, sizeof(ss_addr), AF_INET);
 	if (hent)
@@ -128,14 +129,14 @@ int
 main(argc, argv)
 char **argv;
 {
-	char *domainname, *master, *map;
+	char *domain, *master, *map;
 	struct ypmaplist *ypml, *y;
 	struct hostent *hent;
 	struct sockaddr_in sin;
 	int notrans, mode, getmap;
 	int c, r, i;
 
-	yp_get_default_domain(&domainname);
+	yp_get_default_domain(&domain);
 
 	map = NULL;
 	getmap = notrans = mode = 0;
@@ -148,7 +149,7 @@ char **argv;
 					ypaliases[i].name);
 			exit(0);
 		case 'd':
-			domainname = optarg;
+			domain = optarg;
 			break;
 		case 't':
 			notrans++;
@@ -169,7 +170,7 @@ char **argv;
 			sin.sin_family = AF_INET;
 			sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
-			if(bind_host(domainname, &sin))
+			if(bind_host(domain, &sin))
 				exit(1);
 			break;
 		case 1:
@@ -185,7 +186,7 @@ char **argv;
 				bcopy((char *)hent->h_addr,
 					(char *)&sin.sin_addr, sizeof sin.sin_addr);
 			}
-			if(bind_host(domainname, &sin))
+			if(bind_host(domain, &sin))
 				exit(1);
 			break;
 		default:
@@ -202,7 +203,7 @@ char **argv;
 		for(i=0; (!notrans) && i<sizeof ypaliases/sizeof ypaliases[0]; i++)
 			if( strcmp(map, ypaliases[i].alias) == 0)
 				map = ypaliases[i].name;
-		r = yp_master(domainname, map, &master);
+		r = yp_master(domain, map, &master);
 		switch(r) {
 		case 0:
 			printf("%s\n", master);
@@ -220,24 +221,25 @@ char **argv;
 	}
 
 	ypml = NULL;
-	r = yp_maplist(domainname, &ypml);
+	r = yp_maplist(domain, &ypml);
+	r = 0;
 	switch(r) {
 	case 0:
-		for(y=ypml; y; ) {
+		for(y = ypml; y; ) {
 			ypml = y;
-			r = yp_master(domainname, ypml->ypml_name, &master);
+			r = yp_master(domain, ypml->map, &master);
 			switch(r) {
 			case 0:
-				printf("%s %s\n", ypml->ypml_name, master);
+				printf("%s %s\n", ypml->map, master);
 				free(master);
 				break;
 			default:
 				fprintf(stderr,
 					"YP: can't find the master of %s: Reason: %s\n",
-					ypml->ypml_name, yperr_string(r));
+					ypml->map, yperr_string(r));
 				break;
 			}
-			y = ypml->ypml_next;
+			y = ypml->next;
 			free(ypml);
 		}
 		break;
@@ -246,7 +248,7 @@ char **argv;
 		exit(1);
 	default:
 		fprintf(stderr, "Can't get map list for domain %s. Reason: %s\n",
-			domainname, yperr_string(r));
+			domain, yperr_string(r));
 		exit(1);
 	}
 	exit(0);

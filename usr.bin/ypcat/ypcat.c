@@ -31,7 +31,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypcat.c,v 1.1.1.1 1995/10/18 08:47:08 deraadt Exp $";
+static char rcsid[] = "$Id: ypcat.c,v 1.2 1996/04/24 21:40:13 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
@@ -42,7 +42,7 @@ static char rcsid[] = "$Id: ypcat.c,v 1.1.1.1 1995/10/18 08:47:08 deraadt Exp $"
 
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
-#include <rpcsvc/yp_prot.h>
+#include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
 
 struct ypalias {
@@ -88,7 +88,7 @@ int
 main(argc, argv)
 char **argv;
 {
-	char *domainname;
+	char *domain;
 	struct ypall_callback ypcb;
 	char *inmap;
 	extern char *optarg;
@@ -97,7 +97,7 @@ char **argv;
 	int c, r, i;
 
 	notrans = key = 0;
-	yp_get_default_domain(&domainname);
+	yp_get_default_domain(&domain);
 
 	while( (c=getopt(argc, argv, "xd:kt")) != -1)
 		switch(c) {
@@ -108,7 +108,7 @@ char **argv;
 					ypaliases[i].name);
 			exit(0);
 		case 'd':
-			domainname = optarg;
+			domain = optarg;
 			break;
 		case 't':
 			notrans++;
@@ -130,7 +130,7 @@ char **argv;
 	ypcb.foreach = printit;
 	ypcb.data = NULL;
 
-	r = yp_all(domainname, inmap, &ypcb);
+	r = yp_all(domain, inmap, &ypcb);
 	switch(r) {
 	case 0:
 		break;
