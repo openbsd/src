@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.95 2004/01/07 03:37:57 millert Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.96 2004/01/07 19:34:03 millert Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -995,6 +995,9 @@ again:
 		case KERN_PROC_ALL:
 			if (p->p_flag & P_SYSTEM)
 				continue;
+			break;
+		case KERN_PROC_KTHREAD:
+			/* no filtering */
 			break;
 		default:
 			return (EINVAL);
