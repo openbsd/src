@@ -1,7 +1,0 @@
-/* config.in.  Generated automatically from configure.in by autoheader.  */
-
-/* Define if you have the <stdlib.h> header file.  */
-#undef HAVE_STDLIB_H
-
-/* Define if you have the <time.h> header file.  */
-#undef HAVE_TIME_H

@@ -1,9 +1,0 @@
-yarcrev8  montip.exe -t yarcrev8 -r ..\..\src\nimon\yarcrev8\mon.os
-eb030     montip.exe -t eb030  -r ..\..\src\minimon\eb29030\mon.os
-eb29k     montip.exe -t eb29k  -r ..\..\src\minimon\eb29k\mon.os 
-lcb29k    montip.exe -t lcb29k -r ..\..\src\minimon\lcb29k\mon.os
-pceb      montip.exe -t pceb   -r ..\..\src\minimon\pceb\mon.os
-serial    montip.exe -t serial
-ser       montip.exe -t serial
-ser_384   montip.exe -t serial -baud 38400
-sim       isstip.exe -r ..\..\src\osboot\sim\osboot
