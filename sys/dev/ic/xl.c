@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.32 2001/12/15 05:33:53 nordin Exp $	*/
+/*	$OpenBSD: xl.c,v 1.33 2002/01/25 05:44:06 nordin Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2699,7 +2699,7 @@ xl_detach(sc)
 	if_detach(ifp);
 
 	shutdownhook_disestablish(sc->sc_sdhook);
-	powerhook_disestablish(sc->sc_sdhook);
+	powerhook_disestablish(sc->sc_pwrhook);
 
 	return (0);
 }
