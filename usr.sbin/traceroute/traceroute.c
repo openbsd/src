@@ -462,7 +462,7 @@ main(argc, argv)
 	if (source) {
 		(void) memset(&from, 0, sizeof(struct sockaddr));
 		from.sin_family = AF_INET;
-		if (inet_aton(source, &from.sin_addr) != 0)
+		if (inet_aton(source, &from.sin_addr) == 0)
 			errx(1, "unknown host %s", source);
 		ip->ip_src = from.sin_addr;
 #ifndef IP_HDRINCL
