@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_inherit.h,v 1.3 1999/06/29 14:48:53 aaron Exp $	*/
+/*	$OpenBSD: vm_inherit.h,v 1.4 2000/03/15 14:14:33 art Exp $	*/
 /*	$NetBSD: vm_inherit.h,v 1.7 1994/06/29 06:47:58 cgd Exp $	*/
 
 /* 
@@ -76,10 +76,10 @@
  *	Enumeration of valid values for vm_inherit_t.
  */
 
-#define	VM_INHERIT_SHARE	0	/* share with child */
-#define	VM_INHERIT_COPY		1	/* copy into child */
-#define VM_INHERIT_NONE		2	/* absent from child */
-#define	VM_INHERIT_DONATE_COPY	3	/* copy and delete */
+#define	VM_INHERIT_SHARE	((vm_inherit_t)0)	/* share with child */
+#define	VM_INHERIT_COPY		((vm_inherit_t)1)	/* copy into child */
+#define	VM_INHERIT_NONE		((vm_inherit_t)2)	/* absent from child */
+#define	VM_INHERIT_DONATE_COPY	((vm_inherit_t)3)	/* copy and delete */
 
 #define VM_INHERIT_DEFAULT	VM_INHERIT_COPY
 
