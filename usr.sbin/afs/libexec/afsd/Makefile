@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2003/08/05 11:11:42 hin Exp $
+#	$OpenBSD: Makefile,v 1.6 2003/08/05 14:46:44 hin Exp $
 
 AFSTOPDIR=	../..
 .include <../../Makefile.inc>
@@ -6,7 +6,8 @@ AFSTOPDIR=	../..
 .PATH:	$(ROKENSRC)
 
 PROG	= afsd
-MAN	= afsd.8 CellServDB.5 ThisCell.5 SuidCells.5 afsd.conf.5 DynRootDB.5
+MAN	= afsd.8 CellServDB.5 ThisCell.5 SuidCells.5 afsd.conf.5 DynRootDB.5 \
+	  AliasDB.5
 BINDIR	= /usr/libexec
 LDADD	+= ${LIBARLA} -lkrb5 -lasn1 -lcrypto
 DPADD	+= ${LIBARLA}
