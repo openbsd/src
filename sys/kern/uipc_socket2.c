@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.24 2001/11/28 13:49:08 provos Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.25 2001/11/30 19:48:09 provos Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -650,12 +650,10 @@ sbappendcontrol(sb, m0, control)
  * is null, the buffer is presumed empty.
  */
 void
-sbcompress(sb, m, n)
-	register struct sockbuf *sb;
-	register struct mbuf *m, *n;
+sbcompress(struct sockbuf *sb, struct mbuf *m, struct mbuf *n)
 {
-	register int eor = 0;
-	register struct mbuf *o;
+	int eor = 0;
+	struct mbuf *o;
 
 	while (m) {
 		eor |= m->m_flags & M_EOR;
@@ -666,8 +664,10 @@ sbcompress(sb, m, n)
 			m = m_free(m);
 			continue;
 		}
-		if (n && (n->m_flags & (M_EXT | M_EOR)) == 0 &&
-		    (n->m_data + n->m_len + m->m_len) < &n->m_dat[MLEN] &&
+		if (n && (n->m_flags & M_EOR) == 0 &&
+		    /* M_TRAILINGSPACE() checks buffer writeability */
+		    m->m_len <= MCLBYTES / 4 && /* XXX Don't copy too much */
+		    m->m_len <= M_TRAILINGSPACE(n) &&
 		    n->m_type == m->m_type) {
 			bcopy(mtod(m, caddr_t), mtod(n, caddr_t) + n->m_len,
 			    (unsigned)m->m_len);
