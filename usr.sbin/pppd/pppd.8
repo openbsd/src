@@ -1,4 +1,4 @@
-.\" $OpenBSD: pppd.8,v 1.8 1996/12/23 13:22:47 mickey Exp $
+.\" $OpenBSD: pppd.8,v 1.9 1997/09/02 20:08:37 angelos Exp $
 .\" manual page [] for pppd 2.3
 .\" SH section heading
 .\" SS subsection heading
@@ -448,11 +448,13 @@ should only be required if the peer is buggy and gets confused by
 requests from
 .I pppd
 for CCP negotiation.
+.TP
 .B nocrtscts
 Disable hardware flow control (i.e. RTS/CTS) on the serial port.  If
 neither the \fBcrtscts\fR nor the \fB\nocrtscts\fR option is given,
 the hardware flow control setting for the serial port is left
 unchanged.
+.TP
 .B nodefaultroute
 Disable the \fBdefaultroute\fR option.  The system administrator who
 wishes to prevent users from creating default routes with pppd
@@ -516,6 +518,7 @@ Disable the connection-ID compression option in Van Jacobson style
 TCP/IP header compression.  With this option, pppd will not omit the
 connection-ID byte from Van Jacobson compressed TCP/IP headers, nor
 ask the peer to do so.
+.TP
 .B papcrypt
 Indicates that all secrets in the /etc/ppp/pap-secrets file which
 are used for checking the identity of the peer are encrypted, and thus
