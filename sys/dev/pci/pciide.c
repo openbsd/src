@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.136 2003/07/29 18:16:27 grange Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.137 2003/07/30 19:59:17 grange Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -363,8 +363,12 @@ const struct pciide_product_desc pciide_intel_products[] =  {
 	  0,
 	  piix_chip_map
 	},
-	{ PCI_PRODUCT_INTEL_82801EB_IDE, /* Intel 82801EB/82801ER IDE */
-	  0,				 /* (ICH5/ICH5R)	      */
+	{ PCI_PRODUCT_INTEL_82801EB_IDE, /* Intel 82801EB/ER (ICH5/5R) IDE */
+	  0,
+	  piix_chip_map
+	},
+	{ PCI_PRODUCT_INTEL_82801EB_SATA, /* Intel 82801EB/ER (ICH5/5R) SATA */
+	  0,
 	  piix_chip_map
 	},
 	{ PCI_PRODUCT_INTEL_31244,	 /* Intel 31244 SATA */
@@ -1708,6 +1712,7 @@ piix_chip_map(sc, pa)
 		case PCI_PRODUCT_INTEL_82801DB_IDE:
 		case PCI_PRODUCT_INTEL_82801DBM_IDE:
 		case PCI_PRODUCT_INTEL_82801EB_IDE:
+		case PCI_PRODUCT_INTEL_82801EB_SATA:
 			sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
 			break;
 		}
@@ -1725,13 +1730,16 @@ piix_chip_map(sc, pa)
 	case PCI_PRODUCT_INTEL_82801DB_IDE:
 	case PCI_PRODUCT_INTEL_82801DBM_IDE:
 	case PCI_PRODUCT_INTEL_82801EB_IDE:
+	case PCI_PRODUCT_INTEL_82801EB_SATA:
 		sc->sc_wdcdev.UDMA_cap = 5;
 		break;
 	default:
 		sc->sc_wdcdev.UDMA_cap = 2;
 		break;
 	}
-	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371FB_IDE)
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_SATA)
+		sc->sc_wdcdev.set_modes = sata_setup_channel;
+	else if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82371FB_IDE)
 		sc->sc_wdcdev.set_modes = piix_setup_channel;
 	else
 		sc->sc_wdcdev.set_modes = piix3_4_setup_channel;
@@ -1739,6 +1747,9 @@ piix_chip_map(sc, pa)
 	sc->sc_wdcdev.nchannels = PCIIDE_NUM_CHANNELS;
 
 	pciide_print_channels(sc->sc_wdcdev.nchannels, interface);
+
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_SATA)
+		goto chansetup;
 
 	WDCDEBUG_PRINT(("piix_setup_chip: old idetim=0x%x",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM)),
@@ -1769,8 +1780,22 @@ piix_chip_map(sc, pa)
 	}
 	WDCDEBUG_PRINT(("\n"), DEBUG_PROBE);
 
+chansetup:
 	for (channel = 0; channel < sc->sc_wdcdev.nchannels; channel++) {
 		cp = &sc->pciide_channels[channel];
+
+		/* SATA setup */
+		if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_SATA) {
+			if (pciide_chansetup(sc, channel, interface) == 0)
+				continue;
+			pciide_mapchan(pa, cp, interface, &cmdsize, &ctlsize,
+			    pciide_pci_intr);
+			if (cp->hw_ok == 0)
+				continue;
+			sc->sc_wdcdev.set_modes(&cp->wdc_channel);
+			continue;
+		}
+
 		/* PIIX is compat-only */
 		if (pciide_chansetup(sc, channel, 0) == 0)
 			continue;
@@ -1801,6 +1826,9 @@ next:
 		if (cp->hw_ok == 0)
 			pciide_unmap_compat_intr(pa, cp, channel, 0);
 	}
+
+	if (sc->sc_pp->ide_product == PCI_PRODUCT_INTEL_82801EB_SATA)
+		return;
 
 	WDCDEBUG_PRINT(("piix_setup_chip: idetim=0x%x",
 	    pci_conf_read(sc->sc_pc, sc->sc_tag, PIIX_IDETIM)),
