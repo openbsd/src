@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdi.h,v 1.5 1999/09/27 18:03:56 fgsch Exp $	*/
-/*	$NetBSD: usbdi.h,v 1.29 1999/09/12 08:23:42 augustss Exp $	*/
+/*	$OpenBSD: usbdi.h,v 1.6 1999/11/07 21:30:20 fgsch Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.31 1999/10/13 08:10:58 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ typedef struct usbd_pipe	*usbd_pipe_handle;
 typedef struct usbd_request	*usbd_request_handle;
 typedef void			*usbd_private_handle;
 
-typedef enum { 
+typedef enum {		/* keep in sync with usbd_status_msgs */ 
 	USBD_NORMAL_COMPLETION = 0, /* must be 0 */
 	USBD_IN_PROGRESS,
 	/* errors */
@@ -85,6 +85,10 @@ typedef void (*usbd_callback) __P((usbd_request_handle, usbd_private_handle,
 
 #define USBD_NO_TIMEOUT 0
 #define USBD_DEFAULT_TIMEOUT 5000 /* ms = 5 s */
+
+#if defined(__FreeBSD__)
+#define USB_CDEV_MAJOR 108
+#endif
 
 usbd_status usbd_open_pipe
 	__P((usbd_interface_handle iface, u_int8_t address,
@@ -166,6 +170,8 @@ void usbd_set_polling __P((usbd_interface_handle iface, int on));
 
 const char *usbd_errstr __P((usbd_status err));
 
+void usbd_add_event __P((int, usbd_device_handle));
+
 /* NetBSD attachment information */
 
 /* Attach data */
@@ -207,42 +213,21 @@ struct usb_attach_arg {
 
 #elif defined(__FreeBSD__)
 /* FreeBSD needs values less than zero */
-/* for the moment disabled
-#define UMATCH_VENDOR_PRODUCT_REV			-14
-#define UMATCH_VENDOR_PRODUCT				-13
-#define UMATCH_VENDOR_DEVCLASS_DEVPROTO			-12
-#define UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO		-11
-#define UMATCH_DEVCLASS_DEVSUBCLASS			-10
-#define UMATCH_VENDOR_PRODUCT_REV_CONF_IFACE		 -9
-#define UMATCH_VENDOR_PRODUCT_CONF_IFACE		 -8
-#define UMATCH_VENDOR_IFACESUBCLASS_IFACEPROTO		 -7
-#define UMATCH_VENDOR_IFACESUBCLASS			 -6
-#define UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO	 -5
-#define UMATCH_IFACECLASS_IFACESUBCLASS			 -4
-#define UMATCH_IFACECLASS				 -3
-#define UMATCH_IFACECLASS_GENERIC			 -2
-#define UMATCH_GENERIC					 -1
-#define UMATCH_NONE				      ENXIO
-
-* For the moment we use Yes/No answers with appropriate
-* sorting in the config file
-*/
-#define UMATCH_VENDOR_PRODUCT_REV			0
-#define UMATCH_VENDOR_PRODUCT				0
-#define UMATCH_VENDOR_DEVCLASS_DEVPROTO			0
-#define UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO		0
-#define UMATCH_DEVCLASS_DEVSUBCLASS			0
-#define UMATCH_VENDOR_PRODUCT_REV_CONF_IFACE		0
-#define UMATCH_VENDOR_PRODUCT_CONF_IFACE		0
-#define UMATCH_VENDOR_IFACESUBCLASS_IFACEPROTO		0
-#define UMATCH_VENDOR_IFACESUBCLASS			0
-#define UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO	0
-#define UMATCH_IFACECLASS_IFACESUBCLASS			0
-#define UMATCH_IFACECLASS				0
-#define UMATCH_IFACECLASS_GENERIC			0
-#define UMATCH_GENERIC					0
-#define UMATCH_NONE				      ENXIO
-
+#define UMATCH_VENDOR_PRODUCT_REV			(-10)
+#define UMATCH_VENDOR_PRODUCT				(-20)
+#define UMATCH_VENDOR_DEVCLASS_DEVPROTO			(-30)
+#define UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO		(-40)
+#define UMATCH_DEVCLASS_DEVSUBCLASS			(-50)
+#define UMATCH_VENDOR_PRODUCT_REV_CONF_IFACE		(-60)
+#define UMATCH_VENDOR_PRODUCT_CONF_IFACE		(-70)
+#define UMATCH_VENDOR_IFACESUBCLASS_IFACEPROTO		(-80)
+#define UMATCH_VENDOR_IFACESUBCLASS			(-90)
+#define UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO	(-100)
+#define UMATCH_IFACECLASS_IFACESUBCLASS			(-110)
+#define UMATCH_IFACECLASS				(-120)
+#define UMATCH_IFACECLASS_GENERIC			(-130)
+#define UMATCH_GENERIC					(-140)
+#define UMATCH_NONE					(ENXIO)
 
 #endif
 
@@ -253,9 +238,6 @@ usb_endpoint_descriptor_t *usbd_get_endpoint_descriptor
 
 #if defined(__FreeBSD__)
 int usbd_driver_load    __P((module_t mod, int what, void *arg));
-void usbd_device_set_desc __P((device_t device, char *devinfo));
-char *usbd_devname(device_t *bdev);
-bus_print_child_t usbd_print_child;
 #endif
 
 /* XXX */

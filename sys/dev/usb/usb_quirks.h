@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb_quirks.h,v 1.1 1999/08/13 05:28:04 fgsch Exp $	*/
-/*	$NetBSD: usb_quirks.h,v 1.7 1999/06/26 00:09:15 augustss Exp $	*/
+/*	$OpenBSD: usb_quirks.h,v 1.2 1999/11/07 21:30:19 fgsch Exp $	*/
+/*	$NetBSD: usb_quirks.h,v 1.8 1999/10/11 09:16:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -45,6 +45,7 @@ struct usbd_quirks {
 #define UQ_MS_REVZ	0x04	/* mouse has Z-axis reversed */
 #define UQ_NO_STRINGS	0x08	/* string descriptors are broken. */
 #define UQ_BAD_ADC	0x10	/* bad audio spec version number. */
+#define UQ_BUS_POWERED	0x20	/* device is bus powered, despite claim */
 };
 
 extern struct usbd_quirks usbd_no_quirk;

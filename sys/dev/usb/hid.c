@@ -1,4 +1,4 @@
-/*	$OpenBSD: hid.c,v 1.2 1999/08/16 22:08:48 fgsch Exp $	*/
+/*	$OpenBSD: hid.c,v 1.3 1999/11/07 21:30:18 fgsch Exp $	*/
 /*	$NetBSD: hid.c,v 1.7 1999/01/08 11:58:25 augustss Exp $	*/
 
 /*
@@ -51,7 +51,7 @@
 
 #include <dev/usb/hid.h>
 
-#ifdef USB_DEBUG
+#ifdef UHID_DEBUG
 #define DPRINTF(x)	if (usbdebug) logprintf x
 #define DPRINTFN(n,x)	if (usbdebug>(n)) logprintf x
 extern int usbdebug;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohci.c,v 1.6 1999/09/27 18:03:54 fgsch Exp $	*/
+/*	$OpenBSD: ohci.c,v 1.7 1999/11/07 21:30:19 fgsch Exp $	*/
 /*	$NetBSD: ohci.c,v 1.48 1999/09/15 21:14:03 augustss Exp $	*/
 
 /*
@@ -54,6 +54,8 @@
 #elif defined(__FreeBSD__)
 #include <sys/module.h>
 #include <sys/bus.h>
+#include <machine/bus_pio.h>
+#include <machine/bus_memio.h>
 #endif
 #include <sys/proc.h>
 #include <sys/queue.h>
@@ -73,15 +75,22 @@
 
 #if defined(__FreeBSD__)
 #include <machine/clock.h>
-
 #define delay(d)                DELAY(d)
-
 #endif
 
 #if defined(__OpenBSD__)
 struct cfdriver ohci_cd = {
 	NULL, "ohci", DV_DULL
 };
+#endif
+
+#ifdef OHCI_DEBUG
+#define DPRINTF(x)	if (ohcidebug) logprintf x
+#define DPRINTFN(n,x)	if (ohcidebug>(n)) logprintf x
+int ohcidebug = 0;
+#else
+#define DPRINTF(x)
+#define DPRINTFN(n,x)
 #endif
 
 /*
@@ -178,7 +187,7 @@ void		ohci_abort_req_end __P((void *));
 void		ohci_device_clear_toggle __P((usbd_pipe_handle pipe));
 void		ohci_noop __P((usbd_pipe_handle pipe));
 
-#ifdef USB_DEBUG
+#ifdef OHCI_DEBUG
 ohci_softc_t   *thesc;
 void		ohci_dumpregs __P((ohci_softc_t *));
 void		ohci_dump_tds __P((ohci_soft_td_t *));
@@ -313,11 +322,10 @@ ohci_activate(self, act)
 }
 
 int
-ohci_detach(self, flags)
-	device_ptr_t self;
+ohci_detach(sc, flags)
+	struct ohci_softc *sc;
 	int flags;
 {
-	struct ohci_softc *sc = (struct ohci_softc *)self;
 	int rv = 0;
 
 	if (sc->sc_child != NULL)
@@ -630,7 +638,7 @@ ohci_init(sc)
 		r = USBD_IOERROR;
 		goto bad3;
 	}
-#ifdef USB_DEBUG
+#ifdef OHCI_DEBUG
 	thesc = sc;
 	if (ohcidebug > 15)
 		ohci_dumpregs(sc);
@@ -666,7 +674,7 @@ ohci_init(sc)
 
 	sc->sc_noport = OHCI_GET_NDP(OREAD4(sc, OHCI_RH_DESCRIPTOR_A));
 
-#ifdef USB_DEBUG
+#ifdef OHCI_DEBUG
 	if (ohcidebug > 5)
 		ohci_dumpregs(sc);
 #endif
@@ -694,7 +702,9 @@ ohci_allocm(bus, dma, size)
 	usb_dma_t *dma;
 	u_int32_t size;
 {
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ohci_softc *sc = (struct ohci_softc *)bus;
+#endif
 
 	return (usb_allocmem(&sc->sc_bus, size, 0, dma));
 }
@@ -704,18 +714,20 @@ ohci_freem(bus, dma)
 	struct usbd_bus *bus;
 	usb_dma_t *dma;
 {
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	struct ohci_softc *sc = (struct ohci_softc *)bus;
+#endif
 
 	usb_freemem(&sc->sc_bus, dma);
 }
 
-#if !defined(__OpenBSD__)
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 void
 ohci_power(why, v)
 	int why;
 	void *v;
 {
-#ifdef USB_DEBUG
+#ifdef OHCI_DEBUG
 	ohci_softc_t *sc = v;
 
 	DPRINTF(("ohci_power: sc=%p, why=%d\n", sc, why));
@@ -723,9 +735,9 @@ ohci_power(why, v)
 	ohci_dumpregs(sc);
 #endif
 }
-#endif /* !defined(__OpenBSD__) */
+#endif /* defined(__NetBSD__) || defined(__OpenBSD__) */
 
-#ifdef USB_DEBUG
+#ifdef OHCI_DEBUG
 void ohcidump(void);
 void ohcidump(void) { ohci_dumpregs(thesc); }
 
@@ -864,7 +876,7 @@ ohci_rhsc_able(sc, on)
 	}
 }
 
-#ifdef USB_DEBUG
+#ifdef OHCI_DEBUG
 char *ohci_cc_strs[] = {
 	"NO_ERROR",
 	"CRC",
@@ -900,7 +912,7 @@ ohci_process_done(sc, done)
 		sdone = std;
 	}
 
-#ifdef USB_DEBUG
+#ifdef OHCI_DEBUG
 	if (ohcidebug > 10) {
 		DPRINTF(("ohci_process_done: TD done:\n"));
 		ohci_dump_tds(sdone);
@@ -1098,7 +1110,7 @@ ohci_waitintr(sc, reqh)
 		usb_delay_ms(&sc->sc_bus, 1);
 		intrs = OREAD4(sc, OHCI_INTERRUPT_STATUS) & sc->sc_eintrs;
 		DPRINTFN(15,("ohci_waitintr: 0x%04x\n", intrs));
-#ifdef USB_DEBUG
+#ifdef OHCI_DEBUG
 		if (ohcidebug > 15)
 			ohci_dumpregs(sc);
 #endif
@@ -1224,7 +1236,7 @@ ohci_device_request(reqh)
 	stat->len = 0;
 	stat->reqh = reqh;
 
-#if USB_DEBUG
+#ifdef OHCI_DEBUG
 	if (ohcidebug > 5) {
 		DPRINTF(("ohci_device_request:\n"));
 		ohci_dump_ed(sed);
@@ -1247,7 +1259,7 @@ ohci_device_request(reqh)
 	}
 	splx(s);
 
-#if USB_DEBUG
+#ifdef OHCI_DEBUG
 	if (ohcidebug > 5) {
 		delay(5000);
 		DPRINTF(("ohci_device_request: status=%x\n",
@@ -1370,7 +1382,7 @@ ohci_timeout(addr)
 	splx(s);
 }
 
-#ifdef USB_DEBUG
+#ifdef OHCI_DEBUG
 void
 ohci_dump_tds(std)
 	ohci_soft_td_t *std;
@@ -1408,7 +1420,8 @@ ohci_dump_ed(sed)
 		 (int)LE(sed->ed.ed_flags),
 		 "\20\14OUT\15IN\16LOWSPEED\17SKIP\20ISO",
 		 (u_long)LE(sed->ed.ed_tailp),
-		 (u_long)LE(sed->ed.ed_headp), "\20\1HALT\2CARRY",
+		 (u_long)LE(sed->ed.ed_headp),
+		 "\20\1HALT\2CARRY",
 		 (u_long)LE(sed->ed.ed_nexted)));
 }
 #endif
@@ -1716,7 +1729,7 @@ ohci_root_ctrl_start(reqh)
 {
 	ohci_softc_t *sc = (ohci_softc_t *)reqh->pipe->device->bus;
 	usb_device_request_t *req;
-	void *buf;
+	void *buf = NULL;
 	int port, i;
 	int s, len, value, index, l, totlen = 0;
 	usb_port_status_t ps;
@@ -1740,10 +1753,6 @@ ohci_root_ctrl_start(reqh)
 
 	if (len != 0)
 		buf = KERNADDR(&reqh->dmabuf);
-#ifdef DIAGNOSTIC
-	else
-		buf = 0;
-#endif
 
 #define C(x,y) ((x) | ((y) << 8))
 	switch(C(req->bRequest, req->bmRequestType)) {
@@ -2062,7 +2071,12 @@ void
 ohci_root_intr_abort(reqh)
 	usbd_request_handle reqh;
 {
-	/* No need to abort. */
+	if (reqh->pipe->intrreqh == reqh) {
+		DPRINTF(("ohci_root_intr_abort: remove\n"));
+		reqh->pipe->intrreqh = 0;
+	}
+	reqh->status = USBD_CANCELLED;
+	usb_transfer_complete(reqh);
 }
 
 /* Close the root pipe. */
@@ -2224,7 +2238,7 @@ ohci_device_bulk_start(reqh)
 		    (int)LE(sed->ed.ed_flags), (int)LE(data->td.td_flags),
 		    (int)LE(data->td.td_cbp), (int)LE(data->td.td_be)));
 
-#ifdef USB_DEBUG
+#ifdef OHCI_DEBUG
 	if (ohcidebug > 4) {
 		ohci_dump_ed(sed);
 		ohci_dump_tds(data);
@@ -2246,7 +2260,8 @@ ohci_device_bulk_start(reqh)
 			    MS_TO_TICKS(reqh->timeout), reqh->timo_handle);
 	}
 
-#ifdef USB_DEBUG
+#if 0
+/* This goes wrong if we are too slow. */
 	if (ohcidebug > 5) {
 		delay(5000);
 		DPRINTF(("ohci_device_intr_transfer: status=%x\n",
@@ -2342,7 +2357,7 @@ ohci_device_intr_start(reqh)
 	data->flags = OHCI_CALL_DONE | OHCI_ADD_LEN;
 	reqh->hcpriv = data;
 
-#if USB_DEBUG
+#ifdef OHCI_DEBUG
 	if (ohcidebug > 5) {
 		DPRINTF(("ohci_device_intr_transfer:\n"));
 		ohci_dump_ed(sed);
@@ -2357,7 +2372,12 @@ ohci_device_intr_start(reqh)
 	opipe->tail = tail;
 	sed->ed.ed_flags &= LE(~OHCI_ED_SKIP);
 
-#ifdef USB_DEBUG
+#if 0
+/*
+ * This goes horribly wrong, printing thousands of descriptors,
+ * because false references are followed due to the fact that the
+ * TD is gone.
+ */
 	if (ohcidebug > 5) {
 		delay(5000);
 		DPRINTF(("ohci_device_intr_transfer: status=%x\n",

@@ -1,5 +1,5 @@
-/*	$OpenBSD: usbdivar.h,v 1.5 1999/09/27 18:03:56 fgsch Exp $	*/
-/*	$NetBSD: usbdivar.h,v 1.35 1999/09/15 21:08:19 augustss Exp $	*/
+/*	$OpenBSD: usbdivar.h,v 1.6 1999/11/07 21:30:20 fgsch Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.38 1999/10/25 10:51:46 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -117,6 +117,7 @@ struct usbd_device {
 	int			config;
 	int			langid;	/* language to use for strings */
 #define USBD_NOLANG (-1)
+	usb_event_cookie_t	cookie;	/* unique connection id */
 	struct usbd_port       *powersrc;
 	struct usbd_endpoint	def_ep;	/* for pipe 0 */
 	usb_endpoint_descriptor_t def_ep_desc; /* for pipe 0 */
@@ -193,6 +194,7 @@ struct usbd_request {
 };
 
 void usbd_init __P((void));
+void usbd_finish __P((void));
 
 /* Routines from usb_subr.c */
 int		usbctlprint __P((void *, const char *));
@@ -217,7 +219,7 @@ void		usb_free_device __P((usbd_device_handle));
 
 usbd_status	usb_insert_transfer __P((usbd_request_handle reqh));
 void		usb_transfer_complete __P((usbd_request_handle reqh));
-void		usb_disconnect_port __P((struct usbd_port *up));
+void		usb_disconnect_port __P((struct usbd_port *up, device_ptr_t));
 
 /* Routines from usb.c */
 int		usb_bus_count __P((void));
@@ -226,7 +228,8 @@ void		usb_needs_explore __P((usbd_bus_handle));
 #ifdef DIAGNOSTIC
 #define SPLUSBCHECK \
 	do { int _s = splusb(), _su = splusb(); \
-             if (_s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \
+	     extern int cold; \
+             if (!cold && _s != _su) printf("SPLUSBCHECK failed 0x%x!=0x%x, %s:%d\n", \
 				   _s, _su, __FILE__, __LINE__); \
         } while (0)
 #else

@@ -1,6 +1,9 @@
 Some things that need to be done in no particular order:
 --------------------------------------------------------
 
+Find race condition in UHCI driver.  Rarely (under heavy USB load) you get a
+"uhci_idone: ii=0x%x is done!".  This "cannot happen".
+
 Add lots of bus_dmamap_sync().
 
 Do bandwidth accounting.
@@ -12,9 +15,8 @@ Use the pool allocator for TDs et al.
 Throw out more USBDI gunk.
 
 Make hub driver notice transition between self and bus powered state.
+Some hubs change the number of available ports on this transition. :(
 Handle overcurrent conditions.
-
-Add an event mechanism to find out about attach and detach.
 
 Make it possible to open any device in a "generic" way, i.e., like ugen.
 

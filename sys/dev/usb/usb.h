@@ -1,5 +1,5 @@
-/*	$OpenBSD: usb.h,v 1.5 1999/09/27 18:03:56 fgsch Exp $	*/
-/*	$NetBSD: usb.h,v 1.34 1999/09/16 21:53:58 augustss Exp $	*/
+/*	$OpenBSD: usb.h,v 1.6 1999/11/07 21:30:19 fgsch Exp $	*/
+/*	$NetBSD: usb.h,v 1.38 1999/10/20 21:02:39 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 #define _USB_H_
 
 #include <sys/types.h>
+#include <sys/time.h>
+
 #if defined(__NetBSD__) || defined(__OpenBSD__)
 #include <sys/ioctl.h>
 
@@ -51,9 +53,9 @@
 #endif /* _KERNEL */
 
 #elif defined(__FreeBSD__)
+#if defined(KERNEL)
 #include <sys/malloc.h>
 
-#if defined(KERNEL)
 MALLOC_DECLARE(M_USB);
 MALLOC_DECLARE(M_USBDEV);
 MALLOC_DECLARE(M_USBHC);
@@ -144,11 +146,17 @@ typedef struct {
 #define UR_SET_FEATURE		0x03
 #define UR_SET_ADDRESS		0x05
 #define UR_GET_DESCRIPTOR	0x06
-#define  UDESC_DEVICE		1
-#define  UDESC_CONFIG		2
-#define  UDESC_STRING		3
-#define  UDESC_INTERFACE	4
-#define  UDESC_ENDPOINT		5
+#define  UDESC_DEVICE		0x01
+#define  UDESC_CONFIG		0x02
+#define  UDESC_STRING		0x03
+#define  UDESC_INTERFACE	0x04
+#define  UDESC_ENDPOINT		0x05
+#define  UDESC_CS_DEVICE	0x21	/* class specific */
+#define  UDESC_CS_CONFIG	0x22
+#define  UDESC_CS_STRING	0x23
+#define  UDESC_CS_INTERFACE	0x24
+#define  UDESC_CS_ENDPOINT	0x25
+#define  UDESC_HUB		0x29
 #define UR_SET_DESCRIPTOR	0x07
 #define UR_GET_CONFIG		0x08
 #define UR_SET_CONFIG		0x09
@@ -221,6 +229,7 @@ typedef struct {
 	uByte		bDescriptorType;
 	uByte		bEndpointAddress;
 #define UE_GET_DIR(a)	((a) & 0x80)
+#define UE_SET_DIR(a,d)	((a) | (((d)&1) << 7))
 #define UE_DIR_IN	0x80
 #define UE_DIR_OUT	0x00
 #define UE_ADDR		0x0f
@@ -231,10 +240,12 @@ typedef struct {
 #define  UE_ISOCHRONOUS	0x01
 #define  UE_BULK	0x02
 #define  UE_INTERRUPT	0x03
+#define UE_GET_XFERTYPE(a)	((a) & UE_XFERTYPE)
 #define UE_ISO_TYPE	0x0c
 #define  UE_ISO_ASYNC	0x04
 #define  UE_ISO_ADAPT	0x08
 #define  UE_ISO_SYNC	0x0c
+#define UE_GET_ISO_TYPE(a)	((a) & UE_ISO_TYPE)
 	uWord		wMaxPacketSize;
 	uByte		bInterval;
 } usb_endpoint_descriptor_t;
@@ -324,14 +335,6 @@ typedef struct {
 #define UPS_C_PORT_RESET		0x0010
 } usb_port_status_t;
 
-#define UDESC_CS_DEVICE		0x21
-#define UDESC_CS_CONFIG		0x22
-#define UDESC_CS_STRING		0x23
-#define UDESC_CS_INTERFACE	0x24
-#define UDESC_CS_ENDPOINT	0x25
-
-#define UDESC_HUB		0x29
-
 #define UCLASS_UNSPEC		0
 #define UCLASS_AUDIO		1
 #define  USUBCLASS_AUDIOCONTROL	1
@@ -366,6 +369,21 @@ typedef struct {
 #define UCLASS_HUB		9
 #define  USUBCLASS_HUB		0
 #define UCLASS_DATA		10
+#define  USUBCLASS_DATA		0
+#define   UPROTO_DATA_ISDNBRI		0x30    /* Physical iface */
+#define   UPROTO_DATA_HDLC		0x31    /* HDLC */
+#define   UPROTO_DATA_TRANSPARENT	0x32    /* Transparent */
+#define   UPROTO_DATA_Q921M		0x50    /* Management for Q921 */
+#define   UPROTO_DATA_Q921		0x51    /* Data for Q921 */
+#define   UPROTO_DATA_Q921TM		0x52    /* TEI multiplexer for Q921 */
+#define   UPROTO_DATA_V42BIS		0x90    /* Data compression */  
+#define   UPROTO_DATA_Q931		0x91    /* Euro-ISDN */
+#define   UPROTO_DATA_V120		0x92    /* V.24 rate adaption */
+#define   UPROTO_DATA_CAPI		0x93    /* CAPI 2.0 commands */
+#define   UPROTO_DATA_HOST_BASED	0xfd    /* Host based driver */
+#define   UPROTO_DATA_PUF		0xfe    /* see Prot. Unit Func. Desc.*/
+#define   UPROTO_DATA_VENDOR		0xff    /* Vendor specific */
+
 
 #define USB_HUB_MAX_DEPTH 5
 
@@ -478,12 +496,23 @@ struct usb_device_info {
 };
 
 struct usb_ctl_report {
-	int report;
+	int	report;
 	u_char	data[1024];	/* filled data size will vary */
 };
 
 struct usb_device_stats {
 	u_long	requests[4];	/* indexed by transfer type UE_* */
+};
+
+typedef struct { u_int32_t cookie; } usb_event_cookie_t;
+/* Events that can be read from /dev/usb */
+struct usb_event {
+	int			ue_type;
+#define USB_EVENT_ATTACH 1
+#define USB_EVENT_DETACH 2
+	struct usb_device_info	ue_device;
+	struct timespec		ue_time;
+	usb_event_cookie_t	ue_cookie;
 };
 
 /* USB controller */

@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhid.c,v 1.5 1999/09/27 18:03:55 fgsch Exp $	*/
-/*	$NetBSD: uhid.c,v 1.24 1999/09/05 19:32:18 augustss Exp $	*/
+/*	$OpenBSD: uhid.c,v 1.6 1999/11/07 21:30:19 fgsch Exp $	*/
+/*	$NetBSD: uhid.c,v 1.26 1999/10/13 08:10:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -72,7 +72,7 @@
 #include <dev/usb/hid.h>
 #include <dev/usb/usb_quirks.h>
 
-#ifdef USB_DEBUG
+#ifdef UHID_DEBUG
 #define DPRINTF(x)	if (uhiddebug) logprintf x
 #define DPRINTFN(n,x)	if (uhiddebug>(n)) logprintf x
 int	uhiddebug = 0;
@@ -134,19 +134,14 @@ static struct cdevsw uhid_cdevsw = {
 	/* read */	uhidread,
 	/* write */	uhidwrite,
 	/* ioctl */	uhidioctl,
-	/* stop */	nostop,
-	/* reset */	noreset,
-	/* devtotty */	nodevtotty,
 	/* poll */	uhidpoll,
 	/* mmap */	nommap,
 	/* strategy */	nostrategy,
 	/* name */	"uhid",
-	/* parms */	noparms,
 	/* maj */	UHID_CDEV_MAJOR,
 	/* dump */	nodump,
 	/* psize */	nopsize,
 	/* flags */	0,
-	/* maxio */	0,
 	/* bmaj */	-1
 };
 #endif
@@ -238,6 +233,7 @@ USB_ATTACH(uhid)
 	USB_ATTACH_SUCCESS_RETURN;
 }
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 int
 uhid_activate(self, act)
 	device_ptr_t self;
@@ -256,17 +252,19 @@ uhid_activate(self, act)
 	}
 	return (0);
 }
+#endif
 
-int
-uhid_detach(self, flags)
-	device_ptr_t self;
-	int flags;
+USB_DETACH(uhid)
 {
-	struct uhid_softc *sc = (struct uhid_softc *)self;
-	int maj, mn;
+	USB_DETACH_START(uhid, sc);
 	int s;
+#if defined(__NetBSD__) || defined(__OpenBSD__)
+	int maj, mn;
 
 	DPRINTF(("uhid_detach: sc=%p flags=%d\n", sc, flags));
+#else
+	DPRINTF(("uhid_detach: sc=%p\n", sc));
+#endif
 
 	sc->sc_dying = 1;
 	if (sc->sc_intrpipe)
@@ -283,6 +281,7 @@ uhid_detach(self, flags)
 		splx(s);
 	}
 
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 	/* locate the major number */
 	for (maj = 0; maj < nchrdev; maj++)
 		if (cdevsw[maj].d_open == uhidopen)
@@ -291,6 +290,9 @@ uhid_detach(self, flags)
 	/* Nuke the vnodes for any open instances (calls close). */
 	mn = self->dv_unit;
 	vdevgone(maj, mn, mn, VCHR);
+#elif defined(__FreeBSD__)
+	/* XXX not implemented yet */
+#endif
 
 	free(sc->sc_repdesc, M_USBDEV);
 
@@ -335,7 +337,9 @@ uhidopen(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
+	struct uhid_softc *sc;
 	usbd_status r;
+
 	USB_GET_SC_OPEN(uhid, UHIDUNIT(dev), sc);
 
 	DPRINTF(("uhidopen: sc=%p\n", sc));
@@ -347,14 +351,10 @@ uhidopen(dev, flag, mode, p)
 		return (EBUSY);
 	sc->sc_state |= UHID_OPEN;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	if (clalloc(&sc->sc_q, UHID_BSIZE, 0) == -1) {
 		sc->sc_state &= ~UHID_OPEN;
 		return (ENOMEM);
 	}
-#elif defined(__FreeBSD__)
-	clist_alloc_cblocks(&sc->sc_q, UHID_BSIZE, 0);
-#endif
 
 	sc->sc_ibuf = malloc(sc->sc_isize, M_USBDEV, M_WAITOK);
 	sc->sc_obuf = malloc(sc->sc_osize, M_USBDEV, M_WAITOK);
@@ -385,6 +385,8 @@ uhidclose(dev, flag, mode, p)
 	int mode;
 	struct proc *p;
 {
+	struct uhid_softc *sc;
+
 	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	DPRINTF(("uhidclose: sc=%p\n", sc));
@@ -394,11 +396,7 @@ uhidclose(dev, flag, mode, p)
 	usbd_close_pipe(sc->sc_intrpipe);
 	sc->sc_intrpipe = 0;
 
-#if defined(__NetBSD__) || defined(__OpenBSD__)
 	clfree(&sc->sc_q);
-#elif defined(__FreeBSD__)
-	clist_free_cblocks(&sc->sc_q);
-#endif
 
 	free(sc->sc_ibuf, M_USBDEV);
 	free(sc->sc_obuf, M_USBDEV);
@@ -479,8 +477,10 @@ uhidread(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	struct uhid_softc *sc;
 	int error;
+
+	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = uhid_do_read(sc, uio, flag);
@@ -531,8 +531,10 @@ uhidwrite(dev, uio, flag)
 	struct uio *uio;
 	int flag;
 {
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	struct uhid_softc *sc;
 	int error;
+
+	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = uhid_do_write(sc, uio, flag);
@@ -623,8 +625,10 @@ uhidioctl(dev, cmd, addr, flag, p)
 	int flag;
 	struct proc *p;
 {
-	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
+	struct uhid_softc *sc;
 	int error;
+
+	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	sc->sc_refcnt++;
 	error = uhid_do_ioctl(sc, cmd, addr, flag, p);
@@ -639,8 +643,10 @@ uhidpoll(dev, events, p)
 	int events;
 	struct proc *p;
 {
+	struct uhid_softc *sc;
 	int revents = 0;
 	int s;
+
 	USB_GET_SC(uhid, UHIDUNIT(dev), sc);
 
 	if (sc->sc_dying)

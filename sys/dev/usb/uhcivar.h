@@ -1,5 +1,5 @@
-/*	$OpenBSD: uhcivar.h,v 1.4 1999/09/27 18:03:55 fgsch Exp $	*/
-/*	$NetBSD: uhcivar.h,v 1.14 1999/09/15 10:25:31 augustss Exp $	*/
+/*	$OpenBSD: uhcivar.h,v 1.5 1999/11/07 21:30:19 fgsch Exp $	*/
+/*	$NetBSD: uhcivar.h,v 1.16 1999/10/13 08:10:56 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -130,11 +130,6 @@ typedef struct uhci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	void *sc_ih;			/* interrupt vectoring */
-
-	/* XXX should keep track of all DMA memory */
-#endif /* defined(__FreeBSD__) */
 
 	uhci_physaddr_t *sc_pframes;
 	usb_dma_t sc_dma;
@@ -174,15 +169,6 @@ typedef struct uhci_softc {
 
 usbd_status	uhci_init __P((uhci_softc_t *));
 int		uhci_intr __P((void *));
-int		uhci_detach __P((device_ptr_t, int));
+int		uhci_detach __P((uhci_softc_t *, int));
 int		uhci_activate __P((device_ptr_t, enum devact));
-
-#ifdef USB_DEBUG
-#define DPRINTF(x)	if (uhcidebug) printf x
-#define DPRINTFN(n,x)	if (uhcidebug>(n)) printf x
-extern int uhcidebug;
-#else
-#define DPRINTF(x)
-#define DPRINTFN(n,x)
-#endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ohcivar.h,v 1.5 1999/09/27 18:03:55 fgsch Exp $	*/
+/*	$OpenBSD: ohcivar.h,v 1.6 1999/11/07 21:30:19 fgsch Exp $	*/
 /*	$NetBSD: ohcivar.h,v 1.11 1999/09/15 21:14:03 augustss Exp $	*/
 
 /*
@@ -69,11 +69,6 @@ typedef struct ohci_softc {
 	struct usbd_bus sc_bus;		/* base device */
 	bus_space_tag_t iot;
 	bus_space_handle_t ioh;
-#if defined(__NetBSD__) || defined(__OpenBSD__)
-	void *sc_ih;			/* interrupt vectoring */
-
-	/* XXX should keep track of all DMA memory */
-#endif /* __NetBSD__ || defined(__OpenBSD__) */
 
 	usb_dma_t sc_hccadma;
 	struct ohci_hcca *sc_hcca;
@@ -104,16 +99,7 @@ typedef struct ohci_softc {
 
 usbd_status	ohci_init __P((ohci_softc_t *));
 int		ohci_intr __P((void *));
-int		ohci_detach __P((device_ptr_t, int));
+int		ohci_detach __P((ohci_softc_t *, int));
 int		ohci_activate __P((device_ptr_t, enum devact));
 
 #define MS_TO_TICKS(ms) ((ms) * hz / 1000)
-
-#ifdef USB_DEBUG
-#define DPRINTF(x)	if (ohcidebug) printf x
-#define DPRINTFN(n,x)	if (ohcidebug>(n)) printf x
-extern int ohcidebug;
-#else
-#define DPRINTF(x)
-#define DPRINTFN(n,x)
-#endif
