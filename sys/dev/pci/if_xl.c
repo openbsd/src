@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.12 1998/10/09 00:15:35 deraadt Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.13 1998/11/11 23:25:02 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xl.c,v 1.12 1998/09/25 17:34:19 wpaul Exp $
+ *	$FreeBSD: if_xl.c,v 1.16 1998/10/22 16:46:26 wpaul Exp $
  */
 
 /*
@@ -195,7 +195,7 @@
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static char rcsid[] =
-	"$FreeBSD: if_xl.c,v 1.12 1998/09/25 17:34:19 wpaul Exp $";
+	"$FreeBSD: if_xl.c,v 1.16 1998/10/22 16:46:26 wpaul Exp $";
 #endif
 
 #ifdef __FreeBSD__
@@ -219,6 +219,8 @@ static struct xl_type xl_devs[] = {
 		"3Com 3c905B Fast Etherlink XL 10/100BaseTX" },
 	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100BT4,
 		"3Com 3c905B Fast Etherlink XL 10/100BaseT4" },
+	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100FX,
+		"3Com 3c905B Fast Etherlink XL 10/100BaseFX/SC" },
 	{ TC_VENDORID, TC_DEVICEID_CYCLONE_10_100BT_SERV,
 		"3Com 3c980 Fast Etherlink XL 10/100BaseTX" },
 	{ 0, 0, NULL }
@@ -1067,7 +1069,7 @@ static void xl_getmode_mii(sc)
 		if (bootverbose)
 			printf("xl%d: forcing on autoneg support for BT4\n",
 							 sc->xl_unit);
-		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0 NULL):
+		ifmedia_add(&sc->ifmedia, IFM_ETHER|IFM_AUTO, 0, NULL);
 		sc->ifmedia.ifm_media = IFM_ETHER|IFM_AUTO;
 #endif
 	}
@@ -2087,6 +2089,10 @@ static void xl_txeoc(sc)
 			 * first generation 3c90X chips.
 			 */
 			CSR_WRITE_1(sc, XL_TX_FREETHRESH, XL_PACKET_SIZE >> 8);
+			if (sc->xl_type == XL_TYPE_905B) {
+				CSR_WRITE_2(sc, XL_COMMAND,
+				XL_CMD_SET_TX_RECLAIM|(XL_PACKET_SIZE >> 4));
+			}
 			CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_TX_ENABLE);
 			CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_DOWN_UNSTALL);
 		} else {
@@ -2509,6 +2515,20 @@ static void xl_init(xsc)
 	 * cards in order to enable the download engine.
 	 */
 	CSR_WRITE_1(sc, XL_TX_FREETHRESH, XL_PACKET_SIZE >> 8);
+
+	/*
+	 * If this is a 3c905B, also set the tx reclaim threshold.
+	 * This helps cut down on the number of tx reclaim errors
+	 * that could happen on a busy network. The chip multiplies
+	 * the register value by 16 to obtain the actual threshold
+	 * in bytes, so we divide by 16 when setting the value here.
+	 * The existing threshold value can be examined by reading
+	 * the register at offset 9 in window 5.
+	 */
+	if (sc->xl_type == XL_TYPE_905B) {
+		CSR_WRITE_2(sc, XL_COMMAND,
+			XL_CMD_SET_TX_RECLAIM|(XL_PACKET_SIZE >> 4));
+	}
 
 	/* Set RX filter bits. */
 	XL_SEL_WIN(5);

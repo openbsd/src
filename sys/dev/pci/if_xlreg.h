@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xlreg.h,v 1.6 1998/09/29 02:14:29 jason Exp $	*/
+/*	$OpenBSD: if_xlreg.h,v 1.7 1998/11/11 23:25:02 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_xlreg.h,v 1.5 1998/09/25 17:34:19 wpaul Exp $
+ *	$FreeBSD: if_xlreg.h,v 1.8 1998/10/22 15:52:25 wpaul Exp $
  */
 
 #define XL_EE_READ	0x0080	/* read, 5 bit address */
@@ -363,6 +363,7 @@
  */
 #define XL_W5_STAT_ENB		0x0C
 #define XL_W5_INTR_ENB		0x0A
+#define XL_W5_RECLAIM_THRESH	0x09	/* 3c905B only */
 #define XL_W5_RX_FILTER		0x08
 #define XL_W5_RX_EARLYTHRESH	0x06
 #define XL_W5_TX_AVAILTHRESH	0x02
