@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.10 2002/07/13 06:04:24 deraadt Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.11 2002/12/08 06:40:44 millert Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.10 2002/07/13 06:04:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uniq.c,v 1.11 2002/12/08 06:40:44 millert Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -78,11 +78,8 @@ main(int argc, char *argv[])
 	char *prevline, *thisline, *p;
 
 	obsolete(argv);
-	while ((ch = getopt(argc, argv, "-cdf:s:u")) != -1)
+	while ((ch = getopt(argc, argv, "cdf:s:u")) != -1)
 		switch (ch) {
-		case '-':
-			--optind;
-			goto done;
 		case 'c':
 			cflag = 1;
 			break;
@@ -107,7 +104,7 @@ main(int argc, char *argv[])
 			usage();
 	}
 
-done:	argc -= optind;
+	argc -= optind;
 	argv +=optind;
 
 	/* If no flags are set, default is -d -u. */
