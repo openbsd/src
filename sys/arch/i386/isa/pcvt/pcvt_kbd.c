@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.35 2000/07/19 13:40:26 art Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.36 2000/09/01 05:46:02 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -169,11 +169,12 @@ do_vgapage(int page)
  * get lost other times as well.
  */
 
-struct timeout kbd_led_intr_to;
+static int lost_intr_timeout_queued = 0;
 
 static void
 check_for_lost_intr (void *arg)
 {
+	lost_intr_timeout_queued = 0;
 	if (inb(CONTROLLER_CTRL) & STATUS_OUTPBF) {
 		int opri = spltty();
 		(void)pcrint();
@@ -243,7 +244,11 @@ update_led(void)
 		}
 
 #if PCVT_UPDLED_LOSES_INTR
-		timeout_add(&kbd_led_intr_to, hz);
+		if (lost_intr_timeout_queued)
+			untimeout(check_for_lost_intr, (void *)NULL);
+
+		timeout(check_for_lost_intr, (void *)NULL, hz);
+		lost_intr_timeout_queued = 1;
 #endif /* PCVT_UPDLED_LOSES_INTR */
 	}
 bail:
@@ -576,9 +581,6 @@ kbd_code_init(void)
 	doreset();
 	ovlinit(0);
 	keyboard_is_initialized = 1;
-#if !PCVT_NO_LED_UPDATE && PCVT_UPDLED_LOSES_INTR
-	timeout_set(&kbd_led_intr_to, check_for_lost_intr, NULL);
-#endif
 }
 
 /*---------------------------------------------------------------------------*
@@ -1104,6 +1106,17 @@ regular:
 
 	if ((key == 85) && shift_down &&
 	    (kbd_lastkey != 85 || !kbd_status.breakseen)) {
+		/* removing of visual regions for mouse console support */
+		if (IS_SEL_EXISTS(vsp)) {
+			remove_selection(); /* remove current selection before 
+					       leaving this screen */
+			vsp->mouse_flags &= ~SEL_EXISTS;
+		}
+		if (IS_MOUSE_VISIBLE(vsp)) {
+			mouse_hide();
+			vsp->mouse_flags &= ~MOUSE_VISIBLE;
+		}
+		/* end of visual regions part */
 		if (vsp->scr_offset && vsp->scr_offset >= vsp->row) {
 			if (!vsp->scrolling) {
 				vsp->scrolling += vsp->row - 1;
@@ -1142,6 +1155,17 @@ regular:
 	else if ((key == 86) && shift_down &&
 		(kbd_lastkey != 86 || !kbd_status.breakseen)) {
 scroll_reset:
+		/* removing of visual regions for mouse console support */
+		if (IS_SEL_EXISTS(vsp)) {
+			remove_selection(); /* remove current selection before 
+					       leaving this screen */
+			vsp->mouse_flags &= ~SEL_EXISTS;
+		}
+		if (IS_MOUSE_VISIBLE(vsp)) {
+			mouse_hide();
+			vsp->mouse_flags &= ~MOUSE_VISIBLE;
+		}
+		/* end of visual regions part */
 		if (vsp->scrolling > 0) {
 			vsp->scrolling -= vsp->screen_rows - 1;
 			if (vsp->scrolling < 0)
@@ -2118,4 +2142,96 @@ scrollback_restore_screen(void)
 		bcopy(scrollback_savedscreen, vsp->Crtat, scrnsv_size);
 }
 
+/*
+ * Function to handle the wheel
+ * z == 1 means to scroll to the lower page
+ * z == -1 means to scroll to the upper page
+ */
+
+void
+scrollback_mouse(int z)
+{
+
+	/* removing of visual regions for mouse console support */
+	
+	if (IS_SEL_EXISTS(vsp)) {
+		remove_selection(); /* remove current selection before 
+				       leaving this screen */
+		vsp->mouse_flags &= ~SEL_EXISTS;
+	}
+	if (IS_MOUSE_VISIBLE(vsp)) {
+		mouse_hide();
+		vsp->mouse_flags &= ~MOUSE_VISIBLE;
+	}
+		
+	if (z <= -1)
+		
+	{
+		if (vsp->scr_offset && vsp->scr_offset >= vsp->row) {
+			if (!vsp->scrolling) {
+				vsp->scrolling += vsp->row - 1;
+				if (vsp->Scrollback) {
+					scrollback_save_screen();
+					if (vsp->scr_offset == vsp->max_off) {
+						bcopy(vsp->Scrollback +
+						      vsp->maxcol,
+						      vsp->Scrollback,
+						      vsp->maxcol *
+						      vsp->max_off * CHR);
+						vsp->scr_offset--;
+					}
+					bcopy(vsp->Crtat + vsp->cur_offset -
+					      vsp->col, vsp->Scrollback +
+				      	      (vsp->scr_offset + 1) *
+					      vsp->maxcol, vsp->maxcol * CHR);
+				}
+
+				if (vsp->cursor_on)
+					sw_cursor(0);
+			}
+
+			vsp->scrolling += vsp->screen_rows - 1;
+			if (vsp->scrolling > vsp->scr_offset) {
+				vsp->scrolling = vsp->scr_offset;
+			}
+				
+			bcopy(vsp->Scrollback + ((vsp->scr_offset -
+			      vsp->scrolling) * vsp->maxcol), vsp->Crtat,
+			      vsp->screen_rows * vsp->maxcol * CHR);
+		}
+	}
+	else /* positive z */	
+	{
+		if (IS_SEL_EXISTS(vsp)) {
+			remove_selection();
+			vsp->mouse_flags &= ~SEL_EXISTS;
+		}
+		if (vsp->scrolling > 0) {
+			vsp->scrolling -= vsp->screen_rows - 1;
+			if (vsp->scrolling < 0)
+				vsp->scrolling = 0;
+
+			if (vsp->scrolling <= vsp->row) {
+				vsp->scrolling = 0;
+				scrollback_restore_screen();
+			}
+			else {
+				if (vsp->scrolling + 2 < vsp->screen_rows)
+					fillw(user_attr | ' ',
+					      (caddr_t)vsp->Crtat,
+					      vsp->screen_rows * vsp->maxcol);
+
+				bcopy(vsp->Scrollback + ((vsp->scr_offset -
+			      	      vsp->scrolling) * vsp->maxcol),
+			              vsp->Crtat, (vsp->scrolling + 2 <
+				      vsp->screen_rows ? vsp->scrolling + 2 :
+				      vsp->screen_rows) * vsp->maxcol * CHR);
+			}
+		}
+		if (vsp->scrolling == 0) {
+			if (vsp->cursor_on)
+				sw_cursor(1);
+		}
+	}
+}
 /* ------------------------------- EOF -------------------------------------*/

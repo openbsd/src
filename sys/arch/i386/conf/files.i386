@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.70 2000/08/17 20:15:33 mickey Exp $
+#	$OpenBSD: files.i386,v 1.71 2000/09/01 05:46:01 aaron Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -144,6 +144,7 @@ attach	vt at isa
 file	arch/i386/isa/pcvt/pcvt_drv.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_ext.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_kbd.c	vt needs-flag
+file	arch/i386/isa/pcvt/pcvt_mouse.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_out.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_sup.c	vt needs-flag
 file	arch/i386/isa/pcvt/pcvt_vtf.c	vt needs-flag

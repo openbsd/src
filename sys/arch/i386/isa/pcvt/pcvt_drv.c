@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_drv.c,v 1.30 2000/07/19 13:39:34 art Exp $	*/
+/*	$OpenBSD: pcvt_drv.c,v 1.31 2000/09/01 05:46:01 aaron Exp $	*/
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
  *
@@ -97,12 +97,6 @@ void pccnpollc(Dev_t, int);
 int pcprobe(struct device *, void *, void *);
 void pcattach(struct device *, struct device *, void *);
 
-
-#if PCVT_KBD_FIFO
-struct timeout pcvt_to;
-void pcvt_timeout(void *);
-#endif
-
 int
 pcprobe(struct device *parent, void *match, void *aux)
 {
@@ -185,10 +179,6 @@ pcattach(struct device *parent, struct device *self, void *aux)
 
 	async_update();
 
-#if PCVT_KBD_FIFO
-	timeout_set(&pcvt_to, pcvt_timeout, NULL);
-#endif
-
 	sc->sc_ih = isa_intr_establish(ia->ia_ic, ia->ia_irq, IST_EDGE,
 	    IPL_TTY, pcintr, (void *)0, sc->sc_dev.dv_xname);
 
@@ -229,6 +219,10 @@ pcopen(Dev_t dev, int flag, int mode, struct proc *p)
 
 	vsx = &vs[i];
 
+	if (i == PCVTCTL_MINOR) {
+		return (0);
+	}
+	
   	if((tp = get_pccons(dev)) == NULL)
 		return ENXIO;
 
@@ -342,6 +336,9 @@ pcioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	register int error;
 	register struct tty *tp;
 
+	if((error = mouse_ioctl(dev, cmd, data, flag, p)) >= 0)
+		return (error);
+	
 	if((tp = get_pccons(dev)) == NULL)
 		return(ENXIO);
 
@@ -350,7 +347,7 @@ pcioctl(Dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p)
 	 * sessions are a suspicious wish. If you really need this make the
 	 * appropriate variables arrays
 	 */
-
+	
 	if((error = usl_vt_ioctl(dev, cmd, data, flag, p)) >= 0)
 		return (error == PCVT_ERESTART) ? ERESTART : error;
 
@@ -395,16 +392,19 @@ u_char pcvt_kbd_fifo[PCVT_KBD_FIFO_SZ];
 int pcvt_kbd_wptr = 0;
 int pcvt_kbd_rptr = 0;
 short pcvt_kbd_count= 0;
+static u_char pcvt_timeout_scheduled;
 
-void
+static void
 pcvt_timeout(void *arg)
 {
+	int s;
 	u_char *cp;
+
+	pcvt_timeout_scheduled = 0;
 
 #if PCVT_SCREENSAVER
 	pcvt_scrnsv_reset();
 #endif /* PCVT_SCREENSAVER */
-
 	while (pcvt_kbd_count) {
 		if ((cp = sgetc(1)) && (vs[current_video_screen].openf)) {
 #if PCVT_NULLCHARS
@@ -420,6 +420,13 @@ pcvt_timeout(void *arg)
 				(*linesw[pcconsp->t_line].l_rint)(*cp++ & 0xff,
 				    pcconsp);
 		}
+
+		s = spltty();
+
+		if (!pcvt_kbd_count)
+			pcvt_timeout_scheduled = 0;
+
+		splx(s);
 	}
 
 	return;
@@ -442,7 +449,6 @@ pcintr(void *arg)
 #if PCVT_SCREENSAVER
 	pcvt_scrnsv_reset();
 #endif /* PCVT_SCREENSAVER */
-
 #if PCVT_KBD_FIFO
 	if (kbd_polling) {
 		if(sgetc(1) == 0)
@@ -473,8 +479,11 @@ pcintr(void *arg)
 	}
 
 	if (ret == 1) {	/* got data from keyboard ? */
-		if (!timeout_pending(&pcvt_to)) {/* if not already active .. */
-			timeout_add(&pcvt_to, 1);
+		if (!pcvt_timeout_scheduled) {	/* if not already active .. */
+			s = spltty();
+			pcvt_timeout_scheduled = 1;	/* flag active */
+			timeout((TIMEOUT_FUNC_T)pcvt_timeout, (caddr_t) 0, 1);
+			splx(s);
 		}
 	}
 	return (ret);
@@ -534,6 +543,14 @@ pcstart(register struct tty *tp)
 	while ((len = q_to_b(&tp->t_outq, buf, PCVT_PCBURST)) != 0) {
 		if (vs[minor(tp->t_dev)].scrolling)
 			sgetc(31337);
+		if (vsp == &vs[minor(tp->t_dev)]) {
+			if (IS_SEL_EXISTS(vsp)) { 
+				/* hides a potential selection */
+				remove_selection();
+				vsp->mouse_flags &= ~SEL_EXISTS;
+			}
+			mouse_hide(); /* hides a potential mouse cursor */
+		}
 		sput(&buf[0], 0, len, minor(tp->t_dev));
 	}
 
@@ -542,7 +559,7 @@ pcstart(register struct tty *tp)
 	tp->t_state &= ~TS_BUSY;
 
 	tp->t_state |= TS_TIMEOUT;
-	timeout_add(&tp->t_rstrt_to, 1);
+	timeout(ttrstrt, tp, 1);
 
 	if (tp->t_outq.c_cc <= tp->t_lowat) {
 low:
@@ -630,7 +647,7 @@ pccngetc(Dev_t dev)
 	cp = sgetc(0);
 	splx(s);
 	async_update();
-
+	
 	/* this belongs to cons.c */
 	if (*cp == '\r')
 		return('\n');

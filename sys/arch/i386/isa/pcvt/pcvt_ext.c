@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_ext.c,v 1.26 1999/12/01 09:59:59 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_ext.c,v 1.27 2000/09/01 05:46:01 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -2417,6 +2417,13 @@ vgapage(int new_screen)
 {
 	int x;
 
+	if (IS_SEL_EXISTS(vsp)) {
+		/* hides a potential selection */
+		remove_selection();
+		vsp->mouse_flags &= ~SEL_EXISTS;
+	}
+	mouse_hide(); /* hides a potential mouse cursor */
+	
 	if(new_screen < 0 || new_screen >= totalscreens)
 		return EINVAL;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.36 2000/06/08 22:25:20 niklas Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.37 2000/09/01 05:46:01 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -703,6 +703,18 @@ typedef struct video_state {
 	unsigned vt_status;		/* state of the vt */
 					/*  becoming active */
 	int	kbd_state;		/* keyboard raw or translated */
+	
+	unsigned short mouse; 		/* mouse cursor position */
+	unsigned short cpy_start; 	/* position of the copy start mark*/
+	unsigned short cpy_end;		/* position of the copy end mark */
+	unsigned short cpy_orig;	/* original copy position */
+#define MOUSE_VISIBLE 	(1 << 0)	/* flag, the mouse cursor is visible */
+#define SEL_EXISTS 	(1 << 1)	/* flag, a selection exists */
+#define SEL_IN_PROGRESS (1 << 2)	/* flag, a selection is in progress */
+#define IS_MOUSE_VISIBLE(vsp) ((vsp)->mouse_flags & MOUSE_VISIBLE)
+#define IS_SEL_EXISTS(vsp) ((vsp)->mouse_flags & SEL_EXISTS)
+#define IS_SEL_IN_PROGRESS(vsp) ((vsp)->mouse_flags & SEL_IN_PROGRESS)
+	unsigned char mouse_flags;	/* flags, status of the mouse */
 } video_state;
 
 EXTERN video_state vs[PCVT_NSCREENS];	/* parameters for screens */
@@ -1112,5 +1124,19 @@ static __inline void vt_selattr(struct video_state *svsp)
 				/* keyboard controller                    */
 #define PCVT_KBD_DELAY()	delay(7)
 #endif /* PCVT_PORTIO_DELAY */
+
+/* mouse console support prototype */
+
+char *Copybuffer; /* buffer that contains mouse selections */
+uid_t Copyowner; /* uid of the owner of the selection, useful for verifying
+		    permissions on it
+		  */
+char Paste_avail; /* flag, to indicate whether a selection is in the
+			 Copy buffer */
+
+int mouse_ioctl(Dev_t, u_long, caddr_t, int, struct proc *);
+void remove_selection(void);
+void mouse_hide(void);
+void scrollback_mouse(int);
 
 /*---------------------------------- E O F ----------------------------------*/

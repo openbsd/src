@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_out.c,v 1.25 2000/07/05 03:10:34 aaron Exp $	*/
+/*	$OpenBSD: pcvt_out.c,v 1.26 2000/09/01 05:46:02 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -153,7 +153,6 @@ sput (u_char *s, U_char kernel, int len, int page)
 	else
 		reset_screen_saver = 1;		/* do it asynchronously	*/
 #endif /* PCVT_SCREENSAVER */
-
     }
 
     attrib = kernel ? kern_attr : svsp->c_attr;
@@ -1268,6 +1267,18 @@ vt_coldmalloc(void)
 	     M_WAITOK)) == NULL)
 	{
 		printf("pcvt: scrollback memory malloc failed\n");
+	}
+
+        /* 
+	 * Copy buffer must be 1 character wider than the screen because we
+	 * need to write '\r' characters in the buffer (carriage return
+	 */
+	
+	if ((Copybuffer = (char *)malloc((vs[0].maxcol + 1) *
+	     vs[0].screen_rows, M_DEVBUF,
+	     M_WAITOK)) == NULL)
+	{
+		printf("pcvt: copy memory malloc failed\n");
 	}
 
 	for(nscr = 0; nscr < PCVT_NSCREENS; nscr++)
