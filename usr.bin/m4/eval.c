@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.34 2001/09/18 14:43:22 espie Exp $	*/
+/*	$OpenBSD: eval.c,v 1.35 2001/09/18 14:55:52 espie Exp $	*/
 /*	$NetBSD: eval.c,v 1.7 1996/11/10 21:21:29 pk Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.2 (Berkeley) 4/27/95";
 #else
-static char rcsid[] = "$OpenBSD: eval.c,v 1.34 2001/09/18 14:43:22 espie Exp $";
+static char rcsid[] = "$OpenBSD: eval.c,v 1.35 2001/09/18 14:55:52 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,14 +95,20 @@ eval(argv, argc, td)
 	int argc;
 	int td;
 {
+	ssize_t mark = -1;
+
 	expansion_id++;
 	if (td & RECDEF) 
 		errx(1, "%s at line %lu: expanding recursive definition for %s",
 			CURRENT_NAME, CURRENT_LINE, argv[1]);
+	if (traced_macros && is_traced(argv[1]))
+		mark = trace(argv, argc, infile+ilevel);
 	if (td == MACRTYPE)
 		expand_macro(argv, argc);
 	else
 		expand_builtin(argv, argc, td);
+    	if (mark != -1)
+		finish_trace(mark);
 }
 
 /*
@@ -634,15 +640,15 @@ dump_one_def(p)
 
 	if (mimic_gnu) {
 		if ((p->type & TYPEMASK) == MACRTYPE)
-			fprintf(stderr, "%s:\t%s\n", p->name, p->defn);
+			fprintf(traceout, "%s:\t%s\n", p->name, p->defn);
 		else {
 			real = builtin_realname(p->type);
 			if (real == NULL)
 				real = null;
-			fprintf(stderr, "%s:\t<%s>\n", p->name, real);
+			fprintf(traceout, "%s:\t<%s>\n", p->name, real);
 	    	}
 	} else
-		fprintf(stderr, "`%s'\t`%s'\n", p->name, p->defn);
+		fprintf(traceout, "`%s'\t`%s'\n", p->name, p->defn);
 }
 
 /*

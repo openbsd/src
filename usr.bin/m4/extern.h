@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.24 2001/09/18 14:43:22 espie Exp $	*/
+/*	$OpenBSD: extern.h,v 1.25 2001/09/18 14:55:52 espie Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/01/13 23:25:24 pk Exp $	*/
 
 /*-
@@ -95,6 +95,15 @@ extern int 	obtain_char __P((struct input_file *));
 extern void	set_input __P((struct input_file *, FILE *, const char *));
 extern void	release_input __P((struct input_file *));
 
+/* trace.c */
+extern void mark_traced __P((const char *));
+extern int is_traced __P((const char *));
+extern void trace_file __P((const char *));
+extern ssize_t trace __P((const char **, int, struct input_file *));
+extern void finish_trace __P((size_t));
+extern int traced_macros;
+extern void set_trace_flags __P((const char *));
+extern FILE *traceout;
 
 extern ndptr hashtab[];		/* hash table for macros etc. */
 extern stae *mstack;		/* stack of m4 machine */
