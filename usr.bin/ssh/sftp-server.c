@@ -22,7 +22,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-RCSID("$OpenBSD: sftp-server.c,v 1.12 2001/01/15 21:46:38 markus Exp $");
+RCSID("$OpenBSD: sftp-server.c,v 1.13 2001/01/16 20:54:27 markus Exp $");
 
 #include "ssh.h"
 #include "buffer.h"
@@ -183,23 +183,21 @@ encode_attrib(Buffer *b, Attrib *a)
 	}
 }
 
-Attrib *
-stat_to_attrib(struct stat *st)
+void
+stat_to_attrib(struct stat *st, Attrib *a)
 {
-	static Attrib a;
-	attrib_clear(&a);
-	a.flags = 0;
-	a.flags |= SSH2_FILEXFER_ATTR_SIZE;
-	a.size = st->st_size;
-	a.flags |= SSH2_FILEXFER_ATTR_UIDGID;
-	a.uid = st->st_uid;
-	a.gid = st->st_gid;
-	a.flags |= SSH2_FILEXFER_ATTR_PERMISSIONS;
-	a.perm = st->st_mode;
-	a.flags |= SSH2_FILEXFER_ATTR_ACMODTIME;
-	a.atime = st->st_atime;
-	a.mtime = st->st_mtime;
-	return &a;
+	attrib_clear(a);
+	a->flags = 0;
+	a->flags |= SSH2_FILEXFER_ATTR_SIZE;
+	a->size = st->st_size;
+	a->flags |= SSH2_FILEXFER_ATTR_UIDGID;
+	a->uid = st->st_uid;
+	a->gid = st->st_gid;
+	a->flags |= SSH2_FILEXFER_ATTR_PERMISSIONS;
+	a->perm = st->st_mode;
+	a->flags |= SSH2_FILEXFER_ATTR_ACMODTIME;
+	a->atime = st->st_atime;
+	a->mtime = st->st_mtime;
 }
 
 Attrib *
@@ -258,24 +256,21 @@ handle_is_ok(int i, int type)
 int
 handle_to_string(int handle, char **stringp, int *hlenp)
 {
-	char buf[1024];
 	if (stringp == NULL || hlenp == NULL)
 		return -1;
-	snprintf(buf, sizeof buf, "%d", handle);
-	*stringp = xstrdup(buf);
-	*hlenp = strlen(*stringp);
+	*stringp = xmalloc(sizeof(int32_t));
+	PUT_32BIT(*stringp, handle);
+	*hlenp = sizeof(int32_t);
 	return 0;
 }
 
 int
 handle_from_string(char *handle, u_int hlen)
 {
-/* XXX OVERFLOW ? */
-	char *ep;
-	long lval = strtol(handle, &ep, 10);
-	int val = lval;
-	if (*ep != '\0')
+	int val;
+	if (hlen != sizeof(int32_t))
 		return -1;
+	val = GET_32BIT(handle);
 	if (handle_is_ok(val, HANDLE_FILE) ||
 	    handle_is_ok(val, HANDLE_DIR))
 		return val;
@@ -562,7 +557,7 @@ process_write(void)
 void
 process_do_stat(int do_lstat)
 {
-	Attrib *a;
+	Attrib a;
 	struct stat st;
 	u_int32_t id;
 	char *name;
@@ -575,8 +570,8 @@ process_do_stat(int do_lstat)
 	if (ret < 0) {
 		status = errno_to_portable(errno);
 	} else {
-		a = stat_to_attrib(&st);
-		send_attrib(id, a);
+		stat_to_attrib(&st, &a);
+		send_attrib(id, &a);
 		status = SSH2_FX_OK;
 	}
 	if (status != SSH2_FX_OK)
@@ -599,7 +594,7 @@ process_lstat(void)
 void
 process_fstat(void)
 {
-	Attrib *a;
+	Attrib a;
 	struct stat st;
 	u_int32_t id;
 	int fd, ret, handle, status = SSH2_FX_FAILURE;
@@ -613,8 +608,8 @@ process_fstat(void)
 		if (ret < 0) {
 			status = errno_to_portable(errno);
 		} else {
-			a = stat_to_attrib(&st);
-			send_attrib(id, a);
+			stat_to_attrib(&st, &a);
+			send_attrib(id, &a);
 			status = SSH2_FX_OK;
 		}
 	}
@@ -775,7 +770,6 @@ process_readdir(void)
 	if (dirp == NULL || path == NULL) {
 		send_status(id, SSH2_FX_FAILURE);
 	} else {
-		Attrib *a;
 		struct stat st;
 		char pathname[1024];
 		Stat *stats;
@@ -791,8 +785,7 @@ process_readdir(void)
 			    "%s/%s", path, dp->d_name);
 			if (lstat(pathname, &st) < 0)
 				continue;
-			a = stat_to_attrib(&st);
-			stats[count].attrib = *a;
+			stat_to_attrib(&st, &(stats[count].attrib));
 			stats[count].name = xstrdup(dp->d_name);
 			stats[count].long_name = ls_file(dp->d_name, &st);
 			count++;
