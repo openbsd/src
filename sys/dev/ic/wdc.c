@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.37 2001/07/12 01:45:43 csapuntz Exp $     */
+/*      $OpenBSD: wdc.c,v 1.38 2001/07/19 19:45:01 csapuntz Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -507,12 +507,10 @@ wdcprobe(chp)
 		return 0;
 
 	/*
-	 * Use signatures to find ATAPI drives
-	 *
-	 * Also detect presence of ATA drive (wdc_ata_present)
+	 * Use signatures to find potential ATAPI drives
 	 */
 	for (drive = 0; drive < 2; drive++) {
-		if ((ret_value & (0x01 << drive)) == 0)
+ 		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
 		CHP_WRITE_REG(chp, wdr_sdh, WDSD_IBM | (drive << 4));
 		delay(10);
@@ -532,10 +530,18 @@ wdcprobe(chp)
 		 * spec since not all drives seem to set the other regs
 		 * correctly.
 		 */
-		if (cl == 0x14 && ch == 0xeb) {
+		if (cl == 0x14 && ch == 0xeb)
 			chp->ch_drive[drive].drive_flags |= DRIVE_ATAPI;
+	}
+
+	/* 
+	 * Detect ATA drives by poking around the registers
+	 */ 
+	for (drive = 0; drive < 2; drive++) {
+ 		if ((ret_value & (0x01 << drive)) == 0)
 			continue;
-		} 
+		if (chp->ch_drive[drive].drive_flags & DRIVE_ATAPI)
+			continue;
 
 		wdc_disable_intr(chp);
 		/* ATA detect */
