@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.h,v 1.45 2003/02/16 19:54:20 jason Exp $ */
+/* $OpenBSD: pfkeyv2.h,v 1.46 2003/02/16 21:30:13 deraadt Exp $ */
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) January 1998
  * 
@@ -206,10 +206,10 @@ struct sadb_x_cred {
 };
 
 #ifdef _KERNEL
-#define SADB_X_GETSPROTO(x) ( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
-                                (x) == SADB_SATYPE_ESP ? IPPROTO_ESP :\
-                                    (x) == SADB_X_SATYPE_IPCOMP ? IPPROTO_IPCOMP:\
-                                                         IPPROTO_IPIP )
+#define SADB_X_GETSPROTO(x) \
+	( (x) == SADB_SATYPE_AH ? IPPROTO_AH :\
+	(x) == SADB_SATYPE_ESP ? IPPROTO_ESP :\
+	(x) == SADB_X_SATYPE_IPCOMP ? IPPROTO_IPCOMP: IPPROTO_IPIP )
 #endif
 
 #define SADB_EXT_RESERVED             0

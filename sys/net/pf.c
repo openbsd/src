@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.320 2003/02/12 14:41:07 jason Exp $ */
+/*	$OpenBSD: pf.c,v 1.321 2003/02/16 21:30:13 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -352,7 +352,7 @@ pf_state_compare(struct pf_tree_node *a, struct pf_tree_node *b)
 void
 pf_addrcpy(struct pf_addr *dst, struct pf_addr *src, sa_family_t af)
 {
-	switch(af) {
+	switch (af) {
 #ifdef INET
 	case AF_INET:
 		dst->addr32[0] = src->addr32[0];
@@ -643,7 +643,7 @@ pf_dynaddr_copyout(struct pf_addr_wrap *aw)
 void
 pf_print_host(struct pf_addr *addr, u_int16_t p, sa_family_t af)
 {
-	switch(af) {
+	switch (af) {
 #ifdef INET
 	case AF_INET: {
 		u_int32_t a = ntohl(addr->addr32[0]);
@@ -1408,7 +1408,7 @@ pf_addr_inc(struct pf_addr *addr, u_int8_t af)
 		a -= b; a -= c; a ^= (c >> 3);	\
 		b -= c; b -= a; b ^= (a << 10);	\
 		c -= a; c -= b; c ^= (b >> 15);	\
-	} while(0)
+	} while (0)
 
 /*
  * hash function based on bridge_hash in if_bridge.c
@@ -1719,7 +1719,7 @@ pf_get_translation(int direction, struct ifnet *ifp, u_int8_t proto,
 			break;
 		case PF_NAT:
 			if (pf_get_sport(af, proto, &r->rpool, saddr, daddr,
-		            dport, naddr, nport, r->rpool.proxy_port[0],
+			    dport, naddr, nport, r->rpool.proxy_port[0],
 			    r->rpool.proxy_port[1])) {
 				DPFPRINTF(PF_DEBUG_MISC,
 				    ("pf: NAT proxy port allocation "

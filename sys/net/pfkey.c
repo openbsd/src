@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.13 2003/02/16 19:54:20 jason Exp $	*/
+/*	$OpenBSD: pfkey.c,v 1.14 2003/02/16 21:30:13 deraadt Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -254,7 +254,7 @@ pfkey_usrreq(struct socket *socket, int req, struct mbuf *mbuf,
 	    !pfkey_versions[socket->so_proto->pr_protocol])
 		return (EPROTONOSUPPORT);
 
-	switch(req) {
+	switch (req) {
 	case PRU_ATTACH:
 		return (pfkey_attach(socket, nam));
 
@@ -303,7 +303,7 @@ static struct protosw pfkey_protosw_template = {
 
 int
 pfkey_buildprotosw(void)
-{  
+{
 	struct protosw *protosw, *p;
 	int i, j;
 

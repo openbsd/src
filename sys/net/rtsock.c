@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.25 2002/12/31 02:30:10 itojun Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.26 2003/02/16 21:30:13 deraadt Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -277,7 +277,7 @@ route_output(struct mbuf *m, ...)
 		rt = (struct rtentry *)rn;
 		rt->rt_refcnt++;
 
-		switch(rtm->rtm_type) {
+		switch (rtm->rtm_type) {
 
 		case RTM_GET:
 		report:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.109 2003/01/07 17:47:21 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.110 2003/02/16 21:30:13 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -1696,7 +1696,7 @@ fail:
 		a -= b; a -= c; a ^= (c >> 3);		\
 		b -= c; b -= a; b ^= (a << 10);		\
 		c -= a; c -= b; c ^= (b >> 15);		\
-	} while(0)
+	} while (0)
 
 u_int32_t
 bridge_hash(sc, addr)
@@ -2522,10 +2522,10 @@ bridge_fragment(sc, ifp, eh, m)
 		    m->m_pkthdr.len < (LLC_SNAPFRAMELEN +
 		    sizeof(struct ether_header)))
 			goto dropit;
-		
+
 		m_copydata(m, sizeof(struct ether_header),
 		    LLC_SNAPFRAMELEN, (caddr_t)&llc);
-		
+
 		if (llc.llc_dsap != LLC_SNAP_LSAP ||
 		    llc.llc_ssap != LLC_SNAP_LSAP ||
 		    llc.llc_control != LLC_UI ||
@@ -2534,10 +2534,10 @@ bridge_fragment(sc, ifp, eh, m)
 		    llc.llc_snap.org_code[2] ||
 		    llc.llc_snap.ether_type != htons(ETHERTYPE_IP))
 			goto dropit;
-		
+
 		hassnap = 1;
 	}
-	
+
 	m_adj(m, sizeof(struct ether_header));
 	if (hassnap)
 		m_adj(m, LLC_SNAPFRAMELEN);
@@ -2590,12 +2590,12 @@ bridge_fragment(sc, ifp, eh, m)
 		} else
 			m_freem(m);
 	}
-	
+
 	if (error == 0)
 		ipstat.ips_fragmented++;
-	
+
 	return;
-#endif /* INET */	
+#endif /* INET */
  dropit:
 	if (m != NULL)
 		m_freem(m);
@@ -2629,7 +2629,7 @@ bridge_ifenqueue(sc, ifp, m)
 }
 
 #ifdef INET
-void	
+void
 bridge_send_icmp_err(sc, ifp, eh, n, hassnap, llc, type, code)
 	struct bridge_softc *sc;
 	struct ifnet *ifp;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.35 2003/02/16 19:54:20 jason Exp $	*/
+/*	$OpenBSD: pfkeyv2_parsemessage.c,v 1.36 2003/02/16 21:30:13 deraadt Exp $	*/
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -491,7 +491,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				return (EINVAL);
 			}
 
-			switch(sa->sa_family) {
+			switch (sa->sa_family) {
 			case AF_INET:
 				if (sizeof(struct sadb_address) +
 				    PADUP(sizeof(struct sockaddr_in)) != i) {
@@ -518,7 +518,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				case SADB_X_EXT_SRC_FLOW:
 				case SADB_X_EXT_DST_FLOW:
 					break;
-		      
+
 				default:
 					if (((struct sockaddr_in *)sa)->sin_port) {
 						DPRINTF(("pfkeyv2_parsemessage"
@@ -583,7 +583,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				case SADB_X_EXT_SRC_FLOW:
 				case SADB_X_EXT_DST_FLOW:
 					break;
-		      
+
 				default:
 					if (((struct sockaddr_in6 *)sa)->sin6_port) {
 						DPRINTF(("pfkeyv2_parsemessage"
@@ -656,7 +656,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 			if (sadb_cred->sadb_x_cred_type > SADB_X_AUTHTYPE_MAX) {
 				DPRINTF(("pfkeyv2_parsemessage: unknown auth "
 				    "type %d in AUTH extension header %d\n",
-				    sadb_cred->sadb_x_cred_type, 
+				    sadb_cred->sadb_x_cred_type,
 				    sadb_ext->sadb_ext_type));
 				return (EINVAL);
 			}
@@ -806,8 +806,9 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 				int j;
 
 				for (j = 0;
-				     j < (i - sizeof(struct sadb_prop))/sizeof(struct sadb_comb);
-				     j++) {
+				    j < (i - sizeof(struct sadb_prop))/
+				    sizeof(struct sadb_comb);
+				    j++) {
 					if (sadb_comb->sadb_comb_auth >
 					    SADB_AALG_MAX) {
 						DPRINTF(("pfkeyv2_parsemessage"
@@ -866,11 +867,14 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 					sizeof(struct sadb_supported));
 				int max_alg;
 
-				max_alg = sadb_ext->sadb_ext_type == SADB_EXT_SUPPORTED_AUTH ?
+				max_alg = sadb_ext->sadb_ext_type ==
+				    SADB_EXT_SUPPORTED_AUTH ?
 				    SADB_AALG_MAX : SADB_EXT_SUPPORTED_ENCRYPT ?
-					SADB_EALG_MAX : SADB_X_CALG_MAX;
+				    SADB_EALG_MAX : SADB_X_CALG_MAX;
 
-				for (j = 0; j < sadb_supported->sadb_supported_len - 1; j++) {
+				for (j = 0;
+				    j < sadb_supported->sadb_supported_len - 1;
+				    j++) {
 					if (sadb_alg->sadb_alg_id > max_alg) {
 						DPRINTF(("pfkeyv2_parsemessage"
 						    ": unknown algorithm %d "
@@ -921,7 +925,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 			    sadb_ext->sadb_ext_type));
 			return (EINVAL);
 		}
-  
+
 		headers[sadb_ext->sadb_ext_type] = p;
 		p += i;
 		left -= i;
@@ -944,7 +948,7 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 		}
 	}
 
-	switch(((struct sadb_msg *)headers[0])->sadb_msg_type) {
+	switch (((struct sadb_msg *)headers[0])->sadb_msg_type) {
 	case SADB_UPDATE:
 		if (((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_state !=
 		    SADB_SASTATE_MATURE) {

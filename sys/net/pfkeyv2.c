@@ -1,4 +1,4 @@
-/* $OpenBSD: pfkeyv2.c,v 1.86 2003/02/16 19:54:20 jason Exp $ */
+/* $OpenBSD: pfkeyv2.c,v 1.87 2003/02/16 21:30:13 deraadt Exp $ */
 
 /*
  *	@(#)COPYRIGHT	1.1 (NRL) 17 January 1995
@@ -227,103 +227,103 @@ pfkeyv2_sendmessage(void **headers, int mode, struct socket *socket,
 	    j, &packet)) != 0)
 		goto ret;
 
-    switch(mode) {
-    case PFKEYV2_SENDMESSAGE_UNICAST:
-	    /*
-	     * Send message to the specified socket, plus all
-	     * promiscuous listeners.
-	     */
-	    pfkey_sendup(socket, packet, 0);
+	switch (mode) {
+	case PFKEYV2_SENDMESSAGE_UNICAST:
+		/*
+		 * Send message to the specified socket, plus all
+		 * promiscuous listeners.
+		 */
+		pfkey_sendup(socket, packet, 0);
 
-	    /*
-	     * Promiscuous messages contain the original message
-	     * encapsulated in another sadb_msg header.
-	     */
-	    bzero(buffer, sizeof(struct sadb_msg));
-	    smsg = (struct sadb_msg *) buffer;
-	    smsg->sadb_msg_version = PF_KEY_V2;
-	    smsg->sadb_msg_type = SADB_X_PROMISC;
-	    smsg->sadb_msg_len = (sizeof(struct sadb_msg) + j) /
-		sizeof(uint64_t);
-	    smsg->sadb_msg_seq = 0;
+		/*
+		 * Promiscuous messages contain the original message
+		 * encapsulated in another sadb_msg header.
+		 */
+		bzero(buffer, sizeof(struct sadb_msg));
+		smsg = (struct sadb_msg *) buffer;
+		smsg->sadb_msg_version = PF_KEY_V2;
+		smsg->sadb_msg_type = SADB_X_PROMISC;
+		smsg->sadb_msg_len = (sizeof(struct sadb_msg) + j) /
+		    sizeof(uint64_t);
+		smsg->sadb_msg_seq = 0;
 
-	    /* Copy to mbuf chain */
-	    if ((rval = pfdatatopacket(buffer, sizeof(struct sadb_msg) + j,
-	        &packet)) != 0)
-		    goto ret;
+		/* Copy to mbuf chain */
+		if ((rval = pfdatatopacket(buffer, sizeof(struct sadb_msg) + j,
+		    &packet)) != 0)
+			goto ret;
 
-	    /*
-	     * Search for promiscuous listeners, skipping the
-	     * original destination.
-	     */
-	    for (s = pfkeyv2_sockets; s; s = s->next)
-		    if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
-			(s->socket != socket))
-			    pfkey_sendup(s->socket, packet, 1);
+		/*
+		 * Search for promiscuous listeners, skipping the
+		 * original destination.
+		 */
+		for (s = pfkeyv2_sockets; s; s = s->next)
+			if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
+			    (s->socket != socket))
+				pfkey_sendup(s->socket, packet, 1);
 
-	    /* Done, let's be a bit paranoid */
-	    m_zero(packet);
-	    m_freem(packet);
-	    break;
+		/* Done, let's be a bit paranoid */
+		m_zero(packet);
+		m_freem(packet);
+		break;
 
-    case PFKEYV2_SENDMESSAGE_REGISTERED:
-	    /*
-	     * Send the message to all registered sockets that match
-	     * the specified satype (e.g., all IPSEC-ESP negotiators)
-	     */
-	    for (s = pfkeyv2_sockets; s; s = s->next)
-		    if (s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED) {
-			    if (!satype)    /* Just send to everyone registered */
-				    pfkey_sendup(s->socket, packet, 1);
-			    else {
-				    /* Check for specified satype */
-				    if ((1 << satype) & s->registration)
-					    pfkey_sendup(s->socket, packet, 1);
-			    }
-		    }
+	case PFKEYV2_SENDMESSAGE_REGISTERED:
+		/*
+		 * Send the message to all registered sockets that match
+		 * the specified satype (e.g., all IPSEC-ESP negotiators)
+		 */
+		for (s = pfkeyv2_sockets; s; s = s->next)
+			if (s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED) {
+				if (!satype)    /* Just send to everyone registered */
+					pfkey_sendup(s->socket, packet, 1);
+				else {
+					/* Check for specified satype */
+					if ((1 << satype) & s->registration)
+						pfkey_sendup(s->socket, packet, 1);
+				}
+			}
 
-	    /* Free last/original copy of the packet */
-	    m_freem(packet);
+		/* Free last/original copy of the packet */
+		m_freem(packet);
 
-	    /* Encapsulate the original message "inside" an sadb_msg header */
-	    bzero(buffer, sizeof(struct sadb_msg));
-	    smsg = (struct sadb_msg *) buffer;
-	    smsg->sadb_msg_version = PF_KEY_V2;
-	    smsg->sadb_msg_type = SADB_X_PROMISC;
-	    smsg->sadb_msg_len = (sizeof(struct sadb_msg) + j) /
-		sizeof(uint64_t);
-	    smsg->sadb_msg_seq = 0;
+		/* Encapsulate the original message "inside" an sadb_msg header */
+		bzero(buffer, sizeof(struct sadb_msg));
+		smsg = (struct sadb_msg *) buffer;
+		smsg->sadb_msg_version = PF_KEY_V2;
+		smsg->sadb_msg_type = SADB_X_PROMISC;
+		smsg->sadb_msg_len = (sizeof(struct sadb_msg) + j) /
+		    sizeof(uint64_t);
+		smsg->sadb_msg_seq = 0;
 
-	    /* Convert to mbuf chain */
-	    if ((rval = pfdatatopacket(buffer, sizeof(struct sadb_msg) + j,
-	        &packet)) != 0)
-		    goto ret;
+		/* Convert to mbuf chain */
+		if ((rval = pfdatatopacket(buffer, sizeof(struct sadb_msg) + j,
+		    &packet)) != 0)
+			goto ret;
 
-	    /* Send to all registered promiscuous listeners */
-	    for (s = pfkeyv2_sockets; s; s = s->next)
-		    if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
-		        !(s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED))
-			    pfkey_sendup(s->socket, packet, 1);
+		/* Send to all registered promiscuous listeners */
+		for (s = pfkeyv2_sockets; s; s = s->next)
+			if ((s->flags & PFKEYV2_SOCKETFLAGS_PROMISC) &&
+			    !(s->flags & PFKEYV2_SOCKETFLAGS_REGISTERED))
+				pfkey_sendup(s->socket, packet, 1);
 
-	    m_freem(packet);
-	    break;
+		m_freem(packet);
+		break;
 
-    case PFKEYV2_SENDMESSAGE_BROADCAST:
-	    /* Send message to all sockets */
-	    for (s = pfkeyv2_sockets; s; s = s->next)
-		    pfkey_sendup(s->socket, packet, 1);
+	case PFKEYV2_SENDMESSAGE_BROADCAST:
+		/* Send message to all sockets */
+		for (s = pfkeyv2_sockets; s; s = s->next)
+			pfkey_sendup(s->socket, packet, 1);
 
-	    m_freem(packet);
-	    break;
-    }
+		m_freem(packet);
+		break;
+	}
 
 ret:
-    if (buffer != NULL) {
-	    bzero(buffer, j + sizeof(struct sadb_msg));
-	    free(buffer, M_PFKEY);
-    }
+	if (buffer != NULL) {
+		bzero(buffer, j + sizeof(struct sadb_msg));
+		free(buffer, M_PFKEY);
+	}
 
-    return (rval);
+	return (rval);
 }
 
 /*
@@ -833,7 +833,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		goto ret;
 
 	smsg = (struct sadb_msg *) headers[0];
-	switch(smsg->sadb_msg_type) {
+	switch (smsg->sadb_msg_type) {
 	case SADB_GETSPI:  /* Reserve an SPI */
 		bzero(&sa, sizeof(struct tdb));
 
@@ -878,17 +878,17 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		/* Either all or none of the flow must be included */
 		if ((headers[SADB_X_EXT_SRC_FLOW] ||
-		     headers[SADB_X_EXT_PROTOCOL] ||
-		     headers[SADB_X_EXT_FLOW_TYPE] ||
-		     headers[SADB_X_EXT_DST_FLOW] ||
-		     headers[SADB_X_EXT_SRC_MASK] ||
-		     headers[SADB_X_EXT_DST_MASK]) &&
-		   !(headers[SADB_X_EXT_SRC_FLOW] &&
-		     headers[SADB_X_EXT_PROTOCOL] &&
-		     headers[SADB_X_EXT_FLOW_TYPE] &&
-		     headers[SADB_X_EXT_DST_FLOW] &&
-		     headers[SADB_X_EXT_SRC_MASK] &&
-		     headers[SADB_X_EXT_DST_MASK])) {
+		    headers[SADB_X_EXT_PROTOCOL] ||
+		    headers[SADB_X_EXT_FLOW_TYPE] ||
+		    headers[SADB_X_EXT_DST_FLOW] ||
+		    headers[SADB_X_EXT_SRC_MASK] ||
+		    headers[SADB_X_EXT_DST_MASK]) &&
+		    !(headers[SADB_X_EXT_SRC_FLOW] &&
+		    headers[SADB_X_EXT_PROTOCOL] &&
+		    headers[SADB_X_EXT_FLOW_TYPE] &&
+		    headers[SADB_X_EXT_DST_FLOW] &&
+		    headers[SADB_X_EXT_SRC_MASK] &&
+		    headers[SADB_X_EXT_DST_MASK])) {
 			rval = EINVAL;
 			goto ret;
 		}
@@ -1018,17 +1018,17 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 		/* Either all or none of the flow must be included */
 		if ((headers[SADB_X_EXT_SRC_FLOW] ||
-		     headers[SADB_X_EXT_PROTOCOL] ||
-		     headers[SADB_X_EXT_FLOW_TYPE] ||
-		     headers[SADB_X_EXT_DST_FLOW] ||
-		     headers[SADB_X_EXT_SRC_MASK] ||
-		     headers[SADB_X_EXT_DST_MASK]) &&
+		    headers[SADB_X_EXT_PROTOCOL] ||
+		    headers[SADB_X_EXT_FLOW_TYPE] ||
+		    headers[SADB_X_EXT_DST_FLOW] ||
+		    headers[SADB_X_EXT_SRC_MASK] ||
+		    headers[SADB_X_EXT_DST_MASK]) &&
 		    !(headers[SADB_X_EXT_SRC_FLOW] &&
-		     headers[SADB_X_EXT_PROTOCOL] &&
-		     headers[SADB_X_EXT_FLOW_TYPE] &&
-		     headers[SADB_X_EXT_DST_FLOW] &&
-		     headers[SADB_X_EXT_SRC_MASK] &&
-		     headers[SADB_X_EXT_DST_MASK])) {
+		    headers[SADB_X_EXT_PROTOCOL] &&
+		    headers[SADB_X_EXT_FLOW_TYPE] &&
+		    headers[SADB_X_EXT_DST_FLOW] &&
+		    headers[SADB_X_EXT_SRC_MASK] &&
+		    headers[SADB_X_EXT_DST_MASK])) {
 			rval = EINVAL;
 			goto ret;
 		}
@@ -1265,7 +1265,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	case SADB_FLUSH:
 		rval = 0;
 
-		switch(smsg->sadb_msg_satype) {
+		switch (smsg->sadb_msg_satype) {
 		case SADB_SATYPE_UNSPEC:
 			s = spltdb();
 
