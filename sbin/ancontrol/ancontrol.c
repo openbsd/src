@@ -1,4 +1,4 @@
-/*	$OpenBSD: ancontrol.c,v 1.5 2000/06/20 17:41:50 aaron Exp $	*/
+/*	$OpenBSD: ancontrol.c,v 1.6 2000/06/22 22:56:33 todd Exp $	*/
 /*
  * Copyright 1997, 1998, 1999
  *	Bill Paul <wpaul@ee.columbia.edu>.  All rights reserved.
@@ -1133,7 +1133,7 @@ main(argc, argv)
 	}
 
 	while ((ch = getopt(argc, argv,
-	    "i:ANISCTt:a:o:s:n:v:d:j:b:c:r:p:w:m:l:QZ")) != -1) {
+	    "i:ANISCTt:a:o:s:n:v:d:f:j:b:c:r:p:w:m:l:QZ")) != -1) {
 		switch(ch) {
 		case 'Z':
 #ifdef ANCACHE
