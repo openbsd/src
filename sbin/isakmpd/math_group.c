@@ -1,8 +1,9 @@
-/*	$OpenBSD: math_group.c,v 1.4 1999/02/26 03:46:57 niklas Exp $	*/
-/*	$EOM: math_group.c,v 1.10 1999/02/25 11:39:14 niklas Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.5 1999/04/05 20:59:37 niklas Exp $	*/
+/*	$EOM: math_group.c,v 1.15 1999/04/05 20:18:04 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
+ * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -177,7 +178,7 @@ group_init (void)
 {
   int i;
 
-  for (i = sizeof (groups)/sizeof (groups[0]) -1; i >= 0; i--)
+  for (i = sizeof (groups) / sizeof (groups[0]) - 1; i >= 0; i--)
     switch (groups[i].type)
       {
       case EC2N:		/* Initalize an Elliptic Curve over GF(2**n) */
@@ -199,15 +200,17 @@ struct group *
 group_get (int id)
 {
   struct group *new, *clone;
-  if (id < 1 || id > (sizeof (groups)/sizeof (groups[0])))
-    return NULL;
 
-  clone = &groups[id-1];
+  if (id < 1 || id > (sizeof (groups) / sizeof (groups[0])))
+    return 0;
 
-  if ((new = malloc (sizeof (struct group))) == NULL)
+  clone = &groups[id - 1];
+
+  new = malloc (sizeof *new);
+  if (!new)
     {
-      log_print ("group_get: Out of memory");
-      return (NULL);
+      log_error ("group_get: malloc (%d) failed", sizeof *new);
+      return 0;
     }
 
   switch (clone->type)
@@ -219,11 +222,13 @@ group_get (int id)
       new = modp_clone (new, clone);
       break;
     default:
-      log_print ("group_get: Unknown group type %d", clone->type);
+      log_print ("group_get: unknown group type %d", clone->type);
       free (new);
-      return (NULL);
+      return 0;
     }
-  return (new);
+  log_debug (LOG_MISC, 70, "group_get: returning %p of group %d", new,
+	     new->id);
+  return new;
 }
 
 void
@@ -236,8 +241,9 @@ group_free (struct group *grp)
       break;
     case MODP:
       modp_free (grp);
+      break;
     default:
-      log_print ("group_free: Unknown group type %d", grp->type);
+      log_print ("group_free: unknown group type %d", grp->type);
       break;
     }
   free (grp);
@@ -248,11 +254,12 @@ modp_clone (struct group *new, struct group *clone)
 {
   struct modp_group *new_grp, *clone_grp = clone->group;
 
-  if ((new_grp = malloc (sizeof (struct modp_group))) == NULL)
+  new_grp = malloc (sizeof *new_grp);
+  if (!new_grp)
     {
-      log_print ("modp_clone: Out of memory");
+      log_print ("modp_clone: malloc (%d) failed", sizeof *new_grp);
       free (new);
-      return (NULL);
+      return 0;
     }
 
   memcpy (new, clone, sizeof (struct group));
@@ -271,7 +278,7 @@ modp_clone (struct group *new, struct group *clone)
   new->b = new_grp->b;
   new->c = new_grp->c;
 
-  return (new);
+  return new;
 }
 
 void
@@ -296,7 +303,7 @@ modp_init (struct group *group)
   struct modp_group *grp;
 
   if ((grp = malloc (sizeof (struct modp_group))) == NULL)
-      log_fatal ("modp_init: Out of memory");
+    log_fatal ("modp_init: out of memory");
 
   group->bits = dscr->bits;
 
@@ -323,9 +330,9 @@ ec2n_clone (struct group *new, struct group *clone)
 
   if ((new_grp = malloc (sizeof (struct ec2n_group))) == NULL)
     {
-      log_print ("ec2n_clone: Out of memory");
+      log_print ("ec2n_clone: out of memory");
       free (new);
-      return (NULL);
+      return 0;
     }
 
   memcpy (new, clone, sizeof (struct group));
@@ -347,7 +354,7 @@ ec2n_clone (struct group *new, struct group *clone)
   new->c = new_grp->c;
   new->d = ((ec2np_ptr)new->a)->x;
 
-  return (new);
+  return new;
 }
 
 void
@@ -372,7 +379,7 @@ ec2n_init (struct group *group)
   struct ec2n_group *grp;
 
   if ((grp = malloc (sizeof (struct ec2n_group))) == NULL)
-      log_fatal ("ec2n_init: Out of memory");
+    log_fatal ("ec2n_init: out of memory");
 
   group->bits = dscr->bits;
 
@@ -382,12 +389,13 @@ ec2n_init (struct group *group)
   ec2ng_set_a_str (grp->grp, dscr->a);
   ec2ng_set_b_str (grp->grp, dscr->b);
 
-  ec2np_init (grp->gen); ec2np_set_x_str (grp->gen, dscr->gen_x);
+  ec2np_init (grp->gen);
+  ec2np_set_x_str (grp->gen, dscr->gen_x);
   ec2np_find_y (grp->gen, grp->grp);
 
   /* Sanity check */
   if (!ec2np_ison (grp->gen, grp->grp))
-    log_fatal ("ec2n_init: Generator is not on curve");
+    log_fatal ("ec2n_init: generator is not on curve");
 
   ec2np_init (grp->a);
   ec2np_init (grp->b);
@@ -488,7 +496,7 @@ ec2n_setraw (struct group *grp, ec2np_ptr out, u_int8_t *s, int l)
   b2n_ptr outx = out->x;
   CHUNK_TYPE tmp;
 
-  len = (CHUNK_BYTES - 1 + l)/CHUNK_BYTES;
+  len = (CHUNK_BYTES - 1 + l) / CHUNK_BYTES;
   b2n_resize (outx, len);
 
   bytes = ((l - 1) % CHUNK_BYTES) + 1;
@@ -520,7 +528,6 @@ ec2n_setrandom (struct group *group, ec2np_ptr x)
  * to supply the variable 'a' with the chunks of the Y cooridnate
  * set to zero.
  */
-
 void 
 ec2n_operation (struct group *grp, ec2np_ptr d, ec2np_ptr a, ec2np_ptr e)
 {
