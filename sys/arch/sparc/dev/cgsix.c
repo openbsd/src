@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgsix.c,v 1.22 2002/11/06 21:06:20 miod Exp $	*/
+/*	$OpenBSD: cgsix.c,v 1.23 2002/12/12 23:35:32 miod Exp $	*/
 /*	$NetBSD: cgsix.c,v 1.33 1997/08/07 19:12:30 pk Exp $ */
 
 /*
@@ -257,7 +257,7 @@ cgsixattach(parent, self, args)
 	sc->sc_sunfb.sf_flags = self->dv_cfdata->cf_flags;
 
 	/*
-	 * May just BT, FHC, FBC, THC, and video RAM.
+	 * Map just BT, FHC, FBC, THC, and video RAM.
 	 */
 	sc->sc_phys = ca->ca_ra.ra_reg[0];
 	sc->sc_bt = bt = (volatile struct bt_regs *)
