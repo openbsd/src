@@ -1,7 +1,7 @@
-/*	$OpenBSD: pmap.c,v 1.31 2000/01/17 04:49:02 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.32 2000/01/17 06:51:58 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998,1999 Michael Shalayeff
+ * Copyright (c) 1998-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,24 +30,24 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 /*
- * Copyright 1996 1995 by Open Software Foundation, Inc.   
- *              All Rights Reserved 
- *  
- * Permission to use, copy, modify, and distribute this software and 
- * its documentation for any purpose and without fee is hereby granted, 
- * provided that the above copyright notice appears in all copies and 
- * that both the copyright notice and this permission notice appear in 
- * supporting documentation. 
- *  
- * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE 
- * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS 
- * FOR A PARTICULAR PURPOSE. 
- *  
- * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR 
- * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM 
- * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT, 
- * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION 
- * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. 
+ * Copyright 1996 1995 by Open Software Foundation, Inc.
+ *              All Rights Reserved
+ *
+ * Permission to use, copy, modify, and distribute this software and
+ * its documentation for any purpose and without fee is hereby granted,
+ * provided that the above copyright notice appears in all copies and
+ * that both the copyright notice and this permission notice appear in
+ * supporting documentation.
+ *
+ * OSF DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ * FOR A PARTICULAR PURPOSE.
+ *
+ * IN NO EVENT SHALL OSF BE LIABLE FOR ANY SPECIAL, INDIRECT, OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM
+ * LOSS OF USE, DATA OR PROFITS, WHETHER IN ACTION OF CONTRACT,
+ * NEGLIGENCE, OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 /*
  * Mach Operating System
@@ -244,7 +244,7 @@ pmap_enter_va(pa_space_t space, vaddr_t va, struct pv_entry *pv)
 #ifdef PMAPDEBUG
 	if ((pmapdebug & (PDB_FOLLOW | PDB_VA)) == (PDB_FOLLOW | PDB_VA))
 		printf("pmap_enter_va(%x,%x,%p): hpt=%p, pvp=%p\n",
-		       space, va, pv, hpt, pvp);
+		    space, va, pv, hpt, pvp);
 #endif
 #ifdef DIAGNOSTIC
 	while(pvp && (pvp->pv_va != va || pvp->pv_space != space))
@@ -448,7 +448,7 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, u_int tlbprot, u_int tlbpage,
 #ifdef PMAPDEBUG
 	if ((pmapdebug & (PDB_FOLLOW | PDB_PV)) == (PDB_FOLLOW | PDB_PV))
 		printf("pmap_enter_pv: pv %p: %lx/%p/%p\n",
-		       pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
+		    pv, pv->pv_va, pv->pv_pmap, pv->pv_next);
 #endif
 
 	if (pv->pv_pmap == NULL) {
@@ -673,7 +673,7 @@ pmap_bootstrap(vstart, vend)
 #if	NCPUS > 1
 	lock_init(&pmap_lock, FALSE, ETAP_VM_PMAP_SYS, ETAP_VM_PMAP_SYS_I);
 #endif	/* NCPUS > 1 */
-       	simple_lock_init(&kernel_pmap->pmap_lock);
+	simple_lock_init(&kernel_pmap->pmap_lock);
 	simple_lock_init(&pmap_freelock);
 	simple_lock_init(&sid_pid_lock);
 
@@ -693,7 +693,7 @@ pmap_bootstrap(vstart, vend)
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_INIT)
 		printf("pmap_bootstrap: allocating %d pv_pages\n",
-		       (struct pv_page *)addr - pvp);
+		    (struct pv_page *)addr - pvp);
 #endif
 	TAILQ_INIT(&pv_page_freelist);
 	for (; pvp + 1 <= (struct pv_page *)addr; pvp++)
@@ -740,7 +740,7 @@ pmap_bootstrap(vstart, vend)
 	 */
 
 	size = hppa_round_page(sizeof(struct pv_entry) *
-			       (totalphysmem - atop(virtual_avail)));
+	    (totalphysmem - atop(virtual_avail)));
 	bzero ((caddr_t)addr, size);
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_INIT)
@@ -765,7 +765,7 @@ pmap_bootstrap(vstart, vend)
  *	segment (mapped behind the scenes).
  *	directly mapped cannot be grown dynamically once allocated.
  */
-vaddr_t 
+vaddr_t
 pmap_steal_memory(size, startp, endp)
 	vsize_t size;
 	vaddr_t *startp;
@@ -786,7 +786,7 @@ pmap_steal_memory(size, startp, endp)
 #ifdef PMAPDEBUG
 		if (pmapdebug & PDB_STEAL)
 			printf("pmap_steal_memory: steal %d bytes (%x+%x,%x)\n",
-			       size, virtual_steal, size, virtual_avail);
+			    size, virtual_steal, size, virtual_avail);
 #endif
 		va = virtual_steal;
 		virtual_steal += size;
@@ -836,7 +836,7 @@ pmap_init()
 
 	pmap_initialized = TRUE;
 
-        /*
+	/*
 	 * map SysCall gateways page once for everybody
 	 * NB: we'll have to remap the phys memory
 	 *     if we have one at SYSCALLGATE address (;
@@ -905,8 +905,8 @@ pmap_create()
 		printf("pmap_create()\n");
 #endif
 
-	/* 
-	 * If there is a pmap in the pmap free list, reuse it. 
+	/*
+	 * If there is a pmap in the pmap free list, reuse it.
 	 */
 	simple_lock(&pmap_freelock);
 	if (pmap_nfree) {
@@ -926,7 +926,7 @@ pmap_create()
 	return(pmap);
 }
 
-/* 
+/*
  * pmap_destroy(pmap)
  *	Gives up a reference to the specified pmap.  When the reference count
  *	reaches zero the pmap structure is added to the pmap free list.
@@ -957,7 +957,7 @@ pmap_destroy(pmap)
 
 		simple_unlock(&pmap->pmap_lock);
 
-		/* 
+		/*
 		 * Add the pmap to the pmap free list
 		 * We cannot free() disposed pmaps because of
 		 * PID shortage of 2^16
@@ -995,11 +995,11 @@ pmap_enter(pmap, va, pa, prot, wired, access_type)
 	if (pmapdebug & PDB_FOLLOW &&
 	    (!pmap_initialized || pmapdebug & PDB_ENTER))
 		printf("pmap_enter(%p, %x, %x, %x, %swired)\n", pmap, va, pa,
-		       prot, wired? "" : "un");
+		    prot, wired? "" : "un");
 #endif
 
-        if (!pmap)
-                return;
+	if (!pmap)
+		return;
 
 	simple_lock(&pmap->pmap_lock);
 
@@ -1191,7 +1191,7 @@ pmap_page_protect(pg, prot)
 
 /*
  * pmap_protect(pmap, s, e, prot)
- *	changes the protection on all virtual addresses v in the 
+ *	changes the protection on all virtual addresses v in the
  *	virtual address range determined by [s, e) and pmap to prot.
  *	s and e must be on machine independent page boundaries and
  *	s must be less than or equal to e.
@@ -1259,7 +1259,7 @@ pmap_protect(pmap, sva, eva, prot)
  *	In/out conditions:
  *			The mapping must already exist in the pmap.
  *
- * Change the wiring for a given virtual page. This routine currently is 
+ * Change the wiring for a given virtual page. This routine currently is
  * only used to unwire pages and hence the mapping entry will exist.
  */
 void
@@ -1274,7 +1274,7 @@ pmap_change_wiring(pmap, va, wired)
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_change_wiring(%p, %x, %swire)\n",
-		       pmap, va, wired? "": "un");
+		    pmap, va, wired? "": "un");
 #endif
 
 	if (!pmap)
@@ -1298,7 +1298,7 @@ pmap_change_wiring(pmap, va, wired)
 
 /*
  * pmap_extract(pmap, va)
- *	returns the physical address corrsponding to the 
+ *	returns the physical address corrsponding to the
  *	virtual address specified by pmap and va if the
  *	virtual address is mapped and 0 if it is not.
  */
@@ -1323,7 +1323,7 @@ pmap_extract(pmap, va)
 /*
  * pmap_zero_page(pa)
  *
- * Zeros the specified page. 
+ * Zeros the specified page.
  */
 void
 pmap_zero_page(pa)
@@ -1437,7 +1437,7 @@ pmap_clear_modify(pg)
 
 /*
  * pmap_is_modified(pa)
- *	returns TRUE if the given physical page has been modified 
+ *	returns TRUE if the given physical page has been modified
  *	since the last call to pmap_clear_modify().
  */
 boolean_t
@@ -1468,7 +1468,7 @@ pmap_is_modified(pg)
 /*
  * pmap_clear_reference(pa)
  *	clears the hardware referenced bit in the given machine
- *	independant physical page.  
+ *	independant physical page.
  *
  *	Currently, we treat a TLB miss as a reference; i.e. to clear
  *	the reference bit we flush all mappings for pa from the TLBs.
@@ -1505,7 +1505,7 @@ pmap_clear_reference(pg)
 
 /*
  * pmap_is_referenced(pa)
- *	returns TRUE if the given physical page has been referenced 
+ *	returns TRUE if the given physical page has been referenced
  *	since the last call to pmap_clear_reference().
  */
 boolean_t
@@ -1577,7 +1577,7 @@ pmap_kenter_pa(va, pa, prot)
 	simple_lock(&pmap_kernel()->pmap_lock);
 
 	pmap_enter_pv(pmap_kernel(), va, pmap_prot(pmap_kernel(), prot),
-		      tlbbtop(pa), pmap_find_pv(pa));
+	    tlbbtop(pa), pmap_find_pv(pa));
 	pmap_kernel()->pmap_stats.resident_count++;
 	pmap_kernel()->pmap_stats.wired_count++;
 
