@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 1998/03/02 07:33:01 johns Exp $
+#	$OpenBSD: Makefile,v 1.9 2000/02/19 15:38:24 deraadt Exp $
 #	$NetBSD: Makefile,v 1.2 1995/09/30 21:43:38 pk Exp $
 
 .PATH:	${.CURDIR}/../common
@@ -14,7 +14,7 @@ CFLAGS=	-O2 -I${.CURDIR}/../common -I${.CURDIR}/../../../../arch \
 	-I${.CURDIR}/../../../.. -I${.CURDIR}/../../../../lib/libsa ${DEFS}
 
 ${PROG}: ${OBJS} ${LIBS}
-	${LD} -N -T ${RELOC} -e start ${OBJS} ${LIBSA} ${LIBKERN} ${LIBZ} `cc -print-libgcc-file-name`
+	${LD} -N -T ${RELOC2} -e start ${OBJS} ${LIBSA} ${LIBKERN} ${LIBZ} `cc -print-libgcc-file-name`
 	# convert to Sun magic
 	@size a.out
 	(echo -n 01 | tr 01 '\01\03'; tail +3c a.out) > ${.TARGET}
