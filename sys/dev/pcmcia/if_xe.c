@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.13 2000/04/24 21:10:09 niklas Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.14 2000/04/24 21:15:33 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -466,10 +466,8 @@ xe_pcmcia_detach(dev, flags)
 	int rv = 0;
 
 	for (msc = LIST_FIRST(&sc->sc_mii.mii_phys); msc;
-	    msc = LIST_FIRST(&sc->sc_mii.mii_phys)) {
-		LIST_REMOVE(msc, mii_list);
-		rv |= config_detach(&msc->mii_dev, flags);
-	}
+	    msc = LIST_FIRST(&sc->sc_mii.mii_phys))
+		rv |= mii_detach(msc, flags);
 
 	pcmcia_io_unmap(psc->sc_pf, psc->sc_io_window);
 	pcmcia_io_free(psc->sc_pf, &psc->sc_pcioh);
