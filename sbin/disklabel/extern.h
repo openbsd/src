@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 2004/10/01 04:08:45 jsg Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 2005/01/07 21:58:14 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Theo de Raadt <deraadt@openbsd.org>
@@ -18,7 +18,8 @@
 
 u_short	dkcksum(struct disklabel *);
 int	checklabel(struct disklabel *);
-void	display(FILE *, struct disklabel *, char);
+double	scale(u_int32_t, char, struct disklabel *);
+void	display(FILE *, struct disklabel *, char **, char, int, u_int32_t);
 void	display_partition(FILE *, struct disklabel *, char **, int, char);
 
 struct disklabel *readlabel(int);

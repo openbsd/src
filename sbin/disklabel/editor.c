@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.98 2004/12/11 07:28:05 otto Exp $	*/
+/*	$OpenBSD: editor.c,v 1.99 2005/01/07 21:58:14 otto Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.98 2004/12/11 07:28:05 otto Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.99 2005/01/07 21:58:14 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,6 @@ void	editor_add(struct disklabel *, char **, u_int32_t *, char *);
 void	editor_change(struct disklabel *, u_int32_t *, char *);
 void	editor_countfree(struct disklabel *, u_int32_t *);
 void	editor_delete(struct disklabel *, char **, u_int32_t *, char *);
-void	editor_display(struct disklabel *, char **, u_int32_t *, char);
 void	editor_help(char *);
 void	editor_modify(struct disklabel *, char **, u_int32_t *, char *);
 void	editor_name(struct disklabel *, char **, char *);
@@ -289,8 +288,8 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 			break;
 
 		case 'p':
-			editor_display(&label, mountpoints, &freesectors,
-			    arg ? *arg : 0);
+			display(stdout, &label, mountpoints, arg ? *arg : 0, 1,
+			    freesectors);
 			break;
 
 		case 'M': {
@@ -359,7 +358,7 @@ editor(struct disklabel *lp, int f, char *dev, char *fstabfile)
 			if ((fp = fopen(arg, "w")) == NULL) {
 				warn("cannot open %s", arg);
 			} else {
-				display(fp, &label, 0);
+				display(fp, &label, NULL, 0, 0, 0);
 				(void)fclose(fp);
 			}
 			break;
@@ -783,33 +782,6 @@ editor_delete(struct disklabel *lp, char **mp, u_int32_t *freep, char *p)
 		free(mp[c]);
 		mp[c] = NULL;
 	}
-}
-
-/*
- * Simplified display() for use with the builtin editor.
- */
-void
-editor_display(struct disklabel *lp, char **mp, u_int32_t *freep, char unit)
-{
-	int i;
-
-	printf("device: %s\n", specname);
-	printf("type: %s\n", dktypenames[lp->d_type]);
-	printf("disk: %.*s\n", (int)sizeof(lp->d_typename), lp->d_typename);
-	printf("label: %.*s\n", (int)sizeof(lp->d_packname), lp->d_packname);
-	printf("bytes/sector: %u\n", lp->d_secsize);
-	printf("sectors/track: %u\n", lp->d_nsectors);
-	printf("tracks/cylinder: %u\n", lp->d_ntracks);
-	printf("sectors/cylinder: %u\n", lp->d_secpercyl);
-	printf("cylinders: %u\n", lp->d_ncylinders);
-	printf("total sectors: %u\n", lp->d_secperunit);
-	printf("free sectors: %u\n", *freep);
-	printf("rpm: %hu\n", lp->d_rpm);
-	printf("\n%hu partitions:\n", lp->d_npartitions);
-	printf("#    %13.13s %13.13s  fstype [fsize bsize  cpg]\n",
-	    "size", "offset");
-	for (i = 0; i < lp->d_npartitions; i++)
-		display_partition(stdout, lp, mp, i, unit);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.93 2004/10/04 15:09:41 otto Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.94 2005/01/07 21:58:14 otto Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -39,7 +39,7 @@ static const char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.93 2004/10/04 15:09:41 otto Exp $";
+static const char rcsid[] = "$OpenBSD: disklabel.c,v 1.94 2005/01/07 21:58:14 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -280,7 +280,7 @@ main(int argc, char *argv[])
 		if (tflag)
 			makedisktab(stdout, lp);
 		else
-			display(stdout, lp, print_unit);
+			display(stdout, lp, NULL, print_unit, 0, 0);
 		error = checklabel(lp);
 		break;
 	case RESTORE:
@@ -965,6 +965,29 @@ makedisktab(FILE *f, struct disklabel *lp)
 	(void)fflush(f);
 }
 
+double
+scale(u_int32_t sz, char unit, struct disklabel *lp)
+{
+	double fsz;
+
+	fsz = (double)sz * lp->d_secsize;
+
+	switch (unit) {
+	case 'B':
+		return fsz;
+	case 'C':
+		return fsz / lp->d_secsize / lp->d_secpercyl;
+	case 'K':
+		return fsz / 1024;
+	case 'M':
+		return fsz / (1024 * 1024);
+	case 'G':
+		return fsz / (1024 * 1024 * 1024);
+	default:
+		return -1.0;
+	}
+}
+
 /*
  * Display a particular partition.
  */
@@ -975,36 +998,8 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 	volatile struct partition *pp = &lp->d_partitions[i];
 	double p_size, p_offset;
 
-	unit = toupper(unit);
-	p_size = -1.0;			/* no conversion by default */
-	p_offset = 0.0;
-	switch (unit) {
-	case 'B':
-		p_size = (double)pp->p_size * lp->d_secsize;
-		p_offset = (double)pp->p_offset * lp->d_secsize;
-		break;
-
-	case 'C':
-		p_size = (double)pp->p_size / lp->d_secpercyl;
-		p_offset = (double)pp->p_offset / lp->d_secpercyl;
-		break;
-
-	case 'K':
-		p_size = (double)pp->p_size / (1024 / lp->d_secsize);
-		p_offset = (double)pp->p_offset / (1024 / lp->d_secsize);
-		break;
-
-	case 'M':
-		p_size = (double)pp->p_size / ((1024*1024) / lp->d_secsize);
-		p_offset = (double)pp->p_offset / ((1024*1024) / lp->d_secsize);
-		break;
-
-	case 'G':
-		p_size = (double)pp->p_size / ((1024*1024*1024) / lp->d_secsize);
-		p_offset = (double)pp->p_offset / ((1024*1024*1024) / lp->d_secsize);
-		break;
-	}
-
+	p_size = scale(pp->p_size, unit, lp);
+	p_offset = scale(pp->p_offset, unit, lp);
 	if (pp->p_size) {
 		if (p_size < 0)
 			fprintf(f, "  %c: %13u %13u ", 'a' + i,
@@ -1058,51 +1053,78 @@ display_partition(FILE *f, struct disklabel *lp, char **mp, int i,
 }
 
 void
-display(FILE *f, struct disklabel *lp, char unit)
+display(FILE *f, struct disklabel *lp, char **mp, char unit, int edit,
+     u_int32_t fr)
 {
 	int i, j;
+	double d;
 
-	fprintf(f, "# %s:\n", specname);
+	unit = toupper(unit);
+	if (edit)
+		fprintf(f, "device: %s\n", specname);
+	else
+		fprintf(f, "# %s:\n", specname);
+
 	if ((unsigned) lp->d_type < DKMAXTYPES)
 		fprintf(f, "type: %s\n", dktypenames[lp->d_type]);
 	else
 		fprintf(f, "type: %d\n", lp->d_type);
 	fprintf(f, "disk: %.*s\n", (int)sizeof(lp->d_typename), lp->d_typename);
 	fprintf(f, "label: %.*s\n", (int)sizeof(lp->d_packname), lp->d_packname);
-	fprintf(f, "flags:");
-	if (lp->d_flags & D_REMOVABLE)
-		fprintf(f, " removable");
-	if (lp->d_flags & D_ECC)
-		fprintf(f, " ecc");
-	if (lp->d_flags & D_BADSECT)
-		fprintf(f, " badsect");
-	putc('\n', f);
+	if (!edit) {
+		fprintf(f, "flags:");
+		if (lp->d_flags & D_REMOVABLE)
+			fprintf(f, " removable");
+		if (lp->d_flags & D_ECC)
+			fprintf(f, " ecc");
+		if (lp->d_flags & D_BADSECT)
+			fprintf(f, " badsect");
+		putc('\n', f);
+	}
 	fprintf(f, "bytes/sector: %u\n", lp->d_secsize);
 	fprintf(f, "sectors/track: %u\n", lp->d_nsectors);
 	fprintf(f, "tracks/cylinder: %u\n", lp->d_ntracks);
 	fprintf(f, "sectors/cylinder: %u\n", lp->d_secpercyl);
 	fprintf(f, "cylinders: %u\n", lp->d_ncylinders);
-	fprintf(f, "total sectors: %u\n", lp->d_secperunit);
+	d = scale(lp->d_secperunit, unit, lp);
+	if (d < 0)
+		fprintf(f, "total sectors: %u\n", lp->d_secperunit);
+	else
+		fprintf(f, "total bytes: %.*f%c\n", unit == 'B' ? 0 : 1,
+		    d, unit);
+
+	if (edit) {
+		d = scale(fr, unit, lp);
+		if (d < 0)
+			fprintf(f, "free sectors: %u\n", fr);
+		else
+			fprintf(f, "free bytes: %.*f%c\n", unit == 'B' ? 0 : 1,
+			    d, unit);
+	}
 	fprintf(f, "rpm: %hu\n", lp->d_rpm);
-	fprintf(f, "interleave: %hu\n", lp->d_interleave);
-	fprintf(f, "trackskew: %hu\n", lp->d_trackskew);
-	fprintf(f, "cylinderskew: %hu\n", lp->d_cylskew);
-	fprintf(f, "headswitch: %u\t\t# microseconds\n", lp->d_headswitch);
-	fprintf(f, "track-to-track seek: %u\t# microseconds\n",
-	    lp->d_trkseek);
-	fprintf(f, "drivedata: ");
-	for (i = NDDATA - 1; i >= 0; i--)
-		if (lp->d_drivedata[i])
-			break;
-	if (i < 0)
-		i = 0;
-	for (j = 0; j <= i; j++)
-		fprintf(f, "%d ", lp->d_drivedata[j]);
-	fprintf(f, "\n\n%hu partitions:\n", lp->d_npartitions);
+	if (!edit) {
+		fprintf(f, "interleave: %hu\n", lp->d_interleave);
+		fprintf(f, "trackskew: %hu\n", lp->d_trackskew);
+		fprintf(f, "cylinderskew: %hu\n", lp->d_cylskew);
+		fprintf(f, "headswitch: %u\t\t# microseconds\n",
+		    lp->d_headswitch);
+		fprintf(f, "track-to-track seek: %u\t# microseconds\n",
+		    lp->d_trkseek);
+		fprintf(f, "drivedata: ");
+		for (i = NDDATA - 1; i >= 0; i--)
+			if (lp->d_drivedata[i])
+				break;
+		if (i < 0)
+			i = 0;
+		for (j = 0; j <= i; j++)
+			fprintf(f, "%d ", lp->d_drivedata[j]);
+		fprintf(f, "\n");
+	}
+	fprintf(f, "\n%hu partitions:\n", lp->d_npartitions);
 	fprintf(f, "#    %13.13s %13.13s  fstype [fsize bsize  cpg]\n",
 	    "size", "offset");
 	for (i = 0; i < lp->d_npartitions; i++)
-		display_partition(f, lp, NULL, i, unit);
+		display_partition(f, lp, mp, i, unit);
 	fflush(f);
 }
 
@@ -1119,7 +1141,7 @@ edit(struct disklabel *lp, int f)
 		warn("%s", tmpfil);
 		return (1);
 	}
-	display(fp, lp, 0);
+	display(fp, lp, NULL, 0, 0, 0);
 	fprintf(fp, "\n# Notes:\n");
 	fprintf(fp,
 "# Up to 16 partitions are valid, named from 'a' to 'p'.  Partition 'a' is\n"
