@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.16 2002/11/14 02:31:46 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.17 2003/03/28 00:16:12 krw Exp $ */
 /*-------------------------------------------------------------------------
  *
  * Device driver for the INI-9XXXU/UW or INIC-940/950  PCI SCSI Controller.
@@ -255,16 +255,16 @@ iha_scsi_cmd(xs)
 
 	if (pScb->SCB_BufLen > 0) {
 #ifdef TFS
-		if (xs->flags & SCSI_DATA_UIO)
+		if (pScb->SCB_Flags & SCSI_DATA_UIO)
 			error = bus_dmamap_load_uio(sc->sc_dmat,
 			    pScb->SCB_Dmamap, (struct uio *)xs->data,
-			    (xs->flags & SCSI_NOSLEEP) ?
+			    (pScb->SCB_Flags & SCSI_NOSLEEP) ?
 			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 		else
 #endif /* TFS */
 			error = bus_dmamap_load(sc->sc_dmat, pScb->SCB_Dmamap,
 			    xs->data, pScb->SCB_BufLen, NULL,
-			    (xs->flags & SCSI_NOSLEEP) ?
+			    (pScb->SCB_Flags & SCSI_NOSLEEP) ?
 			    BUS_DMA_NOWAIT : BUS_DMA_WAITOK);
 
 		if (error) {
@@ -314,7 +314,7 @@ iha_scsi_cmd(xs)
 	 * But, timeout_add() ONLY if we are not polling.
 	 */
 	timeout_set(&xs->stimeout, iha_timeout, pScb);
-	if ((xs->flags & SCSI_POLL) == 0)
+	if ((pScb->SCB_Flags & SCSI_POLL) == 0)
 		timeout_add(&xs->stimeout, (xs->timeout/1000) * hz);
 
 	iha_exec_scb(sc, pScb);
@@ -810,10 +810,12 @@ iha_push_sense_request(sc, pScb)
 	struct iha_softc *sc;
 	struct iha_scsi_req_q *pScb;
 {
+	struct scsi_sense *sensecmd;
+
 	pScb->SCB_BufLen   = pScb->SCB_SenseLen;
 	pScb->SCB_BufPAddr = pScb->SCB_SensePAddr;
 
-	pScb->SCB_Flags &= ~(FLAG_SG | FLAG_DIR);
+	pScb->SCB_Flags &= SCSI_POLL;
 	pScb->SCB_Flags |= FLAG_RSENS | SCSI_DATA_IN;
 
 	pScb->SCB_Ident &= ~MSG_IDENTIFY_DISCFLAG;
@@ -822,10 +824,13 @@ iha_push_sense_request(sc, pScb)
 	pScb->SCB_TaStat = SCSI_OK;
 
 	bzero(pScb->SCB_CDB, sizeof(pScb->SCB_CDB));
+	bzero(&pScb->SCB_ScsiSenseData, sizeof(pScb->SCB_ScsiSenseData)); 
 
-	pScb->SCB_CDBLen = 6;
-	pScb->SCB_CDB[0] = REQUEST_SENSE;
-	pScb->SCB_CDB[4] = pScb->SCB_SenseLen;
+	sensecmd = (struct scsi_sense *)pScb->SCB_CDB;
+	pScb->SCB_CDBLen = sizeof(*sensecmd);
+	sensecmd->opcode = REQUEST_SENSE;
+	sensecmd->byte2  = pScb->SCB_Xs->sc_link->lun << 5;
+	sensecmd->length = sizeof(pScb->SCB_ScsiSenseData);
 
 	if ((pScb->SCB_Flags & SCSI_POLL) == 0)
 		timeout_add(&pScb->SCB_Xs->stimeout,
@@ -2402,7 +2407,17 @@ iha_done_scb(sc, pScb)
 	struct scsi_xfer *xs = pScb->SCB_Xs;
 
 	if (xs != NULL) {
+		timeout_del(&xs->stimeout);
+
 		xs->status = pScb->SCB_TaStat;
+
+		if (pScb->SCB_BufLen > 0) {
+			bus_dmamap_sync(sc->sc_dmat, pScb->SCB_Dmamap,
+			    0, pScb->SCB_Dmamap->dm_mapsize,
+			    ((pScb->SCB_Flags & SCSI_DATA_IN) ? 
+				BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
+			bus_dmamap_unload(sc->sc_dmat, pScb->SCB_Dmamap);
+		}
 
 		switch (pScb->SCB_HaStat) {
 		case HOST_OK:
@@ -2463,15 +2478,6 @@ iha_done_scb(sc, pScb)
 			break;
 		}
 
-		if (xs->datalen > 0) {
-			bus_dmamap_sync(sc->sc_dmat, pScb->SCB_Dmamap,
-			    0, pScb->SCB_Dmamap->dm_mapsize,
-			    ((xs->flags & SCSI_DATA_IN) ? 
-				BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE));
-			bus_dmamap_unload(sc->sc_dmat, pScb->SCB_Dmamap);
-		}
-
-		timeout_del(&xs->stimeout);
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
 	}
