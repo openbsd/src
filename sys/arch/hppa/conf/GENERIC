@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.14 2002/12/19 00:24:40 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.15 2003/01/08 02:11:38 krw Exp $
 #
 # Diskless kernel config
 #
@@ -92,9 +92,9 @@ lpt0	at gsc? irq 7	# both com and lpt are on WD16C552
 ie0	at gsc0 irq 8	# 82C5[89]6 ether
 ie1	at gsc1 irq 8
 #tms*	at gsc? irq 10	# TMS380C26 Network Controller (either 802.3 or 802.5)
-#siop0	at gsc? irq 9	# NCR 53C700/710
-#siop1	at gsc? irq 3	# NCR 53C720 (Fast/Wide)
-#scsibus* at siop?
+osiop0	at gsc? irq 9	# NCR 53C700/710
+#osiop1	at gsc? irq 3	# NCR 53C720 (Fast/Wide)
+scsibus* at osiop?
 #aone*	at gsc? irq 13	# Audio Type 1 (PSB 2160-N)
 #audio*	at aone?
 #harmony* at gsc? irq 13	# Audio Type 2 (CS4215/AD1849)
@@ -131,7 +131,7 @@ ie1	at gsc1 irq 8
 
 #fd*	at fdc?	drive ?	# floppy drives
 
-#sd*	at scsibus? target ? lun ?
+sd*	at scsibus? target ? lun ?
 #st*	at scsibus? target ? lun ?
 #cd*	at scsibus? target ? lun ?
 #ch*	at scsibus? target ? lun ?
