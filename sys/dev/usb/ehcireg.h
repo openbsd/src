@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehcireg.h,v 1.9 2004/07/07 00:58:42 deraadt Exp $ */
+/*	$OpenBSD: ehcireg.h,v 1.10 2004/08/11 06:57:42 dlg Exp $ */
 /*	$NetBSD: ehcireg.h,v 1.17 2004/06/23 06:45:56 mycroft Exp $	*/
 
 /*
@@ -172,9 +172,9 @@
 #define EHCI_FLALIGN_ALIGN	0x1000
 
 /* No data structure may cross a page boundary. */
-#define EHCI_PAGE_SIZE 0x1000
-#define EHCI_PAGE(x) ((x) &~ 0xfff)
-#define EHCI_PAGE_OFFSET(x) ((x) & 0xfff)
+#define EHCI_PAGE_SIZE		0x1000
+#define EHCI_PAGE(x)		((x) &~ 0xfff)
+#define EHCI_PAGE_OFFSET(x)	((x) & 0xfff)
 
 typedef u_int32_t ehci_link_t;
 #define EHCI_LINK_TERMINATE	0x00000001
@@ -186,10 +186,11 @@ typedef u_int32_t ehci_link_t;
 #define EHCI_LINK_ADDR(x)	((x) &~ 0x1f)
 
 typedef u_int32_t ehci_physaddr_t;
+#define	EHCI_BUFPTR_MASK	0xfffff000
 
 /* Isochronous Transfer Descriptor */
-#define EHCI_ITD_NTRANS 8
-#define EHCI_ITD_NBUFFERS 7
+#define EHCI_ITD_NTRANS		8
+#define EHCI_ITD_NBUFFERS	7
 typedef struct {
 	ehci_link_t	itd_next;
 	u_int32_t	itd_trans[EHCI_ITD_NTRANS];
@@ -197,44 +198,44 @@ typedef struct {
 #define EHCI_ITD_SET_OFFSET(x)	(x)
 #define EHCI_ITD_GET_PG(x)	(((x) >> 12) & 0x7) /* buffer page */
 #define EHCI_ITD_SET_PG(x)	((x) << 12)
-#define EHCI_QTD_GET_IOC(x)	(((x) >> 15) &  0x1) /* interrupt on complete */
-#define EHCI_QTD_IOC		0x00008000
+#define EHCI_ITD_GET_IOC(x)	(((x) >> 15) &  0x1) /* interrupt on complete */
+#define EHCI_ITD_IOC		0x00008000
 #define EHCI_ITD_GET_XLEN(x)	(((x) >> 16) & 0xfff) /* transaction length */
 #define EHCI_ITD_SET_XLEN(x)	((x) << 12)
 #define EHCI_ITD_GET_STATUS(x)	(((x) >> 28) & 0xf) /* duh */
 #define EHCI_ITD_SET_STATUS(x)	((x) << 28)
-#define  ECHI_ITD_ACTIVE	0x8
-#define  ECHI_ITD_BUFERR	0x4
-#define  ECHI_ITD_BABBLE	0x2
-#define  ECHI_ITD_XACTERR	0x1
+#define  EHCI_ITD_ACTIVE	0x8
+#define  EHCI_ITD_BUFERR	0x4
+#define  EHCI_ITD_BABBLE	0x2
+#define  EHCI_ITD_XACTERR	0x1
 	ehci_physaddr_t	itd_buffer[EHCI_ITD_NBUFFERS];
 /* page (buffer) 0 */
-#define EHCI_ITD_GET_ADDR	(((x) >>  0) & 0x7f) /* endpoint addr */
-#define EHCI_ITD_SET_ADDR	(x)
-#define EHCI_ITD_GET_ENDPT	(((x) >>  8) & 0xf) /* endpoint no */
-#define EHCI_ITD_SET_ENDPT	((x) <<  8)
+#define EHCI_ITD_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
+#define EHCI_ITD_SET_ADDR(x)	(x)
+#define EHCI_ITD_GET_ENDPT(x)	(((x) >>  8) & 0xf) /* endpoint no */
+#define EHCI_ITD_SET_ENDPT(x)	((x) <<  8)
 /* page (buffer) 2 */
-#define EHCI_ITD_GET_MPS	(((x) >>  0) & 0x7ff) /* max packet size */
-#define EHCI_ITD_SET_MPS	(x)
+#define EHCI_ITD_GET_MPS(x)	(((x) >>  0) & 0x7ff) /* max packet size */
+#define EHCI_ITD_SET_MPS(x)	(x)
 #define EHCI_ITD_DIRECTION	0x00000800
 /* page (buffer) 3 */
-#define EHCI_ITD_GET_MULTI	(((x) >>  0) & 0x3) /* trans per microframe */
-#define EHCI_ITD_SET_MULTI	(x)
+#define EHCI_ITD_GET_MULTI(x)	(((x) >>  0) & 0x3) /* trans per microframe */
+#define EHCI_ITD_SET_MULTI(x)	(x)
 	ehci_physaddr_t	itd_buffer_hi[EHCI_ITD_NBUFFERS]; /* 64bit */
 } ehci_itd_t;
-#define EHCI_ITD_ALIGN 32
+#define EHCI_ITD_ALIGN		32
 
 /* Split Transaction Isochronous Transfer Descriptor */
-#define EHCI_SITD_NBUFFERS 2
+#define EHCI_SITD_NBUFFERS	2
 typedef struct {
 	ehci_link_t	sitd_next;
 	u_int32_t	sitd_endp;
-#define EHCI_SITD_GET_ADDR	(((x) >>  0) & 0x7f) /* endpoint addr */
-#define EHCI_SITD_SET_ADDR	(x)
-#define EHCI_SITD_GET_ENDPT	(((x) >>  8) & 0xf) /* endpoint no */
-#define EHCI_SITD_SET_ENDPT	((x) <<  8)
-#define EHCI_SITD_GET_HUBA	(((x) >> 16) & 0x7f) /* hub address */
-#define EHCI_SITD_SET_HUBA	((x) << 16)
+#define EHCI_SITD_GET_ADDR(x)	(((x) >>  0) & 0x7f) /* endpoint addr */
+#define EHCI_SITD_SET_ADDR(x)	(x)
+#define EHCI_SITD_GET_ENDPT(x)	(((x) >>  8) & 0xf) /* endpoint no */
+#define EHCI_SITD_SET_ENDPT(x)	((x) <<  8)
+#define EHCI_SITD_GET_HUBA(x)	(((x) >> 16) & 0x7f) /* hub address */
+#define EHCI_SITD_SET_HUBA(x)	((x) << 16)
 #define EHCI_SITD_GET_PORT(x)	(((x) >> 23) & 0x7f) /* hub port */
 #define EHCI_SITD_SET_PORT(x)	((x) << 23)
 	u_int32_t	sitd_sched;
@@ -260,7 +261,7 @@ typedef struct {
 #define EHCI_SITD_IOC		0x80000000 /* interrupt on complete */
 	ehci_physaddr_t	sitd_buffer[EHCI_SITD_NBUFFERS];
 /* page (buffer) 0 */
-#define ECHI_SITD_GET_OFFSET(x)	(((x) >>  0) & 0xfff) /* current offset */
+#define EHCI_SITD_GET_OFFSET(x)	(((x) >>  0) & 0xfff) /* current offset */
 /* page (buffer) 1 */
 #define EHCI_SITD_GET_TCOUNT(x)	(((x) >>  0) & 0x3) /* transaction count */
 #define EHCI_SITD_GET_TP(x)	(((x) >>  3) & 0x3) /* transaction position */
@@ -272,10 +273,10 @@ typedef struct {
 	ehci_link_t	sitd_back;
 	ehci_physaddr_t sitd_buffer_hi[EHCI_SITD_NBUFFERS]; /* 64bit */
 } ehci_sitd_t;
-#define EHCI_SITD_ALIGN 32
+#define EHCI_SITD_ALIGN		32
 
 /* Queue Element Transfer Descriptor */
-#define EHCI_QTD_NBUFFERS 5
+#define EHCI_QTD_NBUFFERS	5
 typedef struct {
 	ehci_link_t	qtd_next;
 	ehci_link_t	qtd_altnext;
@@ -309,7 +310,7 @@ typedef struct {
 	ehci_physaddr_t	qtd_buffer[EHCI_QTD_NBUFFERS];
 	ehci_physaddr_t qtd_buffer_hi[EHCI_QTD_NBUFFERS];
 } ehci_qtd_t;
-#define EHCI_QTD_ALIGN 32
+#define EHCI_QTD_ALIGN		32
 
 /* Queue Head */
 typedef struct {
@@ -352,13 +353,13 @@ typedef struct {
 	ehci_link_t	qh_curqtd;
 	ehci_qtd_t	qh_qtd;
 } ehci_qh_t;
-#define EHCI_QH_ALIGN 32
+#define EHCI_QH_ALIGN		32
 
 /* Periodic Frame Span Traversal Node */
 typedef struct {
 	ehci_link_t	fstn_link;
 	ehci_link_t	fstn_back;
 } ehci_fstn_t;
-#define EHCI_FSTN_ALIGN 32
+#define EHCI_FSTN_ALIGN		32
 
 #endif /* _DEV_PCI_EHCIREG_H_ */
