@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.6 1996/05/10 03:15:15 chuck Exp $ */
+/*	$OpenBSD: disksubr.c,v 1.7 1996/05/29 16:37:17 chuck Exp $ */
 
 /*
  * Copyright (c) 1995 Dale Rahn.
@@ -32,9 +32,15 @@
 
 #include <sys/param.h>
 #include <sys/buf.h>
+#include <sys/device.h>
 #define DKTYPENAMES
 #include <sys/disklabel.h>
 #include <sys/disk.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
+#include <machine/autoconf.h>
 
 #define b_cylin b_resid
 
@@ -57,6 +63,40 @@ dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
+	struct scsibus_softc *sbsc;
+	int target, lun;
+
+	if (bootpart == -1) /* ignore flag from controller driver? */
+		return;
+
+	/*
+ 	 * scsi: sd,cd
+ 	 */
+
+	if (strncmp("sd", dev->dv_xname, 2) == 0 ||
+	    strncmp("cd", dev->dv_xname, 2) == 0) {
+
+        	sbsc = (struct scsibus_softc *)dev->dv_parent;
+		if (cputyp == CPU_147) {
+			target = bootctrllun % 8; /* XXX: 147 only */
+			lun = bootdevlun; /* XXX: 147, untested */
+		} else {
+			/* 
+		 	 * XXX: on the 167: 
+		 	 * ignore bootctrllun
+		 	 */
+		 	target = bootdevlun / 10;
+		 	lun = bootdevlun % 10;
+		}
+
+        	if (sbsc->sc_link[target][lun] != NULL &&
+            	    sbsc->sc_link[target][lun]->device_softc == (void *)dev) {
+			bootdv = dev;
+                	return;
+		}
+        }
+
+	return;
 }
 
 /*
