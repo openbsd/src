@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.15 1997/01/31 10:32:21 deraadt Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.16 1997/02/13 23:33:26 niklas Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -152,20 +152,20 @@ void	ccdattach __P((int));
 void	ccdiodone __P((struct buf *));
 int	ccdsize __P((dev_t));
 
-static	void ccdstart __P((struct ccd_softc *, struct buf *));
-static	void ccdinterleave __P((struct ccd_softc *, int));
-static	void ccdintr __P((struct ccd_softc *, struct buf *));
-static	int ccdinit __P((struct ccddevice *, char **, struct proc *));
-static	int ccdlookup __P((char *, struct proc *p, struct vnode **));
-static	void ccdbuffer __P((struct ccd_softc *, struct buf *,
+void	ccdstart __P((struct ccd_softc *, struct buf *));
+void	ccdinterleave __P((struct ccd_softc *, int));
+void	ccdintr __P((struct ccd_softc *, struct buf *));
+int	ccdinit __P((struct ccddevice *, char **, struct proc *));
+int	ccdlookup __P((char *, struct proc *p, struct vnode **));
+void	ccdbuffer __P((struct ccd_softc *, struct buf *,
 		daddr_t, caddr_t, long, struct ccdbuf **));
-static	void ccdgetdisklabel __P((dev_t));
-static	void ccdmakedisklabel __P((struct ccd_softc *));
-static	int ccdlock __P((struct ccd_softc *));
-static	void ccdunlock __P((struct ccd_softc *));
+void	ccdgetdisklabel __P((dev_t));
+void	ccdmakedisklabel __P((struct ccd_softc *));
+int	ccdlock __P((struct ccd_softc *));
+void	ccdunlock __P((struct ccd_softc *));
 
 #ifdef DEBUG
-static	void printiinfo __P((struct ccdiinfo *));
+void	printiinfo __P((struct ccdiinfo *));
 #endif
 
 /* Non-private for the benefit of libkvm. */
@@ -205,7 +205,7 @@ ccdattach(num)
 	bzero(ccddevs, num * sizeof(struct ccddevice));
 }
 
-static int
+int
 ccdinit(ccd, cpaths, p)
 	struct ccddevice *ccd;
 	char **cpaths;
@@ -418,7 +418,7 @@ ccdinit(ccd, cpaths, p)
 	return (0);
 }
 
-static void
+void
 ccdinterleave(cs, unit)
 	register struct ccd_softc *cs;
 	int unit;
@@ -677,7 +677,7 @@ done:
 	biodone(bp);
 }
 
-static void
+void
 ccdstart(cs, bp)
 	register struct ccd_softc *cs;
 	register struct buf *bp;
@@ -733,7 +733,7 @@ ccdstart(cs, bp)
 /*
  * Build a component buffer header.
  */
-static void
+void
 ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	register struct ccd_softc *cs;
 	struct buf *bp;
@@ -859,7 +859,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp)
 	}
 }
 
-static void
+void
 ccdintr(cs, bp)
 	register struct ccd_softc *cs;
 	register struct buf *bp;
@@ -1303,7 +1303,7 @@ ccddump(dev, blkno, va, size)
  * is a valid block device, and isn't being used by anyone else,
  * set *vpp to the file's vnode.
  */
-static int
+int
 ccdlookup(path, p, vpp)
 	char *path;
 	struct proc *p;
@@ -1361,7 +1361,7 @@ ccdlookup(path, p, vpp)
  * Read the disklabel from the ccd.  If one is not present, fake one
  * up.
  */
-static void
+void
 ccdgetdisklabel(dev)
 	dev_t dev;
 {
@@ -1418,7 +1418,7 @@ ccdgetdisklabel(dev)
  * Take care of things one might want to take care of in the event
  * that a disklabel isn't present.
  */
-static void
+void
 ccdmakedisklabel(cs)
 	struct ccd_softc *cs;
 {
@@ -1439,7 +1439,7 @@ ccdmakedisklabel(cs)
  * XXX
  * Several drivers do this; it should be abstracted and made MP-safe.
  */
-static int
+int
 ccdlock(cs)
 	struct ccd_softc *cs;
 {
@@ -1457,7 +1457,7 @@ ccdlock(cs)
 /*
  * Unlock and wake up any waiters.
  */
-static void
+void
 ccdunlock(cs)
 	struct ccd_softc *cs;
 {
@@ -1470,7 +1470,7 @@ ccdunlock(cs)
 }
 
 #ifdef DEBUG
-static void
+void
 printiinfo(ii)
 	struct ccdiinfo *ii;
 {
