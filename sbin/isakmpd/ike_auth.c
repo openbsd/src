@@ -1,4 +1,4 @@
-/*	$OpenBSD: ike_auth.c,v 1.55 2001/08/16 13:27:03 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.56 2001/08/16 13:49:50 ho Exp $	*/
 /*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
@@ -1209,7 +1209,6 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
 
   strncpy (filename, rdir, FILENAME_MAX - 1);
   filename[FILENAME_MAX - 1] = '\0';
-  base = filename + strlen (filename) - 1;
 
   /* Exchanges (and SAs) don't carry the ID in ISAKMP form */
   id -= ISAKMP_ID_TYPE_OFF;
@@ -1249,8 +1248,9 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
       /* Id is not NULL-terminated.  */
       id_len -= ISAKMP_ID_DATA_OFF;
       id_len = MIN (id_len, FILENAME_MAX - 1 - strlen (filename));
-      memcpy (base + strlen (addrstr), id + ISAKMP_ID_DATA_OFF, id_len);
-      *(base + strlen (addrstr) + id_len) = '\0';
+      base = filename + strlen (filename);
+      memcpy (base, id + ISAKMP_ID_DATA_OFF, id_len);
+      *(base + id_len) = '\0';
       addrstr = 0;
       break;
 
@@ -1271,9 +1271,14 @@ get_raw_key_from_file (int type, u_int8_t *id, size_t id_len, RSA **rsa)
 	  log_error ("get_raw_key_from_file: could not open \"%s\"", filename);
 	  goto out;
 	}
+      LOG_DBG((LOG_NEGOTIATION, 80, "get_raw_key_from_file: reading file %s",
+	       filename));
       *rsa = LC (PEM_read_RSAPublicKey, (fp, NULL, NULL, NULL));
       fclose (fp);
     }
+  else
+    LOG_DBG((LOG_NEGOTIATION, 50, "get_raw_key_from_file: file %s not found",
+	     filename));
   
  out:
   if (addrstr)
