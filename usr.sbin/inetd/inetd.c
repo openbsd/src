@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.33 1997/06/26 17:31:22 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.34 1997/07/08 20:31:14 kstailey Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.33 1997/06/26 17:31:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.34 1997/07/08 20:31:14 kstailey Exp $";
 #endif /* not lint */
 
 /*
@@ -368,16 +368,16 @@ main(argc, argv, envp)
 	memset((char *)&sv, 0, sizeof(sv));
 	sv.sv_mask = SIGBLOCK;
 	sv.sv_handler = retry;
-	sigvec(SIGALRM, &sv, (struct sigvec *)0);
+	sigvec(SIGALRM, &sv, NULL);
 	config(0);
 	sv.sv_handler = config;
-	sigvec(SIGHUP, &sv, (struct sigvec *)0);
+	sigvec(SIGHUP, &sv, NULL);
 	sv.sv_handler = reapchild;
-	sigvec(SIGCHLD, &sv, (struct sigvec *)0);
+	sigvec(SIGCHLD, &sv, NULL);
 	sv.sv_handler = goaway;
-	sigvec(SIGTERM, &sv, (struct sigvec *)0);
+	sigvec(SIGTERM, &sv, NULL);
 	sv.sv_handler = goaway;
-	sigvec(SIGINT, &sv, (struct sigvec *)0);
+	sigvec(SIGINT, &sv, NULL);
 
 	{
 		/* space for daemons to overwrite environment for ps */
@@ -401,8 +401,7 @@ main(argc, argv, envp)
 		(void) sigsetmask(0L);
 	    }
 	    readable = allsock;
-	    if ((n = select(maxsock + 1, &readable, (fd_set *)0,
-		(fd_set *)0, (struct timeval *)0)) <= 0) {
+	    if ((n = select(maxsock + 1, &readable, NULL, NULL, NULL)) <= 0) {
 		    if (n < 0 && errno != EINTR)
 			syslog(LOG_WARNING, "select: %m");
 		    sleep(1);
@@ -414,8 +413,7 @@ main(argc, argv, envp)
 		if (debug)
 			fprintf(stderr, "someone wants %s\n", sep->se_service);
 		if (!sep->se_wait && sep->se_socktype == SOCK_STREAM) {
-			ctrl = accept(sep->se_fd, (struct sockaddr *)0,
-			    (int *)0);
+			ctrl = accept(sep->se_fd, NULL, NULL);
 			if (debug)
 				fprintf(stderr, "accept, ctrl %d\n", ctrl);
 			if (ctrl < 0) {
@@ -444,12 +442,11 @@ main(argc, argv, envp)
 		dofork = (sep->se_bi == 0 || sep->se_bi->bi_fork);
 		if (dofork) {
 			if (sep->se_count++ == 0)
-			    (void)gettimeofday(&sep->se_time,
-			        (struct timezone *)0);
+			    (void)gettimeofday(&sep->se_time, NULL);
 			else if (sep->se_count >= sep->se_max) {
 				struct timeval now;
 
-				(void)gettimeofday(&now, (struct timezone *)0);
+				(void)gettimeofday(&now, NULL);
 				if (now.tv_sec - sep->se_time.tv_sec >
 				    CNT_INTVL) {
 					sep->se_time = now;
@@ -584,7 +581,7 @@ reapchild(sig)
 	register struct servtab *sep;
 
 	for (;;) {
-		pid = wait3(&status, WNOHANG, (struct rusage *)0);
+		pid = wait3(&status, WNOHANG, NULL);
 		if (pid <= 0)
 			break;
 		if (debug)
@@ -960,7 +957,7 @@ enter(cp)
 	int omask;
 
 	sep = (struct servtab *)malloc(sizeof (*sep));
-	if (sep == (struct servtab *)0) {
+	if (sep == NULL) {
 		syslog(LOG_ERR, "Out of memory.");
 		exit(-1);
 	}
@@ -1090,7 +1087,7 @@ more:
 		;
 #endif
 	if (cp == NULL)
-		return ((struct servtab *)0);
+		return (NULL);
 	memset((char *)sep, 0, sizeof *sep);
 	arg = skip(&cp);
 	if (arg == NULL) {
@@ -1374,7 +1371,7 @@ skip(cpp)
 	char *start;
 
 	if (*cpp == NULL)
-			return ((char *)0);
+			return (NULL);
 
 again:
 	while (*cp == ' ' || *cp == '\t')
@@ -1387,8 +1384,8 @@ again:
 		if (c == ' ' || c == '\t')
 			if ((cp = nextline(fconfig)))
 				goto again;
-		*cpp = (char *)0;
-		return ((char *)0);
+		*cpp = NULL;
+		return (NULL);
 	}
 	start = cp;
 	while (*cp && *cp != ' ' && *cp != '\t')
@@ -1406,7 +1403,7 @@ nextline(fd)
 	char *cp;
 
 	if (fgets(line, sizeof (line), fd) == NULL)
-		return ((char *)0);
+		return (NULL);
 	cp = strchr(line, '\n');
 	if (cp)
 		*cp = '\0';
@@ -1701,7 +1698,7 @@ machtime()
 {
 	struct timeval tv;
 
-	if (gettimeofday(&tv, (struct timezone *)0) < 0) {
+	if (gettimeofday(&tv, NULL) < 0) {
 		fprintf(stderr, "Unable to get time of day\n");
 		return (0L);
 	}
@@ -1748,7 +1745,7 @@ daytime_stream(s, sep)		/* Return human-readable time of day */
 	char buffer[256];
 	time_t time(), clock;
 
-	clock = time((time_t *) 0);
+	clock = time(NULL);
 
 	(void) sprintf(buffer, "%.24s\r\n", ctime(&clock));
 	(void) write(s, buffer, strlen(buffer));
