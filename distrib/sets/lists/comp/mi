@@ -262,8 +262,8 @@
 ./usr/include/dev/ofw
 ./usr/include/dev/ofw/openfirm.h
 ./usr/include/dev/pci
-./usr/include/dev/pci/aeonreg.h
-./usr/include/dev/pci/aeonvar.h
+./usr/include/dev/pci/hifn7751reg.h
+./usr/include/dev/pci/hifn7751var.h
 ./usr/include/dev/pci/brktree_reg.h
 ./usr/include/dev/pci/esoreg.h
 ./usr/include/dev/pci/esovar.h
@@ -3339,3 +3339,4 @@
 ./usr/share/mk/bsd.subdir.mk
 ./usr/share/mk/bsd.sys.mk
 ./var/db/libc.tags
+./usr/include/uvm/uvm_uio.h
