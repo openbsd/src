@@ -1,4 +1,4 @@
-/*     $OpenBSD: ipf.h,v 1.9 1999/02/05 05:58:42 deraadt Exp $      */
+/*     $OpenBSD: ipf.h,v 1.10 1999/07/05 20:12:43 kjell Exp $      */
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
  *
@@ -7,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ipf.h	1.12 6/5/96
- * $Id: ipf.h,v 1.9 1999/02/05 05:58:42 deraadt Exp $
+ * $Id: ipf.h,v 1.10 1999/07/05 20:12:43 kjell Exp $
  */
 
 #ifndef	__IPF_H__
@@ -53,7 +53,7 @@ extern	struct	frentry	*parse __P((char *));
 
 extern	void	printfr __P((struct frentry *));
 extern	void	binprint __P((struct frentry *)), initparse __P((void));
-extern	u_short	portnum __P((char *));
+extern	int	portnum __P((char *, u_short *));
 
 
 struct	ipopt_names	{
