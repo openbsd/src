@@ -41,7 +41,7 @@
 #include <ctype.h>
 
 #if !defined(lint) && defined(LIBC_SCCS)
-static	char	rcsid[] = "$Id: ipmon.c,v 1.9 1997/06/23 16:53:59 kstailey Exp $";
+static	char	rcsid[] = "$Id: ipmon.c,v 1.10 1997/07/22 17:00:05 kstailey Exp $";
 #endif
 
 #include "ip_fil_compat.h"
@@ -548,6 +548,8 @@ char *argv[];
 	if (!(opts & OPT_SYSLOG)) {
 		log = argv[optind] ? fopen(argv[optind], "a") : stdout;
 		setvbuf(log, NULL, _IONBF, 0);
+	} else {
+		daemon(0, 0);
 	}
 
 	if (flushed) {
