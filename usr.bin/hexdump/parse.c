@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.10 2002/03/14 06:51:42 mpech Exp $	*/
+/*	$OpenBSD: parse.c,v 1.11 2003/04/05 16:13:47 deraadt Exp $	*/
 /*	$NetBSD: parse.c,v 1.12 2001/12/07 13:37:39 bjh21 Exp $	*/
 
 /*
@@ -36,7 +36,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)parse.c	5.6 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: parse.c,v 1.10 2002/03/14 06:51:42 mpech Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.11 2003/04/05 16:13:47 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -219,6 +219,7 @@ rewrite(fs)
 	char *p1, *p2;
 	char savech, *fmtp, cs[3];
 	int nconv, prec;
+	size_t len;
 
 	nextpr = NULL;
 	prec = 0;
@@ -396,9 +397,9 @@ isint2:					switch(fu->bcnt) {
 			 */
 			savech = *p2;
 			p1[0] = '\0';
-			pr->fmt = emalloc(strlen(fmtp) + strlen(cs) + 1);
-			(void)strcpy(pr->fmt, fmtp);
-			(void)strcat(pr->fmt, cs);
+			len = strlen(fmtp) + strlen(cs) + 1;
+			pr->fmt = emalloc(len);
+			snprintf(pr->fmt, len, "%s%s", fmtp, cs);
 			*p2 = savech;
 			pr->cchar = pr->fmt + (p1 - fmtp);
 			fmtp = p2;
