@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.14 2004/09/27 17:40:24 pefo Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.15 2004/09/29 17:39:20 pefo Exp $	*/
 
 /*
  * Copyright (c) 2001-2004 Opsycon AB  (www.opsycon.se / www.opsycon.com)
@@ -1253,8 +1253,6 @@ pmap_enter_pv(pmap_t pmap, vaddr_t va, vm_page_t pg, u_int *npte)
 
 		stat_count(enter_stats.firstpv);
 
-		Mips_SyncDCachePage(pv->pv_va);
-
 		pv->pv_va = va;
 		pv->pv_flags = PV_CACHED;
 		pv->pv_pmap = pmap;
@@ -1353,6 +1351,7 @@ pmap_remove_pv(pmap_t pmap, vaddr_t va, paddr_t pa)
 			pmap_pv_free(npv);
 		} else {
 			pv->pv_pmap = NULL;
+			Mips_SyncDCachePage(pv->pv_va);
 		}
 		stat_count(remove_stats.pvfirst);
 	} else {
