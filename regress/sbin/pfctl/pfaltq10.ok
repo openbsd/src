@@ -1,0 +1,20 @@
+queue root_lo0 bandwidth 10Mb priority 0 hfsc( realtime 10Mb linkshare 10Mb ) {one, two}
+[ qid=1 ifname=lo0 ifbandwidth=10Mb ]
+queue  one bandwidth 1Mb hfsc( default linkshare 1Mb ) 
+[ qid=2 ifname=lo0 ifbandwidth=10Mb ]
+queue  two bandwidth 9Mb hfsc( linkshare 9Mb ) {three, four}
+[ qid=3 ifname=lo0 ifbandwidth=10Mb ]
+queue   three bandwidth 4.50Mb hfsc( linkshare 4.50Mb ) 
+[ qid=4 ifname=lo0 ifbandwidth=10Mb ]
+queue   four bandwidth 3.60Mb hfsc( linkshare 3.60Mb ) 
+[ qid=5 ifname=lo0 ifbandwidth=10Mb ]
+queue root_tun0 bandwidth 10Mb priority 0 hfsc( realtime 10Mb linkshare 10Mb ) {one, two}
+[ qid=1 ifname=tun0 ifbandwidth=10Mb ]
+queue  one bandwidth 1Mb hfsc( default linkshare 1Mb ) 
+[ qid=2 ifname=tun0 ifbandwidth=10Mb ]
+queue  two bandwidth 9Mb hfsc( linkshare 9Mb ) {three, four}
+[ qid=3 ifname=tun0 ifbandwidth=10Mb ]
+queue   three bandwidth 4.50Mb hfsc( linkshare 4.50Mb ) 
+[ qid=4 ifname=tun0 ifbandwidth=10Mb ]
+queue   four bandwidth 3.60Mb hfsc( linkshare 3.60Mb ) 
+[ qid=5 ifname=tun0 ifbandwidth=10Mb ]

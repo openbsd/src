@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.122 2003/04/05 21:50:14 henning Exp $
+# $OpenBSD: Makefile,v 1.123 2003/04/12 20:11:30 henning Exp $
 
 # TARGETS
 # pf: feed pfNN.in through pfctl and check wether the output matches pfNN.ok
@@ -19,7 +19,7 @@ PFSIMPLE=1 2
 PFSETUP=1 2 3
 PFLOAD=1 2 3 4 5 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 23 24 25 26 27 28 29
 PFLOAD+=30 31 32 34 36 38 39 40 44 46 47 49 54 56 60 61
-PFALTQ=1 2 3 4 5 6 7 8 9
+PFALTQ=1 2 3 4 5 6 7 8 9 10
 # disabled; no altq in anchors
 # PFLOAD+=33 35 37 42 43 45 51 58 59
 # disabled; no table def in anchors
