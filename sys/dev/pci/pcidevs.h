@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.670 2003/09/23 03:37:23 jason Exp 
+ *		OpenBSD: pcidevs,v 1.671 2003/09/25 07:11:15 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -435,6 +435,7 @@
 
 #define	PCI_PRODUCT_ADP2_2940U2	0x0010		/* AHA-2940U2 U2 */
 #define	PCI_PRODUCT_ADP2_2930U2	0x0011		/* AHA-2930U2 U2 */
+#define	PCI_PRODUCT_ADP2_AAA131U2	0x0013		/* AAA-131U2 U2 */
 #define	PCI_PRODUCT_ADP2_AIC7890	0x001f		/* AIC-7890/1 U2 */
 #define	PCI_PRODUCT_ADP2_AIC7892	0x008f		/* AIC-7892 U160 */
 #define	PCI_PRODUCT_ADP2_29160	0x0080		/* AHA-29160 U160 */
