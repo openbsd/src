@@ -34,7 +34,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.asciz "$OpenBSD: _setjmp.S,v 1.5 2003/06/02 20:18:32 millert Exp $"
+	.asciz "$OpenBSD: _setjmp.S,v 1.6 2004/05/04 15:57:04 miod Exp $"
 #endif /* LIBC_SCCS */
 
 /*
@@ -44,44 +44,35 @@
  * will generate a "return(v?v:1)" from
  * the last call to
  *	_setjmp(a)
- * by unwinding the call stack.
+ * by restoring the previous context.
  * The previous signal state is NOT restored.
  */
 
 #include "DEFS.h"
+#include <machine/trap.h>	/* T_FLUSHWIN */
+#define	CCFSZ	96		/* from locore.S */
 
 ENTRY(_setjmp)
-	st	%sp, [%o0+0]	/* store caller's stack pointer */
-	st	%o7, [%o0+4]	/* ... return pc */
-	st	%fp, [%o0+8]	/* ... and frame pointer */
+	st	%sp, [%o0 + 0]	/* store caller's stack pointer */
+	st	%o7, [%o0 + 4]	/* ... and return pc */
 	retl
 	 clr	%o0		! return 0
 
 ENTRY(_longjmp)
-	addcc	%o1, %g0, %g6	! compute v ? v : 1 in a global register
+	sub	%sp, CCFSZ, %sp	! set up a local stack frame
+	tst	%o1		! compute v ? v : 1
 	be,a	0f
-	 mov	1, %g6
+	 mov	1, %o1
 0:
-	mov	%o0, %g1	! save a in another global register
-	ld	[%g1+8], %g7	/* get caller's frame */
-1:
-	cmp	%fp, %g7	! compare against desired frame
-	bl,a	1b		! if below,
-	 restore		!    pop frame and loop
-	be,a	2f		! if there,
-	 ld	[%g1+0], %o2	!    fetch return %sp
+	t	ST_FLUSHWIN	! flush register windows out to the stack
 
-Lbotch:
-	call	_C_LABEL(longjmperror) ! otherwise, went too far; bomb out
-	nop
-	unimp	0
+	/*
+	 * We restore the saved stack pointer to %fp, then issue
+	 * a `restore' instruction which will reload the register
+	 * window from the stack.
+	 */
+	ld	[%o0 + 4], %o7    /* restore return pc */
+	ld	[%o0 + 0], %fp    /* and stack pointer */
 
-2:
-	cmp	%o2, %sp	! %sp must not decrease
-	bge,a	3f
-	 mov	%o2, %sp	! it is OK, put it in place
-	b,a	Lbotch
-3:
-	ld	[%g1+4], %o3	! fetch pc
-	jmp	%o3 + 8		! success, return %g6
-	 mov	%g6, %o0
+	retl			! success, return %g6
+	 restore	%o1, 0, %o0

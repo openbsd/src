@@ -1,3 +1,4 @@
+/*	$OpenBSD: _setjmp.S,v 1.3 2004/05/04 15:57:06 miod Exp $	*/
 /*	$NetBSD: _setjmp.S,v 1.4 1998/10/08 02:27:59 eeh Exp $	*/
 
 /*
@@ -35,6 +36,9 @@
 
 #include <machine/asm.h>
 
+	.register	%g2,#ignore
+	.register	%g3,#ignore
+
 /*
  * C library -- _setjmp, _longjmp
  *
@@ -42,41 +46,22 @@
  * will generate a "return(v?v:1)" from
  * the last call to
  *	_setjmp(a)
- * by unwinding the call stack.
+ * by restoring the previous context.
  * The previous signal state is NOT restored.
  */
 
 ENTRY(_setjmp)
-	stx	%sp, [%o0+0x00]	/* store caller's stack pointer */
-	stx	%o7, [%o0+0x08]	/* ... return pc */
-	stx	%fp, [%o0+0x10]	/* ... and frame pointer */
+	stx	%sp, [%o0 + 0x00]	/* store caller's stack pointer */
+	stx	%o7, [%o0 + 0x08]	/* ... and return pc */
 	retl
-	 clr	%o0		! return 0
+	 clr	%o0			! return 0
 
 ENTRY(_longjmp)
-	mov	1, %g6
-	movrnz	%o1, %o1, %g6	! compute v ? v : 1 in a global register
-	mov	%o0, %g1	! save a in another global register
-	ldx	[%g1+0x10], %g7	/* get caller's frame */
-1:
-	cmp	%fp, %g7	! compare against desired frame
-	bl,a	1b		! if below,
-	 restore		!    pop frame and loop
-	be,a	2f		! if there,
-	 ldx	[%g1+0], %o2	!    fetch return %sp
-
-Lbotch:
-	call	_C_LABEL(longjmperror)	! otherwise, went too far; bomb out
-	nop
-	unimp	0
-
-2:
-	cmp	%o2, %sp	! %sp must not decrease
-	bge,a	3f
-	 mov	%o2, %sp	! it is OK, put it in place
-	b,a	Lbotch
-3:
-	ldx	[%g1+0x8], %o3	! fetch pc
-	jmp	%o3 + 8		! success, return %g6
-	 mov	%g6, %o0
-
+	save	%sp, -CC64FSZ, %sp
+	flushw
+	ldx	[%i0 + 0x00], %fp
+	ldx	[%i0 + 0x08], %i7
+	mov	1, %i0
+	movrnz	%i1, %i1, %i0		! compute v ? v : 1
+	ret
+	 restore
