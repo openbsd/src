@@ -1,3 +1,5 @@
+/*	$OpenBSD: rmt.c,v 1.6 2000/07/20 01:41:13 jason Exp $	*/
+
 /*
  * Copyright (c) 1983 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmt.c,v 1.5 1998/06/03 07:48:27 deraadt Exp $";
+static char rcsid[] = "$Id: rmt.c,v 1.6 2000/07/20 01:41:13 jason Exp $";
 #endif /* not lint */
 
 /*
@@ -62,9 +64,9 @@ int	tape = -1;
 char	*record;
 int	maxrecsize = -1;
 
-#define	SSIZE	64
-char	device[SSIZE];
-char	count[SSIZE], mode[SSIZE], pos[SSIZE], op[SSIZE];
+#define	STRSIZE	64
+char	device[STRSIZE];
+char	count[STRSIZE], mode[STRSIZE], pos[STRSIZE], op[STRSIZE];
 
 char	resp[BUFSIZ];
 
@@ -203,7 +205,7 @@ getstring(bp)
 	int i;
 	char *cp = bp;
 
-	for (i = 0; i < SSIZE; i++) {
+	for (i = 0; i < STRSIZE; i++) {
 		if (read(0, cp+i, 1) != 1)
 			exit(0);
 		if (cp[i] == '\n')
