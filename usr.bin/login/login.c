@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.6 1996/07/31 12:21:43 deraadt Exp $	*/
+/*	$OpenBSD: login.c,v 1.7 1996/09/18 20:39:06 deraadt Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: login.c,v 1.6 1996/07/31 12:21:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: login.c,v 1.7 1996/09/18 20:39:06 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -479,12 +479,9 @@ pwcheck(user, p, salt, passwd)
 {
 #ifdef SKEY
 	if (strcasecmp(p, "s/key") == 0) {
-		if (skey_haskey(user)) {
-			fprintf(stderr, "You have no s/key. ");
+		if (skey_haskey(user))
 			return 1;
-		} else {
-			return skey_authenticate(user);
-		}
+		return skey_authenticate(user);
 	}
 #endif
 	return strcmp(crypt(p, salt), passwd);
