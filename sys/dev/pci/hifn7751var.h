@@ -1,10 +1,10 @@
-/*	$OpenBSD: hifn7751var.h,v 1.22 2001/06/22 23:53:52 jason Exp $	*/
+/*	$OpenBSD: hifn7751var.h,v 1.23 2001/06/23 00:25:38 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
  * Copyright (c) 1999 Invertex Inc. All rights reserved.
  * Copyright (c) 1999 Theo de Raadt
- * Copyright (c) 2000 Network Security Technologies, Inc.
+ * Copyright (c) 2000-2001 Network Security Technologies, Inc.
  *			http://www.netsec.net
  *
  * Please send any comments, feedback, bug-fixes, or feature requests to
@@ -40,6 +40,14 @@
 #define __HIFN7751VAR_H__
 
 /*
+ *  Some configurable values for the driver
+ */
+#define	HIFN_D_CMD_RSIZE	24	/* command descriptors */
+#define	HIFN_D_SRC_RSIZE	80	/* source descriptors */
+#define	HIFN_D_DST_RSIZE	80	/* destination descriptors */
+#define	HIFN_D_RES_RSIZE	24	/* result descriptors */
+
+/*
  *  Length values for cryptography
  */
 #define HIFN_DES_KEY_LENGTH		8
@@ -56,6 +64,67 @@
 #define HIFN_MAC_TRUNC_LENGTH		12
 
 #define MAX_SCATTER 64
+
+/*
+ * Data structure to hold all 4 rings and any other ring related data.
+ */
+struct hifn_dma {
+	/*
+	 *  Descriptor rings.  We add +1 to the size to accomidate the
+	 *  jump descriptor.
+	 */
+	struct hifn_desc	cmdr[HIFN_D_CMD_RSIZE+1];
+	struct hifn_desc	srcr[HIFN_D_SRC_RSIZE+1];
+	struct hifn_desc	dstr[HIFN_D_DST_RSIZE+1];
+	struct hifn_desc	resr[HIFN_D_RES_RSIZE+1];
+
+	struct hifn_command	*hifn_commands[HIFN_D_RES_RSIZE];
+
+	u_char	command_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_COMMAND];
+	u_char	result_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_RESULT];
+
+	u_int64_t	test_src, test_dst;
+
+	/*
+	 *  Our current positions for insertion and removal from the desriptor
+	 *  rings. 
+	 */
+	int		cmdi, srci, dsti, resi;
+	volatile int	cmdu, srcu, dstu, resu;
+	int		cmdk, srck, dstk, resk;
+};
+
+struct hifn_session {
+	int hs_flags;
+	u_int8_t hs_iv[HIFN_IV_LENGTH];
+};
+
+/*
+ * Holds data specific to a single HIFN board.
+ */
+struct hifn_softc {
+	struct device	sc_dv;		/* generic device */
+	void *		sc_ih;		/* interrupt handler cookie */
+	u_int32_t	sc_dmaier;
+	u_int32_t	sc_drammodel;	/* 1=dram, 0=sram */
+
+	bus_space_handle_t	sc_sh0, sc_sh1;
+	bus_space_tag_t		sc_st0, sc_st1;
+	bus_dma_tag_t		sc_dmat;
+
+	struct hifn_dma *sc_dma;
+	bus_dmamap_t sc_dmamap;
+	int32_t sc_cid;
+	int sc_maxses;
+	int sc_ramsize;
+	int sc_flags;
+#define	HIFN_HAS_RNG		1
+#define	HIFN_HAS_PUBLIC		2
+	struct timeout sc_rngto;
+	int sc_rngfirst;
+	int sc_rnghz;
+	struct hifn_session sc_sessions[2048];
+};
 
 /*
  *  hifn_command_t
@@ -165,8 +234,6 @@
  *  An unsigned long quantity (i.e. large enough to hold a pointer), that
  *  can be used by the callback routine if desired.
  */
-struct hifn_softc;
-
 typedef struct hifn_command {
 	volatile u_int result_flags;
 

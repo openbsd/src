@@ -1,10 +1,10 @@
-/*	$OpenBSD: hifn7751reg.h,v 1.21 2001/06/22 23:53:52 jason Exp $	*/
+/*	$OpenBSD: hifn7751reg.h,v 1.22 2001/06/23 00:25:38 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
  * Copyright (c) 1999 Invertex Inc. All rights reserved.
  * Copyright (c) 1999 Theo de Raadt
- * Copyright (c) 2000 Network Security Technologies, Inc.
+ * Copyright (c) 2000-2001 Network Security Technologies, Inc.
  *			http://www.netsec.net
  *
  * Please send any comments, feedback, bug-fixes, or feature requests to
@@ -47,14 +47,6 @@
 #define HIFN_BAR1		(PCI_MAPREG_START + 4)	/* DMA register map */
 
 /*
- *  Some configurable values for the driver
- */
-#define HIFN_D_CMD_RSIZE	24
-#define HIFN_D_SRC_RSIZE	80
-#define HIFN_D_DST_RSIZE	80
-#define HIFN_D_RES_RSIZE	24
-
-/*
  * The values below should multiple of 4 -- and be large enough to handle
  * any command the driver implements.
  *
@@ -64,8 +56,8 @@
  *			
  *
  */
-#define HIFN_MAX_COMMAND	(8 + 8 + 8 + 64 + 8 + 24)
-#define HIFN_MAX_RESULT		(8 + 4 + 20 + 4)
+#define	HIFN_MAX_COMMAND	(8 + 8 + 8 + 64 + 8 + 24)
+#define	HIFN_MAX_RESULT		(8 + 4 + 20 + 4)
 
 /*
  * hifn_desc_t
@@ -80,7 +72,7 @@ typedef struct hifn_desc {
 /*
  * Masks for the "length" field of struct hifn_desc.
  */
-#define HIFN_D_LENGTH		0x0000ffff	/* length bit mask */
+#define	HIFN_D_LENGTH		0x0000ffff	/* length bit mask */
 #define	HIFN_D_MASKDONEIRQ	0x02000000	/* mask the done interrupt */
 #define	HIFN_D_DESTOVER		0x04000000	/* destination overflow */
 #define	HIFN_D_OVER		0x08000000	/* overflow */
@@ -88,66 +80,6 @@ typedef struct hifn_desc {
 #define	HIFN_D_JUMP		0x40000000	/* jump descriptor */
 #define	HIFN_D_VALID		0x80000000	/* valid bit */
 
-/*
- * Data structure to hold all 4 rings and any other ring related data.
- */
-struct hifn_dma {
-	/*
-	 *  Descriptor rings.  We add +1 to the size to accomidate the
-	 *  jump descriptor.
-	 */
-	struct hifn_desc	cmdr[HIFN_D_CMD_RSIZE+1];
-	struct hifn_desc	srcr[HIFN_D_SRC_RSIZE+1];
-	struct hifn_desc	dstr[HIFN_D_DST_RSIZE+1];
-	struct hifn_desc	resr[HIFN_D_RES_RSIZE+1];
-
-	struct hifn_command	*hifn_commands[HIFN_D_RES_RSIZE];
-
-	u_char	command_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_COMMAND];
-	u_char	result_bufs[HIFN_D_CMD_RSIZE][HIFN_MAX_RESULT];
-
-	u_int64_t	test_src, test_dst;
-
-	/*
-	 *  Our current positions for insertion and removal from the desriptor
-	 *  rings. 
-	 */
-	int		cmdi, srci, dsti, resi;
-	volatile int	cmdu, srcu, dstu, resu;
-	int		cmdk, srck, dstk, resk;
-};
-
-struct hifn_session {
-	int hs_flags;
-	u_int8_t hs_iv[HIFN_IV_LENGTH];
-};
-
-/*
- * Holds data specific to a single HIFN board.
- */
-struct hifn_softc {
-	struct device	sc_dv;		/* generic device */
-	void *		sc_ih;		/* interrupt handler cookie */
-	u_int32_t	sc_dmaier;
-	u_int32_t	sc_drammodel;	/* 1=dram, 0=sram */
-
-	bus_space_handle_t	sc_sh0, sc_sh1;
-	bus_space_tag_t		sc_st0, sc_st1;
-	bus_dma_tag_t		sc_dmat;
-
-	struct hifn_dma *sc_dma;
-	bus_dmamap_t sc_dmamap;
-	int32_t sc_cid;
-	int sc_maxses;
-	int sc_ramsize;
-	int sc_flags;
-#define HIFN_HAS_RNG		1
-#define HIFN_HAS_PUBLIC		2
-	struct timeout sc_rngto;
-	int sc_rngfirst;
-	int sc_rnghz;
-	struct hifn_session sc_sessions[2048];
-};
 
 /*
  * Processing Unit Registers (offset from BASEREG0)
@@ -256,16 +188,16 @@ struct hifn_softc {
 #define	HIFN_1_DMA_CNFG		0x48	/* DMA Configuration */
 #define	HIFN_1_REVID		0x98	/* Revision ID */
 
-#define HIFN_1_PUB_RESET	0x204	/* Public/RNG Reset */
-#define HIFN_1_PUB_BASE		0x300	/* Public Base Address */
-#define HIFN_1_PUB_OPLEN	0x304	/* Public Operand Length */
-#define HIFN_1_PUB_OP		0x308	/* Public Operand */
-#define HIFN_1_PUB_STATUS	0x30c	/* Public Status */
-#define HIFN_1_PUB_IEN		0x310	/* Public Interrupt Enable */
-#define HIFN_1_RNG_CONFIG	0x314	/* RNG config */
-#define HIFN_1_RNG_DATA		0x318	/* RNG data */
-#define HIFN_1_PUB_MEM		0x400	/* start of Public key memory */
-#define HIFN_1_PUB_MEMEND	0xbff	/* end of Public key memory */
+#define	HIFN_1_PUB_RESET	0x204	/* Public/RNG Reset */
+#define	HIFN_1_PUB_BASE		0x300	/* Public Base Address */
+#define	HIFN_1_PUB_OPLEN	0x304	/* Public Operand Length */
+#define	HIFN_1_PUB_OP		0x308	/* Public Operand */
+#define	HIFN_1_PUB_STATUS	0x30c	/* Public Status */
+#define	HIFN_1_PUB_IEN		0x310	/* Public Interrupt Enable */
+#define	HIFN_1_RNG_CONFIG	0x314	/* RNG config */
+#define	HIFN_1_RNG_DATA		0x318	/* RNG data */
+#define	HIFN_1_PUB_MEM		0x400	/* start of Public key memory */
+#define	HIFN_1_PUB_MEMEND	0xbff	/* end of Public key memory */
 
 /* DMA Status and Control Register (HIFN_1_DMA_CSR) */
 #define	HIFN_DMACSR_D_CTRLMASK	0xc0000000	/* Destinition Ring Control */
@@ -343,9 +275,9 @@ struct hifn_softc {
 /* Random number generator config register (HIFN_1_RNG_CONFIG) */
 #define	HIFN_RNGCFG_ENA		0x00000001	/* enable rng */
 
-#define WRITE_REG_0(sc,reg,val) \
+#define	WRITE_REG_0(sc,reg,val) \
     bus_space_write_4((sc)->sc_st0, (sc)->sc_sh0, reg, val)
-#define READ_REG_0(sc,reg) \
+#define	READ_REG_0(sc,reg) \
     bus_space_read_4((sc)->sc_st0, (sc)->sc_sh0, reg)
 
 /*
@@ -355,9 +287,9 @@ struct hifn_softc {
 #define	HIFN_UNLOCK_SECRET1	0xf4
 #define	HIFN_UNLOCK_SECRET2	0xfc
 
-#define WRITE_REG_1(sc,reg,val)	\
+#define	WRITE_REG_1(sc,reg,val)	\
     bus_space_write_4((sc)->sc_st1, (sc)->sc_sh1, reg, val)
-#define READ_REG_1(sc,reg) \
+#define	READ_REG_1(sc,reg) \
     bus_space_read_4((sc)->sc_st1, (sc)->sc_sh1, reg)
 
 /*********************************************************************
@@ -437,19 +369,19 @@ typedef struct hifn_mac_command {
  * MAC POS IPSec initiates authentication after encryption on encodes
  * and before decryption on decodes.
  */
-#define HIFN_MAC_CMD_POS_IPSEC		(0x2 << 8)
-#define HIFN_MAC_CMD_NEW_KEY		(0x1 << 11)
+#define	HIFN_MAC_CMD_POS_IPSEC		0x0200
+#define	HIFN_MAC_CMD_NEW_KEY		0x0800
 
 /*
  * The poll frequency and poll scalar defines are unshifted values used
  * to set fields in the DMA Configuration Register.
  */
 #ifndef HIFN_POLL_FREQUENCY
-#define HIFN_POLL_FREQUENCY	0x1
+#define	HIFN_POLL_FREQUENCY	0x1
 #endif
 
 #ifndef HIFN_POLL_SCALAR
-#define HIFN_POLL_SCALAR	0x0
+#define	HIFN_POLL_SCALAR	0x0
 #endif
 
 #define	HIFN_MAX_SEGLEN 	0xffff		/* maximum dma segment len */

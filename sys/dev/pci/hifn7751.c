@@ -1,10 +1,10 @@
-/*	$OpenBSD: hifn7751.c,v 1.71 2001/06/22 23:53:52 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.72 2001/06/23 00:25:37 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
  * Copyright (c) 1999 Invertex Inc. All rights reserved.
  * Copyright (c) 1999 Theo de Raadt
- * Copyright (c) 2000 Network Security Technologies, Inc.
+ * Copyright (c) 2000-2001 Network Security Technologies, Inc.
  *			http://www.netsec.net
  *
  * This driver is based on a previous driver by Invertex, for which they
@@ -59,8 +59,8 @@
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
 
-#include <dev/pci/hifn7751var.h>
 #include <dev/pci/hifn7751reg.h>
+#include <dev/pci/hifn7751var.h>
 
 #undef HIFN_DEBUG
 
@@ -304,10 +304,8 @@ hifn_attach(parent, self, aux)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	if (sc->sc_flags & (HIFN_HAS_PUBLIC | HIFN_HAS_RNG)) {
-		if (hifn_init_pubrng(sc) == 0) {
-		}
-	}
+	if (sc->sc_flags & (HIFN_HAS_PUBLIC | HIFN_HAS_RNG))
+		hifn_init_pubrng(sc);
 
 	return;
 
