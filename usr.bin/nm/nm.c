@@ -1,4 +1,4 @@
-/*	$OpenBSD: nm.c,v 1.26 2004/07/11 07:08:46 mickey Exp $	*/
+/*	$OpenBSD: nm.c,v 1.27 2004/10/09 20:26:57 mickey Exp $	*/
 /*	$NetBSD: nm.c,v 1.7 1996/01/14 23:04:03 pk Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)nm.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: nm.c,v 1.26 2004/07/11 07:08:46 mickey Exp $";
+static const char rcsid[] = "$OpenBSD: nm.c,v 1.27 2004/10/09 20:26:57 mickey Exp $";
 
 #include <sys/param.h>
 #include <sys/mman.h>
@@ -63,9 +63,11 @@ static const char rcsid[] = "$OpenBSD: nm.c,v 1.26 2004/07/11 07:08:46 mickey Ex
 #include <stdlib.h>
 #include <string.h>
 #include <getopt.h>
-/* XXX get shared code to handle byte-order swaps */
+#include "elfuncs.h"
+#include "util.h"
+
+/* XXX get shared code to handle a.out byte-order swaps */
 #include "byte.c"
-#include "elf.c"
 
 #ifdef MID_MACHINE_OVERRIDE
 #undef MID_MACHINE
@@ -77,8 +79,18 @@ static const char rcsid[] = "$OpenBSD: nm.c,v 1.26 2004/07/11 07:08:46 mickey Ex
 
 union hdr {
 	struct exec aout;
-	Elf_Ehdr elf;
+	Elf32_Ehdr elf32;
+	Elf64_Ehdr elf64;
 };
+
+/* a funky nlist overload for reading 32bit a.out on 64bit toys */
+struct nlist32 {
+	u_int32_t	strx;
+	u_int8_t	type;
+	u_int8_t	other;
+	u_int16_t	desc;
+	u_int32_t	value;
+} __packed;
 
 int armap;
 int demangle;
@@ -116,7 +128,6 @@ int	process_file(int, const char *);
 int	show_archive(int, const char *, FILE *);
 int	show_file(int, int, const char *, FILE *fp, off_t, union hdr *);
 void	print_symbol(const char *, struct nlist *, int);
-int	elf_symload(const char *, FILE *, off_t, Elf_Ehdr *, Elf_Shdr *);
 
 #define	OPTSTRING_NM	"aABCegnoprsuvVw"
 const struct option longopts_nm[] = {
@@ -265,7 +276,7 @@ process_file(int count, const char *fname)
 	bzero(&exec_head, sizeof(exec_head));
 	bytes = fread((char *)&exec_head, 1, sizeof(exec_head), fp);
 	if (bytes < sizeof(exec_head)) {
-		if (bytes < sizeof(exec_head.aout) || IS_ELF(exec_head.elf)) {
+		if (bytes < sizeof(exec_head.aout) || IS_ELF(exec_head.elf32)) {
 			warnx("%s: bad format", fname);
 			(void)fclose(fp);
 			return(1);
@@ -274,7 +285,7 @@ process_file(int count, const char *fname)
 	rewind(fp);
 
 	/* this could be an archive */
-	if (!IS_ELF(exec_head.elf) && N_BADMAG(exec_head.aout)) {
+	if (!IS_ELF(exec_head.elf32) && N_BADMAG(exec_head.aout)) {
 		if (fread(magic, sizeof(magic), (size_t)1, fp) != 1 ||
 		    strncmp(magic, ARMAG, SARMAG)) {
 			warnx("%s: not object file or archive", fname);
@@ -350,29 +361,6 @@ mmbr_name(struct ar_hdr *arh, char **name, int baselen, int *namelen, FILE *fp)
 
 	return (0);
 }
-
-#define	MMAP(ptr, len, prot, flags, fd, off)	do {		\
-	if ((ptr = mmap(NULL, len, prot, flags, fd, off)) == MAP_FAILED) { \
-		usemmap = 0;						\
-		if (errno != EINVAL)					\
-			warn("mmap");					\
-		else if ((ptr = malloc(len)) == NULL) {			\
-			ptr = MAP_FAILED;				\
-			warn("malloc");					\
-		} else if (pread(fd, ptr, len, off) != len) {		\
-			free(ptr);					\
-			ptr = MAP_FAILED;				\
-			warn("pread");					\
-		}							\
-	}								\
-} while (0)
-
-#define MUNMAP(addr, len)	do {					\
-	if (usemmap)							\
-		munmap(addr, len);					\
-	else								\
-		free(addr);						\
-} while (0)
 
 /*
  * show_symtab()
@@ -624,10 +612,7 @@ skip:		if (fseeko(fp, last_ar_off + even(mmbrlen), SEEK_SET)) {
 	return(rval);
 }
 
-struct nlist *names;
-struct nlist **snames;
 char *stab;
-int nnames, nrawnames, stabsize;
 
 /*
  * show_file()
@@ -639,65 +624,51 @@ int
 show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union hdr *head)
 {
 	u_long text, data, bss, total;
-	struct nlist *np;
-	Elf_Shdr *shdr;
+	struct nlist *np, *names, **snames;
+	int i, aout, nrawnames, nnames;
+	size_t stabsize;
 	off_t staboff;
-	int i, aout;
 
 	aout = 0;
-	if (IS_ELF(head->elf) &&
-	    head->elf.e_ident[EI_CLASS] == ELF_TARG_CLASS &&
-	    head->elf.e_ident[EI_VERSION] == ELF_TARG_VER) {
+	if (IS_ELF(head->elf32) &&
+	    head->elf32.e_ident[EI_CLASS] == ELFCLASS32 &&
+	    head->elf32.e_ident[EI_VERSION] == ELF_TARG_VER) {
+		void *shdr;
 
-		elf_fix_header(&head->elf);
-
-		if ((shdr = malloc(head->elf.e_shentsize *
-		    head->elf.e_shnum)) == NULL) {
-			warn("%s: malloc shdr", name);
+		if (!(shdr = elf32_load_shdrs(name, fp, foff, &head->elf32)))
 			return (1);
-		}
 
-		if (fseeko(fp, foff + head->elf.e_shoff, SEEK_SET)) {
-			warn("%s: fseeko", name);
-			free(shdr);
+		i = issize?
+		    elf32_size(&head->elf32, shdr, &text, &data, &bss) :
+		    elf32_symload(name, fp, foff, &head->elf32, shdr,
+			&names, &snames, &stabsize, &nrawnames);
+		free(shdr);
+		if (i)
+			return (i);
+
+	} else if (IS_ELF(head->elf64) &&
+	    head->elf64.e_ident[EI_CLASS] == ELFCLASS64 &&
+	    head->elf64.e_ident[EI_VERSION] == ELF_TARG_VER) {
+		void *shdr;
+
+		if (!(shdr = elf64_load_shdrs(name, fp, foff, &head->elf64)))
 			return (1);
-		}
 
-		if (fread(shdr, head->elf.e_shentsize, head->elf.e_shnum,
-		    fp) != head->elf.e_shnum) {
-			warnx("%s: premature EOF", name);
-			free(shdr);
-			return(1);
-		}
-
-		elf_fix_shdrs(&head->elf, shdr);
-
-		if (issize) {
-			text = data = bss = 0;
-			for (i = 0; i < head->elf.e_shnum; i++) {
-				if (!(shdr[i].sh_flags & SHF_ALLOC))
-					;
-				else if (shdr[i].sh_flags & SHF_EXECINSTR ||
-				    !(shdr[i].sh_flags & SHF_WRITE))
-					text += shdr[i].sh_size;
-				else if (shdr[i].sh_type == SHT_NOBITS)
-					bss += shdr[i].sh_size;
-				else
-					data += shdr[i].sh_size;
-			}
-			free(shdr);
-		} else {
-			i = elf_symload(name, fp, foff, &head->elf, shdr);
-			free(shdr);
-			if (i)
-				return (i);
-		}
+		i = issize?
+		    elf64_size(&head->elf64, shdr, &text, &data, &bss) :
+		    elf64_symload(name, fp, foff, &head->elf64, shdr,
+			&names, &snames, &stabsize, &nrawnames);
+		free(shdr);
+		if (i)
+			return (i);
 
 	} else if (BAD_OBJECT(head->aout)) {
 		if (warn_fmt)
 			warnx("%s: bad format", name);
 		return (1);
 	} else do {
+		u_int32_t w;
+
 		aout++;
 
 		fix_header_order(&head->aout);
@@ -720,25 +691,54 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 			return(1);
 		}
 
+#ifdef __LP64__
+		nrawnames = head->aout.a_syms / sizeof(struct nlist32);
+#else
+		nrawnames = head->aout.a_syms / sizeof(*names);
+#endif
 		/* get memory for the symbol table */
-		if ((names = malloc(head->aout.a_syms)) == NULL) {
+		if ((names = malloc(nrawnames * sizeof(struct nlist))) == NULL) {
 			warn("%s: malloc names", name);
 			return (1);
 		}
-		nrawnames = head->aout.a_syms / sizeof(*names);
+
 		if ((snames = malloc(nrawnames * sizeof(struct nlist *))) == NULL) {
 			warn("%s: malloc snames", name);
 			free(names);
 			return (1);
 		}
 
+#ifdef __LP64__
+		for (np = names, i = nrawnames; i--; np++) {
+			struct nlist32 nl32;
+
+			if (fread(&nl32, sizeof(nl32), 1, fp) != 1) {
+				warnx("%s: cannot read symbol table", name);
+				free(snames);
+				free(names);
+				return (1);
+			}
+			np->n_type = nl32.type;
+			np->n_other = nl32.other;
+			if (byte_sex(N_GETMID(head->aout)) != BYTE_ORDER) {
+				np->n_un.n_strx = swap32(nl32.strx);
+				np->n_desc = swap16(nl32.desc);
+				np->n_value = swap32(nl32.value);
+			} else {
+				np->n_un.n_strx = nl32.strx;
+				np->n_desc = nl32.desc;
+				np->n_value = nl32.value;
+			}
+		}
+#else
 		if (fread(names, head->aout.a_syms, 1, fp) != 1) {
 			warnx("%s: cannot read symbol table", name);
 			free(snames);
 			free(names);
-			return(1);
+			return (1);
 		}
 		fix_nlists_order(names, nrawnames, N_GETMID(head->aout));
+#endif
 
 		staboff = ftello(fp);
 		/*
@@ -746,13 +746,13 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 		 * The first 4-byte-integer gives the total size of the
 		 * string table _including_ the size specification itself.
 		 */
-		if (fread(&stabsize, sizeof(stabsize), (size_t)1, fp) != 1) {
+		if (fread(&w, sizeof(w), (size_t)1, fp) != 1) {
 			warnx("%s: cannot read stab size", name);
 			free(snames);
 			free(names);
 			return(1);
 		}
-		stabsize = fix_long_order(stabsize, N_GETMID(head->aout));
+		stabsize = fix_32_order(w, N_GETMID(head->aout));
 		MMAP(stab, stabsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
 		    fileno(fp), staboff);
 		if (stab == MAP_FAILED) {
@@ -847,121 +847,6 @@ show_file(int count, int warn_fmt, const char *name, FILE *fp, off_t foff, union
 	free(names);
 	MUNMAP(stab, stabsize);
 	return(0);
-}
-
-int
-elf_symload(const char *name, FILE *fp, off_t foff, Elf_Ehdr *eh, Elf_Shdr *shdr)
-{
-	long symsize, shstrsize;
-	struct nlist *np;
-	Elf_Sym sbuf;
-	char *shstr;
-	int i;
-
-	shstrsize = shdr[eh->e_shstrndx].sh_size;
-	if ((shstr = malloc(shstrsize)) == NULL) {
-		warn("%s: malloc shsrt", name);
-		return (1);
-	}
-
-	if (fseeko(fp, foff + shdr[eh->e_shstrndx].sh_offset, SEEK_SET)) {
-		warn("%s: fseeko", name);
-		free(shstr);
-		return (1);
-	}
-
-	if (fread(shstr, 1, shstrsize, fp) != shstrsize) {
-		warnx("%s: premature EOF", name);
-		free(shstr);
-		return(1);
-	}
-
-	stab = NULL;
-	names = NULL; snames = NULL;
-	for (i = 0; i < eh->e_shnum; i++) {
-		if (!strcmp(shstr + shdr[i].sh_name, ELF_STRTAB)) {
-			stabsize = shdr[i].sh_size;
-			if (stabsize > SIZE_T_MAX) {
-				warnx("%s: corrupt file", name);
-				free(shstr);
-				return (1);
-			}
-
-			MMAP(stab, stabsize, PROT_READ, MAP_PRIVATE|MAP_FILE,
-			    fileno(fp), foff + shdr[i].sh_offset);
-			if (stab == MAP_FAILED) {
-				free(shstr);
-				return (1);
-			}
-		}
-	}
-	for (i = 0; i < eh->e_shnum; i++) {
-		if (!strcmp(shstr + shdr[i].sh_name, ELF_SYMTAB)) {
-			symsize = shdr[i].sh_size;
-			if (fseeko(fp, foff + shdr[i].sh_offset, SEEK_SET)) {
-				warn("%s: fseeko", name);
-				if (stab)
-					MUNMAP(stab, stabsize);
-				free(shstr);
-				return (1);
-			}
-
-			nrawnames = symsize / sizeof(sbuf);
-			if ((names = calloc(nrawnames, sizeof(*np))) == NULL) {
-				warn("%s: malloc names", name);
-				if (stab)
-					MUNMAP(stab, stabsize);
-				free(names);
-				free(shstr);
-				return (1);
-			}
-			if ((snames = malloc(nrawnames * sizeof(np))) == NULL) {
-				warn("%s: malloc snames", name);
-				if (stab)
-					MUNMAP(stab, stabsize);
-				free(shstr);
-				free(names);
-				free(snames);
-				return (1);
-			}
-
-			for (np = names; symsize > 0; symsize -= sizeof(sbuf)) {
-				if (fread(&sbuf, 1, sizeof(sbuf),
-				    fp) != sizeof(sbuf)) {
-					warn("%s: read symbol", name);
-					if (stab)
-						MUNMAP(stab, stabsize);
-					free(shstr);
-					free(names);
-					free(snames);
-					return (1);
-				}
-
-				elf_fix_sym(eh, &sbuf);
-
-				if (!sbuf.st_name)
-					continue;
-
-				elf2nlist(&sbuf, eh, shdr, shstr, np);
-				np->n_value = sbuf.st_value;
-				np->n_un.n_strx = sbuf.st_name;
-				np++;
-			}
-			nrawnames = np - names;
-		}
-	}
-
-	free(shstr);
-	if (stab == NULL) {
-		warnx("%s: no name list", name);
-		if (names)
-			free(names);
-		if (snames)
-			free(snames);
-		return (1);
-	}
-
-	return (0);
 }
 
 char *
