@@ -1,4 +1,4 @@
-/*	$OpenBSD: rmt.c,v 1.11 2003/06/02 23:36:54 millert Exp $	*/
+/*	$OpenBSD: rmt.c,v 1.12 2005/03/07 16:08:19 henning Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -37,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmt.c,v 1.11 2003/06/02 23:36:54 millert Exp $";
+static char rcsid[] = "$Id: rmt.c,v 1.12 2005/03/07 16:08:19 henning Exp $";
 #endif /* not lint */
 
 /*
@@ -50,6 +50,7 @@ static char rcsid[] = "$Id: rmt.c,v 1.11 2003/06/02 23:36:54 millert Exp $";
 #include <sys/file.h>
 #include <sys/stat.h>
 #include <sys/mtio.h>
+#include <sys/param.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -61,7 +62,7 @@ char	*record;
 int	maxrecsize = -1;
 
 #define	STRSIZE	64
-char	device[STRSIZE];
+char	device[MAXPATHLEN];
 char	count[STRSIZE], mode[STRSIZE], pos[STRSIZE], op[STRSIZE];
 
 char	resp[BUFSIZ];
