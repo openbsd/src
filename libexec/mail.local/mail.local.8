@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)mail.local.8	6.8 (Berkeley) 4/27/91
-.\"	$Id: mail.local.8,v 1.5 1996/08/29 07:21:57 deraadt Exp $
+.\"	$Id: mail.local.8,v 1.6 1996/08/29 07:24:21 deraadt Exp $
 .\"
 .Dd April 27, 1991
 .Dt MAIL.LOCAL 8
@@ -74,8 +74,8 @@ In this mode
 .Nm mail.local
 (ignoring all other arguments) attains a
 .Nm username.lock
-for the calling user and retains it until stdin is closed or a
-SIGINT signal is received.
+for the calling user and retains it until stdin is closed or a signal
+like SIGINT, SIGTERM, or SIGHUP is received.
 .El
 .Pp
 Individual mail messages in the mailbox are delimited by an empty
