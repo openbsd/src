@@ -2085,19 +2085,18 @@ gengtype.o : gengtype.c gengtype.h $(HCONFIG_H) $(SYSTEM_H) real.h rtl.def \
 	$(HOST_CC) -c $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(INCLUDES) \
 	  $(srcdir)/gengtype.c $(OUTPUT_OPTION)
 
-gengtype-lex.o : $(srcdir)/gengtype-lex.c gengtype.h $(srcdir)/gengtype-yacc.c \
+gengtype-lex.o : gengtype-lex.c gengtype.h gengtype-yacc.c \
   $(HCONFIG_H) $(SYSTEM_H)
 	$(HOST_CC) -c $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(INCLUDES) \
-	  $(srcdir)/gengtype-lex.c $(OUTPUT_OPTION)
+	  gengtype-lex.c $(OUTPUT_OPTION)
 
-gengtype-yacc.o : $(srcdir)/gengtype-yacc.c gengtype.h $(HCONFIG_H) $(SYSTEM_H)
+gengtype-yacc.o : gengtype-yacc.c gengtype.h $(HCONFIG_H) $(SYSTEM_H)
 	$(HOST_CC) -c $(HOST_CFLAGS) $(HOST_CPPFLAGS) $(INCLUDES) \
-	  $(srcdir)/gengtype-yacc.c $(OUTPUT_OPTION)
+	  gengtype-yacc.c $(OUTPUT_OPTION)
 
 # The sed command works around a bug in flex-2.5.4.
-$(srcdir)/gengtype-lex.c : $(srcdir)/gengtype-lex.l
-	cd $(srcdir) && \
-	$(FLEX) $(FLEXFLAGS) -t -o$@ gengtype-lex.l | \
+gengtype-lex.c : $(srcdir)/gengtype-lex.l
+	$(FLEX) $(FLEXFLAGS) -t -o$@ $(srcdir)/gengtype-lex.l | \
 	  sed 's/^\(char msg\[\];\)/yyconst \1/' > g-$$$$ ; \
 	if test $$? -eq 0 ; then \
 	  mv -f g-$$$$ gengtype-lex.c ; \
@@ -2106,10 +2105,9 @@ $(srcdir)/gengtype-lex.c : $(srcdir)/gengtype-lex.l
 	  false ; \
 	fi
 
-$(srcdir)/gengtype-yacc.c: $(srcdir)/gengtype-yacc.y
-	(cd $(srcdir) && \
-	 $(BISON) $(BISONFLAGS) -d -o gengtype-yacc.c gengtype-yacc.y || \
-	 ( rm -f $@ && false ) )
+gengtype-yacc.c: $(srcdir)/gengtype-yacc.y
+	 $(BISON) $(BISONFLAGS) -d -o gengtype-yacc.c $(srcdir)/gengtype-yacc.y || \
+	 ( rm -f $@ && false )
 
 genconditions$(build_exeext) : genconditions.o $(HOST_EARLY_SUPPORT) \
   $(HOST_RTL) $(HOST_ERRORS) $(HOST_LIBDEPS)
@@ -2547,59 +2545,59 @@ gccinstall.dvi: $(TEXI_GCCINSTALL_FILES)
 cppinternals.dvi: $(TEXI_CPPINT_FILES)
 	$(TEXI2DVI) -I $(docdir) -I $(docdir)/include $(docdir)/cppinternals.texi
 
-generated-manpages: $(docdir)/gcov.1 $(docdir)/cpp.1 $(docdir)/gcc.1 \
-	 $(docdir)/gfdl.7 $(docdir)/gpl.7 $(docdir)/fsf-funding.7 \
+generated-manpages: gcov.1 cpp.1 gcc.1 \
+	 gfdl.7 gpl.7 fsf-funding.7 \
 	 lang.generated-manpages
 
-$(docdir)/gcov.1: $(docdir)/gcov.texi
-	$(STAMP) $(docdir)/gcov.1
+gcov.1: $(docdir)/gcov.texi
+	$(STAMP) gcov.1
 	-$(TEXI2POD) $(docdir)/gcov.texi > gcov.pod
-	-($(POD2MAN) --section=1 gcov.pod > $(docdir)/gcov.1.T$$$$ && \
-		mv -f $(docdir)/gcov.1.T$$$$ $(docdir)/gcov.1) || \
-		(rm -f $(docdir)/gcov.1.T$$$$ && exit 1)
+	-($(POD2MAN) --section=1 gcov.pod > gcov.1.T$$$$ && \
+		mv -f gcov.1.T$$$$ gcov.1) || \
+		(rm -f gcov.1.T$$$$ && exit 1)
 	-rm -f gcov.pod
 
-$(docdir)/cpp.1: $(docdir)/cpp.texi $(docdir)/cppenv.texi \
+cpp.1: $(docdir)/cpp.texi $(docdir)/cppenv.texi \
   $(docdir)/cppopts.texi
-	$(STAMP) $(docdir)/cpp.1
+	$(STAMP) cpp.1
 	-$(TEXI2POD) $(docdir)/cpp.texi > cpp.pod
-	-($(POD2MAN) --section=1 cpp.pod > $(docdir)/cpp.1.T$$$$ && \
-		mv -f $(docdir)/cpp.1.T$$$$ $(docdir)/cpp.1) || \
-		(rm -f $(docdir)/cpp.1.T$$$$ && exit 1)
+	-($(POD2MAN) --section=1 cpp.pod > cpp.1.T$$$$ && \
+		mv -f cpp.1.T$$$$ cpp.1) || \
+		(rm -f cpp.1.T$$$$ && exit 1)
 	-rm -f cpp.pod
 
-$(docdir)/gcc.1: $(docdir)/invoke.texi $(docdir)/cppenv.texi \
+gcc.1: $(docdir)/invoke.texi $(docdir)/cppenv.texi \
   $(docdir)/cppopts.texi
-	$(STAMP) $(docdir)/gcc.1
+	$(STAMP) gcc.1
 	-$(TEXI2POD) $(docdir)/invoke.texi > gcc.pod
-	-($(POD2MAN) --section=1 gcc.pod > $(docdir)/gcc.1.T$$$$ && \
-		mv -f $(docdir)/gcc.1.T$$$$ $(docdir)/gcc.1) || \
-		(rm -f $(docdir)/gcc.1.T$$$$ && exit 1)
+	-($(POD2MAN) --section=1 gcc.pod > gcc.1.T$$$$ && \
+		mv -f gcc.1.T$$$$ gcc.1) || \
+		(rm -f gcc.1.T$$$$ && exit 1)
 	-rm -f gcc.pod
 
-$(docdir)/gfdl.7: $(docdir)/include/fdl.texi
-	$(STAMP) $(docdir)/gfdl.7
+gfdl.7: $(docdir)/include/fdl.texi
+	$(STAMP) gfdl.7
 	-$(TEXI2POD) $(docdir)/include/fdl.texi > gfdl.pod
-	-($(POD2MAN) --section=7 gfdl.pod > $(docdir)/gfdl.7.T$$$$ && \
-		mv -f $(docdir)/gfdl.7.T$$$$ $(docdir)/gfdl.7) || \
-		(rm -f $(docdir)/gfdl.7.T$$$$ && exit 1)
+	-($(POD2MAN) --section=7 gfdl.pod > gfdl.7.T$$$$ && \
+		mv -f gfdl.7.T$$$$ gfdl.7) || \
+		(rm -f gfdl.7.T$$$$ && exit 1)
 	-rm -f gfdl.pod
 
-$(docdir)/gpl.7: $(docdir)/include/gpl.texi
-	$(STAMP) $(docdir)/gpl.7
+gpl.7: $(docdir)/include/gpl.texi
+	$(STAMP) gpl.7
 	-$(TEXI2POD) $(docdir)/include/gpl.texi > gpl.pod
-	-($(POD2MAN) --section=7 gpl.pod > $(docdir)/gpl.7.T$$$$ && \
-		mv -f $(docdir)/gpl.7.T$$$$ $(docdir)/gpl.7) || \
-		(rm -f $(docdir)/gpl.7.T$$$$ && exit 1)
+	-($(POD2MAN) --section=7 gpl.pod > gpl.7.T$$$$ && \
+		mv -f gpl.7.T$$$$ gpl.7) || \
+		(rm -f gpl.7.T$$$$ && exit 1)
 	-rm -f gpl.pod
 
-$(docdir)/fsf-funding.7: $(docdir)/include/funding.texi
-	$(STAMP) $(docdir)/fsf-funding.7
+fsf-funding.7: $(docdir)/include/funding.texi
+	$(STAMP) fsf-funding.7
 	-$(TEXI2POD) $(docdir)/include/funding.texi > fsf-funding.pod
 	-($(POD2MAN) --section=7 fsf-funding.pod \
-		> $(docdir)/fsf-funding.7.T$$$$ && \
-	    mv -f $(docdir)/fsf-funding.7.T$$$$ $(docdir)/fsf-funding.7) || \
-	    (rm -f $(docdir)/fsf-funding.7.T$$$$ && exit 1)
+		> fsf-funding.7.T$$$$ && \
+	    mv -f fsf-funding.7.T$$$$ fsf-funding.7) || \
+	    (rm -f fsf-funding.7.T$$$$ && exit 1)
 	-rm -f fsf-funding.pod
 
 #

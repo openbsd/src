@@ -145,7 +145,7 @@ f77.rest.encap:
 
 f77.info: f/g77.info
 f77.dvi: f/g77.dvi
-f77.generated-manpages: $(srcdir)/f/g77.1
+f77.generated-manpages: f/g77.1
 
 # g77 documentation.
 f/g77.info: $(srcdir)/f/g77.texi $(srcdir)/f/bugs.texi \
@@ -171,10 +171,10 @@ f/g77.dvi: $(srcdir)/f/g77.texi $(srcdir)/f/bugs.texi \
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	cd f && $(TEXI2DVI) -I $$s/doc/include $$s/f/g77.texi
 
-$(srcdir)/f/g77.1: $(srcdir)/f/invoke.texi
+f/g77.1: $(srcdir)/f/invoke.texi
 	-$(TEXI2POD) < $(srcdir)/f/invoke.texi > f/g77.pod; \
 	($(POD2MAN) --section=1 f/g77.pod > f/g77.1.T$$$$ && \
-	    mv -f f/g77.1.T$$$$ $(srcdir)/f/g77.1) || \
+	    mv -f f/g77.1.T$$$$ f/g77.1) || \
 	    (rm -f f/g77.1.T$$$$ && exit 1); \
 	rm -f f/g77.pod; \
 
