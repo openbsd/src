@@ -1,4 +1,4 @@
-/*	$OpenBSD: for.c,v 1.19 2000/06/23 16:23:26 espie Exp $	*/
+/*	$OpenBSD: for.c,v 1.20 2000/07/17 21:48:40 espie Exp $	*/
 /*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
 
 /*
@@ -82,7 +82,7 @@
 #if 0
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: for.c,v 1.19 2000/06/23 16:23:26 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.20 2000/07/17 21:48:40 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -198,7 +198,7 @@ For_Eval(line)
     arg->var = interval_dup(wrd, endVar);
 
     /* Make a list with the remaining words.  */
-    sub = Var_Subst(ptr, (SymTable *)VAR_GLOBAL, FALSE);
+    sub = Var_Subst(ptr, NULL, FALSE);
     if (DEBUG(FOR))
 	(void)fprintf(stderr, "For: Iterator %s List %s\n", arg->var, sub);
 
