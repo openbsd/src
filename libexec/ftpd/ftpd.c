@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpd.c,v 1.138 2002/11/15 19:52:15 millert Exp $	*/
+/*	$OpenBSD: ftpd.c,v 1.139 2002/11/25 22:45:39 millert Exp $	*/
 /*	$NetBSD: ftpd.c,v 1.15 1995/06/03 22:46:47 mycroft Exp $	*/
 
 /*
@@ -74,7 +74,7 @@ static const char copyright[] =
 static const char sccsid[] = "@(#)ftpd.c	8.4 (Berkeley) 4/16/94";
 #else
 static const char rcsid[] = 
-    "$OpenBSD: ftpd.c,v 1.138 2002/11/15 19:52:15 millert Exp $";
+    "$OpenBSD: ftpd.c,v 1.139 2002/11/25 22:45:39 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1043,7 +1043,7 @@ pass(passwd)
 		} else
 			lreply(230, "No directory! Logging in with home=/");
 	}
-	if (setuid(pw->pw_uid) < 0) {
+	if (seteuid(pw->pw_uid) < 0) {
 		reply(550, "Can't set uid.");
 		goto bad;
 	}
@@ -1896,10 +1896,13 @@ void
 reply(int n, const char *fmt, ...)
 {
 	char *buf, *p, *next;
+	int rval;
 	va_list ap;
 
 	va_start(ap, fmt);
-	if (vasprintf(&buf, fmt, ap) == -1 || buf == NULL) {
+	rval = vasprintf(&buf, fmt, ap);
+	va_end(ap);
+	if (rval == -1 || buf == NULL) {
 		printf("412 Local resource failure: malloc\r\n");
 		fflush(stdout);
 		dologout(1);
@@ -1913,7 +1916,6 @@ reply(int n, const char *fmt, ...)
 	}
 	(void)fflush(stdout);
 	free(buf);
-	va_end(ap);
 }
 
 void
