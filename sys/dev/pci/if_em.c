@@ -902,18 +902,12 @@ em_print_link_status(struct em_softc * sc)
 			em_get_speed_and_duplex(&sc->hw, 
 						&sc->link_speed, 
 						&sc->link_duplex);
-			printf("%s: Link is up %d Mbps %s\n",
-			       sc->sc_dv.dv_xname,
-			       sc->link_speed,
-			       ((sc->link_duplex == FULL_DUPLEX) ?
-				"Full Duplex" : "Half Duplex"));
 			sc->link_active = 1;
 		}
 	} else {
 		if (sc->link_active == 1) {
 			sc->link_speed = 0;
 			sc->link_duplex = 0;
-			printf("%s: Link is Down\n", sc->sc_dv.dv_xname);
 			sc->link_active = 0;
 		}
 	}
