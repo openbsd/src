@@ -1,7 +1,7 @@
-/*	$OpenBSD: autoconf.c,v 1.12 2001/03/29 00:46:49 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.13 2001/04/01 06:25:33 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998-2000 Michael Shalayeff
+ * Copyright (c) 1998-2001 Michael Shalayeff
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -220,7 +220,6 @@ static const struct nam2blk {
 	{ "rd",		6 },
 	{ "sd",		8 },
 #if 0
-	{ "acd",	4 },
 	{ "wd",		0 },
 	{ "fd",		XXX },
 #endif

@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.8 2000/09/26 14:03:52 art Exp $	*/
+/*	$OpenBSD: conf.c,v 1.9 2001/04/01 06:25:33 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -56,15 +56,11 @@ bdev_decl(sw);
 #include "uk.h"
 #if 0
 #include "fd.h"
-#include "ft.h"
 #else
 #define NFD 0
-#define NFT 0
 #endif
 bdev_decl(fd);
 cdev_decl(fd);
-bdev_decl(ft);
-cdev_decl(ft);
 
 struct bdevsw   bdevsw[] =
 {
@@ -76,8 +72,7 @@ struct bdevsw   bdevsw[] =
 	bdev_tape_init(NST,st),		/*  5: SCSI tape */
 	bdev_disk_init(NCD,cd),		/*  6: SCSI CD-ROM */
 	bdev_disk_init(NFD,fd),		/*  7: floppy drive */
-	bdev_tape_init(NFT,ft),		/*  8: floppy tape */
-					/*  9: */
+					/*  8: */
 	bdev_lkm_dummy(),
 	bdev_lkm_dummy(),
 	bdev_lkm_dummy(),
@@ -103,15 +98,10 @@ int	nblkdev = sizeof(bdevsw) / sizeof(bdevsw[0]);
 cdev_decl(mm);
 cdev_decl(sw);
 #include "pty.h"
-#if 0
 #include "wsdisplay.h"
 #include "wskbd.h"
 #include "wsmouse.h"
-#else
-#define	NWSKBD 0
-#define	NWSDISPLAY 0
-#define	NWSMOUSE 0
-#endif
+#include "wsmux.h"
 #include "bpfilter.h"
 #include "tun.h"
 
@@ -157,19 +147,18 @@ struct cdevsw   cdevsw[] =
 	cdev_tty_init(1,pdc),		/* 22: PDC device */
 	cdev_tty_init(NCOM,com),	/* 23: RS232 */
 	cdev_disk_init(NFD,fd),		/* 24: floppy drive */
-	cdev_tape_init(NFT,ft),		/* 25: floppy tape */
-	cdev_ksyms_init(NKSYMS,ksyms),	/* 26: Kernel symbols device */
-	cdev_lpt_init(NLPT,lpt),	/* 27: parallel printer */
+	cdev_ksyms_init(NKSYMS,ksyms),	/* 25: Kernel symbols device */
+	cdev_lpt_init(NLPT,lpt),	/* 26: parallel printer */
+	cdev_wsdisplay_init(NWSDISPLAY,	/* 27: workstation console */
+	    wsdisplay),
+	cdev_mouse_init(NWSKBD,wskbd),	/* 28: keyboards */
+	cdev_mouse_init(NWSMOUSE,wsmouse), /* 29: mice */
+	cdev_mouse_init(NWSMUX,wsmux),	/* 30: mux */
+					/* 31 */
 #ifdef XFS
-	cdev_xfs_init(NXFS,xfs_dev),	/* 28: xfs communication device */
+	cdev_xfs_init(NXFS,xfs_dev),	/* 32: xfs communication device */
 #else
-	cdev_notdef(),			/* 28 */
-#endif
-					/* 29 */
-#if 0
-	cdev_wsdisplay_init(NWSDISPLAY,wsdisplay), /* : workstation console */
-	cdev_mouse_init(NWSKBD,wskbd),	/* : keyboards */
-	cdev_mouse_init(NWSMOUSE,wsmouse), /* : mice */
+	cdev_notdef(),			/* 32 */
 #endif
 	cdev_lkm_dummy(),
 	cdev_lkm_dummy(),
