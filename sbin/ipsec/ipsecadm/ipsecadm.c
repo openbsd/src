@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.18 1998/08/01 06:12:20 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.19 1998/08/01 06:17:15 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -348,11 +348,35 @@ main(argc, argv)
 		  dst2.s_addr = inet_addr(argv[i+1]);
 		  i++;
 	     } else if (!strcmp(argv[i]+1, "proto") && i+1 < argc) {
-		  proto = atoi(argv[i+1]);
+		  if (isalpha(argv[i+1][0])) {
+			if (!strcasecmp(argv[i+1], "esp"))
+			 	proto = IPPROTO_ESP;
+			else if (!strcasecmp(argv[i+1], "ah"))
+				proto = IPPROTO_AH;
+			else if (!strcasecmp(argv[i+1], "ip4"))
+				proto = IPPROTO_IPIP;
+			else {
+				fprintf(stderr, "%s: unknown security protocol type %s\n", argv[0], argv[i+1]);
+				exit(1);
+			}
+		  } else
+		  	proto = atoi(argv[i+1]);
 		  i++;
 	     } else if (!strcmp(argv[i]+1, "proto2") && 
 			iscmd(mode, GRP_SPI) && i+1 < argc) {
-		  proto2 = atoi(argv[i+1]);
+		  if (isalpha(argv[i+1][0])) {
+			if (!strcasecmp(argv[i+1], "esp"))
+			 	proto2 = IPPROTO_ESP;
+			else if (!strcasecmp(argv[i+1], "ah"))
+				proto2 = IPPROTO_AH;
+			else if (!strcasecmp(argv[i+1], "ip4"))
+				proto2 = IPPROTO_IPIP;
+			else {
+				fprintf(stderr, "%s: unknown security protocol2 type %s\n", argv[0], argv[i+1]);
+				exit(1);
+			}
+		  } else
+		  	proto2 = atoi(argv[i+1]);
 		  i++;
 	     } else if (!strcmp(argv[i]+1, "chain") && chain == 0 &&
 			iscmd(mode, DEL_SPI)) {
