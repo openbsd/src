@@ -1,4 +1,4 @@
-.\"	$OpenBSD: forward.5,v 1.3 2003/06/06 13:28:13 jmc Exp $
+.\"	$OpenBSD: forward.5,v 1.4 2003/09/08 14:53:06 jmc Exp $
 .\"
 .\"	Copyright (c) 2001 Marco S. Hyman
 .\"
@@ -21,14 +21,14 @@ Users may put a file named
 .Pa .forward
 in their home directory.
 If this file exists,
-.Nm sendmail
+.Xr sendmail 8
 (and sendmail-like mailers) will redirect mail for the user to the list of
 addresses found in the
 .Pa .forward
 file.
 .Pa .forward
 files must not be group or world writable.
-The users home directory should not be group writable.
+The user's home directory should not be group writable.
 The
 .Pa .forward
 file must be owned by and readable by the indicated user.
@@ -54,7 +54,8 @@ foo@bar.baz.com				#@# is a comment anywhere
 e-mail forwarding information
 .El
 .Sh SEE ALSO
-.Xr aliases 5
+.Xr aliases 5 ,
+.Xr sendmail 8
 .Rs
 .%T "Sendmail \- An Internetwork Mail Router"
 .%V SMM
