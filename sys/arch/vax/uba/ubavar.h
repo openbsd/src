@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubavar.h,v 1.9 2001/08/12 12:03:03 heko Exp $	*/
+/*	$OpenBSD: ubavar.h,v 1.10 2002/01/18 02:09:27 miod Exp $	*/
 /*	$NetBSD: ubavar.h,v 1.21 1999/01/19 21:04:48 ragge Exp $	*/
 
 /*
@@ -70,6 +70,7 @@
  * the unibus driver in resource wait (mrwant, bdpwant); these
  * wait states are also recorded here.
  */
+struct extent;
 struct	uba_softc {
 	struct	device uh_dev;		/* Device struct, autoconfig */
 	SIMPLEQ_HEAD(, uba_unit) uh_resq;	/* resource wait chain */
@@ -91,7 +92,8 @@ struct	uba_softc {
 	short	uh_users;		/* transient bdp use count */
 	short	uh_xclu;		/* an rk07 is using this uba! */
 	int	uh_lastmem;		/* limit of any unibus memory */
-	struct	map *uh_map;		/* register free map */
+	struct	extent *uh_ext;		/* register free map */
+	char	*uh_extspace;		/* storage space for uh_ext */
 	int	(*uh_errchk) __P((struct uba_softc *));
 	void	(*uh_beforescan) __P((struct uba_softc *));
 	void	(*uh_afterscan) __P((struct uba_softc *));

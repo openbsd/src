@@ -1,4 +1,4 @@
-/*	$OpenBSD: uba.c,v 1.13 2002/01/10 00:11:14 nordin Exp $	   */
+/*	$OpenBSD: uba.c,v 1.14 2002/01/18 02:09:27 miod Exp $	   */
 /*	$NetBSD: uba.c,v 1.43 2000/01/24 02:40:36 matt Exp $	   */
 /*
  * Copyright (c) 1996 Jonathan Stone.
@@ -42,7 +42,7 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/systm.h>
-#include <sys/map.h>
+#include <sys/extent.h>
 #include <sys/buf.h>
 #include <sys/proc.h>
 #include <sys/user.h>
@@ -579,6 +579,7 @@ ubasetup(uh, bp, flags)
 	int temp;
 	int reg, bdp;
 	int a, o, ubinfo;
+	vaddr_t addr;
 
 	if (uh->uh_nbdp == 0)
 		flags &= ~UBA_NEEDBDP;
@@ -588,20 +589,24 @@ ubasetup(uh, bp, flags)
 	if (npf > UBA_MAXNMR)
 		panic("uba xfer too big");
 	a = spluba();
-	while ((reg = rmalloc(uh->uh_map, (long)npf)) == 0) {
-		if (flags & UBA_CANTWAIT) {
-			splx(a);
-			return (0);
-		}
-		uh->uh_mrwant++;
-		sleep((caddr_t)&uh->uh_mrwant, PSWP);
+
+	error = extent_alloc(uh->uh_ext, npf * VAX_NBPG, VAX_NBPG, 0,
+	    EX_NOBOUNDARY, (flags & UBA_CANTWAIT) ? EX_NOWAIT : EX_WAITOK,
+	    (u_long *)addr);
+
+	if (error != 0) {
+		splx(a);
+		return (0);
 	}
+
+	reg = vax_btoc(addr);
 	if ((flags & UBA_NEED16) && reg + npf > 128) {
 		/*
 		 * Could hang around and try again (if we can ever succeed).
 		 * Won't help any current device...
 		 */
-		rmfree(uh->uh_map, (long)npf, (long)reg);
+		extent_free(uh->uh_ext, (u_long)addr, npf * VAX_NBPG,
+		    EX_NOWAIT);
 		splx(a);
 		return (0);
 	}
@@ -609,7 +614,8 @@ ubasetup(uh, bp, flags)
 	if (flags & UBA_NEEDBDP) {
 		while ((bdp = ffs((long)uh->uh_bdpfree)) == 0) {
 			if (flags & UBA_CANTWAIT) {
-				rmfree(uh->uh_map, (long)npf, (long)reg);
+				extent_free(uh->uh_ext, (u_long)addr,
+				    npf * VAX_NBPG, EX_NOWAIT);
 				splx(a);
 				return (0);
 			}
@@ -697,7 +703,7 @@ ubarelse(uh, amr)
 	 */
 	npf = UBAI_NMR(mr);
 	reg = UBAI_MR(mr) + 1;
-	rmfree(uh->uh_map, (long)npf, (long)reg);
+	extent_free(uh->uh_ext, reg * VAX_NBPG, npf * VAX_NBPG, EX_NOWAIT);
 	splx(s);
 
 	/*
@@ -720,10 +726,13 @@ void
 ubainitmaps(uhp)
 	register struct uba_softc *uhp;
 {
+	int error;
 
 	if (uhp->uh_memsize > UBA_MAXMR)
 		uhp->uh_memsize = UBA_MAXMR;
-	rminit(uhp->uh_map, (long)uhp->uh_memsize, (long)1, "uba", UAMSIZ);
+	uhp->uh_ext = extent_create("uba", 0, uhp->uh_memsize * VAX_NBPG,
+	    M_DEVBUF, uhp->uh_extspace, EXTENT_FIXED_STORAGE_SIZE(UAMSIZ),
+	    EX_NOWAIT);
 	uhp->uh_bdpfree = (1 << uhp->uh_nbdp) - 1;
 }
 
@@ -812,11 +821,10 @@ uba_attach(sc, iopagephys)
 	 * Initialize the UNIBUS, by freeing the map
 	 * registers and the buffered data path registers
 	 */
-	sc->uh_map = (struct map *)malloc((u_long)
-	    (UAMSIZ * sizeof(struct map)), M_DEVBUF, M_NOWAIT);
-	if (sc->uh_map == NULL)
+	sc->uh_extspace = (char *)malloc(EXTENT_FIXED_STORAGE_SIZE(UAMSIZ),
+	    M_DEVBUF, M_NOWAIT);
+	if (sc->uh_extspace == NULL)
 		panic("uba_attach");
-	bzero((caddr_t)sc->uh_map, (unsigned)(UAMSIZ * sizeof (struct map)));
 	ubainitmaps(sc);
 
 	/*
