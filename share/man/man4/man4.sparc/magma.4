@@ -1,4 +1,4 @@
-.\"	$OpenBSD: magma.4,v 1.13 2004/09/30 19:59:27 mickey Exp $
+.\"	$OpenBSD: magma.4,v 1.14 2005/02/22 14:02:05 henning Exp $
 .\"
 .\"
 .\" Copyright (c) 1998 Iain Hibbert
@@ -65,10 +65,10 @@ Up to four cards are supported in the system.
 All tty ports have full automatic hardware (RTS/CTS) flow control available
 and a 12 byte FIFO on the chip in each direction so errors should be minimal.
 .Sh FILES
-.Bl -tag -width /dev/bpp[0-3][0-1] -compact
-.It /dev/tty[0-3][0-a]
+.Bl -tag -width /dev/tty[mno][0-f] -compact
+.It /dev/tty[mno][0-f]
 Serial ports
-.It /dev/bpp[0-3][0-1]
+.It /dev/bpp[mno][0-1]
 Parallel ports
 .El
 .Sh DIAGNOSTICS
