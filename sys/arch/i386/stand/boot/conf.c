@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.21 2003/05/31 00:15:28 weingart Exp $	*/
+/*	$OpenBSD: conf.c,v 1.22 2003/06/03 00:38:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -46,7 +46,6 @@
 #include <lib/libsa/unixdev.h>
 #include <biosdev.h>
 #include <dev/cons.h>
-#include <lib/libsa/exec.h>
 
 const char version[] = "2.01";
 int	debug = 1;
