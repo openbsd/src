@@ -1,0 +1,179 @@
+.\"	$NetBSD: strptime.3,v 1.4 1998/01/20 21:10:08 mycroft Exp $
+.\"
+.\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This file was contributed to The NetBSD Foundation by Klaus Klein.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.Dd January 20, 1998
+.Os
+.Dt STRPTIME 3
+.Sh NAME
+.Nm strptime
+.Nd converts a character string to a time value
+.Sh SYNOPSIS
+.Fd #include <time.h>
+.Ft char *
+.Fn strptime "const char *buf" "const char *format" "struct tm *tm"
+.Sh DESCRIPTION
+The
+.Nm
+function converts the character string pointed to by
+.Fa buf
+to values which are stored in the ``tm'' structure pointed to by
+.Fa tm ,
+using the format specified by
+.Fa format .
+.Pp
+The
+.Fa format
+string consists of zero or more conversion specifications and
+ordinary characters.  All ordinary characters are copied directly into
+the buffer.  A conversion specification consists of a percent sign `%'
+followed by one or two conversion characters which specify the replacement
+required. There must be white-space or other non-alphanumeric characters
+between any two conversion specifications.
+.Pp
+The LC_TIME category defines the locale values for the conversion
+specifications. The following conversion specifications are supported:
+.Bl -tag -width "xxxx"
+.It Cm \&%a
+the day of week, using the locale's weekday names;
+either the abbreviated or full name may be specified.
+.It Cm \&%A
+the same as
+.Cm \&%a .
+.It Cm \&%b
+the month, using the locale's month names;
+either the abbreviated or full name may be specified.
+.It Cm \&%B
+the same as
+.Cm \&%b .
+.It Cm \&%c
+the date and time, using the locale's date and time format.
+.It Cm \&%C
+the century number [0,99];
+leading zeros are permitted but not required.
+.It Cm \&%d
+the day of month [1,31];
+leading zeros are permitted but required.
+.It Cm \&%D
+the date as %m/%d/%y.
+.It Cm \&%e
+the same as
+.Cm \&%d .
+.It Cm \&%h
+the same as
+.Cm \&%b .
+.It Cm \&%H
+the hour (24-hour clock) [0,23];
+leading zeros are permitted but not required.
+.It Cm \&%I
+the hour (12-hour clock) [1,12];
+leading zeros are permitted but not required.
+.It Cm \&%j
+the day number of the year [1,366];
+leading zeros are permitted but not required.
+.It Cm \&%k
+the same as
+.Cm \&%H .
+.It Cm \&%l
+the same as
+.Cm \&%I .
+.It Cm \&%m
+the month number [1,12];
+leading zeros are permitted but not required.
+.It Cm \&%M
+the minute [0,59];
+leading zeros are permitted but not required.
+.It Cm \&%n
+any white-space
+.It Cm \&%p
+the locale's equivalent of a.m. or p.m..
+.It Cm \&%r
+the time (12-hour clock) with %p, using the locale's time format.
+.It Cm \&%R
+the time as %H:%M.
+.It Cm \&%S
+the seconds [0,61];
+leading zeros are permitted but not required.
+.It Cm \&%t
+any white-space
+.It Cm \&%T
+the time as %H:%M:%S.
+.It Cm \&%U
+the week number of the year (Sunday as the first day of the week)
+as a decimal number [0,53];
+leading zeros are permitted but not required.
+All days in a year preceding the first Sunday are considered to be in week 0.
+.It Cm \&%w
+the weekday as a decimal number [0,6], with 0 representing Sunday;
+leading zeros are permitted but not required.
+.It Cm \&%W
+the week number of the year (Monday as the first day of the week)
+as a decimal number [0,53];
+leading zeros are permitted but not required.
+All days in a year preceding the first Monday are considered to be in week 0.
+.It Cm \&%x
+the date, using the locale's date format.
+.It Cm \&%X
+the time, using the locale's time format.
+.It Cm \&%y
+the year within the 20th century [69,99] or the 21st century [0,68];
+leading zeros are permitted but not required.
+.It Cm \&%Y
+the year, including the century (i.e., 1996).
+.It Cm \&%%
+A `%' is written. No argument is converted.
+.El
+.Ss Modified conversion specifications
+For compatibility, certain conversion specifications can be modified
+by the
+.Cm E
+and
+.Cm O
+modifier characters to indicate that an alternative format or specification
+should be used rather than the one normally used by the unmodified
+conversion specification. As there are currently neither alternative formats
+nor specifications supported by the system, the behavior will be as if the
+unmodified conversion specification were used.
+.Sh RETURN VALUES
+If successful, the
+.Nm
+function returns a pointer to the character following the last character
+parsed. Otherwise, a null pointer is returned.
+.Sh SEE ALSO
+.Xr strftime 3
+.Sh STANDARDS
+The
+.Fn strptime
+function conforms to
+.St -xpg4 .
