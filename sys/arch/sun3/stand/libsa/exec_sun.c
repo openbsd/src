@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_sun.c,v 1.5 1996/01/29 23:41:06 gwr Exp $ */
+/*	$NetBSD: exec_sun.c,v 1.6 1996/06/20 03:59:41 gwr Exp $ */
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -89,12 +89,16 @@ exec_sun(file, loadaddr)
 	bcopy(&x, cp - sizeof(x), sizeof(x));
 
 	/*
-	 * Read in the text segment.
+	 * Read in the text segment.  Note:
+	 * a.out header part of text in zmagic
 	 */
 	printf("%d", x.a_text);
-	if (read(io, cp, x.a_text) != x.a_text)
+	cc = x.a_text;
+	if (magic == ZMAGIC) 
+		cc -= sizeof(x);
+	if (read(io, cp, cc) != cc)
 		goto shread;
-	cp += x.a_text;
+	cp += cc;
 
 	/*
 	 * NMAGIC may have a gap between text and data.

@@ -1,4 +1,4 @@
-/*	$NetBSD: sun3_startup.c,v 1.51 1996/03/26 15:16:59 gwr Exp $	*/
+/*	$NetBSD: sun3_startup.c,v 1.52 1996/05/05 06:02:37 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -92,6 +92,9 @@ unsigned char *interrupt_reg;
 vm_offset_t proc0_user_pa;
 struct user *proc0paddr;	/* proc[0] pcb address (u-area VA) */
 extern struct pcb *curpcb;
+
+extern vm_offset_t dumppage_pa;
+extern vm_offset_t dumppage_va;
 
 /*
  * Switch to our own interrupt vector table.
@@ -396,14 +399,16 @@ void sun3_vm_init(kehp)
 
 	/*
 	 * Virtual and physical pages for proc[0] u-area (already mapped)
-	 * XXX - Make these non-cached at their full-time mapping address.
-	 * XXX - Still need to do that? -gwr
 	 */
 	proc0paddr = (struct user *) virtual_avail;
 	proc0_user_pa = avail_start;
 	virtual_avail += UPAGES*NBPG;
-	avail_start += UPAGES*NBPG;
-	/* Make them non-cached. */
+	avail_start   += UPAGES*NBPG;
+#if 0
+	/* Make them non-cached.
+	 * XXX - Make these non-cached at their full-time mapping address.
+	 * XXX - Still need to do that? -gwr
+	 */
 	va = (vm_offset_t) proc0paddr;
 	while (va < virtual_avail) {
 		pte = get_pte(va);
@@ -411,6 +416,15 @@ void sun3_vm_init(kehp)
 		set_pte(va, pte);
 		va += NBPG;
 	}
+#endif
+
+	/*
+	 * Virtual and physical page used by dumpsys()
+	 */
+	dumppage_va = virtual_avail;
+	dumppage_pa = avail_start;
+	virtual_avail += NBPG;
+	avail_start   += NBPG;
 
 	/*
 	 * XXX - Make sure avail_start is within the low 1M range
@@ -749,34 +763,39 @@ char *str;
 /*
  * Set the PROM vector handler (for g0, g4, etc.)
  * and set boothowto from the PROM arg strings.
+ *
+ * Note, args are always:
+ * argv[0] = boot_device	(i.e. "sd(0,0,0)")
+ * argv[1] = options	(i.e. "-ds" or NULL)
+ * argv[2] = NULL
  */
 void sun3_monitor_hooks()
 {
 	MachMonBootParam *bpp;
+	char **argp;
 	char *p;
-	int i;
 
 	if (romp->romvecVersion >= 2)
 		*romp->vector_cmd = v_handler;
 
 	/* Set boothowto flags from PROM args. */
 	bpp = *romp->bootParam;
-	for (i = 0; i < 8; i++) {
-		p = bpp->argPtr[i];
+	argp = bpp->argPtr;
 
-		/* Null arg?  We're done. */
-		if (p == NULL || *p == '\0')
-			break;
+	/* Skip argp[0] (the device string) */
+	argp++;
+
+	/* Have options? */
+	if (*argp == NULL)
+		return;
+	p = *argp;
+	if (*p == '-') {
+		/* yes, parse options */
 #ifdef	DEBUG
-		mon_printf("arg[%d]=\"%s\"\n", i, p);
+		mon_printf("boot option: %s\n", p);
 #endif
-
-		/* Not switches?  Skip it. */
-		if (*p++ != '-')
-			continue;
-
-		while (*p) {
-			switch (*p++) {
+		for (++p; *p; p++) {
+			switch (*p) {
 			case 'a':
 				boothowto |= RB_ASKNAME;
 				break;
@@ -788,22 +807,16 @@ void sun3_monitor_hooks()
 				break;
 			}
 		}
+		argp++;
 	}
+
 #ifdef	DEBUG
-	mon_printf("boothowto=0x%x\n", boothowto);
+	/* Have init name? */
+	if (*argp == NULL)
+		return;
+	p = *argp;
+	mon_printf("boot initpath: %s\n", p);
 #endif
-}
-
-void set_interrupt_reg(value)
-	unsigned int value;
-{
-	*interrupt_reg = (unsigned char) value;
-}
-
-unsigned int get_interrupt_reg()
-{
-	vm_offset_t pte;
-	return (unsigned int) *interrupt_reg;
 }
 
 /*

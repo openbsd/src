@@ -1,12 +1,17 @@
-/*	$NetBSD: if_levar.h,v 1.2 1996/05/07 01:32:37 thorpej Exp $	*/
+/*	$NetBSD: remote-sl.h,v 1.1 1996/06/15 14:34:35 gwr Exp $ */
 
-/*-
- * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * Ralph Campbell and Rick Macklem.
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgement:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,18 +41,28 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
+ *	@(#)remote-sl.h	8.1 (Berkeley) 6/11/93
  */
 
 /*
- * Ethernet software status per interface.
- *
- * Each interface is referenced by a network interface structure,
- * arpcom.ac_if, which the routing code uses to locate the interface.
- * This structure contains the output queue for the interface, its address, ...
+ * These definitions are factored out into an include file so
+ * the kernel stub has access to them.
  */
-struct	le_softc {
-	struct	am7990_softc sc_am7990;	/* glue to MI code */
+#define FRAME_START		0xc1		/* Frame End */
+#define FRAME_END		0xc0		/* Frame End */
+#define FRAME_ESCAPE		0xdb		/* Frame Esc */
+#define TRANS_FRAME_START	0xde		/* transposed frame start */
+#define TRANS_FRAME_END		0xdc		/* transposed frame esc */
+#define TRANS_FRAME_ESCAPE	0xdd		/* transposed frame esc */
 
-	struct	lereg1 *sc_r1;		/* LANCE registers */
-};
+/*
+ * Message limits. SL_MAXDATA is the maximum number of bytes that can
+ * be read or written. SL_BUFSIZE is the maximum amount of data that
+ * can be passed across the serial link. The actual MTU is two times
+ * the max message (since each byte might be escaped), plus the two
+ * framing bytes. We add two to the message length to account for the
+ * type byte and checksum.
+ */
+#define SL_MAXDATA 62			/* max data that can be read */
+#define SL_RPCSIZE (1 + SL_MAXDATA)	/* errno byte + data */
+#define SL_MTU ((2 * (SL_RPCSIZE + 2) + 2))

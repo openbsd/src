@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.10 1996/03/26 22:04:14 gwr Exp $ */
+/*	$NetBSD: if_ie.c,v 1.12 1996/05/09 21:15:47 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles Hannum.
@@ -128,6 +128,11 @@
 #include <netinet/if_ether.h>
 #endif
 
+#ifdef NS
+#include <netns/ns.h>
+#include <netns/ns_if.h>
+#endif
+
 #include <vm/vm.h>
 
 /*
@@ -162,7 +167,7 @@ static struct mbuf *last_not_for_us;
 #define	ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
 
-void iewatchdog __P(( /* short */ ));
+void iewatchdog __P((struct ifnet *));
 int ieinit __P((struct ie_softc *));
 int ieioctl __P((struct ifnet *, u_long, caddr_t));
 void iestart __P((struct ifnet *));
@@ -293,8 +298,8 @@ ie_attach(sc)
 	/*
 	 * Initialize and attach S/W interface
 	 */
-	ifp->if_unit = sc->sc_dev.dv_unit;
-	ifp->if_name = ie_cd.cd_name;
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
 	ifp->if_start = iestart;
 	ifp->if_ioctl = ieioctl;
 	ifp->if_watchdog = iewatchdog;
@@ -314,10 +319,10 @@ ie_attach(sc)
  * generate an interrupt after a transmit has been started on it.
  */
 void
-iewatchdog(unit)
-	short   unit;
+iewatchdog(ifp)
+	struct ifnet *ifp;
 {
-	struct ie_softc *sc = ie_cd.cd_devs[unit];
+	struct ie_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", sc->sc_dev.dv_xname);
 	++sc->sc_arpcom.ac_if.if_oerrors;
@@ -1037,7 +1042,7 @@ void
 iestart(ifp)
 	struct ifnet *ifp;
 {
-	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ifp->if_softc;
 	struct mbuf *m0, *m;
 	u_char *buffer;
 	u_short len;
@@ -1556,17 +1561,12 @@ ieioctl(ifp, cmd, data)
 	u_long	cmd;
 	caddr_t data;
 {
-	struct ie_softc *sc = ie_cd.cd_devs[ifp->if_unit];
+	struct ie_softc *sc = ifp->if_softc;
 	struct ifaddr *ifa = (struct ifaddr *) data;
 	struct ifreq *ifr = (struct ifreq *) data;
 	int     s, error = 0;
 
 	s = splnet();
-
-	if ((error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data)) > 0) {
-		splx(s);
-		return error;
-	}
 
 	switch (cmd) {
 
@@ -1580,6 +1580,24 @@ ieioctl(ifp, cmd, data)
 			arp_ifinit(&sc->sc_arpcom, ifa);
 			break;
 #endif
+#ifdef NS
+		/* XXX - This code is probably wrong. */
+		case AF_NS:
+		    {
+			struct ns_addr *ina = &IA_SNS(ifa)->sns_addr;
+
+			if (ns_nullhost(*ina))
+				ina->x_host =
+				    *(union ns_host *)(sc->sc_arpcom.ac_enaddr);
+			else
+				bcopy(ina->x_host.c_host,
+				    sc->sc_arpcom.ac_enaddr,
+				    sizeof(sc->sc_arpcom.ac_enaddr));
+			/* Set new address. */
+			ieinit(sc);
+			break;
+		    }
+#endif /* NS */
 		default:
 			ieinit(sc);
 			break;

@@ -48,11 +48,11 @@
 /*
  * Machine dependent constants for the Sun3 series.
  */
-#define	_MACHINE     sun3
-#define	MACHINE     "sun3"
+#define	_MACHINE	sun3
+#define	MACHINE		"sun3"
 #define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
-#define MID_MACHINE MID_M68K
+#define	MID_MACHINE	MID_M68K
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value

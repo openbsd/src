@@ -1,12 +1,21 @@
-/*	$NetBSD: if_levar.h,v 1.2 1996/05/07 01:32:37 thorpej Exp $	*/
+/*	$NetBSD: kgdb_proto.h,v 1.1 1996/06/15 14:34:37 gwr Exp $ */
 
-/*-
- * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
+/*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
+ * Copyright (c) 1995
+ *	The President and Fellows of Harvard College. All rights reserved.
  *
- * This code is derived from software contributed to Berkeley by
- * Ralph Campbell and Rick Macklem.
+ * This software was developed by the Computer Systems Engineering group
+ * at Lawrence Berkeley Laboratory under DARPA contract BG 91-66 and
+ * contributed to Berkeley.
+ *
+ * All advertising materials mentioning features or use of this software
+ * must display the following acknowledgements:
+ *	This product includes software developed by the University of
+ *	California, Lawrence Berkeley Laboratory.
+ *
+ *	This product includes software developed by Harvard University.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,18 +45,30 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)if_le.c	8.2 (Berkeley) 11/16/93
+ *	@(#)kgdb_proto.h	8.1 (Berkeley) 6/11/93
  */
 
 /*
- * Ethernet software status per interface.
- *
- * Each interface is referenced by a network interface structure,
- * arpcom.ac_if, which the routing code uses to locate the interface.
- * This structure contains the output queue for the interface, its address, ...
+ * Message types.
  */
-struct	le_softc {
-	struct	am7990_softc sc_am7990;	/* glue to MI code */
+#define KGDB_MEM_R	0x01
+#define KGDB_MEM_W	0x02
+#define KGDB_REG_R	0x03
+#define KGDB_REG_W	0x04
+#define KGDB_CONT	0x05
+#define KGDB_STEP	0x06
+#define KGDB_KILL	0x07
+#define KGDB_SIGNAL	0x08
+#define KGDB_EXEC	0x09
+#define KGDB_HALT       0x0a
+#define KGDB_BOOT       0x0b
 
-	struct	lereg1 *sc_r1;		/* LANCE registers */
-};
+#define KGDB_CMD(x) ((x) & 0x0f)
+
+/*
+ * Message flags.
+ */
+#define KGDB_ACK	0x80
+#define KGDB_DELTA	0x40
+#define KGDB_MORE	0x20
+#define KGDB_SEQ	0x10

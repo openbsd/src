@@ -1,3 +1,4 @@
+/*	$NetBSD: zs_kgdb.c,v 1.6 1996/06/17 15:40:36 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -71,8 +72,17 @@
 
 /* The Sun3 provides a 4.9152 MHz clock to the ZS chips. */
 #define PCLK	(9600 * 512)	/* PCLK pin input clock rate */
+#define ZSHARD_PRI	6	/* Wired on the CPU board... */
 
 #define ZS_DELAY()			delay(2)
+
+/* The layout of this is hardware-dependent (padding, order). */
+struct zschan {
+	volatile u_char	zc_csr;		/* ctrl,status, and indirect access */
+	u_char		zc_xxx0;
+	volatile u_char	zc_data;	/* data */
+	u_char		zc_xxx1;
+};
 
 extern int kgdb_dev;
 extern int kgdb_rate;
@@ -103,6 +113,9 @@ static u_char zs_kgdb_regs[16] = {
 	ZSWR15_BREAK_IE | ZSWR15_DCD_IE,
 };
 
+/*
+ * This replaces "zs_reset()" in the sparc driver.
+ */
 static void
 zs_setparam(cs, iena, rate)
 	struct zs_chanstate *cs;
@@ -118,7 +131,7 @@ zs_setparam(cs, iena, rate)
 	}
 
 	/* Initialize the speed, etc. */
-	tconst = BPS_TO_TCONST(cs->cs_pclk_div16, rate);
+	tconst = BPS_TO_TCONST(cs->cs_brg_clk, rate);
 	cs->cs_preg[5] |= ZSWR5_DTR | ZSWR5_RTS;
 	cs->cs_preg[12] = tconst;
 	cs->cs_preg[13] = tconst >> 8;
@@ -126,7 +139,7 @@ zs_setparam(cs, iena, rate)
 	s = splhigh();
 	zs_loadchannelregs(cs);
 	splx(s);
-
+}
 
 /*
  * Set up for kgdb; called at boot time before configuration.
@@ -139,11 +152,12 @@ zs_kgdb_init()
 	volatile struct zschan *zc;
 	int channel, zsc_unit;
 
-	if (major(kgdb_dev) != ZSMAJOR)
+	if (major(kgdb_dev) != ZSTTY_MAJOR)
 		return;
 
-	zsc_unit = 1;	/* XXX */
-	channel = minor(kgdb_dev) & 1;
+	/* Note: (ttya,ttyb) on zsc1, and (ttyc,ttyd) on zsc0 */
+	zsc_unit = 2 - (kgdb_dev & 2);
+	channel  =      kgdb_dev & 1;
 	printf("zs_kgdb_init: attaching zstty%d at %d baud\n",
 		   channel, kgdb_rate);
 
@@ -153,7 +167,7 @@ zs_kgdb_init()
 	cs.cs_reg_csr  = &zc->zc_csr;
 	cs.cs_reg_data = &zc->zc_data;
 	cs.cs_channel = channel;
-	cs.cs_pclk_div16 = PCLK / 16;
+	cs.cs_brg_clk = PCLK / 16;
 
 	/* Now set parameters. (interrupts disabled) */
 	zs_setparam(&cs, 0, kgdb_rate);
@@ -200,7 +214,7 @@ zs_check_kgdb(cs, dev)
  */
 zskgdb()
 {
-	unit = minor(kgdb_dev);
+	int unit = minor(kgdb_dev);
 
 	printf("zstty%d: kgdb interrupt\n", unit);
 	/* This will trap into the debugger. */
@@ -214,7 +228,7 @@ zskgdb()
 
 int kgdb_input_lost;
 
-static int
+static void
 zs_kgdb_rxint(cs)
 	register struct zs_chanstate *cs;
 {
@@ -236,11 +250,9 @@ zs_kgdb_rxint(cs)
 	} else {
 		kgdb_input_lost++;
 	}
-
-	return(0);
 }
 
-static int
+static void
 zs_kgdb_txint(cs)
 	register struct zs_chanstate *cs;
 {
@@ -248,10 +260,9 @@ zs_kgdb_txint(cs)
 
 	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_TXINT);
-	return (0);
 }
 
-static int
+static void
 zs_kgdb_stint(cs)
 	register struct zs_chanstate *cs;
 {
@@ -259,16 +270,13 @@ zs_kgdb_stint(cs)
 
 	rr0 = zs_read_csr(cs);
 	zs_write_csr(cs, ZSWR0_RESET_STATUS);
-
-	return (0);
 }
 
-static int
+static void
 zs_kgdb_softint(cs)
 	struct zs_chanstate *cs;
 {
 	printf("zs_kgdb_softint?\n");
-	return (0);
 }
 
 struct zsops zsops_kgdb = {

@@ -1,4 +1,4 @@
-#	$NetBSD: FOUR_TTYS,v 1.1 1996/03/26 15:14:27 gwr Exp $
+#	$NetBSD: FOUR_TTYS,v 1.1.4.1 1996/08/19 23:35:05 gwr Exp $
 
 #
 # FOUR_TTYS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -16,15 +16,19 @@ options 	HAVECACHE		# Sun3/260 VAC
 maxusers	4
 
 # Standard system options
-options 	SWAPPAGER, DEVPAGER		# paging
+options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options 	KTRACE				# system call tracing support
-#makeoptions DEBUG="-g"			# symbols for kgdb + nm
+
+# Debugging options.  Uncomment either this:
 options 	DDB
+# ... or these two: (for KGDB on another machine)
+#makeoptions DEBUG="-g"			# symbols for kgdb + nm
+#options 	KGDB
 
 # Filesystem options
-options 	NFSSERVER			# nfs server support
-options 	NFSCLIENT			# nfs client support
-options 	FFS				# ufs file system
+options 	NFSSERVER	# nfs server support
+options 	NFSCLIENT	# nfs client support
+options 	FFS		# ufs file system
 #
 options 	CD9660		# ISO 9660 + Rock Ridge file system
 options 	FDESC		# /dev/fd/*
@@ -33,19 +37,21 @@ options 	KERNFS		# /kern
 options 	NULLFS		# loopback file system
 options 	PROCFS		# /proc
 options 	UNION		# union file system
+options 	MFS		# memory-based filesystem
 
 # Networking options
-options 	INET				# IP prototol stack support
+options 	INET		# IP prototol stack support
+#options	GATEWAY		# IP packet forwarding
+options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 # XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
 options 	NFS_BOOT_RWSIZE=1024
 
 # Compatability options
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-#options 	COMPAT_09	# NetBSD 0.9,
-options 	COMPAT_10	# NetBSD 1.0,
-options 	COMPAT_11	# NetBSD 1.1,
-options 	COMPAT_43	# and 4.3BSD
-#options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+options 	COMPAT_43	# and 4.3BSD and ...
+options 	COMPAT_10	# NetBSD 1.0
+options 	COMPAT_11	# NetBSD 1.1
+options 	COMPAT_12	# NetBSD 1.2
 options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3-specific debugging options
@@ -56,7 +62,7 @@ options 	PMAP_DEBUG
 options 	DIAGNOSTIC
 #options 	SCSIDEBUG
 
-config		bsd swap generic
+config		netbsd swap generic
 
 #
 # Serial ports

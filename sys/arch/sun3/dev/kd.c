@@ -1,4 +1,4 @@
-/*	$NetBSD: kd.c,v 1.16 1996/04/26 18:36:54 gwr Exp $	*/
+/*	$NetBSD: kd.c,v 1.17 1996/06/15 14:58:02 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -90,12 +90,14 @@ kd_init(unit)
 	if (unit != 0)
 		return;
 	kd = &kd_softc; 	/* XXX */
-	tp = ttymalloc();
 
-	kd->kd_tty = tp;
+	tp = ttymalloc();
 	tp->t_oproc = kdstart;
 	tp->t_param = kdparam;
 	tp->t_dev = makedev(KDMAJOR, unit);
+	tty_attach(tp);
+
+	kd->kd_tty = tp;
 
 	return;
 }
@@ -329,7 +331,7 @@ kd_later(tpaddr)
 
 	s = spltty();
 	tp->t_state &= ~TS_BUSY;
-		(*linesw[tp->t_line].l_start)(tp);
+	(*linesw[tp->t_line].l_start)(tp);
 	splx(s);
 }
 

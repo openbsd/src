@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.23 1996/03/26 15:15:59 gwr Exp $
+#	$NetBSD: files.sun3,v 1.24 1996/05/07 01:30:18 thorpej Exp $
 
 #
 # sun3-specific configuration info
@@ -105,7 +105,7 @@ file arch/sun3/dev/if_ie_obio.c		ie_obio
 file arch/sun3/dev/if_ie_vmes.c		ie_vmes
 file arch/sun3/dev/if_ie.c		ie
 
-device le: ifnet, ether
+# device defined in sys/conf/files
 attach le at obio
 file arch/sun3/dev/if_le.c		le
 

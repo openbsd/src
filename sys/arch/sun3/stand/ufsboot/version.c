@@ -4,4 +4,4 @@
  *	NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.
  */
 
-char *version = "$Revision: 1.1.1.1 $";
+char *version = "$Revision: 1.2 $";

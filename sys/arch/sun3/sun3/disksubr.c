@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.12 1996/04/26 18:37:58 gwr Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.13 1996/05/05 06:00:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -279,15 +279,12 @@ bad:
  * additional "device registration" types of work. (?)
  * For example, the sparc port uses this to record the
  * device node for the PROM-specified boot device.
- *
- * XXX: return value not documented (ignored everywhere)
  */
 void
 dk_establish(dk, dev)
 	struct disk *dk;
 	struct device *dev;
 {
-	return;
 }
 
 /************************************************************************

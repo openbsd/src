@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.38 1996/04/07 05:42:17 gwr Exp $	*/
+/*	$NetBSD: locore.s,v 1.39 1996/06/17 15:40:52 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -530,13 +530,14 @@ _trap15:
 	jne	kbrkpt			| yes, kernel breakpoint
 	jra	fault			| no, user-mode fault
 
-kbrkpt:	| Kernel-mode breakpoint or trace trap.
-	| Save system sp rather than user sp.
+kbrkpt:	| Kernel-mode breakpoint or trace trap. (d0=trap_type)
+	| Save the system sp rather than the user sp.
+	movw	#PSL_HIGHIPL,sr		| lock out interrupts
 	lea	sp@(FR_SIZE),a6		| Save stack pointer
 	movl	a6,sp@(FR_SP)		|  from before trap
 
 	| If we are not on tmpstk switch to it.
-	| (allows debugger to frob the stack)
+	| (so debugger can change the stack pointer)
 	movl	a6,d1
 	cmpl	#tmpstk,d1
 	jls	Lbrkpt2 		| already on tmpstk
@@ -551,13 +552,39 @@ Lbrkpt1:
 	bgt	Lbrkpt1
 
 Lbrkpt2:
-	| Now call the trap handler as usual.
-	clrl	sp@-			| no VA arg
-	clrl	sp@-			| or code arg
-	movl	d0,sp@-			| push trap type
-	jbsr	_trap			| handle trap
-	lea	sp@(12),sp		| pop value args
-
+	| Call the trap handler for the kernel debugger.
+	| Do not call trap() to do it, so that we can
+	| set breakpoints in trap() if we want.  We know
+	| the trap type is either T_TRACE or T_BREAKPOINT.
+	| If we have both DDB and KGDB, let KGDB see it first,
+	| because KGDB will just return 0 if not connected.
+	| Save args in d2, a2
+	movl	d0,d2			| trap type
+	movl	sp,a2			| frame ptr
+#ifdef	KGDB
+	| Let KGDB handle it (if connected)
+	movl	a2,sp@-			| push frame ptr
+	movl	d2,sp@-			| push trap type
+	jbsr	_kgdb_trap		| handle the trap
+	addql	#8,sp			| pop args
+	cmpl	#0,d0			| did kgdb handle it
+	jne	Lbrkpt3			| yes, done
+#endif
+#ifdef	DDB
+	| Let DDB handle it.	
+	movl	a2,sp@-			| push frame ptr
+	movl	d2,sp@-			| push trap type
+	jbsr	_kdb_trap		| handle the trap
+	addql	#8,sp			| pop args
+	cmpl	#0,d0			| did ddb handle it
+	jne	Lbrkpt3			| yes, done
+#endif
+	| Drop into the PROM temporarily...
+	movl	a2,sp@-			| push frame ptr
+	movl	d2,sp@-			| push trap type
+	jbsr	_nodb_trap		| handle the trap
+	addql	#8,sp			| pop args
+Lbrkpt3:
 	| The stack pointer may have been modified, or
 	| data below it modified (by kgdb push call),
 	| so push the hardware frame at the current sp

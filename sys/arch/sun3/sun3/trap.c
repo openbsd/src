@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.56 1996/03/21 23:03:49 gwr Exp $	*/
+/*	$NetBSD: trap.c,v 1.57 1996/06/17 15:41:05 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -224,22 +224,26 @@ trap(type, code, v, frame)
 		p->p_md.md_regs = frame.f_regs;
 	}
 
-#ifdef DDB
-	if (type == T_TRACE || type == T_BREAKPOINT) {
-		(void)splhigh();	/* XXX - return will restore it */
-		if (kdb_trap(type, &frame))
-			return;
-	}
-#endif
-
 	switch (type) {
 	default:
 	dopanic:
 		printf("trap type=0x%x, code=0x%x, v=0x%x\n", type, code, v);
-#ifdef	DDB
-		if (kdb_trap(type, &frame))
-			return;
+		/*
+		 * Let the kernel debugger see the trap frame that
+		 * caused us to panic.  This is a convenience so
+		 * one can see registers at the point of failure.
+		 */
+		sig = splhigh();
+#ifdef KGDB
+		/* If connected, step or cont returns 1 */
+		if (kgdb_trap(type, &frame))
+			goto kgdb_cont;
 #endif
+#ifdef	DDB
+		(void) kdb_trap(type, &frame);
+#endif
+	kgdb_cont:
+		splx(sig);
 		if (panicstr) {
 			printf("trap during panic!\n");
 			sun3_mon_abort();
@@ -354,12 +358,14 @@ trap(type, code, v, frame)
 	 * HPBSD and HP-UX traps both get mapped by locore.s into T_TRACE.
 	 * SUN 3.x traps get passed through as T_TRAP15 and are not really
 	 * supported yet.
+	 *
+	 * XXX: We should never get kernel-mode T_TRACE or T_TRAP15
+	 * XXX: because locore.s now gives them special treatment.
 	 */
 	case T_TRACE:		/* kernel trace trap */
-	case T_TRAP15:		/* SUN trace trap */
+	case T_TRAP15:		/* kernel breakpoint */
 		frame.f_sr &= ~PSL_T;
-		sig = SIGTRAP;
-		break;
+		return;
 
 	case T_TRACE|T_USER:	/* user trace trap */
 	case T_TRAP15|T_USER:	/* SUN user trace trap */
@@ -452,6 +458,7 @@ trap(type, code, v, frame)
 			/* Do not allow faults outside the "managed" space. */
 			if (va < virtual_avail) {
 				if (p->p_addr->u_pcb.pcb_onfault) {
+					/* XXX - Can this happen? -gwr */
 #ifdef	DEBUG
 					if (mmudebug & MDB_CPFAULT) {
 						printf("trap: copyfault kernel_map va < avail\n");
@@ -715,4 +722,27 @@ child_return(p)
 	if (KTRPOINT(p, KTR_SYSRET))
 		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
 #endif
+}
+
+/*
+ * This is used if we hit a kernel breakpoint or trace trap
+ * when there is no debugger installed (or not attached).
+ * Drop into the PROM temporarily...
+ */
+int
+nodb_trap(type, fp)
+	int type;
+	struct frame *fp;
+{
+
+	if ((0 <= type) && (type < trap_types))
+		printf("\r\nKernel %s,", trap_type[type]);
+	else
+		printf("\r\nKernel trap 0x%x,", type);
+	printf(" frame=0x%x\r\n", fp);
+	printf("\r\n*No debugger. Doing PROM abort...\r\n");
+	sun3_mon_abort();
+	/* OK then, just resume... */
+	fp->f_sr &= ~PSL_T;
+	return(1);
 }

@@ -77,7 +77,7 @@ prom_iopen(si)
 		printf("d_localbytes=%d\n", dip->d_localbytes);
 		printf("d_stdcount=%d\n", dip->d_stdcount);
 		printf("d_stdaddrs[%d]=%x\n", si->si_ctlr,
-	              dip->d_stdaddrs[si->si_ctlr]);
+			   dip->d_stdaddrs[si->si_ctlr]);
 		printf("d_devtype=%d\n", dip->d_devtype);
 		printf("d_maxiobytes=%d\n", dip->d_maxiobytes);
 	}
@@ -96,7 +96,7 @@ prom_iopen(si)
 #ifdef	DEBUG_PROM
 		if (debug)
 			printf("prom_iopen: devaddr=0x%x pte=0x%x\n",
-			   si->si_devaddr, get_pte(si->si_devaddr));
+				   si->si_devaddr, get_pte(si->si_devaddr));
 #endif
 	}
 
@@ -109,7 +109,7 @@ prom_iopen(si)
 		si->si_dmaaddr = (char*) addr;
 #ifdef	DEBUG_PROM
 		if (debug)
-		printf("prom_iopen: dmaaddr=0x%x\n", si->si_dmaaddr);
+			printf("prom_iopen: dmaaddr=0x%x\n", si->si_dmaaddr);
 #endif
 	}
 
@@ -122,6 +122,10 @@ prom_iopen(si)
 	}
 
 	/* OK, call the PROM device open routine. */
+#ifdef	DEBUG_PROM
+	if (debug)
+		printf("prom_iopen: calling prom open...\n");
+#endif
 	error = (*ops->b_open)(si);
 	if (error != 0) {
 		printf("prom_iopen: \"%s\" error=%d\n",

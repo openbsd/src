@@ -1,4 +1,4 @@
-/*	$NetBSD: si_vme.c,v 1.1 1996/03/26 15:01:13 gwr Exp $	*/
+/*	$NetBSD: si_vme.c,v 1.2 1996/06/17 23:21:39 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -230,11 +230,10 @@ si_vmes_attach(parent, self, args)
 
 	ncr_sc->sc_dma_alloc = si_dma_alloc;
 	ncr_sc->sc_dma_free  = si_dma_free;
-	ncr_sc->sc_dma_poll  = si_dma_poll;
-
 	ncr_sc->sc_dma_setup = si_vme_dma_setup;
 	ncr_sc->sc_dma_start = si_vme_dma_start;
-	ncr_sc->sc_dma_eop   = si_vme_dma_stop;
+	ncr_sc->sc_dma_poll  = si_dma_poll;
+	ncr_sc->sc_dma_eop   = si_vme_dma_eop;
 	ncr_sc->sc_dma_stop  = si_vme_dma_stop;
 	ncr_sc->sc_intr_on   = si_vme_intr_on;
 	ncr_sc->sc_intr_off  = si_vme_intr_off;
@@ -272,7 +271,18 @@ si_vme_intr_on(ncr_sc)
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
 	volatile struct si_regs *si = sc->sc_regs;
 
-	si_vme_dma_setup(ncr_sc);
+	/* receive mode should be safer */
+	si->si_csr &= ~SI_CSR_SEND;
+
+	/* Clear the count so nothing happens. */
+	si->dma_counth = 0;
+	si->dma_countl = 0;
+	
+	/* Clear the start address too. (paranoid?) */
+	si->dma_addrh = 0;
+	si->dma_addrl = 0;
+
+	/* Finally, enable the DMA engine. */
 	si->si_csr |= SI_CSR_DMA_EN;
 }
 
@@ -298,40 +308,11 @@ si_vme_intr_off(ncr_sc)
  * XXX: The VME adapter appears to suppress SBC interrupts
  * when the FIFO is not empty or the FIFO count is non-zero!
  *
- * On the VME version we just clear the DMA count and address
- * here (to make sure it stays idle) and do the real setup
- * later, in dma_start.
+ * On the VME version, setup the start addres, but clear the
+ * count (to make sure it stays idle) and set that later.
  */
 void
 si_vme_dma_setup(ncr_sc)
-	struct ncr5380_softc *ncr_sc;
-{
-	struct si_softc *sc = (struct si_softc *)ncr_sc;
-	volatile struct si_regs *si = sc->sc_regs;
-
-	/* Reset the FIFO */
-	si->si_csr &= ~SI_CSR_FIFO_RES; 	/* active low */
-	si->si_csr |= SI_CSR_FIFO_RES;
-
-	/* Set direction (assume recv here) */
-	si->si_csr &= ~SI_CSR_SEND;
-	/* Assume worst alignment */
-	si->si_csr |= SI_CSR_BPCON;
-
-	si->dma_addrh = 0;
-	si->dma_addrl = 0;
-
-	si->dma_counth = 0;
-	si->dma_countl = 0;
-
-	/* Clear FIFO counter. (also hits dma_count) */
-	si->fifo_cnt_hi = 0;
-	si->fifo_count = 0;		
-}
-
-
-void
-si_vme_dma_start(ncr_sc)
 	struct ncr5380_softc *ncr_sc;
 {
 	struct si_softc *sc = (struct si_softc *)ncr_sc;
@@ -350,21 +331,15 @@ si_vme_dma_start(ncr_sc)
 	if (data_pa & 1)
 		panic("si_dma_start: bad pa=0x%x", data_pa);
 	xlen = ncr_sc->sc_datalen;
-	xlen &= ~1;
-	sc->sc_reqlen = xlen; 	/* XXX: or less... */
+	xlen &= ~1;				/* XXX: necessary? */
+	sc->sc_reqlen = xlen; 	/* XXX: or less? */
 
 #ifdef	DEBUG
 	if (si_debug & 2) {
-		printf("si_dma_start: dh=0x%x, pa=0x%x, xlen=%d\n",
+		printf("si_dma_setup: dh=0x%x, pa=0x%x, xlen=%d\n",
 			   dh, data_pa, xlen);
 	}
 #endif
-
-	/*
-	 * Set up the DMA controller.
-	 */
-	si->si_csr &= ~SI_CSR_FIFO_RES; 	/* active low */
-	si->si_csr |= SI_CSR_FIFO_RES;
 
 	/* Set direction (send/recv) */
 	if (dh->dh_flags & SIDH_OUT) {
@@ -373,31 +348,56 @@ si_vme_dma_start(ncr_sc)
 		si->si_csr &= ~SI_CSR_SEND;
 	}
 
+	/* Reset the FIFO. */
+	si->si_csr &= ~SI_CSR_FIFO_RES; 	/* active low */
+	si->si_csr |= SI_CSR_FIFO_RES;
+
 	if (data_pa & 2) {
 		si->si_csr |= SI_CSR_BPCON;
 	} else {
 		si->si_csr &= ~SI_CSR_BPCON;
 	}
 
+	/* Load the start address. */
 	si->dma_addrh = (ushort)(data_pa >> 16);
 	si->dma_addrl = (ushort)(data_pa & 0xFFFF);
+
+	/*
+	 * Keep the count zero or it may start early!
+	 */
+	si->dma_counth = 0;
+	si->dma_countl = 0;
+
+#if 0
+	/* Clear FIFO counter. (also hits dma_count) */
+	si->fifo_cnt_hi = 0;
+	si->fifo_count = 0;		
+#endif
+}
+
+
+void
+si_vme_dma_start(ncr_sc)
+	struct ncr5380_softc *ncr_sc;
+{
+	struct si_softc *sc = (struct si_softc *)ncr_sc;
+	struct sci_req *sr = ncr_sc->sc_current;
+	struct si_dma_handle *dh = sr->sr_dma_hand;
+	volatile struct si_regs *si = sc->sc_regs;
+	long data_pa;
+	int s, xlen;
+
+	xlen = sc->sc_reqlen;
+
+	/* This MAY be time critical (not sure). */
+	s = splhigh();
 
 	si->dma_counth = (ushort)(xlen >> 16);
 	si->dma_countl = (ushort)(xlen & 0xFFFF);
 
-#if 1
-	/* Set it anyway, even though dma_count hits it? */
+	/* Set it anyway, even though dma_count hits it. */
 	si->fifo_cnt_hi = (ushort)(xlen >> 16);
 	si->fifo_count  = (ushort)(xlen & 0xFFFF);
-#endif
-
-#ifdef	DEBUG
-	if (si->fifo_count != xlen) {
-		printf("si_dma_start: fifo_count=0x%x, xlen=0x%x\n",
-			   si->fifo_count, xlen);
-		Debugger();
-	}
-#endif
 
 	/*
 	 * Acknowledge the phase change.  (After DMA setup!)
@@ -420,6 +420,7 @@ si_vme_dma_start(ncr_sc)
 	/* Let'er rip! */
 	si->si_csr |= SI_CSR_DMA_EN;
 
+	splx(s);
 	ncr_sc->sc_state |= NCR_DOINGDMA;
 
 #ifdef	DEBUG
@@ -461,16 +462,22 @@ si_vme_dma_stop(ncr_sc)
 	/* First, halt the DMA engine. */
 	si->si_csr &= ~SI_CSR_DMA_EN;	/* VME only */
 
+	/* Set an impossible phase to prevent data movement? */
+	*ncr_sc->sci_tcmd = PHASE_INVALID;
+
 	if (si->si_csr & (SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)) {
 		printf("si: DMA error, csr=0x%x, reset\n", si->si_csr);
 		sr->sr_xs->error = XS_DRIVER_STUFFUP;
 		ncr_sc->sc_state |= NCR_ABORTING;
 		si_reset_adapter(ncr_sc);
+		goto out;
 	}
 
 	/* Note that timeout may have set the error flag. */
 	if (ncr_sc->sc_state & NCR_ABORTING)
 		goto out;
+
+	/* XXX: Wait for DMA to actually finish? */
 
 	/*
 	 * Now try to figure out how much actually transferred

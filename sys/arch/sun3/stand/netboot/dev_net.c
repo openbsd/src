@@ -139,8 +139,8 @@ net_open(struct open_file *f, ...)
 			fail:
 				netif_close(netdev_sock);
 				netdev_sock = -1;
-			return (error);
-	}
+				return (error);
+			}
 			if (debug)
 				printf("net_open: NFS mount succeeded\n");
 		}

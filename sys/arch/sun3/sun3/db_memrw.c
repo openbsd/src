@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.11 1996/02/20 02:42:55 gwr Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.12 1996/06/17 15:40:48 gwr Exp $	*/
 
 /*
  * Copyright (c) 1996 Gordon W. Ross
@@ -29,6 +29,8 @@
 
 /*
  * Interface to the debugger for virtual memory read/write.
+ * This file is shared by DDB and KGDB, and must work even
+ * when only KGDB is included (thus no db_printf calls).
  *
  * To write in the text segment, we have to first make
  * the page writable, do the write, then restore the PTE.
@@ -130,7 +132,7 @@ db_write_text(addr, size, data)
 #endif
 			oldpte = get_pte(pgva);
 			if ((oldpte & PG_VALID) == 0) {
-				db_printf(" address 0x%x not a valid page\n", dst);
+				printf(" address 0x%x not a valid page\n", dst);
 				return;
 			}
 			tmppte = oldpte | PG_WRITE | PG_NC;

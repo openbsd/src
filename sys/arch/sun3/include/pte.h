@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.9 1995/03/10 02:28:01 gwr Exp $	*/
+/*	$NetBSD: pte.h,v 1.10 1996/05/05 04:18:28 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -73,6 +73,8 @@
 #define	PGT_OBIO	MAKE_PGTYPE(OBIO)		/* onboard I/O */
 #define	PGT_VME_D16	MAKE_PGTYPE(VME_D16)	/* VMEbus 16-bit data */
 #define	PGT_VME_D32	MAKE_PGTYPE(VME_D32)	/* VMEbus 32-bit data */
+
+#define VA_SEGNUM(x)	((u_int)(x) >> SEGSHIFT)
 
 #define VA_PTE_NUM_SHIFT  13
 #define VA_PTE_NUM_MASK (0xF << VA_PTE_NUM_SHIFT)

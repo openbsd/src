@@ -1,8 +1,8 @@
-#	$NetBSD: SMD_TEST,v 1.2.4.1 1996/08/19 23:35:11 gwr Exp $
+#	$NetBSD: GENERIC_KGDB,v 1.1.2.1 1996/08/19 23:35:07 gwr Exp $
 
 #
-# SMD_TEST - for Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
-# Like GENERIC, but includes the SMD disk drivers (xd, xy)
+# GENERIC_KGDB Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
+# like GENERIC but supports KGDB (gdb -k on other machine)
 #
 
 include "std.sun3"
@@ -20,10 +20,10 @@ options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
 options 	KTRACE				# system call tracing support
 
 # Debugging options.  Uncomment either this:
-options 	DDB
+#options 	DDB
 # ... or these two: (for KGDB on another machine)
-#makeoptions DEBUG="-g"			# symbols for kgdb + nm
-#options 	KGDB
+makeoptions DEBUG="-g"			# symbols for kgdb + nm
+options 	KGDB
 
 # Filesystem options
 options 	NFSSERVER	# nfs server support
@@ -55,12 +55,13 @@ options 	COMPAT_12	# NetBSD 1.2
 options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3-specific debugging options
-#options 	PMAP_DEBUG
+options 	PMAP_DEBUG
 #options 	VMFAULT_TRACE
 #options 	SYSCALL_DEBUG
 #options 	EXEC_DEBUG
 options 	DIAGNOSTIC
 #options 	SCSIDEBUG
+options 	NCR5380_DEBUG
 
 config		netbsd swap generic
 
@@ -94,14 +95,14 @@ si0 at vmes0 addr 0xff200000 level 2 vect 0x40
 si1 at vmes0 addr 0xff204000 level 2 vect 0x41
 
 # Xylogics 7053 controllers
-xdc0 at vmel0 addr 0xffffee80 level 2 vect 0x44
-xdc1 at vmel0 addr 0xffffee90 level 2 vect 0x45
-xd* at xdc? drive ?
+# xdc0 at vmel0 addr 0xffffee80 level 2 vect 0x44
+# xdc1 at vmel0 addr 0xffffee90 level 2 vect 0x45
+# xd* at xdc? drive ?
 
 # Xylogics 450/451 controllers
-xyc0 at vmes0 addr 0xffffee40 level 2 vect 0x48
-xyc1 at vmes0 addr 0xffffee48 level 2 vect 0x49
-xy* at xyc? drive ?
+# xyc0 at vmes0 addr 0xffffee40 level 2 vect 0x48
+# xyc1 at vmes0 addr 0xffffee48 level 2 vect 0x49
+# xy* at xyc? drive ?
 
 # Xylogics 472 tape controllers?
 

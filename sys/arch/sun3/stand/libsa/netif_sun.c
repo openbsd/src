@@ -404,7 +404,7 @@ netif_get(desc, pkt, maxlen, timo)
 
 	/* Have to receive into our own buffer and copy. */
 	do {
-	tick0 = getticks();
+		tick0 = getticks();
 		do {
 			rlen = (*sif->sif_poll)(si->si_devdata, dd->rbuf);
 			if (rlen != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.24 1996/03/26 15:01:10 gwr Exp $	*/
+/*	$NetBSD: si.c,v 1.25 1996/06/17 23:21:29 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 David Jones, Gordon W. Ross
@@ -425,6 +425,10 @@ si_dma_free(ncr_sc)
 }
 
 
+#define	CSR_MASK (SI_CSR_SBC_IP | SI_CSR_DMA_IP | \
+		SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR)
+#define	POLL_TIMO	50000	/* X100 = 5 sec. */
+
 /*
  * Poll (spin-wait) for DMA completion.
  * Called right after xx_dma_start(), and
@@ -439,30 +443,36 @@ si_dma_poll(ncr_sc)
 	struct sci_req *sr = ncr_sc->sc_current;
 	struct si_dma_handle *dh = sr->sr_dma_hand;
 	volatile struct si_regs *si = sc->sc_regs;
-	int tmo, csr_mask;
+	int tmo;
 
 	/* Make sure DMA started successfully. */
 	if (ncr_sc->sc_state & NCR_ABORTING)
 		return;
 
-	csr_mask = SI_CSR_SBC_IP | SI_CSR_DMA_IP |
-		SI_CSR_DMA_CONFLICT | SI_CSR_DMA_BUS_ERR;
+	/*
+	 * XXX: The Sun driver waits for ~SI_CSR_DMA_ACTIVE here
+	 * XXX: (on obio) or even worse (on vme) a 10mS. delay!
+	 * XXX: I really doubt that is necessary...
+	 */
 
-	tmo = 50000;	/* X100 = 5 sec. */
+	/* Wait for any "dma complete" or error bits. */
+	tmo = POLL_TIMO;
 	for (;;) {
-		if (si->si_csr & csr_mask)
+		if (si->si_csr & CSR_MASK)
 			break;
 		if (--tmo <= 0) {
 			printf("si: DMA timeout (while polling)\n");
 			/* Indicate timeout as MI code would. */
 			sr->sr_flags |= SR_OVERDUE;
-				break;
-	}
+			break;
+		}
 		delay(100);
 	}
+	NCR_TRACE("si_dma_poll: waited %d\n",
+			  POLL_TIMO - tmo);
 
 #ifdef	DEBUG
-	if (si_debug) {
+	if (si_debug & 2) {
 		printf("si_dma_poll: done, csr=0x%x\n", si->si_csr);
 	}
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.36 1996/04/04 06:26:15 cgd Exp $	*/
+/*	$NetBSD: zs.c,v 1.38 1996/06/17 15:17:06 gwr Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -56,7 +56,6 @@
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
-#include <machine/eeprom.h>
 #include <machine/isr.h>
 #include <machine/obio.h>
 #include <machine/mon.h>
@@ -273,7 +272,7 @@ zsc_attach(parent, self, aux)
 		cs->cs_ops = &zsops_null;
 
 		/* Define BAUD rate clock for the MI code. */
-		cs->cs_pclk_div16 = PCLK / 16;
+		cs->cs_brg_clk = PCLK / 16;
 
 		/* XXX: get defspeed from EEPROM instead? */
 		cs->cs_defspeed = zs_defspeed[zsc_unit][channel];
@@ -536,33 +535,49 @@ void *zs_conschan;
 /*
  * This function replaces sys/dev/cninit.c
  * Determine which device is the console using
- * the "console" byte from the EEPROM.
+ * the PROM "input source" and "output sink".
  */
 void
 cninit()
 {
+	MachMonRomVector *v;
 	struct zschan *zc;
 	struct consdev *cn;
 	int zsc_unit, channel;
+	char inSource;
 
-	switch (ee_console) {
+	v = romVectorPtr;
+	inSource = *(v->inSource);
 
-	case EE_CONS_TTYA:
-	case EE_CONS_TTYB:
+	if (inSource != *(v->outSink)) {
+		mon_printf("cninit: mismatched PROM output selector\n");
+	}
+
+	switch (inSource) {
+
+	case 1:	/* ttya */
+	case 2:	/* ttyb */
 		zsc_unit = 1;
-		channel = (ee_console & 1);
+		channel = inSource - 1;
 		cn = &consdev_tty;
 		cn->cn_dev = makedev(ZSTTY_MAJOR, channel);
 		cn->cn_pri = CN_REMOTE;
 		break;
 
+	case 3:	/* ttyc (rewired keyboard connector) */
+	case 4:	/* ttyd (rewired mouse connector)   */
+		zsc_unit = 0;
+		channel = inSource - 3;
+		cn = &consdev_tty;
+		cn->cn_dev = makedev(ZSTTY_MAJOR, (channel+2));
+		cn->cn_pri = CN_REMOTE;
+		break;
+
 	default:
-		mon_printf("cninit: unknown eeprom console setting\n");
+		mon_printf("cninit: invalid PROM console selector\n");
 		/* assume keyboard/display */
 		/* fallthrough */
-	case EE_CONS_BW:
-	case EE_CONS_COLOR:
-	case EE_CONS_P4OPT:
+	case 0:	/* keyboard/display */
 		zsc_unit = 0;
 		channel = 0;
 		cn = &consdev_kd;

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 1996/02/28 22:51:05 gwr Exp $	*/
+/*	$NetBSD: pmap.c,v 1.61 1996/05/05 06:02:31 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Gordon W. Ross
@@ -3216,6 +3216,55 @@ pmap_prefer(fo, va)
 	d &= SEGOFSET;
 	*va += d;
 }
+
+/*
+ * Copy the kernel segmap into the passed buffer (256 bytes).
+ */
+void
+pmap_get_ksegmap(vaddr)
+	vm_offset_t vaddr;
+{
+	vm_offset_t va;
+	u_char *cp = (u_char*)vaddr;
+
+	va = KERNBASE;
+	do {
+		*cp = get_segmap(va);
+		cp++;
+		va += NBSG;
+	} while (va < 0x10000000);
+}
+
+/*
+ * Copy the pagemap RAM into the passed buffer (one page)
+ * starting at OFF in the pagemap RAM.
+ */
+void
+pmap_get_pagemap(vaddr, off)
+	vm_offset_t vaddr;
+	int off;
+{
+	vm_offset_t va, va_end;
+	int sme, sme_end;	/* SegMap Entry numbers */
+	int *pt;
+
+	pt = (int*)vaddr;	/* destination */
+	sme = (off >> 6);	/* PMEG to start on */
+	sme_end = sme + 128; /* where to stop */
+	va_end = temp_seg_va + NBSG;
+
+	do {
+		set_segmap(temp_seg_va, sme);
+		va = temp_seg_va;
+		do {
+			*pt++ = get_pte(va);
+			va += NBPG;
+		} while (va < va_end);
+		sme++;
+	} while (sme < sme_end);
+	set_segmap(temp_seg_va, SEGINV);
+}
+
 
 /*
  * Helper functions for changing unloaded PMEGs

@@ -101,8 +101,7 @@
  * XDC_HWAIT: add iorq "N" to head of SC's wait queue
  */
 #define XDC_HWAIT(SC, N) { \
-	(SC)->waithead = ((SC)->waithead == 0) ? \
-		(XDC_MAXIOPB - 1) : ((SC)->waithead - 1); \
+	(SC)->waithead = ((SC)->waithead - 1) % XDC_MAXIOPB; \
 	(SC)->waitq[(SC)->waithead] = (N); \
 	(SC)->nwait++; \
 }
@@ -1430,9 +1429,6 @@ xdc_startbuf(xdcsc, xdsc, bp)
 	    bp->b_bcount / XDFM_BPS, dbuf, bp);
 
 	xdc_rqtopb(iorq, iopb, (bp->b_flags & B_READ) ? XDCMD_RD : XDCMD_WR, 0);
-
-	/* Instrumentation. */
-	disk_busy(&xdsc->sc_dk);
 
 	/* Instrumentation. */
 	disk_busy(&xdsc->sc_dk);

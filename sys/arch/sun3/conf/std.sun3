@@ -1,4 +1,4 @@
-#	$NetBSD: std.sun3,v 1.15 1996/03/26 15:16:02 gwr Exp $
+#	$NetBSD: std.sun3,v 1.15.4.1 1996/08/19 23:35:12 gwr Exp $
 
 # Standard information for sun3's.
 machine	sun3 m68k
@@ -31,8 +31,7 @@ intreg0 at obio? addr ?
 options 	NEWCONFIG
 options 	MACHINE_NONCONTIG
 
-# These are used ONLY when reading the hardware time/date clock.
-# All Sun machines keep the hardware time/date clock on GMT.
-options		TIMEZONE=0		# minutes west of GMT (for param.c)
-options 	DST=0			# daylight savings rules (for param.c)
+# All Sun3 machines with an "le" (3/50, 3/60) should be
+# presumed to have the old, buggy LANCE chip. (Rev. C)
+options 	LANCE_REVC_BUG
 

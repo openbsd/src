@@ -1,4 +1,4 @@
-#	$NetBSD: DISKLESS,v 1.12 1996/03/26 15:15:46 gwr Exp $
+#	$NetBSD: DISKLESS,v 1.12.4.1 1996/08/19 23:35:03 gwr Exp $
 
 #
 # DISKLESS Sun3 (3/50, 3/60, 3/110, 3/160, 3/260)
@@ -16,33 +16,37 @@ options 	HAVECACHE		# Sun3/260 VAC
 maxusers	4
 
 # Standard system options
-options		SWAPPAGER, DEVPAGER		# paging
-options		KTRACE				# system call tracing support
-#makeoptions	DEBUG="-g"			# symbols for kgdb + nm
+options 	SWAPPAGER, VNODEPAGER, DEVPAGER	# paging
+options 	KTRACE				# system call tracing support
+
+# Debugging options.  Uncomment either this:
 #options 	DDB
+# ... or these two: (for KGDB on another machine)
+makeoptions DEBUG="-g"			# symbols for kgdb + nm
+options 	KGDB
 
 # Filesystem options
-options 	NFSCLIENT			# nfs client support
+options 	NFSCLIENT	# nfs client support
 #
 options 	FDESC		# /dev/fd/*
-options		FIFO		# FIFOs; RECOMMENDED
-options		KERNFS		# /kern
-options		NULLFS		# loopback file system
-#options 	PROCFS		# /proc
-#options 	UNION		# union file system
+options 	FIFO		# FIFOs; RECOMMENDED
+options 	KERNFS		# /kern
+options 	NULLFS		# loopback file system
+options 	PROCFS		# /proc
 
 # Networking options
-options		INET				# IP prototol stack support
+options 	INET		# IP prototol stack support
+#options	GATEWAY		# IP packet forwarding
+options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
 # XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
 options 	NFS_BOOT_RWSIZE=1024
 
 # Compatability options
 options 	COMPAT_SUNOS	# can run SunOS 4.1.1 executables
-#options 	COMPAT_09	# NetBSD 0.9,
-options 	COMPAT_10	# NetBSD 1.0,
-options 	COMPAT_11	# NetBSD 1.1,
-options 	COMPAT_43	# and 4.3BSD
-#options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
+options 	COMPAT_43	# and 4.3BSD and ...
+options 	COMPAT_10	# NetBSD 1.0
+options 	COMPAT_11	# NetBSD 1.1
+options 	COMPAT_12	# NetBSD 1.2
 options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3-specific debugging options
@@ -52,7 +56,7 @@ options 	UCONSOLE	# Allow non-root TIOCCONS
 #options 	EXEC_DEBUG
 #options 	DIAGNOSTIC
 
-config		bsd root on nfs swap on nfs
+config		netbsd root on nfs swap on nfs
 
 #
 # Serial ports
@@ -106,10 +110,5 @@ cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8
 
 # Misc.
 pseudo-device	loop	1		# network loopback
-#pseudo-device	bpfilter 8		# packet filter
-#pseudo-device	sl	2		# CSLIP
-#pseudo-device	ppp	2		# PPP
-#pseudo-device	tun	2		# network tunneling over tty
 
 pseudo-device	pty	32		# pseudo-terminals
-#pseudo-device	vnd	4		# paging to files

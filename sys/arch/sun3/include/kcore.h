@@ -1,7 +1,7 @@
-/*	$NetBSD: stub.c,v 1.12 1996/06/17 15:41:02 gwr Exp $	*/
+/*	$NetBSD: kcore.h,v 1.1 1996/05/05 04:19:31 gwr Exp $	*/
 
 /*
- * Copyright (c) 1996 Gordon W. Ross
+ * Copyright (c) 1996 Leo Weppelman.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -12,11 +12,11 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
- * 4. All advertising materials mentioning features or use of this software
+ * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
- *      This product includes software developed by Gordon Ross
+ *      This product includes software developed by Leo Weppelman.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -30,29 +30,18 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * Stubs to supply things needed when some options are OFF.
- */
-
-
-/* Called by autoconf.c */
-#ifndef	GENERIC
-void swapgeneric() {}
-#endif
+#ifndef _MACHINE_KCORE_H_
+#define _MACHINE_KCORE_H_
 
 /*
- * XXX: isr.c:netintr() - move to conf.c?
+ * In the dump device, there is a kcore_seg_t
+ * followed by one of these.  The size will be
+ * padded out appropriately by the kernel.
  */
 
-/*
- * When DDB is included, Debugger() comes from db_interface.c
- * otherwise we get the one compiled here.
- */
-#ifndef DDB
-void
-Debugger()
-{
-	__asm ("trap #15");
-}
-#endif	/* !DDB */
+typedef struct cpu_kcore_hdr {
+	phys_ram_seg_t	ram_segs[4];
+	u_char ksegmap[256];
+} cpu_kcore_hdr_t;
 
+#endif	/* _MACHINE_KCORE_H_ */

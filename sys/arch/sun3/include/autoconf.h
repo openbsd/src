@@ -58,7 +58,7 @@ struct confargs {
 #define cf_intvec	cf_loc[2]
 
 int bus_scan __P((struct device *, void *, void *));
-int  bus_print __P((void *, char *));
-int  bus_peek __P((int, int, int));
+int bus_print __P((void *, char *));
+int bus_peek __P((int, int, int));
 char * bus_mapin __P((int, int, int));
 

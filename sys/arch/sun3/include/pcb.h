@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.8 1994/11/21 21:34:02 gwr Exp $	*/
+/*	$NetBSD: pcb.h,v 1.9 1996/06/18 16:03:45 gwr Exp $	*/
 
 /*
  * Copyright (c) 1994 Gordon W. Ross
@@ -48,10 +48,10 @@
 /*
  * Sun3 process control block
  */
-struct pcb
-{
+struct pcb {
 	short	pcb_flags;	/* misc. process flags */
 	short	pcb_ps; 	/* processor status word */
+	int	pcb_mmuctx;	/* MMU context number */
 	int	pcb_usp;	/* user stack pointer */
 	int	pcb_regs[12];	/* D2-D7, A2-A7 */
 	caddr_t	pcb_onfault;	/* for copyin/out faults */

@@ -48,11 +48,11 @@
 
 #include "dvma.h"
 #include "promdev.h"
-
-#define RETRY_COUNT	5
+ 
+#define RETRY_COUNT 5
 
 extern int debug;
-int	disk_opencount;
+int disk_opencount;
 struct saioreq disk_ioreq;
 
 int
@@ -66,22 +66,22 @@ disk_open(f, devname)
 
 #ifdef DEBUG_PROM
 	if (debug)
-	printf("disk_open: %s\n", devname);
+		printf("disk_open: %s\n", devname);
 #endif
 
 	si = &disk_ioreq;
 	if (disk_opencount == 0) {
-	/*
-	 * Setup our part of the saioreq.
-	 * (determines what gets opened)
-	 */
-	bp = *romp->bootParam;
-	si->si_boottab = bp->bootDevice;
-	si->si_ctlr = bp->ctlrNum;
-	si->si_unit = bp->unitNum;
-	si->si_boff = bp->partNum;
-	if ((error = prom_iopen(si)) != 0)
-		return (error);
+		/*
+		 * Setup our part of the saioreq.
+		 * (determines what gets opened)
+		 */
+		bp = *romp->bootParam;
+		si->si_boottab = bp->bootDevice;
+		si->si_ctlr = bp->ctlrNum;
+		si->si_unit = bp->unitNum;
+		si->si_boff = bp->partNum;
+		if ((error = prom_iopen(si)) != 0)
+			return (error);
 	}
 	disk_opencount++;
 
@@ -128,7 +128,7 @@ disk_strategy(devdata, flag, dblk, size, buf, rsize)
 
 #ifdef DEBUG_PROM
 	if (debug > 1)
-	printf("disk_strategy: size=%d dblk=%d\n", size, dblk);
+		printf("disk_strategy: size=%d dblk=%d\n", size, dblk);
 #endif
 
 	dmabuf = dvma_mapin(buf, size);
@@ -140,10 +140,10 @@ disk_strategy(devdata, flag, dblk, size, buf, rsize)
 	 */
 	retry = RETRY_COUNT;
 	do {
-	si->si_bn = dblk;
-	si->si_ma = dmabuf;
-	si->si_cc =	size;
-	xcnt = (*ops->b_strategy)(si, si_flag);
+		si->si_bn = dblk;
+		si->si_ma = dmabuf;
+		si->si_cc =	size;
+		xcnt = (*ops->b_strategy)(si, si_flag);
 	} while ((xcnt <= 0) && (--retry > 0));
 
 	dvma_mapout(dmabuf, size);
