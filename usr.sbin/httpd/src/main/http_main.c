@@ -1,4 +1,4 @@
-/* $OpenBSD: http_main.c,v 1.22 2002/07/31 09:02:28 henning Exp $ */
+/* $OpenBSD: http_main.c,v 1.23 2002/09/04 12:28:42 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -4348,7 +4348,7 @@ static void child_main(int child_num_arg)
 #endif
 	setuid(ap_user_id) == -1)) {
 	ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
-		    "setuid: unable to change to uid: %ld", (long) ap_user_id);
+		    "setuid: unable to change to uid: %u", ap_user_id);
 	clean_child_exit(APEXIT_CHILDFATAL);
     }
 #endif
@@ -5222,8 +5222,8 @@ static void standalone_main(int argc, char **argv)
 			exit(1);
 		} else
 		    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE,
-			server_conf, "changed to uid %ld, gid %ld",
-			(long)ap_user_id, (long)ap_group_id);
+			server_conf, "changed to uid %u, gid %u",
+			ap_user_id, ap_group_id);
 		} else
 		    setproctitle("parent");
 
@@ -5372,8 +5372,8 @@ static void standalone_main(int argc, char **argv)
 		if ( pidfile != NULL && unlink(pidfile) == 0)
 		    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO,
 				 server_conf,
-				 "removed PID file %s (pid=%ld)",
-				 pidfile, (long)getpid());
+				 "removed PID file %s (pid=%u)",
+				 pidfile, getpid());
 	    }
 
 	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_NOTICE, server_conf,
@@ -5701,8 +5701,8 @@ int REALMAIN(int argc, char *argv[])
 	if (!geteuid() && setuid(ap_user_id) == -1) {
 #endif
 	    ap_log_error(APLOG_MARK, APLOG_ALERT, server_conf,
-			"setuid: unable to change to uid: %ld",
-			(long) ap_user_id);
+			"setuid: unable to change to uid: %u",
+			ap_user_id);
 	    exit(1);
 	}
 #endif
@@ -7235,8 +7235,8 @@ die_now:
 	if ( pidfile != NULL && unlink(pidfile) == 0)
 	    ap_log_error(APLOG_MARK, APLOG_NOERRNO|APLOG_INFO,
 			 server_conf,
-			 "removed PID file %s (pid=%ld)",
-			 pidfile, (long)getpid());
+			 "removed PID file %s (pid=%u)",
+			 pidfile, getpid());
     }
 
     if (pparent) {
