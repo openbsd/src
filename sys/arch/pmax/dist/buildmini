@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: buildmini,v 1.5 1994/11/23 18:13:58 dean Exp $
+#	$NetBSD: buildmini,v 1.6 1995/12/22 08:08:19 jonathan Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -42,7 +42,7 @@ minimnt=/tmp/mini
 date
 mkdir ${minimnt}
 umount /dev/${miniroot}
-newfs -s 10240 ${miniroot}
+newfs -s 10240 -b 4096 -f 512 -i 40960 ${miniroot}
 fsck /dev/r${miniroot}
 mount /dev/${miniroot} ${minimnt}
 cd ${minimnt}; sh ${dist}/get

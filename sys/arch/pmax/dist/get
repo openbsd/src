@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: get,v 1.5 1994/11/23 18:13:59 dean Exp $
+#	$NetBSD: get,v 1.6 1995/12/22 08:08:14 jonathan Exp $
 #
 # Copyright (c) 1992, 1993
 #	The Regents of the University of California.  All rights reserved.
@@ -61,7 +61,7 @@ for i in $ETC; do
 	cp $DISTROOT/etc/$i etc/$i
 done
 
-SBIN="disklabel fsck ifconfig init mknod mount newfs restore umount"
+SBIN="disklabel fsck ifconfig init mknod mount mount_ffs mount_nfs newfs restore route umount"
 USBIN="pwd_mkdb"
 for i in $SBIN; do
 	cp $DISTROOT/sbin/$i sbin/$i
@@ -70,8 +70,10 @@ for i in $USBIN; do
 	cp $DISTROOT/usr/sbin/$i sbin/$i
 done
 ln sbin/restore sbin/rrestore
+ln sbin/mount_ffs sbin/mount_ufs
 
 BIN="[ cat cp dd echo ed expr ls mkdir mv pax rcp rm sh stty sync mt"
+#UBIN=""
 UBIN="awk"
 for i in $BIN; do
 	cp $DISTROOT/bin/$i bin/$i
