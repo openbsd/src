@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.849 2005/03/28 22:15:21 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.850 2005/04/04 16:31:52 damien Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3439,8 +3439,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "V.92 Modem",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_2100_3B,
-	    "PRO/2100 3B",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2100,
+	    "PRO/Wireless 2100",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PROXGB,
@@ -4251,16 +4251,20 @@ static const struct pci_known_product pci_known_products[] = {
 	    "E7710 WMCH",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_2200BG_3B,
-	    "PRO/2200BG 3B",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2200BG,
+	    "PRO/Wireless 2200BG",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_2225BG,
-	    "PRO/2225BG",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2225BG,
+	    "PRO/Wireless 2225BG",
 	},
 	{
-	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_2915ABG_3B,
-	    "PRO/2915ABG 3B",
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2915ABG_1,
+	    "PRO/Wireless 2915ABG",
+	},
+	{
+	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_PRO_WL_2915ABG_2,
+	    "PRO/Wireless 2915ABG",
 	},
 	{
 	    PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_80960RD,
