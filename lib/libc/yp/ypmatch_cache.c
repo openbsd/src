@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypmatch_cache.c,v 1.1 1996/04/24 12:56:31 deraadt Exp $	 */
+/*	$OpenBSD: ypmatch_cache.c,v 1.2 1996/05/22 02:08:38 deraadt Exp $	 */
 /*	$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $	 */
 
 /*
@@ -166,6 +166,12 @@ yp_match(indomain, inmap, inkey, inkeylen, outval, outvallen)
 	struct ypreq_key yprk;
 	int             r;
 
+	if (indomain == NULL || *indomain == '\0' || 
+	    strlen(indomain) > YPMAXDOMAIN || inmap == NULL ||
+	    *inmap == '\0' || strlen(inmap) > YPMAXMAP ||
+	    inkey == NULL || inkeylen == 0)
+		return YPERR_BADARGS;
+
 	*outval = NULL;
 	*outvallen = 0;
 
@@ -175,7 +181,7 @@ again:
 
 #ifdef YPMATCHCACHE
 	if (!strcmp(_yp_domain, indomain) && ypmatch_find(inmap, inkey,
-			 inkeylen, &yprv.val.valdat_val, &yprv.val.valdat_len)) {
+	    inkeylen, &yprv.val.valdat_val, &yprv.val.valdat_len)) {
 		*outvallen = yprv.val.valdat_len;
 		if ((*outval = malloc(*outvallen + 1)) == NULL) {
 			_yp_unbind(ysd);
@@ -199,7 +205,7 @@ again:
 	memset(&yprv, 0, sizeof yprv);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MATCH,
-		      xdr_ypreq_key, &yprk, xdr_ypresp_val, &yprv, tv);
+	    xdr_ypreq_key, &yprk, xdr_ypresp_val, &yprv, tv);
 	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_match: clnt_call");
 		ysd->dom_vers = -1;
@@ -216,8 +222,8 @@ again:
 #ifdef YPMATCHCACHE
 		if (strcmp(_yp_domain, indomain) == 0)
 			if (!ypmatch_add(inmap, inkey, inkeylen,
-					 *outval, *outvallen))
-				r = RPC_SYSTEMERROR;
+			    *outval, *outvallen))
+				r = YPERR_RESRC;
 #endif
 	}
 out:
@@ -243,6 +249,11 @@ yp_next(indomain, inmap, inkey, inkeylen, outkey, outkeylen, outval, outvallen)
 	struct timeval  tv;
 	int             r;
 
+	if (indomain == NULL || *indomain == '\0' ||
+	    strlen(indomain) > YPMAXDOMAIN || inmap == NULL ||
+	    *inmap == '\0' || strlen(inmap) > YPMAXMAP)
+		return YPERR_BADARGS;
+
 	*outkey = *outval = NULL;
 	*outkeylen = *outvallen = 0;
 
@@ -260,7 +271,7 @@ again:
 	(void)memset(&yprkv, 0, sizeof yprkv);
 
 	r = clnt_call(ysd->dom_client, YPPROC_NEXT,
-		      xdr_ypreq_key, &yprk, xdr_ypresp_key_val, &yprkv, tv);
+	    xdr_ypreq_key, &yprk, xdr_ypresp_key_val, &yprkv, tv);
 	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_next: clnt_call");
 		ysd->dom_vers = -1;
@@ -269,14 +280,14 @@ again:
 	if (!(r = ypprot_err(yprkv.stat))) {
 		*outkeylen = yprkv.key.keydat_len;
 		if ((*outkey = malloc(*outkeylen + 1)) == NULL)
-			r = RPC_SYSTEMERROR;
+			r = YPERR_RESRC;
 		else {
 			(void)memcpy(*outkey, yprkv.key.keydat_val, *outkeylen);
 			(*outkey)[*outkeylen] = '\0';
 		}
 		*outvallen = yprkv.val.valdat_len;
 		if ((*outval = malloc(*outvallen + 1)) == NULL)
-			r = RPC_SYSTEMERROR;
+			r = YPERR_RESRC;
 		else {
 			(void)memcpy(*outval, yprkv.val.valdat_val, *outvallen);
 			(*outval)[*outvallen] = '\0';

@@ -1,4 +1,4 @@
-/*    $OpenBSD: xdr_keydat.c,v 1.1 1996/04/24 12:55:43 deraadt Exp $   */
+/*    $OpenBSD: xdr_keydat.c,v 1.2 1996/05/22 02:08:32 deraadt Exp $   */
 /*    $NetBSD: xdryp.c,v 1.10 1996/02/04 23:26:21 jtc Exp $   */
 
 /*
@@ -54,5 +54,5 @@ XDR *xdrs;
 keydat *objp;
 {
 	return xdr_bytes(xdrs, (char **)&objp->keydat_val,
-			 (u_int *)&objp->keydat_len, YPMAXRECORD);
+	    (u_int *)&objp->keydat_len, YPMAXRECORD);
 }

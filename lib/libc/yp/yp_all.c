@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_all.c,v 1.1 1996/04/24 12:56:16 deraadt Exp $	 */
+/*	$OpenBSD: yp_all.c,v 1.2 1996/05/22 02:08:35 deraadt Exp $	 */
 /*	$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $	 */
 
 /*
@@ -80,15 +80,15 @@ u_long *objp;
 			size = out.ypresp_all_u.val.key.keydat_len;
 			if ((key = malloc(size + 1)) != NULL) {
 				(void)memcpy(key,
-					     out.ypresp_all_u.val.key.keydat_val,
-					     size);
+				    out.ypresp_all_u.val.key.keydat_val,
+				    size);
 				key[size] = '\0';
 			}
 			size = out.ypresp_all_u.val.val.valdat_len;
 			if ((val = malloc(size + 1)) != NULL) {
 				(void)memcpy(val,
-					     out.ypresp_all_u.val.val.valdat_val,
-					     size);
+				    out.ypresp_all_u.val.val.valdat_val,
+				    size);
 				val[size] = '\0';
 			}
 			else {
@@ -100,10 +100,9 @@ u_long *objp;
 			if (key == NULL || val == NULL)
 				return FALSE;
 
-			r = (*ypresp_allfn)(status,
-				key, out.ypresp_all_u.val.key.keydat_len,
-				val, out.ypresp_all_u.val.val.valdat_len,
-				ypresp_data);
+			r = (*ypresp_allfn)(status, key,
+			    out.ypresp_all_u.val.key.keydat_len, val,
+			    out.ypresp_all_u.val.val.valdat_len, ypresp_data);
 			*objp = status;
 			free(key);
 			free(val);
@@ -136,6 +135,11 @@ yp_all(indomain, inmap, incallback)
 	int             clnt_sock;
 	int		r = 0;
 
+	if (indomain == NULL || *indomain == '\0' ||
+	    strlen(indomain) > YPMAXDOMAIN || inmap == NULL ||
+	    *inmap == '\0' || strlen(inmap) > YPMAXMAP || incallback == NULL)
+		return YPERR_BADARGS;
+
 	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
 
@@ -156,7 +160,7 @@ yp_all(indomain, inmap, incallback)
 	ypresp_data = (void *) incallback->data;
 
 	(void) clnt_call(clnt, YPPROC_ALL,
-		  xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status, tv);
+	    xdr_ypreq_nokey, &yprnk, xdr_ypresp_all_seq, &status, tv);
 	clnt_destroy(clnt);
 	if(status != YP_FALSE)
 		r = ypprot_err(status);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_master.c,v 1.1 1996/04/24 12:56:25 deraadt Exp $	 */
+/*	$OpenBSD: yp_master.c,v 1.2 1996/05/22 02:08:37 deraadt Exp $	 */
 /*	$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $	 */
 
 /*
@@ -64,6 +64,11 @@ yp_master(indomain, inmap, outname)
 	struct timeval  tv;
 	int             r;
 
+	if (indomain == NULL || *indomain == '\0' ||
+	    strlen(indomain) > YPMAXDOMAIN || inmap == NULL ||
+	    *inmap == '\0' || strlen(inmap) > YPMAXMAP || outname == NULL)
+		return YPERR_BADARGS;
+
 again:
 	if (_yp_dobind(indomain, &ysd) != 0)
 		return YPERR_DOMAIN;
@@ -77,7 +82,7 @@ again:
 	(void)memset(&yprm, 0, sizeof yprm);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MASTER,
-		      xdr_ypreq_nokey, &yprnk, xdr_ypresp_master, &yprm, tv);
+	    xdr_ypreq_nokey, &yprnk, xdr_ypresp_master, &yprm, tv);
 	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_master: clnt_call");
 		ysd->dom_vers = -1;
@@ -85,7 +90,7 @@ again:
 	}
 	if (!(r = ypprot_err(yprm.stat))) {
 		if ((*outname = strdup(yprm.peer)) == NULL)
-			r = RPC_SYSTEMERROR;
+			r = YPERR_RESRC;
 	}
 	xdr_free(xdr_ypresp_master, (char *) &yprm);
 	_yp_unbind(ysd);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_bind.c,v 1.1 1996/04/24 12:56:18 deraadt Exp $	 */
+/*	$OpenBSD: yp_bind.c,v 1.2 1996/05/22 02:08:35 deraadt Exp $	 */
 /*	$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $	 */
 
 /*
@@ -144,9 +144,9 @@ again:
 				goto again;
 			}
 			(void)memset(&ysd->dom_server_addr, 0,
-				     sizeof ysd->dom_server_addr);
+			    sizeof ysd->dom_server_addr);
 			ysd->dom_server_addr.sin_len =
-				sizeof(struct sockaddr_in);
+			    sizeof(struct sockaddr_in);
 			ysd->dom_server_addr.sin_family = AF_INET;
 			bn = &ybr.ypbind_resp_u.ypbind_bindinfo;
 			memcpy(&ysd->dom_server_addr.sin_port,
@@ -156,7 +156,6 @@ again:
 			memcpy(&ysd->dom_server_addr.sin_addr,
 			    &bn->ypbind_binding_addr,
 			    sizeof(ysd->dom_server_addr.sin_addr));
-				
 
 			ysd->dom_server_port = ysd->dom_server_addr.sin_port;
 			(void)close(fd);
@@ -179,7 +178,7 @@ trynet:
 
 		clnt_sock = RPC_ANYSOCK;
 		client = clnttcp_create(&clnt_sin, YPBINDPROG, YPBINDVERS,
-					&clnt_sock, 0, 0);
+		    &clnt_sock, 0, 0);
 		if (client == NULL) {
 			clnt_pcreateerror("clnttcp_create");
 			if (new)
@@ -189,7 +188,7 @@ trynet:
 		tv.tv_sec = _yplib_timeout;
 		tv.tv_usec = 0;
 		r = clnt_call(client, YPBINDPROC_DOMAIN, xdr_domainname,
-			      &dom, xdr_ypbind_resp, &ypbr, tv);
+		    &dom, xdr_ypbind_resp, &ypbr, tv);
 		if (r != RPC_SUCCESS) {
 			if (new == 0 || count)
 				fprintf(stderr,
@@ -203,7 +202,7 @@ trynet:
 		clnt_destroy(client);
 
 		(void)memset(&ysd->dom_server_addr, 0, 
-			     sizeof ysd->dom_server_addr);
+		    sizeof ysd->dom_server_addr);
 		ysd->dom_server_addr.sin_len = sizeof(struct sockaddr_in);
 		ysd->dom_server_addr.sin_family = AF_INET;
 		bn = &ypbr.ypbind_resp_u.ypbind_bindinfo;
@@ -224,7 +223,7 @@ gotit:
 		clnt_destroy(ysd->dom_client);
 	ysd->dom_socket = RPC_ANYSOCK;
 	ysd->dom_client = clntudp_create(&ysd->dom_server_addr,
-				      YPPROG, YPVERS, tv, &ysd->dom_socket);
+	    YPPROG, YPVERS, tv, &ysd->dom_socket);
 	if (ysd->dom_client == NULL) {
 		clnt_pcreateerror("clntudp_create");
 		ysd->dom_vers = -1;

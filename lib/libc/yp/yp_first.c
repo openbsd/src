@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_first.c,v 1.1 1996/04/24 12:56:19 deraadt Exp $	 */
+/*	$OpenBSD: yp_first.c,v 1.2 1996/05/22 02:08:36 deraadt Exp $	 */
 /*	$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $	 */
 
 /*
@@ -67,6 +67,11 @@ yp_first(indomain, inmap, outkey, outkeylen, outval, outvallen)
 	struct timeval  tv;
 	int             r;
 
+	if (indomain == NULL || *indomain == '\0' ||
+	    strlen(indomain) > YPMAXDOMAIN || inmap == NULL ||
+	    *inmap == '\0' || strlen(inmap) > YPMAXMAP)
+		return YPERR_BADARGS;
+
 	*outkey = *outval = NULL;
 	*outkeylen = *outvallen = 0;
 
@@ -82,7 +87,7 @@ again:
 	(void)memset(&yprkv, 0, sizeof yprkv);
 
 	r = clnt_call(ysd->dom_client, YPPROC_FIRST,
-		   xdr_ypreq_nokey, &yprnk, xdr_ypresp_key_val, &yprkv, tv);
+	    xdr_ypreq_nokey, &yprnk, xdr_ypresp_key_val, &yprkv, tv);
 	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_first: clnt_call");
 		ysd->dom_vers = -1;
@@ -91,14 +96,14 @@ again:
 	if (!(r = ypprot_err(yprkv.stat))) {
 		*outkeylen = yprkv.key.keydat_len;
 		if ((*outkey = malloc(*outkeylen + 1)) == NULL)
-			r = RPC_SYSTEMERROR;
+			r = YPERR_RESRC;
 		else {
 			(void)memcpy(*outkey, yprkv.key.keydat_val, *outkeylen);
 			(*outkey)[*outkeylen] = '\0';
 		}
 		*outvallen = yprkv.val.valdat_len;
 		if ((*outval = malloc(*outvallen + 1)) == NULL)
-			r = RPC_SYSTEMERROR;
+			r = YPERR_RESRC;
 		else {
 			(void)memcpy(*outval, yprkv.val.valdat_val, *outvallen);
 			(*outval)[*outvallen] = '\0';

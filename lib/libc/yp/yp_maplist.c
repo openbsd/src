@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_maplist.c,v 1.1 1996/04/24 12:56:22 deraadt Exp $	 */
+/*	$OpenBSD: yp_maplist.c,v 1.2 1996/05/22 02:08:37 deraadt Exp $	 */
 /*	$NetBSD: yplib.c,v 1.17 1996/02/04 23:26:26 jtc Exp $	 */
 
 /*
@@ -72,7 +72,7 @@ again:
 	memset(&ypml, 0, sizeof ypml);
 
 	r = clnt_call(ysd->dom_client, YPPROC_MAPLIST,
-		   xdr_domainname, &indomain, xdr_ypresp_maplist, &ypml, tv);
+	    xdr_domainname, &indomain, xdr_ypresp_maplist, &ypml, tv);
 	if (r != RPC_SUCCESS) {
 		clnt_perror(ysd->dom_client, "yp_maplist: clnt_call");
 		ysd->dom_vers = -1;
