@@ -207,9 +207,6 @@ bootstrap(nctx)
 	int nctx;
 {
 	extern int end;	/* End of kernel */
-#if defined(DDB) && defined(DB_ELF_SYMBOLS)
-	extern void *ssym, *esym;
-#endif
 #ifndef	__arch64__
 	/* Assembly glue for the PROM */
 	extern void OF_sym2val32 __P((void *));
@@ -232,11 +229,7 @@ bootstrap(nctx)
 	/* Initialize the PROM console so printf will not panic */
 	(*cn_tab->cn_init)(cn_tab);
 #ifdef DDB
-#ifdef DB_ELF_SYMBOLS
-	ddb_init((int)((caddr_t)esym - (caddr_t)ssym), ssym, esym); 
-#else
 	ddb_init();
-#endif
 #ifdef __arch64__
 	/* This can only be installed on an 64-bit system cause otherwise our stack is screwed */
 	OF_set_symbol_lookup(OF_sym2val, OF_val2sym);
