@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.211 2002/04/28 14:44:01 krw Exp $
+#	$OpenBSD: install.sub,v 1.212 2002/04/28 20:41:15 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -345,7 +345,7 @@ $_DKDEVS
 
 __EOT
 	ask "Which one?" done
-	if [ "X${resp}" = "Xdone" ]; then
+	if [ "$resp" = "done" ]; then
 		DISK=done
 	elif isin $resp $_DKDEVS ; then
 		DISK=$resp
@@ -360,7 +360,7 @@ getrootdisk() {
 	local _defdsk
 
 	_defdsk=`echo $_DKDEVS | cutlast`
-	if [ "${_defdsk}" != "${_DKDEVS}" ]; then
+	if [ "$_defdsk" != "$_DKDEVS" ]; then
 		_defdsk=
 	fi
 
@@ -417,7 +417,7 @@ configure_all_interfaces() {
 	_IFS=`get_ifdevs`
 
 	resp=
-	while [ "X${resp}" != X"done" ]; do
+	while [ "$resp" != "done" ]; do
 		if [ $_reprompt = 1 ]; then
 			cat << __EOT
 
@@ -495,7 +495,7 @@ configure_ifs() {
 	resp=
 	while [ -z "$resp" ] ; do
 		ask "IP address${_dhcp_prompt}?" "$_if_ip"
-		if [ ! -x /sbin/dhclient -a "X$resp" == "Xdhcp" ]; then
+		if [ ! -x /sbin/dhclient -a "$resp" == "dhcp" ]; then
 			resp=
 		fi
 		_if_ip=$resp
@@ -607,7 +607,7 @@ __EOT
 			${_if_ip} \
 			netmask ${_if_mask} ${_if_extra} up
 			then
-			addifconfig ${_if_name} ${_if_symname} ${_if_ip} ${_if_mask} "${_if_extra}"
+			addifconfig ${_if_name} ${_if_symname} ${_if_ip} ${_if_mask} "$_if_extra"
 			return 0
 		fi
 	fi
@@ -731,7 +731,7 @@ enable_network() {
 				fi
 				case $af in
 				inet)	[ "$mask" ] && cmd="$cmd netmask $mask"
-					if [ "$bcaddr" -a "X$bcaddr" != "XNONE" ]; then
+					if [ "$bcaddr" -a "$bcaddr" != "NONE" ]; then
 						cmd="$cmd broadcast $bcaddr"
 					fi
 					[ "$alias" ] && rtcmd="; route -n add -host $name 127.0.0.1"
@@ -785,7 +785,7 @@ get_selection() {
 			echo -n "	[X] "
 		else
 			echo -n "	[ ] "
-			if [ "X$_next" = "Xdone" ]; then
+			if [ "$_next" = "done" ]; then
 				_next=$_f
 			fi
 		fi
@@ -887,7 +887,7 @@ get_sets_list () {
 	_sets=
 
 	for _f in $THESETS ; do
-		if [ "X${_f}" = "Xkernel" ]; then
+		if [ "$_f" = "kernel" ]; then
 			if isin bsd $_file_list; then
 				_sets="$_sets bsd"
 			fi
@@ -957,7 +957,7 @@ get_get_files_list () {
 
 		get_selection "$_sets"
 
-		if [ "X${resp}" = "Xdone" ]; then
+		if [ "$resp" = "done" ]; then
 			break
 		fi
 
@@ -984,7 +984,7 @@ install_get_files_list () {
 
 	# Install/Upgrade the sets one at a time. Keep track of which
 	# ones fail.
-	while [ -n "${_get_files}" ] ; do
+	while [ -n "$_get_files" ] ; do
 		_failed_files=
 		echo
 		for _f in $_get_files ; do
@@ -1006,12 +1006,12 @@ install_get_files_list () {
 
 		# Offer the option of re-fetching failed files.
 		_get_files=
-		while [ -n "${_failed_files}" ] ; do
+		while [ -n "$_failed_files" ] ; do
 			display_failure_msg
 
 			get_selection "$_failed_files"
 
-			if [ "X${resp}" = X"done" ]; then
+			if [ "$resp" = "done" ]; then
 				break
 			fi
 
@@ -1058,14 +1058,14 @@ __EOT
 		_proxy_host=none
 	fi
 	ask "HTTP/FTP proxy URL? (e.g. 'http://proxy:8080', or 'none')" "$_proxy_host"
-	if [ "X${resp}" = X"none" ]; then
+	if [ "$resp" = "none" ]; then
 		unset _proxy_host ftp_proxy http_proxy
 	else
 		_proxy_host=$resp
 		export ftp_proxy=${_proxy_host}
 		export http_proxy=${_proxy_host}
 	fi
-	if [ "${_url_type}" = "ftp" -a -z "$ftp_proxy" ]; then
+	if [ "$_url_type" = "ftp" -a -z "$ftp_proxy" ]; then
 		# Use active mode ftp? (irrelevant if using a proxy)
 		case $_ftp_active in
 		-A)	resp=y ;;
@@ -1108,7 +1108,7 @@ __EOT
 		else
 			eval ask \"Server IP address, or hostname?\" \"\$_${_url_type}_server_ip\"
 		fi
-		if [ "X$resp" = "X?" -a -f /tmp/ftplist ]; then
+		if [ "$resp" = "?" -a -f /tmp/ftplist ]; then
 			cat /tmp/ftplist | grep "^${_url_type}:" | cat -n | less -XE
 			resp=
 		elif [ -n "$resp" \
@@ -1139,7 +1139,7 @@ __EOT
 	done
 
 	# Get server directory
-	if [ "${_url_type}" = "ftp" -a -z "$_ftp_server_dir" ] ; then
+	if [ "$_url_type" = "ftp" -a -z "$_ftp_server_dir" ] ; then
 		# Default ftp dir
 		_ftp_server_dir=pub/OpenBSD/${VERSION_MAJOR}.${VERSION_MINOR}/${ARCH}
 	fi
@@ -1149,7 +1149,7 @@ __EOT
 		eval _${_url_type}_server_dir=$resp
 	done
 
-	if [ "${_url_type}" = "ftp" ]; then
+	if [ "$_url_type" = "ftp" ]; then
 		# Need default values even if we proxy ftp...
 		if [ -z "$_ftp_server_login" ] ; then
 			_ftp_server_login=anonymous
@@ -1169,7 +1169,7 @@ __EOT
 		done
 
 		# Get password unless anonymous
-		if [ "${_ftp_server_login}" != "anonymous" ]; then
+		if [ "$_ftp_server_login" != "anonymous" ]; then
 			resp=
 			while [ -z "$resp" ] ; do
 				askpass "Password (will not echo):"
@@ -1183,9 +1183,9 @@ __EOT
 	fi
 
 	# Build up the base url since it is so nasty...
-	if [ "${_url_type}" = "ftp" -a "${_ftp_server_login}" != "anonymous" ]; then
-		_url_login=`encode_for_url "${_ftp_server_login}"`
-		_url_pass=`encode_for_url "${_ftp_server_password}"`
+	if [ "$_url_type" = "ftp" -a "$_ftp_server_login" != "anonymous" ]; then
+		_url_login=`encode_for_url "$_ftp_server_login"`
+		_url_pass=`encode_for_url "$_ftp_server_password"`
 		_url_base=ftp://${_url_login}:${_url_pass}@${_ftp_server_ip}/${_ftp_server_dir}
 	else
 		eval _url_base=${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
@@ -1193,7 +1193,7 @@ __EOT
 
 	# Get list of files from the server.
 	# XXX - check for nil $_file_list and deal
-	if [ "${_url_type}" = "ftp" -a -z "$ftp_proxy" ] ; then
+	if [ "$_url_type" = "ftp" -a -z "$ftp_proxy" ] ; then
 		_file_list=`ftp_list_files "$_ftp_server_ip" "$_ftp_server_login" "$_ftp_server_password" "$_ftp_server_dir"`
 	else
 		# Assumes index file is "index.txt" for http (or proxy)
@@ -1587,7 +1587,7 @@ __EOT
 
 	# Skip to correct file.
 	echo -n "Skipping to source file..."
-	if [ "X${_nskip}" != X"0" ]; then
+	if [ $_nskip -ne 0 ]; then
 		if ! mt fsf $_nskip ; then
 			echo "Could not skip $_nskip files. Aborting."
 			return
@@ -1741,7 +1741,7 @@ sets in one try and can recover from some errors.
 __EOT
 
 	if [ -n "$local_sets_dir" ]; then
-		install_from_mounted_fs "${local_sets_dir}"
+		install_from_mounted_fs "$local_sets_dir"
 		[ -n "$_setsdone" ] && _yup=TRUE
 	fi
 
@@ -1750,7 +1750,7 @@ __EOT
 	while [ -z "$resp" ]; do
 		# If _yup is not FALSE, it means that we extracted sets above.
 		# If that's the case, bypass the menu the first time.
-		if [ X"$_yup" = X"FALSE" ]; then
+		if [ "$_yup" = "FALSE" ]; then
 			echo -n	"Install from (f)tp, (h)ttp, (t)ape, (C)D-ROM"
 			[ -n "$_have_nfs" ] && echo -n ", (N)FS"
 			ask " or local (d)isk?"
@@ -1846,7 +1846,7 @@ mount_fs() {
 	while read _dev _mp _fstype _opt _rest; do
 		# If not the root filesystem, make sure the mount
 		# point is present.
-		if [ "X{$_mp}" != X"/mnt" ]; then
+		if [ "$_mp" != "/mnt" ]; then
 			mkdir -p $_mp
 		fi
 
@@ -2025,7 +2025,7 @@ __EOT
 		fi
 	fi
 	ask "Enter IP address of default route:" "$resp"
-	if [ "X${resp}" != X"none" ]; then
+	if [ "$resp" != "none" ]; then
 		route delete default > /dev/null 2>&1
 		if route add default $resp > /dev/null ; then
 			echo $resp > /tmp/mygate
@@ -2045,7 +2045,7 @@ __EOT
 		done
 	fi
 	ask "Enter IP address of primary nameserver:" "$resp"
-	if [ "X${resp}" != X"none" ]; then
+	if [ "$resp" != "none" ]; then
 		echo "search $FQDN" > /tmp/resolv.conf
 		for n in `echo ${resp}`; do
 			echo "nameserver $n" >> /tmp/resolv.conf
@@ -2173,7 +2173,7 @@ trap 'exit 2' HUP INT QUIT TERM
 echo
 md_welcome_banner
 
-if [ -f /etc/fstab -a "${MODE}" = "install" ]; then
+if [ -f /etc/fstab -a "$MODE" = "install" ]; then
 	cat << __EOT
 You seem to be trying to restart an interrupted installation!
 You can skip the disk preparation steps and continue,

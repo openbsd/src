@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.98 2002/04/28 14:44:01 krw Exp $
+#	$OpenBSD: install.sh,v 1.99 2002/04/28 20:41:15 krw Exp $
 #	$NetBSD: install.sh,v 1.5.2.8 1996/08/27 18:15:05 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -91,17 +91,17 @@ if [ ! -f /etc/fstab ]; then
 	fi
 
 	while : ; do
-		if [ "X${ROOTDISK}" = "X" ]; then
-			while [ "X${ROOTDISK}" = "X" ]; do
+		if [ -z "$ROOTDISK" ]; then
+			while [ -z "$ROOTDISK" ]; do
 				getrootdisk
 			done
 			DISK=$ROOTDISK
 		else
 			DISK=
-			while [ "X${DISK}" = "X" ]; do
+			while [ -z "$DISK" ]; do
 				getanotherdisk
 			done
-			if [ "${DISK}" = "done" ]; then
+			if [ "$DISK" = "done" ]; then
 				break
 			fi
 		fi
@@ -122,7 +122,7 @@ You will be prompted for the mount point (full path, including the prepending
 partition or "done" when you are finished.
 __EOT
 
-		if [ "${DISK}" = "${ROOTDISK}" ]; then
+		if [ "$DISK" = "$ROOTDISK" ]; then
 			cat << __EOT
 
 The following partitions will be used for the root filesystem and swap:
@@ -218,7 +218,7 @@ __EOT
 	(
 		echo -n "	"
 		while read _device_name _junk; do
-			echo -n "${_device_name} "
+			echo -n "$_device_name "
 		done
 		echo
 	) < ${FILESYSTEMS}
@@ -241,7 +241,7 @@ __EOT
 else
 	# Get the root device
 	ROOTDISK=`df /mnt | sed -e '/^\//!d' -e 's/\/dev\/\([^ ]*\)[a-p] .*/\1/'`
-	while [ "X${ROOTDISK}" = "X" ]; do
+	while [ -z "$ROOTDISK" ]; do
 		getrootdisk
 	done
 fi
@@ -341,7 +341,7 @@ echo "...done."
 
 remount_fs
 
-_encr=`/mnt/usr/bin/encrypt -b 7 "${_password}"`
+_encr=`/mnt/usr/bin/encrypt -b 7 "$_password"`
 echo "1,s@^root::@root:${_encr}:@
 w
 q" | ed /mnt/etc/master.passwd 2> /dev/null

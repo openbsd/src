@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: upgrade.sh,v 1.32 2002/04/28 14:44:01 krw Exp $
+#	$OpenBSD: upgrade.sh,v 1.33 2002/04/28 20:41:15 krw Exp $
 #	$NetBSD: upgrade.sh,v 1.2.4.5 1996/08/27 18:15:08 gwr Exp $
 #
 # Copyright (c) 1997-2002 Todd Miller, Theo de Raadt, Ken Westerback
@@ -59,14 +59,14 @@ THESETS=`echo $THESETS | sed -e 's/ etc / /'`
 # XXX Work around vnode aliasing bug (thanks for the tip, Chris...)
 ls -l /dev > /dev/null 2>&1
 
-while [ "X${ROOTDISK}" = "X" ]; do
+while [ -z "$ROOTDISK" ]; do
 	getrootdisk
 done
 
 # Assume partition 'a' of $ROOTDISK is for the root filesystem. Confirm
 # this with the user. Check and mount the root filesystem.
 resp=
-while [ "X${resp}" = "X" ]; do
+while [ -z "$resp" ]; do
 	ask "Root filesystem?" "${ROOTDISK}a"
 	_root_filesystem=/dev/`basename $resp`
 	if [ ! -b ${_root_filesystem} ]; then
