@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.1.1.1 2004/04/21 15:23:50 aoyama Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.2 2004/06/19 18:29:45 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -78,7 +78,6 @@ void m88k_db_peek(db_expr_t, int, db_expr_t, char *);
 void m88k_db_noise(db_expr_t, int, db_expr_t, char *);
 void m88k_db_translate(db_expr_t, int, db_expr_t, char *);
 void m88k_db_cmmucfg(db_expr_t, int, db_expr_t, char *);
-void m88k_db_prom_cmd(db_expr_t, int, db_expr_t, char *);
 
 int 	db_active;
 int 	db_noisy;
@@ -786,16 +785,6 @@ m88k_db_cmmucfg(addr, have_addr, count, modif)
 	cmmu_dump_config();
 }
 
-void
-m88k_db_prom_cmd(addr, have_addr, count, modif)
-	db_expr_t addr;
-	int have_addr;
-	db_expr_t count;
-	char *modif;
-{
-	db_printf("m88k_db_prom_cmd() is not implemented\n");
-}
-
 /************************/
 /* COMMAND TABLE / INIT */
 /************************/
@@ -816,7 +805,6 @@ struct db_command db_machine_cmds[] = {
 	{ "translate",	m88k_db_translate,	0,	NULL },
 	{ "cmmucfg",	m88k_db_cmmucfg,	0,	NULL },
 	{ "where",	m88k_db_where,		0,	NULL },
-	{ "prom",	m88k_db_prom_cmd,	0,	NULL },
 	{ NULL,		NULL,			0,	NULL }
 };
 
