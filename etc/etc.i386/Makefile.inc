@@ -1,38 +1,38 @@
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
-#	$Id: Makefile.inc,v 1.1.1.1 1995/10/18 08:38:00 deraadt Exp $
+#	$Id: Makefile.inc,v 1.2 1995/11/18 15:44:24 deraadt Exp $
 
 .ifdef DESTDIR
-snap_md: netbsd-aha netbsd-bt
-#snap_md: kc_aha.fs kc_bt.fs
+snap_md: bsd.adp bsd.other
+#snap_md: kcadp.fs kcother.fs
 
-netbsd-aha:
-	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERICAHA
-	cd ${.CURDIR}/../sys/arch/i386/compile/GENERICAHA && \
+bsd.adp:
+	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERICADP
+	cd ${.CURDIR}/../sys/arch/i386/compile/GENERICADP && \
 	    make clean && make depend && make
-	cp ${.CURDIR}/../sys/arch/i386/compile/GENERICAHA/netbsd \
-	    ${DESTDIR}/snapshot/netbsd-aha
+	cp ${.CURDIR}/../sys/arch/i386/compile/GENERICADP/bsd \
+	    ${DESTDIR}/snapshot/bsd.adp
 
-netbsd-bt:
-	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERICBT
-	cd ${.CURDIR}/../sys/arch/i386/compile/GENERICBT && \
+bsd.other:
+	cd ${.CURDIR}/../sys/arch/i386/conf && config GENERICOTHER
+	cd ${.CURDIR}/../sys/arch/i386/compile/GENERICOTHER && \
 	    make clean && make depend && make
-	cp ${.CURDIR}/../sys/arch/i386/compile/GENERICBT/netbsd \
-	    ${DESTDIR}/snapshot/netbsd-bt
+	cp ${.CURDIR}/../sys/arch/i386/compile/GENERICOTHER/bsd \
+	    ${DESTDIR}/snapshot/bsd.other
 
-kc_aha.fs:
+kcadp.fs:
 	make -f ${.CURDIR}/etc.i386/Makefile.kc \
-	    IMAGE=${DESTDIR}/snapshot/kc_aha.fs \
-	    KERNEL=${DESTDIR}/snapshot/netbsd-aha || \
+	    IMAGE=${DESTDIR}/snapshot/kcadp.fs \
+	    KERNEL=${DESTDIR}/snapshot/bsd.adp || \
 	make -f ${.CURDIR}/etc.i386/Makefile.kc \
-	    IMAGE=${DESTDIR}/snapshot/kc_aha.fs unconfig
+	    IMAGE=${DESTDIR}/snapshot/kcadp.fs unconfig
 
-kc_bt.fs:
+kcother.fs:
 	make -f ${.CURDIR}/etc.i386/Makefile.kc \
-	    IMAGE=${DESTDIR}/snapshot/kc_bt.fs \
-	    KERNEL=${DESTDIR}/snapshot/netbsd-bt || \
+	    IMAGE=${DESTDIR}/snapshot/kcother.fs \
+	    KERNEL=${DESTDIR}/snapshot/bsd.other || \
 	make -f ${.CURDIR}/etc.i386/Makefile.kc \
-	    IMAGE=${DESTDIR}/snapshot/kc_bt.fs unconfig
+	    IMAGE=${DESTDIR}/snapshot/kcother.fs unconfig
 
 .endif	# DESTDIR check
