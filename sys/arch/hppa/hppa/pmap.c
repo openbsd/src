@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.2 1998/09/12 03:14:49 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.3 1998/10/30 22:16:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -135,6 +135,7 @@
 #include <machine/pmap.h>
 #include <machine/pte.h>
 #include <machine/cpufunc.h>
+#include <machine/pdc.h>
 
 #ifdef DEBUG
 struct {
@@ -230,6 +231,10 @@ static __inline void pmap_remove_va __P((struct pv_entry *));
 static __inline void pmap_clear_va __P((pa_space_t, vm_offset_t));
 #ifdef DEBUG
 void pmap_hptdump __P((void));
+#endif
+#if FORCE_MAP_KERNEL
+vm_offset_t pmap_map __P((vm_offset_t va, vm_offset_t spa, vm_offset_t epa,
+	vm_prot_t prot, int wired));
 #endif
 
 u_int	kern_prot[8], user_prot[8];
@@ -634,7 +639,7 @@ pmap_find_pv(pa)
 #endif
 		return &vm_physmem[bank].pmseg.pvent[off];
 	} else
-		return NULL;
+		panic("pmap_find_pv: mapping unmappable");
 }
 
 /*
@@ -651,6 +656,7 @@ pmap_bootstrap(vstart, vend)
 	vm_offset_t *vstart;
 	vm_offset_t *vend;
 {
+	extern u_int totalphysmem;
 	vm_offset_t addr;
 	vm_size_t size;
 	struct pv_page *pvp;
@@ -740,29 +746,31 @@ pmap_bootstrap(vstart, vend)
 	   NB: It sez CR_VTOP, but we (and the TLB handlers) know better ... */
 	mtctl(hpt_table, CR_VTOP);
 
-	/* Allocate the physical to virtual table. */
-	addr = cache_align(addr);
-	size = sizeof(struct pv_entry) * atop(*vend - *vstart + 1);
+	addr = hppa_round_page(addr);
+	size = hppa_round_page(sizeof(struct pv_entry) *
+			       (totalphysmem - atop(virtual_avail)));
+	bzero ((caddr_t)addr, size);
+
 #ifdef PMAPDEBUG
 	if (pmapdebug & PDB_INIT)
 		printf("pv_array: 0x%x @ 0x%x\n", size, addr);
 #endif
-	bzero ((caddr_t)addr, size);
-	virtual_steal = hppa_round_page(addr + size);
-	/* align the virtual_avail at power of 2
-	   always keep some memory for steal */
-	for (virtual_avail = 1; virtual_avail <= virtual_steal;
-	     virtual_avail *= 2);
-	vm_page_physload(atop(virtual_steal), atop(virtual_end),
-			 atop(virtual_avail), atop(virtual_end));
+
+	/* map the kernel space, which will give us virtual_avail */
+	*vstart = hppa_round_page(addr + size + totalphysmem * 64);
+	btlb_insert(0, kernel_pmap->pmap_space, 0, 0, vstart,
+		    kernel_pmap->pmap_pid |
+		    pmap_prot(kernel_pmap, VM_PROT_ALL));
+	virtual_avail = *vstart;
+
+	vm_page_physload(atop(virtual_avail), totalphysmem,
+			 atop(virtual_avail), totalphysmem);
 	/* we have only one initial phys memory segment */
-	vm_physmem[0].pmseg.pvent = (struct pv_entry *) addr;
-	addr = virtual_steal;
+	vm_physmem[0].pmseg.pvent = (struct pv_entry *)addr;
+	virtual_steal = addr += size;
 
 	/* here will be a hole due to the kernel memory alignment
 	   and we use it for pmap_steal_memory */
- 
-	*vstart = virtual_avail;
 }
 
 vm_offset_t 
@@ -776,17 +784,17 @@ pmap_steal_memory(size, startp, endp)
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_steal_memory(%x, %x, %x)\n", size, startp, endp);
 #endif
-	*startp = virtual_avail;
-	*endp = virtual_end;
+	if (startp)
+		*startp = virtual_avail;
+	if (endp)
+		*endp = virtual_end;
 
 	size = hppa_round_page(size);
 	if (size <= virtual_avail - virtual_steal) {
 #ifdef PMAPDEBUG
 		printf("pmap_steal_memory: steal %d bytes (%x+%x,%x)\n",
-		       size, vm_physmem[0].start, atop(size),
-		       vm_physmem[0].avail_start);
+		       size, virtual_steal, size, virtual_avail);
 #endif
-		vm_physmem[0].start += atop(size);
 		va = virtual_steal;
 		virtual_steal += size;
 	} else
@@ -804,10 +812,44 @@ pmap_steal_memory(size, startp, endp)
 void
 pmap_init(void)
 {
+#ifdef FORCE_MAP_KERNEL
+	extern int kernel_text, etext;
+	vm_offset_t end_text, end_data;
+#endif
+	register struct pv_page *pvp;
+
 #ifdef DEBUG
 	if (pmapdebug & PDB_FOLLOW)
 		printf("pmap_init()\n");
-/*	pmapdebug |= PDB_ENTER | PDB_VA | PDB_PV; */
+/*	pmapdebug |= PDB_VA | PDB_PV; */
+#endif
+
+	/* alloc the rest of steal area for pv_pages */
+	for (pvp = (struct pv_page *)virtual_steal;
+	     pvp + 1 <= (struct pv_page *)virtual_avail; pvp++)
+		pmap_insert_pvp(pvp, 1);
+#ifdef DEBUG
+	printf("pmap_init: allocate %d pv_pages @ %x\n",
+	       (virtual_avail - virtual_steal) / sizeof(struct pv_page),
+	       virtual_steal);
+#endif
+	virtual_steal = virtual_avail;
+
+#if FORCE_MAP_KERNEL
+	end_text = round_page((vm_offset_t)&etext);
+	end_data = virtual_avail;
+
+	/* pdc/iodc area; kernel_text is assumed to be page-aligned */
+	pmap_map(0, 0, (vm_offset_t)&kernel_text, VM_PROT_ALL, TRUE);
+	/* .text */
+	pmap_map((vm_offset_t)&kernel_text, (vm_offset_t)&kernel_text,end_text,
+#ifdef DDB
+		 VM_PROT_WRITE |
+#endif
+		 VM_PROT_READ | VM_PROT_EXECUTE, TRUE);
+	/* .data+.bss */
+	pmap_map(end_text, end_text, end_data,
+		 VM_PROT_READ | VM_PROT_WRITE, TRUE);
 #endif
 
 	TAILQ_INIT(&pmap_freelist);
@@ -1082,6 +1124,7 @@ pmap_remove(pmap, sva, eva)
 	simple_unlock(&pmap->pmap_lock);
 }
 
+#if FORCE_MAP_KERNEL
 /*
  *	Used to map a range of physical addresses into kernel
  *	virtual address space.
@@ -1090,11 +1133,12 @@ pmap_remove(pmap, sva, eva)
  *	specified memory.
  */
 vm_offset_t
-pmap_map(va, spa, epa, prot)
+pmap_map(va, spa, epa, prot, wired)
 	vm_offset_t va;
 	vm_offset_t spa;
 	vm_offset_t epa;
 	vm_prot_t prot;
+	int wired;
 {
 
 #ifdef DEBUG
@@ -1103,12 +1147,13 @@ pmap_map(va, spa, epa, prot)
 #endif
 
 	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, FALSE);
+		pmap_enter(pmap_kernel(), va, spa, prot, wired);
 		va += NBPG;
 		spa += NBPG;
 	}
 	return va;
 }
+#endif /* FORCE_MAP_KERNEL */
 
 /*
  *	pmap_page_protect(pa, prot)
