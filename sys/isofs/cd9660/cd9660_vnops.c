@@ -1,4 +1,4 @@
-/*	$OpenBSD: cd9660_vnops.c,v 1.25 2003/05/07 23:01:24 deraadt Exp $	*/
+/*	$OpenBSD: cd9660_vnops.c,v 1.26 2003/05/14 21:13:43 tdeval Exp $	*/
 /*	$NetBSD: cd9660_vnops.c,v 1.42 1997/10/16 23:56:57 christos Exp $	*/
 
 /*-
@@ -788,7 +788,8 @@ cd9660_readlink(v)
 	 * Now get a buffer
 	 * Abuse a namei buffer for now.
 	 */
-	if (uio->uio_segflg == UIO_SYSSPACE)
+	if (uio->uio_segflg == UIO_SYSSPACE &&
+	    uio->uio_iov->iov_len >= MAXPATHLEN)
 		symname = uio->uio_iov->iov_base;
 	else
 		MALLOC(symname, char *, MAXPATHLEN, M_NAMEI, M_WAITOK);
@@ -797,7 +798,8 @@ cd9660_readlink(v)
 	 * Ok, we just gathering a symbolic name in SL record.
 	 */
 	if (cd9660_rrip_getsymname(dirp, symname, &symlen, imp) == 0) {
-		if (uio->uio_segflg != UIO_SYSSPACE)
+		if (uio->uio_segflg != UIO_SYSSPACE ||
+		    uio->uio_iov->iov_len >= MAXPATHLEN)
 			FREE(symname, M_NAMEI);
 		brelse(bp);
 		return (EINVAL);
@@ -810,7 +812,8 @@ cd9660_readlink(v)
 	/*
 	 * return with the symbolic name to caller's.
 	 */
-	if (uio->uio_segflg != UIO_SYSSPACE) {
+	if (uio->uio_segflg != UIO_SYSSPACE ||
+	    uio->uio_iov->iov_len < MAXPATHLEN) {
 		error = uiomove(symname, symlen, uio);
 		FREE(symname, M_NAMEI);
 		return (error);
