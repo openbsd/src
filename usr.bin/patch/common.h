@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.h,v 1.10 1999/01/03 05:33:48 millert Exp $ */
+/*	$OpenBSD: common.h,v 1.11 2003/04/08 01:54:26 deraadt Exp $ */
 
 #define DEBUGGING
 
@@ -17,8 +17,6 @@
 #define Fclose (void)fclose
 #define Fflush (void)fflush
 #define Snprintf (void)snprintf
-#define Strcpy (void)strcpy
-#define Strcat (void)strcat
 
 /* NeXT declares malloc and realloc incompatibly from us in some of
    these files.  Temporarily redefine them to prevent errors.  */
