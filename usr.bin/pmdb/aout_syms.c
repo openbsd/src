@@ -1,4 +1,4 @@
-/*	$OpenBSD: aout_syms.c,v 1.5 2002/03/19 21:19:39 fgsch Exp $	*/
+/*	$OpenBSD: aout_syms.c,v 1.6 2002/03/29 19:32:18 deraadt Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -42,11 +42,6 @@
 #include "pmdb.h"
 #include "symbol.h"
 
-#if defined(__OpenBSD__) && (OpenBSD < 200106)
-/* OpenBSD prior to 2.9 have a broken pread on big-endian archs. */
-#define IGNORE_PREAD_ERRORS
-#endif
-
 struct aout_symbol_handle {
 	struct sym_table	ash_st;
 	int		ash_fd;
@@ -84,9 +79,7 @@ sym_check_aout(const char *name, struct pstate *ps)
 		return (1);
 
 	if (pread(fd, &ahdr, sizeof(ahdr), 0) != sizeof(ahdr)) {
-#ifndef IGNORE_PREAD_ERRORS
 		error = 1;
-#endif
 	}
 
 	if (!error && N_BADMAG(ahdr)) {
@@ -121,10 +114,8 @@ aout_open(const char *name)
 	}
 
 	if (pread(ash->ash_fd, &ahdr, sizeof(ahdr), 0) != sizeof(ahdr)) {
-#ifndef IGNORE_PREAD_ERRORS
 		warn("pread(header)");
 		goto fail;
-#endif
 	}
 
 	if (N_BADMAG(ahdr)) {
@@ -138,10 +129,8 @@ aout_open(const char *name)
 
 	if (pread(ash->ash_fd, &ash->ash_strsize, sizeof(u_int32_t),
 	    stroff) != sizeof(u_int32_t)) {
-#ifndef IGNORE_PREAD_ERRORS
 		warn("pread(strsize)");
 		goto fail;
-#endif
 	}
 
 	if ((ash->ash_strtab = mmap(NULL, ash->ash_strsize, PROT_READ,
