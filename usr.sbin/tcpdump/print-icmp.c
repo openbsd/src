@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-icmp.c,v 1.8 2000/10/03 14:31:57 ho Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -21,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.7 1998/07/13 22:13:47 deraadt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-icmp.c,v 1.8 2000/10/03 14:31:57 ho Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-isoclns.c,v 1.9 2000/10/03 14:31:57 ho Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -23,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-isoclns.c,v 1.8 2000/04/26 21:35:41 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-isoclns.c,v 1.9 2000/10/03 14:31:57 ho Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>

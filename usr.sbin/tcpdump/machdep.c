@@ -1,3 +1,5 @@
+/*	$OpenBSD: machdep.c,v 1.6 2000/10/03 14:31:55 ho Exp $	*/
+
 /*
  * Copyright (c) 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -21,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/machdep.c,v 1.5 2000/04/30 05:23:28 ericj Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/machdep.c,v 1.6 2000/10/03 14:31:55 ho Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>

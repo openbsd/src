@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-ether.c,v 1.16 2000/10/03 14:31:57 ho Exp $	*/
+
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -20,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.15 2000/04/26 21:35:40 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-ether.c,v 1.16 2000/10/03 14:31:57 ho Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>

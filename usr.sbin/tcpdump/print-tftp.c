@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-tftp.c,v 1.7 2000/10/03 14:31:58 ho Exp $	*/
+
 /*
  * Copyright (c) 1990, 1991, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -23,7 +25,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tftp.c,v 1.6 1999/09/16 20:58:47 brad Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-tftp.c,v 1.7 2000/10/03 14:31:58 ho Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>

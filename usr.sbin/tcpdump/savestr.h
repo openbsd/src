@@ -1,3 +1,5 @@
+/*	$OpenBSD: savestr.h,v 1.2 2000/10/03 14:31:59 ho Exp $	*/
+
 /*
  * Copyright (c) 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -18,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/savestr.h,v 1.1 1999/07/28 20:41:36 jakob Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/savestr.h,v 1.2 2000/10/03 14:31:59 ho Exp $ (LBL)
  */
 
 extern char *savestr(const char *);

@@ -1,5 +1,7 @@
+/*	$OpenBSD: nfsfh.h,v 1.7 2000/10/03 14:31:56 ho Exp $	*/
+
 /*
- * $Header: /home/cvs/src/usr.sbin/tcpdump/nfsfh.h,v 1.6 1999/07/28 20:41:35 jakob Exp $
+ * $Header: /home/cvs/src/usr.sbin/tcpdump/nfsfh.h,v 1.7 2000/10/03 14:31:56 ho Exp $
  *
  * nfsfh.h - NFS file handle definitions (for portable use)
  *

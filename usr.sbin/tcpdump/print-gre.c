@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-gre.c,v 1.2 2000/10/03 14:31:57 ho Exp $	*/
+
 /*
  * Copyright (c) 1996
  *      The Regents of the University of California.  All rights reserved.
@@ -24,7 +26,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-gre.c,v 1.1 1996/12/12 16:22:37 bitblt Exp $";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-gre.c,v 1.2 2000/10/03 14:31:57 ho Exp $";
 #endif
 
 #include <sys/param.h>

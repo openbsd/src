@@ -1,3 +1,5 @@
+/*	$OpenBSD: addrtoname.h,v 1.9 2000/10/03 14:31:54 ho Exp $	*/
+
 /*
  * Copyright (c) 1990, 1992, 1993, 1994, 1995, 1996, 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -18,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.h,v 1.8 2000/04/26 21:35:37 jakob Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/addrtoname.h,v 1.9 2000/10/03 14:31:54 ho Exp $ (LBL)
  */
 
 #ifndef BYTE_ORDER

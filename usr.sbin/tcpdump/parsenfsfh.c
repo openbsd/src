@@ -1,3 +1,5 @@
+/*	$OpenBSD: parsenfsfh.c,v 1.7 2000/10/03 14:31:56 ho Exp $	*/
+
 /*
  * parsenfsfh.c - portable parser for NFS file handles
  *			uses all sorts of heuristics
@@ -9,7 +11,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/parsenfsfh.c,v 1.6 1999/07/28 20:41:36 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/parsenfsfh.c,v 1.7 2000/10/03 14:31:56 ho Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>

@@ -1,3 +1,5 @@
+/*	$OpenBSD: bpf_dump.c,v 1.6 2000/10/03 14:31:54 ho Exp $	*/
+
 /*
  * Copyright (c) 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -20,7 +22,7 @@
  */
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/bpf_dump.c,v 1.5 1996/12/12 16:22:57 bitblt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/bpf_dump.c,v 1.6 2000/10/03 14:31:54 ho Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>

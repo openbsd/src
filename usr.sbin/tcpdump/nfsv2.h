@@ -1,3 +1,5 @@
+/*	$OpenBSD: nfsv2.h,v 1.6 2000/10/03 14:31:56 ho Exp $	*/
+
 /*
  * Copyright (c) 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.

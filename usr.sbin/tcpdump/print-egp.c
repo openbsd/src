@@ -1,3 +1,5 @@
+/*	$OpenBSD: print-egp.c,v 1.6 2000/10/03 14:31:56 ho Exp $	*/
+
 /*
  * Copyright (c) 1991, 1992, 1993, 1994, 1995, 1996
  *	The Regents of the University of California.  All rights reserved.
@@ -20,7 +22,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/print-egp.c,v 1.5 1996/12/12 16:22:39 bitblt Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/Attic/print-egp.c,v 1.6 2000/10/03 14:31:56 ho Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>

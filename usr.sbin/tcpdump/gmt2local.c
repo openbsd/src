@@ -1,3 +1,5 @@
+/*	$OpenBSD: gmt2local.c,v 1.2 2000/10/03 14:31:55 ho Exp $	*/
+
 /*
  * Copyright (c) 1997
  *	The Regents of the University of California.  All rights reserved.
@@ -21,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/gmt2local.c,v 1.1 1999/07/28 20:41:35 jakob Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/gmt2local.c,v 1.2 2000/10/03 14:31:55 ho Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
