@@ -1,4 +1,4 @@
-/*	$OpenBSD: vxreg.h,v 1.5 2003/12/25 21:01:39 miod Exp $ */
+/*	$OpenBSD: vxreg.h,v 1.6 2003/12/27 21:58:20 miod Exp $ */
 
 /*
  * Copyright (c) 1999 Steve Murphree, Jr. All rights reserved.
@@ -45,10 +45,6 @@ struct vxreg {
 /*0xD*/volatile u_char  unused2;
 /*0xE*/volatile u_short ipc_tas;		 /* IPC test and set reg */
 };
-
-#define NOWAIT                0
-#define WAIT                  1
-#define WAIT_POLL             2
 
 #define IPC_CR_SYSFI          0x1000   /* inhibit sysfail */
 #define IPC_CR_ATTEN          0x2000   /* attention bit */
@@ -352,24 +348,6 @@ struct init_info {      /* 88 bytes */
 	volatile char           init_data[56];
 };
 
-struct init_packet {
-	volatile char              eye_catcher[4];
-	volatile unsigned char     command_pipe_number;
-	volatile unsigned char     status_pipe_number;
-	volatile char              filler_0[4];
-	volatile short             command;
-	volatile char              filler_1[3];
-	volatile char              interrupt_level;
-	volatile char              filler_2[2];
-	volatile short             init_info_ptr_h;
-	volatile short             init_info_ptr_l;
-	volatile char              filler_3[7];
-	volatile char              interrupt_vec;
-	volatile char              filler_4[6];
-	volatile short             error_h;
-	volatile short             error_l;
-};
-
 /* IPC event codes */
 #define  E_INTR      0x0001
 #define  E_QUIT      0x0002
@@ -413,7 +391,8 @@ struct init_packet {
  *       |          (16 bytes)            |
  *       +--------------------------------+
  */
-#define  ALIGNIT(p)           (((u_int)(p) + 7) & ~7)
+
+#define	NVXPORTS	9
 
 #define  NENVELOPES           30
 #define  NPACKETS             NENVELOPES
@@ -424,14 +403,12 @@ struct init_packet {
 #define  PACKET_AREA          (ENVELOPE_AREA + ENVELOPE_AREA_SIZE)
 #define  PACKET_AREA_SIZE     (NPACKETS * sizeof(struct packet))
 #define  INIT_INFO_AREA       (PACKET_AREA + PACKET_AREA_SIZE)
-#define  INIT_INFO_AREA_SIZE  (9 * sizeof(struct init_info))
-#define  WRING_AREA           ALIGNIT(INIT_INFO_AREA + INIT_INFO_AREA_SIZE)
-#define  WRING_AREA_SIZE      (9 * sizeof(struct wring))
+#define  INIT_INFO_AREA_SIZE  (NVXPORTS * sizeof(struct init_info))
+#define  WRING_AREA           roundup(INIT_INFO_AREA + INIT_INFO_AREA_SIZE, 8)
+#define  WRING_AREA_SIZE      (NVXPORTS * sizeof(struct wring))
 #define  RRING_AREA           (WRING_AREA + WRING_AREA_SIZE)
-#define  RRING_AREA_SIZE      (9 * sizeof(struct rring))
+#define  RRING_AREA_SIZE      (NVXPORTS * sizeof(struct rring))
 #define  USER_AREA_SIZE       (RRING_AREA + RRING_AREA_SIZE - USER_AREA)
 
 #define  LO(x) (u_short)((unsigned long)x & 0x0000FFFF)
 #define  HI(x) (u_short)((unsigned long)x >> 16)
-
-
