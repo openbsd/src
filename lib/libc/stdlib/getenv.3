@@ -33,7 +33,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: getenv.3,v 1.2 1996/08/10 05:03:00 tholo Exp $
+.\"	$OpenBSD: getenv.3,v 1.3 1998/11/10 22:27:30 espie Exp $
 .\"
 .Dd December 11, 1993
 .Dt GETENV 3
@@ -119,6 +119,10 @@ return zero if successful; otherwise the global variable
 .Va errno
 is set to indicate the error and a
 \-1 is returned.
+.Pp
+If
+.Fn getenv
+is succesful, the string returned should be considered read-only. 
 .Sh ERRORS
 .Bl -tag -width [ENOMEM]
 .It Bq Er ENOMEM
