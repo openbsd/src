@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.c,v 1.3 2004/02/09 14:11:09 mickey Exp $	*/
+/*	$OpenBSD: syscall.c,v 1.4 2004/02/09 19:14:27 mickey Exp $	*/
 /*	$NetBSD: syscall.c,v 1.1 2003/04/26 18:39:32 fvdl Exp $	*/
 
 /*-
@@ -273,7 +273,7 @@ syscall_fancy(frame)
 #endif
 
 	rval[0] = 0;
-	rval[1] = 0;
+	rval[1] = frame.tf_rdx;
 #if NSYSTRACE > 0
 	if (ISSET(p->p_flag, P_SYSTRACE))
 		error = systrace_redirect(code, p, args, rval);
@@ -326,6 +326,7 @@ child_return(void *arg)
 	struct trapframe *tf = p->p_md.md_regs;
 
 	tf->tf_rax = 0;
+	tf->tf_rdx = 1;
 	tf->tf_rflags &= ~PSL_C;
 
 	KERNEL_PROC_UNLOCK(l);
