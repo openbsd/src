@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftpcmd.y,v 1.35 2002/01/25 06:43:37 mpech Exp $	*/
+/*	$OpenBSD: ftpcmd.y,v 1.36 2002/01/30 17:14:29 mpech Exp $	*/
 /*	$NetBSD: ftpcmd.y,v 1.7 1996/04/08 19:03:11 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #if 0
 static char sccsid[] = "@(#)ftpcmd.y	8.3 (Berkeley) 4/6/94";
 #else
-static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.35 2002/01/25 06:43:37 mpech Exp $";
+static char rcsid[] = "$OpenBSD: ftpcmd.y,v 1.36 2002/01/30 17:14:29 mpech Exp $";
 #endif
 #endif /* not lint */
 
@@ -409,7 +409,7 @@ cmd
 		}
 	| RNTO check_login SP pathname CRLF
 		{
-			if ($2) {
+			if ($2 && $4 != NULL) {
 				if (fromname) {
 					renamecmd(fromname, $4);
 					free(fromname);
