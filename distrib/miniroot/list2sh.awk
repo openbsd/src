@@ -1,4 +1,4 @@
-#	$OpenBSD: list2sh.awk,v 1.8 2002/04/30 01:30:41 deraadt Exp $
+#	$OpenBSD: list2sh.awk,v 1.9 2002/05/10 23:43:22 deraadt Exp $
 #	$NetBSD: list2sh.awk,v 1.2 1996/05/04 15:45:31 pk Exp $
 
 BEGIN {
@@ -13,6 +13,13 @@ $1 == "COPY" {
 	printf("echo '%s'\n", $0);
 	printf("test -f ${TARGDIR}/%s && rm -fr ${TARGDIR}/%s\n", $3, $3);
 	printf("cp %s ${TARGDIR}/%s\n", $2, $3);
+	next;
+}
+$1 == "STRIP" {
+	printf("echo '%s'\n", $0);
+	printf("test -f ${TARGDIR}/%s && rm -fr ${TARGDIR}/%s\n", $3, $3);
+	printf("cp %s ${TARGDIR}/%s\n", $2, $3);
+	printf("strip ${TARGDIR}/%s\n", $3);
 	next;
 }
 $1 == "LINK" {
