@@ -1,4 +1,4 @@
-/*	$OpenBSD: xf_flow.c,v 1.2 1998/05/24 22:32:50 provos Exp $	*/
+/*	$OpenBSD: xf_flow.c,v 1.3 1998/06/01 10:51:40 provos Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -144,8 +144,8 @@ xf_flow(struct in_addr dst, u_int32_t spi, int proto,
 
     /* Additionally create/delete a flow for local packets */
     if (local) {
-	 ddst->sen_ip_src.s_addr = 0;
-	 msk->sen_ip_src.s_addr = INADDR_ANY;
+	 ddst->sen_ip_src.s_addr = INADDR_ANY;
+	 msk->sen_ip_src.s_addr = INADDR_BROADCAST;
 	 if (write(sd, (caddr_t) buf, rtm->rtm_msglen) < 0) {
 	      perror("write");
 	      return 0;
