@@ -340,10 +340,10 @@ ddb_init()
 	extern int	end;
 
 	if (esym > (char *)&end) {
-	    X_db_sym_init((int *)&end, esym, "netbsd");
+	    X_db_sym_init((int *)&end, esym, "bsd");
 	}
 #else
-	X_db_sym_init (db_symtab, 0, "netbsd");
+	X_db_sym_init (db_symtab, 0, "bsd");
 #endif
 }
 

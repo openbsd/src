@@ -113,7 +113,7 @@ db_del_symbol_table(name)
 }
 
 /*
- *  db_qualify("vm_map", "netbsd") returns "netbsd:vm_map".
+ *  db_qualify("vm_map", "bsd") returns "bsd:vm_map".
  *
  *  Note: return value points to static data whose content is
  *  overwritten by each call... but in practice this seems okay.
