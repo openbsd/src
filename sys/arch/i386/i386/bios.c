@@ -1,4 +1,4 @@
-/*	$OpenBSD: bios.c,v 1.36 2000/10/17 16:30:19 deraadt Exp $	*/
+/*	$OpenBSD: bios.c,v 1.37 2000/10/21 17:43:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997-2000 Michael Shalayeff
@@ -43,6 +43,7 @@
 #include <sys/reboot.h>
 
 #include <vm/vm.h>
+#include <vm/vm_kern.h>
 #include <sys/sysctl.h>
 
 #include <dev/cons.h>
@@ -311,6 +312,8 @@ bios32_service(service, e, ei)
 	extern union descriptor *dynamic_gdt;
 	extern int gdt_get_slot __P((void));
 
+	u_long pa, endpa;
+	vm_offset_t va;
 	u_int32_t base, count, off, ent;
 	int slot;
 
@@ -330,12 +333,30 @@ bios32_service(service, e, ei)
 	if (ent <= BIOS32_START || ent >= BIOS32_END)
 		return 0;
 
+
+	endpa = i386_round_page(BIOS32_END);
+
+#if defined(UVM)
+	va = uvm_km_valloc(kernel_map, endpa);
+#else
+	va = kmem_alloc_pageable(kernel_map, endpa);
+#endif
+	if (va == 0)
+		return (0);
+
 	slot = gdt_get_slot();
-	setsegment(&dynamic_gdt[slot].sd, ISA_HOLE_VADDR(base),
-	    ((base + 0x10000) & ~0xffff) - 1, SDT_MEMERA, SEL_KPL, 1, 0);
+	setsegment(&dynamic_gdt[slot].sd, (caddr_t)va, BIOS32_END,
+	    SDT_MEMERA, SEL_KPL, 1, 0);
+
+	for (pa = i386_trunc_page(BIOS32_START),
+	     va += i386_trunc_page(BIOS32_START);
+	     pa < endpa; pa += NBPG, va += NBPG)
+		pmap_enter(pmap_kernel(), va, pa,
+		    VM_PROT_READ | VM_PROT_WRITE, TRUE,
+		    VM_PROT_READ | VM_PROT_WRITE);
 
 	e->segment = GSEL(slot, SEL_KPL);
-	e->offset = (vaddr_t)(ent - base);
+	e->offset = (vaddr_t)ent;
 
 	ei->bei_base = base;
 	ei->bei_size = count;
