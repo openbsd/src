@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.52 2000/11/17 05:18:41 angelos Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.53 2000/11/22 17:51:14 mickey Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -709,7 +709,7 @@ hifn_writeramaddr(sc, addr, data, slot)
 	dma->dstr[slot].l = 8 | masks;
 	dma->resr[slot].l = HIFN_MAX_RESULT | masks;
 
-	DELAY(1000);	/* let write command execute */
+	DELAY(3000);	/* let write command execute */
 	if (dma->resr[slot].l & HIFN_D_VALID) {
 		printf("%s: SRAM/DRAM detection error -- "
 		    "result[%d] valid still set\n", sc->sc_dv.dv_xname, slot);
