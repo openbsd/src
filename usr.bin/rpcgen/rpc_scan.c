@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc_scan.c,v 1.10 2002/07/05 05:39:42 deraadt Exp $	*/
+/*	$OpenBSD: rpc_scan.c,v 1.11 2003/03/30 20:57:27 deraadt Exp $	*/
 /*	$NetBSD: rpc_scan.c,v 1.4 1995/06/11 21:50:02 pk Exp $	*/
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -288,16 +288,16 @@ get_token(tokp)
 
 	default:
 		if (!(isalpha(*where) || *where == '_')) {
-			char buf[100];
-			char *p;
+			char buf[100], chs[20];
 
-			snprintf(buf, sizeof buf, "illegal character in file: ");
-			p = buf + strlen(buf);
 			if (isprint(*where)) {
-				sprintf(p, "%c", *where);
+				snprintf(chs, sizeof chs, "%c", *where);
 			} else {
-				sprintf(p, "%d", *where);
+				snprintf(chs, sizeof chs, "%d", *where);
 			}
+
+			snprintf(buf, sizeof buf,
+			    "illegal character in file: %s", chs);
 			error(buf);
 		}
 		findkind(&where, tokp);
