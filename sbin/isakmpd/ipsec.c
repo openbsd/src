@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.83 2003/11/06 16:12:07 ho Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.84 2003/12/15 10:06:42 hshoexer Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1174,8 +1174,10 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
 	case IKE_ATTR_AUTHENTICATION_METHOD:
 	  return !ike_auth_get (decode_16 (value));
 	case IKE_ATTR_GROUP_DESCRIPTION:
-	  return decode_16 (value) < IKE_GROUP_DESC_MODP_768
-	    || decode_16 (value) > IKE_GROUP_DESC_MODP_1536;
+	  return (decode_16 (value) < IKE_GROUP_DESC_MODP_768
+	          || decode_16 (value) > IKE_GROUP_DESC_MODP_1536) 
+	    && (decode_16 (value) < IKE_GROUP_DESC_MODP_2048
+	        || decode_16 (value) > IKE_GROUP_DESC_MODP_8192);
 	case IKE_ATTR_GROUP_TYPE:
 	  return 1;
 	case IKE_ATTR_GROUP_PRIME:
@@ -1217,8 +1219,10 @@ ipsec_is_attribute_incompatible (u_int16_t type, u_int8_t *value,
 	case IPSEC_ATTR_SA_LIFE_DURATION:
 	  return len != 2 && len != 4;
 	case IPSEC_ATTR_GROUP_DESCRIPTION:
-	  return decode_16 (value) < IKE_GROUP_DESC_MODP_768
-	    || decode_16 (value) > IKE_GROUP_DESC_MODP_1536;
+	  return (decode_16 (value) < IKE_GROUP_DESC_MODP_768
+	          || decode_16 (value) > IKE_GROUP_DESC_MODP_1536)
+	    && (decode_16 (value) < IKE_GROUP_DESC_MODP_2048
+		|| IKE_GROUP_DESC_MODP_8192 < decode_16 (value));
 	case IPSEC_ATTR_ENCAPSULATION_MODE:
 	  return decode_16 (value) < IPSEC_ENCAP_TUNNEL
 	    || decode_16 (value) > IPSEC_ENCAP_TRANSPORT;

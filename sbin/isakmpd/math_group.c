@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_group.c,v 1.18 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: math_group.c,v 1.19 2003/12/15 10:06:42 hshoexer Exp $	*/
 /*	$EOM: math_group.c,v 1.25 2000/04/07 19:53:26 niklas Exp $	*/
 
 /*
@@ -78,8 +78,6 @@ struct modp_group {
 #define OAKLEY_GRP_3	3
 #define OAKLEY_GRP_4	4
 #define OAKLEY_GRP_5	5
-
-#ifdef not_until_IANA_assigns_the_groups
 #define OAKLEY_GRP_6	6
 #define OAKLEY_GRP_7	7
 #define OAKLEY_GRP_8	8
@@ -93,7 +91,6 @@ struct modp_group {
 #define OAKLEY_GRP_16	16
 #define OAKLEY_GRP_17	17
 #define OAKLEY_GRP_18	18
-#endif /* IANA */
 
 /* Describe preconfigured MODP groups */
 
@@ -121,7 +118,7 @@ struct modp_dscr oakley_modp[] =
     "FFFFFFFFFFFFFFFF",
     "0x02"
   },
-  { OAKLEY_GRP_5, 102,	/* This group is yet a bit better, but non-standard */
+  { OAKLEY_GRP_5, 102,
     "0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
     "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
     "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
@@ -132,8 +129,7 @@ struct modp_dscr oakley_modp[] =
     "670C354E4ABC9804F1746C08CA237327FFFFFFFFFFFFFFFF",
     "0x02"
   },
-#ifdef not_until_IANA_assigns_the_groups
-  { OAKLEY_GRP_14, 135,  /* 2048 bit, non-standard */
+  { OAKLEY_GRP_14, 135,  /* 2048 bit */
     "0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
     "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
     "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
@@ -147,7 +143,7 @@ struct modp_dscr oakley_modp[] =
     "15728E5A8AACAA68FFFFFFFFFFFFFFFF",
     "0x02"
   },
-  { OAKLEY_GRP_15, 170,  /* 3072 bit, non-standard */
+  { OAKLEY_GRP_15, 170,  /* 3072 bit */
     "0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
     "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
     "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
@@ -166,7 +162,7 @@ struct modp_dscr oakley_modp[] =
     "43DB5BFCE0FD108E4B82D120A93AD2CAFFFFFFFFFFFFFFFF",
     "0x02"
   },
-  { OAKLEY_GRP_16, 195,  /* 4096 bit, non-standard */
+  { OAKLEY_GRP_16, 195,  /* 4096 bit */
     "0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
     "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
     "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
@@ -191,7 +187,7 @@ struct modp_dscr oakley_modp[] =
     "FFFFFFFFFFFFFFFF",
     "0x02"
   },
-  { OAKLEY_GRP_17, 220,  /* 6144 bit, non-standard */
+  { OAKLEY_GRP_17, 220,  /* 6144 bit */
     "0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
     "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
     "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
@@ -226,7 +222,7 @@ struct modp_dscr oakley_modp[] =
     "12BF2D5B0B7474D6E694F91E6DCC4024FFFFFFFFFFFFFFFF",
     "0x02"
   },
-  { OAKLEY_GRP_18, 250,  /* 8192 bit, non-standard */
+  { OAKLEY_GRP_18, 250,  /* 8192 bit */
     "0xFFFFFFFFFFFFFFFFC90FDAA22168C234C4C6628B80DC1CD1"
     "29024E088A67CC74020BBEA63B139B22514A08798E3404DD"
     "EF9519B3CD3A431B302B0A6DF25F14374FE1356D6D51C245"
@@ -272,7 +268,6 @@ struct modp_dscr oakley_modp[] =
     "60C980DD98EDD3DFFFFFFFFFFFFFFFFF",
     "0x02"
   },
-#endif /* IANA */
 };
 
 #ifdef USE_EC
@@ -344,7 +339,39 @@ struct group groups[] = {
 #ifdef USE_EC
   /* XXX Higher EC2N group go here... */
 #endif /* USE_EC */
-#ifdef not_until_IANA_assigns_the_groups
+  /* XXX group 6 to 13 are not yet defined (draft-ike-ecc) */
+  {
+    NOTYET, OAKLEY_GRP_6, 0, NULL, 0, 0, 0, 0, 0,
+    NULL, NULL, NULL, NULL, NULL
+  },
+  {
+    NOTYET, OAKLEY_GRP_7, 0, NULL, 0, 0, 0, 0, 0,
+    NULL, NULL, NULL, NULL, NULL
+  },
+  {
+    NOTYET, OAKLEY_GRP_8, 0, NULL, 0, 0, 0, 0, 0,
+    NULL, NULL, NULL, NULL, NULL
+  },
+  {
+    NOTYET, OAKLEY_GRP_9, 0, NULL, 0, 0, 0, 0, 0,
+    NULL, NULL, NULL, NULL, NULL
+  },
+  {
+    NOTYET, OAKLEY_GRP_10, 0, NULL, 0, 0, 0, 0, 0,
+    NULL, NULL, NULL, NULL, NULL
+  },
+  {
+    NOTYET, OAKLEY_GRP_11, 0, NULL, 0, 0, 0, 0, 0,
+    NULL, NULL, NULL, NULL, NULL
+  },
+  {
+    NOTYET, OAKLEY_GRP_12, 0, NULL, 0, 0, 0, 0, 0,
+    NULL, NULL, NULL, NULL, NULL
+  },
+  {
+    NOTYET, OAKLEY_GRP_13, 0, NULL, 0, 0, 0, 0, 0,
+    NULL, NULL, NULL, NULL, NULL
+  },
   {
     MODP, OAKLEY_GRP_14, 0, &oakley_modp[3], 0, 0, 0, 0, 0,
     (int (*) (struct group *))modp_getlen,
@@ -385,7 +412,6 @@ struct group groups[] = {
     (int (*) (struct group *, void *))modp_setrandom,
     (int (*) (struct group *, void *, void *, void *))modp_operation
   },
-#endif /* IANA */
 };
 
 /*
@@ -409,6 +435,9 @@ group_init (void)
 
       case MODP:		/* Initialize an over GF(p) */
 	modp_init (&groups[i]);
+	break;
+
+      case NOTYET:		/* Not yet assigned, drop silently */
 	break;
 	
       default:

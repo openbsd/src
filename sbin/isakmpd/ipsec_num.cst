@@ -1,4 +1,4 @@
-#	$OpenBSD: ipsec_num.cst,v 1.13 2003/06/03 14:28:16 ho Exp $
+#	$OpenBSD: ipsec_num.cst,v 1.14 2003/12/15 10:06:42 hshoexer Exp $
 #	$EOM: ipsec_num.cst,v 1.5 2000/10/13 17:56:52 angelos Exp $
 
 #
@@ -164,6 +164,11 @@ IKE_GROUP_DESC
   EC2N_409K				11
   EC2N_571sect				12
   EC2N_571K				13
+  MODP_2048				14
+  MODP_3072				15
+  MODP_4096				16
+  MODP_6144				17
+  MODP_8192				18
 .
 
 # IKE Group type.

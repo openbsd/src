@@ -1,4 +1,4 @@
-/*	$OpenBSD: math_group.h,v 1.7 2003/06/03 14:28:16 ho Exp $	*/
+/*	$OpenBSD: math_group.h,v 1.8 2003/12/15 10:06:42 hshoexer Exp $	*/
 /*	$EOM: math_group.h,v 1.7 1999/04/17 23:20:40 niklas Exp $	*/
 
 /*
@@ -36,7 +36,8 @@
 enum groups {
   MODP,				/* F_p, Z modulo a prime */
   EC2N,				/* Elliptic Curve over the Field GF(2**N) */
-  ECP				/* Elliptic Curve over the Field Z_p */
+  ECP,				/* Elliptic Curve over the Field Z_p */
+  NOTYET			/* Not yet assigned */
 };
 
 /*
