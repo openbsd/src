@@ -1,4 +1,4 @@
-/*	$OpenBSD: mod_rewrite.c,v 1.16 2002/10/07 20:23:06 henning Exp $ */
+/*	$OpenBSD: mod_rewrite.c,v 1.17 2003/04/08 20:40:56 henning Exp $ */
 
 /* ====================================================================
  * The Apache Software License, Version 1.1
@@ -3189,10 +3189,10 @@ static void rewritelog(request_rec *r, int level, const char *text, ...)
     ap_vsnprintf(str2, sizeof(str2), text, ap);
 
     if (r->main == NULL) {
-        strcpy(type, "initial");
+        strlcpy(type, "initial", sizeof(type));
     }
     else {
-        strcpy(type, "subreq");
+        strlcpy(type, "subreq", sizeof(type));
     }
 
     for (i = 0, req = r; req->prev != NULL; req = req->prev) {
