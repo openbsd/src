@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.1 2000/03/20 07:26:50 rahnds Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.2 2000/03/31 04:20:20 rahnds Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -62,7 +62,7 @@ static int hwirq[ICU_LEN], virq[64];
 unsigned int imen /* = 0xffffffff */; /* XXX */
 static int virq_max = 0;
 
-struct evcnt evirq[ICU_LEN*2];
+struct evcnt evirq[ICU_LEN];
 
 static int fakeintr __P((void *));
 static char *intr_typename(int type);
@@ -596,6 +596,7 @@ ext_intr_openpic()
 
 	while (realirq != 255) {
 		irq = virq[realirq];
+		intrcnt[realirq]++;
 
 		/* XXX check range */
 
@@ -632,7 +633,7 @@ openpic_init()
         u_int x;
 
         /* disable all interrupts */
-        for (irq = 0; irq < ICU_LEN; irq++)
+        for (irq = 0; irq < 255; irq++)
                 openpic_write(OPENPIC_SRC_VECTOR(irq), OPENPIC_IMASK);
         openpic_set_priority(0, 15);
 
