@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.48 2005/01/16 19:46:00 brad Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.49 2005/01/16 20:47:44 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -105,6 +105,7 @@ struct dc_type dc_devs[] = {
 	{ PCI_VENDOR_CONEXANT, PCI_PRODUCT_CONEXANT_RS7112 },
 	{ PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_21145 },
 	{ PCI_VENDOR_3COM, PCI_PRODUCT_3COM_3CSHO100BTX },
+	{ PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN130 },
 	{ 0, 0 }
 };
 
@@ -331,17 +332,9 @@ void dc_pci_attach(parent, self, aux)
 			pci_conf_write(pc, pa->pa_tag, DC_PCI_CFLT, command);
 		}
 		break;
-	case PCI_VENDOR_3COM:
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3COM_3CSHO100BTX) {
-			found = 1;
-			sc->dc_type = DC_TYPE_AN983;
-			sc->dc_flags |= DC_TX_USE_TX_INTR;
-			sc->dc_flags |= DC_TX_ADMTEK_WAR;
-			sc->dc_pmode = DC_PMODE_MII;
-			/* Don't read SROM for - auto-loaded on reset */
-		}
-		break;
 	case PCI_VENDOR_ADMTEK:
+	case PCI_VENDOR_3COM:
+	case PCI_VENDOR_MICROSOFT:
 		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AL981) {
 			found = 1;
 			sc->dc_type = DC_TYPE_AL981;
@@ -350,7 +343,9 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_pmode = DC_PMODE_MII;
 			dc_read_srom(sc, sc->dc_romwidth);
 		}
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AN983) {
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AN983 ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_3COM_3CSHO100BTX ||
+		    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_MICROSOFT_MN130) {
 			found = 1;
 			sc->dc_type = DC_TYPE_AN983;
 			sc->dc_flags |= DC_TX_USE_TX_INTR;
@@ -367,6 +362,7 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_type = DC_TYPE_AN983;
 			sc->dc_flags |= DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_TX_ADMTEK_WAR;
+			sc->dc_flags |= DC_64BIT_HASH;
 			sc->dc_pmode = DC_PMODE_MII;
 			/* Don't read SROM for - auto-loaded on reset */
 		}

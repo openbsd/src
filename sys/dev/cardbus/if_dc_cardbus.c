@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_cardbus.c,v 1.17 2005/01/16 19:46:01 brad Exp $	*/
+/*	$OpenBSD: if_dc_cardbus.c,v 1.18 2005/01/16 20:47:44 brad Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,6 +69,8 @@ struct dc_type dc_cardbus_devs[] = {
 	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_FE2500 },
 	{ PCI_VENDOR_ABOCOM, PCI_PRODUCT_ABOCOM_PCM200 },
 	{ PCI_VENDOR_LINKSYS, PCI_PRODUCT_LINKSYS_PCM200 },
+	{ PCI_VENDOR_HAWKING, PCI_PRODUCT_HAWKING_PN672TX },
+	{ PCI_VENDOR_MICROSOFT, PCI_PRODUCT_MICROSOFT_MN120 },
 	{ 0 }
 };
 
@@ -162,13 +164,18 @@ dc_cardbus_attach(parent, self, aux)
 	case PCI_VENDOR_ACCTON:
 	case PCI_VENDOR_ABOCOM:
 	case PCI_VENDOR_LINKSYS:
+	case PCI_VENDOR_HAWKING:
+	case PCI_VENDOR_MICROSOFT:
 		if (PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ADMTEK_AN985 ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ACCTON_EN2242 ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ABOCOM_FE2500 ||
 		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_ABOCOM_PCM200 ||
-		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_LINKSYS_PCM200) {
+		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_LINKSYS_PCM200 ||
+		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_HAWKING_PN672TX ||
+		    PCI_PRODUCT(ca->ca_id) == PCI_PRODUCT_MICROSOFT_MN120) {
 			sc->dc_type = DC_TYPE_AN983;
-			sc->dc_flags |= DC_TX_USE_TX_INTR|DC_TX_ADMTEK_WAR;
+			sc->dc_flags |= DC_TX_USE_TX_INTR|DC_TX_ADMTEK_WAR |
+					DC_64BIT_HASH;
 			sc->dc_pmode = DC_PMODE_MII;
 			/* Don't read SROM for - auto-loaded on reset */
 		}
