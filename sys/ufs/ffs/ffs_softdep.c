@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_softdep.c,v 1.27 2001/11/28 01:18:10 art Exp $	*/
+/*	$OpenBSD: ffs_softdep.c,v 1.28 2001/12/04 15:05:56 art Exp $	*/
 /*
  * Copyright 1998, 2000 Marshall Kirk McKusick. All Rights Reserved.
  *
@@ -219,8 +219,8 @@ STATIC struct lockit {
 } lk = { 0 };
 #define ACQUIRE_LOCK(lk)		(lk)->lkt_spl = splbio()
 #define FREE_LOCK(lk)			splx((lk)->lkt_spl)
-#define ACQUIRE_LOCK_INTERLOCKED(lk)
-#define FREE_LOCK_INTERLOCKED(lk)
+#define ACQUIRE_LOCK_INTERLOCKED(lk,s)	(lk)->lkt_spl = (s)
+#define FREE_LOCK_INTERLOCKED(lk)	((lk)->lkt_spl)
 
 #else /* DEBUG */
 STATIC struct lockit {
@@ -232,12 +232,12 @@ STATIC int lockcnt;
 
 STATIC	void acquire_lock __P((struct lockit *, int));
 STATIC	void free_lock __P((struct lockit *, int));
-STATIC	void acquire_lock_interlocked __P((struct lockit *, int));
-STATIC	void free_lock_interlocked __P((struct lockit *, int));
+STATIC	void acquire_lock_interlocked __P((struct lockit *, int, int));
+STATIC	int free_lock_interlocked __P((struct lockit *, int));
 
 #define ACQUIRE_LOCK(lk)		acquire_lock(lk, __LINE__)
 #define FREE_LOCK(lk)			free_lock(lk, __LINE__)
-#define ACQUIRE_LOCK_INTERLOCKED(lk)	acquire_lock_interlocked(lk, __LINE__)
+#define ACQUIRE_LOCK_INTERLOCKED(lk,s)	acquire_lock_interlocked(lk, (s), __LINE__)
 #define FREE_LOCK_INTERLOCKED(lk)	free_lock_interlocked(lk, __LINE__)
 
 STATIC void
@@ -276,8 +276,9 @@ free_lock(lk, line)
 }
 
 STATIC void
-acquire_lock_interlocked(lk, line)
+acquire_lock_interlocked(lk, s, line)
 	struct lockit *lk;
+	int s;
 	int line;
 {
 	pid_t holder;
@@ -294,10 +295,11 @@ acquire_lock_interlocked(lk, line)
 	}
 	lk->lkt_held = CURPROC->p_pid;
 	lk->lkt_line = line;
+	lk->lkt_spl = s;
 	lockcnt++;
 }
 
-STATIC void
+STATIC int
 free_lock_interlocked(lk, line)
 	struct lockit *lk;
 	int line;
@@ -306,6 +308,8 @@ free_lock_interlocked(lk, line)
 	if (lk->lkt_held == -1)
 		panic("softdep_unlock_interlocked: lock not held at line %d", line);
 	lk->lkt_held = -1;
+
+	return (lk->lkt_spl);
 }
 #endif /* DEBUG */
 
@@ -342,13 +346,14 @@ sema_get(semap, interlock)
 	struct sema *semap;
 	struct lockit *interlock;
 {
+	int s;
 
 	if (semap->value++ > 0) {
 		if (interlock != NULL)
-			FREE_LOCK_INTERLOCKED(interlock);
+			s = FREE_LOCK_INTERLOCKED(interlock);
 		tsleep((caddr_t)semap, semap->prio, semap->name, semap->timo);
 		if (interlock != NULL) {
-			ACQUIRE_LOCK_INTERLOCKED(interlock);
+			ACQUIRE_LOCK_INTERLOCKED(interlock, s);
 			FREE_LOCK(interlock);
 		}
 		return (0);
@@ -4611,6 +4616,7 @@ request_cleanup(resource, islocked)
 	int islocked;
 {
 	struct proc *p = CURPROC;
+	int s;
 
 	/*
 	 * We never hold up the filesystem syncer process.
@@ -4679,9 +4685,9 @@ request_cleanup(resource, islocked)
 	if (!timeout_pending(&proc_waiting_timeout))
 		timeout_add(&proc_waiting_timeout, tickdelay > 2 ? tickdelay : 2);
 
-	FREE_LOCK_INTERLOCKED(&lk);
+	s = FREE_LOCK_INTERLOCKED(&lk);
 	(void) tsleep((caddr_t)&proc_waiting, PPAUSE, "softupdate", 0);
-	ACQUIRE_LOCK_INTERLOCKED(&lk);
+	ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	proc_waiting -= 1;
 	if (islocked == 0)
 		FREE_LOCK(&lk);
@@ -4936,6 +4942,7 @@ getdirtybuf(bpp, waitfor)
 	int waitfor;
 {
 	struct buf *bp;
+	int s;
 
 	for (;;) {
 		if ((bp = *bpp) == NULL)
@@ -4945,9 +4952,9 @@ getdirtybuf(bpp, waitfor)
 		if (waitfor != MNT_WAIT)
 			return (0);
 		bp->b_flags |= B_WANTED;
-		FREE_LOCK_INTERLOCKED(&lk);
+		s = FREE_LOCK_INTERLOCKED(&lk);
 		tsleep((caddr_t)bp, PRIBIO + 1, "sdsdty", 0);
-		ACQUIRE_LOCK_INTERLOCKED(&lk);
+		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	}
 	if ((bp->b_flags & B_DELWRI) == 0)
 		return (0);
@@ -4965,14 +4972,15 @@ drain_output(vp, islocked)
 	struct vnode *vp;
 	int islocked;
 {
+	int s;
 	
 	if (!islocked)
 		ACQUIRE_LOCK(&lk);
 	while (vp->v_numoutput) {
 		vp->v_bioflag |= VBIOWAIT;
-		FREE_LOCK_INTERLOCKED(&lk);
+		s = FREE_LOCK_INTERLOCKED(&lk);
 		tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1, "drain_output", 0);
-		ACQUIRE_LOCK_INTERLOCKED(&lk);
+		ACQUIRE_LOCK_INTERLOCKED(&lk, s);
 	}
 	if (!islocked)
 		FREE_LOCK(&lk);
