@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.64 2002/06/09 03:14:18 todd Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.65 2002/06/12 04:43:41 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.64 2002/06/09 03:14:18 todd Exp $";
+	"$OpenBSD: if_wi.c,v 1.65 2002/06/12 04:43:41 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1634,7 +1634,7 @@ wi_ioctl(ifp, command, data)
 		error = wi_set_debug(sc, &wreq);
 		break;
 	case SIOCG80211NWID:
-		if (ifp->if_flags & IFF_UP) {
+		if ((ifp->if_flags & IFF_UP) && sc->wi_net_name.i_len > 0) {
 			/* Return the desired ID */
 			error = copyout(&sc->wi_net_name, ifr->ifr_data,
 			    sizeof(sc->wi_net_name));
