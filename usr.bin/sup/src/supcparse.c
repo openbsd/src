@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcparse.c,v 1.8 2002/02/16 21:27:54 millert Exp $	*/
+/*	$OpenBSD: supcparse.c,v 1.9 2003/09/05 03:28:27 tedu Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -266,8 +266,10 @@ putwhen(fname, tstamp)
 	FILE *fp;
 	if ((fp = fopen(fname, "w")) == NULL)
 		return (0);
-	if (fprintf(fp, "%u\n", tstamp) < 0)
+	if (fprintf(fp, "%u\n", tstamp) < 0) {
+		(void) fclose(fp);
 		return (0);
+	}
 	if (fclose(fp) != 0)
 		return (0);
 	return (1);
