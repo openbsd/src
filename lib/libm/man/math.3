@@ -1,4 +1,4 @@
-.\"	$OpenBSD: math.3,v 1.16 2003/05/05 18:44:43 jason Exp $
+.\"	$OpenBSD: math.3,v 1.17 2003/06/02 10:42:43 jmc Exp $
 .\" Copyright (c) 1985 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -694,19 +694,6 @@ response will serve most instances satisfactorily,
 the unsatisfactory instances cannot justify aborting
 computation every time the exception occurs.
 .El
-.Sh BUGS
-When signals are appropriate, they are emitted by certain
-operations within
-.Em libm ,
-so a subroutine-trace may be needed to identify the function with its
-signal in case method 5) above is in use.
-All the code in
-.Em libm
-takes the
-.St -ieee754
-defaults for granted; this means that a decision to
-trap all divisions by zero could disrupt a function that would
-otherwise get a correct result despite division by zero.
 .Sh SEE ALSO
 An explanation of
 .St -ieee754
@@ -726,3 +713,16 @@ magazine COMPUTER vol. 14 no. 3 (Mar. 1981), and in the
 .Tn ACM SIGNUM
 Newsletter Special Issue of Oct. 1979, may be helpful although they pertain to
 superseded drafts of the standard.
+.Sh BUGS
+When signals are appropriate, they are emitted by certain
+operations within
+.Em libm ,
+so a subroutine-trace may be needed to identify the function with its
+signal in case method 5) above is in use.
+All the code in
+.Em libm
+takes the
+.St -ieee754
+defaults for granted; this means that a decision to
+trap all divisions by zero could disrupt a function that would
+otherwise get a correct result despite division by zero.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hypot.3,v 1.10 2003/05/20 09:17:51 jmc Exp $
+.\"	$OpenBSD: hypot.3,v 1.11 2003/06/02 10:42:43 jmc Exp $
 .\" Copyright (c) 1985, 1991 Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -126,13 +126,6 @@ the
 \*(Na is designed to
 disappear when it turns out to be irrelevant, as it does in
 .Fn hypot "\*(If" "\*(Na" .
-.Sh BUGS
-The
-.Fn cabs
-and
-.Fn cabsf
-functions use structures that are not defined in any header and need to
-be defined by the user. As such they cannot be prototyped properly.
 .Sh SEE ALSO
 .Xr math 3 ,
 .Xr sqrt 3
@@ -144,3 +137,10 @@ function and a
 function
 appeared in
 .At v7 .
+.Sh BUGS
+The
+.Fn cabs
+and
+.Fn cabsf
+functions use structures that are not defined in any header and need to
+be defined by the user. As such they cannot be prototyped properly.
