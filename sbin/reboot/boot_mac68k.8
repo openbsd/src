@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_mac68k.8,v 1.3 1996/06/29 18:24:17 mickey Exp $
+.\"	$OpenBSD: boot_mac68k.8,v 1.4 1996/07/10 03:52:55 ccappuc Exp $
 .\"	$NetBSD: boot_mac68k.8,v 1.1 1995/07/02 02:09:52 briggs Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -49,7 +49,7 @@ system bootstrapping procedures
 .Sh DESCRIPTION
 .Sy Power fail and crash recovery.
 Normally, the
-.Tn NetBSD
+.Tn OpenBSD
 kernel on the mac68k architecture is booted from the native operating
 system by means of an application program.  When the kernel takes over,
 it initializes itself and proceeds to boot the system.  An automatic
@@ -71,10 +71,10 @@ or not), the system will attempt a reboot.
 On most mac68k machines with "soft-power" after the IIcx, the power
 switch can be physically rotated and locked in the 'on' position.
 The native OS can be configured to automatically start the
-.Tn NetBSD
-boot program.  Additionally, the NetBSD boot program can be configured
+.Tn OpenBSD
+boot program.  Additionally, the OpenBSD boot program can be configured
 to boot
-.Tn NetBSD
+.Tn OpenBSD
 without intervention.  When a system is so configured, it can crash
 or lose power and reboot back to a fully multi-user state without
 any intervention.
@@ -105,12 +105,12 @@ respectively) may be used for this.
 .Pp
 It is sometimes useful to boot a kernel that resides in a folder
 in native OS rather than from the usual location in the
-.Tn NetBSD
+.Tn OpenBSD
 file system.  A radio button is supplied for this purpose.  Note that
 some programs will not run properly if the kernel is not found as
 .Ar /bsd
 within the 
-.Tn NetBSD
+.Tn OpenBSD
 file system.
 .Sh FILES
 .Bl -tag -width /bsd -compact

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_sparc.8,v 1.3 1996/06/29 18:24:19 mickey Exp $
+.\"	$OpenBSD: boot_sparc.8,v 1.4 1996/07/10 03:52:56 ccappuc Exp $
 .\"	$NetBSD: boot_sparc.8,v 1.4 1995/04/25 11:37:25 pk Exp $
 .\"
 .\" Copyright (c) 1992, 1993
@@ -89,9 +89,9 @@ incantation in new-mode to force the rom to always start in new-mode.
 .Pa \	ok
 setenv sunmon-compat? false
 .Pp
-The rom will normally load the kernel from "sd(0,0,0)vmunix". To change the
+The rom will normally load the kernel from "sd(0,0,0)bsd". To change the
 default so that
-.Pa NetBSD
+.Pa OpenBSD
 will be loaded type the following
 .Pp
 .Pa \	ok

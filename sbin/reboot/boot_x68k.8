@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_x68k.8,v 1.3 1996/06/29 18:24:22 mickey Exp $
+.\"	$OpenBSD: boot_x68k.8,v 1.4 1996/07/10 03:52:56 ccappuc Exp $
 .\"	$NetBSD: boot_x68k.8,v 1.1 1996/06/15 18:54:22 oki Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -54,14 +54,14 @@ battery-backuped SRAM.
 By default, the boot rom attempt to boot from
 floppy disk drive (from 0 to 3) first,
 and then attempt to boot from hard disk (SASI or SCSI).
-On the NetBSD/X68k, booting from partition A of SCSI disks (sd?a) 
+On the OpenBSD/X68k, booting from partition A of SCSI disks (sd?a) 
 and 2HD floppy disks (fd?a, fd?c) is currently supported.
 .Pp
 First, the initial program loader of IOCS ROM or SCSI disk
 (or equivalent) reads
 .Pa boot
 program at the top of the disk,
-and then the boot program loads the NetBSD kernel
+and then the boot program loads the OpenBSD kernel
 .Pa /bsd
 which is in the same partition of the disk.
 If you press
@@ -82,15 +82,15 @@ flag and tries to boot the system in debug mode; see
 for details.
 .Pp
 Note for X68030+MC68030 systems:
-Nothing special to be attended to; you can boot NetBSD just like as
+Nothing special to be attended to; you can boot OpenBSD just like as
 other operating systems such as Human68k and OS-9.
 .Pp
 Note for X68030/040turbo(68040 accelerator by BEEPs) systems:
-NetBSD can boot under 040 mode.
+OpenBSD can boot under 040 mode.
 It can also boot under 030 mode if you have MC68030 on the board.
 .Pp
 Note for X68000/Xellent30(68030 accelerator by TSR)+MC68030 systems:
-In order to boot NetBSD, you must choose 030 mode by using
+In order to boot OpenBSD, you must choose 030 mode by using
 .Pa CH30.SYS ,
 which must reside in the battery-backuped SRAM.
 .Pp

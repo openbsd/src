@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_pmax.8,v 1.3 1996/06/29 18:24:18 mickey Exp $
+.\"	$OpenBSD: boot_pmax.8,v 1.4 1996/07/10 03:52:56 ccappuc Exp $
 .\"	$NetBSD: boot_pmax.8,v 1.1 1995/04/25 23:55:11 mellon Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -45,7 +45,7 @@
 system bootstrapping procedures
 .Sh DESCRIPTION
 The
-.Tn NetBSD
+.Tn OpenBSD
 kernel is started by placing it at the beginning of physical memory
 and transferring to the entry point.
 Since the system is not reenterable,
@@ -97,10 +97,10 @@ For automatic boots, the ROM automatically passes a
 .Fl a
 argument to the boot
 loader, requesting that
-.Tn NetBSD
+.Tn OpenBSD
 attempt to come up to multi-user mode.   At the boot ROM prompt,
 the user may boot
-.Tn NetBSD
+.Tn OpenBSD
 with either the
 .Nm auto
 or the
@@ -113,7 +113,7 @@ argument is passed to the kernel, requesting a multi-user boot; otherwise
 the
 .Fl s
 argument is passed, requesting that
-.Tn NetBSD
+.Tn OpenBSD
 boot to single user mode.
 .Pp
 When either the
@@ -163,7 +163,7 @@ devices, the option-specific protocol identifier is either mop or tftp.
 Filename requirements are as for the DECstation 2100 and 3100.
 .Pp
 To start
-.Tn NetBSD
+.Tn OpenBSD
 from the boot prompt, the
 .Nm boot
 command must be used.   With no arguments, this simply boots the default
