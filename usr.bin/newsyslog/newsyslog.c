@@ -1,4 +1,4 @@
-/*	$OpenBSD: newsyslog.c,v 1.58 2002/11/07 15:25:13 millert Exp $	*/
+/*	$OpenBSD: newsyslog.c,v 1.59 2002/11/27 22:56:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1999, 2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -86,7 +86,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.58 2002/11/07 15:25:13 millert Exp $";
+static const char rcsid[] = "$OpenBSD: newsyslog.c,v 1.59 2002/11/27 22:56:16 millert Exp $";
 #endif /* not lint */
 
 #ifndef CONF
@@ -787,14 +787,14 @@ dotrim(struct conf_entry *ent)
 		if (noaction)
 			printf("\tmv %s to %s\n", ent->log, file1);
 		else if (rename(ent->log, file1))
-			warn("can't to mv %s to %s", ent->log, file1);
+			warn("can't mv %s to %s", ent->log, file1);
 	}
 
 	/* Now move the new log file into place */
 	if (noaction)
 		printf("\tmv %s to %s\n", file2, ent->log);
 	else if (rename(file2, ent->log))
-		warn("can't to mv %s to %s", file2, ent->log);
+		warn("can't mv %s to %s", file2, ent->log);
 }
 
 /* Log the fact that the logs were turned over */
