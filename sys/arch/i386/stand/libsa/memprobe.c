@@ -1,4 +1,4 @@
-/*	$OpenBSD: memprobe.c,v 1.13 1997/10/12 20:14:27 mickey Exp $	*/
+/*	$OpenBSD: memprobe.c,v 1.14 1997/10/12 21:01:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -82,33 +82,43 @@ static int
 addrprobe(kloc)
 	u_int kloc;
 {
-	__volatile u_int *loc, i;
+	__volatile u_int *loc;
 	static const u_int pat[] = {
 		0x00000000, 0xFFFFFFFF,
 		0x01010101, 0x10101010,
 		0x55555555, 0xCCCCCCCC
 	};
+	register u_int i, ret = 0;
+	u_int save[NENTS(pat)];
 
 	/* Get location */
 	loc = (int *)(kloc * 1024);
 
+	save[0] = *loc;
 	/* Probe address */
 	for(i = 0; i < NENTS(pat); i++){
 		*loc = pat[i];
 		if(*loc != pat[i])
-			return (1);
+			ret++;
+	}
+	*loc = save[0];
+
+	if (!ret) {
+		/* Write address */
+		for(i = 0; i < NENTS(pat); i++) {
+			save[i] = loc[i];
+			loc[i] = pat[i];
+		}
+
+		/* Read address */
+		for(i = 0; i < NENTS(pat); i++) {
+			if(loc[i] != pat[i])
+				ret++;
+			loc[i] = save[i];
+		}
 	}
 
-	/* Write address */
-	for(i = 0; i < NENTS(pat); i++)
-		loc[i] = pat[i];
-
-	/* Read address */
-	for(i = 0; i < NENTS(pat); i++)
-		if(loc[i] != pat[i])
-			return (1);
-
-	return (0);
+	return ret;
 }
 
 
