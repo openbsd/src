@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.c,v 1.9 2004/04/14 04:34:19 deraadt Exp $ */
+/*	$OpenBSD: dhcpd.c,v 1.10 2004/04/15 08:34:20 jmc Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -162,9 +162,9 @@ usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-df] [-p <port>] [-c config-file]",
+	fprintf(stderr, "usage: %s [-df] [-c config-file] [-l lease-file]",
 	    __progname);
-	fprintf(stderr, " [-l lease-file] [if0 [...ifN]]\n");
+	fprintf(stderr, " [-p port] [if0 [...ifN]]\n");
 	exit(1);
 }
 

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcpd.8,v 1.1 2004/04/13 23:41:48 henning Exp $
+.\"	$OpenBSD: dhcpd.8,v 1.2 2004/04/15 08:34:20 jmc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 The Internet Software Consortium.
 .\" All rights reserved.
@@ -44,15 +44,11 @@
 .Nd Dynamic Host Configuration Protocol Server
 .Sh SYNOPSIS
 .Nm dhcpd
+.Op Fl df
+.Op Fl c Ar config-file
+.Op Fl l Ar lease-file
 .Op Fl p Ar port
-.Op Fl f
-.Op Fl d
-.Op Fl q
-.Op Fl cf Ar config-file
-.Op Fl lf Ar lease-file
-.Bk -words
 .Op Ar if0 Op Ar ... ifN
-.Ek
 .Sh DESCRIPTION
 The Internet Software Consortium DHCP Server,
 .Nm dhcpd ,
@@ -61,7 +57,7 @@ Internet Bootstrap Protocol (BOOTP).
 DHCP allows hosts on a TCP/IP network to request and be assigned IP addresses,
 and also to discover information about the network to which they are attached.
 BOOTP provides similar functionality, with certain restrictions.
-.Sh OPERATION
+.Pp
 The DHCP protocol allows a host which is unknown to the network
 administrator to be automatically assigned a new IP address out of a
 pool of IP addresses for its network.
@@ -144,7 +140,9 @@ file,
 must be restarted.
 To restart
 .Nm dhcpd ,
-send a SIGTERM (signal 15) to the process ID contained in
+send a
+.Dv SIGTERM
+(signal 15) to the process ID contained in
 .Pa /var/run/dhcpd.pid ,
 and then re-invoke
 .Nm dhcpd .
@@ -171,18 +169,58 @@ If no interface names are specified on the command line,
 will identify all network interfaces which are up, eliminating non-broadcast
 interfaces if possible, and listen for DHCP broadcasts on each interface.
 .Pp
-If
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl c Ar config-file
+Use an alternate configuration file,
+.Ar config-file .
+Because of the importance of using the same lease database at all times when
+running
 .Nm
-should listen on a port other than the standard (port 67), the
-.Fl p
-flag may used.
+in production, this option should be used
+.Em only
+for testing database files in a non-production environment.
+.It Fl d
+Force
+.Nm
+to log to
+.Ar stderr .
+This can be useful for debugging, and also at sites where a complete log of
+all dhcp activity must be kept, but
+.Xr syslogd 8
+is not reliable or otherwise cannot be used.
+Normally,
+.Nm
+will log all output using the
+.Xr syslog 3
+function with the log facility set to
+.Dv LOG_DAEMON .
+.It Fl f
+Run
+.Nm
+as a foreground process, rather than allowing it to run as a daemon in the
+background.
+This is useful when running
+.Nm
+under a debugger, or when running it out of inittab on System V systems.
+.It Fl l Ar lease-file
+Use an alternate lease file,
+.Ar lease-file .
+Because of the importance of using the same lease database at all times when
+running
+.Nm
+in production, this option should be used
+.Em only
+for testing lease files in a non-production environment.
+.It Fl p Ar port
+Tell
+.Nm
+to listen on a port other than the standard (port 67).
 It should be followed by the UDP port number on which
 .Nm
 should listen.
 This is mostly useful for debugging purposes.
-If the
-.Fl p
-flag is specified, the server will transmit responses to clients at a
+The server will transmit responses to clients at a
 port number that is one greater than the one specified \- i.e., if you
 specify
 .Fl p
@@ -193,50 +231,7 @@ number specified with the
 flag.
 If you wish to use alternate port numbers, you must configure
 any relay agents you are using to use the same alternate port numbers.
-.Pp
-To run
-.Nm
-as a foreground process, rather than allowing it to run as a daemon in the
-background, the
-.Fl f
-flag should be specified.
-This is useful when running
-.Nm
-under a debugger, or when running it out of inittab on System V systems.
-.Pp
-To have
-.Nm
-log to
-.Ar stderr ,
-the
-.Fl d
-flag should be specified.
-This can be useful for debugging, and also at sites where a complete log of
-all dhcp activity must be kept, but
-.Xr syslogd 8
-is not reliable or otherwise cannot be used.
-Normally,
-.Nm
-will log all output using the
-.Xr syslog 3
-function with the log facility set to LOG_DAEMON.
-.Pp
-.Nm
-can be made to use an alternate configuration file with the
-.Fl cf
-flag, or an alternate lease file with the
-.Fl lf
-flag.
-Because of the importance of using the same lease database at all times when
-running
-.Nm
-in production, these options should be used
-.Em only
-for testing lease files or database files in a non-production environment.
-.Pp
-To avoid printing out the entire copyright message on start-up, the
-.Fl q
-flag should be specified.
+.El
 .Sh CONFIGURATION
 The syntax of the
 .Xr dhcpd.conf 5
@@ -387,12 +382,13 @@ DHCPD PID.
 was written by
 .An Ted Lemon Aq mellon@vix.com
 under a contract with Vixie Labs.
-Funding for this project was provided by the Internet Software Corporation.
-Information about the Internet Software Consortium can be found at
-.Pa http://www.isc.org/ .
+.Pp
+The current implementation was reworked by
+.An Henning Brauer Aq henning@openbsd.org .
 .Sh BUGS
-We realize that it would be nice if one could send a SIGHUP to the server
-and have it reload the database.
+We realize that it would be nice if one could send a
+.Dv SIGHUP
+to the server and have it reload the database.
 This is not technically impossible, but it would require a great deal of work,
 our resources are extremely limited, and they can be better spent elsewhere.
 So please don't complain about this on the mailing list unless you're prepared
