@@ -1247,7 +1247,8 @@ swap_off(p, sdp)
 	return ENODEV;
 
 #ifdef UVM_SWAP_ENCRYPT
-	free(sdp->swd_decrypt);
+	if (sdp->swd_decrypt)
+		free(sdp->swd_decrypt);
 #endif
 	extent_free(swapmap, sdp->swd_mapoffset, sdp->swd_mapsize, EX_WAITOK);
 	name = sdp->swd_ex->ex_name;
