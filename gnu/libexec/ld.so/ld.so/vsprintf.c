@@ -35,8 +35,8 @@ static int skip_atoi(const char **s)
 #define SPECIAL	32		/* 0x */
 #define SMALL	64		/* use 'abcdef' instead of 'ABCDEF' */
 
-static char * number(char * str, int num, int base, int size, int precision
-	,int type)
+static char * number(char * str, int remain, int num, int base,
+			int size, int precision ,int type)
 {
 	char c,sign,tmp[36];
 	const char *digits="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -66,25 +66,25 @@ static char * number(char * str, int num, int base, int size, int precision
 	if (i>precision) precision=i;
 	size -= precision;
 	if (!(type&(ZEROPAD+LEFT)))
-		while(size-->0)
+		while(size-->0 && --remain > 0)
 			*str++ = ' ';
-	if (sign)
+	if (sign && --remain > 0)
 		*str++ = sign;
-	if (type&SPECIAL)
-		if (base==8)
+	if (type & SPECIAL)
+		if (base == 8 && --remain > 0)
 			*str++ = '0';
-		else if (base==16) {
+		else if (base == 16 && --remain > 0 && --remain > 0) {
 			*str++ = '0';
 			*str++ = digits[33];
 		}
-	if (!(type&LEFT))
-		while(size-->0)
+	if (!(type & LEFT))
+		while(size-- > 0 && --remain > 0)
 			*str++ = c;
-	while(i<precision--)
+	while(i < precision-- && --remain > 0)
 		*str++ = '0';
-	while(i-->0)
+	while(i-- > 0 && --remain > 0)
 		*str++ = tmp[i];
-	while(size-->0)
+	while(size-- > 0 && --remain > 0)
 		*str++ = ' ';
 	return str;
 }
@@ -103,13 +103,15 @@ int _dl_fdprintf(int fd, const char *fmt, ...)
 	int precision;		/* min. # of digits for integers; max
 				   number of chars for from string */
 	int qualifier;		/* 'h', 'l', or 'L' for integer fields */
+	int remain;
 	char buf[1024];
 	va_list args;
 
 	va_start(args, fmt);
-	for (str=buf ; *fmt ; ++fmt) {
+	for (str=buf, remain=sizeof(buf) ; *fmt ; ++fmt) {
 		if (*fmt != '%') {
 			*str++ = *fmt;
+			remain--;
 			continue;
 		}
 			
@@ -162,10 +164,11 @@ int _dl_fdprintf(int fd, const char *fmt, ...)
 		switch (*fmt) {
 		case 'c':
 			if (!(flags & LEFT))
-				while (--field_width > 0)
+				while (--field_width > 0 && --remain > 0) 
 					*str++ = ' ';
-			*str++ = (unsigned char) va_arg(args, int);
-			while (--field_width > 0)
+			if(--remain > 0)
+				*str++ = (unsigned char) va_arg(args, int);
+			while (--field_width > 0 && --remain > 0)
 				*str++ = ' ';
 			break;
 
@@ -178,17 +181,19 @@ int _dl_fdprintf(int fd, const char *fmt, ...)
 				len = precision;
 
 			if (!(flags & LEFT))
-				while (len < field_width--)
+				while (len < field_width-- && --remain > 0)
 					*str++ = ' ';
-			for (i = 0; i < len; ++i)
+			for (i = 0; i < len && remain > 1; ++i, --remain)
 				*str++ = *s++;
-			while (len < field_width--)
+			while (len < field_width-- && --remain > 0)
 				*str++ = ' ';
 			break;
 
 		case 'o':
-			str = number(str, va_arg(args, unsigned long), 8,
+			str = number(str, remain,
+				va_arg(args, unsigned long), 8,
 				field_width, precision, flags);
+			remain = buf + sizeof(buf) - 1 - str;
 			break;
 
 		case 'p':
@@ -196,24 +201,29 @@ int _dl_fdprintf(int fd, const char *fmt, ...)
 				field_width = 8;
 				flags |= ZEROPAD;
 			}
-			str = number(str,
+			str = number(str, remain,
 				(unsigned long) va_arg(args, void *), 16,
 				field_width, precision, flags);
+			remain = buf + sizeof(buf) - 1 - str;
 			break;
 
 		case 'x':
 			flags |= SMALL;
 		case 'X':
-			str = number(str, va_arg(args, unsigned long), 16,
+			str = number(str, remain,
+				va_arg(args, unsigned long), 16,
 				field_width, precision, flags);
+			remain = buf + sizeof(buf) - 1 - str;
 			break;
 
 		case 'd':
 		case 'i':
 			flags |= SIGN;
 		case 'u':
-			str = number(str, va_arg(args, unsigned long), 10,
+			str = number(str, remain,
+				va_arg(args, unsigned long), 10,
 				field_width, precision, flags);
+			remain = buf + sizeof(buf) - 1 - str;
 			break;
 
 		case 'n':
@@ -228,6 +238,7 @@ int _dl_fdprintf(int fd, const char *fmt, ...)
 				*str++ = *fmt;
 			else
 				--fmt;
+			remain--;
 			break;
 		}
 	}
