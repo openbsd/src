@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.28 2000/07/03 19:15:34 niklas Exp $
+#	$OpenBSD: RAMDISK,v 1.29 2000/07/05 21:55:36 ericj Exp $
 #	$NetBSD: RAMDISK,v 1.9 1996/12/03 17:25:33 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.
@@ -87,8 +87,8 @@ cpu*	at	mainbus0
 #scc0	at	ioasic? offset ?
 #scc1	at	ioasic? offset ?
 #tcds0	at	tc? slot ? offset ?
-#esp0	at	tcds? slot ?
-#esp1	at	tcds? slot ?
+#asc0	at	tcds? slot ?
+#asc1	at	tcds? slot ?
 #cfb*	at	tc? slot ? offset ?
 #sfb*	at	tc? slot ? offset ?
 #le*	at	tc? slot ? offset ?
@@ -171,7 +171,7 @@ ne2	at 	isa? port 0x280 irq 9		# NE[12]000 ethernet cards
 #scsibus* at atapiscsi?
 
 # SCSI bus support
-#scsibus* at	esp?
+#scsibus* at	asc?
 scsibus* at	ncr?
 
 # SCSI devices
