@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: async.c,v 1.9 2001/06/13 21:33:40 brian Exp $
+ * $OpenBSD: async.c,v 1.10 2002/03/04 10:17:40 brian Exp $
  */
 
 #include <sys/types.h>
@@ -56,10 +56,16 @@
 void
 async_Init(struct async *async)
 {
+  async_Setup(async);
+  memset(async->cfg.EscMap, '\0', sizeof async->cfg.EscMap);
+}
+
+void
+async_Setup(struct async *async)
+{
   async->mode = MODE_HUNT;
   async->length = 0;
   async->my_accmap = async->his_accmap = 0xffffffff;
-  memset(async->cfg.EscMap, '\0', sizeof async->cfg.EscMap);
 }
 
 void

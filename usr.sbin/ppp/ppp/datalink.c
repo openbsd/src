@@ -23,7 +23,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$OpenBSD: datalink.c,v 1.38 2001/10/24 10:01:12 brian Exp $
+ *	$OpenBSD: datalink.c,v 1.39 2002/03/04 10:17:40 brian Exp $
  */
 
 #include <sys/param.h>
@@ -234,7 +234,7 @@ datalink_LoginDone(struct datalink *dl)
     dl->dial.incs = 0;
 
     hdlc_Init(&dl->physical->hdlc, &dl->physical->link.lcp);
-    async_Init(&dl->physical->async);
+    async_Setup(&dl->physical->async);
 
     lcp_Setup(&dl->physical->link.lcp, dl->state == DATALINK_READY ?
               0 : dl->physical->link.lcp.cfg.openmode);
