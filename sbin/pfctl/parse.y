@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.195 2002/11/19 17:05:19 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.196 2002/11/19 17:31:24 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -508,7 +508,7 @@ antispoof_iflst	: if_item			{ $$ = $1; }
 /* altq stuff */
 
 altqif		: ALTQ interface SCHEDULER schedtype bandwidth tbrsize
-		  qassign	{
+		  QUEUE qassign	{
 			struct	pf_altq a;
 
 			memset(&a, 0, sizeof(a));
@@ -523,13 +523,17 @@ altqif		: ALTQ interface SCHEDULER schedtype bandwidth tbrsize
 				YYERROR;
 			}
 			a.tbrsize = $6;
-			expand_altq(&a,	$2, $7);
+			if ($8 == NULL) {
+				yyerror("no child queues?");
+				YYERROR;
+			}
+			expand_altq(&a,	$2, $8);
 		}
 		;
 
-qassign		: /* empty */			{ $$ = NULL; }
-		| QUEUE qassign_item		{ $$ = $2; }
-		| QUEUE '{' qassign_list '}'	{ $$ = $3; }
+qassign		: /* empty */		{ $$ = NULL; }
+		| qassign_item		{ $$ = $1; }
+		| '{' qassign_list '}'	{ $$ = $2; }
 		;
 
 qassign_list	: qassign_item			{ $$ = $1; }
