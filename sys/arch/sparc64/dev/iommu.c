@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.19 2002/08/19 20:02:30 jason Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.20 2002/10/04 01:55:44 jason Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -493,7 +493,7 @@ iommu_dvmamap_load(t, is, map, buf, buflen, p, flags)
 	if (map->dm_nsegs) {
 		/* Already in use?? */
 #ifdef DIAGNOSTIC
-		printf("iommu_dvmamap_load: map still in use\n");
+		panic("iommu_dvmamap_load: map still in use");
 #endif
 		bus_dmamap_unload(t, map);
 	}
@@ -712,7 +712,7 @@ iommu_dvmamap_load_raw(t, is, map, segs, nsegs, flags, size)
 	if (map->dm_nsegs) {
 		/* Already in use?? */
 #ifdef DIAGNOSTIC
-		printf("iommu_dvmamap_load_raw: map still in use\n");
+		panic("iommu_dvmamap_load_raw: map still in use");
 #endif
 		bus_dmamap_unload(t, map);
 	}
