@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.71 2004/02/17 12:07:45 markus Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.72 2004/04/18 16:41:40 markus Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -129,10 +129,8 @@ ipsec_common_input(struct mbuf *m, int skip, int protoff, int af, int sproto,
 	if ((sproto == IPPROTO_ESP && !esp_enable) ||
 	    (sproto == IPPROTO_AH && !ah_enable) ||
 	    (sproto == IPPROTO_IPCOMP && !ipcomp_enable)) {
-		m_freem(m);
-		IPSEC_ISTAT(espstat.esps_pdrops, ahstat.ahs_pdrops,
-		    ipcompstat.ipcomps_pdrops);
-		return EOPNOTSUPP;
+		rip_input(m, skip, sproto);
+		return 0;
 	}
 
 	if (m->m_pkthdr.len - skip < 2 * sizeof(u_int32_t)) {
