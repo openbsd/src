@@ -1,4 +1,4 @@
-/* $OpenBSD: virtual.c,v 1.4 2003/04/02 00:07:53 deraadt Exp $ */
+/* $OpenBSD: virtual.c,v 1.5 2003/06/19 07:21:20 pvalchev Exp $ */
 
 /*
  * Virtual domain support.
@@ -117,7 +117,10 @@ struct passwd *virtual_userpass(char *user, char *pass, int *known)
 		return NULL;
 	}
 
-	if (!(address = strdup(address))) return NULL;
+	if (!(address = strdup(address))) {
+		free(pathname);
+		return NULL;
+	}
 	virtual_domain = address;
 
 	free(pathname);
