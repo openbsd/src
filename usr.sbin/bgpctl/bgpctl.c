@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.35 2004/01/22 03:09:29 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.36 2004/01/27 16:50:20 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -229,7 +229,7 @@ show_summary_msg(struct imsg *imsg)
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
 		printf("%-15s %5u %10llu %10llu %-8s %s\n",
-		    inet_ntoa(p->conf.remote_addr.sin_addr),
+		    log_addr(&p->conf.remote_addr),
 		    p->conf.remote_as,
 		    p->stats.msg_rcvd_open + p->stats.msg_rcvd_notification +
 		    p->stats.msg_rcvd_update + p->stats.msg_rcvd_keepalive,
@@ -258,7 +258,7 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 	case IMSG_CTL_SHOW_NEIGHBOR:
 		p = imsg->data;
 		printf("BGP neighbor is %s, remote AS %u\n",
-		    inet_ntoa(p->conf.remote_addr.sin_addr),
+		    log_addr(&p->conf.remote_addr),
 		    p->conf.remote_as);
 		if (p->conf.descr[0])
 			printf(" Description: %s\n", p->conf.descr);
@@ -286,13 +286,13 @@ show_neighbor_msg(struct imsg *imsg, enum neighbor_views nv)
 		if (p->sa_local.ss_family == AF_INET) {
 			sa_in = (struct sockaddr_in *)&p->sa_local;
 			printf("  Local host:   %20s, Local port:   %5u\n",
-			    log_ntoa(sa_in->sin_addr.s_addr),
+			    inet_ntoa(sa_in->sin_addr),
 			    ntohs(sa_in->sin_port));
 		}
 		if (p->sa_remote.ss_family == AF_INET) {
 			sa_in = (struct sockaddr_in *)&p->sa_remote;
 			printf("  Foreign host: %20s, Foreign port: %5u\n",
-			    log_ntoa(sa_in->sin_addr.s_addr),
+			    inet_ntoa(sa_in->sin_addr),
 			    ntohs(sa_in->sin_port));
 		}
 		printf("\n");
