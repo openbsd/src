@@ -1,4 +1,4 @@
-/*	$OpenBSD: endian.h,v 1.13 2003/09/26 17:06:50 fgsch Exp $	*/
+/*	$OpenBSD: endian.h,v 1.14 2004/01/11 19:17:31 brad Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -68,13 +68,13 @@
 	u_int64_t __swap64gen_x = (x);					\
 									\
 	(u_int64_t)((__swap64gen_x & 0xff) << 56 |			\
-	    (__swap64gen_x & 0xff00) << 40 |				\
-	    (__swap64gen_x & 0xff0000) << 24 |				\
-	    (__swap64gen_x & 0xff000000) << 8 |				\
-	    (__swap64gen_x & 0xff00000000) >> 8 |			\
-	    (__swap64gen_x & 0xff0000000000) >> 24 |			\
-	    (__swap64gen_x & 0xff000000000000) >> 40 |			\
-	    (__swap64gen_x & 0xff00000000000000) >> 56);		\
+	    (__swap64gen_x & 0xff00ULL) << 40 |				\
+	    (__swap64gen_x & 0xff0000ULL) << 24 |			\
+	    (__swap64gen_x & 0xff000000ULL) << 8 |			\
+	    (__swap64gen_x & 0xff00000000ULL) >> 8 |			\
+	    (__swap64gen_x & 0xff0000000000ULL) >> 24 |			\
+	    (__swap64gen_x & 0xff000000000000ULL) >> 40 |		\
+	    (__swap64gen_x & 0xff00000000000000ULL) >> 56);		\
 })
 
 #else /* __GNUC__ */
@@ -90,13 +90,13 @@
 
 #define __swap64gen(x)							\
 	(u_int64_t)((((u_int64_t)(x) & 0xff) << 56) |			\
-	    ((u_int64_t)(x) & 0xff00) << 40 |				\
-	    ((u_int64_t)(x) & 0xff0000) << 24 |				\
-	    ((u_int64_t)(x) & 0xff000000) << 8 |			\
-	    ((u_int64_t)(x) & 0xff00000000) >> 8 |			\
-	    ((u_int64_t)(x) & 0xff0000000000) >> 24 |			\
-	    ((u_int64_t)(x) & 0xff000000000000) >> 40 |			\
-	    ((u_int64_t)(x) & 0xff00000000000000) >> 56)
+	    ((u_int64_t)(x) & 0xff00ULL) << 40 |			\
+	    ((u_int64_t)(x) & 0xff0000ULL) << 24 |			\
+	    ((u_int64_t)(x) & 0xff000000ULL) << 8 |			\
+	    ((u_int64_t)(x) & 0xff00000000ULL) >> 8 |			\
+	    ((u_int64_t)(x) & 0xff0000000000ULL) >> 24 |		\
+	    ((u_int64_t)(x) & 0xff000000000000ULL) >> 40 |		\
+	    ((u_int64_t)(x) & 0xff00000000000000ULL) >> 56)
 
 #endif /* __GNUC__ */
 
