@@ -1,4 +1,4 @@
-/*	$OpenBSD: c_ksh.c,v 1.17 2003/10/22 07:40:38 jmc Exp $	*/
+/*	$OpenBSD: c_ksh.c,v 1.18 2004/02/10 13:03:36 jmc Exp $	*/
 
 /*
  * built-in Korn commands: c_*
@@ -1275,7 +1275,7 @@ c_kill(wp)
 			if (j_kill(p, sig))
 				rv = 1;
 		} else if (!getn(p, &n)) {
-			bi_errorf("%s: arguments must be jobs or process ids",
+			bi_errorf("%s: arguments must be jobs or process IDs",
 				p);
 			rv = 1;
 		} else {
