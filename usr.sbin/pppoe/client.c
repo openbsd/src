@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.6 2001/01/12 06:12:54 jason Exp $	*/
+/*	$OpenBSD: client.c,v 1.7 2001/01/16 05:01:39 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -97,8 +97,8 @@ client_mode(bfd, sysname, srvname, myea)
 	struct ether_addr *myea;
 {
 	struct ether_addr rmea;
-	fd_set fds;
-	int r = 0, max;
+	fd_set *fdsp = NULL;
+	int r = 0, max, oldmax = 0;
 
 	pppfd = -1;
 	client_sessionid = 0xffff;
@@ -107,17 +107,29 @@ client_mode(bfd, sysname, srvname, myea)
 	if (r <= 0)
 		return (r);
 
-	FD_ZERO(&fds);
 	for (;;) {
-		FD_SET(bfd, &fds);
-		max = bfd + 1;
-		if (pppfd >= 0) {
-			if (pppfd >= max)
-				max = pppfd + 1;
-			FD_SET(pppfd, &fds);
+		max = bfd;
+		if (pppfd >= 0 && pppfd >= max)
+			max = pppfd;
+		max++;
+
+		if (max > oldmax) {
+			if (fdsp != NULL)
+				free(fdsp);
+			fdsp = (fd_set *)calloc(howmany(max, NFDBITS),
+			    sizeof(fd_mask));
+			if (fdsp == NULL) {
+				r = -1;
+				break;
+			}
+			max = oldmax;
 		}
 
-		r = select(max, &fds, NULL, NULL, NULL);
+		if (pppfd >= 0)
+			FD_SET(pppfd, fdsp);
+		FD_SET(bfd, fdsp);
+
+		r = select(max, fdsp, NULL, NULL, NULL);
 		if (r < 0) {
 			if (errno == EINTR) {
 				if (timer_hit())
@@ -126,12 +138,12 @@ client_mode(bfd, sysname, srvname, myea)
 			}
 			break;
 		}
-		if (FD_ISSET(bfd, &fds)) {
+		if (FD_ISSET(bfd, fdsp)) {
 			r = getpackets(bfd, srvname, sysname, myea, &rmea);
 			if (r <= 0)
 				break;
 		}
-		if (pppfd >= 0 && FD_ISSET(pppfd, &fds)) {
+		if (pppfd >= 0 && FD_ISSET(pppfd, fdsp)) {
 			r = ppp_to_bpf(bfd, pppfd, myea, &rmea,
 			    client_sessionid);
 			if (r < 0)
@@ -143,6 +155,10 @@ client_mode(bfd, sysname, srvname, myea)
 		send_padt(bfd, myea, &rmea, client_sessionid);
 		pppfd = -1;
 	}
+
+	if (fdsp != NULL)
+		free(fdsp);
+
 	return (r);
 }
 

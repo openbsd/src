@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.2 2000/06/20 04:53:32 jason Exp $	*/
+/*	$OpenBSD: server.c,v 1.3 2001/01/16 05:01:40 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Network Security Technologies, Inc. http://www.netsec.net
@@ -86,45 +86,53 @@ server_mode(bpffd, sysname, srvname, ea)
 	struct ether_addr *ea;
 {
 	struct pppoe_session *ses;
-	fd_set rfds;
-	int n;
+	fd_set *fdsp = NULL;
+	int n, oldmax = 0;
 
 	key_gen();
 
 	while (1) {
 reselect:
-		FD_ZERO(&rfds);
-		FD_SET(bpffd, &rfds);
 		n = bpffd;
-		ses = LIST_FIRST(&session_master.sm_sessions);
-		while (ses) {
-			if (ses->s_fd != -1) {
-				FD_SET(ses->s_fd, &rfds);
-				if (ses->s_fd > n)
-					n = ses->s_fd;
-			}
-			ses = LIST_NEXT(ses, s_next);
+		LIST_FOREACH(ses, &session_master.sm_sessions, s_next) {
+			if (ses->s_fd != -1 && ses->s_fd > n)
+				n = ses->s_fd;
+		}
+		n++;
+
+		if (n > oldmax) {
+			if (fdsp != NULL)
+				free(fdsp);
+			fdsp = (fd_set *)calloc(howmany(n, NFDBITS),
+			    sizeof(fd_mask));
+			if (fdsp == NULL)
+				break;
+			oldmax = n;
+		}
+		FD_SET(bpffd, fdsp);
+		LIST_FOREACH(ses, &session_master.sm_sessions, s_next) {
+			if (ses->s_fd != -1)
+				FD_SET(ses->s_fd, fdsp);
 		}
 
-		n = select(n+1, &rfds, NULL, NULL, NULL);
+		n = select(n, fdsp, NULL, NULL, NULL);
 		if (n < 0) {
 			if (errno == EINTR)
 				goto reselect;
 			err(EX_IOERR, "select");
-			return;
+			break;
 		}
 		if (n == 0)
 			continue;
-		if (FD_ISSET(bpffd, &rfds)) {
+		if (FD_ISSET(bpffd, fdsp)) {
 			n--;
 			getpackets(bpffd, sysname, ea);
 		}
 		if (n == 0)
 			continue;
 
-		ses = LIST_FIRST(&session_master.sm_sessions);
-		while (ses) {
-			if (ses->s_fd != -1 && FD_ISSET(ses->s_fd, &rfds)) {
+		LIST_FOREACH(ses, &session_master.sm_sessions, s_next) {
+			if (ses->s_fd != -1 && FD_ISSET(ses->s_fd, fdsp)) {
 				if (ppp_to_bpf(bpffd, ses->s_fd, ea,
 					&ses->s_ea, ses->s_id) < 0) {
 					send_padt(bpffd, ea,
@@ -135,9 +143,11 @@ reselect:
 				if (n == 0)
 					break;
 			}
-			ses = LIST_NEXT(ses, s_next);
 		}
 	}
+
+	if (fdsp != NULL)
+		free(fdsp);
 }
 
 void
