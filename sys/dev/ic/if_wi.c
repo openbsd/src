@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.34 2002/03/31 01:01:44 millert Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.35 2002/04/01 07:12:05 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.34 2002/03/31 01:01:44 millert Exp $";
+	"$OpenBSD: if_wi.c,v 1.35 2002/04/01 07:12:05 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -255,10 +255,10 @@ wi_attach(sc, print_cis)
 
 	bzero((char *)&sc->wi_stats, sizeof(sc->wi_stats));
 
-	/* Find supported rates (appears to be prism2 only) */
-	gen.wi_type = WI_RID_SUPPORT_RATE;
+	/* Find supported rates. */
+	gen.wi_type = WI_RID_DATA_RATES;
 	gen.wi_len = 2;
-	if (!sc->sc_prism2 || wi_read_record(sc, &gen))
+	if (wi_read_record(sc, &gen))
 		sc->wi_supprates = WI_SUPPRATES_1M | WI_SUPPRATES_2M |
 		    WI_SUPPRATES_5M | WI_SUPPRATES_11M;
 	else
