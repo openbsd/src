@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.61 1998/06/29 20:51:29 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.62 1998/07/07 02:26:38 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1231,6 +1231,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "LeadTek Research",
 	    "S3 805",
+	},
+	{
+	    PCI_VENDOR_LITEON, PCI_PRODUCT_LITEON_PNIC,
+	    0,
+	    "Lite-On",
+	    "PNIC",
 	},
 	{
 	    PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713,
@@ -4769,7 +4775,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	{
 	    PCI_VENDOR_LITEON, 0,
 	    PCI_KNOWNDEV_NOPROD,
-	    "Lite-On Communications",
+	    "Lite-On",
 	    NULL,
 	},
 	{

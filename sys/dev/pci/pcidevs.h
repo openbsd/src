@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.61 1998/06/29 20:51:29 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.62 1998/07/07 02:26:38 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -453,7 +453,7 @@
 #define	PCI_VENDOR_ACTEL	0x11aa		/* Actel */
 #define	PCI_VENDOR_GALILEO	0x11ab		/* Galileo Technology */
 #define	PCI_VENDOR_CANNON	0x11ac		/* Cannon IS */
-#define	PCI_VENDOR_LITEON	0x11ad		/* Lite-On Communications */
+#define	PCI_VENDOR_LITEON	0x11ad		/* Lite-On */
 #define	PCI_VENDOR_SCITEX	0x11ae		/* Scitex */
 #define	PCI_VENDOR_PROLOG	0x11af		/* Pro-Log */
 #define	PCI_VENDOR_V3	0x11b0		/* V3 Semiconductor */
@@ -825,6 +825,9 @@
 
 /* LeadTek Research */
 #define	PCI_PRODUCT_LEADTEK_S3_805	0x0000		/* S3 805 */
+
+/* Lite-On Communications */
+#define	PCI_PRODUCT_LITEON_PNIC	0x0002		/* PNIC */
 
 /* Macronix */
 #define	PCI_PRODUCT_MACRONIX_MX98713	0x0512		/* PMAC 100/10base PCI MAC controller */
