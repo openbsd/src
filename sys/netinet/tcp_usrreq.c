@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_usrreq.c,v 1.45 2000/07/06 05:24:45 itojun Exp $	*/
+/*	$OpenBSD: tcp_usrreq.c,v 1.46 2000/07/11 16:53:22 provos Exp $	*/
 /*	$NetBSD: tcp_usrreq.c,v 1.20 1996/02/13 23:44:16 christos Exp $	*/
 
 /*
@@ -300,9 +300,8 @@ tcp_usrreq(so, req, m, nam, control)
 
 		so->so_state |= SS_CONNECTOUT;
 		/* Compute window scaling to request.  */
-		while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
-		    (TCP_MAXWIN << tp->request_r_scale) < so->so_rcv.sb_hiwat)
-			tp->request_r_scale++;
+		tcp_rscale(tp, so->so_rcv.sb_hiwat);
+
 		soisconnecting(so);
 		tcpstat.tcps_connattempt++;
 		tp->t_state = TCPS_SYN_SENT;

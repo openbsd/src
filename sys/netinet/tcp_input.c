@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.66 2000/07/09 12:53:55 itojun Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.67 2000/07/11 16:53:22 provos Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -761,9 +761,7 @@ findpcb:
 
 			/* Compute proper scaling value from buffer space
 			 */
-			while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
-			   TCP_MAXWIN << tp->request_r_scale < so->so_rcv.sb_hiwat)
-				tp->request_r_scale++;
+			tcp_rscale(tp, so->so_rcv.sb_hiwat);
 		}
 	}
 
@@ -2914,6 +2912,10 @@ tcp_mss(tp, offer)
 		if (bufsize > sb_max)
 			bufsize = sb_max;
 		(void)sbreserve(&so->so_rcv, bufsize);
+#ifdef RTV_RPIPE
+		if (rt->rt_rmx.rmx_recvpipe > 0)
+			tcp_rscale(tp, so->so_rcv.sb_hiwat);
+#endif
 	}
 	tp->snd_cwnd = mss;
 

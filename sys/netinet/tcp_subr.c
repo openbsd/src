@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_subr.c,v 1.28 2000/07/05 22:51:10 itojun Exp $	*/
+/*	$OpenBSD: tcp_subr.c,v 1.29 2000/07/11 16:53:22 provos Exp $	*/
 /*	$NetBSD: tcp_subr.c,v 1.22 1996/02/13 23:44:00 christos Exp $	*/
 
 /*
@@ -660,6 +660,18 @@ void
 tcp_drain()
 {
 
+}
+
+/*
+ * Compute proper scaling value for receiver window from buffer space 
+ */
+
+void
+tcp_rscale(struct tcpcb *tp, u_long hiwat)
+{
+	while (tp->request_r_scale < TCP_MAX_WINSHIFT &&
+	       TCP_MAXWIN << tp->request_r_scale < hiwat)
+		tp->request_r_scale++;
 }
 
 /*
