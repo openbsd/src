@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.37 2001/01/29 06:40:14 mickey Exp $	*/
+/*	$OpenBSD: aha.c,v 1.38 2001/04/02 23:12:50 niklas Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -487,7 +487,8 @@ AGAIN:
 			goto next;
 		}
 
-		timeout_del(&ccb->xs->stimeout);
+		if ((ccb->xs->flags & SCSI_POLL) == 0)
+			timeout_del(&ccb->xs->stimeout);
 		isadma_copyfrombuf((caddr_t)ccb, CCB_PHYS_SIZE,
 		    1, ccb->ccb_phys);
 		aha_done(sc, ccb);
