@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530sc.c,v 1.3 1996/05/26 00:27:06 deraadt Exp $ */
+/*	$OpenBSD: z8530sc.c,v 1.4 1997/01/15 05:35:46 kstailey Exp $ */
 /*	$NetBSD: z8530sc.c,v 1.4 1996/05/17 19:30:34 gwr Exp $	*/
 
 /*
@@ -68,7 +68,10 @@
 #include <dev/ic/z8530reg.h>
 #include <machine/z8530var.h>
 
-int
+static void zsnull_intr __P((struct zs_chanstate *));
+static void zsnull_softint __P((struct zs_chanstate *));
+
+void
 zs_break(cs, set)
 	struct zs_chanstate *cs;
 	int set;
@@ -143,7 +146,6 @@ zs_loadchannelregs(cs)
 	struct zs_chanstate *cs;
 {
 	u_char *reg;
-	int i;
 
 	/* Copy "pending" regs to "current" */
 	bcopy((caddr_t)cs->cs_preg, (caddr_t)cs->cs_creg, 16);

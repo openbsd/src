@@ -1,4 +1,4 @@
-/*	$OpenBSD: z8530tty.c,v 1.9 1996/12/16 00:11:58 kstailey Exp $ */
+/*	$OpenBSD: z8530tty.c,v 1.10 1997/01/15 05:35:47 kstailey Exp $ */
 /*	$NetBSD: z8530tty.c,v 1.13 1996/10/16 20:42:14 gwr Exp $	*/
 
 /*
@@ -175,12 +175,16 @@ struct zsops zsops_tty;
 /* Routines called from other code. */
 cdev_decl(zs);	/* open, close, read, write, ioctl, stop, ... */
 
-static void	zsstart(struct tty *);
-static int	zsparam(struct tty *, struct termios *);
-static void zs_modem(struct zstty_softc *zst, int onoff);
-static int	zshwiflow(struct tty *, int);
-static void zs_hwiflow(struct zstty_softc *, int);
-
+static void	zsstart __P((struct tty *));
+static int	zsparam __P((struct tty *, struct termios *));
+static void	zs_modem __P((struct zstty_softc *zst, int onoff));
+static int	zshwiflow __P((struct tty *, int));
+static void	zs_hwiflow __P((struct zstty_softc *, int));
+static void	zstty_rxint __P((register struct zs_chanstate *));
+static void	zstty_txint __P((register struct zs_chanstate *));
+static void	zstty_stint __P((register struct zs_chanstate *));
+static void	zstty_softint __P((struct zs_chanstate *));
+static void	zsoverrun __P((struct zstty_softc *, long *, char *));
 /*
  * zstty_match: how is this zs channel configured?
  */
@@ -435,8 +439,7 @@ zsclose(dev, flags, mode, p)
 	struct zstty_softc *zst;
 	register struct zs_chanstate *cs;
 	register struct tty *tp;
-	struct zsinfo *zi;
-	int hup, s;
+	int hup;
 
 	zst = zstty_cd.cd_devs[minor(dev)];
 	cs = zst->zst_cs;
@@ -683,7 +686,7 @@ zsparam(tp, t)
 	register struct zstty_softc *zst;
 	register struct zs_chanstate *cs;
 	register int s, bps, cflag, tconst;
-	u_char tmp3, tmp4, tmp5, reset;
+	u_char tmp3, tmp4, tmp5;
 
 	zst = zstty_cd.cd_devs[minor(tp->t_dev)];
 	cs = zst->zst_cs;
@@ -1122,7 +1125,7 @@ zstty_softint(cs)
 	register int get, c, s;
 	int ringmask, overrun;
 	register u_short ring_data;
-	register u_char rr0, rr1, delta;
+	register u_char rr0, delta;
 
 	zst  = cs->cs_private;
 	tp   = zst->zst_tty;
