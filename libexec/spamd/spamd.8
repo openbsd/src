@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd.8,v 1.26 2003/03/09 20:25:33 pvalchev Exp $
+.\"	$OpenBSD: spamd.8,v 1.27 2003/03/09 21:12:06 pvalchev Exp $
 .\"
 .\" Copyright (c) 2002 Theo de Raadt.  All rights reserved.
 .\"
@@ -62,7 +62,8 @@ into the background.
 The SMTP error to return to the spammer, i.e. 450, 451, 550.
 This defaults to 450.
 .It Fl c
-The maximum number of concurrent connections to allow.
+The maximum number of concurrent connections to allow.  The default
+is 200.
 .It Fl p
 Specify a different port number from the default port that
 .Nm
