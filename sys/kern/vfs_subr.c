@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_subr.c,v 1.105 2004/12/26 21:22:13 miod Exp $	*/
+/*	$OpenBSD: vfs_subr.c,v 1.106 2004/12/28 15:14:37 deraadt Exp $	*/
 /*	$NetBSD: vfs_subr.c,v 1.53 1996/04/22 01:39:13 christos Exp $	*/
 
 /*
@@ -2011,7 +2011,7 @@ loop:
 			while (blist && blist->b_lblkno < 0)
 				blist = LIST_NEXT(blist, b_vnbufs);
 		if (blist == NULL &&
-		    (blist = LIST_FIRST(&vp->v_cleanblkhd)) &&
+		    (blist = LIST_FIRST(&vp->v_dirtyblkhd)) &&
 		    (flags & V_SAVEMETA))
 			while (blist && blist->b_lblkno < 0)
 				blist = LIST_NEXT(blist, b_vnbufs);
