@@ -1,4 +1,4 @@
-/*	$OpenBSD: kbd_wscons.c,v 1.5 2002/02/19 01:49:58 maja Exp $ */
+/*	$OpenBSD: kbd_wscons.c,v 1.6 2002/04/12 02:16:01 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001 Mats O Jansson.  All rights reserved.
@@ -88,6 +88,7 @@ struct nameint kbdvar_tab[] = {
 extern char *__progname;
 int rebuild = 0;
 
+#ifndef NOKVM
 void
 kbd_show_enc(kd, idx)
 	kvm_t *kd;
@@ -137,6 +138,7 @@ kbd_show_enc(kd, idx)
 	}
 	printf("\n");
 }
+#endif
 
 void
 kbd_list()
@@ -175,6 +177,7 @@ kbd_list()
 		}
 	}
 
+#ifndef NOKVM
 	if ((kd = kvm_openfiles(NULL,NULL,NULL,O_RDONLY, errbuf)) == 0)
 		errx(1, "kvm_openfiles: %s", errbuf);
 
@@ -201,6 +204,9 @@ kbd_list()
 	if (rebuild > 0) {
 		printf("Unknown encoding or variant. kbd(1) needs to be rebuild.\n");
 	}
+#else
+	printf("List not available, sorry.\n");
+#endif
 }
 
 void
