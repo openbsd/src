@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rpc_callmsg.c,v 1.3 1996/08/19 08:31:45 tholo Exp $";
+static char *rcsid = "$OpenBSD: rpc_callmsg.c,v 1.4 1996/11/14 06:27:18 etheisen Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -39,6 +39,7 @@ static char *rcsid = "$OpenBSD: rpc_callmsg.c,v 1.3 1996/08/19 08:31:45 tholo Ex
  */
 
 #include <stdlib.h>
+#include <string.h>
 #include <sys/param.h>
 
 #include <rpc/rpc.h>
