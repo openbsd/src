@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.17 2004/05/26 16:38:44 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.18 2004/05/30 22:41:15 jakob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -79,6 +79,11 @@
 #define NTP_ORIGINATE        24		/* Offset of originate timestamp */
 #define NTP_RECEIVE          32		/* Offset of receive timestamp */
 #define NTP_TRANSMIT         40		/* Offset of transmit timestamp */
+
+#define STATUS_NOWARNING      0		/* No Leap Indicator */
+#define STATUS_LEAPHIGH       1		/* Last Minute Has 61 Seconds */
+#define STATUS_LEAPLOW        2		/* Last Minute Has 59 Seconds */
+#define STATUS_ALARM          3		/* Server Clock Not Synchronized */
 
 #define MAX_QUERIES         25
 #define MAX_DELAY           15
@@ -230,7 +235,7 @@ sync_ntp(int fd, const struct sockaddr *peer, double *offset, double *error)
 void
 make_packet(struct ntp_data *data)
 {
-	data->status = 0;
+	data->status = STATUS_NOWARNING;
 	data->version = NTP_VERSION;
 	data->mode = NTP_MODE_CLIENT;
 	data->stratum = 0;
@@ -344,6 +349,11 @@ retry:
 		warnx("Invalid NTP server mode, packet rejected");
 		return 1;
 	}
+
+	if (data->status == STATUS_ALARM) {                                     
+		warnx("Server clock not syncronized, packet rejected");         
+		return 1;                                                       
+	}                                                                       
 
 	/*
 	 * Note that the conventions are very poorly defined in the NTP
