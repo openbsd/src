@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sk.c,v 1.53 2004/12/08 04:26:53 brad Exp $	*/
+/*	$OpenBSD: if_sk.c,v 1.54 2004/12/14 20:58:15 krw Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -381,7 +381,7 @@ sk_vpd_read(struct sk_softc *sc)
 	sc->sk_vpd_readonly = malloc(res.vr_len, M_DEVBUF, M_NOWAIT);
 	if (sc->sk_vpd_readonly == NULL)
 		panic("sk_vpd_read");
-	for (i = 0; i < res.vr_len + 1; i++)
+	for (i = 0; i < res.vr_len; i++)
 		sc->sk_vpd_readonly[i] = sk_vpd_readbyte(sc, i + pos);
 }
 
