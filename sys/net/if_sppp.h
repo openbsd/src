@@ -164,13 +164,6 @@ struct spppreq {
 	struct sppp defs;
 };
 
-#if (defined(__FreeBSD_version) && __FreeBSD_version < 300000)  ||	\
-    (defined(__FreeBSD__) && __FreeBSD__ < 3)			||	\
-    defined(__NetBSD__) || defined (__OpenBSD__)
-#define	SIOCSIFGENERIC	 _IOW('i', 57, struct ifreq)	/* generic IF set op */
-#define	SIOCGIFGENERIC	_IOWR('i', 58, struct ifreq)	/* generic IF get op */
-#endif
-
 #if defined(KERNEL) || defined(_KERNEL)
 void sppp_attach (struct ifnet *ifp);
 void sppp_detach (struct ifnet *ifp);
