@@ -1,4 +1,4 @@
-/*	$OpenBSD: yppush.c,v 1.3 1996/05/30 09:53:19 deraadt Exp $ */
+/*	$OpenBSD: yppush.c,v 1.4 1996/11/08 21:53:32 niklas Exp $ */
 
 /*
  * Copyright (c) 1995 Mats O Jansson <moj@stacken.kth.se>
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: yppush.c,v 1.3 1996/05/30 09:53:19 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: yppush.c,v 1.4 1996/11/08 21:53:32 niklas Exp $";
 #endif /* not lint */
 
 /*
@@ -288,14 +288,14 @@ char **argv;
 	sprintf(map_path,"%s/%s",YP_DB_PATH,domain);
 	if (!((stat(map_path, &finfo) == 0) &&
 	      ((finfo.st_mode & S_IFMT) == S_IFDIR))) {
-	  	fprintf(stderr,"yppush: Map does not exists.\n");
+	  	fprintf(stderr,"yppush: Map does not exist.\n");
 		exit(1);
 	}
 		
 	/* Check map */
 	sprintf(map_path,"%s/%s/%s%s",YP_DB_PATH,domain,Map,YPDB_SUFFIX);
 	if (!(stat(map_path, &finfo) == 0)) {
-		fprintf(stderr,"yppush: Map does not exists.\n");
+		fprintf(stderr,"yppush: Map does not exist.\n");
 		exit(1);
 	}
 		
