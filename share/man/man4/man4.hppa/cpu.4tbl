@@ -1,4 +1,4 @@
-.\" $OpenBSD: cpu.4tbl,v 1.1 2002/04/05 21:36:16 mickey Exp $
+.\" $OpenBSD: cpu.4tbl,v 1.2 2002/04/07 10:33:12 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -41,7 +41,7 @@
 .Pp
 The following table lists the
 .Tn PA-RISC
-CPU types and thier characteristics, such as TLB and maximum
+CPU types and their characteristics, such as TLB and maximum
 cache sizes,
 .Tn HP9000/700
 machines they were used in (see also
@@ -57,7 +57,7 @@ _ _ _ _ _ _ _ _
 l l l l l l l l .
 CPU:PA:CLK:FPU:Caches:TLB:BTLB:Models
    :  :Mhz:y/n:      :   :    :
-7000:1.1a:50?:No : :64?:4 I:705,710,720
+7000:1.1a:66 :No : :64?:4 I:705,710,720
     :    :   :   : :   :4 D:730,750
 7100:1.1b:100:Yes: 1MB L2I:120:16:715/33/50/75
     :    :   :   : 2MB L2D:   :  :725/50/75
@@ -78,7 +78,7 @@ CPU:PA:CLK:FPU:Caches:TLB:BTLB:Models
 .in -\n(dIu
 .Pp
 .Sh FLOATING-POINT COPROCESSOR
-The following table summirizes available floating-point coprocessor
+The following table summarizes available floating-point coprocessor
 models for the 32 bit
 .Tn PA-RISC
 processors.

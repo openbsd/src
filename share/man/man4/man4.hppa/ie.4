@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ie.4,v 1.1 2002/04/03 22:58:43 mickey Exp $
+.\"	$OpenBSD: ie.4,v 1.2 2002/04/07 10:33:12 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Paul Weissmann
 .\" All rights reserved.
@@ -46,7 +46,7 @@ interface provides access to the 10 Mb/s
 .Tn Ethernet
 network via the 
 .Tn Intel
-i82C596 DX/CA 32-Bit
+i82C596 DX/CA 32-bit
 Local Area Network Coprocessor for Ethernet
 .Pp
 Each of the host's network addresses
@@ -68,12 +68,12 @@ The i82C596 Coprocessors come basically in two different flavors:
 Systems with a ASP or WAX Main Bus Adapter (MBA), e.g. 720, 735 etc.
 These types of systems generally have only AUI or BNC and AUI connectors at
 the back. On the models with both you usually have to switch a big
-jumper on the mainboard to choose which one to activate.
+jumper-block on the mainboard to choose which one to activate.
 .It i82596CA
 Systems with LASI MBA, e.g. 712/*, 715/100.
 have the i82C59CA 
 integrated on the LASI macrochip. They usually have TP and AUI 
-connectors and do autodetect to which one the network is connected to.
+connectors and autodetect to which one the network is connected to.
 .El
 .Pp
 By default, the system will select the media type automatically, but the

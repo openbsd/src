@@ -1,4 +1,4 @@
-.\"	$OpenBSD: asp.4,v 1.6 2002/04/07 10:14:31 mickey Exp $
+.\"	$OpenBSD: asp.4,v 1.7 2002/04/07 10:33:12 mickey Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -35,13 +35,14 @@
 .Sh NAME
 .Nm asp
 .Nd "Core" bus controller as present on HP9000
-715/33, 715/50, 725/50
+715/33/50/75, 725/50/75, 735/*, 755/*
 workstations
 .Sh SYNOPSIS
 .Cd "asp0    at mainbus? irq 28"
 .Cd "gsc* at asp?"
 .Sh INTRODUCTION
-The supported Core bus controllers are those present on older PA-RISC(tm)
+The supported Core bus controllers are those present on older
+.Tn PA-RISC
 workstations, and include:
 .Bl -bullet -compact
 .It
@@ -50,6 +51,8 @@ Core bus controller
 System Clock
 .It
 Interrupt Controller
+.It
+DMA Controller
 .It
 Real Time Clock Interface
 .It
@@ -60,9 +63,14 @@ The irq level supplied is hardwired to the cpu pin, so changing the value
 would not produce any noticeable results (except lost interrupts for the whole
 I/O subsystem).
 .Sh SEE ALSO
+.Xr lasi 4 ,
 .Xr gsc 4 ,
-.Xr intro 4 ,
-.Xr lasi 4
+.Xr intro 4
+.Rs
+"Hardball I/O Subsystem ERS" Revision 1.1, 30 September 1991
+.br
+Hewlett Packard
+.Re
 .Sh HISTORY
 The
 .Nm
