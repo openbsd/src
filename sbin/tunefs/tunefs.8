@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tunefs.8,v 1.14 2000/03/18 22:56:06 aaron Exp $
+.\"	$OpenBSD: tunefs.8,v 1.15 2001/04/08 00:00:43 gluk Exp $
 .\"	$NetBSD: tunefs.8,v 1.8 1995/03/18 15:01:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -50,7 +50,6 @@
 .Bk -words
 .Op Fl o Ar optimize_preference
 .Ek
-.Op Fl s Ar enable | disable
 .Op Ar special | Ar filesys
 .Sh DESCRIPTION
 .Nm
@@ -124,16 +123,6 @@ are on the selected file system.
 More detailed information can be obtained in the
 .Xr dumpfs 8
 manual page.
-.It Fl s Ar enable_or_disable
-This option enables soft updates on the file system.
-Soft updates
-eliminates most synchronous writes to disk by maintaining
-a partial order of writes to the disk.
-This significantly improves
-meta-data operations (file creation and deletion) at the expense of
-subjecting them to the same potential 30-second delay as file data.
-Recovery is made simpler, however, by maintaining a strict ordering of
-writes to disk.
 .El
 .Sh SEE ALSO
 .Xr fs 5 ,

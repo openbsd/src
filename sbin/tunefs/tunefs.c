@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.10 2001/04/06 20:43:31 gluk Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.11 2001/04/08 00:00:42 gluk Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: tunefs.c,v 1.10 2001/04/06 20:43:31 gluk Exp $";
+static char rcsid[] = "$OpenBSD: tunefs.c,v 1.11 2001/04/08 00:00:42 gluk Exp $";
 #endif
 #endif /* not lint */
 
@@ -90,7 +90,7 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	char *cp, *special, *name, *action;
+	char *cp, *special, *name;
 	struct stat st;
 	int i;
 	int Aflag = 0;
@@ -220,22 +220,8 @@ again:
 				continue;
 
 			case 's':
-				name = "soft updates";
-				if (argc < 1)
-					errx(10, "-s: missing %s", name);
-				argc--, argv++;
-				if (strcmp(*argv, "enable") == 0) {
-					sblock.fs_flags |= FS_DOSOFTDEP;
-					action = "set";
-				} else if (strcmp(*argv, "disable") == 0) {
-					sblock.fs_flags &= ~FS_DOSOFTDEP;
-					action = "cleared";
-				} else {
-					errx(10, "bad %s (options are %s)",
-					    name, "`enable' or `disable'");
-				}
-				warnx("%s %s", name, action);
-				continue;
+				errx(1, "See mount(8) for details about"
+				      " how to enable soft updates.");
 
 			case 'o':
 				name = "optimization preference";
@@ -295,8 +281,7 @@ usage()
 		"\t-m minimum percentage of free space\n"
 		"\t-n expected number of files per directory\n"
 		"\t-o optimization preference (`space' or `time')\n"
-		"\t-p no change - just prints current tuneable settings\n"
-		"\t-s soft updates ('enable' or 'disable')\n",
+		"\t-p no change - just prints current tuneable settings\n",
 		__progname);
 	exit(2);
 }
