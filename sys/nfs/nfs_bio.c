@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_bio.c,v 1.27 2001/11/29 02:08:22 art Exp $	*/
+/*	$OpenBSD: nfs_bio.c,v 1.28 2001/11/29 12:24:28 art Exp $	*/
 /*	$NetBSD: nfs_bio.c,v 1.25.4.2 1996/07/08 20:47:04 jtc Exp $	*/
 
 /*
@@ -630,7 +630,9 @@ nfs_getpages(v)
 	}
 
 	/* vnode is VOP_LOCKed, uobj is locked */
-
+	if (write && (vp->v_bioflag & VBIOONSYNCLIST) == 0) {
+		vn_syncer_add_to_worklist(vp, syncdelay);
+	}
 	bsize = nmp->nm_rsize;
 	orignpages = MIN(*ap->a_count,
 			 round_page(eof - origoffset) >> PAGE_SHIFT);
