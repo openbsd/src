@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: bindresvport.c,v 1.13 2000/01/26 03:43:21 deraadt Exp $";
+static char *rcsid = "$OpenBSD: bindresvport.c,v 1.14 2002/09/06 18:35:12 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -68,7 +68,7 @@ bindresvport_sa(sd, sa)
 	struct sockaddr_in6 *sin6;
 	int proto, portrange, portlow;
 	u_int16_t port;
-	int salen;
+	socklen_t salen;
 
 	if (sa == NULL) {
 		salen = sizeof(myaddr);
@@ -104,7 +104,7 @@ bindresvport_sa(sd, sa)
 	sa->sa_len = salen;
 
 	if (port == 0) {
-		int oldlen = sizeof(old);
+		socklen_t oldlen = sizeof(old);
 
 		error = getsockopt(sd, proto, portrange, &old, &oldlen);
 		if (error < 0)

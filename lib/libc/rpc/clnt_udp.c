@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.18 2002/06/03 12:04:08 deraadt Exp $";
+static char *rcsid = "$OpenBSD: clnt_udp.c,v 1.19 2002/09/06 18:35:12 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -220,7 +220,7 @@ clntudp_call(cl, proc, xargs, argsp, xresults, resultsp, utimeout)
 	XDR *xdrs;
 	int outlen;
 	int inlen;
-	int fromlen;
+	socklen_t fromlen;
 	fd_set *fds, readfds;
 	struct sockaddr_in from;
 	struct rpc_msg reply_msg;

@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.21 2002/01/02 23:00:10 deraadt Exp $";
+static char *rcsid = "$OpenBSD: svc_tcp.c,v 1.22 2002/09/06 18:35:12 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -133,7 +133,7 @@ svctcp_create(sock, sendsize, recvsize)
 	SVCXPRT *xprt;
 	struct tcp_rendezvous *r;
 	struct sockaddr_in addr;
-	int len = sizeof(struct sockaddr_in);
+	socklen_t len = sizeof(struct sockaddr_in);
 
 	if (sock == RPC_ANYSOCK) {
 		if ((sock = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
@@ -250,7 +250,7 @@ rendezvous_request(xprt)
 	int sock;
 	struct tcp_rendezvous *r;
 	struct sockaddr_in addr;
-	int len;
+	socklen_t len;
 
 	r = (struct tcp_rendezvous *)xprt->xp_p1;
     again:

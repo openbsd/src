@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_send.c,v 1.11 2002/02/16 21:27:23 millert Exp $	*/
+/*	$OpenBSD: res_send.c,v 1.12 2002/09/06 18:35:12 deraadt Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -64,7 +64,7 @@
 static char sccsid[] = "@(#)res_send.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_send.c,v 8.12 1996/10/08 04:51:06 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_send.c,v 1.11 2002/02/16 21:27:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_send.c,v 1.12 2002/09/06 18:35:12 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -579,7 +579,7 @@ read_len:
 			struct timeval timeout;
 			fd_set *dsmaskp;
 			struct sockaddr_storage from;
-			int fromlen;
+			socklen_t fromlen;
 
 			if ((s < 0) || vc || (af != nsap->sa_family)) {
 				if (vc)

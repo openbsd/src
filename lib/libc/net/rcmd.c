@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.43 2002/05/24 21:22:37 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.44 2002/09/06 18:35:12 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -216,7 +216,7 @@ rcmd_af(ahost, rport, locuser, remuser, cmd, fd2p, af)
 	} else {
 		char num[8];
 		int s2 = rresvport_af(&lport, af), s3;
-		int len = sizeof(from);
+		socklen_t len = sizeof(from);
 		int fdssize = howmany(MAX(s, s2)+1, NFDBITS) * sizeof(fd_mask);
 
 		if (s2 < 0)

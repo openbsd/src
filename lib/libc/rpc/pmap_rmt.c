@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.19 2001/09/15 13:51:01 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pmap_rmt.c,v 1.20 2002/09/06 18:35:12 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -229,7 +229,8 @@ clnt_broadcast(prog, vers, proc, xargs, argsp, xresults, resultsp, eachresult)
 	AUTH *unix_auth = authunix_create_default();
 	XDR xdr_stream;
 	XDR *xdrs = &xdr_stream;
-	int outlen, inlen, fromlen, nets;
+	int outlen, inlen, nets;
+	socklen_t fromlen;
 	int sock = -1;
 	int on = 1;
 	fd_set *fds = NULL, readfds;
