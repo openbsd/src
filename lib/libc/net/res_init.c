@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_init.c,v 1.12 1997/04/03 05:53:46 deraadt Exp $	*/
+/*	$OpenBSD: res_init.c,v 1.13 1997/04/05 21:13:17 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1989, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_init.c	8.1 (Berkeley) 6/7/93";
 static char rcsid[] = "$From: res_init.c,v 8.7 1996/09/28 06:51:07 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_init.c,v 1.12 1997/04/03 05:53:46 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: res_init.c,v 1.13 1997/04/05 21:13:17 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -514,8 +514,5 @@ net_mask(in)		/* XXX - should really use system's version of this */
 u_int
 res_randomid()
 {
-	struct timeval now;
-
-	gettimeofday(&now, NULL);
-	return (0xffff & (now.tv_sec ^ now.tv_usec ^ getpid()));
+	return (0xffff & arc4random());
 }

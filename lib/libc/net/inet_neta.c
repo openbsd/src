@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_neta.c,v 1.1 1997/03/13 19:07:31 downsj Exp $	*/
+/*	$OpenBSD: inet_neta.c,v 1.2 1997/04/05 21:13:12 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 by Internet Software Consortium.
@@ -19,9 +19,9 @@
 
 #if defined(LIBC_SCCS) && !defined(lint)
 #if 0
-static const char rcsid[] = "$Id: inet_neta.c,v 1.1 1997/03/13 19:07:31 downsj Exp $";
+static const char rcsid[] = "$Id: inet_neta.c,v 1.2 1997/04/05 21:13:12 millert Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: inet_neta.c,v 1.1 1997/03/13 19:07:31 downsj Exp $";
+static const char rcsid[] = "$OpenBSD: inet_neta.c,v 1.2 1997/04/05 21:13:12 millert Exp $";
 #endif
 #endif
 
@@ -32,11 +32,12 @@ static const char rcsid[] = "$OpenBSD: inet_neta.c,v 1.1 1997/03/13 19:07:31 dow
 
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 /*
  * char *
  * inet_neta(src, dst, size)
- *	format a u_long network number into presentation format.
+ *	format an in_addr_t network number into presentation format.
  * return:
  *	pointer to dst, or NULL if an error occurred (check errno).
  * note:
@@ -46,7 +47,7 @@ static const char rcsid[] = "$OpenBSD: inet_neta.c,v 1.1 1997/03/13 19:07:31 dow
  */
 char *
 inet_neta(src, dst, size)
-	u_long src;
+	in_addr_t src;
 	char *dst;
 	size_t size;
 {

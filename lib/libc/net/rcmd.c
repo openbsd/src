@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: rcmd.c,v 1.19 1997/01/25 21:30:37 deraadt Exp $";
+static char *rcsid = "$OpenBSD: rcmd.c,v 1.20 1997/04/05 21:13:15 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -56,14 +56,14 @@ static char *rcsid = "$OpenBSD: rcmd.c,v 1.19 1997/01/25 21:30:37 deraadt Exp $"
 #include <syslog.h>
 #include <stdlib.h>
 
-int	__ivaliduser __P((FILE *, u_long, const char *, const char *));
+int	__ivaliduser __P((FILE *, in_addr_t, const char *, const char *));
 static int __icheckhost __P((u_int32_t, const char *));
 static char *__gethostloop __P((u_int32_t));
 
 int
 rcmd(ahost, rport, locuser, remuser, cmd, fd2p)
 	char **ahost;
-	u_short rport;
+	in_port_t rport;
 	const char *locuser, *remuser, *cmd;
 	int *fd2p;
 {
@@ -259,7 +259,7 @@ rresvport(alport)
 	s = socket(AF_INET, SOCK_STREAM, 0);
 	if (s < 0)
 		return (-1);
-	sin.sin_port = htons((u_short)*alport);
+	sin.sin_port = htons((in_port_t)*alport);
 	if (*alport < IPPORT_RESERVED - 1) {
 		if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) >= 0)
 			return (s);
@@ -298,7 +298,7 @@ ruserok(rhost, superuser, ruser, luser)
 	addrs[i] = 0;
 
 	for (i = 0; i < MAXADDRS && addrs[i]; i++)
-		if (iruserok((u_long)addrs[i], superuser, ruser, luser) == 0)
+		if (iruserok((in_addr_t)addrs[i], superuser, ruser, luser) == 0)
 			return (0);
 	return (-1);
 }
@@ -390,7 +390,7 @@ again:
 int
 __ivaliduser(hostf, raddrl, luser, ruser)
 	FILE *hostf;
-	u_long raddrl;
+	in_addr_t raddrl;
 	const char *luser, *ruser;
 {
 	register char *user, *p;

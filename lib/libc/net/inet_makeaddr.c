@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: inet_makeaddr.c,v 1.2 1996/08/19 08:29:11 tholo Exp $";
+static char rcsid[] = "$OpenBSD: inet_makeaddr.c,v 1.3 1997/04/05 21:13:12 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -45,9 +45,9 @@ static char rcsid[] = "$OpenBSD: inet_makeaddr.c,v 1.2 1996/08/19 08:29:11 tholo
  */
 struct in_addr
 inet_makeaddr(net, host)
-	u_long net, host;
+	in_addr_t net, host;
 {
-	u_long addr;
+	in_addr_t addr;
 
 	if (net < 128)
 		addr = (net << IN_CLASSA_NSHIFT) | (host & IN_CLASSA_HOST);

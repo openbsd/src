@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnetent.3,v 1.3 1997/03/13 19:07:26 downsj Exp $
+.\"	$OpenBSD: getnetent.3,v 1.4 1997/04/05 21:13:07 millert Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -48,7 +48,7 @@
 .Ft struct netent *
 .Fn getnetbyname "char *name"
 .Ft struct netent *
-.Fn getnetbyaddr "unsigned long net" "int type"
+.Fn getnetbyaddr "in_addr_t net" "int type"
 .Fn setnetent "int stayopen"
 .Fn endnetent 
 .Sh DESCRIPTION
@@ -68,7 +68,7 @@ struct	netent {
 	char		*n_name;	/* official name of net */
 	char		**n_aliases;	/* alias list */
 	int		n_addrtype;	/* net number type */
-	unsigned long	n_net;		/* net number */
+	in_addr_t	n_net;		/* net number */
 };
 .Ed
 .Pp

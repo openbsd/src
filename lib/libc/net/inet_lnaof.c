@@ -32,7 +32,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: inet_lnaof.c,v 1.2 1996/08/19 08:29:09 tholo Exp $";
+static char rcsid[] = "$OpenBSD: inet_lnaof.c,v 1.3 1997/04/05 21:13:11 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -44,11 +44,11 @@ static char rcsid[] = "$OpenBSD: inet_lnaof.c,v 1.2 1996/08/19 08:29:09 tholo Ex
  * internet address; handles class a/b/c network
  * number formats.
  */
-u_long
+in_addr_t
 inet_lnaof(in)
 	struct in_addr in;
 {
-	register u_long i = ntohl(in.s_addr);
+	register in_addr_t i = ntohl(in.s_addr);
 
 	if (IN_CLASSA(i))
 		return ((i)&IN_CLASSA_HOST);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_debug.c,v 1.5 1997/03/13 19:07:37 downsj Exp $	*/
+/*	$OpenBSD: res_debug.c,v 1.6 1997/04/05 21:13:16 millert Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1990, 1993
@@ -82,7 +82,7 @@
 static char sccsid[] = "@(#)res_debug.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_debug.c,v 8.19 1996/11/26 10:11:23 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_debug.c,v 1.5 1997/03/13 19:07:37 downsj Exp $";
+static char rcsid[] = "$OpenBSD: res_debug.c,v 1.6 1997/04/05 21:13:16 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -518,7 +518,7 @@ __p_rr(cp, msg, file)
 			} else if (dlen == 7) {
 				char *address;
 				u_char protocol;
-				u_short port;
+				in_port_t port;
 
 				address = inet_ntoa(inaddr);
 				cp += INADDRSZ;
