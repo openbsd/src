@@ -119,7 +119,7 @@ mount -a -t nfs
 
 echo -n 'starting system logger'
 rm -f /dev/log
-syslogd
+syslogd		# use "-s" for greater security
 
 # $timed_flags is imported from /etc/netstart;
 # if $timed_flags == NO, timed isn't run.
