@@ -49,7 +49,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.1.1.1 1995/10/18 10:39:20 deraadt Exp $
+ *	$Id: locore.S,v 1.2 1995/10/30 13:38:02 deraadt Exp $
  */
 
 /*
@@ -2735,7 +2735,7 @@ FPReturn:
 	mtc0	t0, MACH_COP_0_STATUS_REG
 	j	ra
 	addu	sp, sp, STAND_FRAME_SIZE
-END(MachFPInterrupt)
+END(MachFPTrap)
 
 /*----------------------------------------------------------------------------
  *
