@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.46 2000/09/06 23:05:17 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.47 2000/09/15 03:52:37 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -731,7 +731,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	tf->lr = (int)catcher;
 	tf->fixreg[3] = (int)sig;
 	tf->fixreg[4] = (psp->ps_siginfo & sigmask(sig)) ? (int)&fp->sf_si : NULL;
-	tf->fixreg[5] = (int)&frame.sf_sc;
+	tf->fixreg[5] = (int)&fp->sf_sc;
 	tf->srr0 = (int)(((char *)PS_STRINGS)
 			 - (p->p_emul->e_esigcode - p->p_emul->e_sigcode));
 
