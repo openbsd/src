@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.112 2002/09/11 22:40:31 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.113 2002/09/12 03:27:20 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -107,7 +107,8 @@ int	ubsec_dmamap_aligned(bus_dmamap_t);
 
 int	ubsec_kprocess(struct cryptkop *);
 struct ubsec_softc *ubsec_kfind(struct cryptkop *);
-int	ubsec_kprocess_modexp(struct ubsec_softc *, struct cryptkop *);
+int	ubsec_kprocess_modexp_sw(struct ubsec_softc *, struct cryptkop *);
+int	ubsec_kprocess_modexp_hw(struct ubsec_softc *, struct cryptkop *);
 int	ubsec_kprocess_rsapriv(struct ubsec_softc *, struct cryptkop *);
 void	ubsec_kfree(struct ubsec_softc *, struct ubsec_q2 *);
 int	ubsec_ksigbits(struct crparam *);
@@ -1418,12 +1419,20 @@ ubsec_callback2(sc, q)
 
 		if (clen < rlen)
 			krp->krp_status = E2BIG;
-		else
-			ubsec_kshift_l(me->me_shiftbits,
-			    me->me_C.dma_vaddr, me->me_normbits,
-			    krp->krp_param[UBS_MODEXP_PAR_C].crp_p,
-			    krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits);
-
+		else {
+			if (sc->sc_flags & UBS_FLAGS_HWNORM) {
+				bzero(krp->krp_param[UBS_MODEXP_PAR_C].crp_p,
+				    (krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits
+					+ 7) / 8);
+				bcopy(me->me_C.dma_vaddr,
+				    krp->krp_param[UBS_MODEXP_PAR_C].crp_p,
+				    me->me_modbits);
+			} else
+				ubsec_kshift_l(me->me_shiftbits,
+				    me->me_C.dma_vaddr, me->me_normbits,
+				    krp->krp_param[UBS_MODEXP_PAR_C].crp_p,
+				    krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits);
+		}
 		crypto_kdone(krp);
 
 		/* bzero all potentially sensitive data */
@@ -1603,11 +1612,21 @@ void
 ubsec_init_board(sc)
 	struct ubsec_softc *sc;
 {
-	/* Turn on appropriate interrupts and disable hardware normalization */
-	WRITE_REG(sc, BS_CTRL, READ_REG(sc, BS_CTRL) |
-	    BS_CTRL_MCR1INT | BS_CTRL_DMAERR | BS_CTRL_LITTLE_ENDIAN |
-	    ((sc->sc_flags & UBS_FLAGS_KEY) ? BS_CTRL_MCR2INT : 0) |
-	    ((sc->sc_flags & UBS_FLAGS_HWNORM) ? BS_CTRL_SWNORM : 0));
+	u_int32_t ctrl;
+
+	ctrl = READ_REG(sc, BS_CTRL);
+	ctrl &= ~(BS_CTRL_BE32 | BS_CTRL_BE64);
+	ctrl |= BS_CTRL_LITTLE_ENDIAN | BS_CTRL_MCR1INT;
+
+	if (sc->sc_flags & UBS_FLAGS_KEY)
+		ctrl |= BS_CTRL_MCR2INT;
+	else
+		ctrl &= ~BS_CTRL_MCR2INT;
+
+	if (sc->sc_flags & UBS_FLAGS_HWNORM)
+		ctrl &= ~BS_CTRL_SWNORM;
+
+	WRITE_REG(sc, BS_CTRL, ctrl);
 }
 
 /*
@@ -1781,6 +1800,7 @@ ubsec_kprocess(krp)
 	struct cryptkop *krp;
 {
 	struct ubsec_softc *sc;
+	int r;
 
 	if (krp == NULL || krp->krp_callback == NULL)
 		return (EINVAL);
@@ -1797,23 +1817,29 @@ ubsec_kprocess(krp)
 
 	switch (krp->krp_op) {
 	case CRK_MOD_EXP:
-		return (ubsec_kprocess_modexp(sc, krp));
+		if (sc->sc_flags & UBS_FLAGS_HWNORM)
+			r = ubsec_kprocess_modexp_hw(sc, krp);
+		else
+			r = ubsec_kprocess_modexp_sw(sc, krp);
+		break;
 	case CRK_MOD_EXP_CRT:
-		return (ubsec_kprocess_rsapriv(sc, krp));
+		r = ubsec_kprocess_rsapriv(sc, krp);
+		break;
 	default:
 		printf("%s: kprocess: invalid op 0x%x\n",
 		    sc->sc_dv.dv_xname, krp->krp_op);
 		krp->krp_status = EOPNOTSUPP;
 		crypto_kdone(krp);
-		return (0);
+		r = 0;
 	}
+	return (r);
 }
 
 /*
- * Start computation of cr[C] = (cr[M] ^ cr[E]) mod cr[N]
+ * Start computation of cr[C] = (cr[M] ^ cr[E]) mod cr[N] (sw normalization)
  */
 int
-ubsec_kprocess_modexp(sc, krp)
+ubsec_kprocess_modexp_sw(sc, krp)
 	struct ubsec_softc *sc;
 	struct cryptkop *krp;
 {
@@ -1953,6 +1979,207 @@ ubsec_kprocess_modexp(sc, krp)
 	ctx->me_len = htole16((normbits / 8) + (4 * sizeof(u_int16_t)));
 	ctx->me_op = htole16(UBS_CTXOP_MODEXP);
 	ctx->me_E_len = htole16(nbits);
+	ctx->me_N_len = htole16(nbits);
+
+#ifdef UBSEC_DEBUG
+	ubsec_dump_mcr(mcr);
+	ubsec_dump_ctx2((struct ubsec_ctx_keyop *)ctx);
+#endif
+
+	/*
+	 * ubsec_feed2 will sync mcr and ctx, we just need to sync
+	 * everything else.
+	 */
+	bus_dmamap_sync(sc->sc_dmat, me->me_M.dma_map,
+	    0, me->me_M.dma_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, me->me_E.dma_map,
+	    0, me->me_E.dma_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+	bus_dmamap_sync(sc->sc_dmat, me->me_C.dma_map,
+	    0, me->me_C.dma_map->dm_mapsize, BUS_DMASYNC_PREREAD);
+	bus_dmamap_sync(sc->sc_dmat, me->me_epb.dma_map,
+	    0, me->me_epb.dma_map->dm_mapsize, BUS_DMASYNC_PREWRITE);
+
+	/* Enqueue and we're done... */
+	s = splnet();
+	SIMPLEQ_INSERT_TAIL(&sc->sc_queue2, &me->me_q, q_next);
+	ubsec_feed2(sc);
+	splx(s);
+
+	return (0);
+
+errout:
+	if (me != NULL) {
+		if (me->me_q.q_mcr.dma_map != NULL)
+			ubsec_dma_free(sc, &me->me_q.q_mcr);
+		if (me->me_q.q_ctx.dma_map != NULL) {
+			bzero(me->me_q.q_ctx.dma_vaddr, me->me_q.q_ctx.dma_size);
+			ubsec_dma_free(sc, &me->me_q.q_ctx);
+		}
+		if (me->me_M.dma_map != NULL) {
+			bzero(me->me_M.dma_vaddr, me->me_M.dma_size);
+			ubsec_dma_free(sc, &me->me_M);
+		}
+		if (me->me_E.dma_map != NULL) {
+			bzero(me->me_E.dma_vaddr, me->me_E.dma_size);
+			ubsec_dma_free(sc, &me->me_E);
+		}
+		if (me->me_C.dma_map != NULL) {
+			bzero(me->me_C.dma_vaddr, me->me_C.dma_size);
+			ubsec_dma_free(sc, &me->me_C);
+		}
+		if (me->me_epb.dma_map != NULL)
+			ubsec_dma_free(sc, &me->me_epb);
+		free(me, M_DEVBUF);
+	}
+	krp->krp_status = err;
+	crypto_kdone(krp);
+	return (0);
+}
+
+/*
+ * Start computation of cr[C] = (cr[M] ^ cr[E]) mod cr[N] (hw normalization)
+ */
+int
+ubsec_kprocess_modexp_hw(sc, krp)
+	struct ubsec_softc *sc;
+	struct cryptkop *krp;
+{
+	struct ubsec_q2_modexp *me;
+	struct ubsec_mcr *mcr;
+	struct ubsec_ctx_modexp *ctx;
+	struct ubsec_pktbuf *epb;
+	int err = 0, s;
+	u_int nbits, normbits, mbits, shiftbits, ebits;
+
+	me = (struct ubsec_q2_modexp *)malloc(sizeof *me, M_DEVBUF, M_NOWAIT);
+	if (me == NULL) {
+		err = ENOMEM;
+		goto errout;
+	}
+	bzero(me, sizeof *me);
+	me->me_krp = krp;
+	me->me_q.q_type = UBS_CTXOP_MODEXP;
+
+	nbits = ubsec_ksigbits(&krp->krp_param[UBS_MODEXP_PAR_N]);
+	if (nbits <= 512)
+		normbits = 512;
+	else if (nbits <= 768)
+		normbits = 768;
+	else if (nbits <= 1024)
+		normbits = 1024;
+	else if (sc->sc_flags & UBS_FLAGS_BIGKEY && nbits <= 1536)
+		normbits = 1536;
+	else if (sc->sc_flags & UBS_FLAGS_BIGKEY && nbits <= 2048)
+		normbits = 2048;
+	else {
+		err = E2BIG;
+		goto errout;
+	}
+
+	shiftbits = normbits - nbits;
+
+	/* XXX ??? */
+	me->me_modbits = nbits;
+	me->me_shiftbits = shiftbits;
+	me->me_normbits = normbits;
+
+	/* Sanity check: result bits must be >= true modulus bits. */
+	if (krp->krp_param[UBS_MODEXP_PAR_C].crp_nbits < nbits) {
+		err = ERANGE;
+		goto errout;
+	}
+
+	if (ubsec_dma_malloc(sc, sizeof(struct ubsec_mcr),
+	    &me->me_q.q_mcr, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+	mcr = (struct ubsec_mcr *)me->me_q.q_mcr.dma_vaddr;
+
+	if (ubsec_dma_malloc(sc, sizeof(struct ubsec_ctx_modexp),
+	    &me->me_q.q_ctx, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+
+	mbits = ubsec_ksigbits(&krp->krp_param[UBS_MODEXP_PAR_M]);
+	if (mbits > nbits) {
+		err = E2BIG;
+		goto errout;
+	}
+	if (ubsec_dma_malloc(sc, normbits / 8, &me->me_M, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+	bzero(me->me_M.dma_vaddr, normbits / 8);
+	bcopy(krp->krp_param[UBS_MODEXP_PAR_M].crp_p,
+	    me->me_M.dma_vaddr, (mbits + 7) / 8);
+
+	if (ubsec_dma_malloc(sc, normbits / 8, &me->me_C, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+	bzero(me->me_C.dma_vaddr, me->me_C.dma_size);
+
+	ebits = ubsec_ksigbits(&krp->krp_param[UBS_MODEXP_PAR_E]);
+	if (ebits > nbits) {
+		err = E2BIG;
+		goto errout;
+	}
+	if (ubsec_dma_malloc(sc, normbits / 8, &me->me_E, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+	bzero(me->me_E.dma_vaddr, normbits / 8);
+	bcopy(krp->krp_param[UBS_MODEXP_PAR_E].crp_p,
+	    me->me_E.dma_vaddr, (ebits + 7) / 8);
+
+	if (ubsec_dma_malloc(sc, sizeof(struct ubsec_pktbuf),
+	    &me->me_epb, 0)) {
+		err = ENOMEM;
+		goto errout;
+	}
+	epb = (struct ubsec_pktbuf *)me->me_epb.dma_vaddr;
+	epb->pb_addr = htole32(me->me_E.dma_paddr);
+	epb->pb_next = 0;
+	epb->pb_len = htole32((ebits + 7) / 8);
+
+#ifdef UBSEC_DEBUG
+	printf("Epb ");
+	ubsec_dump_pb(epb);
+#endif
+
+	mcr->mcr_pkts = htole16(1);
+	mcr->mcr_flags = 0;
+	mcr->mcr_cmdctxp = htole32(me->me_q.q_ctx.dma_paddr);
+	mcr->mcr_reserved = 0;
+	mcr->mcr_pktlen = 0;
+
+	mcr->mcr_ipktbuf.pb_addr = htole32(me->me_M.dma_paddr);
+	mcr->mcr_ipktbuf.pb_len = htole32(normbits / 8);
+	mcr->mcr_ipktbuf.pb_next = htole32(me->me_epb.dma_paddr);
+
+	mcr->mcr_opktbuf.pb_addr = htole32(me->me_C.dma_paddr);
+	mcr->mcr_opktbuf.pb_next = 0;
+	mcr->mcr_opktbuf.pb_len = htole32(normbits / 8);
+
+#ifdef DIAGNOSTIC
+	/* Misaligned output buffer will hang the chip. */
+	if ((letoh32(mcr->mcr_opktbuf.pb_addr) & 3) != 0)
+		panic("%s: modexp invalid addr 0x%x\n",
+		    sc->sc_dv.dv_xname, letoh32(mcr->mcr_opktbuf.pb_addr));
+	if ((letoh32(mcr->mcr_opktbuf.pb_len) & 3) != 0)
+		panic("%s: modexp invalid len 0x%x\n",
+		    sc->sc_dv.dv_xname, letoh32(mcr->mcr_opktbuf.pb_len));
+#endif
+
+	ctx = (struct ubsec_ctx_modexp *)me->me_q.q_ctx.dma_vaddr;
+	bzero(ctx, sizeof(*ctx));
+	bcopy(krp->krp_param[UBS_MODEXP_PAR_N].crp_p, ctx->me_N,
+	    (nbits + 7) / 2);
+	ctx->me_len = htole16((normbits / 8) + (4 * sizeof(u_int16_t)));
+	ctx->me_op = htole16(UBS_CTXOP_MODEXP);
+	ctx->me_E_len = htole16(ebits);
 	ctx->me_N_len = htole16(nbits);
 
 #ifdef UBSEC_DEBUG
