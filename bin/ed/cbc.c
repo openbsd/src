@@ -1,4 +1,4 @@
-/*	$OpenBSD: cbc.c,v 1.7 2002/01/16 18:44:21 mpech Exp $	*/
+/*	$OpenBSD: cbc.c,v 1.8 2002/09/06 18:17:53 deraadt Exp $	*/
 /*	$NetBSD: cbc.c,v 1.9 1995/03/21 09:04:36 cgd Exp $	*/
 
 /* cbc.c: This file contains the encryption routines for the ed line editor */
@@ -44,7 +44,7 @@
 #if 0
 static char *rcsid = "@(#)cbc.c,v 1.2 1994/02/01 00:34:36 alm Exp";
 #else
-static char rcsid[] = "$OpenBSD: cbc.c,v 1.7 2002/01/16 18:44:21 mpech Exp $";
+static char rcsid[] = "$OpenBSD: cbc.c,v 1.8 2002/09/06 18:17:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,7 +140,7 @@ get_des_char(fp)
 #ifdef DES
 	if (des_n >= des_ct) {
 		des_n = 0;
-		des_ct = cbc_decode(des_buf, fp);
+		des_ct = cbc_decode((char *)des_buf, fp);
 	}
 	return (des_ct > 0) ? des_buf[des_n++] : EOF;
 #endif
@@ -155,7 +155,7 @@ put_des_char(c, fp)
 {
 #ifdef DES
 	if (des_n == sizeof des_buf) {
-		des_ct = cbc_encode(des_buf, des_n, fp);
+		des_ct = cbc_encode((char *)des_buf, des_n, fp);
 		des_n = 0;
 	}
 	return (des_ct >= 0) ? (des_buf[des_n++] = c) : EOF;
@@ -170,10 +170,10 @@ flush_des_file(fp)
 {
 #ifdef DES
 	if (des_n == sizeof des_buf) {
-		des_ct = cbc_encode(des_buf, des_n, fp);
+		des_ct = cbc_encode((char *)des_buf, des_n, fp);
 		des_n = 0;
 	}
-	return (des_ct >= 0 && cbc_encode(des_buf, des_n, fp) >= 0) ? 0 : EOF;
+	return (des_ct >= 0 && cbc_encode((char *)des_buf, des_n, fp) >= 0) ? 0 : EOF;
 #endif
 }
 
