@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_debug.h,v 1.5 1997/04/14 04:09:08 downsj Exp $	*/
+/*	$OpenBSD: scsi_debug.h,v 1.6 1997/08/22 04:43:26 millert Exp $	*/
 /*	$NetBSD: scsi_debug.h,v 1.7 1996/10/12 23:23:16 christos Exp $	*/
 
 /*
@@ -6,6 +6,13 @@
  */
 #ifndef	_SCSI_SCSI_DEBUG_H
 #define _SCSI_SCSI_DEBUG_H 1
+
+/*
+ * Give verbose messages by default.
+ */
+#ifndef SCSIVERBOSE
+#define SCSIVERBOSE	1
+#endif
 
 /*
  * These are the new debug bits.  (Sat Oct  2 12:46:46 WST 1993)
