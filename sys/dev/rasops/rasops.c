@@ -1,4 +1,4 @@
-/*	$OpenBSD: rasops.c,v 1.4 2002/05/28 22:10:03 fgsch Exp $	*/
+/*	$OpenBSD: rasops.c,v 1.5 2002/07/17 14:49:51 miod Exp $	*/
 /*	$NetBSD: rasops.c,v 1.35 2001/02/02 06:01:01 marcus Exp $	*/
 
 /*-
@@ -182,7 +182,7 @@ rasops_reconfig(ri, wantrows, wantcols)
 	s = splhigh();
 
 	if (ri->ri_font->fontwidth > 32 || ri->ri_font->fontwidth < 4)
-		panic("rasops_init: fontwidth assumptions botched!\n");
+		panic("rasops_init: fontwidth assumptions botched!");
 
 	/* Need this to frob the setup below */
 	bpp = (ri->ri_depth == 15 ? 16 : ri->ri_depth);
@@ -331,7 +331,7 @@ rasops_mapchar(cookie, c, cp)
 
 #ifdef DIAGNOSTIC
 	if (ri->ri_font == NULL)
-		panic("rasops_mapchar: no font selected\n");
+		panic("rasops_mapchar: no font selected");
 #endif
 	if (ri->ri_font->encoding != WSDISPLAY_FONTENC_ISO) {
 
