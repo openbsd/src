@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.31 1998/03/07 06:55:40 downsj Exp $
+$OpenBSD: pcidevs,v 1.32 1998/03/10 08:26:08 deraadt Exp $
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -524,6 +524,9 @@ product	3COM 3C905T4	0x9051	3c905 100Base-T4
 
 /* 3D Labs products */
 product 3DLABS 300SX	0x0001	300SX (Glint)
+product 3DLABS 500TX	0x0002	GLINT 500TX
+product 3DLABS DELTA	0x0003	GLINT DELTA
+product 3DLABS 500MX	0x0006	GLINT 500MX
 
 /* ACC Products */
 product ACC 2188	0x0000	ACCM 2188 VL-PCI Bridge
@@ -603,6 +606,7 @@ product CHIPS 64310		0x00b8	64310
 product CHIPS 65545		0x00d8	65545
 product CHIPS 65548		0x00dc	65548
 product CHIPS 65550		0x00e0	65550
+product CHIPS 65554		0x00e4	65554
 
 /* Cirrus Logic products */
 product CIRRUS CL_GD7548	0x0038	CL-GD7548
@@ -618,10 +622,17 @@ product CIRRUS CL_GD7543	0x1202	CL-GD7543
 product CIRRUS CL_GD7541	0x1204	CL-GD7541
 
 /* CMD Technology products */
-product CMDTECH 640A		0x0640	640A
-product	CMDTECH 642		0x0642	642
-product CMDTECH 646		0x0646	646
-product CMDTECH 650A		0x0650	650A
+product CMDTECH 640A		0x0640	PCI640A
+/* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
+product	CMDTECH 642		0x0642	PCI0642
+product	CMDTECH 643		0x0643	PCI0643
+product CMDTECH 646		0x0646	PCI0646
+product CMDTECH 647		0x0647	PCI0647
+/* Inclusion of 'A' in the following entry is probably wrong. */
+/* No data on the CMD Tech. web site for the following as of Mar. 3 '98 */
+product CMDTECH 650A		0x0650	PCI0650A
+product CMDTECH 670		0x0670	USB0670
+product CMDTECH 673		0x0673	USB0673
 	
 /* Cogent Data Technologies products */
 product COGENT EM110TX		0x1400 EX110TX PCI Fast Ethernet Adapter
@@ -682,8 +693,14 @@ product DIAMOND VIPER	0x9001	Viper/PCI
 /* Distributed Processing Technology products */
 product DPT SC_RAID	0xa400	SmartCache/Raid
 
+/* Dolphin products */
+product DOLPHIN PCISCI	0x0658	PCI-SCI Bridge
+
 /* Emulex products */
 product EMULEX LPPFC	0x10df	Light Pulse FibreChannel adapter
+
+/* Ensoniq products */
+product ENSONIQ AUDIOPCI	0x5000	AudioPCI
 
 /* Essential Communications products */
 product ESSENTIAL RR_HIPPI	0x0001	RoadRunner HIPPI Interface
@@ -745,14 +762,15 @@ product INTEL 82439HX	0x1250	82439HX (Triton II) TXC Host Bridge
 product INTEL 82371SB	0x7000	82371SB (Triton II) PCI-ISA Bridge
 product INTEL 82371IDE	0x7010	82371SB (Triton II) IDE controller
 product INTEL 82371USB	0x7020	82371SB (Triton II) USB Interface
-product INTEL 82439TX	0x7100	82439TX System Controller (MTXC)
 product INTEL 82437VX	0x7030	82437VX System Controller (TVX)
+product INTEL 82439TX	0x7100	82439TX System Controller (MTXC)
 product INTEL 82439TX	0x7100	82439TX System Controller (MTXC)
 product INTEL 82371AB	0x7110	82371AB PIIX4 ISA Bridge
 product INTEL 82371AB_IDE	0x7111	82371AB IDE controller (PIIX4)
 product INTEL 82371AB_USB	0x7112	82371AB USB Host Controller (PIIX4)
 product INTEL 82371AB_PMC	0x7113	82371AB Power Management Controller (PIIX4)
 product INTEL 82443LX	0x7180	82443LX PCI AGP Controller (PAC)
+product INTEL 82443LX_AGP	0x7181	82443LX AGP Device (PAC)
 product INTEL PCI450_PB	0x84c4	450 PCIset (Orion) Host-PCI bridge
 product INTEL PCI450_MC	0x84c5	450 PCIset (Orion) Memory Controller
 
@@ -763,6 +781,9 @@ product ITT ITT3204	0x0002	ITT3204 MPEG Decoder
 /* LeadTek Research */
 product LEADTEK S3_805	0x0000	S3 805
 
+/* Macronix */
+product MACRONIX MX98713	0x0512	PMAC 100/10base PCI MAC controller
+
 /* Madge Networks products */
 product MADGE COLLAGE25		0x1000	Collage 25 ATM adapter
 product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
@@ -771,6 +792,8 @@ product MADGE COLLAGE155	0x1001	Collage 155 ATM adapter
 product MATROX IMPRESSION	0x0d10	MGA Impression
 product MATROX ATLAS		0x0518	MGA PX2085 (Atlas)
 product MATROX MILLENIUM	0x0519	MGA Millenium 2064W (Storm)
+product MATROX MILLENNIUM_II	0x051B	MGA Millennium II 2164W
+product MATROX MILLENNIUM_II_AGP	0x051F	MGA Millennium II 2164WA-B AGP
 product MATROX MYSTIQUE		0x102B	MGA 1064SG
 
 /* Mylex products */
@@ -827,6 +850,7 @@ product PROMISE DC5030	0x5300	DC5030
 /* QLogic products */
 product QLOGIC ISP1020	0x1020	ISP1020
 product QLOGIC ISP1022	0x1022	ISP1022
+product QLOGIC ISP2100	0x2100	ISP2100
 
 /* Quantum Designs products */
 product QUANTUMDESIGNS 8500	0x0001	8500
@@ -856,6 +880,7 @@ product S3 968_0	0x88f0	86C968-0 (Vision968)
 product S3 968_1	0x88f1	86C968-1 (Vision968)
 product S3 968_2	0x88f2	86C968-2 (Vision968)
 product S3 968_3	0x88f3	86C968-3 (Vision968)
+product S3 TRIO64V2_DX	0x8901	Trio64V2/DX
 
 /* SGS Thomson products */
 product SGSTHOMSON 2000	0x0008	STG 2000X
@@ -873,6 +898,10 @@ product SIS 85C601	0x0601	85C601
 /* SMC products */
 product SMC 37C665	0x1000	FDC 37C665
 product SMC 37C922	0x1001	FDC 37C922
+product SMC 83C170	0x0005	83C170 (\"EPIC/100\") Fast Ethernet
+
+/* STB products */
+product STB2 RIVA128	0x0018 Velocity128
 
 /* Symphony Labs products */
 product SYMPHONY 82C101	0x0001	82C101
@@ -887,7 +916,10 @@ product TEKRAM 	DC290	0xdc29	DC-290(M)
 product TEKRAM2	DC690C 0x690c	DC-690C
 
 /* Texas Instruments products */
-product TI	CT1130		0xac12	CT1130
+product	TI	TLAN		0x0500	TLAN
+product TI	PCI1130		0xac12	PCI1130
+product TI	PCI1131		0xac15	PCI1131
+product TI	PCI2030		0xac20	PCI2030
 
 /* Toshiba products */
 product TOSHIBA R4X00	0x102f	R4x00 Host-PCI Bridge
@@ -939,11 +971,11 @@ product V3 V96DPC	0xC960	V96DPC	i960 (Dual) Host-PCI Bridge
 product VIATECH VT82C505	0x0505	VT82C505 (Pluto) 
 product VIATECH VT82C561	0x0561	VT82C561
 product VIATECH VT82C576	0x0576	VT82C576 3V
+product VIATECH VT82C586	0x0586	VT82C586 (Apollo VP) PCI-ISA Bridge
+product VIATECH VT86C926	0x0926	VT86C926 Amazon PCI-Ethernet Controller
 product VIATECH	VT82C570M	0x1000	VT82C570M (Apollo) Host-PCI Bridge
 product VIATECH VT82C570MV	0x1006	VT82C570M (Apollo) PCI-ISA Bridge
 product VIATECH VT82C416MV	0x1571	VT82C416MV
-product VIATECH VT86C926	0x0926	VT86C926 Amazon PCI-Ethernet Controller
-product VIATECH VT82C586	0x0586	VT82C586 (Apollo VP) PCI-ISA Bridge
 product VIATECH VT82C595	0x1595	VT82C595 (Apollo VP2) Host-PCI Bridge
 product VIATECH VT83C572	0x3038	VT83C572 USB Controller
 
@@ -987,7 +1019,3 @@ product ZEINET 1221	0x0001	1221
 
 /* Ziatech products */
 product ZIATECH ZT8905	0x8905 PCI-ST32 Bridge
-
-/* STB products */
-product STB2 RIVA128	0x0018 Velocity128
-
