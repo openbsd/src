@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_output.c,v 1.2 1996/03/03 22:30:46 niklas Exp $	*/
+/*	$OpenBSD: tcp_output.c,v 1.3 1996/03/14 08:06:57 tholo Exp $	*/
 /*	$NetBSD: tcp_output.c,v 1.14 1996/02/13 23:43:53 christos Exp $	*/
 
 /*
@@ -329,10 +329,10 @@ send:
 	 * Adjust data length if insertion of options will
 	 * bump the packet length beyond the t_maxseg length.
 	 */
-	 if (len > tp->t_maxseg - optlen) {
+	if (len > tp->t_maxseg - optlen) {
 		len = tp->t_maxseg - optlen;
-		flags &= ~TH_FIN;
 		sendalot = 1;
+		flags &= ~TH_FIN;
 	 }
 
 #ifdef DIAGNOSTIC
@@ -380,8 +380,11 @@ send:
 			m->m_len += len;
 		} else {
 			m->m_next = m_copy(so->so_snd.sb_mb, off, (int) len);
-			if (m->m_next == 0)
-				len = 0;
+			if (m->m_next == 0) {
+				(void) m_free(m);
+				error = ENOBUFS;
+				goto out;
+			}
 		}
 #endif
 		/*
