@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 2002/04/30 09:18:20 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2004/12/03 06:37:48 miod Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -23,15 +23,11 @@ DISKTYPE=	rdroot
 NBLKS=		2880
 NEWFSARGS= -t ffs -m 0 -o space -u 32 -c 16 -b 4096
 
-all:	${BSD_RD} ${BSDSBC_RD}
+all:	${BSD_RD}
 
 ${BSD_RD}: ${CBIN} ${IMAGE} bsd rdsetroot
 	cp bsd ${BSD_RD}
 	${.OBJDIR}/rdsetroot ${BSD_RD} < ${IMAGE}
-
-${BSDSBC_RD}: ${CBIN} ${IMAGE} bsdsbc rdsetroot
-	cp bsdsbc ${BSDSBC_RD}
-	${.OBJDIR}/rdsetroot ${BSDSBC_RD} < ${IMAGE}
 
 ${IMAGE}: rd_setup do_files rd_teardown
 
@@ -42,14 +38,6 @@ bsd:
 	    make clean && make depend && make
 .endif
 	cp ${.CURDIR}/../../../sys/arch/mac68k/compile/RAMDISK/bsd bsd
-
-bsdsbc:
-.ifndef(NOBUILD)
-	cd ${.CURDIR}/../../../sys/arch/mac68k/conf && config RAMDISKSBC
-	cd ${.CURDIR}/../../../sys/arch/mac68k/compile/RAMDISKSBC && \
-	    make clean && make depend && make
-.endif
-	cp ${.CURDIR}/../../../sys/arch/mac68k/compile/RAMDISKSBC/bsd bsdsbc
 
 rd_setup:
 	dd if=/dev/zero of=${IMAGE} bs=512 count=${NBLKS}
@@ -75,7 +63,8 @@ unconfig:
 
 install:
 	cp ${BSD_RD} ${DESTDIR}/snapshot/${BSD_RD}
-	cp ${BSDSBC_RD} ${DESTDIR}/snapshot/${BSDSBC_RD}
+	printf "disable ncrscsi\nenable sbc\nquit" | config -e \
+	    -o ${DESTDIR}/snapshot/${BSDSBC_RD} ${DESTDIR}/snapshot/${BSD_RD}
 
 ${CBIN}.conf: ${LISTS}
 	awk -f ${UTILS}/makeconf.awk CBIN=${CBIN} ${LISTS} > ${CBIN}.conf
@@ -95,7 +84,7 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.conf ${CBIN}.mk ${CBIN}.cache \
-	*.o *.lo *.c bsd bsdmix bsdofw ${BSD_RD} ${BSDSBC_RD} \
+	*.o *.lo *.c bsd bsdmix bsdofw ${BSD_RD} \
 	rdsetroot
 
 .include <bsd.obj.mk>

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.15 2004/12/02 20:17:49 miod Exp $
+#	$OpenBSD: RAMDISK,v 1.16 2004/12/03 06:37:51 miod Exp $
 #
 # RAMDISK - bsd.rd configuration file (non-SBC version)
 
@@ -66,13 +66,13 @@ grf*		at macvid?
 # Attach ite semantics to the appropriate grf device
 ite0		at grf?
 
-# Use only one of ncrscsi or sbc
+# Enable only one of ncrscsi or sbc
 ncrscsi0	at obio?		# SCSI NCR 5380
-#sbc0		at obio? flags 0x1	# MI NCR 5380 SCSI Bus Controller
+sbc0		at obio? disable flags 0x1	# MI NCR 5380 SCSI Bus Controller
 
 scsibus*	at esp?
 scsibus*	at ncrscsi?
-#scsibus*	at sbc?
+scsibus*	at sbc?
 
 sd*	at scsibus?		# SCSI disk drives
 st*	at scsibus?		# SCSI tape drives
