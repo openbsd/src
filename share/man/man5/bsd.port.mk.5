@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.71 2002/06/19 11:40:33 mpech Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.72 2002/07/06 09:30:14 pvalchev Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -731,13 +731,6 @@ See
 .Qq Flavors and multi-packages
 below.
 .Pp
-.It Ev NEED_VERSION
-Specific revision of
-.Nm
-needed by this ports tree.
-Usually set to the current version of
-.Nm
-when port was built, and updated by port maintainers when needed.
 .It Ev NOT_FOR_ARCHS
 List of architectures on which this port does not build.
 See also
@@ -1246,6 +1239,12 @@ and
 to determine which files can be mirrored instead.
 See
 .Xr mirroring-ports 7 .
+.It Ev NEED_VERSION
+Used to set a requirement on a specific revision of
+.Nm
+needed by a port.  No longer needed as
+.Nm
+should always be kept up-to-date.
 .It Ev NO_CONFIGURE
 If ${FILESDIR}/configure does not exist, no automatic configuration will
 be done anyway.
