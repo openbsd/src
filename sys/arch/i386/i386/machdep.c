@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.91 1998/08/16 03:54:21 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.92 1998/08/17 18:15:02 csapuntz Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -1199,8 +1199,12 @@ boot(howto)
 	splhigh();
 
 	/* Do a dump if requested. */
-	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
+	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP) {
+		/* Save registers. */
+		savectx(&dumppcb);
+		
 		dumpsys();
+	}
 
 haltsys:
 	doshutdownhooks();
@@ -1301,9 +1305,6 @@ dumpsys()
 	daddr_t blkno;
 	int (*dump) __P((dev_t, daddr_t, caddr_t, size_t));
 	int error;
-
-	/* Save registers. */
-	savectx(&dumppcb);
 
 	msgbufmapped = 0;	/* don't record dump msgs in msgbuf */
 	if (dumpdev == NODEV)
