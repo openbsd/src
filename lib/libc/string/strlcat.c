@@ -1,4 +1,4 @@
-/*	$OpenBSD: strlcat.c,v 1.5 2001/01/13 16:17:24 millert Exp $	*/
+/*	$OpenBSD: strlcat.c,v 1.6 2001/05/07 15:18:30 millert Exp $	*/
 
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strlcat.c,v 1.5 2001/01/13 16:17:24 millert Exp $";
+static char *rcsid = "$OpenBSD: strlcat.c,v 1.6 2001/05/07 15:18:30 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -58,7 +58,7 @@ size_t strlcat(dst, src, siz)
 	n = siz - dlen;
 
 	if (n == 0)
-		return(dlen + strlen(s));
+		return(strlen(dst) + strlen(s));
 	while (*s != '\0') {
 		if (n != 1) {
 			*d++ = *s;
