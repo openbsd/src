@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.75 1999/03/03 18:18:46 espie Exp $
+#	$OpenBSD: bsd.port.mk,v 1.76 1999/03/05 16:32:49 espie Exp $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
 #	This file is in the public domain.
@@ -28,7 +28,7 @@ OpenBSD_MAINTAINER=	marc@OpenBSD.ORG
 # NEED_VERSION: we need at least this version of bsd.port.mk for this 
 # port  to build
 
-FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.75 1999/03/03 18:18:46 espie Exp $$
+FULL_REVISION=$$OpenBSD: bsd.port.mk,v 1.76 1999/03/05 16:32:49 espie Exp $$
 .if defined(NEED_VERSION)
 _VERSION_REVISION=${FULL_REVISION:M[0-9]*.*}
 
@@ -1119,20 +1119,20 @@ DEPENDS_TARGET=	install
 ################################################################
 
 # Disable checksum
-.if defined(NO_CHECKSUM) && !target(checksum)
-checksum: fetch
+.if defined(NO_CHECKSUM) 
+.for _TARGET in checksum makesum addsum
+.if !target(${_TARGET})
+${_TARGET}: fetch
 	@${DO_NADA}
+.endif
+.endfor
 .endif
 
 # Disable extract
 .if defined(NO_EXTRACT) && !target(extract)
 extract: 
 	@${TOUCH} ${TOUCH_FLAGS} ${EXTRACT_COOKIE}
-checksum: fetch
-	@${DO_NADA}
-makesum:
-	@${DO_NADA}
-addsum:
+checksum makesum addsum: fetch
 	@${DO_NADA}
 .endif
 
@@ -1778,6 +1778,7 @@ addsum: fetch
 	@${MV} -f ${CHECKSUM_FILE}.new ${CHECKSUM_FILE}
 	@if [ `${SED} -e 's/\=.*$$//' ${CHECKSUM_FILE} | uniq -d | wc -l` -ne 0 ]; then \
 		${ECHO} "Inconsistent checksum in ${CHECKSUM_FILE}"; \
+		${FALSE}; \
 	else \
 		${ECHO} "${CHECKSUM_FILE} updated okay, don't forget to remove cruft"; \
 	fi
