@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_union.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_union.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $
+ *	$Id: info_union.c,v 1.2 2001/03/02 06:22:02 deraadt Exp $
  */
 
 /*
@@ -120,7 +120,7 @@ void (*fn)();
 #ifdef DEBUG
 		dlog("Reading directory %s...", *dir);
 #endif
-		while (dp = readdir(dirp)) {
+		while ((dp = readdir(dirp))) {
 			char *val;
 			if (dp->d_name[0] == '.' &&
 					(dp->d_name[1] == '\0' ||

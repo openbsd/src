@@ -36,12 +36,13 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfs_start.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfs_start.c,v 1.3 1997/12/17 20:37:37 deraadt Exp $
+ *	$Id: nfs_start.c,v 1.4 2001/03/02 06:22:04 deraadt Exp $
  */
 
 #include "am.h"
 #include "amq.h"
-#include <sys/signal.h>
+#include <signal.h>
+#include <unistd.h>
 #include <setjmp.h>
 extern jmp_buf select_intr;
 extern int select_intr_valid;
@@ -104,12 +105,12 @@ static char *max_mem = 0;
 static int do_select(smask, fds, fdp, tvp)
 int smask;
 int fds;
-int *fdp;
+fd_set *fdp;
 struct timeval *tvp;
 {
 	int sig;
 	int nsel;
-	if (sig = setjmp(select_intr)) {
+	if ((sig = setjmp(select_intr))) {
 		select_intr_valid = 0;
 		/* Got a signal */
 		switch (sig) {
@@ -136,8 +137,8 @@ struct timeval *tvp;
 		/*
 		 * Wait for input
 		 */
-		nsel = select(fds, fdp, (int *) 0, (int *) 0,
-				tvp->tv_sec ? tvp : (struct timeval *) 0);
+		nsel = select(fds, fdp, NULL, NULL,
+		    tvp->tv_sec ? tvp : (struct timeval *) 0);
 
 	}
 
@@ -178,7 +179,7 @@ static int rpc_pending_now()
 #endif /* FD_SET */
 
 	tvv.tv_sec = tvv.tv_usec = 0;
-	nsel = select(max_fds+1, fdsp, (int *) 0, (int *) 0, &tvv);
+	nsel = select(max_fds+1, fdsp, NULL, NULL, &tvv);
 	if (nsel < 1) {
 		free(fdsp);
 		return(0);

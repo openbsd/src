@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.3 1997/01/31 14:42:02 graichen Exp $
+ *	$Id: util.c,v 1.4 2001/03/02 06:22:05 deraadt Exp $
  */
 
 /*
@@ -45,6 +45,7 @@
 
 #include "am.h"
 #include <ctype.h>
+#include <unistd.h>
 #include <sys/stat.h>
 #include <netdb.h>
 
@@ -551,7 +552,7 @@ int mode;
 	 * This assumes we are root so that we can do mkdir in a
 	 * mode 555 directory...
 	 */
-	while (sp = strchr(sp+1, '/')) {
+	while ((sp = strchr(sp+1, '/'))) {
 		*sp = '\0';
 		if (mkdir(p2, mode) < 0) {
 			error_so_far = errno;

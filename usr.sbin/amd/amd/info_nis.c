@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)info_nis.c	8.1 (Berkeley) 6/6/93
- *	$Id: info_nis.c,v 1.3 1996/05/26 10:39:51 deraadt Exp $
+ *	$Id: info_nis.c,v 1.4 2001/03/02 06:22:02 deraadt Exp $
  */
 
 /*
@@ -44,6 +44,8 @@
  */
 
 #include "am.h"
+
+#include <unistd.h>
 
 #ifdef HAS_NIS_MAPS
 #include <rpcsvc/yp_prot.h>

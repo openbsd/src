@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.3 1997/01/31 14:41:59 graichen Exp $	*/
+/*	$OpenBSD: map.c,v 1.4 2001/03/02 06:22:03 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,10 +40,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)map.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: map.c,v 1.3 1997/01/31 14:41:59 graichen Exp $";
+static char *rcsid = "$OpenBSD: map.c,v 1.4 2001/03/02 06:22:03 deraadt Exp $";
 #endif /* not lint */
 
 #include "am.h"
+
+#include <unistd.h>
 
 /*
  * Generation Numbers.

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)xutil.c	8.1 (Berkeley) 6/6/93
- *	$Id: xutil.c,v 1.3 1999/08/28 13:43:11 millert Exp $
+ *	$Id: xutil.c,v 1.4 2001/03/02 06:22:05 deraadt Exp $
  */
 
 #include "config.h"
@@ -47,7 +47,9 @@
 #include <string.h>
 #endif
 
+#include <unistd.h>
 #include <stdlib.h>
+#include <sys/stat.h>
 
 FILE *logfp = stderr;		/* Log errors to stderr initially */
 #ifdef HAS_SYSLOG

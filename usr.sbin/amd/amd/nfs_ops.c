@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_ops.c,v 1.6 1997/01/31 14:42:00 graichen Exp $	*/
+/*	$OpenBSD: nfs_ops.c,v 1.7 2001/03/02 06:22:04 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -40,7 +40,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nfs_ops.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.6 1997/01/31 14:42:00 graichen Exp $";
+static char *rcsid = "$OpenBSD: nfs_ops.c,v 1.7 2001/03/02 06:22:04 deraadt Exp $";
 #endif /* not lint */
 
 #include "am.h"
@@ -556,11 +556,11 @@ mntfs *mf;
 		strcpy(host + HOSTNAMESZ - 3, "..");
 #endif /* HOSTNAMESZ */
 
-	if (nfs_args.rsize = hasmntval(&mnt, "rsize"))
+	if ((nfs_args.rsize = hasmntval(&mnt, "rsize")))
 		nfs_args.flags |= NFSMNT_RSIZE;
 
 #ifdef NFSMNT_READDIRSIZE
-	if (nfs_args.readdirsize = hasmntval(&mnt, "readdirsize")) {
+	if ((nfs_args.readdirsize = hasmntval(&mnt, "readdirsize"))) {
 		nfs_args.flags |= NFSMNT_READDIRSIZE;
 	} else if (nfs_args.rsize) {
 		nfs_args.readdirsize = nfs_args.rsize;
@@ -568,13 +568,13 @@ mntfs *mf;
 	}
 #endif
 
-	if (nfs_args.wsize = hasmntval(&mnt, "wsize"))
+	if ((nfs_args.wsize = hasmntval(&mnt, "wsize")))
 		nfs_args.flags |= NFSMNT_WSIZE;
 
-	if (nfs_args.timeo = hasmntval(&mnt, "timeo"))
+	if ((nfs_args.timeo = hasmntval(&mnt, "timeo")))
 		nfs_args.flags |= NFSMNT_TIMEO;
 
-	if (nfs_args.retrans = hasmntval(&mnt, "retrans"))
+	if ((nfs_args.retrans = hasmntval(&mnt, "retrans")))
 		nfs_args.flags |= NFSMNT_RETRANS;
 
 #ifdef NFSMNT_BIODS
@@ -584,7 +584,7 @@ mntfs *mf;
 #endif /* NFSMNT_BIODS */
 
 #ifdef NFSMNT_MAXGRPS
-	if (nfs_args.maxgrouplist = hasmntval(&mnt, "maxgroups"))
+	if ((nfs_args.maxgrouplist = hasmntval(&mnt, "maxgroups")))
 		nfs_args.flags |= NFSMNT_MAXGRPS;
 #endif /* NFSMNT_MAXGRPS */
 

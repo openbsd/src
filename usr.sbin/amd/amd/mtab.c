@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)mtab.c	8.1 (Berkeley) 6/6/93
- *	$Id: mtab.c,v 1.1.1.1 1995/10/18 08:47:11 deraadt Exp $
+ *	$Id: mtab.c,v 1.2 2001/03/02 06:22:04 deraadt Exp $
  */
 
 #include "am.h"
@@ -64,7 +64,7 @@ mntlist *mp;
 {
 	mntlist *mp2;
 
-	while (mp2 = mp) {
+	while ((mp2 = mp)) {
 		mp = mp->mnext;
 		if (mp2->mnt)
 			mnt_free(mp2->mnt);

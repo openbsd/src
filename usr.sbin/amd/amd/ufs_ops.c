@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_ops.c,v 1.2 1996/03/25 15:54:50 niklas Exp $	*/
+/*	$OpenBSD: ufs_ops.c,v 1.3 2001/03/02 06:22:05 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -80,7 +80,8 @@ am_opts *fo;
 	return strdup(fo->opt_dev);
 }
 
-static mount_ufs(dir, fs_name, opts)
+static int
+mount_ufs(dir, fs_name, opts)
 char *dir;
 char *fs_name;
 char *opts;

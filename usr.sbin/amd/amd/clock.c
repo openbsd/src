@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)clock.c	8.1 (Berkeley) 6/6/93
- *	$Id: clock.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $
+ *	$Id: clock.c,v 1.2 2001/03/02 06:22:02 deraadt Exp $
  */
 
 /*
@@ -132,7 +132,7 @@ voidp closure;
 	/*
 	 * Find the correct place in the list
 	 */
-	for (cp = &callouts; cp2 = cp->c_next; cp = cp2)
+	for (cp = &callouts; (cp2 = cp->c_next); cp = cp2)
 		if (cp2->c_time >= t)
 			break;
 
@@ -156,7 +156,7 @@ void untimeout(id)
 int id;
 {
 	callout *cp, *cp2;
-	for (cp = &callouts; cp2 = cp->c_next; cp = cp2) {
+	for (cp = &callouts; (cp2 = cp->c_next); cp = cp2) {
 		if (cp2->c_id == id) {
 			cp->c_next = cp2->c_next;
 			free_callout(cp2);
@@ -233,7 +233,7 @@ int softclock()
 	 * Return number of seconds to next event,
 	 * or 0 if there is no event.
 	 */
-	if (cp = callouts.c_next)
+	if ((cp = callouts.c_next))
 		return cp->c_time - now;
 	return 0;
 }

@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)nfsx_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: nfsx_ops.c,v 1.1.1.1 1995/10/18 08:47:11 deraadt Exp $
+ *	$Id: nfsx_ops.c,v 1.2 2001/03/02 06:22:04 deraadt Exp $
  */
 
 #include "am.h"
@@ -103,7 +103,7 @@ am_opts *fo;
 	 * After deslashifying, overwrite the end of ${fs} with "/"
 	 * to make sure it is unique.
 	 */
-	if (ptr = strchr(fo->opt_fs, ','))
+	if ((ptr = strchr(fo->opt_fs, ',')))
 		*ptr = '\0';
 	deslashify(fo->opt_fs);
 	/*

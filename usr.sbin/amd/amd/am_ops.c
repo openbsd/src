@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)am_ops.c	8.1 (Berkeley) 6/6/93
- *	$Id: am_ops.c,v 1.1.1.1 1995/10/18 08:47:10 deraadt Exp $
+ *	$Id: am_ops.c,v 1.2 2001/03/02 06:22:01 deraadt Exp $
  */
 
 #include "am.h"
@@ -143,7 +143,7 @@ char *map;
 		/*
 		 * Next find the correct filesystem type
 		 */
-		for (vp = vops; rop = *vp; vp++)
+		for (vp = vops; (rop = *vp); vp++)
 			if (strcmp(rop->fs_type, fo->opt_type) == 0)
 				break;
 
@@ -168,7 +168,7 @@ char *map;
 	if (fo->fs_mtab)
 		free((voidp) fo->fs_mtab);
 
-	if (fo->fs_mtab = (*rop->fs_match)(fo))
+	if ((fo->fs_mtab = (*rop->fs_match)(fo)))
 		return rop;
 
 	/*
