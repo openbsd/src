@@ -1,4 +1,4 @@
-.\"	$OpenBSD: aucat.1,v 1.8 2000/03/23 21:10:13 aaron Exp $
+.\"	$OpenBSD: aucat.1,v 1.9 2000/07/01 19:54:36 millert Exp $
 .\"
 .\" Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
 .\"
@@ -42,12 +42,17 @@
 .Nd concatenate and play audio files
 .Sh SYNOPSIS
 .Nm aucat
-.Op Ar
+.Op Fl f Ar device
+.Ar file ...
 .Sh DESCRIPTION
 The
 .Nm
-utility reads files sequentially, writing them to
-.Pa /dev/audio .
+utility reads files sequentially, writing them to the specified device.
+By default,
+.Nm
+plays audio through the
+.Pa /dev/audio
+device.
 The
 .Ar file
 operands are processed in command line order.
@@ -58,10 +63,24 @@ Otherwise, the
 entire file is copied to
 .Pa /dev/audio .
 .Pp
+The options are as follows:
+.Bl -tag -width "-f device"
+.It Fl f Ar device
+Specifies an alternate audio device.
+.El
+.Pp
 The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
+.Sh ENVIRONMENT
+The following environment variables affect the execution of
+.Nm aucat :
+.Bl -tag -width AUDIODEVICE
+.It Ev AUDIODEVICE
+The audio device to use.
+.El
 .Sh SEE ALSO
+.Xr mixerctl 1 ,
 .Xr audio 4
 .Sh HISTORY
 An

@@ -1,4 +1,4 @@
-/*	$OpenBSD: aucat.c,v 1.3 1997/01/05 19:00:51 kstailey Exp $	*/
+/*	$OpenBSD: aucat.c,v 1.4 2000/07/01 19:54:36 millert Exp $	*/
 /*
  * Copyright (c) 1997 Kenneth Stailey.  All rights reserved.
  *
@@ -32,7 +32,9 @@
 #include <machine/endian.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <unistd.h>
+#include <err.h>
 
 /* 
  * aucat: concatinate and play Sun 8-bit .au files
@@ -43,55 +45,73 @@
  * device.  Return 0 on sucess, -1 on failure.
  */
 int
-playfile(int fd)
+playfile(fd, dev)
+	int fd;
+	char *dev;
 {
-  static int afd = -1;
-  int rd;
-  char buf[5120];
+	static int afd = -1;
+	int rd;
+	char buf[5120];
 
-  if (afd == -1)
-    if ((afd = open("/dev/audio", O_WRONLY)) < 0) {
-      perror("open /dev/audio");
-      return(-1);
-    }
-  while ((rd = read(fd, buf, sizeof(buf))) > 0) {
-    write(afd, buf, rd);
-    if (rd < sizeof(buf))
-      break;
-  }
-  
-  return (0);
+	if (afd == -1 && (afd = open(dev, O_WRONLY)) < 0) {
+		warn("can't open %s", dev);
+		return(-1);
+	}
+	while ((rd = read(fd, buf, sizeof(buf))) > 0) {
+		write(afd, buf, rd);
+		if (rd < sizeof(buf))
+			break;
+	}
+
+	return (0);
 }
 
 int
-main(int argc, char **argv)
+main(argc, argv)
+	int argc;
+	char **argv;
 {
-  int fd;
-  int argcInc = 0;		/* incrementing version of argc */
-  unsigned long data;
-  char magic[5];
+	int fd, ch;
+	unsigned long data;
+	char magic[5];
+	char *dev;
 
-  while (--argc) {
-    ++argcInc;
-    if ((fd = open(argv[argcInc], O_RDONLY)) < 0) {
-      perror("open file");
-      exit(1);
-    }
+	dev = getenv("AUDIODEVICE");
+	if (dev == 0)
+		dev = "/dev/audio";
 
-    read(fd, magic, 4);
-    magic[4] = '\0';
-    if (strcmp(magic, ".snd")) {
-      /* not an .au file, bad header.  Assume raw audio data since that's
-       * what /dev/audio generates by default.
-       */
-      lseek(fd, 0, SEEK_SET);
-    } else {
-      read(fd, &data, sizeof(data));
-      data = ntohl(data);
-      lseek(fd, (off_t)data, SEEK_SET);
-    }
-    if (playfile(fd) < 0)
-      exit(1);
-  }
-  exit(0);
+	while ((ch = getopt(argc, argv, "f:")) != -1) {
+		switch(ch) {
+		case 'f':
+			dev = optarg;
+			break;
+		}
+	}
+	argc -= optind;
+	argv += optind;
+
+	while (argc) {
+		if ((fd = open(*argv, O_RDONLY)) < 0)
+			err(1, "cannot open %s", *argv);
+
+		read(fd, magic, 4);
+		magic[4] = '\0';
+		if (strcmp(magic, ".snd")) {
+			/*
+			 * not an .au file, bad header.
+			 * Assume raw audio data since that's
+			 * what /dev/audio generates by default.
+			 */
+			lseek(fd, 0, SEEK_SET);
+		} else {
+			read(fd, &data, sizeof(data));
+			data = ntohl(data);
+			lseek(fd, (off_t)data, SEEK_SET);
+		}
+		if (playfile(fd, dev) < 0)
+			exit(1);
+		argc--;
+		argv++;
+	}
+	exit(0);
 }
