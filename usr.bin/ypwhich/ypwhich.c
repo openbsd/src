@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.7 1997/06/23 01:03:57 deraadt Exp $
+/*	$OpenBSD: ypwhich.c,v 1.8 1997/07/21 19:12:46 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -34,16 +34,24 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.7 1997/06/23 01:03:57 deraadt Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.8 1997/07/21 19:12:46 deraadt Exp $";
 #endif
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <netdb.h>
+#include <err.h>
+
 #include <rpc/rpc.h>
 #include <rpc/xdr.h>
 #include <rpcsvc/yp.h>
@@ -62,6 +70,7 @@ struct ypalias {
 	{ "ethers", "ethers.byname" },
 };
 
+void
 usage()
 {
 	fprintf(stderr, "Usage:\n");
@@ -74,17 +83,17 @@ usage()
 /*
  * Like yp_bind except can query a specific host
  */
+int
 bind_host(dom, sin)
 char *dom;
 struct sockaddr_in *sin;
 {
 	struct hostent *hent = NULL;
 	struct ypbind_resp ypbr;
-	struct dom_binding *ysd;
 	struct timeval tv;
 	CLIENT *client;
 	int sock, r;
-	u_int32_t ss_addr;
+	struct in_addr ss_addr;
 
 	sock = RPC_ANYSOCK;
 	tv.tv_sec = 15;
@@ -116,10 +125,11 @@ struct sockaddr_in *sin;
 	}
 	clnt_destroy(client);
 
-	bcopy(&ypbr.ypbind_resp_u.ypbind_bindinfo.ypbind_binding_addr,
-	    &ss_addr, sizeof (ss_addr));
+	memmove(&ss_addr.s_addr, &ypbr.ypbind_resp_u.ypbind_bindinfo.ypbind_binding_addr,
+	    sizeof (ss_addr));
 
-	hent = gethostbyaddr((char *)&ss_addr, sizeof(ss_addr), AF_INET);
+	hent = gethostbyaddr((char *)&ss_addr.s_addr, sizeof(ss_addr.s_addr),
+	    AF_INET);
 	if (hent != NULL)
 		printf("%s\n", hent->h_name);
 	else
@@ -130,7 +140,8 @@ struct sockaddr_in *sin;
 	
 int
 main(argc, argv)
-char **argv;
+	int argc;
+	char **argv;
 {
 	char *domain, *master, *map;
 	struct ypmaplist *ypml, *y;
@@ -143,6 +154,9 @@ char **argv;
 	getmap = notrans = mode = 0;
 
 	yp_get_default_domain(&domain);
+	if (domain == NULL)
+		errx(1, "YP domain name not set");
+
 	while ((c = getopt(argc, argv, "xd:mt")) != -1)
 		switch(c) {
 		case 'x':
@@ -168,7 +182,7 @@ char **argv;
 	if (mode == 0) {
 		switch(argc) {
 		case 0:
-			bzero(&sin, sizeof sin);
+			memset(&sin, 0, sizeof sin);
 			sin.sin_family = AF_INET;
 			sin.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
