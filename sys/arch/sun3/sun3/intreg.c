@@ -1,4 +1,4 @@
-/*	$OpenBSD: intreg.c,v 1.5 1997/01/16 04:04:23 kstailey Exp $	*/
+/*	$OpenBSD: intreg.c,v 1.6 2001/01/03 01:47:30 miod Exp $	*/
 /*	$NetBSD: intreg.c,v 1.5 1996/11/20 18:57:32 gwr Exp $	*/
 
 /*-
@@ -46,6 +46,8 @@
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/vmmeter.h>
+
+#include <net/netisr.h>
 
 #include <machine/autoconf.h>
 #include <machine/cpu.h>
@@ -135,7 +137,7 @@ soft1intr(arg)
 	void *arg;
 {
 	union sun3sir sir;
-	int s;
+	int n, s;
 
 	s = splhigh();
 	sir.sir_any = sun3sir.sir_any;
@@ -146,8 +148,18 @@ soft1intr(arg)
 	if (sir.sir_any) {
 		cnt.v_soft++;
 		if (sir.sir_which[SIR_NET]) {
+			s = splhigh();
+			n = netisr;
+			netisr = 0;
+			splx(s);
 			sir.sir_which[SIR_NET] = 0;
-			netintr();
+#define DONETISR(bit, fn) \
+	do { \
+		if (n & (1 << bit)) \
+			fn(); \
+	} while (0)
+#include <net/netisr_dispatch.h>
+#undef DONETISR
 		}
 		if (sir.sir_which[SIR_CLOCK]) {
 			sir.sir_which[SIR_CLOCK] = 0;
@@ -163,7 +175,7 @@ soft1intr(arg)
 		}
 		return (1);
 	}
-	return(0);
+	return (0);
 }
 
 static int isr_soft_pending;
