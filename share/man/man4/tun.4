@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tun.4,v 1.2 1996/12/16 16:08:52 deraadt Exp $
+.\"	$OpenBSD: tun.4,v 1.3 1997/08/02 09:56:25 deraadt Exp $
 .Dd March 10, 1996
 .Dt TUN 4
 .Os OpenBSD 1.2
@@ -116,13 +116,14 @@ is longer than is allowed for in the buffer passed to
 .Fn read ,
 the extra data will be silently dropped.
 .Pp
-The first byte of data will always be the address family (eg,
+The first u_int32_t of data will always be the address family (eg,
 .Dv AF_INET )
-of the packet.  By default, the packet data follows immediately, but if
+of the packet in host byte order.  By default, the packet data follows
+immediately, but if
 the
 .Dv PREPADDR
 bit is set, the address to which the packet is to be sent is placed
-after the address family byte and before the packet data.  The size and
+after the address family u_int32_t and before the packet data.  The size and
 layout of the address depends on the address family; for
 .Dv AF_INET ,
 for example, it is a
@@ -136,8 +137,8 @@ on the pseudo-interface.  Each
 call supplies exactly one packet; the packet length is taken from the
 amount of data provided to
 .Fn write .
-The first byte must be the address family of the packet, much as in
-packets returned by
+The first u_int32_t must be the address family of the packet in host byte order,
+much as in packets returned by
 .Fn read ;
 the packet data always follows immediately.
 A large number of
@@ -359,3 +360,9 @@ open the control device, and either do the same for the data device or
 leave the
 .Dv SUONLY
 bit set.)
+.Sh NOTES
+Very old versions of the tunnel device did not include the address
+family at the start of the packet.  More recent versions passed the
+address family as a single byte, but this caused problems with bpf,
+hence the currect version passwd a u_int32_t of address family.
+
