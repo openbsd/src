@@ -1124,7 +1124,7 @@ ndbm_map_close(map)
 	{
 #ifdef NDBM_YP_COMPAT
 		bool inclnull;
-		char buf[200];
+		char buf[MAXHOSTNAMELEN];
 
 		inclnull = bitset(MF_INCLNULL, map->map_mflags);
 		map->map_mflags &= ~MF_INCLNULL;
