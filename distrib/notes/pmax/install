@@ -153,7 +153,7 @@ Ok - now let's see what to do to set up the server:
   summer:ht=ethernet:ha=08002b1c4d51:ip=10.0.0.5:bf=/bsd
   --- snip ---
 
-* make shure that the following line in /etc/inetd.conf is not
+* make sure that the following line in /etc/inetd.conf is not
   commented out:
   --- snip ---
   tftp           dgram   udp     wait    root    /usr/libexec/tftpd tftpd -s /tftpboot
@@ -182,7 +182,7 @@ Ok - now let's see what to do to set up the server:
     vi /etc/exports (to add the above line)
     kill -HUP `cat /var/run/mountd.pid` (so that mountd rereads exports)
 
-  Note: also make shure that the server is configured as nfs server -
+  Note: also make sure that the server is configured as nfs server -
         i.e. for OpenBSD "option NFSSERVER" for the kernel and the
         following set in /etc/netstart:
         --- snip ---
