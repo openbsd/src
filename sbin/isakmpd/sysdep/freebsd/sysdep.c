@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.7 2001/06/29 22:12:56 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.8 2001/07/06 09:35:58 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -52,10 +52,6 @@
 #ifdef USE_PF_KEY_V2
 #include "pf_key_v2.h"
 #define KEY_API(x) pf_key_v2_##x
-#else
-#include <net/encap.h>
-#include "pf_encap.h"
-#define KEY_API(x) pf_encap_##x
 #endif
 
 #endif NEED_SYSDEP_APP

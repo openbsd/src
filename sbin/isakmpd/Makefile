@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.40 2001/07/05 12:38:04 ho Exp $
+#	$OpenBSD: Makefile,v 1.41 2001/07/06 09:35:57 ho Exp $
 #	$EOM: Makefile,v 1.78 2000/10/15 21:33:42 niklas Exp $
 
 #
@@ -41,11 +41,9 @@
 # may provide this make variant as "pmake" or maybe "bsdmake".
 #
 
-# openbsd means 2.5 or newer, openbsd-encap is for older kernels with PF_ENCAP
-# linux is the name for Linux with FreeS/WAN integrated, freebsd/netbsd means
-# FreeBSD/NetBSD with KAME IPsec.
+# openbsd means OpenBSD 2.5 or newer. linux is the name for Linux with
+# FreeS/WAN integrated, freebsd/netbsd means FreeBSD/NetBSD with KAME IPsec.
 OS=		openbsd
-#OS=		openbsd-encap
 #OS=		netbsd
 #OS=		freebsd
 #OS=		linux

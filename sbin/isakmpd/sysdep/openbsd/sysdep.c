@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysdep.c,v 1.12 2001/06/29 22:01:28 ho Exp $	*/
+/*	$OpenBSD: sysdep.c,v 1.13 2001/07/06 09:35:58 ho Exp $	*/
 /*	$EOM: sysdep.c,v 1.9 2000/12/04 04:46:35 angelos Exp $	*/
 
 /*
@@ -53,10 +53,6 @@
 #ifdef USE_PF_KEY_V2
 #include "pf_key_v2.h"
 #define KEY_API(x) pf_key_v2_##x
-#else
-#include <net/encap.h>
-#include "pf_encap.h"
-#define KEY_API(x) pf_encap_##x
 #endif
 
 #endif NEED_SYSDEP_APP

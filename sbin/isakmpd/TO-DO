@@ -1,4 +1,4 @@
-$OpenBSD: TO-DO,v 1.23 2001/07/01 20:43:39 niklas Exp $
+$OpenBSD: TO-DO,v 1.24 2001/07/06 09:35:57 ho Exp $
 $EOM: TO-DO,v 1.45 2000/04/07 22:47:38 niklas Exp $
 
 This file mixes small nitpicks with large projects to be done.
@@ -85,7 +85,7 @@ This file mixes small nitpicks with large projects to be done.
 
 * IPsec rekeying. [done]
 
-* Store tunnels into SPD, and handle acquire SA events. [pf_encap done]
+* Store tunnels into SPD, and handle acquire SA events. [done]
 
 * If an exchange is on-going when a rekey event happens, drop the request.
   [done]
