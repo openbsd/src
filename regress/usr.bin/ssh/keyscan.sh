@@ -1,7 +1,10 @@
-#	$OpenBSD: keyscan.sh,v 1.1 2002/02/22 12:31:35 markus Exp $
+#	$OpenBSD: keyscan.sh,v 1.2 2002/02/22 12:38:27 markus Exp $
 #	Placed in the Public Domain.
 
 tid="keyscan"
+
+# remove DSA hostkey
+rm -f ${OBJ}/host.dsa
 
 start_sshd
 
