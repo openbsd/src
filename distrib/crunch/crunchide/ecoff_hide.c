@@ -1,4 +1,4 @@
-/*	$OpenBSD: ecoff_hide.c,v 1.1 1997/05/06 17:08:29 niklas Exp $	*/
+/* $OpenBSD: ecoff_hide.c,v 1.2 2003/01/27 19:41:30 deraadt Exp $	 */
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -45,23 +45,23 @@
 
 #define stNil		0
 
-extern int in_keep_list (char *);
+extern int      in_keep_list(char *);
 
 void
-ecoff_hide (int fd, char *p)
+ecoff_hide(int fd, char *p)
 {
-  struct ecoff_exechdr *ehdr = (struct ecoff_exechdr *)p;
-  struct ecoff_symhdr *shdr = (struct ecoff_symhdr *)(p + ehdr->f.f_symptr);
-  u_int ecnt = shdr->esymMax;
-  struct ecoff_extsym *esym = (struct ecoff_extsym *)(p + shdr->cbExtOffset);
-  char *estr = p + shdr->cbSsExtOffset;
-  int i;
+	struct ecoff_exechdr *ehdr = (struct ecoff_exechdr *) p;
+	struct ecoff_symhdr *shdr = (struct ecoff_symhdr *) (p + ehdr->f.f_symptr);
+	u_int           ecnt = shdr->esymMax;
+	struct ecoff_extsym *esym = (struct ecoff_extsym *) (p + shdr->cbExtOffset);
+	char           *estr = p + shdr->cbSsExtOffset;
+	int             i;
 
-  for (i = 0; i < ecnt; i++, esym++)
-    if ((esym->es_class == scText || esym->es_class == scData
-	 || esym->es_class == scBss || esym->es_class == scSData
-	 || esym->es_class == scSBss || esym->es_class == scRData)
-	&& !in_keep_list(estr + esym->es_strindex))
-      esym->es_type = stNil;
+	for (i = 0; i < ecnt; i++, esym++)
+		if ((esym->es_class == scText || esym->es_class == scData ||
+		    esym->es_class == scBss || esym->es_class == scSData ||
+		    esym->es_class == scSBss || esym->es_class == scRData) &&
+		    !in_keep_list(estr + esym->es_strindex))
+			esym->es_type = stNil;
 }
-#endif /* _NLIST_DO_ECOFF */
+#endif				/* _NLIST_DO_ECOFF */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: elf_hide.c,v 1.7 2002/06/09 05:53:53 todd Exp $ */
+/* $OpenBSD: elf_hide.c,v 1.8 2003/01/27 19:41:30 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Dale Rahn. All rights reserved.
@@ -43,40 +43,38 @@
 #ifdef _NLIST_DO_ELF
 #include <sys/exec_elf.h>
 
-void load_strtab(Elf_Ehdr *pehdr, char *pexe);
-void dump_strtab();
-char *get_str(int indx);
+void	load_strtab(Elf_Ehdr * pehdr, char *pexe);
+void	dump_strtab();
+char	*get_str(int indx);
 
-void load_symtab(Elf_Ehdr *pehdr, char *pexe);
-void dump_symtab();
+void	load_symtab(Elf_Ehdr * pehdr, char *pexe);
+void	dump_symtab();
 
-void load_shstr_tab(Elf_Ehdr *pehdr, char *pexe);
-char *get_shstr(int indx);
-void fprint_shstr(FILE * channel, int indx);
+void	load_shstr_tab(Elf_Ehdr * pehdr, char *pexe);
+char	*get_shstr(int indx);
+void	fprint_shstr(FILE * channel, int indx);
 
-void hide_sym();
+void	hide_sym();
+void	reorder_syms(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
+	    Elf_Sym * symtab, int symtabsize, int symtabsecnum);
+typedef long    Symmap;
+void	renum_reloc_syms(Elf_Ehdr * ehdr, Symmap * symmap,
+	    int symtabsecnum);
 
-void reorder_syms(Elf_Ehdr *ehdr, Elf_Shdr *symsect,
-	Elf_Sym *symtab, int symtabsize, int symtabsecnum);
 
-typedef long Symmap;
-
-void renum_reloc_syms(Elf_Ehdr *ehdr, Symmap *symmap, int symtabsecnum);
-
-char * pexe;
+char           *pexe;
 
 void
 elf_hide(int pfile, char *p)
 {
-	int i;
-
-	Elf_Ehdr *pehdr;
-	Elf_Shdr *pshdr;
-	Elf_Phdr *pphdr;
-	struct stat sb;
+	int             i;
+	Elf_Ehdr       *pehdr;
+	Elf_Shdr       *pshdr;
+	Elf_Phdr       *pphdr;
+	struct stat     sb;
 
 	pexe = p;
-	pehdr = (Elf_Ehdr *)pexe;
+	pehdr = (Elf_Ehdr *) pexe;
 
 #ifdef DEBUG
 	printf("elf header\n");
@@ -94,14 +92,14 @@ elf_hide(int pfile, char *p)
 	printf("e_shnum %x\n", pehdr->e_shnum);
 	printf("e_shstrndx %x\n", pehdr->e_shstrndx);
 #endif
-	
+
 	load_shstr_tab(pehdr, pexe);
 #ifdef DEBUG
 	for (i = 0; i < pehdr->e_shnum; i++) {
 		pshdr = (Elf_Phdr *) (pexe + pehdr->e_shoff +
-			(i * pehdr->e_shentsize));
+		    (i * pehdr->e_shentsize));
 
-		printf("section header %d\n",i);
+		printf("section header %d\n", i);
 		printf("sh_name %x ", pshdr->sh_name);
 		fprint_shstr(stdout, pshdr->sh_name);
 		printf("\n");
@@ -115,12 +113,12 @@ elf_hide(int pfile, char *p)
 		printf("sh_addralign %x\n", pshdr->sh_addralign);
 		printf("sh_entsize %x\n", pshdr->sh_entsize);
 	}
-#endif /* DEBUG */
+#endif				/* DEBUG */
 
 #ifdef DEBUG
 	for (i = 0; i < pehdr->e_phnum; i++) {
 		pshdr = (Elf_Phdr *) (pexe + pehdr->e_phoff +
-			(i * pehdr->e_phentsize);
+		    (i * pehdr->e_phentsize));
 
 		printf("program header %d\n", i);
 		printf("p_type %x\n", pphdr->p_type);
@@ -132,14 +130,13 @@ elf_hide(int pfile, char *p)
 		printf("p_flags %x\n", pphdr->p_flags);
 		printf("p_align %x\n", pphdr->p_align);
 	}
-#endif /* DEBUG */
+#endif				/* DEBUG */
 #if 0
 	for (i = 0; i < pehdr->e_shnum; i++) {
 		pshdr = (Elf_Phdr *) (pexe + pehdr->e_shoff +
-			(i * pehdr->e_shentsize);
-		if (0 == strcmp(".strtab", get_shstr(pshdr->sh_name))) {
+		    (i * pehdr->e_shentsize));
+		if (strcmp(".strtab", get_shstr(pshdr->sh_name)) == 0)
 			break;
-		}
 	}
 	fprint_shstr(stdout, pshdr->sh_name);
 	printf("\n");
@@ -149,63 +146,60 @@ elf_hide(int pfile, char *p)
 	load_symtab(pehdr, pexe);
 
 	munmap(pexe, sb.st_size);
-	close (pfile);
+	close(pfile);
 }
-char *shstrtab;
+char           *shstrtab;
 
 void
-load_shstr_tab(Elf_Ehdr *pehdr, char *pexe)
+load_shstr_tab(Elf_Ehdr * pehdr, char *pexe)
 {
-	Elf_Shdr *pshdr;
+	Elf_Shdr       *pshdr;
 	shstrtab = NULL;
-	if (pehdr->e_shstrndx == 0) {
+	if (pehdr->e_shstrndx == 0)
 		return;
-	}
-	pshdr = (Elf_Shdr *)(pexe + pehdr->e_shoff +
-		(pehdr->e_shstrndx * pehdr->e_shentsize));
+	pshdr = (Elf_Shdr *) (pexe + pehdr->e_shoff +
+	    (pehdr->e_shstrndx * pehdr->e_shentsize));
 
-	shstrtab = (char *)(pexe + pshdr->sh_offset);
+	shstrtab = (char *) (pexe + pshdr->sh_offset);
 }
 
 void
 fprint_shstr(FILE * channel, int indx)
 {
-	if (shstrtab != NULL) {
+	if (shstrtab != NULL)
 		fprintf(channel, "\"%s\"", &(shstrtab[indx]));
-	}
-	return;
 }
 
-char *
+char           *
 get_shstr(int indx)
 {
 	return &(shstrtab[indx]);
 }
 
 void
-load_symtab(Elf_Ehdr *pehdr, char *pexe)
+load_symtab(Elf_Ehdr * pehdr, char *pexe)
 {
-	Elf_Sym *symtab;
-	Elf_Shdr *symsect;
-	int	   symtabsize;
-	Elf_Shdr *pshdr;
-	Elf_Shdr *psymshdr;
-	char *shname;
-	int i;
+	Elf_Sym        *symtab;
+	Elf_Shdr       *symsect;
+	int             symtabsize;
+	Elf_Shdr       *pshdr;
+	Elf_Shdr       *psymshdr;
+	char           *shname;
+	int             i;
+
 	symtab = NULL;
 	for (i = 0; i < pehdr->e_shnum; i++) {
-		pshdr = (Elf_Shdr *)(pexe + pehdr->e_shoff +
-		(i * pehdr->e_shentsize) );
-		if (SHT_REL != pshdr->sh_type && SHT_RELA != pshdr->sh_type){
+		pshdr = (Elf_Shdr *) (pexe + pehdr->e_shoff +
+		    (i * pehdr->e_shentsize));
+		if (SHT_REL != pshdr->sh_type && SHT_RELA != pshdr->sh_type)
 			continue;
-		}
-		psymshdr = (Elf_Shdr *)(pexe + pehdr->e_shoff +
-			(pshdr->sh_link * pehdr->e_shentsize) );
+		psymshdr = (Elf_Shdr *) (pexe + pehdr->e_shoff +
+		    (pshdr->sh_link * pehdr->e_shentsize));
 #ifdef DEBUG
 		fprint_shstr(stdout, pshdr->sh_name);
 		printf("\n");
 #endif
-		symtab = (Elf_Sym *)(pexe + psymshdr->sh_offset);
+		symtab = (Elf_Sym *) (pexe + psymshdr->sh_offset);
 		symsect = psymshdr;
 		symtabsize = psymshdr->sh_size;
 
@@ -218,44 +212,43 @@ load_symtab(Elf_Ehdr *pehdr, char *pexe)
 }
 
 void
-dump_symtab (Elf_Shdr *symsect, Elf_Sym *symtab, int symtabsize)
+dump_symtab(Elf_Shdr * symsect, Elf_Sym * symtab, int symtabsize)
 {
-	int i;
-	Elf_Sym *psymtab;
+	int             i;
+	Elf_Sym        *psymtab;
 
-	for (i = 0 ; i < (symtabsize/sizeof(Elf_Sym)); i++) {
+	for (i = 0; i < (symtabsize / sizeof(Elf_Sym)); i++) {
 		psymtab = &(symtab[i]);
 		if ((psymtab->st_info & 0xf0) == 0x10 &&
-			(psymtab->st_shndx != SHN_UNDEF)) {
-		printf("symbol %d:\n", i);
-		printf("st_name %x \"%s\"\n", psymtab->st_name,
-			get_str(psymtab->st_name));
-		printf("st_value %x\n", psymtab->st_value);
-		printf("st_size %x\n", psymtab->st_size);
-		printf("st_info %x\n", psymtab->st_info);
-		printf("st_other %x\n", psymtab->st_other);
-		printf("st_shndx %x\n", psymtab->st_shndx);
+		    (psymtab->st_shndx != SHN_UNDEF)) {
+			printf("symbol %d:\n", i);
+			printf("st_name %x \"%s\"\n", psymtab->st_name,
+			    get_str(psymtab->st_name));
+			printf("st_value %x\n", psymtab->st_value);
+			printf("st_size %x\n", psymtab->st_size);
+			printf("st_info %x\n", psymtab->st_info);
+			printf("st_other %x\n", psymtab->st_other);
+			printf("st_shndx %x\n", psymtab->st_shndx);
 		}
 	}
 }
 
-char * strtab;
-int strtabsize;
+char           *strtab;
+int             strtabsize;
 void
-load_strtab(Elf_Ehdr *pehdr, char *pexe)
+load_strtab(Elf_Ehdr * pehdr, char *pexe)
 {
-	Elf_Shdr *pshdr;
-	char *shname;
-	int i;
+	Elf_Shdr       *pshdr;
+	char           *shname;
+	int             i;
 	strtab = NULL;
 	for (i = 0; i < pehdr->e_shnum; i++) {
 		pshdr = (Elf_Shdr *) (pexe + pehdr->e_shoff +
-			(i * pehdr->e_shentsize));
+		    (i * pehdr->e_shentsize));
 
 		shname = get_shstr(pshdr->sh_name);
-		if (0 == strcmp(".strtab", shname)) {
+		if (strcmp(".strtab", shname) == 0)
 			break;
-		}
 	}
 #ifdef DEBUG
 	fprint_shstr(stdout, pshdr->sh_name);
@@ -274,10 +267,10 @@ load_strtab(Elf_Ehdr *pehdr, char *pexe)
 void
 dump_strtab()
 {
-	int index;
-	char *pstr;
-	char *pnstr;
-	int i = 0;
+	int             index;
+	char           *pstr;
+	char           *pnstr;
+	int             i = 0;
 	index = 0;
 	pstr = strtab;
 	while (index < strtabsize) {
@@ -287,48 +280,47 @@ dump_strtab()
 		pstr = pnstr;
 		i++;
 	}
-	
+
 }
+
 fprint_str(FILE * channel, int indx)
 {
-	if (strtab != NULL) {
+	if (strtab != NULL)
 		fprintf(channel, "\"%s\"", &(strtab[indx]));
-	}
-	return;
 }
+
 char *
 get_str(int indx)
 {
 	return &(strtab[indx]);
 }
 
-int in_keep_list(char *symbol);
+int             in_keep_list(char *symbol);
 
 void
-hide_sym(Elf_Ehdr *ehdr, Elf_Shdr *symsect,
-	Elf_Sym *symtab, int symtabsize, int symtabsecnum)
+hide_sym(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
+    Elf_Sym * symtab, int symtabsize, int symtabsecnum)
 {
-	int i;
-	unsigned char info;
-	Elf_Sym *psymtab;
+	int             i;
+	unsigned char   info;
+	Elf_Sym        *psymtab;
 
 #ifdef __mips__
-	int f;
+	int             f;
 	sleep(1);
 	f = time(NULL) * 200;
 #endif
 
-	for (i = 0 ; i < (symtabsize/sizeof(Elf_Sym)); i++) {
+	for (i = 0; i < (symtabsize / sizeof(Elf_Sym)); i++) {
 		psymtab = &(symtab[i]);
 		if ((psymtab->st_info & 0xf0) == 0x10 &&
-			(psymtab->st_shndx != SHN_UNDEF)) {
-			if (in_keep_list(get_str(psymtab->st_name))) {
+		    (psymtab->st_shndx != SHN_UNDEF)) {
+			if (in_keep_list(get_str(psymtab->st_name)))
 				continue;
-			}
 #ifdef DEBUG
 			printf("symbol %d:\n", i);
 			printf("st_name %x \"%s\"\n", psymtab->st_name,
-				get_str(psymtab->st_name));
+			    get_str(psymtab->st_name));
 			printf("st_info %x\n", psymtab->st_info);
 #endif
 #ifndef __mips__
@@ -336,24 +328,37 @@ hide_sym(Elf_Ehdr *ehdr, Elf_Shdr *symsect,
 			info = info & 0xf;
 			psymtab->st_info = info;
 #else
-/* XXX This is a small ugly hack to be able to use chrunchide with MIPS.     */
-/* XXX Because MIPS needs global symbols to stay global (has to do with GOT) */
-/* XXX we mess around with the symbol names instead. For most uses this      */
-/* XXX will be no problem, symbols are stripped anyway. However, if many     */
-/* XXX one character symbols exist, names may clash.			     */
+			/*
+			 * XXX This is a small ugly hack to be able to use
+			 * chrunchide with MIPS.
+			 */
+			/*
+			 * XXX Because MIPS needs global symbols to stay
+			 * global (has to do with GOT)
+			 */
+			/*
+			 * XXX we mess around with the symbol names instead.
+			 * For most uses this
+			 */
+			/*
+			 * XXX will be no problem, symbols are stripped
+			 * anyway. However, if many
+			 */
+			/* XXX one character symbols exist, names may clash.
+			 */
 			{
-				char *p;
-				int n, z;
+				char           *p;
+				int             n, z;
 
 				z = f++;
 				p = get_str(psymtab->st_name);
 				n = strlen(p);
-				if(n > 4)
+				if (n > 4)
 					n = 4;
-				while(n--) {
+				while (n--) {
 					p[n] = z;
 					z >>= 8;
-					while(p[n] == 0)
+					while (p[n] == 0)
 						p[n] += rand();
 				}
 			}
@@ -366,35 +371,36 @@ hide_sym(Elf_Ehdr *ehdr, Elf_Shdr *symsect,
 	}
 	reorder_syms(ehdr, symsect, symtab, symtabsize, symtabsecnum);
 }
+
 void
-reorder_syms(Elf_Ehdr *ehdr, Elf_Shdr *symsect,
-	Elf_Sym *symtab, int symtabsize, int symtabsecnum)
+reorder_syms(Elf_Ehdr * ehdr, Elf_Shdr * symsect,
+    Elf_Sym * symtab, int symtabsize, int symtabsecnum)
 {
-	int i;
-	int nsyms;
-	int cursym;
-	Elf_Sym *tmpsymtab;
-	Symmap *symmap;
+	int             i;
+	int             nsyms;
+	int             cursym;
+	Elf_Sym        *tmpsymtab;
+	Symmap         *symmap;
 
 
 	nsyms = symtabsize / sizeof(Elf_Sym);
 
-	tmpsymtab = (Elf_Sym *)calloc(1,symtabsize);
-	symmap = (Symmap *)calloc(1, sizeof(Symmap) * (nsyms));
+	tmpsymtab = (Elf_Sym *) calloc(1, symtabsize);
+	symmap = (Symmap *) calloc(1, sizeof(Symmap) * (nsyms));
 
-	assert (NULL != tmpsymtab);
+	assert(NULL != tmpsymtab);
 
-	bcopy (symtab, tmpsymtab, symtabsize);
+	bcopy(symtab, tmpsymtab, symtabsize);
 
 	cursym = 1;
 	for (i = 1; i < nsyms; i++) {
 		if ((tmpsymtab[i].st_info & 0xf0) == 0x00) {
 #ifdef DEBUG
-			printf("copying  l o%d n%d <%s>\n",i, cursym,
-				get_str(tmpsymtab[i].st_name));
+			printf("copying  l o%d n%d <%s>\n", i, cursym,
+			    get_str(tmpsymtab[i].st_name));
 #endif
-			bcopy (&(tmpsymtab[i]),
-				&(symtab[cursym]), sizeof(Elf_Sym));
+			bcopy(&(tmpsymtab[i]), &(symtab[cursym]),
+			    sizeof(Elf_Sym));
 			symmap[i] = cursym;
 			cursym++;
 		}
@@ -403,76 +409,74 @@ reorder_syms(Elf_Ehdr *ehdr, Elf_Shdr *symsect,
 	for (i = 1; i < nsyms; i++) {
 		if ((tmpsymtab[i].st_info & 0xf0) != 0x00) {
 #ifdef DEBUG
-			printf("copying nl o%d n%d <%s>\n",i, cursym,
-				get_str(tmpsymtab[i].st_name));
+			printf("copying nl o%d n%d <%s>\n", i, cursym,
+			    get_str(tmpsymtab[i].st_name));
 #endif
-			bcopy (&(tmpsymtab[i]),
-				&(symtab[cursym]), sizeof(Elf_Sym));
+			bcopy(&(tmpsymtab[i]), &(symtab[cursym]),
+			    sizeof(Elf_Sym));
 			symmap[i] = cursym;
 			cursym++;
 		}
 	}
 	if (cursym != nsyms) {
 		printf("miscounted symbols somewhere c %d n %d \n",
-			cursym, nsyms);
-		exit (5);
+		    cursym, nsyms);
+		exit(5);
 	}
 	renum_reloc_syms(ehdr, symmap, symtabsecnum);
-	free (tmpsymtab);
-	free (symmap);
+	free(tmpsymtab);
+	free(symmap);
 }
+
 void
-renum_reloc_syms(Elf_Ehdr *ehdr, Symmap *symmap, int symtabsecnum)
+renum_reloc_syms(Elf_Ehdr * ehdr, Symmap * symmap, int symtabsecnum)
 {
-	Elf_Shdr *pshdr;
-	int i, j;
-	int num_reloc;
-	Elf_Rel  *prel;
-	Elf_RelA *prela;
-	int symnum;
+	Elf_Shdr       *pshdr;
+	int             i, j;
+	int             num_reloc;
+	Elf_Rel        *prel;
+	Elf_RelA       *prela;
+	int             symnum;
 
 	for (i = 0; i < ehdr->e_shnum; i++) {
-		pshdr = (Elf_Shdr *)(pexe + ehdr->e_shoff +
-		(i * ehdr->e_shentsize) );
+		pshdr = (Elf_Shdr *) (pexe + ehdr->e_shoff +
+		    (i * ehdr->e_shentsize));
 		if ((pshdr->sh_type == SHT_RELA) &&
-			pshdr->sh_link == symtabsecnum)
-		{
-			
+		    pshdr->sh_link == symtabsecnum) {
+
 #ifdef DEBUG
-			printf ("section %d has rela relocations in symtab\n", i);
+			printf("section %d has rela relocations in symtab\n", i);
 #endif
-			prela = (Elf_RelA *)(pexe + pshdr->sh_offset);
-			num_reloc = pshdr->sh_size /sizeof (Elf_RelA);
+			prela = (Elf_RelA *) (pexe + pshdr->sh_offset);
+			num_reloc = pshdr->sh_size / sizeof(Elf_RelA);
 			for (j = 0; j < num_reloc; j++) {
 				symnum = ELF_R_SYM(prela[j].r_info);
 #ifdef DEBUG
 				printf("sym num o %d n %d\n", symnum,
-					symmap[symnum]);
+				    symmap[symnum]);
 #endif
-				prela[j].r_info = ELF_R_INFO (symmap[symnum],
-					ELF_R_TYPE(prela[j].r_info));
+				prela[j].r_info = ELF_R_INFO(symmap[symnum],
+				    ELF_R_TYPE(prela[j].r_info));
 			}
-
 		}
 		if ((pshdr->sh_type == SHT_REL) &&
-			pshdr->sh_link == symtabsecnum)
-		{
+		    pshdr->sh_link == symtabsecnum) {
 #ifdef DEBUG
-			printf ("section %d has rel relocations in symtab\n", i);
+			printf("section %d has rel relocations in symtab\n", i);
 #endif
-			prel = (Elf_Rel *)(pexe + pshdr->sh_offset);
-			num_reloc = pshdr->sh_size /sizeof (Elf_Rel);
+			prel = (Elf_Rel *) (pexe + pshdr->sh_offset);
+			num_reloc = pshdr->sh_size / sizeof(Elf_Rel);
 			for (j = 0; j < num_reloc; j++) {
 				symnum = ELF_R_SYM(prel[j].r_info);
 #ifdef DEBUG
 				printf("sym num o %d n %d\n", symnum,
-					symmap[symnum]);
+				    symmap[symnum]);
 #endif
-				prel[j].r_info = ELF_R_INFO (symmap[symnum],
-					ELF_R_TYPE(prel[j].r_info));
+				prel[j].r_info = ELF_R_INFO(symmap[symnum],
+				    ELF_R_TYPE(prel[j].r_info));
 			}
 		}
 	}
-	
+
 }
-#endif /* _NLIST_DO_ELF */
+#endif				/* _NLIST_DO_ELF */
