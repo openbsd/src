@@ -1,4 +1,4 @@
-/*	$OpenBSD: fetch.c,v 1.22 1998/09/28 13:38:22 deraadt Exp $	*/
+/*	$OpenBSD: fetch.c,v 1.23 1998/09/30 07:49:36 deraadt Exp $	*/
 /*	$NetBSD: fetch.c,v 1.14 1997/08/18 10:20:20 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fetch.c,v 1.22 1998/09/28 13:38:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: fetch.c,v 1.23 1998/09/30 07:49:36 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -348,10 +348,13 @@ url_get(origline, proxyenv, outfile)
 	 * Construct and send the request.  We're expecting a return
 	 * status of "200". Proxy requests don't want leading /.
 	 */
-	if (!proxy)
-		fprintf(ttyout, "Requesting %s\n", origline);
-	else
-		fprintf(ttyout, "Requesting %s (via %s)\n", origline, proxyenv);
+	if (verbose) {
+		if (!proxy)
+			fprintf(ttyout, "Requesting %s\n", origline);
+		else
+			fprintf(ttyout, "Requesting %s (via %s)\n",
+			    origline, proxyenv);
+	}
 	snprintf(buf, sizeof(buf), "GET %s%s HTTP/1.0\r\nHost: %s\r\n\r\n",
 	    proxy ? "" : "/", path, host);
 	len = strlen(buf);
