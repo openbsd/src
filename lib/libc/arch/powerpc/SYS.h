@@ -1,4 +1,4 @@
-/*	$OpenBSD: SYS.h,v 1.7 2000/03/01 17:31:22 todd Exp $	*/
+/*	$OpenBSD: SYS.h,v 1.8 2000/10/06 23:29:15 d Exp $	*/
 /*-
  * Copyright (c) 1994
  *	Andrew Cagney.  All rights reserved.
@@ -64,15 +64,6 @@
 
 #define SUFFIX			PSEUDO_SUFFIX
 
-#ifndef _THREAD_SAFE
-#define PREFIX(x)		PSEUDO_PREFIX(,x,x)
-#define PREFIX2(x,y)		PSEUDO_PREFIX(,x,y)
-#define	PSEUDO(x,y)		PSEUDO_PREFIX(,x,y) ; \
-				sc ; \
-				PSEUDO_SUFFIX
-
-#define RSYSCALL(x)		PSEUDO(x,x)
-#else /* _THREAD_SAFE */
 #define ALIAS(x,y)		.weak y; .set y,_CONCAT(x,y);
 		
 #define PREFIX(x)		ALIAS(_thread_sys_,x) \
@@ -86,4 +77,3 @@
 
 #define RSYSCALL(x)		PSEUDO(x,x)
 
-#endif /* _THREAD_SAFE */
