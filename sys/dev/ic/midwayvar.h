@@ -1,5 +1,4 @@
-/*	$OpenBSD: midwayvar.h,v 1.2 1996/06/21 21:36:33 chuck Exp $	*/
-/*	(sync'd to midwayvar.h 1.4)	*/
+/*	$OpenBSD: midwayvar.h,v 1.3 1996/06/27 04:27:48 chuck Exp $	*/
 
 /*
  *
@@ -78,6 +77,7 @@ struct en_softc {
   u_int16_t swslist[MID_SL_N];	/* software service list (see en_service()) */
   u_int16_t swsl_head, 		/* ends of swslist (index into swslist) */
 	    swsl_tail;
+  u_int32_t swsl_size;		/* # of items in swsl */
   
 
   /* xmit dma */
@@ -127,10 +127,10 @@ struct en_softc {
   /* stats */
   u_int32_t vtrash;		/* sw copy of counter */
   u_int32_t otrash;		/* sw copy of counter */
+  u_int32_t ttrash;		/* # of RBD's with T bit set */
   u_int32_t mfix;		/* # of times we had to call mfix */
   u_int32_t txmbovr;		/* # of times we dropped due to mbsize */
   u_int32_t dmaovr;		/* tx dma overflow count */
-  u_int32_t ddrop;		/* # of direct deposit drops due to sbsize */
   u_int32_t txoutspace;		/* out of space in xmit buffer */
   u_int32_t txdtqout;		/* out of DTQs */
   u_int32_t launch;		/* total # of launches */
@@ -142,6 +142,7 @@ struct en_softc {
   u_int32_t rxqus;		/* # of good pulls from rx q */
   u_int32_t rxoutboth;		/* # of times out of mbufs and DRQs */
   u_int32_t rxdrqout;		/* # of times out of DRQs */
+  u_int32_t rxmbufout;		/* # of time out of mbufs */
 
   /* random stuff */
   u_int32_t ipl;		/* sbus interrupt lvl (1 on pci?) */
