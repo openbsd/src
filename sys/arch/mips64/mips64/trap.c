@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 2004/10/30 14:48:59 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2004/10/30 14:49:39 pefo Exp $	*/
 /* tracked to 1.23 */
 
 /*
@@ -740,7 +740,6 @@ printf("SIG-BUSB @%p pc %p, ra %p\n", trapframe->badvaddr, trapframe->pc, trapfr
 		goto err;
 
 	case T_FPE+T_USER:
-printf("FPU Trap, pc=%p instr=0x%08x\n", trapframe->pc, *(int *)trapframe->pc);
 		sv.sival_ptr = (void *)trapframe->pc;
 		MipsFPTrap(trapframe->sr, trapframe->cause, trapframe->pc, sv);
 		goto out;
