@@ -12,6 +12,7 @@
 ./usr/bin/g77
 ./usr/bin/gcc
 ./usr/bin/genclass
+./usr/bin/gprof
 ./usr/bin/ld
 ./usr/bin/lex
 ./usr/bin/lint

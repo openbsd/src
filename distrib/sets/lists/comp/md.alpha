@@ -17,7 +17,6 @@
 ./usr/bin/c++filt
 ./usr/bin/gasp
 ./usr/bin/gdb
-./usr/bin/gprof
 ./usr/bin/objcopy
 ./usr/bin/objdump
 ./usr/include/ansidecl.h

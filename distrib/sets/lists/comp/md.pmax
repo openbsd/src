@@ -1,4 +1,5 @@
 ./usr/bin/elf2aout
+./usr/bin/gdb
 ./usr/bin/objcopy
 ./usr/bin/objdump
 ./usr/include/dlfcn.h
