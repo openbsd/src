@@ -1,4 +1,4 @@
-/*	$OpenBSD: sprint.c,v 1.5 1998/07/10 15:45:18 mickey Exp $	*/
+/*	$OpenBSD: sprint.c,v 1.6 2001/01/31 20:11:30 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)sprint.c	5.8 (Berkeley) 12/4/90";*/
-static char rcsid[] = "$OpenBSD: sprint.c,v 1.5 1998/07/10 15:45:18 mickey Exp $";
+static char rcsid[] = "$OpenBSD: sprint.c,v 1.6 2001/01/31 20:11:30 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -77,16 +77,19 @@ sflag_print()
 	 *		office location
 	 *		office phone
 	 */
+#define NAME_WIDTH	8
 #define	MAXREALNAME	20
 #define	MAXHOSTNAME	20
-	(void)printf("%-*s %-*s %s %s\n", UT_NAMESIZE, "Login", MAXREALNAME,
+	(void)printf("%-*.*s %-*s %s %s\n",
+	    NAME_WIDTH, UT_NAMESIZE, "Login", MAXREALNAME,
 	    "Name", "Tty  Idle  Login Time  ",
 	    (oflag) ? "Office     Office Phone" : "Where");
 	for (cnt = 0; cnt < entries; ++cnt) {
 		pn = list[cnt];
 		for (w = pn->whead; w != NULL; w = w->next) {
-			(void)printf("%-*.*s %-*.*s ", UT_NAMESIZE, UT_NAMESIZE,
-			    vs(pn->name), MAXREALNAME, MAXREALNAME,
+			(void)printf("%-*.*s %-*.*s ",
+			    NAME_WIDTH, UT_NAMESIZE, vs(pn->name),
+			    MAXREALNAME, MAXREALNAME,
 			    pn->realname ? vs(pn->realname) : "");
 			if (!w->loginat) {
 				(void)printf("  *     *  No logins   ");
