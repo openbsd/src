@@ -1,4 +1,4 @@
-#	$OpenBSD: na.phone,v 1.16 2001/07/13 17:10:32 brad Exp $
+#	$OpenBSD: na.phone,v 1.17 2001/07/13 17:23:23 aaron Exp $
 #	@(#)na.phone	8.1 (Berkeley) 6/8/93
 #
 # Area Code : City : State/Province : State/Province Abbrev.
@@ -249,7 +249,7 @@
 708:Chicago Suburbs:Illinois:IL
 708:Elgin:Illinois:IL
 708:Waukegan:Illinois:IL
-709:St. John's:Newfoundland:NF
+709::Newfoundland:NF
 712:Council Bluffs:Iowa:IA
 712:Sioux City:Iowa:IA
 713:Houston:Texas:TX
