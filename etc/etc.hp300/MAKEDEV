@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: MAKEDEV,v 1.11 1995/09/30 21:59:57 thorpej Exp $
+#	$NetBSD: MAKEDEV,v 1.11.2.1 1995/11/07 08:24:41 thorpej Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -79,6 +79,7 @@ all)
 	;;
 
 std)
+	rm -f console drum kmem mem null zero tty klog stdin stdout stderr
 	mknod console		c 0 0
 	mknod drum		c 3 0	; chmod 640 drum ; chgrp kmem drum
 	mknod kmem		c 2 1	; chmod 640 kmem ; chgrp kmem kmem
@@ -116,6 +117,8 @@ ct*|mt*|st*)
 		twelve=`expr $unit + 12`; twenty=`expr $unit + 20`
 		#
 		# block devices don't work so don't make them
+		#rm -f ${name}${unit} ${name}${four} ${name}${eight} \
+		#    ${name}${twelve} n${name}${unit} n${name}${eight}
 		#mknod ${name}${unit}	b $blk $unit
 		#mknod ${name}${four}	b $blk $four
 		#mknod ${name}${eight}	b $blk $eight
@@ -123,6 +126,8 @@ ct*|mt*|st*)
 		#mknod n${name}${unit}	b $blk $four ;: sanity w/pdp11 v7
 		#mknod n${name}${eight}	b $blk $twelve ;: ditto
 		#
+		rm -f r${name}${unit} r${name}${four} r${name}${eight} \
+		    r${name}${twelve} nr${name}${unit} nr${name}${eight}
 		mknod r${name}${unit}	c $chr $unit
 		mknod r${name}${four}	c $chr $four
 		mknod r${name}${eight}	c $chr $eight
@@ -192,9 +197,11 @@ ccd*|fd*|rd*|sd*|vnd*)
 	;;
 
 dca*)
+	# XXX What about dca cards?
 	unit=`expr $i : 'dca\(.*\)'`
 	case $unit in
 	0)
+		rm -f tty0
 		mknod tty0 c 12 0
 		;;
 	*)
@@ -209,7 +216,7 @@ dcm*)
 	0|1|2|3)
 		eval `echo $unit | awk ' { unit = $1; u = 4 * $1 } END {
 		for (i = 0; i < 4; i++)
-		printf("mknod tty0%x c 15 %d; ",u+i,u+i); }'`
+		printf("rm -f tty0%x; mknod tty0%x c 15 %d; ",u+i,u+i,u+i); }'`
 	;;
 	*)
 		echo bad unit for dcm in: $i
@@ -221,6 +228,7 @@ ite*)
 	unit=`expr $i : 'ite\(.*\)'`
 	case $unit in
 	0|1|2|3)
+		rm -f ttye${unit}
 		mknod ttye${unit} c 13 ${unit}
 		;;
 	*)
@@ -233,6 +241,7 @@ grf*)
 	unit=`expr $i : 'grf\(.*\)'`
 	case $unit in
 	0|1|2|3)
+		rm -f grf${unit}
 		mknod grf${unit} c 10 ${unit}; chmod 666 grf${unit}
 #		echo "grf${unit}: use MAKEDEV.hpux to make HP-UX names for device"
 		;;
@@ -245,6 +254,7 @@ grf*)
 hil)
 	for unit in 0 1 2 3 4 5 6 7
 	do
+		rm -f hil${unit} locator keyboard
 		mknod hil${unit} c 14 ${unit}
 		if [ -f /usr/sbin/hilinfo ]
 		then
@@ -298,9 +308,10 @@ pty*)
 		umask 0
 		eval `echo $offset $name | awk ' { b=$1; n=$2 } END {
 			for (i = 0; i < 16; i++)
-				printf("mknod tty%s%x c 4 %d; \
+				printf("rm -f tty%s%x pty%s%x; \
+					mknod tty%s%x c 4 %d; \
 					mknod pty%s%x c 5 %d; ", \
-					n, i, b+i, n, i, b+i); }'`
+					n, i, n, i, n, i, b+i, n, i, b+i); }'`
 		umask 77
 		if [ $class = 1 ]; then
 			mv ttyqf ttyv0; mv ptyqf ptyv0
