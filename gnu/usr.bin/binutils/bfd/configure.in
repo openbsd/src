@@ -375,7 +375,9 @@ changequote([,])dnl
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/vaxbsd.h"'
 	;;
-  x86_64-*-netbsd*)	COREFILE=netbsd-core.lo ;;
+  x86_64-*-netbsd* | x86_64-*-openbsd*)
+	COREFILE=netbsd-core.lo
+	;;
   esac
 
   case "$COREFILE" in
