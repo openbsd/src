@@ -899,7 +899,9 @@ setupdaemon(daemonaddr)
 	if (daemonaddr->sa.sa_family == AF_UNSPEC)
 	{
 		memset(daemonaddr, '\0', sizeof *daemonaddr);
-		daemonaddr->sa.sa_family = InetMode;
+# if NETINET
+		daemonaddr->sa.sa_family = AF_INET;
+# endif /* NETINET */
 	}
 
 	switch (daemonaddr->sa.sa_family)
@@ -1012,8 +1014,10 @@ setsockaddroptions(p, d)
 	int l;
 	char *h, *flags;
 
+# if NETINET
 	if (d->d_addr.sa.sa_family == AF_UNSPEC)
-		d->d_addr.sa.sa_family = InetMode;
+		d->d_addr.sa.sa_family = AF_INET;
+# endif /* NETINET */
 
 	while (p != NULL)
 	{
