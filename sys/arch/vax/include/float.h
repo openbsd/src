@@ -1,4 +1,4 @@
-/*	$OpenBSD: float.h,v 1.4 2000/04/26 03:08:41 bjc Exp $	*/
+/*	$OpenBSD: float.h,v 1.5 2002/05/11 14:46:41 millert Exp $	*/
 /*	$NetBSD: float.h,v 1.5 1998/10/10 02:13:55 matt Exp $	*/
 
 /*
@@ -44,23 +44,27 @@
 
 #define FLT_MANT_DIG	24		/* p */
 #define FLT_EPSILON	1.19209290E-7F	/* b**(1-p) */
-#define FLT_DIG		6		/* floor((p-1)*log10(b))+(b == 10) */
 #define FLT_MIN_EXP	(-127)		/* emin */
-#define FLT_MIN		2.93873588E-39F	/* b**(emin-1) */
 #define FLT_MIN_10_EXP	(-38)		/* ceil(log10(b**(emin-1))) */
 #define FLT_MAX_EXP	127		/* emax */
-#define FLT_MAX		1.70141173E+38F	/* (1-b**(-p))*b**emax */
 #define FLT_MAX_10_EXP	38		/* floor(log10((1-b**(-p))*b**emax)) */
 
 #define DBL_MANT_DIG	56
 #define DBL_EPSILON	2.77555756156289135E-17
-#define DBL_DIG		16
 #define DBL_MIN_EXP	(-127)
-#define DBL_MIN		2.938735877055718770E-39
 #define DBL_MIN_10_EXP	(-38)
 #define DBL_MAX_EXP	127
-#define DBL_MAX		1.701411834604692294E+38
 #define DBL_MAX_10_EXP	38
+
+/* limits.h also defines this */
+#if !defined(FLT_DIG)
+# define FLT_DIG	6		/* floor((p-1)*log10(b))+(b == 10) */
+# define FLT_MIN	2.93873588E-39F	/* b**(emin-1) */
+# define FLT_MAX	1.70141173E+38F	/* (1-b**(-p))*b**emax */
+# define DBL_DIG	16
+# define DBL_MIN	2.938735877055718770E-39
+# define DBL_MAX	1.701411834604692294E+38
+#endif
 
 #define LDBL_MANT_DIG	DBL_MANT_DIG
 #define LDBL_EPSILON	DBL_EPSILON

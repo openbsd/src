@@ -1,4 +1,4 @@
-/* $OpenBSD: limits.h,v 1.3 2002/04/24 22:32:57 espie Exp $ */
+/* $OpenBSD: limits.h,v 1.4 2002/05/11 14:46:41 millert Exp $ */
 /*
  * Copyright (c) 2002 Marc Espie.
  *
@@ -103,22 +103,25 @@
 # endif
 # define WORD_BIT	32
 
-# if defined(__DBL_DIG)
-#  define DBL_DIG	__DBL_DIG
-#  define DBL_MAX	__DBL_MAX
-#  define DBL_MIN	__DBL_MIN
+/* float.h defines these as well */
+# if !defined(DBL_DIG)
+#  if defined(__DBL_DIG)
+#   define DBL_DIG	__DBL_DIG
+#   define DBL_MAX	__DBL_MAX
+#   define DBL_MIN	__DBL_MIN
 
-#  define FLT_DIG	__FLT_DIG
-#  define FLT_MAX	__FLT_MAX
-#  define FLT_MIN	__FLT_MIN
-# else
-#  define DBL_DIG	15
-#  define DBL_MAX	1.7976931348623157E+308
-#  define DBL_MIN	2.2250738585072014E-308
-
-#  define FLT_DIG	6
-#  define FLT_MAX	3.40282347E+38F
-#  define FLT_MIN	1.17549435E-38F
+#   define FLT_DIG	__FLT_DIG
+#   define FLT_MAX	__FLT_MAX
+#   define FLT_MIN	__FLT_MIN
+#  else
+#   define DBL_DIG	15
+#   define DBL_MAX	1.7976931348623157E+308
+#   define DBL_MIN	2.2250738585072014E-308
+ 
+#   define FLT_DIG	6
+#   define FLT_MAX	3.40282347E+38F
+#   define FLT_MIN	1.17549435E-38F
+#  endif
 # endif
 #endif
 
