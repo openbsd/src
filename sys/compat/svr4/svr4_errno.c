@@ -1,5 +1,5 @@
-/*	$OpenBSD: svr4_errno.c,v 1.2 2000/08/23 16:33:20 brad Exp $	*/
-/*	$NetBSD: svr4_errno.c,v 1.6 1998/10/23 04:02:18 erh Exp $	*/
+/*	$OpenBSD: svr4_errno.c,v 1.3 2000/08/23 16:37:29 brad Exp $	*/
+/*	$NetBSD: svr4_errno.c,v 1.7 1998/10/23 04:06:00 erh Exp $	*/
 
 /*
  * Copyright (c) 1994 Christos Zoulas
