@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigprocmask.S,v 1.4 1999/12/31 04:36:35 mickey Exp $	*/
+/*	$OpenBSD: sigprocmask.S,v 1.5 2000/01/12 00:08:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -36,10 +36,14 @@
 #ifdef SYSLIBC_SCCS
 	.space .text
 	.subspa $code$
-	.asciz "$OpenBSD: sigprocmask.S,v 1.4 1999/12/31 04:36:35 mickey Exp $"
+	.asciz "$OpenBSD: sigprocmask.S,v 1.5 2000/01/12 00:08:42 mickey Exp $"
+	.align	4
 #endif
 
 ENTRY(sigprocmask)
+	/* just in case compiler forgot about this */
+	stw	arg2, HPPA_FRAME_ARG(2)(sp)
+
 	comb,<>,n r0, arg1, sigprocmask$nblock
 
 	b	sigprocmask$call
@@ -52,15 +56,15 @@ sigprocmask$nblock
 sigprocmask$call
 	SYSCALL(sigprocmask)
 
-	comb,<>,n	r0, t1, sigprocmask$err
+	add,=	r0, t1, t1
+	bv,n	r0(rp)
+	nop
 
 	ldw	HPPA_FRAME_ARG(2)(sp), arg2
 	add,=	r0, arg2, arg2
 	stw	ret0, 0(arg2)
-
-sigprocmask$err
 	bv	r0(rp)
-	nop
+	copy	r0, ret0
 EXIT(sigprocmask)
 
 	.end

@@ -1,4 +1,4 @@
-/*	$OpenBSD: syscall.S,v 1.2 1999/12/31 04:28:51 mickey Exp $	*/
+/*	$OpenBSD: syscall.S,v 1.3 2000/01/12 00:08:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -36,7 +36,8 @@
 #ifdef SYSLIBC_SCCS
 	.space .text
 	.subspa $code$
-	.asciz "$OpenBSD: syscall.S,v 1.2 1999/12/31 04:28:51 mickey Exp $"
+	.asciz "$OpenBSD: syscall.S,v 1.3 2000/01/12 00:08:42 mickey Exp $"
+	.align	4
 #endif
 
 RSYSCALL(syscall)
