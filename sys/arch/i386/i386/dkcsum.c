@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkcsum.c,v 1.3 1997/10/27 15:47:49 mickey Exp $	*/
+/*	$OpenBSD: dkcsum.c,v 1.4 1997/10/28 02:01:47 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserved.
@@ -169,7 +169,7 @@ dkcsumattach()
 
 		/* This will overwrite /boot's guess, just so you remember */
 		hit->bsd_dev = MAKEBOOTDEV(major(bp->b_dev), 0, 0,
-		    DISKUNIT(bp->b_dev), 0);	/* XXX RAW_PART later? */
+		    DISKUNIT(bp->b_dev), RAW_PART);
 		hit->flags |= BDI_PICKED;
 	}
 	bp->b_flags |= B_INVAL;
