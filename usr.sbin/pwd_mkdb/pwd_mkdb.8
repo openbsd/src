@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pwd_mkdb.8,v 1.12 2001/06/05 04:11:25 millert Exp $
+.\"	$OpenBSD: pwd_mkdb.8,v 1.13 2001/06/08 04:23:25 aaron Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@
 .Os
 .Sh NAME
 .Nm pwd_mkdb
-.Nd "generate the password databases"
+.Nd generate the password databases
 .Sh SYNOPSIS
 .Nm pwd_mkdb
 .Op Fl c
@@ -112,6 +112,23 @@ secure password database file
 .It Pa /etc/spwd.db.tmp
 temporary file
 .El
+.Sh SEE ALSO
+.Xr chpass 1 ,
+.Xr passwd 1 ,
+.Xr db 3 ,
+.Xr getpwent 3 ,
+.Xr passwd 5 ,
+.Xr vipw 8
+.Sh COMPATIBILITY
+Previous versions of the system had a program similar to
+.Nm pwd_mkdb ,
+.Xr mkpasswd 8 ,
+which built
+.Xr dbm 3
+style databases for the password file but depended on the calling programs
+to install them.
+The program was renamed in order that previous users of the program
+not be surprised by the changes in functionality.
 .Sh BUGS
 Because of the necessity for atomic update of the password files,
 .Nm
@@ -133,21 +150,4 @@ The front-ends to
 and
 .Xr vipw 8
 handle the locking necessary to avoid this problem.
-.Sh COMPATIBILITY
-Previous versions of the system had a program similar to
-.Nm pwd_mkdb ,
-.Xr mkpasswd 8 ,
-which built
-.Xr dbm 3
-style databases for the password file but depended on the calling programs
-to install them.
-The program was renamed in order that previous users of the program
-not be surprised by the changes in functionality.
-.Sh SEE ALSO
-.Xr chpass 1 ,
-.Xr passwd 1 ,
-.Xr db 3 ,
-.Xr getpwent 3 ,
-.Xr passwd 5 ,
-.Xr vipw 8
 
