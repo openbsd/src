@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.17 1998/03/23 22:40:52 deraadt Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.18 1998/06/22 14:41:47 millert Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -34,7 +34,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: passwd.c,v 1.17 1998/03/23 22:40:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: passwd.c,v 1.18 1998/06/22 14:41:47 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -546,7 +546,7 @@ pw_scan(bp, pw, flags)
 		goto fmt;
 
 	p = pw->pw_shell;
-	if (root && *p)					/* empty == /bin/sh */
+	if (root && *p) {				/* empty == /bin/sh */
 		for (setusershell();;) {
 			if (!(sh = getusershell())) {
 				warnx("warning, unknown root shell");
@@ -555,6 +555,8 @@ pw_scan(bp, pw, flags)
 			if (!strcmp(p, sh))
 				break;	
 		}
+		endusershell();
+	}
 
 	if ((p = strsep(&bp, ":"))) {			/* too many */
 fmt:		warnx("corrupted entry");
