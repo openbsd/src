@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_malloc.c,v 1.32 2001/06/21 14:27:13 niklas Exp $	*/
+/*	$OpenBSD: kern_malloc.c,v 1.33 2001/06/21 14:28:53 niklas Exp $	*/
 /*	$NetBSD: kern_malloc.c,v 1.15.4.2 1996/06/13 17:10:56 cgd Exp $	*/
 
 /*
@@ -343,7 +343,7 @@ free(addr, type)
 
 #ifdef DIAGNOSTIC
 	if (addr < (void *)kmembase || addr >= (void *)kmemlimit)
-		panic("free of non-malloced addr %p type %s", addr,
+		panic("free: non-malloced addr %p type %s", addr,
 		    memname[type]);
 #endif
 
