@@ -1,4 +1,6 @@
-/*	$OpenBSD: SYS.h,v 1.3 1996/08/19 08:18:18 tholo Exp $ */
+/*	$OpenBSD: SYS.h,v 1.4 1998/05/14 23:06:56 niklas Exp $ */
+/*	$NetBSD: SYS.h,v 1.4 1997/05/02 18:15:32 kleink Exp $ */
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,33 +34,43 @@
  * SUCH DAMAGE.
  */
 
+#include <machine/asm.h>
 #include <sys/syscall.h>
 
-#ifndef __STDC__
-#ifdef PROF
-#define	ENTRY(x)	.globl _/**/x; .align 2; _/**/x/**/: .word 0; \
-			.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
+#ifdef __STDC__
+#define SYSTRAP(x)	chmk $ SYS_ ## x
 #else
-#define	ENTRY(x)	.globl _/**/x; .align 2; _/**/x/**/: .word 0
-#endif PROF
-#define	SYSCALL(x)	err: jmp cerror; ENTRY(x); chmk $ SYS_/**/x; jcs err
-#define	RSYSCALL(x)	SYSCALL(x); ret
-#define	PSEUDO(x,y)	ENTRY(x); chmk $ SYS_/**/y; ret
-#define	CALL(x,y)	calls $/**/x, _/**/y
-
-#else
-
-#ifdef PROF
-#define	ENTRY(x)	.globl _ ## x; .align 2; _ ## x ## : .word 0; \
-			.data; 1:; .long 0; .text; moval 1b,r0; jsb mcount
-#else
-#define	ENTRY(x)	.globl _ ## x; .align 2; _ ## x ## : .word 0
-#endif PROF
-#define	SYSCALL(x)	err: jmp cerror; ENTRY(x); chmk $ SYS_ ## x; jcs err
-#define	RSYSCALL(x)	SYSCALL(x); ret
-#define	PSEUDO(x,y)	ENTRY(x); chmk $ SYS_ ## y; ret
-#define	CALL(x,y)	calls $ ## x, _ ## y
+#define SYSTRAP(x)	chmk $ SYS_/**/x
 #endif
+
+#define _SYSCALL_NOERROR(x,y)						\
+	ENTRY(x,0);							\
+	SYSTRAP(y)
+
+#define _SYSCALL(x,y)							\
+	err: jmp cerror;						\
+	_SYSCALL_NOERROR(x,y);						\
+	jcs err
+
+#define SYSCALL_NOERROR(x)						\
+	_SYSCALL_NOERROR(x,x)
+
+#define SYSCALL(x)							\
+	_SYSCALL(x,x)
+
+#define PSEUDO_NOERROR(x,y)						\
+	_SYSCALL_NOERROR(x,y);						\
+	ret
+
+#define PSEUDO(x,y)							\
+	_SYSCALL(x,y);							\
+	ret
+
+#define RSYSCALL_NOERROR(x)						\
+	PSEUDO_NOERROR(x,x)
+
+#define RSYSCALL(x)							\
+	PSEUDO(x,x)
 
 #define	ASMSTR		.asciz
 
