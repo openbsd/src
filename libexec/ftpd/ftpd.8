@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ftpd.8,v 1.34 2000/08/20 18:42:37 millert Exp $
+.\"	$OpenBSD: ftpd.8,v 1.35 2000/09/08 18:03:27 aaron Exp $
 .\"	$NetBSD: ftpd.8,v 1.8 1996/01/14 20:55:23 thorpej Exp $
 .\"
 .\" Copyright (c) 1985, 1988, 1991, 1993
@@ -48,10 +48,9 @@ Internet File Transfer Protocol server
 .Op Fl t Ar timeout
 .Op Fl u Ar mask
 .Sh DESCRIPTION
-.Nm Ftpd
-is the
-Internet File Transfer Protocol
-server process.  The server uses the
+.Nm
+is the Internet File Transfer Protocol server process.
+The server uses the
 .Tn TCP
 protocol
 and listens at the port specified in the
@@ -59,7 +58,7 @@ and listens at the port specified in the
 service specification; see
 .Xr services 5 .
 .Pp
-Available options:
+The options are as follows:
 .Bl -tag -width Ds
 .It Fl A
 Permit only anonymous ftp connections, accounts listed in
@@ -73,11 +72,11 @@ Other connection attempts are refused.
 Debugging information is written to the syslog using LOG_FTP.
 .It Fl D
 With this option set,
-.Nm ftpd
+.Nm
 will detach and become a daemon, accepting connections on the FTP port and
-forking child processes to handle them. This has lower overhead than
-starting
-.Nm ftpd
+forking child processes to handle them.
+This has lower overhead than starting
+.Nm
 from
 .Xr inetd 8
 and is thus useful on busy servers to reduce load.
@@ -87,7 +86,8 @@ This range is defined by the
 .Ev IPPORT_HIFIRSTAUTO
 and
 .Ev IPPORT_HILASTAUTO
-defines in <netinet/in.h>.  In
+defines in <netinet/in.h>.
+In
 .Ox
 they are set to 49152 and 65535 respectively.
 .It Fl l
@@ -98,7 +98,8 @@ If this option is specified twice, the retrieve (get), store (put), append,
 delete, make directory, remove directory and rename operations and
 their filename arguments are also logged.
 .It Fl M
-Enables multihomed mode.  Instead of simply using
+Enables multihomed mode.
+Instead of simply using
 .Pa ~ftp
 for anonymous transfers, a directory matching the fully qualified name of
 the IP number the client connected to, and located inside
@@ -114,7 +115,7 @@ This prevents the "FTP bounce attack" against services on both the local
 machine and other local machines.
 .It Fl S
 With this option set,
-.Nm ftpd
+.Nm
 logs all anonymous downloads to the file
 .Pa /var/log/ftpd
 when this file exists.
@@ -152,7 +153,8 @@ seconds (the default is 15 minutes).
 .It Fl u Ar mask
 Force the umask to
 .Ar mask .
-instead of the default 027.  Also disallows chmod.
+instead of the default 027.
+Also disallows chmod.
 .El
 .Pp
 The file
@@ -172,7 +174,8 @@ If the file
 .Pa /etc/motd
 exists,
 .Nm
-prints it after a successful login.  If the file
+prints it after a successful login.
+If the file
 .Pa .message
 exists in a directory,
 .Nm
@@ -252,7 +255,7 @@ STAT
 command is received during a data transfer, preceded by a Telnet IP
 and Synch, transfer status will be returned.
 .Pp
-.Nm Ftpd
+.Nm
 interprets file names according to the
 .Dq globbing
 conventions used by
@@ -260,7 +263,7 @@ conventions used by
 This allows users to utilize the metacharacters
 .Dq Li \&*?[]{}~ .
 .Pp
-.Nm Ftpd
+.Nm
 authenticates users according to five rules.
 .Pp
 .Bl -enum -offset indent
@@ -271,13 +274,15 @@ and not have a null password.
 In this case a password must be provided by the client before any
 file operations may be performed.
 If the user has an S/Key key, the response from a successful USER
-command will include an S/Key challenge. The client may choose to respond
-with a PASS command giving either a standard password or an S/Key
-one-time password. The server will automatically determine which type of
-password it has been given and attempt to authenticate accordingly. See
+command will include an S/Key challenge.
+The client may choose to respond with a PASS command giving either a
+standard password or an S/Key one-time password.
+The server will automatically determine which type of
+password it has been given and attempt to authenticate accordingly.
+See
 .Xr skey 1
-for more information on S/Key authentication. S/Key is a Trademark of
-Bellcore.
+for more information on S/Key authentication.
+S/Key is a Trademark of Bellcore.
 .It
 The login name must not appear in the file
 .Pa /etc/ftpusers .
@@ -293,10 +298,11 @@ as for an
 .Dq anonymous
 or
 .Dq ftp
-account (see next item).  However, the user must still supply a password.
+account (see next item).
+However, the user must still supply a password.
 This feature is intended as a compromise between a fully anonymous account
-and a fully privileged account.  The account should also be set up as for an
-anonymous account.
+and a fully privileged account.
+The account should also be set up as for an anonymous account.
 .It
 If the user name is
 .Dq anonymous
@@ -312,7 +318,7 @@ the user should be used as the password).
 .El
 .Pp
 In the last case,
-.Nm ftpd
+.Nm
 takes special measures to restrict the client's access privileges.
 The server performs a
 .Xr chroot 2
@@ -416,9 +422,9 @@ The virtual host that the connection was made to.
 .El
 .Pp
 Although fields exist for logging information on real users, this file is
-only used for anonymous downloads.  Unused fields exist only for compatility
-with other
-.Nm ftpd
+only used for anonymous downloads.
+Unused fields exist only for compatility with other
+.Nm
 implementations.
 .Sh LOGIN.CONF VARIABLES
 The
@@ -436,21 +442,21 @@ This value overrides the login directory for the users of this class.
 .Sh FILES
 .Bl -tag -width /var/run/ftpd.pid -compact
 .It Pa /etc/ftpusers
-List of unwelcome/restricted users.
+list of unwelcome/restricted users
 .It Pa /etc/ftpchroot
-List of normal users who should be chroot'd.
+list of normal users who should be chroot'd
 .It Pa /etc/ftpwelcome
-Welcome notice.
+welcome notice
 .It Pa /etc/motd
-Welcome notice after login.
+welcome notice after login
 .It Pa /etc/nologin
-Displayed and access refused.
+displayed and access refused
 .It Pa /var/run/utmp
-List of users on the system.
+list of users on the system
 .It Pa /var/run/ftpd.pid
-Process id if running in daemon mode.
+process ID if running in daemon mode
 .It Pa /var/log/ftpd
-Log file for anonymous downloads.
+log file for anonymous downloads
 .El
 .Sh SEE ALSO
 .Xr ftp 1 ,
@@ -458,15 +464,16 @@ Log file for anonymous downloads.
 .Xr who 1 ,
 .Xr getusershell 3 ,
 .Xr syslogd 8
-.Sh BUGS
-The server must run as the superuser
-to create sockets with privileged port numbers.  It maintains
-an effective user ID of the logged in user, reverting to
-the superuser only when binding addresses to sockets.  The
-possible security holes have been extensively
-scrutinized, but are possibly incomplete.
 .Sh HISTORY
 The
 .Nm
 command appeared in
 .Bx 4.2 .
+.Sh BUGS
+The server must run as the superuser to create sockets with
+privileged port numbers.
+It maintains
+an effective user ID of the logged in user, reverting to
+the superuser only when binding addresses to sockets.
+The possible security holes have been extensively scrutinized,
+but are possibly incomplete.

@@ -30,7 +30,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"     from: @(#)ttys.5	8.1 (Berkeley) 6/4/93
-.\"	$Id: ttys.5,v 1.4 1999/07/09 13:35:50 aaron Exp $
+.\"	$Id: ttys.5,v 1.5 2000/09/08 18:03:28 aaron Exp $
 .\"
 .Dd June 4, 1993
 .Dt TTYS 5
@@ -39,21 +39,23 @@
 .Nm ttys
 .Nd terminal initialization information
 .Sh DESCRIPTION
-The file
-.Nm ttys
-contains information that is used by various routines to initialize
+The
+.Nm
+file contains information that is used by various routines to initialize
 and control the use of terminal special files.
 This information is read with the
 .Xr getttyent 3
 library routines.
 There is one line in the
-.Nm ttys
+.Nm
 file per special device file.
 Fields are separated by tabs and/or spaces.
-Fields comprised of more than one word should be enclosed in double
-quotes (``"'').
+Fields comprised of more than one word should be enclosed in double quotes
+.Pq Ql \&" .
 Blank lines and comments may appear anywhere in the file; comments
-are delimited by hash marks (``#'') and new lines.
+are delimited by hash marks
+.Pq Ql #
+and newlines.
 Any unspecified fields will default to null.
 .Pp
 The first field is the
@@ -72,13 +74,12 @@ the start up for a window system terminal emulator or some other
 daemon process, and can contain multiple words if quoted.
 .Pp
 The third field is the type of terminal usually connected to that
-tty line, normally the one found in the
+TTY line, normally the one found in the
 .Xr termcap 5
-data base file.
+database file.
 The environment variable
 .Dv TERM
-is initialized with the value by
-either
+is initialized with the value by either
 .Xr getty 8
 or
 .Xr login 1 .
@@ -90,7 +91,7 @@ entry (see
 or specify a window system process that
 .Xr init 8
 will maintain for the terminal line.
-The following is a list of permitted flags for each tty:
+The following is a list of permitted flags for each TTY:
 .Bl -tag -width xxxxxxx
 .It Ar on
 Specify that
@@ -99,15 +100,15 @@ should execute the command given in the second field.
 .It Ar off
 The opposite of on.
 .It Ar secure
-if
+If
 .Ar on
-is also specified, allows users with a uid of 0 to login on
-this line.
+is also specified, allows users with a UID of 0 to login on this line.
 .El
 .Pp
 Additionally, the following flags modify the default behavior of
-the terminal line.  Some of these flags may not be supported by a
-terminal line driver.  The flag fields should not be quoted.
+the terminal line.
+Some of these flags may not be supported by a terminal line driver.
+The flag fields should not be quoted.
 .Bl -tag -width xxxxxxx
 .It Ar local
 Treat the line as if it is locally connected.

@@ -1,3 +1,4 @@
+.\"	$OpenBSD: getNAME.8,v 1.10 2000/09/08 18:03:27 aaron Exp $
 .\"	$NetBSD: getNAME.8,v 1.2.2.1 1997/11/10 19:54:39 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
@@ -40,7 +41,8 @@
 The
 .Nm
 program looks inside manual sources to retrieve the NAME section of
-the manual page.  It can be used to create a table of contents, report
+the manual page.
+It can be used to create a table of contents, report
 the style of manual, or to create an introduction to the manual section.
 By default,
 .Nm
@@ -72,6 +74,11 @@ or some unknown
 .Pq Dq UNKNOWN
 format exists.
 .El
+.Sh SEE ALSO
+.Xr apropos 1 ,
+.Xr man 1 ,
+.Xr whatis 1 ,
+.Xr makewhatis 8
 .Sh HISTORY
 The
 .Nm
@@ -81,8 +88,3 @@ command first appeared in
 It would be nice if
 .Nm
 could deal with preformatted manuals.
-.Sh SEE ALSO
-.Xr apropos 1 ,
-.Xr man 1 ,
-.Xr whatis 1 ,
-.Xr makewhatis 8
