@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.13 1998/04/13 15:26:46 millert Exp $	*/
+/*	$OpenBSD: init.c,v 1.14 1998/05/04 06:37:02 deraadt Exp $	*/
 /*	$NetBSD: init.c,v 1.22 1996/05/15 23:29:33 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)init.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: init.c,v 1.13 1998/04/13 15:26:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: init.c,v 1.14 1998/05/04 06:37:02 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,11 +117,7 @@ state_func_t death __P((void));
 enum { AUTOBOOT, FASTBOOT } runcom_mode = AUTOBOOT;
 
 void transition __P((state_t));
-#ifndef LETS_GET_SMALL
 state_t requested_transition = runcom;
-#else /* LETS_GET_SMALL */
-state_t requested_transition = single_user;
-#endif /* LETS_GET_SMALL */
 
 void setctty __P((char *));
 
@@ -177,7 +173,6 @@ main(argc, argv)
 	struct sigaction sa;
 	sigset_t mask;
 
-#ifndef LETS_GET_SMALL
 	/* Dispose of random users. */
 	if (getuid() != 0) {
 		(void)fprintf(stderr, "init: %s\n", strerror(EPERM));
@@ -195,7 +190,6 @@ main(argc, argv)
 	 * Does 'init' deserve its own facility number?
 	 */
 	openlog("init", LOG_CONS|LOG_ODELAY, LOG_AUTH);
-#endif /* LETS_GET_SMALL */
 
 	/*
 	 * Create an initial session.
@@ -210,7 +204,6 @@ main(argc, argv)
 	if (setlogin("root") < 0)
 		warning("setlogin() failed: %m");
 
-#ifndef LETS_GET_SMALL
 	/*
 	 * This code assumes that we always get arguments through flags,
 	 * never through bits set in some random machine register.
@@ -230,9 +223,6 @@ main(argc, argv)
 
 	if (optind != argc)
 		warning("ignoring excess arguments");
-#else /* LETS_GET_SMALL */
-	requested_transition = single_user;
-#endif /* LETS_GET_SMALL */
 
 	/*
 	 * We catch or block signals rather than ignore them,
@@ -715,14 +705,9 @@ single_user()
 	}
 
 	runcom_mode = FASTBOOT;
-#ifndef LETS_GET_SMALL
 	return (state_func_t) runcom;
-#else /* LETS_GET_SMALL */
-	return (state_func_t) single_user;
-#endif /* LETS_GET_SMALL */
 }
 
-#ifndef LETS_GET_SMALL
 /*
  * Run the system startup script.
  */
@@ -1158,7 +1143,6 @@ start_getty(sp)
 		sp->se_getty_argv[0], sp->se_device);
 	_exit(1);
 }
-#endif /* LETS_GET_SMALL */
 
 /*
  * Collect exit status for a child.
@@ -1172,7 +1156,6 @@ collect_child(pid)
 	pid_t pid;
 #endif
 {
-#ifndef LETS_GET_SMALL
 	register session_t *sp, *sprev, *snext;
 
 	if (! sessions)
@@ -1206,7 +1189,6 @@ collect_child(pid)
 	sp->se_process = pid;
 	sp->se_started = time(NULL);
 	add_session(sp);
-#endif /* LETS_GET_SMALL */
 }
 
 /*
@@ -1218,7 +1200,6 @@ transition_handler(sig)
 {
 
 	switch (sig) {
-#ifndef LETS_GET_SMALL
 	case SIGHUP:
 		requested_transition = clean_ttys;
 		break;
@@ -1228,14 +1209,12 @@ transition_handler(sig)
 	case SIGTSTP:
 		requested_transition = catatonia;
 		break;
-#endif /* LETS_GET_SMALL */
 	default:
 		requested_transition = 0;
 		break;
 	}
 }
 
-#ifndef LETS_GET_SMALL
 /*
  * Take the system multiuser.
  */
@@ -1349,7 +1328,6 @@ catatonia()
 
 	return (state_func_t) multi_user;
 }
-#endif /* LETS_GET_SMALL */
 
 /*
  * Note SIGALRM.
@@ -1361,7 +1339,6 @@ alrm_handler(sig)
 	clang = 1;
 }
 
-#ifndef LETS_GET_SMALL
 /*
  * Bring the system down to single user.
  */
@@ -1398,4 +1375,3 @@ death()
 
 	return (state_func_t) single_user;
 }
-#endif /* LETS_GET_SMALL */
