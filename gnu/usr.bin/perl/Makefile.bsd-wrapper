@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.bsd-wrapper,v 1.49 2002/10/04 18:07:30 mickey Exp $
+# $OpenBSD: Makefile.bsd-wrapper,v 1.50 2002/10/04 18:12:03 mickey Exp $
 #
 # Build wrapper for Perl 5.6.1
 #
@@ -411,25 +411,25 @@ perly.c perly.h: perly.y
 # these dump the core on toke
 .if ${MACHINE} == "hppa"
 
-toke.o: ${.CURDIR}/toke.c
+toke.o: toke.c
 	@echo "${COMPILE.c} ${.IMPSRC} -O0 -o ${.TARGET}"
 	@${COMPILE.c} ${.IMPSRC} -O0 -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-toke.go: ${.CURDIR}/toke.c
+toke.go: toke.c
 	@echo "${COMPILE.c} -g ${.IMPSRC} -O0 -o ${.TARGET}"
 	@${COMPILE.c} -g ${.IMPSRC} -O0 -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-toke.po: ${.CURDIR}/toke.c
+toke.po: toke.c
 	@echo "${COMPILE.c} -p ${.IMPSRC} -O0 -o ${.TARGET}"
 	@${COMPILE.c} -p ${.IMPSRC} -O0 -o ${.TARGET}.o
 	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-toke.so: ${.CURDIR}/toke.c
+toke.so: toke.c
 	@echo "${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O0 -o ${.TARGET}"
 	@${COMPILE.c} ${PICFLAG} -DPIC ${.IMPSRC} -O0 -o ${.TARGET}.o
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
