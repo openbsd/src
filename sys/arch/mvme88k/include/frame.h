@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.3 2000/12/06 23:29:51 mickey Exp $	*/
+/*	$OpenBSD: frame.h,v 1.4 2001/08/11 23:51:50 miod Exp $	*/
 /*	$NetBSD: frame.h,v 1.15 1997/05/03 12:49:05 mycroft Exp $	*/
 
 /*
@@ -49,13 +49,5 @@
 struct frame {
 	struct m88100_saved_state  __attribute__((__packed__)) F_t;
 };
-
-
-/* common frame size */
-#define	CFSIZE		(sizeof(struct frame))
-
-#define	V_BUSERR	0x008
-#define	V_ADDRERR	0x00C
-#define	V_TRAP1		0x084
 
 #endif	/* _M88K_FRAME_H_ */
