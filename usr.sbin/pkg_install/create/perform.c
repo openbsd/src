@@ -1,7 +1,7 @@
-/*	$OpenBSD: perform.c,v 1.16 2003/08/15 00:03:22 espie Exp $	*/
+/*	$OpenBSD: perform.c,v 1.17 2003/08/27 06:51:26 jolan Exp $	*/
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: perform.c,v 1.16 2003/08/15 00:03:22 espie Exp $";
+static const char rcsid[] = "$OpenBSD: perform.c,v 1.17 2003/08/27 06:51:26 jolan Exp $";
 #endif
 
 /*
@@ -280,6 +280,8 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 		    errx(2, "can't make temp file");
 		if (! (flist = fdopen(fd, "w")))
 		    errx(2, "can't write to temp file");
+		if (strcmp(args[nargs], "-C") == 0)
+		    nargs+= 2;
 		args[nargs++] = "-I";
 		args[nargs++] = tempfile[current++];
 	    }
@@ -293,18 +295,17 @@ make_dist(char *home, char *pkg, char *suffix, package_t *plist)
 	    if (flist) 
 		fclose(flist);
 	    flist = 0;
-	    args[nargs++] = "-C";
+	    args[nargs] = "-C";
 	    if (BaseDir) {
 		    size_t size = strlen(BaseDir)+2+strlen(p->name);
-		    args[nargs] = malloc(size);
-		    if (!args[nargs]) {
+		    args[nargs+1] = malloc(size);
+		    if (args[nargs+1] == NULL) {
 			    cleanup(0);
 			    errx(2, "can't get Cwd space");
 		    }
-		    snprintf(args[nargs], size, "%s/%s", BaseDir, p->name);
-		    nargs++;
+		    snprintf(args[nargs+1], size, "%s/%s", BaseDir, p->name);
 	    } else
-		    args[nargs++] = p->name;
+		    args[nargs+1] = p->name;
 	}
 	else if (p->type == PLIST_IGNORE)
 	     p = p->next;
