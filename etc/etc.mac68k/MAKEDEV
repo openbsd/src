@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.7 2002/04/21 23:37:05 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.45 2002/04/21 23:37:02 miod Exp 
+#	OpenBSD: etc.mac68k/MAKEDEV.md,v 1.8 2002/05/16 21:11:20 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.46 2002/05/16 16:18:44 provos Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.57 2002/04/21 23:37:30 miod Exp $
+#	$OpenBSD: MAKEDEV,v 1.58 2002/05/16 21:12:21 miod Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -67,6 +67,7 @@
 #	xfs*	XFS filesystem devices
 #	adb	Apple Desktop bus event interface
 #	asc*	ASC Audio device
+#	systrace*	system call tracing device
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -237,6 +238,10 @@ asc*)
         M asc$U c 36 $U
         ;;
 
+systrace)
+	M systrace c 50 0 644
+	;;
+
 asc*)
 	M asc$U 36 0
 	;;
@@ -359,7 +364,7 @@ all)
 	R bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2
 	R xfs0 ss0 ss1 ch0 vnd0 vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4
 	R local grf0 grf1 grf2 grf3 adb asc0 uk0 random lkm ttye0
-	R tty00 tty01 pf altq std st0 st1 fd
+	R tty00 tty01 pf altq systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)

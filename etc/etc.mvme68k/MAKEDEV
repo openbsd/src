@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.mvme68k/MAKEDEV.md,v 1.4 2002/04/28 14:49:25 miod Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.45 2002/04/21 23:37:02 miod Exp 
+#	OpenBSD: etc.mvme68k/MAKEDEV.md,v 1.5 2002/05/16 21:11:20 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.46 2002/05/16 16:18:44 provos Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.42 2002/04/28 14:49:42 miod Exp $
+#	$OpenBSD: MAKEDEV,v 1.43 2002/05/16 21:12:22 miod Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -71,6 +71,7 @@
 #	flash0	flash memory access
 #	vmes0	VMEbus access
 #	vmel0	VMEbus access
+#	systrace*	system call tracing device
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -200,6 +201,10 @@ std)
 	M klog		c 6 0 600
 	;;
 
+
+systrace)
+	M systrace c 50 0 644
+	;;
 
 vmel0)
 	M vmel0 c 31 0 640 kmem
@@ -393,7 +398,7 @@ all)
 	R vnd1 vnd2 vnd3 sd0 sd1 sd2 sd3 sd4 cd0 cd1 rd0 tun0 tun1
 	R tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	R pty0 pty1 pty2 xfs0 ss0 ss1 vmel0 vmes0 flash0 nvram0 sram0
-	R uk0 random lkm pf altq std st0 st1 fd
+	R uk0 random lkm pf altq systrace std st0 st1 fd
 	;;
 
 sd*|ccd*)

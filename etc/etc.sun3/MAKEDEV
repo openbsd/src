@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.sun3/MAKEDEV.md,v 1.6 2002/04/14 23:26:46 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.43 2002/04/11 20:28:49 deraadt Exp 
+#	OpenBSD: etc.sun3/MAKEDEV.md,v 1.7 2002/05/16 21:11:21 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.46 2002/05/16 16:18:44 provos Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.59 2002/04/14 23:27:01 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.60 2002/05/16 21:12:22 miod Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -67,6 +67,7 @@
 #	fd	makes fd/* for the fdescfs
 #	xfs*	XFS filesystem devices
 #	altq/	ALTQ control interface
+#	systrace*	system call tracing device
 # XXX - Keep /usr/etc so SunOS can find chown
 test -d /usr/etc && PATH=$PATH:/usr/etc
 
@@ -216,6 +217,10 @@ std)
 	RMlist="$RMlist vme16 vme24 vme32"
 	;;
 
+systrace)
+	M systrace c 86 0 644
+	;;
+
 altq)
 	RMlist="mkdir -p altq;$RMlist"
 	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
@@ -341,7 +346,7 @@ all)
 	R cd0 cd1 rd0 xy0 xy1 xy2 xy3 tun0 tun1 tun2 tun3 bpf0 bpf1
 	R bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0
 	R ss0 ss1 local cgfour0 cgtwo0 bwtwo0 uk0 random ttya ttyb
-	R ttyc ttyd pf altq xd0 xd1 xd2 xd3 std st0 st1 fd
+	R ttyc ttyd pf altq systrace xd0 xd1 xd2 xd3 std st0 st1 fd
 	;;
 
 xd*|xy*|sd*|ccd*)

@@ -3,11 +3,11 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.7 2002/04/18 23:16:00 deraadt Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.44 2002/04/17 22:53:04 miod Exp 
+#	OpenBSD: etc.hp300/MAKEDEV.md,v 1.8 2002/05/16 21:11:20 miod Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.46 2002/05/16 16:18:44 provos Exp 
 #	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
 #
-#	$OpenBSD: MAKEDEV,v 1.53 2002/04/18 23:16:14 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.54 2002/05/16 21:12:21 miod Exp $
 #
 # Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -68,6 +68,7 @@
 #	*random	inkernel random data source
 #	xfs*	XFS filesystem devices
 #	altq/	ALTQ control interface
+#	systrace*	system call tracing device
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -297,6 +298,10 @@ hil*)
 	RMlist="$RMlist keyboard locator"
 	;;
 
+systrace)
+	M systrace c 50 0 644
+	;;
+
 altq)
 	RMlist="mkdir -p altq;$RMlist"
 	for d in altq cbq wfq afm fifoq red rio localq hfsc cdnr blue priq; do
@@ -400,7 +405,7 @@ all)
 	R st1 hil grf0 ccd0 ccd1 ccd2 ccd3 vnd0 vnd1 vnd2 vnd3 sd0 sd1
 	R sd2 sd3 sd4 rd0 tun0 tun1 tun2 tun3 bpf0 bpf1 bpf2 bpf3 bpf4
 	R bpf5 bpf6 bpf7 bpf8 bpf9 pty0 pty1 pty2 xfs0 local ppi0
-	R apci0 random lkm pf altq std fd
+	R apci0 random lkm pf altq systrace std fd
 	;;
 
 sd*|hd*|ccd*)
