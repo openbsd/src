@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_chpass.c,v 1.4 2001/12/07 04:22:41 millert Exp $	*/
+/*	$OpenBSD: login_chpass.c,v 1.5 2002/01/06 21:53:28 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -212,18 +212,23 @@ yp_chpass(username)
 	}
 
 	/* If user doesn't exist, just prompt for old password and exit. */
-	if ((pw = ypgetpwnam(username)) == NULL) {
+	pw = ypgetpwnam(username);
+	if (pw) {
+		if (pw->pw_uid == 0) {
+			syslog(LOG_ERR, "attempted root password change");
+			pw = NULL;
+		} else if (*pw->pw_passwd == '\0') {
+			syslog(LOG_ERR, "%s attempting to add password",
+			    username);
+			pw = NULL;
+		}
+	}
+	if (pw == NULL) {
 		char *p = getpass("Old password:");
 		crypt(p, "xx");
 		memset(p, 0, strlen(p));
 		warnx("YP passwd database unchanged.");
 		exit(1);
-	}
-
-	if (*pw->pw_passwd == '\0') {
-		syslog(LOG_ERR, "%s attempting to add password", username);
-		(void)writev(BACK_CHANNEL, iov, 2);
-		exit(0);
 	}
 
 	/* prompt for new password */

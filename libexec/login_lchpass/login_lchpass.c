@@ -1,4 +1,4 @@
-/*	$OpenBSD: login_lchpass.c,v 1.5 2001/12/07 04:20:19 millert Exp $	*/
+/*	$OpenBSD: login_lchpass.c,v 1.6 2002/01/06 21:53:28 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Berkeley Software Design, Inc. All rights reserved.
@@ -65,7 +65,7 @@ main(argc, argv)
 	struct iovec iov[2];
 	struct passwd *pwd;
 	char localhost[MAXHOSTNAMELEN];
-    	char *username = 0;
+    	char *username = NULL;
 	char *salt;
 	char *p;
     	int c;
@@ -114,11 +114,15 @@ main(argc, argv)
 	}
 
 	pwd = getpwnam(username);
-
-	if (pwd && *pwd->pw_passwd == '\0') {
-		syslog(LOG_ERR, "%s attempting to add password", username);
-		(void)writev(BACK_CHANNEL, iov, 2);
-		exit(0);
+	if (pwd) {
+		if (pwd->pw_uid == 0) {
+			syslog(LOG_ERR, "attempted root password change");
+			pwd = NULL;
+		} else if (*pwd->pw_passwd == '\0') {
+			syslog(LOG_ERR, "%s attempting to add password",
+			    username);
+			pwd = NULL;
+		}
 	}
 
 	if (pwd)
@@ -128,7 +132,7 @@ main(argc, argv)
 
 	(void)setpriority(PRIO_PROCESS, 0, -4);
 
-	(void)printf("Changing local password for %s.\n", pwd->pw_name);
+	(void)printf("Changing local password for %s.\n", username);
 	p = getpass("Old Password:");
 
 	salt = crypt(p, salt);
