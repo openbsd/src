@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.3 1999/12/21 09:00:50 itojun Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.4 1999/12/28 07:17:38 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -176,7 +176,7 @@ in_gif_input(m, va_alist)
 	va_dcl
 #endif
 {
-	int off, proto;
+	int off;
 	struct gif_softc *sc;
 	struct ifnet *gifp = NULL;
 	struct ip *ip;
@@ -185,7 +185,6 @@ in_gif_input(m, va_alist)
 
 	va_start(ap, m);
 	off = va_arg(ap, int);
-	proto = va_arg(ap, int);
 	va_end(ap);
 
 	/*
@@ -229,6 +228,6 @@ in_gif_input(m, va_alist)
 		m->m_pkthdr.rcvif = gifp;
 
 inject:
-	ip4_input(m, off, proto);
+	ip4_input(m, off);
 	return;
 }
