@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.8 2001/06/23 01:53:02 drahn Exp $
+#	$OpenBSD: Makefile,v 1.1 2001/09/01 15:36:37 drahn Exp $
 #       $NetBSD: Makefile,v 1.1 1996/09/30 16:35:05 ws Exp $
 
 R=              ..

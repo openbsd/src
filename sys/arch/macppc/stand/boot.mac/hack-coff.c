@@ -1,4 +1,4 @@
-/*	$OpenBSD: hack-coff.c,v 1.2 2001/07/04 08:38:53 niklas Exp $	*/
+/*	$OpenBSD: hack-coff.c,v 1.1 2001/09/01 15:36:37 drahn Exp $	*/
 
 #include <stdio.h>
 
