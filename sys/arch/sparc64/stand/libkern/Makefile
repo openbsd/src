@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1.1.1 2001/08/18 15:51:10 jason Exp $
+#	$OpenBSD: Makefile,v 1.2 2001/08/18 16:26:37 jason Exp $
 
 LIB=	kern
 
@@ -36,3 +36,5 @@ install:
 machine:
 	rm -f $@
 	ln -s ${.CURDIR}/../../include $@
+
+beforedepend: machine
