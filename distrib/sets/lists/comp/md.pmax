@@ -14,6 +14,7 @@
 ./usr/include/machine/asm.h
 ./usr/include/machine/autoconf.h
 ./usr/include/machine/bsd-aout.h
+./usr/include/machine/bus.h
 ./usr/include/machine/cdefs.h
 ./usr/include/machine/conf.h
 ./usr/include/machine/cpu.h
