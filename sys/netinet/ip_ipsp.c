@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.118 2001/05/29 01:03:00 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.119 2001/05/29 01:17:24 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1027,6 +1027,15 @@ ipsp_kern(int off, char **bufp, int len)
 	      l += sprintf(buffer + l, "\t%qu bytes processed by this SA\n",
 			 tdb->tdb_cur_bytes);
 
+	      if (tdb->tdb_last_used)
+		l += sprintf(buffer + l, "\tLast used %qu seconds ago\n",
+			     time.tv_sec - tdb->tdb_last_used);
+
+	      if (tdb->tdb_last_marked)
+		l += sprintf(buffer + l, 
+			     "\tLast marked/unmarked %qu seconds ago\n",
+			     time.tv_sec - tdb->tdb_last_marked);
+
 	      l += sprintf(buffer + l, "\tExpirations:\n");
 
 	      if (tdb->tdb_flags & TDBF_TIMER)
@@ -1258,7 +1267,10 @@ ipsp_skipcrypto_mark(struct tdb_ident *tdbi)
  
     tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
     if (tdb != NULL)
-      tdb->tdb_flags |= TDBF_SKIPCRYPTO;
+    {
+	tdb->tdb_flags |= TDBF_SKIPCRYPTO;
+	tdb->tdb_last_marked = time.tv_sec;
+    }
     splx(s);
 }
 
@@ -1271,6 +1283,9 @@ ipsp_skipcrypto_unmark(struct tdb_ident *tdbi)
  
     tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
     if (tdb != NULL)
-      tdb->tdb_flags &= ~TDBF_SKIPCRYPTO;
+    {
+	tdb->tdb_flags &= ~TDBF_SKIPCRYPTO;
+	tdb->tdb_last_marked = time.tv_sec;
+    }
     splx(s);
 }
