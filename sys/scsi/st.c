@@ -1,4 +1,4 @@
-/*	$OpenBSD: st.c,v 1.20 1997/09/03 17:21:49 deraadt Exp $	*/
+/*	$OpenBSD: st.c,v 1.21 1997/09/05 05:56:51 millert Exp $	*/
 /*	$NetBSD: st.c,v 1.71 1997/02/21 23:03:49 thorpej Exp $	*/
 
 /*
@@ -1733,10 +1733,8 @@ st_interpret_sense(xs)
 		info = xs->datalen;	/* bad choice if fixed blocks */
 	if ((sense->error_code & SSD_ERRCODE) != 0x70)
 		return -1;	/* let the generic code handle it */
-#if	SCSIVERBOSE
 	else if ((xs->flags & SCSI_SILENT) == 0)
 		scsi_print_sense(xs, 0);	/* tell folks what happened */
-#endif
 	if (st->flags & ST_FIXEDBLOCKS) {
 		xs->resid = info * st->blksize;
 		if (sense->flags & SSD_EOM) {

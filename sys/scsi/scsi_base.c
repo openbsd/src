@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsi_base.c,v 1.17 1997/09/05 05:19:52 millert Exp $	*/
+/*	$OpenBSD: scsi_base.c,v 1.18 1997/09/05 05:56:49 millert Exp $	*/
 /*	$NetBSD: scsi_base.c,v 1.43 1997/04/02 02:29:36 mycroft Exp $	*/
 
 /*
@@ -31,12 +31,8 @@
  */
 
 /*
- * Additions for detail SCSI error printing are
- * Copyright (c) 1997 by Matthew Jacob.
- */
-
-/*
  * Originally written by Julian Elischer (julian@dialix.oz.au)
+ * Detailed SCSI error printing Copyright 1997 by Matthew Jacob.
  */
 
 #include <sys/types.h>
@@ -59,12 +55,10 @@ LIST_HEAD(xs_free_list, scsi_xfer) xs_free_list;
 static __inline struct scsi_xfer *scsi_make_xs __P((struct scsi_link *,
     struct scsi_generic *, int cmdlen, u_char *data_addr,
     int datalen, int retries, int timeout, struct buf *, int flags));
+static __inline void asc2ascii __P((u_char asc, u_char ascq, char *result));
 int sc_err1 __P((struct scsi_xfer *, int));
 int scsi_interpret_sense __P((struct scsi_xfer *));
-#if	SCSIVERBOSE
-static inline void asc2ascii __P((u_char asc, u_char ascq, char *result));
 char *scsi_decode_sense __P((void *, int));
-#endif
 
 /*
  * Get a scsi transfer structure for the caller. Charge the structure
@@ -592,18 +586,6 @@ scsi_interpret_sense(xs)
 	u_int8_t key;
 	u_int32_t info;
 	int error;
-#if	!SCSIVERBOSE
-	static char *error_mes[] = {
-		"soft error (corrected)",
-		"not ready", "medium error",
-		"non-media hardware failure", "illegal request",
-		"unit attention", "readonly device",
-		"no data found", "vendor unique",
-		"copy aborted", "command aborted",
-		"search returned equal", "volume overflow",
-		"verify miscompare", "unknown error key"
-	};
-#endif
 
 	sense = &xs->sense;
 #ifdef	SCSIDEBUG
@@ -713,44 +695,8 @@ scsi_interpret_sense(xs)
 			error = EIO;
 			break;
 		}
-
-
-#if	SCSIVERBOSE
 		scsi_print_sense(xs, 0);
-#else
-		if (key) {
-			sc_print_addr(sc_link);
-			printf("%s", error_mes[key - 1]);
-			if ((sense->error_code & SSD_ERRCODE_VALID) != 0) {
-				switch (key) {
-				case 0x2:	/* NOT READY */
-				case 0x5:	/* ILLEGAL REQUEST */
-				case 0x6:	/* UNIT ATTENTION */
-				case 0x7:	/* DATA PROTECT */
-					break;
-				case 0x8:	/* BLANK CHECK */
-					printf(", requested size: %d (decimal)",
-					    info);
-					break;
-				case 0xb:	/* COMMAND ABORTED */
-					if (xs->retries)
-						printf(", retrying");
-					printf(", cmd 0x%x, info 0x%x",
-						xs->cmd->opcode, info);
-					break;
-				default:
-					printf(", info = %d (decimal)", info);
-				}
-			}
-			if (sense->extra_len != 0) {
-				int n;
-				printf(", data =");
-				for (n = 0; n < sense->extra_len; n++)
-					printf(" %02x", sense->extra_bytes[n]);
-			}
-			printf("\n");
-		}
-#endif
+
 		return error;
 
 	/*
@@ -791,7 +737,6 @@ sc_print_addr(sc_link)
 	    sc_link->target, sc_link->lun);		
 }
 
-#if	SCSIVERBOSE
 static const char *sense_keys[16] = {
 	"No Additional Sense",
 	"Soft Error",
@@ -810,6 +755,7 @@ static const char *sense_keys[16] = {
 	"Miscompare Error",
 	"Reserved"
 };
+#ifndef SCSITERSE
 static const struct {
 	u_char asc, ascq;
 	char *description;
@@ -1007,8 +953,7 @@ static const struct {
 	{ 0x00, 0x00, NULL }
 };
 
-
-static inline void
+static __inline void
 asc2ascii(asc, ascq, result)
 	u_char asc, ascq;
 	char *result;
@@ -1033,6 +978,18 @@ asc2ascii(asc, ascq, result)
 		(void) strcpy(result, adesc[i].description);
 	}
 }
+
+#else
+
+static __inline void
+asc2ascii(asc, ascq, result)
+	u_char asc, ascq;
+	char *result;
+{
+	(void) sprintf(result, "ASC 0x%02x ASCQ 0x%02x", asc & 0xff,
+	    ascq & 0xff);
+}
+#endif /* SCSITERSE */
 
 void
 scsi_print_sense(xs, verbosity)
@@ -1174,9 +1131,8 @@ scsi_decode_sense(sinfo, flag)
 		asc2ascii(snsbuf[12], snsbuf[13], rqsbuf);
 		return (rqsbuf);
 	} else  if (flag == 2) {	/* Sense Key && ASC/ASCQ */
-		auto char localbuf[64];
-		asc2ascii(snsbuf[12], snsbuf[13], localbuf);
-		(void) sprintf(rqsbuf, "%s, %s", sense_keys[skey], localbuf);
+		asc2ascii(snsbuf[12], snsbuf[13],
+		    rqsbuf + sprintf(rqsbuf, "%s, ", sense_keys[skey]));
 		return (rqsbuf);
 	} else if (flag == 3  && snsbuf[7] >= 9 && (snsbuf[15] & 0x80)) {
 		/*
@@ -1215,7 +1171,6 @@ scsi_decode_sense(sinfo, flag)
 	return (NULL);
 }
 
-#endif
 #ifdef	SCSIDEBUG
 /*
  * Given a scsi_xfer, dump the request, in all it's glory
@@ -1277,4 +1232,4 @@ show_mem(address, num)
 	}
 	printf("\n------------------------------\n");
 }
-#endif /*SCSIDEBUG */
+#endif /* SCSIDEBUG */
