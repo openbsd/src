@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.14 1996/06/17 11:06:18 deraadt Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.15 1997/02/14 18:15:28 deraadt Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -548,7 +548,7 @@ tunwrite(dev, uio, ioflag)
 	ifp = &tunctl[unit].tun_if;
 	TUNDEBUG(("%s: tunwrite\n", ifp->if_xname));
 
-	if (uio->uio_resid < 0 || uio->uio_resid > TUNMTU) {
+	if (uio->uio_resid < 0 || uio->uio_resid > ifp->if_mtu) {
 		TUNDEBUG(("%s: len=%d!\n", ifp->if_xname, uio->uio_resid));
 		return EMSGSIZE;
 	}
