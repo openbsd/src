@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcp_input.c,v 1.65 2000/07/06 10:31:10 fgsch Exp $	*/
+/*	$OpenBSD: tcp_input.c,v 1.66 2000/07/09 12:53:55 itojun Exp $	*/
 /*	$NetBSD: tcp_input.c,v 1.23 1996/02/13 23:43:44 christos Exp $	*/
 
 /*
@@ -2110,8 +2110,10 @@ tcp_dooptions(tp, cp, cnt, th, ts_present, ts_val, ts_ecr)
 		if (opt == TCPOPT_NOP)
 			optlen = 1;
 		else {
+			if (cnt < 2)
+				break;
 			optlen = cp[1];
-			if (optlen <= 0)
+			if (optlen < 2 || optlen > cnt)
 				break;
 		}
 		switch (opt) {
