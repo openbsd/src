@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: newvers.sh,v 1.31 2001/04/19 23:33:11 deraadt Exp $
+#	$OpenBSD: newvers.sh,v 1.32 2001/05/01 22:21:33 deraadt Exp $
 #	$NetBSD: newvers.sh,v 1.17.2.1 1995/10/12 05:17:11 jtc Exp $
 #
 # Copyright (c) 1984, 1986, 1990, 1993
@@ -59,7 +59,8 @@ id=`basename ${d}`
 #		OSMINOR
 #	src/distrib/miniroot/install.sub
 #		VERSION
-#
+#	src/etc/root/root.mail
+#		VERSION and other bits
 
 ost="OpenBSD"
 osr="2.9"
