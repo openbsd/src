@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc_pci.c,v 1.3 2000/04/26 13:58:28 mickey Exp $	*/
+/*	$OpenBSD: if_dc_pci.c,v 1.4 2000/06/12 16:23:22 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -87,7 +87,7 @@ struct dc_type dc_devs[] = {
 	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9100 },
 	{ PCI_VENDOR_DAVICOM, PCI_PRODUCT_DAVICOM_DM9102 },
 	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AL981 },
-	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN985 },
+	{ PCI_VENDOR_ADMTEK, PCI_PRODUCT_ADMTEK_AN983 },
 	{ PCI_VENDOR_ASIX, PCI_PRODUCT_ASIX_AX88140A },
 	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98713 },
 	{ PCI_VENDOR_MACRONIX, PCI_PRODUCT_MACRONIX_MX98715 },
@@ -280,9 +280,9 @@ void dc_pci_attach(parent, self, aux)
 			sc->dc_flags |= DC_TX_ADMTEK_WAR;
 			sc->dc_pmode = DC_PMODE_MII;
 		}
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AN985) {
+		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ADMTEK_AN983) {
 			found = 1;
-			sc->dc_type = DC_TYPE_AN985;
+			sc->dc_type = DC_TYPE_AN983;
 			sc->dc_flags |= DC_TX_USE_TX_INTR;
 			sc->dc_flags |= DC_TX_ADMTEK_WAR;
 			sc->dc_pmode = DC_PMODE_MII;
