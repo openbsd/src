@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.12 1998/12/31 12:27:11 deraadt Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.13 1998/12/31 12:40:34 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -90,7 +90,7 @@ icmp_error(n, type, code, dest, destifp)
 	register struct ip *oip = mtod(n, struct ip *), *nip;
 	register unsigned oiplen = oip->ip_hl << 2;
 	register struct icmp *icp;
-	register struct mbuf *m;
+	struct mbuf *m, m0;
 	unsigned icmplen;
 
 #ifdef ICMPPRINTFS
@@ -149,8 +149,13 @@ icmp_error(n, type, code, dest, destifp)
 	bcopy((caddr_t)oip, (caddr_t)&icp->icmp_ip, icmplen);
 	nip = &icp->icmp_ip;
 	nip->ip_len = htons((u_int16_t)(nip->ip_len + oiplen));
-	/* XXX should correct nip->ip_sum */
-	
+
+	m0.m_next = NULL;			/* correct nip->ip_sum */
+	m0.m_data = (char *)nip;
+	m0.m_len = nip->ip_hl << 2;
+	nip->ip_sum = 0;
+	nip->ip_sum = in_cksum(&m0, nip->ip_hl << 2);
+
 	/*
 	 * Now, copy old ip header (without options)
 	 * in front of icmp message.
