@@ -163,6 +163,7 @@ Supported devices {:-include-:}:
 		ProAudio Spectrum [*] [+]
 		ESS PnP audio cards [*] [+]
 		ESS Solo-1 PCI-based audio cards [*] [+]
+		AC'97 sound a part of Intel 810/815/440MX chipsets [*] [+]
 	Cryptography Accelerators
 		Hi/Fn 7751 based boards, including:
 			GTGI PowerCrypt Encryption Accelerator
