@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.7 1996/04/21 22:16:40 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.8 1996/05/04 09:24:07 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.93 1996/04/15 00:20:32 mycroft Exp $	*/
 
 #undef DEBUG
@@ -73,8 +73,8 @@
 #include <compat/ibcs2/ibcs2_exec.h>
 extern struct emul emul_ibcs2;
 #endif
-#ifdef COMPAT_LINUX
 #include <sys/exec.h>
+#ifdef COMPAT_LINUX
 #include <compat/linux/linux_syscall.h>
 extern struct emul emul_linux_aout, emul_linux_elf;
 #endif
@@ -413,11 +413,7 @@ trap(frame)
 			    map, va, ftype, rv);
 			goto we_re_toast;
 		}
-		trapsignal(p, (rv == KERN_PROTECTION_FAILURE
-#ifdef COMPAT_LINUX
-		    && p->p_emul != &emul_linux_aout && p->p_emul != &emul_linux_elf
-#endif
-		    ) ? SIGBUS : SIGSEGV, T_PAGEFLT);
+		trapsignal(p, SIGSEGV, T_PAGEFLT);
 		break;
 	}
 
