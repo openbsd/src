@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.12 2000/04/19 07:38:49 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.13 2000/04/27 10:46:17 itojun Exp $	*/
 /*	$KAME: nd6.c,v 1.56 2000/04/19 06:17:43 itojun Exp $	*/
 
 /*
@@ -169,7 +169,15 @@ nd6_ifattach(ifp)
 	ND.reachable = ND_COMPUTE_RTIME(ND.basereachable);
 	ND.retrans = RETRANS_TIMER;
 	ND.receivedra = 0;
+#if 1
+	/* XXX temporary workaround */
+	if (ifp->if_flags & IFF_POINTOPOINT)
+		ND.flags = 0;
+	else
+		ND.flags = ND6_IFF_PERFORMNUD;
+#else
 	ND.flags = ND6_IFF_PERFORMNUD;
+#endif
 	nd6_setmtu(ifp);
 #undef ND
 }
