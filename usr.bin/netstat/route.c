@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.9 1997/06/18 01:52:27 angelos Exp $	*/
+/*	$OpenBSD: route.c,v 1.10 1997/06/18 01:58:32 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.9 1997/06/18 01:52:27 angelos Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.10 1997/06/18 01:58:32 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -156,9 +156,9 @@ routepr(rtree)
 				pr_family(i);
 				do_rtent = 1;
 				if (i != AF_ENCAP)
-				  pr_rthdr();
+					pr_rthdr();
 				else
-				  pr_encaphdr();
+					pr_encaphdr();
 				p_tree(head.rnh_treetop);
 			}
 		}
@@ -191,7 +191,7 @@ pr_family(af)
 		afname = "X.25";
 		break;
 	case AF_ENCAP:
-	        afname = "Encap";
+		afname = "Encap";
 		break;
 	default:
 		afname = NULL;
@@ -228,12 +228,12 @@ pr_rthdr()
 void
 pr_encaphdr()
 {
-    if (Aflag)
-            printf("%-8s ", "Address");
-    printf("%-15s %-15s %-5s %-15s %-15s %-5s %-5s %-15s %-15s %-8s %-9s %s\n",
-	   "Source address", "Source mask", "Port", "Dest. address", 
-	   "Dest. mask", "Port", "Proto", "Tunnel entry", "Tunnel exit",
-	   "SPI", "Interface", "Use");
+	if (Aflag)
+		printf("%-8s ", "Address");
+	printf("%-15s %-15s %-5s %-15s %-15s %-5s %-5s %-15s %-15s %-8s %-9s %s\n",
+	    "Source address", "Source mask", "Port", "Dest. address", 
+	    "Dest. mask", "Port", "Proto", "Tunnel entry", "Tunnel exit",
+	    "SPI", "Interface", "Use");
 }
 
 static struct sockaddr *
@@ -295,7 +295,7 @@ p_rtnode()
 		if (rnode.rn_mask) {
 			printf("\t  mask ");
 			p_sockaddr(kgetsa((struct sockaddr *)rnode.rn_mask),
-				    0, -1);
+			    0, -1);
 		} else if (rm == 0)
 			return;
 	} else {
@@ -323,19 +323,25 @@ ntreestuff()
 	char *buf, *next, *lim;
 	register struct rt_msghdr *rtm;
 
-        mib[0] = CTL_NET;
-        mib[1] = PF_ROUTE;
-        mib[2] = 0;
-        mib[3] = 0;
-        mib[4] = NET_RT_DUMP;
-        mib[5] = 0;
-        if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0)
-		{ perror("route-sysctl-estimate"); exit(1);}
-	if ((buf = malloc(needed)) == 0)
-		{ printf("out of space\n"); exit(1);}
-        if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0)
-		{ perror("sysctl of routing table"); exit(1);}
-	lim  = buf + needed;
+	mib[0] = CTL_NET;
+	mib[1] = PF_ROUTE;
+	mib[2] = 0;
+	mib[3] = 0;
+	mib[4] = NET_RT_DUMP;
+	mib[5] = 0;
+	if (sysctl(mib, 6, NULL, &needed, NULL, 0) < 0) {
+		perror("route-sysctl-estimate");
+		exit(1);
+	}
+	if ((buf = malloc(needed)) == 0) {
+		printf("out of space\n");
+		exit(1);
+	}
+        if (sysctl(mib, 6, buf, &needed, NULL, 0) < 0) {
+		perror("sysctl of routing table");
+		exit(1);
+	}
+	lim = buf + needed;
 	for (next = buf; next < lim; next += rtm->rtm_msglen) {
 		rtm = (struct rt_msghdr *)next;
 		np_rtentry(rtm);
@@ -374,9 +380,9 @@ np_rtentry(rtm)
 	if (rtm->rtm_addrs == RTA_DST)
 		p_sockaddr(sa, 0, 36);
 	else {
-	        p_sockaddr(sa, rtm->rtm_flags, 16);
+		p_sockaddr(sa, rtm->rtm_flags, 16);
 		if (sa->sa_len == 0)
-		      sa->sa_len = sizeof(long);
+			sa->sa_len = sizeof(long);
 		sa = (struct sockaddr *)(sa->sa_len + (char *)sa);
 		p_sockaddr(sa, 0, 18);
 	}
@@ -447,7 +453,7 @@ p_sockaddr(sa, flags, width)
 	    {
 		register u_char *s = (u_char *)sa->sa_data, *slim;
 
-		slim =  sa->sa_len + (u_char *) sa;
+		slim = sa->sa_len + (u_char *) sa;
 		cplim = cp + sizeof(workbuf) - 6;
 		cp += sprintf(cp, "(%d)", sa->sa_family);
 		while (s < slim && cp < cplim) {
@@ -495,10 +501,9 @@ p_rtentry(rt)
 	
 	sa = kgetsa(rt_key(rt));
 	
-	if (sa->sa_family == AF_ENCAP)
-	{
-	    encap_print(rt);
-	    return;
+	if (sa->sa_family == AF_ENCAP) {
+		encap_print(rt);
+		return;
 	}
 	
 	p_sockaddr(sa, rt->rt_flags, WID_DST);
@@ -666,7 +671,7 @@ ns_print(sa)
 	work = sns->sns_addr;
 	port = ntohs(work.x_port);
 	work.x_port = 0;
-	net.net_e  = work.x_net;
+	net.net_e = work.x_net;
 	if (ns_nullhost(work) && net.long_e == 0) {
 		if (port ) {
 			sprintf(mybuf, "*.%xH", port);
@@ -734,7 +739,7 @@ ipx_print(sa)
 	work = sipx->sipx_addr;
 	port = ntohs(work.ipx_port);
 	work.ipx_port = 0;
-	net.net_e  = work.ipx_net;
+	net.net_e = work.ipx_net;
 	if (ipx_nullhost(work) && net.long_e == 0) {
 		if (port != 0) {
 			sprintf(mybuf, "*.%xH", port);
@@ -786,7 +791,7 @@ static void
 encap_print(rt)
 	register struct rtentry *rt;
 {
-        struct sockaddr_encap sen1, sen2, sen3;
+	struct sockaddr_encap sen1, sen2, sen3;
 
 	bcopy(kgetsa(rt_key(rt)), &sen1, sizeof(sen1));
 	bcopy(kgetsa(rt_mask(rt)), &sen2, sizeof(sen2));
@@ -796,10 +801,10 @@ encap_print(rt)
 	printf("%-15s %-5u ", inet_ntoa(sen2.sen_ip_src), sen1.sen_sport);
 	printf("%-15s ", inet_ntoa(sen1.sen_ip_dst));
 	printf("%-15s %-5u %-5u ", inet_ntoa(sen2.sen_ip_dst),
-	       sen1.sen_dport, sen1.sen_proto);
+	    sen1.sen_dport, sen1.sen_proto);
 	printf("%-15s ", inet_ntoa(sen3.sen_ipsp_src));
 	printf("%-15s %08x enc%-6u %-u\n", inet_ntoa(sen3.sen_ipsp_dst),
-	       ntohl(sen3.sen_ipsp_spi), sen3.sen_ipsp_ifn, rt->rt_use);
+	    ntohl(sen3.sen_ipsp_spi), sen3.sen_ipsp_ifn, rt->rt_use);
 }
 
 void
