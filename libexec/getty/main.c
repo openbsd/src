@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2002/02/16 21:27:30 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2002/03/29 20:35:55 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)main.c	8.1 (Berkeley) 6/20/93";*/
-static char rcsid[] = "$OpenBSD: main.c,v 1.21 2002/02/16 21:27:30 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.22 2002/03/29 20:35:55 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -59,6 +59,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.21 2002/02/16 21:27:30 millert Exp $
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
+#include <stdio.h>
 #include <time.h>
 #include <unistd.h>
 #include <util.h>
