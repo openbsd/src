@@ -1092,6 +1092,7 @@
 ./usr/share/man/cat4/gre.0
 ./usr/share/man/cat4/gtp.0
 ./usr/share/man/cat4/hifn.0
+./usr/share/man/cat4/hme.0
 ./usr/share/man/cat4/hp300
 ./usr/share/man/cat4/hp300/apci.0
 ./usr/share/man/cat4/hp300/autoconf.0
@@ -1315,7 +1316,6 @@
 ./usr/share/man/cat4/sparc/fdc.0
 ./usr/share/man/cat4/sparc/fga.0
 ./usr/share/man/cat4/sparc/fvme.0
-./usr/share/man/cat4/sparc/hme.0
 ./usr/share/man/cat4/sparc/ie.0
 ./usr/share/man/cat4/sparc/intro.0
 ./usr/share/man/cat4/sparc/kmem.0
@@ -1357,7 +1357,6 @@
 ./usr/share/man/cat4/sparc64/creator.0
 ./usr/share/man/cat4/sparc64/ebus.0
 ./usr/share/man/cat4/sparc64/esp.0
-./usr/share/man/cat4/sparc64/hme.0
 ./usr/share/man/cat4/sparc64/intro.0
 ./usr/share/man/cat4/sparc64/kmem.0
 ./usr/share/man/cat4/sparc64/le.0
@@ -1579,6 +1578,7 @@
 ./usr/share/man/cat5/remote.0
 ./usr/share/man/cat5/resolv.conf.0
 ./usr/share/man/cat5/resolver.0
+./usr/share/man/cat5/rndc.conf.0
 ./usr/share/man/cat5/rpc.0
 ./usr/share/man/cat5/rtadvd.conf.0
 ./usr/share/man/cat5/securenet.0
@@ -1876,6 +1876,8 @@
 ./usr/share/man/cat8/mvme68k/installboot.0
 ./usr/share/man/cat8/mvme88k
 ./usr/share/man/cat8/mvmeppc
+./usr/share/man/cat8/named-checkconf.0
+./usr/share/man/cat8/named-checkzone.0
 ./usr/share/man/cat8/named.0
 ./usr/share/man/cat8/ncheck.0
 ./usr/share/man/cat8/ncheck_ffs.0
@@ -1889,6 +1891,7 @@
 ./usr/share/man/cat8/nfsd.0
 ./usr/share/man/cat8/nologin.0
 ./usr/share/man/cat8/nslookup.0
+./usr/share/man/cat8/nsupdate.0
 ./usr/share/man/cat8/ntalkd.0
 ./usr/share/man/cat8/pac.0
 ./usr/share/man/cat8/pcnfsd.0
@@ -1932,6 +1935,8 @@
 ./usr/share/man/cat8/rmgroup.0
 ./usr/share/man/cat8/rmt.0
 ./usr/share/man/cat8/rmuser.0
+./usr/share/man/cat8/rndc-confgen.0
+./usr/share/man/cat8/rndc.0
 ./usr/share/man/cat8/rotatelogs.0
 ./usr/share/man/cat8/route.0
 ./usr/share/man/cat8/route6d.0
@@ -2208,9 +2213,3 @@
 ./usr/share/texinfo
 ./usr/share/texinfo/texinfo.dtd
 ./usr/share/texinfo/texinfo.xsl
-./usr/share/man/cat5/rndc.conf.0
-./usr/share/man/cat8/named-checkconf.0
-./usr/share/man/cat8/named-checkzone.0
-./usr/share/man/cat8/nsupdate.0
-./usr/share/man/cat8/rndc-confgen.0
-./usr/share/man/cat8/rndc.0
