@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_input.c,v 1.60 2004/10/18 03:59:34 itojun Exp $	*/
+/*	$OpenBSD: ip6_input.c,v 1.61 2005/03/06 16:27:01 dhartmei Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -292,6 +292,20 @@ ip6_input(m)
 	}
 #endif
 
+#if NPF > 0 
+        /*
+         * Packet filter
+         */
+	odst = ip6->ip6_dst;
+	if (pf_test6(PF_IN, m->m_pkthdr.rcvif, &m, NULL) != PF_PASS)
+		goto bad;
+	if (m == NULL)
+		return;
+
+	ip6 = mtod(m, struct ip6_hdr *);
+	srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
+#endif
+
 	if (IN6_IS_ADDR_LOOPBACK(&ip6->ip6_src) ||
 	    IN6_IS_ADDR_LOOPBACK(&ip6->ip6_dst)) {
 		if (m->m_pkthdr.rcvif->if_flags & IFF_LOOPBACK) {
@@ -318,20 +332,6 @@ ip6_input(m)
 			goto bad;
 		}
 	}
-
-#if NPF > 0 
-        /*
-         * Packet filter
-         */
-	odst = ip6->ip6_dst;
-	if (pf_test6(PF_IN, m->m_pkthdr.rcvif, &m, NULL) != PF_PASS)
-		goto bad;
-	if (m == NULL)
-		return;
-
-	ip6 = mtod(m, struct ip6_hdr *);
-	srcrt = !IN6_ARE_ADDR_EQUAL(&odst, &ip6->ip6_dst);
-#endif
 
 	if (IN6_IS_SCOPE_LINKLOCAL(&ip6->ip6_src))
 		ip6->ip6_src.s6_addr16[1]
