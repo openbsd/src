@@ -1,4 +1,4 @@
-/*	$OpenBSD: user.c,v 1.17 2001/12/15 02:12:26 kjell Exp $	*/
+/*	$OpenBSD: user.c,v 1.18 2002/01/18 08:38:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -202,14 +202,14 @@ USER_print_disk(disk)
 	fd = DISK_open(disk->name, O_RDONLY);
 	offset = firstoff = 0;
 
-	DISK_printmetrics(disk);
+	DISK_printmetrics(disk, NULL);
 
 	do {
 		MBR_read(fd, (off_t)offset, mbr_buf);
 		MBR_parse(disk, mbr_buf, offset, firstoff, &mbr);
 
 		printf("Offset: %d\t", (int)offset);
-		MBR_print(&mbr);
+		MBR_print(&mbr, NULL);
 
 		/* Print out extended partitions too */
 		for (offset = i = 0; i < 4; i++)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.27 2002/01/18 08:29:01 kjell Exp $	*/
+/*	$OpenBSD: part.c,v 1.28 2002/01/18 08:38:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -288,22 +288,29 @@ PRT_make(partn, offset, reloff, prt)
 }
 
 void
-PRT_print(num, partn)
+PRT_print(num, partn, units)
 	int num;
 	prt_t *partn;
+	char *units;
 {
+	double size;
+	int i;
+	i = unit_lookup(units);
 
 	if (partn == NULL) {
-		printf("         Starting       Ending\n");
-		printf(" #: id  cyl  hd sec -  cyl  hd sec [     start -       size]\n");
+		printf("         Starting       Ending       LBA Info:\n");
+		printf(" #: id    C   H  S -    C   H  S [       start:      size   ]\n");
 		printf("------------------------------------------------------------------------\n");
 	} else {
-		printf("%c%1d: %.2X %4d %3d %3d - %4d %3d %3d [%10d - %10d] %s\n",
+		size = (double)partn->ns * DEV_BSIZE / 
+		    unit_types[i].conversion;
+		printf("%c%1d: %.2X %4d %3d %2d - %4d %3d %2d [%12d:%12.f%s] %s\n",
 			(partn->flag == 0x80)?'*':' ',
 			num, partn->id,
-			partn->scyl, partn->shead, partn->ssect,
+		        partn->scyl, partn->shead, partn->ssect,
 			partn->ecyl, partn->ehead, partn->esect,
-			partn->bs, partn->ns,
+			partn->bs, size,
+		        unit_types[i].abbr,
 			PRT_ascii_id(partn->id));
 	}
 }

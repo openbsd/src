@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.29 2002/01/18 08:33:10 kjell Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.30 2002/01/18 08:38:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -64,7 +64,7 @@ Xreinit(cmd, disk, mbr, tt, offset)
 	/* Tell em we did something */
 	printf("In memory copy is initialized to:\n");
 	printf("Offset: %d\t", offset);
-	MBR_print(mbr);
+	MBR_print(mbr, cmd->args);
 	printf("Use 'write' to update disk.\n");
 
 	return (CMD_DIRTY);
@@ -83,7 +83,7 @@ Xdisk(cmd, disk, mbr, tt, offset)
 	int maxsec  = 63;
 
 	/* Print out disk info */
-	DISK_printmetrics(disk);
+	DISK_printmetrics(disk, cmd->args);
 
 #if defined (__powerpc__) || defined (__mips__)
 	maxcyl  = 9999999;
@@ -133,8 +133,8 @@ Xedit(cmd, disk, mbr, tt, offset)
 
 	/* Print out current table entry */
 	pp = &mbr->part[pn];
-	PRT_print(0, NULL);
-	PRT_print(pn, pp);
+	PRT_print(0, NULL, NULL);
+	PRT_print(pn, pp, NULL);
 
 #define	EDIT(p, f, v, n, m, h)				\
 	if ((num = ask_num(p, f, v, n, m, h)) != v)	\
@@ -223,8 +223,8 @@ Xsetpid(cmd, disk, mbr, tt, offset)
 
 	/* Print out current table entry */
 	pp = &mbr->part[pn];
-	PRT_print(0, NULL);
-	PRT_print(pn, pp);
+	PRT_print(0, NULL, NULL);
+	PRT_print(pn, pp, NULL);
 
 #define	EDIT(p, f, v, n, m, h)				\
 	if ((num = ask_num(p, f, v, n, m, h)) != v)	\
@@ -289,9 +289,9 @@ Xprint(cmd, disk, mbr, tt, offset)
 	int offset;
 {
 
-	DISK_printmetrics(disk);
+	DISK_printmetrics(disk, cmd->args);
 	printf("Offset: %d\t", offset);
-	MBR_print(mbr);
+	MBR_print(mbr, cmd->args);
 
 	return (CMD_CONT);
 }

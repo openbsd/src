@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.7 2002/01/18 08:33:10 kjell Exp $	*/
+/*	$OpenBSD: misc.c,v 1.8 2002/01/18 08:38:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -40,6 +40,25 @@
 #include <machine/limits.h>
 #include "misc.h"
 
+int
+unit_lookup(units)
+	char *units;
+{
+	int i = 0;
+	if (units == NULL)
+		return (UNIT_TYPE_DEFAULT);
+
+	while (unit_types[i].abbr != NULL) {
+		if (strncasecmp(unit_types[i].abbr, units, 1) == 0)
+			break;
+		i++;
+	}
+	/* default */
+	if (unit_types[i].abbr == NULL)
+		return (UNIT_TYPE_DEFAULT);
+	
+	return (i);
+}
 
 int
 ask_cmd(cmd)

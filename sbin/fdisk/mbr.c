@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.14 2002/01/04 08:35:06 kjell Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.15 2002/01/18 08:38:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -130,19 +130,20 @@ MBR_make(mbr, mbr_buf)
 }
 
 void
-MBR_print(mbr)
+MBR_print(mbr, units)
 	mbr_t *mbr;
+	char *units;
 {
 	int i;
 
 	/* Header */
 	printf("Signature: 0x%X\n",
 	    (int)mbr->signature);
-	PRT_print(0, NULL);
+	PRT_print(0, NULL, units);
 
 	/* Entries */
 	for (i = 0; i < NDOSPART; i++)
-		PRT_print(i, &mbr->part[i]);
+		PRT_print(i, &mbr->part[i], units);
 }
 
 int
@@ -206,6 +207,6 @@ MBR_pcopy(disk, mbr)
 		PRT_parse(disk, &mbr_disk[MBR_PART_OFF +
 					 MBR_PART_SIZE * i], 
 			  offset, reloff, &mbr->part[i], i);
-		PRT_print(i, &mbr->part[i]);
+		PRT_print(i, &mbr->part[i], NULL);
 	}
 }

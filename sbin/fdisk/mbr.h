@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.h,v 1.8 2002/01/04 08:35:06 kjell Exp $	*/
+/*	$OpenBSD: mbr.h,v 1.9 2002/01/18 08:38:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -53,7 +53,7 @@ typedef struct _mbr_t {
 
 /* Prototypes */
 void MBR_print_disk __P((char *));
-void MBR_print __P((mbr_t *));
+void MBR_print __P((mbr_t *, char *));
 void MBR_parse __P((disk_t *, char *, off_t, off_t, mbr_t *));
 void MBR_make __P((mbr_t *, char *));
 void MBR_init __P((disk_t *, mbr_t *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disk.c,v 1.13 2001/06/23 01:54:37 kjell Exp $	*/
+/*	$OpenBSD: disk.c,v 1.14 2002/01/18 08:38:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997, 2001 Tobias Weingartner
@@ -48,6 +48,7 @@
 #include <machine/biosvar.h>
 #endif
 #include "disk.h"
+#include "misc.h"
 
 int
 DISK_open(disk, mode)
@@ -224,15 +225,24 @@ DISK_getmetrics(disk, user)
 	return (1);
 }
 
+/*
+ * Print the disk geometry information. Take an optional modifier
+ * to indicate the units that should be used for display.
+ */
 int
-DISK_printmetrics(disk)
+DISK_printmetrics(disk, units)
 	disk_t *disk;
-{
-
+	char *units;
+{	
+	int i;
+	double size;
+	i = unit_lookup(units);
+	size = (double)disk->real->size * DEV_BSIZE / unit_types[i].conversion;
 	printf("Disk: %s\t", disk->name);
 	if (disk->real)
-		printf("geometry: %d/%d/%d [%d sectors]\n", disk->real->cylinders,
-		    disk->real->heads, disk->real->sectors, disk->real->size);
+		printf("geometry: %d/%d/%d [%.0f %s]\n", disk->real->cylinders,
+		    disk->real->heads, disk->real->sectors, size,
+		       unit_types[i].lname);
 	else
 		printf("geometry: <none>\n");
 

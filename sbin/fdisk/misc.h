@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.h,v 1.5 2002/01/18 08:33:10 kjell Exp $	*/
+/*	$OpenBSD: misc.h,v 1.6 2002/01/18 08:38:26 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -34,15 +34,33 @@
 #define _MISC_H
 
 #include <sys/types.h>
+#include <machine/param.h>
 #include "cmd.h"
+
+/* typedefs */
+
+static const struct unit_type {
+	char	*abbr;
+	int	conversion;
+	char	*lname;
+} unit_types[] = {
+	{"b", 1			, "Bytes"},
+	{" ", DEV_BSIZE		, "Sectors"},
+	{"K", 1024		, "Kilobytes"},
+	{"M", 1024 * 1024	, "Megabytes"},
+	{"G", 1024 * 1024 *1024	, "Gigabytes"},
+	{NULL, 0		, NULL },
+};
 
 /* Constants */
 #define ASK_HEX 0x01
 #define ASK_DEC 0x02
+#define UNIT_TYPE_DEFAULT 1
 #define	DO_CONVERSIONS	0x00000001
 #define	DO_ROUNDING	0x00000002
 
 /* Prototypes */
+int unit_lookup __P((char *));
 int ask_cmd __P((cmd_t *));
 int ask_num __P((const char *, int, int, int, int, void (*help) __P((void))));
 int ask_yn __P((const char *));
