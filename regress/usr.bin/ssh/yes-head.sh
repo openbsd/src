@@ -1,7 +1,7 @@
-tid="yes|head"
+tid="yes pipe head"
 
 for p in 1 2; do
-	lines=`ssh -$p -F $OBJ/ssh_config thishost 'yes | head -2000' | (sleep 3 ; wc -l)`
+	lines=`ssh -$p -F $OBJ/ssh_proxy thishost 'yes | head -2000' | (sleep 3 ; wc -l)`
 	if [ $? -ne 0 ]; then
 		fail "yes|head test failed"
 		lines = 0;

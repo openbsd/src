@@ -1,4 +1,4 @@
-#	$OpenBSD: test-exec.sh,v 1.2 2002/02/15 00:35:13 markus Exp $
+#	$OpenBSD: test-exec.sh,v 1.3 2002/02/15 14:41:38 markus Exp $
 
 PORT=4242
 USER=`id -un`
@@ -34,12 +34,25 @@ unset SSH_AUTH_SOCK
 # helper
 cleanup ()
 {
-	test -f $PIDFILE && $SUDO kill `cat $PIDFILE`
+	if [ -f $PIDFILE ]; then
+		pid=`cat $PIDFILE`
+		if [ "X$pid" = "X" ]; then
+			echo no sshd running
+		else
+			if [ $pid -lt 2 ]; then
+				echo bad pid for ssd: $pid
+			else
+				$SUDO kill $pid
+			fi
+		fi
+	fi
 }
 
 trace ()
 {
-	# echo "$@"
+	if [ "X$DEBUG_SSH_TEST" = "Xyes" ]; then
+		echo "$@"
+	fi
 }
 
 fail ()
@@ -72,7 +85,7 @@ cat << EOF > $OBJ/sshd_config
 EOF
 
 # server config for proxy connects
-cp $OBJ/sshd_config $OBJ/sshd_config_proxy
+cp $OBJ/sshd_config $OBJ/sshd_proxy
 
 # create client config
 cat << EOF > $OBJ/ssh_config
@@ -91,6 +104,7 @@ Host *
 	PasswordAuthentication	no
 	RhostsAuthentication	no
 	RhostsRSAAuthentication	no
+	BatchMode		yes
 EOF
 
 trace "generate keys"
@@ -114,25 +128,34 @@ for t in rsa rsa1; do
 	echo HostKey $OBJ/host.$t >> $OBJ/sshd_config
 
 	# don't use SUDO for proxy connect
-	echo HostKey $OBJ/$t >> $OBJ/sshd_config_proxy
+	echo HostKey $OBJ/$t >> $OBJ/sshd_proxy
 done
 chmod 644 $OBJ/authorized_keys_$USER
 
-# start sshd
-$SUDO sshd -f $OBJ/sshd_config -t	|| fatal "sshd_config broken"
-$SUDO sshd -f $OBJ/sshd_config
-
-trace "wait for sshd"
-i=0;
-while [ ! -f $PIDFILE -a $i -lt 5 ]; do
-	i=`expr $i + 1`
-	sleep $i
-done
-
-test -f $PIDFILE			|| fatal "no sshd running on port $PORT"
+# create a proxy version of the client config
+(
+	cat $OBJ/ssh_config
+	echo proxycommand sshd -i -f $OBJ/sshd_proxy
+) > $OBJ/ssh_proxy
 
 # check proxy config
-sshd -t -f $OBJ/sshd_config_proxy	|| fail "sshd_config_proxy broken"
+sshd -t -f $OBJ/sshd_proxy	|| fatal "sshd_proxy broken"
+
+start_sshd ()
+{
+	# start sshd
+	$SUDO sshd -f $OBJ/sshd_config -t	|| fatal "sshd_config broken"
+	$SUDO sshd -f $OBJ/sshd_config
+
+	trace "wait for sshd"
+	i=0;
+	while [ ! -f $PIDFILE -a $i -lt 5 ]; do
+		i=`expr $i + 1`
+		sleep $i
+	done
+
+	test -f $PIDFILE || fatal "no sshd running on port $PORT"
+}
 
 # source test body
 . $SCRIPT

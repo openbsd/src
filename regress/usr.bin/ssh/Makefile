@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2002/02/14 23:18:00 markus Exp $
+#	$OpenBSD: Makefile,v 1.3 2002/02/15 14:41:38 markus Exp $
 
 REGRESSTARGETS=	t1 t2 t3 t4 t5 t6 t7
 
@@ -6,6 +6,8 @@ CLEANFILES+=	t2.out t6.out1 t6.out2 t7.out t7.out.pub
 
 LTESTS= 	connect \
 		proxy-connect \
+		proto-version \
+		proto-mismatch \
 		exit-status \
 		broken-pipe \
 		try-ciphers \
@@ -15,7 +17,7 @@ LTESTS= 	connect \
 
 USER!=		id -un
 CLEANFILES+=	authorized_keys_${USER} known_hosts pidfile \
-		ssh_config sshd_config sshd_config_proxy \
+		ssh_config ssh_proxy sshd_config sshd_proxy \
 		rsa.pub rsa rsa1.pub rsa1 host.rsa host.rsa1 \
 		rsa-agent rsa-agent.pub rsa1-agent rsa1-agent.pub \
 		ls.copy

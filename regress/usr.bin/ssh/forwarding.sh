@@ -1,5 +1,7 @@
 tid="local and remote forwarding"
 
+start_sshd
+
 base=33
 last=$PORT
 fwd=""

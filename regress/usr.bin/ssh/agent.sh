@@ -40,15 +40,15 @@ else
 		fail "ssh-add -L failed: exit code $?"
 	fi
 
-	trace  "simple connect via agent"
+	trace "simple connect via agent"
 	for p in 1 2; do
-		ssh -o "Protocol=$p" -F $OBJ/ssh_config somehost exit 5$p
+		ssh -$p -F $OBJ/ssh_proxy somehost exit 5$p
 		if [ $? -ne 5$p ]; then
 			fail "ssh connect with protocol $p failed (exit code $?)"
 		fi
 	done
 
-	trace  "delete all agent keys"
+	trace "delete all agent keys"
 	ssh-add -D > /dev/null 2>&1
 	if [ $? -ne 0 ]; then
 		fail "ssh-add -D failed: exit code $?"
