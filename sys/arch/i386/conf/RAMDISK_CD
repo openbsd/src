@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK_CD,v 1.88 2005/02/19 02:37:32 brad Exp $
+#	$OpenBSD: RAMDISK_CD,v 1.89 2005/03/16 19:41:49 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -115,6 +115,7 @@ scsibus* at umass?
 #ums*	at uhidev?
 #wsmouse* at ums? mux 0
 aue*	at uhub?		# ADMtek AN986 Pegasus Ethernet
+#atu*	at uhub?		# Atmel AT76c50x based 802.11b
 axe*	at uhub?		# ASIX Electronics AX88172 USB Ethernet
 cue*	at uhub?		# CATC USB-EL1201A based Ethernet
 kue*	at uhub?		# Kawasaki KL5KUSB101B based Ethernet
@@ -130,6 +131,7 @@ wi*	at uhub?		# WaveLAN IEEE 802.11DS
 #scsibus* at usscanner?
 #uyap*	at uhub?		# Y@P firmware loader
 #ugen*	at uhub?		# USB Generic driver
+#ral*	at uhub?		# Ralink
 
 npx0	at isa? port 0xf0 irq 13	# math coprocessor
 isadma0	at isa?
@@ -327,12 +329,20 @@ bce*	at pci?				# Broadcom BCM4401
 vge*	at pci?				# VIA VT612x
 
 # Wireless network cards
+ath*	at pci?				# Atheros AR5k (802.11a/b/g)
+ath*	at cardbus?			# Atheros AR5k (802.11a/b/g)
+atw*	at pci?				# ADMtek ADM8211 (802.11)
+atw*	at cardbus?			# ADMtek ADM8211 (802.11)
 wi*	at pci?				# WaveLAN IEEE 802.11DS
 wi*	at pcmcia?			# WaveLAN IEEE 802.11DS
 #awi*	at pcmcia?			# Bay Networks IEEE 802.11FH
 an*	at pcmcia?			# Aironet IEEE 802.11DS
 #cnw*	at pcmcia?			# Xircom Netwave
 ray*	at pcmcia?			# Raylink Aviator2.4/Pro 802.11FH
+ral*	at pci?				# Ralink RT2500
+ral*	at cardbus?			# Ralink RT2500
+rtw*	at pci?				# Realtek 8180
+rtw*	at cardbus?			# Realtek 8180
 
 # Media Independent Interface (mii) drivers
 exphy*	at mii?				# 3Com internal PHYs
