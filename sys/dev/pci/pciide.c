@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.38 2000/12/06 22:45:41 deraadt Exp $     */
+/*      $OpenBSD: pciide.c,v 1.39 2000/12/08 14:44:57 millert Exp $     */
 /*	$NetBSD: pciide.c,v 1.48 1999/11/28 20:05:18 bouyer Exp $	*/
 
 /*
@@ -2459,20 +2459,18 @@ cy693_chip_map(sc, pa)
 		printf(": cannot allocate memory for command queue\n");
 		return;
 	}
-	printf("%s: primary channel %s to ",
-	    sc->sc_wdcdev.sc_dev.dv_xname,
+	printf(", %s %s to ", PCIIDE_CHANNEL_NAME(0),
 	    (interface & PCIIDE_INTERFACE_SETTABLE(0)) ?
 	    "configured" : "wired");
 	if (interface & PCIIDE_INTERFACE_PCI(0)) {
-		printf("native-PCI");
+		printf("native-PCI\n");
 		cp->hw_ok = pciide_mapregs_native(pa, cp, &cmdsize, &ctlsize,
 		    pciide_pci_intr);
 	} else {
-		printf("compatibility");
+		printf("compatibility\n");
 		cp->hw_ok = pciide_mapregs_compat(pa, cp, sc->sc_cy_compatchan,
 		    &cmdsize, &ctlsize);
 	}
-        printf(" mode\n");
 
 	cp->wdc_channel.data32iot = cp->wdc_channel.cmd_iot;
 	cp->wdc_channel.data32ioh = cp->wdc_channel.cmd_ioh;
