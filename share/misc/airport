@@ -1,4 +1,4 @@
-#	$OpenBSD: airport,v 1.12 2003/10/17 10:25:50 jmc Exp $
+#	$OpenBSD: airport,v 1.13 2003/10/20 06:06:31 jmc Exp $
 #	@(#)airport	8.1 (Berkeley) 6/8/93
 # 
 # Some of this information from the Airport Search Engine at
@@ -339,6 +339,7 @@ CMB:Katunayake International, Colombo, Sri Lanka
 CME:Ciudad Del Carmen, Campeche, Mexico
 CMG:Corumba, Mato Grosso Do Sul, Brazil
 CMH:Columbus International, Ohio, USA
+CMI:University of Illinois-Willard, Illinois, USA
 CMN:Mohamed V, Casablanca, Morocco
 CMX:Houghton County / Memorial, Hancock, MI, USA
 CND:Kogalniceanu, Constanta, Romania
@@ -608,6 +609,7 @@ GRX:Granada, Spain
 GRZ:Thalerhof, Graz, Austria
 GSE:Goteborg-Save, Sweden
 GSO:Greensboro-High Pt.-Winston Salem Regional, North Carolina, USA
+GSP:Greenville-Spartanburg, South Carolina, USA
 GTF:Great Falls International, Great Falls, MT, USA
 GTO:Tolotio, Gorontalo, Indonesia
 GTR:Golden, Columbus, MS, USA
@@ -684,6 +686,7 @@ HRK:Krarkov, Ukraine
 HRL:Harlingen, Texas, USA
 HRO:Boone County, Harrison, AR, USA
 HSI:Hastings, NE, USA
+HSV:Huntsville International, Alabama, USA
 HTI:Hamilton Island, Queensland, Australia
 HUF:Terre Haute Hulman Regional, Indiana, USA
 HUI:Hue, Vietnam
@@ -744,6 +747,7 @@ ISB:Islamabad International, Pakistan
 ISC:Tresco, Isles Of Scilly, United Kingdom
 ISN:Sloulin Field International, Williston, ND, USA
 ISO:Kinston, NC, USA
+ISP:Long Island MacArthur, New York, USA
 IST:Ataturk International Istanbul, Turkey
 ITH:Ithaca Tompkins County, New York, USA
 ITM:Itami International, Osaka, Japan
