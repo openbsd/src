@@ -1,4 +1,4 @@
-.\" $OpenBSD: pfctl.8,v 1.115 2004/08/26 16:14:58 jaredy Exp $
+.\" $OpenBSD: pfctl.8,v 1.116 2004/12/13 23:59:28 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Kjell Wooding.  All rights reserved.
 .\"
@@ -138,11 +138,12 @@ rules from the main ruleset is described in
 For example, the following will show all filter rules (see the
 .Fl s
 flag below) inside the anchor
-.Li authpf/smith ,
+.Li authpf/smith(1234) ,
 which would have been created for user smith by
-.Xr authpf 8 :
+.Xr authpf 8 ,
+PID 1234:
 .Bd -literal -offset indent
-# pfctl -a authpf/smith -s rules
+# pfctl -a "authpf/smith(1234)" -s rules
 .Ed
 .Pp
 Private tables can also be put inside anchors, either by having table
@@ -154,7 +155,7 @@ file that is loaded in the anchor, or by using regular table commands, as in:
 .Ed
 .Pp
 When a rule referring to a table is loaded in an anchor, the rule will use the
-private table if one is defined, and then fallback to the table defined in the
+private table if one is defined, and then fall back to the table defined in the
 main ruleset, if there is one.
 This is similar to C rules for variable scope.
 It is possible to create distinct tables with the same name in the global
