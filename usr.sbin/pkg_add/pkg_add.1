@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.12 2004/02/20 19:13:51 espie Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.13 2004/03/07 19:29:08 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -26,9 +26,11 @@
 .Sh SYNOPSIS
 .Nm pkg_add
 .Op Fl Inv
+.Op Fl A Ar arch
 .Op Fl B Ar pkg-destdir
 .Op Fl f Ar keys
 .Op Fl L Ar localbase
+.Op Fl P Ar type
 .Ar pkg-name Op Ar ...
 .Sh DESCRIPTION
 The
@@ -121,6 +123,10 @@ If an installation script exists for a given package, do not execute it.
 .It Fl n
 Don't actually install a package, just report the steps that
 would be taken if it was.
+.It Fl A Ar arch
+Assume
+.Ar arch
+as current machine architecture for any package tests.
 .It Fl B Ar pkg-destdir
 Set
 .Ar pkg-destdir
@@ -165,6 +171,13 @@ See
 .Xr bsd.port.mk 5
 for a description of
 .Ev LOCALBASE .
+.It Fl P Ar type
+Check permissions for distribution, where
+.Ar type
+can be
+.Sq cdrom
+or
+.Sq ftp .
 .El
 .Pp
 By default, when adding packages via FTP, the

@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.27 2004/02/20 19:13:51 espie Exp $
+# $OpenBSD: pkg_add,v 1.28 2004/03/07 19:29:08 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -39,6 +39,7 @@ use Getopt::Std;
 use File::Copy;
 
 our %forced = ();
+our ($ftp_only, $cdrom_only);
 
 # XXX we don't want to load this package all the time
 package OpenBSD::RequiredBy;
@@ -100,11 +101,18 @@ package OpenBSD::PackingElement::Arch;
 
 sub check
 {
-	my $self = $_[0];
+	my ($self, $forced_arch) = @_;
 
 	my ($machine_arch, $arch);
 	for my $ok (@{$self->{arches}}) {
 		return 1 if $ok eq '*';
+		if (defined $forced_arch) {
+			if ($ok eq $forced_arch) {
+				return 1;
+			} else {
+				next;
+			}
+		}
 		if (!defined $machine_arch) {
 			chomp($machine_arch = `/usr/bin/arch -s`);
 		}
@@ -121,11 +129,23 @@ package main;
 
 my $errors = 0;
 
-our ($opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B);
-getopts('vnIL:f:B:');
+our ($opt_v, $opt_n, $opt_I, $opt_f, $opt_L, $opt_B, $opt_A, $opt_P);
+getopts('vnIL:f:B:A:P:');
 if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
+if ($opt_P) {
+	if ($opt_P eq 'cdrom') {
+		$cdrom_only = 1;
+	}
+	elsif ($opt_P eq 'ftp') { 
+		$ftp_only = 1;
+	}
+	else {
+	    die "bad option: -P $opt_P";
+	}
+}
+
 $opt_L = '/usr/local' unless defined $opt_L;
 
 my $destdir;
@@ -264,9 +284,28 @@ sub solve_dependencies
 		    push(@deps, $to_install->{$candidates[0]});
 		    push(@$to_register, $candidates[0]);
 		} else {
-		    # okay, give up, use the default
-		    push(@deps, $dep->{def});
-		    push(@$to_register, $dep->{def});
+		    # try with list of packages
+		    my @candidates = OpenBSD::PackageName::pkgspec_match($dep->{pattern}, OpenBSD::PackageLocator::available());
+		    # one single choice
+		    if (@candidates == 1) {
+			push(@deps, $candidates[0]);
+			push(@$to_register, $candidates[0]);
+		    } elsif (@candidates > 1) {
+			# grab default if available
+		    	if (grep {$_ eq $dep->{def}} @candidates) {
+			    push(@deps, $dep->{def});
+			    push(@$to_register, $dep->{def});
+			# grab first one otherwise
+			} else {
+			    push(@deps, $candidates[0]);
+			    push(@$to_register, $candidates[0]);
+			}
+		    } else {
+			# can't get a list of packages, assume default
+			# will be there.
+			push(@deps, $dep->{def});
+			push(@$to_register, $dep->{def});
+		    }
 		}
 	    }
 	}
@@ -370,9 +409,19 @@ sub really_add($$)
 	my $plist = $handle->{plist};
 	my $dir = $handle->info();
 	my $pkgname = $plist->pkgname();
+	my $problems = 0;
+
+	my $extra = $plist->{extrainfo};
+	if ($cdrom_only && ((!defined $extra) || $extra->{cdrom} ne 'yes')) {
+	    print "Package $pkgname is not for cdrom.\n";
+	    $problems++;
+	}
+	if ($ftp_only && ((!defined $extra) || $extra->{ftp} ne 'yes')) {
+	    print "Package $pkgname is not for ftp.\n";
+	    $problems++;
+	}
 	$ENV{'PKG_PREFIX'} = $plist->pkgbase();
 	# check for collisions with existing stuff
-	my $problems = 0;
 	my $colliding = [];
 	for my $item (@{$plist->{items}}) {
 		next unless $item->IsFile();
@@ -396,7 +445,7 @@ sub really_add($$)
 		print "Collision: the following files already exists\n\t",
 			join("\n\t", @$colliding), "\n";
 	}
-	die if $problems;
+	exit(1) if $problems;
 
 	my $interrupted;
 	local $SIG{'INT'} = sub {
@@ -486,7 +535,7 @@ while (my $pkg = shift @todo) {
 		next;
 	}
 	if ($plist->has('arch')) {
-		unless ($plist->{arch}->check()) {
+		unless ($plist->{arch}->check($opt_A)) {
 			print "$pkg is not for the right architecture\n";
 			next MAINLOOP unless $forced{arch};
 		}

@@ -1,4 +1,4 @@
-# $OpenBSD: PackageLocator.pm,v 1.7 2004/01/28 22:30:50 espie Exp $
+# $OpenBSD: PackageLocator.pm,v 1.8 2004/03/07 19:29:08 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -111,6 +111,11 @@ sub open
 	return $fh;
 }
 
+# by default, we don't know how to list packages there.
+sub simplelist
+{
+}
+
 package OpenBSD::PackageLocation::SCP;
 our @ISA=qw(OpenBSD::PackageLocation OpenBSD::PackageLocation::FTPorSCP);
 
@@ -158,14 +163,20 @@ sub list
 {
 	my $self = shift;
 	my @l = ();
-	opendir(my $dir, $self->{location}) or return undef;
+	my $dname = $self->{location};
+	opendir(my $dir, $dname) or return undef;
 	while (my $e = readdir $dir) {
-		next unless -f "$dir/$e";
-		next unless $e = ~ m/\.tgz$/;
+		next unless -f "$dname/$e";
+		next unless $e =~ m/\.tgz$/;
 		push(@l, $`);
 	}
 	close($dir);
 	return @l;
+}
+
+sub simplelist
+{
+	return $_[0]->list();
 }
 
 package OpenBSD::PackageLocation::FTPorSCP;
@@ -311,6 +322,15 @@ sub find
 	}
 	$packages{$_} = $package if defined($package);
 	return $package;
+}
+
+sub available
+{
+	my @l = ();
+	foreach my $loc (@pkgpath) {
+		push(@l, $loc->simplelist());
+	}
+	return @l;
 }
 
 sub info
