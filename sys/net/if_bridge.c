@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.34 2000/06/22 19:00:21 art Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.35 2000/06/26 23:16:37 art Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -457,7 +457,7 @@ bridge_ioctl(ifp, cmd, data)
 		sc->sc_brttimeout = bcacheto->ifbct_time;
 		timeout_del(&sc->sc_brtimeout);
 		if (bcacheto->ifbct_time != 0)
-			timeout_add(&sc->sc_brtimeout, sc->sc_brttimeout);
+			timeout_add(&sc->sc_brtimeout, sc->sc_brttimeout * hz);
 		break;
 	case SIOCBRDGGTO:
 		bcacheto->ifbct_time = sc->sc_brttimeout;
