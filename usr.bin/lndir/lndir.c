@@ -1,4 +1,4 @@
-/*	$OpenBSD: lndir.c,v 1.2 1996/08/19 06:34:03 downsj Exp $	*/
+/*	$OpenBSD: lndir.c,v 1.3 1996/08/19 06:50:16 downsj Exp $	*/
 /* $XConsortium: lndir.c /main/15 1995/08/30 10:56:18 gildea $ */
 /* Create shadow link tree (after X11R4 script of the same name)
    Mark Reinhold (mbr@lcs.mit.edu)/3 January 1990 */
@@ -187,6 +187,11 @@ int rel;			/* if true, prepend "../" to fn before using */
     while (dp = readdir (df)) {
 	if (dp->d_name[strlen(dp->d_name) - 1] == '~')
 	    continue;
+	for (cur = exceptions; cur != (struct except *)NULL;
+	     cur = cur->next) {
+	    if (!strcmp (dp->d_name, cur->name))
+	    	goto next;	/* can't continue */
+	}
 	strcpy (p, dp->d_name);
 
 	if (n_dirs > 0) {
@@ -202,11 +207,6 @@ int rel;			/* if true, prepend "../" to fn before using */
 		    (dp->d_name[1] == '\0' || (dp->d_name[1] == '.' &&
 					       dp->d_name[2] == '\0')))
 		    continue;
-		for (cur = exceptions; cur != (struct except *)NULL;
-		     cur = cur->next) {
-		    if (!strcmp (dp->d_name, cur->name))
-		    	goto next;	/* can't continue */
-		}
 		if (!strcmp (dp->d_name, "RCS"))
 		    continue;
 		if (!strcmp (dp->d_name, "SCCS"))
