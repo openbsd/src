@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fdisk.8,v 1.37 2001/12/21 11:41:50 mpech Exp $
+.\"	$OpenBSD: fdisk.8,v 1.38 2002/01/04 21:20:56 kjell Exp $
 .\"
 .\" Copyright (c) 1997 Tobias Weingartner
 .\" All rights reserved.
@@ -28,7 +28,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd April 4, 1993
+.Dd January 3, 2002
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -46,7 +46,7 @@
 In order for the BIOS to boot the kernel, certain conventions must be
 adhered to.
 Sector 0 of a bootable hard disk must contain boot code,
-an MBR partition table, and a magic number.
+an MBR partition table, and a magic number (0xAA55).
 These MBR partitions (also
 known as BIOS partitions) can be used to break the disk up into several
 pieces.
@@ -92,7 +92,7 @@ table of the specified device, i.e.,
 .Bd -literal
     # fdisk fd0
     Disk: fd0       geometry: 80/2/18 [2880 sectors]
-    Offset: 0       Signatures: 0xAA55,0x0
+    Offset: 0       Signature: 0xAA55
              Starting        Ending
      #: id  cyl  hd sec -  cyl  hd sec [     start -       size]
     ----------------------------------------------------------------------
@@ -161,12 +161,15 @@ or when it has been corrupted beyond repair.
 The
 .Fl u
 flag is used to update the MBR code on a given drive.
+The MBR code extends from offset 0x000 to the start of the partition table
+at offset 0x1BE.
 It is similar to the
 .Fl i
 flag, except the existing partition table is preserved. This
 is useful for writing new MBR code onto an existing drive, and is
-almost equivalent to the DOS command
+equivalent to the DOS command
 .Dq FDISK /MBR .
+Note that this option will overwrite the NT disk signature, if present.
 .Pp
 The flag
 .Fl e
@@ -229,8 +232,10 @@ If you wish to boot from an extended
 partition, you will need to mark the partition table entry for the
 extended partition as bootable.
 .It Em update
-Update the machine code in the memory copy of the
-currently selected boot block.
+Update the machine code in the memory copy of the currently selected
+boot block.
+Note that this option will overwrite the NT disk
+signature, if present.
 .It Em select
 Select and load into memory the boot block pointed
 to by the extended partition table entry in the current boot block.
