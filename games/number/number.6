@@ -1,4 +1,4 @@
-.\"	$NetBSD: number.6,v 1.4 1995/03/23 08:35:29 cgd Exp $
+.\"	$OpenBSD: number.6,v 1.2 1998/03/25 08:45:24 pjanzen Exp $
 .\"
 .\" Copyright (c) 1989, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -56,7 +56,8 @@ The options are as follows:
 .It Fl l
 Display the number on a single line.
 .El
-.Sh BUGS
-Although
-.Nm number
-understand fractions, it doesn't understand exponents.
+.Pp
+.Nm Number
+understands negative numbers (although they must be preceded by `--'
+if they are on the command line to avoid being mistaken for options)
+and numbers in scientific notation (e.g. 1.234E+05).
