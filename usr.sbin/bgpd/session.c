@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.171 2004/05/28 16:33:40 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.172 2004/05/28 18:39:09 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -87,6 +87,7 @@ struct peer		*getpeerbyid(u_int32_t);
 static struct sockaddr	*addr2sa(struct bgpd_addr *, u_int16_t);
 
 struct bgpd_config	*conf, *nconf = NULL;
+struct bgpd_sysdep	 sysdep;
 struct peer		*npeers;
 volatile sig_atomic_t	 session_quit = 0;
 int			 pending_reconf = 0;
@@ -124,8 +125,13 @@ setup_listener(struct sockaddr *sa)
 	}
 
 	opt = 1;
-	if (setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG, &opt, sizeof(opt)) == -1)
-		fatal("setsockopt TCP_MD5SIG");
+	if (setsockopt(fd, IPPROTO_TCP, TCP_MD5SIG, &opt, sizeof(opt)) == -1) {
+		if (errno == ENOPROTOOPT) {	/* system w/o md5sig support */
+			log_warnx("md5 signatures not available, disabling");
+			sysdep.no_md5sig = 1;
+		} else
+			fatal("setsockopt TCP_MD5SIG");
+	}
 
 	if (bind(fd, sa, sa->sa_len)) {
 		close(fd);
@@ -190,7 +196,7 @@ session_main(struct bgpd_config *config, struct peer *cpeers,
 	sock = setup_listener((struct sockaddr *)&conf->listen_addr);
 	sock6 = setup_listener((struct sockaddr *)&conf->listen6_addr);
 
-	if (pfkey_init() == -1)
+	if (pfkey_init(&sysdep) == -1)
 		fatalx("pfkey setup failed");
 
 	if (setgroups(1, &pw->pw_gid) ||
@@ -796,7 +802,23 @@ session_accept(int listenfd)
 				return;
 			}
 		}
+
+		if (p->conf.auth.method != AUTH_NONE && sysdep.no_pfkey) {
+			log_peer_warnx(&p->conf,
+			    "ipsec or md5sig configured but not available");
+			shutdown(connfd, SHUT_RDWR);
+			close(connfd);
+			return;
+		}
+
 		if (p->conf.auth.method == AUTH_MD5SIG) {
+			if (sysdep.no_md5sig) {
+				log_peer_warnx(&p->conf,
+				    "md5sig configured but not available");
+				shutdown(connfd, SHUT_RDWR);
+				close(connfd);
+				return;
+			}
 			len = sizeof(opt);
 			if (getsockopt(connfd, IPPROTO_TCP, TCP_MD5SIG,
 			    &opt, &len) == -1)
@@ -845,14 +867,27 @@ session_connect(struct peer *peer)
 		return (-1);
 	}
 
-	if (peer->conf.auth.method == AUTH_MD5SIG)
+	if (peer->conf.auth.method != AUTH_NONE && sysdep.no_pfkey) {
+		log_peer_warnx(&peer->conf,
+		    "ipsec or md5sig configured but not available");
+		bgp_fsm(peer, EVNT_CON_OPENFAIL);
+		return (-1);
+	}
+
+	if (peer->conf.auth.method == AUTH_MD5SIG) {
+		if (sysdep.no_md5sig) {
+			log_peer_warnx(&peer->conf,
+			    "md5sig configured but not available");
+			bgp_fsm(peer, EVNT_CON_OPENFAIL);
+			return (-1);
+		}
 		if (setsockopt(peer->fd, IPPROTO_TCP, TCP_MD5SIG,
 		    &opt, sizeof(opt)) == -1) {
 			log_peer_warn(&peer->conf, "setsockopt md5sig");
 			bgp_fsm(peer, EVNT_CON_OPENFAIL);
 			return (-1);
 		}
-
+	}
 	peer->wbuf.fd = peer->fd;
 
 	/* if update source is set we need to bind() */
