@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.7 1998/02/28 00:51:57 niklas Exp $	*/
+/*	$OpenBSD: read.c,v 1.8 1998/11/01 01:38:13 smurph Exp $	*/
 
 /* read.c - read a source file -
 
@@ -21,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.7 1998/02/28 00:51:57 niklas Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.8 1998/11/01 01:38:13 smurph Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -55,7 +55,9 @@ The following table is indexed by [ (char) ] and will break if
 #endif
     
 #ifdef ALLOW_ATSIGN
+#ifndef AT
 #define AT 2
+#endif
 #else
 #define AT 0
 #endif

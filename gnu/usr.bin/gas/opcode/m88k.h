@@ -1,4 +1,4 @@
-/*	$OpenBSD: m88k.h,v 1.3 1998/02/15 18:50:05 niklas Exp $	*/
+/*	$OpenBSD: m88k.h,v 1.4 1998/11/01 01:38:13 smurph Exp $	*/
 
 /* m88k-opcode.h -- Instruction information for the Motorola 88000
    Contributed by Devon Bowen of Buffalo University
@@ -261,7 +261,7 @@ static struct m88k_opcode m88k_opcodes[] =
   _MC88xxx(0xf000e800, "tcnd",		"M,1,V")
   _MC88xxx(0x84005880, "trnc.sd",	"d,2")
   _MC88xxx(0x84005800, "trnc.ss",	"d,2")
-  _MC88xxx(0x8000c000, "xcr",		"d,1,c")
+  _MC88xxx(0x8000c000, "xcr",		"d,3,c")
   _MC88xxx(0xf4000600, "xmem",		"d,1[2]")
   _MC88xxx(0xf4000400, "xmem",		"d,1,2")
   _MC88100(0x04000000, "xmem",		"?d,1,I")

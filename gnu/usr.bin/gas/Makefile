@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1998/04/25 06:48:34 niklas Exp $
+#	$OpenBSD: Makefile,v 1.5 1998/11/01 01:38:13 smurph Exp $
 #	$NetBSD: Makefile,v 1.25 1997/10/25 10:10:35 lukem Exp $
 #	@(#)Makefile	6.1 (Berkeley) 3/3/91
 TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
@@ -7,7 +7,8 @@ TARGET_MACHINE_ARCH?=	$(MACHINE_ARCH)
 	(${TARGET_MACHINE_ARCH} == "m68k") || \
 	(${TARGET_MACHINE_ARCH} == "ns32k") || \
 	(${TARGET_MACHINE_ARCH} == "sparc") || \
-	(${TARGET_MACHINE_ARCH} == "vax")
+	(${TARGET_MACHINE_ARCH} == "vax") || \
+	(${TARGET_MACHINE_ARCH} == "mvme88k") 
 .if exists(config/Makefile.$(TARGET_MACHINE_ARCH))
 .include "config/Makefile.$(TARGET_MACHINE_ARCH)"
 .endif
