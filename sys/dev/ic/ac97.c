@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.27 2001/12/17 16:22:58 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.28 2002/01/09 19:27:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -335,6 +335,8 @@ const struct ac97_codecid {
 	{ 0x40,	0xf8, 7, 0,	"CS4201" },
 	{ 0x50,	0xf8, 7, 0,	"CS4205" },
 	{ 0x60,	0xf8, 7, 0,	"CS4291" },
+}, ac97_es[] = {
+	{ 0x08, 0xff, 0, 0,	"ES1921" },
 }, ac97_is[] = {
 	{ 0x00, 0xff, 0, 0,	"HMP9701" },
 }, ac97_ic[] = {
@@ -385,6 +387,7 @@ const struct ac97_vendorid {
 	{ 0x414c4700, "Avance Logic",		cl(ac97_av) },
 	{ 0x414c4300, "Realtek",		cl(ac97_rl) },
 	{ 0x43525900, "Cirrus Logic",		cl(ac97_cs) },
+	{ 0x45838300, "ESS Technology",		cl(ac97_es) },
 	{ 0x48525300, "Intersil",		cl(ac97_is) },
 	{ 0x49434500, "ICEnsemble",		cl(ac97_ic) },
 	{ 0x4e534300, "National Semiconductor", cl(ac97_ns) },
