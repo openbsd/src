@@ -1,4 +1,5 @@
-/*	$NetBSD: iso.h,v 1.9 1995/01/18 09:23:19 mycroft Exp $	*/
+/*	$OpenBSD: iso.h,v 1.2 1996/02/29 10:12:30 niklas Exp $	*/
+/*	$NetBSD: iso.h,v 1.10 1996/02/09 21:32:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -178,26 +179,34 @@ int cd9660_vget __P((struct mount *, ino_t, struct vnode **));
 int cd9660_fhtovp __P((struct mount *, struct fid *, struct mbuf *,
 	    struct vnode **, int *, struct ucred **));
 int cd9660_vptofh __P((struct vnode *, struct fid *));
-int cd9660_init __P(());
+void cd9660_init __P((void));
 
 int cd9660_mountroot __P((void)); 
 
-extern int (**cd9660_vnodeop_p)();
-extern int (**cd9660_specop_p)();
+extern int (**cd9660_vnodeop_p) __P((void *));
+extern int (**cd9660_specop_p) __P((void *));
 #ifdef FIFO
-extern int (**cd9660_fifoop_p)();
+extern int (**cd9660_fifoop_p) __P((void *));
 #endif
 
 static __inline int
+#if __STDC__
+isonum_711(u_char *p)
+#else
 isonum_711(p)
 	u_char *p;
+#endif
 {
 	return *p;
 }
 
 static __inline int
+#if __STDC__
+isonum_712(char *p)
+#else
 isonum_712(p)
 	char *p;
+#endif
 {
 	return *p;
 }
@@ -205,15 +214,23 @@ isonum_712(p)
 #ifndef UNALIGNED_ACCESS
 
 static __inline int
+#if __STDC__
+isonum_723(u_char *p)
+#else
 isonum_723(p)
 	u_char *p;
+#endif
 {
 	return *p|(p[1] << 8);
 }
 
 static __inline int
+#if __STDC__
+isonum_733(u_char *p)
+#else
 isonum_733(p)
 	u_char *p;
+#endif
 {
 	return *p|(p[1] << 8)|(p[2] << 16)|(p[3] << 24);
 }
@@ -223,15 +240,23 @@ isonum_733(p)
 #if BYTE_ORDER == LITTLE_ENDIAN
 
 static __inline int
+#if __STDC__
+isonum_723(u_char *p)
+#else
 isonum_723(p)
 	u_char *p
+#endif
 {
 	return *(u_int16t *)p;
 }
 
 static __inline int
+#if __STDC__
+isonum_733(u_char *p)
+#else
 isonum_733(p)
 	u_char *p;
+#endif
 {
 	return *(u_int32t *)p;
 }
@@ -241,15 +266,23 @@ isonum_733(p)
 #if BYTE_ORDER == BIG_ENDIAN
 
 static __inline int
+#if __STDC__
+isonum_723(u_char *p)
+#else
 isonum_723(p)
 	u_char *p
+#endif
 {
 	return *(u_int16t *)(p + 2);
 }
 
 static __inline int
+#if __STDC__
+isonum_733(u_char *p)
+#else
 isonum_733(p)
 	u_char *p;
+#endif
 {
 	return *(u_int32t *)(p + 4);
 }

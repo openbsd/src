@@ -1,4 +1,5 @@
-/*	$NetBSD: cd9660_node.c,v 1.13 1994/12/24 15:30:07 cgd Exp $	*/
+/*	$OpenBSD: cd9660_node.c,v 1.2 1996/02/29 10:12:19 niklas Exp $	*/
+/*	$NetBSD: cd9660_node.c,v 1.15 1996/02/09 21:31:58 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1994
@@ -47,6 +48,7 @@
 #include <sys/file.h>
 #include <sys/buf.h>
 #include <sys/vnode.h>
+#include <sys/namei.h>
 #include <sys/kernel.h>
 #include <sys/malloc.h>
 #include <sys/stat.h>
@@ -70,10 +72,12 @@ u_long idvhash;
 
 int prtactive;	/* 1 => print out reclaim of active vnodes */
 
+static u_int cd9660_chars2ui __P((u_char *, int));
+
 /*
  * Initialize hash links for inodes and dnodes.
  */
-int
+void
 cd9660_init()
 {
 
@@ -180,7 +184,7 @@ cd9660_ihashins(ip)
 	struct iso_node **ipp, *iq;
 
 	ipp = &isohashtbl[INOHASH(ip->i_dev, ip->i_number)];
-	if (iq = *ipp)
+	if ((iq = *ipp) != NULL)
 		iq->i_prev = &ip->i_next;
 	ip->i_next = iq;
 	ip->i_prev = ipp;
@@ -203,7 +207,7 @@ cd9660_ihashrem(ip)
 {
 	register struct iso_node *iq;
 
-	if (iq = ip->i_next)
+	if ((iq = ip->i_next) != NULL)
 		iq->i_prev = ip->i_prev;
 	*ip->i_prev = iq;
 #ifdef DIAGNOSTIC
@@ -217,11 +221,12 @@ cd9660_ihashrem(ip)
  * truncate and deallocate the file.
  */
 int
-cd9660_inactive(ap)
+cd9660_inactive(v)
+	void *v;
+{
 	struct vop_inactive_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 	register struct iso_node *ip = VTOI(vp);
 	int error = 0;
@@ -243,11 +248,12 @@ cd9660_inactive(ap)
  * Reclaim an inode so that it can be used for other purposes.
  */
 int
-cd9660_reclaim(ap)
+cd9660_reclaim(v)
+	void *v;
+{
 	struct vop_reclaim_args /* {
 		struct vnode *a_vp;
-	} */ *ap;
-{
+	} */ *ap = v;
 	register struct vnode *vp = ap->a_vp;
 	register struct iso_node *ip = VTOI(vp);
 	
@@ -392,8 +398,8 @@ cd9660_tstamp_conv7(pi,pu)
 	tz = pi[6];
 	
 	if (y < 1970) {
-		pu->ts_sec  = 0;
-		pu->ts_nsec = 0;
+		pu->tv_sec  = 0;
+		pu->tv_nsec = 0;
 		return 0;
 	} else {
 #ifdef	ORIGINAL
@@ -413,8 +419,8 @@ cd9660_tstamp_conv7(pi,pu)
 		if (-48 <= tz && tz <= 52)
 			crtime -= tz * 15 * 60;
 	}
-	pu->ts_sec  = crtime;
-	pu->ts_nsec = 0;
+	pu->tv_sec  = crtime;
+	pu->tv_nsec = 0;
 	return 1;
 }
 
