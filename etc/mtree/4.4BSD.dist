@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.29 1996/12/21 21:41:40 tholo Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.30 1997/02/28 11:42:56 niklas Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1018,6 +1018,11 @@ cat7
 # ./usr/share/man/cat8
 cat8
 
+# ./usr/share/man/cat8/alpha
+alpha
+# ./usr/share/man/cat8/alpha
+..
+
 # ./usr/share/man/cat8/amiga
 amiga
 # ./usr/share/man/cat8/amiga
@@ -1026,6 +1031,11 @@ amiga
 # ./usr/share/man/cat8/arm32
 arm32
 # ./usr/share/man/cat8/arm32
+..
+
+# ./usr/share/man/cat8/arc
+arc
+# ./usr/share/man/cat8/arc
 ..
 
 # ./usr/share/man/cat8/atari
@@ -1063,6 +1073,16 @@ pc532
 # ./usr/share/man/cat8/pc532
 ..
 
+# ./usr/share/man/cat8/pmax
+pmax
+# ./usr/share/man/cat8/pmax
+..
+
+# ./usr/share/man/cat8/powerpc
+powerpc
+# ./usr/share/man/cat8/powerpc
+..
+
 # ./usr/share/man/cat8/sparc
 sparc
 # ./usr/share/man/cat8/sparc
@@ -1073,19 +1093,14 @@ sun3
 # ./usr/share/man/cat8/sun3
 ..
 
-# ./usr/share/man/cat8/tahoe
-tahoe
-# ./usr/share/man/cat8/tahoe
-..
-
 # ./usr/share/man/cat8/vax
 vax
 # ./usr/share/man/cat8/vax
 ..
 
-# ./usr/share/man/cat8/x68k
-x68k
-# ./usr/share/man/cat8/x68k
+# ./usr/share/man/cat8/wgrisc
+wgrisc
+# ./usr/share/man/cat8/wgrisc
 ..
 
 # ./usr/share/man/cat8
@@ -1211,8 +1226,18 @@ man7
 man8
 
 # ./usr/share/man/man8/amiga
+alpha
+# ./usr/share/man/man8/amiga
+..
+
+# ./usr/share/man/man8/amiga
 amiga
 # ./usr/share/man/man8/amiga
+..
+
+# ./usr/share/man/man8/arc
+arc
+# ./usr/share/man/man8/arc
 ..
 
 # ./usr/share/man/man8/arm32
@@ -1255,6 +1280,16 @@ pc532
 # ./usr/share/man/man8/pc532
 ..
 
+# ./usr/share/man/man8/pmax
+pmax
+# ./usr/share/man/man8/pmax
+..
+
+# ./usr/share/man/man8/powerpc
+powerpc
+# ./usr/share/man/man8/powerpc
+..
+
 # ./usr/share/man/man8/sparc
 sparc
 # ./usr/share/man/man8/sparc
@@ -1265,19 +1300,14 @@ sun3
 # ./usr/share/man/man8/sun3
 ..
 
-# ./usr/share/man/man8/tahoe
-tahoe
-# ./usr/share/man/man8/tahoe
-..
-
 # ./usr/share/man/man8/vax
 vax
 # ./usr/share/man/man8/vax
 ..
 
-# ./usr/share/man/man8/x68k
-x68k
-# ./usr/share/man/man8/x68k
+# ./usr/share/man/man8/wgrisc
+wgrisc
+# ./usr/share/man/man8/wgrisc
 ..
 
 # ./usr/share/man/man8
