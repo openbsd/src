@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.216 2000/02/08 00:33:43 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.217 2000/02/11 03:50:10 jason Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -965,6 +965,7 @@
 #define	PCI_PRODUCT_INTEL_SIO	0x0484		/* 82378IB PCI-ISA (System I/O) */
 #define	PCI_PRODUCT_INTEL_82426EX	0x0486		/* 82426EX PCI-to-ISA (PCIB) */
 #define	PCI_PRODUCT_INTEL_PCMC	0x04a3		/* 82434LX/NX (Mercury/Neptune) PCI/Cache/DRAM */
+#define	PCI_PRODUCT_INTEL_82452	0x1000		/* Pro/1000 */
 #define	PCI_PRODUCT_INTEL_82092AA	0x1222		/* 82092AA IDE */
 #define	PCI_PRODUCT_INTEL_SAA7116	0x1223		/* SAA7116 */
 #define	PCI_PRODUCT_INTEL_82596	0x1226		/* EE Pro 10 PCI */
