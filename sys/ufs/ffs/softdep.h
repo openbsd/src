@@ -1,3 +1,4 @@
+/*	$OpenBSD: softdep.h,v 1.3 2001/02/10 11:08:40 fgsch Exp $	*/
 /*
  * Copyright 1998 Marshall Kirk McKusick. All Rights Reserved.
  *
