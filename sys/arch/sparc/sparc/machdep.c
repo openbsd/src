@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.42 1999/10/29 14:36:02 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.43 1999/11/26 16:21:01 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -1135,13 +1135,11 @@ oldmon_w_trace(va)
 #endif
 	write_user_windows();
 
-#define round_up(x) (( (x) + (NBPG-1) ) & (~(NBPG-1)) )
-
 	printf("\nstack trace with sp = 0x%lx\n", va);
-	stop = round_up(va);
+	stop = round_page(va);
 	printf("stop at 0x%lx\n", stop);
 	fp = (struct frame *) va;
-	while (round_up((u_long) fp) == stop) {
+	while (round_page((u_long) fp) == stop) {
 		printf("  0x%x(0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x, 0x%x) fp %p\n", fp->fr_pc,
 		    fp->fr_arg[0], fp->fr_arg[1], fp->fr_arg[2], fp->fr_arg[3],
 		    fp->fr_arg[4], fp->fr_arg[5], fp->fr_arg[6], fp->fr_fp);
