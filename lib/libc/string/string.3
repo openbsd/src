@@ -31,13 +31,14 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: string.3,v 1.4 1999/05/16 19:55:17 alex Exp $
+.\"	$OpenBSD: string.3,v 1.5 1999/05/17 05:24:38 millert Exp $
 .\"
 .Dd April 19, 1991
 .Dt STRING 3
 .Os BSD 4
 .Sh NAME
 .Nm strcat ,
+.Nm strlcat ,
 .Nm strncat ,
 .Nm strchr ,
 .Nm strrchr ,
@@ -46,6 +47,7 @@
 .Nm strcasecmp,
 .Nm strncasecmp ,
 .Nm strcpy ,
+.Nm strlcpy ,
 .Nm strncpy ,
 .Nm strerror ,
 .Nm strlen ,
@@ -61,7 +63,9 @@
 .Sh SYNOPSIS
 .Fd #include <string.h>
 .Ft char *
-.Fn strcat "char *s" "const char * append"
+.Fn strcat "char *s" "const char *append"
+.Ft char *
+.Fn strlcat "char *s" "const char *append" "size_t size"
 .Ft char *
 .Fn strncat "char *s" "const char *append" "size_t count"
 .Ft char *
@@ -78,6 +82,8 @@
 .Fn strncasecmp "const char *s1" "const char *s2" "size_t count"
 .Ft char *
 .Fn strcpy "char *dst" "const char *src"
+.Ft char *
+.Fn strlcpy "char *dst" "const char *src" "size_t size"
 .Ft char *
 .Fn strncpy "char *dst" "const char *src" "size_t count"
 .Ft char *
@@ -124,6 +130,8 @@ for size limitations.
 .Xr strcpy 3 ,
 .Xr strcspn 3 ,
 .Xr strerror 3 ,
+.Xr strlcat 3 ,
+.Xr strlcpy 3 ,
 .Xr strlen 3 ,
 .Xr strpbrk 3 ,
 .Xr strrchr 3 ,
@@ -144,7 +152,6 @@ The
 .Fn strerror ,
 .Fn strlen ,
 .Fn strpbrk ,
-.Fn strsep ,
 .Fn strspn ,
 .Fn strcspn ,
 .Fn strstr ,
