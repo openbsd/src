@@ -12,10 +12,11 @@ The following systems have been tested:
 	- MicroVAX 3100/80
 	- MicroVAX 3100/90
 	- MicroVAX 3300
-	- VAX 4000-10{0,5}
-	- VAX 4000-200
-	- VAX 4000-300
-	- VAX 4000-{4,5,6}00{,A}
+	- VAX 4000 10{0,5}
+	- VAX 4000 200
+	- VAX 4000 300
+	- VAX 4000 {4,5,6}00
+	- VAX 4000 {5,7}00A
 
 Ethernet devices:
 	- on-board MicroVAX or VAXstation LANCE
@@ -26,12 +27,17 @@ SCSI:
 	- Includes most 3100's and VAXstation 4000's, as well as the
 	  VAX 4000 10X series.
 	
+QBUS:
+	- KFQSA (MSCP speaking DSSI controller)
+	- Emulex UC08 (MSCP speaking SCSI controller)
+
 Serial ports:
 	- DZ*11 lines (also DZ*11 compatible lines on VAXstations)
 
 The lowest amount of memory tested is 6M; however, more is recommended.
 At the moment, the only supported console is a serial console.
 
-Currently, your only storage options for using OpenBSD/MACHINE are SCSI
-disks or tapes on one of the supported controllers, or a NFS root and
-swap.  Please see below for details.
+Currently, your storage options for using OpenBSD/MACHINE are SCSI disks
+or tapes on one of the supported controllers, disks and tapes accessed
+through an appropriate QBUS MSCP controller, or a NFS root and swap.
+Please see below for details.
