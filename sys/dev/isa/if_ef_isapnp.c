@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ef_isapnp.c,v 1.4 1999/08/08 19:16:08 deraadt Exp $	*/
+/*	$OpenBSD: if_ef_isapnp.c,v 1.5 1999/12/02 20:55:06 jason Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -43,6 +43,7 @@
 #include <sys/select.h>
 #include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/kernel.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -67,6 +68,8 @@
 #include <machine/bus.h>
 #include <machine/intr.h>
 
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 #include <dev/isa/isavar.h>
 #include <dev/isa/isadmavar.h>
 #include <dev/ic/elink3reg.h>
@@ -78,6 +81,7 @@ struct ef_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct arpcom		sc_arpcom;
+	struct mii_data		sc_mii;
 	void *			sc_ih;
 	int			sc_tx_start_thresh;
 	int			sc_tx_succ_ok;
@@ -128,14 +132,14 @@ void eftxstat __P((struct ef_softc *));
 void efread __P((struct ef_softc *));
 struct mbuf *efget __P((struct ef_softc *, int totlen));
 
-#if 0
-/*
- * XXX not used (yet)
- */
-int ef_mii_write __P((struct ef_softc *, int, int, int));
-int ef_mii_read __P((struct ef_softc *, int, int));
+void ef_miibus_writereg __P((struct device *, int, int, int));
+void ef_miibus_statchg __P((struct device *));
+int ef_miibus_readreg __P((struct device *, int, int));
 void ef_mii_writeb __P((struct ef_softc *, int));
-#endif
+void ef_mii_sync __P((struct ef_softc *));
+int ef_ifmedia_upd __P((struct ifnet *));
+void ef_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
+void ef_tick __P((void *));
 
 struct cfdriver ef_cd = {
 	NULL, "ef", DV_IFNET
@@ -191,9 +195,6 @@ ef_isapnp_attach(parent, self, aux)
 
 	printf(": address %s\n", ether_sprintf(sc->sc_arpcom.ac_enaddr));
 
-	/*
-	 * XXX this assumes there is an MII transceiver
-	 */
 	GO_WINDOW(3);
 	cfg = bus_space_read_4(iot, ioh, EP_W3_INTERNAL_CONFIG);
 	cfg &= ~(0x00f00000);
@@ -213,6 +214,18 @@ ef_isapnp_attach(parent, self, aux)
 	ifp->if_watchdog = efwatchdog;
 	ifp->if_flags =
 	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = ef_miibus_readreg;
+	sc->sc_mii.mii_writereg = ef_miibus_writereg;
+	sc->sc_mii.mii_statchg = ef_miibus_statchg;
+	ifmedia_init(&sc->sc_mii.mii_media, 0, ef_ifmedia_upd, ef_ifmedia_sts);
+	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE, 0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_NONE);
+	} else
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER|IFM_AUTO);
 
 	if_attach(ifp);
 	ether_ifattach(ifp);
@@ -361,12 +374,10 @@ efioctl(ifp, cmd, data)
 			efinit(sc);
 			break;
 		}
-#if 0
 	case SIOCSIFMEDIA:
 	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
 		break;
-#endif
 	case SIOCSIFFLAGS:
 		if ((ifp->if_flags & IFF_UP) == 0 &&
 		    (ifp->if_flags & IFF_RUNNING) != 0) {
@@ -406,7 +417,9 @@ efinit(sc)
 	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
-	int i;
+	int i, s;
+
+	s = splimp();
 
 	efstop(sc);
 
@@ -457,8 +470,14 @@ efinit(sc)
 	    (sc->sc_busmaster ? S_DMA_DONE : 0) | S_UP_COMPLETE |
 	    S_DOWN_COMPLETE | S_CARD_FAILURE | S_TX_COMPLETE);
 
+	mii_mediachg(&sc->sc_mii);
+
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
+
+	splx(s);
+
+	timeout(ef_tick, sc, hz);
 
 	efstart(ifp);
 }
@@ -479,8 +498,14 @@ void
 efstop(sc)
 	struct ef_softc *sc;
 {
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+
+	ifp->if_timer = 0;
+	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+
+	untimeout(ef_tick, sc);
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISABLE);
 	efcompletecmd(sc, EP_COMMAND, RX_DISCARD_TOP_PACK);
@@ -793,10 +818,6 @@ efget(sc, totlen)
 	return (top);
 }
 
-#if 0
-/*
- * XXX not used (yet)
- */
 #define MII_SET(sc, x) \
 	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, EP_W4_CTRLR_STATUS, \
 	    bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, EP_W4_CTRLR_STATUS) \
@@ -825,11 +846,22 @@ ef_mii_writeb(sc, b)
 	DELAY(1);
 }
 
-int
-ef_mii_read(sc, phy, reg)
+void
+ef_mii_sync(sc)
 	struct ef_softc *sc;
+{
+	int i;
+
+	for (i = 0; i < 32; i++)
+		ef_mii_writeb(sc, 1);
+}
+
+int
+ef_miibus_readreg(dev, phy, reg)
+	struct device *dev;
 	int phy, reg;
 {
+	struct ef_softc *sc = (struct ef_softc *)dev;
 	int i, ack, s, val = 0;
 
 	s = splimp();
@@ -841,9 +873,7 @@ ef_mii_read(sc, phy, reg)
 	MII_SET(sc, EF_MII_DIR);
 	MII_CLR(sc, EF_MII_CLK);
 
-	/* Transmit idle sequence */
-	for (i = 0; i < 32; i++)
-		ef_mii_writeb(sc, 1);
+	ef_mii_sync(sc);
 
 	/* Transmit start sequence */
 	ef_mii_writeb(sc, 0);
@@ -899,11 +929,12 @@ ef_mii_read(sc, phy, reg)
 	return (val);
 }
 
-int
-ef_mii_write(sc, phy, reg, val)
-	struct ef_softc *sc;
+void
+ef_miibus_writereg(dev, phy, reg, val)
+	struct device *dev;
 	int phy, reg, val;
 {
+	struct ef_softc *sc = (struct ef_softc *)dev;
 	int s, i;
 
 	s = splimp();
@@ -914,8 +945,7 @@ ef_mii_write(sc, phy, reg, val)
 	/* Turn on xmit */
 	MII_SET(sc, EF_MII_DIR);
 
-	for (i = 0; i < 32; i++)
-		ef_mii_writeb(sc, 1);
+	ef_mii_sync(sc);
 
 	ef_mii_writeb(sc, 0);
 	ef_mii_writeb(sc, 1);
@@ -935,7 +965,59 @@ ef_mii_write(sc, phy, reg, val)
 		ef_mii_writeb(sc, (val & i) ? 1 : 0);
 
 	splx(s);
+}
 
+int
+ef_ifmedia_upd(ifp)
+	struct ifnet *ifp;
+{
+	struct ef_softc *sc = ifp->if_softc;
+
+	mii_mediachg(&sc->sc_mii);
 	return (0);
 }
-#endif
+
+void
+ef_ifmedia_sts(ifp, ifmr)
+	struct ifnet *ifp;
+	struct ifmediareq *ifmr;
+{
+	struct ef_softc *sc = ifp->if_softc;
+
+	mii_pollstat(&sc->sc_mii);
+	ifmr->ifm_status = sc->sc_mii.mii_media_status;
+	ifmr->ifm_active = sc->sc_mii.mii_media_active;
+}
+
+void
+ef_miibus_statchg(self)
+	struct device *self;
+{
+	struct ef_softc *sc = (struct ef_softc *)self;
+	int s;
+
+	s = splimp();
+	GO_WINDOW(3);
+	/* Set duplex bit appropriately */
+	if ((sc->sc_mii.mii_media_active & IFM_GMASK) == IFM_FDX)
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    EP_W3_MAC_CONTROL, 0x20);
+	else
+		bus_space_write_1(sc->sc_iot, sc->sc_ioh,
+		    EP_W3_MAC_CONTROL, 0x00);
+	GO_WINDOW(7);
+	splx(s);
+}
+
+void
+ef_tick(v)
+	void *v;
+{
+	struct ef_softc *sc = v;
+	int s;
+
+	s = splimp();
+	mii_tick(&sc->sc_mii);
+	splx(s);
+	timeout(ef_tick, sc, hz);
+}
