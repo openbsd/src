@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.2 1998/01/11 02:10:45 csapuntz Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.3 1998/03/14 19:32:59 millert Exp $  */
 
 
 /*
@@ -59,9 +59,10 @@
 /*
  * The workitem queue.
  */ 
-#define SYNCER_MAXDELAY       32
-int syncer_maxdelay = SYNCER_MAXDELAY;        /* maximum delay time */
-time_t syncdelay = 30;                        /* time to delay syncing vnodes */
+#define SYNCER_MAXDELAY	32
+int syncer_maxdelay = SYNCER_MAXDELAY;	/* maximum delay time */
+time_t syncdelay = 30;			/* time to delay syncing vnodes */
+int rushjob;				/* number of slots to run ASAP */
  
 static int syncer_delayno = 0;
 static long syncer_mask;
@@ -172,6 +173,20 @@ sched_sync(p)
 		if (bioops.io_sync)
 			(*bioops.io_sync)(NULL);
 
+		/*
+		 * The variable rushjob allows the kernel to speed up the
+		 * processing of the filesystem syncer process. A rushjob
+		 * value of N tells the filesystem syncer to process the next
+		 * N seconds worth of work on its queue ASAP. Currently rushjob
+		 * is used by the soft update code to speed up the filesystem
+		 * syncer process when the incore state is getting so far
+		 * ahead of the disk that the kernel memory pool is being
+		 * threatened with exhaustion.
+		 */
+		if (rushjob > 0) {
+			rushjob -= 1;
+			continue;
+		}
 		/*
 		 * If it has taken us less than a second to process the
 		 * current work, then wait. Otherwise start right over

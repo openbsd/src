@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.13 1998/01/10 23:41:17 csapuntz Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.14 1998/03/14 19:33:03 millert Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -285,8 +285,9 @@ vref(vp)
  * Global vnode data.
  */
 extern	struct vnode *rootvnode;	/* root (i.e. "/") vnode */
-extern	time_t syncdelay;		/* time to delay syncing vnodes */
 extern	int desiredvnodes;		/* number of vnodes desired */
+extern	time_t syncdelay;		/* time to delay syncing vnodes */
+extern	int rushjob;			/* # of slots syncer should run ASAP */
 extern	struct vattr va_null;		/* predefined null vattr structure */
 
 /*
