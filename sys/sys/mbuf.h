@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbuf.h,v 1.50 2001/07/02 01:34:47 deraadt Exp $	*/
+/*	$OpenBSD: mbuf.h,v 1.51 2001/07/05 08:33:11 jjbg Exp $	*/
 /*	$NetBSD: mbuf.h,v 1.19 1996/02/09 18:25:14 christos Exp $	*/
 
 /*
@@ -142,6 +142,7 @@ struct mbuf {
 #define	M_MCAST		0x0200	/* send/received as link-level multicast */
 #define M_CONF		0x0400  /* packet was encrypted (ESP-transport) */
 #define M_AUTH		0x0800  /* packet was authenticated (AH) */
+#define M_COMP		0x1000  /* packet was compressed (IPCOMP) */
 
 /* Checksumming flags */
 #define	M_IPV4_CSUM_OUT		0x0001	/* IPv4 checksum needed */
