@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.31 2000/07/03 19:30:20 mickey Exp $
+#	$OpenBSD: files.alpha,v 1.32 2000/07/03 20:14:22 ericj Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -90,7 +90,6 @@ attach	tcds at tc
 file	arch/alpha/tc/tcds.c		tcds		needs-count
 
 # 53C[F]90 SCSI
-device	esp: scsi
 attach	esp at tcds
 file	arch/alpha/tc/esp.c		esp		needs-count
 file	arch/alpha/tc/tcds_dma.c	esp
