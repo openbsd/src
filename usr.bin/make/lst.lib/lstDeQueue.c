@@ -1,4 +1,5 @@
-/*	$OpenBSD: lstDeQueue.c,v 1.10 2000/09/14 13:32:09 espie Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: lstDeQueue.c,v 1.11 2001/05/03 13:41:19 espie Exp $	*/
 /*	$NetBSD: lstDeQueue.c,v 1.5 1996/11/06 17:59:36 christos Exp $	*/
 
 /*
@@ -43,15 +44,15 @@
  */
 
 #include	"lstInt.h"
+
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstDeQueue.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.10 2000/09/14 13:32:09 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.11 2001/05/03 13:41:19 espie Exp $";
 #endif
 #endif /* not lint */
-
 
 /*-
  *-----------------------------------------------------------------------
@@ -59,27 +60,30 @@ static char rcsid[] = "$OpenBSD: lstDeQueue.c,v 1.10 2000/09/14 13:32:09 espie E
  *	Remove and return the datum at the head of the given list.
  *
  * Results:
- *	The datum in the node at the head or (ick) NULL if the list
- *	is empty.
+ *	The datum in the node at the head or NULL if the list is empty.
  *
  * Side Effects:
  *	The head node is removed from the list.
- *
  *-----------------------------------------------------------------------
  */
 void *
 Lst_DeQueue(l)
-    Lst	    	  	l;
+    Lst 	  l;
 {
-    void		*rd;
-    LstNode		tln;
+    void	  *rd;
+    LstNode	  tln;
 
-    tln = Lst_First(l);
+    tln = l->firstPtr;
     if (tln == NULL)
 	return NULL;
 
     rd = tln->datum;
-    Lst_Remove(l, tln);
+    l->firstPtr = tln->nextPtr;
+    if (l->firstPtr)
+	l->firstPtr->prevPtr = NULL;
+    else
+	l->lastPtr = NULL;
+    free(tln);
     return rd;
 }
 

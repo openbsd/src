@@ -1,5 +1,33 @@
-/*	$OpenBSD: buf.h,v 1.13 2000/11/24 14:27:19 espie Exp $	*/
-/*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: buf.h,v 1.14 2001/05/03 13:41:01 espie Exp $	*/
+/*	$NetBSD: buf.h,v 1.7 1996/12/31 17:53:22 christos Exp $ */
+
+/*
+ * Copyright (c) 1999 Marc Espie.
+ *
+ * Extensive code changes for the OpenBSD project.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE OPENBSD PROJECT AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE OPENBSD
+ * PROJECT OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -38,7 +66,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)buf.h	8.1 (Berkeley) 6/6/93
+ *	from: @(#)buf.h 8.1 (Berkeley) 6/6/93
  */
 
 /*-
@@ -62,40 +90,39 @@ typedef struct Buffer_ {
 typedef struct Buffer_ *Buffer;
 
 /* Internal support for Buf_AddChar.  */
-extern void BufOverflow __P((Buffer));
+extern void BufOverflow(Buffer);
 
 /* User interface */
 
 /* Buf_AddChars -- Add a number of chars to the buffer.  */
-extern void Buf_AddChars __P((Buffer, size_t, const char *));
+extern void Buf_AddChars(Buffer, size_t, const char *);
 /* Buf_Reset -- Remove all chars from a buffer.  */
 #define Buf_Reset(bp)	((void)((bp)->inPtr = (bp)->buffer))
-/* Buf_Size -- Return the number of chars in the given buffer. 
+/* Buf_Size -- Return the number of chars in the given buffer.
  *	Doesn't include the null-terminating char.  */
 #define Buf_Size(bp)	((size_t)((bp)->inPtr - (bp)->buffer))
-/* Buf_Init -- Initialize a buffer. If no initial size is given (0), 
+/* Buf_Init -- Initialize a buffer. If no initial size is given,
  *	a reasonable default is used.  */
-extern void Buf_Init __P((Buffer, size_t));
-/* Buf_Destroy -- Nuke a buffer and all its resources.  */
-#define Buf_Destroy(bp)	(free((bp)->buffer))
+extern void Buf_Init(Buffer, size_t);
+/* Buf_Destroy -- Nuke a buffer and all its resources.	*/
+#define Buf_Destroy(bp) ((void)free((bp)->buffer))
 /* Buf_Retrieve -- Retrieve data from a buffer, as a NULL terminated string.  */
 #define Buf_Retrieve(bp)	(*(bp)->inPtr = '\0', (bp)->buffer)
-/* Buf_AddChar -- Add a single char to buffer. */
-#define	Buf_AddChar(bp, byte) 			\
-do {			      			\
+/* Buf_AddChar -- Add a single char to buffer.	*/
+#define Buf_AddChar(bp, byte)			\
+do {						\
 	if ((bp)->endPtr - (bp)->inPtr <= 1)	\
 	    BufOverflow(bp);			\
 	*(bp)->inPtr++ = (byte);		\
-} while (0)					
+} while (0)
 
 /* Buf_AddSpace -- Add a space to buffer.  */
-#define Buf_AddSpace(b)			Buf_AddChar((b), ' ')
+#define Buf_AddSpace(b) 		Buf_AddChar((b), ' ')
 /* Buf_AddString -- Add the contents of a NULL terminated string to buffer.  */
 #define Buf_AddString(b, s)		Buf_AddChars((b), strlen(s), (s))
 /* Buf_AddInterval -- Add characters between pointers s and e to buffer.  */
-#define Buf_AddInterval(b, s, e) 	Buf_AddChars((b), (e) - (s), (s))
+#define Buf_AddInterval(b, s, e)	Buf_AddChars((b), (e) - (s), (s))
 
-/* Buf_ReplaceLastChar -- Replace the last char in a buffer.  */
-extern void Buf_ReplaceLastChar __P((Buffer, char));
+extern void Buf_KillTrailingSpaces(Buffer);
 
 #endif /* _BUF_H */

@@ -1,18 +1,18 @@
-/*	$OpenBSD: util.c,v 1.13 2000/09/14 13:32:08 espie Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: util.c,v 1.14 2001/05/03 13:41:12 espie Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
  * Missing stuff from OS's
  */
 
+#ifndef lint
+static char rcsid[] = "$OpenBSD: util.c,v 1.14 2001/05/03 13:41:12 espie Exp $";
+#endif
+
 #include <stdio.h>
 #include "make.h"
 #include <sys/param.h>
-
-#ifndef lint
-UNUSED
-static char rcsid[] = "$OpenBSD: util.c,v 1.13 2000/09/14 13:32:08 espie Exp $";
-#endif
 
 #ifndef __STDC__
 # ifndef const
@@ -75,11 +75,9 @@ setenv(name, value, dum)
     const char *value;
     int dum;
 {
-    register char *p;
+    char *p;
     int len = strlen(name) + strlen(value) + 2; /* = \0 */
-    char *ptr = (char*) malloc(len);
-
-    (void) dum;
+    char *ptr = (char*)malloc(len);
 
     if (ptr == NULL)
 	return -1;
@@ -137,22 +135,22 @@ random()
 
 /* turn into bsd signals */
 void (*
-signal(s, a)) ()
+signal(s, a))()
     int     s;
     void (*a)();
 {
     struct sigvec osv, sv;
 
-    (void) sigvector(s, (struct sigvec *) 0, &osv);
+    (void)sigvector(s, (struct sigvec *)0, &osv);
     sv = osv;
     sv.sv_handler = a;
 #ifdef SV_BSDSIG
     sv.sv_flags = SV_BSDSIG;
 #endif
 
-    if (sigvector(s, &sv, (struct sigvec *) 0) == -1)
-        return (SIG_ERR);
-    return (osv.sv_handler);
+    if (sigvector(s, &sv, (struct sigvec *)0) == -1)
+	return SIG_ERR;
+    return osv.sv_handler;
 }
 
 #if !defined(BSD) && !defined(d_fileno)
@@ -162,7 +160,7 @@ signal(s, a)) ()
 #ifndef DEV_DEV_COMPARE
 # define DEV_DEV_COMPARE(a, b) ((a) == (b))
 #endif
-#define ISDOT(c) ((c)[0] == '.' && (((c)[1] == '\0') || ((c)[1] == '/')))
+#define ISDOT(c) ((c)[0] == '.' && ((c)[1] == '\0' || (c)[1] == '/'))
 #define ISDOTDOT(c) ((c)[0] == '.' && ISDOT(&((c)[1])))
 
 
@@ -171,14 +169,14 @@ signal(s, a)) ()
  */
 static char *
 strrcpy(ptr, str)
-    register char *ptr, *str;
+    char *ptr, *str;
 {
-    register int len = strlen(str);
+    size_t len = strlen(str);
 
     while (len)
 	*--ptr = str[--len];
 
-    return (ptr);
+    return ptr;
 } /* end strrcpy */
 
 
@@ -196,9 +194,9 @@ getwd(pathname)
 
     /* find the inode of root */
     if (stat("/", &st_root) == -1) {
-	(void) sprintf(pathname,
+	(void)sprintf(pathname,
 			"getwd: Cannot stat \"/\" (%s)", strerror(errno));
-	return (NULL);
+	return NULL;
     }
     pathbuf[MAXPATHLEN - 1] = '\0';
     pathptr = &pathbuf[MAXPATHLEN - 1];
@@ -207,9 +205,9 @@ getwd(pathname)
 
     /* find the inode of the current directory */
     if (lstat(".", &st_cur) == -1) {
-	(void) sprintf(pathname,
+	(void)sprintf(pathname,
 			"getwd: Cannot stat \".\" (%s)", strerror(errno));
-	return (NULL);
+	return NULL;
     }
     nextpathptr = strrcpy(nextpathptr, "../");
 
@@ -219,22 +217,22 @@ getwd(pathname)
 	/* look if we found root yet */
 	if (st_cur.st_ino == st_root.st_ino &&
 	    DEV_DEV_COMPARE(st_cur.st_dev, st_root.st_dev)) {
-	    (void) strcpy(pathname, *pathptr != '/' ? "/" : pathptr);
-	    return (pathname);
+	    (void)strcpy(pathname, *pathptr != '/' ? "/" : pathptr);
+	    return pathname;
 	}
 
 	/* open the parent directory */
 	if (stat(nextpathptr, &st_dotdot) == -1) {
-	    (void) sprintf(pathname,
+	    (void)sprintf(pathname,
 			    "getwd: Cannot stat directory \"%s\" (%s)",
 			    nextpathptr, strerror(errno));
-	    return (NULL);
+	    return NULL;
 	}
 	if ((dp = opendir(nextpathptr)) == NULL) {
-	    (void) sprintf(pathname,
+	    (void)sprintf(pathname,
 			    "getwd: Cannot open directory \"%s\" (%s)",
 			    nextpathptr, strerror(errno));
-	    return (NULL);
+	    return NULL;
 	}
 
 	/* look in the parent for the entry with the same inode */
@@ -252,12 +250,12 @@ getwd(pathname)
 	    for (d = readdir(dp); d != NULL; d = readdir(dp)) {
 		if (ISDOT(d->d_name) || ISDOTDOT(d->d_name))
 		    continue;
-		(void) strcpy(cur_name_add, d->d_name);
+		(void)strcpy(cur_name_add, d->d_name);
 		if (lstat(nextpathptr, &st_next) == -1) {
-		    (void) sprintf(pathname, "getwd: Cannot stat \"%s\" (%s)",
+		    (void)sprintf(pathname, "getwd: Cannot stat \"%s\" (%s)",
 				    d->d_name, strerror(errno));
-		    (void) closedir(dp);
-		    return (NULL);
+		    (void)closedir(dp);
+		    return NULL;
 		}
 		/* check if we found it yet */
 		if (st_next.st_ino == st_cur.st_ino &&
@@ -266,54 +264,54 @@ getwd(pathname)
 	    }
 	}
 	if (d == NULL) {
-	    (void) sprintf(pathname, "getwd: Cannot find \".\" in \"..\"");
-	    (void) closedir(dp);
-	    return (NULL);
+	    (void)sprintf(pathname, "getwd: Cannot find \".\" in \"..\"");
+	    (void)closedir(dp);
+	    return NULL;
 	}
 	st_cur = st_dotdot;
 	pathptr = strrcpy(pathptr, d->d_name);
 	pathptr = strrcpy(pathptr, "/");
 	nextpathptr = strrcpy(nextpathptr, "../");
-	(void) closedir(dp);
+	(void)closedir(dp);
 	*cur_name_add = '\0';
     }
 } /* end getwd */
 
 
-char    *sys_siglist[] = {
-        "Signal 0",
-        "Hangup",                       /* SIGHUP    */
-        "Interrupt",                    /* SIGINT    */
-        "Quit",                         /* SIGQUIT   */
-        "Illegal instruction",          /* SIGILL    */
-        "Trace/BPT trap",               /* SIGTRAP   */
-        "IOT trap",                     /* SIGIOT    */
-        "EMT trap",                     /* SIGEMT    */
-        "Floating point exception",     /* SIGFPE    */
-        "Killed",                       /* SIGKILL   */
-        "Bus error",                    /* SIGBUS    */
-        "Segmentation fault",           /* SIGSEGV   */
-        "Bad system call",              /* SIGSYS    */
-        "Broken pipe",                  /* SIGPIPE   */
-        "Alarm clock",                  /* SIGALRM   */
-        "Terminated",                   /* SIGTERM   */
-        "User defined signal 1",        /* SIGUSR1   */
-        "User defined signal 2",        /* SIGUSR2   */
-        "Child exited",                 /* SIGCLD    */
-        "Power-fail restart",           /* SIGPWR    */
-        "Virtual timer expired",        /* SIGVTALRM */
-        "Profiling timer expired",      /* SIGPROF   */
-        "I/O possible",                 /* SIGIO     */
-        "Window size changes",          /* SIGWINDOW */
-        "Stopped (signal)",             /* SIGSTOP   */
-        "Stopped",                      /* SIGTSTP   */
-        "Continued",                    /* SIGCONT   */
-        "Stopped (tty input)",          /* SIGTTIN   */
-        "Stopped (tty output)",         /* SIGTTOU   */
-        "Urgent I/O condition",         /* SIGURG    */
-        "Remote lock lost (NFS)",       /* SIGLOST   */
-        "Signal 31",                    /* reserved  */
-        "DIL signal"                    /* SIGDIL    */
+char	*sys_siglist[] = {
+	"Signal 0",
+	"Hangup",			/* SIGHUP    */
+	"Interrupt",			/* SIGINT    */
+	"Quit", 			/* SIGQUIT   */
+	"Illegal instruction",		/* SIGILL    */
+	"Trace/BPT trap",		/* SIGTRAP   */
+	"IOT trap",			/* SIGIOT    */
+	"EMT trap",			/* SIGEMT    */
+	"Floating point exception",	/* SIGFPE    */
+	"Killed",			/* SIGKILL   */
+	"Bus error",			/* SIGBUS    */
+	"Segmentation fault",		/* SIGSEGV   */
+	"Bad system call",		/* SIGSYS    */
+	"Broken pipe",			/* SIGPIPE   */
+	"Alarm clock",			/* SIGALRM   */
+	"Terminated",			/* SIGTERM   */
+	"User defined signal 1",	/* SIGUSR1   */
+	"User defined signal 2",	/* SIGUSR2   */
+	"Child exited", 		/* SIGCLD    */
+	"Power-fail restart",		/* SIGPWR    */
+	"Virtual timer expired",	/* SIGVTALRM */
+	"Profiling timer expired",	/* SIGPROF   */
+	"I/O possible", 		/* SIGIO     */
+	"Window size changes",		/* SIGWINDOW */
+	"Stopped (signal)",		/* SIGSTOP   */
+	"Stopped",			/* SIGTSTP   */
+	"Continued",			/* SIGCONT   */
+	"Stopped (tty input)",		/* SIGTTIN   */
+	"Stopped (tty output)", 	/* SIGTTOU   */
+	"Urgent I/O condition", 	/* SIGURG    */
+	"Remote lock lost (NFS)",	/* SIGLOST   */
+	"Signal 31",			/* reserved  */
+	"DIL signal"			/* SIGDIL    */
 };
 
 int
@@ -325,7 +323,7 @@ utimes(file, tvp)
 
     t.actime  = tvp[0].tv_sec;
     t.modtime = tvp[1].tv_sec;
-    return(utime(file, &t));
+    return utime(file, &t);
 }
 
 
@@ -336,7 +334,7 @@ utimes(file, tvp)
 
 /* turn into bsd signals */
 void (*
-signal(s, a)) ()
+signal(s, a))()
     int     s;
     void (*a)();
 {
@@ -363,9 +361,9 @@ signal(s, a)) ()
 #endif
 
 #ifdef _IOSTRG
-#define STRFLAG	(_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
+#define STRFLAG (_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
 #else
-#define STRFLAG	(_IOREAD)		/* XXX: Assume svr4 stdio */
+#define STRFLAG (_IOREAD)		/* XXX: Assume svr4 stdio */
 #endif
 
 int
@@ -382,7 +380,7 @@ vsnprintf(s, n, fmt, args)
 	 * Some os's are char * _ptr, others are unsigned char *_ptr...
 	 * We cast to void * to make everyone happy.
 	 */
-	fakebuf._ptr = (void *) s;
+	fakebuf._ptr = (void *)s;
 	fakebuf._cnt = n-1;
 	fakebuf._file = -1;
 	_doprnt(fmt, args, &fakebuf);
@@ -390,7 +388,7 @@ vsnprintf(s, n, fmt, args)
 	putc('\0', &fakebuf);
 	if (fakebuf._cnt<0)
 	    fakebuf._cnt = 0;
-	return (n-fakebuf._cnt-1);
+	return n-fakebuf._cnt-1;
 }
 
 int
@@ -421,7 +419,6 @@ snprintf(va_alist)
 	return rv;
 }
 #endif
-
 #ifdef NEED_STRSTR
 char *
 strstr(string, substring)
@@ -462,7 +459,7 @@ fgetln(stream, len)
     static size_t buflen = 0;
 
     if (buflen == 0) {
-    	buflen = 512;
+	buflen = 512;
 	buffer = emalloc(buflen+1);
     }
     if (fgets(buffer, buflen+1, stream) == NULL)

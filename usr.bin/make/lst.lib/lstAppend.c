@@ -1,4 +1,5 @@
-/*	$OpenBSD: lstAppend.c,v 1.11 2000/09/14 13:32:08 espie Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: lstAppend.c,v 1.12 2001/05/03 13:41:17 espie Exp $	*/
 /*	$NetBSD: lstAppend.c,v 1.5 1996/11/06 17:59:31 christos Exp $	*/
 
 /*
@@ -43,23 +44,20 @@
  */
 
 #include	"lstInt.h"
+
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lstAppend.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)lstAppend.c 8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.11 2000/09/14 13:32:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.12 2001/05/03 13:41:17 espie Exp $";
 #endif
 #endif /* not lint */
-
 
 /*-
  *-----------------------------------------------------------------------
  * Lst_Append --
  *	Create a new node and add it to the given list after the given node.
- *
- * Results:
- *	SUCCESS if all went well.
  *
  * Side Effects:
  *	A new ListNode is created and linked in to the List. The lastPtr
@@ -71,22 +69,20 @@ static char rcsid[] = "$OpenBSD: lstAppend.c,v 1.11 2000/09/14 13:32:08 espie Ex
  */
 void
 Lst_Append(l, ln, d)
-    Lst	  	l;	/* affected list */
+    Lst 	l;	/* affected list */
     LstNode	ln;	/* node after which to append the datum */
-    void 	*d;	/* said datum */
+    void	*d;	/* said datum */
 {
     LstNode	nLNode;
 
-    if (ln == NULL && LstIsEmpty(l))
-	goto ok;
-
-    if (LstIsEmpty(l)  || ! LstNodeValid(ln, l))
+    if (ln == NULL && !Lst_IsEmpty(l))
 	return;
-    ok:
+
+    if (ln != NULL && Lst_IsEmpty(l))
+	return;
 
     PAlloc(nLNode, LstNode);
     nLNode->datum = d;
-    nLNode->useCount = nLNode->flags = 0;
 
     if (ln == NULL) {
 	nLNode->nextPtr = nLNode->prevPtr = NULL;
@@ -104,3 +100,21 @@ Lst_Append(l, ln, d)
     }
 }
 
+void
+Lst_AtEnd(l, d)
+    Lst 	l;
+    void	*d;
+{
+    LstNode	ln;
+
+    PAlloc(ln, LstNode);
+    ln->datum = d;
+
+    ln->prevPtr = l->lastPtr;
+    ln->nextPtr = NULL;
+    if (l->lastPtr == NULL)
+	l->firstPtr = ln;
+    else
+	l->lastPtr->nextPtr = ln;
+    l->lastPtr = ln;
+}

@@ -1,4 +1,5 @@
-/*	$OpenBSD: lstConcat.c,v 1.11 2000/09/14 13:32:08 espie Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: lstConcat.c,v 1.12 2001/05/03 13:41:19 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -39,60 +40,53 @@
 
 /*-
  * listConcat.c --
- *	Function to concatentate two lists.
+ *	Function to copy a list and append it to another.
  */
 
 #include    "lstInt.h"
+
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)lstConcat.c 8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.11 2000/09/14 13:32:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstConcat.c,v 1.12 2001/05/03 13:41:19 espie Exp $";
 #endif
 #endif /* not lint */
-
 
 /*-
  *-----------------------------------------------------------------------
  * Lst_Concat --
  *	Concatenate two lists. New elements are created to hold the data
- *	elements, but the elements themselves are not copied.
- *	If the elements should be duplicated to avoid confusion with another
- *	list, the Lst_Duplicate function should be called first.
- *
- * Results:
- *	SUCCESS if all went well. FAILURE otherwise.
+ *	elements but the elements themselves are not copied.
+ *	If the elements themselves should be duplicated to avoid
+ *	confusion with another list, the Lst_Duplicate function
+ *	should be called first.
  *
  * Side Effects:
- *	New elements are created and appended to the first list.
+ *	New elements are created and appended the the first list.
  *-----------------------------------------------------------------------
  */
 void
 Lst_Concat(l1, l2)
-    Lst    	  	l1; 	/* The list to which l2 is to be appended */
-    Lst    	  	l2; 	/* The list to append to l1 */
+    Lst 		l1;	/* The list to which l2 is to be appended */
+    Lst 		l2;	/* The list to append to l1 */
 {
-    LstNode  	ln;     	/* original LstNode */
-    LstNode  	nln;    	/* new LstNode */
-    LstNode  	last;   	/* the last element in the list. Keeps
+    LstNode		ln;	/* original LstNode */
+    LstNode		nln;	/* new LstNode */
+    LstNode		last;	/* the last element in the list. Keeps
 				 * bookkeeping until the end */
-
     if (l2->firstPtr != NULL) {
-	/*
-	 * We set the nextPtr of the last element of list 2 to be NULL to make
-	 * the loop less difficult. The loop simply goes through the entire
-	 * second list creating new LstNodes and filling in the nextPtr, and
-	 * prevPtr to fit into l1 and its datum field from the
-	 * datum field of the corresponding element in l2. The 'last' node
-	 * follows the last of the new nodes along until the entire l2 has
-	 * been appended. Only then does the bookkeeping catch up with the
-	 * changes. During the first iteration of the loop, if 'last' is NULL,
-	 * the first list must have been empty so the newly-created node is
-	 * made the first node of the list.
-	 */
-	l2->lastPtr->nextPtr = NULL;
-	for (last = l1->lastPtr, ln = l2->firstPtr; ln != NULL;
+	/* The loop simply goes through the entire second list creating new
+	 * LstNodes and filling in the nextPtr, and prevPtr to fit into l1
+	 * and its datum field from the datum field of the corresponding
+	 * element in l2. The 'last' node follows the last of the new nodes
+	 * along until the entire l2 has been appended.  Only then does the
+	 * bookkeeping catch up with the changes. During the first iteration
+	 * of the loop, if 'last' is NULL, the first list must have been empty
+	 * so the newly-created node is made the first node of the list.  */
+	for (last = l1->lastPtr, ln = l2->firstPtr;
+	     ln != NULL;
 	     ln = ln->nextPtr) {
 	    PAlloc(nln, LstNode);
 	    nln->datum = ln->datum;
@@ -101,19 +95,13 @@ Lst_Concat(l1, l2)
 	    else
 		l1->firstPtr = nln;
 	    nln->prevPtr = last;
-	    nln->flags = nln->useCount = 0;
 	    last = nln;
 	}
 
-	/*
-	 * Finish bookkeeping. The last new element becomes the last element
-	 * of list one.
-	 */
+	/* Finish bookkeeping. The last new element becomes the last element
+	 * of l1.  */
 	l1->lastPtr = last;
-
 	last->nextPtr = NULL;
-
-	l2->lastPtr->nextPtr = l2->firstPtr;
     }
 }
 

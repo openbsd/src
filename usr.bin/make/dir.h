@@ -1,5 +1,6 @@
-/*	$OpenBSD: dir.h,v 1.13 2001/03/02 16:57:26 espie Exp $	*/
-/*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: dir.h,v 1.14 2001/05/03 13:41:04 espie Exp $	*/
+/*	$NetBSD: dir.h,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -38,37 +39,37 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)dir.h	8.1 (Berkeley) 6/6/93
+ *	from: @(#)dir.h 8.1 (Berkeley) 6/6/93
  */
 
 /* dir.h --
  */
 
-#ifndef	_DIR
-#define	_DIR
+#ifndef DIR_H
+#define DIR_H
 
 typedef struct Path_ {
-    int		refCount; 	/* Number of paths with this directory */
-    int		hits;	    	/* the number of times a file in this
+    int 	  refCount;	/* Number of paths with this directory */
+    int 	  hits; 	/* the number of times a file in this
 				 * directory has been found */
-    struct ohash files;    	/* Hash table of files in directory */
-    char	name[1];	/* Name of directory */
+    struct ohash   files;	/* Hash table of files in directory */
+    char	  name[1];	/* Name of directory */
 } Path;
 
-extern void Dir_Init __P((void));
-extern void Dir_End __P((void));
-extern Boolean Dir_HasWildcards __P((const char *));
-extern void Dir_Expand __P((char *, Lst, Lst));
-extern char *Dir_FindFile __P((char *, Lst));
-extern TIMESTAMP Dir_MTime __P((GNode *));
-extern void Dir_AddDir __P((Lst, const char *, const char *));
-extern char *Dir_MakeFlags __P((char *, Lst));
-extern void Dir_ClearPath __P((Lst));
-extern void Dir_Concat __P((Lst, Lst));
-extern void Dir_PrintDirectories __P((void));
-extern void Dir_PrintPath __P((Lst));
-extern void Dir_Destroy __P((void *));
-extern void *Dir_CopyDir __P((void *));
-extern int set_times __P((const char *));
+extern void Dir_Init(void);
+extern void Dir_End(void);
+extern Boolean Dir_HasWildcards(const char *);
+extern void Dir_Expand(const char *, Lst, Lst);
+extern char *Dir_FindFilei(const char *, const char *, Lst);
+#define Dir_FindFile(n, e) Dir_FindFilei(n, strchr(n, '\0'), e)
+extern TIMESTAMP Dir_MTime(GNode *);
+extern void Dir_AddDir(Lst, const char *, const char *);
+extern char *Dir_MakeFlags(const char *, Lst);
+extern void Dir_Concat(Lst, Lst);
+extern void Dir_PrintDirectories(void);
+extern void Dir_PrintPath(Lst);
+extern void Dir_Destroy(void *);
+extern void *Dir_CopyDir(void *);
+extern int set_times(const char *);
 
-#endif /* _DIR */
+#endif /* DIR_H */

@@ -1,4 +1,5 @@
-/* $OpenBSD: lowparse.h,v 1.2 2000/06/23 16:40:50 espie Exp $ */
+/* $OpenPackages$ */
+/* $OpenBSD: lowparse.h,v 1.3 2001/05/03 13:41:07 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -28,13 +29,14 @@
  */
 #ifndef LOWPARSE_H
 #define LOWPARSE_H
-extern void Parse_FromFile __P((char *, FILE *));
-extern Boolean Parse_NextFile __P((void));
+extern void Parse_FromFile(char *, FILE *);
+extern Boolean Parse_NextFile(void);
 #ifdef CLEANUP
-extern void LowParse_Init __P((void));
-extern void LowParse_End __P((void));
+extern void LowParse_Init(void);
+extern void LowParse_End(void);
 #endif
-extern char *ParseReadLine __P((void));
-extern char *ParseSkipLine __P((int));
-extern void Finish_Errors __P((void));
+extern char *ParseReadLine(Buffer);
+extern char *ParseSkipGetLine(Buffer);
+extern char *ParseGetLine(Buffer, const char *);
+extern void Finish_Errors(void);
 #endif

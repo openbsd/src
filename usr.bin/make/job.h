@@ -1,5 +1,6 @@
-/*	$OpenBSD: job.h,v 1.8 2000/09/14 13:32:07 espie Exp $	*/
-/*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: job.h,v 1.9 2001/05/03 13:41:06 espie Exp $	*/
+/*	$NetBSD: job.h,v 1.5 1996/11/06 17:59:10 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -38,7 +39,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)job.h	8.1 (Berkeley) 6/6/93
+ *	from: @(#)job.h 8.1 (Berkeley) 6/6/93
  */
 
 /*-
@@ -56,10 +57,10 @@
  * before coming out to see if a child has finished. SEL_SEC is the number of
  * seconds and SEL_USEC is the number of micro-seconds
  */
-#define SEL_SEC		0
+#define SEL_SEC 	0
 #define SEL_USEC	500000
 
-
+
 /*-
  * Job Table definitions.
  *
@@ -93,20 +94,20 @@
  * traversal of the dependency graph.
  */
 #define JOB_BUFSIZE	1024
-typedef struct Job {
-    int       	pid;	    /* The child's process ID */
-    GNode    	*node;      /* The target the child is making */
-    LstNode 	tailCmds;   /* The node of the first command to be
+typedef struct Job_ {
+    int 	pid;	    /* The child's process ID */
+    GNode	*node;	    /* The target the child is making */
+    LstNode	tailCmds;   /* The node of the first command to be
 			     * saved when the job has been run */
-    FILE 	*cmdFILE;   /* When creating the shell script, this is
+    FILE	*cmdFILE;   /* When creating the shell script, this is
 			     * where the commands go */
-    int    	rmtID;     /* ID returned from Rmt module */
-    short      	flags;	    /* Flags to control treatment of job */
-#define	JOB_IGNERR	0x001	/* Ignore non-zero exits */
-#define	JOB_SILENT	0x002	/* no output */
+    int 	rmtID;	   /* ID returned from Rmt module */
+    short	flags;	    /* Flags to control treatment of job */
+#define JOB_IGNERR	0x001	/* Ignore non-zero exits */
+#define JOB_SILENT	0x002	/* no output */
 #define JOB_SPECIAL	0x004	/* Target is a special one. i.e. run it locally
 				 * if we can't export it and maxLocal is 0 */
-#define JOB_IGNDOTS	0x008  	/* Ignore "..." lines when processing
+#define JOB_IGNDOTS	0x008	/* Ignore "..." lines when processing
 				 * commands */
 #define JOB_REMOTE	0x010	/* Job is running remotely */
 #define JOB_FIRST	0x020	/* Job is first job for the node */
@@ -119,38 +120,38 @@ typedef struct Job {
 				 * JobFinish and JobRestart */
     union {
 	struct {
-	    int	  	op_inPipe;	/* Input side of pipe associated
+	    int 	op_inPipe;	/* Input side of pipe associated
 					 * with job's output channel */
-	    int   	op_outPipe;	/* Output side of pipe associated with
+	    int 	op_outPipe;	/* Output side of pipe associated with
 					 * job's output channel */
-	    char  	op_outBuf[JOB_BUFSIZE + 1];
-	    	  	    	    	/* Buffer for storing the output of the
+	    char	op_outBuf[JOB_BUFSIZE + 1];
+					/* Buffer for storing the output of the
 					 * job, line by line */
-	    int   	op_curPos;	/* Current position in op_outBuf */
-	}   	    o_pipe;	    /* data used when catching the output via
+	    int 	op_curPos;	/* Current position in op_outBuf */
+	}	    o_pipe;	    /* data used when catching the output via
 				     * a pipe */
 	struct {
-	    char  	of_outFile[sizeof(TMPPAT)];
-	    	  	    	    	/* Name of file to which shell output
+	    char	of_outFile[sizeof(TMPPAT)];
+					/* Name of file to which shell output
 					 * was rerouted */
-	    int	    	of_outFd;	/* Stream open to the output
+	    int 	of_outFd;	/* Stream open to the output
 					 * file. Used to funnel all
 					 * from a single job to one file
 					 * while still allowing
 					 * multiple shell invocations */
-	}   	    o_file;	    /* Data used when catching the output in
+	}	    o_file;	    /* Data used when catching the output in
 				     * a temporary file */
-    }       	output;	    /* Data for tracking a shell's output */
+    }		output;     /* Data for tracking a shell's output */
 } Job;
 
-#define outPipe	  	output.o_pipe.op_outPipe
-#define inPipe	  	output.o_pipe.op_inPipe
+#define outPipe 	output.o_pipe.op_outPipe
+#define inPipe		output.o_pipe.op_inPipe
 #define outBuf		output.o_pipe.op_outBuf
 #define curPos		output.o_pipe.op_curPos
-#define outFile		output.o_file.of_outFile
-#define outFd	  	output.o_file.of_outFd
+#define outFile 	output.o_file.of_outFile
+#define outFd		output.o_file.of_outFd
 
-
+
 /*-
  * Shell Specifications:
  * Each shell type has associated with it the following information:
@@ -177,20 +178,20 @@ typedef struct Job {
  * strings is empty when hasErrCtl is FALSE, the command will be executed
  * anyway as is and if it causes an error, so be it.
  */
-typedef struct Shell {
+typedef struct Shell_ {
     char	  *name;	/* the name of the shell. For Bourne and C
 				 * shells, this is used only to find the
 				 * shell description when used as the single
 				 * source of a .SHELL target. For user-defined
 				 * shells, this is the full path of the shell.
 				 */
-    Boolean 	  hasEchoCtl;	/* True if both echoOff and echoOn defined */
-    char          *echoOff;	/* command to turn off echo */
-    char          *echoOn;	/* command to turn it back on again */
-    char          *noPrint;	/* command to skip when printing output from
+    Boolean	  hasEchoCtl;	/* True if both echoOff and echoOn defined */
+    char	  *echoOff;	/* command to turn off echo */
+    char	  *echoOn;	/* command to turn it back on again */
+    char	  *noPrint;	/* command to skip when printing output from
 				 * shell. This is usually the command which
 				 * was executed to turn off echoing */
-    int           noPLen;	/* length of noPrint command */
+    int 	  noPLen;	/* length of noPrint command */
     Boolean	  hasErrCtl;	/* set if can control error checking for
 				 * individual commands */
     char	  *errCheck;	/* string to turn error checking on */
@@ -198,40 +199,43 @@ typedef struct Shell {
     /*
      * command-line flags
      */
-    char          *echo;	/* echo commands */
-    char          *exit;	/* exit on error */
-}               Shell;
+    char	  *echo;	/* echo commands */
+    char	  *exit;	/* exit on error */
+}		Shell;
 
 
-extern char 	*targFmt;   	/* Format string for banner that separates
+#ifdef REMOTE
+extern char	*targFmt;	/* Format string for banner that separates
 				 * output from multiple jobs. Contains a
 				 * single %s where the name of the node being
 				 * made should be put. */
-extern GNode	*lastNode;  	/* Last node for which a banner was printed.
+extern GNode	*lastNode;	/* Last node for which a banner was printed.
 				 * If Rmt module finds it necessary to print
 				 * a banner, it should set this to the node
 				 * for which the banner was printed */
-extern int  	nJobs;	    	/* Number of jobs running (local and remote) */
-extern int  	nLocal;	    	/* Number of jobs running locally */
-extern LIST  	jobs;	    	/* List of active job descriptors */
-extern LIST  	stoppedJobs;	/* List of jobs that are stopped or didn't
+extern int	nJobs;		/* Number of jobs running (local and remote) */
+extern int	nLocal; 	/* Number of jobs running locally */
+extern LIST	jobs;		/* List of active job descriptors */
+extern Boolean	jobFull;	/* Non-zero if no more jobs should/will start*/
+extern LIST	stoppedJobs;	/* List of jobs that are stopped or didn't
 				 * quite get started */
-extern Boolean	jobFull;    	/* Non-zero if no more jobs should/will start*/
+#endif
 
 
-extern void Job_Touch __P((GNode *, Boolean));
-extern Boolean Job_CheckCommands __P((GNode *, void (*abortProc )(char *, ...)));
-extern void Job_CatchChildren __P((Boolean));
-extern void Job_CatchOutput __P((void));
-extern void Job_Make __P((GNode *));
-extern void Job_Init __P((int, int));
-extern Boolean Job_Full __P((void));
-extern Boolean Job_Empty __P((void));
-extern ReturnStatus Job_ParseShell __P((char *));
-extern int Job_Finish __P((void));
-extern void Job_End __P((void));
-extern void Job_Wait __P((void));
-extern void Job_AbortAll __P((void));
-extern void JobFlagForMigration __P((int));
+extern void Job_Touch(GNode *, Boolean);
+extern Boolean Job_CheckCommands(GNode *,
+	void (*abortProc )(char *, ...));
+extern void Job_CatchChildren(Boolean);
+extern void Job_CatchOutput(void);
+extern void Job_Make(GNode *);
+extern void Job_Init(int, int);
+extern Boolean Job_Full(void);
+extern Boolean Job_Empty(void);
+extern ReturnStatus Job_ParseShell(char *);
+extern int Job_Finish(void);
+extern void Job_End(void);
+extern void Job_Wait(void);
+extern void Job_AbortAll(void);
+extern void JobFlagForMigration(int);
 
 #endif /* _JOB_H_ */

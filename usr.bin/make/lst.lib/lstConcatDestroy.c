@@ -1,4 +1,5 @@
-/*	$OpenBSD: lstConcatDestroy.c,v 1.2 2000/09/14 13:32:08 espie Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: lstConcatDestroy.c,v 1.3 2001/05/03 13:41:19 espie Exp $	*/
 /*	$NetBSD: lstConcat.c,v 1.6 1996/11/06 17:59:34 christos Exp $	*/
 
 /*
@@ -38,51 +39,39 @@
  */
 
 /*-
- * listConcatDestroy.c --
+ * listConcat.c --
  *	Function to concatentate two lists.
  */
 
 #include    "lstInt.h"
+
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lstConcat.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)lstConcat.c 8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstConcatDestroy.c,v 1.2 2000/09/14 13:32:08 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstConcatDestroy.c,v 1.3 2001/05/03 13:41:19 espie Exp $";
 #endif
 #endif /* not lint */
-
 
 /*-
  *-----------------------------------------------------------------------
  * Lst_ConcatDestroy --
- *	Concatenate two lists. The elements of the second list are
- *	destructively added to the first list.  If the elements should 
- *	be duplicated to avoid confusion with another list, the 
+ *	Concatenate two lists.	The elements of the second list are
+ *	destructively added to the first list.	If the elements should
+ *	be duplicated to avoid confusion with another list, the
  *	Lst_Duplicate function should be called first.
  *
- * Results:
- *	SUCCESS if all went well. FAILURE otherwise.
- *
  * Side Effects:
- *	The second list is destroyed
+ *	The second list is destroyed.
  *-----------------------------------------------------------------------
  */
 void
 Lst_ConcatDestroy(l1, l2)
-    Lst    	  	l1; 	/* The list to which l2 is to be appended */
-    Lst    	  	l2; 	/* The list to append to l1 */
+    Lst 		l1;	/* The list to which l2 is to be appended */
+    Lst 		l2;	/* The list to append to l1 */
 {
     if (l2->firstPtr != NULL) {
-	/*
-	 * We set the nextPtr of the
-	 * last element of list two to be NULL to make the loop easier and
-	 * so we don't need an extra case should the first list turn
-	 * out to be non-circular -- the final element will already point
-	 * to NULL space and the first element will be untouched if it
-	 * existed before and will also point to NULL space if it didn't.
-	 */
-	l2->lastPtr->nextPtr = NULL;
 	/*
 	 * So long as the second list isn't empty, we just link the
 	 * first element of the second list to the last element of the
@@ -92,11 +81,10 @@ Lst_ConcatDestroy(l1, l2)
 	 * the last element of the first list.
 	 */
 	l2->firstPtr->prevPtr = l1->lastPtr;
-	if (l1->lastPtr != NULL) {
+	if (l1->lastPtr != NULL)
 	    l1->lastPtr->nextPtr = l2->firstPtr;
-	} else {
+	else
 	    l1->firstPtr = l2->firstPtr;
-	}
 	l1->lastPtr = l2->lastPtr;
     }
 }

@@ -1,5 +1,6 @@
-/*	$OpenBSD: lst.h,v 1.18 2000/09/14 13:32:07 espie Exp $	*/
-/*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: lst.h,v 1.19 2001/05/03 13:41:07 espie Exp $ */
+/*	$NetBSD: lst.h,v 1.7 1996/11/06 17:59:12 christos Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -38,7 +39,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	from: @(#)lst.h	8.1 (Berkeley) 6/6/93
+ *	from: @(#)lst.h 8.1 (Berkeley) 6/6/93
  */
 
 /*-
@@ -58,137 +59,121 @@
  * Here for efficiency, so that some functions can be recoded as inlines,
  * and so that lst headers don't need dynamic allocation most of the time.  */
 typedef struct ListNode_ {
-	struct ListNode_    *prevPtr;   /* previous element in list */
-	struct ListNode_    *nextPtr;   /* next in list */
-	short	    	    useCount:8, /* Count of functions using the node.
-			    	         * node may not be deleted until count
-				         * goes to 0 */
- 	    	    	    flags:8;    /* Node status flags */
+	struct ListNode_    *prevPtr;	/* previous element in list */
+	struct ListNode_    *nextPtr;	/* next in list */
 	void		    *datum;	/* datum associated with this element */
 } *LstNode;
 
-typedef enum {
-    Head, Middle, Tail, Unknown
-} Where;
-
 typedef struct	{
-	LstNode  	firstPtr; /* first node in list */
-	LstNode  	lastPtr;  /* last node in list */
-/*
- * fields for sequential access
- */
-	Where	  	atEnd;	  /* Where in the list the last access was */
-	Boolean	  	isOpen;	  /* true if list has been Lst_Open'ed */
-	LstNode  	curPtr;	  /* current node, if open. NULL if
-				   * *just* opened */
-	LstNode  	prevPtr;  /* Previous node, if open. Used by
-				   * Lst_Remove */
+	LstNode 	firstPtr; /* first node in list */
+	LstNode 	lastPtr;  /* last node in list */
 } LIST;
 
 typedef LIST *Lst;
-/*
- * basic typedef. This is what the Lst_ functions handle
- */
 
-typedef int (*FindProc) __P((void *, void *));
-typedef void (*SimpleProc) __P((void *));
-typedef void (*ForEachProc) __P((void *, void *));
-typedef void * (*DuplicateProc) __P((void *));
+typedef void (*SimpleProc)(void *);
+typedef int (*FindProc)(void *, void *);
+typedef int (*FindProcConst)(void *, const void *);
+typedef void (*ForEachProc)(void *, void *);
+typedef void *(*DuplicateProc)(void *);
 
 /*
  * NOFREE can be used as the freeProc to Lst_Destroy when the elements are
  *	not to be freed.
- * NOCOPY performs similarly when given as the copyProc to Lst_Clone.
+ * NOCOPY performs similarly when given as the copyProc to Lst_Duplicate.
  */
-#define NOFREE		((SimpleProc)0)
-#define NOCOPY		((DuplicateProc)0)
+#define NOFREE		((SimpleProc) 0)
+#define NOCOPY		((DuplicateProc) 0)
 
 /*
- * Constructors/destructors
+ * Creation/destruction functions
  */
 /* Create a new list */
-extern void		Lst_Init __P((Lst));
-/* Destroy an old one */
-extern void		Lst_Destroy __P((Lst, SimpleProc));
-
+extern void		Lst_Init(LIST *);
 /* Duplicate an existing list */
-extern Lst		Lst_Clone __P((Lst, Lst, DuplicateProc));
+extern Lst		Lst_Clone(Lst, Lst, DuplicateProc);
+/* Destroy an old one */
+extern void		Lst_Destroy(LIST *, SimpleProc);
 /* True if list is empty */
-extern Boolean		Lst_IsEmpty __P((Lst));
+#define 	Lst_IsEmpty(l)	((l)->firstPtr == NULL)
 
 /*
- * List modifications
+ * Functions to modify a list
  */
 /* Insert an element before another */
-extern void		Lst_Insert __P((Lst, LstNode, void *));
+extern void		Lst_Insert(Lst, LstNode, void *);
+extern void		Lst_AtFront(Lst, void *);
 /* Insert an element after another */
-extern void		Lst_Append __P((Lst, LstNode, void *));
-/* Place an element at the front of a lst. */
-extern void		Lst_AtFront __P((Lst, void *));
-/* Place an element at the end of a lst. */
-extern void		Lst_AtEnd __P((Lst, void *));
+extern void		Lst_Append(Lst, LstNode, void *);
+extern void		Lst_AtEnd(Lst, void *);
 /* Remove an element */
-extern void		Lst_Remove __P((Lst, LstNode));
+extern void		Lst_Remove(Lst, LstNode);
 /* Replace a node with a new value */
-extern void		Lst_Replace __P((LstNode, void *));
-/* Concatenate two lists, destructive.  */
-extern void		Lst_ConcatDestroy __P((Lst, Lst));
-/* Concatenate two lists, non destructive */
-extern void		Lst_Concat __P((Lst, Lst));
+extern void		Lst_Replace(LstNode, void *);
+/* Concatenate two lists, destructive.	*/
+extern void		Lst_ConcatDestroy(Lst, Lst);
+/* Concatenate two lists, non-destructive.  */
+extern void		Lst_Concat(Lst, Lst);
 
 /*
- * Node handling
+ * Node-specific functions
  */
 /* Return first element in list */
-#define	Lst_First(l)	((l)->firstPtr)
 /* Return last element in list */
-#define Lst_Last(l)	((l)->lastPtr)
 /* Return successor to given element */
-extern LstNode		Lst_Succ __P((LstNode));
-/* Return successor to existing element */
-#define Lst_Adv(ln)	((ln)->nextPtr)
-/* Get datum from LstNode */
-#define Lst_Datum(ln)	((ln)->datum)
+extern LstNode		Lst_Succ(LstNode);
 
 /*
- * Apply to entire lists
+ * Functions for entire lists
  */
-
-/* Find an element in a list */
-#define Lst_Find(l, cProc, d)	Lst_FindFrom(Lst_First(l), cProc, d)
-
 /* Find an element starting from somewhere */
-extern LstNode		Lst_FindFrom __P((LstNode, FindProc, void *));
-
-/* Apply a function to all elements of a lst */
-#define Lst_ForEach(l, proc, d)	Lst_ForEachFrom(Lst_First(l), proc, d)
-/* Apply a function to all elements of a lst starting from a certain point.  */
-extern void		Lst_ForEachFrom __P((LstNode, ForEachProc, void *));
-extern void		Lst_Every __P((Lst, SimpleProc));
-
-
-/* Find datum in a list. Returns the LstNode containing the datum */
-extern LstNode		Lst_Member __P((Lst, void *));
-
+extern LstNode		Lst_FindFrom(LstNode, FindProc, void *);
 /*
- * Visitor-like pattern.  Except the visitor is kept in the list.
- * Error-prone and wasteful (used by only a few lists), to be killed.
+ * See if the given datum is on the list. Returns the LstNode containing
+ * the datum
  */
-/* Open the list */
-extern void		Lst_Open __P((Lst));
-/* Next element please */
-extern LstNode		Lst_Next __P((Lst));
-/* Done yet? */
-extern Boolean		Lst_IsAtEnd __P((Lst));
-/* Finish table access */
-extern void		Lst_Close __P((Lst));
+extern LstNode		Lst_Member(Lst, void *);
+/* Apply a function to elements of a lst starting from a certain point.  */
+extern void		Lst_ForEachFrom(LstNode, ForEachProc, void *);
+extern void		Lst_Every(Lst, SimpleProc);
 
+extern ReturnStatus	Lst_AddNew(Lst, void *);
 /*
- * Queue manipulators
+ * for using the list as a queue
  */
 /* Place an element at tail of queue */
-extern void		Lst_EnQueue __P((Lst, void *));
+#define Lst_EnQueue	Lst_AtEnd
+#define Lst_QueueNew	Lst_AddNew
+
 /* Remove an element from head of queue */
-extern void *	Lst_DeQueue __P((Lst));
+extern void *	Lst_DeQueue(Lst);
+
+#define Lst_Datum(ln)	((ln)->datum)
+#define Lst_First(l)	((l)->firstPtr)
+#define Lst_Last(l)	((l)->lastPtr)
+#define Lst_ForEach(l, proc, d) Lst_ForEachFrom(Lst_First(l), proc, d)
+#define Lst_Find(l, cProc, d)	Lst_FindFrom(Lst_First(l), cProc, d)
+#define Lst_Adv(ln)	((ln)->nextPtr)
+#define Lst_Rev(ln)	((ln)->prevPtr)
+
+
+#ifdef HAS_INLINES
+static INLINE LstNode
+Lst_FindConst(Lst l, FindProcConst cProc, const void *d)
+{
+	return Lst_FindFrom(Lst_First(l), (FindProc)cProc, (void *)d);
+}
+
+static INLINE LstNode
+Lst_FindFromConst(LstNode ln, FindProcConst cProc, const void *d)
+{
+	return Lst_FindFrom(ln, (FindProc)cProc, (void *)d);
+}
+#else
+#define Lst_FindConst(l, cProc, d) \
+	Lst_FindFrom(Lst_First(l), (FindProc)cProc, (void *)d)
+#define Lst_FindFromConst(ln, cProc, d) \
+	Lst_FindFrom(ln, (FindProc)cProc, (void *)d)
+#endif
 
 #endif /* _LST_H_ */

@@ -1,4 +1,5 @@
-/* $OpenBSD: error.c,v 1.4 2000/10/13 08:29:20 espie Exp $ */
+/* $OpenPackages$ */
+/* $OpenBSD: error.c,v 1.5 2001/05/03 13:41:04 espie Exp $ */
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -47,7 +48,13 @@
 #include <unistd.h>
 #include "error.h"
 
-static void enomem __P((size_t));
+#ifdef __GNUC__
+#define UNUSED	__attribute__((unused))
+#else
+#define UNUSED
+#endif
+
+static void enomem(size_t);
 
 /*
  * emalloc --
@@ -112,7 +119,7 @@ ecalloc(s1, s2)
 void *
 hash_alloc(s, u)
 	size_t s;
-	void *u;
+	void *u 	UNUSED;
 {
 	return ecalloc(s, 1);
 }
@@ -120,8 +127,8 @@ hash_alloc(s, u)
 void
 hash_free(p, s, u)
 	void *p;
-	size_t s;
-	void *u;
+	size_t s	UNUSED;
+	void *u 	UNUSED;
 {
 	free(p);
 }
@@ -129,11 +136,13 @@ hash_free(p, s, u)
 void *
 element_alloc(s, u)
 	size_t s;
-	void *u;
+	void *u 	UNUSED;
 {
 	return emalloc(s);
 }
-	
+
+
+
 /*
  * enomem --
  *	die when out of memory.
@@ -162,6 +171,7 @@ esetenv(name, value)
 	exit(2);
 }
 
+
 /*
  * enunlink --
  *	Remove a file carefully, avoiding directories.
@@ -181,3 +191,4 @@ eunlink(file)
 	}
 	return unlink(file);
 }
+

@@ -1,4 +1,5 @@
-/*	$OpenBSD: lstRemove.c,v 1.10 2000/09/14 13:32:10 espie Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: lstRemove.c,v 1.11 2001/05/03 13:41:25 espie Exp $	*/
 /*	$NetBSD: lstRemove.c,v 1.5 1996/11/06 17:59:50 christos Exp $	*/
 
 /*
@@ -43,23 +44,20 @@
  */
 
 #include	"lstInt.h"
+
 #ifndef lint
 #if 0
-static char sccsid[] = "@(#)lstRemove.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)lstRemove.c 8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstRemove.c,v 1.10 2000/09/14 13:32:10 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstRemove.c,v 1.11 2001/05/03 13:41:25 espie Exp $";
 #endif
 #endif /* not lint */
-
 
 /*-
  *-----------------------------------------------------------------------
  * Lst_Remove --
  *	Remove the given node from the given list.
- *
- * Results:
- *	SUCCESS or FAILURE.
  *
  * Side Effects:
  *	The list's firstPtr will be set to NULL if ln is the last
@@ -70,11 +68,11 @@ static char rcsid[] = "$OpenBSD: lstRemove.c,v 1.10 2000/09/14 13:32:10 espie Ex
  */
 void
 Lst_Remove(l, ln)
-    Lst	    	  	l;
-    LstNode	  	ln;
+    Lst 		l;
+    LstNode		ln;
 {
-    if (!LstNodeValid(ln, l))
-	    return;
+    if (ln == NULL)
+	return;
 
     /* unlink it from the list */
     if (ln->nextPtr != NULL)
@@ -82,42 +80,15 @@ Lst_Remove(l, ln)
     if (ln->prevPtr != NULL)
 	ln->prevPtr->nextPtr = ln->nextPtr;
 
-    /*
-     * if either the firstPtr or lastPtr of the list point to this node,
-     * adjust them accordingly
-     */
+    /* if either the firstPtr or lastPtr of the list point to this node,
+     * adjust them accordingly */
     if (l->firstPtr == ln)
 	l->firstPtr = ln->nextPtr;
     if (l->lastPtr == ln)
 	l->lastPtr = ln->prevPtr;
 
-    /*
-     * Sequential access stuff. If the node we're removing is the current
-     * node in the list, reset the current node to the previous one. If the
-     * previous one was non-existent (prevPtr == NULL), we set the
-     * end to be Unknown, since it is.
-     */
-    if (l->isOpen && l->curPtr == ln) {
-	l->curPtr = l->prevPtr;
-	if (l->curPtr == NULL)
-	    l->atEnd = Unknown;
-    }
-
-    /*
-     * the only way firstPtr can still point to ln is if ln is the last
-     * node on the list (the list is circular, so ln->nextptr == ln in
-     * this case). The list is, therefore, empty and is marked as such
-     */
-    if (l->firstPtr == ln)
-	l->firstPtr = NULL;
-
-    /*
-     * note that the datum is unmolested. The caller must free it as
-     * necessary and as expected.
-     */
-    if (ln->useCount == 0)
-	free(ln);
-    else
-	ln->flags |= LN_DELETED;
+    /* note that the datum is unmolested. The caller must free it as
+     * necessary and as expected.  */
+    free(ln);
 }
 

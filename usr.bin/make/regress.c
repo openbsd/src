@@ -1,10 +1,11 @@
-/* $OpenBSD: regress.c,v 1.2 2000/07/17 23:03:50 espie Exp $ */
+/* $OpenPackages$ */
+/* $OpenBSD: regress.c,v 1.3 2001/05/03 13:41:10 espie Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
  *
  * Code written for the OpenBSD project.
- * 
+ *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -31,19 +32,19 @@
 #include "make.h"
 #include <stdio.h>
 
-int main __P((void));
+int main(void);
 #define CHECK(s)		\
 do {				\
     printf("%-65s", #s);	\
     if (s)			\
-    	printf("ok\n"); 	\
+	printf("ok\n"); 	\
     else {			\
-    	printf("failed\n");	\
+	printf("failed\n");	\
 	errors++;		\
     }				\
 } while (0);
 
-int 
+int
 main()
 {
     unsigned int errors = 0;

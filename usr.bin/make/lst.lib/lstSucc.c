@@ -1,4 +1,5 @@
-/*	$OpenBSD: lstSucc.c,v 1.7 2000/09/14 13:32:10 espie Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: lstSucc.c,v 1.8 2001/05/03 13:41:27 espie Exp $	*/
 /*	$NetBSD: lstSucc.c,v 1.5 1996/11/06 17:59:52 christos Exp $	*/
 
 /*
@@ -43,15 +44,15 @@
  */
 
 #include	"lstInt.h"
+
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstSucc.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstSucc.c,v 1.7 2000/09/14 13:32:10 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstSucc.c,v 1.8 2001/05/03 13:41:27 espie Exp $";
 #endif
 #endif /* not lint */
-
 
 /*-
  *-----------------------------------------------------------------------
@@ -59,9 +60,8 @@ static char rcsid[] = "$OpenBSD: lstSucc.c,v 1.7 2000/09/14 13:32:10 espie Exp $
  *	Return the sucessor to the given node on its list.
  *
  * Results:
- *	The successor of the node, if it exists (note that on a circular
- *	list, if the node is the only one in the list, it is its own
- *	successor).
+ *	The successor of the node, if it exists.
+ *
  *-----------------------------------------------------------------------
  */
 LstNode

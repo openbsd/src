@@ -1,5 +1,6 @@
-/*	$OpenBSD: for.c,v 1.23 2000/11/24 14:29:55 espie Exp $	*/
-/*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: for.c,v 1.24 2001/05/03 13:41:05 espie Exp $	*/
+/*	$NetBSD: for.c,v 1.4 1996/11/06 17:59:05 christos Exp $ */
 
 /*
  * Copyright (c) 1999 Marc Espie.
@@ -66,9 +67,9 @@
  *	Functions to handle loops in a makefile.
  *
  * Interface:
- *	For_Eval 	Evaluate the .for in the passed line
+ *	For_Eval	Evaluate the .for in the passed line.
  *	For_Accumulate	Add lines to an accumulating loop
- *	For_Run		Run accumulated loop
+ *	For_Run 	Run accumulated loop
  *
  */
 
@@ -83,14 +84,14 @@
 static char sccsid[] = "@(#)for.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: for.c,v 1.23 2000/11/24 14:29:55 espie Exp $";
+static char rcsid[] = "$OpenBSD: for.c,v 1.24 2001/05/03 13:41:05 espie Exp $";
 #endif
 #endif /* not lint */
 
 /*
  * For statements are of the form:
  *
- * .for <variable> in <varlist>
+ * .for <variable> [variable...] in <varlist>
  * ...
  * .endfor
  *
@@ -103,30 +104,38 @@ static char rcsid[] = "$OpenBSD: for.c,v 1.23 2000/11/24 14:29:55 espie Exp $";
 
 /* State of a for loop.  */
 struct For_ {
-    char		*text;		/* unexpanded text       	*/
-    char		*var;		/* Index name		 	*/
-    LIST  		lst;		/* List of items	 	*/
+    char		*text;		/* unexpanded text		*/
+    LIST		vars;		/* list of variables		*/
+    LstNode		var;		/* current var			*/
+    int			nvars;		/* total number of vars		*/
+    LIST		lst;		/* List of items		*/
     size_t		guess;		/* Estimated expansion size	*/
-    BUFFER		buf;		/* Accumulating text	 	*/
-    unsigned long	lineno;		/* Line number at start of loop */
+    BUFFER		buf;		/* Accumulating text		*/
+    unsigned long	lineno; 	/* Line number at start of loop */
     unsigned long	level;		/* Nesting level		*/
+    Boolean		freeold;
 };
 
-static void ForExec __P((void *, void *));
-static void build_words_list __P((Lst, const char *));
+static void ForExec(void *, void *);
+static unsigned long build_words_list(Lst, const char *);
 
 /* Cut a string into words, stuff that into list.  */
-static void
+static unsigned long
 build_words_list(lst, s)
     Lst lst;
     const char *s;
 {
     const char *end, *wrd;
+    unsigned long n;
 
+    n = 0;
     end = s;
 
-    while ((wrd = iterate_words(&end)) != NULL)
-    	Lst_AtFront(lst, escape_dup(wrd, end, "\"'"));
+    while ((wrd = iterate_words(&end)) != NULL) {
+	Lst_AtFront(lst, escape_dup(wrd, end, "\"'"));
+	n++;
+    }
+    return n;
 }
 
 /*
@@ -144,16 +153,15 @@ build_words_list(lst, s)
 
 For *
 For_Eval(line)
-    char    	    *line;    /* Line to parse */
+    const char	    *line;    /* Line to parse */
 {
-    char 	*ptr = line;
-    char	*wrd;
-    char 	*sub;
-    char	*endVar;
+    const char	*ptr = line;
+    const char	*wrd;
+    char	*sub;
+    const char	*endVar;
     For 	*arg;
+    unsigned long n;
 
-    for (ptr++; *ptr && isspace(*ptr); ptr++)
-	continue;
     /* If we are not in a for loop quickly determine if the statement is
      * a for.  */
     if (ptr[0] != 'f' || ptr[1] != 'o' || ptr[2] != 'r' ||
@@ -166,39 +174,49 @@ For_Eval(line)
 
     /* We found a for loop, and now we are going to parse it.  */
 
-    /* Grab the variable.  */
-    for (wrd = ptr; *ptr && !isspace(*ptr); ptr++)
-	continue;
-    if (ptr - wrd == 0) {
-	Parse_Error(PARSE_FATAL, "missing variable in for");
+    arg = emalloc(sizeof(*arg));
+    arg->nvars = 0;
+    Lst_Init(&arg->vars);
+
+    for (;;) {
+	/* Grab the variables.  */
+	for (wrd = ptr; *ptr && !isspace(*ptr); ptr++)
+	    continue;
+	if (ptr - wrd == 0) {
+	    Parse_Error(PARSE_FATAL, "Syntax error in for");
+	    return 0;
+	}
+	endVar = ptr++;
+	while (*ptr && isspace(*ptr))
+	    ptr++;
+	/* finished variable list */
+	if (endVar - wrd == 2 && wrd[0] == 'i' && wrd[1] == 'n')
+	    break;
+	Lst_AtEnd(&arg->vars, interval_dup(wrd, endVar));
+	arg->nvars++;
+    }
+    if (arg->nvars == 0) {
+	Parse_Error(PARSE_FATAL, "Missing variable in for");
 	return 0;
     }
-    endVar = ptr++;
-
-    while (*ptr && isspace(*ptr))
-	ptr++;
-
-    /* Grab the `in'.  */
-    if (ptr[0] != 'i' || ptr[1] != 'n' ||
-	!isspace(ptr[2])) {
-	Parse_Error(PARSE_FATAL, "missing `in' in for");
-	printf("%s\n", ptr);
-	return NULL;
-    }
-    ptr += 3;
-
-    /* .for loop is go, collate what we need.  */
-    arg = emalloc(sizeof(*arg));
-    arg->var = interval_dup(wrd, endVar);
 
     /* Make a list with the remaining words.  */
     sub = Var_Subst(ptr, NULL, FALSE);
-    if (DEBUG(FOR))
-	(void)fprintf(stderr, "For: Iterator %s List %s\n", arg->var, sub);
+    if (DEBUG(FOR)) {
+    	LstNode ln;
+	(void)fprintf(stderr, "For: Iterator ");
+	for (ln = Lst_First(&arg->vars); ln != NULL; ln = Lst_Adv(ln))
+		(void)fprintf(stderr, "%s ", (char *)Lst_Datum(ln));
+	(void)fprintf(stderr, "List %s\n", sub);
+    }
 
     Lst_Init(&arg->lst);
-    build_words_list(&arg->lst, sub);
+    n = build_words_list(&arg->lst, sub);
     free(sub);
+    if (arg->nvars != 1 && n % arg->nvars != 0) {
+	Parse_Error(PARSE_FATAL, "Wrong number of items in for loop");
+    	return 0;
+    }
     arg->lineno = Parse_Getlineno();
     arg->level = 1;
     Buf_Init(&arg->buf, 0);
@@ -206,7 +224,7 @@ For_Eval(line)
     return arg;
 }
 
-
+
 /*-
  *-----------------------------------------------------------------------
  * For_Accumulate --
@@ -222,8 +240,8 @@ For_Eval(line)
  */
 Boolean
 For_Accumulate(arg, line)
-    For		    *arg;
-    const char      *line;    /* Line to parse */
+    For 	    *arg;
+    const char	    *line;    /* Line to parse */
 {
     const char	    *ptr = line;
 
@@ -269,14 +287,30 @@ ForExec(namep, argp)
 {
     char *name = (char *)namep;
     For *arg = (For *)argp;
+    BUFFER buf;
+
+    /* Parse_FromString pushes stuff back, so we need to go over vars in
+       reverse.  */
+    if (arg->var == NULL) {
+    	arg->var = Lst_Last(&arg->vars);
+	arg->text = Buf_Retrieve(&arg->buf);
+	arg->freeold = FALSE;
+    }
 
     if (DEBUG(FOR))
-	(void)fprintf(stderr, "--- %s = %s\n", arg->var, name);
-    Parse_FromString(Var_SubstVar(arg->text, arg->var, name, 
-    	arg->guess), arg->lineno);
+	(void)fprintf(stderr, "--- %s = %s\n", (char *)Lst_Datum(arg->var), name);
+    Buf_Init(&buf, arg->guess);
+    Var_SubstVar(&buf, arg->text, Lst_Datum(arg->var), name);
+    if (arg->freeold)
+    	free(arg->text);
+    arg->text = Buf_Retrieve(&buf);
+    arg->freeold = TRUE;
+    arg->var = Lst_Rev(arg->var);
+    if (arg->var == NULL)
+	Parse_FromString(arg->text, arg->lineno);
 }
 
-
+
 /*-
  *-----------------------------------------------------------------------
  * For_Run --
@@ -291,9 +325,10 @@ For_Run(arg)
     arg->text = Buf_Retrieve(&arg->buf);
     arg->guess = Buf_Size(&arg->buf) + GUESS_EXPANSION;
 
+    arg->var = NULL;
     Lst_ForEach(&arg->lst, ForExec, arg);
-    free(arg->var);
-    free(arg->text);
+    Buf_Destroy(&arg->buf);
+    Lst_Destroy(&arg->vars, (SimpleProc)free);
     Lst_Destroy(&arg->lst, (SimpleProc)free);
     free(arg);
 }

@@ -1,4 +1,5 @@
-/*	$OpenBSD: config.h,v 1.9 1998/12/05 00:06:27 espie Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: config.h,v 1.10 2001/05/03 13:41:03 espie Exp $	*/
 /*	$NetBSD: config.h,v 1.7 1996/11/06 17:59:03 christos Exp $	*/
 
 /*
@@ -41,7 +42,7 @@
  *	from: @(#)config.h	8.1 (Berkeley) 6/6/93
  */
 
-#define	DEFSHELL	1			/* Bourne shell */
+#define DEFSHELL	1			/* Bourne shell */
 
 /*
  * DEFMAXJOBS
@@ -82,17 +83,8 @@
  *	that don't have this problem, you should defined this. Under
  *	NFS you probably should not, unless you aren't exporting jobs.
  */
-#define	LIBSUFF	".a"
-#define	RECHECK
-
-/*
- * POSIX
- *	Adhere to the POSIX 1003.2 draft for the make(1) program.
- *	- Use MAKEFLAGS instead of MAKE to pick arguments from the
- *	  environment.
- *	- Allow empty command lines if starting with tab.
- */
-#define POSIX
+#define LIBSUFF ".a"
+#define RECHECK
 
 /*
  * SYSVINCLUDE
@@ -118,3 +110,36 @@
 #  define RANLIBMAG "__.SYMDEF"
 # endif
 #endif
+
+#ifdef SYSVINCLUDE
+#define DOFEATURE_SYSVINCLUDE	FEATURE_SYSVINCLUDE
+#else
+#define DOFEATURE_SYSVINCLUDE	0
+#endif
+#ifdef SYSVVARSUB
+#define DOFEATURE_SYSVVARSUB	FEATURE_SYSVVARSUB
+#else
+#define DOFEATURE_SYSVVARSUB	0
+#endif
+#ifdef SUNSHCMD
+#define DOFEATURE_SUNSHCMD	FEATURE_SUNSHCMD
+#else
+#define DOFEATURE_SUNSHCMD	0
+#endif
+
+#ifndef DEFAULT_FEATURES
+#define DEFAULT_FEATURES	(FEATURE_UPPERLOWER | DOFEATURE_SYSVVARSUB | DOFEATURE_SYSVINCLUDE | DOFEATURE_SUNSHCMD | FEATURE_RECVARS)
+#endif
+
+#define FEATURES(x)	((DEFAULT_FEATURES & (x)) != 0)
+#define FEATURE_ODE		1
+#define FEATURE_UNIQ		2
+#define FEATURE_SORT		4
+#define FEATURE_UPPERLOWER	8
+#define FEATURE_SYSVVARSUB	16
+#define FEATURE_SYSVINCLUDE	32
+#define FEATURE_SUNSHCMD	64
+#define FEATURE_RECVARS		128
+#define FEATURE_CONDINCLUDE	256
+#define FEATURE_ASSIGN		512
+#define FEATURE_EXECMOD		1024

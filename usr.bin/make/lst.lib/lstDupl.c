@@ -1,4 +1,5 @@
-/*	$OpenBSD: lstDupl.c,v 1.13 2000/09/14 13:32:09 espie Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: lstDupl.c,v 1.14 2001/05/03 13:41:20 espie Exp $	*/
 /*	$NetBSD: lstDupl.c,v 1.6 1996/11/06 17:59:37 christos Exp $	*/
 
 /*
@@ -44,15 +45,15 @@
  */
 
 #include    "lstInt.h"
+
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstDupl.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.13 2000/09/14 13:32:09 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.14 2001/05/03 13:41:20 espie Exp $";
 #endif
 #endif /* not lint */
-
 
 /*-
  *-----------------------------------------------------------------------
@@ -61,7 +62,7 @@ static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.13 2000/09/14 13:32:09 espie Exp 
  *	given, the individual client elements will be duplicated as well.
  *
  * Results:
- *	Returns the new list.
+ *	returns the new list.
  *
  * Side Effects:
  *	The new list is created.
@@ -69,20 +70,20 @@ static char rcsid[] = "$OpenBSD: lstDupl.c,v 1.13 2000/09/14 13:32:09 espie Exp 
  */
 Lst
 Lst_Clone(nl, l, copyProc)
-    Lst		  nl;
-    Lst     	  l;	    	 
-    DuplicateProc copyProc;
+    Lst 	  nl;
+    Lst 	  l;		 /* the list to duplicate */
+    DuplicateProc copyProc;    /* A function to duplicate each void * */
 {
-    LstNode  	ln;
+    LstNode	  ln;
 
     Lst_Init(nl);
 
     for (ln = l->firstPtr; ln != NULL; ln = ln->nextPtr) {
-    	if (copyProc != NOCOPY)
+	if (copyProc != NOCOPY)
 	    Lst_AtEnd(nl, (*copyProc)(ln->datum));
 	else
 	    Lst_AtEnd(nl, ln->datum);
     }
-
     return nl;
 }
+

@@ -1,4 +1,5 @@
-/* $OpenBSD: error.h,v 1.4 2000/10/13 08:29:20 espie Exp $ */
+/* $OpenPackages$ */
+/* $OpenBSD: error.h,v 1.5 2001/05/03 13:41:05 espie Exp $ */
 
 /*-
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -41,19 +42,19 @@
  */
 #ifndef ERROR_H
 #define ERROR_H
-extern void *emalloc __P((size_t));
-extern char *estrdup __P((const char *));
-extern void *erealloc __P((void *, size_t));
-extern void *ecalloc __P((size_t, size_t));
-extern int eunlink __P((const char *));
-extern void esetenv __P((const char *, const char *));
+extern void *emalloc(size_t);
+extern char *estrdup(const char *);
+extern void *erealloc(void *, size_t);
+extern void *ecalloc(size_t, size_t);
+extern int eunlink(const char *);
+extern void esetenv(const char *, const char *);
 
 /* efree(x) works when x==NULL. STDC behavior, may need some different
  * definition for cross-builds on deficient systems */
 #define efree	free
 
-extern void *hash_alloc __P((size_t, void *));
-extern void hash_free __P((void *, size_t, void *));
-extern void *element_alloc __P((size_t, void *));
+extern void *hash_alloc(size_t, void *);
+extern void hash_free(void *, size_t, void *);
+extern void *element_alloc(size_t, void *);
 
 #endif	/* ERROR_H */

@@ -1,4 +1,5 @@
-/*	$OpenBSD: lstForEachFrom.c,v 1.9 2000/09/14 13:32:09 espie Exp $	*/
+/*	$OpenPackages$ */
+/*	$OpenBSD: lstForEachFrom.c,v 1.10 2001/05/03 13:41:21 espie Exp $	*/
 /*	$NetBSD: lstForEachFrom.c,v 1.5 1996/11/06 17:59:42 christos Exp $	*/
 
 /*
@@ -44,45 +45,47 @@
  */
 
 #include	"lstInt.h"
+
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)lstForEachFrom.c	8.1 (Berkeley) 6/6/93";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.9 2000/09/14 13:32:09 espie Exp $";
+static char rcsid[] = "$OpenBSD: lstForEachFrom.c,v 1.10 2001/05/03 13:41:21 espie Exp $";
 #endif
 #endif /* not lint */
-
 
 /*-
  *-----------------------------------------------------------------------
  * Lst_ForEachFrom --
- *	Apply the given function to each element of the given list. 
+ *	Apply the given function to each element of the given list. The
+ *	function should return 0 if traversal should continue and non-
+ *	zero if it should abort.
  *
  * Side Effects:
  *	Only those created by the passed-in function.
- *
  *-----------------------------------------------------------------------
  */
 void
 Lst_ForEachFrom(ln, proc, d)
-    LstNode    	  	ln;
-    ForEachProc		proc;
+    LstNode		ln;
+    ForEachProc 	proc;
     void		*d;
 {
-    LstNode		tln;
+    LstNode	tln;
 
     for (tln = ln; tln != NULL; tln = tln->nextPtr)
-    	(*proc)(tln->datum, d);
+	(*proc)(tln->datum, d);
 }
 
 void
 Lst_Every(l, proc)
-    Lst    	  	l;
-    SimpleProc		proc;
+    Lst 	l;
+    SimpleProc	proc;
 {
-    LstNode		tln;
+    LstNode tln;
 
-    for (tln = Lst_First(l); tln != NULL; tln = tln->nextPtr)
-    	(*proc)(tln->datum);
+    for (tln = l->firstPtr; tln != NULL; tln = tln->nextPtr)
+	(*proc)(tln->datum);
 }
+
