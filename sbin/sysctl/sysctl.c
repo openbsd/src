@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.c,v 1.69 2001/06/22 21:39:07 mickey Exp $	*/
+/*	$OpenBSD: sysctl.c,v 1.70 2001/06/22 22:14:39 art Exp $	*/
 /*	$NetBSD: sysctl.c,v 1.9 1995/09/30 07:12:50 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.5 (Berkeley) 5/9/95";
 #else
-static char *rcsid = "$OpenBSD: sysctl.c,v 1.69 2001/06/22 21:39:07 mickey Exp $";
+static char *rcsid = "$OpenBSD: sysctl.c,v 1.70 2001/06/22 22:14:39 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -804,7 +804,7 @@ parse(string, flags)
 	if (special & LONGARRAY) {
 		long *la = (long *)buf;
 		if (!nflag)
-			printf("%s = ", string, lal);
+			printf("%s = ", string);
 		while (lal--)
 			printf("%ld%s", *la++, lal? ",":"");
 		putchar('\n');
