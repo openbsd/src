@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt8xx.h,v 1.1 2001/03/28 03:30:22 fgsch Exp $	*/
+/*	$OpenBSD: bt8xx.h,v 1.2 2001/04/07 17:11:11 niklas Exp $	*/
 /*	$NetBSD: bt8xx.h,v 1.4 2000/12/30 16:55:24 wiz Exp $	*/
 
 /* This file is merged from ioctl_meteor.h and ioctl_bt848.h from FreeBSD. */
@@ -483,6 +483,15 @@ struct bktr_remote {
 # define BT848_IFORM_F_NTSCM            (0x1)
 # define BT848_IFORM_F_AUTO             (0x0)
 
+
+
+/* XXX Silly constants not always defined by the environment.  */
+#ifndef TRUE
+#define TRUE 1
+#endif
+#ifndef FALSE
+#define FALSE 0
+#endif
 
 
 #endif /* _DEV_IC_BT8XX_H_ */
