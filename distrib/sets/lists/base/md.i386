@@ -1775,3 +1775,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/machine
 ./usr/libdata/perl5/site_perl/i386-openbsd/openssl
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/pcscpreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/siopreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/siopvar.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/ic/siopvar_common.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/siop_pci_common.ph

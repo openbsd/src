@@ -1763,3 +1763,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/machine
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/openssl
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/pcscpreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/siopreg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/siopvar.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/ic/siopvar_common.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/pci/siop_pci_common.ph

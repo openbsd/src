@@ -1725,3 +1725,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/machine
 ./usr/libdata/perl5/site_perl/alpha-openbsd/openssl
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/pcscpreg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/siopreg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/siopvar.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/ic/siopvar_common.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/siop_pci_common.ph

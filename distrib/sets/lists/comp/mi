@@ -4065,3 +4065,7 @@
 ./usr/share/misc/operator
 ./var/db/libc.tags
 ./usr/include/dev/pci/pcscpreg.h
+./usr/include/dev/pci/siop_pci_common.h
+./usr/include/dev/ic/siopreg.h
+./usr/include/dev/ic/siopvar.h
+./usr/include/dev/ic/siopvar_common.h

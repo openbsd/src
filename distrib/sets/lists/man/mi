@@ -2036,3 +2036,5 @@
 ./usr/share/man/cat8/i386/wsfontload.0
 ./usr/share/man/cat4/sparc/led.0
 ./usr/share/man/cat1/sftp.0
+./usr/share/man/cat4/pcscp.0
+./usr/share/man/cat4/siop.0
