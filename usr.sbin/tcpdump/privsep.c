@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.5 2004/03/14 19:17:05 otto Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.6 2004/04/03 10:20:51 avsm Exp $	*/
 
 /*
  * Copyright (c) 2003 Can Erkin Acar
@@ -301,7 +301,7 @@ parent_open_bpf(int fd, int *bpfd)
 static void
 parent_open_dump(int fd, const char *RFileName)
 {
-	int file, err;
+	int file, err = 0;
 
 	logmsg(LOG_DEBUG, "[priv]: msg PRIV_OPEN_DUMP received");
 
@@ -317,7 +317,8 @@ parent_open_dump(int fd, const char *RFileName)
 	}
 	send_fd(fd, file);
 	must_write(fd, &err, sizeof(int));
-	close(file);
+	if (file >= 0)
+		close(file);
 }
 
 static void
@@ -329,13 +330,13 @@ parent_open_output(int fd, const char *WFileName)
 
 	file = open(WFileName, O_WRONLY|O_CREAT|O_TRUNC, 0666);
 	err = errno;
+	send_fd(fd, file);
+	must_write(fd, &err, sizeof(int));
 	if (file < 0)
 		logmsg(LOG_DEBUG, "[priv]: failed to open %s: %s",
 		    WFileName, strerror(errno));
-
-	send_fd(fd, file);
-	must_write(fd, &err, sizeof(int));
-	close(file);
+	else
+		close(file);
 }
 
 static void
