@@ -1,4 +1,4 @@
-/*	$OpenBSD: commit.c,v 1.15 2005/02/22 23:34:28 jfb Exp $	*/
+/*	$OpenBSD: commit.c,v 1.16 2005/03/02 03:05:02 joris Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -213,16 +213,23 @@ cvs_commit_file(CVSFILE *cf, void *arg)
 
 	if ((cf->cf_cvstat == CVS_FST_ADDED) ||
 	    (cf->cf_cvstat == CVS_FST_MODIFIED)) {
-		if ((root->cr_method != CVS_METHOD_LOCAL) &&
-		    (cvs_sendentry(root, entp) < 0)) {
-			cvs_ent_free(entp);
-			return (-1);
-		}
+		if (root->cr_method != CVS_METHOD_LOCAL) {
+			if (cvs_sendentry(root, entp) < 0) {
+				cvs_ent_free(entp);
+				return (-1);
+			}
 
-		if ((cvs_sendreq(root, CVS_REQ_MODIFIED,
-		    CVS_FILE_NAME(cf)) < 0) ||
-		    (cvs_sendfile(root, fpath) < 0))
-			return (-1);
+			if (cvs_sendreq(root, CVS_REQ_MODIFIED,
+			    CVS_FILE_NAME(cf)) < 0) {
+				cvs_ent_free(entp);
+				return (-1);
+			}
+
+			if (cvs_sendfile(root, fpath) < 0) {
+				cvs_ent_free(entp);
+				return (-1);
+			}
+		}
 	}
 
 	snprintf(rcspath, sizeof(rcspath), "%s/%s/%s%s",
