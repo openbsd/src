@@ -79,8 +79,10 @@ extern vm_offset_t kvtophys __P((vm_offset_t kva));	/* XXX */
  * the frame pointers on the stack after copying.
  */
 int
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	register struct user *up = p2->p_addr;
 	register pt_entry_t *pte;
@@ -117,6 +119,14 @@ cpu_fork(p1, p2)
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	/* cache segtab for ULTBMiss() */
 	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_map.pmap->pm_segtab;
+
+#ifdef notyet
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		/* XXX How??? */;
+#endif
 
 	/*
 	 * Arrange for a non-local goto when the new process

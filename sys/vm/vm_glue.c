@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_glue.c,v 1.32 1999/06/23 09:44:29 art Exp $    */
+/*	$OpenBSD: vm_glue.c,v 1.33 1999/08/17 10:32:19 niklas Exp $    */
 /*	$NetBSD: vm_glue.c,v 1.55.4.1 1996/06/13 17:25:45 cgd Exp $	*/
 
 /* 
@@ -211,8 +211,10 @@ int
 #else
 void
 #endif
-vm_fork(p1, p2)
+vm_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	register struct user *up = p2->p_addr;
 
@@ -271,7 +273,7 @@ vm_fork(p1, p2)
 	 * It returns twice, once in the parent process and
 	 * once in the child.
 	 */
-	return (cpu_fork(p1, p2));
+	return (cpu_fork(p1, p2, stack, stacksize));
 #else
 	/*
 	 * cpu_fork will copy and update the kernel stack and pcb,
@@ -279,7 +281,7 @@ vm_fork(p1, p2)
 	 * directly to user mode on its first time slice, and will
 	 * not return here.
 	 */
-	cpu_fork(p1, p2);
+	cpu_fork(p1, p2, stack, stack_size);
 #endif
 }
 

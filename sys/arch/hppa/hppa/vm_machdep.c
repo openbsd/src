@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 1999/06/12 18:13:18 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 1999/08/17 10:32:16 niklas Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,8 +103,10 @@ cpu_swapout(p)
 }
 
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	register struct pcb *pcbp;
 	register struct trapframe *tf;
@@ -123,9 +125,16 @@ cpu_fork(p1, p2)
 	p2->p_md.md_regs = tf = &pcbp->pcb_tf;
 	sp = (struct hppa_frame *)((register_t)p2->p_addr +
 				   round_page(sizeof(struct user)));
+
 	/* setup initial stack frame */
 	bzero(sp, sizeof(struct hppa_frame));
 	tf->tf_sp = (register_t)(sp + 1);
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->tf_sp = (register_t)stack;
 
 	/*
 	 * everybody recomends to note here the inline version of

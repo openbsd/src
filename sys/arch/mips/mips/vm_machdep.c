@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.5 1998/10/15 21:30:15 imp Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.6 1999/08/17 10:32:17 niklas Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -74,8 +74,10 @@ int vm_map_find_U __P((vm_map_t, vm_object_t, vm_offset_t, vm_offset_t *,
  * the frame pointers on the stack after copying.
  */
 int
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct user *up = p2->p_addr;
 	pt_entry_t *pte;
@@ -112,6 +114,14 @@ cpu_fork(p1, p2)
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	/* cache segtab for ULTBMiss() */
 	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_pmap.pm_segtab;
+
+#ifdef notyet
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		/* XXX How??? */;
+#endif
 
 	/*
 	 * Arrange for a non-local goto when the new process

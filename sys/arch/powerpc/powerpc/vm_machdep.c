@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.6 1999/01/23 19:41:33 rahnds Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.7 1999/08/17 10:32:17 niklas Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.1 1996/09/30 16:34:57 ws Exp $	*/
 
 /*
@@ -47,8 +47,10 @@
  * Finish a fork operation, with process p2 nearly set up.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct trapframe *tf;
 	struct callframe *cf;
@@ -71,6 +73,13 @@ cpu_fork(p1, p2)
 	stktop1 = (caddr_t)trapframe(p1);
 	stktop2 = (caddr_t)trapframe(p2);
 	bcopy(stktop1, stktop2, sizeof(struct trapframe));
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->fixreg[1] = (register_t)stack + stacksize;
+
 	stktop2 = (caddr_t)((u_long)stktop2 & ~15);	/* Align stack pointer */
 	
 	/*

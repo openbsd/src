@@ -64,8 +64,10 @@
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct user *up = p2->p_addr;
 	int foo, offset, addr, i;
@@ -96,6 +98,8 @@ cpu_fork(p1, p2)
 	/*
 	 *  Low_level_fork returns twice! First with a 0 in the
 	 *  parent space and Second with a 1 in the child.
+	 *  XXX the child should use stack, stack+stacksize as
+	 *  the stack if stack is not NULL.
 	 */
 
  	return (low_level_fork(up));

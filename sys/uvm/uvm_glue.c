@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_glue.c,v 1.2 1999/02/26 05:32:06 art Exp $	*/
+/*	$OpenBSD: uvm_glue.c,v 1.3 1999/08/17 10:32:19 niklas Exp $	*/
 /*	$NetBSD: uvm_glue.c,v 1.15 1998/10/19 22:21:19 tron Exp $	*/
 
 /*
@@ -266,9 +266,11 @@ uvm_vsunlock(p, addr, len)
  *   than just hang
  */
 void
-uvm_fork(p1, p2, shared)
+uvm_fork(p1, p2, shared, stack, stacksize)
 	struct proc *p1, *p2;
 	boolean_t shared;
+	void *stack;
+	size_t stacksize;
 {
 	struct user *up = p2->p_addr;
 	int rv;
@@ -304,12 +306,12 @@ uvm_fork(p1, p2, shared)
 	((caddr_t)&up->u_stats.pstat_endcopy -
 	 (caddr_t)&up->u_stats.pstat_startcopy));
 	
-/*
+	/*
 	 * cpu_fork will copy and update the kernel stack and pcb, and make
 	 * the child ready to run.  The child will exit directly to user
 	 * mode on its first time slice, and will not return here.
 	 */
-	cpu_fork(p1, p2);
+	cpu_fork(p1, p2, stack, stacksize);
 }
 
 /*

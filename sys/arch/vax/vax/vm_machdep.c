@@ -1,4 +1,4 @@
-/*      $OpenBSD: vm_machdep.c,v 1.14 1999/01/10 13:34:19 niklas Exp $       */
+/*      $OpenBSD: vm_machdep.c,v 1.15 1999/08/17 10:32:18 niklas Exp $       */
 /*      $NetBSD: vm_machdep.c,v 1.33 1997/07/06 22:38:22 ragge Exp $       */
 
 /*
@@ -98,8 +98,10 @@ pagemove(from, to, size)
  * forking.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct pcb *nyproc;
 	struct trapframe *tf;
@@ -137,6 +139,13 @@ cpu_fork(p1, p2)
 	/* General registers as taken from userspace */
 	/* trapframe should be synced with pcb */
 	bcopy(&tf->r2,&nyproc->R[2],10*sizeof(int));
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->sp = (u_long)stack + stacksize;
+
 	nyproc->AP = tf->ap;
 	nyproc->FP = tf->fp;
 	nyproc->USP = tf->sp;

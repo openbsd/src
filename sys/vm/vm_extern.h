@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.15 1998/03/01 00:38:02 niklas Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.16 1999/08/17 10:32:19 niklas Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -138,9 +138,9 @@ void		vm_fault_unwire __P((vm_map_t, vm_offset_t, vm_offset_t));
 int		vm_fault_wire __P((vm_map_t, vm_offset_t, vm_offset_t));
 #if !defined(UVM)
 #ifdef __FORK_BRAINDAMAGE
-int		vm_fork __P((struct proc *, struct proc *));
+int		vm_fork __P((struct proc *, struct proc *, void *, size_t));
 #else
-void		vm_fork __P((struct proc *, struct proc *));
+void		vm_fork __P((struct proc *, struct proc *, void *, size_t));
 #endif
 #endif
 int		vm_inherit __P((vm_map_t,
@@ -176,9 +176,9 @@ void		vmapbuf __P((struct buf *, vm_size_t));
 void		vunmapbuf __P((struct buf *, vm_size_t));
 void		pagemove __P((caddr_t, caddr_t, size_t));
 #ifdef __FORK_BRAINDAMAGE
-int		cpu_fork __P((struct proc *, struct proc *));
+int		cpu_fork __P((struct proc *, struct proc *, void *, size_t));
 #else
-void		cpu_fork __P((struct proc *, struct proc *));
+void		cpu_fork __P((struct proc *, struct proc *, void *, size_t));
 #endif
 #ifndef	cpu_swapin
 void		cpu_swapin __P((struct proc *));

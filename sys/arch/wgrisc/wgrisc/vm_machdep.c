@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.2 1998/07/28 00:13:58 millert Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.3 1999/08/17 10:32:18 niklas Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *
  *	from: @(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
- *      $Id: vm_machdep.c,v 1.2 1998/07/28 00:13:58 millert Exp $
+ *      $Id: vm_machdep.c,v 1.3 1999/08/17 10:32:18 niklas Exp $
  */
 
 
@@ -73,13 +73,16 @@ vm_offset_t kmem_alloc_wait_align();
  * address in each process; in the future we will probably relocate
  * the frame pointers on the stack after copying.
  */
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	register struct user *up = p2->p_addr;
 	register pt_entry_t *pte;
 	register int i;
 	extern struct proc *cpuFPCurProcPtr;
+	struct frame *f;
 
 	p2->p_md.md_regs = up->u_pcb.pcb_regs;
 	p2->p_md.md_flags = p1->p_md.md_flags & MDP_FPUSED;
@@ -111,6 +114,14 @@ cpu_fork(p1, p2)
 	p2->p_addr->u_pcb = p1->p_addr->u_pcb;
 	/* cache segtab for ULTBMiss() */
 	p2->p_addr->u_pcb.pcb_segtab = (void *)p2->p_vmspace->vm_pmap.pm_segtab;
+
+#ifdef notyet
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		/* XXX How??? */;
+#endif
 
 	/*
 	 * Arrange for a non-local goto when the new process

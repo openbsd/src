@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.23 1999/08/15 00:07:43 pjanzen Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.24 1999/08/17 10:32:18 niklas Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -78,7 +78,7 @@ sys_fork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return (fork1(p, ISFORK, 0, retval));
+	return (fork1(p, ISFORK, 0, NULL, 0, retval));
 }
 
 /*ARGSUSED*/
@@ -88,7 +88,7 @@ sys_vfork(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	return (fork1(p, ISVFORK, 0, retval));
+	return (fork1(p, ISVFORK, 0, NULL, 0, retval));
 }
 
 int
@@ -101,14 +101,16 @@ sys_rfork(p, v, retval)
 		syscallarg(int) flags;
 	} */ *uap = v;
 
-	return (fork1(p, ISRFORK, SCARG(uap, flags), retval));
+	return (fork1(p, ISRFORK, SCARG(uap, flags), NULL, 0, retval));
 }
 
 int
-fork1(p1, forktype, rforkflags, retval)
+fork1(p1, forktype, rforkflags, stack, stacksize, retval)
 	register struct proc *p1;
 	int forktype;
 	int rforkflags;
+	void *stack;
+	size_t stacksize;
 	register_t *retval;
 {
 	register struct proc *p2;
@@ -334,7 +336,7 @@ again:
 	 */
 	retval[0] = 0;
 	retval[1] = 1;
-	if (vm_fork(p1, p2))
+	if (vm_fork(p1, p2, stack, stacksize))
 		return (0);
 #else
 	/*
@@ -342,9 +344,11 @@ again:
 	 * different path later.
 	 */
 #if defined(UVM)
-	uvm_fork(p1, p2, (forktype == ISRFORK && (rforkflags & RFMEM)) ? TRUE : FALSE);
+	uvm_fork(p1, p2,
+	    (forktype == ISRFORK && (rforkflags & RFMEM)) ? TRUE : FALSE,
+	    stack, stacksize);
 #else /* UVM */
-	vm_fork(p1, p2);
+	vm_fork(p1, p2, stack, stacksize);
 #endif /* UVM */
 #endif
 	vm = p2->p_vmspace;

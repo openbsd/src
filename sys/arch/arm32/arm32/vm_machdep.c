@@ -103,9 +103,11 @@ extern void child_return	__P(());
  */
 
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	struct proc *p1;
 	struct proc *p2;
+	void *stack;
+	size_t stacksize;
 {
 	struct user *up = p2->p_addr;
 	struct pcb *pcb = (struct pcb *)&p2->p_addr->u_pcb;
@@ -238,6 +240,13 @@ cpu_fork(p1, p2)
 	p2->p_md.md_regs = tf = (struct trapframe *)pcb->pcb_sp - 1;
 
 	*tf = *p1->p_md.md_regs;
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf->tf_usr_sp = (u_int)stack + stacksize;
+
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_spl = SPL_0;
 	sf->sf_r4 = (u_int)child_return;

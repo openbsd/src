@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_kthread.c,v 1.3 1999/01/26 23:07:26 niklas Exp $	*/
+/*	$OpenBSD: kern_kthread.c,v 1.4 1999/08/17 10:32:18 niklas Exp $	*/
 /*	$NetBSD: kern_kthread.c,v 1.3 1998/12/22 21:21:36 kleink Exp $	*/
 
 /*-
@@ -83,7 +83,8 @@ kthread_create(func, arg, newpp, fmt, va_alist)
 	 * descriptors and don't leave the exit status around for the
 	 * parent to wait for.
 	 */
-	error = fork1(&proc0, ISRFORK, RFPROC | RFMEM | RFFDG | RFNOWAIT, rv);
+	error = fork1(&proc0, ISRFORK, RFPROC | RFMEM | RFFDG | RFNOWAIT, NULL,
+	    0, rv);
 	if (error)
 		return (error);
 

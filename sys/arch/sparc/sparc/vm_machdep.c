@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.9 1999/07/09 21:30:03 art Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.10 1999/08/17 10:32:18 niklas Exp $	*/
 /*	$NetBSD: vm_machdep.c,v 1.30 1997/03/10 23:55:40 pk Exp $ */
 
 /*
@@ -359,8 +359,10 @@ vunmapbuf(bp, sz)
  * the first element in struct user.
  */
 void
-cpu_fork(p1, p2)
+cpu_fork(p1, p2, stack, stacksize)
 	register struct proc *p1, *p2;
+	void *stack;
+	size_t stacksize;
 {
 	register struct pcb *opcb = &p1->p_addr->u_pcb;
 	register struct pcb *npcb = &p2->p_addr->u_pcb;
@@ -408,6 +410,12 @@ cpu_fork(p1, p2)
 
 	/* Copy parent's trapframe */
 	*tf2 = *(struct trapframe *)((int)opcb + USPACE - sizeof(*tf2));
+
+	/*
+	 * If specified, give the child a different stack.
+	 */
+	if (stack != NULL)
+		tf2->tf_out[6] = (u_int)stack + stacksize;
 
 	/* Duplicate efforts of syscall(), but slightly differently */
 	if (tf2->tf_global[1] & SYSCALL_G2RFLAG) {
