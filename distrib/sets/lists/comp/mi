@@ -117,6 +117,7 @@
 ./usr/include/dev/ic/opl3sa3.h
 ./usr/include/dev/ic/pdqreg.h
 ./usr/include/dev/ic/pdqvar.h
+./usr/include/dev/ic/s3_617.h
 ./usr/include/dev/ic/smc90cx6reg.h
 ./usr/include/dev/ic/smc93cx6var.h
 ./usr/include/dev/ic/uhareg.h
@@ -837,9 +838,6 @@
 ./usr/include/signal.h
 ./usr/include/skey.h
 ./usr/include/soundcard.h
-./usr/include/ss
-./usr/include/ss/ss.h
-./usr/include/ss/ss_err.h
 ./usr/include/stab.h
 ./usr/include/stdarg.h
 ./usr/include/stddef.h
@@ -1075,8 +1073,6 @@
 ./usr/lib/librx_p.a
 ./usr/lib/libskey.a
 ./usr/lib/libskey_p.a
-./usr/lib/libss.a
-./usr/lib/libss_p.a
 ./usr/lib/libstdc++.a
 ./usr/lib/libstdc++_p.a
 ./usr/lib/libtelnet.a

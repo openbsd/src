@@ -13,7 +13,7 @@
 ./usr/lib/libkadm.so.5.0
 ./usr/lib/libkafs.so.4.0
 ./usr/lib/libkdb.so.5.0
-./usr/lib/libkrb.so.4.1
+./usr/lib/libkrb.so.7.0
 ./usr/lib/libkvm.so.5.1
 ./usr/lib/libm.so.0.1
 ./usr/lib/libmenu.so.1.1
@@ -22,7 +22,6 @@
 ./usr/lib/libpcap.so.0.2
 ./usr/lib/libresolv.so.2.0
 ./usr/lib/libskey.so.0.4
-./usr/lib/libss.so.4.0
 ./usr/lib/libstdc++.so.27.1
 ./usr/lib/libtermcap.so.0.0
 ./usr/lib/libtermlib.so.3.0

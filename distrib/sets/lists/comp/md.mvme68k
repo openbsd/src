@@ -127,7 +127,6 @@
 ./usr/lib/libresolv_pic.a
 ./usr/lib/librx_pic.a
 ./usr/lib/libskey_pic.a
-./usr/lib/libss_pic.a
 ./usr/lib/libstdc++_pic.a
 ./usr/lib/libtelnet_pic.a
 ./usr/lib/libtermcap_pic.a
