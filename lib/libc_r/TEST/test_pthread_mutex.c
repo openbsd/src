@@ -73,6 +73,7 @@ test_debug_double_unlock(mutex)
 	printf("  test_debug_double_unlock()\n");
 	CHECKr(pthread_mutex_lock(mutex));
 	CHECKr(pthread_mutex_unlock(mutex));
+	/* Posix D10 says undefined behaviour? */
 	ASSERTe(pthread_mutex_unlock(mutex), == EPERM);
 }
 
