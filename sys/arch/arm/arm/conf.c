@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2004/04/07 03:20:47 drahn Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 2004/09/28 15:18:53 drahn Exp $	*/
 /*	$NetBSD: conf.c,v 1.10 2002/04/19 01:04:38 wiz Exp $	*/
 
 /*
@@ -73,6 +73,7 @@
 #include "pf.h"
 #include "pty.h"
 #include "tun.h"
+#include "ksyms.h"
 
 /*
  * Disk/Filesystem pseudo-devices
@@ -270,7 +271,7 @@ struct cdevsw cdevsw[] = {
 	cdev_ptc_init(NPTY,ptc),		/*  5: pseudo-tty master */
 	cdev_log_init(1,log),			/*  6: /dev/klog */
 	cdev_fd_init(1,filedesc),		/*  7: file descriptor pseudo-device */
-	cdev_lkm_dummy(),			/*  8: */
+	cdev_ksyms_init(NKSYMS,ksyms),		/*  8: Kernel symbols device */
 	cdev_lpt_init(NLPT,lpt),		/*  9: parallel printer */
 	cdev_lkm_dummy(),			/* 10: */
 	cdev_lkm_dummy(),			/* 11: */
