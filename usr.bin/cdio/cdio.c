@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.26 2002/10/24 20:03:07 fgsch Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.27 2003/02/13 05:48:38 fgsch Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -21,6 +21,11 @@
  * $FreeBSD: cdcontrol.c,v 1.13 1996/06/25 21:01:27 ache Exp $
  */
 
+#include <sys/param.h>
+#include <sys/file.h>
+#include <sys/cdio.h>
+#include <sys/ioctl.h>
+
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -28,14 +33,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <histedit.h>
 #include <util.h>
 #include <vis.h>
-#include <sys/param.h>
-#include <sys/file.h>
-#include <sys/cdio.h>
-#include <sys/ioctl.h>
-#include "extern.h"
 
+#include "extern.h"
 
 #define ASTS_INVALID    0x00  /* Audio status byte not valid */
 #define ASTS_PLAYING    0x11  /* Audio play operation in progress */
@@ -111,6 +113,10 @@ int             msf = 1;
 const char 	*cddb_host;
 char		**track_names;
 
+EditLine       *el = NULL;	/* line-editing structure */
+History	       *hist = NULL;	/* line-editing history */
+void		switch_el(void);
+
 extern char     *__progname;
 
 int             setvol(int, int);
@@ -128,6 +134,7 @@ int		play_next(char *arg);
 int		play_prev(char *arg);
 int		play_same(char *arg);
 char            *input(int *);
+char		*prompt(void);
 void            prtrack(struct cd_toc_entry *e, int lastflag, char *name);
 void            lba2msf(unsigned long lba, u_char *m, u_char *s, u_char *f);
 unsigned int    msf2lba(u_char m, u_char s, u_char f);
@@ -249,6 +256,8 @@ main(int argc, char **argv)
 		printf("Type `?' for command list\n\n");
 	}
 
+	switch_el();
+
 	for (;;) {
 		arg = input(&cmd);
 		if (run(cmd, arg) < 0) {
@@ -270,6 +279,7 @@ run(int cmd, char *arg)
 	switch (cmd) {
 
 	case CMD_QUIT:
+		switch_el();
 		exit(0);
 
 	case CMD_INFO:
@@ -1202,17 +1212,18 @@ status(int *trk, int *min, int *sec, int *frame)
 char *
 input(int *cmd)
 {
-	static char buf[80];
+	char *buf;
+	int siz = 0;
 	char *p;
 
 	do {
-		if (verbose)
-			fprintf(stderr, "%s> ", __progname);
-		if (!fgets(buf, sizeof (buf), stdin)) {
+		if ((buf = (char *) el_gets(el, &siz)) == NULL || !siz) {
 			*cmd = CMD_QUIT;
 			fprintf(stderr, "\r\n");
 			return (0);
 		}
+		if (strlen(buf) > 1)
+			history(hist, H_ENTER, buf);
 		p = parse(buf, cmd);
 	} while (!p);
 	return (p);
@@ -1310,4 +1321,35 @@ open_cd(char *dev)
 		return (0);
 	}
 	return (1);
+}
+
+char *
+prompt(void)
+{
+	return (verbose ? "cdio> " : "");
+}
+
+void
+switch_el(void)
+{
+	if (el == NULL && hist == NULL) {
+		el = el_init(__progname, stdin, stdout);
+		hist = history_init();
+		history(hist, H_EVENT, 100);
+		el_set(el, EL_HIST, history, hist);
+		el_set(el, EL_EDITOR, "emacs");
+		el_set(el, EL_PROMPT, prompt);
+		el_set(el, EL_SIGNAL, 1);
+		el_source(el, NULL);
+
+	} else {
+		if (hist != NULL) {
+			history_end(hist);
+			hist = NULL;
+		}
+		if (el != NULL) {
+			el_end(el);
+			el = NULL;
+		}
+	}
 }
