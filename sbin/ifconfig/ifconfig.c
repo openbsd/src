@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.49 2001/07/07 18:26:13 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.50 2001/07/25 17:41:06 itojun Exp $	*/
 /*      $NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $      */
 
 /*
@@ -81,7 +81,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.49 2001/07/07 18:26:13 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.50 2001/07/25 17:41:06 itojun Exp $";
 #endif
 #endif /* not lint */
 
@@ -1942,7 +1942,8 @@ in_getprefix(plen, which)
 	memset((void *)&sin->sin_addr, 0x00, sizeof(sin->sin_addr));
 	for (cp = (u_char *)&sin->sin_addr; len > 7; len -= 8)
 		*cp++ = 0xff;
-	*cp = 0xff << (8 - len);
+	if (len)
+		*cp = 0xff << (8 - len);
 }
 
 /*
@@ -2047,7 +2048,8 @@ in6_getprefix(plen, which)
 	memset((void *)&sin->sin6_addr, 0x00, sizeof(sin->sin6_addr));
 	for (cp = (u_char *)&sin->sin6_addr; len > 7; len -= 8)
 		*cp++ = 0xff;
-	*cp = 0xff << (8 - len);
+	if (len)
+		*cp = 0xff << (8 - len);
 }
 
 int
