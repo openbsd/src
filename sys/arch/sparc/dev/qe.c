@@ -1,4 +1,4 @@
-/*	$OpenBSD: qe.c,v 1.18 2002/01/01 21:39:42 jason Exp $	*/
+/*	$OpenBSD: qe.c,v 1.19 2002/02/08 18:53:38 jason Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 Jason L. Wright.
@@ -209,9 +209,11 @@ qestart(ifp)
 	bix = sc->sc_last_td;
 
 	for (;;) {
-		IFQ_DEQUEUE(&ifp->if_snd, m);
+		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
+
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 
 #if NBPFILTER > 0
 		/*
@@ -325,7 +327,7 @@ qeintr(v)
 	if (qestat & QE_CR_STAT_RXIRQ)
 		r |= qe_rint(sc);
 
-	return r;
+	return (1);
 }
 
 /*
@@ -349,7 +351,6 @@ qe_tint(sc)
 		if (txd.tx_flags & QE_TXD_OWN)
 			break;
 
-		ifp->if_flags &= ~IFF_OACTIVE;
 		ifp->if_opackets++;
 
 		if (++bix == QE_TX_RING_MAXSIZE)
@@ -358,14 +359,21 @@ qe_tint(sc)
 		--sc->sc_no_td;
 	}
 
-	sc->sc_first_td = bix;
-
-	qestart(ifp);
-
 	if (sc->sc_no_td == 0)
 		ifp->if_timer = 0;
 
-	return 1;
+	/*
+	 * If we freed up at least one descriptor and tx is blocked,
+	 * unblock it and start it up again.
+	 */
+	if ((sc->sc_first_td != bix) && (ifp->if_flags & IFF_OACTIVE)) {
+		ifp->if_flags &= ~IFF_OACTIVE;
+		qestart(ifp);
+	}
+
+	sc->sc_first_td = bix;
+
+	return (1);
 }
 
 /*
