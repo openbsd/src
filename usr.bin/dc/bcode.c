@@ -1,4 +1,4 @@
-/*	$OpenBSD: bcode.c,v 1.18 2003/12/01 09:13:24 otto Exp $	*/
+/*	$OpenBSD: bcode.c,v 1.19 2003/12/02 13:43:02 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -17,7 +17,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bcode.c,v 1.18 2003/12/01 09:13:24 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bcode.c,v 1.19 2003/12/02 13:43:02 otto Exp $";
 #endif /* not lint */
 
 #include <ssl/ssl.h>
@@ -34,7 +34,7 @@ BIGNUM		zero;
 /* #define	DEBUGGING */
 
 #define MAX_ARRAY_INDEX		2048
-#define MAX_RECURSION		100
+#define RECURSION_STACK_SIZE	100
 
 #define NO_ELSE			-2	/* -1 is EOF */
 #define REG_ARRAY_SIZE_SMALL	(UCHAR_MAX + 1)
@@ -49,7 +49,7 @@ struct bmachine {
 	bool			extended_regs;
 	size_t			reg_array_size;
 	struct stack		*reg;
-	struct source		readstack[MAX_RECURSION];
+	struct source		readstack[RECURSION_STACK_SIZE];
 };
 
 static struct bmachine	bmachine;
@@ -1648,7 +1648,7 @@ eval_string(char *p)
 		} else
 			unreadch();
 	}
-	if (bmachine.readsp == MAX_RECURSION)
+	if (bmachine.readsp == RECURSION_STACK_SIZE-1)
 		errx(1, "recursion too deep");
 	src_setstring(&bmachine.readstack[++bmachine.readsp], p);
 }
