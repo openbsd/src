@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.94 2002/08/08 20:34:46 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.95 2002/08/17 21:55:10 fgsch Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -349,6 +349,7 @@ vendor ACCTON			-1	ACCTON
 vendor ADDTRON			-1	Addtron
 vendor AMBICOM			-1	AmbiCom
 vendor AMD			-1	AMD
+vendor AROWANA			-1	Arowana
 vendor BILLIONTON		-1	Billionton Systems Inc.
 vendor CNET			-1	CNet
 vendor DIGITAL			-1	Digital
@@ -440,3 +441,4 @@ product WISECOM T210CT		{ "PCMCIA", "Ethernet&spCard", NULL, NULL }
 product WISECOM IPORT		{ "iPort", "10/100&spEthernet&spCard", NULL, NULL }
 product GEMTEK WLAN		{ "Intersil", "PRISM&sp2_5&spPCMCIA&spADAPTER", "ISL37300P", "Eval-RevA" }
 product SIMPLETECH SPECTRUM24_ALT	{ "Symbol&spTechnologies", "LA4111&spSpectrum24&spWireless&spLAN&spPC&spCard", NULL, NULL }
+product AROWANA FE		{ "PCMCIA", "Fast-Ethernet", NULL, NULL }
