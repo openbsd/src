@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.46 2002/07/22 04:51:17 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.47 2002/10/16 01:06:32 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";
 #else
-static const char rcsid[] = "$OpenBSD: su.c,v 1.46 2002/07/22 04:51:17 millert Exp $";
+static const char rcsid[] = "$OpenBSD: su.c,v 1.47 2002/10/16 01:06:32 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -62,33 +62,34 @@ static const char rcsid[] = "$OpenBSD: su.c,v 1.46 2002/07/22 04:51:17 millert E
 #include <string.h>
 #include <syslog.h>
 #include <unistd.h>
+#include <utmp.h>
 #include <stdarg.h>
 #include <bsd_auth.h>
 
+char   *getloginname(void);
 char   *ontty(void);
 int	chshell(char *);
+int	verify_user(char *, struct passwd *, char *, login_cap_t *,
+	    auth_session_t *);
 void	usage(void);
 void	auth_err(auth_session_t *, int, const char *, ...);
 void	auth_errx(auth_session_t *, int, const char *, ...);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char **argv)
 {
-	int asme = 0, asthem = 0, authok, ch, fastlogin = 0, prio;
+	int asme = 0, asthem = 0, ch, fastlogin = 0, emlogin = 0, prio;
 	char *user, *shell = NULL, *avshell, *username, **np;
-	char *class = NULL, *style = NULL, *p, **g, *fullname;
+	char *class = NULL, *style = NULL, *p;
 	enum { UNSET, YES, NO } iscsh = UNSET;
 	char avshellbuf[MAXPATHLEN];
 	extern char **environ;
 	auth_session_t *as;
 	struct passwd *pwd;
-	struct group *gr;
 	login_cap_t *lc;
 	uid_t ruid;
 
-	while ((ch = getopt(argc, argv, "-a:c:fKlm")) != -1)
+	while ((ch = getopt(argc, argv, "-a:c:fKLlm")) != -1)
 		switch (ch) {
 		case 'a':
 			if (style)
@@ -108,8 +109,11 @@ main(argc, argv)
 				usage();
 			style = "passwd";
 			break;
-		case '-':
+		case 'L':
+			emlogin = 1;
+			break;
 		case 'l':
+		case '-':
 			asme = 0;
 			asthem = 1;
 			break;
@@ -139,6 +143,9 @@ main(argc, argv)
 	ruid = getuid();
 	username = getlogin();
 
+	if (ruid && class)
+		auth_errx(as, 1, "only the superuser may specify a login class");
+
 	if (username != NULL)
 		auth_setoption(as, "invokinguser", username);
 
@@ -159,62 +166,60 @@ main(argc, argv)
 		}
 	}
 
-	/* get target login information, default to root */
-	user = *argv ? *argv : "root";
-	np = *argv ? argv : argv - 1;
-
-	if ((pwd = getpwnam(user)) == NULL)
-		auth_errx(as, 1, "unknown login %s", user);
-	if ((pwd = pw_dup(pwd)) == NULL)
-		auth_errx(as, 1, "can't allocate memory");
-	user = pwd->pw_name;
-
-	/* If the user specified a login class and we are root, use it */
-	if (ruid && class)
-		auth_errx(as, 1, "only the superuser may specify a login class");
-	if (class)
-		pwd->pw_class = class;
-	if ((lc = login_getclass(pwd->pw_class)) == NULL)
-		auth_errx(as, 1, "no such login class: %s",
-		    class ? class : LOGIN_DEFCLASS);
-
-	if (ruid) {
-		/*
-		 * If we are trying to become root and the default style
-		 * is being used, don't bother to look it up (we might be
-		 * be su'ing up to fix /etc/login.conf)
-		 */
-		if ((pwd->pw_uid || !style || strcmp(style, LOGIN_DEFSTYLE)) &&
-		    (style = login_getstyle(lc, style, "auth-su")) == NULL)
-			auth_errx(as, 1, "invalid authentication type");
-		fullname = user;
-		/*
-		 * Let the authentication program know whether they are
-		 * in group wheel or not (if trying to become super user)
-		 */
-		if (pwd->pw_uid == 0 && (gr = getgrgid((gid_t)0)) &&
-		    gr->gr_mem && *(gr->gr_mem)) {
-			for (g = gr->gr_mem; *g; ++g) {
-				if (strcmp(username, *g) == 0) {
-					auth_setoption(as, "wheel", "yes");
-					break;
-				}
+	for (;;) {
+		/* get target user, default to root unless in -L mode */
+		if (*argv) {
+			user = *argv;
+		} else if (emlogin) {
+			if ((user = getloginname()) == NULL) {
+				auth_close(as);
+				exit(1);
 			}
-			if (!*g)
-				auth_setoption(as, "wheel", "no");
+		} else {
+			user = "root";
+		}
+		/* style may be specified as part of the username */
+		if ((p = strchr(user, ':')) != NULL) {
+			*p++ = '\0';
+			style = p;
+		} else
+			style = NULL;	/* XXX overrides -a flag */
+		
+		/*
+		 * Clean and setup our current authentication session.
+		 * Note that options *are* not cleared.
+		 */
+		auth_clean(as);
+		if (auth_setitem(as, AUTHV_INTERACTIVE, "True") != 0 ||
+		    auth_setitem(as, AUTHV_NAME, user) != 0)
+			auth_errx(as, 1, "can't allocate memory");
+		if ((user = auth_getitem(as, AUTHV_NAME)) == NULL)
+			auth_errx(as, 1, "internal error");
+		if (auth_setpwd(as, NULL) || (pwd = auth_getpwd(as)) == NULL) {
+			if (emlogin)
+				pwd = NULL;
+			else
+				auth_errx(as, 1, "unknown login %s", user);
 		}
 
-		auth_verify(as, style, fullname, lc->lc_class, NULL);
-		authok = auth_getstate(as);
-		if ((authok & AUTH_ALLOW) == 0) {
-			if ((p = auth_getvalue(as, "errormsg")) != NULL)
-				fprintf(stderr, "%s\n", p);
+		/* If the user specified a login class, use it */
+		if (!class && pwd && pwd->pw_class && pwd->pw_class[0] != '\0')
+			class = pwd->pw_class;
+		if ((lc = login_getclass(class)) == NULL)
+			auth_errx(as, 1, "no such login class: %s",
+			    class ? class : LOGIN_DEFCLASS);
+
+		if ((ruid == 0 && !emlogin) ||
+		    verify_user(username, pwd, style, lc, as) == 0)
+			break;
+		syslog(LOG_AUTH|LOG_WARNING, "BAD SU %s to %s%s",
+		    username, user, ontty());
+		if (!emlogin) {
 			fprintf(stderr, "Sorry\n");
-			syslog(LOG_AUTH|LOG_WARNING, "BAD SU %s to %s%s",
-			    username, user, ontty());
 			auth_close(as);
 			exit(1);
 		}
+		fprintf(stderr, "Login incorrect\n");
 	}
 
 	if (asme) {
@@ -222,7 +227,8 @@ main(argc, argv)
 		if (!chshell(pwd->pw_shell) && ruid)
 			auth_errx(as, 1, "permission denied (shell).");
 	} else if (pwd->pw_shell && *pwd->pw_shell) {
-		shell = pwd->pw_shell;
+		if ((shell = strdup(pwd->pw_shell)) == NULL)
+			auth_errx(as, 1, "can't allocate memory");
 		iscsh = UNSET;
 	} else {
 		shell = _PATH_BSHELL;
@@ -269,6 +275,7 @@ main(argc, argv)
 			auth_err(as, 1, "unable to set environment");
 	}
 
+	np = *argv ? argv : argv - 1;
 	if (iscsh == YES) {
 		if (fastlogin)
 			*np-- = "-f";
@@ -307,8 +314,51 @@ main(argc, argv)
 }
 
 int
-chshell(sh)
-	char *sh;
+verify_user(char *from, struct passwd *pwd, char *style,
+    login_cap_t *lc, auth_session_t *as)
+{
+	struct group *gr;
+	char **g, *cp;
+	int authok;
+
+	/*
+	 * If we are trying to become root and the default style
+	 * is being used, don't bother to look it up (we might be
+	 * be su'ing up to fix /etc/login.conf)
+	 */
+	if ((pwd == NULL || pwd->pw_uid != 0 || style == NULL ||
+	    strcmp(style, LOGIN_DEFSTYLE) != 0) &&
+	    (style = login_getstyle(lc, style, "auth-su")) == NULL)
+		auth_errx(as, 1, "invalid authentication type");
+
+	/*
+	 * Let the authentication program know whether they are
+	 * in group wheel or not (if trying to become super user)
+	 */
+	if (pwd != NULL && pwd->pw_uid == 0 && (gr = getgrgid(0)) != NULL &&
+	    gr->gr_mem != NULL && *(gr->gr_mem) != NULL) {
+		for (g = gr->gr_mem; *g; ++g) {
+			if (strcmp(from, *g) == 0) {
+				auth_setoption(as, "wheel", "yes");
+				break;
+			}
+		}
+		if (!*g)
+			auth_setoption(as, "wheel", "no");
+	}
+
+	auth_verify(as, style, NULL, lc->lc_class, (char *)NULL);
+	authok = auth_getstate(as);
+	if ((authok & AUTH_ALLOW) == 0) {
+		if ((cp = auth_getvalue(as, "errormsg")) != NULL)
+			fprintf(stderr, "%s\n", cp);
+		return(1);
+	}
+	return(0);
+}
+
+int
+chshell(char *sh)
 {
 	char *cp;
 
@@ -319,7 +369,7 @@ chshell(sh)
 }
 
 char *
-ontty()
+ontty(void)
 {
 	static char buf[MAXPATHLEN + 4];
 	char *p;
@@ -330,13 +380,46 @@ ontty()
 	return (buf);
 }
 
+/*
+ * Allow for a '.' and 16 characters for any instance as well as
+ * space for a ':' and 16 charcters defining the authentication type.
+ */
+#define NBUFSIZ		(UT_NAMESIZE + 1 + 16 + 1 + 16)
+
+char *
+getloginname(void)
+{
+	static char nbuf[NBUFSIZ], *p;
+	int ch;
+
+	for (;;) {
+		(void)printf("login: ");
+		for (p = nbuf; (ch = getchar()) != '\n'; ) {
+			if (ch == EOF)
+				return (NULL);
+			if (p < nbuf + (NBUFSIZ - 1))
+				*p++ = ch;
+		}
+		if (p > nbuf) {
+			if (nbuf[0] == '-') {
+				(void)fprintf(stderr,
+				    "login names may not start with '-'.\n");
+			} else {
+				*p = '\0';
+				break;
+			}
+		}
+	}
+	return (nbuf);
+}
+
 void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
-	fprintf(stderr, "usage: %s [-fKlm] [-a auth-type] %s ", __progname,
-	    "[-c login-class] [login [shell arguments]]\n");
+	fprintf(stderr, "usage: %s [-fKLlm] [-a auth-type] [-c login-class] "
+	    "[login [shell arguments]]\n", __progname);
 	exit(1);
 }
 
