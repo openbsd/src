@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.129 2003/01/09 18:55:32 dhartmei Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.130 2003/01/10 14:21:21 cedric Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -49,6 +49,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <assert.h>
 
 #include "pfctl_parser.h"
 #include "pfctl.h"
@@ -77,6 +78,7 @@ int	 pfctl_clear_rule_counters(int, int);
 int	 pfctl_add_pool(struct pfctl *, struct pf_pool *, sa_family_t);
 int	 pfctl_test_altqsupport(int, int);
 int	 pfctl_show_anchors(int, int);
+char	*pfctl_lookup_option(char *, char **);
 
 char	*clearopt;
 char	*rulesopt;
@@ -157,6 +159,25 @@ static const struct {
 	{ "aggressive",		pf_hint_aggressive },
 	{ NULL,			NULL }
 };
+
+static char *clearopt_list[] = {
+	"nat", "queue", "rules", "state", "info", "Tables", "all", NULL
+};
+
+static char *showopt_list[] = {
+	"nat", "queue", "rules", "anchors", "state", "info", "labels", 
+	"timeouts", "memory", "Tables", "all", NULL
+};
+
+static char *tblcmdopt_list[] = {
+	"create", "kill", "flush", "add", "delete", "replace", "show",
+	"test", "zero", NULL
+};
+
+static char *debugopt_list[] = {
+	"none", "urgent", "misc", NULL
+};
+
 
 void
 usage(void)
@@ -1211,6 +1232,18 @@ pfctl_show_anchors(int dev, int opts)
 	return (0);
 }
 
+char *
+pfctl_lookup_option(char *cmd, char **list)
+{
+	if (cmd != NULL && *cmd)
+		for (; *list; list++)
+			if (!strncmp(cmd, *list, strlen(cmd)))
+				return (*list);
+	return (NULL);
+}
+			
+
+
 int
 main(int argc, char *argv[])
 {
@@ -1241,7 +1274,11 @@ main(int argc, char *argv[])
 			opts |= PF_OPT_QUIET;
 			break;
 		case 'F':
-			clearopt = optarg;
+			clearopt = pfctl_lookup_option(optarg, clearopt_list);
+			if (clearopt == NULL) {
+				warnx("Unknown flush modifier '%s'", optarg);
+				usage();
+			}
 			mode = O_RDWR;
 			break;
 		case 'k':
@@ -1280,13 +1317,21 @@ main(int argc, char *argv[])
 			loadopt |= PFCTL_FLAG_OPTION;
 			break;
 		case 's':
-			showopt = optarg;
+			showopt = pfctl_lookup_option(optarg, showopt_list);
+			if (showopt == NULL) {
+				warnx("Unknown show modifier '%s'", optarg);
+				usage();
+			}			
 			break;
 		case 't':
 			tableopt = optarg;
 			break;
 		case 'T':
-			tblcmdopt = optarg;
+			tblcmdopt = pfctl_lookup_option(optarg, tblcmdopt_list);
+			if (tblcmdopt == NULL) {
+				warnx("Unknown table command '%s'", optarg);
+				usage();
+			}
 			break;
 		case 'v':
 			if (opts & PF_OPT_VERBOSE)
@@ -1294,7 +1339,11 @@ main(int argc, char *argv[])
 			opts |= PF_OPT_VERBOSE;
 			break;
 		case 'x':
-			debugopt = optarg;
+			debugopt = pfctl_lookup_option(optarg, debugopt_list);
+			if (debugopt == NULL) {
+				warnx("Unknown debug level '%s'", optarg);
+				usage();
+			}
 			mode = O_RDWR;
 			break;
 		case 'z':
@@ -1407,8 +1456,7 @@ main(int argc, char *argv[])
 			pfctl_clear_tables(opts);
 			break;
 		default:
-			warnx("Unknown flush modifier '%s'", clearopt);
-			error = 1;
+			assert(0);
 		}
 	}
 	if (state_killers)
@@ -1468,8 +1516,7 @@ main(int argc, char *argv[])
 			pfctl_show_tables(opts);
 			break;
 		default:
-			warnx("Unknown show modifier '%s'", showopt);
-			error = 1;
+			assert(0);
 		}
 	}
 
@@ -1489,8 +1536,7 @@ main(int argc, char *argv[])
 			pfctl_debug(dev, PF_DEBUG_MISC, opts);
 			break;
 		default:
-			warnx("Unknown debug level '%s'", debugopt);
-			error = 1;
+			assert(0);
 		}
 	}
 
