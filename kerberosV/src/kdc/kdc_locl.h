@@ -32,7 +32,7 @@
  */
 
 /* 
- * $KTH: kdc_locl.h,v 1.58 2003/03/18 00:23:06 lha Exp $ 
+ * $KTH: kdc_locl.h,v 1.58.2.2 2003/10/27 11:07:16 joda Exp $ 
  */
 
 #ifndef __KDC_LOCL_H__

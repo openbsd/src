@@ -32,13 +32,13 @@
  */
 
 #if 0
-RCSID("$Id: print_version.c,v 1.1 2003/05/18 07:51:42 mho Exp $");
+RCSID("$Id: print_version.c,v 1.2 2004/10/29 16:25:46 biorn Exp $");
 #endif
 
 #include <stdio.h>
 
 
-#define VERSIONLIST 		{ "heimdal-0.6RC1/OpenBSD", }
+#define VERSIONLIST 		{ "heimdal-0.6.3/OpenBSD", }
 #define PACKAGE_BUGREPORT	"bugs@openbsd.org"
 
 char *__progname;
@@ -54,6 +54,6 @@ print_version(const char *progname)
     if(*package_list == '\0')
 	package_list = "no version information";
     fprintf(stderr, "%s (%s)\n", progname, package_list);
-    fprintf(stderr, "Copyright 1999-2003 Kungliga Tekniska Högskolan\n");
+    fprintf(stderr, "Copyright 1999-2004 Kungliga Tekniska Högskolan\n");
     fprintf(stderr, "Send bug-reports to %s\n", PACKAGE_BUGREPORT);
 }

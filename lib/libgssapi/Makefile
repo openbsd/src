@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.5 2003/06/03 09:34:00 hin Exp $
+# $OpenBSD: Makefile,v 1.6 2004/10/29 16:25:17 biorn Exp $
 
 KRB5DIR	= ${.CURDIR}/../../kerberosV
 .include <${.CURDIR}/../libkrb5/Makefile.common.inc>
@@ -23,6 +23,7 @@ SRCS=	8003.c			\
 	acquire_cred.c		\
 	add_cred.c		\
 	add_oid_set_member.c	\
+	arcfour.c		\
 	canonicalize_name.c	\
 	compare_name.c		\
 	compat.c		\

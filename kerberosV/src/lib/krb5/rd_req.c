@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
+ * Copyright (c) 1997 - 2001, 2003 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden). 
  * All rights reserved. 
  *
@@ -33,7 +33,7 @@
 
 #include <krb5_locl.h>
 
-RCSID("$KTH: rd_req.c,v 1.47 2001/06/18 02:48:18 assar Exp $");
+RCSID("$KTH: rd_req.c,v 1.47.8.3 2003/10/21 20:10:33 lha Exp $");
 
 static krb5_error_code
 decrypt_tkt_enc_part (krb5_context context,
@@ -499,9 +499,15 @@ krb5_rd_req(krb5_context context,
 				     ap_req.ticket.realm);
 	server = service;
     }
+    if (ap_req.ap_options.use_session_key &&
+	(*auth_context)->keyblock == NULL) {
+	krb5_set_error_string(context, "krb5_rd_req: user to user auth "
+			      "without session key given");
+	ret = KRB5KRB_AP_ERR_NOKEY;
+	goto out;
+    }
 
-    if(ap_req.ap_options.use_session_key == 0 || 
-       (*auth_context)->keyblock == NULL){
+    if((*auth_context)->keyblock == NULL){
 	ret = get_key_from_keytab(context, 
 				  auth_context, 
 				  &ap_req,
@@ -510,8 +516,13 @@ krb5_rd_req(krb5_context context,
 				  &keyblock);
 	if(ret)
 	    goto out;
+    } else {
+	ret = krb5_copy_keyblock(context,
+				 (*auth_context)->keyblock,
+				 &keyblock);
+	if (ret)
+	    goto out;
     }
-	
 
     ret = krb5_verify_ap_req(context,
 			     auth_context,

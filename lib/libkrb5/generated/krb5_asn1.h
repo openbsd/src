@@ -111,6 +111,7 @@ typedef enum PADATA_TYPE {
   KRB5_PADATA_PK_AS_SIGN = 16,
   KRB5_PADATA_PK_KEY_REQ = 17,
   KRB5_PADATA_PK_KEY_REP = 18,
+  KRB5_PADATA_ETYPE_INFO2 = 19,
   KRB5_PADATA_USE_SPECIFIED_KVNO = 20,
   KRB5_PADATA_SAM_REDIRECT = 21,
   KRB5_PADATA_GET_FROM_TYPED_DATA = 22,
@@ -1272,6 +1273,27 @@ int    decode_KRB_ERROR(const unsigned char *, size_t, KRB_ERROR *, size_t *);
 void   free_KRB_ERROR  (KRB_ERROR *);
 size_t length_KRB_ERROR(const KRB_ERROR *);
 int    copy_KRB_ERROR  (const KRB_ERROR *, KRB_ERROR *);
+
+
+/*
+ChangePasswdDataMS ::= SEQUENCE {
+  newpasswd[0]    OCTET STRING,
+  targname[1]     PrincipalName OPTIONAL,
+  targrealm[2]    Realm OPTIONAL
+}
+*/
+
+typedef struct ChangePasswdDataMS {
+  octet_string newpasswd;
+  PrincipalName *targname;
+  Realm *targrealm;
+} ChangePasswdDataMS;
+
+int    encode_ChangePasswdDataMS(unsigned char *, size_t, const ChangePasswdDataMS *, size_t *);
+int    decode_ChangePasswdDataMS(const unsigned char *, size_t, ChangePasswdDataMS *, size_t *);
+void   free_ChangePasswdDataMS  (ChangePasswdDataMS *);
+size_t length_ChangePasswdDataMS(const ChangePasswdDataMS *);
+int    copy_ChangePasswdDataMS  (const ChangePasswdDataMS *, ChangePasswdDataMS *);
 
 
 enum { pvno = 5 };

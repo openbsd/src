@@ -161,6 +161,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 /* Define if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
 
+/* Define to 1 if you have the `dlopen' function. */
+/* #undef HAVE_DLOPEN 1 */
+
 /* Define if you have the `dn_expand' function. */
 #define HAVE_DN_EXPAND 1
 
@@ -1014,6 +1017,12 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 /* Define if you have the `_getpty' function. */
 /* #undef HAVE__GETPTY */
 
+/* Define if you have the `_res' variable. */
+#define HAVE__RES 1
+
+/* define if your system declares _res */
+#define HAVE__RES_DECLARATION 1
+
 /* Define if you have the `_scrsize' function. */
 /* #undef HAVE__SCRSIZE */
 
@@ -1036,7 +1045,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 #define KRB5 1
 
 /* Define if krb_mk_req takes cons char * */
-#define KRB_MK_REQ_CONST
+/* #undef KRB_MK_REQ_CONST */
 
 /* Define to zero if your krb.h doesn't */
 /* #undef KRB_VERIFY_NOT_SECURE */
@@ -1142,7 +1151,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "\100(#)" msg }
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "0.6RC1"
+#define VERSION "0.6.3"
 
 /* Define if signal handlers return void. */
 #define VOID_RETSIGTYPE 1

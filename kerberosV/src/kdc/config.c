@@ -35,7 +35,7 @@
 #include <getarg.h>
 #include <parse_bytes.h>
 
-RCSID("$KTH: config.c,v 1.46 2003/03/18 00:22:23 lha Exp $");
+RCSID("$KTH: config.c,v 1.46.2.2 2003/10/27 11:06:52 joda Exp $");
 
 static const char *config_file;	/* location of kdc config file */
 

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.krb5.inc,v 1.9 2004/02/03 13:40:55 hin Exp $
+# $OpenBSD: Makefile.krb5.inc,v 1.10 2004/10/29 16:25:34 biorn Exp $
 
 DIR_KRB5INC=	${.CURDIR}/../../kerberosV/include
 DIR_KRB5LIB=	${KRB5SRC}/lib/krb5
@@ -131,6 +131,11 @@ MAN+=	krb5_unparse_name.3
 
 MAN+=	krb5_verify_user.3
 MLINKS+=krb5_verify_user.3 krb5_verify_user_lrealm.3
+
+MAN+=	krb5_set_password.3
+MLINKS+=krb5_set_password.3 krb5_change_password.3
+MLINKS+=krb5_set_password.3 krb5_set_password_using_ccache.3
+
 
 .PATH:	${DIR_KRB5LIB}
 

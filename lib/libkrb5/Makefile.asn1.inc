@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.asn1.inc,v 1.5 2003/06/23 14:39:14 mho Exp $
+# $OpenBSD: Makefile.asn1.inc,v 1.6 2004/10/29 16:25:34 biorn Exp $
 
 DIR_ASN1=	${KRB5SRC}/lib/asn1
 HDR_ASN1=	der.h asn1-common.h
@@ -16,6 +16,7 @@ gen_files_asn1= \
 	asn1_Authenticator.c            \
 	asn1_AuthorizationData.c        \
 	asn1_CKSUMTYPE.c		\
+	asn1_ChangePasswdDataMS.c	\
 	asn1_Checksum.c                 \
 	asn1_ETYPE_INFO.c		\
 	asn1_ETYPE_INFO_ENTRY.c		\
