@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.16 1996/09/16 02:21:59 millert Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.17 1996/09/21 13:19:03 pefo Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -48,7 +48,7 @@ static char copyright[] =
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 static char sccsid[] = "@(#)disklabel.c	8.2 (Berkeley) 1/7/94";
 #else
-static char rcsid[] = "$OpenBSD: disklabel.c,v 1.16 1996/09/16 02:21:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: disklabel.c,v 1.17 1996/09/21 13:19:03 pefo Exp $";
 #endif
 #endif /* not lint */
 
@@ -117,6 +117,7 @@ enum	{
 } op = UNSPEC;
 
 int	rflag;
+int	nwflag;
 
 #ifdef DEBUG
 int	debug;
@@ -239,7 +240,7 @@ main(argc, argv)
 #ifdef DOSLABEL
 	/*
 	 * Check for presence of DOS partition table in
-	 * master boot record. Return pointer to NetBSD/i386
+	 * master boot record. Return pointer to OpenBSD/i386
 	 * partition, if present. If no valid partition table,
 	 * return 0. If valid partition table present, but no
 	 * partition to use, return a pointer to a non-386bsd
@@ -372,6 +373,12 @@ writelabel(f, boot, lp)
 	int writeable;
 	off_t sectoffset = 0;
 
+	if(nwflag) {
+		warnx("DANGER! The disklabel was not found at the correct location.");
+		warnx("Use 'disklabel -R' to replace it from a file made by using disklabel.");
+		warnx("New disklabel will not be installed.");
+		return(0); /* Actually 1 but we want to exit */
+	}
 #if NUMBOOT > 0
 	setbootflag(lp);
 #endif
@@ -384,7 +391,7 @@ writelabel(f, boot, lp)
 		struct partition *pp = &lp->d_partitions[2];
 
 		/*
-		 * If NetBSD/i386 DOS partition is missing, or if 
+		 * If OpenBSD/i386 DOS partition is missing, or if 
 		 * the label to be written is not within partition,
 		 * prompt first. Need to allow this in case operator
 		 * wants to convert the drive for dedicated use.
@@ -567,7 +574,7 @@ readmbr(f)
 		
 	/*
 	 * Don't (yet) know disk geometry (BIOS), use
-	 * partition table to find NetBSD/i386 partition, and obtain
+	 * partition table to find OpenBSD/i386 partition, and obtain
 	 * disklabel from there.
 	 */
 	/* Check if table is valid. */
@@ -575,15 +582,17 @@ readmbr(f)
 		if ((dp[part].dp_flag & ~0x80) != 0)
 			return (0);
 	}
-	/* Find NetBSD partition. */
+	/* Find OpenBSD partition. */
 	for (part = 0; part < NDOSPART; part++) {
-		if (dp[part].dp_size && dp[part].dp_typ == DOSPTYP_386BSD)
+		if (dp[part].dp_size && dp[part].dp_typ == DOSPTYP_386BSD) {
+			warnx("using dos partition %d.\n", part);
 			return (&dp[part]);
+		}
 	}
-	/* If no NetBSD partition, find first used partition. */
+	/* If no OpenBSD partition, find first used partition. */
 	for (part = 0; part < NDOSPART; part++) {
 		if (dp[part].dp_size) {
-			warnx("warning, DOS partition table with no valid NetBSD partition");
+			warnx("warning, DOS partition table with no valid OpenBSD partition");
 			return (&dp[part]);
 		}
 	}
@@ -613,6 +622,22 @@ readlabel(f)
 		if (lseek(f, sectoffset, SEEK_SET) < 0 ||
 		    read(f, bootarea, BBSIZE) < BBSIZE)
 			err(4, "%s", specname);
+
+		lp = (struct disklabel *)(bootarea +
+			(LABELSECTOR * DEV_BSIZE) + LABELOFFSET);
+		if (lp->d_magic == DISKMAGIC &&
+		    lp->d_magic2 == DISKMAGIC) {
+			if (lp->d_npartitions <= MAXPARTITIONS &&
+			    dkcksum(lp) == 0)
+				return (lp);
+
+			msg = "disk label corrupted";
+		}
+		else {
+			warnx("no disklabel found. scanning.\n");
+		}
+		nwflag++;
+
 		msg = "no disk label";
 		for (lp = (struct disklabel *)bootarea;
 		    lp <= (struct disklabel *)(bootarea + BBSIZE - sizeof(*lp));
@@ -625,7 +650,6 @@ readlabel(f)
 				msg = "disk label corrupted";
 			}
 		}
-		/* lp = (struct disklabel *)(bootarea + LABELOFFSET); */
 		errx(1, msg);
 	} else {
 		lp = &lab;
