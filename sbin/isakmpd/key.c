@@ -1,4 +1,4 @@
-/*	$OpenBSD: key.c,v 1.7 2002/03/05 00:10:43 deraadt Exp $	*/
+/*	$OpenBSD: key.c,v 1.8 2002/03/06 10:02:32 ho Exp $	*/
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -106,14 +106,14 @@ key_printable (int type, int private, u_int8_t *data, int datalen)
       return strdup ((char *)data);
 
     case ISAKMP_KEY_RSA:
-      s = malloc (datalen * 2);
+      s = malloc (datalen * 2 + 1);
       if (!s)
 	{
-	  log_error ("key_printable: malloc (%d) failed", datalen * 2);
+	  log_error ("key_printable: malloc (%d) failed", datalen * 2 + 1);
 	  return 0;
 	}
       for (i = 0; i < datalen; i++)
-	snprintf (s + (2 * i), 2 * (datalen - i), "%02x", data[i]);
+	snprintf (s + (2 * i), 2 * (datalen - i) + 1, "%02x", data[i]);
       return s;
 
     default:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: x509.c,v 1.68 2002/01/23 18:44:48 ho Exp $	*/
+/*	$OpenBSD: x509.c,v 1.69 2002/03/06 10:02:32 ho Exp $	*/
 /*	$EOM: x509.c,v 1.54 2001/01/16 18:42:16 ho Exp $	*/
 
 /*
@@ -1332,16 +1332,16 @@ x509_printable (void *cert)
   if (!data)
     return 0;
 
-  s = malloc (datalen * 2);
+  s = malloc (datalen * 2 + 1);
   if (!s)
     {
       free (data);
-      log_error ("x509_printable: malloc (%d) failed", datalen * 2);
+      log_error ("x509_printable: malloc (%d) failed", datalen * 2 + 1);
       return 0;
     }
 
   for (i = 0; i < datalen; i++)
-    snprintf (s + (2 * i), 2 * (datalen - i), "%02x", data[i]);
+    snprintf (s + (2 * i), 2 * (datalen - i) + 1, "%02x", data[i]);
   free (data);
   return s;
 }
