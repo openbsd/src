@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.15 1997/07/15 07:23:55 downsj Exp $
+#	$OpenBSD: Makefile,v 1.16 1997/08/04 02:17:45 downsj Exp $
 #
 #  OpenBSD Makefile
 #
@@ -38,7 +38,9 @@ SRCS=	alias.c arpadate.c clock.c collect.c conf.c convtime.c daemon.c \
 	usersmtp.c util.c version.c
 MAN=	aliases.5 mailstats.8 mailq.1 newaliases.1 sendmail.8
 LINKS=	${BINDIR}/sendmail /usr/bin/newaliases \
-	${BINDIR}/sendmail /usr/bin/mailq
+	${BINDIR}/sendmail /usr/bin/mailq \
+	${BINDIR}/sendmail /usr/bin/hoststat \
+	${BINDIR}/sendmail /usr/bin/purgestat
 BINOWN=	root
 BINGRP=	bin
 BINMODE=4555
