@@ -1,11 +1,11 @@
-#	$OpenBSD: Makefile,v 1.15 1996/09/10 05:26:08 mickey Exp $
+#	$OpenBSD: Makefile,v 1.16 1996/10/14 12:47:00 mickey Exp $
 #	$NetBSD: Makefile,v 1.22.4.2 1996/07/18 00:51:10 jtc Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	audio.4 acd.4 ahc.4 bpf.4 ccd.4 clnp.4 cltp.4 ddb.4 drum.4 esis.4 \
 	fd.4 icmp.4 idp.4 imp.4 inet.4 ip.4 ipl.4 iso.4 lkm.4 lo.4 \
 	netintro.4 ns.4 nsip.4 null.4 pnp.4 pty.4 rnd.4 route.4 scsi.4 \
-	spp.4 tb.4 tcp.4 termios.4 tty.4 tp.4 udp.4 unix.4 vnd.4
+	spp.4 tb.4 tcp.4 termios.4 tty.4 tp.4 tun.4 udp.4 unix.4 vnd.4
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=netintro.4 networking.4
 MLINKS+=rnd.4 srnd.4 rnd.4 urnd.4 rnd.4 prnd.4 rnd.4 random.4
