@@ -1,5 +1,5 @@
-	$OpenBSD: syscalls.master,v 1.7 1996/04/28 00:26:47 tholo Exp $
-;	$NetBSD: syscalls.master,v 1.31 1996/02/27 04:20:41 jonathan Exp $
+	$OpenBSD: syscalls.master,v 1.8 1996/05/02 13:09:50 deraadt Exp $
+;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
 
@@ -361,7 +361,7 @@
 203	STD		{ int sys_mlock(caddr_t addr, size_t len); }
 204	STD		{ int sys_munlock(caddr_t addr, size_t len); }
 205	STD		{ int sys_undelete(char *path); }
-206	UNIMPL
+206	STD		{ int sys_futimes(int fd, struct timeval *tptr); }
 207	UNIMPL
 208	UNIMPL
 209	UNIMPL

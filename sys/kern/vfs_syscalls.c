@@ -1,5 +1,5 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.6 1996/04/21 22:27:39 deraadt Exp $	*/
-/*	$NetBSD: vfs_syscalls.c,v 1.70 1996/03/22 06:51:04 thorpej Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.7 1996/05/02 13:09:53 deraadt Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -1519,10 +1519,10 @@ sys_fchown(p, v, retval)
 		syscallarg(int) uid;
 		syscallarg(int) gid;
 	} */ *uap = v;
+	register struct vnode *vp;
 	struct vattr vattr;
-	struct vnode *vp;
-	struct file *fp;
 	int error;
+	struct file *fp;
 
 	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
 		return (error);
@@ -1542,7 +1542,7 @@ sys_fchown(p, v, retval)
 }
 
 /*
- * Set the access and modification times of a file.
+ * Set the access and modification times given a path name.
  */
 /* ARGSUSED */
 int
@@ -1566,8 +1566,7 @@ sys_utimes(p, v, retval)
 		microtime(&tv[0]);
 		tv[1] = tv[0];
 		vattr.va_vaflags |= VA_UTIMES_NULL;
-	}
-	else {
+	} else {
 		error = copyin((caddr_t)SCARG(uap, tptr), (caddr_t)tv,
 			       sizeof (tv));
 		if (error)
@@ -1589,6 +1588,55 @@ sys_utimes(p, v, retval)
 		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
 	}
 	vput(vp);
+	return (error);
+}
+
+/*
+ * Set the access and modification times given a file descriptor.
+ */
+/* ARGSUSED */
+int
+sys_futimes(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+	register struct sys_futimes_args /* {
+		syscallarg(int) fd;
+		syscallarg(struct timeval *) tptr;
+	} */ *uap = v;
+	register struct vnode *vp;
+	struct timeval tv[2];
+	struct vattr vattr;
+	int error;
+	struct file *fp;
+
+	VATTR_NULL(&vattr);
+	if (SCARG(uap, tptr) == NULL) {
+		microtime(&tv[0]);
+		tv[1] = tv[0];
+		vattr.va_vaflags |= VA_UTIMES_NULL;
+	} else {
+		error = copyin((caddr_t)SCARG(uap, tptr), (caddr_t)tv,
+			       sizeof (tv));
+		if (error)
+			return (error);
+	}
+	if ((error = getvnode(p->p_fd, SCARG(uap, fd), &fp)) != 0)
+		return (error);
+	vp = (struct vnode *)fp->f_data;
+	VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+	VOP_LOCK(vp);
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		error = EROFS;
+	else {
+		vattr.va_atime.tv_sec = tv[0].tv_sec;
+		vattr.va_atime.tv_nsec = tv[0].tv_usec * 1000;
+		vattr.va_mtime.tv_sec = tv[1].tv_sec;
+		vattr.va_mtime.tv_nsec = tv[1].tv_usec * 1000;
+		error = VOP_SETATTR(vp, &vattr, p->p_ucred, p);
+	}
+	VOP_UNLOCK(vp);
 	return (error);
 }
 
