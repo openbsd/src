@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hostname.if.5,v 1.14 2000/01/10 03:00:55 todd Exp $
+.\"	$OpenBSD: hostname.if.5,v 1.15 2000/01/10 03:06:45 deraadt Exp $
 .\"	$NetBSD: hosts.5,v 1.4 1994/11/30 19:31:20 jtc Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -79,16 +79,14 @@ Other network setup:
 .Pp
 For example,
 .Bd -literal -offset xxxx
-# This is an example comment line.
-# ipv4 lines
 inet 10.0.1.12 255.255.255.0 10.0.1.255 media 100baseTX
 inet alias 10.0.1.13 255.255.255.255 10.0.1.13
 inet alias 10.0.1.14 255.255.255.255 NONE
 inet alias 10.0.1.15 255.255.255.255
 inet alias 10.0.1.16 0xffffffff
-# ipv6 lines
 inet6 alias fec0::1 64
 inet6 alias fec0::2 64 anycast
+# This is an example comment line.
 !wicontrol \e$if -t 2  # Set to 2Mbps
 .Ed
 .Pp
@@ -144,12 +142,17 @@ the interface, such as 64.
 .It Va #
 Comments are allowed.  Anything following a comment 
 character is treated as a comment.
-.It Va !
-Arbitrary commands allow interface specific configuration to
-take place like setting wavelan parameters with 
-.Xr wicontrol 8 .  It is worth note that using
+.It Va ! Ar command-line
+Arbitrary shell commands can be executed using this directive.
+Useful for doing interface specific configuration using commands like
+.Xr wicontrol 8 ,
+setting up custom routes using
+.Xr route 8 ,
+or establishing tunnels using
+.Xr gifconfig 8 .
+It is worth noting that
 .Dq \e$if
-will cause this value to be replaced by the interface name.
+in a command line will be replaced by the interface name.
 .El
 .Pp
 A DHCP-configured network interface setup consists of
