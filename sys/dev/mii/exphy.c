@@ -1,4 +1,4 @@
-/*	$OpenBSD: exphy.c,v 1.9 2001/07/16 16:34:07 peter Exp $	*/
+/*	$OpenBSD: exphy.c,v 1.10 2001/07/17 01:15:22 nate Exp $	*/
 /*	$NetBSD: exphy.c,v 1.23 2000/02/02 23:34:56 thorpej Exp $	*/
 
 /*-
@@ -108,24 +108,23 @@ exphymatch(parent, match, aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	/*
-	 * Argh, 3Com PHY reports oui == 0 model == 0!
-	 */
-	if ((MII_OUI(ma->mii_id1, ma->mii_id2) != 0 ||
-	     MII_MODEL(ma->mii_id2) != 0) &&
-	    (MII_OUI(ma->mii_id1, ma->mii_id2) != MII_OUI_3COM ||
-	     MII_MODEL(ma->mii_id2) != 0) &&
-	    (MII_OUI(ma->mii_id1, ma->mii_id2) != MII_OUI_BROADCOM ||
-	     MII_MODEL(ma->mii_id2) != MII_MODEL_BROADCOM_3C905C))
-		return (0);
+	if (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_BROADCOM &&
+	    MII_MODEL(ma->mii_id2) == MII_MODEL_BROADCOM_3C905C)
+		return (10);
 
 	/*
-	 * Make sure the parent is an `xl'.
+	 * Since 3com's PHY for some xl adapters is braindead and doesn't
+	 * report the proper OUI/MODEL information, we have this stupid
+	 * match function.
 	 */
-	if (strcmp(parent->dv_cfdata->cf_driver->cd_name, "xl") != 0)
-		return (0);
+	if ((strcmp(parent->dv_cfdata->cf_driver->cd_name, "xl") == 0) &&
+	    ((MII_OUI(ma->mii_id1, ma->mii_id2) == 0 &&
+	      MII_MODEL(ma->mii_id2) == 0) ||
+	     (MII_OUI(ma->mii_id1, ma->mii_id2) == MII_OUI_3COM &&
+	      MII_MODEL(ma->mii_id2) == 0)))
+		return (10);
 
-	return (10);
+	return (0);
 }
 
 void
