@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.h,v 1.59 2004/01/09 13:47:07 henning Exp $ */
+/*	$OpenBSD: bgpd.h,v 1.60 2004/01/09 14:10:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -48,11 +48,12 @@
 
 #define	SOCKET_NAME			"/var/run/bgpd.sock"
 
-#define	F_BGPD_INSERTED		0x0001
-#define	F_KERNEL		0x0002
-#define	F_CONNECTED		0x0004
-#define	F_NEXTHOP		0x0008
-#define	F_DOWN			0x0010
+#define	F_BGPD_INSERTED		0x01
+#define	F_KERNEL		0x02
+#define	F_CONNECTED		0x04
+#define	F_NEXTHOP		0x08
+#define	F_DOWN			0x10
+#define	F_STATIC		0x20
 
 enum {
 	PROC_MAIN,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.59 2004/01/09 13:47:07 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.60 2004/01/09 14:10:06 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -368,6 +368,9 @@ kroute_insert(struct kroute_node *kr)
 	}
 
 	if (kr->r.flags & F_KERNEL) {
+		if (!(kr->r.flags & F_CONNECTED))
+			kr->r.flags |= F_STATIC;
+
 		mask = 0xffffffff << (32 - kr->r.prefixlen);
 		ina = ntohl(kr->r.prefix);
 		RB_FOREACH(h, knexthop_tree, &knt)
