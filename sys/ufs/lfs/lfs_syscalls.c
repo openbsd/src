@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs_syscalls.c,v 1.3 1996/07/01 07:41:54 downsj Exp $	*/
+/*	$OpenBSD: lfs_syscalls.c,v 1.4 1996/07/01 11:07:35 downsj Exp $	*/
 /*	$NetBSD: lfs_syscalls.c,v 1.10 1996/02/09 22:28:56 christos Exp $	*/
 
 /*-
@@ -419,7 +419,7 @@ lfs_segwait(p, v, retval)
 
 	if ((error = suser(p->p_ucred, &p->p_acflag)) != 0) {
 		return (error);
-}
+	}
 #ifdef WHEN_QUADS_WORK
 	if (error = copyin(SCARG(uap, fsidp), &fsid, sizeof(fsid_t)))
 		return (error);

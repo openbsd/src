@@ -1,4 +1,4 @@
-/*	$OpenBSD: lfs.h,v 1.3 1996/07/01 07:41:46 downsj Exp $	*/
+/*	$OpenBSD: lfs.h,v 1.4 1996/07/01 11:07:34 downsj Exp $	*/
 /*	$NetBSD: lfs.h,v 1.7 1996/02/09 22:28:45 christos Exp $	*/
 
 /*-
@@ -163,7 +163,7 @@ struct lfs {
 	int8_t	  lfs_flags;		/* currently unused flag */
 	u_char	  lfs_fsmnt[MNAMELEN];	/* name mounted on */
 
-	int32_t	  lfs_pad[40];		/* round to 512 bytes */
+	int32_t	  lfs_pad[37];		/* round to 512 bytes */
 };
 
 /*
