@@ -12,7 +12,7 @@
  *
  * S/KEY verification check, lookups, and authentication.
  * 
- * $OpenBSD: skeylogin.c,v 1.30 1998/07/05 19:47:16 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.31 1999/08/16 10:34:48 millert Exp $
  */
 
 #include <sys/param.h>
@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
