@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spl.9,v 1.8 2001/06/05 09:45:55 angelos Exp $
+.\"	$OpenBSD: spl.9,v 1.9 2002/05/15 11:51:45 art Exp $
 .\"	$NetBSD: spl.9,v 1.1 1997/03/11 06:15:05 mikel Exp $
 .\"
 .\" Copyright (c) 1997 Michael Long.
@@ -49,7 +49,7 @@
 .Ft int
 .Fn splstatclock void
 .Ft int
-.Fn splimp void
+.Fn splvm void
 .Ft int
 .Fn spltty void
 .Ft int
@@ -133,7 +133,7 @@ any code that accesses that data.
 This level is identical to
 .Fn splclock
 if there is no separate statistics clock.
-.It Fn splimp
+.It Fn splvm
 blocks hard interrupts from all devices that are allowed to use the
 kernel
 .Xr malloc 9 .
