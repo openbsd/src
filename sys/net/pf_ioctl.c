@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.5 2002/06/11 01:58:00 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.6 2002/06/16 17:00:39 aaron Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1322,9 +1322,10 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 
 		if ((ifp = ifunit(pi->ifname)) == NULL)
 			error = EINVAL;
-		else
+		else {
 			status_ifp = ifp;
 			strlcpy(pf_status.ifname, ifp->if_xname, IFNAMSIZ);
+		}
 		break;
 	}
 
