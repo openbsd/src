@@ -1,4 +1,4 @@
-/*	$OpenBSD: modload.c,v 1.15 1997/09/11 11:46:09 deraadt Exp $	*/
+/*	$OpenBSD: modload.c,v 1.16 1997/09/11 11:49:51 deraadt Exp $	*/
 /*	$NetBSD: modload.c,v 1.13 1995/05/28 05:21:58 jtc Exp $	*/
 
 /*
@@ -77,6 +77,7 @@ int dounlink = 0;
 #define LDSYMTABLE	"-R"
 #define LDTEXTSTART	"-Ttext"
 #define LDSYMPREFIX	""
+#define MAGICCHECK
 #endif
 
 void
@@ -316,11 +317,13 @@ main(argc, argv)
 	close(modfd);
 	fileopen &= ~MOD_OPEN;
 
+#ifdef MAGICCHECK
 	/*
 	 * Magic number...
 	 */
 	if (N_BADMAG(info_buf))
 		errx(4, "not an a.out format file");
+#endif
 
 	/*
 	 * Calculate the size of the module
