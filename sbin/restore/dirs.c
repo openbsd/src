@@ -1,4 +1,4 @@
-/*	$OpenBSD: dirs.c,v 1.14 1997/07/05 20:51:21 millert Exp $	*/
+/*	$OpenBSD: dirs.c,v 1.15 1998/02/17 00:07:51 millert Exp $	*/
 /*	$NetBSD: dirs.c,v 1.26 1997/07/01 05:37:49 lukem Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)dirs.c	8.5 (Berkeley) 8/31/94";
 #else
-static char rcsid[] = "$OpenBSD: dirs.c,v 1.14 1997/07/05 20:51:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: dirs.c,v 1.15 1998/02/17 00:07:51 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,7 +91,7 @@ struct modeinfo {
 	mode_t mode;
 	uid_t uid;
 	gid_t gid;
-	int flags;
+	u_int flags;
 };
 
 /*
