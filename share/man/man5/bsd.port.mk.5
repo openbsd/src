@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.137 2004/05/27 09:12:21 jmc Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.138 2004/06/06 11:49:39 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -360,6 +360,11 @@ exists, the files described under
 .Ev PATCH_LIST
 will be applied under
 .Ev WRKDIST .
+See also
+.Ev REORDER_DEPENDENCIES
+for possible
+.Ar post-patch
+clean-up.
 .It Ar readmes
 Create an html description of packages, including comments, description,
 and dependencies.
@@ -1346,6 +1351,22 @@ which default to
 and
 .Sq check
 respectively.
+.It Ev REORDER_DEPENDENCIES
+Points to a list of files that specify inter-dependencies for
+.Xr make 1 .
+If defined, each line of the file is either a comment (starting with #)
+or a pair of two files: most_recent older.
+At the end of
+.Ar post-patch ,
+.Xr touch 1
+will be used to ensure those files are put in the proper order.
+The files are assumed to be under
+.Pa ${WRKSRC} .
+The notation /file can be used to ask for a recursive search, e.g.,
+to make sure that all Makefile.in  are up-to-date.
+See
+.Pa ${PORTSDIR}/infrastructure/mk/automake.dep
+for an example.
 .It Ev RUN_DEPENDS
 Specification of ports this port needs installed to be functional.
 Same format as BUILD_DEPENDS.
