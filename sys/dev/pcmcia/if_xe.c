@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xe.c,v 1.7 1999/08/09 03:54:01 fgsch Exp $	*/
+/*	$OpenBSD: if_xe.c,v 1.8 1999/08/13 20:36:38 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist, C Stone, Job de Haas
@@ -445,10 +445,9 @@ xe_pcmcia_attach(parent, self, aux)
 
 bad:
 	if (state > 2)
-		pcmcia_chip_io_unmap(pf->sc->pct, pf->sc->pch,
-		    psc->sc_io_window);
+		pcmcia_io_unmap(pf, psc->sc_io_window);
 	if (state > 1)
-		pcmcia_chip_io_free(pf->sc->pct, pf->sc->pch, &psc->sc_pcioh);
+		pcmcia_io_free(pf, &psc->sc_pcioh);
 	if (state > 0)
 		pcmcia_function_disable(pa->pf);
 	free(cfe, M_DEVBUF);
