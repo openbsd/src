@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.42 2002/03/31 21:49:12 fgsch Exp $-})dnl
+vers(a, {-$OpenBSD: MAKEDEV.mi,v 1.43 2002/04/11 20:28:49 deraadt Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -1115,7 +1115,7 @@ _mcdev(bktr, bktr*, bktr, {-major_bktr_c-}, 644)dnl
 __devitem(tuner, tuner*, tuner device)dnl
 _mkdev(tuner, tuner*, {-M tuner$U c major_bktr_c Add(Mult($U, 2), 16) 644-}, 644)dnl
 __devitem(pci, pci, PCI bus device)dnl
-_mkdev(pci, pci, {-M pci c major_pci_c 0 664-}, 664)dnl
+_mkdev(pci, pci, {-M pci c major_pci_c 0 600-}, 600)dnl
 __devitem(adb, adb, Apple Desktop bus event interface)dnl
 _mkdev(adb, adb, {-M adb c major_adb_c 0-})dnl
 __devitem(pdc, pdc, PDC device)dnl
