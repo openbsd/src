@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.12 2004/06/25 00:44:02 msf Exp $
+#	$OpenBSD: Makefile,v 1.13 2004/06/28 18:36:05 msf Exp $
 
 PROG=	keynote
 SRCS=	keynote-sign.c keynote-keygen.c keynote-sigver.c keynote-verify.c \
 	keynote-main.c z.tab.c lex.kv.c
-CFLAGS+= -Wall -DCRYPTO -DHAVE_CONFIG_H -I. -I${.CURDIR} -I${.CURDIR}/../../lib/libkeynote
+CFLAGS+= -Wall -I. -I${.CURDIR} -I${.CURDIR}/../../lib/libkeynote
 LEXFLAGS= -Pkv -s -i
 YACCFLAGS= -d -p kv -b z
 DPADD=	${LIBKEYNOTE} ${LIBM} ${LIBCRYPTO}
