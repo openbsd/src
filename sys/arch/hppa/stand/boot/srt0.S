@@ -1,4 +1,4 @@
-/*	$OpenBSD: srt0.S,v 1.7 2001/05/16 23:57:35 mickey Exp $	*/
+/*	$OpenBSD: srt0.S,v 1.8 2003/05/19 08:19:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -138,6 +138,9 @@ start
 	ldil	L%HEAP_LIMIT, %sp
 	ldo	R%HEAP_LIMIT(%sp), %sp
 
+	.import	bootprompt, data
+	ldil	L%bootprompt, t1
+	stw	r26, R%bootprompt(t1)
 	b	boot			; Call boot(),
 	copy	%r0, arg0		; use default boot device
 	nop

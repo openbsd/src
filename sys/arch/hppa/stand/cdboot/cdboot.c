@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdboot.c,v 1.3 2003/04/17 12:15:51 mickey Exp $	*/
+/*	$OpenBSD: cdboot.c,v 1.4 2003/05/19 08:19:45 mickey Exp $	*/
 
 /*
  * Copyright (c) 2003 Michael Shalayeff
@@ -45,6 +45,7 @@
 
 dev_t bootdev;
 int debug = 1;
+int bootprompt = 1;
 
 struct fs_ops file_system[] = {
 	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
