@@ -744,20 +744,22 @@ check_viac3aes(void)
 	if (value == 0)
 		return (0);
 
-	cryptodev_aes_128_cbc.init = xcrypt_init_key;
-	cryptodev_aes_128_cbc.do_cipher = xcrypt_cipher;
-	cryptodev_aes_128_cbc.cleanup = xcrypt_cleanup;
-	cryptodev_aes_128_cbc.ctx_size = sizeof(AES_KEY);
+	if (value & C3_HAS_AES) {
+		cryptodev_aes_128_cbc.init = xcrypt_init_key;
+		cryptodev_aes_128_cbc.do_cipher = xcrypt_cipher;
+		cryptodev_aes_128_cbc.cleanup = xcrypt_cleanup;
+		cryptodev_aes_128_cbc.ctx_size = sizeof(AES_KEY);
 
-	cryptodev_aes_192_cbc.init = xcrypt_init_key;
-	cryptodev_aes_192_cbc.do_cipher = xcrypt_cipher;
-	cryptodev_aes_192_cbc.cleanup = xcrypt_cleanup;
-	cryptodev_aes_192_cbc.ctx_size = sizeof(AES_KEY);
+		cryptodev_aes_192_cbc.init = xcrypt_init_key;
+		cryptodev_aes_192_cbc.do_cipher = xcrypt_cipher;
+		cryptodev_aes_192_cbc.cleanup = xcrypt_cleanup;
+		cryptodev_aes_192_cbc.ctx_size = sizeof(AES_KEY);
 
-	cryptodev_aes_256_cbc.init = xcrypt_init_key;
-	cryptodev_aes_256_cbc.do_cipher = xcrypt_cipher;
-	cryptodev_aes_256_cbc.cleanup = xcrypt_cleanup;
-	cryptodev_aes_256_cbc.ctx_size = sizeof(AES_KEY);
+		cryptodev_aes_256_cbc.init = xcrypt_init_key;
+		cryptodev_aes_256_cbc.do_cipher = xcrypt_cipher;
+		cryptodev_aes_256_cbc.cleanup = xcrypt_cleanup;
+		cryptodev_aes_256_cbc.ctx_size = sizeof(AES_KEY);
+	}
 	return (value);
 }
 #endif /* __i386__ */
