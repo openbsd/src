@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtl81x9.c,v 1.37 2005/02/20 00:41:36 brad Exp $ */
+/*	$OpenBSD: rtl81x9.c,v 1.38 2005/02/22 08:09:23 pefo Exp $ */
 
 /*
  * Copyright (c) 1997, 1998
@@ -680,12 +680,13 @@ rl_rxeof(sc)
 			if (m == NULL)
 				ifp->if_ierrors++;
 			else {
-				m_adj(m, ETHER_ALIGN);
-				m_copyback(m, wrap, total_len - wrap,
-					sc->rl_cdata.rl_rx_buf);
-				m = m_pullup(m, sizeof(struct ether_header));
+				m_copyback(m, wrap + ETHER_ALIGN,
+				     total_len - wrap, sc->rl_cdata.rl_rx_buf);
+				m = m_pullup(m, sizeof(struct ip) +ETHER_ALIGN);
 				if (m == NULL)
 					ifp->if_ierrors++;
+				else
+					m_adj(m, ETHER_ALIGN);
 			}
 			cur_rx = (total_len - wrap + ETHER_CRC_LEN);
 		} else {
