@@ -1,4 +1,4 @@
-/*	$OpenBSD: forward.c,v 1.19 2004/03/01 16:35:05 otto Exp $	*/
+/*	$OpenBSD: forward.c,v 1.20 2004/03/12 19:40:05 otto Exp $	*/
 /*	$NetBSD: forward.c,v 1.7 1996/02/13 16:49:10 ghudson Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: forward.c,v 1.19 2004/03/01 16:35:05 otto Exp $";
+static char rcsid[] = "$OpenBSD: forward.c,v 1.20 2004/03/12 19:40:05 otto Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -89,7 +89,7 @@ forward(fp, style, off, sbp)
 {
 	int ch;
 	struct stat nsb;
-	int kq;
+	int kq, queue;
 	struct kevent ke;
 
 	switch(style) {
@@ -206,7 +206,9 @@ kq_retry:
 		if (!fflag)
 			break;
 		clearerr(fp);
+		queue = 1;
 		if (kq < 0 || kevent(kq, NULL, 0, &ke, 1, NULL) <= 0) {
+			queue = 0;
 			sleep(1);
 		} else if (ke.filter == EVFILT_READ) {
 			continue;
@@ -235,7 +237,8 @@ kq_retry:
 			}
 			(void)memcpy(sbp, &nsb, sizeof(nsb));
 			goto kq_retry;
-		} else if (ke.fflags & NOTE_TRUNCATE) {
+		} else if ((queue && (ke.fflags & NOTE_TRUNCATE)) ||
+		    (!queue && nsb.st_size < sbp->st_size)) {
 			warnx("%s has been truncated, resetting.", fname);
 			fpurge(fp);
 			rewind(fp);
