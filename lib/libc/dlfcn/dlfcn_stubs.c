@@ -1,4 +1,4 @@
-/*	$OpenBSD: dlfcn_stubs.c,v 1.6 2003/06/11 21:03:10 deraadt Exp $	*/
+/*	$OpenBSD: dlfcn_stubs.c,v 1.7 2003/07/15 02:56:14 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -38,7 +38,7 @@ void	*dlopen(const char *libname, int how) __attribute__((weak));
 int	 dlclose(void *handle) __attribute__((weak));
 void	*dlsym(void *handle, const char *name) __attribute__((weak));
 int	 dlctl(void *handle, int command, void *data) __attribute__((weak));
-const char *	dlerror() __attribute__((weak));
+const char *	dlerror(void) __attribute__((weak));
 
 #include <stdio.h>
 

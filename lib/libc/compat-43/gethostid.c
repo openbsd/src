@@ -28,11 +28,12 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: gethostid.c,v 1.5 2003/06/02 20:18:33 millert Exp $";
+static char *rcsid = "$OpenBSD: gethostid.c,v 1.6 2003/07/15 02:56:14 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
+#include <unistd.h>
 
 long
 gethostid(void)
