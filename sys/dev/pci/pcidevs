@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.447 2001/09/26 23:48:26 jason Exp $
+	$OpenBSD: pcidevs,v 1.448 2001/10/02 03:08:43 jason Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -689,6 +689,7 @@ product ALI M5229		0x5229	M5229 UDMA IDE
 product ALI M5237		0x5237	M5237 USB
 product ALI M5247		0x5247	M5247 AGP/PCI-PCI
 product ALI M5243		0x5243	M5243 AGP/PCI-PCI
+product ALI M5451		0x5451	M5451 Audio
 product ALI M7101		0x7101	M7101 Power Mgmt
 
 /* ADMtek products */
