@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.83 2002/06/26 17:38:12 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.84 2002/06/28 09:15:12 deraadt Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -113,11 +113,6 @@ static	void udp_detach(struct inpcb *);
 static	void udp_notify(struct inpcb *, int);
 static	struct mbuf *udp_saveopt(caddr_t, int, int);
 
-#ifdef IPSEC
-int udp_check_ipsec(struct mbuf *, struct inpcb *,
-    union sockaddr_union *, int);
-#endif /* IPSEC */
-
 #ifndef UDBHASHSIZE
 #define	UDBHASHSIZE	128
 #endif
@@ -155,93 +150,33 @@ udp6_input(mp, offp, proto)
 }
 #endif
 
-#ifdef IPSEC
-int
-udp_check_ipsec(m, inp, srcsa, iphlen)
-	struct mbuf *m;
-	struct inpcb *inp;
-	union sockaddr_union *srcsa;
-	int iphlen;
-{
-	struct m_tag *mtag;
-	struct tdb_ident *tdbi;
-	struct tdb *tdb;
-	int error, s;
-
-	if (inp == NULL)
-		return 0;
-
-	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
-	s = splnet();
-	if (mtag != NULL) {
-		tdbi = (struct tdb_ident *)(mtag + 1);
-		tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
-	} else
-		tdb = NULL;
-
-	ipsp_spd_lookup(m, srcsa->sa.sa_family, iphlen, &error,
-	    IPSP_DIRECTION_IN, tdb, inp);
-	if (error) {
-		splx(s);
-		return -1;
-	}
-
-	/* Latch SA only if the socket is connected. */
-	if (inp->inp_tdb_in != tdb && inp->inp_socket != NULL &&
-	    (inp->inp_socket->so_state & SS_ISCONNECTED)) {
-		if (tdb) {
-			tdb_add_inp(tdb, inp, 1);
-			if (inp->inp_ipo == NULL) {
-				inp->inp_ipo = ipsec_add_policy(inp,
-				    srcsa->sa.sa_family, IPSP_DIRECTION_OUT);
-				if (inp->inp_ipo == NULL) {
-					splx(s);
-					return -1;
-				}
-			}
-			if (inp->inp_ipo->ipo_dstid == NULL &&
-			    tdb->tdb_srcid != NULL) {
-				inp->inp_ipo->ipo_dstid = tdb->tdb_srcid;
-				tdb->tdb_srcid->ref_count++;
-			}
-			if (inp->inp_ipsec_remotecred == NULL &&
-			    tdb->tdb_remote_cred != NULL) {
-				inp->inp_ipsec_remotecred =
-				    tdb->tdb_remote_cred;
-				tdb->tdb_remote_cred->ref_count++;
-			}
-			if (inp->inp_ipsec_remoteauth == NULL &&
-			    tdb->tdb_remote_auth != NULL) {
-				inp->inp_ipsec_remoteauth =
-				    tdb->tdb_remote_auth;
-				tdb->tdb_remote_auth->ref_count++;
-			}
-		} else { /* Just reset */
-			TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,
-			    inp_tdb_in_next);
-			inp->inp_tdb_in = NULL;
-		}
-	}
-	splx(s);
-	return 0;
-}
-#endif /* IPSEC */
-
 void
 udp_input(struct mbuf *m, ...)
 {
-	struct ip *ip;
-	struct udphdr *uh;
-	struct inpcb *inp;
+	register struct ip *ip;
+	register struct udphdr *uh;
+	register struct inpcb *inp;
 	struct mbuf *opts = 0;
 	struct ip save_ip;
 	int iphlen, len;
 	va_list ap;
 	u_int16_t savesum;
-	union sockaddr_union srcsa, dstsa;
+	union {
+		struct sockaddr sa;
+		struct sockaddr_in sin;
+#ifdef INET6
+		struct sockaddr_in6 sin6;
+#endif /* INET6 */
+	} srcsa, dstsa;
 #ifdef INET6
 	struct ip6_hdr *ipv6;
 #endif /* INET6 */
+#ifdef IPSEC
+	struct m_tag *mtag;
+	struct tdb_ident *tdbi;
+	struct tdb *tdb;
+	int error, s;
+#endif /* IPSEC */
 
 	va_start(ap, m);
 	iphlen = va_arg(ap, int);
@@ -491,12 +426,6 @@ udp_input(struct mbuf *m, ...)
 			if (last != NULL) {
 				struct mbuf *n;
 
-#ifdef IPSEC
-				if (udp_check_ipsec(m, inp, &srcsa,
-				    iphlen) == -1)
-					continue;
-#endif /*IPSEC */
-
 				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
 					opts = NULL;
 #ifdef INET6
@@ -537,11 +466,6 @@ udp_input(struct mbuf *m, ...)
 			udpstat.udps_noportbcast++;
 			goto bad;
 		}
-
-#ifdef IPSEC
-		if (udp_check_ipsec(m, inp, &srcsa, iphlen) == -1)
-			goto bad;
-#endif /*IPSEC */
 
 		opts = NULL;
 #ifdef INET6
@@ -603,8 +527,57 @@ udp_input(struct mbuf *m, ...)
 	}
 
 #ifdef IPSEC
-	if (udp_check_ipsec(m, inp, &srcsa, iphlen) == -1)
+	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
+	s = splnet();
+	if (mtag != NULL) {
+		tdbi = (struct tdb_ident *)(mtag + 1);
+		tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+	} else
+		tdb = NULL;
+	ipsp_spd_lookup(m, srcsa.sa.sa_family, iphlen, &error,
+	    IPSP_DIRECTION_IN, tdb, inp);
+	if (error) {
+		splx(s);
 		goto bad;
+	}
+
+	/* Latch SA only if the socket is connected */
+	if (inp->inp_tdb_in != tdb &&
+	    (inp->inp_socket->so_state & SS_ISCONNECTED)) {
+		if (tdb) {
+			tdb_add_inp(tdb, inp, 1);
+			if (inp->inp_ipo == NULL) {
+				inp->inp_ipo = ipsec_add_policy(inp,
+				    srcsa.sa.sa_family, IPSP_DIRECTION_OUT);
+				if (inp->inp_ipo == NULL) {
+					splx(s);
+					goto bad;
+				}
+			}
+			if (inp->inp_ipo->ipo_dstid == NULL &&
+			    tdb->tdb_srcid != NULL) {
+				inp->inp_ipo->ipo_dstid = tdb->tdb_srcid;
+				tdb->tdb_srcid->ref_count++;
+			}
+			if (inp->inp_ipsec_remotecred == NULL &&
+			    tdb->tdb_remote_cred != NULL) {
+				inp->inp_ipsec_remotecred =
+				    tdb->tdb_remote_cred;
+				tdb->tdb_remote_cred->ref_count++;
+			}
+			if (inp->inp_ipsec_remoteauth == NULL &&
+			    tdb->tdb_remote_auth != NULL) {
+				inp->inp_ipsec_remoteauth =
+				    tdb->tdb_remote_auth;
+				tdb->tdb_remote_auth->ref_count++;
+			}
+		} else { /* Just reset */
+			TAILQ_REMOVE(&inp->inp_tdb_in->tdb_inp_in, inp,
+			    inp_tdb_in_next);
+			inp->inp_tdb_in = NULL;
+		}
+	}
+	splx(s);
 #endif /*IPSEC */
 
 	opts = NULL;
