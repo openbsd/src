@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.19 2000/05/02 14:36:51 niklas Exp $
+.\" $OpenBSD: isakmpd.8,v 1.20 2000/12/12 05:01:01 todd Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -43,7 +43,7 @@
 .Nm isakmpd
 .Op Fl c Ar config-file
 .Op Fl d
-.Op Fl D Ar debug-class=level
+.Op Fl D Ar class=level
 .Op Fl f Ar fifo
 .Op Fl i Ar pid-file
 .Op Fl n
@@ -93,8 +93,9 @@ The
 .Fl d
 option is used to make the daemon run in the foreground, logging to stderr.
 .It Xo Fl D
-.Ar debug-class Ns No = Ns Ar level
+.Ar class Ns No = Ns Ar level
 .Xc
+Debugging class.
 This argument is possible to specify many times.
 It takes a parameter of the form
 .Ar class Ns No = Ns Ar level
@@ -113,6 +114,31 @@ If
 .Ar class
 is set to 'A',
 then all debugging classes are set to the specified level.
+.Pp
+Valid values for
+.Ar class
+are as follows:
+.Pp
+.Bl -tag -width 1n -compact -offset indent
+.It 0
+Misc
+.It 1
+Transport
+.It 2
+Message
+.It 3
+Crypto
+.It 4
+Timer
+.It 5
+Sysdep
+.It 6
+SA
+.It 7
+Exchange
+.It A
+All
+.El
 .It Fl f Ar fifo
 The
 .Fl f
