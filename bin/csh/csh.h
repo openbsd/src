@@ -1,4 +1,4 @@
-/*	$OpenBSD: csh.h,v 1.5 1999/08/06 20:41:04 deraadt Exp $	*/
+/*	$OpenBSD: csh.h,v 1.6 2000/08/30 01:46:34 mickey Exp $	*/
 /*	$NetBSD: csh.h,v 1.9 1995/03/21 09:02:40 cgd Exp $	*/
 
 /*-
@@ -185,6 +185,7 @@ int   OLDSTD;			/* Old standard input (def for cmds) */
 
 #include <setjmp.h>
 jmp_buf reslab;
+int exitset;
 
 #define	setexit()	(setjmp(reslab))
 #define	reset()		longjmp(reslab, 1)

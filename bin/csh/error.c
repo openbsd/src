@@ -1,4 +1,4 @@
-/*	$OpenBSD: error.c,v 1.2 1997/11/15 21:51:28 todd Exp $	*/
+/*	$OpenBSD: error.c,v 1.3 2000/08/30 01:46:34 mickey Exp $	*/
 /*	$NetBSD: err.c,v 1.6 1995/03/21 09:02:47 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)err.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: error.c,v 1.2 1997/11/15 21:51:28 todd Exp $";
+static char rcsid[] = "$OpenBSD: error.c,v 1.3 2000/08/30 01:46:34 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -398,7 +398,7 @@ stderror(id, va_alist)
     /*
      * Go away if -e or we are a child shell
      */
-    if (exiterr || child)
+    if (!exitset || exiterr || child)
 	xexit(1);
 
     /*
