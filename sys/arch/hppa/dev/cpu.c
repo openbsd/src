@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.25 2004/09/14 22:29:19 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.26 2004/09/14 23:39:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -114,6 +114,7 @@ cpuattach(parent, self, aux)
 	printf("MHz");
 
 	if (fpu_enable) {
+		extern u_int fpu_version;
 		u_int32_t ver[2];
 
 		mtctl(fpu_enable, CR_CCR);
@@ -123,9 +124,10 @@ cpuattach(parent, self, aux)
 		    "fstds   %%fr0,0(%0)"
 		    :: "r" (&ver) : "memory");
 		mtctl(0, CR_CCR);
-		ver[0] = HPPA_FPUVER(ver[0]);
+		fpu_version = HPPA_FPUVER(ver[0]);
 		printf(", FPU %s rev %d",
-		    hppa_mod_info(HPPA_TYPE_FPU, ver[0] >> 5), ver[0] & 0x1f);
+		    hppa_mod_info(HPPA_TYPE_FPU, fpu_version >> 5),
+		    fpu_version & 0x1f);
 	}
 
 	printf("\n%s: ", self->dv_xname);

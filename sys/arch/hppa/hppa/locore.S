@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.137 2004/09/14 22:44:58 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.138 2004/09/14 23:39:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -2150,11 +2150,16 @@ $ibrk_exit
 EXIT(TLABEL(ibrk))
 
 LEAF_ENTRY(fpu_exit)
+	/* enable coprocessor XXX */
+	depi	3, 25, 2, r1
+	mtctl	r1, ccr
+
 	ldil	L%fpu_scratch, %r25
 	ldo	R%fpu_scratch(%r25), %r25
 	fstds	%fr0, 0(%r25)
-	bv	%r0(%rp)
 	sync
+	bv	%r0(%rp)
+	mtctl	r0, ccr
 EXIT(fpu_exit)
 
 LEAF_ENTRY(fpu_save)

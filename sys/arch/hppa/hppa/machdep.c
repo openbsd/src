@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.133 2004/09/14 22:37:16 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.134 2004/09/14 23:39:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2003 Michael Shalayeff
@@ -137,6 +137,7 @@ char	cpu_model[128];
 enum hppa_cpu_type cpu_type;
 const char *cpu_typename;
 int	cpu_hvers;
+u_int	fpu_version;
 #ifdef COMPAT_HPUX
 int	cpu_model_hpux;	/* contains HPUX_SYSCONF_CPU* kind of value */
 #endif
@@ -351,8 +352,8 @@ hppa_init(start)
 	fdcacheall();
 
 	avail_end = trunc_page(PAGE0->imm_max_mem);
-	/*if (avail_end > 32*1024*1024)
-		avail_end = 32*1024*1024;*/
+	if (avail_end > SYSCALLGATE)
+		avail_end = SYSCALLGATE;
 	totalphysmem = btoc(avail_end);
 	resvmem = btoc(((vaddr_t)&kernel_text));
 
@@ -1224,16 +1225,16 @@ setregs(p, pack, stack, retval)
 	copyout(&zero, (caddr_t)(stack + HPPA_FRAME_CRP), sizeof(register_t));
 
 	/* reset any of the pending FPU exceptions */
+	if (tf->tf_cr30 == fpu_curpcb) {
+		fpu_exit();
+		fpu_curpcb = 0;
+	}
 	pcb->pcb_fpregs[0] = ((u_int64_t)HPPA_FPU_INIT) << 32;
 	pcb->pcb_fpregs[1] = 0;
 	pcb->pcb_fpregs[2] = 0;
 	pcb->pcb_fpregs[3] = 0;
 	fdcache(HPPA_SID_KERNEL, (vaddr_t)pcb->pcb_fpregs, 8 * 4);
-	if (tf->tf_cr30 == fpu_curpcb) {
-		fpu_curpcb = 0;
-		/* force an fpu ctxsw, we won't be hugged by the cpu_switch */
-		mtctl(0, CR_CCR);
-	}
+
 	retval[1] = 0;
 }
 
@@ -1249,13 +1250,14 @@ sendsig(catcher, sig, mask, code, type, val)
 	union sigval val;
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
+	extern u_int fpu_enable;
 	struct proc *p = curproc;
 	struct trapframe *tf = p->p_md.md_regs;
 	struct sigacts *psp = p->p_sigacts;
 	struct sigcontext ksc;
 	siginfo_t ksi;
+	register_t scp, sip;
 	int sss;
-	register_t zero, scp, sip;
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) && (!sigpid || p->p_pid == sigpid))
@@ -1265,8 +1267,10 @@ sendsig(catcher, sig, mask, code, type, val)
 
 	/* flush the FPU ctx first */
 	if (tf->tf_cr30 == fpu_curpcb) {
+		mtctl(fpu_enable, CR_CCR);
 		fpu_save(fpu_curpcb);
-		fpu_curpcb = 0;
+		/* fpu_curpcb = 0; only needed if fpregs are preset */
+		mtctl(0, CR_CCR);
 	}
 
 	ksc.sc_onstack = psp->ps_sigstk.ss_flags & SS_ONSTACK;
@@ -1394,7 +1398,7 @@ sys_sigreturn(p, v, retval)
 
 	/* flush the FPU ctx first */
 	if (tf->tf_cr30 == fpu_curpcb) {
-		fpu_save(fpu_curpcb);
+		fpu_exit();
 		fpu_curpcb = 0;
 	}
 
@@ -1474,6 +1478,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	struct proc *p;
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
+	extern u_int fpu_enable;
 	extern int cpu_fpuena;
 	dev_t consdev;
 
@@ -1490,6 +1495,7 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		    sizeof consdev));
 	case CPU_FPU:
 		if (fpu_curpcb) {
+			mtctl(fpu_enable, CR_CCR);
 			fpu_save(fpu_curpcb);
 			fpu_curpcb = 0;
 			mtctl(0, CR_CCR);

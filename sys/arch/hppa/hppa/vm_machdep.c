@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.54 2004/06/08 22:00:25 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.55 2004/09/14 23:39:32 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -134,11 +134,14 @@ cpu_swapout(p)
 	struct proc *p;
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
+	extern u_int fpu_enable;
 	struct trapframe *tf = p->p_md.md_regs;
 
 	if (tf->tf_cr30 == fpu_curpcb) {
+		mtctl(fpu_enable, CR_CCR);
 		fpu_save(fpu_curpcb);
 		fpu_curpcb = 0;
+		mtctl(0, CR_CCR);
 	}
 }
 
@@ -151,6 +154,7 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	void *arg;
 {
 	extern paddr_t fpu_curpcb;	/* from locore.S */
+	extern u_int fpu_enable;
 	struct pcb *pcbp;
 	struct trapframe *tf;
 	register_t sp, osp;
@@ -159,8 +163,11 @@ cpu_fork(p1, p2, stack, stacksize, func, arg)
 	if (round_page(sizeof(struct user)) > NBPG)
 		panic("USPACE too small for user");
 #endif
-	if (p1->p_md.md_regs->tf_cr30 == fpu_curpcb)
+	if (p1->p_md.md_regs->tf_cr30 == fpu_curpcb) {
+		mtctl(fpu_enable, CR_CCR);
 		fpu_save(fpu_curpcb);
+		mtctl(0, CR_CCR);
+	}
 
 	pcbp = &p2->p_addr->u_pcb;
 	bcopy(&p1->p_addr->u_pcb, pcbp, sizeof(*pcbp));
