@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.85 2004/02/07 01:41:52 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.86 2004/02/07 01:50:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -1221,6 +1221,7 @@ dispatch_rtmsg(void)
 				kr->r.prefixlen = prefixlen;
 				kr->r.nexthop.s_addr = nexthop.s_addr;
 				kr->r.flags = flags;
+				kr->r.ifindex = ifindex;
 
 				kroute_insert(kr);
 			}
