@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.8 1998/11/23 19:42:42 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.9 1998/12/22 04:23:58 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_rl.c,v 1.2 1998/11/18 21:03:57 wpaul Exp $
+ *	$FreeBSD: if_rl.c,v 1.7 1998/12/14 06:32:55 dillon Exp $
  */
 
 /*
@@ -55,7 +55,7 @@
  *
  * For transmission, the chip offers a series of four TX descriptor
  * registers. Each transmit frame must be in a contiguous buffer, aligned
- * on a doubleword (32-bit) boundary. This means we almost always have to
+ * on a longword (32-bit) boundary. This means we almost always have to
  * do mbuf copies in order to transmit a frame, except in the unlikely
  * case where a) the packet fits into a single mbuf, and b) the packet
  * is 32-bit aligned within the mbuf's data area. The presence of only
@@ -83,15 +83,6 @@
  * chip. The 8129 has a serial MDIO interface for accessing the MII where
  * the 8139 lets you directly access the on-board PHY registers. We need
  * to select which interface to use depending on the chip type.
- *
- * Note: beware of trying to use the Linux RealTek driver as a reference
- * for information about the RealTek chip. It contains several bogosities.
- * It contains definitions for several undocumented registers which it
- * claims are 'required for proper operation' yet it does not use these
- * registers anywhere in the code. It also refers to some undocumented
- * 'Twister tuning codes' which it doesn't use anywhere. It also contains
- * bit definitions for several registers which are totally ignored: magic
- * numbers are used instead, making the code hard to read.
  */
 
 #include "bpfilter.h"
@@ -179,8 +170,8 @@ static void rl_watchdog		__P((struct ifnet *));
 static int rl_ifmedia_upd	__P((struct ifnet *));
 static void rl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
-static void rl_eeprom_putbyte	__P((struct rl_softc *, u_int8_t));
-static void rl_eeprom_getword	__P((struct rl_softc *, u_int8_t, u_int16_t *));
+static void rl_eeprom_putbyte	__P((struct rl_softc *, int));
+static void rl_eeprom_getword	__P((struct rl_softc *, int, u_int16_t *));
 static void rl_read_eeprom	__P((struct rl_softc *, caddr_t,
 					int, int, int));
 static void rl_mii_sync		__P((struct rl_softc *));
@@ -188,7 +179,7 @@ static void rl_mii_send		__P((struct rl_softc *, u_int32_t, int));
 static int rl_mii_readreg	__P((struct rl_softc *, struct rl_mii_frame *));
 static int rl_mii_writereg	__P((struct rl_softc *, struct rl_mii_frame *));
 
-static u_int8_t rl_calchash	__P((u_int8_t *));
+static u_int8_t rl_calchash	__P((caddr_t));
 static void rl_setmulti		__P((struct rl_softc *));
 static void rl_reset		__P((struct rl_softc *));
 static int rl_list_tx_init	__P((struct rl_softc *));
@@ -206,7 +197,7 @@ static int rl_list_tx_init	__P((struct rl_softc *));
  */
 static void rl_eeprom_putbyte(sc, addr)
 	struct rl_softc		*sc;
-	u_int8_t		addr;
+	int			addr;
 {
 	register int		d, i;
 
@@ -236,7 +227,7 @@ static void rl_eeprom_putbyte(sc, addr)
  */
 static void rl_eeprom_getword(sc, addr, dest)
 	struct rl_softc		*sc;
-	u_int8_t		addr;
+	int			addr;
 	u_int16_t		*dest;
 {
 	register int		i;
@@ -503,7 +494,7 @@ static int rl_mii_writereg(sc, frame)
  * Calculate CRC of a multicast group address, return the lower 6 bits.
  */
 static u_int8_t rl_calchash(addr)
-	u_int8_t		*addr;
+	caddr_t			addr;
 {
 	u_int32_t		crc, carry;
 	int			i, j;
@@ -1331,11 +1322,11 @@ rl_attach(parent, self, aux)
 		printf(": can't find i/o space\n");
 		return;
 	}
-	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->sc_sh)) {
+	if (bus_space_map(pa->pa_iot, iobase, iosize, 0, &sc->rl_bhandle)) {
 		printf(": can't map i/o space\n");
 		return;
 	}
-	sc->sc_st = pa->pa_iot;
+	sc->rl_btag = pa->pa_iot;
 #else
 	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
 		printf(": failed to enable memory mapping\n");
@@ -1345,11 +1336,11 @@ rl_attach(parent, self, aux)
 		printf(": can't find mem space\n");
 		return;
 	}
-	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->sc_sh)) {
+	if (bus_space_map(pa->pa_memt, iobase, iosize, 0, &sc->rl_bhandle)) {
 		printf(": can't map mem space\n");
 		return;
 	}
-	sc->sc_st = pa->pa_memt;
+	sc->rl_btag = pa->pa_memt;
 #endif
 
 	/*
@@ -1381,7 +1372,7 @@ rl_attach(parent, self, aux)
 
 	rl_read_eeprom(sc, (caddr_t)&rl_did, RL_EE_PCI_DID, 1, 0);
 
-	if (rl_did == RT_DEVICEID_8139)
+	if (rl_did == RT_DEVICEID_8139 || rl_did == ACCTON_DEVICEID_5030)
 		sc->rl_type = RL_8139;
 	else if (rl_did == RT_DEVICEID_8129)
 		sc->rl_type = RL_8129;

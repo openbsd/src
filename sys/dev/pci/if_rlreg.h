@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rlreg.h,v 1.4 1998/11/19 07:01:56 jason Exp $	*/
+/*	$OpenBSD: if_rlreg.h,v 1.5 1998/12/22 04:23:59 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_rlreg.h,v 1.2 1998/11/18 21:03:58 wpaul Exp $
+ *	$FreeBSD: if_rlreg.h,v 1.4 1998/12/10 19:02:07 wpaul Exp $
  */
 
 /*
@@ -333,8 +333,8 @@ struct rl_mii_frame {
 struct rl_softc {
 	struct device		sc_dev;		/* us, as a device */
 	void *			sc_ih;		/* interrupt vectoring */
-	bus_space_tag_t		sc_st;
-	bus_space_handle_t	sc_sh;
+	bus_space_handle_t	rl_bhandle;	/* bus space handle */
+	bus_space_tag_t		rl_btag;	/* bus space tag */
 	bus_dma_tag_t		sc_dmat;
 	bus_dmamap_t		sc_dma_mem;
 	size_t			sc_dma_mapsize;
@@ -348,18 +348,18 @@ struct rl_softc {
  * register space access macros
  */
 #define CSR_WRITE_4(sc, csr, val) \
-	bus_space_write_4((sc)->sc_st, (sc)->sc_sh, csr, (val))
+	bus_space_write_4(sc->rl_btag, sc->rl_bhandle, csr, val)
 #define CSR_WRITE_2(sc, csr, val) \
-	bus_space_write_2((sc)->sc_st, (sc)->sc_sh, csr, (val))
+	bus_space_write_2(sc->rl_btag, sc->rl_bhandle, csr, val)
 #define CSR_WRITE_1(sc, csr, val) \
-	bus_space_write_1((sc)->sc_st, (sc)->sc_sh, csr, (val))
+	bus_space_write_1(sc->rl_btag, sc->rl_bhandle, csr, val)
 
 #define CSR_READ_4(sc, csr) \
-	bus_space_read_4((sc)->sc_st, (sc)->sc_sh, csr)
+	bus_space_read_4(sc->rl_btag, sc->rl_bhandle, csr)
 #define CSR_READ_2(sc, csr) \
-	bus_space_read_2((sc)->sc_st, (sc)->sc_sh, csr)
+	bus_space_read_2(sc->rl_btag, sc->rl_bhandle, csr)
 #define CSR_READ_1(sc, csr) \
-	bus_space_read_1((sc)->sc_st, (sc)->sc_sh, csr)
+	bus_space_read_1(sc->rl_btag, sc->rl_bhandle, csr)
 
 #define RL_TIMEOUT		1000
 
