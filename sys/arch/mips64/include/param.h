@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.4 2004/09/09 22:21:41 pefo Exp $ */
+/*      $OpenBSD: param.h,v 1.5 2004/09/17 18:31:51 miod Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -107,16 +107,12 @@
  * clusters (MAPPED_MBUFS), MCLBYTES must also be an integral multiple
  * of the hardware page size.
  */
-#define	MSIZE		128		/* size of an mbuf */
+#define	MSIZE		256		/* size of an mbuf */
 #define	MCLSHIFT	11
 #define	MCLBYTES	(1 << MCLSHIFT)	/* enough for whole Ethernet packet */
 #define	MCLOFSET	(MCLBYTES - 1)
 #ifndef NMBCLUSTERS
-#ifdef GATEWAY
-#define	NMBCLUSTERS	2048		/* map size, max cluster allocation */
-#else
-#define	NMBCLUSTERS	1024		/* map size, max cluster allocation */
-#endif
+#define	NMBCLUSTERS	4096		/* map size, max cluster allocation */
 #endif
 
 #define	MSGBUFSIZE	8192
