@@ -168,6 +168,4 @@ acss(ACSS_KEY *key, unsigned long len, const unsigned char *in,
 			out[i] = (sboxdec[in[i]] ^ key->lfsrsum) & 0xff;
 		}
 	}
-
-	return;
 }
