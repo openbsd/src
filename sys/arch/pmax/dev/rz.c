@@ -1,4 +1,4 @@
-/*	$OpenBSD: rz.c,v 1.18 1999/07/27 08:49:47 niklas Exp $	*/
+/*	$OpenBSD: rz.c,v 1.19 1999/08/20 16:22:04 maja Exp $	*/
 /*	$NetBSD: rz.c,v 1.38 1998/05/08 00:05:19 simonb Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsi_disk.h>
+#include <scsi/cd.h>
 #include <scsi/scsi_cd.h>
 #include <scsi/scsiconf.h>
 
