@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_machdep.c,v 1.9 1997/11/06 12:27:03 niklas Exp $	*/
+/*	$OpenBSD: pci_machdep.c,v 1.10 2000/07/03 19:30:21 mickey Exp $	*/
 /*	$NetBSD: pci_machdep.c,v 1.7 1996/11/19 04:57:32 cgd Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
 
 #include "tga.h"
 #if NTGA
-#include <alpha/pci/tgavar.h>
+#include <dev/pci/tgavar.h>
 #endif
 
 void
@@ -67,7 +67,7 @@ pci_display_console(iot, memt, pc, bus, device, function)
 #if NVGA_PCI || NTGA
 	int nmatch;
 #endif
-	void (*fn) __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
+	int (*fn) __P((bus_space_tag_t, bus_space_tag_t, pci_chipset_tag_t,
 	    int, int, int));
 
 	tag = pci_make_tag(pc, bus, device, function);
@@ -84,14 +84,14 @@ pci_display_console(iot, memt, pc, bus, device, function)
 	nmatch = DEVICE_IS_VGA_PCI(class, id);
 	if (nmatch > match) {
 		match = nmatch;
-		fn = vga_pci_console;
+		fn = vga_pci_cnattach;
 	}
 #endif
 #if NTGA
 	nmatch = DEVICE_IS_TGA(class, id);
 	if (nmatch > match) {
 		match = nmatch;
-		fn = tga_console;
+		fn = tga_cnattach;
 	}
 #endif
 

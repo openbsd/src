@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.30 1999/11/08 15:36:07 mickey Exp $
+#	$OpenBSD: files.alpha,v 1.31 2000/07/03 19:30:20 mickey Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -46,13 +46,6 @@ file	arch/alpha/alpha/rd_root.c	ramdisk_hooks
 major { rd = 6 }
 
 #
-# raster console routines
-#
-
-define	raster
-include "dev/rcons/files.rcons"
-
-#
 # "wprkstation cpnsole" routines
 #
 
@@ -77,12 +70,12 @@ attach	ioasic at tc
 file	arch/alpha/tc/ioasic.c		ioasic
 
 # Color Frame buffer
-device	cfb: raster, wsconsdev
+device	cfb: wsemuldisplaydev, wsrasteremulops
 attach	cfb at tc
 file	arch/alpha/tc/cfb.c		cfb
 
 # Smart Frame buffer
-device	sfb: raster, wsconsdev
+device	sfb: wsemuldisplaydev, wsrasteremulops
 attach	sfb at tc
 file	arch/alpha/tc/sfb.c		sfb
 
@@ -215,13 +208,6 @@ device	pceb: isabus, eisabus
 attach	pceb at pci
 file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
 file	arch/alpha/pci/sio_pic.c	sio | pceb
-
-device	tga: raster, wsconsdev
-attach	tga at pci
-file	arch/alpha/pci/tga.c		tga		needs-flag
-file	arch/alpha/pci/tga_conf.c	tga
-file	arch/alpha/pci/tga_bt463.c	tga
-file	arch/alpha/pci/tga_bt485.c	tga
 
 #
 # ISA PnP
