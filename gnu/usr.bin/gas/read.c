@@ -1,4 +1,4 @@
-/*	$OpenBSD: read.c,v 1.2 1996/04/23 00:15:53 niklas Exp $	*/
+/*	$OpenBSD: read.c,v 1.3 1996/12/21 21:50:55 tholo Exp $	*/
 
 /* read.c - read a source file -
 
@@ -21,7 +21,7 @@
    the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: read.c,v 1.2 1996/04/23 00:15:53 niklas Exp $";
+static char rcsid[] = "$OpenBSD: read.c,v 1.3 1996/12/21 21:50:55 tholo Exp $";
 #endif
 
 #define MASK_CHAR (0xFF)	/* If your chars aren't 8 bits, you will
@@ -1273,6 +1273,7 @@ void s_weak() {
 		* input_line_pointer = c;
 		SKIP_WHITESPACE();
 		symbolP->sy_bind = BIND_WEAK;
+		S_SET_EXTERNAL(symbolP);
 		if (c == ',') {
 			input_line_pointer++;
 			SKIP_WHITESPACE();
