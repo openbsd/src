@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.35 2003/12/11 07:41:19 chris Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.36 2004/01/01 11:44:49 markus Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -1690,6 +1690,7 @@ void sis_init(xsc)
 	 * Cancel pending I/O and free all RX/TX buffers.
 	 */
 	sis_stop(sc);
+	sc->sis_stopped = 0;
 
 	mii = &sc->sc_mii;
 
@@ -2024,6 +2025,9 @@ void sis_stop(sc)
 	register int		i;
 	struct ifnet		*ifp;
 
+	if (sc->sis_stopped)
+		return;
+
 	ifp = &sc->arpcom.ac_if;
 	ifp->if_timer = 0;
 
@@ -2076,6 +2080,7 @@ void sis_stop(sc)
 	}
 
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
+	sc->sis_stopped = 1;
 
 	return;
 }
