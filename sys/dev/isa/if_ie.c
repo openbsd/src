@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ie.c,v 1.13 1996/10/06 21:28:22 deraadt Exp $	*/
+/*	$OpenBSD: if_ie.c,v 1.14 1996/10/17 19:12:50 niklas Exp $	*/
 /*	$NetBSD: if_ie.c,v 1.51 1996/05/12 23:52:48 mycroft Exp $	*/
 
 /*-
@@ -296,8 +296,6 @@ struct mbuf *ieget __P((struct ie_softc *,
 void iememinit __P((void *, struct ie_softc *));
 static int mc_setup __P((struct ie_softc *, void *));
 static void mc_reset __P((struct ie_softc *));
-
-vm_offset_t kvtop __P((caddr_t));	/* XXX: Should not use this */
 
 #ifdef IEDEBUG
 void print_rbd __P((volatile struct ie_recv_buf_desc *));
