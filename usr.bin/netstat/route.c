@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.16 1997/07/13 23:02:42 angelos Exp $	*/
+/*	$OpenBSD: route.c,v 1.17 1997/07/14 00:34:27 angelos Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.16 1997/07/13 23:02:42 angelos Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.17 1997/07/14 00:34:27 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -232,7 +232,7 @@ pr_encaphdr()
 {
 	if (Aflag)
 		printf("%-*s ", PLEN, "Address");
-	printf("%-30s %-5s %-30s %-5s %-5s %-26s\n",
+	printf("%-31s %-5s %-31s %-5s %-5s %-26s\n",
 	    "Source address/netmask", "Port", "Destination address/netmask", 
 	    "Port", "Proto", "SA(Address/SPI/Proto)");
 }
@@ -793,30 +793,30 @@ encap_print(rt)
 	register struct rtentry *rt;
 {
 	struct sockaddr_encap sen1, sen2, sen3;
-	u_char buffer[31];
+	u_char buffer[32];
 	int i;
 
 	bcopy(kgetsa(rt_key(rt)), &sen1, sizeof(sen1));
 	bcopy(kgetsa(rt_mask(rt)), &sen2, sizeof(sen2));
 	bcopy(kgetsa(rt->rt_gateway), &sen3, sizeof(sen3));
 
-	bzero(buffer, 31);
+	bzero(buffer, 32);
 	strncpy(buffer, inet_ntoa(sen1.sen_ip_src), 15);
 	i = strlen(buffer);
 	strncpy(buffer + i, "/", 1);
 	i++;
 	strncpy(buffer + i, inet_ntoa(sen2.sen_ip_src), 15);
 
-	printf("%-30s %-5u ", buffer, sen1.sen_sport);
+	printf("%-31s %-5u ", buffer, sen1.sen_sport);
 
-	bzero(buffer, 31);
+	bzero(buffer, 32);
 	strncpy(buffer, inet_ntoa(sen1.sen_ip_dst), 15);
 	i = strlen(buffer);
 	strncpy(buffer + i, "/", 1);
 	i++;
 	strncpy(buffer + i, inet_ntoa(sen2.sen_ip_dst), 15);
 
-	printf("%-30s %-5u %-5u ", buffer, sen1.sen_dport, sen1.sen_proto);
+	printf("%-31s %-5u %-5u ", buffer, sen1.sen_dport, sen1.sen_proto);
 	printf("%s/%08x/%-lu\n", inet_ntoa(sen3.sen_ipsp_dst),
 	       ntohl(sen3.sen_ipsp_spi), sen3.sen_ipsp_sproto);
 }
