@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile,v 1.1.1.1 2001/08/15 14:37:10 fgsch Exp $
+# $OpenBSD: Makefile,v 1.2 2002/01/03 01:43:24 art Exp $
 
 PROG=	socket2a
 SRCS=	socket2a.c
 CFLAGS+= -I${.CURDIR}/../../include
 
-regress:
+regress: ${PROG}
 	@cd ${.CURDIR}/../2; \
 	if test -d ${__objdir} ; then \
 		cd ${__objdir} ; \
