@@ -1,4 +1,4 @@
-/*      $OpenBSD: ip_gre.c,v 1.3 2000/01/07 21:57:02 angelos Exp $ */
+/*      $OpenBSD: ip_gre.c,v 1.4 2000/01/08 00:07:18 angelos Exp $ */
 /*	$NetBSD: ip_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -167,6 +167,26 @@ gre_input2(struct mbuf *m ,int hlen,u_char proto)
 	m->m_len -= hlen;
 	m->m_pkthdr.len -= hlen;
 
+#if NBPFILTER >0
+        if (sc->sc_if->if_bpf) {
+                /*
+                 * We need to prepend the address family as
+                 * a four byte field.  Cons up a fake header
+                 * to pacify bpf.  This is safe because bpf
+                 * will only read from the mbuf (i.e., it won't
+                 * try to free it or keep a pointer a to it).
+                 */
+                struct mbuf m0;
+                u_int af = dst->sa_family;
+
+                m0.m_next = m;
+                m0.m_len = 4;
+                m0.m_data = (char *) &af;
+
+                bpf_mtap(sc->sc_if->if_bpf, &m0);
+        }
+#endif
+
 	s = splimp();		/* possible */
 	if (IF_QFULL(ifq)) {
 		IF_DROP(ifq);
@@ -285,6 +305,26 @@ gre_mobile_input(m, va_alist)
 	ip->ip_sum = in_cksum(m,(ip->ip_hl << 2));
 
 	ifq = &ipintrq;
+
+#if NBPFILTER >0
+        if (sc->sc_if->if_bpf) {
+                /*
+                 * We need to prepend the address family as
+                 * a four byte field.  Cons up a fake header
+                 * to pacify bpf.  This is safe because bpf
+                 * will only read from the mbuf (i.e., it won't
+                 * try to free it or keep a pointer a to it).
+                 */
+                struct mbuf m0;
+                u_int af = dst->sa_family;
+
+                m0.m_next = m;
+                m0.m_len = 4;
+                m0.m_data = (char *) &af;
+
+                bpf_mtap(sc->sc_if->if_bpf, &m0);
+        }
+#endif
 
 	s = splimp();       /* possible */
 	if (IF_QFULL(ifq)) {
