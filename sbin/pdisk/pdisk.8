@@ -84,7 +84,7 @@ initialize partition map
 .It Em s
 change size of partition map
 .It Em c
-create new partition (standard MkLinux type)
+create new partition (standard OpenBSD type)
 .It Em C
 create with type also specified
 .It Em n
@@ -93,6 +93,8 @@ create with type also specified
 delete a partition
 .It Em r
 reorder partition entry in map
+.It Em t
+change the type of an existing partition
 .It Em w
 write the partition table
 .It Em q
@@ -116,9 +118,8 @@ Most of the commands will change the index numbers of all partitions
 after the affected partition.
 You are advised to print the table as frequently as necessary.
 
-Creating more than fifteen partitions is not advised.
-There is currently a bug in the some (all?) of the kernels which causes
-access to the whole disk fail if more than fifteen partitions are in the map.
+Creating more than fifteen partitions is not advised, for
+compatibility reasons.
 
 The
 .Em c
@@ -136,7 +137,7 @@ respectively.
 The last argument is the name of the partition.
 This can be a single word without quotes, or a string surrounded by
 single or double quotes.
-The type of the created partition is the correct type for MkLinux.
+The type of the created partition is the correct type for OpenBSD.
 
 The
 .Em C
@@ -156,6 +157,11 @@ The
 .Em r
 (reorder) command allows the index number of partitions to be changed.
 The index numbers are constrained to be a contiguous sequence.
+
+The
+.Em t
+(change type) command allows the type of an existing partition to be changed.
+Examples of valid partition types are: Apple_Free, Apple_HFS, and OpenBSD.
 
 The
 .Em i
