@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.7 1999/01/20 19:39:53 mickey Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.8 1999/04/20 19:29:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -161,6 +161,8 @@ struct pmap_physseg {
 #define cache_align(x)	(((x) + dcache_line_mask) & ~(dcache_line_mask))
 extern int dcache_line_mask;
 
+extern void gateway_page __P((void));
+
 #define	PMAP_STEAL_MEMORY	/* we have some memory to steal */
 
 #define pmap_kernel_va(VA)	\
@@ -179,8 +181,8 @@ do { if (pmap) { \
 #define pmap_pageable(pmap, start, end, pageable)
 #define pmap_copy(dpmap,spmap,da,len,sa)
 #define	pmap_update()
-#define	pmap_activate(pmap, pcb)
-#define	pmap_deactivate(pmap, pcb)
+#define	pmap_activate(p)
+#define	pmap_deactivate(p)
 
 #define pmap_phys_address(x)	((x) << PGSHIFT)
 #define pmap_phys_to_frame(x)	((x) >> PGSHIFT)
@@ -192,8 +194,8 @@ pmap_prot(struct pmap *pmap, int prot)
 	return (pmap == kernel_pmap? kern_prot: user_prot)[prot];
 }
 
-void pmap_bootstrap __P((vm_offset_t *, vm_offset_t *));
-void pmap_changebit __P((vm_offset_t, u_int, u_int));
+void pmap_bootstrap __P((vaddr_t *, vaddr_t *));
+void pmap_changebit __P((vaddr_t, u_int, u_int));
 #endif /* _KERNEL */
 
 #endif /* _MACHINE_PMAP_H_ */

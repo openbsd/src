@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_machdep.h,v 1.1 1998/12/05 17:38:34 mickey Exp $	*/
+/*	$OpenBSD: db_machdep.h,v 1.2 1999/04/20 19:29:12 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -34,14 +34,14 @@
 #define	_MACHINE_DB_MACHDEP_H_
 
 /* types the generic ddb module needs */
-typedef	vm_offset_t db_addr_t;
+typedef	vaddr_t db_addr_t;
 typedef	long db_expr_t;
 
 typedef struct trapframe db_regs_t;
 extern db_regs_t	ddb_regs;
 #define	DDB_REGS	(&ddb_regs)
 
-#define	PC_REGS(regs)	((db_addr_t)(regs)->iioq_head)
+#define	PC_REGS(regs)	((db_addr_t)(regs)->tf_iioq_head)
 
 /* Breakpoint related definitions */
 #define	BKPT_INST	0x00000000	/* break 0,0 */
@@ -51,7 +51,7 @@ extern db_regs_t	ddb_regs;
 #define	IS_BREAKPOINT_TRAP(type, code) 1
 #define	IS_WATCHPOINT_TRAP(type, code) 0
 
-#define	FIXUP_PC_AFTER_BREAK(regs) ((regs)->tf_regs[FRAME_PC] -= sizeof(int))
+#define	FIXUP_PC_AFTER_BREAK(regs) ((regs)->tf_iioq_head -= sizeof(int))
 
 #define DB_VALID_BREAKPOINT(addr) db_valid_breakpoint(addr)
 
@@ -85,8 +85,8 @@ static __inline int inst_trap_return(u_int ins)	{
 	return (ins & 0xfc001fc0) == 0x00000ca0;
 }
 
-#define db_clear_single_step(r)	((r)->flags |= 0)
-#define db_set_single_step(r)	((r)->flags |= 0)
+#define db_clear_single_step(r)	((r)->tf_flags |= 0)
+#define db_set_single_step(r)	((r)->tf_flags |= 0)
 
 int db_valid_breakpoint __P((db_addr_t));
 int kdb_trap __P((int, int, db_regs_t *));

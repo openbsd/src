@@ -1,4 +1,4 @@
-/*	$OpenBSD: types.h,v 1.4 1999/01/08 03:04:07 millert Exp $	*/
+/*	$OpenBSD: types.h,v 1.5 1999/04/20 19:29:13 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -51,13 +51,18 @@ typedef struct label_t {
 	double	lbl_sf[10];	/* hp800:fr12-fr15, hp700:fr12-fr21 */
 } label_t;
 
-#endif
-
 typedef	unsigned long		hppa_hpa_t;
 typedef	unsigned long		hppa_spa_t;
 typedef	unsigned int		pa_space_t;
-typedef unsigned long		vm_size_t;
-typedef	unsigned long		vm_offset_t;
+typedef	unsigned long		vaddr_t;
+typedef	unsigned long		vsize_t;
+typedef	unsigned long		paddr_t;
+typedef	unsigned long		psize_t;
+/* XXX DIE DIE DIE */
+typedef	unsigned long vm_offset_t;
+typedef unsigned long vm_size_t;
+
+#endif
 
 /*
  * Basic integral types.  Omit the typedef if
