@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_req.c,v 1.6 1998/05/22 07:09:18 millert Exp $	*/
+/*	$OpenBSD: ns_req.c,v 1.7 2001/01/28 02:12:50 niklas Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_req.c	4.47 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_req.c,v 8.30 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_req.c,v 1.6 1998/05/22 07:09:18 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_req.c,v 1.7 2001/01/28 02:12:50 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -242,6 +242,14 @@ ns_req(msg, msglen, buflen, qsp, from, dfd)
 	 */
 	hp->qr = 1;		/* set Response flag */
 	hp->ra = (NoRecurse == 0);
+
+	if (hp->rcode == FORMERR) {
+		hp->qdcount = htons(0);
+		hp->ancount = htons(0);
+		hp->nscount = htons(0);
+		hp->arcount = htons(0);
+		cp = msg + HFIXEDSZ;
+	}
 
 	n = doaddinfo(hp, cp, buflen);
 	cp += n;
@@ -1012,12 +1020,12 @@ req_iquery(hp, cpp, eom, buflenp, msg, from)
 	GETSHORT(class, *cpp);
 	*cpp += INT32SZ;	/* ttl */
 	GETSHORT(dlen, *cpp);
-	*cpp += dlen;
-	if (*cpp != eom) {
+	if (*cpp + dlen != eom) {
 		dprintf(1, (ddt, "FORMERR IQuery message length off\n"));
 		hp->rcode = FORMERR;
 		return (Finish);
 	}
+	*cpp += dlen;
 
 	/*
 	 * not all inverse queries are handled.
@@ -1223,6 +1231,25 @@ stale(dp)
 }
 
 /*
+ * Reset dnptrs so that there are no active references to pointers at or
+ * after src.
+ */
+static void
+ns_name_rollback(src, dnptrs, lastdnptr)
+	const u_char *src;
+	const u_char **dnptrs;
+	const u_char **lastdnptr;
+{
+	while (dnptrs < lastdnptr && *dnptrs != NULL) {
+		if (*dnptrs >= src) {
+			*dnptrs = NULL;
+			break;
+		}
+		dnptrs++;
+	}
+}
+
+/*
  * Copy databuf into a resource record for replies.
  * Return size of RR if OK, -1 if buffer is full.
  */
@@ -1294,11 +1321,11 @@ make_rr(name, dp, buf, buflen, doadd)
 	}
 #endif
 	if ((n = dn_comp(name, buf, buflen, dnptrs, edp)) < 0)
-		return (-1);
+		goto cleanup;
 	cp = buf + n;
 	buflen -= n;
 	if (buflen < 0)
-		return (-1);
+		goto cleanup;
 	PUTSHORT((u_int16_t)type, cp);
 	PUTSHORT((u_int16_t)dp->d_class, cp);
 	PUTLONG(ttl, cp);
@@ -1311,7 +1338,7 @@ make_rr(name, dp, buf, buflen, doadd)
 	case T_PTR:
 		n = dn_comp((char *)dp->d_data, cp, buflen, dnptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		PUTSHORT((u_int16_t)n, sp);
 		cp += n;
 		break;
@@ -1321,7 +1348,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		/* Store domain name in answer */
 		n = dn_comp((char *)dp->d_data, cp, buflen, dnptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		PUTSHORT((u_int16_t)n, sp);
 		cp += n;
 		if (doadd)
@@ -1335,15 +1362,15 @@ make_rr(name, dp, buf, buflen, doadd)
 		cp1 = dp->d_data;
 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 		buflen -= type == T_SOA ? n + 5 * INT32SZ : n;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
 		cp1 += strlen((char *)cp1) + 1;
 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 		if (type == T_SOA) {
 			cp1 += strlen((char *)cp1) + 1;
@@ -1361,7 +1388,7 @@ make_rr(name, dp, buf, buflen, doadd)
  		/* copy order */
 		buflen -= INT16SZ;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
  		bcopy(cp1, cp, INT16SZ);
  		cp += INT16SZ;
  		cp1 += INT16SZ;
@@ -1371,7 +1398,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		/* copy preference */
 		buflen -= INT16SZ;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
 		bcopy(cp1, cp, INT16SZ);
 		cp += INT16SZ;
 		cp1 += INT16SZ;
@@ -1382,7 +1409,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		n = *cp1++;
 		buflen -= n + 1;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
 		dprintf(1, (ddt, "size of n at flags = %d\n", n));
 		*cp++ = n;
 		bcopy(cp1,cp,n);
@@ -1395,7 +1422,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		n = *cp1++;
 		buflen -= n + 1;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
 		*cp++ = n;
 		bcopy(cp1,cp,n);
 		cp += n;
@@ -1407,7 +1434,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		n = *cp1++;
 		buflen -= n + 1;
 		if (buflen < 0)
-			return (-1);
+			goto cleanup;
 		*cp++ = n;
 		bcopy(cp1,cp,n);
 		cp += n;
@@ -1420,7 +1447,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
 		dprintf(1, (ddt, "dn_comp's n = %u\n", n));
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 
 		/* save data length */
@@ -1438,7 +1465,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		cp1 = dp->d_data;
 
  		if ((buflen -= INT16SZ) < 0)
-			return (-1);
+			goto cleanup;
 
  		/* copy preference */
  		bcopy(cp1, cp, INT16SZ);
@@ -1448,7 +1475,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		if (type == T_SRV) {
 			buflen -= INT16SZ*2;
 			if (buflen < 0)
-				return (-1);
+				goto cleanup;
 			bcopy(cp1, cp, INT16SZ*2);
 			cp += INT16SZ*2;
 			cp1 += INT16SZ*2;
@@ -1456,7 +1483,7 @@ make_rr(name, dp, buf, buflen, doadd)
 
 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 
 		/* save data length */
@@ -1470,7 +1497,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		cp1 = dp->d_data;
 
 		if ((buflen -= INT16SZ) < 0)
-			return (-1);
+			goto cleanup;
 
 		/* copy preference */
 		bcopy(cp1, cp, INT16SZ);
@@ -1479,13 +1506,13 @@ make_rr(name, dp, buf, buflen, doadd)
 
 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 		buflen -= n;
 		cp1 += strlen((char *)cp1) + 1;
 		n = dn_comp((char *)cp1, cp, buflen, dnptrs, edp);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 
 		/* save data length */
@@ -1500,7 +1527,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		/* first just copy over the type_covered, algorithm, */
 		/* labels, orig ttl, two timestamps, and the footprint */
 		if ((dp->d_size - 18) > buflen)
-			return (-1);  /* out of room! */
+			goto cleanup;
 		bcopy( cp1, cp, 18 );
 		cp  += 18;
 		cp1 += 18;
@@ -1509,7 +1536,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		/* then the signer's name */
 		n = dn_comp((char *)cp1, cp, buflen, NULL, NULL);
 		if (n < 0)
-			return (-1);
+			goto cleanup;
 		cp += n;
 		buflen -= n;
 		cp1 += strlen((char*)cp1)+1;
@@ -1517,7 +1544,7 @@ make_rr(name, dp, buf, buflen, doadd)
 		/* finally, we copy over the variable-length signature */
 		n = dp->d_size - (u_int16_t)((cp1 - dp->d_data));
 		if (n > buflen)
-			return (-1);  /* out of room! */
+			goto cleanup;
 		bcopy(cp1, cp, n);
 		cp += n;
 		
@@ -1528,12 +1555,19 @@ make_rr(name, dp, buf, buflen, doadd)
 
 	default:
 		if (dp->d_size > buflen)
-			return (-1);
+			goto cleanup;
 		bcopy(dp->d_data, cp, dp->d_size);
 		PUTSHORT((u_int16_t)dp->d_size, sp);
 		cp += dp->d_size;
 	}
 	return (cp - buf);
+
+ cleanup:
+	/* Rollback RR. */
+	ns_name_rollback(buf, (const u_char **)dnptrs,
+			 (const u_char **)(dnptrs +
+					   sizeof dnptrs / sizeof dnptrs[0]));
+	return (-1);
 }
 
 #if defined(__STDC__) || defined(__GNUC__)
@@ -1649,6 +1683,11 @@ doaddinfo(hp, msg, msglen)
 				dprintf(5, (ddt,
 					    "addinfo: not enough room, remaining msglen = %d\n",
 					    save_msglen));
+				/* Rollback RRset. */
+				ns_name_rollback(save_cp,
+						 (const u_char **)dnptrs,
+						 (const u_char **)(dnptrs +
+					   sizeof dnptrs / sizeof dnptrs[0]));
 				cp = save_cp;
 				msglen = save_msglen;
 				count = save_count;

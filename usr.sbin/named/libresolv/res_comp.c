@@ -1,4 +1,4 @@
-/*	$OpenBSD: res_comp.c,v 1.3 1998/05/22 07:09:08 millert Exp $	*/
+/*	$OpenBSD: res_comp.c,v 1.4 2001/01/28 02:12:49 niklas Exp $	*/
 
 /*
  * ++Copyright++ 1985, 1993
@@ -60,7 +60,7 @@
 static char sccsid[] = "@(#)res_comp.c	8.1 (Berkeley) 6/4/93";
 static char rcsid[] = "$From: res_comp.c,v 8.14 1998/05/11 04:19:47 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: res_comp.c,v 1.3 1998/05/22 07:09:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: res_comp.c,v 1.4 2001/01/28 02:12:49 niklas Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -801,6 +801,25 @@ ns_name_compress(src, dst, dstsiz, dnptrs, lastdnptr)
 	if (ns_name_pton(src, tmp, sizeof tmp) == -1)
 		return (-1);
 	return (ns_name_pack(tmp, dst, dstsiz, dnptrs, lastdnptr));
+}
+
+/*
+ * Reset dnptrs so that there are no active references to pointers at or
+ * after src.
+ */
+void
+ns_name_rollback(src, dnptrs, lastdnptr)
+	const u_char *src;
+	const u_char **dnptrs;
+	const u_char **lastdnptr;
+{
+	while (dnptrs < lastdnptr && *dnptrs != NULL) {
+		if (*dnptrs >= src) {
+			*dnptrs = NULL;
+			break;
+		}
+		dnptrs++;
+	}
 }
 
 /*

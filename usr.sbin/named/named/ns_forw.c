@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_forw.c,v 1.4 1998/05/22 00:47:38 millert Exp $	*/
+/*	$OpenBSD: ns_forw.c,v 1.5 2001/01/28 02:12:50 niklas Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_forw.c	4.32 (Berkeley) 3/3/91";
 static char rcsid[] = "$From: ns_forw.c,v 8.19 1996/12/02 09:27:36 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.4 1998/05/22 00:47:38 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_forw.c,v 1.5 2001/01/28 02:12:50 niklas Exp $";
 #endif
 #endif /* not lint */
 
@@ -291,17 +291,23 @@ haveComplained(tag1, tag2)
  *	dname and a_rr are the problematic other name server.
  */
 static void
-nslookupComplain(sysloginfo, queryname, complaint, dname, a_rr, nsdp)
-	const char *sysloginfo, *queryname, *complaint, *dname;
+nslookupComplain(sysloginfo, net_queryname, complaint, net_dname, a_rr, nsdp)
+	const char *sysloginfo, *net_queryname, *complaint, *net_dname;
 	const struct databuf *a_rr, *nsdp;
 {
+	char queryname[64], dname[64];
 #ifdef STATS
 	char nsbuf[20];
 	char abuf[20];
 #endif
-	char *a, *ns;
+	const char *a, *ns;
 	const char *a_type;
 	int print_a;
+
+	strncpy(queryname, net_queryname, (sizeof queryname) - 1);
+	queryname[(sizeof queryname) - 1] = '\0';
+	strncpy(dname, net_dname, (sizeof dname) - 1);
+	dname[(sizeof dname) - 1] = '\0';
 
 	dprintf(2, (ddt, "NS '%s' %s\n", dname, complaint));
 	if (sysloginfo && queryname && !haveComplained(queryname, complaint))
