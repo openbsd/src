@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.123 2004/01/23 18:21:13 espie Exp $
+#	$OpenBSD: Makefile,v 1.124 2004/03/01 02:59:56 drahn Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -57,8 +57,9 @@ WDIRS=	../usr.sbin/httpd ../gnu/usr.bin/binutils
 PWDIRS=	../usr.sbin/httpd ../gnu/usr.bin/binutils
 
 .if ${USE_GCC3:L} == "yes"
-WDIRS+= ../gnu/lib/libstdc++ ../gnu/usr.bin/gcc ../gnu/lib/libobjc
-PWDIRS+= ../gnu/lib/libstdc++
+WDIRS+= ../gnu/lib/libstdc++ ../gnu/usr.bin/gcc ../gnu/lib/libobjc \
+	../gnu/lib/libf2c
+PWDIRS+= ../gnu/lib/libstdc++ ../gnu/lib/libf2c
 .else
 WDIRS+= ../gnu/egcs/libio ../gnu/egcs/libstdc++ \
 	../gnu/egcs/libf2c ../gnu/egcs/libobjc ../gnu/egcs/gcc
