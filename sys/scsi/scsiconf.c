@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.62 2001/10/08 01:50:48 drahn Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.63 2001/11/02 00:08:16 millert Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -325,28 +325,48 @@ scsi_strvis(dst, src, len)
 	u_char *dst, *src;
 	int len;
 {
+	u_char last;
 
-	/* Trim leading and trailing blanks and NULs. */
-	while (len > 0 && (src[0] == ' ' || src[0] == '\0' || src[0] == 0xff))
+	/* Trim leading and trailing whitespace and NULs. */
+	while (len > 0 && (src[0] == ' ' || src[0] == '\t' || src[0] == '\n' ||
+	    src[0] == '\0' || src[0] == 0xff))
 		++src, --len;
-	while (len > 0 && (src[len-1] == ' ' || src[len-1] == '\0' ||
-	    src[len-1] == 0xff))
+	while (len > 0 && (src[len-1] == ' ' || src[len-1] == '\t' || 
+	    src[len-1] == '\n' || src[len-1] == '\0' || src[len-1] == 0xff))
 		--len;
 
+	last = 0xff;
 	while (len > 0) {
-		if (*src < 0x20 || *src >= 0x80) {
-			/* non-printable characters */
-			*dst++ = '\\';
-			*dst++ = ((*src & 0300) >> 6) + '0';
-			*dst++ = ((*src & 0070) >> 3) + '0';
-			*dst++ = ((*src & 0007) >> 0) + '0';
-		} else if (*src == '\\') {
+		switch (*src) {
+		case ' ':
+		case '\t':
+		case '\n':
+		case '\0':
+		case 0xff:
+			/* collapse whitespace and NULs to a single space */
+			if (last != ' ')
+				*dst++ = ' ';
+			last = ' ';
+			break;
+		case '\\':
 			/* quote characters */
 			*dst++ = '\\';
 			*dst++ = '\\';
-		} else {
-			/* normal characters */
-			*dst++ = *src;
+			last = '\\';
+			break;
+		default:
+			if (*src < 0x20 || *src >= 0x80) {
+				/* non-printable characters */
+				*dst++ = '\\';
+				*dst++ = ((*src & 0300) >> 6) + '0';
+				*dst++ = ((*src & 0070) >> 3) + '0';
+				*dst++ = ((*src & 0007) >> 0) + '0';
+			} else {
+				/* normal characters */
+				*dst++ = *src;
+			}
+			last = *src;
+			break;
 		}
 		++src, --len;
 	}
