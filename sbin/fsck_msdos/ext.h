@@ -1,5 +1,5 @@
-/*	$OpenBSD: ext.h,v 1.3 1996/06/23 14:30:43 deraadt Exp $	*/
-/*	$NetBSD: ext.h,v 1.1.4.1 1996/05/31 18:41:45 jtc Exp $	*/
+/*	$OpenBSD: ext.h,v 1.4 1997/03/02 05:25:54 millert Exp $	*/
+/*	$NetBSD: ext.h,v 1.4 1996/09/23 16:27:59 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -39,6 +39,7 @@
 #include <sys/types.h>
 
 #include "dosfs.h"
+#include "fsutil.h"
 
 #define	LOSTDIR	"LOST.DIR"
 
@@ -57,11 +58,7 @@ extern struct dosDirEntry *rootDir;
 /* 
  * function declarations
  */
-void errexit __P((const char *, ...));
-void pfatal __P((const char *, ...));
-void pwarn __P((const char *, ...));
 int ask __P((int, const char *, ...));
-void perror __P((const char *));
 
 /*
  * Check filesystem given as arg

@@ -1,5 +1,5 @@
-/*	$OpenBSD: dir.c,v 1.6 1997/02/28 08:36:11 millert Exp $	*/
-/*	$NetBSD: dir.c,v 1.1.4.1 1996/05/31 18:41:38 jtc Exp $	*/
+/*	$OpenBSD: dir.c,v 1.7 1997/03/02 05:25:53 millert Exp $	*/
+/*	$NetBSD: dir.c,v 1.8 1996/09/27 23:22:52 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank
@@ -37,7 +37,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dir.c,v 1.6 1997/02/28 08:36:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: dir.c,v 1.7 1997/03/02 05:25:53 millert Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -90,6 +90,22 @@ static char rcsid[] = "$OpenBSD: dir.c,v 1.6 1997/02/28 08:36:11 millert Exp $";
 #define DD_YEAR_MASK		0xFE00	/* year - 1980 */
 #define DD_YEAR_SHIFT		9
 
+/* dir.c */
+static struct dosDirEntry *newDosDirEntry __P((void));
+static void freeDosDirEntry __P((struct dosDirEntry *));
+static struct dirTodoNode *newDirTodo __P((void));
+static void freeDirTodo __P((struct dirTodoNode *));
+static char *fullpath __P((struct dosDirEntry *));
+static u_char calcShortSum __P((u_char *));
+static int delete __P((int, struct bootblock *, struct fatEntry *, cl_t, int,
+    cl_t, int, int));
+static int removede __P((int, struct bootblock *, struct fatEntry *, u_char *,
+    u_char *, cl_t, cl_t, cl_t, char *, int));
+static int checksize __P((struct bootblock *, struct fatEntry *, u_char *,
+    struct dosDirEntry *));
+static int readDosDirSection __P((int, struct bootblock *, struct fatEntry *,
+    struct dosDirEntry *));
+
 /*
  * Manage free dosDirEntry structures.
  */
@@ -102,10 +118,10 @@ newDosDirEntry()
 	
 	if (!(de = freede)) {
 		if (!(de = (struct dosDirEntry *)malloc(sizeof *de)))
-			return 0;
+			return (0);
 	} else
 		freede = de->next;
-	return de;
+	return (de);
 }
 
 static void
@@ -128,10 +144,10 @@ newDirTodo()
 	
 	if (!(dt = freedt)) {
 		if (!(dt = (struct dirTodoNode *)malloc(sizeof *dt)))
-			return 0;
+			return (0);
 	} else
 		freedt = dt->next;
-	return dt;
+	return (dt);
 }
 
 static void
@@ -165,12 +181,12 @@ fullpath(dir)
 		nl = strlen(np);
 		if ((cp -= nl) <= namebuf + 1)
 			break;
-		memcpy(cp, np, nl);
+		(void)memcpy(cp, np, nl);
 		*--cp = '/';
-	} while ((dir = dir->parent));
+	} while ((dir = dir->parent) != NULL);
 	if (dir != NULL && dir->parent != NULL)
 		*--cp = '?';
-	return cp;
+	return (cp);
 }
 
 /*
@@ -188,7 +204,7 @@ calcShortSum(p)
 		sum += p[i];
 	}
 
-	return sum;
+	return (sum);
 }
 
 /*
@@ -217,10 +233,10 @@ resetDosDirSection(boot)
 	    || !(delbuf = malloc(b2))
 	    || !(rootDir = newDosDirEntry())) {
 		perror("No space for directory");
-		return FSFATAL;
+		return (FSFATAL);
 	}
-	memset(rootDir, 0, sizeof *rootDir);
-	return FSOK;
+	(void)memset(rootDir, 0, sizeof *rootDir);
+	return (FSOK);
 }
 
 /*
@@ -238,7 +254,7 @@ finishDosDirSection()
 	}
 	pendingDirectories = 0;
 	for (d = rootDir; d; d = nd) {
-		if ((nd = d->child)) {
+		if ((nd = d->child) != NULL) {
 			d->child = 0;
 			continue;
 		}
@@ -284,7 +300,7 @@ delete(f, boot, fat, startcl, startoff, endcl, endoff, notlast)
 		if (lseek(f, off, SEEK_SET) != off
 		    || read(f, delbuf, clsz) != clsz) {
 			perror("Unable to read directory");
-			return FSFATAL;
+			return (FSFATAL);
 		}
 		while (s < e) {
 			*s = SLOT_DELETED;
@@ -293,14 +309,14 @@ delete(f, boot, fat, startcl, startoff, endcl, endoff, notlast)
 		if (lseek(f, off, SEEK_SET) != off
 		    || write(f, delbuf, clsz) != clsz) {
 			perror("Unable to write directory");
-			return FSFATAL;
+			return (FSFATAL);
 		}
 		if (startcl == endcl)
 			break;
 		startcl = fat[startcl].next;
 		s = delbuf;
 	}
-	return FSOK;
+	return (FSOK);
 }
 
 static int
@@ -333,15 +349,15 @@ removede(f, boot, fat, start, end, startcl, endcl, curcl, path, type)
 				   startcl, start - buffer,
 				   endcl, end - buffer,
 				   endcl == curcl) == FSFATAL)
-				return FSFATAL;
+				return (FSFATAL);
 			start = buffer;
 		}
 		if (endcl == curcl)
 			for (; start < end; start += 32)
 				*start = SLOT_DELETED;
-		return FSDIRMOD;
+		return (FSDIRMOD);
 	}
-	return FSERROR;
+	return (FSERROR);
 }
 	
 /*
@@ -363,11 +379,11 @@ checksize(boot, fat, p, dir)
 		physicalSize = 0;
 	else {
 		if (dir->head < CLUST_FIRST || dir->head >= boot->NumClusters)
-			return FSERROR;
+			return (FSERROR);
 		physicalSize = fat[dir->head].length * boot->ClusterSize;
 	}
 	if (physicalSize < dir->size) {
-		pwarn("size of %s is %lu, should at most be %lu\n",
+		pwarn("size of %s is %u, should at most be %u\n",
 		      fullpath(dir), dir->size, physicalSize);
 		if (ask(1, "Truncate")) {
 			dir->size = physicalSize;
@@ -375,9 +391,9 @@ checksize(boot, fat, p, dir)
 			p[29] = (u_char)(physicalSize >> 8);
 			p[30] = (u_char)(physicalSize >> 16);
 			p[31] = (u_char)(physicalSize >> 24);
-			return FSDIRMOD;
+			return (FSDIRMOD);
 		} else
-			return FSERROR;
+			return (FSERROR);
 	} else if (physicalSize - dir->size >= boot->ClusterSize) {
 		pwarn("%s has too many clusters allocated\n",
 		      fullpath(dir));
@@ -389,11 +405,11 @@ checksize(boot, fat, p, dir)
 				cl = fat[cl].next;
 			clearchain(boot, fat, fat[cl].next);
 			fat[cl].next = CLUST_EOF;
-			return FSFATMOD;
+			return (FSFATMOD);
 		} else
-			return FSERROR;
+			return (FSERROR);
 	}
-	return FSOK;
+	return (FSOK);
 }
 
 /*
@@ -413,7 +429,7 @@ readDosDirSection(f, boot, fat, dir)
 	u_char *p, *vallfn, *invlfn, *empty;
 	off_t off;
 	int i, j, k, last;
-	cl_t cl, valcl, invcl, empcl;
+	cl_t cl, valcl = ~0, invcl = ~0, empcl = ~0;
 	char *t;
 	u_int lidx = 0;
 	int shortSum;
@@ -425,7 +441,7 @@ readDosDirSection(f, boot, fat, dir)
 		/*
 		 * Already handled somewhere else.
 		 */
-		return FSOK;
+		return (FSOK);
 	}
 	shortSum = -1;
 	vallfn = invlfn = empty = NULL;
@@ -442,7 +458,7 @@ readDosDirSection(f, boot, fat, dir)
 		if (lseek(f, off, SEEK_SET) != off
 		    || read(f, buffer, last) != last) {
 			perror("Unable to read directory");
-			return FSFATAL;
+			return (FSFATAL);
 		}
 		last /= 32;
 		/*
@@ -468,11 +484,17 @@ readDosDirSection(f, boot, fat, dir)
 					pwarn("%s has entries after end of directory\n",
 					      fullpath(dir));
 					if (ask(1, "Extend")) {
+						u_char *q;
+
 						dir->fsckflags &= ~DIREMPTY;
 						if (delete(f, boot, fat,
 							   empcl, empty - buffer,
-							   cl, p - buffer) == FSFATAL)
-							return FSFATAL;
+							   cl, p - buffer, 1) == FSFATAL)
+							return (FSFATAL);
+						q = empcl == cl ? empty : buffer;
+						for (; q < p; q += 32)
+							*q = SLOT_DELETED;
+						mod |= THISMOD|FSDIRMOD;
 					} else if (ask(0, "Truncate"))
 						dir->fsckflags |= DIREMPWARN;
 				}
@@ -493,7 +515,7 @@ readDosDirSection(f, boot, fat, dir)
 							invcl = valcl;
 						}
 					}
-					memset(longName, 0, sizeof longName);
+					(void)memset(longName, 0, sizeof longName);
 					shortSum = p[13];
 					vallfn = p;
 					valcl = cl;
@@ -560,7 +582,7 @@ readDosDirSection(f, boot, fat, dir)
 			/*
 			 * This is a standard msdosfs directory entry.
 			 */
-			memset(&dirent, 0, sizeof dirent);
+			(void)memset(&dirent, 0, sizeof dirent);
 			
 			/*
 			 * it's a short name record, but we need to know
@@ -622,7 +644,7 @@ readDosDirSection(f, boot, fat, dir)
 						    invcl, vallfn ? valcl : cl, cl,
 						    fullpath(&dirent), 0);
 				if (mod & FSFATAL)
-					return FSFATAL;
+					return (FSFATAL);
 				if (vallfn
 				    ? (valcl == cl && vallfn != buffer)
 				    : p != buffer)
@@ -751,17 +773,17 @@ readDosDirSection(f, boot, fat, dir)
 				/* create directory tree node */
 				if (!(d = newDosDirEntry())) {
 					perror("No space for directory");
-					return FSFATAL;
+					return (FSFATAL);
 				}
 				
-				memcpy(d, &dirent, sizeof(struct dosDirEntry));
+				(void)memcpy(d, &dirent, sizeof(struct dosDirEntry));
 				/* link it into the tree */
 				dir->child = d;
 				
 				/* Enter this directory into the todo list */
 				if (!(n = newDirTodo())) {
 					perror("No space for todo list");
-					return FSFATAL;
+					return (FSFATAL);
 				}
 				n->next = pendingDirectories;
 				n->dir = d;
@@ -778,7 +800,7 @@ readDosDirSection(f, boot, fat, dir)
 			if (lseek(f, off, SEEK_SET) != off
 			    || write(f, buffer, last) != last) {
 				perror("Unable to write directory");
-				return FSFATAL;
+				return (FSFATAL);
 			}
 			mod &= ~THISMOD;
 		}
@@ -788,7 +810,7 @@ readDosDirSection(f, boot, fat, dir)
 				invlfn ? invlfn : vallfn, p,
 				invlfn ? invcl : valcl, -1, 0,
 				fullpath(dir), 1);
-	return mod & ~THISMOD;
+	return (mod & ~THISMOD);
 }
 
 int
@@ -801,7 +823,7 @@ handleDirTree(dosfs, boot, fat)
 	
 	mod = readDosDirSection(dosfs, boot, fat, rootDir);
 	if (mod & FSFATAL)
-		return FSFATAL;
+		return (FSFATAL);
 	
 	if (mod & FSFATMOD) {
 		mod &= ~FSFATMOD;
@@ -809,7 +831,7 @@ handleDirTree(dosfs, boot, fat)
 	}
 
 	if (mod & FSFATAL)
-		return FSFATAL;
+		return (FSFATAL);
 	
 	/*
 	 * process the directory todo list
@@ -830,15 +852,15 @@ handleDirTree(dosfs, boot, fat)
 		 */
 		mod |= readDosDirSection(dosfs, boot, fat, dir);
 		if (mod & FSFATAL)
-			return FSFATAL;
+			return (FSFATAL);
 		if (mod & FSFATMOD) {
 			mod &= ~FSFATMOD;
 			mod |= writefat(dosfs, boot, fat); /* delay writing fats? XXX */
 		}
 		if (mod & FSFATAL)
-			return FSFATAL;
+			return (FSFATAL);
 	}
-	return mod;
+	return (mod);
 }
 
 /*
@@ -865,14 +887,14 @@ reconnect(dosfs, boot, fat, head)
 		}
 		if (!lostDir) {		/* Create LOSTDIR?		XXX */
 			pwarn("No %s directory\n", LOSTDIR);
-			return FSERROR;
+			return (FSERROR);
 		}
 	}
 	if (!lfbuf) {
 		lfbuf = malloc(boot->ClusterSize);
 		if (!lfbuf) {
 			perror("No space for buffer");
-			return FSFATAL;
+			return (FSFATAL);
 		}
 		p = NULL;
 	} else
@@ -889,32 +911,32 @@ reconnect(dosfs, boot, fat, head)
 		if (lfcl < CLUST_FIRST || lfcl >= boot->NumClusters) {
 			/* Extend LOSTDIR?				XXX */
 			pwarn("No space in %s\n", LOSTDIR);
-			return FSERROR;
+			return (FSERROR);
 		}
 		lfoff = lfcl * boot->ClusterSize
 		    + boot->ClusterOffset * boot->BytesPerSec;
 		if (lseek(dosfs, lfoff, SEEK_SET) != lfoff
 		    || read(dosfs, buffer, boot->ClusterSize) != boot->ClusterSize) {
 			perror("could not read LOST.DIR");
-			return FSFATAL;
+			return (FSFATAL);
 		}
 		p = lfbuf;
 	}
 
 	if (!ask(0, "Reconnect"))
-		return FSERROR;
+		return (FSERROR);
 
 	boot->NumFiles++;
 	/* Ensure uniqueness of entry here!				XXX */
-	memset(&d, 0, sizeof d);
+	(void)memset(&d, 0, sizeof d);
 	sprintf(d.name, "%d", head);
 	d.flags = 0;
 	d.head = head;
 	d.size = fat[head].length * boot->ClusterSize;
 	
-	memset(p, 0, 32);
-	memset(p, ' ', 11);
-	memcpy(p, d.name, strlen(d.name));
+	(void)memset(p, 0, 32);
+	(void)memset(p, ' ', 11);
+	(void)memcpy(p, d.name, strlen(d.name));
 	p[26] = (u_char)d.head;
 	p[27] = (u_char)(d.head >> 8);
 	p[28] = (u_char)d.size;
@@ -925,9 +947,9 @@ reconnect(dosfs, boot, fat, head)
 	if (lseek(dosfs, lfoff, SEEK_SET) != lfoff
 	    || write(dosfs, buffer, boot->ClusterSize) != boot->ClusterSize) {
 		perror("could not write LOST.DIR");
-		return FSFATAL;
+		return (FSFATAL);
 	}
-	return FSDIRMOD;
+	return (FSDIRMOD);
 }
 
 void

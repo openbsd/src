@@ -1,5 +1,5 @@
-/*	$OpenBSD: boot.c,v 1.2 1996/06/23 14:30:41 deraadt Exp $	*/
-/*	$NetBSD: boot.c,v 1.1 1996/05/14 17:39:28 ws Exp $	*/
+/*	$OpenBSD: boot.c,v 1.3 1997/03/02 05:25:51 millert Exp $	*/
+/*	$NetBSD: boot.c,v 1.3 1996/09/27 23:22:51 christos Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: boot.c,v 1.2 1996/06/23 14:30:41 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: boot.c,v 1.3 1997/03/02 05:25:51 millert Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -59,7 +59,7 @@ readboot(dosfs, boot)
 			perror("could not read boot block");
 		else
 			pfatal("Short bootblock?");
-		return FSFATAL;
+		return (FSFATAL);
 	}
 
 	/* decode bios parameter block */
@@ -83,11 +83,11 @@ readboot(dosfs, boot)
 
 	if (boot->BytesPerSec % DOSBOOTBLOCKSIZE != 0) {
 		pfatal("Invalid sector size: %u\n", boot->BytesPerSec);
-		return FSFATAL;
+		return (FSFATAL);
 	}
 	if (boot->SecPerClust == 0) {
 		pfatal("Invalid cluster size: %u\n", boot->SecPerClust);
-		return FSFATAL;
+		return (FSFATAL);
 	}
 	if (boot->Sectors) {
 		boot->HugeSectors = 0;
@@ -107,12 +107,12 @@ readboot(dosfs, boot)
 	if (boot->NumFatEntries < boot->NumClusters) {
 		pfatal("FAT size too small, %d entries won't fit into %u sectors\n", 
 		       boot->NumClusters, boot->FATsecs);
-		return FSFATAL;
+		return (FSFATAL);
 	}
 	boot->ClusterSize = boot->BytesPerSec * boot->SecPerClust;
 
 	boot->NumFiles = 1;
 	boot->NumFree = 0;
 	
-	return FSOK;
+	return (FSOK);
 }

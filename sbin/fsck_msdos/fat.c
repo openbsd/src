@@ -1,4 +1,4 @@
-/*	$OpenBSD: fat.c,v 1.4 1997/02/28 08:36:12 millert Exp $	*/
+/*	$OpenBSD: fat.c,v 1.5 1997/03/02 05:25:55 millert Exp $	*/
 /*	$NetBSD: fat.c,v 1.5 1997/01/03 14:32:49 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: fat.c,v 1.4 1997/02/28 08:36:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: fat.c,v 1.5 1997/03/02 05:25:55 millert Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -63,11 +63,11 @@ checkclnum(boot, fat, cl, next)
 		*next |= 0xf000;
 	if (*next == CLUST_FREE) {
 		boot->NumFree++;
-		return FSOK;
+		return (FSOK);
 	}
 	if (*next == CLUST_BAD) {
 		boot->NumBad++;
-		return FSOK;
+		return (FSOK);
 	}
 	if (*next < CLUST_FIRST
 	    || (*next >= boot->NumClusters && *next < CLUST_EOFS)) {
@@ -77,11 +77,11 @@ checkclnum(boot, fat, cl, next)
 		      *next);
 		if (ask(0, "Truncate")) {
 			*next = CLUST_EOF;
-			return FSFATMOD;
+			return (FSFATMOD);
 		}
-		return FSERROR;
+		return (FSERROR);
 	}
-	return FSOK;
+	return (FSOK);
 }
 
 /*
@@ -108,10 +108,10 @@ readfat(fs, boot, no, fp)
 		perror("No space for FAT");
 		if (fat)
 			free(fat);
-		return FSFATAL;
+		return (FSFATAL);
 	}
 	
-	memset(fat, 0, sizeof(struct fatEntry) * boot->NumClusters);
+	(void)memset(fat, 0, sizeof(struct fatEntry) * boot->NumClusters);
 
 	off = boot->ResSectors + no * boot->FATsecs;
 	off *= boot->BytesPerSec;
@@ -120,7 +120,7 @@ readfat(fs, boot, no, fp)
 		perror("Unable to read FAT");
 		free(buffer);
 		free(fat);
-		return FSFATAL;
+		return (FSFATAL);
 	}
 	
 	if ((size = read(fs, buffer, boot->FATsecs * boot->BytesPerSec))
@@ -131,7 +131,7 @@ readfat(fs, boot, no, fp)
 			pfatal("Short FAT?");
 		free(buffer);
 		free(fat);
-		return FSFATAL;
+		return (FSFATAL);
 	}
 
 	/*
@@ -173,7 +173,7 @@ readfat(fs, boot, no, fp)
 	
 	free(buffer);
 	*fp = fat;
-	return ret;
+	return (ret);
 }
 
 /*
@@ -184,10 +184,10 @@ rsrvdcltype(cl)
 	cl_t cl;
 {
 	if (cl < CLUST_BAD)
-		return "reserved";
+		return ("reserved");
 	if (cl > CLUST_BAD)
-		return "as EOF";
-	return "bad";
+		return ("as EOF");
+	return ("bad");
 }
 
 static int
@@ -205,58 +205,58 @@ clustdiffer(cl, cp1, cp2, fatnum)
 				      cl, rsrvdcltype(*cp1));
 				if (ask(1, "fix")) {
 					*cp2 = *cp1;
-					return FSFATMOD;
+					return (FSFATMOD);
 				}
-				return FSFATAL;
+				return (FSFATAL);
 			}
 			pwarn("Cluster %d is marked %s in FAT 1, %s in FAT %d\n",
 			      cl, rsrvdcltype(*cp1), rsrvdcltype(*cp2), fatnum);
 			if (ask(0, "use FAT #1's entry")) {
 				*cp2 = *cp1;
-				return FSFATMOD;
+				return (FSFATMOD);
 			}
 			if (ask(0, "use FAT #%d's entry", fatnum)) {
 				*cp1 = *cp2;
-				return FSFATMOD;
+				return (FSFATMOD);
 			}
-			return FSFATAL;
+			return (FSFATAL);
 		}
 		pwarn("Cluster %d is marked %s in FAT 1, but continues with cluster %d in FAT %d\n",
 		      cl, rsrvdcltype(*cp1), *cp2, fatnum);
 		if (ask(0, "Use continuation from FAT %d", fatnum)) {
 			*cp1 = *cp2;
-			return FSFATMOD;
+			return (FSFATMOD);
 		}
 		if (ask(0, "Use mark from FAT 1")) {
 			*cp2 = *cp1;
-			return FSFATMOD;
+			return (FSFATMOD);
 		}
-		return FSFATAL;
+		return (FSFATAL);
 	}
 	if (*cp2 >= CLUST_RSRVD) {
 		pwarn("Cluster %d continues with cluster %d in FAT 1, but is marked %s in FAT %d\n",
 		      cl, *cp1, rsrvdcltype(*cp2), fatnum);
 		if (ask(0, "Use continuation from FAT 1")) {
 			*cp2 = *cp1;
-			return FSFATMOD;
+			return (FSFATMOD);
 		}
 		if (ask(0, "Use mark from FAT %d", fatnum)) {
 			*cp1 = *cp2;
-			return FSFATMOD;
+			return (FSFATMOD);
 		}
-		return FSERROR;
+		return (FSERROR);
 	}
 	pwarn("Cluster %d continues with cluster %d in FAT 1, but with cluster %d in FAT %d\n",
 	      cl, *cp1, *cp2, fatnum);
 	if (ask(0, "Use continuation from FAT 1")) {
 		*cp2 = *cp1;
-		return FSFATMOD;
+		return (FSFATMOD);
 	}
 	if (ask(0, "Use continuation from FAT %d", fatnum)) {
 		*cp1 = *cp2;
-		return FSFATMOD;
+		return (FSFATMOD);
 	}
-	return FSERROR;
+	return (FSERROR);
 }
 
 /*
@@ -288,7 +288,7 @@ comparefat(boot, first, second, fatnum)
 	for (cl = CLUST_FIRST; cl < boot->NumClusters; cl++)
 		if (first[cl].next != second[cl].next)
 			ret |= clustdiffer(cl, &first[cl].next, &second[cl].next, fatnum);
-	return ret;
+	return (ret);
 }
 
 void
@@ -420,7 +420,7 @@ checkfat(boot, fat)
 		ret |= conf;
 	}
 
-	return ret;
+	return (ret);
 }
 
 /*
@@ -442,9 +442,9 @@ writefat(fs, boot, fat)
 	buffer = malloc(fatsz = boot->FATsecs * boot->BytesPerSec);
 	if (buffer == NULL) {
 		perror("No space for FAT");
-		return FSFATAL;
+		return (FSFATAL);
 	}
-	memset(buffer, 0, fatsz);
+	(void)memset(buffer, 0, fatsz);
 	boot->NumFree = 0;
 	buffer[0] = (u_char)fat[0].length;
 	buffer[1] = (u_char)(fat[0].length >> 8);
@@ -480,7 +480,7 @@ writefat(fs, boot, fat)
 		}
 	}
 	free(buffer);
-	return ret;
+	return (ret);
 }
 
 /*
@@ -512,5 +512,5 @@ checklost(dosfs, boot, fat)
 	}
 	finishlf();
 	
-	return mod;
+	return (mod);
 }

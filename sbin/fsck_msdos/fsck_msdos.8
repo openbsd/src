@@ -1,5 +1,5 @@
-.\"	$OpenBSD: fsck_msdos.8,v 1.3 1996/10/08 01:20:23 michaels Exp $
-.\"	$NetBSD: fsck_msdos.8,v 1.1 1996/05/14 17:39:35 ws Exp $
+.\"	$OpenBSD: fsck_msdos.8,v 1.4 1997/03/02 05:25:55 millert Exp $
+.\"	$NetBSD: fsck_msdos.8,v 1.4 1996/10/17 20:41:24 cgd Exp $
 .\"
 .\" Copyright (C) 1995 Wolfgang Solfrank
 .\" Copyright (c) 1995 Martin Husemann
@@ -41,14 +41,23 @@
 .Sh SYNOPSIS
 .Nm fsck_msdos
 .Fl p
+.Op Fl f
 .Ar filesystem
 .Ar ...
 .Nm fsck_msdos
-.Op Fl y
-.Op Fl n
+.Op Fl fny
 .Ar filesystem
 .Ar ...
 .Sh DESCRIPTION
+.Pp
+The 
+.Nm
+utility verifies and repairs
+.Tn FAT
+filesystems (more commonly known as
+.Tn DOS
+filesystems).
+.Pp
 The first form of
 .Nm
 preens the specified filesystems.
@@ -57,21 +66,45 @@ It is normally started by
 run from
 .Pa /etc/rc
 during automatic reboot, when a FAT filesystem is detected.
+When preening file systems,
+.Nm
+will fix common inconsistencies non-interactively.  If
+more serious problems are found,
+.Nm
+does not try to fix them, indicates that it was not
+successful, and exits.
 .Pp
-.Nm fsck_msdos
-verifies a FAT filesystem (more commonly known as DOS filesystem) and tries
-to recover it from inconsistencies.
+The second form of
+.Nm
+checks the specified file systems and tries to repair all
+detected inconsistencies, requesting confirmation before
+making any changes.
 .Pp
-Options are:
+The options are as follows:
 .Bl -hang -offset indent
-.It Em -y
-assume yes as answer to all questions.
-.It Em -n
-assume no as answer to all questions.
+.It Fl f
+This option is ignored by
+.Nm fsck_msdos ,
+and is present only for compatibility with programs that
+check other file system types for consistency, such as
+.Xr fsck_ffs 8 .
+.It Fl n
+Causes
+.Nm
+to assume no as the answer to all operator
+questions, except
+.Dq CONTINUE? .
+.It Fl p
+Preen the specified filesystems.
+.It Fl y
+Causes
+.Nm
+to assume yes as the answer to all operator questions.
 .El
 .Sh SEE ALSO
 .Xr fsck 8 ,
+.Xr fsck_ffs 8 ,
 .Xr mount_msdos 8
 .Sh BUGS
-.Nm fsck_msdos
+.Nm Fsck_msdos
 is still under construction.

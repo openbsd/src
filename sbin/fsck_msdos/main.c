@@ -1,5 +1,5 @@
-/*	$OpenBSD: main.c,v 1.6 1997/02/28 08:38:26 millert Exp $	*/
-/*	$NetBSD: main.c,v 1.1.4.1 1996/05/31 18:41:54 jtc Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1997/03/02 05:25:56 millert Exp $	*/
+/*	$NetBSD: main.c,v 1.8 1996/10/17 20:29:53 cgd Exp $	*/
 
 /*
  * Copyright (C) 1995 Wolfgang Solfrank
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/02/28 08:38:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.7 1997/03/02 05:25:56 millert Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -57,12 +57,13 @@ int alwaysyes;		/* assume "yes" for all questions */
 int preen;		/* set when preening */
 int rdonly;		/* device is opened read only (supersedes above) */
 
-char *fname;		/* filesystem currently checked */
-	
+static void usage __P((void));
+int main __P((int, char **));
+
 static void
 usage()
 {
-	errexit("Usage: fsck_msdos [-pny] filesystem ... \n");
+	errexit("Usage: fsck_msdos [-fnpy] filesystem ... \n");
 }
 
 int
@@ -74,12 +75,17 @@ main(argc, argv)
 	int ret = 0, erg;
 	int ch;
 
-	while ((ch = getopt(argc, argv, "vpynf")) != -1) {
+	while ((ch = getopt(argc, argv, "pynf")) != -1) {
 		switch (ch) {
+		case 'f':
+			/* Ignore for consistency with fsck_ffs */
+			break;
+
 		case 'n':
 			alwaysno = 1;
 			alwaysyes = preen = 0;
 			break;
+
 		case 'y':
 			alwaysyes = 1;
 			alwaysno = preen = 0;
@@ -90,9 +96,6 @@ main(argc, argv)
 			alwaysyes = alwaysno = 0;
 			break;
 
-		case 'f':
-			break;
-			
 		default:
 			usage();
 			break;
@@ -103,91 +106,14 @@ main(argc, argv)
 
 	if (!argc)
 		usage();
-	
+
 	while (argc-- > 0) {
-		erg = checkfilesys(fname = *argv++);
+		setcdevname(*argv, preen);
+		erg = checkfilesys(*argv++);
 		if (erg > ret)
 			ret = erg;
 	}
 	exit(ret);
-}
-
-/*VARARGS*/
-void
-#if __STDC__
-errexit(const char *fmt, ...)
-#else
-errexit(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-	
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	vprintf(fmt, ap);
-	va_end(ap);
-	exit(8);
-}
-
-/*VARARGS*/
-void
-#if __STDC__
-pfatal(const char *fmt, ...)
-#else
-pfatal(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-	
-	if (preen)
-		printf("%s: ", fname);
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	vprintf(fmt, ap);
-	va_end(ap);
-	printf("\n");
-	if (preen)
-		exit(8);
-}
-
-/*VARARGS*/
-void
-#if __STDC__
-pwarn(const char *fmt, ...)
-#else
-pwarn(fmt, va_alist)
-	char *fmt;
-	va_dcl
-#endif
-{
-	va_list ap;
-	
-	if (preen)
-		printf("%s: ", fname);
-#if __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	vprintf(fmt, ap);
-	va_end(ap);
-}
-
-void
-perror(s)
-	const char *s;
-{
-	pfatal("%s (%s)", s, strerror(errno));
 }
 
 /*VARARGS*/
@@ -202,7 +128,7 @@ ask(def, fmt, va_alist)
 #endif
 {
 	va_list ap;
-	
+
 	char prompt[256];
 	int c;
 
@@ -211,7 +137,7 @@ ask(def, fmt, va_alist)
 			def = 0;
 		if (def)
 			printf("FIXED\n");
-		return def;
+		return (def);
 	}
 
 #if __STDC__
@@ -222,7 +148,7 @@ ask(def, fmt, va_alist)
 	vsnprintf(prompt, sizeof(prompt), fmt, ap);
 	if (alwaysyes || rdonly) {
 		printf("%s? %s\n", prompt, rdonly ? "no" : "yes");
-		return !rdonly;
+		return (!rdonly);
 	}
 	do {
 		printf("%s? [yn] ", prompt);
@@ -230,7 +156,7 @@ ask(def, fmt, va_alist)
 		c = getchar();
 		while (c != '\n' && getchar() != '\n')
 			if (feof(stdin))
-				return 0;
+				return (0);
 	} while (c != 'y' && c != 'Y' && c != 'n' && c != 'N');
-	return c == 'y' || c == 'Y';
+	return (c == 'y' || c == 'Y');
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.4 1997/02/28 08:36:10 millert Exp $	*/
+/*	$OpenBSD: check.c,v 1.5 1997/03/02 05:25:52 millert Exp $	*/
 /*	$NetBSD: check.c,v 1.6 1997/01/03 14:32:48 ws Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
 
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: check.c,v 1.4 1997/02/28 08:36:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: check.c,v 1.5 1997/03/02 05:25:52 millert Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -74,12 +74,12 @@ checkfilesys(fname)
 	
 	if (dosfs < 0) {
 		perror("Can't open");
-		return 8;
+		return (8);
 	}
 
 	if (readboot(dosfs, &boot) != FSOK) {
-		close(dosfs);
-		return 8;
+		(void)close(dosfs);
+		return (8);
 	}
 
 	if (!preen)
@@ -93,8 +93,8 @@ checkfilesys(fname)
 		if (mod & FSFATAL) {
 			if (fat)
 				free(fat);
-			close(dosfs);
-			return 8;
+			(void)close(dosfs);
+			return (8);
 		}
 			
 		if (fat == NULL)
@@ -104,8 +104,8 @@ checkfilesys(fname)
 			free(currentFat);
 			if (mod & FSFATAL) {
 				free(fat);
-				close(dosfs);
-				return 8;
+				(void)close(dosfs);
+				return (8);
 			}
 		}
 	}
@@ -116,16 +116,16 @@ checkfilesys(fname)
 	mod |= checkfat(&boot, fat);
 	if (mod & FSFATAL) {
 		free(fat);
-		close(dosfs);
-		return 8;
+		(void)close(dosfs);
+		return (8);
 	}
 		
 	if (mod & FSFATMOD)
 		mod |= writefat(dosfs, &boot, fat); /* delay writing fats?	XXX */
 	if (mod & FSFATAL) {
 		free(fat);
-		close(dosfs);
-		return 8;
+		(void)close(dosfs);
+		return (8);
 	}
 
 	if (!preen)
@@ -133,16 +133,16 @@ checkfilesys(fname)
 
 	if (resetDosDirSection(&boot) & FSFATAL) {
 		free(fat);
-		close(dosfs);
-		return 8;
+		(void)close(dosfs);
+		return (8);
 	}
 
 	mod |= handleDirTree(dosfs, &boot, fat);
 	if (mod & FSFATAL) {
 		finishDosDirSection();
 		free(fat);
-		close(dosfs);
-		return 8;
+		(void)close(dosfs);
+		return (8);
 	}
 	
 	if (!preen)
@@ -152,7 +152,7 @@ checkfilesys(fname)
 	
 	finishDosDirSection();
 	free(fat);
-	close(dosfs);
+	(void)close(dosfs);
 
 	if (boot.NumBad)
 		pwarn("%d files, %d free (%d clusters), %d bad (%d clusters)\n",
@@ -164,10 +164,10 @@ checkfilesys(fname)
 		      boot.NumFiles,
 		      boot.NumFree * boot.ClusterSize / 1024, boot.NumFree);
 	if (mod & (FSFATAL | FSERROR))
-		return 8;
+		return (8);
 	if (mod) {
 		pwarn("\n***** FILE SYSTEM WAS MODIFIED *****\n");
-		return 4;
+		return (4);
 	}
-	return 0;
+	return (0);
 }
