@@ -544,7 +544,7 @@ for the original directory, then the command.
 The @var{local-directory} is relative to
 the top level at which the command is occurring (i.e. the last
 @code{Directory} which is sent before the command);
-to indicate that top level, @samp{.} should be send for
+to indicate that top level, @samp{.} should be sent for
 @var{local-directory}.
 
 Here is an example of where a client gets @var{repository} and
@@ -919,7 +919,6 @@ directory.
 @itemx tag \n
 @itemx status \n
 @itemx log \n
-@itemx remove \n
 @itemx admin \n
 @itemx history \n
 @itemx watchers \n
@@ -1060,6 +1059,23 @@ directories, as described above), use @samp{.} for
 @var{local-directory}.  Specifying another string for
 @var{local-directory} may not get an error, but it will get you strange
 @code{Checked-in} responses from the buggy servers.
+
+@item remove \n
+Response expected: yes.  Remove a file.  This uses any
+previous @code{Argument}, @code{Directory}, @code{Entry}, or
+@code{Modified} requests, if they have been sent.  The
+last @code{Directory} sent specifies the working directory at the time
+of the operation.
+
+Note that this request does not actually do anything to the repository;
+the only effect of a successful @code{remove} request is to supply the
+client with a new entries line containing @samp{-} to indicate a removed
+file.  In fact, the client probably could perform this operation without
+contacting the server, although using @code{remove} may cause the server
+to perform a few more checks.
+
+The client sends a subsequent @code{ci} request to actually record the
+removal in the repository.
 
 @item watch-on \n
 @itemx watch-off \n

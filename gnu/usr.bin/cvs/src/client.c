@@ -78,8 +78,19 @@ static Key_schedule sched;
 
 #ifdef HAVE_GSSAPI
 
+#ifdef HAVE_GSSAPI_H
+#include <gssapi.h>
+#endif
+#ifdef HAVE_GSSAPI_GSSAPI_H
 #include <gssapi/gssapi.h>
+#endif
+#ifdef HAVE_GSSAPI_GSSAPI_GENERIC_H
 #include <gssapi/gssapi_generic.h>
+#endif
+
+#ifndef HAVE_GSS_C_NT_HOSTBASED_SERVICE
+#define GSS_C_NT_HOSTBASED_SERVICE gss_nt_service_name
+#endif
 
 /* This is needed for GSSAPI encryption.  */
 static gss_ctx_id_t gcontext;
@@ -949,17 +960,24 @@ call_in_directory (pathname, func, data)
 	    error (1, errno, "could not chdir to %s", toplevel_wd);
 	newdir = 0;
 
-	/* Create the CVS directory at the top level if needed.
-	   The isdir seems like an unneeded system call, but it *does*
-	   need to be called both if the CVS_CHDIR below succeeds (e.g.
-	   "cvs co .") or if it fails (e.g. basicb-1a in testsuite).  */
+	/* Create the CVS directory at the top level if needed.  The
+	   isdir seems like an unneeded system call, but it *does*
+	   need to be called both if the CVS_CHDIR below succeeds
+	   (e.g.  "cvs co .") or if it fails (e.g. basicb-1a in
+	   testsuite).  We only need to do this for the "." case,
+	   since the server takes care of forcing this directory to be
+	   created in all other cases.  If we don't create CVSADM
+	   here, the call to Entries_Open below will fail.  FIXME:
+	   perhaps this means that we should change our algorithm
+	   below that calls Create_Admin instead of having this code
+	   here? */
 	if (/* I think the reposdirname_absolute case has to do with
 	       things like "cvs update /foo/bar".  In any event, the
 	       code below which tries to put toplevel_repos into
 	       CVS/Repository is almost surely unsuited to
 	       the reposdirname_absolute case.  */
 	    !reposdirname_absolute
-
+	    && (strcmp (dir_name, ".") == 0)
 	    && ! isdir (CVSADM))
 	{
 	    char *repo;
@@ -2909,19 +2927,19 @@ handle_wrapper_rcs_option (args, len)
        as free-form as it looks.  */
     p = strchr (args, ' ');
     if (p == NULL)
-	goto error;
+	goto handle_error;
     if (*++p != '-'
 	|| *++p != 'k'
 	|| *++p != ' '
 	|| *++p != '\'')
-	goto error;
+	goto handle_error;
     if (strchr (p, '\'') == NULL)
-	goto error;
+	goto handle_error;
 
     /* Add server-side cvswrappers line to our wrapper list. */
     wrap_add (args, 0);
     return;
- error:
+ handle_error:
     error (0, errno, "protocol error: ignoring invalid wrappers %s", args);
 }
 
@@ -3861,7 +3879,8 @@ connect_to_gserver (sock, hostinfo)
     sprintf (buf, "cvs@%s", hostinfo->h_name);
     tok_in.length = strlen (buf);
     tok_in.value = buf;
-    gss_import_name (&stat_min, &tok_in, gss_nt_service_name, &server_name);
+    gss_import_name (&stat_min, &tok_in, GSS_C_NT_HOSTBASED_SERVICE,
+		     &server_name);
 
     tok_in_ptr = GSS_C_NO_BUFFER;
     gcontext = GSS_C_NO_CONTEXT;

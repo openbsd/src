@@ -15,16 +15,9 @@ on another machine (a Unix box) which runs a complete port of CVS.
 Most (all?) work to date has been done on OpenVMS/AXP 6.2.  Other VMS
 variants might work too.
 
-You will also need GNU patch installed on your system.  Here's a list
-of ftp servers which have VMS GNU resources, taken from
-
-    ftp://prep.ai.mit.edu/pub/gnu/vms.README
-
-    mvb.saic.com
-    wuarchive.wustl.edu
-    ftp.wku.edu
-    ftp.spc.edu
-    ftp.stacken.kth.se
+Provided that both your client and your server are recent (for
+example, CVS 1.9.27 or later), you shouldn't need GNU patch or any
+other executables other than CVS.EXE.
 
 Please send bug reports to bug-cvs@gnu.org.
 

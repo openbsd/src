@@ -10,13 +10,13 @@ Prefix: /usr
 %description
 CVS is a version control system, which allows you to keep old versions
 of files (usually source code), keep a log of who, when, and why
-changes occurred, etc., like RCS or SCCS.  It handles multiple
-developers, multiple directories, triggers to enable/log/control
-various operations, and can work over a wide area network.  The
-following tasks are not included; they can be done in conjunction with
-CVS but will tend to require some script-writing and software other
-than CVS: bug-tracking, build management (that is, make and make-like
-tools), and automated testing.
+changes occurred, etc., like RCS or SCCS.  Unlike the simpler systems,
+CVS does not just operate on one file at a time or one directory at a
+time, but operates on hierarchical collections of directories
+consisting of version controlled files.  CVS helps to manage releases
+and to control the concurrent editing of source files among multiple
+authors.  CVS allows triggers to enable/log/control various
+operations and works well over a wide area network.
 
 %prep
 %setup

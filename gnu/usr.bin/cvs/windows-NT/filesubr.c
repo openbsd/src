@@ -855,3 +855,50 @@ expand_wild (argc, argv, pargc, pargv)
     *pargc = new_argc;
     *pargv = new_argv;
 }
+
+static void check_statbuf (const char *file, struct stat *sb)
+{
+    /* Win32 processes file times in a 64 bit format
+       (see Win32 functions SetFileTime and GetFileTime).
+       If the file time on a file doesn't fit into the
+       32 bit time_t format, then stat will set that time
+       to -1.  This would be OK, except that functions
+       like ctime() don't check for validity.  So what we
+       do here is to give a error on -1.  A cleaner solution
+       might be to change CVS's interfaces to return a time
+       in RCS format (for example), and then implement it
+       on Win32 via GetFileTime, but that would be a lot of
+       hair and I'm not sure there is much payoff.  */
+    if (sb->st_mtime == (time_t) -1)
+	error (1, 0, "invalid modification time for %s", file);
+    if (sb->st_ctime == (time_t) -1)
+	/* I'm not sure what this means on windows.  It
+	   might be a creation time (unlike unix)....  */
+	error (1, 0, "invalid ctime for %s", file);
+    if (sb->st_atime == (time_t) -1)
+	error (1, 0, "invalid access time for %s", file);
+}
+
+int
+wnt_stat (const char *file, struct stat *sb)
+{
+    int retval;
+
+    retval = stat (file, sb);
+    if (retval < 0)
+	return retval;
+    check_statbuf (file, sb);
+    return retval;
+}
+
+int
+wnt_lstat (const char *file, struct stat *sb)
+{
+    int retval;
+
+    retval = lstat (file, sb);
+    if (retval < 0)
+	return retval;
+    check_statbuf (file, sb);
+    return retval;
+}

@@ -1,3 +1,45 @@
+Sun Jul 26 02:42:20 1998  Noel Cragg  <noel@swish.red-bean.com>
+
+	* cvs.texinfo (config): TopLevelAdmin variable.
+
+	* cvsclient.texi (Requests): fix typo.
+
+1998-07-14  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvsclient.texi (Requests): "remove" is like "add" in the sense
+	that it is the "ci" request which does most of the work.
+
+1998-06-23  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Excluding directories): Fix order of
+	"!first-dir/sdir" and "first-dir" to match what CVS actually
+	accepts.  Reported by Tim McIntosh of sterling.com.
+
+1998-06-09  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Using keywords): Rewrite to be less specific to
+	source code in C.  The old text was worse than that; it was
+	specific to certain versions of GCC (not even current GCC's, I
+	don't think) (reported most recently by Mitchell Perilstein;
+	if memory serves by others before that).
+
+1998-06-08  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (Concurrency): Also mention #cvs.lock.  Don't
+	mention #cvs.tfl; it is quite old (before CVS 1.5).
+	(Locks, Backing up, Concurrency): Add more index entries.
+
+1998-06-03  Ian Lance Taylor  <ian@cygnus.com>
+
+	* cvs.texinfo (Tracking sources): Clarify that the vendor branch
+	is only made the head revision when you import a new file, not any
+	time you import a file.
+
+1998-05-23  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* cvs.texinfo (What is CVS?): info-cvs-request is now at gnu.org
+	and is no longer handled by a human (hallelujah).
+
 1998-05-12  Jim Meyering  <meyering@ascend.com>
 
 	* cvs.texinfo: Add an info dir entry.

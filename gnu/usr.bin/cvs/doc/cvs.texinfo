@@ -260,20 +260,12 @@ http://www.loria.fr/~molli/cvs-index.html
 @cindex Mailing list
 @cindex List, mailing list
 @cindex Newsgroups
-@c Be careful in editing this--it is worded so that
-@c the long -request address is in the middle of a
-@c line, thus avoiding overfull hboxes.
 There is a mailing list, known as @w{@code{info-cvs}},
 devoted to @sc{cvs}.  To subscribe or
 unsubscribe
-@c could add "to the mailing list,"
-send a message to
-@c or "write to"
-@w{@code{info-cvs-request@@prep.ai.mit.edu}}.  Please
-be specific about your email address.  As of May 1996,
-subscription requests are handled by a busy human
-being, so you cannot expect to be added or removed
-immediately.  If you prefer a usenet group, the right
+write to
+@w{@code{info-cvs-request@@gnu.org}}.
+If you prefer a usenet group, the right
 group is @code{comp.software.config-mgmt} which is for
 @sc{cvs} discussions (along with other configuration
 management systems).  In the future, it might be
@@ -1197,6 +1189,10 @@ later; for details see @ref{Watches Compatibility}.
 @node Locks
 @subsection CVS locks in the repository
 
+@cindex #cvs.rfl, technical details
+@cindex #cvs.wfl, technical details
+@cindex #cvs.lock, technical details
+@cindex locks, cvs, technical details
 For an introduction to CVS locks focusing on
 user-visible behavior, see @ref{Concurrency}.  The
 following section is aimed at people who are writing
@@ -1207,6 +1203,7 @@ described here, like @dfn{read lock}, @dfn{write lock},
 and @dfn{deadlock}, you might consult the literature on
 operating systems or databases.
 
+@cindex #cvs.tfl
 Any file in the repository with a name starting
 with @file{#cvs.rfl} is a read lock.  Any file in
 the repository with a name starting with
@@ -1796,6 +1793,8 @@ in the repository; for the most part it is possible to
 back them up just like any other files.  However, there
 are a few issues to consider.
 
+@cindex locks, cvs, and backups
+@cindex #cvs.rfl, and backups
 The first is that to be paranoid, one should either not
 use @sc{cvs} during the backup, or have the backup
 program lock @sc{cvs} while doing the backup.  To not
@@ -5534,7 +5533,7 @@ newsgroup.
 @node Concurrency
 @section Several developers simultaneously attempting to run CVS
 
-@cindex locks, cvs
+@cindex locks, cvs, introduction
 @c For a discussion of *why* CVS creates locks, see
 @c the comment at the start of src/lock.c
 If several developers try to run @sc{cvs} at the same
@@ -5544,6 +5543,9 @@ time, one may get the following message:
 [11:43:23] waiting for bach's lock in /usr/local/cvsroot/foo
 @end example
 
+@cindex #cvs.rfl, removing
+@cindex #cvs.wfl, removing
+@cindex #cvs.lock, removing
 @sc{cvs} will try again every 30 seconds, and either
 continue with the operation or print the message again,
 if it still needs to wait.  If a lock seems to stick
@@ -5552,8 +5554,8 @@ holding the lock and ask them about the cvs command
 they are running.  If they aren't running a cvs
 command, look in the repository directory mentioned in
 the message and remove files which they own whose names
-start with @file{#cvs.tfl}, @file{#cvs.rfl}, or
-@file{#cvs.wfl}.
+start with @file{#cvs.rfl},
+@file{#cvs.wfl}, or @file{#cvs.lock}.
 
 Note that these locks are to protect @sc{cvs}'s
 internal data structures and have no relationship to
@@ -6215,36 +6217,21 @@ relevant text string, such as @code{$@asis{Id}$}, inside the
 file, and commit the file.  @sc{cvs} will automatically
 expand the string as part of the commit operation.
 
-@need 800
-It is common to embed @code{$@asis{}Id$} string in the
-C source code.  This example shows the first few lines
-of a typical file, after keyword substitution has been
-performed:
+It is common to embed the @code{$@asis{}Id$} string in
+the source files so that it gets passed through to
+generated files.  For example, if you are managing
+computer program source code, you might include a
+variable which is initialized to contain that string.
+Or some C compilers may provide a @code{#pragma ident}
+directive.  Or a document management system might
+provide a way to pass a string through to generated
+files.
 
-@c Hmm.  Someone says that
-@c "static const char rcsid[] = "foo"
-@c is a simpler way to shut up GCC.  But I really
-@c suspect that we should be avoiding specifics in general
-@c (what about Java, Ada, and who knows how many other
-@c languages?  What about #pragma ident and #ident and
-@c other non-GCC C compilers?  What about the VMS help
-@c system and other systems which take text and convert
-@c them to a generated file?
-@example
-static char *rcsid="$@asis{}Id: samp.c,v 1.5 1993/10/19 14:57:32 ceder Exp $";
-/* @r{The following lines will prevent @code{gcc} version 2.@var{x}}
-   @r{from issuing an "unused variable" warning}. */
-#if __GNUC__ == 2
-#define USE(var) static void * use_##var = (&use_##var, (void *) &var)
-USE (rcsid);
-#endif
-@end example
-
-Even though a clever optimizing compiler could remove
-the unused variable @code{rcsid}, most compilers tend
-to include the string in the binary.  Some compilers
-have a @code{#pragma} directive to include literal text
-in the binary.
+@c Would be nice to give an example, but doing this in
+@c portable C is not possible and the problem with
+@c picking any one language (VMS HELP files, Ada,
+@c troff, whatever) is that people use CVS for all
+@c kinds of files.
 
 @cindex Ident (shell command)
 The @code{ident} command (which is part of the @sc{rcs}
@@ -6456,7 +6443,7 @@ made by the vendor, you commit it on the vendor branch
 and copy the modifications onto the main trunk.
 
 Use the @code{import} command to create and update
-the vendor branch.  After a successful @code{import}
+the vendor branch.  When you import a new file,
 the vendor branch is made the `head' revision, so
 anyone that checks out a copy of the file gets that
 revision.  When a local modification is committed it is
@@ -10956,12 +10943,16 @@ before the name of each directory to be excluded.
 For example, if the modules file contains:
 
 @example
-exmodule -a first-dir !first-dir/sdir
+exmodule -a !first-dir/sdir first-dir
 @end example
 
 then checking out the module @samp{exmodule} will check
 out everything in @samp{first-dir} except any files in
 the subdirectory @samp{first-dir/sdir}.
+@c Note that the "!first-dir/sdir" sometimes must be listed
+@c before "first-dir".  That seems like a probable bug, in which
+@c case perhaps it should be fixed (to allow either
+@c order) rather than documented.  See modules4 in testsuite.
 
 @node Module options
 @appendixsubsec Module options
@@ -12080,6 +12071,24 @@ symbolic links, file permissions and ownerships in the
 repository.  The default value is @samp{no}.
 @xref{Special Files} for the full implications of using
 this keyword.
+
+@cindex TopLevelAdmin, in CVSROOT/config
+@item TopLevelAdmin=@var{value}
+Modify the @samp{checkout} command to create a
+@samp{CVS} directory at the top level of the new
+working directory, in addition to @samp{CVS}
+directories created within checked-out directories.
+The default value is @samp{no}.
+
+This option is useful if you find yourself performing
+many commands at the top level of your working
+directory, rather than in one of the checked out
+subdirectories.  The @samp{CVS} directory created there
+will mean you don't have to specify @samp{CVSROOT} for
+each command.  It also provides a place for the
+@samp{CVS/Template} file (@pxref{Working directory
+storage}).
+
 @end table
 
 @c ---------------------------------------------------------------------

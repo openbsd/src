@@ -17,9 +17,9 @@ can set the TESTDIR environment variable to the desired location
 before running them.
 
 You will probably need GNU expr, which is part of the GNU sh-utils
-package.  You may also need sort from the GNU textutils; Solaris 2.6
+package.  You may also need sort from the GNU textutils; Solaris
 in particular has been reported to have a sort program which does not
-behave the way that the testsuite expects (with Solaris 2.6, lines
+behave the way that the testsuite expects (with Solaris, lines
 starting with tabs sort before blank lines).  These programs are just
 for running the tests; CVS itself doesn't require expr or sort.
 

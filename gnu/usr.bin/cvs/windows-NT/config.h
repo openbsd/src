@@ -235,6 +235,10 @@
 /* Under Windows NT, mkdir only takes one argument.  */
 #define CVS_MKDIR wnt_mkdir
 extern int wnt_mkdir (const char *PATH, int MODE);
+#define CVS_STAT wnt_stat
+extern int wnt_stat ();
+#define CVS_LSTAT wnt_lstat
+extern int wnt_lstat ();
 
 /* This function doesn't exist under Windows NT; we
    provide a stub.  */

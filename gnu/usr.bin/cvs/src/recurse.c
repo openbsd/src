@@ -13,6 +13,9 @@
 #include "fileattr.h"
 #include "edit.h"
 
+#ifdef CLIENT_SUPPORT
+static int do_argument_proc PROTO((Node * p, void *closure));
+#endif
 static int do_dir_proc PROTO((Node * p, void *closure));
 static int do_file_proc PROTO((Node * p, void *closure));
 static void addlist PROTO((List ** listp, char *key));
@@ -57,6 +60,24 @@ struct frame_and_entries {
     struct recursion_frame *frame;
     List *entries;
 };
+
+#ifdef CLIENT_SUPPORT
+/* This is a callback to send "Argument" commands to the server in the
+   case we've done a "cvs update" or "cvs commit" in a top-level
+   directory where there is no CVSADM directory. */
+
+static int
+do_argument_proc (p, closure)
+    Node *p;
+    void *closure;
+{
+    char *dir = p->key;
+    send_to_server ("Argument ", 0);
+    send_to_server (dir, 0);
+    send_to_server ("\012", 1);
+    return 0;
+}
+#endif
 
 /* Start a recursive command.
 
@@ -175,6 +196,19 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 		       "there is no version here; run '%s checkout' first",
 		       program_name);
 	    }
+#ifdef CLIENT_SUPPORT
+	    else if (client_active && server_started)
+	    {
+		/* In the the case "cvs update foo bar baz", a call to
+		   send_file_names in update.c will have sent the
+		   appropriate "Argument" commands to the server.  In
+		   this case, that won't have happened, so we need to
+		   do it here.  While this example uses "update", this
+		   generalizes to other commands. */
+
+		err += walklist (dirlist, do_argument_proc, NULL);
+	    }
+#endif
 	}
 	else
 	    addlist (&dirlist, ".");

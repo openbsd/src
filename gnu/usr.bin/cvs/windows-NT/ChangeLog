@@ -1,3 +1,23 @@
+1998-07-01  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* startserver.c (wnt_shutdown_server): Check for errors from close().
+
+1998-06-30  Noel Cragg
+
+    * startserver.c: add a global variable which notes if we've opened
+	a socket.  Since the code in client.c will call wnt_shutdown_server
+	regardless of which client method we've selected, we need to make
+	sure and not call shutdown or closesocket on a pipe (it won't work).
+	(wnt_shutdown_server): use the new global to decide whether or not
+	to call socket routines or simply use close.
+	
+
+1998-06-11  Jim Kingdon
+
+	* config.h (CVS_STAT, CVS_LSTAT): Define.
+	* filesubr.c, config.h (wnt_stat, wnt_lstat, check_statbuf):
+	New functions.
+
 1998-04-09  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* filesubr.c (link_file): Remove; no longer used.

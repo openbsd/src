@@ -1,4 +1,358 @@
+Thu Aug 13 11:15:24 1998  Noel Cragg  <noel@swish.red-bean.com>
+
+	* version.c: Change version number to 1.10 and name to `Halibut'.
+
+	* sanity.sh (rcslib): new tests to check behavior of symlinks in
+ 	the repository.
+
+Wed Aug 12 15:39:38 1998  Noel Cragg  <noel@swish.red-bean.com>
+
+	* main.c (lookup_command_attribute): the `annotate' command
+ 	shouldn't require access to the repository.  Add comment about
+ 	commands that do not use the working directory.
+
+Mon Aug 10 10:26:38 1998  Noel Cragg  <noel@swish.red-bean.com>
+
+	* version.c: Change version number to 1.9.30.
+
+Thu Aug  6 17:44:50 1998  Noel Cragg  <noel@swish.red-bean.com>
+
+	* server.c (serve_rdiff): change the name of the command (for
+ 	error reporting, etc.) from "patch" to "rdiff."
+	(serve_remove): rename from "cvsremove" to "remove."
+
+	* main.c (lookup_command_attribute): the `rdiff' command shouldn't
+ 	require write access to the repository.
+
+1998-08-06  David Masterson of kla-tencor.com
+	and Jim Kingdon
+
+	* commit.c (commit_filesdoneproc): Don't call strlen ("CVSROOT")
+	from within the assert statement.  Apparently HP's cc compiler on
+	HPUX 10.20 has trouble with that.
+
+1998-08-06  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* rcs.c (RCS_checkin): When adding branch, if there is a lock on
+	the branchpoint owned by someone else, leave it alone.  This
+	restores CVS 1.9 (RCS 5.7) behavior, fixing a core dump.
+	* sanity.sh (reserved): New tests reserved-16 through reserved-19
+	test for this fix.
+
+1998-08-05  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (unedit-without-baserev): Use ${QUESTION} not "?".
+	This makes it work with GNU expr 1.12 as well as 1.16.
+
+Sun Aug  2 20:27:44 1998  Noel Cragg  <noel@swish.red-bean.com>
+
+	* mkmodules.c: add comment about TopLevelAdmin for the initial
+ 	contents of CVSROOT/config.
+
+1998-07-29  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* rcs.c (RCS_checkin): Only try to call xreadlink if HAVE_READLINK
+	is defined.
+
+Tue Jul 28 19:33:08 1998  Noel Cragg  <noel@swish.red-bean.com>
+
+	* version.c: Change version number to 1.9.29.
+
+	* rcs.c (RCS_checkin): add code to follow symbolic links in the
+ 	repository.
+
+Sun Jul 26 05:14:41 1998  Noel Cragg  <noel@swish.red-bean.com>
+
+	* This set of changes reverts the code to pre-1.9.2 behavior and
+ 	does not create CVS directories at top-level (except for the
+ 	obvious "cvs co .").  Added a new configuration option to switch
+ 	between 1.9 and 1.9.2 behavior.
+	
+	* recurse.c (do_argument_proc): new function.
+	(start_recursion): in the case that we've done a command from
+ 	top-level but have no CVS directory there, the behavior should be
+ 	the same as "cvs <cmd> dir1 dir2 dir3...".  Make sure that the
+ 	appropriate "Argument" commands are sent to the server by calling
+ 	walklist with do_argument_proc.
+ 
+	* client.c (call_in_directory): only create the top-level CVS
+ 	directory when we're checking out "." explicitly.  The server will
+ 	force creation of this directory in all other cases.
+
+	* checkout.c (checkout_proc): only generate the top-level
+ 	directory when the TopLevelAdmin=yes.  Also send a message to the
+ 	client to do the same.
+
+	* parseinfo.c (parse_config): handle TopLevelAdmin option.  Set
+ 	top_level_admin.
+
+	* main.c: add new variable top_level_admin.
+	* cvs.h: add extern definition for above.
+
+	* sanity.sh: since we're reverting to pre 1.9.2 behavior for
+ 	top-level CVS directories, I needed to make changes to a bunch of
+ 	tests that made assumptions about said directories.
+	(preamble): make sure to add read and execute access to everything
+ 	in TMPDIR before removing, since some tests make things read-only.
+	(basicb-1a, basicb-1b, basicb-9a, basicb-9b): use dotest_fail
+ 	because these tests check for the non-existant top-level CVS
+ 	directory.
+	(basicc-3, emptydir-6, emptydir-7, crerepos-6): use "rm -rf" so it
+ 	won't complain when trying to remove the non-existant top-level
+ 	CVS directory.
+	(106.5): remove imported-f2-orig.tmp.
+	(modules2-10, emptydir-4, abspath-1ba, abspath-1bb): cd into the
+ 	directory where files exist before using the "add" command so cvs
+ 	can find CVSROOT in CVS/Root.
+	(cvsadm-2): look at a different CVS/Repository file, since the
+ 	top-level one doesn't exist.
+	(taginfo-3): create the directory in the repository directly
+ 	rather than relying on the fact that the top-level CVS directory
+ 	was created in a previous test.
+	(serverpatch-6): update first-dir explicity, rather than relying
+ 	on the non-existant top-level CVS/Entries file.
+	(crerepos-18): look at CVS/Repository in a subdirectory rather
+ 	than in the non-existant top-level CVS directory.
+	(toplevel): add code to set TopLevelAdmin=yes.
+	(toplevel2): new tests -- same as toplevel, but TopLevelAdmin=no.
+
+1998-07-21  Jim Meyering  <meyering@ascend.com>
+
+	* rcs.c (RCS_checkout): Hoist frees of rev and value.
+	Warn and return 1 in several cases rather than exiting via
+	`error (1, ...'.  The latter could abort a multi-file commit
+	in mid-stream, leaving stale locks in the repository.
+
+1998-07-16  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* build_src.com (rcscmds.c): Also look for include files in
+	[-.diff], just like Ian's 1998-06-18 change to Makefile.in
+
+1998-07-14  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* tag.c (pretag_proc), rtag.c (pretag_proc): Don't pass RUN_REALLY
+	to run_exec.  This means that taginfo does not get executed if the
+	global -n option is specified.  Which makes it like loginfo, -i,
+	-e, -o, -t, -u in modules, editinfo, and verifymsg and unlike
+	commitinfo.  The old behavior was pretty bad in the sense that it
+	doesn't provide any way to log only the tags which actually
+	happen.
+	* sanity.sh (taginfo): New tests taginfo-11 to taginfo-13, for this.
+
+1998-07-12  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (ann-id): Write the test so that it tests for the
+	current (buggy) behavior.
+
+	* sanity.sh (taginfo): Also clean up cvsroot/first-dir.
+
+1998-07-12  Jim Meyering  <meyering@ascend.com>
+
+	* sanity.sh (ann-id): New (currently failing) test for bug in how
+	rcs keywords are expanded in the output of `cvs annotate'.
+
+1998-07-12  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (taginfo): Write the TESTDIR into the script rather
+	than having the script look at the environment.  This means that
+	it will work if TESTDIR is set by sanity.sh as well as if
+	sanity.sh finds TESTDIR in the environment.
+
+1998-07-11  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* tag.c (check_fileproc): Calculate the revision to be tagged the
+	same way that tag_fileproc does.
+	* sanity.sh (taginfo): New tests, test for this (before this fix,
+	brtag had said 1.1 not 1.1.2.1).
+
+1998-07-10  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (unedit-without-baserev): Also clean up "2" directory.
+
+1998-07-08  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* edit.c (unedit_fileproc): If the Baserev file is missing, don't
+	get the working file from CVS/Base.  The previous code could get
+	you version 1.1 of the working file and put 1.2 in CVS/Entries.
+	* sanity.sh (unedit-without-baserev): New tests test for this.
+
+1998-07-02  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (unedit-without-baserev): Move the test itself to be
+	in the same order as in the "tests" variable.
+
+1998-07-02  Ian Lance Taylor  <ian@cygnus.com>
+
+	* rcscmds.c: Don't include <stdarg.h> or <vasprintf.h>.  Don't
+	declare vasprintf.
+	(call_diff_printf_output): Remove.
+	(call_diff_stdout_callbacks): Don't initialize printf_output
+	field--it has been removed from the interface.
+	(call_diff_file_callbacks): Likewise.
+
+1998-07-01  Jim Meyering  <meyering@ascend.com>
+
+	* edit.c (unedit_fileproc): Handle the case in which base_get
+	returns a NULL baserev.  That happens when a file being `unedit'ed
+	exists in the CVS/Base directory, but isn't listed in the CVS/Baserev
+	file.  The one case I've seen had no Baserev file at all.  The symptom
+	(if you're lucky) is a segmentation fault upon unedit.  If you use
+	SunOS4.1.4 for which printf prints NULL pointers as `(null)', your
+	unedit command will complete normally, but it will have corrupted
+	your CVS/Entries file and a subsequent update may result in an
+	assertion failure, a core dump, and a stale lock in the repository.
+	* sanity.sh (unedit-without-baserev): New test for this.
+
+1998-07-01  Andy Mortimer of aeat.co.uk
+	and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* server.c (server_updated): Use a prototype if we are using them
+	for declarations.
+
+1998-06-29  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (commit-readonly): Protect keyword against expansion
+	in sanity.sh itself.  Keep the keyword in the file which we check
+	in (or else this fails to test for the RCS_checkout change).
+
+1998-06-27  Jim Meyering  <meyering@ascend.com>
+
+	* rcs.c (RCS_checkout): If opening the local workfile fails due to
+	lack of write access, try to chmod the file and retry the open.
+	Before, a commit could fail part way through merely because the
+	open to rewrite with newly expanded rcs keywords would fail.  It's
+	easy to make this happen if you use `cvs -r' or CVSREAD and you
+	apply a patch to one of your read-only source files -- patch
+	preserves the read-only setting for the file and your next commit
+	will fail after committing that file, but before rewriting
+	(checking out) your working copy.
+	* sanity.sh (commit-readonly): New test for this.
+
+1998-06-25  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* update.c (patch_file): Update comments regarding context diffs
+	to reflect diff library.
+
+1998-06-23  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (modules4): Add tests for reversing the order of the
+	"!first-dir/sdir" and "first-dir".
+
+1998-06-23  Jim Kingdon  <kingdon@harvey.cyclic.com>
+	and Dave Wolfe@Motorola.
+
+	* sanity.sh (modes2): Touch the file before chmod'ing it.
+
+1998-06-21  Ian Lance Taylor  <ian@cygnus.com>
+
+	* update.c (merge_files): Revert changes of 1998-06-19.  Instead,
+	register a merged file with a dummy time stamp.  Only set
+	last_register_time if we need to.
+	(join_file): Likewise.  Always register a merged file, not just
+	when the merge fails.
+
+1998-06-21  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* call_diff_write_output, call_diff_printf_output,
+	call_diff_flush_output, call_diff_write_stdout, call_diff_error,
+	call_diff_stdout_callbacks, call_diff_file_callbacks): Re-indent.
+
+1998-06-19  Ian Lance Taylor  <ian@cygnus.com>
+
+	* update.c (merge_file): Make sure the time stamp of the file is
+	different from the time stamp we register in the Entries file.
+	(join_file): Likewise.
+
+1998-06-18  Ian Lance Taylor  <ian@cygnus.com>
+
+	* rcscmds.c: Include <stdio.h>.  Include either <stdarg.h> or
+	<varargs.h>.  Declare vasprintf.
+	(call_diff_write_output): New static function.
+	(call_diff_printf_output): New static function.
+	(call_diff_flush_output): New static function.
+	(call_diff_write_stdout): New static function.
+	(call_diff_error): New static function.
+	(call_diff_stdout_callbacks): New static variable.
+	(call_diff_file_callbacks): New static variable.
+	(call_diff): Don't sleep.  Use a callback structure when calling
+	the diff library.
+	(call_diff3): Likewise.
+
+	* rcscmds.c: Include diffrun.h.
+	(call_diff, call_diff3): Pass NULL callback parameter.
+	(diff_run, diff3_run): Don't declare.
+	* Makefile.in (rcscmds.o): New target, to use -I for diff
+	directory.
+	(zlib.o): Depend upon zlib.h.
+
+1998-06-09  Mike Sutton@SAIC
+
+	Make it compile with Sun's bundled K&R C compiler:
+	* rcs.c (count_delta_actions): Change to static to match
+	declaration.
+	* client.c (handle_wrapper_rcs_option): Rename error label to
+	handle_error to avoid clash with function name.
+
+1998-06-09  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* rcs.c (RCS_delete_revs): If we are trying to delete all
+	revisions, give an error rather than assertion failed.
+	* sanity.sh (basicb): New tests basicb-o* test for this.
+
+1998-06-04  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* add.c (add): Only send "Directory" requests if we need to.
+
+1998-06-02  Assar Westerlund  <assar@sics.se>
+
+	* client.c: Check for HAVE_GSS_C_NT_HOSTBASED_SERVICE rather than
+	assuming that GSS_C_NT_HOSTBASED_SERVICE is a macro.
+	* server.c: Likewise.
+
+1998-06-02  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* fileattr.c (fileattr_read): Check for NULL return from strchr.
+	* sanity.sh (devcom3): New test devcom3-10 checks for this.
+
+1998-06-01  Assar Westerlund  <assar@sics.se>
+	and Ian Lance Taylor  <ian@cygnus.com>
+
+	* client.c: If HAVE_GSSAPI_H, include <gssapi.h>.  Only include
+	<gssapi/gssapi.h> if HAVE_GSSAPI_GSSAPI_H.  Only include
+	<gssapi/gssapi_generic.h> if HAVE_GSSAPI_GSSAPI_GENERIC_H.
+	(GSS_C_NT_HOSTBASED_SERVICE): Define if not defined.
+	(connect_to_gserver): Use GSS_C_NT_HOSTBASED_SERVICE instead of
+	gss_nt_service_name.
+	* server.c: Same header file changes.
+	(GSS_C_NT_HOSTBASED_SERVICE): Define if not defined.
+	(gserver_authenticate_connection): Use GSS_C_NT_HOSTBASED_SERVICE
+	instead of gss_nt_service_name.
+
+1998-06-01  Jim Meyering  <meyering@ascend.com>
+
+	* sanity.sh (tag8k): Add a test for the 1998-05-02 rcs.c bug fix.
+
+1998-05-26  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* rcs.c (annotate): Call tag_check_valid like the other functions
+	which have a -r option.
+	* sanity.sh (ann): New test ann-14 tests for this.
+
+1998-05-24  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (importc): New tests importc-5 through importc-8 test
+	for a (fairly obscure) regression from CVS 1.9.
+
 1998-05-23  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* sanity.sh (modules2): Add comment listing cvs release tests.
+	(info): New test info-cleanup-0 tests "cvs -n release".
+
+	* rcs.c (rcsbuf_getid): Remove semicolon at end of #undef.  I'm
+	kind of surprised that compilers accepted this at all, but
+	removing it squelches a warning for some compilers.
+
+	* version.c: Change version number to 1.9.28.1.
 
 	* Version 1.9.28.
 

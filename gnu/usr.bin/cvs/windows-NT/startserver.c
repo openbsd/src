@@ -10,6 +10,12 @@
 #include <io.h>
 #include <errno.h>
 
+/* Keep track of whether we've opened a socket so that wnt_shutdown_server
+   can do the correct thing.  We don't want to call shutdown or
+   closesocket on a pipe. */
+
+static int opened_a_socket = 0;
+
 void
 wnt_start_server (int *tofd, int *fromfd,
 		  char *client_user,
@@ -52,19 +58,29 @@ wnt_start_server (int *tofd, int *fromfd,
     *tofd = read_fd;
     *fromfd = read_fd;
     free (command);
+
+    opened_a_socket = 1;
 }
 
 
 void
 wnt_shutdown_server (int fd)
 {
-    SOCKET s;
+    if (opened_a_socket)
+    {
+	SOCKET s;
 
-    s = fd;
-    if (shutdown (s, 2) == SOCKET_ERROR)
-        error (1, 0, "couldn't shutdown server connection: %s",
-	       SOCK_STRERROR (SOCK_ERRNO));
-    if (closesocket (s) == SOCKET_ERROR)
-        error (1, 0, "couldn't close server connection: %s",
-	       SOCK_STRERROR (SOCK_ERRNO));
+	s = fd;
+	if (shutdown (s, 2) == SOCKET_ERROR)
+	    error (1, 0, "couldn't shutdown server connection: %s",
+		   SOCK_STRERROR (SOCK_ERRNO));
+	if (closesocket (s) == SOCKET_ERROR)
+	    error (1, 0, "couldn't close server connection: %s",
+		   SOCK_STRERROR (SOCK_ERRNO));
+    }
+    else
+    {
+	if (close (fd) < 0)
+	    error (1, errno, "cannot close server connection");
+    }
 }
