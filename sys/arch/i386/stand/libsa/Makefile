@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.34 1998/05/30 02:30:49 mickey Exp $
+#	$OpenBSD: Makefile,v 1.35 1998/07/20 18:14:55 mickey Exp $
 
 .include "${.CURDIR}/../Makefile.inc"
 
@@ -27,9 +27,9 @@ CLEANFILES+=	unixdev.o unixsys.o nullfs.o
 .endif
 
 # stand routines
-SRCS+=	alloc.c exit.c exec.c getfile.c gets.c globals.c strcmp.c strlen.c \
+SRCS+=	alloc.c exit.c getfile.c gets.c globals.c strcmp.c strlen.c \
 	strncmp.c memcmp.c memcpy.c memset.c printf.c strerror.c strncpy.c \
-	strtol.c ctime.c
+	strtol.c ctime.c exec.new.c exec_aout.c
 
 # io routines
 SRCS+=	close.c closeall.c dev.c disklabel.c dkcksum.c fstat.c ioctl.c lseek.c \
@@ -59,7 +59,7 @@ install:
 .include <bsd.lib.mk>
 
 CPPFLAGS+=-DLINKADDR=${LINKADDR} -DHEAP_LIMIT=${HEAP_LIMIT} ${DEBUGFLAGS}
-CPPFLAGS+=-I${S}/stand/boot
+CPPFLAGS+=-I${S}/stand/boot -DCOMPAT_UFS
 CFLAGS+=${SACFLAGS} -D__INTERNAL_LIBSA_CREAD
 #AS=cat ; 
 #AS+=	-R

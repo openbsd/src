@@ -1,7 +1,7 @@
-/*	$OpenBSD: exec_i386.c,v 1.22 1998/05/25 19:20:54 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.23 1998/07/20 18:14:56 mickey Exp $	*/
 
 /*
- * Copyright (c) 1997 Michael Shalayeff
+ * Copyright (c) 1997-1998 Michael Shalayeff
  * Copyright (c) 1997 Tobias Weingartner
  * All rights reserved.
  *
@@ -35,24 +35,22 @@
  */
 
 #include <sys/param.h>
-#include <sys/exec.h>
-#include <sys/reboot.h>
 #include <dev/cons.h>
 #include <stand/boot/bootarg.h>
 #include <machine/biosvar.h>
 #include <sys/disklabel.h>
 #include "disk.h"
 #include "libsa.h"
-
-#define round_to_size(x) (((int)(x) + sizeof(int) - 1) & ~(sizeof(int) - 1))
+#include <lib/libsa/exec.h>
 
 typedef void (*startfuncp)(int, int, int, int, int, int, int, int)
-    __attribute__ ((noreturn));
+	__attribute__ ((noreturn));
 
 void
-machdep_start(startaddr, howto, loadaddr, ssym, esym)
-	char *startaddr, *loadaddr, *ssym, *esym;
+machdep_exec(xp, howto, loadaddr)
+	struct x_param *xp;
 	int howto;
+	void *loadaddr;
 {
 #ifndef _TEST
 	dev_t bootdev = bootdev_dip->bootdev;
@@ -65,23 +63,21 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 
 #ifdef EXEC_DEBUG
 	x = (void *)loadaddr;
-	printf("exec {\n\ta_midmag = %lx\n\ta_text = %lx\n\ta_data = %lx\n"
-	       "\ta_bss = %lx\n\ta_syms = %lx\n\ta_entry = %lx\n"
-	       "\ta_trsize = %lx\n\ta_drsize = %lx\n}\n",
+	printf("exec {\n\ta_midmag = %x\n\ta_text = %x\n\ta_data = %x\n"
+	       "\ta_bss = %x\n\ta_syms = %x\n\ta_entry = %x\n"
+	       "\ta_trsize = %x\n\ta_drsize = %x\n}\n",
 	       x->a_midmag, x->a_text, x->a_data, x->a_bss, x->a_syms,
 	       x->a_entry, x->a_trsize, x->a_drsize);
 
-	printf("/bsd(%x,%x,%x,%x,%x,%x,%d,%p)\n",
-	       howto, bootdev, BOOTARG_APIVER, round_to_size(esym),
-	       extmem, cnvmem, ac, av);
+	printf("/bsd(%x,%u,%p)\n", BOOTARG_APIVER, ac, av);
 	getchar();
 #endif
-	(int)startaddr &= 0xffffff;
+	xp->xp_entry &= 0xffffff;
 
-	printf("entry point at %p\n", startaddr);
+	printf("entry point at 0x%x\n", xp->xp_entry);
 	/* stack and the gung is ok at this point, so, no need for asm setup */
-	(*(startfuncp)startaddr)(howto, bootdev, BOOTARG_APIVER,
-	    round_to_size(esym), extmem, cnvmem, ac, (int)av);
+	(*(startfuncp)xp->xp_entry)(howto, bootdev, BOOTARG_APIVER,
+		xp->xp_end, extmem, cnvmem, ac, (int)av);
 	/* not reached */
 #endif
 }

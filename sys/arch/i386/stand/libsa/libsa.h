@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.27 1998/07/13 04:03:26 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.28 1998/07/20 18:14:57 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -34,6 +34,8 @@
 
 #include <lib/libsa/stand.h>
 #include <machine/biosvar.h>
+
+#define	EXEC_AOUT
 
 #define	DEFAULT_KERNEL_ADDRESS	0x100000
 

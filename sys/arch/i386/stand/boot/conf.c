@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.12 1998/04/18 07:39:37 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.13 1998/07/20 18:14:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -46,9 +46,15 @@
 #include <lib/libsa/unixdev.h>
 #include <biosdev.h>
 #include <dev/cons.h>
+#include <lib/libsa/exec.h>
 
 const char version[] = "1.23";
 int	debug;
+
+const struct x_sw execsw[] = {
+	{ "aout", aout_probe,	aout_load },
+	{ "",     NULL,		NULL },
+};
 
 struct fs_ops file_system[] = {
 	{ ufs_open,    ufs_close,    ufs_read,    ufs_write,    ufs_seek,
@@ -56,10 +62,10 @@ struct fs_ops file_system[] = {
 #ifdef notdef
 	{ fat_open,    fat_close,    fat_read,    fat_write,    fat_seek,
 	  fat_stat,    fat_readdir    },
-	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
-	  cd9660_stat, cd9660_readdir },
 	{ nfs_open,    nfs_close,    nfs_read,    nfs_write,    nfs_seek,
 	  nfs_stat,    nfs_readdir    },
+	{ cd9660_open, cd9660_close, cd9660_read, cd9660_write, cd9660_seek,
+	  cd9660_stat, cd9660_readdir },
 #endif
 #ifdef _TEST
 	{ null_open,   null_close,   null_read,   null_write,   null_seek,
@@ -87,7 +93,6 @@ struct netif_driver	*netif_drivers[] = {
 int n_netif_drivers = NENTS(netif_drivers);
 #endif
 
-struct consdev *cn_tab = &constab[0];
 struct consdev constab[] = {
 #ifdef _TEST
 	{ unix_probe, unix_init, unix_getc, unix_putc },
@@ -97,4 +102,5 @@ struct consdev constab[] = {
 #endif
 	{ NULL }
 };
+struct consdev *cn_tab = constab;
 
