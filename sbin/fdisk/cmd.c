@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.19 1998/09/08 11:03:15 pefo Exp $	*/
+/*	$OpenBSD: cmd.c,v 1.20 1998/09/14 03:54:34 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -57,38 +57,9 @@ Xreinit(cmd, disk, mbr, tt, offset)
 
 	/* Copy template MBR */
 	MBR_make(tt, buf);
-	MBR_parse(buf, 0, 0, mbr);
+	MBR_parse(disk, buf, 0, 0, mbr);
 
-	/* Fix up given mbr for this disk */
-	mbr->part[0].flag = 0;
-	mbr->part[1].flag = 0;
-	mbr->part[2].flag = 0;
-	mbr->part[3].flag = DOSACTIVE;
-	mbr->signature = DOSMBR_SIGNATURE;
-
-	/* Use whole disk, save for first head, on first cyl. */
-	mbr->part[3].id = DOSPTYP_OPENBSD;
-	mbr->part[3].scyl = 0;
-	mbr->part[3].shead = 1;
-	mbr->part[3].ssect = 1;
-
-	/* Go right to the end */
-	mbr->part[3].ecyl = disk->real->cylinders - 1;
-	mbr->part[3].ehead = disk->real->heads - 1;
-	mbr->part[3].esect = disk->real->sectors;
-
-	/* Fix up start/length fields */
-	PRT_fix_BN(disk, &mbr->part[3]);
-
-#if defined(__powerpc__)
-	/* Now fix up for the MS-DOS boot partition on PowerPC. */
-	mbr->part[0].flag = DOSACTIVE;	/* Boot from dos part */
-	mbr->part[3].flag = 0;
-	mbr->part[3].ns += mbr->part[3].bs;
-	mbr->part[3].bs = mbr->part[0].bs + mbr->part[0].ns;
-	mbr->part[3].ns -= mbr->part[3].bs;
-	PRT_fix_CHS(disk, &mbr->part[3]);
-#endif
+	MBR_init(disk, mbr);
 
 	/* Tell em we did something */
 	printf("In memory copy is initialized to:\n");
@@ -107,18 +78,27 @@ Xdisk(cmd, disk, mbr, tt, offset)
 	mbr_t *tt;
 	int offset;
 {
+	int maxcyl  = 1024;
+	int maxhead = 256;
+	int maxsec  = 64;
 
 	/* Print out disk info */
 	DISK_printmetrics(disk);
 
+#ifdef __powerpc__
+	maxcyl  = 9999999;
+	maxhead = 9999999;
+	maxsec  = 9999999;
+#endif
+
 	/* Ask for new info */
 	if (ask_yn("Change disk geometry?")) {
 		disk->real->cylinders = ask_num("BIOS Cylinders", ASK_DEC,
-		    disk->real->cylinders, 1, 1024, NULL);
+		    disk->real->cylinders, 1, maxcyl, NULL);
 		disk->real->heads = ask_num("BIOS Heads", ASK_DEC,
-		    disk->real->heads, 1, 256, NULL);
+		    disk->real->heads, 1, maxhead, NULL);
 		disk->real->sectors = ask_num("BIOS Sectors", ASK_DEC,
-		    disk->real->sectors, 1, 64, NULL);
+		    disk->real->sectors, 1, maxsec, NULL);
 
 		disk->real->size = disk->real->cylinders * disk->real->heads
 			* disk->real->sectors;
@@ -196,6 +176,10 @@ Xedit(cmd, disk, mbr, tt, offset)
 		EDIT("Partition offset", ASK_DEC, pp->bs, 0,
 		    disk->real->size, NULL);
 		m = MAX(pp->ns, disk->real->size - pp->bs);
+		if ( m > disk->real->size - pp->bs) {
+			/* dont have default value extend beyond end of disk */
+			m = disk->real->size - pp->bs;
+		}
 		EDIT("Partition size", ASK_DEC, pp->ns, 1,
 		    m, NULL);
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.h,v 1.4 1997/10/21 22:49:35 provos Exp $	*/
+/*	$OpenBSD: part.h,v 1.5 1998/09/14 03:54:35 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -46,7 +46,7 @@ typedef struct _prt_t {
 /* Prototypes */
 void	PRT_printall __P((void));
 char *PRT_ascii_id __P((int));
-void PRT_parse __P((void *, off_t, off_t, prt_t *));
+void PRT_parse __P((disk_t *, void *, off_t, off_t, prt_t *));
 void PRT_make __P((prt_t *, off_t, off_t, void *));
 void PRT_print __P((int, prt_t *));
 

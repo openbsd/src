@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdisk.c,v 1.29 1997/10/28 03:12:14 deraadt Exp $	*/
+/*	$OpenBSD: fdisk.c,v 1.30 1998/09/14 03:54:34 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -148,7 +148,7 @@ main(argc, argv)
 		err(1, "open mbr file");
 	MBR_read(fd, 0, mbr_buf);
 	close(fd);
-	MBR_parse(mbr_buf, 0, 0, &mbr);
+	MBR_parse(&disk, mbr_buf, 0, 0, &mbr);
 
 	/* Punt if no i or m */
 	if ((i_flag + m_flag) != 1)

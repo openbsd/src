@@ -1,4 +1,4 @@
-/*	$OpenBSD: part.c,v 1.8 1998/02/19 20:48:08 deraadt Exp $	*/
+/*	$OpenBSD: part.c,v 1.9 1998/09/14 03:54:35 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -127,7 +127,8 @@ PRT_ascii_id(id)
 }
 
 void
-PRT_parse(prt, offset, reloff, partn)
+PRT_parse(disk, prt, offset, reloff, partn)
+	disk_t *disk;
 	void *prt;
 	off_t offset;
 	off_t reloff;
@@ -135,7 +136,19 @@ PRT_parse(prt, offset, reloff, partn)
 {
 	unsigned char *p = prt;
 	off_t off;
+	int need_fix_chs = 0;
 
+	/* dont check fields 0 and 4, they are flag and id, always preserved */
+	if ((p[1] == 0xff) && 
+	    (p[2] == 0xff) && 
+	    (p[3] == 0xff) && 
+	    (p[5] == 0xff) && 
+	    (p[6] == 0xff) && 
+	    (p[7] == 0xff))
+	{
+		/* CHS values invalid */
+		need_fix_chs =1;
+	}
 	partn->flag = *p++;
 	partn->shead = *p++;
 
@@ -153,8 +166,28 @@ PRT_parse(prt, offset, reloff, partn)
 
 	partn->bs = getlong(p) + off;
 	partn->ns = getlong(p+4);
+
+	if (need_fix_chs == 1) {
+		printf("warning MBR CHS values invalid, translating LBA values\n");
+		PRT_fix_CHS(disk, partn);
+	}
 }
 
+int
+PRT_check_chs(partn)
+	prt_t *partn;
+{
+	if ( (partn->shead > 255) || 
+		(partn->ssect >63) || 
+		(partn->scyl > 1023) || 
+		(partn->ehead >255) || 
+		(partn->esect >63) || 
+		(partn->ecyl > 1023) )
+	{
+		return 0;
+	}
+	return 1;
+}
 void
 PRT_make(partn, offset, reloff, prt)
 	prt_t *partn;
@@ -165,16 +198,30 @@ PRT_make(partn, offset, reloff, prt)
 	unsigned char *p = prt;
 	off_t off = partn->id != DOSPTYP_EXTEND ? offset : reloff; 
 
-	*p++ = partn->flag & 0xFF;
-	*p++ = partn->shead & 0xFF;
-	*p++ = (partn->ssect & 0x3F) | ((partn->scyl & 0x300) >> 2);
-	*p++ = partn->scyl & 0xFF;
+	if (PRT_check_chs(partn)) {
+		*p++ = partn->flag & 0xFF;
 
-	*p++ = partn->id & 0xFF;
+		*p++ = partn->shead & 0xFF;
+		*p++ = (partn->ssect & 0x3F) | ((partn->scyl & 0x300) >> 2);
+		*p++ = partn->scyl & 0xFF;
 
-	*p++ = partn->ehead & 0xFF;
-	*p++ = (partn->esect & 0x3F) | ((partn->ecyl & 0x300) >> 2);
-	*p++ = partn->ecyl & 0xFF;
+		*p++ = partn->id & 0xFF;
+
+		*p++ = partn->ehead & 0xFF;
+		*p++ = (partn->esect & 0x3F) | ((partn->ecyl & 0x300) >> 2);
+		*p++ = partn->ecyl & 0xFF;
+	} else {
+		/* should this really keep flag, id and set others to 0xff? */
+		*p++ = partn->flag & 0xFF;
+		*p++ = 0xFF;
+		*p++ = 0xFF;
+		*p++ = 0xFF;
+		*p++ = partn->id & 0xFF;
+		*p++ = 0xFF;
+		*p++ = 0xFF;
+		*p++ = 0xFF;
+		printf("Warning CHS values out of bounds only saving LBA values\n");
+	}
 
 	putlong(p, partn->bs - off);
 	putlong(p+4, partn->ns);

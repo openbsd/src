@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.6 1997/10/21 22:49:33 provos Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.7 1998/09/14 03:54:35 rahnds Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -45,9 +45,52 @@
 #include "mbr.h"
 #include "part.h"
 
+MBR_init(disk_t *disk, mbr_t *mbr)
+{
+	/* Fix up given mbr for this disk */
+	mbr->part[0].flag = 0;
+	mbr->part[1].flag = 0;
+	mbr->part[2].flag = 0;
+
+	mbr->part[3].flag = DOSACTIVE;
+	mbr->signature = DOSMBR_SIGNATURE;
+
+	/* Use whole disk, save for first head, on first cyl. */
+	mbr->part[3].id = DOSPTYP_OPENBSD;
+	mbr->part[3].scyl = 0;
+	mbr->part[3].shead = 1;
+	mbr->part[3].ssect = 1;
+
+	/* Go right to the end */
+	mbr->part[3].ecyl = disk->real->cylinders - 1;
+	mbr->part[3].ehead = disk->real->heads - 1;
+	mbr->part[3].esect = disk->real->sectors;
+
+	/* Fix up start/length fields */
+	PRT_fix_BN(disk, &mbr->part[3]);
+
+#if defined(__powerpc__)
+	/* Now fix up for the MS-DOS boot partition on PowerPC. */
+	mbr->part[0].flag = DOSACTIVE;	/* Boot from dos part */
+	mbr->part[3].flag = 0;
+	mbr->part[3].ns += mbr->part[3].bs;
+	mbr->part[3].bs = mbr->part[0].bs + mbr->part[0].ns;
+	mbr->part[3].ns -= mbr->part[3].bs;
+	PRT_fix_CHS(disk, &mbr->part[3]);
+	if ((mbr->part[3].shead != 1) || (mbr->part[3].ssect != 1)) {
+		/* align the parition on a cylinder boundary */
+		mbr->part[3].shead = 0;
+		mbr->part[3].ssect = 1;
+		mbr->part[3].scyl += 1;
+	}
+	/* Fix up start/length fields */
+	PRT_fix_BN(disk, &mbr->part[3]);
+#endif
+}
 
 void
-MBR_parse(mbr_buf, offset, reloff, mbr)
+MBR_parse(disk, mbr_buf, offset, reloff, mbr)
+	disk_t *disk;
 	char *mbr_buf;
 	off_t offset;
 	off_t reloff;
@@ -63,7 +106,7 @@ MBR_parse(mbr_buf, offset, reloff, mbr)
 	mbr->signature = getshort(&mbr_buf[MBR_SIG_OFF]);
 
 	for (i = 0; i < NDOSPART; i++)
-		PRT_parse(&mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i], 
+		PRT_parse(disk, &mbr_buf[MBR_PART_OFF + MBR_PART_SIZE * i], 
 		    offset, reloff,
 		    &mbr->part[i]);
 }
