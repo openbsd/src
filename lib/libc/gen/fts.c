@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.30 2002/02/16 21:27:22 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.31 2002/06/27 22:21:28 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.30 2002/02/16 21:27:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.31 2002/06/27 22:21:28 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -612,7 +612,7 @@ fts_build(sp, type)
 	}
 
 #ifdef notdef
-	(void)printf("nlinks == %d (cur: %d)\n", nlinks, cur->fts_nlink);
+	(void)printf("nlinks == %d (cur: %u)\n", nlinks, cur->fts_nlink);
 	(void)printf("NOSTAT %d PHYSICAL %d SEEDOT %d\n",
 	    ISSET(FTS_NOSTAT), ISSET(FTS_PHYSICAL), ISSET(FTS_SEEDOT));
 #endif
