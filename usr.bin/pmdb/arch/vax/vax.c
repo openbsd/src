@@ -1,4 +1,4 @@
-/*	$OpenBSD: vax.c,v 1.2 2002/03/19 21:32:10 fgsch Exp $	*/
+/*	$OpenBSD: vax.c,v 1.3 2002/03/19 21:43:05 fgsch Exp $	*/
 /*
  * Copyright (c) 2002 Federico Schwindt <fgsch@openbsd.org>
  * All rights reserved. 
@@ -57,6 +57,9 @@ md_getframe(struct pstate *ps, int frame, struct md_frame *fram)
 	fr.ca_pc = r.pc;
 	for (count = 0; count < frame; count++) {
 		if (read_from_pid(ps->ps_pid, fr.ca_fp, &fr, sizeof(fr)) < 0)
+			return (-1);
+
+		if (fr.ca_pc < 0x1000)
 			return (-1);
 	}
 
