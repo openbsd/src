@@ -491,6 +491,7 @@
 ./usr/include/dev/pci/if_stereg.h
 ./usr/include/dev/pci/if_stgereg.h
 ./usr/include/dev/pci/if_tireg.h
+./usr/include/dev/pci/if_tivar.h
 ./usr/include/dev/pci/if_tlreg.h
 ./usr/include/dev/pci/if_txpreg.h
 ./usr/include/dev/pci/if_txvar.h
@@ -5042,6 +5043,7 @@
 ./usr/share/man/cat9/ktrsysret.0
 ./usr/share/man/cat9/lmax.0
 ./usr/share/man/cat9/lmin.0
+./usr/share/man/cat9/loadfirmware.0
 ./usr/share/man/cat9/locc.0
 ./usr/share/man/cat9/lock.0
 ./usr/share/man/cat9/lockinit.0

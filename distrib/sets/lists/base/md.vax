@@ -472,6 +472,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_stereg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_stgereg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_tireg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_tivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_tlreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_txpreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/if_txvar.ph
