@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.89 1998/09/28 00:25:27 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.90 1998/09/28 00:35:54 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -381,10 +381,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "ABP-930/40UA",
 	},
 	{
-	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_2300,
+	    PCI_VENDOR_ADVSYS, PCI_PRODUCT_ADVSYS_WIDE,
 	    0,
 	    "Advanced System Products",
-	    "",
+	    "ABP-940UW",
 	},
 	{
 	    PCI_VENDOR_ALLIANCE, PCI_PRODUCT_ALLIANCE_AT24,
