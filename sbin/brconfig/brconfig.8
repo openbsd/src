@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.46 2003/06/27 13:10:51 henning Exp $
+.\"	$OpenBSD: brconfig.8,v 1.47 2003/12/07 06:13:23 deraadt Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -286,7 +286,7 @@ broadcast packets or are for 8:0:20:1e:2f:2b.
 .It Cm # brconfig bridge0 rule block in on fxp0
 .It Cm # brconfig bridge0 rule block out on fxp0
 The above commands will set up a filter so that 0:1:2:3:4:5 can send frames
-through fxp0 only to 5:4:3:2:1, and 5:4:3:2:1:0 can return frames through
+through fxp0 only to 5:4:3:2:1:0, and 5:4:3:2:1:0 can return frames through
 fxp0 to 0:1:2:3:4:5.
 All other traffic trying to go into and be sent from fxp0 will be blocked.
 .It Cm "# brconfig bridge0 rule pass in on fxp0 src 9:8:7:6:5:4 tag boss"
