@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.40 2001/08/18 21:09:13 deraadt Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.41 2001/08/18 22:26:08 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -41,6 +41,9 @@ enum	{ PF_PASS=0, PF_DROP=1, PF_SCRUB=2 };
 enum	{ PF_OP_IRG=1, PF_OP_EQ=2, PF_OP_NE=3, PF_OP_LT=4,
 	  PF_OP_LE=5, PF_OP_GT=6, PF_OP_GE=7, PF_OP_XRG=8 };
 enum	{ PF_DEBUG_NONE=0, PF_DEBUG_URGENT=1, PF_DEBUG_MISC=2 };
+enum	{ PF_CHANGERULE_ADD_HEAD=1, PF_CHANGERULE_ADD_TAIL=2,
+	  PF_CHANGERULE_ADD_BEFORE=3, PF_CHANGERULE_ADD_AFTER=4,
+	  PF_CHANGERULE_REMOVE=5 };
 
 struct pf_rule_addr {
 	u_int32_t	addr;
@@ -247,6 +250,13 @@ struct pfioc_rule {
 	struct pf_rule	 rule;
 };
 
+struct pfioc_changerule {
+	u_int32_t	 ticket;
+	u_int32_t	 action;
+	struct pf_rule	 oldrule;
+	struct pf_rule	 newrule;
+};
+
 struct pfioc_nat {
 	u_int32_t	 ticket;
 	u_int32_t	 nr;
@@ -307,6 +317,7 @@ struct pfioc_if {
 #define DIOCNATLOOK	_IOWR('D', 23, struct pf_natlook)
 #define DIOCSETDEBUG	_IOWR('D', 24, u_int32_t)
 #define DIOCGETSTATES	_IOWR('D', 25, struct pfioc_states)
+#define DIOCCHANGERULE	_IOWR('D', 26, struct pfioc_changerule)
 
 #ifdef _KERNEL
 

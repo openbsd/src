@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.124 2001/08/18 21:09:13 deraadt Exp $ */
+/*	$OpenBSD: pf.c,v 1.125 2001/08/18 22:26:08 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -117,6 +117,8 @@ struct pool		 pf_rdr_pl, pf_state_pl;
 
 int			 pf_tree_key_compare(struct pf_tree_key *,
 			    struct pf_tree_key *);
+int			 pf_compare_rules(struct pf_rule *,
+			    struct pf_rule *);
 void			 pf_tree_rotate_left(struct pf_tree_node **);
 void			 pf_tree_rotate_right(struct pf_tree_node **);
 struct pf_tree_node	*pf_tree_first(struct pf_tree_node *);
@@ -221,6 +223,32 @@ pf_tree_key_compare(struct pf_tree_key *a, struct pf_tree_key *b)
 		return (-1);
 	if (a->port[1] > b->port[1])
 		return ( 1);
+	return (0);
+}
+
+int
+pf_compare_rules(struct pf_rule *a, struct pf_rule *b)
+{
+	if (a->return_icmp != b->return_icmp ||
+	    a->action != b->action ||
+	    a->direction != b->direction ||
+	    a->log != b->log ||
+	    a->quick != b->quick ||
+	    a->keep_state != b->keep_state ||
+	    a->proto != b->proto ||
+	    a->type != b->type ||
+	    a->code != b->code ||
+	    a->flags != b->flags ||
+	    a->flagset != b->flagset ||
+	    a->rule_flag != b->rule_flag ||
+	    a->min_ttl != b->min_ttl)
+		return (1);
+	if (memcmp(&a->src, &b->src, sizeof(struct pf_rule_addr)))
+		return (1);
+	if (memcmp(&a->dst, &b->dst, sizeof(struct pf_rule_addr)))
+		return (1);
+	if (strcmp(a->ifname, b->ifname))
+		return (1);
 	return (0);
 }
 
@@ -865,6 +893,84 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(rule, &pr->rule, sizeof(struct pf_rule));
+		splx(s);
+		break;
+	}
+
+	case DIOCCHANGERULE: {
+		struct pfioc_changerule *pcr = (struct pfioc_changerule *)addr;
+		struct pf_rule *oldrule = NULL, *newrule = NULL;
+		u_int32_t nr = 0;
+
+		if (pcr->action < PF_CHANGERULE_ADD_HEAD ||
+		    pcr->action > PF_CHANGERULE_REMOVE) {
+			error = EINVAL;
+			break;
+		}
+
+		if (pcr->action != PF_CHANGERULE_REMOVE) {
+			newrule = pool_get(&pf_rule_pl, PR_NOWAIT);
+			if (newrule == NULL) {
+				error = ENOMEM;
+				break;
+			}
+			bcopy(&pcr->newrule, newrule, sizeof(struct pf_rule));
+			newrule->ifp = NULL;
+			if (newrule->ifname[0]) {
+				newrule->ifp = ifunit(newrule->ifname);
+				if (newrule->ifp == NULL) {
+					pool_put(&pf_rule_pl, newrule);
+					error = EINVAL;
+					break;
+				}
+			}
+		}
+
+		s = splsoftnet();
+
+		if (pcr->action == PF_CHANGERULE_ADD_HEAD)
+			oldrule = TAILQ_FIRST(pf_rules_active);
+		else if (pcr->action == PF_CHANGERULE_ADD_TAIL)
+			oldrule = TAILQ_LAST(pf_rules_active, pf_rulequeue);
+		else {
+			oldrule = TAILQ_FIRST(pf_rules_active);
+			while ((oldrule != NULL) && pf_compare_rules(oldrule,
+			    &pcr->oldrule))
+				oldrule = TAILQ_NEXT(oldrule, entries);
+			if (oldrule == NULL) {
+				error = EINVAL;
+				splx(s);
+				break;
+			}
+		}
+
+		if (pcr->action == PF_CHANGERULE_REMOVE) {
+			struct pf_tree_node *n;
+
+			for (n = pf_tree_first(tree_ext_gwy); n != NULL;
+			    n = pf_tree_next(n))
+				if (n->state->rule == oldrule)
+					n->state->rule = NULL;
+			TAILQ_REMOVE(pf_rules_active, oldrule, entries);
+			pool_put(&pf_rule_pl, oldrule);
+		} else {
+			if (oldrule == NULL)
+				TAILQ_INSERT_TAIL(pf_rules_active, newrule,
+				    entries);
+			else if (pcr->action == PF_CHANGERULE_ADD_HEAD ||
+			    pcr->action == PF_CHANGERULE_ADD_BEFORE)
+				TAILQ_INSERT_BEFORE(oldrule, newrule, entries);
+			else
+				TAILQ_INSERT_AFTER(pf_rules_active, oldrule,
+				     newrule, entries);
+		}
+
+		TAILQ_FOREACH(oldrule, pf_rules_active, entries)
+			oldrule->nr = nr++;
+
+		pf_calc_skip_steps(pf_rules_active);
+
+		ticket_rules_active++;
 		splx(s);
 		break;
 	}
