@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.conf.5,v 1.42 2000/10/16 23:28:22 niklas Exp $
+.\" $OpenBSD: isakmpd.conf.5,v 1.43 2000/11/09 22:50:06 aaron Exp $
 .\" $EOM: isakmpd.conf.5,v 1.52 2000/10/15 20:01:28 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -82,12 +82,12 @@ to fully specify the Main Mode transforms and Quick Mode suites, protocols
 and transforms.
 .Pp
 For Main Mode:
-.Bd -filled -offset indent -compact
+.Bd -filled -compact
 .Ar {DES,BLF,3DES,CAST}-{MD5,SHA}[-{DSS,RSA_SIG}]
 .Ed
 .Pp
 For Quick Mode:
-.Bd -filled -offset indent -compact
+.Bd -filled -compact
 .Ar QM-{ESP,AH}[-TRP]-{DES,3DES,CAST,BLF,AES}[-{MD5,SHA,RIPEMD}][-PFS]-SUITE
 .Ed
 .Pp
