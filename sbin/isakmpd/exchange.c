@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.77 2003/02/26 08:17:59 david Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.78 2003/03/06 13:32:42 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -786,7 +786,7 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 	  type = constant_value (isakmp_exch_cst, str);
 	  if (!type)
 	    {
-	      log_print ("exchange_establish_p1: unknown exchange type %s",
+	      log_print ("exchange_setup_p1: unknown exchange type %s",
 			 str);
 	      return;
 	    }
@@ -1833,14 +1833,10 @@ exchange_establish (char *name,
 	   * finalization routine; otherwise, call it directly.
 	   */
 	  if (exchange)
-	    {
-	      exchange_add_finalization (exchange, finalize, arg);
-	    }
+	    exchange_add_finalization (exchange, finalize, arg);
 	  else
-	    {
-	      finalize (0, arg, 1); /* Indicate failure */
-	    }
-      return;
+	    finalize (0, arg, 1); /* Indicate failure */
+	  return;
 	}
       else
 	exchange_establish_p2 (isakmp_sa, 0, name, 0, finalize, arg);
