@@ -1,6 +1,6 @@
-$OpenBSD: README,v 1.4 2001/05/03 19:21:51 hin Exp $
+$OpenBSD: README,v 1.5 2002/06/09 19:06:10 hin Exp $
 
-This version is based on version 1.0.2 of the Kerberos IV distribution
+This version is based on version 1.1.1 of the Kerberos IV distribution
 from KTH, which is available from ftp://ftp.pdc.kth.se/pub/krb4/src/.
 
 A webpage is available at http://www.pdc.kth.se/kth-krb/.
@@ -9,17 +9,15 @@ UPGRADING
 ---------
 
 1. Import the distribution into src/kerberosIV/src. Dont forget to change
-   all '$Id: README,v 1.4 2001/05/03 19:21:51 hin Exp $' tags etc. to '$KTH: ... $'.
+   all cvs id tags, and remove lib/roken.
 2. mkdir /tmp/krb 
    cd /tmp/krb 
    /usr/src/kerberosIV/src/configure --disable-otp
 3. cd include ; make
 4. cp config.h protos.h roken-common.h ktypes.h version.h \
 	/usr/src/kerberosIV/src/include
-5. cd ../lib/roken ; make roken.h ; make print_version.h
-6. cp roken.h print_version.h /usr/src/kerberosIV/lib/roken
 
-7. merge in OpenBSD specific changes:
+5. merge in OpenBSD specific changes:
 	src/lib/krb/krb.h		Path to krb.equiv 
 					Remove dependency on ktypes.h
 	src/lib/krb/defaults.c		Path to srvtab
@@ -30,16 +28,7 @@ UPGRADING
 	src/kadmin/kadm_server.h	Path to admin acl files
 	src/lib/kadm/kadm.b		<krb_db.h> -> <kerberosIV/krb_db.h>
 
-8. Update the kafs.h include file with a newer from Arla, this is
-   needed for the afs client. *yuk*
-9. Update any other utilities that may need to be changed.
-10. Remember to update version number in the file src/include/config.h.
-11. If necessary, bump version number on any shared libraries that have
+6. Update any other utilities that may need to be changed.
+7. Remember to update version number in the file src/include/config.h.
+8. If necessary, bump version number on any shared libraries that have
     changed.
-
-OTP
----
-
-OTP is not currently supported, even though code is available in KTH Kerberos.
-The reason for this is simply that nobody cares enough to make it work. If you
-need OTP, fixing it should be quite simple.
