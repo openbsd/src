@@ -1,4 +1,35 @@
-.\" $OpenBSD: lndir.1,v 1.1 1996/08/19 05:47:26 downsj Exp $
+.\" $OpenBSD: lndir.1,v 1.2 1997/06/21 20:57:15 downsj Exp $
+.\"
+.\" Copyright (c) 1997, Jason Downs.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"      This product includes software developed by Jason Downs for the
+.\"      OpenBSD system.
+.\" 4. Neither the name(s) of the author(s) nor the name OpenBSD
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+.\" OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+.\" WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+.\" DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+.\" CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
 .\" $XConsortium: lndir.man /main/9 1995/12/15 14:00:35 gildea $
 .\"
 .\" Copyright (c) 1993, 1994  X Consortium
@@ -27,35 +58,30 @@
 .\" other dealings in this Software without prior written authorization
 .\" from the X Consortium.
 .\" 
-.TH LNDIR 1 "" "OpenBSD"
-.SH NAME
-lndir \- create a shadow directory of symbolic links to another directory tree
-.SH SYNOPSIS
-.B lndir
-[
-.B \-e
-.I exceptfile
-]
-[
-.B \-s
-] [
-.B \-i
-]
-.I \|fromdir\|
-[
-.I todir
-]
-.SH DESCRIPTION
+.Dd June 21, 1997
+.Dt LNDIR 1
+.Os OpenBSD
+.Sh NAME
+.Nm lndir
+.Nd create a shadow directory of symbolic links to another directory tree
+.Sh SYNOPSIS
+.Nm lndir
+.Op Fl e Ar exceptfile
+.Op Fl s
+.Op Fl i
+.Op Ar fromdir
+.Op Ar todir
+.Sh DESCRIPTION
 The
-.I lndir
+.Nm lndir
 program makes a shadow copy 
-.I todir 
+.Ar todir 
 of a directory tree
-.I fromdir, 
+.Ar fromdir, 
 except that the shadow is not
 populated with real files but instead with symbolic links pointing at
 the real files in the 
-.I fromdir
+.Ar fromdir
 directory tree.  This is usually useful for maintaining source code for
 different machine architectures.  You create a shadow directory
 containing links to the real source, which you will have usually
@@ -63,77 +89,102 @@ mounted from a remote machine.  You can build in the shadow tree, and
 the object files will be in the shadow directory, while the
 source files in the shadow directory are just symlinks to the real
 files.
-.PP
+.Pp
 This scheme has the advantage that if you update the source, you need not 
 propagate the change to the other architectures by hand, since all
 source in all shadow directories are symlinks to the real thing: just cd
 to the shadow directory and recompile away.
-.PP
+.Pp
 The
-.I todir
+.Ar todir
 argument is optional and defaults to the current directory.  The
-.I fromdir
+.Ar fromdir
 argument may be relative (e.g., ../src) and is relative to
-.I todir
+.Ar todir
 (not the current directory).
-.PP 
+.Pp 
 .\" CVS.adm is used by the Concurrent Versions System.
 Note that RCS, SCCS, CVS and CVS.adm directories are not shadowed, in
-addition to any specified on the command line with \fB\-e\fP arguments.
-.PP
+addition to any specified on the command line with
+.Ar -e
+arguments.
+.Pp
 If you add files, simply run
-.I lndir
+.Nm lndir
 again.  New files will be silently added.  Old files will be
 checked that they have the correct link.
-.PP
+.Pp
 Deleting files is a more painful problem; the symlinks will
 just point into never never land.
-.PP
-If a file in \fIfromdir\fP is a symbolic link, \fIlndir\fP will make
-the same link in \fItodir\fP rather than making a link back to the
-(symbolic link) entry in \fIfromdir.\fP  The \fB\-i\fP flag
-changes this behavior.
-.SH OPTIONS
-.IP \-e
+.Pp
+If a file in 
+.Ar fromdir
+is a symbolic link, 
+.Nm lndir
+will make the same link in 
+.Ar todir
+rather than making a link back to the (symbolic link) entry in 
+.Ar fromdir .
+The
+.Ar -i
+flag changes this behavior.
+.Sh OPTIONS
+.Bl -tag -width XxXXXXXXXXXXXX
+.It Fl e Ar exceptfile
 Add the specified file to the list of excluded files/directories.  This is
-effective in all directories searched by \fIlndir\fP.  This option may be
-specified as many times as needed.
-.IP \-s
-Normally \fIlndir\fP outputs the name of each subdirectory as it
-descends into it.  The \fB\-s\fP option suppresses these status
-messages.
-.IP \-i
-Causes the program to not treat symbolic links in \fIfromdir\fP
-specially.  The link created in \fItodir\fP will point back to the
-corresponding (symbolic link) file in \fIfromdir\fP.
+effective in all directories searched by 
+.Nm lndir .
+This option may be specified as many times as needed.
+.It Fl s
+Suppresses status messages normally output as
+.Nm lndir
+descends into each subdirectory.
+.It Fl i
+Causes the program to not treat symbolic links in 
+.Ar fromdir
+specially.  The link created in 
+.Ar todir
+will point back to the corresponding (symbolic link) file in 
+.Ar fromdir .
 If the link is to a directory, this is almost certainly the wrong thing.
-.IP
+.Pp
 This option exists mostly to emulate the behavior the C version of
-\fIlndir\fP had in X11R6.  Its use is not recommended.
-.SH DIAGNOSTICS
+.Nm lndir
+had in X11R6.  Its use is not recommended.
+.El
+.Sh DIAGNOSTICS
 The program displays the name of each subdirectory it enters, followed
-by a colon.  The \fB\-s\fP option suppresses these messages.
-.PP
+by a colon.  The 
+.Ar -s
+option suppresses these messages.
+.Pp
 A warning message is displayed if the symbolic link cannot be created.
 The usual problem is that a regular file of the same name already
 exists.
-.PP
+.Pp
 If the link already exists but doesn't point to the correct file, the
 program prints the link name and the location where it does point.
-.SH BUGS
+.Sh BUGS
 The
-.I patch
+.Nm patch
 program gets upset if it cannot change the files.  You should never run
-.I patch
+.Nm patch
 from a shadow directory anyway.
-.PP
-You need to use something like
-.nf
-	find todir \|\-type l \|\-print \||\| xargs rm
-.fi
-to clear out all files before you can relink (if fromdir moved, for instance).
-Something like
-.nf
-	 find . \|\\! \|\-type d \|\-print
-.fi
-will find all files that are not directories.
+.\".Pp
+.\" You need to use something like
+.\" .nf
+.\"	find todir \|\-type l \|\-print \||\| xargs rm
+.\" .fi
+.\" to clear out all files before you can relink (if fromdir moved, for instance).
+.\" Something like
+.\" .nf
+.\"	 find . \|\\! \|\-type d \|\-print
+.\" .fi
+.\" will find all files that are not directories.
+.Sh SEE ALSO
+.Xr patch 1
+.Sh HISTORY
+.Nm lndir
+was first distributed as part of X11.
+.Pp
+This version first appeared in OpenBSD 1.2.
