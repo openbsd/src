@@ -1,0 +1,5 @@
+* generate the proper diff arguments to output with the diff
+* cleanup the client/proto mess
+* find a way to make it easier to connect when acting as client
+* prevent reconnection when the cvsroot is the same as the previous one
+* escape the data that we store in delta texts of RCS files (BAD BAD)
