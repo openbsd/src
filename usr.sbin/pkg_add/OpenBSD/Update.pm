@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.45 2004/12/20 12:16:51 espie Exp $
+# $OpenBSD: Update.pm,v 1.46 2004/12/20 22:43:25 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -380,40 +380,42 @@ sub save_old_libraries
 {
 	my ($new_plist, $state) = @_;
 
-	my $old_plist = $new_plist->{replacing};
-	my $libs = {};
-	my $p = {};
+	for my $old_plist (@{$new_plist->{replacing}}) {
 
-	print "Looking for changes in shared libraries\n" 
-	    if $state->{beverbose};
-	$old_plist->visit('mark_lib', $libs, $p);
-	$new_plist->visit('unmark_lib', $libs, $p);
+		my $libs = {};
+		my $p = {};
 
-	if (%$libs) {
-		print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
+		print "Looking for changes in shared libraries\n" 
 		    if $state->{beverbose};
-		my $stub_list = split_libs($old_plist, $libs);
-		my $stub_name = $stub_list->pkgname();
-		my $dest = installed_info($stub_name);
-		print "Keeping them in $stub_name\n" if $state->{beverbose};
-		if ($state->{not}) {
-			$stub_list->to_cache();
-			$old_plist->to_cache();
-		} else {
-			mkdir($dest);
-			my $oldname = $old_plist->pkgname();
-			open my $comment, '>', $dest.COMMENT;
-			print $comment "Stub libraries for $oldname";
-			close $comment;
-			link($dest.COMMENT, $dest.DESC);
-			$stub_list->to_installation();
-			$old_plist->to_installation();
-		}
-		add_installed($stub_name);
+		$old_plist->visit('mark_lib', $libs, $p);
+		$new_plist->visit('unmark_lib', $libs, $p);
 
-		walk_depends_closure($old_plist->pkgname(), $stub_name, $state);
-	} else {
-		print "No libraries to keep\n" if $state->{beverbose};
+		if (%$libs) {
+			print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
+			    if $state->{beverbose};
+			my $stub_list = split_libs($old_plist, $libs);
+			my $stub_name = $stub_list->pkgname();
+			my $dest = installed_info($stub_name);
+			print "Keeping them in $stub_name\n" if $state->{beverbose};
+			if ($state->{not}) {
+				$stub_list->to_cache();
+				$old_plist->to_cache();
+			} else {
+				mkdir($dest);
+				my $oldname = $old_plist->pkgname();
+				open my $comment, '>', $dest.COMMENT;
+				print $comment "Stub libraries for $oldname";
+				close $comment;
+				link($dest.COMMENT, $dest.DESC);
+				$stub_list->to_installation();
+				$old_plist->to_installation();
+			}
+			add_installed($stub_name);
+
+			walk_depends_closure($old_plist->pkgname(), $stub_name, $state);
+		} else {
+			print "No libraries to keep\n" if $state->{beverbose};
+		}
 	}
 }
 
