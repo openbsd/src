@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.32 2000/02/19 21:45:56 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.33 2000/02/19 22:08:50 art Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -4662,8 +4662,18 @@ Lsw_havectx:
 #endif
 1:
 #if defined(SUN4M)
+        /*
+	 * Flush caches that need to be flushed on context switch.
+	 * We know this is currently only necessary on the sun4m hypersparc.
+	 */
+	set	CPUINFO_VA+CPUINFO_PURE_VCACHE_FLS, %o2
+	ld	[%o2], %o2
+	mov	%o7, %g7	! save return address
+	jmpl	%o2, %o7	! this function must not clobber %o0 and %g7
+	 nop
+
 	set	SRMMU_CXR, %o1
-	retl
+	jmp	%g7 + 8		! (retl, but we saved the ret address in g7)
 	 sta	%o0, [%o1] ASI_SRMMU	! setcontext(vm->vm_pmap.pm_ctxnum);
 #endif
 
