@@ -1,4 +1,4 @@
-/*	$OpenBSD: move.c,v 1.2 1998/03/19 11:13:08 pjanzen Exp $	*/
+/*	$OpenBSD: move.c,v 1.3 2001/02/18 04:16:36 ericj Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)move.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: move.c,v 1.2 1998/03/19 11:13:08 pjanzen Exp $";
+static char rcsid[] = "$OpenBSD: move.c,v 1.3 2001/02/18 04:16:36 ericj Exp $";
 #endif
 #endif /* not lint */
 
@@ -141,7 +141,7 @@ move(okay)
 	if (mvlim == 0) {
 		writel(" but cannot use it.\n");
 		nexturn();
-		fixtty(&raw);
+		fixtty(&traw);
 		return;
 	}
 	/* initialize */
@@ -178,7 +178,7 @@ move(okay)
 		buflush();
 		sleep(3);
 	}
-	fixtty(&raw);		/* no more tty interrupt */
+	fixtty(&traw);		/* no more tty interrupt */
 }
 
 void
