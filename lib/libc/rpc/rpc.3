@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rpc.3,v 1.13 1998/12/30 22:18:46 deraadt Exp $
+.\"	$OpenBSD: rpc.3,v 1.14 1999/02/04 01:08:31 deraadt Exp $
 .\" Mostly converted to mandoc by Theo de Raadt, Tue Feb 24 04:04:46 MST 1998
 .\"
 .Dd February 16, 1988
@@ -76,7 +76,7 @@
 .Ft CLIENT *
 .Fn clnt_create "char *host" "u_long prog" "u_long vers" "char *proto"
 .Ft bool_t
-.Fn clnt_control "CLIENT *cl" "char *info"
+.Fn clnt_control "CLIENT *cl" "int req" "char *info"
 .Ft int
 .Fn clnt_freeres "CLIENT *clnt" "xdrproc_t outproc" "char *out"
 .Ft void
