@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.21 2001/06/18 19:19:41 deraadt Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.22 2001/06/24 20:27:00 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1711,7 +1711,6 @@ void ti_rxeof(sc)
 	while(sc->ti_rx_saved_considx != sc->ti_return_prodidx.ti_idx) {
 		struct ti_rx_desc	*cur_rx;
 		u_int32_t		rxidx;
-		struct ether_header	*eh;
 		struct mbuf		*m = NULL;
 #if NVLAN > 0
 		u_int16_t		vlan_tag = 0;
@@ -1779,7 +1778,6 @@ void ti_rxeof(sc)
 
 		m->m_pkthdr.len = m->m_len = cur_rx->ti_len;
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 		m->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
@@ -1806,13 +1804,16 @@ void ti_rxeof(sc)
 		 * to vlan_input() instead of ether_input().
 		 */
 		if (have_tag) {
+			struct ether_header *eh;
+
+			eh = mtod(m, struct ether_header *);
 			if (vlan_input_tag(eh, m, vlan_tag) < 0)
 				ifp->if_data.ifi_noproto++;
 			have_tag = vlan_tag = 0;
 			continue;
 		}
 #endif
-		ether_input(ifp, eh, m);
+		ether_input_mbuf(ifp, m);
 	}
 
 	/* Only necessary on the Tigon 1. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wb.c,v 1.9 2001/05/17 18:41:46 provos Exp $	*/
+/*	$OpenBSD: if_wb.c,v 1.10 2001/06/24 20:27:02 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1059,7 +1059,6 @@ wb_newbuf(sc, c, m)
 void wb_rxeof(sc)
 	struct wb_softc		*sc;
 {
-        struct ether_header	*eh;
         struct mbuf		*m = NULL;
         struct ifnet		*ifp;
 	struct wb_chain_onefrag	*cur_rx;
@@ -1121,7 +1120,6 @@ void wb_rxeof(sc)
 		m = m0;
 
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 		/*
@@ -1130,9 +1128,8 @@ void wb_rxeof(sc)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, eh, m);
+		/* pass it on. */
+		ether_input_mbuf(ifp, m);
 	}
 
 	return;

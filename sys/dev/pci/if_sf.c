@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sf.c,v 1.10 2001/02/20 19:39:44 mickey Exp $ */
+/*	$OpenBSD: if_sf.c,v 1.11 2001/06/24 20:26:59 fgsch Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -876,7 +876,6 @@ int sf_newbuf(sc, c, m)
 void sf_rxeof(sc)
 	struct sf_softc		*sc;
 {
-	struct ether_header	*eh;
 	struct mbuf		*m;
 	struct ifnet		*ifp;
 	struct sf_rx_bufdesc_type0	*desc;
@@ -917,7 +916,6 @@ void sf_rxeof(sc)
 		m_adj(m0, ETHER_ALIGN);
 		m = m0;
 
-		eh = mtod(m, struct ether_header *);
 		ifp->if_ipackets++;
 
 #if NBPFILTER > 0
@@ -925,10 +923,8 @@ void sf_rxeof(sc)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, eh, m);
-
+		/* pass it on. */
+		ether_input_mbuf(ifp, m);
 	}
 
 	csr_write_4(sc, SF_CQ_CONSIDX,

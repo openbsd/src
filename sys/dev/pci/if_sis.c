@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sis.c,v 1.13 2001/05/10 23:34:01 aaron Exp $ */
+/*	$OpenBSD: if_sis.c,v 1.14 2001/06/24 20:27:00 fgsch Exp $ */
 /*
  * Copyright (c) 1997, 1998, 1999
  *	Bill Paul <wpaul@ctr.columbia.edu>.  All rights reserved.
@@ -975,7 +975,6 @@ int sis_newbuf(sc, c, m)
 void sis_rxeof(sc)
 	struct sis_softc	*sc;
 {
-        struct ether_header	*eh;
         struct mbuf		*m;
         struct ifnet		*ifp;
 	struct sis_desc		*cur_rx;
@@ -1021,16 +1020,14 @@ void sis_rxeof(sc)
 		m = m0;
 
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
 
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, eh, m);
+		/* pass it on. */
+		ether_input_mbuf(ifp, m);
 	}
 
 	sc->sis_cdata.sis_rx_prod = i;

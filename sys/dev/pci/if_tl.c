@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tl.c,v 1.19 2001/04/05 02:03:12 jason Exp $	*/
+/*	$OpenBSD: if_tl.c,v 1.20 2001/06/24 20:27:01 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -1154,6 +1154,7 @@ int tl_intvec_rxeof(xsc, type)
 				continue;
 		}
 
+		m->m_pkthdr.len = m->m_len = total_len;
 #if NBPFILTER > 0
 		/*
 	 	 * Handle BPF listeners. Let the BPF user see the packet, but
@@ -1164,15 +1165,11 @@ int tl_intvec_rxeof(xsc, type)
 	 	 * since it can be used again later.
 	 	 */
 		if (ifp->if_bpf) {
-			m->m_pkthdr.len = m->m_len = total_len;
 			bpf_mtap(ifp->if_bpf, m);
 		}
 #endif
-		/* Remove header from mbuf and pass it on. */
-		m->m_pkthdr.len = m->m_len =
-				total_len - sizeof(struct ether_header);
-		m->m_data += sizeof(struct ether_header);
-		ether_input(ifp, eh, m);
+		/* pass it on. */
+		ether_input_mbuf(ifp, m);
 	}
 
 	return(r);

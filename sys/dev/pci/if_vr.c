@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vr.c,v 1.15 2001/05/16 13:41:27 aaron Exp $	*/
+/*	$OpenBSD: if_vr.c,v 1.16 2001/06/24 20:27:02 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -917,7 +917,6 @@ void
 vr_rxeof(sc)
 	struct vr_softc		*sc;
 {
-        struct ether_header	*eh;
         struct mbuf		*m;
         struct ifnet		*ifp;
 	struct vr_chain_onefrag	*cur_rx;
@@ -996,7 +995,6 @@ vr_rxeof(sc)
 		m = m0;
 
 		ifp->if_ipackets++;
-		eh = mtod(m, struct ether_header *);
 
 #if NBPFILTER > 0
 		/*
@@ -1005,9 +1003,8 @@ vr_rxeof(sc)
 		if (ifp->if_bpf)
 			bpf_mtap(ifp->if_bpf, m);
 #endif
-		/* Remove header from mbuf and pass it on. */
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp, eh, m);
+		/* pass it on. */
+		ether_input_mbuf(ifp, m);
 	}
 
 	return;
