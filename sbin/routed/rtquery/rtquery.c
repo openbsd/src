@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtquery.c,v 1.5 1997/01/17 07:12:25 millert Exp $	*/
+/*	$OpenBSD: rtquery.c,v 1.6 1997/06/30 06:33:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -524,7 +524,7 @@ rip_input(struct sockaddr_in *from,
 				 * good guess.
 				 */
 				if ((in.s_addr & ~mask) == 0) {
-					np = getnetbyaddr((long)in.s_addr,
+					np = getnetbyaddr(in.s_addr,
 							  AF_INET);
 					if (np != 0)
 						name = np->n_name;
