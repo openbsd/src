@@ -1,5 +1,6 @@
-/*	$OpenBSD: vsvar.h,v 1.10 2004/05/21 10:24:42 miod Exp $ */
+/*	$OpenBSD: vsvar.h,v 1.11 2004/05/22 19:34:12 miod Exp $	*/
 /*
+ * Copyright (c) 2004, Miodrag Vallat.
  * Copyright (c) 1999 Steve Murphree, Jr.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
@@ -31,8 +32,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-#ifndef _VSVAR_H_
-#define _VSVAR_H_
+#ifndef	_VSVAR_H_
+#define	_VSVAR_H_
 
 /*
  * The largest single request will be MAXPHYS bytes which will require
@@ -41,105 +42,90 @@
  * buffer is not page aligned (+1).
  */
 #define	DMAMAXIO	(MAXPHYS/NBPG+1)
-#define  LO(x) (u_short)((unsigned long)x & 0x0000FFFF)
-#define  HI(x) (u_short)((unsigned long)x >> 16)
-#define  OFF(x) (u_short)((vaddr_t)x - (vaddr_t)sc->sc_vsreg)
+#define	OFF(x)	(u_int16_t)(x)
 
-/****************     Scater/Gather Stuff                *******************/
+/*
+ * scatter/gather structures
+ */
 
 typedef struct {
 	union {
 		unsigned short bytes :16;
-   #define MAX_SG_BLOCK_SIZE	(1<<16)	/* the size *has* to be always *smaller* */
+#define	MAX_SG_BLOCK_SIZE	(1<<16)
 		struct {
 			unsigned short :8;
-			unsigned short gather :8;
+			unsigned short gather:8;
 		} scatter;
 	} count;
-	LONGV           address;
-	unsigned short  link :1;
-	unsigned short  :3;
-	unsigned short  transfer_type :2;
-	/* 				0x0 is reserved */
-   #define SHORT_TREANSFER 		0x1
-   #define LONG_TRANSFER			0x2
-   #define SCATTER_GATTER_LIST_IN_SHORT_IO	0x3
-	unsigned short  memory_type :2;
-   #define NORMAL_TYPE			0x0
-   #define BLOCK_MODE			0x1
-	/*				0x2 is reserved */
-	/*				0x3 is reserved */
-	unsigned short  address_modifier :8;
+	u_int16_t addrhi, addrlo;	/* split due to alignment */
+	unsigned short link:1;
+	unsigned short :3;
+	unsigned short transfer_type:2;
+#define	SHORT_TRANSFER			0x1
+#define	LONG_TRANSFER			0x2
+#define	SCATTER_GATTER_LIST_IN_SHORT_IO	0x3
+	unsigned short memory_type:2;
+#define	NORMAL_TYPE	0x0
+#define	BLOCK_MODE	0x1
+	unsigned short address_modifier:8;
 } sg_list_element_t;
 
 typedef sg_list_element_t * scatter_gather_list_t;
 
-#define MAX_SG_ELEMENTS 64
+#define	MAX_SG_ELEMENTS	64
 
 struct m328_sg {
-	struct m328_sg  *up;
-	int                     elements;
-	int                     level;
-	struct m328_sg  *down[MAX_SG_ELEMENTS];
+	struct m328_sg *up;
+	int elements;
+	int level;
+	struct m328_sg *down[MAX_SG_ELEMENTS];
 	sg_list_element_t list[MAX_SG_ELEMENTS];
 };
 
 typedef struct m328_sg *M328_SG;
 
 typedef struct {
-   struct scsi_xfer  *xs;
-   M328_SG           top_sg_list;
+	struct scsi_xfer *xs;
+	M328_SG top_sg_list;
 } M328_CMD;
 
-/**************** END Scater/Gather Stuff                *******************/
-
-struct  vs_softc {
-	struct  device sc_dev;
-	struct  intrhand sc_ih_e;
-	struct  intrhand sc_ih_n;
-	struct  evcnt sc_intrcnt_e;
-	struct  evcnt sc_intrcnt_n;
-	u_short  sc_ipl;
-	u_short  sc_evec;
-	u_short  sc_nvec;
-	struct  scsi_link sc_link;	/* proto for sub devices */
-	struct   vsreg  *sc_vsreg;
+struct vs_softc {
+	struct device		sc_dev;
+	paddr_t			sc_paddr;
+	bus_space_tag_t		sc_iot;
+	bus_space_handle_t	sc_ioh;
+	struct intrhand		sc_ih_e, sc_ih_n;
+	struct evcnt		sc_intrcnt_e, sc_intrcnt_n;
+	int			sc_ipl;
+	int			sc_evec, sc_nvec;
+	struct scsi_link	sc_link;
 };
 
-/* sync states */
-#define SYNC_START	0	/* no sync handshake started */
-#define SYNC_SENT	1	/* we sent sync request, no answer yet */
-#define SYNC_DONE	2	/* target accepted our (or inferior) settings,
-				   or it rejected the request and we stay async */
+/* Access macros */
 
-#define IOPB_SCSI    0x20
-#define IOPB_RESET   0x22
-#define IOPB_INIT    0x41
-#define IOPB_WQINIT  0x42
-#define IOPB_DEV_RESET   0x4D
+#define	vs_read(w,o) \
+	bus_space_read_##w (sc->sc_iot, sc->sc_ioh, (o))
+#define	vs_write(w,o,v) \
+	bus_space_write_##w (sc->sc_iot, sc->sc_ioh, (o), (v))
+#define	vs_bzero(o,s) \
+	bus_space_set_region_2(sc->sc_iot, sc->sc_ioh, (o), 0, (s) / 2)
 
-#define OPT_INTEN    0x0001
-#define OPT_INTDIS   0x0000
-#define OPT_SG       0x0002
-#define OPT_SST      0x0004
-#define OPT_SIT      0x0040
-#define OPT_READ     0x0000
-#define OPT_WRITE    0x0100
+#define	cib_read(w,o)		vs_read(w, sh_CIB + (o))
+#define	cib_write(w,o,v)	vs_write(w, sh_CIB + (o), (v))
+#define	crb_read(w,o)		vs_read(w, sh_CRB + (o))
+#define	crb_write(w,o,v)	vs_write(w, sh_CRB + (o), (v))
+#define	mce_read(w,o)		vs_read(w, sh_MCE + (o))
+#define	mce_write(w,o,v)	vs_write(w, sh_MCE + (o), (v))
+#define	mce_iopb_read(w,o)	vs_read(w, sh_MCE_IOPB + (o))
+#define	mce_iopb_write(w,o,v)	vs_write(w, sh_MCE_IOPB + (o), (v))
+#define	mcsb_read(w,o)		vs_read(w, sh_MCSB + (o))
+#define	mcsb_write(w,o,v)	vs_write(w, sh_MCSB + (o), (v))
 
-#define AM_S32       0x01
-#define AM_S16       0x05
-#define AM_16        0x0100
-#define AM_32        0x0200
-#define AM_SHORT     0x0300
-#define AM_NORMAL    0x0000
-#define AM_BLOCK     0x0400
-#define AM_D64BLOCK  0x0C00
+#define	CRSW		crb_read(2, CRB_CRSW)
+#define	CRB_CLR_DONE	crb_write(2, CRB_CRSW, 0)
+#define	CRB_CLR_ER	crb_write(2, CRB_CRSW, CRSW & ~M_CRSW_ER)
 
-#define WQO_AE             0x0001   /* abort enable bit */
-#define WQO_FOE            0x0004   /* freeze on error */
-#define WQO_PE             0x0008   /* parity enable bit */
-#define WQO_ARE            0x0010   /* autosense recovery enable bit */
-#define WQO_RFWQ           0x0020   /* report frozen work queue bit */
-#define WQO_INIT           0x8000   /* work queue init bit */
+#define	THAW_REG	mcsb_read(2, MCSB_THAW)
+#define	THAW(x)		mcsb_write(2, MCSB_THAW, ((x) << 8) | M_THAW_TWQE)
 
 #endif /* _M328VAR_H */
