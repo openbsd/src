@@ -1,4 +1,4 @@
-.\" $OpenBSD: openssl.1,v 1.28 2003/12/29 13:44:43 jmc Exp $
+.\" $OpenBSD: openssl.1,v 1.29 2004/01/23 14:31:11 jmc Exp $
 .\" ====================================================================
 .\" Copyright (c) 1998-2002 The OpenSSL Project.  All rights reserved.
 .\"
@@ -2765,7 +2765,7 @@ are all ASCII text.
 The options are as follows:
 .Bl -tag -width "-stats"
 .It Fl stats
-Print debugging statistics about various aspects of the hash table. 
+Print debugging statistics about various aspects of the hash table.
 .El
 .\"
 .\" GENDH
@@ -2934,9 +2934,9 @@ they will be much larger
 .\"
 .Sh NSEQ
 .Nm openssl nseq
+.Op Fl toseq
 .Op Fl in Ar filename
 .Op Fl out Ar filename
-.Op Fl toseq
 .Pp
 The
 .Nm nseq
@@ -2946,7 +2946,7 @@ file of certificates and converts it into a Netscape certificate
 sequence.
 .Pp
 The options are as follows:
-.Bl -tag -width "XXXX"
+.Bl -tag -width "-toseq"
 .It Fl in Ar filename
 This specifies the input
 .Ar filename
@@ -2986,7 +2986,7 @@ A Netscape certificate sequence is a Netscape specific form that can be sent
 to browsers as an alternative to the standard PKCS#7 format when several
 certificates are sent to the browser:
 for example during certificate enrollment.
-It is used by Netscape certificate server for example.
+It is used by the Netscape certificate server, for example.
 .Sh NSEQ BUGS
 This program needs a few more options:
 like allowing
