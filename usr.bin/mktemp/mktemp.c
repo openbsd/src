@@ -1,4 +1,4 @@
-/*	$OpenBSD: mktemp.c,v 1.2 1997/01/03 22:49:22 millert Exp $	*/
+/*	$OpenBSD: mktemp.c,v 1.3 1997/06/17 15:34:29 millert Exp $	*/
 
 /*
  * Copyright (c) 1996 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint                                                              
-static char rcsid[] = "$OpenBSD: mktemp.c,v 1.2 1997/01/03 22:49:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: mktemp.c,v 1.3 1997/06/17 15:34:29 millert Exp $";
 #endif /* not lint */                                                        
 
 #include <stdio.h>
@@ -45,7 +45,8 @@ extern char *__progname;
 void
 usage()
 {
-	(void) fprintf(stderr, "Usage: %s [-u] [-q] template\n", __progname);
+	(void) fprintf(stderr, "Usage: %s [-d] [-q] [-u] template\n",
+	    __progname);
 	exit(1);
 }
 
@@ -55,15 +56,18 @@ main(argc, argv)
 	char **argv;
 {
 	char *template;
-	int ch, uflag = 0, qflag = 0;
+	int c, uflag = 0, qflag = 0, makedir = 0;
 
-	while ((ch = getopt(argc, argv, "uq")) != -1)
-		switch(ch) {
-		case 'u':
-			uflag = 1;
+	while ((c = getopt(argc, argv, "dqu")) != -1)
+		switch(c) {
+		case 'd':
+			makedir = 1;
 			break;
 		case 'q':
 			qflag = 1;
+			break;
+		case 'u':
+			uflag = 1;
 			break;
 		case '?':
 		default:
@@ -80,15 +84,37 @@ main(argc, argv)
 			errx(1, "Cannot allocate memory");
 	}
 
-	if (mkstemp(template) < 0) {
-		if (qflag)
-			exit(1);
-		else
-			err(1, "Cannot create temp file %s", template);
-	}
+	if (makedir) {
+		for (c = 0; c < 100; c++) {
+			if (mktemp(template) == NULL)
+				if (qflag)
+					exit(1);
+				else
+					err(1, "Cannot create temp dir %s",
+					    template);
+			if (mkdir(template, 0700) == 0)
+				break;
+		}
+		if (c >= 100) {
+			if (qflag)
+				exit(1);
+			else
+				err(1, "Cannot make temp dir %s", template);
+		}
 
-	if (uflag)
-		(void) unlink(template);
+		if (uflag)
+			(void) rmdir(template);
+	} else {
+		if (mkstemp(template) < 0) {
+			if (qflag)
+				exit(1);
+			else
+				err(1, "Cannot create temp file %s", template);
+		}
+
+		if (uflag)
+			(void) unlink(template);
+	}
 
 	(void) puts(template);
 	free(template);

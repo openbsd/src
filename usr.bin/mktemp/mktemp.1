@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mktemp.1,v 1.4 1997/05/30 07:49:25 deraadt Exp $
+.\"	$OpenBSD: mktemp.1,v 1.5 1997/06/17 15:34:27 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -39,8 +39,9 @@
 .Nd make temporary file name (unique)
 .Sh SYNOPSIS
 .Nm mktemp
-.Op Fl u
+.Op Fl d
 .Op Fl q
+.Op Fl u
 .Ar template
 .Sh DESCRIPTION
 The
@@ -78,6 +79,11 @@ to standard output.
 .Sh OPTIONS
 .Bl -tag -width indent
 The available options are as follows:
+.It Fl d
+Make a directory instead of a file.
+.It Fl q
+Fail silently if an error occurs.  This is useful if
+a script does not want error output to go to standard error.
 .It Fl u
 Operate in
 .Dq unsafe
@@ -87,9 +93,6 @@ exits.  This is slightly better than
 .Fn mktemp 3
 but still introduces a race condition.  Use of this
 option is not encouraged.
-.It Fl q
-Fail silently if an error occurs.  This is useful if
-a script does not want error output to go to standard error.
 .Sh RETURN VALUES
 The
 .Nm
