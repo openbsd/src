@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.38 2002/03/16 20:29:21 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.39 2002/03/18 01:45:54 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -209,6 +209,17 @@ typedef struct MGWIN {
 struct undo_rec;
 
 /*
+ * This structure holds the starting position
+ * (as a line/offset pair) and the number of characters in a
+ * region of a buffer. This makes passing the specification
+ * of a region around a little bit easier.
+ */
+typedef struct {
+	struct LINE	*r_linep;	/* Origin LINE address.		 */
+	int		r_offset;	/* Origin LINE offset.		 */
+	RSIZE		r_size;		/* Length in characters.	 */
+} REGION;
+/*
  * Text is kept in buffers. A buffer header, described
  * below, exists for every buffer in the system. The buffers are
  * kept in a big list, so that commands that search for a buffer by
@@ -233,6 +244,9 @@ typedef struct BUFFER {
 	char		b_fname[NFILEN];/* File name			 */
 	struct fileinfo	b_fi;		/* File attributes		 */
 	LIST_HEAD(, undo_rec) b_undo;	/* Undo actions list */
+	REGION          b_undopos;      /* Where we were during the last
+					   undo action */
+	struct undo_rec *b_undoptr;
 } BUFFER;
 
 #define b_bufp	b_list.l_p.x_bp
@@ -246,18 +260,6 @@ typedef struct BUFFER {
 #define BFOVERWRITE 0x08	/* overwrite mode		 */
 #define BFREADONLY  0x10	/* read only mode */
 
-
-/*
- * This structure holds the starting position
- * (as a line/offset pair) and the number of characters in a
- * region of a buffer. This makes passing the specification
- * of a region around a little bit easier.
- */
-typedef struct {
-	struct LINE	*r_linep;	/* Origin LINE address.		 */
-	int		r_offset;	/* Origin LINE offset.		 */
-	RSIZE		r_size;		/* Length in characters.	 */
-} REGION;
 
 /*
  * This structure holds information about recent actions for the Undo command.
@@ -577,10 +579,9 @@ int	 cntnonmatchlines(int, int);
 
 /* undo.c X */
 void	 free_undo_record(struct undo_rec *);
-int	 undo_init(void);
 int	 undo_dump(void);
 int	 undo_enable(int);
-int	 undo_add_custom(int, LINE *, int, void *, int);
+int	 undo_add_custom(int, int, LINE *, int, void *, int);
 int	 undo_add_boundary(void);
 int	 undo_add_insert(LINE *, int, int);
 int	 undo_add_delete(LINE *, int, int);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.18 2002/02/21 15:27:29 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.19 2002/03/18 01:45:55 vincent Exp $	*/
 
 /*
  *	Mainline.
@@ -24,9 +24,7 @@ char		 pat[NPAT];			/* pattern		*/
 static void	 edinit(void);
 
 int
-main(argc, argv)
-	int	argc;
-	char	**argv;
+main(int argc, char **argv)
 {
 	char	*cp;
 
@@ -38,8 +36,7 @@ main(argc, argv)
 	maps_init();		/* Keymaps and modes.		*/
 	funmap_init();		/* Functions.			*/
 	ttykeymapinit();	/* Symbols, bindings.		*/
-	undo_init();
-	
+
 	/*
 	 * This is where we initialize standalone extensions that should
 	 * be loaded dynamically sometime in the future.
