@@ -1,4 +1,4 @@
-/*	$OpenBSD: opti82c700.c,v 1.4 2000/08/08 19:12:47 mickey Exp $	*/
+/*	$OpenBSD: opti82c700.c,v 1.5 2001/01/25 00:07:40 mickey Exp $	*/
 /*	$NetBSD: opti82c700.c,v 1.2 2000/07/18 11:07:20 soda Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <i386/pci/pci_intr_fixup.h>
+#include <i386/pci/pcibiosvar.h>
 #include <i386/pci/opti82c700reg.h>
 
 #ifdef FIRESTARDEBUG

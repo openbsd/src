@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.3 2001/01/24 23:40:29 mickey Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.4 2001/01/25 00:07:40 mickey Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -105,6 +105,30 @@ struct pciaddr {
 
 extern struct pciaddr pciaddr;
 
+typedef void *pciintr_icu_handle_t;
+
+struct pciintr_icu {
+	int	(*pi_getclink) __P((pciintr_icu_handle_t, int, int *));
+	int	(*pi_get_intr) __P((pciintr_icu_handle_t, int, int *));
+	int	(*pi_set_intr) __P((pciintr_icu_handle_t, int, int));
+	int	(*pi_get_trigger) __P((pciintr_icu_handle_t, int, int *));
+	int	(*pi_set_trigger) __P((pciintr_icu_handle_t, int, int));
+};
+
+typedef const struct pciintr_icu *pciintr_icu_tag_t;
+
+#define	pciintr_icu_getclink(t, h, link, pirqp)				\
+	(*(t)->pi_getclink)((h), (link), (pirqp))
+#define	pciintr_icu_get_intr(t, h, pirq, irqp)				\
+	(*(t)->pi_get_intr)((h), (pirq), (irqp))
+#define	pciintr_icu_set_intr(t, h, pirq, irq)				\
+	(*(t)->pi_set_intr)((h), (pirq), (irq))
+#define	pciintr_icu_get_trigger(t, h, irq, triggerp)			\
+	(*(t)->pi_get_trigger)((h), (irq), (triggerp))
+#define	pciintr_icu_set_trigger(t, h, irq, trigger)			\
+	(*(t)->pi_set_trigger)((h), (irq), (trigger))
+
+
 int pcibios_flags;
 
 #ifdef PCIBIOSVERBOSE
@@ -125,8 +149,25 @@ extern int pcibiosverbose;
 #define	PCIBIOS_PRINTVN(n, arg)
 #endif
 
+int  pci_intr_fixup __P((pci_chipset_tag_t, bus_space_tag_t, u_int16_t *));
 int  pci_bus_fixup __P((pci_chipset_tag_t, int));
 void pci_addr_fixup __P((pci_chipset_tag_t, int));
 void pci_device_foreach __P((pci_chipset_tag_t, int,
     void (*) __P((pci_chipset_tag_t, pcitag_t))));
+
+/*
+ * Init functions for our known PCI ICUs.
+ */
+int	piix_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
+int	opti82c558_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
+int	opti82c700_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
+int	via82c586_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
+int	sis85c503_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
+int	amd756_init __P((pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *));
 

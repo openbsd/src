@@ -1,4 +1,4 @@
-/*	$OpenBSD: amd756.c,v 1.1 2000/11/07 18:21:22 mickey Exp $	*/
+/*	$OpenBSD: amd756.c,v 1.2 2001/01/25 00:07:40 mickey Exp $	*/
 /*	$NetBSD$	*/
 
 /*-
@@ -79,7 +79,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <i386/pci/pci_intr_fixup.h>
+#include <i386/pci/pcibiosvar.h>
 #include <i386/pci/amd756reg.h>
 
 struct viper_handle {

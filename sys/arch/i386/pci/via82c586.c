@@ -1,4 +1,4 @@
-/*	$OpenBSD: via82c586.c,v 1.5 2001/01/16 20:49:49 mickey Exp $	*/
+/*	$OpenBSD: via82c586.c,v 1.6 2001/01/25 00:07:41 mickey Exp $	*/
 /*	$NetBSD: via82c586.c,v 1.2 2000/07/18 11:24:09 soda Exp $	*/
 
 /*-
@@ -78,7 +78,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <i386/pci/pci_intr_fixup.h>
+#include <i386/pci/pcibiosvar.h>
 #include <i386/pci/via82c586reg.h>
 #include <i386/pci/piixvar.h>
 

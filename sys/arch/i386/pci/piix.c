@@ -1,4 +1,4 @@
-/*	$OpenBSD: piix.c,v 1.4 2000/08/08 19:12:48 mickey Exp $	*/
+/*	$OpenBSD: piix.c,v 1.5 2001/01/25 00:07:40 mickey Exp $	*/
 /*	$NetBSD: piix.c,v 1.1 1999/11/17 01:21:20 thorpej Exp $	*/
 
 /*-
@@ -79,7 +79,7 @@
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#include <i386/pci/pci_intr_fixup.h>
+#include <i386/pci/pcibiosvar.h>
 #include <i386/pci/piixreg.h>
 #include <i386/pci/piixvar.h>
 
