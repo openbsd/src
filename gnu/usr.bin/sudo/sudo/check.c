@@ -1,4 +1,4 @@
-/*	$OpenBSD: check.c,v 1.10 1998/09/15 02:42:43 millert Exp $	*/
+/*	$OpenBSD: check.c,v 1.11 1998/09/17 16:14:18 millert Exp $	*/
 
 /*
  * CU sudo version 1.5.6 (based on Root Group sudo version 1.1)
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$From: check.c,v 1.140 1998/09/11 23:19:53 millert Exp $";
+static char rcsid[] = "$From: check.c,v 1.142 1998/09/17 16:13:05 millert Exp $";
 #endif /* lint */
 
 #include "config.h"
@@ -68,6 +68,7 @@ static char rcsid[] = "$From: check.c,v 1.140 1998/09/11 23:19:53 millert Exp $"
 #include "sudo.h"
 #include <options.h>
 #include "insults.h"
+#include "version.h"
 #if (SHADOW_TYPE == SPW_SECUREWARE)
 #  ifdef __hpux
 #    include <hpsecurity.h>
@@ -949,9 +950,9 @@ static void reminder()
 #ifdef SHORT_MESSAGE
     (void) fprintf(stderr, "\n%s\n%s\n\n%s\n%s\n\n",
 #else
-    (void) fprintf(stderr, "\n%s\n%s\n%s\n%s\n\n%s\n%s\n\n%s\n%s\n\n",
-	"    CU sudo version , based on Root Group sudo version 1.1",
-	"    sudo version 1.1, Copyright (C) 1991 The Root Group, Inc.",
+    (void) fprintf(stderr, "\n%s%s%s\n%s\n%s\n%s\n\n%s\n%s\n\n%s\n%s\n\n",
+	"    CU sudo version ", version, ", based on Root Group sudo version 1.1",
+	"    sudo version 1.1 is Copyright (C) 1991 The Root Group, Inc.",
 	"    sudo comes with ABSOLUTELY NO WARRANTY.  This is free software,",
 	"    and you are welcome to redistribute it under certain conditions.",
 #endif
