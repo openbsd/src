@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.311 2003/01/25 22:48:45 mcbride Exp $ */
+/*	$OpenBSD: pf.c,v 1.312 2003/01/31 19:09:12 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -3061,7 +3061,15 @@ pf_test_state_tcp(struct pf_state **state, int direction, struct ifnet *ifp,
 		/* Fall through to PASS packet */
 
 	} else {
-		if (pf_status.debug >= PF_DEBUG_MISC) {
+		if ((*state)->dst.state == TCPS_SYN_SENT &&
+		    (*state)->src.state == TCPS_SYN_SENT) {
+			/* Send RST for state mismatches during handshake */
+			pf_send_reset(off, th, pd, pd->af, 0,
+			    (*state)->rule.ptr);
+			src->seqlo = 0;
+			src->seqhi = 1;
+			src->max_win = 1;
+		} else if (pf_status.debug >= PF_DEBUG_MISC) {
 			printf("pf: BAD state: ");
 			pf_print_state(*state);
 			pf_print_flags(th->th_flags);
