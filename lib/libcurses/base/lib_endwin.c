@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_endwin.c,v 1.1 1999/01/18 19:09:42 millert Exp $	*/
+/*	$OpenBSD: lib_endwin.c,v 1.2 1999/06/14 02:29:15 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -44,7 +44,7 @@
 #include <curses.priv.h>
 #include <term.h>
 
-MODULE_ID("$From: lib_endwin.c,v 1.16 1998/09/20 03:29:17 tom Exp $")
+MODULE_ID("$From: lib_endwin.c,v 1.17 1999/06/12 23:01:46 tom Exp $")
 
 int
 endwin(void)
@@ -56,7 +56,8 @@ endwin(void)
 		SP->_mouse_wrap(SP);
 		_nc_screen_wrap();
 		_nc_mvcur_wrap();	/* wrap up cursor addressing */
+		returnCode(reset_shell_mode());
 	}
 
-	returnCode(reset_shell_mode());
+	returnCode(ERR);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lib_newterm.c,v 1.3 1999/03/11 21:03:55 millert Exp $	*/
+/*	$OpenBSD: lib_newterm.c,v 1.4 1999/06/14 02:29:15 millert Exp $	*/
 
 /****************************************************************************
  * Copyright (c) 1998 Free Software Foundation, Inc.                        *
@@ -50,7 +50,7 @@
 
 #include <term.h>	/* clear_screen, cup & friends, cur_term */
 
-MODULE_ID("$From: lib_newterm.c,v 1.39 1999/03/03 23:44:22 juergen Exp $")
+MODULE_ID("$From: lib_newterm.c,v 1.40 1999/06/12 21:30:39 tom Exp $")
 
 #ifndef ONLCR		/* Allows compilation under the QNX 4.2 OS */
 #define ONLCR 0
@@ -110,22 +110,6 @@ int t = _nc_getenv_num("NCURSES_TRACE");
 	/* this loads the capability entry, then sets LINES and COLS */
 	if (setupterm(term, fileno(ofp), &errret) == ERR)
 		return 0;
-
-	/*
-	 * Check for mismatched graphic-rendition capabilities.  Most SVr4
-	 * terminfo trees contain entries that have rmul or rmso equated to
-	 * sgr0 (Solaris curses copes with those entries).  We do this only for
-	 * curses, since many termcap applications assume that smso/rmso and
-	 * smul/rmul are paired, and will not function properly if we remove
-	 * rmso or rmul.  Curses applications shouldn't be looking at this
-	 * detail.
-	 */
-	if (exit_attribute_mode) {
-#define SGR0_FIX(mode) if (mode != 0 && !strcmp(mode, exit_attribute_mode)) \
-			mode = 0
-		SGR0_FIX(exit_underline_mode);
-		SGR0_FIX(exit_standout_mode);
-	}
 
 	/* implement filter mode */
 	if (filter_mode) {
@@ -194,6 +178,19 @@ int t = _nc_getenv_num("NCURSES_TRACE");
 	baudrate();	/* sets a field in the SP structure */
 
 	SP->_keytry = 0;
+
+	/*
+	 * Check for mismatched graphic-rendition capabilities.  Most SVr4
+	 * terminfo trees contain entries that have rmul or rmso equated to
+	 * sgr0 (Solaris curses copes with those entries).  We do this only for
+	 * curses, since many termcap applications assume that smso/rmso and
+	 * smul/rmul are paired, and will not function properly if we remove
+	 * rmso or rmul.  Curses applications shouldn't be looking at this
+	 * detail.
+	 */
+#define SGR0_TEST(mode) (mode != 0) && (exit_attribute_mode == 0 || strcmp(mode, exit_attribute_mode))
+	SP->_use_rmso = SGR0_TEST(exit_standout_mode);
+	SP->_use_rmul = SGR0_TEST(exit_underline_mode);
 
 	/* compute movement costs so we can do better move optimization */
 	_nc_mvcur_init();
