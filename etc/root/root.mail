@@ -61,10 +61,28 @@ available on our FTP servers (as described above).  In particular, we provide
 the USA and international versions of PGP.  The filenames are:
 	pgp-intl-2.6.3-tgz pgp-usa-2.6.3-tgz
 
+Two OpenBSD libraries (libssl and libcrypto, based on OpenSSL) implement many
+cryptographic functions which are used by OpenBSD programs like ssh, httpd, and
+isakmpd.  Due to patent licensing reasons, full versions of those libraries may
+not be included on the CD -- instead the base distribution contains libraries
+which have had a few troublesome routines removed -- the programs listed above
+will not be fully functional as a result.  Libraries which _include_ the
+troublesome routines are available and can be FTP installed, as long as you meet
+the follow (legal) criteria:
+  (1) Outside the USA, no restrictions apply. Use ssl26.tar.gz.
+  (2) Inside the USA, non-commercial entities may install sslUSA26.tar.gz.
+  (3) Commercial entities in the USA are left in the cold, due to how the
+      licences work.  (This is how the USA crypto export policy feels to the
+      rest of the world.)
+If you did not install the ssl package yet, it is easily installed at any time
+(see the afterboot(8) and ssl(8) manual pages).
+
 You are STRONGLY urged to use ssh instead of telnet, rlogin, or rsh! ssh is
-included in OpenBSD, and relies on the libssl26.tar.gz package, which
-contains the patented RSA code.  This package is available on all our FTP
-servers, but NOT included on the CD. [MORE DETAILS NEEDED]
+included in OpenBSD systems which have shared libraries (i386, sparc, mips,
+m68k), and relies on the ssl26.tar.gz package, which contains the patented RSA
+code.  This package is available on all our FTP servers, but NOT included on
+the CD. During the system install, this package was probably already installed
+(use pkg_info(1) too see if ssl26 or sslUSA26 are installed).
 
 Significant efforts were made to centralize all system configuration in the
 /etc directory.  You should be able to find each of the configuration files
