@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_i386.c,v 1.10 1997/08/04 21:53:35 mickey Exp $	*/
+/*	$OpenBSD: exec_i386.c,v 1.11 1997/08/13 03:41:46 mickey Exp $	*/
 
 /*
  * Copyright (c) 1997 Michael Shalayeff
@@ -59,6 +59,9 @@ machdep_start(startaddr, howto, loadaddr, ssym, esym)
 	       x->a_midmag, x->a_text, x->a_data, x->a_bss, x->a_syms,
 	       x->a_entry, x->a_trsize, x->a_drsize);
 
+	printf("/bsd(%x,%x,%x,%x,%x,%x,%x,%x\n",
+		howto, bootdev, 0, round_to_size(esym),
+		extmem, cnvmem, (int)&apminfo, (int)&kentry);
 	getchar();
 #endif
 
