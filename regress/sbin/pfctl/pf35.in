@@ -12,12 +12,12 @@ altq on $intf cbq(ecn) bandwidth 10Mb qlimit 100 tbrsize 5000 \
 
 queue	std bandwidth 10% qlimit 1 cbq(default)
 queue	http bandwidth 60% priority 2 cbq(borrow red) { employees, developers }
-queue	 developers
-queue	 employees bandwidth 10%
+queue	 developers bandwidth 60%
+queue	 employees bandwidth 40%
 queue	mail bandwidth 10% priority 0 cbq(borrow ecn)
 queue	ssh bandwidth 20% cbq(borrow) { ssh_interactive, ssh_bulk }
-queue	 ssh_interactive priority 7
-queue	 ssh_bulk priority 0 qlimit 60
+queue	 ssh_interactive priority 7 bandwidth 30%
+queue	 ssh_bulk priority 0 qlimit 60 bandwidth 70%
 
 block return out on $intf inet all queue std
 pass out on $intf inet proto tcp from $developerhosts to any port 80 keep state \
