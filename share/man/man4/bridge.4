@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bridge.4,v 1.46 2003/02/25 22:34:12 jason Exp $
+.\"	$OpenBSD: bridge.4,v 1.47 2003/02/26 08:26:01 jmc Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -45,7 +45,7 @@ encapsulation interfaces (see
 .Xr gif 4 ) .
 This link between the interfaces selectively forwards frames from
 each interface on the bridge to every other interface on the bridge.
-A bridge can serve several services, including, isolation of traffic between
+A bridge can serve several services, including isolation of traffic between
 sets of machines so that traffic local to one set of machines is not
 available on the wire of another set of machines, and it can act as
 a transparent filter for
@@ -327,7 +327,7 @@ to flush all addresses from the cache or
 to flush only the dynamically learned addresses from the cache.
 .It Dv SIOCBRDGARL
 .Pq Li "struct ifbrlreq"
-Add a Ethernet address filtering rule to the bridge on a specific interface.
+Add an Ethernet address filtering rule to the bridge on a specific interface.
 .Fa ifbr_name
 contains the name of the bridge device, and
 .Fa ifbr_ifsname
@@ -485,10 +485,10 @@ bit is set in
 .Fa ifbr_flags .
 The destination address in
 .Fa ifbr_dst
-is check if the
+is checked if the
 .Dv BRL_FLAG_DSTVALID
 bit is set.
-If neither bit is set, the rule is matches all frames.
+If neither bit is set, the rule matches all frames.
 .It Dv SIOCBRDGFRL
 .Pq Li "struct ifbrlreq"
 Flush rules from the bridge
@@ -546,9 +546,9 @@ is set to one of the following values:
 .It Bq Eq ENOENT
 For an add request, this means that the named interface is not configured
 into the system.
-For delete operation, it means that the named interface is not a member
+For a delete operation, it means that the named interface is not a member
 of the bridge.
-For a address cache deletion, the address was not found in the table.
+For an address cache deletion, the address was not found in the table.
 .It Bq Eq ENOMEM
 Memory could not be allocated for an interface or cache entry
 to be added to the bridge.
@@ -607,7 +607,7 @@ policies set with the
 command by the administrator.
 If appropriate security associations (SAs) do not exist, any key
 management daemons such as
-.Xr isakmpd 8 .
+.Xr isakmpd 8
 that are running on the bridge will be invoked to establish the
 necessary SAs.
 These daemons have to be configured as if they were running on the
