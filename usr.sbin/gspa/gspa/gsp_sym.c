@@ -135,7 +135,7 @@ set_numeric_label(int lnum)
 		/* Record a new numeric label and link it into the
 		   chain.  fp->nlab points to the head of the chain,
 		   bp->nlab points to the tail.  */
-		new(nl);
+		ALLOC(nl, struct numlab *);
 		nl->value = pc;
 		nl->lineno = lineno;
 		nl->next = NULL;

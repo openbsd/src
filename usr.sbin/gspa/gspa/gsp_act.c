@@ -62,7 +62,7 @@ reg_op(int reg)
 	register operand o;
 
 /*	printf("reg_op reg=%d sign=%d\n", reg, sign);	*/
-	new(o);
+	ALLOC(o, operand);
 	o->type = REG;
 	o->reg_no = reg;
 	o->next = NULL;
@@ -75,7 +75,7 @@ expr_op(expr val)
 	register operand o;
 
 /*	printf("immed len=%d\n", len);	*/
-	new(o);
+	ALLOC(o, operand);
 	o->type = EXPR;
 	o->op_u.value = val;
 	o->next = NULL;
@@ -88,7 +88,7 @@ string_op(char *str)
 	register operand o;
 
 /*	printf("string_op str=%s\n", str);	*/
-	new(o);
+	ALLOC(o, operand);
 	o->type = STR_OPN;
 	o->op_u.string = str;
 	o->next = NULL;
@@ -101,7 +101,7 @@ abs_adr(expr adr)
 	register operand o;
 
 /*	printf("abs_adr len=%d\n", len);	*/
-	new(o);
+	ALLOC(o, operand);
 	o->type = EA;
 	o->mode = M_ABSOLUTE;
 	o->op_u.value = adr;
@@ -115,7 +115,7 @@ reg_ind(int reg, int mode)
 	register operand o;
 
 /*	printf("reg_adr r1=%d r2=%d mode=%d\n", r1, r2, mode);	*/
-	new(o);
+	ALLOC(o, operand);
 	o->type = EA;
 	o->mode = mode;
 	o->reg_no = reg;
@@ -150,7 +150,7 @@ id_expr(char *id)
 	register expr x;
 
 /*	printf("id_expr id=%s\n", id);	*/
-	new(x);
+	ALLOC(x, expr);
 	x->e_op = SYM;
 	x->e_sym = lookup(id, TRUE);
 	return x;
@@ -162,7 +162,7 @@ num_expr(int val)
 	register expr x;
 
 /*	printf("num_expr val=%d\n", val);	*/
-	new(x);
+	ALLOC(x, expr);
 	x->e_op = CONST;
 	x->e_val = val;
 	return x;
@@ -174,7 +174,7 @@ here_expr()
 	register expr x;
 
 /*	printf("here_expr()\n");	*/
-	new(x);
+	ALLOC(x, expr);
 	x->e_op = '.';
 	return x;
 }
@@ -185,7 +185,7 @@ bexpr(int op, expr l, expr r)
 	register expr x;
 
 /*	printf("bexpr op=%d\n", op);	*/
-	new(x);
+	ALLOC(x, expr);
 	x->e_op = op;
 	x->e_left = l;
 	x->e_right = r;

@@ -182,7 +182,7 @@ push_input(char *fn)
 		p1err("Can't open input file %s", fn);
 		return;
 	}
-	new(p);
+	ALLOC(p, struct input *);
 	p->fp = current_infile;
 	p->lineno = lineno;
 	strcpy(p->name, in_name);

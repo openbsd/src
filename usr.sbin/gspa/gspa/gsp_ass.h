@@ -171,4 +171,4 @@ extern char line[], *lineptr;
 #endif
 #endif
 
-#define new(x)	((x) = (typeof (x)) alloc (sizeof(*(x))))
+#define ALLOC(x, type)	((x) = (type) alloc (sizeof(*(x))))
