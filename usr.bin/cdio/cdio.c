@@ -1,4 +1,4 @@
-/*	$OpenBSD: cdio.c,v 1.13 1999/12/15 05:33:56 deraadt Exp $	*/
+/*	$OpenBSD: cdio.c,v 1.14 2000/12/24 11:34:10 aaron Exp $	*/
 /*
  * Compact Disc Control Utility by Serge V. Vakulenko <vak@cronyx.ru>.
  * Based on the non-X based CD player by Jean-Marc Zucconi and
@@ -155,15 +155,8 @@ void help ()
 
 void usage ()
 {
-	printf ("Usage:\n\t%s [ -vs ] [ -f disc ] [ command args... ]\n", __progname);
-	printf ("Options:\n");
-	printf ("\t-v       - verbose mode\n");
-	printf ("\t-s       - silent mode\n");
-	printf ("\t-f disc  - a block device name such as /dev/cd0c\n");
-	printf ("\tDISC - shell variable with device name\n");
-	printf ("\tCDROM - shell variable checked if DISC isn't sent\n");
-	printf ("Commands:\n");
-	help ();
+	(void)fprintf(stderr,
+	    "usage: %s [-sv] [-f device] [command args ...]\n", __progname);
 	exit (1);
 }
 
