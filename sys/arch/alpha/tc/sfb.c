@@ -1,4 +1,4 @@
-/*	$OpenBSD: sfb.c,v 1.9 1997/11/06 12:27:06 niklas Exp $	*/
+/*	$OpenBSD: sfb.c,v 1.10 1998/11/21 18:13:04 millert Exp $	*/
 /*	$NetBSD: sfb.c,v 1.7 1996/12/05 01:39:44 cgd Exp $	*/
 
 /*
@@ -348,8 +348,8 @@ sfbmmap(v, offset, prot)
 {
 	struct sfb_softc *sc = v;
 
-	if (offset > SFB_SIZE)
-		return -1;
+	if (offset >= SFB_SIZE || offset < 0)
+		return (-1);
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
 }
 

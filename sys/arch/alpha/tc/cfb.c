@@ -1,4 +1,4 @@
-/*	$OpenBSD: cfb.c,v 1.9 1997/11/06 12:27:05 niklas Exp $	*/
+/*	$OpenBSD: cfb.c,v 1.10 1998/11/21 18:13:03 millert Exp $	*/
 /*	$NetBSD: cfb.c,v 1.7 1996/12/05 01:39:39 cgd Exp $	*/
 
 /*
@@ -303,8 +303,8 @@ cfbmmap(v, offset, prot)
 {
 	struct cfb_softc *sc = v;
 
-	if (offset > CFB_SIZE)
-		return -1;
+	if (offset >= CFB_SIZE || offset < 0)
+		return (-1);
 	return alpha_btop(sc->sc_dc->dc_paddr + offset);
 }
 
