@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_re.c,v 1.12 2004/10/29 11:45:01 jsg Exp $	*/
+/*	$OpenBSD: if_re.c,v 1.13 2004/11/14 01:14:07 pvalchev Exp $	*/
 /*
  * Copyright (c) 1997, 1998-2003
  *	Bill Paul <wpaul@windriver.com>.  All rights reserved.
@@ -1101,7 +1101,6 @@ re_newbuf(sc, idx, m)
 
 	d->rl_cmdstat |= htole32(RL_TDESC_CMD_EOF);
 
-
 	sc->rl_ldata.rl_rx_list[idx].rl_cmdstat |= htole32(RL_RDESC_CMD_OWN);
 	sc->rl_ldata.rl_rx_mbuf[idx] = m;
 
@@ -1640,7 +1639,7 @@ re_encap(sc, m_head, idx)
 	d->rl_cmdstat |= htole32(RL_TDESC_CMD_EOF);
 
 	/*
-	 * Insure that the map for this transmission
+	 * Ensure that the map for this transmission
 	 * is placed at the array index of the last descriptor
 	 * in this chain.
 	 */
