@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.20 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.21 2003/08/06 19:09:09 tedu Exp $	*/
 /*	$NetBSD: ls.c,v 1.18 1996/07/09 09:16:29 mycroft Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ls.c	8.7 (Berkeley) 8/5/94";
 #else
-static char rcsid[] = "$OpenBSD: ls.c,v 1.20 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.21 2003/08/06 19:09:09 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,6 +85,7 @@ int f_accesstime;		/* use time of last access */
 int f_column;			/* columnated format */
 int f_columnacross;		/* columnated format, sorted across */
 int f_flags;			/* show flags associated with a file */
+int f_humanval;			/* show human-readable file sizes */
 int f_inode;			/* print inode */
 int f_listdir;			/* list actual directory, not contents */
 int f_listdot;			/* list files beginning with . */
@@ -132,7 +133,7 @@ ls_main(int argc, char *argv[])
 		f_listdot = 1;
 
 	fts_options = FTS_PHYSICAL;
-	while ((ch = getopt(argc, argv, "1ACFLRSTWacdfgiklmnopqrstux")) != -1) {
+	while ((ch = getopt(argc, argv, "1ACFLRSTWacdfghiklmnopqrstux")) != -1) {
 		switch (ch) {
 		/*
 		 * The -1, -C and -l, -m and -x options all override each
@@ -199,6 +200,9 @@ ls_main(int argc, char *argv[])
 			f_nosort = 1;
 			break;
 		case 'g':		/* Compatibility with 4.3BSD. */
+			break;
+		case 'h':
+			f_humanval = 1;
 			break;
 		case 'i':
 			f_inode = 1;

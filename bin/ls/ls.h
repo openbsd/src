@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.h,v 1.6 2003/07/02 21:19:33 deraadt Exp $	*/
+/*	$OpenBSD: ls.h,v 1.7 2003/08/06 19:09:09 tedu Exp $	*/
 /*	$NetBSD: ls.h,v 1.7 1995/03/21 09:06:33 cgd Exp $	*/
 
 /*
@@ -41,6 +41,7 @@ extern long blocksize;		/* block size units */
 
 extern int f_accesstime;	/* use time of last access */
 extern int f_flags;		/* show flags associated with a file */
+extern int f_humanval;		/* show human-readable file sizes */
 extern int f_inode;		/* print inode */
 extern int f_longform;		/* long listing format */
 extern int f_nonprint;		/* show unprintables as ? */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.19 2003/06/11 23:42:12 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.20 2003/08/06 19:09:09 tedu Exp $	*/
 /*	$NetBSD: print.c,v 1.15 1996/12/11 03:25:39 thorpej Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.5 (Berkeley) 7/28/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.19 2003/06/11 23:42:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.20 2003/08/06 19:09:09 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,12 +55,14 @@ static char rcsid[] = "$OpenBSD: print.c,v 1.19 2003/06/11 23:42:12 deraadt Exp 
 #include <time.h>
 #include <tzfile.h>
 #include <unistd.h>
+#include <util.h>
 
 #include "ls.h"
 #include "extern.h"
 
 static int	printaname(FTSENT *, u_long, u_long);
 static void	printlink(FTSENT *);
+static void	printsize(size_t, off_t);
 static void	printtime(time_t);
 static int	printtype(u_int);
 static int	compute_columns(DISPLAY *, int *);
@@ -114,7 +116,7 @@ printlong(DISPLAY *dp)
 			(void)printf("%*s%*qd ",
 			    8 - dp->s_size, "", dp->s_size, sp->st_size);
 		else
-			(void)printf("%*qd ", dp->s_size, sp->st_size);
+			printsize(dp->s_size, sp->st_size);	
 		if (f_accesstime)
 			printtime(sp->st_atime);
 		else if (f_statustime)
@@ -362,4 +364,16 @@ printlink(FTSENT *p)
 	path[lnklen] = '\0';
 	(void)printf(" -> ");
 	(void)putname(path);
+}
+
+static void
+printsize(size_t width, off_t bytes)
+{
+	char ret[FMT_SCALED_STRSIZE];
+
+	if ((f_humanval) && (fmt_scaled(bytes, ret) != -1)) {
+		(void)printf("%*s ", (u_int)width, ret);
+		return;
+	}
+	(void)printf("%*qd ", (u_int)width, bytes);
 }
