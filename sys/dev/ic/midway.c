@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.8 1996/07/03 17:21:19 chuck Exp $	*/
-/*	(sync'd to midway.c 1.57)	*/
+/*	$OpenBSD: midway.c,v 1.9 1996/07/11 00:17:10 chuck Exp $	*/
+/*	(sync'd to midway.c 1.58)	*/
 
 /*
  *
@@ -1360,7 +1360,15 @@ struct ifnet *ifp;
 #endif
 
 #ifdef EN_MBUF_OPT
-      if (M_LEADINGSPACE(m) >= MID_TBD_SIZE) {
+
+      /*
+       * note: external storage (M_EXT) can be shared between mbufs
+       * to avoid copying (see m_copym()).    this means that the same
+       * data buffer could be shared by several mbufs, and thus it isn't
+       * a good idea to try and write TBDs or PDUs to M_EXT data areas.
+       */
+
+      if (M_LEADINGSPACE(m) >= MID_TBD_SIZE && (m->m_flags & M_EXT) == 0) {
 	m->m_data -= MID_TBD_SIZE;
 	m->m_len += MID_TBD_SIZE;
 	mlen += MID_TBD_SIZE;
@@ -1374,7 +1382,8 @@ struct ifnet *ifp;
 	atm_flags |= EN_OBHDR;
       }
 
-      if (toadd && M_TRAILINGSPACE(lastm) >= toadd) {
+      if (toadd && (lastm->m_flags & M_EXT) == 0 && 
+					M_TRAILINGSPACE(lastm) >= toadd) {
 	cp = mtod(lastm, u_int8_t *) + lastm->m_len;
 	lastm->m_len += toadd;
 	mlen += toadd;
@@ -2280,6 +2289,14 @@ defer:					/* defer processing */
 	pdu -= (EN_RXSZ*1024);
       pdu = EN_READ(sc, pdu);		/* READ swaps to proper byte order */
       fill = tlen - MID_RBD_SIZE - MID_PDU_LEN(pdu);
+      if (fill < 0) {
+        printf("%s: invalid AAL5 PDU length detected, dropping frame\n", 
+						sc->sc_dev.dv_xname);
+        printf("%s: got %d cells (%d bytes), AAL5 len is %d bytes (pdu=0x%x)\n",
+	  sc->sc_dev.dv_xname, MID_RBD_CNT(rbd), tlen - MID_RBD_SIZE,
+		MID_PDU_LEN(pdu), pdu);
+	fill = tlen;
+      }
       mlen = tlen - fill;
     }
 
@@ -2299,6 +2316,7 @@ defer:					/* defer processing */
    */
   
   m = sc->rxslot[slot].q.ifq_head;
+  drqneed = 1;
   if (m) {
     sav = mtod(m, u_int32_t *);
     if (sav[0] != cur) {
@@ -2319,7 +2337,7 @@ defer:					/* defer processing */
     }
   }
 
-  if (m == NULL) {
+  if (mlen != 0 && m == NULL) {
     m = en_mget(sc, mlen, &drqneed);		/* allocate! */
     if (m == NULL) {
       fill += mlen;
