@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.40 2003/09/07 18:16:02 tedu Exp $	*/
+/*	$OpenBSD: diff.c,v 1.41 2003/09/07 18:50:58 jmc Exp $	*/
 
 /*
  * Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -21,7 +21,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: diff.c,v 1.40 2003/09/07 18:16:02 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: diff.c,v 1.41 2003/09/07 18:50:58 jmc Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -376,12 +376,12 @@ __dead void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: diff [-bdilqtTw] [-c | -e | -f | -n | -u] [-L label] file1 file2\n"
-	    "       diff [-bdilqtTw] [-L label] -C number file1 file2\n"
-	    "       diff [-bdilqtw] -D string file1 file2\n"
-	    "       diff [-bdilqtTw] [-L label] -U number file1 file2\n"
-	    "       diff [-bdilNPqwtT] [-c | -e | -f | -n | -u ] [-L label] [-r] [-s] [-S name]\n"
-	    "            [-X file] [-x pattern] dir1 dir2\n");
+	    "usage: diff [-abdilqtTw] [-c | -e | -f | -n | -u] [-L label] file1 file2\n"
+	    "       diff [-abdilqtTw] [-L label] -C number file1 file2\n"
+	    "       diff [-abdilqtw] -D string file1 file2\n"
+	    "       diff [-abdilqtTw] [-L label] -U number file1 file2\n"
+	    "       diff [-abdilNPqtTw] [-c | -e | -f | -n | -u ] [-L label] [-r] [-s]\n"
+	    "            [-S name] [-X file] [-x pattern] dir1 dir2\n");
 
 	exit(2);
 }
