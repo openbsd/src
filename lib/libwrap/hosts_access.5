@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hosts_access.5,v 1.4 1997/06/24 01:26:23 downsj Exp $
+.\"	$OpenBSD: hosts_access.5,v 1.5 1997/07/27 18:22:47 downsj Exp $
 .\"
 .\" Copyright (c) 1997, Jason Downs.  All rights reserved.
 .\"
@@ -58,18 +58,18 @@ process names are specified in the inetd configuration file.
 .Sh ACCESS CONTROL FILES
 The access control software consults two files. The search stops
 at the first match:
-.Bl -tag -width XXX
-.It \(bu
+.Bl -bullet -tag -width XXX
+.It
 Access will be granted when a (daemon,client) pair matches an entry in
 the 
 .Pa /etc/hosts.allow
 file.
-.It \(bu
+.It
 Otherwise, access will be denied when a (daemon,client) pair matches an
 entry in the 
 .Pa /etc/hosts.deny
 file.
-.It \(bu
+.It
 Otherwise, access will be granted.
 .El
 .Pp
@@ -80,16 +80,16 @@ control files.
 Each access control file consists of zero or more lines of text.  These
 lines are processed in order of appearance.  The search terminates when a
 match is found.
-.Bl -tag -width XXX
-.It \(bu
+.Bl -bullet -tag -width XXX
+.It
 A newline character is ignored when it is preceded by a backslash
 character. This permits you to break up long lines so that they are
 easier to edit.
-.It \(bu
+.It
 Blank lines or lines that begin with a `#\' character are ignored.
 This permits you to insert comments and whitespace so that the tables
 are easier to read.
-.It \(bu
+.It
 All other lines should satisfy the following format, things between []
 being optional:
 .Bd -unfilled -offset indent
@@ -120,23 +120,23 @@ With the exception of NIS (YP) netgroup lookups, all access control
 checks are case insensitive.
 .Sh PATTERNS
 The access control language implements the following patterns:
-.Bl -tag -width XXX
-.It \(bu
+.Bl -bullet -tag -width XXX
+.It
 A string that begins with a `.\' character. A host name is matched if
 the last components of its name match the specified pattern.  For
 example, the pattern `.tue.nl\' matches the host name
 `wzv.win.tue.nl\'.
-.It \(bu
+.It
 A string that ends with a `.\' character. A host address is matched if
 its first numeric fields match the given string.  For example, the
 pattern `131.155.\' matches the address of (almost) every host on the
 Eind\%hoven University network (131.155.x.x).
-.It \(bu
+.It
 A string that begins with an `@\' character is treated as an NIS
 (formerly YP) netgroup name. A host name is matched if it is a host
 member of the specified netgroup. Netgroup matches are not supported
 for daemon process names or for client user names.
-.It \(bu
+.It
 An expression of the form `n.n.n.n/m.m.m.m\' is interpreted as a
 `net/mask\' pair. A host address is matched if `net\' is equal to the
 bitwise AND of the address and the `mask\'. For example, the net/mask
@@ -270,20 +270,20 @@ match.
 A user pattern has the same syntax as a daemon process pattern, so the
 same wildcards apply (netgroup membership is not supported).  One
 should not get carried away with username lookups, though.
-.Bl -tag -width XXX
-.It \(bu
+.Bl -bullet -tag -width XXX
+.It
 The client username information cannot be trusted when it is needed
 most, i.e. when the client system has been compromised.  In general,
 ALL and (UN)KNOWN are the only user name patterns that make sense.
-.It \(bu
+.It
 Username lookups are possible only with TCP-based services, and only
 when the client host runs a suitable daemon; in all other cases the
 result is "unknown".
-.\" .It \(bu
+.\" .It
 .\" A well-known UNIX kernel bug may cause loss of service when username
 .\" lookups are blocked by a firewall. The wrapper README document
 .\" describes a procedure to find out if your kernel has this bug.
-.It \(bu
+.It
 Username lookups may cause noticeable delays for non-UNIX users.  The
 default timeout for username lookups is 10 seconds: too short to cope
 with slow networks, but long enough to irritate PC users.
