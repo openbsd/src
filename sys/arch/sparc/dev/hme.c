@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.8 1998/09/10 17:34:32 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.9 1998/09/10 22:15:21 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Jason L. Wright (jason@thought.net)
@@ -219,7 +219,14 @@ hmeattach(parent, self, aux)
 	ifmedia_init(&sc->sc_mii.mii_media, IFM_IMASK, hme_mediachange,
 	    hme_mediastatus);
 	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
-	ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_NONE);
+
+	if (LIST_FIRST(&sc->sc_mii.mii_phys) == NULL) {
+		ifmedia_add(&sc->sc_mii.mii_media, IFM_ETHER | IFM_NONE,
+		    0, NULL);
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_NONE);
+	}
+	else
+		ifmedia_set(&sc->sc_mii.mii_media, IFM_ETHER | IFM_AUTO);
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
