@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_var.h,v 1.16 2002/05/29 23:38:58 itojun Exp $	*/
+/*	$OpenBSD: ip6_var.h,v 1.17 2002/06/07 15:27:58 itojun Exp $	*/
 /*	$KAME: ip6_var.h,v 1.33 2000/06/11 14:59:20 jinmei Exp $	*/
 
 /*
@@ -215,6 +215,7 @@ extern int	ip6_forward_srcrt;	/* forward src-routed? */
 extern int	ip6_use_deprecated;	/* allow deprecated addr as source */
 extern int	ip6_rr_prune;		/* router renumbering prefix
 					 * walk list every 5 sec.    */
+extern const int ip6_v6only;
 extern struct socket *ip6_mrouter; 	/* multicast routing daemon */
 extern int	ip6_sendredirects;	/* send IP redirects when forwarding? */
 extern int	ip6_maxfragpackets; /* Maximum packets in reassembly queue */

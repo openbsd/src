@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.63 2002/06/07 15:00:55 itojun Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.64 2002/06/07 15:27:58 itojun Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -1234,6 +1234,7 @@ ip6_ctloutput(op, so, level, optname, mp)
 			case IPV6_RTHDR:
 			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
+			case IPV6_V6ONLY:
 				if (optlen != sizeof(int)) {
 					error = EINVAL;
 					break;
@@ -1295,6 +1296,11 @@ do { \
 				case IPV6_FAITH:
 					OPTSET(IN6P_FAITH);
 					break;
+
+				case IPV6_V6ONLY:
+					if (!optval)
+						error = EINVAL;
+					break;
 				}
 				break;
 #undef OPTSET
@@ -1311,30 +1317,26 @@ do { \
 			case IPV6_PORTRANGE:
 				optval = *mtod(m, int *);
 
-# define in6p		inp
-# define in6p_flags	inp_flags
 				switch (optval) {
 				case IPV6_PORTRANGE_DEFAULT:
-					in6p->in6p_flags &= ~(IN6P_LOWPORT);
-					in6p->in6p_flags &= ~(IN6P_HIGHPORT);
+					inp->inp_flags &= ~(IN6P_LOWPORT);
+					inp->inp_flags &= ~(IN6P_HIGHPORT);
 					break;
 
 				case IPV6_PORTRANGE_HIGH:
-					in6p->in6p_flags &= ~(IN6P_LOWPORT);
-					in6p->in6p_flags |= IN6P_HIGHPORT;
+					inp->inp_flags &= ~(IN6P_LOWPORT);
+					inp->inp_flags |= IN6P_HIGHPORT;
 					break;
 
 				case IPV6_PORTRANGE_LOW:
-					in6p->in6p_flags &= ~(IN6P_HIGHPORT);
-					in6p->in6p_flags |= IN6P_LOWPORT;
+					inp->inp_flags &= ~(IN6P_HIGHPORT);
+					inp->inp_flags |= IN6P_LOWPORT;
 					break;
 
 				default:
 					error = EINVAL;
 					break;
 				}
-# undef in6p
-# undef in6p_flags
 				break;
 
 			case IPSEC6_OUTSA:
@@ -1461,6 +1463,7 @@ do { \
 			case IPV6_RTHDR:
 			case IPV6_CHECKSUM:
 			case IPV6_FAITH:
+			case IPV6_V6ONLY:
 			case IPV6_PORTRANGE:
 				switch (optname) {
 
@@ -1508,6 +1511,10 @@ do { \
 
 				case IPV6_FAITH:
 					optval = OPTBIT(IN6P_FAITH);
+					break;
+
+				case IPV6_V6ONLY:
+					optval = (ip6_v6only != 0); /* XXX */
 					break;
 
 				case IPV6_PORTRANGE:
