@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.13 2001/09/06 14:47:07 naddy Exp $ */
+/*      $OpenBSD: eap.c,v 1.14 2001/09/06 18:33:28 millert Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -287,7 +287,8 @@ eap1370_write_codec(struct eap_softc *sc, int a, int d)
 		icss = EREAD4(sc, EAP_ICSS);
 		DPRINTFN(5,("eap: codec %d prog: icss=0x%08x\n", a, icss));
 		if (!to--) {
-			printf("eap: timeout writing to codec\n");
+			printf("%s: timeout writing to codec\n",
+			    sc->sc_dev.dv_xname);
 			return;
 		}
 	} while (icss & EAP_CWRIP);  /* XXX could use CSTAT here */
@@ -545,7 +546,6 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 	/* Map I/O register */
 	if (pci_mapreg_map(pa, PCI_CBIO, PCI_MAPREG_TYPE_IO, 0,
 			   &sc->iot, &sc->ioh, NULL, NULL, 0)) {
-		printf("\n%s: can't map i/o space\n", sc->sc_dev.dv_xname);
 		return;
 	}
 
@@ -558,15 +558,14 @@ eap_attach(struct device *parent, struct device *self, void *aux)
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		printf("\n%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		printf(": couldn't map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih);
 	sc->sc_ih = pci_intr_establish(pc, ih, IPL_AUDIO, eap_intr, sc, 
 				       sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
-		printf("\n%s: couldn't establish interrupt",
-		       sc->sc_dev.dv_xname);
+		printf(": couldn't establish interrupt");
 		if (intrstr != NULL)
 			printf(" at %s", intrstr);
 		printf("\n");
