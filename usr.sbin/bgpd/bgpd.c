@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.34 2003/12/26 14:55:03 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.35 2003/12/26 16:54:10 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -193,7 +193,8 @@ main(int argc, char *argv[])
 
 	imsg_init(&ibuf_se, pipe_m2s[0]);
 	imsg_init(&ibuf_rde, pipe_m2r[0]);
-	rfd = kroute_init();
+	if ((rfd = kroute_init()) == -1)
+		quit = 1;
 
 	while (quit == 0) {
 		pfd[PFD_PIPE_SESSION].fd = ibuf_se.sock;
