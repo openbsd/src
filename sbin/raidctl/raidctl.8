@@ -1,0 +1,570 @@
+.\"	$OpenBSD: raidctl.8,v 1.1 1999/01/11 14:49:44 niklas Exp $
+.\"
+.\"
+.\" Copyright (c) 1998 The NetBSD Foundation, Inc.
+.\" All rights reserved.
+.\"
+.\" This code is derived from software contributed to The NetBSD Foundation
+.\" by Greg Oster
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"        This product includes software developed by the NetBSD
+.\"        Foundation, Inc. and its contributors.
+.\" 4. Neither the name of The NetBSD Foundation nor the names of its
+.\"    contributors may be used to endorse or promote products derived
+.\"    from this software without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+.\" ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+.\" TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+.\" PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+.\" BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+.\" CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+.\" SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+.\" INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+.\" CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+.\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"
+.\" Copyright (c) 1995 Carnegie-Mellon University.
+.\" All rights reserved.
+.\" 
+.\" Author: Mark Holland
+.\" 
+.\" Permission to use, copy, modify and distribute this software and
+.\" its documentation is hereby granted, provided that both the copyright
+.\" notice and this permission notice appear in all copies of the
+.\" software, derivative works or modified versions, and any portions
+.\" thereof, and that both notices appear in supporting documentation.
+.\" 
+.\" CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+.\" CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
+.\" FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+.\" 
+.\" Carnegie Mellon requests users of this software to return to
+.\" 
+.\"  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+.\"  School of Computer Science
+.\"  Carnegie Mellon University
+.\"  Pittsburgh PA 15213-3890
+.\" 
+.\" any improvements or extensions that they make and grant Carnegie the
+.\" rights to redistribute these changes.
+.\" 
+.Dd November 6, 1998
+.Dt RAIDCTL 8
+.Os
+.Sh NAME
+.Nm raidctl
+.Nd configuration utility for the RAIDframe disk driver
+.Sh SYNOPSIS
+.Nm
+.Fl c Ar config_file Ar dev
+.Nm ""
+.Fl C Ar dev
+.Nm ""
+.Fl f Ar component Ar dev
+.Nm ""
+.Fl F Ar component Ar dev
+.Nm ""
+.Fl r Ar dev
+.Nm ""
+.Fl R Ar dev
+.Nm ""
+.Fl s Ar dev 
+.Nm ""
+.Fl u Ar dev
+.Sh DESCRIPTION
+.Nm
+is the user-land control program for
+.Xr raid 4 , Ns
+the RAIDframe disk device.  
+.Nm 
+is primarily used to dynamically configure and unconfigure RAIDframe disk
+devices.  For more information about the RAIDframe disk device, see
+.Xr raid 4 .
+.Pp
+This document assumes the reader has at least rudimentary knowledge of
+RAID and RAID concepts.
+.Pp
+The command-line options for 
+.Nm
+are as follows:
+.Bl -tag -width indent
+.It Fl c Ar config_file Ar dev
+Configure the RAIDframe device 
+.Ar dev
+according to the configuration given in
+.Ar config_file .
+A description of the contents of 
+.Ar config_file
+is given later.
+.It Fl C Ar dev
+Initiate a copyback of reconstructed data from a spare disk to 
+it's original disk.  This is performed after a component has failed, 
+and the failed drive has been reconstructed onto a spare drive.
+.It Fl f Ar component Ar dev
+This marks the specified 
+.Ar component
+as having failed, but does not initiate a reconstruction of that
+component.  
+.It Fl F Ar component Ar dev
+Fails the specified 
+.Ar component
+of the device, and immediately begin a reconstruction of the failed
+disk onto an available hot spare.  This is the mechanism used to start
+the reconstruction process if a component does have a hardware failure.
+.It Fl r Ar dev
+Re-write the parity on the device.  This 
+.Ar MUST
+be done before the RAID device is labeled and before
+filesystems are created on the RAID device, and is normally used after
+a system crash (and before a 
+.Xr fsck 8 ) Ns
+to ensure the integrity of the parity.
+.It Fl R Ar dev
+Check the status of component reconstruction.  The output indicates 
+the amount of progress achieved in reconstructing a failed component.
+.It Fl s Ar dev
+Display the status of the RAIDframe device for each of the components
+and spares.  
+.It Fl u Ar dev
+Unconfigure the RAIDframe device.
+.El
+.Pp
+The device used by 
+.Nm
+is specified by 
+.Ar dev .  
+.Ar dev
+may be either the full name of the device, e.g. /dev/rraid0d,
+for the i386 architecture, and /dev/rraid0c
+for all others, or just simply raid0 (for /dev/rraid0d).
+.Pp
+The format of the configuration file is complex, and
+only an abbreviated treatment is given here.  In the configuration
+files, a 
+.Sq #
+indicates the beginning of a comment.
+.Pp
+There are 4 required sections of a configuration file, and 2
+optional components.  Each section begins with a 
+.Sq START , 
+followed by
+the section name, and the confuration parameters associated with that
+section.  The first section is the 
+.Sq array
+section, and it specifies
+the number of rows, columns, and spare disks in the RAID array.  For
+example: 
+.Bd -unfilled -offset indent
+START array
+1 3 0
+.Ed
+.Pp
+indicates an array with 1 row, 3 columns, and 0 spare disks.  Note
+that allthough multi-dimenstional arrays may be specified, they are 
+.Ar NOT
+supported in the driver.
+.Pp
+The second section, the 
+.Sq disks
+section, specifies the actual
+components of the device.  For example:
+.Bd -unfilled -offset indent
+START disks
+/dev/sd0e
+/dev/sd1e
+/dev/sd2e
+.Ed
+.Pp
+specifies the three component disks to be used in the RAID device.  If
+any of the specified drives cannot be found when the RAID device is
+configured, then they will be marked as 
+.Sq failed , 
+and the system will
+operate in degraded mode.  Note that it is 
+.Ar imperative
+that the order of the components in the configuration file does not
+change between configurations of a RAID device.  Changing the order
+of the components (at least at the time of this writing) will result in
+data loss.  
+.Pp
+The next section, which is the 
+.Sq spare
+section, is optional, and, if
+present, specifies the devices to be used as 
+.Sq hot spares
+-- devices
+which are on-line, but are not actively used by the RAID driver unless
+one of the main components fail.  A simple 
+.Sq spare
+section might be:
+.Bd -unfilled -offset indent
+START spare 
+/dev/sd3e
+.Ed
+.Pp
+for a configuration with a single spare component.  If no spare drives
+are to be used in the configuration, then the 
+.Sq spare
+section may be ommitted.  
+.Pp
+The next section is the 
+.Sq layout
+section.  This section describes the
+general layout parameters for the RAID device, and provides such
+information as sectors per stripe unit, stripe units per parity unit,
+stripe units per reconstruction unit, and the parity configuration to
+use.  This section might look like:
+.Bd -unfilled -offset indent
+START layout
+# sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level
+32 1 1 5
+.Ed
+.Pp
+The sectors per stripe unit specifies, in blocks, the interleave
+factor; i.e. the number of contiguous sectors to be written to each
+component for a single stripe.  Appropriate selection of this value
+(32 in this example) is the subject of much research in RAID
+architectures.  The stripe units per parity unit and
+stripe units per reconstruction unit are normally each set to 1.
+While certain values above 1 are permitted, a discussion of valid
+values and the consequences of using anything other than 1 are outside
+the scope of this document.  The last value in this section (5 in this
+example) indicates the parity configuration desired.  Valid entries
+include: 
+.Bl -tag -width inde
+.It 0 
+RAID level 0.  No parity, only simple striping.
+.It 1
+RAID level 1.  Mirroring.
+.It 4
+RAID level 4.  Striping across components, with parity stored on the
+last component.
+.It 5
+RAID level 5.  Striping across components, parity distributed across
+all components.
+.El
+.Pp
+There are other valid entries here, including those for Even-Odd
+parity, RAID level 5 with rotated sparing, Chained declustering, 
+and Interleaved declustering, but as of this writing the code for
+those parity operations has not been tested with 
+.Ox .
+.Pp
+The next required section is the 
+.Sq queue
+section.  This is most often
+specified as:
+.Bd -unfilled -offset indent
+START queue
+fifo 1
+.Ed
+.Pp
+where the queueing method is specified as fifo (first-in, first-out),
+and the size of the per-component queue is limited to 1 requests.  A
+value of 1 is quite conservative here, and values of 100 or more may
+been used to increase the driver performance. 
+Other queuing methods may also be specified, but a discussion of them
+is beyond the scope of this document.
+.Pp
+The final section, the 
+.Sq debug section, is optional.  For more details
+on this the reader is referred to the RAIDframe documentation
+dissussed in the 
+.Sx HISTORY
+section.
+
+See
+.Sx EXAMPLES
+for a more complete configuration file example.
+
+.Sh EXAMPLES
+
+The examples in this section will focus on a RAID 5 configuration.
+Other RAID configurations will behave similarly.  It is highly
+recommended that before using the RAID driver for real filesystems
+that the system administrator(s) have used 
+.Ar all
+of the options for 
+.Nm ,
+and that they understand how the component reconstruction process
+works.  While this example is not created as a tutorial, the steps
+shown here can be easily dupilicated using four equal-sized partitions
+from any number of disks (including all four from a single disk).  
+.Pp
+The primary uses of 
+.Nm
+is to configure and unconfigure
+.Xr raid 4 
+devices.  To configure the device, a configuration
+file which looks something like:
+.Bd -unfilled -offset indent
+START array
+# numRow numCol numSpare
+1 3 1
+
+START disks
+/dev/sd1e
+/dev/sd2e
+/dev/sd3e
+
+START spare
+/dev/sd4e
+
+START layout
+# sectPerSU SUsPerParityUnit SUsPerReconUnit RAID_level_5
+32 1 1 5
+
+START queue
+fifo 100
+.Ed
+.Pp
+is first created.  In short, this configuration file specifies a RAID
+5 configuration consisting of the disks /dev/sd1e, /dev/sd2e, and
+/dev/sd3e, with /dev/sd4e available as a 
+.Sq hot spare
+in case one of
+the three main drives should fail.  If the above configuration is in a
+file called 
+.Sq rfconfig , 
+raid device 0 can be configured with: 
+.Bd -unfilled -offset indent
+raidctl -c rfconfig raid0
+.Ed
+.Pp
+The above is equivalent to the following:
+.Bd -unfilled -offset indent
+raidctl -c rfconfig /dev/rraid0d
+.Ed
+.Pp
+on the i386 architecture.  On all other architectures, /dev/rraid0c
+is used in place of /dev/rraid0d.
+.Pp
+To see how the device is doing, the following will show the status:
+.Bd -unfilled -offset indent
+raidctl -s raid0
+.Ed
+.Pp
+The output will look something like:
+.Bd -unfilled -offset indent
+Components:
+           /dev/sd1e: optimal
+           /dev/sd2e: optimal
+           /dev/sd3e: optimal
+Spares:
+           /dev/sd4e [0][0]: spare
+.Ed
+.Pp
+This indicates that all is well with the RAID array.  If this is the first
+time this RAID array has been configured, or the system is just being
+brought up after an unclean shutdown, it is necessary to
+ensure that the parity values are correct.  This can be done via:
+.Bd -unfilled -offset indent
+raidctl -r raid0
+.Ed
+.Pp
+Once this is done, it is then safe to perform
+.Xr disklabel 8 , Ns
+.Xr newfs 8 , Ns
+or
+.Xr fsck 8
+on the device or its filesystems.
+.Pp
+If for some reason
+(perhaps to test reconstruction) it is necessary to pretend a drive
+has failed, the following will perform that function:
+.Bd -unfilled -offset indent
+raidctl -f /dev/sd2e raid0
+.Ed
+.Pp
+The system will then be performing all operations in degraded mode,
+were missing data is re-computed from existing data and the parity.
+In this case, obtaining the status of raid0 will return:
+.Bd -unfilled -offset indent
+Components:
+           /dev/sd1e: optimal
+           /dev/sd2e: failed
+           /dev/sd3e: optimal
+Spares:
+           /dev/sd4e [0][0]: spare
+.Ed
+.Pp
+Note that with the use of 
+.Fl f
+a reconstruction has not been started.  To both fail the disk and
+start a reconstruction, the 
+.Fl F
+option must be used.  (The 
+.Fl f
+option may be used first, and then the
+.Fl F
+option used later, on the same disk, if desired.)  
+Immediately after the reconstruction is started, the status will report:
+.Bd -unfilled -offset indent
+Components:
+           /dev/sd1e: optimal
+           /dev/sd2e: reconstructing
+           /dev/sd3e: optimal
+Spares:
+           /dev/sd4e [0][0]: used_spare
+.Ed
+.Pp
+This indicates that a reconstruction is in progress.  To find out how
+the reconstruction is progressing the 
+.Fl R
+option may be used.  This will indicate the progress in terms of the
+percentage of the reconstruction that is completed.  When the
+reconstruction is finished the
+.Fl s
+option will show:
+.Bd -unfilled -offset indent
+Components:
+           /dev/sd1e: optimal
+           /dev/sd2e: spared
+           /dev/sd3e: optimal
+Spares:
+           /dev/sd4e [0][0]: used_spare
+.Ed
+.Pp
+At this point there are at least two options.  First, if /dev/sd2e is
+known to be good (i.e. the failure was either caused by 
+.Fl f
+or 
+.Fl F ,
+or the failed disk was replaced), then a copyback of the data can 
+be initiated with the 
+.Fl C
+option.  In this example, this would copy the entire contents of
+/dev/sd4e to /dev/sd2e.  Once the copyback procedure is complete, the
+status of the device would be:
+.Bd -unfilled -offset indent
+Components:
+           /dev/sd1e: optimal
+           /dev/sd2e: optimal
+           /dev/sd3e: optimal
+Spares:
+           /dev/sd4e [0][0]: spare
+.Ed
+.Pp
+and the system is back to normal operation.
+.Pp
+The second option after the reconstruction is to simply use /dev/sd4e
+in place of /dev/sd2e in the configuration file.  For example, the
+configuration file (in part) might now look like:
+.Bd -unfilled -offset indent
+START array
+1 3 0
+
+START drives
+/dev/sd1e
+/dev/sd4e
+/dev/sd3e
+.Ed
+.Pp
+This can be done as /dev/sd4e is completely interchangeable with
+/dev/sd2e at this point.  Note that extreme care must be taken when 
+changing the order of the drives in a configuration.  This is one of
+the few instances where the devices and/or their orderings can be
+changed without loss of data!  In general, the ordering of components
+in a configuration file should 
+.Ar never 
+be changed.
+.Pp
+The final operation performed by 
+.Nm
+is to unconfigure a 
+.Xr raid 4
+device.  This is accomplished via a simple:
+.Bd -unfilled -offset indent
+raidctl -u raid0
+.Ed
+.Pp
+at which point the device is ready to be reconfigured.
+.Sh WARNINGS
+Certain RAID levels (1, 4, 5, 6, and others) can protect against some
+data loss due to component failure.  However the loss of two
+components of a RAID 4 or 5 system, or the loss of a single component
+of a RAID 0 system will result in the entire filesystem being lost.
+RAID is 
+.Ar NOT
+a substitute for good backup practices.
+.Pp
+Recomputation of parity 
+.Ar MUST
+be performed whenever there is a chance that it may have been
+compromised.  This includes after system crashes, or before a RAID
+device has been used for the first time.  Failure to keep parity
+correct will be catastrophic should a component ever fail -- it is
+better to use RAID 0 and get the additional space and speed, than it
+is to use parity, but not keep the parity correct.  At least with RAID
+0 there is no perception of increased data security.
+.Pp
+.Sh FILES
+.Bl -tag -width /dev/XXrXraidX -compact
+.It Pa /dev/{,r}raid*
+.Nm
+device special files.
+.El
+.Pp
+.Sh SEE ALSO
+.Xr raid 4 ,
+.Xr ccd 4 ,
+.Xr rc 8
+.Sh HISTORY
+RAIDframe is a framework for rapid prototyping of RAID structures
+developed by the folks at the Parallel Data Laboratory at Carnegie
+Mellon University (CMU).  
+A more complete description of the internals and functionality of
+RAIDframe is found in the paper "RAIDframe: A Rapid Prototyping Tool
+for RAID Systems", by William V. Courtright II, Garth Gibson, Mark
+Holland, LeAnn Neal Reilly, and Jim Zelenka, and published by the
+Parallel Data Laboratory of Carnegie Mellon University.
+.Pp
+The
+.Nm
+command first appeared as a program in CMU's RAIDframe v1.1 distribution.  This
+version of
+.Nm
+is a complete re-write, and first appeared in
+.Nx 1.4 .
+.Sh COPYRIGHT
+.Bd -unfilled
+
+The RAIDframe Copyright is as follows:
+
+Copyright (c) 1994-1996 Carnegie-Mellon University.
+All rights reserved.
+
+Permission to use, copy, modify and distribute this software and
+its documentation is hereby granted, provided that both the copyright
+notice and this permission notice appear in all copies of the
+software, derivative works or modified versions, and any portions
+thereof, and that both notices appear in supporting documentation.
+
+CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
+FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+
+Carnegie Mellon requests users of this software to return to
+
+ Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ School of Computer Science
+ Carnegie Mellon University
+ Pittsburgh PA 15213-3890
+
+any improvements or extensions that they make and grant Carnegie the
+rights to redistribute these changes.
+
+.Ed

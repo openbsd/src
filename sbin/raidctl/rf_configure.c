@@ -1,0 +1,610 @@
+/*	$OpenBSD: rf_configure.c,v 1.1 1999/01/11 14:49:44 niklas Exp $	*/
+
+/*
+ * Copyright (c) 1995 Carnegie-Mellon University.
+ * All rights reserved.
+ *
+ * Author: Mark Holland
+ *
+ * Permission to use, copy, modify and distribute this software and
+ * its documentation is hereby granted, provided that both the copyright
+ * notice and this permission notice appear in all copies of the
+ * software, derivative works or modified versions, and any portions
+ * thereof, and that both notices appear in supporting documentation.
+ *
+ * CARNEGIE MELLON ALLOWS FREE USE OF THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION.  CARNEGIE MELLON DISCLAIMS ANY LIABILITY OF ANY KIND
+ * FOR ANY DAMAGES WHATSOEVER RESULTING FROM THE USE OF THIS SOFTWARE.
+ *
+ * Carnegie Mellon requests users of this software to return to
+ *
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
+ *  School of Computer Science
+ *  Carnegie Mellon University
+ *  Pittsburgh PA 15213-3890
+ *
+ * any improvements or extensions that they make and grant Carnegie the
+ * rights to redistribute these changes.
+ */
+
+/***************************************************************
+ *
+ * rf_configure.c -- code related to configuring the raidframe system
+ *
+ * configuration is complicated by the fact that we want the same
+ * driver to work both in the kernel and at user level.  In the
+ * kernel, we can't read the configuration file, so we configure
+ * by running a user-level program that reads the config file,
+ * creates a data structure describing the configuration and
+ * passes it into the kernel via an ioctl.  Since we want the config
+ * code to be common between the two versions of the driver, we
+ * configure using the same two-step process when running at
+ * user level.  Of course, at user level, the config structure is
+ * passed directly to the config routine, rather than via ioctl.
+ *
+ * This file is not compiled into the kernel, so we have no
+ * need for KERNEL ifdefs.
+ *
+ **************************************************************/
+
+/* $Locker:  $
+ * $Log: rf_configure.c,v $
+ * Revision 1.1  1999/01/11 14:49:44  niklas
+ * Control RAIDframe
+ *
+ * Revision 1.1.1.2  1998/11/23 21:35:58  niklas
+ * NetBSD-current 981123
+ *
+ * Revision 1.2  1998/11/23 00:18:40  mrg
+ * fix compile errors on the alpha.
+ *
+ * Revision 1.1  1998/11/13 04:34:02  oster
+ *
+ * RAIDframe, version 1.1, from the Parallel Data Laboratory at
+ * Carnegie Mellon University.  Full RAID implementation, including
+ * levels 0, 1, 4, 5, 6, parity logging, and a few other goodies.
+ * Ported to NetBSD by Greg Oster.
+ *
+ * raidctl is our userland configuration tool for RAIDframe.
+ *
+ * Revision 1.42  1996/08/09 18:47:47  jimz
+ * major -> dev_major
+ *
+ * Revision 1.41  1996/07/29  14:05:12  jimz
+ * fix numPUs/numRUs confusion (everything is now numRUs)
+ * clean up some commenting, return values
+ *
+ * Revision 1.40  1996/07/27  23:36:08  jimz
+ * Solaris port of simulator
+ *
+ * Revision 1.39  1996/07/27  18:39:45  jimz
+ * cleanup sweep
+ *
+ * Revision 1.38  1996/07/18  22:57:14  jimz
+ * port simulator to AIX
+ *
+ * Revision 1.37  1996/06/19  14:58:02  jimz
+ * move layout-specific config parsing hooks into RF_LayoutSW_t
+ * table in rf_layout.c
+ *
+ * Revision 1.36  1996/06/17  14:38:33  jimz
+ * properly #if out RF_DEMO code
+ * fix bug in MakeConfig that was causing weird behavior
+ * in configuration routines (config was not zeroed at start)
+ * clean up genplot handling of stacks
+ *
+ * Revision 1.35  1996/06/05  19:38:32  jimz
+ * fixed up disk queueing types config
+ * added sstf disk queueing
+ * fixed exit bug on diskthreads (ref-ing bad mem)
+ *
+ * Revision 1.34  1996/06/03  23:28:26  jimz
+ * more bugfixes
+ * check in tree to sync for IPDS runs with current bugfixes
+ * there still may be a problem with threads in the script test
+ * getting I/Os stuck- not trivially reproducible (runs ~50 times
+ * in a row without getting stuck)
+ *
+ * Revision 1.33  1996/06/02  17:31:48  jimz
+ * Moved a lot of global stuff into array structure, where it belongs.
+ * Fixed up paritylogging, pss modules in this manner. Some general
+ * code cleanup. Removed lots of dead code, some dead files.
+ *
+ * Revision 1.32  1996/05/30  23:22:16  jimz
+ * bugfixes of serialization, timing problems
+ * more cleanup
+ *
+ * Revision 1.31  1996/05/30  11:29:41  jimz
+ * Numerous bug fixes. Stripe lock release code disagreed with the taking code
+ * about when stripes should be locked (I made it consistent: no parity, no lock)
+ * There was a lot of extra serialization of I/Os which I've removed- a lot of
+ * it was to calculate values for the cache code, which is no longer with us.
+ * More types, function, macro cleanup. Added code to properly quiesce the array
+ * on shutdown. Made a lot of stuff array-specific which was (bogusly) general
+ * before. Fixed memory allocation, freeing bugs.
+ *
+ * Revision 1.30  1996/05/27  18:56:37  jimz
+ * more code cleanup
+ * better typing
+ * compiles in all 3 environments
+ *
+ * Revision 1.29  1996/05/24  01:59:45  jimz
+ * another checkpoint in code cleanup for release
+ * time to sync kernel tree
+ *
+ * Revision 1.28  1996/05/18  19:51:34  jimz
+ * major code cleanup- fix syntax, make some types consistent,
+ * add prototypes, clean out dead code, et cetera
+ *
+ * Revision 1.27  1995/12/12  18:10:06  jimz
+ * MIN -> RF_MIN, MAX -> RF_MAX, ASSERT -> RF_ASSERT
+ * fix 80-column brain damage in comments
+ *
+ * Revision 1.26  1995/12/01  15:16:36  root
+ * added copyright info
+ *
+ */
+
+
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include "rf_raid.h"
+#include "rf_raidframe.h"
+#include "rf_utils.h"
+#include "rf_general.h"
+#include "rf_decluster.h"
+#include "rf_configure.h"
+#include "rf_sys.h"
+
+/* 
+
+   XXX we include this here so we don't need to drag rf_debugMem.c into 
+   the picture...  This is userland, afterall... 
+
+ */
+
+/* XXX sucky hack to override the defn. of RF_Malloc as given in 
+rf_debugMem.c...  but I *really* don't want (nor need) to link with 
+that file here in userland..  GO
+*/
+
+#undef RF_Malloc
+#define RF_Malloc(_p_, _size_, _cast_) \
+  { \
+     _p_ = _cast_ malloc((u_long)_size_); \
+     bzero((char *)_p_, _size_); \
+  }
+
+
+
+#ifndef SIMULATE
+static unsigned int dev_name2num(char *s);
+static unsigned int osf_dev_name2num(char *s);
+#endif
+static int rf_search_file_for_start_of(char *string, char *buf, int len,
+	FILE *fp);
+static int rf_get_next_nonblank_line(char *buf, int len, FILE *fp,
+	char *errmsg);
+
+/* called from user level to read the configuration file and create
+ * a configuration control structure.  This is used in the user-level
+ * version of the driver, and in the user-level program that configures
+ * the system via ioctl.
+ */
+int rf_MakeConfig(configname, cfgPtr)
+  char         *configname;
+  RF_Config_t  *cfgPtr;
+{
+  int numscanned, val, r, c, retcode, aa, bb, cc;
+  char buf[256], buf1[256], *cp;
+  RF_LayoutSW_t *lp;
+  FILE *fp;
+
+  bzero((char *)cfgPtr, sizeof(RF_Config_t));
+
+  fp = fopen(configname, "r");
+  if (!fp) {
+    RF_ERRORMSG1("Can't open config file %s\n",configname);
+    return(-1);
+  }
+  
+  rewind(fp);
+  if (rf_search_file_for_start_of("array", buf, 256, fp)) {
+    RF_ERRORMSG1("Unable to find start of \"array\" params in config file %s\n",configname);
+    retcode = -1; goto out;
+  }
+  rf_get_next_nonblank_line(buf, 256, fp, "Config file error (\"array\" section):  unable to get numRow and numCol\n");
+  /*
+   * wackiness with aa, bb, cc to get around size problems on different platforms
+   */
+  numscanned = sscanf(buf,"%d %d %d", &aa, &bb, &cc);
+  if (numscanned != 3) {
+    RF_ERRORMSG("Config file error (\"array\" section):  unable to get numRow, numCol, numSpare\n");
+    retcode = -1; goto out;
+  }
+  cfgPtr->numRow = (RF_RowCol_t)aa;
+  cfgPtr->numCol = (RF_RowCol_t)bb;
+  cfgPtr->numSpare = (RF_RowCol_t)cc;
+
+  /* debug section is optional */
+  for (c=0; c<RF_MAXDBGV; c++)
+    cfgPtr->debugVars[c][0] = '\0';
+  rewind(fp);
+  if (!rf_search_file_for_start_of("debug", buf, 256, fp)) {
+    for (c=0; c < RF_MAXDBGV; c++) {
+      if (rf_get_next_nonblank_line(buf, 256, fp, NULL)) break;
+      cp = rf_find_non_white(buf);
+      if (!strncmp(cp, "START", strlen("START"))) break;
+      (void) strcpy(&cfgPtr->debugVars[c][0], cp);
+    }
+  }
+  
+  rewind(fp);
+  strcpy(cfgPtr->diskQueueType,"fifo");
+  cfgPtr->maxOutstandingDiskReqs = 1;
+  /* scan the file for the block related to disk queues */
+  if (rf_search_file_for_start_of("queue",buf,256,fp)) {
+    RF_ERRORMSG2("[No disk queue discipline specified in config file %s.  Using %s.]\n",configname, cfgPtr->diskQueueType);
+  } else {
+    if (rf_get_next_nonblank_line(buf, 256, fp, NULL)) {
+      RF_ERRORMSG2("[No disk queue discipline specified in config file %s.  Using %s.]\n",configname, cfgPtr->diskQueueType);
+    }
+  }
+
+  /* the queue specifier line contains two entries:
+   * 1st char of first word specifies queue to be used
+   * 2nd word specifies max num reqs that can be outstanding on the disk itself (typically 1)
+   */
+  if (sscanf(buf,"%s %d",buf1,&val)!=2) {
+    RF_ERRORMSG1("Can't determine queue type and/or max outstanding reqs from line: %s",buf);
+    RF_ERRORMSG2("Using %s-%d\n", cfgPtr->diskQueueType, cfgPtr->maxOutstandingDiskReqs);
+  } else {
+    char *c;
+    bcopy(buf1, cfgPtr->diskQueueType, RF_MIN(sizeof(cfgPtr->diskQueueType), strlen(buf1)+1));
+    for(c=buf1;*c;c++) {
+      if (*c == ' ') {
+        *c = '\0';
+        break;
+      }
+    }
+    cfgPtr->maxOutstandingDiskReqs = val;
+  }
+
+  rewind(fp);
+
+
+  if (rf_search_file_for_start_of("disks",buf,256,fp)) {
+    RF_ERRORMSG1("Can't find \"disks\" section in config file %s\n",configname);
+    retcode = -1; goto out;
+  }
+
+  for (r=0; r<cfgPtr->numRow; r++) {
+    for (c=0; c<cfgPtr->numCol; c++) {
+      if (rf_get_next_nonblank_line(&cfgPtr->devnames[r][c][0], 50, fp, NULL)) {
+	RF_ERRORMSG2("Config file error: unable to get device file for disk at row %d col %d\n",r,c);
+	retcode = -1; goto out;
+      }
+#ifndef SIMULATE
+      val = dev_name2num(&cfgPtr->devnames[r][c][0]);
+
+      if (val < 0) {
+	RF_ERRORMSG3("Config file error: can't get dev num (dev file '%s') for disk at row %d c %d\n",
+		  &cfgPtr->devnames[r][c][0],r,c);
+	retcode = -1; goto out;
+      } else cfgPtr->devs[r][c] = val;
+#endif /* !SIMULATE */
+    }
+  }
+
+  /* "spare" section is optional */
+  rewind(fp);
+  if (rf_search_file_for_start_of("spare",buf,256,fp)) cfgPtr->numSpare =0;
+  for (c = 0; c < cfgPtr->numSpare; c++) {
+    if (rf_get_next_nonblank_line(&cfgPtr->spare_names[c][0], 256, fp, NULL)) {
+      RF_ERRORMSG1("Config file error: unable to get device file for spare disk %d\n",c);
+      retcode = -1; goto out;
+    }
+#ifndef SIMULATE
+    val = dev_name2num(&cfgPtr->spare_names[c][0]);
+    if (val < 0) {
+      RF_ERRORMSG2("Config file error: can't get dev num (dev file '%s') for spare disk %d\n",
+		&cfgPtr->spare_names[c][0],c);
+      retcode = -1; goto out;
+    } else cfgPtr->spare_devs[c] = val;
+#endif /* !SIMULATE */
+  }
+
+  /* scan the file for the block related to layout */
+  rewind(fp);
+  if (rf_search_file_for_start_of("layout",buf,256,fp)) {
+    RF_ERRORMSG1("Can't find \"layout\" section in configuration file %s\n",configname);
+    retcode = -1; goto out;
+  }
+  if (rf_get_next_nonblank_line(buf, 256, fp, NULL)) {
+    RF_ERRORMSG("Config file error (\"layout\" section): unable to find common layout param line\n");
+    retcode = -1; goto out;
+  }
+  c = sscanf(buf,"%d %d %d %c", &aa, &bb, &cc, &cfgPtr->parityConfig);
+  cfgPtr->sectPerSU = (RF_SectorNum_t)aa;
+  cfgPtr->SUsPerPU = (RF_StripeNum_t)bb;
+  cfgPtr->SUsPerRU = (RF_StripeNum_t)cc;
+  if (c != 4) {
+    RF_ERRORMSG("Unable to scan common layout line\n");
+    retcode = -1; goto out;
+  }
+  lp = rf_GetLayout(cfgPtr->parityConfig);
+  if (lp == NULL) {
+    RF_ERRORMSG1("Unknown parity config '%c'\n", cfgPtr->parityConfig);
+    retcode = -1;
+    goto out;
+  }
+
+  /* XXX who cares.. it's not going into the kernel, so we should ignore this... */
+#ifndef KERNEL
+  retcode = lp->MakeLayoutSpecific(fp, cfgPtr, lp->makeLayoutSpecificArg);
+#endif
+out:
+  fclose(fp);
+  if (retcode < 0)
+    retcode = errno = EINVAL;
+  else
+    errno = retcode;
+  return(retcode);
+}
+
+
+/* used in architectures such as RAID0 where there is no layout-specific
+ * information to be passed into the configuration code.
+ */
+int rf_MakeLayoutSpecificNULL(fp, cfgPtr, ignored)
+  FILE         *fp;
+  RF_Config_t  *cfgPtr;
+  void         *ignored;
+{
+  cfgPtr->layoutSpecificSize = 0;
+  cfgPtr->layoutSpecific     = NULL;
+  return(0);
+}
+
+int rf_MakeLayoutSpecificDeclustered(configfp, cfgPtr, arg)
+  FILE         *configfp;
+  RF_Config_t  *cfgPtr;
+  void         *arg;
+{
+  int b, v, k, r, lambda, norotate, i, val, distSpare;
+  char *cfgBuf, *bdfile, *p, *smname;
+  char buf[256], smbuf[256];
+  FILE *fp;
+
+  distSpare = *((int *)arg);
+
+  /* get the block design file name */
+  if (rf_get_next_nonblank_line(buf,256,configfp,"Can't find block design file name in config file\n"))
+    return(EINVAL);
+  bdfile = rf_find_non_white(buf);
+  if (bdfile[strlen(bdfile)-1] == '\n') {
+    /* strip newline char */
+    bdfile[strlen(bdfile)-1] = '\0';
+  }
+
+  /* open bd file, check validity of configuration */
+  if ((fp = fopen(bdfile,"r"))==NULL) {
+    RF_ERRORMSG1("RAID: config error: Can't open layout table file %s\n",bdfile);
+    return(EINVAL);
+  }
+
+  fgets(buf,256,fp);
+  i = sscanf(buf,"%u %u %u %u %u %u",&b,&v,&k,&r,&lambda,&norotate);
+  if (i == 5)
+    norotate = 0; /* no-rotate flag is optional */
+  else if (i != 6) {
+    RF_ERRORMSG("Unable to parse header line in block design file\n");
+    return(EINVAL);
+  }
+  
+  /* set the sparemap directory.  In the in-kernel version, there's a daemon
+   * that's responsible for finding the sparemaps
+   */
+  if (distSpare) {
+    if (rf_get_next_nonblank_line(smbuf,256,configfp,"Can't find sparemap file name in config file\n"))
+      return(EINVAL);
+    smname = rf_find_non_white(smbuf);
+    if (smname[strlen(smname)-1] == '\n') {
+      /* strip newline char */
+      smname[strlen(smname)-1] = '\0';
+    }
+  }
+  else {
+    smbuf[0] = '\0';
+    smname = smbuf;
+  }
+
+  /* allocate a buffer to hold the configuration info */
+  cfgPtr->layoutSpecificSize = RF_SPAREMAP_NAME_LEN + 6 * sizeof(int) + b * k;
+  /* can't use RF_Malloc here b/c debugMem module not yet init'd */
+  cfgBuf = (char *) malloc(cfgPtr->layoutSpecificSize);          
+  cfgPtr->layoutSpecific = (void *) cfgBuf;
+  p = cfgBuf;
+
+  /* install name of sparemap file */
+  for (i=0; smname[i]; i++)
+    *p++ = smname[i];
+  /* pad with zeros */
+  while (i<RF_SPAREMAP_NAME_LEN) {
+    *p++ = '\0';
+    i++;
+  }
+
+  /*
+   * fill in the buffer with the block design parameters
+   * and then the block design itself
+   */
+  *( (int *) p) = b;        p += sizeof(int);
+  *( (int *) p) = v;        p += sizeof(int);
+  *( (int *) p) = k;        p += sizeof(int);
+  *( (int *) p) = r;        p += sizeof(int);
+  *( (int *) p) = lambda;   p += sizeof(int);
+  *( (int *) p) = norotate; p += sizeof(int);
+
+  while (fscanf(fp,"%d",&val) == 1)
+    *p++ = (char) val;
+  fclose(fp);
+  if (p - cfgBuf != cfgPtr->layoutSpecificSize) {
+      RF_ERRORMSG2("Size mismatch creating layout specific data: is %d sb %d bytes\n",(int)(p-cfgBuf),(int)(6*sizeof(int)+b*k));
+      return(EINVAL);
+  }
+  return(0);
+}
+
+
+/****************************************************************************
+ *
+ * utilities
+ *
+ ***************************************************************************/
+#ifndef SIMULATE
+/* convert a device file name to a device number */
+static unsigned int dev_name2num(s)
+  char  *s;
+{
+  struct stat buf;
+
+  if (stat(s, &buf) < 0) return(osf_dev_name2num(s));
+  else return(buf.st_rdev);
+}
+
+/* converts an osf/1 style device name to a device number.  We use this
+ * only if the stat of the device file fails.
+ */
+static unsigned int osf_dev_name2num(s)
+  char  *s;
+{
+  int num;
+  char part_ch, lun_ch;
+  unsigned int bus, target, lun, part, dev_major;
+
+  dev_major = RF_SCSI_DISK_MAJOR;
+  if (sscanf(s,"/dev/rrz%d%c", &num, &part_ch) == 2) {
+    bus = num>>3;
+    target = num & 0x7;
+    part = part_ch - 'a';
+    lun = 0;
+  } else if (sscanf(s,"/dev/rrz%c%d%c", &lun_ch, &num, &part_ch) == 3) {
+    bus = num>>3;
+    target = num & 0x7;
+    part = part_ch - 'a';
+    lun = lun_ch - 'a' + 1;
+  } else {
+    RF_ERRORMSG1("Unable to parse disk dev file name %s\n",s);
+    return(-1);
+  }
+
+  return( (dev_major<<20) | (bus<<14) | (target<<10) | (lun<<6) | part );
+}
+#endif
+
+/* searches a file for a line that says "START string", where string is
+ * specified as a parameter
+ */
+static int rf_search_file_for_start_of(string, buf, len, fp)
+  char  *string;
+  char  *buf;
+  int    len;
+  FILE  *fp;
+{
+  char *p;
+
+  while (1) {
+    if (fgets(buf, len, fp) == NULL) return(-1);
+    p = rf_find_non_white(buf);
+    if (!strncmp(p, "START", strlen("START"))) {
+      p = rf_find_white(p);
+      p = rf_find_non_white(p);
+      if (!strncmp(p, string, strlen(string))) return(0);
+    }
+  }
+}
+
+/* reads from file fp into buf until it finds an interesting line */
+int rf_get_next_nonblank_line(buf, len, fp, errmsg)
+  char  *buf;
+  int    len;
+  FILE  *fp;
+  char  *errmsg;
+{
+  char *p;
+
+  while (fgets(buf,256,fp) != NULL) {
+    p = rf_find_non_white(buf);
+    if (*p == '\n' || *p == '\0' || *p == '#') continue;
+    return(0);
+  }
+  if (errmsg) RF_ERRORMSG(errmsg);
+  return(1);
+}
+
+/* Allocates an array for the spare table, and initializes it from a file.
+ * In the user-level version, this is called when recon is initiated.
+ * When/if I move recon into the kernel, there'll be a daemon that does
+ * an ioctl into raidframe which will block until a spare table is needed.
+ * When it returns, it will read a spare table from the file system,
+ * pass it into the kernel via a different ioctl, and then block again
+ * on the original ioctl.
+ *
+ * This is specific to the declustered layout, but doesn't belong in
+ * rf_decluster.c because it uses stuff that can't be compiled into
+ * the kernel, and it needs to be compiled into the user-level sparemap daemon.
+ *
+ */
+void *rf_ReadSpareTable(req, fname)
+  RF_SparetWait_t  *req;
+  char             *fname;
+{
+  int i, j, numFound, linecount, tableNum, tupleNum, spareDisk, spareBlkOffset;
+  char buf[1024], targString[100], errString[100];
+  RF_SpareTableEntry_t **table;
+  FILE *fp;
+
+  /* allocate and initialize the table */
+  RF_Malloc(table, req->TablesPerSpareRegion * sizeof(RF_SpareTableEntry_t *), (RF_SpareTableEntry_t **));
+  for (i=0; i<req->TablesPerSpareRegion; i++) {
+    RF_Malloc(table[i], req->BlocksPerTable * sizeof(RF_SpareTableEntry_t), (RF_SpareTableEntry_t *));
+    for (j=0; j<req->BlocksPerTable; j++) table[i][j].spareDisk = table[i][j].spareBlockOffsetInSUs = -1;
+  }
+
+  /* 2.  open sparemap file, sanity check */
+  if ((fp = fopen(fname,"r"))==NULL) {
+    fprintf(stderr,"rf_ReadSpareTable:  Can't open sparemap file %s\n",fname);  return(NULL);
+  }
+  if (rf_get_next_nonblank_line(buf,1024,fp,"Invalid sparemap file:  can't find header line\n"))
+    return(NULL);
+  if (buf[strlen(buf)-1] == '\n')
+    buf[strlen(buf)-1] = '\0';
+
+  sprintf(targString, "fdisk %d\n", req->fcol);
+  sprintf(errString, "Invalid sparemap file:  can't find \"fdisk %d\" line\n",req->fcol);
+  while (1) {
+    rf_get_next_nonblank_line(buf,1024,fp,errString);
+    if (!strncmp(buf,targString,strlen(targString))) break;
+  }
+
+  /* no more blank lines or comments allowed now */
+  linecount = req->TablesPerSpareRegion * req->TableDepthInPUs;
+  for (i=0; i<linecount; i++) {
+    numFound = fscanf(fp," %d %d %d %d",&tableNum, &tupleNum, &spareDisk, &spareBlkOffset);
+    if (numFound != 4) {
+      fprintf(stderr,"Sparemap file prematurely exhausted after %d of %d lines\n",i,linecount); return(NULL);
+    }
+    RF_ASSERT(tableNum >= 0 && tableNum < req->TablesPerSpareRegion);
+    RF_ASSERT(tupleNum >= 0 && tupleNum < req->BlocksPerTable);
+    RF_ASSERT(spareDisk >= 0 && spareDisk < req->C);
+    RF_ASSERT(spareBlkOffset >= 0 && spareBlkOffset < req->SpareSpaceDepthPerRegionInSUs / req->SUsPerPU);
+    
+    table[tableNum][tupleNum].spareDisk = spareDisk;
+    table[tableNum][tupleNum].spareBlockOffsetInSUs = spareBlkOffset * req->SUsPerPU;
+  }
+
+  fclose(fp);
+  return((void *) table);
+}
