@@ -1,4 +1,4 @@
-/*	$OpenBSD: function.c,v 1.4 1996/06/26 05:33:10 deraadt Exp $	*/
+/*	$OpenBSD: function.c,v 1.5 1996/08/31 22:40:21 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)function.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: function.c,v 1.4 1996/06/26 05:33:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: function.c,v 1.5 1996/08/31 22:40:21 tholo Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -541,6 +541,35 @@ c_ls()
 	isoutput = 1;
     
 	return (palloc(N_LS, f_ls));
+}
+
+/*
+ * - maxdepth n functions --
+ *
+ *	True if the current search depth is less than or equal to the
+ *	maximum depth specified
+ */
+int
+f_mdepth(plan, entry)
+	PLAN *plan;
+	FTSENT *entry;
+{
+	extern FTS *tree;
+
+	if (entry->fts_level >= plan->d_data)
+		fts_set(tree, entry, FTS_SKIP);
+	return (entry->fts_level <= plan->d_data);
+}
+
+PLAN *
+c_mdepth(arg)
+	char *arg;
+{
+	PLAN *new;
+
+	new = palloc(N_MDEPTH, f_mdepth);
+	new->d_data = atoi(arg);
+	return (new);
 }
 
 /*

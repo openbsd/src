@@ -1,4 +1,4 @@
-/* *      $OpenBSD: extern.h,v 1.2 1996/06/26 05:33:07 deraadt Exp $*/
+/* *      $OpenBSD: extern.h,v 1.3 1996/08/31 22:40:18 tholo Exp $*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -59,6 +59,7 @@ PLAN	*c_group __P((char *));
 PLAN	*c_inum __P((char *));
 PLAN	*c_links __P((char *));
 PLAN	*c_ls __P((void));
+PLAN	*c_mdepth __P((char *));
 PLAN	*c_name __P((char *));
 PLAN	*c_newer __P((char *));
 PLAN	*c_nogroup __P((void));

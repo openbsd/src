@@ -1,4 +1,4 @@
-.\"	$OpenBSD: find.1,v 1.5 1996/06/26 05:33:08 deraadt Exp $
+.\"	$OpenBSD: find.1,v 1.6 1996/08/31 22:40:19 tholo Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -35,7 +35,7 @@
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd June 6, 1993
+.Dd August 31, 1996
 .Dt FIND 1
 .Os
 .Sh NAME
@@ -191,6 +191,9 @@ will be displayed instead of the size in bytes.
 If the file is a symbolic link, the pathname of the linked\-to file will be
 displayed preceded by ``\->''.
 The format is identical to that produced by ``ls \-dgils''.
+.It Ic -maxdepth Ar n
+True if the current search depth is less than what is specified in
+.Ar n .
 .It Ic -mtime Ar n 
 True if the difference between the file last modification time and the time
 .Nm find
