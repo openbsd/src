@@ -1,4 +1,4 @@
-/*	$OpenBSD: ossaudio.c,v 1.4 2001/08/18 19:33:30 brad Exp $	*/
+/*	$OpenBSD: ossaudio.c,v 1.5 2002/04/24 21:59:53 espie Exp $	*/
 /*	$NetBSD: ossaudio.c,v 1.14 2001/05/10 01:53:48 augustss Exp $	*/
 
 /*-
@@ -43,6 +43,7 @@
  * With some preprocessor magic it could be the same file.
  */
 
+#include <stdarg.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
@@ -71,8 +72,14 @@ static int enum_to_mask(struct audiodevinfo *di, int enm);
 #define INTARG (*(int*)argp)
 
 int
-_oss_ioctl(int fd, unsigned long com, void *argp)
+_oss_ioctl(int fd, unsigned long com, ...)
 {
+	va_list ap;
+	void *argp;
+
+	va_start(ap, com);
+	argp = va_arg(ap, void *);
+	va_end(ap);
 	if (IOCGROUP(com) == 'P')
 		return audio_ioctl(fd, com, argp);
 	else if (IOCGROUP(com) == 'M')

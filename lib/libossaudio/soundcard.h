@@ -1,4 +1,4 @@
-/*	$OpenBSD: soundcard.h,v 1.8 2002/03/23 20:38:10 millert Exp $	*/
+/*	$OpenBSD: soundcard.h,v 1.9 2002/04/24 21:59:53 espie Exp $	*/
 /*	$NetBSD: soundcard.h,v 1.11 2001/05/09 21:49:58 augustss Exp $	*/
 
 /*-
@@ -304,17 +304,12 @@ typedef struct buffmem_desc {
 	int size;
 } buffmem_desc;
 
-#if 0
-/* This is what we'd like to have, but it causes prototype conflicts. */
 #define ioctl _oss_ioctl
-#else
-#define ioctl(x,y,z) _oss_ioctl(x,y,z)
-#endif
 
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
-int _oss_ioctl(int fd, unsigned long com, void *argp);
+int _oss_ioctl(int, unsigned long com, ...);
 __END_DECLS
 
 #endif /* !_SOUNDCARD_H_ */
