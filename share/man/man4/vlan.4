@@ -1,6 +1,6 @@
-.\" $OpenBSD: vlan.4,v 1.5 2000/06/12 14:40:49 chris Exp $
+.\" $OpenBSD: vlan.4,v 1.6 2000/07/02 15:59:14 aaron Exp $
 .\"
-.Dd 09 January 2000
+.Dd January 9, 2000
 .Dt VLAN 4
 .Os
 .Sh NAME
@@ -11,29 +11,31 @@
 .Sh DESCRIPTION
 The
 .Nm vlan
-ethernet interface allows construction of virtual LANs when used in
-conjunction with IEEE 802.1Q-compliant ethernet devices.
+Ethernet interface allows construction of virtual LANs when used in
+conjunction with IEEE 802.1Q-compliant Ethernet devices.
 .Pp
 This driver currently supports the following modes of operation:
 .Bl -tag -width abc
-.It 802.1Q encapsulation over ethernet (Ethernet protocol 0x8100)
+.It 802.1Q encapsulation over Ethernet (Ethernet protocol 0x8100)
 .Pp
 The 802.1Q header specifies the virtual LAN number, and thus allows an
-ethernet switch (or other 802.1Q compliant network devices) to be aware of
+Ethernet switch (or other 802.1Q compliant network devices) to be aware of
 which LAN the frame is part of, and in the case of a switch, which
-port(s) the frame can go to.  Frames transmitted through the vlan
-interface will be diverted to the specified physical interface with
-802.1Q vlan encapsulation. Frames with 802.1Q encapsulation received by
-the parent interface with the correct vlan tag will be diverted to the
-associated vlan pseudo-interface.
+port(s) the frame can go to.
+Frames transmitted through the vlan interface will be diverted to the specified
+physical interface with 802.1Q vlan encapsulation.
+Frames with 802.1Q encapsulation received by the parent interface with the
+correct vlan tag will be diverted to the associated vlan pseudo-interface.
 .El
 .Pp
 Frame headers which normally contain the destination host, source host, and
-protocol, are altered with additional information.  After the source host,
+protocol, are altered with additional information.
+After the source host,
 a 32-bit 802.1Q header is included, with 16 bits for the ether type (0x8100), 3
 bits for the priority field (not used in this implementation), 1 bit for 
-the canonical field (always 0), and 12 bits for the vlan identifier.  Following
-the vlan header is the actual ether type for the frame and length information.
+the canonical field (always 0), and 12 bits for the vlan identifier.
+Following the vlan header is the actual ether type for the frame and length
+information.
 .Pp
 The network interfaces are named
 .Sy vlan Ns Ar 0 ,
@@ -56,21 +58,21 @@ The operation mode can be given as
 .Bl -tag -width bbb
 .It link0
 The parent interface supports VLAN tagging/untagging in hardware,
-this requires support from the ethernet driver as well. 
+this requires support from the Ethernet driver as well.
 .El
 .Pp
 to
 .Xr ifconfig 8 .
 .Pp
 .Sh SEE ALSO
-.Xr netintro 4 ,
-.Xr ip 4 ,
 .Xr bridge 4 ,
 .Xr inet 4 ,
+.Xr ip 4 ,
+.Xr netintro 4 ,
 .Xr ifconfig 8
 .Pp
 All aspects of the vlan interface can be configured with
-.Xr ifconfig 8 ,
+.Xr ifconfig 8 ;
 see its manual page for more information.
 .Pp
 A draft of IEEE 802.1Q standard can be obtained from
@@ -79,32 +81,34 @@ or the final version can be purchased from the
 Institute of Electrical and Electronic Engineers, Inc.
 .Sh BUGS
 The 802.1Q specification allows for operation over FDDI and Token Ring
-as well as Ethernet.  
-This driver only supports such operation with ethernet devices.
+as well as Ethernet.
+This driver only supports such operation with Ethernet devices.
 .Pp
-Some ethernet chips (notably the Intel 82558 and 82559) automatically
-discard frames that are larger then 1514 bytes.  All ethernet
+Some Ethernet chips (notably the Intel 82558 and 82559) automatically
+discard frames that are larger then 1514 bytes.
+All Ethernet
 chips sporting this sort of feature should allow for it to be turned off.
 Optimally, upon loading, the chip's driver would do this (The 
 .Xr fxp 4
 driver currently does for the Intel 82558/82559 chips.)
-Refer to the hardware manual for your ethernet chip to determine
+Refer to the hardware manual for your Ethernet chip to determine
 if it has this feature, and if so, for information on how to turn it off.
 A symptom of this problem is that small frames pass through the VLAN
 (such as a frame carrying an ICMP packet), but frames which are at MTU size
-are dropped.  When these frames are dropped, the TCP session will hang.
+are dropped.
+When these frames are dropped, the TCP session will hang.
 A temporary kludge is to set the MTU for each machine behind each VLAN to
 1496 or less.
 .Pp
-Some ethernet chips support 802.1Q tagging/untagging in hardware, but
+Some Ethernet chips support 802.1Q tagging/untagging in hardware, but
 do not have the appropriate hooks in their driver to pass the frame
-directly to if_vlan.  The PCI device driver if_ti is able to do this,
-use it as a reference.
+directly to if_vlan.
+The PCI device driver if_ti is able to do this, use it as a reference.
 .Pp
 This driver could be the basis for support of the Cisco ISL VLAN protocol,
-detailed at http://www.cisco.com/warp/public/741/4.html.  Unfortunately,
-public reimplementation of this protocol is currently prevented by patent
-(at least in the USA).
+detailed at http://www.cisco.com/warp/public/741/4.html.
+Unfortunately, public reimplementation of this protocol is currently prevented
+by patent (at least in the USA).
 .Pp
 .Sh AUTHOR
-Originally wollman@freebsd.org
+Originally wollman@freebsd.org.
