@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd1.c,v 1.6 1997/07/13 21:21:08 millert Exp $	*/
+/*	$OpenBSD: cmd1.c,v 1.7 1997/07/13 23:53:57 millert Exp $	*/
 /*	$NetBSD: cmd1.c,v 1.9 1997/07/09 05:29:48 mikel Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd1.c,v 1.6 1997/07/13 21:21:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd1.c,v 1.7 1997/07/13 23:53:57 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -185,7 +185,7 @@ printhead(mesg)
 	char *name;
 
 	mp = &message[mesg-1];
-	(void) readline(setinput(mp), headline, LINESIZE);
+	(void)readline(setinput(mp), headline, LINESIZE);
 	if ((subjline = hfield("subject", mp)) == NOSTR)
 		subjline = hfield("subj", mp);
 	/*
@@ -317,8 +317,8 @@ type1(msgvec, doign, page)
 	FILE *obuf;
 #if __GNUC__
 	/* Avoid longjmp clobbering */
-	(void) &cp;
-	(void) &obuf;
+	(void)&cp;
+	(void)&obuf;
 #endif
 
 	obuf = stdout;
@@ -349,7 +349,7 @@ type1(msgvec, doign, page)
 		dot = mp;
 		if (value("quiet") == NOSTR)
 			fprintf(obuf, "Message %d:\n", *ip);
-		(void) send(mp, obuf, doign ? ignore : 0, NOSTR);
+		(void)send(mp, obuf, doign ? ignore : 0, NOSTR);
 	}
 close_pipe:
 	if (obuf != stdout) {
@@ -471,7 +471,7 @@ folders(v)
 	}
 	if ((cmd = value("LISTER")) == NOSTR)
 		cmd = "ls";
-	(void) run_command(cmd, 0, -1, -1, dirname, NOSTR, NOSTR);
+	(void)run_command(cmd, 0, -1, -1, dirname, NOSTR, NOSTR);
 	return(0);
 }
 

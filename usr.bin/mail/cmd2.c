@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd2.c,v 1.3 1997/07/13 21:21:09 millert Exp $	*/
+/*	$OpenBSD: cmd2.c,v 1.4 1997/07/13 23:53:57 millert Exp $	*/
 /*	$NetBSD: cmd2.c,v 1.7 1997/05/17 19:55:10 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd2.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: cmd2.c,v 1.3 1997/07/13 21:21:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd2.c,v 1.4 1997/07/13 23:53:57 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -176,7 +176,7 @@ save1(str, mark, cmd, ignore)
 	int f, *msgvec;
 	FILE *obuf;
 
-	msgvec = (int *) salloc((msgCount + 2) * sizeof(*msgvec));
+	msgvec = (int *)salloc((msgCount + 2) * sizeof(*msgvec));
 	if ((file = snarf(str, &f)) == NOSTR)
 		return(1);
 	if (!f) {
@@ -500,9 +500,8 @@ ignore1(list, tab, which)
 		if (member(field, tab))
 			continue;
 		h = hash(field);
-		igp = (struct ignore *) calloc(1, sizeof(struct ignore));
-		igp->i_field = calloc((unsigned) strlen(field) + 1,
-			sizeof(char));
+		igp = (struct ignore *)calloc(1, sizeof(struct ignore));
+		igp->i_field = (char *)calloc(strlen(field) + 1, sizeof(char));
 		strcpy(igp->i_field, field);
 		igp->i_link = tab->i_head[h];
 		tab->i_head[h] = igp;
@@ -527,7 +526,7 @@ igshow(tab, which)
 		printf("No fields currently being %s.\n", which);
 		return(0);
 	}
-	ring = (char **) salloc((tab->i_count + 1) * sizeof(char *));
+	ring = (char **)salloc((tab->i_count + 1) * sizeof(char *));
 	ap = ring;
 	for (h = 0; h < HSHSIZE; h++)
 		for (igp = tab->i_head[h]; igp != 0; igp = igp->i_link)

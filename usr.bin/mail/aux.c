@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.5 1997/07/13 21:21:08 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.6 1997/07/13 23:53:56 millert Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.5 1997/07/13 21:21:08 millert Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.6 1997/07/13 23:53:56 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -63,7 +63,7 @@ savestr(str)
 	int size = strlen(str) + 1;
 
 	if ((new = salloc(size)) != NOSTR)
-		bcopy(str, new, size);
+		(void)memcpy(new, str, size);
 	return(new);
 }
 
@@ -80,10 +80,10 @@ save2str(str, old)
 
 	if ((new = salloc(newsize + oldsize)) != NOSTR) {
 		if (oldsize) {
-			bcopy(old, new, oldsize);
+			(void)memcpy(new, old, oldsize);
 			new[oldsize - 1] = ' ';
 		}
-		bcopy(str, new + oldsize, newsize);
+		(void)memcpy(new + oldsize, str, newsize);
 	}
 	return(new);
 }
@@ -244,7 +244,7 @@ gethfield(f, linebuf, rem, colon)
 			if (cp + c >= linebuf + LINESIZE - 2)
 				break;
 			*cp++ = ' ';
-			bcopy(cp2, cp, c);
+			(void)memcpy(cp, cp2, c);
 			cp += c;
 		}
 		*cp = 0;

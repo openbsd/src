@@ -1,4 +1,4 @@
-/*	$OpenBSD: quit.c,v 1.4 1997/07/13 21:21:16 millert Exp $	*/
+/*	$OpenBSD: quit.c,v 1.5 1997/07/13 23:54:02 millert Exp $	*/
 /*	$NetBSD: quit.c,v 1.6 1996/12/28 07:11:07 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)quit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$OpenBSD: quit.c,v 1.4 1997/07/13 21:21:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: quit.c,v 1.5 1997/07/13 23:54:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -130,14 +130,14 @@ quit()
 #ifdef APPEND
 		fseek(fbuf, (long)mailsize, 0);
 		while ((c = getc(fbuf)) != EOF)
-			(void) putc(c, rbuf);
+			(void)putc(c, rbuf);
 #else
 		p = minfo.st_size - mailsize;
 		while (p-- > 0) {
 			c = getc(fbuf);
 			if (c == EOF)
 				goto newmail;
-			(void) putc(c, rbuf);
+			(void)putc(c, rbuf);
 		}
 #endif
 		(void)Fclose(rbuf);
@@ -233,7 +233,7 @@ quit()
 		rm(tempQuit);
 		if ((abuf = Fopen(mbox, "r")) != NULL) {
 			while ((c = getc(abuf)) != EOF)
-				(void) putc(c, obuf);
+				(void)putc(c, obuf);
 			(void)Fclose(abuf);
 		}
 		if (ferror(obuf)) {
@@ -284,7 +284,7 @@ quit()
 		rewind(ibuf);
 		c = getc(ibuf);
 		while (c != EOF) {
-			(void) putc(c, obuf);
+			(void)putc(c, obuf);
 			if (ferror(obuf))
 				break;
 			c = getc(ibuf);
@@ -329,7 +329,7 @@ cream:
 		if (abuf == NULL)
 			goto newmail;
 		while ((c = getc(rbuf)) != EOF)
-			(void) putc(c, abuf);
+			(void)putc(c, abuf);
 		(void)Fclose(rbuf);
 		trunc(abuf);
 		(void)Fclose(abuf);
@@ -373,7 +373,7 @@ writeback(res)
 #ifndef APPEND
 	if (res != NULL)
 		while ((c = getc(res)) != EOF)
-			(void) putc(c, obuf);
+			(void)putc(c, obuf);
 #endif
 	for (mp = &message[0]; mp < &message[msgCount]; mp++)
 		if ((mp->m_flag&MPRESERVE)||(mp->m_flag&MTOUCH)==0) {
@@ -387,7 +387,7 @@ writeback(res)
 #ifdef APPEND
 	if (res != NULL)
 		while ((c = getc(res)) != EOF)
-			(void) putc(c, obuf);
+			(void)putc(c, obuf);
 #endif
 	fflush(obuf);
 	trunc(obuf);
@@ -467,7 +467,7 @@ edstop()
 		}
 		fseek(ibuf, (long)mailsize, 0);
 		while ((c = getc(ibuf)) != EOF)
-			(void) putc(c, obuf);
+			(void)putc(c, obuf);
 		(void)Fclose(ibuf);
 		(void)Fclose(obuf);
 		if ((ibuf = Fopen(tempname, "r")) == NULL) {
@@ -500,7 +500,7 @@ edstop()
 	gotcha = (c == 0 && ibuf == NULL);
 	if (ibuf != NULL) {
 		while ((c = getc(ibuf)) != EOF)
-			(void) putc(c, obuf);
+			(void)putc(c, obuf);
 		(void)Fclose(ibuf);
 	}
 	fflush(obuf);

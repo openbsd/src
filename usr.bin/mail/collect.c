@@ -1,4 +1,4 @@
-/*	$OpenBSD: collect.c,v 1.6 1997/07/13 21:21:10 millert Exp $	*/
+/*	$OpenBSD: collect.c,v 1.7 1997/07/13 23:53:58 millert Exp $	*/
 /*	$NetBSD: collect.c,v 1.9 1997/07/09 05:25:45 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)collect.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: collect.c,v 1.6 1997/07/13 21:21:10 millert Exp $";
+static char rcsid[] = "$OpenBSD: collect.c,v 1.7 1997/07/13 23:53:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,10 +91,10 @@ collect(hp, printheaders)
 
 #if __GNUC__
 	/* Avoid longjmp clobbering */
-	(void) &escape;
-	(void) &eofcount;
-	(void) &getsub;
-	(void) &longline;
+	(void)&escape;
+	(void)&eofcount;
+	(void)&getsub;
+	(void)&longline;
 #endif
 
 	collf = NULL;
@@ -354,7 +354,7 @@ cont:
 				break;
 			}
 			while ((t = getc(fbuf)) != EOF)
-				(void) putchar(t);
+				(void)putchar(t);
 			(void)Fclose(fbuf);
 			break;
 		case 'p':
@@ -366,7 +366,7 @@ cont:
 			puts("-------\nMessage contains:");
 			puthead(hp, stdout, GTO|GSUBJECT|GCC|GBCC|GNL);
 			while ((t = getc(collf)) != EOF)
-				(void) putchar(t);
+				(void)putchar(t);
 			goto cont;
 		case '|':
 			/*
@@ -443,7 +443,7 @@ exwrite(name, fp, f)
 		cc++;
 		if (c == '\n')
 			lc++;
-		(void) putc(c, of);
+		(void)putc(c, of);
 		if (ferror(of)) {
 			warn(name);
 			(void)Fclose(of);
@@ -473,7 +473,7 @@ mesedit(fp, c)
 		collf = nf;
 		(void)Fclose(fp);
 	}
-	(void) signal(SIGINT, sigint);
+	(void)signal(SIGINT, sigint);
 }
 
 /*
@@ -496,7 +496,7 @@ mespipe(fp, cmd)
 		warn(tempEdit);
 		goto out;
 	}
-	(void) unlink(tempEdit);
+	(void)unlink(tempEdit);
 	/*
 	 * stdin = current message.
 	 * stdout = new message.
@@ -516,11 +516,11 @@ mespipe(fp, cmd)
 	/*
 	 * Take new files.
 	 */
-	(void) fseek(nf, 0L, 2);
+	(void)fseek(nf, 0L, 2);
 	collf = nf;
 	(void)Fclose(fp);
 out:
-	(void) signal(SIGINT, sigint);
+	(void)signal(SIGINT, sigint);
 }
 
 /*
@@ -542,8 +542,8 @@ forward(ms, fp, f)
 	struct ignoretab *ig;
 	char *tabst;
 
-	msgvec = (int *) salloc((msgCount+1) * sizeof(*msgvec));
-	if (msgvec == (int *) NOSTR)
+	msgvec = (int *)salloc((msgCount+1) * sizeof(*msgvec));
+	if (msgvec == (int *)NOSTR)
 		return(0);
 	if (getmsglist(ms, msgvec, 0) < 0)
 		return(0);
@@ -654,11 +654,11 @@ savedeadletter(fp)
 	cp = getdeadletter();
 	c = umask(077);
 	dbuf = Fopen(cp, "a");
-	(void) umask(c);
+	(void)umask(c);
 	if (dbuf == NULL)
 		return;
 	while ((c = getc(fp)) != EOF)
-		(void) putc(c, dbuf);
+		(void)putc(c, dbuf);
 	(void)Fclose(dbuf);
 	rewind(fp);
 }

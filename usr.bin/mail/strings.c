@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.c,v 1.3 1997/07/13 21:21:17 millert Exp $	*/
+/*	$OpenBSD: strings.c,v 1.4 1997/07/13 23:54:02 millert Exp $	*/
 /*	$NetBSD: strings.c,v 1.5 1996/06/08 19:48:40 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)strings.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: strings.c,v 1.3 1997/07/13 21:21:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: strings.c,v 1.4 1997/07/13 23:54:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,7 +85,7 @@ salloc(size)
 		panic("String too large");
 	if (sp->s_topFree == NOSTR) {
 		index = sp - &stringdope[0];
-		sp->s_topFree = malloc(STRINGSIZE << index);
+		sp->s_topFree = (char *)malloc(STRINGSIZE << index);
 		if (sp->s_topFree == NOSTR) {
 			fprintf(stderr, "No room for space %d\n", index);
 			panic("Internal error");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: names.c,v 1.4 1997/07/13 21:21:15 millert Exp $	*/
+/*	$OpenBSD: names.c,v 1.5 1997/07/13 23:54:01 millert Exp $	*/
 /*	$NetBSD: names.c,v 1.5 1996/06/08 19:48:32 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)names.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: names.c,v 1.4 1997/07/13 21:21:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: names.c,v 1.5 1997/07/13 23:54:01 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ nalloc(str, ntype)
 {
 	register struct name *np;
 
-	np = (struct name *) salloc(sizeof(*np));
+	np = (struct name *)salloc(sizeof(*np));
 	np->n_flink = NIL;
 	np->n_blink = NIL;
 	np->n_type = ntype;
@@ -234,7 +234,7 @@ outof(names, fo, hp)
 
 	top = names;
 	np = names;
-	(void) time(&now);
+	(void)time(&now);
 	date = ctime(&now);
 	while (np != NIL) {
 		if (!isfileaddr(np->n_name) && np->n_name[0] != '|') {
@@ -259,21 +259,21 @@ outof(names, fo, hp)
 				goto cant;
 			}
 			image = open(tempEdit, 2);
-			(void) unlink(tempEdit);
+			(void)unlink(tempEdit);
 			if (image < 0) {
 				warn(tempEdit);
 				senderr++;
 				(void)Fclose(fout);
 				goto cant;
 			}
-			(void) fcntl(image, F_SETFD, 1);
+			(void)fcntl(image, F_SETFD, 1);
 			fprintf(fout, "From %s %s", myname, date);
 			puthead(hp, fout, GTO|GSUBJECT|GCC|GNL);
 			while ((c = getc(fo)) != EOF)
-				(void) putc(c, fout);
+				(void)putc(c, fout);
 			rewind(fo);
-			(void) putc('\n', fout);
-			(void) fflush(fout);
+			(void)putc('\n', fout);
+			(void)fflush(fout);
 			if (ferror(fout))
 				warn(tempEdit);
 			(void)Fclose(fout);
@@ -330,7 +330,7 @@ outof(names, fo, hp)
 			}
 			rewind(fin);
 			while ((c = getc(fin)) != EOF)
-				(void) putc(c, fout);
+				(void)putc(c, fout);
 			if (ferror(fout)) {
 				senderr++;
 				warn(fname);
@@ -510,7 +510,7 @@ unpack(np)
 	verbose = value("verbose") != NOSTR;
 	if (verbose)
 		extra++;
-	top = (char **) salloc((t + extra) * sizeof(*top));
+	top = (char **)salloc((t + extra) * sizeof(*top));
 	ap = top;
 	*ap++ = "send-mail";
 	*ap++ = "-i";

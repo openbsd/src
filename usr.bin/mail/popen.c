@@ -1,4 +1,4 @@
-/*	$OpenBSD: popen.c,v 1.6 1997/07/13 21:21:15 millert Exp $	*/
+/*	$OpenBSD: popen.c,v 1.7 1997/07/13 23:54:01 millert Exp $	*/
 /*	$NetBSD: popen.c,v 1.6 1997/05/13 06:48:42 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)popen.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: popen.c,v 1.6 1997/07/13 21:21:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: popen.c,v 1.7 1997/07/13 23:54:01 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ Fopen(file, mode)
 
 	if ((fp = fopen(file, mode)) != NULL) {
 		register_file(fp, 0, 0);
-		(void) fcntl(fileno(fp), F_SETFD, 1);
+		(void)fcntl(fileno(fp), F_SETFD, 1);
 	}
 	return(fp);
 }
@@ -93,7 +93,7 @@ Fdopen(fd, mode)
 
 	if ((fp = fdopen(fd, mode)) != NULL) {
 		register_file(fp, 0, 0);
-		(void) fcntl(fileno(fp), F_SETFD, 1);
+		(void)fcntl(fileno(fp), F_SETFD, 1);
 	}
 	return(fp);
 }
@@ -119,8 +119,8 @@ Popen(cmd, mode)
 
 	if (pipe(p) < 0)
 		return(NULL);
-	(void) fcntl(p[READ], F_SETFD, 1);
-	(void) fcntl(p[WRITE], F_SETFD, 1);
+	(void)fcntl(p[READ], F_SETFD, 1);
+	(void)fcntl(p[WRITE], F_SETFD, 1);
 	if (*mode == 'r') {
 		myside = p[READ];
 		fd0 = -1;
@@ -179,7 +179,7 @@ register_file(fp, pipe, pid)
 {
 	struct fp *fpp;
 
-	if ((fpp = (struct fp *) malloc(sizeof(*fpp))) == NULL)
+	if ((fpp = (struct fp *)malloc(sizeof(*fpp))) == NULL)
 		panic("Out of memory");
 	fpp->fp = fp;
 	fpp->pipe = pipe;
@@ -197,7 +197,7 @@ unregister_file(fp)
 	for (pp = &fp_head; (p = *pp) != NULL; pp = &p->link)
 		if (p->fp == fp) {
 			*pp = p->link;
-			free((char *) p);
+			(void)free(p);
 			return;
 		}
 	panic("Invalid file pointer");
@@ -289,12 +289,12 @@ prepare_child(nset, infd, outfd)
 	if (nset != NULL) {
 		for (i = 1; i < NSIG; i++)
 			if (sigismember(nset, i))
-				(void) signal(i, SIG_IGN);
+				(void)signal(i, SIG_IGN);
 	}
 	if (nset == NULL || !sigismember(nset, SIGINT))
-		(void) signal(SIGINT, SIG_DFL);
+		(void)signal(SIGINT, SIG_DFL);
 	sigfillset(&fset);
-	(void) sigprocmask(SIG_UNBLOCK, &fset, NULL);
+	(void)sigprocmask(SIG_UNBLOCK, &fset, NULL);
 }
 
 int
@@ -319,7 +319,7 @@ findchild(pid)
 	     cpp = &(*cpp)->link)
 			;
 	if (*cpp == NULL) {
-		*cpp = (struct child *) malloc(sizeof(struct child));
+		*cpp = (struct child *)malloc(sizeof(struct child));
 		(*cpp)->pid = pid;
 		(*cpp)->done = (*cpp)->free = 0;
 		(*cpp)->link = NULL;
@@ -336,7 +336,7 @@ delchild(cp)
 	for (cpp = &child; *cpp != cp; cpp = &(*cpp)->link)
 		;
 	*cpp = cp->link;
-	free((char *) cp);
+	(void)free(cp);
 }
 
 void
@@ -426,17 +426,17 @@ handle_spool_locks(action)
 		lockfp = NULL;
 	} else if (action == 1) {
 		/* Create the lock */
-		if ((cmd = (char *) malloc(sizeof(_PATH_MAIL_LOCAL) + 3)) == NULL)
+		if ((cmd = (char *)malloc(sizeof(_PATH_MAIL_LOCAL) + 3)) == NULL)
 			panic("Out of memory");
 		sprintf(cmd, "%s -H", _PATH_MAIL_LOCAL);
 		if ((lockfp = Popen(cmd, "r")) == NULL || getc(lockfp) != '1') {
 			lockfp = NULL;
-			free(cmd);
+			(void)free(cmd);
 			return(0);
 		}
 
 		lock_pid = fp_head->pid;	/* new entries added at head */
-		free(cmd);
+		(void)free(cmd);
 	} else {
 		fprintf(stderr, "handle_spool_locks: unknown action %d\n",
 		    action);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dotlock.c,v 1.2 1997/07/13 21:21:11 millert Exp $	*/
+/*	$OpenBSD: dotlock.c,v 1.3 1997/07/13 23:53:59 millert Exp $	*/
 /*	$NetBSD: dotlock.c,v 1.1 1996/06/08 19:48:19 christos Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: dotlock.c,v 1.2 1997/07/13 21:21:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: dotlock.c,v 1.3 1997/07/13 23:53:59 millert Exp $";
 #endif
 
 #include <sys/types.h>
@@ -76,8 +76,8 @@ create_exclusive(fname)
 	int fd, serrno;
 	struct stat st;
 
-	(void) gettimeofday(&tv, NULL);
-	(void) gethostname(hostname, MAXHOSTNAMELEN);
+	(void)gettimeofday(&tv, NULL);
+	(void)gethostname(hostname, MAXHOSTNAMELEN);
 	pid = getpid();
 
 	cookie = pid ^ tv.tv_usec;
@@ -90,7 +90,7 @@ create_exclusive(fname)
 	else
 		ptr++;
 
-	(void) snprintf(path, sizeof(path), "%.*s.%s.%x",
+	(void)snprintf(path, sizeof(path), "%.*s.%s.%x",
 	    ptr - fname, fname, hostname, cookie);
 
 	/*
@@ -121,7 +121,7 @@ create_exclusive(fname)
 	if (stat(path, &st) == -1)
 		goto bad;
 
-	(void) unlink(path);
+	(void)unlink(path);
 
 	/*
 	 * If the number of links was two (one for the unique file and one
@@ -135,7 +135,7 @@ create_exclusive(fname)
 
 bad:
 	serrno = errno;
-	(void) unlink(path);
+	(void)unlink(path);
 	errno = serrno;
 	return(-1);
 }
@@ -160,22 +160,22 @@ dot_lock(fname, pollinterval, fp, msg)
 	sigaddset(&nset, SIGTSTP);
 	sigaddset(&nset, SIGCHLD);
 
-	(void) snprintf(path, sizeof(path), "%s.lock", fname);
+	(void)snprintf(path, sizeof(path), "%s.lock", fname);
 
 	for (;;) {
-		(void) sigprocmask(SIG_BLOCK, &nset, &oset);
+		(void)sigprocmask(SIG_BLOCK, &nset, &oset);
 		if (create_exclusive(path) != -1) {
-			(void) sigprocmask(SIG_SETMASK, &oset, NULL);
+			(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 			return(0);
 		}
 		else
-			(void) sigprocmask(SIG_SETMASK, &oset, NULL);
+			(void)sigprocmask(SIG_SETMASK, &oset, NULL);
 
 		if (errno != EEXIST)
 			return(-1);
 
 		if (fp && msg)
-		    (void) fputs(msg, fp);
+		    (void)fputs(msg, fp);
 
 		if (pollinterval) {
 			if (pollinterval == -1) {
@@ -193,6 +193,6 @@ dot_unlock(fname)
 {
 	char path[MAXPATHLEN];
 
-	(void) snprintf(path, sizeof(path), "%s.lock", fname);
-	(void) unlink(path);
+	(void)snprintf(path, sizeof(path), "%s.lock", fname);
+	(void)unlink(path);
 }

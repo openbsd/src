@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.6 1997/07/13 21:21:13 millert Exp $	*/
+/*	$OpenBSD: lex.c,v 1.7 1997/07/13 23:54:00 millert Exp $	*/
 /*	$NetBSD: lex.c,v 1.10 1997/05/17 19:55:13 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)lex.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: lex.c,v 1.6 1997/07/13 21:21:13 millert Exp $";
+static char rcsid[] = "$OpenBSD: lex.c,v 1.7 1997/07/13 23:54:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,10 +140,10 @@ setfile(name)
 	mailsize = fsize(ibuf);
 	if ((otf = fopen(tempMesg, "w")) == NULL)
 		err(1, tempMesg);
-	(void) fcntl(fileno(otf), F_SETFD, 1);
+	(void)fcntl(fileno(otf), F_SETFD, 1);
 	if ((itf = fopen(tempMesg, "r")) == NULL)
 		err(1, tempMesg);
-	(void) fcntl(fileno(itf), F_SETFD, 1);
+	(void)fcntl(fileno(itf), F_SETFD, 1);
 	rm(tempMesg);
 	setptr(ibuf, 0);
 	setmsize(msgCount);
@@ -210,7 +210,7 @@ commands()
 	char linebuf[LINESIZE];
 #if __GNUC__
 	/* Avoid longjmp clobbering */
-	(void) &eofloop;
+	(void)&eofloop;
 #endif
 
 	if (!sourcing) {
@@ -489,8 +489,8 @@ setmsize(sz)
 {
 
 	if (msgvec != 0)
-		free((char *) msgvec);
-	msgvec = (int *) calloc((unsigned) (sz + 1), sizeof(*msgvec));
+		(void)free(msgvec);
+	msgvec = (int *)calloc(sz + 1, sizeof(*msgvec));
 }
 
 /*

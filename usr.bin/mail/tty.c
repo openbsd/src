@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.3 1997/07/13 21:21:17 millert Exp $	*/
+/*	$OpenBSD: tty.c,v 1.4 1997/07/13 23:54:03 millert Exp $	*/
 /*	$NetBSD: tty.c,v 1.7 1997/07/09 05:25:46 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tty.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: tty.c,v 1.3 1997/07/13 21:21:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: tty.c,v 1.4 1997/07/13 23:54:03 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -83,9 +83,9 @@ grabh(hp, gflags)
 #ifdef __GNUC__
 	/* Avoid longjmp clobbering */
 #ifdef TIOCSTI
-	(void) &extproc;
+	(void)&extproc;
 #endif
-	(void) &saveint;
+	(void)&saveint;
 #endif
 
 	savetstp = signal(SIGTSTP, SIG_DFL);
@@ -191,8 +191,8 @@ readtty(pr, src)
 	char *cp, *cp2;
 #if __GNUC__
 	/* Avoid longjmp clobbering */
-	(void) &c;
-	(void) &cp2;
+	(void)&c;
+	(void)&cp2;
 #endif
 
 	fputs(pr, stdout);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fio.c,v 1.6 1997/07/13 21:21:12 millert Exp $	*/
+/*	$OpenBSD: fio.c,v 1.7 1997/07/13 23:53:59 millert Exp $	*/
 /*	$NetBSD: fio.c,v 1.8 1997/07/07 22:57:55 phil Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)fio.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: fio.c,v 1.6 1997/07/13 21:21:12 millert Exp $";
+static char rcsid[] = "$OpenBSD: fio.c,v 1.7 1997/07/13 23:53:59 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,14 +84,14 @@ setptr(ibuf, offset)
 		msgCount = 0;
 	} else {
 		/* Seek into the file to get to the new messages */
-		(void) fseek(ibuf, offset, 0);
+		(void)fseek(ibuf, offset, 0);
 		/*
 		 * We need to make "offset" a pointer to the end of
 		 * the temp file that has the copy of the mail file.
 		 * If any messages have been edited, this will be
 		 * different from the offset into the mail file.
 		 */
-		(void) fseek(otf, 0L, SEEK_END);
+		(void)fseek(otf, 0L, SEEK_END);
 		offset = ftell(otf);
 	}
 	omsgCount = msgCount;
@@ -110,7 +110,7 @@ setptr(ibuf, offset)
 			return;
 		}
 		count = strlen(linebuf);
-		(void) fwrite(linebuf, sizeof(*linebuf), count, otf);
+		(void)fwrite(linebuf, sizeof(*linebuf), count, otf);
 		if (ferror(otf))
 			err(1, "/tmp");
 		linebuf[count - 1] = '\0';
@@ -166,9 +166,9 @@ putline(obuf, linebuf, outlf)
 	register int c;
 
 	c = strlen(linebuf);
-	(void) fwrite(linebuf, sizeof(*linebuf), c, obuf);
+	(void)fwrite(linebuf, sizeof(*linebuf), c, obuf);
 	if (outlf) {
-		(void) putc('\n', obuf);
+		(void)putc('\n', obuf);
 		c++;
 	}
 	if (ferror(obuf))
@@ -225,22 +225,22 @@ makemessage(f, omsgCount)
 	FILE *f;
 	int omsgCount;
 {
-	register size = (msgCount + 1) * sizeof(struct message);
+	register size_t size = (msgCount + 1) * sizeof(struct message);
 
 	if (omsgCount) {
-		message = (struct message *)realloc(message, (unsigned) size);
+		message = (struct message *)realloc(message, size);
 		if (message == 0)
 			panic("Insufficient memory for %d messages\n", msgCount);
 	} else {
 		if (message != 0)
-			free((char *) message);
-		if ((message = (struct message *) malloc((unsigned) size)) == 0)
+			(void)free(message);
+		if ((message = (struct message *)malloc(size)) == 0)
 			panic("Insufficient memory for %d messages", msgCount);
 		dot = message;
 	}
 	size -= (omsgCount + 1) * sizeof(struct message);
 	fflush(f);
-	(void) lseek(fileno(f), (off_t)sizeof(*message), 0);
+	(void)lseek(fileno(f), (off_t)sizeof(*message), 0);
 	if (read(fileno(f), (void *) &message[omsgCount], size) != size)
 		panic("Message temporary file corrupted");
 	message[msgCount].m_size = 0;
@@ -455,7 +455,7 @@ getdeadletter()
 	else if (*cp != '/') {
 		char buf[PATHSIZE];
 
-		(void) snprintf(buf, sizeof(buf), "~/%s", cp);
+		(void)snprintf(buf, sizeof(buf), "~/%s", cp);
 		cp = expand(buf);
 	}
 	return(cp);

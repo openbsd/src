@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 1997/07/13 21:21:15 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 1997/07/13 23:54:00 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.7 1997/05/13 06:15:57 mikel Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 1997/07/13 21:21:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 1997/07/13 23:54:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -79,7 +79,7 @@ main(argc, argv)
 	 * Figure out whether we are being run interactively,
 	 * start the SIGCHLD catcher, and so forth.
 	 */
-	(void) signal(SIGCHLD, sigchild);
+	(void)signal(SIGCHLD, sigchild);
 	if (isatty(0))
 		assign("interactive", "");
 	image = -1;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd3.c,v 1.5 1997/07/13 21:21:09 millert Exp $	*/
+/*	$OpenBSD: cmd3.c,v 1.6 1997/07/13 23:53:58 millert Exp $	*/
 /*	$NetBSD: cmd3.c,v 1.8 1997/07/09 05:29:49 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-static char rcsid[] = "$OpenBSD: cmd3.c,v 1.5 1997/07/13 21:21:09 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmd3.c,v 1.6 1997/07/13 23:53:58 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,13 +65,13 @@ shell(v)
 	char *shell;
 	char cmd[BUFSIZ];
 
-	(void) strcpy(cmd, str);
+	(void)strcpy(cmd, str);
 	if (bangexp(cmd) < 0)
 		return(1);
 	if ((shell = value("SHELL")) == NOSTR)
 		shell = _PATH_CSHELL;
-	(void) run_command(shell, 0, -1, -1, "-c", cmd, NOSTR);
-	(void) signal(SIGINT, sigint);
+	(void)run_command(shell, 0, -1, -1, "-c", cmd, NOSTR);
+	(void)signal(SIGINT, sigint);
 	puts("!");
 	return(0);
 }
@@ -89,8 +89,8 @@ dosh(v)
 
 	if ((shell = value("SHELL")) == NOSTR)
 		shell = _PATH_CSHELL;
-	(void) run_command(shell, 0, -1, -1, NOSTR, NOSTR, NOSTR);
-	(void) signal(SIGINT, sigint);
+	(void)run_command(shell, 0, -1, -1, NOSTR, NOSTR, NOSTR);
+	(void)signal(SIGINT, sigint);
 	putchar('\n');
 	return(0);
 }
@@ -385,7 +385,7 @@ set(v)
 		for (h = 0, s = 1; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NOVAR; vp = vp->v_link)
 				s++;
-		ap = (char **) salloc(s * sizeof(*ap));
+		ap = (char **)salloc(s * sizeof(*ap));
 		for (h = 0, p = ap; h < HSHSIZE; h++)
 			for (vp = variables[h]; vp != NOVAR; vp = vp->v_link)
 				*p++ = vp->v_name;
@@ -442,7 +442,7 @@ unset(v)
 			variables[h] = variables[h]->v_link;
 			vfree(vp2->v_name);
 			vfree(vp2->v_value);
-			free((char *)vp2);
+			(void)free(vp2);
 			continue;
 		}
 		for (vp = variables[h]; vp->v_link != vp2; vp = vp->v_link)
@@ -450,7 +450,7 @@ unset(v)
 		vp->v_link = vp2->v_link;
 		vfree(vp2->v_name);
 		vfree(vp2->v_value);
-		free((char *) vp2);
+		(void)free(vp2);
 	}
 	return(errs);
 }
@@ -473,7 +473,7 @@ group(v)
 		for (h = 0, s = 1; h < HSHSIZE; h++)
 			for (gh = groups[h]; gh != NOGRP; gh = gh->g_link)
 				s++;
-		ap = (char **) salloc(s * sizeof(*ap));
+		ap = (char **)salloc(s * sizeof(*ap));
 		for (h = 0, p = ap; h < HSHSIZE; h++)
 			for (gh = groups[h]; gh != NOGRP; gh = gh->g_link)
 				*p++ = gh->g_name;
@@ -490,7 +490,7 @@ group(v)
 	gname = *argv;
 	h = hash(gname);
 	if ((gh = findgroup(gname)) == NOGRP) {
-		gh = (struct grouphead *) calloc(sizeof(*gh), 1);
+		gh = (struct grouphead *)calloc(sizeof(*gh), 1);
 		gh->g_name = vcopy(gname);
 		gh->g_list = NOGE;
 		gh->g_link = groups[h];
@@ -504,7 +504,7 @@ group(v)
 	 */
 
 	for (ap = argv+1; *ap != NOSTR; ap++) {
-		gp = (struct group *) calloc(sizeof(*gp), 1);
+		gp = (struct group *)calloc(sizeof(*gp), 1);
 		gp->ge_name = vcopy(*ap);
 		gp->ge_link = gh->g_list;
 		gh->g_list = gp;
@@ -742,10 +742,10 @@ alternates(v)
 		return(0);
 	}
 	if (altnames != 0)
-		free((char *) altnames);
-	altnames = (char **) calloc((unsigned) c, sizeof(char *));
+		(void)free(altnames);
+	altnames = (char **)calloc(c, sizeof(char *));
 	for (ap = namelist, ap2 = altnames; *ap; ap++, ap2++) {
-		cp = (char *) calloc((unsigned) strlen(*ap) + 1, sizeof(char));
+		cp = (char *)calloc(strlen(*ap) + 1, sizeof(char));
 		strcpy(cp, *ap);
 		*ap2 = cp;
 	}
