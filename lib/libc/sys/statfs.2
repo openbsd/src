@@ -69,7 +69,7 @@ struct statfs {
     long    f_bavail;	/* free blocks avail to non-superuser */
     long    f_files;	/* total file nodes in file system */
     long    f_ffree;	/* free file nodes in fs */
-    fsid_t  f_fsid;	/* file system id */
+    fsid_t  f_fsid;	/* file system id (super-user only) */
     uid_t   f_owner;	/* user that mounted the file system */
     long    f_spare[4];	/* spare for later */
     char    f_fstypename[MFSNAMELEN]; /* fs type name */
