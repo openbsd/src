@@ -1,5 +1,5 @@
-/*	$OpenBSD: vnode.h,v 1.2 1996/02/29 13:57:32 niklas Exp $	*/
-/*	$NetBSD: vnode.h,v 1.37 1996/02/09 18:25:47 christos Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.3 1996/03/29 19:06:46 mickey Exp $	*/
+/*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -344,7 +344,7 @@ struct vop_generic_args {
 /*
  * Finally, include the default set of vnode operations.
  */
-#include "vnode_if.h"
+#include <sys/vnode_if.h>
 
 /*
  * Public vnode manipulation functions.
