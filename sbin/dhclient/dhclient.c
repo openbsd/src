@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.63 2005/02/06 17:10:13 krw Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.64 2005/04/02 16:41:09 henning Exp $	*/
 
 /*
  * Copyright 2004 Henning Brauer <henning@openbsd.org>
@@ -53,21 +53,10 @@
  * purpose.
  */
 
+#include <ctype.h>
+
 #include "dhcpd.h"
 #include "privsep.h"
-
-#define	PERIOD 0x2e
-#define	hyphenchar(c) ((c) == 0x2d)
-#define	bslashchar(c) ((c) == 0x5c)
-#define	periodchar(c) ((c) == PERIOD)
-#define	asterchar(c) ((c) == 0x2a)
-#define	alphachar(c) (((c) >= 0x41 && (c) <= 0x5a) || \
-	    ((c) >= 0x61 && (c) <= 0x7a))
-#define	digitchar(c) ((c) >= 0x30 && (c) <= 0x39)
-
-#define	borderchar(c) (alphachar(c) || digitchar(c))
-#define	middlechar(c) (borderchar(c) || hyphenchar(c))
-#define	domainchar(c) ((c) > 0x20 && (c) < 0x7f)
 
 #define	CLIENT_PATH "PATH=/usr/bin:/usr/sbin:/bin:/sbin"
 
@@ -2251,24 +2240,26 @@ check_option(struct client_lease *l, int option)
 }
 
 int
-res_hnok(const char *dn)
+res_hnok(const char *name)
 {
-	int pch = PERIOD, ch = *dn++;
+	const char *dn = name;
+	int pch = '.', ch = *dn++;
+	int warn = 0;
 
 	while (ch != '\0') {
 		int nch = *dn++;
 
-		if (periodchar(ch)) {
+		if (ch == '.') {
 			;
-		} else if (periodchar(pch)) {
-			if (!borderchar(ch))
+		} else if (pch == '.' || nch == '.' || nch == '\0') {
+			if (!isalnum(ch))
 				return (0);
-		} else if (periodchar(nch) || nch == '\0') {
-			if (!borderchar(ch))
+		} else if (!isalnum(ch) && ch != '-' && ch != '_')
 				return (0);
-		} else {
-			if (!middlechar(ch))
-				return (0);
+		else if (ch == '_' && warn == 0) {
+			warning("warning: hostname %s contains an "
+				"underscore which violates RFC 952", name);
+				warn++;
 		}
 		pch = ch, ch = nch;
 	}
@@ -2287,7 +2278,7 @@ ipv4addrs(char * buf)
 
 	while (inet_aton(buf, &jnk) == 1){
 		count++;
-		while (periodchar(*buf) || digitchar(*buf))
+		while (*buf == '.' || isdigit(*buf))
 			buf++;
 		if (*buf == '\0')
 			return (count);
