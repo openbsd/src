@@ -1,4 +1,4 @@
-/*	$OpenBSD: fork.c,v 1.1.1.1 2001/08/15 14:37:11 fgsch Exp $	*/
+/*	$OpenBSD: fork.c,v 1.2 2001/09/20 16:43:15 todd Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -44,6 +44,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include "test.h"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pthread_join.c,v 1.1.1.1 2001/08/15 14:37:12 fgsch Exp $	*/
+/*	$OpenBSD: pthread_join.c,v 1.2 2001/09/20 16:43:15 todd Exp $	*/
 /*
  * Copyright (c) 1993, 1994, 1995, 1996 by Chris Provenzano and contributors, 
  * proven@mit.edu All rights reserved.
@@ -44,6 +44,7 @@
 #include <pthread.h>
 #include <unistd.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include "test.h"
 
 /* This thread yields so the creator has a live thread to wait on */

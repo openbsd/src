@@ -1,4 +1,4 @@
-/*	$OpenBSD: poll.c,v 1.2 2001/08/23 04:26:05 fgsch Exp $	*/
+/*	$OpenBSD: poll.c,v 1.3 2001/09/20 16:43:15 todd Exp $	*/
 /* David Leonard <d@openbsd.org>, 2001. Public Domain. */
 
 #include <pthread.h>
@@ -6,6 +6,7 @@
 #include <poll.h>
 #include <paths.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include "test.h"
 
 
