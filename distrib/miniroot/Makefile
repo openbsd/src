@@ -32,8 +32,8 @@ all:
 
 bsd:
 	cd ${.CURDIR}/../../../../sys/arch/${MACHINE}/conf && config GENERIC
-	cd ${.CURDIR}/../../../../sys/arch/${MACHINE}/compile/GENERIC &&
-	    make clean && make depend && make &&
+	cd ${.CURDIR}/../../../../sys/arch/${MACHINE}/compile/GENERIC && \
+	    make clean && make depend && make
 	cp ${.CURDIR}/../../../../sys/arch/${MACHINE}/compile/GENERIC/bsd bsd
 
 all: ${CBIN} bsd
