@@ -1,4 +1,4 @@
-/*	$OpenBSD: screenblank.c,v 1.10 2001/12/01 23:43:48 miod Exp $	*/
+/*	$OpenBSD: screenblank.c,v 1.11 2001/12/09 14:58:21 miod Exp $	*/
 /*	$NetBSD: screenblank.c,v 1.2 1996/02/28 01:18:34 thorpej Exp $	*/
 
 /*-
@@ -58,6 +58,7 @@
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
+#include <syslog.h>
 
 #include <machine/fbio.h>
 
@@ -74,12 +75,13 @@ LIST_HEAD(ds_list, dev_stat) ds_list;
 
 extern	char *__progname;
 
-static	void add_dev __P((char *, int));
-static	void change_state __P((int, int));
-static	void cvt_arg __P((char *, struct timeval *));
-static	void logpid __P((void));
-static	void sighandler __P((int));
-static	void usage __P((void));
+void add_dev __P((char *, int));
+void change_state __P((int, int));
+void cvt_arg __P((char *, struct timeval *));
+void logpid __P((void));
+void sighandler __P((int));
+void usage __P((void));
+void cleanup __P((int));
 
 int
 main(argc, argv)
@@ -167,6 +169,7 @@ main(argc, argv)
 		err(1, "sigaction");
 
 	/* Detach. */
+	openlog(__progname, LOG_PID, LOG_DAEMON);
 	if (daemon(0, 0))
 		err(1, "daemon");
 	logpid();
@@ -179,8 +182,12 @@ main(argc, argv)
 			/* Don't check framebuffers. */
 			if (dsp->ds_isfb)
 				continue;
-			if (stat(dsp->ds_path, &st) < 0)
-				err(1, "stat: %s", dsp->ds_path);
+			if (stat(dsp->ds_path, &st) < 0) {
+				syslog(LOG_ERR, "stat(%s): %m",
+				    dsp->ds_path);
+				cleanup(0);
+				exit(1);
+			}
 			if (st.st_atime > dsp->ds_atime) {
 				change = 1;
 				dsp->ds_atime = st.st_atime;
@@ -209,13 +216,16 @@ main(argc, argv)
 			break;
 		}
 
-		if (select(0, NULL, NULL, NULL, tvp) < 0)
-			err(1, "select");
+		if (select(0, NULL, NULL, NULL, tvp) < 0) {
+			syslog(LOG_ERR, "select: %m");
+			cleanup(0);
+			exit(1);
+		}
 	}
 	/* NOTREACHED */
 }
 
-static void
+void
 add_dev(path, isfb)
 	char *path;
 	int isfb;
@@ -242,18 +252,26 @@ add_dev(path, isfb)
 }
 
 /* ARGSUSED */
-static void
+void
 sighandler(sig)
 	int sig;
 {
 
-	/* Kill the pid file and re-enable the framebuffer before exit. */
-	(void)unlink(_PATH_SCREENBLANKPID);
-	change_state(FBVIDEO_ON, 1);
+	cleanup(1);
 	_exit(0);
 }
 
-static void
+void
+cleanup(sig)
+	int sig;
+{
+
+	/* Kill the pid file and re-enable the framebuffer before exit. */
+	unlink(_PATH_SCREENBLANKPID);
+	change_state(FBVIDEO_ON, sig);
+}
+
+void
 change_state(state, sig)
 	int state;
 	int sig;
@@ -269,19 +287,25 @@ change_state(state, sig)
 			if (errno == ENXIO) {
 				if (sig)
 					_exit(1);
-				else
+				else {
+					syslog(LOG_ERR, "open(%s): %m",
+					    dsp->ds_path);
 					exit(1);
+				}
 			}
-			warn("open: %s", dsp->ds_path);
+			if (!sig)
+				syslog(LOG_WARNING, "open: %s", dsp->ds_path);
 			continue;
 		}
-		if (ioctl(fd, FBIOSVIDEO, &state) < 0)
-			warn("ioctl: %s", dsp->ds_path);
+		if (ioctl(fd, FBIOSVIDEO, &state) < 0) {
+			if (!sig)
+				syslog(LOG_WARNING, "ioctl: %s", dsp->ds_path);
+		}
 		(void)close(fd);
 	}
 }
 
-static void
+void
 cvt_arg(arg, tvp)
 	char *arg;
 	struct timeval *tvp;
@@ -312,7 +336,7 @@ cvt_arg(arg, tvp)
 	tvp->tv_usec = (long)((seconds - tvp->tv_sec) * 1000000);
 }
 
-static void
+void
 logpid()
 {
 	FILE *fp;
@@ -323,7 +347,7 @@ logpid()
 	}
 }
 
-static void
+void
 usage()
 {
 
