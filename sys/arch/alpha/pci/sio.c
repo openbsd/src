@@ -1,4 +1,4 @@
-/*	$OpenBSD: sio.c,v 1.12 1998/01/07 07:39:58 niklas Exp $	*/
+/*	$OpenBSD: sio.c,v 1.13 1998/02/24 02:05:20 millert Exp $	*/
 /*	$NetBSD: sio.c,v 1.15 1996/12/05 01:39:36 cgd Exp $	*/
 
 /*
@@ -110,11 +110,16 @@ siomatch(parent, match, aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) != PCI_VENDOR_INTEL ||
-	    PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_INTEL_SIO)
-		return (0);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_CONTAQ &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_CONTAQ_SIO &&
+	    pa->pa_function == 0)
+		return (1);
 
-	return (1);
+	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_SIO)
+		return (1);
+
+	return (0);
 }
 
 int
