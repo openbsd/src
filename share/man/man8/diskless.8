@@ -1,4 +1,4 @@
-.\"	$OpenBSD: diskless.8,v 1.7 1996/12/10 18:37:53 deraadt Exp $
+.\"	$OpenBSD: diskless.8,v 1.8 1999/05/07 22:03:09 jason Exp $
 .\"	$NetBSD: diskless.8,v 1.7.4.1 1996/05/30 18:58:10 cgd Exp $
 .\"
 .\"
@@ -192,8 +192,8 @@ manual page for more information.
 .It 4.
 If booting a Sun or Motorola client, install a copy of the
 appropriate diskless boot loader (such as
-.Pa boot.sun4.sunos.4.1.1
-from the SunOS media) in the
+.Pa boot.net
+from the root directory of the OpenBSD sparc tree) in the
 .Pa /tftpboot
 directory.
 Make a link such that the boot program is
@@ -202,7 +202,7 @@ in HEX, a dot, and the architecture name (all upper case).
 For example:
 .Bd -literal -offset indent -compact
 # cd /tftpboot
-# ln -s boot.sun4.sunos.4.1.1 C0C5600C.SUN4
+# ln -s boot.net C0C5600C.SUN4
 .Ed
 .Pp
 For a Sun3 machine, the name would be just C0C5600C
