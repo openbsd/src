@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.26 2002/02/11 21:21:55 mickey Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.27 2002/02/16 02:41:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Michael Shalayeff
@@ -130,7 +130,6 @@ extern int (*cpu_desidhash) __P((void));
 void	delay __P((u_int us));
 void	hppa_init __P((paddr_t start));
 void	trap __P((int type, struct trapframe *frame));
-int	dma_cachectl __P((caddr_t p, int size));
 int	spcopy __P((pa_space_t ssp, const void *src,
 		    pa_space_t dsp, void *dst, size_t size));
 int	spstrcpy __P((pa_space_t ssp, const void *src,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.24 2002/02/16 02:21:56 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.25 2002/02/16 02:41:15 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2001 Michael Shalayeff
@@ -808,16 +808,6 @@ mbus_dmamem_mmap(void *v, bus_dma_segment_t *segs, int nsegs, off_t off,
 		 int prot, int flags)
 {
 	panic("_dmamem_mmap: not implemented");
-}
-
-int
-dma_cachectl(p, size)
-	caddr_t p;
-	int size;
-{
-	fdcache(HPPA_SID_KERNEL, (vaddr_t)p, size);
-	sync_caches();
-	return 0;
 }
 
 const struct hppa_bus_dma_tag hppa_dmatag = {
