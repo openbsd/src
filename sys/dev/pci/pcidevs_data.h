@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.93 1998/10/10 03:55:05 jason Exp 
+ *	OpenBSD: pcidevs,v 1.94 1998/10/10 06:59:32 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -481,6 +481,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "ATI Technologies",
 	    "Mach64 VT",
+	},
+	{
+	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_RAGEPRO,
+	    0,
+	    "ATI Technologies",
+	    "Rage Pro",
 	},
 	{
 	    PCI_VENDOR_ATI, PCI_PRODUCT_ATI_MACH64_GT,
@@ -1069,6 +1075,12 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Emulex",
 	    "Light Pulse FibreChannel adapter",
+	},
+	{
+	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_SB64PCI,
+	    0,
+	    "Ensoniq",
+	    "SoundBlaster 64PCI",
 	},
 	{
 	    PCI_VENDOR_ENSONIQ, PCI_PRODUCT_ENSONIQ_AUDIOPCI,

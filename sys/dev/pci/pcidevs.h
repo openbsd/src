@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.93 1998/10/10 03:55:05 jason Exp 
+ *	OpenBSD: pcidevs,v 1.94 1998/10/10 06:59:32 downsj Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -637,6 +637,7 @@
 #define	PCI_PRODUCT_ATI_MACH64_CX	0x4358		/* Mach64 CX */
 #define	PCI_PRODUCT_ATI_MACH64_ET	0x4554		/* Mach64 ET */
 #define	PCI_PRODUCT_ATI_MACH64_VT	0x4654		/* Mach64 VT */
+#define	PCI_PRODUCT_ATI_RAGEPRO	0x4742		/* Rage Pro */
 #define	PCI_PRODUCT_ATI_MACH64_GT	0x4754		/* Mach64 GT */
 #define	PCI_PRODUCT_ATI_MACH64_GX	0x4758		/* Mach64 GX */
 
@@ -785,6 +786,7 @@
 #define	PCI_PRODUCT_EMULEX_LPPFC	0x10df		/* Light Pulse FibreChannel adapter */
 
 /* Ensoniq products */
+#define	PCI_PRODUCT_ENSONIQ_SB64PCI	0x1371		/* SoundBlaster 64PCI */
 #define	PCI_PRODUCT_ENSONIQ_AUDIOPCI	0x5000		/* AudioPCI */
 
 /* ESS Technology Inc products */
