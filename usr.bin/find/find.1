@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)find.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: find.1,v 1.2 1996/01/15 01:11:16 deraadt Exp $
+.\"	$Id: find.1,v 1.3 1996/05/28 12:31:18 deraadt Exp $
 .\"
 .Dd June 6, 1993
 .Dt FIND 1
@@ -298,6 +298,8 @@ True if the file is of the specified type.
 Possible file types are as follows:
 .Pp
 .Bl -tag -width flag -offset indent -compact
+.It Cm W
+whiteout
 .It Cm b
 block special
 .It Cm c
