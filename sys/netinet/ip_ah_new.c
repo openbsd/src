@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.18 1998/06/03 09:50:18 provos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.19 1998/11/25 02:01:27 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -568,7 +568,7 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
             DPRINTF(("ah_new_output(): m_pullup() failed, SA &x/%08x\n",
 		     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
             ahstat.ahs_hdrops++;
-            return NULL;
+            return ENOBUFS;
         }
 
         ip = mtod(m, struct ip *);
@@ -583,6 +583,15 @@ ah_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     ilen = ntohs(ip->ip_len);
 
     ohlen = AH_NEW_FLENGTH;
+    if (ohlen + ilen > IP_MAXPACKET) {
+	if (encdebug)
+            log(LOG_ALERT,
+		"ah_new_output(): packet in SA %x/%0x8 got too big\n",
+		tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	m_freem(m);
+	ahstat.ahs_toobig++;
+        return ENOBUFS;
+    }
 
     ipo.ip_v = IPVERSION;
     ipo.ip_hl = ip->ip_hl;

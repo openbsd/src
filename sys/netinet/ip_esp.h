@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.17 1998/05/18 21:10:41 provos Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.18 1998/11/25 02:01:28 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -117,6 +117,7 @@ struct espstat
     u_int32_t	esps_invalid;   /* Trying to use an invalid TDB */
     u_int64_t	esps_ibytes;	/* input bytes */
     u_int64_t   esps_obytes;	/* output bytes */
+    u_int32_t	esps_toobig;	/* packet got larger than IP_MAXPACKET */
 };
 
 struct esp_old_xdata

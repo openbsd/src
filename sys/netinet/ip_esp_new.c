@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.25 1998/11/25 01:02:59 niklas Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.26 1998/11/25 02:01:27 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -933,6 +933,15 @@ esp_new_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     /* Raw payload length */
     rlen = ilen - iphlen; 
     padding = ((blks - ((rlen + 2) % blks)) % blks) + 2;
+    if (iphlen + ohlen + rlen + padding + alen > IP_MAXPACKET) {
+	if (encdebug)
+            log(LOG_ALERT,
+		"esp_new_output(): packet in SA %x/%0x8 got too big\n",
+		tdb->tdb_dst, ntohl(tdb->tdb_spi));
+	m_freem(m);
+	espstat.esps_toobig++;
+        return ENOBUFS;
+    }
 
     pad = (u_char *) m_pad(m, padding + alen);
     if (pad == NULL)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.12 1998/05/18 21:10:31 provos Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.13 1998/11/25 02:01:28 niklas Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -86,6 +86,7 @@ struct ahstat
     u_int32_t   ahs_invalid;    /* Trying to use an invalid TDB */
     u_int64_t	ahs_ibytes;	/* input bytes */
     u_int64_t   ahs_obytes;	/* output bytes */
+    u_int32_t	ahs_toobig;	/* packet got larger than IP_MAXPACKET */
 };
 
 #define AH_HMAC_HASHLEN		12	/* 96 bits of authenticator */
