@@ -1,4 +1,4 @@
-/*	$OpenBSD: monitor.c,v 1.1 2003/05/15 00:28:53 ho Exp $	*/
+/*	$OpenBSD: monitor.c,v 1.2 2003/05/15 01:51:10 ho Exp $	*/
 
 /*
  * Copyright (c) 2003 Håkan Olsson.  All rights reserved.
@@ -31,6 +31,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <pwd.h>
@@ -90,7 +91,8 @@ monitor_init (void)
   m_state.s = p[m_state.pid ? 1 : 0];
   strlcpy (m_state.root, pw->pw_dir, sizeof m_state.root);
 
-  LOG_DBG ((LOG_SYSDEP, 95, "monitor_init: pid %d my fd %d", m_state.pid, m_state.s));
+  LOG_DBG ((LOG_SYSDEP, 95, "monitor_init: pid %d my fd %d", m_state.pid,
+	    m_state.s));
 
   /* The child process should drop privileges now.  */
   if (!m_state.pid)
@@ -425,7 +427,11 @@ monitor_loop (int debugging)
        * is in the process of shutting down.
        */
       if (sigtermed || sigchlded)
-	shutdown++;
+	{
+	  if (sigchlded)
+	    wait (&n);
+	  shutdown++;
+	}
 
       FD_ZERO (fds);
       FD_SET (m_state.s, fds);
