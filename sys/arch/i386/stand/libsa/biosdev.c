@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.42 1997/10/24 17:16:53 mickey Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.43 1997/10/24 22:49:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -74,7 +74,6 @@ bios_getinfo(dev, pdi)
 #ifdef BIOS_DEBUG
 	printf("getinfo: try #8, %x,%p\n", dev, pdi);
 #endif
-	BIOS_regs.biosr_ds = BIOS_regs.biosr_es = 0;
 	__asm __volatile (DOINT(0x13) "\n\t"
 			  "setc %b0; movzbl %h1, %1\n\t"
 			  "movzbl %%cl, %3; andb $0x3f, %b3\n\t"
