@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.49 2000/03/20 15:29:53 deraadt Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.50 2000/03/22 21:35:37 mickey Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -546,8 +546,11 @@ start_init(arg)
 #endif
 
 	for (pathp = &initpaths[0]; (path = *pathp) != NULL; pathp++) {
+#ifdef MACHINE_STACK_GROWS_UP
+		ucp = (char *)addr;
+#else
 		ucp = (char *)(addr + PAGE_SIZE);
-
+#endif
 		/*
 		 * Construct the boot flag argument.
 		 */
@@ -575,8 +578,14 @@ start_init(arg)
 #ifdef DEBUG
 			printf("init: copying out flags `%s' %d\n", flags, i);
 #endif
+#ifdef MACHINE_STACK_GROWS_UP
+			arg1 = ucp;
+			(void)copyout((caddr_t)flags, (caddr_t)ucp, i);
+			ucp += i;
+#else
 			(void)copyout((caddr_t)flags, (caddr_t)(ucp -= i), i);
 			arg1 = ucp;
+#endif
 		}
 
 		/*
@@ -586,13 +595,20 @@ start_init(arg)
 #ifdef DEBUG
 		printf("init: copying out path `%s' %d\n", path, i);
 #endif
+#ifdef MACHINE_STACK_GROWS_UP
+		arg0 = ucp;
+		(void)copyout((caddr_t)path, (caddr_t)ucp, i);
+		ucp += i;
+		ucp = (caddr_t)ALIGN((u_long)ucp);
+		uap = (char **)ucp + 3;
+#else
 		(void)copyout((caddr_t)path, (caddr_t)(ucp -= i), i);
 		arg0 = ucp;
-
+		uap = (char **)((u_long)ucp & ~ALIGNBYTES);
+#endif
 		/*
 		 * Move out the arg pointers.
 		 */
-		uap = (char **)((long)ucp & ~ALIGNBYTES);
 		(void)suword((caddr_t)--uap, 0);	/* terminator */
 		if (options != 0)
 			(void)suword((caddr_t)--uap, (long)arg1);

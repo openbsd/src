@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.39 2000/02/01 04:03:14 assar Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.40 2000/03/22 21:35:37 mickey Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -429,8 +429,8 @@ sys_execve(p, v, retval)
 	arginfo.ps_nenvstr = envc;
 
 #ifdef MACHINE_STACK_GROWS_UP
-	stack = (char *)USRSTACK;
-	slen = len;
+	stack = (char *)USRSTACK + sizeof(arginfo) + szsigcode;
+	slen = len - sizeof(arginfo) - szsigcode;
 #else
 	stack = (char *)(USRSTACK - len);
 #endif
@@ -445,7 +445,7 @@ sys_execve(p, v, retval)
 	/* copy out the process's signal trampoline code */
 #ifdef MACHINE_STACK_GROWS_UP
 	if (szsigcode && copyout((char *)pack.ep_emul->e_sigcode,
-	    ((char *)PS_STRINGS) + sizeof(struct ps_strings), szsigcode))
+	    ((char *)PS_STRINGS) + sizeof(arginfo), szsigcode))
 		goto exec_abort;
 #else
 	if (szsigcode && copyout((char *)pack.ep_emul->e_sigcode,
