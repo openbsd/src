@@ -1,4 +1,4 @@
-/*	$OpenBSD: expr.c,v 1.10 1999/11/17 15:34:13 espie Exp $	*/
+/*	$OpenBSD: expr.c,v 1.11 2000/01/11 14:00:57 espie Exp $	*/
 /*	$NetBSD: expr.c,v 1.7 1995/09/28 05:37:31 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)expr.c	8.2 (Berkeley) 4/29/95";
 #else
-static char rcsid[] = "$OpenBSD: expr.c,v 1.10 1999/11/17 15:34:13 espie Exp $";
+static char rcsid[] = "$OpenBSD: expr.c,v 1.11 2000/01/11 14:00:57 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,7 @@ static char rcsid[] = "$OpenBSD: expr.c,v 1.10 1999/11/17 15:34:13 espie Exp $";
 #define HEX	16
 
 static const char *nxtch;		       /* Parser scan pointer */
+static const char *where;
 
 static int query __P((void));
 static int lor __P((void));
@@ -147,6 +148,7 @@ expr(expbuf)
 	int rval;
 
 	nxtch = expbuf;
+	where = expbuf;
 	if (setjmp(expjump) != 0)
 		return FALSE;
 
@@ -616,6 +618,6 @@ static void
 experr(msg)
 	const char *msg;
 {
-	printf("m4: %s in expr.\n", msg);
+	printf("m4: %s in expr %s.\n", msg, where);
 	longjmp(expjump, -1);
 }
