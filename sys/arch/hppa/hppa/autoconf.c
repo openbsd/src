@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.8 2000/03/29 23:11:12 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.9 2000/03/30 16:33:27 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -107,7 +107,7 @@ configure()
 
 #ifdef USELEDS
 	timeout_set(&heartbeat_tmo, heartbeat, NULL);
-	timeout_add(&heartbeat_tmo, hz / 8);
+	heatbeat(NULL);
 #endif
 }
 
@@ -133,11 +133,14 @@ heartbeat(v)
 	 *  _| |_| |_,_,_,_
 	 *   0 1 2 3 4 6 7
 	 */
-	if (hbcnt % 8 < 4)
+	if (hbcnt < 4) {
 		ledctl(0, 0, PALED_HEARTBEAT);
-	hbcnt++;
-
-	timeout_add(&heartbeat_tmo, hz / 8);
+		hbcnt++;
+		timeout_add(&heartbeat_tmo, hz / 8);
+	} else {
+		hbcnt = 0;
+		timeout_add(&heartbeat_tmo, hz / 2);
+	}
 }
 #endif
 
