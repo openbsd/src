@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.4,v 1.35 2004/08/04 00:05:30 jaredy Exp $
+.\"	$OpenBSD: audio.4,v 1.36 2004/11/06 05:02:46 brad Exp $
 .\"	$NetBSD: audio.4,v 1.20 1998/05/28 17:27:15 augustss Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -323,7 +323,7 @@ the
 .Vt audio_info
 structure should first be initialized with
 .Pp
-.Dl "ioctl(fd, AUDIO_INITINFO, &info);"
+.Dl "AUDIO_INITINFO(&info);"
 .Pp
 and then the particular values to be changed should be set.
 This allows the audio driver to only set those things that you wish
