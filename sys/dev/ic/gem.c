@@ -1442,9 +1442,6 @@ gem_rint(sc)
 
 		ifp->if_ipackets++;
 		eh = mtod(m, struct ether_header *);
-#if 0 /* XXXART */
-		m->m_flags |= M_HASFCS;
-#endif
 		m->m_pkthdr.rcvif = ifp;
 		m->m_pkthdr.len = m->m_len = len;
 
@@ -1544,19 +1541,12 @@ gem_eint(sc, status)
 	struct gem_softc *sc;
 	u_int status;
 {
-#if 0
-	char bits[128];
-#endif
-
 	if ((status & GEM_INTR_MIF) != 0) {
 		printf("%s: XXXlink status changed\n", sc->sc_dev.dv_xname);
 		return (1);
 	}
 
-#if 0 /* XXXART - I'm lazy */
-	printf("%s: status=%s\n", sc->sc_dev.dv_xname,
-		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits)));
-#endif
+	printf("%s: status=%b\n", sc->sc_dev.dv_xname, status, GEM_INTR_BITS);
 	return (1);
 }
 
@@ -1571,21 +1561,11 @@ gem_intr(v)
 	u_int32_t status;
 	int r = 0;
 
-#if 0
-	char bits[128];
-#endif
-
 	status = bus_space_read_4(t, seb, GEM_STATUS);
-#if 0 /* XXXART - I'm lazy */
-	DPRINTF(sc, ("%s: gem_intr: cplt %xstatus %s\n",
-		sc->sc_dev.dv_xname, (status>>19),
-		bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits))));
-#endif
-#if 0 /* XXXART */
-if (gem_opdebug) printf("%s: gem_intr: cplt %x status %s\n",
-	sc->sc_dev.dv_xname, (status>>19),
-	bitmask_snprintf(status, GEM_INTR_BITS, bits, sizeof(bits)));
-#endif
+	DPRINTF(sc, ("%s: gem_intr: cplt %xstatus %b\n",
+		sc->sc_dev.dv_xname, (status>>19), status, GEM_INTR_BITS));
+if (gem_opdebug) printf("%s: gem_intr: cplt %x status %b\n",
+	sc->sc_dev.dv_xname, (status>>19), status, GEM_INTR_BITS);
 if (gem_opdebug && (status & GEM_INTR_TX_DONE)) {
 	int i;
 	int64_t pa;
