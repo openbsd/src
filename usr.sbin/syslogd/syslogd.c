@@ -588,12 +588,12 @@ fprintlog(f, flags, msg)
 	struct iovec iov[6];
 	struct iovec *v;
 	int l;
-	char line[MAXLINE + 1], repbuf[80], greetings[200];
+	char line[MAXLINE + 1], repbuf[80], greetings[500];
 
 	v = iov;
 	if (f->f_type == F_WALL) {
 		v->iov_base = greetings;
-		v->iov_len = sprintf(greetings,
+		v->iov_len = snprintf(greetings, 500,
 		    "\r\n\7Message from syslogd@%s at %.24s ...\r\n",
 		    f->f_prevhost, ctime(&now));
 		v++;
