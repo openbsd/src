@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.24 2004/03/17 14:16:04 miod Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.25 2004/12/01 23:03:51 miod Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.22 1997/11/26 04:18:20 briggs Exp $	*/
 
 /*
@@ -80,6 +80,7 @@
 #include <sys/buf.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
+#include <sys/malloc.h>
 #include <sys/syslog.h>
 
 #include <mac68k/mac68k/dpme.h>	/* MF the structure of a mac partition entry */
@@ -284,9 +285,13 @@ skip:
 char *
 read_mac_label(char *dlbuf, struct disklabel *lp, struct cpu_disklabel *osdep)
 {
-	char *msg = NULL;
 	int i, num_parts, maxslot = RAW_PART;
-	struct partmapentry pmap[NUM_PARTS_PROBED];
+	struct partmapentry *pmap;
+
+	MALLOC(pmap, struct partmapentry *,
+	    NUM_PARTS_PROBED * sizeof(struct partmapentry), M_DEVBUF, M_NOWAIT);
+	if (pmap == NULL)
+		return ("out of memory");
 
 	num_parts = fixPartTable(pmap, lp->d_secsize, dlbuf);
 	if (getNamedType(pmap, num_parts, lp, ROOT_PART, 0, &maxslot))
@@ -336,7 +341,9 @@ read_mac_label(char *dlbuf, struct disklabel *lp, struct cpu_disklabel *osdep)
 		}
 	}
 	lp->d_npartitions = maxslot + 1;
-	return msg;
+
+	FREE(pmap, M_DEVBUF);
+	return NULL;
 }
 
 /*
