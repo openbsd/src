@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount_procfs.c,v 1.11 2003/07/03 22:41:40 tedu Exp $	*/
+/*	$OpenBSD: mount_procfs.c,v 1.12 2004/05/18 10:54:08 otto Exp $	*/
 /*	$NetBSD: mount_procfs.c,v 1.7 1996/04/13 01:31:59 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mount_procfs.c	8.3 (Berkeley) 3/27/94";
 #else
-static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.11 2003/07/03 22:41:40 tedu Exp $";
+static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.12 2004/05/18 10:54:08 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -64,7 +64,7 @@ static char rcsid[] = "$OpenBSD: mount_procfs.c,v 1.11 2003/07/03 22:41:40 tedu 
 
 const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
-	{ "linux", 0, PROCFSMNT_LINUXCOMPAT, 1 },
+	{ "linux", PROCFSMNT_LINUXCOMPAT, 0 },
 	{ NULL }
 };
 
@@ -81,7 +81,7 @@ main(int argc, char *argv[])
 	while ((ch = getopt(argc, argv, "o:")) != -1)
 		switch (ch) {
 		case 'o':
-			getmntopts(optarg, mopts, &mntflags, &altflags);
+			altflags |= getmntopts(optarg, mopts, &mntflags);
 			break;
 		case '?':
 		default:

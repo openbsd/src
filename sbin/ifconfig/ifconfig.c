@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.98 2004/05/10 18:34:42 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.99 2004/05/18 10:54:07 otto Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.98 2004/05/10 18:34:42 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.99 2004/05/18 10:54:07 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -2540,7 +2540,7 @@ usage(void)
 	    "\t[[-]alias] [[-]arp] [broadcast addr]\n"
 	    "\t[[-]debug] [delete] [up] [down] [ipdst addr]\n"
 	    "\t[tunnel src_address dest_address] [deletetunnel]\n"
-	    "\t[[-]link0] [[-]link1] [[-]link2] [[-]trailers]\n"
+	    "\t[[-]link0] [[-]link1] [[-]link2]\n"
 	    "\t[media type] [[-]mediaopt opts] [instance minst]\n"
 	    "\t[mtu value] [metric nhops] [netmask mask] [prefixlen n]\n"
 	    "\t[nwid id] [nwkey key] [nwkey persist[:key]] [-nwkey]\n"

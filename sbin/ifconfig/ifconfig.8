@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.80 2004/04/27 21:13:09 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.81 2004/05/18 10:54:07 otto Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -587,27 +587,6 @@ Set the IPv6 tentative address bit.
 .It Fl tentative
 (inet6 only)
 Clear the IPv6 tentative address bit.
-.It Cm trailers
-Request the use of a
-.Dq trailer
-link level encapsulation when
-sending (default).
-If a network interface supports
-.Cm trailers ,
-the system will, when possible, encapsulate outgoing
-messages in a manner which minimizes the number of
-memory to memory copy operations performed by the receiver.
-On networks that support ARP
-(currently, only Ethernet),
-this flag indicates that the system should request that other
-systems use trailers when sending to this host.
-Similarly, trailer encapsulations will be sent to other
-hosts that have made such requests.
-Currently used by Internet protocols only.
-.It Fl trailers
-Disable the use of a
-.Dq trailer
-link level encapsulation.
 .It Cm tunnel Ar src_address dest_address
 Set the source and destination tunnel addresses on a tunnel interface,
 including
