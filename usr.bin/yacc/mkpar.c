@@ -1,11 +1,12 @@
 #ifndef lint
-static char rcsid[] = "$Id: mkpar.c,v 1.1.1.1 1995/10/18 08:47:05 deraadt Exp $";
+static char rcsid[] = "$Id: mkpar.c,v 1.2 1996/02/04 08:37:01 etheisen Exp $";
 #endif /* not lint */
 
 #include "defs.h"
 
 action **parser;
 int SRtotal;
+int SRexpect = 0;
 int RRtotal;
 short *SRconflicts;
 short *RRconflicts;
@@ -279,21 +280,21 @@ remove_conflicts()
 
 total_conflicts()
 {
-    fprintf(stderr, "%s: ", myname);
-    if (SRtotal == 1)
-	fprintf(stderr, "1 shift/reduce conflict");
-    else if (SRtotal > 1)
-	fprintf(stderr, "%d shift/reduce conflicts", SRtotal);
-
-    if (SRtotal && RRtotal)
-	fprintf(stderr, ", ");
+    /* Warn if s/r != expect or if any r/r */
+    if ((SRtotal != SRexpect) || RRtotal)
+    {
+        if (SRtotal == 1)
+            fprintf(stderr, "%s: 1 shift/reduce conflict\n", myname);
+        else if (SRtotal > 1)
+            fprintf(stderr, "%s: %d shift/reduce conflicts\n", myname,
+                    SRtotal);
+    }
 
     if (RRtotal == 1)
-	fprintf(stderr, "1 reduce/reduce conflict");
+        fprintf(stderr, "%s: 1 reduce/reduce conflict\n", myname);
     else if (RRtotal > 1)
-	fprintf(stderr, "%d reduce/reduce conflicts", RRtotal);
-
-    fprintf(stderr, ".\n");
+	fprintf(stderr, "%s: %d reduce/reduce conflicts\n", myname,
+                RRtotal);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$Id: defs.h,v 1.1.1.1 1995/10/18 08:47:05 deraadt Exp $ */
+/*	$Id: defs.h,v 1.2 1996/02/04 08:37:00 etheisen Exp $ */
 
 #include <assert.h>
 #include <ctype.h>
@@ -66,6 +66,7 @@
 #define START 7
 #define UNION 8
 #define IDENT 9
+#define EXPECT 10
 
 
 /*  symbol classes  */
@@ -263,6 +264,7 @@ extern short *to_state;
 
 extern action **parser;
 extern int SRtotal;
+extern int SRexpect;
 extern int RRtotal;
 extern short *SRconflicts;
 extern short *RRconflicts;
