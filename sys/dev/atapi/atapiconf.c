@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapiconf.c,v 1.2 1996/06/09 08:59:49 downsj Exp $	*/
+/*	$OpenBSD: atapiconf.c,v 1.3 1996/06/10 08:01:13 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -155,7 +155,7 @@ atapiprint(aux, bus)
 	if (bus != NULL)
 		printf("%s", bus);
 
-	printf(" drive %d: <%s, %s, %s> type %d/%s %s",
+	printf(" drive %d: <%s, %s, %s> ATAPI %d/%s %s",
 	    ad_link->drive, id->model, id->serial_number,
 	    id->firmware_revision,
 	    id->config.device_type & ATAPI_DEVICE_TYPE_MASK, dtype, fixrem);

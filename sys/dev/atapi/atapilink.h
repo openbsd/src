@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapilink.h,v 1.3 1996/06/10 00:43:57 downsj Exp $	*/
+/*	$OpenBSD: atapilink.h,v 1.4 1996/06/10 08:01:14 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -204,6 +204,7 @@ static __inline void _lto2b __P((u_int32_t val, u_int8_t *bytes));
 static __inline void _lto3b __P((u_int32_t val, u_int8_t *bytes));
 static __inline void _lto4b __P((u_int32_t val, u_int8_t *bytes));
 static __inline u_int32_t _2btol __P((u_int8_t *bytes));
+static __inline u_int16_t _2btos __P((u_int8_t *bytes));
 static __inline u_int32_t _3btol __P((u_int8_t *bytes));
 static __inline u_int32_t _4btol __P((u_int8_t *bytes));
 
@@ -252,6 +253,17 @@ _2btol(bytes)
 	u_int8_t *bytes;
 {
 	register u_int32_t rv;
+
+	rv = (bytes[0] << 8) |
+	     bytes[1];
+	return (rv);
+}
+
+static __inline u_int16_t
+_2btos(bytes)
+	u_int8_t *bytes;
+{
+	register u_int16_t rv;
 
 	rv = (bytes[0] << 8) |
 	     bytes[1];

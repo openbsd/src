@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi.h,v 1.2 1996/06/09 08:59:48 downsj Exp $	*/
+/*	$OpenBSD: atapi.h,v 1.3 1996/06/10 08:01:11 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -198,10 +198,10 @@ struct cappage {
 #define SEP_VOL			0x01	/* independent volume controls */
 #define SEP_MUTE		0x02	/* independent mute controls */
 
-	u_int8_t	max_speed[2];	/* max raw data rate in bytes/1000 */
-	u_int8_t   max_vol_levels[2];	/* number of discrete volume levels */
-	u_int8_t	buf_size[2];	/* internal buffer size in bytes/1024 */
-	u_int8_t	cur_speed[2];	/* current data rate in bytes/1000  */
+	u_int16_t	max_speed;	/* max raw data rate in bytes/1000 */
+	u_int16_t	max_vol_levels;	/* number of discrete volume levels */
+	u_int16_t	buf_size;	/* internal buffer size in bytes/1024 */
+	u_int16_t	cur_speed;	/* current data rate in bytes/1000  */
 
 	/* Digital drive output format description (optional?) */
 	u_int8_t	reserved3;

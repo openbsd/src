@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.4 1996/06/10 00:43:56 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.5 1996/06/10 08:01:06 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -77,6 +77,7 @@ struct acd_softc {
 #define	CDF_WLABEL	0x04		/* label is writable */
 #define	CDF_LABELLING	0x08		/* writing label */
 	struct	at_dev_link *ad_link;	/* contains our drive number, etc ... */
+	struct	cappage cap;		/* drive capabilities */
 	struct	cd_parms {
 		int	blksize;
 		u_long	disksize;	/* total number sectors */
@@ -123,8 +124,11 @@ acdmatch(parent, match, aux)
 	    sa->id.config.device_type & ATAPI_DEVICE_TYPE_MASK);
 #endif
 
-	if ((sa->id.config.device_type & ATAPI_DEVICE_TYPE_MASK) ==
-	    ATAPI_DEVICE_TYPE_CD)
+	if (((sa->id.config.device_type & ATAPI_DEVICE_TYPE_MASK) ==
+	    ATAPI_DEVICE_TYPE_CD) ||
+	   (((sa->id.config.device_type & ATAPI_DEVICE_TYPE_MASK) ==
+	    ATAPI_DEVICE_TYPE_DAD) &&
+	    (sa->id.config.cmd_drq_rem & ATAPI_REMOVABLE)))
 		return 1;
 	return 0;
 }
@@ -141,7 +145,6 @@ acdattach(parent, self, aux)
 	struct acd_softc *acd = (void *)self;
 	struct at_dev_link *sa = aux;
 	struct mode_sense cmd;
-	struct cappage cap;
 
 	printf("\n");
 
@@ -169,13 +172,36 @@ acdattach(parent, self, aux)
 	bzero(&cmd, sizeof(cmd));
 	cmd.operation_code = ATAPI_MODE_SENSE;
 	cmd.page_code_control = CAP_PAGE;
-	_lto2b(sizeof(cap), cmd.length);
-	if (atapi_exec_cmd(sa, &cmd , sizeof(cmd), &cap, sizeof(cap),
-	    B_READ, A_POLLED) != 0) {
+	_lto2b(sizeof(struct cappage), cmd.length);
+	if (atapi_exec_cmd(sa, &cmd , sizeof(cmd), &acd->cap,
+	    sizeof(struct cappage), B_READ, A_POLLED) != 0) {
 		printf("%s: can't MODE SENSE: atapi_exec_cmd failed\n",
 		    self->dv_xname);
 		return;
 	}
+
+	/*
+	 * Fix cappage entries in place.
+	 */
+	acd->cap.max_speed = _2btos((u_int8_t *)&acd->cap.max_speed);
+	acd->cap.max_vol_levels = _2btos((u_int8_t *)&acd->cap.max_vol_levels);
+	acd->cap.buf_size = _2btos((u_int8_t *)&acd->cap.buf_size);
+	acd->cap.cur_speed = _2btos((u_int8_t *)&acd->cap.cur_speed);
+
+	/*
+	 * Display useful information about the drive (not media!).
+	 */
+	printf ("%s: ", self->dv_xname);
+	if (acd->cap.cur_speed != acd->cap.max_speed)
+		printf ("%d/", acd->cap.cur_speed * 1000 / 1024);
+	printf ("%dKb/sec", acd->cap.max_speed * 1000 / 1024);
+	if (acd->cap.buf_size)
+		printf (", %dKb cache", acd->cap.buf_size);
+	if (acd->cap.format_cap & FORMAT_AUDIO_PLAY)
+		printf (", audio play");
+	if (acd->cap.max_vol_levels)
+		printf (", %d volume levels", acd->cap.max_vol_levels);
+	printf ("\n");
 }
 
 /*
