@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_run.c,v 1.11 1998/03/16 08:44:32 pefo Exp $	*/
+/*	$OpenBSD: db_run.c,v 1.12 1999/06/17 18:17:08 art Exp $	*/
 /*	$NetBSD: db_run.c,v 1.8 1996/02/05 01:57:12 christos Exp $	*/
 
 /* 
@@ -107,6 +107,9 @@ db_stop_at_pc(regs, is_breakpoint)
 	    (db_not_taken_bkpt && db_not_taken_bkpt->address == pc))
 #endif
 	    ) {
+#ifdef PC_ADVANCE
+		PC_ADVANCE(regs);
+#else
 		/*
 		 * XXX why on earth is this ifndef'd?  Please explain!
 		 * I believe this was a workaround a bug where singlestep
@@ -115,6 +118,7 @@ db_stop_at_pc(regs, is_breakpoint)
 		 */
 #ifndef m88k
 		PC_REGS(regs) = old_pc;
+#endif
 #endif
 	}
 	db_clear_single_step(regs);
