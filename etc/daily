@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.31 2000/04/29 18:45:58 millert Exp $
+#	$OpenBSD: daily,v 1.32 2000/05/26 14:51:31 aaron Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
@@ -19,7 +19,7 @@ trap 'rm -f $TMP' 0 1 15
 
 echo ""
 echo "Removing scratch and junk files:"
-if [ -d /tmp -a ! -h /tmp ]; then
+if [ -d /tmp -a ! -L /tmp ]; then
 	cd /tmp && {
 	find -x . \( -name 'ssh-*' -o -name '.X11-unix' \) -prune -o \
 	    -type f -atime +3 -execdir rm -f -- {} \;
@@ -27,7 +27,7 @@ if [ -d /tmp -a ! -h /tmp ]; then
 	    >/dev/null 2>&1; }
 fi
 
-if [ -d /var/tmp -a ! -h /var/tmp ]; then
+if [ -d /var/tmp -a ! -L /var/tmp ]; then
 	cd /var/tmp && {
 	find -x . \( -name 'ssh-*' -o -name '.X11-unix' \) -prune -o \
 	    ! -type d -atime +7 -execdir rm -f -- {} \;
@@ -36,19 +36,19 @@ if [ -d /var/tmp -a ! -h /var/tmp ]; then
 fi
 
 # Additional junk directory cleanup would go like this:
-#if [ -d /scratch -a ! -h /scratch ]; then
+#if [ -d /scratch -a ! -L /scratch ]; then
 #	cd /scratch && {
 #	find . ! -name . -atime +1 -execdir rm -f -- {} \;
 #	find . ! -name . -type d -mtime +1 -execdir rmdir -- {} \; \
 #	    >/dev/null 2>&1; }
 #fi
 
-if [ -d /var/preserve -a ! -h /var/preserve ]; then
+if [ -d /var/preserve -a ! -L /var/preserve ]; then
 	cd /var/preserve && {
 	find . ! -name . -mtime +7 -execdir rm -f -- {} \; ; }
 fi
 
-if [ -d /var/rwho -a ! -h /var/rwho ] ; then
+if [ -d /var/rwho -a ! -L /var/rwho ] ; then
 	cd /var/rwho && {
 	find . ! -name . -mtime +7 -execdir rm -f -- {} \; ; }
 fi
