@@ -1,4 +1,4 @@
-.\"	$OpenBSD: asp.4,v 1.14 2003/07/09 13:26:20 jmc Exp $
+.\"	$OpenBSD: asp.4,v 1.15 2003/08/31 20:53:33 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -29,16 +29,17 @@
 .Os
 .Sh NAME
 .Nm asp
-.Nd "Core" bus controller as present on older
+.Nd core bus controller as present on older
 .Tn HP 9000/700
-machines.
+machines
 .Sh SYNOPSIS
 .Cd "asp0    at mainbus? irq 28"
 .Cd "gsc* at asp?"
-.Sh INTRODUCTION
+.Sh DESCRIPTION
 The supported Core bus controllers are those present on older
 .Tn PA-RISC
 workstations, and include:
+.Pp
 .Bl -bullet -compact
 .It
 Core bus controller

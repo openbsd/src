@@ -1,4 +1,4 @@
-.\"	$OpenBSD: lasi.4,v 1.19 2003/08/20 21:17:08 mickey Exp $
+.\"	$OpenBSD: lasi.4,v 1.20 2003/08/31 20:53:33 jmc Exp $
 .\"
 .\"
 .\" Copyright (c) 1999 Michael Shalayeff
@@ -29,14 +29,14 @@
 .Os
 .Sh NAME
 .Nm lasi
-.Nd "Core" bus controller and I/O subsystem as present on newer
+.Nd core bus controller and I/O subsystem as present on newer
 .Tn HP 9000/700
-workstations and single-board computers.
+workstations and single-board computers
 .Sh SYNOPSIS
 .Cd "lasi0   at mainbus? irq 28"
 .Cd "lasi0   at phantomas? irq 28"
 .Cd "gsc* at lasi?"
-.Sh INTRODUCTION
+.Sh DESCRIPTION
 The supported Core bus controllers are those used in conjunction with
 .Tn PA7100LC
 and
