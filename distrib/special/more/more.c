@@ -1,4 +1,4 @@
-/*	$OpenBSD: more.c,v 1.23 2003/06/04 23:50:35 millert Exp $	*/
+/*	$OpenBSD: more.c,v 1.24 2003/06/05 03:17:47 millert Exp $	*/
 
 /*-
  * Copyright (c) 1980 The Regents of the University of California.
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)more.c	5.28 (Berkeley) 3/1/93";
 #else
-static const char rcsid[] = "$OpenBSD: more.c,v 1.23 2003/06/04 23:50:35 millert Exp $";
+static const char rcsid[] = "$OpenBSD: more.c,v 1.24 2003/06/05 03:17:47 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,6 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.23 2003/06/04 23:50:35 millert
 
 /*
  * TODO (millert)
- *  o deal with large files (use off_t and ftello(), fseeko())
  *  o POSIX compliance
  */
 
@@ -79,11 +78,11 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.23 2003/06/04 23:50:35 millert
 #include <unistd.h>
 #include <paths.h>
 
-#define Fopen(s,m)	(Currline = 0, file_pos=0, fopen(s,m))
+#define Fopen(s, m)	(Currline = 0, file_pos = 0, fopen(s,m))
 #define Ftell(f)	(file_pos)
-#define Fseek(f,off)	(file_pos=off, fseek(f,off,0))
+#define Fseek(f, off)	(file_pos = off, fseeko(f, off, SEEK_SET))
 #define Getc(f)		(++file_pos, getc(f))
-#define Ungetc(c,f)	(--file_pos, ungetc(c,f))
+#define Ungetc(c, f)	(--file_pos, ungetc(c, f))
 
 #define	cleareol()	(tputs(eraseln, 1, putch))
 #define	clreos()	(tputs(EodClr, 1, putch))
@@ -103,7 +102,7 @@ static const char rcsid[] = "$OpenBSD: more.c,v 1.23 2003/06/04 23:50:35 millert
 #include "morehelp.h"
 
 struct termios	otty, ntty;
-long		file_pos, file_size;
+off_t		file_pos, file_size;
 int		fnum, no_intty, no_tty, slow_tty;
 int		dum_opt, dlines;
 int		nscroll = 11;	/* Number of lines scrolled by 'd' */
@@ -112,7 +111,7 @@ int		stop_opt = 1;	/* Stop after form feeds */
 int		ssp_opt = 0;	/* Suppress white space */
 int		ul_opt = 1;	/* Underline as best we can */
 int		promptlen;
-int		Currline;	/* Line we are currently at */
+off_t		Currline;	/* Line we are currently at */
 int		startup = 1;
 int		firstf = 1;
 int		notell = 1;
@@ -152,7 +151,7 @@ size_t		linsize = LINSIZ;
 volatile sig_atomic_t signo;	/* signal received */
 
 struct {
-	long chrctr, line;
+	off_t chrctr, line;
 } context, screen_start;
 
 extern char	PC;		/* pad character (termcap) */
@@ -200,7 +199,7 @@ main(int argc, char **argv)
 	FILE * volatile f;
 	char		*s;
 	volatile int	left;
-	volatile int	initline;
+	volatile off_t	initline;
 	volatile int	prnames = 0;
 	volatile int	initopt = 0;
 	volatile int	srchopt = 0;
@@ -467,7 +466,7 @@ magic(FILE *f, char *fs)
 	char twobytes[2];
 
 	/* don't try to look ahead if the input is unseekable */
-	if (fseek(f, 0L, SEEK_SET))
+	if (fseeko(f, (off_t)0, SEEK_SET))
 		return (0);
 
 	if (fread(twobytes, 2, 1, f) == 1) {
@@ -485,7 +484,7 @@ magic(FILE *f, char *fs)
 			return (1);
 		}
 	}
-	(void)fseek(f, 0L, L_SET);		/* rewind() not necessary */
+	(void)fseeko(f, (off_t)0, SEEK_SET);	/* rewind() not necessary */
 	return (0);
 }
 
@@ -579,7 +578,9 @@ screen(FILE *f, int num_lines)
 		}
 		/*
 		 * XXX - should store the *first* line on the screen,
-		 * not the last (but we don't know the file position)
+		 * not the last (but we don't know the file position).
+		 * Fixing this requires keeping an arry of dline off_ts
+		 * and updating each one when a new line is started.
 		 */
 		screen_start.line = Currline;
 		screen_start.chrctr = Ftell(f);
@@ -922,12 +923,12 @@ command(char *filename, FILE *f)
 				cleareol();
 			putchar('\n');
 
-			initline = Currline - dlines * (nlines + 1);
+			initline = Currline - (off_t)dlines * (nlines + 1);
 			if (!noscroll)
 				--initline;
 			if (initline < 0)
 				initline = 0;
-			Fseek(f, 0L);
+			Fseek(f, (off_t)0);
 			Currline = 0; /* skiplns() will make Currline correct */
 			skiplns(initline, f);
 			ret(dlines);
@@ -1009,7 +1010,7 @@ command(char *filename, FILE *f)
 			}
 		case '=':
 			kill_line();
-			promptlen = printf("%d", Currline);
+			promptlen = printf("%lld", (long long)Currline);
 			fflush(stdout);
 			break;
 		case 'n':
@@ -1065,8 +1066,8 @@ command(char *filename, FILE *f)
 				else
 					p = editor;
 				kill_line();
-				snprintf(cmdbuf, sizeof(cmdbuf), "+%d",
-				    Currline);
+				snprintf(cmdbuf, sizeof(cmdbuf), "+%lld",
+				    (long long)Currline);
 				if (!altscr)
 					printf("%s %s %s", p, cmdbuf,
 					    fnames[fnum]);
@@ -1122,9 +1123,11 @@ colon(char *filename, int cmd, int nlines)
 		kill_line();
 		if (!no_intty)
 			promptlen =
-			    printf("\"%s\" line %d", fnames[fnum], Currline);
+			    printf("\"%s\" line %lld", fnames[fnum],
+				(long long)Currline);
 		else
-			promptlen = printf("[Not a file] line %d", Currline);
+			promptlen = printf("[Not a file] line %lld",
+			    (long long)Currline);
 		fflush(stdout);
 		return (-1);
 	case 'n':
@@ -1220,12 +1223,12 @@ do_shell(char *filename)
 int
 search(char *buf, FILE *file, int n)
 {
-	long startline = Ftell(file);
-	long line1 = startline;
-	long line2 = startline;
-	long line3 = startline;
-	int lncount;
-	int saveln, rv;
+	off_t startline = Ftell(file);
+	off_t line1 = startline;
+	off_t line2 = startline;
+	off_t line3 = startline;
+	off_t saveln;
+	int lncount, rv;
 	char ebuf[BUFSIZ];
 	static regex_t reg;
 	static int initialized;
@@ -1293,7 +1296,7 @@ search(char *buf, FILE *file, int n)
 	if (feof(file)) {
 		if (!no_intty) {
 			Currline = saveln;
-			Fseek (file, startline);
+			Fseek(file, startline);
 		} else {
 			fputs("\nPattern not found\n", stdout);
 			end_it();
