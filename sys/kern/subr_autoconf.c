@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_autoconf.c,v 1.6 1996/05/07 15:23:36 niklas Exp $	*/
+/*	$OpenBSD: subr_autoconf.c,v 1.7 1996/06/18 09:43:44 deraadt Exp $	*/
 /*	$NetBSD: subr_autoconf.c,v 1.21 1996/04/04 06:06:18 cgd Exp $	*/
 
 /*
@@ -375,6 +375,9 @@ config_attach(parent, match, aux, print)
 				cf->cf_unit++;
 	    }
 	}
+#ifdef __alpha__
+	device_register(dev, aux);
+#endif
 	(*ca->ca_attach)(parent, dev, aux);
 	return (dev);
 }
