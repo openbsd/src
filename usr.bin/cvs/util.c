@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.11 2004/11/09 21:08:05 krapht Exp $	*/
+/*	$OpenBSD: util.c,v 1.12 2004/11/10 22:27:31 krapht Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -26,8 +26,10 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 
 #include <md5.h>
+#include <err.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
