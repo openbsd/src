@@ -15,13 +15,18 @@ test "$usemymalloc" || usemymalloc='n'
 # change starting with OpenBSD 2.7.
 usevfork='true'
 
-# setre?[ug]id() have been replaced by the _POSIX_SAVED_IDS versions
-# in 4.4BSD.  Configure will find these but they are just emulated
-# and do not have the same semantics as in 4.3BSD.
-d_setregid=$undef
-d_setreuid=$undef
-d_setrgid=$undef
-d_setruid=$undef
+# In OpenBSD < 3.3, the setre?[ug]id() are emulated using the
+# _POSIX_SAVED_IDS functionality which does not have the same
+# semantics as 4.3BSD.  Starting with OpenBSD 3.3, these functions
+# are emulated via setres[ug]id().
+#case "$osvers" in
+#[0-2].*|3.[0-2])
+#	d_setregid=$undef
+#	d_setreuid=$undef
+#	d_setrgid=$undef
+#	d_setruid=$undef
+#	;;
+#esac
 
 #
 # Not all platforms support dynamic loading...
