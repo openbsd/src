@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.189 2003/09/26 21:44:09 cedric Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.190 2003/10/02 17:01:16 mcbride Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -706,7 +706,7 @@ pfctl_show_states(int dev, u_int8_t proto, int opts)
 {
 	struct pfioc_states ps;
 	struct pf_state *p;
-	char *inbuf = NULL;
+	char *inbuf = NULL, *newinbuf = NULL;
 	unsigned len = 0;
 	int i;
 
@@ -714,9 +714,10 @@ pfctl_show_states(int dev, u_int8_t proto, int opts)
 	for (;;) {
 		ps.ps_len = len;
 		if (len) {
-			ps.ps_buf = inbuf = realloc(inbuf, len);
-			if (inbuf == NULL)
+			newinbuf = realloc(inbuf, len);
+			if (newinbuf == NULL)
 				err(1, "realloc");
+			ps.ps_buf = inbuf = newinbuf;
 		}
 		if (ioctl(dev, DIOCGETSTATES, &ps) < 0) {
 			warn("DIOCGETSTATES");
