@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_machdep.c,v 1.21 2002/03/14 01:26:32 millert Exp $	*/
+/*	$OpenBSD: linux_machdep.c,v 1.22 2002/04/19 21:28:58 jasoni Exp $	*/
 /*	$NetBSD: linux_machdep.c,v 1.29 1996/05/03 19:42:11 christos Exp $	*/
 
 /*
@@ -72,8 +72,8 @@
  * To see whether wsdisplay is configured (for virtual console ioctl calls).
  */
 #include "wsdisplay.h"
-#if NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL)
 #include <sys/ioctl.h>
+#if NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL)
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplay_usl_io.h>
 #endif
@@ -446,8 +446,8 @@ linux_machdepioctl(p, v, retval)
 	} */ *uap = v;
 	struct sys_ioctl_args bia;
 	u_long com;
-#if (NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL))
 	int error;
+#if (NWSDISPLAY > 0 && defined(WSDISPLAY_COMPAT_USL))
 	struct vt_mode lvt;
 	caddr_t bvtp, sg;
 #endif
