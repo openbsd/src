@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.14 2003/12/20 21:49:06 miod Exp $	*/
+/*	$OpenBSD: intr.c,v 1.15 2003/12/30 21:21:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff
@@ -60,7 +60,7 @@ struct hppa_iv {
 } __packed;
 
 register_t kpsw = PSL_Q | PSL_P | PSL_C | PSL_D;
-volatile int cpl = IPL_NESTED;
+volatile int cpu_inintr, cpl = IPL_NESTED;
 u_long cpu_mask;
 struct hppa_iv *intr_list, intr_store[8*2*CPU_NINTS], *intr_more = intr_store;
 struct hppa_iv intr_table[CPU_NINTS] = {
@@ -223,7 +223,10 @@ cpu_intr(void *v)
 {
 	struct trapframe *frame = v;
 	u_long mask;
-	int s = cpl;
+	int oldintr, s = cpl;
+
+	if ((oldintr = cpu_inintr++))
+		frame->tf_flags |= TFF_INTR;
 
 	while ((mask = ipending & ~imask[s])) {
 		int r, bit = ffs(mask) - 1;
@@ -247,5 +250,6 @@ cpu_intr(void *v)
 #endif
 		mtctl(0, CR_EIEM);
 	}
+	cpu_inintr--;
 	cpl = s;
 }
