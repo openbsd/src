@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.10 2004/04/07 18:24:20 mickey Exp $	*/
+/*	$OpenBSD: trap.h,v 1.11 2005/01/17 20:47:40 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 Michael Shalayeff
@@ -61,6 +61,9 @@
 #define	T_DATACC	26	/* data access rights >=7100 */
 #define	T_DATAPID	27	/* data protection ID >=7100 */
 #define	T_DATALIGN	28	/* unaligned data ref */
+#define	T_PERFMON	29	/* performance monitor interrupt */
+#define	T_IDEBUG	30	/* debug SFU interrupt */
+#define	T_DDEBUG	31	/* debug SFU interrupt */
 
 /*
  * Reserved range for traps is 0-63, place user flag at 6th bit
