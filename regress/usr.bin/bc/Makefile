@@ -1,8 +1,8 @@
-# $OpenBSD: Makefile,v 1.7 2003/11/17 11:23:02 otto Exp $
+# $OpenBSD: Makefile,v 1.8 2003/12/02 09:02:02 otto Exp $
 
 BC=bc
 
-REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16
+REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16 t17
 
 # .in: input file
 # .out: desired result
@@ -10,7 +10,7 @@ REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16
 # t1: bc.library
 # t2: while loop
 # t3: for loop
-# t4: deep nested while loop
+# t4: deeply nested while loop
 # t5: function definition and call
 # t6: empty if statement
 # t7: assignment ops
@@ -23,6 +23,7 @@ REGRESS_TARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 t16
 # t14: compare
 # t15: boolean and
 # t16: boolean or
+# t17: long var names
 
 all: clean ${REGRESS_TARGET}
 
