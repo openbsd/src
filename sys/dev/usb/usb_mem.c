@@ -1,4 +1,4 @@
-/*	$OpenBSD: usb_mem.c,v 1.14 2003/07/08 13:19:09 nate Exp $ */
+/*	$OpenBSD: usb_mem.c,v 1.15 2003/08/06 20:43:12 millert Exp $ */
 /*	$NetBSD: usb_mem.c,v 1.26 2003/02/01 06:23:40 thorpej Exp $	*/
 
 /*
@@ -143,7 +143,6 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 	p = malloc(sizeof *p, M_USB, M_NOWAIT);
 	if (p == NULL)
 		return (USBD_NOMEM);
-	*dmap = p;
 
 	p->tag = tag;
 	p->size = size;
@@ -152,12 +151,12 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 				 p->segs, sizeof(p->segs)/sizeof(p->segs[0]),
 				 &p->nsegs, BUS_DMA_NOWAIT);
 	if (error)
-		return (USBD_NOMEM);
+		goto free0;
 
 	error = bus_dmamem_map(tag, p->segs, p->nsegs, p->size,
 			       &p->kaddr, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
 	if (error)
-		goto free;
+		goto free1;
 
 	error = bus_dmamap_create(tag, p->size, 1, p->size,
 				  0, BUS_DMA_NOWAIT, &p->map);
@@ -168,14 +167,18 @@ usb_block_allocmem(bus_dma_tag_t tag, size_t size, size_t align,
 				BUS_DMA_NOWAIT);
 	if (error)
 		goto destroy;
+
+	*dmap = p;
 	return (USBD_NORMAL_COMPLETION);
 
 destroy:
 	bus_dmamap_destroy(tag, p->map);
 unmap:
 	bus_dmamem_unmap(tag, p->kaddr, p->size);
-free:
+free1:
 	bus_dmamem_free(tag, p->segs, p->nsegs);
+free0:
+	free(p, M_USB);
 	return (USBD_NOMEM);
 }
 
