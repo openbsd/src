@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.71 2003/10/31 09:00:32 mcbride Exp $	*/
+/*	$OpenBSD: inet.c,v 1.72 2003/11/02 10:23:58 markus Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.71 2003/10/31 09:00:32 mcbride Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.72 2003/11/02 10:23:58 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -124,7 +124,7 @@ protopr0(u_long off, char *name, int af)
 	struct inpcbtable table;
 	struct inpcb *head, *next, *prev;
 	struct inpcb inpcb;
-	int istcp;
+	int istcp, israw;
 	int first = 1;
 	char *name0;
 	char namebuf[20];
@@ -133,6 +133,7 @@ protopr0(u_long off, char *name, int af)
 	if (off == 0)
 		return;
 	istcp = strcmp(name, "tcp") == 0;
+	israw = strncmp(name, "ip", 2) == 0;
 	kread(off, (char *)&table, sizeof table);
 	prev = head =
 	    (struct inpcb *)&((struct inpcbtable *)off)->inpt_queue.cqh_first;
@@ -192,7 +193,7 @@ protopr0(u_long off, char *name, int af)
 				printf("%*p ", PLEN, prev);
 		}
 #ifdef INET6
-		if (inpcb.inp_flags & INP_IPV6) {
+		if (inpcb.inp_flags & INP_IPV6 && !israw) {
 			strlcpy(namebuf, name0, sizeof namebuf);
 			strlcat(namebuf, "6", sizeof namebuf);
 			name = namebuf;
@@ -220,6 +221,21 @@ protopr0(u_long off, char *name, int af)
 				printf(" %d", tcpcb.t_state);
 			else
 				printf(" %s", tcpstates[tcpcb.t_state]);
+		} else if (israw) {
+			struct protoent *pe = NULL;
+			u_int8_t proto;
+#ifdef INET6
+			if (inpcb.inp_flags & INP_IPV6)
+				proto = inpcb.inp_ipv6.ip6_nxt;
+			else
+#endif
+				proto = inpcb.inp_ip.ip_p;
+			if (!nflag)
+				pe = getprotobynumber(proto);
+			if (pe)
+				printf(" %s", pe->p_name);
+			else
+				printf(" %u", proto);
 		}
 		putchar('\n');
 	}

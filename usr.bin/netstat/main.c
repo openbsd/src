@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.39 2003/10/17 21:04:59 mcbride Exp $	*/
+/*	$OpenBSD: main.c,v 1.40 2003/11/02 10:23:58 markus Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.39 2003/10/17 21:04:59 mcbride Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.40 2003/11/02 10:23:58 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -177,6 +177,10 @@ struct nlist nl[] = {
 	{ "_rip6stat" },
 #define N_CARPSTAT	55
 	{ "_carpstats" },
+#define	N_RAWIPTABLE	56
+	{ "_rawcbtable" },
+#define	N_RAWIP6TABLE	57
+	{ "_rawin6pcbtable" },
 	{ ""},
 };
 
@@ -192,7 +196,7 @@ struct protox {
 	  tcp_stats,	"tcp" },
 	{ N_UDBTABLE,	N_UDPSTAT,	1,	protopr,
 	  udp_stats,	"udp" },
-	{ -1,		N_IPSTAT,	1,	0,
+	{ N_RAWIPTABLE,	N_IPSTAT,	1,	protopr,
 	  ip_stats,	"ip" },
 	{ -1,		N_ICMPSTAT,	1,	0,
 	  icmp_stats,	"icmp" },
@@ -220,7 +224,7 @@ struct protox ip6protox[] = {
 	  0,		"tcp" },
 	{ N_UDBTABLE,	N_UDPSTAT,	1,	ip6protopr,
 	  0,		"udp" },
-	{ -1,		N_IP6STAT,	1,	0,
+	{ N_RAWIP6TABLE,N_IP6STAT,	1,	ip6protopr,
 	  ip6_stats,	"ip6" },
 	{ -1,		N_ICMP6STAT,	1,	0,
 	  icmp6_stats,	"icmp6" },
