@@ -18,7 +18,7 @@
    to the Free Software Foundation, 675 Mass Ave, Cambridge, MA 02139, USA. */
 
 /*
- * $Id: tc-sparc.h,v 1.1.1.1 1995/10/18 08:39:06 deraadt Exp $
+ * $Id: tc-sparc.h,v 1.2 1997/02/17 09:03:32 niklas Exp $
  */
 
 #define TC_SPARC 1
@@ -26,7 +26,7 @@
 #define LOCAL_LABELS_FB
 #define WORKING_DOT_WORD
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__OpenBSD__)
 #define AOUT_MACHTYPE	138
 #endif
 

@@ -17,7 +17,7 @@ You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
 Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
-	$Id: ch-exp.y,v 1.1.1.1 1995/10/18 08:39:57 deraadt Exp $
+	$Id: ch-exp.y,v 1.2 1997/02/17 09:11:26 niklas Exp $
 */
 
 /* Parse a Chill expression from text in a string,
@@ -64,7 +64,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #include "parser-defs.h"
 #include "ch-lang.h"
 
-#ifndef __NetBSD__
+#if !defined (__NetBSD__) && !defined (__OpenBSD__)
 /* Remap normal yacc parser interface names (yyparse, yylex, yyerror, etc),
    as well as gratuitiously global symbol names, so we can have multiple
    yacc generated parsers in gdb.  Note that these are only the variables
@@ -101,7 +101,7 @@ Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #define	yylloc	chill_lloc
 #define	yyreds	chill_reds		/* With YYDEBUG defined */
 #define	yytoks	chill_toks		/* With YYDEBUG defined */
-#endif /* __NetBSD__ */
+#endif /* __NetBSD__ || __OpenBSD__ */
 
 #ifndef YYDEBUG
 #define	YYDEBUG	0		/* Default to no yydebug support */

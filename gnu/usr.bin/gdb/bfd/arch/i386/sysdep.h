@@ -1,4 +1,4 @@
-/*	$Id: sysdep.h,v 1.1.1.1 1995/10/18 08:39:54 deraadt Exp $ */
+/*	$Id: sysdep.h,v 1.2 1997/02/17 09:08:33 niklas Exp $ */
 #ifndef	hosts_i386bsd_H
 /* Intel 386 running any BSD Unix */
 #include <fcntl.h>
@@ -28,7 +28,7 @@
    (u.u_kproc.kp_eproc.e_vm.vm_maxsaddr + MAXSSIZ), which should work on
    both BSDI and 386BSD, but that is believed not to work for BSD 4.4.  */
 
-#if defined(__bsdi__) || defined(__NetBSD__)
+#if defined (__bsdi__) || defined (__NetBSD__) || defined (__OpenBSD__)
 /* This seems to be the right thing. */
 #define	HOST_STACK_END_ADDR		USRSTACK
 #else
