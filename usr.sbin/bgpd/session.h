@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.h,v 1.47 2004/04/27 22:42:13 henning Exp $ */
+/*	$OpenBSD: session.h,v 1.48 2004/04/28 02:57:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -170,6 +170,7 @@ struct peer {
 	struct sockaddr_storage	 sa_remote;
 	struct msgbuf		 wbuf;
 	struct buf_read		*rbuf;
+	u_int8_t		 auth_established;
 	struct peer		*next;
 };
 
