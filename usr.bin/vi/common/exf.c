@@ -10,7 +10,7 @@
 #include "config.h"
 
 #ifndef lint
-static const char sccsid[] = "@(#)exf.c		10.49 (Berkeley) 10/10/96";
+static const char sccsid[] = "@(#)exf.c	10.49 (Berkeley) 10/10/96";
 #endif /* not lint */
 
 #include <sys/param.h>

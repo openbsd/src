@@ -13,7 +13,7 @@
 static const char sccsid[] = "@(#)v_scroll.c	10.9 (Berkeley) 4/27/96";
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 

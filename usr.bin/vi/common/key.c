@@ -13,7 +13,7 @@
 static const char sccsid[] = "@(#)key.c	10.33 (Berkeley) 9/24/96";
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 

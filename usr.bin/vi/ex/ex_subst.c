@@ -13,7 +13,7 @@
 static const char sccsid[] = "@(#)ex_subst.c	10.37 (Berkeley) 9/15/96";
 #endif /* not lint */
 
-#include <sys/types.h>
+#include <sys/param.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 
