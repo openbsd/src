@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.2 2004/08/09 14:57:26 pefo Exp $	*/
+/*	$OpenBSD: mem.c,v 1.3 2004/08/10 17:06:06 pefo Exp $	*/
 /*	$NetBSD: mem.c,v 1.6 1995/04/10 11:55:03 mycroft Exp $	*/
 
 /*
@@ -152,14 +152,15 @@ mmrw(dev, uio, flags)
 		case 1:
 			v = uio->uio_offset;
 			c = min(iov->iov_len, MAXPHYS);
-			if (v < KSEG0_BASE)
-				return (EFAULT);
-			if (!uvm_kernacc((caddr_t)v, c,
-			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE))
-				return (EFAULT);
+			if ((v > KSEG0_BASE && v + c <= KSEG0_BASE + ctob(physmem)) ||
+			    uvm_kernacc((caddr_t)v, c,
+			    uio->uio_rw == UIO_READ ? B_READ : B_WRITE)) {
 
-			error = uiomove((caddr_t)v, c, uio);
-			continue;
+				error = uiomove((caddr_t)v, c, uio);
+				continue;
+			} else {
+				return (EFAULT);
+			}
 
 /* minor device 2 is EOF/RATHOLE */
 		case 2:
