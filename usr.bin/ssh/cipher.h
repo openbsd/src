@@ -32,7 +32,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* RCSID("$OpenBSD: cipher.h,v 1.20 2000/10/11 20:27:23 markus Exp $"); */
+/* RCSID("$OpenBSD: cipher.h,v 1.21 2000/10/12 09:59:18 markus Exp $"); */
 
 #ifndef CIPHER_H
 #define CIPHER_H
@@ -97,7 +97,7 @@ struct Cipher {
 	void	(*decrypt)(CipherContext *, u_char *, const u_char *, u_int);
 };
 
-unsigned int cipher_mask1();
+unsigned int cipher_mask_ssh1(int client);
 Cipher *cipher_by_name(const char *name);
 Cipher *cipher_by_number(int id);
 int cipher_number(const char *name);

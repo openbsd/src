@@ -40,7 +40,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshd.c,v 1.130 2000/10/11 20:27:24 markus Exp $");
+RCSID("$OpenBSD: sshd.c,v 1.131 2000/10/12 09:59:20 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1135,7 +1135,7 @@ do_ssh1_kex()
 	packet_put_int(SSH_PROTOFLAG_HOST_IN_FWD_OPEN);
 
 	/* Declare which ciphers we support. */
-	packet_put_int(cipher_mask1());
+	packet_put_int(cipher_mask_ssh1(0));
 
 	/* Declare supported authentication types. */
 	auth_mask = 0;
@@ -1176,7 +1176,7 @@ do_ssh1_kex()
 	/* Get cipher type and check whether we accept this. */
 	cipher_type = packet_get_char();
 
-	if (!(cipher_mask1() & (1 << cipher_type)))
+	if (!(cipher_mask_ssh1(0) & (1 << cipher_type)))
 		packet_disconnect("Warning: client selects unsupported cipher.");
 
 	/* Get check bytes from the packet.  These must match those we

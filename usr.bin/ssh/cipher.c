@@ -35,7 +35,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: cipher.c,v 1.33 2000/10/11 20:45:21 markus Exp $");
+RCSID("$OpenBSD: cipher.c,v 1.34 2000/10/12 09:59:18 markus Exp $");
 
 #include "ssh.h"
 #include "xmalloc.h"
@@ -62,6 +62,12 @@ none_crypt(CipherContext *cc, u_char *dest, const u_char *src, u_int len)
 void
 des_ssh1_setkey(CipherContext *cc, const u_char *key, u_int keylen)
 {
+	static int dowarn = 1;
+	if (dowarn) {
+		error("Warning: use of DES is strongly discouraged "
+		    "due to cryptographic weaknesses");
+		dowarn = 0;
+	}
 	des_set_key((void *)key, cc->u.des.key);
 }
 void
@@ -301,6 +307,10 @@ Cipher ciphers[] = {
 		SSH_CIPHER_NONE, 8, 0,
 		none_setkey, none_setiv,
 		none_crypt, none_crypt },
+	{ "des",
+		SSH_CIPHER_DES, 8, 8,
+		des_ssh1_setkey, des_ssh1_setiv,
+		des_ssh1_encrypt, des_ssh1_decrypt },
 	{ "3des",
 		SSH_CIPHER_3DES, 8, 16,
 		des3_ssh1_setkey, des3_setiv,
@@ -332,13 +342,13 @@ Cipher ciphers[] = {
 /*--*/
 
 unsigned int
-cipher_mask1()
+cipher_mask_ssh1(int client)
 {
 	unsigned int mask = 0;
-	Cipher *c;
-	for (c = ciphers; c->name != NULL; c++) {
-		if (c->number > SSH_CIPHER_NONE)
-			mask |= 1 << c->number;
+	mask |= 1 << SSH_CIPHER_3DES;           /* Mandatory */
+	mask |= 1 << SSH_CIPHER_BLOWFISH;
+	if (client) {
+		mask |= 1 << SSH_CIPHER_DES;
 	}
 	return mask;
 }
@@ -347,9 +357,6 @@ Cipher *
 cipher_by_name(const char *name)
 {
 	Cipher *c;
-	if (strcmp(name, "des") == 0)
-		error("Warning: use of DES is strongly discouraged "
-		    "due to cryptographic weaknesses");
 	for (c = ciphers; c->name != NULL; c++)
 		if (strcasecmp(c->name, name) == 0)
 			return c;
