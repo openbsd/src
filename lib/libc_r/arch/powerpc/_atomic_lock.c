@@ -1,4 +1,4 @@
-/*	$OpenBSD: _atomic_lock.c,v 1.1 1998/12/21 07:22:26 d Exp $	*/
+/*	$OpenBSD: _atomic_lock.c,v 1.2 1998/12/22 05:47:17 rahnds Exp $	*/
 /*
  * Atomic lock for powerpc
  */
@@ -24,9 +24,9 @@ _atomic_lock(volatile _spinlock_lock_t *lock)
 	 *   Side note. to prevent two processes from accessing
 	 *   the same address with the lwarx in one instrution
 	 *   and the stwcx in another process, the current powerpc
-	 *   kernel uses a lwarx instruction without the corresponding
-	 *   stwcx which effectively causes any reservation of a
-	 *   process to be removed.  if a context switch occurs
+	 *   kernel uses a stwcx instruction without the corresponding
+	 *   lwarx which causes any reservation of a process
+	 *   to be removed.  if a context switch occurs
 	 *   between the two accesses the store will not occur
 	 *   and the condition code will cause it to loop. If on
 	 *   a dual processor machine, the reserve will cause
