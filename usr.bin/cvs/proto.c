@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.14 2004/07/30 17:37:58 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.15 2004/07/30 23:10:21 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -176,8 +176,8 @@ struct cvs_resp {
 	{ CVS_RESP_CREATED,    "Created",                cvs_resp_updated  },
 	{ CVS_RESP_UPDATED,    "Updated",                cvs_resp_updated  },
 	{ CVS_RESP_UPDEXIST,   "Update-existing",        cvs_resp_updated  },
+	{ CVS_RESP_MERGED,     "Merged",                 cvs_resp_updated  },
 	{ CVS_RESP_REMOVED,    "Removed",                cvs_resp_removed  },
-	{ CVS_RESP_MERGED,     "Merged",                 NULL              },
 	{ CVS_RESP_CKSUM,      "Checksum",               cvs_resp_cksum    },
 	{ CVS_RESP_CLRSTATDIR, "Clear-static-directory", cvs_resp_statdir  },
 	{ CVS_RESP_SETSTATDIR, "Set-static-directory",   cvs_resp_statdir  },
@@ -819,10 +819,8 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 {
-	char entbuf[128], path[MAXPATHLEN];
+	char entbuf[128];
 	CVSENTRIES *entfile;
-
-	snprintf(path, sizeof(path), "%s/" CVS_PATH_ENTRIES, line);
 
 	/* get the remote path */
 	cvs_getln(root, entbuf, sizeof(entbuf));
@@ -831,7 +829,7 @@ cvs_resp_newentry(struct cvsroot *root, int type, char *line)
 	if (cvs_getln(root, entbuf, sizeof(entbuf)) < 0)
 		return (-1);
 
-	entfile = cvs_ent_open(path, O_WRONLY);
+	entfile = cvs_ent_open(line, O_WRONLY);
 	if (entfile == NULL)
 		return (-1);
 	cvs_ent_addln(entfile, entbuf);
@@ -953,23 +951,24 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 
 	ep = NULL;
 
+	len = strlen(tbuf);
+	if ((len > 0) && (tbuf[len - 1] == '\n'))
+		tbuf[--len] = '\0';
+
+	/* read the remote path of the file */
+	cvs_getln(root, path, sizeof(path));
+
+	/* read the new entry */
+	cvs_getln(root, path, sizeof(path));
+	ep = cvs_ent_parse(path);
+	if (ep == NULL)
+		return (-1);
+	snprintf(path, sizeof(path), "%s/%s", line, ep->ce_name);
+
+
 	if (type == CVS_RESP_CREATED) {
-		/* read the remote path of the file */
-		cvs_getln(root, path, sizeof(path));
-
-		/* read the new entry */
-		cvs_getln(root, path, sizeof(path));
-		ep = cvs_ent_parse(path);
-		if (ep == NULL)
-			return (-1);
-
-		snprintf(path, sizeof(path), "%s%s", line, ep->ce_name);
-
 		/* set the timestamp as the last one received from Mod-time */
 		ep->ce_timestamp = ctime_r(&cvs_modtime, tbuf);
-		len = strlen(tbuf);
-		if ((len > 0) && (tbuf[len - 1] == '\n'))
-			tbuf[--len] = '\0';
 
 		ef = cvs_ent_open(line, O_WRONLY);
 		if (ef == NULL)
@@ -1070,7 +1069,6 @@ cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
 	if (fname == NULL)
 		fname = buf;
 	snprintf(file, sizeof(file), "%s%s", line, fname);
-	printf("FILE TO PATCH: %s\n", file);
 
 	/* get updated entry fields */
 	cvs_getln(root, buf, sizeof(buf));
