@@ -1,4 +1,4 @@
-$OpenBSD: Options,v 1.6 1997/11/06 19:42:26 millert Exp $
+$OpenBSD: Options,v 1.7 2001/08/12 23:01:39 miod Exp $
 $NetBSD: Options,v 1.7 1997/09/12 08:04:12 mycroft Exp $
 
 Here is a list of hp300 specific kernel compilation options and what they
@@ -113,13 +113,3 @@ MAPPEDCOPY
 	the default is to use mapped copy for operations on one page
 	or more except on machines with virtually-indexed caches.
 	See initcpu() in machdep.c
-
-BUFFERS_UNMANAGED
-	Set up the buffer cache "below" the machine independent VM.
-	Normally, in startup() we use vm_map operations to initially
-	assign physical memory to the buffers.  This creates a map with
-	a huge number of map entries (twice the number of buffers)
-	which serve no purpose since remaining buffer operations
-	(i.e. pagemove) work below the MI layer anyway.  Defining this
-	symbol will cause startup() to use pmap operations to map the
-	initial pages leaving the buffer_map one big entry.
