@@ -23,14 +23,16 @@ question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
-	At this time the system can primarily only be installed
-	by network loading the bootloader. Once the bootloader
-	is installed on the local harddrive the system can boot
-	from local disk, but currently the bootloader cannot be
-	loaded from CD.
+	At this time the system can be installed from the supplied
+	CD boot image or by network loading the bootloader.  Once
+	the bootloader is installed on the local hard drive, the
+	system can boot from it.  Although currently OpenBSD
+	cannot share the same drive as Mac OS due to partitioning
+	issues, systems that support more than one physical drive
+	can dual boot using Open Firmware commands.
 
-	[include directions on where to look up network booting
-	instructions]
+	(Refer to "OpenBSD OSREV Release Contents" above for information
+	on how to access and boot from Open Firmware)
 
 	You will then be presented with the OpenBSD kernel boot
 	messages.  You will want to read them, to determine your

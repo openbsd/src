@@ -1,70 +1,104 @@
 TopPart
 
-OpenBSDfloppy
+		cd{:--:}OSrev.fs The standard MACHINE boot and installation
+				CD image; see below.
 
 OpenBSDdistsets
 
 OpenBSDbsd
 
-As well you may be interested in
-
-.../OSREV/tools/
-		miscellaneous i386 installation utilities like
-		rawrite.exe, ntrw.exe, gzip.exe, and pfdisk.exe; 
-		see installation section, below.
-
 There are several ways to boot a supported PowerPC Macintosh system into
 the OpenBSD installer.  Unfortunately they all currently require some
-limited knowledge of Open Firmware commands.  Examples are provided below
-for common configurations.
+limited knowledge of Open Firmware, the low-level process that controls
+the microprocessor after hardware initialization and diagnostics are
+performed but before control is handed to the operating system.
 
-To access Open Firmware:
-Upon booting, simultaneously hold down the Command, Option, O and F
-keys until you are presented with a > prompt at which you can enter
-commands, such as the "boot" command or others that allow you to view the
-structure of the device tree. (cd /devalias, .properties)
+To access Open Firmware you should simultaneously hold down the
+Command, Option, O and F keys immediately upon booting.  You will
+be presented with information and a ">" prompt that will look something
+like this (example taken from a Power Macintosh G4):
 
-Typical boot commands can be used by entering them at the Open Firmware
-prompt and pressing enter/return.
+Apple PowerMac3,1 2.4f1 BootROM built on 02/18/00 at 09:44:35
+Copyright 1994-2000 Apple Computer, Inc.
+All Rights Reserved
 
-To netboot from a pre-configured bootp/tftp/nfs server containing the
-"ofwboot" and "bsd.rd" files at the root directory of the tftp server:
+Welcome to Open Firmware
+To continue booting, type "mac-boot" and press return
+To shut down, type "shut-down" and press return
 
-	boot enet:,ofwboot /bsd.rd
+ ok
+0 >
 
-To boot from a HFS formatted CD containing the "ofwboot", "bsd.rd" and all
-other installation files at the root directory of the CD:
+Important Open Firmware command examples:
+-----------------------------------------
 
-	boot cd:,ofwboot /OSREV/MACHINE/bsd.rd
+boot cd:,ofwboot /OSREV/MACHINE/bsd.rd
 
-Post-install, you will need to boot into OpenBSD from a hard drive, and
-may need to reboot to Mac OS if you have it installed on another drive
-connected to the system.  Typical commands for this are as follows:
+		(boot from an appropriately prepared
+		OpenBSD CD in the CD/DVD drive)
 
-To boot to an OpenBSD system installed on an ATA drive configured 
-as a slave and connected to the same bus as the CD/DVD drive on a Power
-Macintosh G4 (Tower):
-	
-	boot ide1:,ofwboot /bsd
+boot enet:,ofwboot /bsd.rd
 
-To reboot to Mac OS:
+		(netboot from a pre-configured bootp/tftp/nfs
+		server containing the "ofwboot" and "bsd.rd"
+		files at the root directory of the tftp server)
 
-	mac-boot
+boot ide1:,ofwboot /bsd
 
-Typically, substituting the device alias (devalias) will allow for easy to
-understand device selection.  Typical examples from a Power Macintosh G4
-(Tower):
+		(After installation, boot /bsd from the slave
+		 device on the second ATA bus)
+
+mac-boot	(boot into MacOS)
+reset-all	(reboot the machine)
+shut-down	(halt the machine; shutdown)
+printenv	(print current machine variables)
+setenv		(set a machine variable)
+devalias	(list device aliases; useful for locating other
+		devices in the machine such as hard drives etc)
+
+As seen above, device aliases typically take the form of "ide", "cd"
+etc.  To boot to an alternative device you may substitute them
+with entries from this list (example devices taken from a Power
+Macintosh G4):
 
 ultra0 = hd = master device, primary ATA bus (factory-installed drive)
-ultra1 = slave device, primary ATA bus
-ide0 = cd = master device, secondary ATA bus (CD/DVD drive)
-ide1 = slave device, secondary ATA bus (Zip drive, if installed)
-enet = motherboard ethernet device
+ultra1 =      slave device, primary ATA bus
+ide0   = cd = master device, secondary ATA bus (CD/DVD drive)
+ide1   =      slave device, secondary ATA bus (Zip drive, if installed)
+enet   =      motherboard ethernet device
 
-NOTE:
-The powerpc port does not currently support sharing the disk with MacOS
-This is an important fact on the iMac which does not support more than
-one disk.
+Other Open Firmware command examples:
+-------------------------------------
+
+setenv auto-boot false
+
+		(force the machine to wait at Open Firmware
+		for user input at next reboot; options are true/false)
+
+setenv boot-device ide:,ofwboot /bsd
+
+		(force the machine to boot into OpenBSD
+		automatically at next reboot)
+
+dev /		(change to root level of the device tree)
+pwd		(show current location in the device tree)
+ls		(show items at current location in the device tree)
+words		(show methods of items at current location in the device tree)
+.properties	(show properties of items at current location in the device tree)
+
+
+NOTES:
+	The powerpc port does not currently support sharing the disk with MacOS
+	This is an important fact on the iMac which does not support more than
+	one disk.
+
+	The powerpc port does not currently support booting from the Zip drive,
+	if installed.
+
+	To reset a Power Macintosh to the factory-configure Open Firmware
+	settings, simultaneously hold down the Command, Option, P, R keys
+	immediately upon booting.  Typically the machine will then attempt to
+	load Mac OS, if available.
 
 DistributionDescription
 
