@@ -1,4 +1,4 @@
-/*	$OpenBSD: bsd_openprom.h,v 1.10 2003/06/02 23:27:54 millert Exp $	*/
+/*	$OpenBSD: bsd_openprom.h,v 1.11 2003/11/14 19:05:36 miod Exp $	*/
 /*	$NetBSD: bsd_openprom.h,v 1.11 1996/05/18 12:27:43 mrg Exp $ */
 
 /*
@@ -279,7 +279,7 @@ struct promvec {
  * A node property is simply a name/value pair.  The names are C strings
  * (NUL-terminated); the values are arbitrary byte strings (counted strings).
  * Many values are really just C strings.  Sometimes these are NUL-terminated,
- * sometimes not, depending on the the interface version; v0 seems to
+ * sometimes not, depending on the interface version; v0 seems to
  * terminate and v2 not.  Many others are simply integers stored as four
  * bytes in machine order: you just get them and go.  The third popular
  * format is an `address', which is made up of one or more sets of three

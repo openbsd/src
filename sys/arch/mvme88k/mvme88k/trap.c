@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.57 2003/10/27 10:46:44 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.58 2003/11/14 19:05:34 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -464,7 +464,7 @@ user_fault:
 			} else {
 				/*
 				 * back up SXIP, SNIP,
-				 * clearing the the Error bit
+				 * clearing the Error bit
 				 */
 				frame->sfip = frame->snip & ~FIP_E;
 				frame->snip = frame->sxip & ~NIP_E;

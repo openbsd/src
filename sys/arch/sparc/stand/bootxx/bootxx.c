@@ -1,4 +1,4 @@
-/*	$OpenBSD: bootxx.c,v 1.4 2003/08/14 17:13:57 deraadt Exp $	*/
+/*	$OpenBSD: bootxx.c,v 1.5 2003/11/14 19:05:36 miod Exp $	*/
 /*	$NetBSD: bootxx.c,v 1.2 1997/09/14 19:28:17 pk Exp $	*/
 
 /*
@@ -50,7 +50,7 @@ struct open_file	io;
 
 /*
  * The contents of the block_* variables below is set by installboot(8)
- * to hold the the filesystem data of the second-stage boot program
+ * to hold the filesystem data of the second-stage boot program
  * (typically `/boot'): filesystem block size, # of filesystem blocks and
  * the block numbers themselves.
  */
