@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2003/10/31 03:59:05 drahn Exp $
+#	$OpenBSD: Makefile,v 1.2 2004/03/11 22:16:50 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -48,7 +48,11 @@ cd: ${BSD_RD}
 	gzip -9 ${.OBJDIR}/cd-dir/${OSREV}/pegasos/bsd.rd
 	mv ${.OBJDIR}/cd-dir/${OSREV}/pegasos/bsd.rd.gz ${.OBJDIR}/cd-dir/${OSREV}/pegasos/bsd.rd
 	cp ${DESTDIR}/usr/mdec/ofwboot ${.OBJDIR}/cd-dir/
-	mkhybrid -R -r -T -N -d -L -o ${.OBJDIR}/cd${OSrev}.iso ${.OBJDIR}/cd-dir
+	mkhybrid -R -r -T -N -d -L \
+	    -P "Copyright (c) 2004 Theo de Raadt, The OpenBSD project" \
+	    -p "Theo de Raadt <deraadt@openbsd.org>" \
+	    -V "OpenBSD/pegasos ${OSREV} boot-only CD" \
+	    -o ${.OBJDIR}/cd${OSrev}.iso ${.OBJDIR}/cd-dir
 
 
 ${IMAGE}: rd_setup do_files rd_teardown

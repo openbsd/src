@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.14 2003/03/24 18:56:18 drahn Exp $
+#	$OpenBSD: Makefile,v 1.15 2004/03/11 22:16:50 deraadt Exp $
 
 REV=	${OSrev}
 
@@ -58,7 +58,7 @@ cd: ${BSD_RD}
 	    -hfs-bless ${.OBJDIR}/cd-dir/${OSREV}/macppc \
 	    -map ${.CURDIR}/../../../gnu/usr.sbin/mkhybrid/src/more.mapping \
 	    -A "OpenBSD ${OSREV} macppc bootonly CD" \
-	    -P "Copyright (c) 2003 Theo de Raadt, The OpenBSD project" \
+	    -P "Copyright (c) 2004 Theo de Raadt, The OpenBSD project" \
 	    -p "Theo de Raadt <deraadt@openbsd.org>" \
 	    -V "OpenBSD/macppc  ${OSREV} boot-only CD" \
 	    -o ${.OBJDIR}/cd${OSrev}.iso ${.OBJDIR}/cd-dir
