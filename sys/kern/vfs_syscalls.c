@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.33 1997/11/24 22:42:38 niklas Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.34 1997/12/09 09:34:36 deraadt Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -902,11 +902,20 @@ sys_open(p, v, retval)
 		fp->f_flag |= FHASLOCK;
 	}
 	if (localtrunc) {
-		VATTR_NULL(&vattr);
-		vattr.va_size = 0;
 		VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
-		error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
+		if ((fp->f_flag & FWRITE) == 0)
+			error = EACCES;
+		else if (vp->v_mount->mnt_flag & MNT_RDONLY)
+			error = EROFS;
+		else if (vp->v_type == VDIR)
+			error = EISDIR;
+		else if ((error = vn_writechk(vp)) == 0) {
+			VATTR_NULL(&vattr);
+			vattr.va_size = 0;
+			error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
+		}
 		if (error) {
+			VOP_UNLOCK(vp, 0, p);
 			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
 			ffree(fp);
 			fdp->fd_ofiles[indx] = NULL;
