@@ -1,4 +1,4 @@
-/*	$OpenBSD: mount.h,v 1.56 2003/08/05 20:47:36 tedu Exp $	*/
+/*	$OpenBSD: mount.h,v 1.57 2003/08/05 21:27:15 tedu Exp $	*/
 /*	$NetBSD: mount.h,v 1.48 1996/02/18 11:55:47 fvdl Exp $	*/
 
 /*
@@ -52,7 +52,7 @@ typedef struct { int32_t val[2]; } fsid_t;	/* file system id type */
 struct fid {
 	u_short		fid_len;		/* length of data in bytes */
 	u_short		fid_reserved;		/* force longword alignment */
- 	char		fid_data[MAXFIDSZ];	/* data (variable length) */
+	char		fid_data[MAXFIDSZ];	/* data (variable length) */
 };
 
 /*
@@ -178,7 +178,7 @@ struct nfs_args3 {
 
 /* Flags valid only in mount syscall arguments */
 #define NFSMNT_ACREGMIN		0x00040000  /* acregmin field valid */
-#define NFSMNT_ACREGMAX 	0x00080000  /* acregmax field valid */
+#define NFSMNT_ACREGMAX		0x00080000  /* acregmax field valid */
 #define NFSMNT_ACDIRMIN		0x00100000  /* acdirmin field valid */
 #define NFSMNT_ACDIRMAX		0x00200000  /* acdirmax field valid */
 
@@ -236,29 +236,33 @@ struct adosfs_args {
 /*
  * Arguments to mount ntfs filesystems
  */
-
 struct ntfs_args {
-        char    *fspec;                 /* block special device to mount */
-        struct  export_args export_info;/* network export information */
-        uid_t   uid;                    /* uid that owns ntfs files */
-        gid_t   gid;                    /* gid that owns ntfs files */
-        mode_t  mode;                   /* mask to be applied for ntfs perms */
-        u_long  flag;                   /* additional flags */
+	char	*fspec;			/* block special device to mount */
+	struct	export_args export_info;/* network export information */
+	uid_t	uid;			/* uid that owns ntfs files */
+	gid_t	gid;			/* gid that owns ntfs files */
+	mode_t	mode;			/* mask to be applied for ntfs perms */
+	u_long	flag;			/* additional flags */
 };
 
 /*
  * ntfs mount options:
  */
-#define     NTFS_MFLAG_CASEINS      0x00000001
-#define     NTFS_MFLAG_ALLNAMES     0x00000002
+#define	NTFS_MFLAG_CASEINS      0x00000001
+#define	NTFS_MFLAG_ALLNAMES     0x00000002
 
+/*
+ * Arguments to mount procfs filesystems
+ */
 struct procfs_args {
 	int version;
 	int flags;
 };
 
+/*
+ * procfs mount options:
+ */
 #define PROCFS_ARGSVERSION      1
-
 #define PROCFSMNT_LINUXCOMPAT   0x01
 
 
@@ -517,11 +521,11 @@ struct vfsops {
 #define VFS_EXTATTRCTL(MP, C, FN, NS, N, P) \
 	(*(MP)->mnt_op->vfs_extattrctl)(MP, C, FN, NS, N, P)
 
-/* 
- * Declarations for these vfs default operations are located in 
- * kern/vfs_default.c, they should be used instead of making "dummy" 
+/*
+ * Declarations for these vfs default operations are located in
+ * kern/vfs_default.c, they should be used instead of making "dummy"
  * functions or casting entries in the VFS op table to "enopnotsupp()".
- */ 
+ */
 int	vfs_stdextattrctl(struct mount *mp, int cmd,
 	    struct vnode *filename_vp, int attrnamespace, const char *attrname,
 	    struct proc *p);
