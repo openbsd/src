@@ -1,4 +1,4 @@
-/*      $OpenBSD: elf2olf.c,v 1.2 1996/11/06 21:34:00 etheisen Exp $	*/
+/*      $OpenBSD: elf2olf.c,v 1.3 1996/12/09 07:10:14 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen.  All rights reserved.
  *
@@ -30,7 +30,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.2 1996/11/06 21:34:00 etheisen Exp $";
+static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.3 1996/12/09 07:10:14 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -234,14 +234,22 @@ warn(name, fname, errval)
 usage()
 {
     register int i;
+    int col = 8;
 
     if (olf2elf) {
 	fprintf(stderr,	"usage: %s [-v] file ...\n", progname);
     } else {
 	fprintf(stderr,	"usage: %s [-v] [-o opsys] elffile ...\n", progname);
-	fprintf(stderr, "where opsys is:\n");
-	for (i = 1; os_namev[i] != NULL; i++)
-	    fprintf(stderr, "\t%s\n", os_namev[i]);
+	fprintf(stderr, "where opsys is:\n\t");
+	for (i = 1; os_namev[i] != NULL; i++) {
+	    col = col + strlen(os_namev[i]) + 2;
+	    if (col > 78) {
+		fprintf(stderr, "\n\t");
+		col = 8;
+	    }
+	    fprintf(stderr, "%s%s", os_namev[i],
+		os_namev[i+1] ? ", " : "\n");
+	}
     }
     exit(1);
 }
