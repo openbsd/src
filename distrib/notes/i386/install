@@ -184,16 +184,7 @@ should make a new inst floppy or fsck your existing one (if you can).
 	program will now prompt you asking how you wish to install
 	the remaining required system files.
 
-XXX
 	To install from floppy:
-		If you only have only one floppy drive, the order of
-		installation is different.  Follow the directions in
-		the "Kernel installation" section which will help you
-		install a kernel on the hard drive and then boot off
-		the hard drive, then continue with the rest of the
-		process described here to install the distribution
-		sets from floppy:
-
 		The first thing you should do is pick a temporary
 		directory where the distribution files can be stored.
 		To do this, enter the command "Set_tmp_dir", and enter
@@ -208,9 +199,10 @@ XXX
 		You will be asked which floppy drive to use.  Enter
 		"0" (zero) if you're using the first floppy drive
 		(i.e. what DOS would call "A:"), or enter "1" if
-		you're using the second.  (Remember that you CANNOT
-		use the floppy drive that you booted from.  If you
-		booted from "A:", you must load from "B:".)
+		you're using the second.  (Unlike previous installers,
+		you may use the floppy drive that you booted from.
+		Simply eject the install floppy -- the installation
+		process does not need it like it used to).
 
 		You will be prompted to insert a floppy into the drive,
 		to have its contents copied to your hard disk.  Do so,
@@ -411,7 +403,11 @@ XXX
 	information.  It will set up your configuration files and make
 	the device nodes for the newly-installed system.
 
-Congratulations, you have successfully installed OpenBSD 2.1.  When you
+XXX
+At this point, you should ensure that you have installed a kernel on
+the new filesystem!
+
+Congratulations, you have successfully installed OpenBSD 2.1. When you
 reboot into OpenBSD, you should log in as "root" at the login prompt.
 There is no initial password, but if you're using the machine in a
 networked environment, you should create yourself an account and
