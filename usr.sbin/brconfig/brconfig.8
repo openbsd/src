@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.13 1999/07/02 20:11:48 aaron Exp $
+.\"	$OpenBSD: brconfig.8,v 1.14 1999/07/24 22:46:10 deraadt Exp $
 .\"
 .\" Copyright (c) 1999 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -205,7 +205,11 @@ kernel interface were written by Jason L. Wright <jason@thought.net> as
 part of an undergraduate independent study
 at the University of North Carolina at Greensboro.
 .Sh BUGS
-There are some network interface chipsets which will not work in a bridge
-configuration.  Some, like the Lite-On PNIC, have serious flaws when
-running in promiscuous mode, and others, like the TI ThunderLAN, receive
-their own transmissions, which makes the address learning code ineffective.
+There are some rather special network interface chipsets which will
+not work in a bridge configuration.  Some, like the Lite-On PNIC (see
+.Xr pn 4 ),
+have serious flaws when running in promiscuous mode, and others, like the
+TI ThunderLAN (see
+.Xr tl 4 ),
+receive their own transmissions, which makes the address learning code
+ineffective.  Most other chipsets work fine though.
