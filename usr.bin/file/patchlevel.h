@@ -1,23 +1,33 @@
-/* * $OpenBSD: patchlevel.h,v 1.3 1996/06/26 05:33:00 deraadt Exp $*/
+/*	$OpenBSD: patchlevel.h,v 1.4 1997/02/09 23:58:31 millert Exp $	*/
+
 #define	FILE_VERSION_MAJOR	3
-#define	patchlevel		19
+#define	patchlevel		22
 
 /*
  * Patchlevel file for Ian Darwin's MAGIC command.
  *
- * $Log: patchlevel.h,v $
- * Revision 1.3  1996/06/26 05:33:00  deraadt
- * rcsid
+ * Log: patchlevel.h,v
+ * Revision 1.22  1997/01/15 17:23:24  christos
+ * - add support for elf core files: find the program name under SVR4 [Ken Pizzini]
+ * - print strings only up to the first carriage return [various]
+ * - freebsd international ascii support [J Wunsch]
+ * - magic fixes and additions [Guy Harris]
+ * - 64 bit fixes [Larry Schwimmer]
+ * - support for both utime and utimes, but don't restore file access times
+ *   by default [various]
+ * - \xXX only takes 2 hex digits, not 3.
+ * - re-implement support for core files [Guy Harris]
  *
- * Revision 1.2  1995/12/14 03:30:04  deraadt
- * update from netbsd
+ * Revision 1.21  1996/10/05 18:15:29  christos
+ * Segregate elf stuff and conditionally enable it with -DBUILTIN_ELF
+ * More magic fixes
  *
- * Revision 1.5  1995/10/27 23:33:21  christos
- * Update to file-3.19.
- * - Magic fixes
- * - MAGIC environment variable processing
- * - Better LEGAL.NOTICE
- * - -m magic : separated list of magic files processing
+ * Revision 1.20  1996/06/22  22:15:52  christos
+ * - support relative offsets of the form >&
+ * - fix bug with truncating magic strings that contain \n
+ * - file -f - did not read from stdin as documented
+ * - support elf file parsing using our own elf support.
+ * - as always magdir fixes and additions.
  *
  * Revision 1.19  1995/10/27  23:14:46  christos
  * Ability to parse colon separated list of magic files

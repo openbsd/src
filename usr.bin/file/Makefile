@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.5 1996/12/08 14:32:25 downsj Exp $
+#	$OpenBSD: Makefile,v 1.6 1997/02/09 23:58:15 millert Exp $
 
 MAGIC=		/etc/magic
 MAGICOWN=	root
@@ -7,8 +7,8 @@ MAGICMODE=	444
 
 PROG=		file
 SRCS=		file.c apprentice.c fsmagic.c softmagic.c ascmagic.c is_tar.c \
-		print.c compress.c
-CFLAGS+=	-DMAGIC='"$(MAGIC)"'
+		print.c compress.c readelf.c internat.c
+CFLAGS+=	-DMAGIC='"$(MAGIC)"' -DUSE_UTIMES
 MAN=		file.1 magic.5
 
 CLEANFILES+=	magic

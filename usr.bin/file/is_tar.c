@@ -1,4 +1,5 @@
-/*	$OpenBSD: is_tar.c,v 1.2 1996/06/26 05:32:58 deraadt Exp $	*/
+/*	$OpenBSD: is_tar.c,v 1.3 1997/02/09 23:58:27 millert Exp $	*/
+
 /*
  * is_tar() -- figure out whether file is a tar archive.
  *
@@ -19,9 +20,9 @@
 #define	isodigit(c)	( ((c) >= '0') && ((c) <= '7') )
 
 #if	defined(__STDC__) || defined(__cplusplus)
-static long from_oct(int, char*);	/* Decode octal number */
+static int from_oct(int, char*);	/* Decode octal number */
 #else
-static long from_oct();
+static int from_oct();
 #endif
 
 /*
@@ -37,7 +38,7 @@ int nbytes;
 {
 	register union record *header = (union record *)buf;
 	register int	i;
-	register long	sum, recsum;
+	register int	sum, recsum;
 	register char	*p;
 
 	if (nbytes < sizeof(union record))
@@ -75,12 +76,12 @@ int nbytes;
  *
  * Result is -1 if the field is invalid (all blank, or nonoctal).
  */
-static long
+static int
 from_oct(digs, where)
 	register int	digs;
 	register char	*where;
 {
-	register long	value;
+	register int	value;
 
 	while (isspace(*where)) {		/* Skip spaces */
 		where++;

@@ -1,4 +1,5 @@
-/*	$OpenBSD: print.c,v 1.2 1996/06/26 05:33:00 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.3 1997/02/09 23:58:32 millert Exp $	*/
+
 /*
  * print.c - debugging printout routines
  *
@@ -40,7 +41,7 @@
 #include "file.h"
 
 #ifndef lint
-static char *moduleid = "$OpenBSD: print.c,v 1.2 1996/06/26 05:33:00 deraadt Exp $";
+static char *moduleid = "$OpenBSD: print.c,v 1.3 1997/02/09 23:58:32 millert Exp $";
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
@@ -58,7 +59,7 @@ struct magic *m;
 		       m->offset);
 
 	if (m->flag & INDIR)
-		(void) fprintf(stderr, "(%s,%ld),",
+		(void) fprintf(stderr, "(%s,%d),",
 			       (m->in.type >= 0 && m->in.type < SZOF(typ)) ? 
 					typ[(unsigned char) m->in.type] :
 					"*bad*",
@@ -69,7 +70,7 @@ struct magic *m;
 				typ[(unsigned char) m->type] : 
 				"*bad*");
 	if (m->mask != ~0L)
-		(void) fprintf(stderr, " & %.8lx", m->mask);
+		(void) fprintf(stderr, " & %.8x", m->mask);
 
 	(void) fprintf(stderr, ",%c", m->reln);
 
@@ -82,7 +83,7 @@ struct magic *m;
 	    case LELONG:
 	    case BESHORT:
 	    case BELONG:
-		    (void) fprintf(stderr, "%ld", m->value.l);
+		    (void) fprintf(stderr, "%d", m->value.l);
 		    break;
 	    case STRING:
 		    showstr(stderr, m->value.s, -1);

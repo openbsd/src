@@ -1,4 +1,5 @@
-/*	$OpenBSD: compress.c,v 1.2 1996/06/26 05:32:55 deraadt Exp $	*/
+/*	$OpenBSD: compress.c,v 1.3 1997/02/09 23:58:19 millert Exp $	*/
+
 /*
  * compress routines:
  *	zmagic() - returns 0 if not recognized, uncompresses and prints
