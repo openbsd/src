@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.11 2003/01/08 19:53:59 millert Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.12 2003/07/21 20:37:08 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -15,7 +15,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: sha1.c,v 1.11 2003/01/08 19:53:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: sha1.c,v 1.12 2003/07/21 20:37:08 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #define SHA1HANDSOFF		/* Copies data before messing with it. */
@@ -116,7 +116,7 @@ SHA1Transform(u_int32_t state[5], const u_char buffer[64])
     CHAR64LONG16 *block;
 
 #ifdef SHA1HANDSOFF
-    static CHAR64LONG16 workspace;
+    CHAR64LONG16 workspace;
     block = &workspace;
     (void)memcpy(block, buffer, 64);
 #else
