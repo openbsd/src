@@ -1,4 +1,4 @@
-/*	$OpenBSD: ukc.c,v 1.12 2004/01/04 00:47:01 deraadt Exp $ */
+/*	$OpenBSD: ukc.c,v 1.13 2004/06/08 20:59:29 mcbride Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ukc.c,v 1.12 2004/01/04 00:47:01 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ukc.c,v 1.13 2004/06/08 20:59:29 mcbride Exp $";
 #endif
 
 #include <sys/types.h>
@@ -139,7 +139,6 @@ WARNING this kernel doesn't support pseudo devices.\n");
 		nopdev = 1;
 	}
 
-	check_int(I_NMBCLUSTERS, "NMCLUSTERS");
 	check_int(I_BUFCACHEPCT, "BUFCACHEPERCENT");
 	check_int(I_NKMEMPG, "NKMEMPAGES");
 	check_int(I_SHMSEG, "SHMSEG");

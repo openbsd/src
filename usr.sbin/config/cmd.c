@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmd.c,v 1.12 2004/01/04 18:30:05 deraadt Exp $ */
+/*	$OpenBSD: cmd.c,v 1.13 2004/06/08 20:59:28 mcbride Exp $ */
 
 /*
  * Copyright (c) 1999-2001 Mats O Jansson.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: cmd.c,v 1.12 2004/01/04 18:30:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmd.c,v 1.13 2004/06/08 20:59:28 mcbride Exp $";
 #endif
 
 #include <sys/types.h>
@@ -60,7 +60,6 @@ cmd_table_t cmd_table[] = {
 	{"exit",   Xexit,	"",		"Exit, without saving changes"},
 	{"quit",   Xquit,	"",		"Quit, saving current changes"},
 	{"timezone", Xtimezone,	"[mins [dst]]",	"Show/change timezone"},
-	{"nmbclust", Xnmbclusters, "[number]",	"Show/change NMBCLUSTERS"},
 	{"cachepct", Xbufcachepct, "[number]",	"Show/change BUFCACHEPERCENT"},
 	{"nkmempg", Xnkmempg,	"[number]",	"Show/change NKMEMPAGES"},
 	{"shmseg", Xshmseg,	"[number]",	"Show/change SHMSEG"},
@@ -304,13 +303,6 @@ int_variable_adjust(const cmd_t *cmd, int idx, const char *name)
 	} else
 		printf("This kernel does not support modification of %s.\n",
 		    name);
-}
-
-int
-Xnmbclusters(cmd_t *cmd)
-{
-	int_variable_adjust(cmd, I_NMBCLUSTERS, "nmbclusters");
-	return (CMD_CONT);
 }
 
 int
