@@ -1,4 +1,4 @@
-/*	$OpenBSD: ss.c,v 1.29 1997/03/13 12:19:59 kstailey Exp $	*/
+/*	$OpenBSD: ss.c,v 1.30 1997/03/13 12:22:37 kstailey Exp $	*/
 /*	$NetBSD: ss.c,v 1.10 1996/05/05 19:52:55 christos Exp $	*/
 
 /*
@@ -345,6 +345,7 @@ ss_identify_scanner(ss, inqbuf)
 		if (ss->quirkdata->special_minphys != NULL) {
 			ss->special.minphys = ss->quirkdata->special_minphys;
 		}
+		ss->sio.scan_scanner_type = ss->quirkdata->scanner_type;
 		printf("\n%s: %s\n", ss->sc_dev.dv_xname, ss->quirkdata->name);
 	} else {
 		printf("\n%s: generic scanner\n", ss->sc_dev.dv_xname);
