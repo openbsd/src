@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.195 2005/03/19 18:54:01 miod Exp $
+dnl	$OpenBSD: hardware,v 1.196 2005/03/20 00:15:46 joris Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PCs and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -333,7 +333,7 @@ Supported hardware {:-include-:}:
 		    SMC EZ Connect USB
 		    SOHOware NUB100
 		ASIX Electronics AX88172 USB Ethernet adapters,
-		  including: [A] [B] [C]
+		  including: [A] [B]
 		    ATEN UC210T
 		    Billionton Systems USB2AR
 		    Buffalo(MELCO) LUA-U2-KTX
@@ -360,7 +360,7 @@ Supported hardware {:-include-:}:
 		ASIX 88140A/88141 PCI Ethernet adapters, including:
 		    CNet Pro110B
 		    Alfa Inc. GFC2204
-		Broadcom BCM4401 [A] [B] [C]
+		Broadcom BCM4401 [A] [B]
 		CATC USB-EL1210A-based USB adapters, including: [A] [B] [C]
 		    CATC Netmate and Netmate II
 		    Belkin F5U011/F5U111
@@ -781,7 +781,7 @@ Supported hardware {:-include-:}:
 		    Zinwell ZWX-G360 mini-PCI
 		    Zinwell ZWX-G361
 		    Zonet ZEW1600
-		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters [A] [B] [C]
+		Ralink RT2500 based USB 2.0 IEEE 802.11b/g adapters [A] [B]
 		    AMIT WL532U
 		    ASUS WL-167g
 		    Buffalo WLI-U2-KG54-AI
