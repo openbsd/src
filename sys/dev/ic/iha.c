@@ -1,4 +1,4 @@
-/*	$OpenBSD: iha.c,v 1.2 2001/02/08 17:35:05 krw Exp $ */
+/*	$OpenBSD: iha.c,v 1.3 2001/02/20 00:47:33 krw Exp $ */
 /*
  * Initio INI-9xxxU/UW SCSI Device Driver
  *
@@ -367,7 +367,6 @@ iha_scsi_cmd(xs)
 				printf("%s: error %d loading dma map\n",
 				    sc->sc_dev.dv_xname, error);
 
-			/* XXX - need to scsi_done() xs? i.e. put in doneq? */
 			tul_append_free_scb(sc, pScb); 
 
 			xs->error = XS_DRIVER_STUFFUP;
@@ -1069,15 +1068,30 @@ tul_scsi(sc, iot, ioh)
 		pScb->SCB_NxtStat = 8;
 	}
 
-	if (pScb->SCB_Flags & SCSI_POLL) {
+	if ((pScb->SCB_Flags & SCSI_POLL) != 0) {
 		for (; pScb->SCB_Timeout > 0; pScb->SCB_Timeout--) {
 			if (tul_wait(sc, iot, ioh, NO_OP) == -1)
-				return;
+				break;
 			if (tul_next_state(sc, iot, ioh) == -1)
-				return;
+				break;
 			delay(1000); /* Only happens in boot, so it's ok */
 		}
-		tul_timeout(pScb);
+
+		/*
+		 * Since done queue processing not done until AFTER this
+		 * function returns, pScb is on the done queue, not
+		 * the free queue at this point and still has valid data
+		 *
+		 * Conversely, xs->error has not been set yet
+		 */
+		if (pScb->SCB_Timeout == 0)
+			tul_timeout(pScb);
+
+		else if ((pScb->SCB_CDB[0] == INQUIRY)
+		    && (pScb->SCB_Lun == 0)
+		    && (pScb->SCB_HaStat == HOST_OK)
+		    && (pScb->SCB_TaStat == SCSI_OK))
+			tul_print_info(sc, pScb->SCB_Target);
 	}
 }
 
@@ -2503,11 +2517,6 @@ tul_done_scb(sc, pScb)
 			case SCSI_CONDITION_MET:
 			case SCSI_INTERM:
 			case SCSI_INTERM_COND_MET:
-				if (((pScb->SCB_Flags & SCSI_POLL) != 0)
-				    && (pScb->SCB_CDB[0] == INQUIRY)
-				    && (pScb->SCB_Lun == 0))
-					tul_print_info(sc, pScb->SCB_Target);
-
 				xs->resid = pScb->SCB_BufLen;
 				xs->error = XS_NOERROR;
 				break;
@@ -2570,9 +2579,6 @@ tul_done_scb(sc, pScb)
 		xs->flags |= ITSDONE;
 		scsi_done(xs);
 	}
-
-	if (xs->flags & SCSI_RESET)
-		printf("[debug] tul_done_scb - finished a reset request\n");
 
 	tul_append_free_scb(sc, pScb);
 }
@@ -2658,34 +2664,27 @@ tul_print_info(sc, target)
 	struct iha_softc *sc;
 	int target;
 {
-	struct tcs *pTcs = &sc->HCS_Tcs[target];
+	u_int8_t period = sc->HCS_Tcs[target].TCS_JS_Period;
+	u_int8_t config = sc->HCS_Tcs[target].TCS_SConfig0;
 	int rate;
 
-	printf("%s: target %d ", sc->sc_dev.dv_xname, target);
+	printf("%s: target %d using %d bit ", sc->sc_dev.dv_xname, target,
+	    (period & PERIOD_WIDE_SCSI) ? 16 : 8);
 
-	if ((pTcs->TCS_JS_Period & PERIOD_WIDE_SCSI) != 0)
-		printf("using 16 bit ");
-	else
-		printf("using 8 bit ");
-
-	if ((pTcs->TCS_JS_Period & PERIOD_SYOFS) != 0) {
-		printf("synchronous transfers at ");
-		rate = (pTcs->TCS_JS_Period & PERIOD_SYXPD) >> 4;
-		if ((pTcs->TCS_SConfig0 & ALTPD) == 0)
+	if ((period & PERIOD_SYOFS) == 0)
+		printf("async ");
+	else {
+		rate = (period & PERIOD_SYXPD) >> 4;
+		if ((config & ALTPD) == 0)
 			rate = 100 + rate * 50;
 		else
 			rate =	50 + rate * 25;
 		rate = 1000000000 / rate;
-		printf("%d.%d MHz ",  rate / 1000000
-		    ,(rate % 1000000 + 99999) / 100000);
+		printf("%d.%d MHz %d REQ/ACK offset ", rate / 1000000,
+		    (rate % 1000000 + 99999) / 100000, period & PERIOD_SYOFS);
 	}
-	else
-		printf("asynchronous transfers ");
-
-	printf("with ");
-	if ((pTcs->TCS_SConfig0 & SPCHK) == 0)
-		printf("no ");
-	printf("parity\n");
+	
+	printf("xfers\n");
 }
 
 
