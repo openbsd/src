@@ -159,7 +159,7 @@ add_file(void *db, FILE *file)
 	    break;
 	}
 	lineno++;
-	ret = sscanf(line, "%s %s %d %d %d %hd %lx %lx %s %s %s %s",
+	ret = sscanf(line, "%s %s %d %d %d %hd %lx %lx %63s %63s %s %s",
 		     pr.name, pr.instance,
 		     &life, &kkvno, &kvno,
 		     &pr.attributes,

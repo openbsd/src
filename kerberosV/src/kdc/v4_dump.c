@@ -103,7 +103,7 @@ v4_prop_dump(void *arg, const char *file)
 	memset(&pr, 0, sizeof(pr));
 	errno = 0;
 	lineno++;
-	ret = sscanf(buf, "%s %s %d %d %d %d %lx %lx %s %s %s %s",
+	ret = sscanf(buf, "%s %s %d %d %d %d %lx %lx %63s %63s %s %s",
 		     pr.name, pr.instance,
 		     &pr.max_life, &pr.mkvno, &pr.kvno,
 		     &attributes,
