@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.12 1999/07/18 18:53:40 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.13 1999/12/03 17:55:07 mickey Exp 
  */
 
 static const struct hppa_mod_info hppa_knownmods[] = {
@@ -142,8 +142,8 @@ static const struct hppa_mod_info hppa_knownmods[] = {
 	{HPPA_TYPE_BUS,	HPPA_BUS_ROPES,	"Ropes" },
 	{HPPA_TYPE_BUS,	HPPA_BUS_MERCED,	"Merced" },
 	{HPPA_TYPE_CPU,	HPPA_CPU_SOFTEMU,	"Software Emulation" },
-	{HPPA_TYPE_CPU,	HPPA_CPU_TORNADO,	"Tornado" },
-	{HPPA_TYPE_CPU,	HPPA_CPU_PCXT1,	"PA7100LC" },
+	{HPPA_TYPE_CPU,	HPPA_CPU_PCXT,	"Tornado" },
+	{HPPA_TYPE_CPU,	HPPA_CPU_PCXL,	"PA7100LC" },
 	{HPPA_TYPE_CPU,	HPPA_CPU_PCXUP,	"PA8000" },
 	{HPPA_TYPE_CPU,	HPPA_CPU_PCXL2,	"PA7300LC" },
 	{HPPA_TYPE_CPU,	HPPA_CPU_PCXUP1,	"PA8200" },
@@ -212,6 +212,8 @@ static const struct hppa_mod_info hppa_knownmods[] = {
 	{HPPA_TYPE_OTHER,	HPPA_OTHER_MIDBEDU,	"MID_BUS Verification EDU" },
 	{HPPA_TYPE_OTHER,	HPPA_OTHER_SPECFB,	"Spectograph frame buffer" },
 	{HPPA_TYPE_OTHER,	HPPA_OTHER_SPECCTL,	"Spectograph control" },
+	{HPPA_TYPE_BCPORT,	HPPA_BCPORT_PHANTOM,	"Phantom Port" },
+	{HPPA_TYPE_BCPORT,	HPPA_BCPORT_PORT,	"Bus Converter Port" },
 	{HPPA_TYPE_CIO,	HPPA_CIO_CIO,	"CIO" },
 	{HPPA_TYPE_CONSOLE,	HPPA_CONSOLE_CHEETAH,	"Cheetah Console" },
 	{HPPA_TYPE_CONSOLE,	HPPA_CONSOLE_NULL,	"Jason/Anole Null Console" },
@@ -260,6 +262,12 @@ static const struct hppa_mod_info hppa_knownmods[] = {
 	{HPPA_TYPE_BHA,	HPPA_BHA_WAX,	"WAX Bus Adapter" },
 	{HPPA_TYPE_BHA,	HPPA_BHA_WEISA,	"WAX EISA Bus Adapter" },
 	{HPPA_TYPE_BHA,	HPPA_BHA_TIMI,	"TIMI Bus Adapter" },
-	{HPPA_TYPE_BHA,	HPPA_BHA_EPICPCI,	"Epic PCI Bridge" },
+	{HPPA_TYPE_BHA,	HPPA_BHA_EPICPCI,	"Epic PCI Bus Adapter" },
+	{HPPA_TYPE_IOA,	HPPA_IOA_RUNWAY,	"BC Runway Port" },
+	{HPPA_TYPE_BRIDGE,	HPPA_BRIDGE_SAGA,	"Saga PCI Bridge" },
+	{HPPA_TYPE_BRIDGE,	HPPA_BRIDGE_DINO,	"PCI Bridge" },
+	{HPPA_TYPE_FABRIC,	HPPA_FABRIC_DNACA,	"Halfdome DNA Central Agent" },
+	{HPPA_TYPE_FABRIC,	HPPA_FABRIC_TOGO,	"Halfdome TOGO Fabric Crossbar" },
+	{HPPA_TYPE_FABRIC,	HPPA_FABRIC_SAKURA,	"Halfdome Sakura Fabric Router" },
 	{ -1 }
 };

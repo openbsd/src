@@ -1,7 +1,7 @@
 /*
  * THIS FILE AUTOMATICALLY GENERATED. DO NOT EDIT.
  * generated from:
- *	OpenBSD: cpudevs,v 1.12 1999/07/18 18:53:40 mickey Exp 
+ *	OpenBSD: cpudevs,v 1.13 1999/12/03 17:55:07 mickey Exp 
  */
 
 #define	HPPA_TYPE_NPROC	0x00
@@ -161,8 +161,8 @@
 #define	HPPA_BUS_ROPES	15
 #define	HPPA_BUS_MERCED	16
 #define	HPPA_CPU_SOFTEMU	0x01
-#define	HPPA_CPU_TORNADO	0x0b
-#define	HPPA_CPU_PCXT1	0x0d
+#define	HPPA_CPU_PCXT	0x0b
+#define	HPPA_CPU_PCXL	0x0d
 #define	HPPA_CPU_PCXUP	0x0e
 #define	HPPA_CPU_PCXL2	0x0f
 #define	HPPA_CPU_PCXUP1	0x10
@@ -231,6 +231,8 @@
 #define	HPPA_OTHER_MIDBEDU	0x038
 #define	HPPA_OTHER_SPECFB	0x048
 #define	HPPA_OTHER_SPECCTL	0x049
+#define	HPPA_BCPORT_PHANTOM	0x000
+#define	HPPA_BCPORT_PORT	0x00c
 #define	HPPA_CIO_CIO	0x010
 #define	HPPA_CONSOLE_CHEETAH	0x01c
 #define	HPPA_CONSOLE_NULL	0x01f
@@ -280,3 +282,9 @@
 #define	HPPA_BHA_WEISA	0x090
 #define	HPPA_BHA_TIMI	0x093
 #define	HPPA_BHA_EPICPCI	0x0a5
+#define	HPPA_IOA_RUNWAY	0x00b
+#define	HPPA_BRIDGE_SAGA	0x0a5
+#define	HPPA_BRIDGE_DINO	0x00a
+#define	HPPA_FABRIC_DNACA	0x0aa
+#define	HPPA_FABRIC_TOGO	0x0ab
+#define	HPPA_FABRIC_SAKURA	0x0ac
