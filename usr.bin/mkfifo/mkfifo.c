@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfifo.c,v 1.2 1996/06/26 05:37:11 deraadt Exp $	*/
+/*	$OpenBSD: mkfifo.c,v 1.3 1996/08/28 07:31:51 etheisen Exp $	*/
 /*	$NetBSD: mkfifo.c,v 1.7 1994/12/23 07:16:56 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mkfifo.c	8.2 (Berkeley) 1/5/94";
 #endif
-static char rcsid[] = "$OpenBSD: mkfifo.c,v 1.2 1996/06/26 05:37:11 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: mkfifo.c,v 1.3 1996/08/28 07:31:51 etheisen Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -53,11 +53,15 @@ static char rcsid[] = "$OpenBSD: mkfifo.c,v 1.2 1996/06/26 05:37:11 deraadt Exp 
 #include <locale.h>
 #include <errno.h>
 #include <sys/types.h>
+#include <sys/socket.h>
+#include <sys/un.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include <err.h>
 
 static void usage();
+
+int mksocket;
 
 int
 main(argc, argv)
@@ -67,6 +71,8 @@ main(argc, argv)
 	int ch, exitval;
 	void * set;
 	mode_t mode;
+	int sock;
+	struct sockaddr_un name;
 
 	setlocale (LC_ALL, "");
 
@@ -75,7 +81,7 @@ main(argc, argv)
 	   modified by the file creation mask */
 	mode = 0666 & ~umask(0);
 
-	while ((ch = getopt(argc, argv, "m:")) != -1)
+	while ((ch = getopt(argc, argv, "m:s")) != -1)
 		switch(ch) {
 		case 'm':
 			if (!(set = setmode(optarg))) {
@@ -87,6 +93,9 @@ main(argc, argv)
 			   a=rw. */
 			mode = getmode (set, 0666);
 			break;
+		case 's':
+			mksocket = 1;
+			break;
 		case '?':
 		default:
 			usage();
@@ -96,10 +105,35 @@ main(argc, argv)
 	if (argv[0] == NULL)
 		usage();
 
-	for (exitval = 0; *argv; ++argv) {
-		if (mkfifo(*argv, mode) < 0) {
+	if (mksocket) {
+		for (exitval = 0; *argv; ++argv) {
+			if ((sock = socket(AF_UNIX, SOCK_DGRAM, 0)) < 0)
+				goto error;
+
+			name.sun_family = AF_UNIX;
+			strncpy(name.sun_path, *argv, sizeof(name.sun_path)-1);
+			name.sun_path[sizeof(name.sun_path) - 1];
+			if (bind(sock, (struct sockaddr *)&name,
+			      SUN_LEN(&name)) < 0)
+				goto error;
+
+			if (chmod(*argv, mode) < 0) {
+				unlink(*argv);
+				goto error;
+			}
+
+			continue;
+error:
 			warn("%s", *argv);
 			exitval = 1;
+		}
+	}
+	else {
+		for (exitval = 0; *argv; ++argv) {
+			if (mkfifo(*argv, mode) < 0) {
+				warn("%s", *argv);
+				exitval = 1;
+			}
 		}
 	}
 	exit(exitval);
@@ -108,6 +142,6 @@ main(argc, argv)
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: mkfifo [-m mode] fifoname ...\n");
+	(void)fprintf(stderr, "usage: mkfifo [-m mode] [-s] filename ...\n");
 	exit(1);
 }
