@@ -1,4 +1,4 @@
-/* $OpenBSD: locore_c_routines.c,v 1.31 2003/09/01 19:14:04 miod Exp $	*/
+/* $OpenBSD: locore_c_routines.c,v 1.32 2003/09/01 22:51:05 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -341,11 +341,11 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 	switch (cputyp) {
 #ifdef M88110
 	case CPU_88110:
-		while (num <= SIGSYS_MAX)
-			SET_VECTOR(num++, m88110_sigsys);
+		for (; num <= SIGSYS_MAX; num++)
+			SET_VECTOR(num, m88110_sigsys);
 
-		while (num <= SIGTRAP_MAX)
-			SET_VECTOR(num++, m88110_sigtrap);
+		for (; num <= SIGTRAP_MAX; num++)
+			SET_VECTOR(num, m88110_sigtrap);
 
 		SET_VECTOR(450, m88110_syscall_handler);
 		SET_VECTOR(MVMEPROM_VECTOR, m88110_bugtrap);
@@ -355,11 +355,11 @@ vector_init(m88k_exception_vector_area *vector, unsigned *vector_init_list)
 #endif /* M88110 */
 #ifdef M88100
 	case CPU_88100:
-		while (num <= SIGSYS_MAX)
-			SET_VECTOR(num++, sigsys);
+		for (; num <= SIGSYS_MAX; num++)
+			SET_VECTOR(num, sigsys);
 
-		while (num <= SIGTRAP_MAX)
-			SET_VECTOR(num++, sigtrap);
+		for (; num <= SIGTRAP_MAX; num++)
+			SET_VECTOR(num, sigtrap);
 
 		SET_VECTOR(450, syscall_handler);
 		SET_VECTOR(MVMEPROM_VECTOR, bugtrap);

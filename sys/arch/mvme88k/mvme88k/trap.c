@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.41 2003/09/01 18:22:30 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.42 2003/09/01 22:51:05 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -555,6 +555,9 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 	case T_FPEIFLT+T_USER:
 		sig = SIGFPE;
 		break;
+	case T_SIGSYS+T_USER:
+		sig = SIGSYS;
+		break;
 	case T_SIGTRAP+T_USER:
 		sig = SIGTRAP;
 		fault_type = TRAP_TRACE;
@@ -1044,6 +1047,9 @@ m88110_user_fault:
 	case T_FPEPFLT+T_USER:
 	case T_FPEIFLT+T_USER:
 		sig = SIGFPE;
+		break;
+	case T_SIGSYS+T_USER:
+		sig = SIGSYS;
 		break;
 	case T_SIGTRAP+T_USER:
 		sig = SIGTRAP;
