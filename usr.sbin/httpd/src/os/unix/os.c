@@ -1,4 +1,4 @@
-/* $OpenBSD: os.c,v 1.10 2005/03/28 14:01:14 niallo Exp $ */
+/* $OpenBSD: os.c,v 1.11 2005/03/28 22:41:51 niallo Exp $ */
 
 /*
  * This file will include OS specific functions which are not inlineable.
@@ -33,24 +33,24 @@ ap_os_dso_init(void)
 void
 *ap_os_dso_load(const char *path)
 {
-        return dlopen(path, RTLD_NOW | RTLD_GLOBAL);
+	return dlopen(path, RTLD_NOW | RTLD_GLOBAL);
 }
 
 void
 ap_os_dso_unload(void *handle)
 {
-        dlclose(handle);
-        return;
+	dlclose(handle);
+	return;
 }
 
 void
 *ap_os_dso_sym(void *handle, const char *symname)
 {
-        return dlsym(handle, symname);
+	return dlsym(handle, symname);
 }
 
 const char *
 ap_os_dso_error(void)
 {
-        return dlerror();
+	return dlerror();
 }
