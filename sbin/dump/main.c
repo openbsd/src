@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2003/06/02 20:06:14 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2003/06/26 16:35:21 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.14 1997/06/05 11:13:24 lukem Exp $	*/
 
 /*-
@@ -96,9 +96,7 @@ static void obsolete(int *, char **[]);
 static void usage(void);
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	ino_t ino;
 	int dirty;
@@ -556,7 +554,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	extern char *__progname;
 
@@ -572,9 +570,7 @@ usage()
  * range (except that a vmax of 0 means unlimited).
  */
 static long
-numarg(meaning, vmin, vmax)
-	char *meaning;
-	long vmin, vmax;
+numarg(char *meaning, long vmin, long vmax)
 {
 	char *p;
 	long val;
@@ -588,8 +584,7 @@ numarg(meaning, vmin, vmax)
 }
 
 void
-sig(signo)
-	int signo;
+sig(int signo)
 {
 	switch(signo) {
 	case SIGALRM:
@@ -615,8 +610,7 @@ sig(signo)
 }
 
 char *
-rawname(cp)
-	char *cp;
+rawname(char *cp)
 {
 	static char rawbuf[MAXPATHLEN];
 	char *dp = strrchr(cp, '/');
@@ -635,9 +629,7 @@ rawname(cp)
  *	getopt(3) will like.
  */
 static void
-obsolete(argcp, argvp)
-	int *argcp;
-	char **argvp[];
+obsolete(int *argcp, char **argvp[])
 {
 	int argc, flags;
 	char *ap, **argv, *flagsp, **nargv, *p;

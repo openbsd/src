@@ -1,4 +1,4 @@
-/*	$OpenBSD: itime.c,v 1.9 2003/06/02 20:06:14 millert Exp $	*/
+/*	$OpenBSD: itime.c,v 1.10 2003/06/26 16:35:21 deraadt Exp $	*/
 /*	$NetBSD: itime.c,v 1.4 1997/04/15 01:09:50 lukem Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)itime.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: itime.c,v 1.9 2003/06/02 20:06:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: itime.c,v 1.10 2003/06/26 16:35:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,7 +73,7 @@ static	int makedumpdate(struct dumpdates *, char *);
 static	void readdumptimes(FILE *);
 
 void
-initdumptimes()
+initdumptimes(void)
 {
 	FILE *df;
 
@@ -105,8 +105,7 @@ initdumptimes()
 }
 
 static void
-readdumptimes(df)
-	FILE *df;
+readdumptimes(FILE *df)
 {
 	int i;
 	struct	dumptime *dtwalk;
@@ -133,7 +132,7 @@ readdumptimes(df)
 }
 
 void
-getdumptime()
+getdumptime(void)
 {
 	struct dumpdates *ddp;
 	int i;
@@ -165,7 +164,7 @@ getdumptime()
 }
 
 void
-putdumptime()
+putdumptime(void)
 {
 	FILE *df;
 	struct dumpdates *dtwalk;
@@ -222,9 +221,7 @@ putdumptime()
 }
 
 static void
-dumprecout(file, what)
-	FILE *file;
-	struct dumpdates *what;
+dumprecout(FILE *file, struct dumpdates *what)
 {
 
 	if (fprintf(file, DUMPOUTFMT,
@@ -237,9 +234,7 @@ dumprecout(file, what)
 int	recno;
 
 static int
-getrecord(df, ddatep)
-	FILE *df;
-	struct dumpdates *ddatep;
+getrecord(FILE *df, struct dumpdates *ddatep)
 {
 	char tbuf[BUFSIZ];
 
@@ -259,9 +254,7 @@ getrecord(df, ddatep)
 }
 
 static int
-makedumpdate(ddp, tbuf)
-	struct dumpdates *ddp;
-	char *tbuf;
+makedumpdate(struct dumpdates *ddp, char *tbuf)
 {
 	char un_buf[BUFSIZ], *str;
 	struct tm then;

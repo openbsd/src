@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.57 2003/06/02 20:06:16 millert Exp $	*/
+/*	$OpenBSD: route.c,v 1.58 2003/06/26 16:35:21 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.57 2003/06/02 20:06:16 millert Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.58 2003/06/26 16:35:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -88,7 +88,7 @@ union	sockunion {
 typedef union sockunion *sup;
 pid_t	pid;
 int	rtm_addrs, s;
-int	forcehost, forcenet, doflush, nflag, af, qflag, tflag, keyword();
+int	forcehost, forcenet, doflush, nflag, af, qflag, tflag, keyword(char *);
 int	iflag, verbose, aflen = sizeof (struct sockaddr_in);
 int	locking, lockrest, debugonly;
 struct	rt_metrics rt_metrics;
@@ -361,8 +361,8 @@ routename(struct sockaddr *sa)
 	struct hostent *hp;
 	static char domain[MAXHOSTNAMELEN];
 	static int first = 1;
-	char *ns_print();
-	char *ipx_print();
+	char *ns_print(struct sockaddr_ns *);
+	char *ipx_print(struct sockaddr_ipx *);
 
 	if (first) {
 		first = 0;
@@ -465,8 +465,8 @@ netname(struct sockaddr *sa)
 	static char line[MAXHOSTNAMELEN];
 	struct netent *np = 0;
 	in_addr_t net, mask, subnetshift;
-	char *ns_print();
-	char *ipx_print();
+	char *ns_print(struct sockaddr_ns *);
+	char *ipx_print(struct sockaddr_ipx *);
 
 	switch (sa->sa_family) {
 
@@ -905,10 +905,7 @@ int
 getaddr(int which, char *s, struct hostent **hpp)
 {
 	sup su = NULL;
-	struct ns_addr ns_addr();
-	struct ipx_addr ipx_addr();
-	struct iso_addr *iso_addr();
-	struct ccitt_addr *ccitt_addr();
+	struct ccitt_addr *ccitt_addr(char *, struct sockaddr_x25 *);
 	struct hostent *hp;
 	struct netent *np;
 	u_long val;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: passwd.c,v 1.41 2003/06/02 20:18:42 millert Exp $	*/
+/*	$OpenBSD: passwd.c,v 1.42 2003/06/26 16:34:42 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994, 1995
@@ -30,7 +30,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static const char rcsid[] = "$OpenBSD: passwd.c,v 1.41 2003/06/02 20:18:42 millert Exp $";
+static const char rcsid[] = "$OpenBSD: passwd.c,v 1.42 2003/06/26 16:34:42 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -58,8 +58,7 @@ static const char rcsid[] = "$OpenBSD: passwd.c,v 1.41 2003/06/02 20:18:42 mille
 
 static void	pw_cont(int sig);
 
-static const char options[NUM_OPTIONS][2][80] =
-{
+static const char options[NUM_OPTIONS][2][80] = {
 	{"localcipher", "blowfish,4"},
 	{"ypcipher", "old"}
 };
@@ -68,10 +67,13 @@ static char pw_defdir[] = "/etc";
 static char *pw_dir = pw_defdir;
 static char *pw_lck;
 
+static void trim_whitespace(char *);
+static int read_line(FILE *, char *, int);
+static const char *pw_default(const char *);
+
 /* Removes head and/or tail spaces. */
 static void
-trim_whitespace(line)
-	char   *line;
+trim_whitespace(char *line)
 {
 	char   *p;
 
@@ -91,10 +93,7 @@ trim_whitespace(line)
 
 /* Get one line, remove spaces from front and tail */
 static int
-read_line(fp, line, max)
-	FILE   *fp;
-	char   *line;
-	int	max;
+read_line(FILE *fp, char *line, int max)
 {
 	char   *p;
 
@@ -117,8 +116,7 @@ read_line(fp, line, max)
 
 
 static const char *
-pw_default(option)
-	char   *option;
+pw_default(const char *option)
 {
 	int	i;
 
@@ -129,8 +127,7 @@ pw_default(option)
 }
 
 char *
-pw_file(nm)
-	const char *nm;
+pw_file(const char *nm)
 {
 	const char *p = strrchr(nm, '/');
 	char *new_nm;
@@ -153,11 +150,7 @@ pw_file(nm)
  * well.
  */
 void
-pw_getconf(data, max, key, option)
-	char	*data;
-	size_t	max;
-	const char *key;
-	const char *option;
+pw_getconf(char *data, size_t max, const char *key, const char *option)
 {
 	FILE   *fp;
 	char    line[LINE_MAX];
@@ -225,8 +218,7 @@ pw_getconf(data, max, key, option)
 
 
 void
-pw_setdir(dir)
-	const char *dir;
+pw_setdir(const char *dir)
 {
 	char *p;
 
@@ -244,8 +236,7 @@ pw_setdir(dir)
 
 
 int
-pw_lock(retries)
-	int retries;
+pw_lock(int retries)
 {
 	int i, fd;
 	mode_t old_mode;
@@ -271,9 +262,7 @@ pw_lock(retries)
 }
 
 int
-pw_mkdb(username, flags)
-	char *username;
-	int flags;
+pw_mkdb(char *username, int flags)
 {
 	int pstat, ac;
 	pid_t pid;
@@ -319,7 +308,7 @@ pw_mkdb(username, flags)
 }
 
 int
-pw_abort()
+pw_abort(void)
 {
 	return (pw_lck ? unlink(pw_lck) : -1);
 }
@@ -331,18 +320,17 @@ pw_abort()
 static pid_t editpid = -1;
 
 static void
-pw_cont(sig)
-	int sig;
+pw_cont(int signo)
 {
 	int save_errno = errno;
 
 	if (editpid != -1)
-		kill(editpid, sig);
+		kill(editpid, signo);
 	errno = save_errno;
 }
 
 void
-pw_init()
+pw_init(void)
 {
 	struct rlimit rlim;
 
@@ -372,9 +360,7 @@ pw_init()
 }
 
 void
-pw_edit(notsetuid, filename)
-	int notsetuid;
-	const char *filename;
+pw_edit(int notsetuid, const char *filename)
 {
 	int pstat;
 	char *p;
@@ -423,7 +409,7 @@ pw_edit(notsetuid, filename)
 }
 
 void
-pw_prompt()
+pw_prompt(void)
 {
 	int first, c;
 
@@ -437,9 +423,7 @@ pw_prompt()
 }
 
 void
-pw_copy(ffd, tfd, pw)
-	int ffd, tfd;
-	struct passwd *pw;
+pw_copy(int ffd, int tfd, struct passwd *pw)
 {
 	FILE   *from, *to;
 	int	done;
@@ -499,10 +483,7 @@ err:
 }
 
 int
-pw_scan(bp, pw, flags)
-	char *bp;
-	struct passwd *pw;
-	int *flags;
+pw_scan(char *bp, struct passwd *pw, int *flags)
 {
 	u_long id;
 	int root;
@@ -593,9 +574,7 @@ fmt:		warnx("corrupted entry");
 }
 
 __dead void
-pw_error(name, err, eval)
-	const char *name;
-	int err, eval;
+pw_error(const char *name, int err, int eval)
 {
 	char   *master = pw_file(_PATH_MASTERPASSWD);
 

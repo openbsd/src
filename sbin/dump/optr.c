@@ -1,4 +1,4 @@
-/*	$OpenBSD: optr.c,v 1.23 2003/06/02 20:06:14 millert Exp $	*/
+/*	$OpenBSD: optr.c,v 1.24 2003/06/26 16:35:21 deraadt Exp $	*/
 /*	$NetBSD: optr.c,v 1.11 1997/05/27 08:34:36 mrg Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)optr.c	8.2 (Berkeley) 1/6/94";
 #else
-static char rcsid[] = "$OpenBSD: optr.c,v 1.23 2003/06/02 20:06:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: optr.c,v 1.24 2003/06/26 16:35:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -75,8 +75,7 @@ static	int timeout;
 static	char *attnmessage;		/* attention message */
 
 int
-query(question)
-	char	*question;
+query(char *question)
 {
 	char	replybuffer[64];
 	int	back, errcount;
@@ -134,8 +133,7 @@ char lastmsg[BUFSIZ];
  * XXX not safe
  */
 void
-alarmcatch(signo)
-	int signo;
+alarmcatch(int signo)
 {
 	int save_errno = errno;
 
@@ -164,8 +162,7 @@ alarmcatch(signo)
  *	Here if an inquisitive operator interrupts the dump program
  */
 void
-interrupt(signo)
-	int signo;
+interrupt(int signo)
 {
 	msg("Interrupt received.\n");
 	if (query("Do you want to abort dump?"))
@@ -176,8 +173,7 @@ interrupt(signo)
  *	We now use wall(1) to do the actual broadcasting.
  */
 void
-broadcast(message)
-	char	*message;
+broadcast(char *message)
 {
 	FILE *fp;
 	char buf[sizeof(_PATH_WALL) + sizeof(OPGRENT) + 3];
@@ -205,7 +201,7 @@ broadcast(message)
 time_t	tschedule = 0;
 
 void
-timeest()
+timeest(void)
 {
 	time_t	tnow, deltat;
 
@@ -275,8 +271,7 @@ quit(const char *fmt, ...)
  */
 
 struct fstab *
-allocfsent(fs)
-	struct fstab *fs;
+allocfsent(struct fstab *fs)
 {
 	struct fstab *new;
 
@@ -299,7 +294,7 @@ struct	pfstab {
 static	struct pfstab *table;
 
 void
-getfstab()
+getfstab(void)
 {
 	struct fstab *fs;
 	struct pfstab *pf;
@@ -339,8 +334,7 @@ getfstab()
  * The file name can omit the leading '/'.
  */
 struct fstab *
-fstabsearch(key)
-	char *key;
+fstabsearch(char *key)
 {
 	struct pfstab *pf;
 	struct fstab *fs;
@@ -368,10 +362,10 @@ fstabsearch(key)
 
 /*
  *	Tell the operator what to do
+ *	w ==> just what to do; W ==> most recent dumps
  */
 void
-lastdump(arg)
-	char	arg;	/* w ==> just what to do; W ==> most recent dumps */
+lastdump(int arg)
 {
 	int i;
 	struct fstab *dt;
@@ -413,8 +407,7 @@ lastdump(arg)
 }
 
 int
-datesort(a1, a2)
-	const void *a1, *a2;
+datesort(const void *a1, const void *a2)
 {
 	struct dumpdates *d1 = *(struct dumpdates **)a1;
 	struct dumpdates *d2 = *(struct dumpdates **)a2;
