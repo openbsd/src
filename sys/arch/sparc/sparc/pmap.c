@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.136 2003/12/20 00:49:46 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.137 2004/05/08 21:45:26 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -5084,8 +5084,10 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 		int size = NSEGRG * sizeof (struct segmap);
 
 		sp = malloc((u_long)size, M_VMPMAP, M_NOWAIT);
-		if (sp == NULL)
+		if (sp == NULL) {
+			splx(s);
 			return (ENOMEM);
+		}
 		qzero((caddr_t)sp, size);
 		rp->rg_segmap = sp;
 		rp->rg_nsegmap = 0;
@@ -5099,8 +5101,10 @@ pmap_enu4_4c(pm, va, prot, flags, pv, pteproto)
 		int size = NPTESG * sizeof *pte;
 
 		pte = malloc((u_long)size, M_VMPMAP, M_NOWAIT);
-		if (pte == NULL)
+		if (pte == NULL) {
+			splx(s);
 			return (ENOMEM);
+		}
 #ifdef DEBUG
 		if (sp->sg_pmeg != seginval)
 			panic("pmap_enter: new ptes, but not seginval");
@@ -5426,8 +5430,10 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 		int size = NSEGRG * sizeof (struct segmap);
 
 		sp = malloc((u_long)size, M_VMPMAP, M_NOWAIT);
-		if (sp == NULL)
+		if (sp == NULL) {
+			splx(s);
 			return (ENOMEM);
+		}
 		qzero((caddr_t)sp, size);
 		rp->rg_segmap = sp;
 		rp->rg_nsegmap = 0;
@@ -5439,8 +5445,10 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 		int i, *ptd;
 
 		ptd = pool_get(&L23_pool, PR_NOWAIT);
-		if (ptd == NULL)
+		if (ptd == NULL) {
+			splx(s);
 			return (ENOMEM);
+		}
 
 		rp->rg_seg_ptps = ptd;
 		for (i = 0; i < SRMMU_L2SIZE; i++)
@@ -5455,8 +5463,10 @@ pmap_enu4m(pm, va, prot, flags, pv, pteproto)
 		int i;
 
 		pte = pool_get(&L23_pool, PR_NOWAIT);
-		if (pte == NULL)
+		if (pte == NULL) {
+			splx(s);
 			return (ENOMEM);
+		}
 
 		sp->sg_pte = pte;
 		sp->sg_npte = 1;
