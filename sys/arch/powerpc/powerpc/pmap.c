@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 1999/11/09 00:20:42 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 2000/01/14 05:42:17 rahnds Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -33,11 +33,17 @@
  */
 #include <sys/param.h>
 #include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/user.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#ifdef UVM
+#include <uvm/uvm.h>
+#endif
 
 #include <machine/pcb.h>
 #include <machine/powerpc.h>
@@ -437,6 +443,13 @@ avail_end = npgs * NBPG;
 		LIST_INIT(potable + i);
 	LIST_INIT(&pv_page_freelist);
 	
+#ifdef UVM
+	for (mp = avail; mp->size; mp++) {
+		uvm_page_physload(atop(mp->start), atop(mp->start + mp->size),
+			atop(mp->start), atop(mp->start + mp->size),
+			VM_FREELIST_DEFAULT);
+	}
+#endif
 	/*
 	 * Initialize kernel pmap and hardware.
 	 */
@@ -491,13 +504,21 @@ void
 pmap_init()
 {
 	struct pv_entry *pv;
-	vm_size_t sz;
-	vm_offset_t addr;
+	vsize_t sz;
+	vaddr_t addr;
 	int i, s;
+#ifdef UVM
+	int bank;
+	char *attr;
+#endif
 	
 	sz = (vm_size_t)((sizeof(struct pv_entry) + 1) * npgs);
 	sz = round_page(sz);
-	addr = (vm_offset_t)kmem_alloc(kernel_map, sz);
+#ifdef UVM
+	addr = uvm_km_zalloc(kernel_map, sz);
+#else
+	addr = kmem_alloc(kernel_map, sz);
+#endif
 	s = splimp();
 	pv = pv_table = (struct pv_entry *)addr;
 	for (i = npgs; --i >= 0;)
@@ -505,6 +526,17 @@ pmap_init()
 	LIST_INIT(&pv_page_freelist);
 	pmap_attrib = (char *)pv;
 	bzero(pv, npgs);
+#ifdef UVM
+	pv = pv_table;
+	attr = pmap_attrib;
+	for (bank = 0; bank < vm_nphysseg; bank++) {
+		sz = vm_physmem[bank].end - vm_physmem[bank].start;
+		vm_physmem[bank].pmseg.pvent = pv;
+		vm_physmem[bank].pmseg.attrs = attr;
+		pv += sz;
+		attr += sz;
+	}
+#endif
 	pmap_initialized = 1;
 	splx(s);
 }
@@ -738,8 +770,13 @@ pmap_alloc_pv()
 	int i;
 	
 	if (pv_nfree == 0) {
+#ifdef UVM
+		if (!(pvp = (struct pv_page *)uvm_km_zalloc(kernel_map, NBPG)))
+			panic("pmap_alloc_pv: uvm_km_zalloc() failed");
+#else
 		if (!(pvp = (struct pv_page *)kmem_alloc(kernel_map, NBPG)))
 			panic("pmap_alloc_pv: kmem_alloc() failed");
+#endif
 		pv_pcnt++;
 		pvp->pvp_pgi.pgi_freelist = pv = &pvp->pvp_pv[1];
 		for (i = NPVPPG - 2; --i >= 0; pv++)
@@ -778,7 +815,11 @@ pmap_free_pv(pv)
 		pv_nfree -= NPVPPG - 1;
 		pv_pcnt--;
 		LIST_REMOVE(pvp, pvp_pgi.pgi_list);
+#ifdef UVM
+		uvm_km_free(kernel_map, (vaddr_t)pvp, NBPG);
+#else
 		kmem_free(kernel_map, (vm_offset_t)pvp, NBPG);
+#endif
 		break;
 	}
 }
@@ -803,7 +844,11 @@ poalloc()
 		 * Since we cannot use maps for potable allocation,
 		 * we have to steal some memory from the VM system.			XXX
 		 */
+#ifdef UVM
+		mem = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_USERESERVE);
+#else
 		mem = vm_page_alloc(NULL, NULL);
+#endif
 		po_pcnt++;
 		pop = (struct po_page *)VM_PAGE_TO_PHYS(mem);
 		pop->pop_pgi.pgi_page = mem;
@@ -839,7 +884,11 @@ pofree(po, freepage)
 		po_nfree -= NPOPPG - 1;
 		po_pcnt--;
 		LIST_REMOVE(pop, pop_pgi.pgi_list);
+#ifdef UVM
+		uvm_pagefree(pop->pop_pgi.pgi_page);
+#else
 		vm_page_free(pop->pop_pgi.pgi_page);
+#endif
 		return;
 	case 1:
 		LIST_INSERT_HEAD(&po_page_freelist, pop, pop_pgi.pgi_list);
@@ -1367,3 +1416,25 @@ addbatmap(u_int32_t vaddr, u_int32_t raddr, u_int32_t wimg)
 	battable[segment].batl = BATL(raddr, wimg);
 }
 
+/* ??? */
+void
+pmap_activate(struct proc *p)
+{
+	struct pcb *pcb = &p->p_addr->u_pcb;
+	pmap_t pmap = p->p_vmspace->vm_map.pmap;
+
+	/*
+	 * XXX Normally performed in cpu_fork();
+	 */
+	if (pcb->pcb_pm != pmap) {
+		pcb->pcb_pm = pmap;
+	}
+	curpcb=pcb;
+	return;
+}
+/* ??? */
+void
+pmap_deactivate(struct proc *p)
+{
+	return;
+}

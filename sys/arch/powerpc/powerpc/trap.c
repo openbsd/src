@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.15 1999/07/05 20:29:14 rahnds Exp $	*/
+/*	$OpenBSD: trap.c,v 1.16 2000/01/14 05:42:17 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -41,6 +41,10 @@
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
+
+#ifdef UVM
+#include <uvm/uvm_extern.h>
+#endif
 
 #include <machine/cpu.h>
 #include <machine/frame.h>
@@ -132,9 +136,16 @@ trap(frame)
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
 			else
 				ftype = VM_PROT_READ;
+#ifdef UVM
+			if (uvm_fault(map, trunc_page(va), 0, ftype)
+			    == KERN_SUCCESS)
+#else
 			if (vm_fault(map, trunc_page(va), ftype, FALSE)
 			    == KERN_SUCCESS)
+#endif
+			{
 				return;
+			}
 			if (fb = p->p_addr->u_pcb.pcb_onfault) {
 				p->p_addr->u_pcb.pcb_onfault = 0;
 				frame->srr0 = fb->pc;		/* PC */
@@ -157,10 +168,18 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 				vftype = VM_PROT_WRITE;
 			} else
 				vftype = ftype = VM_PROT_READ;
+#ifdef UVM
+			if (uvm_fault(&p->p_vmspace->vm_map,
+				     trunc_page(frame->dar), 0, ftype)
+			    == KERN_SUCCESS)
+#else
 			if (vm_fault(&p->p_vmspace->vm_map,
 				     trunc_page(frame->dar), ftype, FALSE)
 			    == KERN_SUCCESS)
+#endif
+			{
 				break;
+			}
 printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 /*
  * keep this for later in case we want it later.
@@ -174,10 +193,18 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 			int ftype;
 			
 			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
+#ifdef UVM
+			if (uvm_fault(&p->p_vmspace->vm_map,
+				     trunc_page(frame->srr0), 0, ftype)
+			    == KERN_SUCCESS)
+#else
 			if (vm_fault(&p->p_vmspace->vm_map,
 				     trunc_page(frame->srr0), ftype, FALSE)
 			    == KERN_SUCCESS)
+#endif
+			{
 				break;
+			}
 		}
 printf("isi iar %x\n", frame->srr0);
 	case EXC_MCHK|EXC_USER:
@@ -195,7 +222,11 @@ printf("isi iar %x\n", frame->srr0);
 			int nsys, n;
 			register_t args[10];
 			
+#ifdef UVM
+			uvmexp.syscalls++;
+#else
 			cnt.v_syscall++;
+#endif
 			
 			nsys = p->p_emul->e_nsysent;
 			callp = p->p_emul->e_sysent;
@@ -377,7 +408,11 @@ for (i = 0; i < errnum; i++) {
 
 	astpending = 0;		/* we are about to do it */
 
+#ifdef UVM
+	uvmexp.softs++;
+#else
 	cnt.v_soft++;
+#endif
 
 	if (p->p_flag & P_OWEUPC) {
 		p->p_flag &= ~P_OWEUPC;
@@ -467,7 +502,7 @@ badaddr(addr, len)
 
 	if (setfault(env)) {
 		curpcb->pcb_onfault = 0;
-		return EACCES;
+		return EFAULT;
 	}
 	switch(len) {
 	case 4:
@@ -496,7 +531,7 @@ copyin(udaddr, kaddr, len)
 
 	if (setfault(env)) {
 		curpcb->pcb_onfault = 0;
-		return EACCES;
+		return EFAULT;
 	}
 	while (len > 0) {
 		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);
@@ -525,7 +560,7 @@ copyout(kaddr, udaddr, len)
 
 	if (setfault(env)) {
 		curpcb->pcb_onfault = 0;
-		return EACCES;
+		return EFAULT;
 	}
 	while (len > 0) {
 		p = USER_ADDR + ((u_int)udaddr & ~SEGMENT_MASK);

@@ -31,6 +31,9 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifndef MACHINE_VMPARAM_H
+#define MACHINE_VMPARAM_H
+
 #define	USRTEXT		CLBYTES
 #define	USRSTACK	VM_MAXUSER_ADDRESS
 
@@ -100,13 +103,19 @@ extern vm_offset_t ppc_kvm_size;
 #define	VM_MAX_KERNEL_ADDRESS	((vm_offset_t)((KERNEL_SR << ADDR_SR_SHFT) \
 						+ VM_KERN_ADDRESS_SIZE))
 
+#ifdef UVM
+#define	MACHINE_NEW_NONCONTIG	/* VM <=> pmap interface modifier */
+#else
 #define	MACHINE_NONCONTIG	/* VM <=> pmap interface modifier */
+#endif
 
 #define	VM_KMEM_SIZE		(NKMEMCLUSTERS * CLBYTES)
 #define	VM_MBUF_SIZE		(NMBCLUSTERS * CLBYTES)
 #define	VM_PHYS_SIZE		(USRIOSIZE * CLBYTES)
 
 struct pmap_physseg {
+	struct pv_entry *pvent;
+	char *attrs;
 	/* NULL ??? */
 };
 
@@ -117,3 +126,4 @@ struct pmap_physseg {
 #define VM_NFREELIST		1
 #define VM_FREELIST_DEFAULT	0
 
+#endif

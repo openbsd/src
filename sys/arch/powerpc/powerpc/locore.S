@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.8 1999/07/05 20:56:26 rahnds Exp $	*/
+/*	$OpenBSD: locore.S,v 1.9 2000/01/14 05:42:17 rahnds Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -195,7 +195,11 @@ _ENTRY(_C_LABEL(switchexit))
 	stw	6,_C_LABEL(curpcb)@l(7)
 	addi	1,6,USPACE-16		/* 16 bytes are reserved at stack top */
 /* Now free the old user structure (args are already in r3, r4, r5) */
+#ifdef UVM
+	bl	_C_LABEL(uvm_km_free)
+#else
 	bl	_C_LABEL(kmem_free)
+#endif
 /* Fall through to cpu_switch to actually select another proc */
 
 /*

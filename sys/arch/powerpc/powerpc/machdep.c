@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.30 2000/01/14 05:16:03 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.31 2000/01/14 05:42:17 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -69,6 +69,7 @@
 #include <machine/powerpc.h>
 #include <machine/trap.h>
 #include <machine/autoconf.h>
+#include <machine/bus.h>
 #include <machine/pio.h>
 
 #include <powerpc/pci/mpc106reg.h>
@@ -82,7 +83,29 @@ struct proc *fpuproc;
 extern struct user *proc0paddr;
 extern int cold;
 
+/* 
+ * Declare these as initialized data so we can patch them.
+ */
+int	nswbuf = 0;
+#ifdef NBUF
+int	nbuf = NBUF;
+#else
+int	nbuf = 0;
+#endif
+#ifdef BUFPAGES
+int bufpages = BUFPAGES;
+#else
+int bufpages = 0;
+#endif
+
 struct bat battable[16];
+
+#ifdef UVM
+/* ??? */
+vm_map_t exec_map = NULL;
+vm_map_t mb_map = NULL;
+vm_map_t phys_map = NULL;
+#endif
 
 int astpending;
 int ppc_malloc_ok = 0;
@@ -250,7 +273,13 @@ where = 3;
 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 
 
+#ifdef UVM
+	uvmexp.pagesize = 4096;
+	uvm_setpagesize();
+
+#else
 	vm_set_page_size();
+#endif
 
 	/*
 	 * Initialize pmap module.
@@ -264,7 +293,6 @@ where = 3;
 
 	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
-
 
 	/*                                                              
 	 * Look at arguments passed to us and compute boothowto.      
@@ -404,11 +432,17 @@ cpu_startup()
 	 * and then give everything true virtual addresses.
 	 */
 	sz = (int)allocsys((caddr_t)0);
+#ifdef UVM
+	if ((v = (caddr_t)uvm_km_zalloc(kernel_map, round_page(sz))) == 0)
+		panic("startup: no room for tables");
+#else
 	if ((v = (caddr_t)kmem_alloc(kernel_map, round_page(sz))) == 0)
 		panic("startup: no room for tables");
+#endif
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
 
+#if !defined (UVM)
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -417,7 +451,7 @@ cpu_startup()
 	buffer_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, sz, TRUE);
 	buffers = (char *)minaddr;
 	if (vm_map_find(buffer_map, vm_object_allocate(sz), (vm_offset_t)0,
-			&minaddr, sz, FALSE) != KERN_SUCCESS)
+	   &minaddr, sz, FALSE) != KERN_SUCCESS)
 		panic("startup: cannot allocate buffers");
 	base = bufpages / nbuf;
 	residual = bufpages % nbuf;
@@ -432,32 +466,49 @@ cpu_startup()
 		
 		curbuf = (vm_offset_t)buffers + i * MAXBSIZE;
 		curbufsize = CLBYTES * (i < residual ? base + 1 : base);
-		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize, FALSE);
+		vm_map_pageable(buffer_map, curbuf, curbuf + curbufsize,
+		    FALSE);
 		vm_map_simplify(buffer_map, curbuf);
 	}
+#endif
 
 	/*
 	 * Allocate a submap for exec arguments.  This map effectively
 	 * limits the number of processes exec'ing at any time.
 	 */
-	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 16*NCARGS, TRUE);
+#ifdef UVM
+	exec_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr, 16 * NCARGS,
+	    TRUE, FALSE, NULL);
+#else
+	exec_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, 16 * NCARGS,
+	    TRUE);
+#endif
 
 	/*
 	 * Allocate a submap for physio
 	 */
-	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, TRUE);
+#ifdef UVM
+	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
+	    VM_PHYS_SIZE, TRUE, FALSE, NULL);
+#else
+	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr, VM_PHYS_SIZE,
+	    TRUE);
+#endif
 	ppc_malloc_ok = 1;
 	
 	/*
 	 * Allocate mbuf pool.
 	 */
-	mclrefcnt = (char *)malloc(NMBCLUSTERS + CLBYTES/MCLBYTES,
-				   M_MBUF, M_NOWAIT);
+	mclrefcnt = (char *)malloc(NMBCLUSTERS + CLBYTES/MCLBYTES, M_MBUF,
+	    M_NOWAIT);
 	bzero(mclrefcnt, NMBCLUSTERS + CLBYTES/MCLBYTES);
+#ifdef UVM
+	mb_map = uvm_km_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
+	    VM_MBUF_SIZE, FALSE, FALSE, NULL);
+#else
 	mb_map = kmem_suballoc(kernel_map, (vm_offset_t *)&mbutl, &maxaddr,
-			       VM_MBUF_SIZE, FALSE);
+	    VM_MBUF_SIZE, FALSE);
+#endif
 	
 	/*
 	 * Initialize callouts.
@@ -466,9 +517,13 @@ cpu_startup()
 	for (i = 1; i < ncallout; i++)
 		callout[i - 1].c_next = &callout[i];
 	
+#ifdef UVM
+	printf("avail mem = %d\n", ptoa(uvmexp.free));
+#else
 	printf("avail mem = %d\n", ptoa(cnt.v_free_count));
-	printf("using %d buffers containing %d bytes of memory\n",
-	       nbuf, bufpages * CLBYTES);
+#endif
+	printf("using %d buffers containing %d bytes of memory\n", nbuf,
+	    bufpages * CLBYTES);
 	
 	
 	/*
@@ -528,7 +583,7 @@ allocsys(v)
 	 * Decide on buffer space to use.
 	 */
 	if (bufpages == 0)
-		bufpages = (physmem / ((100/BUFCACHEPERCENT) / CLSIZE));
+		bufpages = (physmem / ((100 / BUFCACHEPERCENT) / CLSIZE));
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -536,8 +591,8 @@ allocsys(v)
 	}
 	/* Restrict to at most 70% filled kvm */
 	if (nbuf * MAXBSIZE >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) * 7 / 10)
-		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
+	    (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) * 7 / 10)
+		nbuf = (VM_MAX_KERNEL_ADDRESS - VM_MIN_KERNEL_ADDRESS) /
 		    MAXBSIZE * 7 / 10;
 
 	/* More buffer pages than fits into the buffers is senseless.  */
@@ -549,7 +604,9 @@ allocsys(v)
 		if (nswbuf > 256)
 			nswbuf = 256;
 	}
+#if !defined(UVM)
 	valloc(swbuf, struct buf, nswbuf);
+#endif
 	valloc(buf, struct buf, nbuf);
 	
 	return v;
@@ -914,7 +971,7 @@ systype(char *name)
 		{ "V-I Power",	"(POWER4e) V-I ppc vme boards ",  POWER4e},
 		{ "iMac",	"(APPL) Apple iMac ",  APPL},
 		{ "PowerMac",	"(APPL) Apple PowerMac ",  APPL},
-		{ "PowerBook",  "(APPL) Apple Powerbook ",  APPL},
+		{ "PowerBook",	"(APPL) Apple Powerbook ",  APPL},
 		{ NULL,"",0}
 	};
 	for (i = 0; systypes[i].name != NULL; i++) {
@@ -1035,7 +1092,11 @@ bus_space_unmap(t, bsh, size)
 	off = bsh - sva;
 	len = size+off;
 
+#ifdef UVM
+	uvm_km_free_wakeup(phys_map, sva, len);
+#else
 	kmem_free_wakeup(phys_map, sva, len);
+#endif
 #ifdef DESTROY_MAPPINGS
 	for (; len > 0; len -= NBPG) {
 		pmap_enter(vm_map_pmap(phys_map), vaddr, sva,
@@ -1076,7 +1137,11 @@ bus_mem_add_mapping(bpa, size, cacheable, bshp)
 
 		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_size;
 	} else {
+#ifdef UVM
+		vaddr = uvm_km_valloc_wait(phys_map, len);
+#else
 		vaddr = kmem_alloc_wait(phys_map, len);
+#endif
 	}
 	*bshp = vaddr + off;
 #ifdef DEBUG_BUS_MEM_ADD_MAPPING
@@ -1108,7 +1173,11 @@ mapiodev(pa, len)
 	spa = trunc_page(pa);
 	off = pa - spa;
 	size = round_page(off+len);
+#ifdef UVM
+	va = vaddr = uvm_km_valloc(phys_map, size);
+#else
 	va = vaddr = kmem_alloc(phys_map, size);
+#endif
 
 	if (va == 0) 
 		return NULL;
@@ -1269,4 +1338,24 @@ void
 ppc_close_pci_bridge(int handle)
 {
 	OF_close(handle);
+}
+
+/* bcopy(), error on fault */
+int
+kcopy(from, to, size)
+	const void *from;
+	void *to;
+	size_t size;
+{
+	faultbuf env;
+	register void *oldh = curproc->p_addr->u_pcb.pcb_onfault;
+
+	if (setfault(env)) {
+		curpcb->pcb_onfault = 0;
+		return EFAULT;
+	}
+	bcopy(from, to, size);
+	curproc->p_addr->u_pcb.pcb_onfault = oldh;
+
+	return 0;
 }

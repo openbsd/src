@@ -89,7 +89,11 @@ u_int32_t *heathrow_FCR = NULL;
 
 void prog_switch (void *arg)
 {
+#ifdef DDB
 	Debugger();
+#else
+	printf("programmer button pressed, debugger not available\n");
+#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.10 1999/11/08 23:49:00 rahnds Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.11 2000/01/14 05:42:16 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -443,7 +443,9 @@ mpc_conf_read(cpv, tag, offset)
 	device = (tag >> 11) & 0x1f;
 	if(device > 11)
 		return(~0);	/* Outside config space */
+#if 0
 	printf("mpc_conf_read tag %x offset %x: ", tag, offset);
+#endif
 
 	addr = (0x800 << device) | (tag & 0x380) | offset;
 
@@ -455,7 +457,9 @@ mpc_conf_read(cpv, tag, offset)
 
 	splx(s);
 	ppc_close_pci_bridge(handle);
+#if 0
 	printf("data %x\n", data);
+#endif
 
 	return(data);
 }
@@ -471,7 +475,9 @@ mpc_conf_write(cpv, tag, offset, data)
 	int device;
 	int s;
 	int handle; 
+#if 0
 	printf("mpc_conf_write tag %x offset %x data %x\n", tag, offset, data);
+#endif
 
 	device = (tag >> 11) & 0x1f;
 	addr = (0x800 << device) | (tag & 0x380) | offset;
