@@ -1,4 +1,14 @@
-/* CVS client-related stuff.  */
+/* CVS client-related stuff.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.  */
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -14,7 +24,7 @@
 
 #include "md5.h"
 
-#if defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || USE_DIRECT_TCP || defined(SOCK_ERRNO) || defined(SOCK_STRERROR)
+#if defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || defined(SOCK_ERRNO) || defined(SOCK_STRERROR)
 #  ifdef HAVE_WINSOCK_H
 #    include <winsock.h>
 #  else /* No winsock.h */
@@ -22,8 +32,7 @@
 #    include <netinet/in.h>
 #    include <netdb.h>
 #  endif /* No winsock.h */
-#endif /* defined(AUTH_CLIENT_SUPPORT) || HAVE_KERBEROS || USE_DIRECT_TCP
-	  || defined(SOCK_ERRNO) || defined(SOCK_STRERROR) */
+#endif
 
 /* If SOCK_ERRNO is defined, then send()/recv() and other socket calls
    do not set errno, but that this macro should be used to obtain an
@@ -48,7 +57,7 @@ extern char *strerror ();
 #  endif
 #endif /* ! SOCK_STRERROR */
 
-#if HAVE_KERBEROS || USE_DIRECT_TCP
+#if HAVE_KERBEROS
 #define CVS_PORT 1999
 
 #if HAVE_KERBEROS
@@ -65,7 +74,7 @@ static Key_schedule sched;
 
 #endif /* HAVE_KERBEROS */
 
-#endif /* HAVE_KERBEROS || USE_DIRECT_TCP */
+#endif /* HAVE_KERBEROS */
 
 static void add_prune_candidate PROTO((char *));
 
@@ -97,6 +106,7 @@ static void handle_copy_file PROTO((char *, int));
 static void handle_updated PROTO((char *, int));
 static void handle_merged PROTO((char *, int));
 static void handle_patched PROTO((char *, int));
+static void handle_rcs_diff PROTO((char *, int));
 static void handle_removed PROTO((char *, int));
 static void handle_remove_entry PROTO((char *, int));
 static void handle_set_static_directory PROTO((char *, int));
@@ -1303,7 +1313,28 @@ handle_mode (args, len)
     stored_mode = xstrdup (args);
     stored_mode_valid = 1;
 }
+
+/* Nonzero if time was specified in Mod-time.  */
+static int stored_modtime_valid;
+/* Time specified in Mod-time.  */
+static time_t stored_modtime;
 
+static void handle_mod_time PROTO ((char *, int));
+
+static void
+handle_mod_time (args, len)
+    char *args;
+    int len;
+{
+    if (stored_modtime_valid)
+	error (0, 0, "protocol error: duplicate Mod-time");
+    stored_modtime = get_date (args, NULL);
+    if (stored_modtime == (time_t) -1)
+	error (0, 0, "protocol error: cannot parse date %s", args);
+    else
+	stored_modtime_valid = 1;
+}
+
 /*
  * If we receive a patch, but the patch program fails to apply it, we
  * want to request the original file.  We keep a list of files whose
@@ -1327,7 +1358,12 @@ struct update_entries_data
        * We are getting a patch against the existing local file, not
        * an entire new file.
        */
-      UPDATE_ENTRIES_PATCH
+      UPDATE_ENTRIES_PATCH,
+      /*
+       * We are getting an RCS change text (diff -n output) against
+       * the existing local file, not an entire new file.
+       */
+      UPDATE_ENTRIES_RCS_DIFF
     } contents;
 
     enum {
@@ -1363,10 +1399,10 @@ update_entries (data_arg, ent_list, short_pathname, filename)
     /* Timestamp field.  Always empty according to the protocol.  */
     char *ts;
     char *options;
-    char *tag;
-    char *date;
+    char *tag = NULL;
+    char *date = NULL;
     char *tag_or_date;
-    char *scratch_entries;
+    char *scratch_entries = NULL;
     int bin;
 
     read_line (&entries_line);
@@ -1403,8 +1439,6 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	cp = strchr (tag_or_date, '/');
 	if (cp != NULL)
 	    *cp = '\0';
-	tag = (char *) NULL;
-	date = (char *) NULL;
 	if (*tag_or_date == 'T')
 	    tag = tag_or_date + 1;
 	else if (*tag_or_date == 'D')
@@ -1421,16 +1455,16 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	options = NULL;
 
     if (data->contents == UPDATE_ENTRIES_UPDATE
-	|| data->contents == UPDATE_ENTRIES_PATCH)
+	|| data->contents == UPDATE_ENTRIES_PATCH
+	|| data->contents == UPDATE_ENTRIES_RCS_DIFF)
     {
 	char *size_string;
 	char *mode_string;
 	int size;
-	int fd;
 	char *buf;
 	char *temp_filename;
-	int use_gzip, gzip_status;
-	pid_t gzip_pid = 0;
+	int use_gzip;
+	int patch_failed;
 
 	read_line (&mode_string);
 	
@@ -1527,6 +1561,7 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	sprintf (temp_filename, ".new.%s", filename);
 #endif /* _POSIX_NO_TRUNC */
 #endif /* USE_VMS_FILENAMES */
+
 	buf = xmalloc (size);
 
         /* Some systems, like OS/2 and Windows NT, end lines with CRLF
@@ -1541,51 +1576,74 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	else
 	    bin = 0;
 
-        fd = CVS_OPEN (temp_filename,
-                   O_WRONLY | O_CREAT | O_TRUNC | (bin ? OPEN_BINARY : 0),
-                   0777);
-
-	if (fd < 0)
+	if (data->contents == UPDATE_ENTRIES_RCS_DIFF)
 	{
-	    /* I can see a case for making this a fatal error; for a condition
-	       like disk full or network unreachable (for a file server),
-	       carrying on and giving an error on each file seems unnecessary.
-	       But if it is a permission problem, or some such, then it is
-	       entirely possible that future files will not have the same
-	       problem.  */
-	    error (0, errno, "cannot write %s", short_pathname);
-	    goto discard_file_and_return;
-	}
+	    /* This is an RCS change text.  We just hold the change
+	       text in memory.  */
 
-	if (use_gzip)
-	    fd = filter_through_gunzip (fd, 0, &gzip_pid);
+	    if (use_gzip)
+		error (1, 0,
+		       "server error: gzip invalid with RCS change text");
 
-	if (size > 0)
-	{
 	    read_from_server (buf, size);
-
-	    if (write (fd, buf, size) != size)
-		error (1, errno, "writing %s", short_pathname);
 	}
-
-	if (close (fd) < 0)
-	    error (1, errno, "writing %s", short_pathname);
-	if (gzip_pid > 0)
+	else
 	{
-	    if (waitpid (gzip_pid, &gzip_status, 0) == -1)
-		error (1, errno, "waiting for gzip process %ld",
-		       (long) gzip_pid);
-	    else if (gzip_status != 0)
-		error (1, 0, "gzip process exited %d", gzip_status);
-	}
+	    int fd;
+	    pid_t gzip_pid = 0;
 
-	gzip_pid = -1;
+	    fd = CVS_OPEN (temp_filename,
+			   (O_WRONLY | O_CREAT | O_TRUNC
+			    | (bin ? OPEN_BINARY : 0)),
+			   0777);
+
+	    if (fd < 0)
+	    {
+		/* I can see a case for making this a fatal error; for
+		   a condition like disk full or network unreachable
+		   (for a file server), carrying on and giving an
+		   error on each file seems unnecessary.  But if it is
+		   a permission problem, or some such, then it is
+		   entirely possible that future files will not have
+		   the same problem.  */
+		error (0, errno, "cannot write %s", short_pathname);
+		goto discard_file_and_return;
+	    }
+
+	    if (use_gzip)
+		fd = filter_through_gunzip (fd, 0, &gzip_pid);
+
+	    if (size > 0)
+	    {
+		read_from_server (buf, size);
+
+		if (write (fd, buf, size) != size)
+		    error (1, errno, "writing %s", short_pathname);
+	    }
+
+	    if (close (fd) < 0)
+		error (1, errno, "writing %s", short_pathname);
+	    if (gzip_pid > 0)
+	    {
+		int gzip_status;
+
+		if (waitpid (gzip_pid, &gzip_status, 0) == -1)
+		    error (1, errno, "waiting for gzip process %ld",
+			   (long) gzip_pid);
+		else if (gzip_status != 0)
+		    error (1, 0, "gzip process exited %d", gzip_status);
+	    }
+
+	    gzip_pid = -1;
+	}
 
 	/* Since gunzip writes files without converting LF to CRLF
 	   (a reasonable behavior), we now have a patch file in LF
 	   format.  Leave the file as is if we're just going to feed
 	   it to patch; patch can handle it.  However, if it's the
 	   final source file, convert it.  */
+
+	patch_failed = 0;
 
 	if (data->contents == UPDATE_ENTRIES_UPDATE)
 	{
@@ -1628,7 +1686,7 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 	    rename_file (temp_filename, filename);
 #endif /* LINES_CRLF_TERMINATED */
 	}
-	else
+	else if (data->contents == UPDATE_ENTRIES_PATCH)
 	{
 	    int retcode;
 	    char *backup;
@@ -1674,29 +1732,126 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 		(void) unlink_file (path_tmp);
 		free (path_tmp);
 
-		/* Save this file to retrieve later.  */
-		failed_patches =
-		    (char **) xrealloc ((char *) failed_patches,
-					((failed_patches_count + 1)
-					 * sizeof (char *)));
-		failed_patches[failed_patches_count] =
-		    xstrdup (short_pathname);
-		++failed_patches_count;
-
 		error (retcode == -1 ? 1 : 0, retcode == -1 ? old_errno : 0,
 		       "could not patch %s%s", filename,
 		       retcode == -1 ? "" : "; will refetch");
 
-		stored_checksum_valid = 0;
-
-		free (backup);
-		return;
+		patch_failed = 1;
 	    }
 	    free (backup);
 	}
+	else
+	{
+	    struct stat s;
+	    char *filebuf, *tobuf;
+	    size_t filebufsize;
+	    FILE *e;
+	    size_t nread;
+	    char *patchedbuf;
+	    size_t patchedlen;
+
+	    /* Handle UPDATE_ENTRIES_RCS_DIFF.  */
+
+	    if (!isfile (filename))
+	        error (1, 0, "patch original file %s does not exist",
+		       short_pathname);
+	    if (CVS_STAT (filename, &s) < 0)
+	        error (1, errno, "can't stat %s", short_pathname);
+
+	    filebufsize = s.st_size;
+	    filebuf = xmalloc (filebufsize);
+
+	    e = open_file (filename, bin ? FOPEN_BINARY_READ : "r");
+
+	    tobuf = filebuf;
+	    nread = 0;
+	    while (1)
+	    {
+		size_t got;
+
+		got = fread (tobuf, 1, filebufsize - (tobuf - filebuf), e);
+		if (ferror (e))
+		    error (1, errno, "can't read %s", short_pathname);
+		nread += got;
+		tobuf += got;
+
+		if (feof (e))
+		  break;
+
+		/* It's probably paranoid to think S.ST_SIZE might be
+                   too small to hold the entire file contents, but we
+                   handle it just in case.  */
+		if (tobuf == filebuf + filebufsize)
+		{
+		    int c;
+		    long off;
+
+		    c = getc (e);
+		    if (c == EOF)
+			break;
+		    off = tobuf - filebuf;
+		    expand_string (&filebuf, &filebufsize, filebufsize + 100);
+		    tobuf = filebuf + off;
+		    *tobuf++ = c;
+		    ++nread;
+		}
+	    }
+
+	    fclose (e);
+
+	    /* At this point the contents of the existing file are in
+               FILEBUF, and the length of the contents is in NREAD.
+               The contents of the patch from the network are in BUF,
+               and the length of the patch is in SIZE.  */
+
+	    if (! rcs_change_text (short_pathname, filebuf, nread, buf, size,
+				   &patchedbuf, &patchedlen))
+		patch_failed = 1;
+	    else
+	    {
+		if (stored_checksum_valid)
+		{
+		    struct MD5Context context;
+		    unsigned char checksum[16];
+
+		    /* We have a checksum.  Check it before writing
+		       the file out, so that we don't have to read it
+		       back in again.  */
+		    MD5Init (&context);
+		    MD5Update (&context, (unsigned char *) patchedbuf, patchedlen);
+		    MD5Final (checksum, &context);
+		    if (memcmp (checksum, stored_checksum, 16) != 0)
+		    {
+			error (0, 0,
+			       "checksum failure after patch to %s; will refetch",
+			       short_pathname);
+
+			patch_failed = 1;
+		    }
+
+		    stored_checksum_valid = 0;
+		}
+
+		if (! patch_failed)
+		{
+		    e = open_file (temp_filename,
+				   bin ? FOPEN_BINARY_WRITE : "w");
+		    if (fwrite (patchedbuf, 1, patchedlen, e) != patchedlen)
+			error (1, errno, "cannot write %s", temp_filename);
+		    if (fclose (e) == EOF)
+			error (1, errno, "cannot close %s", temp_filename);
+		    rename_file (temp_filename, filename);
+		}
+
+		free (patchedbuf);
+	    }
+
+	    free (filebuf);
+	}
+
 	free (temp_filename);
 
-	if (stored_checksum_valid)
+	if (stored_checksum_valid && ! patch_failed)
 	{
 	    FILE *e;
 	    struct MD5Context context;
@@ -1739,17 +1894,25 @@ update_entries (data_arg, ent_list, short_pathname, filename)
 		       "checksum failure after patch to %s; will refetch",
 		       short_pathname);
 
-		/* Save this file to retrieve later.  */
-		failed_patches =
-		    (char **) xrealloc ((char *) failed_patches,
-					((failed_patches_count + 1)
-					 * sizeof (char *)));
-		failed_patches[failed_patches_count] =
-		    xstrdup (short_pathname);
-		++failed_patches_count;
-
-		return;
+		patch_failed = 1;
 	    }
+	}
+
+	if (patch_failed)
+	{
+	    /* Save this file to retrieve later.  */
+	    failed_patches = (char **) xrealloc ((char *) failed_patches,
+						 ((failed_patches_count + 1)
+						  * sizeof (char *)));
+	    failed_patches[failed_patches_count] = xstrdup (short_pathname);
+	    ++failed_patches_count;
+
+	    stored_checksum_valid = 0;
+
+	    free (mode_string);
+	    free (buf);
+
+	    return;
 	}
 
         {
@@ -1766,6 +1929,19 @@ update_entries (data_arg, ent_list, short_pathname, filename)
     if (stored_mode_valid)
 	change_mode (filename, stored_mode);
     stored_mode_valid = 0;
+
+    if (stored_modtime_valid)
+    {
+	struct utimbuf t;
+
+	memset (&t, 0, sizeof (t));
+	/* There is probably little point in trying to preserved the
+	   actime (or is there? What about Checked-in?).  */
+	t.modtime = t.actime = stored_modtime;
+	if (utime (filename, &t) < 0)
+	    error (0, errno, "cannot set time on %s", filename);
+	stored_modtime_valid = 0;
+    }
 
     /*
      * Process the entries line.  Do this after we've written the file,
@@ -1892,6 +2068,19 @@ handle_patched (args, len)
 {
     struct update_entries_data dat;
     dat.contents = UPDATE_ENTRIES_PATCH;
+    /* Think this could be UPDATE_ENTRIES_EXISTING, but just in case...  */
+    dat.existp = UPDATE_ENTRIES_EXISTING_OR_NEW;
+    dat.timestamp = NULL;
+    call_in_directory (args, update_entries, (char *)&dat);
+}
+
+static void
+handle_rcs_diff (args, len)
+     char *args;
+     int len;
+{
+    struct update_entries_data dat;
+    dat.contents = UPDATE_ENTRIES_RCS_DIFF;
     /* Think this could be UPDATE_ENTRIES_EXISTING, but just in case...  */
     dat.existp = UPDATE_ENTRIES_EXISTING_OR_NEW;
     dat.timestamp = NULL;
@@ -2722,7 +2911,9 @@ struct response responses[] =
        rs_optional),
     RSP_LINE("Merged", handle_merged, response_type_normal, rs_essential),
     RSP_LINE("Patched", handle_patched, response_type_normal, rs_optional),
+    RSP_LINE("Rcs-diff", handle_rcs_diff, response_type_normal, rs_optional),
     RSP_LINE("Mode", handle_mode, response_type_normal, rs_optional),
+    RSP_LINE("Mod-time", handle_mod_time, response_type_normal, rs_optional),
     RSP_LINE("Removed", handle_removed, response_type_normal, rs_essential),
     RSP_LINE("Remove-entry", handle_remove_entry, response_type_normal,
        rs_optional),
@@ -2928,7 +3119,7 @@ get_responses_and_close ()
     else
 #endif /* NO_SOCKET_TO_FD */
     {
-#if defined(HAVE_KERBEROS) || defined(USE_DIRECT_TCP) || defined(AUTH_CLIENT_SUPPORT)
+#if defined(HAVE_KERBEROS) || defined(AUTH_CLIENT_SUPPORT)
 	if (server_fd != -1)
 	{
 	    if (shutdown (server_fd, 1) < 0)
@@ -2946,7 +3137,7 @@ get_responses_and_close ()
 	    }
 	}
         else
-#endif /* HAVE_KERBEROS || USE_DIRECT_TCP || AUTH_CLIENT_SUPPORT */
+#endif
           
 #ifdef SHUTDOWN_SERVER
 	    SHUTDOWN_SERVER (fileno (to_server_fp));
@@ -3224,7 +3415,7 @@ connect_to_pserver (tofdp, fromfdp, verify_only)
 #endif /* AUTH_CLIENT_SUPPORT */
 
 
-#if HAVE_KERBEROS || USE_DIRECT_TCP
+#if HAVE_KERBEROS
 
 /*
  * FIXME: this function has not been changed to deal with
@@ -3252,14 +3443,6 @@ start_tcp_server (tofdp, fromfdp)
 #endif /* HAVE_KERBEROS */
 
     int status;
-
-#ifndef HAVE_KERBEROS
-    /* It is a crock to have :kserver: sometimes mean kerberos,
-       and sometimes mean "direct tcp", based on USE_DIRECT_TCP.
-       If we need the "direct tcp" stuff, we need a new access method,
-       like :direct: or something.  */
-    error (1, 0, "this CVS executable does not support kerberos");
-#endif
 
     /*
      * We look up the host to give a better error message if it
@@ -3379,7 +3562,7 @@ start_tcp_server (tofdp, fromfdp)
     *fromfdp = fromfd;
 }
 
-#endif /* HAVE_KERBEROS || USE_DIRECT_TCP */
+#endif /* HAVE_KERBEROS */
 
 static int send_variable_proc PROTO ((Node *, void *));
 
@@ -3419,14 +3602,19 @@ start_server ()
 	    break;
 #endif
 
-#if HAVE_KERBEROS || USE_DIRECT_TCP
+#if HAVE_KERBEROS
 	case kserver_method:
 	    start_tcp_server (&tofd, &fromfd);
 	    break;
 #endif
 
 	case ext_method:
+#if defined (NO_EXT_METHOD)
+	    error (0, 0, ":ext: method not supported by this port of CVS");
+	    error (1, 0, "try :server: instead");
+#else
 	    start_rsh_server (&tofd, &fromfd);
+#endif
 	    break;
 
 	case server_method:
@@ -3735,6 +3923,8 @@ the :server: access method is not supported by this port of CVS");
 	walklist (variable_list, send_variable_proc, NULL);
 }
 
+#ifndef NO_EXT_METHOD
+
 /* Contact the server by starting it with rsh.  */
 
 /* Right now, we have two different definitions for this function,
@@ -3896,9 +4086,12 @@ start_rsh_server (tofdp, fromfdp)
 	if (rsh_pid < 0)
 	    error (1, errno, "cannot start server via rsh");
     }
+    free (command);
 }
 
 #endif /* START_RSH_WITH_POPEN_RW */
+
+#endif /* NO_EXT_METHOD */
 
 
 
@@ -3929,6 +4122,10 @@ send_arg (string)
 }
 
 static void send_modified PROTO ((char *, char *, Vers_TS *));
+
+/* VERS->OPTIONS specifies whether the file is binary or not.  NOTE: BEFORE
+   using any other fields of the struct vers, we would need to fix
+   client_process_import_file to set them up.  */
 
 static void
 send_modified (file, short_pathname, vers)
@@ -4004,8 +4201,8 @@ send_modified (file, short_pathname, vers)
 #endif /* LINES_CRLF_TERMINATED */
 
 #ifdef LINES_CRLF_TERMINATED
-	/* Assume everything in a "cvs import" is text.  */
 	if (vers == NULL)
+	    /* "Can't happen".  */
 	    converting = 1;
 	else
             /* Otherwise, we convert things unless they're binary. */
@@ -4444,8 +4641,6 @@ send_file_names (argc, argv, flags)
     unsigned int flags;
 {
     int i;
-    char *p;
-    char *q;
     int level;
     int max_level;
 
@@ -4458,25 +4653,9 @@ send_file_names (argc, argv, flags)
     max_level = 0;
     for (i = 0; i < argc; ++i)
     {
-	p = argv[i];
-	level = 0;
-	do
-	{
-	    q = strchr (p, '/');
-	    if (q != NULL)
-		++q;
-	    if (p[0] == '.' && p[1] == '.' && (p[2] == '\0' || p[2] == '/'))
-	    {
-		--level;
-		if (-level > max_level)
-		    max_level = -level;
-	    }
-	    else if (p[0] == '.' && (p[1] == '\0' || p[1] == '/'))
-		;
-	    else
-		++level;
-	    p = q;
-	} while (p != NULL);
+	level = pathname_levels (argv[i]);
+	if (level > max_level)
+	    max_level = level;
     }
     if (max_level > 0)
     {
@@ -4637,16 +4816,19 @@ client_import_setup (repository)
  * Process the argument import file.
  */
 int
-client_process_import_file (message, vfile, vtag, targc, targv, repository)
+client_process_import_file (message, vfile, vtag, targc, targv, repository,
+                            all_files_binary)
     char *message;
     char *vfile;
     char *vtag;
     int targc;
     char *targv[];
     char *repository;
+    int all_files_binary;
 {
     char *update_dir;
     char *fullname;
+    Vers_TS vers;
 
     assert (toplevel_repos != NULL);
 
@@ -4671,7 +4853,18 @@ client_process_import_file (message, vfile, vtag, targc, targv, repository)
     }
 
     send_a_repository ("", repository, update_dir);
-    send_modified (vfile, fullname, NULL);
+    if (all_files_binary)
+    {
+	vers.options = xmalloc (4); /* strlen("-kb") + 1 */
+	strcpy (vers.options, "-kb");
+    }
+    else
+    {
+	vers.options = wrap_rcsoption (vfile, 1);
+    }
+    send_modified (vfile, fullname, &vers);
+    if (vers.options != NULL)
+	free (vers.options);
     free (fullname);
     return 0;
 }
@@ -4732,6 +4925,7 @@ notified_a_file (data, ent_list, short_pathname, filename)
     {
 	if (feof (fp))
 	{
+	    free (line);
 	    if (fclose (fp) < 0)
 		error (0, errno, "cannot close %s", CVSADM_NOTIFY);
 	    if ( CVS_UNLINK (CVSADM_NOTIFY) < 0)
@@ -4774,6 +4968,7 @@ notified_a_file (data, ent_list, short_pathname, filename)
 	error (0, errno, "cannot close %s", CVSADM_NOTIFYTMP);
 	goto error_exit;
     }
+    free (line);
     if (fclose (fp) < 0)
     {
 	error (0, errno, "cannot close %s", CVSADM_NOTIFY);
@@ -4792,6 +4987,7 @@ notified_a_file (data, ent_list, short_pathname, filename)
   error2:
     (void) fclose (newf);
   error_exit:
+    free (line);
     (void) fclose (fp);
 }
 

@@ -1,3 +1,16 @@
+Mon Jun 16 13:49:39 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h, rcmd.h, rcmd.c: Add "copyright" notice.
+
+Sun Jun  8 23:41:56 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h (HAVE_MKFIFO): Remove; not used anywhere.
+
+Wed Apr 30 12:45:50 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* icc.compilation-errors: Removed; it was the error messages from
+	trying to compile CVS on OS/2, way out of date.
+
 Wed Mar 12 16:10:01 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* config.h (HAVE_SETVBUF): Removed; no longer used.

@@ -169,7 +169,7 @@ extern char *toplevel_wd;
 extern void client_import_setup PROTO((char *repository));
 extern int client_process_import_file
     PROTO((char *message, char *vfile, char *vtag,
-	   int targc, char *targv[], char *repository));
+	   int targc, char *targv[], char *repository, int all_files_binary));
 extern void client_import_done PROTO((void));
 extern void client_notify PROTO((char *, char *, char *, int, char *));
 #endif /* CLIENT_SUPPORT */

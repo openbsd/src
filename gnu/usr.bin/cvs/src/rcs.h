@@ -124,3 +124,9 @@ int RCS_deltag PROTO ((RCSNode *, const char *, int));
 int RCS_setbranch PROTO((RCSNode *, const char *));
 int RCS_lock PROTO ((RCSNode *, const char *, int));
 int RCS_unlock PROTO ((RCSNode *, const char *, int));
+int rcs_change_text PROTO ((const char *, char *, size_t, const char *,
+			    size_t, char **, size_t *));
+
+/* From import.c.  */
+extern int add_rcs_file PROTO ((char *, char *, char *, char *,
+				char *, char *, int, char **, FILE *));

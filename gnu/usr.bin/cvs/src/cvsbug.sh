@@ -7,8 +7,6 @@
 # This file is part of GNU GNATS.
 # Modified by Berliner for CVS.
 #
-#ident	"@(#)cvs/src:$Name:  $:$Id: cvsbug.sh,v 1.1.1.3 1997/02/21 06:37:08 tholo Exp $"
-#
 # GNU GNATS is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 2, or (at your option)
@@ -233,11 +231,14 @@ fi
 
 case "$FORMAT" in
   lisp) echo "$CATEGORIES" | \
-        awk 'BEGIN {printf "( "} {printf "(\"%s\") ",$0} END {printf ")\n"}'
+        awk 'BEGIN {printf "( "}
+	     {printf "(\"%s\") ",$0}
+	     END {printf ")\n"}'
         exit 0
         ;;
   norm) l=`echo "$CATEGORIES" | \
-	awk 'BEGIN {max = 0; } { if (length($0) > max) { max = length($0); } }
+	awk 'BEGIN {max = 0; }
+	     { if (length($0) > max) { max = length($0); } }
 	     END {print max + 1;}'`
 	c=`expr 70 / $l`
 	if [ $c -eq 0 ]; then c=1; fi
@@ -312,7 +313,8 @@ __EOF__
 
       # Format the categories so they fit onto lines.
 	l=`echo "$CATEGORIES" | \
-	awk 'BEGIN {max = 0; } { if (length($0) > max) { max = length($0); } }
+	awk 'BEGIN {max = 0; }
+	     { if (length($0) > max) { max = length($0); } }
 	     END {print max + 1;}'`
 	c=`expr 61 / $l`
 	if [ $c -eq 0 ]; then c=1; fi

@@ -1,0 +1,66 @@
+
+CVS for OS/2
+based on EMX 0.9c (patch 02)
+
+
+This port works well in local mode.  It fully respects the OS/2
+filename conventions, but only works on HPFS or other filesystem types
+which support long filenames (like ext2fs or Netware FS with OS/2
+namespace).  It does _not_ work on FAT partitions or any other fs which
+does not support long filenames.  The port also works in client mode.
+
+This port requires EMX 0.9c (patch 02) and the BSD libraries.  It should
+work in local mode, in client mode and also in server mode.  nServer mode
+will only work if the client uses the :server: method, because the CRLF
+handling of IBM's RSHD.EXE is not "compatible" with CVS.  (If you find a
+better rshd for OS/2, please let us know!)
+
+To compile CVS for OS/2, you must install the following packages:
+
+ - EMX 0.9c (patch 02) and the GNU-C-Compiler
+
+      EMXDEV1.ZIP
+      EMXDEV2.ZIP
+      EMXRT.ZIP
+      GNUDEV1.ZIP
+      GNUDEV2.ZIP
+      BSDDEV.ZIP
+      EMXFIX02.ZIP
+
+ - GNU make for OS/2
+
+      GNUMAKE.ZIP
+
+ - ufc.a (ufc-crypt) as a replacement for crypt (this may be something
+   different if you live inside the USA).  You don't need this one currently,
+   because the port of the server to OS/2 isn't done yet, but I'm mentioning
+   in case it is useful for future reference (we're probably better off
+   using a different password hash instead, as noted in item #184 of ../TODO).
+
+      GNUUFC.ZIP
+
+All packages can be found on ftp://ftp.leo.org/pub/comp/os/os2/leo/gnu
+(You may also try http://www.leo.org/pub/comp/os/os2/leo/gnu).
+
+Change to the `emx' directory, do "make" and get emx\cvs.exe.  Assuming
+you have edited the `install_dir' variable in the Makefile, you may type
+"make install-cvs" to put cvs.exe in the right place.  You may also "make
+clean-cvs" to clean up object and library files.
+
+The cvs.exe generated will require emx.dll to run.  You can try
+compiling with -Zomf -Zsys to generate a cvs.exe without this
+requirement, but that almost surely will require significant changes
+to make it work.  For the client, the big known problem would be that
+EMX 0.9c doesn't have sockets with -Zsys (according to the
+documentation).  That seems like it would be hard to get around.  For
+local, the big known problem is that -Zsys doesn't have fork().  This
+one isn't as bad--using os2/run.c or something similar instead of
+src/run.c should solve this problem.
+
+You will get warnings in lib/getdate.c.  These are yacc's fault; ignore
+them.
+
+You will get about 5 warnings in lib/regex.c concerning "unused variable
+destination".  Ignore them.
+
+Report bugs to tepting@swol.de and bug-cvs@prep.ai.mit.edu.

@@ -19,14 +19,6 @@
 
 #include "cvs.h"
 
-/*
- * I don't know of a convenient way to test this at configure time, or else
- * I'd certainly do it there.
- */
-#if defined(NeXT)
-#define LOSING_TMPNAM_FUNCTION
-#endif
-
 static int deep_remove_dir PROTO((const char *path));
 
 /*
@@ -624,38 +616,51 @@ xcmp (file1, file2)
     return (ret);
 }
 
-/* Just in case this implementation does not define this.  */
-#ifndef L_tmpnam
-#define	L_tmpnam 50
-#endif
-
-#ifdef LOSING_TMPNAM_FUNCTION
-char *
-cvs_temp_name ()
-{
-    char value[L_tmpnam + 1];
-
-    /* FIXME: Should be using TMPDIR.  */
-    strcpy (value, "/tmp/cvsXXXXXX");
-    mktemp (value);
-    return xstrdup (value);
-}
-#else
 /* Generate a unique temporary filename.  Returns a pointer to a newly
    malloc'd string containing the name.  Returns successfully or not at
    all.  */
+/* There are at least three functions for generating temporary
+   filenames.  We use tempnam (SVID 3) if possible, else mktemp (BSD
+   4.3), and as last resort tmpnam (POSIX). Reason is that tempnam and
+   mktemp both allow to specify the directory in which the temporary
+   file will be created.  */
+#ifdef HAVE_TEMPNAM
 char *
 cvs_temp_name ()
 {
+    char *retval;
+
+    retval = tempnam (Tmpdir, "cvs");
+    if (retval == NULL)
+	error (1, errno, "cannot generate temporary filename");
+    /* tempnam returns a pointer to a newly malloc'd string, so there's
+       no need for a xstrdup  */
+    return retval;
+}
+#else
+char *
+cvs_temp_name ()
+{
+#  ifdef HAVE_MKTEMP
+    char *value;
+    char *retval;
+
+    value = xmalloc (strlen (Tmpdir) + 40);
+    sprintf (value, "%s/%s", Tmpdir, "cvsXXXXXX" );
+    retval = mktemp (value);
+
+    if (retval == NULL)
+	error (1, errno, "cannot generate temporary filename");
+    return value;
+#  else
     char value[L_tmpnam + 1];
     char *retval;
 
-    /* FIXME: should be using TMPDIR, perhaps by using tempnam on systems
-       which have it.  */
     retval = tmpnam (value);
     if (retval == NULL)
 	error (1, errno, "cannot generate temporary filename");
-    return xstrdup (retval);
+    return xstrdup (value);
+#  endif
 }
 #endif
 

@@ -31,6 +31,14 @@
 @c indeed  seem to be the usual approach (according to
 @c an internet draft by Jacob Palme).
 
+@c This document seems to get overfull hboxes with some
+@c frequency (probably because the tendency is to
+@c sanity-check it with "make info" and run TeX less
+@c often).  The big ugly boxes just seem to add insult
+@c to injury, and I'm not aware of them helping to fix
+@c the overfull hboxes at all.
+@finalout
+
 @setfilename cvs.info
 @include CVSvn.texi
 @settitle CVS---Concurrent Versions System
@@ -206,34 +214,6 @@ every @sc{cvs} command is gathered together.  There is also
 an extensive index, and a lot of cross references.
 @end itemize
 
-@cindex Signum Support
-@cindex Support, getting CVS support
-This manual was contributed by Signum Support AB in
-Sweden.  Signum is yet another in the growing list of
-companies that support free software.  You are free to
-copy both this manual and the @sc{cvs} program.
-@xref{Copying}, for the details.  Signum Support offers
-@c -- Check this reference! It has been bogus in the past.
-support contracts and binary distribution for many
-programs, such as @sc{cvs}, @sc{gnu} Emacs, the
-@sc{gnu} C compiler and others.  Write to us for
-more information.
-
-@example
-Signum Support AB
-Box 2044
-S-580 02  Linkoping
-Sweden
-
-Email: info@@signum.se
-Phone: +46 (0)13 - 21 46 00
-Fax:   +46 (0)13 - 21 47 00
-@end example
-
-Another company selling support for @sc{cvs} is Cyclic
-Software, web: @code{http://www.cyclic.com/}, email:
-@code{info@@cyclic.com}.
-
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @menu
 * Checklist::                   
@@ -280,8 +260,8 @@ to use it.
 @cindex Credits (manual)
 Roland Pesch, then of Cygnus Support <@t{roland@@wrs.com}>
 wrote the manual pages which were distributed with
-@sc{cvs} 1.3.  Appendix A and B contain much text that
-was extracted from them.  He also read an early draft
+@sc{cvs} 1.3.  Much of their text was copied into this
+manual.  He also read an early draft
 of this manual and contributed many ideas and
 corrections.
 
@@ -301,6 +281,8 @@ use @sc{cvs}, at least).
 
 In addition, the following persons have helped by
 telling me about mistakes I've made:
+
+@display
 Roxanne Brunskill <@t{rbrunski@@datap.ca}>,
 Kathy Dyer <@t{dyer@@phoenix.ocf.llnl.gov}>,
 Karl Pingle <@t{pingle@@acuson.com}>,
@@ -308,55 +290,122 @@ Thomas A Peterson <@t{tap@@src.honeywell.com}>,
 Inge Wallin <@t{ingwa@@signum.se}>,
 Dirk Koschuetzki <@t{koschuet@@fmi.uni-passau.de}>
 and Michael Brown <@t{brown@@wi.extrel.com}>.
+@end display
+
+The list of contributors here is not comprehensive; for a more
+complete list of who has contributed to this manual see
+the file @file{doc/ChangeLog} in the @sc{cvs} source
+distribution.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node BUGS
 @unnumberedsec BUGS
 
-@cindex Bugs, known in this manual
-@cindex Known bugs in this manual
-This manual is known to have room for improvement.
-Here is a list of known deficiencies:
+@cindex Bugs in this manual or CVS
+Neither @sc{cvs} nor this manual is perfect, and they
+probably never will be.  If you are having trouble
+using @sc{cvs}, or think you have found a bug, there
+are a number of things you can do about it.  Note that
+if the manual is unclear, that can be considered a bug
+in the manual, so these problems are often worth doing
+something about as well as problems with @sc{cvs} itself.
 
+@cindex Reporting bugs
+@cindex Bugs, reporting
+@cindex Errors, reporting
 @itemize @bullet
 @item
-In the examples, the output from @sc{cvs} is sometimes
-displayed, sometimes not.
+If you want someone to help you and fix bugs that you
+report, there are companies which will do that for a
+fee.  Two such companies are:
+
+@cindex Signum Support
+@cindex Cyclic Software
+@cindex Support, getting CVS support
+@example
+Signum Support AB
+Box 2044
+S-580 02  Linkoping
+Sweden
+Email: info@@signum.se
+Phone: +46 (0)13 - 21 46 00
+Fax:   +46 (0)13 - 21 47 00
+http://www.signum.se/
+
+Cyclic Software
+United States of America
+http://www.cyclic.com/
+info@@cyclic.com
+@end example
 
 @item
-The input that you are supposed to type in the examples
-should have a different font than the output from the
-computer.
+If you got @sc{cvs} through a distributor, such as an
+operating system vendor or a vendor of freeware
+@sc{cd-rom}s, you may wish to see whether the
+distributor provides support.  Often, they will provide
+no support or minimal support, but this may vary from
+distributor to distributor.
 
 @item
-This manual should be clearer about what file
-permissions you should set up in the repository, and
-about setuid/setgid.
+If you have the skills and time to do so, you may wish
+to fix the bug yourself.  If you wish to submit your
+fix for inclusion in future releases of @sc{cvs}, see
+the file @sc{hacking} in the @sc{cvs} source
+distribution.  It contains much more information on the
+process of submitting fixes.
 
 @item
-Some of the chapters are not yet complete.  They are
-noted by comments in the @file{cvs.texinfo} file.
+There may be resources on the net which can help.  Two
+good places to start are:
+
+@example
+http://www.cyclic.com
+  @r{particularly the Unsupported Resources page}
+http://www.loria.fr/~molli/cvs-index.html
+@end example
+
+If you are so inspired, increasing the information
+available on the net is likely to be appreciated.  For
+example, before the standard @sc{cvs} distribution
+worked on Windows 95, there was a web page with some
+explanation and patches for running @sc{cvs} on Windows
+95, and various people helped out by mentioning this
+page on mailing lists or newsgroups when the subject
+came up.
 
 @item
-@cindex Reporting bugs (manual)
-@cindex Bugs, reporting (manual)
-@cindex Errors, reporting (manual)
-This list is not complete.  If you notice any error,
-omission, or something that is unclear, please send
-mail to @t{bug-cvs@@prep.ai.mit.edu}.  This is also the
-address for reporting bugs in @sc{cvs}.
-@c FIXME: There is a lot more to say on this, when we
-@c get around to writing it up.
+It is also possible to report bugs to @code{bug-cvs}.
+Note that someone may or may not want to do anything
+with your bug report---if you need a solution consider
+one of the options mentioned above.  People probably do
+want to hear about bugs which are particularly severe
+in consequences and/or easy to fix, however.  You can
+also increase your odds by being as clear as possible
+about the exact nature of the bug and any other
+relevant information.  The way to report bugs is to
+send email to @code{bug-cvs@@prep.ai.mit.edu}.  Note
+that submissions to @code{bug-cvs} may be distributed
+under the terms of the @sc{gnu} Public License, so if
+you don't like this, don't submit them.  There is
+usually no justification for sending mail directly to
+one of the @sc{cvs} maintainers rather than to
+@code{bug-cvs}; those maintainers who want to hear
+about such bug reports read @code{bug-cvs}.  Also note
+that sending a bug report to other mailing lists or
+newsgroups is @emph{not} a substitute for sending it to
+@code{bug-cvs}.  It is fine to discuss @sc{cvs} bugs on
+whatever forum you prefer, but there are not
+necessarily any maintainers reading bug reports sent
+anywhere except @code{bug-cvs}.
 @end itemize
 
-I hope that you will find this manual useful, despite
-the above-mentioned shortcomings.
-
-@flushright
-
-Linkoping, October 1993
-Per Cederqvist
-@end flushright
+@cindex Known bugs in this manual or CVS
+People often ask if there is a list of known bugs or
+whether a particular bug is a known one.  The file
+@sc{bugs} in the @sc{cvs} source distribution is one
+list of known bugs, but it doesn't necessarily try to
+be comprehensive.  Perhaps there will never be a
+comprehensive, detailed list of known bugs.
 
 @c ---------------------------------------------------------------------
 @node What is CVS?
@@ -404,7 +453,8 @@ the work when each developer is done.
 @cindex Credits (CVS program)
 @cindex Contributors (CVS program)
 @sc{cvs} started out as a bunch of shell scripts written by
-Dick Grune, posted to @code{comp.sources.unix} in the volume 6
+Dick Grune, posted to the newsgroup
+@code{comp.sources.unix} in the volume 6
 release of December, 1986.  While no actual code from
 these shell scripts is present in the current version
 of @sc{cvs} much of the @sc{cvs} conflict resolution algorithms
@@ -462,21 +512,9 @@ if there is sufficient @sc{cvs} traffic on
 @c would need to take a more comprehensive look at the
 @c whole comp.software.config-mgmt.* hierarchy).
 
-@cindex Reporting bugs (CVS)
-@cindex Bugs, reporting (CVS)
-@cindex Errors, reporting (CVS)
-To report bugs in @sc{cvs} send mail to
-@code{bug-cvs@@prep.ai.mit.edu}.  Do note that someone
-may or may not feel like taking care of your bug
-report---if you need a response consider a support
-contract from Cyclic Software
-(@code{http://www.cyclic.com} or
-@code{info@@cyclic.com}).  This is also the procedure
-for submitting suggested changes to @sc{cvs} (see the file
-@sc{hacking} in the source distribution for more details).
-Note that all submitted changes may be distributed
-under the terms of the @sc{gnu} Public License, so if you
-don't like this, don't submit them.
+You can also subscribe to the bug-cvs mailing list,
+described in more detail in @ref{BUGS}.  To subscribe
+send mail to bug-cvs-request@@prep.ai.mit.edu.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @unnumberedsec CVS is not@dots{}
@@ -884,13 +922,20 @@ control.
 
 Normally, you never access any of the files in the
 repository directly.  Instead, you use @sc{cvs}
-commands to get your own copy of the files, and then
+commands to get your own copy of the files into a
+@dfn{working directory}, and then
 work on that copy.  When you've finished a set of
 changes, you check (or @dfn{commit}) them back into the
 repository.  The repository then contains the changes
 which you have made, as well as recording exactly what
 you changed, when you changed it, and other such
-information.
+information.  Note that the repository is not a
+subdirectory of the working directory, or vice versa;
+they should be in separate locations.
+@c Need some example, e.g. repository
+@c /usr/local/cvsroot; working directory
+@c /home/joe/sources.  But this node is too long
+@c as it is; need a little reorganization...
 
 @cindex :local:
 @sc{Cvs} can access a repository by a variety of
@@ -934,8 +979,11 @@ user-defined modules.
 * Intro administrative files::  Defining modules
 * Multiple repositories::       Multiple repositories
 * Creating a repository::       Creating a repository
+* Backing up::                  Backing up a repository
+* Moving a repository::         Moving a repository
 * Remote repositories::         Accessing repositories on remote machines
 * Read-only access::            Granting read-only access to the repository
+* Server temporary directory::  The server creates temporary directories
 @end menu
 
 @node Specifying a repository
@@ -1022,8 +1070,14 @@ the file permissions appropriate for the repository.
 The overall structure of the repository is a directory
 tree corresponding to the directories in the working
 directory.  For example, supposing the repository is in
-@file{/usr/local/cvsroot}, here is a possible directory
-tree (showing only the directories):
+
+@example
+/usr/local/cvsroot
+@end example
+
+@noindent
+here is a possible directory tree (showing only the
+directories):
 
 @example
 @t{/usr}
@@ -1171,6 +1225,18 @@ typical for newly created files, except that sometimes
 @sc{cvs} creates them read-only (see the sections on
 watches, @ref{Setting a watch}; -r, @ref{Global
 options}; or CVSREAD, @ref{Environment variables}).
+@c FIXME: Need more discussion of which users and
+@c groups should own the file in the repository.
+@c Include a somewhat detailed example of the usual
+@c case where CVSUMASK is 007, the developers are all
+@c in a group, and that group owns stuff in the
+@c repository.  Need to talk about group ownership of
+@c newly-created directories/files (on some unices,
+@c such as SunOS4, setting the setgid bit on the
+@c directories will make files inherit the directory's
+@c group.  On other unices, your mileage may vary.  I
+@c can't remember what POSIX says about this, if
+@c anything).
 
 Note that using the client/server @sc{cvs}
 (@pxref{Remote repositories}), there is no good way to
@@ -1238,6 +1304,13 @@ non-@code{dead} state.
 
 @node Working directory storage
 @section How data is stored in the working directory
+
+@c FIXME: Somewhere we should discuss timestamps (test
+@c case "stamps" in sanity.sh).  But not here.  Maybe
+@c in some kind of "working directory" chapter which
+@c would encompass the "Builds" one?  But I'm not sure
+@c whether that is a good organization (is it based on
+@c what the user wants to do?).
 
 While we are discussing @sc{cvs} internals which may
 become visible from time to time, we might as well talk
@@ -1323,7 +1396,16 @@ revision for a removed file.  @var{timestamp} is the
 timestamp of the file at the time that @sc{cvs} created
 it; if the timestamp differs with the actual
 modification time of the file it means the file has
-been modified.  @var{conflict} indicates that there was
+been modified.  It is in Universal Time (UT), stored in
+the format used by the ISO C asctime() function (for
+example, @samp{Sun Apr  7 01:29:26 1996}).  One may
+write a string which is not in that format, for
+example, @samp{Result of merge}, to indicate that the
+file should always be considered to be modified.  This
+is not a special case; to see whether a file is
+modified a program should take the timestamp of the file
+and simply do a string compare with @var{timestamp}.
+@var{conflict} indicates that there was
 a conflict; if it is the same as the actual
 modification time of the file it means that the user
 has obviously not resolved the conflict.  @var{options}
@@ -1363,6 +1445,12 @@ the information without having to rewrite the entire
 @file{Entries} file, including the ability to preserve
 the information even if the program writing
 @file{Entries} and @file{Entries.Log} abruptly aborts.
+Programs which are reading the @file{Entries} file
+should also check for @file{Entries.Log}.  If the latter
+exists, they should read @file{Entries} and then apply
+the changes mentioned in @file{Entries.Log}.  After
+applying the changes, the recommended practice is to
+rewrite @file{Entries} and then delete @file{Entries.Log}.
 The format of a line in @file{Entries.Log} is a single
 character command followed by a space followed by a
 line in the format specified for a line in
@@ -1636,6 +1724,93 @@ repository.
 don't want that, remove the history file after running
 @code{cvs init}.  @xref{history file}.
 
+@node Backing up
+@section Backing up a repository
+@cindex Repository, backing up
+@cindex Backing up, repository
+
+There is nothing particularly magical about the files
+in the repository; for the most part it is possible to
+back them up just like any other files.  However, there
+are a few issues to consider.
+
+The first is that to be paranoid, one should either not
+use @sc{cvs} during the backup, or have the backup
+program lock @sc{cvs} while doing the backup.  To not
+use @sc{cvs}, you might forbid logins to machines which
+can access the repository, turn off your @sc{cvs}
+server, or similar mechanisms.  The details would
+depend on your operating system and how you have
+@sc{cvs} set up.  To lock @sc{cvs}, you would create
+@file{#cvs.rfl} locks in each repository directory.
+See @ref{Concurrency}, for more on @sc{cvs} locks.
+Having said all this, if you just back up without any
+of these precautions, the results are unlikely to be
+particularly dire.  Restoring from backup, the
+repository might be in an inconsistent state, but this
+would not be particularly hard to fix manually.
+
+When you restore a repository from backup, assuming
+that changes in the repository were made after the time
+of the backup, working directories which were not
+affected by the failure may refer to revisions which no
+longer exist in the repository.  Trying to run @sc{cvs}
+in such directories will typically produce an error
+message.  One way to get those changes back into the
+repository is as follows:
+
+@itemize @bullet
+@item
+Get a new working directory.
+
+@item
+Copy the files from the working directory from before
+the failure over to the new working directory (do not
+copy the contents of the @file{CVS} directories, of
+course).
+
+@item
+Working in the new working directory, use commands such
+as @code{cvs update} and @code{cvs diff} to figure out
+what has changed, and then when you are ready, commit
+the changes into the repository.
+@end itemize
+
+@node Moving a repository
+@section Moving a repository
+@cindex repository, moving
+@cindex moving a repository
+@cindex copying a repository
+
+Just as backing up the files in the repository is
+pretty much like backing up any other files, if you
+need to move a repository from one place to another it
+is also pretty much like just moving any other
+collection of files.
+
+The main thing to consider is that working directories
+point to the repository.  The simplest way to deal with
+a moved repository is to just get a fresh working
+directory after the move.  Of course, you'll want to
+make sure that the old working directory had been
+checked in before the move, or you figured out some
+other way to make sure that you don't lose any
+changes.  If you really do want to reuse the existing
+working directory, it should be possible with manual
+surgery on the @file{CVS/Repository} files.  You can
+see @ref{Working directory storage}, for information on
+the @file{CVS/Repository} and @file{CVS/Root} files, but
+unless you are sure you want to bother, it probably
+isn't worth it.
+@c FIXME: This should be made unnecessary by:
+@c 1) a new -d should affect CVS/Root files throughout
+@c the tree, not just at the top level.
+@c 2) the RELATIVE_REPOS code should be fixed and made the
+@c default.  I think that CVS already reads
+@c CVS/Repository files which are absolute or
+@c relative.  FIXME: needs more investigation and
+@c documentation in "Working directory storage".
+
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Remote repositories
 @section Remote repositories
@@ -1749,19 +1924,19 @@ operations, so the remote user host needs to have a
 user.
 
 For example, suppose you are the user @file{mozart} on
-the local machine @file{anklet.grunge.com}, and the
-server machine is @file{chainsaw.brickyard.com}.  On
+the local machine @file{toe.grunge.com}, and the
+server machine is @file{chainsaw.yard.com}.  On
 chainsaw, put the following line into the file
 @file{.rhosts} in @file{bach}'s home directory:
 
 @example
-anklet.grunge.com  mozart
+toe.grunge.com  mozart
 @end example
 
 Then test that @code{rsh} is working with
 
 @example
-rsh -l bach chainsaw.brickyard.com 'echo $PATH'
+rsh -l bach chainsaw.yard.com 'echo $PATH'
 @end example
 
 @cindex CVS_SERVER
@@ -1817,10 +1992,10 @@ replacement.
 Continuing our example, supposing you want to access
 the module @file{foo} in the repository
 @file{/usr/local/cvsroot/}, on machine
-@file{chainsaw.brickyard.com}, you are ready to go:
+@file{chainsaw.yard.com}, you are ready to go:
 
 @example
-cvs -d :ext:bach@@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
+cvs -d :ext:bach@@chainsaw.yard.com:/usr/local/cvsroot checkout foo
 @end example
 
 (The @file{bach@@} can be omitted if the username is
@@ -1873,12 +2048,18 @@ single line in @file{inetd.conf}) should be sufficient:
 
 @example
 2401  stream  tcp  nowait  root  /usr/local/bin/cvs
-cvs -b /usr/local/bin pserver
+cvs -b /usr/local/bin --allow-root=/usr/cvsroot pserver
 @end example
 
 The @samp{-b} option specifies the directory which contains
 the @sc{rcs} binaries on the server.  You could also use the
 @samp{-T} option to specify a temporary directory.
+
+The @samp{--allow-root} option specifies the allowable
+@sc{cvsroot} directory.  Clients which attempt to use a
+different @sc{cvsroot} directory will not be allowed to
+connect.  If there is more than one @sc{cvsroot}
+directory which you want to allow, repeat the option.
 
         If your @code{inetd} wants a symbolic service
 name instead of a raw port number, then put this in
@@ -1956,11 +2137,11 @@ anyone:1sOp854gDF3DY:spwang
 @end example
 
         Thus, someone remotely accessing the repository
-on @file{chainsaw.brickyard.com} with the following
+on @file{chainsaw.yard.com} with the following
 command:
 
 @example
-cvs -d :pserver:cvs@@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
+cvs -d :pserver:cvs@@chainsaw.yard.com:/usr/local/cvsroot checkout foo
 @end example
 
         would end up running the server under the
@@ -1988,6 +2169,8 @@ passwd} command.
 @c would open up a can of worms in that the users next
 @c questions are likely to be "where do I get it?" and
 @c "how do I use it?"
+@c Also note that htpasswd, at least the version I had,
+@c likes to clobber the third field.
 
 @node Password authentication client
 @subsubsection Using the client with password authentication
@@ -2008,7 +2191,7 @@ argument or the @code{CVSROOT} environment variable.
 password:
 
 @example
-cvs -d :pserver:bach@@chainsaw.brickyard.com:/usr/local/cvsroot login 
+cvs -d :pserver:bach@@chainsaw.yard.com:/usr/local/cvsroot login 
 CVS password: 
 @end example
 
@@ -2021,7 +2204,7 @@ connect directly to the server and authenticate with
 the stored password:
 
 @example
-cvs -d :pserver:bach@@chainsaw.brickyard.com:/usr/local/cvsroot checkout foo
+cvs -d :pserver:bach@@chainsaw.yard.com:/usr/local/cvsroot checkout foo
 @end example
 
 The @samp{:pserver:} is necessary because without it,
@@ -2136,7 +2319,7 @@ which allows you to log into the server machine.  Then
 you are ready to go:
 
 @example
-cvs -d :kserver:chainsaw.brickyard.com:/user/local/cvsroot checkout foo
+cvs -d :kserver:chainsaw.yard.com:/user/local/cvsroot checkout foo
 @end example
 
 Previous versions of @sc{cvs} would fall back to a
@@ -2185,16 +2368,22 @@ jrandom
         (Don't forget the newline after the last user.)
 
         "Exclusion" means explicitly listing everyone
-who has @emph{write} access---if the
-@file{$CVSROOT/CVSROOT/writers} file exists, then only
+who has @emph{write} access---if the file
+
+@example
+$CVSROOT/CVSROOT/writers
+@end example
+
+@noindent
+exists, then only
 those users listed in it have write access, and
 everyone else has read-only access (of course, even the
 read-only users still need to be listed in the
-@file{$CVSROOT/CVSROOT/passwd} file).  The
+@sc{cvs} @file{passwd} file).  The
 @file{writers} file has the same format as the
 @file{readers} file.
 
-        Note: if your @file{$CVSROOT/CVSROOT/passwd}
+        Note: if your @sc{cvs} @file{passwd}
 file maps cvs users onto system users (@pxref{Password
 authentication server}), make sure you deny or grant
 read-only access using the @emph{cvs} usernames, not
@@ -2218,6 +2407,51 @@ listed in both files.  This is resolved in the more
 conservative way, it being better to protect the
 repository too much than too little: such a user gets
 read-only access.
+
+@node Server temporary directory
+@section Temporary directories for the server
+@cindex temporary directories, and server
+@cindex server, temporary directories
+
+While running, the @sc{cvs} server creates temporary
+directories.  They are named 
+
+@example
+cvs-serv@var{pid}
+@end example
+
+@noindent
+where @var{pid} is the process identification number of
+the server.  They are located in the directory
+specified by the @samp{TMPDIR} environment variable
+(@pxref{Environment variables}), the @samp{-T} global
+option (@pxref{Global options}), or failing that
+@file{/tmp}.
+
+In most cases the server will remove the temporary
+directory when it is done, whether it finishes normally
+or abnormally.  However, there are a few cases in which
+the server does not or cannot remove the temporary
+directory, for example:
+
+@itemize @bullet
+@item
+If the server aborts due to an internal server error,
+it may preserve the directory to aid in debugging
+
+@item
+If the server is killed in a way that it has no way of
+cleaning up (most notably, @samp{kill -KILL} on unix).
+
+@item
+If the system shuts down without an orderly shutdown,
+which tells the server to clean up.
+@end itemize
+
+In cases such as this, you will need to manually remove
+the @file{cvs-serv@var{pid}} directories.  As long as
+there is no server running with process identification
+number @var{pid}, it is safe to do so.
 
 @c ---------------------------------------------------------------------
 @node Starting a new project
@@ -2323,7 +2557,7 @@ files are binary and which are not.  @xref{Wrappers}.
 @c thinking of something more concise.
 @node From other version control systems
 @subsection Creating Files From Other Version Control Systems
-@cindex Importing files, from other version control systesm
+@cindex Importing files, from other version control systems
 
 If you have a project which you are maintaining with
 another version control system, such as @sc{rcs}, you
@@ -2629,6 +2863,9 @@ edit that file.  (breaking locks, or lack thereof).
 @cindex File status
 @cindex Status of a file
 
+@c Shouldn't this start with an example or something,
+@c introducing the unreserved checkout model?  Before we
+@c dive into listing states?
 Based on what operations you have performed on a
 checked out file, and what operations others have
 performed to that file in the repository, one can
@@ -2738,11 +2975,38 @@ use.
 @c perhaps it should be removed for non-client/server too?
 @c FIXME: Need some examples.
 
-For information on the options to @code{status}, see
-@ref{status}.  For information on its @code{Sticky tag}
+@c Would be nice to have an @example showing output
+@c from cvs status, with comments showing the xref
+@c where each part of the output is described.  This
+@c might fit in nicely if it is desirable to split this
+@c node in two; one to introduce "cvs status" and one
+@c to list each of the states.
+The options to @code{status} are listed in
+@ref{Invoking CVS}.  For information on its @code{Sticky tag}
 and @code{Sticky date} output, see @ref{Sticky tags}.
 For information on its @code{Sticky options} output,
 see the @samp{-k} option in @ref{update options}.
+
+You can think of the @code{status} and @code{update}
+commands as somewhat complementary.  You use
+@code{update} to bring your files up to date, and you
+can use @code{status} to give you some idea of what an
+@code{update} would do (of course, the state of the
+repository might change before you actually run
+@code{update}).  In fact, if you want a command to
+display file status in a more brief format than is
+displayed by the @code{status} command, you can invoke
+
+@cindex update, to display file status
+@example
+$ cvs -n -q update
+@end example
+
+The @samp{-n} option means to not actually do the
+update, but merely to display statuses; the @samp{-q}
+option avoids printing the name of each directory.  For
+more information on the @code{update} command, and
+these options, see @ref{Invoking CVS}.
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Updating a file
@@ -3120,7 +3384,7 @@ To enable the watch features, you first specify that
 certain files are to be watched.
 
 @cindex watch on (subcommand)
-@deffn Command {cvs watch on} [@code{-l}] files @dots{}
+@deffn Command {cvs watch on} [@code{-lR}] files @dots{}
 
 @cindex read-only files, and watches
 Specify that developers should run @code{cvs edit}
@@ -3136,18 +3400,20 @@ added in the future; this allows the user to set
 notification policies on a per-directory basis.  The
 contents of the directory are processed recursively,
 unless the @code{-l} option is given.
+The @code{-R} option can be used to force recursion if the @code{-l}
+option is set in @file{~/.cvsrc} (@pxref{~/.cvsrc}).
 
 If @var{files} is omitted, it defaults to the current directory.
 
 @cindex watch off (subcommand)
 @end deffn
 
-@deffn Command {cvs watch off} [@code{-l}] files @dots{}
+@deffn Command {cvs watch off} [@code{-lR}] files @dots{}
 
 Do not provide notification about work on @var{files}.  CVS will create
 working copies of @var{files} read-write.
 
-The @var{files} and @code{-l} arguments are processed as for @code{cvs
+The @var{files} and options are processed as for @code{cvs
 watch on}.
 
 @end deffn
@@ -3163,7 +3429,7 @@ watch on}, so that developers use the @code{cvs edit}
 command.
 
 @cindex watch add (subcommand)
-@deffn Command {cvs watch add} [@code{-a} action] [@code{-l}] files @dots{}
+@deffn Command {cvs watch add} [@code{-a} action] [@code{-lR}] files @dots{}
 
 Add the current user to the list of people to receive notification of
 work done on @var{files}.
@@ -3197,14 +3463,14 @@ described below.)
 The @code{-a} option may appear more than once, or not at all.  If
 omitted, the action defaults to @code{all}.
 
-The @var{files} and @code{-l} option are processed as for the
+The @var{files} and options are processed as for the
 @code{cvs watch} commands.
 
 @end deffn
 
 
 @cindex watch remove (subcommand)
-@deffn Command {cvs watch remove} [@code{-a} action] [@code{-l}] files @dots{}
+@deffn Command {cvs watch remove} [@code{-a} action] [@code{-lR}] files @dots{}
 
 Remove a notification request established using @code{cvs watch add};
 the arguments are the same.  If the @code{-a} option is present, only
@@ -3291,6 +3557,10 @@ source}), an operation which those systems call a
 @c still accept "checkout" in .cvsrc files indefinitely
 @c even if the CVS's messages are changed from "cvs checkout: "
 @c to "cvs get: ").
+@c There is a concern about whether "get" is not as
+@c good for novices because it is a more general term
+@c than "checkout" (and thus arguably harder to assign
+@c a technical meaning for).
 
 @cindex edit (subcommand)
 @deffn Command {cvs edit} [options] files @dots{}
@@ -3305,7 +3575,7 @@ user on @var{files}; CVS will remove the watch when @var{files} are
 @code{unedit}ed or @code{commit}ted.  If the user does not wish to
 receive notifications, she should specify @code{-a none}.
 
-The @var{files} and @code{-l} option are processed as for the @code{cvs
+The @var{files} and options are processed as for the @code{cvs
 watch} commands.
 
 @end deffn
@@ -3320,7 +3590,7 @@ the @code{cvs unedit} command.
 @cindex unedit (subcommand)
 @cindex abandoning work
 @cindex reverting to repository version
-@deffn Command {cvs unedit} [@code{-l}] files @dots{}
+@deffn Command {cvs unedit} [@code{-lR}] files @dots{}
 
 Abandon work on the working files @var{files}, and revert them to the
 repository versions on which they are based.  CVS makes those
@@ -3328,7 +3598,7 @@ repository versions on which they are based.  CVS makes those
 @code{cvs watch on}.  CVS notifies users who have requested @code{unedit}
 notification for any of @var{files}.
 
-The @var{files} and @code{-l} option are processed as for the
+The @var{files} and options are processed as for the
 @code{cvs watch} commands.
 
 If watches are not in use, the @code{unedit} command
@@ -3352,26 +3622,26 @@ successful @sc{cvs} command.
 @subsection Information about who is watching and editing
 
 @cindex watchers (subcommand)
-@deffn Command {cvs watchers} [@code{-l}] files @dots{}
+@deffn Command {cvs watchers} [@code{-lR}] files @dots{}
 
 List the users currently watching changes to @var{files}.  The report
 includes the files being watched, and the mail address of each watcher.
 
-The @var{files} and @code{-l} arguments are processed as for the
+The @var{files} and options are processed as for the
 @code{cvs watch} commands.
 
 @end deffn
 
 
 @cindex editors (subcommand)
-@deffn Command {cvs editors} [@code{-l}] files @dots{}
+@deffn Command {cvs editors} [@code{-lR}] files @dots{}
 
 List the users currently working on @var{files}.  The report
 includes the mail address of each user, the time when the user began
 working with the file, and the host and path of the working directory
 containing the file.
 
-The @var{files} and @code{-l} arguments are processed as for the
+The @var{files} and options are processed as for the
 @code{cvs watch} commands.
 
 @end deffn
@@ -3384,10 +3654,12 @@ If you use the watch features on a repository, it
 creates @file{CVS} directories in the repository and
 stores the information about watches in that directory.
 If you attempt to use @sc{cvs} 1.6 or earlier with the
-repository, you get an error message such as
+repository, you get an error message such as the
+following (all on one line):
 
 @example
-cvs update: cannot open CVS/Entries for reading: No such file or directory
+cvs update: cannot open CVS/Entries for reading:
+No such file or directory
 @end example
 
 and your operation will likely be aborted.  To use the
@@ -3545,18 +3817,18 @@ example.
 
 @example
 @group
-                                                     +-------------+
-                          Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
-                                                   / +-------------+
-                                                  /
-                                                 /
-                 +---------+    +---------+    +---------+    +---------+
-Branch 1.2.2 -> _! 1.2.2.1 !----! 1.2.2.2 !----! 1.2.2.3 !----! 1.2.2.4 !
-               / +---------+    +---------+    +---------+    +---------+
+                                      +-------------+
+           Branch 1.2.2.3.2 ->        ! 1.2.2.3.2.1 !
+                                    / +-------------+
+                                   /
+                                  /
+                 +---------+    +---------+    +---------+
+Branch 1.2.2 -> _! 1.2.2.1 !----! 1.2.2.2 !----! 1.2.2.3 !
+               / +---------+    +---------+    +---------+
               /
              /
 +-----+    +-----+    +-----+    +-----+    +-----+
-! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !      <- The main trunk
+! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !  <- The main trunk
 +-----+    +-----+    +-----+    +-----+    +-----+
                 !
                 !
@@ -3749,7 +4021,7 @@ $ cvs status -v backend.c
 File: backend.c         Status: Up-to-date
 
     Version:            1.4     Tue Dec  1 14:39:01 1992
-    RCS Version:        1.4     /usr/local/cvsroot/yoyodyne/tc/backend.c,v
+    RCS Version:        1.4     /u/cvsroot/yoyodyne/tc/backend.c,v
     Sticky Tag:         (none)
     Sticky Date:        (none)
     Sticky Options:     (none)
@@ -3906,7 +4178,7 @@ $ cvs status -v driver.c backend.c
 File: driver.c          Status: Up-to-date
 
     Version:            1.7     Sat Dec  5 18:25:54 1992
-    RCS Version:        1.7     /usr/local/cvsroot/yoyodyne/tc/driver.c,v
+    RCS Version:        1.7     /u/cvsroot/yoyodyne/tc/driver.c,v
     Sticky Tag:         release-1-0-patches (branch: 1.7.2)
     Sticky Date:        (none)
     Sticky Options:     (none)
@@ -3919,7 +4191,7 @@ File: driver.c          Status: Up-to-date
 File: backend.c         Status: Up-to-date
 
     Version:            1.4     Tue Dec  1 14:39:01 1992
-    RCS Version:        1.4     /usr/local/cvsroot/yoyodyne/tc/backend.c,v
+    RCS Version:        1.4     /u/cvsroot/yoyodyne/tc/backend.c,v
     Sticky Tag:         release-1-0-patches (branch: 1.4.2)
     Sticky Date:        (none)
     Sticky Options:     (none)
@@ -3973,7 +4245,7 @@ $ cvs status -v driver.c
 File: driver.c          Status: Up-to-date
 
     Version:            1.7.2.1 Sat Dec  5 19:35:03 1992
-    RCS Version:        1.7.2.1 /usr/local/cvsroot/yoyodyne/tc/driver.c,v
+    RCS Version:        1.7.2.1 /u/cvsroot/yoyodyne/tc/driver.c,v
     Sticky Tag:         release-1-0-patches (branch: 1.7.2)
     Sticky Date:        (none)
     Sticky Options:     (none)
@@ -4194,7 +4466,7 @@ like this:
 
 @example
 +-----+    +-----+    +-----+    +-----+    +-----+
-! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !      <- The main trunk
+! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !   <- The main trunk
 +-----+    +-----+    +-----+    +-----+    +-----+
                 !                           *
                 !                          *
@@ -4212,7 +4484,7 @@ Now suppose that development continues on the
 
 @example
 +-----+    +-----+    +-----+    +-----+    +-----+
-! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !      <- The main trunk
+! 1.1 !----! 1.2 !----! 1.3 !----! 1.4 !----! 1.5 !   <- The main trunk
 +-----+    +-----+    +-----+    +-----+    +-----+
                 !                           *
                 !                          *
@@ -4352,8 +4624,11 @@ following is true:
 
 @itemize @bullet
 @item
-@samp{cvs update testing} is equivalent to @samp{cvs
-update testing/testpgm.t testing/test2.t}
+@samp{cvs update testing} is equivalent to
+
+@example
+cvs update testing/testpgm.t testing/test2.t
+@end example
 
 @item
 @samp{cvs update testing man} updates all files in the
@@ -4373,6 +4648,8 @@ for most of the @sc{cvs} subcommands, not only the
 
 The recursive behavior of the @sc{cvs} subcommands can be
 turned off with the @samp{-l} option.
+Conversely, the @samp{-R} option can be used to force recursion if
+@samp{-l} is specified in @file{~/.cvsrc} (@pxref{~/.cvsrc}).
 
 @example
 $ cvs update -l         # @r{Don't update files in subdirectories}
@@ -4495,6 +4772,13 @@ later merge the additions to another branch if you want
 @cindex Removing files
 @cindex Deleting files
 
+@c FIXME: this node wants to be split into several
+@c smaller nodes.  Probably would fit well with merging
+@c this chapter with "adding files" and the others, as
+@c suggested at the top-level menu (death support could
+@c be its own section, for example, as could the
+@c various bits about undoing mistakes in adding and
+@c removing).
 Modules change.  New files are added, and old files
 disappear.  Still, you want to be able to retrieve an
 exact copy of old releases.
@@ -4527,6 +4811,15 @@ Use @samp{cvs commit @var{filename}} to actually
 perform the removal of the file from the repository.
 @end itemize
 
+@c FIXME: Somehow this should be linked in with a more
+@c general discussion of death support.  I don't know
+@c whether we want to use the term "death support" or
+@c not (we can perhaps get by without it), but we do
+@c need to discuss the "dead" state in "cvs log" and
+@c related subjects.  The current discussion is
+@c scattered around, and not xref'd to each other.
+@c FIXME: I think this paragraph wants to be moved
+@c later down, at least after the first example.
 When you commit the removal of the file, @sc{cvs}
 records the fact that the file no longer exists.  It is
 possible for a file to exist on only some branches and
@@ -4535,23 +4828,24 @@ name later.  CVS will correctly create or not create
 the file, based on the @samp{-r} and @samp{-D} options
 specified to @code{checkout} or @code{update}.
 
+@c FIXME: This style seems to clash with how we
+@c document things in general.
 @cindex Remove (subcommand)
-@deffn Command {cvs remove} [@code{-lR}] files @dots{}
+@deffn Command {cvs remove} [options] files @dots{}
 
 Schedule file(s) to be removed from the repository
 (files which have not already been removed from the
 working directory are not processed).  This command
 does not actually remove the file from the repository
-until you commit the removal.  The @samp{-R} option
-(the default) specifies that it will recurse into
-subdirectories; @samp{-l} specifies that it will not.
+until you commit the removal.  For a full list of
+options, see @ref{Invoking CVS}.
 @end deffn
 
 Here is an example of removing several files:
 
 @example
 $ cd test
-$ rm ?.c
+$ rm *.c
 $ cvs remove
 cvs remove: Removing .
 cvs remove: scheduling a.c for removal
@@ -4562,9 +4856,36 @@ cvs commit: Examining .
 cvs commit: Committing .
 @end example
 
-If you change your mind you can easily resurrect the
-file before you commit it, using the @code{add}
-command.
+As a convenience you can remove the file and @code{cvs
+remove} it in one step, by specifying the @samp{-f}
+option.  For example, the above example could also be
+done like this:
+
+@example
+$ cd test
+$ cvs remove -f *.c
+cvs remove: scheduling a.c for removal
+cvs remove: scheduling b.c for removal
+cvs remove: use 'cvs commit' to remove these files permanently
+$ cvs ci -m "Removed unneeded files"
+cvs commit: Examining .
+cvs commit: Committing .
+@end example
+
+If you execute @code{remove} for a file, and then
+change your mind before you commit, you can undo the
+@code{remove} with an @code{add} command.
+@ignore
+@c is this worth saying or not?  Somehow it seems
+@c confusing to me.
+Of course,
+since you have removed your copy of file in the working
+directory, @sc{cvs} does not necessarily bring back the
+contents of the file from right before you executed
+@code{remove}; instead it gets the file from the
+repository again.
+@end ignore
+
 @c FIXME: what if you change your mind after you commit
 @c it?  (answer is also "cvs add" but we don't say that...).
 @c We need some index entries for thinks like "undoing
@@ -4638,6 +4959,15 @@ are checking out contains any files in that directory.
 @cindex Tracking sources
 
 @c FIXME: Need discussion of added and removed files.
+@c FIXME: This doesn't really adequately introduce the
+@c concepts of "vendor" and "you".  They don't *have*
+@c to be separate organizations or separate people.
+@c We want a description which is somewhat more based on
+@c the technical issues of which sources go where, but
+@c also with enough examples of how this relates to
+@c relationships like customer-supplier, developer-QA,
+@c maintainer-contributor, or whatever, to make it
+@c seem concrete.
 If you modify a program to better fit your site, you
 probably want to include your modifications when the next
 release of the program arrives.  @sc{cvs} can help you with
@@ -4670,6 +5000,8 @@ revision.
 * Update imports::              Updating a module with the import command
 * Reverting local changes::     Reverting a module to the latest vendor release
 * Binary files in imports::     Binary files require special handling
+* Keywords in imports::         Keyword substitution might be undesirable
+* Multiple vendor branches::    What if you get sources from several places?
 @end menu
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -4685,7 +5017,7 @@ command to track third-party sources, the @dfn{vendor
 tag} and @dfn{release tags} are useful.  The
 @dfn{vendor tag} is a symbolic name for the branch
 (which is always 1.1.1, unless you use the @samp{-b
-@var{branch}} flag---@xref{import options}.).  The
+@var{branch}} flag---@xref{Multiple vendor branches}.).  The
 @dfn{release tags} are symbolic names for a particular
 release, such as @samp{FSF_0_04}.
 
@@ -4701,7 +5033,7 @@ directory (@pxref{Getting the source}).
 
 @cindex Wdiff (import example)
 Suppose you have the sources to a program called
-@code{wdiff} in a directory called @file{wdiff-0.04},
+@code{wdiff} in a directory @file{wdiff-0.04},
 and are going to make private modifications that you
 want to be able to use even when new releases are made
 in the future.  You start by importing the source to
@@ -4737,6 +5069,10 @@ revision becomes the head revision.  If you have made local
 changes, @code{import} will warn you that you must merge the changes
 into the main trunk, and tell you to use @samp{checkout -j} to do so.
 
+@c FIXME: why "wdiff" here and "fsf/wdiff" in the
+@c "import"?  I think the assumption is that one has
+@c "wdiff fsf/wdiff" or some such in modules, but it
+@c would be better to not use modules in this example.
 @example
 $ cvs checkout -jFSF_DIST:yesterday -jFSF_DIST wdiff
 @end example
@@ -4785,6 +5121,85 @@ after the @samp{-b}.  @xref{admin options}.
 
 Use the @samp{-k} wrapper option to tell import which
 files are binary.  @xref{Wrappers}.
+
+@node Keywords in imports
+@section How to handle keyword substitution with cvs import
+
+The sources which you are importing may contain
+keywords (@pxref{Keyword substitution}).  For example,
+the vendor may use @sc{cvs} or some other system
+which uses similar keyword expansion syntax.  If you
+just import the files in the default fashion, then
+the keyword expansions supplied by the vendor will
+be replaced by keyword expansions supplied by your
+own copy of @sc{cvs}.  It may be more convenient to
+maintain the expansions supplied by the vendor, so
+that this information can supply information about
+the sources that you imported from the vendor.
+
+To maintain the keyword expansions supplied by the
+vendor, supply the @samp{-ko} option to @code{cvs
+import} the first time you import the file.
+This will turn off keyword expansion
+for that file entirely, so if you want to be more
+selective you'll have to think about what you want
+and use the @samp{-k} option to @code{cvs update} or
+@code{cvs admin} as appropriate.
+@c Supplying -ko to import if the file already existed
+@c has no effect.  Not clear to me whether it should
+@c or not.
+
+@node Multiple vendor branches
+@section Multiple vendor branches
+
+All the examples so far assume that there is only one
+vendor from which you are getting sources.  In some
+situations you might get sources from a variety of
+places.  For example, suppose that you are dealing with
+a project where many different people and teams are
+modifying the software.  There are a variety of ways to
+handle this, but in some cases you have a bunch of
+source trees lying around and what you want to do more
+than anything else is just to all put them in CVS so
+that you at least have them in one place.
+
+For handling situations in which there may be more than
+one vendor, you may specify the @samp{-b} option to
+@code{cvs import}.  It takes as an argument the vendor
+branch to import to.  The default is @samp{-b 1.1.1}.
+
+For example, suppose that there are two teams, the red
+team and the blue team, that are sending you sources.
+You want to import the red team's efforts to branch
+1.1.1 and use the vendor tag RED.  You want to import
+the blue team's efforts to branch 1.1.3 and use the
+vendor tag BLUE.  So the commands you might use are:
+
+@example
+$ cvs import dir RED RED_1-0
+$ cvs import -b 1.1.3 dir BLUE BLUE_1-5
+@end example
+
+Note that if your vendor tag does not match your
+@samp{-b} option, CVS will not detect this case!  For
+example,
+
+@example
+$ cvs import -b 1.1.3 dir RED RED_1-0
+@end example
+
+@noindent
+Be careful; this kind of mismatch is sure to sow
+confusion or worse.  I can't think of a useful purpose
+for the ability to specify a mismatch here, but if you
+discover such a use, don't.  CVS is likely to make this
+an error in some future release.
+
+@c Probably should say more about the semantics of
+@c multiple branches.  What about the default branch?
+@c What about joining (perhaps not as useful with
+@c multiple branches, or perhaps it is.  Either way
+@c should be mentioned).
 
 @c ---------------------------------------------------------------------
 @node Moving files
@@ -5078,6 +5493,8 @@ history---what files have changed when, how, and by
 whom, there are a variety of mechanisms for looking
 through the history.
 
+@c FIXME: should also be talking about how you look at
+@c old revisions (e.g. "cvs update -p -r 1.2 foo.c").
 @menu
 * log messages::                Log messages
 * history database::            The history database
@@ -5204,6 +5621,7 @@ Notified}); this command is useful even if you are not
 using @code{cvs watch on}.
 
 @cindex taginfo
+@cindex exit status, of taginfo
 The @file{taginfo} file defines programs to execute
 when someone executes a @code{tag} or @code{rtag}
 command.  The @file{taginfo} file has the standard form
@@ -5222,7 +5640,7 @@ aborted.
 @section Annotate command
 @cindex annotate (subcommand)
 
-@deffn Command {cvs annotate} [@code{-lf}] [@code{-r rev}|@code{-D date}] files @dots{}
+@deffn Command {cvs annotate} [@code{-flR}] [@code{-r rev}|@code{-D date}] files @dots{}
 
 For each file in @var{files}, print the head revision
 of the trunk, together with information on the last
@@ -5276,7 +5694,7 @@ But as soon as you export the files from your
 development environment it becomes harder to identify
 which revisions they are.
 
-@sc{Rcs} uses a mechanism known as @dfn{keyword
+CVS can use a mechanism known as @dfn{keyword
 substitution} (or @dfn{keyword expansion}) to help
 identifying the files.  Embedded strings of the form
 @code{$@var{keyword}$} and
@@ -5286,7 +5704,7 @@ with strings of the form
 a new revision of the file.
 
 @menu
-* Keyword list::                RCS Keywords
+* Keyword list::                Keywords
 * Using keywords::              Using keywords
 * Avoiding substitution::       Avoiding substitution
 * Substitution modes::          Substitution modes
@@ -5298,8 +5716,13 @@ a new revision of the file.
 @section RCS Keywords
 @cindex RCS keywords
 
-This is a list of the keywords that @sc{rcs} currently
-(in release 5.6.0.1) supports:
+@c FIXME: need some kind of example here I think, 
+@c perhaps in a
+@c "Keyword intro" node.  The intro in the "Keyword
+@c substitution" node itself seems OK, but to launch
+@c into a list of the keywords somehow seems too abrupt.
+
+This is a list of the keywords:
 
 @table @code
 @cindex Author keyword
@@ -5447,7 +5870,7 @@ keyword substitution.  You can use @samp{-ko}
 (@pxref{Substitution modes}) to turn off keyword
 substitution entirely.
 
-In many cases you can avoid using @sc{rcs} keywords in
+In many cases you can avoid using keywords in
 the source, even though they appear in the final
 product.  For example, the source for this manual
 contains @samp{$@@asis@{@}Author$} whenever the text
@@ -5458,7 +5881,7 @@ and @code{troff} you can embed the null-character
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node Substitution modes
 @section Substitution modes
-@cindex -k (RCS kflags)
+@cindex -k (keyword substitution)
 @cindex Kflag
 
 @c FIXME: This could be made more coherent, by expanding it
@@ -5541,10 +5964,14 @@ keyword---just do a @code{cvs log}.  Once you export
 the file the history information might be useless
 anyhow.
 
-A more serious concern is that @sc{rcs} is not good at
+A more serious concern is that @sc{cvs} is not good at
 handling @code{$@asis{}Log$} entries when a branch is
 merged onto the main trunk.  Conflicts often result
 from the merging operation.
+@c We say "cvs" even though it is done via rcsmerge;
+@c this is an implementation detail.  If the merging is
+@c done in CVS instead, should check if this problem
+@c still persists.
 
 People also tend to "fix" the log entries in the file
 (correcting spelling mistakes and maybe even factual
@@ -5647,6 +6074,20 @@ You can also set a default for whether @code{cvs add}
 and @code{cvs import} treat a file as binary based on
 its name; for example you could say that files who
 names end in @samp{.exe} are binary.  @xref{Wrappers}.
+There is currently no way to have @sc{cvs} detect
+whether a file is binary based on its contents.  The
+main difficulty with designing such a feature is that
+it is not clear how to distinguish between binary and
+non-binary files, and the rules to apply would vary
+considerably with the operating system.
+@c For example, it would be good on MS-DOS-family OSes
+@c for anything containing ^Z to be binary.  Having
+@c characters with the 8th bit set imply binary is almost
+@c surely a bad idea in the context of ISO-8859-* and
+@c other such character sets.  On VMS or the Mac, we
+@c could use the OS's file typing.  This is a
+@c commonly-desired feature, and something of this sort
+@c may make sense.  But there are a lot of pitfalls here.
 
 @c I'm not sure about the best location for this.  In
 @c one sense, it might belong right after we've introduced
@@ -5737,8 +6178,11 @@ is Odin (see
 @c Of course, many non-CVS systems have this kind of
 @c functionality, for example OSF's ODE
 @c (http://www.osf.org/ode/) or mk
-@c (http://www.io.org/~pzi/heading.html;
-@c ftp://ftp.interlog.com/pub/unix/mk is out of date).  But I'm not sure
+@c (http://www.grin.net/~pzi/mk-3.18.4.docs/mk_toc.html
+@c He has changed providers in the past; a search engine search
+@c for "Peter Ziobrzynski" probably won't get too many
+@c spurious hits :-).  A more stable URL might be
+@c ftp://ftp.uu.net/pub/cmvc/mk).  But I'm not sure
 @c there is any point in mentioning them here unless they
 @c can work with CVS.
 
@@ -5799,6 +6243,20 @@ further (1.5 was the first official release with the remote protocol,
 but some older versions might still be floating around).  In many
 cases you need to upgrade both the client and the server to take
 advantage of new features and bugfixes, however.
+
+@c Perhaps should be saying something here about the
+@c "D" lines in Entries (written by CVS 1.9; 1.8 and
+@c older don't use them).  These are supposed to be
+@c compatible in both directions, but I'm not sure
+@c they quite are 100%.  One common gripe is if you
+@c "rm -r" a directory and 1.9 gets confused, as it
+@c still sees it in Entries.  That one is fixed in
+@c (say) 1.9.6.  Someone else reported problems with
+@c starting with a directory which was checked out with
+@c an old version, and then using a new version, and
+@c some "D" lines appeared, but not for every
+@c directory, causing some directories to be skipped.
+@c They weren't sure how to reproduce this, though.
 
 @c ---------------------------------------------------------------------
 @node Revision management
@@ -5868,21 +6326,21 @@ reference to @sc{cvs} commands, @pxref{Invoking CVS}).
 
 @menu
 * Structure::                   Overall structure of CVS commands
+* Exit status::                 Indicating CVS's success or failure
 * ~/.cvsrc::                    Default options with the ~/.csvrc file
 * Global options::              Options you give to the left of cvs_command
 * Common options::              Options you give to the right of cvs_command
 * admin::                       Administration front end for rcs
 * checkout::                    Checkout sources for editing
 * commit::                      Check files into the repository
-* diff::                        Run diffs between revisions
+* diff::                        Show differences between revisions
 * export::                      Export sources from CVS, similar to checkout
 * history::                     Show status of files and users
 * import::                      Import sources into CVS, using vendor branches
-* log::                         Print out 'rlog' information for files
+* log::                         Show log messages for files
 * rdiff::                       'patch' format diffs between releases
 * release::                     Indicate that a Module is no longer in use
 * rtag::                        Add a tag to a module
-* status::                      Status info on the revisions
 * tag::                         Add a tag to checked out version
 * update::                      Bring work tree in sync with repository
 @end menu
@@ -5932,6 +6390,40 @@ affects some of the commands.  When it is given as a
 is accepted by more commands.  In other words, do not
 take the above categorization too seriously.  Look at
 the documentation instead.
+
+@node Exit status
+@appendixsec CVS's exit status
+@cindex exit status, of CVS
+
+CVS can indicate to the calling environment whether it
+succeeded or failed by setting its @dfn{exit status}.
+The exact way of testing the exit status will vary from
+one operating system to another.  For example in a unix
+shell script the @samp{$?} variable will be 0 if the
+last command returned a successful exit status, or
+greater than 0 if the exit status indicated failure.
+
+If CVS is successful, it returns a successful status;
+if there is an error, it prints an error message and
+returns a failure status.  The one exception to this is
+the @code{cvs diff} command.  It will return a
+successful status if it found no differences, or a
+failure status if there were differences or if there
+was an error.  Because this behavior provides no good
+way to detect errors, in the future it is possible that
+@code{cvs diff} will be changed to behave like the
+other @sc{cvs} commands.
+@c It might seem like checking whether cvs -q diff
+@c produces empty or non-empty output can tell whether
+@c there were differences or not.  But it seems like
+@c there are cases with output but no differences
+@c (testsuite basica-8b).  It is not clear to me how
+@c useful it is for a script to be able to check
+@c whether there were differences.
+@c FIXCVS? In previous versions of CVS, cvs diff
+@c returned 0 for no differences, 1 for differences, or
+@c 2 for errors.  Is this behavior worth trying to
+@c bring back (but what does it mean for VMS?)?
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node ~/.cvsrc
@@ -6007,6 +6499,10 @@ The available @samp{cvs_options} (that are given to the
 left of @samp{cvs_command}) are:
 
 @table @code
+@item --allow-root=@var{rootdir}
+Specify legal @sc{cvsroot} directory.  See
+@ref{Password authentication server}.
+
 @cindex RCSBIN, overriding
 @cindex Overriding RCSBIN
 @item -b @var{bindir}
@@ -6068,6 +6564,12 @@ anyway).  @xref{history}, for information on command history.
 Do not change any files.  Attempt to execute the
 @samp{cvs_command}, but only to issue reports; do not remove,
 update, or merge any existing files, or create any new files.
+
+Note that @sc{cvs} will not necessarily produce exactly
+the same output as without @samp{-n}.  In some cases
+the output will be the same, but in other cases
+@sc{cvs} will skip some of the processing that would
+have been required to produce the exact same output.
 
 @item -Q
 Cause the command to be really quiet; the command will only
@@ -6261,9 +6763,11 @@ are:
 @c bizarre and it has lots of gratuitous multiple ways
 @c to specify the same thing.
 
-See
-@file{http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html}
-for more details about ISO8601 dates.
+For more details about ISO8601 dates, see:
+
+@example
+http://www.ft.uni-erlangen.de/~mskuhn/iso-time.html
+@end example
 @c Perhaps we want to also cite other sources in
 @c case that page goes away.  For example:
 @c http://www.saqqara.demon.co.uk/datefmt.htm
@@ -6353,10 +6857,11 @@ recursing through subdirectories.
 as the overall @samp{cvs -l} option, which you can specify to the
 left of a cvs command!
 
-Available with the following commands: @code{checkout},
-@code{commit}, @code{diff}, @code{export}, @code{log},
-@code{remove}, @code{rdiff}, @code{rtag},
-@code{status}, @code{tag}, and @code{update}.
+Available with the following commands: @code{annotate}, @code{checkout},
+@code{commit}, @code{diff}, @code{edit}, @code{editors}, @code{export},
+@code{log}, @code{rdiff}, @code{remove}, @code{rtag},
+@code{status}, @code{tag}, @code{unedit}, @code{update}, @code{watch},
+and @code{watchers}.
 
 @cindex Editor, avoiding invocation of
 @cindex Avoiding editor invocation
@@ -6386,13 +6891,14 @@ Pipe the files retrieved from the repository to standard output,
 rather than writing them in the current directory.  Available
 with the @code{checkout} and @code{update} commands.
 
-@item -W
-Specify file names that should be filtered.  You can
-use this option repeatedly.  The spec can be a file
-name pattern of the same type that you can specify in
-the @file{.cvswrappers} file.
-Avaliable with the following commands: @code{import},
-and @code{update}.
+@item -R
+Process directories recursively.  This is on by default.
+
+Available with the following commands: @code{annotate}, @code{checkout},
+@code{commit}, @code{diff}, @code{edit}, @code{editors}, @code{export},
+@code{rdiff}, @code{remove}, @code{rtag},
+@code{status}, @code{tag}, @code{unedit}, @code{update}, @code{watch},
+and @code{watchers}.
 
 @item -r @var{tag}
 Use the revision specified by the @var{tag} argument instead of the
@@ -6442,6 +6948,14 @@ which you can specify to the left of a cvs command!
 @samp{-r} is available with the @code{checkout}, @code{commit},
 @code{diff}, @code{history}, @code{export}, @code{rdiff},
 @code{rtag}, and @code{update} commands.
+
+@item -W
+Specify file names that should be filtered.  You can
+use this option repeatedly.  The spec can be a file
+name pattern of the same type that you can specify in
+the @file{.cvswrappers} file.
+Avaliable with the following commands: @code{import},
+and @code{update}.
 
 @end table
 
@@ -6782,6 +7296,8 @@ collection of source directories and files, or paths to
 directories or files in the repository.  The symbolic
 names are defined in the @samp{modules} file.
 @xref{modules}.
+@c Needs an example, particularly of the non-"modules"
+@c case but probably of both.
 
 Depending on the modules you specify, @code{checkout} may
 recursively create directories and populate them with
@@ -6853,7 +7369,8 @@ Process @sc{rcs} keywords according to @var{kflag}.  See
 co(1).  This option is sticky; future updates of
 this file in this working directory will use the same
 @var{kflag}.  The @code{status} command can be viewed
-to see the sticky options.  @xref{status}.
+to see the sticky options.  See @ref{Invoking CVS}, for
+more information on the @code{status} command.
 
 @item -l
 Local; run only in current working directory.
@@ -6868,6 +7385,9 @@ Prune empty directories.  See @ref{Moving directories}.
 
 @item -p
 Pipe files to the standard output.
+
+@item -R
+Checkout directories recursively.  This option is on by default.
 
 @item -r @var{tag}
 Use revision @var{tag}.  This option is sticky, and implies @samp{-P}.
@@ -6960,12 +7480,8 @@ $ cvs checkout -D yesterday tc
 
 @itemize @bullet
 @item
-Version 1.3 Synopsis: commit [-lnR] [-m 'log_message' |
--f file] [-r revision] [files@dots{}]
-@item
-Version 1.3.1 Synopsis: commit [-lnRf] [-m 'log_message' |
+Synopsis: commit [-lnRf] [-m 'log_message' |
 -F file] [-r revision] [files@dots{}]
-@c -- rename-f-F--
 @item
 Requires: working directory, repository.
 @item
@@ -6973,11 +7489,6 @@ Changes: repository.
 @item
 Synonym: ci
 @end itemize
-
-@strong{Warning:} The @samp{-f @var{file}} option will
-probably be renamed to @samp{-F @var{file}}, and @samp{-f}
-will be given a new behavior in future releases of @sc{cvs}.
-@c -- rename-f-F--
 
 Use @code{commit} when you want to incorporate changes
 from your working source files into the source
@@ -7010,8 +7521,7 @@ repository.  This log message can be retrieved with the
 @code{log} command; @xref{log}.  You can specify the
 log message on the command line with the @samp{-m
 @var{message}} option, and thus avoid the editor invocation,
-or use the @samp{-f @var{file}} option to specify
-@c -- rename-f-F--
+or use the @samp{-F @var{file}} option to specify
 that the argument file contains the log message.
 
 @menu
@@ -7162,12 +7672,12 @@ $ cvs checkout -r EXPR1 whatever_module
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 @node diff
-@appendixsec diff---Run diffs between revisions
+@appendixsec diff---Show differences between revisions
 @cindex Diff (subcommand)
 
 @itemize @bullet
 @item
-Synopsis: diff [-l] [rcsdiff_options] [[-r rev1 | -D date1] [-r rev2 |  -D date2]] [files@dots{}]
+Synopsis: diff [-lR] [rcsdiff_options] [[-r rev1 | -D date1] [-r rev2 |  -D date2]] [files@dots{}]
 @item
 Requires: working directory, repository.
 @item
@@ -7183,9 +7693,8 @@ If any file names are given, only those files are
 compared.  If any directories are given, all files
 under them will be compared.
 
-The exit status will be 0 if no differences were found,
-1 if some differences were found, and 2 if any error
-occurred.
+The exit status for diff is different than for other
+@sc{cvs} commands; for details @ref{Exit status}.
 
 @menu
 * diff options::                diff options
@@ -7339,7 +7848,7 @@ $ cvs diff -u | less
 
 @itemize @bullet
 @item
-Synopsis: export [-flNn] [-r rev|-D date] [-k subst] [-d dir] module@dots{}
+Synopsis: export [-flNnR] [-r rev|-D date] [-k subst] [-d dir] module@dots{}
 @item
 Requires: repository.
 @item
@@ -7688,13 +8197,7 @@ There are three additional special options.
 
 @table @code
 @item -b @var{branch}
-Specify a first-level branch other than 1.1.1.  Unless
-the @samp{-b @var{branch}} flag is given, revisions will
-@emph{always} be made to the branch 1.1.1---even if a
-@var{vendortag} that matches another branch is given!
-What happens in that case, is that the tag will be
-reset to 1.1.1.  Warning: This behavior might change
-in the future.
+See @ref{Multiple vendor branches}.
 
 @item -k @var{subst}
 Indicate the RCS keyword expansion mode desired.  This
@@ -7813,6 +8316,9 @@ Coordinated Universal Time (UTC).  (Other parts of
 @c where LT means the client's timezone, which the
 @c client then communicates to the server, is the
 @c right solution.
+
+@strong{Warning:} @code{log} uses @samp{-R} in a way that conflicts
+with the normal use inside @sc{cvs} (@pxref{Common options}).
 
 @menu
 * log options::                 log options
@@ -8008,6 +8514,9 @@ recent revision (instead of ignoring the file).
 
 @item -l
 Local; don't descend subdirectories.
+
+@item -R
+Examine directories recursively.  This option is on by default.
 
 @item -r @var{tag}
 Use revision @var{tag}.
@@ -8250,8 +8759,15 @@ recent revision (instead of ignoring the file).
 
 @item -F 
 Overwrite an existing tag of the same name on a
-different revision.  This option is new in @sc{cvs}
-1.4.  The old behavior is matched by @samp{cvs tag -F}.
+different revision.
+@c FIXME: Needs an example, and/or more explanation.
+@c Also needs to contrast this with the behavior if -F
+@c is not specified, and the description needs to be
+@c moved somewhere where it is shared between "tag" and
+@c "rtag" (probably some sub-node of Revisions and
+@c branches).  Also should be clear about whether this
+@c applies to branch tags, non-branch tags, or both.
+@c Also this is *not* a common option.
 
 @item -l
 Local; run only in current working directory.
@@ -8262,7 +8778,7 @@ Do not run any tag program that was specified with the
 (@pxref{modules}).
 
 @item -R
-Commit directories recursively.  This is on by default.
+Tag directories recursively.  This is on by default.
 
 @item -r @var{tag}
 Only tag those files that contain @var{tag}.  This can
@@ -8305,78 +8821,6 @@ module).
 @appendixsubsec rtag examples
 
 @c -- Examples here!
-@end ignore
-
-@c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-@node status
-@appendixsec status---Display status information on checked out files
-@cindex Status (subcommand)
-
-@c It is not clear to me what the best home for this
-@c information is.  Probably put a @deffn in "File
-@c status" listing options and documenting -l and -R,
-@c and refer to Sticky tags,
-@c Tags, and <something for sticky options> for the more
-@c obscure features.
-
-@itemize @bullet
-@item
-status [-lR] [-v] [files@dots{}]
-@item
-Requires: working directory, repository.
-@item
-Changes: nothing.
-@end itemize
-
-Display a brief report on the current status of files
-with respect to the source repository.  For information
-on the basic output see @ref{File status}.  For
-information on the @code{Sticky tag} and @code{Sticky
-date} output, see @ref{Sticky tags}.  For information
-on the @code{Sticky options} output, see the @samp{-k}
-option in @ref{update options}.
-
-You can also use this command to determine the
-potential impact of a @samp{cvs update} on your working
-source directory---but remember that things might
-change in the repository before you run @code{update}.
-
-@menu
-* status options::              status options
-@end menu
-
-@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-@node status options
-@appendixsubsec status options
-
-These standard options are supported by @code{status}
-(@pxref{Common options}, for a complete description of
-them):
-
-@table @code
-@item -l
-Local; run only in current working directory.
-
-@item -R
-Commit directories recursively.  This is on by default.
-@end table
-
-There is one additional option:
-
-@table @code
-@item -v
-Verbose.  In addition to the information normally
-displayed, print all symbolic tags, together with the
-numerical value of the revision or branch they refer
-to.  For more information, see @ref{Tags}
-@end table
-
-@ignore
-@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-@c @node status examples
-@appendixsubsec status examples
-
-@c -- FIXME
 @end ignore
 
 @c - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -8440,16 +8884,19 @@ These standard options are supported by @code{tag}
 them):
 
 @table @code
+@cindex renaming tags
+@cindex tags, renaming
+@cindex moving tags
 @item -F 
 Overwrite an existing tag of the same name on a
-different revision.  This option is new in @sc{cvs}
-1.4.  The old behavior is matched by @samp{cvs tag -F}.
+different revision.
+@c FIXME: See "rtag -F" for comments on this.
 
 @item -l
 Local; run only in current working directory.
 
 @item -R
-Commit directories recursively.  This is on by default.
+Tag directories recursively.  This is on by default.
 @end table
 
 Two special options are available:
@@ -8511,7 +8958,6 @@ since your last checkout or update.
 @menu
 * update options::              update options
 * update output::               update output
-* update examples::             update examples
 @end menu
 
 @c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
@@ -8539,7 +8985,8 @@ Process @sc{rcs} keywords according to @var{kflag}.  See
 co(1).  This option is sticky; future updates of
 this file in this working directory will use the same
 @var{kflag}.  The @code{status} command can be viewed
-to see the sticky options.  @xref{status}.
+to see the sticky options.  See @ref{Invoking CVS}, for
+more information on the @code{status} command.
 
 @item -l
 Local; run only in current working directory.  @xref{Recursive behavior}.
@@ -8551,7 +8998,7 @@ Prune empty directories.  See @ref{Moving directories}.
 Pipe files to the standard output.
 
 @item -R
-Operate recursively (default).  @xref{Recursive
+Update directories recursively (default).  @xref{Recursive
 behavior}.
 
 @item -r tag
@@ -8709,19 +9156,6 @@ description of the @samp{-I} option, and
 @pxref{cvsignore}).
 @end table
 
-@c . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-@node update examples
-@appendixsubsec update examples
-
-The following line will display all files which are not
-up-to-date without actually change anything in your
-working directory.  It can be used to check what has
-been going on with the project.
-
-@example
-$ cvs -n -q update
-@end example
-
 @node Invoking CVS
 @appendix Quick reference to CVS commands
 @cindex Command reference
@@ -8819,6 +9253,10 @@ Use head revision if tag/date not found.  See
 @item -l
 Local; run only in current working directory.  @xref{Recursive behavior}.
 
+@item -R
+Operate recursively (default).  @xref{Recursive
+behavior}.
+
 @item -r @var{tag}
 Annotate revision @var{tag}.  See @ref{Common options}.
 @end table
@@ -8828,7 +9266,7 @@ Get a copy of the sources.  See @ref{checkout}.
 
 @table @code
 @item -A
-Reset any sticky tags/date/kopts.  See @ref{Sticky
+Reset any sticky tags/date/options.  See @ref{Sticky
 tags} and @ref{Keyword substitution}.
 
 @item -c
@@ -8869,6 +9307,10 @@ Prune empty directories.  See @ref{Moving directories}.
 @item -p
 Check out files to standard output (avoids
 stickiness).  See @ref{checkout options}.
+
+@item -R
+Operate recursively (default).  @xref{Recursive
+behavior}.
 
 @item -r @var{tag}
 Checkout revision @var{tag} (is sticky).  See @ref{Common options}.
@@ -8932,6 +9374,10 @@ Local; run only in current working directory.  See @ref{Recursive behavior}.
 Include diffs for added and removed files.  See
 @ref{diff options}.
 
+@item -R
+Operate recursively (default).  @xref{Recursive
+behavior}.
+
 @item -r @var{rev1}
 Diff revision for @var{rev1} against working file.  See
 @ref{diff options}.
@@ -8952,6 +9398,10 @@ Specify actions for temporary watch, where
 
 @item -l
 Local; run only in current working directory.  See @ref{Recursive behavior}.
+
+@item -R
+Operate recursively (default).  @xref{Recursive
+behavior}.
 @end table
 
 @item editors [@var{options}] [@var{files}@dots{}]
@@ -8960,6 +9410,10 @@ See who is editing a watched file.  See @ref{Watch information}.
 @table @code
 @item -l
 Local; run only in current working directory.  See @ref{Recursive behavior}.
+
+@item -R
+Operate recursively (default).  @xref{Recursive
+behavior}.
 @end table
 
 @item export [@var{options}] @var{modules}@dots{}
@@ -8992,6 +9446,10 @@ Do not run module program (if any).  See @ref{export options}.
 
 @item -P
 Prune empty directories.  See @ref{Moving directories}.
+
+@item -R
+Operate recursively (default).  @xref{Recursive
+behavior}.
 
 @item -r @var{tag}
 Checkout revision @var{tag} (is sticky).  See @ref{Common options}.
@@ -9065,7 +9523,7 @@ Import files into CVS, using vendor branches.  See
 @table @code
 @item -b @var{bra}
 Import to vendor branch @var{bra}.  See
-@ref{import options}.
+@ref{Multiple vendor branches}.
 
 @item -d
 Use the file's modification time as the time of
@@ -9153,6 +9611,10 @@ Use head revision if tag/date not found.  See
 @item -l
 Local; run only in current working directory.  See @ref{Recursive behavior}.
 
+@item -R
+Operate recursively (default).  @xref{Recursive
+behavior}.
+
 @item -r @var{rev}
 Select revisions based on @var{rev}.  See @ref{Common options}.
 
@@ -9237,7 +9699,7 @@ Tag existing tag @var{tag}.  See @ref{rtag options}.
 
 @item status [@var{options}] @var{files}@dots{}
 Display status information in a working directory.  See
-@ref{status}.
+@ref{File status}.
 
 @table @code
 @item -l
@@ -9248,7 +9710,7 @@ Operate recursively (default).  @xref{Recursive
 behavior}.
 
 @item -v
-Include tag information for file.  See @ref{status options}.
+Include tag information for file.  See @ref{Tags}.
 @end table
 
 @item tag [@var{options}] @var{tag} [@var{files}@dots{}]
@@ -9298,6 +9760,10 @@ Specify actions for temporary watch, where
 
 @item -l
 Local; run only in current working directory.  See @ref{Recursive behavior}.
+
+@item -R
+Operate recursively (default).  @xref{Recursive
+behavior}.
 @end table
 
 @item update [@var{options}] [@var{files}@dots{}]
@@ -9306,7 +9772,7 @@ Bring work tree in sync with repository.  See
 
 @table @code
 @item -A
-Reset any sticky tags/date/kopts.  See @ref{Sticky
+Reset any sticky tags/date/options.  See @ref{Sticky
 tags} and @ref{Keyword substitution}.
 
 @item -D @var{date}
@@ -9371,6 +9837,10 @@ Specify actions for temporary watch, where
 
 @item -l
 Local; run only in current working directory.  See @ref{Recursive behavior}.
+
+@item -R
+Operate recursively (default).  @xref{Recursive
+behavior}.
 @end table
 
 @item watchers [@var{options}] [@var{files}@dots{}]
@@ -9379,18 +9849,29 @@ See who is watching a file.  See @ref{Watch information}.
 @table @code
 @item -l
 Local; run only in current working directory.  See @ref{Recursive behavior}.
+
+@item -R
+Operate recursively (default).  @xref{Recursive
+behavior}.
 @end table
 
 @end table
 
 @c ---------------------------------------------------------------------
 @node Administrative files
-@appendix Reference manual for the Administrative files
+@appendix Reference manual for Administrative files
 @cindex Administrative files (reference)
 @cindex Files, reference manual
 @cindex Reference manual (files)
 @cindex CVSROOT (file)
 
+@c FIXME?  Somewhere there needs to be a more "how-to"
+@c guide to writing these.  I think the triggers
+@c (commitinfo, loginfo, taginfo, &c) are perhaps a
+@c different case than files like modules.  One
+@c particular issue that people sometimes are
+@c (unnecessarily?) worried about is performance, and
+@c the impact of writing in perl or sh or ____.
 Inside the repository, in the directory
 @file{$CVSROOT/CVSROOT}, there are a number of
 supportive files for @sc{cvs}.  You can use @sc{cvs} in a limited
@@ -9599,6 +10080,10 @@ with the @code{-t} flag) and the other when the file is
 checked out of the repository (this is denoted with the
 @code{-f} flag).  The @samp{-t}/@samp{-f} feature does
 not work with client/server @sc{cvs}.
+@c I think maybe -t/-f works client/server if a single
+@c file converts to/from a single file, as opposed to
+@c the file<->directory case.  Could use more
+@c investigation...
 
 The @file{cvswrappers} also has a @samp{-m} option to
 specify the merge methodology that should be used when
@@ -9854,6 +10339,7 @@ repository is appended to the template, followed by the
 file names of any files involved in the commit (added,
 removed, and modified files).
 
+@cindex exit status, of commitinfo
 The first line with a regular expression matching the
 relative path to the module will be used.  If the
 command returns a non-zero exit status the commit will
@@ -9924,6 +10410,7 @@ If the repository name does not match any of the
 regular expressions in this file, the @samp{DEFAULT}
 line is used, if it is specified.
 
+@cindex exit status, of verifymsg
 If the verification script exits with a non-zero exit status,
 the commit is aborted.
 
@@ -10207,7 +10694,7 @@ like this:
 
 @example
 #!/bin/sh
-(echo "-----------------------------------------------------------------";
+(echo "------------------------------------------------------";
  echo -n $USER"  ";
  date;
  echo;
@@ -10288,6 +10775,19 @@ All occurances of the name @samp{ALL} appearing as a
 regular expression are used in addition to the first
 matching regular expression or @samp{DEFAULT}.
 
+@c FIXME: should be offering advice, somewhere around
+@c here, about where to put the template file.  The
+@c verifymsg example uses /usr/cvssupport but doesn't
+@c say anything about what that directory is for or
+@c whether it is hardwired into CVS or who creates
+@c it or anything.  In particular we should say
+@c how to version control the template file.  A
+@c probably better answer than the /usr/cvsssupport
+@c stuff is to use checkoutlist.  FIXME: it doesn't
+@c seem like checkoutlist is documented at all!
+@c Also I am starting to see a connection between
+@c this and the Keeping a checked out copy node.
+@c Probably want to say something about that.
 The log message template will be used as a default log
 message.  If you specify a log message with @samp{cvs
 commit -m @var{message}} or @samp{cvs commit -f
@@ -10485,7 +10985,14 @@ particularly useful to specify this option via
 For example, if you want the administrative file to
 refer to a test directory you might create a user
 variable @code{TESTDIR}.  Then if @sc{cvs} is invoked
-as @code{cvs -s TESTDIR=/work/local/tests}, and the
+as
+
+@example
+cvs -s TESTDIR=/work/local/tests
+@end example
+
+@noindent
+and the
 administrative file contains @code{sh
 $@{=TESTDIR@}/runtests}, then that string is expanded
 to @code{sh /work/local/tests/runtests}.
@@ -10521,6 +11028,10 @@ If this is set, @code{checkout} and @code{update} will
 try hard to make the files in your working directory
 read-only.  When this is not set, the default behavior
 is to permit modification of your working files.
+
+@item $CVSUMASK
+Controls permissions of files in the repository.  See
+@ref{File permissions}.
 
 @cindex CVSROOT
 @item $CVSROOT
@@ -10677,8 +11188,16 @@ argument lists of most @sc{rcs} commands.
 @node Troubleshooting
 @appendix Troubleshooting
 
+If you are having trouble with @sc{cvs}, this appendix
+may help.  If there is a particular error message which
+you are seeing, then you can look up the message
+alphabetically.  If not, you can look through the
+section on other problems to see if your problem is
+mentioned there.
+
 @menu
 * Error messages::              Partial list of CVS errors
+* Other problems::              Problems not readily listed by error message
 @end menu
 
 @ignore
@@ -10709,24 +11228,45 @@ sure which version of @sc{cvs} they are using at any
 particular moment).
 
 @table @code
-@item cvs [server aborted]: received broken pipe signal
-This message seems to be caused by a hard-to-track-down
-bug in @sc{cvs} or the systems it runs on (we don't
-know---we haven't tracked it down yet!).  It seems to
-happen only after a @sc{cvs} command has completed, and
-you should be able to just ignore the message.
-However, if you have discovered information concerning its
-cause, please let us know as described in @ref{BUGS}.
+@c FIXME: What is the correct way to format a multiline
+@c error message here?  Maybe @table is the wrong
+@c choice?  Texinfo gurus?
+@item cannot change permissions on temporary directory
+@example
+Operation not permitted
+@end example
+This message has been happening in a non-reproducible,
+occasional way when we run the client/server testsuite,
+both on Red Hat Linux 3.0.3 and 4.1.  We haven't been
+able to figure out what causes it, nor is it known
+whether it is specific to linux (or even to this
+particular machine!).  If the problem does occur on
+other unices, @samp{Operation not permitted} would be
+likely to read @samp{Not owner} or whatever the system
+in question uses for the unix @code{EPERM} error.  If
+you have any information to add, please let us know as
+described in @ref{BUGS}.  If you experience this error
+while using @sc{cvs}, retrying the operation which
+produced it should work fine.
+@c Most recently this was in the multibranch-5 test.
+@c But I'm not sure it is specific to that test.
 
 @c For one example see basica-1a10 in the testsuite
 @c For another example, "cvs co ." on NT; see comment
 @c at windows-NT/filesubr.c (expand_wild).
+@c For another example, "cvs co foo/bar" where foo exists.
 @item cannot open CVS/Entries for reading: No such file or directory
 This generally indicates a @sc{cvs} internal error, and
 can be handled as with other @sc{cvs} bugs
 (@pxref{BUGS}).  Usually there is a workaround---the
 exact nature of which would depend on the situation but
 which hopefully could be figured out.
+
+@item cvs [checkout aborted]: cannot rename file @var{file} to CVS/,,@var{file}: Invalid argument
+This message has been reported as intermittently
+happening with CVS 1.9 on Solaris 2.5.  The cause is
+unknown; if you know more about what causes it, let us
+know as described in @ref{BUGS}.
 
 @item cvs [update aborted]: could not patch @var{file}: No such file or directory
 This means that there was a problem finding the
@@ -10784,6 +11324,25 @@ every place it appears in your @code{modules}
 file.  For more information on the @code{modules} file,
 see @ref{modules}.
 
+@item rcs error: Unknown option: -x,v/
+This message will be followed by a usage message for
+@sc{rcs}.  It means that you have an old version of
+@sc{rcs} (probably supplied with your operating
+system).  CVS only works with @sc{rcs} version 5 and
+later.
+@c For more information on installing @sc{cvs}, see
+@c (FIXME: where?  it depends on whether you are
+@c getting binaries or sources or what).
+
+@item cvs [server aborted]: received broken pipe signal
+This message seems to be caused by a hard-to-track-down
+bug in @sc{cvs} or the systems it runs on (we don't
+know---we haven't tracked it down yet!).  It seems to
+happen only after a @sc{cvs} command has completed, and
+you should be able to just ignore the message.
+However, if you have discovered information concerning its
+cause, please let us know as described in @ref{BUGS}.
+
 @item cvs commit: Up-to-date check failed for `@var{file}'
 This means that someone else has committed a change to
 that file since the last time that you did a @code{cvs
@@ -10816,6 +11375,7 @@ it might be sufficient to place GNU diff3 in your
 @c Should we mention the cvsaux binaries here?
 
 @item cvs commit: warning: editor session failed
+@cindex exit status, of editor
 This means that the editor which @sc{cvs} is using exits with a nonzero
 exit status.  Some versions of vi will do this even when there was not
 a problem editing the file.  If so, point the
@@ -10832,6 +11392,23 @@ exit 0
 @c Would be nice to write these up--they are
 @c potentially confusing for the new user.
 @end table
+
+@node Other problems
+@appendixsec Other common problems
+
+Here is a list of problems which cannot be readily
+looked up based on an error message.  They are in no
+particular order.
+
+@itemize @bullet
+@item
+If @code{cvs update} finds a conflict and tries to
+merge, as described in @ref{Conflicts example}, but
+doesn't tell you there were conflicts, then you may
+have an old version of @sc{rcs}.  For more information
+on how to set this up, see the @file{INSTALL} file in
+the @sc{cvs} source distribution.
+@end itemize
 
 @c ---------------------------------------------------------------------
 @node Copying
@@ -10897,7 +11474,8 @@ patent must be licensed for everyone's free use or not licensed at all.
 modification follow.
 
 @iftex
-@unnumberedsec TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
+@heading TERMS AND CONDITIONS FOR COPYING,
+@heading DISTRIBUTION AND MODIFICATION
 @end iftex
 @ifinfo
 @center TERMS AND CONDITIONS FOR COPYING, DISTRIBUTION AND MODIFICATION
@@ -11186,7 +11764,8 @@ GNU General Public License for more details.
 
 You should have received a copy of the GNU General Public License
 along with this program; if not, write to the Free Software
-Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+Foundation, Inc., 59 Temple Place - Suite 330,
+Boston, MA 02111-1307, USA.
 @end smallexample
 
 Also add information on how to contact you by electronic and paper mail.

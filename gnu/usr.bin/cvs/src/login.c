@@ -178,11 +178,6 @@ login (argc, argv)
 		already_entered = 1;
 		break;
             }
-	    else
-            {
-		free (linebuf);
-		linebuf = (char *) NULL;
-            }
         }
 	fclose (fp);
     }
@@ -217,13 +212,13 @@ login (argc, argv)
 	    if (fp == NULL)
             {
 		error (1, errno, "unable to open %s", passfile);
+		if (linebuf)
+		    free (linebuf);
 		return 1;
             }
 	    /* I'm not paranoid, they really ARE out to get me: */
 	    chmod (passfile, 0600);
 
-	    free (linebuf);
-	    linebuf = (char *) NULL;
 	    while (getline (&linebuf, &linebuf_len, fp) >= 0)
             {
 		if (strncmp (CVSroot_original, linebuf, root_len))
@@ -232,9 +227,9 @@ login (argc, argv)
 		    fprintf (tmp_fp, "%s %s\n", CVSroot_original,
 			     typed_password);
 
-		free (linebuf);
-		linebuf = (char *) NULL;
             }
+            if (linebuf)
+                free (linebuf);
 	    fclose (tmp_fp);
 	    fclose (fp);
 	    copy_file (tmp_name, passfile);
@@ -245,6 +240,8 @@ login (argc, argv)
     }
     else
     {
+	if (linebuf)
+	    free (linebuf);
 	if ((fp = CVS_FOPEN (passfile, "a")) == NULL)
         {
 	    error (1, errno, "could not open %s", passfile);
@@ -335,11 +332,6 @@ get_cvs_password ()
 	    found_it = 1;
 	    break;
         }
-	else
-        {
-	    free (linebuf);
-	    linebuf = (char *) NULL;
-        }
     }
 
     if (found_it)
@@ -351,15 +343,15 @@ get_cvs_password ()
 	password = strtok (NULL, "\n");
 
 	/* Give it permanent storage. */
-	tmp = xmalloc (strlen (password) + 1);
-	strcpy (tmp, password);
-	tmp[strlen (password)] = '\0';
+	tmp = xstrdup (password);
 	memset (password, 0, strlen (password));
 	free (linebuf);
 	return tmp;
     }
     else
     {
+        if (linebuf)
+            free (linebuf);
 	error (0, 0, "cannot find password");
 	error (1, 0, "use \"cvs login\" to log in first");
     }
@@ -445,6 +437,8 @@ logout (argc, argv)
 	else
 	    found = TRUE;
     }
+    if (linebuf)
+        free (linebuf);
     fclose (fp);
     fclose (tmp_fp);
 

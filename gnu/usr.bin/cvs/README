@@ -19,29 +19,18 @@
 
 Welcome to CVS!
 
-Bug reports are accepted, however note that someone may or may not
-feel like taking care of your bug report.  Support contracts are
-available from Cyclic Software (http://www.cyclic.com or
-info@cyclic.com).
+If you have problems or think you have found a bug in CVS, see the
+section BUGS in the CVS manual (also known as Version Management with
+CVS by Per Cederqvist et al, or cvs.texinfo--see below for details).
 
-To report bugs send mail to bug-cvs@prep.ai.mit.edu, or run the "cvsbug"
-program and fill out the template:
-
-	$ cvsbug
-
-The "cvsbug" program is installed in the same location as the "cvs"
-program.  If your installation failed, you may need to run "cvsbug"
-directly out of the "src" directory as "src/cvsbug.sh".  This is also
-the procedure for submitting suggested changes to CVS (see the file
-HACKING for more details).  Note that all submitted changes may be
-distributed under the terms of the GNU Public License, so if you don't
-like this, don't submit them.
+If you are thinking of submitting changes to CVS, see the
+file HACKING.
 
 Please consult the INSTALL file for information on tested
 configurations.  If you have a comment about an already tested
-configuration, or have tried CVS on a new configuration, please write
-to the above address and let us know!  Free software only works if we
-all help out.
+configuration, or have tried CVS on a new configuration, please let us
+know as described in INSTALL.  Free software only works if we all help
+out.
 
 Finally, we cannot guarantee that this release will not completely wipe out
 all of your work from your system.  We do some simple testing before each

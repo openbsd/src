@@ -1,3 +1,21 @@
+Tue Jun 17 16:35:06 1997  Jim Kingdon  (unknown@beezley)
+
+	* rcmd.c: Check HAVE_WINSOCK_H in figuring out which files
+	to include (see comment about making this portable).  If not
+	HAVE_WINSOCK_H, make various #definitions.
+	* rcmd.c (init_winsock): Move from here...
+	* win32.c: ...to here.
+	* rcmd.c (bind_and_connect, resolve_address): Shut up gcc -Wall
+	(which doesn't know that error (1, ...) doesn't return).
+
+Sun Jun  8 23:43:21 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* config.h (HAVE_MKFIFO): Remove; not used anywhere.
+
+Sat May  3 11:15:46 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* rcmd.c: Add "copyright" notice.
+
 Thu Apr 17 00:15:36 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* Makefile.in: Add sockerror.c.

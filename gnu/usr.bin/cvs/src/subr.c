@@ -114,16 +114,58 @@ void
 strip_trailing_newlines (str)
      char *str;
 {
-  int len;
-  len = strlen (str) - 1;
+    int len;
+    len = strlen (str) - 1;
 
-  while (str[len] == '\n')
-    str[len--] = '\0';
+    while (str[len] == '\n')
+	str[len--] = '\0';
 }
 
-/*
- * Recover the space allocated by line2argv()
- */
+/* Return the number of levels that path ascends above where it starts.
+   For example:
+   "../../foo" -> 2
+   "foo/../../bar" -> 1
+   */
+/* FIXME: Should be using ISDIRSEP, last_component, or some other
+   mechanism which is more general than just looking at slashes,
+   particularly for the client.c caller.  The server.c caller might
+   want something different, so be careful.  */
+int
+pathname_levels (path)
+    char *path;
+{
+    char *p;
+    char *q;
+    int level;
+    int max_level;
+
+    max_level = 0;
+    p = path;
+    level = 0;
+    do
+    {
+	q = strchr (p, '/');
+	if (q != NULL)
+	    ++q;
+	if (p[0] == '.' && p[1] == '.' && (p[2] == '\0' || p[2] == '/'))
+	{
+	    --level;
+	    if (-level > max_level)
+		max_level = -level;
+	}
+	else if (p[0] == '.' && (p[1] == '\0' || p[1] == '/'))
+	    ;
+	else
+	    ++level;
+	p = q;
+    } while (p != NULL);
+    return max_level;
+}
+
+
+/* Free a vector, where (*ARGV)[0], (*ARGV)[1], ... (*ARGV)[*PARGC - 1]
+   are malloc'd and so is *ARGV itself.  Such a vector is allocated by
+   line2argv or expand_wild, for example.  */
 void
 free_names (pargc, argv)
     int *pargc;
@@ -157,7 +199,9 @@ line2argv (pargc, argv, line)
     int argv_allocated;
 
     /* Small for testing.  */
-    argv_allocated = 1;
+    /* argv_allocated must be at least 3 because at some places
+       (e.g. checkout_proc) cvs alters argv[2].  */
+    argv_allocated = 4;
     *argv = (char **) xmalloc (argv_allocated * sizeof (**argv));
 
     *pargc = 0;
@@ -190,11 +234,13 @@ numdots (s)
     return (dots);
 }
 
-/*
- * Get the caller's login from his uid. If the real uid is "root" try LOGNAME
- * USER or getlogin(). If getlogin() and getpwuid() both fail, return
- * the uid as a string.
- */
+/* Return the username by which the caller should be identified in
+   CVS, in contexts such as the author field of RCS files, various
+   logs, etc.
+
+   Returns a pointer to storage that we manage; it is good until the
+   next call to getcaller () (provided that the caller doesn't call
+   getlogin () or some such themself).  */
 char *
 getcaller ()
 {
@@ -202,6 +248,16 @@ getcaller ()
     struct passwd *pw;
     char *name;
     uid_t uid;
+
+    /* If there is a CVS username, return it.  */
+#ifdef AUTH_SERVER_SUPPORT
+    if (CVS_Username != NULL)
+	return CVS_Username;
+#endif
+
+    /* Get the caller's login from his uid.  If the real uid is "root"
+       try LOGNAME USER or getlogin(). If getlogin() and getpwuid()
+       both fail, return the uid as a string.  */
 
     uid = getuid ();
     if (uid == (uid_t) 0)

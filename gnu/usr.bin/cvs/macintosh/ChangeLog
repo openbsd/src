@@ -1,3 +1,8 @@
+Fri May 30 22:11:52 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* pwd.c: Remove $Header; we decided to get rid of these some time
+	ago.
+
 Wed Mar 12 16:10:01 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* config.h (HAVE_SETVBUF): Removed; no longer used.

@@ -11,7 +11,6 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
     GNU General Public License for more details.
 
-    $Header: /home/cvs/src/gnu/usr.bin/cvs/macintosh/Attic/pwd.c,v 1.1.1.3 1997/02/21 06:38:57 tholo Exp $
 */
 
 /* This 'implementation' is conjectured from the use of this functions in

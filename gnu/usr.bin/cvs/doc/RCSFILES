@@ -37,6 +37,26 @@ for more information on them.  CVS also sets the RCS state to "dead"
 to indicate that a file does not exist in a given revision (this is
 stored just as any other RCS state is).
 
+The RCS file format allows quite a variety of extensions to be added
+in a compatible manner by use of the "newphrase" feature documented in
+rcsfile.5.  We won't try to document extensions not used by CVS in any
+detail, but we will briefly list them.  Each occurrence of a newphrase
+begins with an identifier, which is what we list here.  Future
+designers of extensions are strongly encouraged to pick
+non-conflicting identifiers.  Note that newphrase occurs several
+places in the RCS grammar, and a given extension may not be legal in
+all locations.  However, it seems better to reserve a particular
+identifier for all locations, to avoid confusion and complicated
+rules.
+
+   Identifier   Used by
+   ----------   -------
+   namespace    RCS library done at Silicon Graphics Inc. (SGI) in 1996
+                (a modified RCS 5.7--not sure it has any other name).
+   dead         A set of RCS patches developed by Rich Pixley at
+                Cygnus.  These were for CVS, and predated the current
+                CVS death support, which does not require RCS changes.
+
 The rules regarding keyword expansion are not documented along with
 the rest of the RCS file format; they are documented in the co(1)
 manpage in the RCS 5.7 distribution.  See also the "Keyword
@@ -54,6 +74,30 @@ versions of CVS.
 Both RCS 5.7 and current versions of CVS handle the $Log keyword in a
 different way if the log message starts with "checked in with -k by ".
 I don't think this behavior is documented anywhere.
+
+One common concern about the RCS file format is the fact that to get
+the head of a branch, one must apply deltas from the head of the trunk
+to the branchpoint, and then from the branchpoint to the head of the
+branch.  While more detailed analyses might be worth doing, we will
+note:
+
+    * The performance bottleneck for CVS generally is figuring out which
+    files to operate on and that sort of thing, not applying deltas.
+
+    * Here is one quick test (probably not a very good test; a better test
+    would use a normally sized file (say 50-200K) instead of a small one):
+
+	I just did a quick test with a small file (on a Sun Ultra 1/170E
+	running Solaris 5.5.1), with 1000 revisions on the main branch and
+	1000 revisions on branch that forked at the root (i.e., RCS revisions
+	1.1, 1.2, ..., 1.1000, and branch revisions 1.1.1.1, 1.1.1.2, ...,
+	1.1.1.1000).  It took about 0.15 seconds real time to check in the
+	first revision, and about 0.6 seconds to check in and 0.3 seconds to
+	retrieve revision 1.1.1.1000 (the worst case).
+
+    * Any attempt to "fix" this problem should be careful not to interfere
+    with other features, such as lightweight creation of branches
+    (particularly using CVS magic branches).
 
 Diff follows:
 

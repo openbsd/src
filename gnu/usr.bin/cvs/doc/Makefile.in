@@ -127,10 +127,7 @@ cvsclient.dvi cvsclient.aux: cvsclient.texi CVSvn.texi
 		ln -s $(srcdir)/CVSvn.texi . || \
 		ln $(srcdir)/CVSvn.texi . || \
 		cp $(srcdir)/CVSvn.texi . ; else true; fi
-	$(SET_TEXINPUTS) $(TEX) cvsclient.texi
-	$(SET_TEXINPUTS) $(TEX) cvsclient.texi
-	$(TEXINDEX) cvsclient.??
-	$(SET_TEXINPUTS) $(TEX) cvsclient.texi
+	$(TEXI2DVI) $(srcdir)/cvsclient.texi
 	rm -f cvsclient.?? cvsclient.log cvsclient.toc cvsclient.??s
 
 cvs.ps: cvs.dvi

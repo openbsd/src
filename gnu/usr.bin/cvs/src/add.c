@@ -102,7 +102,7 @@ add (argc, argv)
     wrap_setup ();
 
     /* parse args */
-    optind = 1;
+    optind = 0;
     while ((c = getopt (argc, argv, "+k:m:")) != -1)
     {
 	switch (c)
@@ -183,6 +183,9 @@ add (argc, argv)
 	/* FIXME: should be able to pass SEND_NO_CONTENTS, I think.  */
 	send_files (argc, argv, 0, 0, SEND_BUILD_DIRS);
 	send_to_server ("add\012", 0);
+	if (message)
+	    free (message);
+	free (repository);
 	return get_responses_and_close ();
     }
 #endif
@@ -449,6 +452,7 @@ cannot resurrect %s; RCS file removed by second party", user);
 
     if (message)
 	free (message);
+    free (repository);
 
     return (err);
 }

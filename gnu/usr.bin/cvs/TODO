@@ -400,3 +400,23 @@ the FreeBSD Handbook, and src/lib/libcrypt/crypt.c in the FreeBSD
 sources.  Certainly in the context of non-unix servers this algorithm
 makes more sense than the traditional unix crypt() algorithm, which
 suffers from export control problems.
+
+185.  A frequent complaint is that keyword expansion causes conflicts
+when merging from one branch to another.  The first step is
+documenting CVS's existing features in this area--what happens with
+various -k options in various places?  The second step is thinking
+about whether there should be some new feature and if so how it should
+be designed.  For example, here is one thought:
+
+    rcs' co command needs a new -k option.  The new option should expand
+    $Log entries without expanding $Revision entries.  This would
+    allow cvs to use rcsmerge in such a way that joining branches into
+    main lines would neither generate extra collisions on revisions nor
+    drop log lines.
+
+The details of this are out of date (CVS no longer invokes "co", and
+any changes in this area would be done by bypassing RCS rather than
+modifying it), but even as to the general idea, I don't have a clear
+idea about whether it would be good (see what I mean about the need
+for better documentation?  I work on CVS full-time, and even I don't
+understand the state of the art on this subject).

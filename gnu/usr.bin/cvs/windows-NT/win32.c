@@ -13,6 +13,18 @@
 
 #include <config.h>
 
+void
+init_winsock ()
+{
+    WSADATA data;
+
+    if (WSAStartup (MAKEWORD (1, 1), &data))
+    {
+	fprintf (stderr, "cvs: unable to initialize winsock\n");
+	exit (1);
+    }
+}
+
 unsigned sleep(unsigned seconds)
 {
 	Sleep(1000*seconds);

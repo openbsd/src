@@ -542,6 +542,29 @@ DEP_CPP_MKMOD=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_MKMOD=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\mkmodules.obj" : $(SOURCE) $(DEP_CPP_MKMOD) "$(INTDIR)"
@@ -556,6 +579,29 @@ SOURCE=.\src\subr.c
 DEP_CPP_SUBR_=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_SUBR_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\subr.obj" : $(SOURCE) $(DEP_CPP_SUBR_) "$(INTDIR)"
@@ -569,6 +615,29 @@ DEP_CPP_SUBR_=\
 SOURCE=.\src\admin.c
 DEP_CPP_ADMIN=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_ADMIN=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\admin.obj" : $(SOURCE) $(DEP_CPP_ADMIN) "$(INTDIR)"
@@ -588,6 +657,28 @@ DEP_CPP_SERVE=\
 	".\lib\getline.h"\
 	".\src\buffer.h"\
 	{$(INCLUDE)}"\sys\Types.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_SERVE=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\server.obj" : $(SOURCE) $(DEP_CPP_SERVE) "$(INTDIR)"
@@ -601,6 +692,29 @@ DEP_CPP_SERVE=\
 SOURCE=.\src\diff.c
 DEP_CPP_DIFF_=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_DIFF_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\diff.obj" : $(SOURCE) $(DEP_CPP_DIFF_) "$(INTDIR)"
@@ -619,6 +733,28 @@ DEP_CPP_CLIEN=\
 	".\src\edit.h"\
 	".\src\buffer.h"\
 	".\lib\md5.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_CLIEN=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\client.obj" : $(SOURCE) $(DEP_CPP_CLIEN) "$(INTDIR)"
@@ -632,6 +768,29 @@ DEP_CPP_CLIEN=\
 SOURCE=.\src\checkout.c
 DEP_CPP_CHECK=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_CHECK=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\checkout.obj" : $(SOURCE) $(DEP_CPP_CHECK) "$(INTDIR)"
@@ -645,6 +804,29 @@ DEP_CPP_CHECK=\
 SOURCE=.\src\no_diff.c
 DEP_CPP_NO_DI=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_NO_DI=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\no_diff.obj" : $(SOURCE) $(DEP_CPP_NO_DI) "$(INTDIR)"
@@ -659,6 +841,29 @@ SOURCE=.\src\entries.c
 DEP_CPP_ENTRI=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_ENTRI=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\entries.obj" : $(SOURCE) $(DEP_CPP_ENTRI) "$(INTDIR)"
@@ -673,6 +878,29 @@ SOURCE=.\src\tag.c
 DEP_CPP_TAG_C=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_TAG_C=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\tag.obj" : $(SOURCE) $(DEP_CPP_TAG_C) "$(INTDIR)"
@@ -686,6 +914,29 @@ DEP_CPP_TAG_C=\
 SOURCE=.\src\rtag.c
 DEP_CPP_RTAG_=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_RTAG_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\rtag.obj" : $(SOURCE) $(DEP_CPP_RTAG_) "$(INTDIR)"
@@ -699,6 +950,29 @@ DEP_CPP_RTAG_=\
 SOURCE=.\src\status.c
 DEP_CPP_STATU=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_STATU=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\status.obj" : $(SOURCE) $(DEP_CPP_STATU) "$(INTDIR)"
@@ -713,6 +987,29 @@ SOURCE=.\src\root.c
 DEP_CPP_ROOT_=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_ROOT_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\root.obj" : $(SOURCE) $(DEP_CPP_ROOT_) "$(INTDIR)"
@@ -727,6 +1024,29 @@ SOURCE=.\src\myndbm.c
 DEP_CPP_MYNDB=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_MYNDB=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\myndbm.obj" : $(SOURCE) $(DEP_CPP_MYNDB) "$(INTDIR)"
@@ -740,6 +1060,29 @@ DEP_CPP_MYNDB=\
 SOURCE=.\src\hash.c
 DEP_CPP_HASH_=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_HASH_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\hash.obj" : $(SOURCE) $(DEP_CPP_HASH_) "$(INTDIR)"
@@ -754,6 +1097,29 @@ SOURCE=.\src\repos.c
 DEP_CPP_REPOS=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_REPOS=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\repos.obj" : $(SOURCE) $(DEP_CPP_REPOS) "$(INTDIR)"
@@ -768,6 +1134,29 @@ SOURCE=.\src\parseinfo.c
 DEP_CPP_PARSE=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_PARSE=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\parseinfo.obj" : $(SOURCE) $(DEP_CPP_PARSE) "$(INTDIR)"
@@ -781,6 +1170,29 @@ DEP_CPP_PARSE=\
 SOURCE=.\src\vers_ts.c
 DEP_CPP_VERS_=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_VERS_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\vers_ts.obj" : $(SOURCE) $(DEP_CPP_VERS_) "$(INTDIR)"
@@ -796,6 +1208,29 @@ DEP_CPP_CHECKI=\
 	".\src\cvs.h"\
 	".\src\fileattr.h"\
 	".\src\edit.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_CHECKI=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\checkin.obj" : $(SOURCE) $(DEP_CPP_CHECKI) "$(INTDIR)"
@@ -812,6 +1247,29 @@ DEP_CPP_COMMI=\
 	".\lib\getline.h"\
 	".\src\edit.h"\
 	".\src\fileattr.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_COMMI=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\commit.obj" : $(SOURCE) $(DEP_CPP_COMMI) "$(INTDIR)"
@@ -825,6 +1283,29 @@ DEP_CPP_COMMI=\
 SOURCE=.\src\version.c
 DEP_CPP_VERSI=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_VERSI=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\version.obj" : $(SOURCE) $(DEP_CPP_VERSI) "$(INTDIR)"
@@ -839,6 +1320,29 @@ SOURCE=.\src\cvsrc.c
 DEP_CPP_CVSRC=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_CVSRC=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\cvsrc.obj" : $(SOURCE) $(DEP_CPP_CVSRC) "$(INTDIR)"
@@ -852,6 +1356,29 @@ DEP_CPP_CVSRC=\
 SOURCE=.\src\remove.c
 DEP_CPP_REMOV=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_REMOV=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\remove.obj" : $(SOURCE) $(DEP_CPP_REMOV) "$(INTDIR)"
@@ -871,6 +1398,29 @@ DEP_CPP_UPDAT=\
 	".\src\fileattr.h"\
 	".\src\edit.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_UPDAT=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\update.obj" : $(SOURCE) $(DEP_CPP_UPDAT) "$(INTDIR)"
@@ -885,6 +1435,29 @@ SOURCE=.\src\logmsg.c
 DEP_CPP_LOGMS=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_LOGMS=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\logmsg.obj" : $(SOURCE) $(DEP_CPP_LOGMS) "$(INTDIR)"
@@ -898,6 +1471,29 @@ DEP_CPP_LOGMS=\
 SOURCE=.\src\classify.c
 DEP_CPP_CLASS=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_CLASS=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\classify.obj" : $(SOURCE) $(DEP_CPP_CLASS) "$(INTDIR)"
@@ -912,6 +1508,29 @@ SOURCE=.\src\history.c
 DEP_CPP_HISTO=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_HISTO=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\history.obj" : $(SOURCE) $(DEP_CPP_HISTO) "$(INTDIR)"
@@ -926,6 +1545,29 @@ SOURCE=.\src\add.c
 DEP_CPP_ADD_C=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_ADD_C=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\add.obj" : $(SOURCE) $(DEP_CPP_ADD_C) "$(INTDIR)"
@@ -939,6 +1581,29 @@ DEP_CPP_ADD_C=\
 SOURCE=.\src\lock.c
 DEP_CPP_LOCK_=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_LOCK_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\lock.obj" : $(SOURCE) $(DEP_CPP_LOCK_) "$(INTDIR)"
@@ -955,6 +1620,29 @@ DEP_CPP_RECUR=\
 	".\lib\savecwd.h"\
 	".\src\fileattr.h"\
 	".\src\edit.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_RECUR=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\recurse.obj" : $(SOURCE) $(DEP_CPP_RECUR) "$(INTDIR)"
@@ -969,6 +1657,29 @@ SOURCE=.\src\modules.c
 DEP_CPP_MODUL=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_MODUL=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\modules.obj" : $(SOURCE) $(DEP_CPP_MODUL) "$(INTDIR)"
@@ -982,6 +1693,29 @@ DEP_CPP_MODUL=\
 SOURCE=.\src\find_names.c
 DEP_CPP_FIND_=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_FIND_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\find_names.obj" : $(SOURCE) $(DEP_CPP_FIND_) "$(INTDIR)"
@@ -995,6 +1729,29 @@ DEP_CPP_FIND_=\
 SOURCE=.\src\rcs.c
 DEP_CPP_RCS_C=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_RCS_C=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\rcs.obj" : $(SOURCE) $(DEP_CPP_RCS_C) "$(INTDIR)"
@@ -1008,6 +1765,29 @@ DEP_CPP_RCS_C=\
 SOURCE=.\src\create_adm.c
 DEP_CPP_CREAT=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_CREAT=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\create_adm.obj" : $(SOURCE) $(DEP_CPP_CREAT) "$(INTDIR)"
@@ -1021,6 +1801,29 @@ DEP_CPP_CREAT=\
 SOURCE=.\src\main.c
 DEP_CPP_MAIN_=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_MAIN_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\main.obj" : $(SOURCE) $(DEP_CPP_MAIN_) "$(INTDIR)"
@@ -1035,6 +1838,29 @@ SOURCE=.\src\patch.c
 DEP_CPP_PATCH=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_PATCH=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\patch.obj" : $(SOURCE) $(DEP_CPP_PATCH) "$(INTDIR)"
@@ -1049,6 +1875,29 @@ SOURCE=.\src\release.c
 DEP_CPP_RELEA=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_RELEA=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\release.obj" : $(SOURCE) $(DEP_CPP_RELEA) "$(INTDIR)"
@@ -1062,6 +1911,29 @@ DEP_CPP_RELEA=\
 SOURCE=.\src\rcscmds.c
 DEP_CPP_RCSCM=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_RCSCM=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\rcscmds.obj" : $(SOURCE) $(DEP_CPP_RCSCM) "$(INTDIR)"
@@ -1076,6 +1948,29 @@ SOURCE=.\src\import.c
 DEP_CPP_IMPOR=\
 	".\src\cvs.h"\
 	".\lib\savecwd.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_IMPOR=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\import.obj" : $(SOURCE) $(DEP_CPP_IMPOR) "$(INTDIR)"
@@ -1090,6 +1985,29 @@ SOURCE=.\src\ignore.c
 DEP_CPP_IGNOR=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_IGNOR=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\ignore.obj" : $(SOURCE) $(DEP_CPP_IGNOR) "$(INTDIR)"
@@ -1103,6 +2021,29 @@ DEP_CPP_IGNOR=\
 SOURCE=.\src\log.c
 DEP_CPP_LOG_C=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_LOG_C=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\log.obj" : $(SOURCE) $(DEP_CPP_LOG_C) "$(INTDIR)"
@@ -1117,6 +2058,29 @@ SOURCE=.\src\wrapper.c
 DEP_CPP_WRAPP=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_WRAPP=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\wrapper.obj" : $(SOURCE) $(DEP_CPP_WRAPP) "$(INTDIR)"
@@ -1130,6 +2094,29 @@ DEP_CPP_WRAPP=\
 SOURCE=.\src\error.c
 DEP_CPP_ERROR=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_ERROR=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\error.obj" : $(SOURCE) $(DEP_CPP_ERROR) "$(INTDIR)"
@@ -1144,6 +2131,28 @@ SOURCE=.\src\expand_path.c
 DEP_CPP_EXPAN=\
 	".\src\cvs.h"\
 	{$(INCLUDE)}"\sys\Types.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_EXPAN=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\expand_path.obj" : $(SOURCE) $(DEP_CPP_EXPAN) "$(INTDIR)"
@@ -1161,6 +2170,29 @@ DEP_CPP_EDIT_=\
 	".\src\watch.h"\
 	".\src\edit.h"\
 	".\src\fileattr.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_EDIT_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\edit.obj" : $(SOURCE) $(DEP_CPP_EDIT_) "$(INTDIR)"
@@ -1176,6 +2208,29 @@ DEP_CPP_FILEA=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
 	".\src\fileattr.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_FILEA=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\fileattr.obj" : $(SOURCE) $(DEP_CPP_FILEA) "$(INTDIR)"
@@ -1192,6 +2247,29 @@ DEP_CPP_WATCH=\
 	".\src\edit.h"\
 	".\src\fileattr.h"\
 	".\src\watch.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_WATCH=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\watch.obj" : $(SOURCE) $(DEP_CPP_WATCH) "$(INTDIR)"
@@ -1206,6 +2284,29 @@ SOURCE=.\src\login.c
 DEP_CPP_LOGIN=\
 	".\src\cvs.h"\
 	".\lib\getline.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_LOGIN=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\login.obj" : $(SOURCE) $(DEP_CPP_LOGIN) "$(INTDIR)"
@@ -1219,6 +2320,29 @@ DEP_CPP_LOGIN=\
 SOURCE=.\src\scramble.c
 DEP_CPP_SCRAM=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_SCRAM=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\scramble.obj" : $(SOURCE) $(DEP_CPP_SCRAM) "$(INTDIR)"
@@ -1233,6 +2357,29 @@ SOURCE=.\src\buffer.c
 DEP_CPP_BUFFE=\
 	".\src\cvs.h"\
 	".\src\buffer.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_BUFFE=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\buffer.obj" : $(SOURCE) $(DEP_CPP_BUFFE) "$(INTDIR)"
@@ -1248,7 +2395,30 @@ DEP_CPP_ZLIB_=\
 	".\src\cvs.h"\
 	".\src\buffer.h"\
 	".\zlib\zlib.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
 	".\zlib\zconf.h"\
+	
+NODEP_CPP_ZLIB_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\zlib.obj" : $(SOURCE) $(DEP_CPP_ZLIB_) "$(INTDIR)"
@@ -1521,6 +2691,29 @@ DEP_CPP_VASPR=\
 SOURCE=".\windows-NT\mkdir.c"
 DEP_CPP_MKDIR=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_MKDIR=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\mkdir.obj" : $(SOURCE) $(DEP_CPP_MKDIR) "$(INTDIR)"
@@ -1534,6 +2727,29 @@ DEP_CPP_MKDIR=\
 SOURCE=".\windows-NT\run.c"
 DEP_CPP_RUN_C=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_RUN_C=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\run.obj" : $(SOURCE) $(DEP_CPP_RUN_C) "$(INTDIR)"
@@ -1560,6 +2776,29 @@ DEP_CPP_PWD_C=\
 SOURCE=".\windows-NT\filesubr.c"
 DEP_CPP_FILES=\
 	".\src\cvs.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_FILES=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\filesubr.obj" : $(SOURCE) $(DEP_CPP_FILES) "$(INTDIR)"
@@ -1625,6 +2864,29 @@ SOURCE=".\windows-NT\rcmd.c"
 DEP_CPP_RCMD_=\
 	".\src\cvs.h"\
 	".\windows-NT\rcmd.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_RCMD_=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\rcmd.obj" : $(SOURCE) $(DEP_CPP_RCMD_) "$(INTDIR)"
@@ -1639,6 +2901,29 @@ SOURCE=".\windows-NT\startserver.c"
 DEP_CPP_START=\
 	".\src\cvs.h"\
 	".\windows-NT\rcmd.h"\
+	".\windows-NT\config.h"\
+	".\windows-NT\options.h"\
+	".\lib\fnmatch.h"\
+	".\windows-NT\pwd.h"\
+	".\lib\system.h"\
+	".\src\hash.h"\
+	".\src\client.h"\
+	".\src\myndbm.h"\
+	".\lib\regex.h"\
+	".\lib\getopt.h"\
+	".\lib\wait.h"\
+	".\src\rcs.h"\
+	".\src\update.h"\
+	".\src\server.h"\
+	{$(INCLUDE)}"\sys\Types.h"\
+	{$(INCLUDE)}"\sys\Stat.h"\
+	{$(INCLUDE)}"\sys\Timeb.h"\
+	{$(INCLUDE)}"\sys\Utime.h"\
+	".\windows-NT\ndir.h"\
+	
+NODEP_CPP_START=\
+	".\src\popen.h"\
+	".\lib\tcpip.h"\
 	
 
 "$(INTDIR)\startserver.obj" : $(SOURCE) $(DEP_CPP_START) "$(INTDIR)"

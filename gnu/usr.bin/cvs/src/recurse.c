@@ -135,9 +135,16 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
     }
     if (filelist)
 	dellist (&filelist); /* FIXME-krp: no longer correct. */
-/* FIXME-krp: clean up files_by_dir */
     if (dirlist)
 	dellist (&dirlist);
+
+#ifdef SERVER_SUPPORT
+    if (server_active)
+    {
+	for (i = 0; i < argc; ++i)
+	    server_pathname_check (argv[i]);
+    }
+#endif
 
     if (argc == 0)
     {
@@ -218,7 +225,11 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 		addfile (&files_by_dir, dir, comp);
 	    else if (isdir (dir))
 	    {
-		if ((which & W_LOCAL) && isdir (CVSADM))
+		if ((which & W_LOCAL) && isdir (CVSADM)
+#ifdef CLIENT_SUPPORT
+		    && !client_active
+#endif
+		    )
 		{
 		    /* otherwise, look for it in the repository. */
 		    char *tmp_update_dir;
@@ -249,6 +260,7 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
 			addfile (&files_by_dir, dir, comp);
 
 		    free (tmp_update_dir);
+		    free (reposfile);
 		}
 		else
 		    addfile (&files_by_dir, dir, comp);
@@ -267,15 +279,14 @@ start_recursion (fileproc, filesdoneproc, direntproc, dirleaveproc, callerdat,
        calling do_recursion. */
 
     err += walklist (files_by_dir, unroll_files_proc, (void *) &frame);
+    dellist(&files_by_dir);
 
     /* then do_recursion on the dirlist. */
     if (dirlist != NULL)
 	err += do_recursion (&frame);
 
     /* Free the data which expand_wild allocated.  */
-    for (i = 0; i < argc; ++i)
-	free (argv[i]);
-    free (argv);
+    free_names (&argc, argv);
 
  out:
     free (update_dir);
@@ -769,6 +780,7 @@ unroll_files_proc (p, closure)
 
     /* otherwise, call dorecusion for this list of files. */
     filelist = (List *) p->data;
+    p->data = NULL;
     save_dirlist = dirlist;
     dirlist = NULL;
 

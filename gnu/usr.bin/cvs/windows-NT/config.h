@@ -129,9 +129,6 @@
 /* Define if you have the krb_get_err_text function.  */
 #undef HAVE_KRB_GET_ERR_TEXT
 
-/* Define if you have the mkfifo function.  */
-#undef HAVE_MKFIFO
-
 /* Define if you have the putenv function.  */
 #define HAVE_PUTENV 1
 

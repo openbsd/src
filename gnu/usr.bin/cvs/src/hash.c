@@ -101,15 +101,27 @@ dellist (listp)
 	if ((p = (*listp)->hasharray[i]) != (Node *) NULL)
 	{
 	    /* put the nodes into the cache */
+#ifndef NOCACHE
 	    p->type = UNKNOWN;
 	    p->next = nodecache;
 	    nodecache = p;
+#else
+	    /* If NOCACHE is defined we turn off the cache.  This can make
+	       it easier to tools to determine where items were allocated
+	       and freed, for tracking down memory leaks and the like.  */
+	    free (p);
+#endif
 	}
     }
 
     /* put it on the cache */
+#ifndef NOCACHE
     (*listp)->next = listcache;
     listcache = *listp;
+#else
+    free ((*listp)->list);
+    free (*listp);
+#endif
     *listp = (List *) NULL;
 }
 
@@ -198,9 +210,13 @@ freenode (p)
     freenode_mem (p);
 
     /* then put it in the cache */
+#ifndef NOCACHE
     p->type = UNKNOWN;
     p->next = nodecache;
     nodecache = p;
+#else
+    free (p);
+#endif
 }
 
 /*

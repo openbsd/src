@@ -48,61 +48,16 @@ $ CVS :== $YOUR_DEVICE:[YOUR.DIRECTORY.CVS]CVS.EXE
 
 Accessing a remote repository can happen in several ways.
 
-0. pserver
-1. Direct TCP using a listener process running on the CVS server.
-   (unprivileged)
+1. pserver
 2. rsh - privileged (default)
 3. rsh - unprivileged (on VMS side)
 
 Here's how to do each of the above:
 
 -------------------------------------------------------------------------------
-0.  pserver.  This is the preferred way.  It works just as it is
+1.  pserver.  This is the preferred way.  It works just as it is
 documented in the CVS manual (see the README file in the CVS
 distribution for more information on the manual).
-
-1.  Using direct TCP to communicate with a CVS server.  This method is
-broken in the current version of CVS; the following text is included
-for historical information but will be removed once we have verified
-that the so-called "direct TCP" is not worth resurrecting.
-
-Compile the file contrib/listener.c on the machine which will be the CVS
-server.  For each developer using the CVS client, choose a unique TCP port
-number.  This listener program is run on the server after defining a pair of
-environment variables, and acts as a proxy for the VMS client, which is
-authenticated only by reverse address resolution of hostname.
-
-Commits to the repository on a particular port will seen by the repository
-as being from the same user.
-
-On the VMS side, you will need to define the logical CVS_CLIENT_PORT.  Here's
-an example:
-
-$ DEFINE CVS_CLIENT_PORT 3050
-
-This will direct CVS to expect a direct connection to the CVS server on
-TCP port 3050 on whatever host is defined as the respository (whether through
-CVSROOT or the "-d" command option.
-
-The repository must have a full (client/server) CVS installed.  Choose a
-TCP port number (say 3050) [with coordination of your network administrator]
-for YOUR CVS transactions.  Each user of CVS under this arrangement will
-require a separate port.   Again, commits to the same port from the same
-host are all attributed to the user running the listener.  Invoke listener 
-as follows (asuming csh syntax)
-
-% setenv SERVER_PORT 3050
-% setenv SERVER_ALLOW my.vms.host.com
-% listener /my_cvs_path/cvs server &
-
-This will set up the CVS server to listen for connections on port 3050
-(instead of running through rsh, inetd, etc.).  It will immediately
-terminate the connection if the IP address of the connection does not
-resolve to "my.vms.host.com".  This at least gives some measure of the
-host control access afforded by rsh.  If the connection is not
-terminated, then the command "/my_cvs_path/cvs server" is invoked and
-it's stdin/stdout is redirected through the port.  Listener is used as
-a "poor man's (unprivileged) inetd".
 
 -------------------------------------------------------------------------------
 2. Using CVS internal rsh support (privileged)

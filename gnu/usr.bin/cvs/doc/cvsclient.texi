@@ -127,10 +127,6 @@ of "cvs edit" in this case is the most sensible course (the "cvs edit"
 could be handled by a package like VC for emacs).  This would also allow
 local operation of @code{cvs diff} without arguments.
 
-@c It isn't clear exactly how this should relate to a more general
-@c multisite feature (in which one can modify the local copy even if the
-@c network is down between the local and the master, and then they get
-@c reconciled by a potentially manual process).
 @item
 Have the client keep a copy of some part of the repository.  This allows
 all of @code{cvs diff} and large parts of @code{cvs update} and
@@ -138,6 +134,14 @@ all of @code{cvs diff} and large parts of @code{cvs update} and
 the master copy at night (but if the master copy has been updated since
 the latest nightly re-sync, then it would read what it needs to from the
 master).
+
+It isn't clear exactly how this should relate to a more general
+multisite feature (in which one can modify the local copy even if the
+network is down between the local and the master, and then they get
+reconciled by a potentially manual process).  Another variant of a
+multisite feature would be where version history is cached to speed up
+operations such as @code{cvs diff}, but in which checkins still must be
+checked in to all sites, or to a master site.
 
 @item
 The current procedure for @code{cvs update} is highly sub-optimal if
@@ -149,6 +153,38 @@ more, if changes in the repository mean it has to ask the client for
 more files), because it can't keep locks open while waiting for the
 network.  Perhaps this whole thing is irrelevant if client-side
 repositories are implemented, and the rcsmerge is done by the client.
+
+@item
+The fact that @code{pserver} requires an extra network turnaround in
+order to perform authentication would be nice to avoid.  This relates to
+the issue of reporting errors; probably the clean solution is to defer
+the error until the client has issued a request which expects a
+response.  To some extent this might relate to the next item (in terms
+of how easy it is to skip a whole bunch of requests until we get to one
+that expects a response).  I know that the kerberos code doesn't wait in
+this fashion, but that probably can cause network deadlocks and perhaps
+future problems running over a transport which is more transaction
+oriented than TCP.  On the other hand I'm not sure it is wise to make
+the client conduct a lengthy upload only to find there is an
+authentication failure.
+
+@item
+The protocol uses an extra network turnaround for protocol negotiation
+(@code{valid-requests}).  It might be nice to avoid this by having the
+client be able to send requests and tell the server to ignore them if
+they are unrecognized (different requests could produce a fatal error if
+unrecognized).  To do this there should be a standard syntax for
+requests.  For example, perhaps all future requests should be a single
+line, with mechanisms analogous to @code{Argumentx}, or several requests
+working together, to provide greater amounts of information.  Or there
+might be a standard mechanism for counted data (analogous to that used
+by @code{Modified}) or continuation lines (like a generalized
+@code{Argumentx}).  It would be useful to compare what HTTP is planning
+in this area; last I looked they were contemplating something called
+Protocol Extension Protocol but I haven't looked at the relevant IETF
+documents in any detail.  Obviously, we want something as simple as
+possible (but no simpler).
+
 @end itemize
 
 @node Connection and Authentication
@@ -198,6 +234,17 @@ protocol, the procedure is the same, except @samp{BEGIN AUTH REQUEST} is
 replaced with @samp{BEGIN VERIFICATION REQUEST}, @samp{END AUTH REQUEST}
 is replaced with @samp{END VERIFICATION REQUEST}, and upon receipt of
 @samp{I LOVE YOU} the connection is closed rather than continuing.
+
+@item future possibilities
+There are a nearly unlimited number of ways to connect and authenticate.
+One might want to allow access based on IP address (similar to the usual
+rsh protocol but with different/no restrictions on ports < 1024), to
+adopt mechanisms such as the General Security Service (GSS) API or
+Pluggable Authentication Modules (PAM), to allow users to run their own
+servers under their own usernames without root access, or any number of
+other possibilities.  The way to add future mechanisms, for the most
+part, should be to continue to use port 2401, but to use different
+strings in place of @samp{BEGIN AUTH REQUEST}.
 @end table
 
 @node Protocol
@@ -470,6 +517,12 @@ The first character of @var{tagspec} is @samp{T} for a tag, or @samp{D}
 for a date.  The remainder of @var{tagspec} contains the actual tag or
 date.
 
+The server should remember @code{Static-directory} and @code{Sticky}
+requests for a particular directory; the client need not resend them
+each time it sends a @code{Directory} request for a given directory.
+However, the server is not obliged to remember them beyond the context
+of a single command.
+
 @item Checkin-prog @var{program} \n
 Response expected: no.  Tell the server that the directory most recently
 specified with @code{Directory} has a checkin program @var{program}.
@@ -517,7 +570,7 @@ specified), @code{watch-on}, @code{watch-off}, @code{watch-add},
 @code{log}, and @code{annotate}.
 
 For the @code{status} command, one can send @code{Is-modified} but if
-the client is using imperfect mechanisms such a timestamps to determine
+the client is using imperfect mechanisms such as timestamps to determine
 whether to consider a file modified, then the behavior will be
 different.  That is, if one sends @code{Modified}, then the server will
 actually compare the contents of the file sent and the one it derives
@@ -711,7 +764,6 @@ directory.
 @itemx tag \n
 @itemx status \n
 @itemx log \n
-@itemx add \n
 @itemx remove \n
 @itemx admin \n
 @itemx export \n
@@ -769,6 +821,78 @@ requests (files which the client knows should be ignored are not sent;
 the server must still process the CVSROOT/cvsignore file unless -I ! is
 sent).  A log message must have been specified with a @code{-m}
 argument.
+
+@item add \n
+Response expected: yes.  Add a file or directory.  This uses any
+previous @code{Argument}, @code{Directory}, @code{Entry}, or
+@code{Modified} requests, if they have been sent.  The
+last @code{Directory} sent specifies the working directory at the time
+of the operation.
+
+To add a directory, send the directory to be added using
+@code{Directory} and @code{Argument} requests.  For example:
+
+@example
+C: Root /u/cvsroot
+. . .
+C: Argument nsdir
+C: Directory nsdir
+C: /u/cvsroot/1dir/nsdir
+C: Directory .
+C: /u/cvsroot/1dir
+C: add
+S: M Directory /u/cvsroot/1dir/nsdir added to the repository
+S: ok
+@end example
+
+You will notice that the server does not signal to the client in any
+particular way that the directory has been successfully added.  The
+client is supposed to just assume that the directory has been added and
+update its records accordingly.  Note also that adding a directory is
+immediate; it does not wait until a @code{ci} request as files do.
+
+To add a file, send the file to be added using a @code{Modified}
+request.  For example:
+
+@example
+C: Argument nfile
+C: Directory .
+C: /u/cvsroot/1dir
+C: Modified nfile
+C: u=rw,g=r,o=r
+C: 6
+C: hello
+C: add
+S: E cvs server: scheduling file `nfile' for addition
+S: Mode u=rw,g=r,o=r
+S: Checked-in ./
+S: /u/cvsroot/1dir/nfile
+S: /nfile/0///
+S: E cvs server: use 'cvs commit' to add this file permanently
+S: ok
+@end example
+
+Note that the file has not been added to the repository; the only effect
+of a successful @code{add} request, for a file, is to supply the client
+with a new entries line containing @samp{0} to indicate an added file.
+In fact, the client probably could perform this operation without
+contacting the server, although using @code{add} does cause the server
+to perform a few more checks.
+
+The client sends a subsequent @code{ci} to actually add the file to the
+repository.
+
+Another quirk of the @code{add} request is that a pathname specified in
+an @code{Argument} request cannot contain @samp{/}.  There is no good
+reason for this restriction, and it could be eliminated if someone took
+the effort to rewrite the @code{add} code in the CVS server to not have
+it.  But in the meantime, the way to comply with it is to ensure that
+all @code{Directory} requests for @code{add} (except those used to add
+directories, as described above), use @samp{.} for
+@var{local-directory}.  Specifying another string for
+@var{local-directory} may not get an error, but it will get you strange
+@code{Checked-in} responses, until servers are fixed to send the correct
+responses.
 
 @item watch-on \n
 @itemx watch-off \n
@@ -947,22 +1071,51 @@ file around; traditionally clients have left it around forever, thus
 letting the user clean it up as desired.  But another answer, such as
 until the next commit, might be preferable.
 
-@item Patched @var{pathname} \n
+@item Rcs-diff @var{pathname} \n
 This is just like @code{Updated} and takes the same additional data,
 with the one difference that instead of sending a new copy of the file,
-the server sends a patch.  This patch is produced by @samp{diff -c} for
-@sc{cvs} 1.6 and later (see POSIX.2 for a description of this format),
-or @samp{diff -u} for previous versions of @sc{cvs}; clients are
-encouraged to accept either format.  The client must apply this patch to
-the existing file.  This will only be used when the client has an exact
-copy of an earlier revision of a file.  This response is only used if
-the @code{update} command is given the @samp{-u} argument.
+the server sends an RCS change text.  This change text is produced by
+@samp{diff -n} (the GNU diff @samp{-a} option may also be used).  The
+client must apply this change text to the existing file.  This will only
+be used when the client has an exact copy of an earlier revision of a
+file.  This response is only used if the @code{update} command is given
+the @samp{-u} argument.
+
+@item Patched @var{pathname} \n
+This is just like @code{Rcs-diff} and takes the same additional data,
+except that it sends a standard patch rather than an RCS change text.
+The patch is produced by @samp{diff -c} for @sc{cvs} 1.6 and later (see
+POSIX.2 for a description of this format), or @samp{diff -u} for
+previous versions of @sc{cvs}; clients are encouraged to accept either
+format.  Like @code{Rcs-diff}, this response is only used if the
+@code{update} command is given the @samp{-u} argument.
+
+The @code{Patched} response is deprecated in favor of the
+@code{Rcs-diff} response.  However, older clients (CVS 1.9 and earlier)
+only support @code{Patched}.
 
 @item Mode @var{mode} \n
 This @var{mode} applies to the next file mentioned in
 @code{Checked-in}.  It does not apply to any request which follows a
 @code{Checked-in}, @code{New-entry}, @code{Updated}, @code{Merged}, or
 @code{Patched} response.
+
+@item Mod-time @var{time} \n
+Set the modification time of the next file sent to @var{time}.  Next
+file sent means sent by @code{Checked-in}, @code{Created}, etc.  The
+@var{time} is in the format specified by RFC822 as modified by RFC1123.
+The server may specify any timezone it chooses; clients will want to
+convert that to their own timezone as appropriate.  An example of this
+format is:
+
+@example
+26 May 1997 13:01:40 -0400
+@end example
+
+There is no requirement that the client and server clocks be
+synchronized.  The server just sends its recommendation for a timestamp
+(based on its own clock, presumably), and the client should just believe
+it (this means that the time might be in the future, for example).
 
 @item Checksum @var{checksum}\n
 The @var{checksum} applies to the next file sent over via
@@ -978,6 +1131,12 @@ client supports it (as judged by the @code{Valid-responses} request).
 Additional data: @var{newname} \n.  Copy file @var{pathname} to
 @var{newname} in the same directory where it already is.  This does not
 affect @code{CVS/Entries}.
+
+This can optionally be implemented as a rename instead of a copy.  The
+only use for it which currently has been identified is prior to a
+@code{Merged} response as described under @code{Merged}.  Clients can
+probably assume that is how it is being used, if they want to worry
+about things like how long to keep the @var{newname} file around.
 
 @item Removed @var{pathname} \n
 The file has been removed from the repository (this is the case where
@@ -1093,7 +1252,7 @@ and requests would be longer.
 @c reponses are not quite what you would pick for pedagogical purposes.
 
 @example
-C: Root /home/kingdon/testing/cvsroot
+C: Root /u/cvsroot
 C: Valid-responses ok error Checked-in M E
 C: valid-requests
 S: Valid-requests Root Directory Entry Modified Argument Argumentx ci co
@@ -1112,7 +1271,7 @@ directory rather than a module.
 @example
 C: Argument supermunger
 C: Directory .
-C: /home/kingdon/testing/cvsroot
+C: /u/cvsroot
 C: expand-modules
 @end example
 
@@ -1134,25 +1293,25 @@ for the working directory means that there is not already a
 C: Argument -N
 C: Argument supermunger
 C: Directory .
-C: /home/kingdon/testing/cvsroot
+C: /u/cvsroot
 C: co
 @end example
 
 The server replies with the requested files.  In this example, there is
-only one, @file{mungeall.c}.  The @code{Clear-sticky} and
+only one file, @file{mungeall.c}.  The @code{Clear-sticky} and
 @code{Clear-static-directory} requests are sent by the current
 implementation but they have no effect because the default is for those
 settings to be clear when a directory is newly created.
 
 @example
 S: Clear-sticky supermunger/
-S: /home/kingdon/testing/cvsroot/supermunger/
+S: /u/cvsroot/supermunger/
 S: Clear-static-directory supermunger/
-S: /home/kingdon/testing/cvsroot/supermunger/
+S: /u/cvsroot/supermunger/
 S: E cvs server: Updating supermunger
 S: M U supermunger/mungeall.c
 S: Created supermunger/
-S: /home/kingdon/testing/cvsroot/supermunger/mungeall.c
+S: /u/cvsroot/supermunger/mungeall.c
 S: /mungeall.c/1.1///
 S: u=rw,g=r,o=r
 S: 26
@@ -1170,8 +1329,9 @@ to check in:
 
 @example
 C: Argument -m
-C: Argument Well, you see, it took me hours and hours to find this typo and I
-C: Argumentx searched and searched and eventually had to ask John for help.
+C: Argument Well, you see, it took me hours and hours to find
+C: Argumentx this typo and I searched and searched and eventually
+C: Argumentx had to ask John for help.
 C: Argument mungeall.c
 @end example
 
@@ -1187,7 +1347,7 @@ relative to that directory.
 
 @example
 C: Directory .
-C: /home/kingdon/testing/cvsroot/supermunger
+C: /u/cvsroot/supermunger
 C: Entry /mungeall.c/1.1///
 C: Modified mungeall.c
 C: u=rw,g=r,o=r
@@ -1206,12 +1366,12 @@ And the server tells the client that the checkin succeeded:
 
 @example
 S: M Checking in mungeall.c;
-S: E /home/kingdon/testing/cvsroot/supermunger/mungeall.c,v  <--  mungeall.c
+S: E /u/cvsroot/supermunger/mungeall.c,v  <--  mungeall.c
 S: E new revision: 1.2; previous revision: 1.1
 S: E done
 S: Mode u=rw,g=r,o=r
 S: Checked-in ./
-S: /home/kingdon/testing/cvsroot/supermunger/mungeall.c
+S: /u/cvsroot/supermunger/mungeall.c
 S: /mungeall.c/1.2///
 S: ok
 @end example

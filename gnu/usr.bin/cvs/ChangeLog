@@ -1,3 +1,86 @@
+Wed Jun 18 00:00:02 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* NEWS: Mention pserver --allow-root.
+
+Mon Jun 16 19:07:34 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* Makefile.in (SUBDIRS): Add emx.
+	* configure.in (AC_OUTPUT): Add emx.
+	* configure: Regenerated.
+
+Sun Jun  8 23:44:00 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* configure.in (AC_CHECK_FUNCS): Remove mkfifo; not used anywhere.
+	* configure, config.h.in: Regenerated.
+
+Thu May 29 15:53:06 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* DEVEL-CVS: Add "Policy regarding checkout-only access" to
+	replace parenthetical remark about checkout-only access.  This is
+	more of a cosmetic/editorial change than a new policy.
+
+Wed May 21 17:02:29 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* BUGS: Add item about wrappers.
+
+Fri May 16 13:43:53 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* BUGS: Add item about "cvs export" and binary files.
+
+Sun May 11 11:38:03 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README.VMS: Remove information about "direct TCP".  Noone has
+	been complaining about it being broken (the code bitrotted not long
+	after it was written), nor has anyone complained
+	that contrib/listener.c was omitted from the distribution (because
+	it wasn't mentioned in contrib/Makefile.in DISTFILES).  If there
+	is a desire to resurrect such a feature, it should use port 2401
+	as now discussed in doc/cvsclient.texi.
+
+Thu May  8 12:14:40 1997  Larry Jones  <larry.jones@sdrc.com>
+	and Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Update MIPS/SGI Irix 6.2
+	* TESTS: Add note about TESTDIR and SGI Irix 6's XFS.
+
+Wed May  7 12:01:21 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* TODO: Fix keywords accidentally expanded in previous checkin.
+
+	* TODO: Add item #185, concerning keyword expansion and merges.
+
+Sun May  4 19:46:03 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* README: Replace section on reporting bugs with a reference to
+	the bug-reporting section in cvs.texinfo.
+
+Fri May  2 22:50:04 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* BUGS: Remove item about importing binary files; the bug is fixed.
+
+Sun Apr 27 19:54:34 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
+
+	* INSTALL: Refer to doc/DIFFUTILS-2.7-BUG.
+
+	* INSTALL: Don't mention GREP; CVS no longer uses it.
+
+	* configure.in: Add comment about --bindir.
+
+Thu Apr 24 15:21:17 1997  Norbert Kiesel  <nk@cosa.de>
+
+	* configure.in (AC_CHECK_FUNCS): added tempnam and mktemp
+	* config.h.in, configure: Regenerated with autoconf 2.10.
+
+21 Apr 1997  Jim Kingdon
+
+	* cvsnt.mak: Visual C++, as usual, wants to fiddle with this.
+	This time it would appear to be chiefly the dependencies.
+
+Mon Apr 21 01:06:31 1997  Ian Lance Taylor  <ian@cygnus.com>
+
+	* NEWS: Document that the client no longer needs an external patch
+	program.
+
 Thu Apr 17 14:28:20 1997  Jim Kingdon  <kingdon@harvey.cyclic.com>
 
 	* TODO: Combine items 150 and 181 since they are basically the same.

@@ -51,7 +51,7 @@ Checkin (type, finfo, rcs, rev, tag, options, message)
      * for the checkin and checkout.
      */
 
-    tocvsPath = wrap_tocvs_process_file (finfo->fullname);
+    tocvsPath = wrap_tocvs_process_file (finfo->file);
 
     if (!noexec)
     {

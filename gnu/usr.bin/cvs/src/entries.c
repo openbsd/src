@@ -655,9 +655,20 @@ WriteTag (dir, tag, date, nonbranch, update_dir, repository)
 #endif
 }
 
-/*
- * Parse the CVS/Tag file for the current directory.
- */
+/* Parse the CVS/Tag file for the current directory.
+
+   If it contains a date, sets *DATEP to the date in a newly malloc'd
+   string, *TAGP to NULL, and *NONBRANCHP to an unspecified value.
+
+   If it contains a branch tag, sets *TAGP to the tag in a newly
+   malloc'd string, *NONBRANCHP to 0, and *DATEP to NULL.
+
+   If it contains a nonbranch tag, sets *TAGP to the tag in a newly
+   malloc'd string, *NONBRANCHP to 1, and *DATEP to NULL.
+
+   If it does not exist, or contains something unrecognized by this
+   version of CVS, set *DATEP and *TAGP to NULL and *NONBRANCHP to
+   an unspecified value.  */
 void
 ParseTag (tagp, datep, nonbranchp)
     char **tagp;
@@ -670,6 +681,11 @@ ParseTag (tagp, datep, nonbranchp)
 	*tagp = (char *) NULL;
     if (datep)
 	*datep = (char *) NULL;
+    /* Always store a value here, even in the 'D' case where the value
+       is unspecified.  Shuts up tools which check for references to
+       uninitialized memory.  */
+    if (nonbranchp != NULL)
+	*nonbranchp = 0;
     fp = CVS_FOPEN (CVSADM_TAG, "r");
     if (fp)
     {
@@ -679,7 +695,7 @@ ParseTag (tagp, datep, nonbranchp)
 
 	line = NULL;
 	line_chars_allocated = 0;
-	  
+
 	if ((line_length = getline (&line, &line_chars_allocated, fp)) > 0)
 	{
 	    /* Remove any trailing newline.  */
@@ -690,8 +706,6 @@ ParseTag (tagp, datep, nonbranchp)
 		case 'T':
 		    if (tagp != NULL)
 			*tagp = xstrdup (line + 1);
-		    if (nonbranchp != NULL)
-			*nonbranchp = 0;
 		    break;
 		case 'D':
 		    if (datep != NULL)

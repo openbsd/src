@@ -32,6 +32,12 @@
    FD2P is a feature we don't support, but there's no point in making mindless
    deviations from the interface.  Callers should always pass this argument
    as zero.  */
+
+/* Note that because we are using windows-NT/rcmd.c, this declaration
+   must match windows-NT/rcmd.h (and rcmd.c).  It would be much
+   more sensible to use a common header file.  But I haven't bothered to
+   adjust the makefile accordingly, yet.  Probably the best long-term
+   home for this would be in lib/rcmd.*, or perhaps src.  */
 extern int rcmd (const char **AHOST,
 		 unsigned short INPORT,
 		 char *LOCUSER,

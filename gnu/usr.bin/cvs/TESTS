@@ -11,6 +11,13 @@ pathname of a shell which handles normal shell functions:
 WARNING:  This test can take quite a while to run, esp. if your
 disks are slow or over-loaded.
 
+The tests work in /tmp/cvs-sanity (which the tests create) by default.
+If for some reason you want them to work in a different directory, you
+can set the TESTDIR environment variable to the desired location
+before running them.  In particular, using SGI's Irix 6, the tests
+will fail if TESTDIR is an XFS filesystem (which /tmp often is);
+you'll want to set TESTDIR to a non-XFS filesystem.
+
 You will probably need GNU expr, which is part of the GNU sh-utils
 package (this is just for running the tests; CVS itself doesn't use
 expr).

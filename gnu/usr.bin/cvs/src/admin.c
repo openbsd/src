@@ -89,7 +89,7 @@ admin (argc, argv)
 	
 	ign_setup ();
 
-	for (i = 0; i <= ac; ++i)	/* XXX send -ko too with i = 0 */
+	for (i = 0; i < ac; ++i)	/* XXX send -ko too with i = 0 */
 	    send_arg (av[i]);
 
 	send_file_names (argc, argv, SEND_EXPAND_WILD);

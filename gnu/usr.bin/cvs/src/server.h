@@ -21,10 +21,18 @@ extern int server_expanding;
 /* Run the server.  */
 extern int server PROTO((int argc, char **argv));
 
+/* See server.c for description.  */
+extern void server_pathname_check PROTO ((char *));
+
 /* We have a new Entries line for a file.  TAG or DATE can be NULL.  */
 extern void server_register
     PROTO((char *name, char *version, char *timestamp,
 	     char *options, char *tag, char *date, char *conflict));
+
+/* Set the modification time of the next file sent.  This must be
+   followed by a call to server_updated on the same file.  */
+extern void server_modtime PROTO ((struct file_info *finfo,
+				   Vers_TS *vers_ts));
 
 /*
  * We want to nuke the Entries line for a file, and (unless
@@ -57,12 +65,22 @@ extern void server_copy_file
    case, vers must be non-NULL, and UPDATED indicates whether the file
    is now up to date (SERVER_UPDATED, yes, SERVER_MERGED, no,
    SERVER_PATCHED, yes, but file is a diff from user version to
-   repository version).  */
-enum server_updated_arg4 {SERVER_UPDATED, SERVER_MERGED, SERVER_PATCHED};
+   repository version, SERVER_RCS_DIFF, yes, like SERVER_PATCHED but
+   with an RCS style diff).  */
+enum server_updated_arg4
+{
+    SERVER_UPDATED,
+    SERVER_MERGED,
+    SERVER_PATCHED,
+    SERVER_RCS_DIFF
+};
 extern void server_updated
     PROTO((struct file_info *finfo, Vers_TS *vers,
 	   enum server_updated_arg4 updated, struct stat *,
 	   unsigned char *checksum));
+
+/* Whether we should send RCS format patches.  */
+extern int server_use_rcs_diff PROTO((void));
 
 /* Set the Entries.Static flag.  */
 extern void server_set_entstat PROTO((char *update_dir, char *repository));
@@ -92,6 +110,10 @@ extern void server_cleanup PROTO((int sig));
 /* Pause if it's convenient to avoid memory blowout */
 extern void server_pause_check PROTO((void));
 #endif /* SERVER_FLOWCONTROL */
+
+#ifdef AUTH_SERVER_SUPPORT
+extern char *CVS_Username;
+#endif /* AUTH_SERVER_SUPPORT */
 
 #endif /* SERVER_SUPPORT */
 

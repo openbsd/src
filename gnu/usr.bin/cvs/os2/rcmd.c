@@ -1,6 +1,16 @@
 /* rcmd.c --- execute a command on a remote host from OS/2
    Karl Fogel <kfogel@cyclic.com> --- November 1995  */
 
+/* This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.  */
+
 #include <io.h>
 #include <stdio.h>
 #include <fcntl.h>

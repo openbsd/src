@@ -1,28 +1,46 @@
 /* rcmd.c --- execute a command on a remote host from Windows NT
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 2, or (at your option)
+   any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
    Jim Blandy <jimb@cyclic.com> --- August 1995  */
 
 #include <io.h>
 #include <fcntl.h>
 #include <malloc.h>
 #include <errno.h>
-#include <winsock.h>
+
+#ifdef HAVE_WINSOCK_H
+  #include <winsock.h>
+#else
+  #include <sys/types.h>
+  #include <sys/socket.h>
+  #include <netinet/in.h>
+  #include <netdb.h>
+  typedef int SOCKET;
+  #define closesocket close
+  #define SOCK_ERRNO errno
+  #define SOCK_STRERROR strerror
+  /* Probably would be cleaner to just use EADDRINUSE, as NT has that too.  */
+  #define WSAEADDRINUSE EADDRINUSE
+  /* Probably would be cleaner to just check for < 0.  Might want to
+     double-check that doing so would seem to work on NT.  */
+  #define SOCKET_ERROR -1
+  #define INVALID_SOCKET -1
+#endif
+
 #include <stdio.h>
 #include <assert.h>
 
 #include "cvs.h"
 #include "rcmd.h"
-
-void
-init_winsock ()
-{
-    WSADATA data;
-
-    if (WSAStartup (MAKEWORD (1, 1), &data))
-    {
-      fprintf (stderr, "cvs: unable to initialize winsock\n");
-      exit (1);
-    }
-}
 
 /* The rest of this file contains the rcmd() code, which is used
    only by START_SERVER.  The idea for a long-term direction is
@@ -60,6 +78,8 @@ resolve_address (const char **ahost, struct sockaddr_in *sai)
     }
 
     error (1, 0, "no such host %s", *ahost);
+    /* Shut up gcc -Wall.  */
+    return 1;
 }
 
 static SOCKET
@@ -113,6 +133,8 @@ bind_and_connect (struct sockaddr_in *server_sai)
     }
 
     error (1, 0, "cannot find free port");
+    /* Shut up gcc -Wall.  */
+	return s;
 }
 
 static int

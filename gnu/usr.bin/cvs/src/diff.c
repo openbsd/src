@@ -44,11 +44,9 @@ static char *diff_rev1, *diff_rev2;
 static char *diff_date1, *diff_date2;
 static char *use_rev1, *use_rev2;
 
-#ifdef SERVER_SUPPORT
 /* Revision of the user file, if it is unchanged from something in the
    repository and we want to use that fact.  */
 static char *user_file_rev;
-#endif
 
 static char *options;
 static char *opts;
@@ -61,9 +59,10 @@ static int empty_files = 0;
    --ifdef and --context, but rcsdiff only does if diff does).  */
 static const char *const diff_usage[] =
 {
-    "Usage: %s %s [-lN] [rcsdiff-options]\n",
+    "Usage: %s %s [-lNR] [rcsdiff-options]\n",
     "    [[-r rev1 | -D date1] [-r rev2 | -D date2]] [files...] \n",
     "\t-l\tLocal directory only, not recursive\n",
+    "\t-R\tProcess directories recursively.\n",
     "\t-D d1\tDiff revision for date against working file.\n",
     "\t-D d2\tDiff rev1/date1 against date2.\n",
     "\t-N\tinclude diffs for added and removed files.\n",
@@ -200,7 +199,7 @@ diff (argc, argv)
     }
     opts[0] = '\0';
 
-    optind = 1;
+    optind = 0;
     while ((c = getopt_long (argc, argv,
 	       "+abcdefhilnpstuwy0123456789BHNRTC:D:F:I:L:U:V:W:k:r:",
 			     longopts, &option_index)) != -1)
@@ -360,9 +359,7 @@ diff_fileproc (callerdat, finfo)
     char *tocvsPath;
     char *fname;
 
-#ifdef SERVER_SUPPORT
     user_file_rev = 0;
-#endif
     vers = Version_TS (finfo, NULL, NULL, NULL, 1, 0);
 
     if (diff_rev2 != NULL || diff_date2 != NULL)
@@ -458,7 +455,6 @@ diff_fileproc (callerdat, finfo)
 		diff_mark_errors (err);
 		return (err);
 	    }
-#ifdef SERVER_SUPPORT
 	    else if (!strcmp (vers->ts_user, vers->ts_rcs)) 
 	    {
 		/* The user file matches some revision in the repository
@@ -466,7 +462,6 @@ diff_fileproc (callerdat, finfo)
 		   have a copy of the user file around).  */
 		user_file_rev = vers->vn_user;
 	    }
-#endif
 	}
     }
 
@@ -475,7 +470,16 @@ diff_fileproc (callerdat, finfo)
     {
 	freevers_ts (&vers);
 	if (empty_file == DIFF_SAME)
+	{
+	    /* In the server case, would be nice to send a "Checked-in"
+	       response, so that the client can rewrite its timestamp.
+	       server_checked_in by itself isn't the right thing (it
+	       needs a server_register), but I'm not sure what is.
+	       It isn't clear to me how "cvs status" handles this (that
+	       is, for a client which sends Modified not Is-modified to
+	       "cvs status"), but it does.  */
 	    return (0);
+	}
 	else
 	{
 	    diff_mark_errors (err);
@@ -643,7 +647,7 @@ diff_fileproc (callerdat, finfo)
 	    if (! existence_error (errno))
 		error (1, errno, "cannot remove %s", finfo->file);
 
-	rename_file (fname,finfo->file);
+	rename_file (fname, finfo->file);
 	if (unlink_file (tocvsPath) < 0)
 	    error (1, errno, "cannot remove %s", tocvsPath);
 	free (fname);
@@ -828,10 +832,8 @@ diff_file_nodiff (finfo, vers, empty_file)
 		return DIFF_SAME;
 	    else
 	    {
-#ifdef SERVER_SUPPORT
 		if (user_file_rev && use_rev2 == NULL)
 		    use_rev2 = xstrdup (user_file_rev);
-#endif
 		return DIFF_ADDED;
 	    }
 	}
@@ -847,7 +849,6 @@ diff_file_nodiff (finfo, vers, empty_file)
 	}
     }
 
-#ifdef SERVER_SUPPORT
     if (user_file_rev)
     {
         /* drop user_file_rev into first unused use_rev */
@@ -867,7 +868,6 @@ diff_file_nodiff (finfo, vers, empty_file)
 	else
 	    return DIFF_DIFFERENT;
     }
-#endif /* SERVER_SUPPORT */
 
     if (use_rev1 == NULL
 	|| (vers->vn_user != NULL && strcmp (use_rev1, vers->vn_user) == 0))

@@ -17,10 +17,11 @@
 
 const char *const watch_usage[] =
 {
-    "Usage: %s %s [on|off|add|remove] [-l] [-a action] [files...]\n",
+    "Usage: %s %s [on|off|add|remove] [-lR] [-a action] [files...]\n",
     "on/off: turn on/off read-only checkouts of files\n",
     "add/remove: add or remove notification on actions\n",
     "-l (on/off/add/remove): Local directory only, not recursive\n",
+    "-R (on/off/add/remove): Process directories recursively\n",
     "-a (add/remove): Specify what actions, one of\n",
     "    edit,unedit,commit,all,none\n",
     NULL
@@ -255,13 +256,16 @@ watch_addremove (argc, argv)
     the_args.commit = 0;
     the_args.edit = 0;
     the_args.unedit = 0;
-    optind = 1;
-    while ((c = getopt (argc, argv, "+la:")) != -1)
+    optind = 0;
+    while ((c = getopt (argc, argv, "+lRa:")) != -1)
     {
 	switch (c)
 	{
 	    case 'l':
 		local = 1;
+		break;
+	    case 'R':
+		local = 0;
 		break;
 	    case 'a':
 		a_omitted = 0;
@@ -410,7 +414,9 @@ watch (argc, argv)
 
 static const char *const watchers_usage[] =
 {
-    "Usage: %s %s [files...]\n",
+    "Usage: %s %s [-lR] [files...]\n",
+    "\t-l\tProcess this directory only (not recursive).\n",
+    "\t-R\tProcess directories recursively.\n",
     NULL
 };
 
@@ -479,13 +485,16 @@ watchers (argc, argv)
     if (argc == -1)
 	usage (watchers_usage);
 
-    optind = 1;
-    while ((c = getopt (argc, argv, "+l")) != -1)
+    optind = 0;
+    while ((c = getopt (argc, argv, "+lR")) != -1)
     {
 	switch (c)
 	{
 	    case 'l':
 		local = 1;
+		break;
+	    case 'R':
+		local = 0;
 		break;
 	    case '?':
 	    default:

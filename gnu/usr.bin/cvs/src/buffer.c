@@ -717,7 +717,7 @@ buf_read_line (buf, line, lenp)
 
     while (1)
     {
-	int len, finallen;
+	int len, finallen = 0;
 	struct buffer_data *data;
 	char *nl;
 
