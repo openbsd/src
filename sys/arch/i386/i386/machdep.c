@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.208 2002/05/22 18:43:45 art Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.209 2002/06/08 22:20:49 weingart Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -508,11 +508,12 @@ allocsys(v)
 			nbuf = 16;
 	}
 
-	/* Restrict to at most 70% filled kvm */
+	/* Restrict to at most 35% filled kvm */
+	/* XXX - This needs UBC... */
 	if (nbuf >
-	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / MAXBSIZE * 7 / 10) 
+	    (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) / MAXBSIZE * 35 / 100) 
 		nbuf = (VM_MAX_KERNEL_ADDRESS-VM_MIN_KERNEL_ADDRESS) /
-		    MAXBSIZE * 7 / 10;
+		    MAXBSIZE * 35 / 100;
 
 	/* More buffer pages than fits into the buffers is senseless.  */
 	if (bufpages > nbuf * MAXBSIZE / PAGE_SIZE)
@@ -2181,7 +2182,7 @@ init386(first_avail)
 #endif
 	for(i = 0, im = bios_memmap; im->type != BIOS_MAP_END; im++)
 		if (im->type == BIOS_MAP_FREE) {
-			register int32_t a, e;
+			register paddr_t a, e;
 
 			a = i386_round_page(im->addr);
 			e = i386_trunc_page(im->addr + im->size);
@@ -2235,8 +2236,8 @@ init386(first_avail)
 	printf("physload: ");
 #endif
 	for (i = 0; i < ndumpmem; i++) {
-		int32_t a, e;
-		int32_t lim;
+		paddr_t a, e;
+		paddr_t lim;
 
 		a = dumpmem[i].start;
 		e = dumpmem[i].end;
