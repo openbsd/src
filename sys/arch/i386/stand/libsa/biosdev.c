@@ -1,4 +1,4 @@
-/*	$OpenBSD: biosdev.c,v 1.64 2003/09/18 08:24:11 fgsch Exp $	*/
+/*	$OpenBSD: biosdev.c,v 1.65 2003/09/19 04:17:00 fgsch Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -93,7 +93,7 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 
 #ifdef BIOS_DEBUG
 	if (debug)
-		printf("getinfo: try #8, %x,%p\n", dev, pdi);
+		printf("getinfo: try #8, 0x%x, %p\n", dev, pdi);
 #endif
 	__asm __volatile (DOINT(0x13) "\n\t"
 			  "setc %b0; movzbl %h1, %1\n\t"
@@ -140,6 +140,11 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 	 */
 	if (dev & 0x80 && (dev == 0x80 || dev == 0x81 || dev == bios_bootdev)) {
 		int bm;
+
+#ifdef BIOS_DEBUG
+		if (debug)
+			printf("getinfo: try #41, 0x%x\n", dev);
+#endif
 		/* EDD support check */
 		__asm __volatile(DOINT(0x13) "; setc %b0"
 			 : "=a" (rv), "=c" (bm)
@@ -149,6 +154,12 @@ bios_getdiskinfo(int dev, bios_diskinfo_t *pdi)
 		else
 			pdi->bios_edd = -1;
 
+#ifdef BIOS_DEBUG
+		if (debug) {
+			printf("getinfo: got #41\n");
+			printf("disk 0x%x: 0x%x\n", dev, bm);
+		}
+#endif
 		/*
 		 * If extended disk access functions are not supported
 		 * there is not much point on doing EDD.
