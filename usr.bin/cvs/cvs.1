@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvs.1,v 1.29 2005/01/19 18:10:08 xsa Exp $
+.\"	$OpenBSD: cvs.1,v 1.30 2005/01/22 18:04:55 xsa Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\" All rights reserved.
@@ -249,8 +249,57 @@ between local or remote revisions of files stored in the CVS repository.
 Aliases:
 .Ic di ,
 .Ic dif .
-.It Ic edit
-Get ready to edit a watched file.
+.It Xo Ic edit Op Fl lR
+.Op Fl a Ar action
+.Op Ar file ...
+.Xc
+.Pp
+The
+.Ic edit
+command is used to make a file that is being watched (read-only)
+readable and writable and to inform others that you are planning to edit it.
+Notifications terminate when the
+.Ic commit
+command is issued.
+Editing rights on the file can be given up using the
+.Ic unedit
+command.
+This command terminates the temporary notifications.
+.Pp
+The
+.Fl l
+flag is used to limit the scope of the search to the local directory
+only and to disable recursive behaviour, which can be requested with the
+.Fl R
+flag.
+The
+.Fl a
+flag specifies the temporary notification wanted:
+.Bl -tag -width "commitXX"
+.It Cm commit
+Another user has committed changes to the
+.Ar file .
+.It Cm edit
+Another user has issued the
+.Ic edit
+command on the
+.Ar file .
+.It Cm unedit
+Another user has issued the
+.Ic unedit
+command on the
+.Ar file .
+.It Cm all
+All of the above.
+.It Cm none
+None of the above.
+.El
+.Pp
+The
+.Fl a
+flag may appear more than once, or not at all.
+If omitted, the action defaults to
+.Ic Cm all .
 .It Ic editors
 See who is editing a watched file.
 .It Ic export
@@ -439,10 +488,27 @@ leaving only the new tag behind on exactly the same files.
 Aliases:
 .Ic ta ,
 .Ic freeze .
-.It Ic unedit
-Undo an
+.It Xo Ic unedit Op Fl lR
+.Op Ar file ...
+.Xc
+.Pp
+The
+.Ic unedit
+command is used to give up an edition on a file and thus cancel
+the wanted temporary notifications.
+If the file has been modified since the
 .Ic edit
-command.
+command has been issued,
+.Nm
+will ask if you want to go back to the previous version, and lose the
+modifications done on the file, or stay in edition mode on it.
+.Pp
+The
+.Fl l
+flag is used to limit the scope of the search to the local directory
+only and to disable recursive behaviour, which can be requested with the
+.Fl R
+flag.
 .It Xo Ic update
 .Op Fl ACdP
 .Op Ar file ...
