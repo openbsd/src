@@ -1013,6 +1013,16 @@ dup_queue_file(e, ee, type)
 
 	(void) sm_strlcpy(f1buf, queuename(e, type), sizeof f1buf);
 	(void) sm_strlcpy(f2buf, queuename(ee, type), sizeof f2buf);
+
+	/* Force the df to disk if it's not there yet */
+	if (type == DATAFL_LETTER && e->e_dfp != NULL &&
+	    sm_io_setinfo(e->e_dfp, SM_BF_COMMIT, NULL) < 0 &&
+	    errno != EINVAL)
+	{
+		syserr("!dup_queue_file: can't commit %s", f1buf);
+		/* NOTREACHED */
+	}
+
 	if (link(f1buf, f2buf) < 0)
 	{
 		int save_errno = errno;
