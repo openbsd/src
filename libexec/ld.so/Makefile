@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2003/11/20 23:23:09 avsm Exp $
+#	$OpenBSD: Makefile,v 1.24 2004/05/26 19:16:30 mickey Exp $
 
 SUBDIR=ldconfig ldd
 VPATH=${.CURDIR}/../../lib/libc/string
@@ -25,6 +25,6 @@ INSTALL_STRIP=
 ELF_LDFLAGS+=--shared -Bsymbolic
 
 $(PROG):
-	$(LD) -x -e _dl_start $(ELF_LDFLAGS) -o $(PROG) $(OBJS)
+	$(LD) -x -e _dl_start $(ELF_LDFLAGS) -o $(PROG) $(OBJS) $(LDADD)
 
 .include <bsd.prog.mk>
