@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi.c,v 1.42 2002/04/02 21:47:26 markus Exp $	*/
+/*	$OpenBSD: if_wi.c,v 1.43 2002/04/03 21:52:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -124,7 +124,7 @@ u_int32_t	widebug = WIDEBUG;
 
 #if !defined(lint) && !defined(__OpenBSD__)
 static const char rcsid[] =
-	"$OpenBSD: if_wi.c,v 1.42 2002/04/02 21:47:26 markus Exp $";
+	"$OpenBSD: if_wi.c,v 1.43 2002/04/03 21:52:08 millert Exp $";
 #endif	/* lint */
 
 #ifdef foo
@@ -1435,11 +1435,14 @@ wi_init(xsc)
 	/* Roaming type */
 	WI_SETVAL(WI_RID_ROAMING_MODE, sc->wi_roaming);
 
-	/* Specify the IBSS name */
-	WI_SETSTR(WI_RID_OWN_SSID, sc->wi_ibss_name);
-
 	/* Specify the network name */
 	WI_SETSTR(WI_RID_DESIRED_SSID, sc->wi_net_name);
+
+	/* Specify the IBSS name */
+	if (sc->wi_ptype == WI_PORTTYPE_AP)
+		WI_SETSTR(WI_RID_OWN_SSID, sc->wi_net_name);
+	else
+		WI_SETSTR(WI_RID_OWN_SSID, sc->wi_ibss_name);
 
 	/* Specify the frequency to use */
 	WI_SETVAL(WI_RID_OWN_CHNL, sc->wi_channel);
