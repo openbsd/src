@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.17 2004/05/25 11:29:27 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.18 2004/07/13 13:44:25 jmc Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -52,24 +52,20 @@ and it's thus somewhat hard to debug and/or modify its behaviour.
 However, in this implementation
 .Em PPP
 is done as a user process with the help of the
-tunnel device driver
-.Pq Xr tun 4 .
+tunnel device driver,
+.Xr tun 4 .
 .Pp
 The
 .Fl nat
 flag does the equivalent of a
 .Dq nat enable yes ,
 enabling
-.Nm Ns No 's
+.Nm Ns 's
 network address translation features.
 This allows
 .Nm
 to act as a NAT or masquerading engine for all machines on an internal
 LAN.
-ifdef({LOCALNAT},{},{Refer to
-.Xr libalias 3
-for details on the technical side of the NAT engine.
-})dnl
 Refer to the
 .Sx NETWORK ADDRESS TRANSLATION (PACKET ALIASING)
 section of this manual page for details on how to configure NAT in
@@ -98,10 +94,8 @@ by one each time until it succeeds.
 If it fails three times in a row
 because the device file is missing, it gives up.
 .Pp
-The following
-.Va mode Ns No s
-are understood by
-.Nm ppp :
+The following modes are understood by
+.Nm :
 .Bl -tag -width XXX -offset XXX
 .It Fl auto
 .Nm
@@ -115,15 +109,15 @@ Packets received (including the first one) while
 is trying to bring the link up will remain queued for a default of
 2 minutes.
 See the
-.Dq set choked
+.Ic set choked
 command below.
 .Pp
 In
 .Fl auto
 mode, at least one
-.Dq system
+.Ic system
 must be given on the command line (see below) and a
-.Dq set ifaddr
+.Ic set ifaddr
 must be done in the system profile that specifies a peer IP address to
 use when configuring the interface.
 Something like
@@ -152,19 +146,19 @@ attempts to establish a connection with the peer immediately, but never
 becomes a daemon.
 The link is created in background mode.
 This is useful if you wish to control
-.Nm Ns No 's
+.Nm ppp Ns 's
 invocation from another process.
 .It Fl direct
 This is used for receiving incoming connections.
 .Nm
 ignores the
-.Dq set device
+.Ic set device
 line and uses descriptor 0 as the link.
 .Pp
 If callback is configured,
 .Nm
 will use the
-.Dq set device
+.Ic set device
 information when dialing back.
 .It Fl dedicated
 This option is designed for machines connected with a dedicated
@@ -205,7 +199,7 @@ the status of the connection and close the connection.
 All functions can also be optionally password protected for security.
 .It Supports both manual and automatic dialing.
 Interactive mode has a
-.Dq term
+.Ic term
 command which enables you to talk to the device directly.
 When you are connected to the remote peer and it starts to talk
 .Em PPP ,
@@ -239,7 +233,7 @@ A third
 mode is also available.
 This mode is targeted at a dedicated link between two machines.
 .Nm
-will never voluntarily quit from dedicated mode - you must send it the
+will never voluntarily quit from dedicated mode \- you must send it the
 .Dq quit all
 command via its diagnostic socket.
 A
@@ -274,7 +268,7 @@ In direct mode,
 acts as server which accepts incoming
 .Em PPP
 connections on stdin/stdout.
-.It "Supports PAP and CHAP (rfc 1994, 2433 and 2759) authentication.
+.It "Supports PAP and CHAP (RFC 1994, 2433, and 2759) authentication.
 With PAP or CHAP, it is possible to skip the Unix style
 .Xr login 1
 procedure, and use the
@@ -284,25 +278,17 @@ If the peer requests Microsoft CHAP authentication and
 .Nm
 is compiled with DES support, an appropriate MD4/DES response will be
 made.
-.It Supports RADIUS (rfc 2138 & 2548) authentication.
+.It Supports RADIUS (RFC 2138 & 2548) authentication.
 An extension to PAP and CHAP,
-.Em \&R Ns No emote
-.Em \&A Ns No ccess
-.Em \&D Ns No ial
-.Em \&I Ns No n
-.Em \&U Ns No ser
-.Em \&S Ns No ervice
+.Em \&R Ns emote
+.Em \&A Ns ccess
+.Em \&D Ns ial
+.Em \&I Ns n
+.Em \&U Ns ser
+.Em \&S Ns ervice
 allows authentication information to be stored in a central or
 distributed database along with various per-user framed connection
 characteristics.
-ifdef({LOCALRAD},{},{If
-.Xr libradius 3
-is available at compile time,
-.Nm
-will use it to make
-.Em RADIUS
-requests when configured to do so.
-})dnl
 .It Supports Proxy Arp.
 .Nm
 can be configured to make one or more proxy arp entries on behalf of
@@ -316,7 +302,7 @@ filter for incoming packets, the
 .Em out
 filter for outgoing packets, the
 .Em dial
-filter to {define} a dialing trigger packet and the
+filter to {define} a dialing trigger packet, and the
 .Em alive
 filter for keeping a connection alive with the trigger packet.
 .It Tunnel driver supports bpf.
@@ -327,7 +313,7 @@ to check the packet flow over the
 link.
 .It Supports PPP over TCP and PPP over UDP.
 If a device name is specified as
-.Em host Ns No : Ns Em port Ns
+.Em host : Ns Em port Ns
 .Xo
 .Op / Ns tcp|udp ,
 .Xc
@@ -337,38 +323,10 @@ conventional serial device.
 UDP connections force
 .Nm
 into synchronous mode.
-.It Supports PPP over ISDN.
-If
-.Nm
-is given a raw B-channel i4b device to open as a link, it's able to talk
-to the
-.Xr isdnd 8
-daemon to establish an ISDN connection.
-.It Supports PPP over Ethernet (rfc 2516).
-If
-.Nm
-is given a device specification of the format
-.No PPPoE: Ns Ar iface Ns Xo
-.Op \&: Ns Ar provider Ns
-.Xc
-and if
-.Xr netgraph 4
-is available,
-.Nm
-will attempt talk
-.Em PPP
-over Ethernet to
-.Ar provider
-using the
-.Ar iface
-network interface.
-.Pp
-On systems that do not support
-.Xr netgraph 4 ,
-an external program such as
-.Xr pppoe 8
-may be used.
-.It "Supports IETF draft Predictor-1 (rfc 1978) and DEFLATE (rfc 1979) compression."
+.It Supports PPP over Ethernet (RFC 2516).
+PPP over Ethernet is supported with the external program
+.Xr pppoe 8 .
+.It "Supports IETF draft Predictor-1 (RFC 1978) and DEFLATE (RFC 1979) compression."
 .Nm
 supports not only VJ-compression but also Predictor-1 and DEFLATE compression.
 Normally, a modem has built-in compression (e.g., v42.bis) and the system
@@ -381,17 +339,17 @@ Unlike VJ-compression, Predictor-1 and DEFLATE compression pre-compresses
 .Em all
 network traffic flowing through the link, thus reducing overheads to a
 minimum.
-.It Supports Microsoft's IPCP extensions (rfc 1877).
+.It Supports Microsoft's IPCP extensions (RFC 1877).
 Name Server Addresses and NetBIOS Name Server Addresses can be negotiated
 with clients using the Microsoft
 .Em PPP
 stack (i.e., Win95, WinNT)
-.It Supports Multi-link PPP (rfc 1990)
+.It Supports Multi-link PPP (RFC 1990).
 It is possible to configure
 .Nm
 to open more than one physical connection to the peer, combining the
 bandwidth of all links for better throughput.
-.It Supports MPPE (draft-ietf-pppext-mppe)
+.It Supports MPPE (draft-ietf-pppext-mppe).
 MPPE is Microsoft Point to Point Encryption scheme.
 It is possible to configure
 .Nm
@@ -401,31 +359,36 @@ For now,
 can only get encryption keys from CHAP 81 authentication.
 .Nm
 must be compiled with DES for MPPE to operate.
-.It Supports IPV6CP (rfc 2023).
+.It Supports IPV6CP (RFC 2023).
 An IPv6 connection can be made in addition to or instead of the normal
 IPv4 connection.
 .El
 .Sh PERMISSIONS
 .Nm
 is installed as user
-.Dv root
+.Dq root
 and group
-.Dv network ,
+.Dq network ,
 with permissions
-.Dv 04554 .
+.Dv 04550 .
 By default,
 .Nm
 will not run if the invoking user ID is not zero.
 This may be overridden by using the
-.Dq allow users
+.Ic allow users
 command in
 .Pa /etc/ppp/ppp.conf .
 When running as a normal user,
 .Nm
 switches to user ID 0 in order to alter the system routing table, set up
 system lock files and read the ppp configuration files.
-All external commands (executed via the "shell" or "!bg" commands) are executed
-as the user ID that invoked
+All external commands
+(executed via the
+.Ic shell
+or
+.No !\& Ns Ic bg
+commands)
+are executed as the user ID that invoked
 .Nm ppp .
 Refer to the
 .Sq ID0
@@ -434,7 +397,7 @@ zero.
 .Sh GETTING STARTED
 When you first run
 .Nm
-you may need to deal with some initial configuration details.
+you may need to deal with some initial configuration details:
 .Bl -bullet
 .It
 Your kernel must {include} a tunnel device (the GENERIC kernel includes
@@ -476,7 +439,7 @@ Refer to the
 .Xr group 5
 manual page for details.
 Each of these users must also be given access using the
-.Dq allow users
+.Ic allow users
 command in
 .Pa /etc/ppp/ppp.conf .
 .It
@@ -520,13 +483,13 @@ after altering
 .Pa /etc/syslog.conf .
 .It
 Although not strictly relevant to
-.Nm Ns No 's
+.Nm ppp Ns 's
 operation, you should configure your resolver so that it works correctly.
 This can be done by configuring a local DNS
 (using
 .Xr named 8 )
 or by adding the correct
-.Sq nameserver
+.Dq nameserver
 lines to the file
 .Pa /etc/resolv.conf .
 Refer to the
@@ -540,14 +503,14 @@ update
 .Pa /etc/resolv.conf
 automatically.
 Refer to the
-.Dq enable dns
+.Ic enable dns
 and
-.Dq resolv
+.Ic resolv
 commands below for details.
 .El
 .Sh MANUAL DIALING
 In the following examples, we assume that your machine name is
-.Dv awfulhak .
+.Dq awfulhak .
 When you invoke
 .Nm
 (see
@@ -579,20 +542,20 @@ certain circumstances (as may happen when you are connected directly
 to certain PPP-capable terminal servers), this may result in
 .Nm
 hanging as soon as it tries to write data to your communications link
-as it is waiting for the CTS (clear to send) signal - which will never
+as it is waiting for the CTS (clear to send) signal \- which will never
 come.
 Thus, if you have a direct line and can't seem to make a
 connection, try turning CTS/RTS off with
 .Dq set ctsrts off .
 If you need to do this, check the
 .Dq set accmap
-description below too - you'll probably need to
+description below too \- you'll probably need to
 .Dq set accmap 000a0000 .
 .Pp
 Usually, parity is set to
 .Dq none ,
 and this is
-.Nm Ns No 's
+.Nm ppp Ns 's
 default.
 Parity is a rather archaic error checking mechanism that is no
 longer used because modern modems do their own error checking, and most
@@ -637,7 +600,9 @@ Overall 0 bytes/sec
 ppp ON awfulhak>
 .Ed
 .Pp
-The term command can now be used to talk directly to the device:
+The
+.Ic term
+command can now be used to talk directly to the device:
 .Bd -literal -offset indent
 ppp ON awfulhak> term
 at
@@ -667,7 +632,7 @@ To force
 to start sending
 .Em PPP
 configuration packets to the peer, use the
-.Dq ~p
+.Ic ~p
 command to drop out of terminal mode and enter packet mode.
 .Pp
 If you never even receive a login prompt, it is quite likely that the
@@ -700,19 +665,19 @@ Note that
 .Sq PPP
 in the prompt has changed to capital letters to indicate that you have
 a peer connection.
-If only some of the three Ps go uppercase, wait until
-either everything is uppercase or lowercase.
-If they revert to lowercase, it means that
+If only some of the three Ps go upper case, wait until
+either everything is upper case or lower case.
+If they revert to lower case, it means that
 .Nm
 couldn't successfully negotiate with the peer.
-A good first step for troubleshooting at this point would be to
+A good first step for troubleshooting at this point would be:
 .Bd -literal -offset indent
 ppp ON awfulhak> set log local phase lcp ipcp
 .Ed
 .Pp
-and try again.
+\&...and try again.
 Refer to the
-.Dq set log
+.Ic set log
 command description below for further details.
 If things fail at this point,
 it is quite important that you turn logging on and try again.
@@ -720,8 +685,9 @@ It is also
 important that you note any prompt changes and report them to anyone trying
 to help you.
 .Pp
-When the link is established, the show command can be used to see how
-things are going:
+When the link is established, the
+.Ic show
+command can be used to see how things are going:
 .Bd -literal -offset indent
 PPP ON awfulhak> show physical
 * Modem related information is shown here *
@@ -753,12 +719,13 @@ PPP ON awfulhak> add default HISADDR
 .Ed
 .Pp
 The string
-.Sq HISADDR
+.Dq HISADDR
 represents the IP address of the connected peer.
 If the
-.Dq add
+.Ic add
 command fails due to an existing route, you can overwrite the existing
 route using
+.Ic add! :
 .Bd -literal -offset indent
 PPP ON awfulhak> add! default HISADDR
 .Ed
@@ -768,15 +735,15 @@ If a new IP address is negotiated at connection time,
 .Nm
 will update your default route accordingly.
 .Pp
-You can now use your network applications (ping, telnet, ftp, etc.)
+You can now use your network applications (ping, telnet, ftp, etc.)\&
 in other windows or terminals on your machine.
 If you wish to reuse the current terminal, you can put
 .Nm
 into the background using your standard shell suspend and background
 commands (usually
-.Dq ^Z
+.Sq ^Z
 followed by
-.Dq bg ) .
+.Sq bg ) .
 .Pp
 Refer to the
 .Sx PPP COMMAND LIST
@@ -788,17 +755,17 @@ See the example definitions in
 (the format of
 .Pa /etc/ppp/ppp.conf
 is pretty simple).
-Each line contains one comment, inclusion, label or command:
+Each line contains one comment, inclusion, label, or command:
 .Bl -bullet
 .It
 A line starting with a
-.Pq Dq #
+.Sq #
 character is treated as a comment line.
 Leading whitespace is ignored when identifying comment lines.
 .It
 An inclusion is a line beginning with the word
-.Sq {!include} .
-It must have one argument - the file to {include}.
+.Dq {!include} .
+It must have one argument \- the file to {include}.
 You may wish to
 .Dq {!include} ~/.ppp.conf
 for compatibility with older versions of
@@ -806,7 +773,7 @@ for compatibility with older versions of
 .It
 A label name starts in the first column and is followed by
 a colon
-.Pq Dq \&: .
+.Pq Sq \&: .
 .It
 A command line must contain a space or tab in the first column.
 .El
@@ -836,7 +803,9 @@ When
 is started with no arguments, the
 .Dq default
 section is still executed.
-The load command can be used to manually load a section from the
+The
+.Ic load
+command can be used to manually load a section from the
 .Pa /etc/ppp/ppp.conf
 file:
 .Bd -literal -offset indent
@@ -847,7 +816,7 @@ Note, no action is taken by
 .Nm
 after a section is loaded, whether it's the result of passing a label on
 the command line or using the
-.Dq load
+.Ic load
 command.
 Only the commands specified for that label in the configuration
 file are executed.
@@ -862,13 +831,13 @@ switches, the link mode tells
 .Nm
 to establish a connection.
 Refer to the
-.Dq set mode
+.Ic set mode
 command below for further details.
 .Pp
 Once the connection is made, the
-.Sq ppp
+.Dq ppp
 portion of the prompt will change to
-.Sq PPP :
+.Dq PPP :
 .Bd -literal -offset indent
 # ppp MyISP
 \&...
@@ -901,9 +870,9 @@ example in
 .Pa /etc/ppp/ppp.conf.sample
 which runs a script in the background after the connection is established
 (refer to the
-.Dq shell
+.Ic shell
 and
-.Dq bg
+.Ic bg
 commands below for a description of possible substitution strings).
 Similarly, when a connection is closed, the contents of the
 .Pa /etc/ppp/ppp.linkdown
@@ -922,7 +891,7 @@ supports
 where all routes that contain the
 .Dv HISADDR ,
 .Dv MYADDR ,
-.Dv HISADDR6
+.Dv HISADDR6 ,
 or
 .Dv MYADDR6
 literals will automatically be updated when the values of these variables
@@ -934,7 +903,7 @@ non-interactively (such as from a
 .Xr crontab 5
 entry or an
 .Xr at 1
-job) you should use the
+job), you should use the
 .Fl background
 option.
 When
@@ -964,10 +933,10 @@ You must also specify the destination label in
 .Pa /etc/ppp/ppp.conf
 to use.
 It must contain the
-.Dq set ifaddr
-command to {define} the remote peer's IP address.
+.Ic set ifaddr
+command to {define} the remote peer's IP address
 (refer to
-.Pa /etc/ppp/ppp.conf.sample )
+.Pa /etc/ppp/ppp.conf.sample ) .
 .Bd -literal -offset indent
 # ppp -auto pmdemand
 .Ed
@@ -980,11 +949,11 @@ is specified,
 .Nm
 runs as a daemon but you can still configure or examine its
 configuration by using the
-.Dq set server
+.Ic set server
 command in
-.Pa /etc/ppp/ppp.conf ,
+.Pa /etc/ppp/ppp.conf
 (for example,
-.Dq Li "set server +3000 mypasswd" )
+.Dq Li set server +3000 mypasswd )
 and connecting to the diagnostic port as follows:
 .Bd -literal -offset indent
 # pppctl 3000	(assuming tun0)
@@ -994,7 +963,7 @@ tcp (127.0.0.1:1028) *
 .Ed
 .Pp
 The
-.Dq show who
+.Ic show who
 command lists users that are currently connected to
 .Nm
 itself.
@@ -1014,25 +983,26 @@ to be down.
 If the connect fails, the default behaviour is to wait 30 seconds
 and then attempt to connect when another outgoing packet is detected.
 This behaviour can be changed using the
-.Dq set redial
+.Ic set redial
 command:
-.Pp
-.No set redial Ar secs Ns Xo
+.Bd -ragged -offset indent
+.Ic set redial Ar secs Ns Xo
 .Oo + Ns Ar inc Ns
 .Op - Ns Ar max Ns
 .Oc Ns Op . Ns Ar next
 .Op Ar attempts
 .Xc
+.Ed
 .Pp
 .Bl -tag -width attempts -compact
 .It Ar secs
-is the number of seconds to wait before attempting
+The number of seconds to wait before attempting
 to connect again.
 If the argument is the literal string
 .Sq Li random ,
 the delay period is a random value between 1 and 30 seconds inclusive.
 .It Ar inc
-is the number of seconds that
+The number of seconds that
 .Ar secs
 should be incremented each time a new dial attempt is made.
 The timeout reverts to
@@ -1042,7 +1012,7 @@ The default value for
 .Ar inc
 is zero.
 .It Ar max
-is the maximum number of times
+The maximum number of times
 .Nm
 should increment
 .Ar secs .
@@ -1050,16 +1020,16 @@ The default value for
 .Ar max
 is 10.
 .It Ar next
-is the number of seconds to wait before attempting
+The number of seconds to wait before attempting
 to dial the next number in a list of numbers (see the
-.Dq set phone
+.Ic set phone
 command).
 The default is 3 seconds.
 Again, if the argument is the literal string
 .Sq Li random ,
 the delay period is a random value between 1 and 30 seconds.
 .It Ar attempts
-is the maximum number of times to try to connect for each outgoing packet
+The maximum number of times to try to connect for each outgoing packet
 that triggers a dial.
 The previous value is unchanged if this parameter is omitted.
 If a value of zero is specified for
@@ -1073,7 +1043,7 @@ So, for example:
 set redial 10.3 4
 .Ed
 .Pp
-will attempt to connect 4 times for each outgoing packet that causes
+\&...will attempt to connect 4 times for each outgoing packet that causes
 a dial attempt with a 3 second delay between each number and a 10 second
 delay after all numbers have been tried.
 If multiple phone numbers
@@ -1085,7 +1055,7 @@ Alternatively,
 set redial 10+10-5.3 20
 .Ed
 .Pp
-tells
+\&...tells
 .Nm
 to attempt to connect 20 times.
 After the first attempt,
@@ -1096,7 +1066,7 @@ and so on until after the sixth attempt it pauses for 1 minute.
 The next 14 pauses will also have a duration of one minute.
 If
 .Nm
-connects, disconnects and fails to connect again, the timeout starts again
+connects, disconnects, and fails to connect again, the timeout starts again
 at 10 seconds.
 .Pp
 Modifying the dial delay is very useful when running
@@ -1128,14 +1098,11 @@ For example,
 set reconnect 3 5
 .Ed
 .Pp
-tells
+\&...tells
 .Nm
 that on an unexpected loss of carrier, it should wait
-.Ar 3
-seconds before attempting to reconnect.
-This may happen up to
-.Ar 5
-times before
+3 seconds before attempting to reconnect.
+This may happen up to 5 times before
 .Nm
 gives up.
 The default value of ntries is zero (no reconnect).
@@ -1151,19 +1118,19 @@ If the
 flag is specified, all phone numbers are dialed at most once until
 a connection is made.
 The next number redial period specified with the
-.Dq set redial
+.Ic set redial
 command is honoured, as is the reconnect tries value.
 If your redial
 value is less than the number of phone numbers specified, not all
 the specified numbers will be tried.
-To terminate the program, type
+To terminate the program, type:
 .Bd -literal -offset indent
 PPP ON awfulhak> close
 ppp ON awfulhak> quit all
 .Ed
 .Pp
 A simple
-.Dq quit
+.Ic quit
 command will terminate the
 .Xr pppctl 8
 or
@@ -1172,7 +1139,7 @@ connection but not the
 .Nm
 program itself.
 You must use
-.Dq quit all
+.Ic quit all
 to terminate
 .Nm
 as well.
@@ -1182,9 +1149,8 @@ To handle an incoming
 connection request, follow these steps:
 .Bl -enum
 .It
-Make sure the modem and (optionally)
-.Pa /etc/rc.serial
-are configured correctly.
+Make sure the modem
+is configured correctly:
 .Pp
 .Bl -bullet -compact
 .It
@@ -1276,9 +1242,9 @@ for details.
 .It
 Support for IPCP Domain Name Server and NetBIOS Name Server negotiation
 can be enabled using the
-.Dq accept dns
+.Ic accept dns
 and
-.Dq set nbns
+.Ic set nbns
 commands.
 Refer to their descriptions below.
 .El
@@ -1292,16 +1258,16 @@ to authenticate the connection rather than
 Configure your default section in
 .Pa /etc/gettytab
 with automatic ppp recognition by specifying the
-.Dq pp
+.Sq pp
 capability:
-.Bd -literal
+.Bd -literal -offset indent
 default:\\
 	:pp=/usr/local/bin/ppplogin:\\
 	.....
 .Ed
 .It
 Configure your serial device(s), enable a
-.Xr getty 8
+.Xr getty 8 ,
 and create
 .Pa /usr/local/bin/ppplogin
 as in the first three steps for method 1 above.
@@ -1314,7 +1280,7 @@ or
 to
 .Pa /etc/ppp/ppp.conf
 under the
-.Sq incoming
+.Dq incoming
 label (or whatever label
 .Pa ppplogin
 uses).
@@ -1322,7 +1288,7 @@ uses).
 Create an entry in
 .Pa /etc/ppp/ppp.secret
 for each incoming user:
-.Bd -literal
+.Bd -literal -offset indent
 Pfred<TAB>xxxx
 Pgeorge<TAB>yyyy
 .Ed
@@ -1331,7 +1297,7 @@ Pgeorge<TAB>yyyy
 Now, as soon as
 .Xr getty 8
 detects a ppp connection (by recognising the HDLC frame headers), it runs
-.Dq /usr/local/bin/ppplogin .
+.Pa /usr/local/bin/ppplogin .
 .Pp
 It is
 .Em VITAL
@@ -1348,9 +1314,9 @@ This may be done using
 but alternatively, you can use PAP or CHAP.
 CHAP is the more secure of the two, but some clients may not support it.
 Once you decide which you wish to use, add the command
-.Sq enable chap
+.Dq enable chap
 or
-.Sq enable pap
+.Dq enable pap
 to the relevant section of
 .Pa ppp.conf .
 .Pp
@@ -1359,10 +1325,11 @@ You must then configure the
 file.
 This file contains one line per possible client, each line
 containing up to five fields:
-.Pp
+.Bd -ragged -offset indent
 .Ar name Ar key Oo
 .Ar hisaddr Op Ar label Op Ar callback-number
 .Oc
+.Ed
 .Pp
 The
 .Ar name
@@ -1372,14 +1339,14 @@ specify the client username and password.
 If
 .Ar key
 is
-.Dq \&*
+.Sq \&*
 and PAP is being used,
 .Nm
 will look up the password database
 .Pq Xr passwd 5
 when authenticating.
 If the client does not offer a suitable response based on any
-.Ar name Ns No / Ns Ar key
+.Ar name Ns / Ns Ar key
 combination in
 .Pa ppp.secret ,
 authentication fails.
@@ -1389,7 +1356,7 @@ If authentication is successful,
 (if specified)
 is used when negotiating IP numbers.
 See the
-.Dq set ifaddr
+.Ic set ifaddr
 command for details.
 .Pp
 If authentication is successful and
@@ -1412,18 +1379,18 @@ the client will be called back on the given number.
 If CBCP is being used,
 .Ar callback-number
 may also contain a list of numbers or a
-.Dq \&* ,
+.Sq \&* ,
 as if passed to the
 .Dq set cbcp
 command.
 The value will be used in
-.Nm Ns No 's
+.Nm ppp Ns 's
 subsequent CBCP phase.
-.Sh PPP OVER TCP and UDP (a.k.a Tunnelling)
+.Sh PPP OVER TCP and UDP (a.k.a. Tunnelling)
 Instead of running
 .Nm
 over a serial link, it is possible to
-use a TCP connection instead by specifying the host, port and protocol as the
+use a TCP connection instead by specifying the host, port, and protocol as the
 device:
 .Pp
 .Dl set device ui-gate:6669/tcp
@@ -1501,7 +1468,7 @@ MyAuthName MyAuthPasswd
 If
 .Ar MyAuthPasswd
 is a
-.Dq * ,
+.Sq * ,
 the password is looked up in the
 .Xr passwd 5
 database.
@@ -1519,7 +1486,7 @@ ui-gate:
  set ifaddr 10.0.4.2 10.0.4.1
 .Ed
 .Pp
-with the route setup in
+\&...with the route setup in
 .Pa /etc/ppp/ppp.linkup :
 .Bd -literal -offset indent
 ui-gate:
@@ -1543,7 +1510,7 @@ To open the connection, just type
 The result will be an additional "route" on awfulhak to the
 10.0.2.0/24 network via the TCP connection, and an additional
 "route" on ui-gate to the 10.0.1.0/24 network.
-The networks are effectively bridged - the underlying TCP
+The networks are effectively bridged \- the underlying TCP
 connection may be across a public network (such as the
 Internet), and the
 .Em PPP
@@ -1552,10 +1519,10 @@ traffic is conceptually encapsulated
 the two gateways.
 .Pp
 The major disadvantage of this mechanism is that there are two
-"guaranteed delivery" mechanisms in place - the underlying TCP
+"guaranteed delivery" mechanisms in place \- the underlying TCP
 stream and whatever protocol is used over the
 .Em PPP
-link - probably TCP again.
+link \- probably TCP again.
 If packets are lost, both levels will
 get in each others way trying to negotiate sending of the missing
 packet.
@@ -1569,7 +1536,7 @@ will operate in synchronous mode.
 This is another gain as the incoming
 data does not have to be rearranged into packets.
 .Pp
-Care should be taken when adding a default route through a tunneled
+Care should be taken when adding a default route through a tunnelled
 setup like this.
 It is quite common for the default route
 (added in
@@ -1606,7 +1573,7 @@ on the server:
   deny deflate pred1
 .Ed
 .Pp
-ensuring that you've put the requisite entry in
+Ensure that you've put the requisite entry in
 .Pa /etc/ppp/ppp.secret
 (MSCHAPv2 is challenge based, so
 .Xr passwd 5
@@ -1642,8 +1609,8 @@ option should be switched on, and network applications (web browser,
 .Xr telnet 1 ,
 .Xr ftp 1 ,
 .Xr ping 8 ,
-.Xr traceroute 8 )
-should be checked on the
+.Xr traceroute 8 ,
+etc.) should be checked on the
 .Nm
 host.
 Finally, the same or similar applications should be checked on other
@@ -1667,7 +1634,7 @@ filter, the
 .Em out
 filter, the
 .Em dial
-filter and the
+filter, and the
 .Em alive
 filter.
 Here are the basics:
@@ -1675,7 +1642,7 @@ Here are the basics:
 .It
 A filter definition has the following syntax:
 .Pp
-set filter
+.Ic set filter
 .Ar name
 .Ar rule-no
 .Ar action
@@ -1695,34 +1662,29 @@ set filter
 .It
 .Ar Name
 should be one of
-.Sq in ,
-.Sq out ,
-.Sq dial
+.Dq in ,
+.Dq out ,
+.Dq dial ,
 or
-.Sq alive .
+.Dq alive .
 .It
 .Ar Rule-no
-is a numeric value between
-.Sq 0
-and
-.Sq 39
+is a numeric value between 0 and 39
 specifying the rule number.
 Rules are specified in numeric order according to
 .Ar rule-no ,
-but only if rule
-.Sq 0
-is defined.
+but only if rule 0 is defined.
 .It
 .Ar Action
 may be specified as
-.Sq permit
+.Dq permit
 or
-.Sq deny ,
-in which case, if a given packet matches the rule, the associated action
+.Dq deny ,
+in which case if a given packet matches the rule, the associated action
 is taken immediately.
 .Ar Action
 can also be specified as
-.Sq clear
+.Dq clear
 to clear the action associated with that particular rule, or as a new
 rule number greater than the current rule.
 In this case, if a given
@@ -1732,7 +1694,7 @@ the new rule number (rather than the next rule number).
 The
 .Ar action
 may optionally be followed with an exclamation mark
-.Pq Dq !\& ,
+.Pq Sq !\& ,
 telling
 .Nm
 to reverse the sense of the following match.
@@ -1753,16 +1715,16 @@ or
 may be given the values
 .Dv MYADDR ,
 .Dv HISADDR ,
-.Dv MYADDR6
+.Dv MYADDR6 ,
 or
 .Dv HISADDR6
 (refer to the description of the
-.Dq bg
+.Ic bg
 command for a description of these values).
 When these values are used,
 the filters will be updated any time the values change.
 This is similar to the behaviour of the
-.Dq add
+.Ic add
 command below.
 .It
 .Ar Proto
@@ -1772,12 +1734,12 @@ may be any protocol from
 .Ar Cmp
 is one of
 .Sq \&lt ,
-.Sq \&eq
+.Sq \&eq ,
 or
 .Sq \&gt ,
-meaning less-than, equal and greater-than respectively.
+meaning less-than, equal, and greater-than, respectively.
 .Ar Port
-can be specified as a numeric port or by service name from
+can be specified as a numeric port or by a service name from
 .Pa /etc/services .
 .It
 The
@@ -1789,7 +1751,7 @@ flags are only allowed when
 .Ar proto
 is set to
 .Sq tcp ,
-and represent the TH_ACK, TH_SYN and TH_FIN or TH_RST TCP flags respectively.
+and represent the TH_ACK, TH_SYN, and TH_FIN or TH_RST TCP flags, respectively.
 .It
 The timeout value adjusts the current idle timeout to at least
 .Ar secs
@@ -1820,7 +1782,7 @@ See the
 option below for further details.
 .It
 Use
-.Dq set filter Ar name No -1
+.Dq Li set filter name \-1
 to flush all rules.
 .El
 .Pp
@@ -1828,9 +1790,9 @@ See
 .Pa /etc/ppp/ppp.conf.sample .
 .Sh SETTING THE IDLE TIMER
 To check/set the idle timer, use the
-.Dq show bundle
+.Ic show bundle
 and
-.Dq set timeout
+.Ic set timeout
 commands:
 .Bd -literal -offset indent
 ppp ON awfulhak> set timeout 600
@@ -1839,7 +1801,7 @@ ppp ON awfulhak> set timeout 600
 The timeout period is measured in seconds, the default value for which
 is 180 seconds
 (or 3 min).
-To disable the idle timer function, use the command
+To disable the idle timer function, use the following command:
 .Bd -literal -offset indent
 ppp ON awfulhak> set timeout 0
 .Ed
@@ -1869,9 +1831,9 @@ when the peer agrees
 The deflate protocol is preferred by
 .Nm ppp .
 Refer to the
-.Dq disable
+.Ic disable
 and
-.Dq deny
+.Ic deny
 commands if you wish to disable this functionality.
 .Pp
 It is possible to use a different compression algorithm in each direction
@@ -1885,7 +1847,7 @@ By default, when negotiating DEFLATE,
 .Nm
 will use a window size of 15.
 Refer to the
-.Dq set deflate
+.Ic set deflate
 command if you wish to change this behaviour.
 .Pp
 A special algorithm called DEFLATE24 is also available, and is disabled
@@ -1914,10 +1876,10 @@ both sides of the connection agree to accept the received request (and
 send an ACK), IPCP is set to the open state and a network level connection
 is established.
 To control this IPCP behaviour, this implementation has the
-.Dq set ifaddr
+.Ic set ifaddr
 command for defining the local and remote IP address:
 .Bd -ragged -offset indent
-.No set ifaddr Oo Ar src_addr Ns
+.Ic set ifaddr Oo Ar src_addr Ns
 .Op / Ns Ar \&nn
 .Oo Ar dst_addr Ns Op / Ns Ar \&nn
 .Oo Ar netmask
@@ -1927,23 +1889,22 @@ command for defining the local and remote IP address:
 .Oc
 .Ed
 .Pp
-where
-.Sq src_addr
+.Ar src_addr
 is the IP address that the local side is willing to use,
-.Sq dst_addr
-is the IP address which the remote side should use and
-.Sq netmask
+.Ar dst_addr
+is the IP address which the remote side should use, and
+.Ar netmask
 is the netmask that should be used.
-.Sq Src_addr
+.Ar src_addr
 defaults to the current
 .Xr hostname 1 ,
-.Sq dst_addr
+.Ar dst_addr
 defaults to 0.0.0.0, and
-.Sq netmask
+.Ar netmask
 defaults to whatever mask is appropriate for
-.Sq src_addr .
+.Ar src_addr .
 It is only possible to make
-.Sq netmask
+.Ar netmask
 smaller than the default.
 The usual value is 255.255.255.255, as
 most kernels ignore the netmask of a POINTOPOINT interface.
@@ -1952,9 +1913,9 @@ Some incorrect
 .Em PPP
 implementations require that the peer negotiates a specific IP
 address instead of
-.Sq src_addr .
+.Ar src_addr .
 If this is the case,
-.Sq trigger_addr
+.Ar trigger_addr
 may be used to specify this IP number.
 This will not affect the
 routing table unless the other side agrees with this proposed number.
@@ -1981,13 +1942,13 @@ This is all fine when each side has a pre-determined IP address, however
 it is often the case that one side is acting as a server which controls
 all IP addresses and the other side should go along with it.
 In order to allow more flexible behaviour, the
-.Dq set ifaddr
+.Ic set ifaddr
 command allows the user to specify IP addresses more loosely:
 .Pp
 .Dl set ifaddr 192.244.177.38/24 192.244.177.2/20
 .Pp
 A number followed by a slash
-.Pq Dq /
+.Pq Sq /
 represents the number of bits significant in the IP address.
 The above example means:
 .Pp
@@ -2019,15 +1980,15 @@ The following steps should be taken when connecting to your ISP:
 .Bl -enum
 .It
 Describe your providers phone number(s) in the dial script using the
-.Dq set phone
+.Ic set phone
 command.
 This command allows you to set multiple phone numbers for
 dialing and redialing separated by either a pipe
-.Pq Dq \&|
+.Pq Sq \&|
 or a colon
-.Pq Dq \&: :
+.Pq Sq \&: :
 .Bd -ragged -offset indent
-.No set phone Ar telno Ns Xo
+.Ic set phone Ar telno Ns Xo
 .Oo \&| Ns Ar backupnumber
 .Oc Ns ... Ns Oo : Ns Ar nextnumber
 .Oc Ns ...
@@ -2051,8 +2012,10 @@ fails.
 On the dial after this, the 3456789 number is used.
 The 4567890
 number is only used if the dial or login script using the 3456789 fails.
-If the login script of the 2345678 number fails, the next number is still the
-3456789 number.
+Irrespective of whether the login script of the 2345678 number
+succeeds or fails,
+the next number is still the 3456789 number.
+.Pp
 As many pipes and colons can be used as are necessary
 (although a given site would usually prefer to use either the pipe or the
 colon, but not both).
@@ -2060,11 +2023,11 @@ The next number redial timeout is used between all numbers.
 When the end of the list is reached, the normal redial period is
 used before starting at the beginning again.
 The selected phone number is substituted for the \\\\T string in the
-.Dq set dial
+.Ic set dial
 command (see below).
 .It
 Set up your redial requirements using
-.Dq set redial .
+.Ic set redial .
 For example, if you have a bad telephone line or your provider is
 usually engaged (not so common these days), you may want to specify
 the following:
@@ -2076,12 +2039,12 @@ This says that up to 4 phone calls should be attempted with a pause of 10
 seconds before dialing the first number again.
 .It
 Describe your login procedure using the
-.Dq set dial
+.Ic set dial
 and
-.Dq set login
+.Ic set login
 commands.
 The
-.Dq set dial
+.Ic set dial
 command is used to talk to your modem and establish a link with your
 ISP, for example:
 .Bd -literal -offset indent
@@ -2146,7 +2109,7 @@ Expect "HELLO".
 .El
 .Pp
 The
-.Dq set authkey
+.Ic set authkey
 command is logged specially.
 When
 .Ar command
@@ -2162,9 +2125,9 @@ If you're setting one up for the first time,
 so that you can see if your script is behaving as you expect.
 .It
 Use
-.Dq set device
+.Ic set device
 and
-.Dq set speed
+.Ic set speed
 to specify your serial line and speed, for example:
 .Bd -literal -offset indent
 set device /dev/cua00
@@ -2187,7 +2150,7 @@ if you have a modem capable of bit rates of 28800 or more.
 In general, the serial speed should be about four times the modem speed.
 .It
 Use the
-.Dq set ifaddr
+.Ic set ifaddr
 command to {define} the IP address.
 .Bl -bullet
 .It
@@ -2207,39 +2170,37 @@ something in the class C network 1.2.3.0, you could specify 1.2.3.1/24.
 If you find that your ISP accepts the first IP number that you suggest,
 specify third and forth arguments of
 .Dq 0.0.0.0 .
-This will force your ISP to assign a number.
-(The third argument will
+This will force your ISP to assign a number
+(the third argument will
 be ignored as it is less restrictive than the default mask for your
 .Sq src_addr ) .
 .El
 .Pp
 An example for a connection where you don't know your IP number or your
-ISPs IP number would be:
+ISP's IP number would be:
 .Bd -literal -offset indent
 set ifaddr 10.0.0.1/0 10.0.0.2/0 0.0.0.0 0.0.0.0
 .Ed
 .Pp
 .It
 In most cases, your ISP will also be your default router.
-If this is the case, add the line
-.Bd -literal -offset indent
-add default HISADDR
-.Ed
-.Pp
-to
+If this is the case, add the following line to
 .Pa /etc/ppp/ppp.conf
 (or to
 .Pa /etc/ppp/ppp.linkup
 for setups that don't use
 .Fl auto
-mode).
+mode):
+.Bd -literal -offset indent
+add default HISADDR
+.Ed
 .Pp
 This tells
 .Nm
 to add a default route to whatever the peer address is
 (10.0.0.2 in this example).
 This route is
-.Sq sticky ,
+.Dq sticky ,
 meaning that should the value of
 .Dv HISADDR
 change, the route will be updated accordingly.
@@ -2260,7 +2221,8 @@ will provide whatever your ISP requires.
 It should be noted that a login script is rarely (if ever) required
 when PAP or CHAP are in use.
 .It
-Ask your ISP to authenticate your nameserver address(es) with the line
+Ask your ISP to authenticate your nameserver address(es)
+with the following line:
 .Bd -literal -offset indent
 enable dns
 .Ed
@@ -2290,13 +2252,18 @@ The pmdemand label should be appropriate for most ISPs.
 is able to generate the following log info either via
 .Xr syslog 3
 or directly to the screen:
-.Pp
-.Bl -tag -width XXXXXXXXX -offset XXX -compact
+.Bl -tag -width XXXXXXXXX -offset indent
 .It Li All
 Enable all logging facilities.
 This generates a lot of log.
-The most common use of 'all' is as a basis, where you remove some facilities
-after enabling 'all' ('debug' and 'timer' are usually best disabled.)
+The most common use of
+.Dq all
+is as a basis, where you remove some facilities after enabling
+.Dq all
+.Pf ( Dq debug
+and
+.Dq timer
+are usually best disabled).
 .It Li Async
 Dump async level packet in hex.
 .It Li CBCP
@@ -2305,11 +2272,11 @@ Generate CBCP (CallBack Control Protocol) logs.
 Generate a CCP packet trace.
 .It Li Chat
 Generate
-.Sq dial ,
-.Sq login ,
-.Sq logout
+.Dq dial ,
+.Dq login ,
+.Dq logout ,
 and
-.Sq hangup
+.Dq hangup
 chat script trace logs.
 .It Li Command
 Log commands executed either from the command line or any of the configuration
@@ -2343,15 +2310,17 @@ Dump all TCP/IP packets.
 .It Li Timer
 Log timer manipulation.
 .It Li TUN
-Include the tun device on each log line.
+Include the
+.Xr tun 4
+device on each log line.
 .It Li Warning
 Output to the terminal device.
 If there is currently no terminal,
-output is sent to the log file using syslogs
+output is sent to the log file using syslog's
 .Dv LOG_WARNING .
 .It Li Error
 Output to both the terminal device
-and the log file using syslogs
+and the log file using syslog's
 .Dv LOG_ERROR .
 .It Li Alert
 Output to the log file using
@@ -2359,7 +2328,7 @@ Output to the log file using
 .El
 .Pp
 The
-.Dq set log
+.Ic set log
 command allows you to set the logging output level.
 Multiple levels can be specified on a single command line.
 The default is equivalent to
@@ -2372,9 +2341,9 @@ should immediately follow
 .Dq set log .
 The default is
 .Dq set log local
-(i.e., only the un-maskable warning, error and alert output).
+(i.e., only the un-maskable warning, error, and alert output).
 .Pp
-If The first argument to
+If the first argument to
 .Dq set log Op local
 begins with a
 .Sq +
@@ -2394,7 +2363,7 @@ Log:   Phase TCP/IP Warning Error Alert
 Local: Command Warning Error Alert
 .Ed
 .Pp
-Log messages of level Warning, Error and Alert are not controllable
+Log messages of level Warning, Error, and Alert are not controllable
 using
 .Dq set log Op local .
 .Pp
@@ -2416,7 +2385,7 @@ to exit unless it is in
 or
 .Fl ddial
 mode.
-.It HUP, TERM & QUIT
+.It HUP, TERM, & QUIT
 These signals tell
 .Nm
 to exit.
@@ -2452,9 +2421,9 @@ at least one is specified, otherwise there is no way of ensuring that
 all links are actually connected to the same peer program, and some
 confusing lock-ups may result.
 Locally, these identification variables are specified using the
-.Dq set enddisc
+.Ic set enddisc
 and
-.Dq set authname
+.Ic set authname
 commands.
 The
 .Sq authname
@@ -2463,42 +2432,42 @@ The
 must be agreed in advance with the peer.
 .Pp
 Multi-link capabilities are enabled using the
-.Dq set mrru
+.Ic set mrru
 command (set maximum reconstructed receive unit).
 Once multi-link is enabled,
 .Nm
 will attempt to negotiate a multi-link connection with the peer.
 .Pp
 By default, only one
-.Sq link
+.Dq link
 is available
 (called
-.Sq deflink ) .
+.Dq deflink ) .
 To create more links, the
-.Dq clone
+.Ic clone
 command is used.
 This command will clone existing links, where all
 characteristics are the same except:
 .Bl -enum
 .It
 The new link has its own name as specified on the
-.Dq clone
+.Ic clone
 command line.
 .It
 The new link is an
-.Sq interactive
+.Dq interactive
 link.
 Its mode may subsequently be changed using the
-.Dq set mode
+.Ic set mode
 command.
 .It
 The new link is in a
-.Sq closed
+.Dq closed
 state.
 .El
 .Pp
 A summary of all available links can be seen using the
-.Dq show links
+.Ic show links
 command.
 .Pp
 Once a new link has been created, command usage varies.
@@ -2511,9 +2480,9 @@ is smart enough not to require the
 .Dq link Ar name
 prefix.
 .Pp
-Some commands can still be used without specifying a link - resulting
+Some commands can still be used without specifying a link \- resulting
 in an operation at the
-.Sq bundle
+.Dq bundle
 level.
 For example, once two or more links are available, the command
 .Dq show ccp
@@ -2538,22 +2507,22 @@ mp:
  set authkey ppppassword
 
  set mrru 1500
- clone 1,2,3		# Create 3 new links - duplicates of the default
- link deflink remove	# Delete the default link (called ``deflink'')
+ clone 1,2,3	     # Create 3 new links - duplicates of the default
+ link deflink remove # Delete the default link (called ``deflink'')
 .Ed
 .Pp
 Note how all cloning is done at the end of the configuration.
-Usually, the link will be configured first, then cloned.
+Usually the link will be configured first, then cloned.
 If you wish all links
 to be up all the time, you can add the following line to the end of your
-configuration.
+configuration:
 .Bd -literal -offset indent
-  link 1,2,3 set mode ddial
+link 1,2,3 set mode ddial
 .Ed
 .Pp
 If you want the links to dial on demand, this command could be used:
 .Bd -literal -offset indent
-  link * set mode auto
+link * set mode auto
 .Ed
 .Pp
 Links may be tied to specific names by removing the
@@ -2562,17 +2531,17 @@ line above, and specifying the following after the
 .Dq clone
 command:
 .Bd -literal -offset indent
- link 1 set device /dev/cua00
- link 2 set device /dev/cua01
- link 3 set device /dev/cua02
+link 1 set device /dev/cua00
+link 2 set device /dev/cua01
+link 3 set device /dev/cua02
 .Ed
 .Pp
 Use the
-.Dq help
+.Ic help
 command to see which commands require context (using the
-.Dq link
-command), which have optional
-context and which should not have any context.
+.Ic link
+command), which have optional context,
+and which should not have any context.
 .Pp
 When
 .Nm
@@ -2586,7 +2555,7 @@ the actual link file descriptor) between different
 .Nm
 invocations.
 This facilitates
-.Nm Ns No 's
+.Nm ppp Ns 's
 ability to be run from a
 .Xr getty 8
 or directly from
@@ -2613,12 +2582,18 @@ or
 .Xr telnet 1
 session.
 .Bl -tag -width 2n
-.It accept|deny|enable|disable Ar option....
+.It Xo
+.Ic accept No \&|
+.Ic deny No \&|
+.Ic enable No \&|
+.Ic disable
+.Ar option....
+.Xc
 These directives tell
 .Nm
 how to negotiate the initial connection with the peer.
 Each
-.Dq option
+.Ar option
 has a default of either accept or deny and enable or disable.
 .Dq Accept
 means that the option will be ACK'd if the peer asks for it.
@@ -2629,7 +2604,7 @@ means that the option will be requested by us.
 .Dq Disable
 means that the option will not be requested by us.
 .Pp
-.Dq Option
+.Ar option
 may be one of the following:
 .Bl -tag -width 2n
 .It acfcomp
@@ -2642,9 +2617,7 @@ If this option is
 negotiated, these two bytes are simply not sent, thus minimising
 traffic.
 .Pp
-See
-.Pa rfc1662
-for details.
+See RFC 1662 for details.
 .It chap Ns Op \&05
 Default: Disabled and Accepted.
 CHAP stands for Challenge Handshake Authentication Protocol.
@@ -2692,7 +2665,7 @@ Note: There is a problem negotiating
 .Ar deflate
 capabilities with
 .Xr pppd 8
-- a
+\- a
 .Em PPP
 implementation available under many operating systems.
 .Nm pppd
@@ -2702,23 +2675,18 @@ compression using type
 .Em 24
 as the CCP configuration type rather than type
 .Em 26
-as specified in
-.Pa rfc1979 .
+as specified in RFC 1979.
 Type
 .Ar 24
 is actually specified as
 .Dq PPP Magna-link Variable Resource Compression
-in
-.Pa rfc1975 Ns !
+in RFC 1975!
 .Nm
 is capable of negotiating with
 .Nm pppd ,
 but only if
 .Dq deflate24
-is
-.Ar enable Ns No d
-and
-.Ar accept Ns No ed .
+is enabled and accepted.
 .It deflate24
 Default: Disabled and Denied.
 This is a variance of the
@@ -2729,14 +2697,12 @@ program.
 Refer to the
 .Ar deflate
 section above for details.
-It is disabled by default as it violates
-.Pa rfc1975 .
+It is disabled by default as it violates RFC 1975.
 .It dns
 Default: Disabled and Denied.
 This option allows DNS negotiation.
 .Pp
-If
-.Dq enable Ns No d,
+If enabled,
 .Nm
 will request that the peer confirms the entries in
 .Pa /etc/resolv.conf .
@@ -2744,22 +2710,21 @@ If the peer NAKs our request (suggesting new IP numbers),
 .Pa /etc/resolv.conf
 is updated and another request is sent to confirm the new entries.
 .Pp
-If
-.Dq accept Ns No ed,
+If accepted,
 .Nm
 will answer any DNS queries requested by the peer rather than rejecting
 them.
 The answer is taken from
 .Pa /etc/resolv.conf
 unless the
-.Dq set dns
+.Ic set dns
 command is used as an override.
 .It enddisc
 Default: Enabled and Accepted.
 This option allows control over whether we
 negotiate an endpoint discriminator.
 We only send our discriminator if
-.Dq set enddisc
+.Ic set enddisc
 is used and
 .Ar enddisc
 is enabled.
@@ -2774,7 +2739,7 @@ implementing two different mechanisms (LANMan & NT) under the guise of
 a single CHAP type (0x80).
 .Dq LANMan
 uses a simple DES encryption mechanism and is the least secure of the
-CHAP alternatives (although is still more secure than PAP).
+CHAP alternatives (although still more secure than PAP).
 .Pp
 Refer to the
 .Dq MSChap
@@ -2784,7 +2749,7 @@ Default: Disabled and Accepted.
 This option decides if Link Quality Requests will be sent or accepted.
 LQR is a protocol that allows
 .Nm
-to determine that the link is down without relying on the modems
+to determine that the link is down without relying on the modem's
 carrier detect.
 When LQR is enabled,
 .Nm
@@ -2817,16 +2782,16 @@ connection.
 Default: Enabled and Accepted.
 This is Microsoft Point to Point Encryption scheme.
 MPPE key size can be
-40-, 56- and 128-bits.
-Refer to
-.Dq set mppe
+40-, 56-, and 128-bits.
+Refer to the
+.Ic set mppe
 command.
 .It MSChapV2|chap81
 Default: Disabled and Accepted.
 It is very similar to standard CHAP (type 0x05)
 except that it issues challenges of a fixed 16 bytes in length and uses a
-combination of MD4, SHA-1 and DES to encrypt the challenge rather than using the
-standard MD5 mechanism.
+combination of MD4, SHA-1, and DES
+to encrypt the challenge rather than using the standard MD5 mechanism.
 .It MSChap|chap80nt
 Default: Disabled and Accepted.
 The use of this authentication protocol
@@ -2837,16 +2802,15 @@ It is very similar to standard CHAP (type 0x05)
 except that it issues challenges of a fixed 8 bytes in length and uses a
 combination of MD4 and DES to encrypt the challenge rather than using the
 standard MD5 mechanism.
-CHAP type 0x80 for LANMan is also supported - see
+CHAP type 0x80 for LANMan is also supported \- see
 .Dq enable LANMan
 for details.
 .Pp
 Because both
 .Dq LANMan
 and
-.Dq NT
-use CHAP type 0x80, when acting as authenticator with both
-.Dq enable Ns No d ,
+.Sq NT
+use CHAP type 0x80, when acting as authenticator with both enabled,
 .Nm
 will rechallenge the peer up to three times if it responds using the wrong
 one of the two protocols.
@@ -2854,8 +2818,7 @@ This gives the peer a chance to attempt using both protocols.
 .Pp
 Conversely, when
 .Nm
-acts as the authenticatee with both protocols
-.Dq accept Ns No ed ,
+acts as the authenticatee with both protocols accepted,
 the protocols are used alternately in response to challenges.
 .Pp
 Note: If only LANMan is enabled,
@@ -2879,9 +2842,9 @@ in
 and have an entry in
 .Pa /etc/ppp/ppp.secret
 for the peer (although see the
-.Dq passwdauth
+.Ic passwdauth
 and
-.Dq set radius
+.Ic set radius
 options below).
 .Pp
 When using PAP as the client, you need only specify
@@ -2905,7 +2868,7 @@ Default: Enabled and Accepted.
 This option determines if
 .Nm
 will request and accept requests for short
-(12 bit)
+(12-bit)
 sequence numbers when negotiating multi-link mode.
 This is only applicable if our MRRU is set (thus enabling multi-link).
 .It vjcomp
@@ -2945,7 +2908,7 @@ invocation with the udp link.
 Default: Enabled.
 When
 .Nm
-exchanges low-level LCP, CCP and IPCP configuration traffic, the
+exchanges low-level LCP, CCP, and IPCP configuration traffic, the
 .Em Identifier
 field of any replies is expected to be the same as that of the request.
 By default,
@@ -2969,10 +2932,7 @@ The option can only be enabled if network address translation is enabled
 .Pp
 With this option enabled,
 .Nm
-will pass traffic for old interface addresses through the NAT
-ifdef({LOCALNAT},{engine,},{engine
-(see
-.Xr libalias 3 ) ,})
+will pass traffic for old interface addresses through the NAT engine,
 resulting in the ability (in
 .Fl auto
 mode) to properly connect the process that caused the PPP link to
@@ -2981,7 +2941,7 @@ come up in the first place.
 Disabling NAT with
 .Dq nat enable no
 will also disable
-.Sq iface-alias .
+.Dq iface-alias .
 .It ipcp
 Default: Enabled.
 This option allows
@@ -3016,7 +2976,7 @@ and wait for the controlling
 .Nm
 to finish with the link and deliver a signal back to the idle process.
 This prevents the confusion that results from
-.Nm Ns No 's
+.Nm ppp Ns 's
 parent considering the link resource available again.
 .Pp
 For tty devices that have entries in
@@ -3062,7 +3022,7 @@ is always checked first.
 If you wish to use passwords from
 .Xr passwd 5 ,
 but also to specify an IP number or label for a given client, use
-.Dq \&*
+.Sq \&*
 as the client password in
 .Pa /etc/ppp/ppp.secret .
 .It proxy
@@ -3079,7 +3039,7 @@ and the
 address of the local network in which
 .Dv HISADDR
 appears.
-This allows other machines connecteed to the LAN to talk to
+This allows other machines connected to the LAN to talk to
 the peer as if the peer itself was connected to the LAN.
 The proxy entry cannot be made unless
 .Dv HISADDR
@@ -3093,30 +3053,30 @@ smaller subnets routed via the tun interface.
 .Pp
 Proxy arp entries are only made for sticky routes that are added
 using the
-.Dq add
+.Ic add
 command.
 No proxy arp entries are made for the interface address itself
 (as created by the
-.Dq set ifaddr
+.Ic set ifaddr
 command).
 .It sroutes
 Default: Enabled.
 When the
-.Dq add
+.Ic add
 command is used with the
 .Dv HISADDR ,
 .Dv MYADDR ,
-.Dv HISADDR6
+.Dv HISADDR6 ,
 or
 .Dv MYADDR6
 values, entries are stored in the
-.Sq sticky route
+.Dq sticky route
 list.
 Each time these variables change, this list is re-applied to the routing table.
 .Pp
 Disabling this option will prevent the re-application of sticky routes,
 although the
-.Sq stick route
+.Dq sticky route
 list will still be maintained.
 .It Op tcp Ns Xo
 .No mssfixup
@@ -3132,11 +3092,11 @@ This option tells
 .Nm
 to gather throughput statistics.
 Input and output is sampled over
-a rolling 5 second window, and current, best and total figures are retained.
+a rolling 5 second window, and current, best, and total figures are retained.
 This data is output when the relevant
 .Em PPP
 layer shuts down, and is also available using the
-.Dq show
+.Ic show
 command.
 Throughput statistics are available at the
 .Dq IPCP
@@ -3156,8 +3116,7 @@ not to make any utmp or wtmp entries.
 This is usually only necessary if
 you require the user to both login and authenticate themselves.
 .El
-.Pp
-.It add Ns Xo
+.It Ic add Ns Xo
 .Op !\&
 .Ar dest Ns Op / Ns Ar nn
 .Op Ar mask
@@ -3166,7 +3125,7 @@ you require the user to both login and authenticate themselves.
 .Ar Dest
 is the destination IP address.
 The netmask is specified either as a number of bits with
-.Ar /nn
+.No / Ns Ar nn
 or as an IP number using
 .Ar mask .
 .Ar 0 0
@@ -3174,7 +3133,7 @@ or simply
 .Ar 0
 with no mask refers to the default route.
 It is also possible to use the literal name
-.Sq default
+.Dq default
 instead of
 .Ar 0 .
 .Ar Gateway
@@ -3186,33 +3145,33 @@ Refer to the
 command for further details.
 .Pp
 It is possible to use the symbolic names
-.Sq MYADDR ,
-.Sq HISADDR ,
-.Sq MYADDR6
+.Dq MYADDR ,
+.Dq HISADDR ,
+.Dq MYADDR6 ,
 or
-.Sq HISADDR6
+.Dq HISADDR6
 as the destination, and
-.Sq HISADDR
+.Dq HISADDR
 or
-.Sq HISADDR6
+.Dq HISADDR6
 as the
 .Ar gateway .
-.Sq MYADDR
+.Dq MYADDR
 is replaced with the interface IP address,
-.Sq HISADDR
+.Dq HISADDR
 is replaced with the interface IP destination (peer) address,
-.Sq MYADDR6
+.Dq MYADDR6
 is replaced with the interface IPv6 address, and
-.Sq HISADDR6
-is replaced with the interface IPv6 destination address,
+.Dq HISADDR6
+is replaced with the interface IPv6 destination address.
 .Pp
 If the
-.Ar add!\&
+.Ic add Ns !\&
 command is used
 (note the trailing
-.Dq !\& ) ,
+.Sq !\& ) ,
 then if the route already exists, it will be updated as with the
-.Sq route change
+.Ic route change
 command (see
 .Xr route 8
 for further details).
@@ -3226,14 +3185,14 @@ Routes that contain the
 or
 .Dq DNS1
 constants are considered
-.Sq sticky .
+.Dq sticky .
 They are stored in a list (use
-.Dq show ncp
+.Ic show ncp
 to see the list), and each time the value of one of these variables
 changes, the appropriate routing table entries are updated.
 This facility may be disabled using
-.Dq disable sroutes .
-.It allow Ar command Op Ar args
+.Ic disable sroutes .
+.It Ic allow Ar command Op Ar args
 This command controls access to
 .Nm
 and its configuration files.
@@ -3244,43 +3203,51 @@ is being run in.
 For example, you may wish to configure
 .Nm
 so that only user
-.Sq fred
+.Dq fred
 may access label
-.Sq fredlabel
+.Dq fredlabel
 in
 .Fl background
 mode.
 .Pp
 User ID 0 is immune to these commands.
 .Bl -tag -width 2n
-.It allow user Ns Xo
-.Op s
-.Ar logname Ns No ...
+.It Ic allow user Ns Xo
+.Op Ic s
+.Ar logname ...
 .Xc
 By default, only user ID 0 is allowed access to
 .Nm ppp .
 If this command is used, all of the listed users are allowed access to
 the section in which the
-.Dq allow users
+.Ic allow users
 command is found.
 The
-.Sq default
+.Dq default
 section is always checked first (even though it is only ever automatically
 loaded at startup).
-.Dq allow users
+.Ic allow users
 commands are cumulative in a given section, but users allowed in any given
 section override users allowed in the default section, so it's possible to
 allow users access to everything except a given label by specifying default
 users in the
-.Sq default
+.Dq default
 section, and then specifying a new user list for that label.
 .Pp
 If user
 .Sq *
 is specified, access is allowed to all users.
-.It allow mode Ns Xo
-.Op s
-.Ar mode Ns No ...
+If
+.Ar logname
+is omitted, the user access list is emptied
+(i.e. only root will have access).
+There is no difference between the forms
+.Ic allow user
+and
+.Ic allow users .
+.It Ic allow mode Ns Xo
+.Op Ic s
+.Ar mode ...
 .Xc
 By default, access using any
 .Nm
@@ -3289,215 +3256,33 @@ If this command is used, it restricts the access
 .Ar modes
 allowed to load the label under which this command is specified.
 Again, as with the
-.Dq allow users
+.Ic allow users
 command, each
-.Dq allow modes
+.Ic allow modes
 command overrides any previous settings, and the
-.Sq default
+.Dq default
 section is always checked first.
 .Pp
 Possible modes are:
-.Sq interactive ,
-.Sq auto ,
-.Sq direct ,
-.Sq dedicated ,
-.Sq ddial ,
-.Sq background
+.Dq interactive ,
+.Dq auto ,
+.Dq direct ,
+.Dq dedicated ,
+.Dq ddial ,
+.Dq background ,
 and
 .Sq * .
+There is no difference between the forms
+.Ic allow mode
+and
+.Ic allow modes .
 .Pp
 When running in multi-link mode, a section can be loaded if it allows
 .Em any
 of the currently existing line modes.
 .El
-.Pp
-.It nat Ar command Op Ar args
-This command allows the control of the network address translation (also
-known as masquerading or IP aliasing) facilities that are built into
-.Nm ppp .
-NAT is done on the external interface only, and is unlikely to make sense
-if used with the
-.Fl direct
-flag.
-.Pp
-If nat is enabled on your system (it may be omitted at compile time),
-the following commands are possible:
-.Bl -tag -width 2n
-.It nat enable yes|no
-This command either switches network address translation on or turns it off.
-The
-.Fl nat
-command line flag is synonymous with
-.Dq nat enable yes .
-.It nat addr Op Ar addr_local addr_alias
-This command allows data for
-.Ar addr_alias
-to be redirected to
-.Ar addr_local .
-It is useful if you own a small number of real IP numbers that
-you wish to map to specific machines behind your gateway.
-.It nat deny_incoming yes|no
-If set to yes, this command will refuse all incoming packets where an
-aliasing link doesn't already exist.
-ifdef({LOCALNAT},{},{Refer to the
-.Sx CONCEPTUAL BACKGROUND
-section of
-.Xr libalias 3
-for a description of what an
-.Dq aliasing link
-is.
-})dnl
-.Pp
-It should be noted under what circumstances an aliasing link is
-ifdef({LOCALNAT},{created.},{created by
-.Xr libalias 3 .})
-It may be necessary to further protect your network from outside
-connections using the
-.Dq set filter
-or
-.Dq nat target
-commands.
-.It nat help|?
-This command gives a summary of available nat commands.
-.It nat log yes|no
-This option causes various NAT statistics and information to
-be logged to the file
-.Pa /var/log/alias.log .
-.It nat port Ar proto Ar targetIP Ns Xo
-.No : Ns Ar targetPort Ns
-.Oo
-.No - Ns Ar targetPort
-.Oc Ar aliasPort Ns
-.Oo
-.No - Ns Ar aliasPort
-.Oc Oo Ar remoteIP : Ns
-.Ar remotePort Ns
-.Oo
-.No - Ns Ar remotePort
-.Oc Ns
-.Oc
-.Xc
-This command causes incoming
-.Ar proto
-connections to
-.Ar aliasPort
-to be redirected to
-.Ar targetPort
-on
-.Ar targetIP .
-.Ar proto
-is either
-.Dq tcp
-or
-.Dq udp .
-.Pp
-A range of port numbers may be specified as shown above.
-The ranges must be of the same size.
-.Pp
-If
-.Ar remoteIP
-is specified, only data coming from that IP number is redirected.
-.Ar remotePort
-must either be
-.Dq 0
-(indicating any source port)
-or a range of ports the same size as the other ranges.
-.Pp
-This option is useful if you wish to run things like Internet phone on
-machines behind your gateway, but is limited in that connections to only
-one interior machine per source machine and target port are possible.
-.It nat proto Ar proto localIP Oo
-.Ar publicIP Op Ar remoteIP
-.Oc
-This command tells
-.Nm
-to redirect packets of protocol type
-.Ar proto
-(see
-.Xr protocols 5 )
-to the internal address
-.Ar localIP .
-.Pp
-If
-.Ar publicIP
-is specified, only packets destined for that address are matched,
-otherwise the default alias address is used.
-.Pp
-If
-.Ar remoteIP
-is specified, only packets matching that source address are matched,
-.Pp
-This command is useful for redirecting tunnel endpoints to an internal machine,
-for example:
-.Pp
-.Dl nat proto ipencap 10.0.0.1
-.It "nat proxy cmd" Ar arg Ns No ...
-This command tells
-.Nm
-to proxy certain connections, redirecting them to a given server.
-ifdef({LOCALNAT},{},{Refer to the description of
-.Fn PacketAliasProxyRule
-in
-.Xr libalias 3
-for details of the available commands.
-})dnl
-.It nat punch_fw Op Ar base count
-This command tells
-.Nm
-to punch holes in the firewall for FTP or IRC DCC connections.
-This is done dynamically by installing termporary firewall rules which
-allow a particular connection (and only that connection) to go through
-the firewall.
-The rules are removed once the corresponding connection terminates.
-.Pp
-A maximum of
-.Ar count
-rules starting from rule number
-.Ar base
-will be used for punching firewall holes.
-The range will be cleared when the
-.Dq nat punch_fw
-command is run.
-.Pp
-If no arguments are given, firewall punching is disabled.
-.It nat same_ports yes|no
-When enabled, this command will tell the network address translation engine to
-attempt to avoid changing the port number on outgoing packets.
-This is useful
-if you want to support protocols such as RPC and LPD which require
-connections to come from a well known port.
-.It nat target Op Ar address
-Set the given target address or clear it if no address is given.
-The target address is used
-ifdef({LOCALNAT},{},{by libalias })dnl
-to specify how to NAT incoming packets by default.
-If a target address is not set or if
-.Dq default
-is given, packets are not altered and are allowed to route to the internal
-network.
-.Pp
-The target address may be set to
-.Dq MYADDR ,
-in which case
-ifdef({LOCALNAT},{all packets will be redirected},
-{libalias will redirect all packets})
-to the interface address.
-.It nat use_sockets yes|no
-When enabled, this option tells the network address translation engine to
-create a socket so that it can guarantee a correct incoming ftp data or
-IRC connection.
-.It nat unregistered_only yes|no
-Only alter outgoing packets with an unregistered source address.
-According to RFC 1918, unregistered source addresses
-are 10.0.0.0/8, 172.16.0.0/12 and 192.168.0.0/16.
-.El
-.Pp
-These commands are also discussed in the file
-.Pa README.nat
-which comes with the source distribution.
-.Pp
 .It Op !\& Ns Xo
-.No bg Ar command
+.Ic bg Ar command
 .Xc
 The given
 .Ar command
@@ -3508,7 +3293,7 @@ This is replaced with the local
 .Ar authname
 value.
 See the
-.Dq set authname
+.Ic set authname
 command below.
 .It Li COMPILATIONDATE
 This is replaced with the date on which
@@ -3520,7 +3305,7 @@ If nameservers are negotiated by IPCP, the values of these macros will change.
 .It Li ENDDISC
 This is replaced with the local endpoint discriminator value.
 See the
-.Dq set enddisc
+.Ic set enddisc
 command below.
 .It Li HISADDR
 This is replaced with the peer's IP number.
@@ -3557,9 +3342,9 @@ This is replaced with the last label name used.
 A label may be specified on the
 .Nm
 command line, via the
-.Dq load
+.Ic load
 or
-.Dq dial
+.Ic dial
 commands and in the
 .Pa ppp.secret
 file.
@@ -3590,7 +3375,9 @@ This is replaced with the bundle uptime in HH:MM:SS format.
 .It Li USER
 This is replaced with the username that has been authenticated with PAP or
 CHAP.
-Normally, this variable is assigned only in -direct mode.
+Normally, this variable is assigned only in
+.Fl direct
+mode.
 This value is available irrespective of whether utmp logging is enabled.
 .It Li VERSION
 This is replaced with the current version number of
@@ -3598,31 +3385,39 @@ This is replaced with the current version number of
 .El
 .Pp
 These substitutions are also done by the
-.Dq set proctitle ,
-.Dq ident
+.Ic set proctitle ,
+.Ic ident ,
 and
-.Dq log
+.Ic log
 commands.
 .Pp
 If you wish to pause
 .Nm
 while the command executes, use the
-.Dq shell
+.Ic shell
 command instead.
-.It clear physical|ipcp|ipv6 Op current|overall|peak...
+.It Xo
+.Ic clear
+.Ic physical No \&|
+.Ic ipcp No \&|
+.Ic ipv6
+.Oo Ic current No \&|
+.Ic overall No \&|
+.Ic peak No ... Oc
+.Xc
 Clear the specified throughput values at either the
 .Dq physical ,
-.Dq ipcp
+.Dq ipcp ,
 or
 .Dq ipv6cp
 level.
 If
 .Dq physical
 is specified, context must be given (see the
-.Dq link
+.Ic link
 command below).
 If no second argument is given, all values are cleared.
-.It clone Ar name Ns Xo
+.It Ic clone Ar name Ns Xo
 .Op \&, Ns Ar name Ns
 .No ...
 .Xc
@@ -3634,12 +3429,17 @@ This command must be used from the
 command below unless you've only got a single link (in which case that
 link becomes the default).
 Links may be removed using the
-.Dq remove
-command below.
+.Ic remove
+command
+.Pq see below .
 .Pp
 The default link name is
 .Dq deflink .
-.It close Op lcp|ccp Ns Op !\&
+.It Xo
+.Ic close
+.Oo Ic lcp Ns Oo !\& Oc |\&
+.Ic ccp Ns Op !\& Oc
+.Xc
 If no arguments are given, the relevant protocol layers will be brought
 down and the link will be closed.
 If
@@ -3657,7 +3457,7 @@ If
 .Dq ccp
 is specified, only the relevant compression layer is closed.
 If the
-.Dq !\&
+.Sq !\&
 is used, the compression layer will remain in the closed state, otherwise
 it will re-enter the STOPPED state, waiting for the peer to initiate
 further CCP negotiation.
@@ -3666,9 +3466,9 @@ In any event, this command does not disconnect the user from
 or exit
 .Nm ppp .
 See the
-.Dq quit
+.Ic quit
 command below.
-.It delete Ns Xo
+.It Ic delete Ns Xo
 .Op !\&
 .Ar dest
 .Xc
@@ -3678,33 +3478,35 @@ IP address.
 If
 .Ar dest
 is specified as
-.Sq ALL ,
+.Dq ALL ,
 all non-direct entries in the routing table for the current interface,
 and all
-.Sq sticky route
+.Dq sticky route
 entries are deleted.
 If
 .Ar dest
 is specified as
-.Sq default ,
+.Dq default ,
 the default route is deleted.
 .Pp
 If the
-.Ar delete!\&
+.Ic delete Ns !\&
 command is used
 (note the trailing
-.Dq !\& ) ,
+.Sq !\& ) ,
 .Nm
 will not complain if the route does not already exist.
-.It dial|call Op Ar label Ns Xo
-.No ...
+.It Xo
+.Ic dial No \&|
+.Ic call
+.Op Ar label ...
 .Xc
 This command is the equivalent of
 .Dq load label
 followed by
 .Dq open ,
 and is provided for backwards compatibility.
-.It down Op Ar lcp|ccp
+.It Ic down Op Ar lcp | ccp
 Bring the relevant layer down ungracefully, as if the underlying layer
 had become unavailable.
 It's not considered polite to use this command on
@@ -3713,20 +3515,24 @@ If no arguments are
 supplied, the entire link is closed (or if no context is given, all links
 are terminated).
 If
-.Sq lcp
+.Dq lcp
 is specified, the
 .Em LCP
 layer is terminated but the device is not brought offline and the link
 is not closed.
 If
-.Sq ccp
+.Dq ccp
 is specified, only the relevant compression layer(s) are terminated.
-.It help|? Op Ar command
+.It Xo
+.Ic help No \&|
+.Ic ?\&
+.Op Ar command
+.Xc
 Show a list of available commands.
 If
 .Ar command
 is specified, show the usage string for that command.
-.It ident Op Ar text Ns No ...
+.It Ic ident Op Ar text ...
 Identify the link to the peer using
 .Ar text .
 If
@@ -3740,18 +3546,19 @@ Refer to the
 command for details of when
 .Nm
 identifies itself to the peer.
-.It iface Ar command Op args
+.It Ic iface Ar command Op Ar args
 This command is used to control the interface used by
-.Nm ppp .
+.Nm .
 .Ar Command
 may be one of the following:
-.Bl -tag -width 2n
-.It iface add Ns Xo
+.Pp
+.Bl -tag -width 2n -compact
+.It Ic iface add Ns Xo
 .Op !\&
 .Ar addr Ns Op / Ns Ar bits
 .Op Ar peer
 .Xc
-.It iface add Ns Xo
+.It Ic iface add Ns Xo
 .Op !\&
 .Ar addr
 .Ar mask
@@ -3762,29 +3569,30 @@ Add the given
 combination to the interface.
 Instead of specifying
 .Ar mask ,
-.Ar /bits
+.No / Ns Ar bits
 can be used
 (with no space between it and
 .Ar addr ) .
 If the given address already exists, the command fails unless the
-.Dq !\&
-is used - in which case the previous interface address entry is overwritten
+.Sq !\&
+is used \- in which case the previous interface address entry is overwritten
 with the new one, allowing a change of netmask or peer address.
 .Pp
 If only
 .Ar addr
 is specified,
 .Ar bits
-defaults to
-.Dq 32
-and
+defaults to 32 and
 .Ar peer
-defaults to
-.Dq 255.255.255.255 .
+defaults to 255.255.255.255.
 This address (the broadcast address) is the only duplicate peer address that
 .Nm
 allows.
-.It iface clear Op INET | INET6
+.Pp
+.It Xo
+.Ic iface clear
+.Op Ic INET No \&| Ic INET6
+.Xc
 If this command is used while
 .Nm
 is in the OPENED state or while in
@@ -3800,23 +3608,26 @@ mode, all interface addresses are deleted.
 If the INET or INET6 arguments are used, only addresses for that address
 family are cleared.
 .Pp
-.It iface delete Ns Xo
-.Op !\& Ns
-.No |rm Ns Op !\&
+.It Xo
+.Ic iface
+.Ic delete Ns Oo !\& Oc \&|
+.Ic rm Ns Op !\&
 .Ar addr
 .Xc
 This command deletes the given
 .Ar addr
 from the interface.
 If the
-.Dq !\&
+.Sq !\&
 is used, no error is given if the address isn't currently assigned to
 the interface (and no deletion takes place).
-.It iface show
+.Pp
+.It Ic iface show
 Shows the current state and current addresses for the interface.
 It is much the same as running
 .Dq ifconfig INTERFACE .
-.It iface help Op Ar sub-command
+.Pp
+.It Ic iface help Op Ar sub-command
 This command, when invoked without
 .Ar sub-command ,
 will show a list of possible
@@ -3826,8 +3637,8 @@ When invoked with
 .Ar sub-command ,
 only the synopsis for the given sub-command is shown.
 .El
-.It Op data Ns Xo
-.No link
+.It Op Ic data Ns Xo
+.Ic link
 .Ar name Ns Op , Ns Ar name Ns
 .No ... Ar command Op Ar args
 .Xc
@@ -3835,7 +3646,7 @@ This command may prefix any other command if the user wishes to
 specify which link the command should affect.
 This is only applicable after multiple links have been created in Multi-link
 mode using the
-.Dq clone
+.Ic clone
 command.
 .Pp
 .Ar Name
@@ -3848,14 +3659,14 @@ is executed on each link.
 If
 .Ar name
 is
-.Dq * ,
+.Sq * ,
 .Ar command
 is executed on all links.
-.It load Op Ar label Ns Xo
+.It Ic load Op Ar label Ns Xo
 .No ...
 .Xc
 Load the given
-.Ar label Ns No (s)
+.Ar label Ns (s)
 from the
 .Pa ppp.conf
 file.
@@ -3868,27 +3679,194 @@ label is used.
 Unless the
 .Ar label
 section uses the
-.Dq set mode ,
-.Dq open
+.Ic set mode ,
+.Ic open ,
 or
-.Dq dial
+.Ic dial
 commands,
 .Nm
 will not attempt to make an immediate connection.
-.It log Ar word Ns No ...
+.It Ic log Ar word Ns ...
 Send the given word(s) to the log file with the prefix
 .Dq LOG: .
 Word substitutions are done as explained under the
-.Dq !bg
+.No !\& Ns Ic bg
 command above.
-.It open Op lcp|ccp|ipcp
+.It Ic nat Ar command Op Ar args
+This command allows the control of the network address translation (also
+known as masquerading or IP aliasing) facilities that are built into
+.Nm .
+NAT is done on the external interface only, and is unlikely to make sense
+if used with the
+.Fl direct
+flag.
+.Pp
+If nat is enabled on your system (it may be omitted at compile time),
+the following commands are possible:
+.Bl -tag -width 2n
+.It Ic nat enable Ar yes | no
+This command either switches network address translation on or turns it off.
+The
+.Fl nat
+command line flag is synonymous with
+.Dq nat enable yes .
+.It Ic nat addr Op Ar addr_local addr_alias
+This command allows data for
+.Ar addr_alias
+to be redirected to
+.Ar addr_local .
+It is useful if you own a small number of real IP numbers that
+you wish to map to specific machines behind your gateway.
+.It Ic nat deny_incoming Ar yes | no
+If set to yes, this command will refuse all incoming packets where an
+aliasing link doesn't already exist.
+.Pp
+It should be noted under what circumstances an aliasing link is created.
+It may be necessary to further protect your network from outside
+connections using the
+.Ic set filter
+or
+.Ic nat target
+commands.
+.It Ic nat help No \&| Ic ?\&
+This command gives a summary of available nat commands.
+.It Ic nat log Ar yes | no
+This option causes various NAT statistics and information to
+be logged to the file
+.Pa /var/log/alias.log .
+.It Ic nat port Ar proto Ar targetIP Ns Xo
+.No : Ns Ar targetPort Ns
+.Oo
+.No - Ns Ar targetPort
+.Oc Ar aliasPort Ns
+.Oo
+.No - Ns Ar aliasPort
+.Oc Oo Ar remoteIP : Ns
+.Ar remotePort Ns
+.Oo
+.No - Ns Ar remotePort
+.Oc Ns
+.Oc
+.Xc
+This command causes incoming
+.Ar proto
+connections to
+.Ar aliasPort
+to be redirected to
+.Ar targetPort
+on
+.Ar targetIP .
+.Ar proto
+is either
+.Dq tcp
+or
+.Dq udp .
+.Pp
+A range of port numbers may be specified as shown above.
+The ranges must be of the same size.
+.Pp
+If
+.Ar remoteIP
+is specified, only data coming from that IP number is redirected.
+.Ar remotePort
+must either be 0
+(indicating any source port)
+or a range of ports the same size as the other ranges.
+.Pp
+This option is useful if you wish to run things like an Internet phone on
+machines behind your gateway, but it is limited in that connections to only
+one interior machine per source machine and target port are possible.
+.It Ic nat proto Ar proto localIP Oo
+.Ar publicIP Op Ar remoteIP
+.Oc
+This command tells
+.Nm
+to redirect packets of protocol type
+.Ar proto
+(see
+.Xr protocols 5 )
+to the internal address
+.Ar localIP .
+.Pp
+If
+.Ar publicIP
+is specified, only packets destined for that address are matched,
+otherwise the default alias address is used.
+.Pp
+If
+.Ar remoteIP
+is specified, only packets matching that source address are matched.
+.Pp
+This command is useful for redirecting tunnel endpoints to an internal machine,
+for example:
+.Pp
+.Dl nat proto ipencap 10.0.0.1
+.It Ic nat proxy cmd Ar arg ...
+This command tells
+.Nm
+to proxy certain connections, redirecting them to a given server.
+.It Ic nat punch_fw Op Ar base count
+This command tells
+.Nm
+to punch holes in the firewall for FTP or IRC DCC connections.
+This is done dynamically by installing temporary firewall rules which
+allow a particular connection (and only that connection) to go through
+the firewall.
+The rules are removed once the corresponding connection terminates.
+.Pp
+A maximum of
+.Ar count
+rules starting from rule number
+.Ar base
+will be used for punching firewall holes.
+The range will be cleared when the
+.Ic nat punch_fw
+command is run.
+.Pp
+If no arguments are given, firewall punching is disabled.
+.It Ic nat same_ports Ar yes | no
+When enabled, this command tells the network address translation engine to
+attempt to avoid changing the port number on outgoing packets.
+This is useful
+if you want to support protocols such as RPC and LPD which require
+connections to come from a well known port.
+.It Ic nat target Op Ar address
+Set the given target address or clear it if no address is given.
+The target address is used to specify how to NAT incoming packets by default.
+If a target address is not set or if
+.Dq default
+is given, packets are not altered and are allowed to route to the internal
+network.
+.Pp
+The target address may be set to
+.Dq MYADDR ,
+in which case all packets will be redirected to the interface address.
+.It Ic nat use_sockets Ar yes | no
+When enabled, this option tells the network address translation engine to
+create a socket so that it can guarantee a correct incoming FTP data or
+IRC connection.
+.It Ic nat unregistered_only Ar yes | no
+Only alter outgoing packets with an unregistered source address.
+According to RFC 1918, unregistered source addresses
+are 10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16.
+.El
+.Pp
+These commands are also discussed in the file
+.Pa README.nat
+which comes with the source distribution.
+.It Xo
+.Ic open
+.Oo Ic lcp No \&|
+.Ic ccp No \&|
+.Ic ipcp Oc
+.Xc
 This is the opposite of the
-.Dq close
+.Ic close
 command.
 All closed links are immediately brought up apart from second and subsequent
 .Ar demand-dial
-links - these will come up based on the
-.Dq set autoload
+links \- these will come up based on the
+.Ic set autoload
 command that has been used.
 .Pp
 If the
@@ -3917,45 +3895,50 @@ like this as it's possible that the peer will not behave correctly.
 It
 .Em is
 however useful as a way of forcing the CCP or VJ dictionaries to be reset.
-.It passwd Ar pass
+.It Ic passwd Ar pass
 Specify the password required for access to the full
 .Nm
 command set.
 This password is required when connecting to the diagnostic port (see the
-.Dq set server
+.Ic set server
 command).
 .Ar Pass
 is specified on the
-.Dq set server
+.Ic set server
 command line.
 The value of
 .Ar pass
 is not logged when
 .Ar command
 logging is active, instead, the literal string
-.Sq ********
+.Dq ********
 is logged.
-.It quit|bye Op all
+.It Xo
+.Ic quit No \&|
+.Ic bye
+.Op Ic all
+.Xc
 If
-.Dq quit
+.Ic quit
 is executed from the controlling connection or from a command file,
-ppp will exit after closing all connections.
+.Nm
+will exit after closing all connections.
 Otherwise, if the user
 is connected to a diagnostic socket, the connection is simply dropped.
 .Pp
 If the
-.Ar all
-argument is given,
+.Ic all
+keyword is given,
 .Nm
 will exit despite the source of the command after closing all existing
 connections.
-.It remove|rm
+.It Ic remove No \&| Ic rm
 This command removes the given link.
 It is only really useful in multi-link mode.
 A link must be in the
 .Dv CLOSED
 state before it is removed.
-.It rename|mv Ar name
+.It Ic rename No \&| Ic mv Ar name
 This command renames the given link to
 .Ar name .
 It will fail if
@@ -3963,16 +3946,16 @@ It will fail if
 is already used by another link.
 .Pp
 The default link name is
-.Sq deflink .
+.Dq deflink .
 Renaming it to
-.Sq modem ,
-.Sq cua00
+.Dq modem ,
+.Dq cua00 ,
 or
-.Sq USR
+.Dq USR
 may make the log file more readable.
-.It resolv Ar command
+.It Ic resolv Ar command
 This command controls
-.Nm Ns No 's
+.Nm ppp Ns 's
 manipulation of the
 .Xr resolv.conf 5
 file.
@@ -3983,7 +3966,7 @@ image for future use.
 .Ar command
 is one of the following:
 .Bl -tag -width readonly
-.It Em readonly
+.It Ic readonly
 Treat
 .Pa /etc/resolv.conf
 as read only.
@@ -3998,36 +3981,36 @@ and
 .Dv DNS1
 macros.
 This is the opposite of the
-.Dq resolv writable
+.Ic resolv writable
 command.
-.It Em reload
+.It Ic reload
 Reload
 .Pa /etc/resolv.conf
 into memory.
-This may be necessary if for example a DHCP client overwrote
+This may be necessary if, for example, a DHCP client overwrote
 .Pa /etc/resolv.conf .
-.It Em restore
+.It Ic restore
 Replace
 .Pa /etc/resolv.conf
 with the version originally read at startup or with the last
-.Dq resolv reload
+.Ic resolv reload
 command.
 This is sometimes a useful command to put in the
 .Pa /etc/ppp/ppp.linkdown
 file.
-.It Em rewrite
+.It Ic rewrite
 Rewrite the
 .Pa /etc/resolv.conf
 file.
 This command will work even if the
-.Dq resolv readonly
+.Ic resolv readonly
 command has been used.
 It may be useful as a command in the
 .Pa /etc/ppp/ppp.linkup
 file if you wish to defer updating
 .Pa /etc/resolv.conf
 until after other commands have finished.
-.It Em writable
+.It Ic writable
 Allow
 .Nm
 to update
@@ -4038,12 +4021,12 @@ is enabled and
 .Nm
 successfully negotiates a DNS.
 This is the opposite of the
-.Dq resolv readonly
+.Ic resolv readonly
 command.
 .El
-.It save
-This option is not (yet) implemented.
-.It sendident
+.\" .It save
+.\" This option is not (yet) implemented.
+.It Ic sendident
 This command tells
 .Nm
 to identify itself to the peer.
@@ -4057,18 +4040,18 @@ will fail.
 When an identity has been set,
 .Nm
 will automatically identify itself when it sends or receives a configure
-reject, when negotiation fails or when LCP reaches the opened state.
+reject, when negotiation fails, or when LCP reaches the opened state.
 .Pp
 Received identification packets are logged to the LCP log (see
 .Ic set log
 for details) and are never responded to.
-.It set Ns Xo
-.Op up
+.It Ic set Ns Xo
+.Op Ic up
 .Ar var value
 .Xc
 This option allows the setting of any of the following variables:
 .Bl -tag -width 2n
-.It set accmap Ar hex-value
+.It Ic set accmap Ar hex-value
 ACCMap stands for Asynchronous Control Character Map.
 This is always
 negotiated with the peer, and defaults to a value of 00000000 in hex.
@@ -4077,8 +4060,8 @@ certain characters from end to end (such as XON/XOFF etc).
 .Pp
 For the XON/XOFF scenario, use
 .Dq set accmap 000a0000 .
-.It set Op auth Ns Xo
-.No key Ar value
+.It Ic set Op Ic auth Ns Xo
+.Ic key Ar value
 .Xc
 This sets the authentication key (or password) used in client mode
 PAP or CHAP negotiation to the given value.
@@ -4093,13 +4076,13 @@ or
 logging is in effect,
 .Ar value
 is logged as
-.Sq ********
+.Dq ********
 for security reasons.
 .Pp
 If the first character of
 .Ar value
 is an exclamation mark
-.Pq Dq !\& ,
+.Pq Sq !\& ,
 .Nm
 treats the remainder of the string as a program that must be executed
 to determine the
@@ -4109,17 +4092,17 @@ and
 values.
 .Pp
 If the
-.Dq !\&
+.Sq !\&
 is doubled up
 (to
-.Dq !! ) ,
+.Sq !! ) ,
 it is treated as a single literal
-.Dq !\& ,
+.Sq !\& ,
 otherwise, ignoring the
-.Dq !\& ,
+.Sq !\& ,
 .Ar value
 is parsed as a program to execute in the same was as the
-.Dq !bg
+.No !\& Ns Ic bg
 command above, substituting special names in the same manner.
 Once executed,
 .Nm
@@ -4154,7 +4137,7 @@ in this manner, it's expected that the host challenge is a series of ASCII
 digits or characters.
 An encryption device or Secure ID card is usually
 required to calculate the secret appropriate for the given challenge.
-.It set authname Ar ID
+.It Ic set authname Ar ID
 This sets the authentication ID used in client mode PAP or CHAP negotiation.
 .Pp
 If used in
@@ -4163,11 +4146,11 @@ mode with CHAP enabled,
 .Ar ID
 is used in the initial authentication challenge and should normally be set to
 the local machine name.
-.It set autoload Xo
+.It Ic set autoload Xo
 .Ar min-percent max-percent period
 .Xc
-These settings apply only in multi-link mode and default to zero, zero and
-five respectively.
+These settings apply only in multi-link mode and default to zero, zero, and
+five, respectively.
 When more than one
 .Ar demand-dial
 (also known as
@@ -4199,48 +4182,44 @@ links to simply come up one at a time.
 .Pp
 Certain devices cannot determine their physical bandwidth, so it
 is sometimes necessary to use the
-.Dq set bandwidth
+.Ic set bandwidth
 command (described below) to make
-.Dq set autoload
+.Ic set autoload
 work correctly.
-.It set bandwidth Ar value
+.It Ic set bandwidth Ar value
 This command sets the connection bandwidth in bits per second.
 .Ar value
 must be greater than zero.
 It is currently only used by the
-.Dq set autoload
+.Ic set autoload
 command above.
-.It set callback Ar option Ns No ...
+.It Ic set callback Ar option ...
 If no arguments are given, callback is disabled, otherwise,
 .Nm
 will request (or in
 .Fl direct
-mode, will accept) one of the given
-.Ar option Ns No s .
+mode, will accept) one of the given options.
 In client mode, if an
 .Ar option
 is NAK'd
 .Nm
 will request a different
 .Ar option ,
-until no options remain at which point
+until no options remain; at which point
 .Nm
 will terminate negotiations (unless
 .Dq none
-is one of the specified
-.Ar option ) .
+is one of the specified options).
 In server mode,
 .Nm
-will accept any of the given protocols - but the client
+will accept any of the given protocols \- but the client
 .Em must
 request one of them.
 If you wish callback to be optional, you must {include}
 .Ar none
 as an option.
 .Pp
-The
-.Ar option Ns No s
-are as follows (in this order of preference):
+The options are as follows (in this order of preference):
 .Bl -tag -width Ds
 .It auth
 The callee is expected to decide the callback number based on
@@ -4253,7 +4232,7 @@ the peer's entry in
 .It cbcp
 Microsoft's callback control protocol is used.
 See
-.Dq set cbcp
+.Ic set cbcp
 below.
 .Pp
 If you wish to negotiate
@@ -4275,14 +4254,14 @@ If
 is the callee,
 .Ar number
 should be either a comma separated list of allowable numbers or a
-.Dq \&* ,
+.Sq \&* ,
 meaning any number is permitted.
 If
 .Nm
 is the caller, only a single number should be specified.
 .Pp
 Note, this option is very unsafe when used with a
-.Dq \&*
+.Sq \&*
 as a malicious caller can tell
 .Nm
 to call any (possibly international) number without first authenticating
@@ -4296,38 +4275,37 @@ This is required (in addition to one or more other callback
 options) if you wish callback to be optional.
 .El
 .Pp
-.It set cbcp Oo
+.It Ic set cbcp Oo
 .No *| Ns Ar number Ns Oo
 .No , Ns Ar number Ns ...\& Oc
 .Op Ar delay Op Ar retry
 .Oc
 If no arguments are given, CBCP (Microsoft's CallBack Control Protocol)
-is disabled - ie, configuring CBCP in the
+is disabled \- i.e., configuring CBCP in the
 .Dq set callback
 command will result in
 .Nm
 requesting no callback in the CBCP phase.
 Otherwise,
 .Nm
-attempts to use the given phone
-.Ar number Ns No (s).
+attempts to use the given phone number(s).
 .Pp
 In server mode
 .Pq Fl direct ,
 .Nm
 will insist that the client uses one of these numbers, unless
-.Dq \&*
+.Sq \&*
 is used in which case the client is expected to specify the number.
 .Pp
 In client mode,
 .Nm
 will attempt to use one of the given numbers (whichever it finds to
 be agreeable with the peer), or if
-.Dq \&*
+.Sq \&*
 is specified,
 .Nm
 will expect the peer to specify the number.
-.It set cd Oo
+.It Ic set cd Oo
 .No off| Ns Ar seconds Ns Op !\&
 .Oc
 Normally,
@@ -4342,7 +4320,7 @@ If it's not set,
 assumes that this is because the device doesn't support carrier (which
 is true for most
 .Dq laplink
-NULL-modem cables), logs the fact and stops checking
+NULL-modem cables), logs the fact, and stops checking
 for carrier.
 .Pp
 As ptys don't support the TIOCMGET ioctl, the tty device will switch all
@@ -4368,13 +4346,13 @@ result in a warning when the device is opened.
 Some modems take more than one second after connecting to assert the carrier
 signal.
 If this delay isn't increased, this will result in
-.Nm Ns No 's
+.Nm ppp Ns 's
 inability to detect when the link is dropped, as
 .Nm
 assumes that the device isn't asserting carrier.
 .Pp
 The
-.Dq set cd
+.Ic set cd
 command overrides the default carrier behaviour.
 .Ar seconds
 specifies the maximum number of seconds that
@@ -4401,7 +4379,7 @@ values.
 If
 .Ar seconds
 is followed immediately by an exclamation mark
-.Pq Dq !\& ,
+.Pq Sq !\& ,
 .Nm
 will
 .Em require
@@ -4409,7 +4387,7 @@ carrier.
 If carrier is not detected after
 .Ar seconds
 seconds, the link will be disconnected.
-.It set choked Op Ar timeout
+.It Ic set choked Op Ar timeout
 This sets the number of seconds that
 .Nm
 will keep a choked output queue before dropping all pending output packets.
@@ -4440,65 +4418,48 @@ seconds have passed or at least one packet has been sent.
 If
 .Ar timeout
 seconds pass, all pending output packets are dropped.
-.It set ctsrts|crtscts on|off
+.It Xo
+.Ic set ctsrts Ns \&| Ns Ic crtscts
+.Ic on Ns \&| Ns Ic off
+.Xc
 This sets hardware flow control.
 Hardware flow control is
 .Ar on
 by default.
-.It set deflate Ar out-winsize Op Ar in-winsize
-This sets the DEFLATE algorithms default outgoing and incoming window
+.It Ic set deflate Ar out-winsize Op Ar in-winsize
+This sets the DEFLATE algorithm's default outgoing and incoming window
 sizes.
 Both
 .Ar out-winsize
 and
 .Ar in-winsize
-must be values between
-.Em 8
-and
-.Em 15 .
+must be values between 8 and 15.
 If
 .Ar in-winsize
 is specified,
 .Nm
 will insist that this window size is used and will not accept any other
 values from the peer.
-.It set dns Op Ar primary Op Ar secondary
-This command specifies DNS overrides for the
-.Dq accept dns
-command.
-Refer to the
-.Dq accept
-command description above for details.
-This command does not affect the IP numbers requested using
-.Dq enable dns .
-.It set device|line Xo
-.Ar value Ns No ...
+.It Ic set device No \&| Ic line Xo
+.Ar value ...
 .Xc
 This sets the device(s) to which
 .Nm
 will talk to the given
-.Dq value .
+.Ar value .
 .Pp
-All ISDN and serial device names are expected to begin with
+All serial device names are expected to begin with
 .Pa /dev/ .
-ISDN devices are usually called
-.Pa i4brbchX
-and serial devices are usually called
+Serial devices are usually called
 .Pa cuaXX .
 .Pp
 If
-.Dq value
+.Ar value
 does not begin with
 .Pa /dev/ ,
 it must either begin with an exclamation mark
-.Pq Dq !\& ,
-be of the format
-.No PPPoE: Ns Ar iface Ns Xo
-.Op \&: Ns Ar provider Ns
-.Xc
-(on
-.Xr netgraph 4
-enabled systems), or be of the format
+.Pq Sq !\&
+or be of the format
 .Sm off
 .Ar host : port Op /tcp|udp .
 .Sm on
@@ -4506,51 +4467,12 @@ enabled systems), or be of the format
 If it begins with an exclamation mark, the rest of the device name is
 treated as a program name, and that program is executed when the device
 is opened.
-Standard input, output and error are fed back to
+Standard input, output, and error are fed back to
 .Nm
 and are read and written as if they were a regular device.
 .Pp
 If a
-.No PPPoE: Ns Ar iface Ns Xo
-.Op \&: Ns Ar provider Ns
-.Xc
-specification is given,
-.Nm
-will attempt to create a
-.Em PPP
-over Ethernet connection using the given
-.Ar iface
-interface by using
-.Xr netgraph 4 .
-If
-.Xr netgraph 4
-is not available,
-.Nm
-will attempt to load it using
-.Xr kldload 2 .
-If this fails, an external program must be used such as the
-.Xr pppoe 8
-program available under
-.Ox .
-The given
-.Ar provider
-is passed as the service name in the PPPoE Discovery Initiation (PADI)
-packet.
-If no provider is given, an empty value will be used.
-.Pp
-When a PPPoE connection is established,
-.Nm
-will place the name of the Access Concentrator in the environment variable
-.Ev ACNAME .
-.Pp
-Refer to
-.Xr netgraph 4
-and
-.Xr ng_pppoe 4
-for further details.
-.Pp
-If a
-.Ar host Ns No : Ns Ar port Ns Oo
+.Ar host : Ns Ar port Ns Oo
 .No /tcp|udp
 .Oc
 specification is given,
@@ -4569,37 +4491,35 @@ Refer to the section on
 .Em PPP OVER TCP and UDP
 above for further details.
 .Pp
-If multiple
-.Dq values
-are specified,
+If multiple values are specified,
 .Nm
 will attempt to open each one in turn until it succeeds or runs out of
 devices.
-.It set dial Ar chat-script
+.It Ic set dial Ar chat-script
 This specifies the chat script that will be used to dial the other
 side.
 See also the
-.Dq set login
+.Ic set login
 command below.
 Refer to
 .Xr chat 8
 and to the example configuration files for details of the chat script
 format.
 It is possible to specify some special
-.Sq values
+.Dq values
 in your chat script as follows:
 .Bl -tag -width 2n
 .It Li \ec
 When used as the last character in a
-.Sq send
+.Dq send
 string, this indicates that a newline should not be appended.
 .It Li \ed
 When the chat script encounters this sequence, it delays two seconds.
+.It Li \en
+This is replaced with a newline character.
 .It Li \ep
 When the chat script encounters this sequence, it delays for one quarter of
 a second.
-.It Li \en
-This is replaced with a newline character.
 .It Li \er
 This is replaced with a carriage return character.
 .It Li \es
@@ -4608,27 +4528,27 @@ This is replaced with a space character.
 This is replaced with a tab character.
 .It Li \eT
 This is replaced by the current phone number (see
-.Dq set phone
+.Ic set phone
 below).
 .It Li \eP
 This is replaced by the current
 .Ar authkey
 value (see
-.Dq set authkey
+.Ic set authkey
 above).
 .It Li \eU
 This is replaced by the current
 .Ar authname
 value (see
-.Dq set authname
+.Ic set authname
 above).
 .El
 .Pp
 Note that two parsers will examine these escape sequences, so in order to
 have the
-.Sq chat parser
+.Dq chat parser
 see the escape character, it is necessary to escape it from the
-.Sq command parser .
+.Dq command parser .
 This means that in practice you should use two escapes, for example:
 .Bd -literal -offset indent
 set dial "... ATDT\\\\T CONNECT"
@@ -4637,14 +4557,14 @@ set dial "... ATDT\\\\T CONNECT"
 It is also possible to execute external commands from the chat script.
 To do this, the first character of the expect or send string is an
 exclamation mark
-.Pq Dq !\& .
+.Pq Sq !\& .
 If a literal exclamation mark is required, double it up to
-.Dq !!\&
+.Sq !!\&
 and it will be treated as a single literal
-.Dq !\& .
+.Sq !\& .
 When the command is executed, standard input and standard output are
 directed to the open device (see the
-.Dq set device
+.Ic set device
 command), and standard error is read by
 .Nm
 and substituted as the expect or send string.
@@ -4661,7 +4581,7 @@ word: ppp \\"!sh \\\\-c \\\\\\"echo \\\\-n label: >&2\\\\\\"\\" \e
 .Ed
 .Pp
 would result in the following chat sequence (output using the
-.Sq set log local chat
+.Dq set log local chat
 command before dialing):
 .Bd -literal -offset indent
 Dial attempt 1 of 1
@@ -4686,16 +4606,16 @@ login OK!
 .Pp
 Note (again) the use of the escape character, allowing many levels of
 nesting.
-Here, there are four parsers at work.
+Here there are four parsers at work.
 The first parses the original line, reading it as three arguments.
 The second parses the third argument, reading it as 11 arguments.
 At this point, it is
 important that the
-.Dq \&-
+.Sq \&-
 signs are escaped, otherwise this parser will see them as constituting
 an expect-send-expect sequence.
 When the
-.Dq !\&
+.Sq !\&
 character is seen, the execution parser reads the first command as three
 arguments, and then
 .Xr sh 1
@@ -4704,7 +4624,7 @@ itself expands the argument after the
 As we wish to send the output back to the modem, in the first example
 we redirect our output to file descriptor 2 (stderr) so that
 .Nm
-itself sends and logs it, and in the second example, we just output to stdout,
+itself sends and logs it, and in the second example we just output to stdout,
 which is attached directly to the modem.
 .Pp
 This, of course means that it is possible to execute an entirely external
@@ -4716,12 +4636,24 @@ for a good alternative.
 .Pp
 The external command that is executed is subjected to the same special
 word expansions as the
-.Dq !bg
+.No !\& Ns Ic bg
 command.
-.It set enddisc Op label|IP|MAC|magic|psn value
+.It Xo
+.Ic set dns
+.Op Ar primary Op Ar secondary
+.Xc
+This command specifies DNS overrides for the
+.Ic accept dns
+command.
+Refer to the
+.Ic accept
+command description above for details.
+This command does not affect the IP numbers requested using
+.Ic enable dns .
+.It Ic set enddisc Op label|IP|MAC|magic|psn value
 This command sets our local endpoint discriminator.
 If set prior to LCP negotiation, and if no
-.Dq disable enddisc
+.Ic disable enddisc
 command has been used,
 .Nm
 will send the information to the peer using the LCP endpoint discriminator
@@ -4751,7 +4683,7 @@ is usually done prior to any
 .Dq set ifaddr
 commands.
 .It Li magic
-A 20 digit random number is used.
+A 20-digit random number is used.
 Care should be taken when using magic numbers as restarting
 .Nm
 or creating a link using a different
@@ -4771,14 +4703,14 @@ country code first.
 .El
 .Pp
 If no arguments are given, the endpoint discriminator is reset.
-.It set escape Ar value...
+.It Ic set escape Ar value...
 This option is similar to the
-.Dq set accmap
+.Ic set accmap
 option above.
 It allows the user to specify a set of characters that will be
-.Sq escaped
+.Dq escaped
 as they travel across the link.
-.It set filter dial|alive|in|out Ar rule-no Xo
+.It Ic set filter No dial|alive|in|out Ar rule-no Xo
 .No permit|deny|clear| Ns Ar rule-no
 .Op !\&
 .Oo Op host
@@ -4796,7 +4728,7 @@ as they travel across the link.
 supports four filter sets.
 The
 .Em alive
-filter specifies packets that keep the connection alive - resetting the
+filter specifies packets that keep the connection alive \- resetting the
 idle timer.
 The
 .Em dial
@@ -4832,7 +4764,7 @@ In the case of
 .Em alive
 filters it means that the packet will not reset the idle timer (even if
 the
-.Ar in Ns No / Ns Ar out
+.Ar in Ns / Ns Ar out
 filter has a
 .Dq timeout
 value) and in the case of
@@ -4843,16 +4775,21 @@ Refer to the
 section on
 .Sx PACKET FILTERING
 above for further details.
-.It set hangup Ar chat-script
+.It Ic set hangup Ar chat-script
 This specifies the chat script that will be used to reset the device
 before it is closed.
 It should not normally be necessary, but can
 be used for devices that fail to reset themselves properly on close.
-.It set help|? Op Ar command
-This command gives a summary of available set commands, or if
+.It Xo
+.Ic set help No \&| Ic ?\&
+.Op Ar command
+.Xc
+This command gives a summary of available
+.Ic set
+commands, or if
 .Ar command
 is specified, the command usage is shown.
-.It set ifaddr Oo Ar myaddr Ns
+.It Ic set ifaddr Oo Ar myaddr Ns
 .Op / Ns Ar \&nn
 .Oo Ar hisaddr Ns Op / Ns Ar \&nn
 .Oo Ar netmask
@@ -4861,11 +4798,11 @@ is specified, the command usage is shown.
 .Oc
 This command specifies the IP addresses that will be used during
 IPCP negotiation.
-Addresses are specified using the format
+Addresses are specified using the following format:
 .Pp
 .Dl a.b.c.d/nn
 .Pp
-Where
+\&...where
 .Dq a.b.c.d
 is the preferred IP, but
 .Ar nn
@@ -4873,13 +4810,13 @@ specifies how many bits of the address we will insist on.
 If
 .No / Ns Ar nn
 is omitted, it defaults to
-.Dq /32
+.Sq /32
 unless the IP address is 0.0.0.0 in which case it defaults to
-.Dq /0 .
+.Sq /0 .
 .Pp
 If you wish to assign a dynamic IP number to the peer,
 .Ar hisaddr
-may also be specified as a range of IP numbers in the format
+may also be specified as a range of IP numbers in the following format:
 .Bd -ragged -offset indent
 .Ar \&IP Ns Oo \&- Ns Ar \&IP Ns Xo
 .Oc Ns Oo , Ns Ar \&IP Ns
@@ -4888,11 +4825,11 @@ may also be specified as a range of IP numbers in the format
 .Xc
 .Ed
 .Pp
-for example:
+For example:
 .Pp
 .Dl set ifaddr 10.0.0.1 10.0.1.2-10.0.1.10,10.0.1.20
 .Pp
-will only negotiate
+\&...will only negotiate
 .Dq 10.0.0.1
 as the local IP number, but may assign any of the given 10 IP
 numbers to the peer.
@@ -4902,7 +4839,7 @@ and that number is not already in use,
 will grant the peer's request.
 This is useful if the peer wants
 to re-establish a link using the same IP number as was previously
-allocated (thus maintaining any existing tcp or udp connections).
+allocated (thus maintaining any existing TCP or UDP connections).
 .Pp
 If the peer requests an IP number that's either outside
 of this range or is already in use,
@@ -4949,7 +4886,7 @@ In all cases, if the interface is already configured,
 .Nm
 will try to maintain the interface IP numbers so that any existing
 bound sockets will remain valid.
-.It set ifqueue Ar packets
+.It Ic set ifqueue Ar packets
 Set the maximum number of packets that
 .Nm
 will read from the tunnel interface while data cannot be sent to any of
@@ -4967,23 +4904,32 @@ This prevents any possible latency problems.
 .Pp
 The default value for
 .Ar packets
-is
-.Dq 30 .
-.It set ccpretry|ccpretries Oo Ar timeout
-.Op Ar reqtries Op Ar trmtries
-.Oc
-.It set chapretry|chapretries Oo Ar timeout
-.Op Ar reqtries
-.Oc
-.It set ipcpretry|ipcpretries Oo Ar timeout
-.Op Ar reqtries Op Ar trmtries
-.Oc
-.It set lcpretry|lcpretries Oo Ar timeout
-.Op Ar reqtries Op Ar trmtries
-.Oc
-.It set papretry|papretries Oo Ar timeout
-.Op Ar reqtries
-.Oc
+is 30.
+.It Xo
+.Ic set ccpretry No \&|
+.Ic ccpretries Oo Ar timeout
+.Op Ar reqtries Op Ar trmtries Oc
+.Xc
+.It Xo
+.Ic set chapretry No \&|
+.Ic chapretries Oo Ar timeout
+.Op Ar reqtries Oc
+.Xc
+.It Xo
+.Ic set ipcpretry No \&|
+.Ic ipcpretries Oo Ar timeout
+.Op Ar reqtries Op Ar trmtries Oc
+.Xc
+.It Xo
+.Ic set lcpretry No \&|
+.Ic lcpretries Oo Ar timeout
+.Op Ar reqtries Op Ar trmtries Oc
+.Xc
+.It Xo
+.Ic set papretry No \&|
+.Ic papretries Oo Ar timeout
+.Op Ar reqtries Oc
+.Xc
 These commands set the number of seconds that
 .Nm
 will wait before resending Finite State Machine (FSM) Request packets.
@@ -4998,7 +4944,7 @@ is specified, it tells
 how many configuration request attempts it should make while receiving
 no reply from the peer before giving up.
 The default is 5 attempts for
-CCP, LCP and IPCP and 3 attempts for PAP and CHAP.
+CCP, LCP, and IPCP, and 3 attempts for PAP and CHAP.
 .Pp
 If
 .Ar trmtries
@@ -5017,25 +4963,25 @@ In order to avoid negotiations with the peer that will never converge,
 will only send at most 3 times the configured number of
 .Ar reqtries
 in any given negotiation session before giving up and closing that layer.
-.It set log Xo
+.It Ic set log Xo
 .Op local
 .Op +|- Ns
-.Ar value Ns No ...
+.Ar value Ns ...
 .Xc
 This command allows the adjustment of the current log level.
 Refer to the Logging Facility section for further details.
-.It set login Ar chat-script
+.It Ic set login Ar chat-script
 This
 .Ar chat-script
 compliments the dial-script.
 If both are specified, the login
 script will be executed after the dial script.
 Escape sequences available in the dial script are also available here.
-.It set logout Ar chat-script
-This specifies the chat script that will be used to logout
+.It Ic set logout Ar chat-script
+This specifies the chat script that will be used to log out
 before the hangup script is called.
 It should not normally be necessary.
-.It set lqrperiod Ar frequency
+.It Ic set lqrperiod Ar frequency
 This command sets the
 .Ar frequency
 in seconds at which
@@ -5045,19 +4991,22 @@ or
 packets are sent.
 The default is 30 seconds.
 You must also use the
-.Dq enable lqr
+.Ic enable lqr
 command if you wish to send LQR requests to the peer.
-.It set mode Ar interactive|auto|ddial|background
+.It Xo
+.Ic set mode
+.Ar interactive | auto | ddial | background
+.Xc
 This command allows you to change the
-.Sq mode
+.Dq mode
 of the specified link.
 This is normally only useful in multi-link mode,
 but may also be used in uni-link mode.
 .Pp
 It is not possible to change a link that is
-.Sq direct
+.Dq direct
 or
-.Sq dedicated .
+.Dq dedicated .
 .Pp
 Note: If you issue the command
 .Dq set mode auto ,
@@ -5069,15 +5018,15 @@ This will allow
 to do the necessary address translations to enable the process that
 triggers the connection to connect once the link is up despite the
 peer assigning us a new (dynamic) IP address.
-.It set mppe Op 40|56|128|* Op stateless|stateful|*
+.It Ic set mppe Op 40|56|128|* Op stateless|stateful|*
 This option selects the encryption parameters used when negotiating
 MPPE.
 MPPE can be disabled entirely with the
-.Dq disable mppe
+.Ic disable mppe
 command.
 If no arguments are given,
 .Nm
-will attempt to negotiate a stateful link with a 128 bit key, but
+will attempt to negotiate a stateful link with a 128-bit key, but
 will agree to whatever the peer requests (including no encryption
 at all).
 .Pp
@@ -5085,8 +5034,8 @@ If any arguments are given,
 .Nm
 will
 .Em insist
-on using MPPE and will close the link if it's rejected by the peer (Note;
-this behaviour can be overridden by a configured RADIUS server).
+on using MPPE and will close the link if it's rejected by the peer.
+(Note: this behaviour can be overridden by a configured RADIUS server.)
 .Pp
 The first argument specifies the number of bits that
 .Nm
@@ -5101,13 +5050,13 @@ the encryption dictionary is re-initialised every 256 packets or after
 the loss of any data and the key is changed every 256 packets.
 Stateless mode is less efficient but is better for unreliable transport
 layers.
-.It set mrru Op Ar value
+.It Ic set mrru Op Ar value
 Setting this option enables Multi-link PPP negotiations, also known as
 Multi-link Protocol or MP.
 There is no default MRRU (Maximum Reconstructed Receive Unit) value.
 If no argument is given, multi-link mode is disabled.
-.It set mru Xo
-.Op max Ns Op imum
+.It Ic set mru Xo
+.Op Ic max Ns Op Ic imum
 .Op Ar value
 .Xc
 The default MRU (Maximum Receive Unit) is 1500.
@@ -5118,24 +5067,24 @@ protocol says implementations *must* be able to accept packets of at
 least 1500 octets.
 .Pp
 If the
-.Dq maximum
+.Ic maximum
 keyword is used,
 .Nm
 will refuse to negotiate a higher value.
 The maximum MRU can be set to 2048 at most.
 Setting a maximum of less than 1500 violates the
 .Em PPP
-rfc, but may sometimes be necessary.
+RFC, but may sometimes be necessary.
 For example,
 .Em PPPoE
 imposes a maximum of 1492 due to hardware limitations.
 .Pp
 If no argument is given, 1500 is assumed.
 A value must be given when
-.Dq maximum
+.Ic maximum
 is specified.
-.It set mtu Xo
-.Op max Ns Op imum
+.It Ic set mtu Xo
+.Op Ic max Ns Op Ic imum
 .Op Ar value
 .Xc
 The default MTU is 1500.
@@ -5154,7 +5103,7 @@ limiting your packet size (giving better bandwidth sharing at the expense
 of more header data).
 .Pp
 If the
-.Dq maximum
+.Ic maximum
 keyword is used,
 .Nm
 will refuse to negotiate a higher value.
@@ -5162,39 +5111,42 @@ The maximum MTU can be set to 2048 at most.
 .Pp
 If no
 .Ar value
-is given, 1500, or whatever the peer asks for is used.
+is given, 1500, or whatever the peer asks for, is used.
 A value must be given when
-.Dq maximum
+.Ic maximum
 is specified.
-.It set nbns Op Ar x.x.x.x Op Ar y.y.y.y
+.It Xo
+.Ic set nbns
+.Op Ar x.x.x.x Op Ar y.y.y.y
+.Xc
 This option allows the setting of the Microsoft NetBIOS name server
 values to be returned at the peer's request.
 If no values are given,
 .Nm
 will reject any such requests.
-.It set openmode active|passive Op Ar delay
+.It Xo
+.Ic set openmode
+.No active|passive Op Ar delay
+.Xc
 By default,
-.Ar openmode
-is always
-.Ar active
-with a one second
+.Ic openmode
+is always active with a one second
 .Ar delay .
 That is,
 .Nm
 will always initiate LCP/IPCP/CCP negotiation one second after the line
 comes up.
 If you want to wait for the peer to initiate negotiations, you
-can use the value
-.Ar passive .
+can use the value passive.
 If you want to initiate negotiations immediately or after more than one
 second, the appropriate
 .Ar delay
 may be specified here in seconds.
-.It set parity odd|even|none|mark
+.It Ic set parity No odd|even|none|mark
 This allows the line parity to be set.
 The default value is
 .Ar none .
-.It set phone Ar telno Ns Xo
+.It Ic set phone Ar telno Ns Xo
 .Oo \&| Ns Ar backupnumber
 .Oc Ns ... Ns Oo : Ns Ar nextnumber
 .Oc Ns ...
@@ -5202,9 +5154,9 @@ The default value is
 This allows the specification of the phone number to be used in
 place of the \\\\T string in the dial and login chat scripts.
 Multiple phone numbers may be given separated either by a pipe
-.Pq Dq \&|
+.Pq Sq \&|
 or a colon
-.Pq Dq \&: .
+.Pq Sq \&: .
 .Pp
 Numbers after the pipe are only dialed if the dial or login
 script for the previous number failed.
@@ -5216,13 +5168,13 @@ If multiple numbers are given,
 .Nm
 will dial them according to these rules until a connection is made, retrying
 the maximum number of times specified by
-.Dq set redial
+.Ic set redial
 below.
 In
 .Fl background
 mode, each number is attempted at most once.
-.It set Op proc Ns Xo
-.No title Op Ar value
+.It Ic set Op Ic proc Ns Xo
+.Ic title Op Ar value
 .Xc
 The current process title as displayed by
 .Xr ps 1
@@ -5233,34 +5185,33 @@ If
 is not specified, the original process title is restored.
 All the
 word replacements done by the shell commands (see the
-.Dq bg
+.Ic bg
 command above) are done here too.
 .Pp
 Note, if USER is required in the process title, the
-.Dq set proctitle
+.Ic set proctitle
 command must appear in
 .Pa ppp.linkup ,
 as it is not known when the commands in
 .Pa ppp.conf
 are executed.
-.It set radius Op Ar config-file
+.It Ic set radius Op Ar config-file
 This command enables RADIUS support (if it's compiled in).
 .Ar config-file
 refers to the radius client configuration file.
-If PAP, CHAP, MSCHAP or MSCHAPv2 are
-.Dq enable Ns No d ,
+If PAP, CHAP, MSCHAP, or MSCHAPv2 are enabled,
 .Nm
 behaves as a
-.Em \&N Ns No etwork
-.Em \&A Ns No ccess
-.Em \&S Ns No erver
+.Em \&N Ns etwork
+.Em \&A Ns ccess
+.Em \&S Ns erver
 and uses the configured RADIUS server to authenticate rather than
 authenticating from the
 .Pa ppp.secret
 file or from the passwd database.
 .Pp
-If none of PAP, CHAP, MSCHAP or MSCHAPv2 are enabled,
-.Dq set radius
+If none of PAP, CHAP, MSCHAP, or MSCHAPv2 are enabled,
+.Ic set radius
 will do nothing.
 .Pp
 .Nm
@@ -5272,12 +5223,14 @@ The peer IP address is set to the given value.
 The tun interface netmask is set to the given value.
 .It RAD_FRAMED_MTU
 If the given MTU is less than the peer's MRU as agreed during LCP
-negotiation, *and* it is less that any configured MTU (see the
-.Dq set mru
+negotiation,
+.Em and
+it is less that any configured MTU (see the
+.Ic set mru
 command), the tun interface MTU is set to the given value.
 .It RAD_FRAMED_COMPRESSION
 If the received compression type is
-.Dq 1 ,
+.Sq 1 ,
 .Nm
 will request VJ compression during IPCP negotiations despite any
 .Dq disable vj
@@ -5367,22 +5320,22 @@ will insist that MPPE encryption is used (even if no
 configuration command has been given with arguments).
 If it is supplied with a value of 1 (Allowed), encryption is made optional
 (despite any
-.Dq set mppe
+.Ic set mppe
 configuration commands with arguments).
 .It RAD_MICROSOFT_MS_MPPE_ENCRYPTION_TYPES
 If this
 .Dv RAD_VENDOR_MICROSOFT
 vendor specific attribute is supplied, bits 1 and 2 are examined.
-If either or both are set, 40 bit and/or 128 bit (respectively) encryption
+If either or both are set, 40-bit and/or 128-bit (respectively) encryption
 options are set, overriding any given first argument to the
-.Dq set mppe
+.Ic set mppe
 command.
-Note, it is not currently possible for the RADIUS server to specify 56 bit
+Note, it is not currently possible for the RADIUS server to specify 56-bit
 encryption.
 .It RAD_MICROSOFT_MS_MPPE_RECV_KEY
 If this
 .Dv RAD_VENDOR_MICROSOFT
-vendor specific attribute is supplied, it's value is used as the master
+vendor specific attribute is supplied, its value is used as the master
 key for decryption of incoming data.
 When clients are authenticated using MSCHAPv2,
 the RADIUS server MUST provide this attribute if inbound MPPE is
@@ -5390,7 +5343,7 @@ to function.
 .It RAD_MICROSOFT_MS_MPPE_SEND_KEY
 If this
 .Dv RAD_VENDOR_MICROSOFT
-vendor specific attribute is supplied, it's value is used as the master
+vendor specific attribute is supplied, its value is used as the master
 key for encryption of outgoing data.
 When clients are authenticated using MSCHAPv2,
 the RADIUS server MUST provide this attribute if outbound MPPE is
@@ -5398,8 +5351,8 @@ to function.
 .El
 .Pp
 Values received from the RADIUS server may be viewed using
-.Dq show bundle .
-.It set reconnect Ar timeout ntries
+.Ic show bundle .
+.It Ic set reconnect Ar timeout ntries
 Should the line drop unexpectedly (due to loss of CD or LQR
 failure), a connection will be re-established after the given
 .Ar timeout .
@@ -5413,13 +5366,13 @@ A value of
 for
 .Ar timeout
 will result in a variable pause, somewhere between 1 and 30 seconds.
-.It set recvpipe Op Ar value
+.It Ic set recvpipe Op Ar value
 This sets the routing table RECVPIPE value.
 The optimum value is just over twice the MTU value.
 If
 .Ar value
 is unspecified or zero, the default kernel controlled value is used.
-.It set redial Ar secs Ns Xo
+.It Ic set redial Ar secs Ns Xo
 .Oo + Ns Ar inc Ns
 .Op - Ns Ar max Ns
 .Oc Ns Op . Ns Ar next
@@ -5430,7 +5383,7 @@ can be instructed to attempt to redial
 .Ar attempts
 times.
 If more than one phone number is specified (see
-.Dq set phone
+.Ic set phone
 above), a pause of
 .Ar next
 is taken before dialing each number.
@@ -5466,21 +5419,22 @@ delay will be effective, even after
 has been exceeded, so an immediate manual dial may appear to have
 done nothing.
 If an immediate dial is required, a
-.Dq !\&
+.Sq !\&
 should immediately follow the
-.Dq open
+.Ic open
 keyword.
 See the
-.Dq open
+.Ic open
 description above for further details.
-.It set sendpipe Op Ar value
+.It Ic set sendpipe Op Ar value
 This sets the routing table SENDPIPE value.
 The optimum value is just over twice the MTU value.
 If
 .Ar value
 is unspecified or zero, the default kernel controlled value is used.
-.It "set server|socket" Ar TcpPort Ns No \&| Ns Xo
-.Ar LocalName Ns No |none|open|closed
+.It Xo
+.Ic set server Ns \&| Ns Ic socket
+.Ar TcpPort Ns \&| Ns Ar LocalName Ns |none|open|closed
 .Op password Op Ar mask
 .Xc
 This command tells
@@ -5525,14 +5479,14 @@ If the password is
 specified as an empty string, no password is required for connecting clients.
 .Pp
 When specifying a local domain socket, the first
-.Dq %d
+.Sq %d
 sequence found in the socket name will be replaced with the current
 interface unit number.
 This is useful when you wish to use the same
 profile for more than one connection.
 .Pp
 In a similar manner TCP sockets may be prefixed with the
-.Dq +
+.Sq +
 character, in which case the current interface unit number is added to
 the port number.
 .Pp
@@ -5540,19 +5494,19 @@ When using
 .Nm
 with a server socket, the
 .Xr pppctl 8
-command is the preferred mechanism of communications.
+command is the preferred mechanism of communication.
 Currently,
 .Xr telnet 1
 can also be used, but link encryption may be implemented in the future, so
 .Xr telnet 1
 should be avoided.
 .Pp
-Note;
+Note:
 .Dv SIGUSR1
 and
 .Dv SIGUSR2
 interact with the diagnostic socket.
-.It set speed Ar value
+.It Ic set speed Ar value
 This sets the speed of the serial device.
 If speed is specified as
 .Dq sync ,
@@ -5563,7 +5517,10 @@ Certain device types will know whether they should be specified as
 synchronous or asynchronous.
 These devices will override incorrect
 settings and log a warning to this effect.
-.It set stopped Op Ar LCPseconds Op Ar CCPseconds
+.It Xo
+.Ic set stopped
+.Op Ar LCPseconds Op Ar CCPseconds
+.Xc
 If this option is set,
 .Nm
 will time out after the given FSM (Finite State Machine) has been in
@@ -5587,9 +5544,9 @@ The default value is zero, where
 doesn't time out in the stopped state.
 .Pp
 This value should not be set to less than the openmode delay (see
-.Dq set openmode
+.Ic set openmode
 above).
-.It set timeout Ar idleseconds Op Ar mintimeout
+.It Ic set timeout Ar idleseconds Op Ar mintimeout
 This command allows the setting of the idle timer.
 Refer to the section titled
 .Sx SETTING THE IDLE TIMER
@@ -5601,7 +5558,7 @@ is specified,
 .Nm
 will never idle out before the link has been up for at least that number
 of seconds.
-.It set urgent Xo
+.It Ic set urgent Xo
 .Op tcp|udp|none
 .Oo Op +|- Ns
 .Ar port
@@ -5626,9 +5583,8 @@ are specified,
 .Dq tcp
 is assumed.
 .Pp
-If no
-.Ar port Ns No s
-are given, the priority port lists are cleared (although if
+If no ports are given,
+the priority port lists are cleared (although if
 .Dq tcp
 or
 .Dq udp
@@ -5636,122 +5592,121 @@ is specified, only that list is cleared).
 If the first
 .Ar port
 argument is prefixed with a plus
-.Pq Dq \&+
+.Pq Sq \&+
 or a minus
-.Pq Dq \&- ,
+.Pq Sq \&- ,
 the current list is adjusted, otherwise the list is reassigned.
-.Ar port Ns No s
-prefixed with a plus or not prefixed at all are added to the list and
-.Ar port Ns No s
-prefixed with a minus are removed from the list.
+ports prefixed with a plus or not prefixed at all are added to the list and
+ports prefixed with a minus are removed from the list.
 .Pp
 If
 .Dq none
 is specified, all priority port lists are disabled and even
 .Dv IPTOS_LOWDELAY
 packets are not prioritised.
-.It set vj slotcomp on|off
+.It Ic set vj slotcomp on|off
 This command tells
 .Nm
 whether it should attempt to negotiate VJ slot compression.
 By default, slot compression is turned
 .Ar on .
-.It set vj slots Ar nslots
+.It Ic set vj slots Ar nslots
 This command sets the initial number of slots that
 .Nm
 will try to negotiate with the peer when VJ compression is enabled (see the
-.Sq enable
+.Ic enable
 command above).
 It defaults to a value of 16.
 .Ar Nslots
-must be between
-.Ar 4
-and
-.Ar 16
-inclusive.
+must be between 4 and 16 inclusive.
 .El
 .Pp
-.It shell|! Op Ar command
+.It Xo
+.Ic shell No \&|
+.Ic !\&
+.Op Ar command
+.Xc
 If
 .Ar command
-is not specified a shell is invoked according to the
+is not specified, a shell is invoked according to the
 .Dv SHELL
 environment variable.
 Otherwise, the given
 .Ar command
 is executed.
 Word replacement is done in the same way as for the
-.Dq !bg
+.No !\& Ns Ic bg
 command as described above.
 .Pp
-Use of the ! character
-requires a following space as with any of the other commands.
+Use of the
+.Sq !\&
+character requires a following space as with any of the other commands.
 You should note that this command is executed in the foreground;
 .Nm
 will not continue running until this process has exited.
 Use the
-.Dv bg
+.Ic bg
 command if you wish processing to happen in the background.
-.It show Ar var
+.It Ic show Ar var
 This command allows the user to examine the following:
 .Bl -tag -width 2n
-.It show bundle
+.It Ic show bundle
 Show the current bundle settings.
-.It show ccp
+.It Ic show ccp
 Show the current CCP compression statistics.
-.It show compress
+.It Ic show compress
 Show the current VJ compression statistics.
-.It show escape
+.It Ic show escape
 Show the current escape characters.
-.It show filter Op Ar name
+.It Ic show filter Op Ar name
 List the current rules for the given filter.
 If
 .Ar name
 is not specified, all filters are shown.
-.It show hdlc
+.It Ic show hdlc
 Show the current HDLC statistics.
-.It show help|?
+.It Ic show help No \&| Ic ?\&
 Give a summary of available show commands.
-.It show iface
+.It Ic show iface
 Show the current interface information
 (the same as
-.Dq iface show ) .
-.It show ipcp
+.Ic iface show ) .
+.It Ic show ipcp
 Show the current IPCP statistics.
-.It show layers
+.It Ic show layers
 Show the protocol layers currently in use.
-.It show lcp
+.It Ic show lcp
 Show the current LCP statistics.
-.It show Op data Ns Xo
-.No link
+.It Ic show Op Ic data Ns Xo
+.Ic link
 .Xc
 Show high level link information.
-.It show links
+.It Ic show links
 Show a list of available logical links.
-.It show log
+.It Ic show log
 Show the current log values.
-.It show mem
+.It Ic show mem
 Show current memory statistics.
-.It show ncp
+.It Ic show ncp
 Show the current NCP statistics.
-.It show physical
+.It Ic show physical
 Show low level link information.
-.It show mp
+.It Ic show mp
 Show Multi-link information.
-.It show proto
+.It Ic show proto
 Show current protocol totals.
-.It show route
+.It Ic show route
 Show the current routing tables.
-.It show stopped
+.It Ic show stopped
 Show the current stopped timeouts.
-.It show timer
+.It Ic show timer
 Show the active alarm timers.
-.It show version
+.It Ic show version
 Show the current version number of
 .Nm ppp .
 .El
 .Pp
-.It term
+.It Ic term
 Go into terminal mode.
 Characters typed at the keyboard are sent to the device.
 Characters read from the device are displayed on the screen.
@@ -5768,15 +5723,16 @@ Read the example configuration files.
 They are a good source of information.
 .It
 Use
-.Dq help ,
-.Dq nat \&? ,
-.Dq enable \&? ,
-.Dq set ?\&
+.Ic help ,
+.Ic nat \&? ,
+.Ic enable \&? ,
+.Ic set ?\& ,
 and
-.Dq show ?\&
+.Ic show ?\&
 to get online information about what's available.
 .It
 The following URLs contain useful information:
+.Pp
 .Bl -bullet -compact
 .It
 http://www.FreeBSD.org/doc/en_US.ISO8859-1/books/faq/ppp.html
@@ -5790,7 +5746,7 @@ http://www.FreeBSD.org/doc/en_US.ISO8859-1/books/handbook/userppp.html
 refers to four files:
 .Pa ppp.conf ,
 .Pa ppp.linkup ,
-.Pa ppp.linkdown
+.Pa ppp.linkdown ,
 and
 .Pa ppp.secret .
 These files are placed in the
@@ -5831,7 +5787,7 @@ is the number of the device.
 The tun interface used by this port.
 Again, this file is only created in
 .Fl background ,
-.Fl auto
+.Fl auto ,
 and
 .Fl ddial
 modes.
@@ -5842,7 +5798,7 @@ In multi-link mode, local domain sockets are created using the peer
 authentication name
 .Pq Sq authname ,
 the peer endpoint discriminator class
-.Pq Sq class
+.Pq Sq class ,
 and the peer endpoint discriminator value
 .Pq Sq value .
 As the endpoint discriminator value may be a binary value, it is turned
@@ -5857,22 +5813,21 @@ This socket is used to pass links between different instances of
 .Xr gzip 1 ,
 .Xr hostname 1 ,
 .Xr login 1 ,
+.Xr ps 1 ,
 .Xr telnet 1 ,
-.\" .Xr kldload 2 ,
-.\" ifdef({LOCALNAT},{},{.Xr libalias 3 ,
-.\" })dnl
-.\" ifdef({LOCALRAD},{},{.Xr libradius 3 ,
-.\" })dnl
+.Xr umask 2 ,
 .Xr syslog 3 ,
 .Xr uucplock 3 ,
-.\" .Xr netgraph 4 ,
-.\" .Xr ng_pppoe 4 ,
+.Xr com 4 ,
+.Xr pccom 4 ,
 .Xr tun 4 ,
+.Xr ucom 4 ,
 .Xr crontab 5 ,
 .Xr group 5 ,
 .Xr passwd 5 ,
 .Xr protocols 5 ,
 .Xr resolv.conf 5 ,
+.Xr services 5 ,
 .Xr syslog.conf 5 ,
 .Xr adduser 8 ,
 .Xr chat 8 ,
@@ -5880,7 +5835,6 @@ This socket is used to pass links between different instances of
 .Xr ifconfig 8 ,
 .Xr inetd 8 ,
 .Xr init 8 ,
-.\" .Xr isdn 8 ,
 .Xr named 8 ,
 .Xr ping 8 ,
 .Xr pppctl 8 ,
