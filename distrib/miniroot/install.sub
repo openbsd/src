@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.324 2003/12/21 21:45:41 krw Exp $
+#	$OpenBSD: install.sub,v 1.325 2004/01/11 18:57:02 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2003 Todd Miller, Theo de Raadt, Ken Westerback
@@ -545,8 +545,7 @@ __EOT
 lookup file bind
 __EOT
 
-	kill_dhclient
-	dhclient -1 $_ifs
+	dhclient $_ifs
 
 	set -- $(inet_info $_ifs)
 
@@ -702,7 +701,6 @@ enable_network() {
 				[ "$mask" = "NONE" ] && mask=
 				[ "$bcaddr" = "NONE" ] && bcaddr=
 				ifconfig $if $name $mask $bcaddr $ext1 $ext2 down
-				kill_dhclient
 				cmd="dhclient $if"
 				;;
 			"up")
@@ -1496,14 +1494,6 @@ __EOT
 			exit
 		fi
 	done < /etc/fstab
-}
-
-# Try to kill a running dhclient.
-kill_dhclient() {
-	if [[ -f /var/run/dhclient.pid ]]; then
-		kill -HUP $(sed -ne "1p" /var/run/dhclient.pid) > /dev/null 2>&1
-		rm -f /var/run/dhclient.pid
-	fi
 }
 
 # Preen all filesystems in /etc/fstab that have a /sbin/fsck_XXX,
