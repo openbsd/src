@@ -28,7 +28,7 @@ main(int argc, char *argv[])
 	struct sigaction sa;
 
 	memset(&sa, 0, sizeof sa);
-	sigfillset(&sa);
+	sigfillset(&sa.sa_mask);
 	sa.sa_sigaction = handler;
 	sa.sa_flags = SA_SIGINFO;
 
