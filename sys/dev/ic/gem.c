@@ -1,4 +1,4 @@
-/*	$OpenBSD: gem.c,v 1.19 2002/03/22 05:41:55 jason Exp $	*/
+/*	$OpenBSD: gem.c,v 1.20 2002/04/03 15:33:07 jason Exp $	*/
 /*	$NetBSD: gem.c,v 1.1 2001/09/16 00:11:43 eeh Exp $ */
 
 /*
@@ -904,15 +904,13 @@ gem_rint(sc)
 	struct gem_rxsoft *rxs;
 	struct mbuf *m;
 	u_int64_t rxstat;
+	u_int32_t rxcomp;
 	int i, len;
 
-	/*
-	 * XXXX Read the lastrx only once at the top for speed.
-	 */
 	DPRINTF(sc, ("gem_rint: sc->rxptr %d, complete %d\n",
 		sc->sc_rxptr, bus_space_read_4(t, h, GEM_RX_COMPLETION)));
-	for (i = sc->sc_rxptr; i != bus_space_read_4(t, h, GEM_RX_COMPLETION);
-	     i = GEM_NEXTRX(i)) {
+	rxcomp = bus_space_read_4(t, h, GEM_RX_COMPLETION);
+	for (i = sc->sc_rxptr; i != rxcomp; i = GEM_NEXTRX(i)) {
 		rxs = &sc->sc_rxsoft[i];
 
 		GEM_CDRXSYNC(sc, i,
@@ -921,8 +919,6 @@ gem_rint(sc)
 		rxstat = GEM_DMA_READ(sc, sc->sc_rxdescs[i].gd_flags);
 
 		if (rxstat & GEM_RD_OWN) {
-			printf("%s: gem_rint: completed descriptor "
-				"still owned %d\n", sc->sc_dev.dv_xname, i);
 			/*
 			 * We have processed all of the receive buffers.
 			 */
