@@ -39,11 +39,12 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexdump.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: hexdump.c,v 1.2 1996/05/21 21:51:51 deraadt Exp $";
+static char rcsid[] = "$Id: hexdump.c,v 1.3 1996/05/24 09:19:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <string.h>
 #include "hexdump.h"
 
 FS *fshead;				/* head of format strings */
