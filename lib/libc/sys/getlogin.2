@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getlogin.2,v 1.11 2001/04/09 18:31:35 deraadt Exp $
+.\"	$OpenBSD: getlogin.2,v 1.12 2002/02/23 00:31:22 millert Exp $
 .\"	$NetBSD: getlogin.2,v 1.4 1995/02/27 12:33:03 cgd Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
@@ -68,6 +68,53 @@ This call is restricted to the superuser, and
 is normally used only when a new session is being created on behalf
 of the named user
 (for example, at login time, or when a remote shell is invoked).
+.Pp
+.Em NOTE :
+There is only one login name per session.
+.Pp
+It is
+.Em CRITICALLY
+important to ensure that
+.Fn setlogin
+is only ever called after the process has taken adequate steps to ensure
+that it is detached from its parent's session.
+The
+.Em ONLY
+way to do this is via the
+.Fn setsid  
+function.
+The
+.Fn daemon
+function calls
+.Fn setsid
+which is an ideal way of detaching from a controlling terminal and
+forking into the background.
+.Pp
+In particular, neither
+.Fn ioctl ttyfd TIOCNOTTY ...\&
+nor
+.Fn setpgrp ...\&
+is sufficient to create a new session.
+.Pp
+Once a parent process has called
+.Fn setsid ,
+it is acceptable for some child of that process to then call
+.Fn setlogin ,
+even though it is not the session leader.
+Beware, however, that
+.Em ALL
+processes in the session will change their login name at the same time,
+even the parent.
+.Pp
+This is different from traditional
+.Ux
+privilege inheritance and as such can be counter-intuitive.
+.Pp
+Since the
+.Fn setlogin
+routine is restricted to the super-user, it is assumed that (like
+all other privileged programs) the programmer has taken adequate
+precautions to prevent security violations.
 .Sh RETURN VALUES
 If a call to
 .Fn getlogin
@@ -106,13 +153,6 @@ The caller tried to set the login name and was not the superuser.
 .Sh SEE ALSO
 .Xr setsid 2
 .Sh BUGS
-Login names are limited in length by
-.Fn setlogin .
-However, lower limits are placed on login names elsewhere in the system
-.Pf ( Dv UT_NAMESIZE
-in
-.Ao Pa utmp.h Ac ) .
-.Pp
 In earlier versions of the system,
 .Fn getlogin
 failed unless the process was associated with a login terminal.
