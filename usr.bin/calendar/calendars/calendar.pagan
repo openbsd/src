@@ -1,0 +1,29 @@
+/*
+ * Pagan
+ *
+ * $OpenBSD: calendar.pagan,v 1.1 1998/01/31 18:49:23 kstailey Exp $
+ */
+
+#ifndef _calendar_pagan_
+#define _calendar_pagan_
+
+02/02	1st Cross-Quarter Day
+02/02	Imbolg / Imbolc (other Celtic names) / Brighid / Oimelc
+03/19	1st Quarter Day - Spring (Vernal) Equinox
+03/21	Ostara / Eostre (Saxon goddess of Spring)
+04/30	May Eve / Walpurgisnacht (witches' Sabbath) / Walpurgis Night (after St. Walpurga)
+05/01	May Day / Beltane / Bealtaine - Celtic bonfire festival
+05/04	2nd Cross-Quarter Day
+06/20	2nd Quarter Day - Summer Solstice
+06/21	Litha (Norse/Anglo-Saxon for "longest day")
+06/23	St. John's Eve - European Midsummer celebration
+08/01	Lugnasad / Lughnasada / Lunasa - Gaelic summer "games of Lug" (sun-god)
+08/05	3rd Cross-Quarter Day
+09/21	3rd Quarter Day - Fall (Autumnal) Equinox
+10/31	Hallowmas / Allhallowmas / Allhallows
+11/01	Samhain - Celtic feast of departing Sun & new year
+11/05	4th Cross-Quarter Day
+12/20	4th Quarter Day - Winter Solstice
+12/21	Yule (Norse for "wheel") - Germanic 12-day feast
+
+#endif /* !_calendar_pagan_ */
