@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.113 2004/06/04 16:02:34 millert Exp $
+	$OpenBSD: pcmciadevs,v 1.114 2004/06/04 18:03:35 millert Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -85,6 +85,7 @@ vendor SYMBOL			0x026c	Symbol
 vendor BUFFALO			0x026f	BUFFALO (Melco Corporation)
 vendor LINKSYS2			0x0274	The Linksys Group
 vendor IODATA2			0x028a	I-O DATA
+vendor ASUS			0x02aa	ASUS
 vendor MICROSOFT		0x02d2	Microsoft
 vendor NWN			0x0602	No Wires Needed
 vendor BREEZECOM		0x0a02	BreezeCOM
@@ -145,6 +146,9 @@ product ALLIEDTELESIS LA_PCM	0x0002 Allied Telesis LA-PCM
 
 /* Archos */
 product	ARCHOS ARC_ATAPI	0x0043 MiniCD
+
+/* ASUS */
+product	ASUS WL_100		0x0002 SpaceLink WL-100
 
 /* Bay Networks */
 product BAY STACK_650		0x0804 BayStack 650
