@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.389 2001/04/14 13:37:29 aaron Exp 
+ *		OpenBSD: pcidevs,v 1.390 2001/04/29 17:30:53 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -3531,6 +3531,10 @@ static const struct pci_known_product pci_known_products[] = {
 	    "PCI1451 PCI-CardBus",
 	},
 	{
+	    PCI_VENDOR_TOPIC, PCI_PRODUCT_TOPIC_5634PCV,
+	    "5634PCV SurfRider",
+	},
+	{
 	    PCI_VENDOR_TOSHIBA, PCI_PRODUCT_TOSHIBA_TC35856F,
 	    "TC35856F ATM (Meteor)",
 	},
@@ -6217,6 +6221,10 @@ static const struct pci_known_vendor pci_known_vendors[] = {
 	{
 	    PCI_VENDOR_DELTA,
 	    "Delta",
+	},
+	{
+	    PCI_VENDOR_TOPIC,
+	    "Topic/SmartLink",
 	},
 	{
 	    PCI_VENDOR_BLUESTEEL,
