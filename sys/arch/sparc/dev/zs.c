@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.31 2002/01/30 20:45:34 nordin Exp $	*/
+/*	$OpenBSD: zs.c,v 1.32 2002/03/13 00:24:21 miod Exp $	*/
 /*	$NetBSD: zs.c,v 1.49 1997/08/31 21:26:37 pk Exp $ */
 
 /*
@@ -72,6 +72,8 @@
 #ifdef DDB
 #include <ddb/db_var.h>
 #endif
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/autoconf.h>
 #include <machine/conf.h>

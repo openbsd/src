@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.119 2002/01/24 10:15:07 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.120 2002/03/13 00:24:21 miod Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -2576,13 +2576,14 @@ void
 pmap_bootstrap(nctx, nregion, nsegment)
 	int nsegment, nctx, nregion;
 {
+	extern int nbpg;	/* locore.s */
 
-	uvmexp.pagesize = NBPG;
+	uvmexp.pagesize = nbpg;
 	uvm_setpagesize();
 
 #if defined(SUN4) && (defined(SUN4C) || defined(SUN4M))
 	/* In this case NPTESG is not a #define */
-	nptesg = (NBPSG >> pgshift);
+	nptesg = (NBPSG >> uvmexp.pageshift);
 #endif
 
 #if 0

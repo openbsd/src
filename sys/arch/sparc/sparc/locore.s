@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.45 2002/02/20 22:28:23 deraadt Exp $	*/
+/*	$OpenBSD: locore.s,v 1.46 2002/03/13 00:24:21 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.73 1997/09/13 20:36:48 pk Exp $	*/
 
 /*
@@ -218,12 +218,9 @@ _cputypvallen = _cputypvar - _cputypval
 #endif
 
 /*
- * There variables are pointed to by the cpp symbols PGSHIFT, NBPG,
- * and PGOFSET.
+ * nbpg is used by pmap_bootstrap(), pgofset is used internally.
  */
-	.globl	_pgshift, _nbpg, _pgofset
-_pgshift:
-	.word	0
+	.globl	_nbpg
 _nbpg:
 	.word	0
 _pgofset:
@@ -3694,10 +3691,7 @@ startmap_done:
 	sethi	%hi(_cputyp), %o0	! what type of cpu we are on
 	st	%g4, [%o0 + %lo(_cputyp)]
 
-	sethi	%hi(_pgshift), %o0	! pgshift = log2(nbpg)
-	st	%g5, [%o0 + %lo(_pgshift)]
-
-	mov	1, %o0			! nbpg = 1 << pgshift
+	mov	1, %o0			! nbpg = 1 << pgshift (g5)
 	sll	%o0, %g5, %g5
 	sethi	%hi(_nbpg), %o0		! nbpg = bytes in a page
 	st	%g5, [%o0 + %lo(_nbpg)]

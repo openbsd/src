@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.24 2001/03/24 01:37:28 ho Exp $	*/
+/*	$OpenBSD: fd.c,v 1.25 2002/03/13 00:24:21 miod Exp $	*/
 /*	$NetBSD: fd.c,v 1.51 1997/05/24 20:16:19 pk Exp $	*/
 
 /*-
@@ -68,6 +68,8 @@
 #include <sys/timeout.h>
 
 #include <dev/cons.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
 #include <machine/autoconf.h>

@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.23 2002/02/19 21:56:28 miod Exp $	*/
+/*	$OpenBSD: param.h,v 1.24 2002/03/13 00:24:21 miod Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -82,16 +82,6 @@
 
 #define SUN4_PGSHIFT	13	/* for a sun4 machine */
 #define SUN4CM_PGSHIFT	12	/* for a sun4c or sun4m machine */
-
-/*
- * The following variables are always defined and initialized (in locore)
- * so independently compiled modules (e.g. LKMs) can be used irrespective
- * of the `options SUN4?' combination a particular kernel was configured with.
- * See also the definitions of NBPG, PGOFSET and PGSHIFT below.
- */
-#if defined(_KERNEL) && !defined(_LOCORE)
-extern int nbpg, pgofset, pgshift;
-#endif
 
 #define	KERNBASE	0xf8000000	/* start of kernel virtual space */
 #define	KERNTEXTOFF	0xf8004000	/* start of kernel text */
@@ -218,12 +208,12 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
-#	define PAGE_SIZE	nbpg
-#	define PAGE_MASK	pgofset
-#	define PAGE_SHIFT	pgshift
+#	define NBPG		uvmexp.pagesize
+#	define PGOFSET		uvmexp.pagemask
+#	define PGSHIFT		uvmexp.pageshift
+#	define PAGE_SIZE	uvmexp.pagesize
+#	define PAGE_MASK	uvmexp.pagemask
+#	define PAGE_SHIFT	uvmexp.pageshift
 #elif defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(cputyp == CPU_SUN4M)
 #	define CPU_ISSUN4C	(cputyp == CPU_SUN4C)
@@ -242,12 +232,12 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4M)
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
-#	define PAGE_SIZE	nbpg
-#	define PAGE_MASK	pgofset
-#	define PAGE_SHIFT	pgshift
+#	define NBPG		uvmexp.pagesize
+#	define PGOFSET		uvmexp.pagemask
+#	define PGSHIFT		uvmexp.pageshift
+#	define PAGE_SIZE	uvmexp.pagesize
+#	define PAGE_MASK	uvmexp.pagemask
+#	define PAGE_SHIFT	uvmexp.pageshift
 #elif defined(SUN4M) && !defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(1)
 #	define CPU_ISSUN4C	(0)
@@ -266,12 +256,12 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(1)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C)
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
-#	define PAGE_SIZE	nbpg
-#	define PAGE_MASK	pgofset
-#	define PAGE_SHIFT	pgshift
+#	define NBPG		uvmexp.pagesize
+#	define PGOFSET		uvmexp.pagemask
+#	define PGSHIFT		uvmexp.pageshift
+#	define PAGE_SIZE	uvmexp.pagesize
+#	define PAGE_MASK	uvmexp.pagemask
+#	define PAGE_SHIFT	uvmexp.pageshift
 #elif !defined(SUN4M) && defined(SUN4C) && !defined(SUN4)
 #	define CPU_ISSUN4M	(0)
 #	define CPU_ISSUN4C	(1)
@@ -302,12 +292,12 @@ extern int mmumod;
 #	define CPU_ISSUN4	(cputyp == CPU_SUN4)
 #	define CPU_ISSUN4OR4C	(cputyp == CPU_SUN4 || cputyp == CPU_SUN4C)
 #	define CPU_ISSUN4COR4M	(cputyp == CPU_SUN4C || cputyp == CPU_SUN4M)
-#	define NBPG		nbpg
-#	define PGOFSET		pgofset
-#	define PGSHIFT		pgshift
-#	define PAGE_SIZE	nbpg
-#	define PAGE_MASK	pgofset
-#	define PAGE_SHIFT	pgshift
+#	define NBPG		uvmexp.pagesize
+#	define PGOFSET		uvmexp.pagemask
+#	define PGSHIFT		uvmexp.pageshift
+#	define PAGE_SIZE	uvmexp.pagesize
+#	define PAGE_MASK	uvmexp.pagemask
+#	define PAGE_SHIFT	uvmexp.pageshift
 #endif
 
 #endif /* _SPARC_PARAM_H_ */
