@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.3 1996/05/19 21:48:28 niklas Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.4 1996/05/22 08:56:02 niklas Exp $
 
 .if defined(OBJMACHINE)
 OBJDIR=	obj.${MACHINE}
@@ -27,7 +27,7 @@ LIBG++_DIST_VERSION = 2.7.1
 
 .PATH:		$(.CURDIR)/src
 
-SUBDIR+=	gperf genclass
+SUBDIR=		gperf genclass
 
 LIB=		g++
 CXXFLAGS+=	-fno-implicit-templates
