@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.4 1998/09/24 06:45:08 pjanzen Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.5 1999/02/12 04:08:55 deraadt Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -82,11 +82,7 @@ setup_board()
 
 	p = board;
 	for (i = B_SIZE; i; i--)
-#ifndef mips
 		*p++ = i <= (2 * B_COLS) || (i % B_COLS) < 2;
-#else /* work around compiler bug */
-		*p++ = i <= (2 * B_COLS) || (i % B_COLS) < 2 ? 1 : 0;
-#endif
 }
 
 /*
