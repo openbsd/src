@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifstated.h,v 1.3 2004/02/15 00:56:01 mcbride Exp $	*/
+/*	$OpenBSD: ifstated.h,v 1.4 2004/03/10 00:13:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2004 Ryan McBride
@@ -42,7 +42,7 @@ struct ifsd_ifstate {
 #define IFSD_LINKUP		2	/* LINK_STATE_UP */
 	int				 prevstate;
 	u_int32_t			 refcount;
-	u_short 			 ifindex;
+	u_short				 ifindex;
 };
 
 struct ifsd_external {
@@ -136,7 +136,7 @@ struct ifsd_config {
 #define IFSD_LOG_VERBOSE	3
 #define IFSD_LOG_DEBUG		4
 };
- 
+
 enum	{ IFSD_EVTIMER_ADD, IFSD_EVTIMER_DEL };
 struct ifsd_config *parse_config(char *, int);
 int	cmdline_symset(char *);
