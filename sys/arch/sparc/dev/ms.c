@@ -1,3 +1,4 @@
+/*	$OpenBSD: ms.c,v 1.5 1996/08/11 23:28:12 downsj Exp $	*/
 /*	$NetBSD: ms.c,v 1.8 1996/04/01 17:29:52 christos Exp $ */
 
 /*
@@ -253,12 +254,6 @@ msopen(dev, flags, mode, p)
 		return (EBUSY);
 	ms_softc.ms_events.ev_io = p;
 	ev_init(&ms_softc.ms_events);	/* may cause sleep */
-
-	if (CPU_ISSUN4) {
-		/* We need to set the baud rate on the mouse. */
-		ms_softc.ms_mouse->t_ispeed =
-		    ms_softc.ms_mouse->t_ospeed = 1200;
-	}
 
 	(*ms_softc.ms_open)(ms_softc.ms_mouse);
 	ms_softc.ms_ready = 1;		/* start accepting events */
