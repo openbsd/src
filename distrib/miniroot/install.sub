@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.31 1997/05/16 04:12:44 millert Exp $
+#	$OpenBSD: install.sub,v 1.32 1997/05/16 04:55:05 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -612,12 +612,19 @@ install_url() {
 	     "files will be retrieved iteratively via ftp(1).\n"
 	    
 	# Proxy the connections?
-	eval echo -n "${_url_type} proxy URL? [\$${_url_type}_proxy]\ "
-	eval getresp "\$${_url_type}_proxy"
-	if [ "X$resp" != "X" ]; then
-		eval ${_url_type}_proxy=$resp
-		eval export ${_url_type}_proxy
-	elif [ "${_url_type}" = "ftp" ]; then
+	if [ "X${_proxy_host}" = X"" ]; then
+		_proxy_host=none
+	fi
+	echo -n "http/ftp proxy URL? [${_proxy_host}] "
+	getresp "${_proxy_host}"
+	if [ "X${resp}" = X"none" ]; then
+		unset _proxy_host ftp_proxy http_proxy
+	else
+		_proxy_host=$resp
+		export ftp_proxy=${_proxy_host}
+		export http_proxy=${_proxy_host}
+	fi
+	if [ "${_url_type}" = "ftp" -a "X$ftp_proxy" = "X" ]; then
 		# Use passive mode ftp? (incompatible with proxy)
 		case "${_ftp_passive}" in
 			-p)	resp=y ;;
