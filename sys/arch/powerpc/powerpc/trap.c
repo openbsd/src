@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 1998/09/09 04:54:43 rahnds Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 1999/03/13 01:49:07 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -316,17 +316,29 @@ mpc_print_pci_stat();
 
 
 	case EXC_PGM|EXC_USER:
-printf("pgm iar %x\n", frame->srr0);
-		if (frame->srr1 && (1<<11)) { 
+	{
+		char *errstr[8];
+		int errnum = 0;
+		int i;
+
+		if (frame->srr1 & (1<<(31-11))) { 
 			/* floating point enabled program exception */
-		}
-		if (frame->srr1 && (1<<12)) {
+			errstr[errnum] = "floating point";
+			errnum++;
+		} 
+		if (frame->srr1 & (1<<(31-12))) {
 			/* illegal instruction program exception */
+			errstr[errnum] = "illegal instruction";
+			errnum++;
 		}
-		if (frame->srr1 && (1<<13)) {
+		if (frame->srr1 & (1<<(31-13))) {
 			/* privileged instruction exception */
+			errstr[errnum] = "priviledged instr";
+			errnum++;
 		}
-		if (frame->srr1 && (1<<14)) {
+		if (frame->srr1 & (1<<(31-14))) {
+			errstr[errnum] = "trap instr";
+			errnum++;
 			/* trap instruction exception */
 			/*
 				instr = copyin (srr0)
@@ -336,6 +348,14 @@ printf("pgm iar %x\n", frame->srr0);
 				}
 			*/
 		}
+		if (frame->srr1 & (1<<(31-15))) {
+			errstr[errnum] = "previous address";
+			errnum++;
+		}
+printf("pgm iar %x srr1 %x\n", frame->srr0, frame->srr1);
+for (i = 0; i < errnum; i++) {
+	printf("\t[%s]\n", errstr[i]);
+}
 		sv.sival_int = frame->srr0;
 		trapsignal(p, SIGILL, 0, ILL_ILLOPC, sv);
 		break;
@@ -349,6 +369,7 @@ printf("pgm iar %x\n", frame->srr0);
 #endif
 		break;
 
+	}
 	case EXC_AST|EXC_USER:
 		/* This is just here that we trap */
 		break;
