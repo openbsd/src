@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.8 1998/04/25 18:47:20 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.9 1998/06/02 15:05:02 mickey Exp $	*/
 /*	$NetBSD: main.c,v 1.12 1997/02/08 23:54:49 cgd Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.8 1998/04/25 18:47:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.9 1998/06/02 15:05:02 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -288,9 +288,10 @@ macro() {
 
 	cycle {
 		t = gpbc();
+		s = token;
 		if (t == '_' || isalpha(t)) {
 			putback(t);
-			if ((p = inspect(s = token)) == nil) {
+			if ((p = inspect(s)) == nil) {
 				if (sp < 0)
 					while (*s)
 						putc(*s++, active);
