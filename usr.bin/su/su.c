@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.9 1996/10/16 00:37:11 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.10 1996/10/21 18:55:56 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.9 1996/10/16 00:37:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.10 1996/10/21 18:55:56 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -140,9 +140,10 @@ main(argc, argv)
 	if ((username = strdup(pwd->pw_name)) == NULL)
 		err(1, "can't allocate memory");
 	if (asme)
-		if (pwd->pw_shell && *pwd->pw_shell)
-			shell = strcpy(shellbuf, pwd->pw_shell);
-		else {
+		if (pwd->pw_shell && *pwd->pw_shell) {
+			shell = strncpy(shellbuf, pwd->pw_shell, sizeof(shellbuf));
+			shellbuf[sizeof(shellbuf) - 1] = '\0';
+		} else {
 			shell = _PATH_BSHELL;
 			iscsh = NO;
 		}
@@ -257,12 +258,14 @@ badlogin:
 
 	if (asthem) {
 		avshellbuf[0] = '-';
-		strcpy(avshellbuf+1, avshell);
+		strncpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
+		avshellbuf[sizeof(avshellbuf) - 1] = '\0';
 		avshell = avshellbuf;
 	} else if (iscsh == YES) {
 		/* csh strips the first character... */
 		avshellbuf[0] = '_';
-		strcpy(avshellbuf+1, avshell);
+		strncpy(avshellbuf+1, avshell, sizeof(avshellbuf) - 1);
+		avshellbuf[sizeof(avshellbuf) - 1] = '\0';
 		avshell = avshellbuf;
 	}
 			
@@ -402,7 +405,7 @@ kerberos(username, user, uid)
 			dest_tkt();
 			return (1);
 		}
-		(void)bcopy((char *)hp->h_addr, (char *)&faddr, sizeof(faddr));
+		(void)memcpy((void *)&faddr, (void *)hp->h_addr, sizeof(faddr));
 
 		if ((kerno = krb_rd_req(&ticket, "rcmd", savehost, faddr,
 		    &authdata, "")) != KSUCCESS) {
@@ -424,12 +427,19 @@ koktologin(name, realm, toname)
 	register AUTH_DAT *kdata;
 	AUTH_DAT kdata_st;
 
+	memset((void *)kdata_st, 0, sizeof(*kdata_st));
 	kdata = &kdata_st;
-	bzero((caddr_t) kdata, sizeof(*kdata));
-	(void)strcpy(kdata->pname, name);
-	(void)strcpy(kdata->pinst,
-	    ((strcmp(toname, "root") == 0) ? "root" : ""));
-	(void)strcpy(kdata->prealm, realm);
+
+	(void)strncpy(kdata->pname, name, sizeof(kdata->pname));
+	kdata->pname[sizeof(kdata->pname) - 1] = '\0';
+
+	(void)strncpy(kdata->pinst,
+	    ((strcmp(toname, "root") == 0) ? "root" : ""), sizeof(kdata->pinst));
+	kdata->pinst[sizeof(kdata->pinst) -1] '\0';
+
+	(void)strncpy(kdata->prealm, realm, sizeof(kdata->prealm));
+	kdata->prealm[sizeof(kdata->prealm) -1] = '\0';
+
 	return (kuserok(kdata, toname));
 }
 #endif
