@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.57 2001/04/08 21:42:04 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.58 2001/04/18 14:58:28 aaron Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -326,6 +326,7 @@ product LINKSYS ECARD_2		{ "LINKSYS", "E-CARD", NULL, NULL }
 product COREGA ETHER_PCC_T	{ "corega&spK.K.", "corega&spEther&spPCC-T", NULL, NULL }
 product COREGA ETHER_II_PCC_T	{ "corega&spK.K.", "corega&spEtherII&spPCC-T", NULL, NULL }
 product COREGA FAST_ETHER_PCC_TX	{ "corega&spK.K.", "corega&spFastEther&spPCC-TX", NULL, NULL }
+product COREGA FAST_ETHER_PCC_TXF	{ "corega", "FEther&spPCC-TXF", NULL, NULL }
 product COREGA WIRELESS_LAN_PCC_11	{ "corega&spK.K.", "Wireless&spLAN&spPCC-11", NULL, NULL }
 product SVEC COMBOCARD		{ "Ethernet", "Adapter", NULL, NULL }
 product SVEC LANCARD		{ "SVEC", "FD605&spPCMCIA&spEtherNet&spCard", "V1-1", NULL }
