@@ -1,6 +1,6 @@
 #-*- mode: Fundamental; tab-width: 4; -*-
 # ex:ts=4
-#	$OpenBSD: bsd.port.mk,v 1.41 1998/08/08 06:14:58 marc Exp $
+#	$OpenBSD: bsd.port.mk,v 1.42 1998/08/21 06:57:19 marc Exp $
 #	$NetBSD: $
 #
 #	bsd.port.mk - 940820 Jordan K. Hubbard.
@@ -1700,7 +1700,7 @@ lib-depends:
 			target=${DEPENDS_TARGET}; \
 		fi; \
 		tmp=`mktemp /tmp/bpmXXXXXXXXXX`; \
-		if ${LD} -r -o $$tmp -l$$lib; then \
+		if ${LD} -r -o $$tmp -L${LOCALBASE}/lib -L${X11BASE}/lib -l$$lib; then \
 			${ECHO_MSG} "===>  ${PKGNAME} depends on library: $$lib - found"; \
 		else \
 			${ECHO_MSG} "===>  ${PKGNAME} depends on library: $$lib - not found"; \
