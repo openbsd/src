@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: authfile.c,v 1.17 2000/06/20 01:39:38 markus Exp $");
+RCSID("$OpenBSD: authfile.c,v 1.18 2000/09/05 19:18:47 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -262,6 +262,7 @@ load_public_key_rsa(const char *filename, RSA * pub, char **comment_return)
 	return 1;
 }
 
+/* load public key from private-key file */
 int
 load_public_key(const char *filename, Key * key, char **comment_return)
 {
@@ -490,4 +491,58 @@ load_private_key(const char *filename, const char *passphrase, Key *key,
 	}
 	close(fd);
 	return ret;
+}
+
+int
+do_load_public_key(const char *filename, Key *k, char **commentp)
+{
+	FILE *f;
+	unsigned int bits;
+	char line[1024];
+	char *cp;
+
+	f = fopen(filename, "r");
+	if (f != NULL) {
+		while (fgets(line, sizeof(line), f)) {
+			line[sizeof(line)-1] = '\0';
+			cp = line;
+			switch(*cp){
+			case '#':
+			case '\n':
+			case '\0':
+				continue;
+			}
+			/* Skip leading whitespace. */
+			for (; *cp && (*cp == ' ' || *cp == '\t'); cp++)
+				;
+			if (*cp) {
+				bits = key_read(k, &cp);
+				if (bits != 0) {
+					if (commentp)
+						*commentp=xstrdup(filename);
+					fclose(f);
+					return 1;
+				}
+			}
+		}
+		fclose(f);
+	}
+	return 0;
+}
+
+/* load public key from pubkey file */
+int
+try_load_public_key(const char *filename, Key *k, char **commentp)
+{
+	char pub[MAXPATHLEN];
+
+	if (do_load_public_key(filename, k, commentp) == 1)
+		return 1;
+	if (strlcpy(pub, filename, sizeof pub) >= MAXPATHLEN)
+		return 0;
+	if (strlcat(pub, ".pub", sizeof pub) >= MAXPATHLEN)
+		return 0;
+	if (do_load_public_key(pub, k, commentp) == 1)
+		return 1;
+	return 0;
 }

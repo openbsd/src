@@ -10,7 +10,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: ssh-add.c,v 1.20 2000/08/28 03:50:54 deraadt Exp $");
+RCSID("$OpenBSD: ssh-add.c,v 1.21 2000/09/05 19:18:48 markus Exp $");
 
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -31,8 +31,12 @@ delete_file(AuthenticationConnection *ac, const char *filename)
 
 	public = key_new(KEY_RSA);
 	if (!load_public_key(filename, public, &comment)) {
-		printf("Bad key file %s: %s\n", filename, strerror(errno));
-		return;
+		key_free(public);
+		public = key_new(KEY_DSA);
+		if (!try_load_public_key(filename, public, &comment)) {
+			printf("Bad key file %s\n", filename);
+			return;
+		}
 	}
 	if (ssh_remove_identity(ac, public))
 		fprintf(stderr, "Identity removed: %s (%s)\n", filename, comment);
