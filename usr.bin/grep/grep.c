@@ -1,4 +1,4 @@
-/*	$OpenBSD: grep.c,v 1.15 2003/06/23 22:32:48 tedu Exp $	*/
+/*	$OpenBSD: grep.c,v 1.16 2003/06/24 18:45:30 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -232,6 +232,34 @@ main(int argc, char *argv[])
 	char *tmp;
 	int c, i;
 
+	switch (__progname[0]) {
+	case 'e':
+		Eflag++;
+		break;
+	case 'f':
+		Fflag++;
+		break;
+	case 'g':
+		Gflag++;
+		break;
+#ifndef NOZ
+	case 'z':
+		Zflag++;
+		switch(__progname[1]) {
+		case 'e':
+			Eflag++;
+			break;
+		case 'f':
+			Fflag++;
+			break;
+		case 'g':
+			Gflag++;
+			break;
+		}
+		break;
+#endif
+	}
+
 	while ((c = getopt_long(argc, argv, optstr,
 				long_options, (int *)NULL)) != -1) {
 		switch (c) {
@@ -257,12 +285,15 @@ main(int argc, char *argv[])
 				Aflag = Bflag = strtol(optarg, (char **)NULL, 10);
 			break;
 		case 'E':
+			Fflag = Gflag = 0;
 			Eflag++;
 			break;
 		case 'F':
+			Eflag = Gflag = 0;
 			Fflag++;
 			break;
 		case 'G':
+			Eflag = Fflag = 0;
 			Gflag++;
 			break;
 		case 'H':
@@ -380,35 +411,10 @@ main(int argc, char *argv[])
 		++argv;
 	}
 
-	switch (__progname[0]) {
-	case 'e':
-		Eflag++;
-		break;
-	case 'f':
-		Fflag++;
-		break;
-	case 'g':
-		Gflag++;
-		break;
-#ifndef NOZ
-	case 'z':
-		Zflag++;
-		switch(__progname[1]) {
-		case 'e':
-			Eflag++;
-			break;
-		case 'f':
-			Fflag++;
-			break;
-		case 'g':
-			Gflag++;
-			break;
-		}
-		break;
-#endif
-	}
-
-	cflags |= Eflag ? REG_EXTENDED : REG_BASIC;
+	if (Eflag)
+		cflags |= REG_EXTENDED;
+	else if (Fflag)
+		cflags |= REG_NOSPEC;
 	fg_pattern = grep_malloc(patterns * sizeof(*fg_pattern));
 	r_pattern = grep_malloc(patterns * sizeof(regex_t));
 	for (i = 0; i < patterns; ++i) {

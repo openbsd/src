@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.7 2003/06/24 17:32:10 tedu Exp $	*/
+/*	$OpenBSD: util.c,v 1.8 2003/06/24 18:45:30 tedu Exp $	*/
 
 /*-
  * Copyright (c) 1999 James Howard and Dag-Erling Coïdan Smørgrav
@@ -246,6 +246,11 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 	int firstLastHalfDot = -1;
 	int lastHalfDot = 0;
 
+	if (Fflag) {
+		fg->pattern = NULL;
+		return (-1);
+	}
+
 	/* Initialize. */
 	origPatternLen = fg->patternLen = strlen(pattern);
 	fg->bol = 0;
@@ -269,8 +274,8 @@ fastcomp(fastgrep_t *fg, const char *pattern)
 	}
 
 	/*
-	 * Copy pattern minus '^' and '$' characters at the beginning and ending of
-	 * the string respectively.
+	 * Copy pattern minus '^' and '$' characters at the beginning and
+	 * ending of the string respectively.
 	 */
 	fg->pattern = grep_strdup(pattern + bol);
 
