@@ -1,4 +1,4 @@
-$OpenBSD: pcidevs,v 1.801 2004/11/21 09:32:17 grange Exp $
+$OpenBSD: pcidevs,v 1.802 2004/11/21 17:56:06 grange Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1945,6 +1945,7 @@ product NVIDIA NFORCE_DDR2	0x01aa	nForce 220 DDR
 product NVIDIA NFORCE_DDR	0x01ab	nForce 420 DDR
 product NVIDIA NFORCE_MEM	0x01ac	nForce 220/420
 product NVIDIA NFORCE_MEM1	0x01ad	nForce 220/420
+product NVIDIA NFORCE_APU	0x01b0	nForce APU
 product NVIDIA NFORCE_ACA	0x01b1	nForce AC-97 Audio
 product NVIDIA NFORCE_ISA	0x01b2	nForce ISA
 product NVIDIA NFORCE_SMB	0x01b4	nForce SMBus
