@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.159 1999/07/06 21:58:39 deraadt Exp 
+ *	OpenBSD: pcidevs,v 1.160 1999/07/07 17:02:45 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2757,7 +2757,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "PCI1225 PCI-CardBus",
 	},
 	{
-	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1225,
+	    PCI_VENDOR_TI, PCI_PRODUCT_TI_PCI1251,
 	    0,
 	    "Texas Instruments",
 	    "PCI1251 PCI-CardBus",
@@ -2865,10 +2865,10 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "CYBER 9397",
 	},
 	{
-	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_9397,
+	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_CYBER_939a,
 	    0,
 	    "Trident",
-	    "CYBER 9750",
+	    "CYBER 939A",
 	},
 	{
 	    PCI_VENDOR_TRIDENT, PCI_PRODUCT_TRIDENT_TGUI_9420,
