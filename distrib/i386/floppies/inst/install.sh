@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sh,v 1.17 1997/01/28 07:07:36 deraadt Exp $
+#	$OpenBSD: install.sh,v 1.18 1997/04/23 19:52:16 gvf Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -153,7 +153,7 @@ echo	""
 echo	"You will now need to provide some information about your disk's"
 echo	"geometry.  This should either be in the User's Manual for your disk,"
 echo	"or you should have written down what OpenBSD printed when booting."
-echo	"(Note that he geometry that's printed at boot time is preferred.)"
+echo	"(Note that the geometry that's printed at boot time is preferred.)"
 echo	""
 echo    "You may choose to view the initial boot messages for your system"
 echo    "again right now if you like."
