@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdcache.c,v 1.3 2002/07/17 13:51:42 henning Exp $ */
+/*	$OpenBSD: fdcache.c,v 1.4 2002/07/17 17:00:25 henning Exp $ */
 
 /*
  * Copyright (c) 2002 Henning Brauer
@@ -36,9 +36,9 @@
 #include <errno.h>
 
 struct fdcache {
-	char	*fname;
-	int	 fd;
-	struct fdcache	*next;
+    char *fname;
+    int  fd;
+    struct fdcache *next;
 };
 
 struct fdcache	*fdc;
@@ -46,49 +46,48 @@ struct fdcache	*fdc;
 int
 fdcache_open(char *fn, int flags, mode_t mode)
 {
-	struct fdcache *fdcp = NULL, *tmp = NULL;
+    struct fdcache *fdcp = NULL, *tmp = NULL;
 
-	for (fdcp = fdc; fdcp && strncmp(fn, fdcp->fname, 1024);
-	    fdcp = fdcp->next);
-		/* nothing */
+    for (fdcp = fdc; fdcp && strncmp(fn, fdcp->fname, 1024); fdcp = fdcp->next);
+	/* nothing */
 
-	if (fdcp == NULL) {
-		/* need to open */
-		tmp = calloc(1, sizeof(struct fdcache));
-		if (tmp == NULL) {
-			fprintf(stderr, "calloc failed\n");
-			exit(1);
-		}
-		tmp->fname = malloc(strlen(fn) + 1);
-		if (tmp->fname == NULL) {
-			fprintf(stderr, "malloc failed\n");
-			exit(1);
-		}
-		strlcpy(tmp->fname, fn, strlen(fn) + 1);
-		if ((tmp->fd = open(fn, flags, mode)) < 0) {
-			fprintf(stderr, "Cannot open %s: %s\n",
-			    tmp->fname, strerror(errno));
-			exit(1);
-		}
-		tmp->next = fdc;
-		fdc = tmp;
-		return(fdc->fd);
-	} else
-		return(fdcp->fd);	/* fd cached */
+    if (fdcp == NULL) {
+	/* need to open */
+	tmp = calloc(1, sizeof(struct fdcache));
+	if (tmp == NULL) {
+	    fprintf(stderr, "calloc failed\n");
+	    exit(1);
+	}
+	tmp->fname = malloc(strlen(fn) + 1);
+	if (tmp->fname == NULL) {
+	    fprintf(stderr, "malloc failed\n");
+	    exit(1);
+	}
+	strlcpy(tmp->fname, fn, strlen(fn) + 1);
+	if ((tmp->fd = open(fn, flags, mode)) < 0) {
+	    fprintf(stderr, "Cannot open %s: %s\n",
+	      tmp->fname, strerror(errno));
+	    exit(1);
+	}
+	tmp->next = fdc;
+	fdc = tmp;
+	return(fdc->fd);
+    } else
+	return(fdcp->fd);	/* fd cached */
 }
 
 void
 fdcache_closeall()
 {
-	struct fdcache *fdcp = NULL, *tmp = NULL;
+    struct fdcache *fdcp = NULL, *tmp = NULL;
 
-	for (fdcp = fdc; fdcp; ) {
-		tmp = fdcp;
-		fdcp = tmp->next;
-		if (tmp->fd > 0)
-			close(tmp->fd);
-		free(tmp->fname);
-		free(tmp);
-	}
+    for (fdcp = fdc; fdcp; ) {
+	tmp = fdcp;
+	fdcp = tmp->next;
+	if (tmp->fd > 0)
+	    close(tmp->fd);
+	free(tmp->fname);
+	free(tmp);
+    }
 }
 
