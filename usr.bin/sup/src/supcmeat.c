@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.5 1997/04/01 07:35:33 todd Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.6 1997/07/28 09:47:38 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -1311,7 +1311,7 @@ int x;
 		done (FDONESUCCESS,"Success");
 		(void) requestend ();
 	}
-	(void) sprintf (tname,FILELASTTEMP,collname);
+	(void) sprintf (tname,FILELASTTEMP,collname,relsufix);
 	finishfile = fopen (tname,"w");
 	if (finishfile == NULL) {
 		notify ("SUP: Can't record list of all files in %s\n",tname);
