@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_conv.c,v 1.4 1996/02/29 10:46:49 niklas Exp $	*/
+/*	$OpenBSD: msdosfs_conv.c,v 1.5 1996/03/02 00:54:54 niklas Exp $	*/
 /*	$NetBSD: msdosfs_conv.c,v 1.17 1996/02/09 19:13:42 christos Exp $	*/
 
 /*-
@@ -119,7 +119,7 @@ unix2dostime(tsp, ddp, dtp)
 	 * If the time from the last conversion is the same as now, then
 	 * skip the computations and use the saved result.
 	 */
-	t = tsp->ts_sec - (tz.tz_minuteswest * 60)
+	t = tsp->tv_sec - (tz.tz_minuteswest * 60)
 	     /* +- daylight savings time correction */ ;
 	if (lasttime != t) {
 		lasttime = t;
@@ -228,9 +228,9 @@ dos2unixtime(dd, dt, tsp)
 		days += ((dd & DD_DAY_MASK) >> DD_DAY_SHIFT) - 1;
 		lastseconds = (days * 24 * 60 * 60) + SECONDSTO1980;
 	}
-	tsp->ts_sec = seconds + lastseconds + (tz.tz_minuteswest * 60)
+	tsp->tv_sec = seconds + lastseconds + (tz.tz_minuteswest * 60)
 	     /* -+ daylight savings time correction */ ;
-	tsp->ts_nsec = 0;
+	tsp->tv_nsec = 0;
 }
 
 static u_char
