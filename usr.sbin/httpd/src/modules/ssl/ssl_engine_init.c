@@ -243,7 +243,7 @@ void ssl_init_Module(server_rec *s, pool *p)
         if (mc->pRSATmpKey == NULL) {
 #ifdef __OpenBSD__
             ssl_log(s, SSL_LOG_ERROR, "Init: Failed to generate temporary (512 bit) RSA private key (SSL won't work without an RSA capable shared library)");
-	    ssl_log(s, SSL_LOG_ERROR, "Init: pkg_add ftp://ftp.openbsd.org/pub/2.5/packages/<arch>/libssl-1.1.tgz if you are able to use RSA");
+	    ssl_log(s, SSL_LOG_ERROR, "Init: pkg_add ftp://ftp.openbsd.org/pub/OpenBSD/<version>/packages/<arch>/libssl-1.1.tgz if you are able to use RSA");
 	    /* harmless in http only case. We'll get a fatal error below 
 	     * if this didn't work and we try to init https servers 
              */ 
