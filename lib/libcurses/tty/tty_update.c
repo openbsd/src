@@ -1,7 +1,7 @@
-/*	$OpenBSD: tty_update.c,v 1.14 2001/01/22 18:02:01 millert Exp $	*/
+/*	$OpenBSD: tty_update.c,v 1.15 2001/02/22 04:16:35 millert Exp $	*/
 
 /****************************************************************************
- * Copyright (c) 1998,1999,2000 Free Software Foundation, Inc.              *
+ * Copyright (c) 1998,1999,2000,2001 Free Software Foundation, Inc.         *
  *                                                                          *
  * Permission is hereby granted, free of charge, to any person obtaining a  *
  * copy of this software and associated documentation files (the            *
@@ -72,7 +72,7 @@
 
 #include <term.h>
 
-MODULE_ID("$From: tty_update.c,v 1.150 2001/01/14 00:16:22 tom Exp $")
+MODULE_ID("$From: tty_update.c,v 1.151 2001/02/03 23:41:55 tom Exp $")
 
 /*
  * This define controls the line-breakout optimization.  Every once in a
@@ -279,18 +279,6 @@ check_pending(void)
     return FALSE;
 }
 
-/*
- * No one supports recursive inline functions.  However, gcc is quieter if we
- * instantiate the recursive part separately.
- */
-#if CC_HAS_INLINE_FUNCS
-static void callPutChar(chtype const);
-#else
-#define callPutChar(ch) PutChar(ch)
-#endif
-
-static inline void PutChar(chtype const ch);	/* forward declaration */
-
 /* put char at lower right corner */
 static void
 PutCharLR(chtype const ch)
@@ -312,7 +300,7 @@ PutCharLR(chtype const ch)
     } else if ((enter_insert_mode && exit_insert_mode)
 	       || insert_character || parm_ich) {
 	GoTo(screen_lines - 1, screen_columns - 2);
-	callPutChar(ch);
+	PutAttrChar(ch);
 	GoTo(screen_lines - 1, screen_columns - 2);
 	InsStr(newscr->_line[screen_lines - 1].text + screen_columns - 2, 1);
     }
@@ -512,14 +500,6 @@ PutRange(
     }
     return EmitRange(ntext + first, last - first + 1);
 }
-
-#if CC_HAS_INLINE_FUNCS
-static void
-callPutChar(chtype const ch)
-{
-    PutChar(ch);
-}
-#endif
 
 /* leave unbracketed here so 'indent' works */
 #define MARK_NOCHANGE(win,row) \

@@ -25,7 +25,7 @@
 #include "cursesw.h"
 #include "internal.h"
 
-MODULE_ID("$From: cursesw.cc,v 1.17 2000/09/02 18:55:31 tom Exp $")
+MODULE_ID("$From: cursesw.cc,v 1.18 2001/01/28 01:17:41 tom Exp $")
 
 #define COLORS_NEED_INITIALIZATION  -1
 #define COLORS_NOT_INITIALIZED       0
@@ -142,8 +142,7 @@ NCursesWindow::initialize() {
 }
 
 NCursesWindow::NCursesWindow() {
-  if (!b_initialized)
-    initialize();
+  initialize();
 
   w = (WINDOW *)0;
   init();
@@ -154,8 +153,7 @@ NCursesWindow::NCursesWindow() {
 
 NCursesWindow::NCursesWindow(int lines, int cols, int begin_y, int begin_x)
 {
-    if (!b_initialized)
-      initialize();
+    initialize();
 
     w = ::newwin(lines, cols, begin_y, begin_x);
     if (w == 0) {
@@ -170,8 +168,7 @@ NCursesWindow::NCursesWindow(int lines, int cols, int begin_y, int begin_x)
 
 NCursesWindow::NCursesWindow(WINDOW* &window)
 {
-    if (!b_initialized)
-      initialize();
+    initialize();
 
     w = window;
     init();
@@ -183,6 +180,7 @@ NCursesWindow::NCursesWindow(WINDOW* &window)
 NCursesWindow::NCursesWindow(NCursesWindow& win, int l, int c,
 			     int begin_y, int begin_x, char absrel)
 {
+    initialize();
     if (absrel == 'a') { // absolute origin
 	begin_y -= win.begy();
 	begin_x -= win.begx();
@@ -208,6 +206,7 @@ NCursesWindow::NCursesWindow(NCursesWindow& win, int l, int c,
 NCursesWindow::NCursesWindow(NCursesWindow& win,
 				bool do_box NCURSES_PARAM_INIT(TRUE))
 {
+  initialize();
   w = :: derwin(win.w,win.height()-2,win.width()-2,1,1);
   if (w == 0) {
     err_handler("Cannot construct subwindow");
@@ -244,6 +243,7 @@ static RIPOFFINIT* prip = R_INIT;
 extern "C" int _nc_ripoffline(int,int (*init)(WINDOW*,int));
 
 NCursesWindow::NCursesWindow(WINDOW *win, int cols) {
+  initialize();
   w = win;
   assert((w->_maxx+1)==cols);
   alloced = FALSE;
