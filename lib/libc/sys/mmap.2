@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mmap.2,v 1.8 1998/07/06 18:27:59 deraadt Exp $
+.\"	$OpenBSD: mmap.2,v 1.9 1998/08/21 16:38:10 millert Exp $
 .\"	$NetBSD: mmap.2,v 1.5 1995/06/24 10:48:59 cgd Exp $
 .\"
 .\" Copyright (c) 1991, 1993
@@ -134,6 +134,10 @@ system calls.
 Modifications are private.
 .It Dv MAP_SHARED
 Modifications are shared.
+.It Dv MAP_COPY
+Modifications are private and unlike
+.Dv MAP_PRIVATE
+you don't see modifications made by others.
 .El
 .Pp
 The 
