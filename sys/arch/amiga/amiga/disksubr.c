@@ -1,4 +1,4 @@
-/*	$OpenBSD: disksubr.c,v 1.9 1997/01/20 15:43:28 niklas Exp $	*/
+/*	$OpenBSD: disksubr.c,v 1.10 1997/02/21 09:06:18 niklas Exp $	*/
 /*	$NetBSD: disksubr.c,v 1.27 1996/10/13 03:06:34 christos Exp $	*/
 
 /*
@@ -33,8 +33,6 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- *	@(#)ufs_disksubr.c	7.16 (Berkeley) 5/4/91
  */
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,8 +71,8 @@ struct rdbmap {
 
 u_long rdbchksum __P((void *));
 struct adostype getadostype __P((u_long));
-struct rdbmap *getrdbmap __P((dev_t, void (*)(struct buf *), struct disklabel *,
-    struct cpu_disklabel *));
+struct rdbmap *getrdbmap __P((dev_t, void (*)(struct buf *),
+    struct disklabel *, struct cpu_disklabel *));
 
 /* XXX unknown function but needed for /sys/scsi to link */
 void
@@ -148,7 +146,6 @@ readdisklabel(dev, strat, lp, clp)
 
 	/*
 	 * find the RDB block
-	 * XXX Need to check for a standard label if this fails (fd0 etc..)
 	 */
 	for (nextb = 0; nextb < RDB_MAXBLOCKS; nextb++) {
 		bp->b_blkno = nextb;
@@ -474,7 +471,7 @@ setdisklabel(olp, nlp, openmask, clp)
 /*
  * Write disk label back to device after modification.
  * this means write out the Rigid disk blocks to represent the 
- * label.  Hope the user was carefull.
+ * label.  Hope the user was careful.
  */
 int
 writedisklabel(dev, strat, lp, clp)
@@ -602,7 +599,7 @@ getadostype(dostype)
 		else
 #else
 			printf("found dostype: 0x%x, assuming an ADOS FS "
-			    "although it's unknown", dostype);
+			    "although it's unknown\n", dostype);
 #endif
 		adt.fstype = FS_ADOS;
 		return(adt);
