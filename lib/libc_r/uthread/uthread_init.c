@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_init.c,v 1.10 1999/11/25 07:01:37 d Exp $	*/
+/*	$OpenBSD: uthread_init.c,v 1.11 2000/01/06 07:18:26 d Exp $	*/
 /*
  * Copyright (c) 1995-1998 John Birrell <jb@cimlogic.com.au>
  * All rights reserved.
@@ -40,6 +40,7 @@
 #include <paths.h>
 #include <poll.h>
 #include <unistd.h>
+#include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/sysctl.h>
 #include <sys/time.h>
@@ -59,8 +60,8 @@ struct pthread *volatile _last_user_thread = &_thread_kern_thread;
 struct pthread *volatile _thread_single = NULL;
 _thread_list_t	_thread_list = TAILQ_HEAD_INITIALIZER(_thread_list);
 int		_thread_kern_pipe[2] = { -1, -1 };
-int volatile	_queue_signals = 0;
-int		_thread_kern_in_sched = 0;
+volatile int	_queue_signals = 0;
+volatile int	_thread_kern_in_sched = 0;
 struct timeval	kern_inc_prio_time = { 0, 0 };
 _thread_list_t	_dead_list = TAILQ_HEAD_INITIALIZER(_dead_list);
 struct pthread *_thread_initial = NULL;
