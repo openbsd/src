@@ -1,4 +1,4 @@
-/*	$OpenBSD: neighbor.c,v 1.5 2005/02/09 12:53:17 claudio Exp $ */
+/*	$OpenBSD: neighbor.c,v 1.6 2005/02/09 15:57:57 claudio Exp $ */
 
 /*
  * Copyright (c) 2005 Claudio Jeker <claudio@openbsd.org>
@@ -73,7 +73,7 @@ struct {
     {NBR_STA_2_WAY,	NBR_EVT_ADJ_OK,		NBR_ACT_EVAL,		0},
     {NBR_STA_ADJFORM,	NBR_EVT_ADJ_OK,		NBR_ACT_ADJ_OK,		0},
     {NBR_STA_PRELIM,	NBR_EVT_ADJ_OK,		NBR_ACT_HELLO_CHK,	0},
-    {NBR_STA_ADJFORM,	NBR_EVT_ADJTMOUT,	NBR_ACT_RESTRT_DD,	NBR_STA_2_WAY},
+    {NBR_STA_ADJFORM,	NBR_EVT_ADJTMOUT,	NBR_ACT_RESTRT_DD,	0},
     {NBR_STA_FLOOD,	NBR_EVT_SEQ_NUM_MIS,	NBR_ACT_RESTRT_DD,	NBR_STA_XSTRT},
     {NBR_STA_FLOOD,	NBR_EVT_BAD_LS_REQ,	NBR_ACT_RESTRT_DD,	NBR_STA_XSTRT},
     {NBR_STA_ANY,	NBR_EVT_KILL_NBR,	NBR_ACT_DEL,		NBR_STA_DOWN},
@@ -547,10 +547,21 @@ nbr_act_restart_dd(struct nbr *nbr)
 {
 	log_debug("nbr_act_restart_dd: neighbor ID %s", inet_ntoa(nbr->id));
 
+	nbr_act_clear_lists(nbr);
+
+	if (!nbr_adj_ok(nbr)) {
+		nbr->state = NBR_STA_2_WAY;
+		return (0);
+	}
+
+	nbr->state = NBR_STA_XSTRT;
 	nbr->master = true;
 	nbr->dd_seq_num += arc4random() & 0xffff;
 
-	return (nbr_act_clear_lists(nbr));
+	/* initial db negotiation */
+	start_db_tx_timer(nbr);
+
+	return (0);
 }
 
 int
