@@ -49,11 +49,12 @@ ENGINE_load_cryptodev(void)
 	return;
 }
 
-#else 
+#else
 
 #include <sys/types.h>
 #include <crypto/cryptodev.h>
 #include <sys/ioctl.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -62,6 +63,13 @@ ENGINE_load_cryptodev(void)
 #include <syslog.h>
 #include <errno.h>
 #include <string.h>
+
+#ifdef __i386__
+#include <sys/sysctl.h>
+#include <machine/cpu.h>
+#include <machine/specialreg.h>
+static void check_viac3aes(void);
+#endif
 
 struct dev_crypto_state {
 	struct session_op d_sess;
@@ -245,6 +253,14 @@ get_cryptodev_ciphers(const int **cnids)
 			nids[count++] = ciphers[i].c_nid;
 	}
 	close(fd);
+
+#if defined(__i386__)
+	/*
+	 * On i386, always check for the VIA C3 AES instructions;
+	 * even if /dev/crypto is disabled.
+	 */
+	check_viac3aes();
+#endif
 
 	if (count > 0)
 		*cnids = nids;
@@ -518,7 +534,7 @@ const EVP_CIPHER cryptodev_cast_cbc = {
 	NULL
 };
 
-const EVP_CIPHER cryptodev_aes_128_cbc = {
+EVP_CIPHER cryptodev_aes_128_cbc = {
 	NID_aes_128_cbc,
 	16, 16, 16,
 	EVP_CIPH_CBC_MODE,
@@ -531,7 +547,7 @@ const EVP_CIPHER cryptodev_aes_128_cbc = {
 	NULL
 };
 
-const EVP_CIPHER cryptodev_aes_192_cbc = {
+EVP_CIPHER cryptodev_aes_192_cbc = {
 	NID_aes_192_cbc,
 	16, 24, 16,
 	EVP_CIPH_CBC_MODE,
@@ -544,7 +560,7 @@ const EVP_CIPHER cryptodev_aes_192_cbc = {
 	NULL
 };
 
-const EVP_CIPHER cryptodev_aes_256_cbc = {
+EVP_CIPHER cryptodev_aes_256_cbc = {
 	NID_aes_256_cbc,
 	16, 32, 16,
 	EVP_CIPH_CBC_MODE,
@@ -556,6 +572,160 @@ const EVP_CIPHER cryptodev_aes_256_cbc = {
 	EVP_CIPHER_get_asn1_iv,
 	NULL
 };
+
+#if defined(__i386__)
+
+volatile static void
+viac3_crypto(int *cw, const void *src, void *dst, void *key, int rep,
+    void *iv)
+{
+#ifdef notdef
+	printf("cw %x[%x %x %x %x] src %x dst %x key %x rep %x iv %x\n",
+	    cw, cw[0], cw[1], cw[2], cw[3],
+	    src, dst, key, rep, iv);
+#endif
+	/*
+	 * Clear bit 30 of EFLAGS.
+	 */
+	__asm __volatile("pushfl; popfl");
+
+	/*
+	 * Cannot simply place key into "b" register, since the compiler
+	 * -pic mode uses that register; so instead we must dance a little.
+	 */
+	__asm __volatile("pushl %%ebx; movl %0, %%ebx; rep xcrypt-cbc; popl %%ebx" :
+	    : "mr" (key), "a" (iv), "c" (rep), "d" (cw), "S" (src), "D" (dst)
+	    : "memory", "cc");
+}
+
+#define ISUNALIGNED(x)	((long)(x)) & 15
+#define DOALIGN(v)	((void *)(((long)(v) + 15) & ~15))
+
+static int
+xcrypt_cipher(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    const unsigned char *in, unsigned int inl)
+{
+	unsigned char *save_iv_store[EVP_MAX_IV_LENGTH + 15];
+	unsigned char *save_iv = DOALIGN(save_iv_store);
+	unsigned char *ivs_store[EVP_MAX_IV_LENGTH + 15];
+	unsigned char *ivs = DOALIGN(ivs_store);
+	void *iiv, *iv = NULL, *ivp = NULL;
+	const void *usein = in;
+	void *useout = out, *spare;
+	int cws[4 + 3], *cw = DOALIGN(cws);
+
+	if (!inl)
+		return (1);
+	if ((inl % ctx->cipher->block_size) != 0)
+		return (0);
+
+	if (ISUNALIGNED(in) || ISUNALIGNED(out)) {
+		spare = malloc(inl);
+		if (spare == NULL)
+			return (0);
+
+		if (ISUNALIGNED(in)) {
+			bcopy(in, spare, inl);
+			usein = spare;
+		}
+		if (ISUNALIGNED(out))
+			useout = spare;
+	}
+
+	cw[0] = C3_CRYPT_CWLO_ALG_AES | C3_CRYPT_CWLO_KEYGEN_HW |
+	    C3_CRYPT_CWLO_NORMAL |
+	    ctx->encrypt ? C3_CRYPT_CWLO_ENCRYPT : C3_CRYPT_CWLO_DECRYPT;
+	cw[1] = cw[2] = cw[3] = 0;
+
+	switch (ctx->key_len * 8) {
+	case 128:
+		cw[0] |= C3_CRYPT_CWLO_KEY128;
+		break;
+	case 192:
+		cw[0] |= C3_CRYPT_CWLO_KEY192;
+		break;
+	case 256:
+		cw[0] |= C3_CRYPT_CWLO_KEY256;
+		break;
+	}
+
+	if (ctx->cipher->iv_len) {
+		iv = (caddr_t) ctx->iv;
+		if (!ctx->encrypt) {
+			iiv = (void *) in + inl - ctx->cipher->iv_len;
+			memcpy(save_iv, iiv, ctx->cipher->iv_len);
+		}
+	}
+
+	ivp = iv;
+	if (ISUNALIGNED(iv)) {
+		bcopy(iv, ivs, ctx->cipher->iv_len);
+		ivp = ivs;
+	}
+
+	viac3_crypto(cw, usein, useout, ctx->cipher_data,  inl / 16, ivp);
+
+	if (ISUNALIGNED(out)) {
+		bcopy(spare, out, inl);
+		free(spare);
+	}
+
+	if (ivp == ivs)
+		bcopy(ivp, iv, ctx->cipher->iv_len);
+
+	if (ctx->cipher->iv_len) {
+		if (ctx->encrypt)
+			iiv = (void *) out + inl - ctx->cipher->iv_len;
+		else
+			iiv = save_iv;
+		memcpy(ctx->iv, iiv, ctx->cipher->iv_len);
+	}
+	return (1);
+}
+
+static int
+xcrypt_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
+    const unsigned char *iv, int enc)
+{
+	bcopy(key, ctx->cipher_data, ctx->key_len);
+	return (1);
+}
+
+static int
+xcrypt_cleanup(EVP_CIPHER_CTX *ctx)
+{
+	bzero(ctx->cipher_data, ctx->key_len);
+	return (1);
+}
+
+static void
+check_viac3aes(void)
+{
+	int mib[2] = { CTL_MACHDEP, CPU_XCRYPT }, value;
+	size_t size = sizeof(value);
+
+	if (sysctl(mib, sizeof(mib)/sizeof(mib[0]), &value, &size,
+	    NULL, 0) < 0)
+		return;
+	if (value == 0)
+		return;
+
+	cryptodev_aes_128_cbc.init = xcrypt_init_key;
+	cryptodev_aes_128_cbc.do_cipher = xcrypt_cipher;
+	cryptodev_aes_128_cbc.cleanup = xcrypt_cleanup;
+	cryptodev_aes_128_cbc.ctx_size = 128;
+
+	cryptodev_aes_192_cbc.init = xcrypt_init_key;
+	cryptodev_aes_192_cbc.do_cipher = xcrypt_cipher;
+	cryptodev_aes_192_cbc.cleanup = xcrypt_cleanup;
+	cryptodev_aes_192_cbc.ctx_size = 128;
+
+	cryptodev_aes_256_cbc.init = xcrypt_init_key;
+	cryptodev_aes_256_cbc.do_cipher = xcrypt_cipher;
+	cryptodev_aes_256_cbc.cleanup = xcrypt_cleanup;
+	cryptodev_aes_256_cbc.ctx_size = 128;
+}
+#endif /* __i386__ */
 
 /*
  * Registered by the ENGINE when used to find out how to deal with
