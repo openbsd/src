@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.28 2001/12/08 02:24:07 art Exp $ */
+/*	$OpenBSD: pmap.c,v 1.29 2001/12/22 12:01:53 hugh Exp $ */
 /*	$NetBSD: pmap.c,v 1.74 1999/11/13 21:32:25 matt Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999 Ludd, University of Lule}, Sweden.
@@ -755,11 +755,11 @@ if (startpmapdebug)
 			pv->pv_next = tmp;
 		}
 		splx(s);
+		pmap->pm_stats.resident_count++;
 	} else {
 		/* No mapping change, just flush the TLB; necessary? */
 		mtpr(0, PR_TBIA);
 	}
-	pmap->pm_stats.resident_count++;
 
 	if (flags & VM_PROT_READ) {
 		pv->pv_attr |= PG_V;
