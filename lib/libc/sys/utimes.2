@@ -1,4 +1,5 @@
-.\"	$NetBSD: utimes.2,v 1.8 1995/07/12 07:18:31 cgd Exp $
+.\"	$OpenBSD: utimes.2,v 1.2 1996/05/01 11:08:27 deraadt Exp $
+.\"	$NetBSD: utimes.2,v 1.9 1996/04/23 10:34:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -43,10 +44,15 @@
 .Fd #include <sys/time.h>
 .Ft int
 .Fn utimes "const char *file" "const struct timeval *times"
+.Ft int
+.Fn futimes "int fd" "const struct timeval *times"
 .Sh DESCRIPTION
-The
-.Fn utimes
-function sets the access and modification times of the named file.
+The access and modification times of the file named by
+.Fa path
+or referenced by
+.Fa fd
+are changed as specified by the argument
+.Fa times .
 .Pp
 If 
 .Fa times
@@ -114,6 +120,35 @@ does not match the owner of the file and is not the super-user.
 .It Bq Er EROFS
 The file system containing the file is mounted read-only.
 .El
+.Fn Futimes
+will fail if:
+.Bl -tag -width Er
+.It Bq Er EBADF
+.Fa Fd
+does not refer to a valid descriptor.
+.It Bq Er EACCES
+The
+.Fa times
+argument is
+.Dv NULL
+and the effective user ID of the process does not
+match the owner of the file, and is not the super-user, and write
+access is denied.
+.It Bq Er EFAULT
+.Fa Times
+points outside the process's allocated address space.
+.It Bq Er EIO
+An I/O error occurred while reading or writing the affected inode.
+.It Bq Er EPERM
+The
+.Fa times
+argument is not
+.Dv NULL
+and the calling process's effective user ID
+does not match the owner of the file and is not the super-user.
+.It Bq Er EROFS
+The file system containing the file is mounted read-only.
+.El
 .Sh SEE ALSO
 .Xr stat 2 ,
 .Xr utime 3
@@ -122,3 +157,7 @@ The
 .Fn utimes
 function call appeared in
 .Bx 4.2 .
+The
+.Fn futimes
+function call appeared in
+.Nx 1.2 .
