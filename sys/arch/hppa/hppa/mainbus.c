@@ -1,4 +1,4 @@
-/*	$OpenBSD: mainbus.c,v 1.1 1998/10/30 18:54:11 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.2 1998/11/30 21:38:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -80,10 +80,12 @@ mbattach(parent, self, aux)
 	printf("\n");
 
 	/* PDC first */
+	bzero (&nca, sizeof(nca));
 	nca.ca_name = "pdc";
 	nca.ca_mod = -1;
 	config_found(self, &nca, mbprint);
 
+	bzero (&nca, sizeof(nca));
 	nca.ca_name = "mainbus";
 	nca.ca_mod = -1;
 	pdc_scanbus(self, &nca, -1, MAXMODBUS);
@@ -99,11 +101,8 @@ mbprint(aux, pnp)
 	if (pnp)
 		printf("\"%s\" at %s (type %x, sv %x)", ca->ca_name, pnp,
 		       ca->ca_type.iodc_type, ca->ca_type.iodc_sv_model);
-	if (ca->ca_mod >= 0) {
+	if (ca->ca_mod >= 0)
 		printf(" mod %d", ca->ca_mod);
-		if (!pnp)
-			printf(" \"%s\"", ca->ca_name);
-	}
 
 	return (UNCONF);
 }
