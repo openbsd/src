@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rx.4,v 1.6 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: rx.4,v 1.7 2002/10/01 21:05:31 miod Exp $
 .\"	$NetBSD: rx.4,v 1.3 1996/03/03 17:14:03 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 Regents of the University of California.
@@ -167,15 +167,7 @@ hold file systems.
 .Pp
 A number of
 .Xr ioctl 2
-calls apply to the rx devices, and
-have the form
-.Bd -literal -offset indent
-#include <vaxuba/rxreg.h>
-ioctl(fildes, code, arg)
-int *arg;
-.Ed
-.Pp
-The applicable codes are:
+calls apply to the rx devices:
 .Bl -tag -width RXIOC_GETDENS
 .It Dv RXIOC_FORMAT
 Format the diskette.
@@ -237,11 +229,11 @@ the device
 .Xr close 2 ) .
 .El
 .Sh SEE ALSO
-.Xr tar 1 ,
-.Xr arff 8 ,
+.Xr intro 4 ,
+.\" .Xr arff 8 ,
 .Xr mkfs 8 ,
-.Xr newfs 8 ,
-.Xr rxformat 8
+.Xr newfs 8
+.\" .Xr rxformat 8
 .Sh HISTORY
 The
 .Nm

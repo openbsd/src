@@ -1,4 +1,4 @@
-.\"	$OpenBSD: de.4,v 1.5 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: de.4,v 1.6 2002/10/01 21:05:31 miod Exp $
 .\"	$NetBSD: de.4,v 1.3 1996/03/03 17:13:19 thorpej Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -43,7 +43,7 @@
 .Tn DEC DEUNA
 10 Mb/s Ethernet interface
 .Sh SYNOPSIS
-.Cd "device de0 at uba0 csr 174510 vector deintr"
+.Cd "de0 at uba? csr 0174510"
 .Sh DESCRIPTION
 The
 .Nm de
@@ -126,7 +126,10 @@ See the hardware manual for details.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr inet 4 ,
-.Xr netintro 4
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm

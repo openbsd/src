@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hp.4,v 1.8 2001/10/05 14:45:54 mpech Exp $
+.\"	$OpenBSD: hp.4,v 1.9 2002/10/01 21:05:31 miod Exp $
 .\"	$NetBSD: hp.4,v 1.4 1996/03/05 15:28:50 ragge Exp $
 .\"
 .\" Copyright (c) 1980,1988, 1991 Regents of the University of California.
@@ -43,7 +43,6 @@
 .Tn MASSBUS
 disk interface
 .Sh SYNOPSIS
-.Cd "hp0 at mba0 drive 0"
 .Cd "hp* at mba? drive ?"
 .Sh DESCRIPTION
 The
@@ -91,10 +90,10 @@ On disks larger than about 205 Megabytes, the hp?h partition
 is inserted prior to the hp?d or hp?g partition;
 the hp?g partition then maps the remainder of the pack.
 .Sh FILES
-.Bl -tag -width /dev/rhp[0-7][a-h] -compact
-.It Pa /dev/hp[0-7][a-h]
+.Bl -tag -width /dev/rhp[0-7][a-p] -compact
+.It Pa /dev/hp[0-7][a-p]
 block files
-.It Pa /dev/rhp[0-7][a-h]
+.It Pa /dev/rhp[0-7][a-p]
 raw files
 .El
 .Sh DIAGNOSTICS
@@ -146,12 +145,9 @@ spots on the carriage of the drive or heads are indicated.
 .Pp
 .El
 .Sh SEE ALSO
-.Xr up 4 ,
+.Xr intro 4 ,
 .Xr disklabel 5 ,
-.Xr MAKEDEV 8 ,
-.Xr disklabel 8 ,
-.Xr mknod 8 ,
-.Xr physio 9
+.Xr disklabel 8
 .Sh HISTORY
 The
 .Nm

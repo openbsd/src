@@ -1,4 +1,4 @@
-.\"	$OpenBSD: qe.4,v 1.5 2001/11/13 13:54:26 mpech Exp $
+.\"	$OpenBSD: qe.4,v 1.6 2002/10/01 21:05:31 miod Exp $
 .\"	$NetBSD: qe.4,v 1.3 1996/03/03 17:14:01 thorpej Exp $
 .\"
 .\" Copyright (c) 1983, 1991 The Regents of the University of California.
@@ -44,7 +44,7 @@
 .Tn Q-bus
 10 Mb/s Ethernet interface
 .Sh SYNOPSIS
-.Cd "device qe0 at uba? csr 174440 vector qeintr"
+.Cd "qe0 at uba? csr 0174440"
 .Sh DESCRIPTION
 The
 .Nm qe
@@ -80,7 +80,10 @@ flag with an
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr inet 4 ,
-.Xr netintro 4
+.Xr intro 4 ,
+.Xr netintro 4 ,
+.Xr hostname.if 5 ,
+.Xr ifconfig 8
 .Sh HISTORY
 The
 .Nm
