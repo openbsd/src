@@ -1,4 +1,4 @@
-/* $OpenBSD: sysdep.h,v 1.15 2004/04/15 18:39:26 deraadt Exp $	 */
+/* $OpenBSD: sysdep.h,v 1.16 2004/06/23 01:17:29 ho Exp $	 */
 /* $EOM: sysdep.h,v 1.17 2000/12/04 04:46:35 angelos Exp $	 */
 
 /*
@@ -33,6 +33,10 @@
 #define _SYSDEP_H_
 
 #include <sys/types.h>
+#if defined (USE_BOEHM_GC)
+#include <stdlib.h>
+#include <string.h>
+#endif
 
 #include "sysdep-os.h"
 
@@ -58,5 +62,24 @@ sysdep_ipsec_set_spi(struct sa *, struct proto *, int,
 extern char    *sysdep_progname(void);
 extern u_int32_t sysdep_random(void);
 extern u_int8_t sysdep_sa_len(struct sockaddr *);
+
+#if defined (USE_BOEHM_GC)
+/*
+ * Use Boehm's garbage collector as a means to find leaks.
+ * XXX The defines below are GCC-specific.  I think it is OK to require
+ * XXX GCC if you are debugging isakmpd in this way.
+ */
+void	*GC_debug_malloc(size_t, char *, int);
+void	*GC_debug_realloc(void *, size_t, char *, int);
+void	 GC_debug_free(void *); 
+char	*my_strdup(const char *);
+
+#define malloc(x)	GC_debug_malloc ((x), __FILE__, __LINE__)
+#define realloc(x,y)	GC_debug_realloc ((x), (y), __FILE__, __LINE__)
+#define free(x)		GC_debug_free (x)
+#define calloc(x,y)	malloc((x) * (y))
+#define strdup(x)	my_strdup((x))
+
+#endif /* WITH_BOEHM_GC */
 
 #endif				/* _SYSDEP_H_ */
