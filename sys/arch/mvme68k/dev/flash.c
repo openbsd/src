@@ -1,4 +1,4 @@
-/*	$Id: flash.c,v 1.2 1995/11/07 08:48:55 deraadt Exp $ */
+/*	$Id: flash.c,v 1.3 1995/11/17 12:45:52 deraadt Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -171,14 +171,114 @@ flashattach(parent, self, args)
 	printf(": %s %s len %d", flashmanu[manu].name,
 	    flashmanu[manu].flashii[ident].name, sc->sc_len);
 
+	sc->sc_vaddr[0] = FLCMD_CLEARSTAT;
+	sc->sc_vaddr[0] = FLCMD_RESET;
+
 	unmapiodev(sc->sc_vaddr, NBPG);
 	sc->sc_vaddr = mapiodev(sc->sc_paddr, sc->sc_len);
 	if (sc->sc_vaddr == NULL) {
 		sc->sc_len = 0;
 		printf(" -- failed to map");
 	}
-	printf("\n"); 
+	printf("\n");
 }
+
+caddr_t
+flashsavezone(sc, start)
+	struct flashsoftc *sc;
+	int start;
+{
+	caddr_t zone;
+
+	zone = (u_char *)malloc(sc->sc_zonesize, M_TEMP, M_WAITOK);
+	if (!zone)
+		return (NULL);
+	sc->sc_vaddr[0] = FLCMD_RESET;
+	bcopy((caddr_t)&sc->sc_vaddr[start], zone, sc->sc_zonesize);
+	return (zone);
+}
+
+int
+flashwritezone(sc, zone, start)
+	struct flashsoftc *sc;
+	caddr_t zone;
+	int start;
+{
+	u_char sr;
+	int i;
+
+	for (i = 0; i < sc->sc_zonesize; i++) {
+		if (zone[i] == 0xff)
+			continue;
+		sc->sc_vaddr[start + i] = FLCMD_WSETUP;
+		sc->sc_vaddr[start + i] = zone[i];
+		do {
+			sc->sc_vaddr[0] = FLCMD_READSTAT;
+			sr = sc->sc_vaddr[0];
+		} while (sr & FLSR_WSMS == 0);
+		if (sr & FLSR_BWS)
+			return (i);	/* write failed on this byte! */
+		sc->sc_vaddr[0] = FLCMD_RESET;
+	}
+	free(zone, M_TEMP);
+	return (0);
+}
+
+int
+flasherasezone(sc, addr)
+	struct flashsoftc *sc;
+	int addr;
+{
+	u_char	sr;
+
+	printf("erasing zone at %d\n", addr);
+
+	sc->sc_vaddr[addr] = FLCMD_ESETUP;
+	sc->sc_vaddr[addr] = FLCMD_ECONFIRM;
+
+	sc->sc_vaddr[0] = FLCMD_READSTAT;
+	sr = sc->sc_vaddr[0];
+	while ((sr & FLSR_WSMS) == 0) {
+		sc->sc_vaddr[0] = FLCMD_READSTAT;
+		sr = sc->sc_vaddr[0];
+	}
+	printf("sr=%2x\n", sr);
+
+	sc->sc_vaddr[0] = FLCMD_RESET;
+	if (sr & FLSR_ES)
+		return (-1);
+	return (0);
+}
+
+/*
+ * Should add some light retry code. If a write fails see if an
+ * erase helps the situation... eventually flash rams become
+ * useless but perhaps we can get just one more cycle out of it.
+ */
+int
+flashwritebyte(sc, addr, val)
+	struct flashsoftc *sc;
+	int addr;
+	u_char val;
+{
+	u_char sr;
+
+	sc->sc_vaddr[addr] = FLCMD_CLEARSTAT;
+	sr = sc->sc_vaddr[0];
+	sc->sc_vaddr[addr] = FLCMD_WSETUP;
+	sc->sc_vaddr[addr] = val;
+	delay(9);
+	do {
+		sr = sc->sc_vaddr[addr];
+	} while ((sr & FLSR_WSMS) == 0);
+	printf("write status %2x\n", sr);
+
+	sc->sc_vaddr[0] = FLCMD_RESET;
+	if (sr & FLSR_BWS)
+		return (-1);	/* write failed! */
+	return (0);
+}
+
 
 /*ARGSUSED*/
 int
@@ -267,7 +367,99 @@ flashwrite(dev, uio, flags)
 	struct uio *uio;
 	int flags;
 {
-	return (ENXIO);
+	int unit = minor(dev);
+	struct flashsoftc *sc = (struct flashsoftc *) flashcd.cd_devs[unit];
+	register vm_offset_t v;
+	register int c, i, r;
+	register struct iovec *iov;
+	int error = 0;
+	caddr_t cmpbuf;
+	int neederase = 0, needwrite = 0;
+	int zonestart, zoneoff;
+
+	cmpbuf = (caddr_t)malloc(sc->sc_zonesize, M_TEMP, M_WAITOK);
+	if (!cmpbuf)
+		return (ENOMEM);
+
+	while (uio->uio_resid > 0 && error == 0) {
+		iov = uio->uio_iov;
+		if (iov->iov_len == 0) {
+			uio->uio_iov++;
+			uio->uio_iovcnt--;
+			if (uio->uio_iovcnt < 0)
+				panic("flashrw");
+			continue;
+		}
+
+		/* 
+		 * constrain to be at most a zone in size, and
+		 * aligned to be within that one zone only.
+		*/
+		v = uio->uio_offset;
+		zonestart = v & ~(sc->sc_zonesize - 1);
+		zoneoff = v & (sc->sc_zonesize - 1);
+		c = min(iov->iov_len, MAXPHYS);
+		if (v + c > sc->sc_len)
+			c = sc->sc_len - v;	/* till end of FLASH */
+		if (c > sc->sc_zonesize - zoneoff)
+			c = sc->sc_zonesize - zoneoff; /* till end of zone */
+		if (c == 0)
+			return (0);
+		error = uiomove((caddr_t)cmpbuf, c, uio);
+
+		/*
+		 * compare to see if we are going to need a block erase
+		 * operation.
+		 */
+		sc->sc_vaddr[0] = FLCMD_RESET;
+		for (i = 0; i < c; i++) {
+			u_char x = sc->sc_vaddr[v + i];
+			if (cmpbuf[i] & ~x)
+				neederase = 1;
+			if (cmpbuf[i] != x)
+				needwrite = 1;
+		}
+		if (needwrite && !neederase) {
+			/*
+			 * we don't need to erase. all the bytes being
+			 * written (thankfully) set bits.
+			 */
+			for (i = 0; i < c; i++) {
+				if (cmpbuf[i] == sc->sc_vaddr[v + i])
+					continue;
+				r = flashwritebyte(sc, v + i, cmpbuf[i]);
+				if (r == 0)
+					continue;
+				/*
+				 * this doesn't make sense. we
+				 * thought we didn't need to erase,
+				 * but a write failed. let's try an
+				 * erase operation..
+				 */
+				printf("%s: failed write at %d, trying erase\n",
+				    sc->sc_dev.dv_xname, i);
+				goto tryerase;
+			}
+		} else if (neederase) {
+			caddr_t mem;
+
+tryerase:
+			mem = flashsavezone(sc, zonestart);
+			for (i = 0; i < c; i++)
+				mem[zoneoff + i] = cmpbuf[i];
+			flasherasezone(sc, zonestart);
+			r = flashwritezone(sc, mem, zonestart);
+			if (r) {
+				printf("%s: failed at offset %x\n",
+				    sc->sc_dev.dv_xname, r);
+				free(mem, M_TEMP);
+				error = EIO;
+			}
+		}
+	}
+
+	free(cmpbuf, M_TEMP);
+	return (error);
 }
 
 int
@@ -284,78 +476,3 @@ flashmmap(dev, off, prot)
 	return (m68k_btop(sc->sc_paddr + off));
 }
 
-int
-flasherasezone(sc, addr)
-	struct flashsoftc *sc;
-	int addr;
-{
-	u_char	sr;
-
-	sc->sc_vaddr[addr] = FLCMD_ESETUP;
-	sc->sc_vaddr[addr] = FLCMD_ECONFIRM;
-
-	/* XXX should use sleep/wakeup/timeout combination */
-	do {
-		sc->sc_vaddr[0] = FLCMD_READSTAT;
-		sr = sc->sc_vaddr[0];
-	} while (sr & FLSR_WSMS == 0);
-	if (sr & FLSR_ES)
-		return (-1);
-	return (0);
-}
-
-/*
- * Should add some light retry code. If a write fails see if an
- * erase helps the situation... eventually flash rams become
- * useless but perhaps we can get just one more cycle out of it.
- */
-int
-flashwritebyte(sc, addr, val)
-	struct flashsoftc *sc;
-	int addr;
-	u_char val;
-{
-	u_char sr;
-
-	/*
-	 * If a zero'd bit in the flash memory needs to become set,
-	 * then the zone must be erased and rebuilt.
-	 */
-	if (val & ~sc->sc_vaddr[addr]) {
-		int faddr = addr & ~(sc->sc_zonesize - 1);
-		u_char *zone;
-		int i;
-
-		zone = (u_char *)malloc(sc->sc_zonesize, M_TEMP, M_WAITOK);
-		if (!zone)
-			return (-1);
-		bcopy((caddr_t)&sc->sc_vaddr[faddr], zone, sc->sc_zonesize);
-
-		if (flasherasezone(sc, faddr) == -1)
-			return (-1);
-
-		zone[addr - faddr] = val;
-		for (i = 0; i < sc->sc_zonesize; i++) {
-			sc->sc_vaddr[faddr + i] = FLCMD_WSETUP;
-			sc->sc_vaddr[faddr + i] = zone[i];
-			do {
-				sc->sc_vaddr[0] = FLCMD_READSTAT;
-				sr = sc->sc_vaddr[0];
-			} while (sr & FLSR_WSMS == 0);
-			if (sr & FLSR_BWS)
-				return (-1);	/* write failed! */
-		}
-		free(zone, M_TEMP);
-		return (0);
-	}
-
-	sc->sc_vaddr[addr] = FLCMD_WSETUP;
-	sc->sc_vaddr[addr] = val;
-	do {
-		sc->sc_vaddr[0] = FLCMD_READSTAT;
-		sr = sc->sc_vaddr[0];
-	} while (sr & FLSR_WSMS == 0);
-	if (sr & FLSR_BWS)
-		return (-1);	/* write failed! */
-	return (0);
-}
