@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.8 2001/04/09 04:09:18 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.9 2001/04/09 05:36:17 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -126,8 +126,8 @@
 #define	TXP_CMD_MEDIA_STATUS_WRITE		0x1c
 #define	TXP_CMD_NETWORK_DIAGS_READ		0x1d
 #define	TXP_CMD_NETWORK_DIAGS_WRITE		0x1e
-#define	TXP_CMD_POWER_MGMT_EVENT_READ		0x1f
-#define	TXP_CMD_POWER_MGMT_EVENT_WRITE		0x20
+#define	TXP_CMD_PHY_MGMT_READ			0x1f
+#define	TXP_CMD_PHY_MGMT_WRITE			0x20
 #define	TXP_CMD_VARIABLE_PARAMETER_READ		0x21
 #define	TXP_CMD_VARIABLE_PARAMETER_WRITE	0x22
 #define	TXP_CMD_GOTO_SLEEP			0x23
@@ -352,6 +352,12 @@ struct txp_tcpseg_desc {
 #define	TXP_XCVR_100_FDX	3
 #define	TXP_XCVR_AUTO		4
 
+#define TXP_MEDIA_CRC		0x0004	/* crc strip disable */
+#define	TXP_MEDIA_CD		0x0010	/* collision detection */
+#define	TXP_MEDIA_CS		0x0020	/* carrier sense */
+#define	TXP_MEDIA_POL		0x0400	/* polarity reversed */
+#define	TXP_MEDIA_NOLINK	0x0800	/* 0 = link, 1 = no link */
+
 /*
  * boot record (pointers to rings)
  */
@@ -439,18 +445,19 @@ struct txp_rsp_ring {
 };
 
 struct txp_softc {
-	struct device		sc_dev;
-	struct arpcom		sc_arpcom;
+	struct device		sc_dev;		/* base device */
+	struct arpcom		sc_arpcom;	/* ethernet common */
 	struct txp_hostvar	*sc_hostvar;
 	struct txp_boot_record	*sc_boot;
-	bus_space_handle_t	sc_bh;
-	bus_space_tag_t		sc_bt;
-	bus_dma_tag_t		sc_dmat;
+	bus_space_handle_t	sc_bh;		/* bus handle (regs) */
+	bus_space_tag_t		sc_bt;		/* bus tag (regs) */
+	bus_dma_tag_t		sc_dmat;	/* dma tag */
 	struct txp_cmd_ring	sc_cmdring;
 	struct txp_rsp_ring	sc_rspring;
 	void *			sc_ih;
 	struct timeout		sc_tick_tmo;
 	struct ifmedia		sc_ifmedia;
+	mii_data_t		sc_mii;		/* mii bus */
 	u_int16_t		sc_xcvr;
 	struct txp_dma_alloc	sc_boot_dma, sc_host_dma, sc_zero_dma;
 	struct txp_dma_alloc	sc_rxhiring_dma, sc_rxloring_dma;

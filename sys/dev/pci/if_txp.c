@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txp.c,v 1.7 2001/04/09 04:09:17 jason Exp $	*/
+/*	$OpenBSD: if_txp.c,v 1.8 2001/04/09 05:36:16 jason Exp $	*/
 
 /*
  * Copyright (c) 2001
@@ -112,6 +112,8 @@ int txp_response __P((struct txp_softc *, u_int32_t, u_int16_t,
 
 void txp_ifmedia_sts __P((struct ifnet *, struct ifmediareq *));
 int txp_ifmedia_upd __P((struct ifnet *));
+int txp_miibus_readreg __P((struct device *, int, int));
+void txp_miibus_writereg __P((struct device *, int, int, int));
 
 struct cfattach txp_ca = {
 	sizeof(struct txp_softc), txp_probe, txp_attach,
@@ -232,6 +234,12 @@ txp_attach(parent, self, aux)
 	txp_command(sc, TXP_CMD_XCVR_SELECT, TXP_XCVR_AUTO, 0, 0,
 	    NULL, NULL, NULL, 0);
 
+#if 0
+	sc->sc_mii.mii_ifp = ifp;
+	sc->sc_mii.mii_readreg = txp_miibus_readreg;
+	sc->sc_mii.mii_writereg = txp_miibus_writereg;
+	mii_phy_probe(self, &sc->sc_mii, 0xffffffff);
+#endif
 
 	ifp->if_softc = sc;
 	ifp->if_mtu = ETHERMTU;
@@ -904,6 +912,11 @@ txp_command(sc, id, in1, in2, in3, out1, out2, out3, wait)
 	if (out3 != NULL)
 		*out3 = rsp->rsp_par3;
 
+	idx += sizeof(struct txp_rsp_desc);
+	if (idx == sc->sc_rspring.size)
+		idx = 0;
+	sc->sc_rspring.lastwrite = hv->hv_resp_read_idx = idx;
+
 	return (0);
 }
 
@@ -1035,6 +1048,7 @@ txp_ifmedia_sts(ifp, ifmr)
 	struct ifmediareq *ifmr;
 {
 	struct txp_softc *sc = ifp->if_softc;
+	u_int16_t p1;
 
 	switch (sc->sc_xcvr) {
 	case TXP_XCVR_10_HDX:
@@ -1057,6 +1071,45 @@ txp_ifmedia_sts(ifp, ifmr)
 		break;
 	}
 
-	/* XXX determine real speed/duplex/link status */
-	ifmr->ifm_status &= ~IFM_AVALID;
+	/* XXX determine real speed/duplex status */
+
+	if (txp_command(sc, TXP_CMD_MEDIA_STATUS_READ, 0, 0, 0,
+	    &p1, NULL, NULL, 1))
+		ifmr->ifm_status &= ~IFM_AVALID;
+	else {
+		ifmr->ifm_status |= IFM_AVALID;
+		if ((p1 & TXP_MEDIA_NOLINK) == 0)
+			ifmr->ifm_status |= IFM_ACTIVE;
+	}
+}
+
+void
+txp_miibus_writereg(self, phy, reg, val)
+	struct device *self;
+	int phy, reg, val;
+{
+	struct txp_softc *sc = (struct txp_softc *)self;
+
+	if (phy != 0)
+		return;
+
+	txp_command(sc, TXP_CMD_PHY_MGMT_WRITE, val, reg, 0,
+	    NULL, NULL, NULL, 0);
+}
+
+int
+txp_miibus_readreg(self, phy, reg)
+	struct device *self;
+	int phy, reg;
+{
+	struct txp_softc *sc = (struct txp_softc *)self;
+	u_int16_t dat;
+
+	if (phy != 0)
+		return (0);
+
+	if (txp_command(sc, TXP_CMD_PHY_MGMT_READ, 0, reg, 0,
+	    &dat, NULL, NULL, 1))
+		return (0);
+	return (dat);
 }
