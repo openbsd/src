@@ -1,4 +1,4 @@
-/*	$OpenBSD: be.c,v 1.14 1998/10/02 17:42:23 jason Exp $	*/
+/*	$OpenBSD: be.c,v 1.15 1998/10/09 02:29:03 jason Exp $	*/
 
 /*
  * Copyright (c) 1998 Theo de Raadt and Jason L. Wright.
@@ -469,10 +469,6 @@ beeint(sc, why)
 		rst = 1;
 		printf("%s: max packet size error\n", sc->sc_dev.dv_xname);
 	}
-	if (why & BE_BR_STAT_DTIMEXP) {
-		r |= 1;
-		printf("%s: defer timer expired\n", sc->sc_dev.dv_xname);
-	}
 
 	if (!r) {
 		rst = 1;
@@ -777,18 +773,18 @@ beinit(sc)
 	 * Turn off counter expiration interrupts as well as
 	 * 'gotframe' and 'sentframe'
 	 */
-	sc->sc_br->imask = BE_BR_IMASK_GOTFRAME |
-			   BE_BR_IMASK_RCNTEXP  |
-			   BE_BR_IMASK_ACNTEXP  |
-			   BE_BR_IMASK_CCNTEXP  |
-			   BE_BR_IMASK_LCNTEXP  |
-			   BE_BR_IMASK_CVCNTEXP |
-			   BE_BR_IMASK_NCNTEXP  |
-			   BE_BR_IMASK_ECNTEXP  |
-			   BE_BR_IMASK_LCCNTEXP |
-			   BE_BR_IMASK_LCNTEXP  |
-			   BE_BR_IMASK_LCNTEXP  |
-			   BE_BR_IMASK_SENTFRAME;
+	sc->sc_br->imask = BE_BR_IMASK_GOTFRAME	|
+			   BE_BR_IMASK_RCNTEXP	|
+			   BE_BR_IMASK_ACNTEXP	|
+			   BE_BR_IMASK_CCNTEXP	|
+			   BE_BR_IMASK_LCNTEXP	|
+			   BE_BR_IMASK_CVCNTEXP	|
+			   BE_BR_IMASK_SENTFRAME|
+			   BE_BR_IMASK_NCNTEXP	|
+			   BE_BR_IMASK_ECNTEXP	|
+			   BE_BR_IMASK_LCCNTEXP	|
+			   BE_BR_IMASK_FCNTEXP	|
+			   BE_BR_IMASK_DTIMEXP;
 
 	sc->sc_cr->rimask = 0;
 	sc->sc_cr->timask = 0;
