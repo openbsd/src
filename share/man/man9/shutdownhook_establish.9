@@ -1,4 +1,4 @@
-.\"	$OpenBSD: shutdownhook_establish.9,v 1.11 2002/03/01 00:10:52 art Exp $
+.\"	$OpenBSD: shutdownhook_establish.9,v 1.12 2003/03/10 19:56:29 tedu Exp $
 .\"	$NetBSD: shutdownhook_establish.9,v 1.1 1995/11/25 21:24:52 perry Exp $
 .\"
 .\" Copyright (c) 1994 Christopher G. Demetriou
@@ -86,7 +86,7 @@ causing an endless loop.
 An example of things that need to be done in a shutdown hook could be
 stopping DMA engines that might corrupt memory when rebooting.
 An example of things that shouldn't be done in a shutdown hook is syncing
-the filesystems.
+the file systems.
 Once again, since the system could be rebooting because of an internal
 inconsistency, writing down anything to permanent storage or trusting
 the internal state of the system is a very bad idea.

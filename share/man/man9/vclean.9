@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vclean.9,v 1.2 2002/05/28 09:07:07 mpech Exp $
+.\"     $OpenBSD: vclean.9,v 1.3 2003/03/10 19:56:29 tedu Exp $
 .\"-
 .\" Copyright (c) 2002 Peter Werner 
 .\" All rights reserved.
@@ -45,7 +45,7 @@ The
 .Fn vclean
 function clears any VM and buffer data associated with a vnode
 .Fa vp
-and reclaims it from the underlying filesystem.
+and reclaims it from the underlying file system.
 The arguments are:
 .Bl -tag -width ".Fa flags"
 .It Fa vp
@@ -60,7 +60,7 @@ will call
 .Xr vinvalbuf 9
 on the vnode.
 If the vnode is active, it will be closed and inactivated in the
-underlying filesystem.
+underlying file system.
 .El
 .It Fa p
 The process associated with this operation
