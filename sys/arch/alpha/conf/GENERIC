@@ -1,3 +1,4 @@
+#	$OpenBSD: GENERIC,v 1.7 1996/07/29 20:01:23 niklas Exp $
 #	$NetBSD: GENERIC,v 1.15.4.3 1996/06/13 19:22:07 cgd Exp $
 #
 # Generic Alpha kernel.  Enough to get booted, etc., but not much more.

@@ -1,3 +1,4 @@
+#	$OpenBSD: files.alpha,v 1.5 1996/07/29 20:01:27 niklas Exp $
 #	$NetBSD: files.alpha,v 1.19.4.2 1996/05/30 23:20:37 cgd Exp $
 #
 # alpha-specific configuration info
@@ -109,6 +110,14 @@ file	dev/tc/if_le_tc.c		le_tc
 #
 # ISA Bus support
 #
+
+#
+# Machine-independent ATAPI drivers
+#
+include "../../../dev/atapi/files.atapi"
+
+# XXX Dummy bus needed for some multi-homed devices specified in files.isa
+define	pcmcia {}
 
 include "../../../dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
 include "../../../dev/isa/files.isa"

@@ -1,3 +1,4 @@
+#	$OpenBSD: Makefile.alpha,v 1.7 1996/07/29 20:01:25 niklas Exp $
 #	$NetBSD: Makefile.alpha,v 1.16 1996/05/19 21:16:51 cgd Exp $
 
 # Makefile for NetBSD

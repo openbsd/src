@@ -1,18 +1,17 @@
-#	$OpenBSD: NOSY,v 1.3 1996/07/29 20:01:26 niklas Exp $
-#	$NetBSD: NOSY,v 1.5.4.2 1996/06/13 19:22:15 cgd Exp $
+#	$OpenBSD: BALVENIE,v 1.1 1996/07/29 20:01:22 niklas Exp $
+#	$NetBSD: BALVENIE,v 1.1 1996/05/01 23:32:45 cgd Exp $
 #
-# Jason's DEC 3000/400 in the lab...
-#
+# Kernel for balvenie.pdl.cs.cmu.edu, a 3000/300LX.
 
 include	"std.alpha"
 
 maxusers 8
 
 # CPU Support
-options		DEC_3000_500	# Flamingo etc:	3000/[4-9]00*
+options		DEC_3000_300	# Pelican etc:	3000/300*
 
 # needs to be set per system
-options		TIMEZONE="8*60"		# Minutes west of GMT (for param.c)
+options		TIMEZONE="5*60"		# Minutes west of GMT (for param.c)
 options		DST=1			# Daylight savings rules (for param.c)
 
 # Standard system options
@@ -26,7 +25,6 @@ options		FFS		# Fast file system
 options		MFS		# Memory-based file system
 options		NFSSERVER	# Sun NFS-compatible file system server
 options		NFSCLIENT	# Sun NFS-compatible file system client
-options		UNION		# Union filesystem
 
 # Networking options
 options		INET		# Internet protocol suite
@@ -35,20 +33,15 @@ options		INET		# Internet protocol suite
 options		COMPAT_43
 
 # Binary compatibility with previous versions of NetBSD.
-#options	COMPAT_09
 options		COMPAT_10
-options		COMPAT_11
-
-# OSF/1 binary compatibility -- CURRENTLY DOES NOT WORK
-#options	COMPAT_OSF1
 
 # Loadable Kernel Modules
 options		LKM
 
 # Disable kernel security.
-options		INSECURE
+#options	INSECURE
 
-config		bsd	swap generic
+config		bsd		root on sd0 swap on sd0
 
 mainbus0 at	root
 cpu*	at	mainbus0
@@ -67,9 +60,9 @@ scc0	at	ioasic? offset ?
 scc1	at	ioasic? offset ?
 tcds0	at	tc? slot ? offset ?
 esp0	at	tcds? slot ?
-esp1	at	tcds? slot ?
+cfb*	at	tc? slot ? offset ?
 sfb*	at	tc? slot ? offset ?
-fta*	at	tc? slot ? offset ?		# DEC DEFTA FDDI cards
+le*	at	tc? slot ? offset ?
 
 # SCSI bus support
 scsibus* at	esp?
@@ -80,8 +73,11 @@ st*	at	scsibus? target ? lun ?
 cd*	at	scsibus? target ? lun ?
 
 # Workstation Console attachments
+wscons*	at	cfb?
 wscons*	at	sfb?
 
-pseudo-device	bpfilter	16
+pseudo-device	bpfilter
 pseudo-device	loop
-pseudo-device	pty		64
+pseudo-device	pty
+pseudo-device	sl
+pseudo-device	vnd

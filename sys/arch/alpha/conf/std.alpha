@@ -1,6 +1,7 @@
+#	$OpenBSD: std.alpha,v 1.2 1996/07/29 20:01:27 niklas Exp $
 #	$NetBSD: std.alpha,v 1.4 1995/11/25 01:34:38 cgd Exp $
 #
-# Standard/required configuration info for NetBSD/alpha.
+# Standard/required configuration info for OpenBSD/alpha.
 
 machine		alpha
 
