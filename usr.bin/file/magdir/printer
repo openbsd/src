@@ -38,6 +38,10 @@
 >3	string		\&l-81A		- No. 10 envelope size (landscape)
 >3	string		\&l-90A		- Intl. DL envelope size (landscape)
 
+# HPGL2 - Graphics for HP printers. Pavel Lisy <pali@tmapy.cz>, edited.
+0	string		\033%OB;	HP HPGL printer data
+# 	be nice to get the other parameters that can follow, as per PCL?
+
 # IMAGEN printer-ready files:
 0	string	@document(		Imagen printer
 # this only works if "language xxx" is first item in Imagen header.
