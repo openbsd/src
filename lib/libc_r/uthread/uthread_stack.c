@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_stack.c,v 1.5 2000/02/10 11:47:15 d Exp $	*/
+/*	$OpenBSD: uthread_stack.c,v 1.6 2000/02/26 13:34:51 d Exp $	*/
 /*
  * Copyright 1999, David Leonard. All rights reserved.
  * <insert BSD-style license&disclaimer>
@@ -68,8 +68,12 @@ _thread_stack_alloc(base, size)
 		return NULL;
 	}
 
-	/* The red zone is the first physical page of the storage: */
-	stack->redzone = (void*)(((int)stack->storage + nbpg - 1) & 
+	/*
+	 * The red zone is the first physical page of the storage.
+	 * I'm using _BSD_PTRDIFF_T_ to convert the storage base pointer
+	 * into an integer so that I can do page alignment on it.
+	 */
+	stack->redzone = (void*)(((_BSD_PTRDIFF_T_)stack->storage + nbpg - 1) & 
 	    ~(nbpg - 1));
 	if (mprotect(stack->redzone, nbpg, 0) == -1)
 		PANIC("Cannot protect stack red zone");
