@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.15 2001/09/26 20:38:55 mickey Exp $	*/
+/*	$OpenBSD: io.c,v 1.16 2001/09/27 02:55:01 mickey Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.15 2001/09/26 20:38:55 mickey Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.16 2001/09/27 02:55:01 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,7 @@ cal()
 	register int printing;
 	register char *p;
 	FILE *fp;
-	int ch, l, i, bodun, bodun_maybe;
+	int ch, l, i, bodun = 0, bodun_maybe = 0;
 	int var;
 	char buf[2048 + 1];
 	struct event *events, *cur_evt, *ev1, *tmp;
