@@ -1,0 +1,196 @@
+.\" $OpenBSD: starttls.8,v 1.1 2001/09/19 14:08:37 millert Exp $
+.Dd August 20, 2001
+.Dt STARTTLS 8
+.Sh NAME
+.Nm starttls 
+.Nd ESMTP over TLS
+.Sh DESCRIPTION
+STARTTLS is an ESMTP option, defined in RFC 2487, which is used to conduct
+ESMTP transactions over TLS circuits.
+This is used to increase the security of mail server transactions.
+Since version 8.11, 
+.Xr sendmail 8
+has supported the use of TLS to protect ESMTP communications.
+.Pp
+STARTTLS allows for the combination of several security solutions for MTA
+(mail transport agent) level services through the TLS suite.
+These security features include:
+.Bl -tag -width Ds
+.It Confidentiality
+Encryption is used to protect data from passive monitoring.
+An attacker would have to recover the encryption key used to
+decode the transmitted data.
+.It Integrity
+Hash algorithms are used to ensure the integrity of the
+transmitted data, and alternatively the timestamp, protecting against a
+replay attack.
+This protects data from modification in transit.
+.It Authentication
+The use of public key encryption allows for the strong authentication of
+either, or both, communicating parties.
+This can be used to allow for select features, such as relaying,
+to be controlled more securely.
+.El
+.Pp
+A new ESMTP option, STARTTLS, has been added.
+This is presented by the server when an ESMTP session is initiated.
+The client then begins the TLS portion of the ESMTP session by issuing
+the command
+.Dq STARTTLS .
+The remaining portion of the ESMTP session occurs over a TLS channel.
+.Ss Configuring sendmail to utilize TLS
+The global sendmail configuration file,
+.Pa /etc/mail/sendmail.cf ,
+must be modified to support TLS functionality.
+An example .mc file which has entries for TLS options, such as certificates,
+is available as
+.Pa /usr/share/sendmail/cf/knecht.mc .
+.Pp
+The pertinent options are:
+.Bl -bullet -literal
+.It
+CERT_DIR
+.It
+confCACERT_PATH
+.It
+confCACERT
+.It
+confSERVER_CERT
+.It
+confSERVER_KEY
+.It
+confCLIENT_CERT
+.It
+confCLIENT_KEY
+.El
+.Pp
+By default, the directory 
+.Pa /etc/mail/certs ,
+defined in CERT_DIR, is used to store certificates, and the server will
+use the same certificates both as a client and as a server (when sending
+and receiving mail, respectively, to another MTA). 
+This can be changed by having different entries for the respective roles.
+.Pp
+These certificates can be generated using the 
+.Xr openssl 1
+utility as described in
+.Xr ssl 8 .
+Make sure to leave the private key files unencrypted, using the
+.Fl nodes 
+option.
+Otherwise,
+.Xr sendmail 8
+will be unable to initiate TLS server functions.
+Also be sure to name the files as they are defined in the above macros
+and store them in PEM format.
+.Pp
+Because the private key files are unencrypted,
+.Xr sendmail 8
+is picky about using tight permissions on those files.
+The certificate directory and the files therein should be
+readable and writable only by the owner (root).
+A simple way to ensure this is to run the following:
+.Bd -literal -offset indent -width Ds
+# chmod -R go-rwx /etc/mail/certs
+.Ed
+.Pp
+Having installed this configuration file and the certificates and
+restarted the sendmail daemon, a new option should be presented for ESMTP
+transactions, STARTTLS.
+This can be tested using a mail client which is TLS capable, or by
+using a TLS capable server.
+.Ss Uses for TLS-Equipped sendmail
+The most obvious use of a cryptographically enabled sendmail installation
+is for confidentiality of the electronic mail transaction and the
+integrity checking provided by the cipher suite.
+All traffic between the two mail servers is encrypted, including the
+sender and recipient addresses.
+TLS also allows for authentication of either or both systems in the transaction.
+.Pp
+One use of public key cryptography is for strong authentication.
+We can use this authentication to selectively relay clients, including
+other mail servers and mobile clients like laptops.
+However, there have been some problems getting some mail clients to work using
+certificate-based authentication. 
+Note that your clients will have to generate certificates and have them
+signed (for trust validation) by a CA (certificate authority) you also trust,
+if you configure your server to do client certificate checking.
+.Pp
+The use of the access map (usually
+.Pa /etc/mail/access ) ,
+which is normally used to determine connections and relaying,
+can also be extended to give server level control for the use of TLS.
+Two new entries are available for TLS options:
+.Bl -tag -width Ds -offset indent
+.It VERIFY
+contains the status of the level of verification (held in the macro {verify})
+.It ENCR
+the strength of the encryption (in the macro {cipher_bits})
+.El
+.Pp
+VERIFY can also accept the argument for {cipher_bits}.
+Here are a few example entries that illustrate these features, and
+the role based granularity as well:
+.\" XXX - clean this up
+.Bl -tag -width Ds
+.It "Force strong (112 bit) encryption for communications for this server:"
+.sp
+.Li server1.example.net             ENCR:112
+.It "For a TLS client, force string verification depths to at least 80 bits:"
+.sp
+.Li TLS_Clt:desktop.example:net     VERIFY:80
+.El
+.Pp
+Much more complicated access maps are possible, and error conditions (such
+as permanent or temporary, PERM+ or TEMP+) can be set on the basis of
+various criteria.
+This allows you fine-grained control over the types of connections you
+can allow.
+.Pp
+Note that it is unwise to force all SMTP clients to use TLS, as it is not
+yet widespread.
+The RFC document notes that publicly referenced SMTP servers, such as the
+MX servers for a domain, must not refuse non-TLS connections.
+However, restricted access SMTP servers, such as those for a corporate
+intranet, can use TLS as an access control mechanism.
+.Sh LIMITATIONS
+One often forgotten limitation of using TLS on a mail server is the
+payload of the mail message and the resulting security there.
+Many virus and worm files are now distributed via electronic mail.
+While the mail may be encrypted and the servers authenticated, the payload
+can still be malicious.
+The use of a good content protection program on the desktop is
+therefore still of value even with TLS at the MTA level.
+.Pp
+Because sendmail with TLS can only authenticate at the server level, true
+end-to-end authentication of the mail message cannot be performed with
+only the use of STARTLS on the server.
+The use of S/MIME or PGP e-mail and trustworthy key hierarchies can guarantee
+full confidentiality and integrity of the entire message path.
+.Pp
+Furthermore, if a mail message traverses more than just the starting and
+ending servers, there is no way to control interactions between the intervening
+mail servers, which may use non-secure connections.
+This introduces a point of vulnerability in the chain.
+.Pp
+Additionally, SMTP over TLS is not yet widely implemented.
+The standard, in fact, doesn't require it, leaving it only as an option, though
+specific sites can configure their servers to force it for specific clients.
+As such, it is difficult to forsee the widespread use of SMTP using TLS,
+despite the fact that the standard is, at the date of this writing,
+over two years old.
+.Pp
+Lastly, interoperability problems can appear between different implementations.
+.Sh SEE ALSO
+.Xr openssl 1 ,
+.Xr afterboot 8 ,
+.Xr sendmail 8 ,
+.Xr ssl 8
+.Pp
+.Tn DARPA
+Internet Request for Comments 
+.Tn RFC2487
+.Pp
+http://www.sendmail.org/
+.Sh HISTORY
+TLS features first appeared in sendmail 8.11.
