@@ -53,6 +53,28 @@
 .Fn pthread_mutex_unlock "pthread_mutex_t *mutex"
 .Ft int
 .Fn pthread_once "pthread_once_t *once_control" "void (*init_routine)(void)"
+.Ft int
+.Fn pthread_rwlock_destroy "pthread_rwlock_t *lock"
+.Ft int
+.Fn pthread_rwlock_init "pthread_rwlock_t *lock" "const pthread_rwlockattr_t *attr"
+.Ft int
+.Fn pthread_rwlock_rdlock "pthread_rwlock_t *lock"
+.Ft int
+.Fn pthread_rwlock_tryrdlock "pthread_rwlock_t *lock"
+.Ft int
+.Fn pthread_rwlock_unlock "pthread_rwlock_t *lock"
+.Ft int
+.Fn pthread_rwlock_wrlock "pthread_rwlock_t *lock"
+.Ft int
+.Fn pthread_rwlock_trywrlock "pthread_rwlock_t *lock"
+.Ft int
+.Fn pthread_rwlockattr_destroy "pthread_rwlockattr_t *attr"
+.Ft int
+.Fn pthread_rwlockattr_getpshared "pthread_rwlockattr_t *attr" "int *pshared"
+.Ft int
+.Fn pthread_rwlockattr_init "pthread_rwlockattr_t *attr"
+.Ft int
+.Fn pthread_rwlockattr_setpshared "pthread_rwlockattr_t *attr" "int *pshared"
 .Ft pthread_t
 .Fn pthread_self "void"
 .Ft int
@@ -82,6 +104,15 @@ Steal something from the posix specs to describe what a thread is.
 .Xr pthread_mutex_trylock 3 ,
 .Xr pthread_mutex_unlock 3 ,
 .Xr pthread_once 3 ,
+.Xr pthread_rwlock_destroy 3 ,
+.Xr pthread_rwlock_init 3 ,
+.Xr pthread_rwlock_rdlock.3 
+.Xr pthread_rwlock_unlock 3 ,
+.Xr pthread_rwlock_wrlock 3 ,
+.Xr pthread_rwlockattr_destroy 3 ,
+.Xr pthread_rwlockattr_getpshared 3 ,
+.Xr pthread_rwlockattr_init 3 ,
+.Xr pthread_rwlockattr_setpshared 3 ,
 .Xr pthread_self 3 ,
 .Xr pthread_setspecific 3 
 .Sh STANDARDS

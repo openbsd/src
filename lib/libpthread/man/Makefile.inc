@@ -1,5 +1,5 @@
-# $Id: Makefile.inc,v 1.2 1998/11/09 03:13:14 d Exp $
-# $OpenBSD: Makefile.inc,v 1.2 1998/11/09 03:13:14 d Exp $
+# $Id: Makefile.inc,v 1.3 1998/11/20 15:15:06 d Exp $
+# $OpenBSD: Makefile.inc,v 1.3 1998/11/20 15:15:06 d Exp $
 
 # POSIX thread man files
 
@@ -44,5 +44,7 @@ MAN+=	pthreads.3 \
 	sigwait.3
 
 MLINKS+=flockfile.3 funlockfile.3 \
-	flockfile.3 ftrylockfile.3
+	flockfile.3 ftrylockfile.3 \
+	pthread_rwlock_rdlock.3 pthread_rwlock_tryrdlock.3 \
+	pthread_rwlock_wrlock.3 pthread_rwlock_trywrlock.3
 	
