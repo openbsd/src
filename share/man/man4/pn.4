@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pn.4,v 1.5 1999/06/05 13:18:34 aaron Exp $
+.\"	$OpenBSD: pn.4,v 1.6 1999/06/29 02:39:53 jason Exp $
 .\"
 .\" Copyright (c) 1997, 1998
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -30,7 +30,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$FreeBSD: pn.4,v 1.3 1999/01/11 15:38:25 wpaul Exp $
+.\"	$FreeBSD: pn.4,v 1.5 1999/05/05 07:36:58 wpaul Exp $
 .\"
 .Dd November 7, 1998
 .Dt PN 4
@@ -48,8 +48,8 @@ driver provides support for PCI ethernet adapters and embedded
 controllers based on the Lite-On 82c168 and 82c169 fast ethernet
 controller chips. This includes the LinkSys LNE100TX, the
 Bay Networks Netgear FA310TX revision D1, the Matrox Networks
-FastNIC 10/100, certain adapters manufactured by D-Link and
-Trendware, and various other commodity fast ethernet cards.
+FastNIC 10/100, the Kingston KNE110TX (EtherRx VP),
+and various other commodity fast ethernet cards.
 .Pp
 The Lite-On chips use bus master DMA and are designed to be
 DEC 'tulip' workalikes. Many vendors that formerly based their
@@ -155,12 +155,11 @@ The
 driver was written by
 .An Bill Paul Aq wpaul@ctr.columbia.edu .
 .Sh BUGS
-The
-.Nm
-driver currently only supports cards with external transceivers
-connected to the PNIC controller via its MII bus. This is because
-the author had no boards available for testing which made use of the
-internal transceiver. Most of the PNIC implementations on the market
-today use an external PHY, so hopefully this will not present any
-serious problems. Code to support the internal transceiver may be
-added later if hardware becomes available.
+The internal NWAY support on the 82c168 chips is horribly broken, which
+means that autoselection will not work, except maybe for half-duplex
+10Mbps links. In order to use other modes (e.g. 100Mbps) it will be
+necessary to
+use
+.Xr ifconfig 8
+to set the interface manually. Autoselection for 82c169 boards using
+MII transceivers should work correctly.
