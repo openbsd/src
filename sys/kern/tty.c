@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.c,v 1.8 1996/07/31 18:34:36 deraadt Exp $	*/
+/*	$OpenBSD: tty.c,v 1.9 1996/08/01 14:17:20 mickey Exp $	*/
 /*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
@@ -711,23 +711,26 @@ ttioctl(tp, cmd, data, flag, p)
 		break;
 	}
 	case TIOCCONS: {		/* become virtual console */
-		struct nameidata nid;
-
-		/* ensure user can open the real console */
-		NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", p);
-		error = namei(&nid);
-		if (error)
-			return (error);
-		error = VOP_ACCESS(nid.ni_vp, VREAD, p->p_ucred, p);
-		vrele(nid.ni_vp);
-		if (error)
-			return (error);
-
 		if (*(int *)data) {
-			if (constty && constty != tp &&
+			struct nameidata nid;
+
+			if (constty != NULL && constty != tp &&
 			    ISSET(constty->t_state, TS_CARR_ON | TS_ISOPEN) ==
 			    (TS_CARR_ON | TS_ISOPEN))
 				return (EBUSY);
+
+			/* ensure user can open the real console */
+			NDINIT(&nid, LOOKUP, FOLLOW, UIO_SYSSPACE, "/dev/console", p);
+			error = namei(&nid);
+			if (error)
+				return (error);
+			VOP_LOCK(nid.ni_vp);
+			error = VOP_ACCESS(nid.ni_vp, VREAD, p->p_ucred, p);
+			VOP_UNLOCK(nid.ni_vp);
+			vrele(nid.ni_vp);
+			if (error)
+				return (error);
+
 			constty = tp;
 		} else if (tp == constty)
 			constty = NULL;
