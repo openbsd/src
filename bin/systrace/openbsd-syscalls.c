@@ -1,4 +1,4 @@
-/*	$OpenBSD: openbsd-syscalls.c,v 1.26 2004/07/09 21:53:55 mickey Exp $	*/
+/*	$OpenBSD: openbsd-syscalls.c,v 1.27 2004/07/09 23:42:50 mickey Exp $	*/
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
  * All rights reserved.
@@ -36,7 +36,7 @@
 #include <compat/bsdos/bsdos_syscall.h>
 #include <compat/freebsd/freebsd_syscall.h>
 #include <compat/netbsd/netbsd_syscall.h>
-#include <compat/hpux/common/hpux_syscall.h>
+#include <compat/hpux/hpux_syscall.h>
 #include <compat/ibcs2/ibcs2_syscall.h>
 #include <compat/linux/linux_syscall.h>
 #include <compat/osf1/osf1_syscall.h>
@@ -56,7 +56,7 @@
 #include <compat/bsdos/bsdos_syscalls.c>
 #include <compat/freebsd/freebsd_syscalls.c>
 #include <compat/netbsd/netbsd_syscalls.c>
-#include <compat/hpux/common/hpux_syscalls.c>
+#include <compat/hpux/hpux_syscalls.c>
 #include <compat/ibcs2/ibcs2_syscalls.c>
 #include <compat/linux/linux_syscalls.c>
 #include <compat/osf1/osf1_syscalls.c>
