@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.84 1998/09/17 00:44:35 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.85 1998/09/17 00:50:01 deraadt Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997,1998 Todd Miller, Theo de Raadt
@@ -1938,7 +1938,7 @@ fi
 		echo -n "${_mp} "
 		umount ${_mp}
 	done
-	echo "Done."
+	echo "... Done."
 
 	if [ $_check = 1 ]; then
 		echo "Checking filesystem integrity..."
