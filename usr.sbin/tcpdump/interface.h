@@ -1,4 +1,4 @@
-/*	$OpenBSD: interface.h,v 1.31 2002/02/19 19:39:40 millert Exp $	*/
+/*	$OpenBSD: interface.h,v 1.32 2002/07/12 23:18:12 pvalchev Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1991, 1992, 1993, 1994, 1995, 1996, 1997
@@ -20,7 +20,7 @@
  * WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED WARRANTIES OF
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.31 2002/02/19 19:39:40 millert Exp $ (LBL)
+ * @(#) $Header: /home/cvs/src/usr.sbin/tcpdump/interface.h,v 1.32 2002/07/12 23:18:12 pvalchev Exp $ (LBL)
  */
 
 #ifndef tcpdump_interface_h
@@ -124,8 +124,16 @@ extern int snaplen;
 extern const u_char *packetp;
 extern const u_char *snapend;
 
-/* True if  "l" bytes of "var" were captured */
-#define TTEST2(var, l) ((u_char *)&(var) <= snapend - (l))
+/*
+ * True if  "l" bytes of "var" were captured.
+ *
+ * The "snapend - (l) <= snapend" checks to make sure "l" isn't so large
+ * that "snapend - (l)" underflows.
+ *
+ * The check is for <= rather than < because "l" might be 0.
+ */
+#define TTEST2(var, l) (snapend - (l) <= snapend && \
+			(const u_char *)&(var) <= snapend - (l))
 
 /* True if "var" was captured */
 #define TTEST(var) TTEST2(var, sizeof(var))
