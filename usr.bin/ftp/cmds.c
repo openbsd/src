@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmds.c,v 1.7 1996/12/17 02:11:46 michaels Exp $      */
+/*      $OpenBSD: cmds.c,v 1.8 1996/12/24 20:00:04 deraadt Exp $      */
 /*      $NetBSD: cmds.c,v 1.8 1995/09/08 01:06:05 tls Exp $      */
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.7 1996/12/17 02:11:46 michaels Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.8 1996/12/24 20:00:04 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -808,18 +808,17 @@ remglob(argv,doswitch)
 		return (cp);
 	}
 	if (ftemp == NULL) {
+		mode_t um;
+
 		(void) strcpy(temp, _PATH_TMPFILE);
-		(void) mktemp(temp);
-		/* create a zero-byte version of the file so that
-		 * people can't play symlink games.
-		*/
-		fd = open (temp, O_CREAT | O_EXCL | O_WRONLY, 600);
+		um = umask(0600);
+		fd = mkstemp(temp);
 		if (fd < 0) {
-			printf ("temporary file %s already exists\n",temp);
-			close (fd);
+			printf ("temporary file %s already exists\n", temp);
 			return NULL;
 		}
-       	       close (fd);
+		close (fd);
+		(void) umask(um);
 		oldverbose = verbose, verbose = 0;
 		oldhash = hash, hash = 0;
 		if (doswitch) {
