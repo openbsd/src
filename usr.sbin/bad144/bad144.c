@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)bad144.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: bad144.c,v 1.4 1998/07/13 02:11:45 millert Exp $";
+static char *rcsid = "$Id: bad144.c,v 1.5 1999/06/16 10:23:17 espie Exp $";
 #endif not lint
 
 /*
@@ -105,7 +105,7 @@ main(argc, argv)
 		(*argv)++;
 		while (**argv) {
 			switch (**argv) {
-#if vax
+#if __vax__
 			    case 'f':
 				fflag++;
 				break;
@@ -181,7 +181,7 @@ usage:
 			dp->d_secsize);
 		exit(7);
 	}
-#ifdef i386
+#ifdef __i386__
 	if (dp->d_type == DTYPE_SCSI) {
 		fprintf(stderr, "SCSI disks don't use bad144!\n");
 		exit(1);
