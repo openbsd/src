@@ -85,15 +85,6 @@ both OpenBSD and SunOS environments on the same system.
     Although untested, it is likely that SunOS would be confused by a 
     filesystem with soft update flags enabled.
 
-OpenBSD supports both OpenBSD "native" disklabels and "Sun compatible"
-disklabels.  Unless you have some really good reason, you should stick
-with the Sun compatible labels.  The disklabel(8) "-r" switch says to
-use OpenBSD labels, which is a bit counter-intuitive and contrary to
-the reasons why might want to use "-r" on other OpenBSD ports.
-
-Don't use "-r" with disklabel(8).
-
-
 The OpenBSD "Sun Compatible" disklabel have been extended to support 16
 partitions, which may be compatible with Solaris, but the old SunOS
 format(8) utility only sees the first 8 partititions and may "lose"
