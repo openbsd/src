@@ -1,4 +1,4 @@
-/*      $OpenBSD: elf2olf.c,v 1.1 1996/11/06 21:13:50 etheisen Exp $    */
+/*      $OpenBSD: elf2olf.c,v 1.2 1996/11/06 21:34:00 etheisen Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen.  All rights reserved.
  *
@@ -30,7 +30,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.1 1996/11/06 21:13:50 etheisen Exp $";
+static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.2 1996/11/06 21:34:00 etheisen Exp $";
 #endif
 
 #include <stdlib.h>
@@ -194,13 +194,17 @@ main(int argc, char*argv[])
 		    if (write(fd, &ehdr, sizeof(Elf32_Ehdr)) == sizeof(Elf32_Ehdr)) {
 			if (verbose) {
 			    if (!olf2elf) {
-				printf("%s ELF => %s %s %s OLF.\n",
-				       *argv, *argv,
-				       ehdr.e_ident[OI_STRIP] ? \
-				           "stripped" : "unstripped",
-				       os_namev[ehdr.e_ident[OI_OS]]);
+				printf("ELF %s => OLF %d-bit %s %s linked %s OLF.\n",
+				       *argv,
+				       (ehdr.e_ident[OI_CLASS] == OLFCLASS32)?\
+				           32 : 64,
+				       os_namev[ehdr.e_ident[OI_OS]],
+				       ehdr.e_ident[OI_DYNAMIC] ? \
+				           "dynamically" : "statically", 
+				       !ehdr.e_ident[OI_STRIP] ?
+				           "stripped" : "unstripped");
 			    } else
-				printf("%s OLF => %s ELF.\n", *argv, *argv);
+				printf("OLF %s => ELF.\n", *argv);
 			}
 		    } else /* bad write */
 			warn(progname, *argv, errno);	
