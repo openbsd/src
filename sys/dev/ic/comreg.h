@@ -1,6 +1,37 @@
-/*	$OpenBSD: comreg.h,v 1.8 1998/02/23 11:41:25 downsj Exp $	*/
+/*	$OpenBSD: comreg.h,v 1.9 1998/05/14 05:59:42 downsj Exp $	*/
 /*	$NetBSD: comreg.h,v 1.8 1996/02/05 23:01:50 scottr Exp $	*/
 
+/*
+ * Copyright (c) 1997 - 1998, Jason Downs.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Jason Downs for the
+ *      OpenBSD system.
+ * 4. Neither the name(s) of the author(s) nor the name OpenBSD
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR(S) ``AS IS'' AND ANY EXPRESS
+ * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ * DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR(S) BE LIABLE FOR ANY DIRECT,
+ * INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+ * (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ * SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ * CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
  * All rights reserved.
@@ -78,6 +109,15 @@
 #define FIFO_XMT_TRIGGER_8	0x10
 #define FIFO_XMT_TRIGGER_24	0x20
 #define FIFO_XMT_TRIGGER_30	0x30
+/* XR16850 fifo control register */
+#define FIFO_RCV3_TRIGGER_8	FIFO_RCV_TRIGGER_8
+#define FIFO_RCV3_TRIGGER_16	FIFO_RCV_TRIGGER_16
+#define FIFO_RCV3_TRIGGER_56	0x80
+#define FIFO_RCV3_TRIGGER_60	0xc0
+#define FIFO_XMT3_TRIGGER_8	0x00
+#define FIFO_XMT3_TRIGGER_16	0x10
+#define FIFO_XMT3_TRIGGER_32	0x20
+#define FIFO_XMT3_TRIGGER_56	0x30
 /* TI16750 fifo control register */
 #define FIFO_ENABLE_64BYTE	0x20
 
@@ -95,6 +135,7 @@
 #define	LCR_7BITS	0x02	/* 7 bits */
 #define	LCR_6BITS	0x01	/* 6 bits */
 #define	LCR_5BITS	0x00	/* 5 bits */
+#define LCR_EFR		0xbf	/* ST16650/XR16850 EFR access enable */
 
 /* modem control register */
 #define	MCR_LOOPBACK	0x10	/* Loop test: echos from TX to RX */
@@ -130,6 +171,14 @@
 #define EFR_SCD		0x20	/* special character detect */
 #define EFR_RTS		0x40	/* RTS flow control */
 #define EFR_CTS		0x80	/* CTS flow control */
+
+/* enhanced FIFO control register */
+#define FCTL_MODE	0x80
+#define FCTL_SWAP	0x40
+#define FCTL_RS485	0x08
+#define FCTL_IrRxInv	0x04
+#define FCTL_TRIGGER2	0x10
+#define FCTL_TRIGGER3	0x20
 
 #define	COM_NPORTS	8
 
