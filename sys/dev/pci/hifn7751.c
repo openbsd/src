@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.85 2001/07/16 14:42:16 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.86 2001/07/18 15:49:29 jason Exp $	*/
 
 /*
  * Invertex AEON / Hifn 7751 driver
@@ -637,7 +637,8 @@ hifn_init_pci_registers(sc)
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_D_CTRL_ENA |
 	    HIFN_DMACSR_R_CTRL_ENA | HIFN_DMACSR_S_CTRL_ENA |
 	    HIFN_DMACSR_C_CTRL_ENA);
-	sc->sc_dmaier |= HIFN_DMAIER_R_DONE;
+	sc->sc_dmaier |= HIFN_DMAIER_R_DONE | HIFN_DMAIER_C_ABORT |
+	    HIFN_DMAIER_S_ABORT | HIFN_DMAIER_D_ABORT | HIFN_DMAIER_R_ABORT;
 	WRITE_REG_1(sc, HIFN_1_DMA_IER, sc->sc_dmaier);
 
 	WRITE_REG_0(sc, HIFN_0_PUCNFG, HIFN_PUCNFG_COMPSING |
@@ -1249,8 +1250,8 @@ hifn_intr(arg)
 {
 	struct hifn_softc *sc = arg;
 	struct hifn_dma *dma = sc->sc_dma;
-	u_int32_t dmacsr;
-	int i, r = 0, u;
+	u_int32_t dmacsr, restart;
+	int i, u;
 
 	dmacsr = READ_REG_1(sc, HIFN_1_DMA_CSR);
 
@@ -1263,23 +1264,32 @@ hifn_intr(arg)
 
 	/* Nothing in the DMA unit interrupted */
 	if ((dmacsr & sc->sc_dmaier) == 0)
-		return (r);
+		return (0);
 
 	if ((sc->sc_flags & HIFN_HAS_PUBLIC) &&
 	    (dmacsr & HIFN_DMACSR_PUBDONE)) {
-		r = 1;
 		dmacsr &= ~HIFN_DMACSR_PUBDONE;
 		WRITE_REG_1(sc, HIFN_1_PUB_STATUS,
 		    READ_REG_1(sc, HIFN_1_PUB_STATUS) | HIFN_PUBSTS_DONE);
 	}
 
 	if ((dmacsr & sc->sc_dmaier) == 0)
-		return (r);
-
-	r = 1;
+		return (0);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
 	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD); 
+
+	restart = dmacsr & (HIFN_DMACSR_C_ABORT | HIFN_DMACSR_S_ABORT |
+	    HIFN_DMACSR_D_ABORT | HIFN_DMACSR_R_ABORT);
+	if (restart) {
+		printf("%s: pci abort %x... restarting\n", sc->sc_dv.dv_xname,
+		    restart);
+		/* clear aborts... */
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, restart);
+		WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_C_CTRL_ENA |
+		    HIFN_DMACSR_S_CTRL_ENA | HIFN_DMACSR_D_CTRL_ENA |
+		    HIFN_DMACSR_R_CTRL_ENA);
+	}
 
 	if (dma->resu > HIFN_D_RES_RSIZE)
 		printf("%s: Internal Error -- ring overflow\n",
@@ -1344,7 +1354,7 @@ hifn_intr(arg)
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_DONE|HIFN_DMACSR_C_WAIT);
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_dmamap, 
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD); 
-	return (r);
+	return (1);
 }
 
 /*
