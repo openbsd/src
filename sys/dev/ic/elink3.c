@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.34 1999/08/08 21:46:15 niklas Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.35 1999/08/13 19:00:37 deraadt Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -154,7 +154,6 @@ int	epioctl __P((struct ifnet *, u_long, caddr_t));
 void	epstart __P((struct ifnet *));
 void	epwatchdog __P((struct ifnet *));
 void	epreset __P((struct ep_softc *));
-void	epshutdown __P((void *));
 void	epread __P((struct ep_softc *));
 struct mbuf *epget __P((struct ep_softc *, int));
 void	epmbuffill __P((void *));
@@ -347,9 +346,6 @@ epconfig(sc, chipset, enaddr)
 #endif
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
-
-	/*  Establish callback to reset card when we reboot. */
-	shutdownhook_establish(epshutdown, sc);
 
 	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
 	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
@@ -1465,19 +1461,6 @@ epstop(sc)
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RX_FILTER);
 
 	epmbufempty(sc);
-}
-
-/*
- * Before reboots, reset card completely.
- */
-void
-epshutdown(arg)
-	void *arg;
-{
-	register struct ep_softc *sc = arg;
-
-	epstop(sc);
-	ep_complete_cmd(sc, EP_COMMAND, GLOBAL_RESET);
 }
 
 /*
