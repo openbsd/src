@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.1 1998/06/23 19:45:28 mickey Exp $	*/
+/*	$OpenBSD: trap.h,v 1.2 1998/08/29 01:22:36 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -23,52 +23,48 @@
  * 	Utah $Hdr: trap.h 1.6 94/12/16$
  */
 
+#ifndef _MACHINE_TRAP_H_
+#define _MACHINE_TRAP_H_
+
 /*
  * Trap type values
  * also known in trap.c for name strings
  */
 
 #define	T_NONEXIST	0
-#define	T_HPMACH_CHK	1
-#define	T_POW_FAIL	2
-#define	T_RECOV_CTR	3
-#define	T_EXT_INTP	4
-#define	T_LPMACH_CHK	5
-#define	T_IPGFT		6
-#define	T_IMEM_PROT	7
-#define	T_UNIMPL_INST	8
-#define	T_BRK_INST	9
+#define	T_HPMC		1
+#define	T_POWERFAIL	2
+#define	T_RECOVERY	3
+#define	T_INTERRUPT	4
+#define	T_LPMC		5
+#define	T_ITLBMISS	6
+#define	T_IPROT		7
+#define	T_ILLEGAL	8
+#define	T_IBREAK	9
 #define	T_PRIV_OP	10
 #define	T_PRIV_REG	11
-#define	T_OVFLO		12
-#define	T_COND		13
-#define	T_EXCEP		14
-#define	T_DPGFT		15
-#define	T_IPGFT_NA	16
-#define	T_DPGFT_NA	17
-#define	T_DMEM_PROT	18
-#define	T_DMEM_BREAK	19
+#define	T_OVERFLOW	12
+#define	T_CONDITION	13
+#define	T_EXCEPTION	14
+#define	T_DTLBMISS	15
+#define	T_ITLBMISSNA	16
+#define	T_DTLBMISSNA	17
+#define	T_DPROT		18
+#define	T_DBREAK       	19
 #define	T_TLB_DIRTY	20
-#define	T_VIO_REF	21
-#define	T_EMULAT	22
-#define	T_HPRIV_XFR	23
-#define	T_LPRIV_XFR	24
-#define	T_TAKEN_BR	25
+#define	T_PAGEREF	21
+#define	T_EMULATION	22
+#define	T_HIGHERPL	23
+#define	T_LOWERPL	24
+#define	T_TAKENBR	25
 
-#define	T_DMEM_ACC	26	/* 7100 */
-#define	T_DMEM_PID	27	/* 7100 */
-#define	T_DMEM_UNALIGN	28	/* 7100 */
+#define	T_DATACC	26	/* 7100 */
+#define	T_DATAPID	27	/* 7100 */
+#define	T_DATALIGN	28	/* 7100 */
 
 #define	T_ICS_OVFL	30	/* SW: interrupt stack overflow */
 #define	T_KS_OVFL	31	/* SW: kernel stack overflow */
 
 #define	T_USER		0x20	/* user-mode flag or'ed with type */
 
-/* definitions for <sys/signal.h> */
-#define	    ILL_PRIVREG_FAULT	0x4
-#define	    ILL_UNIMPL_INST	0x8
-#define     ILL_PRIV_OP		0x10
-#define     ILL_PRIV_REG	0x11
-#define     ILL_OVFLO		0x12
-#define     ILL_COND		0x13
-#define     ILL_EXCEP		0x14
+#endif /* _MACHINE_TRAP_H_ */
