@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.73 2002/01/24 22:38:03 mickey Exp $
+#	$OpenBSD: files.isa,v 1.74 2002/01/27 21:03:53 mickey Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -92,11 +92,6 @@ file	dev/isa/pcdisplay.c	pcdisplay	needs-flag
 #
 
 # BusLogic BT-74x EISA family (XXX; should be EISA.  it's special)
-device	bt: scsi, isa_dma
-attach	bt at isa
-file	dev/isa/bt.c			bt needs-count
-
-# 
 attach	bha at isa with bha_isa: isa_dma
 file	dev/isa/bha_isa.c		bha_isa
 
