@@ -1,4 +1,4 @@
-/*   $OpenBSD: eh.S,v 1.44 2003/10/05 21:22:02 miod Exp $   */
+/*   $OpenBSD: eh.S,v 1.45 2003/10/09 16:30:58 miod Exp $   */
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -947,9 +947,7 @@ ASLOCAL(m88110_badaddr__return_nonzero)
 	stcr	r0, DPAR
 	/* FALLTHROUGH */
 #endif
-#ifdef M88100
 ASLOCAL(badaddr__return_nonzero)
-#endif
 	or	r2, r0, 1
 	/* FALLTHROUGH */
 

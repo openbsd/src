@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.54 2003/10/05 20:27:47 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.55 2003/10/09 16:30:58 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -204,7 +204,10 @@ m88100_trap(unsigned type, struct m88100_saved_state *frame)
 	unsigned nss, fault_addr;
 	struct vmspace *vm;
 	union sigval sv;
-	int result, s;
+	int result;
+#ifdef DDB
+	int s;
+#endif
 	int sig = 0;
 	unsigned pc = PC_REGS(frame);  /* get program counter (sxip) */
 

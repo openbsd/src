@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.116 2003/10/05 20:27:47 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.117 2003/10/09 16:30:58 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -2293,8 +2293,12 @@ mvme_bootstrap()
 {
 	extern int kernelstart;
 	extern struct consdev *cn_tab;
+#ifdef MVME197
 	extern struct cmmu_p cmmu88110;
+#endif
+#if defined(MVME187) || defined(MVME188)
 	extern struct cmmu_p cmmu8820x;
+#endif
 	extern void set_tcfp(void);
 
 	struct mvmeprom_brdid brdid;
