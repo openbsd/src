@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cgsix.4,v 1.7 1999/09/09 02:40:21 jason Exp $
+.\"	$OpenBSD: cgsix.4,v 1.8 2000/04/21 03:26:36 pjanzen Exp $
 .\"	$NetBSD: cgsix.4,v 1.4 1998/06/11 08:32:20 fair Exp $
 .\"
 .\" Copyright 1994
@@ -37,7 +37,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	from: @(#)cgsix.4	8.1 (Berkeley) 2/16/94
-.\"	$Id: cgsix.4,v 1.7 1999/09/09 02:40:21 jason Exp $
+.\"	$Id: cgsix.4,v 1.8 2000/04/21 03:26:36 pjanzen Exp $
 .\"
 .Dd February 16, 1994
 .Dt CGSIX 4 sparc
@@ -63,4 +63,30 @@ It supports the minimal ioctl's needed to run
 .Xr cgthree 4 ,
 .Xr cgtwo 4 ,
 .Xr p9100 4 ,
-.Xr tcx 4 ,
+.Xr tcx 4
+.Sh BUGS
+Several firmware revisions of the
+.Nm cgsix ,
+in particular those found in the SparcStation 5, have a
+bug that occurs when the screen control sequences for inserting blank lines
+(i.e., the control sequences produced by the
+.So al Sc and So AL Sc
+capabilities found in the
+.Xr termcap 5
+database) are used near the bottom end of the screen.
+This bug is most likely to be encountered during the
+use of a full-screen editor such as
+.Xr vi 1
+on the workstation's console.
+.Pp
+To work around this bug, the
+.Ev TERM
+environment variable should be set to
+.Sq sun-ss5 ,
+which is the same as the
+.Sq sun
+entry except without the
+.Sq al
+and
+.Sq AL
+capabilities.
