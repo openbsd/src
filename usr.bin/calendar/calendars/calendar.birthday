@@ -1,7 +1,7 @@
 /*
  * Birthday
  *
- * $OpenBSD: calendar.birthday,v 1.23 2002/10/16 17:31:48 markus Exp $
+ * $OpenBSD: calendar.birthday,v 1.24 2003/07/02 00:08:24 avsm Exp $
  */
 
 #ifndef _calendar_birthday_
@@ -109,7 +109,7 @@
 03/30	Francisco Jose de Goya born, 1746
 03/30	Sean O'Casey born, 1880
 03/30	Vincent Van Gogh born, 1853
-03/30	Adolph Hitler comitted suicide, 1945
+03/30	Adolph Hitler committed suicide, 1945
 03/31	Rene Descartes born, 1596, mathematician & philosopher
 03/31	Nikolay Vasilyevich Gogol born, 1809
 04/03	Washington Irving born, 1783
