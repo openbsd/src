@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_join.3,v 1.5 1999/11/24 05:35:32 d Exp $
+.\" $OpenBSD: pthread_join.3,v 1.6 2001/06/24 23:46:35 jasoni Exp $
 .\" Copyright (c) 1996-1998 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
 .\"
@@ -70,7 +70,7 @@ is cancelled, then the target thread is not detached.
 A thread that has exited but remains unjoined counts against
 [_POSIX_THREAD_THREADS_MAX].
 .Sh RETURN VALUES
-If successful,  the
+If successful, the
 .Fn pthread_join
 function will return zero. Otherwise an error number will be returned to
 indicate the error.

@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthread_setspecific.3,v 1.7 2001/05/31 03:12:27 deraadt Exp $
+.\" $OpenBSD: pthread_setspecific.3,v 1.8 2001/06/24 23:46:35 jasoni Exp $
 .\" Copyright (c) 1996 John Birrell <jb@cimlogic.com.au>.
 .\" All rights reserved.
 .\"
@@ -66,7 +66,7 @@ is undefined.
 may be called from a thread-specific data destructor function; however, this
 may result in lost storage or infinite loops.
 .Sh RETURN VALUES
-If successful,  the
+If successful, the
 .Fn pthread_setspecific
 function will return zero. Otherwise an error number will be returned to
 indicate the error.
