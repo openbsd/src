@@ -1,4 +1,4 @@
-/* $OpenBSD: ike_quick_mode.c,v 1.85 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: ike_quick_mode.c,v 1.86 2004/08/14 13:29:50 hshoexer Exp $	 */
 /* $EOM: ike_quick_mode.c,v 1.139 2001/01/26 10:43:17 niklas Exp $	 */
 
 /*
@@ -1727,6 +1727,9 @@ next_sa:
 	/*
 	 * Check for accepted identities as well as lookup the connection
 	 * name and set it on the exchange.
+	 *
+	 * When not using policies make sure the peer proposes sane IDs.
+	 * Otherwise this is done by KeyNote.
          */
 	name = connection_passive_lookup_by_ids(ie->id_ci, ie->id_cr);
 	if (name) {
@@ -1736,20 +1739,16 @@ next_sa:
 			    "strdup (\"%s\") failed", name);
 			goto cleanup;
 		}
-	}
-#if !defined (USE_POLICY) && !defined (USE_KEYNOTE)
-	else {
-		/*
-		 * This code is no longer necessary, as policy determines
-		 * acceptance of IDs/SAs. (angelos@openbsd.org)
-	         *
-		 * XXX Keep it if not USE_POLICY for now, though.
-	         */
-
-		/* XXX Notify peer and log.  */
+	} else if (ignore_policy || strncmp("yes", conf_get_str("General",
+	    "Use-Keynote"), 3)) {
+		log_print("responder_recv_HASH_SA_NONCE: peer proposed "
+		    "invalid phase 2 IDs: %s",
+		        (exchange->doi->decode_ids("initiator id %s, responder"
+			" id %s", ie->id_ci, ie->id_ci_sz, ie->id_cr,
+			ie->id_cr_sz, 1)));
+		message_drop(msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
 		goto cleanup;
 	}
-#endif				/* !USE_POLICY && !USE_KEYNOTE */
 
 	return retval;
 
