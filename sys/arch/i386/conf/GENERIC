@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.214 2000/11/16 19:40:16 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.215 2000/11/17 15:13:20 aaron Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -386,7 +386,7 @@ audio*	at clcs?
 audio*	at ich?
 audio*	at fms?
 audio*	at auvia?
-#audio*	at uaudio?
+audio*	at uaudio?
 
 bktr0   at pci? dev ? function ?
 
