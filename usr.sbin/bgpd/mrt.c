@@ -1,4 +1,4 @@
-/*	$OpenBSD: mrt.c,v 1.19 2004/01/07 12:34:23 claudio Exp $ */
+/*	$OpenBSD: mrt.c,v 1.20 2004/01/10 16:20:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -38,10 +38,13 @@
  * XXX imsg_create(), imsg_add(), imsg_close() ...
  */
 
-static int	mrt_dump_entry(struct mrt_config *, struct prefix *, u_int16_t,
-		    struct peer_config *);
-static int	mrt_dump_header(struct buf *, u_int16_t, u_int16_t, u_int32_t);
-static int	mrt_open(struct mrt *);
+static u_int16_t	mrt_attr_length(struct attr_flags *);
+static int		mrt_attr_dump(void *, u_int16_t, struct attr_flags *);
+static int		mrt_dump_entry(struct mrt_config *, struct prefix *,
+			    u_int16_t, struct peer_config *);
+static int		mrt_dump_header(struct buf *, u_int16_t, u_int16_t,
+			    u_int32_t);
+static int		mrt_open(struct mrt *);
 
 #define DUMP_BYTE(x, b)							\
 	do {								\
@@ -196,6 +199,79 @@ mrt_dump_state(struct mrt_config *mrt, u_int16_t old_state, u_int16_t new_state,
 
 }
 
+static u_int16_t
+mrt_attr_length(struct attr_flags *a)
+{
+	struct attr	*oa;
+	u_int16_t	 alen, plen;
+
+	alen = 4 /* origin */ + 7 /* nexthop */ + 7 /* lpref */;
+	plen = aspath_length(a->aspath);
+	alen += 2 + plen + (plen > 255 ? 2 : 1);
+	if (a->med != 0)
+		alen += 7;
+
+	TAILQ_FOREACH(oa, &a->others, attr_l)
+		alen += 2 + oa->len + (oa->len > 255 ? 2 : 1);
+
+	return alen;
+}
+
+static int
+mrt_attr_dump(void *p, u_int16_t len, struct attr_flags *a)
+{
+	struct attr	*oa;
+	u_char		*buf = p;
+	u_int32_t	 tmp32;
+	int		 r;
+	u_int16_t	 aslen, wlen = 0;
+
+	/* origin */
+	if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN, ATTR_ORIGIN,
+	    &a->origin, 1)) == -1)
+		return (-1);
+	wlen += r; len -= r;
+
+	/* aspath */
+	aslen = aspath_length(a->aspath);
+	if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN, ATTR_ASPATH,
+	    aspath_dump(a->aspath), aslen)) == -1)
+		return (-1);
+	wlen += r; len -= r;
+
+	/* nexthop, already network byte order */
+	if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN, ATTR_NEXTHOP,
+	    &a->nexthop, 4)) ==	-1)
+		return (-1);
+	wlen += r; len -= r;
+
+	/* MED, non transitive */
+	if (a->med != 0) {
+		tmp32 = htonl(a->med);
+		if ((r = attr_write(buf + wlen, len, ATTR_OPTIONAL, ATTR_MED,
+		    &tmp32, 4)) == -1)
+			return (-1);
+		wlen += r; len -= r;
+	}
+
+	/* local preference, only valid for ibgp */
+	tmp32 = htonl(a->lpref);
+	if ((r = attr_write(buf + wlen, len, ATTR_WELL_KNOWN, ATTR_LOCALPREF,
+	    &tmp32, 4)) == -1)
+		return (-1);
+	wlen += r; len -= r;
+
+	/* dump all other path attributes without modification */
+	TAILQ_FOREACH(oa, &a->others, attr_l) {
+		if ((r = attr_write(buf + wlen, len, oa->flags, oa->type,
+		    oa->data, oa->len)) == -1)
+			return (-1);
+		wlen += r; len -= r;
+	}
+
+	return (wlen);
+}
+
 static int
 mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
     struct peer_config *peer)
@@ -206,7 +282,7 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 	u_int16_t	 len, attr_len;
 	int		 n;
 
-	attr_len = attr_length(&p->aspath->flags);
+	attr_len = mrt_attr_length(&p->aspath->flags);
 	len = MRT_DUMP_HEADER_SIZE + attr_len;
 
 	hdr.len = len + IMSG_HEADER_SIZE + MRT_HEADER_SIZE;
@@ -244,8 +320,8 @@ mrt_dump_entry(struct mrt_config *mrt, struct prefix *p, u_int16_t snum,
 		return (-1);
 	}
 
-	if (attr_dump(bptr, attr_len, &p->aspath->flags) == -1) {
-		logit(LOG_ERR, "mrt_dump_entry: attr_dump error");
+	if (mrt_attr_dump(bptr, attr_len, &p->aspath->flags) == -1) {
+		logit(LOG_ERR, "mrt_dump_entry: mrt_attr_dump error");
 		buf_free(buf);
 		return (-1);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.14 2004/01/06 10:51:14 claudio Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.15 2004/01/10 16:20:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -75,135 +75,153 @@ struct rib_stats {
 #define MAX_PREFIX_PER_AS 1500
 
 /* attribute specific functions */
+void	attr_optfree(struct attr_flags *);
 
 int
-attr_equal(struct attr_flags *a, struct attr_flags *b)
+attr_compare(struct attr_flags *a, struct attr_flags *b)
 {
-	/* astags not yet used */
-	if (a->origin != b->origin ||
-	    aspath_equal(a->aspath, b->aspath) == 0 ||
-	    a->nexthop.s_addr != b->nexthop.s_addr ||
-	    a->med != b->med ||
-	    a->lpref != b->lpref ||
-	    a->aggr_atm != b->aggr_atm ||
-	    a->aggr_as != b->aggr_as ||
-	    a->aggr_ip.s_addr != b->aggr_ip.s_addr)
-		return 0;
-	return 1;
+	struct attr	*oa, *ob;
+	int		 r;
+
+	if (a->origin > b->origin)
+		return (1);
+	if (a->origin < b->origin)
+		return (-1);
+	if (a->nexthop.s_addr > b->nexthop.s_addr)
+		return (1);
+	if (a->nexthop.s_addr < b->nexthop.s_addr)
+		return (-1);
+	if (a->med > b->med)
+		return (1);
+	if (a->med < b->med)
+		return (-1);
+	if (a->lpref > b->lpref) 
+		return (1);
+	if (a->lpref < b->lpref) 
+		return (-1);
+	r = aspath_compare(a->aspath, b->aspath);
+	if (r > 0)
+		return (1);
+	if (r < 0)
+		return (-1);
+
+	for (oa = TAILQ_FIRST(&a->others), ob = TAILQ_FIRST(&b->others);
+	   oa != TAILQ_END(&a->others) && ob != TAILQ_END(&a->others);
+	   oa = TAILQ_NEXT(oa, attr_l), ob = TAILQ_NEXT(ob, attr_l)) {
+		if (oa->type > ob->type)
+			return (1);
+		if (oa->type < ob->type)
+			return (-1);
+		if (oa->len > ob->len)
+			return (1);
+		if (oa->len < ob->len)
+			return (-1);
+		r = memcmp(oa->data, ob->data, oa->len);
+		if (r > 0)
+			return (1);
+		if (r < 0)
+			return (-1);
+	}
+	if (oa != TAILQ_END(&a->others))
+		return (1);
+	if (ob != TAILQ_END(&a->others))
+		return (-1);
+	return (0);
 }
 
 void
 attr_copy(struct attr_flags *t, struct attr_flags *s)
 {
+	struct attr	*os;
 	/*
 	 * first copy the full struct, then replace the path and tags with
 	 * a own copy.
 	 */
 	memcpy(t, s, sizeof(struct attr_flags));
-	/* XXX we could speed that a bit with a direct malloc, memcpy */
 	t->aspath = aspath_create(s->aspath->data, s->aspath->hdr.len);
-	t->astags = NULL;	/* XXX NOT YET */
-}
-
-u_int16_t
-attr_length(struct attr_flags *attr)
-{
-	u_int16_t	alen, plen;
-
-	alen = 4 /* origin */ + 7 /* nexthop */ + 7 /* lpref */;
-	plen = aspath_length(attr->aspath);
-	alen += 2 + plen + (plen > 255 ? 2 : 1);
-	if (attr->med != 0)
-		alen += 7;
-	if (attr->aggr_atm == 1)
-		alen += 3;
-	if (attr->aggr_as != 0)
-		alen += 9;
-
-	return alen;
+	TAILQ_INIT(&t->others);
+	TAILQ_FOREACH(os, &s->others, attr_l)
+		attr_optadd(t, os->flags, os->type, os->data, os->len);
 }
 
 int
-attr_dump(void *p, u_int16_t len, struct attr_flags *a)
+attr_write(void *p, u_int16_t p_len, u_int8_t flags, u_int8_t type,
+    void *data, u_int16_t data_len)
 {
-	u_char		*buf = p;
-	u_int32_t	 tmp32;
-	u_int16_t	 tmp16;
-	u_int16_t	 aslen, wlen = 0;
+	u_char		*b = p;
+	u_int16_t	 tmp, tot_len = 2; /* attribute header (without len) */
 
-#define ATTR_WRITE(b, a, alen)				\
-	do {						\
-		if ((wlen + (alen)) > len)		\
-			return (-1);			\
-		memcpy((b) + wlen, (a), (alen));	\
-		wlen += (alen);				\
-	} while (0)
-#define ATTR_WRITEB(b, c)				\
-	do {						\
-		if (wlen == len || (c) > 0xff)		\
-			return (-1);			\
-		(b)[wlen++] = (c);			\
-	} while (0)
-
-	/* origin */
-	ATTR_WRITEB(buf, ATTR_ORIGIN_FLAGS);
-	ATTR_WRITEB(buf, ATTR_ORIGIN);
-	ATTR_WRITEB(buf, 1);
-	ATTR_WRITEB(buf, a->origin);
-
-	/* aspath */
-	aslen = aspath_length(a->aspath);
-	ATTR_WRITEB(buf, ATTR_TRANSITIVE | (aslen>255 ? ATTR_EXTLEN : 0));
-	ATTR_WRITEB(buf, ATTR_ASPATH);
-	if (aslen > 255) {
-		tmp16 = htonl(aslen);
-		ATTR_WRITE(buf, &tmp16, 4);
+	if (data_len > 255) {
+		tot_len += 2 + data_len;
+		flags |= ATTR_EXTLEN;
 	} else
-		ATTR_WRITEB(buf, aslen);
-	ATTR_WRITE(buf, aspath_dump(a->aspath), aslen);
+		tot_len += 1 + data_len;
 
-	/* nexthop */
-	ATTR_WRITEB(buf, ATTR_NEXTHOP_FLAGS);
-	ATTR_WRITEB(buf, ATTR_NEXTHOP);
-	ATTR_WRITEB(buf, 4);
-	ATTR_WRITE(buf, &a->nexthop, 4);	/* network byte order */
+	if (tot_len > p_len)
+		return (-1);
 
-	/* MED */
-	if (a->med != 0) {
-		ATTR_WRITEB(buf, ATTR_MED_FLAGS);
-		ATTR_WRITEB(buf, ATTR_MED);
-		ATTR_WRITEB(buf, 4);
-		tmp32 = htonl(a->med);
-		ATTR_WRITE(buf, &tmp32, 4);
+	*b++ = flags;
+	*b++ = type;
+	if (data_len > 255) {
+		tmp = htons(data_len);
+		memcpy(b, &tmp, 2);
+		b += 2;
+	} else
+		*b++ = (u_char)(data_len & 0xff);
+
+	if (data_len != 0)
+		memcpy(b, data, data_len);
+
+	return (tot_len);
+}
+
+void
+attr_optadd(struct attr_flags *attr, u_int8_t flags, u_int8_t type,
+    u_char *data, u_int16_t len)
+{
+	struct attr	*a, *p;
+
+	if (flags & ATTR_OPTIONAL && ! flags & ATTR_TRANSITIVE)
+		/*
+		 * We already know that we're not intrested in this attribute.
+		 * Currently only the MED is optional and non-transitive but
+		 * MED is directly stored in struct attr_flags.
+		 */
+		return;
+
+	a = calloc(1, sizeof(struct attr));
+	if (a == NULL)
+		fatal("attr_optadd");
+	a->flags = flags;
+	a->type = type;
+	a->len = len;
+	if (len != 0) {
+		a->data = malloc(len);
+		if (a->data == NULL)
+			fatal("attr_optadd");
+		memcpy(a->data, data, len);
 	}
-
-	/* local preference */
-	ATTR_WRITEB(buf, ATTR_LOCALPREF_FLAGS);
-	ATTR_WRITEB(buf, ATTR_LOCALPREF);
-	ATTR_WRITEB(buf, 4);
-	tmp32 = htonl(a->lpref);
-	ATTR_WRITE(buf, &tmp32, 4);
-
-	/* atomic aggregate */
-	if (a->aggr_atm == 1) {
-		ATTR_WRITEB(buf, ATTR_ATOMIC_AGGREGATE_FLAGS);
-		ATTR_WRITEB(buf, ATTR_ATOMIC_AGGREGATE);
-		ATTR_WRITEB(buf, 0);
+	/* keep a sorted list */
+	TAILQ_FOREACH_REVERSE(p, &attr->others, attr_l, attr_list) {
+		if (type > p->type) {
+			TAILQ_INSERT_AFTER(&attr->others, p, a, attr_l);
+			return;
+		}
+		ENSURE(type != p->type);
 	}
+}
 
-	/* aggregator */
-	if (a->aggr_as != 0) {
-		ATTR_WRITEB(buf, ATTR_AGGREGATOR_FLAGS);
-		ATTR_WRITEB(buf, ATTR_AGGREGATOR);
-		ATTR_WRITEB(buf, 6);
-		tmp16 = htons(a->aggr_as);
-		ATTR_WRITE(buf, &tmp16, 2);
-		ATTR_WRITE(buf, &a->aggr_ip, 4);	/* network byte order */
+void
+attr_optfree(struct attr_flags *attr)
+{
+	struct attr	*a, *xa;
+
+	for (a = TAILQ_FIRST(&attr->others); a != TAILQ_END(&attr->others);
+	    a = xa) {
+		xa = TAILQ_NEXT(a, attr_l);
+		free(a->data);
+		free(a);
 	}
-
-	return wlen;
-#undef ATTR_WRITEB
-#undef ATTR_WRITE
 }
 
 /* aspath specific functions */
@@ -367,11 +385,19 @@ aspath_hash(struct aspath *aspath)
 }
 
 int
-aspath_equal(struct aspath *a1, struct aspath *a2)
+aspath_compare(struct aspath *a1, struct aspath *a2)
 {
-	if (a1->hdr.len == a2->hdr.len &&
-	    memcmp(a1->data, a2->data, a1->hdr.len) == 0)
-		return 1;
+	int r;
+
+	if (a1->hdr.len > a2->hdr.len)
+		return (1);
+	if (a1->hdr.len < a2->hdr.len)
+		return (-1);
+	r = memcmp(a1->data, a2->data, a1->hdr.len);
+	if (r > 0)
+		return (1);
+	if (r < 0)
+		return (-1);
 	return 0;
 }
 
@@ -418,10 +444,15 @@ path_update(struct rde_peer *peer, struct attr_flags *attrs,
 	RIB_STAT(path_update);
 
 	if ((asp = path_get(attrs->aspath, peer)) == NULL) {
+		/* path not available */
 		asp = path_add(peer, attrs);
 		pte = prefix_add(asp, prefix, prefixlen);
 	} else {
-		if (attr_equal(&asp->flags, attrs) == 0) {
+		if (attr_compare(&asp->flags, attrs) == 0)
+			/* path are equal, just add prefix */
+			pte = prefix_add(asp, prefix, prefixlen);
+		else {
+			/* non equal path attributes create new path */
 			if ((p = prefix_get(asp,
 			    prefix, prefixlen)) == NULL) {
 				asp = path_add(peer, attrs);
@@ -430,8 +461,7 @@ path_update(struct rde_peer *peer, struct attr_flags *attrs,
 				asp = path_add(peer, attrs);
 				pte = prefix_move(asp, p);
 			}
-		} else
-			pte = prefix_add(asp, prefix, prefixlen);
+		}
 	}
 }
 
@@ -447,7 +477,7 @@ path_get(struct aspath *aspath, struct rde_peer *peer)
 	ENSURE(head != NULL);
 
 	LIST_FOREACH(asp, head, path_l) {
-		if (aspath_equal(asp->flags.aspath, aspath) &&
+		if (aspath_compare(asp->flags.aspath, aspath) == 0 &&
 		    peer == asp->peer)
 			return asp;
 	}
@@ -553,14 +583,10 @@ path_unlink(struct rde_aspath *asp)
 	asp->peer = NULL;
 	asp->nexthop = NULL;
 
-	/* free the aspath and astags */
+	/* free the aspath and all other path attributes */
 	aspath_destroy(asp->flags.aspath);
 	asp->flags.aspath = NULL;
-
-	/*
-	 * astags_destroy(asp->flags.astags);
-	 * asp->flags.astags = NULL;
-	 */
+	attr_optfree(&asp->flags);
 }
 
 /* alloc and initialize new entry. May not fail. */
@@ -585,7 +611,7 @@ path_free(struct rde_aspath *asp)
 	RIB_STAT(path_free);
 	ENSURE(asp->peer == NULL &&
 	    asp->flags.aspath == NULL &&
-	    asp->flags.astags == NULL);
+	    TAILQ_EMPTY(&asp->flags.others));
 	free(asp);
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.11 2004/01/06 10:51:14 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.12 2004/01/10 16:20:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -21,6 +21,7 @@
 
 #include <sys/types.h>
 #include <sys/queue.h>
+#include <sys/tree.h>
 
 #include "bgpd.h"
 
@@ -48,14 +49,27 @@ enum peer_state {
  */
 LIST_HEAD(rde_peer_head, rde_peer);
 LIST_HEAD(aspath_head, rde_aspath);
+RB_HEAD(uptree_prefix, update_prefix);
+RB_HEAD(uptree_attr, update_attr);
+TAILQ_HEAD(uplist_prefix, update_prefix);
+TAILQ_HEAD(uplist_attr, update_attr);
 
 struct rde_peer {
-	LIST_ENTRY(rde_peer)		hash_l;	/* hash list over all peers */
-	LIST_ENTRY(rde_peer)		peer_l; /* list of all peers */
-	struct aspath_head		path_h; /* list of all as paths */
-	struct peer_config		conf;
-	u_int32_t			remote_bgpid;
-	enum peer_state			state;
+	LIST_ENTRY(rde_peer)		 hash_l; /* hash list over all peers */
+	LIST_ENTRY(rde_peer)		 peer_l; /* list of all peers */
+	struct aspath_head		 path_h; /* list of all as paths */
+	struct peer_config		 conf;
+	u_int32_t			 remote_bgpid;
+	enum peer_state			 state;
+	struct in_addr			 if_ip; /* nexthop for announcements*/
+	u_int32_t			 up_pcnt;
+	u_int32_t			 up_acnt;
+	u_int32_t			 up_nlricnt;
+	u_int32_t			 up_wcnt;
+	struct uptree_prefix		 up_prefix;
+	struct uptree_attr		 up_attrs;
+	struct uplist_attr		 updates;
+	struct uplist_prefix		 withdraws;
 };
 
 #define AS_SET			1
@@ -114,29 +128,29 @@ enum attrtypes {
 #define ATTR_OPTIONAL		0x80
 
 /* default attribute flags for well known attributes */
-#define ATTR_ORIGIN_FLAGS	ATTR_TRANSITIVE
-#define ATTR_NEXTHOP_FLAGS	ATTR_TRANSITIVE
-#define ATTR_MED_FLAGS		ATTR_OPTIONAL
-#define ATTR_LOCALPREF_FLAGS	ATTR_TRANSITIVE
-#define ATTR_ATOMIC_AGGREGATE_FLAGS	ATTR_TRANSITIVE
-#define ATTR_AGGREGATOR_FLAGS	(ATTR_OPTIONAL | ATTR_TRANSITIVE)
+#define ATTR_WELL_KNOWN		ATTR_TRANSITIVE
 
-enum origins {
-	ORIGIN_IGP,
-	ORIGIN_EGP,
-	ORIGIN_INCOMPLETE
+struct attr {
+	u_int8_t			 flags;
+	u_int8_t			 type;
+	u_int16_t			 len;
+	u_char				*data;
+	TAILQ_ENTRY(attr)		 attr_l;
 };
 
+TAILQ_HEAD(attr_list, attr);
+
+#define ORIGIN_IGP		0
+#define ORIGIN_EGP		1
+#define ORIGIN_INCOMPLETE	2
+
 struct attr_flags {
-	enum origins			 origin;
 	struct aspath			*aspath;
-	struct astags			*astags;
 	struct in_addr			 nexthop;	/* exit nexthop */
 	u_int32_t			 med;		/* multi exit disc */
 	u_int32_t			 lpref;		/* local pref */
-	u_int8_t			 aggr_atm;	/* atomic aggregate */
-	u_int16_t			 aggr_as;	/* aggregator as */
-	struct in_addr			 aggr_ip;	/* aggregator ip */
+	u_int8_t			 origin;
+	struct attr_list		 others;
 };
 
 enum nexthop_state {
@@ -206,10 +220,12 @@ void		 rde_send_kroute(struct prefix *, struct prefix *);
 void		 rde_send_nexthop(in_addr_t, int);
 
 /* rde_rib.c */
-int		 attr_equal(struct attr_flags *, struct attr_flags *);
+int		 attr_compare(struct attr_flags *, struct attr_flags *);
 void		 attr_copy(struct attr_flags *, struct attr_flags *);
-u_int16_t	 attr_length(struct attr_flags *);
-int		 attr_dump(void *, u_int16_t, struct attr_flags *);
+int		 attr_write(void *, u_int16_t, u_int8_t, u_int8_t, void *,
+		     u_int16_t);
+void		 attr_optadd(struct attr_flags *, u_int8_t, u_int8_t,
+		     u_char *, u_int16_t);
 
 int		 aspath_verify(void *, u_int16_t, u_int16_t);
 #define		 AS_ERR_LEN	-1
@@ -222,11 +238,11 @@ u_int16_t	 aspath_length(struct aspath *);
 u_int16_t	 aspath_count(struct aspath *);
 u_int16_t	 aspath_neighbour(struct aspath *);
 u_long		 aspath_hash(struct aspath *);
-int		 aspath_equal(struct aspath *, struct aspath *);
+int		 aspath_compare(struct aspath *, struct aspath *);
 
 void		 path_init(u_long);
 void		 path_update(struct rde_peer *, struct attr_flags *,
-			    struct in_addr , int);
+		     struct in_addr , int);
 struct rde_aspath *path_get(struct aspath *, struct rde_peer *);
 struct rde_aspath *path_add(struct rde_peer *, struct attr_flags *);
 void		 path_remove(struct rde_aspath *);
@@ -249,6 +265,11 @@ void		 nexthop_update(struct kroute_nexthop *);
 
 /* rde_decide.c */
 void		 prefix_evaluate(struct prefix *, struct pt_entry *);
+void		 up_init(struct rde_peer *);
+void		 up_down(struct rde_peer *);
+int		 up_dump_prefix(u_char *, int, struct uplist_prefix *,
+		     struct rde_peer *);
+int		 up_dump_attrnlri(u_char *, int, struct rde_peer *);
 
 /* rde_prefix.c */
 void		 pt_init(void);

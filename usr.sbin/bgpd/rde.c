@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.50 2004/01/07 12:38:36 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.51 2004/01/10 16:20:29 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -42,11 +42,13 @@ int		 rde_update_dispatch(struct imsg *);
 int		 rde_update_get_prefix(u_char *, u_int16_t, struct in_addr *,
 		     u_int8_t *);
 void		 init_attr_flags(struct attr_flags *);
-int		 rde_update_get_attr(u_char *, u_int16_t, struct attr_flags *);
+int		 rde_update_get_attr(struct rde_peer *, u_char *, u_int16_t,
+		     struct attr_flags *);
 void		 rde_update_err(u_int32_t, enum suberr_update);
 void		 rde_update_log(const char *,
 		     const struct rde_peer *, const struct attr_flags *,
 		     const struct in_addr *, u_int8_t);
+void		 rde_update_queue_runner(void);
 
 void		 peer_init(struct peer *, u_long);
 struct rde_peer	*peer_add(u_int32_t, struct peer_config *);
@@ -166,6 +168,7 @@ rde_main(struct bgpd_config *config, struct peer *peer_l, int pipe_m2r[2],
 			nfds--;
 			rde_dispatch_imsg_session(&ibuf_se);
 		}
+		rde_update_queue_runner();
 	}
 
 	logit(LOG_INFO, "route decision engine exiting");
@@ -364,7 +367,8 @@ rde_update_dispatch(struct imsg *imsg)
 
 	init_attr_flags(&attrs);
 	while (attrpath_len > 0) {
-		if ((pos = rde_update_get_attr(p, attrpath_len, &attrs)) < 0) {
+		if ((pos = rde_update_get_attr(peer, p, attrpath_len,
+		    &attrs)) < 0) {
 			rde_update_err(peer->conf.id, ERR_UPD_ATTRLIST);
 			return (-1);
 		}
@@ -436,15 +440,16 @@ init_attr_flags(struct attr_flags *a)
 {
 	bzero(a, sizeof(struct attr_flags));
 	a->origin = ORIGIN_INCOMPLETE;
+	TAILQ_INIT(&a->others);
 }
 
 int
-rde_update_get_attr(u_char *p, u_int16_t len, struct attr_flags *a)
+rde_update_get_attr(struct rde_peer *peer, u_char *p, u_int16_t len,
+    struct attr_flags *a)
 {
 	u_int32_t	 tmp32;
 	u_int16_t	 attr_len;
 	u_int16_t	 plen = 0;
-	u_int16_t	 tmp16;
 	u_int8_t	 flags;
 	u_int8_t	 type;
 	u_int8_t	 tmp8;
@@ -502,23 +507,18 @@ rde_update_get_attr(u_char *p, u_int16_t len, struct attr_flags *a)
 	case ATTR_LOCALPREF:
 		if (attr_len != 4)
 			return (-1);
+		if (peer->conf.ebgp) {
+			/* ignore local-pref attr for non ibgp peers */
+			a->lpref = 0;	/* set a default value */
+			break;
+		}
 		UPD_READ(&tmp32, p, plen, 4);
 		a->lpref = ntohl(tmp32);
 		break;
 	case ATTR_ATOMIC_AGGREGATE:
-		if (attr_len > 0)
-			return (-1);
-		a->aggr_atm = 1;
-		break;
 	case ATTR_AGGREGATOR:
-		if (attr_len != 6)
-			return (-1);
-		UPD_READ(&tmp16, p, plen, 2);
-		a->aggr_as = ntohs(tmp16);
-		UPD_READ(&a->aggr_ip, p, plen, 4);	/*network byte order */
-		break;
 	default:
-		/* ignore for now */
+		attr_optadd(a, flags, type, p, attr_len);
 		plen += attr_len;
 		break;
 	}
@@ -618,6 +618,49 @@ rde_send_nexthop(in_addr_t next, int valid)
 		fatal("imsg_compose error");
 }
 
+u_char	queue_buf[4096];
+
+void
+rde_update_queue_runner(void)
+{
+	struct rde_peer		*peer;
+	int			 r, sent;
+	u_int16_t	 	 len, wd_len, wpos;
+
+	len = sizeof(queue_buf) - MSGSIZE_HEADER;
+	do {
+		sent = 0;
+		LIST_FOREACH(peer, &peerlist, peer_l) {
+			if (peer->state != PEER_UP)
+				continue;
+			/* first withdraws */
+			wpos = 2;
+			r = up_dump_prefix(queue_buf + wpos, len - wpos,
+			    &peer->withdraws, peer);
+			wd_len = r;
+			wd_len = htons(wd_len);
+			memcpy(queue_buf, &wd_len, 2);
+			wpos += r;
+
+			/* now bgp path attributes */
+			r = up_dump_attrnlri(queue_buf + wpos, len - wpos,
+			    peer);
+			wpos += r;
+
+			if (wpos == 2)
+				/* no packet to send */
+				continue;
+
+			/* finally send message to SE */
+			if (imsg_compose(&ibuf_se, IMSG_UPDATE, peer->conf.id,
+			    queue_buf, wpos) == -1)
+				fatal("imsg_compose error");
+			sent++;
+		}
+	} while (sent != 0);
+}
+
+
 /*
  * peer functions
  */
@@ -688,6 +731,7 @@ peer_add(u_int32_t id, struct peer_config *p_conf)
 	memcpy(&peer->conf, p_conf, sizeof(struct peer_config));
 	peer->remote_bgpid = 0;
 	peer->state = PEER_NONE;
+	up_init(peer);
 
 	head = PEER_HASH(id);
 	ENSURE(head != NULL);
@@ -731,6 +775,7 @@ peer_up(u_int32_t id, u_int32_t rid)
 	}
 	peer->remote_bgpid = ntohl(rid);
 	peer->state = PEER_UP;
+	up_init(peer);
 }
 
 void
@@ -746,6 +791,7 @@ peer_down(u_int32_t id)
 	}
 	peer->remote_bgpid = 0;
 	peer->state = PEER_DOWN;
+	up_down(peer);
 
 	/* walk through per peer RIB list and remove all prefixes. */
 	for (asp = LIST_FIRST(&peer->path_h);
