@@ -129,15 +129,15 @@ fi
 ## Now see if Configuration.tmpl is more recent than $file. If
 ## so, then we complain and bail out
 ##
-if ls -lt Configuration.tmpl $file | head -1 | \
-  grep 'Configuration.tmpl' > /dev/null
-then
-  echo "Configuration.tmpl is more recent than $file;"
-  echo "Make sure that $file is valid and, if it is, simply"
-  echo "'touch $file' and re-run $0 again."
-  exitcode=1
-  exit 1
-fi
+#if ls -lt Configuration.tmpl $file | head -1 | \
+#  grep 'Configuration.tmpl' > /dev/null
+#then
+#  echo "Configuration.tmpl is more recent than $file;"
+#  echo "Make sure that $file is valid and, if it is, simply"
+#  echo "'touch $file' and re-run $0 again."
+#  exitcode=1
+#  exit 1
+#fi
 
 echo "Using config file: $file"
 
