@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.c,v 1.32 2001/09/04 23:35:59 millert Exp $
+ * $OpenBSD: lcp.c,v 1.33 2001/10/24 10:01:15 brian Exp $
  */
 
 #include <sys/param.h>
@@ -297,6 +297,7 @@ lcp_Setup(struct lcp *lcp, int openmode)
   lcp->his_authtype = 0;
   lcp->his_callback.opmask = 0;
   lcp->his_shortseq = 0;
+  lcp->mru_req = 0;
 
   if ((lcp->want_mru = lcp->cfg.mru) == 0)
     lcp->want_mru = DEF_MRU;
@@ -554,6 +555,7 @@ LcpLayerStart(struct fsm *fp)
   log_Printf(LogLCP, "%s: LayerStart\n", fp->link->name);
   lcp->LcpFailedMagic = 0;
   fp->more.reqs = fp->more.naks = fp->more.rejs = lcp->cfg.fsm.maxreq * 3;
+  lcp->mru_req = 0;
 }
 
 static void
@@ -618,7 +620,7 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, int plen, int mode_type,
 {
   /* Deal with incoming PROTO_LCP */
   struct lcp *lcp = fsm2lcp(fp);
-  int type, length, sz, pos, op, callback_req, mru_req;
+  int type, length, sz, pos, op, callback_req;
   u_int32_t magic, accmap;
   u_short mru, phmtu, maxmtu, maxmru, wantmtu, wantmru, proto;
   struct lqrreq *req;
@@ -626,7 +628,7 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, int plen, int mode_type,
   struct mp *mp;
   struct physical *p = link2physical(fp->link);
 
-  sz = op = callback_req = mru_req = 0;
+  sz = op = callback_req = 0;
 
   while (plen >= sizeof(struct fsmconfig)) {
     type = *cp;
@@ -696,7 +698,7 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, int plen, int mode_type,
       break;
 
     case TY_MRU:
-      mru_req = 1;
+      lcp->mru_req = 1;
       ua_ntohs(cp + 2, &mru);
       log_Printf(LogLCP, "%s %d\n", request, mru);
 
@@ -1099,7 +1101,7 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, int plen, int mode_type,
         if (p->type != PHYS_DIRECT)
 	  goto reqreject;
         if ((p->dl->cfg.callback.opmask & CALLBACK_BIT(op)) &&
-            (op != CALLBACK_AUTH || p->link.lcp.auth_ineed) &&
+            (op != CALLBACK_AUTH || p->link.lcp.want_auth) &&
             (op != CALLBACK_E164 ||
              E164ok(&p->dl->cfg.callback, cp + 3, sz))) {
 	  lcp->his_callback.opmask = CALLBACK_BIT(op);
@@ -1262,7 +1264,7 @@ reqreject:
       *dec->nakend++ = TY_CALLBACK;
       *dec->nakend++ = 3;
       if ((p->dl->cfg.callback.opmask & CALLBACK_BIT(CALLBACK_AUTH)) &&
-          p->link.lcp.auth_ineed)
+          p->link.lcp.want_auth)
         *dec->nakend++ = CALLBACK_AUTH;
       else if (p->dl->cfg.callback.opmask & CALLBACK_BIT(CALLBACK_CBCP))
         *dec->nakend++ = CALLBACK_CBCP;
@@ -1274,7 +1276,7 @@ reqreject:
         dec->nakend[-1] = 2;	/* XXX: Silly ! */
       }
     }
-    if (mode_type == MODE_REQ && !mru_req) {
+    if (mode_type == MODE_REQ && !lcp->mru_req) {
       mru = DEF_MRU;
       phmtu = p ? physical_DeviceMTU(p) : 0;
       if (phmtu && mru > phmtu)
@@ -1288,6 +1290,7 @@ reqreject:
         *dec->nakend++ = 4;
         ua_htons(&lcp->his_mru, dec->nakend);
         dec->nakend += 2;
+        lcp->mru_req = 1;	/* Don't keep NAK'ing this */
       }
     }
     if (dec->rejend != dec->rej) {

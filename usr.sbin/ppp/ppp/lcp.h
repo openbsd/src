@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.h,v 1.10 2001/06/19 10:24:55 brian Exp $
+ * $OpenBSD: lcp.h,v 1.11 2001/10/24 10:01:15 brian Exp $
  */
 
 /* callback::opmask values */
@@ -59,6 +59,7 @@ struct lcp {
   unsigned his_shortseq : 1;	/* Peer would like only 12bit seqs (MP) */
   unsigned his_protocomp : 1;	/* Does peer do Protocol field compression */
   unsigned his_acfcomp : 1;	/* Does peer do addr & cntrl fld compression */
+  unsigned mru_req : 1;		/* Has the peer requested an MRU */
 
   u_short want_mru;		/* Our maximum packet size */
   u_short want_mrru;		/* Our maximum reassembled packet size (MP) */
