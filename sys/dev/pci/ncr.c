@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.32 1997/12/01 18:58:48 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.33 1997/12/03 21:43:35 millert Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -1069,6 +1069,7 @@ struct ccb {
 */
 
 struct ncb {
+#ifndef __OpenBSD__
 	/*
 	**	The global header.
 	**	Accessible to both the host and the
@@ -1076,6 +1077,7 @@ struct ncb {
 	**	We assume it is cache line size aligned.
 	*/
 	struct head     header;
+#endif
 
 #ifdef __OpenBSD__
 	struct device sc_dev;
@@ -1226,6 +1228,16 @@ struct ncb {
 	struct profile	profile;
 	u_long		disc_phys;
 	u_long		disc_ref;
+
+#ifdef __OpenBSD__
+	/*
+	**	The global header.
+	**	Accessible to both the host and the
+	**	script-processor.
+	**	We assume it is cache line size aligned.
+	*/
+	struct head     header;
+#endif
 
 	/*
 	**	The global control block.
@@ -1449,7 +1461,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.32 1997/12/01 18:58:48 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.33 1997/12/03 21:43:35 millert Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
