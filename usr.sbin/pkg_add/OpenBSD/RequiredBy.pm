@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: RequiredBy.pm,v 1.5 2004/11/14 11:40:08 espie Exp $
+# $OpenBSD: RequiredBy.pm,v 1.6 2004/12/14 12:22:47 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -21,53 +21,102 @@ use warnings;
 package OpenBSD::RequirementList;
 use OpenBSD::PackageInfo;
 
+sub fill_entries($)
+{
+	my $self = shift;
+	if (!exists $self->{entries}) {
+		my $l = {};
+		$self->{entries} = $l;
+
+		if (-f $self->{filename}) {
+			open(my $fh, '<', $self->{filename}) or 
+			    die "Problem opening required list: ",
+				$self->{filename}, ": $!";
+			local $_;
+			while(<$fh>) {
+				chomp $_;
+				s/\s+$//;
+				next if /^$/;
+				$l->{$_} = 1;
+			}
+			close($fh);
+			$self->{nonempty} = 1;
+		} else {
+			$self->{nonempty} = 0;
+		}
+	}
+}
+
+sub synch
+{
+	my $self = shift;
+	if (!unlink $self->{filename}) {
+		if ($self->{nonempty}) {
+		    die "Can't erase $self->{filename}: $!";
+		}
+	}
+	if (%{$self->{entries}}) {
+		open(my $fh, '>', $self->{filename}) or
+		    die "Can't write $self->{filename}: $!";
+		while (my ($k, $v) = each %{$self->{entries}}) {
+			print $fh "$k\n";
+		}
+		close($fh) or
+		    die "Write to $self->{filename} didn't work: $!";
+		$self->{nonempty} = 1;
+	} else {
+		$self->{nonempty} = 0;
+	}
+} 
+
 sub list($)
 {
 	my $self = shift;
 
 	if (wantarray) {
-		return () unless -f $$self;
-		open(my $fh, '<', $$self) or 
-		    die "Problem opening required list: $$self: $!";
-		local $_;
-		my $l = {};
-		while(<$fh>) {
-			chomp $_;
-			s/\s+$//;
-			next if /^$/;
-			$l->{$_} = 1;
-		}
-		close($fh);
-		return keys %$l;
+		$self->fill_entries();
+		return keys %{$self->{entries}};
 	} else {
-		return -f $$self ? 1 : 0;
+		if (exists $self->{entries}) {
+			return %{$self->{entries}} ? 1 : 0;
+		} elsif (!exists $self->{nonempty}) {
+			$self->{nonempty} = -f $self->{filename} ? 1 : 0;
+		}
+		return $self->{nonempty};
 	}
 }
 
 sub delete
 {
-	my ($self, $pkgname) = @_;
-	my @lines = grep { $_ ne $pkgname } $self->list();
-	unlink($$self) or die "Can't erase $$self: $!";
-	if (@lines > 0) {
-		$self->add(@lines);
-	} 
+	my ($self, @pkgnames) = @_;
+	$self->fill_entries($self);
+	for my $pkg (@pkgnames) {
+		delete $self->{entries}->{$pkg};
+	}
+	$self->synch();
 }
 
 sub add
 {
 	my ($self, @pkgnames) = @_;
-	open(my $fh, '>>', $$self) or
-	    die "Can't add dependencies to $$self: $!";
-	print $fh join("\n", @pkgnames), "\n";
-	close($fh);
+	$self->fill_entries($self);
+	for my $pkg (@pkgnames) {
+		$self->{entries}->{$pkg} = 1;
+	}
+	$self->synch();
 }
+
+my $cache = {};
 
 sub new
 {
 	my ($class, $pkgname) = @_;
 	my $f = installed_info($pkgname).$class->filename();
-	bless \$f, $class;
+	if (exists $cache->{$f}) {
+		return $cache->{$f};
+	} else {
+		return bless { filename => $f }, $class;
+	}
 }
 
 package OpenBSD::RequiredBy;
