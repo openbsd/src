@@ -1,3 +1,4 @@
+/*	$OpenBSD: krb_lib.c,v 1.5 1997/12/12 11:29:25 art Exp $	*/
 /* $KTH: krb_lib.c,v 1.11 1997/05/07 01:36:08 assar Exp $ */
 
 /* 
@@ -219,7 +220,7 @@ kerb_get_dba(char *name, char *inst, Dba *dba, unsigned int max, int *more)
 #ifdef DEBUG
     if (kerb_debug & 1)
 	fprintf(stderr, "\n%s: kerb_get_dba for %s %s max = %d\n",
-	    progname, name, inst, max);
+		progname, name, inst, max);
 #endif
     /*
      * if this is a request including a wild card, have to go to db
@@ -255,5 +256,5 @@ kerb_get_dba(char *name, char *inst, Dba *dba, unsigned int max, int *more)
 	kerb_cache_put_dba(dba, found);
     }
 #endif
-    return (found);
+    return found;
 }

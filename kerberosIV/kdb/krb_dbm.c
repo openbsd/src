@@ -1,3 +1,4 @@
+/*	$OpenBSD: krb_dbm.c,v 1.6 1997/12/12 11:29:24 art Exp $	*/
 /* $KTH: krb_dbm.c,v 1.27 1997/05/02 14:29:09 assar Exp $ */
 
 /* 
@@ -37,7 +38,7 @@ static int init = 0;
 static char default_db_name[] = DBM_FILE;
 static char *current_db_name = default_db_name;
 
-static struct timeval timestamp;/* current time of request */
+static struct timeval timestamp;      /* current time of request */
 static int non_blocking = 0;
 
 /*
@@ -98,8 +99,6 @@ static int non_blocking = 0;
  * Utility routine: generate name of database file.
  */
 
-static char *gen_dbsuffix (char *db_name, char *sfx);
-
 static char *
 gen_dbsuffix(char *db_name, char *sfx)
 {
@@ -109,11 +108,12 @@ gen_dbsuffix(char *db_name, char *sfx)
 	sfx = ".ok";
 
     asprintf (&dbsuffix, "%s%s", db_name, sfx);
+    if (dbsuffix == NULL) {   /* This might not be the nest solution */
+	fprintf(stderr, "gen_dbsuffix: not enough memory\n");
+	exit(1);
+    }
     return dbsuffix;
 }
-
-static void
-decode_princ_key (datum *key, char *name, char *instance);
 
 static void
 decode_princ_key(datum *key, char *name, char *instance)
@@ -123,9 +123,6 @@ decode_princ_key(datum *key, char *name, char *instance)
     name[ANAME_SZ - 1] = '\0';
     instance[INST_SZ - 1] = '\0';
 }
-
-static void
-encode_princ_contents (datum *contents, Principal *principal);
 
 static void
 encode_princ_contents(datum *contents, Principal *principal)
@@ -157,9 +154,6 @@ static int mylock = 0;
 static int inited = 0;
 
 static int
-kerb_dbl_init (void);
-
-static int
 kerb_dbl_init()
 {
     if (!inited) {
@@ -171,13 +165,11 @@ kerb_dbl_init()
 	    exit(1);
 	}
 	free(filename);
+	filename = NULL;
 	inited++;
     }
-    return (0);
+    return 0;
 }
-
-static void
-kerb_dbl_fini (void);
 
 static void
 kerb_dbl_fini()
@@ -187,9 +179,6 @@ kerb_dbl_fini()
     inited = 0;
     mylock = 0;
 }
-
-static int
-kerb_dbl_lock (int mode);
 
 static int
 kerb_dbl_lock(int mode)
@@ -224,8 +213,6 @@ kerb_dbl_lock(int mode)
     return 0;
 }
 
-static void kerb_dbl_unlock (void);
-
 static void
 kerb_dbl_unlock()
 {
@@ -244,9 +231,6 @@ kerb_dbl_unlock()
 }
 
 int
-kerb_db_set_lockmode (int mode);
-
-int
 kerb_db_set_lockmode(int mode)
 {
     int old = non_blocking;
@@ -257,9 +241,6 @@ kerb_db_set_lockmode(int mode)
 /*
  * initialization for data base routines.
  */
-
-int
-kerb_db_init (void);
 
 int
 kerb_db_init()
@@ -274,9 +255,6 @@ kerb_db_init()
  */
 
 void
-kerb_db_fini (void);
-
-void
 kerb_db_fini()
 {
 }
@@ -287,9 +265,6 @@ kerb_db_fini()
  * Passing a null pointer as "name" will set back to the default.
  * If the alternate database doesn't exist, nothing is changed.
  */
-
-int
-kerb_db_set_name (char *name);
 
 int
 kerb_db_set_name(char *name)
@@ -312,9 +287,6 @@ kerb_db_set_name(char *name)
  */
 
 time_t
-kerb_get_db_age (void);
-
-time_t
 kerb_get_db_age()
 {
     struct stat st;
@@ -329,6 +301,7 @@ kerb_get_db_age()
 	age = st.st_mtime;
 
     free (okname);
+    okname = NULL;
     return age;
 }
 
@@ -341,9 +314,6 @@ kerb_get_db_age()
  */
 
 static time_t
-kerb_start_update (char *db_name);
-
-static time_t
 kerb_start_update(char *db_name)
 {
     char *okname = gen_dbsuffix(db_name, ".ok");
@@ -354,11 +324,9 @@ kerb_start_update(char *db_name)
 	    age = -1;
     }
     free (okname);
+    okname = NULL;
     return age;
 }
-
-static int
-kerb_end_update (char *db_name, time_t age);
 
 static int
 kerb_end_update(char *db_name, time_t age)
@@ -389,21 +357,18 @@ kerb_end_update(char *db_name, time_t age)
     }
 
     free (new_okname);
+    new_okname = NULL;
     free (okname);
+    okname = NULL;
 
     return retval;
 }
-
-static time_t
-kerb_start_read (void);
 
 static time_t
 kerb_start_read()
 {
     return kerb_get_db_age();
 }
-
-static int kerb_end_read (time_t age);
 
 static int
 kerb_end_read(time_t age)
@@ -488,7 +453,9 @@ kerb_db_rename(char *from, char *to)
 	ok = 1;
     }
     free (fromdb);
+    fromdb = NULL;
     free (todb);
+    todb = NULL;
 #else
     if ((rename (fromdir, todir) == 0)
 	&& (rename (frompag, topag) == 0)) {
@@ -496,11 +463,16 @@ kerb_db_rename(char *from, char *to)
 	ok = 1;
     }
     free (fromdir);
+    fromdir = NULL;
     free (todir);
+    todir = NULL;
     free (frompag);
+    frompag = NULL;
     free (topag);
+    topag = NULL;
 #endif
     free (fromok);
+    fromok = NULL;
     if (ok)
 	return kerb_end_update(to, trans);
     else
@@ -703,9 +675,6 @@ kerb_db_update(long *db, Principal *principal, unsigned int max)
  */
 
 int
-kerb_db_put_principal (Principal *principal, unsigned int max);
-
-int
 kerb_db_put_principal(Principal *principal,
 		      unsigned max)
 
@@ -722,9 +691,6 @@ kerb_db_put_principal(Principal *principal,
     kerb_db_end_update(db);
     return (found);
 }
-
-void
-kerb_db_get_stat (DB_stat *s);
 
 void
 kerb_db_get_stat(DB_stat *s)
@@ -745,15 +711,9 @@ kerb_db_get_stat(DB_stat *s)
 }
 
 void
-kerb_db_put_stat (DB_stat *s);
-
-void
 kerb_db_put_stat(DB_stat *s)
 {
 }
-
-void
-delta_stat (DB_stat *a, DB_stat *b, DB_stat *c);
 
 void
 delta_stat(DB_stat *a, DB_stat *b, DB_stat *c)
@@ -772,7 +732,6 @@ delta_stat(DB_stat *a, DB_stat *b, DB_stat *c)
     c->n_put_stat = a->n_put_stat - b->n_put_stat;
 
     memcpy(b, a, sizeof(DB_stat));
-    return;
 }
 
 /*
