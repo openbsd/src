@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.11 2002/05/22 00:32:27 deraadt Exp $	*/
+/*	$OpenBSD: process.c,v 1.12 2002/05/22 20:01:28 millert Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.11 2002/05/22 00:32:27 deraadt Exp $";
+static char rcsid[] = "$Id: process.c,v 1.12 2002/05/22 20:01:28 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -206,6 +206,7 @@ find_user(name, tty, ttyl)
 	struct utmp ubuf, ubuf1;
 	int status;
 	FILE *fd;
+	char line[UT_LINESIZE+1];
 	char ftty[MAXPATHLEN];
 	time_t	idle, now;
 
@@ -224,8 +225,10 @@ find_user(name, tty, ttyl)
 				/* no particular tty was requested */
 				struct stat statb;
 
-				strlcpy(ftty+sizeof(_PATH_DEV)-1, ubuf.ut_line,
-				    sizeof(ftty) - sizeof(_PATH_DEV)-1);
+				memcpy(line, ubuf.ut_line, UT_LINESIZE);
+				line[sizeof(line)-1] = '\0';
+				strlcat(ftty+sizeof(_PATH_DEV)-1, line,
+				    sizeof(ftty));
 				if (stat(ftty, &statb) == 0) {
 					if (!(statb.st_mode & S_IWGRP)) {
 						if (status == NOT_HERE)
@@ -236,13 +239,16 @@ find_user(name, tty, ttyl)
 						ubuf1 = ubuf;
 					}
 				}
-			} else if (strcmp(ubuf.ut_line, tty) == 0) {
+			} else if (SCMPN(ubuf.ut_line, tty) == 0) {
 				status = SUCCESS;
 				break;
 			}
 		}
 	fclose(fd);
-	if (*tty == '\0' && status == SUCCESS)
-		strlcpy(tty, ubuf1.ut_line, ttyl);
+	if (*tty == '\0' && status == SUCCESS) {
+		memcpy(line, ubuf1.ut_line, UT_LINESIZE);
+		line[sizeof(line)-1] = '\0';
+		strlcpy(tty, line, ttyl);
+	}
 	return (status);
 }
