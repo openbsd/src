@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth_subr.c,v 1.6 2001/07/02 19:22:34 millert Exp $	*/
+/*	$OpenBSD: auth_subr.c,v 1.7 2002/01/14 16:50:18 millert Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996,1997 Berkeley Software Design, Inc.
@@ -833,12 +833,12 @@ auth_call(auth_session_t *as, char *path, ...)
 		_auth_spool(as, pfd[0]);
 		close(pfd[0]);
 		if (waitpid(pid, &status, 0) < 0) {
-			syslog(LOG_ERR, "%s: waitpid: %m", path);
-			_warnx("internal failure");
-			goto fail;
-		}
-
-		if (!WIFEXITED(status))
+			if (errno != ECHILD) {
+				syslog(LOG_ERR, "%s: waitpid: %m", path);
+				_warnx("internal failure");
+				goto fail;
+			}
+		} else if (!WIFEXITED(status))
 			goto fail;
 	}
 
