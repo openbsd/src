@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: readlink.c,v 1.5 1997/06/29 19:01:18 deraadt Exp $
+ * $OpenBSD: readlink.c,v 1.6 1997/06/29 19:19:38 kstailey Exp $
  *
  * Copyright (c) 1997
  *	Kenneth Stailey (hereinafter referred to as the author)
@@ -41,7 +41,7 @@ char **argv;
 	int n;
 
 	if (argc != 2) {
-		frintf(stderr, "usage: readlink symlink");
+		fprintf(stderr, "usage: readlink symlink");
 		exit(1);
 	}
 
