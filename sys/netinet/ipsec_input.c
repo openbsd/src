@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.15 2000/01/15 19:37:28 angelos Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.16 2000/01/15 20:03:05 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -80,8 +80,6 @@
 #include "bpfilter.h"
 
 int ipsec_common_input(struct mbuf **, int, int, int, int);
-
-extern struct enc_softc encif[];
 
 #ifdef ENCDEBUG
 #define DPRINTF(x)	if (encdebug) printf x
