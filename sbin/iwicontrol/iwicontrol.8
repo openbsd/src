@@ -1,4 +1,4 @@
-.\" $Id: iwicontrol.8,v 1.4 2004/11/22 21:34:28 damien Exp $
+.\"	$OpenBSD: iwicontrol.8,v 1.5 2004/11/23 21:33:24 jmc Exp $
 .\"
 .\" Copyright (c) 2004
 .\"	Damien Bergamini <damien.bergamini@free.fr>. All rights reserved.
@@ -33,22 +33,23 @@
 .Nd configure Intel(R) PRO/Wireless 2200BG/2915ABG network adapters
 .Sh SYNOPSIS
 .Nm
-.Op Ar interface
+.Op Fl i Ar interface
 .Op Fl r
 .Sh DESCRIPTION
 The
 .Nm
 utility controls the operation of Intel(R) PRO/Wireless 2200BG/2915ABG
-networking devices via
+networking devices via the
 .Xr iwi 4
 driver.
 .Pp
-You should not use this program to configure IEEE 802.11 parameters. Use
+You should not use this program to configure IEEE 802.11 parameters.
+Use
 .Xr ifconfig 8
 instead.
-.Sh OPTIONS
+.Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width "-i interfaceXX"
 .It Fl i Ar interface
 Displays adapter's internal statistics.
 .It Fl r
