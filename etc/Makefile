@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.168 2002/07/18 20:37:47 provos Exp $
+#	$OpenBSD: Makefile,v 1.169 2002/07/18 20:57:50 provos Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -171,6 +171,8 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 644 README \
 		    ${DESTDIR}/etc/afs
 	cd systrace; \
+		${INSTALL} -c -o root -g wheel -m 600 usr_sbin_lpd \
+		    ${DESTDIR}/etc/systrace; \
 		${INSTALL} -c -o root -g wheel -m 600 usr_sbin_named \
 		    ${DESTDIR}/etc/systrace;
 	cd namedb; \
