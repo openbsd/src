@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: gram.y,v 1.8 1997/07/06 03:54:04 downsj Exp $	*/
+/*	$OpenBSD: gram.y,v 1.9 1997/11/13 08:21:54 deraadt Exp $	*/
 /*	$NetBSD: gram.y,v 1.14 1997/02/02 21:12:32 thorpej Exp $	*/
 
 /*
@@ -101,17 +101,17 @@ static	void	check_maxpart __P((void));
 }
 
 %token	AND AT ATTACH BUILD COMPILE_WITH CONFIG DEFINE DEFOPT DEVICE DISABLE
-%token	DUMPS ENDFILE XFILE FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS MAXUSERS
-%token	MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE SWAP WITH
-%token	NEEDS_COUNT NEEDS_FLAG
+%token	DUMPS ENDFILE XFILE XOBJECT FLAGS INCLUDE XMACHINE MAJOR MAKEOPTIONS
+%token	MAXUSERS MAXPARTITIONS MINOR ON OPTIONS PSEUDO_DEVICE ROOT SOURCE SWAP
+%token	WITH NEEDS_COUNT NEEDS_FLAG
 %token	<val> NUMBER
-%token	<str> PATHNAME WORD
+%token	<str> PATHNAME WORD EMPTY
 
 %left '|'
 %left '&'
 
 %type	<list>	fopts fexpr fatom
-%type	<val>	fflgs fflag
+%type	<val>	fflgs fflag oflgs oflag
 %type	<str>	rule
 %type	<attr>	attr
 %type	<devb>	devbase
@@ -174,6 +174,9 @@ dev_eof:
 file:
 	XFILE PATHNAME fopts fflgs rule	{ addfile($2, $3, $4, $5); };
 
+object:
+	XOBJECT PATHNAME fopts oflgs	{ addobject($2, $3, $4); };
+
 /* order of options is important, must use right recursion */
 fopts:
 	fexpr				{ $$ = $1; } |
@@ -197,6 +200,13 @@ fflag:
 	NEEDS_COUNT			{ $$ = FI_NEEDSCOUNT; } |
 	NEEDS_FLAG			{ $$ = FI_NEEDSFLAG; };
 
+oflgs:
+	oflgs oflag			{ $$ = $1 | $2; } |
+	/* empty */			{ $$ = 0; };
+
+oflag:
+	NEEDS_FLAG			{ $$ = OI_NEEDSFLAG; };
+
 rule:
 	COMPILE_WITH WORD		{ $$ = $2; } |
 	/* empty */			{ $$ = NULL; };
@@ -219,6 +229,7 @@ dev_def:
 
 one_def:
 	file |
+	object |
 	include |
 	DEFINE WORD interface_opt	{ (void)defattr($2, $3); } |
 	DEFOPT WORD			{ defoption($2); } |
@@ -274,6 +285,7 @@ locdefault:
 
 value:
 	WORD				{ $$ = $1; } |
+	EMPTY				{ $$ = $1; } |
 	signed_number			{ char bf[40];
 					    (void)sprintf(bf, FORMAT($1), $1);
 					    $$ = intern(bf); };
@@ -316,6 +328,7 @@ spec:
 
 config_spec:
 	file |
+	object |
 	include |
 	OPTIONS opt_list |
 	MAKEOPTIONS mkopt_list |

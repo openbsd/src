@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: scan.l,v 1.8 1997/07/06 03:54:06 downsj Exp $	*/
+/*	$OpenBSD: scan.l,v 1.9 1997/11/13 08:21:55 deraadt Exp $	*/
 /*	$NetBSD: scan.l,v 1.13 1997/02/02 21:12:37 thorpej Exp $	*/
 
 /*
@@ -105,6 +105,7 @@ maxusers	return MAXUSERS;
 minor		return MINOR;
 needs-count	return NEEDS_COUNT;
 needs-flag	return NEEDS_FLAG;
+object		return XOBJECT;
 on		return ON;
 options		return OPTIONS;
 option		return OPTIONS;
@@ -123,6 +124,10 @@ with		return WITH;
 		return WORD;
 	}
 
+\"\"		{
+		yylval.str = intern("");
+		return EMPTY;
+	}
 \"([^"\n]|\\\")+ {
 		tok = input();  /* eat closing quote */
 		if (tok != '"') {

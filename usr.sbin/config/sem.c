@@ -1,4 +1,4 @@
-/*	$OpenBSD: sem.c,v 1.11 1997/08/07 10:36:59 deraadt Exp $	*/
+/*	$OpenBSD: sem.c,v 1.12 1997/11/13 08:21:56 deraadt Exp $	*/
 /*	$NetBSD: sem.c,v 1.10 1996/11/11 23:40:11 gwr Exp $	*/
 
 /*
@@ -86,6 +86,7 @@ static int lresolve __P((struct nvlist **, const char *, const char *,
 static struct devi *newdevi __P((const char *, int, struct devbase *d));
 static struct devi *getdevi __P((const char *));
 static const char *concat __P((const char *, int));
+static char *extend __P((char *, const char *));
 static int split __P((const char *, size_t, char *, size_t, int *));
 static void selectbase __P((struct devbase *, struct deva *));
 static int onlist __P((struct nvlist *, void *));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: files.c,v 1.6 1997/01/17 07:14:02 millert Exp $	*/
+/*	$OpenBSD: files.c,v 1.7 1997/11/13 08:21:53 deraadt Exp $	*/
 /*	$NetBSD: files.c,v 1.6 1996/03/17 13:18:17 cgd Exp $	*/
 
 /*
@@ -66,6 +66,8 @@ static struct hashtab *pathtab;		/* full path names */
 static struct files **nextfile;
 static struct files **unchecked;
 
+static struct objects **nextobject;
+
 static int	checkaux __P((const char *, void *));
 static int	fixcount __P((const char *, void *));
 static int	fixfsel __P((const char *, void *));
@@ -82,20 +84,8 @@ initfiles()
 	pathtab = ht_new();
 	nextfile = &allfiles;
 	unchecked = &allfiles;
+	nextobject = &allobjects;
 }
-
-#if 0
-static void
-showprev(pref, fi)
-	const char *pref;
-	register struct files *fi;
-{
-
-	xerror(fi->fi_srcfile, fi->fi_srcline,
-	    "%sfile %s ...", pref, fi->fi_path);
-	errors--;
-}
-#endif
 
 void
 addfile(path, optx, flags, rule)
@@ -167,6 +157,38 @@ bad:
 	expr_free(optx);
 }
 
+void
+addobject(path, optx, flags)
+	const char *path;
+	struct nvlist *optx;
+	int flags;
+{
+	struct objects *oi;
+
+	/*
+	 * Commit this object to memory.  We will decide later whether it
+	 * will be used after all.
+	 */
+	oi = emalloc(sizeof *oi);
+	if (ht_insert(pathtab, path, oi)) {
+		free(oi);
+		if ((oi = ht_lookup(pathtab, path)) == NULL)
+			panic("addfile: ht_lookup(%s)", path);
+		error("duplicate file %s", path);
+		xerror(oi->oi_srcfile, oi->oi_srcline,
+		    "here is the original definition");
+	} 
+	oi->oi_next = NULL;
+	oi->oi_srcfile = yyfile;
+	oi->oi_srcline = currentline();
+	oi->oi_flags = flags;
+	oi->oi_path = path;
+	oi->oi_optx = optx;
+	oi->oi_optf = NULL;
+	*nextobject = oi;
+	nextobject = &oi->oi_next;
+}     
+
 /*
  * We have finished reading some "files" file, either ../../conf/files
  * or ./files.$machine.  Make sure that everything that is flagged as
@@ -177,7 +199,6 @@ void
 checkfiles()
 {
 	register struct files *fi, *last;
-	/*register struct nvlist *nv;*/
 
 	last = NULL;
 	for (fi = *unchecked; fi != NULL; last = fi, fi = fi->fi_next)
@@ -225,8 +246,9 @@ fixfiles()
 		/* Skip files that generated counted-device complaints. */
 		if (fi->fi_flags & FI_HIDDEN)
 			continue;
+
+		/* Optional: see if it is to be included. */
 		if (fi->fi_optx != NULL) {
-			/* Optional: see if it is to be included. */
 			flathead = NULL;
 			flatp = &flathead;
 			sel = expr_eval(fi->fi_optx,
@@ -267,6 +289,37 @@ fixfiles()
 	}
 	return (err);
 }
+
+/*    
+ * We have finished reading everything.  Tack the objects down: calculate
+ * selection.
+ */   
+int    
+fixobjects()
+{     
+	struct objects *oi;
+	struct nvlist *flathead, **flatp;
+	int err, sel; 
+
+	err = 0;
+	for (oi = allobjects; oi != NULL; oi = oi->oi_next) {
+		/* Optional: see if it is to be included. */
+		if (oi->oi_optx != NULL) {
+			flathead = NULL;
+			flatp = &flathead;
+			sel = expr_eval(oi->oi_optx,
+			    oi->oi_flags & OI_NEEDSFLAG ? fixfsel :
+			    fixsel,
+			    &flatp);
+			oi->oi_optf = flathead;
+			if (!sel)
+				continue;
+		}
+
+		oi->oi_flags |= OI_SEL;  
+	}
+	return (err);
+}     
 
 /*
  * Called when evaluating a needs-count expression.  Make sure the
@@ -363,7 +416,7 @@ expr_eval(expr, fn, context)
 		return (lhs | rhs);
 	}
 	panic("expr_eval %d", expr->nv_int);
-	/* NOTREACHED */
+	return (0);
 }
 
 /*

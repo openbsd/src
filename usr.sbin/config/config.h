@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.h,v 1.11 1997/08/07 10:36:57 deraadt Exp $	*/
+/*	$OpenBSD: config.h,v 1.12 1997/11/13 08:21:53 deraadt Exp $	*/
 /*	$NetBSD: config.h,v 1.30 1997/02/02 21:12:30 thorpej Exp $	*/
 
 /*
@@ -244,6 +244,25 @@ struct files {
 	struct  nvlist *fi_optf;/* flattened version of above, if needed */
 	const char *fi_mkrule;	/* special make rule, if any */
 };
+
+/*
+ * Objects and libraries.  This allows precompiled object and library
+ * files (e.g. binary-only device drivers) to be linked in.
+ */
+struct objects {
+	struct  objects *oi_next;/* linked list */
+	const char *oi_srcfile; /* the name of the "objects" file that got us */
+	u_short oi_srcline;     /* and the line number */
+	u_char  oi_flags;       /* as below */
+	char    oi_lastc;       /* last char from path */
+	const char *oi_path;    /* full object path */
+	struct  nvlist *oi_optx;/* options expression */
+	struct  nvlist *oi_optf;/* flattened version of above, if needed */
+};
+
+#define	OI_SEL		0x01	/* selected */
+#define	OI_NEEDSFLAG	0x02	/* needs-flag */
+
 #define	FX_ATOM		0	/* atom (in nv_name) */
 #define	FX_NOT		1	/* NOT expr (subexpression in nv_next) */
 #define	FX_AND		2	/* AND expr (lhs in nv_ptr, rhs in nv_next) */
@@ -294,6 +313,7 @@ int	ndevi;			/* number of devi's (before packing) */
 int	npseudo;		/* number of pseudo's */
 
 struct	files *allfiles;	/* list of all kernel source files */
+struct objects *allobjects;	/* list of all kernel object and library files */
 
 struct	devi **packed;		/* arrayified table for packed devi's */
 int	npacked;		/* size of packed table, <= ndevi */
@@ -311,7 +331,9 @@ struct {			/* loc[] table for config */
 void	initfiles __P((void));
 void	checkfiles __P((void));
 int	fixfiles __P((void));	/* finalize */
+int	fixobjects __P((void));
 void	addfile __P((const char *, struct nvlist *, int, const char *));
+void	addobject __P((const char *, struct nvlist *, int));
 
 /* hash.c */
 struct	hashtab *ht_new __P((void));
@@ -347,6 +369,7 @@ void	pack __P((void));
 
 /* scan.l */
 int	currentline __P((void));
+int	firstfile __P((const char *));
 int	include __P((const char *, int));
 
 /* sem.c, other than for yacc actions */

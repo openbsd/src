@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.15 1997/07/06 04:07:09 downsj Exp $	*/
+/*	$OpenBSD: main.c,v 1.16 1997/11/13 08:21:54 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -198,6 +198,12 @@ usage:
 	 * Fix (as in `set firmly in place') files.
 	 */
 	if (fixfiles())
+		stop();
+
+	/*
+	 * Fix objects and libraries.
+	 */
+	if (fixobjects())
 		stop();
 
 	/*
