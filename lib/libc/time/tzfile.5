@@ -1,139 +1,141 @@
-.\"	$OpenBSD: tzfile.5,v 1.6 1999/01/29 07:04:05 d Exp $
-.TH TZFILE 5
-.SH NAME
-tzfile \- time zone information
-.SH SYNOPSIS
-.B
-#include <tzfile.h>
-.SH DESCRIPTION
+.\"	$OpenBSD: tzfile.5,v 1.7 1999/05/25 00:49:42 aaron Exp $
+.Dd May 24, 1999
+.Dt TZFILE 5
+.Os
+.Sh NAME
+.Nm tzfile
+.Nd time zone information
+.Sh SYNOPSIS
+.Fd #include <tzfile.h>
+.Sh DESCRIPTION
 The time zone information files used by
-.IR tzset (3)
-begin with the magic characters "TZif" to identify then as
+.Xr tzset 3
+begin with the magic characters "TZif" to identify themselves as
 time zone information files,
 followed by sixteen bytes reserved for future use,
 followed by six four-byte values of type
-.BR long ,
-written in a ``standard'' byte order
-(the high-order byte of the value is written first).
+.Fa long
+written in a 
+.Dq standard
+byte order
+.Po
+the high-order byte of the value is written first
+.Pc .
 These values are,
 in order:
-.TP
-.I tzh_ttisgmtcnt
+.Bl -tag -width "tzh_ttisgmtcnt"
+.It Fa tzh_ttisgmtcnt
 The number of UTC/local indicators stored in the file.
-.TP
-.I tzh_ttisstdcnt
+.It Fa tzh_ttisstdcnt
 The number of standard/wall indicators stored in the file.
-.TP
-.I tzh_leapcnt
+.It Fa tzh_leapcnt
 The number of leap seconds for which data is stored in the file.
-.TP
-.I tzh_timecnt
+.It Fa tzh_timecnt
 The number of "transition times" for which data is stored
 in the file.
-.TP
-.I tzh_typecnt
+.It Fa tzh_typecnt
 The number of "local time types" for which data is stored
 in the file (must not be zero).
-.TP
-.I tzh_charcnt
+.It Fa tzh_charcnt
 The number of characters of "time zone abbreviation strings"
 stored in the file.
-.PP
+.El
+.Pp
 The above header is followed by
-.I tzh_timecnt
+.Fa tzh_timecnt
 four-byte values of type
-.BR long ,
+.Fa long ,
 sorted in ascending order.
-These values are written in ``standard'' byte order.
-Each is used as a transition time (as returned by
-.IR time (3))
+These values are written in
+.Dq standard
+byte order.
+Each is used as a transition time
+.Pq as returned by Xr time 3
 at which the rules for computing local time change.
 Next come
-.I tzh_timecnt
+.Fa tzh_timecnt
 one-byte values of type
-.BR "unsigned char" ;
-each one tells which of the different types of ``local time'' types
+.Fa unsigned char ;
+each one tells which of the different types of
+.Dq local time
+types
 described in the file is associated with the same-indexed transition time.
 These values serve as indices into an array of
-.I ttinfo
+.Fa ttinfo
 structures that appears next in the file;
 these structures are defined as follows:
-.in +.5i
-.sp
-.nf
+.Bd -literal -offset indent
 .ta .5i +\w'unsigned int\0\0'u
 struct ttinfo {
 	long	tt_gmtoff;
 	int	tt_isdst;
 	unsigned int	tt_abbrind;
 };
-.in -.5i
-.fi
-.sp
+.Ed
+.Pp
 Each structure is written as a four-byte value for
-.I tt_gmtoff
+.Fa tt_gmtoff
 of type
-.BR long ,
+.Fa long ,
 in a standard byte order, followed by a one-byte value for
-.I tt_isdst
+.Fa tt_isdst
 and a one-byte value for
-.IR tt_abbrind .
+.Fa tt_abbrind .
 In each structure,
-.I tt_gmtoff
+.Fa tt_gmtoff
 gives the number of seconds to be added to UTC,
-.I tt_isdst
+.Fa tt_isdst
 tells whether
-.I tm_isdst
+.Fa tm_isdst
 should be set by
-.I localtime (3)
+.Xr localtime 3
 and
-.I tt_abbrind
+.Fa tt_abbrind
 serves as an index into the array of time zone abbreviation characters
 that follow the
-.I ttinfo
+.Fa ttinfo
 structure(s) in the file.
-.PP
+.Pp
 Then there are
-.I tzh_leapcnt
+.Fa tzh_leapcnt
 pairs of four-byte values, written in standard byte order;
 the first value of each pair gives the time
-(as returned by
-.IR time(3))
+.Pq as returned by Xr time 3
 at which a leap second occurs;
 the second gives the
-.I total
+.Em total
 number of leap seconds to be applied after the given time.
 The pairs of values are sorted in ascending order by time.
-.PP
+.Pp
 Then there are
-.I tzh_ttisstdcnt
+.Fa tzh_ttisstdcnt
 standard/wall indicators, each stored as a one-byte value;
 they tell whether the transition times associated with local time types
 were specified as standard time or wall clock time,
 and are used when a time zone file is used in handling POSIX-style
 time zone environment variables.
-.PP
+.Pp
 Finally there are
-.I tzh_ttisgmtcnt
+.Fa tzh_ttisgmtcnt
 UTC/local indicators, each stored as a one-byte value;
 they tell whether the transition times associated with local time types
 were specified as UTC or local time,
 and are used when a time zone file is used in handling POSIX-style
 time zone environment variables.
-.PP
-.I Localtime
+.Pp
+.Xr localtime 3
 uses the first standard-time
-.I ttinfo
-structure in the file
-(or simply the first
-.I ttinfo
-structure in the absence of a standard-time structure)
+.Fa ttinfo
+structure in the file,
+or simply the first
+.Fa ttinfo
+structure in the absence of a standard-time structure,
 if either
-.I tzh_timecnt
+.Fa tzh_timecnt
 is zero or the time argument is less than the first transition time recorded
 in the file.
-.SH SEE ALSO
-ctime(3)
+.Sh SEE ALSO
+.Xr ctime 3
 .\" @(#)tzfile.5	7.11
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).

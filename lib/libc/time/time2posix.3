@@ -1,91 +1,110 @@
-.\"	$OpenBSD: time2posix.3,v 1.7 1999/05/20 15:22:53 aaron Exp $
-.TH TIME2POSIX 3
-.SH NAME
-time2posix, posix2time \- convert seconds since the Epoch
-.SH SYNOPSIS
-.nf
-.B #include <sys/types.h>
-.B #include <time.h>
-.PP
-.B time_t
-.br
-.B time2posix(time_t t)
-.PP
-.B time_t
-.br
-.B posix2time(time_t t)
-.fi
-.SH DESCRIPTION
+.\"	$OpenBSD: time2posix.3,v 1.8 1999/05/25 00:49:41 aaron Exp $
+.Dd May 24, 1999
+.Dt TIME2POSIX 3
+.Os
+.Sh NAME
+.Nm time2posix , posix2time
+.Nd convert seconds since the Epoch
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <time.h>
+.Ft time_t
+.Fn time2posix "time_t t"
+.Ft time_t
+.Fn posix2time "time_t t"
+.Sh DESCRIPTION
 IEEE Standard 1003.1
 (POSIX)
-legislates that a time_t value of
+legislates that a
+.Fa time_t
+value of
 536457599 shall correspond to "Wed Dec 31 23:59:59 UTC 1986."
-This effectively implies that POSIX time_t's cannot include leap
-seconds and,
-therefore,
+This effectively implies that a POSIX
+.Fa time_t
+cannot include leap seconds and, therefore,
 that the system time must be adjusted as each leap occurs.
-.PP
+.Pp
 If the time package is configured with leap-second support
 enabled,
 however,
 no such adjustment is needed and
-time_t values continue to increase over leap events
-(as a true `seconds since...' value).
+.Fa time_t
+values continue to increase over leap events
+.Po 
+as a true 
+.Sq seconds since...
+value
+.Pc .
 This means that these values will differ from those required by POSIX
 by the net number of leap seconds inserted since the Epoch.
-.PP
-Typically this is not a problem as the type time_t is intended
-to be
-(mostly)
-opaque\(emtime_t values should only be obtained-from and
+.Pp
+Typically this is not a problem as the type
+.Fa time_t
+is intended to be
+.Pq mostly
+opaque.
+.Fa time_t
+values should only be obtained-from and
 passed-to functions such as
-.IR time(3) ,
-.IR localtime(3) ,
-.IR mktime(3) ,
+.Xr time 3  ,
+.Xr localtime 3 ,
+.Xr mktime 3 ,
 and
-.IR difftime(3) .
+.Xr difftime 3 .
 However,
 POSIX gives an arithmetic
-expression for directly computing a time_t value from a given date/time,
+expression for directly computing a
+.Fa time_t
+value from a given date/time,
 and the same relationship is assumed by some
-(usually older)
+.Pq usually older
 applications.
-Any programs creating/dissecting time_t's
+Any programs creating/dissecting
+.Fa time_t
+values
 using such a relationship will typically not handle intervals
 over leap seconds correctly.
-.PP
+.Pp
 The
-.I time2posix
+.Fn time2posix
 and
-.I posix2time
-functions are provided to address this time_t mismatch by converting
-between local time_t values and their POSIX equivalents.
+.Fn posix2time
+functions are provided to address this
+.Fa time_t
+mismatch by converting
+between local 
+.Fa time_t
+values and their POSIX equivalents.
 This is done by accounting for the number of time-base changes that
 would have taken place on a POSIX system as leap seconds were inserted
 or deleted.
 These converted values can then be used in lieu of correcting the older
 applications,
 or when communicating with POSIX-compliant systems.
-.PP
-.I Time2posix
+.Pp
+.Fn time2posix
 is single-valued.
 That is,
-every local time_t
-corresponds to a single POSIX time_t.
-.I Posix2time
+every local 
+.Fa time_t
+corresponds to a single POSIX 
+.Fa time_t .
+.Fn posix2time
 is less well-behaved:
 for a positive leap second hit the result is not unique,
 and for a negative leap second hit the corresponding
-POSIX time_t doesn't exist so an adjacent value is returned.
+POSIX 
+.Fa time_t
+doesn't exist so an adjacent value is returned.
 Both of these are good indicators of the inferiority of the
 POSIX representation.
-.PP
+.Pp
 The following table summarizes the relationship between a time
 T and its conversion to,
 and back from,
 the POSIX representation over the leap second inserted at the end of June,
 1993.
-.nf
+.Bd -ragged -offset indent
 .ta \w'93/06/30 'u +\w'23:59:59 'u +\w'A+0 'u +\w'X=time2posix(T) 'u
 DATE	TIME	T	X=time2posix(T)	posix2time(X)
 93/06/30	23:59:59	A+0	B+0	A+0
@@ -102,21 +121,23 @@ DATE	TIME	T	X=time2posix(T)	posix2time(X)
 .sp
 .ce
 	[Note: posix2time(B+1) => A+0 or A+1]
-.fi
-.PP
-If leap-second support is not enabled,
-local time_t's and
-POSIX time_t's are equivalent,
-and both
-.I time2posix
+.Ed
+.Pp
+If leap-second support is not enabled, local
+.Fa time_t
 and
-.I posix2time
+POSIX
+.Fa time_t
+are equivalent, and both
+.Fn time2posix
+and
+.Fn posix2time
 degenerate to the identity function.
-.SH SEE ALSO
-difftime(3),
-localtime(3),
-mktime(3),
-time(3)
+.Sh SEE ALSO
+.Xr difftime 3 ,
+.Xr localtime 3 ,
+.Xr mktime 3 ,
+.Xr time 3
 .\" @(#)time2posix.3	7.7
 .\" This file is in the public domain, so clarified as of
 .\" 1996-06-05 by Arthur David Olson (arthur_david_olson@nih.gov).
