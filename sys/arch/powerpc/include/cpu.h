@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.5 2001/01/24 21:29:12 drahn Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.6 2001/06/24 04:43:04 drahn Exp $	*/
 /*	$NetBSD: cpu.h,v 1.1 1996/09/30 16:34:21 ws Exp $	*/
 
 /*
@@ -58,10 +58,8 @@ extern volatile int astpending;
 
 #define	CACHELINESIZE	32			/* For now		XXX */
 
-extern __inline void
-syncicache(from, len)
-	void *from;
-	int len;
+static __inline void
+syncicache(void *from, int len)
 {
 	int l = len;
 	char *p = from;
