@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.28 2001/06/08 04:19:24 angelos Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.29 2001/09/15 20:40:46 frantzen Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -64,7 +64,7 @@
 
 #define BPF_BUFSIZE 8192	/* 4096 too small for FDDI frames */
 
-#define PRINET  6			/* interruptible */
+#define PRINET  26			/* interruptible */
 
 /*
  * The default read buffer size is patchable.
