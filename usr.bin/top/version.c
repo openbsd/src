@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.3 2002/07/15 17:20:36 deraadt Exp $	*/
+/*	$OpenBSD: version.c,v 1.4 2003/04/06 18:48:15 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -41,7 +41,7 @@ char *version_string()
 
     snprintf(version, sizeof(version), "%d.%d", VERSION, PATCHLEVEL);
 #ifdef BETA
-    strcat(version, BETA);
+    strlcat(version, BETA, sizeof version);
 #endif
     return(version);
 }
