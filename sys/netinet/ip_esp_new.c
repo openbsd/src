@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_new.c,v 1.49 1999/12/06 07:14:35 angelos Exp $	*/
+/*	$OpenBSD: ip_esp_new.c,v 1.50 1999/12/06 08:55:03 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -58,21 +58,14 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/in_pcb.h>
-#include <netinet/in_var.h>
-#include <netinet/ip_var.h>
 
 #include <sys/socketvar.h>
 #include <net/raw_cb.h>
 
 #ifdef INET6
-#include <netinet6/ip6.h>
-#include <netinet6/in6_pcb.h>
-#include <netinet6/ip6_var.h>
-#include <netinet6/icmp6.h>
+#include <netinet6/in6.h>
 #endif /* INET6 */
 
-#include <netinet/ip_icmp.h>
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_esp.h>
 #include <net/pfkeyv2.h>
