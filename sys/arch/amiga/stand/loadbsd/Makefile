@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.3 1998/08/13 21:08:08 espie Exp $
+#	$OpenBSD: Makefile,v 1.4 1999/09/09 21:25:13 espie Exp $
 
 CC = gcc
 CFLAGS = -m68030 -Wall -O3 -fomit-frame-pointer -D__progname=program_name -msmall-code -resident 
@@ -11,13 +11,18 @@ PROGS=loadbsd loadbsd.ixemul
 LIBS = 
 LDFLAGS=-s
 
-all: $(PROGS)
+all: $(PROGS) distrib
 
 loadbsd: $(OBJS1)
 	$(CC) $(CFLAGS) $(LDFLAGS) -noixemul -o loadbsd $(OBJS1) $(LIBS)
 
 loadbsd.ixemul: $(OBJS2)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o loadbsd.ixemul $(OBJS2) $(LIBS)
+
+distrib: loadbsd
+	gzip -c loadbsd >loadbsd.gz
+	echo loadbsd built on `date` with gcc `gcc -dumpversion` >loadbsd.gz.uu
+	uuencode loadbsd.gz loadbsd.gz >>loadbsd.gz.uu
 
 clean:
 	-rm $(OBJS1) $(OBJS2) $(PROGS)

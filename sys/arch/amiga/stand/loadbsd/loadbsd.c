@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadbsd.c,v 1.12 1998/08/13 21:08:15 espie Exp $	*/
+/*	$OpenBSD: loadbsd.c,v 1.13 1999/09/09 21:25:13 espie Exp $	*/
 /*	$NetBSD: loadbsd.c,v 1.22 1996/10/13 13:39:52 is Exp $	*/
 
 /*
@@ -80,9 +80,6 @@ void warnx __P((const char *, ...));
 #endif
 
 extern const char _version[];
-extern void open_libraries(void);
-extern void ensure_no_poolmem(void);
-
 /*
  *	Version history:
  *	1.x	Kernel startup interface version check.
@@ -171,7 +168,9 @@ void startit __P((void *, u_long, u_long, void *, u_long, u_long, int, void *,
 		int, int, u_long, u_long, int));
 void startit_end __P((void));
 
-extern void ensure_no_poolmem(void);
+extern void open_libraries __P((void));
+extern void ensure_no_poolmem __P((void));
+
 extern struct ExecBase *SysBase;
 extern char *optarg;
 extern int optind;

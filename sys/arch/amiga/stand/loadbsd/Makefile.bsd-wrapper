@@ -1,0 +1,15 @@
+# $OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/09/09 21:25:13 espie Exp $
+
+all: loadbsd
+
+loadbsd: loadbsd.gz
+	zcat ${.ALLSRC} >$@
+
+loadbsd.gz: loadbsd.gz.uu
+	uudecode ${.ALLSRC}
+
+CLEANFILES=loadbsd loadbsd.gz
+
+MAN=loadbsd.8
+
+.include <bsd.prog.mk>
