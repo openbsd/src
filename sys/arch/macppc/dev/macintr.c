@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.11 2002/03/02 17:37:41 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.12 2002/03/08 20:33:43 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -548,17 +548,11 @@ start:
 	} else {
 		splraise(m_intrmask[irq]);
 
-		/*
-		 * enable interrupts for the duration of the
-		 * interrupt handler 
-		 */
-		ppc_intr_enable(1);
 		ih = m_intrhand[irq];
 		while (ih) {
 			(*ih->ih_fun)(ih->ih_arg);
 			ih = ih->ih_next;
 		}
-		ppc_intr_disable();
 
 		uvmexp.intrs++;
 		evirq[m_hwirq[irq]].ev_count++;
@@ -568,9 +562,7 @@ start:
 		goto start;
 
 out:
-	ppc_intr_enable(1);
 	splx(pcpl);	/* Process pendings. */
-	ppc_intr_disable();
 }
 
 void

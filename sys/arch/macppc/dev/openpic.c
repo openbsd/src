@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.13 2002/03/02 17:31:53 drahn Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.14 2002/03/08 20:33:43 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -644,17 +644,11 @@ ext_intr_openpic()
 		} else {
 			splraise(o_intrmask[irq]);
 
-			/*
-			 * enable interrupts for the duration of the
-			 * interrupt handler 
-			 */
-			ppc_intr_enable(1);
 			ih = o_intrhand[irq];
 			while (ih) {
 				(*ih->ih_fun)(ih->ih_arg);
 				ih = ih->ih_next;
 			}
-			ppc_intr_disable();
 
 			uvmexp.intrs++;
 			evirq[realirq].ev_count++;
@@ -665,9 +659,7 @@ ext_intr_openpic()
 		realirq = openpic_read_irq(0);
 	}
 
-	ppc_intr_enable(1);
 	splx(pcpl);     /* Process pendings. */
-	ppc_intr_disable();
 }
 void
 openpic_init()
