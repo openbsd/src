@@ -28,7 +28,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: realpath.3,v 1.11 2005/03/29 19:34:14 brad Exp $
+.\"	$OpenBSD: realpath.3,v 1.12 2005/03/30 07:33:57 otto Exp $
 .\"
 .Dd February 16, 1994
 .Dt REALPATH 3
@@ -81,10 +81,10 @@ on success.
 If an error occurs,
 .Fn realpath
 returns
-.Dv NULL ,
-and
+.Dv NULL
+and the contents of
 .Fa resolved
-contains the pathname which caused the problem.
+are undefined.
 .Sh ERRORS
 The function
 .Fn realpath
