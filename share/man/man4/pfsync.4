@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pfsync.4,v 1.7 2003/11/08 00:45:33 mcbride Exp $
+.\"	$OpenBSD: pfsync.4,v 1.8 2003/11/08 07:58:19 jmc Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -33,7 +33,7 @@
 .Sy pseudo-device Nm pfsync
 .Sh DESCRIPTION
 The
-.Nm pfsync
+.Nm
 interface is the interface to the packet filter,
 .Xr pf 4 ,
 exposing all the changes to the state table.
@@ -43,10 +43,10 @@ for changes in the table by invoking
 on the
 .Nm
 interface.
-States created by a rule marked with the 
+States created by a rule marked with the
 .Ar no-sync
-keyword are ommited from the 
-.Nm pfsync
+keyword are omitted from the
+.Nm
 interface (see
 .Xr pf.conf 5
 for details).
