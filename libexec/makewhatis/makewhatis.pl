@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.16 2001/03/14 10:56:24 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.17 2001/03/14 10:57:13 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -151,6 +151,9 @@ sub add_unformated_subject
     s/\\\s+/ /g;
 	# em dashes
     s/\\\(em\s+/- /g;
+    	# em dashes in the middle of lines
+    s/\\\(em/-/g;
+    s/\\\*[LO]//g;
     s/\\\(tm/(tm)/g;
 	# font changes
     s/\\f[BIRP]//g;
