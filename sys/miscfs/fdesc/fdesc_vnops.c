@@ -1,4 +1,4 @@
-/*	$OpenBSD: fdesc_vnops.c,v 1.3 1996/04/17 04:46:59 mickey Exp $	*/
+/*	$OpenBSD: fdesc_vnops.c,v 1.4 1996/09/07 18:11:18 tholo Exp $	*/
 /*	$NetBSD: fdesc_vnops.c,v 1.32 1996/04/11 11:24:29 mrg Exp $	*/
 
 /*
@@ -478,6 +478,29 @@ fdesc_attr(fd, vap, cred, p)
 		}
 		break;
 
+	case DTYPE_PIPE:
+		error = pipe_stat((struct pipe *)fp->f_data, &stb);
+		if (error == 0) {
+			vattr_null(vap);
+			vap->va_type = VFIFO;
+			vap->va_mode = stb.st_mode;
+			vap->va_nlink = stb.st_nlink;
+			vap->va_uid = stb.st_uid;
+			vap->va_gid = stb.st_gid;
+			vap->va_fsid = stb.st_dev;
+			vap->va_fileid = stb.st_ino;
+			vap->va_size = stb.st_size;
+			vap->va_blocksize = stb.st_blksize;
+			vap->va_atime = stb.st_atimespec;
+			vap->va_mtime = stb.st_mtimespec;
+			vap->va_ctime = stb.st_ctimespec;
+			vap->va_gen = stb.st_gen;
+			vap->va_flags = stb.st_flags;
+			vap->va_rdev = stb.st_rdev;
+			vap->va_bytes = stb.st_blocks * stb.st_blksize;
+		}
+		break;
+
 	default:
 		panic("fdesc attr");
 		break;
@@ -611,6 +634,7 @@ fdesc_setattr(v)
 		break;
 
 	case DTYPE_SOCKET:
+	case DTYPE_PIPE:
 		error = 0;
 		break;
 
