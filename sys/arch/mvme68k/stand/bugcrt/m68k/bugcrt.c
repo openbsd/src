@@ -1,4 +1,4 @@
-/*	$OpenBSD: bugcrt.c,v 1.3 1996/04/28 10:48:29 deraadt Exp $ */
+/*	$OpenBSD: bugcrt.c,v 1.4 1996/05/07 03:06:15 rahnds Exp $ */
 
 #include <sys/types.h>
 #include <machine/prom.h>
@@ -6,7 +6,7 @@
 struct mvmeprom_args bugargs = { 1 };	/* not in BSS */
 
 	asm (".text");
-	asm (".long 0x003ffff8");
+	asm (".long _start-0x10");
 	asm (".long _start");
 start()
 {
