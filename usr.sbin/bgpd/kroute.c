@@ -1,4 +1,4 @@
-/*	$OpenBSD: kroute.c,v 1.33 2003/12/26 17:47:04 henning Exp $ */
+/*	$OpenBSD: kroute.c,v 1.34 2003/12/26 19:19:25 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -508,6 +508,7 @@ kroute_dispatch_msg(int fd)
 			break;
 		}
 	}
+	return (0);
 }
 
 int
