@@ -1,4 +1,4 @@
-.\"	$OpenBSD: hier.7,v 1.37 2003/05/07 06:53:06 jmc Exp $
+.\"	$OpenBSD: hier.7,v 1.38 2003/05/24 15:23:45 jmc Exp $
 .\"	$NetBSD: hier.7,v 1.7 1994/11/30 19:07:10 jtc Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -421,6 +421,34 @@ Example source code implementing several lkm module types (see
 Locales for multi-language support.
 .It man/
 Manual pages.
+.Bl -tag -width man3p/ -compact
+.It cat*/
+Preformatted
+.Xr man 1
+pages.
+Layout similar to man (below).
+.It man1/
+General commands (tools and utilities).
+.It man2/
+System calls and error numbers.
+.It man3/
+Libraries.
+.It man3p/
+.Xr perl 1
+programmers' reference guide.
+.It man4/
+Special files and hardware support.
+.It man5/
+File formats.
+.It man6/
+Games.
+.It man7/
+Miscellaneous.
+.It man8/
+System maintenance and operation commands.
+.It man9/
+Kernel internals.
+.El
 .It misc/
 Miscellaneous system-wide ASCII text files.
 .Pp
