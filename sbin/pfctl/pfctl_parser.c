@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.15 2001/06/26 22:26:15 deraadt Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.16 2001/06/26 22:36:28 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -137,7 +137,7 @@ error(int n, char *fmt, ...)
 struct icmptypeent *
 geticmptypebynumber(u_int8_t type)
 {
-	int i;
+	unsigned i;
 
 	for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
 		if(type == icmp_type[i].type)
@@ -149,7 +149,7 @@ geticmptypebynumber(u_int8_t type)
 struct icmptypeent *
 geticmptypebyname(char *w)
 {
-	int i;
+	unsigned i;
 
 	for(i=0; i < (sizeof (icmp_type) / sizeof(icmp_type[0])); i++) {
 		if(!strcmp(w, icmp_type[i].name))
@@ -161,7 +161,7 @@ geticmptypebyname(char *w)
 struct icmpcodeent *
 geticmpcodebynumber(u_int8_t type, u_int8_t code)
 {
-	int i;
+	unsigned i;
 
 	for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
 		if (type == icmp_code[i].type && code == icmp_code[i].code)
@@ -173,7 +173,7 @@ geticmpcodebynumber(u_int8_t type, u_int8_t code)
 struct icmpcodeent *
 geticmpcodebyname(u_long type, char *w)
 {
-	int i;
+	unsigned i;
 
 	for(i=0; i < (sizeof (icmp_code) / sizeof(icmp_code[0])); i++) {
 		if (type == icmp_code[i].type && !strcmp(w, icmp_code[i].name))
