@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wsfontload.8,v 1.4 2001/01/30 06:50:12 aaron Exp $
+.\"	$OpenBSD: wsfontload.8,v 1.5 2001/03/15 05:50:41 mickey Exp $
 .\"	$NetBSD: wsfontload.8,v 1.5 1999/04/06 04:54:22 cgd Exp $
 .\"
 .Dd January 13, 1999
@@ -10,25 +10,28 @@
 .Sh SYNOPSIS
 .Nm wsfontload
 .Bk -words
-.Op Fl f Ar file
-.Ek
-.Bk -words
-.Op Fl w Ar width
-.Ek
-.Bk -words
-.Op Fl h Ar height
-.Ek
-.Bk -words
-.Op Fl e Ar encoding
-.Ek
-.Bk -words
-.Op Fl N Ar name
+.Op Fl B
 .Ek
 .Bk -words
 .Op Fl b
 .Ek
 .Bk -words
-.Op Fl B
+.Op Fl e Ar encoding
+.Ek
+.Bk -words
+.Op Fl f Ar file
+.Ek
+.Bk -words
+.Op Fl h Ar height
+.Ek
+.Bk -words
+.Op Fl l
+.Ek
+.Bk -words
+.Op Fl N Ar name
+.Ek
+.Bk -words
+.Op Fl w Ar width
 .Ek
 .Op Ar fontfile
 .Sh DESCRIPTION
@@ -48,16 +51,12 @@ is not provided.
 .Pp
 The options are as follows:
 .Bl -tag -width Ds
-.It Fl f Ar file
-Specify the control device of the wscons display to operate on.
-Default is
-.Pa /dev/ttyCcfg .
-.It Fl w Ar width
-Sets the width of a font character in pixels.
-Default is 8.
-.It Fl h Ar height
-Sets the height of a font character in pixels.
-Default is 16.
+.It Fl b
+Specifies that the font data is ordered right-to-left bit wise.
+The default is left-to-right.
+.It Fl B
+Specifies that the font data is ordered right-to-left byte wise.
+The default is left-to-right.
 .It Fl e Ar encoding
 Sets the encoding of the font.
 This can be either a symbolic abbreviation or a numeric value.
@@ -73,17 +72,24 @@ console driver.
 Per default,
 .Dq iso
 is assumed.
+.It Fl f Ar file
+Specify the control device of the wscons display to operate on.
+Default is
+.Pa /dev/ttyCcfg .
+.It Fl h Ar height
+Sets the height of a font character in pixels.
+Default is 16.
+.It Fl l
+Specifies to print out a list of loaded fonts, no other
+arguments should be specified.
 .It Fl N Ar name
 Specifies a name which can be used later to refer to the font.
 In none is given, the
 .Ar fontfile
 name is used to create one.
-.It Fl b
-Specifies that the font data is ordered right-to-left bit wise.
-The default is left-to-right.
-.It Fl B
-Specifies that the font data is ordered right-to-left byte wise.
-The default is left-to-right.
+.It Fl w Ar width
+Sets the width of a font character in pixels.
+Default is 8.
 .El
 .Pp
 Typically, the
