@@ -1,4 +1,4 @@
-/*	$OpenBSD: fold.c,v 1.5 2001/11/19 19:02:14 mpech Exp $	*/
+/*	$OpenBSD: fold.c,v 1.6 2002/06/17 07:06:12 deraadt Exp $	*/
 /*	$NetBSD: fold.c,v 1.6 1995/09/01 01:42:44 jtc Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)fold.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: fold.c,v 1.5 2001/11/19 19:02:14 mpech Exp $";
+static char rcsid[] = "$OpenBSD: fold.c,v 1.6 2002/06/17 07:06:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -110,7 +110,7 @@ main(argc, argv)
 		fold(width);
 	else for (; *argv; ++argv)
 		if (!freopen(*argv, "r", stdin)) {
-			err (1, "%s", *argv);
+			err(1, "%s", *argv);
 			/* NOTREACHED */
 		} else
 			fold(width);
@@ -141,47 +141,48 @@ fold(width)
 	while ((ch = getchar()) != EOF) {
 		if (ch == '\n') {
 			if (indx != 0)
-				fwrite (buf, 1, indx, stdout);
+				fwrite(buf, 1, indx, stdout);
 			putchar('\n');
 			col = indx = 0;
 			continue;
 		}
 
-		col = new_column_position (col, ch);
+		col = new_column_position(col, ch);
 		if (col > width) {
 			int i, last_space;
 
 			if (split_words) {
 				for (i = 0, last_space = -1; i < indx; i++)
-					if(buf[i] == ' ') last_space = i;
+					if(buf[i] == ' ')
+						last_space = i;
 			}
 
 			if (split_words && last_space != -1) {
 				last_space++;
 
-				fwrite (buf, 1, last_space, stdout);
-				memmove (buf, buf+last_space, indx-last_space);
+				fwrite(buf, 1, last_space, stdout);
+				memmove(buf, buf+last_space, indx-last_space);
 
 				indx -= last_space;
 				col = 0;
 				for (i = 0; i < indx; i++) {
-					col = new_column_position (col, buf[i]);
+					col = new_column_position(col, buf[i]);
 				}
 			} else {
-				fwrite (buf, 1, indx, stdout);
+				fwrite(buf, 1, indx, stdout);
 				col = indx = 0;
 			}
 			putchar('\n');
 
 			/* calculate the column position for the next line. */
-			col = new_column_position (col, ch);
+			col = new_column_position(col, ch);
 		}
 
 		if (indx + 1 > buf_max) {
 			/* Allocate buffer in LINE_MAX increments */
 			buf_max += 2048;
-			if((buf = realloc (buf, buf_max)) == NULL) {
-				err (1, NULL);
+			if((buf = realloc(buf, buf_max)) == NULL) {
+				err(1, NULL);
 				/* NOTREACHED */
 			}
 		}
@@ -189,14 +190,14 @@ fold(width)
 	}
 
 	if (indx != 0)
-		fwrite (buf, 1, indx, stdout);
+		fwrite(buf, 1, indx, stdout);
 }
 
 /*
  * calculate the column position 
  */
 static int
-new_column_position (col, ch)
+new_column_position(col, ch)
 	int col;
 	int ch;
 {

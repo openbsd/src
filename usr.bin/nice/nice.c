@@ -1,4 +1,4 @@
-/*	$OpenBSD: nice.c,v 1.6 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: nice.c,v 1.7 2002/06/17 07:06:25 deraadt Exp $	*/
 /*	$NetBSD: nice.c,v 1.9 1995/08/31 23:30:58 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nice.c	5.4 (Berkeley) 6/1/90";
 #endif
-static char rcsid[] = "$OpenBSD: nice.c,v 1.6 2002/02/16 21:27:50 millert Exp $";
+static char rcsid[] = "$OpenBSD: nice.c,v 1.7 2002/06/17 07:06:25 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/time.h>
@@ -72,16 +72,17 @@ main(argc, argv)
 
 	setlocale(LC_ALL, "");
 
-        /* handle obsolete -number syntax */
-        if (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
-		niceness = atoi (argv[1] + 1);
-                argc--; argv++;
-        }
+	/* handle obsolete -number syntax */
+	if (argc > 1 && argv[1][0] == '-' && isdigit(argv[1][1])) {
+		niceness = atoi(argv[1] + 1);
+		argc--;
+		argv++;
+	}
 
 	while ((c = getopt (argc, argv, "n:")) != -1) {
 		switch (c) {
 		case 'n':
-			niceness = atoi (optarg);
+			niceness = atoi(optarg);
 			break;
 
 		case '?':
@@ -98,15 +99,14 @@ main(argc, argv)
 	errno = 0;
 	niceness += getpriority(PRIO_PROCESS, 0);
 	if (errno) {
-		err (1, "getpriority");
+		err(1, "getpriority");
 		/* NOTREACHED */
 	}
-	if (setpriority(PRIO_PROCESS, 0, niceness)) {
-		warn ("setpriority");
-	}
+	if (setpriority(PRIO_PROCESS, 0, niceness))
+		warn("setpriority");
 
 	execvp(argv[0], &argv[0]);
-	err ((errno == ENOENT) ? 127 : 126, "%s", argv[0]);
+	err((errno == ENOENT) ? 127 : 126, "%s", argv[0]);
 	/* NOTREACHED */
 }
 
