@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.59 2001/01/05 03:09:08 dugsong Exp $
+.\"	$OpenBSD: options.4,v 1.60 2001/02/07 11:54:49 itojun Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -669,6 +669,12 @@ enables multicast routing code as well.
 This option requires
 .Em INET
 at this moment, but it should not.
+.It Cd options ND6_DEBUG
+The option sets the default value of net.inet6.icmp6.nd6_debug to 1,
+for debugging IPv6 neighbor discovery protocol handling.
+See
+.Xr sysctl 3
+for details.
 .It Cd option NS
 Include support for the Xerox XNS protocol stack.
 See
