@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.1 1999/07/17 21:48:59 niklas Exp $
-#	$EOM: Makefile,v 1.2 1999/07/17 20:44:12 niklas Exp $
+#	$OpenBSD: Makefile,v 1.2 1999/07/18 20:13:49 niklas Exp $
+#	$EOM: Makefile,v 1.3 1999/07/18 20:11:17 niklas Exp $
 
 #
 # Copyright (c) 1999 Niels Provos.  All rights reserved.
@@ -43,8 +43,7 @@ OS!=		awk '/^OS=/ { print $$2 }' ${.CURDIR}/../../Makefile
 .PATH:		${TOPSRC} ${TOPSRC}/sysdep/${OS} ${TOPOBJ}
 CFLAGS+=	-I${TOPSRC} -I${TOPSRC}/sysdep/${OS} -I${TOPOBJ} -Wall
 LDADD+=		-lcrypto
-DPADD+=		${LIBDES}
-NOMAN=
-DEBUG=		-g
+DPADD+=		${LIBCRYPTO}
+MAN=		certpatch.8
 
 .include <bsd.prog.mk>
