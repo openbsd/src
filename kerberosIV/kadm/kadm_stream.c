@@ -123,6 +123,10 @@ vts_long(u_int32_t dat, u_char **st, int loc)
     return 4;
 }
     
+#ifndef min
+#define	min(a,b)	(a < b ? a : b)
+#endif
+
 int
 stv_string(u_char *st,		/* base pointer to the stream */
 	   char *dat,		/* a string to read from the stream */
