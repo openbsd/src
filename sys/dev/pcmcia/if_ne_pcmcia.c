@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.23 2000/01/31 22:51:48 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.24 2000/02/01 16:59:07 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -91,6 +91,10 @@ struct ne2000dev {
     unsigned char enet_vendor[3];
 } ne2000devs[] = {
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_AMBICOM_AMB8002T,
+      0, -1, { 0x00, 0x10, 0x7a } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_PREMAX_PE200,
       0, 0x07f0, { 0x00, 0x20, 0xe0 } },
 
@@ -123,20 +127,16 @@ struct ne2000dev {
       0, 0x7f0, { 0x00, 0xc0, 0x6c } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-      PCMCIA_CIS_AMBICOM_AMB8002T,
-      0, -1, { 0x00, 0x10, 0x7a } },
-
-    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
-      PCMCIA_CIS_PLANEX_FNW3600T,
-      0, -1, { 0x00, 0x90, 0xcc } },
-
-    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_EDIMAX_NE2000,
       0, -1, { 0x00, 0x00, 0xb4 } },
 
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_CNET_NE2000,
       0, -1, { 0x00, 0x80, 0xad } },
+
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_EPSON_EEN10B,
+      PCMCIA_CIS_EPSON_EEN10B,
+      0, 0xff0, { 0x00, 0x00, 0x48 } },
 
     /*
      * You have to add new entries which contains
@@ -156,6 +156,18 @@ struct ne2000dev {
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ECARD_1,
       PCMCIA_CIS_LINKSYS_ECARD_1,
       0, -1, { 0x00, 0x80, 0xc8 } },
+
+    { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
+      PCMCIA_CIS_PLANEX_FNW3600T,
+      0, -1, { 0x00, 0x90, 0xcc } },
+
+    { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
+      PCMCIA_CIS_SVEC_PN650TX,
+      0, -1, { 0x00, 0xe0, 0x98 } },
+
+    { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
+      PCMCIA_CIS_LINKSYS_ETHERFAST,
+      0, -1, { 0x00, 0x80, 0xc8 } }, 
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_COMBO_ECARD,
       PCMCIA_CIS_LINKSYS_COMBO_ECARD, 
@@ -190,10 +202,30 @@ struct ne2000dev {
       PCMCIA_CIS_DLINK_DE650,
       0, 0x0040, { 0x00, 0x80, 0xc8 } },
 
-    { PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLAT,
-      PCMCIA_CIS_IODATA_PCLAT,
-      /* two possible location, 0x01c0 or 0x0ff0 */
+    /*
+     * IO-DATA PCLA/TE and later version of PCLA/T has valid
+     * vendor/product ID and it is possible to read MAC address
+     * using standard I/O ports.  It also read from CIS offset 0x01c0.
+     * On the other hand, earlier version of PCLA/T doesn't have valid
+     * vendor/product ID and MAC address must be read from CIS offset
+     * 0x0ff0 (i.e., usual ne2000 way to read it doesn't work).
+     * And CIS information of earlier and later version of PCLA/T are
+     * same except fourth element.  So, for now, we place the entry for
+     * PCLA/TE (and later version of PCLA/T) followed by entry
+     * for the earlier version of PCLA/T (or, modify to match all CIS
+     * information and have three or more individual entries).
+     */
+    { PCMCIA_VENDOR_IODATA, PCMCIA_PRODUCT_IODATA_PCLATE,
+      PCMCIA_CIS_IODATA_PCLATE,
       0, -1, { 0x00, 0xa0, 0xb0 } },
+ 
+    /*
+     * This entry should be placed after above PCLA-TE entry.
+     * See above comments for detail.
+     */
+    { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
+      PCMCIA_CIS_IODATA_PCLAT,
+      0, 0x0ff0, { 0x00, 0xa0, 0xb0 } },
 
     { PCMCIA_VENDOR_DAYNA, PCMCIA_PRODUCT_DAYNA_COMMUNICARD_E_1,
       PCMCIA_CIS_DAYNA_COMMUNICARD_E_1,
@@ -222,10 +254,6 @@ struct ne2000dev {
     { PCMCIA_VENDOR_KINGSTON, PCMCIA_PRODUCT_KINGSTON_KNE_PC2,
       PCMCIA_CIS_KINGSTON_KNE_PC2,
       0, 0x0180, { 0x00, 0xc0, 0xf0 } },
-
-    { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_FAST_ECARD,
-      PCMCIA_CIS_LINKSYS_FAST_ECARD,
-      0, -1, { 0x00, 0x80, 0xc8} },
 
     { PCMCIA_VENDOR_SMC, PCMCIA_PRODUCT_SMC_EZCARD,
       PCMCIA_CIS_SMC_EZCARD,
@@ -262,9 +290,6 @@ struct ne2000dev {
     { "EP-210 Ethernet",
       0x0000, 0x0000, NULL, NULL, 0,
       0x0110, { 0x00, 0x40, 0x33 } },
-    { "Epson EEN10B",
-      0x0000, 0x0000, NULL, NULL, 0,
-      0x0ff0, { 0x00, 0x00, 0x48 } },
     { "ELECOM Laneed LD-CDWA",
       0x0000, 0x0000, NULL, NULL, 0,
       0x00b8, { 0x08, 0x00, 0x42 } },
