@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile,v 1.5 2001/06/22 23:24:25 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.6 2002/02/08 20:12:37 deraadt Exp $
 
-SUBDIR=	ftp pppd rsh dhclient init dmesg
+SUBDIR=	ftp pppd rsh dhclient init dmesg grep
 
 .include <bsd.subdir.mk>
