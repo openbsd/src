@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_norm.c,v 1.42 2002/12/18 16:28:40 dhartmei Exp $ */
+/*	$OpenBSD: pf_norm.c,v 1.43 2002/12/18 19:17:07 henning Exp $ */
 
 /*
  * Copyright 2001 Niels Provos <provos@citi.umich.edu>
@@ -147,7 +147,7 @@ pf_normalize_init(void)
 static __inline int
 pf_frag_compare(struct pf_fragment *a, struct pf_fragment *b)
 {
-	int diff;
+	int	diff;
 
 	if ((diff = a->fr_id - b->fr_id))
 		return (diff);
@@ -167,8 +167,8 @@ pf_frag_compare(struct pf_fragment *a, struct pf_fragment *b)
 void
 pf_purge_expired_fragments(void)
 {
-	struct pf_fragment *frag;
-	u_int32_t expire = time.tv_sec - pftm_frag;
+	struct pf_fragment	*frag;
+	u_int32_t		 expire = time.tv_sec - pftm_frag;
 
 	while ((frag = TAILQ_LAST(&pf_fragqueue, pf_fragqueue)) != NULL) {
 		KASSERT(BUFFER_FRAGMENTS(frag));
@@ -198,8 +198,8 @@ pf_purge_expired_fragments(void)
 void
 pf_flush_fragments(void)
 {
-	struct pf_fragment *frag;
-	int goal;
+	struct pf_fragment	*frag;
+	int			 goal;
 
 	goal = pf_nfrents * 9 / 10;
 	DPFPRINTF(("trying to free > %d frents\n",
@@ -228,8 +228,8 @@ pf_flush_fragments(void)
 void
 pf_free_fragment(struct pf_fragment *frag)
 {
-	struct pf_frent *frent;
-	struct pf_frcache *frcache;
+	struct pf_frent		*frent;
+	struct pf_frcache	*frcache;
 
 	/* Free all fragments */
 	if (BUFFER_FRAGMENTS(frag)) {
@@ -270,8 +270,8 @@ pf_ip2key(struct pf_fragment *key, struct ip *ip)
 struct pf_fragment *
 pf_find_fragment(struct ip *ip, struct pf_frag_tree *tree)
 {
-	struct pf_fragment key;
-	struct pf_fragment *frag;
+	struct pf_fragment	 key;
+	struct pf_fragment	*frag;
 
 	pf_ip2key(&key, ip);
 
@@ -311,13 +311,13 @@ struct mbuf *
 pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
     struct pf_frent *frent, int mff)
 {
-	struct mbuf *m = *m0, *m2;
-	struct pf_frent *frea, *next;
-	struct pf_frent *frep = NULL;
-	struct ip *ip = frent->fr_ip;
-	int hlen = ip->ip_hl << 2;
-	u_int16_t off = ip->ip_off;
-	u_int16_t max = ip->ip_len + off;
+	struct mbuf	*m = *m0, *m2;
+	struct pf_frent	*frea, *next;
+	struct pf_frent	*frep = NULL;
+	struct ip	*ip = frent->fr_ip;
+	int		 hlen = ip->ip_hl << 2;
+	u_int16_t	 off = ip->ip_off;
+	u_int16_t	 max = ip->ip_len + off;
 
 	KASSERT(frag == NULL || BUFFER_FRAGMENTS(frag));
 
@@ -365,7 +365,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 	KASSERT(frep != NULL || frea != NULL);
 
 	if (frep != NULL) {
-		u_int16_t precut;
+		u_int16_t	precut;
 
 		precut = frep->fr_ip->ip_off + frep->fr_ip->ip_len - off;
 		if (precut >= ip->ip_len)
@@ -382,7 +382,7 @@ pf_reassemble(struct mbuf **m0, struct pf_fragment *frag,
 
 	for (; frea != NULL && ip->ip_len + off > frea->fr_ip->ip_off;
 	    frea = next) {
-		u_int16_t aftercut;
+		u_int16_t	aftercut;
 
 		aftercut = (ip->ip_len + off) - frea->fr_ip->ip_off;
 		DPFPRINTF(("adjust overlap %d\n", aftercut));
@@ -498,12 +498,12 @@ struct mbuf *
 pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
     int drop, int *nomem)
 {
-	struct mbuf *m = *m0;
-	struct pf_frcache *frp, *fra, *cur = NULL;
-	int ip_len = h->ip_len - (h->ip_hl << 2);
-	u_int16_t off = h->ip_off << 3;
-	u_int16_t max = ip_len + off;
-	int hosed = 0;
+	struct mbuf		*m = *m0;
+	struct pf_frcache	*frp, *fra, *cur = NULL;
+	int			 ip_len = h->ip_len - (h->ip_hl << 2);
+	u_int16_t		 off = h->ip_off << 3;
+	u_int16_t		 max = ip_len + off;
+	int			 hosed = 0;
 
 	KASSERT(frag == NULL || !BUFFER_FRAGMENTS(frag));
 
@@ -560,7 +560,7 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
 	KASSERT(frp != NULL || fra != NULL);
 
 	if (frp != NULL) {
-		int precut;
+		int	precut;
 
 		precut = frp->fr_end - off;
 		if (precut >= ip_len) {
@@ -643,8 +643,8 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
 	}
 
 	if (fra != NULL) {
-		int aftercut;
-		int merge = 0;
+		int	aftercut;
+		int	merge = 0;
 
 		aftercut = max - fra->fr_off;
 		if (aftercut == 0) {
@@ -788,16 +788,17 @@ pf_fragcache(struct mbuf **m0, struct ip *h, struct pf_fragment *frag, int mff,
 int
 pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 {
-	struct mbuf *m = *m0;
-	struct pf_rule *r;
-	struct pf_frent *frent;
-	struct pf_fragment *frag = NULL;
-	struct ip *h = mtod(m, struct ip *);
-	int mff = (h->ip_off & IP_MF), hlen = h->ip_hl << 2;
-	u_int16_t fragoff = (h->ip_off & IP_OFFMASK) << 3;
-	u_int16_t max;
-	int ip_len;
-	int ip_off;
+	struct mbuf		*m = *m0;
+	struct pf_rule		*r;
+	struct pf_frent		*frent;
+	struct pf_fragment	*frag = NULL;
+	struct ip		*h = mtod(m, struct ip *);
+	int			 mff = (h->ip_off & IP_MF);
+	int			 hlen = h->ip_hl << 2;
+	u_int16_t		 fragoff = (h->ip_off & IP_OFFMASK) << 3;
+	u_int16_t		 max;
+	int			 ip_len;
+	int			 ip_off;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_RULE].active.ptr);
 	while (r != NULL) {
@@ -894,7 +895,7 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		h = mtod(m, struct ip *);
 	} else {
 		/* non-buffering fragment cache (drops or masks overlaps) */
-		int nomem = 0;
+		int	nomem = 0;
 
 		if (dir == PF_OUT) {
 			if (m_tag_find(m, PACKET_TAG_PF_FRAGCACHE, NULL) !=
@@ -926,7 +927,8 @@ pf_normalize_ip(struct mbuf **m0, int dir, struct ifnet *ifp, u_short *reason)
 		}
 
 		if (dir == PF_IN) {
-			struct m_tag *mtag;
+			struct m_tag	*mtag;
+
 			mtag = m_tag_get(PACKET_TAG_PF_FRAGCACHE, 0, M_NOWAIT);
 			if (mtag == NULL)
 				goto no_mem;
@@ -993,12 +995,12 @@ int
 pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
     int off, void *h, struct pf_pdesc *pd)
 {
-	struct pf_rule *r, *rm = NULL;
-	struct tcphdr *th = pd->hdr.tcp;
-	int rewrite = 0;
-	u_short reason;
-	u_int8_t flags;
-	sa_family_t af = pd->af;
+	struct pf_rule	*r, *rm = NULL;
+	struct tcphdr	*th = pd->hdr.tcp;
+	int		 rewrite = 0;
+	u_short		 reason;
+	u_int8_t	 flags;
+	sa_family_t	 af = pd->af;
 
 	r = TAILQ_FIRST(pf_main_ruleset.rules[PF_RULESET_RULE].active.ptr);
 	while (r != NULL) {
@@ -1065,7 +1067,7 @@ pf_normalize_tcp(int dir, struct ifnet *ifp, struct mbuf *m, int ipoff,
 
 	/* If flags changed, or reserved data set, then adjust */
 	if (flags != th->th_flags || th->th_x2 != 0) {
-		u_int16_t ov, nv;
+		u_int16_t	ov, nv;
 
 		ov = *(u_int16_t *)(&th->th_ack + 1);
 		th->th_flags = flags;
@@ -1104,11 +1106,11 @@ int
 pf_normalize_tcpopt(struct pf_rule *r, struct mbuf *m, struct tcphdr *th,
     int off)
 {
-	u_int16_t *mss;
-	int thoff;
-	int opt, cnt, optlen = 0;
-	int rewrite = 0;
-	u_char *optp;
+	u_int16_t	*mss;
+	int		 thoff;
+	int		 opt, cnt, optlen = 0;
+	int		 rewrite = 0;
+	u_char		*optp;
 
 	thoff = th->th_off << 2;
 	cnt = thoff - sizeof(struct tcphdr);
