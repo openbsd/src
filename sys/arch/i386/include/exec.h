@@ -48,7 +48,8 @@ struct relocation_info_i386 {
 
 #define ELF_TARG_CLASS		ELFCLASS32
 #define ELF_TARG_DATA		ELFDATA2LSB
-#define ELF_TARG_MACH		EM_386
+#define ELF_TARG_MACH		EM_386 /* XXX - EM_486 is currently unused
+                                          by all OSs/compilers/linkers */
 
 #define DO_AOUT			/* support a.out */
 #define DO_ELF			/* support ELF */
