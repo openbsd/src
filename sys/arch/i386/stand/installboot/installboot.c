@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.23 1997/10/25 23:04:05 mickey Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.24 1997/10/25 23:42:37 mickey Exp $	*/
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -189,7 +189,7 @@ main(argc, argv)
 		size = sizeof(devno);
 		if(sysctl(mib, 3, &devno, &size, NULL, 0) < 0)
 			err(1, "mapping device number");
-		devno = MAKEBOOTDEV(major(devno), 0, 0, minor(devno), 0);
+		devno = MAKEBOOTDEV(major(devno), 0, 0, DISKUNIT(devno), 0);
 
 		mib[0] = CTL_MACHDEP;
 		mib[1] = CPU_BIOS;
