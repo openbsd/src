@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.6 1997/09/17 19:27:21 niklas Exp $	*/
+/*	$OpenBSD: bus.h,v 1.7 1998/03/26 12:45:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1996 Niklas Hallqvist.
@@ -35,6 +35,8 @@
 #ifndef _AMIGA_BUS_H_
 #define _AMIGA_BUS_H_
 
+#include <machine/endian.h>
+
 #ifdef __STDC__
 #define CAT(a,b)	a##b
 #define CAT3(a,b,c)	a##b##c
@@ -69,14 +71,6 @@ struct amiga_bus_space {
 #define bus_space_unmap(t, bshp, size) \
     (*(t)->bs_unmap)((t), (bshp), (size))
 
-/* Swap bytes in a short word.  */
-static __inline u_int16_t
-swap(u_int16_t x)
-{
-	__asm("rolw #8,%0" : "=r" (x) : "0" (x));
-	return x;
-}
-
 static __inline u_int8_t
 bus_space_read_1(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba)
 {
@@ -89,7 +83,7 @@ bus_space_read_2(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba)
 	u_int16_t x =
 	    *(volatile u_int16_t *)((bsh & ~1) + (ba << bst->bs_shift));
 
-	return bst->bs_swapped ? swap(x) : x;
+	return bst->bs_swapped ? swap16(x) : x;
 }
 
 static __inline u_int32_t
@@ -146,7 +140,7 @@ bus_space_write_2(bus_space_tag_t bst, bus_space_handle_t bsh, bus_addr_t ba,
     u_int16_t x)
 {
 	*(volatile u_int16_t *)((bsh & ~1) + (ba << bst->bs_shift)) =
-            bst->bs_swapped ? swap(x) : x;
+            bst->bs_swapped ? swap16(x) : x;
 }
 
 static __inline void
@@ -197,13 +191,13 @@ static __inline void
 bus_space_read_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
     bus_addr_t ba, u_int8_t *buf, bus_size_t cnt)
 {
-	register u_int16_t *buf16 = (u_int16_t *)buf;
+	u_int16_t *buf16 = (u_int16_t *)buf;
 
 	while (cnt) {
-		register u_int16_t x = *(volatile u_int16_t *)
+		u_int16_t x = *(volatile u_int16_t *)
 		    ((bsh & ~1) + (ba << bst->bs_shift));
 
-		*buf16++ = bst->bs_swapped ? x : swap(x);
+		*buf16++ = bst->bs_swapped ? x : swap16(x);
 		cnt -= 2;
 	}
 }
@@ -223,11 +217,11 @@ static __inline void
 bus_space_write_raw_multi_2(bus_space_tag_t bst, bus_space_handle_t bsh,
     bus_addr_t ba, const u_int8_t *buf, bus_size_t cnt)
 {
-	register const u_int16_t *buf16 = (const u_int16_t *)buf;
+	const u_int16_t *buf16 = (const u_int16_t *)buf;
 
 	while (cnt) {
 		*(volatile u_int16_t *)((bsh & ~1) + (ba << bst->bs_shift)) =
-		    bst->bs_swapped ? *buf16 : swap(*buf16);
+		    bst->bs_swapped ? *buf16 : swap16(*buf16);
 		buf16++;
 		cnt -= 2;
 	}
