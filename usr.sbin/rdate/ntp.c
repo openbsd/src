@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.9 2002/07/27 20:11:34 jakob Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.10 2002/07/28 07:48:29 jakob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -128,6 +128,9 @@ ntp_client(const char *hostname, struct timeval *new, struct timeval *adjust)
 		errx(1, "%s: %s", hostname, gai_strerror(error));
 		/*NOTREACHED*/
 	}
+
+	if (corrleaps)
+		ntpleaps_init();
 
 	s = -1;
 	for (res = res0; res; res = res->ai_next) {
