@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.32 1998/01/22 19:05:57 deraadt Exp $
+#	$OpenBSD: BABY,v 1.33 1998/06/17 11:49:19 mickey Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -85,7 +85,6 @@ mainbus0 at root
 
 bios0	at mainbus0
 apm0	at bios0
-option	APM_NOIDLE
 
 isa0	at mainbus0
 eisa0	at mainbus0

@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.29 1998/03/28 10:00:44 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.30 1998/06/17 11:49:23 mickey Exp $
 #	from: OpenBSD: INST,v 1.19 1996/11/05 03:49:13 tholo Exp 
 #
 #	Install kernels no longer support X.
@@ -53,8 +53,8 @@ mainbus0 at root
 
 bios0	at mainbus0
 apm0	at bios0
-option	APM_NOIDLE
 option	APMDEBUG
+
 isa0	at mainbus0
 eisa0	at mainbus0
 pci*	at mainbus0

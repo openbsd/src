@@ -1,4 +1,4 @@
-#	$OpenBSD: PETRA,v 1.9 1998/02/22 22:04:22 niklas Exp $
+#	$OpenBSD: PETRA,v 1.10 1998/06/17 11:49:22 mickey Exp $
 #
 #	PETRA -- everything that's currently supported with certain
 #		 changes for Applitron's fileserver petra, a 128 MB
@@ -48,7 +48,7 @@ mainbus0 at root
 
 bios0	at mainbus0
 apm0	at bios0
-option	APM_NOIDLE
+
 isa0	at mainbus0
 eisa0	at mainbus0
 pci*	at mainbus0 bus ?
