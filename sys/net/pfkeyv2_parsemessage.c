@@ -386,9 +386,6 @@ pfkeyv2_parsemessage(void *p, int len, void **headers)
 	      if (sa->sa_len != sizeof(struct sockaddr_in6))
 		return EINVAL;
 
-	      if (((struct sockaddr_in6 *)sa)->sin6_port)
-		return EINVAL;
-
 	      if (((struct sockaddr_in6 *)sa)->sin6_flowinfo)
 		return EINVAL;
 
