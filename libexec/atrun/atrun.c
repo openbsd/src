@@ -1,4 +1,4 @@
-/*	$OpenBSD: atrun.c,v 1.17 2002/05/11 17:45:26 millert Exp $	*/
+/*	$OpenBSD: atrun.c,v 1.18 2002/05/11 21:51:07 millert Exp $	*/
 
 /*
  *  atrun.c - run jobs queued by at; run with root privileges.
@@ -71,7 +71,7 @@
 /* File scope variables */
 
 static char *namep;
-static char rcsid[] = "$OpenBSD: atrun.c,v 1.17 2002/05/11 17:45:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: atrun.c,v 1.18 2002/05/11 21:51:07 millert Exp $";
 static int debug = 0;
 
 /* Local functions */
@@ -430,13 +430,9 @@ main(argc, argv)
 			debug++;
 			break;
 
-		case '?':
-			perr("unknown option");
-			break;
-
 		default:
-			perr("idiotic option - aborted");
-			break;
+			syslog(LOG_ERR, "unknown option");
+			exit(EXIT_FAILURE);
 		}
 	}
 
