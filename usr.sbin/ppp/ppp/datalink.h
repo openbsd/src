@@ -23,19 +23,20 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: datalink.h,v 1.3 1999/03/04 17:42:25 brian Exp $
+ *	$Id: datalink.h,v 1.4 1999/07/15 02:04:06 brian Exp $
  */
 
 #define DATALINK_CLOSED  (0)
 #define DATALINK_OPENING (1)
 #define DATALINK_HANGUP  (2)
 #define DATALINK_DIAL    (3)
-#define DATALINK_LOGIN   (4)
-#define DATALINK_READY   (5)
-#define DATALINK_LCP     (6)
-#define DATALINK_AUTH    (7)
-#define DATALINK_CBCP    (8)
-#define DATALINK_OPEN    (9)
+#define DATALINK_CARRIER (4)
+#define DATALINK_LOGIN   (5)
+#define DATALINK_READY   (6)
+#define DATALINK_LCP     (7)
+#define DATALINK_AUTH    (8)
+#define DATALINK_CBCP    (9)
+#define DATALINK_OPEN    (10)
 
 #define DATALINK_MAXNAME (20)   /* Maximum datalink::name length */
 
@@ -149,3 +150,4 @@ extern int datalink_RemoveFromSet(struct datalink *, fd_set *, fd_set *,
                                   fd_set *);
 extern int datalink_SetMode(struct datalink *, int);
 extern int datalink_GetDialTimeout(struct datalink *);
+extern const char *datalink_ChoosePhoneNumber(struct datalink *);

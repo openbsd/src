@@ -23,14 +23,14 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: bundle.c,v 1.20 1999/06/22 11:32:44 brian Exp $
+ *	$Id: bundle.c,v 1.21 1999/07/15 02:04:06 brian Exp $
  */
 
 #include <sys/param.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <net/if.h>
-#include <net/if_tun.h>
+#include <net/if_tun.h>		/* For TUNSIFMODE & TUNSLMODE */
 #include <arpa/inet.h>
 #include <net/route.h>
 #include <netinet/in_systm.h>
@@ -43,7 +43,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
+/* #include <sys/ioctl.h> (auto-remove) */
 #include <sys/uio.h>
 #include <sys/wait.h>
 #include <termios.h>

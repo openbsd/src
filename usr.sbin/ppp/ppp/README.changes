@@ -85,3 +85,5 @@ o The ``set device'' command now expects each device to be specified as an
   on commas and spaces.
 o The ``show modem'' command is depricated and has been changed to
   ``show physical''.
+o Ppp now waits the full ``set cd'' time before running the login script,
+  and drops the connection at that point if CD is required and not present.

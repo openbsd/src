@@ -23,16 +23,16 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	$Id: exec.c,v 1.6 1999/06/09 08:47:23 brian Exp $
+ *	$Id: exec.c,v 1.7 1999/07/15 02:04:06 brian Exp $
  */
 
 #include <sys/param.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
+/* #include <netinet/in.h> (auto-remove) */
+/* #include <arpa/inet.h> (auto-remove) */
+/* #include <netdb.h> (auto-remove) */
+/* #include <netinet/in_systm.h> (auto-remove) */
+/* #include <netinet/ip.h> (auto-remove) */
 #include <sys/un.h>
 
 #include <errno.h>
@@ -49,7 +49,7 @@
 #include "defs.h"
 #include "mbuf.h"
 #include "log.h"
-#include "sync.h"
+/* #include "sync.h" (auto-remove) */
 #include "timer.h"
 #include "lqr.h"
 #include "hdlc.h"
@@ -59,20 +59,20 @@
 #include "ccp.h"
 #include "link.h"
 #include "async.h"
-#include "slcompress.h"
-#include "iplist.h"
-#include "ipcp.h"
-#include "filter.h"
+/* #include "slcompress.h" (auto-remove) */
+/* #include "iplist.h" (auto-remove) */
+/* #include "ipcp.h" (auto-remove) */
+/* #include "filter.h" (auto-remove) */
 #include "descriptor.h"
 #include "physical.h"
 #include "mp.h"
 #ifndef NORADIUS
-#include "radius.h"
+/* #include "radius.h" (auto-remove) */
 #endif
 #include "chat.h"
 #include "command.h"
-#include "bundle.h"
-#include "prompt.h"
+/* #include "bundle.h" (auto-remove) */
+/* #include "prompt.h" (auto-remove) */
 #include "auth.h"
 #include "chap.h"
 #include "cbcp.h"
@@ -82,6 +82,7 @@
 static struct device execdevice = {
   EXEC_DEVICE,
   "exec",
+  NULL,
   NULL,
   NULL,
   NULL,

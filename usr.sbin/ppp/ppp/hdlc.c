@@ -17,14 +17,14 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- * $Id: hdlc.c,v 1.7 1999/06/02 15:58:40 brian Exp $
+ * $Id: hdlc.c,v 1.8 1999/07/15 02:04:06 brian Exp $
  *
  *	TODO:
  */
 #include <sys/param.h>
-#include <netinet/in.h>
-#include <netinet/in_systm.h>
-#include <netinet/ip.h>
+/* #include <netinet/in.h> (auto-remove) */
+/* #include <netinet/in_systm.h> (auto-remove) */
+/* #include <netinet/ip.h> (auto-remove) */
 #include <sys/un.h>
 
 #include <stdio.h>
@@ -40,15 +40,15 @@
 #include "fsm.h"
 #include "lqr.h"
 #include "hdlc.h"
-#include "proto.h"
-#include "iplist.h"
+/* #include "proto.h" (auto-remove) */
+/* #include "iplist.h" (auto-remove) */
 #include "throughput.h"
-#include "slcompress.h"
-#include "ipcp.h"
-#include "ip.h"
-#include "vjcomp.h"
+/* #include "slcompress.h" (auto-remove) */
+/* #include "ipcp.h" (auto-remove) */
+/* #include "ip.h" (auto-remove) */
+/* #include "vjcomp.h" (auto-remove) */
 #include "auth.h"
-#include "pap.h"
+/* #include "pap.h" (auto-remove) */
 #include "lcp.h"
 #include "async.h"
 #include "ccp.h"
@@ -61,11 +61,11 @@
 #include "mp.h"
 #include "cbcp.h"
 #include "datalink.h"
-#include "filter.h"
+/* #include "filter.h" (auto-remove) */
 #ifndef NORADIUS
-#include "radius.h"
+/* #include "radius.h" (auto-remove) */
 #endif
-#include "bundle.h"
+/* #include "bundle.h" (auto-remove) */
 
 static u_int16_t const fcstab[256] = {
    /* 00 */ 0x0000, 0x1189, 0x2312, 0x329b, 0x4624, 0x57ad, 0x6536, 0x74bf,
