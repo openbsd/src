@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.19 2003/06/05 12:27:02 deraadt Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.20 2003/07/25 03:35:13 jason Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -1098,7 +1098,7 @@ ncr53c9x_done(sc, ecb)
 #ifdef NCR53C9X_DEBUG
 	if (ncr53c9x_debug & NCR_SHOWMISC) {
 		if (xs->resid != 0)
-			printf("resid=%d ", xs->resid);
+			printf("resid=%lu ", (unsigned long)xs->resid);
 		if (xs->error == XS_SENSE)
 			printf("sense=0x%02x\n", xs->sense.error_code);
 		else
