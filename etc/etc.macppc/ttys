@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ttys,v 1.13 2001/03/03 21:23:50 deraadt Exp $
+#	$OpenBSD: ttys,v 1.1 2001/09/01 16:13:48 drahn Exp $
 #
 # name	getty				type	status		comments
 #
