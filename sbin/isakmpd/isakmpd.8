@@ -1,7 +1,8 @@
-.\" $OpenBSD: isakmpd.8,v 1.30 2001/08/15 09:16:29 ho Exp $
+.\" $OpenBSD: isakmpd.8,v 1.31 2001/08/23 18:14:16 niklas Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
-.\" Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
+.\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
+.\" All rights reserved.
 .\" Copyright (c) 1999 Angelos D. Keromytis.  All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -222,13 +223,6 @@ needs to be used to create a certificate signing request that the
 CA understands.  The latter case however is described here:
 .Pp
 .Bl -enum
-.It
-An RSA-enabled
-.Pa libcrypto
-(see
-.Xr crypto 3 )
-needs to be installed.  This is described in
-.Xr ssl 8 .
 .It
 Create your own CA as root.
 .Pp
