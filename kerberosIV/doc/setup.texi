@@ -64,7 +64,7 @@ only allow logins on the console.
 
 This machine has also to be reliable.  If it is down, you will not be
 able to use any kerberised services unless you have also configured a
-slave server (@xref{Install a slave kerberos server}).
+slave server (@pxref{Install a slave kerberos server})
 
 Running the kerberos server requires very little CPU power and a small
 amount of disk. An old PC with some hundreds of megabytes of free disk
@@ -112,14 +112,14 @@ support has been added for ports other than the default (750), and
 protocols other than UDP.
 
 The formal syntax for an entry is now
-@samp{@var{[proto}/@var{]host[}:@var{port]}}. @var{proto} is either
+@samp{[@var{proto}/]@var{host}[:@var{port}]}. @var{proto} is either
 @samp{udp} or @samp{tcp}, and @var{port} is the port to talk to. Default
 value for @var{proto} is @samp{udp} and for @var{port} whatever
 @samp{kerberos-iv} is defined to be in @file{/etc/services} or 750 if
 undefined.
 
 You can also talk HTTP with your KDC, in that case you specify an URL,
-like @samp{http://@var{host[}:@var{port]}}. If you for some reason need
+like @samp{http://@var{host}[:@var{port}]}. If you for some reason need
 to use a HTTP proxy, you can specify the proxy in the @samp{krb4_proxy}
 environment variable, also in URL format. The default for port in this
 case is 80.
@@ -205,7 +205,7 @@ have them there anyway.
 
 You should have already chosen the machine where you want to run the
 kerberos server and the realm name.  The machine should also be as
-secure as possible (@xref{Choose a kerberos server}) before installing
+secure as possible (@pxref{Choose a kerberos server}) before installing
 the kerberos server.  In this example, we will install a kerberos server
 for the realm @samp{FOO.SE} on a machine called @samp{hemlig.foo.se}.
 
@@ -296,7 +296,7 @@ to edit the kerberos database directly on the server.
 
 @code{kdb_edit} is intended as a bootstrapping and fall-back mechanism
 for editing the database.  For normal purposes, use the @code{kadmin}
-program (@xref{Add users to the database}).
+program (@pxref{Add users to the database})
 
 The following example shows the adding of the principal
 @samp{nisse.admin} into the kerberos database.  This principal is used
@@ -483,8 +483,8 @@ admin server to your startup scripts (@file{/etc/rc} or similar).
 
 Making a machine a kerberos client only requires a few steps.  First you
 might need to change the configuration files as with the kerberos
-server.  (@xref{Install the configuration files} and @ref{Install the
-/etc/services}.) Also you need to make the programs in
+server.  (@xref{Install the configuration files}, and @pxref{Install the
+/etc/services}) Also you need to make the programs in
 @file{/usr/athena/bin} available.  This can be done by adding the
 @file{/usr/athena/bin} directory to the users' paths, by making symbolic
 links, or even by copying the programs.
@@ -578,7 +578,7 @@ authentication method should be used.  The @code{telnetd} program has
 an option ``-a user'' that only allows kerberised and authenticated
 connections.  If this is not included, it falls back to using clear text
 passwords.  For obvious reasons, we recommend that you enable this
-option.  If you want to use one-time passwords (@xref{One-Time
+option.  If you want to use one-time passwords (@pxref{One-Time
 Passwords}) you can use the ``-a otp'' option which will allow OTPs or
 kerberised connections.
 
@@ -591,7 +591,7 @@ specify additional levels that are thus allowed with these options:
 
 @table @asis
 @item @kbd{-a otp}
-Allow one-time passwords (@xref{One-Time Passwords}).
+Allow one-time passwords (@pxref{One-Time Passwords})
 @item @kbd{-a ftp}
 Allow anonymous login (as user ``ftp'' or ``anonymous'').
 @item @kbd{-a safe}
