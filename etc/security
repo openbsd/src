@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.44 2001/01/31 19:12:10 deraadt Exp $
+#	$OpenBSD: security,v 1.45 2001/03/16 15:38:13 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -374,7 +374,7 @@ fi
 
 # Files that should not be owned by someone else or readable.
 list=".netrc .rhosts .gnupg/secring.gpg .gnupg/random_seed \
-	.pgp/secring.pgp .shosts .ssh/identity .ssh/random_seed"
+	.pgp/secring.pgp .shosts .ssh/identity .ssh/id_dsa .ssh/id_rsa"
 awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for f in $list ; do
@@ -399,8 +399,9 @@ awk '$1 != $5 && $5 != "root" \
 list=".bashrc .bash_profile .bash_login .bash_logout .cshrc \
       .emacs .exrc .forward .fvwmrc .inputrc .klogin .kshrc .login \
       .logout .nexrc .profile .screenrc .ssh .ssh/config \
-      .ssh/authorized_keys .ssh/environment .ssh/known_hosts .ssh/rc \
-      .tcshrc .twmrc .xsession .xinitrc .Xdefaults .Xauthority"
+      .ssh/authorized_keys .ssh/authorized_keys2 .ssh/environment \
+      .ssh/known_hosts .ssh/rc .tcshrc .twmrc .xsession .xinitrc \
+      .Xdefaults .Xauthority"
 awk -F: '/^[^+-]/ { print $1 " " $6 }' /etc/passwd | \
 while read uid homedir; do
 	for f in $list ; do
