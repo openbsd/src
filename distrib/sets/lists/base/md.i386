@@ -1,6 +1,7 @@
 ./sbin/ancontrol
 ./sbin/fdisk
 ./sbin/iopctl
+./sbin/kbd
 ./sbin/ldconfig
 ./sbin/wicontrol
 ./sbin/wsconsctl
@@ -58,7 +59,7 @@
 ./usr/lib/libmenu.so.1.1
 ./usr/lib/libobjc.so.0.0
 ./usr/lib/libocurses.so.3.0
-./usr/lib/libossaudio.so.0.0
+./usr/lib/libossaudio.so.1.0
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.2
 ./usr/lib/libpcap.so.1.2
@@ -1193,6 +1194,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/gdt.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ieee.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ieeefp.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/i386/internal_types.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/intr.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/ioctl_fd.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/i386/joystick.ph
@@ -1723,6 +1725,7 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/kgdb.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/ktrace.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/sys/limits.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/lkm.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/sys/lock.ph
@@ -1928,4 +1931,3 @@
 ./usr/share/misc/pcvtfonts/vt220l.810
 ./usr/share/misc/pcvtfonts/vt220l.814
 ./usr/share/misc/pcvtfonts/vt220l.816
-./sbin/kbd

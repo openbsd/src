@@ -1,3 +1,4 @@
+./sbin/kbd
 ./sbin/ldconfig
 ./sbin/wsconsctl
 ./usr/bin/c++filt
@@ -53,7 +54,7 @@
 ./usr/lib/libmenu.so.1.1
 ./usr/lib/libobjc.so.0.0
 ./usr/lib/libocurses.so.3.0
-./usr/lib/libossaudio.so.0.0
+./usr/lib/libossaudio.so.1.0
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.2
 ./usr/lib/libpcap.so.1.2
@@ -1234,6 +1235,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/ieeefp.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/instr.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/int_types.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/internal_types.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/intr.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/kcore.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sparc64/limits.ph
@@ -1379,6 +1381,7 @@
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/kgdb.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/ktrace.ph
+./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/limits.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/lkm.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/sparc64-openbsd/sys/lock.ph
@@ -1896,4 +1899,3 @@
 ./usr/mdec/ofwboot.net
 ./usr/sbin/eeprom
 ./usr/sbin/wsconscfg
-./sbin/kbd

@@ -1,3 +1,4 @@
+./sbin/kbd
 ./sbin/ldconfig
 ./usr/bin/c++filt
 ./usr/bin/ldd
@@ -53,7 +54,7 @@
 ./usr/lib/libmenu.so.1.1
 ./usr/lib/libobjc.so.0.0
 ./usr/lib/libocurses.so.3.0
-./usr/lib/libossaudio.so.0.0
+./usr/lib/libossaudio.so.1.0
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.2
 ./usr/lib/libpcap.so.1.2
@@ -1239,6 +1240,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/frame.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieee.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/ieeefp.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/kcore.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/limits.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/m68k/param.ph
@@ -1742,6 +1744,7 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/kgdb.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/ktrace.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/sys/limits.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/lkm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/sys/lock.ph
@@ -1913,4 +1916,3 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/zlib.ph
 ./usr/libexec/ld.so
 ./usr/local/libdata/perl5/site_perl/m68k-openbsd
-./sbin/kbd

@@ -28,6 +28,7 @@
 ./usr/include/alpha/frame.h
 ./usr/include/alpha/ieee.h
 ./usr/include/alpha/ieeefp.h
+./usr/include/alpha/internal_types.h
 ./usr/include/alpha/intr.h
 ./usr/include/alpha/intrcnt.h
 ./usr/include/alpha/ioctl_fd.h

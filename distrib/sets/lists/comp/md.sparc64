@@ -40,6 +40,7 @@
 ./usr/include/sparc64/ieeefp.h
 ./usr/include/sparc64/instr.h
 ./usr/include/sparc64/int_types.h
+./usr/include/sparc64/internal_types.h
 ./usr/include/sparc64/intr.h
 ./usr/include/sparc64/kcore.h
 ./usr/include/sparc64/limits.h

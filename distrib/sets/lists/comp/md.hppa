@@ -32,6 +32,7 @@
 ./usr/include/hppa/hppa_cpu.h
 ./usr/include/hppa/ieee.h
 ./usr/include/hppa/ieeefp.h
+./usr/include/hppa/internal_types.h
 ./usr/include/hppa/intr.h
 ./usr/include/hppa/intrcnt.h
 ./usr/include/hppa/ioctl_fd.h

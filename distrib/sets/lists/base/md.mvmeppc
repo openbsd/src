@@ -59,7 +59,7 @@
 ./usr/lib/libmenu.so.1.1
 ./usr/lib/libobjc.so.0.0
 ./usr/lib/libocurses.so.3.0
-./usr/lib/libossaudio.so.0.0
+./usr/lib/libossaudio.so.1.0
 ./usr/lib/libotermcap.so.3.0
 ./usr/lib/libpanel.so.1.2
 ./usr/lib/libpcap.so.1.2
@@ -1483,6 +1483,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/frame.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ieee.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ieeefp.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/internal_types.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/intr.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/ipkdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/powerpc/kbio.ph
@@ -1714,6 +1715,7 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/kgdb.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/ktrace.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/limits.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/lkm.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/sys/lock.ph

@@ -545,6 +545,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/keynote.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/login_cap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/ieee.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/m88k/internal_types.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/machine
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/tcfs
 ./usr/libdata/perl5/site_perl/m88k-openbsd/miscfs/tcfs/tcfs.ph
@@ -587,6 +588,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/ataio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/extattr.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/kgdb.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/sys/limits.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/memrange.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/pciio.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/sys/radioio.ph

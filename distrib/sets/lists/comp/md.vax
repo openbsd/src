@@ -22,6 +22,7 @@
 ./usr/include/vax/exec.h
 ./usr/include/vax/float.h
 ./usr/include/vax/frame.h
+./usr/include/vax/internal_types.h
 ./usr/include/vax/intr.h
 ./usr/include/vax/ioa.h
 ./usr/include/vax/ka410.h

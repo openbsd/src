@@ -34,6 +34,7 @@
 ./usr/include/sparc/ieee.h
 ./usr/include/sparc/ieeefp.h
 ./usr/include/sparc/instr.h
+./usr/include/sparc/internal_types.h
 ./usr/include/sparc/ioctl_fd.h
 ./usr/include/sparc/kbd.h
 ./usr/include/sparc/kbio.h

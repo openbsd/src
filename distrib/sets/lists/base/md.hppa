@@ -1,4 +1,5 @@
 ./sbin/iopctl
+./sbin/kbd
 ./sbin/wsconsctl
 ./usr/bin/c++filt
 ./usr/include/hppa
@@ -1111,6 +1112,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/hppa_cpu.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/ieee.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/ieeefp.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/internal_types.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/intr.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/intrcnt.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/hppa/ioctl_fd.ph
@@ -1635,6 +1637,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/kgdb.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/kthread.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/ktrace.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/sys/limits.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/lkm.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/localedef.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/sys/lock.ph
@@ -1814,4 +1817,3 @@
 ./usr/mdec/setnetbootinfo
 ./usr/sbin/wsconscfg
 ./usr/sbin/wsfontload
-./sbin/kbd

@@ -75,6 +75,7 @@
 ./usr/include/powerpc/frame.h
 ./usr/include/powerpc/ieee.h
 ./usr/include/powerpc/ieeefp.h
+./usr/include/powerpc/internal_types.h
 ./usr/include/powerpc/intr.h
 ./usr/include/powerpc/ipkdb.h
 ./usr/include/powerpc/kcore.h
