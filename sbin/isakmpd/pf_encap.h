@@ -1,8 +1,8 @@
-/*	$OpenBSD: pf_encap.h,v 1.5 1999/03/24 14:45:06 niklas Exp $	*/
-/*	$EOM: pf_encap.h,v 1.10 1999/03/24 11:04:25 niklas Exp $	*/
+/*	$OpenBSD: pf_encap.h,v 1.6 1999/04/05 21:03:01 niklas Exp $	*/
+/*	$EOM: pf_encap.h,v 1.11 1999/04/02 00:51:32 niklas Exp $	*/
 
 /*
- * Copyright (c) 1998 Niklas Hallqvist.  All rights reserved.
+ * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,6 +56,7 @@ struct pf_encap_node {
   void *arg;
 };
 
+extern int pf_encap_connection (char *);
 extern int pf_encap_delete_spi (struct sa *, struct proto *, int);
 extern int pf_encap_enable_sa (struct sa *);
 extern int pf_encap_enable_spi (in_addr_t, in_addr_t, in_addr_t, in_addr_t,
@@ -66,8 +67,6 @@ extern int pf_encap_group_spis (struct sa *, struct proto *, struct proto *,
 				int);
 extern void pf_encap_handler (int);
 extern int pf_encap_open (void);
-extern int pf_encap_route (in_addr_t, in_addr_t, in_addr_t, in_addr_t,
-			   u_int32_t, in_addr_t, char *);
 extern int pf_encap_set_spi (struct sa *, struct proto *, int);
 
 #endif /* _PF_ENCAP_H_ */
