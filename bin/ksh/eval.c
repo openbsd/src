@@ -1,4 +1,4 @@
-/*	$OpenBSD: eval.c,v 1.17 2004/12/09 11:32:07 otto Exp $	*/
+/*	$OpenBSD: eval.c,v 1.18 2004/12/13 16:37:06 millert Exp $	*/
 
 /*
  * Expansion - quoting, separation, substitution, globbing
@@ -292,12 +292,12 @@ expand(cp, wp, f)
 					char endc;
 					char *str, *end;
 
+					sp = varname - 2; /* restore sp */
 					end = (char *) wdscan(sp, CSUBST);
 					/* ({) the } or x is already skipped */
 					endc = *end;
 					*end = EOS;
-					str = snptreef((char *) 0, 64, "%S",
-							varname - 1);
+					str = snptreef(NULL, 64, "%S", sp);
 					*end = endc;
 					errorf("%s: bad substitution", str);
 				}
