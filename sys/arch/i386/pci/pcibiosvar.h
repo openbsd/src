@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibiosvar.h,v 1.10 2002/03/14 03:15:54 millert Exp $	*/
+/*	$OpenBSD: pcibiosvar.h,v 1.11 2003/07/30 05:26:33 mickey Exp $	*/
 /*	$NetBSD: pcibios.h,v 1.2 2000/04/28 17:15:16 uch Exp $	*/
 
 /*
@@ -164,6 +164,8 @@ int	opti82c558_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 int	opti82c700_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
 int	via82c586_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
+	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
+int	via8231_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
 int	sis85c503_init(pci_chipset_tag_t, bus_space_tag_t, pcitag_t,
 	    pciintr_icu_tag_t *, pciintr_icu_handle_t *);
