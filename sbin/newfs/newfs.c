@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.19 1999/08/17 09:13:14 millert Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.20 1999/12/03 19:24:18 art Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.19 1999/08/17 09:13:14 millert Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.20 1999/12/03 19:24:18 art Exp $";
 #endif
 #endif /* not lint */
 
@@ -151,6 +151,7 @@ void	fatal();
 int	mfs;			/* run as the memory based filesystem */
 int	Nflag;			/* run without writing file system */
 int	Oflag;			/* format as an 4.3BSD file system */
+int	Uflag;			/* enable soft updates for file system */
 int	fssize;			/* file system size */
 int	ntracks;		/* # tracks/cylinder */
 int	nsectors;		/* # sectors/track */
@@ -217,8 +218,8 @@ main(argc, argv)
 		fatal("insane maxpartitions value %d", maxpartitions);
 
 	opstring = mfs ?
-	    "NT:a:b:c:d:e:f:i:m:o:s:" :
-	    "NOS:T:a:b:c:d:e:f:i:k:l:m:n:o:p:qr:s:t:u:x:z:";
+	    "NT:Ua:b:c:d:e:f:i:m:o:s:" :
+	    "NOS:UT:a:b:c:d:e:f:i:k:l:m:n:o:p:qr:s:t:u:x:z:";
 	while ((ch = getopt(argc, argv, opstring)) != -1) {
 		switch (ch) {
 		case 'N':
@@ -236,6 +237,9 @@ main(argc, argv)
 			disktype = optarg;
 			break;
 #endif
+		case 'U':
+			Uflag = 1;
+			break;
 		case 'a':
 			if ((maxcontig = atoi(optarg)) <= 0)
 				fatal("%s: bad maximum contiguous blocks\n",
@@ -727,6 +731,7 @@ usage()
 #ifdef COMPAT
 	fprintf(stderr, "\t-T disktype\n");
 #endif
+	fprintf(stderr, "\t-U enable soft updates\n");
 	fprintf(stderr, "\t-a maximum contiguous blocks\n");
 	fprintf(stderr, "\t-b block size\n");
 	fprintf(stderr, "\t-c cylinders/group\n");

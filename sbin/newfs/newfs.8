@@ -1,4 +1,4 @@
-.\"	$OpenBSD: newfs.8,v 1.18 1999/09/29 13:50:44 aaron Exp $
+.\"	$OpenBSD: newfs.8,v 1.19 1999/12/03 19:24:18 art Exp $
 .\"	$NetBSD: newfs.8,v 1.12 1995/03/18 14:58:41 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993, 1994
@@ -42,7 +42,7 @@
 .Nd construct a new file system
 .Sh SYNOPSIS
 .Nm newfs
-.Op Fl NO
+.Op Fl NOU
 .Op Fl S Ar sector-size
 .Op Fl a Ar maxcontig
 .Op Fl b Ar block-size
@@ -67,7 +67,7 @@
 .Ar special
 .Pp
 .Nm mount_mfs
-.Op Fl N
+.Op Fl NU
 .Op Fl a Ar maxcontig
 .Op Fl b Ar block-size
 .Op Fl c Ar cylinders
@@ -149,6 +149,8 @@ Creates a
 format filesystem.
 This options is primarily used to build root filesystems
 that can be understood by older boot ROMs.
+.It Fl U
+Enables soft updates on the new filesystem.
 .It Fl q
 Operate in quiet mode.  With this option,
 .Nm
