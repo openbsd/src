@@ -1,0 +1,229 @@
+.\" $OpenBSD: spell.1,v 1.1 2002/03/01 22:01:11 millert Exp $
+.\"
+.\" Copyright (C) 1985, 1993, 1994
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed by the University of
+.\"	California, Berkeley and its contributors.
+.\" 4. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.\" Copyright (C) Caldera International Inc.  2001-2002.
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code and documentation must retain the above
+.\"    copyright notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. All advertising materials mentioning features or use of this software
+.\"    must display the following acknowledgement:
+.\"	This product includes software developed or owned by Caldera
+.\"	International, Inc.
+.\" 4. Neither the name of Caldera International, Inc. nor the names of other
+.\"    contributors may be used to endorse or promote products derived from
+.\"    this software without specific prior written permission.
+.\"
+.\" USE OF THE SOFTWARE PROVIDED FOR UNDER THIS LICENSE BY CALDERA
+.\" INTERNATIONAL, INC. AND CONTRIBUTORS ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL CALDERA INTERNATIONAL, INC. BE LIABLE FOR ANY DIRECT,
+.\" INDIRECT INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+.\" (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+.\" SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+.\" STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+.\" IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+.\" POSSIBILITY OF SUCH DAMAGE.
+.\"
+.\"	@(#)spell.1	8.2 (Berkeley) 4/18/94
+.\"
+.Dd April 18, 1994
+.Dt SPELL 1
+.Os
+.Sh NAME
+.Nm spell
+.Nd find spelling errors
+.Sh SYNOPSIS
+.Nm spell
+.Op Fl biltvx
+.Op Fl d Ar list
+.Op Fl h Ar spellhist
+.Op Fl s Ar stop
+.Op + Ns Ar extra_list
+.Op Ar file ...
+.Sh DESCRIPTION
+.Nm spell
+collects words from the named documents and looks them up in a spelling list.
+Words that neither occur among nor are derivable (by applying certain
+inflections, prefixes or suffixes) from words in the spelling list
+are printed on the standard output.
+.Pp
+If no files are named, words are collected from the standard input.
+.Nm
+ignores most
+.Xr troff 1 ,
+.Xr tbl 1 ,
+.Xr eqn 1
+and
+.Xr pic 1
+constructions.
+Copies of all output may be accumulated in the history file,
+if one is specified.
+.Pp
+By default,
+.Nm
+(like
+.Xr deroff 1 )
+follows chains of included files (`.so' and `.nx' commands).
+.Pp
+The default spelling list is based on Webster's Second International
+dictionary and should be fairly complete.
+Words that appear in the
+.Dq stop list
+are immediately flagged as misspellings, regardless of whether or not
+they exist in one of the word lists.
+This helps filter out misspellings (e.g. thier=thy\-y+ier)
+that would otherwise pass.
+Additionally, the
+.Pa british
+file is also used as a stop list unless the
+.Fl b
+option is specified.
+.Pp
+Site administrators may add words to the local word list,
+.Pa /usr/local/share/dict/words
+or the local stop list, 
+.Pa /usr/local/share/dict/stop .
+.Pp
+All word (and stop) lists must be sorted in lexigraphical order
+with case folded.
+The simplest way to achieve this is to use
+.Dq sort -f .
+If the word files are incorrectly sorted,
+.Nm
+will not be able to operate correctly.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl b
+Check British spelling.
+Besides preferring
+.Em centre , colour , speciality , travelled ,
+etc., this option insists upon
+.Fl ise
+in words like
+.Em standardise ,
+Fowler and the OED to the contrary notwithstanding.
+In this mode, American variants of words are added to the stop list.
+.It Fl i
+Instruct
+.Xr deroff 1
+to ignore `.so' and `.nx' commands.
+.It Fl l
+Use
+.Xr delatex 1
+instead of
+.Xr deroff 1
+if it is present on the system.
+.It Fl t
+Use
+.Xr detex 1
+instead of
+.Xr deroff 1
+if it is present on the system.
+.It Fl v
+Print all words not literally in the spelling list in addition to
+plausible derivations from spelling list words.
+.It Fl x
+Print every plausible stem, prefixed with `='.
+.It Fl d Ar word_list
+Use the specified word list instead of the default system word list.
+The word list must be sorted as specified above.
+.It Fl h Ar spellhist
+Store misspelled words in the specified history file.
+The output of
+.Li who -m
+is appended to the history file after the list of misspelled words.
+.It Fl s Ar stop_list
+Use the specified stop list instead of the default system stop list.
+The stop list must be sorted as specified above.
+.It + Ns Ar extra_list
+Use
+.Ar extra_list
+in addition to the default word list.
+The extra word list must be sorted as specified above. 
+.El
+.Sh FILES
+.Bl -tag -width /usr/local/share/dict/wordsxx -compact
+.It Pa /usr/share/dict/words
+Default spelling list
+.It Pa /usr/share/dict/american
+American spelling of certain words
+.It Pa /usr/share/dict/british
+British spelling of certain words
+.It Pa /usr/share/dict/stop
+Default stop list.
+.It Pa /usr/local/share/dict/words
+Local spelling list (optional)
+.It Pa /usr/local/share/dict/stop
+Local stop list (optional)
+.It Pa /usr/libexec/spellprog
+Binary executed by the shell script
+.Pa /usr/bin/spell .
+.El
+.Sh SEE ALSO
+.Xr deroff 1 ,
+.Xr look 1 ,
+.Xr sed 1 ,
+.Xr sort 1 ,
+.Xr tee 1
+.Sh BUGS
+The spelling list lacks many technical terms; new installations will
+probably wish to monitor the output for several months to gather local
+additions.
+.Pp
+British spelling was done by an American.
+.Pp
+In
+.Fl x
+mode it would be nicer if the stems were grouped with the appropriate word.
+.Sh HISTORY
+The
+.Nm spell
+command appeared in
+.At v6 .
+.Pp
+Unlike historic versions, the
+.Ox
+.Nm
+command does not use hashed word files.
+Instead, it uses lexigraphically sorted files and the same technique as
+.Xr look 1 .
