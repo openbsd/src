@@ -1,4 +1,4 @@
-/*	$OpenBSD: nofn.c,v 1.4 2002/05/16 22:52:17 jason Exp $	*/
+/*	$OpenBSD: nofn.c,v 1.5 2002/09/18 04:32:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -498,8 +498,13 @@ nofn_pk_read_reg(sc, ridx, rp)
 	int ridx;
 	union nofn_pk_reg *rp;
 {
+#if BYTE_ORDER == BIG_ENDIAN
+	bus_space_read_region_4(sc->sc_pk_t, sc->sc_pk_h,
+	    NOFN_PK_REGADDR(NOFN_PK_WIN_0, ridx, 0), rp->w, 1024/32);
+#else
 	bus_space_read_region_4(sc->sc_pk_t, sc->sc_pk_h,
 	    NOFN_PK_REGADDR(NOFN_PK_WIN_2, ridx, 0), rp->w, 1024/32);
+#endif
 }
 
 void
@@ -508,8 +513,13 @@ nofn_pk_write_reg(sc, ridx, rp)
 	int ridx;
 	union nofn_pk_reg *rp;
 {
+#if BYTE_ORDER == BIG_ENDIAN
+	bus_space_write_region_4(sc->sc_pk_t, sc->sc_pk_h,
+	    NOFN_PK_REGADDR(NOFN_PK_WIN_0, ridx, 0), rp->w, 1024/32);
+#else
 	bus_space_write_region_4(sc->sc_pk_t, sc->sc_pk_h,
 	    NOFN_PK_REGADDR(NOFN_PK_WIN_2, ridx, 0), rp->w, 1024/32);
+#endif
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: lofn.c,v 1.19 2002/05/10 15:45:18 jason Exp $	*/
+/*	$OpenBSD: lofn.c,v 1.20 2002/09/18 04:32:59 jason Exp $	*/
 
 /*
  * Copyright (c) 2001-2002 Jason L. Wright (jason@thought.net)
@@ -229,8 +229,13 @@ lofn_read_reg(sc, ridx, rp)
 	int ridx;
 	union lofn_reg *rp;
 {
+#if BYTE_ORDER == BIG_ENDIAN
+	bus_space_read_region_4(sc->sc_st, sc->sc_sh,
+	    LOFN_REGADDR(LOFN_WIN_0, ridx, 0), rp->w, 1024/32);
+#else
 	bus_space_read_region_4(sc->sc_st, sc->sc_sh,
 	    LOFN_REGADDR(LOFN_WIN_2, ridx, 0), rp->w, 1024/32);
+#endif
 }
 
 void
@@ -239,8 +244,13 @@ lofn_write_reg(sc, ridx, rp)
 	int ridx;
 	union lofn_reg *rp;
 {
+#if BYTE_ORDER == BIG_ENDIAN
+	bus_space_write_region_4(sc->sc_st, sc->sc_sh,
+	    LOFN_REGADDR(LOFN_WIN_0, ridx, 0), rp->w, 1024/32);
+#else
 	bus_space_write_region_4(sc->sc_st, sc->sc_sh,
 	    LOFN_REGADDR(LOFN_WIN_2, ridx, 0), rp->w, 1024/32);
+#endif
 }
 
 void
