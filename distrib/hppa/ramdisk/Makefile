@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.1 2003/01/30 21:05:01 mickey Exp $
+#	$OpenBSD: Makefile,v 1.2 2003/02/13 21:42:45 mickey Exp $
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/..
@@ -29,7 +29,7 @@ STRIP?=		strip
 LISTS=		${ARCHDIR}/list ${.CURDIR}/list
 MTREE=		${UTILS}/mtree.conf
 
-FLOPPY?=	ramdisk${REV}.lif
+LIF?=		lif${REV}.fs
 MKBOOT?=	${DESTDIR}/usr/mdec/mkboot
 BOOT?=		${DESTDIR}/usr/mdec/boot
 
@@ -40,10 +40,10 @@ GZIPFLAGS?=	-9
 NEWFSOPTS=	-t ffs -m 0 -o space -f 1024 -b 8192
 NEWFSOPTS_RD?=	${NEWFSOPTS} -i 16384 -c 64 -s ${IMAGESIZE}
 
-all:	bsd.rd ${FLOPPY}
+all:	bsd.rd ${LIF}
 
-${FLOPPY}:	bsd ${BOOT} ${BOOTXX}
-	${MKBOOT} -v ${BOOT} bsd ${FLOPPY}
+${LIF}:	bsd ${BOOT} ${BOOTXX}
+	${MKBOOT} -v ${BOOT} bsd ${LIF}
 
 obsd:
 	cd ${SRCDIR}/sys/arch/${MACHINE}/conf && config ${KERNEL}
@@ -92,11 +92,11 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 
 clean cleandir:
 	/bin/rm -f *.core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache \
-	${CBIN}.conf *.o *.lo *.c obsd bsd bsd.*
+	${CBIN}.conf *.o *.lo *.c obsd bsd bsd.* ${LIF}
 
 beforeinstall:
 	cp bsd.rd ${DESTDIR}/snapshot
-	cp ${FLOPPY} ${DESTDIR}/snapshot
+	cp ${LIF} ${DESTDIR}/snapshot
 
 unconfig:
 	-umount -f ${MOUNT_POINT}

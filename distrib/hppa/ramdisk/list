@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.2 2003/01/30 22:09:56 deraadt Exp $
+#	$OpenBSD: list,v 1.3 2003/02/13 21:42:45 mickey Exp $
 
 # hppa extra's
 LINK	instbin				sbin/disklabel
@@ -13,8 +13,9 @@ SYMLINK	/tmp	var/tmp
 SCRIPT	${DESTDIR}/dev/MAKEDEV		dev/MAKEDEV
 SPECIAL	cd dev; sh MAKEDEV ramdisk
 
-# we need the contents of /usr/mdec (but not boot or binstall)
+# we need the contents of /usr/mdec (but not boot or mkboot)
 COPYDIR	${DESTDIR}/usr/mdec		usr/mdec
+SPECIAL	rm -f usr/mdec/boot
 SPECIAL	rm -f usr/mdec/mkboot
 
 # various files that we need in /etc for the install
