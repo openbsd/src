@@ -69,18 +69,18 @@ FILE *xtmpfile()
   int fd = mkstemp(templ);
   if (fd < 0)
     fatal("cannot create temporary file: %1", strerror(errno));
-  errno = 0;
-  FILE *fp = fdopen(fd, "w+");
-  if (!fp)
-    fatal("fdopen: %1", strerror(errno));
 #else /* not HAVE_MKSTEMP */
   if (!mktemp(templ) || !templ[0])
     fatal("cannot create file name for temporary file");
   errno = 0;
-  FILE *fp = fopen(templ, "w+");
-  if (!fp)
+  int fd = open(templ, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+  if (fd < 0)
     fatal("cannot open `%1': %2", templ, strerror(errno));
 #endif /* not HAVE_MKSTEMP */
+  errno = 0;
+  FILE *fp = fdopen(fd, "w+");
+  if (!fp)
+    fatal("fdopen: %1", strerror(errno));
   if (unlink(templ) < 0)
     error("cannot unlink `%1': %2", templ, strerror(errno));
   a_delete templ;

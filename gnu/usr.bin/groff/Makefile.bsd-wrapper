@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.15 2000/01/11 16:29:52 millert Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.16 2000/04/09 08:25:09 millert Exp $
 
 #
 # groff config
@@ -12,43 +12,23 @@ COMMON_WORDS=	/usr/share/dict/eign
 GNUCFLAGS=	CC="${CC}" CFLAGS="${CFLAGS} ${COPTS}" 
 GNUCXXFLAGS=	CXX="${CXX}" CCFLAGS="${CXXFLAGS} ${COPTS}"
 
-CLEANFILES=	config.cache config.log pic/pic.cc eqn/eqn.cc \
-		refer/label.cc pic/pic.tab.h eqn/eqn.tab.h ${MANALL}
+CLEANFILES+=	config.cache config.log pic/pic.cc eqn/eqn.cc \
+		refer/label.cc pic/pic.tab.h eqn/eqn.tab.h
 
-# All of groff's man pages have a .n extension.  Sigh.
-MANLOCALBUILD=	yes
+MAN=	addftinfo/addftinfo.1 afmtodit/afmtodit.1 eqn/eqn.1 \
+	grodvi/grodvi.1 groff/groff.1 grog/grog.1 grohtml/grohtml.1 \
+	grolj4/grolj4.1 grops/grops.1 grotty/grotty.1 hpftodit/hpftodit.1 \
+	indxbib/indxbib.1 lkbib/lkbib.1 lookbib/lookbib.1 \
+	man/groff_char.7 man/groff_font.5 man/groff_out.5 mm/groff_mm.7 \
+	mm/groff_mmse.7 nroff/nroff.1 pfbtops/pfbtops.1 pic/pic.1 \
+	psbb/psbb.1 refer/refer.1 soelim/soelim.1 tbl/tbl.1 \
+	tfmtodit/tfmtodit.1 tmac/groff_man.7 tmac/groff_me.7 tmac/groff_ms.7 \
+	tmac/groff_msafer.7 troff/troff.1
 
-MAN_SRC1=	addftinfo/addftinfo.n groff/groff.n troff/troff.n \
-	tbl/tbl.n pic/pic.n eqn/eqn.n grops/grops.n grotty/grotty.n \
-	grodvi/grodvi.n tfmtodit/tfmtodit.n grolj4/grolj4.n \
-	hpftodit/hpftodit.n refer/refer.n lookbib/lookbib.n \
-	indxbib/indxbib.n lkbib/lkbib.n soelim/soelim.n \
-	pfbtops/pfbtops.n psbb/psbb.n \
-	afmtodit/afmtodit.n grog/grog.n nroff/nroff.n
-MAN_SRC5=	man/groff_font.n man/groff_out.n
-MAN_SRC7=	man/groff_char.n tmac/groff_ms.n tmac/me.n \
-	tmac/msafer.n mm/groff_mm.n mm/groff_mmse.n
+MLINKS=	groff_man.7 man.7 groff_me.7 me.7 groff_mm.7 mm.7 groff_ms.7 ms.7 \
+	eqn.1 neqn.1
 
-MAN_BUILD1=	${MAN_SRC1:S/.n$/.cat1/g}
-MAN_BUILD5=	${MAN_SRC5:S/.n$/.cat5/g}
-MAN_BUILD7=	${MAN_SRC7:S/.n$/.cat7/g}
-
-# Used for cleaning, which is why it is independent of NOMAN
-MANALL=		${MAN_BUILD1} ${MAN_BUILD5} ${MAN_BUILD7}
-.ifndef NOMAN
-MAN_BUILD=	${MANALL}
-.endif
-
-
-MLINKS=	groff_ms.7 ms.7 groff_mm.7 mm.7 eqn.1 neqn.1
-
-.SUFFIXES: .n .cat1 .cat5 .cat7
-
-.n.cat1 .n.cat5 .n.cat7:
-	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
-	@${NROFF} -mandoc ${.IMPSRC} > ${.TARGET} || (rm -f ${.TARGET}; false)
-
-all: config.status gnu_build ${MAN_BUILD}
+all: config.status gnu_build
 
 .FORCE: .IGNORE
 
@@ -92,14 +72,13 @@ install: maninstall
 		fontdir=${DESTDIR}${FONTDIR} \
 		indexdir=${DESTDIR}${INDEXDIR} \
 		common_words_file=${DESTDIR}${COMMON_WORDS} \
-		INSTALL_MAN= TMAC_AN= TMAC_ANDOC= MDOCFILES= tmac_an= \
 		install
 	install -c -o ${BINOWN} -g ${BINGRP} -m 444 ${.CURDIR}/tmac/tmac.an \
                 ${DESTDIR}${DATASUBDIR}/tmac/tmac.an.old
 
 clean cleandir:
-	rm -f ${CLEANFILES}
 	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+	rm -f ${CLEANFILES}
 
 depend:
 	# Nothing here so far...
@@ -112,7 +91,7 @@ tags:
 
 .ifdef NOMAN
 maninstall:
-	# Dummy target for bootstrap...
+	@echo NOMAN is set
 .endif
 
 .include <bsd.obj.mk>

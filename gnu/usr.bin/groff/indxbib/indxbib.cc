@@ -38,6 +38,7 @@ Foundation, 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA. */
 extern "C" {
   // Sun's stdlib.h fails to declare this.
   char *mktemp(char *);
+  int mkstemp(char *);
 }
 
 #define DEFAULT_HASH_TABLE_SIZE 997
@@ -220,11 +221,15 @@ int main(int argc, char **argv)
     temp_index_file = strsave(TEMP_INDEX_TEMPLATE);
   }
   catch_fatal_signals();
+#ifdef HAVE_MKSTEMP
   int fd = mkstemp(temp_index_file);
-  if (fd == -1 || !temp_index_file[0])
+#else /* not HAVE_MKSTEMP */
+  if (!mktemp(temp_index_file) || !temp_index_file[0])
     fatal("cannot create file name for temporary file");
-  if (fchmod(fd, S_IRUSR|S_IRGRP|S_IROTH) < 0)
-    fatal("cannot change permissions for temporary file");
+  int fd = open(temp_index_file, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+#endif /* not HAVE_MKSTEMP */
+  if (fd < 0)
+    fatal("can't create temporary index file: %1", strerror(errno));
   indxfp = fdopen(fd, "w");
   if (indxfp == 0)
     fatal("fdopen failed");

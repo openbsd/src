@@ -1,5 +1,5 @@
 PROG=tbl
-MAN1=tbl.n
+MAN1=tbl.1
 XLIBS=$(LIBGROFF)
 OBJS=main.o table.o
 CCSRCS=main.cc table.cc

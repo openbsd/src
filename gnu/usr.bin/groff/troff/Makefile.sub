@@ -1,5 +1,5 @@
 PROG=troff
-MAN1=troff.n
+MAN1=troff.1
 XLIBS=$(LIBGROFF)
 MLIB=$(LIBM)
 OBJS=env.o node.o input.o div.o symbol.o dictionary.o reg.o \

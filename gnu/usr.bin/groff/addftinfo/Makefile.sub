@@ -1,5 +1,5 @@
 PROG=addftinfo
-MAN1=addftinfo.n
+MAN1=addftinfo.1
 XLIBS=$(LIBGROFF)
 OBJS=addftinfo.o guess.o
 CCSRCS=addftinfo.cc guess.cc

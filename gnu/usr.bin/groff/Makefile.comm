@@ -31,7 +31,6 @@ TOP=..
 LIBGROFF=$(TOP)/libgroff/libgroff.a
 LIBBIB=$(TOP)/libbib/libbib.a
 LIBDRIVER=$(TOP)/libdriver/libdriver.a
-LIBM=-lm
 MLIB=
 XLIBS=
 YTABH=
@@ -50,18 +49,14 @@ MANPAGES=$(MAN1) $(MAN5) $(MAN7)
 MANCLEAN=$(MANPAGES)
 fontsubdir=$(fontdir)/dev$(DEV)
 
-# Target to use for installing unformatted man-pages.  Some systems may not
-# want them installed.
-INSTALL_MAN=install_man
+all install install_bin install_data TAGS depend distfiles uninstall_sub:
 
-all install install_bin install_data $(INSTALL_MAN) TAGS depend distfiles uninstall_sub:
-
-install: install_bin install_data $(INSTALL_MAN)
+install: install_bin install_data
 uninstall: uninstall_sub
 pure:
 
 .PHONY: all clean distclean mostlyclean realclean extraclean depend distfiles
-.PHONY: install install_bin install_data $(INSTALL_MAN)
+.PHONY: install install_bin install_data
 .PHONY: uninstall uninstall_sub
 .PHONY: pure
 
@@ -83,7 +78,7 @@ extraclean:
 	  \#* *~ =* core junk grot old temp tmp tem
 
 .SUFFIXES:
-.SUFFIXES: .o .cc .c .y .man .n
+.SUFFIXES: .o .cc .c .y .1_in .1 .5_in .5 .7_in .7
 
 .cc.o:
 	$(COMPILE.cc) $<
@@ -108,7 +103,7 @@ extraclean:
 	  fi; \
 	fi
 
-.man.n:
+.1_in.1 .5_in.5 .7_in.7:
 	@echo Making $@ from $<
 	@-rm -f $@
 	@sed -e "s;@FONTDIR@;$(fontdir);g" \
@@ -125,6 +120,7 @@ extraclean:
 	-e "s;@MAN7EXT@;$(man7ext);g" \
 	-e "s;@TMAC_S_PREFIX@;$(tmac_s_prefix);g" \
 	-e "s;@TMAC_M_PREFIX@;$(tmac_m_prefix);g" \
+	-e "s;@TMAC_AN_PREFIX@;$(tmac_an_prefix);g" \
 	-e "s;@TMAC_MDIR@;$(tmacdir)/mm;g" \
 	-e "s;@BROKEN_SPOOLER_FLAGS@;$(BROKEN_SPOOLER_FLAGS);g" \
 	-e "s;@VERSION@;`cat $(srcdir)/../VERSION`;g" \
@@ -135,11 +131,11 @@ extraclean:
 
 .PHONY: install_man
 install_man:
-	-test -d $(mandir) || mkdir $(mandir)
+	-test -d $(manroot) || mkdir $(manroot)
 	-test -d $(man1dir) || mkdir $(man1dir)
 	@-pages="$(MAN1)"; \
 	for p in $$pages; do \
-	 prog=`basename $$p .n`; \
+	 prog=`basename $$p .1`; \
 	 target=$(man1dir)/$(NAMEPREFIX)$$prog.$(man1ext); \
 	 rm -f $$target; \
 	 echo $(INSTALL_DATA) $$p $$target; \
@@ -148,7 +144,7 @@ install_man:
 	-test -d $(man5dir) || mkdir $(man5dir)
 	@-pages="$(MAN5)"; \
 	for p in $$pages; do \
-	 target=$(man5dir)/`basename $$p .n`.$(man5ext); \
+	 target=$(man5dir)/`basename $$p .5`.$(man5ext); \
 	 rm -f $$target; \
 	 echo $(INSTALL_DATA) $$p $$target; \
 	 $(INSTALL_DATA) $$p $$target; \
@@ -156,7 +152,7 @@ install_man:
 	-test -d $(man7dir) || mkdir $(man7dir)
 	@-pages="$(MAN7)"; \
 	for p in $$pages; do \
-	 target=$(man7dir)/`basename $$p .n`.$(man7ext); \
+	 target=$(man7dir)/`basename $$p .5`.$(man7ext); \
 	 rm -f $$target; \
 	 echo $(INSTALL_DATA) $$p $$target; \
 	 $(INSTALL_DATA) $$p $$target; \
@@ -166,19 +162,19 @@ install_man:
 uninstall_man:
 	@-pages="$(MAN1)"; \
 	for p in $$pages; do \
-	 target=$(man1dir)/$(NAMEPREFIX)`basename $$p .n`.$(man1ext); \
+	 target=$(man1dir)/$(NAMEPREFIX)`basename $$p .1`.$(man1ext); \
 	 echo rm -f $$target; \
 	 rm -f $$target; \
 	done
 	@-pages="$(MAN5)"; \
 	for p in $$pages; do \
-	 target=$(man5dir)/`basename $$p .n`.$(man5ext); \
+	 target=$(man5dir)/`basename $$p .5`.$(man5ext); \
 	 echo rm -f $$target; \
 	 rm -f $$target; \
 	done
 	@-pages="$(MAN7)"; \
 	for p in $$pages; do \
-	 target=$(man7dir)/`basename $$p .n`.$(man7ext); \
+	 target=$(man7dir)/`basename $$p .7`.$(man7ext); \
 	 echo rm -f $$target; \
 	 rm -f $$target; \
 	done

@@ -1,5 +1,5 @@
 PROG=grolj4
-MAN1=grolj4.n
+MAN1=grolj4.1
 XLIBS=$(LIBDRIVER) $(LIBGROFF)
 MLIB=$(LIBM)
 OBJS=lj4.o

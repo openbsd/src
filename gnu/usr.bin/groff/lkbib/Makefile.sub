@@ -1,5 +1,5 @@
 PROG=lkbib
-MAN1=lkbib.n
+MAN1=lkbib.1
 XLIBS=$(LIBBIB) $(LIBGROFF)
 MLIB=$(LIBM)
 OBJS=lkbib.o

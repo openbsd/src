@@ -1,5 +1,5 @@
 PROG=groff
-MAN1=groff.n
+MAN1=groff.1
 XLIBS=$(LIBGROFF)
 MLIB=$(LIBM)
 OBJS=groff.o pipeline.o

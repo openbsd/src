@@ -1,4 +1,4 @@
-MAN1=afmtodit.n
+MAN1=afmtodit.1
 CLEANADD=afmtodit
 
 all: afmtodit

@@ -20,6 +20,12 @@ static char Xrcsid[] = "$XConsortium: Dvi.c,v 1.9 89/12/10 16:12:25 rws Exp $";
 #include <X11/Xmu/Converters.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <unistd.h>
+#ifndef HAVE_MKSTEMP
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
 #include "DviP.h"
 
 /****************************************************************
@@ -186,7 +192,14 @@ static void Initialize(request, new)
 	dw->dvi.native = 0;
 }
 
-#include <X11/bitmaps/gray>
+#include "gray1.bm"
+#include "gray2.bm"
+#include "gray3.bm"
+#include "gray4.bm"
+#include "gray5.bm"
+#include "gray6.bm"
+#include "gray7.bm"
+#include "gray8.bm"
 
 static void
 Realize (w, valueMask, attrs)
@@ -211,16 +224,37 @@ Realize (w, valueMask, attrs)
 				       GCForeground|GCCapStyle|GCJoinStyle
 				       |GCLineWidth,
 				       &values);
-	dw->dvi.gray = XCreateBitmapFromData(XtDisplay (w), XtWindow (w),
-					     gray_bits,
-					     gray_width, gray_height);
+	dw->dvi.gray[0] = XCreateBitmapFromData(XtDisplay (w), XtWindow (w),
+					     gray1_bits,
+					     gray1_width, gray1_height);
+	dw->dvi.gray[1] = XCreateBitmapFromData(XtDisplay (w), XtWindow (w),
+					     gray2_bits,
+					     gray2_width, gray2_height);
+	dw->dvi.gray[2] = XCreateBitmapFromData(XtDisplay (w), XtWindow (w),
+					     gray3_bits,
+					     gray3_width, gray3_height);
+	dw->dvi.gray[3] = XCreateBitmapFromData(XtDisplay (w), XtWindow (w),
+					     gray4_bits,
+					     gray4_width, gray4_height);
+	dw->dvi.gray[4] = XCreateBitmapFromData(XtDisplay (w), XtWindow (w),
+					     gray5_bits,
+					     gray5_width, gray5_height);
+	dw->dvi.gray[5] = XCreateBitmapFromData(XtDisplay (w), XtWindow (w),
+					     gray6_bits,
+					     gray6_width, gray6_height);
+	dw->dvi.gray[6] = XCreateBitmapFromData(XtDisplay (w), XtWindow (w),
+					     gray7_bits,
+					     gray7_width, gray7_height);
+	dw->dvi.gray[7] = XCreateBitmapFromData(XtDisplay (w), XtWindow (w),
+					     gray8_bits,
+					     gray8_width, gray8_height);
 	values.background = dw->dvi.background;
-	values.stipple = dw->dvi.gray;
+	values.stipple = dw->dvi.gray[5];
 	dw->dvi.fill_GC = XCreateGC (XtDisplay (w), XtWindow (w),
 				     GCForeground|GCBackground|GCStipple,
 				     &values);
 
-	dw->dvi.fill_type = DVI_FILL_BLACK;
+	dw->dvi.fill_type = 9;
 
 	if (dw->dvi.file)
 		OpenFile (dw);
@@ -235,7 +269,14 @@ Destroy(w)
 
 	XFreeGC (XtDisplay (w), dw->dvi.normal_GC);
 	XFreeGC (XtDisplay (w), dw->dvi.fill_GC);
-	XFreePixmap (XtDisplay (w), dw->dvi.gray);
+	XFreePixmap (XtDisplay (w), dw->dvi.gray[0]);
+	XFreePixmap (XtDisplay (w), dw->dvi.gray[1]);
+	XFreePixmap (XtDisplay (w), dw->dvi.gray[2]);
+	XFreePixmap (XtDisplay (w), dw->dvi.gray[3]);
+	XFreePixmap (XtDisplay (w), dw->dvi.gray[4]);
+	XFreePixmap (XtDisplay (w), dw->dvi.gray[5]);
+	XFreePixmap (XtDisplay (w), dw->dvi.gray[6]);
+	XFreePixmap (XtDisplay (w), dw->dvi.gray[7]);
 	DestroyFontMap (dw->dvi.font_map);
 	DestroyFileMap (dw->dvi.file_map);
 	device_destroy (dw->dvi.device);
@@ -345,13 +386,18 @@ static void OpenFile (dw)
 	DviWidget	dw;
 {
 	char	tmpName[sizeof ("/tmp/dviXXXXXX")];
-	int fd;
+	int	fd;
 
 	dw->dvi.tmpFile = 0;
 	if (!dw->dvi.seek) {
 		strcpy (tmpName, "/tmp/dviXXXXXX");
+#ifdef HAVE_MKSTEMP
 		fd = mkstemp (tmpName);
-		dw->dvi.tmpFile = fdopen (fd, "w+");
+#else /* not HAVE_MKSTEMP */
+		mktemp (tmpName);
+		fd = open (tmpName, O_CREAT|O_EXCL|O_RDWR, S_IRUSR|S_IWUSR);
+#endif /* not HAVE_MKSTEMP */
+		dw->dvi.tmpFile = fdopen (tmpName, "w+");
 		unlink (tmpName);
 	}
 	dw->dvi.requested_page = 1;

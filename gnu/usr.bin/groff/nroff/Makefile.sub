@@ -1,4 +1,4 @@
-MAN1=nroff.n
+MAN1=nroff.1
 NAMEPREFIX=$(g)
 CLEANADD=nroff
 

@@ -1,5 +1,4 @@
-GROFF_LIBDIR = /usr/share
-GROFF_FONTDIR = $(GROFF_LIBDIR)/groff_font
+GROFF_FONTDIR = /usr/share/groff_font
 GROFF_FONTPATH = .:$(GROFF_FONTDIR):/usr/local/lib/font:/usr/lib/font
 DPIS = 75 100
 
@@ -14,7 +13,7 @@ SRCS2 = xtotroff.c XFontName.c DviChar.c
 OBJS2 = xtotroff.o XFontName.o DviChar.o
 INCLUDES = -I$(TOOLKITSRC) -I$(TOP)
 MATHLIB = -lm
-DEFINES = $(SIGNAL_DEFINES) -DFONTPATH=\"$(GROFF_FONTPATH)\" # -DX_NOT_STDC_ENV
+DEFINES = -DHAVE_MKSTEMP $(SIGNAL_DEFINES) -DFONTPATH=\"$(GROFF_FONTPATH)\" # -DX_NOT_STDC_ENV
 
 ComplexProgramTarget_1(gxditview,$(LOCAL_LIBRARIES),$(MATHLIB))
 NormalProgramTarget(xtotroff,$(OBJS2),$(DEPXLIB),$(XLIB), /**/)
@@ -46,7 +45,10 @@ fonts: xtotroff DESC FontMap
 	  $$dir/xtotroff -g -r $$dpi -s 12 $$dir/FontMap); \
 	done
 
+GXditview-ad.h: GXditview.ad
+	/bin/sh ad2c GXditview.ad >GXditview-ad.h
+
 extraclean: clean
-	-rm -f junk tmp grot old
+	-rm -f junk tmp grot old Makefile
 
 FORCE:

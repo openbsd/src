@@ -1,11 +1,11 @@
 .\"------------
-.\" $Id: 4.MT,v 1.3 1998/01/19 00:40:19 etheisen Exp $
+.\" $Id: 4.MT,v 1.4 2000/04/09 08:25:19 millert Exp $
 .\" Cover sheet. Memorandum type 4
 .\"------------
 .de cov@print-title
 .if !d cov*title .@error title (.TL) not defined!
 .MOVE 2.4c
-.S 12
+.S +4
 .ad c
 .fi
 .B
@@ -41,6 +41,7 @@
 .SP 2
 .if d cov*abstract \{\
 .	misc@ev-keep cov*ev
+.	init@reset
 .	if \\n[cov*abs-ind]>0 \{\
 .		in +\\n[cov*abs-ind]u
 .		ll -\\n[cov*abs-ind]u
@@ -60,9 +61,19 @@
 .	cov@print-title
 .	cov@print-authors
 .	cov@print-firm
-.	cov@print-abstract
+.	if !\n[cov*abs-arg] .cov@print-abstract
 .	SP 3
+.	nr hd*cur-bline \n[nl]
 .	ds cov*mt-printed
 .	pg@enable-top-trap
 .	pg@enable-trap
 .\}
+.de CS
+.pg@disable-top-trap
+.SK
+.cov@print-title
+.cov@print-authors
+.cov@print-firm
+.cov@print-abstract
+..
+

@@ -1,5 +1,5 @@
 PROG=pfbtops
-MAN1=pfbtops.n
+MAN1=pfbtops.1
 OBJS=pfbtops.o
 CSRCS=pfbtops.c
 XLIBS=$(LIBGROFF)

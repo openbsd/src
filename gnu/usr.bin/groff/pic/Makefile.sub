@@ -1,5 +1,5 @@
 PROG=pic
-MAN1=pic.n
+MAN1=pic.1
 XLIBS=$(LIBGROFF)
 MLIB=$(LIBM)
 OBJS=pic.o lex.o main.o object.o common.o troff.o tex.o # fig.o 

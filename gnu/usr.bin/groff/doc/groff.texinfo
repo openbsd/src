@@ -3920,7 +3920,7 @@ request can make a macro have more than one name.
 This would be called as
 
 @example
-.vl $Id: groff.texinfo,v 1.1.1.1 2000/04/09 07:58:37 millert Exp $
+.vl $Id: groff.texinfo,v 1.2 2000/04/09 08:25:11 millert Exp $
 @end example
 
 

@@ -1,5 +1,5 @@
 PROG=tfmtodit
-MAN1=tfmtodit.n
+MAN1=tfmtodit.1
 XLIBS=$(LIBGROFF)
 MLIB=$(LIBM)
 OBJS=tfmtodit.o

@@ -1,5 +1,5 @@
 PROG=eqn
-MAN1=eqn.n
+MAN1=eqn.1
 XLIBS=$(LIBGROFF)
 OBJS=eqn.o main.o lex.o  box.o limit.o list.o over.o text.o script.o \
   mark.o other.o delim.o sqrt.o pile.o special.o

@@ -1,5 +1,5 @@
 PROG=grops
-MAN1=grops.n
+MAN1=grops.1
 XLIBS=$(LIBDRIVER) $(LIBGROFF)
 MLIB=$(LIBM)
 OBJS=ps.o psrm.o

@@ -64,7 +64,7 @@ DVIPRINT=@DVIPRINT@
 g=@g@
 
 # Common prefix for installation directories.
-# Used in definitions of exec_prefix, datasubdir, fontpath, mandir.
+# Used in definitions of exec_prefix, datasubdir, fontpath, manroot.
 # This must already exist when you do make install.
 prefix=@prefix@
 
@@ -130,20 +130,20 @@ indexname=Ind
 # otherwise the supplied eign file will be used.
 common_words_file=$(datasubdir)/eign
 
-# mandir is the root of the man page directory tree.
-mandir=@mandir@
+# manroot is the root of the man page directory tree.
+manroot=$(prefix)/man
 
 # man1ext is the man section for user commands.
 man1ext=1
-man1dir=$(mandir)/man$(man1ext)
+man1dir=$(manroot)/man$(man1ext)
 
 # man5ext is the man section for file formats.
 man5ext=5
-man5dir=$(mandir)/man$(man5ext)
+man5dir=$(manroot)/man$(man5ext)
 
 # man7ext is the man section for macros.
 man7ext=7
-man7dir=$(mandir)/man$(man7ext)
+man7dir=$(manroot)/man$(man7ext)
 
 # DEFINES should include the following:
 # -DHAVE_MMAP			if you have mmap() and <sys/mman.h>
@@ -166,8 +166,13 @@ man7dir=$(mandir)/man$(man7ext)
 # -DUNISTD_H_DECLARES_GETOPT	if your C++ <unistd.h> declares getopt()
 # -DSTDLIB_H_DECLARES_PUTENV	if your C++ <stdlib.h> declares putenv()
 # -DSTDIO_H_DECLARES_POPEN	if your C++ <stdio.h> declares popen()
+# -DSTDIO_H_DECLARES_PCLOSE	if your C++ <stdio.h> declares pclose()
+# -DHAVE_SYS_NERR		if you have sysnerr in <errno.h> or <stdio.h>
+# -DHAVE_SYS_ERRLIST		if you have sys_errlist in <errno.h> or
+#				<stdio.h>
+# -DMATH_H_DECLARES_HYPOT	if you have hypot() in <math.h>
 # -DTRADITIONAL_CPP		if your C++ compiler uses a traditional
-#				(Reiser) preprocessor.
+#				(Reiser) preprocessor
 # -DLONG_FOR_TIME_T		if localtime() takes a long * not a time_t *
 # -DHAVE_STRUCT_EXCEPTION	if <math.h> defines struct exception
 # -DRETSIGTYPE=int		if signal handlers return int not void	
@@ -187,11 +192,12 @@ CDEFINES=$(DEFINES)
 
 CCFLAGS=@CXXFLAGS@
 CFLAGS=@CFLAGS@
-LDFLAGS=
+LDFLAGS=@LDFLAGS@
 YACC=@YACC@
 YACCFLAGS=-v
 
 LIBS=@LIBS@
+LIBM=@LIBM@
 RANLIB=@RANLIB@
 INSTALL=@INSTALL@
 INSTALL_PROGRAM=@INSTALL_PROGRAM@
@@ -214,15 +220,6 @@ PURIFYCCFLAGS=
 #PURIFYCCFLAGS=-g++=yes \
 #  -collector=`dirname \`$(CCC) -print-libgcc-file-name\``/ld
 
-#
-# XXX - OpenBSD build mods
-#
-INSTALL_MAN=install_man
-TMAC_AN=tmac.an
-TMAC_ANDOC=tmac.andoc
-TMAC_S=tmac.s
-MDOCFILES=doc-common doc-ditroff doc-nroff doc-syms
-
 # Passing down MAKEOVERRIDES prevents $(MAKE) from containing a second
 # copy of $(MDEFINES) when making individual directories; this could
 # cause the argument list to become too long on some systems.
@@ -235,7 +232,7 @@ MDEFINES="MAKEOVERRIDES=$(MAKEOVERRIDES)" \
   "tmacdir=$(tmacdir)" "tmacpath=$(tmacpath)" \
   "indexext=$(indexext)" "indexdir=$(indexdir)" \
   "indexname=$(indexname)" "common_words_file=$(common_words_file)" \
-  "mandir=$(mandir)" "man1ext=$(man1ext)" "man1dir=$(man1dir)" \
+  "manroot=$(manroot)" "man1ext=$(man1ext)" "man1dir=$(man1dir)" \
   "man5ext=$(man5ext)" "man5dir=$(man5dir)" \
   "man7ext=$(man7ext)" "man7dir=$(man7dir)" \
   "tmac_wrap=$(tmac_wrap)" "sys_tmac_prefix=$(sys_tmac_prefix)" \
@@ -243,29 +240,28 @@ MDEFINES="MAKEOVERRIDES=$(MAKEOVERRIDES)" \
   "tmac_s_prefix=$(tmac_s_prefix)" "tmac_m_prefix=$(tmac_m_prefix)" \
   "CCC=$(CCC)" "CC=$(CC)" "CCDEFINES=$(CCDEFINES)" "CDEFINES=$(CDEFINES)" \
   "CCFLAGS=$(CCFLAGS)" "CFLAGS=$(CFLAGS)" "LDFLAGS=$(LDFLAGS)" \
-  "YACC=$(YACC)" "YACCFLAGS=$(YACCFLAGS)" \
+  "YACC=$(YACC)" "YACCFLAGS=$(YACCFLAGS)" "LIBM=$(LIBM)" \
   "LIBS=$(LIBS)" "LIBOBJS=$(LIBOBJS)" "RANLIB=$(RANLIB)" "AR=$(AR)" \
   "INSTALL_PROGRAM=$(INSTALL_PROGRAM)" "INSTALL_DATA=$(INSTALL_DATA)" \
   "ETAGS=$(ETAGS)" "ETAGSFLAGS=$(ETAGSFLAGS)" "ETAGSCCFLAG=$(ETAGSCCFLAG)" \
   "PERLPATH=$(PERLPATH)" "SH_SCRIPT_SED_CMD=$(SH_SCRIPT_SED_CMD)" \
-  "PURIFY=$(PURIFY)" "PURIFYCCFLAGS=$(PURIFYCCFLAGS)" \
-  "INSTALL_MAN=$(INSTALL_MAN)" "TMAC_AN=$(TMAC_AN)" "TMAC_ANDOC=$(TMAC_ANDOC)" \
-  "TMAC_S=$(TMAC_S)" "MDOCFILES=$(MDOCFILES)" "tmac_m=$(tmac_m_prefix)m"
+  "PURIFY=$(PURIFY)" "PURIFYCCFLAGS=$(PURIFYCCFLAGS)"
 
 SHELL=/bin/sh
 INCDIRS=include
 LIBDIRS=libgroff libdriver libbib
 CCPROGDIRS=groff troff tbl pic eqn grops grotty grodvi tfmtodit \
-  grolj4 hpftodit refer lookbib indxbib lkbib soelim addftinfo
+  grolj4 hpftodit refer lookbib indxbib lkbib soelim addftinfo \
+  grohtml
 CPROGDIRS=pfbtops psbb
 PROGDIRS=$(CCPROGDIRS) $(CPROGDIRS)
 DEVDIRS=devps devdvi devascii devlatin1 devX75 devX75-12 devX100 devX100-12 \
-  devlj4
+  devlj4 devhtml
 OTHERDIRS=man tmac afmtodit grog nroff mm
 ALLDIRS=$(INCDIRS) $(LIBDIRS) $(PROGDIRS) $(DEVDIRS) $(OTHERDIRS)
 EXTRADIRS=devps/generate devdvi/generate xditview doc
 DISTDIRS=$(ALLDIRS) $(EXTRADIRS)
-TARGETS=all install install_bin install_data $(INSTALL_MAN) clean distclean mostlyclean \
+TARGETS=all install install_bin install_data clean distclean mostlyclean \
   realclean extraclean distfiles TAGS depend uninstall_sub
 
 do=all
@@ -280,7 +276,7 @@ $(TARGETS):
 dot: FORCE
 	@$(MAKE) $(MDEFINES) srcdir=$(srcdir) VPATH=$(srcdir) \
 		-f $(srcdir)/Makefile.comm -f $(srcdir)/Makefile.sub $(do)
-	
+
 $(LIBDIRS): FORCE
 	@if test $(srcdir) = .; \
 	then srcdir=.; \
@@ -359,6 +355,7 @@ dist:
 	rm -f Makefile; \
 	$(LN_S) $$srcdir/Makefile.init Makefile
 	mv tmp groff-$(version)
+	rm -f groff-$(version).tar.gz
 	tar cfh - groff-$(version) | gzip -c >groff-$(version).tar.gz
 	rm -fr groff-$(version)
 
@@ -395,7 +392,7 @@ uninstall: uninstall_sub uninstall_dirs
 .PHONY: uninstall_dirs
 uninstall_dirs:
 # Use rmdir here so that the directories are only removed if they're empty
-	-rmdir $(man1dir) $(man5dir) $(man7dir) $(mandir) \
+	-rmdir $(man1dir) $(man5dir) $(man7dir) $(manroot) \
 	  $(tmacdir) $(fontdir) $(bindir) $(datasubdir) $(datadir)
 
 

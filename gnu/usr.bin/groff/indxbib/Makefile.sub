@@ -1,5 +1,5 @@
 PROG=indxbib
-MAN1=indxbib.n
+MAN1=indxbib.1
 XLIBS=$(LIBBIB) $(LIBGROFF)
 MLIB=$(LIBM)
 OBJS=indxbib.o dirnamemax.o signal.o

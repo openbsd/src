@@ -1,5 +1,5 @@
 PROG=grohtml
-MAN1=grohtml.n
+MAN1=grohtml.1
 XLIBS=$(LIBDRIVER) $(LIBGROFF)
 MLIB=$(LIBM)
 OBJS=html.o
