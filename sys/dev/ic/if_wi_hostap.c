@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.2 2002/03/28 21:22:52 mickey Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.3 2002/03/28 22:22:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -75,7 +75,22 @@
 #include <dev/ic/if_wivar.h>
 
 void wihap_sta_timeout(void *v);
+struct wihap_sta_info *wihap_sta_alloc(struct wi_softc *sc, u_int8_t *addr);
 void wihap_sta_delete(struct wihap_sta_info *sta);
+struct wihap_sta_info *wihap_sta_find(struct wihap_info *whi, u_int8_t *addr);
+int wihap_sta_is_assoc(struct wihap_info *whi, u_int8_t addr[]);
+void wihap_auth_req(struct wi_softc *sc, struct wi_frame *rxfrm,
+    caddr_t pkt, int len);
+void wihap_sta_deauth(struct wi_softc *sc, u_int8_t sta_addr[],
+    u_int16_t reason);
+void wihap_deauth_req(struct wi_softc *sc, struct wi_frame *rxfrm,
+    caddr_t pkt, int len);
+void wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
+    caddr_t pkt, int len);
+void wihap_sta_disassoc(struct wi_softc *sc,
+    struct wihap_sta_info *sta, u_int16_t reason);
+void wihap_disassoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
+    caddr_t pkt, int len);
 
 /*
  * take_hword()
@@ -191,7 +206,7 @@ wihap_init(struct wi_softc *sc)
  *
  *	Send a disassociation frame to a specified station.
  */
-static void
+void
 wihap_sta_disassoc(struct wi_softc *sc,
     struct wihap_sta_info *sta, u_int16_t reason)
 {
@@ -220,8 +235,9 @@ wihap_sta_disassoc(struct wi_softc *sc,
  *
  *	Send a deauthentication message to a specified station.
  */
-static void
-wihap_sta_deauth(struct wi_softc *sc, u_int8_t sta_addr[], u_int16_t reason)
+void
+wihap_sta_deauth(struct wi_softc *sc, u_int8_t sta_addr[],
+    u_int16_t reason)
 {
 	struct wi_80211_hdr 	*resp_hdr;
 	caddr_t			pkt;
@@ -253,6 +269,7 @@ wihap_shutdown(struct wi_softc *sc)
 {
 	struct wihap_info 	*whi = &sc->wi_hostap_info;
 	struct wihap_sta_info 	*sta, *next;
+	int s;
 
 	if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
 		printf("wihap_shutdown: sc=0x%x whi=0x%x\n",
@@ -265,6 +282,7 @@ wihap_shutdown(struct wi_softc *sc)
 	 * a single broadcast.  Maybe try that someday.
 	 */
 
+	s = splimp();
 	sta = LIST_FIRST(&whi->sta_list);
 	while (sta) {
 
@@ -288,6 +306,7 @@ wihap_shutdown(struct wi_softc *sc)
 		FREE(sta, M_DEVBUF);
 		sta = next;
 	}
+	splx(s);
 
 	whi->apflags = 0;
 }
@@ -314,9 +333,10 @@ wihap_sta_timeout(void *v)
 {
 	struct wihap_sta_info 	*sta = v;
 	struct wi_softc 	*sc = sta->sc;
+	struct wihap_info 	*whi = &sc->wi_hostap_info;
 	int	s;
 
-	s = splimp();
+	s = splsoftnet();
 
 	if (sta->flags & WI_SIFLAGS_ASSOC) {
 		if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
@@ -371,7 +391,7 @@ wihap_sta_delete(struct wihap_sta_info *sta)
  *	Create a new station data structure and put it in the list
  *	and hash table.
  */
-static struct wihap_sta_info *
+struct wihap_sta_info *
 wihap_sta_alloc(struct wi_softc *sc, u_int8_t *addr)
 {
 	struct wihap_info 	*whi = &sc->wi_hostap_info;
@@ -410,7 +430,7 @@ wihap_sta_alloc(struct wi_softc *sc, u_int8_t *addr)
  *
  *	Find station structure given address.
  */
-static struct wihap_sta_info *
+struct wihap_sta_info *
 wihap_sta_find(struct wihap_info *whi, u_int8_t *addr)
 {
 	int i;
@@ -424,7 +444,7 @@ wihap_sta_find(struct wihap_info *whi, u_int8_t *addr)
 	return(NULL);
 }
 
-static int
+static __inline int
 wihap_check_rates(struct wihap_sta_info *sta, u_int8_t rates[], int rates_len)
 {
 	struct wi_softc *sc = sta->sc;
@@ -465,7 +485,7 @@ wihap_check_rates(struct wihap_sta_info *sta, u_int8_t rates[], int rates_len)
  *	Handle incoming authentication request.  Only handle OPEN
  *	requests.
  */
-static void
+void
 wihap_auth_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 	       caddr_t pkt, int len)
 {
@@ -577,7 +597,7 @@ fail:
  *
  *	Handle incoming association and reassociation requests.
  */
-static void
+void
 wihap_assoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 		caddr_t pkt, int len)
 {
@@ -702,7 +722,7 @@ fail:
  *
  *	Handle deauthentication requests.  Delete the station.
  */
-static void
+void
 wihap_deauth_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 		 caddr_t pkt, int len)
 {
@@ -731,7 +751,7 @@ wihap_deauth_req(struct wi_softc *sc, struct wi_frame *rxfrm,
  *	We'll free up the station resources when we get a deauth
  *	request or when it times out.
  */
-static void
+void
 wihap_disassoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
 		  caddr_t pkt, int len)
 {
@@ -766,7 +786,7 @@ wihap_disassoc_req(struct wi_softc *sc, struct wi_frame *rxfrm,
  *
  * Print out frame type.  Used in early debugging.
  */
-static void
+static __inline void
 wihap_debug_frame_type(struct wi_frame *rxfrm)
 {
 	printf("wihap_mgmt_input: len=%d ", rxfrm->wi_dat_len);
@@ -831,8 +851,8 @@ wihap_debug_frame_type(struct wi_frame *rxfrm)
 void
 wihap_mgmt_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 {
-	caddr_t		pkt;
-	int		len;
+	caddr_t	pkt;
+	int	s, len;
 
 	if (sc->arpcom.ac_if.if_flags & IFF_DEBUG)
 		wihap_debug_frame_type(rxfrm);
@@ -842,6 +862,8 @@ wihap_mgmt_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 
 	if ((rxfrm->wi_frame_ctl & WI_FCTL_FTYPE) == WI_FTYPE_MGMT) {
 
+		/* any of the following will mess w/ the station list */
+		s = splsoftclock();
 		switch (letoh16(rxfrm->wi_frame_ctl) & WI_FCTL_STYPE) {
 		case WI_STYPE_MGMT_ASREQ:
 			wihap_assoc_req(sc, rxfrm, pkt, len);
@@ -871,7 +893,7 @@ wihap_mgmt_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 			wihap_deauth_req(sc, rxfrm, pkt, len);
 			break;
 		}
-
+		splx(s);
 	}
 
 	m_freem(m);
@@ -882,7 +904,7 @@ wihap_mgmt_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
  *	Determine if a station is assoc'ed.  Update its activity
  *	counter as a side-effect.
  */
-static int
+int
 wihap_sta_is_assoc(struct wihap_info *whi, u_int8_t addr[])
 {
 	struct wihap_sta_info *sta;
@@ -893,8 +915,8 @@ wihap_sta_is_assoc(struct wihap_info *whi, u_int8_t addr[])
 		timeout_add(&sta->tmo, hz * whi->inactivity_time);
 		return(1);
 	}
-	else
-		return(0);
+
+	return(0);
 }
 
 /* wihap_check_tx()
@@ -912,6 +934,7 @@ wihap_check_tx(struct wihap_info *whi, u_int8_t addr[], u_int8_t *txrate)
 		*txrate = 0; /* XXX: multicast rate? */
 		return(1);
 	}
+
 	sta = wihap_sta_find(whi, addr);
 	if (sta!=NULL && (sta->flags & WI_SIFLAGS_ASSOC)) {
 		/* Keep it active. */
@@ -919,6 +942,7 @@ wihap_check_tx(struct wihap_info *whi, u_int8_t addr[], u_int8_t *txrate)
 		*txrate = txratetable[ sta->tx_curr_rate ];
 		return(1);
 	}
+
 	return(0);
 }
 
@@ -938,7 +962,7 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 	struct ifnet		*ifp = &sc->arpcom.ac_if;
 	struct wihap_info	*whi = &sc->wi_hostap_info;
 	struct wihap_sta_info 	*sta;
-	int			mcast;
+	int			mcast, s;
 
 	/* TODS flag must be set. */
 	if (!(letoh16(rxfrm->wi_frame_ctl) & WI_FCTL_TODS)) {
@@ -956,6 +980,8 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 		return(1);
 	}
 
+	s = splsoftclock();
+
 	/* Find source station. */
 	sta = wihap_sta_find(whi, rxfrm->wi_addr2);
 
@@ -964,11 +990,14 @@ wihap_data_input(struct wi_softc *sc, struct wi_frame *rxfrm, struct mbuf *m)
 		if (ifp->if_flags & IFF_DEBUG)
 			printf("wihap_data_input: dropping unassoc src %s\n",
 				ether_sprintf(rxfrm->wi_addr2));
+		splx(s);
 		return(1);
 	}
 
 	timeout_add(&sta->tmo, hz * whi->inactivity_time);
 	sta->sig_info = rxfrm->wi_q_info;
+
+	splx(s);
 
 	/* Repeat this packet to BSS? */
 	mcast = (rxfrm->wi_addr3[0] & 0x01) != 0;
@@ -1017,7 +1046,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 	struct hostap_getall 	reqall;
 	struct hostap_sta 	reqsta;
 	struct hostap_sta 	stabuf;
-	int			error = 0, n, flag;
+	int			s, error = 0, n, flag;
 
 	if (!(sc->arpcom.ac_if.if_flags & IFF_RUNNING))
 		return ENODEV;
@@ -1028,6 +1057,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 			break;
 		if ((error = copyin(ifr->ifr_data, &reqsta, sizeof(reqsta))))
 			break;
+		s = splimp();
 		sta = wihap_sta_find(whi, reqsta.addr);
 		if (sta == NULL)
 			error = ENOENT;
@@ -1043,11 +1073,13 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 
 			wihap_sta_delete(sta);
 		}
+		splx(s);
 		break;
 
 	case SIOCHOSTAP_GET:
 		if ((error = copyin(ifr->ifr_data, &reqsta, sizeof(reqsta))))
 			break;
+		s = splimp();
 		sta = wihap_sta_find(whi, reqsta.addr);
 		if (sta == NULL)
 			error = ENOENT;
@@ -1061,6 +1093,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 			error = copyout(&reqsta, ifr->ifr_data,
 					sizeof(reqsta));
 		}
+		splx(s);
 		break;
 
 	case SIOCHOSTAP_ADD:
@@ -1068,6 +1101,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 			break;
 		if ((error = copyin(ifr->ifr_data, &reqsta, sizeof(reqsta))))
 			break;
+		s = splimp();
 		sta = wihap_sta_find(whi, reqsta.addr);
 		if (sta != NULL) {
 			error = EEXIST;
@@ -1080,6 +1114,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 		sta = wihap_sta_alloc(sc, reqsta.addr);
 		sta->flags = reqsta.flags;
 		timeout_add(&sta->tmo, hz * whi->inactivity_time);
+		splx(s);
 		break;
 
 	case SIOCHOSTAP_SFLAGS:
@@ -1104,6 +1139,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 
 		reqall.nstations = whi->n_stations;
 		n = 0;
+		s = splimp();
 		sta = LIST_FIRST(&whi->sta_list);
 		while (sta && reqall.size >= n+sizeof(struct hostap_sta)) {
 
@@ -1122,6 +1158,7 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 			sta = LIST_NEXT(sta, list);
 			n += sizeof(struct hostap_sta);
 		}
+		splx(s);
 
 		if (!error)
 			error = copyout(&reqall, ifr->ifr_data,
