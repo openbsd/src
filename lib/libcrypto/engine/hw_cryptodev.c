@@ -1,6 +1,6 @@
 /*
+ * Copyright (c) 2002-2004 Theo de Raadt
  * Copyright (c) 2002 Bob Beck <beck@openbsd.org>
- * Copyright (c) 2002 Theo de Raadt
  * Copyright (c) 2002 Markus Friedl
  * All rights reserved.
  *
@@ -55,8 +55,6 @@ ENGINE_load_cryptodev(void)
 #include <crypto/cryptodev.h>
 #include <sys/ioctl.h>
 
-#include <ssl/aes.h>
-
 #include <errno.h>
 #include <stdio.h>
 #include <unistd.h>
@@ -70,6 +68,9 @@ ENGINE_load_cryptodev(void)
 #include <sys/sysctl.h>
 #include <machine/cpu.h>
 #include <machine/specialreg.h>
+
+#include <ssl/aes.h>
+
 static int check_viac3aes(void);
 #endif
 
@@ -261,7 +262,7 @@ get_cryptodev_ciphers(const int **cnids)
 	 * On i386, always check for the VIA C3 AES instructions;
 	 * even if /dev/crypto is disabled.
 	 */
-	if (check_viac3aes() == 1) {
+	if (check_viac3aes() >= 1) {
 		int have_NID_aes_128_cbc = 0;
 		int have_NID_aes_192_cbc = 0;
 		int have_NID_aes_256_cbc = 0;
@@ -709,16 +710,9 @@ xcrypt_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
     const unsigned char *iv, int enc)
 {
 	AES_KEY *k = ctx->cipher_data;
-	u_long *kk = (u_long *)key;
 	int i;
 
 	bzero(k, sizeof *k);
-#ifdef notdef
-	for (i = 0; i < ctx->key_len / 4; i++)
-		printf("%08x ", kk[i]);
-	printf("\n");
-#endif
-
 	if (enc)
 		AES_set_encrypt_key(key, ctx->key_len * 8, k);
 	else
@@ -727,12 +721,6 @@ xcrypt_init_key(EVP_CIPHER_CTX *ctx, const unsigned char *key,
 	/* Damn OpenSSL byte swaps the expanded key!! */
 	for (i = 0; i < 4 * (AES_MAXNR + 1); i++)
 		k->rd_key[i] = htonl(k->rd_key[i]);
-
-#ifdef notdef
-	for (i = 0; i < 4 * (AES_MAXNR + 1); i++)
-		printf("%08x ", k->rd_key[i]);
-	printf("\n");
-#endif
 
 	return (1);
 }
@@ -770,7 +758,7 @@ check_viac3aes(void)
 	cryptodev_aes_256_cbc.do_cipher = xcrypt_cipher;
 	cryptodev_aes_256_cbc.cleanup = xcrypt_cleanup;
 	cryptodev_aes_256_cbc.ctx_size = sizeof(AES_KEY);
-	return (1);
+	return (value);
 }
 #endif /* __i386__ */
 
