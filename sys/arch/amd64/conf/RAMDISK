@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.16 2004/10/11 17:40:09 brad Exp $
+#	$OpenBSD: RAMDISK,v 1.17 2005/01/03 20:39:29 deraadt Exp $
 
 machine		amd64		# architecture, used by config; REQUIRED
 
@@ -128,8 +128,8 @@ scsibus* at mpt?
 #scsibus* at gdt?
 #aac*	at pci?			# Adaptec FSA RAID controllers
 #scsibus* at aac?
-#ami*	at pci?			# AMI MegaRAID controllers
-#scsibus* at ami?
+ami*	at pci?			# AMI MegaRAID controllers
+scsibus* at ami?
 #cac*	at pci?			# Compaq Smart ARRAY RAID controllers
 #scsibus* at cac?
 #twe*	at pci?			# 3ware Escalade RAID controllers
