@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.30 1997/06/23 09:35:04 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.31 1997/06/23 09:37:37 deraadt Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.30 1997/06/23 09:35:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.31 1997/06/23 09:37:37 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -1540,7 +1540,7 @@ chargen_dg(s, sep)		/* Character generator */
  * some seventy years Bell Labs was asleep.
  */
 
-long
+u_int
 machtime()
 {
 	struct timeval tv;
@@ -1549,7 +1549,7 @@ machtime()
 		fprintf(stderr, "Unable to get time of day\n");
 		return (0L);
 	}
-	return (htonl((long)tv.tv_sec + 2208988800UL));
+	return (htonl((u_int)tv.tv_sec + 2208988800UL));
 }
 
 /* ARGSUSED */
@@ -1558,7 +1558,7 @@ machtime_stream(s, sep)
 	int s;
 	struct servtab *sep;
 {
-	long result;
+	u_int result;
 
 	result = machtime();
 	(void) write(s, (char *) &result, sizeof(result));
@@ -1570,7 +1570,7 @@ machtime_dg(s, sep)
 	int s;
 	struct servtab *sep;
 {
-	long result;
+	u_int result;
 	struct sockaddr sa;
 	int size;
 
