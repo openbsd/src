@@ -1,4 +1,4 @@
-/*	$OpenBSD: libsa.h,v 1.10 2002/07/09 01:46:08 mickey Exp $	*/
+/*	$OpenBSD: libsa.h,v 1.11 2003/04/16 07:20:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -33,7 +33,6 @@
 #include <lib/libsa/stand.h>
 
 #define	EXEC_ELF
-/* #define	EXEC_ECOFF */
 #define	EXEC_SOM
 
 #define	DEFAULT_KERNEL_ADDRESS	0
@@ -66,21 +65,19 @@ void machdep(void);
 void devboot(dev_t, char *);
 void fcacheall(void);
 
-int     lif_open(char *path, struct open_file *f);
-int     lif_close(struct open_file *f);
-int     lif_read(struct open_file *f, void *buf,
-                size_t size, size_t *resid);
-int     lif_write(struct open_file *f, void *buf,
-		size_t size, size_t *resid);
-off_t   lif_seek(struct open_file *f, off_t offset, int where);
-int     lif_stat(struct open_file *f, struct stat *sb);
-int     lif_readdir(struct open_file *f, char *name);
+int lif_open(char *path, struct open_file *f);
+int lif_close(struct open_file *f);
+int lif_read(struct open_file *f, void *buf, size_t size, size_t *resid);
+int lif_write(struct open_file *f, void *buf, size_t size, size_t *resid);
+off_t lif_seek(struct open_file *f, off_t offset, int where);
+int lif_stat(struct open_file *f, struct stat *sb);
+int lif_readdir(struct open_file *f, char *name);
 
 union x_header;
 struct x_param;
-int	som_probe(int, union x_header *);
-int	som_load(int, struct x_param *);
-int	som_ldsym(int, struct x_param *);
+int som_probe(int, union x_header *);
+int som_load(int, struct x_param *);
+int som_ldsym(int, struct x_param *);
 
 extern int debug;
 

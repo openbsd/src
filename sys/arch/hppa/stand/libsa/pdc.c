@@ -1,4 +1,4 @@
-/*	$OpenBSD: pdc.c,v 1.13 2003/01/14 11:40:18 mickey Exp $	*/
+/*	$OpenBSD: pdc.c,v 1.14 2003/04/16 07:20:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -461,4 +461,3 @@ fcacheall()
 	     pdc_cacheinfo.dc_loop, pdc_cacheinfo.dc_stride, 1);
 	sync_caches();
 }
-

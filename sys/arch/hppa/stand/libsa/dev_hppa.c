@@ -1,4 +1,4 @@
-/*	$OpenBSD: dev_hppa.c,v 1.7 2003/04/15 18:07:32 mickey Exp $	*/
+/*	$OpenBSD: dev_hppa.c,v 1.8 2003/04/16 07:20:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -70,9 +70,9 @@ devopen(f, fname, file)
 	const char *fname;
 	char **file;
 {
-	register struct hppa_dev *hpd;
-	register const struct pdc_devs *dp = pdc_devs;
-	register int rc = 1;
+	struct hppa_dev *hpd;
+	const struct pdc_devs *dp = pdc_devs;
+	int rc = 1;
 
 	if (!(*file = strchr(fname, ':')))
 		return ENODEV;
@@ -127,7 +127,7 @@ devboot(dev, p)
 	dev_t dev;
 	char *p;
 {
-	register const char *q;
+	const char *q;
 	if (!dev) {
 		int type, unit;
 
@@ -201,7 +201,7 @@ putchar(c)
 int
 getchar()
 {
-	register int c = cngetc();
+	int c = cngetc();
 
 	if (c == '\r')
 		c = '\n';

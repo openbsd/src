@@ -1,4 +1,4 @@
-/*	$OpenBSD: lif.c,v 1.7 2001/06/09 03:54:41 mickey Exp $	*/
+/*	$OpenBSD: lif.c,v 1.8 2003/04/16 07:20:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -55,9 +55,9 @@ lif_open (path, f)
 	char *path;
 	struct open_file *f;
 {
-	register struct file *fp;
-	register struct lifdir *dp;
-	register char *p, *q;
+	struct file *fp;
+	struct lifdir *dp;
+	char *p, *q;
 	struct lif_load load;
 	int err, buf_size, l;
 
@@ -102,10 +102,10 @@ lif_open (path, f)
 			if (debug)
 				printf("lif_open: "
 				       "%s <--> '%c%c%c%c%c%c%c%c%c%c'\n",
-				       path, dp->dir_name[0], dp->dir_name[1], 
-				       dp->dir_name[2], dp->dir_name[3], 
-				       dp->dir_name[4], dp->dir_name[5], 
-				       dp->dir_name[6], dp->dir_name[7], 
+				       path, dp->dir_name[0], dp->dir_name[1],
+				       dp->dir_name[2], dp->dir_name[3],
+				       dp->dir_name[4], dp->dir_name[5],
+				       dp->dir_name[6], dp->dir_name[7],
 				       dp->dir_name[8], dp->dir_name[9]);
 #endif
 			for (p = path, q = dp->dir_name;
@@ -164,8 +164,8 @@ lif_read(f, buf, size, resid)
 	size_t size;
 	size_t *resid;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register char *p;
+	struct file *fp = (struct file *)f->f_fsdata;
+	char *p;
 	char bbuf[DEV_BSIZE];
 	size_t bsize, count = sizeof(bbuf);
 	int err = 0;
@@ -213,7 +213,7 @@ lif_seek(f, offset, where)
 	off_t offset;
 	int where;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	struct file *fp = (struct file *)f->f_fsdata;
 
 	switch (where) {
 	case SEEK_SET:
@@ -236,7 +236,7 @@ lif_stat(f, sb)
 	struct open_file *f;
 	struct stat *sb;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
+	struct file *fp = (struct file *)f->f_fsdata;
 
 	sb->st_mode = 0755 | (fp->f_isdir? S_IFDIR: 0);	/* XXX */
 	sb->st_uid = 0;
@@ -250,8 +250,8 @@ lif_readdir(f, name)
 	struct open_file *f;
 	char *name;
 {
-	register struct file *fp = (struct file *)f->f_fsdata;
-	register char *p;
+	struct file *fp = (struct file *)f->f_fsdata;
+	char *p;
 
 	if (name) {
 		while ((fp->f_rd->dir_name[0] == ' ' ||

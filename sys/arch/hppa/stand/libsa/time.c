@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.c,v 1.3 1999/02/13 04:43:18 mickey Exp $	*/
+/*	$OpenBSD: time.c,v 1.4 2003/04/16 07:20:50 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -39,8 +39,8 @@
 time_t
 getsecs()
 {
+	time_t tt;
 	int err;
-	register time_t tt;
 
 	if ((err = (*pdc)(PDC_TOD, PDC_TOD_READ, &pdcbuf)) < 0) {
 		tt = 0;
@@ -58,4 +58,3 @@ getsecs()
 
 	return tt;
 }
-
