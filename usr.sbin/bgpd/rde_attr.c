@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_attr.c,v 1.9 2004/02/18 23:18:16 claudio Exp $ */
+/*	$OpenBSD: rde_attr.c,v 1.10 2004/02/19 10:55:41 claudio Exp $ */
 
 /*
  * Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
@@ -685,10 +685,6 @@ aspath_loopfree(struct aspath *aspath, u_int16_t myAS)
 	u_int8_t	*seg;
 	u_int16_t	 len, seg_size;
 	u_int8_t	 i, seg_len, seg_type;
-
-	if (len & 1)
-		/* odd lenght aspath are invalid */
-		return AS_ERR_BAD;
 
 	seg = aspath->data;
 	for (len = aspath->hdr.len; len > 0; len -= seg_size, seg += seg_size) {
