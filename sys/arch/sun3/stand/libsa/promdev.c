@@ -105,7 +105,7 @@ prom_iopen(si)
 		/* try page-aligned address... */
 		size = dip->d_dmabytes + NBPG;
 		addr = (int) dvma_alloc(size);
-		addr = sun3_round_page(addr);
+		addr = m68k_round_page(addr);
 		si->si_dmaaddr = (char*) addr;
 #ifdef	DEBUG_PROM
 		if (debug)

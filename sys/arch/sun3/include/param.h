@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.13 1997/02/14 23:50:18 kstailey Exp $	*/
+/*	$OpenBSD: param.h,v 1.14 1997/09/07 14:05:17 kstailey Exp $	*/
 /*	$NetBSD: param.h,v 1.34 1996/03/04 05:04:40 cgd Exp $	*/
 
 /*
@@ -135,19 +135,6 @@
  * For now though just use DEV_BSIZE.
  */
 #define	bdbtofsb(bn)	((bn) / (BLKDEV_IOSIZE/DEV_BSIZE))
-
-/*
- * Mach derived conversion macros
- */
-#define sun3_round_seg(x)	((((unsigned)(x)) + SEGOFSET) & ~SEGOFSET)
-#define sun3_trunc_seg(x)	((unsigned)(x) & ~SEGOFSET)
-#define sun3_btos(x)		((unsigned)(x) >> SEGSHIFT)
-#define sun3_stob(x)		((unsigned)(x) << SEGSHIFT)
-
-#define sun3_round_page(x)	((((unsigned)(x)) + PGOFSET) & ~PGOFSET)
-#define sun3_trunc_page(x)	((unsigned)(x) & ~PGOFSET)
-#define sun3_btop(x)		((unsigned)(x) >> PGSHIFT)
-#define sun3_ptob(x)		((unsigned)(x) << PGSHIFT)
 
 /*
  * spl functions; all are done in-line

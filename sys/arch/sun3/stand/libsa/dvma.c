@@ -108,7 +108,7 @@ dvma_mapout(char *addr, int len)
 char *
 dvma_alloc(int len)
 {
-	len = sun3_round_page(len);
+	len = m68k_round_page(len);
 	dvma_end -= len;
 	return((char*)dvma_end);
 }

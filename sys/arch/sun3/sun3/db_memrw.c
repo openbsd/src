@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_memrw.c,v 1.6 1997/01/16 04:04:17 kstailey Exp $	*/
+/*	$OpenBSD: db_memrw.c,v 1.7 1997/09/07 14:05:20 kstailey Exp $	*/
 /*	$NetBSD: db_memrw.c,v 1.13 1996/11/20 18:57:28 gwr Exp $	*/
 
 /*-
@@ -117,7 +117,7 @@ db_write_text(addr, size, data)
 		return;
 
 	dst = (char*)addr;
-	pgva = sun3_trunc_page((long)dst);
+	pgva = m68k_trunc_page((long)dst);
 
 	goto firstpage;
 	do {
@@ -127,7 +127,7 @@ db_write_text(addr, size, data)
 		 * for the previous page, and make the new
 		 * page writable.
 		 */
-		pgva = sun3_trunc_page((long)dst);
+		pgva = m68k_trunc_page((long)dst);
 		if (pgva != prevpg) {
 			/*
 			 * Restore old PTE.  No cache flush,
