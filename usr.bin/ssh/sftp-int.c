@@ -28,7 +28,7 @@
 /* XXX: recursive operations */
 
 #include "includes.h"
-RCSID("$OpenBSD: sftp-int.c,v 1.15 2001/02/07 22:55:47 stevesk Exp $");
+RCSID("$OpenBSD: sftp-int.c,v 1.16 2001/02/08 15:02:01 deraadt Exp $");
 
 #include "buffer.h"
 #include "xmalloc.h"
@@ -171,11 +171,13 @@ local_do_ls(const char *args)
 	if (!args || !*args)
 		local_do_shell("ls");
 	else {
-		char *buf = xmalloc(8 + strlen(args) + 1);
+		int len = sizeof("/bin/ls ") + strlen(args) + 1;
+		char *buf = xmalloc(len);
 
 		/* XXX: quoting - rip quoting code from ftp? */
-		sprintf(buf, "/bin/ls %s", args);
+		snprintf(buf, len, "/bin/ls %s", args);
 		local_do_shell(buf);
+		xfree(buf);
 	}
 }
 
@@ -227,7 +229,6 @@ get_pathname(const char **cpp, char **path)
 	if (!*cp) {
 		*cpp = cp;
 		*path = NULL;
-
 		return (0);
 	}
 
@@ -240,19 +241,16 @@ get_pathname(const char **cpp, char **path)
 			error("Unterminated quote");
 			goto fail;
 		}
-
 		if (cp == end) {
 			error("Empty quotes");
 			goto fail;
 		}
-
 		*cpp = end + 1 + strspn(end + 1, WHITESPACE);
 	} else {
 		/* Read to end of filename */
 		end = strpbrk(cp, WHITESPACE);
 		if (end == NULL)
 			end = strchr(cp, '\0');
-
 		*cpp = end + strspn(end, WHITESPACE);
 	}
 
@@ -261,12 +259,10 @@ get_pathname(const char **cpp, char **path)
 	*path = xmalloc(i + 1);
 	memcpy(*path, cp, i);
 	(*path)[i] = '\0';
-
 	return(0);
 
  fail:
 	*path = NULL;
-
 	return (-1);
 }
 
@@ -278,7 +274,6 @@ infer_path(const char *p, char **ifp)
 	debug("XXX: P = \"%s\"", p);
 
 	cp = strrchr(p, '/');
-
 	if (cp == NULL) {
 		*ifp = xstrdup(p);
 		return(0);
@@ -429,7 +424,6 @@ parse_args(const char **cpp, int *pflag, unsigned long *n_arg,
 	}
 
 	*cpp = cp;
-
 	return(cmdnum);
 }
 
@@ -590,7 +584,6 @@ parse_dispatch_command(int in, int out, const char *cmd, char **pwd)
 		xfree(path1);
 	if (path2)
 		xfree(path2);
-
 	return(0);
 }
 
