@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.81 2002/06/25 00:21:58 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.82 2002/06/26 16:37:58 angelos Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -114,7 +114,8 @@ static	void udp_notify(struct inpcb *, int);
 static	struct mbuf *udp_saveopt(caddr_t, int, int);
 
 #ifdef IPSEC
-int udp_check_ipsec(struct mbuf *, struct inpcb *, union sockaddr_union, int);
+int udp_check_ipsec(struct mbuf *, struct inpcb *,
+    union sockaddr_union *, int);
 #endif /* IPSEC */
 
 #ifndef UDBHASHSIZE
@@ -156,16 +157,19 @@ udp6_input(mp, offp, proto)
 
 #ifdef IPSEC
 int
-udp_check_ipsec(m, inp, srcsa,iphlen)
+udp_check_ipsec(m, inp, srcsa, iphlen)
 	struct mbuf *m;
 	struct inpcb *inp;
-	union sockaddr_union srcsa;
+	union sockaddr_union *srcsa;
 	int iphlen;
 {
 	struct m_tag *mtag;
 	struct tdb_ident *tdbi;
 	struct tdb *tdb;
 	int error, s;
+
+	if (inp == NULL)
+		return 0;
 
 	mtag = m_tag_find(m, PACKET_TAG_IPSEC_IN_DONE, NULL);
 	s = splnet();
@@ -174,7 +178,8 @@ udp_check_ipsec(m, inp, srcsa,iphlen)
 		tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
 	} else
 		tdb = NULL;
-	ipsp_spd_lookup(m, srcsa.sa.sa_family, iphlen, &error,
+
+	ipsp_spd_lookup(m, srcsa->sa.sa_family, iphlen, &error,
 	    IPSP_DIRECTION_IN, tdb, inp);
 	if (error) {
 		splx(s);
@@ -188,7 +193,7 @@ udp_check_ipsec(m, inp, srcsa,iphlen)
 			tdb_add_inp(tdb, inp, 1);
 			if (inp->inp_ipo == NULL) {
 				inp->inp_ipo = ipsec_add_policy(inp,
-				    srcsa.sa.sa_family, IPSP_DIRECTION_OUT);
+				    srcsa->sa.sa_family, IPSP_DIRECTION_OUT);
 				if (inp->inp_ipo == NULL) {
 					splx(s);
 					return -1;
@@ -487,9 +492,9 @@ udp_input(struct mbuf *m, ...)
 				struct mbuf *n;
 
 #ifdef IPSEC
-				if (udp_check_ipsec(m, inp, srcsa,
+				if (udp_check_ipsec(m, inp, &srcsa,
 				    iphlen) == -1)
-					goto bad;
+					continue;
 #endif /*IPSEC */
 
 				if ((n = m_copy(m, 0, M_COPYALL)) != NULL) {
@@ -534,7 +539,7 @@ udp_input(struct mbuf *m, ...)
 		}
 
 #ifdef IPSEC
-		if (udp_check_ipsec(m, inp, srcsa, iphlen) == -1)
+		if (udp_check_ipsec(m, inp, &srcsa, iphlen) == -1)
 			goto bad;
 #endif /*IPSEC */
 
@@ -598,7 +603,7 @@ udp_input(struct mbuf *m, ...)
 	}
 
 #ifdef IPSEC
-	if (udp_check_ipsec(m, inp, srcsa, iphlen) == -1)
+	if (udp_check_ipsec(m, inp, &srcsa, iphlen) == -1)
 		goto bad;
 #endif /*IPSEC */
 
