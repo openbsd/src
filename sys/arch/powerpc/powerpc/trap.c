@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.45 2002/03/14 23:51:47 drahn Exp $	*/
+/*	$OpenBSD: trap.c,v 1.46 2002/05/13 17:55:02 drahn Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -40,6 +40,8 @@
 #include <sys/user.h>
 #include <sys/ktrace.h>
 #include <sys/pool.h>
+
+#include <dev/cons.h>
 
 #include <machine/cpu.h>
 #include <machine/fpu.h>
@@ -568,7 +570,9 @@ mpc_print_pci_stat();
 			/*
 				instr = copyin (srr0)
 				if (instr == BKPT_INST && uid == 0) {
+					cnpollc(TRUE);
 					db_trap(T_BREAKPOINT?)
+					cnpollc(FALSE);
 					break;
 				}
 			*/
@@ -594,7 +598,9 @@ for (i = 0; i < errnum; i++) {
 		/* should check for correct byte here or panic */
 #ifdef DDB
 		db_save_regs(frame);
+		cnpollc(TRUE);
 		db_trap(T_BREAKPOINT, 0);
+		cnpollc(FALSE);
 #else
 		panic("trap EXC_PGM");
 #endif
