@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.542 2002/09/03 20:04:14 jason Exp 
+ *		OpenBSD: pcidevs,v 1.543 2002/09/09 17:35:00 gluk Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1489,6 +1489,10 @@ static const struct pci_known_product pci_known_products[] = {
 	{
 	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_673,
 	    "USB0673",
+	},
+	{
+	    PCI_VENDOR_CMDTECH, PCI_PRODUCT_CMDTECH_680,
+	    "PCI0680",
 	},
 	{
 	    PCI_VENDOR_COGENT, PCI_PRODUCT_COGENT_EM110TX,
