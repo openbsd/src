@@ -33,11 +33,12 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)displayq.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 
 #include <signal.h>
 #include <fcntl.h>
@@ -132,7 +133,7 @@ displayq(format)
 	seteuid(uid);
 	if (ret >= 0) {
 		if (statb.st_mode & 0100) {
-			if (sendtorem)
+			if (remote)
 				printf("%s: ", host);
 			printf("Warning: %s is down: ", printer);
 			seteuid(euid);
@@ -147,7 +148,7 @@ displayq(format)
 				putchar('\n');
 		}
 		if (statb.st_mode & 010) {
-			if (sendtorem)
+			if (remote)
 				printf("%s: ", host);
 			printf("Warning: %s queue is turned off\n", printer);
 		}
@@ -162,8 +163,8 @@ displayq(format)
 		else {
 			/* get daemon pid */
 			cp = current;
-			while ((*cp = getc(fp)) != EOF && *cp != '\n')
-				cp++;
+			while ((i = getc(fp)) != EOF && i != '\n')
+				*cp++ = i;
 			*cp = '\0';
 			i = atoi(current);
 			if (i <= 0) {
@@ -178,13 +179,13 @@ displayq(format)
 			} else {
 				/* read current file name */
 				cp = current;
-				while ((*cp = getc(fp)) != EOF && *cp != '\n')
-					cp++;
+				while ((i = getc(fp)) != EOF && i != '\n')
+					*cp++ = i;
 				*cp = '\0';
 				/*
 				 * Print the status file.
 				 */
-				if (sendtorem)
+				if (remote)
 					printf("%s: ", host);
 				seteuid(euid);
 				fd = open(ST, O_RDONLY);
@@ -212,7 +213,7 @@ displayq(format)
 		}
 		free(queue);
 	}
-	if (!sendtorem) {
+	if (!remote) {
 		if (nitems == 0)
 			puts("no entries");
 		return;
@@ -236,7 +237,7 @@ displayq(format)
 		(void) strcpy(cp, user[i]);
 	}
 	strcat(line, "\n");
-	fd = getport(RM);
+	fd = getport(RM, 0);
 	if (fd < 0) {
 		if (from != host)
 			printf("%s: ", host);
@@ -258,7 +259,7 @@ displayq(format)
 void
 warn()
 {
-	if (sendtorem)
+	if (remote)
 		printf("\n%s: ", host);
 	puts("Warning: no daemon present");
 	current[0] = '\0';
@@ -294,7 +295,7 @@ inform(cf)
 
 	if (rank < 0)
 		rank = 0;
-	if (sendtorem || garbage || strcmp(cf, current))
+	if (remote || garbage || strcmp(cf, current))
 		rank++;
 	j = 0;
 	while (getline(cfp)) {

@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char sccsid[] = "@(#)printcap.c	8.1 (Berkeley) 6/6/93";
+static char sccsid[] = "@(#)printcap.c	8.2 (Berkeley) 4/28/95";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -83,9 +83,10 @@ static char sccsid[] = "@(#)printcap.c	8.1 (Berkeley) 6/6/93";
 static	FILE *pfp = NULL;	/* printcap data base file pointer */
 static	char *tbuf;
 static	int hopcount;		/* detect infinite loops in termcap, init 0 */
+static	int tf;
 
+char *tgetstr __P((char *, char **));
 static char *tskip __P((char *));
-static char *tskip __P((char *bp));
 static char *tdecode __P((char *, char **));
 
 /*
@@ -143,8 +144,18 @@ getprent(bp)
 void
 endprent()
 {
-	if (pfp != NULL)
-		fclose(pfp);
+	if (pfp != NULL) {
+		/*
+		 * Can't use fclose here because on POSIX-compliant
+		 * systems, fclose() causes the file pointer of the
+		 * underlying file descriptor (which is possibly shared
+		 * with a parent process) to be adjusted, and this
+		 * reeks havoc in the parent because it doesn't know
+		 * the file pointer has changed.
+		 */
+		(void) close(fileno(pfp));
+		pfp = NULL;
+	}
 }
 
 /*
@@ -160,10 +171,8 @@ tgetent(bp, name)
 	register int c;
 	register int i = 0, cnt = 0;
 	char ibuf[BUFSIZ];
-	int tf;
 
 	tbuf = bp;
-	tf = 0;
 #ifndef V6
 	cp = getenv("TERMCAP");
 	/*
@@ -191,16 +200,12 @@ tgetent(bp, name)
 			 */
 			tf = open(cp, 0);
 	}
+#endif
 	if (tf == 0) {
 		seteuid(euid);
 		tf = open(_PATH_PRINTCAP, 0);
 		seteuid(uid);
 	}
-#else
-	seteuid(euid);
-	tf = open(_PATH_PRINTCAP, 0);
-	seteuid(uid);
-#endif
 	if (tf < 0)
 		return (-1);
 	for (;;) {
@@ -210,6 +215,7 @@ tgetent(bp, name)
 				cnt = read(tf, ibuf, BUFSIZ);
 				if (cnt <= 0) {
 					close(tf);
+					tf = 0;
 					return (0);
 				}
 				i = 0;
@@ -234,8 +240,13 @@ tgetent(bp, name)
 		 * The real work for the match.
 		 */
 		if (tnamatch(name)) {
-			close(tf);
-			return(tnchktc());
+			lseek(tf, 0L, 0);
+			i = tnchktc();
+			if (tf) {
+				close(tf);
+				tf = 0;
+			}
+			return(i);
 		}
 	}
 }
@@ -461,7 +472,6 @@ nextc:
 				c -= '0', i = 2;
 				do
 					c <<= 3, c |= *str++ - '0';
-				while (--i && isdigit(*str));
 			}
 			break;
 		}

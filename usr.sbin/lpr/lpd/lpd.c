@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.3 1996/05/05 16:13:58 deraadt Exp $ */
+/*	$OpenBSD: lpd.c,v 1.4 1996/07/04 05:41:54 tholo Exp $ */
 /*	$NetBSD: lpd.c,v 1.7 1996/04/24 14:54:06 mrg Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)lpd.c	8.4 (Berkeley) 4/17/94";
+static char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #endif /* not lint */
 
 /*
@@ -80,6 +80,7 @@ static char sccsid[] = "@(#)lpd.c	8.4 (Berkeley) 4/17/94";
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
+#include <sys/file.h>
 #include <netinet/in.h>
 
 #include <netdb.h>
@@ -106,6 +107,7 @@ static void       mcleanup __P((int));
 static void       doit __P((void));
 static void       startup __P((void));
 static void       chkhost __P((struct sockaddr_in *));
+static int	  ckqueue __P((char *));
 
 uid_t	uid, euid;
 
@@ -176,11 +178,13 @@ main(argc, argv)
 	 */
 	startup();
 	(void) unlink(_PATH_SOCKETNAME);
+	(void) umask(07);
 	funix = socket(AF_UNIX, SOCK_STREAM, 0);
 	if (funix < 0) {
 		syslog(LOG_ERR, "socket: %m");
 		exit(1);
 	}
+	(void) umask(0);
 #define	mask(s)	(1 << ((s) - 1))
 	omask = sigblock(mask(SIGHUP)|mask(SIGINT)|mask(SIGQUIT)|mask(SIGTERM));
 	signal(SIGHUP, mcleanup);
@@ -436,11 +440,17 @@ startup()
 	 * Restart the daemons.
 	 */
 	while (cgetnext(&buf, printcapdb) > 0) {
+		if (ckqueue(buf) <= 0) {
+			free(buf);
+			continue;	/* no work to do for this printer */
+		}
 		for (cp = buf; *cp; cp++)
 			if (*cp == '|' || *cp == ':') {
 				*cp = '\0';
 				break;
 			}
+		if (lflag)
+			syslog(LOG_INFO, "work for %s", buf);
 		if ((pid = fork()) < 0) {
 			syslog(LOG_WARNING, "startup: cannot fork");
 			mcleanup(0);
@@ -449,8 +459,35 @@ startup()
 			printer = buf;
 			cgetclose();
 			printjob();
+			/* NOTREACHED */
 		}
+		else free(buf);
 	}
+}
+
+/*
+ * Make sure there's some work to do before forking off a child
+ */
+static int
+ckqueue(cap)
+	char *cap;
+{
+	register struct dirent *d;
+	DIR *dirp;
+	char *spooldir;
+
+	if (cgetstr(cap, "sd", &spooldir) == -1)
+		spooldir = _PATH_DEFSPOOL;
+	if ((dirp = opendir(spooldir)) == NULL)
+		return (-1);
+	while ((d = readdir(dirp)) != NULL) {
+		if (d->d_name[0] != 'c' || d->d_name[1] != 'f')
+			continue;	/* daemon control files only */
+		closedir(dirp);
+		return (1);		/* found something */
+	}
+	closedir(dirp);
+	return (0);
 }
 
 #define DUMMY ":nobody::"
