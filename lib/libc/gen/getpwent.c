@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.8 1996/10/16 09:24:21 downsj Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.9 1997/04/13 05:11:07 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -961,8 +961,12 @@ __hashpw(key)
 	if ((_pw_db->get)(_pw_db, key, &data, 0))
 		return(0);
 	p = (char *)data.data;
-	if (data.size > max && !(line = realloc(line, (max += 1024))))
-		return(0);
+	if (data.size > max) {
+		max = data.size + 256;
+		line = realloc(line, max);
+		if (line == NULL)
+			return 0;
+	}
 
 	t = line;
 #define	EXPAND(e)	e = t; while ((*t++ = *p++));

@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet_pton.c,v 1.1 1997/03/13 19:07:33 downsj Exp $	*/
+/*	$OpenBSD: inet_pton.c,v 1.2 1997/04/13 05:08:24 deraadt Exp $	*/
 
 /* Copyright (c) 1996 by Internet Software Consortium.
  *
@@ -20,7 +20,7 @@
 #if 0
 static char rcsid[] = "$From: inet_pton.c,v 8.7 1996/08/05 08:31:35 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: inet_pton.c,v 1.1 1997/03/13 19:07:33 downsj Exp $";
+static char rcsid[] = "$OpenBSD: inet_pton.c,v 1.2 1997/04/13 05:08:24 deraadt Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -100,12 +100,12 @@ inet_pton4(src, dst)
 
 			if (new > 255)
 				return (0);
-			*tp = new;
 			if (! saw_digit) {
 				if (++octets > 4)
 					return (0);
 				saw_digit = 1;
 			}
+			*tp = new;
 		} else if (ch == '.' && saw_digit) {
 			if (octets == 4)
 				return (0);
