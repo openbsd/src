@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.34 2001/05/29 01:20:43 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.35 2001/06/17 03:44:03 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -89,7 +89,7 @@ abtn*	at adb?				# ADB button?
 #zsc*	at obio?
 #zstty*	at zsc? channel ?
 
-awacs*  at obio? disable                       # Apple audio device
+awacs*  at obio? 			# Apple audio device
 audio* at awacs?
 
 
