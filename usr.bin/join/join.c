@@ -1,4 +1,4 @@
-/* $OpenBSD: join.c,v 1.16 2003/06/10 22:20:47 deraadt Exp $	*/
+/* $OpenBSD: join.c,v 1.17 2003/12/12 10:38:44 otto Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,25 +34,22 @@
  */
 
 #ifndef lint
-static char copyright[] =
+static const char copyright[] =
 "@(#) Copyright (c) 1991, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
 #ifndef lint
 /*static char sccsid[] = "@(#)join.c	8.6 (Berkeley) 5/4/95"; */
-static char rcsid[] = "$OpenBSD: join.c,v 1.16 2003/06/10 22:20:47 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: join.c,v 1.17 2003/12/12 10:38:44 otto Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
 
-#include <ctype.h>
 #include <err.h>
-#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 /*
  * There's a structure per input file which encapsulates the state of the
@@ -74,7 +71,7 @@ typedef struct {
 	FILE *fp;			/* file descriptor */
 	u_long joinf;			/* join field (-1, -2, -j) */
 	int unpair;			/* output unpairable lines (-a) */
-	int number;			/* 1 for file 1, 2 for file 2 */
+	u_long number;			/* 1 for file 1, 2 for file 2 */
 	LINE *set;			/* set of lines with same field */
 	int pushbool;			/* if pushback is set */
 	u_long pushback;		/* line on the stack */
@@ -82,8 +79,8 @@ typedef struct {
 	u_long setalloc;		/* set allocated count */
 	u_long setusedc;		/* sets used  */
 } INPUT;
-INPUT input1 = { NULL, 0, 0, 1, NULL, 0, 0, 0, },
-      input2 = { NULL, 0, 0, 2, NULL, 0, 0, 0, };
+INPUT input1 = { NULL, 0, 0, 1, NULL, 0, 0, 0, 0, 0 },
+      input2 = { NULL, 0, 0, 2, NULL, 0, 0, 0, 0, 0 };
 
 typedef struct {
 	u_long	filenum;	/* file number */
@@ -306,7 +303,7 @@ slurpit(INPUT *F)
 {
 	LINE *lp, *lastlp, tmp;
 	size_t len;
-	int cnt;
+	u_long cnt;
 	char *bp, *fieldp;
 	long fpos;
 	/*
@@ -322,11 +319,14 @@ slurpit(INPUT *F)
 		 * is new space.
 		 */
 		if (F->setcnt == F->setalloc) {
+			LINE *p;
+			u_long newsize = F->setalloc + 50;
 			cnt = F->setalloc;
-			F->setalloc += 50;
-			if ((F->set = realloc(F->set,
-			    F->setalloc * sizeof(LINE))) == NULL)
+			if ((p = realloc(F->set,
+			    newsize * sizeof(LINE))) == NULL)
 				err(1, NULL);
+			F->set = p;
+			F->setalloc = newsize;
 			memset(F->set + cnt, 0, 50 * sizeof(LINE));
 			/* re-set lastlp in case it moved */
 			if (lastlp != NULL)
@@ -356,10 +356,13 @@ slurpit(INPUT *F)
 		*/
 		fpos = ftell(F->fp) - len;
 		if (lp->linealloc <= len + 1) {
-			lp->linealloc += MAX(100, len + 1 - lp->linealloc);
-			if ((lp->line = realloc(lp->line, lp->linealloc))
-			== NULL)
+			char *p;
+			u_long newsize = lp->linealloc +
+			    MAX(100, len + 1 - lp->linealloc);
+			if ((p = realloc(lp->line, newsize)) == NULL)
 				err(1, NULL);
+			lp->line = p;
+			lp->linealloc = newsize;
 		}
 		F->setusedc++;
 		memmove(lp->line, bp, len);
@@ -377,10 +380,13 @@ slurpit(INPUT *F)
 			if (spans && *fieldp == '\0')
 				continue;
 			if (lp->fieldcnt == lp->fieldalloc) {
-				lp->fieldalloc += 50;
-				if ((lp->fields = realloc(lp->fields,
-				    lp->fieldalloc * sizeof(char *))) == NULL)
+				char **p;
+				u_long newsize = lp->fieldalloc + 50;
+				if ((p = realloc(lp->fields,
+				    newsize * sizeof(char *))) == NULL)
 					err(1, NULL);
+				lp->fields = p;
+				lp->fieldalloc = newsize;
 			}
 			lp->fields[lp->fieldcnt++] = fieldp;
 		}
@@ -407,7 +413,7 @@ cmp(LINE *lp1, u_long fieldno1, LINE *lp2, u_long fieldno2)
 void
 joinlines(INPUT *F1, INPUT *F2)
 {
-	int cnt1, cnt2;
+	u_long cnt1, cnt2;
 
 	/*
 	 * Output the results of a join comparison.  The output may be from
@@ -427,7 +433,7 @@ joinlines(INPUT *F1, INPUT *F2)
 void
 outoneline(INPUT *F, LINE *lp)
 {
-	int cnt;
+	u_long cnt;
 
 	/*
 	 * Output a single line from one of the files, according to the
@@ -438,6 +444,8 @@ outoneline(INPUT *F, LINE *lp)
 		for (cnt = 0; cnt < olistcnt; ++cnt) {
 			if (olist[cnt].filenum == F->number)
 				outfield(lp, olist[cnt].fieldno, 0);
+			else if (olist[cnt].filenum == 0)
+				outfield(lp, F->joinf, 0);
 			else
 				outfield(lp, 0, 1);
 		}
@@ -453,12 +461,17 @@ outoneline(INPUT *F, LINE *lp)
 void
 outtwoline(INPUT *F1, LINE *lp1, INPUT *F2, LINE *lp2)
 {
-	int cnt;
+	u_long cnt;
 
 	/* Output a pair of lines according to the join list (if any). */
 	if (olist) {
 		for (cnt = 0; cnt < olistcnt; ++cnt)
-			if (olist[cnt].filenum == 1)
+			if (olist[cnt].filenum == 0) {
+				if (lp1->fieldcnt >= F1->joinf)
+					outfield(lp1, F1->joinf, 0);
+				else
+					outfield(lp2, F2->joinf, 0);
+			} else if (olist[cnt].filenum == 1)
 				outfield(lp1, olist[cnt].fieldno, 0);
 			else /* if (olist[cnt].filenum == 2) */
 				outfield(lp2, olist[cnt].fieldno, 0);
@@ -507,27 +520,36 @@ outfield(LINE *lp, u_long fieldno, int out_empty)
 void
 fieldarg(char *option)
 {
-	u_long fieldno;
+	u_long fieldno, filenum;
 	char *end, *token;
 
 	while ((token = strsep(&option, ", \t")) != NULL) {
 		if (*token == '\0')
 			continue;
-		if ((token[0] != '1' && token[0] != '2') || token[1] != '.')
+		if (token[0] == '0')
+			filenum = fieldno = 0;
+		else if ((token[0] == '1' || token[0] == '2') &&
+		    token[1] == '.') {
+			filenum = token[0] - '0';
+			fieldno = strtol(token + 2, &end, 10);
+			if (*end)
+				errx(1, "malformed -o option field");
+			if (fieldno == 0)
+				errx(1, "field numbers are 1 based");
+			--fieldno;
+		} else
 			errx(1, "malformed -o option field");
-		fieldno = strtol(token + 2, &end, 10);
-		if (*end)
-			errx(1, "malformed -o option field");
-		if (fieldno == 0)
-			errx(1, "field numbers are 1 based");
 		if (olistcnt == olistalloc) {
-			olistalloc += 50;
-			if ((olist = realloc(olist,
-			    olistalloc * sizeof(OLIST))) == NULL)
+			OLIST *p;
+			u_long newsize = olistalloc + 50;
+			if ((p = realloc(olist,
+			    newsize * sizeof(OLIST))) == NULL)
 				err(1, NULL);
+			olist = p;
+			olistalloc = newsize;
 		}
-		olist[olistcnt].filenum = token[0] - '0';
-		olist[olistcnt].fieldno = fieldno - 1;
+		olist[olistcnt].filenum = filenum;
+		olist[olistcnt].fieldno = fieldno;
 		++olistcnt;
 	}
 }
@@ -535,7 +557,7 @@ fieldarg(char *option)
 void
 obsolete(char **argv)
 {
-	int len;
+	size_t len;
 	char **p, *ap, *t;
 
 	while ((ap = *++argv) != NULL) {
@@ -556,8 +578,13 @@ obsolete(char **argv)
 			 * on the command line.  (Well, we could reallocate
 			 * the argv array, but that hardly seems worthwhile.)
 			 */
-			if (ap[2] == '\0')
+			if (ap[2] == '\0' && (argv[1] == NULL ||
+			    (strcmp(argv[1], "1") != 0 &&
+			    strcmp(argv[1], "2") != 0))) {
 				ap[1] = '\01';
+				warnx("-a option used without an argument; "
+				    "reverting to historical behavior");
+			}
 			break;
 		case 'j':
 			/*
@@ -593,7 +620,8 @@ jbad:				errx(1, "illegal option -- %s", ap);
 			if (ap[2] != '\0')
 				break;
 			for (p = argv + 2; *p != NULL; ++p) {
-				if ((p[0][0] != '1' && p[0][0] != '2') || p[0][1] != '.')
+				if (p[0][0] == '0' || ((p[0][0] != '1' &&
+				    p[0][0] != '2') || p[0][1] != '.'))
 					break;
 				len = strlen(*p);
 				if (len - 2 != strspn(*p + 2, "0123456789"))

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: join.1,v 1.13 2003/06/10 09:12:10 jmc Exp $
+.\"	$OpenBSD: join.1,v 1.14 2003/12/12 10:38:44 otto Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -89,11 +89,6 @@ The options are as follows:
 In addition to the default output, produce a line for each unpairable
 line in file
 .Ar file_number .
-(The argument to
-.Fl a
-must not be preceded by a space; see the
-.Sx STANDARDS
-section.)
 .It Fl e Ar string
 Replace empty output fields with
 .Ar string .
@@ -108,7 +103,11 @@ where
 .Ar file_number
 is a file number and
 .Ar field
-is a field number.
+is a field number,
+or the form
+.Dq 0
+(zero),
+representing the join field.
 The elements of list must be either comma
 .Pq Ql \&,
 or whitespace separated.
@@ -185,10 +184,6 @@ the following options are available:
 .It Fl a
 In addition to the default output, produce a line for each unpairable line
 in both file 1 and file 2.
-(To distinguish between this and
-.Fl a Ar file_number ,
-.Nm
-currently requires that the latter not include any whitespace.)
 .It Fl j1 Ar field
 Join on the
 .Ar field Ns 'th
