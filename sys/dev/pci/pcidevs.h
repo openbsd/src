@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.358 2001/01/22 22:36:30 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.360 2001/01/23 00:05:01 deraadt Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1066,6 +1066,7 @@
 #define	PCI_PRODUCT_IBM_82351	0x0022		/* 82351 PCI-PCI */
 #define	PCI_PRODUCT_IBM_0x0036	0x0036		/* Miami/PCI */
 #define	PCI_PRODUCT_IBM_OLYMPIC	0x003e		/* Olympic */
+#define	PCI_PRODUCT_IBM_FIREGL2	0x0170		/* FireGL2 */
 
 /* IDT products */
 #define	PCI_PRODUCT_IDT_77201	0x0001		/* 77201/77211 ATM (NICStAR) */
