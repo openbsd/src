@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.7 2001/10/02 20:32:46 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.8 2001/10/02 21:21:52 jason Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -119,9 +119,6 @@ static void	hme_mii_statchg __P((struct device *));
 int		hme_mediachange __P((struct ifnet *));
 void		hme_mediastatus __P((struct ifnet *, struct ifmediareq *));
 
-struct mbuf	*hme_get __P((struct hme_softc *, int, int));
-int		hme_put __P((struct hme_softc *, int, struct mbuf *));
-void		hme_read __P((struct hme_softc *, int, int));
 int		hme_eint __P((struct hme_softc *, u_int));
 int		hme_rint __P((struct hme_softc *));
 int		hme_tint __P((struct hme_softc *));
@@ -159,9 +156,6 @@ hme_config(sc)
 	 * the maximum bus burst size:
 	 *	sc_burst
 	 *
-	 * (notyet:DMA capable memory for the ring descriptors & packet buffers:
-	 *	rb_membase, rb_dmabase)
-	 *
 	 * the local Ethernet address:
 	 *	sc_enaddr
 	 *
@@ -174,40 +168,20 @@ hme_config(sc)
 
 
 	/*
-	 * Allocate descriptors and buffers
-	 * XXX - do all this differently.. and more configurably,
-	 * eg. use things as `dma_load_mbuf()' on transmit,
-	 *     and a pool of `EXTMEM' mbufs (with buffers DMA-mapped
-	 *     all the time) on the reveiver side.
-	 *
-	 * Note: receive buffers must be 64-byte aligned.
-	 * Also, apparently, the buffers must extend to a DMA burst
-	 * boundary beyond the maximum packet size.
-	 */
-#define _HME_BUFSZ	1600
-
-	/* Note: the # of descriptors must be a multiple of 16 */
-	sc->sc_rb.rb_ntbuf = _HME_NDESC;
-	sc->sc_rb.rb_nrbuf = _HME_NDESC;
-
-	/*
 	 * Allocate DMA capable memory
 	 * Buffer descriptors must be aligned on a 2048 byte boundary;
 	 * take this into account when calculating the size. Note that
 	 * the maximum number of descriptors (256) occupies 2048 bytes,
-	 * so we allocate that much regardless of _HME_NDESC.
+	 * so we allocate that much regardless of the number of descriptors.
 	 */
-	size =	2048 +					/* TX descriptors */
-		2048 +					/* RX descriptors */
-		sc->sc_rb.rb_ntbuf * _HME_BUFSZ +	/* TX buffers */
-		sc->sc_rb.rb_nrbuf * _HME_BUFSZ;	/* TX buffers */
+	size = (HME_XD_SIZE * HME_RX_RING_MAX) +	/* RX descriptors */
+	    (HME_XD_SIZE * HME_TX_RING_MAX);		/* TX descriptors */
 
 	/* Allocate DMA buffer */
 	if ((error = bus_dmamem_alloc(dmatag, size,
-				      2048, 0,
-				      &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
+	    2048, 0, &seg, 1, &rseg, BUS_DMA_NOWAIT)) != 0) {
 		printf("%s: DMA buffer alloc error %d\n",
-			sc->sc_dev.dv_xname, error);
+		    sc->sc_dev.dv_xname, error);
 		return;
 	}
 
@@ -311,15 +285,6 @@ hme_config(sc)
 	if (sc->sc_sh == NULL)
 		panic("hme_config: can't establish shutdownhook");
 
-#if 0
-	printf("%s: %d receive buffers, %d transmit buffers\n",
-	    sc->sc_dev.dv_xname, sc->sc_nrbuf, sc->sc_ntbuf);
-	sc->sc_rbufaddr = malloc(sc->sc_nrbuf * sizeof(int), M_DEVBUF,
-					M_WAITOK);
-	sc->sc_tbufaddr = malloc(sc->sc_ntbuf * sizeof(int), M_DEVBUF,
-					M_WAITOK);
-#endif
-
 	timeout_set(&sc->sc_tick_ch, hme_tick, sc);
 }
 
@@ -370,7 +335,7 @@ hme_stop(sc)
 		DELAY(20);
 	}
 
-	for (n = 0; n < sc->sc_rb.rb_ntbuf; n++) {
+	for (n = 0; n < HME_TX_RING_SIZE; n++) {
 		if (sc->sc_txd[n].sd_map != NULL) {
 			bus_dmamap_sync(sc->sc_dmatag, sc->sc_txd[n].sd_map,
 			    0, sc->sc_txd[n].sd_map->dm_mapsize,
@@ -392,25 +357,21 @@ void
 hme_meminit(sc)
 	struct hme_softc *sc;
 {
-	bus_addr_t txbufdma, rxbufdma;
 	bus_addr_t dma;
 	caddr_t p;
-	unsigned int ntbuf, nrbuf, i;
+	unsigned int i;
 	struct hme_ring *hr = &sc->sc_rb;
 
 	p = hr->rb_membase;
 	dma = hr->rb_dmabase;
-
-	ntbuf = hr->rb_ntbuf;
-	nrbuf = hr->rb_nrbuf;
 
 	/*
 	 * Allocate transmit descriptors
 	 */
 	hr->rb_txd = p;
 	hr->rb_txddma = dma;
-	p += ntbuf * HME_XD_SIZE;
-	dma += ntbuf * HME_XD_SIZE;
+	p += HME_TX_RING_SIZE * HME_XD_SIZE;
+	dma += HME_TX_RING_SIZE * HME_XD_SIZE;
 	/* We have reserved descriptor space until the next 2048 byte boundary.*/
 	dma = (bus_addr_t)roundup((u_long)dma, 2048);
 	p = (caddr_t)roundup((u_long)p, 2048);
@@ -420,33 +381,16 @@ hme_meminit(sc)
 	 */
 	hr->rb_rxd = p;
 	hr->rb_rxddma = dma;
-	p += nrbuf * HME_XD_SIZE;
-	dma += nrbuf * HME_XD_SIZE;
+	p += HME_RX_RING_SIZE * HME_XD_SIZE;
+	dma += HME_RX_RING_SIZE * HME_XD_SIZE;
 	/* Again move forward to the next 2048 byte boundary.*/
 	dma = (bus_addr_t)roundup((u_long)dma, 2048);
 	p = (caddr_t)roundup((u_long)p, 2048);
 
-
 	/*
-	 * Allocate transmit buffers
+	 * Initialize transmit descriptors
 	 */
-	hr->rb_txbuf = p;
-	txbufdma = dma;
-	p += ntbuf * _HME_BUFSZ;
-	dma += ntbuf * _HME_BUFSZ;
-
-	/*
-	 * Allocate receive buffers
-	 */
-	hr->rb_rxbuf = p;
-	rxbufdma = dma;
-	p += nrbuf * _HME_BUFSZ;
-	dma += nrbuf * _HME_BUFSZ;
-
-	/*
-	 * Initialize transmit buffer descriptors
-	 */
-	for (i = 0; i < ntbuf; i++) {
+	for (i = 0; i < HME_TX_RING_SIZE; i++) {
 		HME_XD_SETADDR(sc->sc_pci, hr->rb_txd, i, 0);
 		HME_XD_SETFLAGS(sc->sc_pci, hr->rb_txd, i, 0);
 		sc->sc_txd[i].sd_mbuf = NULL;
@@ -454,9 +398,9 @@ hme_meminit(sc)
 	}
 
 	/*
-	 * Initialize receive buffer descriptors
+	 * Initialize receive descriptors
 	 */
-	for (i = 0; i < nrbuf; i++) {
+	for (i = 0; i < HME_RX_RING_SIZE; i++) {
 		if (hme_newbuf(sc, &sc->sc_rxd[i], 1)) {
 			printf("%s: rx allocation failed\n",
 			    sc->sc_dev.dv_xname);
@@ -465,12 +409,11 @@ hme_meminit(sc)
 		HME_XD_SETADDR(sc->sc_pci, hr->rb_rxd, i,
 		    sc->sc_rxd[i].sd_map->dm_segs[0].ds_addr);
 		HME_XD_SETFLAGS(sc->sc_pci, hr->rb_rxd, i,
-		    HME_XD_OWN | HME_XD_ENCODE_RSIZE(_HME_BUFSZ));
+		    HME_XD_OWN | HME_XD_ENCODE_RSIZE(HME_RX_PKTSIZE));
 	}
 
-	hr->rb_tdhead = hr->rb_tdtail = 0;
-	sc->sc_tx_cnt = 0;
-	hr->rb_rdtail = 0;
+	sc->sc_tx_prod = sc->sc_tx_cons = sc->sc_tx_cnt = 0;
+	sc->sc_last_rd = 0;
 }
 
 /*
@@ -545,7 +488,7 @@ hme_init(sc)
 
 	/* step 6 & 7. Program Descriptor Ring Base Addresses */
 	bus_space_write_4(t, etx, HME_ETXI_RING, sc->sc_rb.rb_txddma);
-	bus_space_write_4(t, etx, HME_ETXI_RSIZE, sc->sc_rb.rb_ntbuf);
+	bus_space_write_4(t, etx, HME_ETXI_RSIZE, HME_TX_RING_SIZE);
 
 	bus_space_write_4(t, erx, HME_ERXI_RING, sc->sc_rb.rb_rxddma);
 	bus_space_write_4(t, mac, HME_MACI_RXSIZE, HME_MTU);
@@ -585,31 +528,23 @@ hme_init(sc)
 	bus_space_write_4(t, etx, HME_ETXI_CFG, v);
 
 	/* Transmit Descriptor ring size: in increments of 16 */
-	bus_space_write_4(t, etx, HME_ETXI_RSIZE, _HME_NDESC / 16 - 1);
+	bus_space_write_4(t, etx, HME_ETXI_RSIZE, HME_TX_RING_SIZE / 16 - 1);
 
 
 	/* step 10. ERX Configuration */
 	v = bus_space_read_4(t, erx, HME_ERXI_CFG);
-
-	/* Encode Receive Descriptor ring size: four possible values */
-	switch (_HME_NDESC /*XXX*/) {
-	case 32:
-		v |= HME_ERX_CFG_RINGSIZE32;
-		break;
-	case 64:
-		v |= HME_ERX_CFG_RINGSIZE64;
-		break;
-	case 128:
-		v |= HME_ERX_CFG_RINGSIZE128;
-		break;
-	case 256:
-		v |= HME_ERX_CFG_RINGSIZE256;
-		break;
-	default:
-		printf("hme: invalid Receive Descriptor ring size\n");
-		break;
-	}
-
+	v &= ~HME_ERX_CFG_RINGSIZE256;
+#if HME_RX_RING_SIZE == 32
+	v |= HME_ERX_CFG_RINGSIZE32;
+#elif HME_RX_RING_SIZE == 64
+	v |= HME_ERX_CFG_RINGSIZE64;
+#elif HME_RX_RING_SIZE == 128
+	v |= HME_ERX_CFG_RINGSIZE128;
+#elif HME_RX_RING_SIZE == 256
+	v |= HME_ERX_CFG_RINGSIZE256;
+#else
+# error	"RX ring size must be 32, 64, 128, or 256"
+#endif
 	/* Enable DMA */
 	v |= HME_ERX_CFG_DMAENABLE | (HME_RX_OFFSET << 3);
 	bus_space_write_4(t, erx, HME_ERXI_CFG, v);
@@ -648,142 +583,6 @@ hme_init(sc)
 	hme_start(ifp);
 }
 
-/*
- * Routine to copy from mbuf chain to transmit buffer in
- * network buffer memory.
- * Returns the amount of data copied.
- */
-int
-hme_put(sc, ri, m)
-	struct hme_softc *sc;
-	int ri;			/* Ring index */
-	struct mbuf *m;
-{
-	struct mbuf *n;
-	int len, tlen = 0;
-	caddr_t bp;
-
-	bp = sc->sc_rb.rb_txbuf + (ri % sc->sc_rb.rb_ntbuf) * _HME_BUFSZ;
-	for (; m; m = n) {
-		len = m->m_len;
-		if (len == 0) {
-			MFREE(m, n);
-			continue;
-		}
-		memcpy(bp, mtod(m, caddr_t), len);
-		bp += len;
-		tlen += len;
-		MFREE(m, n);
-	}
-	return (tlen);
-}
-
-/*
- * Pull data off an interface.
- * Len is length of data, with local net header stripped.
- * We copy the data into mbufs.  When full cluster sized units are present
- * we copy into clusters.
- */
-struct mbuf *
-hme_get(sc, ri, totlen)
-	struct hme_softc *sc;
-	int ri, totlen;
-{
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct mbuf *m, *m0, *newm;
-	caddr_t bp;
-	int len;
-
-	MGETHDR(m0, M_DONTWAIT, MT_DATA);
-	if (m0 == 0)
-		return (0);
-	m0->m_pkthdr.rcvif = ifp;
-	m0->m_pkthdr.len = totlen;
-	len = MHLEN;
-	m = m0;
-
-	bp = sc->sc_rb.rb_rxbuf + (ri % sc->sc_rb.rb_nrbuf) * _HME_BUFSZ;
-
-	while (totlen > 0) {
-		if (totlen >= MINCLSIZE) {
-			MCLGET(m, M_DONTWAIT);
-			if ((m->m_flags & M_EXT) == 0)
-				goto bad;
-			len = MCLBYTES;
-		}
-
-		if (m == m0) {
-			caddr_t newdata = (caddr_t)
-			    ALIGN(m->m_data + sizeof(struct ether_header)) -
-			    sizeof(struct ether_header);
-			len -= newdata - m->m_data;
-			m->m_data = newdata;
-		}
-
-		m->m_len = len = min(totlen, len);
-		memcpy(mtod(m, caddr_t), bp, len);
-		bp += len;
-
-		totlen -= len;
-		if (totlen > 0) {
-			MGET(newm, M_DONTWAIT, MT_DATA);
-			if (newm == 0)
-				goto bad;
-			len = MLEN;
-			m = m->m_next = newm;
-		}
-	}
-
-	return (m0);
-
-bad:
-	m_freem(m0);
-	return (0);
-}
-
-/*
- * Pass a packet to the higher levels.
- */
-void
-hme_read(sc, ix, len)
-	struct hme_softc *sc;
-	int ix, len;
-{
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct mbuf *m;
-
-	if (len <= sizeof(struct ether_header) ||
-	    (len > HME_MTU)) {
-#ifdef HMEDEBUG
-		printf("%s: invalid packet size %d; dropping\n",
-		    sc->sc_dev.dv_xname, len);
-#endif
-		ifp->if_ierrors++;
-		return;
-	}
-
-	/* Pull packet off interface. */
-	m = hme_get(sc, ix, len);
-	if (m == 0) {
-		ifp->if_ierrors++;
-		return;
-	}
-
-	ifp->if_ipackets++;
-
-#if NBPFILTER > 0
-	/*
-	 * Check if there's a BPF listener on this interface.
-	 * If so, hand off the raw packet to BPF.
-	 */
-	if (ifp->if_bpf)
-		bpf_mtap(ifp->if_bpf, m);
-#endif
-
-	/* Pass the packet up. */
-	ether_input_mbuf(ifp, m);
-}
-
 void
 hme_start(ifp)
 	struct ifnet *ifp;
@@ -795,7 +594,7 @@ hme_start(ifp)
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
 
-	bix = sc->sc_rb.rb_tdhead;
+	bix = sc->sc_tx_prod;
 	while (sc->sc_txd[bix].sd_mbuf == NULL) {
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
@@ -821,7 +620,7 @@ hme_start(ifp)
 				  HME_ETX_TP_DMAWAKEUP);
 	}
 
-	sc->sc_rb.rb_tdhead = bix;
+	sc->sc_tx_prod = bix;
 	ifp->if_timer = 5;
 }
 
@@ -856,7 +655,7 @@ hme_tint(sc)
 	bus_space_write_4(t, mac, HME_MACI_LTCNT, 0);
 
 	/* Fetch current position in the transmit ring */
-	ri = sc->sc_rb.rb_tdtail;
+	ri = sc->sc_tx_cons;
 	sd = &sc->sc_txd[ri];
 
 	for (;;) {
@@ -884,7 +683,7 @@ hme_tint(sc)
 			sd->sd_mbuf = NULL;
 		}
 
-		if (++ri == sc->sc_rb.rb_ntbuf) {
+		if (++ri == HME_TX_RING_SIZE) {
 			ri = 0;
 			sd = sc->sc_txd;
 		} else
@@ -894,7 +693,7 @@ hme_tint(sc)
 	}
 
 	/* Update ring */
-	sc->sc_rb.rb_tdtail = ri;
+	sc->sc_tx_cons = ri;
 
 	hme_start(ifp);
 
@@ -917,7 +716,7 @@ hme_rint(sc)
 	unsigned int ri, len;
 	u_int32_t flags;
 
-	ri = sc->sc_rb.rb_rdtail;
+	ri = sc->sc_last_rd;
 	sd = &sc->sc_rxd[ri];
 
 	/*
@@ -961,16 +760,16 @@ again:
 		HME_XD_SETADDR(sc->sc_pci, sc->sc_rb.rb_rxd, ri,
 		    sd->sd_map->dm_segs[0].ds_addr);
 		HME_XD_SETFLAGS(sc->sc_pci, sc->sc_rb.rb_rxd, ri,
-		    HME_XD_OWN | HME_XD_ENCODE_RSIZE(_HME_BUFSZ));
+		    HME_XD_OWN | HME_XD_ENCODE_RSIZE(HME_RX_PKTSIZE));
 
-		if (++ri == sc->sc_rb.rb_nrbuf) {
+		if (++ri == HME_RX_RING_SIZE) {
 			ri = 0;
 			sd = sc->sc_rxd;
 		} else
 			sd++;
 	}
 
-	sc->sc_rb.rb_rdtail = ri;
+	sc->sc_last_rd = ri;
 	return (1);
 }
 
@@ -1429,7 +1228,7 @@ hme_encap(sc, mhead, bixp)
 			continue;
 		}
 
-		if ((sc->sc_rb.rb_ntbuf - (sc->sc_tx_cnt + cnt)) < 5)
+		if ((HME_TX_RING_SIZE - (sc->sc_tx_cnt + cnt)) < 5)
 			goto err;
 
 		if (bus_dmamap_create(sc->sc_dmatag, MCLBYTES, 1,
@@ -1462,7 +1261,7 @@ hme_encap(sc, mhead, bixp)
 
 		cur = frag;
 		cnt++;
-		if (++frag == sc->sc_rb.rb_ntbuf) {
+		if (++frag == HME_TX_RING_SIZE) {
 			frag = 0;
 			sd = sc->sc_txd;
 		} else
@@ -1495,7 +1294,7 @@ err:
 	 */
 	for (; cnt > 0; cnt--) {
 		if (--frag == -1)
-			frag = sc->sc_rb.rb_ntbuf - 1;
+			frag = HME_TX_RING_SIZE - 1;
 		sd = &sc->sc_txd[frag];
 		bus_dmamap_sync(sc->sc_dmatag, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hmevar.h,v 1.2 2001/10/02 20:32:46 jason Exp $	*/
+/*	$OpenBSD: hmevar.h,v 1.3 2001/10/02 21:21:52 jason Exp $	*/
 /*	$NetBSD: hmevar.h,v 1.6 2000/09/28 10:56:57 tsutsui Exp $	*/
 
 /*-
@@ -39,7 +39,11 @@
 
 #include <sys/timeout.h>
 
-#define	_HME_NDESC	32
+#define	HME_TX_RING_SIZE	128
+#define	HME_RX_RING_SIZE	128
+#define	HME_RX_RING_MAX		256
+#define	HME_TX_RING_MAX		256
+#define	HME_RX_PKTSIZE		1600
 
 struct hme_sxd {
 	struct mbuf *sd_mbuf;
@@ -54,15 +58,6 @@ struct hme_ring {
 	bus_addr_t	rb_txddma;	/* DMA address of same */
 	caddr_t		rb_rxd;		/* Receive descriptors */
 	bus_addr_t	rb_rxddma;	/* DMA address of same */
-	caddr_t		rb_txbuf;	/* Transmit buffers */
-	caddr_t		rb_rxbuf;	/* Receive buffers */
-	int		rb_ntbuf;	/* # of transmit buffers */
-	int		rb_nrbuf;	/* # of receive buffers */
-
-	/* Ring Descriptor state */
-	int	rb_tdhead, rb_tdtail;
-	int	rb_rdtail;
-	int	rb_td_nbusy;
 };
 
 struct hme_softc {
@@ -88,12 +83,6 @@ struct hme_softc {
 
 	/* Ring descriptor */
 	struct hme_ring		sc_rb;
-#if notused
-	void		(*sc_copytobuf) __P((struct hme_softc *,
-					     void *, void *, size_t));
-	void		(*sc_copyfrombuf) __P((struct hme_softc *,
-					      void *, void *, size_t));
-#endif
 
 	int			sc_debug;
 	void			*sc_sh;		/* shutdownhook cookie */
@@ -103,8 +92,9 @@ struct hme_softc {
 	void	(*sc_hwreset) __P((struct hme_softc *));
 	void	(*sc_hwinit) __P((struct hme_softc *));
 
-	int	sc_tx_cnt;
-	struct hme_sxd sc_txd[_HME_NDESC], sc_rxd[_HME_NDESC];
+	struct hme_sxd sc_txd[HME_TX_RING_MAX], sc_rxd[HME_RX_RING_MAX];
+	int	sc_tx_cnt, sc_tx_prod, sc_tx_cons;
+	int	sc_last_rd;
 };
 
 
