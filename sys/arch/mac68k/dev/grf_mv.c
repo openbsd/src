@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_mv.c,v 1.3 1996/05/26 18:35:21 briggs Exp $	*/
-/*	$NetBSD: grf_mv.c,v 1.11 1996/05/19 22:27:07 scottr Exp $	*/
+/*	$OpenBSD: grf_mv.c,v 1.4 1996/08/10 21:37:44 briggs Exp $	*/
+/*	$NetBSD: grf_mv.c,v 1.12 1996/08/04 06:03:54 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -243,7 +243,7 @@ grfmv_attach(parent, self, aux)
 	add_nubus_intr(sc->sc_slot.slot, grfmv_intr, sc);
 
 	/* Perform common video attachment. */
-	grf_establish(sc, grfmv_mode, grfmv_phys);
+	grf_establish(sc, &sc->sc_slot, grfmv_mode, grfmv_phys);
 }
 
 static int

@@ -1,5 +1,5 @@
-#	$OpenBSD: Makefile.mac68k,v 1.9 1996/05/26 18:35:07 briggs Exp $
-#	$NetBSD: Makefile.mac68k,v 1.38 1996/05/11 16:12:20 mycroft Exp $
+#	$OpenBSD: Makefile.mac68k,v 1.10 1996/08/10 21:37:40 briggs Exp $
+#	$NetBSD: Makefile.mac68k,v 1.40 1996/08/10 06:09:07 mycroft Exp $
 
 # Makefile for NetBSD
 #
@@ -22,21 +22,20 @@
 # DEBUG is set to -g if debugging.
 # PROF is set to -pg if profiling.
 
-AS?=	as
 CC?=	cc
-CPP?=	cpp
 LD?=	ld
+MKDEP?=	mkdep
 STRIP?=	strip -d
 TOUCH?=	touch -f -c
 
 # source tree is located via $S relative to the compilation directory
-S=	../../../..
-MAC68K=	../..
+S!=	cd ../../../..; pwd
+MAC68K=	$S/arch/mac68k
 
-INCLUDES=	-I. -I$S/arch -I$S
+INCLUDES=	-I. -I$S/arch -I$S -nostdinc
 CPPFLAGS=	${INCLUDES} ${IDENT} -D_KERNEL -Dmc68020 -Dmac68k
-GCCWFLAGS=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wno-uninitialized
-CFLAGS=		${DEBUG} -O ${GCCWFLAGS} -msoft-float
+CWARNFLAGS=	-Wall -Wstrict-prototypes -Wmissing-prototypes -Wno-uninitialized
+CFLAGS=		${DEBUG} ${CWARNFLAGS} -O -msoft-float
 AFLAGS=		-x assembler-with-cpp -traditional-cpp -D_LOCORE
 LINKFLAGS=	-n -Ttext 0 -e start
 
@@ -73,6 +72,8 @@ DRIVER_C_C=	${CC} ${CFLAGS} ${CPPFLAGS} ${PROF} ${PARAM} -c $<
 NORMAL_S=	${CC} ${AFLAGS} ${CPPFLAGS} -c $<
 NORMAL_S_C=	${CC} ${AFLAGS} ${CPPFLAGS} ${PARAM} -c $<
 
+HOSTED_C_C=	${NORMAL_C_C:S/^-pg$//:S/^-p$//:S/^-nostdinc$//}
+
 %OBJS
 
 %CFILES
@@ -99,7 +100,7 @@ SYSTEM_LD_TAIL+=; \
 		echo cp $@ $@.gdb; rm -f $@.gdb; cp $@ $@.gdb; \
 		echo ${STRIP} $@; ${STRIP} $@
 .else
-LINKFLAGS+=	-x
+LINKFLAGS+=	-S
 .endif
 
 %LOAD
@@ -111,7 +112,7 @@ genassym: genassym.o
 	${CC} -o $@ genassym.o
 
 genassym.o: ${MAC68K}/mac68k/genassym.c
-	${NORMAL_C_C}
+	${HOSTED_C_C}
 
 param.c: $S/conf/param.c
 	rm -f param.c
@@ -153,10 +154,10 @@ SRCS=	${MAC68K}/mac68k/locore.s \
 	param.c ioconf.c ${CFILES} ${SFILES}
 depend:: .depend
 .depend: ${SRCS} assym.h param.c
-	mkdep ${AFLAGS} ${CPPFLAGS} ${MAC68K}/mac68k/locore.s
-	mkdep -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
-	mkdep -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
-	mkdep -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${MAC68K}/mac68k/genassym.c
+	${MKDEP} ${AFLAGS} ${CPPFLAGS} ${MAC68K}/mac68k/locore.s
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} param.c ioconf.c ${CFILES}
+	${MKDEP} -a ${AFLAGS} ${CPPFLAGS} ${SFILES}
+	${MKDEP} -a ${CFLAGS} ${CPPFLAGS} ${PARAM} ${MAC68K}/mac68k/genassym.c
 
 
 # depend on root or device configuration

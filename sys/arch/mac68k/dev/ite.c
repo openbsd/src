@@ -1,5 +1,5 @@
-/*	$OpenBSD: ite.c,v 1.4 1996/06/08 16:21:10 briggs Exp $	*/
-/*	$NetBSD: ite.c,v 1.23 1996/06/01 00:13:39 scottr Exp $	*/
+/*	$OpenBSD: ite.c,v 1.5 1996/08/10 21:37:45 briggs Exp $	*/
+/*	$NetBSD: ite.c,v 1.24 1996/08/05 01:26:35 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,14 +56,14 @@
  */
 
 #include <sys/param.h>
-#include <sys/conf.h>
-#include <sys/proc.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
 #include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/device.h>
 #include <dev/cons.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/ioctl.h>
+#include <sys/malloc.h>
+#include <sys/proc.h>
+#include <sys/tty.h>
 
 #include <machine/viareg.h>
 #include <machine/cpu.h>
@@ -73,11 +73,17 @@
 #include <machine/keyboard.h>
 #include <machine/adbsys.h>
 #include <machine/iteioctl.h>
+#include <machine/grfioctl.h>
+
+#include <vm/vm.h>
+#include <vm/pmap.h>
 
 #include "../mac68k/macrom.h"
 
-#include "ascvar.h"
+#include "nubus.h"
 #include "itevar.h"
+#include "grfvar.h"
+#include "ascvar.h"
 
 #include "6x10.h"
 #define CHARWIDTH	6
@@ -154,6 +160,8 @@ static int	scrreg_bottom;
 /* For polled ADB mode */
 static int	polledkey;
 extern int	adb_polling;
+
+extern u_long	conspa;
 
 struct tty	*ite_tty;		/* Our tty */
 
@@ -798,16 +806,24 @@ struct cfdriver ite_cd = {
 };
 
 static int
-itematch(pdp, match, auxp)
-	struct device	*pdp;
-	void	*match, *auxp;
+itematch(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
 {
-	return 1;
+	struct grfbus_attach_args *ga = aux;
+	struct grfmode *gm = ga->ga_grfmode;
+	vm_offset_t pa;
+
+	if (strcmp(ga->ga_name, "ite"))
+		return 0;
+	pa = pmap_extract(pmap_kernel(), (vm_offset_t) gm->fbbase);
+
+	return (pa == (vm_offset_t) conspa);
 }
 
 static void 
-iteattach(parent, dev, aux)
-	struct device *parent, *dev;
+iteattach(parent, self, aux)
+	struct device *parent, *self;
 	void	*aux;
 {
 	printf(" (minimal console)\n");
@@ -1092,12 +1108,10 @@ itecninit(struct consdev * cp)
 	scrrows = height / CHARHEIGHT;
 	scrcols = width / CHARWIDTH;
 
-	vt100_reset();
-
 	switch (videobitdepth) {
 	default:
 	case 1:
-		putpixel = putpixel2;
+		putpixel = putpixel1;
 		reversepixel = reversepixel1;
 		screenrowbytes = (width + 7) >> 3;
 		break;
@@ -1117,6 +1131,8 @@ itecninit(struct consdev * cp)
 		screenrowbytes = width;
 		break;
 	}
+
+	vt100_reset();
 
 	return iteon(cp->cn_dev, 0);
 }

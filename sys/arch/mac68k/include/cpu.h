@@ -1,5 +1,5 @@
-/*	$OpenBSD: cpu.h,v 1.8 1996/06/23 15:35:59 briggs Exp $	*/
-/*	$NetBSD: cpu.h,v 1.38 1996/06/11 02:52:54 scottr Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.9 1996/08/10 21:37:46 briggs Exp $	*/
+/*	$NetBSD: cpu.h,v 1.40 1996/07/12 17:09:26 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.

@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_iv.c,v 1.3 1996/05/26 18:35:21 briggs Exp $	*/
-/*	$NetBSD: grf_iv.c,v 1.12 1996/05/19 22:27:06 scottr Exp $	*/
+/*	$OpenBSD: grf_iv.c,v 1.4 1996/08/10 21:37:43 briggs Exp $	*/
+/*	$NetBSD: grf_iv.c,v 1.13 1996/08/04 06:03:52 scottr Exp $	*/
 
 /*
  * Copyright (c) 1995 Allen Briggs.  All rights reserved.
@@ -111,7 +111,7 @@ grfiv_attach(parent, self, aux)
 	gm->fboff = 0;
 
 	/* Perform common video attachment. */
-	grf_establish(sc, grfiv_mode, grfiv_phys);
+	grf_establish(sc, NULL, grfiv_mode, grfiv_phys);
 }
 
 static int

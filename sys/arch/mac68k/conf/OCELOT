@@ -1,5 +1,5 @@
-#	$OpenBSD: OCELOT,v 1.5 1996/05/26 18:35:08 briggs Exp $
-#	$NetBSD: OCELOT,v 1.10 1996/05/19 22:29:06 scottr Exp $
+#	$OpenBSD: OCELOT,v 1.6 1996/08/10 21:37:40 briggs Exp $
+#	$NetBSD: OCELOT,v 1.11 1996/08/05 01:52:14 scottr Exp $
 #
 # OCELOT
 
@@ -60,6 +60,9 @@ macvid*		at nubus?
 # Attach grf semantics to all video hardware as it is found
 grf*		at intvid?
 grf*		at macvid?
+
+# Attach ite semantics to the appropriate grf device
+ite0		at grf?
 
 ncrscsi0	at mainbus?		# SCSI NCR 5380
 ncr96scsi0	at mainbus?		# SCSI NCR 53C96

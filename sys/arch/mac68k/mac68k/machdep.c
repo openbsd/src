@@ -1,5 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.17 1996/07/27 11:40:38 deraadt Exp $	*/
-/*	$NetBSD: machdep.c,v 1.110 1996/06/21 06:11:02 scottr Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.18 1996/08/10 21:37:46 briggs Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 1996/08/06 04:03:33 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -141,6 +141,7 @@ struct mac68k_machine_S mac68k_machine;
 volatile u_char *Via1Base, *Via2Base;
 u_long  NuBusBase = NBBASE;
 u_long  IOBase;
+u_long	conspa;
 
 vm_offset_t SCSIBase;
 
@@ -200,8 +201,9 @@ int     safepri = PSL_LOWIPL;
  */
 int     fpu_type;
 
-static void identifycpu __P((void));
-void dumpsys __P((void));
+static void	identifycpu __P((void));
+static u_long	get_physical __P((u_int, u_long *));
+void		dumpsys __P((void));
 
 /*
  * Console initialization: called early on from main,
@@ -1912,6 +1914,35 @@ static romvec_t romvecs[] =
 		(caddr_t) 0x40a1c406,	/* FixDiv */
 		(caddr_t) 0x40a1c312,	/* FixMul */
 	},
+
+	/*
+	 * Vectors verified for Quadra 630
+	 */
+	{			/* 13 */
+		"Quadra630 ROMs",
+		(caddr_t) 0x408a9bd2,	/* ADB int */
+		(caddr_t) 0x0,		/* PM intr */
+ 		(caddr_t) 0x408b2f94,	/* ADBBase + 130 */
+		(caddr_t) 0x4080a360,	/* CountADBs */
+		(caddr_t) 0x4080a37a,	/* GetIndADB */
+		(caddr_t) 0x4080a3a6,	/* GetADBInfo */
+		(caddr_t) 0x4080a3ac,	/* SetADBInfo */
+		(caddr_t) 0x4080a752,	/* ADBReInit */
+		(caddr_t) 0x4080a3dc,	/* ADBOp */
+		(caddr_t) 0,		/* PMgrOp */
+		(caddr_t) 0x4080c05c,	/* WriteParam */
+		(caddr_t) 0x4080c086,	/* SetDateTime */
+		(caddr_t) 0x4080c5cc,	/* InitUtil */
+		(caddr_t) 0x4080b190,	/* Wild guess at WriteXPRam */
+		(caddr_t) 0x408b39f4,	/* jClkNoMem */
+		(caddr_t) 0x4080a818,	/* ADBAlternateInit */
+		(caddr_t) 0x408a99c0,	/* Egret */
+		(caddr_t) 0x408147c8,	/* InitEgret */
+		(caddr_t) 0x408a7ef8,	/* ADBReInit_JTBL */
+		(caddr_t) 0x4087eb90,	/* ROMResourceMap List Head */
+		(caddr_t) 0x4081c406,	/* FixDiv */
+		(caddr_t) 0x4081c312,	/* FixMul */
+	},
 	/* Please fill these in! -BG */
 };
 
@@ -1941,7 +1972,7 @@ struct cpu_model_info cpu_models[] = {
 	{MACH_MACQ605, "Quadra", " 605", MACH_CLASSQ, &romvecs[9]},
 	{MACH_MACC610, "Centris", " 610 ", MACH_CLASSQ, &romvecs[6]},
 	{MACH_MACQ610, "Quadra", " 610 ", MACH_CLASSQ, &romvecs[6]},
-	{MACH_MACQ630, "Quadra", " 630 ", MACH_CLASSQ, &romvecs[6]},
+	{MACH_MACQ630, "Quadra", " 630 ", MACH_CLASSQ, &romvecs[13]},
 	{MACH_MACC660AV, "Centris", " 660AV ", MACH_CLASSAV, &romvecs[7]},
 	{MACH_MACQ840AV, "Quadra", " 840AV ", MACH_CLASSAV, &romvecs[7]},
 
@@ -1997,7 +2028,6 @@ struct cpu_model_info cpu_models[] = {
  *	PowerBook 520
  *	PowerBook 150
  *	Duo 280
- *	Quadra	630
  *	Performa 6000s
  * 	...?
  */
@@ -2167,6 +2197,7 @@ void
 setmachdep()
 {
 	static int firstpass = 1;
+	int setup_mrg_vectors = 0;
 	struct cpu_model_info *cpui;
 
 	/*
@@ -2182,16 +2213,15 @@ setmachdep()
 	cpui = &(cpu_models[mac68k_machine.cpu_model_index]);
 	current_mac_model = cpui;
 
-	if (firstpass == 0)
+	if (!firstpass)
 		return;
 
 	/*
-	 * Set up current ROM Glue vectors.  Actually now all we do
-	 * is save the address of the ROM Glue Vector table. This gets
-	 * used later when we re-map the vectors from MacOS Address
-	 * Space to NetBSD Address Space.
+	 * Get the console buffer physical address.  If we can't, we
+	 * punt and set it to 0.
 	 */
-	mrg_MacOSROMVectors = cpui->rom_vectors;
+	if (!get_physical(videoaddr, &conspa))
+		conspa = 0;
 
 	/*
 	 * Set up any machine specific stuff that we have to before
@@ -2206,6 +2236,7 @@ setmachdep()
 		mac68k_machine.sccClkConst = 115200;
 		via_reg(VIA1, vIER) = 0x7f;	/* disable VIA1 int */
 		via_reg(VIA2, vIER) = 0x7f;	/* disable VIA2 int */
+		setup_mrg_vectors = 1;
 		break;
 	case MACH_CLASSPB:
 		VIA2 = 1;
@@ -2286,6 +2317,16 @@ setmachdep()
 	case MACH_CLASSIIfx:
 		break;
 	}
+
+	/*
+	 * Set up current ROM Glue vectors.  Actually now all we do
+	 * is save the address of the ROM Glue Vector table. This gets
+	 * used later when we re-map the vectors from MacOS Address
+	 * Space to NetBSD Address Space.
+	 */
+	if ((mac68k_machine.serial_console & 0x03) == 0 || setup_mrg_vectors)
+		mrg_MacOSROMVectors = cpui->rom_vectors;
+
 	firstpass = 0;
 }
 
@@ -2375,12 +2416,10 @@ extern int get_pte __P((u_int addr, u_long pte[2], u_short * psr));
  *  to look through MacOS page tables.
  */
 
-static u_long	get_physical __P((u_int, u_long *));
-
 static u_long
 get_physical(u_int addr, u_long * phys)
 {
-	u_long  pte[2], ph;
+	u_long  pte[2], ph, mask;
 	u_short psr;
 	int     i, numbits;
 	extern u_int macos_tc;
@@ -2415,12 +2454,11 @@ get_physical(u_int addr, u_long * phys)
 	/*
 	 * We have to take the most significant "numbits" from
 	 * the returned value "ph", and the rest from our addr.
-	 * Assume that the lower (32-numbits) bits of ph are
-	 * already zero.  Also assume numbits != 0.  Also, notice
-	 * that this is an addition, not an "or".
+	 * Assume that numbits != 0.
 	 */
 
-	*phys = ph + (addr & ((1 << (32 - numbits)) - 1));
+	mask = (1 << (32 - numbits)) - 1;
+	*phys = (ph & ~mask) | (addr & mask);
 
 	return 1;
 }

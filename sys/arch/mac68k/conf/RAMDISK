@@ -1,5 +1,5 @@
-#	$OpenBSD: RAMDISK,v 1.4 1996/05/26 18:35:09 briggs Exp $
-#	$NetBSD: RAMDISK,v 1.5 1996/05/19 22:29:08 scottr Exp $
+#	$OpenBSD: RAMDISK,v 1.5 1996/08/10 21:37:41 briggs Exp $
+#	$NetBSD: RAMDISK,v 1.6 1996/08/05 01:52:16 scottr Exp $
 
 # RAMDISK
 # Support Root/swap on ramdisk
@@ -52,6 +52,9 @@ macvid*		at nubus?
 # Attach grf semantics to all video hardware as it is found
 grf*		at intvid?
 grf*		at macvid?
+
+# Attach ite semantics to the appropriate grf device
+ite0		at grf?
 
 ncrscsi0	at mainbus?		# SCSI NCR 5380
 ncr96scsi0	at mainbus?		# SCSI NCR 53C96

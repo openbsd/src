@@ -1,5 +1,5 @@
-/*	$OpenBSD: macrom.c,v 1.3 1996/05/26 18:36:24 briggs Exp $	*/
-/*	$NetBSD: macrom.c,v 1.25 1996/05/25 14:45:34 briggs Exp $	*/
+/*	$OpenBSD: macrom.c,v 1.4 1996/08/10 21:37:47 briggs Exp $	*/
+/*	$NetBSD: macrom.c,v 1.26 1996/08/05 23:20:46 briggs Exp $	*/
 
 /*-
  * Copyright (C) 1994	Bradley A. Grantham
@@ -763,9 +763,12 @@ mrg_init()
 	caddr_t *handle;
 #endif
 	
-	VBLQueue = (u_int16_t) 0;	/* No vertical blanking routines in the queue */
-	VBLQueue_head = (caddr_t) 0;	/*  Let's hope that this init happens
-	VBLQueue_tail = (caddr_t) 0;	 *  before the RTC interrupts are enabled */
+	/*
+	 * Clear the VBLQueue.
+	 */
+	VBLQueue = (u_int16_t) 0;
+	VBLQueue_head = (caddr_t) 0;
+	VBLQueue_tail = (caddr_t) 0;
 					 
 #if defined(MRG_TEST)
 	if (ROMResourceMap) {

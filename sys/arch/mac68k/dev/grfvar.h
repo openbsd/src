@@ -1,5 +1,5 @@
-/*	$OpenBSD: grfvar.h,v 1.3 1996/05/26 18:35:22 briggs Exp $	*/
-/*	$NetBSD: grfvar.h,v 1.10 1996/05/19 22:27:10 scottr Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.4 1996/08/10 21:37:44 briggs Exp $	*/
+/*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -144,7 +144,7 @@ int	grfaddr __P((struct grf_softc *gp, register int off));
 int	grfmap __P((dev_t dev, caddr_t *addrp, struct proc *p));
 int	grfunmap __P((dev_t dev, caddr_t addr, struct proc *p));
 
-void	grf_establish __P((struct grfbus_softc *,
+void	grf_establish __P((struct grfbus_softc *, nubus_slot *,
 	    int (*)(struct grf_softc *, int, void *),
 	    caddr_t (*)(struct grf_softc *, vm_offset_t)));
 int	grfbusprint __P((void *, char *));

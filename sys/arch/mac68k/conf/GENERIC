@@ -1,5 +1,5 @@
-#	$OpenBSD: GENERIC,v 1.6 1996/05/26 18:35:05 briggs Exp $
-#	$NetBSD: GENERIC,v 1.37 1996/05/19 22:29:04 scottr Exp $
+#	$OpenBSD: GENERIC,v 1.7 1996/08/10 21:37:39 briggs Exp $
+#	$NetBSD: GENERIC,v 1.38 1996/08/05 01:52:13 scottr Exp $
 #
 # GENERIC
 
@@ -7,7 +7,6 @@ include	"std.mac68k"
 
 maxusers	16
 
-# obsolete timezone spec
 options         MAXFDESCS=2048
 
 # Standard system options
@@ -77,6 +76,9 @@ nubus0		at mainbus?
 ae*		at nubus?
 macvid*		at nubus?
 grf*		at macvid?
+
+# Attach ite semantics to the appropriate grf device
+ite0		at grf?
 
 ncrscsi0	at obio?		# SCSI NCR 5380
 ncr96scsi0	at obio?		# SCSI NCR 53C96

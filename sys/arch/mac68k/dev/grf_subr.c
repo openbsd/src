@@ -1,5 +1,5 @@
-/*	$OpenBSD: grf_subr.c,v 1.1 1996/05/26 19:02:06 briggs Exp $	*/
-/*	$NetBSD: grf_subr.c,v 1.1 1996/05/19 22:27:08 scottr Exp $	*/
+/*	$OpenBSD: grf_subr.c,v 1.2 1996/08/10 21:37:44 briggs Exp $	*/
+/*	$NetBSD: grf_subr.c,v 1.2 1996/08/04 06:03:56 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -47,8 +47,9 @@
 #include <mac68k/dev/grfvar.h>
 
 void
-grf_establish(sc, g_mode, g_phys)
+grf_establish(sc, sp, g_mode, g_phys)
 	struct grfbus_softc *sc;
+	nubus_slot *sp;
 	int (*g_mode) __P((struct grf_softc *, int, void *));
 	caddr_t (*g_phys) __P((struct grf_softc *, vm_offset_t));
 {
@@ -65,7 +66,7 @@ grf_establish(sc, g_mode, g_phys)
 	/* Attach grf semantics to the hardware. */
 	ga.ga_name = "grf";
 	ga.ga_grfmode = gm;
-	ga.ga_slot = &sc->sc_slot;	/* XXX */
+	ga.ga_slot = sp;
 	ga.ga_mode = g_mode;
 	ga.ga_phys = g_phys;
 	(void)config_found(&sc->sc_dev, &ga, grfbusprint);
