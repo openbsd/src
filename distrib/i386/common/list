@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.7 2002/05/01 19:21:28 mickey Exp $
+#	$OpenBSD: list,v 1.8 2003/01/03 18:36:08 krw Exp $
 
 SRCDIRS distrib/special
 SRCDIRS usr.bin bin sbin usr.sbin gnu/usr.bin
@@ -64,7 +64,7 @@ COPY	${DESTDIR}/usr/mdec/boot		usr/mdec/boot
 # various files that we need in /etc for the install
 COPY	${DESTDIR}/etc/group			etc/group
 COPY	${DESTDIR}/etc/spwd.db			etc/spwd.db
-COPY	${DESTDIR}/etc/disktab			etc/disktab.shadow
+SCRIPT	${DESTDIR}/etc/disktab			etc/disktab.shadow
 COPY	${CURDIR}/../../miniroot/protocols	etc/protocols
 COPY	${CURDIR}/../../miniroot/services	etc/services
 TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
@@ -75,7 +75,7 @@ SYMLINK	/tmp/resolv.conf.shadow			etc/resolv.conf
 SYMLINK	/tmp/hosts				etc/hosts
 
 # dhcp things
-COPY	${DESTDIR}/sbin/dhclient-script 	sbin/dhclient-script
+SCRIPT	${DESTDIR}/sbin/dhclient-script 	sbin/dhclient-script
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
@@ -83,4 +83,4 @@ SCRIPT	${CURDIR}/../common/install.md		install.md
 SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
-SPECIAL	chmod 755 install upgrade
+SPECIAL	chmod 755 install upgrade sbin/dhclient-script

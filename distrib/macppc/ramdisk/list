@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.17 2002/05/01 19:21:28 mickey Exp $
+#	$OpenBSD: list,v 1.18 2003/01/03 18:36:08 krw Exp $
 
 SRCDIRS distrib/special
 SRCDIRS gnu/usr.bin usr.bin bin sbin usr.sbin
@@ -74,7 +74,7 @@ SYMLINK	/tmp/hosts				etc/hosts
 TERMCAP	vt100,vt220,dumb			usr/share/misc/termcap
 
 # dhcp things
-COPY    ${DESTDIR}/sbin/dhclient-script		sbin/dhclient-script
+SCRIPT    ${DESTDIR}/sbin/dhclient-script	sbin/dhclient-script
 
 # and the installation tools
 SCRIPT	${CURDIR}/../../miniroot/dot.profile	.profile
@@ -82,4 +82,4 @@ SCRIPT	${CURDIR}/install.md			install.md
 SCRIPT	${CURDIR}/../../miniroot/upgrade.sh	upgrade
 SCRIPT	${CURDIR}/../../miniroot/install.sh	install
 SCRIPT	${CURDIR}/../../miniroot/install.sub	install.sub
-SPECIAL	chmod 755 install upgrade
+SPECIAL	chmod 755 install upgrade sbin/dhclient-script

@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.12 2002/05/01 19:21:28 mickey Exp $
+#	$OpenBSD: list,v 1.13 2003/01/03 18:36:08 krw Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Amiga extra's
@@ -19,7 +19,7 @@ SPECIAL	cd dev; sh MAKEDEV all
 COPY	bsd	bsd
 
 # various files that we need in /etc for the install
-COPY	${DESTDIR}/etc/disktab		etc/disktab.shadow
+SCRIPT	${DESTDIR}/etc/disktab		etc/disktab.shadow
 SYMLINK	/tmp/disktab.shadow		etc/disktab
 SYMLINK	/tmp/fstab.shadow		etc/fstab
 SYMLINK	/tmp/resolv.conf.shadow		etc/resolv.conf
