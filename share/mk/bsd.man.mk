@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.man.mk,v 1.27 2003/08/18 22:39:15 espie Exp $
+#	$OpenBSD: bsd.man.mk,v 1.28 2004/02/08 01:19:54 espie Exp $
 #	$NetBSD: bsd.man.mk,v 1.23 1996/02/10 07:49:33 jtc Exp $
 #	@(#)bsd.man.mk	5.2 (Berkeley) 5/11/90
 
@@ -15,9 +15,10 @@ MANLINT?=	\#
 .MAIN: all
 .endif
 
-.SUFFIXES: .1 .2 .3 .3p .4 .5 .6 .7 .8 .9 .1tbl .2tbl .3tbl .4tbl .5tbl .6tbl \
-	.7tbl .8tbl .9tbl .cat1 .cat2 .cat3 .cat4 .cat5 .cat6 .cat7 .cat8 .cat9 \
-	.ps1 .ps2 .ps3 .ps4 .ps5 .ps6 .ps7 .ps8 .ps9
+.SUFFIXES: .1 .2 .3 .3p .4 .5 .6 .7 .8 .9 \
+	.1tbl .2tbl .3tbl .4tbl .5tbl .6tbl .7tbl .8tbl .9tbl \
+	.cat1 .cat2 .cat3 .cat3p .cat4 .cat5 .cat6 .cat7 .cat8 .cat9 \
+	.ps1 .ps2 .ps3 .ps3p .ps4 .ps5 .ps6 .ps7 .ps8 .ps9
 
 .9.cat9 .8.cat8 .7.cat7 .6.cat6 .5.cat5 .4.cat4 .3p.cat3p .3.cat3 .2.cat2 .1.cat1:
 	@echo "${NROFF} -mandoc ${.IMPSRC} > ${.TARGET}"
