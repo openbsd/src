@@ -1,4 +1,4 @@
-/*	$OpenBSD: resp.c,v 1.20 2005/01/13 05:39:07 jfb Exp $	*/
+/*	$OpenBSD: resp.c,v 1.21 2005/01/27 18:34:26 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -364,6 +364,7 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 	char buf[MAXPATHLEN], subdir[MAXPATHLEN], *file;
 	struct cvs_ent *ent;
 	CVSFILE *cf, *sdir;
+	CVSENTRIES *entf;
 
 	/* get the remote path */
 	if (cvs_getln(root, buf, sizeof(buf)) < 0)
@@ -396,7 +397,7 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 		cvs_file_attach(sdir, cf);
 
 		/* add a directory entry to the parent */
-		if (CVS_DIR_ENTRIES(sdir) != NULL) {
+		if ((entf = cvs_ent_open(subdir, O_WRONLY)) != NULL) {
 			snprintf(buf, sizeof(buf), "D/%s////",
 			    CVS_FILE_NAME(cf));
 			ent = cvs_ent_parse(buf);
@@ -404,7 +405,8 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 				cvs_log(LP_ERR,
 				    "failed to create directory entry");
 			else
-				cvs_ent_add(CVS_DIR_ENTRIES(sdir), ent);
+				cvs_ent_add(entf, ent);
+			cvs_ent_close(entf);
 		}
 	}
 
