@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.41 2000/09/20 21:28:23 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.42 2000/09/21 01:34:19 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -864,7 +864,13 @@ main(int argc, char **argv)
 		exit(1);
 	    }
 
-	    srcid = argv[i + 1];
+	    srcid = calloc(ROUNDUP(strlen(argv[i + 1])), sizeof(char));
+            if (srcid == NULL)
+            {
+                fprintf(stderr, "%s: malloc failed\n", argv[0]);
+                exit(1);
+            }
+            strcpy(srcid, argv[i + 1]);
 	    sid1.sadb_ident_len += ROUNDUP(strlen(srcid)) / sizeof(u_int64_t);
 	    i++;
 	    continue;
@@ -880,7 +886,13 @@ main(int argc, char **argv)
 		exit(1);
 	    }
 
-	    dstid = argv[i + 1];
+	    dstid = calloc(ROUNDUP(strlen(argv[i + 1])), sizeof(char));
+            if (dstid == NULL)
+            {
+                fprintf(stderr, "%s: malloc failed\n", argv[0]);
+                exit(1);
+            }
+            strcpy(dstid, argv[i + 1]);
 	    sid2.sadb_ident_len += ROUNDUP(strlen(dstid)) / sizeof(u_int64_t);
 	    i++;
 	    continue;
