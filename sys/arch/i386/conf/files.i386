@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.33 1997/09/21 04:27:34 mickey Exp $
+#	$OpenBSD: files.i386,v 1.34 1997/09/29 03:52:21 mickey Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -215,11 +215,11 @@ include "../../../compat/bsdos/files.bsdos"
 include "../../../compat/freebsd/files.freebsd"
 file	arch/i386/i386/freebsd_machdep.c	compat_freebsd
 
-device apm
-attach apm at mainbus
-file	arch/i386/i386/apm.c		apm needs-count
-
-device bios
+device bios {}
 attach bios at mainbus
 file	arch/i386/i386/bios.c		bios needs-count
+
+device apm
+attach apm at bios
+file	arch/i386/i386/apm.c		apm needs-count
 
