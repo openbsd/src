@@ -1,4 +1,4 @@
-/*	$OpenBSD: ping.c,v 1.9 1996/12/10 08:37:06 deraadt Exp $	*/
+/*	$OpenBSD: ping.c,v 1.10 1996/12/14 02:16:42 bitblt Exp $	*/
 /*	$NetBSD: ping.c,v 1.20 1995/08/11 22:37:58 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ping.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: ping.c,v 1.9 1996/12/10 08:37:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ping.c,v 1.10 1996/12/14 02:16:42 bitblt Exp $";
 #endif
 #endif /* not lint */
 
@@ -164,6 +164,7 @@ void catcher(), finish();
 int in_cksum __P((u_short *, int));
 void pinger();
 char *pr_addr __P((u_long));
+int check_icmph __P((struct ip *));
 void pr_icmph __P((struct icmp *));
 void pr_pack __P((char *, int, struct sockaddr_in *));
 void pr_retip __P((struct ip *));
@@ -587,11 +588,11 @@ pr_pack(buf, cc, from)
 	register u_char *cp,*dp;
 	static int old_rrlen;
 	static char old_rr[MAX_IPOPTLEN];
-	struct ip *ip;
+	struct ip *ip, *ip2;
 	struct timeval tv, tp;
 	char *pkttime;
 	double triptime;
-	int hlen, dupflag;
+	int hlen, hlen2, dupflag;
 
 	(void)gettimeofday(&tv, (struct timezone *)NULL);
 
@@ -604,6 +605,7 @@ pr_pack(buf, cc, from)
 			  inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr));
 		return;
 	}
+
 
 	/* Now the ICMP part */
 	cc -= hlen;
@@ -644,6 +646,7 @@ pr_pack(buf, cc, from)
 		if (options & F_FLOOD)
 			(void)write(STDOUT_FILENO, &BSPACE, 1);
 		else {
+ 
 			(void)printf("%d bytes from %s: icmp_seq=%u", cc,
 			   inet_ntoa(*(struct in_addr *)&from->sin_addr.s_addr),
 			   icp->icmp_seq);
@@ -674,6 +677,13 @@ pr_pack(buf, cc, from)
 		/* We've got something other than an ECHOREPLY */
 		if (!(options & F_VERBOSE))
 			return;
+                ip2 = (struct ip *) (buf + hlen + sizeof (struct icmp));
+                hlen2 = ip2->ip_hl << 2; 
+ 	        if ((cc >= hlen2 + 8) && check_icmph(
+                         (struct ip *)(icp + sizeof (struct icmp))) != 1)
+                     return;
+
+
 		(void)printf("%d bytes from %s: ", cc,
 		    pr_addr(from->sin_addr.s_addr));
 		pr_icmph(icp);
@@ -855,6 +865,8 @@ void
 pr_icmph(icp)
 	struct icmp *icp;
 {
+
+      
 	switch(icp->icmp_type) {
 	case ICMP_ECHOREPLY:
 		(void)printf("Echo Reply\n");
@@ -1093,6 +1105,40 @@ fill(bp, patp)
 		(void)printf("\n");
 	}
 }
+
+
+/* 
+ * when we get types of ICMP message with parts of the orig. datagram
+ * we want to try to assure ourselves that it is from this instance
+ * of ping, and not say, a refused finger connection or something
+ */
+int
+check_icmph(iph)
+	struct ip *iph;
+{
+  struct icmp *icmph;
+
+  /* only allow IP version 4 */
+  if (iph->ip_v != 4)
+    return 0;
+
+  /* Only allow ICMP */
+  if (iph->ip_p != IPPROTO_ICMP)
+    return 0;
+
+  icmph = (struct icmp *) (iph + (4 * iph->ip_hl));
+
+  /* make sure it is in response to an ECHO request */
+  if (icmph->icmp_type != 8)
+    return 0;
+
+  /* ok, make sure it has the right id on it */
+  if (icmph->icmp_hun.ih_idseq.icd_id != ident)
+    return 0;
+
+  return 1;
+}
+
 
 void
 usage()
