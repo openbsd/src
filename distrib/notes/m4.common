@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.13 2001/05/02 22:18:16 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.14 2001/08/22 18:27:42 miod Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -30,16 +30,6 @@ out as follows:
 		MD5		usable for verification of the correctness
 				of downloaded files.')dnl
 dnl
-dnl 
-dnl XXX Fix this for i386 vs rest 'ten binary' is not right for i386
-define(`DistributionDescription',
-`The OpenBSD/MACHINE binary distribution sets contain the binaries which
-comprise the OpenBSD OSREV release for MACHINE systems.  There are ten binary
-distribution sets.  The binary distribution sets can be found in
-the "MACHINE" subdirectory of the OpenBSD OSREV distribution tree,
-and are as follows:')dnl
-dnl
-dnl
 dnl Change the quote.  There were too many `word' situations that would have
 dnl to have been changed to ``word''.  The quote gets changed to {:- and -:}.
 dnl It can really be anything, but it needs to be unique.
@@ -56,6 +46,17 @@ dnl o `include' and `define' is required as include and define are both m4
 dnl   reserved words that evaluate to NULL if not quoted.
 dnl o showsize() must not be on a new line.  It creates its own new line if
 dnl   there are sizes to display, otherwise, evaluates to NULL
+dnl
+dnl
+dnl 
+dnl DistributionDescription( number of sets )
+dnl
+define({:-DistributionDescription-:},
+{:-The OpenBSD/MACHINE binary distribution sets contain the binaries which
+comprise the OpenBSD OSREV release for MACHINE systems.  There are $1
+binary distribution sets.  The binary distribution sets can be found in
+the "MACHINE" subdirectory of the OpenBSD OSREV distribution tree,
+and are as follows:-:})dnl
 dnl
 dnl
 dnl OpenBSDbase( compressed size, uncompressed size )
