@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: bc.y,v 1.24 2004/10/19 07:36:51 otto Exp $	*/
+/*	$OpenBSD: bc.y,v 1.25 2005/03/17 16:59:31 otto Exp $	*/
 
 /*
  * Copyright (c) 2003, Otto Moerbeek <otto@drijf.net>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: bc.y,v 1.24 2004/10/19 07:36:51 otto Exp $";
+static const char rcsid[] = "$OpenBSD: bc.y,v 1.25 2005/03/17 16:59:31 otto Exp $";
 #endif /* not lint */
 
 #include <ctype.h>
@@ -187,6 +187,10 @@ input_item	: semicolon_list NEWLINE
 				st_has_continue = false;
 			}
 		| error NEWLINE
+			{
+				yyerrok;
+			}
+		| error QUIT
 			{
 				yyerrok;
 			}
@@ -928,8 +932,11 @@ yyerror(char *s)
 {
 	char	*str, *p;
 
-	if (isspace(yytext[0]) || !isprint(yytext[0]))
-		asprintf(&str, "%s: %s:%d: %s: ascii char 0x%x unexpected",
+	if (feof(yyin))
+		asprintf(&str, "%s: %s:%d: %s: unexpected EOF",
+		    __progname, filename, lineno, s);
+	else if (isspace(yytext[0]) || !isprint(yytext[0]))
+		asprintf(&str, "%s: %s:%d: %s: ascii char 0x%02x unexpected",
 		    __progname, filename, lineno, s, yytext[0]);
 	else
 		asprintf(&str, "%s: %s:%d: %s: %s unexpected",
