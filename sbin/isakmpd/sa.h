@@ -1,4 +1,4 @@
-/*	$OpenBSD: sa.h,v 1.27 2002/03/17 21:50:59 angelos Exp $	*/
+/*	$OpenBSD: sa.h,v 1.28 2002/06/07 15:24:22 ho Exp $	*/
 /*	$EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	*/
 
 /*
@@ -204,6 +204,9 @@ struct sa {
 
 /* This SA should always be actively renegotiated (with us as initiator).  */
 #define SA_FLAG_ACTIVE_ONLY	0x20
+
+/* This SA flag is a placeholder for a TRANSACTION exchange "SA flag".  */
+#define SA_FLAG_IKECFG		0x40
 
 /* Outfile for detailed SA information. */
 #define SA_FILE "/var/run/isakmpd_sa"
