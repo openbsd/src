@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcsnum.c,v 1.2 2004/07/14 05:08:20 vincent Exp $	*/
+/*	$OpenBSD: rcsnum.c,v 1.3 2004/07/29 17:47:50 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -188,9 +188,6 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	const char *sp;
 	void *tmp;
 
-	if (!isdigit(*str))
-		return (-1);
-
 	if (nump->rn_id == NULL) {
 		nump->rn_id = (u_int16_t *)malloc(sizeof(u_int16_t));
 		if (nump->rn_id == NULL)
@@ -200,13 +197,9 @@ rcsnum_aton(const char *str, char **ep, RCSNUM *nump)
 	nump->rn_len = 0;
 	nump->rn_id[nump->rn_len] = 0;
 
-	for (sp = str; ; sp++) {
-		if (!isdigit(*sp) && (*sp != '.')) {
-			if (nump->rn_id[nump->rn_len] == 0) {
-				return (-1);
-			}
+	for (sp = str;; sp++) {
+		if (!isdigit(*sp) && (*sp != '.'))
 			break;
-		}
 
 		if (*sp == '.') {
 			nump->rn_len++;
