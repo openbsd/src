@@ -1,0 +1,116 @@
+.\"	$OpenBSD: wsfontload.8,v 1.1 2000/07/02 01:29:44 mickey Exp $
+.\"	$NetBSD: wsfontload.8,v 1.5 1999/04/06 04:54:22 cgd Exp $
+.\"
+.Dd January 13, 1999
+.Os
+.Dt WSFONTLOAD 8
+.Sh NAME
+.Nm wsfontload
+.Nd load a font bitmap into a wscons display device
+.Sh SYNOPSIS
+.Nm ""
+.Bk -words
+.Op Fl f Ar ctldev
+.Ek
+.Bk -words
+.Op Fl w Ar width
+.Ek
+.Bk -words
+.Op Fl h Ar height
+.Ek
+.Bk -words
+.Op Fl e Ar encoding
+.Ek
+.Bk -words
+.Op Fl N Ar name
+.Ek
+.Bk -words
+.Op Fl b
+.Ek
+.Bk -words
+.Op Fl B
+.Ek
+.Op Ar fontfile
+.Sh DESCRIPTION
+The
+.Nm
+utility loads a font bitmap to a wscons device if the device driver
+supports this.
+The font gets assigned a name in this process which it can be referred to
+by later for use on a display screen.
+The font is loaded from the specified
+.Ar fontfile ,
+or from
+.Pa stdin
+if
+.Ar fontfile
+is not provided.
+.Pp
+The options are:
+.Bl -tag -width xxxxxxxxxxx
+.It Fl f Ar ctldev
+Specify the control device of the wscons display to operate on.
+Default is
+.Pa /dev/ttyEcfg .
+.It Fl w Ar width
+Sets the width of a font character in pixels. Default is 8.
+.It Fl h Ar height
+Sets the width of a font character in pixels. Default is 16.
+.It Fl e Ar encoding
+Sets the encoding of the font. This can be either a symbolic abbreviation
+or a numeric value. Currently recognized abbreviations are
+.Dq iso
+for ISO-8859-1 encoding,
+.Dq ibm
+for IBM encoded fonts and
+.Dq pcvt
+for the custom encoding of the supplemental fonts which came with
+the BSD
+.Dq pcvt
+console driver. Per default,
+.Dq iso
+is assumed.
+.It Fl N Ar name
+Specifies a name which can be used later to refer to the font.
+In none is given, the
+.Ar fontfile
+name is used to create one.
+.It Fl b
+Specifies that the font data is ordered right-to-left bit wise. The default
+is left-to-right.
+.It Fl B
+Specifies that the font data is ordered right-to-left byte wise. The default
+is left-to-right.
+.El
+.Pp
+Typically, the
+.Nm
+utility will be executed in system startup by the
+.Pa /etc/rc.wscons
+script, controlled by the
+.Pa /etc/wscons.conf
+configuration file.
+.Pp
+No font files are provided with the wscons framework. The fonts installed by
+.Xr pcvt 4
+can be used instead, as can raw font files from other operating system
+distributions.
+.Sh FILES
+.Pa /etc/wscons.conf
+.Sh EXAMPLES
+.Dl wsfontload -N myname -h 8 -e ibm /usr/share/pcvt/fonts/vt220l.808
+.Pp
+Load the IBM-encoded 8x8-font from the
+.Xr pcvt 4
+distribution. This (or another 8x8-font) is necessary to use the
+50-line screen type on
+.Xr vga 4
+displays.
+.Sh BUGS
+Many features are missing.
+.Pp
+There is no way ro remove a loaded font.
+.Sh SEE ALSO
+.Xr wscons 4 ,
+.Xr wsconscfg 8 ,
+.Xr wsconsctl 8
