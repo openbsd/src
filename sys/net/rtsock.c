@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsock.c,v 1.23 2002/07/03 02:31:00 mickey Exp $	*/
+/*	$OpenBSD: rtsock.c,v 1.24 2002/07/17 14:20:19 art Exp $	*/
 /*	$NetBSD: rtsock.c,v 1.18 1996/03/29 00:32:10 cgd Exp $	*/
 
 /*
@@ -393,6 +393,10 @@ flush:
 		/* There is another listener, so construct message */
 		rp = sotorawcb(so);
 	}
+	if (rp)
+		rp->rcb_proto.sp_family = 0; /* Avoid us */
+	if (dst)
+		route_proto.sp_protocol = dst->sa_family;
 	if (rtm) {
 		m_copyback(m, 0, rtm->rtm_msglen, (caddr_t)rtm);
 		if (m->m_pkthdr.len < rtm->rtm_msglen) {
@@ -402,10 +406,6 @@ flush:
 			m_adj(m, rtm->rtm_msglen - m->m_pkthdr.len);
 		Free(rtm);
 	}
-	if (rp)
-		rp->rcb_proto.sp_family = 0; /* Avoid us */
-	if (dst)
-		route_proto.sp_protocol = dst->sa_family;
 	if (m)
 		raw_input(m, &route_proto, &route_src, &route_dst);
 	if (rp)
