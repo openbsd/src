@@ -1,4 +1,4 @@
-/*	$OpenBSD: v3451.c,v 1.5 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: v3451.c,v 1.6 2001/10/24 18:38:58 millert Exp $	*/
 /*	$NetBSD: v3451.c,v 1.6 1997/02/11 09:24:20 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)v3451.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: v3451.c,v 1.5 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: v3451.c,v 1.6 2001/10/24 18:38:58 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -53,7 +53,7 @@ static	void vawrite(), alarmtr();
 
 int
 v3451_dialer(num, acu)
-	register char *num;
+	char *num;
 	char *acu;
 {
 	sig_t func;
@@ -143,7 +143,7 @@ v3451_abort()
 
 static void
 vawrite(cp, delay)
-	register char *cp;
+	char *cp;
 	int delay;
 {
 
@@ -153,10 +153,10 @@ vawrite(cp, delay)
 
 static int
 expect(cp)
-	register char *cp;
+	char *cp;
 {
 	char buf[300];
-	register char *rp = buf;
+	char *rp = buf;
 	int timeout = 30, online = 0;
 
 	if (strcmp(cp, "\"\"") == 0)
@@ -209,9 +209,9 @@ notin(sh, lg)
 
 static int
 prefix(s1, s2)
-	register char *s1, *s2;
+	char *s1, *s2;
 {
-	register char c;
+	char c;
 
 	while ((c = *s1++) == *s2++)
 		if (c == '\0')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: biz31.c,v 1.5 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: biz31.c,v 1.6 2001/10/24 18:38:58 millert Exp $	*/
 /*	$NetBSD: biz31.c,v 1.5 1997/02/11 09:24:14 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)biz31.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: biz31.c,v 1.5 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: biz31.c,v 1.6 2001/10/24 18:38:58 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -59,7 +59,7 @@ static int
 biz_dialer(num, mod)
 	char *num, *mod;
 {
-	register int connected = 0;
+	int connected = 0;
 
 	if (!bizsync(FD)) {
 		logent(value(HOST), "", "biz", "out of sync");
@@ -135,7 +135,7 @@ biz31_abort()
 
 static int
 echo(s)
-	register char *s;
+	char *s;
 {
 	char c;
 
@@ -167,7 +167,7 @@ sigALRM()
 
 static int
 detect(s)
-	register char *s;
+	char *s;
 {
 	sig_t f;
 	char c;
@@ -192,7 +192,7 @@ detect(s)
 
 static int
 flush(s)
-	register char *s;
+	char *s;
 {
 	sig_t f;
 	char c;
@@ -227,7 +227,7 @@ bizsync(fd)
 #	define chars(b)	(b)
 #	define IOCTL	FIONREAD
 #endif
-	register int already = 0;
+	int already = 0;
 	char buf[10];
 
 retry:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: value.c,v 1.6 1999/02/04 17:59:38 deraadt Exp $	*/
+/*	$OpenBSD: value.c,v 1.7 2001/10/24 18:38:58 millert Exp $	*/
 /*	$NetBSD: value.c,v 1.6 1997/02/11 09:24:09 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)value.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: value.c,v 1.6 1999/02/04 17:59:38 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: value.c,v 1.7 2001/10/24 18:38:58 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -54,8 +54,8 @@ static int col = 0;
 void
 vinit()
 {
-	register value_t *p;
-	register char *cp;
+	value_t *p;
+	char *cp;
 	FILE *f;
 	char file[FILENAME_MAX];
 
@@ -76,7 +76,7 @@ vinit()
 	} else {
 		snprintf(file, sizeof file, "%s/.tiprc", value(HOME));
 		if ((f = fopen(file, "r")) != NULL) {
-			register char *tp;
+			char *tp;
 
 			while (fgets(file, sizeof(file)-1, f) != NULL) {
 				if (vflag)
@@ -99,7 +99,7 @@ static int vaccess();
 /*VARARGS1*/
 void
 vassign(p, v)
-	register value_t *p;
+	value_t *p;
 	char *v;
 {
 
@@ -146,16 +146,16 @@ static void vtoken();
 
 void
 vlex(s)
-	register char *s;
+	char *s;
 {
-	register value_t *p;
+	value_t *p;
 
 	if (equal(s, "all")) {
 		for (p = vtable; p->v_name; p++)
 			if (vaccess(p->v_access, READ))
 				vprint(p);
 	} else {
-		register char *cp;
+		char *cp;
 
 		do {
 			if ((cp = vinterp(s, ' ')))
@@ -172,10 +172,10 @@ vlex(s)
 
 static void
 vtoken(s)
-	register char *s;
+	char *s;
 {
-	register value_t *p;
-	register char *cp;
+	value_t *p;
+	char *cp;
 	char *expand();
 
 	if ((cp = strchr(s, '='))) {
@@ -212,9 +212,9 @@ vtoken(s)
 
 static void
 vprint(p)
-	register value_t *p;
+	value_t *p;
 {
-	register char *cp;
+	char *cp;
 	extern char *interp(), *ctrl();
 
 	if (col > 0 && col < MIDDLE)
@@ -266,7 +266,7 @@ vprint(p)
 
 static int
 vaccess(mode, rw)
-	register unsigned mode, rw;
+	unsigned mode, rw;
 {
 	if (mode & (rw<<PUBLIC))
 		return (1);
@@ -277,9 +277,9 @@ vaccess(mode, rw)
 
 static value_t *
 vlookup(s)
-	register char *s;
+	char *s;
 {
-	register value_t *p;
+	value_t *p;
 
 	for (p = vtable; p->v_name; p++)
 		if (equal(p->v_name, s) || (p->v_abrev && equal(p->v_abrev, s)))
@@ -289,10 +289,10 @@ vlookup(s)
 
 char *
 vinterp(s, stop)
-	register char *s;
+	char *s;
 	char stop;
 {
-	register char *p = s, c;
+	char *p = s, c;
 	int num;
 
 	while ((c = *s++) && c != stop)
@@ -311,7 +311,7 @@ vinterp(s, stop)
 			if (c >= '0' && c <= '7')
 				num = (num<<3)+(c-'0');
 			else {
-				register char *q = "n\nr\rt\tb\bf\f";
+				char *q = "n\nr\rt\tb\bf\f";
 
 				for (; *q; q++)
 					if (c == *q++) {
@@ -345,10 +345,10 @@ vinterp(s, stop)
  */
 int
 vstring(s,v)
-	register char *s;
-	register char *v;
+	char *s;
+	char *v;
 {
-	register value_t *p;
+	value_t *p;
 	char *expand();
 
 	p = vlookup(s); 

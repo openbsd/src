@@ -1,4 +1,4 @@
-/*	$OpenBSD: hayes.c,v 1.7 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: hayes.c,v 1.8 2001/10/24 18:38:58 millert Exp $	*/
 /*	$NetBSD: hayes.c,v 1.6 1997/02/11 09:24:17 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: hayes.c,v 1.7 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: hayes.c,v 1.8 2001/10/24 18:38:58 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -86,11 +86,11 @@ static	int state = IDLE;
 
 int
 hay_dialer(num, acu)
-	register char *num;
+	char *num;
 	char *acu;
 {
-	register char *cp;
-	register int connected = 0;
+	char *cp;
+	int connected = 0;
 	char dummy;
 	struct termios cntrl;
 #ifdef ACULOG
@@ -174,7 +174,7 @@ sigALRM()
 
 static char
 gobble(match)
-	register char *match;
+	char *match;
 {
 	char c;
 	sig_t f;
@@ -210,7 +210,7 @@ gobble(match)
 
 static void
 error_rep(c)
-	register char c;
+	char c;
 {
 	printf("\n\r");
 	switch (c) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.12 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.13 2001/10/24 18:38:58 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.12 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.13 2001/10/24 18:38:58 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -133,10 +133,10 @@ transfer(buf, fd, eofchars)
 	char *buf, *eofchars;
 	int fd;
 {
-	register int ct;
+	int ct;
 	char c, buffer[BUFSIZ];
 	char *p = buffer;
-	register int cnt, eof;
+	int cnt, eof;
 	time_t start;
 	sig_t f;
 	char r;
@@ -204,7 +204,6 @@ pipefile()
 	int cpid, pdes[2];
 	char buf[256];
 	int status, p;
-	extern int errno;
 
 	if (prompt("Local command? ", buf, sizeof(buf)))
 		return;
@@ -230,7 +229,7 @@ pipefile()
 				;
 		}
 	} else {
-		register int f;
+		int f;
 
 		dup2(pdes[0], 0);
 		close(pdes[0]);
@@ -496,7 +495,7 @@ pipeout(c)
 		while ((p = wait(&status)) > 0 && p != cpid)
 			;
 	} else {
-		register int i;
+		int i;
 
 		dup2(FD, 1);
 		for (i = 3; i < 20; i++)
@@ -548,7 +547,7 @@ consh(c)
 		while ((p = wait(&status)) > 0 && p != cpid)
 			;
 	} else {
-		register int i;
+		int i;
 
 		dup2(FD, 0);
 		dup2(3, 1);
@@ -634,7 +633,7 @@ void
 chdirectory()
 {
 	char dirname[PATH_MAX];
-	register char *cp = dirname;
+	char *cp = dirname;
 
 	if (prompt("[cd] ", dirname, sizeof(dirname))) {
 		if (stoprompt)
@@ -686,7 +685,7 @@ void
 execute(s)
 	char *s;
 {
-	register char *cp;
+	char *cp;
 
 	if ((cp = strrchr(value(SHELL), '/')) == NULL)
 		cp = value(SHELL);
@@ -701,9 +700,9 @@ args(buf, a, num)
 	char *buf, *a[];
 	int num;
 {
-	register char *p = buf, *start;
-	register char **parg = a;
-	register int n = 0;
+	char *p = buf, *start;
+	char **parg = a;
+	int n = 0;
 
 	do {
 		while (*p && (*p == ' ' || *p == '\t'))
@@ -727,7 +726,7 @@ prtime(s, a)
 	char *s;
 	time_t a;
 {
-	register int i;
+	int i;
 	int nums[3];
 
 	for (i = 0; i < 3; i++) {
@@ -876,8 +875,8 @@ expand(name)
 {
 	static char xname[BUFSIZ];
 	char cmdbuf[BUFSIZ];
-	register int pid, l;
-	register char *cp, *Shell;
+	int pid, l;
+	char *cp, *Shell;
 	int s, pivec[2];
 
 	if (!anyof(name, "~{[*?$`'\"\\"))
@@ -942,9 +941,9 @@ expand(name)
  */
 int
 anyof(s1, s2)
-	register char *s1, *s2;
+	char *s1, *s2;
 {
-	register int c;
+	int c;
 
 	while ((c = *s1++))
 		if (any(c, s2))

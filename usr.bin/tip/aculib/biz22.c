@@ -1,4 +1,4 @@
-/*	$OpenBSD: biz22.c,v 1.6 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: biz22.c,v 1.7 2001/10/24 18:38:58 millert Exp $	*/
 /*	$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: biz22.c,v 1.6 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: biz22.c,v 1.7 2001/10/24 18:38:58 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -61,7 +61,7 @@ static int
 biz_dialer(num, mod)
 	char *num, *mod;
 {
-	register int connected = 0;
+	int connected = 0;
 	char cbuf[40];
 
 	if (boolean(value(VERBOSE)))
@@ -149,7 +149,7 @@ sigALRM()
 
 static int
 cmd(s)
-	register char *s;
+	char *s;
 {
 	sig_t f;
 	char c;
@@ -171,7 +171,7 @@ cmd(s)
 
 static int
 detect(s)
-	register char *s;
+	char *s;
 {
 	sig_t f;
 	char c;

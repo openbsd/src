@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.4 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: df.c,v 1.5 2001/10/24 18:38:58 millert Exp $	*/
 /*	$NetBSD: df.c,v 1.4 1995/10/29 00:49:51 pk Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)df.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: df.c,v 1.4 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.5 2001/10/24 18:38:58 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -71,7 +71,7 @@ df_dialer(num, acu, df03)
 	char *num, *acu;
 	int df03;
 {
-	register int f = FD;
+	int f = FD;
 	struct termios cntrl;
 	int speed = 0;
 	char c = '\0';

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hunt.c,v 1.7 2001/09/17 22:21:09 deraadt Exp $	*/
+/*	$OpenBSD: hunt.c,v 1.8 2001/10/24 18:38:58 millert Exp $	*/
 /*	$NetBSD: hunt.c,v 1.6 1997/04/20 00:02:10 mellon Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)hunt.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: hunt.c,v 1.7 2001/09/17 22:21:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: hunt.c,v 1.8 2001/10/24 18:38:58 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -59,7 +59,7 @@ long
 hunt(name)
 	char *name;
 {
-	register char *cp;
+	char *cp;
 	sig_t f;
 
 	f = signal(SIGALRM, dead);

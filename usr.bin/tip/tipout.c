@@ -1,4 +1,4 @@
-/*	$OpenBSD: tipout.c,v 1.7 2001/09/04 23:35:59 millert Exp $	*/
+/*	$OpenBSD: tipout.c,v 1.8 2001/10/24 18:38:58 millert Exp $	*/
 /*	$NetBSD: tipout.c,v 1.5 1996/12/29 10:34:12 cgd Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tipout.c,v 1.7 2001/09/04 23:35:59 millert Exp $";
+static char rcsid[] = "$OpenBSD: tipout.c,v 1.8 2001/10/24 18:38:58 millert Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -72,7 +72,7 @@ void
 intEMT()
 {
 	char c, line[256];
-	register char *pline = line;
+	char *pline = line;
 	char reply;
 
 	read(fildes[0], &c, 1);
@@ -122,9 +122,8 @@ void
 tipout()
 {
 	char buf[BUFSIZ];
-	register char *cp;
-	register int cnt;
-	extern int errno;
+	char *cp;
+	int cnt;
 	sigset_t mask, omask;
 
 	signal(SIGINT, SIG_IGN);

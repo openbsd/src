@@ -1,4 +1,4 @@
-/*	$OpenBSD: t3000.c,v 1.8 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: t3000.c,v 1.9 2001/10/24 18:38:58 millert Exp $	*/
 /*	$NetBSD: t3000.c,v 1.5 1997/02/11 09:24:18 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)t3000.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: t3000.c,v 1.8 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: t3000.c,v 1.9 2001/10/24 18:38:58 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -61,10 +61,10 @@ static	void t3000_nap();
 
 int
 t3000_dialer(num, acu)
-	register char *num;
+	char *num;
 	char *acu;
 {
-	register char *cp;
+	char *cp;
 	struct termios cntrl;
 #ifdef ACULOG
 	char line[80];
@@ -145,8 +145,8 @@ sigALRM()
 
 static int
 t3000_swallow(match)
-  register char *match;
-  {
+	char *match;
+{
 	sig_t f;
 	char c;
 

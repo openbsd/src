@@ -1,4 +1,4 @@
-/*	$OpenBSD: tip.c,v 1.14 2001/09/26 06:07:28 pvalchev Exp $	*/
+/*	$OpenBSD: tip.c,v 1.15 2001/10/24 18:38:58 millert Exp $	*/
 /*	$NetBSD: tip.c,v 1.13 1997/04/20 00:03:05 mellon Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tip.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: tip.c,v 1.14 2001/09/26 06:07:28 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: tip.c,v 1.15 2001/10/24 18:38:58 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -76,8 +76,8 @@ main(argc, argv)
 	char *argv[];
 {
 	char *system = NOSTR;
-	register int i;
-	register char *p;
+	int i;
+	char *p;
 	char sbuf[12];
 
 	gid = getgid();
@@ -331,8 +331,8 @@ prompt(s, p, sz)
 	char *p;
 	size_t sz;
 {
-	register int c;
-	register char *b = p;
+	int c;
+	char *b = p;
 	sig_t oint, oquit;
 
 	stoprompt = 0;
@@ -420,8 +420,8 @@ extern esctable_t etable[];
 int
 escape()
 {
-	register char gch;
-	register esctable_t *p;
+	char gch;
+	esctable_t *p;
 	char c = character(value(ESCAPE));
 
 	gch = (getchar()&STRIP_PAR);
@@ -443,7 +443,7 @@ int
 speed(n)
 	int n;
 {
-	register int *p;
+	int *p;
 
 	for (p = rates; *p != -1;  p++)
 		if (*p == n)
@@ -453,7 +453,7 @@ speed(n)
 
 int
 any(cc, p)
-	register int cc;
+	int cc;
 	char *p;
 {
 	char c = cc;
@@ -465,9 +465,9 @@ any(cc, p)
 
 int
 size(s)
-	register char	*s;
+	char *s;
 {
-	register int i = 0;
+	int i = 0;
 
 	while (s && *s++)
 		i++;
@@ -476,10 +476,10 @@ size(s)
 
 char *
 interp(s)
-	register char *s;
+	char *s;
 {
 	static char buf[256];
-	register char *p = buf, c, *q;
+	char *p = buf, c, *q;
 
 	while ((c = *s++)) {
 		for (q = "\nn\rr\tt\ff\033E\bb"; *q; q++)
@@ -524,7 +524,7 @@ void
 help(c)
 	char c;
 {
-	register esctable_t *p;
+	esctable_t *p;
 
 	printf("%c\r\n", c);
 	for (p = etable; p->e_char; p++) {
@@ -573,11 +573,10 @@ void
 parwrite(fd, buf, n)
 	int fd;
 	char *buf;
-	register int n;
+	int n;
 {
-	register int i;
-	register char *bp;
-	extern int errno;
+	int i;
+	char *bp;
 
 	bp = buf;
 	if (bits8 == 0)
@@ -600,7 +599,7 @@ void
 setparity(defparity)
 	char *defparity;
 {
-	register int i, flip, clr, set;
+	int i, flip, clr, set;
 	char *parity;
 	extern const unsigned char evenpartab[];
 
