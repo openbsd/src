@@ -1,4 +1,4 @@
-/*	$OpenBSD: calendar.c,v 1.8 1997/08/26 23:37:21 millert Exp $	*/
+/*	$OpenBSD: calendar.c,v 1.9 1997/09/08 23:49:57 millert Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -43,7 +43,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: calendar.c,v 1.8 1997/08/26 23:37:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: calendar.c,v 1.9 1997/09/08 23:49:57 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,6 +121,7 @@ main(argc, argv)
 		while ((pw = getpwent()) != NULL) {
 			(void)setegid(pw->pw_gid);
 			(void)initgroups(pw->pw_name, pw->pw_gid);
+			(void)setlogin(pw->pw_name);
 			(void)seteuid(pw->pw_uid);
 			if (!chdir(pw->pw_dir))
 				cal();
