@@ -1,6 +1,7 @@
+.\"	$OpenBSD: map-mbone.8,v 1.4 1999/07/04 15:44:26 aaron Exp $
 .\"	$NetBSD: map-mbone.8,v 1.2 1995/10/03 23:16:53 thorpej Exp $
 .\"
-.Dd 13 June, 1999
+.Dd June 13, 1999
 .Os
 .Dt MAP-MBONE 8
 .Sh NAME
@@ -21,7 +22,7 @@ router
 If not specified on the command line,
 .Ar starting_router
 is
-.Sq localhost .
+.Dq localhost .
 .Pp
 .Nm
 sends an
@@ -38,7 +39,7 @@ all its neighboring multicast routers.
 If the multicast version number is recent, then
 .Nm
 requests additional information such as metrics, thresholds, and flags.
-
+.Pp
 If a recursive search has been requested (see
 .Fl f ) ,
 .Nm
@@ -52,10 +53,10 @@ must be run as root.
 .Em Options
 .Bl -tag -width "-t seconds"
 .It Fl d Ar level
-sets the debug level to
+Sets the debug level to
 .Ar level .
 When the debug level is greater than
-0, addition debugging messages are printed to stderr. Regardless of
+0, additional debugging messages are printed to stderr. Regardless of
 the debug level, an error condition will always write an error message and will
 cause
 .Nm
@@ -63,35 +64,34 @@ to terminate.
 Non-zero debug levels are
 .Bl -tag -width "1: " -offset indent
 .It 1 :
-print packet warnings, plus level 0 messages.
+Print packet warnings, plus level 0 messages.
 .It 2 :
-print notifications of down networks, plus level 1 messages.
+Print notifications of down networks, plus level 1 messages.
 .It 3 :
-print notifications of all packet timeouts, plus level 2 messages.
+Print notifications of all packet timeouts, plus level 2 messages.
 .El
 .Pp
 Default is 0.
 .It Fl f
-causes a recursive (flooding) search. If no
+Causes a recursive (flooding) search. If no
 .Ar starting_router
 is specified, a recursive search is always performed.
 .It Fl g
-sets graphing format to GraphEd format.
+Sets graphing format to GraphEd format.
 .It Fl n
-disables DNS lookup for the names of the multicast routers.
+Disables DNS lookup for the names of the multicast routers.
 .It Fl r Ar count
-sets the neighbor query retry limit to
+Sets the neighbor query retry limit to
 .Ar count .
 Default is 1.
 .It Fl t Ar seconds
-sets the number of seconds to wait for a neighbor query
+Sets the number of seconds to wait for a neighbor query
 reply before retrying to
 .Ar seconds .
 Default is 2.
 .Sh SEE ALSO
-.Xr mrouted 8 ,
 .Xr mrinfo 8 ,
+.Xr mrouted 8 ,
 .Xr mtrace 8
-.Pp
 .Sh AUTHOR
 Pavel Curtis
