@@ -1,4 +1,4 @@
-/*	$OpenBSD: openprom.c,v 1.5 2002/07/31 01:09:32 jason Exp $	*/
+/*	$OpenBSD: openprom.c,v 1.6 2002/07/31 01:12:28 jason Exp $	*/
 /*	$NetBSD: openprom.c,v 1.2 2000/11/18 23:45:05 mrg Exp $ */
 
 /*
@@ -63,7 +63,6 @@
 
 static	int lastnode;			/* speed hack */
 extern	int optionsnode;		/* node ID of ROM's options */
-extern	struct promvec *promvec;
 
 static int openpromcheckid(int, int);
 static int openpromgetstr(int, char *, char **);
@@ -94,11 +93,8 @@ openpromclose(dev, flags, mode, p)
  */
 static int
 openpromcheckid(sid, tid)
-	register int sid, tid;
+	int sid, tid;
 {
-	register struct nodeops *no;
-
-	no = promvec->pv_nodeops;
 	for (; sid != 0; sid = OF_peer(sid))
 		if (sid == tid || openpromcheckid(OF_child(sid), tid))
 			return (1);
