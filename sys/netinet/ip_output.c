@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.150 2002/10/10 17:27:40 dhartmei Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.151 2003/01/31 17:27:03 deraadt Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -443,7 +443,7 @@ ip_output(struct mbuf *m0, ...)
 		if ((((m->m_flags & M_MCAST) &&
 		      (ifp->if_flags & IFF_MULTICAST) == 0) ||
 		     ((m->m_flags & M_BCAST) &&
-		      (ifp->if_flags & IFF_BROADCAST) == 0)) && (sproto == 0))  {
+		      (ifp->if_flags & IFF_BROADCAST) == 0)) && (sproto == 0)) {
 			ipstat.ips_noroute++;
 			error = ENETUNREACH;
 			goto bad;

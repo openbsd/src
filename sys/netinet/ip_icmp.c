@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.54 2003/01/31 17:23:34 henning Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.55 2003/01/31 17:27:03 deraadt Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -340,7 +340,7 @@ icmp_input(struct mbuf *m, ...)
 		goto freeit;
 	}
 	i = hlen + min(icmplen, ICMP_ADVLENMIN);
-	if (m->m_len < i && (m = m_pullup(m, i)) == NULL)  {
+	if (m->m_len < i && (m = m_pullup(m, i)) == NULL) {
 		icmpstat.icps_tooshort++;
 		return;
 	}
@@ -668,11 +668,10 @@ icmp_reflect(m)
 		dst->sin_addr = t;
 
 		rtalloc(&ro);
-		if (ro.ro_rt == 0)
-		{
-		    ipstat.ips_noroute++;
-		    m_freem(m);
-		    goto done;
+		if (ro.ro_rt == 0) {
+			ipstat.ips_noroute++;
+			m_freem(m);
+			goto done;
 		}
 
 		ia = ifatoia(ro.ro_rt->rt_ifa);
