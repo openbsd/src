@@ -1,0 +1,2 @@
+nat on lo0 inet all tag regress -> 127.0.0.1
+pass out quick on lo0 all keep state tagged regress 
