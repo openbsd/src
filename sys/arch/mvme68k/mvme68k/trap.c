@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2004/04/18 20:02:08 miod Exp $ */
+/*	$OpenBSD: trap.c,v 1.54 2004/04/18 20:19:52 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -555,7 +555,7 @@ copyfault:
 			    ((p && !p->p_addr->u_pcb.pcb_onfault) || KDFAULT(code)))
 				map = kernel_map;
 			else
-				map = &vm->vm_map;
+				map = vm ? &vm->vm_map : kernel_map;
 			if (WRFAULT(code)) {
 				vftype = VM_PROT_WRITE;
 				ftype = VM_PROT_READ | VM_PROT_WRITE;
