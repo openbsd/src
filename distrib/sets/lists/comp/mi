@@ -2834,3 +2834,12 @@
 ./usr/include/xfs/xfs_vfsops.h
 ./usr/include/xfs/xfs_vnodeops.h
 ./usr/include/xfs/xfs_vopdefs.h
+./usr/include/g++/cursesapp.h
+./usr/include/g++/cursesf.h
+./usr/include/g++/cursesm.h
+./usr/include/g++/cursesp.h
+./usr/include/g++/cursesw.h
+./usr/include/g++/cursslk.h
+./usr/include/g++/etip.h
+./usr/lib/libcurses++.a
+./usr/lib/libcurses++_p.a

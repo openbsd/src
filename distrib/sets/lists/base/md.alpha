@@ -650,3 +650,4 @@
 ./usr/share/info/ld.info-1
 ./usr/share/info/ld.info-2
 ./usr/share/info/ld.info-3
+/usr/lib/libcurses++.so.1.0

@@ -414,3 +414,4 @@
 ./usr/lib/perl5/site_perl/mips-openbsd/net/if_bridge.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/skipjack.ph
 ./usr/lib/perl5/site_perl/mips-openbsd/sys/pool.ph
+/usr/lib/libcurses++.so.1.0

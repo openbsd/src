@@ -155,3 +155,4 @@
 ./usr/share/man/cat3/dlopen.0
 ./usr/share/man/cat3/dlsym.0
 ./usr/share/man/cat3/keycap.0
+./usr/lib/libcurses++_pic.a

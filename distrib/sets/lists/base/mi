@@ -1063,6 +1063,7 @@
 ./usr/share/doc/smm/18.net
 ./usr/share/doc/usd
 ./usr/share/doc/usd/01.begin
+./usr/share/doc/usd/29.pic
 ./usr/share/doc/usd/02.learn
 ./usr/share/doc/usd/03.shell
 ./usr/share/doc/usd/04.csh
@@ -1090,7 +1091,6 @@
 ./usr/share/doc/usd/26.refer
 ./usr/share/doc/usd/27.invert
 ./usr/share/doc/usd/28.bib
-./usr/share/doc/usd/29.diction
 ./usr/share/doc/usd/30.rogue
 ./usr/share/doc/usd/31.trek
 ./usr/share/games

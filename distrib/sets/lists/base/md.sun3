@@ -41,3 +41,4 @@
 ./usr/mdec/ufsboot
 ./usr/sbin/eeprom
 ./usr/sbin/screenblank
+/usr/lib/libcurses++.so.1.0
