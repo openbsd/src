@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.24 1997/04/17 11:40:40 downsj Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.25 1997/04/17 12:02:34 downsj Exp $	*/
 /*	$NetBSD: machdep.c,v 1.89 1997/04/09 20:05:20 thorpej Exp $	*/
 
 /*
@@ -511,17 +511,17 @@ identifycpu()
 		t = "380 (25MHz";
 		break;
 	case HP_425:
-	        if ((mmuid & 0xff) == 5 || (mmuid & 0xff) == 7) {
-		    t = "425 (25MHz";
-		} else {	/* == 4 */
-		    t = "425 (33MHz";
+	        if ((mmuid & 0xff) == 5) {
+		    t = "425t (25MHz";
+		} else {	/* == 7 */
+		    t = "425s (25MHz";
 		}
 		break;
 	case HP_433:
-	        if ((mmuid & 0xff) == 6) {
-		    t = "433 (33MHz";
-		} else {	/* == 7 ??? what is this? */
-		    t = "433 (25MHz";
+	        if ((mmuid & 0xff) == 4) {
+		    t = "433t (33MHz";
+		} else {	/* == 6 */
+		    t = "433s (33MHz";
 		}
 		break;
 	default:

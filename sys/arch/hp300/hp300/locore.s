@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.16 1997/04/17 11:40:37 downsj Exp $	*/
+/*	$OpenBSD: locore.s,v 1.17 1997/04/17 12:02:32 downsj Exp $	*/
 /*	$NetBSD: locore.s,v 1.67 1997/03/16 10:49:43 thorpej Exp $	*/
 
 /*
@@ -222,21 +222,21 @@ Lnot68030:
 	lsrl	#8,d0			| get apparent ID
 	movl	d0,a0@			| save MMU ID
 	RELOC(_machineid, a0)
-	cmpb	#7,d0			| id == 7?
-	jeq	Lis425			| yes, we have a 425s
-	cmpb	#6,d0			| id == 6?
-	jeq	Lis433			| yes, we have a 433s
-	cmpb	#5,d0			| id == 5?
-	jeq	Lis425			| yes, we have a 425t
 	cmpb	#4,d0			| id == 4?
-	jeq	Lis425			| Heh, 425t overclocked
+	jeq	Lis33mhz		| yes, a 33MHz Strider (433t)
+	cmpb	#6,d0			| id == 6?
+	jeq	Lis33mhz		| yes, a 33MHz Trailways (433s)
+	cmpb	#5,d0			| id == 5?
+	jeq	Lis25mhz		| yes, a 25MHz Strider (425t)
+	cmpb	#7,d0			| id == 7?
+	jeq	Lis25mhz		| yes, a 25MHz Trailways (425s)
 	movl	#HP_380,a0@		| no, we have a 380
 	jra	Lstart1
-Lis425:
-	movl	#HP_425,a0@		| 425t
+Lis25mhz:
+	movl	#HP_425,a0@		| 425 of some sort
 	jra	Lstart1
-Lis433:
-	movl	#HP_433,a0@		| 433s
+Lis33mhz:
+	movl	#HP_433,a0@		| 433 of some sort
 	jra	Lstart1
 Lis68020:
 	movl	#1,a1@(MMUCMD)		| a 68020, write HP MMU location
