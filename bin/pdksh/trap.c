@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.4 1997/06/19 13:58:48 kstailey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.5 1997/08/05 22:22:58 deraadt Exp $	*/
 
 /*
  * signal handling
@@ -111,6 +111,7 @@ trapsig(i)
 	int i;
 {
 	Trap *p = &sigtraps[i];
+	int save_errno = errno;
 
 	trap = p->set = 1;
 	if (p->flags & TF_DFL_INTR)
@@ -125,6 +126,7 @@ trapsig(i)
 	if (sigtraps[i].cursig == trapsig) /* this for SIGCHLD,SIGALRM */
 		sigaction(i, &Sigact_trap, (struct sigaction *) 0);
 #endif /* V7_SIGNALS */
+	errno = save_errno;
 	return RETSIGVAL;
 }
 

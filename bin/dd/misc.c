@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.4 1997/02/14 07:05:21 millert Exp $	*/
+/*	$OpenBSD: misc.c,v 1.5 1997/08/05 22:22:53 deraadt Exp $	*/
 /*	$NetBSD: misc.c,v 1.4 1995/03/21 09:04:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1997/02/14 07:05:21 millert Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.5 1997/08/05 22:22:53 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -93,8 +93,10 @@ void
 summaryx(notused)
 	int notused;
 {
+	int save_errno = errno;
 
 	summary();
+	errno = save_errno;
 }
 
 /* ARGSUSED */
