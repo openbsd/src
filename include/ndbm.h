@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.h,v 1.2 1997/09/21 10:45:44 niklas Exp $	*/
+/*	$OpenBSD: ndbm.h,v 1.3 1999/02/16 21:57:53 millert Exp $	*/
 /*	$NetBSD: ndbm.h,v 1.6 1995/07/20 23:31:11 jtc Exp $	*/
 
 /*-
@@ -77,6 +77,7 @@ int	 dbm_store __P((DBM *, datum, datum, int));
 int	 dbm_dirfno __P((DBM *));
 int	 dbm_error __P((DBM *));
 int	 dbm_clearerr __P((DBM *));
+int	 dbm_rdonly __P((DBM *));
 __END_DECLS
 
 #endif /* !_NDBM_H_ */

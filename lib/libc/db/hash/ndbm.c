@@ -1,4 +1,4 @@
-/*	$OpenBSD: ndbm.c,v 1.9 1999/02/16 21:21:04 imp Exp $	*/
+/*	$OpenBSD: ndbm.c,v 1.10 1999/02/16 21:57:53 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)dbm.c	8.6 (Berkeley) 11/7/95";
 #else
-static char rcsid[] = "$OpenBSD: ndbm.c,v 1.9 1999/02/16 21:21:04 imp Exp $";
+static char rcsid[] = "$OpenBSD: ndbm.c,v 1.10 1999/02/16 21:57:53 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -53,9 +53,6 @@ static char rcsid[] = "$OpenBSD: ndbm.c,v 1.9 1999/02/16 21:21:04 imp Exp $";
 
 #include <ndbm.h>
 #include "hash.h"
-
-/* KLUDGE */
-#define dbm_rdonly(a) (0)
 
 /*
  *
@@ -339,5 +336,16 @@ int
 dbm_dirfno(db)
 	DBM *db;
 {
+
 	return(((HTAB *)db->internal)->fp);
+}
+
+int
+dbm_rdonly(dbp)
+	DBM *dbp;
+{
+	HTAB *hashp = (HTAB *)dbp->internal;
+
+	/* Could use DBM_RDONLY instead if we wanted... */
+	return ((hashp->flags & O_ACCMODE) == O_RDONLY);
 }
