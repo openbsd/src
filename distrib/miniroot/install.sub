@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.356 2004/11/11 21:48:06 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.357 2004/11/28 04:15:09 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -609,6 +609,7 @@ __EOT
 lookup file bind
 __EOT
 
+	ifconfig $_ifs group dhcp >/dev/null 2>&1
 	dhclient $_ifs
 
 	set -- $(v4_info $_ifs)
@@ -629,12 +630,16 @@ __EOT
 }
 
 v4_config() {
-	local _ifs=$1 _media=$2 _name=$3 _hn=$4 _prompt
+	local _ifs=$1 _media=$2 _name=$3 _hn=$4 _prompt _addr _mask
 
-	set -- $(v4_info $_ifs)
-	if [[ -n $2 ]]; then
-		ifconfig $_ifs inet $2 delete
-		[[ $2 != "0.0.0.0" ]] && { _addr=$2; _mask=$3; }
+	if ifconfig $_ifs | grep 'groups:.* dhcp' >/dev/null 2>&1; then
+		_addr=dhcp
+	else	
+		set -- $(v4_info $_ifs)
+		if [[ -n $2 ]]; then
+			_addr=$2; _mask=$3
+			ifconfig $_ifs inet $_addr delete
+		fi
 	fi
 
 	[[ -x /sbin/dhclient ]] && _prompt=" or 'dhcp'"
@@ -652,6 +657,7 @@ v4_config() {
 		;;
 	*)	_addr=$resp
 		ask_until "Netmask?" "${_mask:=255.255.255.0}"
+		ifconfig $_ifs -group dhcp >/dev/null 2>&1
 		if ifconfig $_ifs inet $_addr netmask $resp up ; then
 			addhostent "$_addr" "$_name"
 			echo "inet $_addr $resp NONE $_media" > $_hn
