@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.22 2004/06/11 19:26:13 marc Exp $
+# $OpenBSD: Makefile,v 1.23 2004/07/10 06:44:51 david Exp $
 
 SUBDIR= cancel cancel2 close closefrom cwd execve fork group \
 	malloc_duel netdb pcap poll \
@@ -7,7 +7,7 @@ SUBDIR= cancel cancel2 close closefrom cwd execve fork group \
 	select setjmp signal sigdeliver siginfo signodefer sigsuspend \
 	sigwait sleep socket stdarg stdio switch system
 
-# Not available or disabled: fcntl, pause, and pw
+# Not available or disabled: fcntl, getaddrinfo, pause, pw, sigmask, stdfiles
 
 install:
 
