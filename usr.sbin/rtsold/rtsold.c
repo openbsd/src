@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtsold.c,v 1.11 2001/11/17 19:49:40 deraadt Exp $	*/
+/*	$OpenBSD: rtsold.c,v 1.12 2001/12/01 19:27:28 deraadt Exp $	*/
 /*	$KAME: rtsold.c,v 1.32 2001/07/09 22:34:07 itojun Exp $	*/
 
 /*
@@ -115,7 +115,7 @@ main(argc, argv)
 #endif
 	int once = 0;
 	struct timeval *timeout;
-	struct fd_set fdset;
+	fd_set fdset;
 	char *argv0;
 	char *opts;
 
@@ -279,7 +279,7 @@ main(argc, argv)
 #endif
 	while (1) {		/* main loop */
 		int e;
-		struct fd_set select_fd = fdset;
+		fd_set select_fd = fdset;
 
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;

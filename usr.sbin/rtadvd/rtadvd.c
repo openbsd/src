@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtadvd.c,v 1.10 2001/11/17 19:49:40 deraadt Exp $	*/
+/*	$OpenBSD: rtadvd.c,v 1.11 2001/12/01 19:27:28 deraadt Exp $	*/
 /*	$KAME: rtadvd.c,v 1.50 2001/02/04 06:15:15 itojun Exp $	*/
 
 /*
@@ -266,7 +266,7 @@ main(argc, argv)
 	signal(SIGUSR1, (void *)rtadvd_set_dump_file);
 
 	while (1) {
-		struct fd_set select_fd = fdset; /* reinitialize */
+		fd_set select_fd = fdset; /* reinitialize */
 
 		if (do_dump) {	/* SIGUSR1 */
 			do_dump = 0;
