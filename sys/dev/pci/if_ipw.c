@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.18 2004/10/28 23:06:10 brad Exp $  */
+/*	$Id: if_ipw.c,v 1.19 2004/11/02 06:06:21 marius Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -102,6 +102,8 @@ int ipw_ioctl(struct ifnet *, u_long, caddr_t);
 u_int32_t ipw_read_table1(struct ipw_softc *, u_int32_t);
 void ipw_write_table1(struct ipw_softc *, u_int32_t, u_int32_t);
 int ipw_read_table2(struct ipw_softc *, u_int32_t, void *, u_int32_t *);
+int ipw_dmamem_init(struct ipw_softc *);
+void ipw_dmamem_stop(struct ipw_softc *);
 int ipw_tx_init(struct ipw_softc *);
 void ipw_tx_stop(struct ipw_softc *);
 int ipw_rx_init(struct ipw_softc *);
@@ -222,6 +224,12 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 		return;
 	}
 
+	/* set up dma memory */
+	if (ipw_dmamem_init(sc) != 0) {
+		printf(": failed to initialize DMA memory\n");
+		return;
+	}
+
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
@@ -296,6 +304,7 @@ ipw_detach(struct device* self, int flags)
 	struct ifnet *ifp = &sc->sc_ic.ic_if;
 
 	ipw_stop(ifp, 1);
+	ipw_dmamem_stop(sc);
 
 	if (sc->flags & IPW_FLAG_FW_CACHED)
 		ipw_free_firmware(sc);
@@ -1163,23 +1172,14 @@ ipw_read_table2(struct ipw_softc *sc, u_int32_t off, void *buf, u_int32_t *len)
 	return 0;
 }
 
+/*
+ * Allocate and map DMAble memory.  Do not call in interrupt context.
+ */
 int
-ipw_tx_init(struct ipw_softc *sc)
+ipw_dmamem_init(struct ipw_softc *sc)
 {
+	int error, nsegs;
 	char *errmsg;
-	struct ipw_bd *bd;
-	struct ipw_soft_bd *sbd;
-	struct ipw_soft_hdr *shdr;
-	struct ipw_soft_buf *sbuf;
-	int error, i, nsegs;
-
-	/* Allocate transmission buffer descriptors */
-	error = bus_dmamap_create(sc->sc_dmat, IPW_TBD_SZ, 1, IPW_TBD_SZ, 0,
-	    BUS_DMA_NOWAIT, &sc->tbd_map);
-	if (error != 0) {
-		errmsg = "could not create tbd dma map";
-		goto fail;
-	}
 
 	error = bus_dmamem_alloc(sc->sc_dmat, IPW_TBD_SZ, PAGE_SIZE, 0,
 	    &sc->tbd_seg, 1, &nsegs, BUS_DMA_NOWAIT);
@@ -1192,6 +1192,109 @@ ipw_tx_init(struct ipw_softc *sc)
 	    (caddr_t *)&sc->tbd_list, BUS_DMA_NOWAIT);
 	if (error != 0) {
 		errmsg = "could not map tbd dma memory";
+		goto fail;
+	}
+
+	error = bus_dmamem_alloc(sc->sc_dmat, sizeof (struct ipw_cmd),
+	    PAGE_SIZE, 0, &sc->cmd_seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		errmsg = "could not allocate cmd dma memory";
+		goto fail;
+	}
+
+	error = bus_dmamem_map(sc->sc_dmat, &sc->cmd_seg, nsegs,
+	    sizeof (struct ipw_cmd), (caddr_t *)&sc->cmd, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		errmsg = "could not map cmd dma memory";
+		goto fail;
+	}
+
+	error = bus_dmamem_alloc(sc->sc_dmat, IPW_RBD_SZ, PAGE_SIZE, 0,
+	    &sc->rbd_seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		errmsg = "could not allocate rbd dma memory";
+		goto fail;
+	}
+
+	error = bus_dmamem_map(sc->sc_dmat, &sc->rbd_seg, nsegs, IPW_RBD_SZ,
+	    (caddr_t *)&sc->rbd_list, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		errmsg = "could not map rbd dma memory";
+		goto fail;
+	}
+
+	error = bus_dmamem_alloc(sc->sc_dmat, IPW_STATUS_SZ, PAGE_SIZE, 0,
+	    &sc->status_seg, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		errmsg = "could not allocate status dma memory";
+		goto fail;
+	}
+
+	error = bus_dmamem_map(sc->sc_dmat, &sc->status_seg, nsegs,
+	    IPW_STATUS_SZ, (caddr_t *)&sc->status_list, BUS_DMA_NOWAIT);
+	if (error != 0) {
+		errmsg = "could not map status dma memory";
+		goto fail;
+	}
+
+	return 0;
+
+fail:	printf("%s: %s", sc->sc_dev.dv_xname, errmsg);
+	ipw_dmamem_stop(sc);
+
+	return error;
+}
+
+/*
+ * Unmap and free DMAble memory.
+ */
+void
+ipw_dmamem_stop(struct ipw_softc *sc)
+{
+	if (sc->tbd_list != NULL) {
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->tbd_list,
+		    IPW_TBD_SZ);
+		bus_dmamem_free(sc->sc_dmat, &sc->tbd_seg, 1);
+		sc->tbd_list = NULL;
+	}
+
+	if (sc->cmd != NULL) {
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->cmd,
+		    sizeof (struct ipw_cmd));
+		bus_dmamem_free(sc->sc_dmat, &sc->cmd_seg, 1);
+		sc->cmd = NULL;
+	}
+
+	if (sc->rbd_list != NULL) {
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rbd_list,
+		    IPW_RBD_SZ);
+		bus_dmamem_free(sc->sc_dmat, &sc->rbd_seg, 1);
+		sc->rbd_list = NULL;
+	}
+
+	if (sc->status_list != NULL) {
+		bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->status_list,
+		    IPW_STATUS_SZ);
+		bus_dmamem_free(sc->sc_dmat, &sc->status_seg, 1);
+		sc->status_list = NULL;
+	}
+}
+
+int
+ipw_tx_init(struct ipw_softc *sc)
+{
+	char *errmsg;
+	struct ipw_bd *bd;
+	struct ipw_soft_bd *sbd;
+	struct ipw_soft_hdr *shdr;
+	struct ipw_soft_buf *sbuf;
+	int error, i;
+
+	/* Allocate transmission buffer descriptors */
+	error = bus_dmamap_create(sc->sc_dmat, IPW_TBD_SZ, 1, IPW_TBD_SZ, 0,
+	    BUS_DMA_NOWAIT, &sc->tbd_map);
+	if (error != 0) {
+		errmsg = "could not create tbd dma map";
 		goto fail;
 	}
 
@@ -1228,20 +1331,6 @@ ipw_tx_init(struct ipw_softc *sc)
 	    sizeof (struct ipw_cmd), 0, BUS_DMA_NOWAIT, &sc->cmd_map);
 	if (error != 0) {
 		errmsg = "could not create cmd dma map";
-		goto fail;
-	}
-
-	error = bus_dmamem_alloc(sc->sc_dmat, sizeof (struct ipw_cmd),
-	    PAGE_SIZE, 0, &sc->cmd_seg, 1, &nsegs, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		errmsg = "could not allocate cmd dma memory";
-		goto fail;
-	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &sc->cmd_seg, nsegs,
-	    sizeof (struct ipw_cmd), (caddr_t *)&sc->cmd, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		errmsg = "could not map cmd dma memory";
 		goto fail;
 	}
 
@@ -1301,13 +1390,8 @@ ipw_tx_stop(struct ipw_softc *sc)
 	int i;
 
 	if (sc->tbd_map != NULL) {
-		if (sc->tbd_list != NULL) {
+		if (sc->tbd_list != NULL)
 			bus_dmamap_unload(sc->sc_dmat, sc->tbd_map);
-			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->tbd_list,
-			    IPW_TBD_SZ);
-			bus_dmamem_free(sc->sc_dmat, &sc->tbd_seg, 1);
-			sc->tbd_list = NULL;
-		}
 		bus_dmamap_destroy(sc->sc_dmat, sc->tbd_map);
 		sc->tbd_map = NULL;
 	}
@@ -1320,12 +1404,6 @@ ipw_tx_stop(struct ipw_softc *sc)
 	}
 
 	if (sc->cmd_map != NULL) {
-		if (sc->cmd != NULL) {
-			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->cmd,
-			    sizeof (struct ipw_cmd));
-			bus_dmamem_free(sc->sc_dmat, &sc->cmd_seg, 1);
-			sc->cmd = NULL;
-		}
 		bus_dmamap_destroy(sc->sc_dmat, sc->cmd_map);
 		sc->cmd_map = NULL;
 	}
@@ -1336,7 +1414,6 @@ ipw_tx_stop(struct ipw_softc *sc)
 		free(sc->shdr_list, M_DEVBUF);
 		sc->shdr_list = NULL;
 	}
-
 
 	if (sc->tx_sbuf_list != NULL) {
 		TAILQ_FOREACH(sbuf, &sc->sc_free_sbuf, next)
@@ -1353,27 +1430,13 @@ ipw_rx_init(struct ipw_softc *sc)
 	struct ipw_bd *bd;
 	struct ipw_soft_bd *sbd;
 	struct ipw_soft_buf *sbuf;
-	int error, i, nsegs;
+	int error, i;
 
 	/* Allocate reception buffer descriptors */
 	error = bus_dmamap_create(sc->sc_dmat, IPW_RBD_SZ, 1, IPW_RBD_SZ, 0,
 	    BUS_DMA_NOWAIT, &sc->rbd_map);
 	if (error != 0) {
 		errmsg = "could not create rbd dma map";
-		goto fail;
-	}
-
-	error = bus_dmamem_alloc(sc->sc_dmat, IPW_RBD_SZ, PAGE_SIZE, 0,
-	    &sc->rbd_seg, 1, &nsegs, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		errmsg = "could not allocate rbd dma memory";
-		goto fail;
-	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &sc->rbd_seg, nsegs, IPW_RBD_SZ,
-	    (caddr_t *)&sc->rbd_list, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		errmsg = "could not map rbd dma memory";
 		goto fail;
 	}
 
@@ -1409,20 +1472,6 @@ ipw_rx_init(struct ipw_softc *sc)
 	    0, BUS_DMA_NOWAIT, &sc->status_map);
 	if (error != 0) {
 		errmsg = "could not create status dma map";
-		goto fail;
-	}
-
-	error = bus_dmamem_alloc(sc->sc_dmat, IPW_STATUS_SZ, PAGE_SIZE, 0,
-	    &sc->status_seg, 1, &nsegs, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		errmsg = "could not allocate status dma memory";
-		goto fail;
-	}
-
-	error = bus_dmamem_map(sc->sc_dmat, &sc->status_seg, nsegs,
-	    IPW_STATUS_SZ, (caddr_t *)&sc->status_list, BUS_DMA_NOWAIT);
-	if (error != 0) {
-		errmsg = "could not map status dma memory";
 		goto fail;
 	}
 
@@ -1499,25 +1548,15 @@ ipw_rx_stop(struct ipw_softc *sc)
 	int i;
 
 	if (sc->rbd_map != NULL) {
-		if (sc->rbd_list != NULL) {
+		if (sc->rbd_list != NULL)
 			bus_dmamap_unload(sc->sc_dmat, sc->rbd_map);
-			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->rbd_list,
-			    IPW_RBD_SZ);
-			bus_dmamem_free(sc->sc_dmat, &sc->rbd_seg, 1);
-			sc->rbd_list = NULL;
-		}
 		bus_dmamap_destroy(sc->sc_dmat, sc->rbd_map);
 		sc->rbd_map = NULL;
 	}
 
 	if (sc->status_map != NULL) {
-		if (sc->status_list != NULL) {
+		if (sc->status_list != NULL)
 			bus_dmamap_unload(sc->sc_dmat, sc->status_map);
-			bus_dmamem_unmap(sc->sc_dmat, (caddr_t)sc->status_list,
-			    IPW_STATUS_SZ);
-			bus_dmamem_free(sc->sc_dmat, &sc->status_seg, 1);
-			sc->status_list = NULL;
-		}
 		bus_dmamap_destroy(sc->sc_dmat, sc->status_map);
 		sc->status_map = NULL;
 	}
