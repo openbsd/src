@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.25 1999/11/17 05:22:41 millert Exp $
+#	$OpenBSD: Makefile.inc,v 1.26 1999/12/11 08:09:11 itojun Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -19,6 +19,9 @@ SRCS+=	base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c gethostnamadr.c \
 	res_init.c res_mkquery.c res_query.c res_random.c res_send.c send.c \
 	sethostent.c ethers.c rcmdsh.c
 
+# IPv6
+SRCS+=	ip6opt.c rthdr.c vars6.c
+
 # machine-dependent net sources
 # m-d Makefile.inc must include sources for:
 #	htonl() htons() ntohl() ntohs()
@@ -28,7 +31,8 @@ SRCS+=	base64.c freeaddrinfo.c gai_strerror.c getaddrinfo.c gethostnamadr.c \
 MAN+=	byteorder.3 ethers.3 getaddrinfo.3 gethostbyname.3 getnameinfo.3 \
 	getnetent.3 getprotoent.3 getservent.3 inet.3 if_indextoname.3 \
 	inet_net.3 iso_addr.3 link_addr.3 ns.3 ipx.3 \
-	rcmd.3 rcmdsh.3 resolver.3 net_addrcmp.3
+	rcmd.3 rcmdsh.3 resolver.3 net_addrcmp.3 \
+	inet6_option_space.3 inet6_rthdr_space.3
 
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
@@ -64,3 +68,15 @@ MLINKS+=rcmd.3 iruserok.3 rcmd.3 rresvport.3 rcmd.3 ruserok.3
 MLINKS+=resolver.3 dn_comp.3 resolver.3 dn_expand.3 resolver.3 res_init.3 \
 	resolver.3 res_mkquery.3 resolver.3 res_send.3 resolver.3 res_query.3 \
 	resolver.3 res_search.3
+MLINKS+=inet6_option_space.3 inet6_option_init.3 \
+	inet6_option_space.3 inet6_option_append.3 \
+	inet6_option_space.3 inet6_option_alloc.3 \
+	inet6_option_space.3 inet6_option_next.3 \
+	inet6_option_space.3 inet6_option_find.3
+MLINKS+=inet6_rthdr_space.3 inet6_rthdr_init.3 \
+	inet6_rthdr_space.3 inet6_rthdr_add.3 \
+	inet6_rthdr_space.3 inet6_rthdr_lasthop.3 \
+	inet6_rthdr_space.3 inet6_rthdr_reverse.3 \
+	inet6_rthdr_space.3 inet6_rthdr_segments.3 \
+	inet6_rthdr_space.3 inet6_rthdr_getaddr.3 \
+	inet6_rthdr_space.3 inet6_rthdr_getflags.3
