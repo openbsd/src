@@ -1,4 +1,4 @@
-/*	$OpenBSD: math.h,v 1.6 2002/02/16 21:27:17 millert Exp $	*/
+/*	$OpenBSD: math.h,v 1.7 2003/06/26 22:27:14 jason Exp $	*/
 /*
  * ====================================================
  * Copyright (C) 1993 by Sun Microsystems, Inc. All rights reserved.
@@ -41,7 +41,12 @@ extern char __infinity[];
 #define	M_SQRT2		1.41421356237309504880	/* sqrt(2) */
 #define	M_SQRT1_2	0.70710678118654752440	/* 1/sqrt(2) */
 
+#ifdef __vax__
+#define	MAXFLOAT	((float)1.7e38)
+#else
 #define	MAXFLOAT	((float)3.40282346638528860e+38)
+#endif
+
 extern int signgam;
 
 #if !defined(_XOPEN_SOURCE)
