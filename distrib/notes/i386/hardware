@@ -22,8 +22,10 @@ Supported devices include:
 			only the AHA-152x and motherboards using this chip
 			are likely to be bootable, consequently.)
 		Adaptec AHA-294x[W] cards and some onboard PCI designs using
-			the AIC7870 chip.  This driver does *not* currently
-			work with non-PCI AIC-7xxx boards or the Adaptec 3940.
+			the AIC7870 chip.  The 2940AU is known not to perform
+			very well with this driver.
+		Adaptec AHA-394x[W] cards; two AIC7870 chips with an on-board
+			PCI to PCI bridge.
 		Adaptec AIC-7770-based SCSI host adapters (including the
 			Adaptec AHA-274x, AHA-284x families).
 		WD-7000 SCSI host adapters.
@@ -84,6 +86,8 @@ Supported devices include:
 			to cause trouble with several devices!]
 		Most SCSI CD-ROM drives
 		Most ATAPI CD-ROM drives
+			[Note: With single ATAPI device IDE busses, the
+			ATAPI device should be set to SLAVE.]
 	Mice:
 		"Logitech"-style bus mice [*] [+]
 		"Microsoft"-style bus mice [*] [+]
