@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.9 2000/05/31 06:47:31 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.10 2000/07/01 14:56:43 aaron Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -193,19 +193,21 @@ device interface.
 .El
 .Pp
 .Ss Audio devices
-.Bl -tag -width speaker -offset ind
+.Bl -tag -width cmpci(4) -offset ind
 .It Xr eap 4
-Ensoniq AudioPCI sound device.
+Ensoniq AudioPCI sound devices.
 .It Xr eso 4
-ESS Solo-1 PCI AudioDrive sound device.
+ESS Solo-1 PCI AudioDrive sound devices.
 .It Xr sv 4
-S3 SonicVibes sound device.
+S3 SonicVibes sound devices.
 .It Xr neo 4
-NeoMagic 256AV/ZX audio driver.
+NeoMagic 256AV/ZX sound devices.
 .It Xr cmpci 4
-C-Media CMI8x38 PCI device driver.
+C-Media CMI8x38 sound devices.
 .It Xr ich 4
-Intel 82801AA/AB and 440MX PCI audio driver.
+Intel 82801AA/AB and 440MX sound devices.
+.It Xr clcs 4
+Cirrus Logic CrystalClear CS4280 sound devices.
 .El
 .Pp
 .Ss Miscellaneous devices
