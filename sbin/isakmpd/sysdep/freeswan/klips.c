@@ -1,4 +1,4 @@
-/*	$OpenBSD: klips.c,v 1.2 2003/06/03 14:53:11 ho Exp $	*/
+/*	$OpenBSD: klips.c,v 1.3 2003/09/26 15:59:34 aaron Exp $	*/
 
 /*
  * Copyright (c) 1999 Niklas Hallqvist.  All rights reserved.
@@ -72,7 +72,7 @@
 #define KLIPS_DEVICE "/dev/ipsec"
 
 #define PROC_ROUTE_FILE	"/proc/net/route"
-#define PROC_ROUTE_FMT	"%16s %128s %128s %X %d %d %d %128s %d %d %d\n"
+#define PROC_ROUTE_FMT	"%15s %127s %127s %X %d %d %d %127s %d %d %d\n"
 
 /* XXX Maybe these are available through some system-supplied define?  */
 #define AH_NEW_XENCAP_LEN (3 * sizeof(u_short) + 2 * sizeof(u_char))
