@@ -1,5 +1,5 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.13 2000/12/24 00:30:54 aaron Exp $
-.\"	$KAME: getaddrinfo.3,v 1.22 2000/08/09 21:16:17 itojun Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.14 2001/01/26 13:31:35 itojun Exp $
+.\"	$KAME: getaddrinfo.3,v 1.27 2001/01/26 13:27:56 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -258,12 +258,12 @@ Here are pitfall cases you may encounter:
 .Bl -bullet
 .It
 .Fn getaddrinfo
-will raise error if members in
+will raise an error if members of the 
 .Fa hints
-structure is not consistent.
+structure are not consistent.
 For example, for internet address families,
 .Fn getaddrinfo
-will raise error if you specify
+will raise an error if you specify
 .Dv SOCK_STREAM
 to
 .Fa ai_socktype
@@ -277,10 +277,10 @@ If you specify a
 which is defined only for certain
 .Fa ai_socktype ,
 .Fn getaddrinfo
-will raise error because the arguments are not consistent.
+will raise an error because the arguments are not consistent.
 For example,
 .Fn getaddrinfo
-will raise error if you ask for
+will raise an error if you ask for
 .Dq Li tftp
 service on
 .Dv SOCK_STREAM .
@@ -292,11 +292,11 @@ while you set
 to
 .Dv SOCK_RAW ,
 .Fn getaddrinfo
-will raise error, because service names are not defined for the internet
+will raise an error, because service names are not defined for the internet
 .Dv SOCK_RAW
 space.
 .It
-If you specify numeric
+If you specify a numeric
 .Fa servname ,
 while leaving
 .Fa ai_socktype
@@ -304,7 +304,7 @@ and
 .Fa ai_protocol
 unspecified,
 .Fn getaddrinfo
-will raise error.
+will raise an error.
 This is because the numeric
 .Fa servname
 does not identify any socket type, and
@@ -347,10 +347,11 @@ If the argument is not one of the
 values, the function still returns a pointer to a string whose contents
 indicate an unknown error.
 .\"
-.Sh EXTENSION
+.Ss Extension for scoped IPv6 address
 The implementation allows experimental numeric IPv6 address notation with
 scope identifier.
-By appending atmark and scope identifier to addresses, you can fill
+By appending the percent character and scope identifier to addresses,
+you can fill
 .Li sin6_scope_id
 field for addresses.
 This would make management of scoped address easier,
@@ -405,7 +406,7 @@ hints.ai_family = PF_UNSPEC;
 hints.ai_socktype = SOCK_STREAM;
 error = getaddrinfo("www.kame.net", "http", &hints, &res0);
 if (error) {
-	err1(1, "%s", gai_strerror(error));
+	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
 }
 s = -1;
@@ -449,7 +450,7 @@ hints.ai_socktype = SOCK_STREAM;
 hints.ai_flags = AI_PASSIVE;
 error = getaddrinfo(NULL, "http", &hints, &res0);
 if (error) {
-	err1(1, "%s", gai_strerror(error));
+	errx(1, "%s", gai_strerror(error));
 	/*NOTREACHED*/
 }
 nsock = 0;
@@ -575,7 +576,7 @@ The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .Sh STANDARDS
 The
 .Fn getaddrinfo
-function is defined IEEE POSIX 1003.1g draft specification,
+function is defined in IEEE POSIX 1003.1g draft specification,
 and documented in
 .Dq Basic Socket Interface Extensions for IPv6
 .Pq RFC2553 .
