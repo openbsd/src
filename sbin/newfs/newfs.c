@@ -1,4 +1,4 @@
-/*	$OpenBSD: newfs.c,v 1.37 2003/04/16 10:33:16 markus Exp $	*/
+/*	$OpenBSD: newfs.c,v 1.38 2003/05/03 17:21:04 millert Exp $	*/
 /*	$NetBSD: newfs.c,v 1.20 1996/05/16 07:13:03 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.8 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: newfs.c,v 1.37 2003/04/16 10:33:16 markus Exp $";
+static char rcsid[] = "$OpenBSD: newfs.c,v 1.38 2003/05/03 17:21:04 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,7 @@ static char rcsid[] = "$OpenBSD: newfs.c,v 1.37 2003/04/16 10:33:16 markus Exp $
 #include <sys/ioctl.h>
 #include <sys/disklabel.h>
 #include <sys/mount.h>
+#include <sys/resource.h>
 #include <sys/sysctl.h>
 #include <sys/wait.h>
 
@@ -203,6 +204,7 @@ main(argc, argv)
 	struct partition oldpartition;
 	struct stat st;
 	struct statfs *mp;
+	struct rlimit rl;
 	int fsi = -1, fso, len, n, maxpartitions;
 	char *cp, *s1, *s2, *special, *opstring;
 #ifdef MFS
@@ -356,6 +358,12 @@ main(argc, argv)
 
 	if (ffs && argc - mfs != 1)
 		usage();
+
+	/* Increase our data size to the max */
+	if (getrlimit(RLIMIT_DATA, &rl) == 0) {
+		rl.rlim_cur = rl.rlim_max;
+		(void)setrlimit(RLIMIT_DATA, &rl);
+	}
 
 	special = argv[0];
 	if (!mfs) {

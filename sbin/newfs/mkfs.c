@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkfs.c,v 1.24 2003/04/16 10:33:16 markus Exp $	*/
+/*	$OpenBSD: mkfs.c,v 1.25 2003/05/03 17:21:04 millert Exp $	*/
 /*	$NetBSD: mkfs.c,v 1.25 1995/06/18 21:35:38 cgd Exp $	*/
 
 /*
@@ -38,18 +38,18 @@
 #if 0
 static char sccsid[] = "@(#)mkfs.c	8.3 (Berkeley) 2/3/94";
 #else
-static char rcsid[] = "$OpenBSD: mkfs.c,v 1.24 2003/04/16 10:33:16 markus Exp $";
+static char rcsid[] = "$OpenBSD: mkfs.c,v 1.25 2003/05/03 17:21:04 millert Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
-#include <sys/resource.h>
 #include <ufs/ufs/dinode.h>
 #include <ufs/ufs/dir.h>
 #include <ufs/ffs/fs.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 
 #include <string.h>
 #include <stdlib.h>
@@ -108,7 +108,6 @@ extern int	sbsize;		/* superblock size */
 extern int	avgfilesize;	/* expected average file size */
 extern int	avgfilesperdir;	/* expected number of files per directory */
 extern int	quiet;		/* quiet flag */
-extern u_long	memleft;	/* virtual memory available */
 extern caddr_t	membase;	/* start address of memory based filesystem */
 
 union fs_u {
@@ -172,10 +171,9 @@ mkfs(pp, fsys, fi, fo)
 	time(&utime);
 #endif
 	if (mfs) {
-		(void)malloc(0);
-		if (fssize * sectorsize > memleft)
-			fssize = (memleft - 16384) / sectorsize;
-		if ((membase = malloc(fssize * sectorsize)) == 0)
+		membase = mmap(NULL, fssize * sectorsize, PROT_READ|PROT_WRITE,
+		    MAP_ANON|MAP_PRIVATE, -1, 0);
+		if (membase == MAP_FAILED)
 			exit(12);
 	}
 	fsi = fi;
@@ -1029,8 +1027,7 @@ iput(ip, ino)
 	struct dinode *ip;
 	ino_t ino;
 {
-	struct dinode *buf =
-	   (struct dinode *)malloc(MAXINOPB * sizeof (struct dinode));
+	struct dinode buf[MAXINOPB];
 	daddr_t d;
 	int c;
 
@@ -1058,85 +1055,6 @@ iput(ip, ino)
 	rdfs(d, sblock.fs_bsize, buf);
 	buf[ino_to_fsbo(&sblock, ino)] = *ip;
 	wtfs(d, sblock.fs_bsize, buf);
-	free(buf);
-}
-
-/*
- * Replace libc function with one suited to our needs.
- */
-static void *
-malloc(size)
-	size_t size;
-{
-	void *base, *i;
-	static u_long pgsz;
-	struct rlimit rlp;
-
-	if (pgsz == 0) {
-		base = sbrk(0);
-		pgsz = getpagesize() - 1;
-		i = (char *)((u_long)(base + pgsz) &~ pgsz);
-		base = sbrk(i - base);
-		if (getrlimit(RLIMIT_DATA, &rlp) < 0)
-			perror("getrlimit");
-		rlp.rlim_cur = rlp.rlim_max;
-		if (setrlimit(RLIMIT_DATA, &rlp) < 0)
-			perror("setrlimit");
-		memleft = rlp.rlim_max - (u_long)base;
-	}
-	size = (size + pgsz) &~ pgsz;
-	if (size > memleft)
-		size = memleft;
-	memleft -= size;
-	if (size == 0)
-		return (0);
-	return (sbrk(size));
-}
-
-/*
- * Replace libc function with one suited to our needs.
- */
-static void *
-realloc(ptr, size)
-	void *ptr;
-	size_t size;
-{
-	void *p;
-
-	if ((p = malloc(size)) == NULL)
-		return (NULL);
-	if (ptr) {
-		memcpy(p, ptr, size);
-		free(ptr);
-	}
-	return (p);
-}
-
-/*
- * Replace libc function with one suited to our needs.
- */
-static void *
-calloc(size, numelm)
-	size_t size;
-	size_t numelm;
-{
-	void	*base;
-
-	size *= numelm;
-	if ((base = malloc(size)) != 0)
-		memset(base, 0, size);
-	return (base);
-}
-
-/*
- * Replace libc function with one suited to our needs.
- */
-static void
-free(ptr)
-	void *ptr;
-{
-	
-	/* do not worry about it for now */
 }
 
 /*
