@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_add.1,v 1.26 2004/11/21 11:29:35 xsa Exp $
+.\"	$OpenBSD: pkg_add.1,v 1.27 2004/12/09 18:58:25 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -146,13 +146,13 @@ architecture recorded in package may not match.
 .It Ar conflicts
 package may conflict with other packages.
 .It Ar installed
-reinstall an existing package.
+in update mode, reinstall an existing package with the same signature.
 .It Ar libdepends
 library specifications may not be fulfilled.
 .It Ar nonroot
 install even if not running as root.
 .It Ar scripts
-install scripts may fail.
+external scripts may fail.
 .It Ar update
 unsafe update: old packing-list will run scripts that may fail.
 .It Ar updatedepends

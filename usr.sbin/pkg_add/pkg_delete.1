@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_delete.1,v 1.14 2004/12/02 00:29:04 xsa Exp $
+.\"	$OpenBSD: pkg_delete.1,v 1.15 2004/12/09 18:58:25 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -74,6 +74,8 @@ delete all packages matching ambiguous package specifications.
 also delete the whole set of packages that depends upon the requested packages.
 .It Ar nonroot
 uninstall even if not running as root.
+.It Ar scripts
+external scripts may fail.
 .It Ar uninstalled
 proceed even if some package names don't resolve to installed package names.
 .El

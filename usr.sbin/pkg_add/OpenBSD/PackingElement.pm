@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.73 2004/11/21 15:36:17 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.74 2004/12/09 18:58:25 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -1167,7 +1167,11 @@ sub run
 	return if $not;
 	chmod 0755, $dir.$name;
 	return if $state->system($dir.$name, $pkgname, @args) == 0;
-	Fatal $self->beautify()." script borked";
+	if ($state->{forced}->{scripts}) {
+		$state->warn($self->beautify(), " script failed\n");
+	} else {
+		$state->fatal($self->beautify()." script failed");
+	}
 }
 
 package OpenBSD::PackingElement::FCOMMENT;
