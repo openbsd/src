@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.50 2002/06/07 22:53:45 pb Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.51 2002/06/08 04:36:18 henning Exp $
 .\"
 .\" Copyright (c) 2001, Daniel Hartmeier
 .\" All rights reserved.
@@ -363,9 +363,37 @@ Adds a label (name) to the rule, which can be used to identify the rule.
 For instance,
 .Em pfctl -s labels
 shows per-rule statistics for rules that have labels.
-You can use $srcaddr, $srcport, $dstaddr and $dstport which will be replaced
-by source/destination address/port at parse time in the label.
-This allows for unique labels even when using address lists.
+.Pp
+The following macros can be used in labels:
+.Pp
+.Bl -tag -width $srcaddr -compact -offset indent
+.It Em $srcaddr
+the source IP address.
+.It Em $dstaddr
+the destination IP address.
+.It Em $srcport
+the source port specification.
+.It Em $dstport
+the destination port specification.
+.It Em $proto
+the protocol name.
+.It Em $nr
+the rule number.
+.El
+.Pp
+Example:
+.Bd -literal
+    ips = "{ 1.2.3.4, 1.2.3.5 }"
+    pass in proto tcp from any to $ips port >1023 label "$dstaddr:$dstport"
+.Ed
+.Pp
+expands to
+.Bd -literal
+    pass in proto tcp from any to 1.2.3.4 port >1023 label "1.2.3.4:>1023"
+    pass in proto tcp from any to 1.2.3.5 port >1023 label "1.2.3.5:>1023"
+.Ed
+.Pp
+Note that evaluation takes place at parse time.
 .Sh MACROS
 .Em pfctl
 supports macro definition and expansion like:
