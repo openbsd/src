@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysent.h,v 1.3 1997/04/01 07:35:52 todd Exp $	*/
+/*	$OpenBSD: sysent.h,v 1.4 2001/04/29 21:52:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -25,6 +25,22 @@
  * to redistribute these changes.
  */
 /*
+ **********************************************************************
+ * HISTORY
+ * Revision 2.4  89/12/05  16:02:00  mrt
+ * 	Removed include of sys/features.h as it is no longer
+ * 	exported or needed.
+ * 	[89/12/05            mrt]
+ * 
+ * Revision 2.3  89/01/20  15:44:24  gm0w
+ * 	Added externs to the non-STDC case for functions that do not
+ * 	have int return values.
+ * 	[88/12/17            gm0w]
+ * 
+ * Revision 2.2  88/12/14  23:35:52  mja
+ * 	Created.
+ * 	[88/01/06            jjk]
+ * 
  **********************************************************************
  */
 

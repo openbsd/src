@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.4 2000/06/29 00:23:13 millert Exp $	*/
+/*	$OpenBSD: log.c,v 1.5 2001/04/29 21:52:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -28,6 +28,14 @@
  * Logging support for SUP
  **********************************************************************
  * HISTORY
+ * Revision 1.5  92/08/11  12:03:43  mrt
+ * 	Brad's delinting and variable argument list usage
+ * 	changes. Added copyright.
+ * 
+ * Revision 1.3  89/08/15  15:30:37  bww
+ * 	Updated to use v*printf() in place of _doprnt().
+ * 	From "[89/04/19            mja]" at CMU.
+ * 	[89/08/15            bww]
  * 
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added check to allow logopen() to be called multiple times.

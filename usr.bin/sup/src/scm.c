@@ -1,4 +1,4 @@
-/*	$OpenBSD: scm.c,v 1.9 2000/02/01 03:23:40 deraadt Exp $	*/
+/*	$OpenBSD: scm.c,v 1.10 2001/04/29 21:52:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -69,6 +69,23 @@
  *  2-Oct-92  Mary Thompson (mrt) at Carnegie-Mellon University
  *	Added conditional declarations of INADDR_NONE and INADDR_LOOPBACK
  *	since Tahoe version of <netinet/in.h> does not define them.
+ *
+ * Revision 1.13  92/08/11  12:05:35  mrt
+ * 	Added changes from stump:
+ * 	  Allow for multiple interfaces, and for numeric addresses.
+ * 	  Changed to use builtin port for the "supfiledbg"
+ * 	    service when getservbyname() cannot find it.
+ * 	  Added forward static declatations, delinted.
+ * 	  Updated variable argument usage.
+ * 	[92/08/08            mrt]
+ * 
+ * Revision 1.12  92/02/08  19:01:11  mja
+ * 	Add (struct sockaddr *) casts for HC 2.1.
+ * 	[92/02/08  18:59:09  mja]
+ * 
+ * Revision 1.11  89/08/03  19:49:03  mja
+ * 	Updated to use v*printf() in place of _doprnt().
+ * 	[89/04/19            mja]
  * 
  * 11-Feb-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Moved sleep into computeBackoff, renamed to dobackoff.

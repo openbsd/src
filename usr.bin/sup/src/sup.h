@@ -1,4 +1,4 @@
-/*	$OpenBSD: sup.h,v 1.5 2001/04/29 18:14:09 millert Exp $	*/
+/*	$OpenBSD: sup.h,v 1.6 2001/04/29 21:52:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -40,6 +40,19 @@
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
  *
+ * Revision 1.10  92/08/11  12:06:42  mrt
+ * 	Added definition for DEBUGFPORTNUM, the debugging port number.
+ * 	Changed so that last and when file names could include
+ * 	the relase name if any.
+ * 	[92/07/23            mrt]
+ * 
+ * Revision 1.9  91/04/29  14:39:03  mja
+ * 	Reduce MAXCHILDREN from 8 to 3.
+ * 
+ * Revision 1.8  89/08/23  14:55:30  gm0w
+ * 	Moved coll.dir from supservers to supfiles.
+ * 	[89/08/23            gm0w]
+ * 
  * 18-Mar-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added host=<hostfile> support to releases file.
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmain.c,v 1.8 1998/06/03 16:20:36 deraadt Exp $	*/
+/*	$OpenBSD: supcmain.c,v 1.9 2001/04/29 21:52:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -175,6 +175,20 @@
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
  *
+ * Revision 1.6  92/08/11  12:06:59  mrt
+ * 	Merged in Brad's changes. Made resource pausing code conditional
+ * 	on MACH, rather than CMUCS. Fixed some calls to sprintf to
+ * 	return void.
+ * 	[92/08/09            mrt]
+ * 
+ * Revision 1.5  92/02/08  19:01:18  mja
+ * 	Correct oldsigsys type when ANSI C.
+ * 	[92/02/08  18:59:47  mja]
+ * 
+ * Revision 1.4  92/02/08  18:24:01  mja
+ * 	Added -k and -K switches.
+ * 	[92/01/17            vdelvecc]
+ * 
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added crosspatch support (is currently ignored).
  *

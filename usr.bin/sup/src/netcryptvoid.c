@@ -1,4 +1,4 @@
-/*	$OpenBSD: netcryptvoid.c,v 1.3 1997/04/01 07:35:10 todd Exp $	*/
+/*	$OpenBSD: netcryptvoid.c,v 1.4 2001/04/29 21:52:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -26,6 +26,9 @@
  */
 /**********************************************************************
  * HISTORY
+ * Revision 2.2  92/09/09  22:04:34  mrt
+ * 	Created.
+ * 	[92/09/09            mrt]
  * 
  */
 /*

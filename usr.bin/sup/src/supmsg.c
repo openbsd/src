@@ -1,4 +1,4 @@
-/*	$OpenBSD: supmsg.c,v 1.4 1997/04/01 07:35:45 todd Exp $	*/
+/*	$OpenBSD: supmsg.c,v 1.5 2001/04/29 21:52:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -31,6 +31,22 @@
  * 7-July-93  Nate Williams at Montana State University
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
+ *
+ * Revision 2.4  92/09/09  22:05:17  mrt
+ * 	Moved PFI definition under __STDC__ conditional since it
+ * 	is already defined in libc.h in this case.
+ * 	[92/09/01            mrt]
+ * 
+ * Revision 2.3  92/08/11  12:08:12  mrt
+ * 	Added copyright
+ * 	[92/08/10            mrt]
+ * 	Brad's changes: Delinted, Incorporated updated variable 
+ * 	argument list usage from old msgxfer.c
+ * 	[92/07/24            mrt]
+ * 
+ * Revision 2.2  89/08/23  15:02:56  gm0w
+ * 	Created from separate message modules.
+ * 	[89/08/14            gm0w]
  * 
  **********************************************************************
  */

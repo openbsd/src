@@ -1,4 +1,4 @@
-/*	$OpenBSD: vprintf.c,v 1.5 1997/10/11 23:34:22 beck Exp $	*/
+/*	$OpenBSD: vprintf.c,v 1.6 2001/04/29 21:52:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -28,15 +28,38 @@
  * varargs versions of printf routines
  *
  **********************************************************************
+ * HISTORY
+ * Revision 2.5  89/09/08  18:15:55  mbj
+ * 	Use _doprnt() for the Multimax (an "old" architecture).
+ * 	[89/09/08            mbj]
+ * 
+ * Revision 2.4  89/08/03  14:40:10  mja
+ * 	Add vsnprintf() routine.
+ * 	[89/07/12            mja]
+ * 
+ * 	Terminate vsprintf() string with null byte.
+ * 	[89/04/21            mja]
+ * 
+ * 	Change to use new hidden name for _doprnt on MIPS.
+ * 	[89/04/18            mja]
+ * 
+ * Revision 2.3  89/06/10  14:13:43  gm0w
+ * 	Added putc of NULL byte to vsprintf.
+ * 	[89/06/10            gm0w]
+ * 
+ * Revision 2.2  88/12/13  13:53:17  gm0w
+ * 	From Brad White.
+ * 	[88/12/13            gm0w]
+ ************************************************************
  */
 
 #include <stdio.h>
 #include <varargs.h>
 
 #ifdef _IOSTRG
-#define STRFLAG		(_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
+#define STRFLAG	(_IOSTRG|_IOWRT)	/* no _IOWRT: avoid stdio bug */
 #else
-#define STRFLAG		(_IOREAD)		/* XXX: Assume svr4 stdio */
+#define STRFLAG	(_IOREAD)		/* XXX: Assume svr4 stdio */
 #endif
 
 #ifdef DOPRINT_VA

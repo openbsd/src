@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmeat.c,v 1.10 2001/04/29 18:16:19 millert Exp $	*/
+/*	$OpenBSD: supcmeat.c,v 1.11 2001/04/29 21:52:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -33,6 +33,59 @@
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
  *
+ * Revision 1.16  92/09/09  22:04:51  mrt
+ * 	Really added bww's recvone changes this time. 
+ * 	Added code to support non-crypting version of sup.
+ * 	[92/09/01            mrt]
+ * 
+ * Revision 1.15  92/08/11  12:07:09  mrt
+ * 	Added support to add release to FILEWHEN name.
+ * 	Updated variable arguemnt list usage - bww
+ * 	Updated recvone() to take a va_list - bww
+ * 	Changed conditional for rpausing code from CMUCS to MACH
+ * 	[92/07/24            mrt]
+ * 
+ * Revision 1.14  92/02/08  18:24:12  mja
+ * 	Only apply "keep" mode when local file is strictly newer
+ * 	otherwise allow update as before if necessary.
+ * 	[92/02/08  18:09:00  mja]
+ * 
+ * 	Added support for -k (keep) option to needone().  Rewrote and
+ * 	commented other parts of needone().
+ * 	[92/01/17            vdelvecc]
+ * 
+ * Revision 1.13  91/05/16  14:49:41  ern
+ * 	Add timestap to fileserver.
+ * 	Drop day of the week from 5 messages.
+ * 	[91/05/16  14:47:53  ern]
+ * 
+ * Revision 1.12  89/08/23  14:55:44  gm0w
+ * 	Changed msgf routines to msg routines.
+ * 	[89/08/23            gm0w]
+ * 
+ * Revision 1.11  89/08/03  19:49:10  mja
+ * 	Updated to use v*printf() in place of _doprnt().
+ * 	[89/04/19            mja]
+ * 
+ * Revision 1.10  89/06/18  14:41:27  gm0w
+ * 	Fixed up some notify messages of errors to use "SUP:" prefix.
+ * 	[89/06/18            gm0w]
+ * 
+ * Revision 1.9  89/06/10  15:12:17  gm0w
+ * 	Changed to always use rename to install targets.  This breaks hard
+ * 	links and recreates those known to sup, other links will be orphaned.
+ * 	[89/06/10            gm0w]
+ * 
+ * Revision 1.8  89/05/24  15:04:23  gm0w
+ * 	Added code to check for EINVAL from FSPARAM ioctl for disk
+ * 	space check failures when the ioctl is not implemented.
+ * 	[89/05/24            gm0w]
+ * 
+ * Revision 1.7  89/01/16  18:22:28  gm0w
+ * 	Changed needone() to check that mode of files match before
+ * 	setting update if times also match.
+ * 	[89/01/16            gm0w]
+ * 
  * 10-Feb-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added timeout to backoff.
  *

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcparse.c,v 1.4 1997/09/16 10:42:57 deraadt Exp $	*/
+/*	$OpenBSD: supcparse.c,v 1.5 2001/04/29 21:52:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -32,6 +32,20 @@
  * 7-July-93  Nate Williams at Montana State University
  *	Modified SUP to use gzip based compression when sending files
  *	across the network to save BandWidth
+ *
+ * Revision 1.6  92/08/11  12:07:38  mrt
+ * 	Added use-rel-suffix option corresponding to -u switch.
+ * 	[92/07/26            mrt]
+ * 
+ * Revision 1.5  92/02/08  18:24:19  mja
+ * 	Added "keep" supfile option, corresponding to -k switch.
+ * 	[92/01/17            vdelvecc]
+ * 
+ * Revision 1.4  91/05/16  14:49:50  ern
+ * 	Change default timeout from none to 3 hours so we don't accumalute 
+ * 	processes running sups to dead hosts especially for users.
+ * 	[91/05/16  14:49:21  ern]
+ * 
  *
  * 10-Feb-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added timeout to backoff.

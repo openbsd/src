@@ -1,4 +1,4 @@
-/*	$OpenBSD: scan.c,v 1.9 2001/04/29 18:16:19 millert Exp $	*/
+/*	$OpenBSD: scan.c,v 1.10 2001/04/29 21:52:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -29,6 +29,10 @@
  *
  **********************************************************************
  * HISTORY
+ * Revision 1.8  92/08/11  12:04:28  mrt
+ * 	Brad's changes: delinted, added forward declarations of static
+ * 	functions.Added Copyright.
+ * 	[92/07/24            mrt]
  * 
  * 18-Mar-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added host=<hostfile> support to releases file.

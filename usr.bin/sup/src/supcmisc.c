@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcmisc.c,v 1.6 1997/09/16 11:01:21 deraadt Exp $	*/
+/*	$OpenBSD: supcmisc.c,v 1.7 2001/04/29 21:52:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -28,6 +28,15 @@
  * sup misc. routines, include list processing.
  **********************************************************************
  * HISTORY
+ * Revision 1.5  92/08/11  12:07:22  mrt
+ * 	Added release to FILEWHEN name.
+ * 	Brad's changes: delinted and updated variable arguement usage.
+ * 	[92/07/26            mrt]
+ * 
+ * Revision 1.3  89/08/15  15:31:28  bww
+ * 	Updated to use v*printf() in place of _doprnt().
+ * 	From "[89/04/19            mja]" at CMU.
+ * 	[89/08/15            bww]
  * 
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Fixed bug in ugconvert() which left pw uninitialized.

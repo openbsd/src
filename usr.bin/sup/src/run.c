@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.5 1998/06/03 16:20:35 deraadt Exp $	*/
+/*	$OpenBSD: run.c,v 1.6 2001/04/29 21:52:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -49,6 +49,12 @@
  *
  **********************************************************************
  * HISTORY
+ * Revision 1.1  89/10/14  19:53:39  rvb
+ * Initial revision
+ * 
+ * Revision 1.2  89/08/03  14:36:46  mja
+ * 	Update run() and runp() to use <varargs.h>.
+ * 	[89/04/19            mja]
  * 
  * 23-Sep-86  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Merged old runv and runvp modules.

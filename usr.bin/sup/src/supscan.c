@@ -1,4 +1,4 @@
-/*	$OpenBSD: supscan.c,v 1.8 1997/09/16 11:01:24 deraadt Exp $	*/
+/*	$OpenBSD: supscan.c,v 1.9 2001/04/29 21:52:17 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -40,6 +40,39 @@
  *
  **********************************************************************
  * HISTORY
+ * Revision 1.14  92/08/11  12:08:30  mrt
+ * 	Picked up Brad's deliniting and variable argument changes
+ * 	[92/08/10            mrt]
+ * 
+ * Revision 1.13  92/02/08  18:04:44  dlc
+ * 	Once again revised localhost().  Do not use gethostbyname() at
+ * 	all, but assume that the host names in the coll.host file are at
+ * 	least a prefix of the fully qualified name.  Modcoll (and related
+ * 	scripts) will maintain this fact.
+ * 	[92/02/08            dlc]
+ * 
+ * Revision 1.12  91/08/17  23:35:31  dlc
+ * 	Changes to localhost() function:
+ * 		- Use host name in kernel for local host name; assume it is
+ * 		  fully qualified.
+ * 		- If gethostbyname() of host to see if we are the repository
+ * 		  fails, with TRY_AGAIN or NO_RECOVERY, then use the "host"
+ * 		  parameter.  Print a diagnostic in this case.
+ * 	[91/08/17            dlc]
+ * 
+ * Revision 1.11  90/04/04  10:53:01  dlc
+ * 	Changed localhost to retry getting the local host name 4 times with
+ * 	30 second sleep intervals before aborting; after 4 tries, things are
+ * 	probably too messed up for the supscan to do anything useful
+ * 	[90/04/04            dlc]
+ * 
+ * Revision 1.10  89/08/03  19:49:33  mja
+ * 	Updated to use v*printf() in place of _doprnt().
+ * 	[89/04/19            mja]
+ * 
+ * Revision 1.9  89/06/18  14:41:37  gm0w
+ * 	Fixed up some notify messages of errors to use "SUP:" prefix.
+ * 	[89/06/18            gm0w]
  * 
  * 13-May-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Changed goaway to longjmp back to top-level to scan next

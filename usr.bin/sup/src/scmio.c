@@ -1,4 +1,4 @@
-/*	$OpenBSD: scmio.c,v 1.4 2000/02/01 03:23:40 deraadt Exp $	*/
+/*	$OpenBSD: scmio.c,v 1.5 2001/04/29 21:52:15 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -110,6 +110,14 @@
  *
  **********************************************************************
  * HISTORY
+ * Revision 1.7  92/09/09  22:04:41  mrt
+ * 	Removed the data encryption routines from here to netcrypt.c
+ * 	[92/09/09            mrt]
+ * 
+ * Revision 1.6  92/08/11  12:05:57  mrt
+ * 	Brad's changes: Delinted,Added forward declarations of 
+ * 	static functions. Added copyright.
+ * 	[92/07/24            mrt]
  * 
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added crosspatch support.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: supcvers.c,v 1.3 1997/04/01 07:35:39 todd Exp $	*/
+/*	$OpenBSD: supcvers.c,v 1.4 2001/04/29 21:52:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -16,7 +16,7 @@
  *
  * Carnegie Mellon requests users of this software to return to
  *
- *  Software Distribution Coordinator  or  Software_Distribution@CS.CMU.EDU
+ *  Software Distribution Coordinator  or  Software.Distribution@CS.CMU.EDU
  *  School of Computer Science
  *  Carnegie Mellon University
  *  Pittsburgh PA 15213-3890
@@ -27,6 +27,13 @@
 /*
  **********************************************************************
  * HISTORY
+ * Revision 1.8  92/08/11  12:07:51  mrt
+ * 	Added use-rel-suffix option. Picked up STUMP changes.
+ * 	[V7.26]
+ * 
+ * Revision 1.7  92/02/08  18:24:23  mja
+ * 	Support for -k/-K and "keep" option. [V7.25]
+ * 	[92/01/17            vdelvecc]
  * 
  * 27-Dec-87  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added crosspatch support.  Removed nameserver support. [V7.24]

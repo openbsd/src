@@ -1,4 +1,4 @@
-/*	$OpenBSD: libc.h,v 1.4 2001/04/29 21:42:41 millert Exp $	*/
+/*	$OpenBSD: libc.h,v 1.5 2001/04/29 21:52:14 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -27,6 +27,34 @@
 /*
  **********************************************************************
  * HISTORY
+
+ * Revision 1.7  89/04/03  11:10:45  vanryzin
+ * 	Changed definition of qsort for c++ to indicate the procedure
+ * 	passed to qsort has parameters.  Since we were unsure if ANSI C
+ * 	could handle the syntax I placed the new definition within #if
+ * 	defined(c_plusplus) conditionals.  This may not be necessary
+ * 	and perhaps should be fixed at a later time.
+ * 	[89/04/03            vanryzin]
+ * 
+ * Revision 1.6  89/02/05  15:55:57  gm0w
+ * 	Added extern char *errmsg().
+ * 	[89/02/04            gm0w]
+ * 
+ * Revision 1.5  89/01/20  15:34:40  gm0w
+ * 	Moved all of the STDC changes to other existing include files
+ * 	back into this one.  Added non-STDC extern declarations for
+ * 	all functions without int return values to match those defined
+ * 	by STDC.  Added include of sysent.h.  Removed obsolete cdate
+ * 	extern declaration.
+ * 	[88/12/17            gm0w]
+ * 
+ * Revision 1.4  88/12/22  16:58:56  mja
+ * 	Correct __STDC__ parameter type for getenv().
+ * 	[88/12/20            dld]
+ * 
+ * Revision 1.3  88/12/14  23:31:42  mja
+ * 	Made file reentrant.  Added declarations for __STDC__.
+ * 	[88/01/06            jjk]
  * 
  * 30-Apr-88  Glenn Marcy (gm0w) at Carnegie-Mellon University
  *	Added pathof() extern.
