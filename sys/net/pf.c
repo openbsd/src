@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.105 2001/07/06 23:01:30 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.106 2001/07/07 01:56:09 marc Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -1353,7 +1353,7 @@ pf_send_icmp(struct mbuf *m, u_int8_t type, u_int8_t code)
 int
 pf_match_addr(u_int8_t n, u_int32_t a, u_int32_t m, u_int32_t b)
 {
-	if (a & m == b & m) {
+	if ((a & m) == (b & m)) {
 		if (n)
 			return (0);
 		else
