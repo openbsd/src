@@ -629,15 +629,17 @@ fs_set_sysname (const char *sys)
 {
     struct ViceIoctl a_params;
     int32_t set = 1;
+    size_t len;
 
-    a_params.in_size  = sizeof(set) + strlen(sys) + 1;
+    len = strlen(sys) + 1;
+    a_params.in_size  = sizeof(set) + len;
     a_params.in       = malloc(a_params.in_size);
     if (a_params.in == NULL)
 	return ENOMEM;
     a_params.out      = NULL;
     a_params.out_size = 0;
     memcpy (a_params.in, &set, sizeof(set));
-    strcpy (a_params.in + sizeof(set), sys);
+    strlcpy (a_params.in + sizeof(set), sys, len);
 
     if(k_pioctl (NULL, VIOC_AFS_SYSNAME, &a_params, 1) < 0)
 	return errno;
@@ -760,20 +762,21 @@ int
 fs_newcell (const char *cell, int nservers, char **servers)
 {
     struct ViceIoctl a_params;
-    int len;
+    int len, l;
     char *buf;
     int i, ret;
     u_int32_t *hp;
 
     nservers = min (nservers, 8);
 
-    len = 8 * sizeof(u_int32_t) + strlen(cell) + 1;
+    l = strlen(cell) + 1;
+    len = 8 * sizeof(u_int32_t) + l;
     buf = malloc (len);
     if (buf == NULL)
 	return errno;
 
     memset (buf, 0, len);
-    strcpy (buf + 8 * sizeof(u_int32_t), cell);
+    strlcpy (buf + 8 * sizeof(u_int32_t), cell, l);
     hp = (u_int32_t *)buf;
     for (i = 0; i < nservers; ++i) {
 	struct addrinfo hints, *res;
