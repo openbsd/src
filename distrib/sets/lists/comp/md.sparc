@@ -241,6 +241,8 @@
 ./usr/libdata/ldscripts/elf32_sparc_obsd.x
 ./usr/libdata/ldscripts/elf32_sparc_obsd.xbn
 ./usr/libdata/ldscripts/elf32_sparc_obsd.xc
+./usr/libdata/ldscripts/elf32_sparc_obsd.xd
+./usr/libdata/ldscripts/elf32_sparc_obsd.xdc
 ./usr/libdata/ldscripts/elf32_sparc_obsd.xn
 ./usr/libdata/ldscripts/elf32_sparc_obsd.xr
 ./usr/libdata/ldscripts/elf32_sparc_obsd.xs
