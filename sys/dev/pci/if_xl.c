@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_xl.c,v 1.36 1999/12/31 05:17:47 jason Exp $	*/
+/*	$OpenBSD: if_xl.c,v 1.37 2000/02/15 02:28:15 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2208,11 +2208,21 @@ xl_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (sc->xl_type == XL_TYPE_905B)
-			xl_setmulti_hash(sc);
-		else
-			xl_setmulti(sc);
-		error = 0;
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->arpcom) :
+		    ether_delmulti(ifr, &sc->arpcom);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware
+			 * filter accordingly.
+			 */
+			if (sc->xl_type == XL_TYPE_905B)
+				xl_setmulti_hash(sc);
+			else
+				xl_setmulti(sc);
+			error = 0;
+		}
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_dc.c,v 1.9 2000/01/16 16:17:56 jason Exp $	*/
+/*	$OpenBSD: if_dc.c,v 1.10 2000/02/15 02:28:14 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2610,8 +2610,18 @@ int dc_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		dc_setfilt(sc);
-		error = 0;
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->arpcom) :
+		    ether_delmulti(ifr, &sc->arpcom);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware
+			 * filter accordingly.
+			 */
+			dc_setfilt(sc);
+			error = 0;
+		}
 		break;
 	case SIOCGIFMEDIA:
 	case SIOCSIFMEDIA:

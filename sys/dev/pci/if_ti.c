@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.9 2000/01/18 05:26:25 jason Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.10 2000/02/15 02:28:15 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2351,7 +2351,15 @@ int ti_ioctl(ifp, command, data)
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
-		if (ifp->if_flags & IFF_RUNNING) {
+		error = (command == SIOCADDMULTI) ?
+		    ether_addmulti(ifr, &sc->arpcom) :
+		    ether_delmulti(ifr, &sc->arpcom);
+
+		if (error == ENETRESET) {
+			/*
+			 * Multicast list has changed; set the hardware
+			 * filter accordingly.
+			 */
 			ti_setmulti(sc);
 			error = 0;
 		}
