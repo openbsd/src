@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.71 2004/08/17 09:38:07 henning Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.72 2004/09/18 07:29:38 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -703,7 +703,7 @@ nextstate(struct con *cp)
 			cp->w = t + cp->stutter;
 			if (cp->mail[0] && cp->rcpt[0]) {
 				if (verbose)
-					syslog_r(LOG_DEBUG, &sdata,
+					syslog_r(LOG_INFO, &sdata,
 					    "(%s) %s: %s -> %s",
 					    cp->blacklists ? "BLACK" : "GREY",
 					    cp->addr, cp->mail,
