@@ -18,7 +18,7 @@ Modified to work with SSL by Niels Provos <provos@citi.umich.edu> in Canada.
 */
 
 #include "includes.h"
-RCSID("$Id: ssh.c,v 1.2 1999/09/28 04:45:37 provos Exp $");
+RCSID("$Id: ssh.c,v 1.3 1999/09/28 07:57:42 deraadt Exp $");
 
 #include "xmalloc.h"
 #include "ssh.h"
@@ -243,7 +243,13 @@ main(int ac, char **av)
 	{
 	  if (host)
 	    break;
-	  host = av[optind];
+          if ((cp = strchr(av[optind], '@'))) {
+            options.user = av[optind];
+            *cp = '\0';
+            host = ++cp;
+          }
+          else
+	    host = av[optind];
 	  continue;
 	}
       opt = av[optind][1];
