@@ -1,4 +1,4 @@
-/*	$OpenBSD: pchb.c,v 1.35 2002/07/12 20:17:03 mickey Exp $	*/
+/*	$OpenBSD: pchb.c,v 1.36 2002/08/22 23:03:48 deraadt Exp $	*/
 /*	$NetBSD: pchb.c,v 1.6 1997/06/06 23:29:16 thorpej Exp $	*/
 
 /*
@@ -190,6 +190,8 @@ pchbattach(parent, self, aux)
 		case PCI_PRODUCT_RCC_CIOB20:
 		case PCI_PRODUCT_RCC_CNB20LE:
 		case PCI_PRODUCT_RCC_CMIC_HE:
+		case PCI_PRODUCT_RCC_XX5:
+		case PCI_PRODUCT_RCC_CIOBX2:
 			bdnum = pci_conf_read(pa->pa_pc, pa->pa_tag, 0x44);
 			if (bdnum == 0)
 				break;
