@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.182 2000/04/16 14:10:19 aaron Exp $
+#	$OpenBSD: GENERIC,v 1.183 2000/04/27 02:19:42 millert Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -314,6 +314,7 @@ eap*	at pci? dev ? function ?		# Ensoniq AudioPCI S5016
 eso*	at pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 sv*	at pci? dev ? function ?		# S3 SonicVibes (S3 617)
 neo*	at pci? dev ? function ?		# NeoMagic 256AV/ZX
+cmpci*	at pci? dev ? function ?		# C-Media CMI8338/8738
 sb0	at isa? port 0x220 irq 5 drq 1		# SoundBlaster
 sb*	at isapnp?
 ess*	at isapnp?				# ESS Tech ES188[78], ES888
@@ -352,6 +353,7 @@ audio*  at eap?
 audio*	at eso?
 audio*  at sv?
 audio*	at neo?
+audio*	at cmpci?
 #audio*	at uaudio?
 
 bktr0   at pci? dev ? function ?

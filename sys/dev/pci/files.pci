@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.72 2000/04/18 19:35:31 jason Exp $
+#	$OpenBSD: files.pci,v 1.73 2000/04/27 02:19:41 millert Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -253,3 +253,8 @@ file	dev/pci/pucdata.c		puc
 # device declaration in sys/conf/files
 attach	an at pci with an_pci
 file	dev/pci/if_an_pci.c		an_pci
+
+# C-Media CMI8x38 Audio Chip
+device	cmpci: audio, auconv, mulaw
+attach	cmpci at pci
+file	dev/pci/cmpci.c			cmpci
