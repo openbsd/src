@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.5 1999/08/16 02:48:39 mickey Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.6 1999/11/26 17:58:17 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -23,8 +23,8 @@
  * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
  * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
- * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF MIND,
+ * USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
@@ -127,7 +127,7 @@ cpuattach(parent, self, aux)
 	} else {
 		static const char lvls[4][4] = { "0", "1", "1.5", "2" };
 
-		printf("level %s, category %c, ",
+		printf("lev %s, cat %c, ",
 		       lvls[pdc_model.pa_lvl], "AB"[pdc_model.mc]);
 	}
 
@@ -135,7 +135,7 @@ cpuattach(parent, self, aux)
 	if (mhz % 100 > 9)
 		printf(".%02d", mhz % 100);
 
-	printf(" MHz clock\n%s: %s", self->dv_xname,
+	printf(" MHz clk\n%s: %s", self->dv_xname,
 	       pdc_model.sh? "shadows, ": "");
 
 	if (pdc_cache.dc_conf.cc_sh)
