@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.7 2000/05/27 19:42:49 art Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.8 2000/05/27 20:25:04 art Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.16 1997/07/12 16:18:36 perry Exp $	*/
 
 /*
@@ -170,6 +170,16 @@
 #define VM_PHYSSEG_MAX		(16)
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
 #define VM_PHYSSEG_NOADD	/* XXX this should be done right later */
+
+/*
+ * Allow supporting Zorro-II memory as lower priority:
+ *
+ *     - DEFAULT for Zorro-III memory (presumably 32 bit)
+ *     - ZORROII for Zorro-II memory (16 bit, Zorro-II DMA)
+ */
+#define VM_NFREELIST		2
+#define VM_FREELIST_DEFAULT	0
+#define VM_FREELIST_ZORROII	1
 
 /* 
  * pmap-specific data stored in the vm_physmem[] array.
