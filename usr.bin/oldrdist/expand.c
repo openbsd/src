@@ -1,4 +1,4 @@
-/*	$OpenBSD: expand.c,v 1.3 1996/07/19 21:57:32 millert Exp $	*/
+/*	$OpenBSD: expand.c,v 1.4 1996/07/25 05:13:48 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)expand.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: expand.c,v 1.3 1996/07/19 21:57:32 millert Exp $";
+static char *rcsid = "$OpenBSD: expand.c,v 1.4 1996/07/25 05:13:48 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -183,12 +183,13 @@ expstr(s)
 			*tail = savec;
 		if (tp != NULL) {
 			for (; tp != NULL; tp = tp->n_next) {
-				sprintf(buf, "%s%s%s", s, tp->n_name, tail);
+				snprintf(buf, BUFSIZ, "%s%s%s", s,
+					tp->n_name, tail);
 				expstr(buf);
 			}
 			return;
 		}
-		sprintf(buf, "%s%s", s, tail);
+		snprintf(buf, BUFSIZ, "%s%s", s, tail);
 		expstr(buf);
 		return;
 	}

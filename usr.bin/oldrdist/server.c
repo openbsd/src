@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.4 1996/07/19 21:57:34 millert Exp $	*/
+/*	$OpenBSD: server.c,v 1.5 1996/07/25 05:13:49 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.4 1996/07/19 21:57:34 millert Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.5 1996/07/25 05:13:49 millert Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -93,7 +93,7 @@ server()
 
 	rem = 0;
 	oumask = umask(0);
-	(void) sprintf(buf, "V%d\n", VERSION);
+	(void) snprintf(buf, BUFSIZ, "V%d\n", VERSION);
 	(void) write(rem, buf, strlen(buf));
 
 	if (getuid() != geteuid()) {
@@ -279,7 +279,7 @@ install(src, dest, destdir, opts)
 	/*
 	 * Pass the destination file/directory name to remote.
 	 */
-	(void) sprintf(buf, "%c%s\n", destdir ? 'T' : 't', dest);
+	(void) snprintf(buf, BUFSIZ, "%c%s\n", destdir ? 'T' : 't', dest);
 	if (debug)
 		printf("buf = %s", buf);
 	(void) write(rem, buf, strlen(buf));
@@ -335,14 +335,14 @@ sendf(rname, opts)
 			log(lfp, "%s: no password entry for uid %d \n",
 				target, stb.st_uid);
 			pw = NULL;
-			(void)sprintf(user, ":%lu", stb.st_uid);
+			(void) snprintf(user, sizeof(user), ":%lu", stb.st_uid);
 		}
 	if (gr == NULL || gr->gr_gid != stb.st_gid)
 		if ((gr = getgrgid(stb.st_gid)) == NULL) {
 			log(lfp, "%s: no name for group %d\n",
 				target, stb.st_gid);
 			gr = NULL;
-			(void)sprintf(group, ":%lu", stb.st_gid);
+			(void) snprintf(group, sizeof(group), ":%lu", stb.st_gid);
 		}
 	if (u == 1) {
 		if (opts & VERIFY) {
@@ -359,7 +359,7 @@ sendf(rname, opts)
 			error("%s: %s\n", target, strerror(errno));
 			return;
 		}
-		(void) sprintf(buf, "D%o %04o 0 0 %s %s %s\n", opts,
+		(void) snprintf(buf, BUFSIZ, "D%o %04o 0 0 %s %s %s\n", opts,
 			stb.st_mode & 07777, protoname(), protogroup(), rname);
 		if (debug)
 			printf("buf = %s", buf);
@@ -407,11 +407,11 @@ sendf(rname, opts)
 			if ((lp = savelink(&stb)) != NULL) {
 				/* install link */
 				if (*lp->target == 0)
-				(void) sprintf(buf, "k%o %s %s\n", opts,
-					lp->pathname, rname);
+				(void) snprintf(buf, BUFSIZ, "k%o %s %s\n",
+					opts, lp->pathname, rname);
 				else
-				(void) sprintf(buf, "k%o %s/%s %s\n", opts,
-					lp->target, lp->pathname, rname);
+				(void) snprintf(buf, BUFSIZ, "k%o %s/%s %s\n",
+					opts, lp->target, lp->pathname, rname);
 				if (debug)
 					printf("buf = %s", buf);
 				(void) write(rem, buf, strlen(buf));
@@ -419,8 +419,8 @@ sendf(rname, opts)
 				return;
 			}
 		}
-		(void) sprintf(buf, "K%o %o %qd %ld %s %s %s\n", opts,
-			stb.st_mode & 07777, stb.st_size, stb.st_mtime,
+		(void) snprintf(buf, BUFSIZ, "K%o %o %qd %ld %s %s %s\n",
+			opts, stb.st_mode & 07777, stb.st_size, stb.st_mtime,
 			protoname(), protogroup(), rname);
 		if (debug)
 			printf("buf = %s", buf);
@@ -455,11 +455,11 @@ sendf(rname, opts)
 		if ((lp = savelink(&stb)) != NULL) {
 			/* install link */
 			if (*lp->target == 0)
-			(void) sprintf(buf, "k%o %s %s\n", opts,
+			(void) snprintf(buf, BUFSIZ, "k%o %s %s\n", opts,
 				lp->pathname, rname);
 			else
-			(void) sprintf(buf, "k%o %s/%s %s\n", opts,
-				lp->target, lp->pathname, rname);
+			(void) snprintf(buf, BUFSIZ, "k%o %s/%s %s\n",
+				opts, lp->target, lp->pathname, rname);
 			if (debug)
 				printf("buf = %s", buf);
 			(void) write(rem, buf, strlen(buf));
@@ -472,7 +472,7 @@ sendf(rname, opts)
 		error("%s: %s\n", target, strerror(errno));
 		return;
 	}
-	(void) sprintf(buf, "R%o %o %qd %ld %s %s %s\n", opts,
+	(void) snprintf(buf, BUFSIZ, "R%o %o %qd %ld %s %s %s\n", opts,
 		stb.st_mode & 07777, stb.st_size, stb.st_mtime,
 		protoname(), protogroup(), rname);
 	if (debug)
@@ -510,7 +510,8 @@ dospecial:
 		log(lfp, "special \"%s\"\n", sc->sc_name);
 		if (opts & VERIFY)
 			continue;
-		(void) sprintf(buf, "SFILE=%s;%s\n", target, sc->sc_name);
+		(void) snprintf(buf, BUFSIZ, "SFILE=%s;%s\n", target,
+			sc->sc_name);
 		if (debug)
 			printf("buf = %s", buf);
 		(void) write(rem, buf, strlen(buf));
@@ -569,7 +570,7 @@ update(rname, opts, stp)
 	/*
 	 * Check to see if the file exists on the remote machine.
 	 */
-	(void) sprintf(buf, "Q%s\n", rname);
+	(void) snprintf(buf, BUFSIZ, "Q%s\n", rname);
 	if (debug)
 		printf("buf = %s", buf);
 	(void) write(rem, buf, strlen(buf));
@@ -673,7 +674,7 @@ query(name)
 
 	switch (stb.st_mode & S_IFMT) {
 	case S_IFREG:
-		(void) sprintf(buf, "Y%qd %ld\n", stb.st_size,
+		(void) snprintf(buf, BUFSIZ, "Y%qd %ld\n", stb.st_size,
 		    stb.st_mtime);
 		(void) write(rem, buf, strlen(buf));
 		break;
@@ -776,7 +777,7 @@ recvf(cmd, type)
 					return;
 				}
 				buf[0] = '\0';
-				(void) sprintf(buf + 1,
+				(void) snprintf(buf + 1, BUFSIZ - 1,
 					"%s: Warning: remote mode %o != local mode %o\n",
 					target, stb.st_mode & 07777, mode);
 				(void) write(rem, buf, strlen(buf + 1) + 1);
@@ -801,10 +802,10 @@ recvf(cmd, type)
 	if (cp == NULL)
 		strcpy(new, tempname);
 	else if (cp == target)
-		(void) sprintf(new, "/%s", tempname);
+		(void) snprintf(new, sizeof(new), "/%s", tempname);
 	else {
 		*cp = '\0';
-		(void) sprintf(new, "%s/%s", target, tempname);
+		(void) snprintf(new, sizeof(new), "%s/%s", target, tempname);
 		*cp = '/';
 	}
 
@@ -904,7 +905,8 @@ badnew1:		error("%s:%s: %s\n", host, new, strerror(errno));
 		(void) fclose(f2);
 		if (opts & VERIFY) {
 differ:			buf[0] = '\0';
-			(void) sprintf(buf + 1, "need to update: %s\n",target);
+			(void) snprintf(buf + 1, BUFSIZ - 1,
+				"need to update: %s\n",target);
 			(void) write(rem, buf, strlen(buf + 1) + 1);
 			goto badnew2;
 		}
@@ -937,7 +939,8 @@ badtarget:	error("%s:%s: %s\n", host, target, strerror(errno));
 
 	if (opts & COMPARE) {
 		buf[0] = '\0';
-		(void) sprintf(buf + 1, "updated %s\n", target);
+		(void) snprintf(buf + 1, BUFSIZ - 1,
+			"updated %s\n", target);
 		(void) write(rem, buf, strlen(buf + 1) + 1);
 	} else
 		ack();
@@ -1107,7 +1110,7 @@ rmchk(opts)
 	/*
 	 * Tell the remote to clean the files from the last directory sent.
 	 */
-	(void) sprintf(buf, "C%o\n", opts & VERIFY);
+	(void) snprintf(buf, BUFSIZ, "C%o\n", opts & VERIFY);
 	if (debug)
 		printf("buf = %s", buf);
 	(void) write(rem, buf, strlen(buf));
@@ -1219,7 +1222,7 @@ clean(cp)
 			error("%s:%s: %s\n", host, target, strerror(errno));
 			continue;
 		}
-		(void) sprintf(buf, "Q%s\n", dp->d_name);
+		(void) snprintf(buf, BUFSIZ, "Q%s\n", dp->d_name);
 		(void) write(rem, buf, strlen(buf));
 		cp = buf;
 		do {
@@ -1233,7 +1236,8 @@ clean(cp)
 		if (opts & VERIFY) {
 			cp = buf;
 			*cp++ = '\0';
-			(void) sprintf(cp, "need to remove: %s\n", target);
+			(void) snprintf(cp, BUFSIZ - 1,
+				"need to remove: %s\n", target);
 			(void) write(rem, buf, strlen(cp) + 1);
 		} else
 			removeit(&stb);
@@ -1311,7 +1315,7 @@ bad:
 removed:
 	cp = buf;
 	*cp++ = '\0';
-	(void) sprintf(cp, "removed %s\n", target);
+	(void) snprintf(cp, BUFSIZ - 1, "removed %s\n", target);
 	(void) write(rem, buf, strlen(cp) + 1);
 }
 
@@ -1353,7 +1357,7 @@ dospecial(cmd)
 	(void) close(fd[1]);
 	s = sbuf;
 	*s++ = '\0';
-	while ((i = read(fd[0], buf, sizeof(buf))) > 0) {
+	while ((i = read(fd[0], buf, BUFSIZ)) > 0) {
 		cp = buf;
 		do {
 			*s++ = *cp++;
@@ -1412,11 +1416,11 @@ log(fp, fmt, va_alist)
 #endif
 	/* Print changes locally if not quiet mode */
 	if (!qflag)
-		(void)vprintf(fmt, ap);
+		(void) vprintf(fmt, ap);
 
 	/* Save changes (for mailing) if really updating files */
 	if (!(options & VERIFY) && fp != NULL)
-		(void)vfprintf(fp, fmt, ap);
+		(void) vfprintf(fp, fmt, ap);
 	va_end(ap);
 }
 
@@ -1441,19 +1445,19 @@ error(fmt, va_alist)
 	if (iamremote) {
 		if (!fp && (rem < 0 || !(fp = fdopen(rem, "w"))))
 			return;
-		(void)fprintf(fp, "%crdist: ", 0x01);
-		(void)vfprintf(fp, fmt, ap);
+		(void) fprintf(fp, "%crdist: ", 0x01);
+		(void) vfprintf(fp, fmt, ap);
 		fflush(fp);
 	}
 	else {
 		fflush(stdout);
-		(void)fprintf(stderr, "rdist: ");
-		(void)vfprintf(stderr, fmt, ap);
+		(void) fprintf(stderr, "rdist: ");
+		(void) vfprintf(stderr, fmt, ap);
 		fflush(stderr);
 	}
 	if (lfp != NULL) {
-		(void)fprintf(lfp, "rdist: ");
-		(void)vfprintf(lfp, fmt, ap);
+		(void) fprintf(lfp, "rdist: ");
+		(void) vfprintf(lfp, fmt, ap);
 		fflush(lfp);
 	}
 	va_end(ap);
@@ -1480,19 +1484,19 @@ fatal(fmt, va_alist)
 	if (!fp && !(fp = fdopen(rem, "w")))
 		return;
 	if (iamremote) {
-		(void)fprintf(fp, "%crdist: ", 0x02);
-		(void)vfprintf(fp, fmt, ap);
+		(void) fprintf(fp, "%crdist: ", 0x02);
+		(void) vfprintf(fp, fmt, ap);
 		fflush(fp);
 	}
 	else {
 		fflush(stdout);
-		(void)fprintf(stderr, "rdist: ");
-		(void)vfprintf(stderr, fmt, ap);
+		(void) fprintf(stderr, "rdist: ");
+		(void) vfprintf(stderr, fmt, ap);
 		fflush(stderr);
 	}
 	if (lfp != NULL) {
-		(void)fprintf(lfp, "rdist: ");
-		(void)vfprintf(lfp, fmt, ap);
+		(void) fprintf(lfp, "rdist: ");
+		(void) vfprintf(lfp, fmt, ap);
 		fflush(lfp);
 	}
 	cleanup(0);
@@ -1573,7 +1577,7 @@ note(fmt, va_alist)
 #else
 	va_start(ap);
 #endif
-	(void)vsnprintf(buf, sizeof(buf), fmt, ap);
+	(void) vsnprintf(buf, BUFSIZ, fmt, ap);
 	va_end(ap);
 	comment(buf);
 }

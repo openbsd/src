@@ -1,4 +1,4 @@
-/*	$OpenBSD: docmd.c,v 1.4 1996/07/19 21:57:31 millert Exp $	*/
+/*	$OpenBSD: docmd.c,v 1.5 1996/07/25 05:13:47 millert Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)docmd.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: docmd.c,v 1.4 1996/07/19 21:57:31 millert Exp $";
+static char *rcsid = "$OpenBSD: docmd.c,v 1.5 1996/07/25 05:13:47 millert Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -245,7 +245,8 @@ makeconn(rhost)
 		ruser = user;
 	if (!qflag)
 		printf("updating host %s\n", rhost);
-	(void) sprintf(buf, "%s -Server%s", _PATH_RDIST, qflag ? " -q" : "");
+	(void) snprintf(buf, BUFSIZ, "%s -Server%s", _PATH_RDIST,
+		qflag ? " -q" : "");
 #if	defined(DIRECT_RCMD)
 	if (port < 0) {
 		struct servent *sp;
@@ -564,7 +565,7 @@ notify(file, rhost, to, lmod)
 	/*
 	 * Create a pipe to mailling program.
 	 */
-	(void)sprintf(buf, "%s -oi -t", _PATH_SENDMAIL);
+	(void) snprintf(buf, BUFSIZ, "%s -oi -t", _PATH_SENDMAIL);
 	pf = popen(buf, "w");
 	if (pf == NULL) {
 		error("notify: \"%s\" failed\n", _PATH_SENDMAIL);
