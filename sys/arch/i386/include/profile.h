@@ -1,4 +1,4 @@
-/*	$OpenBSD: profile.h,v 1.9 2003/08/21 05:08:15 drahn Exp $	*/
+/*	$OpenBSD: profile.h,v 1.10 2005/01/07 02:03:17 pascoe Exp $	*/
 /*	$NetBSD: profile.h,v 1.6 1995/03/28 18:17:08 jtc Exp $	*/
 
 /*
@@ -58,9 +58,10 @@ mcount()								\
 
 #ifdef _KERNEL
 /*
- * Note that we assume splhigh() and splx() cannot call mcount()
- * recursively.
+ * We inline the code that splhigh and splx would do here as otherwise we would
+ * call recursively into mcount() as machdep.c is compiled with -pg on a 
+ * profiling build.
  */
-#define	MCOUNT_ENTER	s = splhigh()
-#define	MCOUNT_EXIT	splx(s)
+#define	MCOUNT_ENTER	_SPLRAISE(s, IPL_HIGH); __splbarrier()
+#define	MCOUNT_EXIT	__splbarrier(); _SPLX(s)
 #endif /* _KERNEL */

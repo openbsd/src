@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.314 2004/12/24 21:22:00 pvalchev Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.315 2005/01/07 02:03:17 pascoe Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -4185,10 +4185,9 @@ int
 splraise(ncpl)
 	int ncpl;
 {
-	int ocpl = lapic_tpr;
+	int ocpl;
 
-	if (ncpl > ocpl)
-		lapic_tpr = ncpl;
+	_SPLRAISE(ocpl, ncpl);
 	return (ocpl);
 }
 
@@ -4200,9 +4199,7 @@ void
 splx(ncpl)
 	int ncpl;
 {
-	lapic_tpr = ncpl;
-	if (ipending & IUNMASK(ncpl))
-		Xspllower();
+	_SPLX(ncpl);
 }
 
 /*

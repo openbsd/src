@@ -1,4 +1,4 @@
-/*	$OpenBSD: icu.s,v 1.21 2004/06/13 21:49:16 niklas Exp $	*/
+/*	$OpenBSD: icu.s,v 1.22 2005/01/07 02:03:17 pascoe Exp $	*/
 /*	$NetBSD: icu.s,v 1.45 1996/01/07 03:59:34 mycroft Exp $	*/
 
 /*-
@@ -42,25 +42,6 @@ _C_LABEL(netisr):
 	.long	0		# scheduling bits for network
 
 	.text
-
-#if defined(PROF) || defined(GPROF)
-	.globl	_C_LABEL(splhigh), _C_LABEL(splx)
-
-	ALIGN_TEXT
-_C_LABEL(splhigh):
-	movl	$IPL_HIGH,%eax
-	xchgl	%eax,CPL
-	ret
-
-	ALIGN_TEXT
-_C_LABEL(splx):
-	movl	4(%esp),%eax
-	movl	%eax,CPL
-	testl	%eax,%eax
-	jnz	_C_LABEL(Xspllower)
-	ret
-#endif /* PROF || GPROF */
-	
 /*
  * Process pending interrupts.
  *
