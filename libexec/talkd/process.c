@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.4 1996/06/24 13:41:29 mickey Exp $	*/
+/*	$OpenBSD: process.c,v 1.5 1996/06/25 12:09:35 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983 Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)process.c	5.10 (Berkeley) 2/26/91";*/
-static char rcsid[] = "$Id: process.c,v 1.4 1996/06/24 13:41:29 mickey Exp $";
+static char rcsid[] = "$Id: process.c,v 1.5 1996/06/25 12:09:35 mickey Exp $";
 #endif /* not lint */
 
 /*
@@ -230,7 +230,7 @@ find_user(name, tty)
 			}
 		}
 	fclose(fd);
-	if (status == SUCCESS)
+	if (*tty != '\0' && status == SUCCESS)
 		strcpy(tty, ubuf1.ut_line);
 	return (status);
 }
