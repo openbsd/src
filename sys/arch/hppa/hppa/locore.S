@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.9 1999/05/21 23:19:17 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.10 1999/06/12 17:35:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -77,14 +77,19 @@
 	.import	boothowto, data
 	.import	bootdev, data
 	.import	esym, data
-	.import	curproc, code
+	.import	curproc, data
 	.import	fpu_curproc, data
 	.import	want_resched, data
 	.import	proc0, data
 	.import	proc0paddr, data
 	.import	intr_recurse, data
-
 	.import	panic, code
+
+	.space $PRIVATE$
+	.subspa $BSS$
+	.export	proc0stack, data
+proc0stack
+	.block	5*NBPG
 
 /*
  * This is the starting location for the kernel
@@ -142,10 +147,11 @@ ENTRY(__start)
 	 * kernel stack lives here (arg3 is esym)
 	 * arg0 will be available space for hppa_init()
 	 */
-#define	PROC0STKSZ	5*NBPG
-	ldo	R%NBPG(arg3), sp
-	ldo	R%PROC0STKSZ(sp), arg0
+	ldil	L%proc0stack, t2
+	ldo	R%proc0stack(t2), t2
+	copy	t2, sp
 	ldil	L%proc0paddr, t1
+	ldo	NBPG(arg3), arg0
 	stw	arg3, R%proc0paddr(t1)
 	stw	r0, TF_R2 +pcb_tf+u_pcb(sr0, arg3)
 	stw	dp, TF_R27+pcb_tf+u_pcb(sr0, arg3)
@@ -481,13 +487,11 @@ $syscall_return
 	ldw	TF_R17+pcb_tf+u_pcb(t4), r17
 	ldw	TF_R18+pcb_tf+u_pcb(t4), r18
 
-	ldw	TF_CR8+pcb_tf(sr1,t4), t3
-	mtctl	t3, pidr1
-	mtctl	t3, pidr3
-	mtctl	t3, pidr4
-
-	ldw	p_vmspace(t1), t3
-	ldw	vm_pmap+pmap_space(t3), t3
+	ldw	TF_CR8+pcb_tf(sr1,t4), t2
+	ldw	pcb_space+u_pcb(t4), t3
+	mtctl	t2, pidr1
+	mtctl	t2, pidr3
+	mtctl	t2, pidr4
 	mtctl	t3, sr0
 	mtctl	t3, sr2
 	mtctl	t3, sr3
@@ -967,7 +971,7 @@ TLABEL(all)
 	comb,=,n r0, t2, $trap_recurse
 
 	b	$trap_trap
-	ldw	p_md(t2), t2
+	ldo	p_md(t2), t2
 
 $trap_recurse
 	copy	sp, t2
@@ -1499,6 +1503,16 @@ $spstrcpy_exit
 	stw	ret1, VA_ARG5(sp)
 EXIT(spstrcpy)
 
+
+/*
+ * adjust the time value
+ */
+ENTRY(microtime)
+
+	
+	bv,n	(rp)
+EXIT(microtime)
+
 	.import	whichqs, data
 	.import	qs, data
 /*
@@ -1507,24 +1521,23 @@ EXIT(spstrcpy)
  */
 ENTRY(setrunqueue)
 #ifdef DIAGNOSTIC
-	ldw	p_back(%arg0), t1
-	comb,=	r0, t1, Lsetrunqueue_panic
+	ldw	p_back(arg0), t1
+	comb,<>,n r0, t1, $setrunqueue_panic
 	ldw	p_wchan(arg0), t1
-	comb,=	r0, t1, Lsetrunqueue_panic
-	ldw	p_stat(arg0), t1
-	comib,<> SRUN, t1, Lsetrunqueue_panic
-	b	Lsetrunqueue_ok
-Lsrqpstr
+	comb,<>,n r0, t1, $setrunqueue_panic
+	ldb	p_stat(arg0), t1
+	comib,=,n SRUN, t1, $setrunqueue_ok
+$srqpstr
 	.asciz	"setrunqueue"
-Lsetrunqueue_panic
-	ldil	L%Lsrqpstr, arg0
-	ldo	R%Lsrqpstr(arg0), arg0
-	ldil    L%panic, r1
-	ldo     R%panic(r1), r1
+$setrunqueue_panic
+	ldil	L%panic, r1
+	ldil	L%$srqpstr, arg0
+	ldo	R%panic(r1), r1
 	.call
-	blr     %r0, rp
-	bv,n    %r0(r1)
-Lsetrunqueue_ok
+	blr	%r0, rp
+	bv	%r0(r1)
+	ldo	R%$srqpstr(arg0), arg0
+$setrunqueue_ok
 #endif
 
 	ldw	p_priority(arg0), t1
