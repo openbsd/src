@@ -1,4 +1,4 @@
-.\"	$OpenBSD: exec.3,v 1.10 2000/04/18 03:01:26 aaron Exp $
+.\"	$OpenBSD: exec.3,v 1.11 2000/08/31 16:24:38 deraadt Exp $
 .\"
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -138,9 +138,12 @@ character.
 The search path is the path specified in the environment by
 .Ev PATH
 variable.
-If this variable isn't specified, the default path
-.Pa /bin:/usr/bin:\&.
-is used.
+If this variable isn't specified,
+.Va _PATH_DEFPATH from
+.Pa <paths.h>
+is used instead, its value being:
+.Pa /usr/bin:/bin:/usr/sbin:/sbin:/usr/X11R6/bin:/usr/local/bin
+.Pp
 In addition, certain errors are treated specially.
 .Pp
 If permission is denied for a file (the attempted
@@ -219,8 +222,7 @@ and
 .Fn execvp
 functions was
 .Pa \&.:/bin:/usr/bin .
-This was changed to place the current directory last to enhance system
-security.
+This was changed to improve security and behaviour.
 .Pp
 The behavior of
 .Fn execlp
