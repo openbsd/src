@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: pcidevs,v 1.116 1999/02/03 08:55:34 downsj Exp 
+ *	OpenBSD: pcidevs,v 1.117 1999/02/08 18:17:20 millert Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1059,7 +1059,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "82C599 PCI-VLB",
 	},
 	{
-	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_SIO,
+	    PCI_VENDOR_CONTAQ, PCI_PRODUCT_CONTAQ_82C693,
 	    0,
 	    "Contaq Microsystems",
 	    "CY82C693U PCI-ISA",
