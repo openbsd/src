@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rlreg.h,v 1.6 1998/12/31 02:35:14 jason Exp $	*/
+/*	$OpenBSD: if_rlreg.h,v 1.7 1999/02/26 21:25:43 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_rlreg.h,v 1.4 1998/12/10 19:02:07 wpaul Exp $
+ *	$FreeBSD: if_rlreg.h,v 1.5 1999/02/23 15:38:25 wpaul Exp $
  */
 
 /*
@@ -371,20 +371,40 @@ struct rl_softc {
 #define	RT_VENDORID				0x10EC
 
 /*
- * Accton PCI vendor ID
- */
-#define ACCTON_VENDORID				0x1113
-
-/*
  * RealTek chip device IDs.
  */
 #define	RT_DEVICEID_8129			0x8129
 #define	RT_DEVICEID_8139			0x8139
 
 /*
+ * Accton PCI vendor ID
+ */
+#define ACCTON_VENDORID				0x1113
+
+/*
  * Accton MPX 5030/5038 device ID.
  */
 #define ACCTON_DEVICEID_5030			0x1211
+
+/*
+ * Delta Electronics Vendor ID.
+ */
+#define DELTA_VENDORID				0x1500
+
+/*
+ * Delta device IDs.
+ */
+#define DELTA_DEVICEID_8139			0x1360
+
+/*
+ * Addtron vendor ID.
+ */
+#define ADDTRON_VENDORID			0x4033
+
+/*
+ * Addtron device IDs.
+ */
+#define ADDTRON_DEVICEID_8139			0x1360
 
 /*
  * Texas Instruments PHY identifiers

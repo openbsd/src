@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.12 1999/02/26 17:05:54 jason Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.13 1999/02/26 21:25:44 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$FreeBSD: if_rl.c,v 1.8 1998/12/24 18:39:48 wpaul Exp $
+ *	$FreeBSD: if_rl.c,v 1.12 1999/02/23 15:38:25 wpaul Exp $
  */
 
 /*
@@ -491,7 +491,7 @@ static int rl_mii_writereg(sc, frame)
 }
 
 /*
- * Calculate CRC of a multicast group address, return the lower 6 bits.
+ * Calculate CRC of a multicast group address, return the upper 6 bits.
  */
 static u_int8_t rl_calchash(addr)
 	caddr_t			addr;
@@ -515,7 +515,7 @@ static u_int8_t rl_calchash(addr)
 	}
 
 	/* return the filter bit position */
-	return(crc & 0x0000003F);
+	return(crc >> 26);
 }
 
 /*
@@ -537,7 +537,7 @@ static void rl_setmulti(sc)
 
 	rxfilt = CSR_READ_4(sc, RL_RXCFG);
 
-	if (ifp->if_flags & IFF_ALLMULTI) {
+	if (ifp->if_flags & IFF_ALLMULTI || ifp->if_flags & IFF_PROMISC) {
 		rxfilt |= RL_RXCFG_RX_MULTI;
 		CSR_WRITE_4(sc, RL_RXCFG, rxfilt);
 		CSR_WRITE_4(sc, RL_MAR0, 0xFFFFFFFF);
@@ -661,7 +661,7 @@ static void rl_rxeof(sc)
 	else
 		max_bytes = limit - cur_rx;
 
-	while((CSR_READ_1(sc, RL_COMMAND) & 1) == 0) {
+	while((CSR_READ_1(sc, RL_COMMAND) & RL_CMD_EMPTY_RXBUF) == 0) {
 		rxbufpos = sc->rl_cdata.rl_rx_buf + cur_rx;
 		rxstat = *(u_int32_t *)rxbufpos;
 
@@ -1378,7 +1378,8 @@ rl_attach(parent, self, aux)
 
 	rl_read_eeprom(sc, (caddr_t)&rl_did, RL_EE_PCI_DID, 1, 0);
 
-	if (rl_did == RT_DEVICEID_8139 || rl_did == ACCTON_DEVICEID_5030)
+	if (rl_did == RT_DEVICEID_8139 || rl_did == ACCTON_DEVICEID_5030 ||
+	    rl_did == DELTA_DEVICEID_8139)
 		sc->rl_type = RL_8139;
 	else if (rl_did == RT_DEVICEID_8129)
 		sc->rl_type = RL_8129;
@@ -1427,6 +1428,7 @@ rl_attach(parent, self, aux)
 	ifp->if_start = rl_start;
 	ifp->if_watchdog = rl_watchdog;
 	ifp->if_baudrate = 10000000;
+	ifp->if_snd.ifq_maxlen = RL_TX_LIST_CNT - 1;
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 
 	/*
