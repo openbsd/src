@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.20 2002/03/26 02:12:29 hugh Exp $	*/
+/*	$OpenBSD: theo.c,v 1.21 2002/04/01 00:34:07 miod Exp $	*/
 
 #include "def.h"
 #include "kbd.h"
@@ -81,7 +81,8 @@ static const char *talk[] = {
 	"you bring new meaning to the terms slackass. I will have to invent a new term.",
 	"if they cut you out, muddy their back yards",
 	"Make them want to start over, and play nice the next time.",
-	"It is clear that this has not been thought through."
+	"It is clear that this has not been thought through.",
+	"if you do not test that, you are banned from editing theo.c"
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
