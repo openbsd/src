@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_altq.c,v 1.42 2003/03/06 12:50:40 henning Exp $	*/
+/*	$OpenBSD: pfctl_altq.c,v 1.43 2003/03/08 14:40:03 henning Exp $	*/
 
 /*
  * Copyright (C) 2002
@@ -436,7 +436,9 @@ cbq_compute_idletime(struct pfctl *pf, struct pf_altq *pa)
 		 * (bandwidth < 6Kbps when max_pkt_size=1500)
 		 */
 		if (pa->bandwidth != 0 && (pf->opts & PF_OPT_QUIET) == 0)
-			warnx("queue bandwidth must be larger than 6Kb");
+			warnx("queue bandwidth must be larger than %s",
+			    rate2str(ifnsPerByte * (double)opts->maxpktsize /
+			    (double)INT_MAX * (double)pa->ifbandwidth));
 			fprintf(stderr, "cbq: queue %s is too slow!\n",
 			    pa->qname);
 		nsPerByte = (double)(INT_MAX / opts->maxpktsize);
