@@ -28,26 +28,13 @@ sendbug \- send problem report (PR) about OpenBSD to a central support site
 .SH SYNOPSIS
 .B sendbug
 [
-.I site
-]
-[
-.B \-f
-.I problem-report
-]
-[
-.B \-t
-.I mail-address
-]
-.br
-.in +0.8i
-[
 .B \-P
 ]
 [
 .B \-L
 ]
 [
-.B \-\-request-id
+.B \-V
 ]
 [
 .B \--version
@@ -57,15 +44,7 @@ sendbug \- send problem report (PR) about OpenBSD to a central support site
 is a tool used to submit 
 .I problem reports 
 .\" SITE ADMINISTRATORS - change this if you use a local default
-(PRs) to a central support site.  In most cases the correct 
-.I site
-will be the default.  This argument indicates the support site which
-is responsible for the category of problem involved.  Some sites may
-use a local address as a default.  
-.I site
-values are defined by using the 
-.BR aliases (5).
-.LP
+(PRs) to a central support site.
 .B sendbug
 invokes an editor on a problem report template (after trying to fill
 in some fields with reasonable default values).  When you exit the
@@ -89,29 +68,6 @@ The more precise your problem description and the more complete your
 information, the faster your support team can solve your problems.
 .SH OPTIONS
 .TP
-.BI \-f " problem-report"
-specify a file (\fIproblem-report\fR) which already contains a
-complete problem report.
-.B sendbug
-sends the contents of the file without invoking the editor.  If 
-the value for 
-.I problem-report
-is
-.BR `\|\-\|' ,
-then
-.B sendbug
-reads from standard input.
-.TP
-.BI \-t " mail-address"
-Change mail address at the support site for problem reports.  The
-default 
-.I mail-address
-is the address used for the default 
-.IR site .  
-Use the
-.I site
-argument rather than this option in nearly all cases.
-.TP
 .B \-P
 print the form specified by the environment variable 
 .B PR_FORM 
@@ -122,23 +78,14 @@ is not set, print the standard blank PR template.  No mail is sent.
 .B -L
 print the list of available categories.  No mail is sent.
 .TP
-.B \-\-request\-id
-sends mail to the default support site, or
-.I site
-if specified, with a request for your 
-.IR submitter-id . 
-If you are
-not affiliated with 
-.IR site ,
-use a
-.I submitter-id
-of
-.BR net \|'.
-.TP
-.B \-v
-Display the 
+.B \-V
+Display the
 .B sendbug
 version number.
+.TP
+.B \--version
+Same as
+.B \-V
 .LP
 Note: use
 .B sendbug
