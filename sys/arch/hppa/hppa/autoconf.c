@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.39 2003/12/23 23:07:47 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.40 2004/09/14 23:07:56 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -375,9 +375,9 @@ print_devpath(const char *label, struct pz_device *pz)
 		if (pz->pz_bc[i] >= 0)
 			printf("%d/", pz->pz_bc[i]);
 
-	printf("%d.%d", pz->pz_mod, pz->pz_layers[0]);
+	printf("%d.%x", pz->pz_mod, pz->pz_layers[0]);
 	for (i = 1; i < 6 && pz->pz_layers[i]; i++)
-		printf(".%d", pz->pz_layers[i]);
+		printf(".%x", pz->pz_layers[i]);
 
 	printf(" class=%d flags=%b hpa=%p spa=%p io=%p\n", pz->pz_class,
 	    pz->pz_flags, PZF_BITS, pz->pz_hpa, pz->pz_spa, pz->pz_iodc_io);
