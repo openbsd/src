@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.54 2001/03/01 23:19:34 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.55 2001/03/29 19:02:06 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -833,6 +833,9 @@ dumpsys()
 	printf("dumpsys: TBD\n");
 }
 
+volatile int cpl, ipending, astpending, tickspending;
+int imask[7];
+
 /*
  * Soft networking interrupts.
  */
@@ -1146,8 +1149,22 @@ bus_space_map(t, bpa, size, cacheable, bshp)
 	}
 	return 0;
 }
+bus_addr_t bus_space_unmap_p __P((bus_space_tag_t t, bus_space_handle_t bsh,
+			  bus_size_t size));
 void bus_space_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
 			  bus_size_t size));
+bus_addr_t
+bus_space_unmap_p(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	bus_addr_t paddr;
+
+	paddr = (bus_addr_t) pmap_extract(pmap_kernel(), bsh);
+	bus_space_unmap((t), (bsh), (size));
+	return paddr ;
+}
 void
 bus_space_unmap(t, bsh, size)
 	bus_space_tag_t t;
@@ -1156,6 +1173,7 @@ bus_space_unmap(t, bsh, size)
 {
 	bus_addr_t sva;
 	bus_size_t off, len;
+	bus_addr_t bpa;
 
 	/* should this verify that the proper size is freed? */
 	sva = trunc_page(bsh);
@@ -1167,15 +1185,17 @@ bus_space_unmap(t, bsh, size)
 #else
 	kmem_free_wakeup(phys_map, sva, len);
 #endif
-#ifdef DESTROY_MAPPINGS
-	for (; len > 0; len -= NBPG) {
-		pmap_enter(vm_map_pmap(phys_map), vaddr, sva,
-			VM_PROT_READ | VM_PROT_WRITE, TRUE);
-		sva += NBPG;
-		vaddr += NBPG;
+#if 0
+	bpa = pmap_extract(pmap_kernel(), sva);
+	if (extent_free(devio_ex, bpa, size, EX_NOWAIT | 
+		(ppc_malloc_ok ? EX_MALLOCOK : 0)))
+	{
+		printf("bus_space_map: pa 0x%x, size 0x%x\n",
+			bpa, size);
+		printf("bus_space_map: can't free region\n");
 	}
 #endif
-
+	pmap_remove(vm_map_pmap(phys_map), sva, sva+len);
 }
 
 int
@@ -1364,16 +1384,17 @@ __C(bus_space_read_raw_multi_,BYTES)(bst, h, o, dst, size)		\
 	bus_space_tag_t bst;						\
 	bus_space_handle_t h;						\
 	bus_addr_t o;							\
-	TYPE *dst;							\
+	u_int8_t *dst;							\
 	bus_size_t size;						\
 {									\
 	TYPE *src;							\
+	TYPE *rdst = (TYPE *)dst;					\
 	int i;								\
 	int count = size >> SHIFT;					\
 									\
 	src = (TYPE *)(h+o);						\
 	for (i = 0; i < count; i++) {					\
-		dst[i] = *src;						\
+		rdst[i] = *src;						\
 		__asm__("eieio");					\
 	}								\
 }
@@ -1387,16 +1408,17 @@ __C(bus_space_write_raw_multi_,BYTES)(bst, h, o, src, size)		\
 	bus_space_tag_t bst;						\
 	bus_space_handle_t h;						\
 	bus_addr_t o;							\
-	const TYPE *src;						\
+	const u_int8_t *src;						\
 	bus_size_t size;						\
 {									\
 	int i;								\
 	TYPE *dst;							\
+	TYPE *rsrc = (TYPE *)src;					\
 	int count = size >> SHIFT;					\
 									\
 	dst = (TYPE *)(h+o);						\
 	for (i = 0; i < count; i++) {					\
-		*dst = src[i];						\
+		*dst = rsrc[i];						\
 		__asm__("eieio");					\
 	}								\
 }
