@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.64 2004/10/11 11:38:35 espie Exp $
+# $OpenBSD: pkg_add,v 1.65 2004/10/11 12:13:46 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -761,38 +761,39 @@ sub really_add($$)
 	}
 }
 
-my @todo = (@ARGV);
-my $cache={};
 
-MAINLOOP:
-while (my $pkg = shift @todo) {
+sub install_package
+{
+	my ($pkg, $state, @todo) = @_;
+	my $cache = $state->{cache};
+
 	if (!defined $cache->{$pkg}) {
 		$cache->{$pkg} = pre_add($pkg, $opt_n);
 	}
+
 	my $handle = $cache->{$pkg};
 	if ($errors > 0) {
-		last unless defined $handle;
+		Fatal "Fatal error" unless defined $handle;
 	} else {
-		next unless defined $handle;
+		return () unless defined $handle;
 	}
 
 	my $plist = $handle->{plist};
 
 	if (is_installed($plist->pkgname())) {
 		$handle->close();
-		next;
+		return ();
 	}
 	if ($plist->has('arch')) {
 		unless ($plist->{arch}->check($opt_A)) {
 			print "$pkg is not for the right architecture\n";
-			next MAINLOOP unless $forced{arch};
+			return () unless $forced{arch};
 		}
 	}
 	if (!defined $handle->{solved_dependencies}) {
 		my @deps = solve_dependencies($handle, @todo);
 		if (@deps > 0) {
-			unshift(@todo, @deps, $pkg);
-			next MAINLOOP;
+			return (@deps, $pkg);
 		}
 	}
 
@@ -801,27 +802,36 @@ while (my $pkg = shift @todo) {
 	for my $dep (@{$handle->{solved_dependencies}}) {
 		next if is_installed($dep);
 		print "Can't install $pkg: can't resolve $dep\n";
-		next MAINLOOP;
+		return ();
 	}
 	for my $dep (@{$plist->{libdepend}}) {
 		# can't check libspecs yet
-		next if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
+		return () if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
 		if (!check_lib_specs($plist->pkgbase(), $dep->{libspec})) {
-			print "Can't install $pkg: incorrect libspec: ",
+			Warn "Can't install $pkg: incorrect libspec: ",
 			    $dep->{libspec}, "\n";
-			next MAINLOOP unless $forced{libdepends};
+			return () unless $forced{libdepends};
 		}
 	}
 	for my $dep (@{$handle->{solved_dependencies}}) {
 		OpenBSD::PackingElement::PkgDep->add($plist, $dep);
 	}
-	eval { really_add($handle, $destdir) };
-	if ($@) {
-		Warn $@;
-		last;
-	}
+	really_add($handle, $destdir);
 	$conflict_list->{$plist->pkgname()} = $handle->{conflicts};
+	return ();
 }
+
+my @todo = (@ARGV);
+my $state = {};
+$state->{cache} = {};
+
+eval {
+while (my $pkg = shift @todo) {
+	unshift(@todo, install_package($pkg, $state, @todo));
+}
+};
+
+my $dielater = @_;
 
 OpenBSD::PackingElement::Fontdir::finish_fontdirs();
 ensure_ldconfig($opt_v) unless $opt_n;
@@ -829,4 +839,6 @@ ensure_ldconfig($opt_v) unless $opt_n;
 if ($opt_n or $opt_v) {
 	OpenBSD::Vstat::tally();
 }
-exit(1) if $errors;
+if ($dielater) {
+	die $@;
+}
