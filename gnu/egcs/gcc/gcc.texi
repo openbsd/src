@@ -236,7 +236,9 @@ bugs.  It corresponds to GCC version 2.95.
 @end ifset
 
 * Funding::         How to help assure funding for free software.
+@ifset FSFspam
 * GNU/Linux::       Linux and the GNU Project
+@end ifset
 
 * Copying::         GNU General Public License says
                      how you can copy and share GCC.
@@ -4081,6 +4083,7 @@ Verbatim copying and redistribution of this section is permitted
 without royalty; alteration is not permitted.
 @end display
 
+@ifset FSFspam
 @node GNU/Linux
 @unnumbered Linux and the GNU Project
 
@@ -4179,6 +4182,7 @@ you use them too.  But please don't confuse the public by using the
 name ``Linux'' ambiguously.  Linux is the kernel, one of the essential
 major components of the system.  The system as a whole is more or less
 the GNU system.
+@end ifset
 
 @node Copying
 @unnumbered GNU GENERAL PUBLIC LICENSE
