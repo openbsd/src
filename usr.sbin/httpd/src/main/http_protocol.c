@@ -2068,7 +2068,7 @@ API_EXPORT(long) ap_get_client_block(request_rec *r, char *buffer, int bufsiz)
     unsigned long max_body;
 
     if (!r->read_chunked) {     /* Content-length read */
-        len_to_read = (r->remaining > bufsiz) ? bufsiz : r->remaining;
+        len_to_read = (r->remaining > (unsigned int)bufsiz) ? bufsiz : r->remaining;
         len_read = ap_bread(r->connection->client, buffer, len_to_read);
         if (len_read <= 0) {
             if (len_read < 0)
@@ -2180,7 +2180,7 @@ API_EXPORT(long) ap_get_client_block(request_rec *r, char *buffer, int bufsiz)
 
     /* Otherwise, we are in the midst of reading a chunk of data */
 
-    len_to_read = (r->remaining > bufsiz) ? bufsiz : r->remaining;
+    len_to_read = (r->remaining > (unsigned int)bufsiz) ? bufsiz : r->remaining;
 
     len_read = ap_bread(r->connection->client, buffer, len_to_read);
     if (len_read <= 0) {
