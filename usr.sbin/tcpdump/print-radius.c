@@ -1,7 +1,8 @@
-#include <stdio.h>
-
 #include <sys/types.h>
 #include <netinet/in.h>
+
+#include <stdio.h>
+#include <string.h>
 
 /* RADIUS support for tcpdump, Thomas Ptacek <tqbf@enteract.com> */
 
