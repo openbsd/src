@@ -237,7 +237,7 @@ kq_dispatch(void *arg, struct timeval *tv)
 
 	for (i = 0; i < res; i++) {
 		/* XXX */
-		int ncalls, res;
+		int ncalls, evres;
 
 		if (events[i].flags & EV_ERROR || events[i].filter == NULL)
 			continue;
@@ -249,13 +249,13 @@ kq_dispatch(void *arg, struct timeval *tv)
 		ncalls = 0;
 		if (ev->ev_flags & EVLIST_ACTIVE) {
 			ncalls = ev->ev_ncalls;
-			res = ev->ev_res;
+			evres = ev->ev_res;
 		}
 		ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
 		event_del(ev);
 
 		if (ncalls)
-			event_active(ev, res, ncalls);
+			event_active(ev, evres, ncalls);
 	}
 
 	return (0);
