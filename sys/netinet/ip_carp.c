@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.6 2003/10/22 14:56:54 markus Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.7 2003/10/23 23:00:37 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -189,7 +189,7 @@ carp_hmac_generate(struct carp_softc *sc, u_int32_t counter[2],
 	/* outer hash */
 	SHA1Init(&sha1ctx);
 	SHA1Update(&sha1ctx, opad, CARP_HMAC_PAD);
-	SHA1Update(&sha1ctx, md, sizeof(md));
+	SHA1Update(&sha1ctx, md, sizeof(*md));
 	SHA1Final(md, &sha1ctx);
 }
 
