@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.7 1997/09/26 02:09:54 millert Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/10/20 03:42:11 downsj Exp $
 #	$NetBSD: Makefile,v 1.1 1995/07/18 04:13:06 briggs Exp $
 
 TOP=		${.CURDIR}/..
@@ -17,22 +17,19 @@ VND_CRDEV=	/dev/r${VND}c
 PID!=		echo $$$$
 REALIMAGE!=	echo /var/tmp/image.${PID}
 
-all: ${CBIN} ${IMAGE}
+all: ${CBIN} ${IMAGE} bsd.rd
 	@echo "all done"
 
 .include "Makefile.inc"
 
 DISKTYPE=       rdroot
 NBLKS=          4096
-# minfree, opt, b/i  trks, sects, cpg
-NEWFSARGS= -m 0 -o space -c 16 -i 4096
-
-bsd.gz: bsd.rd
-	gzip -c9 bsd.rd > bsd.gz
+NEWFSARGS= -m 0 -o space -c 16 -i 3072
 
 bsd.rd: ${IMAGE} bsd rdsetroot
-	cp bsd bsd.rd
-	${.OBJDIR}/rdsetroot bsd.rd < ${IMAGE}
+	${.OBJDIR}/rdsetroot bsd < ${IMAGE}
+	gzip -c9 bsd > bsd.rd
+	rm bsd
 
 bsd:
 	cd ${.CURDIR}/../../../sys/arch/hp300/conf && config RAMDISK
