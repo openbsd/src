@@ -1,4 +1,4 @@
-/*	$OpenBSD: uio.h,v 1.2 1996/03/03 12:12:38 niklas Exp $	*/
+/*	$OpenBSD: uio.h,v 1.3 1996/12/13 21:26:39 michaels Exp $	*/
 /*	$NetBSD: uio.h,v 1.12 1996/02/09 18:25:45 christos Exp $	*/
 
 /*
@@ -70,9 +70,10 @@ struct uio {
 /*
  * Limits
  */
-#define UIO_MAXIOV	1024		/* max 1K of iov's */
 #define UIO_SMALLIOV	8		/* 8 on stack, else malloc */
 #endif /* _KERNEL */
+
+#define UIO_MAXIOV	1024		/* max 1K of iov's */
 
 #ifndef	_KERNEL
 #include <sys/cdefs.h>
