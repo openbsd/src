@@ -1,4 +1,4 @@
-/*      $OpenBSD: pciide.c,v 1.1 1999/07/18 21:25:19 csapuntz Exp $     */
+/*      $OpenBSD: pciide.c,v 1.2 1999/07/19 00:32:44 csapuntz Exp $     */
 /*	$NetBSD: pciide.c,v 1.40 1999/07/12 13:49:38 bouyer Exp $	*/
 
 /*
@@ -53,7 +53,7 @@
 #define DEBUG_PROBE  0x10
 
 #ifdef WDCDEBUG
-int wdcdebug_pciide_mask;
+int wdcdebug_pciide_mask = 0;
 #define WDCDEBUG_PRINT(args, level) \
 	if (wdcdebug_pciide_mask & (level)) printf args
 #else
@@ -818,12 +818,10 @@ pciide_dma_table_setup(sc, channel, drive)
 	struct pciide_dma_maps *dma_maps =
 	    &sc->pciide_channels[channel].dma_maps[drive];
 
-	printf ("pciide_dma_table_setup: 1\n");
 	/* If table was already allocated, just return */
 	if (dma_maps->dma_table)
 		return 0;
 
-	printf ("pciide_dma_table_setup: 2\n");
 	/* Allocate memory for the DMA tables and map it */
 	if ((error = bus_dmamem_alloc(sc->sc_dmat, dma_table_size,
 	    IDEDMA_TBL_ALIGN, IDEDMA_TBL_ALIGN, &seg, 1, &rseg,
