@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.3 2003/11/18 00:00:55 drahn Exp $g
+#	$OpenBSD: GENERIC,v 1.4 2004/02/04 20:06:21 drahn Exp $g
 #
 # PPC GENERIC config file
 #
@@ -169,6 +169,7 @@ uyap*		at uhub? port ?			# Y@P firmware loader
 ugen*		at uhub? port ? configuration ? # USB Generic driver
 umass*		at uhub? port ? configuration ? # USB Mass Storage devices
 scsibus*	at umass?
+wi*		at uhub? port ?			# 802.11 USB
 kue*		at uhub? port ?			# Kawasaki KL5KUSB101B
 aue*		at uhub? port ?			# USB EtherNet 
 uplcom* 	at uhub? port ?			# I/O DATA USB-RSAQ2 serial
