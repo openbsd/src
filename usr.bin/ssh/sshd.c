@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.42 1999/11/02 00:08:42 markus Exp $");
+RCSID("$Id: sshd.c,v 1.43 1999/11/02 19:10:15 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1128,7 +1128,7 @@ do_authentication(char *user, int privileged_port)
 	    int dlen;
 	    char *token_string = packet_get_string(&dlen);
 	    packet_integrity_check(plen, 4 + dlen, type);
-	    if (!auth_afs_token(user, pw->pw_uid, token_string))
+	    if (!auth_afs_token(pw, token_string))
 	      debug("AFS token REFUSED for %s", user);
 	    xfree(token_string);
 	    continue;
