@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mquery.2,v 1.1 2003/04/14 04:53:50 art Exp $
+.\"	$OpenBSD: mquery.2,v 1.2 2003/04/17 18:38:01 millert Exp $
 .\"
 .\" Copyright (c) 2003 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved. 
@@ -36,7 +36,7 @@
 .Fn mquery "int flags" "void **addr" "size_t size" "int fd" "off_t off"
 .Sh DESCRIPTION
 The
-.Nm mqeury
+.Nm mquery
 system call checks the existing memory mappings of a process and returns
 hints to the caller about where to put a memory mapping.
 This hint can be later used when performing memory mappings with the
