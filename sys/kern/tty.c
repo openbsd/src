@@ -1,5 +1,5 @@
-/*	$OpenBSD: tty.c,v 1.5 1996/04/24 21:26:36 mickey Exp $	*/
-/*	$NetBSD: tty.c,v 1.68 1996/03/29 01:55:12 christos Exp $	*/
+/*	$OpenBSD: tty.c,v 1.6 1996/06/10 07:26:22 deraadt Exp $	*/
+/*	$NetBSD: tty.c,v 1.68.4.2 1996/06/06 16:04:52 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1991, 1993
@@ -159,6 +159,9 @@ char const char_type[] = {
 #define	SET(t, f)	(t) |= (f)
 #define	CLR(t, f)	(t) &= ~((unsigned)(f))
 #define	ISSET(t, f)	((t) & (f))
+
+struct ttylist_head ttylist;	/* TAILQ_HEAD */
+int tty_count;
 
 /*
  * Initial open of tty, or (re)entry to standard tty line discipline.
@@ -2034,6 +2037,54 @@ ttysleep(tp, chan, pri, wmesg, timo)
 }
 
 /*
+ * Initialise the global tty list.
+ */
+void
+tty_init()
+{
+
+	TAILQ_INIT(&ttylist);
+	tty_count = 0;
+}
+
+/*
+ * Attach a tty to the tty list.
+ *
+ * This should be called ONLY once per real tty (including pty's).
+ * eg, on the sparc, the keyboard and mouse have struct tty's that are
+ * distinctly NOT usable as tty's, and thus should not be attached to
+ * the ttylist.  This is why this call is not done from ttymalloc().
+ *
+ * Device drivers should attach tty's at a similar time that they are
+ * ttymalloc()'ed, or, for the case of statically allocated struct tty's
+ * either in the attach or (first) open routine.
+ */
+void
+tty_attach(tp)
+	struct tty *tp;
+{
+
+	TAILQ_INSERT_TAIL(&ttylist, tp, tty_link);
+	++tty_count;
+}
+
+/*
+ * Remove a tty from the tty list.
+ */
+void
+tty_detach(tp)
+	struct tty *tp;
+{
+
+	--tty_count;
+#ifdef DIAGNOSTIC
+	if (tty_count < 0)
+		panic("tty_detach: tty_count < 0");
+#endif
+	TAILQ_REMOVE(&ttylist, tp, tty_link);
+}
+
+/*
  * Allocate a tty structure and its associated buffers.
  */
 struct tty *
@@ -2053,11 +2104,15 @@ ttymalloc()
 
 /*
  * Free a tty structure and its buffers.
+ *
+ * Be sure to call tty_detach() for any tty that has been
+ * tty_attach()ed.
  */
 void
 ttyfree(tp)
-struct tty *tp;
+	struct tty *tp;
 {
+
 	clfree(&tp->t_rawq);
 	clfree(&tp->t_canq);
 	clfree(&tp->t_outq);

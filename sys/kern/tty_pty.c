@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_pty.c,v 1.33 1996/03/30 22:24:45 christos Exp $	*/
+/*	$NetBSD: tty_pty.c,v 1.33.4.1 1996/06/02 09:08:11 mrg Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -119,8 +119,10 @@ ptsopen(dev, flag, devtype, p)
 	if (minor(dev) >= npty)
 		return (ENXIO);
 	pti = &pt_softc[minor(dev)];
-	if (!pti->pt_tty)
+	if (!pti->pt_tty) {
 		tp = pti->pt_tty = ttymalloc();
+		tty_attach(tp);
+	}
 	else
 		tp = pti->pt_tty;
 	if ((tp->t_state & TS_ISOPEN) == 0) {
@@ -311,8 +313,10 @@ ptcopen(dev, flag, devtype, p)
 	if (minor(dev) >= npty)
 		return (ENXIO);
 	pti = &pt_softc[minor(dev)];
-	if (!pti->pt_tty)
+	if (!pti->pt_tty) {
 		tp = pti->pt_tty = ttymalloc();
+		tty_attach(tp);
+	}
 	else
 		tp = pti->pt_tty;
 	if (tp->t_oproc)
