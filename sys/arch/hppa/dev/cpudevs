@@ -1,4 +1,4 @@
-$OpenBSD: cpudevs,v 1.9 1999/04/20 20:19:36 mickey Exp $
+$OpenBSD: cpudevs,v 1.10 1999/06/18 03:16:50 mickey Exp $
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -379,12 +379,12 @@ fio	HIL	0x073	Core HIL
 fio	CENT	0x074	Core Centronics
 fio	RS232	0x075	Core RS-232C
 fio	SGC	0x077	SGC Graphics
-fio	A1	0x07a	Core audio
-fio	A2NB	0x07b	Advanced audio (no beeper)
+fio	A1	0x07a	Core audio (int.)
+fio	A2NB	0x07b	Advanced audio (ext.)
 fio	FWSCSI	0x07c	Core FW SCSI
 fio	FDDI	0x07d	Core FDDI
-fio	A1NB	0x07e	Core audio (no beeper)
-fio	A2	0x07f	Advanced audio
+fio	A1NB	0x07e	Core audio (ext.)
+fio	A2	0x07f	Advanced audio (int.)
 fio	HPIB	0x080	Core HPIB
 fio	TR9000	0x086	GSC IBM TokenRing
 fio	VMENET	0x088	VME Networking
@@ -393,9 +393,9 @@ fio	DINOPCK	0x096	Dino PC Keyboard
 fio	EISALAN	0x097	Cascade EISA 100VG lan
 fio	WHPIB	0x099	Wax/Clark/Dino HPIB
 fio	PCILAN	0x0a2	PCI Plug-In LAN
-fio	PCIDSK	0x0a3	PCI Plug-In Disk Controller
+fio	PCIDSK	0x0a3	PCI Plug-In Disk
 fio	SONICET	0x0a6	Sonic Ethernet
-fio	PCIMISC	0x0a9	Miscelaneous PCI Plug-in
+fio	PCIMISC	0x0a9	Misc PCI Plug-in
 
 # Gecko section
 fio	GSCSI	0x082	Core SCSI
