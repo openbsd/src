@@ -1,4 +1,4 @@
-/*	$OpenBSD: uplcom.c,v 1.14 2004/09/20 06:01:04 deraadt Exp $	*/
+/*	$OpenBSD: uplcom.c,v 1.15 2004/09/20 21:34:46 deraadt Exp $	*/
 /*	$NetBSD: uplcom.c,v 1.29 2002/09/23 05:51:23 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -157,6 +157,8 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_ATEN, USB_PRODUCT_ATEN_UC232A },
 	/* IOGEAR/ATEN UC-232A */
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2303 },
+	/* IOGEAR/ATENTRIPPLITE U209 */
+	{ USB_VENDOR_TRIPPLITE, USB_PRODUCT_TRIPPLITE_U209 },
 	/* ELECOM UC-SGT */
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT },
 	{ USB_VENDOR_ELECOM, USB_PRODUCT_ELECOM_UCSGT0 },
@@ -170,6 +172,12 @@ static const struct usb_devno uplcom_devs[] = {
 	{ USB_VENDOR_SUSTEEN, USB_PRODUCT_SUSTEEN_DCU11 },
 	/* Sitecom USB to Serial. */
 	{ USB_VENDOR_SITECOM, USB_PRODUCT_SITECOM_CN104 },
+	/* SOURCENEXT KeikaiDenwa 8 */
+	{ USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8 },
+	/* SOURCENEXT KeikaiDenwa 8 with charger */
+	{ USB_VENDOR_SOURCENEXT, USB_PRODUCT_SOURCENEXT_KEIKAI8_CHG },
+	/* HAL Corporation Crossam2+USB */
+	{ USB_VENDOR_HAL, USB_PRODUCT_HAL_IMR001 },
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 

@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.106 2004/09/20 06:01:04 deraadt Exp $
+$OpenBSD: usbdevs,v 1.107 2004/09/20 21:34:46 deraadt Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -285,6 +285,7 @@ vendor BROADLOGIC	0x0827	BroadLogic
 vendor HANDSPRING	0x082d	Handspring
 vendor ACTIONSTAR	0x0835	Action Star Enterprise
 vendor PALM		0x0830	Palm Computing
+vendor SOURCENEXT	0x0833	SOURCENEXT
 vendor ACCTON		0x083a	Accton Technology
 vendor DIAMOND		0x0841	Diamond
 vendor NETGEAR		0x0846	BayNETGEAR
@@ -343,6 +344,7 @@ vendor GEOCAST		0x0a79	Geocast Network Systems
 vendor NEODIO		0x0aec  Neodio
 vendor TODOS		0x0b0c	Todos Data System
 vendor SIIG2		0x0b39	SIIG
+vendor HAL		0x0b41	HAL Corporation
 vendor NEC2		0x0b62	NEC
 vendor ATI2		0x0b6f	ATI
 vendor KURUSUGAWA	0x0b7e	Kurusugawa Electronics, Inc.
@@ -376,6 +378,7 @@ vendor INSIDEOUT	0x1608	Inside Out Networks
 vendor ENTREGA		0x1645	Entrega
 vendor ACTIONTEC	0x1668	Actiontec Electronics
 vendor DLINK		0x2001	D-Link
+vendor TRIPPLITE	0x2478	Tripp-Lite
 vendor NHJ		0x2770  NHJ
 vendor PQI		0x3538	PQI
 vendor DAISY		0x3579	Daisy Technology
@@ -536,6 +539,7 @@ product AVISION 1200U		0x0268	1200U
 product BELKIN2 F5U002		0x0002	F5U002 Parallel
 product BELKIN F5U103		0x0103	F5U103 Serial
 product BELKIN F5U109		0x0109	F5U109 Serial
+product BELKIN F5U409		0x0409	F5U409 Serial
 product BELKIN SCSI		0x0115	SCSI
 product BELKIN USB2LAN		0x0121	USB to LAN Converter
 product BELKIN F5U120		0x1203	F5U120-PC Hub
@@ -776,6 +780,9 @@ product GUILLEMOT DALEADER	0xa300	DA Leader
 product HAGIWARA FGSM		0x0002  FlashGate SmartMedia
 product HAGIWARA FGCF		0x0003  FlashGate CompactFlash
 product HAGIWARA FG		0x0005  FlashGate
+
+/* HAL Corporation products */
+product HAL IMR001		0x0011	Crossam2+USB IR commander
 
 /* Handspring, Inc. */
 product HANDSPRING VISOR	0x0100	Handspring Visor
@@ -1440,6 +1447,10 @@ product SONY CLIE_41		0x009a	Clie v4.1
 product SONY CLIE_NX60		0x00da	Sony Clie nx60
 product SONY CLIE_TJ25		0x0169	Sony Clie tj25
 
+/* SOURCENEXT products */
+product SOURCENEXT KEIKAI8	0x039f	KeikaiDenwa 8
+product SOURCENEXT KEIKAI8_CHG	0x012e	KeikaiDenwa 8 with charger
+
 /* STMicroelectronics products */
 product STMICRO COMMUNICATOR	0x7554	Communicator
 
@@ -1507,6 +1518,9 @@ product	TODOS ARGOS_MINI	0x0002	Argos Mini Smartcard
 /* Trek Technology products */
 product TREK THUMBDRIVE		0x1111	ThumbDrive
 product TREK THUMBDRIVE_8MB	0x9988	ThumbDrive 8MB
+
+/* Tripp-Lite products */
+product TRIPPLITE U209		0x2008	U209 Serial
 
 /* Trumpion products */
 product	TRUMPION T33521		0x1003	USB/MP3 decoder

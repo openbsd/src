@@ -1,4 +1,4 @@
-/*	$OpenBSD: umct.c,v 1.12 2004/07/11 07:39:38 deraadt Exp $	*/
+/*	$OpenBSD: umct.c,v 1.13 2004/09/20 21:34:46 deraadt Exp $	*/
 /*	$NetBSD: umct.c,v 1.10 2003/02/23 04:20:07 simonb Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -151,6 +151,8 @@ static const struct usb_devno umct_devs[] = {
 	{ USB_VENDOR_MCT, USB_PRODUCT_MCT_DU_H3SP_USB232 },
 	/* BELKIN F5U109 */
 	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U109 },
+	/* BELKIN F5U409 */
+	{ USB_VENDOR_BELKIN, USB_PRODUCT_BELKIN_F5U409 },
 };
 #define umct_lookup(v, p) usb_lookup(umct_devs, v, p)
 
