@@ -1,4 +1,4 @@
-/*	$OpenBSD: privsep.c,v 1.14 2004/02/26 11:04:15 avsm Exp $	*/
+/*	$OpenBSD: privsep.c,v 1.15 2004/03/06 19:42:38 otto Exp $	*/
 
 /*
  * Copyright (c) 2003 Anil Madhavapeddy <anil@recoil.org>
@@ -72,7 +72,7 @@ enum cmd_types {
 };
 
 static int priv_fd = -1;
-static pid_t child_pid = -1;
+static volatile pid_t child_pid = -1;
 static char config_file[MAXPATHLEN];
 static struct stat cf_info;
 static int allow_gethostbyaddr = 0;
@@ -104,6 +104,9 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 	struct hostent *hp;
 	struct passwd *pw;
 
+	for (i = 1; i < _NSIG; i++)
+		signal(i, SIG_DFL);
+
 	/* Create sockets */
 	if (socketpair(AF_LOCAL, SOCK_STREAM, PF_UNSPEC, socks) == -1)
 		err(1, "socketpair() failed");
@@ -111,6 +114,7 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 	pw = getpwnam("_syslogd");
 	if (pw == NULL)
 		errx(1, "unknown user _syslogd");
+	endpwent();
 
 	child_pid = fork();
 	if (child_pid < 0)
@@ -151,9 +155,6 @@ priv_init(char *conf, int numeric, int lockfd, int nullfd, char *argv[])
 		close(nullfd);
 
 	/* Father */
-	for (i = 1; i <= _NSIG; i++)
-		signal(i, SIG_DFL);
-
 	/* Pass TERM/HUP through to child, and accept CHLD */
 	signal(SIGTERM, sig_pass_to_chld);
 	signal(SIGHUP, sig_pass_to_chld);
@@ -606,8 +607,11 @@ priv_gethostbyaddr(char *addr, int addr_len, int af, char *res, size_t res_len)
 static void
 sig_pass_to_chld(int sig)
 {
+	int oerrno = errno;
+
 	if (child_pid != -1)
 		kill(child_pid, sig);
+	errno = oerrno;
 }
 
 /* When child dies, move into the shutdown state */
