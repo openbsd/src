@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 2004/06/02 10:08:59 henning Exp $ */
+/*	$OpenBSD: config.c,v 1.3 2004/07/06 18:03:07 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,8 +27,9 @@
 
 #include "ntpd.h"
 
-int		host_v4(const char *, struct sockaddr *, u_int8_t *);
-int		host_v6(const char *, struct sockaddr *);
+int	host_v4(const char *, struct sockaddr *, u_int8_t *);
+int	host_v6(const char *, struct sockaddr *);
+int	host_dns(const char *, struct sockaddr *, u_int8_t *);
 
 int
 check_file_secrecy(int fd, const char *fname)
@@ -86,6 +87,10 @@ host(const char *s, struct sockaddr *sa, u_int8_t *len)
 		*len = mask;
 	}
 
+	/* Hostname? */
+	if (!done)
+		done = host_dns(ps, sa, len);
+
 	free(ps);
 
 	return (done);
@@ -141,4 +146,47 @@ host_v6(const char *s, struct sockaddr *sa)
 	}
 
 	return (0);
+}
+
+int
+host_dns(const char *s, struct sockaddr *sa, u_int8_t *len)
+{
+	struct addrinfo		 hints, *res0, *res;
+	int			 error;
+	int			 got = 0;
+	struct sockaddr_in	*sa_in;
+	struct sockaddr_in6	*sa_in6;
+
+	memset(&hints, 0, sizeof(hints));
+	hints.ai_family = PF_UNSPEC;
+	hints.ai_socktype = SOCK_STREAM; /* DUMMY */
+	error = getaddrinfo(s, NULL, &hints, &res0);
+	if (error)
+		return (0);
+
+	for (res = res0; res; res = res->ai_next) {
+		if (res->ai_family != AF_INET &&
+		    res->ai_family != AF_INET6)
+			continue;
+		sa->sa_family = res->ai_family;
+		if (res->ai_family == AF_INET) {
+			sa_in = (struct sockaddr_in *)sa;
+			sa_in->sin_len = sizeof(struct sockaddr_in);
+			sa_in->sin_addr.s_addr = ((struct sockaddr_in *)
+			    res->ai_addr)->sin_addr.s_addr;
+			*len = 32;
+		} else {
+			sa_in6 = (struct sockaddr_in6 *)sa;
+			sa_in6->sin6_len = sizeof(struct sockaddr_in6);
+			memcpy(&sa_in6->sin6_addr, &((struct sockaddr_in6 *)
+			    res->ai_addr)->sin6_addr, sizeof(struct in6_addr));
+			*len = 128;
+		}
+
+		got++;
+		break;	/* XXX should expand to all results... */
+	}
+	freeaddrinfo(res0);
+
+	return (got);
 }
