@@ -1,6 +1,35 @@
-/*	$OpenBSD: db_interface.c,v 1.2 1999/02/25 19:19:20 mickey Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.3 1999/04/20 21:02:28 mickey Exp $	*/
 
-#include <sys/types.h>
+/*
+ * Copyright (c) 1999 Michael Shalayeff
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. All advertising materials mentioning features or use of this software
+ *    must display the following acknowledgement:
+ *      This product includes software developed by Michael Shalayeff.
+ * 4. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+ * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+ * OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+ * IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+ * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+ * NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+ * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ */
+
 #include <sys/param.h>
 #include <sys/systm.h>
 
@@ -30,61 +59,61 @@ extern int trap_types;
 
 db_regs_t	ddb_regs;
 struct db_variable db_regs[] = {
-	{ "r1",    (long *)&ddb_regs.r1,  FCN_NULL },
-	{ "rp",    (long *)&ddb_regs.rp,  FCN_NULL },
-	{ "r3",    (long *)&ddb_regs.r3,  FCN_NULL },
-	{ "r4",    (long *)&ddb_regs.r4,  FCN_NULL },
-	{ "r5",    (long *)&ddb_regs.r5,  FCN_NULL },
-	{ "r6",    (long *)&ddb_regs.r6,  FCN_NULL },
-	{ "r7",    (long *)&ddb_regs.r7,  FCN_NULL },
-	{ "r8",    (long *)&ddb_regs.r8,  FCN_NULL },
-	{ "r9",    (long *)&ddb_regs.r9,  FCN_NULL },
-	{ "r10",   (long *)&ddb_regs.r10, FCN_NULL },
-	{ "r11",   (long *)&ddb_regs.r11, FCN_NULL },
-	{ "r12",   (long *)&ddb_regs.r12, FCN_NULL },
-	{ "r13",   (long *)&ddb_regs.r13, FCN_NULL },
-	{ "r14",   (long *)&ddb_regs.r14, FCN_NULL },
-	{ "r15",   (long *)&ddb_regs.r15, FCN_NULL },
-	{ "r16",   (long *)&ddb_regs.r16, FCN_NULL },
-	{ "r17",   (long *)&ddb_regs.r17, FCN_NULL },
-	{ "r18",   (long *)&ddb_regs.r18, FCN_NULL },
-	{ "t4",    (long *)&ddb_regs.t4,  FCN_NULL },
-	{ "t3",    (long *)&ddb_regs.t3,  FCN_NULL },
-	{ "t2",    (long *)&ddb_regs.t2,  FCN_NULL },
-	{ "t1",    (long *)&ddb_regs.t1,  FCN_NULL },
-	{ "arg3",  (long *)&ddb_regs.arg3,  FCN_NULL },
-	{ "arg2",  (long *)&ddb_regs.arg2,  FCN_NULL },
-	{ "arg1",  (long *)&ddb_regs.arg1,  FCN_NULL },
-	{ "arg0",  (long *)&ddb_regs.arg0,  FCN_NULL },
-	{ "dp",    (long *)&ddb_regs.dp,    FCN_NULL },
-	{ "ret0",  (long *)&ddb_regs.ret0,  FCN_NULL },
-	{ "ret1",  (long *)&ddb_regs.ret1,  FCN_NULL },
-	{ "sp",    (long *)&ddb_regs.sp,    FCN_NULL },
-	{ "r31",   (long *)&ddb_regs.r31,   FCN_NULL },
-	{ "sar",   (long *)&ddb_regs.sar,   FCN_NULL },
+	{ "r1",    (long *)&ddb_regs.tf_r1,  FCN_NULL },
+	{ "rp",    (long *)&ddb_regs.tf_rp,  FCN_NULL },
+	{ "r3",    (long *)&ddb_regs.tf_r3,  FCN_NULL },
+	{ "r4",    (long *)&ddb_regs.tf_r4,  FCN_NULL },
+	{ "r5",    (long *)&ddb_regs.tf_r5,  FCN_NULL },
+	{ "r6",    (long *)&ddb_regs.tf_r6,  FCN_NULL },
+	{ "r7",    (long *)&ddb_regs.tf_r7,  FCN_NULL },
+	{ "r8",    (long *)&ddb_regs.tf_r8,  FCN_NULL },
+	{ "r9",    (long *)&ddb_regs.tf_r9,  FCN_NULL },
+	{ "r10",   (long *)&ddb_regs.tf_r10, FCN_NULL },
+	{ "r11",   (long *)&ddb_regs.tf_r11, FCN_NULL },
+	{ "r12",   (long *)&ddb_regs.tf_r12, FCN_NULL },
+	{ "r13",   (long *)&ddb_regs.tf_r13, FCN_NULL },
+	{ "r14",   (long *)&ddb_regs.tf_r14, FCN_NULL },
+	{ "r15",   (long *)&ddb_regs.tf_r15, FCN_NULL },
+	{ "r16",   (long *)&ddb_regs.tf_r16, FCN_NULL },
+	{ "r17",   (long *)&ddb_regs.tf_r17, FCN_NULL },
+	{ "r18",   (long *)&ddb_regs.tf_r18, FCN_NULL },
+	{ "t4",    (long *)&ddb_regs.tf_t4,  FCN_NULL },
+	{ "t3",    (long *)&ddb_regs.tf_t3,  FCN_NULL },
+	{ "t2",    (long *)&ddb_regs.tf_t2,  FCN_NULL },
+	{ "t1",    (long *)&ddb_regs.tf_t1,  FCN_NULL },
+	{ "arg3",  (long *)&ddb_regs.tf_arg3,  FCN_NULL },
+	{ "arg2",  (long *)&ddb_regs.tf_arg2,  FCN_NULL },
+	{ "arg1",  (long *)&ddb_regs.tf_arg1,  FCN_NULL },
+	{ "arg0",  (long *)&ddb_regs.tf_arg0,  FCN_NULL },
+	{ "dp",    (long *)&ddb_regs.tf_dp,    FCN_NULL },
+	{ "ret0",  (long *)&ddb_regs.tf_ret0,  FCN_NULL },
+	{ "ret1",  (long *)&ddb_regs.tf_ret1,  FCN_NULL },
+	{ "sp",    (long *)&ddb_regs.tf_sp,    FCN_NULL },
+	{ "r31",   (long *)&ddb_regs.tf_r31,   FCN_NULL },
+	{ "sar",   (long *)&ddb_regs.tf_sar,   FCN_NULL },
 
-	{ "eiem",  (long *)&ddb_regs.eiem,  FCN_NULL },
-	{ "iir",   (long *)&ddb_regs.iir,   FCN_NULL },
-	{ "isr",   (long *)&ddb_regs.isr,   FCN_NULL },
-	{ "ior",   (long *)&ddb_regs.ior,   FCN_NULL },
-	{ "ipsw",  (long *)&ddb_regs.ipsw,  FCN_NULL },
+	{ "eiem",  (long *)&ddb_regs.tf_eiem,  FCN_NULL },
+	{ "iir",   (long *)&ddb_regs.tf_iir,   FCN_NULL },
+	{ "isr",   (long *)&ddb_regs.tf_isr,   FCN_NULL },
+	{ "ior",   (long *)&ddb_regs.tf_ior,   FCN_NULL },
+	{ "ipsw",  (long *)&ddb_regs.tf_ipsw,  FCN_NULL },
 
-	{ "sr0",   (long *)&ddb_regs.sr0,   FCN_NULL },
-	{ "sr1",   (long *)&ddb_regs.sr1,   FCN_NULL },
-	{ "sr2",   (long *)&ddb_regs.sr2,   FCN_NULL },
-	{ "sr3",   (long *)&ddb_regs.sr3,   FCN_NULL },
-	{ "sr4",   (long *)&ddb_regs.sr4,   FCN_NULL },
-	{ "sr5",   (long *)&ddb_regs.sr5,   FCN_NULL },
-	{ "sr6",   (long *)&ddb_regs.sr6,   FCN_NULL },
-	{ "sr7",   (long *)&ddb_regs.sr7,   FCN_NULL },
+	{ "sr0",   (long *)&ddb_regs.tf_sr0,   FCN_NULL },
+	{ "sr1",   (long *)&ddb_regs.tf_sr1,   FCN_NULL },
+	{ "sr2",   (long *)&ddb_regs.tf_sr2,   FCN_NULL },
+	{ "sr3",   (long *)&ddb_regs.tf_sr3,   FCN_NULL },
+	{ "sr4",   (long *)&ddb_regs.tf_sr4,   FCN_NULL },
+	{ "sr5",   (long *)&ddb_regs.tf_sr5,   FCN_NULL },
+	{ "sr6",   (long *)&ddb_regs.tf_sr6,   FCN_NULL },
+	{ "sr7",   (long *)&ddb_regs.tf_sr7,   FCN_NULL },
 
-	{ "pidr1", (long *)&ddb_regs.pidr1, FCN_NULL },
-	{ "pidr2", (long *)&ddb_regs.pidr2, FCN_NULL },
-	{ "pidr3", (long *)&ddb_regs.pidr3, FCN_NULL },
-	{ "pidr4", (long *)&ddb_regs.pidr4, FCN_NULL },
+	{ "pidr1", (long *)&ddb_regs.tf_pidr1, FCN_NULL },
+	{ "pidr2", (long *)&ddb_regs.tf_pidr2, FCN_NULL },
+	{ "pidr3", (long *)&ddb_regs.tf_pidr3, FCN_NULL },
+	{ "pidr4", (long *)&ddb_regs.tf_pidr4, FCN_NULL },
 
-	{ "hptm",  (long *)&ddb_regs.hptm,  FCN_NULL },
-	{ "vtop",  (long *)&ddb_regs.vtop,  FCN_NULL },
+	{ "hptm",  (long *)&ddb_regs.tf_hptm,  FCN_NULL },
+	{ "vtop",  (long *)&ddb_regs.tf_vtop,  FCN_NULL },
 #if 0
 	u_int	ccr;	/* cr10 */
 	u_int	tr2;	/* cr26 */
@@ -165,6 +194,10 @@ kdb_trap(type, code, regs)
 	return (1);
 }
 
+/*
+ *  Validate an address for use as a breakpoint.
+ *  Any address is allowed for now.
+ */
 int
 db_valid_breakpoint(addr)
 	db_addr_t addr;
@@ -179,6 +212,5 @@ db_stack_trace_cmd(addr, have_addr, count, modif)
 	db_expr_t	count;
 	char		*modif;
 {
-
 }
 
