@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_tables.c,v 1.4 2003/06/02 23:28:23 millert Exp $	*/
+/*	$OpenBSD: ffs_tables.c,v 1.5 2003/08/26 16:10:57 mickey Exp $	*/
 /*	$NetBSD: ffs_tables.c,v 1.2 1994/06/29 06:46:35 cgd Exp $	*/
 
 /*
@@ -33,15 +33,16 @@
  */
 
 #include <sys/param.h>
+#include <ufs/ffs/fs.h>
 
 /*
  * Bit patterns for identifying fragments in the block map
  * used as ((map & around) == inside)
  */
-int around[9] = {
+const int around[9] = {
 	0x3, 0x7, 0xf, 0x1f, 0x3f, 0x7f, 0xff, 0x1ff, 0x3ff
 };
-int inside[9] = {
+const int inside[9] = {
 	0x0, 0x2, 0x6, 0xe, 0x1e, 0x3e, 0x7e, 0xfe, 0x1fe
 };
 
@@ -57,7 +58,7 @@ int inside[9] = {
  * These tables are used by the scanc instruction on the VAX to
  * quickly find an appropriate fragment.
  */
-u_char fragtbl124[256] = {
+const u_char fragtbl124[256] = {
 	0x00, 0x16, 0x16, 0x2a, 0x16, 0x16, 0x26, 0x4e,
 	0x16, 0x16, 0x16, 0x3e, 0x2a, 0x3e, 0x4e, 0x8a,
 	0x16, 0x16, 0x16, 0x3e, 0x16, 0x16, 0x36, 0x5e,
@@ -92,7 +93,7 @@ u_char fragtbl124[256] = {
 	0x9e, 0x9e, 0x9e, 0xbe, 0xaa, 0xbe, 0xce, 0x8a,
 };
 
-u_char fragtbl8[256] = {
+const u_char fragtbl8[256] = {
 	0x00, 0x01, 0x01, 0x02, 0x01, 0x01, 0x02, 0x04,
 	0x01, 0x01, 0x01, 0x03, 0x02, 0x03, 0x04, 0x08,
 	0x01, 0x01, 0x01, 0x03, 0x01, 0x01, 0x03, 0x05,
@@ -130,6 +131,6 @@ u_char fragtbl8[256] = {
 /*
  * The actual fragtbl array.
  */
-u_char *fragtbl[MAXFRAG + 1] = {
+const u_char *fragtbl[MAXFRAG + 1] = {
 	0, fragtbl124, fragtbl124, 0, fragtbl124, 0, 0, 0, fragtbl8,
 };
