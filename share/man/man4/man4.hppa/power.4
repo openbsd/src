@@ -1,4 +1,4 @@
-.\"	$OpenBSD: power.4,v 1.1 2003/08/20 21:17:08 mickey Exp $
+.\"	$OpenBSD: power.4,v 1.2 2003/09/02 21:11:50 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Michael Shalayeff
 .\" All rights reserved.
@@ -28,46 +28,49 @@
 .Os
 .Sh NAME
 .Nm power
-.Nd Power button and power fail support
+.Nd power button and power fail support
 .Sh SYNOPSIS
 .Cd "power0 at mainbus?"
-.Sh INTRODUCTION
+.Sh DESCRIPTION
 .Tn HP PA-RISC
 machines support power failure detection in different forms:
-.Bl -bullet -compact
+.Pp
+.Bl -bullet -offset indent -compact
 .It
 .Dq soft
-power button;
+power button
 .It
-power failure interrupt.
+power failure interrupt
 .El
 .Pp
 The
 .Nm
-driver tries it's best at determining the power failure condition
-that is a result of power button being depressed or a power supply
+driver tries its best to determinine the power failure condition
+that is a result of a power button being depressed or a power supply
 system failure or a similar condition.
-Upon detection of any of the beforementioned conditions it tries to
-gracefully (if possible) shutdown the system through a call to
+Upon detection of any of the aforementioned conditions, it tries to gracefully
+.Pq if possible
+shutdown the system through a call to the
 .Xr boot 9
 function.
 .Pp
-On systems equipped with
+On systems equipped with the
 .Xr lasi 4
-bus adapter we find a
+bus adapter, we find a
 .Dq soft
-power buttun which upon depression gives us a signal in the
+power button which upon depression gives us a signal in the
 .Dq power register
 and thus polling periodically we detect the event.
-Since that bit comes directly from the power button without any
-dampenning we perform a second long delay thus
-quick transitions off and on will
+Since that bit comes directly from the power button without any dampening,
+we perform a second long delay;
+thus quick transitions off and on will
 .Em not
 result in a shutdown.
 .Pp
-On modern systems an interruption is signalled upon the power
-button depression and thus this avoids polling and does not
-require (as being implemented in hardware) dampenning.
+On modern systems, an interruption is signalled upon the power
+button depression and thus this avoids polling and does not require
+.Pq as does being implemented in hardware
+dampening.
 .Sh SEE ALSO
 .Xr intro 4 ,
 .Xr lasi 4 ,
