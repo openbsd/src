@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2001/05/24 10:43:19 art Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2001/05/24 10:58:34 art Exp $	*/
 
 /*
  *	Mainline.
@@ -41,6 +41,16 @@ main(argc, argv)
 	maps_init();		/* Keymaps and modes.		*/
 	funmap_init();		/* Functions.			*/
 	ttykeymapinit();	/* Symbols, bindings.		*/
+
+	/*
+	 * This is where we initialize standalone extensions that should
+	 * be loaded dynamically sometime in the future.
+	 */
+	{
+		extern void grep_init(void);
+
+		grep_init();
+	}
 
 	/*
 	 * doing update() before reading files causes the error messages from
