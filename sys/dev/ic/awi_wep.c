@@ -1,4 +1,4 @@
-/*	$OpenBSD: awi_wep.c,v 1.6 2001/11/05 17:25:58 art Exp $	*/
+/*	$OpenBSD: awi_wep.c,v 1.7 2002/02/18 23:07:19 mickey Exp $	*/
 /*	$NetBSD: awi_wep.c,v 1.2 2000/07/04 14:47:58 onoe Exp $	*/
 
 /*
@@ -90,6 +90,10 @@
 #include <dev/ic/am79c930var.h>
 #include <dev/ic/awireg.h>
 #include <dev/ic/awivar.h>
+#include <dev/rndvar.h>
+#endif
+
+#ifdef __OpenBSD__
 #include <dev/rndvar.h>
 #endif
 
