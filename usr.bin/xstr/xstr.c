@@ -1,4 +1,4 @@
-/*	$OpenBSD: xstr.c,v 1.4 1996/12/07 08:18:38 bitblt Exp $	*/
+/*	$OpenBSD: xstr.c,v 1.5 2001/07/20 14:20:29 deraadt Exp $	*/
 /*	$NetBSD: xstr.c,v 1.5 1994/12/24 16:57:59 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)xstr.c	8.1 (Berkeley) 6/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: xstr.c,v 1.4 1996/12/07 08:18:38 bitblt Exp $";
+static char rcsid[] = "$OpenBSD: xstr.c,v 1.5 2001/07/20 14:20:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -492,5 +492,5 @@ onintr()
 		ignore(unlink(strings));
 	ignore(unlink("x.c"));
 	ignore(unlink("xs.c"));
-	exit(7);
+	_exit(7);
 }
