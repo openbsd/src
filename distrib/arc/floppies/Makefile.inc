@@ -1,3 +1,3 @@
-#	$Id: Makefile.inc,v 1.4 1998/03/08 00:26:15 deraadt Exp $
+#	$Id: Makefile.inc,v 1.5 1998/06/27 20:52:04 todd Exp $
 
-REV=	23
+REV=	${OSrev}

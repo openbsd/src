@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.21 1998/03/08 00:26:22 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.22 1998/06/27 20:52:08 todd Exp $
 
-REV=		23
+REV=		${OSrev}
 
 CBIN=		instbin
 ARCHDIR=	${.CURDIR}/../${MACHINE}/miniroot
