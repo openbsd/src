@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.101 2003/01/13 14:10:20 henning Exp $
+dnl	$OpenBSD: hardware,v 1.102 2003/01/13 15:53:42 jason Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -398,7 +398,7 @@ Supported hardware {:-include-:}:
 		    Olicom OC2135, OC2183, OC2325, OC2326
 		    Racore 8165 and 8148
 		    TI ThunderLAN adapters
-		VIA Rhine/RhineII Ethernet adapters, including: [C]
+		VIA Rhine/RhineII/RhineIII Ethernet adapters, including: [C]
 		    Addtron AEF-360TX
 		    Hawking PN102TX
 		    D-Link DFE530TX
