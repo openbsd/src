@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.14 1997/01/31 10:31:43 deraadt Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.15 1997/01/31 10:32:21 deraadt Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -561,7 +561,7 @@ ccdopen(dev, flags, fmt, p)
 	/* Check that the partition exists. */
 	if (part != RAW_PART) {
 		if (((cs->sc_flags & CCDF_INITED) == 0) ||
-		    ((part > lp->d_npartitions) ||
+		    ((part >= lp->d_npartitions) ||
 		     (lp->d_partitions[part].p_fstype == FS_UNUSED))) {
 			error = ENXIO;
 			goto done;
