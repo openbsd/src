@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_subr.c,v 1.6 1998/01/06 02:36:43 deraadt Exp $	*/
+/*	$OpenBSD: pci_subr.c,v 1.7 1998/02/03 19:42:04 deraadt Exp $	*/
 /*	$NetBSD: pci_subr.c,v 1.19 1996/10/13 01:38:29 christos Exp $	*/
 
 /*
@@ -109,6 +109,8 @@ struct pci_class pci_subclass_bridge[] = {
 	{ "MicroChannel",	PCI_SUBCLASS_BRIDGE_MC,			},
 	{ "PCI",		PCI_SUBCLASS_BRIDGE_PCI,		},
 	{ "PCMCIA",		PCI_SUBCLASS_BRIDGE_PCMCIA,		},
+	{ "NuBus",		PCI_SUBCLASS_BRIDGE_NUBUS,		},
+	{ "CardBus",		PCI_SUBCLASS_BRIDGE_CARDBUS,		},
 	{ "miscellaneous",	PCI_SUBCLASS_BRIDGE_MISC,		},
 	{ 0 },
 };

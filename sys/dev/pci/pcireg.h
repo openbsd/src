@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcireg.h,v 1.5 1996/11/28 23:28:13 niklas Exp $	*/
+/*	$OpenBSD: pcireg.h,v 1.6 1998/02/03 19:42:05 deraadt Exp $	*/
 /*	$NetBSD: pcireg.h,v 1.11 1996/08/10 15:42:33 mycroft Exp $	*/
 
 /*
@@ -166,6 +166,8 @@ typedef u_int8_t pci_revision_t;
 #define	PCI_SUBCLASS_BRIDGE_MC			0x03
 #define	PCI_SUBCLASS_BRIDGE_PCI			0x04
 #define	PCI_SUBCLASS_BRIDGE_PCMCIA		0x05
+#define	PCI_SUBCLASS_BRIDGE_NUBUS		0x06
+#define	PCI_SUBCLASS_BRIDGE_CARDBUS		0x07
 #define	PCI_SUBCLASS_BRIDGE_MISC		0x80
 
 /*
