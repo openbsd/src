@@ -1,4 +1,4 @@
-/*	$OpenBSD: io.c,v 1.25 2004/01/14 23:54:11 millert Exp $	*/
+/*	$OpenBSD: io.c,v 1.26 2004/06/02 14:58:46 tom Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1994
@@ -39,7 +39,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)calendar.c  8.3 (Berkeley) 3/25/94";
 #else
-static char rcsid[] = "$OpenBSD: io.c,v 1.25 2004/01/14 23:54:11 millert Exp $";
+static char rcsid[] = "$OpenBSD: io.c,v 1.26 2004/06/02 14:58:46 tom Exp $";
 #endif
 #endif /* not lint */
 
@@ -178,7 +178,7 @@ cal(void)
 						int len = l1 + l2 + 2;
 						if ((cur_evt->ldesc =
 						    malloc(len)) == NULL)
-							err(1, "malloc");
+							err(1, NULL);
 						snprintf(cur_evt->ldesc, len,
 						    "\t%s %s", prefix, p + 1);
 					} else if ((cur_evt->ldesc =

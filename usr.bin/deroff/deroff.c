@@ -1,4 +1,4 @@
-/*	$OpenBSD: deroff.c,v 1.5 2003/06/03 02:56:07 millert Exp $	*/
+/*	$OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -72,7 +72,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)deroff.c	8.1 (Berkeley) 6/6/93";
 #else
-static const char rcsid[] = "$OpenBSD: deroff.c,v 1.5 2003/06/03 02:56:07 millert Exp $";
+static const char rcsid[] = "$OpenBSD: deroff.c,v 1.6 2004/06/02 14:58:46 tom Exp $";
 #endif
 #endif /* not lint */
 
@@ -447,11 +447,11 @@ getfname(void)
 
 	q = (struct chain *) malloc(sizeof(struct chain));
 	if (q == NULL)
-		err(1, "malloc");
+		err(1, NULL);
 	q->nextp = namechain;
 	q->datap = strdup(fname);
 	if (q->datap == NULL)
-		err(1, "strdup");
+		err(1, NULL);
 	namechain = q;
 }
 
@@ -1598,7 +1598,7 @@ buildtab(struct mactab **r_back, int *r_size)
 	size += sizetab(p2);
 	back = (struct mactab *)calloc(size+2, sizeof(struct mactab));
 	if (back == NULL)
-		err(1, "calloc");
+		err(1, NULL);
 
 	p = macfill(back, troffmactab);
 	p = macfill(p, ppmactab);

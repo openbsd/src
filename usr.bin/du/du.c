@@ -1,4 +1,4 @@
-/*	$OpenBSD: du.c,v 1.14 2003/07/02 21:04:09 deraadt Exp $	*/
+/*	$OpenBSD: du.c,v 1.15 2004/06/02 14:58:46 tom Exp $	*/
 /*	$NetBSD: du.c,v 1.11 1996/10/18 07:20:35 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)du.c	8.5 (Berkeley) 5/4/95";
 #else
-static char rcsid[] = "$OpenBSD: du.c,v 1.14 2003/07/02 21:04:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: du.c,v 1.15 2004/06/02 14:58:46 tom Exp $";
 #endif
 #endif /* not lint */
 
@@ -242,7 +242,7 @@ linkchk(FTSENT *p)
 
 	if (nfiles == maxfiles && (files = realloc((char *)files,
 	    (u_int)(sizeof(ID) * (maxfiles += 128)))) == NULL)
-		err(1, "can't allocate memory");
+		err(1, NULL);
 	files[nfiles].inode = ino;
 	files[nfiles].dev = dev;
 	++nfiles;
