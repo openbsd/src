@@ -1,4 +1,4 @@
-.\"	$OpenBSD: utmp.5,v 1.20 2003/06/06 13:28:13 jmc Exp $
+.\"	$OpenBSD: utmp.5,v 1.21 2004/08/18 21:29:15 jmc Exp $
 .\"	$NetBSD: utmp.5,v 1.5 1994/11/30 19:31:35 jtc Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -51,7 +51,7 @@ file, logins and logouts in the
 file, and last logins in the
 .Nm lastlog
 file.
-The time stamps of date changes, shutdowns, and reboots are also logged in the
+The timestamps of date changes, shutdowns, and reboots are also logged in the
 .Nm wtmp
 file.
 .Pp
@@ -192,7 +192,8 @@ character indicates the new time.
 .Xr login 1 ,
 .Xr who 1 ,
 .Xr ac 8 ,
-.Xr init 8
+.Xr init 8 ,
+.Xr newsyslog 8
 .Sh HISTORY
 A
 .Nm utmp
