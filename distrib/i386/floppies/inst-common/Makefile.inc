@@ -1,4 +1,4 @@
-#	$Id: Makefile.inc,v 1.4 1996/06/02 11:41:36 deraadt Exp $
+#	$Id: Makefile.inc,v 1.5 1996/06/11 09:04:14 deraadt Exp $
 
 # TOP is assumed to be defined by Makefile including this one.
 
@@ -43,7 +43,7 @@ all: ${CBIN}
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
-	-/bin/rm -f ${IMAGE}
+	-/bin/rm -f ${REALIMAGE} ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
@@ -52,7 +52,8 @@ ${CBIN}: ${CBIN}.mk ${CBIN}.cache ${CBIN}.c
 	make -f ${CBIN}.mk all
 
 clean cleandir:
-	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.mk ${CBIN}.cache *.o *.lo *.c
+	/bin/rm -f core ${REALIMAGE} ${IMAGE} ${CBIN} ${CBIN}.mk \
+		${CBIN}.cache *.o *.lo *.c
 
 .include <bsd.obj.mk>
 .include <bsd.subdir.mk>

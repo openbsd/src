@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.4 1996/06/02 11:41:40 deraadt Exp $
+#	$Id: Makefile,v 1.5 1996/06/11 09:04:17 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -48,7 +48,7 @@ all: ${CBIN}
 unconfig:
 	-umount -f ${MOUNT_POINT}
 	-vnconfig -u ${VND_DEV}
-	-/bin/rm -f ${IMAGE}
+	-/bin/rm -f ${REALIMAGE} ${IMAGE}
 
 ${CBIN}.mk ${CBIN}.cache ${CBIN}.c: ${CRUNCHCONF}
 	crunchgen -D ${TOP}/../../.. -L ${DESTDIR}/usr/lib ${CRUNCHCONF}
