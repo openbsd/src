@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.11 1999/09/22 21:57:08 deraadt Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.12 2000/01/31 01:50:55 weingart Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -626,10 +626,14 @@ load_seeprom(ahc)
 #if defined(__FreeBSD__)
 	sd.sd_iobase = ahc->baseport + SEECTL;
 #elif defined(__NetBSD__) || defined(__OpenBSD__)
-	sd.sd_iot = ahc->sc_iot;
-	sd.sd_ioh = ahc->sc_ioh;
-	sd.sd_offset = SEECTL;
+	sd.sd_tag = ahc->sc_iot;
+	sd.sd_bsh = ahc->sc_ioh;
+	sd.sd_control_offset = SEECTL;
+	sd.sd_status_offset = SEECTL;
+	sd.sd_dataout_offset = SEECTL;
 #endif
+	sd.sd_chip = C46;	/* XXX - backwards compat */
+
 	sd.sd_MS = SEEMS;
 	sd.sd_RDY = SEERDY;
 	sd.sd_CS = SEECS;
@@ -724,10 +728,10 @@ acquire_seeprom(sd)
 	 */
 	SEEPROM_OUTB(sd, sd->sd_MS);
 	wait = 1000;  /* 1 second timeout in msec */
-	while (--wait && ((SEEPROM_INB(sd) & sd->sd_RDY) == 0)) {
+	while (--wait && ((SEEPROM_STATUS_INB(sd) & sd->sd_RDY) == 0)) {
 		DELAY (1000);  /* delay 1 msec */
         }
-	if ((SEEPROM_INB(sd) & sd->sd_RDY) == 0) {
+	if ((SEEPROM_STATUS_INB(sd) & sd->sd_RDY) == 0) {
 		SEEPROM_OUTB(sd, 0); 
 		return (0);
 	}         

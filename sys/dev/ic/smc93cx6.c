@@ -1,10 +1,9 @@
-/*	$OpenBSD: smc93cx6.c,v 1.6 1996/11/28 23:27:53 niklas Exp $	*/
-/*	$NetBSD: smc93cx6.c,v 1.5 1996/10/21 22:34:38 thorpej Exp $	*/
-
+/*	$OpenBSD: smc93cx6.c,v 1.7 2000/01/31 01:50:54 weingart Exp $	*/
+/* $FreeBSD: sys/dev/aic7xxx/93cx6.c,v 1.5 2000/01/07 23:08:17 gibbs Exp $ */
 /*
- * Interface for the 93C46/26/06 serial eeprom parts.
+ * Interface for the 93C66/56/46/26/06 serial eeprom parts.
  *
- * Copyright (c) 1995 Daniel M. Eischen
+ * Copyright (c) 1995, 1996 Daniel M. Eischen
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -23,10 +22,10 @@
  */
 
 /*
- *   The instruction set of the 93C46/26/06 chips are as follows:
+ *   The instruction set of the 93C66/56/46/26/06 chips are as follows:
  *
- *               Start  OP
- *     Function   Bit  Code  Address    Data     Description
+ *               Start  OP	    *
+ *     Function   Bit  Code  Address**  Data     Description
  *     -------------------------------------------------------------------
  *     READ        1    10   A5 - A0             Reads data stored in memory,
  *                                               starting at specified address
@@ -39,12 +38,14 @@
  *     EWDS        1    00   00XXXX              Disables all programming
  *                                               instructions
  *     *Note: A value of X for address is a don't care condition.
+ *    **Note: There are 8 address bits for the 93C56/66 chips unlike
+ *	      the 93C46/26/06 chips which have 6 address bits.
  *
  *   The 93C46 has a four wire interface: clock, chip select, data in, and
  *   data out.  In order to perform one of the above functions, you need
  *   to enable the chip select for a clock period (typically a minimum of
  *   1 usec, with the clock high and low a minimum of 750 and 250 nsec
- *   respectively.  While the chip select remains high, you can clock in
+ *   respectively).  While the chip select remains high, you can clock in
  *   the instructions (above) starting with the start bit, followed by the
  *   OP code, Address, and Data (if needed).  For the READ instruction, the
  *   requested 16-bit register contents is read from the data out line but
@@ -56,11 +57,14 @@
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#if defined(__FreeBSD__)
-#include <machine/clock.h>
-#include <i386/scsi/93cx6.h>
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
+#include <machine/bus_memio.h>
+#include <machine/bus_pio.h>
+#endif
 #include <machine/bus.h>
+#if !(defined(__NetBSD__) || defined(__OpenBSD__))
+#include <dev/aic7xxx/93cx6.h>
+#else
 #include <dev/ic/smc93cx6var.h>
 #endif
 
@@ -76,10 +80,11 @@ static struct seeprom_cmd {
 /*
  * Wait for the SEERDY to go high; about 800 ns.
  */
-#define CLOCK_PULSE(sd, rdy)			\
-	while ((SEEPROM_INB(sd) & rdy) == 0) {		\
-		;  /* Do nothing */		\
-	}
+#define CLOCK_PULSE(sd, rdy)				\
+	while ((SEEPROM_STATUS_INB(sd) & rdy) == 0) {	\
+		;  /* Do nothing */			\
+	}						\
+	(void)SEEPROM_INB(sd);	/* Clear clock */
 
 /*
  * Read the serial EEPROM and returns 1 if successful and 0 if
@@ -89,15 +94,11 @@ int
 read_seeprom(sd, buf, start_addr, count)
 	struct seeprom_descriptor *sd;
 	u_int16_t *buf;
-#if defined(__FreeBSD__)
-	u_int start_addr;
-	int count;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 	bus_size_t start_addr;
 	bus_size_t count;
-#endif
 {
-	int i = 0, k = 0;
+	int i = 0;
+	u_int k = 0;
 	u_int16_t v;
 	u_int8_t temp;
 
@@ -125,8 +126,8 @@ read_seeprom(sd, buf, start_addr, count)
 			if (seeprom_read.bits[i] != 0)
 				temp ^= sd->sd_DO;
 		}
-		/* Send the 6 bit address (MSB first, LSB last). */
-		for (i = 5; i >= 0; i--) {
+		/* Send the 6 or 8 bit address (MSB first, LSB last). */
+		for (i = (sd->sd_chip - 1); i >= 0; i--) {
 			if ((k & (1 << i)) != 0)
 				temp ^= sd->sd_DO;
 			SEEPROM_OUTB(sd, temp);
@@ -148,7 +149,7 @@ read_seeprom(sd, buf, start_addr, count)
 			SEEPROM_OUTB(sd, temp);
 			CLOCK_PULSE(sd, sd->sd_RDY);
 			v <<= 1;
-			if (SEEPROM_INB(sd) & sd->sd_DI)
+			if (SEEPROM_DATA_INB(sd) & sd->sd_DI)
 				v |= 1;
 			SEEPROM_OUTB(sd, temp ^ sd->sd_CK);
 			CLOCK_PULSE(sd, sd->sd_RDY);
@@ -165,12 +166,11 @@ read_seeprom(sd, buf, start_addr, count)
 		SEEPROM_OUTB(sd, temp);
 		CLOCK_PULSE(sd, sd->sd_RDY);
 	}
-#if 0
-	printf ("Serial EEPROM:");
+#ifdef AHC_DUMP_EEPROM
+	printf("\nSerial EEPROM:\n\t");
 	for (k = 0; k < count; k = k + 1) {
-		if (((k % 8) == 0) && (k != 0))
-		{
-			printf ("\n              ");
+		if (((k % 8) == 0) && (k != 0)) {
+			printf ("\n\t");
 		}
 		printf (" 0x%x", buf[k]);
 	}

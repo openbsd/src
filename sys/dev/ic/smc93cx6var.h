@@ -1,6 +1,5 @@
-/*	$OpenBSD: smc93cx6var.h,v 1.5 1996/11/28 23:27:53 niklas Exp $	*/
-/*	$NetBSD: smc93cx6var.h,v 1.3 1996/10/21 22:34:41 thorpej Exp $	*/
-
+/*	$OpenBSD: smc93cx6var.h,v 1.6 2000/01/31 01:50:54 weingart Exp $	*/
+/* $FreeBSD: sys/dev/aic7xxx/93cx6.h,v 1.3 1999/12/29 04:35:33 peter Exp $ */
 /*
  * Interface to the 93C46 serial EEPROM that is used to store BIOS
  * settings for the aic7xxx based adaptec SCSI controllers.  It can
@@ -13,15 +12,29 @@
  * modification, are permitted provided that the following conditions
  * are met:
  * 1. Redistributions of source code must retain the above copyright
- *    notice immediately at the beginning of the file, without modification,
- *    this list of conditions, and the following disclaimer.
- * 2. Redistributions in binary form must reproduce the above copyright
- *    notice, this list of conditions and the following disclaimer in the
- *    documentation and/or other materials provided with the distribution.
- * 3. Absolutely no warranty of function or purpose is made by the author
- *    Justin T. Gibbs.
- * 4. Modifications may be freely made to this file if the above conditions
- *    are met.
+ *    notice, this list of conditions, and the following disclaimer,
+ *    without modification, immediately at the beginning of the file.
+ * 2. The name of the author may not be used to endorse or promote products
+ *    derived from this software without specific prior written permission.
+ *
+ * Where this Software is combined with software released under the terms of 
+ * the GNU Public License ("GPL") and the terms of the GPL would require the 
+ * combined work to also be released under the terms of the GPL, the terms
+ * and conditions of this License will apply in addition to those of the
+ * GPL with the exception of any terms or conditions of this License that
+ * conflict with, or are expressly prohibited by, the GPL.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE FOR
+ * ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
  */
 
 #include <sys/param.h>
@@ -29,14 +42,20 @@
 #include <sys/systm.h>
 #endif
 
+#ifdef _KERNEL
+
+typedef enum {
+	C46 = 6,
+	C56_66 = 8
+} seeprom_chip_t;
+
 struct seeprom_descriptor {
-#if defined(__FreeBSD__)
-	u_long sd_iobase;
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-	bus_space_tag_t sd_iot;
-	bus_space_handle_t sd_ioh;
-	bus_size_t sd_offset;
-#endif
+	bus_space_tag_t sd_tag;             
+	bus_space_handle_t sd_bsh;
+	bus_size_t sd_control_offset;
+	bus_size_t sd_status_offset;
+	bus_size_t sd_dataout_offset;
+	seeprom_chip_t sd_chip;
 	u_int16_t sd_MS;
 	u_int16_t sd_RDY;
 	u_int16_t sd_CS;
@@ -61,20 +80,16 @@ struct seeprom_descriptor {
  *  A failed read attempt returns 0, and a successful read returns 1.
  */
 
-#if defined(__FreeBSD__)
-#define	SEEPROM_INB(sd)		inb(sd->sd_iobase)
-#define	SEEPROM_OUTB(sd, value)	outb(sd->sd_iobase, value)
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
 #define	SEEPROM_INB(sd) \
-	bus_space_read_1(sd->sd_iot, sd->sd_ioh, sd->sd_offset)
+	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_control_offset)
 #define	SEEPROM_OUTB(sd, value) \
-	bus_space_write_1(sd->sd_iot, sd->sd_ioh, sd->sd_offset, value)
-#endif
+	bus_space_write_1(sd->sd_tag, sd->sd_bsh, sd->sd_control_offset, value)
+#define	SEEPROM_STATUS_INB(sd) \
+	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_status_offset)
+#define	SEEPROM_DATA_INB(sd) \
+	bus_space_read_1(sd->sd_tag, sd->sd_bsh, sd->sd_dataout_offset)
 
-#if defined(__FreeBSD__)
-int read_seeprom __P((struct seeprom_descriptor *sd,
-    u_int16_t *buf, u_int start_addr, int count));
-#elif defined(__NetBSD__) || defined(__OpenBSD__)
-int read_seeprom __P((struct seeprom_descriptor *sd,
-    u_int16_t *buf, bus_size_t start_addr, bus_size_t count));
-#endif
+int read_seeprom(struct seeprom_descriptor *sd, u_int16_t *buf,
+		 bus_size_t start_addr, bus_size_t count);
+
+#endif /* _KERNEL */
