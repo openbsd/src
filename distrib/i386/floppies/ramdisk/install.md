@@ -1,4 +1,4 @@
-#	$OpenBSD: install.md,v 1.48 1999/04/07 22:58:12 millert Exp $
+#	$OpenBSD: install.md,v 1.49 1999/07/30 17:16:05 deraadt Exp $
 #
 #
 # Copyright rc) 1996 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ md_get_diskdevs() {
 
 md_get_cddevs() {
 	# return available CDROM devices
-	cat /kern/msgbuf | egrep "^a?cd[0-9]+ " | cutword 1 | sort -u
+	cat /kern/msgbuf | egrep "^cd[0-9]+ " | cutword 1 | sort -u
 }
 
 md_get_partition_range() {
