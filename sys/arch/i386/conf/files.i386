@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.104 2003/05/14 22:53:59 tedu Exp $
+#	$OpenBSD: files.i386,v 1.105 2003/06/24 22:45:33 espie Exp $
 #	$NetBSD: files.i386,v 1.73 1996/05/07 00:58:36 thorpej Exp $
 #
 # new style config file for i386 architecture
@@ -222,6 +222,9 @@ file	arch/i386/isa/joy_isapnp.c	joy_isapnp
 
 # VM86 mode
 file	arch/i386/i386/vm86.c			vm86
+
+# a.out binary compatibility (COMPAT_AOUT)
+include "../../../compat/aout/files.aout"
 
 # SVR4 binary compatibility (COMPAT_SVR4)
 include "../../../compat/svr4/files.svr4"

@@ -1,0 +1,6 @@
+#	$OpenBSD: files.aout,v 1.1 2003/06/24 22:45:33 espie Exp $
+#
+# machine-independent a.out compat code.
+# Included by ports that need it.
+
+file	compat/aout/compat_aout.c		compat_aout

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.58 2003/06/02 23:27:47 millert Exp $	*/
+/*	$OpenBSD: trap.c,v 1.59 2003/06/24 22:45:33 espie Exp $	*/
 /*	$NetBSD: trap.c,v 1.95 1996/05/05 06:50:02 mycroft Exp $	*/
 
 /*-
@@ -86,6 +86,9 @@ extern struct emul emul_aout_freebsd, emul_elf_freebsd;
 #endif
 #ifdef COMPAT_BSDOS
 extern struct emul emul_bsdos;
+#endif
+#ifdef COMPAT_AOUT
+extern struct emul emul_aout;
 #endif
 
 #include "npx.h"
@@ -643,6 +646,9 @@ syscall(frame)
 #ifdef COMPAT_FREEBSD
 		    && p->p_emul != &emul_aout_freebsd
 		    && p->p_emul != &emul_elf_freebsd
+#endif
+#ifdef COMPAT_AOUT
+		    && p->p_emul != &emul_aout
 #endif
 #ifdef COMPAT_BSDOS
 		    && p->p_emul != &emul_bsdos

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.343 2003/06/08 00:42:23 miod Exp $
+#	$OpenBSD: GENERIC,v 1.344 2003/06/24 22:45:33 espie Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -30,6 +30,7 @@ option		COMPAT_IBCS2	# binary compatibility with SCO and ISC
 option		COMPAT_LINUX	# binary compatibility with Linux
 option		COMPAT_FREEBSD	# binary compatibility with FreeBSD
 option		COMPAT_BSDOS	# binary compatibility with BSD/OS
+option		COMPAT_AOUT	# a.out binaries are emulated
 
 #option		NTFS		# Experimental NTFS support
 
