@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 1997/03/23 03:52:13 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 1997/03/23 04:43:22 millert Exp $	*/
 /*	$NetBSD: conf.c,v 1.4 1995/04/23 10:33:19 cgd Exp $	*/
 
 /*
@@ -47,7 +47,7 @@
 #include <string.h>
 #include <errno.h>
 #include <limits.h>
-#include <regexp.h>
+#include <regex.h>
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/syslog.h>
@@ -62,13 +62,12 @@ struct path {
 	int p_lno;		/* Line number of this record */
 	char *p_args;		/* copy of arg string (malloc) */
 	char *p_key;		/* Pathname to match (also p_argv[0]) */
-	regexp *p_re;		/* RE to match against pathname (malloc) */
+	regex_t p_re;		/* RE to match against pathname */
 	int p_argc;		/* number of elements in arg string */
 	char **p_argv;		/* argv[] pointers into arg string (malloc) */
 };
 
 static char *conf_file;		/* XXX for regerror */
-static path *curp;		/* XXX for regerror */
 
 /*
  * Add an element to a 2-way list,
@@ -137,14 +136,6 @@ pinsert(p0, q0)
 	ins_que(&p0->p_q, q0->q_back);
 	return (1);
 	
-}
-
-void
-regerror(s)
-	const char *s;
-{
-	syslog(LOG_ERR, "%s:%d: regcomp %s: %s",
-			conf_file, curp->p_lno, curp->p_key, s);
 }
 
 static path *
@@ -219,12 +210,12 @@ palloc(cline, lno)
 #endif
 
 	p->p_key = p->p_argv[0];
-	if (strpbrk(p->p_key, RE_CHARS)) {
-		curp = p;			/* XXX */
-		p->p_re = regcomp(p->p_key);
-		curp = 0;			/* XXX */
-	} else {
-		p->p_re = 0;
+	if ((c = regcomp(&(p->p_re), p->p_key, REG_EXTENDED))) {
+		char errbuf[BUFSIZ];
+
+		(void)regerror(c, &(p->p_re), errbuf, sizeof(errbuf));
+		syslog(LOG_ERR, "%s:%d: regcomp %s: %s",
+				conf_file, p->p_lno, p->p_key, errbuf);
 	}
 	p->p_lno = lno;
 
@@ -239,8 +230,7 @@ pfree(p)
 	path *p;
 {
 	free(p->p_args);
-	if (p->p_re)
-		free((void *)p->p_re);
+	regfree(&(p->p_re));
 	free((void *)p->p_argv);
 	free((void *)p);
 }
@@ -322,7 +312,7 @@ conf_read(q, conf)
 	if (fp) {
 		conf_file = conf;		/* XXX */
 		readfp(q, fp);
-		conf_file = 0;		/* XXX */
+		conf_file = NULL;		/* XXX */
 		(void)fclose(fp);
 	} else {
 		syslog(LOG_ERR, "open config file \"%s\": %m", conf);
@@ -338,13 +328,9 @@ char *key;
 
 	for (q = q0->q_forw; q != q0; q = q->q_forw) {
 		path *p = (path *)q;
-		if (p->p_re) {
-			if (regexec(p->p_re, key))
-				return (p->p_argv+1);
-		} else {
-			if (strncmp(p->p_key, key, strlen(p->p_key)) == 0)
-				return (p->p_argv+1);
-		}
+
+		if (regexec(&(p->p_re), key, 0, NULL, 0) == 0)
+			return (p->p_argv+1);
 	}
 
 	return (0);
