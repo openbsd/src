@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ax.c,v 1.4 1999/09/27 17:50:03 aaron Exp $ */
+/*	$OpenBSD: if_ax.c,v 1.5 1999/11/15 20:59:03 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -62,7 +62,6 @@
 #include <sys/errno.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/socket.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
