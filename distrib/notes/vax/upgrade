@@ -1,0 +1,10 @@
+To upgrade to OpenBSD OSREV from a previous version start with the general
+instructions in the section "Installing OpenBSD".
+
+If you are upgrading with the miniroot or the new single floppy image,
+select the (U)pdate option rather than the (I)nstall option at the prompt
+in the install process.
+
+The upgrade script will use the existing disk partitions to install the
+new system in, and also preserves files in `/etc' which you are likely
+to have customized since a previous installation.
