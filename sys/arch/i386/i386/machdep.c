@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.116 1999/10/26 18:16:48 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.117 1999/11/01 17:15:08 art Exp $	*/
 /*	$NetBSD: machdep.c,v 1.214 1996/11/10 03:16:17 thorpej Exp $	*/
 
 /*-
@@ -581,6 +581,8 @@ setup_buffers(maxaddr)
 	 * solved by making the PCI DMA memory allocation routines go for
 	 * memory above 16MB first.
 	 */
+
+	left = bufpages;
 
 	/*
 	 * First, save ISA DMA bounce buffer area so we won't lose that
