@@ -1,4 +1,4 @@
-/*	$OpenBSD: aac.c,v 1.2 2000/12/13 15:32:39 mickey Exp $	*/
+/*	$OpenBSD: aac.c,v 1.3 2000/12/13 16:03:11 mickey Exp $	*/
 
 /*-
  * Copyright (c) 2000 Michael Smith
@@ -1482,15 +1482,18 @@ aac_start_ccbs(sc)
 
 		if (aac_exec_ccb(ccb) == 0) {
 			ccb->ac_flags |= AAC_ACF_WATCHDOG;
+			timeout_set(&ccb->ac_xs->stimeout, aac_watchdog, ccb);
 			timeout_add(&xs->stimeout,
 			    (AAC_WATCH_TIMEOUT * hz) / 1000);
 			break;
 		}
 		TAILQ_REMOVE(&sc->sc_ccbq, ccb, ac_chain);
 
-		if ((xs->flags & SCSI_POLL) == 0)
+		if ((xs->flags & SCSI_POLL) == 0) {
+			timeout_set(&ccb->ac_xs->stimeout, aac_timeout, ccb);
 			timeout_add(&xs->stimeout,
 			    (ccb->ac_timeout * hz) / 1000);
+		}
 	}
 }
 

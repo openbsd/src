@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.10 2000/12/13 15:32:39 mickey Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.11 2000/12/13 16:03:11 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -1307,15 +1307,18 @@ gdt_start_ccbs(gdt)
 
 		if (gdt_exec_ccb(ccb) == 0) {
 			ccb->gc_flags |= GDT_GCF_WATCHDOG;
+			timeout_set(&ccb->gc_xs->stimeout, gdt_watchdog, ccb);
 			timeout_add(&xs->stimeout,
 			    (GDT_WATCH_TIMEOUT * hz) / 1000);
 			break;
 		}
 		TAILQ_REMOVE(&gdt->sc_ccbq, ccb, gc_chain);
 
-		if ((xs->flags & SCSI_POLL) == 0)
+		if ((xs->flags & SCSI_POLL) == 0) {
+			timeout_set(&ccb->gc_xs->stimeout, gdt_timeout, ccb);
 			timeout_add(&xs->stimeout,
 			    (ccb->gc_timeout * hz) / 1000);
+		}
 	}
 }
 
