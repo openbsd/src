@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.14 1999/04/22 06:08:06 rahnds Exp $	*/
+/*	$OpenBSD: trap.c,v 1.15 1999/07/05 20:29:14 rahnds Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -57,15 +57,16 @@
 
 volatile int want_resched;
 
-#ifdef PPC_WANT_BACKTRACE
-u_int32_t dumpframe(u_int32_t);
+#ifdef DDB
+u_int32_t db_dumpframe(u_int32_t);
 void
 ppc_dumpbt(struct trapframe *frame)
 {
+	u_int32_t addr;
 	/* dumpframe is defined in db_trace.c */
 	addr=frame->fixreg[1];
 	while (addr != 0) {
-		addr = dumpframe(addr);
+		addr = db_dumpframe(addr);
 	}
 	return;
 }
@@ -163,7 +164,6 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 /*
  * keep this for later in case we want it later.
-ppc_dumpbt(frame);
 */
 			sv.sival_int = frame->dar;
 			trapsignal(p, SIGSEGV, vftype, SEGV_MAPERR, sv);
