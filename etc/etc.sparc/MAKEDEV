@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.42 1998/05/05 21:52:06 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.43 1998/05/20 23:37:25 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -72,7 +72,7 @@
 #	lkm	loadable kernel modules interface
 #	tun*	network tunnel driver
 #	*random	random data source
-#	magma*	magma card (makes 16 mtty and 2 mbpp)
+#	magma*	magma card (makes 16 tty and 2 bpp)
 
 PATH=/sbin:/bin/:/usr/bin:/usr/sbin:/usr/etc
 this=$0
@@ -536,6 +536,25 @@ pty*)
 		umask 77
 		;;
 	esac
+	;;
+
+magma*)
+	if [ 0$unit -gt 3 ]
+	then
+		echo "bad unit for $i: $unit"
+		exit 127
+	fi
+	echo rm -f {tty,bpp}${unit}?
+	offset=`expr $unit \* 64`
+	n=0
+	while [ $n -lt 16 ]
+	do
+		name=$unit`hex $n`
+		mknod tty$name c 100 `add $offset $n`
+		n=`add $n 1`
+	done
+	mknod bpp${unit}0 c 101 `add $offset 0`
+	mknod bpp${unit}1 c 101 `add $offset 1`
 	;;
 
 magma*)
