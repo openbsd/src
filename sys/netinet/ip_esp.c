@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.27 1999/12/06 07:14:35 angelos Exp $	*/
+/*	$OpenBSD: ip_esp.c,v 1.28 1999/12/07 08:58:00 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -33,11 +33,6 @@
  * REPRESENTATION OR WARRANTY OF ANY KIND CONCERNING THE
  * MERCHANTABILITY OF THIS SOFTWARE OR ITS FITNESS FOR ANY PARTICULAR
  * PURPOSE.
- */
-
-/*
- * Encapsulation Security Payload Processing
- * Per RFC1827 (Atkinson, 1995)
  */
 
 #include <sys/param.h>
@@ -91,7 +86,7 @@ extern struct enc_softc encif[];
 int esp_enable = 0;
 
 /*
- * esp_input gets called when we receive an packet with an ESP.
+ * esp_input gets called when we receive an ESP-protected packet
  */
 
 void

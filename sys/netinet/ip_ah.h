@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.h,v 1.17 1999/10/29 02:10:01 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.h,v 1.18 1999/12/07 08:57:59 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -82,6 +82,9 @@ struct ah_new
 };
 
 #define AH_NEW_FLENGTH		(sizeof(struct ah_new))
+
+/* Size of the largest hash function output used in AH-new, in bytes */
+#define AH_MAX_HASHLEN		20
 
 /*
  * Names for AH sysctl objects

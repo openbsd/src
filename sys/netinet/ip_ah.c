@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.29 1999/12/06 23:02:08 angelos Exp $	*/
+/*	$OpenBSD: ip_ah.c,v 1.30 1999/12/07 08:57:59 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -198,7 +198,6 @@ ah_input(m, va_alist)
 				       offsetof(struct ip, ip_p));
     if (m == NULL)
     {
-	DPRINTF(("ah_input(): authentication failed for AH packet from %s to %s, spi %08x\n", inet_ntoa4(ipn.ip_src), ipsp_address(sunion), ntohl(ahn.ah_spi)));
 	ahstat.ahs_badkcr++;
 	return;
     }
@@ -211,6 +210,8 @@ ah_input(m, va_alist)
 
     ipo = mtod(m, struct ip *);
     ipo->ip_len = htons(m->m_pkthdr.len);
+    HTONS(ipo->ip_id);
+    HTONS(ipo->ip_off);
     ipo->ip_sum = 0;
     ipo->ip_sum = in_cksum(m, ipo->ip_hl << 2);
 
@@ -283,6 +284,8 @@ ah_input(m, va_alist)
     } else
         m->m_pkthdr.tdbi = NULL;
 
+    printf("here4\n");
+
     /* Packet is authentic */
     m->m_flags |= M_AUTH;
 
@@ -310,6 +313,7 @@ ah_input(m, va_alist)
         bpf_mtap(m->m_pkthdr.rcvif->if_bpf, &m0);
     }
 #endif
+
     splx(s);
 
     /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_new.c,v 1.29 1999/12/06 07:14:35 angelos Exp $	*/
+/*	$OpenBSD: ip_ah_new.c,v 1.30 1999/12/07 08:58:00 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -50,7 +50,6 @@
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/socketvar.h>
-
 #include <machine/cpu.h>
 #include <machine/endian.h>
 
@@ -62,10 +61,11 @@
 #include <netinet/in.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip.h>
-#include <netinet/in_pcb.h>
-#include <netinet/in_var.h>
-#include <netinet/ip_var.h>
-#include <netinet/ip_icmp.h>
+
+#ifdef INET6
+#include <netinet6/in6.h>
+#include <netinet6/ip6.h>
+#endif /* INET6 */
 
 #include <netinet/ip_ipsp.h>
 #include <netinet/ip_ah.h>
@@ -75,6 +75,10 @@
 #define DPRINTF(x)	if (encdebug) printf x
 #else
 #define DPRINTF(x)
+#endif
+
+#ifndef offsetof
+#define offsetof(s, e) ((int)&((s *)0)->e)
 #endif
 
 extern struct auth_hash auth_hash_hmac_md5_96;
@@ -88,10 +92,8 @@ struct auth_hash *ah_new_hash[] = {
 };
 
 /*
- * ah_new_attach() is called from the transformation initialization code.
- * It just returns.
+ * ah_new_attach() is called from the transformation initialization code
  */
-
 int
 ah_new_attach()
 {
@@ -187,68 +189,71 @@ ah_new_zeroize(struct tdb *tdbp)
 
 /*
  * ah_new_input() gets called to verify that an input packet
- * passes authentication.
+ * passes authentication
  */
 
 struct mbuf *
 ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 {
     struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
-    struct ip *ip, ipo;
-    struct ah_new *aho, *ah;
-    int ohlen, len, count, off, errc;
-    u_int32_t btsx;
-    struct mbuf *m0;
+    unsigned char calcauth[AH_MAX_HASHLEN];
+    int len, count, off, roff;
+    struct mbuf *m0, *m1;
     union authctx ctx;
-    u_int8_t optval;
-    u_char buffer[40];
+    struct ah_new ah;
+    
+#ifdef INET
+    unsigned char *ptr;
+    struct ip *ipo;
+#endif /* INET */
 
-    aho = (struct ah_new *) buffer;
-    ohlen = sizeof(struct ip) + AH_NEW_FLENGTH;
+    /* Save the AH header, we use it throughout */
+    m_copydata(m, skip, sizeof(ah), (unsigned char *) &ah);
 
-    if (m->m_len < ohlen)
+    /* Replay window checking */
+    if (tdb->tdb_wnd > 0)
     {
-	if ((m = m_pullup(m, ohlen)) == NULL)
+	switch (checkreplaywindow32(ntohl(ah.ah_rpl), 0, &(tdb->tdb_rpl),
+				    tdb->tdb_wnd, &(tdb->tdb_bitmap)))
 	{
-	    ahstat.ahs_hdrops++;
-	    DPRINTF(("ah_new_input(): (possibly too short) packet dropped\n"));
-	    return NULL;
+	    case 0: /* All's well */
+		break;
+
+	    case 1:
+		DPRINTF(("ah_new_input(): replay counter wrapped for SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		ahstat.ahs_wrap++;
+		m_freem(m);
+		return NULL;
+
+	    case 2:
+	    case 3:
+		DPRINTF(("ah_new_input(): duplicate packet received in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		ahstat.ahs_replay++;
+		m_freem(m);
+		return NULL;
+
+	    default:
+                DPRINTF(("ah_new_input(): bogus value from checkreplaywindow32() in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		ahstat.ahs_replay++;
+                m_freem(m);
+                return NULL;
 	}
     }
 
-    ip = mtod(m, struct ip *);
-
-    /* Adjust, if options are present */
-    if ((ip->ip_hl << 2) > sizeof(struct ip))
+    /* Verify AH header length */
+    if (ah.ah_hl * sizeof(u_int32_t) != AH_HMAC_HASHLEN + AH_HMAC_RPLENGTH)
     {
-	if ((m = m_pullup(m, ohlen - sizeof (struct ip) +
-			  (ip->ip_hl << 2))) == NULL)
-	{
-	    DPRINTF(("ah_new_input(): m_pullup() failed\n"));
-	    ahstat.ahs_hdrops++;
-	    return NULL;
-	}
-	
-	ip = mtod(m, struct ip *);
-	ah = (struct ah_new *) ((u_int8_t *) ip + (ip->ip_hl << 2));
-	ohlen += ((ip->ip_hl << 2) - sizeof(struct ip));
-    }
-    else
-      ah = (struct ah_new *) (ip + 1);
-
-    if (ah->ah_hl * sizeof(u_int32_t) != AH_HMAC_HASHLEN + AH_HMAC_RPLENGTH)
-    {
-	DPRINTF(("ah_new_input(): bad authenticator length for packet from %s to %s, spi %08x\n", inet_ntoa4(ip->ip_src), inet_ntoa4(ip->ip_dst), ntohl(ah->ah_spi)));
+	DPRINTF(("ah_new_input(): bad authenticator length %d for packet in SA %s/%08x\n", ah.ah_hl * sizeof(u_int32_t), ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	ahstat.ahs_badauthl++;
 	m_freem(m);
 	return NULL;
     }
 
     /* Update the counters */
-    tdb->tdb_cur_bytes += ip->ip_len - (ip->ip_hl << 2) -
-			  ah->ah_hl * sizeof(u_int32_t);
-    ahstat.ahs_ibytes += ip->ip_len - (ip->ip_hl << 2) -
-			 ah->ah_hl * sizeof(u_int32_t);
+    tdb->tdb_cur_bytes += (m->m_pkthdr.len - skip -
+			   ah.ah_hl * sizeof(u_int32_t));
+    ahstat.ahs_ibytes += (m->m_pkthdr.len - skip -
+			  ah.ah_hl * sizeof(u_int32_t));
 
     /* Hard expiration */
     if ((tdb->tdb_flags & TDBF_BYTES) &&
@@ -268,115 +273,131 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	tdb->tdb_flags &= ~TDBF_SOFT_BYTES;     /* Turn off checking */
     }
 
-    /* Replay window checking */
-    if (tdb->tdb_wnd > 0)
-    {
-	btsx = ntohl(ah->ah_rpl);
-	if ((errc = checkreplaywindow32(btsx, 0, &(tdb->tdb_rpl), tdb->tdb_wnd,
-					&(tdb->tdb_bitmap))) != 0)
-	{
-	    switch(errc)
-	    {
-		case 1:
-		    DPRINTF(("ah_new_input(): replay counter wrapped for packets from %s to %s, spi %08x\n", inet_ntoa4(ip->ip_src), inet_ntoa4(ip->ip_dst), ntohl(ah->ah_spi)));
-		    ahstat.ahs_wrap++;
-		    break;
+    bcopy(tdb->tdb_ictx, &ctx, ahx->ctxsize);
 
-		case 2:
-	        case 3:
-		    DPRINTF(("ah_new_input(): duplicate packet received from %s to %s, spi %08x\n", inet_ntoa4(ip->ip_src), inet_ntoa4(ip->ip_dst), ntohl(ah->ah_spi)));
-		    ahstat.ahs_replay++;
-		    break;
+    switch (tdb->tdb_dst.sa.sa_family)
+    {
+#ifdef INET
+	case AF_INET:
+	    /*
+	     * This is the most painless way of dealing with IPv4 header
+	     * and option processing -- just make sure they're in
+	     * contiguous memory.
+	     */
+	    m = m_pullup(m, skip);
+	    if (m == NULL)
+	    {
+		DPRINTF(("ah_new_input(): m_pullup() failed, SA %s/%08x\n",
+			 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+		ahstat.ahs_hdrops++;
+		return NULL;
 	    }
 
-	    m_freem(m);
-	    return NULL;
-	}
-    }
+	    ptr = mtod(m, unsigned char *);
 
-    ipo = *ip;
-    ipo.ip_tos = 0;
-    ipo.ip_len += (ip->ip_hl << 2);     /* adjusted in ip_intr() */
-    HTONS(ipo.ip_len);
-    HTONS(ipo.ip_id);
-    ipo.ip_off = 0;
-    ipo.ip_ttl = 0;
-    ipo.ip_sum = 0;
+	    ipo = (struct ip *) ptr;
+	    ipo->ip_tos = 0;
+	    ipo->ip_len += skip;     /* adjusted in ip_intr() */
+	    HTONS(ipo->ip_len);
+	    HTONS(ipo->ip_id);
+	    ipo->ip_off = 0;
+	    ipo->ip_ttl = 0;
+	    ipo->ip_sum = 0;
+	    ahx->Update(&ctx, ptr, sizeof(struct ip));
 
-    bcopy(tdb->tdb_ictx, &ctx, ahx->ctxsize);
-    ahx->Update(&ctx, (unsigned char *) &ipo, sizeof(struct ip));
+	    /* IPv4 option processing */
+	    for (off = sizeof(struct ip); off < skip;)
+	    {
+		switch (ptr[off])
+		{
+		    case IPOPT_EOL:
+			ahx->Update(&ctx, ptr + off, 1);
+			off = skip;  /* End the loop */
+			break;
 
-    /* Options */
-    if ((ip->ip_hl << 2) > sizeof(struct ip))
-      for (off = sizeof(struct ip); off < (ip->ip_hl << 2);)
-      {
-	  optval = ((u_int8_t *) ip)[off];
-	  switch (optval)
-	  {
-	      case IPOPT_EOL:
-		  ahx->Update(&ctx, ipseczeroes, 1);
+		    case IPOPT_NOP:
+			ahx->Update(&ctx, ptr + off, 1);
+			off++;
+			break;
 
-		  off = ip->ip_hl << 2;
-		  break;
+		    case IPOPT_SECURITY:	/* 0x82 */
+		    case 0x85:	/* Extended security */
+		    case 0x86:	/* Commercial security */
+		    case 0x94:	/* Router alert */
+		    case 0x95:	/* RFC1770 */
+			ahx->Update(&ctx, ptr + off, ptr[off + 1]);
+			off += ptr[off + 1];
+			break;
 
-	      case IPOPT_NOP:
-		  ahx->Update(&ctx, ipseczeroes, 1);
+		    default:
+			ahx->Update(&ctx, ipseczeroes, ptr[off + 1]);
+			off += ptr[off + 1];
+			break;
+		}
+	    }
 
-		  off++;
-		  break;
+	    break;
+#endif /* INET */
 
-	      case IPOPT_SECURITY:
-	      case 133:
-	      case 134:
-		  optval = ((u_int8_t *) ip)[off + 1];
+#ifdef INET6
+	    /* XXX */
+#endif /* INET6 */
 
-		  ahx->Update(&ctx, (u_int8_t *) ip + off, optval);
-
-		  off += optval;
-		  break;
-
-	      default:
-		  optval = ((u_int8_t *) ip)[off + 1];
-
-		  ahx->Update(&ctx, ipseczeroes, optval);
-
-		  off += optval;
-		  break;
-	  }
-      }
-
-    ahx->Update(&ctx, (unsigned char *) ah, AH_NEW_FLENGTH - AH_HMAC_HASHLEN);
-    ahx->Update(&ctx, ipseczeroes, AH_HMAC_HASHLEN);
-
-    /*
-     * Code shamelessly stolen from m_copydata
-     */
-    off = ohlen;
-    len = m->m_pkthdr.len - off;
-    m0 = m;
-	
-    while (off > 0)
-    {
-	if (m0 == 0)
-	{
-	    DPRINTF(("ah_new_input(): bad mbuf chain for packet from %s to %s, spi %08x\n", inet_ntoa4(ip->ip_src), inet_ntoa4(ip->ip_dst), ntohl(ah->ah_spi)));
+	default:
+	    DPRINTF(("ah_new_input(): unsupported protocol family %d in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	    ahstat.ahs_hdrops++;
 	    m_freem(m);
 	    return NULL;
-	}
-
-	if (off < m0->m_len)
-	  break;
-
-	off -= m0->m_len;
-	m0 = m0->m_next;
+	    
     }
 
+    /* Record the begining of the AH header */
+    for (len = 0, m1 = m; m1 && (len + m1->m_len <= skip); m1 = m1->m_next)
+      len += m1->m_len;
+
+    if (m1 == NULL)
+    {
+	DPRINTF(("ah_new_input(): bad mbuf chain for packet in SA %s/%08x\n",
+		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	ahstat.ahs_hdrops++;
+	m_freem(m);
+	return NULL;
+    }
+    else
+      roff = skip - len;
+
+    /* Skip the AH header */
+    for (len = 0, m0 = m1;
+	 m0 && (len + m0->m_len <= AH_NEW_FLENGTH + roff);
+	 m0 = m0->m_next)
+      len += m0->m_len;
+
+    if (m0 == NULL)
+    {
+	DPRINTF(("ah_new_input(): bad mbuf chain for packet in SA %s/%08x\n",
+		 ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
+	ahstat.ahs_hdrops++;
+	m_freem(m);
+	return NULL;
+    }
+    else
+      off = (AH_NEW_FLENGTH + roff) - len;
+
+    /* Include the AH header (minus the authenticator) in the computation */
+    ahx->Update(&ctx, (unsigned char *) &ah, AH_NEW_FLENGTH - AH_HMAC_HASHLEN);
+
+    /* All-zeroes for the authenticator */
+    ahx->Update(&ctx, ipseczeroes, AH_HMAC_HASHLEN);
+
+    /* Amount of data to be verified */
+    len = m->m_pkthdr.len - skip - AH_NEW_FLENGTH;
+
+    /* Loop through the mbuf chain computing the HMAC */
     while (len > 0)
     {
-	if (m0 == 0)
+	if (m0 == NULL)
 	{
-	    DPRINTF(("ah_new_input(): bad mbuf chain for packet from %s to %s, spi %08x\n", inet_ntoa4(ip->ip_src), inet_ntoa4(ip->ip_dst), ntohl(ah->ah_spi)));
+	    DPRINTF(("ah_new_input(): bad mbuf chain for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	    ahstat.ahs_hdrops++;
 	    m_freem(m);
 	    return NULL;
@@ -391,42 +412,76 @@ ah_new_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
 	m0 = m0->m_next;
     }
 
-    ahx->Final((unsigned char *) (aho->ah_data), &ctx);
+    /* Finish HMAC computation */
+    ahx->Final(calcauth, &ctx);
     bcopy(tdb->tdb_octx, &ctx, ahx->ctxsize);
-    ahx->Update(&ctx, (unsigned char *) (aho->ah_data), ahx->hashsize);
-    ahx->Final((unsigned char *) (aho->ah_data), &ctx);
+    ahx->Update(&ctx, calcauth, ahx->hashsize);
+    ahx->Final(calcauth, &ctx);
 
-    if (bcmp(aho->ah_data, ah->ah_data, AH_HMAC_HASHLEN))
+    /* Verify */
+    if (bcmp(&(ah.ah_data), calcauth, AH_HMAC_HASHLEN))
     {
-	DPRINTF(("ah_new_input(): authentication failed for packet from %s to %s, spi %08x\n", inet_ntoa4(ip->ip_src), inet_ntoa4(ip->ip_dst), ntohl(ah->ah_spi)));
+	DPRINTF(("ah_new_input(): authentication failed for packet in SA %s/%08x\n", ipsp_address(tdb->tdb_dst), ntohl(tdb->tdb_spi)));
 	ahstat.ahs_badauth++;
 	m_freem(m);
 	return NULL;
     }
-	
-    ipo = *ip;
-    ipo.ip_p = ah->ah_nh;
 
-    /* Save options */
-    m_copydata(m, sizeof(struct ip), (ip->ip_hl << 2) - sizeof(struct ip),
-	       (caddr_t) buffer);
+    /* Fix the Next Protocol field */
+    m_copyback(m, protoff, 1, (u_char *) &(ah.ah_nh));
 
-    m->m_len -= AH_NEW_FLENGTH;
-    m->m_data += AH_NEW_FLENGTH;
-    m->m_pkthdr.len -= AH_NEW_FLENGTH;
+    /*
+     * Remove the AH header from the mbuf.
+     */
+    if (roff == 0) 
+    {
+	/* The AH header was conveniently at the begining of the mbuf */
+	m_adj(m1, AH_NEW_FLENGTH);
+	if (!(m1->m_flags & M_PKTHDR))
+	  m->m_pkthdr.len -= AH_NEW_FLENGTH;
+    }
+    else
+      if (roff + AH_NEW_FLENGTH >= m1->m_len)
+      {
+	  /*
+	   * Part or all of the AH header is at the end of this mbuf, so first
+	   * let's remove the remainder of the AH header from the
+	   * begining of the remainder of the mbuf chain, if any.
+	   */
+	  if (roff + AH_NEW_FLENGTH > m1->m_len)
+	  {
+	      /* Adjust the next mbuf by the remainder */
+	      m_adj(m1->m_next, roff + AH_NEW_FLENGTH - m1->m_len);
 
-    ip = mtod(m, struct ip *);
-    *ip = ipo;
-    ip->ip_len = htons(ip->ip_len - AH_NEW_FLENGTH + (ip->ip_hl << 2));
-    HTONS(ip->ip_id);
-    HTONS(ip->ip_off);
-    ip->ip_sum = 0;
+	      /* The second mbuf is guaranteed not to have a pkthdr... */
+	      m->m_pkthdr.len -= (roff + AH_NEW_FLENGTH - m1->m_len);
+	  }
 
-    /* Copy the options back */
-    m_copyback(m, sizeof(struct ip), (ip->ip_hl << 2) - sizeof(struct ip),
-	       (caddr_t) buffer);
+	  /* Now, let's unlink the mbuf chain for a second...*/
+	  m0 = m1->m_next;
+	  m1->m_next = NULL;
 
-    ip->ip_sum = in_cksum(m, (ip->ip_hl << 2));
+	  /* ...and trim the end of the first part of the chain...sick */
+	  m_adj(m1, -(m1->m_len - roff));
+	  if (!(m1->m_flags & M_PKTHDR))
+	    m->m_pkthdr.len -= (m1->m_len - roff);
+
+	  /* Finally, let's relink */
+	  m1->m_next = m0;
+      }
+      else
+      {
+	  /* 
+	   * The AH header lies in the "middle" of the mbuf...do an
+	   * overlapping copy of the remainder of the mbuf over the ESP
+	   * header.
+	   */
+	  bcopy(mtod(m1, u_char *) + roff + AH_NEW_FLENGTH,
+		mtod(m1, u_char *) + roff,
+		m1->m_len - (roff + AH_NEW_FLENGTH));
+	  m1->m_len -= AH_NEW_FLENGTH;
+	  m->m_pkthdr.len -= AH_NEW_FLENGTH;
+      }
 
     return m;
 }
