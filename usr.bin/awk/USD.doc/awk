@@ -1,4 +1,4 @@
-.\"	$OpenBSD: awk,v 1.2 2003/12/14 16:00:37 jmc Exp $
+.\"	$OpenBSD: awk,v 1.3 2003/12/20 15:12:50 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -105,16 +105,16 @@ Peter J. Weinberger
 .AI
 .\" .MH
 .AB
-.IT Awk
+.I Awk
 is a programming language whose
 basic operation
 is to search a set of files
 for patterns, and to perform specified actions upon lines or fields of lines which
 contain instances of those patterns.
-.IT Awk
+.I Awk
 makes certain data selection and transformation operations easy to express;
 for example, the
-.IT awk
+.I awk
 program
 .sp
 .ce
@@ -140,20 +140,20 @@ and the program
 .sp
 replaces the first field of each line by its logarithm.
 .PP
-.IT Awk
+.I Awk
 patterns may include arbitrary boolean combinations of regular expressions
 and of relational operators on strings, numbers, fields, variables, and array elements.
 Actions may include the same pattern-matching constructions as in patterns,
 as well as
 arithmetic and string expressions and assignments,
-.UL if-else ,
-.UL while ,
-.UL for
+.B if-else ,
+.B while ,
+.B for
 statements,
 and multiple output streams.
 .PP
 This report contains a user's guide, a discussion of the design and implementation of
-.IT awk ,
+.I awk ,
 and some timing statistics.
 It supersedes TM-77-1271-5, dated September 8, 1977.
 .AE
@@ -165,14 +165,14 @@ It supersedes TM-77-1271-5, dated September 8, 1977.
 Introduction
 .\" .if t .2C
 .PP
-.IT Awk
+.I Awk
 is a programming language designed to make
 many common
 information retrieval and text manipulation tasks
 easy to state and to perform.
 .PP
 The basic operation of
-.IT awk
+.I awk
 is to scan a set of input lines in order,
 searching for lines which match any of a set of patterns
 which the user has specified.
@@ -182,21 +182,21 @@ this action will be performed on each line that matches the pattern.
 Readers familiar with the
 .UX
 program
-.IT grep
+.I grep
 .\" .[
 .\" unix program manual
 .\" .]
 (see the manual page for grep(1))
 will recognize
 the approach, although in
-.IT awk
+.I awk
 the patterns may be more
 general than in
-.IT grep ,
+.I grep ,
 and the actions allowed are more involved than merely
 printing the matching line.
 For example, the
-.IT awk
+.I awk
 program
 .P1
 {print $3, $2}
@@ -223,14 +223,14 @@ The command
 awk  program  [files]
 .P2
 executes the
-.IT awk
+.I awk
 commands in
 the string
-.UL program
+.B program
 on the set of named files,
 or on the standard input if there are no files.
 The statements can also be placed in a file
-.UL pfile ,
+.B pfile ,
 and executed by the command
 .P1
 awk  -f pfile  [files]
@@ -241,7 +241,7 @@ See the manual page for awk(1) for details of other options.
 Program Structure
 .PP
 An
-.IT awk
+.I awk
 program is a sequence of statements of the form:
 .P1
 .ft I
@@ -274,55 +274,56 @@ to distinguish them from patterns.
 .NH 2
 Records and Fields
 .PP
-.IT Awk
+.I Awk
 input is divided into
 ``records'' terminated by a record separator.
 The default record separator is a newline,
 so by default
-.IT awk
+.I awk
 processes its input a line at a time.
 The number of the current record is available in a variable
 named
-.UL NR .
+.B NR .
 .PP
 Each input record
 is considered to be divided into ``fields.''
 Fields are normally separated by
-white space \(em blanks or tabs \(em
+whitespace \(em blanks or tabs \(em
 but the input field separator may be changed, as described below.
 Fields are referred to as
-.UL "$1, $2,"
+.B $1 ,
+.B $2 ,
 and so forth,
 where
-.UL $1
+.B $1
 is the first field,
 and
-.UL $0
+.B $0
 is the whole input record itself.
 Fields may be assigned to.
 The number of fields in the current record
 is available in a variable named
-.UL NF .
+.B NF .
 .PP
 The variables
-.UL FS
+.B FS
 and
-.UL RS
+.B RS
 refer to the input field and record separators;
 they may be changed at any time to any single character.
 The optional command-line argument
 \f3\-F\fIc\fR
 may also be used to set
-.UL FS
+.B FS
 to the character
-.IT c .
+.I c .
 .PP
 If the record separator is empty,
-an empty input line is taken as the record separator,
+any number of empty input lines are taken as the record separator,
 and blanks, tabs and newlines are treated as field separators.
 .PP
 The variable
-.UL FILENAME
+.B FILENAME
 contains the name of the current input file.
 .NH 2
 Printing
@@ -333,18 +334,18 @@ all
 lines.
 The simplest action is to print some or all of a record;
 this is accomplished by the
-.IT awk
+.I awk
 command
-.UL print .
+.B print .
 The
-.IT awk
+.I awk
 program
 .P1
 { print }
 .P2
 prints each record, thus copying the input to the output intact.
 More useful is to print a field or fields from each record.
-For instance, 
+For instance,
 .P1
 print $2, $1
 .P2
@@ -359,9 +360,9 @@ print $1 $2
 runs the first and second fields together.
 .PP
 The predefined variables
-.UL NF
+.B NF
 and
-.UL NR
+.B NR
 can be used;
 for example
 .P1
@@ -375,19 +376,19 @@ the program
 { print $1 >"foo1"; print $2 >"foo2" }
 .P2
 writes the first field,
-.UL $1 ,
+.B $1 ,
 on the file
-.UL foo1 ,
+.B foo1 ,
 and the second field on file
-.UL foo2 .
+.B foo2 .
 The
-.UL >>
+.B >>
 notation can also be used:
 .P1
 print $1 >>"foo"
 .P2
 appends the output to the file
-.UL foo .
+.B foo .
 (In each case,
 the output files are
 created if necessary.)
@@ -408,23 +409,23 @@ only); for instance,
 print | "mail bwk"
 .P2
 mails the output to
-.UL bwk .
+.B bwk .
 .PP
 The variables
-.UL OFS
+.B OFS
 and
-.UL ORS
+.B ORS
 may be used to change the current
 output field separator and output
 record separator.
 The output record separator is
 appended to the output of the
-.UL print
+.B print
 statement.
 .PP
-.IT Awk
+.I Awk
 also provides the
-.UL printf
+.B printf
 statement for output formatting:
 .P1
 printf format expr, expr, ...
@@ -432,25 +433,25 @@ printf format expr, expr, ...
 formats the expressions in the list
 according to the specification
 in
-.UL format
+.B format
 and prints them.
 For example,
 .P1
 printf "%8.2f  %10ld\en", $1, $2
 .P2
-prints 
-.UL $1
+prints
+.B $1
 as a floating point number 8 digits wide,
 with two after the decimal point,
 and
-.UL $2
+.B $2
 as a 10-digit long decimal number,
 followed by a newline.
 No output separators are produced automatically;
 you must add them yourself,
 as in this example.
 The version of
-.UL printf
+.B printf
 is identical to that used with C.
 .\" .[
 .\" C programm language prentice hall 1978
@@ -471,16 +472,16 @@ combinations of these.
 BEGIN and END
 .PP
 The special pattern
-.UL BEGIN
+.B BEGIN
 matches the beginning of the input,
 before the first record is read.
 The pattern
-.UL END
+.B END
 matches the end of the input,
 after the last record has been processed.
-.UL BEGIN
+.B BEGIN
 and
-.UL END
+.B END
 thus provide a way to gain control before and after processing,
 for initialization and wrapup.
 .PP
@@ -497,9 +498,9 @@ Or the input lines may be counted by
 END  { print NR }
 .P2
 If
-.UL BEGIN
+.B BEGIN
 is present, it must be the first pattern;
-.UL END
+.B END
 must be the last if used.
 .NH 2
 Regular Expressions
@@ -512,7 +513,7 @@ like
 .P2
 This
 is actually a complete
-.IT awk
+.I awk
 program which
 will print all lines which contain any occurrence
 of the name ``smith''.
@@ -523,36 +524,38 @@ it will also be printed, as in
 blacksmithing
 .P2
 .PP
-.IT Awk
+.I Awk
 regular expressions include the regular expression
 forms found in
 the
 .UC UNIX
 text editor
-.IT ed(1)
+.I ed (1)
 .\" .[
 .\" unix program manual
 .\" .]
 and
-.IT grep(1)
+.I grep (1)
 (without back-referencing).
 In addition,
-.IT awk
+.I awk
 allows
-parentheses for grouping, | for alternatives,
-.UL +
+parentheses for grouping,
+.B |
+for alternatives,
+.B +
 for ``one or more'', and
-.UL ?
+.B ?
 for ``zero or one'',
 all as in
-.IT lex(1) .
+.I lex (1).
 Character classes
 may be abbreviated:
-.UL [a\-zA\-Z0\-9]
+.B [a\-zA\-Z0\-9]
 is the set of all letters and digits.
 As an example,
 the
-.IT awk
+.I awk
 program
 .P1
 /[Aa]ho\||[Ww]einberger\||[Kk]ernighan/
@@ -565,9 +568,9 @@ Regular expressions
 (with the extensions listed above)
 must be enclosed in slashes,
 just as in
-.IT ed(1)
+.I ed (1)
 and
-.IT sed(1) .
+.I sed (1).
 Within a regular expression,
 blanks and the regular expression
 metacharacters are significant.
@@ -584,9 +587,9 @@ enclosed in slashes.
 One can also specify that any field or variable
 matches
 a regular expression (or does not match it) with the operators
-.UL ~
+.B ~
 and
-.UL !~ .
+.B !~ .
 The program
 .P1
 $1 ~ /[jJ]ohn/
@@ -594,30 +597,31 @@ $1 ~ /[jJ]ohn/
 prints all lines where the first field matches ``john'' or ``John.''
 Notice that this will also match ``Johnson'', ``St. Johnsbury'', and so on.
 To restrict it to exactly
-.UL [jJ]ohn ,
+.B [jJ]ohn ,
 use
 .P1
 $1 ~ /^[jJ]ohn$/
 .P2
-The caret ^ refers to the beginning
-of a line or field;
+The caret
+.B ^
+refers to the beginning of a line or field;
 the dollar sign
-.UL $
+.B $
 refers to the end.
 .NH 2
 Relational Expressions
 .PP
 An
-.IT awk
+.I awk
 pattern can be a relational expression
 involving the usual relational operators
-.UL < ,
-.UL <= ,
-.UL == ,
-.UL != ,
-.UL >= ,
+.B < ,
+.B <= ,
+.B == ,
+.B != ,
+.B >= ,
 and
-.UL > .
+.B > .
 An example is
 .P1
 $2 > $1 + 100
@@ -638,9 +642,9 @@ Thus,
 $1 >= "s"
 .P2
 selects lines that begin with an
-.UL s ,
-.UL t ,
-.UL u ,
+.B s ,
+.B t ,
+.B u ,
 etc.
 In the absence of any other information,
 fields are treated as strings, so
@@ -654,20 +658,20 @@ Combinations of Patterns
 .PP
 A pattern can be any boolean combination of patterns,
 using the operators
-.UL \||\||
+.B \||\||
 (or),
-.UL &&
+.B &&
 (and), and
-.UL !
+.B !
 (not).
 For example,
 .P1
 $1 >= "s" && $1 < "t" && $1 != "smith"
 .P2
 selects lines where the first field begins with ``s'', but is not ``smith''.
-.UL &&
+.B &&
 and
-.UL \||\||
+.B \||\||
 guarantee that their operands
 will be evaluated
 from left to right;
@@ -683,18 +687,18 @@ pat1, pat2	{ ... }
 .P2
 In this case, the action is performed for each line between
 an occurrence of
-.UL pat1
+.B pat1
 and the next occurrence of
-.UL pat2
+.B pat2
 (inclusive).
 For example,
 .P1
 /start/, /stop/
 .P2
 prints all lines between
-.UL start
+.B start
 and
-.UL stop ,
+.B stop ,
 while
 .P1
 NR == 100, NR == 200 { ... }
@@ -705,7 +709,7 @@ of the input.
 Actions
 .PP
 An
-.IT awk
+.I awk
 action is a sequence of action statements
 terminated by newlines or semicolons.
 These action statements can be used to do a variety of
@@ -713,7 +717,7 @@ bookkeeping and string manipulating tasks.
 .NH 2
 Built-in Functions
 .PP
-.IT Awk
+.I Awk
 provides a ``length'' function
 to compute the length of a string of characters.
 This program prints each record,
@@ -721,10 +725,10 @@ preceded by its length:
 .P1
 {print length, $0}
 .P2
-.UL length
+.B length
 by itself is a ``pseudo-variable'' which
 yields the length of the current record;
-.UL length(argument)
+.B length(argument)
 is a function which yields the length of its argument,
 as in
 the equivalent
@@ -733,26 +737,26 @@ the equivalent
 .P2
 The argument may be any expression.
 .PP
-.IT Awk
+.I Awk
 also
 provides the arithmetic functions
-.UL sqrt ,
-.UL log ,
-.UL exp ,
-.UL sin ,
-.UL cos ,
-.UL atan2 ,
+.B sqrt ,
+.B log ,
+.B exp ,
+.B sin ,
+.B cos ,
+.B atan2 ,
 and
-.UL int ,
+.B int ,
 for
 square root,
 base
-.IT e
+.I e
 logarithm,
 exponential,
 sine,
 cosine,
-tangent,
+arctangent,
 and integer part of their respective arguments.
 .PP
 The name of one of these built-in functions,
@@ -768,61 +772,60 @@ is less than 10 or greater
 than 20.
 .PP
 The function
-.UL substr(s,\ m,\ n)
+.B substr(s,\ m,\ n)
 produces the substring of
-.UL s
+.B s
 that begins at position
-.UL m
+.B m
 (origin 1)
 and is at most
-.UL n
+.B n
 characters long.
 If
-.UL n
+.B n
 is omitted, the substring goes to the end of
-.UL s .
+.B s .
 The function
-.UL index(s1,\ s2)
+.B index(s,\ t)
 returns the position where the string
-.UL s2
+.B t
 occurs in
-.UL s1 ,
+.B s ,
 or zero if it does not.
 .PP
 The function
-.UL sprintf(f,\ e1,\ e2,\ ...)
-produces the value of the expressions
-.UL e1 ,
-.UL e2 ,
+.B sprintf(fmt,\ expr,\ ...)
+produces the value of the expression
+.B expr ,
 etc.,
 in the
-.UL printf
+.B printf
 format specified by
-.UL f .
+.B fmt .
 Thus, for example,
 .P1
 x = sprintf("%8.2f %10ld", $1, $2)
 .P2
 sets
-.UL x
+.B x
 to the string produced by formatting
 the values of
-.UL $1
+.B $1
 and
-.UL $2 .
+.B $2 .
 .LP
 See the awk(1) manual page for details of other functions available.
 .NH 2
 Variables, Expressions, and Assignments
 .PP
-.IT Awk
+.I Awk
 variables take on numeric (floating point)
 or string values according to context.
 For example, in
 .P1
 x = 1
 .P2
-.UL x
+.B x
 is clearly a number, while in
 .P1
 x = "smith"
@@ -835,7 +838,7 @@ For instance,
 x = "3" + "4"
 .P2
 assigns 7 to
-.UL x .
+.B x .
 Strings which cannot be interpreted
 as numbers in a numerical context
 will generally have numeric value zero,
@@ -844,7 +847,7 @@ but it is unwise to count on this behavior.
 By default, variables (other than built-ins) are initialized to the null string,
 which has numerical value zero;
 this eliminates the need for most
-.UL BEGIN
+.B BEGIN
 sections.
 For example, the sums of the first two fields can be computed by
 .P1
@@ -854,35 +857,35 @@ END	{ print s1, s2 }
 .PP
 Arithmetic is done internally in floating point.
 The arithmetic operators are
-.UL + ,
-.UL \- ,
-.UL \(** ,
-.UL / ,
-.UL ^
+.B + ,
+.B \- ,
+.B \(** ,
+.B / ,
+.B ^
 (exponentiation),
 and
-.UL %
-(mod).
+.B %
+(modulus).
 The C increment
-.UL ++
+.B ++
 and
 decrement
-.UL \-\-
+.B \-\-
 operators are also available,
 and so are the assignment operators
-.UL += ,
-.UL \-= ,
-.UL *= ,
-.UL /= ,
-.UL ^= ,
+.B += ,
+.B \-= ,
+.B *= ,
+.B /= ,
+.B ^= ,
 and
-.UL %= .
+.B %= .
 These operators may all be used in expressions.
 .NH 2
 Field Variables
 .PP
 Fields in
-.IT awk
+.I awk
 share essentially all of the properties of variables _
 they may be used in arithmetic or string operations,
 and may be assigned to.
@@ -924,21 +927,20 @@ Each input line is split into fields automatically as necessary.
 It is also possible to split any variable or string
 into fields:
 .P1
-n = split(s, array, sep)
+n = split(s, a, fs)
 .P2
-splits the
-the string
-.UL s
-into
-.UL array[1] ,
+splits the string
+.B s
+into array elements
+.B a[1] ,
 \&...,
-.UL array[n] .
+.B a[n] .
 The number of elements found is returned.
 If the
-.UL sep
+.B fs
 argument is provided, it is used as the field separator;
 otherwise
-.UL FS
+.B FS
 is used as the separator.
 .NH 2
 String Concatenation
@@ -950,7 +952,7 @@ length($1 $2 $3)
 .P2
 returns the length of the first three fields.
 Or in a
-.UL print
+.B print
 statement,
 .P1
 print $1 " is " $2
@@ -975,12 +977,12 @@ x[NR] = $0
 .P2
 assigns the current input record to
 the
-.UL NR -th
+.B NR -th
 element of the array
-.UL x .
+.B x .
 In fact, it is possible in principle (though perhaps slow)
 to process the entire input in a random order with the
-.IT awk
+.I awk
 program
 .P1
 	{ x[NR] = $0 }
@@ -988,16 +990,16 @@ END	{ \fI... program ...\fP }
 .P2
 The first action merely records each input line in
 the array
-.UL x .
+.B x .
 .PP
 Array elements may be named by non-numeric values,
 which gives
-.IT awk
+.I awk
 a capability rather like the associative memory of
 Snobol tables.
 Suppose the input contains fields with values like
-.UL apple ,
-.UL orange ,
+.B apple ,
+.B orange ,
 etc.
 Then the program
 .P1
@@ -1010,25 +1012,25 @@ and prints them at the end of the input.
 .NH 2
 Flow-of-Control Statements
 .PP
-.IT Awk
+.I Awk
 provides the basic flow-of-control statements
-.UL if-else ,
-.UL while ,
-.UL for ,
+.B if-else ,
+.B while ,
+.B for ,
 and statement grouping with braces, as in C.
 We showed the
-.UL if
+.B if
 statement in section 3.3 without describing it.
 The condition in parentheses is evaluated;
 if it is true, the statement following the
-.UL if
+.B if
 is done.
 The
-.UL else
+.B else
 part is optional.
 .PP
 The
-.UL while
+.B while
 statement is exactly like that of C.
 For example, to print all input fields one per line,
 .P1
@@ -1040,18 +1042,18 @@ while (i <= NF) {
 .P2
 .PP
 The
-.UL for
+.B for
 statement is also exactly that of C:
 .P1
 for (i = 1; i <= NF; i++)
 	print $i
 .P2
 does the same job as the
-.UL while
+.B while
 statement above.
 .PP
 There is an alternate form of the
-.UL for
+.B for
 statement which is suited for accessing the
 elements of an associative array:
 .P1
@@ -1061,70 +1063,70 @@ for (i in array)
 does
 .ul
 statement
-with 
-.UL i
+with
+.B i
 set in turn to each element of
-.UL array .
+.B array .
 The elements are accessed in an apparently random order.
-Chaos will ensue if 
-.UL i
+Chaos will ensue if
+.B i
 is altered, or if any new elements are
 accessed during the loop.
 .PP
 The expression in the condition part of an
-.UL if ,
-.UL while
+.B if ,
+.B while
 or
-.UL for
+.B for
 can include relational operators like
-.UL < ,
-.UL <= ,
-.UL > ,
-.UL >= ,
-.UL ==
+.B < ,
+.B <= ,
+.B > ,
+.B >= ,
+.B ==
 (``is equal to''),
 and
-.UL !=
+.B !=
 (``not equal to'');
 regular expression matches with the match operators
-.UL ~
+.B ~
 and
-.UL !~ ;
+.B !~ ;
 the logical operators
-.UL \||\|| ,
-.UL && ,
+.B \||\|| ,
+.B && ,
 and
-.UL ! ;
+.B ! ;
 and of course parentheses for grouping.
 .PP
 The
-.UL break
+.B break
 statement causes an immediate exit
 from an enclosing
-.UL while
+.B while
 or
-.UL for ;
+.B for ;
 the
-.UL continue
+.B continue
 statement
 causes the next iteration to begin.
 .PP
 The statement
-.UL next
+.B next
 causes
-.IT awk
+.I awk
 to skip immediately to
 the next record and begin scanning the patterns from the top.
 The statement
-.UL exit
+.B exit
 causes the program to behave as if the end of the input
 had occurred.
 .PP
 Comments may be placed in
-.IT awk
+.I awk
 programs:
 they begin with the character
-.UL #
+.B #
 and end with the end of the line,
 as in
 .P1
@@ -1139,28 +1141,28 @@ system
 already provides several programs that
 operate by passing input through a
 selection mechanism.
-.IT Grep ,
+.I Grep ,
 the first and simplest, merely prints all lines which
 match a single specified pattern.
-.IT Egrep
+.I Egrep
 provides more general patterns, i.e., regular expressions
 in full generality;
-.IT fgrep
+.I fgrep
 searches for a set of keywords with a particularly fast algorithm.
-.IT Sed(1)
+.I sed (1)
 .\" .[
 .\" unix programm manual
 .\" .]
 provides most of the editing facilities of
 the editor
-.IT ed  ,
+.I ed  ,
 applied to a stream of input.
 None of these programs provides
 numeric capabilities,
 logical relations,
 or variables.
 .PP
-.IT Lex
+.I Lex
 .\" .[
 .\" lesk lexical analyzer cstr
 .\" .]
@@ -1169,14 +1171,14 @@ provides general regular expression recognition capabilities,
 and, by serving as a C program generator,
 is essentially open-ended in its capabilities.
 The use of
-.IT lex ,
+.I lex ,
 however, requires a knowledge of C programming,
 and a
-.IT lex
+.I lex
 program must be compiled and loaded before use,
 which discourages its use for one-shot applications.
 .PP
-.IT Awk
+.I Awk
 is an attempt
 to fill in another part of the matrix of possibilities.
 It
@@ -1189,12 +1191,12 @@ and control flow in the actions.
 It
 does not require compilation or a knowledge of C.
 Finally,
-.IT awk
+.I awk
 provides
 a convenient way to access fields within lines;
 it is unique in this respect.
 .PP
-.IT Awk
+.I Awk
 also tries to integrate strings and numbers
 completely,
 by treating all quantities as both string and numeric,
@@ -1224,7 +1226,7 @@ that is meant to be used for tiny programs
 that may even be composed on the command line.
 .PP
 In practice,
-.IT awk
+.I awk
 usage seems to fall into two broad categories.
 One is what might be called ``report generation'' \(em
 processing an input to extract counts,
@@ -1243,28 +1245,28 @@ The simplest examples merely select fields, perhaps with rearrangements.
 Implementation
 .PP
 The actual implementation of
-.IT awk
+.I awk
 uses the language development tools available
 on the
 .UC UNIX
 operating system.
 The grammar is specified with
-.IT yacc(1) ;
+.I yacc (1);
 .\" .[
 .\" yacc johnson cstr
 .\" .]
 the lexical analysis is done by
-.IT lex(1) ;
+.I lex (1);
 the regular expression recognizers are
 deterministic finite automata
 constructed directly from the expressions.
 An
-.IT awk
-program is translated into a 
+.I awk
+program is translated into a
 parse tree which is then directly executed
 by a simple interpreter.
 .PP
-.IT Awk
+.I Awk
 was designed for ease of use rather than processing speed;
 the delayed evaluation of variable types
 and the necessity to break input
@@ -1277,14 +1279,14 @@ on a PDP-11/70 of
 the
 .UC UNIX
 programs
-.IT wc ,
-.IT grep ,
-.IT egrep ,
-.IT fgrep ,
-.IT sed ,
-.IT lex ,
+.I wc ,
+.I grep ,
+.I egrep ,
+.I fgrep ,
+.I sed ,
+.I lex ,
 and
-.IT awk
+.I awk
 on the following simple tasks:
 .IP "\ \ 1."
 count the number of lines.
@@ -1305,14 +1307,14 @@ print each line prefixed by ``line-number\ :\ ''.
 sum the fourth column of a table.
 .LP
 The program
-.IT wc
+.I wc
 merely counts words, lines and characters in its input;
 we have already mentioned the others.
 In all cases the input was a file containing
 10,000 lines
 as created by the
 command
-.IT "ls \-l" ;
+.I "ls \-l" ;
 each line has the form
 .P1
 -rw-rw-rw- 1 ava 123 Oct 15 17:05 xxx
@@ -1320,34 +1322,34 @@ each line has the form
 The total length of this input is
 452,960 characters.
 Times for
-.IT lex
+.I lex
 do not include compile or load.
 .PP
 As might be expected,
-.IT awk
+.I awk
 is not as fast as the specialized tools
-.IT wc ,
-.IT sed ,
+.I wc ,
+.I sed ,
 or the programs in the
-.IT grep
+.I grep
 family,
 but
 is faster than the more general tool
-.IT lex .
+.I lex .
 In all cases, the tasks were
 about as easy to express as
-.IT awk
+.I awk
 programs
 as programs in these other languages;
 tasks involving fields were
 considerably easier to express as
-.IT awk
+.I awk
 programs.
 Some of the test programs are shown in
-.IT awk ,
-.IT sed
+.I awk ,
+.I sed
 and
-.IT lex .
+.I lex .
 .\" .[
 .\" $LIST$
 .\" .]
@@ -1356,7 +1358,7 @@ and
 center;
 c c c c c c c c c
 c c c c c c c c c
-c|n|n|n|n|n|n|n|n|.
+|c|n|n|n|n|n|n|n|n|.
 				Task
 Program	1	2	3	4	5	6	7	8
 _
@@ -1378,7 +1380,7 @@ _
 .PP
 The programs for some of these jobs are shown below.
 The
-.IT lex
+.I lex
 programs are generally too long to show.
 .LP
 AWK:
