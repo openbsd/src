@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.34 2000/01/11 01:13:49 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.35 2000/01/18 19:06:07 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -311,7 +311,7 @@ struct ip_mreq {
  * Third level is protocol number.
  * Fourth level is desired variable within that protocol.
  */
-#define	IPPROTO_MAXID	(IPPROTO_AH + 1)	/* don't list to IPPROTO_MAX */
+#define	IPPROTO_MAXID	(IPPROTO_ETHERIP + 1)	/* don't list to IPPROTO_MAX */
 
 #define	CTL_IPPROTO_NAMES { \
 	{ "ip", CTLTYPE_NODE }, \
