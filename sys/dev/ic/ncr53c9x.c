@@ -1,5 +1,5 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.3 1998/02/03 22:02:46 jason Exp $	*/
-/*	$NetBSD: ncr53c9x.c,v 1.22 1998/01/24 15:33:35 pk Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.4 1998/02/10 05:03:30 jason Exp $	*/
+/*	$NetBSD: ncr53c9x.c,v 1.23 1998/01/31 23:37:51 pk Exp $	*/
 
 /*
  * Copyright (c) 1996 Charles M. Hannum.  All rights reserved.
@@ -424,13 +424,14 @@ ncr53c9x_select(sc, ecb)
 {
 	struct scsi_link *sc_link = ecb->xs->sc_link;
 	int target = sc_link->target;
+	int lun = sc_link->lun;
 	struct ncr53c9x_tinfo *ti = &sc->sc_tinfo[target];
 	int tiflags = ti->flags;
 	u_char *cmd;
 	int clen;
 
 	NCR_TRACE(("[ncr53c9x_select(t%d,l%d,cmd:%x)] ",
-		   sc_link->target, sc_link->lun, ecb->cmd.cmd.opcode));
+		   target, lun, ecb->cmd.cmd.opcode));
 
 	sc->sc_state = NCR_SELECTING;
 
@@ -454,7 +455,7 @@ ncr53c9x_select(sc, ecb)
 		size_t dmasize;
 
 		ecb->cmd.id = 
-		    MSG_IDENTIFY(sc_link->lun, (ti->flags & T_RSELECTOFF)?0:1);
+		    MSG_IDENTIFY(lun, (ti->flags & T_RSELECTOFF)?0:1);
 
 		/* setup DMA transfer for command */
 		dmasize = clen = ecb->clen + 1;
@@ -483,7 +484,7 @@ ncr53c9x_select(sc, ecb)
 	 * happy for it to disconnect etc.
 	 */
 	NCR_WRITE_REG(sc, NCR_FIFO,
-		MSG_IDENTIFY(sc_link->lun, (ti->flags & T_RSELECTOFF)?0:1));
+		MSG_IDENTIFY(lun, (ti->flags & T_RSELECTOFF)?0:1));
 
 	if (ti->flags & T_NEGOTIATE) {
 		/* Arbitrate, select and stop after IDENTIFY message */
@@ -706,6 +707,7 @@ ncr53c9x_sense(sc, ecb)
 	if (ecb->flags & ECB_NEXUS)
 		ti->lubusy &= ~(1 << sc_link->lun);
 	if (ecb == sc->sc_nexus) {
+		ecb->flags &= ~ECB_NEXUS;
 		ncr53c9x_select(sc, ecb);
 	} else {
 		ncr53c9x_dequeue(sc, ecb);
@@ -795,6 +797,7 @@ ncr53c9x_dequeue(sc, ecb)
 
 	if (ecb->flags & ECB_NEXUS) {
 		TAILQ_REMOVE(&sc->nexus_list, ecb, chain);
+		ecb->flags &= ~ECB_NEXUS;
 	} else {
 		TAILQ_REMOVE(&sc->ready_list, ecb, chain);
 	}
@@ -864,7 +867,13 @@ ncr53c9x_reselect(sc, message)
 	sc->sc_state = NCR_CONNECTED;
 	sc->sc_nexus = ecb;
 	ti = &sc->sc_tinfo[target];
-	ti->lubusy |= (1 << lun);
+#ifdef NCR53C9X_DEBUG
+	if ((ti->lubusy & (1 << lun)) == 0) {
+		printf("%s: reselect: target %d, lun %d: should be busy\n",
+			sc->sc_dev.dv_xname, target, lun);
+		ti->lubusy |= (1 << lun);
+	}
+#endif
 	ncr53c9x_setsync(sc, ti);
 
 	if (ecb->flags & ECB_RESET)
@@ -1008,9 +1017,7 @@ gotit:
 			break;
 
 		case MSG_MESSAGE_REJECT:
-			if (ncr53c9x_debug & NCR_SHOWMSGS)
-				printf("%s: our msg rejected by target\n",
-				    sc->sc_dev.dv_xname);
+			NCR_MSGS(("msg reject (msgout=%x) ", sc->sc_msgout));
 			switch (sc->sc_msgout) {
 			case SEND_SDTR:
 				sc->sc_flags &= ~NCR_SYNCHNEGO;
@@ -1630,6 +1637,11 @@ printf("<<RESELECT CONT'd>>");
 			sc->sc_msgpriq = sc->sc_msgout = sc->sc_msgoutq = 0;
 			sc->sc_flags = 0;
 			ecb = sc->sc_nexus;
+			if (ecb != NULL && (ecb->flags & ECB_NEXUS)) {
+				sc_print_addr(ecb->xs->sc_link);
+				printf("ECB_NEXUS while in state %x\n",
+					sc->sc_state);
+			}
 
 			if (sc->sc_espintr & NCRINTR_RESEL) {
 				/*
@@ -2065,8 +2077,17 @@ ncr53c9x_abort(sc, ecb)
 		untimeout(ncr53c9x_timeout, ecb);
 		timeout(ncr53c9x_timeout, ecb, (ecb->timeout * hz) / 1000);
 	} else {
-		ncr53c9x_dequeue(sc, ecb);
-		TAILQ_INSERT_HEAD(&sc->ready_list, ecb, chain);
+		/* The command should be on the nexus list */
+		if ((ecb->flags & ECB_NEXUS) == 0) {
+			sc_print_addr(ecb->xs->sc_link);
+			printf("ncr53c9x_abort: not NEXUS\n");
+			ncr53c9x_init(sc, 1);
+		}
+		/*
+		 * Just leave the command on the nexus list.
+		 * XXX - what choice do we have but to reset the SCSI
+		 *	 eventually?
+		 */
 		if (sc->sc_state == NCR_IDLE)
 			ncr53c9x_sched(sc);
 	}
@@ -2085,11 +2106,13 @@ ncr53c9x_timeout(arg)
 
 	sc_print_addr(sc_link);
 	printf("%s: timed out [ecb %p (flags 0x%x, dleft %x, stat %x)], "
-	       "<state %d, nexus %p, phase(c %x, p %x), resid %lx, "
+	       "<state %d, nexus %p, phase(l %x, c %x, p %x), resid %lx, "
 	       "msg(q %x,o %x) %s>",
 		sc->sc_dev.dv_xname,
 		ecb, ecb->flags, ecb->dleft, ecb->stat,
-		sc->sc_state, sc->sc_nexus, sc->sc_phase, sc->sc_prevphase,
+		sc->sc_state, sc->sc_nexus,
+		NCR_READ_REG(sc, NCR_STAT),
+		sc->sc_phase, sc->sc_prevphase,
 		(long)sc->sc_dleft, sc->sc_msgpriq, sc->sc_msgout,
 		NCRDMA_ISACTIVE(sc) ? "DMA active" : "");
 #if NCR53C9X_DEBUG > 1
