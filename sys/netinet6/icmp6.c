@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.c,v 1.13 2000/05/15 11:45:35 itojun Exp $	*/
+/*	$OpenBSD: icmp6.c,v 1.14 2000/05/22 10:32:51 itojun Exp $	*/
 /*	$KAME: icmp6.c,v 1.88 2000/05/11 00:58:53 itojun Exp $	*/
 
 /*
@@ -108,7 +108,7 @@ extern u_char ip6_protox[];
 struct icmp6stat icmp6stat;
 
 extern struct in6pcb rawin6pcb;
-extern u_int icmp6errratelim;
+extern struct timeval icmp6errratelim;
 extern int icmp6_nodeinfo;
 static struct rttimer_queue *icmp6_mtudisc_timeout_q = NULL;
 extern int pmtu_expire;
@@ -129,7 +129,6 @@ static void icmp6_mtudisc_timeout __P((struct rtentry *, struct rttimer *));
 #ifdef COMPAT_RFC1885
 static struct route_in6 icmp6_reflect_rt;
 #endif
-static struct timeval icmp6_nextsend = {0, 0};
 
 void
 icmp6_init()
@@ -1971,30 +1970,13 @@ icmp6_ratelimit(dst, type, code)
 	const int type;			/* not used at this moment */
 	const int code;			/* not used at this moment */
 {
-	struct timeval tp;
-	long sec_diff, usec_diff;
+	static struct timeval icmp6errratelim_last;
 
-	/* If we are not doing rate limitation, it is always okay to send */
-	if (!icmp6errratelim)
-		return 0;
-
-	tp = time;
-	if (tp.tv_sec < icmp6_nextsend.tv_sec
-	 || (tp.tv_sec == icmp6_nextsend.tv_sec
-	  && tp.tv_usec < icmp6_nextsend.tv_usec)) {
-		/* The packet is subject to rate limit */
-		return 1;
-	}
-	sec_diff = icmp6errratelim / 1000000;
-	usec_diff = icmp6errratelim % 1000000;
-	icmp6_nextsend.tv_sec = tp.tv_sec + sec_diff;
-	if ((tp.tv_usec = tp.tv_usec + usec_diff) >= 1000000) {
-		icmp6_nextsend.tv_sec++;
-		icmp6_nextsend.tv_usec -= 1000000;
-	}
-
-	/* it is okay to send this */
-	return 0;
+	/*
+	 * ratecheck() returns true if it is okay to send.  We return
+	 * true if it is not okay to send.
+	 */
+	return (ratecheck(&icmp6errratelim_last, &icmp6errratelim) == 0);
 }
 
 static struct rtentry *
@@ -2081,8 +2063,25 @@ icmp6_sysctl(name, namelen, oldp, oldlenp, newp, newlen)
 		return sysctl_rdstruct(oldp, oldlenp, newp,
 				&icmp6stat, sizeof(icmp6stat));
 	case ICMPV6CTL_ERRRATELIMIT:
-		return sysctl_int(oldp, oldlenp, newp, newlen,
-				  &icmp6errratelim);
+	    {
+		int rate_usec, error, s;
+
+		/*
+		 * The sysctl specifies the rate in usec-between-icmp,
+		 * so we must convert from/to a timeval.
+		 */
+		rate_usec = (icmp6errratelim.tv_sec * 1000000) +
+		    icmp6errratelim.tv_usec;
+		error = sysctl_int(oldp, oldlenp, newp, newlen, &rate_usec);
+		if (error)
+			return (error);
+		s = splsoftnet();
+		icmp6errratelim.tv_sec = rate_usec / 1000000;
+		icmp6errratelim.tv_usec = rate_usec % 1000000;
+		splx(s);
+
+		return (0);
+	    }
 	case ICMPV6CTL_ND6_PRUNE:
 		return sysctl_int(oldp, oldlenp, newp, newlen, &nd6_prune);
 	case ICMPV6CTL_ND6_DELAY:
