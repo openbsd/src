@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil_compat.h,v 1.4 1997/02/13 05:09:33 kstailey Exp $	*/
+/*	$OpenBSD: ip_fil_compat.h,v 1.5 1997/02/13 05:54:16 kstailey Exp $	*/
 /*
  * (C)opyright 1993, 1994, 1995 by Darren Reed.
  *
@@ -192,11 +192,7 @@ extern	vm_map_t	kmem_map;
 #  define	SPLNET(x)	x = splsoftnet()
 # else
 #  if !SOLARIS
-#   ifdef __OpenBSD__
-#    define	SPLNET(x)	x = splsoftnet()
-#   else
-#    define	SPLNET(x)	x = splnet()
-#   endif /* __OpenBSD__ */
+#   define	SPLNET(x)	x = splnet()
 #   define	SPLX(x)		(void) splx(x)
 #  endif
 # endif
