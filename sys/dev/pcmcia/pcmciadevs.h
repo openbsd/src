@@ -1,10 +1,10 @@
-/*	$OpenBSD: pcmciadevs.h,v 1.60 2001/03/31 14:27:23 aaron Exp $	*/
+/*	$OpenBSD: pcmciadevs.h,v 1.61 2001/04/06 18:02:20 aaron Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcmciadevs,v 1.54 2001/03/29 01:35:56 aaron Exp 
+ *		OpenBSD: pcmciadevs,v 1.55 2001/03/31 14:27:09 aaron Exp 
  */
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
@@ -127,6 +127,8 @@
 #define	PCMCIA_PRODUCT_AIRONET_PC4500	0x0005
 #define	PCMCIA_CIS_AIRONET_PC4800	{ NULL, NULL, NULL, NULL }
 #define	PCMCIA_PRODUCT_AIRONET_PC4800	0x0007
+#define	PCMCIA_CIS_AIRONET_350	{ NULL, NULL, NULL, NULL }
+#define	PCMCIA_PRODUCT_AIRONET_350	0x000a
 
 /* Allied Telesis K.K. */
 #define	PCMCIA_CIS_ALLIEDTELESIS_LA_PCM	{ NULL, NULL, NULL, NULL }
