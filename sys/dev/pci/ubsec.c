@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.32 2000/08/19 16:41:01 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.33 2000/09/21 04:39:11 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -264,8 +264,8 @@ ubsec_intr(arg)
 	if (stat & BS_STAT_DMAERR) {
 		a = READ_REG(sc, BS_ERR);
 		printf("%s: dmaerr %s@%08x\n", sc->sc_dv.dv_xname,
-		       (a & BS_ERR_READ) ? "read" : "write",
-		       a & ~BS_ERR_READ);
+		    (a & BS_ERR_READ) ? "read" : "write",
+		    a & ~BS_ERR_READ);
 		panic("to let theo see things");
 	}
 
@@ -443,7 +443,7 @@ ubsec_newsession(sidp, cri)
 			bcopy(encini->cri_key, &ses->ses_deskey[2], 8);
 			bcopy(encini->cri_key, &ses->ses_deskey[4], 8);
 		} else
-			bcopy(encini->cri_key, &ses->ses_deskey[0], 24);
+			bcopy(encini->cri_key, ses->ses_deskey, 24);
 
 		SWAP32(ses->ses_deskey[0]);
 		SWAP32(ses->ses_deskey[1]);
@@ -653,7 +653,7 @@ ubsec_process(crp)
 			q->q_ctx.pc_flags |= UBS_PKTCTX_INBOUND;
 
 			if (enccrd->crd_flags & CRD_F_IV_EXPLICIT)
-				bcopy(enccrd->crd_iv, &q->q_ctx.pc_iv[0], 8);
+				bcopy(enccrd->crd_iv, q->q_ctx.pc_iv, 8);
 			else
 				m_copydata(q->q_src_m, enccrd->crd_inject,
 				    8, (caddr_t)q->q_ctx.pc_iv);
@@ -709,7 +709,7 @@ ubsec_process(crp)
 		printf("src: skip %d, len %d\n", sskip, stheend);
 		printf("dst: skip %d, len %d\n", dskip, dtheend);
 		printf("ubs: coffset %d, pktlen %d, cpskip %d, cpoffset %d\n",
-		       coffset, stheend, cpskip, cpoffset);
+		    coffset, stheend, cpskip, cpoffset);
 #endif
 	} else {
 		cpskip = dskip = sskip = macoffset + encoffset;
@@ -790,7 +790,7 @@ ubsec_process(crp)
 		q->q_mcr->mcr_opktbuf.pb_addr = 0;
 		q->q_mcr->mcr_opktbuf.pb_len = 0;
 		q->q_mcr->mcr_opktbuf.pb_next =
-		    (u_int32_t)vtophys(&q->q_macbuf[0]);
+		    (u_int32_t)vtophys(q->q_macbuf);
 #ifdef UBSEC_DEBUG
 		printf("opkt: %x %x %x\n",
 		    q->q_mcr->mcr_opktbuf.pb_addr,
@@ -895,8 +895,7 @@ ubsec_process(crp)
 
 			if ((i + 1) == q->q_dst_npa) {
 				if (maccrd)
-					pb->pb_next =
-					    vtophys(&q->q_macbuf[0]);
+					pb->pb_next = vtophys(q->q_macbuf);
 				else
 					pb->pb_next = 0;
 			} else
