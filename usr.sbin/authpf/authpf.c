@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.51 2003/02/03 09:59:19 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.52 2003/02/11 20:15:59 henning Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -52,7 +52,7 @@
 
 #include "pathnames.h"
 
-extern int	symset(const char *, const char *);
+extern int	symset(const char *, const char *, int);
 
 static int	read_config(FILE *);
 static void	print_message(char *);
@@ -628,7 +628,8 @@ change_filter(int add, const char *luser, const char *ipsrc)
 	}
 
 	if (add) {
-		if (symset("user_ip", ipsrc) || symset("user_id", luser)) {
+		if (symset("user_ip", ipsrc, 0) ||
+		    symset("user_id", luser, 0)) {
 			syslog(LOG_ERR, "symset");
 			goto error;
 		}
