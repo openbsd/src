@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofdev.c,v 1.2 2002/03/14 01:26:37 millert Exp $	*/
+/*	$OpenBSD: ofdev.c,v 1.3 2002/07/23 21:04:26 drahn Exp $	*/
 /*	$NetBSD: ofdev.c,v 1.1 1997/04/16 20:29:20 thorpej Exp $	*/
 
 /*
@@ -350,10 +350,8 @@ devopen(of, name, file)
 		*cp++ = partition;
 		*cp = 0;
 	}
-#if 0
 	if (*buf != '/')
 		strcat(opened_name, "/");
-#endif
 	strcat(opened_name, buf);
 	*file = opened_name + strlen(fname) + 1;
 	if ((handle = OF_finddevice(fname)) == -1)
