@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.25 1999/12/08 06:50:17 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.26 1999/12/18 22:03:43 angelos Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -319,7 +319,9 @@ if_detach(ifp)
 
 #ifdef INET
 	rti_delete(ifp);
+#if NETHER > 0
 	myip_ifp = NULL;
+#endif
 #ifdef MROUTING
 	vif_delete(ifp);
 #endif
