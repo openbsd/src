@@ -1,4 +1,4 @@
-/*	$OpenBSD: fingerd.c,v 1.19 2000/08/18 05:28:31 itojun Exp $	*/
+/*	$OpenBSD: fingerd.c,v 1.20 2001/01/25 19:22:08 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)fingerd.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: fingerd.c,v 1.19 2000/08/18 05:28:31 itojun Exp $";
+static char rcsid[] = "$OpenBSD: fingerd.c,v 1.20 2001/01/25 19:22:08 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -148,7 +148,7 @@ main(argc, argv)
 
 	if (logging)
 		syslog(LOG_NOTICE, "query from %s: `%.*s'", hname,
-		    strcspn(line, "\r\n"), line);
+		    (int)strcspn(line, "\r\n"), line);
 
 	/*
 	 * Note: we assume that finger(1) will treat "--" as end of
