@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_en_pci.c,v 1.9 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: if_en_pci.c,v 1.10 2002/06/19 18:46:41 fgsch Exp $	*/
 
 /*
  *
@@ -109,11 +109,7 @@ struct en_pci_softc {
  * prototypes
  */
 
-#ifdef __BROKEN_INDIRECT_CONFIG
 static	int en_pci_match(struct device *, void *, void *);
-#else
-static	int en_pci_match(struct device *, struct cfdata *, void *);
-#endif
 static	void en_pci_attach(struct device *, struct device *, void *);
 
 /*
@@ -162,11 +158,7 @@ void *v;
 static int en_pci_match(parent, match, aux)
 
 struct device *parent;
-#ifdef __BROKEN_INDIRECT_CONFIG
 void *match;
-#else
-struct cfdata *match;
-#endif
 void *aux;
 
 {
