@@ -1,4 +1,4 @@
-/*	$OpenBSD: rndioctl.h,v 1.8 2000/04/13 13:48:30 mickey Exp $	*/
+/*	$OpenBSD: rndioctl.h,v 1.9 2000/10/20 03:30:06 mickey Exp $	*/
 
 /*
  * Copyright (c) 1996,2000 Michael Shalayeff.
@@ -46,10 +46,10 @@ struct rnd_pool_info {
 	u_int32_t *buf;
 };
 
-#define RNDGETENTCNT	_IOR('R', 0, sizeof(u_int))
-#define RNDADDTOENTCNT	_IOW('R', 1, sizeof(u_int))
-#define RNDGETPOOL	_IOWR('R', 2, sizeof(struct rnd_pool_info))
-#define RNDADDENTROPY	_IOW('R', 3, sizeof(u_int))
+#define RNDGETENTCNT	_IOR('R', 0, u_int)
+#define RNDADDTOENTCNT	_IOW('R', 1, u_int)
+#define RNDGETPOOL	_IOWR('R', 2, struct rnd_pool_info)
+#define RNDADDENTROPY	_IOW('R', 3, u_int)
 #define RNDZAPENTCNT	_IO( 'R', 4)
 #define RNDSTIRARC4	_IO( 'R', 5)
 #define RNDCLRSTATS	_IO( 'R', 6)
