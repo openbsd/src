@@ -1,4 +1,5 @@
-/*	$NetBSD: atwvar.h,v 1.9 2004/06/23 08:13:29 dyoung Exp $	*/
+/*	$OpenBSD: atwvar.h,v 1.3 2004/07/15 12:00:31 millert Exp $	*/
+/*	$NetBSD: atwvar.h,v 1.10 2004/07/15 06:06:53 dyoung Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 The NetBSD Foundation, Inc.  All rights reserved.
@@ -271,7 +272,6 @@ struct atw_softc {
 	/* ADM8211 state variables. */
 	u_int8_t	sc_sram[ATW_SRAM_SIZE];
 	u_int8_t	sc_bssid[IEEE80211_ADDR_LEN];
-	u_int8_t	sc_lost_bcn_thresh;
 
 	struct timeval	sc_last_beacon;
 	struct timeout	sc_scan_to;
