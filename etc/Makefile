@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.96 1999/03/17 18:26:07 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.97 1999/04/30 00:46:25 art Exp $
 
 TZDIR=		/usr/share/zoneinfo
 LOCALTIME=	US/Pacific
@@ -137,6 +137,8 @@ distribution-etc-root-var: distrib-dirs
 		${INSTALL} -c -o root -g wheel -m 644 ThisCell \
 		    ${DESTDIR}/etc/afs; \
 		${INSTALL} -c -o root -g wheel -m 644 CellServDB \
+		    ${DESTDIR}/etc/afs; \
+		${INSTALL} -c -o root -g wheel -m 644 SuidCells \
 		    ${DESTDIR}/etc/afs; \
 		${INSTALL} -c -o root -g wheel -m 644 README \
 		    ${DESTDIR}/etc/afs)
