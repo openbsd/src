@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cp.1,v 1.12 1999/09/23 02:59:37 aaron Exp $
+.\"	$OpenBSD: cp.1,v 1.13 1999/09/23 19:27:35 aaron Exp $
 .\"	$NetBSD: cp.1,v 1.9 1995/07/25 19:36:45 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -183,6 +183,27 @@ command's actions are determined by the last one specified.
 The
 .Nm
 utility exits 0 on success or >0 if an error occurred.
+.Sh EXAMPLES
+Make a copy of file
+.Pa foo
+named
+.Pa bar :
+.Pp
+.D1 Ic cp foo bar
+.Pp
+Copy a group of files to the
+.Pa /tmp
+directory:
+.Pp
+.D1 Ic cp *.txt /tmp
+.Pp
+Copy the directory
+.Pa junk ,
+and all of its contents (including any subdirectories) to the
+.Pa /tmp
+directory:
+.Pp
+.D1 Ic cp -R junk /tmp
 .Sh COMPATIBILITY
 Historic versions of the
 .Nm
