@@ -1,6 +1,6 @@
-#	$OpenBSD: Makefile,v 1.2 2001/07/05 02:14:38 mickey Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/09/01 16:21:16 drahn Exp $
 
-.if (${MACHINE} == "i386") || (${MACHINE} == "powerpc") || \
+.if (${MACHINE} == "i386") || (${MACHINE} == "macppc") || \
     (${MACHINE} == "alpha")
 PROG=   iopctl
 .else

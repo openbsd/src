@@ -1,6 +1,6 @@
-#	$Id: Makefile,v 1.3 2001/04/17 05:11:10 drahn Exp $
+#	$Id: Makefile,v 1.4 2001/09/01 16:21:16 drahn Exp $
 
-.if ${MACHINE} == "powerpc"
+.if ${MACHINE} == "macppc"
 PROG=	pdisk
 
 SRCS=	pdisk.c dump.c partition_map.c convert.c io.c errors.c bitfield.c \
@@ -10,6 +10,6 @@ NOPROG=yes
 .endif
 
 MAN=	pdisk.8
-MANSUBDIR=powerpc
+MANSUBDIR=macppc
 
 .include <bsd.prog.mk>
