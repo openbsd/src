@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.h,v 1.16 1996/10/19 13:25:59 mickey Exp $	*/
+/*	$OpenBSD: conf.h,v 1.17 1996/11/06 01:29:03 deraadt Exp $	*/
 /*	$NetBSD: conf.h,v 1.33 1996/05/03 20:03:32 christos Exp $	*/
 
 /*-
@@ -376,6 +376,7 @@ struct swdevt {
 extern struct swdevt swdevt[];
 
 int	chrtoblk __P((dev_t));
+int	blktochr __P((dev_t));
 int	iskmemdev __P((dev_t));
 int	iszerodev __P((dev_t));
 
