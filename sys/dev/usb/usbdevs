@@ -1,4 +1,4 @@
-$OpenBSD: usbdevs,v 1.71 2003/10/04 01:01:34 deraadt Exp $
+$OpenBSD: usbdevs,v 1.72 2003/10/26 15:26:53 drahn Exp $
 /* $NetBSD: usbdevs,v 1.322 2003/05/10 17:47:14 hamajima Exp $ */
 
 /*
@@ -1102,6 +1102,7 @@ product NETGEAR EA101		0x1001	Ethernet
 product NETGEAR EA101X		0x1002	Ethernet
 product NETGEAR FA101		0x1020	10/100 Ethernet
 product NETGEAR FA120		0x1040	USB 2.0 Fast Ethernet Adapter
+product NETGEAR MA111NA		0x4110  802.11b Adapter
 
 /* Nikon products */
 product NIKON E990		0x0102	Digital Camera E990
