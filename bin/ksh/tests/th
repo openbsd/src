@@ -1,5 +1,5 @@
-#!/usr/local/bin/perl
-#	$OpenBSD: th,v 1.9 2003/03/10 03:48:16 david Exp $
+#!/usr/bin/perl
+#	$OpenBSD: th,v 1.10 2003/09/01 05:16:46 fgsch Exp $
 
 
 #
