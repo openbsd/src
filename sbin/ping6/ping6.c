@@ -1,5 +1,5 @@
-/*	$OpenBSD: ping6.c,v 1.13 2000/10/08 00:27:44 itojun Exp $	*/
-/*	$KAME: ping6.c,v 1.91 2000/10/07 06:23:06 itojun Exp $	*/
+/*	$OpenBSD: ping6.c,v 1.14 2000/10/12 09:02:19 itojun Exp $	*/
+/*	$KAME: ping6.c,v 1.92 2000/10/11 00:04:47 itojun Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -780,7 +780,7 @@ main(argc, argv)
 			struct addrinfo *iaip;
 
 			if ((error = getaddrinfo(argv[hops], NULL, &hints, &iaip)))
-				errx(1, gai_strerror(error));
+				errx(1, "%s", gai_strerror(error));
 			if (SIN6(iaip->ai_addr)->sin6_family != AF_INET6)
 				errx(1,
 				     "bad addr family of an intermediate addr");
