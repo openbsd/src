@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.38 2001/08/12 00:17:45 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.39 2001/08/12 19:28:38 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -1597,11 +1597,11 @@ pmap_free_tables(pmap_t pmap)
 	sdttbl = pmap->sdt_vaddr;    /* addr of segment table */
 	/* 
 	  This contortion is here instead of the natural loop 
-	  because of integer overflow/wraparound if VM_MAX_USER_ADDRESS 
+	  because of integer overflow/wraparound if VM_MAX_ADDRESS 
 	  is near 0xffffffff
 	*/
-	i = VM_MIN_USER_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
-	j = VM_MAX_USER_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
+	i = VM_MIN_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
+	j = VM_MAX_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
 	if ( j < 1024 )	j++;
 
 	/* Segment table Loop */
@@ -3018,17 +3018,17 @@ pmap_collect(pmap_t pmap)
 
 	/* 
 	  This contortion is here instead of the natural loop 
-	  because of integer overflow/wraparound if VM_MAX_USER_ADDRESS 
+	  because of integer overflow/wraparound if VM_MAX_ADDRESS 
 	  is near 0xffffffff
 	*/
 
-	i = VM_MIN_USER_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
-	j = VM_MAX_USER_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
+	i = VM_MIN_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
+	j = VM_MAX_ADDRESS / PDT_TABLE_GROUP_VA_SPACE;
 	if ( j < 1024 )	j++;
 
 	/* Segment table loop */
 	for ( ; i < j; i++, sdtp += PDT_TABLE_GROUP_SIZE) {
-		sdt_va = VM_MIN_USER_ADDRESS + PDT_TABLE_GROUP_VA_SPACE*i;
+		sdt_va = VM_MIN_ADDRESS + PDT_TABLE_GROUP_VA_SPACE*i;
 
 		gdttbl = pmap_pte(pmap, (vm_offset_t)sdt_va);
 
@@ -3051,9 +3051,9 @@ pmap_collect(pmap_t pmap)
 
 		/* figure out end of range. Watch for wraparound */
 
-		sdt_vt = sdt_va <= VM_MAX_USER_ADDRESS-PDT_TABLE_GROUP_VA_SPACE ?
+		sdt_vt = sdt_va <= VM_MAX_ADDRESS-PDT_TABLE_GROUP_VA_SPACE ?
 			 sdt_va+PDT_TABLE_GROUP_VA_SPACE : 
-			 VM_MAX_USER_ADDRESS;
+			 VM_MAX_ADDRESS;
 
 		/* invalidate all maps in this range */
 		pmap_remove_range (pmap, (vm_offset_t)sdt_va,(vm_offset_t)sdt_vt);
@@ -3356,8 +3356,7 @@ clear_modify_Retry:
 	}
 
 	/* for each listed pmap, turn off the page modified bit */
-	pvep = pvl;
-	while (pvep != PV_ENTRY_NULL) {
+	for (pvep = pvl; pvep != PV_ENTRY_NULL; pvep = pvep->next) {
 		pmap = pvep->pmap;
 		va = pvep->va;
 		if (!simple_lock_try(&pmap->lock)) {
@@ -3388,7 +3387,6 @@ clear_modify_Retry:
 		splx(spl_sav);
 
 		simple_unlock(&pmap->lock);
-		pvep = pvep->next;
 	}
 	UNLOCK_PVH(phys);
 	SPLX(spl);
@@ -3714,6 +3712,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	case VM_PROT_READ|VM_PROT_EXECUTE:
 		pmap_copy_on_write(phys);
 		break;
+	case VM_PROT_READ|VM_PROT_WRITE:
 	case VM_PROT_ALL:
 		break;
 	default:
@@ -4163,7 +4162,7 @@ check_pmap_consistency(char *who)
 			printf("check_pmap_consistency: pmap struct loop error.\n");
 			panic(who);
 		}
-		check_map(p, VM_MIN_USER_ADDRESS, VM_MAX_USER_ADDRESS, who);
+		check_map(p, VM_MIN_ADDRESS, VM_MAX_ADDRESS, who);
 	}
 
 	/* run through all managed paes, check pv_list for each one */
