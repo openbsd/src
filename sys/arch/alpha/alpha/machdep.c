@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.38 2000/11/19 01:08:08 art Exp $ */
+/* $OpenBSD: machdep.c,v 1.39 2000/12/21 16:54:52 aaron Exp $ */
 /* $NetBSD: machdep.c,v 1.206 2000/05/23 05:12:54 thorpej Exp $ */
 
 /*-
@@ -364,7 +364,7 @@ nobootinfo:
 	cycles_per_usec = (hwrpb->rpb_cc_freq + 999999) / 1000000;
 
 	/*
-	 * Initalize the (temporary) bootstrap console interface, so
+	 * Initialize the (temporary) bootstrap console interface, so
 	 * we can use printf until the VM system starts being setup.
 	 * The real console is initialized before then.
 	 */
@@ -401,7 +401,7 @@ nobootinfo:
 	strcpy(cpu_model, platform.model);
 
 	/*
-	 * Initalize the real console, so that the bootstrap console is
+	 * Initialize the real console, so that the bootstrap console is
 	 * no longer necessary.
 	 */
 	(*platform.cons_init)();

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.13 2000/02/22 19:27:56 deraadt Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.14 2000/12/21 16:54:56 aaron Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -283,7 +283,7 @@ int   etherlen;
 
 /*
  * First and last physical address that we maintain any information
- * for. Initalized to zero so that pmap operations done before
+ * for. Initialized to zero so that pmap operations done before
  * pmap_init won't touch any non-existent structures.
  */
 
@@ -604,7 +604,7 @@ pmap_pte(pmap_t map, vm_offset_t virt)
  *	PDT_IDX
  *
  * This routine simply dequeues a table from the kpdt_free list,
- * initalizes all its entries (invalidates them), and sets the
+ * initializes all its entries (invalidates them), and sets the
  * corresponding segment table entry to point to it. If the kpdt_free
  * list is empty - we panic (no other places to get memory, sorry). (Such
  * a panic indicates that pmap_bootstrap is not allocating enough table
@@ -651,7 +651,7 @@ pmap_expand_kmap(vm_offset_t virt, vm_prot_t prot)
  * Routine:	PMAP_MAP
  *
  * Function:
- *    Map memory at initalization. The physical addresses being
+ *    Map memory at initialization. The physical addresses being
  * mapped are not managed and are never unmapped.
  *
  * Parameters:
@@ -753,7 +753,7 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
  * Routine:	PMAP_MAP_BATC
  *
  * Function:
- *    Map memory using BATC at initalization. The physical addresses being
+ *    Map memory using BATC at initialization. The physical addresses being
  * mapped are not managed and are never unmapped.
  *
  * Parameters:
@@ -1105,7 +1105,7 @@ pmap_bootstrap(vm_offset_t load_start, /* IN */
                  (M88K_TRUNC_PAGE((unsigned)&kernelstart) - load_start);
 
    /*
-    * Initialilze kernel_pmap structure
+    * Initialize kernel_pmap structure
     */
    kernel_pmap->ref_count = 1;
    kernel_pmap->cpus_using = 0;
@@ -1748,7 +1748,7 @@ pmap_pinit(pmap_t p)
                    CACHE_INH);
 #endif
    /*
-    * Initalize SDT_ENTRIES.
+    * Initialize SDT_ENTRIES.
     */
    /*
     * There is no need to clear segment table, since kmem_alloc would

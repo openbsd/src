@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_hdr.h,v 1.42 2000/10/26 22:53:31 aaron Exp $	*/
+/*	$OpenBSD: pcvt_hdr.h,v 1.43 2000/12/21 16:54:53 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -276,7 +276,7 @@
 #define CRTC_HSYNCE	0x05		/* horizontal sync end */
 #define CRTC_VTOTAL	0x06		/* vertical total */
 #define CRTC_OVERFLL	0x07		/* overflow low */
-#define CRTC_IROWADDR	0x08		/* inital row address */
+#define CRTC_IROWADDR	0x08		/* initial row address */
 #define CRTC_MAXROW	0x09		/* maximum row address */
 #define CRTC_CURSTART	0x0A		/* cursor start row address */
 #define 	CURSOR_ON_BIT 0x20	/* cursor on/off on mda/cga/vga */

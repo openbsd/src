@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_aereg.h,v 1.4 1998/01/07 00:33:46 niklas Exp $	*/
+/*	$OpenBSD: if_aereg.h,v 1.5 2000/12/21 16:54:53 aaron Exp $	*/
 /*	$NetBSD: if_aereg.h,v 1.2 1995/08/18 15:53:32 chopps Exp $	*/
 
 /*
@@ -114,7 +114,7 @@ struct aereg2 {
 #define	AE_MERR		0x0008	/* memory error */
 #define	AE_RINT		0x0004	/* receiver interrupt */
 #define	AE_TINT		0x0002	/* transmitter interrupt */
-#define	AE_IDON		0x0001	/* initalization done */
+#define	AE_IDON		0x0001	/* initialization done */
 #define	AE_INTR		0x8000	/* interrupt condition */
 #define	AE_INEA		0x4000	/* interrupt enable */
 #define	AE_RXON		0x2000	/* receiver on */
@@ -122,7 +122,7 @@ struct aereg2 {
 #define	AE_TDMD		0x0800	/* transmit demand */
 #define	AE_STOP		0x0400	/* disable all external activity */
 #define	AE_STRT		0x0200	/* enable external activity */
-#define	AE_INIT		0x0100	/* begin initalization */
+#define	AE_INIT		0x0100	/* begin initialization */
 
 #define AE_PROM		0x0080	/* promiscuous mode */
 #define AE_MODE		0x0000

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_vtf.c,v 1.16 2000/05/31 23:31:42 aaron Exp $	*/
+/*	$OpenBSD: pcvt_vtf.c,v 1.17 2000/12/21 16:54:54 aaron Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -1906,7 +1906,7 @@ vt_sca(struct video_state *svsp)
 }
 
 /*---------------------------------------------------------------------------*
- *	initalize selective attribute bit array
+ *	initialize selective attribute bit array
  *---------------------------------------------------------------------------*/
 void
 vt_initsel(struct video_state *svsp)

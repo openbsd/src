@@ -128,7 +128,7 @@ int	msgbufmapped = 0;		/* set when safe to use msgbuf */
 static int _mapped;	/* TG: FIXME.  */
 
 /*  Real low level initialization.  This is called in unmapped mode and
-    sets up the inital page directory and page tables for the kernel.
+    sets up the initial page directory and page tables for the kernel.
     This routine is the first to be called by locore.s to get the
     kernel running at the correct place in memory.
  */

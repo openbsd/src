@@ -1,4 +1,4 @@
-/*	$OpenBSD: vt220keys.c,v 1.5 1999/05/24 15:37:44 aaron Exp $	*/
+/*	$OpenBSD: vt220keys.c,v 1.6 2000/12/21 16:54:54 aaron Exp $	*/
 
 /*
  *      Trivial program to load VT220 Function keys with strings,
@@ -261,7 +261,7 @@ void getinit()
             statflag = statbuf.st_mode & S_IFREG && statbuf.st_mode & S_IREAD;
             if (!statflag || (fp = fopen(path, "r")) == NULL)
             {
-                fprintf(stderr, "couldn't open initalization file: %s\n", path);
+                fprintf(stderr, "couldn't open initialization file: %s\n",path);
                 exit(1);
             }
 
