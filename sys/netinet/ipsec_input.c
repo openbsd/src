@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_input.c,v 1.51 2001/08/07 14:07:47 deraadt Exp $	*/
+/*	$OpenBSD: ipsec_input.c,v 1.52 2001/08/08 15:07:04 jjbg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and
@@ -603,10 +603,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		case IPPROTO_AH:
 			return ah4_input_cb(m);
 
-#ifdef IPCOMP
 		case IPPROTO_IPCOMP:
 			return ipcomp4_input_cb(m);
-#endif /* IPCOMP */
 
 		default:
 			DPRINTF(("ipsec_common_input_cb(): unknown/unsupported"
@@ -626,10 +624,8 @@ ipsec_common_input_cb(struct mbuf *m, struct tdb *tdbp, int skip, int protoff,
 		case IPPROTO_AH:
 			return ah6_input_cb(m, skip, protoff);
 
-#ifdef IPCOMP
 		case IPPROTO_IPCOMP:
 			return ipcomp6_input_cb(m, skip, protoff);
-#endif /* IPCOMP */
 
 		default:
 			DPRINTF(("ipsec_common_input_cb(): unknown/unsupported"
@@ -801,7 +797,6 @@ esp4_input_cb(struct mbuf *m, ...)
 }
 
 /* IPv4 IPCOMP wrapper */
-#ifdef IPCOMP
 void
 ipcomp4_input(struct mbuf *m, ...)
 {
@@ -842,7 +837,6 @@ ipcomp4_input_cb(struct mbuf *m, ...)
 
 	return 0;
 }
-#endif /* IPCOMP */
 
 void *
 ipsec_common_ctlinput(int cmd, struct sockaddr *sa, void *v, int proto)
@@ -1059,7 +1053,6 @@ esp6_input_cb(struct mbuf *m, int skip, int protoff)
 }
 
 /* IPv6 IPcomp wrapper */
-#ifdef IPCOMP
 int
 ipcomp6_input(struct mbuf **mp, int *offp, int proto)
 {
@@ -1111,7 +1104,6 @@ ipcomp6_input_cb(struct mbuf *m, int skip, int protoff)
 {
 	return ah6_input_cb(m, skip, protoff);
 }
-#endif /* IPCOMP */
 
 #endif /* INET6 */
 

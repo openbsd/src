@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.140 2001/07/05 16:45:54 jjbg Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.141 2001/08/08 15:07:04 jjbg Exp $	*/
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr),
@@ -118,11 +118,9 @@ struct xformsw xformsw[] = {
 	{ XF_ESP,	 XFT_CONF|XFT_AUTH, "IPsec ESP",
 	  esp_attach,	esp_init,  esp_zeroize,
 	  esp_input,	esp_output, },
-#ifdef IPCOMP
 	{ XF_IPCOMP,	XFT_COMP, "IPcomp",
 	  ipcomp_attach,    ipcomp_init, ipcomp_zeroize,
 	  ipcomp_input,     ipcomp_output, },
-#endif /* IPCOMP */
 #ifdef TCP_SIGNATURE
 	{ XF_TCPSIGNATURE,	 XFT_AUTH, "TCP MD5 Signature Option, RFC 2385",
 	  tcp_signature_tdb_attach, 	tcp_signature_tdb_init,

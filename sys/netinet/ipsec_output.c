@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.18 2001/07/05 16:45:55 jjbg Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.19 2001/08/08 15:07:04 jjbg Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
  *
@@ -292,7 +292,6 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 #endif /* INET6 */
 	}
 
-#ifdef IPCOMP
 	/* Non expansion policy for IPCOMP */
 	if (tdb->tdb_sproto == IPPROTO_IPCOMP) {
 		if ((m->m_pkthdr.len - i) < tdb->tdb_compalgxform->minlen) {
@@ -300,7 +299,6 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 			return ipsp_process_done(m, tdb);
 		}
 	}
-#endif /* IPCOMP */
 
 	/* Invoke the IPsec transform. */
 	return (*(tdb->tdb_xform->xf_output))(m, tdb, NULL, i, off);
