@@ -8,7 +8,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: malloc.c,v 1.16 1996/09/26 15:22:19 tholo Exp $";
+static char rcsid[] = "$OpenBSD: malloc.c,v 1.17 1996/11/22 16:15:23 kstailey Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -311,7 +311,7 @@ malloc_dump(fd)
 	fprintf(fd, "Free: @%p [%p...%p[ %ld ->%p <-%p\n",
 		pf, pf->page, pf->end, pf->size, pf->prev, pf->next);
 	if (pf == pf->next) {
-+ 		fprintf(fd, "Free_list loops.\n");
+ 		fprintf(fd, "Free_list loops.\n");
 		break;
 	}
     }
