@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.3 1996/08/24 18:10:37 imp Exp $ */
+/*      $OpenBSD: param.h,v 1.4 1996/08/26 11:12:03 pefo Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,8 +50,7 @@
  */
 #define	MACHINE	     "arc"
 #define MACHINE_ARCH "mips"
-#define MID_PICA MID_PMAX /* For the moment */
-#define MID_MACHINE  MID_PICA
+#define MID_MACHINE  MID_PMAX	/* XXX Bogus, but we need it for now... */
 
 /*
  * Round p (pointer or byte index) up to a correctly-aligned value for all
@@ -71,7 +70,9 @@
 #define	SEGSHIFT	22		/* LOG2(NBSEG) */
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
+#if 0
 #define	KERNTEXTOFF	0x80080000	/* start of kernel text for kvm_mkdb */
+#endif
 #define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define	DEV_BSIZE	512
@@ -115,7 +116,7 @@
  * Size of kernel malloc arena in CLBYTES-sized logical pages
  */ 
 #ifndef NKMEMCLUSTERS
-#define	NKMEMCLUSTERS	(512*1024/CLBYTES)
+#define	NKMEMCLUSTERS	(4096*1024/CLBYTES)
 #endif
 
 /* pages ("clicks") (4096 bytes) to disk blocks */

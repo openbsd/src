@@ -1,4 +1,4 @@
-/*	$OpenBSD: minidebug.c,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $	*/
+/*	$OpenBSD: minidebug.c,v 1.2 1996/08/26 11:11:55 pefo Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +35,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)kadb.c	8.1 (Berkeley) 6/10/93
- *      $Id: minidebug.c,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $
+ *      $Id: minidebug.c,v 1.2 1996/08/26 11:11:55 pefo Exp $
  */
 
 /*
@@ -254,8 +254,8 @@ break_insert()
 		if(brk_tab[i].addr != 0) {
 			brk_tab[i].inst = *(u_int *)brk_tab[i].addr;
 			*(u_int *)brk_tab[i].addr = BREAK_BRKPT;
-			MachFlushDCache(brk_tab[i].addr,4);
-			MachFlushICache(brk_tab[i].addr,4);
+			R4K_FlushDCache(brk_tab[i].addr,4);
+			R4K_FlushICache(brk_tab[i].addr,4);
 		}
 	}
 }
@@ -267,8 +267,8 @@ break_restore()
 	for(i = 0; i < MAXBRK; i++) {
 		if(brk_tab[i].addr != 0) {
 			*(u_int *)brk_tab[i].addr = brk_tab[i].inst;
-			MachFlushDCache(brk_tab[i].addr,4);
-			MachFlushICache(brk_tab[i].addr,4);
+			R4K_FlushDCache(brk_tab[i].addr,4);
+			R4K_FlushICache(brk_tab[i].addr,4);
 		}
 	}
 }
@@ -522,12 +522,12 @@ static int ssandrun;	/* Single step and run flag (when cont at brk) */
 			switch(c) {
 			case 't':
 				printf("tlb");
-				MachTLBFlush();
+				R4K_TLBFlush();
 				break;
 
 			case 'c':
 				printf("cache");
-				MachFlushCache();
+				R4K_FlushCache();
 				break;
 			}
 			break;
@@ -567,8 +567,8 @@ mdbsetsstep()
 		/* kernel address */
 		mdb_ss_instr = mdbpeek(va);
 		mdbpoke((caddr_t)va, BREAK_SSTEP);
-		MachFlushDCache(va,4);
-		MachFlushICache(va,4);
+		R4K_FlushDCache(va,4);
+		R4K_FlushICache(va,4);
 		return;
 	}
 }
@@ -597,8 +597,8 @@ mdbclrsstep(cr)
 	if ((int)va < 0) {
 		/* kernel address */
 		mdbpoke((caddr_t)va, mdb_ss_instr);
-		MachFlushDCache(va,4);
-		MachFlushICache(va,4);
+		R4K_FlushDCache(va,4);
+		R4K_FlushICache(va,4);
 		mdb_ss_addr = 0;
 		return(TRUE);
 	}
@@ -1089,7 +1089,7 @@ void arc_dump_tlb(int first,int last)
 	tlbno = first;
 
 	while(tlbno <= last) {
-		MachTLBRead(tlbno, &tlb);
+		R4K_TLBRead(tlbno, &tlb);
 		if(tlb.tlb_lo0 & PG_V || tlb.tlb_lo1 & PG_V) {
 			printf("TLB %2d vad 0x%08x ", tlbno, tlb.tlb_hi);
 		}

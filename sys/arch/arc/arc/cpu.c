@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.1.1.1 1996/06/24 09:07:20 pefo Exp $	*/
+/*	$OpenBSD: cpu.c,v 1.2 1996/08/26 11:11:52 pefo Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Carnegie-Mellon University.
@@ -86,7 +86,7 @@ cpuattach(parent, dev, aux)
 		printf("MIPS R6000 CPU");
 		break;
 	case MIPS_R4000:
-		if(machPrimaryInstCacheSize == 16384)
+		if(CpuPrimaryInstCacheSize == 16384)
 			printf("MIPS R4400 CPU");
 		else
 			printf("MIPS R4000 CPU");
@@ -181,8 +181,12 @@ cpuattach(parent, dev, aux)
 	printf(" Rev. %d.%d", fpu_id.cpu.cp_majrev, fpu_id.cpu.cp_minrev);
 	printf("\n");
 
-	printf("        Primary cache size: %dkb Instruction, %dkb Data.\n",
-		machPrimaryInstCacheSize / 1024,
-		machPrimaryDataCacheSize / 1024);
+	printf("        Primary cache size: %dkb Instruction, %dkb Data.",
+		CpuPrimaryInstCacheSize / 1024,
+		CpuPrimaryDataCacheSize / 1024);
+	if(CpuTwoWayCache)
+		printf("Two way set associative.\n");
+	else
+		printf("Direct mapped.\n");
 }
 

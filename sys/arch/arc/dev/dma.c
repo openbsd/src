@@ -1,4 +1,4 @@
-/*	$OpenBSD: dma.c,v 1.2 1996/07/30 20:24:20 pefo Exp $	*/
+/*	$OpenBSD: dma.c,v 1.3 1996/08/26 11:11:59 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)rz.c	8.1 (Berkeley) 7/29/93
- *      $Id: dma.c,v 1.2 1996/07/30 20:24:20 pefo Exp $
+ *      $Id: dma.c,v 1.3 1996/08/26 11:11:59 pefo Exp $
  */
 
 /*
@@ -79,7 +79,7 @@ picaDmaInit()
 {
 	int map = PICA_TL_BASE;
 
-	MachFlushCache();	/* Make shure no map entries are cached */
+	R4K_FlushCache();	/* Make shure no map entries are cached */
 
 	bzero((char *)map, PICA_TL_SIZE);
 	free_dma_pte = (dma_pte_t *)map;

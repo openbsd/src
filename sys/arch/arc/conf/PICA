@@ -1,4 +1,4 @@
-#
+
 #	Generic configuration file for MIPS R4400 PICA system
 #
 
@@ -58,8 +58,15 @@ options		GATEWAY		# IP packet forwarding
 #options	TPIP
 #options	EON
 
+# Special options
+#options		MACHINE_NONCONTIG # Support noncontigous memory.
+
+# Specify storage configuration
 config		bsd	root on sd0 swap on sd0 and sd1
 
+#
+# Definition of system
+#
 mainbus0	at root
 cpu*		at mainbus0
 

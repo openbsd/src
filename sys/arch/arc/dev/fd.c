@@ -1,4 +1,4 @@
-/*	$OpenBSD: fd.c,v 1.1.1.1 1996/06/24 09:07:19 pefo Exp $	*/
+/*	$OpenBSD: fd.c,v 1.2 1996/08/26 11:12:00 pefo Exp $	*/
 /*	$NetBSD: fd.c,v 1.78 1995/07/04 07:23:09 mycroft Exp $	*/
 
 /*-
@@ -877,7 +877,7 @@ loop:
 #endif
 		 }}
 #endif
-		MachFlushDCache(bp->b_data + fd->sc_skip, fd->sc_nbytes);
+		R4K_FlushDCache(bp->b_data + fd->sc_skip, fd->sc_nbytes);
 		read = bp->b_flags & B_READ ? DMA_FROM_DEV : DMA_TO_DEV;
 		DMA_START(fdc->dma, bp->b_data + fd->sc_skip, fd->sc_nbytes, read);
 		outb(iobase + fdctl, type->rate);

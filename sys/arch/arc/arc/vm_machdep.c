@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.2 1996/08/26 11:11:57 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: vm_machdep.c 1.21 91/04/06
  *
  *	from: @(#)vm_machdep.c	8.3 (Berkeley) 1/4/94
- *      $Id: vm_machdep.c,v 1.1.1.1 1996/06/24 09:07:21 pefo Exp $
+ *      $Id: vm_machdep.c,v 1.2 1996/08/26 11:11:57 pefo Exp $
  */
 
 
@@ -217,12 +217,12 @@ pagemove(from, to, size)
 		panic("pagemove");
 	fpte = kvtopte(from);
 	tpte = kvtopte(to);
-	if(((int)from & machCacheAliasMask) != ((int)to & machCacheAliasMask)) {
-		MachHitFlushDCache(from, size);
+	if(((int)from & CpuCacheAliasMask) != ((int)to & CpuCacheAliasMask)) {
+		R4K_HitFlushDCache(from, size);
 	}
 	while (size > 0) {
-		MachTLBFlushAddr(from);
-		MachTLBUpdate(to, *fpte);
+		R4K_TLBFlushAddr(from);
+		R4K_TLBUpdate(to, *fpte);
 		*tpte++ = *fpte;
 		fpte->pt_entry = PG_NV | PG_G;
 		fpte++;
@@ -269,7 +269,7 @@ vmapbuf(bp, len)
 	off = (int)addr & PGOFSET;
 	p = bp->b_proc;
 	sz = round_page(off + len);
-	kva = kmem_alloc_wait_align(phys_map, sz, (vm_size_t)addr & machCacheAliasMask);
+	kva = kmem_alloc_wait_align(phys_map, sz, (vm_size_t)addr & CpuCacheAliasMask);
 	bp->b_un.b_addr = (caddr_t) (kva + off);
 	sz = atop(sz);
 	while (sz--) {
@@ -427,11 +427,11 @@ vm_map_findspace_align(map, start, length, addr, align)
 		 * win.
 		 */
 		start = ((start + NBPG -1) & ~(NBPG - 1)); /* Paranoia */
-		if((start & machCacheAliasMask) <= align) {
-			start += align - (start & machCacheAliasMask);
+		if((start & CpuCacheAliasMask) <= align) {
+			start += align - (start & CpuCacheAliasMask);
 		}
 		else {
-			start = ((start + machCacheAliasMask) & ~machCacheAliasMask);
+			start = ((start + CpuCacheAliasMask) & ~CpuCacheAliasMask);
 			start += align;
 		}
 			

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.4 1996/07/30 20:24:17 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.5 1996/08/26 11:11:54 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.4 1996/07/30 20:24:17 pefo Exp $
+ *      $Id: machdep.c,v 1.5 1996/08/26 11:11:54 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -83,6 +83,7 @@
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/autoconf.h>
+#include <machine/memconf.h>
 
 #include <sys/exec_ecoff.h>
 
@@ -129,6 +130,8 @@ int	cputype;		/* Mother board type */
 int	ncpu = 1;		/* At least one cpu in the system */
 int	isa_io_base;		/* Base address of ISA io port space */
 int	isa_mem_base;		/* Base address of ISA memory space */
+
+struct mem_descriptor mem_layout[MAXMEMSEGS];
 
 extern	int Mach_spl0(), Mach_spl1(), Mach_spl2(), Mach_spl3();
 extern	int Mach_spl4(), Mach_spl5(), splhigh();
@@ -276,9 +279,9 @@ mips_init(argc, argv, code)
 	 * Now its time to abandon the BIOS and be self supplying.
 	 * Start with cleaning out the TLB. Bye bye Microsoft....
 	 */
-	MachSetWIRED(0);
-	MachTLBFlush();
-	MachSetWIRED(VMWIRED_ENTRIES);
+	R4K_SetWIRED(0);
+	R4K_TLBFlush();
+	R4K_SetWIRED(VMWIRED_ENTRIES);
 
 	/*
 	 * Set up mapping for hardware the way we want it!
@@ -288,31 +291,31 @@ mips_init(argc, argv, code)
 	tlb.tlb_hi = vad_to_vpn(R4030_V_LOCAL_IO_BASE);
 	tlb.tlb_lo0 = vad_to_pfn(R4030_P_LOCAL_IO_BASE) | PG_IOPAGE;
 	tlb.tlb_lo1 = vad_to_pfn(PICA_P_INT_SOURCE) | PG_IOPAGE;
-	MachTLBWriteIndexed(1, &tlb);
+	R4K_TLBWriteIndexed(1, &tlb);
 
 	tlb.tlb_mask = PG_SIZE_1M;
 	tlb.tlb_hi = vad_to_vpn(PICA_V_LOCAL_VIDEO_CTRL);
 	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL) | PG_IOPAGE;
 	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO_CTRL + PICA_S_LOCAL_VIDEO_CTRL/2) | PG_IOPAGE;
-	MachTLBWriteIndexed(2, &tlb);
+	R4K_TLBWriteIndexed(2, &tlb);
 	
 	tlb.tlb_mask = PG_SIZE_1M;
 	tlb.tlb_hi = vad_to_vpn(PICA_V_EXTND_VIDEO_CTRL);
 	tlb.tlb_lo0 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL) | PG_IOPAGE;
 	tlb.tlb_lo1 = vad_to_pfn(PICA_P_EXTND_VIDEO_CTRL + PICA_S_EXTND_VIDEO_CTRL/2) | PG_IOPAGE;
-	MachTLBWriteIndexed(3, &tlb);
+	R4K_TLBWriteIndexed(3, &tlb);
 	
 	tlb.tlb_mask = PG_SIZE_4M;
 	tlb.tlb_hi = vad_to_vpn(PICA_V_LOCAL_VIDEO);
 	tlb.tlb_lo0 = vad_to_pfn(PICA_P_LOCAL_VIDEO) | PG_IOPAGE;
 	tlb.tlb_lo1 = vad_to_pfn(PICA_P_LOCAL_VIDEO + PICA_S_LOCAL_VIDEO/2) | PG_IOPAGE;
-	MachTLBWriteIndexed(4, &tlb);
+	R4K_TLBWriteIndexed(4, &tlb);
 	
 	tlb.tlb_mask = PG_SIZE_16M;
 	tlb.tlb_hi = vad_to_vpn(PICA_V_ISA_IO);
 	tlb.tlb_lo0 = vad_to_pfn(PICA_P_ISA_IO) | PG_IOPAGE;
 	tlb.tlb_lo1 = vad_to_pfn(PICA_P_ISA_MEM) | PG_IOPAGE;
-	MachTLBWriteIndexed(5, &tlb);
+	R4K_TLBWriteIndexed(5, &tlb);
 	
 	/*
 	 * Init mapping for u page(s) for proc[0], pm_tlbpid 1.
@@ -329,12 +332,12 @@ mips_init(argc, argv, code)
 		tlb.tlb_lo1 = vad_to_pfn(firstaddr + NBPG) | PG_V | PG_M | PG_CACHED;
 		curproc->p_md.md_upte[i] = tlb.tlb_lo0;
 		curproc->p_md.md_upte[i+1] = tlb.tlb_lo1;
-		MachTLBWriteIndexed(i,&tlb);
+		R4K_TLBWriteIndexed(i,&tlb);
 		firstaddr += NBPG * 2;
 	}
 	v += UPAGES * NBPG;
 	v = (caddr_t)((int)v+3 & -4);
-	MachSetPID(1);
+	R4K_SetPID(1);
 
 	/*
 	 * init nullproc for swtch_exit().
@@ -368,8 +371,8 @@ mips_init(argc, argv, code)
 	/*
 	 * Clear out the I and D caches.
 	 */
-	cpucfg = MachConfigCache();
-	MachFlushCache();
+	cpucfg = R4K_ConfigCache();
+	R4K_FlushCache();
 
 	/* check what model platform we are running on */
 	switch (cputype) {
@@ -420,14 +423,31 @@ mips_init(argc, argv, code)
 		if((memcfg & 0x40) == 0)
 			physmem += physmem;	/* 128 bit config */
 
+		mem_layout[0].mem_start = 0x00100000;
+		mem_layout[0].mem_size = physmem - mem_layout[0].mem_start;
+		mem_layout[1].mem_start = 0x00020000;
+		mem_layout[1].mem_size =  0x00100000 - mem_layout[1].mem_start;
+		mem_layout[2].mem_start = 0x0;
+		
 		physmem = btoc(physmem);
 		break;
 
 	case MAGNUM:
 		memcfg = in32(R4030_SYS_CONFIG);
+
+		physmem = btoc(physmem);
 		break;
 
 	case DESKSTATION:
+		/*XXX Need to find out how to size mem */
+		physmem = 1024 * 1024 * 32;
+		mem_layout[0].mem_start = 0x00100000;
+		mem_layout[0].mem_size = physmem - mem_layout[0].mem_start;
+		mem_layout[1].mem_start = 0x00008000;
+		mem_layout[1].mem_size = 0x000a0000 - mem_layout[1].mem_start;
+		mem_layout[2].mem_start = 0x0;
+
+		physmem = btoc(physmem);
 		break;
 
 	default:

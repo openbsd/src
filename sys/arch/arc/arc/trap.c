@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.3 1996/07/30 20:24:18 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.4 1996/08/26 11:11:56 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  * from: Utah Hdr: trap.c 1.32 91/04/06
  *
  *	from: @(#)trap.c	8.5 (Berkeley) 1/11/94
- *      $Id: trap.c,v 1.3 1996/07/30 20:24:18 pefo Exp $
+ *      $Id: trap.c,v 1.4 1996/08/26 11:11:56 pefo Exp $
  */
 
 #include <sys/param.h>
@@ -299,7 +299,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			entry |= PG_M;
 			pte->pt_entry = entry;
 			vadr &= ~PGOFSET;
-			MachTLBUpdate(vadr, entry);
+			R4K_TLBUpdate(vadr, entry);
 			pa = pfn_to_vad(entry);
 #ifdef ATTR
 			pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
@@ -337,7 +337,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		pte->pt_entry = entry;
 		vadr = (vadr & ~PGOFSET) |
 			(pmap->pm_tlbpid << VMTLB_PID_SHIFT);
-		MachTLBUpdate(vadr, entry);
+		R4K_TLBUpdate(vadr, entry);
 		pa = pfn_to_vad(entry);
 #ifdef ATTR
 		pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
@@ -621,7 +621,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 			locr0[A3] = 1;
 		}
 		if(code == SYS_ptrace)
-			MachFlushCache();
+			R4K_FlushCache();
 	done:
 #ifdef SYSCALL_DEBUG
 		scdebug_ret(p, code, i, rval);
@@ -669,7 +669,7 @@ trap(statusReg, causeReg, vadr, pc, args)
 		uio.uio_rw = UIO_WRITE;
 		uio.uio_procp = curproc;
 		i = procfs_domem(p, p, NULL, &uio);
-		MachFlushCache();
+		R4K_FlushCache();
 
 		if (i < 0)
 			printf("Warning: can't restore instruction at %x: %x\n",
@@ -1257,7 +1257,7 @@ cpu_singlestep(p)
 	uio.uio_rw = UIO_WRITE;
 	uio.uio_procp = curproc;
 	i = procfs_domem(curproc, p, NULL, &uio);
-	MachFlushCache();
+	R4K_FlushCache();
 
 	if (i < 0)
 		return (EFAULT);
