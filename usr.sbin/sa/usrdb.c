@@ -1,4 +1,4 @@
-/*	$OpenBSD: usrdb.c,v 1.6 2002/05/30 18:47:44 deraadt Exp $	*/
+/*	$OpenBSD: usrdb.c,v 1.7 2003/06/28 20:22:21 deraadt Exp $	*/
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: usrdb.c,v 1.6 2002/05/30 18:47:44 deraadt Exp $";
+static char rcsid[] = "$Id: usrdb.c,v 1.7 2003/06/28 20:22:21 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -49,7 +49,7 @@ static int uid_compare(const DBT *, const DBT *);
 static DB	*usracct_db;
 
 int
-usracct_init()
+usracct_init(void)
 {
 	DB *saved_usracct_db;
 	BTREEINFO bti;
@@ -112,7 +112,7 @@ out:
 }
 
 void
-usracct_destroy()
+usracct_destroy(void)
 {
 	if (DB_CLOSE(usracct_db) < 0)
 		warn("destroying user accounting stats");
@@ -169,7 +169,7 @@ usracct_add(const struct cmdinfo *ci)
 }
 
 int
-usracct_update()
+usracct_update(void)
 {
 	DB *saved_usracct_db;
 	DBT key, data;
@@ -221,7 +221,7 @@ usracct_update()
 }
 
 void
-usracct_print()
+usracct_print(void)
 {
 	DBT key, data;
 	struct userinfo uistore, *ui = &uistore;
