@@ -1,4 +1,4 @@
-#	$OpenBSD: files.amiga,v 1.35 2000/02/29 19:05:23 niklas Exp $
+#	$OpenBSD: files.amiga,v 1.36 2000/04/12 16:10:22 aaron Exp $
 #	$NetBSD: files.amiga,v 1.62 1997/08/27 19:32:47 is Exp $
 
 
@@ -386,7 +386,7 @@ file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 # XXX this needs to be done very late, so it's done here.  This feels
 # like a kludge, but it might be for the best.
 
-device	pcic {[controller = -1], [socket = -1]}
+device	pcic: pcmciabus
 file	dev/ic/i82365.c			pcic
 
 # PCIC pcmcia controller on ISA bus.
