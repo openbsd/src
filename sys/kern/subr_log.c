@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr_log.c,v 1.7 2001/04/06 04:42:07 csapuntz Exp $	*/
+/*	$OpenBSD: subr_log.c,v 1.8 2002/06/29 02:58:14 mickey Exp $	*/
 /*	$NetBSD: subr_log.c,v 1.11 1996/03/30 22:24:44 christos Exp $	*/
 
 /*
@@ -68,6 +68,12 @@ int	log_open;			/* also used in log() */
 int	msgbufmapped;			/* is the message buffer mapped */
 int	msgbufenabled;			/* is logging to the buffer enabled */
 struct	msgbuf *msgbufp;		/* the mapped buffer, itself. */
+
+void filt_logrdetach(struct knote *kn);
+int filt_logread(struct knote *kn, long hint);
+   
+struct filterops logread_filtops =
+	{ 1, NULL, filt_logrdetach, filt_logread};
 
 void
 initmsgbuf(buf, bufsize)
@@ -198,6 +204,49 @@ logselect(dev, rw, p)
 	return (0);
 }
 
+int
+logkqfilter(dev_t dev, struct knote *kn)
+{
+	struct klist *klist;
+	int s;
+
+	switch (kn->kn_filter) {
+	case EVFILT_READ:
+		klist = &logsoftc.sc_selp.si_note;
+		kn->kn_fop = &logread_filtops;
+		break;
+	default:
+		return (1);
+	}
+
+	kn->kn_hook = (void *)msgbufp;
+
+	s = splhigh();
+	SLIST_INSERT_HEAD(klist, kn, kn_selnext);
+	splx(s);
+
+	return (0);
+}
+
+void
+filt_logrdetach(struct knote *kn)
+{
+	int s = splhigh();
+
+	SLIST_REMOVE(&logsoftc.sc_selp.si_note, kn, knote, kn_selnext);
+	splx(s);
+}
+
+int
+filt_logread(struct knote *kn, long hint)
+{
+	struct  msgbuf *p = (struct  msgbuf *)kn->kn_hook;
+
+	kn->kn_data = (int)(p->msg_bufx - p->msg_bufr);
+
+	return (p->msg_bufx != p->msg_bufr);
+}
+
 void
 logwakeup()
 {
@@ -211,6 +260,7 @@ logwakeup()
 		wakeup((caddr_t)msgbufp);
 		logsoftc.sc_state &= ~LOG_RDWAIT;
 	}
+	KNOTE(&logsoftc.sc_selp.si_note, 0);
 }
 
 /*ARGSUSED*/
