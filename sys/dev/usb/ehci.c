@@ -1,4 +1,4 @@
-/*	$OpenBSD: ehci.c,v 1.38 2005/03/07 11:12:04 pascoe Exp $ */
+/*	$OpenBSD: ehci.c,v 1.39 2005/03/07 12:58:19 pascoe Exp $ */
 /*	$NetBSD: ehci.c,v 1.66 2004/06/30 03:11:56 mycroft Exp $	*/
 
 /*
@@ -761,7 +761,7 @@ ehci_idone(struct ehci_xfer *ex)
 	struct ehci_pipe *epipe = (struct ehci_pipe *)xfer->pipe;
 	ehci_soft_qtd_t *sqtd, *lsqtd;
 	u_int32_t status = 0, nstatus = 0;
-	int actlen;
+	int actlen, cerr;
 	uint pkts_left;
 
 	DPRINTFN(/*12*/2, ("ehci_idone: ex=%p\n", ex));
@@ -833,12 +833,13 @@ ehci_idone(struct ehci_xfer *ex)
 	    UGETW(xfer->pipe->endpoint->edesc->wMaxPacketSize);
 	epipe->nexttoggle ^= pkts_left % 2;
 
+	cerr = EHCI_QTD_GET_CERR(status);
 	status &= EHCI_QTD_STATERRS;
-	DPRINTFN(/*10*/2, ("ehci_idone: len=%d, actlen=%d, status=0x%x\n",
-			   xfer->length, actlen, status));
+	DPRINTFN(/*10*/2, ("ehci_idone: len=%d, actlen=%d, cerr=%d, "
+	    "status=0x%x\n", xfer->length, actlen, cerr, status));
 	xfer->actlen = actlen;
-	if (status != 0) {
 #ifdef EHCI_DEBUG
+	if (status != 0) {
 		char sbuf[128];
 
 		bitmask_snprintf((u_int32_t)status,
@@ -855,14 +856,23 @@ ehci_idone(struct ehci_xfer *ex)
 			ehci_dump_sqh(epipe->sqh);
 			ehci_dump_sqtds(ex->sqtdstart);
 		}
-#endif
-		if (status == EHCI_QTD_HALTED)
-			xfer->status = USBD_STALLED;
-		else
-			xfer->status = USBD_IOERROR; /* more info XXX */
-	} else {
-		xfer->status = USBD_NORMAL_COMPLETION;
 	}
+#endif
+	/*
+	 * XactErr with CErr > 0 indicates that there were one or more retries
+	 * on the wire, but the transfer succeeded before the host controller
+	 * gave up.  Ignore the XactErr bit in this case, and determine the
+	 * overall transfer status from the remaining bits.
+	 */
+	if (status & EHCI_QTD_XACTERR && cerr > 0)
+		status &= ~EHCI_QTD_XACTERR;
+
+	if (status == 0)
+		xfer->status = USBD_NORMAL_COMPLETION;
+	else if (status == EHCI_QTD_HALTED)
+		xfer->status = USBD_STALLED;
+	else
+		xfer->status = USBD_IOERROR; /* more info XXX */
 
 	usb_transfer_complete(xfer);
 	DPRINTFN(/*12*/2, ("ehci_idone: ex=%p done\n", ex));
