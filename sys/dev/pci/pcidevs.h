@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.570 2002/12/10 23:50:03 miod Exp 
+ *		OpenBSD: pcidevs,v 1.571 2002/12/19 20:05:00 henning Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -597,8 +597,14 @@
  * List of known products.  Grouped by vendor.
  */
 
-/* 2 Micro Inc */
-#define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832 CardBus */
+/* O2 Micro Inc */
+#define	PCI_PRODUCT_O2MICRO_OZ6832	0x6832		/* OZ6832 and OZ6836 CardBus */
+#define	PCI_PRODUCT_O2MICRO_OZ6836	0x6836		/* OZ6836 and OZ6860 CardBus */
+#define	PCI_PRODUCT_O2MICRO_OZ6872	0x6872		/* OZ6812 and OZ6872 CardBus */
+#define	PCI_PRODUCT_O2MICRO_OZ6922	0x6925		/* OZ6922 CardBus */
+#define	PCI_PRODUCT_O2MICRO_OZ6933	0x6933		/* OZ6933 CardBus */
+#define	PCI_PRODUCT_O2MICRO_OZ6972	0x6972		/* OZ6912 and OZ6972 CardBus */
+ 
 
 
 /* 3Com Products */
