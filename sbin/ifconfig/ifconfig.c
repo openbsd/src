@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.11 1997/09/20 07:51:39 deraadt Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.12 1997/12/31 11:16:22 deraadt Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.22 1996/01/04 20:11:20 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.11 1997/09/20 07:51:39 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ifconfig.c,v 1.12 1997/12/31 11:16:22 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -941,7 +941,7 @@ void
 usage()
 {
 	fprintf(stderr, "usage: ifconfig interface\n%s",
-		"\t[ af [ address [ dest_addr ] ] [ up ] [ down ] "
+		"\t[ [af] [ address [ dest_addr ] ] [ up ] [ down ] "
 		"[ netmask mask ] ]\n"
 		"\t[ metric n ]\n"
 		"\t[ arp | -arp ]\n"
