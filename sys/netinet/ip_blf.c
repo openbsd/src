@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_blf.c,v 1.3 1999/02/23 02:44:20 angelos Exp $ */
+/* $OpenBSD: ip_blf.c,v 1.4 1999/02/23 05:04:27 angelos Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -69,8 +69,8 @@ Blowfish_encipher(c, xl, xr)
 	u_int32_t Xl;
 	u_int32_t Xr;
 
-	Xl = ntohl(*xl);
-	Xr = ntohl(*xr);
+	Xl = *xl;
+	Xr = *xr;
 
 	Xl ^= c->P[0];
 	BLFRND(c, Xr, Xl, 1); BLFRND(c, Xl, Xr, 2);
@@ -95,8 +95,8 @@ Blowfish_decipher(c, xl, xr)
 	u_int32_t Xl;
 	u_int32_t Xr;
 
-	Xl = htonl(*xl);
-	Xr = htonl(*xr);
+	Xl = *xl;
+	Xr = *xr;
 
 	Xl ^= c->P[17];
 	BLFRND(c, Xr, Xl, 16); BLFRND(c, Xl, Xr, 15);
