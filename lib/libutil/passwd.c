@@ -154,19 +154,21 @@ pw_edit(notsetuid, filename)
 		filename = _PATH_MASTERPASSWD_LOCK;
 	if (!(editor = getenv("EDITOR")))
 		editor = _PATH_VI;
-	if (p = strrchr(editor, '/'))
-		++p;
-	else 
-		p = editor;
+
+	p = malloc(strlen(editor) + 1 + strlen(filename) + 1);
+	if (p == NULL)
+		return;
+	sprintf(p, "%s %s", editor, filename);
 
 	if (!(editpid = vfork())) {
 		if (notsetuid) {
 			setgid(getgid());
 			setuid(getuid());
 		}
-		execlp(editor, p, filename, NULL);
+		system(p);
 		_exit(1);
 	}
+	free(p);
 	for (;;) {
 		editpid = waitpid(editpid, (int *)&pstat, WUNTRACED);
 		if (editpid == -1)

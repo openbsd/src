@@ -42,7 +42,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)edquota.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: edquota.c,v 1.7 1996/06/06 12:00:55 deraadt Exp $";
+static char *rcsid = "$Id: edquota.c,v 1.8 1996/06/06 12:10:04 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -329,11 +329,21 @@ editit(tmpfile)
 	int pid, stat;
 	extern char *getenv();
 
+	register char *ed;
+	char *p;
+	if ((ed = getenv("EDITOR")) == (char *)0)
+		ed = _PATH_VI;
+	p = (char *)malloc(strlen(ed) + 1 + strlen(tmpfile) + 1);
+	if (!p)
+		return (0);
+	sprintf(p, "%s %s", ed, tmpfile);
+
 	omask = sigblock(sigmask(SIGINT)|sigmask(SIGQUIT)|sigmask(SIGHUP));
  top:
 	if ((pid = fork()) < 0) {
 		extern errno;
 
+		free(p);
 		if (errno == EPROCLIM) {
 			fprintf(stderr, "You have too many processes\n");
 			return(0);
@@ -346,20 +356,14 @@ editit(tmpfile)
 		return (0);
 	}
 	if (pid == 0) {
-		register char *ed;
-		char *p;
-
 		sigsetmask(omask);
 		setgid(getgid());
 		setuid(getuid());
-		if ((ed = getenv("EDITOR")) == (char *)0)
-			ed = _PATH_VI;
-		p = (char *)malloc(strlen(ed) + 1 + strlen(tmpfile) + 1);
-		sprintf(p, "%s %s", ed, tmpfile);
 		if (system(p) == -1)
 			perror(ed);
 		exit(1);
 	}
+	free(p);
 	waitpid(pid, &stat, 0);
 	sigsetmask(omask);
 	if (!WIFEXITED(stat) || WEXITSTATUS(stat) != 0)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.6 1996/05/18 19:06:38 pefo Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.7 1996/06/06 12:10:01 deraadt Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -936,6 +936,16 @@ editit()
 	int stat;
 	extern char *getenv();
 	sigset_t sigset, osigset;
+	char *ed, *p;
+
+	if ((ed = getenv("EDITOR")) == (char *)0)
+		ed = DEFEDITOR;
+	p = (char *)malloc(strlen(ed) + 1 + strlen(tmpfil) + 1);
+	if (!p)
+		warn("failed to start editor");
+		return (0);
+	}
+	sprintf(p, "%s %s", ed, tmpfil);
 
 	sigemptyset(&sigset);
 	sigaddset(&sigset, SIGINT);
@@ -943,6 +953,7 @@ editit()
 	sigaddset(&sigset, SIGHUP);
 	sigprocmask(SIG_BLOCK, &sigset, &osigset);
 	while ((pid = fork()) < 0) {
+		free(p);
 		if (errno != EAGAIN) {
 			sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 			warn("fork");
@@ -951,17 +962,14 @@ editit()
 		sleep(1);
 	}
 	if (pid == 0) {
-		char *ed;
-
 		sigprocmask(SIG_SETMASK, &osigset, (sigset_t *)0);
 		setgid(getgid());
 		setuid(getuid());
-		if ((ed = getenv("EDITOR")) == (char *)0)
-			ed = DEFEDITOR;
-		execlp(ed, ed, tmpfil, 0);
-		perror(ed);
+		if (system(p) == -1)
+			perror(ed);
 		exit(1);
 	}
+	free(p);
 	while ((xpid = wait(&stat)) >= 0)
 		if (xpid == pid)
 			break;
