@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.2 1998/09/24 06:45:07 pjanzen Exp $	*/
+/*	$OpenBSD: screen.c,v 1.3 1999/01/08 04:11:50 pjanzen Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -201,7 +201,7 @@ scr_init()
 	if (CMstr == NULL || UP == NULL || BC == NULL)
 		stop("cannot do random cursor positioning via tgoto()");
 	PC = pcstr ? *pcstr : 0;
-	if (sgnum >= 0 || xsflag)
+	if (sgnum > 0 || xsflag)
 		SOstr = SEstr = NULL;
 #ifdef unneeded
 	if (ncflag)
