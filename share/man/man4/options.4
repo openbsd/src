@@ -1,4 +1,4 @@
-.\"	$OpenBSD: options.4,v 1.99 2002/05/07 08:15:53 miod Exp $
+.\"	$OpenBSD: options.4,v 1.100 2002/05/16 14:13:44 kjc Exp $
 .\"	$NetBSD: options.4,v 1.21 1997/06/25 03:13:00 thorpej Exp $
 .\"
 .\" Copyright (c) 1998 Theo de Raadt
@@ -790,6 +790,15 @@ outstanding data during the fast recovery phase by using
 information.
 This option can only be used together with
 .Em TCP_SACK .
+.It Cd option TCP_ECN
+Turns on Explicit Congestion Notification (RFC3168).
+.Em ECN
+allows intermediate routers to use the Congestion Experienced
+codepoint in the IP header as an indication of congestion, and allows
+TCP to adjust the trasmission rate using this signal.
+Both communication endpoints negotiate enabling
+.Em ECN
+functionality at the TCP connection establishment.
 .It Cd option TCP_SIGNATURE
 Turns on support for the TCP MD5 Signature option (RFC 2385).
 This is used by
