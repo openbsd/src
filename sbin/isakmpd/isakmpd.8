@@ -1,4 +1,4 @@
-.\" $OpenBSD: isakmpd.8,v 1.37 2001/12/21 11:41:50 mpech Exp $
+.\" $OpenBSD: isakmpd.8,v 1.38 2002/03/17 21:49:26 angelos Exp $
 .\" $EOM: isakmpd.8,v 1.23 2000/05/02 00:30:23 niklas Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2000, 2001 Niklas Hallqvist.
@@ -395,6 +395,8 @@ The default IKE packet capture file.
 The report file written when
 .Dv SIGUSR1
 is received.
+.It Pa /var/run/isakmpd_sa
+The report file written when the 'S' command is issued in the command FIFO.
 .It Pa /usr/share/ipsec/isakmpd/
 A directory containing some sample
 .Nm
