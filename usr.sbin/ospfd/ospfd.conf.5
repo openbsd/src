@@ -1,0 +1,189 @@
+.\"	$OpenBSD: ospfd.conf.5,v 1.1 2005/02/02 21:22:28 norby Exp $
+.\"
+.\" Copyright (c) 2005 Esben Norby <norby@openbsd.org>
+.\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
+.\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
+.\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd February 2, 2005
+.Dt OSPFD.CONF 5
+.Os
+.Sh NAME
+.Nm ospfd.conf
+.Nd Open Shortest Path First daemon configuration file
+.Sh DESCRIPTION
+The
+.Xr ospfd 8
+daemon implements the Open Shortest Path First protocol version 2 as described
+in RFC 2328.
+.Sh SECTIONS
+The
+.Nm
+config file is divided into three main sections.
+.Bl -tag -width xxxx
+.It Sy Macros
+User-defined variables may be defined and used later, simplifying the
+configuration file.
+.It Sy Global Configuration
+Global settings for
+.Xr ospfd 8 . A number of global settings can be overruled in specfic areas or
+interfaces.
+.It Sy Areas
+An OSPF router must be a member of at least one area. Areas are used to group
+interfaces, simplifying configuration.
+.Sh MACROS
+Much like
+.Xr cpp 1
+or
+.Xr m4 1 ,
+macros can be defined that will later be expanded in context.
+Macro names must start with a letter, and may contain letters, digits
+and underscores.
+Macro names may not be reserved words (for example,
+.Ic area ,
+.Ic interface ,
+or
+.Ic hello-interval ) .
+Macros are not expanded inside quotes.
+.Pp
+For example,
+.Bd -literal -offset indent
+hi="5"
+area 0.0.0.0 {
+	interface em0 {
+		hello-interval $hi
+	}
+}
+.Ed
+.Pp
+The same can be accomplished by specifying the hello-interval
+globally or within the area declaration.
+.Pp
+.Sh GLOBAL CONFIGURATION
+All interface related settings can be configured globally, per area and per
+interface. The only settings that can be set globally and not overuled are
+listed below.
+.Pp
+.Bl -tag -width Ds -compact
+.It Xo
+.Ic fib-update
+.Pq Ic yes Ns \&| Ns Ic no
+.Xc
+If set to
+.Ic no ,
+do not update the Forward Information Base, a.k.a. the kernel
+routing table.
+The default is
+.Ic yes .
+.Pp
+.It Ic router-id Ar address
+Set the router ID, if not specified the the lowest IP address of the router
+will be used.
+.Pp
+.\".It Ic spf-delay Ar seconds
+.\"Set SPF delay in seconds. The delay between receiving an update to the link
+.\"state database and starting the shortest path first calculation. The default
+.\"value is 1, valid range is 1-10 seconds.
+.\".Pp
+.\".It Ic spf-holdtime Ar seconds
+.\"Set the SPF holdtime in seconds. The minimum time between two consecutive
+.\"shortest path first calculations. The default value is 5 seconds, the valid
+.\"is range 1-5 seconds.
+.\".Pp
+.Sh AREAS
+Areas are used for grouping interfaces. All interface specific parameters can
+be configured per area, overruling the global settings.
+.Pp
+.Bl -tag -width Ds -compact
+.It Ic area Ar address
+Specify an area section, grouping one or more interfaces.
+.Pp
+.Bd -literal -offset indent
+area 0.0.0.0 {
+	interface em0 {
+	}
+	interface em1 {
+	}
+}
+.Ed
+.Pp
+.Sh INTERFACES
+Each interface can have several parameteres configured individually, otherwise
+they are enherited.
+.Pp
+.Bd -literal -offset indent
+	interface em0 {
+	}
+.Ed
+.Pp
+Interface specific parameters are listed below.
+.Pp
+.Bl -tag -width Ds -compact
+.It Ic auth-key Ar key
+Set the authentication key. If the auth-type is set to simple, up to 8
+characters can be specified.
+.Pp
+.It Xo
+.Ic auth-type
+.Po Ic none Ns \&| Ns
+.Ic simple Ns \&| Ns Ic crypt Pc
+.Xc
+Set the authentication type. The default is none. Simple authentication uses a
+plaintext pssword, up to 8 characters. Crypt authentication uses a MD5 hash.
+.Pp
+.It Ic hello-interval Ar seconds
+Set the hello interval. The default value is 10, valid range is 1-65535 seconds.
+.Pp
+.It Ic metric Ar cost
+Set the interface metric a.k.a. cost. The default value is 10, valid range is 
+1-65535.
+.Pp
+.It Ic passive
+Prevent transmission and reception of OSPF packets on this interface.
+.Pp
+.It Ic retransmit-interval Ar seconds
+Set retransmit interval. The default value is 5 seconds, valid range is 5-3600
+seconds.
+.Pp
+.It Ic router-dead-time Ar seconds
+Set the router dead time, a.k.a. neighbor inactivity timer. The default value
+is 40 seconds, valid range is 2-2147483647 seconds. When a neigbhor has been
+inactive for router-dead-time it's state is set to DOWN. Neighbors
+that have been inactive for more than 24 hours are completely removed.
+.Pp
+.It Ic router-priority Ar seconds
+Set the router priority. The default value is 1, valid range is 0-255. If set
+to 0 the router is not elegible as Desginated Router or Backup Designated
+Router.
+.Pp
+.It Ic transmit-delay Ar seconds
+Set the transmit delay. The default value is 1, valid range is 1-3600 seconds.
+.Pp
+.Sh FILES
+.Bl -tag -width "/etc/ospfd.conf" -compact
+.It Pa /etc/ospfd.conf
+.Xr ospfd 8
+configuration file
+.El
+.Sh SEE ALSO
+.Xr ospfctl 8
+.Xr ospfd 8
+.Xr rc.conf.local 8
+.Sh HISTORY
+The
+.Nm
+file format first appeared in
+.Ox 3.7 .
+
