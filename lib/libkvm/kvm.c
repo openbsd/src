@@ -1,4 +1,4 @@
-/*	$OpenBSD: kvm.c,v 1.6 1997/02/26 16:46:28 niklas Exp $ */
+/*	$OpenBSD: kvm.c,v 1.7 1997/06/02 17:06:53 dm Exp $ */
 /*	$NetBSD: kvm.c,v 1.43 1996/05/05 04:31:59 gwr Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm.c	8.2 (Berkeley) 2/13/94";
 #else
-static char *rcsid = "$OpenBSD: kvm.c,v 1.6 1997/02/26 16:46:28 niklas Exp $";
+static char *rcsid = "$OpenBSD: kvm.c,v 1.7 1997/06/02 17:06:53 dm Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -246,7 +246,7 @@ _kvm_open(kd, uf, mf, sf, flag, errout)
 		_kvm_err(kd, kd->program, "exec file name too long");
 		goto failed;
 	}
-	if (flag & ~O_RDWR) {
+	if (flag & ~O_ACCMODE) {
 		_kvm_err(kd, kd->program, "bad flags arg");
 		goto failed;
 	}
