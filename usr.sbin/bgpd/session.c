@@ -1,4 +1,4 @@
-/*	$OpenBSD: session.c,v 1.67 2004/01/06 18:01:26 henning Exp $ */
+/*	$OpenBSD: session.c,v 1.68 2004/01/06 19:19:21 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -240,6 +240,17 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 				bgp_fsm(p, EVNT_TIMER_KEEPALIVE);
 			if (timer_due(p->IdleHoldTimer))
 				bgp_fsm(p, EVNT_START);
+			if (timer_due(p->IdleHoldResetTimer)) {
+				p->IdleHoldTime /= 2;
+				if (p->IdleHoldTime <=
+				    INTERVAL_IDLE_HOLD_INITIAL) {
+					p->IdleHoldTime =
+					    INTERVAL_IDLE_HOLD_INITIAL;
+					p->IdleHoldResetTimer = 0;
+				} else
+					p->IdleHoldResetTimer =
+					    time(NULL) + p->IdleHoldTime;
+			}
 
 			/* set nextaction to the first expiring timer */
 			if (p->ConnectRetryTimer &&
@@ -251,6 +262,9 @@ session_main(struct bgpd_config *config, struct peer *cpeers, int pipe_m2s[2],
 				nextaction = p->KeepaliveTimer;
 			if (p->IdleHoldTimer && p->IdleHoldTimer < nextaction)
 				nextaction = p->IdleHoldTimer;
+			if (p->IdleHoldResetTimer &&
+			    p->IdleHoldResetTimer < nextaction)
+				nextaction = p->IdleHoldResetTimer;
 
 			/* are we waiting for a write? */
 			if (p->wbuf.queued > 0)
@@ -625,6 +639,7 @@ change_state(struct peer *peer, enum session_state state,
 		peer->ConnectRetryTimer = 0;
 		peer->KeepaliveTimer = 0;
 		peer->HoldTimer = 0;
+		peer->IdleHoldResetTimer = 0;
 		session_close_connection(peer);
 		msgbuf_clear(&peer->wbuf);
 		free(peer->rbuf);
@@ -633,7 +648,8 @@ change_state(struct peer *peer, enum session_state state,
 			session_down(peer);
 		if (event != EVNT_STOP) {
 			peer->IdleHoldTimer = time(NULL) + peer->IdleHoldTime;
-			if (peer->IdleHoldTime < UINT_MAX / 2)
+			if (event != EVNT_NONE &&
+			    peer->IdleHoldTime < MAX_IDLE_HOLD/2)
 				peer->IdleHoldTime *= 2;
 		}
 		break;
@@ -651,7 +667,9 @@ change_state(struct peer *peer, enum session_state state,
 		break;
 	case STATE_ESTABLISHED:
 		peer->events = POLLIN;
-		peer->IdleHoldTime = INTERVAL_IDLE_HOLD_INITIAL;
+		if (peer->IdleHoldTime > INTERVAL_IDLE_HOLD_INITIAL)
+			peer->IdleHoldResetTimer =
+			    time(NULL) + peer->IdleHoldTime;
 		session_up(peer);
 		break;
 	default:		/* something seriously fucked */
