@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.4 2002/08/08 21:18:30 jason Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.5 2002/08/09 14:38:23 art Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -100,7 +100,7 @@ static int reloc_target_flags[] = {
 	      _RF_A|_RF_P|	_RF_SZ(32) | _RF_RS(2),		/* WPLT30 */
 	_RF_S|			_RF_SZ(32) | _RF_RS(0),		/* COPY */
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* GLOB_DAT */
-				_RF_SZ(32) | _RF_RS(0),		/* JMP_SLOT */
+	_RF_S|			_RF_SZ(32) | _RF_RS(0),		/* JMP_SLOT */
 	      _RF_A|	_RF_B|	_RF_SZ(32) | _RF_RS(0),		/* RELATIVE */
 	_RF_S|_RF_A|		_RF_SZ(32) | _RF_RS(0),		/* UA_32 */
 
@@ -184,11 +184,7 @@ _dl_reloc_plt(Elf_Addr *where, Elf_Addr value)
 	 * iflush requires 5 subsequent cycles to be sure all copies
 	 * are flushed from the CPU and the icache.
 	 */
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
+	__asm __volatile("nop;nop;nop;nop;nop");
 }
 
 int
@@ -287,11 +283,6 @@ resolve_failed:
 			}
 		}
 
-		if (type == R_TYPE(JMP_SLOT)) {
-			_dl_reloc_plt(where, value);
-			continue;
-		}
-
 		if (type == R_TYPE(COPY)) {
 			void *dstaddr = where;
 			const void *srcaddr;
@@ -306,6 +297,11 @@ resolve_failed:
 
 			srcaddr = (void *)(soff + srcsym->st_value);
 			_dl_bcopy(srcaddr, dstaddr, size);
+			continue;
+		}
+
+		if (type == R_TYPE(JMP_SLOT)) {
+			_dl_reloc_plt(where, value);
 			continue;
 		}
 
@@ -373,38 +369,36 @@ _dl_md_reloc_got(elf_object_t *object, int lazy)
 
 	pltgot = (Elf_Addr *)object->Dyn.info[DT_PLTGOT];
 
+	if (pltgot != NULL) {
+		/*
+		 * PLTGOT is the PLT on the sparc.
+		 * The first entry holds the call the dynamic linker.
+		 * We construct a `call' sequence that transfers
+		 * to `_dl_bind_start()'.
+		 * The second entry holds the object identification.
+		 * Note: each PLT entry is three words long.
+		 */
+#define SAVE    0x9de3bfc0      /* i.e. `save %sp,-64,%sp' */
+#define CALL    0x40000000
+#define NOP     0x01000000
+		pltgot[0] = SAVE;
+		pltgot[1] = CALL |
+		    ((Elf_Addr)&_dl_bind_start - (Elf_Addr)&pltgot[1]) >> 2;
+		pltgot[2] = NOP;
+		pltgot[3] = (Elf_Addr) object;
+		__asm __volatile("iflush %0+8"  : : "r" (pltgot));
+		__asm __volatile("iflush %0+4"  : : "r" (pltgot));
+		__asm __volatile("iflush %0+0"  : : "r" (pltgot));
+		/*
+		 * iflush requires 5 subsequent cycles to be sure all copies
+		 * are flushed from the CPU and the icache.
+		 */
+		__asm __volatile("nop;nop;nop;nop;nop");
+	}
+
 	if (object->obj_type == OBJTYPE_LDR || !lazy || pltgot == NULL) {
 		_dl_md_reloc(object, DT_JMPREL, DT_PLTRELSZ);
 		return;
 	}
 
-	/*
-	 * PLTGOT is the PLT on the sparc.
-	 * The first entry holds the call the dynamic linker.
-	 * We construct a `call' sequence that transfers
-	 * to `_dl_bind_start()'.
-	 * The second entry holds the object identification.
-	 * Note: each PLT entry is three words long.
-	 */
-#define SAVE    0x9de3bfc0      /* i.e. `save %sp,-64,%sp' */
-#define CALL    0x40000000
-#define NOP     0x01000000
-	pltgot[0] = SAVE;
-	pltgot[1] = CALL |
-	    ((Elf_Addr)&_dl_bind_start - (Elf_Addr)&pltgot[1]) >> 2;
-	pltgot[2] = NOP;
-	pltgot[3] = (Elf_Addr) object;
-	__asm __volatile("iflush %0+12" : : "r" (pltgot));
-	__asm __volatile("iflush %0+8"  : : "r" (pltgot));
-	__asm __volatile("iflush %0+4"  : : "r" (pltgot));
-	__asm __volatile("iflush %0+0"  : : "r" (pltgot));
-	/*
-	 * iflush requires 5 subsequent cycles to be sure all copies
-	 * are flushed from the CPU and the icache.
-	 */
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
-	__asm __volatile("nop");
 }
