@@ -44,12 +44,19 @@
 .Nm cgtwo
 .Nd 8-bit color frame buffer
 .Sh SYNOPSIS
-.Cd "cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xA8"
+.Cd "cgtwo0 at vmes0 addr 0xff400000 level 4 vect 0xa8"
 .Sh DESCRIPTION
 The
 .Nm
 is a memory based color frame buffer.
-It supports the minimal ioctl's needed to run X11.
+Its control pixel memory can be mapped into a user process address
+space by using the
+.Xr mmap 2
+system call.
+The
+.Nm
+driver supports the minimal ioctl's needed to run
+.Xr X 1 .
 .Sh SEE ALSO
 .Xr bwtwo 4 ,
 .Xr cgfour 4

@@ -48,8 +48,15 @@
 .Sh DESCRIPTION
 The
 .Nm
-is a memory based color frame buffer.
-It supports the minimal ioctl's needed to run X11.
+is a memory based color frame buffer with overlay plane.
+Its pixel memory and control planes can be mapped into a user
+process address space by using the
+.Xr mmap 2
+system call.
+The
+.Nm
+driver supports the minimal ioctl's needed to run
+.Xr X 1 .
 .Sh SEE ALSO
 .Xr bwtwo 4 ,
 .Xr cgtwo 4

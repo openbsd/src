@@ -63,8 +63,9 @@ Only kernel virtual addresses that are currently mapped to memory are allowed.
 .Pp
 On the
 .Tn Sun3 ,
+physical memory may be discontiguous;
 kernel virtual memory begins at
-.Ad 0x0E000000 .
+.Li 0x0e000000 .
 .Pp
 Writeability of these devices is controlled by the system
 .Xr securelevel 7 .

@@ -48,11 +48,14 @@
 .Sh DESCRIPTION
 The
 .Nm
-interface provides access to the 10 Mb/s Ethernet network via the
+interface provides access to the 10 Mb/s
+.Tn Ethernet
+network via the
 .Tn AMD
-7990
-.Tn LANCE
-Ethernet chip set.
+Am7990
+Local Area Network Controller for Ethernet
+.Pq Tn LANCE
+chip set.
 .Pp
 Each of the host's network addresses
 is specified at boot time with an
@@ -62,8 +65,9 @@ The
 .Nm
 interface employs the address resolution protocol described in
 .Xr arp 4
-to dynamically map between Internet and Ethernet addresses on the local
-network.
+to dynamically map between Internet and
+.Tn Ethernet
+addresses on the local network.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ie 4 ,
