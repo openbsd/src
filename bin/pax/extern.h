@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.6 1996/10/27 06:45:10 downsj Exp $	*/
+/*	$OpenBSD: extern.h,v 1.7 1996/12/09 12:00:14 deraadt Exp $	*/
 /*	$NetBSD: extern.h,v 1.5 1996/03/26 23:54:16 mrg Exp $	*/
 
 /*-
@@ -50,6 +50,7 @@
  * ar_io.c
  */
 extern char *arcname;
+extern char *gzip_program;
 int ar_open __P((char *));
 void ar_close __P((void));
 void ar_drain __P((void));
