@@ -36,21 +36,28 @@
 .Os "The Arla Project"
 .Sh NAME
 .Nm AliasDB
-.Nd add alias for cell in DynRoot
+.Nd add alias for an afs cell in dynroot
 .Sh DESCRIPTION
 The file
 .Nm
-add alias for cellname in dynroot, useful to add readwrite mountpoint
+add aliases for afs cellnames in dynroot, useful to add readwrite mountpoints
 in dynroot.
 .Pp
-Each line in the file contain at least two elements with an optional
-third.
+Each line in the file contains at least two elements with an optional
+third element.
 The first element is the cell name to make the alias for. The second
 element is the alias.
-The optional third element is describing the property of the
+The optional third element is describing properties of the
 mountpoint.
 .Pp
-The default property of a mountpoint is that is a readonly mountpoint.
+By default, an alias is a readonly mountpoint, which means that
+.Nm afsd
+will use readonly replicas of volumes, if they exist.
+If an alias set to readwrite,
+.Nm afsd
+will disregard the readonly replicas and use the readwrite volumes only.
+This will seriously limit performance, but maybe necessary to install
+software packages etc.
 .Pp
 Each line that starts with a
 .Sq #
@@ -71,5 +78,5 @@ andrew.cmu.edu	andrew  #andrew is a readonly alias
 .Sh SEE ALSO
 .Xr CellServDB 5 ,
 .Xr DynRootDB 5 ,
-.Xr arlad 8
+.Xr afsd 8
 
