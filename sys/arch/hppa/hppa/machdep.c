@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.91 2002/12/17 23:11:32 millert Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.92 2002/12/19 00:41:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999-2002 Michael Shalayeff
@@ -490,6 +490,9 @@ hppa_init(start)
 #endif
 				/* this one is just a 100MHz pcxl */
 				if (lev == 0x10)
+					lev = 0xc;
+				/* this one is a pcxl2 */
+				if (lev == 0x16)
 					lev = 0xe;
 				break;
 			case 8:
