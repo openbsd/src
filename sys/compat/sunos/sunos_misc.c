@@ -1,4 +1,4 @@
-/*	$OpenBSD: sunos_misc.c,v 1.31 2002/02/02 16:05:58 art Exp $	*/
+/*	$OpenBSD: sunos_misc.c,v 1.32 2002/02/12 13:05:31 art Exp $	*/
 /*	$NetBSD: sunos_misc.c,v 1.65 1996/04/22 01:44:31 christos Exp $	*/
 
 /*
@@ -519,20 +519,23 @@ sunos_sys_setsockopt(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	register struct sunos_sys_setsockopt_args *uap = v;
+	struct sunos_sys_setsockopt_args *uap = v;
 	struct file *fp;
 	struct mbuf *m = NULL;
 	int error;
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)) != 0)
 		return (error);
+	FREF(fp);
 #define	SO_DONTLINGER (~SO_LINGER)
 	if (SCARG(uap, name) == SO_DONTLINGER) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
-		return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+		error = (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 		    SO_LINGER, m));
+		FRELE(fp);
+		return (error);
 	}
 	if (SCARG(uap, level) == IPPROTO_IP) {
 #define		SUNOS_IP_MULTICAST_IF		2
@@ -553,20 +556,25 @@ sunos_sys_setsockopt(p, v, retval)
 			    ipoptxlat[SCARG(uap, name) - SUNOS_IP_MULTICAST_IF];
 		}
 	}
-	if (SCARG(uap, valsize) > MLEN)
+	if (SCARG(uap, valsize) > MLEN) {
+		FRELE(fp);
 		return (EINVAL);
+	}
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize));
 		if (error) {
+			FRELE(fp);
 			(void) m_free(m);
 			return (error);
 		}
 		m->m_len = SCARG(uap, valsize);
 	}
-	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	error = (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
 	    SCARG(uap, name), m));
+	FRELE(fp);
+	return (error);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: hpux_net.c,v 1.6 2001/08/26 06:25:10 deraadt Exp $	*/
+/*	$OpenBSD: hpux_net.c,v 1.7 2002/02/12 13:05:31 art Exp $	*/
 /*	$NetBSD: hpux_net.c,v 1.14 1997/04/01 19:59:02 scottr Exp $	*/
 
 /*
@@ -216,10 +216,12 @@ hpux_sys_setsockopt(p, v, retval)
 		return (error);
 	if (SCARG(uap, valsize) > MLEN)
 		return (EINVAL);
+	FREF(fp);
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize)))) {
+			FRELE(fp);
 			(void) m_free(m);
 			return (error);
 		}
@@ -236,8 +238,10 @@ hpux_sys_setsockopt(p, v, retval)
 		mtod(m, struct linger *)->l_onoff = 0;
 		m->m_len = sizeof(struct linger);
 	}
-	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-	    SCARG(uap, name), m));
+	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	    SCARG(uap, name), m);
+	FRELE(fp);
+	return (error);
 }
 
 /* ARGSUSED */
@@ -256,17 +260,21 @@ hpux_sys_setsockopt2(p, v, retval)
 		return (error);
 	if (SCARG(uap, valsize) > MLEN)
 		return (EINVAL);
+	FREF(fp);
 	if (SCARG(uap, val)) {
 		m = m_get(M_WAIT, MT_SOOPTS);
 		if ((error = copyin(SCARG(uap, val), mtod(m, caddr_t),
 		    (u_int)SCARG(uap, valsize)))) {
+			FRELE(fp);
 			(void) m_free(m);
 			return (error);
 		}
 		socksetsize(SCARG(uap, valsize), m);
 	}
-	return (sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
-	    SCARG(uap, name), m));
+	error = sosetopt((struct socket *)fp->f_data, SCARG(uap, level),
+	    SCARG(uap, name), m);
+	FRELE(fp);
+	return (error);
 }
 
 int
@@ -282,10 +290,13 @@ hpux_sys_getsockopt(p, v, retval)
 
 	if ((error = getsock(p->p_fd, SCARG(uap, s), &fp)))
 		return (error);
+	FREF(fp);
 	if (SCARG(uap, val)) {
 		if ((error = copyin((caddr_t)SCARG(uap, avalsize),
-		    (caddr_t)&valsize, sizeof (valsize))))
+		    (caddr_t)&valsize, sizeof (valsize)))) {
+			FRELE(fp);
 			return (error);
+		}
 	} else
 		valsize = 0;
 	if ((error = sogetopt((struct socket *)fp->f_data, SCARG(uap, level),
@@ -308,6 +319,7 @@ hpux_sys_getsockopt(p, v, retval)
 			    (caddr_t)SCARG(uap, avalsize), sizeof (valsize));
 	}
 bad:
+	FRELE(fp);
 	if (m != NULL)
 		(void) m_free(m);
 	return (error);

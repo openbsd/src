@@ -1,4 +1,4 @@
-/*	$OpenBSD: portal_vfsops.c,v 1.11 2002/02/08 13:53:28 art Exp $	*/
+/*	$OpenBSD: portal_vfsops.c,v 1.12 2002/02/12 13:05:32 art Exp $	*/
 /*	$NetBSD: portal_vfsops.c,v 1.14 1996/02/09 22:40:41 christos Exp $	*/
 
 /*
@@ -108,9 +108,13 @@ portal_mount(mp, path, data, ndp, p)
 	if (so->so_proto->pr_domain->dom_family != AF_UNIX)
 		return (ESOCKTNOSUPPORT);
 
+	FREF(fp);
+
 	error = getnewvnode(VT_PORTAL, mp, portal_vnodeop_p, &rvp); /* XXX */
-	if (error)
+	if (error) {
+		FRELE(fp);
 		return (error);
+	}
 	MALLOC(rvp->v_data, void *, sizeof(struct portalnode),
 		M_TEMP, M_WAITOK);
 
@@ -122,7 +126,9 @@ portal_mount(mp, path, data, ndp, p)
 	VTOPORTAL(rvp)->pt_size = 0;
 	VTOPORTAL(rvp)->pt_fileid = PORTAL_ROOTFILEID;
 	fmp->pm_root = rvp;
-	fmp->pm_server = fp; fp->f_count++;
+	fmp->pm_server = fp;
+	fp->f_count++;
+	FRELE(fp);
 
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_data = (qaddr_t)fmp;

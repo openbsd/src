@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_syscalls.c,v 1.28 2002/02/10 22:02:05 nate Exp $	*/
+/*	$OpenBSD: nfs_syscalls.c,v 1.29 2002/02/12 13:05:32 art Exp $	*/
 /*	$NetBSD: nfs_syscalls.c,v 1.19 1996/02/18 11:53:52 fvdl Exp $	*/
 
 /*
@@ -287,6 +287,7 @@ sys_nfssvc(p, v, retval)
 		error = getsock(p->p_fd, nfsdarg.sock, &fp);
 		if (error)
 			return (error);
+		FREF(fp);
 		/*
 		 * Get the client address for connected sockets.
 		 */
@@ -295,10 +296,13 @@ sys_nfssvc(p, v, retval)
 		else {
 			error = sockargs(&nam, nfsdarg.name, nfsdarg.namelen,
 				MT_SONAME);
-			if (error)
+			if (error) {
+				FRELE(fp);
 				return (error);
+			}
 		}
 		error = nfssvc_addsock(fp, nam);
+		FRELE(fp);
 #endif /* !NFSSERVER */
 	} else {
 #ifndef NFSSERVER
