@@ -1,4 +1,4 @@
-/*	$NetBSD: wwclreos.c,v 1.3 1995/09/28 10:35:18 tls Exp $	*/
+/*	$NetBSD: wwclreos.c,v 1.4 1996/02/08 20:45:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwclreos.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwclreos.c,v 1.3 1995/09/28 10:35:18 tls Exp $";
+static char rcsid[] = "$NetBSD: wwclreos.c,v 1.4 1996/02/08 20:45:07 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,6 +56,6 @@ register struct ww *w;
 	for (i = row + 1; i < w->ww_b.b; i++)
 		wwclreol(w, i, w->ww_b.l);
 	/* XXX */
-	if (!w->ww_noupdate)
+	if (!ISSET(w->ww_wflags, WWW_NOUPDATE))
 		wwupdate1(w->ww_i.t, w->ww_i.b);
 }

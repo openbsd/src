@@ -1,4 +1,4 @@
-/*	$NetBSD: mloop.c,v 1.4 1995/12/21 10:45:53 mycroft Exp $	*/
+/*	$NetBSD: mloop.c,v 1.5 1996/02/08 20:45:03 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)mloop.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: mloop.c,v 1.4 1995/12/21 10:45:53 mycroft Exp $";
+static char rcsid[] = "$NetBSD: mloop.c,v 1.5 1996/02/08 20:45:03 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ mloop()
 		if (incmd) {
 			docmd();
 		} else if (wwcurwin->ww_state != WWS_HASPROC) {
-			if (!wwcurwin->ww_keepopen)
+			if (!ISSET(wwcurwin->ww_uflags, WWU_KEEPOPEN))
 				closewin(wwcurwin);
 			setcmd(1);
 			if (wwpeekc() == escapec)
@@ -72,7 +72,8 @@ mloop()
 			     p++)
 				;
 			if ((n = p - wwibp) > 0) {
-				if (w->ww_type != WWT_PTY && w->ww_stopped)
+				if (w->ww_type != WWT_PTY &&
+				    ISSET(w->ww_pflags, WWP_STOPPED))
 					startwin(w);
 #if defined(sun) && !defined(BSD)
 				/* workaround for SunOS pty bug */

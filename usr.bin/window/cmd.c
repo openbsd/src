@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd.c,v 1.3 1995/09/28 10:34:02 tls Exp $	*/
+/*	$NetBSD: cmd.c,v 1.4 1996/02/08 20:44:57 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: cmd.c,v 1.3 1995/09/28 10:34:02 tls Exp $";
+static char rcsid[] = "$NetBSD: cmd.c,v 1.4 1996/02/08 20:44:57 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -49,7 +49,7 @@ static char rcsid[] = "$NetBSD: cmd.c,v 1.3 1995/09/28 10:34:02 tls Exp $";
 
 docmd()
 {
-	register char c;
+	register int c;
 	register struct ww *w;
 	char out = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwunframe.c,v 1.3 1995/09/28 10:35:59 tls Exp $	*/
+/*	$NetBSD: wwunframe.c,v 1.4 1996/02/08 21:49:17 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwunframe.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwunframe.c,v 1.3 1995/09/28 10:35:59 tls Exp $";
+static char rcsid[] = "$NetBSD: wwunframe.c,v 1.4 1996/02/08 21:49:17 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -55,7 +55,7 @@ register struct ww *w;
 		register j;
 		register char *win = w->ww_win[i];
 		register char *fmap = w->ww_fmap ? w->ww_fmap[i] : 0;
-		register char *smap = wwsmap[i];
+		register unsigned char *smap = wwsmap[i];
 		register union ww_char *ns = wwns[i];
 		int nchanged = 0;
 

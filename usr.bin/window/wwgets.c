@@ -1,4 +1,4 @@
-/*	$NetBSD: wwgets.c,v 1.5 1995/09/29 00:44:10 cgd Exp $	*/
+/*	$NetBSD: wwgets.c,v 1.6 1996/02/08 20:45:08 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwgets.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwgets.c,v 1.5 1995/09/29 00:44:10 cgd Exp $";
+static char rcsid[] = "$NetBSD: wwgets.c,v 1.6 1996/02/08 20:45:08 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,11 +54,11 @@ int n;
 register struct ww *w;
 {
 	register char *p = buf;
-	register char c;
-	char uc = w->ww_unctrl;
+	register int c;
+	int uc = ISSET(w->ww_wflags, WWW_UNCTRL);
 	static void rub();
 
-	w->ww_unctrl = 0;
+	CLR(w->ww_wflags, WWW_UNCTRL);
 	for (;;) {
 		wwcurtowin(w);
 		while ((c = wwgetc()) < 0)
@@ -102,7 +102,7 @@ register struct ww *w;
 		}
 	}
 	*p = 0;
-	w->ww_unctrl = uc;
+	SET(w->ww_wflags, uc);
 }
 
 static void

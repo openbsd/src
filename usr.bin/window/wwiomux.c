@@ -1,4 +1,4 @@
-/*	$NetBSD: wwiomux.c,v 1.4 1995/12/21 10:46:16 mycroft Exp $	*/
+/*	$NetBSD: wwiomux.c,v 1.5 1996/02/08 20:45:09 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwiomux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwiomux.c,v 1.4 1995/12/21 10:46:16 mycroft Exp $";
+static char rcsid[] = "$NetBSD: wwiomux.c,v 1.5 1996/02/08 20:45:09 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -87,7 +87,8 @@ wwiomux()
 					n = w->ww_pty + 1;
 				FD_SET(w->ww_pty, &imask);
 			}
-			if (w->ww_obq > w->ww_obp && !w->ww_stopped)
+			if (w->ww_obq > w->ww_obp &&
+			    !ISSET(w->ww_pflags, WWP_STOPPED))
 				noblock = 1;
 		}
 		if (wwibq < wwibe) {
@@ -162,11 +163,11 @@ wwiomux()
 				} else {
 					wwnwreadp++;
 					if (*p & TIOCPKT_STOP)
-						w->ww_stopped = 1;
+						SET(w->ww_pflags, WWP_STOPPED);
 					if (*p & TIOCPKT_START)
-						w->ww_stopped = 0;
+						CLR(w->ww_pflags, WWP_STOPPED);
 					if (*p & TIOCPKT_FLUSHWRITE) {
-						w->ww_stopped = 0;
+						CLR(w->ww_pflags, WWP_STOPPED);
 						w->ww_obq = w->ww_obp =
 							w->ww_ob;
 					}
@@ -182,7 +183,8 @@ wwiomux()
 		 * dies down.
 		 */
 		if ((w = wwcurwin) != 0 && w->ww_pty >= 0 &&
-		    w->ww_obq > w->ww_obp && !w->ww_stopped) {
+		    w->ww_obq > w->ww_obp &&
+		    !ISSET(w->ww_pflags, WWP_STOPPED)) {
 			n = wwwrite(w, w->ww_obp, w->ww_obq - w->ww_obp);
 			if ((w->ww_obp += n) == w->ww_obq)
 				w->ww_obq = w->ww_obp = w->ww_ob;
@@ -191,7 +193,7 @@ wwiomux()
 		}
 		for (w = wwhead.ww_forw; w != &wwhead; w = w->ww_forw)
 			if (w->ww_pty >= 0 && w->ww_obq > w->ww_obp &&
-			    !w->ww_stopped) {
+			    !ISSET(w->ww_pflags, WWP_STOPPED)) {
 				n = wwwrite(w, w->ww_obp,
 					w->ww_obq - w->ww_obp);
 				if ((w->ww_obp += n) == w->ww_obq)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwinit.c,v 1.10 1995/12/21 11:06:28 mycroft Exp $	*/
+/*	$NetBSD: wwinit.c,v 1.11 1996/02/08 21:49:07 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwinit.c	8.2 (Berkeley) 4/28/95";
 #else
-static char rcsid[] = "$NetBSD: wwinit.c,v 1.10 1995/12/21 11:06:28 mycroft Exp $";
+static char rcsid[] = "$NetBSD: wwinit.c,v 1.11 1996/02/08 21:49:07 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -223,7 +223,9 @@ wwinit()
 	wwibe = wwib + 512;
 	wwibq = wwibp = wwib;
 
-	if ((wwsmap = wwalloc(0, 0, wwnrow, wwncol, sizeof (char))) == 0)
+	wwsmap = (unsigned char **)
+		wwalloc(0, 0, wwnrow, wwncol, sizeof (unsigned char));
+	if (wwsmap == 0)
 		goto bad;
 	for (i = 0; i < wwnrow; i++)
 		for (j = 0; j < wwncol; j++)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwsize.c,v 1.4 1995/12/21 10:46:28 mycroft Exp $	*/
+/*	$NetBSD: wwsize.c,v 1.5 1996/02/08 20:45:11 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwsize.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwsize.c,v 1.4 1995/12/21 10:46:28 mycroft Exp $";
+static char rcsid[] = "$NetBSD: wwsize.c,v 1.5 1996/02/08 20:45:11 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -174,8 +174,8 @@ register struct ww *w;
 	/*
 	 * Put cursor back.
 	 */
-	if (w->ww_hascursor) {
-		w->ww_hascursor = 0;
+	if (ISSET(w->ww_wflags, WWW_HASCURSOR)) {
+		CLR(w->ww_wflags, WWW_HASCURSOR);
 		wwcursor(w, 1);
 	}
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwdelete.c,v 1.3 1995/09/28 10:35:23 tls Exp $	*/
+/*	$NetBSD: wwdelete.c,v 1.4 1996/02/08 21:49:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwdelete.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwdelete.c,v 1.3 1995/09/28 10:35:23 tls Exp $";
+static char rcsid[] = "$NetBSD: wwdelete.c,v 1.4 1996/02/08 21:49:01 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -56,7 +56,7 @@ register struct ww *w;
 
 	for (i = w->ww_i.t; i < w->ww_i.b; i++) {
 		register j;
-		register char *smap = wwsmap[i];
+		register unsigned char *smap = wwsmap[i];
 		register union ww_char *ns = wwns[i];
 		register int nchanged = 0;
 
@@ -106,7 +106,7 @@ again:
 	}
 	for (i = tt; i < bb; i++) {
 		register j;
-		register char *smap = wwsmap[i];
+		register unsigned char *smap = wwsmap[i];
 		register union ww_char *ns = wwns[i];
 		register char *win = w->ww_win[i];
 		register union ww_char *buf = w->ww_buf[i];

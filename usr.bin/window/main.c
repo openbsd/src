@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.5 1995/12/21 10:45:28 mycroft Exp $	*/
+/*	$NetBSD: main.c,v 1.6 1996/02/08 20:45:01 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -46,7 +46,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.2 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$NetBSD: main.c,v 1.5 1995/12/21 10:45:28 mycroft Exp $";
+static char rcsid[] = "$NetBSD: main.c,v 1.6 1996/02/08 20:45:01 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -161,10 +161,8 @@ char **argv;
 		(void) fprintf(stderr, "%s.\r\n", wwerror());
 		goto bad;
 	}
-	cmdwin->ww_mapnl = 1;
-	cmdwin->ww_nointr = 1;
-	cmdwin->ww_noupdate = 1;
-	cmdwin->ww_unctrl = 1;
+	SET(cmdwin->ww_wflags,
+	    WWW_MAPNL | WWW_NOINTR | WWW_NOUPDATE | WWW_UNCTRL);
 	if ((framewin = wwopen(WWT_INTERNAL, WWO_GLASS|WWO_FRAME, wwnrow,
 			       wwncol, 0, 0, 0)) == 0) {
 		wwflush();

@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd1.c,v 1.3 1995/09/28 10:34:03 tls Exp $	*/
+/*	$NetBSD: cmd1.c,v 1.4 1996/02/08 20:44:59 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd1.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: cmd1.c,v 1.3 1995/09/28 10:34:03 tls Exp $";
+static char rcsid[] = "$NetBSD: cmd1.c,v 1.4 1996/02/08 20:44:59 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -111,7 +111,8 @@ c_window()
 		wwputc('\n', cmdwin);
 	wwcurtowin(cmdwin);
 	(void) openwin(id, row, col, xrow-row+1, xcol-col+1, default_nline,
-		(char *) 0, 1, 1, default_shellfile, default_shell);
+	    (char *) 0, WWT_PTY, WWU_HASFRAME, default_shellfile,
+	    default_shell);
 }
 
 getpos(row, col, minrow, mincol, maxrow, maxcol)
@@ -121,7 +122,7 @@ int maxrow, maxcol;
 {
 	static int scount;
 	int count;
-	char c;
+	int c;
 	int oldrow = *row, oldcol = *col;
 
 	while ((c = wwgetc()) >= 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: wwredrawwin.c,v 1.3 1995/09/28 10:35:50 tls Exp $	*/
+/*	$NetBSD: wwredrawwin.c,v 1.4 1996/02/08 21:49:15 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwredrawwin.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwredrawwin.c,v 1.3 1995/09/28 10:35:50 tls Exp $";
+static char rcsid[] = "$NetBSD: wwredrawwin.c,v 1.4 1996/02/08 21:49:15 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -52,7 +52,7 @@ int row1, row2, offset;
 {
 	int row;
 	register col;
-	register char *smap;
+	register unsigned char *smap;
 	register union ww_char *buf;
 	register char *win;
 	register union ww_char *ns;

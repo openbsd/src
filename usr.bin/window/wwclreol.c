@@ -1,4 +1,4 @@
-/*	$NetBSD: wwclreol.c,v 1.3 1995/09/28 10:35:15 tls Exp $	*/
+/*	$NetBSD: wwclreol.c,v 1.4 1996/02/08 21:48:58 mycroft Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)wwclreol.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$NetBSD: wwclreol.c,v 1.3 1995/09/28 10:35:15 tls Exp $";
+static char rcsid[] = "$NetBSD: wwclreol.c,v 1.4 1996/02/08 21:48:58 mycroft Exp $";
 #endif
 #endif /* not lint */
 
@@ -84,7 +84,8 @@ char cleared;
 	 */
 	{
 		register union ww_char *s;
-		register char *smap, *win;
+		register unsigned char *smap;
+		register char *win;
 
 		i = col;
 		smap = &wwsmap[row][i];
