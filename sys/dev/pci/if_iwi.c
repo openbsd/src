@@ -1,4 +1,4 @@
-/*	$Id: if_iwi.c,v 1.9 2004/11/24 20:44:10 damien Exp $  */
+/*	$Id: if_iwi.c,v 1.10 2004/11/24 20:50:55 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -185,7 +185,7 @@ iwi_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pct = pa->pa_pc;
 
 	data = pci_conf_read(sc->sc_pct, pa->pa_tag, 0x40);
-	data &= ~0x00ff0000;
+	data &= ~0x0000ff00;
 	pci_conf_write(sc->sc_pct, pa->pa_tag, 0x40, data);
 
 	/* enable bus-mastering */

@@ -1,4 +1,4 @@
-/*	$Id: if_ipw.c,v 1.26 2004/11/20 16:28:31 damien Exp $  */
+/*	$Id: if_ipw.c,v 1.27 2004/11/24 20:50:55 damien Exp $  */
 
 /*-
  * Copyright (c) 2004
@@ -179,7 +179,7 @@ ipw_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_pct = pa->pa_pc;
 
 	data = pci_conf_read(sc->sc_pct, pa->pa_tag, 0x40);
-	data &= ~0x00ff0000;
+	data &= ~0x0000ff00;
 	pci_conf_write(sc->sc_pct, pa->pa_tag, 0x40, data);
 
 	/* enable bus-mastering */
