@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: dot.profile,v 1.2 1997/05/08 06:13:42 millert Exp $
+#	$OpenBSD: dot.profile,v 1.3 1997/05/11 18:44:34 millert Exp $
 #
 # Copyright (c) 1994 Christopher G. Demetriou
 # All rights reserved.
@@ -32,21 +32,63 @@
 
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
-TERM=vt200
-export TERM
 
-# set up some sane defaults
-echo 'erase ^?, werase ^H, kill ^U, intr ^C'
-stty newcrt werase ^H intr ^C kill ^U erase ^? 9600
-echo ''
-
-# mount / rw
-mount /dev/rd0a /
-
-# pull in the function definitions that people will use from the shell prompt.
-. /.commonutils
-. /.instutils
-
-# run the installation script.
 umask 022
-install
+
+# XXX
+# the TERM/EDITOR stuff is really well enough parameterized to be moved
+# into install.sub where it could use the routines there and be invoked
+# from the various (semi) MI install and upgrade scripts
+
+# Terminals in termcap, default TERM.
+# This assumes a *small* termcap file.
+TERMS=`grep '^[A-z]' /usr/share/misc/termcap | sed -e 's/|[^|]*$//' -e 's/|/ /g'`
+TERM=ansi-mini
+
+if [ "X${DONEPROFILE}" = "X" ]; then
+	DONEPROFILE=YES
+
+	# need a writable root
+	mount /dev/rd0a /
+
+	isin() {
+		local   _a
+
+		_a=$1; shift
+		while [ $# != 0 ]; do
+			if [ "$_a" = "$1" ]; then return 0; fi
+			shift
+		done
+		return 1
+	}
+
+
+	# set up some sane defaults
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
+	echo ''
+
+	# get the terminal type
+	echo "Supported terminals are:"
+	echo $TERMS
+	_forceloop=""
+	while [ "X$_forceloop" = X"" ]; do
+		echo -n "TERM = ($TERM) "
+		read resp
+		if [ "X$resp" = "X" ]; then
+			break
+		fi
+		if isin $resp $TERMS ; then
+			break;
+		fi
+		echo "Type $resp unknown."
+	done
+	export TERM
+
+	# pull in the functions that people will use from the shell prompt.
+	. /.commonutils
+	. /.instutils
+
+	# run the installation script.
+	install
+fi
