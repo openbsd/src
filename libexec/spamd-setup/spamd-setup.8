@@ -1,4 +1,4 @@
-.\"	$OpenBSD: spamd-setup.8,v 1.6 2003/06/02 20:20:35 jason Exp $
+.\"	$OpenBSD: spamd-setup.8,v 1.7 2004/01/21 08:07:41 deraadt Exp $
 .\"
 .\" Copyright (c) 2003 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -31,6 +31,7 @@
 .Nd parse and load file of spammer addresses
 .Sh SYNOPSIS
 .Nm spamd-setup
+.Op Fl dn
 .Op Ar file ...
 .Sh DESCRIPTION
 The
@@ -50,6 +51,15 @@ redirection rule to selectively redirect mail connections
 to the
 .Xr spamd 8
 daemon.
+.Pp
+The options are as follows:
+.Bl -tag -width Ds
+.It Fl d
+Debug mode reports a few pieces of information.
+.It Fl n
+Dry-run mode.  No data is shipped to
+.Xr pf 4 .
+.El
 .Pp
 Blacklists and whitelists are specified in the configuration file
 .Pa /etc/spamd.conf

@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd-setup.c,v 1.15 2004/01/21 02:49:34 deraadt Exp $ */
+/*	$OpenBSD: spamd-setup.c,v 1.16 2004/01/21 08:07:41 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -37,6 +37,7 @@
 #include <netinet/ip_ipsp.h>
 #include <netdb.h>
 #include <machine/endian.h>
+#include <zlib.h>
 
 #define PATH_FTP		"/usr/bin/ftp"
 #define PATH_PFCTL		"/sbin/pfctl"
@@ -60,6 +61,7 @@ struct blacklist {
 	struct bl *bl;
 	size_t blc, bls;
 	u_int8_t black;
+	int count;
 };
 
 u_int32_t	imask(u_int8_t b);
@@ -76,7 +78,7 @@ int		fetch(char *url);
 int		open_file(char *method, char *file);
 char		*fix_quoted_colons(char *buf);
 void		do_message(FILE *sdc, char *msg);
-struct bl	*add_blacklist(struct bl *bl, int *blc, int *bls, int fd,
+struct bl	*add_blacklist(struct bl *bl, int *blc, int *bls, gzFile gzf,
 		    int white);
 int		cmpbl(const void *a, const void *b);
 struct cidr	**collapse_blacklist(struct bl *bl, int blc);
@@ -85,6 +87,9 @@ int		configure_spamd(u_short dport, char *name, char *message,
 int		configure_pf(struct cidr **blacklists);
 int		getlist(char ** db_array, char *name, struct blacklist *blist,
 		    struct blacklist *blistnew);
+
+int		debug;
+int		dryrun;
 
 u_int32_t
 imask(u_int8_t b)
@@ -281,6 +286,9 @@ fetch(char *url)
 {
 	char *argv[6]= {"ftp", "-V", "-o", "-", url, NULL};
 
+	if (debug)
+		fprintf(stderr, "Getting %s\n", url);
+
 	return open_child(PATH_FTP, argv);
 }
 
@@ -456,13 +464,13 @@ do_message(FILE *sdc, char *msg)
 
 /* retrieve a list from fd. add to blacklist bl */
 struct bl *
-add_blacklist(struct bl *bl, int *blc, int *bls, int fd, int white)
+add_blacklist(struct bl *bl, int *blc, int *bls, gzFile gzf, int white)
 {
 	int i, n, start, bu = 0, bs = 0, serrno = 0;
 	char *buf = NULL;
 
 	for (;;) {
-		/* read in fd, then parse */
+		/* read in gzf, then parse */
 		if (bu == bs) {
 			char *tmp;
 
@@ -478,7 +486,7 @@ add_blacklist(struct bl *bl, int *blc, int *bls, int fd, int white)
 			buf = tmp;
 		}
 
-		n = read(fd, buf + bu, bs - bu);
+		n = gzread(gzf, buf + bu, bs - bu);
 		if (n == 0)
 			goto parse;
 		else if (n == -1) {
@@ -504,7 +512,7 @@ add_blacklist(struct bl *bl, int *blc, int *bls, int fd, int white)
 		}
 		if (buf[i] == '\n') {
 			buf[i] = '\0';
-			if (parse_netblock (buf + start,
+			if (parse_netblock(buf + start,
 			    bl + *blc, bl + *blc + 1, white))
 				*blc+=2;
 			start = i+1;
@@ -669,6 +677,7 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 	char *buf, *method, *file, *message;
 	int blc, bls, fd, black = 0;
 	struct bl *bl = NULL;
+	gzFile gzf;
 
 	if (cgetent(&buf, db_array, name) != 0)
 		err(1, "Can't find \"%s\" in spamd config", name);
@@ -707,19 +716,23 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 
 	switch (cgetstr(buf, "file", &file)) {
 	case -1:
-		errx(1, "No file given for %slist %s", black?"black":"white",
-		    name);
+		errx(1, "No file given for %slist %s",
+		    black ? "black" : "white", name);
 	case -2:
 		errx(1, "malloc failed");
 	default:
 		fd = open_file(method, file);
 		if (fd == -1)
 			err(1, "Can't open %s by %s method",
-			    file, method ? method:"file");
+			    file, method ? method : "file");
 		free(method);
 		free(file);
+		gzf = gzdopen(fd, "r");
+		if (gzf == NULL)
+			errx(1, "gzdopen");
 	}
-	bl = add_blacklist(bl, &blc, &bls, fd, !black);
+	bl = add_blacklist(bl, &blc, &bls, gzf, !black);
+	gzclose(gzf);
 	if (bl == NULL) {
 		warn("Could not add %slist %s", black ? "black" : "white",
 		    name);
@@ -738,6 +751,9 @@ getlist(char ** db_array, char *name, struct blacklist *blist,
 		blist->blc = blc;
 		blist->bls = bls;
 	}
+	if (debug)
+		fprintf(stderr, "%slist %s %d entries\n",
+		    black ? "black" : "white", name, blc / 2);
 	return(black);
 }
 
@@ -748,10 +764,23 @@ main(int argc, char *argv[])
 	char **db_array, *buf, *name;
 	struct blacklist *blists;
 	struct servent *ent;
-	int i;
+	int i, ch;
+
+	while ((ch = getopt(argc, argv, "nd")) != -1) {
+		switch (ch) {
+		case 'n':
+			dryrun = 1;
+			break;
+		case 'd':
+			debug = 1;
+			break;
+		default:
+			break;
+		}
+	}
 
 	if ((ent = getservbyname("spamd-cfg", "tcp")) == NULL)
-		errx(1, "Can't find service \"spamd-cfg\" in /etc/services");
+		errx(1, "cannot find service \"spamd-cfg\" in /etc/services");
 	ent->s_port = ntohs(ent->s_port);
 
 	dbs = argc + 2;
@@ -803,6 +832,9 @@ main(int argc, char *argv[])
 			   blists[i].blc);
 			if (cidrs == NULL)
 				errx(1, "malloc failed");
+			if (dryrun)
+				continue;
+
 			if (configure_spamd(ent->s_port, blists[i].name,
 			    blists[i].message, cidrs) == -1)
 				err(1, "Can't connect to spamd on port %d",
