@@ -166,7 +166,7 @@ static void add_password(char *user, char *realm, FILE *f)
     fprintf(f, "%s:%s:", user, realm);
 
     /* Do MD5 stuff */
-    sprintf(string, "%s:%s:%s", user, realm, pw);
+    snprintf(string, sizeof(string), "%s:%s:%s", user, realm, pw);
 
     ap_MD5Init(&context);
     ap_MD5Update(&context, (unsigned char *) string, strlen(string));
@@ -241,7 +241,7 @@ int main(int argc, char *argv[])
     else if (argc != 4)
 	usage();
 
-    strcpy(tn, "/tmp/htdigest-XXXXXX");
+    strlcpy(tn, "/tmp/htdigest-XXXXXX", sizeof(tn));
     tfd = mkstemp(tn);
     if (tfd == -1 || (tfp = fdopen(tfd, "w")) == NULL) {
 	fprintf(stderr, "Could not create temp file.\n");
@@ -254,8 +254,8 @@ int main(int argc, char *argv[])
 	fprintf(stderr, "Use -c option to create new one.\n");
 	exit(1);
     }
-    strcpy(user, argv[3]);
-    strcpy(realm, argv[2]);
+    strlcpy(user, argv[3], sizeof(user));
+    strlcpy(realm, argv[2], sizeof(realm));
 
     found = 0;
     while (!(getline(line, MAX_STRING_LEN, f))) {
@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
 	    putline(tfp, line);
 	    continue;
 	}
-	strcpy(l, line);
+	strlcpy(l, line, sizeof(l));
 	getword(w, l, ':');
 	getword(x, l, ':');
 	if (strcmp(user, w) || strcmp(realm, x)) {
@@ -284,9 +284,9 @@ int main(int argc, char *argv[])
     fclose(tfp);
 #ifndef NETWARE
 #if defined(OS2) || defined(WIN32)
-    sprintf(command, "copy \"%s\" \"%s\"", tn, argv[1]);
+    snprintf(command, sizeof(command), "copy \"%s\" \"%s\"", tn, argv[1]);
 #else
-    sprintf(command, "cp %s %s", tn, argv[1]);
+    snprintf(command, sizeof(command), "cp %s %s", tn, argv[1]);
 #endif
     system(command);
 #else
