@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.13 2004/07/30 01:49:24 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.14 2004/07/30 17:37:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -58,6 +58,7 @@
 #include "buf.h"
 #include "cvs.h"
 #include "log.h"
+#include "file.h"
 #include "proto.h"
 
 
@@ -91,6 +92,7 @@ static int  cvs_resp_updated   (struct cvsroot *, int, char *);
 static int  cvs_resp_removed   (struct cvsroot *, int, char *);
 static int  cvs_resp_mode      (struct cvsroot *, int, char *);
 static int  cvs_resp_modxpand  (struct cvsroot *, int, char *);
+static int  cvs_resp_rcsdiff   (struct cvsroot *, int, char *);
 
 static int  cvs_initlog   (void);
 
@@ -186,6 +188,7 @@ struct cvs_resp {
 	{ CVS_RESP_MODXPAND,   "Module-expansion",       cvs_resp_modxpand },
 	{ CVS_RESP_SETSTICKY,  "Set-sticky",             cvs_resp_sticky   },
 	{ CVS_RESP_CLRSTICKY,  "Clear-sticky",           cvs_resp_sticky   },
+	{ CVS_RESP_RCSDIFF,    "Rcs-diff",               cvs_resp_rcsdiff  },
 };
 
 
@@ -200,12 +203,6 @@ static time_t cvs_modtime = 0;
 
 /* mask of requets supported by server */
 static u_char  cvs_server_validreq[CVS_REQ_MAX + 1];
-
-/*
- * Local and remote directory used by the `Directory' request.
- */
-char  cvs_ldir[MAXPATHLEN];
-char  cvs_rdir[MAXPATHLEN];
 
 char *cvs_fcksum = NULL;
 
@@ -796,10 +793,10 @@ cvs_resp_sticky(struct cvsroot *root, int type, char *line)
 			if (cf == NULL)
 				return (-1);
 			cf->cf_ddat->cd_repo = strdup(line);
-			cf->cf_ddat->cd_root = cvs_root;
+			cf->cf_ddat->cd_root = root;
+			root->cr_ref++;
 			cvs_mkadmin(cf, 0755);
 
-			cf->cf_ddat->cd_root = NULL;
 			cvs_file_free(cf);
 		}
 	}
@@ -948,7 +945,9 @@ static int
 cvs_resp_updated(struct cvsroot *root, int type, char *line)
 {
 	size_t len;
+	mode_t fmode;
 	char tbuf[32], path[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
+	BUF *fbuf;
 	CVSENTRIES *ef;
 	struct cvs_ent *ep;
 
@@ -963,6 +962,8 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 		ep = cvs_ent_parse(path);
 		if (ep == NULL)
 			return (-1);
+
+		snprintf(path, sizeof(path), "%s%s", line, ep->ce_name);
 
 		/* set the timestamp as the last one received from Mod-time */
 		ep->ce_timestamp = ctime_r(&cvs_modtime, tbuf);
@@ -982,14 +983,15 @@ cvs_resp_updated(struct cvsroot *root, int type, char *line)
 	else if (type == CVS_RESP_UPDATED) {
 	}
 
-	snprintf(path, sizeof(path), "%s%s", line, ep->ce_name);
-	if (cvs_recvfile(root, path) < 0) {
+	fbuf = cvs_recvfile(root, &fmode);
+	if (fbuf == NULL)
 		return (-1);
-	}
+
+	cvs_buf_write(fbuf, path, fmode);
 
 	/* now see if there is a checksum */
 	if (cvs_fcksum != NULL) {
-		if (cvs_cksum(line, cksum_buf, sizeof(cksum_buf)) < 0) {
+		if (cvs_cksum(path, cksum_buf, sizeof(cksum_buf)) < 0) {
 		}
 
 		if (strcmp(cksum_buf, cvs_fcksum) != 0) {
@@ -1043,6 +1045,77 @@ cvs_resp_mode(struct cvsroot *root, int type, char *line)
 static int
 cvs_resp_modxpand(struct cvsroot *root, int type, char *line)
 {
+	return (0);
+}
+
+/*
+ * cvs_resp_rcsdiff()
+ *
+ * Handler for the `Rcs-diff' response.
+ */
+
+static int
+cvs_resp_rcsdiff(struct cvsroot *root, int type, char *line)
+{
+	char file[MAXPATHLEN], buf[MAXPATHLEN], cksum_buf[CVS_CKSUM_LEN];
+	char *fname, *orig, *patch;
+	mode_t fmode;
+	BUF *res, *fcont, *patchbuf;
+	CVSENTRIES *entf;
+	struct cvs_ent *ent;
+
+	/* get remote path and build local path of file to be patched */
+	cvs_getln(root, buf, sizeof(buf));
+	fname = strrchr(buf, '/');
+	if (fname == NULL)
+		fname = buf;
+	snprintf(file, sizeof(file), "%s%s", line, fname);
+	printf("FILE TO PATCH: %s\n", file);
+
+	/* get updated entry fields */
+	cvs_getln(root, buf, sizeof(buf));
+	ent = cvs_ent_parse(buf);
+	if (ent == NULL) {
+		return (-1);
+	}
+
+	patchbuf = cvs_recvfile(root, &fmode);
+	fcont = cvs_buf_load(file, BUF_AUTOEXT);
+	if (fcont == NULL)
+		return (-1);
+
+	cvs_buf_putc(patchbuf, '\0');
+	cvs_buf_putc(fcont, '\0');
+	orig = cvs_buf_release(fcont);
+	patch = cvs_buf_release(patchbuf);
+
+	res = rcs_patch(orig, patch);
+	if (res == NULL)
+		return (-1);
+
+	cvs_buf_write(res, file, fmode);
+
+	/* now see if there is a checksum */
+	if (cvs_fcksum != NULL) {
+		if (cvs_cksum(file, cksum_buf, sizeof(cksum_buf)) < 0) {
+		}
+
+		if (strcmp(cksum_buf, cvs_fcksum) != 0) {
+			cvs_log(LP_ERR, "checksum error on received file");
+			(void)unlink(file);
+		}
+
+		free(cvs_fcksum);
+		cvs_fcksum = NULL;
+	}
+
+	/* update revision in entries */
+	entf = cvs_ent_open(line, O_WRONLY);
+	if (entf == NULL)
+		return (-1);
+
+	cvs_ent_close(entf);
+
 	return (0);
 }
 
@@ -1103,19 +1176,22 @@ cvs_sendfile(struct cvsroot *root, const char *path)
  * information.
  */
 
-int
-cvs_recvfile(struct cvsroot *root, const char *path)
+BUF*
+cvs_recvfile(struct cvsroot *root, mode_t *mode)
 {
-	int fd;
-	mode_t mode;
 	size_t len;
 	ssize_t ret;
 	off_t fsz, cnt;
 	char buf[4096], *ep;
+	BUF *fbuf;
+
+	fbuf = cvs_buf_alloc(sizeof(buf), BUF_AUTOEXT);
+	if (fbuf == NULL)
+		return (NULL);
 
 	if ((cvs_getln(root, buf, sizeof(buf)) < 0) ||
-	    (cvs_strtomode(buf, &mode) < 0)) {
-		return (-1);
+	    (cvs_strtomode(buf, mode) < 0)) {
+		return (NULL);
 	}
 
 	cvs_getln(root, buf, sizeof(buf));
@@ -1123,13 +1199,7 @@ cvs_recvfile(struct cvsroot *root, const char *path)
 	fsz = (off_t)strtol(buf, &ep, 10);
 	if (*ep != '\0') {
 		cvs_log(LP_ERR, "parse error in file size transmission");
-		return (-1);
-	}
-
-	fd = open(path, O_WRONLY|O_CREAT, mode);
-	if (fd == -1) {
-		cvs_log(LP_ERRNO, "failed to open `%s'", path);
-		return (-1);
+		return (NULL);
 	}
 
 	cnt = 0;
@@ -1139,25 +1209,21 @@ cvs_recvfile(struct cvsroot *root, const char *path)
 			break;
 		ret = cvs_recvraw(root, buf, len);
 		if (ret == -1) {
-			(void)close(fd);
-			(void)unlink(path);
-			return (-1);
+			cvs_buf_free(fbuf);
+			return (NULL);
 		}
 
-		if (write(fd, buf, (size_t)ret) == -1) {
-			cvs_log(LP_ERRNO,
-			    "failed to write contents to file `%s'", path);
-			(void)close(fd);
-			(void)unlink(path);
-			return (-1);
+		if (cvs_buf_append(fbuf, buf, (size_t)ret) == -1) {
+			cvs_log(LP_ERR,
+			    "failed to append received file data");
+			cvs_buf_free(fbuf);
+			return (NULL);
 		}
 
 		cnt += (off_t)ret;
 	} while (cnt < fsz);
 
-	(void)close(fd);
-
-	return (0);
+	return (fbuf);
 }
 
 

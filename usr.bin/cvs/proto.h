@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.h,v 1.1 2004/07/30 01:49:24 jfb Exp $	*/
+/*	$OpenBSD: proto.h,v 1.2 2004/07/30 17:37:58 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -28,8 +28,9 @@
 #define PROTO_H
 
 #include <sys/param.h>
-#include <stdio.h>
-#include <dirent.h>
+
+#include "buf.h"
+#include "file.h"
 
 #define CVS_REQ_TIMEOUT    300
 
@@ -145,7 +146,7 @@
 
 
 int         cvs_sendfile       (struct cvsroot *, const char *);
-int         cvs_recvfile       (struct cvsroot *, const char *);
+BUF*        cvs_recvfile       (struct cvsroot *, mode_t *);
 int         cvs_connect        (struct cvsroot *);
 void        cvs_disconnect     (struct cvsroot *);
 
