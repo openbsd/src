@@ -1,4 +1,4 @@
-/*	$OpenBSD: simm13.c,v 1.2 2003/08/19 05:37:57 jason Exp $	*/
+/*	$OpenBSD: simm13.c,v 1.3 2003/08/19 05:49:22 jason Exp $	*/
 
 /*
  * Copyright (c) 2003 Jason L. Wright (jason@thought.net)
@@ -26,6 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * check that "popc immediate, %rd" gets the correct value.  It is
+ * emulated on most SPARC v9 implementations.
+ */
+
 #include <sys/types.h>
 #include <sys/mman.h>
 #include <machine/instr.h>
@@ -33,6 +38,11 @@
 #include <stdio.h>
 
 #define	SIGN_EXT13(v)	(((int64_t)(v) << 51) >> 51)
+
+void gen_simm(u_int32_t *, int);
+int64_t a_popc_imm(void *, int);
+int64_t c_popc(int64_t);
+int main(void);
 
 void
 gen_simm(u_int32_t *p, int imm)
@@ -43,17 +53,18 @@ gen_simm(u_int32_t *p, int imm)
 	 *	 popc imm, %o0
 	 */
 	p[0] = I_JMPLri(I_G0, I_O7, 8);
-	__asm __volatile("iflush %0+0" : : "r" (&p[0]));
+	__asm __volatile("iflush %0+0" : : "r" (p + 0));
 	p[1] = _I_OP3_R_RI(I_O0, IOP3_POPC, I_G0, imm);
-	__asm __volatile("iflush %0+0" : : "r" (&p[1]));
+	__asm __volatile("iflush %0+0" : : "r" (p + 1));
 	__asm __volatile("nop;nop;nop;nop;nop");
 }
 
-int
-testit(void *v)
+int64_t
+a_popc_imm(void *v, int i)
 {
 	int (*func)(void) = v;
 
+	gen_simm(v, i);
 	return ((*func)());
 }
 
@@ -81,9 +92,8 @@ main()
 		err(1, "mmap");
 
 	for (i = -4096; i <= 4095; i++) {
-		gen_simm(v, i);
+		a = a_popc_imm(v, i);
 		c = c_popc(SIGN_EXT13(i));
-		a = testit(v);
 		if (c != a) {
 			printf("BAD: %d: asm %d, c %d\n", i, a, c);
 			r = 1;
