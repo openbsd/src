@@ -1,10 +1,10 @@
 #!/bin/sh -
 #
-#	$OpenBSD: security,v 1.54 2002/12/15 13:25:27 henning Exp $
+#	$OpenBSD: security,v 1.55 2002/12/30 13:59:54 millert Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
-PATH=/sbin:/usr/sbin:/bin:/usr/bin
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
 
 umask 077
 
