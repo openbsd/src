@@ -1,4 +1,4 @@
-/*	$OpenBSD: krpc_subr.c,v 1.5 1996/06/10 07:30:04 deraadt Exp $	*/
+/*	$OpenBSD: krpc_subr.c,v 1.6 1997/04/25 09:22:34 deraadt Exp $	*/
 /*	$NetBSD: krpc_subr.c,v 1.12.4.1 1996/06/07 00:52:26 cgd Exp $	*/
 
 /*
@@ -261,6 +261,7 @@ krpc_call(sa, prog, vers, func, data, from_p)
 	sin->sin_len = m->m_len = sizeof(*sin);
 	sin->sin_family = AF_INET;
 	sin->sin_addr.s_addr = INADDR_ANY;
+	/* XXX should do random allocation */
 	tport = IPPORT_RESERVED;
 	do {
 		tport--;

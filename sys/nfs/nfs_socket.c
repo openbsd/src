@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_socket.c,v 1.10 1997/04/18 10:13:27 deraadt Exp $	*/
+/*	$OpenBSD: nfs_socket.c,v 1.11 1997/04/25 09:22:31 deraadt Exp $	*/
 /*	$NetBSD: nfs_socket.c,v 1.27 1996/04/15 20:20:00 thorpej Exp $	*/
 
 /*
@@ -174,6 +174,7 @@ nfs_connect(nmp, rep)
 		sin->sin_len = m->m_len = sizeof (struct sockaddr_in);
 		sin->sin_family = AF_INET;
 		sin->sin_addr.s_addr = INADDR_ANY;
+		/* XXX should do random allocation */
 		tport = IPPORT_RESERVED - 1;
 		sin->sin_port = htons(tport);
 		while ((error = sobind(so, m)) == EADDRINUSE &&
