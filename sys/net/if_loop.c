@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_loop.c,v 1.31 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: if_loop.c,v 1.32 2003/12/16 20:33:25 markus Exp $	*/
 /*	$NetBSD: if_loop.c,v 1.15 1996/05/07 02:40:33 thorpej Exp $	*/
 
 /*
@@ -174,7 +174,7 @@ static void lo_altqstart(struct ifnet *);
 #endif
 
 int	loop_clone_create(struct if_clone *, int);
-void	loop_clone_destroy(struct ifnet *);
+int	loop_clone_destroy(struct ifnet *);
 
 struct if_clone loop_cloner =
     IF_CLONE_INITIALIZER("lo", loop_clone_create, loop_clone_destroy);
@@ -225,12 +225,12 @@ loop_clone_create(ifc, unit)
 	return (0);
 }
 
-void
+int
 loop_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
 	if (ifp == lo0ifp)
-		return;			/* XXX silently fail for lo0 */
+		return (EPERM);
 
 #if NBPFILTER > 0
 	bpfdetach(ifp);
@@ -238,6 +238,7 @@ loop_clone_destroy(ifp)
 	if_detach(ifp);
 
 	free(ifp, M_DEVBUF);
+	return (0);
 }
 
 int

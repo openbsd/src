@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ppp.c,v 1.39 2003/12/13 10:01:16 markus Exp $	*/
+/*	$OpenBSD: if_ppp.c,v 1.40 2003/12/16 20:33:25 markus Exp $	*/
 /*	$NetBSD: if_ppp.c,v 1.39 1997/05/17 21:11:59 christos Exp $	*/
 
 /*
@@ -168,7 +168,7 @@ static void	pppdumpm(struct mbuf *m0);
 static void	ppp_ifstart(struct ifnet *ifp);
 #endif
 int		ppp_clone_create(struct if_clone *, int);
-void		ppp_clone_destroy(struct ifnet *);
+int		ppp_clone_destroy(struct ifnet *);
 
 /*
  * Some useful mbuf macros not in mbuf.h.
@@ -270,7 +270,7 @@ ppp_clone_create(ifc, unit)
     return (0);
 }
 
-void
+int
 ppp_clone_destroy(ifp)
     struct ifnet *ifp;
 {
@@ -278,7 +278,7 @@ ppp_clone_destroy(ifp)
     int s;
 
     if (sc->sc_devp != NULL)
-	return;
+	return (EBUSY);
 
     s = splimp();
     LIST_REMOVE(sc, sc_list);
@@ -290,6 +290,7 @@ ppp_clone_destroy(ifp)
     if_detach(ifp);
 
     free(sc, M_DEVBUF);
+    return (0);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.126 2003/12/03 14:55:58 markus Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.127 2003/12/16 20:33:25 markus Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -167,7 +167,7 @@ void	bridge_send_icmp_err(struct bridge_softc *, struct ifnet *,
 int bridge_ipsec(int, int, int, struct mbuf *);
 #endif
 int     bridge_clone_create(struct if_clone *, int);
-void	bridge_clone_destroy(struct ifnet *ifp);
+int	bridge_clone_destroy(struct ifnet *ifp);
 
 #define	ETHERADDR_IS_IP_MCAST(a) \
 	/* struct etheraddr *a;	*/				\
@@ -234,7 +234,7 @@ bridge_clone_create(struct if_clone *ifc, int unit)
 	return (0);
 }
 
-void
+int
 bridge_clone_destroy(struct ifnet *ifp)
 {
 	struct bridge_softc *sc = ifp->if_softc;
@@ -266,6 +266,7 @@ bridge_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 
 	free(sc, M_DEVBUF);
+	return (0);
 }
 
 int

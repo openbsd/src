@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.47 2003/12/10 03:30:21 itojun Exp $	*/
+/*	$OpenBSD: if.h,v 1.48 2003/12/16 20:33:25 markus Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ struct if_clone {
 	size_t ifc_namelen;		/* length of name */
 
 	int	(*ifc_create)(struct if_clone *, int);
-	void	(*ifc_destroy)(struct ifnet *);
+	int	(*ifc_destroy)(struct ifnet *);
 };
 
 #define	IF_CLONE_INITIALIZER(name, create, destroy)			\

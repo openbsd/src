@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sl.c,v 1.25 2003/12/13 10:01:16 markus Exp $	*/
+/*	$OpenBSD: if_sl.c,v 1.26 2003/12/16 20:33:25 markus Exp $	*/
 /*	$NetBSD: if_sl.c,v 1.39.4.1 1996/06/02 16:26:31 thorpej Exp $	*/
 
 /*
@@ -184,7 +184,7 @@ static int slinit(struct sl_softc *);
 static struct mbuf *sl_btom(struct sl_softc *, int);
 
 int	sl_clone_create(struct if_clone *, int);
-void	sl_clone_destroy(struct ifnet *);
+int	sl_clone_destroy(struct ifnet *);
 
 LIST_HEAD(, sl_softc) sl_softc_list;
 struct if_clone sl_cloner =
@@ -239,7 +239,7 @@ sl_clone_create(ifc, unit)
 	return (0);
 }
 
-void
+int
 sl_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
@@ -247,7 +247,7 @@ sl_clone_destroy(ifp)
 	int s;
 
 	if (sc->sc_ttyp != NULL)
-		return;
+		return (EBUSY);
 
 	s = splimp();
 	LIST_REMOVE(sc, sc_list);
@@ -259,6 +259,7 @@ sl_clone_destroy(ifp)
 	if_detach(ifp);
 
 	free(sc, M_DEVBUF);
+	return (0);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.54 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.55 2003/12/16 20:33:25 markus Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -131,7 +131,7 @@ int	tunwrite(dev_t, struct uio *, int);
 int	tunpoll(dev_t, int, struct proc *);
 int	tunkqfilter(dev_t, struct knote *);
 int	tun_clone_create(struct if_clone *, int);
-void	tun_clone_destroy(struct ifnet *);
+int	tun_clone_destroy(struct ifnet *);
 struct	tun_softc *tun_lookup(int);
 void	tun_wakeup(struct tun_softc *);
 
@@ -214,7 +214,7 @@ tun_clone_create(ifc, unit)
 	return (0);
 }
 
-void
+int
 tun_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
@@ -232,6 +232,7 @@ tun_clone_destroy(ifp)
 	if_detach(ifp);
 
 	free(tp, M_DEVBUF);
+	return (0);
 }
 
 struct tun_softc *

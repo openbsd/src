@@ -1,4 +1,4 @@
-/*      $OpenBSD: if_gre.c,v 1.30 2003/12/08 10:23:39 markus Exp $ */
+/*      $OpenBSD: if_gre.c,v 1.31 2003/12/16 20:33:25 markus Exp $ */
 /*	$NetBSD: if_gre.c,v 1.9 1999/10/25 19:18:11 drochner Exp $ */
 
 /*
@@ -100,7 +100,7 @@
                          correct value */
 
 int	gre_clone_create(struct if_clone *, int);
-void    gre_clone_destroy(struct ifnet *);
+int	gre_clone_destroy(struct ifnet *);
 
 struct gre_softc_head gre_softc_list;
 struct if_clone gre_cloner =
@@ -171,7 +171,7 @@ gre_clone_create(struct if_clone *ifc, int unit)
 	return (0);
 }
 
-void   
+int
 gre_clone_destroy(struct ifnet *ifp)
 {
 	struct gre_softc *sc = ifp->if_softc;
@@ -187,6 +187,7 @@ gre_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 
 	free(sc, M_DEVBUF);
+	return (0);
 }
 
 /*

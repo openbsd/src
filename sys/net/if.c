@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.78 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.79 2003/12/16 20:33:24 markus Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -634,8 +634,7 @@ if_clone_destroy(name)
 	if (ifc->ifc_destroy == NULL)
 		return (EOPNOTSUPP);
 
-	(*ifc->ifc_destroy)(ifp);
-	return (0);
+	return ((*ifc->ifc_destroy)(ifp));
 }
 
 /*

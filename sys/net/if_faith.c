@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_faith.c,v 1.16 2003/12/03 14:53:04 markus Exp $	*/
+/*	$OpenBSD: if_faith.c,v 1.17 2003/12/16 20:33:25 markus Exp $	*/
 /*
  * Copyright (c) 1982, 1986, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -73,7 +73,7 @@ static void faithrtrequest(int, struct rtentry *, struct rt_addrinfo *);
 
 void	faithattach(int);
 int	faith_clone_create(struct if_clone *, int);
-void	faith_clone_destroy(struct ifnet *ifp);
+int	faith_clone_destroy(struct ifnet *ifp);
 
 struct if_clone faith_cloner =
     IF_CLONE_INITIALIZER("faith", faith_clone_create, faith_clone_destroy);
@@ -117,7 +117,7 @@ faith_clone_create(ifc, unit)
 	return (0);
 }
 
-void
+int
 faith_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
@@ -127,6 +127,7 @@ faith_clone_destroy(ifp)
 	if_detach(ifp);
 
 	free(ifp, M_DEVBUF);
+	return (0);
 }
 
 int

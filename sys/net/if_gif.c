@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.30 2003/12/10 07:22:42 itojun Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.31 2003/12/16 20:33:25 markus Exp $	*/
 /*	$KAME: if_gif.c,v 1.43 2001/02/20 08:51:07 itojun Exp $	*/
 
 /*
@@ -64,8 +64,8 @@
 extern int ifqmaxlen;
 
 void	gifattach(int);
-int     gif_clone_create(struct if_clone *, int);
-void    gif_clone_destroy(struct ifnet *);
+int	gif_clone_create(struct if_clone *, int);
+int	gif_clone_destroy(struct ifnet *);
 
 /*
  * gif global variable definitions
@@ -120,7 +120,7 @@ gif_clone_create(ifc, unit)
 	return (0);
 }
 
-void
+int
 gif_clone_destroy(ifp)
 	struct ifnet *ifp;
 {
@@ -143,6 +143,7 @@ gif_clone_destroy(ifp)
 		free((caddr_t)sc->gif_pdst, M_IFADDR);
 	sc->gif_pdst = NULL;
 	free(sc, M_DEVBUF);
+	return (0);
 }
 
 void

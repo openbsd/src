@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.43 2003/12/06 09:23:25 grange Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.44 2003/12/16 20:33:25 markus Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -92,7 +92,7 @@ int	vlan_ether_addmulti(struct ifvlan *, struct ifreq *);
 int	vlan_ether_delmulti(struct ifvlan *, struct ifreq *);
 void	vlan_ether_purgemulti(struct ifvlan *);
 int	vlan_clone_create(struct if_clone *, int);
-void	vlan_clone_destroy(struct ifnet *);
+int	vlan_clone_destroy(struct ifnet *);
 
 LIST_HEAD(, ifvlan) vlan_list;
 
@@ -146,7 +146,7 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	return (0);
 }
 
-void
+int
 vlan_clone_destroy(struct ifnet *ifp)
 {
 	struct ifvlan *ifv = ifp->if_softc;
@@ -164,6 +164,7 @@ vlan_clone_destroy(struct ifnet *ifp)
 	if_detach(ifp);
 
 	free(ifv, M_DEVBUF);
+	return (0);
 }
 
 void
