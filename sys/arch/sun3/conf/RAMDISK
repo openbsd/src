@@ -46,7 +46,6 @@ options 	NFS_BOOT_RWSIZE=1024
 #options 	COMPAT_10	# NetBSD 1.0
 options 	COMPAT_11	# NetBSD 1.1
 options 	COMPAT_12	# NetBSD 1.2
-options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3-specific debugging options
 options 	DIAGNOSTIC

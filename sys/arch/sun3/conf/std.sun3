@@ -28,7 +28,7 @@ intreg0 at obio0 addr 0x0A0000
 # Standard defines
 options		EXEC_AOUT
 options		EXEC_SCRIPT
-options 	SWAPPAGER, VNODEPAGER, DEVPAGER
+options 	SWAPPAGER, DEVPAGER
 
 # XXX - Still needed?
 options 	NEWCONFIG

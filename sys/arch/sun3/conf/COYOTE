@@ -1,5 +1,5 @@
 #
-# $OpenBSD: COYOTE,v 1.4 1997/02/07 02:18:45 kstailey Exp $
+# $OpenBSD: COYOTE,v 1.5 1997/02/11 17:41:13 kstailey Exp $
 #
 
 #
@@ -37,7 +37,8 @@ options 	PROCFS		# /proc
 
 # Networking options
 options 	INET		# IP prototol stack support
-options		IPFILTER	# IP packet filter for security
+options		GATEWAY		# IP packet forwarding
+options		IPFILTER	# IP packet filter for security and NAT
 # XXX - Work-around for root on slow SunOS/Sun3 servers (sigh...)
 options 	NFS_BOOT_RWSIZE=1024
 
@@ -48,7 +49,6 @@ options 	COMPAT_10	# NetBSD 1.0,
 options 	COMPAT_11	# NetBSD 1.1,
 options 	COMPAT_43	# and 4.3BSD
 #options 	TCP_COMPAT_42	# TCP bug compatibility with 4.2BSD
-options 	UCONSOLE	# Allow non-root TIOCCONS
 
 # Sun3-specific debugging options
 #options 	PMAP_DEBUG
@@ -83,7 +83,7 @@ bwtwo0 at obmem0 addr ?
 
 # Misc.
 pseudo-device	loop	1		# network loopback
-#pseudo-device	bpfilter 8		# packet filter
+pseudo-device	bpfilter 2		# packet filter
 #pseudo-device	sl	2		# CSLIP
 pseudo-device	ppp	1		# PPP
 #pseudo-device	tun	2		# network tunneling over tty
