@@ -1,7 +1,7 @@
-/*	$OpenBSD: locore.S,v 1.5 1999/02/25 19:22:50 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.6 1999/04/20 20:36:06 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998,1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,22 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Portitions of this file are derived from other sources, see
+ * the copyrights and acknowledgements.
+ */
+/*
+ * Copyright (c) 1990,1991,1992,1994 The University of Utah and
+ * the Computer Systems Laboratory (CSL).  All rights reserved.
+ *
+ * THE UNIVERSITY OF UTAH AND CSL PROVIDE THIS SOFTWARE IN ITS "AS IS"
+ * CONDITION, AND DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM ITS USE.
+ *
+ * CSL requests users of this software to return to csl-dist@cs.utah.edu any
+ * improvements that they make and grant CSL redistribution rights.
+ *
+ * 	Utah $Hdr: locore.s 1.62 94/12/15$
  */
 /*
  *  (c) Copyright 1988 HEWLETT-PACKARD COMPANY
@@ -43,20 +59,8 @@
  *  Hewlett-Packard Company makes no representations about the
  *  suitability of this software for any purpose.
  */
-/*
- * Copyright (c) 1990,1991,1992,1994 The University of Utah and
- * the Computer Systems Laboratory (CSL).  All rights reserved.
- *
- * THE UNIVERSITY OF UTAH AND CSL PROVIDE THIS SOFTWARE IN ITS "AS IS"
- * CONDITION, AND DISCLAIM ANY LIABILITY OF ANY KIND FOR ANY DAMAGES
- * WHATSOEVER RESULTING FROM ITS USE.
- *
- * CSL requests users of this software to return to csl-dist@cs.utah.edu any
- * improvements that they make and grant CSL redistribution rights.
- *
- * 	Utah $Hdr: locore.s 1.62 94/12/15$
- */
 
+#include <sys/errno.h>
 #include <machine/asm.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
@@ -77,6 +81,8 @@
 	.import	bootdev, data
 	.import	esym, data
 	.import istackptr, data
+	.import	curproc, code
+	.import	want_resched, data
 /*
  * Declare data sections
  */
@@ -134,12 +140,13 @@ s_textsize
  */
 ENTRY(__start)
 /*
- *	start(pdc, boothowto, bootdev, bootapiver, argv, argc)
+ *	start(pdc, boothowto, bootdev, esym bootapiver, argv, argc)
  *
  *	pdc - PDC entry point (not used, HP-UX compatibility)
  *	boothowto - boot flags (see "reboot.h")
  *	bootdev - boot device (index into bdevsw)
  *	bootapiver - /boot API version
+ *	esym - end of symbol table (or &end if not present)
  *	argv - options block passed from /boot
  *	argc - the length of the block
  */
@@ -326,7 +333,8 @@ ENTRY(set_psw)
 	rfi
 	nop
 $set_psw
-
+	bv	0(rp)
+	nop
 EXIT(set_psw)
 
 /*
@@ -339,24 +347,51 @@ EXIT(set_psw)
  * those in the C library.
  */
 	.align  NBPG
-$gateway_page
+	.globl	gateway_page, code
+gateway_page
 	nop				/* @ 0.C0000000 (Nothing)  */
 	gate,n	$bsd_syscall,r0         /* @ 0.C0000004 (HPUX/BSD) */
+#ifdef COMPAT_OSF1
+	bl,n	$osf_syscall,r0
+	bl,n	$osf_syscall,r0
+#else
 	nop				/* @ 0.C0000008 (HPOSF UNIX) */
 	nop				/* @ 0.C000000C (HPOSF Mach) */
+#endif
 	nop
 	nop
 	nop
 	nop
 
+#ifdef COMPAT_OSF1
+$osf_syscall
+	/*
+	 * Ripped screaming from OSF/MkLinux:
+	 *
+	 * Convert HPOSF system call to a BSD one by stashing arg4 and arg5
+	 * back into the frame, and moving the system call number into r22.
+	 * Fortunately, the HPOSF compiler has a bigger stack frame, which
+	 * allows this horrible hack.
+	 *
+	 * We also need to save r29 (aka ret1) for the emulator since it may
+	 * get clobbered between here and there.
+	 */
+	stw	r22,VA_ARG4(sp)
+	stw	r21,VA_ARG5(sp)
+	stw	r29,FM_SL(sp)
+	gate	$bsd_syscall,r0
+	copy	r1,r22
+#endif /* COMPAT_OSF1 */
+
 $bsd_syscall
 	/*
-	 * set up a space register and a protection register so that 
+	 * set up a space register and a protection id so that 
 	 * we can access kernel memory
 	 */
 	mtsp	r0, sr1
+	mfctl	pidr2, r28
 	ldi	HPPA_PID_KERNEL, r1
-	mtctl	r1, pidr4
+	mtctl	r1, pidr2
 
 	/*
 	 * now call the syscall handler
@@ -367,14 +402,172 @@ $bsd_syscall
 	be,n    R%$syscall(sr1,r1)
 	nop
 
-	/*
-	 * Don't let anything else get on the gateway page.
-	 */
-	.align  NBPG
-        .export $syscall,entry
-$syscall
+	.globl	gateway_page_end, code
+gateway_page_end
 
+	.import	syscall,code
+        .export $syscall,entry
+	.proc
+	.callinfo calls
+	.entry
+$syscall
+	/*
+	 *
+	 * t1:	curproc
+	 * t2:	user
+	 * t3:	args
+	 * t4:	user stack
+	 */
+	ldil	L%curproc, t1
+	ldw	R%curproc(sr1, t1), t1
+	ldw	p_addr(sr1, t1), t2
+
+	/* save sp first */
+	stw	sp, TF_R30+pcb_tf+u_pcb(sr1, t2)
+	copy	sp, t4
+
+	/* calculate kernel sp, load, create kernel stack frame */
+	copy	r0, t2
+	depi	-1, 31, 12, t2
+	depi	0, 19, 12, t3
+	addi	FM_SIZE+ARG_SIZE, t3, sp
+	
+	stw	r1 , TF_R1 +pcb_tf+u_pcb(sr1, t2)
+	stw	r2 , TF_R2 +pcb_tf+u_pcb(sr1, t2)
+	stw	r3 , TF_R3 +pcb_tf+u_pcb(sr1, t2)
+	stw	r4 , TF_R4 +pcb_tf+u_pcb(sr1, t2)
+	stw	r5 , TF_R5 +pcb_tf+u_pcb(sr1, t2)
+	stw	r6 , TF_R6 +pcb_tf+u_pcb(sr1, t2)
+	stw	r7 , TF_R7 +pcb_tf+u_pcb(sr1, t2)
+	stw	r8 , TF_R8 +pcb_tf+u_pcb(sr1, t2)
+	stw	r9 , TF_R9 +pcb_tf+u_pcb(sr1, t2)
+	stw	r10, TF_R10+pcb_tf+u_pcb(sr1, t2)
+	stw	r11, TF_R11+pcb_tf+u_pcb(sr1, t2)
+	stw	r12, TF_R12+pcb_tf+u_pcb(sr1, t2)
+	stw	r13, TF_R13+pcb_tf+u_pcb(sr1, t2)
+	stw	r14, TF_R14+pcb_tf+u_pcb(sr1, t2)
+	stw	r15, TF_R15+pcb_tf+u_pcb(sr1, t2)
+	stw	r16, TF_R16+pcb_tf+u_pcb(sr1, t2)
+	stw	r17, TF_R17+pcb_tf+u_pcb(sr1, t2)
+	stw	r18, TF_R18+pcb_tf+u_pcb(sr1, t2)
+	stw	r27, TF_R27+pcb_tf+u_pcb(sr1, t2)	/* dp */
+	stw	r28, TF_CR8+pcb_tf+u_pcb(sr1, t2)	/* saved pidr2 */
+
+	/* copy arguments */
+	copy	t3, r1
+	stwm	arg0, 4(sr1, t3)
+	stwm	arg1, 4(sr1, t3)
+	stwm	arg2, 4(sr1, t3)
+	stwm	arg3, 4(sr1, t3)
+	ldw	VA_ARG4(sr0, t4), arg0
+	ldw	VA_ARG5(sr0, t4), arg1
+	ldw	VA_ARG6(sr0, t4), arg2
+	ldw	VA_ARG7(sr0, t4), arg3
+	stwm	arg0, 4(sr1, t3)
+	stwm	arg1, 4(sr1, t3)
+	stwm	arg2, 4(sr1, t3)
+	stwm	arg3, 4(sr1, t3)
+	ldw	VA_ARG8 (sr0, t4), arg0
+	ldw	VA_ARG9 (sr0, t4), arg1
+	ldw	VA_ARG10(sr0, t4), arg2
+	ldw	VA_ARG11(sr0, t4), arg3
+	stwm	arg0, 4(sr1, t3)
+	stwm	arg1, 4(sr1, t3)
+	stwm	arg2, 4(sr1, t3)
+	stwm	arg3, 4(sr1, t3)
+
+	/* setup kernel context */
+	ldi	HPPA_SID_KERNEL, t4
+	mtctl	t4, sr0
+	mtctl	t4, sr1
+	mtctl	t4, sr2
+	mtctl	t4, sr3
+	mtctl	t4, sr4
+	mtctl	t4, sr5
+	mtctl	t4, sr6
+	mtctl	t4, sr7
+
+	/* leave pidr4 in user space so copy* work */
+	ldi	HPPA_PID_KERNEL, t4
+	mtctl	t4, pidr1
+	mtctl	t4, pidr3
+
+	/* setup frame */
+	stw	r0, FM_PSP(sr1, sp)
+	stw	r0, FM_CRP(sr1, sp)
+
+	addi	pcb_tf+u_pcb, t2, arg0
+	copy	r1, arg1
+
+	ldil	L%$global$,dp
+	ldo	R%$global$(dp),dp
+
+	/* do a syscall */
+	ldil	L%syscall, ret0
+	ldo	R%syscall(ret0), ret0
+	.call
+	blr	r0, rp
+	bv,n	0(ret0)
+	.exit
+	.procend
+/* fall through */
+	.export	$syscall_return, entry
+	.proc
+	.callinfo no_calls
+	.entry
 $syscall_return
+	/* check for AST ? XXX */
+	/*
+	 * t1:	curproc
+	 * t2:	user
+	 */
+	ldil	L%curproc, t1
+	ldw	R%curproc(t1), t1
+	ldw	p_addr(t1), t4
+
+	/* restore state */
+	ldw	TF_R1 +pcb_tf+u_pcb(t4), r1
+	ldw	TF_R2 +pcb_tf+u_pcb(t4), r2
+	ldw	TF_R3 +pcb_tf+u_pcb(t4), r3
+	ldw	TF_R4 +pcb_tf+u_pcb(t4), r4
+	ldw	TF_R5 +pcb_tf+u_pcb(t4), r5
+	ldw	TF_R6 +pcb_tf+u_pcb(t4), r6
+	ldw	TF_R7 +pcb_tf+u_pcb(t4), r7
+	ldw	TF_R8 +pcb_tf+u_pcb(t4), r8
+	ldw	TF_R9 +pcb_tf+u_pcb(t4), r9
+	ldw	TF_R10+pcb_tf+u_pcb(t4), r10
+	ldw	TF_R11+pcb_tf+u_pcb(t4), r11
+	ldw	TF_R12+pcb_tf+u_pcb(t4), r12
+	ldw	TF_R13+pcb_tf+u_pcb(t4), r13
+	ldw	TF_R14+pcb_tf+u_pcb(t4), r14
+	ldw	TF_R15+pcb_tf+u_pcb(t4), r15
+	ldw	TF_R16+pcb_tf+u_pcb(t4), r16
+	ldw	TF_R17+pcb_tf+u_pcb(t4), r17
+	ldw	TF_R18+pcb_tf+u_pcb(t4), r18
+
+	ldw	TF_CR8+pcb_tf(sr1,t4), t3
+	mtctl	t3, pidr1
+	mtctl	t3, pidr3
+	mtctl	t3, pidr4
+
+	ldw	p_vmspace(t1), t3
+	ldw	vm_pmap+pmap_space(t3), t3
+	mtctl	t3, sr0
+	mtctl	t3, sr2
+	mtctl	t3, sr3
+	mtctl	t3, sr4
+	mtctl	t3, sr5
+	mtctl	t3, sr6
+
+	ldw	TF_CR9+pcb_tf(sr1,t4), t4
+	bv	0(rp)
+	mtctl	t4, pidr2
+
+	.exit
+	.procend
+
+$syscall_end
+	.align NBPG
 
 /*
  * interrupt vector table
@@ -495,7 +688,7 @@ TLABEL(tlbd)
 	 */
 	ldw	hpt_entry(r24),r24
 $hash_loop_tlbd
-	comb,=	r0,r24,$pageflt
+	comb,=	r0, r24, TLABEL(all)
 	mtsp	r25, sr1
 	ldw     pv_va(r24),r16
 	comb,<>,n r9,r16,$hash_loop_tlbd
@@ -567,7 +760,7 @@ $tlbmiss
 	 */
 	ldw	hpt_entry(r24),r24
 $hash_loop
-	comb,=	r0,r24,$pageflt
+	comb,=	r0, r24, TLABEL(all)
 	mtsp	r25, sr1
 	ldw     pv_va(r24),r16
 	comb,<>,n r9,r16,$hash_loop
@@ -615,12 +808,10 @@ $tlbret
 	rfir
 	nop
 
-	.align 32
-$pageflt
-	/* r1 still has trap type */
-	/* FALL THROUGH */
 	.export	TLABEL(all), code
 TLABEL(all)
+	/* r1 still has trap type */
+
 	/*
 	 * at this point we have:
 	 *	psw copied into ipsw
@@ -1053,6 +1244,7 @@ ENTRY(setjmp)
 	stwm    rp,4(arg0)	/* Save the return pointer */
 	stwm	sp,4(arg0)	/* Save the original stack pointer */
 
+	bv	0(rp)
 	or      r0,r0,ret0
 EXIT(setjmp)
 
@@ -1080,23 +1272,392 @@ ENTRY(longjmp)
 	ldwm	4(arg0),rp	/* Restore return address pointer, */
 	ldwm	4(arg0),sp	/* stack pointer, */
 
+	bv	0(rp)
 	or	arg1,r0,ret0	/* Move return value to where it belongs. */
 EXIT(longjmp)
+
+
+	.align	NBPG	/* let's fit 'em on a single page */
+
+#define	FUSUX(name)				  \
+ENTRY(name)					! \
+	ldil	L%VM_MAXUSER_ADDRESS, t1	! \
+	comb,>=	arg0, t1, fusubadaddr		! \
+	ldil	L%curproc, t1			! \
+	ldw	p_addr(t1), t1			! \
+	ldil	L%fusufault, t2			! \
+	ldw	u_pcb+pcb_onfault(t1), t3	! \
+	ldo	R%fusufault(t2), t2		! \
+	stw	t2, u_pcb+pcb_onfault(t1)	! \
+	ldw	u_pcb+pcb_space(t1), t2		! \
+	mtsp	t2, sr1
+
+#define	FUX(name,insn)				  \
+	FUSUX(name)				! \
+	insn	0(sr1, arg0), ret0		! \
+	b,n	fusuexit			! \
+EXIT(name)
+
+#define	SUX(name,insn)				  \
+	FUSUX(name)				! \
+	insn	arg1, 0(sr1, arg0)		! \
+	b,n	fusuexit			! \
+EXIT(name)
+
+ENTRY(fusuexit)
+	bv	r0(rp)	/* execute stw in a delay slot */
+ALTENTRY(fusufault)
+	stw	r0, u_pcb+pcb_onfault(t1)
+ALTENTRY(fusubadaddr)
+	bv	0(rp)
+	ldi	-1, ret0
+EXIT(fusuexit)
+
+FUX(fubyte,   ldb)
+FUX(fusword,  ldh)
+FUX(fuword,   ldw)
+FUX(fuswintr, ldh)
+SUX(subyte,   stb)
+SUX(susword,  sth)
+SUX(suword,   stw)
+SUX(suswintr, sth)
+
+	.align	64
+
+ENTRY(copy_on_fault)
+	bv	0(rp)
+	ldi	EFAULT, %ret0
+EXIT(copy_on_fault)
+
+/*
+ * int spstrcpy (pa_space_t ssp, const void *src, pa_space_t dsp, void *dst,
+ *		 size_t size, size_t *rsize)
+ * do a space to space strncpy, return actual copy size in the rsize;
+ */
+ENTRY(spstrcpy)
+	/* setup fault handler */
+	ldil	L%curproc, r31
+	ldw	R%curproc(r31), r31
+	ldw	p_addr(r31), r31
+	ldil	L%copy_on_fault, t2
+	ldo	R%copy_on_fault(t2), t2
+	stw	t2, pcb_onfault+u_pcb(r31)
+
+	ldw	VA_ARG4(sp), ret1
+	mfctl	sr2, ret0	/* XXX need this? */
+	mtctl	arg0, sr1
+	mtctl	arg2, sr2
+	add	ret1, arg1, ret1
+
+$spstrcpy_loop
+	ldbs,ma	1(sr1, arg1), t1
+	comb,=	ret1, arg1, $spstrcpy_exit
+	stbs,ma	t1, 1(sr2, arg3)
+	comb,<>,n r0, t1, $spstrcpy_loop
+
+$spstrcpy_exit
+	/* reset fault handler */
+	stw	r0, pcb_onfault+u_pcb(r31)
+	copy	r0, ret0
+	ldw	VA_ARG4(sp), t1
+	mtctl	ret0, sr2
+	sub	ret1, t1, ret1
+	bv	0(rp)
+	stw	ret1, VA_ARG5(sp)
+EXIT(spstrcpy)
+
+	.import	whichqs, data
+	.import	qs, data
+	.import	panic, code
+/*
+ * setrunqueue(struct proc *p);
+ * Insert a process on the appropriate queue.  Should be called at splclock().
+ */
+ENTRY(setrunqueue)
+#ifdef DIAGNOSTIC
+	ldw	p_back(%arg0), t1
+	comb,=	r0, t1, Lsetrunqueue_panic
+	ldw	p_wchan(arg0), t1
+	comb,=	r0, t1, Lsetrunqueue_panic
+	ldw	p_stat(arg0), t1
+	comib,<> SRUN, t1, Lsetrunqueue_panic
+	b	Lsetrunqueue_ok
+Lsrqpstr
+	.asciz	"setrunqueue"
+Lsetrunqueue_panic
+	ldil	L%Lsrqpstr, arg0
+	ldo	R%Lsrqpstr(arg0), arg0
+	ldil    L%panic, r1
+	ldo     R%panic(r1), r1
+	.call
+	blr     %r0, rp
+	bv,n    (r1)
+Lsetrunqueue_ok
+#endif
+
+	ldw	p_priority(arg0), t1
+	extru	t1,29,6,t1
+	mtctl	t1, sar
+	ldil	L%whichqs, t2
+	ldw	R%whichqs(t2), t3
+	vdepi	1, 1, t3
+	stw	t3, R%whichqs(t2)
+	ldil	L%qs, t2
+	ldo	R%qs(t2), t2
+	sh3add	t1, t2, t3
+	ldw	p_back(t1), t2
+	stw	t3, p_forw(arg0)
+	stw	arg0, p_back(t3)
+	stw	arg0, p_forw(t2)
+	bv	0(rp)
+	stw	t2, p_back(arg0)
+EXIT(setrunqueue)
+
+/*
+ * remrunqueue(struct proc *p);
+ * Remove a process from its queue.  Should be called at splclock().
+ */
+ENTRY(remrunqueue)
+	ldw	p_priority(arg0), t1
+	extru	t1,29,6,t1
+
+#ifdef DIAGNOSTIC
+	ldil	L%whichqs, t3
+	ldw	R%whichqs(t3), t3
+	mtctl	t1, sar
+	bvb,<	t3, remrunqueue_ok
+
+Lremrunqueue_panic
+	ldil	L%Lrrqpstr, arg0
+	ldo	R%Lrrqpstr(arg0), arg0
+	ldil    L%panic, r1
+	ldo     R%panic(r1), r1
+	.call
+	blr     %r0, rp
+	bv,n    (r1)
+Lrrqpstr
+	.asciz	"remrunqueue"
+remrunqueue_ok
+#endif
+	ldw	p_back(arg0), t2
+	stw	%r0, p_back(arg0)
+	ldw	p_forw(arg0), arg0
+	stw	arg0, p_forw(t2)
+	stw	t2, p_back(arg0)
+	comb,<>	t2, arg0, Lqnempty
+	ldil	L%whichqs, t2
+#ifndef DIAGNOSTIC
+	ldw	R%whichqs(t2), t3
+	mtctl	t1, sar
+#endif
+	vdepi	1, 1, t3
+	stw	t3, R%whichqs(t2)
+Lqnempty
+	bv	0(rp)
+	nop
+EXIT(remrunqueue)
 
 /*
  * cpu_switch()
  * Find the highest priority process and resume it.
  */
-	ENTRY(cpu_switch)
-	EXIT(cpu_switch)
+ENTRY(cpu_switch)
+
+	/*
+	 * Clear curproc so that we don't accumulate system time while idle.
+	 */
+	ldil	L%curproc, t1
+	ldw	R%curproc(t1), t2
+	stw	r0, R%curproc(t1)
+
+	/*
+	 * arg3: spl
+	 * t1:	&whichqs
+	 * t2:	old curproc
+	 *
+	 */
+
+switch_search
+	/* arg3 = splhigh() */
+	mfctl	cr15, arg3
+idle_loop
+	rsm	PSW_I, r0
+	mtctl	r0, cr15
+
+	/* 1. find new process */
+	ldil	L%whichqs, t1
+	ldw	R%whichqs(t1), t3
+
+	comb,<>	r0, t3, gotprocs
+
+	mtctl	arg3, cr15
+	ssm	PSW_I, r0
+	/* XXX do idle work here */
+	b	idle_loop
+	nop
+
+gotprocs
+	ldi	0, t4
+getbit
+	addi	1, t4, t4
+	bb,>=	t3,0,getbit
+	shd	t3, t3, 1, t3
+
+	ldil	L%qs, t3
+	ldo	R%qs(t3), t3
+	sh3add	t4, t3, t3
+
+	ldw	p_forw(t3), arg1
+#ifdef DIAGNOSTIC
+	comb,<>,n t3, arg1, link_ok
+switch_error
+	ldil	L%switch_panic, arg0
+	ldo	R%switch_panic(arg0), arg0
+	ldil    L%panic, arg1
+	ldo     R%panic(arg1), arg1
+	.call
+	blr     %r0, rp
+	bv,n    (r1)
+
+switch_panic	.asciz	"cpu_switch"
+link_ok
+#endif
+	ldw	p_forw(arg1), arg0
+	stw	arg0, p_forw(t3)
+	stw	t3, p_back(arg0)
+
+	comb,<> arg0, t3, sw_qnempty
+	ldw	R%whichqs(t1), t3
+	mtctl	t4, sar
+	vdepi	1, 1, t3
+	stw	t3, R%whichqs(t1)
+
+	/* don't need &whichqs(t1) starting here */
+sw_qnempty
+	ldil	L%want_resched, t3
+	stw	r0, R%want_resched(t3)
+
+#ifdef DIAGNOSTIC
+	ldw	p_wchan(arg1), t1
+	comb,=,n r0, t1, switch_error
+	ldw	p_stat(arg1), t1
+	comib,<>,n SRUN, t1, switch_error
+#endif
+	ldil	L%curproc, t1
+	stw	r0, p_back(arg1)
+	stw	arg1, R%curproc(t1)
+
+	/* enable interrupts */
+	ssm	PSW_I, r0
+
+	/* Skip context switch if same process. */
+	comb,=,n arg1, t2, switch_return
+
+	/* If old process exited, don't bother. */
+	comb,=,n r0, t2, switch_exited
+
+	/*
+	 * 2. save old proc context
+	 *
+	 * t2: old proc
+	 *
+	 * nothing to save, everything needed to be done is already
+	 * dome on enter, wonderfull.
+	 */
+
+	/* don't need old curproc(t2) starting from here */
+switch_exited
+	/*
+	 * 3. restore new proc context
+	 *
+	 * arg1: new proc
+	 * arg2: new pcb
+	 */
+	rsm	PSW_I, r0
+
+	ldw	p_addr(arg1), arg2
+	/* only pidr needs restoring, so we can access user space */
+	ldw	TF_CR13+pcb_tf+u_pcb(arg2), t1
+	mtctl	t1, pidr4
+
+switch_return
+	mtctl	arg3, cr15
+	bv	0(rp)
+	ssm	PSW_I, r0
+
+EXIT(cpu_switch)
+
+/*
+ * switch_exit(struct proc *p)
+ * restore proc0 context and go into cpu_switch to select the next runable
+ * process.
+ */
+	.import	proc0, data
+	.import	kernel_map, data
+	.import	uvmspace_free, code
+	.import	uvm_km_free, code
+ENTRY(switch_exit)
+
+	/* no curproc */
+	ldil	L%curproc, t1
+	stw	r0, R%curproc(t1)
+
+	ldil	L%proc0, arg0
+	ldo	R%proc0(t1), arg0
+
+	/* setup kernel context */
+	ldi	HPPA_SID_KERNEL, t4
+	mtctl	t4, sr0
+	mtctl	t4, sr1
+	mtctl	t4, sr2
+	mtctl	t4, sr3
+	mtctl	t4, sr4
+	mtctl	t4, sr5
+	mtctl	t4, sr6
+	mtctl	t4, sr7
+
+	/* leave pidr4 in user space so copy* work */
+	ldi	HPPA_PID_KERNEL, t4
+	mtctl	t4, pidr1
+	mtctl	t4, pidr2
+	mtctl	t4, pidr3
+	mtctl	t4, pidr4
+
+	b	switch_search
+	nop
+EXIT(switch_exit)
+
+ENTRY(switch_trampoline)
+	/* TODO */
+	bv	0(rp)
+	nop
+EXIT(switch_trampoline)
+
+ENTRY(child_return)
+	/* TODO */
+	bv	0(rp)
+	nop
+EXIT(child_return)
 
 /*
  * Signal "trampoline" code. Invoked from RTE setup by sendsig().
  */
-	ENTRY(sigcode)
+ENTRY(sigcode)
+	/* TODO */
+ALTENTRY(esigcode)
+	bv	0(rp)
+	nop
+EXIT(sigcode)
 
-	ALTENTRY(esigcode)
-	EXIT(sigcode)
+#ifdef COMPAT_LINUX
+ENTRY(linux_sigcode)
+
+ALTENTRY(linux_esigcode)
+	/* TODO */
+	bv	0(rp)
+	nop
+EXIT(linix_esigcode)
+#endif /* COMPAT_LINUX */
 
 	/* Leave this down here.  It avoids a nasty, hard-to-fix bug in gas. */
 	.space $PRIVATE$
