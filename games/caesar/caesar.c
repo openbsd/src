@@ -1,4 +1,4 @@
-/*    $NetBSD: caesar.c,v 1.4 1996/02/06 22:47:15 jtc Exp $   */
+/*	$OpenBSD: caesar.c,v 1.6 1998/03/12 09:06:43 pjanzen Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -51,7 +51,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)caesar.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$NetBSD: caesar.c,v 1.4 1996/02/06 22:47:15 jtc Exp $";
+static char rcsid[] = "$OpenBSD: caesar.c,v 1.6 1998/03/12 09:06:43 pjanzen Exp $";
 #endif
 #endif /* not lint */
 
@@ -98,7 +98,7 @@ main(argc, argv)
 
 	if (argc > 1) {
 		if ((i = atoi(argv[1])))
-			printit(atoi(argv[1]));
+			printit(i);
 		else
 			usage();
 	}
