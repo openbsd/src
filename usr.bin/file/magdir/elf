@@ -40,6 +40,7 @@
 >>18	leshort		17		VPP500,
 >>18	leshort		18		SPARC32PLUS,
 >>18	leshort		20		PowerPC,
+>>18	leshort		40		ARM,
 >>18	leshort		43		Sparc64 - invalid byte order,
 >>18	leshort		75		VAX,
 >>18	leshort		0x9026		Alpha,
