@@ -1,4 +1,4 @@
-/*	$OpenBSD: inetd.c,v 1.27 1997/06/04 11:07:05 deraadt Exp $	*/
+/*	$OpenBSD: inetd.c,v 1.28 1997/06/17 05:26:22 denny Exp $	*/
 /*	$NetBSD: inetd.c,v 1.11 1996/02/22 11:14:41 mycroft Exp $	*/
 /*
  * Copyright (c) 1983,1991 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)inetd.c	5.30 (Berkeley) 6/3/91";*/
-static char rcsid[] = "$OpenBSD: inetd.c,v 1.27 1997/06/04 11:07:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: inetd.c,v 1.28 1997/06/17 05:26:22 denny Exp $";
 #endif /* not lint */
 
 /*
@@ -85,6 +85,30 @@ static char rcsid[] = "$OpenBSD: inetd.c,v 1.27 1997/06/04 11:07:05 deraadt Exp 
  *	user[.group]			user to run daemon as
  *	server program			full path name
  *	server program arguments	maximum of MAXARGS (20)
+ *
+ * For non-RPC services, the "service name" can be of the form
+ * hostaddress:servicename, in which case the hostaddress is used
+ * as the host portion of the address to listen on.  If hostaddress
+ * consists of a single `*' character, INADDR_ANY is used.
+ *
+ * A line can also consist of just
+ *      hostaddress:
+ * where hostaddress is as in the preceding paragraph.  Such a line must
+ * have no further fields; the specified hostaddress is remembered and
+ * used for all further lines that have no hostaddress specified,
+ * until the next such line (or EOF).  (This is why * is provided to
+ * allow explicit specification of INADDR_ANY.)  A line
+ *      *:
+ * is implicitly in effect at the beginning of the file.
+ *
+ * The hostaddress specifier may (and often will) contain dots;
+ * the service name must not.
+ *
+ * For RPC services, host-address specifiers are accepted and will
+ * work to some extent; however, because of limitations in the
+ * portmapper interface, it will not work to try to give more than
+ * one line for any given RPC service, even if the host-address
+ * specifiers are different.
  *
  * Comment lines are indicated by a `#' in column 1.
  */
@@ -178,6 +202,7 @@ struct rlimit	rlim_ofile;
 #endif
 
 struct	servtab {
+	char	*se_hostaddr;		/* host address to listen on */
 	char	*se_service;		/* name of service */
 	int	se_socktype;		/* type of socket to use */
 	int	se_family;		/* address family */
@@ -612,6 +637,7 @@ config(sig)
 	while ((cp = getconfigent())) {
 		for (sep = servtab; sep; sep = sep->se_next)
 			if (strcmp(sep->se_service, cp->se_service) == 0 &&
+			    strcmp(sep->se_hostaddr, cp->se_hostaddr) == 0 &&
 			    strcmp(sep->se_proto, cp->se_proto) == 0)
 				break;
 		if (sep != 0) {
@@ -667,6 +693,55 @@ config(sig)
 			break;
 		case AF_INET:
 			sep->se_ctrladdr_in.sin_family = AF_INET;
+			if (!strcmp(sep->se_hostaddr,"*"))
+				sep->se_ctrladdr_in.sin_addr.s_addr =
+				    INADDR_ANY;
+			else if (!inet_aton(sep->se_hostaddr,
+			    &sep->se_ctrladdr_in.sin_addr)) {
+				/*
+				 * Do we really want to support hostname
+				 * lookups here?
+				 */
+				struct hostent *hp;
+				hp = gethostbyname(sep->se_hostaddr);
+				if (hp == 0) {
+					syslog(LOG_ERR, "%s: unknown host",
+					    sep->se_hostaddr);
+					sep->se_checked = 0;
+					continue;
+				} else if (hp->h_addrtype != AF_INET) {
+					syslog(LOG_ERR,
+					    "%s: address isn't an Internet "
+					    "address",
+					    sep->se_hostaddr);
+					sep->se_checked = 0;
+					continue;
+				} else if (hp->h_length != sizeof(struct in_addr)) {
+					syslog(LOG_ERR,
+			"%s: address size wrong (under DNS corruption attack?)",
+					    sep->se_hostaddr);
+					sep->se_checked = 0;
+					continue;
+				} else {
+					/*
+					 * What to do about multi-homed hosts?
+					 *
+					 * The resolver may be doing
+					 * random load balancing. Somehow
+					 * this doesn't seem like what the
+					 * user intended.
+					 */
+					if (hp->h_addr_list[1] != NULL) {
+						syslog(LOG_WARNING,
+				"%s has multiple addresses, using the first",
+							sep->se_hostaddr);
+					}
+
+					bcopy(hp->h_addr_list[0],
+						&sep->se_ctrladdr_in.sin_addr,
+						sizeof(struct in_addr));
+				}
+			}
 			sep->se_ctrladdr_size = sizeof sep->se_ctrladdr_in;
 			if (isrpcservice(sep)) {
 				struct rpcent *rp;
@@ -939,6 +1014,7 @@ enter(cp)
 FILE	*fconfig = NULL;
 struct	servtab serv;
 char	line[1024];
+char	*defhost;
 char	*skip __P((char **));
 char	*nextline __P((FILE *));
 char	*newstr __P((char *));
@@ -946,7 +1022,8 @@ char	*newstr __P((char *));
 int
 setconfig()
 {
-
+	if (defhost) free(defhost);
+	defhost = newstr("*");
 	if (fconfig != NULL) {
 		fseek(fconfig, 0L, L_SET);
 		return (1);
@@ -962,6 +1039,10 @@ endconfig()
 		(void) fclose(fconfig);
 		fconfig = NULL;
 	}
+	if (defhost) {
+		free(defhost);
+		defhost = 0;
+	}
 }
 
 struct servtab *
@@ -970,6 +1051,7 @@ getconfigent()
 	register struct servtab *sep = &serv;
 	int argc;
 	char *cp, *arg;
+	char *hostdelim;
 
 more:
 #ifdef MULOG
@@ -1007,10 +1089,35 @@ more:
 	if (cp == NULL)
 		return ((struct servtab *)0);
 	bzero((char *)sep, sizeof *sep);
-	sep->se_service = newstr(skip(&cp));
 	arg = skip(&cp);
-	if (arg == NULL)
+	if (arg == NULL) {
+		/* A blank line. */
 		goto more;
+	}
+
+	/* Check for a host name. */
+	hostdelim = strrchr(arg, ':');
+	if (hostdelim) {
+		*hostdelim = '\0';
+		sep->se_hostaddr = newstr(arg);
+		arg = hostdelim + 1;
+		/*
+		 * If the line is of the form `host:', then just change the
+		 * default host for the following lines.
+		 */
+		if (*arg == '\0') {
+			arg = skip(&cp);
+			if (cp == NULL) {
+				free(defhost);
+				defhost = sep->se_hostaddr;
+				goto more;
+			}
+		}
+	} else
+		sep->se_hostaddr = newstr(defhost);
+
+	sep->se_service = newstr(arg);
+	arg = skip(&cp);
 
 	if (strcmp(arg, "stream") == 0)
 		sep->se_socktype = SOCK_STREAM;
@@ -1134,6 +1241,8 @@ freeconfig(cp)
 {
 	int i;
 
+	if (cp->se_hostaddr)
+		free(cp->se_hostaddr);
 	if (cp->se_service)
 		free(cp->se_service);
 	if (cp->se_proto)
