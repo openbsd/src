@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: ipcp.c,v 1.38 2003/04/28 17:36:56 beck Exp $
+ * $OpenBSD: ipcp.c,v 1.39 2004/06/26 20:12:48 claudio Exp $
  */
 
 #include <sys/param.h>
@@ -754,7 +754,7 @@ IpcpSendConfigReq(struct fsm *fp)
   /* Send config REQ please */
   struct physical *p = link2physical(fp->link);
   struct ipcp *ipcp = fsm2ipcp(fp);
-  u_char buff[24];
+  u_char buff[MAX_FSM_OPT_LEN];
   struct fsm_opt *o;
 
   o = (struct fsm_opt *)buff;
@@ -1050,7 +1050,7 @@ IpcpDecodeConfig(struct fsm *fp, u_char *cp, u_char *end, int mode_type,
   struct ipcp *ipcp = fsm2ipcp(fp);
   int gotdnsnak;
   u_int32_t compproto;
-  struct compreq *pcomp;
+  struct compreq *pcomp, pcompbuff;
   struct in_addr ipaddr, dstipaddr, have_ip;
   char tbuff[100], tbuff2[100];
   struct fsm_opt *opt, nak;
@@ -1098,7 +1098,8 @@ IpcpDecodeConfig(struct fsm *fp, u_char *cp, u_char *end, int mode_type,
       break;
 
     case TY_COMPPROTO:
-      pcomp = (struct compreq *)opt->data;
+      pcomp = &pcompbuff;
+      memcpy(pcomp, opt->data, sizeof(pcompbuff));
       compproto = (ntohs(pcomp->proto) << 16) + (pcomp->slots << 8) +
                   pcomp->compcid;
       log_Printf(LogIPCP, "%s %s\n", tbuff, vj2asc(compproto));

@@ -25,7 +25,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenBSD: lcp.c,v 1.38 2003/04/07 23:58:53 deraadt Exp $
+ * $OpenBSD: lcp.c,v 1.39 2004/06/26 20:12:48 claudio Exp $
  */
 
 #include <sys/param.h>
@@ -660,7 +660,7 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, u_char *end, int mode_type,
   int sz, pos, op, callback_req, chap_type;
   u_int32_t magic, accmap;
   u_short mru, phmtu, maxmtu, maxmru, wantmtu, wantmru, proto;
-  struct lqrreq *req;
+  struct lqrreq *req, reqbuff;
   char request[20], desc[22];
   struct mp *mp;
   struct physical *p = link2physical(fp->link);
@@ -927,7 +927,8 @@ LcpDecodeConfig(struct fsm *fp, u_char *cp, u_char *end, int mode_type,
       break;
 
     case TY_QUALPROTO:
-      req = (struct lqrreq *)opt;
+      req = &reqbuff;
+      memcpy(req, opt, sizeof(reqbuff));
       log_Printf(LogLCP, "%s proto %x, interval %lums\n",
                 request, ntohs(req->proto), (u_long)ntohl(req->period) * 10);
       switch (mode_type) {
