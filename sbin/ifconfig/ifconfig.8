@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ifconfig.8,v 1.92 2004/12/01 09:59:35 jmc Exp $
+.\"	$OpenBSD: ifconfig.8,v 1.93 2004/12/01 22:30:53 jmc Exp $
 .\"	$NetBSD: ifconfig.8,v 1.11 1996/01/04 21:27:29 pk Exp $
 .\"     $FreeBSD: ifconfig.8,v 1.16 1998/02/01 07:03:29 steve Exp $
 .\"
@@ -475,6 +475,7 @@ operating modes.
 Set the MTU for this device to the given
 .Ar value .
 Cloned routes will inherit this value as a default.
+Currently, not all devices support setting the MTU.
 .It Cm netmask Ar mask
 (inet and inet6)
 Specify how much of the address to reserve for subdividing
