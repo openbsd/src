@@ -1,7 +1,7 @@
-/*	$OpenBSD: mainbus.c,v 1.8 2000/01/17 06:43:04 mickey Exp $	*/
+/*	$OpenBSD: mainbus.c,v 1.9 2000/02/09 05:56:50 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998,1999 Michael Shalayeff
+ * Copyright (c) 1998-2000 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -72,7 +72,7 @@ extern struct extent *hppa_ex;
 extern struct pdc_btlb pdc_btlb;
 
 int
-mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
+mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cachable,
     bus_space_handle_t *bshp)
 {
 	extern u_int virtual_avail;
@@ -80,8 +80,8 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 	int bank, off;
 
 #ifdef BTLBDEBUG
-	printf("bus_mem_add_mapping(%x,%x,%scaceable,%p)\n",
-	    bpa, size, cacheable?"":"non", bshp);
+	printf("bus_mem_add_mapping(%x,%x,%scachable,%p)\n",
+	    bpa, size, cachable?"":"non", bshp);
 #endif
 	if (bpa > 0 && bpa < virtual_avail)
 		*bshp = bpa;
@@ -96,6 +96,13 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 		 */
 		static u_int32_t bmm[0x4000/32];
 		int flex = HPPA_FLEX(bpa);
+
+#ifdef DEBUG
+		if (cachable) {
+			printf("WARNING: mapping I/O space cachable\n");
+			cachable = 0;
+		}
+#endif
 
 		/* need a new mapping */
 		if (!(bmm[flex / 32] & (1 << (flex % 32)))) {
@@ -163,7 +170,7 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 		*bshp = (bus_space_handle_t)(va + (bpa & PGOFSET));
 
 		for (; spa < epa; spa += NBPG, va += NBPG) {
-			if (!cacheable)
+			if (!cachable)
 				pmap_changebit(spa, TLB_UNCACHEABLE, ~0);
 			else
 				pmap_changebit(spa, 0, ~TLB_UNCACHEABLE);
@@ -178,14 +185,14 @@ mbus_add_mapping(bus_addr_t bpa, bus_size_t size, int cacheable,
 
 int
 mbus_map(void *v, bus_addr_t bpa, bus_size_t size,
-    int cacheable, bus_space_handle_t *bshp)
+    int cachable, bus_space_handle_t *bshp)
 {
 	register int error;
 
 	if ((error = extent_alloc_region(hppa_ex, bpa, size, EX_NOWAIT)))
 		return (error);
 
-	if ((error = mbus_add_mapping(bpa, size, cacheable, bshp))) {
+	if ((error = mbus_add_mapping(bpa, size, cachable, bshp))) {
 		if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
 			printf ("bus_space_map: pa 0x%lx, size 0x%lx\n",
 				bpa, size);
@@ -223,7 +230,7 @@ mbus_unmap(void *v, bus_space_handle_t bsh, bus_size_t size)
 
 int
 mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
-	 bus_size_t align, bus_size_t boundary, int cacheable,
+	 bus_size_t align, bus_size_t boundary, int cachable,
 	 bus_addr_t *addrp, bus_space_handle_t *bshp)
 {
 	u_long bpa;
@@ -236,7 +243,7 @@ mbus_alloc(void *v, bus_addr_t rstart, bus_addr_t rend, bus_size_t size,
 					    align, boundary, EX_NOWAIT, &bpa)))
 		return (error);
 
-	if ((error = mbus_add_mapping(bpa, size, cacheable, bshp))) {
+	if ((error = mbus_add_mapping(bpa, size, cachable, bshp))) {
 		if (extent_free(hppa_ex, bpa, size, EX_NOWAIT)) {
 			printf("bus_space_alloc: pa 0x%lx, size 0x%lx\n",
 				bpa, size);
@@ -598,13 +605,13 @@ const struct hppa_bus_space_tag hppa_bustag = {
 	mbus_wm_1,  mbus_wm_2, mbus_wm_4, mbus_wm_8,
 	mbus_sm_1,  mbus_sm_2, mbus_sm_4, mbus_sm_8,
 	/* *_raw_* are the same as non-raw for native busses */
-	            crr(mbus_rm_2), crr(mbus_rm_4), crr(mbus_rm_8),
-	            cwr(mbus_wm_2), cwr(mbus_wm_4), cwr(mbus_wm_8),
+	            crr(mbus_rm_1), crr(mbus_rm_1), crr(mbus_rm_1),
+	            cwr(mbus_wm_1), cwr(mbus_wm_1), cwr(mbus_wm_1),
 	mbus_rr_1,  mbus_rr_2, mbus_rr_4, mbus_rr_8,
 	mbus_wr_1,  mbus_wr_2, mbus_wr_4, mbus_wr_8,
 	/* *_raw_* are the same as non-raw for native busses */
-	            crr(mbus_rr_2), crr(mbus_rr_4), crr(mbus_rr_8),
-	            cwr(mbus_wr_2), cwr(mbus_wr_4), cwr(mbus_wr_8),
+	            crr(mbus_rr_1), crr(mbus_rr_1), crr(mbus_rr_1),
+	            cwr(mbus_wr_1), cwr(mbus_wr_1), cwr(mbus_wr_1),
 	mbus_sr_1,  mbus_sr_2, mbus_sr_4, mbus_sr_8,
 	mbus_cp_1,  mbus_cp_2, mbus_cp_4, mbus_cp_8
 };
