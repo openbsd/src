@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.6 2001/04/15 06:01:28 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.7 2001/04/23 13:48:42 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -354,8 +354,8 @@ siop_intr(v)
 	struct siop_cmd *siop_cmd;
 	struct siop_lun *siop_lun;
 	struct scsi_xfer *xs;
-	int istat, sist, sstat1, dstat;
-	u_int32_t irqcode;
+	int istat, sist = 0, sstat1 = 0, dstat = 0;
+	u_int32_t irqcode = 0;
 	int need_reset = 0;
 	int offset, target, lun, tag;
 	bus_addr_t dsa;
@@ -603,7 +603,7 @@ siop_intr(v)
 			    SIOP_DSP) - 8);
 			return 1;
 		}
-		/* Else it's an unhandled exeption (for now). */
+		/* Else it's an unhandled exception (for now). */
 		printf("%s: unhandled scsi interrupt, sist=0x%x sstat1=0x%x "
 		    "DSA=0x%x DSP=0x%x\n", sc->sc_dev.dv_xname, sist,
 		    bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_SSTAT1),
@@ -941,13 +941,15 @@ scintr:
 		}
 		return 1;
 	}
-	/* We just shouldn't get here */
-	printf("istat = 0x%x, dstat = 0x%x, sist = 0x%x, sstat1 = 0x%x\n", istat, dstat, sist, sstat1);
-	printf("need_reset = %d, irqcode = %d, siop_cmd = %p, siop_target = %p, xs = %p\n");
-	if (siop_cmd != NULL)
-		printf("siop_cmd->status = %d\n", siop_cmd->status);
-	panic("%s: siop_intr: I shouldn't be here!", sc->sc_dev.dv_xname);
-	return 1;
+	/* We can get here if ISTAT_DIP and DSTAT_DFE are the only bits set. */
+	/* But that *SHOULDN'T* happen. It does on powerpc (at least).	     */
+	printf("%s: siop_intr() - we should not be here!\n"
+	    "   istat = 0x%x, dstat = 0x%x, sist = 0x%x, sstat1 = 0x%x\n"
+	    "   need_reset = %x, irqcode = %x, siop_cmd %s\n",
+	    sc->sc_dev.dv_xname,
+	    istat, dstat, sist, sstat1, need_reset, irqcode,
+	    (siop_cmd == NULL) ? "== NULL" : "!= NULL");
+	goto reset; /* Where we should have gone in the first place! */
 end:
 	/*
 	 * Restart the script now if command completed properly.
