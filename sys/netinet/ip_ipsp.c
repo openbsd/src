@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.11 1997/07/01 22:12:51 provos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.12 1997/07/02 06:58:42 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -117,7 +117,7 @@ int ipspkernfs_dirty = 1;
  */
 
 u_int32_t
-reserve_spi(u_int32_t tspi, struct in_addr src)
+reserve_spi(u_int32_t tspi, struct in_addr src, int *errval)
 {
     struct tdb *tdbp;
     u_int32_t spi = tspi;		/* Don't change */
@@ -131,15 +131,21 @@ reserve_spi(u_int32_t tspi, struct in_addr src)
 	if (gettdb(spi, src) != (struct tdb *) NULL)
 	{
 	    if (tspi != 0)		/* If one was proposed, report error */
-	      return 0;
-	    
+	    {
+		(*errval) = EEXIST;
+	      	return 0;
+	    }
+
 	    spi = 0;
 	    continue;
 	}
 	
 	MALLOC(tdbp, struct tdb *, sizeof(*tdbp), M_TDB, M_WAITOK);
 	if (tdbp == NULL)
-	  return 0;
+	{
+	    spi = 0;
+	    (*errval) = ENOBUFS;
+	} 
 
 	bzero((caddr_t)tdbp, sizeof(*tdbp));
 	
@@ -214,7 +220,10 @@ tdb_delete(struct tdb *tdbp, int delchain)
 	
     ipspkernfs_dirty = 1;
     tdbpp = tdbp->tdb_onext;
-    (*(tdbp->tdb_xform->xf_zeroize))(tdbp);
+
+    if (tdbp->tdb_xform)
+      (*(tdbp->tdb_xform->xf_zeroize))(tdbp);
+
     FREE(tdbp, M_TDB);
     if (delchain && tdbpp)
       return tdb_delete(tdbpp, delchain);
@@ -281,7 +290,10 @@ ipsp_kern(int off, char **bufp, int len)
       {
 	  /* Being paranoid to avoid buffer overflows */
 
-          k += 126 + strlen(tdbp->tdb_xform->xf_name);
+	  if (tdbp->tdb_xform)
+            k += 126 + strlen(tdbp->tdb_xform->xf_name);
+	  else
+	    k += 60;
       }
 
     if (k == 0)
@@ -295,13 +307,17 @@ ipsp_kern(int off, char **bufp, int len)
       for (tdbp = tdbh[i]; tdbp != (struct tdb *) NULL; tdbp = tdbp->tdb_hnext)
       {
 	  b = (char *)&(tdbp->tdb_dst.s_addr);
-	  k += sprintf(ipspkernfs + k, 
-		       "SPI=%x, destination=%d.%d.%d.%d\n algorithm=%d (%s)\n next SPI=%x, previous SPI=%x\n", 
-		       ntohl(tdbp->tdb_spi), ((int)b[0] & 0xff), ((int)b[1] & 0xff), 
-		       ((int)b[2] & 0xff), ((int)b[3] & 0xff), 
-		       tdbp->tdb_xform->xf_type, tdbp->tdb_xform->xf_name,
-		       (tdbp->tdb_onext ? ntohl(tdbp->tdb_onext->tdb_spi) : 0),
-		       (tdbp->tdb_inext ? ntohl(tdbp->tdb_inext->tdb_spi) : 0));
+	  if (!tdbp->tdb_xform)
+	    k += sprintf(ipspkernfs + k, "SPI=%x, destination=%d.%d.%d.%d\n",
+			 tdbp->tdb_spi, ((int)b[0] & 0xff), ((int)b[1] & 0xff), ((int)b[2] & 0xff), ((int)b[3] & 0xff));
+	  else
+	    k += sprintf(ipspkernfs + k, 
+		         "SPI=%x, destination=%d.%d.%d.%d\n algorithm=%d (%s)\n next SPI=%x, previous SPI=%x\n", 
+		         ntohl(tdbp->tdb_spi), ((int)b[0] & 0xff), ((int)b[1] & 0xff), 
+		         ((int)b[2] & 0xff), ((int)b[3] & 0xff), 
+		         tdbp->tdb_xform->xf_type, tdbp->tdb_xform->xf_name,
+		         (tdbp->tdb_onext ? ntohl(tdbp->tdb_onext->tdb_spi) : 0),
+		         (tdbp->tdb_inext ? ntohl(tdbp->tdb_inext->tdb_spi) : 0));
       }
 
     ipspkernfs[k] = '\0';

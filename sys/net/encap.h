@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.h,v 1.5 1997/07/01 22:12:40 provos Exp $	*/
+/*	$OpenBSD: encap.h,v 1.6 1997/07/02 06:58:40 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -271,14 +271,14 @@ struct encap_msghdr
 
 /* Total packet lengths */
 #define EMT_SETSPI_FLEN	      124
-#define EMT_GRPSPIS_FLEN      20
-#define EMT_GENLEN            12
+#define EMT_GRPSPIS_FLEN      24
+#define EMT_GENLEN            16
 #define EMT_DELSPI_FLEN       EMT_GENLEN
 #define EMT_DELSPICHAIN_FLEN  EMT_GENLEN
 #define EMT_ENABLESPI_FLEN    EMT_GENLEN
 #define EMT_DISABLESPI_FLEN   EMT_GENLEN
 #define EMT_RESERVESPI_FLEN   EMT_GENLEN
-#define EMT_NOTIFY_FLEN       40
+#define EMT_NOTIFY_FLEN       44
 
 #ifdef _KERNEL
 extern struct ifaddr *encap_findgwifa(struct sockaddr *);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: encap.c,v 1.6 1997/07/01 22:12:40 provos Exp $	*/
+/*	$OpenBSD: encap.c,v 1.7 1997/07/02 06:58:40 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -182,18 +182,18 @@ va_dcl
 	case EMT_SETSPI:
 	    if (emlen <= EMT_SETSPI_FLEN)
 	      SENDERR(EINVAL);
-	    
+
+	    /* 
+	     * If only one of the two outter addresses is set, return
+	     * error.
+	     */
+	    if ((emp->em_osrc.s_addr != 0) ^
+		(emp->em_odst.s_addr != 0))
+	      SENDERR(EINVAL);	    
+
 	    tdbp = gettdb(emp->em_spi, emp->em_dst);
 	    if (tdbp == NULL)
 	    {
-		/* 
-		 * If only one of the two outter addresses is set, return
-		 * error.
-		 */
-		if ((emp->em_osrc.s_addr != 0) ^
-		    (emp->em_odst.s_addr != 0))
-		  SENDERR(EINVAL);
-		
 		MALLOC(tdbp, struct tdb *, sizeof (*tdbp), M_TDB, M_WAITOK);
 		if (tdbp == NULL)
 		  SENDERR(ENOBUFS);
@@ -203,41 +203,45 @@ va_dcl
 		tdbp->tdb_spi = emp->em_spi;
 		tdbp->tdb_dst = emp->em_dst;
 
-		tdbp->tdb_proto = emp->em_proto;
-		tdbp->tdb_sport = emp->em_sport;
-		tdbp->tdb_dport = emp->em_dport;
-
-	        tdbp->tdb_src = emp->em_src;
-
-		/* Check if this is an encapsulating SPI */
-		if (emp->em_osrc.s_addr != 0)
-		{
-		    tdbp->tdb_flags |= TDBF_TUNNELING;
-		    tdbp->tdb_osrc = emp->em_osrc;
-		    tdbp->tdb_odst = emp->em_odst;
-
-		    /* TTL */
-		    switch (emp->em_ttl)
-		    {
-			case IP4_DEFAULT_TTL:
-			    tdbp->tdb_ttl = 0;
-			    break;
-			    
-			case IP4_SAME_TTL:
-			    tdbp->tdb_flags |= TDBF_SAME_TTL;
-			    break;
-
-			default:
-			    /* Get just the least significant bits */
-			    tdbp->tdb_ttl = emp->em_ttl % 256;
-			    break;
-		    }
-		}
-		
 		puttdb(tdbp);
 	    }
 	    else
-	      (*tdbp->tdb_xform->xf_zeroize)(tdbp);
+	      if (tdbp->tdb_xform)
+	        (*tdbp->tdb_xform->xf_zeroize)(tdbp);
+	    
+	    tdbp->tdb_proto = emp->em_proto;
+	    tdbp->tdb_sport = emp->em_sport;
+	    tdbp->tdb_dport = emp->em_dport;
+
+	    tdbp->tdb_src = emp->em_src;
+
+	    /* Check if this is an encapsulating SPI */
+	    if (emp->em_osrc.s_addr != 0)
+	    {
+		tdbp->tdb_flags |= TDBF_TUNNELING;
+		tdbp->tdb_osrc = emp->em_osrc;
+		tdbp->tdb_odst = emp->em_odst;
+		
+		/* TTL */
+		switch (emp->em_ttl)
+		{
+		    case IP4_DEFAULT_TTL:
+			tdbp->tdb_ttl = 0;
+			break;
+			
+		    case IP4_SAME_TTL:
+			tdbp->tdb_flags |= TDBF_SAME_TTL;
+			break;
+
+		    default:
+			/* Get just the least significant bits */
+			tdbp->tdb_ttl = emp->em_ttl % 256;
+			break;
+		}
+	    }
+	    
+	    /* Clear the INVALID flag */
+	    tdbp->tdb_flags &= (~TDBF_INVALID);
 
 	    /* Various timers/counters */
 	    if (emp->em_relative_hard != 0)
@@ -359,12 +363,9 @@ va_dcl
 	    if (emlen != EMT_RESERVESPI_FLEN)
 	      SENDERR(EINVAL);
 	    
-	    spi = reserve_spi(emp->em_gen_spi, emp->em_gen_dst);
+	    spi = reserve_spi(emp->em_gen_spi, emp->em_gen_dst, &error);
 	    if (spi == 0)
-	      if (emp->em_gen_spi == 0)
-		SENDERR(ENOBUFS);
-	      else
-		SENDERR(EINVAL);
+	      SENDERR(error);
 
 	    emp->em_gen_spi = spi;
 	    
@@ -394,6 +395,8 @@ va_dcl
 	    /* Clear the INVALID flag */
 	    tdbp->tdb_flags &= (~TDBF_INVALID);
 
+	    /* XXX Install a routing entry */
+
 	    error = 0;
 
 	    break;
@@ -408,6 +411,8 @@ va_dcl
 	    
 	    /* Set the INVALID flag */
 	    tdbp->tdb_flags |= TDBF_INVALID;
+
+	    /* XXX Delete a routing entry, if on exists */
 
 	    error = 0;
 	    
