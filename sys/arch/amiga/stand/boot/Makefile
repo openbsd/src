@@ -1,42 +1,47 @@
-#	$OpenBSD: Makefile,v 1.2 1997/03/22 00:19:56 niklas Exp $
+#	$OpenBSD: Makefile,v 1.3 1997/03/25 17:05:49 niklas Exp $
 
 NOPROG=	installboot
 MAN=installboot.8
 
 SUBDIR=aout2bb txlt
 
-TXLT=txlt/txlt
+AOUT2BB!=cd $(.CURDIR)/aout2bb; \
+	printf "xxx:\n\techo \$${.OBJDIR}/aout2bb\n" | \
+	${MAKE} -r -s -f - xxx | grep aout2bb
 
-OBJS = configure.o main.o
-OBJS += console.o xd.o
+TXLT!=	cd $(.CURDIR)/txlt; \
+	printf "xxx:\n\techo \$${.OBJDIR}/txlt\n" | \
+	${MAKE} -r -s -f - xxx | grep txlt
+
+OBJS=	configure.o main.o
+OBJS+=	console.o xd.o
 
 # libsa library replacements:
-OBJS += alloc.o printf.o twiddle.o
+OBJS+=	alloc.o printf.o twiddle.o
 
 # libkern replacements:
-OBJS += bcopy.o bzero.o ashrdi3.o muldi3.o
+OBJS+=	bcopy.o ashrdi3.o muldi3.o
 
 # machine language startup code:
-OBJS += startit.o
+OBJS+=	startit.o
 
-SRCS = installboot.sh configure.c main.c console.c xd.c 
-SRCS+= twiddle.c
-SRCS+= bbstart.s libstubs.s alloc.s printf.s startit.s
-SRCS+= bcopy.s bzero.c ashrdi3.s muldi3.s
+SRCS=	installboot.sh configure.c main.c console.c xd.c twiddle.c
+SRCS+=	bbstart.s libstubs.s alloc.s printf.s startit.s
+SRCS+=	bcopy.s ashrdi3.s muldi3.s
 
-CLEANFILES = $(OBJS) $(BOOTBLOCKS) x.out xxstart.s f.out fdstart.s
+CLEANFILES=	$(OBJS) $(BOOTBLOCKS) x.out xxstart.s f.out fdstart.s
 
-S=	${.CURDIR}/../../../..
-INCPATH=-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
-COPTIM=	-O2 -fomit-frame-pointer -fno-function-cse -Wa,-l -m68060 -Wa,-m68030
-CFLAGS = ${COPTIM} ${INCPATH} ${DEFS}
-COPTS += -Wall -Wstrict-prototypes
+S=		${.CURDIR}/../../../..
+INCPATH=	-I${.CURDIR} -I${.CURDIR}/../.. -I${S} -I${S}/lib/libsa
+COPTIM=		-O -fomit-frame-pointer -fno-function-cse -Wa,-l -m68060 \
+		-Wa,-m68030
+CFLAGS=		${COPTIM} ${INCPATH} ${DEFS}
+COPTS+=		-Wall -Wstrict-prototypes
 
-BOOTBLOCKS=xxboot # XXX  fdboot is too large at the moment.
+BOOTBLOCKS=	xxboot # XXX  fdboot is too large at the moment.
 
 .s.o:
-	$(CC) $(CAFLAGS) $(COPTS) -x assembler-with-cpp -o $*.o -c \
-	    ${.CURDIR}/$*.s
+	$(CC) $(CAFLAGS) $(COPTS) -x assembler-with-cpp -o $*.o -c $<
 
 #libs:
 
@@ -69,11 +74,11 @@ $(BOOTBLOCKS): aout2bb
 
 xxboot: x.out
 	rm -f $@
-	aout2bb/aout2bb x.out $@ || nm -u x.out
+	${AOUT2BB} x.out $@ || nm -u x.out
 
 fdboot: f.out
 	rm -f $@
-	aout2bb/aout2bb -F f.out $@ || nm -u f.out
+	${AOUT2BB} -F f.out $@ || nm -u f.out
 
 clean::
 	rm -f $(OBJS) fdstart.[os] xxstart.[os] f.out x.out installboot

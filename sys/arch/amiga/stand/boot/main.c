@@ -1,5 +1,5 @@
 /*
- * $OpenBSD: main.c,v 1.1 1997/01/16 09:26:38 niklas Exp $
+ * $OpenBSD: main.c,v 1.2 1997/03/25 17:05:53 niklas Exp $
  * $NetBSD: main.c,v 1.1.1.1 1996/11/29 23:36:29 is Exp $
  *
  *
@@ -79,7 +79,7 @@ int get_cpuid __P((u_int32_t *));
 static long get_number(char **);
 
 const char version[] = "2.0";
-char default_command[] = "openbsd -Sn2";
+char default_command[] = "bsd -Sn2";
 
 int
 pain()
@@ -97,7 +97,6 @@ pain()
 	int	Z_flag = 0;
 	int	m_value = 0;
 	int	S_flag = 0;
-	int	t_flag = 0;
 	long stringsz;
 
 	u_int32_t fmem = 0x0;
@@ -105,6 +104,9 @@ pain()
 	int	cmemsz = 0x0;
 	int	eclock = SysBase->EClockFreq;
 	/* int	skip_chipmem = 0; */
+#if 0
+	const char *memt;
+#endif
 
 	void (*start_it)(void *, u_long, u_long, void *, u_long, u_long, int,
 	    void *, int, int, u_long, u_long, int) = startit;
@@ -132,13 +134,12 @@ pain()
 	 */
 
 	if (SysBase->LibNode.Version < EXECMIN) {
-		printf("Exec V%ld, need V%ld\n",
+		printf("Exec V%ld < V%ld\n",
 		    (long)SysBase->LibNode.Version, (long)EXECMIN);
 		goto out;
 	}
 
-	printf("\2337mOpenBSD/Amiga bootblock %s\2330m\n%s :- ",
-		version, kernel_name);
+	printf("\2337mOpenBSD/Amiga %s\2330m\n%s : ",version, kernel_name);
 
 	timelimit = 3;
 	gets(linebuf);
@@ -164,8 +165,8 @@ pain()
 				case 'b':	/* ask for root device */
 					boothowto |= RB_ASKNAME;
 					break;
-				case 'c':	/* force machine model */
-					cpuid = get_number(&path) << 16;
+				case 'c':
+					boothowto |= RB_CONFIG;
 					break;
 				case 'k':	/* Reserve first 4M fastmem */
 					k_flag++;
@@ -183,19 +184,17 @@ pain()
 				case 's':	/* single-user state */
 					boothowto |= RB_SINGLE;
 					break;
-				case 't':	/* test flag */
-					t_flag = 1;
-					break;
 				case 'A':	/* enable AGA modes */
 					amiga_flags |= 1;
+					break;
+				case 'C':	/* force machine model */
+					cpuid = get_number(&path) << 16;
 					break;
 				case 'D':	/* enter Debugger */
 					boothowto |= RB_KDB;
 					break;
 				case 'I':	/* inhibit sync negotiation */
 					I_flag = get_number(&path);
-					break;
-				case 'K':	/* remove 1st 4MB fastmem */
 					break;
 				case 'S':	/* include debug symbols */
 					S_flag = 1;
@@ -364,7 +363,7 @@ pain()
 	kvers = (u_short *)(kp + eh->a_entry - 2);
 
 	if (*kvers > KERNEL_STARTUP_VERSION_MAX && *kvers != 0x4e73) {
-                printf("\nnewer bootblock required: %ld\n", (long)*kvers);
+                printf("\nbootblock < V%ld\n", (long)*kvers);
 		goto freeall;
 	}
 #if 0
@@ -422,9 +421,9 @@ pain()
 		    (char *)startit_end - (char *)startit);
 		CacheClearU();
 		(caddr_t)start_it = kp + ksize + 256;
-		printf("*** Loading from %08lx to Fastmem %08lx ***\n",
-		    (u_long)kp, (u_long)fmem);
-		/* sleep(2); */
+#if 0
+		memt = "fast";
+#endif
 	} else {
 		/*
 		 * Either the kernel doesn't suppport loading directly to
@@ -432,13 +431,20 @@ pain()
 		 * fits into chipmem.
 		 */
 		if (ksize >= cmemsz) {
-			printf("Kernel size %d exceeds Chip Memory of %d\n",
+			printf("Kernel size %d > chipmem size %d\n",
 			    ksize, cmemsz);
 			return 20;
 		}
 		Z_flag = 1;
-		printf("*** Loading from %08lx to Chipmem ***\n", (u_long)kp);
+#if 0
+		memt = "chip";
+		fmem = 0;
+#endif
 	}
+#if 0
+	printf("Loading %08lx to %smem %08lx\n", (u_long)kp, memt,
+	    (u_long)fmem);
+#endif
 
 #if 0
 	printf("would start(kp=0x%lx, ksize=%ld, entry=0x%lx,\n"
@@ -461,7 +467,7 @@ freeall:
 	free(kp, ksize);
 	free(eh, sizeof(*eh));
 err:
-	printf("\nError %ld\n", (long)errno);
+	printf("\nErr %ld\n", (long)errno);
 	close(io);
 out:
 	timelimit = 10;
@@ -486,10 +492,7 @@ char **ptr;
 		sign = -1;
 		c = *++p;
 	}
-	if (c == '$') {
-		base = 16;
-		c = *++p;
-	} else if (c == '0') {
+	if (c == '0') {
 		c = *++p;
 		if ((c & 0xdf) == 'X') {
 			base = 16;
@@ -539,8 +542,7 @@ get_cpuid(cpuid)
 		case 4000:
 			return 0;
 		default:
-			printf("Amiga %ld ???\n",
-			    (long)(*cpuid >> 16));
+			printf("A%ld?\n", (long)(*cpuid >> 16));
 			return(1);
 		}
 	}
