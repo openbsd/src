@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.41 2002/05/09 21:22:01 millert Exp $
+#	$OpenBSD: special,v 1.42 2002/05/16 17:42:09 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -68,7 +68,8 @@ resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 resolv.conf.tail type=file mode=0644 uname=root gname=wheel optional
 security	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
-skeykeys	type=file mode=0600 uname=root gname=wheel optional
+skey		type=dir mode=01730 uname=root gname=auth optional
+..	#skey
 spwd.db		type=file mode=0600 uname=root gname=wheel
 ssh		type=dir mode=0755 uname=root gname=wheel optional
 ssh_config	type=file mode=0644 uname=root gname=wheel
