@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_rl.c,v 1.16 1999/07/23 14:51:53 ho Exp $	*/
+/*	$OpenBSD: if_rl.c,v 1.17 1999/09/30 00:12:22 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -143,43 +143,43 @@
  * so failure to positively identify the chip is not a fatal error.
  */
 
-static int rl_probe	__P((struct device *, void *, void *));
-static void rl_attach	__P((struct device *, struct device *, void *));
-static int rl_intr	__P((void *));
-static void rl_shutdown	__P((void *));
+int rl_probe	__P((struct device *, void *, void *));
+void rl_attach	__P((struct device *, struct device *, void *));
+int rl_intr	__P((void *));
+void rl_shutdown	__P((void *));
 
 /*
  * MII glue
  */
-static int rl_mii_read __P((struct device *, int, int));
-static void rl_mii_write __P((struct device *, int, int, int));
-static void rl_mii_statchg __P((struct device *));
+int rl_mii_read __P((struct device *, int, int));
+void rl_mii_write __P((struct device *, int, int, int));
+void rl_mii_statchg __P((struct device *));
 
-static int rl_encap		__P((struct rl_softc *, struct mbuf * ));
+int rl_encap		__P((struct rl_softc *, struct mbuf * ));
 
-static void rl_rxeof		__P((struct rl_softc *));
-static void rl_txeof		__P((struct rl_softc *));
-static void rl_start		__P((struct ifnet *));
-static int rl_ioctl		__P((struct ifnet *, u_long, caddr_t));
-static void rl_init		__P((void *));
-static void rl_stop		__P((struct rl_softc *));
-static void rl_watchdog		__P((struct ifnet *));
-static int rl_ifmedia_upd	__P((struct ifnet *));
-static void rl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
+void rl_rxeof		__P((struct rl_softc *));
+void rl_txeof		__P((struct rl_softc *));
+void rl_start		__P((struct ifnet *));
+int rl_ioctl		__P((struct ifnet *, u_long, caddr_t));
+void rl_init		__P((void *));
+void rl_stop		__P((struct rl_softc *));
+void rl_watchdog		__P((struct ifnet *));
+int rl_ifmedia_upd	__P((struct ifnet *));
+void rl_ifmedia_sts	__P((struct ifnet *, struct ifmediareq *));
 
-static void rl_eeprom_putbyte	__P((struct rl_softc *, int));
-static void rl_eeprom_getword	__P((struct rl_softc *, int, u_int16_t *));
-static void rl_read_eeprom	__P((struct rl_softc *, caddr_t,
+void rl_eeprom_putbyte	__P((struct rl_softc *, int));
+void rl_eeprom_getword	__P((struct rl_softc *, int, u_int16_t *));
+void rl_read_eeprom	__P((struct rl_softc *, caddr_t,
 					int, int, int));
-static void rl_mii_sync		__P((struct rl_softc *));
-static void rl_mii_send		__P((struct rl_softc *, u_int32_t, int));
-static int rl_mii_readreg	__P((struct rl_softc *, struct rl_mii_frame *));
-static int rl_mii_writereg	__P((struct rl_softc *, struct rl_mii_frame *));
+void rl_mii_sync		__P((struct rl_softc *));
+void rl_mii_send		__P((struct rl_softc *, u_int32_t, int));
+int rl_mii_readreg	__P((struct rl_softc *, struct rl_mii_frame *));
+int rl_mii_writereg	__P((struct rl_softc *, struct rl_mii_frame *));
 
-static u_int8_t rl_calchash	__P((caddr_t));
-static void rl_setmulti		__P((struct rl_softc *));
-static void rl_reset		__P((struct rl_softc *));
-static int rl_list_tx_init	__P((struct rl_softc *));
+u_int8_t rl_calchash	__P((caddr_t));
+void rl_setmulti		__P((struct rl_softc *));
+void rl_reset		__P((struct rl_softc *));
+int rl_list_tx_init	__P((struct rl_softc *));
 
 #define EE_SET(x)					\
 	CSR_WRITE_1(sc, RL_EECMD,			\
@@ -192,7 +192,7 @@ static int rl_list_tx_init	__P((struct rl_softc *));
 /*
  * Send a read command and address to the EEPROM, check for ACK.
  */
-static void rl_eeprom_putbyte(sc, addr)
+void rl_eeprom_putbyte(sc, addr)
 	struct rl_softc		*sc;
 	int			addr;
 {
@@ -222,7 +222,7 @@ static void rl_eeprom_putbyte(sc, addr)
 /*
  * Read a word of data stored in the EEPROM at address 'addr.'
  */
-static void rl_eeprom_getword(sc, addr, dest)
+void rl_eeprom_getword(sc, addr, dest)
 	struct rl_softc		*sc;
 	int			addr;
 	u_int16_t		*dest;
@@ -263,7 +263,7 @@ static void rl_eeprom_getword(sc, addr, dest)
 /*
  * Read a sequence of words from the EEPROM.
  */
-static void rl_read_eeprom(sc, dest, off, cnt, swap)
+void rl_read_eeprom(sc, dest, off, cnt, swap)
 	struct rl_softc		*sc;
 	caddr_t			dest;
 	int			off;
@@ -303,7 +303,7 @@ static void rl_read_eeprom(sc, dest, off, cnt, swap)
 /*
  * Sync the PHYs by setting data bit and strobing the clock 32 times.
  */
-static void rl_mii_sync(sc)
+void rl_mii_sync(sc)
 	struct rl_softc		*sc;
 {
 	register int		i;
@@ -323,7 +323,7 @@ static void rl_mii_sync(sc)
 /*
  * Clock a series of bits through the MII.
  */
-static void rl_mii_send(sc, bits, cnt)
+void rl_mii_send(sc, bits, cnt)
 	struct rl_softc		*sc;
 	u_int32_t		bits;
 	int			cnt;
@@ -348,7 +348,7 @@ static void rl_mii_send(sc, bits, cnt)
 /*
  * Read an PHY register through the MII.
  */
-static int rl_mii_readreg(sc, frame)
+int rl_mii_readreg(sc, frame)
 	struct rl_softc		*sc;
 	struct rl_mii_frame	*frame;
 	
@@ -441,7 +441,7 @@ fail:
 /*
  * Write to a PHY register through the MII.
  */
-static int rl_mii_writereg(sc, frame)
+int rl_mii_writereg(sc, frame)
 	struct rl_softc		*sc;
 	struct rl_mii_frame	*frame;
 	
@@ -490,7 +490,7 @@ static int rl_mii_writereg(sc, frame)
 /*
  * Calculate CRC of a multicast group address, return the upper 6 bits.
  */
-static u_int8_t rl_calchash(addr)
+u_int8_t rl_calchash(addr)
 	caddr_t			addr;
 {
 	u_int32_t		crc, carry;
@@ -518,7 +518,7 @@ static u_int8_t rl_calchash(addr)
 /*
  * Program the 64-bit multicast hash filter.
  */
-static void rl_setmulti(sc)
+void rl_setmulti(sc)
 	struct rl_softc		*sc;
 {
 	struct ifnet		*ifp;
@@ -571,7 +571,7 @@ static void rl_setmulti(sc)
 	return;
 }
 
-static void rl_reset(sc)
+void rl_reset(sc)
 	struct rl_softc		*sc;
 {
 	register int		i;
@@ -592,7 +592,7 @@ static void rl_reset(sc)
 /*
  * Initialize the transmit descriptors.
  */
-static int rl_list_tx_init(sc)
+int rl_list_tx_init(sc)
 	struct rl_softc		*sc;
 {
 	struct rl_chain_data	*cd;
@@ -638,7 +638,7 @@ static int rl_list_tx_init(sc)
  * bytes of space preceecing it so that it will be safe for us to do the
  * 2-byte backstep even if reading from the ring at offset 0.
  */
-static void rl_rxeof(sc)
+void rl_rxeof(sc)
 	struct rl_softc		*sc;
 {
         struct ether_header	*eh;
@@ -776,7 +776,7 @@ static void rl_rxeof(sc)
  * A frame was downloaded to the chip. It's safe for us to clean up
  * the list buffers.
  */
-static void rl_txeof(sc)
+void rl_txeof(sc)
 	struct rl_softc		*sc;
 {
 	struct ifnet		*ifp;
@@ -818,7 +818,7 @@ static void rl_txeof(sc)
 	return;
 }
 
-static int rl_intr(arg)
+int rl_intr(arg)
 	void			*arg;
 {
 	struct rl_softc		*sc;
@@ -871,7 +871,7 @@ static int rl_intr(arg)
  * Encapsulate an mbuf chain in a descriptor by coupling the mbuf data
  * pointers to the fragment pointers.
  */
-static int rl_encap(sc, m_head)
+int rl_encap(sc, m_head)
 	struct rl_softc		*sc;
 	struct mbuf		*m_head;
 {
@@ -916,7 +916,7 @@ static int rl_encap(sc, m_head)
  * Main transmit routine.
  */
 
-static void rl_start(ifp)
+void rl_start(ifp)
 	struct ifnet		*ifp;
 {
 	struct rl_softc		*sc;
@@ -967,7 +967,7 @@ static void rl_start(ifp)
 	return;
 }
 
-static void rl_init(xsc)
+void rl_init(xsc)
 	void			*xsc;
 {
 	struct rl_softc		*sc = xsc;
@@ -1062,7 +1062,7 @@ static void rl_init(xsc)
 /*
  * Set media options.
  */
-static int rl_ifmedia_upd(ifp)
+int rl_ifmedia_upd(ifp)
 	struct ifnet		*ifp;
 {
 	if (ifp->if_flags & IFF_UP)
@@ -1073,7 +1073,7 @@ static int rl_ifmedia_upd(ifp)
 /*
  * Report current media status.
  */
-static void rl_ifmedia_sts(ifp, ifmr)
+void rl_ifmedia_sts(ifp, ifmr)
 	struct ifnet		*ifp;
 	struct ifmediareq	*ifmr;
 {
@@ -1084,7 +1084,7 @@ static void rl_ifmedia_sts(ifp, ifmr)
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
 }
 
-static int rl_ioctl(ifp, command, data)
+int rl_ioctl(ifp, command, data)
 	struct ifnet		*ifp;
 	u_long			command;
 	caddr_t			data;
@@ -1144,7 +1144,7 @@ static int rl_ioctl(ifp, command, data)
 	return(error);
 }
 
-static void rl_watchdog(ifp)
+void rl_watchdog(ifp)
 	struct ifnet		*ifp;
 {
 	struct rl_softc		*sc;
@@ -1164,7 +1164,7 @@ static void rl_watchdog(ifp)
  * Stop the adapter and free any mbufs allocated to the
  * RX and TX lists.
  */
-static void rl_stop(sc)
+void rl_stop(sc)
 	struct rl_softc		*sc;
 {
 	register int		i;
@@ -1192,7 +1192,7 @@ static void rl_stop(sc)
 	return;
 }
 
-static int
+int
 rl_probe(parent, match, aux)
 	struct device *parent;
 	void *match;
@@ -1227,7 +1227,7 @@ rl_probe(parent, match, aux)
 	return 0;
 }
 
-static void
+void
 rl_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -1375,7 +1375,7 @@ rl_attach(parent, self, aux)
 	shutdownhook_establish(rl_shutdown, sc);
 }
 
-static void rl_shutdown(arg)
+void rl_shutdown(arg)
 	void			*arg;
 {
 	struct rl_softc		*sc = (struct rl_softc *)arg;
@@ -1383,7 +1383,7 @@ static void rl_shutdown(arg)
 	rl_stop(sc);
 }
 
-static int
+int
 rl_mii_read(self, phy, reg)
 	struct device *self;
 	int phy, reg;
@@ -1424,7 +1424,7 @@ rl_mii_read(self, phy, reg)
 	return(frame.mii_data);
 }
 
-static void
+void
 rl_mii_write(self, phy, reg, val)
 	struct device *self;
 	int phy, reg, val;
@@ -1463,7 +1463,7 @@ rl_mii_write(self, phy, reg, val)
 	rl_mii_writereg(sc, &frame);
 }
 
-static void
+void
 rl_mii_statchg(self)
 	struct device *self;
 {

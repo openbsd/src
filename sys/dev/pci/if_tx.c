@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tx.c,v 1.7 1999/06/29 17:13:40 jason Exp $	*/
+/*	$OpenBSD: if_tx.c,v 1.8 1999/09/30 00:12:21 jason Exp $	*/
 /*	$FreeBSD: if_tx.c,v 1.27 1999/05/10 00:20:46 peter Exp $	*/
 
 /*-
@@ -150,41 +150,41 @@
 #define EPIC_INTR_RET_TYPE int
 #endif
 
-static int epic_ifioctl __P((register struct ifnet *, EPIC_IFIOCTL_CMD_TYPE, caddr_t));
-static EPIC_INTR_RET_TYPE epic_intr __P((void *));
-static int epic_common_attach __P((epic_softc_t *));
-static void epic_ifstart __P((struct ifnet *));
-static void epic_ifwatchdog __P((struct ifnet *));
-static int epic_init __P((epic_softc_t *));
-static void epic_stop __P((epic_softc_t *));
-static __inline void epic_rx_done __P((epic_softc_t *));
-static __inline void epic_tx_done __P((epic_softc_t *));
-static int epic_init_rings __P((epic_softc_t *));
-static void epic_free_rings __P((epic_softc_t *));
-static void epic_stop_activity __P((epic_softc_t *));
-static void epic_start_activity __P((epic_softc_t *));
-static void epic_set_rx_mode __P((epic_softc_t *));
-static void epic_set_tx_mode __P((epic_softc_t *));
-static void epic_set_mc_table __P((epic_softc_t *));
-static void epic_set_media_speed __P((epic_softc_t *));
-static void epic_init_phy __P((epic_softc_t *));
-static void epic_dump_state __P((epic_softc_t *));
-static int epic_autoneg __P((epic_softc_t *));
-static int epic_read_eeprom __P((epic_softc_t *,u_int16_t));
-static void epic_output_eepromw __P((epic_softc_t *, u_int16_t));
-static u_int16_t epic_input_eepromw __P((epic_softc_t *));
-static u_int8_t epic_eeprom_clock __P((epic_softc_t *,u_int8_t));
-static void epic_write_eepromreg __P((epic_softc_t *,u_int8_t));
-static u_int8_t epic_read_eepromreg __P((epic_softc_t *));
-static u_int16_t epic_read_phy_register __P((epic_softc_t *, u_int16_t));
-static void epic_write_phy_register __P((epic_softc_t *, u_int16_t, u_int16_t));
+int epic_ifioctl __P((register struct ifnet *, EPIC_IFIOCTL_CMD_TYPE, caddr_t));
+EPIC_INTR_RET_TYPE epic_intr __P((void *));
+int epic_common_attach __P((epic_softc_t *));
+void epic_ifstart __P((struct ifnet *));
+void epic_ifwatchdog __P((struct ifnet *));
+int epic_init __P((epic_softc_t *));
+void epic_stop __P((epic_softc_t *));
+void epic_rx_done __P((epic_softc_t *));
+void epic_tx_done __P((epic_softc_t *));
+int epic_init_rings __P((epic_softc_t *));
+void epic_free_rings __P((epic_softc_t *));
+void epic_stop_activity __P((epic_softc_t *));
+void epic_start_activity __P((epic_softc_t *));
+void epic_set_rx_mode __P((epic_softc_t *));
+void epic_set_tx_mode __P((epic_softc_t *));
+void epic_set_mc_table __P((epic_softc_t *));
+void epic_set_media_speed __P((epic_softc_t *));
+void epic_init_phy __P((epic_softc_t *));
+void epic_dump_state __P((epic_softc_t *));
+int epic_autoneg __P((epic_softc_t *));
+int epic_read_eeprom __P((epic_softc_t *,u_int16_t));
+void epic_output_eepromw __P((epic_softc_t *, u_int16_t));
+u_int16_t epic_input_eepromw __P((epic_softc_t *));
+u_int8_t epic_eeprom_clock __P((epic_softc_t *,u_int8_t));
+void epic_write_eepromreg __P((epic_softc_t *,u_int8_t));
+u_int8_t epic_read_eepromreg __P((epic_softc_t *));
+u_int16_t epic_read_phy_register __P((epic_softc_t *, u_int16_t));
+void epic_write_phy_register __P((epic_softc_t *, u_int16_t, u_int16_t));
 #if 0
 void epic_dump_phy_regs __P((epic_softc_t *));
 #endif
 
 #if !defined(EPIC_NOIFMEDIA)
-static int epic_ifmedia_change __P((struct ifnet *));
-static void epic_ifmedia_status __P((struct ifnet *, struct ifmediareq *));
+int epic_ifmedia_change __P((struct ifnet *));
+void epic_ifmedia_status __P((struct ifnet *, struct ifmediareq *));
 #endif
 
 int epic_mtypes [] = {
@@ -210,9 +210,9 @@ int epic_mtypes [] = {
 #if defined(__OpenBSD__)
 /* -----------------------------OpenBSD------------------------------------- */
 
-static int epic_openbsd_probe __P((struct device *,void *,void *));
-static void epic_openbsd_attach __P((struct device *, struct device *, void *));
-static void epic_shutdown __P((void *));
+int epic_openbsd_probe __P((struct device *,void *,void *));
+void epic_openbsd_attach __P((struct device *, struct device *, void *));
+void epic_shutdown __P((void *));
 
 struct cfattach tx_ca = {
 	sizeof(epic_softc_t), epic_openbsd_probe, epic_openbsd_attach 
@@ -222,7 +222,7 @@ struct cfdriver tx_cd = {
 };
 
 /* Synopsis: Check if device id corresponds with SMC83C170 id. */
-static int 
+int 
 epic_openbsd_probe(
     struct device *parent,
     void *match,
@@ -238,7 +238,7 @@ epic_openbsd_probe(
 	return 0;
 }
 
-static void
+void
 epic_openbsd_attach(
     struct device *parent,
     struct device *self,
@@ -366,7 +366,7 @@ epic_openbsd_attach(
 }
 
 /* Simple call epic_stop() */
-static void
+void
 epic_shutdown(
     void *sc)
 {
@@ -376,13 +376,13 @@ epic_shutdown(
 #else /* __FreeBSD__ */
 /* -----------------------------FreeBSD------------------------------------- */
 
-static const char* epic_freebsd_probe __P((pcici_t, pcidi_t));
-static void epic_freebsd_attach __P((pcici_t, int));
-static void epic_shutdown __P((int, void *));
+const char* epic_freebsd_probe __P((pcici_t, pcidi_t));
+void epic_freebsd_attach __P((pcici_t, int));
+void epic_shutdown __P((int, void *));
 
 /* Global variables */
-static u_long epic_pci_count;
-static struct pci_device txdevice = { 
+u_long epic_pci_count;
+struct pci_device txdevice = { 
 	"tx",
 	epic_freebsd_probe,
 	epic_freebsd_attach,
@@ -394,7 +394,7 @@ static struct pci_device txdevice = {
 COMPAT_PCI_DRIVER (tx, txdevice);
 
 /* Synopsis: Check if device id corresponds with SMC83C170 id.  */
-static const char*
+const char*
 epic_freebsd_probe(
     pcici_t config_id,
     pcidi_t device_id)
@@ -412,7 +412,7 @@ epic_freebsd_probe(
  * Do FreeBSD-specific attach routine, like map registers, alloc softc
  * structure and etc.
  */
-static void
+void
 epic_freebsd_attach(
     pcici_t config_id,
     int unit)
@@ -563,7 +563,7 @@ epic_freebsd_attach(
 	return;
 }
 
-static void
+void
 epic_shutdown(
     int howto,
     void *sc)
@@ -580,7 +580,7 @@ epic_shutdown(
 /*
  * This is if_ioctl handler. 
  */
-static int
+int
 epic_ifioctl __P((
     register struct ifnet * ifp,
     EPIC_IFIOCTL_CMD_TYPE command,
@@ -703,7 +703,7 @@ epic_ifioctl __P((
  * and frag lists, wake up chip, read MAC address and PHY identyfier.
  * Return -1 on failure.
  */
-static int
+int
 epic_common_attach(
     epic_softc_t *sc)
 {
@@ -759,7 +759,7 @@ epic_common_attach(
  * and quque them for transmit, one by one, until TX ring become full
  * or quque become empty.
  */
-static void
+void
 epic_ifstart(struct ifnet * const ifp){
 	epic_softc_t *sc = ifp->if_softc;
 	struct epic_tx_buffer *buf;
@@ -868,7 +868,7 @@ epic_ifstart(struct ifnet * const ifp){
  *
  * splimp() invoked before epic_intr_normal()
  */
-static __inline void
+void
 epic_rx_done __P((
 	epic_softc_t *sc ))
 {
@@ -948,7 +948,7 @@ epic_rx_done __P((
  * packet, switch to next descriptor and repeat until no packets
  * are pending or descriptor is not transmitted yet.
  */
-static __inline void
+void
 epic_tx_done __P(( 
     register epic_softc_t *sc ))
 {
@@ -991,7 +991,7 @@ epic_tx_done __P((
  *
  * splimp() assumed to be done 
  */
-static EPIC_INTR_RET_TYPE
+EPIC_INTR_RET_TYPE
 epic_intr (
     void *arg)
 {
@@ -1133,7 +1133,7 @@ epic_intr (
  *
  * splimp() invoked here
  */
-static void
+void
 epic_ifwatchdog __P((
     struct ifnet *ifp))
 {
@@ -1170,7 +1170,7 @@ epic_ifwatchdog __P((
 }
 
 #if defined(SIOCSIFMEDIA) && !defined(EPIC_NOIFMEDIA)
-static int
+int
 epic_ifmedia_change __P((
     struct ifnet * ifp))
 {
@@ -1189,7 +1189,7 @@ epic_ifmedia_change __P((
 	return 0;
 }
 
-static void
+void
 epic_ifmedia_status __P((
     struct ifnet * ifp,
     struct ifmediareq *ifmr))
@@ -1231,7 +1231,7 @@ epic_ifmedia_status __P((
  * 
  * splimp() invoked here
  */
-static int 
+int 
 epic_init __P((
     epic_softc_t * sc))
 {       
@@ -1314,7 +1314,7 @@ epic_init __P((
  * Synopsis: calculate and set Rx mode. Chip must be in idle state to
  * access RXCON.
  */
-static void
+void
 epic_set_rx_mode(
     epic_softc_t * sc)
 {
@@ -1348,7 +1348,7 @@ epic_dump_phy_regs(epic_softc_t *sc)
 /*
  * Synopsis: Reset PHY and do PHY-special initialization:
  */
-static void
+void
 epic_init_phy __P((
     epic_softc_t * sc))
 {
@@ -1395,7 +1395,7 @@ epic_init_phy __P((
  * Synopsis: Set PHY to media type specified by IFF_LINK* flags or
  * ifmedia structure. Chip must be in idle state to access TXCON.
  */
-static void
+void
 epic_set_media_speed __P((
     epic_softc_t * sc))
 {
@@ -1490,7 +1490,7 @@ epic_set_media_speed __P((
  * DP83840A data sheet
  * http://www.national.com/ds/DP/DP83840A.pdf
  */
-static int 
+int 
 epic_autoneg(
     epic_softc_t * sc)
 {
@@ -1564,7 +1564,7 @@ epic_autoneg(
 
 /*
  */
-static void
+void
 epic_set_tx_mode (
     epic_softc_t *sc )
 {
@@ -1583,7 +1583,7 @@ epic_set_tx_mode (
  * reprogramming MC filter. The epic_stop_activity() and 
  * epic_start_activity() should help to do this.
  */
-static void
+void
 epic_set_mc_table (
     epic_softc_t * sc)
 {
@@ -1603,7 +1603,7 @@ epic_set_mc_table (
 /* 
  * Synopsis: Start receive process and transmit one, if they need.
  */
-static void
+void
 epic_start_activity __P((
     epic_softc_t * sc))
 {
@@ -1618,7 +1618,7 @@ epic_start_activity __P((
  * Synopsis: Completely stop Rx and Tx processes. If TQE is set additional
  * packet needs to be queued to stop Tx DMA.
  */
-static void
+void
 epic_stop_activity __P((
     epic_softc_t * sc))
 {
@@ -1715,7 +1715,7 @@ epic_stop_activity __P((
  *
  *  splimp() invoked here
  */
-static void
+void
 epic_stop __P((
     epic_softc_t * sc))
 {
@@ -1752,7 +1752,7 @@ epic_stop __P((
 /*
  * Synopsis: This function should free all memory allocated for rings.
  */ 
-static void
+void
 epic_free_rings __P((
     epic_softc_t * sc))
 {
@@ -1788,7 +1788,7 @@ epic_free_rings __P((
  * Point Tx descs to fragment lists. Check that all descs and fraglists
  * are bounded and aligned properly.
  */
-static int
+int
 epic_init_rings(epic_softc_t * sc){
 	int i;
 
@@ -1838,7 +1838,7 @@ epic_init_rings(epic_softc_t * sc){
 /*
  * EEPROM operation functions
  */
-static void epic_write_eepromreg __P((
+void epic_write_eepromreg __P((
     epic_softc_t *sc,
     u_int8_t val))
 {
@@ -1852,14 +1852,14 @@ static void epic_write_eepromreg __P((
 	return;
 }
 
-static u_int8_t
+u_int8_t
 epic_read_eepromreg __P((
     epic_softc_t *sc))
 {
 	return CSR_READ_1( sc,EECTL );
 }  
 
-static u_int8_t
+u_int8_t
 epic_eeprom_clock __P((
     epic_softc_t *sc,
     u_int8_t val))
@@ -1871,7 +1871,7 @@ epic_eeprom_clock __P((
 	return epic_read_eepromreg( sc );
 }
 
-static void
+void
 epic_output_eepromw __P((
     epic_softc_t * sc,
     u_int16_t val))
@@ -1883,7 +1883,7 @@ epic_output_eepromw __P((
 	}
 }
 
-static u_int16_t
+u_int16_t
 epic_input_eepromw __P((
     epic_softc_t *sc))
 {
@@ -1900,7 +1900,7 @@ epic_input_eepromw __P((
 	return retval;
 }
 
-static int
+int
 epic_read_eeprom __P((
     epic_softc_t *sc,
     u_int16_t loc))
@@ -1924,7 +1924,7 @@ epic_read_eeprom __P((
 	return dataval;
 }
 
-static u_int16_t
+u_int16_t
 epic_read_phy_register __P((
     epic_softc_t *sc,
     u_int16_t loc))
@@ -1941,7 +1941,7 @@ epic_read_phy_register __P((
 	return CSR_READ_4( sc, MIIDATA );
 }
 
-static void
+void
 epic_write_phy_register __P((
     epic_softc_t * sc,
     u_int16_t loc,
@@ -1960,7 +1960,7 @@ epic_write_phy_register __P((
 	return;
 }
 
-static void
+void
 epic_dump_state __P((
     epic_softc_t * sc))
 {
