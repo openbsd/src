@@ -1,5 +1,5 @@
-/*	$OpenBSD: faithd.c,v 1.12 2001/05/01 07:40:04 itojun Exp $	*/
-/*	$KAME: faithd.c,v 1.39 2001/04/25 11:20:42 itojun Exp $	*/
+/*	$OpenBSD: faithd.c,v 1.13 2001/09/05 01:31:33 itojun Exp $	*/
+/*	$KAME: faithd.c,v 1.40 2001/07/02 14:36:48 itojun Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -97,7 +97,7 @@ struct myaddrs {
 	struct sockaddr *addr;
 };
 struct myaddrs *myaddrs = NULL;
-static char *service;
+static const char *service;
 #ifdef USE_ROUTE
 static int sockfd = 0;
 #endif
@@ -184,19 +184,19 @@ inetd_main(int argc, char **argv)
 
 	sockfd = socket(PF_ROUTE, SOCK_RAW, PF_UNSPEC);
 	if (sockfd < 0) {
-		exit_failure("socket(PF_ROUTE): %s", ERRSTR);
+		exit_failure("socket(PF_ROUTE): %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 #endif
 
 	melen = sizeof(me);
 	if (getsockname(STDIN_FILENO, (struct sockaddr *)&me, &melen) < 0) {
-		exit_failure("getsockname: %s", ERRSTR);
+		exit_failure("getsockname: %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 	fromlen = sizeof(from);
 	if (getpeername(STDIN_FILENO, (struct sockaddr *)&from, &fromlen) < 0) {
-		exit_failure("getpeername: %s", ERRSTR);
+		exit_failure("getpeername: %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 	if (getnameinfo((struct sockaddr *)&me, melen, NULL, 0,
@@ -224,7 +224,7 @@ inetd_main(int argc, char **argv)
 	error = setsockopt(STDIN_FILENO, SOL_SOCKET, SO_OOBINLINE, &on,
 	    sizeof(on));
 	if (error < 0) {
-		exit_failure("setsockopt(SO_OOBINLINE): %s", ERRSTR);
+		exit_failure("setsockopt(SO_OOBINLINE): %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 
@@ -336,13 +336,14 @@ daemon_main(int argc, char **argv)
 
 	s_wld = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
 	if (s_wld == -1)
-		exit_stderr("socket: %s", ERRSTR);
+		exit_stderr("socket: %s", strerror(errno));
 
 #ifdef IPV6_FAITH
 	if (res->ai_family == AF_INET6) {
 		error = setsockopt(s_wld, IPPROTO_IPV6, IPV6_FAITH, &on, sizeof(on));
 		if (error == -1)
-			exit_stderr("setsockopt(IPV6_FAITH): %s", ERRSTR);
+			exit_stderr("setsockopt(IPV6_FAITH): %s",
+			    strerror(errno));
 	}
 #endif
 #ifdef FAITH4
@@ -350,31 +351,32 @@ daemon_main(int argc, char **argv)
 	if (res->ai_family == AF_INET) {
 		error = setsockopt(s_wld, IPPROTO_IP, IP_FAITH, &on, sizeof(on));
 		if (error == -1)
-			exit_stderr("setsockopt(IP_FAITH): %s", ERRSTR);
+			exit_stderr("setsockopt(IP_FAITH): %s",
+			    strerror(errno));
 	}
 #endif
 #endif /* FAITH4 */
 
 	error = setsockopt(s_wld, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on));
 	if (error == -1)
-		exit_stderr("setsockopt(SO_REUSEADDR): %s", ERRSTR);
+		exit_stderr("setsockopt(SO_REUSEADDR): %s", strerror(errno));
 	
 	error = setsockopt(s_wld, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on));
 	if (error == -1)
-		exit_stderr("setsockopt(SO_OOBINLINE): %s", ERRSTR);
+		exit_stderr("setsockopt(SO_OOBINLINE): %s", strerror(errno));
 
 	error = bind(s_wld, (struct sockaddr *)res->ai_addr, res->ai_addrlen);
 	if (error == -1)
-		exit_stderr("bind: %s", ERRSTR);
+		exit_stderr("bind: %s", strerror(errno));
 
 	error = listen(s_wld, 5);
 	if (error == -1)
-		exit_stderr("listen: %s", ERRSTR);
+		exit_stderr("listen: %s", strerror(errno));
 
 #ifdef USE_ROUTE
 	sockfd = socket(PF_ROUTE, SOCK_RAW, PF_UNSPEC);
 	if (sockfd < 0) {
-		exit_stderr("socket(PF_ROUTE): %s", ERRSTR);
+		exit_stderr("socket(PF_ROUTE): %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 #endif
@@ -426,7 +428,7 @@ again:
 	if (error < 0) {
 		if (errno == EINTR)
 			goto again;
-		exit_failure("select: %s", ERRSTR);
+		exit_failure("select: %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 
@@ -440,7 +442,7 @@ again:
 		s_src = accept(s_wld, (struct sockaddr *)&srcaddr,
 			&len);
 		if (s_src == -1) {
-			exit_failure("socket: %s", ERRSTR);
+			exit_failure("socket: %s", strerror(errno));
 			/*NOTREACHED*/
 		}
 
@@ -487,7 +489,7 @@ play_child(int s_src, struct sockaddr *srcaddr)
 
 	error = getsockname(s_src, (struct sockaddr *)&dstaddr6, &len);
 	if (error == -1) {
-		exit_failure("getsockname: %s", ERRSTR);
+		exit_failure("getsockname: %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 
@@ -508,7 +510,8 @@ play_child(int s_src, struct sockaddr *srcaddr)
 				dup2(0, 2);
 			}
 			execv(serverpath, serverarg);
-			syslog(LOG_ERR, "execv %s: %s", serverpath, ERRSTR);
+			syslog(LOG_ERR, "execv %s: %s", serverpath,
+			    strerror(errno));
 			_exit(EXIT_FAILURE);
 		} else {
 			close(s_src);
@@ -586,38 +589,38 @@ play_child(int s_src, struct sockaddr *srcaddr)
 		break;
 	}
 	if (s_dst < 0) {
-		exit_failure("socket: %s", ERRSTR);
+		exit_failure("socket: %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 
 	if (conf->src.a.ss_family) {
-		if (bind(s_dst, (struct sockaddr *)&conf->src.a,
+		if (bind(s_dst, (const struct sockaddr *)&conf->src.a,
 		    conf->src.a.ss_len) < 0) {
-			exit_failure("bind: %s", ERRSTR);
+			exit_failure("bind: %s", strerror(errno));
 			/*NOTREACHED*/
 		}
 	}
 
 	error = setsockopt(s_dst, SOL_SOCKET, SO_OOBINLINE, &on, sizeof(on));
 	if (error < 0) {
-		exit_failure("setsockopt(SO_OOBINLINE): %s", ERRSTR);
+		exit_failure("setsockopt(SO_OOBINLINE): %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 
 	error = setsockopt(s_src, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	if (error < 0) {
-		exit_failure("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
+		exit_failure("setsockopt(SO_SNDTIMEO): %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 	error = setsockopt(s_dst, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
 	if (error < 0) {
-		exit_failure("setsockopt(SO_SNDTIMEO): %s", ERRSTR);
+		exit_failure("setsockopt(SO_SNDTIMEO): %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 
 	error = connect(s_dst, sa4, sa4->sa_len);
 	if (error < 0) {
-		exit_failure("connect: %s", ERRSTR);
+		exit_failure("connect: %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 
@@ -660,7 +663,7 @@ faith_prefix(struct sockaddr *dst)
 	mib[3] = IPV6CTL_FAITH_PREFIX;
 	size = sizeof(struct in6_addr);
 	if (sysctl(mib, 4, &faith_prefix, &size, NULL, 0) < 0) {
-		exit_failure("sysctl: %s", ERRSTR);
+		exit_failure("sysctl: %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 
@@ -756,7 +759,8 @@ map4to6(struct sockaddr_in *dst4, struct sockaddr_in6 *dst6)
 	hints.ai_protocol = 0;
 
 	if ((ai_errno = getaddrinfo(host, serv, &hints, &res)) != 0) {
-		syslog(LOG_INFO, "%s %s: %s", host, serv, gai_strerror(ai_errno));
+		syslog(LOG_INFO, "%s %s: %s", host, serv,
+		    gai_strerror(ai_errno));
 		return 0;
 	}
 
@@ -794,7 +798,7 @@ start_daemon(void)
 #endif
 
 	if (daemon(0, 0) == -1)
-		exit_stderr("daemon: %s", ERRSTR);
+		exit_stderr("daemon: %s", strerror(errno));
 
 #ifdef SA_NOCLDWAIT
 	memset(&sa, 0, sizeof(sa));
@@ -804,13 +808,13 @@ start_daemon(void)
 	sigaction(SIGCHLD, &sa, (struct sigaction *)0);
 #else
 	if (signal(SIGCHLD, sig_child) == SIG_ERR) {
-		exit_failure("signal CHLD: %s", ERRSTR);
+		exit_failure("signal CHLD: %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 #endif
 
 	if (signal(SIGTERM, sig_terminate) == SIG_ERR) {
-		exit_failure("signal TERM: %s", ERRSTR);
+		exit_failure("signal TERM: %s", strerror(errno));
 		/*NOTREACHED*/
 	}
 }
