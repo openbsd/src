@@ -1,4 +1,4 @@
-/*	$OpenBSD: dcreg.h,v 1.10 2001/02/09 02:23:35 aaron Exp $ */
+/*	$OpenBSD: dcreg.h,v 1.11 2001/02/09 03:45:54 aaron Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_dcreg.h,v 1.11 2000/09/07 18:51:04 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_dcreg.h,v 1.12 2000/10/05 17:36:14 wpaul Exp $
  */
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dc.c,v 1.21 2001/02/09 02:23:34 aaron Exp $	*/
+/*	$OpenBSD: dc.c,v 1.22 2001/02/09 03:45:53 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -31,7 +31,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  *
- * $FreeBSD: src/sys/pci/if_dc.c,v 1.22 2000/09/07 18:51:04 wpaul Exp $
+ * $FreeBSD: src/sys/pci/if_dc.c,v 1.43 2001/01/19 23:55:07 wpaul Exp $
  */
 
 /*
@@ -743,10 +743,13 @@ int dc_miibus_readreg(self, phy, reg)
 
 	frame.mii_phyaddr = phy;
 	frame.mii_regaddr = reg;
-	phy_reg = CSR_READ_4(sc, DC_NETCFG);
-	CSR_WRITE_4(sc, DC_NETCFG, phy_reg & ~DC_NETCFG_PORTSEL);
+	if (sc->dc_type == DC_TYPE_98713) {
+		phy_reg = CSR_READ_4(sc, DC_NETCFG);
+		CSR_WRITE_4(sc, DC_NETCFG, phy_reg & ~DC_NETCFG_PORTSEL);
+	}
 	dc_mii_readreg(sc, &frame);
-	CSR_WRITE_4(sc, DC_NETCFG, phy_reg);
+	if (sc->dc_type == DC_TYPE_98713)
+		CSR_WRITE_4(sc, DC_NETCFG, phy_reg);
 
 	return(frame.mii_data);
 }
@@ -812,10 +815,13 @@ void dc_miibus_writereg(self, phy, reg, data)
 	frame.mii_regaddr = reg;
 	frame.mii_data = data;
 
-	phy_reg = CSR_READ_4(sc, DC_NETCFG);
-	CSR_WRITE_4(sc, DC_NETCFG, phy_reg & ~DC_NETCFG_PORTSEL);
+	if (sc->dc_type == DC_TYPE_98713) {
+		phy_reg = CSR_READ_4(sc, DC_NETCFG);
+		CSR_WRITE_4(sc, DC_NETCFG, phy_reg & ~DC_NETCFG_PORTSEL);
+	}
 	dc_mii_writereg(sc, &frame);
-	CSR_WRITE_4(sc, DC_NETCFG, phy_reg);
+	if (sc->dc_type == DC_TYPE_98713)
+		CSR_WRITE_4(sc, DC_NETCFG, phy_reg);
 
 	return;
 }
@@ -1267,6 +1273,8 @@ void dc_setcfg(sc, media)
 			if (!DC_IS_DAVICOM(sc))
 				DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
 			DC_CLRBIT(sc, DC_10BTCTRL, 0xFFFF);
+			if (DC_IS_INTEL(sc))
+				dc_apply_fixup(sc, IFM_AUTO);
 		} else {
 			if (DC_IS_PNIC(sc)) {
 				DC_PN_GPIO_SETBIT(sc, DC_PN_GPIO_SPEEDSEL);
@@ -1305,6 +1313,8 @@ void dc_setcfg(sc, media)
 			if (!DC_IS_DAVICOM(sc))
 				DC_SETBIT(sc, DC_NETCFG, DC_NETCFG_PORTSEL);
 			DC_CLRBIT(sc, DC_10BTCTRL, 0xFFFF);
+			if (DC_IS_INTEL(sc))
+				dc_apply_fixup(sc, IFM_AUTO);
 		} else {
 			if (DC_IS_PNIC(sc)) {
 				DC_PN_GPIO_CLRBIT(sc, DC_PN_GPIO_SPEEDSEL);
@@ -1414,7 +1424,7 @@ void dc_apply_fixup(sc, media)
 	struct dc_mediainfo	*m;
 	u_int8_t		*p;
 	int			i;
-	u_int8_t		reg;
+	u_int32_t		reg;
 
 	m = sc->dc_mi;
 
@@ -1447,6 +1457,7 @@ void dc_decode_leaf_sia(sc, l)
 	struct dc_mediainfo	*m;
 
 	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	bzero(m, sizeof(struct dc_mediainfo));
 	if (l->dc_sia_code == DC_SIA_CODE_10BT)
 		m->dc_media = IFM_10_T;
 
@@ -1477,6 +1488,7 @@ void dc_decode_leaf_sym(sc, l)
 	struct dc_mediainfo	*m;
 
 	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	bzero(m, sizeof(struct dc_mediainfo));
 	if (l->dc_sym_code == DC_SYM_CODE_100BT)
 		m->dc_media = IFM_100_TX;
 
@@ -1502,6 +1514,7 @@ void dc_decode_leaf_mii(sc, l)
 	struct dc_mediainfo	*m;
 
 	m = malloc(sizeof(struct dc_mediainfo), M_DEVBUF, M_NOWAIT);
+	bzero(m, sizeof(struct dc_mediainfo));
 	/* We abuse IFM_AUTO to represent MII. */
 	m->dc_media = IFM_AUTO;
 	m->dc_gp_len = l->dc_gpr_len;
