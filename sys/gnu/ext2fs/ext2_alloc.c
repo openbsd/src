@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_alloc.c,v 1.3 1996/07/15 03:39:27 downsj Exp $	*/
+/*	$OpenBSD: ext2_alloc.c,v 1.4 1996/10/18 15:23:34 mickey Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -130,7 +130,7 @@ ext2_alloc(ip, lbn, bpref, size, cred, bnp)
 		fs->s_es->s_free_blocks_count < fs->s_es->s_r_blocks_count)
 		goto nospace;
 #if QUOTA
-	if (error = chkdq(ip, (long)btodb(size), cred, 0))
+	if ((error = chkdq(ip, (long)btodb(size), cred, 0)) != 0)
 		return (error);
 #endif
 	if (bpref >= fs->s_es->s_blocks_count)
@@ -219,14 +219,14 @@ int
 ext2_reallocblks(v)
 	void *v;
 {
-	struct vop_reallocblks_args /* {
-		struct vnode *a_vp;
-		struct cluster_save *a_buflist;
-	} */ *ap = v;
 #ifndef FANCY_REALLOC
 /* printf("ext2_reallocblks not implemented\n"); */
 return ENOSPC;
 #else
+	struct vop_reallocblks_args /* {
+		struct vnode *a_vp;
+		struct cluster_save *a_buflist;
+	} */ *ap = v;
 
 	struct ext2_sb_info *fs;
 	struct inode *ip;

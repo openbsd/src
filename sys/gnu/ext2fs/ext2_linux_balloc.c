@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_linux_balloc.c,v 1.2 1996/07/13 21:21:15 downsj Exp $	*/
+/*	$OpenBSD: ext2_linux_balloc.c,v 1.3 1996/10/18 15:23:36 mickey Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -65,8 +65,9 @@ static void read_block_bitmap (struct mount * mp,
 	int    error;
 	
 	gdp = get_group_desc (mp, block_group, NULL);
-	if(error = bread (VFSTOUFS(mp)->um_devvp, 
-		fsbtodb(sb, gdp->bg_block_bitmap),sb->s_blocksize, NOCRED, &bh))
+	error = bread (VFSTOUFS(mp)->um_devvp, 
+		fsbtodb(sb, gdp->bg_block_bitmap),sb->s_blocksize, NOCRED, &bh);
+	if (error != 0)
 		panic ( "read_block_bitmap: "
 			    "Cannot read block bitmap - "
 			    "block_group = %d, block_bitmap = %lu",
@@ -452,6 +453,7 @@ got_block:
 	return j;
 }
 
+#if 0
 static unsigned long ext2_count_free_blocks (struct mount * mp)
 {
 	struct ext2_sb_info *sb = VFSTOUFS(mp)->um_e2fs;
@@ -485,7 +487,7 @@ static unsigned long ext2_count_free_blocks (struct mount * mp)
 	return sb->s_es->s_free_blocks_count;
 #endif
 }
-
+#endif
 
 static INLINE int block_in_use (unsigned long block,
 				struct ext2_sb_info * sb,
@@ -495,6 +497,7 @@ static INLINE int block_in_use (unsigned long block,
 			 	 EXT2_BLOCKS_PER_GROUP(sb), map);
 }
 
+#if 0
 static void ext2_check_blocks_bitmap (struct mount * mp)
 {
 	struct ext2_sb_info *sb = VFSTOUFS(mp)->um_e2fs;
@@ -560,6 +563,7 @@ static void ext2_check_blocks_bitmap (struct mount * mp)
 			    (unsigned long) es->s_free_blocks_count, bitmap_count);
 	unlock_super (VFSTOUFS(mp)->um_devvp);
 }
+#endif
 
 /*
  *  this function is taken from 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_inode.c,v 1.3 1996/07/15 03:39:28 downsj Exp $	*/
+/*	$OpenBSD: ext2_inode.c,v 1.4 1996/10/18 15:23:36 mickey Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -123,9 +123,9 @@ ext2_update(v)
 	}
 	ip->i_flag &= ~(IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE);
 	fs = ip->i_e2fs;
-	if (error = bread(ip->i_devvp,
-	    fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-		(int)fs->s_blocksize, NOCRED, &bp)) {
+	error = bread(ip->i_devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
+		(int)fs->s_blocksize, NOCRED, &bp);
+	if (error != 0) {
 		brelse(bp);
 		return (error);
 	}
@@ -198,7 +198,7 @@ printf("ext2_truncate called %d to %d\n", VTOI(ovp)->i_number, ap->a_length);
 		return (VOP_UPDATE(ovp, &ts, &ts, 0));
 	}
 #if QUOTA
-	if (error = getinoquota(oip))
+	if ((error = getinoquota(oip)) != 0)
 		return (error);
 #endif
 	vnode_pager_setsize(ovp, (u_long)length);
@@ -216,8 +216,9 @@ printf("ext2_truncate called %d to %d\n", VTOI(ovp)->i_number, ap->a_length);
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
-		if (error = ext2_balloc(oip, lbn, offset + 1, ap->a_cred, &bp,
-		    aflags))
+		error = ext2_balloc(oip, lbn, offset + 1, ap->a_cred,
+				&bp, aflags);
+		if (error != 0)
 			return (error);
 		oip->i_size = length;
 		(void) vnode_pager_uncache(ovp);
@@ -244,8 +245,9 @@ printf("ext2_truncate called %d to %d\n", VTOI(ovp)->i_number, ap->a_length);
 		aflags = B_CLRBUF;
 		if (ap->a_flags & IO_SYNC)
 			aflags |= B_SYNC;
-		if (error = ext2_balloc(oip, lbn, offset, ap->a_cred, &bp,
-		    aflags))
+		error = ext2_balloc(oip, lbn, offset, ap->a_cred,
+				&bp, aflags);
+		if (error != 0)
 			return (error);
 		oip->i_size = length;
 		size = blksize(fs, oip, lbn);
@@ -283,7 +285,7 @@ printf("ext2_truncate called %d to %d\n", VTOI(ovp)->i_number, ap->a_length);
 	for (i = NDADDR - 1; i > lastblock; i--)
 		oip->i_db[i] = 0;
 	oip->i_flag |= IN_CHANGE | IN_UPDATE;
-	if (error = VOP_UPDATE(ovp, &ts, &ts, MNT_WAIT))
+	if ((error = VOP_UPDATE(ovp, &ts, &ts, MNT_WAIT)) != 0)
 		allerror = error;
 	/*
 	 * Having written the new inode to disk, save its new configuration
@@ -482,8 +484,9 @@ ext2_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		if (nb == 0)
 			continue;
 		if (level > SINGLE) {
-			if (error = ext2_indirtrunc(ip, nlbn,
-			    fsbtodb(fs, nb), (daddr_t)-1, level - 1, &blkcount))
+			error = ext2_indirtrunc(ip, nlbn,
+			    fsbtodb(fs, nb), (daddr_t)-1, level - 1, &blkcount);
+			if (error != 0)
 				allerror = error;
 			blocksreleased += blkcount;
 		}
@@ -498,8 +501,9 @@ ext2_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 		last = lastbn % factor;
 		nb = bap[i];
 		if (nb != 0) {
-			if (error = ext2_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
-			    last, level - 1, &blkcount))
+			error = ext2_indirtrunc(ip, nlbn, fsbtodb(fs, nb),
+			    last, level - 1, &blkcount);
+			if (error != 0)
 				allerror = error;
 			blocksreleased += blkcount;
 		}

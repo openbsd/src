@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_linux_ialloc.c,v 1.2 1996/07/13 21:21:16 downsj Exp $	*/
+/*	$OpenBSD: ext2_linux_ialloc.c,v 1.3 1996/10/18 15:23:37 mickey Exp $	*/
 
 /*
  *  modified for Lites 1.1
@@ -110,10 +110,11 @@ static void read_inode_bitmap (struct mount * mp,
 	int	error;
 
 	gdp = get_group_desc (mp, block_group, NULL);
-	if (error = bread (VFSTOUFS(mp)->um_devvp, 
+	error = bread (VFSTOUFS(mp)->um_devvp, 
 			    fsbtodb(sb, gdp->bg_inode_bitmap), 
 			    sb->s_blocksize,
-			    NOCRED, &bh))
+			    NOCRED, &bh);
+	if (error != 0)
 		panic ( "read_inode_bitmap:"
 			    "Cannot read inode bitmap - "
 			    "block_group = %lu, inode_bitmap = %lu",
@@ -448,6 +449,7 @@ repeat:
 	return j;
 }
 
+#if 0
 static unsigned long ext2_count_free_inodes (struct mount * mp)
 {
 #ifdef EXT2FS_DEBUG
@@ -481,6 +483,7 @@ static unsigned long ext2_count_free_inodes (struct mount * mp)
 	return VFSTOUFS(mp)->um_e2fsb->s_free_inodes_count;
 #endif
 }
+#endif
 
 #ifdef LATER
 void ext2_check_inodes_bitmap (struct mount * mp)

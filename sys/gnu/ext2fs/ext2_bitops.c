@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_bitops.c,v 1.1 1996/07/13 21:21:15 downsj Exp $	*/
+/*	$OpenBSD: ext2_bitops.c,v 1.2 1996/10/18 15:23:35 mickey Exp $	*/
 
 /*
  * bitops.c --- Bitmap frobbing code.  See bitops.h for the inlined
@@ -17,6 +17,14 @@
 #ifndef INLINE
 #define INLINE
 #endif
+
+static INLINE int ext2fs_set_bit __P((int nr, void *addr));
+static INLINE int ext2fs_clear_bit __P((int nr, void *addr));
+static INLINE int ext2fs_change_bit __P((int nr, void *addr));
+static INLINE int ext2fs_test_bit __P((int nr, const void *addr));
+static INLINE int ext2fs_ffzb __P((void *addr, unsigned size));
+static INLINE int ext2fs_fnzb __P((void *addr, int size, int offset));
+static INLINE void *ext2fs_memscan __P((void *addr, int c, size_t size));
 
 #ifdef alpha
 

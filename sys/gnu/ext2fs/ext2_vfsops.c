@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2_vfsops.c,v 1.11 1996/07/14 09:45:03 downsj Exp $	*/
+/*	$OpenBSD: ext2_vfsops.c,v 1.12 1996/10/18 15:23:39 mickey Exp $	*/
 
 /*
  *  modified for EXT2FS support in Lites 1.1
@@ -118,6 +118,7 @@ static int	compute_sb_data __P((struct vnode * devvp,
 				     struct ext2_super_block * es,
 				     struct ext2_sb_info * fs));
 
+#ifdef notdef
 /*
  * Called by main() when ext2fs is going to be mounted as root.
  *
@@ -170,6 +171,7 @@ ext2_mountroot()
 	inittodr(fs->s_es->s_wtime);		/* this helps to set the time */
 	return (0);
 }
+#endif
 
 /*
  * VFS Operations.
@@ -254,7 +256,7 @@ ext2_mount(mp, path, data, ndp, p)
 	 * and verify that it refers to a sensible block device.
 	 */
 	NDINIT(ndp, LOOKUP, FOLLOW, UIO_USERSPACE, args.fspec, p);
-	if (error = namei(ndp))
+	if ((error = namei(ndp)) != 0)
 		return (error);
 	devvp = ndp->ni_vp;
 
@@ -494,7 +496,7 @@ ext2_reload(mountp, cred, p)
 	 * Step 2: re-read superblock from disk.
 	 * constants have been adjusted for ext2
 	 */
-	if (error = bread(devvp, SBLOCK, SBSIZE, NOCRED, &bp))
+	if ((error = bread(devvp, SBLOCK, SBSIZE, NOCRED, &bp)) != 0)
 		return (error);
 	es = (struct ext2_super_block *)bp->b_data;
 	if (es->s_magic != EXT2_SUPER_MAGIC) {
@@ -511,7 +513,7 @@ ext2_reload(mountp, cred, p)
 	fs = VFSTOUFS(mountp)->um_e2fs;
 	bcopy(bp->b_data, fs->s_es, sizeof(struct ext2_super_block));
 
-	if(error = compute_sb_data(devvp, es, fs)) {
+	if ((error = compute_sb_data(devvp, es, fs)) != 0) {
 		brelse(bp);
 		return error;
 	}
@@ -542,9 +544,9 @@ loop:
 		 * Step 6: re-read inode data for all active vnodes.
 		 */
 		ip = VTOI(vp);
-		if (error =
-		    bread(devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
-		    (int)fs->s_blocksize, NOCRED, &bp)) {
+		error = bread(devvp, fsbtodb(fs, ino_to_fsba(fs, ip->i_number)),
+		    (int)fs->s_blocksize, NOCRED, &bp);
+		if (error != 0) {
 			vput(vp);
 			return (error);
 		}
@@ -882,7 +884,7 @@ loop:
 			continue;
 		if (vget(vp, 1))
 			goto loop;
-		if (error = VOP_FSYNC(vp, cred, waitfor, p))
+		if ((error = VOP_FSYNC(vp, cred, waitfor, p)) != 0)
 			allerror = error;
 		vput(vp);
 	}
@@ -920,12 +922,11 @@ ext2_vget(mp, ino, vpp)
 
 	ump = VFSTOUFS(mp);
 	dev = ump->um_dev;
-restart:
 	if ((*vpp = ufs_ihashget(dev, ino)) != NULL)
 		return (0);
 
 	/* Allocate a new vnode/inode. */
-	if (error = getnewvnode(VT_EXT2FS, mp, ext2_vnodeop_p, &vp)) {
+	if ((error = getnewvnode(VT_EXT2FS, mp, ext2_vnodeop_p, &vp)) != 0) {
 		*vpp = NULL;
 		return (error);
 	}

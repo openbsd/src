@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_cksum.c,v 1.1 1996/08/16 09:48:40 mickey Exp $	*/
+/*	$OpenBSD: ipx_cksum.c,v 1.2 1996/10/18 15:25:25 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -39,7 +39,9 @@
  */
 
 #include <sys/param.h>
+#include <sys/systm.h>
 #include <sys/mbuf.h>
+#include <netipx/ipx.h>
 
 /*
  * Checksum routine for Internet Protocol family headers.
