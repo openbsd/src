@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.47 1999/03/26 14:34:31 niklas Exp $
+#	$OpenBSD: netstart,v 1.48 1999/03/29 22:09:58 niklas Exp $
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -135,14 +135,37 @@ done
 # that name must be in /etc/hosts.
 if [ -f /etc/mygate ]; then
 	route -n add -host default `cat /etc/mygate`
-
-	# default multicast route for hosts with a gateway
-	route -n add -net 224.0.0.0 -interface default
-else
-	# default multicast route
-	route -n add -net 224.0.0.0 -interface $hostname
 fi
 
+# Multicast routing.
+#
+# The routing to the 224.0.0.0/4 net is setup according to these rules:
+# multicast_host	multicast_router	route		comment
+# NO			NO			-reject		no multicast
+# NO			YES			none installed	daemon will run
+# YES/interface		NO			-interface	YES=def. iface
+#	   Any other combination		-reject		config error
+case "$multicast_host:$multicast_router" in
+NO:NO)
+	route -n add -net 224.0.0.0/4 -interface 127.0.0.1 -reject;;
+NO:YES)
+	;;
+*:NO)
+	set `if [ $multicast_host = YES ]; then
+		ed -s '!route -n show' <<EOF
+/^default/p
+EOF
+	else
+		ed -s "!ifconfig $multicast_host" <<EOF
+/^	inet /p
+EOF
+	fi`
+	route -n add -net 224.0.0.0/4 -interface $2;;
+*:*)
+	echo 'config error, multicasting disabled until rc.conf is fixed'
+	route -n add -net 224.0.0.0/4 -interface 127.0.0.1 -reject;;
+esac
+	
 # Configure NAT after configuring network interfaces
 if [ "${ipnat}" = "YES" -a "${ipfilter}" = "YES" -a -f "${ipnat_rules}" ]; then
 	echo 'configuring NAT'
