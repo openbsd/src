@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.71 2004/02/13 23:47:29 grange Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.72 2004/02/21 09:34:56 grange Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -1010,6 +1010,7 @@ wdc_atapi_intr_data(chp, xfer, timeout, ret)
 	struct ata_drive_datas *drvp = &chp->ch_drive[xfer->drive];
 	int len, ire;
 	char *message;
+	int tohost;
 
 	len = (CHP_READ_REG(chp, wdr_cyl_hi) << 8) |
 	    CHP_READ_REG(chp, wdr_cyl_lo);
@@ -1034,6 +1035,8 @@ wdc_atapi_intr_data(chp, xfer, timeout, ret)
 		}
 	}
 
+	tohost = ((sc_xfer->flags & SCSI_DATA_IN) != 0 ||
+	    (xfer->c_flags & C_SENSE) != 0);
 
 	if (xfer->c_bcount >= len) {
 		WDCDEBUG_PRINT(("wdc_atapi_intr: c_bcount %d len %d "
@@ -1043,7 +1046,7 @@ wdc_atapi_intr_data(chp, xfer, timeout, ret)
 		    DEBUG_INTR);
 
 		/* Common case */
-		if (sc_xfer->flags & SCSI_DATA_OUT)
+		if (!tohost)
 			wdc_output_bytes(drvp, (u_int8_t *)xfer->databuf +
 			    xfer->c_skip, len);
 		else
@@ -1055,7 +1058,7 @@ wdc_atapi_intr_data(chp, xfer, timeout, ret)
 	} else {
 		/* Exceptional case - drive want to transfer more
 		   data than we have buffer for */
-		if (sc_xfer->flags & SCSI_DATA_OUT) {
+		if (!tohost) {
 			/* Wouldn't it be better to just abort here rather
 			   than to write random stuff to drive? */
 			printf("wdc_atapi_intr: warning: device requesting "
