@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.h,v 1.12 2001/09/01 15:49:05 drahn Exp $ */
+/*	$OpenBSD: intr.h,v 1.13 2001/11/19 05:13:50 drahn Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
@@ -68,30 +68,30 @@ volatile extern int cpl, ipending, astpending, tickspending;
 extern int imask[7];
 
 /*
- *  Reorder protection in the following inline functions is
- * achived with the "eieio" instruction which the assembler
- * seems to detect and then doen't move instructions past....
+ * Reorder protection in the following inline functions is
+ * achived with an empty asm volatile statement. the compiler
+ * will not move instructions past asm volatiles.
  */
 static __inline int
 splraise(int newcpl)
 {
 	int oldcpl;
 
-	__asm__ volatile("sync; eieio\n");	/* don't reorder.... */
+	__asm__ volatile("");	/* don't reorder.... */
 	oldcpl = cpl;
 	cpl = oldcpl | newcpl;
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm__ volatile("");	/* reorder protect */
 	return(oldcpl);
 }
 
 static __inline void
 splx(int newcpl)
 {
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm__ volatile("");	/* reorder protect */
 	cpl = newcpl;
 	if(ipending & ~newcpl)
 		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm__ volatile("");	/* reorder protect */
 }
 
 static __inline int
@@ -99,12 +99,12 @@ spllower(int newcpl)
 {
 	int oldcpl;
 
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm__ volatile("");	/* reorder protect */
 	oldcpl = cpl;
 	cpl = newcpl;
 	if(ipending & ~newcpl)
 		do_pending_int();
-	__asm__ volatile("sync; eieio\n");	/* reorder protect */
+	__asm__ volatile("");	/* reorder protect */
 	return(oldcpl);
 }
 
