@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.18 2003/03/03 00:51:40 cloder Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.19 2003/03/03 14:47:37 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -223,6 +223,7 @@ parse_configs(void)
 			if (debug > 0)
 				perror("malloc()");
 			free(cb);
+			cb = NULL;
 			cbs = cbu = 0;
 			return;
 		}
@@ -262,6 +263,7 @@ do_config(void)
 			if (debug > 0)
 				perror("malloc()");
 			free(cb);
+			cb = NULL;
 			cbs = 0;
 			goto configdone;
 		}
@@ -378,8 +380,8 @@ no_mem:
 	/* Out of memory, free obuf and bail, caller must deal */
 	if (cp->osize)
 		free(cp->obuf);
-	cp->osize = 0;
 	cp->obuf = NULL;
+	cp->osize = 0;
 	return (-1);
 }
 
@@ -394,8 +396,8 @@ build_reply(struct con *cp)
 	if (matches == NULL) {
 		if (cp->osize)
 			free(cp->obuf);
-		cp->osize = 0;
 		cp->obuf = NULL;
+		cp->osize = 0;
 		goto bad;
 	}
 	for (; *matches; matches++) {
@@ -414,8 +416,8 @@ build_reply(struct con *cp)
 				if (c == NULL) {
 					if (cp->osize)
 						free(cp->obuf);
-					cp->osize = 0;
 					cp->obuf = NULL;
+					cp->osize = 0;
 					goto bad;
 				}
 			}
@@ -479,6 +481,7 @@ initcon(struct con *cp, int fd, struct sockaddr_in *sin)
 	time(&t);
 	if (cp->obufalloc) {
 		free(cp->obuf);
+		cp->obuf = NULL;
 	}
 	bzero(cp, sizeof(struct con));
 	if (grow_obuf(cp, 0) == NULL)

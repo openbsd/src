@@ -1,4 +1,4 @@
-/*	$OpenBSD: sdl.c,v 1.3 2003/03/02 20:40:15 deraadt Exp $ */
+/*	$OpenBSD: sdl.c,v 1.4 2003/03/03 14:47:37 deraadt Exp $ */
 /*
  * Copyright (c) 2003 Bob Beck.  All rights reserved.
  *
@@ -69,8 +69,11 @@ sdl_add(char *sdname, char *sdstring, char ** addrs, int addrc)
 		if (debug > 0)
 			printf("replacing list %s\n", blacklists[index].tag);
 		free(blacklists[index].tag);
+		blacklists[index].tag = NULL;
 		free(blacklists[index].string);
+		blacklists[index].string = NULL;
 		free(blacklists[index].addrs);
+		blacklists[index].addrs = NULL;
 	} else {
 		if (debug > 0)
 			printf("adding list %s\n", sdname);
