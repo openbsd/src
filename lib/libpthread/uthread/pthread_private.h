@@ -31,7 +31,7 @@
  *
  * Private thread definitions for the uthread kernel.
  *
- * $OpenBSD: pthread_private.h,v 1.8 1999/01/08 05:42:18 d Exp $
+ * $OpenBSD: pthread_private.h,v 1.9 1999/01/08 05:44:53 d Exp $
  *
  */
 
@@ -343,8 +343,6 @@ struct pthread {
 	void			*stack;
 	struct pthread_attr	attr;
 
-	struct _machdep_struct	_machdep;
-
 	/*
 	 * Saved signal context used in call to sigreturn by
 	 * _thread_kern_sched if sig_saved is TRUE.
@@ -454,6 +452,9 @@ struct pthread {
 	struct pthread_cleanup *cleanup;
 	const char		*fname;	/* Ptr to source file name  */
 	int			lineno;	/* Source line number.      */
+
+	/* Machine dependent information */
+	struct _machdep_struct	_machdep;
 };
 
 /*
