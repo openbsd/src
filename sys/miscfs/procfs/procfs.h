@@ -1,4 +1,4 @@
-/*	$OpenBSD: procfs.h,v 1.11 2001/04/09 07:14:21 tholo Exp $	*/
+/*	$OpenBSD: procfs.h,v 1.12 2001/05/24 07:32:42 aaron Exp $	*/
 /*	$NetBSD: procfs.h,v 1.17 1996/02/12 15:01:41 christos Exp $	*/
 
 /*
@@ -136,7 +136,6 @@ int procfs_docmdline __P((struct proc *, struct proc *, struct pfsnode *pfsp, st
 int procfs_domeminfo __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 int procfs_docpuinfo __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio));
 int procfs_domap __P((struct proc *, struct proc *, struct pfsnode *pfsp, struct uio *uio, int));
-struct vnode *procfs_findtextvp __P((struct proc *));
 int procfs_freevp __P((struct vnode *));
 int procfs_getcpuinfstr __P((char *, int *));
 
