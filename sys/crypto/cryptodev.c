@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.31 2002/03/01 02:52:51 provos Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.32 2002/03/04 21:25:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -110,7 +110,11 @@ struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, u_int64_t,
     struct auth_hash *);
 int	csefree(struct csession *);
 
-int	crypto_op(struct csession *, struct crypt_op *, struct proc *);
+int	cryptodev_op(struct csession *, struct crypt_op *, struct proc *);
+int	cryptodev_key(struct crypt_kop *);
+int	cryptodev_dokey(struct crypt_kop *kop, struct crparam kvp[]);
+
+int	cryptodev_cb(void *);
 
 int	usercrypto = 1;		/* userland may do crypto requests */
 int	cryptodevallowsoft = 0;	/* only use hardware crypto */
@@ -275,7 +279,10 @@ bail:
 		cse = csefind(fcr, cop->ses);
 		if (cse == NULL)
 			return (EINVAL);
-		error = crypto_op(cse, cop, p);
+		error = cryptodev_op(cse, cop, p);
+		break;
+	case CIOCKEY:
+		error = cryptodev_key((struct crypt_kop *)data);
 		break;
 	default:
 		error = EINVAL;
@@ -283,11 +290,8 @@ bail:
 	return (error);
 }
 
-int	cryptodev_cb(void *);
-
-
 int
-crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
+cryptodev_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 {
 	struct cryptop *crp = NULL;
 	struct cryptodesc *crde = NULL, *crda = NULL;
@@ -433,6 +437,88 @@ cryptodev_cb(void *op)
 		return crypto_dispatch(crp);
 	wakeup(cse);
 	return (0);
+}
+
+int
+cryptodev_dokey(struct crypt_kop *kop, struct crparam kvp[])
+{
+	return (EIO);
+}
+
+int
+cryptodev_key(struct crypt_kop *kop)
+{
+	struct crparam kvp[CRK_MAXPARAM];
+	int in = kop->crk_iparams, out = kop->crk_oparams;
+	int error = EINVAL;
+	int size, i;
+
+	if (kop->crk_iparams + kop->crk_oparams > CRK_MAXPARAM)
+		return (EFBIG);
+	bzero(&kvp, sizeof(kvp));
+
+	switch (kop->crk_op) {
+	case CRK_MOD_EXP:
+		if (in == 3 && out == 1)
+			break;
+		goto fail;
+	case CRK_MOD_EXP_CRT:
+		if (in == 6 && out == 1)
+			break;
+		goto fail;
+	case CRK_DSA_SIGN:
+		if (in == 5 && out == 2)
+			break;
+		goto fail;
+	case CRK_DSA_VERIFY:
+		if (in == 7 && out == 0)
+			break;
+		goto fail;
+	case CRK_DH_COMPUTE_KEY:
+		if (in == 3 && out == 1)
+			break;
+		goto fail;
+	default:
+		goto fail;
+	}
+
+	for (i = 0; i < CRK_MAXPARAM; i++)
+		kvp[i].crp_nbits = kop->crk_param[i].crp_nbits;
+
+	for (i = 0; i < kop->crk_iparams + kop->crk_oparams; i++) {
+		size = (kvp[i].crp_nbits + 7) / 8;
+		if (size == 0)
+			continue;
+		MALLOC(kvp[i].crp_p, caddr_t, size, M_XDATA, M_WAITOK);
+		if (i >= kop->crk_iparams)
+			continue;
+		error = copyin(kop->crk_param[i].crp_p, kvp[i].crp_p, size);
+		if (error)
+			goto fail;
+	}
+
+	kop->crk_status = 0;
+	error = cryptodev_dokey(kop, kvp);
+
+	for (i = kop->crk_iparams; i < kop->crk_iparams + kop->crk_oparams; i++) {
+		int err;
+
+		size = (kvp[i].crp_nbits + 7) / 8;
+		if (size == 0)
+			continue;
+		err = copyout(kvp[i].crp_p, kop->crk_param[i].crp_p, size);
+		if (err) {
+			error = err;
+			goto fail;
+		}
+	}
+
+fail:
+	for (i = 0; i < CRK_MAXPARAM; i++) {
+		if (kvp[i].crp_p)
+			FREE(kvp[i].crp_p, M_XDATA);
+	}
+	return (error);
 }
 
 /* ARGSUSED */
@@ -598,7 +684,7 @@ csedelete(struct fcrypt *fcr, struct csession *cse_del)
 	}
 	return (0);
 }
-	
+
 struct csession *
 cseadd(struct fcrypt *fcr, struct csession *cse)
 {
