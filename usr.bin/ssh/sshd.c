@@ -18,7 +18,7 @@ agent connections.
 */
 
 #include "includes.h"
-RCSID("$Id: sshd.c,v 1.40 1999/10/18 06:16:50 markus Exp $");
+RCSID("$Id: sshd.c,v 1.41 1999/10/25 20:38:49 markus Exp $");
 
 #include "xmalloc.h"
 #include "rsa.h"
@@ -1041,7 +1041,7 @@ do_authentication(char *user, int privileged_port)
 	  packet_send();
 	  packet_write_wait();
           if (++authentication_failures >= MAX_AUTH_FAILURES) {
-	    packet_disconnect("To many authentication failures for %.100s from %.200s", 
+	    packet_disconnect("Too many authentication failures for %.100s from %.200s", 
             		       user, get_canonical_hostname());
           }
 	}
@@ -1344,7 +1344,7 @@ do_authentication(char *user, int privileged_port)
       packet_write_wait();
 
       if (++authentication_failures >= MAX_AUTH_FAILURES) {
-	packet_disconnect("To many authentication failures for %.100s from %.200s", 
+	packet_disconnect("Too many authentication failures for %.100s from %.200s", 
           pw->pw_name, get_canonical_hostname());
       }
     }
