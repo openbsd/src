@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.31 1998/02/26 10:39:04 johns Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.32 1998/03/01 09:24:28 johns Exp $	*/
 /*	$NetBSD: machdep.c,v 1.85 1997/09/12 08:55:02 pk Exp $ */
 
 /*
@@ -851,7 +851,7 @@ dumpsys()
 	printf("memory ");
 	for (mp = pmemarr, nmem = npmemarr; --nmem >= 0 && error == 0; mp++) {
 		register unsigned i = 0, n;
-		register maddr = mp->addr;
+		register unsigned maddr = mp->addr;
 
 		/* XXX - what's so special about PA 0 that we can't dump it? */
 		if (maddr == 0) {
@@ -989,7 +989,7 @@ cpu_exec_aout_makecmds(p, epp)
 	int error = ENOEXEC;
 
 #ifdef COMPAT_SUNOS
-	extern sunos_exec_aout_makecmds __P((struct proc *, struct exec_package *));
+	extern int sunos_exec_aout_makecmds __P((struct proc *, struct exec_package *));
 	if ((error = sunos_exec_aout_makecmds(p, epp)) == 0)
 		return 0;
 #endif
