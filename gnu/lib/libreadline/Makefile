@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.2 2001/03/18 20:04:11 millert Exp $
+#	$OpenBSD: Makefile,v 1.3 2001/03/23 03:57:24 millert Exp $
 
 LIB=	readline
 SRCS=	readline.c funmap.c keymaps.c vi_mode.c parens.c rltty.c complete.c \
@@ -7,7 +7,6 @@ SRCS=	readline.c funmap.c keymaps.c vi_mode.c parens.c rltty.c complete.c \
 	histexpand.c histfile.c nls.c search.c shell.c savestring.c tilde.c
 HDRS=	readline.h chardefs.h keymaps.h history.h tilde.h rlstdc.h rlconf.h
 CPPFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR}
-SUBDIRS= doc
 
 includes:
 	@cd ${.CURDIR}; for i in $(HDRS); do \
@@ -17,6 +16,9 @@ includes:
 	    echo $$j; \
 	    eval "$$j"; \
 	done
+
+all:
+	@cd ${.CURDIR}/doc && ${MAKE} all
 
 cleandir:
 	@cd ${.CURDIR}/doc && ${MAKE} cleandir
