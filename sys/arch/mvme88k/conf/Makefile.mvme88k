@@ -1,5 +1,5 @@
 #	@(#)Makefile.hp300	7.10 (Berkeley) 6/27/91
-#	$Id: Makefile.mvme88k,v 1.3 1997/09/15 02:40:32 deraadt Exp $
+#	$Id: Makefile.mvme88k,v 1.4 1998/09/15 04:01:22 smurph Exp $
 #
 # Makefile for NetBSD
 #
@@ -22,11 +22,13 @@
 
 # DEBUG is set to -g by config if debugging is requested (config -g).
 # PROF is set to -pg by config if profiling is requested (config -p).
-AS=     as ${DEBUG}
+DESTDIR=/usr/cross/mvme88k
+DESTBIN=${DESTDIR}/usr/m88k-unknown-openbsd2.2/bin
+AS=     ${DESTBIN}/as ${DEBUG}
 AWK=	awk
-CC=     cc ${DEBUG}
+CC=     ${DESTBIN}/gcc ${DEBUG}
 CPP=    cpp
-LD=     ld
+LD=     ${DESTBIN}/ld
 TOUCH=	touch -f -c
 
 .ifndef HOSTCC

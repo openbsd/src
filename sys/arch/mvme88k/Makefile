@@ -1,5 +1,9 @@
 #	from: @(#)Makefile	7.3 (Berkeley) 6/9/91
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 10:54:18 deraadt Exp $
+#	$Id: Makefile,v 1.2 1998/09/15 04:01:21 smurph Exp $
+
+SUBDIR= stand
+DIRS= conf dev ddb mvme88k include
+
 S=${BSDSRCDIR}/sys
 COMM=	$S/vm/*.[ch] $S/ufs/*.[ch] $S/sys/*.h $S/compat/sunos/*.[ch] \
 	$S/nfs/*.[ch] $S/netns/*.[ch] $S/netiso/*.[ch] \
@@ -9,16 +13,16 @@ COMM=	$S/vm/*.[ch] $S/ufs/*.[ch] $S/sys/*.h $S/compat/sunos/*.[ch] \
 
 # Makefile for m88k tags file
 
-all:
-	@echo "make tags or links only"
+#all:
+#	@echo "make tags or links only"
 
-TM88K=	$S/arch/m88k/tags
-SM88K=	$S/arch/m88k/m88k/*.[ch] $S/arch/m88k/include/*.h \
-	$S/arch/m88k/dev/*.[ch]
-AM88K=	$S/arch/m88k/m88k/*.s
+TM88K=	$S/arch/mvme88k/tags
+SM88K=	$S/arch/mvme88k/mvme88k/*.[ch] $S/arch/mvme88k/include/*.h \
+	$S/arch/mvme88k/dev/*.[ch]
+AM88K=	$S/arch/mvme88k/mvme88k/*.s
 
 # Directories in which to place m88k tags links
-DM88K=	m88k dev include
+DM88K=	mvme88k dev include
 
 TAGS:
 	-etags -dt ${COMM} ${SM88K} ${AM88K}
@@ -38,5 +42,8 @@ links:
 	    rm -f $$i/tags; rm -f $$i/TAGS ; \
 	    ln -s ../tags $$i/tags; ln -s ../TAGS $$i/TAGS; done
 
+obj:	_SUBDIRUSE
+
 .include <bsd.prog.mk>
+.include <bsd.subdir.mk>
 

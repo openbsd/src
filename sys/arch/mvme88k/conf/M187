@@ -2,7 +2,7 @@
 # This configuration file contains all possible options
 #
 
-machine m88k
+machine mvme88k
 
 maxusers 8
 
