@@ -1,5 +1,7 @@
 #include "DEFS.h"
 
+	.set	noreorder
+
 /*
  * bit = ffs(value)
  */

@@ -1,5 +1,7 @@
 #include "DEFS.h"
 
+	.set	noreorder
+
 /*
  * NOTE: this version assumes unsigned chars in order to be "8 bit clean".
  */

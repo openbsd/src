@@ -1,5 +1,7 @@
 #include "DEFS.h"
 
+	.set	noreorder
+
 /*
  * bzero(s1, n)
  */
@@ -30,6 +32,6 @@ smallclr:
 	sb	zero, -1(a0)
 2:
 	j	ra
-	 nop
+	nop
 END(bzero)
 

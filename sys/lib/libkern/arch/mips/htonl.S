@@ -1,5 +1,7 @@
 #include "DEFS.h"
 
+	.set	noreorder
+
 /*
  * netorder = htonl(hostorder)
  * hostorder = ntohl(netorder)

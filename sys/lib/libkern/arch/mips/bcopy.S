@@ -1,5 +1,7 @@
 #include "DEFS.h"
 
+	.set	noreorder
+
 /*
  * memcpy(to, from, len)
  * {ov}bcopy(from, to, len)
@@ -27,7 +29,7 @@ ALEAF(ovbcopy)
 	sb	v1, 0(t1)
 2:
 	j	ra
-	 nop
+	nop
 forward:
 	bne	t2, zero, smallcpy	# do a small bcopy
 	xor	v1, a0, a1		# compare low two bits of addresses
@@ -90,5 +92,5 @@ smallcpy:
 	nop			# MMU BUG ? can't do -1(a1) at 0x80000000!!
 2:
 	j	ra
-	 nop
+	nop
 END(memcpy)
