@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.11 2001/02/26 19:45:17 todd Exp $	*/
+/*	$OpenBSD: input.c,v 1.12 2002/09/06 18:15:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -36,7 +36,7 @@
 #if !defined(lint)
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/5/93";
 #else
-static char rcsid[] = "$OpenBSD: input.c,v 1.11 2001/02/26 19:45:17 todd Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.12 2002/09/06 18:15:55 deraadt Exp $";
 #endif
 
 #include "defs.h"
@@ -329,7 +329,7 @@ input(struct sockaddr_in *from,		/* received from this IP address */
 		}
 #else
 		msglog("trace command from %s ignored: %s\n",
-		    rip->rip_tracefile);
+		    naddr_ntoa(FROM_NADDR), rip->rip_tracefile);
 #endif
 		return;
 
