@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.48 2002/01/23 17:25:38 ho Exp $	*/
+/*	$OpenBSD: policy.c,v 1.49 2002/01/23 18:09:04 ho Exp $	*/
 /*	$EOM: policy.c,v 1.49 2000/10/24 13:33:39 niklas Exp $ */
 
 /*
@@ -141,8 +141,9 @@ my_inet_ntop4 (const in_addr_t *src, char *dst, size_t size, int normalize)
   else
     src2 = *src;
 
-  if (sprintf (tmp, fmt, ((u_int8_t *) &src2)[0], ((u_int8_t *) &src2)[1],
-	       ((u_int8_t *) &src2)[2], ((u_int8_t *) &src2)[3]) > size)
+  if (snprintf (tmp, sizeof tmp, fmt, ((u_int8_t *) &src2)[0],
+		((u_int8_t *) &src2)[1], ((u_int8_t *) &src2)[2],
+		((u_int8_t *) &src2)[3]) > size)
     {
       errno = ENOSPC;
       return 0;
@@ -157,9 +158,9 @@ my_inet_ntop6 (const unsigned char *src, char *dst, size_t size)
   static const char fmt[] = "%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x";
   char tmp[sizeof "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"];
 
-  if (sprintf (tmp, fmt, src[0], src[1], src[2], src[3], src[4], src[5],
-               src[6], src[7], src[8], src[9], src[10], src[11], src[12],
-               src[13], src[14], src[15]) > size)
+  if (snprintf (tmp, sizeof tmp, fmt, src[0], src[1], src[2], src[3], src[4],
+		src[5], src[6], src[7], src[8], src[9], src[10], src[11],
+		src[12], src[13], src[14], src[15]) > size)
     {
       errno = ENOSPC;
       return 0;
@@ -711,22 +712,19 @@ policy_callback (char *name)
 	  net = decode_32 (id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ + 4);
 	  my_inet_ntop4 (&net, remote_id_addr_upper,
 			 sizeof remote_id_addr_upper - 1, 1);
-	  remote_id = calloc (strlen (remote_id_addr_upper)
-			      + strlen (remote_id_addr_lower) + 2,
-			      sizeof (char));
+	  len = strlen (remote_id_addr_upper) + strlen (remote_id_addr_lower)
+	    + 2;
+	  remote_id = calloc (len, sizeof (char));
 	  if (!remote_id)
 	    {
-	      log_error ("policy_callback: calloc (%d, %d) failed",
-			 strlen (remote_id_addr_upper)
-			 + strlen (remote_id_addr_lower) + 2,
+	      log_error ("policy_callback: calloc (%d, %d) failed", len,
 			 sizeof (char));
 	      goto bad;
 	    }
 
-	  strcpy (remote_id, remote_id_addr_lower);
-	  remote_id[strlen (remote_id_addr_lower)] = '-';
-	  strcpy (remote_id + strlen (remote_id_addr_lower) + 1,
-		  remote_id_addr_upper);
+	  strlcpy (remote_id, remote_id_addr_lower, len);
+	  strlcat (remote_id, "-", len);
+	  strlcat (remote_id, remote_id_addr_upper, len);
 	  break;
 
 	case IPSEC_ID_IPV4_ADDR_SUBNET:
@@ -740,29 +738,27 @@ policy_callback (char *name)
 	  net |= ~subnet;
 	  my_inet_ntop4 (&net, remote_id_addr_upper,
 			 sizeof remote_id_addr_upper - 1, 1);
-	  remote_id = calloc (strlen (remote_id_addr_upper)
-			      + strlen (remote_id_addr_lower) + 2,
-			      sizeof (char));
+	  len = strlen (remote_id_addr_upper) + strlen (remote_id_addr_lower)
+	    + 2;
+	  remote_id = calloc (len, sizeof (char));
 	  if (!remote_id)
 	    {
-	      log_error ("policy_callback: calloc (%d, %d) failed",
-			 strlen (remote_id_addr_upper)
-			 + strlen (remote_id_addr_lower) + 2,
+	      log_error ("policy_callback: calloc (%d, %d) failed", len,
 			 sizeof (char));
 	      goto bad;
 	    }
 
-	  strcpy (remote_id, remote_id_addr_lower);
-	  remote_id[strlen (remote_id_addr_lower)] = '-';
-	  strcpy (remote_id + strlen (remote_id_addr_lower) + 1,
-		  remote_id_addr_upper);
+	  strlcpy (remote_id, remote_id_addr_lower, len);
+	  strlcat (remote_id, "-", len);
+	  strlcat (remote_id, remote_id_addr_upper, len);
 	  break;
 
 	case IPSEC_ID_IPV6_ADDR:
 	  remote_id_type = "IPv6 address";
 	  my_inet_ntop6 (id + ISAKMP_ID_DATA_OFF - ISAKMP_GEN_SZ,
 			 remote_id_addr_upper, sizeof remote_id_addr_upper);
-	  strcpy (remote_id_addr_lower, remote_id_addr_upper);
+	  strlcpy (remote_id_addr_lower, remote_id_addr_upper, 
+		   sizeof remote_id_addr_lower);
 	  remote_id = strdup (remote_id_addr_upper);
 	  if (!remote_id)
   	    {
@@ -783,22 +779,19 @@ policy_callback (char *name)
 			 remote_id_addr_upper,
 			 sizeof remote_id_addr_upper - 1);
 
-	  remote_id = calloc (strlen (remote_id_addr_upper) +
-			      strlen (remote_id_addr_lower) + 2,
-			      sizeof (char));
+	  len = strlen (remote_id_addr_upper) + strlen (remote_id_addr_lower)
+	    + 2;
+	  remote_id = calloc (len, sizeof (char));
 	  if (!remote_id)
 	    {
-	      log_error ("policy_callback: calloc (%d, %d) failed",
-			 strlen (remote_id_addr_upper)
-			 + strlen (remote_id_addr_lower) + 2,
+	      log_error ("policy_callback: calloc (%d, %d) failed", len,
 			 sizeof (char));
 	      goto bad;
 	    }
 
-	  strcpy (remote_id, remote_id_addr_lower);
-	  remote_id[strlen (remote_id_addr_lower)] = '-';
-	  strcpy (remote_id + strlen (remote_id_addr_lower) + 1,
-		  remote_id_addr_upper);
+	  strlcpy (remote_id, remote_id_addr_lower, len);
+	  strlcat (remote_id, "-", len);
+	  strlcat (remote_id, remote_id_addr_upper, len);
 	  break;
 
 	case IPSEC_ID_IPV6_ADDR_SUBNET:
@@ -823,22 +816,19 @@ policy_callback (char *name)
 	  my_inet_ntop6 ((char *) &net, remote_id_addr_upper,
 			 sizeof remote_id_addr_upper - 1);
 
-	  remote_id = calloc (strlen (remote_id_addr_upper) +
-			      strlen (remote_id_addr_lower) + 2,
-			      sizeof (char));
+	  len = strlen (remote_id_addr_upper) + strlen (remote_id_addr_lower)
+	    + 2;
+	  remote_id = calloc (len, sizeof (char));
 	  if (!remote_id)
 	    {
-	      log_error ("policy_callback: calloc (%d, %d) failed",
-			 strlen (remote_id_addr_upper)
-			 + strlen (remote_id_addr_lower) + 2,
+	      log_error ("policy_callback: calloc (%d, %d) failed", len,
 			 sizeof (char));
 	      goto bad;
 	    }
 
-	  strcpy (remote_id, remote_id_addr_lower);
-	  remote_id[strlen (remote_id_addr_lower)] = '-';
-	  strcpy (remote_id + strlen (remote_id_addr_lower) + 1,
-		  remote_id_addr_upper);
+	  strlcpy (remote_id, remote_id_addr_lower, len);
+	  strlcat (remote_id, "-", len);
+	  strlcat (remote_id, remote_id_addr_upper, len);
 	  break;
 	}
 
@@ -1000,21 +990,19 @@ policy_callback (char *name)
 	      net = decode_32 (idremote + ISAKMP_ID_DATA_OFF + 4);
 	      my_inet_ntop4 (&net, remote_filter_addr_upper,
 			     sizeof remote_filter_addr_upper - 1, 1);
-	      remote_filter = calloc (strlen (remote_filter_addr_upper)
-				      + strlen (remote_filter_addr_lower) + 2,
-				      sizeof (char));
+	      len = strlen (remote_filter_addr_upper)
+		+ strlen (remote_filter_addr_lower) + 2;
+	      remote_filter = calloc (len, sizeof (char));
 	      if (!remote_filter)
 	        {
-		  log_error ("policy_callback: calloc (%d, %d) failed",
-			     strlen (remote_filter_addr_upper)
-			     + strlen (remote_filter_addr_lower) + 2,
+		  log_error ("policy_callback: calloc (%d, %d) failed", len,
 			     sizeof (char));
 		  goto bad;
 		}
-	      strcpy (remote_filter, remote_filter_addr_lower);
-	      remote_filter[strlen (remote_filter_addr_lower)] = '-';
-	      strcpy (remote_filter + strlen (remote_filter_addr_lower) + 1,
-		      remote_filter_addr_upper);
+
+	      strlcpy (remote_filter, remote_filter_addr_lower, len);
+	      strlcat (remote_filter, "-", len);
+	      strlcat (remote_filter, remote_filter_addr_upper, len);
 	      break;
 
 	    case IPSEC_ID_IPV4_ADDR_SUBNET:
@@ -1028,21 +1016,18 @@ policy_callback (char *name)
 	      net |= ~subnet;
 	      my_inet_ntop4 (&net, remote_filter_addr_upper,
 			     sizeof remote_filter_addr_upper - 1, 1);
-	      remote_filter = calloc (strlen (remote_filter_addr_upper)
-				      + strlen (remote_filter_addr_lower) + 2,
-				      sizeof (char));
+	      len = strlen (remote_filter_addr_upper)
+		+ strlen (remote_filter_addr_lower) + 2;
+	      remote_filter = calloc (len, sizeof (char));
 	      if (!remote_filter)
 	        {
-		  log_error ("policy_callback: calloc (%d, %d) failed",
-			     strlen (remote_filter_addr_upper)
-			     + strlen (remote_filter_addr_lower) + 2,
+		  log_error ("policy_callback: calloc (%d, %d) failed", len,
 			     sizeof (char));
 		  goto bad;
 		}
-	      strcpy (remote_filter, remote_filter_addr_lower);
-	      remote_filter[strlen (remote_filter_addr_lower)] = '-';
-	      strcpy (remote_filter + strlen (remote_filter_addr_lower) + 1,
-		      remote_filter_addr_upper);
+	      strlcpy (remote_filter, remote_filter_addr_lower, len);
+	      strlcat (remote_filter, "-", len);
+	      strlcat (remote_filter, remote_filter_addr_upper, len);
 	      break;
 
 	    case IPSEC_ID_IPV6_ADDR:
@@ -1050,7 +1035,8 @@ policy_callback (char *name)
 	      my_inet_ntop6 (idremote + ISAKMP_ID_DATA_OFF,
 			     remote_filter_addr_upper,
 			     sizeof remote_filter_addr_upper - 1);
-	      strcpy (remote_filter_addr_lower, remote_filter_addr_upper);
+	      strlcpy (remote_filter_addr_lower, remote_filter_addr_upper,
+		       sizeof remote_filter_addr_lower);
 	      remote_filter = strdup (remote_filter_addr_upper);
 	      if (!remote_filter)
 	        {
@@ -1071,22 +1057,19 @@ policy_callback (char *name)
 			     remote_filter_addr_upper,
 			     sizeof remote_filter_addr_upper - 1);
 
-	      remote_filter = calloc (strlen (remote_filter_addr_upper) +
-				      strlen (remote_filter_addr_lower) + 2,
-				      sizeof (char));
+	      len = strlen (remote_filter_addr_upper)
+		+ strlen (remote_filter_addr_lower) + 2;
+	      remote_filter = calloc (len, sizeof (char));
 	      if (!remote_filter)
 		{
-		  log_error ("policy_callback: calloc (%d, %d) failed",
-			     strlen (remote_filter_addr_upper) +
-			     strlen (remote_filter_addr_lower) + 2,
+		  log_error ("policy_callback: calloc (%d, %d) failed", len,
 			     sizeof (char));
 		  goto bad;
 		}
 
-	      strcpy (remote_filter, remote_filter_addr_lower);
-	      remote_filter[strlen (remote_filter_addr_lower)] = '-';
-	      strcpy (remote_filter + strlen (remote_filter_addr_lower) + 1,
-		      remote_filter_addr_upper);
+	      strlcpy (remote_filter, remote_filter_addr_lower, len);
+	      strlcat (remote_filter, "-", len);
+	      strlcat (remote_filter, remote_filter_addr_upper, len);
 	      break;
 
 	    case IPSEC_ID_IPV6_ADDR_SUBNET:
@@ -1110,22 +1093,19 @@ policy_callback (char *name)
 	      my_inet_ntop6 ((char *) &net, remote_filter_addr_upper,
 			     sizeof remote_filter_addr_upper - 1);
 
-	      remote_filter = calloc (strlen (remote_filter_addr_upper) +
-				      strlen (remote_filter_addr_lower) + 2,
-				      sizeof (char));
+	      len = strlen (remote_filter_addr_upper)
+		+ strlen (remote_filter_addr_lower) + 2;
+	      remote_filter = calloc (len, sizeof (char));
 	      if (!remote_filter)
 		{
-		  log_error ("policy_callback: calloc (%d, %d) failed",
-			     strlen (remote_filter_addr_upper) +
-			     strlen (remote_filter_addr_lower) + 2,
+		  log_error ("policy_callback: calloc (%d, %d) failed", len,
 			     sizeof (char));
 		  goto bad;
 		}
 
-	      strcpy (remote_filter, remote_filter_addr_lower);
-	      remote_filter[strlen (remote_filter_addr_lower)] = '-';
-	      strcpy (remote_filter + strlen (remote_filter_addr_lower) + 1,
-		      remote_filter_addr_upper);
+	      strlcpy (remote_filter, remote_filter_addr_lower, len);
+	      strlcat (remote_filter, "-", len);
+	      strlcat (remote_filter, remote_filter_addr_upper, len);
 	      break;
 	    }
 
@@ -1303,21 +1283,18 @@ policy_callback (char *name)
 	      net = decode_32 (idlocal + ISAKMP_ID_DATA_OFF + 4);
 	      my_inet_ntop4 (&net, local_filter_addr_upper,
 			     sizeof local_filter_addr_upper - 1, 1);
-	      local_filter = calloc (strlen (local_filter_addr_upper)
-				     + strlen (local_filter_addr_lower) + 2,
-				     sizeof (char));
+	      len = strlen (local_filter_addr_upper)
+		+ strlen (local_filter_addr_lower) + 2;
+	      local_filter = calloc (len, sizeof (char));
 	      if (!local_filter)
 	        {
-		  log_error ("policy_callback: calloc (%d, %d) failed",
-			     strlen (local_filter_addr_upper)
-			     + strlen (local_filter_addr_lower) + 2,
+		  log_error ("policy_callback: calloc (%d, %d) failed", len,
 			     sizeof (char));
 		  goto bad;
 		}
-	      strcpy (local_filter, local_filter_addr_lower);
-	      local_filter[strlen (local_filter_addr_lower)] = '-';
-	      strcpy (local_filter + strlen (local_filter_addr_lower) + 1,
-		      local_filter_addr_upper);
+	      strlcpy (local_filter, local_filter_addr_lower, len);
+	      strlcat (local_filter, "-", len);
+	      strlcat (local_filter, local_filter_addr_upper, len);
 	      break;
 
 	    case IPSEC_ID_IPV4_ADDR_SUBNET:
@@ -1331,21 +1308,18 @@ policy_callback (char *name)
 	      net |= ~subnet;
 	      my_inet_ntop4 (&net, local_filter_addr_upper,
 			     sizeof local_filter_addr_upper - 1, 1);
-	      local_filter = calloc (strlen (local_filter_addr_upper)
-				     + strlen (local_filter_addr_lower) + 2,
-				     sizeof (char));
+	      len = strlen (local_filter_addr_upper)
+		+ strlen (local_filter_addr_lower) + 2;
+	      local_filter = calloc (len, sizeof (char));
 	      if (!local_filter)
 	        {
-		  log_error ("policy_callback: calloc (%d, %d) failed",
-			     strlen (local_filter_addr_upper)
-			     + strlen (local_filter_addr_lower) + 2,
+		  log_error ("policy_callback: calloc (%d, %d) failed", len,
 			     sizeof (char));
 		  goto bad;
 		}
-	      strcpy (local_filter, local_filter_addr_lower);
-	      local_filter[strlen (local_filter_addr_lower)] = '-';
-	      strcpy (local_filter + strlen (local_filter_addr_lower) + 1,
-		      local_filter_addr_upper);
+	      strlcpy (local_filter, local_filter_addr_lower, len);
+	      strlcat (local_filter, "-", len);
+	      strlcat (local_filter, local_filter_addr_upper, len);
 	      break;
 
 	    case IPSEC_ID_IPV6_ADDR:
@@ -1353,7 +1327,8 @@ policy_callback (char *name)
 	      my_inet_ntop6 (idlocal + ISAKMP_ID_DATA_OFF,
 			     local_filter_addr_upper,
 			     sizeof local_filter_addr_upper - 1);
-	      strcpy (local_filter_addr_lower, local_filter_addr_upper);
+	      strlcpy (local_filter_addr_lower, local_filter_addr_upper,
+		       sizeof local_filter_addr_lower);
 	      local_filter = strdup (local_filter_addr_upper);
 	      if (!local_filter)
 	        {
@@ -1374,22 +1349,19 @@ policy_callback (char *name)
 			     local_filter_addr_upper,
 			     sizeof local_filter_addr_upper - 1);
 
-	      local_filter = calloc (strlen (local_filter_addr_upper) +
-				      strlen (local_filter_addr_lower) + 2,
-				      sizeof (char));
+	      len = strlen (local_filter_addr_upper)
+		+ strlen (local_filter_addr_lower) + 2;
+	      local_filter = calloc (len, sizeof (char));
 	      if (!local_filter)
 		{
-		  log_error ("policy_callback: calloc (%d, %d) failed",
-			     strlen (local_filter_addr_upper) +
-			     strlen (local_filter_addr_lower) + 2,
+		  log_error ("policy_callback: calloc (%d, %d) failed", len,
 			     sizeof (char));
 		  goto bad;
 		}
 
-	      strcpy (local_filter, local_filter_addr_lower);
-	      local_filter[strlen (local_filter_addr_lower)] = '-';
-	      strcpy (local_filter + strlen (local_filter_addr_lower) + 1,
-		      local_filter_addr_upper);
+	      strlcpy (local_filter, local_filter_addr_lower, len);
+	      strlcat (local_filter, "-", len);
+	      strlcat (local_filter, local_filter_addr_upper, len);
 	      break;
 
 	    case IPSEC_ID_IPV6_ADDR_SUBNET:
@@ -1413,22 +1385,19 @@ policy_callback (char *name)
 	      my_inet_ntop6 ((char *) &net, local_filter_addr_upper,
 			     sizeof local_filter_addr_upper - 1);
 
-	      local_filter = calloc (strlen (local_filter_addr_upper) +
-				      strlen (local_filter_addr_lower) + 2,
-				      sizeof (char));
+	      len = strlen (local_filter_addr_upper)
+		+ strlen (local_filter_addr_lower) + 2;
+	      local_filter = calloc (len, sizeof (char));
 	      if (!local_filter)
 		{
-		  log_error ("policy_callback: calloc (%d, %d) failed",
-			     strlen (local_filter_addr_upper) +
-			     strlen (local_filter_addr_lower) + 2,
+		  log_error ("policy_callback: calloc (%d, %d) failed", len,
 			     sizeof (char));
 		  goto bad;
 		}
 
-	      strcpy (local_filter, local_filter_addr_lower);
-	      local_filter[strlen (local_filter_addr_lower)] = '-';
-	      strcpy (local_filter + strlen (local_filter_addr_lower) + 1,
-		      local_filter_addr_upper);
+	      strlcpy (local_filter, local_filter_addr_lower, len);
+	      strlcat (local_filter, "-", len);
+	      strlcat (local_filter, local_filter_addr_upper, len);
 	      break;
 	    }
 
