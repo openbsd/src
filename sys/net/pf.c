@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.206 2002/05/09 19:58:42 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.207 2002/05/12 00:54:56 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -276,7 +276,7 @@ int			 pf_normalize_tcp(int, struct ifnet *, struct mbuf *,
 			     int, int, void *, struct pf_pdesc *);
 void			 pf_route(struct mbuf **, struct pf_rule *, int);
 void			 pf_route6(struct mbuf **, struct pf_rule *, int);
-int			 pf_user_lookup(uid_t *, uid_t *, int, int, int,
+int			 pf_socket_lookup(uid_t *, gid_t *, int, int, int,
 			     struct pf_pdesc *);
 
 
@@ -2972,11 +2972,19 @@ pf_match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 }
 
 int
-pf_match_uid(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t u)
+pf_match_uid(u_int8_t op, uid_t a1, uid_t a2, uid_t u)
 {
 	if (u == UID_MAX && op != PF_OP_EQ && op != PF_OP_NE)
 		return (0);
 	return (pf_match(op, a1, a2, u));
+}
+
+int
+pf_match_gid(u_int8_t op, gid_t a1, gid_t a2, gid_t g)
+{
+	if (g == GID_MAX && op != PF_OP_EQ && op != PF_OP_NE)
+		return (0);
+	return (pf_match(op, a1, a2, g));
 }
 
 int
@@ -3195,7 +3203,7 @@ pf_map_port_range(struct pf_rdr *rdr, u_int16_t port)
 }
 
 int
-pf_user_lookup(uid_t *ruid, uid_t *euid, int direction, int af, int proto,
+pf_socket_lookup(uid_t *uid, gid_t *gid, int direction, int af, int proto,
     struct pf_pdesc *pd)
 {
 	struct pf_addr *saddr, *daddr;
@@ -3203,7 +3211,8 @@ pf_user_lookup(uid_t *ruid, uid_t *euid, int direction, int af, int proto,
 	struct inpcbtable *tb;
 	struct inpcb *inp;
 
-	*ruid = *euid = UID_MAX;
+	*uid = UID_MAX;
+	*gid = GID_MAX;
 	if (af != AF_INET)
 		return (0);
 	switch (proto) {
@@ -3239,8 +3248,8 @@ pf_user_lookup(uid_t *ruid, uid_t *euid, int direction, int af, int proto,
 		if (inp == NULL)
 			return (0);
 	}
-	*ruid = inp->inp_socket->so_ruid;
-	*euid = inp->inp_socket->so_euid;
+	*uid = inp->inp_socket->so_euid;
+	*gid = inp->inp_socket->so_egid;
 	return (1);
 }
 
@@ -3254,8 +3263,9 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr;
 	struct tcphdr *th = pd->hdr.tcp;
 	u_int16_t bport, nport = 0, af = pd->af;
-	int xuid = -1;
-	uid_t ruid, euid;
+	int lookup = -1;
+	uid_t uid;
+	gid_t gid;
 	struct pf_rule *r;
 	u_short reason;
 	int rewrite = 0, error;
@@ -3348,15 +3358,15 @@ pf_test_tcp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = TAILQ_NEXT(r, entries);
 		else if ((r->flagset & th->th_flags) != r->flags)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->ruid.op && (xuid != -1 || (xuid =
-		    pf_user_lookup(&ruid, &euid, direction, af, IPPROTO_TCP, pd),
-		    1)) && !pf_match_uid(r->ruid.op, r->ruid.uid[0],
-		    r->ruid.uid[1], ruid))
+		else if (r->uid.op && (lookup != -1 || (lookup =
+		    pf_socket_lookup(&uid, &gid, direction, af, IPPROTO_TCP, pd),
+		    1)) && !pf_match_uid(r->uid.op, r->uid.uid[0],
+		    r->uid.uid[1], uid))
 			r = TAILQ_NEXT(r, entries);
-		else if (r->euid.op && (xuid != -1 || (xuid =
-		    pf_user_lookup(&ruid, &euid, direction, af, IPPROTO_TCP, pd),
-		    1)) && !pf_match_uid(r->euid.op, r->euid.uid[0],
-		    r->euid.uid[1], euid))
+		else if (r->gid.op && (lookup != -1 || (lookup =
+		    pf_socket_lookup(&uid, &gid, direction, af, IPPROTO_TCP, pd),
+		    1)) && !pf_match_gid(r->gid.op, r->gid.gid[0],
+		    r->gid.gid[1], gid))
 			r = TAILQ_NEXT(r, entries);
 		else {
 			*rm = r;
@@ -3500,8 +3510,9 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 	struct pf_addr *saddr = pd->src, *daddr = pd->dst, baddr;
 	struct udphdr *uh = pd->hdr.udp;
 	u_int16_t bport, nport = 0, af = pd->af;
-	int xuid = -1;
-	uid_t ruid, euid;
+	int lookup = -1;
+	uid_t uid;
+	gid_t gid;
 	struct pf_rule *r;
 	u_short reason;
 	int rewrite = 0, error;
@@ -3595,15 +3606,15 @@ pf_test_udp(struct pf_rule **rm, int direction, struct ifnet *ifp,
 			r = r->skip[PF_SKIP_DST_PORT];
 		else if (r->rule_flag & PFRULE_FRAGMENT)
 			r = TAILQ_NEXT(r, entries);
-		else if (r->ruid.op && (xuid != -1 || (xuid =
-		    pf_user_lookup(&ruid, &euid, direction, af, IPPROTO_UDP, pd),
-		    1)) && !pf_match_uid(r->ruid.op, r->ruid.uid[0],
-		    r->ruid.uid[1], ruid))
+		else if (r->uid.op && (lookup != -1 || (lookup =
+		    pf_socket_lookup(&uid, &gid, direction, af, IPPROTO_UDP, pd),
+		    1)) && !pf_match_uid(r->uid.op, r->uid.uid[0],
+		    r->uid.uid[1], uid))
 			r = TAILQ_NEXT(r, entries);
-		else if (r->euid.op && (xuid != -1 || (xuid =
-		    pf_user_lookup(&ruid, &euid, direction, af, IPPROTO_UDP, pd),
-		    1)) && !pf_match_uid(r->euid.op, r->euid.uid[0],
-		    r->euid.uid[1], euid))
+		else if (r->gid.op && (lookup != -1 || (lookup =
+		    pf_socket_lookup(&uid, &gid, direction, af, IPPROTO_UDP, pd),
+		    1)) && !pf_match_gid(r->gid.op, r->gid.gid[0],
+		    r->gid.gid[1], gid))
 			r = TAILQ_NEXT(r, entries);
 		else {
 			*rm = r;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.71 2002/05/09 21:58:12 jasoni Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.72 2002/05/12 00:54:56 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -201,6 +201,11 @@ struct pf_rule_uid {
 	u_int8_t	 op;
 };
 
+struct pf_rule_gid {
+	uid_t		 gid[2];
+	u_int8_t	 op;
+};
+
 struct pf_rule_addr {
 	struct pf_addr_wrap	 addr;
 	struct pf_addr		 mask;
@@ -242,8 +247,8 @@ struct pf_rule {
 	u_int16_t		 return_icmp;
 	u_int16_t		 max_mss;
 
-	struct pf_rule_uid	 ruid;
-	struct pf_rule_uid	 euid;
+	struct pf_rule_uid	 uid;
+	struct pf_rule_gid	 gid;
 
 	u_int8_t		 action;
 	u_int8_t		 direction;
@@ -626,7 +631,8 @@ int	pf_match_addr(u_int8_t, struct pf_addr *, struct pf_addr *,
 	    struct pf_addr *, int);
 int	pf_match(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
 int	pf_match_port(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
-int	pf_match_uid(u_int8_t, u_int16_t, u_int16_t, u_int16_t);
+int	pf_match_uid(u_int8_t, uid_t, uid_t, uid_t);
+int	pf_match_gid(u_int8_t, gid_t, gid_t, gid_t);
 
 void	pf_normalize_init(void);
 int	pf_normalize_ip(struct mbuf **, int, struct ifnet *, u_short *);

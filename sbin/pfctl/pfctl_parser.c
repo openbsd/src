@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.69 2002/05/09 21:58:12 jasoni Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.70 2002/05/12 00:54:56 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -61,6 +61,7 @@ void		 print_seq (struct pf_state_peer *);
 void		 print_op (u_int8_t, const char *, const char *);
 void		 print_port (u_int8_t, u_int16_t, u_int16_t, char *);
 void		 print_uid (u_int8_t, uid_t, uid_t, const char *);
+void		 print_gid (u_int8_t, gid_t, gid_t, const char *);
 void		 print_flags (u_int8_t);
 
 char *tcpflags = "FSRPAU";
@@ -399,6 +400,20 @@ print_uid(u_int8_t op, uid_t u1, uid_t u2, const char *t)
 	snprintf(a2, sizeof(a2), "%u", u2);
 	printf("%s ", t);
 	if (u1 == UID_MAX && (op == PF_OP_EQ || op == PF_OP_NE))
+		print_op(op, "unknown", a2);
+	else
+		print_op(op, a1, a2);
+}
+
+void
+print_gid(u_int8_t op, gid_t g1, gid_t g2, const char *t)
+{
+	char a1[5], a2[5];
+
+	snprintf(a1, sizeof(a1), "%u", g1);
+	snprintf(a2, sizeof(a2), "%u", g2);
+	printf("%s ", t);
+	if (g1 == GID_MAX && (op == PF_OP_EQ || op == PF_OP_NE))
 		print_op(op, "unknown", a2);
 	else
 		print_op(op, a1, a2);
@@ -803,12 +818,10 @@ print_rule(struct pf_rule *r)
 			    r->dst.port[1],
 			    r->proto == IPPROTO_TCP ? "tcp" : "udp");
 	}
-	if (r->ruid.op) {
-		print_uid(r->ruid.op, r->ruid.uid[0], r->ruid.uid[1], "ruid");
-	}
-	if (r->euid.op) {
-		print_uid(r->euid.op, r->euid.uid[0], r->euid.uid[1], "euid");
-	}
+	if (r->uid.op)
+		print_uid(r->uid.op, r->uid.uid[0], r->uid.uid[1], "user");
+	if (r->gid.op)
+		print_gid(r->gid.op, r->gid.gid[0], r->gid.gid[1], "group");
 	if (r->flags || r->flagset) {
 		printf("flags ");
 		print_flags(r->flags);

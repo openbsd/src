@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.64 2002/05/10 14:09:53 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.65 2002/05/12 00:54:56 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -89,6 +89,12 @@ struct node_uid {
 	struct node_uid		*next;
 };
 
+struct node_gid {
+	gid_t			 gid[2];
+	u_int8_t		 op;
+	struct node_gid		*next;
+};
+
 struct node_icmp {
 	u_int8_t		 code;
 	u_int8_t		 type;
@@ -109,7 +115,7 @@ void			 expand_rule(struct pf_rule *,
 			    struct node_if *, struct node_proto *,
 			    struct node_host *, struct node_port *,
 			    struct node_host *, struct node_port *,
-			    struct node_uid *, struct node_uid *,
+			    struct node_uid *, struct node_gid *,
 			    struct node_icmp *);
 
 struct sym {
@@ -147,6 +153,7 @@ typedef struct {
 		struct node_host	*host;
 		struct node_port	*port;
 		struct node_uid		*uid;
+		struct node_gid		*gid;
 		struct peer		peer;
 		struct {
 			struct peer	src, dst;
@@ -171,12 +178,12 @@ typedef struct {
 %token	RETURNRST RETURNICMP RETURNICMP6 PROTO INET INET6 ALL ANY ICMPTYPE
 %token  ICMP6TYPE CODE KEEP MODULATE STATE PORT RDR NAT BINAT ARROW NODF
 %token	MINTTL IPV6ADDR ERROR ALLOWOPTS FASTROUTE ROUTETO DUPTO NO LABEL
-%token	NOROUTE FRAGMENT RUID EUID MAXMSS
+%token	NOROUTE FRAGMENT USER GROUP MAXMSS
 %token	<v.string> STRING
 %token	<v.number> NUMBER
 %token	<v.i>	PORTUNARY PORTBINARY
 %type	<v.interface>	interface if_list if_item_not if_item
-%type	<v.number>	port icmptype icmp6type minttl uid maxmss
+%type	<v.number>	port icmptype icmp6type minttl uid gid maxmss
 %type	<v.i>	no dir log quick af keep nodf allowopts fragment
 %type	<v.b>	action flag flags blockspec
 %type	<v.range>	dport rport
@@ -186,7 +193,8 @@ typedef struct {
 %type	<v.peer>	ipportspec
 %type	<v.host>	ipspec xhost host address host_list IPV6ADDR
 %type	<v.port>	portspec port_list port_item
-%type	<v.uid>		ruid euid uid_list uid_item
+%type	<v.uid>		uids uid_list uid_item
+%type	<v.gid>		gids gid_list gid_item
 %type	<v.route>	route
 %type	<v.redirection>	redirection
 %type	<v.string>	label
@@ -213,7 +221,7 @@ varset		: STRING PORTUNARY STRING
 		}
 		;
 
-pfrule		: action dir log quick interface route af proto fromto ruid euid flags icmpspec keep fragment nodf minttl maxmss allowopts label
+pfrule		: action dir log quick interface route af proto fromto uids gids flags icmpspec keep fragment nodf minttl maxmss allowopts label
 		{
 			struct pf_rule r;
 
@@ -644,14 +652,9 @@ port		: NUMBER			{
 		}
 		;
 
-ruid		: /* empty */			{ $$ = NULL; }
-		| RUID uid_item			{ $$ = $2; }
-		| RUID '{' uid_list '}'		{ $$ = $3; }
-		;
-
-euid		: /* empty */			{ $$ = NULL; }
-		| EUID uid_item			{ $$ = $2; }
-		| EUID '{' uid_list '}'		{ $$ = $3; }
+uids		: /* empty */			{ $$ = NULL; }
+		| USER uid_item			{ $$ = $2; }
+		| USER '{' uid_list '}'		{ $$ = $3; }
 		;
 
 uid_list	: uid_item			{ $$ = $1; }
@@ -702,6 +705,66 @@ uid		: NUMBER			{
 
 				if ((pw = getpwnam($1)) == NULL) {
 					yyerror("unknown user %s", $1);
+					YYERROR;
+				}
+				$$ = pw->pw_uid;
+			}
+		}
+		;
+
+gids		: /* empty */			{ $$ = NULL; }
+		| GROUP gid_item		{ $$ = $2; }
+		| GROUP '{' gid_list '}'	{ $$ = $3; }
+		;
+
+gid_list	: gid_item			{ $$ = $1; }
+		| gid_list ',' gid_item		{ $3->next = $1; $$ = $3; }
+		;
+
+gid_item	: gid				{
+			$$ = malloc(sizeof(struct node_gid));
+			if ($$ == NULL)
+				err(1, "gid_item: malloc");
+			$$->gid[0] = $1;
+			$$->gid[1] = $1;
+			$$->op = PF_OP_EQ;
+			$$->next = NULL;
+		}
+		| PORTUNARY gid			{
+			$$ = malloc(sizeof(struct node_gid));
+			if ($$ == NULL)
+				err(1, "gid_item: malloc");
+			$$->gid[0] = $2;
+			$$->gid[1] = $2;
+			$$->op = $1;
+			$$->next = NULL;
+		}
+		| gid PORTBINARY gid		{
+			$$ = malloc(sizeof(struct node_gid));
+			if ($$ == NULL)
+				err(1, "gid_item: malloc");
+			$$->gid[0] = $1;
+			$$->gid[1] = $3;
+			$$->op = $2;
+			$$->next = NULL;
+		}
+		;
+
+gid		: NUMBER			{
+			if ($1 < 0 || $1 >= GID_MAX) {
+				yyerror("illegal gid value %d", $1);
+				YYERROR;
+			}
+			$$ = $1;
+		}
+		| STRING			{
+			if (!strcmp($1, "unknown"))
+				$$ = GID_MAX;
+			else {
+				struct passwd *pw;
+
+				if ((pw = getpwnam($1)) == NULL) {
+					yyerror("unknown group %s", $1);
 					YYERROR;
 				}
 				$$ = pw->pw_uid;
@@ -1499,7 +1562,7 @@ expand_rule(struct pf_rule *r,
     struct node_if *interfaces, struct node_proto *protos,
     struct node_host *src_hosts, struct node_port *src_ports,
     struct node_host *dst_hosts, struct node_port *dst_ports,
-    struct node_uid *ruids, struct node_uid *euids,
+    struct node_uid *uids, struct node_gid *gids,
     struct node_icmp *icmp_types)
 {
 	int nomatch = 0;
@@ -1510,8 +1573,8 @@ expand_rule(struct pf_rule *r,
 	CHECK_ROOT(struct node_port, src_ports);
 	CHECK_ROOT(struct node_host, dst_hosts);
 	CHECK_ROOT(struct node_port, dst_ports);
-	CHECK_ROOT(struct node_uid, ruids);
-	CHECK_ROOT(struct node_uid, euids);
+	CHECK_ROOT(struct node_uid, uids);
+	CHECK_ROOT(struct node_gid, gids);
 	CHECK_ROOT(struct node_icmp, icmp_types);
 
 	LOOP_THROUGH(struct node_if, interface, interfaces,
@@ -1521,8 +1584,8 @@ expand_rule(struct pf_rule *r,
 	LOOP_THROUGH(struct node_port, src_port, src_ports,
 	LOOP_THROUGH(struct node_host, dst_host, dst_hosts,
 	LOOP_THROUGH(struct node_port, dst_port, dst_ports,
-	LOOP_THROUGH(struct node_uid, ruid, ruids,
-	LOOP_THROUGH(struct node_uid, euid, euids,
+	LOOP_THROUGH(struct node_uid, uid, uids,
+	LOOP_THROUGH(struct node_gid, gid, gids,
 
 		memcpy(r->ifname, interface->ifname, sizeof(r->ifname));
 		r->proto = proto->proto;
@@ -1540,12 +1603,12 @@ expand_rule(struct pf_rule *r,
 		r->dst.port[0] = dst_port->port[0];
 		r->dst.port[1] = dst_port->port[1];
 		r->dst.port_op = dst_port->op;
-		r->ruid.op = ruid->op;
-		r->ruid.uid[0] = ruid->uid[0];
-		r->ruid.uid[1] = ruid->uid[1];
-		r->euid.op = euid->op;
-		r->euid.uid[0] = euid->uid[0];
-		r->euid.uid[1] = euid->uid[1];
+		r->uid.op = uid->op;
+		r->uid.uid[0] = uid->uid[0];
+		r->uid.uid[1] = uid->uid[1];
+		r->gid.op = gid->op;
+		r->gid.gid[0] = gid->gid[0];
+		r->gid.gid[1] = gid->gid[1];
 		r->type = icmp_type->type;
 		r->code = icmp_type->code;
 		
@@ -1592,8 +1655,8 @@ expand_rule(struct pf_rule *r,
 	FREE_LIST(struct node_port, src_ports);
 	FREE_LIST(struct node_host, dst_hosts);
 	FREE_LIST(struct node_port, dst_ports);
-	FREE_LIST(struct node_uid, ruids);
-	FREE_LIST(struct node_uid, euids);
+	FREE_LIST(struct node_uid, uids);
+	FREE_LIST(struct node_gid, gids);
 	FREE_LIST(struct node_icmp, icmp_types);
 }
 
@@ -1620,11 +1683,11 @@ lookup(char *s)
 		{ "block",	BLOCK},
 		{ "code",	CODE},
 		{ "dup-to",	DUPTO},
-		{ "euid",	EUID},
 		{ "fastroute",	FASTROUTE},
 		{ "flags",	FLAGS},
 		{ "fragment",	FRAGMENT},
 		{ "from",	FROM},
+		{ "group",	GROUP},
 		{ "icmp-type",	ICMPTYPE},
 		{ "in",		IN},
 		{ "inet",	INET},
@@ -1653,10 +1716,10 @@ lookup(char *s)
 		{ "return-icmp6",RETURNICMP6},
 		{ "return-rst",	RETURNRST},
 		{ "route-to",	ROUTETO},
-		{ "ruid",	RUID},
 		{ "scrub",	SCRUB},
 		{ "state",	STATE},
 		{ "to",		TO},
+		{ "user",	USER},
 	};
 	const struct keywords *p;
 
