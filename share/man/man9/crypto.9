@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.1 2000/04/28 05:42:50 angelos Exp $
+.\"	$OpenBSD: crypto.9,v 1.2 2000/04/28 05:51:40 angelos Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -26,7 +26,7 @@
 .Ft int32_t
 .Fn crypto_get_driverid "void"
 .Ft int
-.Fn crypto_register "u_int32_t" "int" "void *" "void *" "void *"
+.Fn crypto_register "u_int32_t" "int" "int (*)(u_int32_t *, struct cryptoini *)" "int (*)(u_int64_t)" "int (*)(struct cryptop *)"
 .Ft int
 .Fn crypto_unregister "u_int32_t" "int"
 .Ft int
