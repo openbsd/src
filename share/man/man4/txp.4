@@ -1,4 +1,4 @@
-.\"     $OpenBSD: txp.4,v 1.14 2004/12/14 01:50:42 deraadt Exp $
+.\"     $OpenBSD: txp.4,v 1.15 2004/12/14 09:09:22 jmc Exp $
 .\"
 .\" Copyright (c) 2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -116,8 +116,8 @@ Use 10baseT, full duplex
 Use 10baseT, half duplex
 .El
 .Sh FILES
-The driver need a firmware file,
-which is loaded on demand at startup:
+The driver needs a firmware file,
+which is loaded on demand when the device is attached:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
 .It Pa /etc/firmware/3c990
