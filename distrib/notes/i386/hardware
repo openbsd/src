@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.92 2002/10/20 17:02:00 henning Exp $
+dnl	$OpenBSD: hardware,v 1.93 2002/10/21 12:14:25 henning Exp $
 OpenBSD/MACHINE OSREV works across a broad range of standard PC's and
 clones, with a wide variety of processors and I/O bus architectures.  It
 can be expected to install and run with minimal difficulties on most
@@ -314,6 +314,8 @@ Supported hardware {:-include-:}:
 		    Adaptec ANA-6944A
 		    Cogent EM400
 		    Compex 400TX
+		    CompuShack Goldline Quattro
+		    Phobos P430TX
 		    Znyx ZX346
 		Intel EtherExpress 16 [A] [B] [C]
 		Intel EtherExpross PRO/10 ISA [A] [B] [C]
