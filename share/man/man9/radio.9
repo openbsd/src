@@ -1,4 +1,4 @@
-.\"	$OpenBSD: radio.9,v 1.4 2002/05/28 09:07:07 mpech Exp $
+.\"	$OpenBSD: radio.9,v 1.5 2002/08/29 07:26:18 wcobb Exp $
 .\"	$RuOBSD: radio.9,v 1.3 2001/10/26 05:38:44 form Exp $
 .\"
 .\" Copyright (c) Maxim Tsyplakov <tm@oganer.net>
@@ -45,20 +45,16 @@ struct radio_hw_if {
 	int     (*set_info)(void *, struct radio_info *);
 	int     (*search)(void *, int);
 };
-
 .Ed
 .Pp
-
 The high level radio driver attaches to the low level driver
 when the latter calls
 .Va radio_attach_mi .
 This call should be
 .Bd -literal
-    void
-    radio_attach_mi(rhwp, hdlp, dev)
-	struct radio_hw_if *rhwp;
-	void *hdlp;
-	struct device *dev;
+.Ft void
+.Fn radio_attach_mi "struct radio_hw_if *rhwp" "void *hdlp" \
+                    "struct device * dev"
 .Ed
 .Pp
 The
@@ -73,31 +69,34 @@ when the high level driver calls them.
 .Va dev
 is the device struct for the hardware device.
 .Pp
-
 The fields of
 .Va radio_hw_if
 are described in some more detail below.
-
 .Bd -literal
-int open (void *, int flags, int fmt, struct proc *p);
+.Ft int
+.Fn open "void *" "int flags" "int fmt" "struct proc *p"
   Optional.
   Is called when the radio device is opened.
   Returns 0 on success, otherwise an error code.
 
-int close (void *, int flags, int fmt, struct proc *p);
+.Ft int
+.Fn close "void *" "int flags" "int fmt" "struct proc *p"
   Optional.
   Is called when the radio device is closed.
   Returns 0 on success, otherwise an error code.
 
-int get_info (void *, struct radio_info *);
+.Ft int
+.Fn get_info "void *" "struct radio_info *"
   Fill the radio_info struct.
   Returns 0 on success, otherwise an error code.
 
-int set_info (void *, struct radio_info *);
+.Ft int
+.Fn set_info "void *" "struct radio_info *"
   Set values from the radio_info struct.
   Returns 0 on success, otherwise an error code.
 
-int search (void *, int);
+.Ft int
+.Fn search "void *" "int"
   Returns 0 on success, otherwise an error code.
 .Ed
 .Sh SEE ALSO
