@@ -109,8 +109,8 @@ SYSTEM_LD=	-@if [ X${DEBUG} = X-g ]; \
 		else strip=-x; \
 		fi; \
 		echo ${LD} ${LINKFLAGS} -o $@ -e start \
-			-T ../../conf/ld.script '$${SYSTEM_OBJ}' vers.o; \
-		${LD} ${LINKFLAGS} -o $@ -e start -T ../../conf/ld.script \
+			-T ${PMAX}/conf/ld.script '$${SYSTEM_OBJ}' vers.o; \
+		${LD} ${LINKFLAGS} -o $@ -e start -T ${PMAX}/conf/ld.script \
 			${SYSTEM_OBJ} vers.o
 SYSTEM_LD_TAIL=	@size $@; chmod 755 $@
 
