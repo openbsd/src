@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.41 2001/09/30 05:29:37 frantzen Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.42 2001/10/01 14:38:34 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -444,8 +444,10 @@ pfctl_rules(int dev, char *filename, int opts)
 		fin = fopen(filename, "r");
 		infile = filename;
 	}
-	if (fin == NULL)
+	if (fin == NULL) {
+		warn("%s", filename);
 		return (1);
+	}
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCBEGINRULES, &pr.ticket))
 			err(1, "DIOCBEGINRULES");
@@ -485,8 +487,10 @@ pfctl_nat(int dev, char *filename, int opts)
 		fin = fopen(filename, "r");
 		infile = filename;
 	}
-	if (fin == NULL)
+	if (fin == NULL) {
+		warn("%s", filename);
 		return (1);
+	}
 
 	if ((opts & PF_OPT_NOACTION) == 0) {
 		if (ioctl(dev, DIOCBEGINNATS, &pn.ticket))
