@@ -27,7 +27,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: npx.4,v 1.4 1997/04/21 15:41:55 kstailey Exp $
+.\"	$Id: npx.4,v 1.5 1997/04/21 15:43:56 kstailey Exp $
 .\"
 .Dd August 6, 1993
 .Dt NPX 4 i386
@@ -59,9 +59,9 @@ driver is required for proper system functioning regardless
 of whether or not a NPX is present.
 .Pp
 If there is no NPX present in the system, either the "MATH_EMULATE"
-option or the "GPL_MATH_EMULATE" must be defined in the kernel configuration
-file.  It will provide support for the instructions normally executed
-by the NPX.  If there is no NPX in the system and the kernel
+option or the "GPL_MATH_EMULATE" option must be defined in the kernel
+configuration file.  It will provide support for the instructions normally
+executed by the NPX.  If there is no NPX in the system and the kernel
 is not built with math emulation, the system will not boot.
 .Sh CAVEATS
 The emulator is much slower than the NPX coprocessor.
