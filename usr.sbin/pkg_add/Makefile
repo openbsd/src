@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.20 2005/02/28 13:08:41 espie Exp $
+# $OpenBSD: Makefile,v 1.21 2005/02/28 13:44:19 espie Exp $
 
 .include <bsd.own.mk>
 
@@ -68,6 +68,12 @@ MANSRC_COOKIE=
 $p.3p: pod/$p.pod
 	${POD2MAN} --section=3p --official ${.ALLSRC} $@
 .endfor
+.ifndef NOMAN
+MANALL+=${MAN:S/.1$/.cat1/}
+.  ifdef MANPS
+PSALL+= ${MAN:S/.1$/.ps1/}
+.  endif
+.endif
 
 mansrc.build:
 .if !empty(_quick3p)
