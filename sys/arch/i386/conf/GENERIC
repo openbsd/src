@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.23 1995/10/10 01:29:15 mycroft Exp $
+#	$NetBSD: GENERIC,v 1.23.2.1 1995/10/17 12:54:55 tls Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -154,6 +154,7 @@ el0	at isa? port 0x300 irq 9		# 3C501 ethernet cards
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and Etherexpress
 #le0	at isa? port 0x320 irq 10 drq 7		# IsoLan, NE2100, and DEPCA
+le*	at pci? bus ? dev ?
 de*	at pci? bus ? dev ?
 
 pss0	at isa? port 0x220 irq 7 drq 6  # Personal Sound System

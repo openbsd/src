@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.5 1995/10/06 07:12:42 mycroft Exp $
+#	$NetBSD: INSTALL,v 1.5.2.1 1995/10/17 12:54:58 tls Exp $
 #
 #	INSTALL -- somewhat generic kernel with a snowball's chance of
 #		   fitting on an install floppy.
@@ -81,6 +81,8 @@ aha1	at isa? port 0x334 irq ? drq ?	# Adaptec 154[02] SCSI controllers
 scsibus* at aha?
 ahb0	at isa? port ? irq ?		# Adaptec 174[024] SCSI controllers
 scsibus* at ahb?
+ahc0	at pci? bus ? dev ?
+scsibus* at ahc?
 aic0	at isa? port 0x340 irq 12	# Adaptec 152[02] SCSI controllers
 scsibus* at aic?
 bt0	at isa? port 0x330 irq ? drq ?	# BusLogic [57]4X SCSI controllers
@@ -89,8 +91,6 @@ bt2	at isa? port ? irq ?
 scsibus* at bt?
 ncr*	at pci? bus ? dev ?		# NCR 538XX SCSI controllers
 scsibus* at ncr?
-sea0	at isa? iomem 0xc8000 irq 5
-scsibus* at sea?
 uha0	at isa? port 0x330 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha1	at isa? port 0x334 irq ? drq ?	# UltraStor [13]4f SCSI controllers
 uha2	at isa? port ? irq ?		# UltraStor 24f SCSI controllers
@@ -103,8 +103,6 @@ cd*	at scsibus? target ? lun ?	# SCSI CD-ROM drives
 fdc0	at isa? port 0x3f0 irq 6 drq 2	# standard PC floppy controllers
 fd*	at fdc? drive ?
 
-mcd0	at isa? port 0x300 irq 10	# Mitsumi CD-ROM drives
-
 wdc0	at isa? port 0x1f0 irq 14	# ST506, ESDI, and IDE controllers
 wd*	at wdc? drive ?
 
@@ -115,6 +113,8 @@ ed1	at isa? port 0x250 iomem 0xd8000 irq 9	#   ethernet cards
 ed2	at isa? port 0x300 iomem 0xcc000 irq 10
 ep0	at isa? port ? irq ?			# 3C509 ethernet cards
 ie0	at isa? port 0x360 iomem 0xd0000 irq 7	# StarLAN, 3C507, and EtherExpress
+le*	at pci? bus ? dev ?
+de*	at pci? bus ? dev ?
 
 pseudo-device	loop	1		# network loopback
 pseudo-device	sl	2		# CSLIP
