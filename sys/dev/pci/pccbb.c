@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccbb.c,v 1.20 2001/06/12 15:40:32 niklas Exp $ */
+/*	$OpenBSD: pccbb.c,v 1.21 2001/06/20 23:12:11 niklas Exp $ */
 /*	$NetBSD: pccbb.c,v 1.42 2000/06/16 23:41:35 cgd Exp $	*/
 
 /*
@@ -82,10 +82,8 @@ struct cfdriver cbb_cd = {
 
 #if defined CBB_DEBUG
 #define DPRINTF(x) printf x
-#define STATIC
 #else
 #define DPRINTF(x)
-#define STATIC static
 #endif
 
 int	pcicbbmatch __P((struct device *, void *, void *));
@@ -987,7 +985,7 @@ pccbbintr_function(sc)
 		 * sentense instead of switch-case sentense because of
 		 * avoiding duplicate case value error.  More than one
 		 * IPL_XXX use same value.  It depends on
-		 * implimentation.
+		 * implementation.
 		 */
 		splchanged = 1;
 #if 0
@@ -1283,7 +1281,7 @@ struct cb_poll_str {
 static struct cb_poll_str cb_poll[10];
 static int cb_poll_n = 0;
 
-STATIC void cb_pcmcia_poll __P((void *arg));
+void cb_pcmcia_poll __P((void *arg));
 
 void
 cb_pcmcia_poll(arg)
@@ -2680,7 +2678,7 @@ struct pccbb_poll_str {
 static struct pccbb_poll_str pccbb_poll[10];
 static int pccbb_poll_n = 0;
 
-STATIC void pccbb_pcmcia_poll __P((void *arg));
+void pccbb_pcmcia_poll __P((void *arg));
 
 void
 pccbb_pcmcia_poll(arg)
