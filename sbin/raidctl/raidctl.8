@@ -1,4 +1,4 @@
-.\"	$OpenBSD: raidctl.8,v 1.14 2000/04/15 02:15:16 aaron Exp $
+.\"	$OpenBSD: raidctl.8,v 1.15 2000/04/24 05:12:19 deraadt Exp $
 .\"     $NetBSD: raidctl.8,v 1.11 2000/01/05 03:02:41 oster Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -223,12 +223,9 @@ is specified by
 .Ar dev .
 .Ar dev
 may be either the full name of the device (e.g.,
-.Pa /dev/rraid0d
-for the i386 architecture, and
-.Pa /dev/rraid0c
-for all others),
+.Pa /dev/rraid0c ) ,
 or just simply raid0 (for
-.Pa /dev/rraid0d ) .
+.Pa /dev/rraid0c ) .
 .Pp
 The format of the configuration file is complex, and
 only an abbreviated treatment is given here.
@@ -443,14 +440,8 @@ raidctl -c rfconfig raid0
 .Pp
 The above is equivalent to the following:
 .Bd -unfilled -offset indent
-raidctl -c rfconfig /dev/rraid0d
+raidctl -c rfconfig /dev/rraid0c
 .Ed
-.Pp
-on the i386 architecture.
-On all other architectures,
-.Pa /dev/rraid0c
-is used in place of
-.Pa /dev/rraid0d .
 .Pp
 A RAID set will not configure with
 .Fl c
