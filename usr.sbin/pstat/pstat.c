@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.23 2000/05/24 03:24:23 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.24 2000/06/16 19:03:48 assar Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.23 2000/05/24 03:24:23 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.24 2000/06/16 19:03:48 assar Exp $";
 #endif
 #endif /* not lint */
 
@@ -346,6 +346,12 @@ vnode_print(avnode, vp)
 		*fp++ = 'A';
 	if (flag & VDIROP)
 		*fp++ = 'D';
+	if (flag & VONFREELIST)
+		*fp++ = 'F';
+	if (flag & VLOCKSWORK)
+		*fp++ = 'l';
+	if (flag & VONSYNCLIST)
+		*fp++ = 's';
 	if (flag == 0)
 		*fp++ = '-';
 	*fp = '\0';
@@ -379,16 +385,16 @@ ufs_print(vp)
 	if (flag & IN_LWAIT)
 		*flags++ = 'Z';
 #endif
-	if (flag & IN_RENAME)
-		*flags++ = 'R';
-	if (flag & IN_UPDATE)
-		*flags++ = 'U';
 	if (flag & IN_ACCESS)
 		*flags++ = 'A';
 	if (flag & IN_CHANGE)
 		*flags++ = 'C';
+	if (flag & IN_UPDATE)
+		*flags++ = 'U';
 	if (flag & IN_MODIFIED)
 		*flags++ = 'M';
+	if (flag & IN_RENAME)
+		*flags++ = 'R';
 	if (flag & IN_SHLOCK)
 		*flags++ = 'S';
 	if (flag & IN_EXLOCK)
@@ -435,16 +441,16 @@ ext2fs_print(vp)
 	if (flag & IN_LWAIT)
 		*flags++ = 'Z';
 #endif
-	if (flag & IN_RENAME)
-		*flags++ = 'R';
-	if (flag & IN_UPDATE)
-		*flags++ = 'U';
 	if (flag & IN_ACCESS)
 		*flags++ = 'A';
 	if (flag & IN_CHANGE)
 		*flags++ = 'C';
+	if (flag & IN_UPDATE)
+		*flags++ = 'U';
 	if (flag & IN_MODIFIED)
 		*flags++ = 'M';
+	if (flag & IN_RENAME)
+		*flags++ = 'R';
 	if (flag & IN_SHLOCK)
 		*flags++ = 'S';
 	if (flag & IN_EXLOCK)
@@ -489,6 +495,12 @@ nfs_print(vp)
 		*flags++ = 'O';
 	if (flag & NQNFSEVICTED)
 		*flags++ = 'G';
+	if (flag & NACC)
+		*flags++ = 'A';
+	if (flag & NUPD)
+		*flags++ = 'U';
+	if (flag & NCHG)
+		*flags++ = 'C';
 	if (flag == 0)
 		*flags++ = '-';
 	*flags = '\0';
@@ -624,10 +636,30 @@ mount_print(mp)
 			flags &= ~MNT_ROOTFS;
 			comma = ",";
 		}
+		if (flags & MNT_NOATIME) {
+			(void)printf("%snoatime", comma);
+			flags &= ~MNT_NOATIME;
+			comma = ",";
+		}
 		/* filesystem control flags */
 		if (flags & MNT_UPDATE) {
 			(void)printf("%supdate", comma);
 			flags &= ~MNT_UPDATE;
+			comma = ",";
+		}
+		if (flags & MNT_DELEXPORT) {
+			(void)printf("%sdelexport", comma);
+			flags &= ~MNT_DELEXPORT;
+			comma = ",";
+		}
+		if (flags & MNT_RELOAD) {
+			(void)printf("%sreload", comma);
+			flags &= ~MNT_RELOAD;
+			comma = ",";
+		}
+		if (flags & MNT_FORCE) {
+			(void)printf("%sforce", comma);
+			flags &= ~MNT_FORCE;
 			comma = ",";
 		}
 		if (flags & MNT_MLOCK) {
@@ -653,6 +685,11 @@ mount_print(mp)
 		if (flags & MNT_UNMOUNT) {
 			(void)printf("%sunmount", comma);
 			flags &= ~MNT_UNMOUNT;
+			comma = ",";
+		}
+		if (flags & MNT_WANTRDWR) {
+			(void)printf("%swantrdwr", comma);
+			flags &= ~MNT_WANTRDWR;
 			comma = ",";
 		}
 		if (flags & MNT_SOFTDEP) {
