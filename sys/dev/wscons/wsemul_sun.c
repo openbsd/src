@@ -1,4 +1,4 @@
-/* $OpenBSD: wsemul_sun.c,v 1.4 2002/03/14 01:27:03 millert Exp $ */
+/* $OpenBSD: wsemul_sun.c,v 1.5 2002/05/30 18:25:44 fgsch Exp $ */
 /* $NetBSD: wsemul_sun.c,v 1.11 2000/01/05 11:19:36 drochner Exp $ */
 
 /*
@@ -129,8 +129,7 @@ wsemul_sun_cnattach(type, cookie, ccol, crow, defattr)
 	edp->crow = crow;
 	edp->ccol = ccol;
 	edp->curattr = edp->defattr = defattr;
-#if defined(WS_KERNEL_FG) || defined(WS_KERNEL_BG) || \
-  defined(WS_KERNEL_COLATTR) || defined(WS_KERNEL_MONOATTR)
+
 #ifndef WS_KERNEL_FG
 #define WS_KERNEL_FG WSCOL_WHITE
 #endif
@@ -153,10 +152,7 @@ wsemul_sun_cnattach(type, cookie, ccol, crow, defattr)
 					    WS_KERNEL_MONOATTR,
 					    &edp->kernattr);
 	if (res)
-#else
-	res = 0; /* XXX gcc */
-#endif
-	edp->kernattr = defattr;
+		edp->kernattr = defattr;
 
 	edp->cbcookie = NULL;
 
