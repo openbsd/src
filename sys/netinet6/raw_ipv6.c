@@ -1,4 +1,4 @@
-/*	$OpenBSD: raw_ipv6.c,v 1.20 2000/06/18 18:59:12 itojun Exp $	*/
+/*	$OpenBSD: raw_ipv6.c,v 1.21 2000/06/18 19:07:27 itojun Exp $	*/
 
 /*
 %%% copyright-nrl-95
@@ -44,7 +44,7 @@ didn't get a copy, you may request one from <license@ipv6.nrl.navy.mil>.
  * SUCH DAMAGE.
  *
  *	@(#)raw_ip.c	8.7 (Berkeley) 5/15/95
- *	$Id: raw_ipv6.c,v 1.20 2000/06/18 18:59:12 itojun Exp $
+ *	$Id: raw_ipv6.c,v 1.21 2000/06/18 19:07:27 itojun Exp $
  */
 
 #include <sys/param.h>
@@ -274,17 +274,6 @@ rip6_input(mp, offp, proto)
       continue;
 
     foundone = 1;
-
-#ifdef IPSEC
-    /* Perform input-side policy check. Drop packet if policy says to drop it.
-
-       Note: For ICMPv6 packets, we also checked policy in ipv6_icmp_input().
-
-       XXX - state arg should NOT be NULL, it should be the netproc state
-       carried up the stack - cmetz */
-    if (!netproc_inputpolicy(NULL, (struct sockaddr *)&srcsa,
-	 (struct sockaddr *)&dstsa, nexthdr, m, NULL, NULL))
-#endif /* IPSEC */
 
     /* Note the inefficiency here; this is a consequence of the interfaces of
        the functions being used. The raw code is not performance critical
