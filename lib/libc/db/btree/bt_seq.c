@@ -1,4 +1,4 @@
-/*	$OpenBSD: bt_seq.c,v 1.4 1999/02/15 05:11:23 millert Exp $	*/
+/*	$OpenBSD: bt_seq.c,v 1.5 2001/09/16 13:08:55 art Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -40,7 +40,7 @@
 #if 0
 static char sccsid[] = "@(#)bt_seq.c	8.7 (Berkeley) 7/20/94";
 #else
-static char rcsid[] = "$OpenBSD: bt_seq.c,v 1.4 1999/02/15 05:11:23 millert Exp $";
+static char rcsid[] = "$OpenBSD: bt_seq.c,v 1.5 2001/09/16 13:08:55 art Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -364,7 +364,7 @@ __bt_first(t, key, erval, exactp)
 	 * page) and return it.
 	 */
 	if ((ep = __bt_search(t, key, exactp)) == NULL)
-		return (NULL);
+		return (0);
 	if (*exactp) {
 		if (F_ISSET(t, B_NODUPS)) {
 			*erval = *ep;
