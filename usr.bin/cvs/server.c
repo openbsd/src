@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.2 2004/07/28 02:02:50 jfb Exp $	*/
+/*	$OpenBSD: server.c,v 1.3 2004/07/29 18:23:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -37,9 +37,6 @@
 #include "cvs.h"
 #include "log.h"
 #include "sock.h"
-
-
-extern struct cvsroot *cvs_root;
 
 
 

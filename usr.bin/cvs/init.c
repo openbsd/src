@@ -1,4 +1,4 @@
-/*	$OpenBSD: init.c,v 1.2 2004/07/14 00:46:48 jfb Exp $	*/
+/*	$OpenBSD: init.c,v 1.3 2004/07/29 18:23:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -38,11 +38,6 @@
 #include "cvs.h"
 #include "rcs.h"
 #include "log.h"
-
-extern struct cvsroot *cvs_root;
-
-
-extern char cvs_loginfo_data[];
 
 
 #define CFT_FILE   1

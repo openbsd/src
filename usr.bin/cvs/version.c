@@ -1,4 +1,4 @@
-/*	$OpenBSD: version.c,v 1.2 2004/07/28 01:57:16 jfb Exp $	*/
+/*	$OpenBSD: version.c,v 1.3 2004/07/29 18:23:25 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -34,10 +34,6 @@
 #include <sysexits.h>
 
 #include "cvs.h"
-
-
-
-extern struct cvsroot *cvs_root;
 
 
 

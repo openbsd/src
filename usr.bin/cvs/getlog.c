@@ -1,4 +1,4 @@
-/*	$OpenBSD: getlog.c,v 1.1.1.1 2004/07/13 22:02:40 jfb Exp $	*/
+/*	$OpenBSD: getlog.c,v 1.2 2004/07/29 18:23:26 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -51,8 +51,6 @@
 static void cvs_getlog_print   (const char *, RCSFILE *, u_int);
 
 
-
-extern struct cvsroot *cvs_root;
 
 
 /*
