@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.22 2000/03/30 23:14:25 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.23 2000/03/31 05:49:08 jason Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -93,8 +93,6 @@ int	hifn_newsession __P((u_int32_t *, struct cryptoini *));
 int	hifn_freesession __P((u_int32_t));
 int	hifn_process __P((struct cryptop *));
 void	hifn_callback __P((struct hifn_command *));
-void	hifn_timeout __P((void *));
-void	hifn_print_stats __P((struct hifn_softc *));
 int	hifn_crypto __P((struct hifn_softc *, hifn_command_t *));
 
 struct hifn_stats {
@@ -966,9 +964,11 @@ hifn_mbuf(m, np, pp, lp, maxp, nicep)
 		long pg, npg;
 		int len, off;
 
-		va = m->m_data;
+		if (m->m_len == 0)
+			continue;
 		len = m->m_len;
 		tlen += len;
+		va = m->m_data;
 
 		lp[npa] = len;
 		pp[npa] = vtophys(va);
@@ -1199,7 +1199,7 @@ hifn_intr(arg)
 			    HIFN_MAC_BAD : 0;
 		}
 	
-		/* position is done, notify producer with wakup or callback */
+		/* position is done, notify producer with callback */
 		cmd->dest_ready_callback(cmd);
 	
 		if (++dma->resk == HIFN_D_RES_RSIZE)
@@ -1236,9 +1236,7 @@ hifn_intr(arg)
 	dma->cmdk = i; dma->cmdu = u;
 
 	/*
-	 * Clear "result done" and "waiting on command ring" flags in status
-	 * register.  If we still have slots to process and we received a
-	 * waiting interrupt, this will interupt us again.
+	 * Clear "result done" flags in status register.
 	 */
 	WRITE_REG_1(sc, HIFN_1_DMA_CSR, HIFN_DMACSR_R_DONE);
 	return (1);
@@ -1257,7 +1255,7 @@ hifn_newsession(sidp, cri)
 	struct cryptoini *cri;
 {
 	struct cryptoini *c;
-	struct hifn_softc *sc;
+	struct hifn_softc *sc = NULL;
 	int i, mac = 0, cry = 0;
 
 	if (sidp == NULL || cri == NULL)
@@ -1265,6 +1263,8 @@ hifn_newsession(sidp, cri)
 
 	for (i = 0; i < hifn_cd.cd_ndevs; i++) {
 		sc = hifn_cd.cd_devs[i];
+		if (sc == NULL)
+			break;
 		if (sc->sc_cid == (*sidp))
 			break;
 	}
@@ -1453,25 +1453,5 @@ hifn_callback(cmd)
 	}
 
 	free(cmd, M_DEVBUF);
-	(*crp->crp_callback)(crp);
-}
-
-void
-hifn_timeout(v)
-	void *v;
-{
-	struct hifn_softc *sc = v;
-
-	hifn_print_stats(sc);
-}
-
-void
-hifn_print_stats(sc)
-	struct hifn_softc *sc;
-{
-	printf("timeout: dmacsr %08x\n",
-	    READ_REG_1(sc, HIFN_1_DMA_CSR));
-	printf("timeout: %08x, %08x, %08x, %08x\n",
-	    READ_REG_1(sc, HIFN_1_DMA_CRAR), READ_REG_1(sc, HIFN_1_DMA_SRAR),
-	    READ_REG_1(sc, HIFN_1_DMA_DRAR), READ_REG_1(sc, HIFN_1_DMA_RRAR));
+	crp->crp_callback(crp);
 }
