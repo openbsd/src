@@ -1,4 +1,4 @@
-/*	$OpenBSD: com_pcmcia.c,v 1.5 1998/10/14 07:34:43 fgsch Exp $	*/
+/*	$OpenBSD: com_pcmcia.c,v 1.6 1998/12/21 09:56:07 niklas Exp $	*/
 /*	$NetBSD: com_pcmcia.c,v 1.15 1998/08/22 17:47:58 msaitoh Exp $	*/
 
 /*-
@@ -245,15 +245,15 @@ retry:
 
 		if (autoalloc == 1) {
 			if (cfe->iomask == 3) {
-				if (!pcmcia_io_alloc(pa->pf, 0, cfe->iospace[0].length,
-									 cfe->iospace[0].length,
-									 &psc->sc_pcioh)) {
+				if (!pcmcia_io_alloc(pa->pf, 0,
+				    cfe->iospace[0].length,
+				    cfe->iospace[0].length, &psc->sc_pcioh)) {
 					goto found;
 				}
 			}
 		} else {
 			if (!pcmcia_io_alloc(pa->pf, cfe->iospace[0].start,
-								 cfe->iospace[0].length, 0, &psc->sc_pcioh)) {
+			    cfe->iospace[0].length, 1, &psc->sc_pcioh)) {
 				goto found;
 			}
 		}
