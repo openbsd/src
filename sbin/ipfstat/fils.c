@@ -1,3 +1,4 @@
+/*	$OpenBSD: fils.c,v 1.11 1997/06/23 18:57:23 kstailey Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -42,7 +43,7 @@
 
 #if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fils.c,v 1.10 1997/04/06 19:52:16 millert Exp $";
+static	char	rcsid[] = "$DRId: fils.c,v 2.0.1.3 1997/03/20 15:52:50 darrenr Exp $";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -253,6 +254,10 @@ struct	friostat	*fiop;
 			i++;
 		} else if (opts & OPT_INQUE)
 			fp = (struct frentry *)fiop->f_acctin[set];
+		else {
+			FPRINTF(stderr, "No -i or -o given with -a\n");
+			return;
+		}
 	} else if (opts & OPT_OUTQUE) {
 		i = F_OUT;
 		fp = (struct frentry *)fiop->f_fout[set];
@@ -265,7 +270,7 @@ struct	friostat	*fiop;
 		FPRINTF(stderr, "showlist:opts %#x i %d\n", opts, i);
 
 	if (opts & OPT_VERBOSE)
-		PRINTF("fp %#x set %d\n", (u_long)fp, set);
+		PRINTF("fp %#lx set %d\n", (u_long)fp, set);
 	if (!fp) {
 		FPRINTF(stderr, "empty list for %s%s\n",
 			(opts & OPT_INACTIVE) ? "inactive " : "", filters[i]);
