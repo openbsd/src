@@ -1,4 +1,4 @@
-/*	$OpenBSD: uthread_seterrno.c,v 1.3 1999/11/25 07:01:43 d Exp $	*/
+/*	$OpenBSD: uthread_seterrno.c,v 1.4 1999/11/27 01:30:11 d Exp $	*/
 /*
  * Copyright (c) 1995 John Birrell <jb@cimlogic.com.au>.
  * All rights reserved.
@@ -41,22 +41,28 @@
  * normally hidden from the user. 
  */
 #ifdef errno
-#undef errno;
+#undef errno
 #endif
 extern int      errno;
 
 void
 _thread_seterrno(pthread_t thread, int error)
 {
-	/* Check for the initial thread: */
-	if (thread == _thread_initial)
-		/* The initial thread always uses the global error variable: */
+
+	/* Don't allow _thread_run to change: */
+	_thread_kern_sig_defer();
+
+	/* Check for the current thread: */
+	if (thread == _thread_run)
+		/* The current thread always uses the global error variable: */
 		errno = error;
 	else
 		/*
-		 * Threads other than the initial thread always use the error
-		 * field in the thread structureL 
+		 * Threads other than the current thread will keep the error
+		 * field in the thread structure: 
 		 */
 		thread->error = error;
+
+	_thread_kern_sig_undefer();
 }
 #endif
