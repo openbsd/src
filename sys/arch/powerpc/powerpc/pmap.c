@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.65 2002/03/22 21:01:07 drahn Exp $ */
+/*	$OpenBSD: pmap.c,v 1.66 2002/05/18 20:11:06 drahn Exp $ */
 
 /*
  * Copyright (c) 2001, 2002 Dale Rahn. All rights reserved.
@@ -519,20 +519,62 @@ pmap_enter(pm, va, pa, prot, flags)
 void
 pmap_remove(struct pmap *pm, vaddr_t va, vaddr_t endva)
 {
-	vaddr_t addr;
+	int i_sr, s_sr, e_sr;
+	int i_vp1, s_vp1, e_vp1;
+	int i_vp2, s_vp2, e_vp2;
+	pmapvp_t *vp1;
+	pmapvp_t *vp2;
 
-	/*
-	 * Should this be optimized for unmapped regions
-	 * rather than perform all of the vp lookups?
-	 * Not yet, still much faster than old version
+	/* I suspect that if this loop were unrolled better 
+	 * it would have better performance, testing i_sr and i_vp1
+	 * in the middle loop seems excessive
 	 */
-	for (addr = va; addr < endva; addr += PAGE_SIZE) {
-		pmap_remove_pg(pm, addr);
+
+	s_sr = VP_SR(va);
+	e_sr = VP_SR(endva);
+	for (i_sr = s_sr; i_sr <= e_sr; i_sr++) {
+		vp1 = pm->pm_vp[i_sr];
+		if (vp1 == NULL)
+			continue;
+		
+		if (i_sr == s_sr) {
+			s_vp1 = VP_IDX1(va);
+		} else {
+			s_vp1 = 0;
+		}
+		if (i_sr == e_sr) {
+			e_vp1 = VP_IDX1(endva);
+		} else {
+			e_vp1 = VP_IDX1_SIZE-1; 
+		}
+		for (i_vp1 = s_vp1; i_vp1 <= e_vp1; i_vp1++) {
+			vp2 = vp1->vp[i_vp1];
+			if (vp2 == NULL)
+				continue;
+
+			if ((i_sr == s_sr) && (i_vp1 == s_vp1)) {
+				s_vp2 = VP_IDX2(va);
+			} else {
+				s_vp2 = 0;
+			}
+			if ((i_sr == e_sr) && (i_vp1 == e_vp1)) {
+				e_vp2 = VP_IDX2(endva);
+			} else {
+				e_vp2 = VP_IDX2_SIZE; 
+			}
+			for (i_vp2 = s_vp2; i_vp2 < e_vp2; i_vp2++) {
+				if (vp2->vp[i_vp2] != NULL) {
+					pmap_remove_pg(pm,
+					    (i_sr << VP_SR_POS) |
+					    (i_vp1 << VP_IDX1_POS) |
+					    (i_vp2 << VP_IDX2_POS));
+				}
+			}
+		}
 	}
 }
 /*
- * remove a single mapping, any process besides pmap_kernel()
- * notice that this code is O(1)
+ * remove a single mapping, notice that this code is O(1)
  */
 void
 pmap_remove_pg(struct pmap *pm, vaddr_t va)
