@@ -1,4 +1,4 @@
-.\"	$OpenBSD: kern.9,v 1.6 2003/06/06 20:56:32 jmc Exp $
+.\"	$OpenBSD: kern.9,v 1.7 2003/06/10 17:56:35 millert Exp $
 .\"
 .\" Copyright (c) 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -67,7 +67,8 @@ and
 functions return the smallest integer between
 .Fa a
 and
-.Fa b .
+.Fa b ,
+inclusive.
 The
 .Fn max ,
 .Fn imax ,
@@ -77,7 +78,8 @@ and
 functions return the largest integer between
 .Fa a
 and
-.Fa b .
+.Fa b ,
+inclusive.
 .Pp
 The
 .Fn abs
