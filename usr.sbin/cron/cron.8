@@ -17,7 +17,7 @@
 .\" ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS
 .\" SOFTWARE.
 .\"
-.\" $OpenBSD: cron.8,v 1.12 2001/12/13 19:38:42 millert Exp $
+.\" $OpenBSD: cron.8,v 1.13 2001/12/20 23:27:47 millert Exp $
 .\"
 .Dd June 6, 1999
 .Dt CRON 8
@@ -97,14 +97,28 @@ new time immediately.
 Clock changes of more than 3 hours are considered to be corrections to
 the clock, and the new time is used immediately.
 .Sh SIGNALS
-On receipt of a
-.Tn SIGHUP ,
-the cron daemon will close and reopen its log file.
-This is useful in scripts which rotate and age log files.  
-Naturally this is not relevant if cron was built to use
+.Bl -tag -width Ds
+.It Dv SIGHUP
+causes
+.Nm
+to close and reopen its log file.
+This is useful in scripts which rotate and age log files.
+On
+.Ox
+this has no effect because
+.Nm cron
+logs via
 .Xr syslog 3 .
+.It Dv SIGUSR1
+causes
+.Nm
+to check its spool directory's modtime (and the modtime of
+.Pa /etc/crontab )
+at the next possible moment instead of waiting until the next minute.
+.El
 .Sh SEE ALSO
 .Xr crontab 1 ,
+.Xr syslog 3 ,
 .Xr crontab 5
 .Sh AUTHORS
 Paul Vixie <paul@vix.com>

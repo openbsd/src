@@ -1,4 +1,4 @@
-/*	$OpenBSD: cron.c,v 1.17 2001/12/11 04:14:00 millert Exp $	*/
+/*	$OpenBSD: cron.c,v 1.18 2001/12/20 23:27:47 millert Exp $	*/
 /* Copyright 1988,1990,1993,1994 by Paul Vixie
  * All rights reserved
  */
@@ -21,7 +21,7 @@
  */
 
 #if !defined(lint) && !defined(LINT)
-static char rcsid[] = "$OpenBSD: cron.c,v 1.17 2001/12/11 04:14:00 millert Exp $";
+static char rcsid[] = "$OpenBSD: cron.c,v 1.18 2001/12/20 23:27:47 millert Exp $";
 #endif
 
 #define	MAIN_PROGRAM
@@ -35,13 +35,15 @@ static	void	usage(void),
 		cron_sleep __P((int)),
 		sigchld_handler(int),
 		sighup_handler(int),
+		sigusr1_handler(int),
 		sigchld_reaper(void),
-		check_sigs(void),
+		check_sigs(int),
 		parse_args(int c, char *v[]);
 
-static	volatile sig_atomic_t	got_sighup, got_sigchld;
+static	volatile sig_atomic_t	got_sighup, got_sigchld, got_sigusr1;
 static	int			timeRunning, virtualTime, clockTime;
 static	long			GMToff;
+static	cron_db			database;
 
 static void
 usage(void) {
@@ -56,7 +58,6 @@ usage(void) {
 
 int
 main(int argc, char *argv[]) {
-	cron_db	database;
 	struct sigaction sact;
 	int fd;
 
@@ -144,8 +145,7 @@ main(int argc, char *argv[]) {
 		int timeDiff;
 		int wakeupKind;
 
-		check_sigs();
-		load_database(&database);
+		check_sigs(TRUE);
 		/* ... wait for the time (in minutes) to change ... */
 		do {
 			cron_sleep(timeRunning + 1);
@@ -340,6 +340,16 @@ static void
 cron_sleep(int target) {
 	time_t t1, t2;
 	int seconds_to_wait;
+	struct sigaction sact;
+
+	bzero((char *)&sact, sizeof sact);
+	sigemptyset(&sact.sa_mask);
+	sact.sa_flags = 0;
+#ifdef SA_RESTART
+	sact.sa_flags |= SA_RESTART;
+#endif
+	sact.sa_handler = sigusr1_handler;
+	(void) sigaction(SIGUSR1, &sact, NULL);
 
 	t1 = time(NULL) + GMToff;
 	seconds_to_wait = (int)(target * SECONDS_PER_MINUTE - t1) + 1;
@@ -354,11 +364,14 @@ cron_sleep(int target) {
 		 * If so, service the signal(s) then continue sleeping
 		 * where we left off.
 		 */
-		check_sigs();
+		check_sigs(FALSE);
 		t2 = time(NULL) + GMToff;
 		seconds_to_wait -= (int)(t2 - t1);
 		t1 = t2;
 	}
+
+	sact.sa_handler = SIG_DFL;
+	(void) sigaction(SIGUSR1, &sact, NULL);
 }
 
 static void
@@ -369,6 +382,11 @@ sighup_handler(int x) {
 static void
 sigchld_handler(int x) {
 	got_sigchld = 1;
+}
+
+static void
+sigusr1_handler(int x) {
+	got_sigusr1 = 1;
 }
 
 static void
@@ -400,7 +418,7 @@ sigchld_reaper() {
 }
 
 static void
-check_sigs() {
+check_sigs(int force_dbload) {
 	if (got_sighup) {
 		got_sighup = 0;
 		log_close();
@@ -408,6 +426,10 @@ check_sigs() {
 	if (got_sigchld) {
 		got_sigchld = 0;
 		sigchld_reaper();
+	}
+	if (got_sigusr1 || force_dbload) {
+		got_sigusr1 = 0;
+		load_database(&database);
 	}
 }
 
