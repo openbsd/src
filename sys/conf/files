@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.192 2001/03/21 23:24:50 art Exp $
+#	$OpenBSD: files,v 1.193 2001/03/29 01:26:46 aaron Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -53,6 +53,7 @@ define	ncr53c7xx	# NCR 53c7xx SCSI Bus Controller
 define	pdq		# DEC FDDI chipset
 define	dp8390nic	# 8390-family Ethernet controllers
 define	rtl80x9		# RealTek 8019/8029 NE2000-compatible
+define	dl10019		# DL10019/10022-family Ethernet controllers
 
 # a wscons output device; used later, but needs to be near the top for
 # common file (e.g. vga) definitions.
@@ -189,6 +190,9 @@ file	dev/ic/smc91cxx.c	sm
 # National Semiconductor DS8390.
 device	ne: ether, ifnet, dp8390nic, ifmedia
 file	dev/ic/ne2000.c		ne
+
+# D-Link DL10019/10022 NE2000-compatible network interface subroutines
+file	dev/ic/dl10019.c	dl10019
 
 # Intel i82596/i82586 Ethernet Controller
 device	ie: ether, ifnet, ifmedia
