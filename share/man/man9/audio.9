@@ -1,4 +1,4 @@
-.\"	$OpenBSD: audio.9,v 1.5 2000/12/03 15:06:08 espie Exp $
+.\"	$OpenBSD: audio.9,v 1.6 2000/12/22 00:13:34 avsm Exp $
 .\"	$NetBSD: audio.9,v 1.14 2000/02/11 22:56:15 kleink Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
@@ -377,7 +377,7 @@ AUDIO_PROP_xxx.
 .It Dv int trigger_output(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
 .br
-.Dv "stuct audio_params *param)"
+.Dv "struct audio_params *param)"
 .br
 optional, is called to start the transfer of data from the circular buffer
 delimited by
@@ -401,7 +401,7 @@ Return 0 on success, otherwise an error code.
 .It Dv int trigger_input(void *hdl, void *start, void *end,
 .Dv "int blksize, void (*intr)(void*), void *intrarg,"
 .br
-.Dv "stuct audio_params *param)"
+.Dv "struct audio_params *param)"
 .br
 optional, is called to start the transfer of data from the audio hardware,
 parameterized as in

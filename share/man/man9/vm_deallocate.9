@@ -1,5 +1,5 @@
 .\"
-.\"	$OpenBSD: vm_deallocate.9,v 1.2 2000/10/12 18:06:04 aaron Exp $
+.\"	$OpenBSD: vm_deallocate.9,v 1.3 2000/12/22 00:13:34 avsm Exp $
 .\"
 .\" Mach Operating System
 .\" Copyright (c) 1991,1990 Carnegie Mellon University
@@ -72,7 +72,7 @@ bytes may be deallocated. Use
 .B cnt.vm_page_size
 find out the current virtual page size.
 
-This call may be used to deallocte memory that was passed to a task
+This call may be used to deallocate memory that was passed to a task
 in a message (via out of line data). In that case, the rounding should
 cause no trouble, since the region of memory was allocated as a set
 of pages.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disklabel.9,v 1.5 2000/10/12 18:05:58 aaron Exp $
+.\"	$OpenBSD: disklabel.9,v 1.6 2000/12/22 00:13:34 avsm Exp $
 .\"	$NetBSD: disklabel.9,v 1.7 1999/03/06 22:09:29 mycroft Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -115,11 +115,11 @@ using the buffer pointed at by
 .Fa osdep
 .Pc ,
 to store the disk label onto the medium in a format complying with
-architectural contraints.
+architectural constraints.
 .Fn writedisklabel
 returns 0 on success and
 .Dv EINVAL
-if the disk label specifies invalid or unconvertable values.
+if the disk label specifies invalid or unconvertible values.
 Otherwise, any error condition reported by the device strategy routine
 in the buffer's
 .Dq Va b_error
@@ -142,7 +142,7 @@ Failure to pass on
 .Dq basic sanity ,
 results in a
 .Dv EINVAL
-return value, while a vetoed update of the partition layout is signaled by a
+return value, while a vetoed update of the partition layout is signalled by a
 .Dv EBUSY
 return value.
 Otherwise, 0 is returned.

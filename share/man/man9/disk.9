@@ -1,4 +1,4 @@
-.\"	$OpenBSD: disk.9,v 1.14 2000/11/10 20:02:20 todd Exp $
+.\"	$OpenBSD: disk.9,v 1.15 2000/12/22 00:13:34 avsm Exp $
 .\"	$NetBSD: disk.9,v 1.2 1996/04/08 20:41:25 jtc Exp $
 .\"
 .\" Copyright (c) 1995, 1996 Jason R. Thorpe.
@@ -122,10 +122,10 @@ before autoconfiguration.
 .It Fn disk_attach
 Attach a disk; allocate storage for the disklabel, set the
 .Dq attached time
-timestamp, insert the disk into the disklist, and intrement the
+timestamp, insert the disk into the disklist, and increment the
 system disk count.
 .It Fn disk_detach
-Detatch a disk; free storage for the disklabel, remove the disk
+Detach a disk; free storage for the disklabel, remove the disk
 from the disklist, and decrement the system disk count.
 If the count drops below zero, panic.
 .It Fn disk_busy
@@ -178,7 +178,7 @@ Each device in the system uses a
 structure which contains autoconfiguration and state information for that
 device.
 In the case of disks, the softc should also contain one instance
-of the disk stucture, e.g.:
+of the disk structure, e.g.:
 .Bd -literal
 struct foo_softc {
 	struct	device *sc_dev;		/* generic device information */
@@ -234,7 +234,7 @@ switch.
 This switch currently includes a pointer to the disk's
 .Dq strategy
 routine.
-This switch needs to have global scope and sould be initialized as follows:
+This switch needs to have global scope and should be initialized as follows:
 .Bd -literal
 void	foostrategy __P((struct buf *));
 struct	dkdriver foodkdriver = { foostrategy };

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.4 2000/11/10 20:02:20 todd Exp $
+.\"	$OpenBSD: uvm.9,v 1.5 2000/12/22 00:13:34 avsm Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -351,7 +351,7 @@ is the main entry point for faults.  It takes
 .Fa orig_map
 as the map the fault originated in, a
 .Fa vaddr
-offset into the map the fault occured,
+offset into the map the fault occurred,
 .Fa fault_type
 describing the type of fault, and
 .Fa access_type
@@ -611,7 +611,7 @@ and
 .Fn uvm_km_free_wakeup
 free
 .Fa size
-bytes of memory in the kernal map, starting at address
+bytes of memory in the kernel map, starting at address
 .Fa addr .
 .Fn uvm_km_free_wakeup
 calls
@@ -920,7 +920,7 @@ UVM appeared in
 Charles D. Cranor <chuck@ccrc.wustl.edu> designed and implemented UVM.
 .Pp
 Matthew Green <mrg@eterna.com.au> wrote the swap-space management code
-and handled the logistical issues involed with merging UVM into the
+and handled the logistical issues involved with merging UVM into the
 .Nx
 source tree.
 .Pp
