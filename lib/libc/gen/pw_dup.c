@@ -1,4 +1,4 @@
-/*	$OpenBSD: pw_dup.c,v 1.2 2002/04/29 18:43:08 millert Exp $	*/
+/*	$OpenBSD: pw_dup.c,v 1.3 2003/02/17 18:26:56 millert Exp $	*/
 
 /*
  * Copyright (c) 2000,2002 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: pw_dup.c,v 1.2 2002/04/29 18:43:08 millert Exp $";
+static const char rcsid[] = "$OpenBSD: pw_dup.c,v 1.3 2003/02/17 18:26:56 millert Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -72,7 +72,7 @@ pw_dup(const struct passwd *pw)
 		total += ssize;
 	}
 	if ((cp = malloc(total)) == NULL)
-		return(NULL);
+		return (NULL);
 	newpw = (struct passwd *)cp;
 
 	/*
@@ -112,5 +112,5 @@ pw_dup(const struct passwd *pw)
 		cp += ssize;
 	}
 
-	return(newpw);
+	return (newpw);
 }
