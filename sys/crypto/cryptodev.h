@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.20 2002/03/02 19:15:11 deraadt Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.21 2002/03/02 23:00:30 deraadt Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -235,20 +235,20 @@ struct crparam {
 	u_int		crp_nbits;
 };
 
-#define CRS_MAXPARAM	8
-struct crypt_sop {
-	u_int		crs_op;		/* ie. CRS_RSA_MOD_EXP or other */
-	u_int		crs_iparams;	/* # of input parameters */
-	u_int		crs_oparams;	/* # of output parameters */
-	u_int		crs_status;
-	struct crparam	crs_param[CRS_MAXPARAM];
+#define CRK_MAXPARAM	8
+struct crypt_kop {
+	u_int		crk_op;		/* ie. CRK_RSA_MOD_EXP or other */
+	u_int		crk_iparams;	/* # of input parameters */
+	u_int		crk_oparams;	/* # of output parameters */
+	u_int		crk_status;
+	struct crparam	crk_param[CRK_MAXPARAM];
 };
-#define CRS_RSA_MOD_EXP		0
-#define CRS_MOD_EXP		1
-#define CRS_RSA_MOD_EXP_CRT	2
-#define CRS_DSA_SIGN		3
-#define CRS_DSA_VERIFY		4
-#define CRS_DH_COMPUTE_KEY	5
+#define CRK_RSA_MOD_EXP		0
+#define CRK_MOD_EXP		1
+#define CRK_RSA_MOD_EXP_CRT	2
+#define CRK_DSA_SIGN		3
+#define CRK_DSA_VERIFY		4
+#define CRK_DH_COMPUTE_KEY	5
 
 #define	CRIOGET		_IOWR('c', 100, u_int32_t)
 
@@ -259,7 +259,7 @@ struct crypt_sop {
 #define COP_ENCRYPT	1
 #define COP_DECRYPT	2
 
-#define CIOCSYMMETRIC	_IOWR('c', 104, struct crypt_sop)
+#define CIOCKEY		_IOWR('c', 104, struct crypt_kop)
 
 #define CIOCSYMFEAT	_IOR('c', 105, u_int32_t)
 #define CRSFEAT_RSA	0x00000001	/* supports all basic RSA ops */
