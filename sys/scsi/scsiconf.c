@@ -1,4 +1,4 @@
-/*	$OpenBSD: scsiconf.c,v 1.22 1997/01/16 20:47:32 kstailey Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.23 1997/01/18 12:24:25 niklas Exp $	*/
 /*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
@@ -158,7 +158,7 @@ scsibusattach(parent, self, aux)
 	if (sb->sc_link == NULL)
 		panic("scsibusattach: can't allocate target links");
 	nbytes = 8 * sizeof(struct scsi_link *);
-	for (i = 0; i <= sb->sc_buswidth; i++) {
+	for (i = 0; i < sb->sc_buswidth; i++) {
 		sb->sc_link[i] = (struct scsi_link **)malloc(nbytes,
 		    M_DEVBUF, M_NOWAIT);
 		if (sb->sc_link[i] == NULL)
