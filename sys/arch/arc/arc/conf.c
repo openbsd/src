@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.26 1998/10/14 18:28:06 imp Exp $ */
+/*	$OpenBSD: conf.c,v 1.27 1999/08/12 13:06:33 niklas Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)conf.c	8.2 (Berkeley) 11/14/93
- *      $Id: conf.c,v 1.26 1998/10/14 18:28:06 imp Exp $
+ *      $Id: conf.c,v 1.27 1999/08/12 13:06:33 niklas Exp $
  */
 
 #include <sys/param.h>
@@ -63,10 +63,8 @@ bdev_decl(sd);
 bdev_decl(cd);
 #include "fdc.h"
 bdev_decl(fd);
-#include "wdc.h"
+#include "wd.h"
 bdev_decl(wd);
-#include "acd.h"
-bdev_decl(acd);
 #include "ccd.h"
 #include "rd.h"
 bdev_decl(rd);
@@ -77,8 +75,8 @@ struct bdevsw	bdevsw[] =
 	bdev_swap_init(1,sw),		/* 1: should be here swap pseudo-dev */
 	bdev_disk_init(NVND,vnd),	/* 2: vnode disk driver */
 	bdev_disk_init(NCD,cd),		/* 3: SCSI CD-ROM */
-	bdev_disk_init(NWDC,wd),	/* 4: ST506/ESDI/IDE disk */
-	bdev_disk_init(NACD,acd),	/* 5: ATAPI CD-ROM */
+	bdev_disk_init(NWD,wd),		/* 4: ST506/ESDI/IDE disk */
+	bdev_notdef(),			/* 5:  */
 	bdev_disk_init(NCCD,ccd),	/* 6: concatenated disk driver */
 	bdev_disk_init(NFDC,fd),	/* 7: Floppy disk driver */
 	bdev_disk_init(NRD,rd),		/* 8: RAM disk (for install) */
@@ -197,8 +195,8 @@ struct cdevsw	cdevsw[] =
 	cdev_mouse_init(NPC,pms),	/* 15: builtin PS2 style mouse */
 	cdev_lpt_init(NLPT,lpt),	/* 16: Parallel printer interface */
 	cdev_tty_init(NCOM,com),	/* 17: 16C450 serial interface */
-	cdev_disk_init(NWDC,wd),	/* 18: ST506/ESDI/IDE disk */
-	cdev_disk_init(NACD,acd),	/* 19: ATAPI CD-ROM */
+	cdev_disk_init(NWD,wd),		/* 18: ST506/ESDI/IDE disk */
+	cdev_notdef(),			/* 19: */
 	cdev_tty_init(NPTY,pts),	/* 20: pseudo-tty slave */
 	cdev_ptc_init(NPTY,ptc),	/* 21: pseudo-tty master */
 	cdev_disk_init(NRD,rd),		/* 22: ramdisk device */

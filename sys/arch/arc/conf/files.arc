@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arc,v 1.19 1998/05/05 05:44:41 imp Exp $
+#	$OpenBSD: files.arc,v 1.20 1999/08/12 13:06:33 niklas Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -18,10 +18,11 @@ file	arch/arc/arc/trap.c
 file	arch/mips/mips/arcbios.c
 
 #
-#	Machine-independent ATAPI drivers 
+# Machine-independent ATAPI drivers
 #
-include "../../../dev/atapi/files.atapi"
-major	{ acd = 5 }
+
+include "../../../dev/atapiscsi/files.atapiscsi"
+include "../../../dev/ata/files.ata"
 
 #
 #	System BUS types
@@ -125,13 +126,6 @@ file	arch/arc/dev/com_lbus.c		com & (com_pica | com_algor)
 device  joy
 attach  joy at isa
 file    arch/arc/isa/joy.c             joy needs-flag
-
-# National Semiconductor DS8390/WD83C690-based boards
-# (WD/SMC 80x3 family, SMC Ultra [8216], 3Com 3C503, NE[12]000, and clones)
-# XXX conflicts with other ports; can't be in files.isa
-device  ed: ether, ifnet
-attach  ed at isa with ed_isa
-attach  ed at pcmcia with ed_pcmcia
 file    dev/isa/if_ed.c                 ed & (ed_isa | ed_pcmcia) needs-flag
 
 # PC parallel ports (XXX what chip?)
