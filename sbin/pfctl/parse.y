@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.180 2002/11/02 15:29:28 dhartmei Exp $	*/
+/*	$OpenBSD: parse.y,v 1.181 2002/11/04 22:46:28 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -181,7 +181,7 @@ int	lgetc(FILE *);
 int	lungetc(int, FILE *);
 int	findeol(void);
 int	yylex(void);
-struct	node_host *host(char *);
+struct	node_host *host(char *, int);
 int	atoul(char *, u_long *);
 int	getservice(char *);
 
@@ -814,19 +814,7 @@ xhost		: '!' host			{
 		;
 
 host		: address
-		| address '/' number		{
-			struct node_host *n;
-			for (n = $1; n; n = n->next) {
-				if (($1->af == AF_INET && $3 > 32) ||
-				    ($1->af == AF_INET6 && $3 > 128)) {
-					yyerror("illegal netmask value /%d",
-					    $3);
-					YYERROR;
-				}
-				set_ipmask(n, $3);
-			}
-			$$ = $1;
-		}
+		| STRING '/' number		{ $$ = host($1, $3); }
 		;
 
 number		: STRING			{
@@ -850,7 +838,7 @@ address		: '(' STRING ')'		{
 			strncpy($$->addr.addr.pfa.ifname, $2,
 			    sizeof($$->addr.addr.pfa.ifname));
 		}
-		| STRING			{ $$ = host($1); }
+		| STRING			{ $$ = host($1, -1); }
 		;
 
 portspec	: port_item			{ $$ = $1; }
@@ -2920,30 +2908,51 @@ ifa_pick_ip(struct node_host *nh, sa_family_t af)
 }
 
 struct node_host *
-host(char *s)
+host(char *s, int mask)
 {
 	struct node_host *h = NULL, *n;
 	struct in_addr ina;
 	struct addrinfo hints, *res0, *res;
-	int error;
+	int bits, error, v4mask, v6mask;
+	char *buf;
+
+	if (mask == -1) {
+		if (asprintf(&buf, "%s", s) == -1)
+			err(1, "host: malloc");
+		v4mask = 32;
+		v6mask = 128;
+	} else if (mask <= 128) {
+		if (asprintf(&buf, "%s/%d", s, mask) == -1)
+			err(1, "host: malloc");
+		v4mask = v6mask = mask;
+	} else {
+		yyerror("illegal mask");
+		return (NULL);
+	}
 
 	if (ifa_exists(s) || !strncmp(s, "self", IFNAMSIZ)) {
 		/* interface with this name exists */
-		return(ifa_lookup(s, PFCTL_IFLOOKUP_HOST));
+		h = ifa_lookup(s, PFCTL_IFLOOKUP_HOST);
+		if (h != NULL && mask > -1)
+			set_ipmask(h, mask);
+		return (h);
 	}
 
-	if (inet_aton(s, &ina) == 1) {
+	memset(&ina, 0, sizeof(struct in_addr));
+	if ((bits = inet_net_pton(AF_INET, buf, &ina, sizeof(&ina))) > -1) {
 		h = calloc(1, sizeof(struct node_host));
 		if (h == NULL)
 			err(1, "address: calloc");
 		h->af = AF_INET;
 		h->addr.addr_dyn = NULL;
 		h->addr.addr.addr32[0] = ina.s_addr;
-		set_ipmask(h, 32);
+		set_ipmask(h, bits);
 		h->next = NULL;
 		h->tail = h;
+		free(buf);
 		return (h);
 	}
+	free(buf);
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_INET6;
@@ -2959,7 +2968,7 @@ host(char *s)
 		    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr,
 		    sizeof(n->addr.addr));
 		n->ifindex = ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
-		set_ipmask(n, 128);
+		set_ipmask(n, v6mask);
 		freeaddrinfo(res);
 		n->next = NULL;
 		n->tail = n;
@@ -2988,14 +2997,14 @@ host(char *s)
 			memcpy(&n->addr.addr,
 			    &((struct sockaddr_in *)res->ai_addr)->sin_addr.s_addr,
 			    sizeof(struct in_addr));
-			set_ipmask(n, 32);
+			set_ipmask(n, v4mask);
 		} else {
 			memcpy(&n->addr.addr,
 			    &((struct sockaddr_in6 *)res->ai_addr)->sin6_addr.s6_addr,
 			    sizeof(struct in6_addr));
 			n->ifindex =
 			    ((struct sockaddr_in6 *)res->ai_addr)->sin6_scope_id;
-			set_ipmask(n, 128);
+			set_ipmask(n, v6mask);
 		}
 		n->next = NULL;
 		n->tail = n;
