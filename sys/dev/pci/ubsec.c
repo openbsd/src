@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.75 2001/11/20 20:19:26 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.76 2001/12/07 18:08:20 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -171,11 +171,6 @@ ubsec_attach(parent, self, aux)
 		return;
 	}
 	sc->sc_dmat = pa->pa_dmat;
-
-	/* Disable TRDY timeout and RETRY timeout */
-	cmd = pci_conf_read(pc, pa->pa_tag, BS_TRDY_TIMEOUT);
-	cmd &= 0xffff0000;
-	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, cmd);
 
 	if (pci_intr_map(pa, &ih)) {
 		printf(": couldn't map interrupt\n");
