@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.31 2003/06/30 03:42:05 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.32 2003/07/08 00:30:12 mickey Exp $	*/
 
 static const char copyright[] =
 "@(#) Copyright (c) 1992, 1993\n\
@@ -35,7 +35,7 @@ static const char license[] =
 #if 0
 static char sccsid[] = "@(#)compress.c	8.2 (Berkeley) 1/7/94";
 #else
-static const char main_rcsid[] = "$OpenBSD: main.c,v 1.31 2003/06/30 03:42:05 millert Exp $";
+static const char main_rcsid[] = "$OpenBSD: main.c,v 1.32 2003/07/08 00:30:12 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -451,6 +451,7 @@ compress(const char *in, const char *out, const struct compressor *method,
 	if ((ofd = open(out, O_WRONLY|O_CREAT, S_IWUSR)) < 0) {
 		if (verbose >= 0)
 			warn("%s", out);
+		(void) close(ifd);
 		return (-1);
 	}
 
@@ -458,39 +459,45 @@ compress(const char *in, const char *out, const struct compressor *method,
 		if (verbose >= 0)
 			warnx("%s: won't write compressed data to terminal",
 			    out);
+		(void) close(ofd);
+		(void) close(ifd);
 		return (-1);
 	}
 
-	if ((cookie = (*method->open)(ofd, "w", bits)) != NULL) {
-
-		while ((nr = read(ifd, buf, sizeof(buf))) > 0)
-			if ((method->write)(cookie, buf, nr) != nr) {
-				if (verbose >= 0)
-					warn("%s", out);
-				error++;
-				break;
-			}
+	if ((cookie = (*method->open)(ofd, "w", bits)) == NULL) {
+		if (verbose >= 0)
+			warn("%s", in);
+		(void) close(ofd);
+		(void) close(ifd);
+		return (-1);
 	}
 
-	if (cookie == NULL || nr < 0) {
-		if (!error && verbose >= 0)
+	while ((nr = read(ifd, buf, sizeof(buf))) > 0)
+		if ((method->write)(cookie, buf, nr) != nr) {
+			if (verbose >= 0)
+				warn("%s", out);
+			error++;
+			break;
+		}
+
+	if (!error && nr < 0) {
+		if (verbose >= 0)
 			warn("%s", in);
 		error++;
 	}
 
-	if (cookie == NULL || (method->close)(cookie)) {
+	if ((method->close)(cookie)) {
 		if (!error && verbose >= 0)
 			warn("%s", out);
 		error++;
-		(void) close(ofd);
 	}
 
 	if (close(ifd)) {
 		if (!error && verbose >= 0)
-			warn("%s", out);
+			warn("%s", in);
 		error++;
 	}
-
+	
 	return (error);
 }
 
@@ -543,29 +550,40 @@ decompress(const char *in, const char *out, const struct compressor *method,
 		return -1;
 	}
 
-	if ((cookie = (*method->open)(ifd, "r", bits)) != NULL) {
-		if ((ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR)) < 0) {
-			if (verbose >= 0)
-				warn("%s", in);
-			(method->close)(cookie);
-			return -1;
-		}
-
-		while ((nr = (method->read)(cookie, buf, sizeof(buf))) > 0)
-			if (write(ofd, buf, nr) != nr) {
-				if (verbose >= 0)
-					warn("%s", out);
-				error++;
-				break;
-			}
+	if ((cookie = (*method->open)(ifd, "r", bits)) == NULL) {
+		if (verbose >= 0)
+			warn("%s", in);
+		error++;
+		close (ifd);
+		return -1;
 	}
 
-	if (cookie == NULL || (method->close)(cookie) || nr < 0) {
-		if (!error && verbose >= 0)
+	if ((ofd = open(out, O_WRONLY|O_CREAT|O_TRUNC, S_IWUSR)) < 0) {
+		if (verbose >= 0)
+			warn("%s", in);
+		(method->close)(cookie);
+		return -1;
+	}
+
+	while ((nr = (method->read)(cookie, buf, sizeof(buf))) > 0)
+		if (write(ofd, buf, nr) != nr) {
+			if (verbose >= 0)
+				warn("%s", out);
+			error++;
+			break;
+		}
+
+	if (!error && nr < 0) {
+		if (verbose >= 0)
 			warnx("%s: %s", in,
 			    errno == EINVAL ? "crc error" : strerror(errno));
 		error++;
-		close (ifd);
+	}
+
+	if ((method->close)(cookie)) {
+		if (!error && verbose >= 0)
+			warnx("%s", in);
+		error++;
 	}
 
 	if (close(ofd)) {
