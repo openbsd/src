@@ -1,4 +1,4 @@
-/*	$OpenBSD: emacs.c,v 1.14 2001/02/19 09:49:52 camield Exp $	*/
+/*	$OpenBSD: emacs.c,v 1.15 2001/07/17 12:39:31 camield Exp $	*/
 
 /*
  *  Emacs-like command line editing and history
@@ -1798,15 +1798,15 @@ do_complete(flags, type)
 
 	olen = end - start;
 	nlen = x_longest_prefix(nwords, words);
-	/* complete single match, or multi-match without globbing chars */
-	if ((nlen > olen) &&
-	    ((nwords == 1) || (strncmp(words[0], xbuf + start, olen) == 0))) {
-			x_goto(xbuf + start);
-			x_delete(olen, FALSE);
-			x_escape(words[0], nlen, x_emacs_putbuf);
-			x_adjust();
-			completed = 1;
+	/* complete */
+	if (nlen > olen) {
+		x_goto(xbuf + start);
+		x_delete(olen, FALSE);
+		x_escape(words[0], nlen, x_emacs_putbuf);
+		x_adjust();
+		completed = 1;
 	}
+	/* add space if single non-dir match */
 	if ((nwords == 1) && (!ISDIRSEP(words[0][nlen - 1]))) {
 		x_ins(space);
 		completed = 1;
