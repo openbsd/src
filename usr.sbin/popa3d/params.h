@@ -1,4 +1,4 @@
-/* $OpenBSD: params.h,v 1.4 2001/08/25 15:35:09 camield Exp $ */
+/* $OpenBSD: params.h,v 1.5 2001/09/21 20:22:06 camield Exp $ */
 
 /*
  * Global POP daemon parameters.
@@ -8,6 +8,11 @@
 #define _POP_PARAMS_H
 
 /*
+ * Our name to use when talking to various interfaces.
+ */
+#define POP_SERVER			"popa3d"
+
+/*
  * Are we going to be a standalone server or start via an inetd clone?
  */
 #define POP_STANDALONE			1
@@ -15,10 +20,38 @@
 #if POP_STANDALONE
 
 /*
+ * Should the command line options be supported?
+ * If enabled, popa3d will default to inetd mode and will require a -D
+ * to actually enable the standalone mode.
+ */
+#define POP_OPTIONS			1
+
+/*
  * The address and port to listen on.
  */
 #define DAEMON_ADDR			"0.0.0.0"	/* INADDR_ANY */
 #define DAEMON_PORT			110
+
+/*
+ * Should libwrap be used?
+ *
+ * This may make things slower and also adds to code running as root,
+ * so it is recommended that you use a packet filter instead.  This
+ * option is provided primarily as a way to meet conventions of certain
+ * systems where all services obey libwrap access controls.
+ */
+#ifdef LIBWRAP
+#define DAEMON_LIBWRAP			1
+#else
+#define DAEMON_LIBWRAP			0
+#endif
+
+#if DAEMON_LIBWRAP
+/*
+ * How do we talk to libwrap?
+ */
+#define DAEMON_LIBWRAP_IDENT		POP_SERVER
+#endif
 
 /*
  * Limit the number of POP sessions we can handle at a time to reduce
@@ -69,10 +102,16 @@
 #endif
 
 /*
- * An unprivileged dummy user to run as before authentication. The user
- * and its UID must not be used for any other purpose.
+ * A pseudo-user to run as before authentication. The user and its UID
+ * must not be used for any other purpose.
  */
-#define POP_USER			"popa3d"
+#define POP_USER			POP_SERVER
+
+/*
+ * An empty directory to chroot to before authentication. The directory
+ * and its parent directories must not be writable by anyone but root.
+ */
+#define POP_CHROOT			"/usr/share/empty"
 
 /*
  * Sessions will be closed if idle for longer than POP_TIMEOUT seconds.
@@ -133,8 +172,17 @@
 /*
  * Your mail spool directory. Note: only local (non-NFS) mode 775 mail
  * spools are currently supported.
+ *
+ * #undef this for qmail-style $HOME/Mailbox mailboxes.
  */
 #define MAIL_SPOOL_PATH			"/var/mail"
+
+#ifndef MAIL_SPOOL_PATH
+/*
+ * The mailbox file name relative to the user's home directory.
+ */
+#define HOME_MAILBOX_NAME		"Mailbox"
+#endif
 
 #endif
 
@@ -148,10 +196,12 @@
 /*
  * How do we talk to syslogd? These should be fine for most systems.
  */
-#define SYSLOG_IDENT			"popa3d"
+#define SYSLOG_IDENT			POP_SERVER
 #define SYSLOG_OPTIONS			LOG_PID
 #define SYSLOG_FACILITY			LOG_DAEMON
-#define SYSLOG_PRIORITY			LOG_INFO
+#define SYSLOG_PRI_LO			LOG_INFO
+#define SYSLOG_PRI_HI			LOG_NOTICE
+#define SYSLOG_PRI_ERROR		LOG_CRIT
 
 /*
  * There's probably no reason to touch anything below this comment.

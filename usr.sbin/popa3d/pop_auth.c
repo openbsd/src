@@ -1,4 +1,4 @@
-/* $OpenBSD: pop_auth.c,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: pop_auth.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
 
 /*
  * AUTHORIZATION state handling.
@@ -31,14 +31,14 @@ static int pop_auth_user(char *params)
 
 	user = pop_get_param(&params);
 	if (!user || pop_user || params) return POP_ERROR;
-	if (!(pop_user = strdup(user))) return POP_CRASH;
+	if (!(pop_user = strdup(user))) return POP_CRASH_SERVER;
 	return POP_OK;
 }
 
 static int pop_auth_pass(char *params)
 {
 	if (!params || !pop_user) return POP_ERROR;
-	if (!(pop_pass = strdup(params))) return POP_CRASH;
+	if (!(pop_pass = strdup(params))) return POP_CRASH_SERVER;
 	return POP_STATE;
 }
 
@@ -67,23 +67,25 @@ int do_pop_auth(int channel)
 	return 0;
 }
 
-void log_pop_auth(int result, char *mailbox)
+void log_pop_auth(int result, char *user)
 {
 	if (result == AUTH_NONE) {
-		syslog(SYSLOG_PRIORITY, "Didn't attempt authentication");
+		syslog(SYSLOG_PRI_LO, "Didn't attempt authentication");
 		return;
 	}
 
 #if POP_VIRTUAL
 	if (virtual_domain) {
-		syslog(SYSLOG_PRIORITY, "Authentication %s for %s@%s",
+		syslog(result == AUTH_OK ? SYSLOG_PRI_LO : SYSLOG_PRI_HI,
+			"Authentication %s for %s@%s",
 			result == AUTH_OK ? "passed" : "failed",
-			mailbox ? mailbox : "UNKNOWN",
+			user ? user : "UNKNOWN USER",
 			virtual_domain);
 		return;
 	}
 #endif
-	syslog(SYSLOG_PRIORITY, "Authentication %s for %s",
+	syslog(result == AUTH_OK ? SYSLOG_PRI_LO : SYSLOG_PRI_HI,
+		"Authentication %s for %s",
 		result == AUTH_OK ? "passed" : "failed",
-		mailbox ? mailbox : "UNKNOWN");
+		user ? user : "UNKNOWN USER");
 }

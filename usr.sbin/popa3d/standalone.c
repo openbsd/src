@@ -1,4 +1,4 @@
-/* $OpenBSD: standalone.c,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: standalone.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
 
 /*
  * Standalone POP server: accepts connections, checks the anti-flood limits,
@@ -24,12 +24,21 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#if DAEMON_LIBWRAP
+#include <tcpd.h>
+int allow_severity = SYSLOG_PRI_LO;
+int deny_severity = SYSLOG_PRI_HI;
+#endif
+
 /*
  * These are defined in pop_root.c.
  */
 extern int log_error(char *s);
 extern int do_pop_startup(void);
 extern int do_pop_session(void);
+
+typedef sig_atomic_t a_int;
+typedef volatile a_int va_int;
 
 /*
  * Active POP sessions. Those that were started within the last MIN_DELAY
@@ -39,13 +48,13 @@ extern int do_pop_session(void);
  */
 static struct {
 	struct in_addr addr;		/* Source IP address */
-	int pid;			/* PID of the server, or 0 for none */
+	a_int pid;			/* PID of the server, or 0 for none */
 	clock_t start;			/* When the server was started */
 	clock_t log;			/* When we've last logged a failure */
 } sessions[MAX_SESSIONS];
 
-static volatile int child_blocked;	/* We use blocking to avoid races */
-static volatile int child_pending;	/* Are any dead children waiting? */
+static va_int child_blocked;		/* We use blocking to avoid races */
+static va_int child_pending;		/* Are any dead children waiting? */
 
 /*
  * SIGCHLD handler; can also be called directly with a zero signum.
@@ -76,7 +85,31 @@ static void handle_child(int signum)
 	errno = saved_errno;
 }
 
+#if DAEMON_LIBWRAP
+static void check_access(int sock)
+{
+	struct request_info request;
+
+	request_init(&request,
+		RQ_DAEMON, DAEMON_LIBWRAP_IDENT,
+		RQ_FILE, sock,
+		0);
+	fromhost(&request);
+
+	if (!hosts_access(&request)) {
+/* refuse() shouldn't return... */
+		refuse(&request);
+/* ...but just in case */
+		exit(1);
+	}
+}
+#endif
+
+#if POP_OPTIONS
+int do_standalone(void)
+#else
 int main(void)
+#endif
 {
 	int true = 1;
 	int sock, new;
@@ -169,7 +202,7 @@ int main(void)
 			if (!sessions[i].log ||
 			    now < sessions[i].log ||
 			    now - sessions[i].log >= MIN_DELAY * CLK_TCK) {
-				syslog(SYSLOG_PRIORITY,
+				syslog(SYSLOG_PRI_HI,
 					"%s: per source limit reached",
 					inet_ntoa(addr.sin_addr));
 				sessions[i].log = now;
@@ -178,21 +211,24 @@ int main(void)
 		}
 
 		if (j < 0) {
-			syslog(SYSLOG_PRIORITY, "%s: sessions limit reached",
+			syslog(SYSLOG_PRI_HI, "%s: sessions limit reached",
 				inet_ntoa(addr.sin_addr));
 			continue;
 		}
 
 		switch ((pid = fork())) {
 		case -1:
-			syslog(SYSLOG_PRIORITY, "%s: fork: %m",
+			syslog(SYSLOG_PRI_ERROR, "%s: fork: %m",
 				inet_ntoa(addr.sin_addr));
 			break;
 
 		case 0:
-			syslog(SYSLOG_PRIORITY, "Session from %s",
-				inet_ntoa(addr.sin_addr));
 			if (close(sock)) return log_error("close");
+#if DAEMON_LIBWRAP
+			check_access(new);
+#endif
+			syslog(SYSLOG_PRI_LO, "Session from %s",
+				inet_ntoa(addr.sin_addr));
 			if (dup2(new, 0) < 0) return log_error("dup2");
 			if (dup2(new, 1) < 0) return log_error("dup2");
 			if (dup2(new, 2) < 0) return log_error("dup2");
@@ -201,7 +237,7 @@ int main(void)
 
 		default:
 			sessions[j].addr = addr.sin_addr;
-			(volatile int)sessions[j].pid = pid;
+			(va_int)sessions[j].pid = pid;
 			sessions[j].start = now;
 			sessions[j].log = 0;
 		}

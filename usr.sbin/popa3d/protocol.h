@@ -1,4 +1,4 @@
-/* $OpenBSD: protocol.h,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: protocol.h,v 1.2 2001/09/21 20:22:06 camield Exp $ */
 
 /*
  * POP protocol handling.
@@ -15,8 +15,9 @@
 #define POP_QUIET			2	/* We've already replied */
 #define POP_LEAVE			3	/* Leave the session */
 #define POP_STATE			4	/* Advance the state */
-#define POP_CRASH			5	/* Session crashed */
-#define POP_TIMED_OUT			6	/* Connection timed out */
+#define POP_CRASH_NETFAIL		5	/* Network failure */
+#define POP_CRASH_NETTIME		6	/* Network timeout */
+#define POP_CRASH_SERVER		7	/* POP server failure */
 
 /*
  * POP command description.

@@ -1,4 +1,4 @@
-/* $OpenBSD: virtual.c,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: virtual.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
 
 /*
  * Virtual domain support.
@@ -8,7 +8,7 @@
 
 #if POP_VIRTUAL
 
-#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE 4
 #define _XOPEN_SOURCE_EXTENDED
 #define _XOPEN_VERSION 4
 #define _XPG4_2
@@ -52,7 +52,7 @@ static char *lookup(void)
 	return inet_ntoa(sin.sin_addr);
 }
 
-static int isvaliduser(char *user)
+static int is_valid_user(char *user)
 {
 	unsigned char *p;
 
@@ -66,7 +66,7 @@ static int isvaliduser(char *user)
 	return 1;
 }
 
-struct passwd *virtual_userpass(char *user, char *pass, char **mailbox)
+struct passwd *virtual_userpass(char *user, char *pass, int *known)
 {
 	struct passwd *pw, *result;
 	struct stat stat;
@@ -75,6 +75,8 @@ struct passwd *virtual_userpass(char *user, char *pass, char **mailbox)
 	char *template, *passwd;
 	int fail;
 	int fd, size;
+
+	*known = 0;
 
 /* Make sure we don't try to authenticate globally if something fails
  * before we find out whether the virtual domain is known to us */
@@ -90,7 +92,7 @@ struct passwd *virtual_userpass(char *user, char *pass, char **mailbox)
 	}
 
 	fail = 0;
-	if (!isvaliduser(user)) {
+	if (!is_valid_user(user)) {
 		user = "INVALID";
 		fail = 1;
 	}
@@ -138,7 +140,7 @@ struct passwd *virtual_userpass(char *user, char *pass, char **mailbox)
 
 	size = 0;
 	if (fd >= 0) {
-		if (!fail) *mailbox = user;
+		*known = !fail;
 
 		if ((size = read(fd, auth, sizeof(auth))) < 0) {
 			log_error("read");
@@ -167,10 +169,8 @@ struct passwd *virtual_userpass(char *user, char *pass, char **mailbox)
 	}
 	if (!strtok(NULL, ":")) fail = 1;
 
-	if ((pw = getpwnam(template))) {
+	if ((pw = getpwnam(template)))
 		memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));
-		pw->pw_passwd = "*";
-	}
 	endpwent();
 
 	result = NULL;

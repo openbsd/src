@@ -1,4 +1,4 @@
-/* $OpenBSD: pop_trans.c,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: pop_trans.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
 
 /*
  * TRANSACTION state handling.
@@ -28,7 +28,7 @@ static int pop_trans_stat(char *params)
 {
 	if (params) return POP_ERROR;
 	if (pop_reply("+OK %d %ld", db.visible_count, db.visible_size))
-		return POP_CRASH;
+		return POP_CRASH_NETFAIL;
 	return POP_QUIET;
 }
 
@@ -51,14 +51,14 @@ static int pop_trans_list_or_uidl(char *params, int uidl)
 			    msg->hash[1], msg->hash[0],
 			    msg->hash[7], msg->hash[6],
 			    msg->hash[5], msg->hash[4]))
-				return POP_CRASH;
+				return POP_CRASH_NETFAIL;
 		} else
 			if (pop_reply("+OK %d %ld", number, msg->size))
-				return POP_CRASH;
+				return POP_CRASH_NETFAIL;
 		return POP_QUIET;
 	}
 
-	if (pop_reply_ok()) return POP_CRASH;
+	if (pop_reply_ok()) return POP_CRASH_NETFAIL;
 	for (number = 1; number <= db.total_count; number++) {
 		msg = db.array[number - 1];
 		if (msg->flags & MSG_DELETED) continue;
@@ -70,12 +70,12 @@ static int pop_trans_list_or_uidl(char *params, int uidl)
 			    msg->hash[1], msg->hash[0],
 			    msg->hash[7], msg->hash[6],
 			    msg->hash[5], msg->hash[4]))
-				return POP_CRASH;
+				return POP_CRASH_NETFAIL;
 		} else
 			if (pop_reply("%d %ld", number, msg->size))
-				return POP_CRASH;
+				return POP_CRASH_NETFAIL;
 	}
-	if (pop_reply_terminate()) return POP_CRASH;
+	if (pop_reply_terminate()) return POP_CRASH_NETFAIL;
 
 	return POP_QUIET;
 }
@@ -94,12 +94,13 @@ static int pop_trans_retr(char *params)
 {
 	int number;
 	struct db_message *msg;
+	int event;
 
 	number = pop_get_int(&params);
 	if (number < 1 || number > db.total_count || params) return POP_ERROR;
 	msg = db.array[number - 1];
 	if (msg->flags & MSG_DELETED) return POP_ERROR;
-	if (mailbox_get(msg, -1)) return POP_CRASH;
+	if ((event = mailbox_get(msg, -1)) != POP_OK) return event;
 #if POP_SUPPORT_LAST
 	if (number > db.last) db.last = number;
 #endif
@@ -110,6 +111,7 @@ static int pop_trans_top(char *params)
 {
 	int number, lines;
 	struct db_message *msg;
+	int event;
 
 	number = pop_get_int(&params);
 	if (number < 1 || number > db.total_count) return POP_ERROR;
@@ -117,7 +119,7 @@ static int pop_trans_top(char *params)
 	if (lines < 0 || params) return POP_ERROR;
 	msg = db.array[number - 1];
 	if (msg->flags & MSG_DELETED) return POP_ERROR;
-	if (mailbox_get(msg, lines)) return POP_CRASH;
+	if ((event = mailbox_get(msg, lines)) != POP_OK) return event;
 	return POP_QUIET;
 }
 
@@ -161,7 +163,7 @@ static int pop_trans_rset(char *params)
 static int pop_trans_last(char *params)
 {
 	if (params) return POP_ERROR;
-	if (pop_reply("+OK %d", db.last)) return POP_CRASH;
+	if (pop_reply("+OK %d", db.last)) return POP_CRASH_NETFAIL;
 	return POP_QUIET;
 }
 #endif
@@ -203,28 +205,32 @@ int do_pop_trans(char *spool, char *mailbox)
 	if (!pop_sane()) return 1;
 
 	if (db_load(spool, mailbox)) {
-		syslog(SYSLOG_PRIORITY, "Failed to open mailbox");
+		syslog(SYSLOG_PRI_HI,
+			"Failed or refused to load %s/%s",
+			spool, mailbox);
 		pop_reply_error();
 		return 0;
 	}
 
-	syslog(SYSLOG_PRIORITY, "%d message%s (%ld byte%s) loaded",
+	syslog(SYSLOG_PRI_LO, "%d message%s (%ld byte%s) loaded",
 		db.total_count, db.total_count == 1 ? "" : "s",
 		db.total_size, db.total_size == 1 ? "" : "s");
 
 	if (pop_reply_ok())
-		result = POP_CRASH;
+		result = POP_CRASH_NETFAIL;
 	else
 	switch ((result = pop_handle_state(pop_trans_commands))) {
 	case POP_STATE:
 		if (mailbox_update()) {
 			if (db.flags & DB_STALE) break;
-			syslog(SYSLOG_PRIORITY, "Failed to update mailbox");
+			syslog(SYSLOG_PRI_ERROR,
+				"Failed to update %s/%s",
+				spool, mailbox);
 			pop_reply_error();
 			break;
 		}
 
-		syslog(SYSLOG_PRIORITY, "%d (%ld) deleted, %d (%ld) left",
+		syslog(SYSLOG_PRI_LO, "%d (%ld) deleted, %d (%ld) left",
 			db.total_count - db.visible_count,
 			db.total_size - db.visible_size,
 			db.visible_count,
@@ -232,15 +238,21 @@ int do_pop_trans(char *spool, char *mailbox)
 		pop_reply_ok();
 		break;
 
-	case POP_TIMED_OUT:
-		syslog(SYSLOG_PRIORITY, "Connection timed out");
+	case POP_CRASH_NETFAIL:
+		syslog(SYSLOG_PRI_LO, "Premature disconnect");
+		break;
+
+	case POP_CRASH_NETTIME:
+		syslog(SYSLOG_PRI_LO, "Connection timed out");
 	}
 
 	if (db.flags & DB_STALE)
-		syslog(SYSLOG_PRIORITY, "Another MUA active, giving up");
+		syslog(SYSLOG_PRI_LO, "Another MUA active, giving up");
 	else
-	if (result == POP_CRASH)
-		syslog(SYSLOG_PRIORITY, "Session crashed");
+	if (result == POP_CRASH_SERVER)
+		syslog(SYSLOG_PRI_ERROR,
+			"Server failure accessing %s/%s",
+			spool, mailbox);
 
 	mailbox_close();
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: mailbox.h,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: mailbox.h,v 1.2 2001/09/21 20:22:06 camield Exp $ */
 
 /*
  * Mailbox access.
@@ -14,8 +14,8 @@
 extern int mailbox_open(char *spool, char *mailbox);
 
 /*
- * Sends (first lines of) a message to the POP client. Returns a non-zero
- * value on error; the POP session then has to crash.
+ * Sends (first lines of) a message to the POP client. Returns one of the
+ * POP_* event codes.
  */
 extern int mailbox_get(struct db_message *msg, int lines);
 

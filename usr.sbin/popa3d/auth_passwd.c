@@ -1,4 +1,4 @@
-/* $OpenBSD: auth_passwd.c,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: auth_passwd.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
 
 /*
  * The /etc/passwd authentication routine.
@@ -8,7 +8,7 @@
 
 #if AUTH_PASSWD && !VIRTUAL_ONLY
 
-#define _XOPEN_SOURCE
+#define _XOPEN_SOURCE 4
 #define _XOPEN_SOURCE_EXTENDED
 #define _XOPEN_VERSION 4
 #define _XPG4_2
@@ -17,11 +17,11 @@
 #include <pwd.h>
 #include <sys/types.h>
 
-struct passwd *auth_userpass(char *user, char *pass, char **mailbox)
+struct passwd *auth_userpass(char *user, char *pass, int *known)
 {
 	struct passwd *pw, *result;
 
-	if ((pw = getpwnam(user))) *mailbox = user;
+	*known = (pw = getpwnam(user)) != NULL;
 	endpwent();
 	result = NULL;
 

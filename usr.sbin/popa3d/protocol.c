@@ -1,4 +1,4 @@
-/* $OpenBSD: protocol.c,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: protocol.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
 
 /*
  * POP protocol handling.
@@ -17,7 +17,7 @@
 #include "protocol.h"
 
 struct pop_buffer pop_buffer;
-static jmp_buf pop_timed_out;
+static sigjmp_buf pop_timed_out;
 
 void pop_init(void)
 {
@@ -41,7 +41,7 @@ int pop_sane(void)
 static void pop_timeout(int signum)
 {
 	signal(SIGALRM, SIG_DFL);
-	longjmp(pop_timed_out, 1);
+	siglongjmp(pop_timed_out, 1);
 }
 
 static int pop_fetch(void)
@@ -103,7 +103,7 @@ int pop_handle_state(struct pop_command *commands)
 	struct pop_command *command;
 	int response;
 
-	if (setjmp(pop_timed_out)) return POP_TIMED_OUT;
+	if (sigsetjmp(pop_timed_out, 1)) return POP_CRASH_NETTIME;
 
 	while (pop_get_line(line, sizeof(line))) {
 		if ((params = strchr(line, ' '))) {
@@ -120,24 +120,24 @@ int pop_handle_state(struct pop_command *commands)
 
 		switch (response) {
 		case POP_OK:
-			if (pop_reply_ok()) return POP_CRASH;
+			if (pop_reply_ok()) return POP_CRASH_NETFAIL;
 			break;
 
 		case POP_ERROR:
-			if (pop_reply_error()) return POP_CRASH;
+			if (pop_reply_error()) return POP_CRASH_NETFAIL;
 
 		case POP_QUIET:
 			break;
 
 		case POP_LEAVE:
-			if (pop_reply_ok()) return POP_CRASH;
+			if (pop_reply_ok()) return POP_CRASH_NETFAIL;
 
 		default:
 			return response;
 		}
 	}
 
-	return POP_CRASH;
+	return POP_CRASH_NETFAIL;
 }
 
 char *pop_get_param(char **params)
@@ -207,8 +207,7 @@ int pop_reply_error(void)
 
 int pop_reply_multiline(int fd, long size, int lines)
 {
-	char *in_buffer;
-	char *out_buffer;
+	char *in_buffer, *out_buffer;
 	char *in, *out;
 	int in_block, out_block;
 	int start, body;

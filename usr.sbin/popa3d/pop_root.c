@@ -1,4 +1,4 @@
-/* $OpenBSD: pop_root.c,v 1.1 2001/08/19 13:05:57 deraadt Exp $ */
+/* $OpenBSD: pop_root.c,v 1.2 2001/09/21 20:22:06 camield Exp $ */
 
 /*
  * Main daemon code: invokes the actual POP handling routines. Most calls
@@ -6,6 +6,7 @@
  * POP_USER or the authenticated user). Depending on compile-time options
  * in params.h, the following files may contain code executed as root:
  *
+ * startup.c		if supporting command line options (POP_OPTIONS)
  * standalone.c		if not running via an inetd clone (POP_STANDALONE)
  * virtual.c		if supporting virtual domains (POP_VIRTUAL)
  * auth_passwd.c	if using passwd or *BSD (AUTH_PASSWD && !VIRTUAL_ONLY)
@@ -17,6 +18,7 @@
 #include <stdlib.h>
 #include <syslog.h>
 #include <errno.h>
+#include <time.h>
 #include <grp.h>
 #include <pwd.h>
 #include <sys/stat.h>
@@ -32,15 +34,19 @@
 #endif
 
 #if !VIRTUAL_ONLY
-extern struct passwd *auth_userpass(char *user, char *pass, char **mailbox);
+extern struct passwd *auth_userpass(char *user, char *pass, int *known);
 #endif
 
+/* POP_USER's pw_uid and pw_gid, other fields may not be valid */
 static struct passwd pop_pw;
-static char *mailbox;
+
+static int known;
+static char *user;
+static char *spool, *mailbox;
 
 int log_error(char *s)
 {
-	syslog(SYSLOG_PRIORITY, "%s: %m", s);
+	syslog(SYSLOG_PRI_ERROR, "%s: %m", s);
 	return 1;
 }
 
@@ -56,6 +62,17 @@ static int set_user(struct passwd *pw)
 	if (setuid(pw->pw_uid)) return log_error("setuid");
 
 	return 0;
+}
+
+static int drop_root(void)
+{
+	tzset();
+	openlog(SYSLOG_IDENT, SYSLOG_OPTIONS | LOG_NDELAY, SYSLOG_FACILITY);
+
+	if (chroot(POP_CHROOT)) return log_error("chroot");
+	if (chdir("/")) return log_error("chdir");
+
+	return set_user(&pop_pw);
 }
 
 /*
@@ -89,10 +106,10 @@ static int read_loop(int fd, char *buffer, int count)
 static int do_root_auth(int channel)
 {
 	static char auth[AUTH_BUFFER_SIZE + 2];
-	char *user, *pass;
+	char *pass;
 	struct passwd *pw;
 
-	mailbox = NULL;
+	known = 0;
 #if POP_VIRTUAL
 	virtual_domain = NULL;
 #endif
@@ -104,29 +121,55 @@ static int do_root_auth(int channel)
 	    sizeof(pop_buffer)) return AUTH_NONE;
 
 /* Now, the authentication data. */
-	memset(auth, 0, sizeof(auth));	/* Ensure the NUL termination */
-	if (read_loop(channel, auth, AUTH_BUFFER_SIZE) < 0) return AUTH_NONE;
+	memset(auth, 0, sizeof(auth));	/* Ensure NUL termination */
+	if (read_loop(channel, auth, AUTH_BUFFER_SIZE) < 0) {
+		memset(auth, 0, sizeof(auth));
+		return AUTH_NONE;
+	}
 
 	user = auth;
 	pass = &user[strlen(user) + 1];
 
 	pw = NULL;
 #if POP_VIRTUAL
-	if (!(pw = virtual_userpass(user, pass, &mailbox)) && virtual_domain)
+	if (!(pw = virtual_userpass(user, pass, &known)) && virtual_domain) {
+		memset(pass, 0, strlen(pass));
 		return AUTH_FAILED;
+	}
 #endif
 #if VIRTUAL_ONLY
-	if (!pw)
+	if (!pw) {
+		memset(pass, 0, strlen(pass));
 		return AUTH_FAILED;
+	}
 #else
-	if (!pw && !(pw = auth_userpass(user, pass, &mailbox)))
+	if (!pw && !(pw = auth_userpass(user, pass, &known))) {
+		memset(pass, 0, strlen(pass));
 		return AUTH_FAILED;
+	}
 #endif
-	if (!*user || !*pass) return AUTH_FAILED;
-
+	if (!*pass) return AUTH_FAILED;
 	memset(pass, 0, strlen(pass));
+	if (!*user) return AUTH_FAILED;
 
 	if (set_user(pw)) return AUTH_FAILED;
+
+#if POP_VIRTUAL
+	if (virtual_domain) {
+		spool = virtual_spool;
+		mailbox = user;
+
+		return AUTH_OK;
+	}
+#endif
+
+#ifdef MAIL_SPOOL_PATH
+	spool = MAIL_SPOOL_PATH;
+	mailbox = user;
+#else
+	spool = pw->pw_dir;
+	mailbox = HOME_MAILBOX_NAME;
+#endif
 
 	return AUTH_OK;
 }
@@ -142,11 +185,14 @@ int do_pop_startup(void)
 
 	errno = 0;
 	if (!(pw = getpwnam(POP_USER))) {
-		syslog(SYSLOG_PRIORITY, "getpwnam(\"" POP_USER "\"): %s",
+		syslog(SYSLOG_PRI_ERROR, "getpwnam(\"" POP_USER "\"): %s",
 			errno ? strerror(errno) : "No such user");
 		return 1;
 	}
-	memcpy(&pop_pw, pw, sizeof(pop_pw));
+	memset(pw->pw_passwd, 0, strlen(pw->pw_passwd));
+	endpwent();
+	pop_pw.pw_uid = pw->pw_uid;
+	pop_pw.pw_gid = pw->pw_gid;
 
 #if POP_VIRTUAL
 	if (virtual_startup()) return 1;
@@ -160,7 +206,10 @@ int do_pop_session(void)
 	int channel[2];
 	int result, status;
 
-	signal(SIGCHLD, SIG_IGN);
+/* For SIGCHLD, default action is to ignore the signal. {SIGCHLD, SIG_IGN}
+ * may be invalid (POSIX) or may enable a different behavior (SUSv2), none
+ * of which are any good for us. */
+	signal(SIGCHLD, SIG_DFL);
 
 	if (pipe(channel)) return log_error("pipe");
 
@@ -170,7 +219,7 @@ int do_pop_session(void)
 
 	case 0:
 		if (close(channel[0])) return log_error("close");
-		if (set_user(&pop_pw)) return 1;
+		if (drop_root()) return 1;
 		return do_pop_auth(channel[1]);
 	}
 
@@ -189,18 +238,12 @@ int do_pop_session(void)
 
 	if (result == AUTH_OK) {
 		if (close(channel[0])) return log_error("close");
-		log_pop_auth(result, mailbox);
-#if POP_VIRTUAL
-		if (virtual_domain)
-			return do_pop_trans(virtual_spool, mailbox);
-#endif
-#if !VIRTUAL_ONLY
-		return do_pop_trans(MAIL_SPOOL_PATH, mailbox);
-#endif
+		log_pop_auth(result, user);
+		return do_pop_trans(spool, mailbox);
 	}
 
-	if (set_user(&pop_pw)) return 1;
-	log_pop_auth(result, mailbox);
+	if (drop_root()) return 1;
+	log_pop_auth(result, known ? user : NULL);
 
 #ifdef AUTH_FAILED_MESSAGE
 	if (result == AUTH_FAILED) pop_reply("-ERR %s", AUTH_FAILED_MESSAGE);
@@ -211,7 +254,7 @@ int do_pop_session(void)
 	return status;
 }
 
-#if !POP_STANDALONE
+#if !POP_STANDALONE && !POP_OPTIONS
 int main(void)
 {
 	if (do_pop_startup()) return 1;
