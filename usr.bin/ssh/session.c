@@ -33,7 +33,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: session.c,v 1.162 2003/08/28 12:54:34 markus Exp $");
+RCSID("$OpenBSD: session.c,v 1.163 2003/08/31 13:29:05 markus Exp $");
 
 #include "ssh.h"
 #include "ssh1.h"
@@ -389,12 +389,6 @@ do_exec_no_pty(Session *s, const char *command)
 
 	session_proctitle(s);
 
-#ifdef GSSAPI
-	temporarily_use_uid(s->pw);
-	ssh_gssapi_storecreds();
-	restore_uid();
-#endif
-
 	/* Fork the child. */
 	if ((pid = fork()) == 0) {
 		fatal_remove_all_cleanups();
@@ -503,12 +497,6 @@ do_exec_pty(Session *s, const char *command)
 	ptyfd = s->ptyfd;
 	ttyfd = s->ttyfd;
 
-#ifdef GSSAPI
-	temporarily_use_uid(s->pw);
-	ssh_gssapi_storecreds();
-	restore_uid();
-#endif
-
 	/* Fork the child. */
 	if ((pid = fork()) == 0) {
 		fatal_remove_all_cleanups();
@@ -584,6 +572,14 @@ do_exec(Session *s, const char *command)
 		command = forced_command;
 		debug("Forced command '%.900s'", command);
 	}
+
+#ifdef GSSAPI
+	if (options.gss_authentication) {
+		temporarily_use_uid(s->pw);
+		ssh_gssapi_storecreds();
+		restore_uid();
+	}
+#endif
 
 	if (s->ttyfd != -1)
 		do_exec_pty(s, command);
