@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.87 2003/08/14 14:54:54 jason Exp $
+#	$OpenBSD: GENERIC,v 1.88 2004/01/31 06:01:12 deraadt Exp $
 # 	$NetBSD: GENERIC32,v 1.18 2001/07/20 00:07:12 eeh Exp $
 
 machine		sparc64
@@ -97,7 +97,9 @@ wskbd*	at ukbd? console ? mux 1
 ums*	at uhidev? reportid ?
 wsmouse* at ums? mux 0
 uhid*	at uhidev? reportid ?
-ugen*	at uhub? port ? configuration ?		# USB generic device
+ugen*	at uhub? port ? configuration ?	# USB generic device
+uplcom* at uhub? port ?			# I/O DATA USB-RSAQ2 serial adapter
+ucom*	at uplcom? portno ?
 
 #### Standard system devices -- all required for a given architecture
 
