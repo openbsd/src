@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: server.c,v 1.1 1998/11/14 23:37:28 deraadt Exp $";
+static char rcsid[] = "$Id: server.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
 #endif
 
 #define _SERVER_C_
@@ -269,7 +269,7 @@ server(void)
 
      memset((void *)normfds, 0, size); 
 
-     for (i=0; i<num_ifs; i++)
+     for (i = 0; i < num_ifs; i++)
 	  FD_SET(sockets[i], normfds);
 
      while (1) {
@@ -299,27 +299,23 @@ server(void)
 		    else
 #endif
 			 if (addresses[i] == NULL)
-			 process_api(sockets[i], global_socket); 
-			 else if (strcmp("127.0.0.1", inet_ntoa(sin.sin_addr))) {
-			 d = sizeof(struct sockaddr_in);
-			 if (recvfrom(sockets[i], 
+				 process_api(sockets[i], global_socket); 
+			 else {
+				 d = sizeof(struct sockaddr_in);
+				 if (recvfrom(sockets[i], 
 #ifdef BROKEN_RECVFROM
-				      (char *) buffer, 1,
+					      (char *) buffer, 1,
 #else
-				      (char *) NULL, 0, 
+					      (char *) NULL, 0, 
 #endif
-				      MSG_PEEK, 
-				      (struct sockaddr *) &sin, &d) == -1) {
-			      log_error(1, "recvfrom() in server()"); 
-			      return -1;
-			 }
-			 handle_packet(sockets[i], addresses[i]);
- 		    } else {
-			 /* XXX - flush it. APUE */
-			 d = sizeof(struct sockaddr_in);
-			 recvfrom(sockets[i], (char *)buffer, BUFFER_SIZE, 0,
-				  (struct sockaddr *) &sin, &d);
-		    }
+					      MSG_PEEK,
+					      (struct sockaddr *)&sin,
+					      &d) == -1) {
+					 log_error(1, "recvfrom() in server()"); 
+					 return -1;
+				 }
+				 handle_packet(sockets[i], addresses[i]);
+ 		    }
 	       } 
 	  }
 

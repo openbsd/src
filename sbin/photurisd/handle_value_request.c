@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: handle_value_request.c,v 1.2 1999/12/17 18:57:03 deraadt Exp $";
+static char rcsid[] = "$Id: handle_value_request.c,v 1.3 2000/12/11 02:16:50 provos Exp $";
 #endif
 
 #include <stdio.h>
@@ -44,6 +44,7 @@ static char rcsid[] = "$Id: handle_value_request.c,v 1.2 1999/12/17 18:57:03 der
 #include <sys/time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
+#include <ssl/bn.h>
 #include "config.h"
 #include "photuris.h"
 #include "packets.h"
@@ -75,9 +76,10 @@ handle_value_request(u_char *packet, int size,
 	};
 	struct value_request *header;
 	struct stateob *st;
-	mpz_t test, gen, mod;
+	BIGNUM *test, *gen, *mod;
 	u_int8_t *p, *modp, *refp, *genp = NULL;
-	u_int16_t sstart, vsize, modsize, modflag;
+	size_t sstart, vsize, modsize, modpsize, refpsize;
+	int modflag;
 	u_int8_t scheme_ref[2];
 	u_int8_t rcookie[COOKIE_SIZE];
 
@@ -121,26 +123,31 @@ handle_value_request(u_char *packet, int size,
 	     modflag = 0;
 	     refp = modp = NULL;
 	     *(u_int16_t *)scheme_ref = htons(scheme_get_ref(header->scheme));
-	     while(sstart < ssize) {
-		  p = scheme_get_mod(schemes+sstart);
+	     while (sstart < ssize) {
+		  p = scheme_get_mod(schemes + sstart);
 		  modsize = varpre2octets(p);
 		  if (!bcmp(header->scheme, schemes + sstart, 2)) {
 		       modflag = 1;
 		       if (modsize == vsize) {
 			    genp = scheme_get_gen(schemes+sstart);
 			    modp = p;
+			    modpsize = modsize;
 			    break;  /* On right scheme + right size */
 		       } else if (modsize <= 2 && refp != NULL) {
-			    modp =  refp;
+			    modp = refp;
+			    modpsize = refpsize;
 			    break;
 		       }
-		  } else if (!bcmp(scheme_ref, schemes + sstart,2 ) && modsize == vsize) {
-		       genp = scheme_get_gen(schemes+sstart);
+		  } else if (!bcmp(scheme_ref, schemes + sstart, 2) &&
+			     modsize == vsize) {
+		       genp = scheme_get_gen(schemes + sstart);
 		       if (modflag) {
 			    modp = p;
+			    modpsize = modsize;
 			    break;
 		       }
 		       refp = p;
+		       refpsize = modsize;
 		  }
 		  
 		  sstart += scheme_get_len(schemes+sstart);
@@ -149,19 +156,30 @@ handle_value_request(u_char *packet, int size,
 		  return -1;   /* Did not find a scheme - XXX log */
 
 	     /* now check the exchange value */
-	     mpz_init_set_varpre(test, parts[0].where);
-	     mpz_init_set_varpre(mod, modp);
-	     mpz_init(gen);
+	     test = BN_new();
+	     if (BN_varpre2bn(parts[0].where, parts[0].size, test) == NULL) {
+		     BN_free(test);
+		     return (-1);
+	     }
+
+	     mod = BN_new();
+	     if (BN_varpre2bn(modp, modpsize, mod) == NULL) {
+		     BN_free(test);
+		     BN_free(mod);
+		     return (-1);
+	     }
+
+	     gen = BN_new();
 	     if (exchange_set_generator(gen, header->scheme, genp) == -1 ||
 		 !exchange_check_value(test, gen, mod)) {
-		  mpz_clear(test);
-		  mpz_clear(gen);
-		  mpz_clear(mod);
+		  BN_free(test);
+		  BN_free(gen);
+		  BN_free(mod);
 		  return 0;
 	     }
-	     mpz_clear(test);
-	     mpz_clear(gen);
-	     mpz_clear(mod);
+	     BN_free(test);
+	     BN_free(gen);
+	     BN_free(mod);
 
 	     if ((st = state_new()) == NULL)
 		  return -1;

@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: identity.c,v 1.1 1998/11/14 23:37:25 deraadt Exp $";
+static char rcsid[] = "$Id: identity.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
 #endif
 
 #define _IDENTITY_C_
@@ -50,7 +50,7 @@ static char rcsid[] = "$Id: identity.c,v 1.1 1998/11/14 23:37:25 deraadt Exp $";
 #include <netinet/in.h> 
 #include <arpa/inet.h> 
 #include <md5.h>
-#include <gmp.h>
+#include <ssl/bn.h>
 #include <sha1.h>
 #include "config.h"
 #include "photuris.h"

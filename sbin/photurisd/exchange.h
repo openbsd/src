@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: exchange.h,v 1.1 1998/11/14 23:37:23 deraadt Exp $ */
+/* $Id: exchange.h,v 1.2 2000/12/11 02:16:50 provos Exp $ */
 /* 
  * exchange.h: 
  * exchange generation header file
@@ -44,15 +44,13 @@
 #define EXTERN extern
 #endif
 
-EXTERN void make_random_mpz(mpz_t a, mpz_t bits);
-EXTERN u_int8_t *varpre_get_number_bits(mpz_t bits, u_int8_t *varpre);
-EXTERN u_int8_t *mpz_set_varpre(mpz_t a, u_int8_t *varpre);
-EXTERN u_int8_t *mpz_init_set_varpre(mpz_t a, u_int8_t *varpre);
-EXTERN void mpz_get_number_bits(mpz_t rop, mpz_t p);
-EXTERN int mpz_to_varpre(u_int8_t *value, u_int16_t *size, mpz_t p, mpz_t bits);
-EXTERN int exchange_set_generator(mpz_t, u_int8_t *, u_int8_t *);
-EXTERN int exchange_check_value(mpz_t, mpz_t, mpz_t);
-EXTERN int exchange_make_values(struct stateob *, mpz_t, mpz_t );
+EXTERN u_int8_t *varpre_get_number_bits(size_t *, u_int8_t *);
+EXTERN u_int8_t *BN_varpre2bn(u_int8_t *, size_t, BIGNUM *);
+EXTERN int BN_bn2varpre(BIGNUM *, u_int8_t *, size_t *);
+
+EXTERN int exchange_set_generator(BIGNUM *, u_int8_t *, u_int8_t *);
+EXTERN int exchange_check_value(BIGNUM *, BIGNUM *, BIGNUM *);
+EXTERN int exchange_make_values(struct stateob *, BIGNUM *, BIGNUM *);
 EXTERN int exchange_value_generate(struct stateob *, u_int8_t *, u_int16_t *);
 
 #endif

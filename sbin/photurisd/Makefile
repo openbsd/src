@@ -1,6 +1,6 @@
 PROG=   photurisd
-LDADD=	-lgmp -ldes
-DPADD=	${LIBGMP} ${LIBDES}
+LDADD=	-lcrypto -ldes
+DPADD=	${LIBCRYPTO} ${LIBDES}
 SRCS=   photuris_cookie_request.c photuris_cookie_response.c \
 	photuris_value_request.c photuris_value_response.c \
 	photuris_identity_request.c photuris_identity_response.c \

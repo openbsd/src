@@ -39,7 +39,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: kernel.c,v 1.7 2000/08/25 05:16:46 angelos Exp $";
+static char rcsid[] = "$Id: kernel.c,v 1.8 2000/12/11 02:16:50 provos Exp $";
 #endif
 
 #include <time.h>
@@ -295,13 +295,19 @@ kernel_xf_read(int sd, char *buffer, int blen, int seq)
 	       perror("read() in kernel_xf_read()");
 	       return 0;
 	  }
-     } while ((seq && sres->sadb_msg_seq != seq) ||
-	      (sres->sadb_msg_pid && sres->sadb_msg_pid != pfkey_pid));
+     } while (seq && (sres->sadb_msg_seq != seq ||
+		      (sres->sadb_msg_pid && sres->sadb_msg_pid != pfkey_pid)
+		      ));
+	      
      if (sres->sadb_msg_errno) {
 	  log_error(0, "kernel_xf_read: PFKEYV2 result: %s",
 		    strerror(sres->sadb_msg_errno));
 	  return 0;
      }
+
+     if (sres->sadb_msg_pid && sres->sadb_msg_pid != pfkey_pid)
+	     return (0);
+
      return 1;
 }
 

@@ -141,8 +141,8 @@ state_new(void)
      if((p = calloc(1, sizeof(struct stateob)))==NULL)
 	  return NULL;
 
-     mpz_init(p->modulus);
-     mpz_init(p->generator);
+     p->modulus = BN_new();
+     p->generator = BN_new();
   
      p->exchange_lifetime = exchange_lifetime;
      p->spi_lifetime = spi_lifetime;
@@ -153,8 +153,8 @@ state_new(void)
 int
 state_value_reset(struct stateob *ob)
 { 
-     mpz_clear(ob->modulus);
-     mpz_clear(ob->generator);
+     BN_clear_free(ob->modulus);
+     BN_clear_free(ob->generator);
 
      if (ob->texchange != NULL)
 	  free(ob->texchange);

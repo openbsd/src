@@ -40,7 +40,7 @@
 
 #include <stdlib.h>
 #include <time.h>
-#include <gmp.h>
+#include <ssl/bn.h>
 #include "config.h"
 #include "modulus.h"
 #include "errlog.h"
@@ -99,27 +99,30 @@ mod_check_prime(int iter, int tm)
      struct moduli_cache *p = modob, *tmp;
      time_t now;
      int flag;
+     BN_CTX *ctx;
 
 #ifdef DEBUG 
      char *hex; 
 #endif 
 
+     ctx = BN_CTX_new();
+
      now = time(NULL);
-     while(p != NULL && (tm == 0 || (time(NULL) - now < tm))) {
+     while (p != NULL && (tm == 0 || (time(NULL) - now < tm))) {
 	  if (p->iterations < MOD_PRIME_MAX &&
 	      (p->status == MOD_UNUSED || p->status == MOD_COMPUTING)) {
 #ifdef DEBUG 
-	       hex = mpz_get_str(NULL, 16, p->modulus); 
+	       hex = BN_bn2hex(p->modulus); 
 	       printf(" Checking 0x%s for primality: ", hex);  
 	       fflush(stdout); 
 	       free(hex); 
 #endif 
-	       flag = mpz_probab_prime_p(p->modulus, iter);
+	       flag = BN_is_prime(p->modulus, iter, NULL, ctx, NULL);
 	       if (!flag)
 		    log_error(0, "found a non prime in mod_check_prime()");
 
 	       tmp = mod_find_modulus(p->modulus);
-	       while(tmp != NULL) {
+	       while (tmp != NULL) {
 		    if (!flag) {
 			 tmp->status = MOD_NOTPRIME;
 			 tmp->lifetime = now + 2*MOD_TIMEOUT;
@@ -154,19 +157,21 @@ mod_check_prime(int iter, int tm)
 	  }
 	  p = p->next;
      }
+
+     BN_CTX_free(ctx);
 }
 
 struct moduli_cache *
-mod_new_modgen(mpz_t m, mpz_t g)
+mod_new_modgen(BIGNUM *m, BIGNUM *g)
 {
      struct moduli_cache *p;
 
      if((p = calloc(1, sizeof(struct moduli_cache)))==NULL)
 	  return NULL;
 
-     mpz_init_set(p->modulus,m);
-     mpz_init_set(p->generator,g);
-     mpz_init(p->private_value);
+     p->modulus = BN_new(); BN_copy(p->modulus, m);
+     p->generator = BN_new(); BN_copy(p->generator, g);
+     p->private_value = BN_new();
 
      /* XXX - change lifetime later */
      p->lifetime = time(NULL) + MOD_TIMEOUT;
@@ -176,14 +181,14 @@ mod_new_modgen(mpz_t m, mpz_t g)
 }
 
 struct moduli_cache * 
-mod_new_modulus(mpz_t m) 
+mod_new_modulus(BIGNUM *m) 
 { 
      struct moduli_cache *tmp;
 
-     mpz_t generator;
-     mpz_init(generator);
+     BIGNUM *generator;
+     generator = BN_new();
      tmp = mod_new_modgen(m, generator);
-     mpz_clear(generator);
+     BN_clear_free(generator);
 
      return tmp;
 }
@@ -191,9 +196,9 @@ mod_new_modulus(mpz_t m)
 int
 mod_value_reset(struct moduli_cache *ob)
 { 
-     mpz_clear(ob->private_value);
-     mpz_clear(ob->modulus);
-     mpz_clear(ob->generator);
+     BN_clear_free(ob->private_value);
+     BN_clear_free(ob->modulus);
+     BN_clear_free(ob->generator);
 
      if (ob->exchangevalue != NULL)
 	  free(ob->exchangevalue);
@@ -206,7 +211,8 @@ mod_value_reset(struct moduli_cache *ob)
  */
 
 struct moduli_cache *
-mod_find_modgen_next(struct moduli_cache *ob, mpz_t modulus, mpz_t generator)
+mod_find_modgen_next(struct moduli_cache *ob, BIGNUM *modulus,
+		     BIGNUM *generator)
 {
      struct moduli_cache *tmp = ob; 
 
@@ -216,9 +222,9 @@ mod_find_modgen_next(struct moduli_cache *ob, mpz_t modulus, mpz_t generator)
 	  tmp = tmp->next;
 
      while(tmp!=NULL) { 
-          if((!mpz_cmp_ui(generator,0) ||  
-              !mpz_cmp(tmp->generator,generator)) && 
-             (!mpz_cmp_ui(modulus,0) || !mpz_cmp(modulus,tmp->modulus))) 
+          if((BN_is_zero(generator) ||  
+              !BN_cmp(tmp->generator, generator)) && 
+             (BN_is_zero(modulus) || !BN_cmp(modulus, tmp->modulus))) 
                return tmp; 
           tmp = tmp->next; 
      } 
@@ -226,59 +232,59 @@ mod_find_modgen_next(struct moduli_cache *ob, mpz_t modulus, mpz_t generator)
 }
 
 struct moduli_cache *
-mod_find_modgen(mpz_t modulus, mpz_t generator)
+mod_find_modgen(BIGNUM *modulus, BIGNUM *generator)
 {
      return mod_find_modgen_next(NULL, modulus, generator);
 }
 
 struct moduli_cache *   
-mod_find_generator_next(struct moduli_cache *ob, mpz_t generator)
+mod_find_generator_next(struct moduli_cache *ob, BIGNUM *generator)
 {
      struct moduli_cache *tmp;
-     mpz_t modulus;  
+     BIGNUM *modulus;  
   
-     mpz_init(modulus);                     /* Is set to zero by init */  
+     modulus = BN_new();                     /* Is set to zero by init */  
      tmp = mod_find_modgen_next(ob, modulus, generator);  
-     mpz_clear(modulus);  
+     BN_clear_free(modulus);  
   
      return tmp;  
 }  
 
 struct moduli_cache *  
-mod_find_generator(mpz_t generator)  
+mod_find_generator(BIGNUM *generator)  
 { 
      struct moduli_cache *tmp;
-     mpz_t modulus; 
+     BIGNUM *modulus; 
  
-     mpz_init(modulus);                     /* Is set to zero by init */ 
+     modulus = BN_new();                     /* Is set to zero by init */ 
      tmp = mod_find_modgen(modulus,generator); 
-     mpz_clear(modulus); 
+     BN_clear_free(modulus); 
  
      return tmp; 
 } 
 
 struct moduli_cache *  
-mod_find_modulus_next(struct moduli_cache *ob, mpz_t modulus)  
+mod_find_modulus_next(struct moduli_cache *ob, BIGNUM *modulus)  
 { 
      struct moduli_cache *tmp;
-     mpz_t generator; 
+     BIGNUM *generator; 
  
-     mpz_init(generator);                    /* Is set to zero by init */ 
+     generator = BN_new();                    /* Is set to zero by init */ 
      tmp = mod_find_modgen_next(ob, modulus, generator); 
-     mpz_clear(generator); 
+     BN_clear_free(generator); 
  
      return tmp; 
 } 
 
 struct moduli_cache * 
-mod_find_modulus(mpz_t modulus) 
+mod_find_modulus(BIGNUM *modulus) 
 {
      struct moduli_cache *tmp;
-     mpz_t generator;
+     BIGNUM *generator;
 
-     mpz_init(generator);                    /* Is set to zero by init */
+     generator = BN_new();                    /* Is set to zero by init */
      tmp = mod_find_modgen(modulus,generator);
-     mpz_clear(generator);
+     BN_clear_free(generator);
 
      return tmp;
 }

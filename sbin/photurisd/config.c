@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: config.c,v 1.1 1998/11/14 23:37:22 deraadt Exp $";
+static char rcsid[] = "$Id: config.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
 #endif
 
 #define _CONFIG_C_
@@ -50,7 +50,7 @@ static char rcsid[] = "$Id: config.c,v 1.1 1998/11/14 23:37:22 deraadt Exp $";
 #include <netdb.h>
 #include <time.h>
 #include <pwd.h>
-#include <gmp.h>
+#include <ssl/bn.h>
 #if defined(_AIX) || defined(NEED_STRSEP)
 #include "strsep.h"
 #endif
@@ -351,12 +351,12 @@ int
 init_schemes(void)
 {
      struct moduli_cache *tmp;
-     mpz_t generator, bits;
-     u_int32_t scheme_bits;
+     BIGNUM *generator;
+     size_t scheme_bits;
      u_int8_t *newbuf;
 
      char *p, *p2;
-     u_int16_t size;
+     size_t size;
      int gen_flag = 0;
 
 #ifdef DEBUG
@@ -365,10 +365,9 @@ init_schemes(void)
 
      open_config_file(NULL);
 
-     mpz_init(generator);
-     mpz_init(bits);
+     generator = BN_new();
 
-     while((p = config_get(CONFIG_EXCHANGE)) != NULL) {
+     while ((p = config_get(CONFIG_EXCHANGE)) != NULL) {
 	  p2 = p + strlen(CONFIG_EXCHANGE);
 	  if (!isspace(*p2))
 	       continue;
@@ -378,15 +377,15 @@ init_schemes(void)
 	  /* Get exchange Scheme */
 	  if (!strncmp(p2, "DH_G_2_MD5", 10)) {
 	       p = p2 + 11;
-	       mpz_set_ui(generator, 2);
+	       BN_set_word(generator, 2);
 	       *(u_int16_t *)buffer = htons(DH_G_2_MD5);
 	  } else if (!strncmp(p2, "DH_G_2_DES_MD5", 14)) { 
 	       p = p2 + 15;
-               mpz_set_ui(generator, 2); 
+               BN_set_word(generator, 2); 
                *(u_int16_t *)buffer = htons(DH_G_2_DES_MD5);
 	  } else if (!strncmp(p2, "DH_G_2_3DES_SHA1", 16)) { 
 	       p  = p2 + 17;
-               mpz_set_ui(generator, 2); 
+               BN_set_word(generator, 2); 
                *(u_int16_t *)buffer = htons(DH_G_2_3DES_SHA1);
 	  } else {
 	       log_error(0, "Unknown scheme %s in init_schemes()", p2);
@@ -401,13 +400,11 @@ init_schemes(void)
 	  }
 	       
 	  if (scheme_bits != 0) {
-	       
 	       if ((tmp = mod_find_generator(generator)) == NULL)
 		    continue;
 
-	       while(tmp != NULL) {
-		    mpz_get_number_bits(bits, tmp->modulus);
-		    if (mpz_get_ui(bits) == scheme_bits)
+	       while (tmp != NULL) {
+		    if (BN_num_bits(tmp->modulus) == scheme_bits)
 			 break;
 		    tmp = mod_find_generator_next(tmp, generator);
 	       }
@@ -418,7 +415,7 @@ init_schemes(void)
 	       }
 
 	       size = BUFFER_SIZE - 2;
-	       if (mpz_to_varpre(buffer+2, &size, tmp->modulus, bits) == -1)
+	       if (BN_bn2varpre(tmp->modulus, buffer+2, &size) == -1)
 		    continue;
 	  } else {
 	       size = 2;
@@ -439,7 +436,6 @@ init_schemes(void)
 
 	  bcopy(buffer, global_schemes + global_schemesize, size + 2);
 	  global_schemesize += size + 2;
-
      }
 #ifdef DEBUG
      printf("Read %d bytes of exchange schemes.\n", global_schemesize);
@@ -448,20 +444,18 @@ init_schemes(void)
 
      if (!gen_flag) {
 	  log_error(0, "DH_G_2_MD5 not in config file, inserting it");
-	  mpz_set_ui(generator, 2); 
+	  BN_set_word(generator, 2); 
 	  if ((tmp = mod_find_generator(generator)) == NULL) 
 	       crit_error(0, "no modulus for generator 2 in init_schemes()");
 
- 	  mpz_get_number_bits(bits, tmp->modulus);
 	  size = BUFFER_SIZE - 2; 
-	  if (mpz_to_varpre(buffer+2, &size, tmp->modulus, bits) == -1) 
-	       crit_error(0, "mpz_to_varpre() in init_schemes()");
+	  if (BN_bn2varpre(tmp->modulus, buffer+2, &size) == -1) 
+	       crit_error(0, "BN_bn2varpre() in init_schemes()");
                 
 	  *(u_int16_t *)buffer = htons(DH_G_2_MD5);
      }
 
-     mpz_clear(generator);
-     mpz_clear(bits);
+     BN_clear_free(generator);
 
      return 1;
 }
@@ -471,7 +465,7 @@ init_moduli(int primes)
 {
      struct moduli_cache *tmp;
      char *p, *p2;
-     mpz_t m, g;
+     BIGNUM *m, *g, *a;
 
      open_config_file(NULL);
  
@@ -479,24 +473,30 @@ init_moduli(int primes)
      printf("[Bootstrapping moduli]\n");
 #endif
 
-     mpz_init(m);
-     mpz_init(g);
+     m = BN_new();
+     g = BN_new();
 
      while((p = config_get(CONFIG_MODULUS)) != NULL) {
 	  p2 = p + strlen(CONFIG_MODULUS);
-	  while(isspace(*p2))
+	  while (isspace(*p2))
 	       p2++;
 
 	  /* Get generator */
-	  if ((p=strsep(&p2, " ")) == NULL)
+	  if ((p = strsep(&p2, " ")) == NULL)
 	       continue;
 
-	  /* Convert an ascii string to mpz, autodetect base */
-	  if (mpz_set_str(g, p, 0) == -1)
+	  /* Convert an hex string to bignum */
+	  a = g;
+	  if (!strncmp(p, "0x", 2))
+	      p += 2;
+	  if (!BN_hex2bn(&a, p))
 	       continue;
 	  
 	  /* Get modulus */
-	  if (mpz_set_str(m, p2, 0) == -1)
+	  a = m;
+	  if (!strncmp(p2, "0x", 2))
+	      p2 += 2;
+	  if (!BN_hex2bn(&a, p2))
 	       continue;
 
 	  if ((tmp = mod_new_modgen(m, g)) == NULL)
@@ -512,8 +512,8 @@ init_moduli(int primes)
      
      close_config_file();
 
-     mpz_clear(m);
-     mpz_clear(g);
+     BN_free(m);
+     BN_free(g);
 
      /* Now check primality */
      if (primes)

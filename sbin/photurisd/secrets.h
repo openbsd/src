@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
-/* $Id: secrets.h,v 1.1 1998/11/14 23:37:28 deraadt Exp $ */
+/* $Id: secrets.h,v 1.2 2000/12/11 02:16:50 provos Exp $ */
 /*
  * secrets.h:
  * prototypes for compute_secrets.c
@@ -48,7 +48,7 @@
 #define EXTERN extern 
 #endif
 
-EXTERN int compute_shared_secret(struct stateob *, u_int8_t **, u_int16_t *);
+EXTERN int compute_shared_secret(struct stateob *, u_int8_t **, size_t *);
 EXTERN int compute_session_key(struct stateob *st, u_int8_t *key, 
 			       u_int8_t *attribute, int owner, 
 			       u_int16_t *order);

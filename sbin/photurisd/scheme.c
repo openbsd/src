@@ -33,7 +33,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: scheme.c,v 1.1 1998/11/14 23:37:28 deraadt Exp $";
+static char rcsid[] = "$Id: scheme.c,v 1.2 2000/12/11 02:16:50 provos Exp $";
 #endif
 
 #define _SCHEME_C_
@@ -119,7 +119,7 @@ scheme_get_mod(u_int8_t *scheme)
 size_t
 scheme_get_len(u_int8_t *scheme)
 {
-     return 2 + varpre2octets(scheme+2); 
+     return 2 + varpre2octets(scheme + 2); 
 }
 
 u_int16_t
@@ -151,41 +151,30 @@ scheme_get_ref(u_int8_t *scheme)
 size_t 
 varpre2octets(u_int8_t *varpre)
 {
-     int blocks, header;
-     size_t size;
-     mpz_t offset, a;
+	int blocks, header;
+	size_t size;
 
-     mpz_init(offset);
-     mpz_init(a);
+	/* XXX - only support a few octets at the moment */
+	if(varpre[0] == 255 && varpre[1] == 255)
+		return (0);
+     
+	size = 0;
+	if (varpre[0] == 255) {
+		blocks = 3;
+		varpre++;
+		size = 65280;
+		header = 4;
+	} else {
+		header = 2;
+		blocks = 2;
+	}
 
-     /* XXX - only support a few octets at the moment */
+	while (blocks--) {
+		size = (size << 8) + *varpre;
+		varpre++;
+	}
+	size = (size + 7) / 8;
 
-     if(*varpre == 255 && *(varpre+1) == 255) {
-          blocks = 6;
-          varpre += 2;
-          mpz_set_ui(offset, 16776960);
-	  header = 8;
-     } else if (*varpre == 255) {
-	  blocks = 3;
-	  varpre++;
-	  mpz_set_ui(offset, 65280);
-	  header = 4;
-     } else {
-	  header = 2;
-	  blocks = 2;
-     }
-
-     while(blocks--) {
-	  mpz_mul_ui(a, a, 256);
-	  mpz_add_ui(a, a, *varpre);
-	  varpre++;
-     }
-     mpz_add(offset, offset, a);
-     mpz_cdiv_q_ui(offset, offset, 8);
-     size = mpz_get_ui(offset) + header;
-     mpz_clear(offset);
-     mpz_clear(a);
-
-     return size;
+	return (size + header);
 }
 
