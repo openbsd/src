@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.h,v 1.29 2000/08/12 05:59:50 deraadt Exp $	*/
+/*	$OpenBSD: malloc.h,v 1.30 2000/11/16 20:02:20 provos Exp $	*/
 /*	$NetBSD: malloc.h,v 1.39 1998/07/12 19:52:01 augustss Exp $	*/
 
 /*
@@ -159,7 +159,6 @@
 #define	M_USB		101	/* USB general */
 #define	M_USBDEV	102	/* USB device driver */
 #define	M_USBHC		103	/* USB host controller */
-  
 
 /* KAME IPv6 */
 #define	M_IP6OPT	123	/* IPv6 options */
@@ -172,6 +171,8 @@
 #define M_MEMDESC	105	/* Memory range */
 
 #define M_DEBUG		106	/* MALLOC_DEBUG structures */
+
+#define M_KNOTE		107	/* kernel event queue */  
 
 #define	M_TEMP		127	/* misc temporary data buffers */
 #define M_LAST          128     /* Must be last type + 1 */
@@ -285,7 +286,8 @@
 	"pipe", 	/* 104 M_PIPE */ \
 	"memdesc",	/* 105 M_MEMDESC */ \
 	"malloc debug",	/* 106 M_DEBUG */ \
-	NULL, NULL, NULL, NULL, NULL, \
+	"knote",	/* 107 M_KNOTE */ \
+	NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, NULL, NULL, NULL, NULL, \
 	NULL, \

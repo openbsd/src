@@ -1,4 +1,4 @@
-/*	$OpenBSD: proc.h,v 1.33 2000/11/08 05:38:47 art Exp $	*/
+/*	$OpenBSD: proc.h,v 1.34 2000/11/16 20:02:20 provos Exp $	*/
 /*	$NetBSD: proc.h,v 1.44 1996/04/22 01:23:21 christos Exp $	*/
 
 /*-
@@ -48,6 +48,7 @@
 #include <sys/select.h>			/* For struct selinfo. */
 #include <sys/queue.h>
 #include <sys/timeout.h>		/* For struct timeout. */
+#include <sys/event.h>			/* For struct klist */
 
 /*
  * One structure allocated per session.
@@ -173,7 +174,8 @@ struct	proc {
 	int	p_holdcnt;		/* If non-zero, don't swap. */
 	struct	emul *p_emul;		/* Emulation information */
 
-	long	p_spare[1];		/* pad to 256, avoid shifting eproc. */
+	struct	klist p_klist;		/* knotes attached to this process */
+					/* pad to 256, avoid shifting eproc. */
 
 
 /* End area that is zeroed on creation. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty.h,v 1.6 2000/08/13 03:38:45 ericj Exp $	*/
+/*	$OpenBSD: tty.h,v 1.7 2000/11/16 20:02:21 provos Exp $	*/
 /*	$NetBSD: tty.h,v 1.30.4.1 1996/06/02 09:08:13 mrg Exp $	*/
 
 /*-
@@ -42,8 +42,8 @@
  */
 
 #include <sys/termios.h>
-#include <sys/select.h>		/* For struct selinfo. */
 #include <sys/queue.h>
+#include <sys/select.h>		/* For struct selinfo. */
 #include <sys/timeout.h>
 
 #ifndef REAL_CLISTS

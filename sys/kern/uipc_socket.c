@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.27 1999/10/14 08:18:49 cmetz Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.28 2000/11/16 20:02:19 provos Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -44,11 +44,28 @@
 #include <sys/mbuf.h>
 #include <sys/domain.h>
 #include <sys/kernel.h>
+#include <sys/event.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+
+int 	filt_sorattach(struct knote *kn);
+void 	filt_sordetach(struct knote *kn);
+int 	filt_soread(struct knote *kn, long hint);
+int 	filt_sowattach(struct knote *kn);
+void 	filt_sowdetach(struct knote *kn);
+int	filt_sowrite(struct knote *kn, long hint);
+int	filt_solisten(struct knote *kn, long hint);
+
+struct filterops solisten_filtops = 
+	{ 1, filt_sorattach, filt_sordetach, filt_solisten };
+
+struct filterops so_rwfiltops[] = {
+	{ 1, filt_sorattach, filt_sordetach, filt_soread },
+	{ 1, filt_sowattach, filt_sowdetach, filt_sowrite },
+};
 
 #ifndef SOMINCONN
 #define SOMINCONN 80
@@ -1092,4 +1109,99 @@ sohasoutofband(so)
 {
 	csignal(so->so_pgid, SIGURG, so->so_siguid, so->so_sigeuid);
 	selwakeup(&so->so_rcv.sb_sel);
+}
+
+int
+filt_sorattach(struct knote *kn)
+{
+	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+	int s = splnet();
+
+	if (so->so_options & SO_ACCEPTCONN)
+		kn->kn_fop = &solisten_filtops;
+	SLIST_INSERT_HEAD(&so->so_rcv.sb_sel.si_note, kn, kn_selnext);
+	so->so_rcv.sb_flags |= SB_KNOTE;
+	splx(s);
+	return (0);
+}
+
+void
+filt_sordetach(struct knote *kn)
+{
+	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+	int s = splnet();
+
+	SLIST_REMOVE(&so->so_rcv.sb_sel.si_note, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_rcv.sb_sel.si_note))
+		so->so_rcv.sb_flags &= ~SB_KNOTE;
+	splx(s);
+}
+
+/*ARGSUSED*/
+int
+filt_soread(struct knote *kn, long hint)
+{
+	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+
+	kn->kn_data = so->so_rcv.sb_cc;
+	if (so->so_state & SS_CANTRCVMORE) {
+		kn->kn_flags |= EV_EOF; 
+		return (1);
+	}
+	if (so->so_error)	/* temporary udp error */
+		return (1);
+	return (kn->kn_data >= so->so_rcv.sb_lowat);
+}
+
+int
+filt_sowattach(struct knote *kn)
+{
+	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+	int s = splnet();
+
+	SLIST_INSERT_HEAD(&so->so_snd.sb_sel.si_note, kn, kn_selnext);
+	so->so_snd.sb_flags |= SB_KNOTE;
+	splx(s);
+	return (0);
+}
+
+void
+filt_sowdetach(struct knote *kn)
+{
+	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+	int s = splnet();
+
+	SLIST_REMOVE(&so->so_snd.sb_sel.si_note, kn, knote, kn_selnext);
+	if (SLIST_EMPTY(&so->so_snd.sb_sel.si_note))
+		so->so_snd.sb_flags &= ~SB_KNOTE;
+	splx(s);
+}
+
+/*ARGSUSED*/
+int
+filt_sowrite(struct knote *kn, long hint)
+{
+	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+
+	kn->kn_data = sbspace(&so->so_snd);
+	if (so->so_state & SS_CANTSENDMORE) {
+		kn->kn_flags |= EV_EOF; 
+		return (1);
+	}
+	if (so->so_error)	/* temporary udp error */
+		return (1);
+	if (((so->so_state & SS_ISCONNECTED) == 0) &&
+	    (so->so_proto->pr_flags & PR_CONNREQUIRED))
+		return (0);
+	return (kn->kn_data >= so->so_snd.sb_lowat);
+}
+
+/*ARGSUSED*/
+int
+filt_solisten(struct knote *kn, long hint)
+{
+	struct socket *so = (struct socket *)kn->kn_fp->f_data;
+
+	kn->kn_data = so->so_qlen;
+	return (so->so_qlen != 0);
 }

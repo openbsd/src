@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.35 2000/11/09 17:02:25 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.36 2000/11/16 20:02:17 provos Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -423,6 +423,11 @@ again:
 	if (flags & FORK_SHAREVM)
 		uvmexp.forks_sharevm++;
 #endif
+
+	/*
+	 * tell any interested parties about the new process
+	 */
+	KNOTE(&p1->p_klist, NOTE_FORK | p2->p_pid);
 
 	/*
 	 * Preserve synchronization semantics of vfork.  If waiting for

@@ -1,4 +1,4 @@
-/*	$OpenBSD: filedesc.h,v 1.8 2000/04/24 06:26:23 provos Exp $	*/
+/*	$OpenBSD: filedesc.h,v 1.9 2000/11/16 20:02:20 provos Exp $	*/
 /*	$NetBSD: filedesc.h,v 1.14 1996/04/09 20:55:28 cgd Exp $	*/
 
 /*
@@ -71,6 +71,11 @@ struct filedesc {
 	int	fd_freefile;		/* approx. next free file */
 	u_short	fd_cmask;		/* mask for file creation */
 	u_short	fd_refcnt;		/* reference count */
+
+	int	fd_knlistsize;		/* size of knlist */
+	struct	klist *fd_knlist;	/* list of attached knotes */
+	u_long	fd_knhashmask;		/* size of knhash */
+	struct	klist *fd_knhash;	/* hash table for attached knotes */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.45 2000/11/10 18:15:46 art Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.46 2000/11/16 20:02:16 provos Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -598,6 +598,11 @@ sys_execve(p, v, retval)
 	FREE(nid.ni_cnd.cn_pnbuf, M_NAMEI);
 	VOP_CLOSE(pack.ep_vp, FREAD, cred, p);
 	vput(pack.ep_vp);
+
+	/*
+	 * notify others that we exec'd
+	 */
+	KNOTE(&p->p_klist, NOTE_EXEC);
 
 	/* setup new registers and do misc. setup. */
 	if(pack.ep_emul->e_fixup != NULL) {

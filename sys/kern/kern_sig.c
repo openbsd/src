@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sig.c,v 1.39 2000/11/10 18:15:47 art Exp $	*/
+/*	$OpenBSD: kern_sig.c,v 1.40 2000/11/16 20:02:17 provos Exp $	*/
 /*	$NetBSD: kern_sig.c,v 1.54 1996/04/22 01:38:32 christos Exp $	*/
 
 /*
@@ -46,8 +46,10 @@
 #include <sys/param.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/queue.h>
 #include <sys/namei.h>
 #include <sys/vnode.h>
+#include <sys/event.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/timeb.h>
@@ -74,6 +76,13 @@
 #if defined(UVM)
 #include <uvm/uvm_extern.h>
 #endif
+
+int	filt_sigattach(struct knote *kn);
+void	filt_sigdetach(struct knote *kn);
+int	filt_signal(struct knote *kn, long hint);
+
+struct filterops sig_filtops =
+	{ 0, filt_sigattach, filt_sigdetach, filt_signal };
 
 void stop __P((struct proc *p));
 void killproc __P((struct proc *, char *));
@@ -683,6 +692,9 @@ psignal(p, signum)
 
 	if ((u_int)signum >= NSIG || signum == 0)
 		panic("psignal signal number");
+
+	KNOTE(&p->p_klist, NOTE_SIGNAL | signum);
+
 	mask = sigmask(signum);
 	prop = sigprop[signum];
 
@@ -1330,4 +1342,45 @@ initsiginfo(si, sig, code, type, val)
 			break;
 		}
 	}
+}
+
+int
+filt_sigattach(struct knote *kn)
+{
+	struct proc *p = curproc;
+
+	kn->kn_ptr.p_proc = p;
+	kn->kn_flags |= EV_CLEAR;		/* automatically set */
+
+	/* XXX lock the proc here while adding to the list? */
+	SLIST_INSERT_HEAD(&p->p_klist, kn, kn_selnext);
+
+	return (0);
+}
+
+void
+filt_sigdetach(struct knote *kn)
+{
+	struct proc *p = kn->kn_ptr.p_proc;
+
+	SLIST_REMOVE(&p->p_klist, kn, knote, kn_selnext);
+}
+
+/*
+ * signal knotes are shared with proc knotes, so we apply a mask to 
+ * the hint in order to differentiate them from process hints.  This
+ * could be avoided by using a signal-specific knote list, but probably
+ * isn't worth the trouble.
+ */
+int
+filt_signal(struct knote *kn, long hint)
+{
+
+	if (hint & NOTE_SIGNAL) {
+		hint &= ~NOTE_SIGNAL;
+
+		if (kn->kn_id == hint)
+			kn->kn_data++;
+	}
+	return (kn->kn_data != 0);
 }

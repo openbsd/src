@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_syscalls.c,v 1.33 2000/11/10 18:15:48 art Exp $	*/
+/*	$OpenBSD: uipc_syscalls.c,v 1.34 2000/11/16 20:02:19 provos Exp $	*/
 /*	$NetBSD: uipc_syscalls.c,v 1.19 1996/02/09 19:00:48 christos Exp $	*/
 
 /*
@@ -43,6 +43,7 @@
 #include <sys/file.h>
 #include <sys/buf.h>
 #include <sys/malloc.h>
+#include <sys/event.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
@@ -195,11 +196,16 @@ sys_accept(p, v, retval)
 		return (error);
 	}
 	*retval = tmpfd;
+
+	/* connection has been removed from the listen queue */
+	KNOTE(&so->so_rcv.sb_sel.si_note, 0);
+
 	{ struct socket *aso = so->so_q;
 	  if (soqremque(aso, 1) == 0)
 		panic("accept");
 	  so = aso;
 	}
+
 	fp->f_type = DTYPE_SOCKET;
 	fp->f_flag = FREAD|FWRITE;
 	fp->f_ops = &socketops;

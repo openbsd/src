@@ -1,4 +1,4 @@
-/*	$OpenBSD: socketvar.h,v 1.18 2000/04/19 08:34:51 csapuntz Exp $	*/
+/*	$OpenBSD: socketvar.h,v 1.19 2000/11/16 20:02:20 provos Exp $	*/
 /*	$NetBSD: socketvar.h,v 1.18 1996/02/09 18:25:38 christos Exp $	*/
 
 /*-
@@ -95,6 +95,7 @@ struct socket {
 #define	SB_SEL		0x08		/* someone is selecting */
 #define	SB_ASYNC	0x10		/* ASYNC I/O, need signals */
 #define	SB_NOINTR	0x40		/* operations not interruptible */
+#define	SB_KNOTE	0x80		/* kernel note attached */
 
 	void	*so_internal;		/* Space for svr4 stream data */
 	void	(*so_upcall) __P((struct socket *so, caddr_t arg, int waitf));
@@ -128,7 +129,8 @@ struct socket {
 /*
  * Do we need to notify the other side when I/O is possible?
  */
-#define	sb_notify(sb)	(((sb)->sb_flags & (SB_WAIT|SB_SEL|SB_ASYNC)) != 0)
+#define	sb_notify(sb)	(((sb)->sb_flags & (SB_WAIT|SB_SEL|SB_ASYNC| \
+    SB_KNOTE)) != 0)
 
 /*
  * How much space is there in a socket buffer (so->so_snd or so->so_rcv)?

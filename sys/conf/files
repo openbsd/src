@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.179 2000/11/16 05:53:59 aaron Exp $
+#	$OpenBSD: files,v 1.180 2000/11/16 20:02:21 provos Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -365,6 +365,7 @@ file kern/init_sysent.c
 file kern/kern_acct.c
 file kern/kern_clock.c
 file kern/kern_descrip.c
+file kern/kern_event.c
 file kern/kern_exec.c
 file kern/kern_exit.c
 file kern/kern_fork.c
