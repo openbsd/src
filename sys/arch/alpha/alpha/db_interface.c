@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.1 1997/07/06 16:31:13 niklas Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.2 1997/07/06 17:19:25 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -47,7 +47,9 @@
 
 #include <dev/cons.h>
 
-extern label_t	*db_recover;
+extern label_t *db_recover;
+extern char    *trap_type[];
+extern int	trap_types;
 
 void kdbprinttrap __P((int, int));
 
@@ -138,14 +140,10 @@ kdbprinttrap(type, code)
 	int type, code;
 {
 	db_printf("kernel: ");
-#if 0
 	if (type >= trap_types || type < 0)
-#endif
 		db_printf("type %d", type);
-#if 0
 	else
 		db_printf("%s", trap_type[type]);
-#endif
 	db_printf(" trap, code=%x\n", code);
 }
 
@@ -173,8 +171,8 @@ kdb_trap(type, code, regs)
 
 	/* XXX Should switch to kdb`s own stack here. */
 
-#if 0 /* XXX leave this until later */
 	ddb_regs = *regs;
+#if 0 /* XXX leave this until later */
 	if (KERNELMODE(regs->tf_cs, regs->tf_eflags)) {
 		/*
 		 * Kernel mode - esp and ss not saved
