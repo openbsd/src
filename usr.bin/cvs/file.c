@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.c,v 1.12 2004/07/29 17:51:06 jfb Exp $	*/
+/*	$OpenBSD: file.c,v 1.13 2004/07/30 11:50:33 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -400,6 +400,59 @@ cvs_file_getspec(char **fspec, int fsn, int flags)
 
 
 /*
+ * cvs_file_find()
+ *
+ * Find the pointer to a CVS file entry within the file hierarchy <hier>.
+ * The file's pathname <path> must be relative to the base of <hier>.
+ * Returns the entry on success, or NULL on failure.
+ */
+
+CVSFILE*
+cvs_file_find(CVSFILE *hier, const char *path)
+{
+	char *pp, *sp, pbuf[MAXPATHLEN];
+	CVSFILE *sf, *cf;
+
+	strlcpy(pbuf, path, sizeof(pbuf));
+
+	cf = hier;
+	pp = pbuf;
+	do {
+		sp = strchr(pp, '/');
+		if (sp != NULL)
+			*sp = '\0';
+
+		/* special case */
+		if (*pp == '.') {
+			if ((*(pp + 1) == '.') && (*(pp + 2) == '\0')) {
+				/* request to go back to parent */
+				if (cf->cf_parent == NULL) {
+					cvs_log(LP_NOTICE,
+					    "path %s goes back too far", path);
+					return (NULL);
+				}
+				cf = cf->cf_parent;
+				continue;
+			}
+			else if (*(pp + 1) == '\0')
+				continue;
+		}
+
+		TAILQ_FOREACH(sf, &(cf->cf_ddat->cd_files), cf_list)
+			if (strcmp(pp, sf->cf_name) == 0)
+				break;
+		if (sf == NULL)
+			return (NULL);
+
+		cf = sf;
+		pp = sp;
+	} while (sp != NULL);
+
+	return (NULL);
+}
+
+
+/*
  * cvs_file_getdir()
  *
  * Get a cvs directory structure for the directory whose path is <dir>.
@@ -408,9 +461,9 @@ cvs_file_getspec(char **fspec, int fsn, int flags)
 static int
 cvs_file_getdir(struct cvs_file *cf, int flags)
 {
-	int nf, ret, fd;
+	int ret, fd;
 	long base;
-	void *dp, *ep, *tmp;
+	void *dp, *ep;
 	char fbuf[2048], pbuf[MAXPATHLEN];
 	struct dirent *ent;
 	struct cvs_file *cfp;
@@ -525,11 +578,13 @@ cvs_file_examine(CVSFILE *cf, int (*exam)(CVSFILE *, void *), void *arg)
 		TAILQ_FOREACH(fp, &(cf->cf_ddat->cd_files), cf_list) {
 			ret = cvs_file_examine(fp, exam, arg);
 			if (ret == -1)
-				return (-1);
+				break;
 		}
 	}
 	else
-		return (*exam)(cf, arg);
+		ret = (*exam)(cf, arg);
+
+	return (ret);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.1 2004/07/30 01:49:23 jfb Exp $	*/
+/*	$OpenBSD: file.h,v 1.2 2004/07/30 11:50:33 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -193,14 +193,21 @@ struct cvs_dir {
 	struct cvs_flist cd_files;
 };
 
+
+#define CVS_DIR_ROOT(f)  (((f)->cf_type == DTDIR) ? \
+	(f)->cf_ddat->cd_root : (((f)->cf_parent == NULL) ? \
+	NULL : (f)->cf_parent->cf_ddat->cd_root))
+
+
 int      cvs_file_init    (void);
 int      cvs_file_ignore  (const char *);
 int      cvs_file_chkign  (const char *);
 CVSFILE* cvs_file_create  (const char *, u_int, mode_t);
 CVSFILE* cvs_file_get     (const char *, int);
 CVSFILE* cvs_file_getspec (char **, int, int);
-void     cvs_file_free    (struct cvs_file *);
+CVSFILE* cvs_file_find    (CVSFILE *, const char *);
 int      cvs_file_examine (CVSFILE *, int (*)(CVSFILE *, void *), void *);
+void     cvs_file_free    (struct cvs_file *);
 
 
 #endif /* FILE_H */
