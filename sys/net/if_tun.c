@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_tun.c,v 1.31 2001/02/06 03:32:02 mickey Exp $	*/
+/*	$OpenBSD: if_tun.c,v 1.32 2001/03/05 04:00:36 angelos Exp $	*/
 /*	$NetBSD: if_tun.c,v 1.24 1996/05/07 02:40:48 thorpej Exp $	*/
 
 /*
@@ -424,7 +424,25 @@ tunioctl(dev, cmd, data, flag, p)
 		*(int *)data = tundebug;
 		break;
 #endif
-	case FIONBIO:
+        case TUNSIFMODE:
+	        switch (*(int *)data & (IFF_POINTOPOINT|IFF_BROADCAST)) {
+                case IFF_POINTOPOINT:
+                case IFF_BROADCAST:
+                        if (tp->tun_if.if_flags & IFF_UP) {
+                                splx(s);
+                                return (EBUSY);
+                        }
+                        tp->tun_if.if_flags &=
+                                ~(IFF_BROADCAST|IFF_POINTOPOINT|IFF_MULTICAST);
+                        tp->tun_if.if_flags |= *(int *)data;
+                        break;
+                default:
+		        splx(s);
+                        return (EINVAL);
+                }
+                break;
+
+       	case FIONBIO:
 		if (*(int *)data)
 			tp->tun_flags |= TUN_NBIO;
 		else
