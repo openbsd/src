@@ -1,4 +1,4 @@
-.\"	$OpenBSD: crypto.9,v 1.22 2003/04/15 04:14:29 jmc Exp $
+.\"	$OpenBSD: crypto.9,v 1.23 2003/06/06 20:56:32 jmc Exp $
 .\"
 .\" The author of this man page is Angelos D. Keromytis (angelos@cis.upenn.edu)
 .\"
@@ -438,7 +438,7 @@ Drivers must first use the
 function to acquire a driver identifier, specifying the
 .Fa cc_flags
 as an argument (normally 0, but software-only drivers should specify
-.Dv CRYPTOCAP_F_SOFTWARE Ns ).
+.Dv CRYPTOCAP_F_SOFTWARE ) .
 For each algorithm the driver supports, it must then call
 .Fn crypto_register .
 The first argument is the driver identifier.
@@ -560,7 +560,8 @@ most of the framework code
 .Sh HISTORY
 The cryptographic framework first appeared in
 .Ox 2.7
-and was written by Angelos D. Keromytis <angelos@openbsd.org>.
+and was written by
+.An Angelos D. Keromytis Aq angelos@openbsd.org .
 .Sh BUGS
 The framework currently assumes that all the algorithms in a
 .Fn crypto_newsession

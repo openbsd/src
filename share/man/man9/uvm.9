@@ -1,4 +1,4 @@
-.\"	$OpenBSD: uvm.9,v 1.22 2003/05/10 21:57:25 jmc Exp $
+.\"	$OpenBSD: uvm.9,v 1.23 2003/06/06 20:56:32 jmc Exp $
 .\"	$NetBSD: uvm.9,v 1.14 2000/06/29 06:08:44 mrg Exp $
 .\"
 .\" Copyright (c) 1998 Matthew R. Green
@@ -360,7 +360,7 @@ function allocates and returns a new address space, with ranges from
 to
 .Fa max ,
 setting the pageability of the address space to
-.Fa pageable.
+.Fa pageable .
 .Pp
 The
 .Fn uvmspace_exec
@@ -580,9 +580,7 @@ The
 .Fn uvm_km_suballoc
 function allocates submap (with the specified
 .Fa flags ,
-as described in
-.Xr uvm 9 )
-from
+as described above) from
 .Fa map ,
 creating a new map if
 .Fa submap
@@ -1030,6 +1028,13 @@ were named so UVM could coexist with BSD VM during the early
 development stages.
 They will be renamed to
 .Dq uvm_ .
+.Sh SEE ALSO
+.Xr getloadavg 3 ,
+.Xr kvm 3 ,
+.Xr sysctl 3 ,
+.Xr ddb 4 ,
+.Xr options 4 ,
+.Xr pmap 9
 .Sh HISTORY
 UVM is a new VM system developed at Washington University in St. Louis
 (Missouri).
@@ -1073,10 +1078,3 @@ source tree.
 The
 .Fn uvm_fork
 function should be able to fail in low memory conditions.
-.Sh SEE ALSO
-.Xr getloadavg 3 ,
-.Xr kvm 3 ,
-.Xr sysctl 3 ,
-.Xr ddb 4 ,
-.Xr options 4 ,
-.Xr pmap 9

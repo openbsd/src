@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pmap.9,v 1.5 2003/06/02 19:19:49 wcobb Exp $
+.\"	$OpenBSD: pmap.9,v 1.6 2003/06/06 20:56:32 jmc Exp $
 .\"
 .\" Copyright (c) 2001, 2002, 2003 CubeSoft Communications, Inc.
 .\" <http://www.csoft.org>
@@ -400,11 +400,6 @@ mappings.
 .Sh SEE ALSO
 .Xr fork 2 ,
 .Xr uvm 9
-.Sh BUGS
-Ifdefs must be documented.
-.Pp
-.Fn pmap_update
-should be mandatory.
 .Sh HISTORY
 The
 .Bx 4.4
@@ -415,3 +410,8 @@ The introduction of
 left the
 .Nm
 interface unchanged for the most part.
+.Sh BUGS
+Ifdefs must be documented.
+.Pp
+.Fn pmap_update
+should be mandatory.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: malloc.9,v 1.25 2003/04/17 05:08:39 jmc Exp $
+.\"	$OpenBSD: malloc.9,v 1.26 2003/06/06 20:56:32 jmc Exp $
 .\"	$NetBSD: malloc.9,v 1.2 1996/10/30 05:29:54 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ Mbuf memory.
 .It Dv M_DEVBUF
 Device driver memory.
 .It Dv M_DEBUG
-.Xr malloc 9
+.Nm malloc
 debug structures.
 .It Dv M_PCB
 Protocol control block.
@@ -290,8 +290,6 @@ and can be examined by using
 .Fn malloc
 returns a kernel virtual address that is suitably aligned for storage of
 any type of object.
-.Sh SEE ALSO
-.Xr vmstat 8
 .Sh DIAGNOSTICS
 A kernel compiled with the
 .Dv DIAGNOSTIC
@@ -397,3 +395,5 @@ Care needs to be taken when using the
 option:  the memory consumption can run away pretty quickly and there is
 a severe performance degradation when allocating and freeing debugged memory
 types.
+.Sh SEE ALSO
+.Xr vmstat 8

@@ -1,4 +1,4 @@
-.\"     $OpenBSD: autoconf.9,v 1.3 2003/03/08 23:17:18 jmc Exp $
+.\"     $OpenBSD: autoconf.9,v 1.4 2003/06/06 20:56:32 jmc Exp $
 .\"     $NetBSD: autoconf.9,v 1.9 2002/02/13 08:18:35 ross Exp $
 .\"
 .\" Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -206,7 +206,6 @@ typedef int (*cfprint_t)(void *aux, const char *parentname);
 #define	UNSUPP	2		/* print " not supported" */
 .Ed
 .Pp
-.Pp
 Two special strings,
 .Do
 not configured
@@ -340,7 +339,7 @@ The autoconfiguration framework itself is implemented within the file
 Data structures and function prototypes for the framework are located in
 .Pa sys/sys/device.h .
 .Sh SEE ALSO
-.Xr config 8 .
+.Xr config 8
 .Sh HISTORY
 Autoconfiguration first appeared in
 .Bx 4.1 .

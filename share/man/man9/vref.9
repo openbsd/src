@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vref.9,v 1.2 2002/05/28 09:07:07 mpech Exp $
+.\"     $OpenBSD: vref.9,v 1.3 2003/06/06 20:56:32 jmc Exp $
 .\" -*- nroff -*-
 .\"
 .\" Copyright (c) 1996 Doug Rabson
@@ -57,7 +57,7 @@ no longer being used and can be safely recycled for a different file.
 Any code in the system which is using a vnode (e.g. during the
 operation of some algorithm or to store in a data structure) should
 call
-.Xr vref 9 .
+.Fn vref .
 .Sh SEE ALSO
 .Xr vget 9 ,
 .Xr vnode 9 ,

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ratecheck.9,v 1.5 2001/08/03 15:21:17 mpech Exp $
+.\"	$OpenBSD: ratecheck.9,v 1.6 2003/06/06 20:56:32 jmc Exp $
 .\"	$NetBSD: ratecheck.9,v 1.1.2.1 2000/02/18 20:26:43 he Exp $
 .\"
 .\" Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@ drv_errhandler(int err1, int err2)
 		drv_err1count++;
 		if (ratecheck(&drv_lasterr1notice,
 		    &drv_errinterval)) {
-			printf("drv: %ld err1 errors occurred",	
+			printf("drv: %ld err1 errors occurred",
 			    drv_err1count);
 			drv_err1count = 0;
 		}
@@ -127,7 +127,7 @@ drv_errhandler(int err1, int err2)
 		drv_err2count++;
 		if (ratecheck(&drv_lasterr2notice,
 		    &drv_errinterval)) {
-			printf("drv: %ld err2 errors occurred",	
+			printf("drv: %ld err2 errors occurred",
 			    drv_err2count);
 			drv_err2count = 0;
 		}

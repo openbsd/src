@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vrele.9,v 1.2 2002/05/28 09:07:07 mpech Exp $
+.\"     $OpenBSD: vrele.9,v 1.3 2003/06/06 20:56:32 jmc Exp $
 .\" -*- nroff -*-
 .\"
 .\" Copyright (c) 1996 Doug Rabson
@@ -50,7 +50,7 @@ the vnode to decrement
 .El
 .Pp
 Any code in the system which is using a vnode should call
-.Xr vrele 9
+.Fn vrele
 when it is finished with the vnode.
 If the
 .Dv v_usecount

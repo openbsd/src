@@ -1,4 +1,4 @@
-.\"     $OpenBSD: vget.9,v 1.4 2003/04/20 20:38:28 jmc Exp $
+.\"     $OpenBSD: vget.9,v 1.5 2003/06/06 20:56:32 jmc Exp $
 .\" -*- nroff -*-
 .\"
 .\" Copyright (c) 1996 Doug Rabson
@@ -60,7 +60,7 @@ When a vnode which is on the free list is used again, for instance if
 the vnode was found in the name cache as a result of a call to
 .Xr VOP_LOOKUP 9 ,
 then the new user must call
-.Xr vget 9
+.Fn vget
 to increment the reference count and remove it from the free list.
 .Sh ERRORS
 .Bl -tag -width Er

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bus_space.9,v 1.9 2003/04/16 07:34:57 mickey Exp $
+.\"	$OpenBSD: bus_space.9,v 1.10 2003/06/06 20:56:32 jmc Exp $
 .\" $NetBSD: bus_space.9,v 1.15 2000/08/09 03:11:00 tv Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -569,12 +569,13 @@ or delayed.
 .It Dv BUS_SPACE_MAP_LINEAR
 Try to map the space so that its contents can be accessed linearly via
 normal memory access methods (e.g. pointer dereferencing and structure
-accesses). The
+accesses).
+The
 .Fn bus_space_vaddr
 method can be used to obtain the kernel virtual address of the mapped range.
 This is useful when software wants to do direct access to a memory
-device, e.g. a frame buffer.  If this flag is specified and linear
-mapping is not possible, the
+device, e.g. a frame buffer.
+If this flag is specified and linear mapping is not possible, the
 .Fn bus_space_map
 call should fail.
 If this
@@ -684,7 +685,8 @@ is called on a handle, all subregions of that handle become invalid.
 This method returns the kernel virtual address of a mapped bus space if and
 only if it was mapped with the
 .Dv BUS_SPACE_MAP_LINEAR
-flag. The range can be accessed by normal (volatile) pointer dereferences.
+flag.
+The range can be accessed by normal (volatile) pointer dereferences.
 If mapped with the
 .Dv BUS_SPACE_MAP_PREFETCHABLE
 flag, the
@@ -1456,7 +1458,9 @@ would also ease translation of the
 functions into user space (since mapping in user space would look like
 it just used a different bus-specific mapping function).
 .El
-.\".Sh COMPATIBILITY
+.Sh SEE ALSO
+.Xr bus_dma 9
+.\".Sh STANDARDS
 .\".Pp
 .\"The current version of the
 .\".Nm
@@ -1505,5 +1509,3 @@ Chris Demetriou wrote this manual page.
 .Pp
 Niklas Hallqvist did the *_raw_* API for
 .Ox .
-.Sh SEE ALSO
-.Xr bus_dma 9
