@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.24 2001/10/29 19:33:39 todd Exp $
+#	$OpenBSD: MAKEDEV,v 1.25 2001/11/16 20:52:18 todd Exp $
 #
 # Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
 # All rights reserved.
@@ -72,6 +72,7 @@
 #	tun*	network tunnel driver
 #	lkm	loadable kernel modules interface
 #	*random	inkernel random data source
+#	crypto	hardware crypto access driver
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
 T=$0
 
@@ -185,7 +186,7 @@ all)
 	R pf altq tun0 tun1 tun2 random ses0 uk0 uk1 ss0 ss1
 	R fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H
 	R fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H
-	R xfs0 tcx0 lkm audio0 local
+	R xfs0 tcx0 lkm audio0 local crypto
 	R ttya ttyb ttyc ttyd cuaa cuab cuac cuad
 	R tty00 tty01 tty02 tty03 ttyh0 ttyh1
 	;;
@@ -221,6 +222,7 @@ mouse*)name=${i##mouse-}
 	fi
 	RMlist="$RMlist mouse"
 	MKlist="$MKlist;ln -s $name mouse";;
+crypto)M crypto c 75 0;;
 *random)n=0
 	for pre in " " s u p a
 	do
