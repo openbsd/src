@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpd.c,v 1.113 2005/02/09 10:56:28 henning Exp $ */
+/*	$OpenBSD: bgpd.c,v 1.114 2005/03/24 02:39:16 tedu Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -472,6 +472,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 {
 	struct imsg		 imsg;
 	int			 n;
+	int			 rv;
 
 	if ((n = imsg_read(ibuf)) == -1)
 		return (-1);
@@ -481,6 +482,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 		return (-1);
 	}
 
+	rv = 0;
 	for (;;) {
 		if ((n = imsg_get(ibuf, &imsg)) == -1)
 			return (-1);
@@ -493,13 +495,13 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			if (idx != PFD_PIPE_ROUTE)
 				log_warnx("route request not from RDE");
 			else if (kr_change(imsg.data))
-				return (-1);
+				rv = -1;
 			break;
 		case IMSG_KROUTE_DELETE:
 			if (idx != PFD_PIPE_ROUTE)
 				log_warnx("route request not from RDE");
 			else if (kr_delete(imsg.data))
-				return (-1);
+				rv = -1;
 			break;
 		case IMSG_NEXTHOP_ADD:
 			if (idx != PFD_PIPE_ROUTE)
@@ -509,7 +511,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 				    sizeof(struct bgpd_addr))
 					log_warnx("wrong imsg len");
 				else if (kr_nexthop_add(imsg.data) == -1)
-					return (-1);
+					rv = -1;
 			break;
 		case IMSG_NEXTHOP_REMOVE:
 			if (idx != PFD_PIPE_ROUTE)
@@ -529,7 +531,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 				    sizeof(struct pftable_msg))
 					log_warnx("wrong imsg len");
 				else if (pftable_addr_add(imsg.data) != 0)
-					return (-1);
+					rv = -1;
 			break;
 		case IMSG_PFTABLE_REMOVE:
 			if (idx != PFD_PIPE_ROUTE)
@@ -539,7 +541,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 				    sizeof(struct pftable_msg))
 					log_warnx("wrong imsg len");
 				else if (pftable_addr_remove(imsg.data) != 0)
-					return (-1);
+					rv = -1;
 			break;
 		case IMSG_PFTABLE_COMMIT:
 			if (idx != PFD_PIPE_ROUTE)
@@ -548,7 +550,7 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 				if (imsg.hdr.len != IMSG_HEADER_SIZE)
 					log_warnx("wrong imsg len");
 				else if (pftable_commit() != 0)
-					return (-1);
+					rv = -1;
 			break;
 		case IMSG_CTL_RELOAD:
 			if (idx != PFD_PIPE_SESSION)
@@ -589,6 +591,8 @@ dispatch_imsg(struct imsgbuf *ibuf, int idx)
 			break;
 		}
 		imsg_free(&imsg);
+		if (rv != 0)
+			return (rv);
 	}
 	return (0);
 }
