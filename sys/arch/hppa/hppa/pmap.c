@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.94 2003/01/22 21:01:42 mickey Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.95 2003/01/22 23:56:33 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -75,8 +75,8 @@
 #define	PDB_PHYS	0x00020000
 #define	PDB_POOL	0x00040000
 int pmapdebug = 0
-	| PDB_INIT
-	| PDB_FOLLOW
+/*	| PDB_INIT */
+/*	| PDB_FOLLOW */
 /*	| PDB_VP */
 /*	| PDB_PV */
 /*	| PDB_ENTER */
