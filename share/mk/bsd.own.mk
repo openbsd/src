@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.68 2003/07/22 17:26:06 brad Exp $
+#	$OpenBSD: bsd.own.mk,v 1.69 2003/08/21 07:04:09 deraadt Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 # Host-specific overrides
@@ -20,12 +20,7 @@ YP?=		yes
 # integrated support for libwrap.
 TCP_WRAPPERS?=	yes
 # Set `AFS` to `yes' to build with AFS support.
-.if (${MACHINE_ARCH} == "m88k")
-AFS?=		no
-.else
-# AFS needs updating to work w/o krb4 - disable for now.
-AFS?=		no
-.endif
+AFS?=		yes
 # Set `DEBUGLIBS' to `yes' to build libraries with debugging symbols
 DEBUGLIBS?=	no
 # Set toolchain to be able to know differences.
