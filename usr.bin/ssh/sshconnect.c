@@ -13,7 +13,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: sshconnect.c,v 1.85 2000/12/21 15:10:17 markus Exp $");
+RCSID("$OpenBSD: sshconnect.c,v 1.86 2000/12/27 12:30:20 markus Exp $");
 
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
@@ -491,8 +491,13 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 		break;
 	}
 	if (local) {
-		debug("Forcing accepting of host key for loopback/localhost.");
-		return;
+		if (options.host_key_alias == NULL) {
+			debug("Forcing accepting of host key for "
+			    "loopback/localhost.");
+			return;
+		}
+		if (options.check_host_ip)
+			options.check_host_ip = 0;
 	}
 
 	/*
@@ -504,11 +509,21 @@ check_host_key(char *host, struct sockaddr *hostaddr, Key *host_key,
 
 	if (options.proxy_command == NULL) {
 		if (getnameinfo(hostaddr, hostaddr->sa_len, ntop, sizeof(ntop),
-				NULL, 0, NI_NUMERICHOST) != 0)
+		    NULL, 0, NI_NUMERICHOST) != 0)
 			fatal("check_host_key: getnameinfo failed");
 		ip = xstrdup(ntop);
 	} else {
 		ip = xstrdup("<no hostip for proxy command>");
+	}
+
+	/*
+	 * Allow the user to record the key under a different name. This is
+	 * useful for ssh tunneling over forwarded connections or if you run
+	 * multiple sshd's on different ports on the same machine.
+	 */
+	if (options.host_key_alias != NULL) {
+		host = options.host_key_alias;
+		debug("using hostkeyalias: %s", host);
 	}
 
 	/*

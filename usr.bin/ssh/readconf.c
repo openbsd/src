@@ -12,7 +12,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: readconf.c,v 1.51 2000/12/19 23:17:57 markus Exp $");
+RCSID("$OpenBSD: readconf.c,v 1.52 2000/12/27 12:30:19 markus Exp $");
 
 #include "ssh.h"
 #include "readconf.h"
@@ -103,7 +103,7 @@ typedef enum {
 	oCompressionLevel, oKeepAlives, oNumberOfPasswordPrompts, oTISAuthentication,
 	oUsePrivilegedPort, oLogLevel, oCiphers, oProtocol,
 	oGlobalKnownHostsFile2, oUserKnownHostsFile2, oPubkeyAuthentication,
-	oKbdInteractiveAuthentication, oKbdInteractiveDevices
+	oKbdInteractiveAuthentication, oKbdInteractiveDevices, oHostKeyAlias
 } OpCodes;
 
 /* Textual representations of the tokens. */
@@ -137,6 +137,7 @@ static struct {
 	{ "identityfile", oIdentityFile },
 	{ "identityfile2", oIdentityFile },			/* alias */
 	{ "hostname", oHostName },
+	{ "hostkeyalias", oHostKeyAlias },
 	{ "proxycommand", oProxyCommand },
 	{ "port", oPort },
 	{ "cipher", oCipher },
@@ -433,6 +434,10 @@ parse_string:
 		charptr = &options->hostname;
 		goto parse_string;
 
+	case oHostKeyAlias:
+		charptr = &options->host_key_alias;
+		goto parse_string;
+
 	case oProxyCommand:
 		charptr = &options->proxy_command;
 		string = xstrdup("");
@@ -687,6 +692,7 @@ initialize_options(Options * options)
 	options->protocol = SSH_PROTO_UNKNOWN;
 	options->num_identity_files = 0;
 	options->hostname = NULL;
+	options->host_key_alias = NULL;
 	options->proxy_command = NULL;
 	options->user = NULL;
 	options->escape_char = -1;
@@ -800,4 +806,5 @@ fill_default_options(Options * options)
 	/* options->proxy_command should not be set by default */
 	/* options->user will be set in the main program if appropriate */
 	/* options->hostname will be set in the main program if appropriate */
+	/* options->host_key_alias should not be set by default */
 }

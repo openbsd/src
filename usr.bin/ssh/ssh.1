@@ -34,7 +34,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ssh.1,v 1.73 2000/12/27 11:51:53 markus Exp $
+.\" $OpenBSD: ssh.1,v 1.74 2000/12/27 12:30:20 markus Exp $
 .Dd September 25, 1999
 .Dt SSH 1
 .Os
@@ -746,6 +746,12 @@ The default is
 .It Cm GlobalKnownHostsFile
 Specifies a file to use instead of
 .Pa /etc/ssh_known_hosts .
+.It Cm HostKeyAlias
+Specifies an alias that should be used instead of the
+real host name when looking up or saving the host key
+the kown_hosts files.
+This option is useful for tunneling ssh connection
+or if you have multiple servers running on a single host.
 .It Cm HostName
 Specifies the real host name to log into.
 This can be used to specify nicknames or abbreviations for hosts.
