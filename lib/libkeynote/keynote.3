@@ -1,4 +1,4 @@
-.\" $OpenBSD: keynote.3,v 1.17 1999/11/03 19:52:22 angelos Exp $
+.\" $OpenBSD: keynote.3,v 1.18 1999/11/05 00:27:18 angelos Exp $
 .\"
 .\" The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 .\"
@@ -454,7 +454,9 @@ no longer needed.
 contains the number of assertions (and thus strings in the returned
 array) found in
 .Fa array .
-On failure, this function returns \-1 and sets
+On failure, this function returns
+.Dv NULL
+and sets
 .Va keynote_errno
 to
 .Er ERROR_MEMORY
@@ -464,6 +466,12 @@ if
 .Fa array
 was
 .Dv NULL .
+Note that if there were no assertions found in
+.Fa array ,
+a valid pointer will be returned, but
+.Fa numassertions
+will contain the value zero on return. The returned pointer should be
+freed by the programmer.
 .Pp
 .Fn kn_keycompare
 compares

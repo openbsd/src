@@ -1,4 +1,4 @@
-/* $OpenBSD: keynote-sigver.c,v 1.9 1999/11/03 19:52:22 angelos Exp $ */
+/* $OpenBSD: keynote-sigver.c,v 1.10 1999/11/05 00:27:18 angelos Exp $ */
 /*
  * The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
  *
@@ -102,13 +102,17 @@ keynote_sigver(int argc, char *argv[])
     close(fd);
 
     assertlist = kn_read_asserts(buf, sb.st_size, &n);
-    if ((assertlist == NULL) || (n == 0))
+    if (assertlist == NULL)
     {
-	if (keynote_errno == ERROR_MEMORY)
-	  fprintf(stderr, "Out of memory while allocating memory for "
-		  "assertions.\n");
-	else
-	  fprintf(stderr, "No assertions found.\n");
+      	fprintf(stderr, "Out of memory while allocating memory for "
+		"assertions.\n");
+	exit(-1);
+    }
+
+    if (n == 0)
+    {
+	fprintf(stderr, "No assertions found in %s.\n", argv[1]);
+	free(assertlist);
 	exit(-1);
     }
 

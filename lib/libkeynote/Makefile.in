@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile.in,v 1.7 1999/10/26 22:31:37 angelos Exp $
+# $OpenBSD: Makefile.in,v 1.8 1999/11/05 00:27:18 angelos Exp $
 #
 # The author of this code is Angelos D. Keromytis (angelos@dsl.cis.upenn.edu)
 #
@@ -62,11 +62,13 @@ LIBS = -L. -lkeynote @LIBS@
 
 TARGET = libkeynote.a
 TARGET2 = keynote
+TARGET3 = sample-app
 
 OBJS = 	k.tab.o lex.kn.o environment.o parse_assertion.o \
 	signature.o aux.o base64.o
 OBJS2 = z.tab.o lex.kv.o keynote-verify.o keynote-sign.o \
 	keynote-sigver.o keynote-keygen.o keynote-main.o @LIBOBJS@
+OBJS3 = sample-app.o
 
 crypto: all
 
@@ -120,7 +122,7 @@ cleandir: cleanall
 cleanall: clean
 	$(RM) $(RMFLAGS) *.o k.tab.c lex.kn.c k.tab.h z.tab.c z.tab.h
 	$(RM) $(RMFLAGS) lex.kv.c y.output z.output ${DISTFILE}
-	$(RM) $(RMFLAGS) $(TARGET) $(TARGET2) man/*.0 config.cache
+	$(RM) $(RMFLAGS) $(TARGET) $(TARGET2) $(TARGET3) man/*.0 config.cache
 	$(RM) $(RMFLAGS) config.log config.status config.h Makefile
 	$(RM) $(RMFLAGS) man/*.cat?
 
@@ -128,6 +130,9 @@ $(SSLCERT) $(SSLKEY):
 	$(SSLEAY) req -config $(SSLCONF) \
 	-new -x509 -nodes -out $(SSLCERT) \
 	-keyout $(SSLKEY)
+
+test-sample: all $(OBJS3)
+	$(CC) $(CFLAGS) -o $(TARGET3) $(OBJS3) $(LIBS)
 
 test-sig: all $(SSLCERT) $(SSLKEY)
 	$(SED) -e 's/--.*//' < $(SSLCERT) > $(SSLCERT).1

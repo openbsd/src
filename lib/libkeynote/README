@@ -1,4 +1,4 @@
-# $OpenBSD: README,v 1.7 1999/11/03 19:52:21 angelos Exp $
+# $OpenBSD: README,v 1.8 1999/11/05 00:27:18 angelos Exp $
 
 This is release 2.2 of the KeyNote trust management library reference
 implementation (in case you are wondering, there was never an official 1.0
@@ -13,6 +13,9 @@ evaluate to "true" (look at the last line of output). To build without
 crypto support, use "make nocrypto" instead (you still need to run
 "configure"). If you have built crypto support, "make test-sig" will run
 some more tests on the cryptographic algorithms.
+
+A sample application is provided in sample-app.c. To build it, use
+"make test-sample".
 
 Compile tips:
 - You need the SSLeay/OpenSSL library if you compile with crypto
