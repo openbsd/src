@@ -1,3 +1,4 @@
+/*	$OpenBSD: umodem.c,v 1.2 2000/04/08 20:03:34 aaron Exp $ */
 /*	$NetBSD: umodem.c,v 1.25 2000/03/27 12:33:57 augustss Exp $	*/
 
 /*

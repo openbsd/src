@@ -1,3 +1,4 @@
+/*	$OpenBSD: ucom.c,v 1.2 2000/04/08 20:03:33 aaron Exp $ */
 /*	$NetBSD: ucom.c,v 1.16 2000/03/27 12:33:55 augustss Exp $	*/
 
 /*
