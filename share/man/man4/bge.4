@@ -1,4 +1,4 @@
-.\" $OpenBSD: bge.4,v 1.16 2004/09/30 19:59:24 mickey Exp $
+.\" $OpenBSD: bge.4,v 1.17 2004/10/02 00:44:02 brad Exp $
 .\" Copyright (c) 2001 Wind River Systems
 .\" Copyright (c) 1997, 1998, 1999, 2000, 2001
 .\"	Bill Paul <wpaul@windriver.com>. All rights reserved.
@@ -30,8 +30,6 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 .\" THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\" $FreeBSD$
-.\"
 .Dd September 27, 2001
 .Dt BGE 4
 .Os
@@ -55,7 +53,17 @@ following:
 .It
 3Com 3c996B-T
 .It
+Dell PowerEdge 1750 integrated BCM5704C NIC
+.It
 Dell PowerEdge 2550 integrated BCM5700 NIC
+.It
+Dell PowerEdge 2650 integrated BCM5703 NIC
+.It
+HP ProLiant NC7760 embedded Gigabit NIC
+.It
+HP ProLiant NC7770 PCI-X Gigabit NIC
+.It
+HP ProLiant NC7781 embedded PCI-X Gigabit NIC
 .It
 IBM xSeries 235 integrated BCM5703X NIC
 .It
@@ -80,21 +88,21 @@ receive filtering, and VLAN tag stripping/insertion as well as
 a 256-bit multicast hash filter.
 Additional features may be provided via value-add firmware updates.
 The BCM570x supports TBI (ten bit interface) and GMII transceivers, which
-means it can be used with either copper of 1000baseX fiber applications.
+means it can be used with either copper or 1000baseX fiber applications.
 Note however the device only supports a single speed in TBI mode.
 .Pp
-Most cards also use the Broadcom BCM5401 or BCM5411 10/100/1000
-copper gigabit transceivers,
+Most BCM5700-based cards also use the Broadcom BCM5401 or BCM5411 10/100/1000
+copper Gigabit transceivers,
 which support autonegotiation of 10, 100 and 1000Mbps modes in
 full or half duplex.
-.\".Pp
-.\"The BCM5700 also supports jumbo frames, which can be configured
-.\"via the interface MTU setting.
-.\"Selecting an MTU larger than 1500 bytes with the
-.\".Xr ifconfig 8
-.\"utility configures the adapter to receive and transmit jumbo frames.
-.\"Using jumbo frames can greatly improve performance for certain tasks,
-.\"such as file transfers and data streaming.
+.Pp
+The BCM570x also supports jumbo frames, which can be configured
+via the interface MTU setting.
+Selecting an MTU larger than 1500 bytes with the
+.Xr ifconfig 8
+utility configures the adapter to receive and transmit jumbo frames.
+Using jumbo frames can greatly improve performance for certain tasks,
+such as file transfers and data streaming.
 .Pp
 The
 .Nm
@@ -128,10 +136,9 @@ or
 modes.
 .It Cm 1000baseT
 Set 1000baseT operation over twisted pair.
+Only
 .Cm full-duplex
-and
-.Cm half-duplex
-modes are supported.
+mode is supported.
 .It Cm 1000baseSX
 Set 1000Mbps (Gigabit Ethernet) operation.
 Both
