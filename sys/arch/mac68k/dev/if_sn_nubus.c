@@ -1,5 +1,5 @@
 /*	$NetBSD$	*/
-/*	$OpenBSD: if_sn_nubus.c,v 1.1 1997/03/12 13:20:32 briggs Exp $	*/
+/*	$OpenBSD: if_sn_nubus.c,v 1.2 1997/03/14 14:11:35 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -120,9 +120,12 @@ sn_nubus_attach(parent, self, aux)
 	}
 
 	sc->sc_regt = bst;
-	sc->sc_is16 = 0;
+	sc->bitmode = 1;
 
 	success = 0;
+
+        sc->bitmode = 1;		/* 32-bit card */
+        sc->slotno = na->slot;
 
         switch (sn_nb_card_vendor(na)) {
 	case AE_VENDOR_DAYNA:
@@ -148,7 +151,6 @@ sn_nubus_attach(parent, self, aux)
 			sc->sc_arpcom.ac_enaddr[i] =
 					bus_space_read_1(bst, tmp_bsh, i);
 
-                sc->slotno = na->slot;
 		success = 1;
                 break;
 

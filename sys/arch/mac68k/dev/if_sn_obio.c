@@ -1,5 +1,5 @@
 /*	$NetBSD$	*/
-/*	$OpenBSD: if_sn_obio.c,v 1.1 1997/03/12 13:20:32 briggs Exp $	*/
+/*	$OpenBSD: if_sn_obio.c,v 1.2 1997/03/14 14:11:35 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -96,12 +96,12 @@ sn_obio_attach(parent, self, aux)
         case MACH_CLASSQ:
         case MACH_CLASSQ2:
                 sc->s_dcr |= DCR_DW32;
-		sc->sc_is16 = 0;
+		sc->bitmode = 1;
                 break;
 
         case MACH_CLASSPB:
                 sc->s_dcr |= DCR_DW16;
-		sc->sc_is16 = 1;
+		sc->bitmode = 0;
                 return;
 
 	default:
