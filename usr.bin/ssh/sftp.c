@@ -16,7 +16,7 @@
 
 #include "includes.h"
 
-RCSID("$OpenBSD: sftp.c,v 1.61 2005/01/24 10:22:06 dtucker Exp $");
+RCSID("$OpenBSD: sftp.c,v 1.62 2005/02/20 22:59:06 djm Exp $");
 
 #include <glob.h>
 #include <histedit.h>
@@ -1461,6 +1461,7 @@ main(int argc, char **argv)
 				fatal("%s (%s).", strerror(errno), optarg);
 			showprogress = 0;
 			batchmode = 1;
+			addargs(&args, "-obatchmode yes");
 			break;
 		case 'P':
 			sftp_direct = optarg;
