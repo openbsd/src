@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf.c,v 1.38 2001/06/27 03:49:52 angelos Exp $	*/
+/*	$OpenBSD: uipc_mbuf.c,v 1.39 2001/06/27 03:53:50 angelos Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.15.4.1 1996/06/13 17:11:44 cgd Exp $	*/
 
 /*
@@ -659,7 +659,7 @@ m_pullup2(n, len)
 		m->m_len = 0;
 		if (n->m_flags & M_PKTHDR) {
 			/* Too many adverse side effects. */
-			/* M_COPY_PKTHDR(m, n); */
+			/* M_MOVE_PKTHDR(m, n); */
 			m->m_flags = (n->m_flags & M_COPYFLAGS) | M_EXT;
 			M_MOVE_HDR(m, n);
 			/* n->m_data is cool. */
