@@ -1,4 +1,4 @@
-/*	$OpenBSD: retest.c,v 1.2 1996/06/26 05:42:34 deraadt Exp $	*/
+/*	$OpenBSD: retest.c,v 1.3 2002/02/24 01:24:24 pvalchev Exp $	*/
 /*	$NetBSD: retest.c,v 1.2 1994/11/17 08:28:18 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)retest.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: retest.c,v 1.2 1996/06/26 05:42:34 deraadt Exp $":
+static char rcsid[] = "$OpenBSD: retest.c,v 1.3 2002/02/24 01:24:24 pvalchev Exp $":
 #endif /* not lint */
 
 #include <ctype.h>
@@ -61,7 +61,7 @@ main()
     char str[132];
     char *match;
     char matstr[132];
-    char c;
+    int c;
 
     while (1) {
 	printf ("\nexpr: ");
