@@ -90,7 +90,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char *rcsid = "$OpenBSD: strtod.c,v 1.9 1997/03/25 17:07:30 rahnds Exp $";
+static char *rcsid = "$OpenBSD: strtod.c,v 1.10 1998/08/11 22:04:29 niklas Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #if defined(__m68k__) || defined(__sparc__) || defined(__i386__) || \
@@ -2004,6 +2004,10 @@ __dtoa
 	if (i = (int)(word0(d) >> Exp_shift1 & (Exp_mask>>Exp_shift1))) {
 #endif
 		d2 = d;
+#ifdef __GNUC__
+		/* Do not move instructions depending on d2 over this line. */
+		__asm__ __volatile__ ("" : : "X" (d2) : "memory");
+#endif
 		word0(d2) &= Frac_mask1;
 		word0(d2) |= Exp_11;
 #ifdef IBM
