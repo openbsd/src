@@ -57,7 +57,7 @@
 ./usr/lib/libperl.so.6.0
 ./usr/lib/libreadline.so.0.0
 ./usr/lib/libskey.so.1.0
-./usr/lib/libssl.so.4.0
+./usr/lib/libssl.so.4.1
 ./usr/lib/libstdc++.so.30.0
 ./usr/lib/libtermcap.so.8.0
 ./usr/lib/libtermlib.so.8.0
