@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.17 2002/01/12 21:14:57 jason Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.18 2002/01/23 06:10:35 todd Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -102,89 +102,104 @@ dnl necessary devices.  Otherwise the devices are not included in the 'all'
 dnl target.  Note this keeps line lengths to less than column 70.  For the
 dnl gory details see the definition of '_dl' in MAKEDEV.sub
 dnl
+twrget(all,attyB,sd,5,6,7,8,9)dnl
+target(all,sd,0,1,2,3,4)dnl
+target(all,mcd,0)dnl
+twrget(all,fdesc,fd)dnl
+target(all,pty,0)dnl
+target(all,st,0)dnl
+target(all,ch,0)dnl
+target(all,cd,0)dnl
+target(all,mcd,0)dnl
+target(all,std)dnl
+target(all,vnd,0,1,2,3)dnl
+target(all,ccd,0,1,2,3)dnl
+target(all,wd,0,1,2,3)dnl
+target(all,raid,0,1,2,3)dnl
+target(all,xy,0,1,2,3)dnl
+target(all,xd,0,1,2,3)dnl
+target(all,rz,0,1,2,3,4)dnl
+target(all,rd,0)dnl
+target(all,hp,0,1,2,3)dnl
+target(all,hk,0,1,2,3)dnl
+target(all,up,0,1,2,3)dnl
+target(all,ra,0,1,2,3)dnl
+target(all,rb,0,1,2,3)dnl
+target(all,rx,0,1)dnl
+target(all,rl,0,1,2,3)dnl
+target(all,hd,0,1,2,3,4)dnl
+twrget(all,flo,fd,0,0B,0C,0D,0E,0F,0G,0H)dnl
+twrget(all,flo,fd,1,1B,1C,1D,1E,1F,1G,1H)dnl
+twrget(all,aflo,fd,0,1,2,3)dnl
+target(all,bpf,0,1,2,3,4,5,6,7,8,9)dnl
+target(all,tun,0,1,2,3)dnl
+target(all,pctr)dnl
+target(all,pctr0)dnl
+target(all,altq)dnl
+target(all,pf)dnl
+twrget(all,cry,crypto)dnl
+target(all,apm)dnl
+target(all,tth,0,1)dnl
+target(all,ttyA,0,1)dnl
+target(all,ttyB,0,1,2,3,4,5)dnl
+twrget(all,attyB,ttyB,0,1,2,3,4)dnl
+target(all,tty0,0,1,2,3)dnl
+twrget(all,mac_tty0,tty0,0,1)dnl
+twrget(all,tzs,tty,a,b,c,d)dnl
+twrget(all,czs,cua,a,b,c,d)dnl
+target(all,ttyc,0,1,2,3,4,5,6,7)dnl
+twrget(all,com,tty0,0,1,2,3)dnl
+twrget(all,mac_ttye,ttye,0)dnl
+target(all,ttye,0,1,2,3,4,5,6)dnl
+target(all,lkm)dnl
+twrget(all,mmcl,mmclock)dnl
+target(all,lpt,0,1,2)dnl
+twrget(all,lpt,lpa,0,1,2)dnl
+target(all,joy,0,1)dnl
+target(all,rnd,random)dnl
+target(all,ses,0)dnl
+target(all,uk,0)dnl
+target(all,ss,0)dnl
+target(all,wt,0)dnl
+target(all,wdt,0)dnl
+target(all,xfs,0)dnl
+twrget(all,au,audio,0)dnl
+twrget(all,speak,speaker)dnl
+target(all,asc,0)dnl
+target(all,music,0)dnl
+target(all,radio,0)dnl
+target(all,tuner,0)dnl
+target(all,rmidi,0,1,2,3,4,5,6,7)dnl
+target(all,usbs)dnl
+target(all,adb)dnl
+target(all,iop,0,1)dnl
+target(all,pci)dnl
+twrget(all,wsmouse,wscons)dnl
+twrget(all,btw,bwtwo,0)dnl
+twrget(all,ctw,cgtwo,0)dnl
+twrget(all,ctr,cgthree,0)dnl
+twrget(all,cfr,cgfour,0)dnl
+twrget(all,csx,cgsix,0)dnl
+twrget(all,ceg,cgeight,0)dnl
+twrget(all,cfo,cgfourteen,0)dnl
+target(all,tcx,0)dnl
+twrget(all,mac_grf,grf,0,1,2,3)dnl
+target(all,grf,0,1,2,3,4,5,6)dnl
+target(all,par,0)dnl
+twrget(all,amouse,mouse,0,1)dnl
+twrget(all,akbd,kbd)dnl
+target(all,ppi,0)dnl
+target(all,view0,0,1,2,3,4,5)dnl
+target(all,local)dnl
+dnl
 _mkdev(all,{-all-},{-dnl
-_dl({-std-},{-std-},
-{-fdesc-},{-fd-},
-{-sd-},{-sd0 sd1 sd2 sd3 sd4-},
-{-attyB-},{-sd5 sd6 sd7 sd8 sd9-},
-{-pty-},{-pty0 pty1-},
-{-st-},{-st0 st1-},
-{-ch-},{-ch0-},
-{-cd-},{-cd0 cd1-},
-{-mcd-},{-mcd0-},
-{-vnd-},{-vnd0 vnd1 vnd2 vnd3-},
-{-ccd-},{-ccd0 ccd1 ccd2 ccd3-},
-{-wd-},{-wd0 wd1 wd2 wd3-},
-{-raid-},{-raid0 raid1 raid2 raid3-},
-{-xy-},{-xy0 xy1 xy2 xy3-},
-{-xd-},{-xd0 xd1 xd2 xd3-},
-{-hd-},{-hd0 hd1 hd2 hd3 hd4-},
-{-rz-},{-rz0 rz1 rz2 rz3 rz4-},
-{-rd-},{-rd0-},
-{-flo-},{-fd0 fd0B fd0C fd0D fd0E fd0F fd0G fd0H-},
-{-flo-},{-fd1 fd1B fd1C fd1D fd1E fd1F fd1G fd1H-},
-{-aflo-},{-fd0 fd1 fd2 fd3-},
-{-bpf-},{-bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9-},
-{-tun-},{-tun0 tun1 tun2 tun3-},
-{-pctr-},{-pctr-},
-{-bktr-},{-bktr0-},
-{-altq-},{-altq-},
-{-pf-},{-pf-},
-{-cry-},{-crypto-},
-{-apm-},{-apm-},
-{-tth-},{-ttyh0 ttyh1-},
-{-ttyA-},{-ttyA0 ttyA1-},
-{-ttyB-},{-ttyB0 ttyB1 ttyB2 ttyB3 ttyB4 ttyB5-},
-{-attyB-},{-ttyB0 ttyB1 ttyB2 ttyB3 ttyB4-},
-{-tty0-},{-tty00 tty01 tty02 tty03-},
-{-mac_tty0-},{-tty00 tty01-},
-{-tzs-},{-ttya ttyb ttyc ttyd-},
-{-czs-},{-cuaa cuab cuac cuad-},
-{-ttyc-},{-ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7-},
-{-com-},{-tty00 tty01 tty02 tty03-},
-{-mac_ttye-},{-ttye0-},
-{-ttye-},{-ttye0 ttye1 ttye2 ttye3 ttye4 ttye5 ttye6-},
-{-lkm-},{-lkm-},
-{-mmcl-},{-mmclock-},dnl
-{-lpt-},{-lpa0 lpt0 lpa1 lpt1 lpa2 lpt2-},
-{-joy-},{-joy0 joy1-},
-{-rnd-},{-random-},
-{-ses-},{-ses0-},
-{-uk-},{-uk0 uk1-},
-{-ss-},{-ss0 ss1-},
-{-wt-},{-wt0-},
-{-wdt-},{-wdt0-},
-{-xfs-},{-xfs0-},
-{-au-},{-audio0-},
-{-speak-},{-speaker-},
-{-asc-},{-asc0-},
-{-music-},{-music0-},
-{-radio-},{-radio0-},
-{-tuner-},{-tuner0-},
-{-rmidi-},{-rmidi0 rmidi1 rmidi2 rmidi3 rmidi4 rmidi5 rmidi6 rmidi7-},
-{-usbs-},{-usbs-},
-{-adb-},{-adb-},
-{-iop-},{-iop0 iop1-},
-{-pci-},{-pci-},
-{-wsmouse-},{-wscons-},
-{-btw-},{-bwtwo0-},
-{-ctw-},{-cgtwo0-},
-{-ctr-},{-cgthree0-},
-{-cfr-},{-cgfour0-},
-{-csx-},{-cgsix0-},
-{-ceg-},{-cgeight0-},
-{-cfo-},{-cgfourteen0-},
-{-tcx-},{-tcx0-},
-{-mac_grf-},{-grf0 grf1 grf2 grf3-},
-{-grf-},{-grf0 grf1 grf2 grf3 grf4 grf5 grf6-},
-{-par-},{-par0-},
-{-amouse-},{-mouse0 mouse1-},
-{-akbd-},{-kbd-},
-{-ppi-},{-ppi0-},
-{-view-},{-view00 view01 view02 view03 view04 view05-},
-{-local-},{-local-})-})dnl
+show_target(all)dnl
+-})dnl
+dnl
 __devitem(floppy,floppy,devices to be put on install floppies)dnl
 __devitem(std,{-std-},standard devices)dnl
+dnl
+dnl
 dnl
 dnl _std
 dnl
@@ -209,15 +224,18 @@ std)
 	M drum		c $4 0 640 kmem
 	M klog		c $5 0 600-})dnl
 dnl
+target(usb,usb,0,1)dnl
+target(usb,urio,0)dnl
+target(usb,uscanner,0)dnl
+target(usb,uhid,0,1,2,3)dnl
+target(usb,ulpt,0,1)dnl
+target(usb,ugen,0,1)dnl
+target(usb,utty,0,1)dnl
+dnl
 __devitem({-usbs-},usbs,make USB devices)dnl
 _mkdev(usbs,usbs,{-dnl
-_dl({-usb-},{-usb0 usb1-},
-{-urio-},{-urio-},
-{-uscan-},{-uscanner0-},
-{-uhid-},{-uhid0 uhid1 uhid2 uhid3-},
-{-ulpt-},{-ulpt0 ulpt1-},
-{-ugen-},{-ugen0 ugen1-},
-{-utty-},{-utty0 utty1-})-})dnl
+show_target({-usb-})dnl
+-})dnl
 __devtitle(tap,Tapes)dnl
 __devitem(wt,{-wt*	-},QIC-interface (e.g. not SCSI) 3M cartridge tape)dnl
 _mkdev(wt,wt*,
@@ -282,6 +300,36 @@ _mkdev(ss,ss*,{-M ss$U c major_ss_c $U 440 operator
 __devitem(ses,ses*,SES/SAF-TE SCSI devices)dnl
 _mkdev(ses,ses*,{-M ses$U c major_ses_c $U 640 operator-})dnl
 __devitem(ramd,ramdisk,makes all devices for a ramdisk kernel)dnl arc
+ifelse(MACHINE,mvmeppc,{-dnl
+target(ramd,std)dnl
+target(ramd,tty0,0,1,2,3)dnl
+twrget(ramd,wsdisp,ttyC,0)dnl
+target(ramd,random)dnl
+target(ramd,rd,0)dnl
+target(ramd,wd,0,1,2,3)dnl
+target(ramd,bpf,0)dnl
+target(ramd,sd,0,1,2,3,4)dnl
+target(ramd,st,0,1)dnl
+target(ramd,cd,0,1)dnl
+_mkdev(ramd,ramdisk,{-dnl
+show_target(ramd)dnl
+-})dnl
+-})dnl
+ifelse(MACHINE,i386,{-dnl
+target(ramd,std)dnl
+target(ramd,tty0,0,1,2,3)dnl
+twrget(ramd,wsdisp,ttyC,0)dnl
+target(ramd,random)dnl
+target(ramd,wt,0)dnl
+target(ramd,fd,0)dnl
+target(ramd,rd,0)dnl
+target(ramd,wd,0,1,2,3)dnl
+target(ramd,bpf,0)dnl
+target(ramd,sd,0,1,2,3)dnl
+target(ramd,st,0,1)dnl
+target(ramd,cd,0,1)dnl
+target(ramd,mcd,0)dnl
+-})dnl
 __devitem(rd,{-rd*-},"ramdisk" pseudo-disks)dnl
 _mkdev(rd,rd*,{-dodisk2 rd $U major_rd_b major_rd_c $U 0{--}ifstep(rd)-})dnl
 __devitem(xd,xd*,Xylogic 753/7053 disks)dnl
@@ -332,18 +380,33 @@ __devitem(raid,raid*,RAIDframe disk devices)dnl
 __devitem(vnd,vnd*,"file" pseudo-disks)dnl
 _mkdev(vnd,vnd*,{-dodisk vnd $U major_vnd_b major_vnd_c $U 0{--}ifstep(vnd)
 	dodisk svnd $U major_vnd_b major_vnd_c $U 128{--}ifstep(vnd)-})dnl
+__devitem(ra,ra*,{-MSCP disks (ra??, hd??)-})dnl
+__devitem(hp,hp*,{-massbuss rm??-})dnl
+__devitem(hk,hk*,{-unibus rk06 and rk07-})dnl
+__devitem(up,up*,{-other unibus devices (e.g. on Emulex sc-21v controller)-})dnl
+__devitem(rb,rb*,{-730 idc w/ rb80 and/or rb02-})dnl
+__devitem(rx,rx*,{-MSCP floppy disk (rx33/50/...)-})dnl
+__devitem(rl,rl*,{-unibus r102-})dnl
+__devitem(hd,hd*,{-HDC9224 hd disks on VS2000-})dnl
 dnl
 dnl For normal disk devices, add a disk_q entry; anything else define like
 dnl the rest (such as vnd above).
 dnl
+disk_q({-ccd-})dnl
+disk_q({-hd-})dnl
+disk_q({-hk-})dnl
+disk_q({-hp-})dnl
+disk_q({-ra-})dnl
+disk_q({-raid-})dnl
+disk_q({-rb-})dnl
+disk_q({-rl-})dnl
+disk_q({-rx-})dnl
+disk_q({-sd-})dnl
 disk_q({-xy-})dnl
 disk_q({-xd-})dnl
-disk_q({-hd-})dnl
-disk_q({-rz-})dnl
+disk_q({-up-})dnl
 disk_q({-wd-})dnl
-disk_q({-raid-})dnl
-disk_q({-ccd-})dnl
-disk_q({-sd-})dnl
+disk_q({-rz-})dnl
 dnl
 __devitem(loc,local,configuration specific devices)dnl
 _mkdev(loc,local,{-test -s $T.local && sh $T.local-})dnl
@@ -595,7 +658,41 @@ _mkdev(rnd,*random,{-n=0
 __devitem(joy,joy*,joystick driver)dnl
 _mcdev(joy,joy*,joy,{-major_joy_c-},666)dnl
 __devitem(mag,magma*,magma card (makes 16 tty and 2 bpp))dnl
+__devitem(bppmag,bppmag[mno],magma parallel port device)dnl
 __devitem(spif,spif*,spif card (makes 8 tty and 1 bpp))dnl
+__devitem(bppsp,bpp[jkl],spif parallel port device)dnl
+_mkdev(mag,magma*,{-case $U in
+	0)	offset=0  nam=m;;
+	1)	offset=16 nam=n;;
+	2)	offset=32 nam=o;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
+	esac
+	offset=Mult($U,64)
+	n=0
+	while [ $n -lt 16 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c major_mag_c Add($offset,$n) 660 dialer uucp
+		n=Add($n,1)
+	done
+	M bpp${nam}0 c major_bppmag_c Add($offset,0) 600
+	M bpp${nam}1 c major_bppmag_c Add($offset,1) 600-})dnl
+_mkdev(spif,spif*,{-case $U in
+	0)	offset=0  nam=j;;
+	1)	offset=16 nam=k;;
+	2)	offset=32 nam=l;;
+	*)	echo "bad unit for $i: $U"; exit 127;;
+	esac
+	offset=Mult($U,64)
+	n=0
+	while [ $n -lt 8 ]
+	do
+		name=${nam}`hex $n`
+		M tty$name c major_spif_c Add($offset,$n) 660 dialer uucp
+		n=Add($n,1)
+	done
+	M bpp${nam}0 c major_bppsp_c Add($offset,0) 600-})dnl
+__devitem(bpp,bpp*,parallel port devices)dnl
 __devitem(xfs,xfs*,XFS filesystem devices)dnl
 _mcdev(xfs,xfs*,xfs,{-major_xfs_c-},600)dnl
 __devitem(hil,hil,HIL input devices)dnl
