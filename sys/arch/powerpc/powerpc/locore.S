@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.16 2001/06/10 18:45:02 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.17 2001/06/23 01:56:59 drahn Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -55,6 +55,9 @@ _C_LABEL(esym):		.long	0	/* end of symbol table */
 _C_LABEL(proc0paddr):	.long	0	/* proc0 p_addr */
 idle_u:			.long	0	/* fake uarea during idle after exit */
 
+fwargsave:
+			.long 0
+			.long 0
 	.globl _C_LABEL(where)
 	.type  _C_LABEL(where),@object
 _C_LABEL(where):	.long	0
@@ -75,6 +78,9 @@ _ENTRY(_ASM_LABEL(start))
 	.globl	start
 	.type start,@function
 start:
+	lis	3, fwargsave@ha
+	stw	6, fwargsave@l(3)
+	stw	7, fwargsave@l+4(3)
 #ifdef SUPPORT_PPC1BUG
 	mr 	0,5
 	cmpwi	0,0,0
@@ -93,15 +99,20 @@ start:
 /* compute end of kernel memory */
 	lis	8,_end@ha
 	addi	8,8,_end@l
-#if 0
+	lis	3, fwargsave@ha
+	lwz	6, fwargsave@l(3)
+	lwz	7, fwargsave@l+4(3)
 #if defined(DDB) || defined(KERNFS)
-	lwz	9,0(8)			/* number of symbols */
-	add	8,8,9
-	lwzu	9,4(8)			/* length of string table */
-	add	8,8,9
-	lis	9,_C_LABEL(esym)@ha
-	stw	8,_C_LABEL(esym)@l(9)		/* save for symbol handling */
-#endif
+	cmpwi	6, 0
+	beq	1f
+	add	9,6,7
+	lwz	9, -4(9)
+	cmpwi   9,0
+	beq	1f
+	lis	8,_C_LABEL(esym)@ha
+	stw	9,_C_LABEL(esym)@l(8)
+	mr	8, 9
+1:
 #endif
 	li	9,PGOFSET
 	add	8,8,9

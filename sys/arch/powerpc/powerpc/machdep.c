@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.63 2001/06/10 18:45:02 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.64 2001/06/23 01:57:00 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -123,6 +123,10 @@ char *bootpath;
 char bootpathbuf[512];
 
 struct firmware *fw = NULL;
+
+#ifdef DDB
+void * startsym, *endsym;
+#endif
 
 void ofw_dbg(char *str);
 
@@ -329,12 +333,11 @@ where = 3;
 	/* make a copy of the args! */
 	strncpy(bootpathbuf, args, 512);
 	bootpath= &bootpathbuf[0];
-	args = bootpath;
-	while ( *++args && *args != ' ');
-	if (*args) {
-		*args++ = 0;
-		while (*args) {
-			switch (*args++) {
+	while ( *++bootpath && *bootpath != ' ');
+	if (*bootpath) {
+		*bootpath++ = 0;
+		while (*bootpath) {
+			switch (*bootpath++) {
 			case 'a':
 				boothowto |= RB_ASKNAME;
 				break;
@@ -347,11 +350,16 @@ where = 3;
 			case 'c':
 				boothowto |= RB_CONFIG;
 				break;
+			default:
+				break;
 			}
 		}
 	}			
-#if 0
-	ddb_init((int)(esym - (&_end)), &_end, esym);
+	bootpath= &bootpathbuf[0];
+#if 1
+	bcopy(args +strlen(args) + 1, &startsym, sizeof(startsym));
+	bcopy(args +strlen(args) + 5, &endsym, sizeof(endsym)); 
+	ddb_init((int)((u_int)endsym - (u_int)startsym), startsym, endsym);
 #endif
 
 	/*
