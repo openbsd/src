@@ -21,7 +21,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.6 1997/07/25 20:12:27 mickey Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/print-sunrpc.c,v 1.7 1998/07/14 00:01:11 deraadt Exp $ (LBL)";
 #endif
 
 #include <sys/param.h>
@@ -126,7 +126,9 @@ progstr(prog)
 	rp = getrpcbynumber(prog);
 	if (rp == NULL)
 		(void) sprintf(buf, "#%u", prog);
-	else
-		strcpy(buf, rp->r_name);
+	else {
+		strncpy(buf, rp->r_name, sizeof buf-1);
+		buf[sizeof buf-1] = '\0';
+	}
 	return (buf);
 }
