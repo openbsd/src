@@ -1,0 +1,618 @@
+DHCPD.CONF(5)             OpenBSD Programmer's Manual            DHCPD.CONF(5)
+
+NNAAMMEE
+     ddhhccppdd..ccoonnff - dhcpd configuration file
+
+DDEESSCCRRIIPPTTIIOONN
+     The ddhhccppdd..ccoonnff file contains configuration information for dhcpd(8), the
+     Internet Software Consortium DHCP Server.
+
+     The ddhhccppdd..ccoonnff file is a free-form ASCII text file.  It is parsed by the
+     recursive-descent parser built into dhcpd(8).  The file may contain extra
+     tabs and newlines for formatting purposes.  Keywords in the file are
+     case-insensitive.  Comments may be placed anywhere within the file (ex-
+     cept within quotes).  Comments begin with the `#' character and end at
+     the end of the line.
+
+     The file essentially consists of a list of statements.  Statements fall
+     into two broad categories - parameters and declarations.
+
+     Parameter statements say how to do something (e.g., how long a lease to
+     offer), whether to do something (e.g., should dhcpd(8) provide addresses
+     to unknown clients), or what parameters to provide to the client (e.g.,
+     use gateway 220.177.244.7).
+
+     Declarations are used to describe the topology of the network, to de-
+     scribe clients on the network, to provide addresses that can be assigned
+     to clients, or to apply a group of parameters to a group of declarations.
+     In any group of parameters and declarations, all parameters must be spec-
+     ified before any declarations which depend on those parameters may be
+     specified.
+
+     Declarations about network topology include the sshhaarreedd--nneettwwoorrkk and the
+     ssuubbnneett declarations.  If clients on a subnet are to be assigned addresses
+     dynamically, a rraannggee declaration must appear within the ssuubbnneett declara-
+     tion.  For clients with statically assigned addresses, or for installa-
+     tions where only known clients will be served, each such client must have
+     a hhoosstt declaration.  If parameters are to be applied to a group of decla-
+     rations which are not related strictly on a per-subnet basis, the ggrroouupp
+     declaration can be used.
+
+     For every subnet which will be served, and for every subnet to which the
+     dhcp server is connected, there must be one ssuubbnneett declaration, which
+     tells dhcpd(8) how to recognize that an address is on that subnet.  A
+     ssuubbnneett declaration is required for each subnet even if no addresses will
+     be dynamically allocated on that subnet.
+
+     Some installations have physical networks on which more than one IP sub-
+     net operates.  For example, if there is a site-wide requirement that
+     8-bit subnet masks be used, but a department with a single physical eth-
+     ernet network expands to the point where it has more than 254 nodes, it
+     may be necessary to run two 8-bit subnets on the same ethernet until such
+     time as a new physical network can be added.  In this case, the ssuubbnneett
+     declarations for these two networks may be enclosed in a sshhaarreedd--nneettwwoorrkk
+     declaration.
+
+     Some sites may have departments which have clients on more than one sub-
+     net, but it may be desirable to offer those clients a uniform set of pa-
+     rameters which are different than what would be offered to clients from
+     other departments on the same subnet.  For clients which will be declared
+     explicitly with hhoosstt declarations, these declarations can be enclosed in
+     a ggrroouupp declaration along with the parameters which are common to that
+     department.  For clients whose addresses will be dynamically assigned,
+     there is currently no way to group parameter assignments other than by
+     network topology.
+
+     When a client is to be booted, its boot parameters are determined by
+     first consulting that client's hhoosstt declaration (if any), then consulting
+     the ggrroouupp declaration (if any) which enclosed that hhoosstt declaration, then
+     consulting the ssuubbnneett declaration for the subnet on which the client is
+     booting, then consulting the sshhaarreedd--nneettwwoorrkk declaration (if any) contain-
+     ing that subnet, and finally consulting the top-level parameters which
+     may be specified outside of any declaration.
+
+     When dhcpd(8) tries to find a hhoosstt declaration for a client, it first
+     looks for a hhoosstt declaration which has a _f_i_x_e_d_-_a_d_d_r_e_s_s parameter which
+     matches the subnet or shared network on which the client is booting.  If
+     it doesn't find any such entry, it then tries to find an entry which has
+     no _f_i_x_e_d_-_a_d_d_r_e_s_s parameter.  If no such entry is found, then dhcpd(8)
+     acts as if there is no entry in the ddhhccppdd..ccoonnff file for that client, even
+     if there is an entry for that client on a different subnet or shared net-
+     work.
+
+EEXXAAMMPPLLEESS
+     A typical ddhhccppdd..ccoonnff file will look something like this:
+
+     Example 1
+
+           _g_l_o_b_a_l _p_a_r_a_m_e_t_e_r_s_._._.
+
+           shared-network ISC-BIGGIE {
+             _s_h_a_r_e_d_-_n_e_t_w_o_r_k_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+             subnet 204.254.239.0 netmask 255.255.255.224 {
+               _s_u_b_n_e_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+               range 204.254.239.10 204.254.239.30;
+             }
+             subnet 204.254.239.32 netmask 255.255.255.224 {
+               _s_u_b_n_e_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+               range 204.254.239.42 204.254.239.62;
+             }
+           }
+
+           subnet 204.254.239.64 netmask 255.255.255.224 {
+             _s_u_b_n_e_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+             range 204.254.239.74 204.254.239.94;
+           }
+
+           group {
+             _g_r_o_u_p_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+             host zappo.test.isc.org {
+               _h_o_s_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+             }
+             host beppo.test.isc.org {
+               _h_o_s_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+             }
+             host harpo.test.isc.org {
+               _h_o_s_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s_._._.
+             }
+           }
+
+     Notice that at the beginning of the file, there's a place for global pa-
+     rameters.  These might be things like the organization's domain name, the
+     addresses of the name servers (if they are common to the entire organiza-
+     tion), and so on.  So, for example:
+
+     Example 2
+
+           option domain-name "isc.org";
+           option domain-name-servers ns1.isc.org, ns2.isc.org;
+
+     As you can see in Example 2, it's legal to specify host addresses in pa-
+     rameters as domain names rather than as numeric IP addresses.  If a given
+     hostname resolves to more than one IP address (for example, if that host
+     has two ethernet interfaces), both addresses are supplied to the client.
+
+     In Example 1, you can see that both the shared-network statement and the
+     subnet statements can have parameters.  Let us say that the shared net-
+     work ISC-BIGGIE supports an entire department - perhaps the accounting
+     department.  If accounting has its own domain, then a shared-network-spe-
+     cific parameter might be:
+
+           option domain-name "accounting.isc.org";
+
+     All subnet declarations appearing in the shared-network declaration would
+     then have the domain-name option set to ``accounting.isc.org'' instead of
+     just ``isc.org''.
+
+     The most obvious reason for having subnet-specific parameters as shown in
+     Example 1 is that each subnet, of necessity, has its own router.  So for
+     the first subnet, for example, there should be something like:
+
+           option routers 204.254.239.1;
+
+     Note that the address here is specified numerically.  This is not re-
+     quired - if you have a different domain name for each interface on your
+     router, it's perfectly legitimate to use the domain name for that inter-
+     face instead of the numeric address.  However, in many cases there may be
+     only one domain name for all of a router's IP addresses, and it would not
+     be appropriate to use that name here.
+
+     In Example 1 there is also a ggrroouupp statement, which provides common pa-
+     rameters for a set of three hosts - zappo, beppo and harpo.  As you can
+     see, these hosts are all in the test.isc.org domain, so it might make
+     sense for a group-specific parameter to override the domain name supplied
+     to these hosts:
+
+           option domain-name "test.isc.org";
+
+     Also, given the domain they're in, these are probably test machines.  If
+     we wanted to test the DHCP leasing mechanism, we might set the lease
+     timeout somewhat shorter than the default:
+
+           max-lease-time 120;
+           default-lease-time 120;
+
+     You may have noticed that while some parameters start with the ooppttiioonn
+     keyword, some do not.  Parameters starting with the ooppttiioonn keyword corre-
+     spond to actual DHCP options, while parameters that do not start with the
+     option keyword either control the behaviour of the DHCP server (e.g., how
+     long a lease dhcpd(8) will give out), or specify client parameters that
+     are not optional in the DHCP protocol (for example, server-name and file-
+     name).
+
+     In Example 1, each host had _h_o_s_t_-_s_p_e_c_i_f_i_c _p_a_r_a_m_e_t_e_r_s.  These could in-
+     clude such things as the hhoossttnnaammee option, the name of a file to upload
+     (the _f_i_l_e_n_a_m_e parameter) and the address of the server from which to up-
+     load the file (the _n_e_x_t_-_s_e_r_v_e_r parameter).  In general, any parameter can
+     appear anywhere that parameters are allowed, and will be applied accord-
+     ing to the scope in which the parameter appears.
+
+     Imagine that you have a site with a lot of NCD X-Terminals.  These termi-
+     nals come in a variety of models, and you want to specify the boot files
+     for each model.  One way to do this would be to have host declarations
+     for each server and group them by model:
+
+           group {
+             filename "Xncd19r";
+             next-server ncd-booter;
+
+             host ncd1 { hardware ethernet 0:c0:c3:49:2b:57; }
+             host ncd4 { hardware ethernet 0:c0:c3:80:fc:32; }
+             host ncd8 { hardware ethernet 0:c0:c3:22:46:81; }
+           }
+
+           group {
+             filename "Xncd19c";
+             next-server ncd-booter;
+
+             host ncd2 { hardware ethernet 0:c0:c3:88:2d:81; }
+             host ncd3 { hardware ethernet 0:c0:c3:00:14:11; }
+           }
+
+           group {
+             filename "XncdHMX";
+             next-server ncd-booter;
+
+             host ncd5 { hardware ethernet 0:c0:c3:11:90:23; }
+             host ncd6 { hardware ethernet 0:c0:c3:91:a7:8; }
+             host ncd7 { hardware ethernet 0:c0:c3:cc:a:8f; }
+           }
+
+RREEFFEERREENNCCEE:: DDEECCLLAARRAATTIIOONNSS
+     The sshhaarreedd--nneettwwoorrkk statement
+
+           sshhaarreedd--nneettwwoorrkk _n_a_m_e {
+             [_p_a_r_a_m_e_t_e_r_s]
+             [_d_e_c_l_a_r_a_t_i_o_n_s]
+           }
+
+     The sshhaarreedd--nneettwwoorrkk statement is used to inform the DHCP server that some
+     IP subnets actually share the same physical network.  Any subnets in a
+     shared network should be declared within a sshhaarreedd--nneettwwoorrkk statement.  Pa-
+     rameters specified in the sshhaarreedd--nneettwwoorrkk statement will be used when
+     booting clients on those subnets unless parameters provided at the subnet
+     or host level override them.  If any subnet in a shared network has ad-
+     dresses available for dynamic allocation, those addresses are collected
+     into a common pool for that shared network and assigned to clients as
+     needed.  There is no way to distinguish on which subnet of a shared net-
+     work a client should boot.
+
+     _n_a_m_e should be the name of the shared network.  This name is used when
+     printing debugging messages, so it should be descriptive for the shared
+     network.  The name may have the syntax of a valid domain name (although
+     it will never be used as such), or it may be any arbitrary name, enclosed
+     in quotes.
+
+     The ssuubbnneett statement
+
+           ssuubbnneett _s_u_b_n_e_t_-_n_u_m_b_e_r nneettmmaasskk _n_e_t_m_a_s_k {
+             [_p_a_r_a_m_e_t_e_r_s]
+             [_d_e_c_l_a_r_a_t_i_o_n_s]
+           }
+
+     The ssuubbnneett statement is used to provide dhcpd(8) with enough information
+     to tell whether or not an IP address is on that subnet.  It may also be
+     used to provide subnet-specific parameters and to specify what addresses
+     may be dynamically allocated to clients booting on that subnet.  Such ad-
+     dresses are specified using the rraannggee declaration.
+
+     The _s_u_b_n_e_t_-_n_u_m_b_e_r should be an IP address or domain name which resolves
+     to the subnet number of the subnet being described.  The _n_e_t_m_a_s_k should
+     be an IP address or domain name which resolves to the subnet mask of the
+     subnet being described.  The subnet number, together with the netmask,
+     are sufficient to determine whether any given IP address is on the speci-
+     fied subnet.
+
+     Although a netmask must be given with every subnet declaration, it is
+     recommended that if there is any variance in subnet masks at a site, a
+     subnet-mask option statement be used in each subnet declaration to set
+     the desired subnet mask, since any subnet-mask option statement will
+     override the subnet mask declared in the subnet statement.
+
+     The rraannggee statement
+
+     rraannggee [ddyynnaammiicc--bboooottpp] _l_o_w_-_a_d_d_r_e_s_s [_h_i_g_h_-_a_d_d_r_e_s_s];
+
+     For any subnet on which addresses will be assigned dynamically, there
+     must be at least one rraannggee statement.  The range statement gives the low-
+     est and highest IP addresses in a range.  All IP addresses in the range
+     should be in the subnet in which the rraannggee statement is declared.  The
+     ddyynnaammiicc--bboooottpp flag may be specified if addresses in the specified range
+     may be dynamically assigned to BOOTP clients as well as DHCP clients.
+     When specifying a single address, _h_i_g_h_-_a_d_d_r_e_s_s can be omitted.
+
+     The hhoosstt statement
+
+           hhoosstt _h_o_s_t_n_a_m_e {
+             [_p_a_r_a_m_e_t_e_r_s]
+             [_d_e_c_l_a_r_a_t_i_o_n_s]
+           }
+
+     There must be at least one hhoosstt statement for every BOOTP client that is
+     to be served.  hhoosstt statements may also be specified for DHCP clients,
+     although this is not required unless booting is only enabled for known
+     hosts.
+
+     If it is desirable to be able to boot a DHCP or BOOTP client on more than
+     one subnet with fixed addresses, more than one address may be specified
+     in the _f_i_x_e_d_-_a_d_d_r_e_s_s parameter, or more than one hhoosstt statement may be
+     specified.
+
+     If client-specific boot parameters must change based on the network to
+     which the client is attached, then multiple hhoosstt statements should be
+     used.
+
+     If a client is to be booted using a fixed address if it's possible, but
+     should be allocated a dynamic address otherwise, then a hhoosstt statement
+     must be specified without a _f_i_x_e_d_-_a_d_d_r_e_s_s clause.  _h_o_s_t_n_a_m_e should be a
+     name identifying the host.  If a _h_o_s_t_n_a_m_e option is not specified for the
+     host, _h_o_s_t_n_a_m_e is used.
+
+     hhoosstt declarations are matched to actual DHCP or BOOTP clients by matching
+     the ddhhccpp--cclliieenntt--iiddeennttiiffiieerr option specified in the hhoosstt declaration to
+     the one supplied by the client, or, if the hhoosstt declaration or the client
+     does not provide a ddhhccpp--cclliieenntt--iiddeennttiiffiieerr option, by matching the
+     _h_a_r_d_w_a_r_e parameter in the hhoosstt declaration to the network hardware ad-
+     dress supplied by the client.  BOOTP clients do not normally provide a
+     _d_h_c_p_-_c_l_i_e_n_t_-_i_d_e_n_t_i_f_i_e_r, so the hardware address must be used for all
+     clients that may boot using the BOOTP protocol.
+
+     The ggrroouupp statement
+
+           ggrroouupp {
+             [_p_a_r_a_m_e_t_e_r_s]
+             [_d_e_c_l_a_r_a_t_i_o_n_s]
+           }
+
+     The ggrroouupp statement is used simply to apply one or more parameters to a
+     group of declarations.  It can be used to group hosts, shared networks,
+     subnets, or even other groups.
+
+RREEFFEERREENNCCEE:: AALLLLOOWW aanndd DDEENNYY
+     The aallllooww and ddeennyy statements can be used to control the behaviour of
+     dhcpd(8) to various sorts of requests.
+
+     The _u_n_k_n_o_w_n_-_c_l_i_e_n_t_s keyword
+
+           allow unknown-clients;
+           deny unknown-clients;
+
+     The _u_n_k_n_o_w_n_-_c_l_i_e_n_t_s flag is used to tell dhcpd(8) whether or not to dy-
+     namically assign addresses to unknown clients.  Dynamic address assign-
+     ment to unknown clients is allowed by default.
+
+     The _b_o_o_t_p keyword
+
+           allow bootp;
+           deny bootp;
+
+     The _b_o_o_t_p flag is used to tell dhcpd(8) whether or not to respond to
+     bootp queries.  Bootp queries are allowed by default.
+
+     The _b_o_o_t_i_n_g keyword
+
+           allow booting;
+           deny booting;
+
+     The _b_o_o_t_i_n_g flag is used to tell dhcpd(8) whether or not to respond to
+     queries from a particular client.  This keyword only has meaning when it
+     appears in a host declaration.  By default, booting is allowed, but if it
+     is disabled for a particular client, then that client will not be able to
+     get an address from the DHCP server.
+
+RREEFFEERREENNCCEE:: PPAARRAAMMEETTEERRSS
+     The ddeeffaauulltt--lleeaassee--ttiimmee statement
+
+           ddeeffaauulltt--lleeaassee--ttiimmee _t_i_m_e;
+
+     _t_i_m_e should be the length in seconds that will be assigned to a lease if
+     the client requesting the lease does not ask for a specific expiration
+     time.
+
+     The mmaaxx--lleeaassee--ttiimmee statement
+
+           mmaaxx--lleeaassee--ttiimmee _t_i_m_e;
+
+     _t_i_m_e should be the maximum length in seconds that will be assigned to a
+     lease if the client requesting the lease asks for a specific expiration
+     time.
+
+     The hhaarrddwwaarree statement
+
+           hhaarrddwwaarree _h_a_r_d_w_a_r_e_-_t_y_p_e _h_a_r_d_w_a_r_e_-_a_d_d_r_e_s_s;
+
+     In order for a BOOTP client to be recognized, its network hardware ad-
+     dress must be declared using a hhaarrddwwaarree clause in the hhoosstt statement.
+     _h_a_r_d_w_a_r_e_-_t_y_p_e must be the name of a physical hardware interface type.
+     Currently, only the _e_t_h_e_r_n_e_t and _t_o_k_e_n_-_r_i_n_g types are recognized, al-
+     though support for an _f_d_d_i hardware type (and others) would also be de-
+     sirable.  The _h_a_r_d_w_a_r_e_-_a_d_d_r_e_s_s should be a set of hexadecimal octets
+     (numbers from 0 through ff) separated by colons.  The hhaarrddwwaarree statement
+     may also be used for DHCP clients.
+
+     The ffiilleennaammee statement
+
+           ffiilleennaammee _"_f_i_l_e_n_a_m_e_";
+
+     The ffiilleennaammee statement can be used to specify the name of the initial
+     boot file which is to be loaded by a client.  The _f_i_l_e_n_a_m_e should be a
+     filename recognizable to whatever file transfer protocol the client can
+     be expected to use to load the file.
+
+     The sseerrvveerr--nnaammee statement
+
+           sseerrvveerr--nnaammee _"_n_a_m_e_";
+
+     The sseerrvveerr--nnaammee statement can be used to inform the client of the name of
+     the server from which it is booting.  _n_a_m_e should be the name that will
+     be provided to the client.
+
+     The nneexxtt--sseerrvveerr statement
+
+           nneexxtt--sseerrvveerr _s_e_r_v_e_r_-_n_a_m_e;
+
+     The nneexxtt--sseerrvveerr statement is used to specify the host address of the
+     server from which the initial boot file (specified in the ffiilleennaammee state-
+     ment) is to be loaded.  _s_e_r_v_e_r_-_n_a_m_e should be a numeric IP address or a
+     domain name.  If no nneexxtt--sseerrvveerr parameter applies to a given client, the
+     DHCP server's IP address is used.
+
+     The ffiixxeedd--aaddddrreessss statement
+
+          ffiixxeedd--aaddddrreessss _a_d_d_r_e_s_s [, _a_d_d_r_e_s_s _._._.];
+
+     The ffiixxeedd--aaddddrreessss statement is used to assign one or more fixed IP ad-
+     dresses to a client.  It should only appear in a hhoosstt declaration.  If
+     more than one address is supplied, then when the client boots, it will be
+     assigned the address which corresponds to the network on which it is
+     booting.  If none of the addresses in the ffiixxeedd--aaddddrreessss statement are on
+     the network on which the client is booting, that client will not match
+     the hhoosstt declaration containing that ffiixxeedd--aaddddrreessss statement.  Each
+     _a_d_d_r_e_s_s should be either an IP address or a domain name which resolves to
+     one or more IP addresses.
+
+     The ddyynnaammiicc--bboooottpp--lleeaassee--ccuuttooffff statement
+
+           ddyynnaammiicc--bboooottpp--lleeaassee--ccuuttooffff _d_a_t_e;
+
+     The ddyynnaammiicc--bboooottpp--lleeaassee--ccuuttooffff statement sets the ending time for all
+     leases assigned dynamically to BOOTP clients.  Because BOOTP clients do
+     not have any way of renewing leases, and don't know that their leases
+     could expire, by default dhcpd(8) assigns infinite leases to all BOOTP
+     clients.  However, it may make sense in some situations to set a cutoff
+     date for all BOOTP leases - for example, the end of a school term, or the
+     time at night when a facility is closed and all machines are required to
+     be powered off.
+
+     _d_a_t_e should be the date on which all assigned BOOTP leases will end.  The
+     date is specified in the form:
+
+           W YYYY/MM/DD HH:MM:SS
+
+     W is the day of the week expressed as a number from zero (Sunday) to six
+     (Saturday).  YYYY is the year, including the century.  MM is the month
+     expressed as a number from 1 to 12.  DD is the day of the month, counting
+     from 1.  HH is the hour, from zero to 23.  MM is the minute and SS is the
+     second.  The time is always in Coordinated Universal Time (UTC), not lo-
+     cal time.
+
+     The ddyynnaammiicc--bboooottpp--lleeaassee--lleennggtthh statement
+
+           ddyynnaammiicc--bboooottpp--lleeaassee--lleennggtthh _l_e_n_g_t_h;
+
+     The ddyynnaammiicc--bboooottpp--lleeaassee--lleennggtthh statement is used to set the length of
+     leases dynamically assigned to BOOTP clients.  At some sites, it may be
+     possible to assume that a lease is no longer in use if its holder has not
+     used BOOTP or DHCP to get its address within a certain time period.  The
+     period is specified in _l_e_n_g_t_h as a number of seconds.  If a client re-
+     boots using BOOTP during the timeout period, the lease duration is reset
+     to _l_e_n_g_t_h, so a BOOTP client that boots frequently enough will never lose
+     its lease.  Needless to say, this parameter should be adjusted with ex-
+     treme caution.
+
+     The ggeett--lleeaassee--hhoossttnnaammeess statement
+
+           ggeett--lleeaassee--hhoossttnnaammeess _f_l_a_g;
+
+     The ggeett--lleeaassee--hhoossttnnaammeess statement is used to tell dhcpd(8) whether or not
+     to look up the domain name corresponding to the IP address of each ad-
+     dress in the lease pool and use that address for the DHCP hhoossttnnaammee op-
+     tion.  If _f_l_a_g is true, then this lookup is done for all addresses in the
+     current scope.  By default, or if _f_l_a_g is false, no lookups are done.
+
+     The uussee--hhoosstt--ddeeccll--nnaammeess statement
+
+           uussee--hhoosstt--ddeeccll--nnaammeess _f_l_a_g;
+
+     If the uussee--hhoosstt--ddeeccll--nnaammeess parameter is true in a given scope, then for
+     every host declaration within that scope, the name provided for the host
+     declaration will be supplied to the client as its hostname.  So, for ex-
+     ample,
+
+           group {
+             use-host-decl-names on;
+
+             host joe {
+            hardware ethernet 08:00:2b:4c:29:32;
+            fixed-address joe.fugue.com;
+             }
+           }
+
+     is equivalent to
+
+            host joe {
+           hardware ethernet 08:00:2b:4c:29:32;
+           fixed-address joe.fugue.com;
+              option host-name "joe";
+            }
+
+     An ooppttiioonn hhoosstt--nnaammee statement within a host declaration will override the
+     use of the name in the host declaration.
+
+     The aauutthhoorriittaattiivvee statement
+
+           aauutthhoorriittaattiivvee;
+
+           nnoott aauutthhoorriittaattiivvee;
+
+     The DHCP server will normally assume that the configuration information
+     about a given network segment is known to be correct and is authorita-
+     tive.  So if a client requests an IP address on a given network segment
+     that the server knows is not valid for that segment, the server will re-
+     spond with a DHCPNAK message, causing the client to forget its IP address
+     and try to get a new one.
+
+     If a DHCP server is being configured by somebody who is not the network
+     administrator and who therefore does not wish to assert this level of au-
+     thority, then the statement ``not authoritative'' should be written in
+     the appropriate scope in the configuration file.
+
+     Usually, writing _n_o_t _a_u_t_h_o_r_i_t_a_t_i_v_e_; at the top level of the file should
+     be sufficient.  However, if a DHCP server is to be set up so that it is
+     aware of some networks for which it is authoritative and some networks
+     for which it is not, it may be more appropriate to declare authority on a
+     per-network-segment basis.
+
+     Note that the most specific scope for which the concept of authority
+     makes any sense is the physical network segment - either a shared-network
+     statement or a subnet statement that is not contained within a shared-
+     network statement.  It is not meaningful to specify that the server is
+     authoritative for some subnets within a shared network, but not authori-
+     tative for others, nor is it meaningful to specify that the server is au-
+     thoritative for some host declarations and not others.
+
+     The uussee--lleeaassee--aaddddrr--ffoorr--ddeeffaauulltt--rroouuttee statement
+
+           uussee--lleeaassee--aaddddrr--ffoorr--ddeeffaauulltt--rroouuttee _f_l_a_g;
+
+     If the uussee--lleeaassee--aaddddrr--ffoorr--ddeeffaauulltt--rroouuttee parameter is true in a given
+     scope, then instead of sending the value specified in the routers option
+     (or sending no value at all), the IP address of the lease being assigned
+     is sent to the client.  This supposedly causes Win95 machines to ARP for
+     all IP addresses, which can be helpful if your router is configured for
+     proxy ARP.
+
+     If uussee--lleeaassee--aaddddrr--ffoorr--ddeeffaauulltt--rroouuttee is enabled and an option routers
+     statement are both in scope, the routers option will be preferred.  The
+     rationale for this is that in situations where you want to use this fea-
+     ture, you probably want it enabled for a whole bunch of Windows 95 ma-
+     chines, and you want to override it for a few other machines.  Unfortu-
+     nately, if the opposite happens to be true for your site, you are proba-
+     bly better off not trying to use this flag.
+
+     The aallwwaayyss--rreeppllyy--rrffcc11004488 statement
+
+           aallwwaayyss--rreeppllyy--rrffcc11004488 _f_l_a_g;
+
+     Some BOOTP clients expect RFC 1048-style responses, but do not follow RFC
+     1048 when sending their requests.  You can tell that a client is having
+     this problem if it is not getting the options you have configured for it
+     and if you see in the server log the message ``(non-rfc1048)'' printed
+     with each BOOTREQUEST that is logged.
+
+     If you want to send RFC 1048 options to such a client, you can set the
+     aallwwaayyss--rreeppllyy--rrffcc11004488 option in that client's host declaration, and the
+     DHCP server will respond with an RFC 1048-style vendor options field.
+     This flag can be set in any scope, and will affect all clients covered by
+     that scope.
+
+     The sseerrvveerr--iiddeennttiiffiieerr statement
+
+           sseerrvveerr--iiddeennttiiffiieerr _h_o_s_t_n_a_m_e;
+
+     The sseerrvveerr--iiddeennttiiffiieerr statement can be used to define the value that is
+     sent in the DHCP Server Identifier option for a given scope.  The value
+     specified _m_u_s_t be an IP address for the DHCP server, and must be reach-
+     able by all clients served by a particular scope.
+
+     The use of the server-identifier statement is not recommended - the only
+     reason to use it is to force a value other than the default value to be
+     sent on occasions where the default value would be incorrect.  The de-
+     fault value is the first IP address associated with the physical network
+     interface on which the request arrived.
+
+     The usual case where the sseerrvveerr--iiddeennttiiffiieerr statement needs to be sent is
+     when a physical interface has more than one IP address, and the one being
+     sent by default isn't appropriate for some or all clients served by that
+     interface.  Another common case is when an alias is defined for the pur-
+     pose of having a consistent IP address for the DHCP server, and it is de-
+     sired that the clients use this IP address when contacting the server.
+
+     Supplying a value for the ddhhccpp--sseerrvveerr--iiddeennttiiffiieerr option is equivalent to
+     using the sseerrvveerr--iiddeennttiiffiieerr statement.
+
+RREEFFEERREENNCCEE:: OOPPTTIIOONN SSTTAATTEEMMEENNTTSS
+     DHCP option statements are documented in the dhcp-options(5) manual page.
+
+SSEEEE AALLSSOO
+     dhcp-options(5), dhcpd.leases(5), dhcpd(8)
+
+     RFC 2132, RFC 2131.
+
+AAUUTTHHOORRSS
+     dhcpd(8) was written by Ted Lemon <mellon@vix.com> under a contract with
+     Vixie Labs.  Funding for this project was provided by the Internet Soft-
+     ware Corporation.  Information about the Internet Software Consortium can
+     be found at _h_t_t_p_:_/_/_w_w_w_._i_s_c_._o_r_g_/_i_s_c.
+
+OpenBSD 3.5                     January 1, 1995                             10

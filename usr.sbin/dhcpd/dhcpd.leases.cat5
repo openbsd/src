@@ -1,0 +1,134 @@
+DHCPD.LEASES(5)           OpenBSD Programmer's Manual          DHCPD.LEASES(5)
+
+NNAAMMEE
+     ddhhccppdd..lleeaasseess - DHCP client lease database
+
+DDEESSCCRRIIPPTTIIOONN
+     The Internet Software Consortium DHCP Server keeps a persistent database
+     of leases that it has assigned.  This database is a free-form ASCII file
+     containing a series of lease declarations.  Every time a lease is ac-
+     quired, renewed or released, its new value is recorded at the end of the
+     lease file.  So if more than one declaration appears for a given lease,
+     the last one in the file is the current one.
+
+     When dhcpd(8) is first installed, there is no lease database.  However,
+     dhcpd requires that a lease database be present before it will start.  To
+     make the initial lease database, just create an empty file called
+     _/_v_a_r_/_d_b_/_d_h_c_p_d_._l_e_a_s_e_s.
+
+     In order to prevent the lease database from growing without bound, the
+     file is rewritten from time to time.  First, a temporary lease database
+     is created and all known leases are dumped to it.  Then, the old lease
+     database is renamed _/_v_a_r_/_d_b_/_d_h_c_p_d_._l_e_a_s_e_s_~.  Finally, the newly written
+     lease database is moved into place.
+
+     There is a window of vulnerability where if the dhcpd process is killed
+     or the system crashes after the old lease database has been renamed but
+     before the new one has been moved into place, there will be no
+     _/_v_a_r_/_d_b_/_d_h_c_p_d_._l_e_a_s_e_s.  In this case, dhcpd will refuse to start, and will
+     require manual intervention.  _D_O _N_O_T simply create a new lease file when
+     this happens - if you do, you will lose all your old bindings, and chaos
+     will ensue.  Instead, rename _/_v_a_r_/_d_b_/_d_h_c_p_d_._l_e_a_s_e_s_~ to
+     _/_v_a_r_/_d_b_/_d_h_c_p_d_._l_e_a_s_e_s, restoring the old, valid lease file, and then start
+     dhcpd.  This guarantees that a valid lease file will be restored.
+
+FFOORRMMAATT
+     Lease descriptions are stored in a format that is parsed by the same re-
+     cursive descent parser used to read the dhcpd.conf(5) and
+     dhclient.conf(5) files.  Currently, the only declaration that is used in
+     the ddhhccppdd..lleeaasseess file is the lleeaassee declaration.
+
+          lleeaassee _i_p_-_a_d_d_r_e_s_s { _s_t_a_t_e_m_e_n_t_s_._._. }
+
+     Each lease declaration includes the single IP address that has been
+     leased to the client.  The statements within the braces define the dura-
+     tion of the lease and to whom it is assigned.
+
+     The start and end time of a lease are recorded using the ``starts'' and
+     ``ends'' statements:
+
+           ssttaarrttss _d_a_t_e;
+           eennddss _d_a_t_e;
+
+     Dates are specified as follows:
+
+          _w_e_e_k_d_a_y _y_e_a_r/_m_o_n_t_h/_d_a_y _h_o_u_r:_m_i_n_u_t_e:_s_e_c_o_n_d
+
+     The weekday is present to make it easy for a human to tell when a lease
+     expires - it's specified as a number from zero to six, with zero being
+     Sunday.  The day of week is ignored on input.  The year is specified with
+     the century, so it should generally be four digits except for really long
+     leases.  The month is specified as a number starting with 1 for January.
+     The day of the month is likewise specified starting with 1.  The hour is
+     a number from 0 to 23, the minute a number from 0 to 59, and the second
+     also a number from 0 to 59.
+
+     Lease times are specified in Coordinated Universal Time (UTC), not in the
+     local time zone.  "date -u" will show the current time in UTC.
+
+     The MAC address of the network interface that was used to acquire the
+     lease is recorded with the hhaarrddwwaarree statement:
+
+           hhaarrddwwaarree _h_a_r_d_w_a_r_e_-_t_y_p_e _m_a_c_-_a_d_d_r_e_s_s;
+
+     The MAC address is specified as a series of hexadecimal octets, separated
+     by colons.
+
+     If the client uses a client identifier to acquire its address, the client
+     identifier is recorded using the uuiidd statement:
+
+           uuiidd _c_l_i_e_n_t_-_i_d_e_n_t_i_f_i_e_r;
+
+     The client identifier is recorded as a series of hexadecimal octets, re-
+     gardless of whether the client specifies an ASCII string or uses the new-
+     er hardware type/MAC address format.
+
+     If the client sends a hostname using the CClliieenntt HHoossttnnaammee option, as spec-
+     ified in some versions of the DHCP-DNS Interaction draft, that hostname
+     is recorded using the cclliieenntt--hhoossttnnaammee statement.
+
+           cclliieenntt--hhoossttnnaammee _"_h_o_s_t_n_a_m_e_";
+
+     If the client sends its hostname using the HHoossttnnaammee option, as Windows 95
+     does, it is recorded using the hhoossttnnaammee statement.
+
+           hhoossttnnaammee _"_h_o_s_t_n_a_m_e_";
+
+     The DHCP server may determine that a lease has been misused in some way,
+     either because a client that has been assigned a lease NAKs it, or be-
+     cause the server's own attempt to see if an address is in use prior to
+     reusing it reveals that the address is in fact already in use.  In that
+     case, the aabbaannddoonneedd statement will be used to indicate that the lease
+     should not be reassigned.
+
+           aabbaannddoonneedd;
+
+     Abandoned leases are reclaimed automatically.  When a client asks for a
+     new address, and the server finds that there are no new addresses, it
+     checks to see if there are any abandoned leases, and allocates the least
+     recently abandoned lease.  The standard mechanisms for checking for lease
+     address conflicts are still followed, so if the abandoned lease's IP ad-
+     dress is still in use, it will be reabandoned.
+
+     If a client _r_e_q_u_e_s_t_s an abandoned address, the server assumes that the
+     reason the address was abandoned was that the lease file was corrupted,
+     and that the client is the machine that responded when the lease was
+     probed, causing it to be abandoned.  In that case, the address is immedi-
+     ately assigned to the client.
+
+FFIILLEESS
+     /var/db/dhcpd.leases
+     /var/db/dhcpd.leases~
+
+SSEEEE AALLSSOO
+     dhcp-options(5), dhcpd.conf(5), dhcpd(8)
+
+     RFC 2132, RFC 2131.
+
+AAUUTTHHOORRSS
+     dhcpd(8) was written by Ted Lemon <mellon@vix.com> under a contract with
+     Vixie Labs.  Funding for this project was provided by the Internet Soft-
+     ware Corporation.  Information about the Internet Software Consortium can
+     be found at _h_t_t_p_:_/_/_w_w_w_._i_s_c_._o_r_g_/_i_s_c.
+
+OpenBSD 3.5                     January 1, 1997                              2
