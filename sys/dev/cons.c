@@ -1,4 +1,4 @@
-/*	$OpenBSD: cons.c,v 1.11 2003/06/02 23:28:01 millert Exp $	*/
+/*	$OpenBSD: cons.c,v 1.12 2003/06/16 18:44:11 millert Exp $	*/
 /*	$NetBSD: cons.c,v 1.30 1996/04/08 19:57:30 jonathan Exp $	*/
 
 /*
@@ -229,12 +229,17 @@ cnkqfilter(dev, kn)
 	dev_t dev;
 	struct knote *kn;
 {
-	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
-		return 0;
-	if (cn_tab == NULL)
-		return (1);
 
-	dev = cn_tab->cn_dev;
+	/*
+	 * Redirect output, if that's appropriate.
+	 * If there's no real console, return 1.
+	 */
+	if (constty != NULL && (cn_tab == NULL || cn_tab->cn_pri != CN_REMOTE))
+		dev = constty->t_dev;
+	else if (cn_tab == NULL)
+		return (1);
+	else
+		dev = cn_tab->cn_dev;
 	if (cdevsw[major(dev)].d_type & D_KQFILTER)
 		return ((*cdevsw[major(dev)].d_kqfilter)(dev, kn));
 	return (1);
@@ -297,4 +302,3 @@ cnbell(pitch, period, volume)
 
 	(*cn_tab->cn_bell)(cn_tab->cn_dev, pitch, period, volume);
 }
-
