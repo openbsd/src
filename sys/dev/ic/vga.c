@@ -1,4 +1,4 @@
-/*	$OpenBSD: vga.c,v 1.4 1997/07/10 19:08:28 kstailey Exp $	*/
+/*	$OpenBSD: vga.c,v 1.5 1997/07/31 04:03:43 kstailey Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -220,7 +220,6 @@ vgaioctl(v, cmd, data, flag, p)
 	int flag;
 	struct proc *p;
 {
-
 	/* XXX */
 	return -1;
 }
@@ -231,7 +230,6 @@ vgammap(v, offset, prot)
 	off_t offset;
 	int prot;
 {
-
 	/* XXX */
 	return -1;
 }
@@ -290,8 +288,6 @@ vga_putstr(id, row, col, cp, len)
 	}
 }
 
-/* be careful not to call bus_space_copy_2() with overlapping regions */
-
 void
 vga_copycols(id, row, srccol, dstcol, ncols)
 	void *id;
@@ -303,19 +299,8 @@ vga_copycols(id, row, srccol, dstcol, ncols)
 	srcoff = (row * vc->vc_ncol + srccol) * 2;
 	dstoff = (row * vc->vc_ncol + dstcol) * 2;
 
-	if (ncols == 0 || srccol == dstcol)
-		return;
-
-	if (srccol < dstcol && srccol + ncols > dstcol) {
-		int scol, dcol;
-
-		for (scol = srccol + ncols - 1, dcol = dstcol + ncols - 1;
-		     scol >= srccol; scol--, dcol--) {
-			vga_copycols(id, row, scol, dcol, 1);
-		}
-	} else
-		bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh,
-		    dstoff, ncols);
+	bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh, dstoff,
+	    ncols);
 }
 
 void
@@ -334,8 +319,6 @@ vga_erasecols(id, row, startcol, ncols)
 	bus_space_set_region_2(vc->vc_memt, vc->vc_memh, off, val, ncols);
 }
 
-/* be careful not to call bus_space_copy_2() with overlapping regions */
-
 void
 vga_copyrows(id, srcrow, dstrow, nrows)
 	void *id;
@@ -347,19 +330,8 @@ vga_copyrows(id, srcrow, dstrow, nrows)
 	srcoff = (srcrow * vc->vc_ncol + 0) * 2;
 	dstoff = (dstrow * vc->vc_ncol + 0) * 2;
 
-	if (nrows == 0 || srcrow == dstrow)
-		return;
-
-	if (srcrow < dstrow && srcrow + nrows > dstrow) {
-		int srow, drow;
-
-		for (srow = srcrow + nrows - 1, drow = dstrow + nrows - 1;
-		     srow >= srcrow; srow--, drow--) {
-			vga_copyrows(id, srow, drow, 1);
-		}
-	} else
-		bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff,
-			 vc->vc_memh, dstoff, nrows * vc->vc_ncol);
+	bus_space_copy_2(vc->vc_memt, vc->vc_memh, srcoff, vc->vc_memh, dstoff,
+	    nrows * vc->vc_ncol);
 }
 
 void
