@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.14 2001/07/11 09:21:15 hin Exp $
+# $OpenBSD: Makefile,v 1.15 2001/07/11 09:36:05 hin Exp $
 
 KRBDEPTH=../..
 .include <${.CURDIR}/../../Makefile.inc>
@@ -230,7 +230,6 @@ SRCS=	add_et_list.c \
 # These are files in libroken that are needed in libkrb5 to make it independant
 # from libroken.
 SRCS+=	base64.c		\
-	bswap.c			\
 	issuid.c		\
 	getaddrinfo_hostspec.c	\
 	getarg.c		\

@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.4 2001/06/23 00:17:45 hin Exp $
+# $OpenBSD: Makefile,v 1.5 2001/07/11 09:36:05 hin Exp $
 
 LIB	= roken
 
@@ -13,7 +13,6 @@ test:
 CFLAGS	+= -I.
 
 SRCS=	base64.c		\
-	bswap.c			\
 	concat.c		\
 	emalloc.c		\
 	eread.c			\

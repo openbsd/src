@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  */
 
-/* $Id: roken.h,v 1.4 2001/06/27 15:22:42 hin Exp $ */
+/* $Id: roken.h,v 1.5 2001/07/11 09:36:05 hin Exp $ */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -138,9 +138,8 @@ const char *get_default_username (void);
 
 void pidfile (const char*);
 
-unsigned int bswap32(unsigned int);
-
-unsigned short bswap16(unsigned short);
+#define bswap32 swap32
+#define bswap16 swap16
 
 
 time_t tm2time (struct tm tm, int local);
