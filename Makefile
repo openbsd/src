@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.69 2001/06/26 18:00:16 brad Exp $
+#	$OpenBSD: Makefile,v 1.70 2001/08/31 10:54:59 art Exp $
 
 #
 # For more information on building in tricky environments, please see
@@ -114,11 +114,16 @@ CROSSENV=	AR=${CROSSDIR}/usr/bin/ar AS=${CROSSDIR}/usr/bin/as \
 		HOSTCC=cc
 CROSSPATH=	${PATH}:${CROSSDIR}/usr/bin
 
+.if (${TARGET} == "sparc64")
+CROSSENV+= CPPFLAGS=-D__arch64__
+CPPFLAGS=-D__arch64__
+.endif
+
 cross-helpers:
 	@-mkdir -p ${CROSSDIR}
 	echo _MACHINE_ARCH | \
 	    cat ${.CURDIR}/sys/arch/${TARGET}/include/param.h - | \
-	    ${CPP} -E -I${.CURDIR}/sys/arch | \
+	    ${CPP} ${CPPFLAGS} -E -I${.CURDIR}/sys/arch | \
 	    sed -n '$$p' >${CROSSDIR}/TARGET_ARCH
 	eval `grep '^osr=' sys/conf/newvers.sh`; \
 	   sed "s/\$$/-unknown-openbsd$$osr/" ${CROSSDIR}/TARGET_ARCH > \
@@ -154,7 +159,8 @@ cross-includes:	cross-dirs
 	    ${MAKE} DESTDIR=${CROSSDIR} includes
 
 .if ${TARGET} == "powerpc" || ${TARGET} == "alpha" || ${TARGET} == "arc" || \
-    ${TARGET} == "pmax" || ${TARGET} == "wgrisc" || ${TARGET} == "hppa"
+    ${TARGET} == "pmax" || ${TARGET} == "wgrisc" || ${TARGET} == "hppa" || \
+    ${TARGET} == "sparc64"
 cross-binutils: cross-binutils-new
 .else
 cross-binutils: cross-binutils-old
