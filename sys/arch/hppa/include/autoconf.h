@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.h,v 1.6 1999/02/25 17:28:58 mickey Exp $	*/
+/*	$OpenBSD: autoconf.h,v 1.7 1999/04/20 19:52:20 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998 Michael Shalayeff
@@ -46,17 +46,9 @@ struct confargs {
 
 #define	hppacf_irq	cf_loc[0]
 
-/* this is used for hppa_knownboards table
- * describing known to this port boards
- */
-struct hppa_board_info {
-	int	bi_id;
-	char	*bi_label;
-	char	*bi_name;
-};
-
 /* this is used for hppa_knownmodules table
- * describing known to this port modules
+ * describing known to this port modules,
+ * system boards, cpus, fpus and busses
  */
 struct hppa_mod_info {
 	int	mi_type;
