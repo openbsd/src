@@ -1,4 +1,4 @@
-/* $OpenBSD: ip_blf.c,v 1.4 1999/02/23 05:04:27 angelos Exp $ */
+/* $OpenBSD: ip_blf.c,v 1.5 1999/02/23 05:14:46 angelos Exp $ */
 /*
  * Blowfish block cipher for OpenBSD
  * Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
@@ -579,5 +579,65 @@ blf_dec(c, data, blocks)
 	for (i = 0; i < blocks; i++) {
 		Blowfish_decipher(c, d, d + 1);
 		d += 2;
+	}
+}
+
+#if __STDC__
+void
+blf_ecb_encrypt(blf_ctx *c, u_int8_t *data, u_int32_t len)
+#else
+void
+blf_ecb_encrypt(c, data, len)
+     blf_ctx *c;
+     u_int8_t *data;
+     u_int32_t len;
+#endif
+{
+	u_int32_t l, r;
+	u_int32_t i;
+
+	for (i = 0; i < len; i += 8) {
+		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
+		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
+		Blowfish_encipher(c, &l, &r);
+		data[0] = l >> 24 & 0xff;
+		data[1] = l >> 16 & 0xff;
+		data[2] = l >> 8 & 0xff;
+		data[3] = l & 0xff;
+		data[4] = r >> 24 & 0xff;
+		data[5] = r >> 16 & 0xff;
+		data[6] = r >> 8 & 0xff;
+		data[7] = r & 0xff;
+		data += 8;
+	}
+}
+
+#if __STDC__
+void
+blf_ecb_decrypt(blf_ctx *c, u_int8_t *data, u_int32_t len)
+#else
+void
+blf_ecb_decrypt(c, data, len)
+     blf_ctx *c;
+     u_int8_t *data;
+     u_int32_t len;
+#endif
+{
+	u_int32_t l, r;
+	u_int32_t i;
+
+	for (i = 0; i < len; i += 8) {
+		l = data[0] << 24 | data[1] << 16 | data[2] << 8 | data[3];
+		r = data[4] << 24 | data[5] << 16 | data[6] << 8 | data[7];
+		Blowfish_decipher(c, &l, &r);
+		data[0] = l >> 24 & 0xff;
+		data[1] = l >> 16 & 0xff;
+		data[2] = l >> 8 & 0xff;
+		data[3] = l & 0xff;
+		data[4] = r >> 24 & 0xff;
+		data[5] = r >> 16 & 0xff;
+		data[6] = r >> 8 & 0xff;
+		data[7] = r & 0xff;
+		data += 8;
 	}
 }
