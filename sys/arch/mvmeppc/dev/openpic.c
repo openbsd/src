@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.17 2004/07/14 11:37:07 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.18 2004/11/19 22:10:24 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -103,7 +103,7 @@ void i8259_init(void);
 int i8259_intr(void);
 void i8259_enable_irq(int, int);
 void i8259_disable_irq(int);
-static __inline void i8259_eoi(int);
+void i8259_eoi(int);
 void *i8259_intr_establish(void *, int, int, int, int (*)(void *), void *,
     char *);
 void i8259_set_irq_mask(void);
@@ -818,7 +818,7 @@ i8259_enable_irq(irq, type)
 	}
 }
 
-static __inline void
+void
 i8259_eoi(int irq)
 {
 #ifdef DIAGNOSTIC
@@ -831,7 +831,14 @@ i8259_eoi(int irq)
 		outb(IO_ICU1, 0x60 | irq);
 	else {
 		outb(IO_ICU2, 0x60 | (irq - 8));
-		outb(IO_ICU1, 0x60 | IRQ_SLAVE);
+		/*
+		 * Do not ack on the master unless there are no
+		 * other interrupts pending on the slave
+		 * controller!
+		 */
+		outb(IO_ICU2, 0x0b);
+		if (inb(IO_ICU2) == 0)
+			outb(IO_ICU1, 0x60 | IRQ_SLAVE);
 	}
 }
 
@@ -897,6 +904,15 @@ i8259_intr(void)
 		 */
 		outb(IO_ICU2, 0x0c);
 		irq = (inb(IO_ICU2) & 7) + 8;
+		if (irq == 15) {
+			outb(IO_ICU2, 0x0b);
+			if ((inb(IO_ICU2) & 0x80) == 0) {
+#ifdef DIAGNOSTIC
+				printf("spurious interrupt on ICU2\n");
+#endif
+				return PIC_SPURIOUS;
+			}
+		}
 	} else if (irq == 7) {
 		/*
 		 * This may be a spurious interrupt
