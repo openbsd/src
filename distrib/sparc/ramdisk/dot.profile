@@ -1,4 +1,4 @@
-#	$OpenBSD: dot.profile,v 1.1 1997/05/14 20:44:37 deraadt Exp $
+#	$OpenBSD: dot.profile,v 1.2 1997/05/15 05:34:20 deraadt Exp $
 #	$NetBSD: dot.profile,v 1.1 1995/12/18 22:54:43 pk Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
@@ -59,8 +59,8 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount_ffs -o update /kern/rootdev /
 
 	# set up some sane defaults
-	echo 'erase ^H, werase ^W, kill ^U, intr ^C'
-	stty newcrt werase ^W intr ^C kill ^U erase ^H 9600
+	echo 'erase ^?, werase ^W, kill ^U, intr ^C'
+	stty newcrt werase ^W intr ^C kill ^U erase ^? 9600
 
 	# get the terminal type
 	_forceloop=""
