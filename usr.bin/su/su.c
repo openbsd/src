@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.37 2001/05/31 17:34:17 millert Exp $	*/
+/*	$OpenBSD: su.c,v 1.38 2001/05/31 18:41:16 millert Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.37 2001/05/31 17:34:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.38 2001/05/31 18:41:16 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -342,7 +342,7 @@ usage()
 	extern char *__progname;
 
 	fprintf(stderr, "usage: %s [-fKlm] [-a auth-type] %s ", __progname,
-	    ARGSTR, "[-c login-class] [login [shell arguments]]\n");
+	    "[-c login-class] [login [shell arguments]]\n");
 	exit(1);
 }
 
