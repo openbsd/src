@@ -29,6 +29,10 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * Note: Most of the code here was written by Theo de Raadt originally,
+ * ie. all the mechanics of probing for all cards on first call and then
+ * searching for matching devices on subsequent calls.
  */
 
 #include "bpfilter.h"
