@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.83 2004/10/19 10:21:49 espie Exp $
+# $OpenBSD: pkg_add,v 1.84 2004/10/20 11:38:57 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -269,7 +269,7 @@ sub install
 {
 	my ($self, $state) = @_;
 	$self->SUPER::install($state);
-	print "You may wish to add ", $self->fullname(), " to /etc/man.conf\n";
+	$state->print("You may wish to add ", $self->fullname(), " to /etc/man.conf\n");
 }
 
 package OpenBSD::PackingElement::Manpage;
@@ -420,7 +420,7 @@ if ($opt_x) {
 
 $opt_L = '/usr/local' unless defined $opt_L;
 
-my $state = {};
+my $state = new OpenBSD::Error;
 $state->{cache} = {};
 $state->{deptree} = {};
 $state->{do_faked} = 0;
@@ -793,7 +793,7 @@ sub really_add($$)
 	my $pkgname = $plist->pkgname();
 	$state->{archive} = $handle;
 	$state->{dir} = $dir;
-	$state->{pkgname} = $pkgname;
+	$state->set_pkgname($pkgname);
 
 	my $header = $pkgname;
 
@@ -979,6 +979,7 @@ if (defined $state->{display}) {
 	my $pager = $ENV{'PAGER'} || "/usr/bin/more";
 	System("$pager ".$state->{displayname});
 }
+$state->delayed_output();
 if ($dielater) {
 	die $dielater;
 }

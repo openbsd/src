@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingElement.pm,v 1.57 2004/10/18 10:51:03 espie Exp $
+# $OpenBSD: PackingElement.pm,v 1.58 2004/10/20 11:38:57 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -1173,23 +1173,13 @@ use OpenBSD::Error;
 sub prepare
 {
 	my ($self, $state) = @_;
-	unless (defined $state->{display}) {
-		require OpenBSD::Temp;
-		require File::Temp;
-
-		($state->{display}, $state->{displayname}) = File::Temp::tempfile("display.XXXXXXXXX", DIR => $OpenBSD::Temp::tempbase);
-	}
 	my $fname = $state->{dir}.$self->{name};
 	open(my $src, '<', $fname) or Fatal "Can't open $fname: $!";
-	my $dest = $state->{display};
-	local $_;
-	print $dest "+-------------- ", $state->{pkgname}, "\n";
 	while (<$src>) {
 		next if m/^\+\-+\s*$/;
 		s/^[+-] //;
-		print $dest "| $_";
+		$state->print($_);
 	}
-	print $dest "+-------------- ", $state->{pkgname}, "\n";
 }
 
 package OpenBSD::PackingElement::FDISPLAY;

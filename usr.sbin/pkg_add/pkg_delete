@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.60 2004/10/19 09:43:40 espie Exp $
+# $OpenBSD: pkg_delete,v 1.61 2004/10/20 11:38:57 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -415,7 +415,7 @@ sub cleanup
 {
 	my ($self, $state) = @_;
 	my $fullname = $state->{destdir}.$self->fullname();
-	print "You may wish to remove ", $fullname, " from man.conf\n";
+	$state->print("You may wish to remove ", $fullname, " from man.conf\n");
 	unlink("$fullname/whatis.db");
 }
 
@@ -637,7 +637,7 @@ if ($< && !$forced{nonroot}) {
 my %done;
 my $removed;
 
-my $state = {};
+my $state = new OpenBSD::Error;
 $state->{not} = $opt_n;
 $state->{quick} = $opt_q;
 $state->{verbose} = $opt_v >= 2;
@@ -742,6 +742,7 @@ eval {
 			print $opt_n ? "Pretending to delete " : "Deleting ", 
 			    "$pkgname\n";
 		}
+		$state->set_pkgname($pkgname);
 		$state->{pkgname_tolog} = $pkgname;
 		delete_package($pkgname, $state);
 		delete_installed($pkgname);
@@ -769,6 +770,7 @@ my $logname = OpenBSD::Logger::logname();
 if (defined $logname) {
 	print "Problems logged as $logname\n";
 }
+$state->delayed_output();
 if ($dielater) {
 	die $dielater;
 }

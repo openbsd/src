@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Error.pm,v 1.2 2004/10/04 12:12:30 espie Exp $
+# $OpenBSD: Error.pm,v 1.3 2004/10/20 11:38:57 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -66,6 +66,51 @@ sub Fatal
 sub Warn
 {
 	print STDERR @_;
+}
+
+sub new
+{
+	my $class = shift;
+	bless {messages=>{}}, $class;
+}
+
+sub set_pkgname
+{
+	my ($self, $pkgname) = @_;
+	$self->{pkgname} = $pkgname;
+	if (!defined $self->{messages}->{$pkgname}) {
+		$self->{messages}->{$pkgname} = [];
+	}
+	$self->{output} = $self->{messages}->{$pkgname};
+}
+
+sub warn
+{
+	&OpenBSD::Error::print;
+}
+
+sub fatal
+{
+	my $self = shift;
+	die ($self->{pkgname}, ':', @_);
+}
+
+sub print
+{
+	my $self = shift;
+	push(@{$self->{output}}, join('', @_));
+}
+
+sub delayed_output
+{
+	my $self = shift;
+	for my $pkg (sort keys %{$self->{messages}}) {
+		my $msgs = $self->{messages}->{$pkg};
+		if (@$msgs > 0) {
+			print "$pkg -------------------\n";
+			print @$msgs;
+		}
+	}
 }
 
 1;
