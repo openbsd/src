@@ -1,4 +1,4 @@
-/*	$OpenBSD: fsplit.c,v 1.9 2002/02/16 21:27:46 millert Exp $	*/
+/*	$OpenBSD: fsplit.c,v 1.10 2002/02/25 00:04:09 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -44,7 +44,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fsplit.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: fsplit.c,v 1.9 2002/02/16 21:27:46 millert Exp $";
+static char rcsid[] = "$OpenBSD: fsplit.c,v 1.10 2002/02/25 00:04:09 deraadt Exp $";
 #endif				/* not lint */
 
 #include <ctype.h>
@@ -273,10 +273,12 @@ get_name(name, letters)
 int
 getline()
 {
+	int c;
 	char *ptr;
 
 	for (ptr = buf; ptr < &buf[BSZ];) {
-		*ptr = getc(ifp);
+		c = getc(ifp);
+		*ptr = c;
 		if (feof(ifp))
 			return (-1);
 		if (*ptr++ == '\n') {
