@@ -1,4 +1,4 @@
-/*	$OpenBSD: midi.c,v 1.3 2000/01/03 19:38:13 fgsch Exp $	*/
+/*	$OpenBSD: midi.c,v 1.4 2000/05/24 13:44:18 ho Exp $	*/
 /*	$NetBSD: midi.c,v 1.10 1998/12/20 14:26:44 drochner Exp $	*/
 
 /*
@@ -746,7 +746,7 @@ midi_getinfo(dev, mi)
 
 int	midiprint __P((void *, const char *));
 
-void
+struct device *
 midi_attach_mi(mhwp, hdlp, dev)
 	struct midi_hw_if *mhwp;
 	void *hdlp;
@@ -757,13 +757,13 @@ midi_attach_mi(mhwp, hdlp, dev)
 #ifdef DIAGNOSTIC
 	if (mhwp == NULL) {
 		printf("midi_attach_mi: NULL\n");
-		return;
+		return 0;
 	}
 #endif
 	arg.type = AUDIODEV_TYPE_MIDI;
 	arg.hwif = mhwp;
 	arg.hdl = hdlp;
-	(void)config_found(dev, &arg, midiprint);
+	return config_found(dev, &arg, midiprint);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio_if.h,v 1.9 1999/07/23 13:18:04 niklas Exp $	*/
+/*	$OpenBSD: audio_if.h,v 1.10 2000/05/24 13:44:17 ho Exp $	*/
 /*	$NetBSD: audio_if.h,v 1.24 1998/01/10 14:07:25 tv Exp $	*/
 
 /*
@@ -136,8 +136,9 @@ struct audio_attach_args {
 #define AUDIODEV_TYPE_MPU	3
 
 /* Attach the MI driver(s) to the MD driver. */
-void	audio_attach_mi __P((struct audio_hw_if *, void *, struct device *));
-int	audioprint __P((void *, const char *));
+struct device *audio_attach_mi __P((struct audio_hw_if *, void *, 
+				    struct device *));
+int	       audioprint __P((void *, const char *));
 
 /* Device identity flags */
 #define SOUND_DEVICE		0
