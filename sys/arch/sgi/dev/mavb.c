@@ -1,3 +1,5 @@
+/*	$OpenBSD: mavb.c,v 1.2 2005/01/02 18:55:56 kettenis Exp $	*/
+
 /*
  * Copyright (c) 2004 Mark Kettenis
  *
@@ -98,10 +100,37 @@ int mavb_debug = ~MAVB_DEBUG_INTR;
 #define  AD1843_PDNO			0x4000
 #define  AD1843_REVISION_MASK		0x000f
 
+#define AD1843_ADC_SOURCE_GAIN		2
+#define  AD1843_LSS_MASK		0xe000
+#define  AD1843_LSS_SHIFT		13
+#define  AD1843_RSS_MASK		0x00e0
+#define  AD1843_RSS_SHIFT		5
+#define  AD1843_LMGE			0x1000
+#define  AD1843_RMGE			0x0010
+#define  AD1843_LIG_MASK		0x0f00
+#define  AD1843_LIG_SHIFT		8
+#define  AD1843_RIG_MASK		0x000f
+#define  AD1843_RIG_SHIFT		0
+
+#define AD1843_DAC2_TO_MIXER		3
+#define  AD1843_LD2MM			0x8000
+#define  AD1843_RD2MM			0x0080
+#define  AD1843_LD2M_MASK		0x1f00
+#define  AD1843_LD2M_SHIFT		8
+#define  AD1843_RD2M_MASK		0x001f
+#define  AD1843_RD2M_SHIFT		0
+
 #define AD1843_MISC_SETTINGS		8
-#define  AD1843_MPOM			0x0040
+#define  AD1843_MNMM			0x8000
+#define  AD1843_MNM_MASK		0x1f00
+#define  AD1843_MNM_SHIFT		8
+#define  AD1843_ALLMM			0x0080
+#define  AD1843_MNOM			0x0040
 #define  AD1843_HPOM			0x0020
-#define  AD1843_HSOM			0x0010
+#define  AD1843_HPOS			0x0010
+#define  AD1843_SUMM			0x0008
+#define  AD1843_DAC2T			0x0002
+#define  AD1843_DAC1T			0x0001
 
 #define AD1843_DAC1_ANALOG_GAIN		9
 #define  AD1843_LDA1GM			0x8000
@@ -134,8 +163,15 @@ int mavb_debug = ~MAVB_DEBUG_INTR;
 #define  AD1843_SCF			0x0080
 
 #define AD1843_CHANNEL_POWER_DOWN	27
+#define  AD1843_DFREE			0x8000
+#define  AD1843_DDMEN			0x1000
 #define  AD1843_DA2EN			0x0200
 #define  AD1843_DA1EN			0x0100
+#define  AD1843_ANAEN			0x0080
+#define  AD1843_HPEN			0x0040
+#define  AD1843_AAMEN			0x0010
+#define  AD1843_ADREN			0x0002
+#define  AD1843_ADLEN			0x0001
 
 #define AD1843_FUNDAMENTAL_SETTINGS	28
 #define  AD1843_PDNI			0x8000
@@ -152,8 +188,54 @@ typedef u_long ad1843_addr_t;
  * AD1843 Mixer.
  */
 
-#define AD1843_OUTPUT_CLASS	0
-#define AD1843_MASTER_LVL	1	/* DAC1 Analog Gain/Attenuation */
+enum {
+	AD1843_RECORD_CLASS,
+	AD1843_ADC_SOURCE,	/* ADC Source Select */
+	AD1843_ADC_GAIN,	/* ADC Input Gain */
+
+	AD1843_INPUT_CLASS,
+	AD1843_DAC1_GAIN,	/* DAC1 Analog/Digital Gain/Attenuation */
+	AD1843_DAC1_MUTE,	/* DAC1 Analog Mute */
+	AD1843_DAC2_GAIN,	/* DAC2 Mix Gain */
+	AD1843_AUX1_GAIN,	/* Auxilliary 1 Mix Gain */
+	AD1843_AUX2_GAIN,	/* Auxilliary 2 Mix Gain */
+	AD1843_AUX3_GAIN,	/* Auxilliary 3 Mix Gain */
+	AD1843_MIC_GAIN,	/* Microphone Mix Gain */
+	AD1843_MONO_GAIN,	/* Mono Mix Gain */
+	AD1843_DAC2_MUTE,	/* DAC2 Mix Mute */
+	AD1843_AUX1_MUTE,	/* Auxilliary 1 Mix Mute */
+	AD1843_AUX2_MUTE,	/* Auxilliary 2 Mix Mute */
+	AD1843_AUX3_MUTE,	/* Auxilliary 3 Mix Mute */
+	AD1843_MIC_MUTE,	/* Microphone Mix Mute */
+	AD1843_MONO_MUTE,	/* Mono Mix Mute */
+	AD1843_SUM_MUTE,	/* Sum Mute */
+
+	AD1843_OUTPUT_CLASS,
+	AD1843_MNO_MUTE,	/* Mono Output Mute */
+	AD1843_HPO_MUTE		/* Headphone Output Mute */
+};
+
+/* ADC Source Select.  The order matches the hardware bits.  */
+const char *ad1843_source[] = {
+	AudioNline,
+	AudioNmicrophone,
+	AudioNaux "1",
+	AudioNaux "2",
+	AudioNaux "3",
+	AudioNmono,
+	AudioNdac "1",
+	AudioNdac "2"
+};
+
+/* Mix Control.  The order matches the hardware register numbering.  */
+const char *ad1843_input[] = {
+	AudioNdac "2",		/* AD1843_DAC2__TO_MIXER */
+	AudioNaux "1",
+	AudioNaux "2",
+	AudioNaux "3",
+	AudioNmicrophone,
+	AudioNmono		/* AD1843_MISC_SETTINGS */
+};
 
 
 struct mavb_softc {
@@ -575,13 +657,31 @@ mavb_set_port(void *hdl, struct mixer_ctrl *mc)
 {
 	struct mavb_softc *sc = (struct mavb_softc *)hdl;
 	u_char left, right;
+	ad1843_addr_t reg;
 	u_int16_t value;
 
 	DPRINTF(1, ("%s: mavb_set_port: dev=%d\n", sc->sc_dev.dv_xname,
 	    mc->dev));
 
 	switch (mc->dev) {
-	case AD1843_MASTER_LVL:
+	case AD1843_ADC_SOURCE:
+		value = ad1843_reg_read(sc, AD1843_ADC_SOURCE_GAIN);
+		value &= ~(AD1843_LSS_MASK | AD1843_RSS_MASK);
+		value |= ((mc->un.ord << AD1843_LSS_SHIFT) & AD1843_LSS_MASK);
+		value |= ((mc->un.ord << AD1843_RSS_SHIFT) & AD1843_RSS_MASK);
+		ad1843_reg_write(sc, AD1843_ADC_SOURCE_GAIN, value);
+		break;
+	case AD1843_ADC_GAIN:
+		left = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+		right = mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+		value = ad1843_reg_read(sc, AD1843_ADC_SOURCE_GAIN);
+		value &= ~(AD1843_LIG_MASK | AD1843_RIG_MASK);
+		value |= ((left >> 4) << AD1843_LIG_SHIFT);
+		value |= ((right >> 4) << AD1843_RIG_SHIFT);
+		ad1843_reg_write(sc, AD1843_ADC_SOURCE_GAIN, value);
+		break;
+
+	case AD1843_DAC1_GAIN:
 		left = AUDIO_MAX_GAIN -
 		    mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
 		right = AUDIO_MAX_GAIN -
@@ -592,6 +692,82 @@ mavb_set_port(void *hdl, struct mixer_ctrl *mc)
 		value |= ((right >> 2) << AD1843_RDA1G_SHIFT);
 		ad1843_reg_write(sc, AD1843_DAC1_ANALOG_GAIN, value);
 		break;
+	case AD1843_DAC1_MUTE:
+		value = ad1843_reg_read(sc, AD1843_DAC1_ANALOG_GAIN);
+		if (mc->un.ord == 0)
+			value &= ~(AD1843_LDA1GM | AD1843_RDA1GM);
+		else
+			value |= (AD1843_LDA1GM | AD1843_RDA1GM);
+		ad1843_reg_write(sc, AD1843_DAC1_ANALOG_GAIN, value);
+		break;
+
+	case AD1843_DAC2_GAIN:
+	case AD1843_AUX1_GAIN:
+	case AD1843_AUX2_GAIN:
+	case AD1843_AUX3_GAIN:
+	case AD1843_MIC_GAIN:
+		left = AUDIO_MAX_GAIN -
+		    mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
+		right = AUDIO_MAX_GAIN -
+                    mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT];
+		reg = AD1843_DAC2_TO_MIXER + mc->dev - AD1843_DAC2_GAIN;
+		value = ad1843_reg_read(sc, reg);
+		value &= ~(AD1843_LD2M_MASK | AD1843_RD2M_MASK);
+		value |= ((left >> 3) << AD1843_LD2M_SHIFT);
+		value |= ((right >> 3) << AD1843_RD2M_SHIFT);
+		ad1843_reg_write(sc, reg, value);
+		break;
+	case AD1843_MONO_GAIN:
+		left = AUDIO_MAX_GAIN -
+		    mc->un.value.level[AUDIO_MIXER_LEVEL_MONO];
+		value = ad1843_reg_read(sc, AD1843_MISC_SETTINGS);
+		value &= ~AD1843_MNM_MASK;
+		value |= ((left >> 3) << AD1843_MNM_SHIFT);
+		ad1843_reg_write(sc, AD1843_MISC_SETTINGS, value);
+		break;
+	case AD1843_DAC2_MUTE:
+	case AD1843_AUX1_MUTE:
+	case AD1843_AUX2_MUTE:
+	case AD1843_AUX3_MUTE:
+	case AD1843_MIC_MUTE:
+	case AD1843_MONO_MUTE:	/* matches left channel */
+		reg = AD1843_DAC2_TO_MIXER + mc->dev - AD1843_DAC2_MUTE;
+		value = ad1843_reg_read(sc, reg);
+		if (mc->un.ord == 0)
+			value &= ~(AD1843_LD2MM | AD1843_RD2MM);
+		else
+			value |= (AD1843_LD2MM | AD1843_RD2MM);
+		ad1843_reg_write(sc, reg, value);
+		break;
+
+	case AD1843_SUM_MUTE:
+		value = ad1843_reg_read(sc, AD1843_MISC_SETTINGS);
+		if (mc->un.ord == 0)
+			value &= ~AD1843_SUMM;
+		else
+			value |= AD1843_SUMM;
+		ad1843_reg_write(sc, AD1843_MISC_SETTINGS, value);
+		break;
+		
+	case AD1843_MNO_MUTE:
+		value = ad1843_reg_read(sc, AD1843_MISC_SETTINGS);
+		if (mc->un.ord == 0)
+			value &= ~AD1843_MNOM;
+		else
+			value |= AD1843_MNOM;
+		ad1843_reg_write(sc, AD1843_MISC_SETTINGS, value);
+		break;
+		
+	case AD1843_HPO_MUTE:
+		value = ad1843_reg_read(sc, AD1843_MISC_SETTINGS);
+		if (mc->un.ord == 0)
+			value &= ~AD1843_HPOM;
+		else
+			value |= AD1843_HPOM;
+		ad1843_reg_write(sc, AD1843_MISC_SETTINGS, value);
+		value = ad1843_reg_read(sc, AD1843_MISC_SETTINGS);
+		break;
+
 	default:
 		return (EINVAL);
 	}
@@ -604,13 +780,28 @@ mavb_get_port(void *hdl, struct mixer_ctrl *mc)
 {
 	struct mavb_softc *sc = (struct mavb_softc *)hdl;
 	u_char left, right;
+	ad1843_addr_t reg;
 	u_int16_t value;
 
 	DPRINTF(1, ("%s: mavb_get_port: dev=%d\n", sc->sc_dev.dv_xname,
 	    mc->dev));
 
 	switch (mc->dev) {
-	case AD1843_MASTER_LVL:
+	case AD1843_ADC_SOURCE:
+		value = ad1843_reg_read(sc, AD1843_ADC_SOURCE_GAIN);
+		mc->un.ord = (value & AD1843_LSS_MASK) >> AD1843_LSS_SHIFT;
+		break;
+	case AD1843_ADC_GAIN:
+		value = ad1843_reg_read(sc, AD1843_ADC_SOURCE_GAIN);
+		left = (value & AD1843_LIG_MASK) >> AD1843_LIG_SHIFT;
+		right = (value & AD1843_RIG_MASK) >> AD1843_RIG_SHIFT;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+		    (left << 4) | left;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+		    (right << 2) | right;
+		break;
+
+	case AD1843_DAC1_GAIN:
 		value = ad1843_reg_read(sc, AD1843_DAC1_ANALOG_GAIN);
 		left = (value & AD1843_LDA1G_MASK) >> AD1843_LDA1G_SHIFT;
 		right = (value & AD1843_RDA1G_MASK) >> AD1843_RDA1G_SHIFT;
@@ -619,6 +810,60 @@ mavb_get_port(void *hdl, struct mixer_ctrl *mc)
 		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
 		    AUDIO_MAX_GAIN - (right << 2);
 		break;
+	case AD1843_DAC1_MUTE:
+		value = ad1843_reg_read(sc, AD1843_DAC1_ANALOG_GAIN);
+		mc->un.ord = (value & AD1843_LDA1GM) ? 1 : 0;
+		break;
+
+	case AD1843_DAC2_GAIN:
+	case AD1843_AUX1_GAIN:
+	case AD1843_AUX2_GAIN:
+	case AD1843_AUX3_GAIN:
+	case AD1843_MIC_GAIN:
+		reg = AD1843_DAC2_TO_MIXER + mc->dev - AD1843_DAC2_GAIN;
+		value = ad1843_reg_read(sc, reg);
+		left = (value & AD1843_LD2M_MASK) >> AD1843_LD2M_SHIFT;
+		right = (value & AD1843_RD2M_MASK) >> AD1843_RD2M_SHIFT;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] =
+		    AUDIO_MAX_GAIN - (left << 3);
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] =
+		    AUDIO_MAX_GAIN - (right << 3);
+		break;
+	case AD1843_MONO_GAIN:
+		if (mc->un.value.num_channels != 1)
+			return (EINVAL);
+
+		value = ad1843_reg_read(sc, AD1843_MISC_SETTINGS);
+		left = (value & AD1843_MNM_MASK) >> AD1843_MNM_SHIFT;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_MONO] =
+		    AUDIO_MAX_GAIN - (left << 3);
+		break;
+	case AD1843_DAC2_MUTE:
+	case AD1843_AUX1_MUTE:
+	case AD1843_AUX2_MUTE:
+	case AD1843_AUX3_MUTE:
+	case AD1843_MIC_MUTE:
+	case AD1843_MONO_MUTE:	/* matches left channel */
+		reg = AD1843_DAC2_TO_MIXER + mc->dev - AD1843_DAC2_MUTE;
+		value = ad1843_reg_read(sc, reg);
+		mc->un.ord = (value & AD1843_LD2MM) ? 1 : 0;
+		break;
+
+	case AD1843_SUM_MUTE:
+		value = ad1843_reg_read(sc, AD1843_MISC_SETTINGS);
+		mc->un.ord = (value & AD1843_SUMM) ? 1 : 0;
+		break;
+		
+	case AD1843_MNO_MUTE:
+		value = ad1843_reg_read(sc, AD1843_MISC_SETTINGS);
+		mc->un.ord = (value & AD1843_MNOM) ? 1 : 0;
+		break;
+		
+	case AD1843_HPO_MUTE:
+		value = ad1843_reg_read(sc, AD1843_MISC_SETTINGS);
+		mc->un.ord = (value & AD1843_HPOM) ? 1 : 0;
+		break;
+		
 	default:
 		return (EINVAL);
 	}
@@ -629,22 +874,154 @@ mavb_get_port(void *hdl, struct mixer_ctrl *mc)
 int
 mavb_query_devinfo(void *hdl, struct mixer_devinfo *di)
 {
+	int i;
+
 	di->prev = di->next = AUDIO_MIXER_LAST;
 
 	switch (di->index) {
+	case AD1843_RECORD_CLASS:
+		di->type = AUDIO_MIXER_CLASS;
+		di->mixer_class = AD1843_RECORD_CLASS;
+		strlcpy(di->label.name, AudioCrecord, sizeof di->label.name);
+		break;
+
+	case AD1843_ADC_SOURCE:
+		di->type = AUDIO_MIXER_ENUM;
+		di->mixer_class = AD1843_RECORD_CLASS;
+		di->next = AD1843_ADC_GAIN;
+		strlcpy(di->label.name, AudioNsource, sizeof di->label.name);
+		di->un.e.num_mem =
+			sizeof ad1843_source / sizeof ad1843_source[1];
+		for (i = 0; i < di->un.e.num_mem; i++) {
+			strlcpy(di->un.e.member[i].label.name,
+                            ad1843_source[i],
+			    sizeof di->un.e.member[0].label.name);
+			di->un.e.member[i].ord = i;
+		}
+		break;
+	case AD1843_ADC_GAIN:
+		di->type = AUDIO_MIXER_VALUE;
+		di->mixer_class = AD1843_RECORD_CLASS;
+		di->prev = AD1843_ADC_SOURCE;
+		strlcpy(di->label.name, AudioNvolume, sizeof di->label.name);
+		di->un.v.num_channels = 2;
+		strlcpy(di->un.v.units.name, AudioNvolume,
+		    sizeof di->un.v.units.name);
+		break;
+
+	case AD1843_INPUT_CLASS:
+		di->type = AUDIO_MIXER_CLASS;
+		di->mixer_class = AD1843_INPUT_CLASS;
+		strlcpy(di->label.name, AudioCinputs, sizeof di->label.name);
+		break;
+
+	case AD1843_DAC1_GAIN:
+		di->type = AUDIO_MIXER_VALUE;
+		di->mixer_class = AD1843_INPUT_CLASS;
+		di->next = AD1843_DAC1_MUTE;
+		strlcpy(di->label.name, AudioNmaster, sizeof di->label.name);
+		di->un.v.num_channels = 2;
+		strlcpy(di->un.v.units.name, AudioNvolume,
+		    sizeof di->un.v.units.name);
+		break;
+	case AD1843_DAC1_MUTE:
+		di->type = AUDIO_MIXER_ENUM;
+		di->mixer_class = AD1843_INPUT_CLASS;
+		di->prev = AD1843_DAC1_GAIN;
+		strlcpy(di->label.name, AudioNmute, sizeof di->label.name);
+		di->un.e.num_mem = 2;
+		strlcpy(di->un.e.member[0].label.name, AudioNoff,
+		    sizeof di->un.e.member[0].label.name);
+		di->un.e.member[0].ord = 0;
+		strlcpy(di->un.e.member[1].label.name, AudioNon,
+		    sizeof di->un.e.member[1].label.name);
+		di->un.e.member[1].ord = 1;
+		break;
+
+	case AD1843_DAC2_GAIN:
+	case AD1843_AUX1_GAIN:
+	case AD1843_AUX2_GAIN:
+	case AD1843_AUX3_GAIN:
+	case AD1843_MIC_GAIN:
+	case AD1843_MONO_GAIN:
+		di->type = AUDIO_MIXER_VALUE;
+		di->mixer_class = AD1843_INPUT_CLASS;
+		di->next = di->index + AD1843_DAC2_MUTE - AD1843_DAC2_GAIN;
+		strlcpy(di->label.name,
+                    ad1843_input[di->index - AD1843_DAC2_GAIN],
+		    sizeof di->label.name);
+		if (di->index == AD1843_MONO_GAIN)
+			di->un.v.num_channels = 1;
+		else
+			di->un.v.num_channels = 2;
+		strlcpy(di->un.v.units.name, AudioNvolume,
+		    sizeof di->un.v.units.name);
+		break;
+	case AD1843_DAC2_MUTE:
+	case AD1843_AUX1_MUTE:
+	case AD1843_AUX2_MUTE:
+	case AD1843_AUX3_MUTE:
+	case AD1843_MIC_MUTE:
+	case AD1843_MONO_MUTE:
+		di->type = AUDIO_MIXER_ENUM;
+		di->mixer_class = AD1843_INPUT_CLASS;
+		di->prev = di->index + AD1843_DAC2_GAIN - AD1843_DAC2_MUTE;
+		strlcpy(di->label.name, AudioNmute, sizeof di->label.name);
+		di->un.e.num_mem = 2;
+		strlcpy(di->un.e.member[0].label.name, AudioNoff,
+		    sizeof di->un.e.member[0].label.name);
+		di->un.e.member[0].ord = 0;
+		strlcpy(di->un.e.member[1].label.name, AudioNon,
+		    sizeof di->un.e.member[1].label.name);
+		di->un.e.member[1].ord = 1;
+		break;
+
+	case AD1843_SUM_MUTE:
+		di->type = AUDIO_MIXER_ENUM;
+		di->mixer_class = AD1843_INPUT_CLASS;
+		strlcpy(di->label.name, "sum." AudioNmute,
+		    sizeof di->label.name);
+		di->un.e.num_mem = 2;
+		strlcpy(di->un.e.member[0].label.name, AudioNoff,
+		    sizeof di->un.e.member[0].label.name);
+		di->un.e.member[0].ord = 0;
+		strlcpy(di->un.e.member[1].label.name, AudioNon,
+		    sizeof di->un.e.member[1].label.name);
+		di->un.e.member[1].ord = 1;
+		break;
+
 	case AD1843_OUTPUT_CLASS:
 		di->type = AUDIO_MIXER_CLASS;
 		di->mixer_class = AD1843_OUTPUT_CLASS;
 		strlcpy(di->label.name, AudioCoutputs, sizeof di->label.name);
 		break;
 
-	case AD1843_MASTER_LVL:
-		di->type = AUDIO_MIXER_VALUE;
+	case AD1843_MNO_MUTE:
+		di->type = AUDIO_MIXER_ENUM;
 		di->mixer_class = AD1843_OUTPUT_CLASS;
-		strlcpy(di->label.name, AudioNmaster, sizeof di->label.name);
-		di->un.v.num_channels = 2;
-		strlcpy(di->un.v.units.name, AudioNvolume,
-			sizeof di->un.v.units.name);
+		strlcpy(di->label.name, AudioNmono "." AudioNmute,
+		    sizeof di->label.name);
+		di->un.e.num_mem = 2;
+		strlcpy(di->un.e.member[0].label.name, AudioNoff,
+		    sizeof di->un.e.member[0].label.name);
+		di->un.e.member[0].ord = 0;
+		strlcpy(di->un.e.member[1].label.name, AudioNon,
+		    sizeof di->un.e.member[1].label.name);
+		di->un.e.member[1].ord = 1;
+		break;
+
+	case AD1843_HPO_MUTE:
+		di->type = AUDIO_MIXER_ENUM;
+		di->mixer_class = AD1843_OUTPUT_CLASS;
+		strlcpy(di->label.name, AudioNheadphone "." AudioNmute,
+		    sizeof di->label.name);
+		di->un.e.num_mem = 2;
+		strlcpy(di->un.e.member[0].label.name, AudioNoff,
+		    sizeof di->un.e.member[0].label.name);
+		di->un.e.member[0].ord = 0;
+		strlcpy(di->un.e.member[1].label.name, AudioNon,
+		    sizeof di->un.e.member[1].label.name);
+		di->un.e.member[1].ord = 1;
 		break;
 
 	default:
@@ -921,7 +1298,8 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
 
 	/* 7. Enable conversion resources.  */
 	value = ad1843_reg_read(sc, AD1843_CHANNEL_POWER_DOWN);
-	ad1843_reg_write(sc, AD1843_CHANNEL_POWER_DOWN, value | AD1843_DA1EN);
+	ad1843_reg_write(sc, AD1843_CHANNEL_POWER_DOWN,
+	     value | (AD1843_DA1EN | AD1843_AAMEN));
 
 	/* 8. Configure conversion resources while they are enabled.  */
 	value = ad1843_reg_read(sc, AD1843_DAC1_ANALOG_GAIN);
@@ -932,7 +1310,7 @@ mavb_attach(struct device *parent, struct device *self, void *aux)
             value & ~(AD1843_LDA1AM | AD1843_RDA1AM));
 	value = ad1843_reg_read(sc, AD1843_MISC_SETTINGS);
 	ad1843_reg_write(sc, AD1843_MISC_SETTINGS,
-            value & ~(AD1843_HPOM | AD1843_MPOM));
+            value & ~(AD1843_HPOM | AD1843_MNOM));
 
 	value = ad1843_reg_read(sc, AD1843_CODEC_STATUS);
 	printf(": AD1843 rev %d\n", (u_int)value & AD1843_REVISION_MASK);
@@ -970,8 +1348,8 @@ ad1843_reg_write(struct mavb_softc *sc, ad1843_addr_t addr, u_int16_t value)
 void
 ad1843_dump_regs(struct mavb_softc *sc)
 {
-  u_int16_t addr;
+	u_int16_t addr;
 
-  for (addr = 0; addr < AD1843_NREGS; addr++)
-    printf ("%d: 0x%04x\n", (int)addr, ad1843_reg_read(sc, addr));
+	for (addr = 0; addr < AD1843_NREGS; addr++)
+		printf("%d: 0x%04x\n", addr, ad1843_reg_read(sc, addr));
 }
