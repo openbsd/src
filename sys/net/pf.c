@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.253 2002/10/07 14:53:00 dhartmei Exp $ */
+/*	$OpenBSD: pf.c,v 1.254 2002/10/08 05:12:08 kjc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -77,6 +77,10 @@
 #include <netinet/icmp6.h>
 #endif /* INET6 */
 
+#ifdef ALTQ
+#include <altq/if_altq.h>
+#endif
+
 
 #define DPFPRINTF(n, x)	if (pf_status.debug >= (n)) printf x
 struct pf_state_tree;
@@ -94,6 +98,8 @@ struct pf_binatqueue	*pf_binats_active;
 struct pf_binatqueue	*pf_binats_inactive;
 struct pf_rdrqueue	*pf_rdrs_active;
 struct pf_rdrqueue	*pf_rdrs_inactive;
+struct pf_altqqueue	*pf_altqs_active;
+struct pf_altqqueue	*pf_altqs_inactive;
 struct pf_status	 pf_status;
 struct ifnet		*status_ifp;
 
@@ -105,6 +111,8 @@ u_int32_t		 ticket_binats_active;
 u_int32_t		 ticket_binats_inactive;
 u_int32_t		 ticket_rdrs_active;
 u_int32_t		 ticket_rdrs_inactive;
+u_int32_t		 ticket_altqs_active;
+u_int32_t		 ticket_altqs_inactive;
 
 /* Timeouts */
 int			 pftm_tcp_first_packet = 120;	/* First TCP packet */
@@ -142,6 +150,7 @@ int			*pftm_timeouts[PFTM_MAX] = { &pftm_tcp_first_packet,
 
 struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl, pf_sport_pl;
 struct pool		 pf_rdr_pl, pf_state_pl, pf_binat_pl, pf_addr_pl;
+struct pool		 pf_altq_pl;
 
 void			 pf_addrcpy(struct pf_addr *, struct pf_addr *,
 			    u_int8_t);
@@ -266,6 +275,7 @@ struct pf_rulequeue		 pf_rules[2];
 struct pf_natqueue		 pf_nats[2];
 struct pf_binatqueue		 pf_binats[2];
 struct pf_rdrqueue		 pf_rdrs[2];
+struct pf_altqqueue		 pf_altqs[2];
 
 static __inline int
 pf_state_compare(struct pf_tree_node *a, struct pf_tree_node *b)
@@ -4002,6 +4012,23 @@ done:
 		DPFPRINTF(PF_DEBUG_MISC,
 		    ("pf: dropping packet with ip options\n"));
 	}
+
+#ifdef ALTQ
+	if (action != PF_DROP && r && r->qid) {
+		struct m_tag *mtag;
+		struct altq_tag *atag;
+
+		mtag = m_tag_get(PACKET_TAG_PF_QID, sizeof(*atag), M_NOWAIT);
+		if (mtag != NULL) {
+			atag = (struct altq_tag *)(mtag + 1);
+			atag->qid = r->qid;
+			/* add hints for ecn */
+			atag->af = AF_INET;
+			atag->hdr = h;
+			m_tag_prepend(m, mtag);
+		}
+	}
+#endif
 
 	if (log) {
 		if (r == NULL) {

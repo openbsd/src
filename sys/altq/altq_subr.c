@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_subr.c,v 1.7 2002/07/25 20:42:53 deraadt Exp $	*/
+/*	$OpenBSD: altq_subr.c,v 1.8 2002/10/08 05:12:08 kjc Exp $	*/
 /*	$KAME: altq_subr.c,v 1.11 2002/01/11 08:11:49 kjc Exp $	*/
 
 /*
@@ -54,6 +54,7 @@
 #include <netinet/tcp.h>
 #include <netinet/udp.h>
 
+#include <net/pfvar.h>
 #include <altq/altq.h>
 #include <altq/altq_conf.h>
 
@@ -416,6 +417,181 @@ tbr_get(ifq, profile)
 		profile->depth = (u_int)TBR_UNSCALE(tbr->tbr_depth);
 	}
 	return (0);
+}
+
+/*
+ * attach a discipline to the interface.  if one already exists, it is
+ * overridden.
+ */
+int
+altq_pfattach(struct pf_altq *a)
+{
+	struct ifnet *ifp;
+	struct tb_profile tb;
+	int s, error = 0;
+
+	switch (a->scheduler) {
+	case ALTQT_NONE:
+		break;
+	case ALTQT_CBQ:
+#if 0 /* notyet */
+		error = cbq_pfattach(a);
+#endif
+		break;
+	default:
+		error = EINVAL;
+	}
+
+	/* if altq is already enabled, reset set tokenbucket regulator */
+	if (error == 0 && (ifp = ifunit(a->ifname)) != NULL &&
+	    ALTQ_IS_ENABLED(&ifp->if_snd)) {
+		tb.rate = a->ifbandwidth;
+		tb.depth = a->tbrsize;
+		s = splimp();
+		error = tbr_set(&ifp->if_snd, &tb);
+		splx(s);
+	}
+
+	return (error);
+}
+
+/*
+ * detach a discipline from the interface.
+ * it is possible that the discipline was already overridden by another
+ * discipline.
+ */
+int
+altq_pfdetach(struct pf_altq *a)
+{
+	struct ifnet *ifp;
+	int s, error = 0;
+	
+	if ((ifp = ifunit(a->ifname)) == NULL)
+		return (EINVAL);
+
+	/* if this discipline is no longer referenced, just return */
+	if (a->altq_disc == NULL || a->altq_disc != ifp->if_snd.altq_disc)
+		return (0);
+
+	s = splimp();
+	if (ALTQ_IS_ENABLED(&ifp->if_snd))
+		error = altq_disable(&ifp->if_snd);
+	if (error == 0)
+		error = altq_detach(&ifp->if_snd);
+	splx(s);
+
+	return (error);
+}
+
+/*
+ * add a discipline or a queue
+ */
+int
+altq_add(struct pf_altq *a)
+{
+	int error = 0;
+
+	if (a->qname[0] != 0)
+		return (altq_add_queue(a));
+
+	switch (a->scheduler) {
+	case ALTQT_CBQ:
+#if 0 /* notyet */
+		error = cbq_add_altq(a);
+#endif
+		break;
+	default:
+		error = EINVAL;
+	}
+
+	return (error);
+}
+
+/*
+ * remove a discipline or a queue
+ */
+int
+altq_remove(struct pf_altq *a)
+{
+	int error = 0;
+
+	if (a->qname[0] != 0)
+		return (altq_remove_queue(a));
+
+	switch (a->scheduler) {
+	case ALTQT_CBQ:
+#if 0 /* notyet */
+		error = cbq_remove_altq(a);
+#endif
+		break;
+	default:
+		error = EINVAL;
+	}
+
+	return (error);
+}
+
+/*
+ * add a queue to the discipline
+ */
+int
+altq_add_queue(struct pf_altq *a)
+{
+	int error = 0;
+
+	switch (a->scheduler) {
+	case ALTQT_CBQ:
+#if 0 /* notyet */
+		error = cbq_add_queue(a);
+#endif
+		break;
+	default:
+		error = EINVAL;
+	}
+
+	return (error);
+}
+
+/*
+ * remove a queue from the discipline
+ */
+int
+altq_remove_queue(struct pf_altq *a)
+{
+	int error = 0;
+
+	switch (a->scheduler) {
+	case ALTQT_CBQ:
+#if 0 /* notyet */
+		error = cbq_remove_queue(a);
+#endif
+		break;
+	default:
+		error = EINVAL;
+	}
+
+	return (error);
+}
+
+/*
+ * get queue statistics
+ */
+int
+altq_getqstats(struct pf_altq *a, void *ubuf, int *nbytes)
+{
+	int error = 0;
+
+	switch (a->scheduler) {
+	case ALTQT_CBQ:
+#if 0 /* notyet */
+		error = cbq_getqstats(a, ubuf, nbytes);
+#endif
+		break;
+	default:
+		error = EINVAL;
+	}
+
+	return (error);
 }
 
 

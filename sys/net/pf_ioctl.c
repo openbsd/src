@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.9 2002/10/07 14:53:00 dhartmei Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.10 2002/10/08 05:12:08 kjc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -63,6 +63,10 @@
 #include <netinet/in_pcb.h>
 #endif /* INET6 */
 
+#ifdef ALTQ
+#include <altq/altq.h>
+#endif
+
 void			 pfattach(int);
 int			 pfopen(dev_t, int, int, struct proc *);
 int			 pfclose(dev_t, int, int, struct proc *);
@@ -89,6 +93,8 @@ pfattach(int num)
 	    NULL);
 	pool_init(&pf_addr_pl, sizeof(struct pf_addr_dyn), 0, 0, 0, "pfaddr",
 	    NULL);
+	pool_init(&pf_altq_pl, sizeof(struct pf_altq), 0, 0, 0, "pfaltqpl",
+	    NULL);
 
 	TAILQ_INIT(&pf_rules[0]);
 	TAILQ_INIT(&pf_rules[1]);
@@ -98,6 +104,8 @@ pfattach(int num)
 	TAILQ_INIT(&pf_binats[1]);
 	TAILQ_INIT(&pf_rdrs[0]);
 	TAILQ_INIT(&pf_rdrs[1]);
+	TAILQ_INIT(&pf_altqs[0]);
+	TAILQ_INIT(&pf_altqs[1]);
 	pf_rules_active = &pf_rules[0];
 	pf_rules_inactive = &pf_rules[1];
 	pf_nats_active = &pf_nats[0];
@@ -106,6 +114,8 @@ pfattach(int num)
 	pf_binats_inactive = &pf_binats[1];
 	pf_rdrs_active = &pf_rdrs[0];
 	pf_rdrs_inactive = &pf_rdrs[1];
+	pf_altqs_active = &pf_altqs[0];
+	pf_altqs_inactive = &pf_altqs[1];
 
 	timeout_set(&pf_expire_to, pf_purge_timeout, &pf_expire_to);
 	timeout_add(&pf_expire_to, pftm_interval * hz);
@@ -157,6 +167,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCGETTIMEOUT:
 		case DIOCCLRRULECTRS:
 		case DIOCGETLIMIT:
+		case DIOCGETALTQS:
+		case DIOCGETALTQ:
+		case DIOCGETQSTATS:
 			break;
 		default:
 			return (EPERM);
@@ -177,6 +190,9 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		case DIOCGETBINATS:
 		case DIOCGETBINAT:
 		case DIOCGETLIMIT:
+		case DIOCGETALTQS:
+		case DIOCGETALTQ:
+		case DIOCGETQSTATS:
 			break;
 		default:
 			return (EACCES);
@@ -1479,6 +1495,255 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 		splx(s);
 		break;
 	}
+
+#ifdef ALTQ
+	case DIOCSTARTALTQ: {
+		struct pf_altq *altq;
+		struct ifnet *ifp;
+		struct tb_profile tb;
+
+		/* enable all altq interfaces on active list */
+		s = splsoftnet();
+		TAILQ_FOREACH(altq, pf_altqs_active, entries) {
+			if (altq->qname[0] == 0) {
+				if ((ifp = ifunit(altq->ifname)) == NULL) {
+					error = EINVAL;
+					break;
+				}
+				if (ifp->if_snd.altq_type != ALTQT_NONE)
+					error = altq_enable(&ifp->if_snd);
+				if (error != 0)
+					break;
+				/* set tokenbucket regulator */
+				tb.rate = altq->ifbandwidth;
+				tb.depth = altq->tbrsize;
+				error = tbr_set(&ifp->if_snd, &tb);
+				if (error != 0)
+					break;
+			}
+		}
+		splx(s);
+		DPFPRINTF(PF_DEBUG_MISC, ("altq: started\n"));
+		break;
+	}
+
+	case DIOCSTOPALTQ: {
+		struct pf_altq *altq;
+		struct ifnet *ifp;
+		struct tb_profile tb;
+		int err;
+
+		/* disable all altq interfaces on active list */
+		s = splsoftnet();
+		TAILQ_FOREACH(altq, pf_altqs_active, entries) {
+			if (altq->qname[0] == 0) {
+				if ((ifp = ifunit(altq->ifname)) == NULL) {
+					error = EINVAL;
+					break;
+				}
+				if (ifp->if_snd.altq_type != ALTQT_NONE) {
+					err = altq_disable(&ifp->if_snd);
+					if (err != 0 && error == 0)
+						error = err;
+				}
+				/* clear tokenbucket regulator */
+				tb.rate = 0;
+				err = tbr_set(&ifp->if_snd, &tb);
+				if (err != 0 && error == 0)
+					error = err;
+			}
+		}
+		splx(s);
+		DPFPRINTF(PF_DEBUG_MISC, ("altq: stopped\n"));
+		break;
+	}
+
+	case DIOCBEGINALTQS: {
+		u_int32_t *ticket = (u_int32_t *)addr;
+		struct pf_altq *altq;
+
+		/* Purge the old altq list */
+		while ((altq = TAILQ_FIRST(pf_altqs_inactive)) != NULL) {
+			TAILQ_REMOVE(pf_altqs_inactive, altq, entries);
+
+			if (altq->qname[0] == 0) {
+				/* detach and destroy the discipline */
+				error = altq_remove(altq);
+			}
+
+			pool_put(&pf_altq_pl, altq);
+		}
+
+		*ticket = ++ticket_altqs_inactive;
+		break;
+	}
+
+	case DIOCADDALTQ: {
+		struct pfioc_altq *pa = (struct pfioc_altq *)addr;
+		struct pf_altq *altq, *a;
+
+		if (pa->ticket != ticket_altqs_inactive) {
+			error = EBUSY;
+			break;
+		}
+		altq = pool_get(&pf_altq_pl, PR_NOWAIT);
+		if (altq == NULL) {
+			error = ENOMEM;
+			break;
+		}
+		bcopy(&pa->altq, altq, sizeof(struct pf_altq));
+
+		/*
+		 * if this is for a queue, find the discipline and
+		 * copy the necessary fields
+		 */
+		if (altq->qname[0] != 0) {
+			TAILQ_FOREACH(a, pf_altqs_inactive, entries) {
+				if (strncmp(a->ifname, altq->ifname, IFNAMSIZ)
+				    == 0 && a->qname[0] == 0) {
+					altq->altq_disc = a->altq_disc;
+					break;
+				}
+			}
+		}
+
+		error = altq_add(altq);
+
+		if (error) {
+			pool_put(&pf_altq_pl, altq);
+			break;
+		}
+
+		TAILQ_INSERT_TAIL(pf_altqs_inactive, altq, entries);
+
+		bcopy(altq, &pa->altq, sizeof(struct pf_altq));
+		break;
+	}
+
+	case DIOCCOMMITALTQS: {
+		u_int32_t *ticket = (u_int32_t *)addr;
+		struct pf_altqqueue *old_altqs;
+		struct pf_altq *altq;
+		int err;
+
+		if (*ticket != ticket_altqs_inactive) {
+			error = EBUSY;
+			break;
+		}
+
+		/* Swap altqs, keep the old. */
+		s = splsoftnet();
+		old_altqs = pf_altqs_active;
+		pf_altqs_active = pf_altqs_inactive;
+		pf_altqs_inactive = old_altqs;
+		ticket_altqs_active = ticket_altqs_inactive;
+
+		/* Attach new disciplines */
+		TAILQ_FOREACH(altq, pf_altqs_active, entries) {
+			if (altq->qname[0] == 0) {
+				/* attach the discipline */
+				error = altq_pfattach(altq);
+				if (error)
+					goto fail;
+			}
+		}
+
+		/* Purge the old altq list */
+		while ((altq = TAILQ_FIRST(pf_altqs_inactive)) != NULL) {
+			TAILQ_REMOVE(pf_altqs_inactive, altq, entries);
+
+			if (altq->qname[0] == 0) {
+				/* detach and destroy the discipline */
+				err = altq_pfdetach(altq);
+				if (err != 0 && error == 0)
+					error = err;
+				err = altq_remove(altq);
+				if (err != 0 && error == 0)
+					error = err;
+			}
+
+			pool_put(&pf_altq_pl, altq);
+		}
+		splx(s);
+		break;
+	}
+
+	case DIOCGETALTQS: {
+		struct pfioc_altq *pa = (struct pfioc_altq *)addr;
+		struct pf_altq *altq;
+
+		pa->nr = 0;
+		s = splsoftnet();
+		TAILQ_FOREACH(altq, pf_altqs_active, entries)
+			pa->nr++;
+		pa->ticket = ticket_altqs_active;
+		splx(s);
+		break;
+	}
+
+	case DIOCGETALTQ: {
+		struct pfioc_altq *pa = (struct pfioc_altq *)addr;
+		struct pf_altq *altq;
+		u_int32_t nr;
+
+		if (pa->ticket != ticket_altqs_active) {
+			error = EBUSY;
+			break;
+		}
+		nr = 0;
+		s = splsoftnet();
+		altq = TAILQ_FIRST(pf_altqs_active);
+		while ((altq != NULL) && (nr < pa->nr)) {
+			altq = TAILQ_NEXT(altq, entries);
+			nr++;
+		}
+		if (altq == NULL) {
+			error = EBUSY;
+			splx(s);
+			break;
+		}
+		bcopy(altq, &pa->altq, sizeof(struct pf_altq));
+		splx(s);
+		break;
+	}
+
+	case DIOCCHANGEALTQ:
+		/* CHANGEALTQ not supported yet! */
+		error = ENODEV;
+		break;
+
+	case DIOCGETQSTATS: {
+		struct pfioc_qstats *pq = (struct pfioc_qstats *)addr;
+		struct pf_altq *altq;
+		u_int32_t nr;
+		int nbytes;
+
+		if (pq->ticket != ticket_altqs_active) {
+			error = EBUSY;
+			break;
+		}
+		nbytes = pq->nbytes;
+		nr = 0;
+		s = splsoftnet();
+		altq = TAILQ_FIRST(pf_altqs_active);
+		while ((altq != NULL) && (nr < pq->nr)) {
+			altq = TAILQ_NEXT(altq, entries);
+			nr++;
+		}
+		if (altq == NULL) {
+			error = EBUSY;
+			splx(s);
+			break;
+		}
+		error = altq_getqstats(altq, pq->buf, &nbytes);
+		splx(s);
+		if (error == 0) {
+			pq->scheduler = altq->scheduler;
+			pq->nbytes = nbytes;
+		}
+		break;
+	}
+#endif /* ALTQ */
 
 	default:
 		error = ENODEV;

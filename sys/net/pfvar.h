@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.95 2002/10/07 13:23:46 henning Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.96 2002/10/08 05:12:08 kjc Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -234,8 +234,10 @@ struct pf_rule {
 	char			 label[PF_RULE_LABEL_SIZE];
 	u_int32_t		 timeout[PFTM_MAX];
 	struct pf_addr		 rt_addr;
+#define PF_QNAME_SIZE		 16
 	char			 ifname[IFNAMSIZ];
 	char			 rt_ifname[IFNAMSIZ];
+	char			 qname[PF_QNAME_SIZE];
 	TAILQ_ENTRY(pf_rule)	 entries;
 
 	u_int64_t		 evaluations;
@@ -247,6 +249,7 @@ struct pf_rule {
 
 	u_int32_t		 states;
 	u_int32_t		 max_states;
+	u_int32_t		 qid;
 
 	u_int16_t		 nr;
 	u_int16_t		 return_icmp;
@@ -491,6 +494,56 @@ struct pf_status {
 	char		ifname[IFNAMSIZ];
 };
 
+struct cbq_opts {
+	u_int		minburst;
+	u_int		maxburst;
+	u_int		pktsize;
+	u_int		maxpktsize;
+	u_int		ns_per_byte;
+	u_int		maxidle;
+	int		minidle;
+	u_int		offtime;
+	int		flags;
+};
+
+struct hfsc_opts {
+	u_int		rt_m1;
+	u_int		rt_d;
+	u_int		rt_m2;
+	u_int		ls_m1;
+	u_int		ls_d;
+	u_int		ls_m2;
+	int		flags;
+};
+
+struct pf_altq {
+	char			 ifname[IFNAMSIZ];
+
+	void			*altq_disc;	/* discipline-specific state */
+	TAILQ_ENTRY(pf_altq)	 entries;
+
+	/* scheduler spec */
+	u_int8_t		 scheduler;	/* scheduler type */
+	u_int16_t		 tbrsize;	/* tokenbuket regulator size */
+	u_int32_t		 ifbandwidth;	/* interface bandwidth */
+
+	/* queue spec */
+	char			 qname[PF_QNAME_SIZE];	/* queue name */
+	char			 parent[PF_QNAME_SIZE];	/* parent name */
+	u_int32_t		 parent_qid;	/* parent queue id */
+	u_int32_t		 bandwidth;	/* queue bandwidth */
+	u_int8_t		 priority;	/* priority */
+	u_int16_t		 qlimit;	/* queue size limit */
+	u_int16_t		 flags;		/* misc flags */
+	union {
+		struct cbq_opts		 cbq_opts;
+		struct hfsc_opts	 hfsc_opts;
+		/* and other discipline specific options */
+	} pq_u;
+
+	u_int32_t		 qid;		/* return value */
+};
+
 #define PFFRAG_FRENT_HIWAT	5000	/* Number of fragment entries */
 #define PFFRAG_FRAG_HIWAT	1000	/* Number of fragmented packets */
 #define PFFRAG_FRCENT_HIWAT	50000	/* Number of fragment cache entries */
@@ -599,6 +652,26 @@ struct pfioc_limit {
 	unsigned	 limit;
 };
 
+struct pfioc_altq {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	struct pf_altq	 altq;
+};
+
+struct pfioc_changealtq {
+	u_int32_t	 action;
+	struct pf_altq	 oldaltq;
+	struct pf_altq	 newaltq;
+};
+
+struct pfioc_qstats {
+	u_int32_t	 ticket;
+	u_int32_t	 nr;
+	void		*buf;
+	int		 nbytes;
+	u_int8_t	 scheduler;
+};
+
 /*
  * ioctl operations
  */
@@ -644,6 +717,15 @@ struct pfioc_limit {
 #define DIOCGETLIMIT	_IOWR('D', 39, struct pfioc_limit)
 #define DIOCSETLIMIT	_IOWR('D', 40, struct pfioc_limit)
 #define DIOCKILLSTATES	_IOWR('D', 41, struct pfioc_state_kill)
+#define DIOCSTARTALTQ	_IO  ('D', 42)
+#define DIOCSTOPALTQ	_IO  ('D', 43)
+#define DIOCBEGINALTQS	_IOWR('D', 44, u_int32_t)
+#define DIOCADDALTQ	_IOWR('D', 45, struct pfioc_altq)
+#define DIOCCOMMITALTQS	_IOWR('D', 46, u_int32_t)
+#define DIOCGETALTQS	_IOWR('D', 47, struct pfioc_altq)
+#define DIOCGETALTQ	_IOWR('D', 48, struct pfioc_altq)
+#define DIOCCHANGEALTQ	_IOWR('D', 49, struct pfioc_altq)
+#define DIOCGETQSTATS	_IOWR('D', 50, struct pfioc_qstats)
 
 
 #ifdef _KERNEL
@@ -658,6 +740,8 @@ TAILQ_HEAD(pf_binatqueue, pf_binat);
 extern struct pf_binatqueue		 pf_binats[2];
 TAILQ_HEAD(pf_rdrqueue, pf_rdr);
 extern struct pf_rdrqueue		 pf_rdrs[2];
+TAILQ_HEAD(pf_altqqueue, pf_altq);
+extern struct pf_altqqueue		 pf_altqs[2];
 
 
 extern u_int32_t		 ticket_rules_active;
@@ -670,6 +754,8 @@ extern u_int32_t		 ticket_binats_inactive;
 extern u_int32_t		 ticket_rdrs_active;
 extern u_int32_t		 ticket_rdrs_inactive;
 extern u_int32_t		 ticket_rules_inactive;
+extern u_int32_t		 ticket_altqs_active;
+extern u_int32_t		 ticket_altqs_inactive;
 extern struct pf_rulequeue	*pf_rules_active;
 extern struct pf_rulequeue	*pf_rules_inactive;
 extern struct pf_natqueue	*pf_nats_active;
@@ -678,6 +764,8 @@ extern struct pf_binatqueue	*pf_binats_active;
 extern struct pf_binatqueue	*pf_binats_inactive;
 extern struct pf_rdrqueue	*pf_rdrs_active;
 extern struct pf_rdrqueue	*pf_rdrs_inactive;
+extern struct pf_altqqueue	*pf_altqs_active;
+extern struct pf_altqqueue	*pf_altqs_inactive;
 extern void			 pf_dynaddr_remove(struct pf_addr_wrap *);
 extern int			 pf_dynaddr_setup(struct pf_addr_wrap *,
 				    u_int8_t);
@@ -686,6 +774,7 @@ extern void			 pf_dynaddr_copyout(struct pf_addr_wrap *);
 extern struct pool		 pf_tree_pl, pf_rule_pl, pf_nat_pl;
 extern struct pool		 pf_rdr_pl, pf_state_pl, pf_binat_pl,
 				    pf_addr_pl;
+extern struct pool		 pf_altq_pl;
 extern void			 pf_purge_timeout(void *);
 extern int			 pftm_interval;
 extern int			 pf_compare_rules(struct pf_rule *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_var.h,v 1.5 2002/05/31 09:44:53 kjc Exp $	*/
+/*	$OpenBSD: altq_var.h,v 1.6 2002/10/08 05:12:08 kjc Exp $	*/
 /*	$KAME: altq_var.h,v 1.8 2001/02/09 09:44:41 kjc Exp $	*/
 
 /*
@@ -233,6 +233,7 @@ typedef void (timeout_t)(void *);
 #define	m_pktlen(m)		((m)->m_pkthdr.len)
 
 struct ifnet; struct mbuf; struct flowinfo;
+struct pf_altq; struct pf_qstats;
 
 void *altq_lookup(char *, int);
 int altq_extractflow(struct mbuf *, int, struct flowinfo *, u_int32_t);
@@ -246,6 +247,13 @@ void write_dsfield(struct mbuf *, struct altq_pktattr *, u_int8_t);
 void altq_assert(const char *, int, const char *);
 int tbr_set(struct ifaltq *, struct tb_profile *);
 int tbr_get(struct ifaltq *, struct tb_profile *);
+int	altq_pfattach(struct pf_altq *);
+int	altq_pfdetach(struct pf_altq *);
+int	altq_add(struct pf_altq *);
+int	altq_remove(struct pf_altq *);
+int	altq_add_queue(struct pf_altq *);
+int	altq_remove_queue(struct pf_altq *);
+int	altq_getqstats(struct pf_altq *, void *, int *);
 
 #endif /* _KERNEL */
 #endif /* _ALTQ_ALTQ_VAR_H_ */
