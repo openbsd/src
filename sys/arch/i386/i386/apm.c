@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.20 1998/04/27 23:39:31 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.21 1998/07/18 02:40:33 marc Exp $	*/
 
 /*-
  * Copyright (c) 1995 John T. Kohl.  All rights reserved.
@@ -83,6 +83,7 @@ struct apm_softc {
 	struct selinfo sc_rsel;
 	struct selinfo sc_xsel;
 	int	sc_flags;
+	int	batt_life;
 	int	event_count;
 	int	event_ptr;
 	struct	apm_event_info event_list[APM_NEVENTS];
@@ -90,6 +91,19 @@ struct apm_softc {
 #define	SCFLAG_OREAD	0x0000001
 #define	SCFLAG_OWRITE	0x0000002
 #define	SCFLAG_OPEN	(SCFLAG_OREAD|SCFLAG_OWRITE)
+
+/*
+ * Flags to control kernel display
+ * 	SCFLAG_NOPRINT:		do not output APM power messages due to
+ *				a power change event.
+ *
+ *	SCFLAG_PCTPRINT:	do not output APM power messages due to
+ *				to a power change event unless the battery
+ *				percentage changes.
+ */
+#define SCFLAG_NOPRINT	0x0008000
+#define SCFLAG_PCTPRINT	0x0004000
+#define SCFLAG_PRINT	(SCFLAG_NOPRINT|SCFLAG_PCTPRINT)
 
 #define	APMUNIT(dev)	(minor(dev)&0xf0)
 #define	APMDEV(dev)	(minor(dev)&0x0f)
@@ -194,6 +208,7 @@ apm_power_print (sc, regs)
 	struct apm_softc *sc;
 	struct apmregs *regs;
 {
+	sc->batt_life = BATT_LIFE(regs);
 	if (BATT_LIFE(regs) != APM_BATT_LIFE_UNKNOWN) {
 		printf("%s: battery life expectancy %d%%\n",
 		    sc->sc_dev.dv_xname,
@@ -378,7 +393,10 @@ apm_event_handle(sc, regs)
 	case APM_POWER_CHANGE:
 		DPRINTF(("power status change\n"));
 		error = apm_get_powstat(nregs);
-		if (error == 0)
+		if (error == 0 &&
+		    (sc->sc_flags & SCFLAG_PRINT) != SCFLAG_NOPRINT &&
+		    ((sc->sc_flags & SCFLAG_PRINT) != SCFLAG_PCTPRINT ||
+		     sc->batt_life != BATT_LIFE(&nregs)))
 			apm_power_print(sc, &nregs);
 		apm_record_event(sc, regs->bx);
 		break;
@@ -830,6 +848,29 @@ apmioctl(dev, cmd, data, flag, p)
 			return EBADF;
 		apm_suspends++;
 		return 0;
+	case APM_IOC_PRN_CTL:
+		if ((flag & FWRITE) == 0)
+			return EBADF;
+		{
+			int flag = *(int*)data;
+			DPRINTF(( "APM_IOC_PRN_CTL: %d\n", flag ));
+			switch (flag) {
+			case APM_PRINT_ON:	/* enable printing */
+				sc->sc_flags &= ~SCFLAG_PRINT;
+				return 0;
+			case APM_PRINT_OFF: /* disable printing */
+				sc->sc_flags &= ~SCFLAG_PRINT;
+				sc->sc_flags |= SCFLAG_NOPRINT;
+				return 0;
+			case APM_PRINT_PCT: /* disable some printing */
+				sc->sc_flags &= ~SCFLAG_PRINT;
+				sc->sc_flags |= SCFLAG_PCTPRINT;
+				return 0;
+			default:
+				break;
+			}
+		}
+		return EINVAL;
 	case APM_IOC_DEV_CTL:
 		actl = (struct apm_ctl *)data;
 		if ((flag & FWRITE) == 0)

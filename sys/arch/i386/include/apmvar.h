@@ -1,4 +1,4 @@
-/*	$OpenBSD: apmvar.h,v 1.4 1997/09/29 03:42:28 mickey Exp $	*/
+/*	$OpenBSD: apmvar.h,v 1.5 1998/07/18 02:40:35 marc Exp $	*/
 
 /*
  *  Copyright (c) 1995 John T. Kohl
@@ -217,6 +217,11 @@ struct apm_ctl {
 #define	APM_IOC_GETPOWER _IOR('A', 3, struct apm_power_info) /* fetch battery state */
 #define	APM_IOC_NEXTEVENT _IOR('A', 4, struct apm_event_info) /* fetch event */
 #define	APM_IOC_DEV_CTL	_IOW('A', 5, struct apm_ctl) /* put device into mode */
+#define APM_IOC_PRN_CTL _IOW('A', 6, int ) /* driver power status msg */
+#define		APM_PRINT_ON	0	/* driver power status displayed */
+#define		APM_PRINT_OFF	1	/* driver power status not displayed */
+#define		APM_PRINT_PCT	2	/* driver power status only displayed
+					   if the percentage changes */
 
 #ifdef _KERNEL
 extern void apm_cpu_busy __P((void));
