@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.64 2005/01/15 17:52:07 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.65 2005/03/21 22:31:06 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -483,11 +483,10 @@ define({:-OpenBSDTAPEInstall-:},
 		distribution sets are to be extracted from.  This will
 		typically be "nrst0" (no-rewind, raw interface).
 
-		Next you will have to provide the file number of the set
-		that is to be extracted.  Note that the file number starts
-		at 1, which is the first file written to the tape{:--:}ifelse(X$1,X,,{:-, unless
-		you have created a bootable tape, in which case the file
-		number starts at $1-:}).
+		Next you will have to specify how many files have to be
+		skipped on the tape.  This number is usually zero{:--:}ifelse(X$1,X,,{:-, unless
+		you have created a bootable tape, in which case the number
+		will be $1-:}).
 
 		The install program will not automatically detect whether
 		an image has been compressed, so it will ask for that
