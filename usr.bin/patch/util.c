@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.8 1999/12/04 01:04:14 provos Exp $	*/
+/*	$OpenBSD: util.c,v 1.9 1999/12/04 21:00:03 provos Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.8 1999/12/04 01:04:14 provos Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.9 1999/12/04 21:00:03 provos Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -328,45 +328,24 @@ makedirs(filename,striplast)
 Reg1 char *filename;
 bool striplast;
 {
-    char tmpbuf[256];
-    Reg2 char *s = tmpbuf;
-    char *dirv[20];		/* Point to the NULs between elements.  */
-    Reg3 int i;
-    Reg4 int dirvp = 0;		/* Number of finished entries in dirv. */
+    char *tmpbuf;
 
-    /* Copy `filename' into `tmpbuf' with a NUL instead of a slash
-       between the directories.  */
-    while (*filename) {
-	if (*filename == '/') {
-	    filename++;
-	    dirv[dirvp++] = s;
-	    *s++ = '\0';
-	}
-	else {
-	    *s++ = *filename++;
-	}
+    if ((tmpbuf = strdup(filename)) == NULL)
+        fatal1("out of memory\n");
+
+    if (striplast) {
+        char *s = strrchr(tmpbuf, '/');
+	if (s == NULL)
+	  return; /* nothing to be done */
+	*s = '\0';
     }
-    *s = '\0';
-    dirv[dirvp] = s;
-    if (striplast)
-	dirvp--;
-    if (dirvp < 0)
-	return;
 
-    strcpy(buf, "mkdir");
-    s = buf;
-    for (i=0; i<=dirvp; i++) {
-	struct stat sbuf;
+    strcpy(buf, "/bin/mkdir -p ");
+    if (strlcat(buf, tmpbuf, sizeof(buf)) >= sizeof(buf))
+      fatal2("buffer too small to hold %.20s...\n", tmpbuf);
 
-	if (stat(tmpbuf, &sbuf) && errno == ENOENT) {
-	    while (*s) s++;
-	    *s++ = ' ';
-	    strcpy(s, tmpbuf);
-	}
-	*dirv[i] = '/';
-    }
-    if (s != buf)
-	system(buf);
+    if (system(buf))
+      pfatal2("%.40s failed", buf);
 }
 
 /* Make filenames more reasonable. */
