@@ -1221,7 +1221,6 @@
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/raidframe/rf_map.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/raidframe/rf_mcpair.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/raidframe/rf_memchunk.ph
-./usr/libdata/perl5/site_perl/arm-openbsd/dev/raidframe/rf_netbsd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/raidframe/rf_nwayxor.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/raidframe/rf_openbsd.ph
 ./usr/libdata/perl5/site_perl/arm-openbsd/dev/raidframe/rf_options.ph

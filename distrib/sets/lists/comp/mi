@@ -573,7 +573,6 @@
 ./usr/include/dev/raidframe/rf_map.h
 ./usr/include/dev/raidframe/rf_mcpair.h
 ./usr/include/dev/raidframe/rf_memchunk.h
-./usr/include/dev/raidframe/rf_netbsd.h
 ./usr/include/dev/raidframe/rf_nwayxor.h
 ./usr/include/dev/raidframe/rf_openbsd.h
 ./usr/include/dev/raidframe/rf_options.h
