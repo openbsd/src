@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.51 2001/12/09 01:13:17 miod Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.52 2001/12/12 19:34:23 miod Exp $	*/
 /*
  * Copyright (c) 1996 Nivas Madhur
  * All rights reserved.
@@ -332,7 +332,6 @@ extern vm_offset_t sramva;
 extern vm_offset_t obiova;
 
 void flush_atc_entry __P((long, vm_offset_t, boolean_t));
-unsigned int m88k_protection __P((pmap_t, vm_prot_t));
 pt_entry_t *pmap_expand_kmap __P((vm_offset_t, vm_prot_t));
 void pmap_free_tables __P((pmap_t));
 void pmap_remove_range __P((pmap_t, vm_offset_t, vm_offset_t));
@@ -341,6 +340,20 @@ void pmap_expand __P((pmap_t, vm_offset_t));
 void cache_flush_loop __P((int, vm_offset_t, int));
 void pmap_pinit __P((pmap_t));
 void pmap_release __P((pmap_t));
+vm_offset_t pmap_map __P((vm_offset_t, vm_offset_t, vm_offset_t,
+    vm_prot_t, unsigned int));
+vm_offset_t pmap_map_batc __P((vm_offset_t, vm_offset_t, vm_offset_t,
+    vm_prot_t, unsigned int));
+void pmap_set_batc __P((pmap_t, boolean_t, int, vm_offset_t, vm_offset_t,
+    boolean_t, boolean_t, boolean_t, boolean_t, boolean_t, boolean_t));
+pt_entry_t *pmap_pte __P((pmap_t, vm_offset_t));
+void pmap_remove_all __P((vm_offset_t));
+
+/*
+ * PTE field macros
+ */
+
+#define	m88k_protection(prot)	((prot) & VM_PROT_WRITE ? PG_RW : PG_RO)
 
 /*
  * Routine:	FLUSH_ATC_ENTRY
@@ -375,22 +388,6 @@ flush_atc_entry(long users, vm_offset_t va, boolean_t kernel)
 		tusers &= ~(1 << cpu);
 	}
 }
-
-/*
- *	Convert machine-independent protection code to M88K protection bits.
- */
-
-unsigned int
-m88k_protection(pmap_t map, vm_prot_t prot)
-{
-	pte_template_t p;
-
-	p.bits = 0;
-	p.pte.prot = (prot & VM_PROT_WRITE) ? 0 : 1;
-
-	return (p.bits);
-
-} /* m88k_protection */
 
 /*
  * Routine:	PMAP_PTE
@@ -460,7 +457,6 @@ pmap_pte(pmap_t map, vm_offset_t virt)
  *	kpdt_free	kernel page table free queue
  *
  * Calls:
- *	m88k_protection
  *	SDTENT
  *	SDT_VALID
  *	PDT_IDX
@@ -486,7 +482,7 @@ pmap_expand_kmap(vm_offset_t virt, vm_prot_t prot)
 	if ((pmap_con_dbg & (CD_KMAP | CD_FULL)) == (CD_KMAP | CD_FULL))
 		printf("(pmap_expand_kmap :%x) v %x\n", curproc,virt);
 #endif
-	aprot = m88k_protection (map, prot);
+	aprot = m88k_protection(prot);
 
 	/*  segment table entry derivate from map and virt. */
 	sdt = SDTENT(map, virt);
@@ -520,6 +516,7 @@ pmap_expand_kmap(vm_offset_t virt, vm_prot_t prot)
  *	start	physical address of range to map
  *	end	physical address of end of range
  *	prot	protection attributes
+ *	cmode	cache control attributes
  *
  * Calls:
  *	pmap_pte
@@ -551,24 +548,19 @@ extern void m197_load_patc(int, vm_offset_t, vm_offset_t, int);
 #endif
 
 vm_offset_t
-pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
+pmap_map(virt, start, end, prot, cmode)
+	vm_offset_t virt, start, end;
+	vm_prot_t prot;
+	unsigned int cmode;
 {
 	int		aprot;
 	unsigned	npages;
 	unsigned	num_phys_pages;
-	unsigned	cmode;
 	pt_entry_t	*pte;
 	pte_template_t	template;
 #ifdef MVME197
 	static int m197_atc_initialized = FALSE;
 #endif
-	/*
-	 * cache mode is passed in the top 16 bits.
-	 * extract it from there. And clear the top
-	 * 16 bits from prot.
-	 */
-	cmode = (prot & 0xffff0000) >> 16;
-	prot &= 0x0000ffff;
 
 #ifdef DEBUG
 	if ((pmap_con_dbg & (CD_MAP | CD_NORM)) == (CD_MAP | CD_NORM))
@@ -581,7 +573,7 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
 		panic("pmap_map: start greater than end address");
 #endif
 
-	aprot = m88k_protection (kernel_pmap, prot);
+	aprot = m88k_protection(prot);
 
 	template.bits = trunc_page(start) | aprot | cmode | DT_VALID;
 
@@ -636,7 +628,6 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
  *	batc_used	number of BATC used
  *
  * Calls:
- *	m88k_protection
  *	BATC_BLK_ALIGNED
  *	pmap_pte
  *	pmap_expand_kmap
@@ -662,8 +653,10 @@ pmap_map(vm_offset_t virt, vm_offset_t start, vm_offset_t end, vm_prot_t prot)
  *
  */
 vm_offset_t
-pmap_map_batc(vm_offset_t virt, vm_offset_t start, vm_offset_t end,
-	      vm_prot_t prot, unsigned cmode)
+pmap_map_batc(virt, start, end, prot, cmode)
+	vm_offset_t virt, start, end;
+	vm_prot_t prot;
+	unsigned int cmode;
 {
 	int		aprot;
 	unsigned	num_phys_pages;
@@ -684,7 +677,7 @@ pmap_map_batc(vm_offset_t virt, vm_offset_t start, vm_offset_t end,
 		panic("pmap_map_batc: start greater than end address");
 #endif
 
-	aprot = m88k_protection (kernel_pmap, prot);
+	aprot = m88k_protection(prot);
 	template.bits = trunc_page(start) | aprot | DT_VALID | cmode;
 	phys = start;
 	batctmp.bits = 0;
@@ -1049,24 +1042,15 @@ pmap_bootstrap(vm_offset_t load_start,
 #endif
 
 	/*  map the first 64k (BUG ROM) read only, cache inhibited (? XXX) */
-	vaddr = PMAPER(
-		      0,
-		      0,
-		      0x10000,
-		      (VM_PROT_WRITE | VM_PROT_READ)|(CACHE_INH <<16));
+	vaddr = PMAPER(0, 0, 0x10000, VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
 
 	/*  map the kernel text read only */
-	vaddr = PMAPER(
-		      (vm_offset_t)trunc_page(((unsigned)&kernelstart)),
-		      s_text,
-		      e_text,
-		      (VM_PROT_WRITE | VM_PROT_READ)|(CACHE_GLOBAL<<16));  /* shouldn't it be RO? XXX*/
+	vaddr = PMAPER((vm_offset_t)trunc_page(((unsigned)&kernelstart)),
+		      s_text, e_text,
+		      VM_PROT_WRITE | VM_PROT_READ, CACHE_GLOBAL);  /* shouldn't it be RO? XXX*/
 
-	vaddr = PMAPER(
-		      vaddr,
-		      e_text,
-		      (vm_offset_t)kmap,
-		      (VM_PROT_WRITE|VM_PROT_READ)|(CACHE_GLOBAL << 16));
+	vaddr = PMAPER(vaddr, e_text, (vm_offset_t)kmap,
+		      VM_PROT_WRITE | VM_PROT_READ, CACHE_GLOBAL);
 	/*
 	 * Map system segment & page tables - should be cache inhibited?
 	 * 88200 manual says that CI bit is driven on the Mbus while accessing
@@ -1082,11 +1066,8 @@ pmap_bootstrap(vm_offset_t load_start,
 		while (vaddr < (*virt_start - kernel_pmap_size))
 			vaddr = round_page(vaddr + 1);
 	}
-	vaddr = PMAPER(
-		      vaddr,
-		      (vm_offset_t)kmap,
-		      *phys_start,
-		      (VM_PROT_WRITE|VM_PROT_READ)|(CACHE_INH << 16));
+	vaddr = PMAPER(vaddr, (vm_offset_t)kmap, *phys_start,
+		      VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
 
 	if (vaddr != *virt_start) {
 #ifdef DEBUG
@@ -1111,11 +1092,8 @@ pmap_bootstrap(vm_offset_t load_start,
 		etherlen = ETHERPAGES * NBPG;
 		etherbuf = (void *)vaddr;
 
-		vaddr = PMAPER(
-			      vaddr,
-			      *phys_start,
-			      *phys_start + etherlen,
-			      (VM_PROT_WRITE|VM_PROT_READ)|(CACHE_INH << 16));
+		vaddr = PMAPER(vaddr, *phys_start, *phys_start + etherlen,
+			      VM_PROT_WRITE | VM_PROT_READ, CACHE_INH);
 
 		*virt_start += etherlen;
 		*phys_start += etherlen; 
@@ -1177,7 +1155,7 @@ pmap_bootstrap(vm_offset_t load_start,
 			PMAPER(ptable->virt_start,
 			       ptable->phys_start,
 			       ptable->phys_start + (ptable->size - 1),
-			       ptable->prot|(ptable->cacheability << 16));
+			       ptable->prot, ptable->cacheability);
 		}
 
 		/*
@@ -1418,7 +1396,6 @@ pmap_init(void)
  *	phys_map_vaddr1
  *
  * Calls:
- *	m88k_protection
  *	cmmu_sflush_page
  *	bzero
  *
@@ -1443,7 +1420,7 @@ pmap_zero_page(vm_offset_t phys)
 	srcpte = pmap_pte(kernel_pmap, srcva);
 
 	template.bits = trunc_page(phys)
-			| m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE)
+			| m88k_protection(VM_PROT_READ | VM_PROT_WRITE)
 			| DT_VALID | CACHE_GLOBAL;
 
 	SPLVM(spl);
@@ -2264,7 +2241,6 @@ out:
  *	prot		desired protection attributes
  *
  *	Calls:
- *		m88k_protection
  *		PMAP_LOCK, PMAP_UNLOCK
  *		CHECK_PAGE_ALIGN
  *		panic
@@ -2301,7 +2277,7 @@ pmap_protect(pmap_t pmap, vm_offset_t s, vm_offset_t e, vm_prot_t prot)
 		panic("pmap_protect: start grater than end address");
 #endif
 
-	maprot.bits = m88k_protection(pmap, prot);
+	maprot.bits = m88k_protection(prot);
 	ap = maprot.pte.prot;
 
 	PMAP_LOCK(pmap, spl);
@@ -2505,7 +2481,6 @@ pmap_expand(pmap_t map, vm_offset_t v)
  *	pmap_modify_list
  *
  * Calls:
- *	m88k_protection
  *	pmap_pte
  *	pmap_expand
  *	pmap_remove_range
@@ -2579,7 +2554,7 @@ pmap_enter(pmap_t pmap, vm_offset_t va, vm_offset_t pa,
 			printf("(pmap_enter :%x) pmap %x  va %x pa %x\n", curproc, pmap, va, pa);
 	}
 #endif
-	ap = m88k_protection(pmap, prot);
+	ap = m88k_protection(prot);
 
 	/*
 	 *	Must allocate a new pvlist entry while we're unlocked;
@@ -3211,15 +3186,9 @@ pmap_copy_page(vm_offset_t src, vm_offset_t dst)
 {
 	vm_offset_t dstva, srcva;
 	unsigned int spl;
-	int      aprot;
 	pte_template_t template;
 	pt_entry_t  *dstpte, *srcpte;
 	int      cpu = cpu_number();
-
-	/*
-	 *	Map source physical address.
-	 */
-	aprot = m88k_protection(kernel_pmap, VM_PROT_READ | VM_PROT_WRITE);
 
 	srcva = (vm_offset_t)(phys_map_vaddr1 + (cpu << PAGE_SHIFT));
 	dstva = (vm_offset_t)(phys_map_vaddr2 + (cpu << PAGE_SHIFT));
@@ -3227,7 +3196,10 @@ pmap_copy_page(vm_offset_t src, vm_offset_t dst)
 	srcpte = pmap_pte(kernel_pmap, srcva);
 	dstpte = pmap_pte(kernel_pmap, dstva);
 
-	template.bits = trunc_page(src) | aprot | 
+	/*
+	 *	Map source physical address.
+	 */
+	template.bits = trunc_page(src) | PG_RW | 
 		DT_VALID | CACHE_GLOBAL;
 
 	/* do we need to write back dirty bits */
@@ -3238,8 +3210,8 @@ pmap_copy_page(vm_offset_t src, vm_offset_t dst)
 	/*
 	 *	Map destination physical address.
 	 */
-	template.bits = trunc_page(dst) | aprot | 
-		CACHE_GLOBAL | DT_VALID;
+	template.bits = trunc_page(dst) | PG_RW | 
+		DT_VALID | CACHE_GLOBAL;
 	cmmu_flush_tlb(1, dstva, PAGE_SIZE);
 	*dstpte  = template.pte;
 	SPLX(spl);
@@ -4213,24 +4185,6 @@ pmap_set_batc(
 	}
 }
 
-void 
-use_batc(task_t task,
-	 boolean_t data,	 /* for data-cmmu ? */
-	 int i,			 /* batc number */
-	 vm_offset_t va,	 /* virtual address */
-	 vm_offset_t pa,	 /* physical address */
-	 boolean_t s,		 /* for super-mode ? */
-	 boolean_t wt,		 /* is writethrough */
-	 boolean_t g,		 /* is global ? */
-	 boolean_t ci,		 /* is cache inhibited ? */
-	 boolean_t wp,		 /* is write-protected ? */
-	 boolean_t v)		 /* is valid ? */
-{
-	pmap_t pmap;
-	pmap = vm_map_pmap(task->map);
-	pmap_set_batc(pmap, data, i, va, pa, s, wt, g, ci, wp, v);
-}
-
    #endif
 #endif /* USING_BATC */
 #ifdef FUTURE_MAYBE
@@ -4397,7 +4351,7 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot)
 	PMAP_LOCK(kernel_pmap, spl);
 	users = kernel_pmap->cpus_using;
 
-	ap = m88k_protection(kernel_pmap, prot);
+	ap = m88k_protection(prot);
 
 	/*
 	 * Expand pmap to include this pte.
