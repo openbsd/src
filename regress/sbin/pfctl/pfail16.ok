@@ -1,0 +1,10 @@
+no IP address found for 10.0.0.0.1
+no IP address found for :80
+no IP address found for 2000:0:0:0:0:0:0:0:0:1
+no IP address found for 256.0.0.1
+no IP address found for 10.0.0.0:network
+block drop all 
+block drop all 
+block drop all 
+block drop all 
+block drop all 
