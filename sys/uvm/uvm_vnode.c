@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_vnode.c,v 1.37 2003/06/12 05:55:05 henric Exp $	*/
+/*	$OpenBSD: uvm_vnode.c,v 1.38 2004/06/06 13:44:07 grange Exp $	*/
 /*	$NetBSD: uvm_vnode.c,v 1.36 2000/11/24 20:34:01 chs Exp $	*/
 
 /*
@@ -175,7 +175,7 @@ uvn_attach(arg, accessprot)
 	 */
 	simple_lock(&uvn->u_obj.vmobjlock);
 	while (uvn->u_flags & UVM_VNODE_BLOCKED) {
-		printf("uvn_attach: blocked at 0x%p flags 0x%x\n",
+		printf("uvn_attach: blocked at %p flags 0x%x\n",
 		    uvn, uvn->u_flags);
 		uvn->u_flags |= UVM_VNODE_WANTED;
 		UVMHIST_LOG(maphist, "  SLEEPING on blocked vn",0,0,0,0);
