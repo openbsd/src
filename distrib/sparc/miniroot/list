@@ -1,4 +1,4 @@
-#	$OpenBSD: list,v 1.7 1997/04/30 18:56:03 niklas Exp $
+#	$OpenBSD: list,v 1.8 1997/05/05 13:55:27 grr Exp $
 #	$NetBSD: list,v 1.2.4.2 1996/06/26 19:25:00 pk Exp $
 
 # Sparc extra's
@@ -39,8 +39,9 @@ COPYDIR	${DESTDIR}/usr/mdec	usr/mdec
 # the zoneinfo
 COPYDIR	${DESTDIR}/usr/share/zoneinfo	usr/share/zoneinfo
 
-# and the termcap file
-COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
+# and a few useful bits of the termcap file (512K and still growing 8-)
+# COPY	${CURDIR}/../../share/termcap/termcap.src usr/share/misc/termcap
+SPECIAL sed -n -e '/^dumb|/,/:[ 	]*$/p' -e '/^unknown|/,/:[ 	]*$/p' -e '/^sun.*|/,/:[ 	]*$/p' -e '/^vt.*|/,/:[ 	]*$/p' -e '/^pc3|/,/:[ 	]*$/p' -e '/^pcvt.*|/,/:[ 	]*$/p' ${CURDIR}/../../share/termcap/termcap.src > usr/share/misc/termcap
 
 # copy the kernel
 COPY	bsd	bsd
