@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_mbuf2.c,v 1.17 2002/03/14 01:27:05 millert Exp $	*/
+/*	$OpenBSD: uipc_mbuf2.c,v 1.18 2002/10/10 10:38:13 kjc Exp $	*/
 /*	$KAME: uipc_mbuf2.c,v 1.29 2001/02/14 13:42:10 itojun Exp $	*/
 /*	$NetBSD: uipc_mbuf.c,v 1.40 1999/04/01 00:23:25 thorpej Exp $	*/
 
@@ -397,10 +397,9 @@ m_tag_copy_chain(to, from)
 		}
 		if (tprev == NULL)
 			SLIST_INSERT_HEAD(&to->m_pkthdr.tags, t, m_tag_link);
-		else {
+		else
 			SLIST_INSERT_AFTER(tprev, t, m_tag_link);
-			tprev = t;
-		}
+		tprev = t;
 	}
 	return (1);
 }
