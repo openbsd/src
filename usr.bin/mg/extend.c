@@ -1,4 +1,4 @@
-/*	$OpenBSD: extend.c,v 1.29 2002/09/15 14:48:50 vincent Exp $	*/
+/*	$OpenBSD: extend.c,v 1.30 2003/09/22 23:03:07 vincent Exp $	*/
 
 /*
  *	Extended (M-X) commands, rebinding, and	startup file processing.
@@ -91,7 +91,7 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
       )
 {
 	int		 i, n1, n2, nold;
-	KEYMAP		*mp;
+	KEYMAP		*mp, *newmap;
 	PF		*pfp;
 	MAP_ELEMENT	*mep;
 
@@ -136,9 +136,11 @@ remap(KEYMAP *curmap,		/* pointer to the map being changed */
 			ele->k_base = c;
 			ele->k_funcp = pfp;
 		} else {
-			if (curmap->map_num >= curmap->map_max &&
-			    (curmap = reallocmap(curmap)) == NULL)
-				return FALSE;
+			if (curmap->map_num >= curmap->map_max) {
+				if ((newmap = reallocmap(curmap)) == NULL)
+					return FALSE;
+				curmap = newmap;
+			}
 			if ((pfp = malloc(sizeof(PF))) == NULL) {
 				ewprintf("Out of memory");
 				return FALSE;
