@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.c,v 1.10 2002/04/08 18:31:27 mickey Exp $	*/
+/*	$OpenBSD: if_wi_hostap.c,v 1.11 2002/04/08 18:44:42 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -1116,10 +1116,12 @@ wihap_ioctl(struct wi_softc *sc, u_long command, caddr_t data)
 		sta = wihap_sta_find(whi, reqsta.addr);
 		if (sta != NULL) {
 			error = EEXIST;
+			splx(s);
 			break;
 		}
 		if (whi->n_stations >= WIHAP_MAX_STATIONS) {
 			error = ENOSPC;
+			splx(s);
 			break;
 		}
 		sta = wihap_sta_alloc(sc, reqsta.addr);
