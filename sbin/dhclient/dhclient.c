@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.35 2004/04/08 15:36:38 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.36 2004/04/13 18:04:09 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -207,7 +207,7 @@ int
 main(int argc, char *argv[])
 {
 	extern char		*__progname;
-	int			 ch, fd, quiet = 0;
+	int			 ch, fd, quiet = 0, i = 0;
 
 	/* Initially, log errors to stderr as well as to syslogd. */
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
@@ -268,13 +268,26 @@ main(int argc, char *argv[])
 	rewrite_client_leases();
 	close(fd);
 
-	if (interface_link_status(ifi->name)) {
-		script_init(ifi, "PREINIT", NULL);
-		if (ifi->client->alias)
-			script_write_params(ifi, "alias_", ifi->client->alias);
-		script_go(ifi);
-	} else
-		error("no link on interface %s", ifi->name);
+	if (!interface_link_status(ifi->name)) {
+		fprintf(stderr, "%s: no link ", ifi->name);
+		fflush(stderr);
+		sleep(1);
+		while (!interface_link_status(ifi->name)) {
+			fprintf(stderr, ".");
+			fflush(stderr);
+			if (++i > 10) {
+				fprintf(stderr, " giving up\n");
+				exit(1);
+			}
+			sleep(1);
+		}
+		fprintf(stderr, "got link\n");
+	}
+
+	script_init(ifi, "PREINIT", NULL);
+	if (ifi->client->alias)
+		script_write_params(ifi, "alias_", ifi->client->alias);
+	script_go(ifi);
 
 	if ((routefd = socket(PF_ROUTE, SOCK_RAW, 0)) != -1)
 		add_protocol("AF_ROUTE", routefd, routehandler, ifi);
