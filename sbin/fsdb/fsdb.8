@@ -1,5 +1,5 @@
-.\"	$OpenBSD: fsdb.8,v 1.4 1996/10/08 01:20:24 michaels Exp $
-.\"	$NetBSD: fsdb.8,v 1.4 1996/02/27 22:28:09 jtc Exp $
+.\"	$OpenBSD: fsdb.8,v 1.5 1997/01/16 04:04:18 millert Exp $
+.\"	$NetBSD: fsdb.8,v 1.5 1997/01/11 05:51:40 lukem Exp $
 .\"
 .\" Copyright (c) 1996 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -175,6 +175,10 @@ Change the file flags of the current inode to
 .It Cm chown Ar uid
 Change the owner of the current inode to
 .Ar uid .
+.Pp
+.It Cm chlen Ar length 
+Change length of current inode to
+.Ar length .
 .Pp
 .It Cm chgrp Ar gid
 Change the group of the current inode to

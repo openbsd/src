@@ -1,5 +1,5 @@
-/*	$OpenBSD: fsdb.h,v 1.2 1996/03/21 00:15:48 niklas Exp $	*/
-/*	$NetBSD: fsdb.h,v 1.3 1996/02/27 22:28:13 jtc Exp $	*/
+/*	$OpenBSD: fsdb.h,v 1.3 1997/01/16 04:04:20 millert Exp $	*/
+/*	$NetBSD: fsdb.h,v 1.4 1996/09/28 19:30:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -57,9 +57,9 @@ struct cmdtable {
 extern struct dinode *curinode;
 extern ino_t curinum;
 
-int argcount __P((struct cmdtable *cmdp, int argc, char *argv[]));
-char **crack __P((char *line, int *argc));
-void printstat __P((const char *cp, ino_t inum, struct dinode *dp));
-int printactive __P((void));
+char **crack __P((char *, int *));
+int argcount __P((struct cmdtable *, int, char *[]));
+void printstat __P((const char *, ino_t, struct dinode *));
 int checkactive __P((void));
 int checkactivedir __P((void));
+int printactive __P((void));

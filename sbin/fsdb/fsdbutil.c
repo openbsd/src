@@ -1,5 +1,5 @@
-/*	$OpenBSD: fsdbutil.c,v 1.4 1996/03/21 00:15:50 niklas Exp $	*/
-/*	$NetBSD: fsdbutil.c,v 1.4 1996/02/27 22:28:16 jtc Exp $	*/
+/*	$OpenBSD: fsdbutil.c,v 1.5 1997/01/16 04:04:21 millert Exp $	*/
+/*	$NetBSD: fsdbutil.c,v 1.5 1996/09/28 19:30:37 christos Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$NetBSD: fsdbutil.c,v 1.4 1996/02/27 22:28:16 jtc Exp $";
+static char rcsid[] = "$OpenBSD: fsdbutil.c,v 1.5 1997/01/16 04:04:21 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -47,6 +47,7 @@ static char rcsid[] = "$NetBSD: fsdbutil.c,v 1.4 1996/02/27 22:28:16 jtc Exp $";
 #include <sys/time.h>
 #include <sys/mount.h>
 #include <ctype.h>
+#include <err.h>
 #include <fcntl.h>
 #include <grp.h>
 #include <pwd.h>
@@ -139,7 +140,7 @@ printstat(cp, inum, dp)
 	puts("fifo");
 	break;
     }
-    printf("I=%lu MODE=%o SIZE=%qu", inum, dp->di_mode, dp->di_size);
+    printf("I=%u MODE=%o SIZE=%qu", inum, dp->di_mode, dp->di_size);
     t = dp->di_mtime;
     p = ctime(&t);
     printf("\n\tMTIME=%15.15s %4.4s [%d nsec]", &p[4], &p[20],
@@ -153,11 +154,11 @@ printstat(cp, inum, dp)
     printf("\n\tATIME=%15.15s %4.4s [%d nsec]\n", &p[4], &p[20],
 	   dp->di_atimensec);
 
-    if (pw = getpwuid(dp->di_uid))
+    if ((pw = getpwuid(dp->di_uid)))
 	printf("OWNER=%s ", pw->pw_name);
     else
 	printf("OWNUID=%u ", dp->di_uid);
-    if (grp = getgrgid(dp->di_gid))
+    if ((grp = getgrgid(dp->di_gid)))
 	printf("GRP=%s ", grp->gr_name);
     else
 	printf("GID=%u ", dp->di_gid);
