@@ -1,4 +1,4 @@
-/*	$OpenBSD: autest.c,v 1.8 2003/06/04 01:31:04 jason Exp $	*/
+/*	$OpenBSD: autest.c,v 1.9 2003/06/04 02:41:57 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -249,7 +249,7 @@ enc_ulinear_8(int fd, audio_encoding_t *enc, int chans)
 	}
 
 	if (ioctl(fd, AUDIO_GETINFO, &inf) == -1) {
-		warn("getinfo");
+		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
 
@@ -301,7 +301,7 @@ enc_slinear_8(int fd, audio_encoding_t *enc, int chans)
 	}
 
 	if (ioctl(fd, AUDIO_GETINFO, &inf) == -1) {
-		warn("getinfo");
+		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
 
@@ -353,7 +353,7 @@ enc_slinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 	}
 
 	if (ioctl(fd, AUDIO_GETINFO, &inf) == -1) {
-		warn("getinfo");
+		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
 
@@ -414,7 +414,7 @@ enc_ulinear_16(int fd, audio_encoding_t *enc, int chans, int order)
 	}
 
 	if (ioctl(fd, AUDIO_GETINFO, &inf) == -1) {
-		warn("getinfo");
+		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
 
@@ -477,7 +477,7 @@ enc_adpcm_8(int fd, audio_encoding_t *enc, int chans)
 	}
 
 	if (ioctl(fd, AUDIO_GETINFO, &inf) == -1) {
-		warn("getinfo");
+		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
 
@@ -550,7 +550,7 @@ enc_ulaw_8(int fd, audio_encoding_t *enc, int chans)
 	}
 
 	if (ioctl(fd, AUDIO_GETINFO, &inf) == -1) {
-		warn("getinfo");
+		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
 
@@ -607,12 +607,12 @@ enc_alaw_8(int fd, audio_encoding_t *enc, int chans)
 	inf.play.channels = chans;
 
 	if (ioctl(fd, AUDIO_SETINFO, &inf) == -1) {
-		warn("setinfo");
+		printf("[%s]", strerror(errno));
 		goto out;
 	}
 
 	if (ioctl(fd, AUDIO_GETINFO, &inf) == -1) {
-		warn("getinfo");
+		printf("[getinfo: %s]", strerror(errno));
 		goto out;
 	}
 
