@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.2 2004/04/20 04:19:00 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.3 2004/04/20 20:56:47 canacar Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -95,10 +95,7 @@ if_register_send(struct interface_info *info)
 }
 
 /*
- * Packet filter program...
- *
- * XXX: Changes to the filter program may require changes to the
- * constant offsets used in if_register_send to patch the BPF program!
+ * Packet filter program: 'ip and udp and dst port SERVER_PORT'
  */
 struct bpf_insn dhcp_bpf_filter[] = {
 	/* Make sure this is an IP packet... */
@@ -118,7 +115,7 @@ struct bpf_insn dhcp_bpf_filter[] = {
 
 	/* Make sure it's to the right port... */
 	BPF_STMT(BPF_LD + BPF_H + BPF_IND, 16),
-	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, 67, 0, 1),		/* patch */
+	BPF_JUMP(BPF_JMP + BPF_JEQ + BPF_K, SERVER_PORT, 0, 1),
 
 	/* If we passed all the tests, ask for the whole packet. */
 	BPF_STMT(BPF_RET+BPF_K, (u_int)-1),
@@ -169,13 +166,6 @@ if_register_receive(struct interface_info *info)
 	/* Set up the bpf filter program structure. */
 	p.bf_len = dhcp_bpf_filter_len;
 	p.bf_insns = dhcp_bpf_filter;
-
-	/* Patch the server port into the BPF program...
-	 *
-	 * XXX: changes to filter program may require changes to the
-	 * insn number(s) used below!
-	 */
-	dhcp_bpf_filter[8].k = LOCAL_PORT;
 
 	if (ioctl(info->rfdesc, BIOCSETF, &p) < 0)
 		error("Can't install packet filter program: %m");

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcrelay.c,v 1.16 2004/04/20 04:19:00 deraadt Exp $ */
+/*	$OpenBSD: dhcrelay.c,v 1.17 2004/04/20 20:56:47 canacar Exp $ */
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@cvs.openbsd.org>
@@ -52,8 +52,8 @@ time_t max_lease_time = 86400; /* 24 hours... */
 
 int log_perror = 1;
 
-u_int16_t local_port;
-u_int16_t remote_port;
+u_int16_t server_port;
+u_int16_t client_port;
 int log_priority;
 struct interface_info *interfaces = NULL;
 
@@ -67,7 +67,6 @@ main(int argc, char *argv[])
 {
 	int			 ch, no_daemon = 0;
 	extern char		*__progname;
-	struct servent		*ent;
 	struct server_list	*sp = NULL;
 	struct passwd		*pw;
 
@@ -75,7 +74,7 @@ main(int argc, char *argv[])
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "di:p:")) != -1) {
+	while ((ch = getopt(argc, argv, "di:")) != -1) {
 		switch (ch) {
 		case 'd':
 			no_daemon = 1;
@@ -88,9 +87,6 @@ main(int argc, char *argv[])
 				error("calloc");
 			strlcpy(interfaces->name, optarg,
 			    sizeof(interfaces->name));
-			break;
-		case 'p':
-			local_port = htons(atoi(optarg));
 			break;
 		default:
 			usage();
@@ -133,16 +129,9 @@ main(int argc, char *argv[])
 	if (interfaces == NULL)
 		error("no interface given");
 
-	/* Default to the DHCP/BOOTP port. */
-	if (!local_port) {
-		ent = getservbyname("dhcps", "udp");
-		if (!ent)
-			local_port = htons(67);
-		else
-			local_port = ent->s_port;
-		endservent();
-	}
-	remote_port = htons(ntohs(local_port) + 1);
+	/* Default DHCP/BOOTP ports. */
+	server_port = htons(SERVER_PORT);
+	client_port = htons(CLIENT_PORT);
 
 	/* We need at least one server. */
 	if (!sp)
@@ -150,7 +139,7 @@ main(int argc, char *argv[])
 
 	/* Set up the server sockaddrs. */
 	for (sp = servers; sp; sp = sp->next) {
-		sp->to.sin_port = local_port;
+		sp->to.sin_port = server_port;
 		sp->to.sin_family = AF_INET;
 		sp->to.sin_len = sizeof sp->to;
 	}
@@ -197,10 +186,10 @@ relay(struct interface_info *ip, struct dhcp_packet *packet, int length,
 		bzero(&to, sizeof(to));
 		if (!(packet->flags & htons(BOOTP_BROADCAST))) {
 			to.sin_addr = packet->yiaddr;
-			to.sin_port = remote_port;
+			to.sin_port = client_port;
 		} else {
 			to.sin_addr.s_addr = htonl(INADDR_BROADCAST);
-			to.sin_port = remote_port;
+			to.sin_port = client_port;
 		}
 		to.sin_family = AF_INET;
 		to.sin_len = sizeof to;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcpd.h,v 1.4 2004/04/20 04:19:00 deraadt Exp $	*/
+/*	$OpenBSD: dhcpd.h,v 1.5 2004/04/20 20:56:47 canacar Exp $	*/
 
 /*
  * Copyright (c) 2004 Henning Brauer <henning@openbsd.org>
@@ -73,8 +73,8 @@
 
 #include "dhcp.h"
 
-#define	LOCAL_PORT	68
-#define	REMOTE_PORT	67
+#define	SERVER_PORT	67
+#define	CLIENT_PORT	68
 
 struct iaddr {
 	int len;
@@ -178,6 +178,9 @@ ssize_t decode_hw_header(struct interface_info *, unsigned char *,
 ssize_t decode_udp_ip_header(struct interface_info *, unsigned char *,
     int, struct sockaddr_in *, unsigned char *, int);
 
+/* dhcrelay.c */
+extern u_int16_t server_port;
+extern u_int16_t client_port;
 
 /* crap */
 extern time_t cur_time;
