@@ -1,4 +1,4 @@
-dnl	$OpenBSD: INSTALL,v 1.35 2003/03/25 19:57:56 miod Exp $
+dnl	$OpenBSD: INSTALL,v 1.36 2003/09/06 21:19:17 miod Exp $
 include(INCLUDE/../m4.common)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
 
@@ -9,7 +9,7 @@ What is OpenBSD?
 OpenBSD is a fully functional, multi-platform UN*X-like Operating
 System based on Berkeley Networking Release 2 (Net/2) and 4.4BSD-Lite.
 There are several operating systems in this family, but OpenBSD
-differentiates itself by putting security and correctness first. The
+differentiates itself by putting security and correctness first.  The
 OpenBSD team strives to achieve what is called 'a secure by default'
 status.  This means that an OpenBSD user should feel safe that their
 newly installed machine will not be compromised.  This 'secure by
@@ -46,12 +46,8 @@ Because OpenBSD is from Canada, the export of Cryptography pieces
 the US.  Because of this, take care NOT to get the distribution from
 an FTP server in the US if you are outside of Canada and the US.)
 
-The OSREV release features more user programs and device drivers,
-extensive firewalling and network bandwidth management capabilities,
-as well as numerous security mechanisms (stricter control over memory
-execute and write permissions, compiler built-in stack protection,
-privilege separation or early revocation of privileges in more and
-more executables, etc).
+A comprehensive list of the improvewents brought by the OSREV release
+is available on the web at http://www.OpenBSD.org/OSREV.html.
 
 includeit(whatis)dnl
 
@@ -112,9 +108,9 @@ A few methods are provided.  If you have an OpenBSD CD-ROM, the source code
 is provided.  Otherwise, you can get the pieces over the Internet using
 ANONCVS, CTM or FTP.  For more information, see
 
-	http://www.openbsd.org/anoncvs.html
-	http://www.openbsd.org/ctm.html
-	http://www.openbsd.org/ftp.html
+	http://www.OpenBSD.org/anoncvs.html
+	http://www.OpenBSD.org/ctm.html
+	http://www.OpenBSD.org/ftp.html
 
 
 Using online OpenBSD documentation:

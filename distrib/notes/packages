@@ -1,4 +1,4 @@
-dnl	$OpenBSD: packages,v 1.30 2003/09/04 21:53:45 pvalchev Exp $
+dnl	$OpenBSD: packages,v 1.31 2003/09/06 21:19:17 miod Exp $
 As complete as your OpenBSD system is, you may want to add any of several
 excellent third party software applications.  There are several ways to do
 this.  You can:
@@ -50,14 +50,14 @@ Installing applications from the CD-ROM package collection:
 	Package names are usually the application name and version
 	with .tgz appended, e.g. emacs-20.7.tgz
 
-Installing applications from the ftp.openbsd.org package collection:
+Installing applications from the ftp.OpenBSD.org package collection:
 
 	All available packages for your architecture have been placed on
-	ftp.openbsd.org in the directory pub/OpenBSD/OSREV/packages/MACHINE_ARCH/
+	ftp.OpenBSD.org in the directory pub/OpenBSD/OSREV/packages/MACHINE_ARCH/
 	You may want to peruse this to see what packages are available.  The
 	packages are also on the OpenBSD FTP mirror sites.  See
 
-		http://www.openbsd.org/ftp.html
+		http://www.OpenBSD.org/ftp.html
 
 	for a list of current ftp mirror sites.
 
@@ -71,7 +71,7 @@ Installing applications from the ftp.openbsd.org package collection:
     $ su
     Password: <enter your root password>
     # pkg_add \
-      ftp://ftp.openbsd.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE_ARCH/emacs-20.7.tgz
+      ftp://ftp.OpenBSD.org/pub/OpenBSD/{:--:}OSREV/packages/MACHINE_ARCH/emacs-20.7.tgz
 
 	Packages available {:-include-:} (at least):
 
@@ -1214,7 +1214,7 @@ Installing applications from the CD-ROM ports collection:
 
 Installing applications from the OpenBSD ports collection:
 
-	See http://www.openbsd.org/ports.html for current instructions
+	See http://www.OpenBSD.org/ports.html for current instructions
 	on obtaining and installing OpenBSD ports.
 
 	You should also refer to the ports(7) manual page.
@@ -1227,8 +1227,8 @@ define({:-PORTS-:},
 {:-ifelse(
 MACHINE_ARCH,alpha,{:-FreeBSD
 	ports or NetBSD package collection-:},
-MACHINE_ARCH,hppa,{:-NetBSD
-	package collection-:},
+dnl MACHINE_ARCH,hppa,{:-NetBSD
+dnl 	package collection-:},
 MACHINE_ARCH,i386,{:-FreeBSD
 	ports or NetBSD package collection-:},
 MACHINE_ARCH,m68k,{:-NetBSD
@@ -1254,7 +1254,7 @@ Installing other applications:
 
 	If an OpenBSD package or port does not exist for an application
 	you're pretty much on your own.  The first thing to do is ask
-	<ports@openbsd.org> if anyone is working on a port -- there may
+	<ports@OpenBSD.org> if anyone is working on a port -- there may
 	be one in progress.
 	
 	ifelse(PORTS,,,{:-If no such port exists, you might want to tinker with the PORTS.
@@ -1265,5 +1265,5 @@ Installing other applications:
 
 	If you can't find an existing port try to make your own and
 	feed it back to OpenBSD.  That's how our ports collection grows.
-	Some details can be found at http://www.openbsd.org/porting.html
-	with more help coming from the mailing list, <ports@openbsd.org>.
+	Some details can be found at http://www.OpenBSD.org/porting.html
+	with more help coming from the mailing list, <ports@OpenBSD.org>.
