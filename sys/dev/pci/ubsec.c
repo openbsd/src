@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.47 2001/05/13 15:56:09 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.48 2001/05/14 02:45:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -599,8 +599,8 @@ ubsec_process(crp)
 		q->q_src_m = (struct mbuf *)crp->crp_buf;
 		q->q_dst_m = (struct mbuf *)crp->crp_buf;
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
-		q->q_src = (struct criov *)crp->crp_buf;
-		q->q_dst = (struct criov *)crp->crp_buf;
+		q->q_src = (struct uio *)crp->crp_buf;
+		q->q_dst = (struct uio *)crp->crp_buf;
 	} else {
 		err = EINVAL;
 		goto errout;	/* XXX only handle mbufs right now */
@@ -1038,7 +1038,7 @@ ubsec_callback(q)
 				    crd->crd_skip + crd->crd_len - 8, 8,
 				    (caddr_t)q->q_sc->sc_sessions[q->q_sesn].ses_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV) {
-				criov_copydata((struct criov *)crp->crp_buf,
+				cuio_copydata((struct uio *)crp->crp_buf,
 				    crd->crd_skip + crd->crd_len - 8, 8,
 				    (caddr_t)q->q_sc->sc_sessions[q->q_sesn].ses_iv);
 			}

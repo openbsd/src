@@ -1,4 +1,4 @@
-/*	$OpenBSD: hifn7751.c,v 1.62 2001/05/13 23:39:53 jason Exp $	*/
+/*	$OpenBSD: hifn7751.c,v 1.63 2001/05/14 02:45:19 deraadt Exp $	*/
 
 /*
  * Invertex AEON / Hi/fn 7751 driver
@@ -935,19 +935,8 @@ hifn_crypto(sc, cmd, crp)
 		    cmd->src_m, BUS_DMA_NOWAIT))
 			goto err_srcmap1;
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
-		struct uio u;
-
-		u.uio_iov = cmd->src_io->iov;
-		u.uio_iovcnt = cmd->src_io->niov;
-		u.uio_offset = u.uio_resid = 0;
-		u.uio_segflg = UIO_SYSSPACE;	/* XXX */
-		u.uio_procp = NULL;		/* XXX */
-		u.uio_rw = UIO_READ;
-		for (i = 0; i < cmd->src_io->niov; i++)
-			u.uio_resid += cmd->src_io->iov[0].iov_len;
-
 		if (bus_dmamap_load_uio(sc->sc_dmat, cmd->src_map,
-		    &u, BUS_DMA_NOWAIT))
+		    cmd->src_io, BUS_DMA_NOWAIT))
 			goto err_srcmap1;
 	} else
 		goto err_srcmap1;
@@ -1020,19 +1009,8 @@ hifn_crypto(sc, cmd, crp)
 		    cmd->dst_m, BUS_DMA_NOWAIT))
 			goto err_dstmap1;
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
-		struct uio u;
-
-		u.uio_iov = cmd->dst_io->iov;
-		u.uio_iovcnt = cmd->dst_io->niov;
-		u.uio_offset = u.uio_resid = 0;
-		u.uio_segflg = UIO_SYSSPACE;	/* XXX */
-		u.uio_procp = NULL;		/* XXX */
-		u.uio_rw = UIO_READ;
-		for (i = 0; i < cmd->dst_io->niov; i++)
-			u.uio_resid += cmd->dst_io->iov[0].iov_len;
-
 		if (bus_dmamap_load_uio(sc->sc_dmat, cmd->dst_map,
-		    &u, BUS_DMA_NOWAIT))
+		    cmd->dst_io, BUS_DMA_NOWAIT))
 			goto err_dstmap1;
 	}
 
@@ -1341,8 +1319,8 @@ hifn_process(crp)
 		cmd->src_m = (struct mbuf *)crp->crp_buf;
 		cmd->dst_m = (struct mbuf *)crp->crp_buf;
 	} else if (crp->crp_flags & CRYPTO_F_IOV) {
-		cmd->src_io = (struct criov *)crp->crp_buf;
-		cmd->dst_io = (struct criov *)crp->crp_buf;
+		cmd->src_io = (struct uio *)crp->crp_buf;
+		cmd->dst_io = (struct uio *)crp->crp_buf;
 	} else {
 		err = EINVAL;
 		goto errout;	/* XXX only handle mbufs right now */
@@ -1543,7 +1521,7 @@ hifn_callback(sc, cmd, macbuf)
 				    HIFN_IV_LENGTH,
 				    cmd->softc->sc_sessions[cmd->session_num].hs_iv);
 			else if (crp->crp_flags & CRYPTO_F_IOV) {
-				criov_copydata((struct criov *)crp->crp_buf,
+				cuio_copydata((struct uio *)crp->crp_buf,
 				    crd->crd_skip + crd->crd_len - HIFN_IV_LENGTH,
 				    HIFN_IV_LENGTH,
 				    cmd->softc->sc_sessions[cmd->session_num].hs_iv);

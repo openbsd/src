@@ -1,4 +1,4 @@
-/*      $OpenBSD: criov.c,v 1.1 2001/05/13 15:39:26 deraadt Exp $	*/
+/*      $OpenBSD: criov.c,v 1.2 2001/05/14 02:45:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1999 Theo de Raadt
@@ -41,8 +41,8 @@
 #include <crypto/crypto.h>
 
 int
-iov2pages(crio, np, pp, lp, maxp, nicep)
-	struct criov *crio;
+iov2pages(uio, np, pp, lp, maxp, nicep)
+	struct uio *uio;
 	int *np;
 	long *pp;
 	int *lp;
@@ -52,15 +52,15 @@ iov2pages(crio, np, pp, lp, maxp, nicep)
 	int npa = 0, tlen = 0;
 	int i;
 
-	for (i = 0; i < crio->niov; i++) {
+	for (i = 0; i < uio->uio_iovcnt; i++) {
 		vaddr_t va, off;
 		paddr_t pa;
 		int len;
 
-		if ((len = crio->iov[i].iov_len) == 0)
+		if ((len = uio->uio_iov[i].iov_len) == 0)
 			continue;
 		tlen += len;
-		va = (vaddr_t)crio->iov[i].iov_base;
+		va = (vaddr_t)uio->uio_iov[i].iov_base;
 		off = va & PAGE_MASK;
 		va -= off;
 
@@ -101,19 +101,19 @@ next_page:
 }
 
 void
-criov_copydata(crio, off, len, cp)
-	struct criov *crio;
+cuio_copydata(uio, off, len, cp)
+	struct uio *uio;
 	int off, len;
 	caddr_t cp;
 {
-	struct iovec *iov = crio->iov;
-	int iol = crio->niov;
+	struct iovec *iov = uio->uio_iov;
+	int iol = uio->uio_iovcnt;
 	unsigned count;
 
 	if (off < 0)
-		panic("criov_copydata: off %d < 0", off);
+		panic("cuio_copydata: off %d < 0", off);
 	if (len < 0)
-		panic("criov_copydata: len %d < 0", len);
+		panic("cuio_copydata: len %d < 0", len);
 	while (off > 0) {
 		if (iol == 0)
 			panic("iov_copydata: empty in skip");
@@ -125,7 +125,7 @@ criov_copydata(crio, off, len, cp)
 	}
 	while (len > 0) {
 		if (iol == 0)
-			panic("criov_copydata: empty");
+			panic("cuio_copydata: empty");
 		count = min(iov->iov_len - off, len);
 		bcopy(((caddr_t)iov->iov_base) + off, cp, count);
 		len -= count;
@@ -137,22 +137,22 @@ criov_copydata(crio, off, len, cp)
 }
 
 void
-criov_copyback(crio, off, len, cp)
-	struct criov *crio;
+cuio_copyback(uio, off, len, cp)
+	struct uio *uio;
 	int off, len;
 	caddr_t cp;
 {
-	struct iovec *iov = crio->iov;
-	int iol = crio->niov;
+	struct iovec *iov = uio->uio_iov;
+	int iol = uio->uio_iovcnt;
 	unsigned count;
 
 	if (off < 0)
-		panic("criov_copyback: off %d < 0", off);
+		panic("cuio_copyback: off %d < 0", off);
 	if (len < 0)
-		panic("criov_copyback: len %d < 0", len);
+		panic("cuio_copyback: len %d < 0", len);
 	while (off > 0) {
 		if (iol == 0)
-			panic("criov_copyback: empty in skip");
+			panic("cuio_copyback: empty in skip");
 		if (off < iov->iov_len)
 			break;
 		off -= iov->iov_len;
@@ -161,7 +161,7 @@ criov_copyback(crio, off, len, cp)
 	}
 	while (len > 0) {
 		if (iol == 0)
-			panic("criov_copyback: empty");
+			panic("uio_copyback: empty");
 		count = min(iov->iov_len - off, len);
 		bcopy(cp, ((caddr_t)iov->iov_base) + off, count);
 		len -= count;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.c,v 1.3 2001/05/13 16:52:33 jason Exp $	*/
+/*	$OpenBSD: cryptodev.c,v 1.4 2001/05/14 02:45:19 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2001 Theo de Raadt
@@ -63,7 +63,8 @@ struct csession {
 	int		mackeylen;
 	u_char		tmp_mac[16];		/* XXX MAX_MAC_SIZE */
 
-	struct criov	criov;
+	struct iovec	iovec[IOV_MAX];
+	struct uio	uio;
 	int		error;
 };
 
@@ -98,7 +99,7 @@ struct	csession *cseadd(struct fcrypt *, struct csession *);
 struct	csession *csecreate(struct fcrypt *, u_int64_t, caddr_t, caddr_t);
 void	csefree(struct csession *);
 
-int	crypto_op(struct csession *, struct crypt_op *);
+int	crypto_op(struct csession *, struct crypt_op *, struct proc *);
 
 /* ARGSUSED */
 int
@@ -239,7 +240,7 @@ bail:
 		cse = csefind(fcr, cop->ses);
 		if (cse == NULL)
 			return (EINVAL);
-		error = crypto_op(cse, cop);
+		error = crypto_op(cse, cop, p);
 		break;
 	default:
 		error = EINVAL;
@@ -251,21 +252,29 @@ int	cryptodev_cb(void *);
 
 
 int
-crypto_op(struct csession *cse, struct crypt_op *cop)
+crypto_op(struct csession *cse, struct crypt_op *cop, struct proc *p)
 {
 	struct cryptop *crp = NULL;
 	struct cryptodesc *crde = NULL, *crda = NULL;
-	int error;
+	int i, error;
 
 	if (cop->len > 64*1024)
 		return (E2BIG);
 
-	bzero(&cse->criov, sizeof(cse->criov));
-	cse->criov.niov = 1;
-	cse->criov.iov[0].iov_len = cop->len;
-	cse->criov.iov[0].iov_base = malloc(cop->len, M_XDATA, M_WAITOK);
-	if (cse->criov.iov[0].iov_base == NULL)
+	bzero(&cse->uio, sizeof(cse->uio));
+	cse->uio.uio_iovcnt = 1;
+	cse->uio.uio_resid = 0;
+	cse->uio.uio_segflg = UIO_SYSSPACE;
+	cse->uio.uio_rw = UIO_WRITE;
+	cse->uio.uio_procp = p;
+	cse->uio.uio_iov = cse->iovec;
+	bzero(&cse->iovec, sizeof(cse->iovec));
+	cse->uio.uio_iov[0].iov_len = cop->len;
+	cse->uio.uio_iov[0].iov_base = malloc(cop->len, M_XDATA, M_WAITOK);
+	if (cse->uio.uio_iov[0].iov_base == NULL)
 		return (ENOMEM);
+	for (i = 0; i < cse->uio.uio_iovcnt; i++)
+		cse->uio.uio_resid += cse->uio.uio_iov[0].iov_len;
 
 	crp = crypto_getreq((cse->cipher > 0) + (cse->mac > 0));
 	if (crp == NULL)
@@ -284,7 +293,7 @@ crypto_op(struct csession *cse, struct crypt_op *cop)
 		}
 	}
 
-	if ((error = copyin(cop->src, cse->criov.iov[0].iov_base, cop->len)))
+	if ((error = copyin(cop->src, cse->uio.uio_iov[0].iov_base, cop->len)))
 		goto bail;
 
 	if (crda) {
@@ -309,7 +318,7 @@ crypto_op(struct csession *cse, struct crypt_op *cop)
 
 	crp->crp_ilen = cop->len;
 	crp->crp_flags = CRYPTO_F_IOV;
-	crp->crp_buf = (caddr_t)&cse->criov;
+	crp->crp_buf = (caddr_t)&cse->uio;
 	crp->crp_callback = (int (*) (struct cryptop *)) cryptodev_cb;
 	crp->crp_sid = cse->sid;
 	crp->crp_opaque = (void *)cse;
@@ -343,7 +352,7 @@ crypto_op(struct csession *cse, struct crypt_op *cop)
 	if (cse->error)
 		goto bail;
 
-	if ((error = copyout(cse->criov.iov[0].iov_base, cop->dst, cop->len)))
+	if ((error = copyout(cse->uio.uio_iov[0].iov_base, cop->dst, cop->len)))
 		goto bail;
 
 	if (cop->mac &&
@@ -353,8 +362,8 @@ crypto_op(struct csession *cse, struct crypt_op *cop)
 bail:
 	if (crp)
 		crypto_freereq(crp);
-	if (cse->criov.iov[0].iov_base)
-		free(cse->criov.iov[0].iov_base, M_XDATA);
+	if (cse->uio.uio_iov[0].iov_base)
+		free(cse->uio.uio_iov[0].iov_base, M_XDATA);
 
 	return (error);
 }

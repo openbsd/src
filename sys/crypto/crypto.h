@@ -132,7 +132,7 @@ struct cryptop
 
     caddr_t            crp_iv;
     caddr_t            crp_mac;
-    int                        crp_mac_trunc_len;
+    int                crp_mac_trunc_len;
 
 };
 
@@ -158,10 +158,12 @@ struct cryptocap
 };
 
 
+#if 0
 struct criov {
        int niov;
        struct iovec iov[IOV_MAX];
 };
+#endif
 
 #ifdef _KERNEL
 extern int crypto_newsession(u_int64_t *, struct cryptoini *, int);
@@ -178,9 +180,9 @@ extern void crypto_done(struct cryptop *);
 
 struct mbuf;
 int	mbuf2pages __P((struct mbuf *, int *, long *, int *, int, int *));
-int	iov2pages __P((struct criov *, int *, long *, int *, int, int *));
-void	criov_copydata __P((struct criov *, int, int, caddr_t));
-void	criov_copyback __P((struct criov *, int, int, caddr_t));
+int	iov2pages __P((struct uio *, int *, long *, int *, int, int *));
+void	cuio_copydata __P((struct uio *, int, int, caddr_t));
+void	cuio_copyback __P((struct uio *, int, int, caddr_t));
 
 extern struct cryptop *crypto_getreq(int);
 extern void crypto_freereq(struct cryptop *);
