@@ -46,6 +46,8 @@ mode_t cvsumask = UMASK_DFLT;
 
 char *CurDir;
 
+static char *CVSroot = CVSROOT_DFLT;
+
 /*
  * Defaults, for the environment variables that are not set
  */
@@ -302,7 +304,6 @@ main (argc, argv)
     int argc;
     char **argv;
 {
-    char *CVSroot = CVSROOT_DFLT;
     extern char *version_string;
     extern char *config_string;
     char *cp, *end;
