@@ -1,4 +1,4 @@
-.\"	$OpenBSD: config.8,v 1.31 2002/12/15 13:31:13 henning Exp $
+.\"	$OpenBSD: config.8,v 1.32 2003/05/08 08:24:53 jmc Exp $
 .\"	$NetBSD: config.8,v 1.10 1996/08/31 20:58:16 mycroft Exp $
 .\"
 .\" Copyright (c) 1980, 1991, 1993
@@ -270,7 +270,7 @@ a new kernel binary so changes are preserved during subsequent system restarts.
 When invoked, the kernel identification is first shown.
 .Pp
 .Bd -literal
-.Li #\  Ic config Fl e o Ar bsd.new /bsd
+# config -e o bsd.new /bsd
 OpenBSD 2.6-beta (GENERIC.rz0) #0: Mon Oct  4 03:57:22 MEST 1999
     root@winona:/usr/src/sys/arch/pmax/compile/GENERIC.rz0
 Enter 'help' for information
@@ -372,64 +372,26 @@ Without arguments, displays its current value.
 .Sh EXAMPLES (First synopsis)
 A custom kernel is built in the following way.
 .Pp
-To compile your own kernel from a non-writable media (such as a CDROM)
+To compile your own kernel from a non-writable media (such as a CD-ROM)
 mounted on
 .Pa /usr/src ,
 do the following:
-.Sm off
 .Bd -literal -offset indent
-.Li #\  Xo
-.Ic cd\ /
-.Ar somedir
-.Xc
-.Li #\  Xo
-.Ic cp\ /usr/src/sys/arch/
-.Ar somearch
-.Ic /conf/
-.Ar SOMEFILE
-.Ic \ .
-.Xc
-.Li #\  Xo
-.Ic vi\ \&
-.Ar SOMEFILE
-.No \ \ \ (to\ make\ any\ changes)
-.Xc
-.Li #\  Xo
-.Ic config\ -s\ /usr/src/sys\ -b\ .\ \&
-.Ar SOMEFILE
-.Xc
-.Li #\  Xo
-.Ic make
-.Xc
+# cd /somedir
+# cp /usr/src/sys/arch/somearch/conf/SOMEFILE .
+# vi SOMEFILE	(to make any changes)
+# config -s /usr/src/sys -b . SOMEFILE
+# make
 .Ed
-.Sm on
 .Pp
 To compile a kernel inside a writable source tree, do the following:
-.Sm off
 .Bd -literal -offset indent
-.Li #\  Xo
-.Ic cd\ /usr/src/sys/arch/
-.Ar somearch
-.Ic /conf
-.Xc
-.Li #\  Xo
-.Ic vi\ \&
-.Ar SOMEFILE
-.No \ \ \ (to\ make\ any\ changes)
-.Xc
-.Li #\  Xo
-.Ic config\ \&
-.Ar SOMEFILE
-.Xc
-.Li #\  Xo
-.Ic cd\ ../compile/
-.Ar SOMEFILE
-.Xc
-.Li #\  Xo
-.Ic make
-.Xc
+# cd /usr/src/sys/arch/somearch/conf
+# vi SOMEFILE	(to make any changes)
+# config SOMEFILE
+# cd ../compile/SOMEFILE
+# make
 .Ed
-.Sm on
 .Pp
 where
 .Ar somedir
@@ -443,10 +405,10 @@ should be a name indicative of a particular configuration (often
 that of the hostname).
 .Nm config
 will warn you if a
-.Ar "make clean"
+.Dq make clean
 is required;
 you can also do a
-.Ic make depend
+.Dq make depend
 so that you will have dependencies there the next time you do a compile.
 .Pp
 After either of these two methods, you can place the new kernel (called
