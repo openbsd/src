@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.7 1997/07/25 17:40:06 deraadt Exp 
+ *	OpenBSD: eisadevs,v 1.8 1998/05/16 04:03:16 imp Exp 
  */
 
 /*
@@ -119,6 +119,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	},
 	{
 	    0,
+	    "DTI0000",
+	    EISA_PRODUCT_DTI0000,
+	},
+	{
+	    0,
 	    "FSI2001",
 	    EISA_PRODUCT_FSI2001,
 	},
@@ -211,6 +216,11 @@ struct eisa_knowndev eisa_knowndevs[] = {
 	    EISA_KNOWNDEV_NOPROD,
 	    "DEC",
 	    "Digital Equipment",
+	},
+	{
+	    EISA_KNOWNDEV_NOPROD,
+	    "DTI",
+	    "DeskStation Technology, Inc.",
 	},
 	{
 	    EISA_KNOWNDEV_NOPROD,

@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	OpenBSD: eisadevs,v 1.7 1997/07/25 17:40:06 deraadt Exp 
+ *	OpenBSD: eisadevs,v 1.8 1998/05/16 04:03:16 imp Exp 
  */
 
 /*
@@ -63,6 +63,9 @@
 #define	EISA_PRODUCT_DEC3002	"Digital Equipment DEFEA FDDI Controller"
 #define	EISA_PRODUCT_DEC3003	"Digital Equipment DEFEA FDDI Controller"
 #define	EISA_PRODUCT_DEC3004	"Digital Equipment DEFEA FDDI Controller"
+
+/* DeskStation Technology, Inc. products */
+#define	EISA_PRODUCT_DTI0000	"DeskStation Technology, Inc. Evolution RISC PC"
 
 /* FORE Systems products */
 #define	EISA_PRODUCT_FSI2001	"FORE Systems ESA-200 ATM"
