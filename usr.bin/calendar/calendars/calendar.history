@@ -1,7 +1,7 @@
 /*
  * History
  *
- * $OpenBSD: calendar.history,v 1.32 2004/05/04 21:16:05 hshoexer Exp $
+ * $OpenBSD: calendar.history,v 1.33 2004/06/29 11:35:30 mickey Exp $
  */
 
 #ifndef _calendar_history_
@@ -11,6 +11,12 @@
 01/01	Castro expels Cuban President Batista, 1959
 01/01	Churchill delivers his "Iron Curtain" speech, 1947
 01/01	First Rose Bowl; Michigan 49 - Stanford 0, 1902
+01/02	First military deployment of helicopters (VS-300 by Igor Sikorsky),
+	with a brittish american convoy, 1944
+01/02	Soviet rocket carrying Lunokhod-1 leaves the Earth's orbit
+	the first time ever (though did not reach the moon), 1959
+01/03	After 218 years since discovery by europeans and 92 years after
+	it was purchased from Russian Empire, Alaska becomes 49th state, 1959
 01/04	Quadrantid meteor shower (look north)
 01/05	-50 degrees F, Strawberry UT, 1913
 01/05	The FCC hears the first demonstration of FM radio, 1940
@@ -94,7 +100,6 @@
 03/28	First reaction thrust motor demonstration, 1883
 03/28	Three Mile Island releases radioactive gas, 1979
 03/29	Swedish settled Christiana (Wilmington) DE, 1638
-03/30	Alaska purchased from Russia for $7.2 million, 1867
 03/30	Five rings around Uranus discovered, 1977
 03/30	Pencil with eraser patented, 1858
 04/01	People of superb intelligence, savoir-faire, etc. born this day.
@@ -104,6 +109,7 @@
 04/07	Albert Hofmann synthesizes LSD in Switzerland, 1943
 04/07	Alewives run, Cape Cod
 04/09	Lee surrenders to Grant at Appomattox Courthouse, 1865
+04/09	Alaska purchased from Russia for $7.2 million, 1867
 04/12	Confederate troops fire first shots of Civil War at Ft Sumter, 1861
 04/12	Yuri Gagarin becomes the first man in space, 1961
 04/12	Space Shuttle Columbia launched, 1981
