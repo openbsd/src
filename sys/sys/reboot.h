@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.h,v 1.4 1996/05/02 13:14:55 deraadt Exp $	*/
+/*	$OpenBSD: reboot.h,v 1.5 1996/06/16 10:27:30 deraadt Exp $	*/
 /*	$NetBSD: reboot.h,v 1.9 1996/04/22 01:23:25 christos Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #define	RB_RDONLY	0x080	/* mount root fs read-only */
 #define	RB_DUMP		0x100	/* dump kernel memory before reboot */
 #define	RB_MINIROOT	0x200	/* mini-root present in memory at boot time */
+#define	RB_CONFIG	0x400	/* change configured devices */
 
 /*
  * Constants for converting boot-style device number to type,
