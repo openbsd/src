@@ -1,4 +1,4 @@
-.\" $OpenBSD: dbm.3,v 1.5 1999/07/07 10:50:04 aaron Exp $
+.\" $OpenBSD: dbm.3,v 1.6 2000/04/18 02:31:35 aaron Exp $
 .\"
 .\" Copyright (c) 1999 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -29,14 +29,13 @@
 .Dt DBM 3
 .Os
 .Sh NAME
-.Nm dbm ,
 .Nm dbminit ,
+.Nm dbmclose ,
 .Nm fetch ,
 .Nm store ,
 .Nm delete ,
 .Nm firstkey ,
-.Nm nextkey ,
-.Nm dbmclose
+.Nm nextkey
 .Nd database subroutines
 .Sh SYNOPSIS
 .Fd #include <dbm.h>
@@ -72,29 +71,34 @@ typedef struct {
 .Pp
 The
 .Fn dbminit
-function is used to open a database.  Before the call to
+function is used to open a database.
+Before the call to
 .Fn dbminit ,
 the files
-.Fa file.pag
+.Pa file.pag
 and
-.Fa file.dir
-must exist.  The user is responsible for creating the zero-length
-\&.pag and .dir files.
+.Pa file.dir
+must exist.
+The user is responsible for creating the zero-length
+.Pa \&.pag
+and
+.Pa \&.dir
+files.
 .Pp
 Once the database is open,
 .Fn fetch
-is used to retrieve the data content associated with the key
+is used to retrieve the data content associated with the specified
 .Fa key .
 Similarly,
 .Fn store
 is used to store the
 .Fa content
-data with the key
+data with the specified
 .Fa key .
 .Pp
 The
 .Fn delete
-function removes the key
+function removes the specified
 .Fa key
 and its associated content from the database.
 .Pp
@@ -151,7 +155,8 @@ Because the
 routines are implemented on top of the
 .Xr db 3 ,
 only a single file,
-.Ar file.pag ,
-is used to actually store the database.  The references to
-.Ar file.dir
+.Pa file.pag ,
+is used to actually store the database.
+The references to
+.Pa file.dir
 are purely for backwards compatibility with historic implementations.

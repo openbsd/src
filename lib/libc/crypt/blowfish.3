@@ -1,4 +1,4 @@
-.\" $OpenBSD: blowfish.3,v 1.8 2000/04/15 02:15:22 aaron Exp $
+.\" $OpenBSD: blowfish.3,v 1.9 2000/04/18 02:31:34 aaron Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -63,7 +63,8 @@ The block size is 64 bit and the key size is maximal 448 bit.
 The
 .Fn blf_key
 function initializes the 4 8bit S-boxes and the 18 Subkeys with
-the hexadecimal digits of Pi. The key is used for further randomization.
+the hexadecimal digits of Pi.
+The key is used for further randomization.
 The first argument to
 .Fn blf_enc
 is the initialized state derived from

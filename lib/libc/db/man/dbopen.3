@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dbopen.3,v 1.14 2000/03/14 21:31:39 aaron Exp $
+.\"	$OpenBSD: dbopen.3,v 1.15 2000/04/18 02:31:35 aaron Exp $
 .\"	$NetBSD: dbopen.3,v 1.6 1995/02/27 13:23:25 cgd Exp $
 .\"
 .\" Copyright (c) 1997, Phillip F Knaack. All rights reserved.
@@ -50,9 +50,10 @@
 .Ft DB *
 .Fn dbopen "const char *file" "int flags" "int mode" "DBTYPE type" "const void *openinfo"
 .Sh DESCRIPTION
-.Nm
-is the library interface to database files.
-The supported file formats are btree, hashed and UNIX file oriented.
+The
+.Fn dbopen
+function is the library interface to database files.
+The supported file formats are btree, hashed, and UNIX file oriented.
 The btree format is a representation of a sorted, balanced tree structure.
 The hashed format is an extensible, dynamic hashing scheme.
 The flat-file format is a byte stream file with fixed or variable length
@@ -64,7 +65,7 @@ in their respective manual pages
 and
 .Xr recno 3 .
 .Pp
-.Nm
+.Fn dbopen
 opens
 .Fa file
 for reading and/or writing.
@@ -86,7 +87,7 @@ routine; however, only the
 .Dv O_NONBLOCK ,
 .Dv O_RDONLY ,
 .Dv O_RDWR ,
-.Dv O_SHLOCK
+.Dv O_SHLOCK ,
 and
 .Dv O_TRUNC
 flags are meaningful.
@@ -117,10 +118,11 @@ The
 .Fa type
 argument is of type
 .Fa DBTYPE
-(as defined in the <db.h> include file) and
-may be set to
+(as defined in the
+.Aq Pa db.h
+include file) and may be set to
 .Dv DB_BTREE ,
-.Dv DB_HASH
+.Dv DB_HASH ,
 or
 .Dv DB_RECNO .
 .Pp
@@ -135,11 +137,13 @@ is
 each access method will use defaults appropriate for the system
 and the access method.
 .Pp
-.Nm
+.Fn dbopen
 returns a pointer to a DB structure on success and
 .Dv NULL
-on error.  The DB structure is defined in the <db.h> include file,
-and contains at least the following fields:
+on error.
+The DB structure is defined in the
+.Aq Pa db.h
+include file, and contains at least the following fields:
 .Pp
 .Bl -item -compact
 typedef struct {
@@ -169,13 +173,13 @@ int (*seq)(const DB *db, DBT *key, DBT *data, u_int flags);
 These elements describe a database type and a set of functions performing
 various actions.
 These functions take a pointer to a structure as returned by
-.Nm dbopen ,
+.Fn dbopen dbopen ,
 and sometimes one or more pointers to key/data structures and a flag value.
 .Pp
 .Bl -tag -width XXXXX -offset indent
-.It type
+.It Fa type
 The type of the underlying access method (and file format).
-.It close
+.It Fa close
 A pointer to a routine to flush any cached information to disk, free any
 allocated resources, and close the underlying file(s).
 Since key/data pairs may be cached in memory, failing to sync the file
@@ -188,14 +192,14 @@ function may result in inconsistent or lost information.
 routines return \-1 on error (setting
 .Va errno )
 and 0 on success.
-.It del
+.It Fa del
 A pointer to a routine to remove key/data pairs from the database.
 .Pp
 The parameter
 .Fa flag
 may be set to the following value:
 .Bl -tag -width XXXXX
-.It R_CURSOR
+.It Dv R_CURSOR
 Delete the record referenced by the cursor.
 The cursor must have previously been initialized.
 .El
@@ -206,12 +210,12 @@ routines return \-1 on error (setting
 0 on success, and 1 if the specified
 .Fa key
 was not in the file.
-.It fd
+.It Fa fd
 A pointer to a routine which returns a file descriptor representative
 of the underlying database.
 A file descriptor referencing the same file will be returned to all
 processes which call
-.Nm
+.Fn dbopen
 with the same
 .Fa file
 name.
@@ -227,7 +231,7 @@ No file descriptor is available for in memory databases.
 routines return \-1 on error (setting
 .Va errno ) ,
 and the file descriptor on success.
-.It get
+.It Fa get
 A pointer to a routine which is the interface for keyed retrieval from
 the database.
 The address and length of the data associated with the specified
@@ -240,45 +244,61 @@ routines return \-1 on error (setting
 0 on success, and 1 if the
 .Fa key
 was not in the file.
-.It put
+.It Fa put
 A pointer to a routine to store key/data pairs in the database.
 .Pp
 The parameter
 .Fa flag
 may be set to one of the following values:
 .Bl -tag -width XXXXX
-.It R_CURSOR
+.It Dv R_CURSOR
 Replace the key/data pair referenced by the cursor.
 The cursor must have previously been initialized.
-.It R_IAFTER
+.It Dv R_IAFTER
 Append the data immediately after the data referenced by
 .Fa key ,
 creating a new key/data pair.
 The record number of the appended key/data pair is returned in the
 .Fa key
 structure.
-(Applicable only to the DB_RECNO access method.)
-.It R_IBEFORE
+(Applicable only to the
+.Dv DB_RECNO
+access method.)
+.It Dv R_IBEFORE
 Insert the data immediately before the data referenced by
 .Fa key ,
 creating a new key/data pair.
 The record number of the inserted key/data pair is returned in the
 .Fa key
 structure.
-(Applicable only to the DB_RECNO access method.)
-.It R_NOOVERWRITE
+(Applicable only to the
+.Dv DB_RECNO
+access method.)
+.It Dv R_NOOVERWRITE
 Enter the new key/data pair only if the key does not previously exist.
-.It R_SETCURSOR
+.It Dv R_SETCURSOR
 Store the key/data pair, setting or initializing the position of the
 cursor to reference it.
-(Applicable only to the DB_BTREE and DB_RECNO access methods.)
+(Applicable only to the
+.Dv DB_BTREE
+and
+.Dv DB_RECNO
+access methods.)
 .El
 .Pp
-R_SETCURSOR is available only for the DB_BTREE and DB_RECNO access
-methods because it implies that the keys have an inherent order
+.Dv R_SETCURSOR
+is available only for the
+.Dv DB_BTREE
+and
+.Dv DB_RECNO
+access methods because it implies that the keys have an inherent order
 which does not change.
 .Pp
-R_IAFTER and R_IBEFORE are available only for the DB_RECNO
+.Dv R_IAFTER
+and
+.Dv R_IBEFORE
+are available only for the
+.Dv DB_RECNO
 access method because they each imply that the access method is able to
 create new keys.
 This is only true if the keys are ordered and independent, record numbers
@@ -292,10 +312,11 @@ existing key.
 .Fa put
 routines return \-1 on error (setting
 .Va errno ) ,
-0 on success, and 1 if the R_NOOVERWRITE
+0 on success, and 1 if the
+.Dv R_NOOVERWRITE
 .Fa flag
 was set and the key already exists in the file.
-.It seq
+.It Fa seq
 A pointer to a routine which is the interface for sequential
 retrieval from the database.
 The address and length of the key are returned in the structure
@@ -307,7 +328,9 @@ by
 .Fa data .
 .Pp
 Sequential key/data pair retrieval may begin at any time, and the
-position of the ``cursor'' is not affected by calls to the
+position of the
+.Dq cursor
+is not affected by calls to the
 .Fa del ,
 .Fa get ,
 .Fa put ,
@@ -322,33 +345,53 @@ The flag value
 .Sy must
 be set to one of the following values:
 .Bl -tag -width XXXXX
-.It R_CURSOR
+.It Dv R_CURSOR
 The data associated with the specified key is returned.
 This differs from the
 .Fa get
 routines in that it sets or initializes the cursor to the location of
 the key as well.
-(Note, for the DB_BTREE access method, the returned key is not necessarily an
+(Note, for the
+.Dv DB_BTREE
+access method, the returned key is not necessarily an
 exact match for the specified key.
 The returned key is the smallest key greater than or equal to the specified
 key, permitting partial key matches and range searches.)
-.It R_FIRST
+.It Dv R_FIRST
 The first key/data pair of the database is returned, and the cursor
 is set or initialized to reference it.
-.It R_LAST
+.It Dv R_LAST
 The last key/data pair of the database is returned, and the cursor
 is set or initialized to reference it.
-(Applicable only to the DB_BTREE and DB_RECNO access methods.)
-.It R_NEXT
+(Applicable only to the
+.Dv DB_BTREE
+and
+.Dv DB_RECNO
+access methods.)
+.It Dv R_NEXT
 Retrieve the key/data pair immediately after the cursor.
-If the cursor is not yet set, this is the same as the R_FIRST flag.
-.It R_PREV
+If the cursor is not yet set, this is the same as the
+.Dv R_FIRST
+flag.
+.It Dv R_PREV
 Retrieve the key/data pair immediately before the cursor.
-If the cursor is not yet set, this is the same as the R_LAST flag.
-(Applicable only to the DB_BTREE and DB_RECNO access methods.)
+If the cursor is not yet set, this is the same as the
+.Dv R_LAST
+flag.
+(Applicable only to the
+.Dv DB_BTREE
+and
+.Dv DB_RECNO
+access methods.)
 .El
 .Pp
-R_LAST and R_PREV are available only for the DB_BTREE and DB_RECNO
+.Dv R_LAST
+and
+.Dv R_PREV
+are available only for the
+.Dv DB_BTREE
+and
+.Dv DB_RECNO
 access methods because they each imply that the keys have an inherent
 order which does not change.
 .Pp
@@ -357,12 +400,14 @@ routines return \-1 on error (setting
 .Va errno ) ,
 0 on success and 1 if there are no key/data pairs less than or greater
 than the specified or current key.
-If the DB_RECNO access method is being used, and if the database file
+If the
+.Dv DB_RECNO
+access method is being used, and if the database file
 is a character special file and no complete key/data pairs are currently
 available, the
 .Fa seq
 routines return 2.
-.It sync
+.It Fa sync
 A pointer to a routine to flush any cached information to disk.
 If the database is in memory only, the
 .Fa sync
@@ -370,8 +415,10 @@ routine has no effect and will always succeed.
 .Pp
 The flag value may be set to the following value:
 .Bl -tag -width XXXXX
-.It R_RECNOSYNC
-If the DB_RECNO access method is being used, this flag causes
+.It Dv R_RECNOSYNC
+If the
+.Dv DB_RECNO
+access method is being used, this flag causes
 the sync routine to apply to the btree file which underlies the
 recno file, not the recno file itself.
 (See the
@@ -406,9 +453,9 @@ size_t size;
 .Pp
 The elements of the DBT structure are defined as follows:
 .Bl -tag -width XXXXX
-.It data
+.It Fa data
 A pointer to a byte string.
-.It size
+.It Fa size
 The length of the byte string.
 .El
 .Pp
@@ -419,7 +466,7 @@ It should be noted that the access methods provide no guarantees about
 byte string alignment.
 .Sh ERRORS
 The
-.Nm
+.Fn dbopen
 routine may fail and set
 .Va errno
 for any of the errors specified for the library routines
@@ -469,7 +516,9 @@ The
 .Fa fd
 routines will fail and set
 .Va errno
-to ENOENT for in memory databases.
+to
+.Er ENOENT
+for in memory databases.
 .Pp
 The
 .Fa sync
@@ -491,7 +540,9 @@ for any of the errors specified for the library routine
 .%D Winter 1992
 .Re
 .Sh BUGS
-The typedef DBT is a mnemonic for ``data base thang'', and was used
+The typedef DBT is a mnemonic for
+.Dq data base thang ,
+and was used
 because noone could think of a reasonable name that wasn't already used.
 .Pp
 The file descriptor interface is a kluge and will be deleted in a

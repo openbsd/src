@@ -1,4 +1,4 @@
-.\" $OpenBSD: arc4random.3,v 1.13 2000/04/15 02:15:22 aaron Exp $
+.\" $OpenBSD: arc4random.3,v 1.14 2000/04/18 02:31:34 aaron Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -50,8 +50,8 @@
 The
 .Fn arc4random
 function uses the key stream generator employed by the
-arc4 cipher, which uses 8*8 8 bit S-Boxes. The S-Boxes
-can be in about (2**1700) states.
+arc4 cipher, which uses 8*8 8 bit S-Boxes.
+The S-Boxes can be in about (2**1700) states.
 .Pp
 The
 .Fn arc4random_stir
@@ -74,8 +74,8 @@ automatically initializes itself.
 .Sh HISTORY
 An algorithm call
 .Pa RC4
-was designed by RSA Data Security, Inc.  It was considered a trade secret,
-but not trademarked.
+was designed by RSA Data Security, Inc.
+It was considered a trade secret, but not trademarked.
 A clone of this was posted anonymously to the USENET and was confirmed to
 be equivalent by several sources who had access to the original cipher.
 Because of the trade secret situation, RSA Data Security, Inc. can do

@@ -1,10 +1,20 @@
 .\" David Leonard, 1998. Placed in the public domain.
-.\" $OpenBSD: ndbm.3,v 1.9 1999/07/09 13:35:15 aaron Exp $
+.\" $OpenBSD: ndbm.3,v 1.10 2000/04/18 02:31:36 aaron Exp $
 .Dd May 13, 1998
 .Dt NDBM 3
 .Os
 .Sh NAME
-.Nm ndbm
+.Nm dbm_clearerr ,
+.Nm dbm_close ,
+.Nm dbm_delete ,
+.Nm dbm_dirfno ,
+.Nm dbm_error ,
+.Nm dbm_fetch ,
+.Nm dbm_firstkey ,
+.Nm dbm_nextkey ,
+.Nm dbm_open ,
+.Nm dbm_pagfno ,
+.Nm dbm_store
 .Nd database access methods
 .Sh SYNOPSIS
 .Fd #include <ndbm.h>
@@ -122,23 +132,23 @@ function clears the error condition of the database.
 The
 .Fn dbm_dirfno
 function is used to find the file descriptor associated with the
-directory file of an open database. Since a directory bitmap file is
-not used in this implementation,
+directory file of an open database.
+Since a directory bitmap file is not used in this implementation,
 this function returns the file descriptor of the datbase file opened with
 .Fn dbm_open .
 .Pp
 The
 .Fn dbm_pagfno
 function is used to find the file descriptor associated with the
-page file of an open database. Since a page file is not used in
-this implementation,
-this function
+page file of an open database.
+Since a page file is not used in this implementation, this function
 is implemented as a macro that always returns the (undefined) value
 .Dv DBM_PAGFNO_NOT_AVAILABLE .
 .Pp
 The database is closed with the
 .Fn dbm_close
-function. Thereafter, the
+function.
+Thereafter, the
 .Fa db
 handle is invalid.
 .Ss Implementation notes

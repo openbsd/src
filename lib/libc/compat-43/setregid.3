@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: setregid.3,v 1.7 2000/04/15 11:46:01 aaron Exp $
+.\"	$OpenBSD: setregid.3,v 1.8 2000/04/18 02:31:32 aaron Exp $
 .\"
 .Dd March 10, 1991
 .Dt SETREGID 3
@@ -56,7 +56,8 @@ The
 .Fn setregid
 function was intended to allow swapping the real and
 effective group IDs in set-group-ID programs to temporarily relinquish
-the set-group-ID value.  This function did not work correctly, and its
+the set-group-ID value.
+This function did not work correctly, and its
 purpose is now better served by the use of the
 .Fn setegid
 function (see
@@ -67,8 +68,8 @@ standard
 .Fn setgid
 function is preferred.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.  Otherwise,
-a value of \-1 is returned and
+Upon successful completion, a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS

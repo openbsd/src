@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: setreuid.3,v 1.7 2000/04/15 11:46:01 aaron Exp $
+.\"	$OpenBSD: setreuid.3,v 1.8 2000/04/18 02:31:32 aaron Exp $
 .\"
 .Dd March 10, 1991
 .Dt SETREUID 3
@@ -57,7 +57,8 @@ The
 .Fn setreuid
 function has been used to swap the real and effective user
 IDs in set-user-ID programs to temporarily relinquish the set-user-ID
-value.  This purpose is now better served by the use of the
+value.
+This purpose is now better served by the use of the
 .Fn seteuid
 function (see
 .Xr setuid 2 ) .
@@ -66,8 +67,8 @@ When setting the real and effective user IDs to the same value, the standard
 .Fn setuid
 function is preferred.
 .Sh RETURN VALUES
-Upon successful completion, a value of 0 is returned.  Otherwise,
-a value of \-1 is returned and
+Upon successful completion, a value of 0 is returned.
+Otherwise, a value of \-1 is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
