@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_fork.c,v 1.41 2001/06/27 06:21:28 art Exp $	*/
+/*	$OpenBSD: kern_fork.c,v 1.42 2001/06/27 07:14:22 art Exp $	*/
 /*	$NetBSD: kern_fork.c,v 1.29 1996/02/09 18:59:34 christos Exp $	*/
 
 /*
@@ -349,28 +349,13 @@ again:
 
 	p2->p_addr = (struct user *)uaddr;
 
-#ifdef __FORK_BRAINDAMAGE
-	/*
-	 * Set return values for child before vm_fork,
-	 * so they can be copied to child stack.
-	 * We return 0, rather than the traditional behaviour of modifying the
-	 * return value in the system call stub.
-	 * NOTE: the kernel stack may be at a different location in the child
-	 * process, and thus addresses of automatic variables (including retval)
-	 * may be invalid after vm_fork returns in the child process.
-	 */
-	retval[0] = 0;
-	retval[1] = 1;
-	if (vm_fork(p1, p2, stack, stacksize))
-		return (0);
-#else
 	/*
 	 * Finish creating the child process.  It will return through a
 	 * different path later.
 	 */
 	uvm_fork(p1, p2, ((flags & FORK_SHAREVM) ? TRUE : FALSE), stack,
 	    stacksize);
-#endif
+
 	vm = p2->p_vmspace;
 
 	if (flags & FORK_FORK) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_extern.h,v 1.21 2001/06/27 07:10:27 art Exp $	*/
+/*	$OpenBSD: vm_extern.h,v 1.22 2001/06/27 07:14:22 art Exp $	*/
 /*	$NetBSD: vm_extern.h,v 1.20 1996/04/23 12:25:23 christos Exp $	*/
 
 /*-
@@ -66,11 +66,7 @@ void		thread_sleep_msg __P((void *, simple_lock_t,
 void		vmapbuf __P((struct buf *, vsize_t));
 void		vunmapbuf __P((struct buf *, vsize_t));
 void		pagemove __P((caddr_t, caddr_t, size_t));
-#ifdef __FORK_BRAINDAMAGE
-int		cpu_fork __P((struct proc *, struct proc *, void *, size_t));
-#else
 void		cpu_fork __P((struct proc *, struct proc *, void *, size_t));
-#endif
 #ifndef	cpu_swapin
 void		cpu_swapin __P((struct proc *));
 #endif
