@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.61 2004/01/09 10:01:57 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.62 2004/01/15 10:50:49 markus Exp $	*/
 /*	$NetBSD: route.c,v 1.16 1996/04/15 18:27:05 cgd Exp $	*/
 
 /*
@@ -40,7 +40,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)route.c	8.3 (Berkeley) 3/19/94";
 #else
-static const char rcsid[] = "$OpenBSD: route.c,v 1.61 2004/01/09 10:01:57 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: route.c,v 1.62 2004/01/15 10:50:49 markus Exp $";
 #endif
 #endif /* not lint */
 
@@ -1456,6 +1456,7 @@ char *msgtypes[] = {
 	"RTM_NEWADDR: address being added to iface",
 	"RTM_DELADDR: address being removed from iface",
 	"RTM_IFINFO: iface status change",
+	"RTM_IFANNOUNCE: iface arrival/departure",
 	0,
 };
 
@@ -1473,6 +1474,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 {
 	struct if_msghdr *ifm;
 	struct ifa_msghdr *ifam;
+	struct if_announcemsghdr *ifan;
 
 	if (verbose == 0)
 		return;
@@ -1495,6 +1497,23 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 		(void) printf("metric %d, flags:", ifam->ifam_metric);
 		bprintf(stdout, ifam->ifam_flags, routeflags);
 		pmsg_addrs((char *)(ifam + 1), ifam->ifam_addrs);
+		break;
+	case RTM_IFANNOUNCE:
+		ifan = (struct if_announcemsghdr *)rtm;
+		(void) printf("if# %d, name %s, what: ",
+		    ifan->ifan_index, ifan->ifan_name);
+		switch (ifan->ifan_what) {
+		case IFAN_ARRIVAL:
+			printf("arrival");
+			break;
+		case IFAN_DEPARTURE:
+			printf("departure");
+			break;
+		default:
+			printf("#%d", ifan->ifan_what);
+			break;
+		}
+		printf("\n");
 		break;
 	default:
 		(void) printf("pid: %ld, seq %d, errno %d, flags:",
