@@ -68,7 +68,7 @@ Supported devices include:
 		BICC Isolan [* and not recently tested]
 		Intel EtherExpress 16
 		SMC/WD 8003, 8013, and the SMC "Elite16" ISA boards
-		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)
+		SMC/WD 8216 (the SMC "Elite16 Ultra" ISA boards)  [X SEE BELOW]
 		Novell NE1000, NE2000
 	Tape drives:
 		Most SCSI tape drives
@@ -178,7 +178,7 @@ SMC/WD 8003, 8013, Elite16, and Elite16 Ultra Ethernet boards, 3c503,
 Novell NE1000, or NE2000 Ethernet boards
 		ed0	0x280	2		iomem 0xd0000
 		ed1	0x250	2		iomem 0xd8000
-		ed2	0x300	10		iomem 0xcc000
+		ed2	0x300	10		iomem 0xcc000 [X SEE BELOW]
 
 3COM 3c509, 3c579, 3c595 Ethernet boards (the 3c590 has problems)
 		ep0	any	any
@@ -193,3 +193,52 @@ PCNet-PCI based Ethernet boards; see above for partial list
 DC21x4x based Ethernet boards; see above for partial list
 		de0	any	any 	[you must assign an interrupt in your
 					 PCI BIOS, or let it do so for you]
+
+
+SPECIAL CARE FOR SMC ULTRA ELITE
+--------------------------------
+
+
+Note for SMC Elite Ultra ethernet card users:  The Elite Ultra is very
+sensitive to how it's i/o port is treated.  Mistreating it can cause
+a number of effects -- everything from the card not responding when the
+kernel probes, or the soft configuration being corrupted or wiped completely.
+
+By default, the kernel ships with device ed2 configured for the 'default'
+Elite Ultra locations, comprising of port 0x300, irq 10, and memory location
+0xcc000.  This matches a hard coded jumper on the board as well a common
+soft config setting.
+
+Unfortunately, the kernel's autconfiguration process (specifically, some
+of the devices it probes for) cause conflicts with the SMC Elite Ultra, and
+very often cause it to lose it's configuration and fail it's own probe.
+If thise happens, you must boot the computer into DOS, and run the EzSetup
+program available from SMC.  The complete URL of which is 
+ftp://ftp.smc.com/pub/nics/ethernet/elite_ultra/gez122.exe.  This program
+will allow you to reconfigure and recover a card that has lost it's
+configuration with a minimum of hassle.
+
+In order to avoid blowing away the card, one *must* use the run-time kernel
+configuration system when booting the Install kernel.  This is done by
+giving the -c flag to the initial boot request.  Following the loading of
+the kernel, the user is presented with a
+
+UKC>
+
+prompt.  At this prompt, as variety of commands may be issued, but the
+relevant one to getting the SMC Elite Ultra running is 'disable'.  The
+wt0, el0, and ie1 devices all need to be disabled.  This is done by typing
+'disable' followed by the name of the device, i.e., 'disable wt0', and
+pressing return.
+
+If, for some reason, your Elite Ultra is not configured at the 'default'
+location the kernel is expecting it, you may also use the 'change' command
+in the UKC system to modify where the kernel will look for it.  Typing
+'change ed2' will allow you to modify those settings.  Note that running the
+card at an i/o port of anything other then 0x300 at this point is not
+recommended, and is beyond the scope of this document-- by doing so you
+risk other device probes wreaking the havoc we are trying to avoid.
+
+When all three extra devices are disabled and any changes made, the
+'quit' command will exit the UKC.  The kernel should then boot, and find
+your Elite Ultra on device ed2.
