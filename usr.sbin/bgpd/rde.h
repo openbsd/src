@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.36 2004/03/11 17:12:51 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.37 2004/04/10 17:27:28 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -24,16 +24,6 @@
 #include <sys/tree.h>
 
 #include "bgpd.h"
-
-/* XXX generic stuff, should be somewhere else */
-/* Address Family Numbers as per rfc1700 */
-#define AFI_IPv4	1
-#define AFI_IPv6	2
-
-/* Subsequent Address Family Identifier as per rfc2858 */
-#define SAFI_UNICAST	1
-#define SAFI_MULTICAST	2
-#define SAFI_BOTH	3
 
 /* rde internal structures */
 
