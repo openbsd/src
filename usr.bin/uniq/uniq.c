@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.4 1997/07/25 21:05:46 mickey Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.5 1997/07/25 22:21:40 mickey Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.4 1997/07/25 21:05:46 mickey Exp $";
+static char rcsid[] = "$OpenBSD: uniq.c,v 1.5 1997/07/25 22:21:40 mickey Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -56,13 +56,13 @@ static char rcsid[] = "$OpenBSD: uniq.c,v 1.4 1997/07/25 21:05:46 mickey Exp $";
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <err.h>
 
 #define	MAXLINELEN	(8 * 1024)
 
 int cflag, dflag, uflag;
 int numchars, numfields, repeats;
 
-void	 err __P((const char *, ...));
 FILE	*file __P((char *, char *));
 void	 show __P((FILE *, char *));
 char	*skip __P((char *));
@@ -94,12 +94,12 @@ main (argc, argv)
 		case 'f':
 			numfields = strtol(optarg, &p, 10);
 			if (numfields < 0 || *p)
-				err("illegal field skip value: %s", optarg);
+				errx(1, "illegal field skip value: %s", optarg);
 			break;
 		case 's':
 			numchars = strtol(optarg, &p, 10);
 			if (numchars < 0 || *p)
-				err("illegal character skip value: %s", optarg);
+				errx(1, "illegal character skip value: %s", optarg);
 			break;
 		case 'u':
 			uflag = 1;
@@ -139,7 +139,7 @@ done:	argc -= optind;
 	prevline = malloc(MAXLINELEN);
 	thisline = malloc(MAXLINELEN);
 	if (prevline == NULL || thisline == NULL)
-		err("%s", strerror(errno));
+		err(1, "malloc");
 
 	if (fgets(prevline, MAXLINELEN, ifp) == NULL)
 		exit(0);
@@ -210,7 +210,7 @@ file(name, mode)
 	FILE *fp;
 
 	if ((fp = fopen(name, mode)) == NULL)
-		err("%s: %s", name, strerror(errno));
+		err(1, name);
 	return(fp);
 }
 
@@ -236,7 +236,7 @@ obsolete(argv)
 		 */
 		len = strlen(ap);
 		if ((start = p = malloc(len + 3)) == NULL)
-			err("%s", strerror(errno));
+			err(1, "malloc");
 		*p++ = '-';
 		*p++ = ap[0] == '+' ? 's' : 'f';
 		(void)strcpy(p, ap + 1);
@@ -250,33 +250,4 @@ usage()
 	(void)fprintf(stderr,
 	    "usage: uniq [-c | -du] [-f fields] [-s chars] [input [output]]\n");
 	exit(1);
-}
-
-#ifdef __STDC__
-#include <stdarg.h>
-#else
-#include <varargs.h>
-#endif
-
-void
-#ifdef __STDC__
-err(const char *fmt, ...)
-#else
-err(fmt, va_alist)
-	char *fmt;
-        va_dcl
-#endif
-{
-	va_list ap;
-#ifdef __STDC__
-	va_start(ap, fmt);
-#else
-	va_start(ap);
-#endif
-	(void)fprintf(stderr, "uniq: ");
-	(void)vfprintf(stderr, fmt, ap);
-	va_end(ap);
-	(void)fprintf(stderr, "\n");
-	exit(1);
-	/* NOTREACHED */
 }
