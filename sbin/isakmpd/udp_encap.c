@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.1 2004/06/20 15:24:05 ho Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.2 2004/06/21 13:09:01 ho Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -68,6 +68,8 @@
 
 /* Reused, from udp.c */
 struct transport *udp_clone (struct transport *, struct sockaddr *);
+int		  udp_fd_set(struct transport *, fd_set *, int);
+int		  udp_fd_isset(struct transport *, fd_set *);
 void		  udp_get_dst (struct transport *, struct sockaddr **);
 void		  udp_get_src (struct transport *, struct sockaddr **);
 char		 *udp_decode_ids (struct transport *);
@@ -86,8 +88,8 @@ static struct transport_vtbl udp_encap_transport_vtbl = {
 	0,
 	udp_encap_remove,
 	udp_encap_report,
-	0,
-	0,
+	udp_fd_set,
+	udp_fd_isset,
 	udp_encap_handle_message,
 	udp_encap_send_message,
 	udp_get_dst,
@@ -435,8 +437,7 @@ udp_encap_send_message(struct message *msg, struct transport *t)
 	}
 	new_iov[0].iov_base = &marker;
 	new_iov[0].iov_len = IPSEC_SPI_SIZE;
-	memcpy (new_iov + sizeof *new_iov, msg->iov,
-	    msg->iovlen * sizeof *new_iov);
+	memcpy (new_iov + 1, msg->iov, msg->iovlen * sizeof *new_iov);
 
 	/*
 	 * Sending on connected sockets requires that no destination address is

@@ -1,4 +1,4 @@
-/* $OpenBSD: sa.h,v 1.38 2004/06/20 15:20:07 ho Exp $	 */
+/* $OpenBSD: sa.h,v 1.39 2004/06/21 13:09:00 ho Exp $	 */
 /* $EOM: sa.h,v 1.58 2000/10/10 12:39:01 provos Exp $	 */
 
 /*
@@ -235,6 +235,10 @@ struct sa {
 
 /* This SA flag indicates if we should do DPD with the phase 1 SA peer.  */
 #define SA_FLAG_DPD		0x80
+
+/* NAT-T encapsulation state. Kept in isakmp_sa for the new p2 exchange.  */
+#define SA_FLAG_NAT_T_ENABLE	0x100
+#define SA_FLAG_NAT_T_KEEPALIVE	0x200
 
 extern void     proto_free(struct proto * proto);
 extern int	sa_add_transform(struct sa *, struct payload *, int,

@@ -1,4 +1,4 @@
-/* $OpenBSD: transport.c,v 1.27 2004/06/20 15:24:05 ho Exp $	 */
+/* $OpenBSD: transport.c,v 1.28 2004/06/21 13:09:00 ho Exp $	 */
 /* $EOM: transport.c,v 1.43 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -75,7 +75,8 @@ transport_init(void)
 void
 transport_setup(struct transport *t, int toplevel)
 {
-	LOG_DBG((LOG_TRANSPORT, 70, "transport_setup: adding %p", t));
+	LOG_DBG((LOG_TRANSPORT, 70, "transport_setup: adding %p%s", t,
+	    toplevel ? " (virtual)" : ""));
 	if (toplevel == 0)
 		LIST_INSERT_HEAD(&transport_list, t, link);
 	else {
@@ -199,7 +200,7 @@ transport_fd_set(fd_set * fds)
 
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link))
 		if (t->virtual->flags & TRANSPORT_LISTEN) {
-			n = t->virtual->vtbl->fd_set(t->virtual, fds, 1);
+			n = t->vtbl->fd_set(t, fds, 1);
 			if (n > max)
 				max = n;
 
@@ -226,7 +227,7 @@ transport_pending_wfd_set(fd_set * fds)
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
 		if (TAILQ_FIRST(&t->virtual->sendq) ||
 		    TAILQ_FIRST(&t->virtual->prio_sendq)) {
-			n = t->virtual->vtbl->fd_set(t->virtual, fds, 1);
+			n = t->vtbl->fd_set(t, fds, 1);
 			LOG_DBG((LOG_TRANSPORT,95,"transport_pending_wfd_set: "
 			    "transport %p (virtual %p) fd %d pending", t,
 			    t->virtual, n));
@@ -248,9 +249,9 @@ transport_handle_messages(fd_set *fds)
 
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
 		if ((t->flags & TRANSPORT_LISTEN) &&
-		    (*t->virtual->vtbl->fd_isset)(t->virtual, fds)) {
-			(*t->virtual->vtbl->handle_message)(t->virtual);
-			(*t->virtual->vtbl->fd_set)(t->virtual, fds, 0);
+		    (*t->vtbl->fd_isset)(t, fds)) {
+			(*t->virtual->vtbl->handle_message)(t);
+			(*t->vtbl->fd_set)(t, fds, 0);
 		}
 	}
 }
@@ -285,9 +286,9 @@ transport_send_messages(fd_set * fds)
 	for (t = LIST_FIRST(&transport_list); t; t = LIST_NEXT(t, link)) {
 		if ((TAILQ_FIRST(&t->virtual->sendq) ||
 		    TAILQ_FIRST(&t->virtual->prio_sendq)) &&
-		    t->virtual->vtbl->fd_isset(t->virtual, fds)) {
+		    t->vtbl->fd_isset(t, fds)) {
 			/* Remove fd bit.  */
-			t->virtual->vtbl->fd_set(t->virtual, fds, 0);
+			t->vtbl->fd_set(t, fds, 0);
 
 			/* Prefer a message from the prioritized sendq.  */
 			if (TAILQ_FIRST(&t->virtual->prio_sendq)) {

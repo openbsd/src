@@ -1,4 +1,4 @@
-/* $OpenBSD: udp.c,v 1.75 2004/06/20 15:24:05 ho Exp $	 */
+/* $OpenBSD: udp.c,v 1.76 2004/06/21 13:09:01 ho Exp $	 */
 /* $EOM: udp.c,v 1.57 2001/01/26 10:09:57 niklas Exp $	 */
 
 /*
@@ -71,9 +71,11 @@
 
 /* These are reused by udp_encap.c, thus not 'static' here.  */
 struct transport *udp_clone(struct transport *, struct sockaddr *);
-void		 udp_get_dst(struct transport *, struct sockaddr **);
-void		 udp_get_src(struct transport *, struct sockaddr **);
-char		*udp_decode_ids(struct transport *);
+int		  udp_fd_set(struct transport *, fd_set *, int);
+int		  udp_fd_isset(struct transport *, fd_set *);
+void		  udp_get_dst(struct transport *, struct sockaddr **);
+void		  udp_get_src(struct transport *, struct sockaddr **);
+char		 *udp_decode_ids(struct transport *);
 
 static struct transport *udp_create(char *);
 static void     udp_remove(struct transport *);
@@ -91,8 +93,8 @@ static struct transport_vtbl udp_transport_vtbl = {
 	0,
 	udp_remove,
 	udp_report,
-	0,
-	0,
+	udp_fd_set,
+	udp_fd_isset,
 	udp_handle_message,
 	udp_send_message,
 	udp_get_dst,
@@ -475,6 +477,27 @@ udp_send_message(struct message *msg, struct transport *t)
 		return -1;
 	}
 	return 0;
+}
+
+int
+udp_fd_set(struct transport *t, fd_set *fds, int bit)
+{
+	struct udp_transport		*u = (struct udp_transport *)t;
+
+	if (bit)
+		FD_SET(u->s, fds);
+	else
+		FD_CLR(u->s, fds);
+
+	return u->s + 1;
+}
+
+int
+udp_fd_isset(struct transport *t, fd_set *fds)
+{
+	struct udp_transport		*u = (struct udp_transport *)t;
+
+	return FD_ISSET(u->s, fds);
 }
 
 /*

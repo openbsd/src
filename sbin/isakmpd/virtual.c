@@ -1,4 +1,4 @@
-/*	$OpenBSD: virtual.c,v 1.1 2004/06/20 15:24:05 ho Exp $	*/
+/*	$OpenBSD: virtual.c,v 1.2 2004/06/21 13:09:01 ho Exp $	*/
 
 /*
  * Copyright (c) 2004 Håkan Olsson.  All rights reserved.
@@ -60,8 +60,6 @@ static int		 virtual_bind_if(char *, struct sockaddr *, void *);
 static struct transport	*virtual_clone(struct transport *, struct sockaddr *);
 static struct transport	*virtual_create(char *);
 static char		*virtual_decode_ids (struct transport *);
-static int		 virtual_fd_set(struct transport *, fd_set *, int);
-static int		 virtual_fd_isset(struct transport *, fd_set *);
 static void		 virtual_get_dst(struct transport *,
     struct sockaddr **);
 static struct msg_head	*virtual_get_queue(struct message *);
@@ -80,8 +78,8 @@ static struct transport_vtbl virtual_transport_vtbl = {
 	virtual_reinit,
 	virtual_remove,
 	virtual_report,
-	virtual_fd_set,
-	virtual_fd_isset,
+	0,
+	0,
 	virtual_handle_message,
 	virtual_send_message,
 	virtual_get_dst,
@@ -249,6 +247,8 @@ virtual_bind(const struct sockaddr *addr)
 
 	sockaddr_set_port((struct sockaddr *)&tmp_sa, (in_port_t)lport);
 	v->main = udp_bind((struct sockaddr *)&tmp_sa);
+	if (!v->main)
+		return 0;
 	((struct transport *)v->main)->virtual = (struct transport *)v;
 
 #if defined (USE_NAT_TRAVERSAL)
@@ -269,6 +269,8 @@ virtual_bind(const struct sockaddr *addr)
 
 	sockaddr_set_port((struct sockaddr *)&tmp_sa, (in_port_t)lport);
 	v->encap = udp_encap_bind((struct sockaddr *)&tmp_sa);
+	if (!v->encap)
+		return 0;
 	((struct transport *)v->encap)->virtual = (struct transport *)v;
 #endif
 	v->encap_is_active = 0;
@@ -493,25 +495,32 @@ virtual_clone(struct transport *vt, struct sockaddr *raddr)
 
 	memcpy(v2, v, sizeof *v);
 
-	if (v->encap_is_active) {
-		v2->main = 0;
-		v2->encap = v->encap->vtbl->clone(v->encap, raddr);
-		v2->encap->virtual = (struct transport *)v2;
-	} else {
+	if (v->encap_is_active)
+		v2->main = 0; /* No need to clone this.  */
+	else {
 		v2->main = v->main->vtbl->clone(v->main, raddr);
 		v2->main->virtual = (struct transport *)v2;	
-		v2->encap = 0;
 	}
-	LOG_DBG((LOG_TRANSPORT, 50, "virtual_clone: old %p new %p (->%s %p)",
-	    v, t, v->encap_is_active ? "encap" : "main", 
+#if defined (USE_NAT_TRAVERSAL)
+	/* XXX fix strtol() call */
+	sockaddr_set_port(raddr, udp_encap_default_port ?
+	    strtol(udp_encap_default_port, NULL, 10) : UDP_ENCAP_DEFAULT_PORT);
+	v2->encap = v->encap->vtbl->clone(v->encap, raddr);
+	v2->encap->virtual = (struct transport *)v2;
+#endif
+	LOG_DBG((LOG_TRANSPORT, 50, "virtual_clone: old %p new %p (%s is %p)",
+	    v, t, v->encap_is_active ? "encap" : "main",
 	    v->encap_is_active ? v2->encap : v2->main));
 
 	t->flags &= ~TRANSPORT_LISTEN;
 	transport_setup(t, 1);
 
 	transport_reference(t);
-	transport_reference(v->encap_is_active ? v2->encap : v2->main);
-	
+	if (v2->main)
+		transport_reference(v2->main);
+	if (v2->encap)
+		transport_reference(v2->encap);
+
 	return t;
 }
   
@@ -583,9 +592,8 @@ virtual_report(struct transport *t)
 static void
 virtual_handle_message(struct transport *t)
 {
-	struct virtual_transport *v = (struct virtual_transport *)t;
-
-	if (t == default_transport || t == default_transport6) {
+	if (t->virtual == default_transport ||
+	    t->virtual == default_transport6) {
 		/* XXX drain pending message. See udp_handle_message().  */
 
 		virtual_reinit();
@@ -598,10 +606,7 @@ virtual_handle_message(struct transport *t)
 		return;
 	}
 
-	if (v->encap_is_active)
-		v->encap->vtbl->handle_message(v->encap);
-	else
-		v->main->vtbl->handle_message(v->main);
+	t->vtbl->handle_message(t);
 }
 
 static int
@@ -616,10 +621,19 @@ virtual_send_message(struct message *msg, struct transport *t)
 		    "transport %p != NULL", t);
 
 #if defined (USE_NAT_TRAVERSAL)
+	/*
+	 * Activate NAT-T Encapsulation if
+	 *   - the exchange says we can, and
+	 *   - in ID_PROT, after step 4 (draft-ietf-ipsec-nat-t-ike-03), or
+	 *   - in other exchange (Aggressive, ), asap
+	 * XXX ISAKMP_EXCH_BASE etc?
+	 */
 	if (v->encap_is_active == 0 &&
-	    (msg->exchange->flags & EXCHANGE_FLAG_NAT_T_ENABLE)) {
+	    (msg->exchange->flags & EXCHANGE_FLAG_NAT_T_ENABLE) &&
+	    (msg->exchange->type != ISAKMP_EXCH_ID_PROT ||
+		msg->exchange->step > 4)) {
 		LOG_DBG((LOG_MESSAGE, 10, "virtual_send_message: "
-		    "switching to ENCAP"));
+		    "enabling NAT-T encapsulation for this exchange"));
 		v->encap_is_active++;
 	}
 #endif
@@ -628,39 +642,6 @@ virtual_send_message(struct message *msg, struct transport *t)
 		return v->encap->vtbl->send_message(msg, v->encap);
 	else
 		return v->main->vtbl->send_message(msg, v->main);
-}
-
-static int
-virtual_fd_set(struct transport *t, fd_set *fds, int bit)
-{
-	struct virtual_transport	*v = (struct virtual_transport *)t;
-	struct udp_transport		*u;
-
-	if (v->encap_is_active)
-		u = (struct udp_transport *)v->encap;
-	else
-		u = (struct udp_transport *)v->main;
-
-	if (bit)
-		FD_SET(u->s, fds);
-	else
-		FD_CLR(u->s, fds);
-
-	return u->s + 1;
-}
-
-static int
-virtual_fd_isset(struct transport *t, fd_set *fds)
-{
-	struct virtual_transport	*v = (struct virtual_transport *)t;
-	struct udp_transport		*u;
-
-	if (v->encap_is_active)
-		u = (struct udp_transport *)v->encap;
-	else
-		u = (struct udp_transport *)v->main;
-
-	return FD_ISSET(u->s, fds);
 }
 
 static void

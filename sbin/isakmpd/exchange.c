@@ -1,4 +1,4 @@
-/* $OpenBSD: exchange.c,v 1.98 2004/06/20 17:17:34 ho Exp $	 */
+/* $OpenBSD: exchange.c,v 1.99 2004/06/21 13:09:00 ho Exp $	 */
 /* $EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	 */
 
 /*
@@ -954,6 +954,12 @@ exchange_establish_p2(struct sa *isakmp_sa, u_int8_t type, char *name,
 	memcpy(exchange->cookies, isakmp_sa->cookies, ISAKMP_HDR_COOKIES_LEN);
 	getrandom(exchange->message_id, ISAKMP_HDR_MESSAGE_ID_LEN);
 	exchange->flags |= EXCHANGE_FLAG_ENCRYPT;
+#if defined (USE_NAT_TRAVERSAL)
+	if (isakmp_sa->flags & SA_FLAG_NAT_T_ENABLE)
+		exchange->flags |= EXCHANGE_FLAG_NAT_T_ENABLE;
+	if (isakmp_sa->flags & SA_FLAG_NAT_T_KEEPALIVE)
+		exchange->flags |= EXCHANGE_FLAG_NAT_T_KEEPALIVE;
+#endif
 	exchange_enter(exchange);
 #ifdef USE_DEBUG
 	exchange_dump("exchange_establish_p2", exchange);
@@ -1141,6 +1147,12 @@ exchange_setup_p2(struct message *msg, u_int8_t doi)
 	GET_ISAKMP_HDR_RCOOKIE(buf,
 	    exchange->cookies + ISAKMP_HDR_ICOOKIE_LEN);
 	GET_ISAKMP_HDR_MESSAGE_ID(buf, exchange->message_id);
+#if defined (USE_NAT_TRAVERSAL)
+	if (msg->isakmp_sa->flags & SA_FLAG_NAT_T_ENABLE)
+		exchange->flags |= EXCHANGE_FLAG_NAT_T_ENABLE;
+	if (msg->isakmp_sa->flags & SA_FLAG_NAT_T_KEEPALIVE)
+		exchange->flags |= EXCHANGE_FLAG_NAT_T_KEEPALIVE;
+#endif	
 	exchange_enter(exchange);
 #ifdef USE_DEBUG
 	exchange_dump("exchange_setup_p2", exchange);
@@ -1468,11 +1480,18 @@ exchange_finalize(struct message *msg)
 		else
 			id_doi = "<no doi>";
 
-		if (msg->isakmp_sa && msg->isakmp_sa->transport)
+		if (msg->isakmp_sa->transport)
 			id_trp =
 			    msg->isakmp_sa->transport->vtbl->decode_ids(msg->isakmp_sa->transport);
 		else
 			id_trp = "<no transport>";
+
+#if defined (USE_NAT_TRAVERSAL)
+		if (exchange->flags & EXCHANGE_FLAG_NAT_T_ENABLE)
+			msg->isakmp_sa->flags |= SA_FLAG_NAT_T_ENABLE;
+		if (exchange->flags & EXCHANGE_FLAG_NAT_T_KEEPALIVE)
+			msg->isakmp_sa->flags |= SA_FLAG_NAT_T_KEEPALIVE;
+#endif		
 
 		LOG_DBG((LOG_EXCHANGE, 10,
 		    "exchange_finalize: phase 1 done: %s, %s", id_doi,
