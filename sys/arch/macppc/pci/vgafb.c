@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.7 2002/03/26 16:51:43 drahn Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.8 2002/04/05 02:36:06 drahn Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -504,12 +504,22 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 	wsdisplay_cnattach(&vgafb_stdscreen, ri, 0, 0, defattr);
 }
 
+struct {
+	u_int8_t r;
+	u_int8_t g;
+	u_int8_t b;
+	u_int8_t pad;
+} vgafb_color[256];
 void
 vgafb_setcolor(index, r, g, b) 
 	unsigned int index;
 	u_int8_t r, g, b;
 {
-	OF_call_method_1("color!", cons_display_ofh, 4, r, g, b, index);
+	vgafb_color[0].r = r;
+	vgafb_color[0].g = g;
+	vgafb_color[0].b = b;
+	OF_call_method_1("set-colors", cons_display_ofh, 3,
+	    &vgafb_color, index, 1);
 }
 
 int
@@ -563,8 +573,12 @@ vgafb_putcmap(vc, cm)
 	b = &(vc->vc_cmap_blue[index]);
 
 	for (i = 0; i < count; i++) {
-		OF_call_method_1("color!", vc->vc_ofh, 4, *r, *g, *b, index);
+		vgafb_color[i].r = *r;
+		vgafb_color[i].g = *g;
+		vgafb_color[i].b = *b;
 		r++, g++, b++, index++;
 	}
+	OF_call_method_1("set-colors", cons_display_ofh, 3,
+	    &vgafb_color, cm->index, count);
 	return 0;
 }
