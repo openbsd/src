@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 2004/12/14 02:05:00 mickey Exp $
+#	$OpenBSD: Makefile,v 1.14 2004/12/14 13:45:09 mickey Exp $
 
 LDSTATIC=${STATIC}
 PROG=	kdump
@@ -20,7 +20,6 @@ ioctl.c: ${.CURDIR}/Makefile ${.CURDIR}/mkioctls
 	    ${DESTDIR}/usr/include/dev/vndioctl.h \
 	    ${DESTDIR}/usr/include/scsi/ses.h \
 	    ${DESTDIR}/usr/include/net/bpf.h \
-	    ${DESTDIR}/usr/include/net/if_pfsync.h \
 	    ${DESTDIR}/usr/include/net/if_ppp.h \
 	    ${DESTDIR}/usr/include/net/if_pppoe.h \
 	    ${DESTDIR}/usr/include/net/if_tun.h \
