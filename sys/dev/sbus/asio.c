@@ -1,4 +1,4 @@
-/*	$OpenBSD: asio.c,v 1.3 2002/03/14 01:27:02 millert Exp $	*/
+/*	$OpenBSD: asio.c,v 1.4 2002/03/14 15:42:44 jason Exp $	*/
 
 /*
  * Copyright (c) 2002 Jason L. Wright (jason@thought.net)
@@ -52,7 +52,7 @@
 #include <dev/sbus/asioreg.h>
 #include <dev/ic/comvar.h>
 
-#include "com.h"
+#include "asio.h"
 
 #define BAUD_BASE       (1843200)
 
@@ -91,13 +91,6 @@ struct cfattach asio_ca = {
 
 struct cfdriver asio_cd = {
 	NULL, "asio", DV_DULL
-};
-
-int	com_asio_match(struct device *, void *, void *);
-void	com_asio_attach(struct device *, struct device *, void *);
-
-struct cfattach com_asio_ca = {
-	sizeof(struct com_softc), com_asio_match, com_asio_attach
 };
 
 int
@@ -192,6 +185,14 @@ asio_print(aux, name)
 	return (UNCONF);
 }
 
+#if NCOM_ASIO > 0
+int	com_asio_match(struct device *, void *, void *);
+void	com_asio_attach(struct device *, struct device *, void *);
+
+struct cfattach com_asio_ca = {
+	sizeof(struct com_softc), com_asio_match, com_asio_attach
+};
+
 void
 asio_intr_enable(dv, en)
 	struct device *dv;
@@ -240,3 +241,4 @@ com_asio_attach(parent, self, aux)
 
 	com_attach_subr(sc);
 }
+#endif
