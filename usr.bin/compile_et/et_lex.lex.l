@@ -16,7 +16,7 @@ end		return END;
 \n		++lineno;
 
 \"{PC}*\"	{ register char *p; yylval.dynstr = ds(yytext+1);
-		  if (p=strrchr(yylval.dynstr, '"')) *p='\0';
+		  if ((p = strrchr(yylval.dynstr, '"')) != NULL) *p = '\0';
 		  return QUOTED_STRING;
 		}
 
@@ -27,5 +27,5 @@ end		return END;
 .		{ return (*yytext); }
 %%
 #ifndef lint
-static char rcsid_et_lex_lex_l[] = "$Id: et_lex.lex.l,v 1.1 1996/11/11 05:06:35 downsj Exp $";
+static char rcsid_et_lex_lex_l[] = "$Id: et_lex.lex.l,v 1.2 1998/05/13 17:54:22 art Exp $";
 #endif

@@ -1,5 +1,5 @@
 %{
-/*	$OpenBSD: error_table.y,v 1.1 1996/11/11 05:06:35 downsj Exp $	*/
+/*	$OpenBSD: error_table.y,v 1.2 1998/05/13 17:54:21 art Exp $	*/
 
 /*-
  * Copyright 1987, 1988 by the Student Information Processing Board
@@ -101,7 +101,7 @@ description	:	QUOTED_STRING
 
 #ifndef	lint
 static char const rcsid_error_table_y[] =
-    "$Id: error_table.y,v 1.1 1996/11/11 05:06:35 downsj Exp $";
+    "$Id: error_table.y,v 1.2 1998/05/13 17:54:21 art Exp $";
 #endif
 
 #include "et_lex.lex.c"
@@ -148,10 +148,11 @@ quote(string)
 	return(rv);
 }
 
-long table_number;
+int table_number;
 int current = 0;
 char **error_codes = (char **)NULL;
 
+void
 add_ec(name, description)
 	char const *name, *description;
 {
@@ -166,6 +167,7 @@ add_ec(name, description)
 	error_codes[current] = (char *)NULL;
 }
 
+void
 add_ec_val(name, val, description)
 	char const *name, *val, *description;
 {
@@ -190,12 +192,13 @@ add_ec_val(name, val, description)
 	error_codes[current] = (char *)NULL;
 } 
 
+void
 put_ecs()
 {
 	int i;
 	for (i = 0; i < current; i++) {
 	     if (error_codes[i] != (char *)NULL)
-		  fprintf(hfile, "#define %-40s (%ldL)\n",
+		  fprintf(hfile, "#define %-40s (%d)\n",
 			  error_codes[i], table_number + i);
 	}
 }
@@ -234,6 +237,7 @@ int char_to_num(c)
 	exit (1);
 }
 
+void
 set_table_num(string)
 	char *string;
 {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile_et.c,v 1.3 1997/06/17 20:28:56 kstailey Exp $	*/
+/*	$OpenBSD: compile_et.c,v 1.4 1998/05/13 17:54:20 art Exp $	*/
 
 /*
  * Copyright 1986, 1987, 1988
@@ -23,7 +23,7 @@ static const char copyright[] =
     "Copyright 1987,1988 by MIT Student Information Processing Board";
 
 static const char rcsid_compile_et_c[] =
-    "$Id: compile_et.c,v 1.3 1997/06/17 20:28:56 kstailey Exp $";
+    "$Id: compile_et.c,v 1.4 1998/05/13 17:54:20 art Exp $";
 #endif
 
 extern char *gensym();
@@ -253,7 +253,7 @@ int main (argc, argv) int argc; char **argv; {
     for (cpp = struct_def; *cpp; cpp++)
 	fputs (*cpp, cfile);
     fprintf(cfile,
-	    "static const struct error_table et = { text, %dL, %d };\n\n",
+	    "static const struct error_table et = { text, %d, %d };\n\n",
 	    table_number, current);
     fputs("static struct et_list link = { 0, 0 };\n\n",
 	  cfile);
