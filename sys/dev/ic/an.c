@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.2 2000/04/06 04:01:49 mickey Exp $	*/
+/*	$OpenBSD: an.c,v 1.3 2000/06/18 03:26:51 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -797,7 +797,7 @@ an_setdef(sc, areq)
 	case AN_RID_GENCONFIG:
 		cfg = (struct an_ltv_genconfig *)areq;
 
-		ifa = ifnet_addrs[ifp->if_index - 1];
+		ifa = ifnet_addrs[ifp->if_index];
 		sdl = (struct sockaddr_dl *)ifa->ifa_addr;
 		bcopy((char *)&cfg->an_macaddr, (char *)&sc->arpcom.ac_enaddr,
 		    ETHER_ADDR_LEN);
