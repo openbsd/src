@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.16 1999/10/29 17:12:23 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.17 1999/10/29 22:00:31 csapuntz Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -563,7 +563,7 @@ wdc_atapi_start(chp, xfer)
 	 */
 
 	wdccommand(chp, xfer->drive, ATAPI_PKT_CMD, 
-	    sc_xfer->datalen <= 0xffff ? sc_xfer->datalen : 0xffff,
+	    xfer->c_bcount <= 0xfffe ? xfer->c_bcount : 0xfffe,
 	    0, 0, 0, 
 	    (xfer->c_flags & C_DMA) ? ATAPI_PKT_CMD_FTRE_DMA : 0);
 
