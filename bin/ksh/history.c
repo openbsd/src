@@ -1,4 +1,4 @@
-/*	$OpenBSD: history.c,v 1.15 2002/10/23 14:23:15 millert Exp $	*/
+/*	$OpenBSD: history.c,v 1.16 2002/11/27 20:53:25 pvalchev Exp $	*/
 
 /*
  * command history
@@ -239,10 +239,8 @@ c_fc(wp)
 		return 1;
 	}
 
-	if (!Flag(FSH)) {
-		/* Ignore setstr errors here (arbitrary) */
-		setstr(local("_", FALSE), tf->name, KSH_RETURN_ERROR);
-	}
+	/* Ignore setstr errors here (arbitrary) */
+	setstr(local("_", FALSE), tf->name, KSH_RETURN_ERROR);
 
 	/* XXX: source should not get trashed by this.. */
 	{
