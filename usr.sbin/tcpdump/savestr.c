@@ -1,4 +1,4 @@
-/*	$OpenBSD: savestr.c,v 1.4 2003/04/02 20:42:22 millert Exp $	*/
+/*	$OpenBSD: savestr.c,v 1.5 2003/04/04 02:56:51 millert Exp $	*/
 
 /*
  * Copyright (c) 1997
@@ -23,7 +23,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/savestr.c,v 1.4 2003/04/02 20:42:22 millert Exp $ (LBL)";
+    "@(#) $Header: /home/cvs/src/usr.sbin/tcpdump/savestr.c,v 1.5 2003/04/04 02:56:51 millert Exp $ (LBL)";
 #endif
 
 #include <sys/types.h>
@@ -53,9 +53,9 @@ savestr(register const char *str)
 		strsize = 1024;
 		if (strsize < size)
 			strsize = size;
-		strptr = strptr ? realloc(strptr, strsize) : malloc(strsize);
+		strptr = (char *)malloc(strsize);
 		if (strptr == NULL) {
-			fprintf(stderr, "savestr: cannot allocate memory\n");
+			fprintf(stderr, "savestr: malloc\n");
 			exit(1);
 		}
 	}
