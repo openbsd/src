@@ -1,5 +1,5 @@
-/*	$OpenBSD: hp.c,v 1.6 1997/08/08 21:46:56 niklas Exp $ */
-/*	$NetBSD: hp.c,v 1.12 1996/10/13 03:34:58 christos Exp $ */
+/*	$OpenBSD: hp.c,v 1.7 1997/09/10 11:52:26 maja Exp $ */
+/*	$NetBSD: hp.c,v 1.14 1997/03/15 16:32:18 ragge Exp $ */
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -52,11 +52,13 @@
 #include <sys/ioccom.h>
 #include <sys/fcntl.h>
 #include <sys/syslog.h>
+#include <sys/reboot.h>
 
 #include <machine/trap.h>
 #include <machine/pte.h>
 #include <machine/mtpr.h>
 #include <machine/cpu.h>
+#include <machine/rpb.h>
 
 #include <vax/mba/mbavar.h>
 #include <vax/mba/mbareg.h>
@@ -164,6 +166,12 @@ hpattach(parent, self, aux)
 	    dl, NULL)) != NULL)
 		printf(": %s", msg);
 	printf(": %s, size = %d sectors\n", dl->d_typename, dl->d_secperunit);
+	/*
+	 * check if this was what we booted from.
+	 */
+	if ((B_TYPE(bootdev) == BDEV_HP) && (ma->unit == B_UNIT(bootdev)) &&
+	    (ms->sc_physnr == B_ADAPTOR(bootdev)))
+		booted_from = self;
 }
 
 
@@ -493,4 +501,3 @@ hp_getdev(mbanr, unit, uname)
 	}
 	return -1;
 }
-

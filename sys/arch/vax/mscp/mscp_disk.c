@@ -1,5 +1,5 @@
-/*	$OpenBSD: mscp_disk.c,v 1.3 1997/08/08 21:46:56 niklas Exp $	*/
-/*	$NetBSD: mscp_disk.c,v 1.7 1997/01/11 11:20:32 ragge Exp $	*/
+/*	$OpenBSD: mscp_disk.c,v 1.4 1997/09/10 11:54:42 maja Exp $	*/
+/*	$NetBSD: mscp_disk.c,v 1.10 1997/03/15 16:32:19 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -58,6 +58,10 @@
 #include <sys/fcntl.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+#include <sys/reboot.h>
+
+#include <machine/cpu.h>
+#include <machine/rpb.h>
 
 #include <ufs/ffs/fs.h> /* For some disklabel stuff */
 
@@ -121,7 +125,7 @@ struct	mscp_device ra_device = {
 #define	raminor(u, p)	(((u) << UNITSHIFT) | (p))
 
 struct	cfdriver ra_cd = {
-	NULL, "ra", DV_DULL
+	NULL, "ra", DV_DISK
 };
 
 struct	cfattach ra_ca = {
@@ -187,6 +191,13 @@ raattach(parent, self, aux)
 	dl->d_ntracks = mp->mscp_guse.guse_ngpc;
 	dl->d_secpercyl = dl->d_nsectors * dl->d_ntracks;
 	disk_printtype(mp->mscp_unit, mp->mscp_guse.guse_mediaid);
+	/*
+	 * Find out if we booted from this disk.
+	 */
+	if ((B_TYPE(bootdev) == BDEV_UDA) && (ra->ra_hwunit == B_UNIT(bootdev))
+	    && (mi->mi_ctlrnr == B_CONTROLLER(bootdev))
+	    && (mi->mi_adapnr == B_ADAPTOR(bootdev)))
+		booted_from = self;
 }
 
 /* 

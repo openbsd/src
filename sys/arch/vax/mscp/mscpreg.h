@@ -1,5 +1,5 @@
-/*	$OpenBSD: mscpreg.h,v 1.2 1997/05/29 00:05:04 niklas Exp $	*/
-/*	$NetBSD: mscpreg.h,v 1.1 1996/07/01 20:41:37 ragge Exp $	*/
+/*	$OpenBSD: mscpreg.h,v 1.3 1997/09/10 11:54:42 maja Exp $	*/
+/*	$NetBSD: mscpreg.h,v 1.2 1997/03/15 16:39:20 ragge Exp $	*/
 /*
  * Copyright (c) 1996 Ludd, University of Lule}, Sweden.
  * Copyright (c) 1988 Regents of the University of California.
@@ -46,10 +46,12 @@
  * If you get warnings about your command ring being too small,
  * try increasing the values by one.
  */
+#ifndef	NRSP
 #define	NRSPL2	5
 #define	NCMDL2	5
 #define	NRSP	(1 << NRSPL2)
 #define	NCMD	(1 << NCMDL2)
+#endif
 
 /*
  * Communication area definition. This seems to be the same for
