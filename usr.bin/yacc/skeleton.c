@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.13 1998/11/18 15:45:12 dm Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.14 2000/01/26 22:37:24 deraadt Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -67,7 +67,7 @@ char *banner[] =
     "#if __GNUC__ == 2",
     "  __attribute__ ((unused))",
     "#endif /* __GNUC__ == 2 */",
-    "  = \"$OpenBSD: skeleton.c,v 1.13 1998/11/18 15:45:12 dm Exp $\";",
+    "  = \"$OpenBSD: skeleton.c,v 1.14 2000/01/26 22:37:24 deraadt Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -154,18 +154,26 @@ char *body[] =
     "    newss = yyss ? (short *)realloc(yyss, newsize * sizeof *newss) :",
     "      (short *)malloc(newsize * sizeof *newss);",
     "    if (newss == NULL)",
-    "        return -1;",
+    "        goto bail;",
     "    yyss = newss;",
     "    yyssp = newss + i;",
     "    newvs = yyvs ? (YYSTYPE *)realloc(yyvs, newsize * sizeof *newvs) :",
     "      (YYSTYPE *)malloc(newsize * sizeof *newvs);",
     "    if (newvs == NULL)",
-    "        return -1;",
+    "        goto bail;",
     "    yyvs = newvs;",
     "    yyvsp = newvs + i;",
     "    yystacksize = newsize;",
     "    yysslim = yyss + newsize - 1;",
     "    return 0;",
+    "bail:",
+    "    if (yyss)",
+    "            free(yyss);",
+    "    if (yyvs)",
+    "            free(yyvs);",
+    "    yyss = yyssp = yyvs = yyvsp = NULL;",
+    "    yystacksize = 0;",
+    "    return -1;",
     "}",
     "",
     "#define YYABORT goto yyabort",
