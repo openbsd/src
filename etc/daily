@@ -1,10 +1,9 @@
 #!/bin/sh -
 #
-#	$OpenBSD: daily,v 1.40 2002/09/12 02:36:31 danh Exp $
+#	$OpenBSD: daily,v 1.41 2002/12/07 20:16:19 millert Exp $
 #	From: @(#)daily	8.2 (Berkeley) 1/25/94
 #
 PATH=/bin:/usr/bin:/sbin:/usr/sbin:/usr/local/bin
-host=`hostname -s`
 bak=/var/backups
 
 if [ -f /etc/daily.local ]; then
@@ -176,5 +175,5 @@ fi
 
 sh /etc/security 2>&1 > $OUT
 if [ -s $OUT ]; then
-    mail -s "$host daily insecurity output" root < $OUT
+    mail -s "`hostname` daily insecurity output" root < $OUT
 fi
