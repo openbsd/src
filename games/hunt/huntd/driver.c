@@ -1,4 +1,4 @@
-/*	$OpenBSD: driver.c,v 1.7 1999/12/12 15:13:50 d Exp $	*/
+/*	$OpenBSD: driver.c,v 1.8 2000/06/30 18:28:07 pjanzen Exp $	*/
 /*	$NetBSD: driver.c,v 1.5 1997/10/20 00:37:16 lukem Exp $	*/
 /*
  *  Hunt
@@ -115,10 +115,10 @@ erred:
 again:
 	do {
 		/* First, poll to see if we can get input */
-		timerclear(&timeout);
 		do {
 			read_fds = Fds_mask;
 			errno = 0;
+			timerclear(&timeout);
 			nready = select(Num_fds, &read_fds, NULL, NULL, 
 			    &timeout);
 			if (nready < 0 && errno != EINTR) {
@@ -134,22 +134,22 @@ again:
 			 * to do, and decide if we need to to block 
 			 * indefinitely or just timeout.
 			 */
-			if (conf_simstep && can_moveshots()) {
+			do {
+				if (conf_simstep && can_moveshots()) {
 				/*
 				 * block for a short time before continuing
 				 * with explosions, bullets and whatnot
 				 */
-				to = &timeout;
-				to->tv_sec =  conf_simstep / 1000000;
-				to->tv_usec = conf_simstep % 1000000;
-			} else
+					to = &timeout;
+					to->tv_sec =  conf_simstep / 1000000;
+					to->tv_usec = conf_simstep % 1000000;
+				} else
 				/*
 				 * since there's nothing going on,
 				 * just block waiting for external activity
 				 */
-				to = NULL;
-			
-			do {
+					to = NULL;
+				
 				read_fds = Fds_mask;
 				errno = 0;
 				nready = select(Num_fds, &read_fds, NULL, NULL, 
@@ -263,6 +263,8 @@ again:
 			log(LOG_WARNING, "select");
 			break;
 		}
+		linger.tv_sec = conf_linger;
+		linger.tv_usec = 0;
 	}
 	if (ret > 0)
 		/* Someone returned! Resume the game: */

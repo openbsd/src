@@ -1,4 +1,4 @@
-/*	$OpenBSD: list.c,v 1.1 1999/12/12 14:53:02 d Exp $	*/
+/*	$OpenBSD: list.c,v 1.2 2000/06/30 18:28:03 pjanzen Exp $	*/
 /*
  * Copyright 1999, David Leonard. All rights reserved.
  * Redistribution and use in source and binary forms are permitted
@@ -71,6 +71,8 @@ next_driver_fd(fd)
 			maxfd = probe_sock[i];
 	}
 
+	probe_timeout.tv_sec = LIST_DELAY;
+	probe_timeout.tv_usec = 0;
 	ret = select(maxfd + 1, &r, NULL, NULL, &probe_timeout);
 
 	if (ret == -1) {
@@ -221,8 +223,6 @@ probe_drivers(req, preferred)
         int fd, inlen = 8192;
         int i, len;
 
-	probe_timeout.tv_sec = LIST_DELAY;
-	probe_timeout.tv_usec = 0;
 	numdrivers = 0;
 
 	probe_cleanup();
