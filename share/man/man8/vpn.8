@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.73 2004/03/12 09:46:03 jmc Exp $
+.\" $OpenBSD: vpn.8,v 1.74 2004/05/27 22:43:08 hshoexer Exp $
 .\"
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -73,30 +73,10 @@ manual (symmetric shared secret)
 .It
 .Xr isakmpd 8
 .El
-.Ss Enabling the Appropriate Kernel Operations
-Make sure that the following options and devices are enabled in the kernel:
-.Bd -literal -offset indent
-option    CRYPTO          # Cryptographic Framework
-option    IPSEC           # IPSEC VPN
-pseudo-device enc 1       # Encapsulation device used by IPSEC
-.Ed
-.Pp
-To use IPsec,
-.Xr ipsec 4
-operations must be enabled using
-.Xr sysctl 8 .
-Before doing either manual or automated keying, or performing
-encryption (ESP) or authentication (AH) operations, ensure the appropriate
-kernel operation has been enabled:
-.Bd -literal -offset indent
-# sysctl net.inet.esp.enable=1
-# sysctl net.inet.ah.enable=1
-.Ed
-.Pp
-The ESP and AH protocols default to 'on'.
-.Pp
-For security gateways, proper operation often also requires packet
-forwarding to be enabled:
+.Ss Enabling Packet Forwarding
+For security gateways, proper operation often requires packet
+forwarding to be enabled using
+.Xr sysctl 8 :
 .Bd -literal -offset indent
 # sysctl net.inet.ip.forwarding=1
 # sysctl net.inet6.ip6.forwarding=1
