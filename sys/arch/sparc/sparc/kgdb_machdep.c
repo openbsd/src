@@ -106,7 +106,6 @@
 #if defined(SUN4M)
 #define getpte4m(va) \
 	lda(((vm_offset_t)va & 0xFFFFF000) | ASI_SRMMUFP_L3, ASI_SRMMUFP)
-void	setpte4m __P((vm_offset_t, int));
 #endif
 
 #if defined(SUN4) || defined(SUN4C)
