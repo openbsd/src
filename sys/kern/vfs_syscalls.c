@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls.c,v 1.31 1997/11/18 06:59:59 millert Exp $	*/
+/*	$OpenBSD: vfs_syscalls.c,v 1.32 1997/11/20 07:15:38 millert Exp $	*/
 /*	$NetBSD: vfs_syscalls.c,v 1.71 1996/04/23 10:29:02 mycroft Exp $	*/
 
 /*
@@ -838,9 +838,10 @@ sys_open(p, v, retval)
 	register struct filedesc *fdp = p->p_fd;
 	register struct file *fp;
 	register struct vnode *vp;
+	struct vattr vattr;
 	int flags, cmode;
 	struct file *nfp;
-	int type, indx, error;
+	int type, indx, error, localtrunc = 0;
 	struct flock lf;
 	struct nameidata nd;
 	extern struct fileops vnops;
@@ -852,6 +853,10 @@ sys_open(p, v, retval)
 	cmode = ((SCARG(uap, mode) &~ fdp->fd_cmask) & ALLPERMS) &~ S_ISTXT;
 	NDINIT(&nd, LOOKUP, FOLLOW, UIO_USERSPACE, SCARG(uap, path), p);
 	p->p_dupfd = -indx - 1;			/* XXX check for fdopen */
+	if ((flags & O_TRUNC) && (flags & (O_EXLOCK | O_SHLOCK))) {
+		localtrunc = 1;
+		flags &= ~O_TRUNC;	/* Must do truncate ourselves */
+	}
 	if ((error = vn_open(&nd, flags, cmode)) != 0) {
 		ffree(fp);
 		if ((error == ENODEV || error == ENXIO) &&
@@ -893,6 +898,18 @@ sys_open(p, v, retval)
 		}
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY, p);
 		fp->f_flag |= FHASLOCK;
+	}
+	if (localtrunc) {
+		VATTR_NULL(&vattr);
+		vattr.va_size = 0;
+		VOP_LEASE(vp, p, p->p_ucred, LEASE_WRITE);
+		error = VOP_SETATTR(vp, &vattr, fp->f_cred, p);
+		if (error) {
+			(void) vn_close(vp, fp->f_flag, fp->f_cred, p);
+			ffree(fp);
+			fdp->fd_ofiles[indx] = NULL;
+			return (error);
+		}
 	}
 	VOP_UNLOCK(vp, 0, p);
 	*retval = indx;
