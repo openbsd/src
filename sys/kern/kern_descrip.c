@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_descrip.c,v 1.20 2000/04/01 23:29:25 provos Exp $	*/
+/*	$OpenBSD: kern_descrip.c,v 1.21 2000/09/24 19:13:26 provos Exp $	*/
 /*	$NetBSD: kern_descrip.c,v 1.42 1996/03/30 22:24:38 christos Exp $	*/
 
 /*
@@ -650,10 +650,6 @@ fdalloc(p, want, result)
 		    M_FILEDESC, M_WAITOK);
 		newofileflags = (char *) &newofile[nfiles];
 
-		MALLOC(newhimap, u_int *, NDHISLOTS(nfiles) * sizeof(u_int),
-		       M_FILEDESC, M_WAITOK);
-		MALLOC(newlomap, u_int *, NDLOSLOTS(nfiles) * sizeof(u_int),
-		       M_FILEDESC, M_WAITOK);
 		/*
 		 * Copy the existing ofile and ofileflags arrays
 		 * and zero the new portion of each array.
@@ -665,27 +661,37 @@ fdalloc(p, want, result)
 			(i = sizeof(char) * fdp->fd_nfiles));
 		bzero(newofileflags + i, nfiles * sizeof(char) - i);
 
-		bcopy(fdp->fd_himap, newhimap,
-		      (i = NDHISLOTS(fdp->fd_nfiles) * sizeof(u_int)));
-		bzero((char *)newhimap + i,
-		      NDHISLOTS(nfiles) * sizeof(u_int) - i);
-
-		bcopy(fdp->fd_lomap, newlomap,
-		      (i = NDLOSLOTS(fdp->fd_nfiles) * sizeof(u_int)));
-		bzero((char *)newlomap + i,
-		      NDLOSLOTS(nfiles) * sizeof(u_int) - i);
-
 		if (fdp->fd_nfiles > NDFILE)
 			FREE(fdp->fd_ofiles, M_FILEDESC);
-		if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
-			FREE(fdp->fd_himap, M_FILEDESC);
-			FREE(fdp->fd_lomap, M_FILEDESC);
+
+		if (NDHISLOTS(nfiles) > NDHISLOTS(fdp->fd_nfiles)) {
+			MALLOC(newhimap, u_int *,
+			       NDHISLOTS(nfiles) * sizeof(u_int),
+			       M_FILEDESC, M_WAITOK);
+			MALLOC(newlomap, u_int *,
+			       NDLOSLOTS(nfiles) * sizeof(u_int),
+			       M_FILEDESC, M_WAITOK);
+
+			bcopy(fdp->fd_himap, newhimap,
+			      (i = NDHISLOTS(fdp->fd_nfiles) * sizeof(u_int)));
+			bzero((char *)newhimap + i,
+			      NDHISLOTS(nfiles) * sizeof(u_int) - i);
+
+			bcopy(fdp->fd_lomap, newlomap,
+			      (i = NDLOSLOTS(fdp->fd_nfiles) * sizeof(u_int)));
+			bzero((char *)newlomap + i,
+			      NDLOSLOTS(nfiles) * sizeof(u_int) - i);
+
+			if (NDHISLOTS(fdp->fd_nfiles) > NDHISLOTS(NDFILE)) {
+				FREE(fdp->fd_himap, M_FILEDESC);
+				FREE(fdp->fd_lomap, M_FILEDESC);
+			}
+			fdp->fd_himap = newhimap;
+			fdp->fd_lomap = newlomap;
 		}
 		fdp->fd_ofiles = newofile;
 		fdp->fd_ofileflags = newofileflags;
 		fdp->fd_nfiles = nfiles;
-		fdp->fd_himap = newhimap;
-		fdp->fd_lomap = newlomap;
 		fdexpand++;
 	}
 }
