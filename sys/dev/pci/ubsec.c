@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.94 2002/05/02 18:28:24 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.95 2002/05/02 19:03:35 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1822,7 +1822,7 @@ ubsec_kprocess_modexp(sc, krp)
 		goto errout;
 	}
 
-	if (ubsec_dma_malloc(sc, 1024 / 8, &me->me_E, 0)) {
+	if (ubsec_dma_malloc(sc, 2048 / 8, &me->me_E, 0)) {
 		err = ENOMEM;
 		goto errout;
 	}
@@ -1840,11 +1840,12 @@ ubsec_kprocess_modexp(sc, krp)
 	}
 	epb = (struct ubsec_pktbuf *)me->me_epb.dma_vaddr;
 
-	if (ubsec_kcopyin(&krp->krp_param[UBS_MODEXP_PAR_E], me->me_E.dma_vaddr,
-	    1024 / 8, &len)) {
+	len = (krp->krp_param[UBS_MODEXP_PAR_E].crp_nbits + 7) / 8;
+	if (len > me->me_E.dma_size) {
 		err = EOPNOTSUPP;
 		goto errout;
 	}
+	bcopy(krp->krp_param[UBS_MODEXP_PAR_E].crp_p, me->me_E.dma_vaddr, len);
 	epb->pb_addr = htole32(me->me_E.dma_paddr);
 	epb->pb_next = 0;
 	epb->pb_len = htole32(len);
@@ -1894,7 +1895,8 @@ ubsec_kprocess_modexp(sc, krp)
 		len = 512;
 	ctx->me_len = htole16((len / 8) + (4 * sizeof(u_int16_t)));
 	ctx->me_op = htole16(UBS_CTXOP_MODEXP);
-	ctx->me_E_len = htole16(((krp->krp_param[UBS_MODEXP_PAR_E].crp_nbits + 31) / 32) * 32);
+	ctx->me_E_len =
+	    htole16(((krp->krp_param[UBS_MODEXP_PAR_E].crp_nbits + 7) / 8) * 8);
 	ctx->me_N_len = htole16(len);
 
 #ifdef UBSEC_DEBUG
