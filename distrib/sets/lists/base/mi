@@ -3754,6 +3754,7 @@
 ./var/at/jobs
 ./var/at/spool
 ./var/audit
+./var/authpf
 ./var/backups
 ./var/crash
 ./var/cron

@@ -7,6 +7,7 @@
 ./etc/afs/ThisCell
 ./etc/afs/afsd.conf
 ./etc/amd/master.sample
+./etc/authpf
 ./etc/bootptab
 ./etc/ccd.conf
 ./etc/changelist
