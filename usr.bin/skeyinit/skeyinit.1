@@ -1,4 +1,4 @@
-.\"	$OpenBSD: skeyinit.1,v 1.17 2000/03/23 21:39:55 aaron Exp $
+.\"	$OpenBSD: skeyinit.1,v 1.18 2000/07/06 04:06:56 aaron Exp $
 .\"	$NetBSD: skeyinit.1,v 1.4 1995/07/07 22:24:09 jtc Exp $
 .\"	@(#)skeyinit.1	1.1 	10/28/93
 .\"
@@ -46,7 +46,8 @@ When used over an untrusted network, a password of
 should be used.
 The user will then be presented with the standard
 S/Key challenge and allowed to proceed if it is correct.
-.Sh OPTIONS
+.Pp
+The options are as follows:
 .Bl -tag -width XXXXXXX
 .It Fl x
 Displays pass phrase in hexadecimal instead of ASCII.
@@ -94,6 +95,7 @@ Selects RMD-160 (160 bit Ripe Message Digest) as the hash algorithm.
 .It Ar user
 The username to be changed/added.
 By default the current user is operated on.
+.El
 .Sh ERRORS
 .Bl -tag -width "skey disabled"
 .It skey disabled

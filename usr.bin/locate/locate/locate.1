@@ -1,4 +1,4 @@
-.\"	$OpenBSD: locate.1,v 1.14 2000/03/24 21:06:53 ian Exp $
+.\"	$OpenBSD: locate.1,v 1.15 2000/07/06 04:06:54 aaron Exp $
 .\"
 .\" Copyright (c) 1995 Wolfram Schneider <wosch@FreeBSD.org>. Berlin.
 .\" Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 .\" SUCH DAMAGE.
 .\"
 .\"	@(#)locate.1	8.1 (Berkeley) 6/6/93
-.\"	$Id: locate.1,v 1.14 2000/03/24 21:06:53 ian Exp $
+.\"	$Id: locate.1,v 1.15 2000/07/06 04:06:54 aaron Exp $
 .\"
 .Dd June 6, 1993
 .Dt LOCATE 1
@@ -179,6 +179,7 @@ Use the
 .Xr stdio 3
 library instead of
 .Xr mmap 2 .
+.El
 .Sh FILES
 .Bl -tag -width /usr/libexec/locate.updatedb -compact
 .It Pa /var/db/locate.database
@@ -207,6 +208,11 @@ option was specified.
 .%V 8:1
 .%P pp. 8-10
 .Re
+.Sh HISTORY
+The
+.Nm
+command appeared in
+.Bx 4.4 .
 .Sh BUGS
 .Nm
 may fail to list some files that are present, or may
@@ -249,12 +255,3 @@ implementation understands databases in host byte order or
 network byte order.
 So a little-endian machine can't understand
 a locate database which was built on an big-endian machine.
-.Sh HISTORY
-The
-.Nm
-command appeared in
-.Bx 4.4 .
-Many new features were
-added in
-.\".Fx 2.2 .
-FreeBSD 2.2. \"I assume

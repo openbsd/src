@@ -1,4 +1,4 @@
-.\" $OpenBSD: skeyaudit.1,v 1.6 2000/03/11 21:40:02 aaron Exp $
+.\" $OpenBSD: skeyaudit.1,v 1.7 2000/07/06 04:06:55 aaron Exp $
 .\"
 .Dd 22 July 1997
 .Dt SKEYAUDIT 1
@@ -35,6 +35,7 @@ Don't send mail, just print to the standard output.
 .It Fl l Ar limit
 The limit used to determine whether or not a user should be notified.
 The default is to notify if there are fewer than 12 keys left.
+.El
 .Sh FILES
 .Bl -tag -width /etc/skeykeys -compact
 .It Pa /etc/skeykeys
