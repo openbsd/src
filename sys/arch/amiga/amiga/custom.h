@@ -1,4 +1,5 @@
-/*	$NetBSD: custom.h,v 1.9 1995/03/28 18:14:32 jtc Exp $	*/
+/*	$OpenBSD: custom.h,v 1.3 1996/05/06 11:36:53 niklas Exp $	*/
+/*	$NetBSD: custom.h,v 1.10 1996/02/01 22:29:10 mycroft Exp $	*/
 
 /*
  * Mach Operating System
