@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53c9x.c,v 1.10 2001/09/27 04:01:42 jason Exp $	*/
+/*	$OpenBSD: ncr53c9x.c,v 1.11 2001/12/17 23:13:41 nordin Exp $	*/
 /*     $NetBSD: ncr53c9x.c,v 1.56 2000/11/30 14:41:46 thorpej Exp $    */
 
 /*
@@ -2711,7 +2711,7 @@ ncr53c9x_abort(sc, ecb)
 	ecb->flags |= ECB_ABORT;
 
 	if (ecb == sc->sc_nexus) {
-		int timeout;
+		int timeout = ecb->timeout;
 
 		/*
 		 * If we're still selecting, the message will be scheduled
