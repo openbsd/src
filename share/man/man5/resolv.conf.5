@@ -1,4 +1,4 @@
-.\"	$OpenBSD: resolv.conf.5,v 1.17 2001/09/14 23:49:29 itojun Exp $
+.\"	$OpenBSD: resolv.conf.5,v 1.18 2001/09/24 13:41:30 heko Exp $
 .\"	$NetBSD: resolv.conf.5,v 1.7 1996/03/06 18:22:16 scottr Exp $
 .\"
 .\" Copyright (c) 1986, 1991 The Regents of the University of California.
@@ -172,12 +172,6 @@ non-EDNS0 DNS servers.
 The option must be used only when all the DNS servers listed in
 .Sy nameserver
 lines are able to handle EDNS0 extension.
-.It Sy inet6
-enable support for IPv6-only applications, by setting RES_USE_INET6 in
-_res.options (see
-.Xr resolver 3 ) .
-The option is meaningful with certain kernel configuration only and
-use of this options is discourated.
 .It Sy inet6
 Enables support for IPv6-only applications, by setting RES_USE_INET6 in
 _res.options (see
