@@ -1,4 +1,4 @@
-/*	$OpenBSD: cryptodev.h,v 1.6 2001/06/23 21:57:00 angelos Exp $	*/
+/*	$OpenBSD: cryptodev.h,v 1.7 2001/06/24 22:11:02 angelos Exp $	*/
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -155,19 +155,22 @@ struct DH_buf {
  */
 struct RSA_key {
 	/* Length of variables (in bits) */
-	u_int16_t 	rsak_exponent_length;  	/* Length of exponent */
+	u_int16_t 	rsak_exponent_length;  	/* Length of exponent (e) */
 	u_int16_t	rsak_mod_length;	/* Length of modulus */
-	u_int16_t	rsak_p_length;		/* Length of prime number p */
-	u_int16_t	rsak_q_length;		/* Length of prime number q */
-	u_int16_t 	rsak_priv_key_length;	/* Length of private key */
+	u_int16_t	rsak_p_length;		/* Length of p */
+	u_int16_t	rsak_q_length;		/* Length of q */
+	u_int16_t 	rsak_dp_length;		/* Length of CRT dp */
+	u_int16_t	rsak_dq_length;		/* Length of CRT dq */
+	u_int16_t	rsak_qinv_length;	/* Length of CRT qinv */
 
 	/* Input/output buffers */
 	caddr_t		rsak_exponent;
 	caddr_t		rsak_modulus;
-	caddr_t		rsak_prime_p;
-	caddr_t		rsak_prime_q;
-	caddr_t		rsak_priv_coeff;
-	caddr_t		rsak_priv_key;
+	caddr_t		rsak_p;
+	caddr_t		rsak_q;
+	caddr_t		rsak_dp;
+	caddr_t		rsak_dq;
+	caddr_t		rsak_qinv;
 };
   
 /*
