@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.10 2000/04/06 20:05:39 todd Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.11 2001/01/26 22:15:04 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -212,8 +212,8 @@ bad:
 	return;
 }
 
-struct nam2blk {
-	char *name;
+const struct nam2blk {
+	char name[4];
 	int maj;
 } nam2blk[] = {
 	{ "st",		2 },
