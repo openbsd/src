@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_atu.c,v 1.39 2004/12/06 09:05:51 dlg Exp $ */
+/*	$OpenBSD: if_atu.c,v 1.40 2004/12/06 11:33:30 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
  *	Daan Vreeken <Danovitsch@Vitsch.net>.  All rights reserved.
@@ -177,8 +177,6 @@ void atu_task(void *);
 int atu_newstate(struct ieee80211com *, enum ieee80211_state, int);
 int atu_tx_start(struct atu_softc *, struct ieee80211_node *,
     struct atu_chain *, struct mbuf *);
-/* XXX stolen from iwi */
-void atu_fix_channel(struct ieee80211com *, struct mbuf *);
 
 void
 atu_msleep(struct atu_softc *sc, int ms)
@@ -1374,7 +1372,7 @@ USB_ATTACH(atu)
 	ic->ic_phytype = IEEE80211_T_DS;
 	ic->ic_opmode = IEEE80211_M_STA;
 	ic->ic_state = IEEE80211_S_INIT;
-	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_WEP;
+	ic->ic_caps = IEEE80211_C_IBSS | IEEE80211_C_WEP | IEEE80211_C_SCANALL;
 
 	i = 0;
 	ic->ic_sup_rates[IEEE80211_MODE_11B].rs_rates[i++] = 2;
@@ -1570,44 +1568,6 @@ atu_xfer_list_free(struct atu_softc *sc, struct atu_chain *ch,
 	}
 }
 
-/* XXX Horrible hack to fix channel number of beacons and probe responses */
-void
-atu_fix_channel(struct ieee80211com *ic, struct mbuf *m)
-{
-	struct ieee80211_frame *wh;
-	u_int8_t subtype;
-	u_int8_t *frm, *efrm;
-
-	DPRINTFN(10, ("atu_fix_channel\n"));
-
-	wh = mtod(m, struct ieee80211_frame *);
-
-	if ((wh->i_fc[0] & IEEE80211_FC0_TYPE_MASK) != IEEE80211_FC0_TYPE_MGT)
-		return;
-
-	DPRINTFN(10, ("atu_fix_channel: beacon/resp\n"));
-
-	subtype = wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
-
-	if (subtype != IEEE80211_FC0_SUBTYPE_BEACON &&
-	    subtype != IEEE80211_FC0_SUBTYPE_PROBE_RESP)
-		return;
-
-	frm = (u_int8_t *)(wh + 1);
-	efrm = mtod(m, u_int8_t *) + m->m_len;
-
-	frm += 12;	/* skip tstamp, bintval and capinfo */
-	while (frm < efrm) {
-		if (*frm == IEEE80211_ELEMID_DSPARMS)
-#if IEEE80211_CHAN_MAX < 255
-		if (frm[2] <= IEEE80211_CHAN_MAX)
-#endif
-			ic->ic_bss->ni_chan = &ic->ic_channels[frm[2]];
-
-		frm += frm[1] + 2;
-	}
-}
-
 /*
  * A frame has been uploaded: pass the resulting mbuf chain up to
  * the higher level protocols.
@@ -1687,15 +1647,6 @@ atu_rxeof(usbd_xfer_handle xfer, usbd_private_handle priv, usbd_status status)
 	memcpy(mtod(m, char *), c->atu_buf + ATU_RX_HDRLEN, len);
 	m->m_pkthdr.rcvif = ifp;
 	m->m_pkthdr.len = m->m_len = len;
-
-	/*
-	 * XXX stolen from iwi, needs fixing
-	 * Management frames (beacons or probe responses) received during
-	 * scanning have an invalid channel field. Thus these frames are
-	 * rejected by the 802.11 layer which breaks AP detection.
-	 */
-	if (ic->ic_state == IEEE80211_S_SCAN)
-		atu_fix_channel(ic, m);
 
 	ifp->if_ipackets++;
 
