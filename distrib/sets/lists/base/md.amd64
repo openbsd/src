@@ -24,9 +24,6 @@
 ./etc/firmware/fxp-license
 ./etc/firmware/kue
 ./etc/firmware/kue-license
-./etc/firmware/tigon-license
-./etc/firmware/tigon1
-./etc/firmware/tigon2
 ./etc/firmware/uyap
 ./etc/firmware/uyap-license
 ./etc/firmware/yds

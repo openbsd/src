@@ -31,9 +31,6 @@
 ./etc/firmware/symbol-eprim
 ./etc/firmware/symbol-esec
 ./etc/firmware/symbol-license
-./etc/firmware/tigon-license
-./etc/firmware/tigon1
-./etc/firmware/tigon2
 ./etc/firmware/uyap
 ./etc/firmware/uyap-license
 ./etc/firmware/yds
