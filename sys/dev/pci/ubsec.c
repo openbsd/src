@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.21 2000/08/12 06:29:08 deraadt Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.22 2000/08/13 21:58:06 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -36,7 +36,7 @@
 
 
 /*
- * uBsec 5[56]01 hardware crypto accelerator
+ * uBsec 5[56]01, 580x hardware crypto accelerator
  */
 
 #include <sys/param.h>
@@ -115,7 +115,7 @@ ubsec_probe(parent, match, aux)
 	return (0);
 }
 
-void 
+void
 ubsec_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
@@ -193,7 +193,7 @@ ubsec_attach(parent, self, aux)
 	printf(": %s\n", intrstr);
 }
 
-int 
+int
 ubsec_intr(arg)
 	void *arg;
 {
@@ -282,7 +282,7 @@ ubsec_feed(sc)
 	struct ubsec_mcr *mcr;
 	int npkts, i, l;
 	void *v, *mcr2;
-	
+
 	npkts = sc->sc_nqueue;
 	if (npkts > 20)
 		npkts = 20;
@@ -796,7 +796,7 @@ ubsec_process(crp)
 
 			if ((i + 1) == q->q_dst_npa) {
 				if (maccrd)
-					pb->pb_next = 
+					pb->pb_next =
 					    vtophys(&q->q_macbuf[0]);
 				else
 					pb->pb_next = 0;
