@@ -1,4 +1,4 @@
-/*	$OpenBSD: df.c,v 1.39 2004/09/14 22:51:47 deraadt Exp $	*/
+/*	$OpenBSD: df.c,v 1.40 2004/10/15 20:15:47 millert Exp $	*/
 /*	$NetBSD: df.c,v 1.21.2.1 1995/11/01 00:06:11 jtc Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)df.c	8.7 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: df.c,v 1.39 2004/09/14 22:51:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: df.c,v 1.40 2004/10/15 20:15:47 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -172,22 +172,24 @@ main(int argc, char *argv[])
 		}
 	}
 
-	maxwidth = 0;
-	for (i = 0; i < mntsize; i++) {
-		width = strlen(mntbuf[i].f_mntfromname);
-		if (width > maxwidth)
-			maxwidth = width;
+	if (mntsize) {
+		maxwidth = 0;
+		for (i = 0; i < mntsize; i++) {
+			width = strlen(mntbuf[i].f_mntfromname);
+			if (width > maxwidth)
+				maxwidth = width;
+		}
+
+		if (maxwidth < 11)
+			maxwidth = 11;
+
+		if (Pflag)
+			posixprint(mntbuf, mntsize, maxwidth);
+		else
+			bsdprint(mntbuf, mntsize, maxwidth);
 	}
 
-	if (maxwidth < 11)
-		maxwidth = 11;
-
-	if (Pflag)
-		posixprint(mntbuf, mntsize, maxwidth);
-	else
-		bsdprint(mntbuf, mntsize, maxwidth);
-
-	exit(0);
+	exit(mntsize ? 0 : 1);
 }
 
 char *
