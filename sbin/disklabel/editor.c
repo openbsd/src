@@ -1,4 +1,4 @@
-/*	$OpenBSD: editor.c,v 1.48 1999/03/13 19:42:40 millert Exp $	*/
+/*	$OpenBSD: editor.c,v 1.49 1999/03/16 04:27:20 millert Exp $	*/
 
 /*
  * Copyright (c) 1997-1999 Todd C. Miller <Todd.Miller@courtesan.com>
@@ -28,7 +28,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: editor.c,v 1.48 1999/03/13 19:42:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: editor.c,v 1.49 1999/03/16 04:27:20 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -73,7 +73,7 @@ void	editor_display __P((struct disklabel *, u_int32_t *, char));
 void	editor_help __P((char *));
 void	editor_modify __P((struct disklabel *, u_int32_t *, char *));
 char	*getstring __P((struct disklabel *, char *, char *, char *));
-u_int32_t getuint __P((struct disklabel *, int, char *, char *, u_int32_t, u_int32_t, int));
+u_int32_t getuint __P((struct disklabel *, int, char *, char *, u_int32_t, u_int32_t, u_int32_t, int));
 int	has_overlap __P((struct disklabel *, u_int32_t *, int));
 void	make_contiguous __P((struct disklabel *));
 u_int32_t next_offset __P((struct disklabel *, struct partition *));
@@ -429,7 +429,7 @@ getoff1:
 	for (;;) {
 		ui = getuint(lp, partno, "offset",
 		   "Starting sector for this partition.", pp->p_offset,
-		   pp->p_offset, DO_CONVERSIONS |
+		   pp->p_offset, 0, DO_CONVERSIONS |
 		   (pp->p_fstype == FS_BSDFFS ? DO_ROUNDING : 0));
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
@@ -468,7 +468,7 @@ getoff1:
 	/* Get size */
 	for (;;) {
 		ui = getuint(lp, partno, "size", "Size of the partition.",
-		    pp->p_size, *freep, DO_CONVERSIONS |
+		    pp->p_size, *freep, pp->p_offset, DO_CONVERSIONS |
 		    ((pp->p_fstype == FS_BSDFFS || pp->p_fstype == FS_SWAP) ?
 		    DO_ROUNDING : 0));
 		if (ui == UINT_MAX - 1) {
@@ -527,7 +527,7 @@ getoff1:
 		for (;;) {
 			ui = getuint(lp, partno, "FS type (decimal)",
 			    "Filesystem type as a decimal number; usually 7 (4.2BSD) or 1 (swap).",
-			    pp->p_fstype, pp->p_fstype, 0);
+			    pp->p_fstype, pp->p_fstype, 0, 0);
 			if (ui == UINT_MAX - 1) {
 				fputs("Command aborted\n", stderr);
 				pp->p_size = 0;		/* effective delete */
@@ -545,7 +545,7 @@ getoff1:
 		for (;;) {
 			ui = getuint(lp, partno, "fragment size",
 			    "Size of fs block fragments.  Usually 1024 or 512.",
-			    pp->p_fsize, pp->p_fsize, 0);
+			    pp->p_fsize, pp->p_fsize, 0, 0);
 			if (ui == UINT_MAX - 1) {
 				fputs("Command aborted\n", stderr);
 				pp->p_size = 0;		/* effective delete */
@@ -565,7 +565,7 @@ getoff1:
 			ui = getuint(lp, partno, "block size",
 			    "Size of filesystem blocks.  Usually 8192 or 4096.",
 			    pp->p_fsize * pp->p_frag, pp->p_fsize * pp->p_frag,
-			    0);
+			    0, 0);
 
 			/* sanity checks */
 			if (ui == UINT_MAX - 1) {
@@ -592,7 +592,7 @@ getoff1:
 			for (;;) {
 				ui = getuint(lp, partno, "cpg",
 				    "Number of filesystem cylinders per group.  Usually 16 or 8.",
-				    pp->p_cpg, pp->p_cpg, 0);
+				    pp->p_cpg, pp->p_cpg, 0, 0);
 				if (ui == UINT_MAX - 1) {
 					fputs("Command aborted\n", stderr);
 					pp->p_size = 0;	/* effective delete */
@@ -671,7 +671,7 @@ editor_modify(lp, freep, p)
 		for (;;) {
 			ui = getuint(lp, partno, "FS type (decimal)",
 			    "Filesystem type as a decimal number; usually 7 (4.2BSD) or 1 (swap).",
-			    pp->p_fstype, pp->p_fstype, 0);
+			    pp->p_fstype, pp->p_fstype, 0, 0);
 			if (ui == UINT_MAX - 1) {
 				fputs("Command aborted\n", stderr);
 				pp->p_size = 0;		/* effective delete */
@@ -706,7 +706,7 @@ getoff2:
 	for (;;) {
 		ui = getuint(lp, partno, "offset",
 		    "Starting sector for this partition.", pp->p_offset,
-		    pp->p_offset, DO_CONVERSIONS |
+		    pp->p_offset, 0, DO_CONVERSIONS |
 		    (pp->p_fstype == FS_BSDFFS ? DO_ROUNDING : 0));
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
@@ -728,7 +728,9 @@ getoff2:
 	/* XXX - this loop sucks */
 	for (;;) {
 		ui = getuint(lp, partno, "size", "Size of the partition.",
-		    pp->p_size, *freep, 1);
+		    pp->p_size, *freep, pp->p_offset, DO_CONVERSIONS |
+		    ((pp->p_fstype == FS_BSDFFS || pp->p_fstype == FS_SWAP)
+		    ? DO_ROUNDING : 0));
 
 		if (ui == pp->p_size)
 			break;			/* no change */
@@ -780,7 +782,7 @@ getoff2:
 		for (;;) {
 			ui = getuint(lp, partno, "fragment size",
 			    "Size of fs block fragments.  Usually 1024 or 512.",
-			    pp->p_fsize ? pp->p_fsize : 1024, 1024, 0);
+			    pp->p_fsize ? pp->p_fsize : 1024, 1024, 0, 0);
 			if (ui == UINT_MAX - 1) {
 				fputs("Command aborted\n", stderr);
 				*pp = origpart;		/* undo changes */
@@ -799,7 +801,7 @@ getoff2:
 			ui = getuint(lp, partno, "block size",
 			    "Size of filesystem blocks.  Usually 8192 or 4096.",
 			    pp->p_frag ? pp->p_fsize * pp->p_frag : 8192,
-			    8192, 0);
+			    8192, 0, 0);
 
 			/* sanity check */
 			if (ui == UINT_MAX - 1) {
@@ -824,7 +826,7 @@ getoff2:
 				ui = getuint(lp, partno, "cpg",
 				    "Number of filesystem cylinders per group."
 				    "  Usually 16 or 8.",
-				    pp->p_cpg ? pp->p_cpg : 16, 16, 0);
+				    pp->p_cpg ? pp->p_cpg : 16, 16, 0, 0);
 				if (ui == UINT_MAX - 1) {
 					fputs("Command aborted\n", stderr);
 					*pp = origpart;	/* undo changes */
@@ -1015,6 +1017,7 @@ editor_change(lp, freep, p)
 {
 	int partno;
 	u_int32_t newsize;
+	struct partition *pp;
 
 	if (p == NULL) {
 		p = getstring(lp, "partition to change size",
@@ -1034,48 +1037,46 @@ editor_change(lp, freep, p)
 		fprintf(stderr, "Partition '%c' is not in use.\n", 'a' + partno);
 		return;
 	}
+	pp = &lp->d_partitions[partno];
 
 	printf("Partition %c is currently %u sectors in size (%u free).\n",
-	    partno + 'a', lp->d_partitions[partno].p_size, *freep);
+	    partno + 'a', pp->p_size, *freep);
 	/* XXX - make maxsize lp->d_secperunit if FS_UNUSED/FS_BOOT? */
 	newsize = getuint(lp, partno, "new size", "Size of the partition.  "
 	    "You may also say +/- amount for a relative change.",
-	    lp->d_partitions[partno].p_size,
-	    lp->d_partitions[partno].p_size + *freep, DO_CONVERSIONS |
-	    (lp->d_partitions[partno].p_fstype == FS_BSDFFS ? DO_ROUNDING : 0));
+	    pp->p_size, pp->p_size + *freep, pp->p_offset, DO_CONVERSIONS |
+	    (pp->p_fstype == FS_BSDFFS ? DO_ROUNDING : 0));
 	if (newsize == UINT_MAX - 1) {
 		fputs("Command aborted\n", stderr);
 		return;
 	} else if (newsize == UINT_MAX) {
 		fputs("Invalid entry\n", stderr);
 		return;
-	} else if (newsize == lp->d_partitions[partno].p_size)
+	} else if (newsize == pp->p_size)
 		return;
 
-	if (lp->d_partitions[partno].p_fstype != FS_UNUSED &&
-	    lp->d_partitions[partno].p_fstype != FS_BOOT) {
-		if (newsize > lp->d_partitions[partno].p_size) {
-			if (newsize - lp->d_partitions[partno].p_size > *freep) {
+	if (pp->p_fstype != FS_UNUSED && pp->p_fstype != FS_BOOT) {
+		if (newsize > pp->p_size) {
+			if (newsize - pp->p_size > *freep) {
 				fprintf(stderr,
 				    "Only %u sectors free, you asked for %u\n",
-				    *freep,
-				    newsize - lp->d_partitions[partno].p_size);
+				    *freep, newsize - pp->p_size);
 				return;
 			}
-			*freep -= newsize - lp->d_partitions[partno].p_size;
-		} else if (newsize < lp->d_partitions[partno].p_size) {
-			*freep += lp->d_partitions[partno].p_size - newsize;
+			*freep -= newsize - pp->p_size;
+		} else if (newsize < pp->p_size) {
+			*freep += pp->p_size - newsize;
 		}
 	} else {
 		if (partno == 2 && newsize +
-		    lp->d_partitions[partno].p_offset > lp->d_secperunit) {
+		    pp->p_offset > lp->d_secperunit) {
 			fputs("'c' partition may not be larger than the disk\n",
 			    stderr);
 			return;
 		}
 	}
-	lp->d_partitions[partno].p_size = newsize;
-	if (newsize + lp->d_partitions[partno].p_offset > ending_sector ||
+	pp->p_size = newsize;
+	if (newsize + pp->p_offset > ending_sector ||
 	    has_overlap(lp, freep, -1))
 		make_contiguous(lp);
 }
@@ -1161,13 +1162,14 @@ getstring(lp, prompt, helpstring, oval)
  * XXX - there are way too many parameters here.  Use inline helper functions
  */
 u_int32_t
-getuint(lp, partno, prompt, helpstring, oval, maxval, flags)
+getuint(lp, partno, prompt, helpstring, oval, maxval, offset, flags)
 	struct disklabel *lp;
 	int partno;
 	char *prompt;
 	char *helpstring;
 	u_int32_t oval;
 	u_int32_t maxval;		/* XXX - used inconsistently */
+	u_int32_t offset;
 	int flags;
 {
 	char buf[BUFSIZ], *endptr, *p, operator = '\0';
@@ -1175,6 +1177,9 @@ getuint(lp, partno, prompt, helpstring, oval, maxval, flags)
 	size_t n;
 	int mult = 1;
 	double d;
+
+	/* We only care about the remainder */
+	offset = offset % lp->d_secpercyl;
 
 	buf[0] = '\0';
 	do {
@@ -1266,13 +1271,15 @@ getuint(lp, partno, prompt, helpstring, oval, maxval, flags)
 			/* If we round up past the end, round down instead */
 			cyls = (u_int32_t)((rval / (double)lp->d_secpercyl)
 			    + 0.5);
-			if (cyls * lp->d_secpercyl > maxval)
-				cyls--;
+			if (cyls != 0 && lp->d_secpercyl != 0) {
+				if ((cyls * lp->d_secpercyl) - offset > maxval)
+					cyls--;
 
-			if (rval != cyls * lp->d_secpercyl) {
-				rval = cyls * lp->d_secpercyl;
-				printf("Rounding to nearest cylinder: %u\n",
-				    rval);
+				if (rval != (cyls * lp->d_secpercyl) - offset) {
+					rval = (cyls * lp->d_secpercyl) - offset;
+					printf("Rounding to nearest cylinder: %u\n",
+					    rval);
+				}
 			}
 		}
 	}
@@ -1415,7 +1422,7 @@ edit_parms(lp, freep)
 	for (;;) {
 		ui = getuint(lp, 0, "sectors/track",
 		    "The Numer of sectors per track.", lp->d_nsectors,
-		    lp->d_nsectors, 0);
+		    lp->d_nsectors, 0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			*lp = oldlabel;		/* undo damage */
@@ -1431,7 +1438,7 @@ edit_parms(lp, freep)
 	for (;;) {
 		ui = getuint(lp, 0, "tracks/cylinder",
 		    "The number of tracks per cylinder.", lp->d_ntracks,
-		    lp->d_ntracks, 0);
+		    lp->d_ntracks, 0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			*lp = oldlabel;		/* undo damage */
@@ -1447,7 +1454,8 @@ edit_parms(lp, freep)
 	for (;;) {
 		ui = getuint(lp, 0, "sectors/cylinder",
 		    "The number of sectors per cylinder (Usually sectors/track "
-		    "* tracks/cylinder).", lp->d_secpercyl, lp->d_secpercyl, 0);
+		    "* tracks/cylinder).", lp->d_secpercyl, lp->d_secpercyl,
+		    0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			*lp = oldlabel;		/* undo damage */
@@ -1463,7 +1471,7 @@ edit_parms(lp, freep)
 	for (;;) {
 		ui = getuint(lp, 0, "number of cylinders",
 		    "The total number of cylinders on the disk.",
-		    lp->d_ncylinders, lp->d_ncylinders, 0);
+		    lp->d_ncylinders, lp->d_ncylinders, 0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			*lp = oldlabel;		/* undo damage */
@@ -1481,7 +1489,7 @@ edit_parms(lp, freep)
 		    "The total number of sectors on the disk.",
 		    lp->d_secperunit ? lp->d_secperunit :
 		    lp->d_ncylinders * lp->d_ncylinders,
-		    lp->d_ncylinders * lp->d_ncylinders, 0);
+		    lp->d_ncylinders * lp->d_ncylinders, 0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			*lp = oldlabel;		/* undo damage */
@@ -1519,7 +1527,7 @@ edit_parms(lp, freep)
 	for (;;) {
 		ui = getuint(lp, 0, "rpm",
 		  "The rotational speed of the disk in revolutions per minute.",
-		  lp->d_rpm, lp->d_rpm, 0);
+		  lp->d_rpm, lp->d_rpm, 0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			*lp = oldlabel;		/* undo damage */
@@ -1535,7 +1543,7 @@ edit_parms(lp, freep)
 	for (;;) {
 		ui = getuint(lp, 0, "interleave",
 		  "The physical sector interleave, set when formatting.  Almost always 1.",
-		  lp->d_interleave, lp->d_interleave, 0);
+		  lp->d_interleave, lp->d_interleave, 0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			*lp = oldlabel;		/* undo damage */
@@ -1688,7 +1696,7 @@ set_bounds(lp, freep)
 	do {
 		ui = getuint(lp, 0, "Starting sector",
 		  "The start of the OpenBSD portion of the disk.",
-		  starting_sector, lp->d_secperunit, 0);
+		  starting_sector, lp->d_secperunit, 0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			return;
@@ -1701,7 +1709,7 @@ set_bounds(lp, freep)
 		ui = getuint(lp, 0, "Size ('*' for entire disk)",
 		  "The size of the OpenBSD portion of the disk ('*' for the "
 		  "entire disk).", ending_sector - starting_sector,
-		  lp->d_secperunit - start_temp, 0);
+		  lp->d_secperunit - start_temp, 0, 0);
 		if (ui == UINT_MAX - 1) {
 			fputs("Command aborted\n", stderr);
 			return;
