@@ -1,4 +1,4 @@
-/*      $OpenBSD: cmp.c,v 1.5 1997/01/15 23:42:19 millert Exp $      */
+/*      $OpenBSD: cmp.c,v 1.6 1997/06/12 19:45:21 deraadt Exp $      */
 /*      $NetBSD: cmp.c,v 1.7 1995/09/08 03:22:56 tls Exp $      */
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cmp.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cmp.c,v 1.5 1997/01/15 23:42:19 millert Exp $";
+static char rcsid[] = "$OpenBSD: cmp.c,v 1.6 1997/06/12 19:45:21 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -129,8 +129,8 @@ endargs:
 		else
 			err(ERR_EXIT, "%s", file2);
 
-	skip1 = argc > 2 ? strtoq(argv[2], NULL, 10) : 0;
-	skip2 = argc == 4 ? strtoq(argv[3], NULL, 10) : 0;
+	skip1 = argc > 2 ? strtoq(argv[2], NULL, 0) : 0;
+	skip2 = argc == 4 ? strtoq(argv[3], NULL, 0) : 0;
 
 	if (!special) {
 		if (fstat(fd1, &sb1))
