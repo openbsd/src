@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.330 2005/03/05 23:58:43 tdeval Exp $
+#	$OpenBSD: files,v 1.331 2005/03/08 20:00:24 tdeval Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -13,7 +13,7 @@ define	audio {}
 define	scsi {}
 define	ifmedia
 define	mii {[phy = -1]}
-define	midibus { }
+define	midibus {}
 define	midisyn
 define	radiobus {}
 define	i2cbus {}
@@ -98,20 +98,20 @@ file	dev/ic/mk48txx.c		mk48txx
 
 # VGA graphics
 device	vga: wsemuldisplaydev, pcdisplayops
-file	dev/ic/vga.c		vga & (vga_pci | vga_isa)	needs-flag
-file	dev/ic/vga_subr.c	vga & (vga_pci | vga_isa)	needs-flag
+file	dev/ic/vga.c			vga & (vga_pci | vga_isa) needs-flag
+file	dev/ic/vga_subr.c		vga & (vga_pci | vga_isa) needs-flag
 
 # Attribute for devices that read/write an IEEE 802.3u MII bus using the
 # bit-bang method.
 define	mii_bitbang
-file	dev/mii/mii_bitbang.c	mii_bitbang
+file	dev/mii/mii_bitbang.c		mii_bitbang
 
 define	wdc_base
 define	ata {[channel = -1], [drive = -1]}
 define	atapi {[channel = -1]}
 # Common code for ESDI/IDE/etc. controllers
 device	wdc: ata, atapi, wdc_base
-file	dev/ic/wdc.c wdc_base
+file	dev/ic/wdc.c			wdc_base
 
 # "Chipset" drivers.  These are the bus-independent routines which
 # contain the cfdrivers.  Attachments are provided by files.<bus>
@@ -133,15 +133,15 @@ file	dev/ic/aic6360.c	aic & (aic_isa | aic_pcmcia | aic_isapnp)
 
 # DPT EATA SCSI controllers
 device	dpt: scsi
-file	dev/ic/dpt.c		dpt
+file	dev/ic/dpt.c			dpt
 
 # AdvanSys 1200A, 1200B and ULTRA SCSI controllers
 device	adv: scsi
-file	dev/ic/adv.c		adv
+file	dev/ic/adv.c			adv
 
 # AdvanSys ULTRA WIDE SCSI controllers
 device	adw: scsi
-file	dev/ic/adw.c		adw
+file	dev/ic/adw.c			adw
 
 # BusLogic MultiMaster and MultiMaster Ultra SCSI controllers
 device	bha: scsi
@@ -149,23 +149,23 @@ file	dev/ic/bha.c		bha & (bha_pci | bha_isa | bha_eisa) needs-flag
 
 # ICP Vortex GDT RAID controllers
 device	gdt: scsi
-file	dev/ic/gdt_common.c	gdt
+file	dev/ic/gdt_common.c		gdt
 
 # 3ware Escalade RAID controllers
 device	twe: scsi
-file	dev/ic/twe.c		twe
+file	dev/ic/twe.c			twe
 
 # LSI64854 DMA controller back-end
 define	lsi64854
-file	dev/ic/lsi64854.c	lsi64854
+file	dev/ic/lsi64854.c		lsi64854
 
 # Compaq Smart ARRAY controllers
 device	cac: scsi
-file	dev/ic/cac.c		cac
+file	dev/ic/cac.c			cac
 
 # AMI MegaRAID controllers
 device	ami: scsi
-file	dev/ic/ami.c		ami
+file	dev/ic/ami.c			ami
 
 # Qlogic ISP 10x0 SCSI Controllers
 device	isp: scsi
@@ -174,19 +174,19 @@ file	dev/ic/isp_openbsd.c		isp
 
 # LSILogic Fusion-MPT I/O Processor SCSI/FC Controllers
 #
-device  mpt: scsi
-file    dev/ic/mpt.c			mpt
-file    dev/ic/mpt_debug.c		mpt
-file    dev/ic/mpt_openbsd.c		mpt
+device	mpt: scsi
+file	dev/ic/mpt.c			mpt
+file	dev/ic/mpt_debug.c		mpt
+file	dev/ic/mpt_openbsd.c		mpt
 
 # UltraStor SCSI controllers
 device	uha: scsi
-file	dev/ic/uha.c		uha
+file	dev/ic/uha.c			uha
 
 # NCR 53c9x or Emulex ESP SCSI Controller
 define	ncr53c9x
 device	esp: scsi, ncr53c9x
-file	dev/ic/ncr53c9x.c	ncr53c9x
+file	dev/ic/ncr53c9x.c		ncr53c9x
 
 # common stuff for siop and esiop
 define	siop_common
@@ -206,91 +206,95 @@ file	dev/ic/oosiop.c			oosiop & (oosiop_gsc)
 
 # 3Com Etherlink-III Ethernet controller
 device	ep: ether, ifnet, ifmedia, mii
-file	dev/ic/elink3.c		ep
+file	dev/ic/elink3.c			ep
 
 # LEMAC-based cards
 device	lc: ether, ifnet, ifmedia
-file	dev/ic/lemac.c		lc
+file	dev/ic/lemac.c			lc
 
 # WaveLan
 device	wi: ether, ifnet, ifmedia
-file	dev/ic/if_wi.c		wi
-file	dev/ic/if_wi_hostap.c	wi
+file	dev/ic/if_wi.c			wi
+file	dev/ic/if_wi_hostap.c		wi
 
 # Aironet 802.11 DS Ethernet controller
 device	an: ether, ifnet, ifmedia
-file	dev/ic/an.c		an
+file	dev/ic/an.c			an
 
 # RangeLAN2
 device	rln: ether, ifnet
-file	dev/ic/rln.c		rln
-file	dev/ic/rlnsubr.c	rln
+file	dev/ic/rln.c			rln
+file	dev/ic/rlnsubr.c		rln
 
 # LANCE and PCnet Ethernet controllers
 device	le: ether, ifnet, ifmedia
-file	dev/ic/am7990.c		le
+file	dev/ic/am7990.c			le
 
 # 3Com 3c9xx
 device	xl: ether, ifnet, ifmedia, mii
-file	dev/ic/xl.c		xl
+file	dev/ic/xl.c			xl
 
 # Intel EtherExpress PRO 10/100B
 device	fxp: ether, ifnet, ifmedia, mii, firmload
-file	dev/ic/fxp.c		fxp
+file	dev/ic/fxp.c			fxp
 
 # Myson MTD803
 device	mtd: ether, ifnet, ifmedia, mii
-file	dev/ic/mtd8xx.c		mtd
+file	dev/ic/mtd8xx.c			mtd
 
 # RealTek 8129/8139
 device	rl: ether, ifnet, ifmedia, mii
-file	dev/ic/rtl81x9.c	rl
+file	dev/ic/rtl81x9.c		rl
 
 # Realtek 8169
 device	re: ether, ifnet, ifmedia, mii
-file	dev/ic/re.c		re
+file	dev/ic/re.c			re
 
 # Clones of Digital 2104x
 device	dc: ether, ifnet, ifmedia, mii
-file	dev/ic/dc.c		dc
+file	dev/ic/dc.c			dc
 
 # SMC 91Cxx Ethernet Controller
 device	sm: ether, ifnet, ifmedia
-file	dev/ic/smc91cxx.c	sm
+file	dev/ic/smc91cxx.c		sm
 
 # Novell NE2000-compatible Ethernet cards, based on the
 # National Semiconductor DS8390.
 device	ne: ether, ifnet, dp8390nic, ifmedia, mii
-file	dev/ic/ne2000.c		ne
+file	dev/ic/ne2000.c			ne
 
 # D-Link DL10019/10022 NE2000-compatible network interface subroutines
-file	dev/ic/dl10019.c	dl10019
+file	dev/ic/dl10019.c		dl10019
 
 # ASIX AX88190 NE2000-compatible network interface subroutines
-file	dev/ic/ax88190.c	ax88190
+file	dev/ic/ax88190.c		ax88190
 
 # Intel i82596/i82586 Ethernet Controller
 device	ie: ether, ifnet, ifmedia
-file	dev/ic/i82596.c		ie & (ie_pci | ie_eisa | ie_gsc)
+file	dev/ic/i82596.c			ie & (ie_pci | ie_eisa | ie_gsc)
 
 # Sun GEM Ethernet controllers
 device	gem: ether, ifnet, ifmedia, mii
-file	dev/ic/gem.c		gem
+file	dev/ic/gem.c			gem
 
 # TROPIC Token-Ring controller
 device	tr: ether, token, ifnet
-file	dev/ic/tropic.c		tr
+file	dev/ic/tropic.c			tr
 
 # 8250/16[45]50-based "com" ports
 device	com: tty
-file	dev/ic/com.c		com & (com_isa | com_isapnp | com_commulti | com_pcmcia | com_localbus | com_gsc | com_puc | com_ebus | com_dino) needs-flag
+file	dev/ic/com.c			com & (com_isa | com_isapnp |
+					       com_commulti | com_pcmcia |
+					       com_localbus | com_gsc |
+					       com_puc | com_ebus |
+					       com_dino) needs-flag
 
 # PC-like keyboard controller
-device	pckbc { [slot = -1] }
-file	dev/ic/pckbc.c		pckbc needs-flag
+device	pckbc {[slot = -1]}
+file	dev/ic/pckbc.c			pckbc needs-flag
 
 # HPPA PS/2 input ports (forward definition)
-device	gsckbc { [slot = -1] }
+device	gsckbc {[slot = -1]}
 
 # OPL2/OPL3 FM synth driver
 device	opl: midibus, midisyn
@@ -303,63 +307,66 @@ file	dev/ic/ac97.c			ac97
 
 # Cyclades Cyclom multiport serial cards
 device	cy: tty
-file	dev/ic/cy.c		cy & (cy_isa | cy_pci)	needs-flag
+file	dev/ic/cy.c			cy & (cy_isa | cy_pci)	needs-flag
 
 # PC parallel ports (IEEE 1284)
 device	lpt
-file	dev/ic/lpt.c		lpt & (lpt_isa | lpt_localbus | lpt_gsc | lpt_puc | lpt_apio | lpt_ebus) needs-flag
+file	dev/ic/lpt.c			lpt & (lpt_isa | lpt_localbus |
+					       lpt_gsc | lpt_puc | lpt_apio |
+					       lpt_ebus) needs-flag
 
 # STI (hp graphics)
 device	sti: wsemuldisplaydev
-file	dev/ic/sti.c		sti & (sti_pci | sti_gedoens | sti_sgc) needs-flag
+file	dev/ic/sti.c			sti & (sti_pci | sti_gedoens |
+					       sti_sgc) needs-flag
 
 # Initio ULTRA WIDE/ULTRA2 WIDE SCSI Controllers
 device	iha: scsi
-file	dev/ic/iha.c		iha
+file	dev/ic/iha.c			iha
 
 # Tekram TRM-S1040 SCSI Cards (DC395U/UW/F,DC315/U)
 device	trm: scsi
-file	dev/ic/trm.c		trm
+file	dev/ic/trm.c			trm
 
 # National Semiconductor LM7[89] and compatible hardware monitors
 device	lm
-file	dev/ic/nslm7x.c		lm
+file	dev/ic/nslm7x.c			lm
 
 # Atheros AR5k (802.11/a/b/g) Hardware Abstraction Layer
-define  ar5xxx
-file	dev/ic/ar5xxx.c		ar5xxx
-file	dev/ic/ar5210.c		ar5xxx
-file	dev/ic/ar5211.c		ar5xxx
-file	dev/ic/ar5212.c		ar5xxx
+define	ar5xxx
+file	dev/ic/ar5xxx.c			ar5xxx
+file	dev/ic/ar5210.c			ar5xxx
+file	dev/ic/ar5211.c			ar5xxx
+file	dev/ic/ar5212.c			ar5xxx
 
 # Atheros AR5k (802.11/a/b/g) driver
 device	ath: ether, ifnet, ifmedia, ar5xxx, wlan, gpiobus
-file	dev/ic/ath.c		ath
+file	dev/ic/ath.c			ath
 
 # ADMtek ADM8211 802.11
 device	atw: ether, ifnet, ifmedia, smc93cx6, wlan
-file	dev/ic/atw.c		atw
+file	dev/ic/atw.c			atw
 
 # Realtek RTL8180 802.11
 device	rtw: ether, ifnet, ifmedia, smc93cx6, wlan
-file	dev/ic/rtw.c		rtw
-file	dev/ic/rtwphy.c		rtw
-file	dev/ic/rtwphyio.c	rtw
+file	dev/ic/rtw.c			rtw
+file	dev/ic/rtwphy.c			rtw
+file	dev/ic/rtwphyio.c		rtw
 
 # Ralink RT2500 802.11
 device	ral: ether, ifnet, ifmedia, wlan
-file	dev/ic/ral.c		ral
+file	dev/ic/ral.c			ral
 
 # Attributes which machine-independent bus support can be attached to.
 # These should be defined here, because some of these busses can have
 # devices which provide these attributes, and we'd like to avoid hairy
 # ordering constraints on inclusion of the busses' "files" files.
-define	isabus { }			# ISA attachment
-define	eisabus { }			# EISA attachment
+define	isabus {}			# ISA attachment
+define	eisabus {}			# EISA attachment
 define	pcibus {[bus = -1]}		# PCI attachment
-define	tcbus { }			# TurboChannel attachment
-define	usbus { }			# USB attachment
-define	pcmciabus { [controller = -1], [socket = -1]}	# PCMCIA attachment
+define	tcbus {}			# TurboChannel attachment
+define	usbus {}			# USB attachment
+define	pcmciabus {[controller = -1], [socket = -1]}	# PCMCIA attachment
 define	cbbus {[slot = -1]}		# CardBus attachment
 define	pcmciaslot {[slot = -1]}	# PCMCIA slot itself
 
@@ -410,28 +417,28 @@ pseudo-device sequencer
 pseudo-device systrace
 
 pseudo-device ksyms
-file	dev/ksyms.c	ksyms needs-flag
+file	dev/ksyms.c			ksyms needs-flag
 
 pseudo-device pf: ifnet
-file	net/pf.c		pf	needs-flag
-file	net/pf_norm.c		pf
-file	net/pf_ioctl.c		pf
-file	net/pf_table.c		pf
-file	net/pf_osfp.c		pf
-file	net/pf_if.c		pf
+file	net/pf.c			pf	needs-flag
+file	net/pf_norm.c			pf
+file	net/pf_ioctl.c			pf
+file	net/pf_table.c			pf
+file	net/pf_osfp.c			pf
+file	net/pf_if.c			pf
 pseudo-device pflog: ifnet
-file	net/if_pflog.c		pflog	needs-flag
+file	net/if_pflog.c			pflog	needs-flag
 pseudo-device pfsync: ifnet
-file	net/if_pfsync.c		pfsync	needs-flag
+file	net/if_pfsync.c			pfsync	needs-flag
 
 pseudo-device bio
-file	dev/bio.c	bio needs-flag
+file	dev/bio.c			bio needs-flag
 
 pseudo-device hotplug
-file	dev/hotplug.c		hotplug	needs-flag
+file	dev/hotplug.c			hotplug	needs-flag
 
 pseudo-device pppoe: ifnet, ether, sppp
-file 	net/if_pppoe.c		pppoe	needs-flag
+file 	net/if_pppoe.c			pppoe	needs-flag
 
 
 # XXX machine-independent SCSI files should live somewhere here, maybe
@@ -831,7 +838,7 @@ file nfs/krpc_subr.c			nfsclient
 file nfs/nfs_bio.c			nfsclient
 file nfs/nfs_boot.c			nfsclient
 file nfs/nfs_node.c			nfsclient
-file nfs/nfs_kq.c                       nfsclient
+file nfs/nfs_kq.c			nfsclient
 file nfs/nfs_serv.c			nfsserver
 file nfs/nfs_socket.c			nfsserver | nfsclient
 file nfs/nfs_srvcache.c			nfsserver

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.luna88k,v 1.8 2004/10/08 13:04:36 grange Exp $
+#	$OpenBSD: files.luna88k,v 1.9 2005/03/08 20:00:23 tdeval Exp $
 #	
 maxpartitions 16
 
@@ -13,7 +13,7 @@ file	arch/luna88k/dev/timekeeper.c			clock
 attach le at mainbus
 file	arch/luna88k/dev/if_le.c			le
 
-device sio { [channel = -1] }
+device sio {[channel = -1]}
 attach sio at mainbus
 file	arch/luna88k/dev/sio.c				sio
 
@@ -46,11 +46,11 @@ attach cpu at mainbus
 
 include "../../../scsi/files.scsi"
 
-major { sd = 4 }
-major { st = 5 }
-major { cd = 6 }
-major { rd = 7 }
-major { vnd = 8 }
+major {sd = 4}
+major {st = 5}
+major {cd = 6}
+major {rd = 7}
+major {vnd = 8}
 
 device spc: scsi
 attach spc at mainbus
@@ -61,7 +61,7 @@ file arch/luna88k/dev/mb89352.c				spc
 #device pcm: audio, auconv, mulaw
 #attach pcm at mainbus
 #file arch/luna88k/dev/nec86.c				pcm needs-flag
-#file arch/luna88k/dev/nec86hw.c				pcm needs-flag
+#file arch/luna88k/dev/nec86hw.c			pcm needs-flag
 #file arch/luna88k/dev/nec86_luna88k.c			pcm needs-flag
 
 # list of standard files

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.ofw,v 1.3 1998/08/22 18:00:32 rahnds Exp $
+#	$OpenBSD: files.ofw,v 1.4 2005/03/08 20:00:25 tdeval Exp $
 
 #
 # First cut on Openfirmware interface
@@ -12,7 +12,7 @@ attach	ofdisk at openfirm
 file	dev/ofw/ofdisk.c		ofdisk needs-flag
 
 # Generic net support
-#define	ipkdbofn { [ disable = 0 ] }
+#define	ipkdbofn {[disable = 0]}
 #device	ofnet: ether, ifnet, ipkdbofn
 device	ofnet: ether, ifnet
 #device	ipkdbif: ether, ifnet 
@@ -26,7 +26,7 @@ attach	ofcons at openfirm
 file	dev/ofw/ofcons.c		ofcons needs-flag
 
 # Generic RTC support
-device ofrtc
+device	ofrtc
 attach	ofrtc at openfirm
 file	dev/ofw/ofrtc.c			ofrtc needs-flag
 

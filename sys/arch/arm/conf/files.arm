@@ -1,4 +1,4 @@
-#	$OpenBSD: files.arm,v 1.4 2005/01/13 16:15:11 drahn Exp $
+#	$OpenBSD: files.arm,v 1.5 2005/03/08 20:00:23 tdeval Exp $
 #	$NetBSD: files.arm,v 1.76 2003/11/05 12:53:15 scw Exp $
 
 # CPU types.  Make sure to update <arm/cpuconf.h> if you change this list.
@@ -47,13 +47,13 @@ file	arch/arm/arm/fiq.c
 file	arch/arm/arm/fiq_subr.S
 
 # mainbus files
-device	mainbus { [base = -1], [dack = -1], [irq = -1] }
+device	mainbus {[base = -1], [dack = -1], [irq = -1]}
 attach	mainbus at root
 file	arch/arm/mainbus/mainbus.c		mainbus
 file	arch/arm/mainbus/mainbus_io.c		mainbus
 file	arch/arm/mainbus/mainbus_io_asm.S	mainbus
 
-device	cpu { }
+device	cpu {}
 attach	cpu at mainbus with cpu_mainbus
 file	arch/arm/mainbus/cpu_mainbus.c		cpu_mainbus
 
@@ -94,9 +94,9 @@ file	arch/arm/arm/cpufunc_asm_sa1.S		cpu_sa110 | cpu_sa1100 |
 							cpu_ixp12x0
 file	arch/arm/arm/cpufunc_asm_sa11x0.S	cpu_sa1100 | cpu_sa1110
 file	arch/arm/arm/cpufunc_asm_xscale.S	cpu_xscale_80200 |
-						    cpu_xscale_80321 |
-						    cpu_xscale_ixp425 |
-						    cpu_xscale_pxa2x0
+							cpu_xscale_80321 |
+							cpu_xscale_ixp425 |
+							cpu_xscale_pxa2x0
 file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
 file	arch/arm/arm/process_machdep.c
 file	arch/arm/arm/procfs_machdep.c		procfs

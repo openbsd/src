@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc64,v 1.56 2005/03/05 01:44:52 miod Exp $
+#	$OpenBSD: files.sparc64,v 1.57 2005/03/08 20:00:24 tdeval Exp $
 #	$NetBSD: files.sparc64,v 1.50 2001/08/10 20:53:50 eeh Exp $
 
 # maxpartitions must be first item in files.${ARCH}
@@ -6,36 +6,36 @@ maxpartitions 16
 
 maxusers 2 8 1024
 
-define mainbus {}
-device mainbus: pcibus, mainbus
-attach mainbus at root
+define	mainbus {}
+device	mainbus: pcibus, mainbus
+attach	mainbus at root
 file	arch/sparc64/dev/upa.c			upa
 
-define upa {}
-device upa
-attach upa at mainbus
+define	upa {}
+device	upa
+attach	upa at mainbus
 
-define central {}
-device central
-attach central at mainbus
+define	central {}
+device	central
+attach	central at mainbus
 file	arch/sparc64/dev/central.c		central
 
-define fhc {}
-device fhc
+define	fhc {}
+device	fhc
 file	arch/sparc64/dev/fhc.c			fhc
 
-attach fhc at central with fhc_central
+attach	fhc at central with fhc_central
 file	arch/sparc64/dev/fhc_central.c		fhc_central
 
-attach fhc at mainbus with fhc_mainbus
+attach	fhc at mainbus with fhc_mainbus
 file	arch/sparc64/dev/fhc_mainbus.c		fhc_mainbus
 
-device clkbrd
-attach clkbrd at fhc
+device	clkbrd
+attach	clkbrd at fhc
 file	arch/sparc64/dev/clkbrd.c		clkbrd
 
-device pcons
-attach pcons at mainbus
+device	pcons
+attach	pcons at mainbus
 file	arch/sparc64/dev/pcons.c		pcons needs-flag
 
 # Sun HME Ethernet controllers
@@ -48,106 +48,106 @@ file	arch/sparc64/dev/uperf.c		uperf needs-flag
 # Framebuffer support
 
 file	arch/sparc64/dev/fb.c
-include "dev/wscons/files.wscons"
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
+include	"dev/wscons/files.wscons"
+include	"dev/rasops/files.rasops"
+include	"dev/wsfont/files.wsfont"
 
-include "dev/sbus/files.sbus"
-include "dev/i2o/files.i2o"
-include "dev/mii/files.mii"
-include "dev/atapiscsi/files.atapiscsi"
-include "dev/ata/files.ata"
-include "dev/pckbc/files.pckbc"
-include "dev/pcmcia/files.pcmcia"
+include	"dev/sbus/files.sbus"
+include	"dev/i2o/files.i2o"
+include	"dev/mii/files.mii"
+include	"dev/atapiscsi/files.atapiscsi"
+include	"dev/ata/files.ata"
+include	"dev/pckbc/files.pckbc"
+include	"dev/pcmcia/files.pcmcia"
 
 # COMPAT_NETBSD
-include "compat/netbsd/files.netbsd"
+include	"compat/netbsd/files.netbsd"
 file	arch/sparc64/sparc64/netbsd_machdep.c	compat_netbsd
 
 # Sun specific files
-include "../../../dev/sun/files.sun"
+include	"../../../dev/sun/files.sun"
 
 attach	sbus at mainbus with sbus_mb
 attach	sbus at xbox with sbus_xbox
 file	arch/sparc64/dev/sbus.c			sbus
 
-device creator: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, wsemul_sun
+device	creator: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, wsemul_sun
 file	arch/sparc64/dev/creator.c		creator
 
-attach creator at mainbus with creator_mainbus
+attach	creator at mainbus with creator_mainbus
 file	arch/sparc64/dev/creator_mainbus.c	creator_mainbus
 
-attach creator at upa with creator_upa
+attach	creator at upa with creator_upa
 file	arch/sparc64/dev/creator_upa.c		creator_upa
 
-include "dev/pci/files.pci"
-major { wd = 12 }
+include	"dev/pci/files.pci"
+major	{wd = 12}
 
-include "dev/puc/files.puc"
+include	"dev/puc/files.puc"
 
-device psycho: pcibus
-attach psycho at mainbus
+device	psycho: pcibus
+attach	psycho at mainbus
 file	arch/sparc64/dev/psycho.c		psycho
 
-device schizo: pcibus
-attach schizo at mainbus
+device	schizo: pcibus
+attach	schizo at mainbus
 file	arch/sparc64/dev/schizo.c		schizo
 file	arch/sparc64/dev/pci_machdep.c		psycho | schizo
 
 attach	hme at pci with hme_pci
 file	dev/pci/if_hme_pci.c			hme_pci
 
-device vgafb: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, wsemul_sun
-attach vgafb at pci
+device	vgafb: wsemuldisplaydev, rasops8, rasops16, rasops24, rasops32, wsemul_sun
+attach	vgafb at pci
 file	arch/sparc64/dev/vgafb.c		vgafb
 
 # IOMMU is for both
 file	arch/sparc64/dev/iommu.c		sbus | psycho
 
-device ebus {[addr = -1]}: pcibus
-attach ebus at pci
+device	ebus {[addr = -1]}: pcibus
+attach	ebus at pci
 file	arch/sparc64/dev/ebus.c			ebus
 
 attach	uperf at ebus with uperf_ebus
 file	arch/sparc64/dev/uperf_ebus.c		uperf_ebus
 
-device clock: mk48txx
-attach clock at mainbus, sbus with clock_sbus
-attach clock at ebus with clock_ebus
-attach clock at fhc with clock_fhc
+device	clock: mk48txx
+attach	clock at mainbus, sbus with clock_sbus
+attach	clock at ebus with clock_ebus
+attach	clock at fhc with clock_fhc
 
-device rtc
-attach rtc at ebus with  rtc_ebus
+device	rtc
+attach	rtc at ebus with rtc_ebus
 
-device timer
-attach timer at mainbus, sbus
+device	timer
+attach	timer at mainbus, sbus
 
-device eeprom
-attach eeprom at sbus, ebus
+device	eeprom
+attach	eeprom at sbus, ebus
 file	arch/sparc64/sparc64/clock.c
 file	dev/clock_subr.c
 
-device cpu
-attach cpu at mainbus
+device	cpu
+attach	cpu at mainbus
 file	arch/sparc64/sparc64/cpu.c
 
-device auxio
-attach auxio at ebus with auxio_ebus
-attach auxio at sbus with auxio_sbus
+device	auxio
+attach	auxio at ebus with auxio_ebus
+attach	auxio at sbus with auxio_sbus
 file	arch/sparc64/dev/auxio.c		auxio
 
-device beeper
-attach beeper at ebus
+device	beeper
+attach	beeper at ebus
 file	arch/sparc64/dev/beeper.c		beeper
 
-device sab {}
-attach sab at ebus
-device sabtty
-attach sabtty at sab
+device	sab {}
+attach	sab at ebus
+device	sabtty
+attach	sabtty at sab
 file	arch/sparc64/dev/sab.c			sab | sabtty needs-flag
 
-device audioce: audio, auconv
-attach audioce at ebus
+device	audioce: audio, auconv
+attach	audioce at ebus
 file	arch/sparc64/dev/ce4231.c		audioce
 
 file	arch/sparc64/dev/stp_sbus.c		stp_sbus
@@ -156,32 +156,32 @@ file	arch/sparc64/dev/stp_sbus.c		stp_sbus
 # Console related stuff
 #
 
-attach com at ebus with com_ebus
+attach	com at ebus with com_ebus
 file	arch/sparc64/dev/com_ebus.c		com_ebus
 
-attach pckbc at ebus with pckbc_ebus
+attach	pckbc at ebus with pckbc_ebus
 file	arch/sparc64/dev/pckbc_ebus.c		pckbc_ebus
 
-device comkbd: tty, wskbddev, sunkbd
-attach comkbd at ebus
+device	comkbd: tty, wskbddev, sunkbd
+attach	comkbd at ebus
 file	arch/sparc64/dev/comkbd_ebus.c		comkbd
 
-attach lpt at ebus with lpt_ebus
+attach	lpt at ebus with lpt_ebus
 file	arch/sparc64/dev/lpt_ebus.c		lpt_ebus
 
-device zs {[channel = -1]}
-attach zs at sbus with zs_sbus
-attach zs at fhc with zs_fhc
+device	zs {[channel = -1]}
+attach	zs at sbus with zs_sbus
+attach	zs at fhc with zs_fhc
 file	arch/sparc64/dev/zs.c			zs needs-flag
 file	arch/sparc64/dev/z8530sc.c		zs
 
-define zstty {}
-device zstty: tty
-attach zstty at zs
+define	zstty {}
+device	zstty: tty
+attach	zstty at zs
 file	arch/sparc64/dev/z8530tty.c		zstty needs-flag
 
-device zskbd: tty, wskbddev, sunkbd
-attach zskbd at zs
+device	zskbd: tty, wskbddev, sunkbd
+attach	zskbd at zs
 file	arch/sparc64/dev/z8530kbd.c		zskbd needs-flag
 
 file	arch/sparc64/dev/consinit.c
@@ -233,13 +233,13 @@ file	arch/sparc64/dev/md_root.c	memory_disk_hooks
 #
 # Machine-independent SCSI drivers
 #
-include "../../../scsi/files.scsi"
-major { sd = 7 }
-major { vnd = 8 }
-major { cd = 18 }
-major { rd = 5 }
+include	"../../../scsi/files.scsi"
+major	{sd = 7}
+major	{vnd = 8}
+major	{cd = 18}
+major	{rd = 5}
 
 #
 # Machine-independent USB drivers
 #
-include "dev/usb/files.usb"
+include	"dev/usb/files.usb"

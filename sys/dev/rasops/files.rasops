@@ -1,17 +1,17 @@
-#	$OpenBSD: files.rasops,v 1.3 2003/04/14 10:42:26 miod Exp $
+#	$OpenBSD: files.rasops,v 1.4 2005/03/08 20:00:25 tdeval Exp $
 # 	$NetBSD: files.rasops,v 1.7 2001/01/21 13:50:59 takemura Exp $
 
 # Note: `rasops_glue' is only here to force the header file's name
-#       hence it must be mentioned first  (shudder...)
-file dev/rasops/rasops.c	((rasops_glue | rasops1 | rasops2 | rasops4 |
+#	hence it must be mentioned first (shudder...)
+file	dev/rasops/rasops.c	((rasops_glue | rasops1 | rasops2 | rasops4 |
 				rasops8 | rasops15 | rasops16 | rasops24 |
 				rasops32) & wsdisplay)	needs-flag
 
-file dev/rasops/rasops_masks.c	wsdisplay & (rasops1 | rasops2 | rasops4)
-file dev/rasops/rasops1.c	wsdisplay & rasops1
-file dev/rasops/rasops2.c	wsdisplay & rasops2
-file dev/rasops/rasops4.c	wsdisplay & rasops4
-file dev/rasops/rasops8.c	wsdisplay & rasops8
-file dev/rasops/rasops15.c	wsdisplay & (rasops15 | rasops16)
-file dev/rasops/rasops24.c	wsdisplay & rasops24
-file dev/rasops/rasops32.c	wsdisplay & rasops32
+file	dev/rasops/rasops_masks.c  wsdisplay & (rasops1 | rasops2 | rasops4)
+file	dev/rasops/rasops1.c	wsdisplay & rasops1
+file	dev/rasops/rasops2.c	wsdisplay & rasops2
+file	dev/rasops/rasops4.c	wsdisplay & rasops4
+file	dev/rasops/rasops8.c	wsdisplay & rasops8
+file	dev/rasops/rasops15.c	wsdisplay & (rasops15 | rasops16)
+file	dev/rasops/rasops24.c	wsdisplay & rasops24
+file	dev/rasops/rasops32.c	wsdisplay & rasops32

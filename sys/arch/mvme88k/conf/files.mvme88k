@@ -1,68 +1,68 @@
-#	$OpenBSD: files.mvme88k,v 1.34 2004/10/08 13:04:36 grange Exp $
+#	$OpenBSD: files.mvme88k,v 1.35 2005/03/08 20:00:23 tdeval Exp $
 #
 maxpartitions 16
 
-device 	mainbus { [addr = -1 ] }
-attach 	mainbus at root
+device	mainbus {[addr = -1]}
+attach	mainbus at root
 
-device bussw { [offset = -1], [ ipl = 0 ] }
-attach bussw at mainbus
+device	bussw {[offset = -1], [ipl = 0]}
+attach	bussw at mainbus
 file	arch/mvme88k/dev/bussw.c			bussw needs-count
 
-device pcctwo { [offset = -1], [ ipl = 0 ] }
-attach pcctwo at bussw, mainbus
+device	pcctwo {[offset = -1], [ipl = 0]}
+attach	pcctwo at bussw, mainbus
 file	arch/mvme88k/dev/pcctwo.c			pcctwo needs-count
 
-device syscon { [offset = -1], [ ipl = 0 ] }
-attach syscon at mainbus
+device	syscon {[offset = -1], [ipl = 0]}
+attach	syscon at mainbus
 file	arch/mvme88k/dev/syscon.c			syscon needs-count
 
-device clock
-attach clock at pcctwo, syscon
+device	clock
+attach	clock at pcctwo, syscon
 file	arch/mvme88k/dev/clock.c			clock
 
-device memc
-attach memc at pcctwo
+device	memc
+attach	memc at pcctwo
 file	arch/mvme88k/dev/memc.c				memc
 
-device sram
-attach sram at mainbus
+device	sram
+attach	sram at mainbus
 file	arch/mvme88k/dev/sram.c				sram needs-count
 
-device nvram
-attach nvram at pcctwo, syscon
+device	nvram
+attach	nvram at pcctwo, syscon
 file	arch/mvme88k/dev/nvram.c			nvram needs-count
 
-device cl: tty
-attach cl at pcctwo
+device	cl: tty
+attach	cl at pcctwo
 file	arch/mvme88k/dev/cl.c				cl needs-count
 
-device dart: tty
-attach dart at syscon
+device	dart: tty
+attach	dart at syscon
 file	arch/mvme88k/dev/dart.c				dart needs-count
 
 # fallback console, only if no cl or dart is available
-device bugtty: tty
-attach bugtty at mainbus
+device	bugtty: tty
+attach	bugtty at mainbus
 file	arch/mvme88k/dev/bugtty.c			bugtty needs-count
 
-include "../../../scsi/files.scsi"
+include	"../../../scsi/files.scsi"
 
-major { sd = 4 }
-major { st = 5 }
-major { cd = 6 }
-major { rd = 7 }
-major { vnd = 8 }
+major	{sd = 4}
+major	{st = 5}
+major	{cd = 6}
+major	{rd = 7}
+major	{vnd = 8}
 
-attach osiop at pcctwo with osiop_pcctwo
+attach	osiop at pcctwo with osiop_pcctwo
 file	arch/mvme88k/dev/osiop_pcctwo.c			osiop_pcctwo
 
-device vme { }
-attach vme at pcctwo, syscon
-device vmes { [addr = -1], [vec = -1], [ipl = 0] }
-attach vmes at vme
-device vmel { [addr = -1], [vec = -1], [ipl = 0] }
-attach vmel at vme
+device	vme {}
+attach	vme at pcctwo, syscon
+device	vmes {[addr = -1], [vec = -1], [ipl = 0]}
+attach	vmes at vme
+device	vmel {[addr = -1], [vec = -1], [ipl = 0]}
+attach	vmel at vme
 file	arch/mvme88k/dev/vme.c				vme | vmes | vmel
 file	arch/mvme88k/dev/vmes.c				vmes needs-count
 file	arch/mvme88k/dev/vmel.c				vmel needs-count
@@ -93,20 +93,20 @@ file	arch/mvme88k/dev/bugio.c
 file	arch/mvme88k/dev/mainbus.c
 file	arch/mvme88k/dev/memdevs.c			nvram | sram
 
-attach ie at pcctwo: ifnet, ether
-file    arch/mvme88k/dev/if_ie.c			ie
+attach	ie at pcctwo: ifnet, ether
+file	arch/mvme88k/dev/if_ie.c			ie
 
-attach le at vmes
-file    arch/mvme88k/dev/if_le.c			le
+attach	le at vmes
+file	arch/mvme88k/dev/if_le.c			le
 
-#device vp: ether, ifnet, ifmedia
-#attach vp at vmes
-#file    arch/mvme88k/dev/if_vp.c			vp
+#device	vp: ether, ifnet, ifmedia
+#attach	vp at vmes
+#file	arch/mvme88k/dev/if_vp.c			vp
 
-device vx: tty
-attach vx at vmes
+device	vx: tty
+attach	vx at vmes
 file	arch/mvme88k/dev/vx.c				vx needs-count
 
-device vs: scsi
-attach vs at vmes
+device	vs: scsi
+attach	vs at vmes
 file	arch/mvme88k/dev/vs.c				vs

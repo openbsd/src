@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pcmcia,v 1.37 2002/06/15 05:55:59 fgsch Exp $
+#	$OpenBSD: files.pcmcia,v 1.38 2005/03/08 20:00:25 tdeval Exp $
 #	$NetBSD: files.pcmcia,v 1.9 1998/06/21 18:45:41 christos Exp $
 #
 # Config.new file and device description for machine-independent PCMCIA code.
@@ -10,7 +10,7 @@ file	dev/pcmcia/pcmcia_cis.c			pcmcia
 file	dev/pcmcia/pcmcia_cis_quirks.c		pcmcia
 
 # device declaration in sys/conf/files
-attach pcmcia at pcmciabus
+attach	pcmcia at pcmciabus
 
 # 3Com 3c589 Ethernet, 3c562 multifunction Ethernet, and 3CXEM556
 # multifunction Ethernet controllers
@@ -46,17 +46,17 @@ file	dev/pcmcia/if_sm_pcmcia.c		sm_pcmcia
 #file	dev/pcmcia/if_mbe_pcmcia.c		mbe_pcmcia
 
 # Xircom Ethernet controllers
-device xe: ether, ifnet, mii, ifmedia
-attach xe at pcmcia with xe_pcmcia
-file dev/pcmcia/if_xe.c				xe_pcmcia
+device	xe: ether, ifnet, mii, ifmedia
+attach	xe at pcmcia with xe_pcmcia
+file	dev/pcmcia/if_xe.c			xe_pcmcia
 
 # PCMCIA Floppy controller
 #attach	fdc at pcmcia with fdc_pcmcia
 #file	dev/pcmcia/fdc_pcmcia.c			fdc_pcmcia
 
 # Proxim RangeLAN2 PC-Card
-attach rln at pcmcia with rln_pcmcia
-file dev/pcmcia/if_rln_pcmcia.c			rln_pcmcia
+attach	rln at pcmcia with rln_pcmcia
+file	dev/pcmcia/if_rln_pcmcia.c		rln_pcmcia
 
 # PCMCIA multi-port serial cards
 #device	pcmcom {[slave = -1]}
@@ -74,13 +74,13 @@ attach	wi at pcmcia with wi_pcmcia
 file	dev/pcmcia/if_wi_pcmcia.c		wi_pcmcia
 
 # AMD 79c930-based 802.11 cards (including BayStack 650 FH card).
-device awi: ether, ifnet
-attach awi at pcmcia with awi_pcmcia
-file    dev/pcmcia/if_awi_pcmcia.c		awi_pcmcia
-file    dev/ic/awi.c				awi
-file    dev/ic/awi_wep.c			awi
-#file    dev/ic/awi_wicfg.c			awi
-file    dev/ic/am79c930.c			awi
+device	awi: ether, ifnet
+attach	awi at pcmcia with awi_pcmcia
+file	dev/pcmcia/if_awi_pcmcia.c		awi_pcmcia
+file	dev/ic/awi.c				awi
+file	dev/ic/awi_wep.c			awi
+#file	dev/ic/awi_wicfg.c			awi
+file	dev/ic/am79c930.c			awi
 
 # Raytheon(Raylink)/WebGear IEEE 802.11 FH WLAN
 device	ray: ether, ifnet, ifmedia

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.cardbus,v 1.15 2005/03/05 23:58:43 tdeval Exp $
+#	$OpenBSD: files.cardbus,v 1.16 2005/03/08 20:00:24 tdeval Exp $
 #	$NetBSD: files.cardbus,v 1.8 2000/01/26 06:37:24 thorpej Exp $
 #
 # files.cardbus
@@ -6,14 +6,14 @@
 
 device	cardslot: cbbus, pcmciabus
 attach	cardslot at pcmciaslot
-file	dev/cardbus/cardslot.c		cardslot	needs-flag
+file	dev/cardbus/cardslot.c			cardslot	needs-flag
 
 device	cardbus {[dev = -1], [function = -1]}
 attach	cardbus at cbbus
-file	dev/cardbus/cardbus.c		cardbus		needs-flag
-file	dev/cardbus/cardbus_map.c	cardbus
-file	dev/cardbus/cardbus_exrom.c	cardbus
-file	dev/cardbus/rbus.c		cardbus
+file	dev/cardbus/cardbus.c			cardbus		needs-flag
+file	dev/cardbus/cardbus_map.c		cardbus
+file	dev/cardbus/cardbus_exrom.c		cardbus
+file	dev/cardbus/rbus.c			cardbus
 
 # Com ports
 attach	com at cardbus with com_cardbus
@@ -63,8 +63,8 @@ file	dev/cardbus/if_atw_cardbus.c		atw_cardbus
 
 # Realtek RTL8180
 #
-attach  rtw at cardbus with rtw_cardbus
-file    dev/cardbus/if_rtw_cardbus.c            rtw_cardbus
+attach	rtw at cardbus with rtw_cardbus
+file	dev/cardbus/if_rtw_cardbus.c		rtw_cardbus
 
 #
 # Ralink RT2500

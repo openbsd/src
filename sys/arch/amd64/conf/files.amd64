@@ -1,11 +1,11 @@
-#	$OpenBSD: files.amd64,v 1.8 2005/03/05 23:58:43 tdeval Exp $
+#	$OpenBSD: files.amd64,v 1.9 2005/03/08 20:00:23 tdeval Exp $
 
 maxpartitions 16
 maxusers 2 16 128
 
 file	arch/amd64/amd64/autoconf.c
 file	arch/amd64/amd64/conf.c
-file	arch/amd64/amd64/disksubr.c	disk
+file	arch/amd64/amd64/disksubr.c		disk
 file	arch/amd64/amd64/gdt.c
 file	arch/amd64/amd64/machdep.c
 file	arch/amd64/amd64/identcpu.c
@@ -56,17 +56,17 @@ file	dev/clock_subr.c
 
 include	"dev/mii/files.mii"
 
-include "scsi/files.scsi"
+include	"scsi/files.scsi"
 
-include "dev/i2o/files.i2o"
+include	"dev/i2o/files.i2o"
 
-include "dev/atapiscsi/files.atapiscsi"
-include "dev/ata/files.ata"
+include	"dev/atapiscsi/files.atapiscsi"
+include	"dev/ata/files.ata"
 
-define mainbus {[apid = -1]}
+define	mainbus {[apid = -1]}
 device	mainbus: isabus, pcibus, mainbus
 attach	mainbus at root
-file	arch/amd64/amd64/mainbus.c	mainbus
+file	arch/amd64/amd64/mainbus.c		mainbus
 
 define	cpu {[apid = -1]}
 device	cpu
@@ -75,52 +75,52 @@ file	arch/amd64/amd64/cpu.c	cpu
 
 
 define	lapic
-file	arch/amd64/amd64/lapic.c	lapic needs-flag
+file	arch/amd64/amd64/lapic.c		lapic needs-flag
 
 device	ioapic: lapic
 attach	ioapic at mainbus
-file	arch/amd64/amd64/ioapic.c	ioapic needs-flag
+file	arch/amd64/amd64/ioapic.c		ioapic needs-flag
 
 #
 # PCI drivers
 #
 
-include "dev/pci/files.pci"
-file	arch/amd64/pci/pci_machdep.c	pci
-file	arch/amd64/pci/pciide_machdep.c	pciide
+include	"dev/pci/files.pci"
+file	arch/amd64/pci/pci_machdep.c		pci
+file	arch/amd64/pci/pciide_machdep.c		pciide
 
-include "dev/puc/files.puc"
+include	"dev/puc/files.puc"
 
 # PCI Host bridge chipsets
 device	pchb: pcibus
 attach	pchb at pci
-file	arch/amd64/pci/pchb.c		pchb
+file	arch/amd64/pci/pchb.c			pchb
 
 # PCI-ISA bridges
 device	pcib: isabus
 attach	pcib at pci
-file	arch/amd64/pci/pcib.c		pcib
+file	arch/amd64/pci/pcib.c			pcib
 
 device	aapic
 attach	aapic at pci
-file	arch/amd64/pci/aapic.c		aapic
+file	arch/amd64/pci/aapic.c			aapic
 
 #
 # ISA drivers
 #
 
-include "dev/isa/files.isa"
-include "dev/isa/files.isapnp"
-file	arch/amd64/isa/isa_machdep.c	isa
+include	"dev/isa/files.isa"
+include	"dev/isa/files.isapnp"
+file	arch/amd64/isa/isa_machdep.c		isa
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
-define	pckbcport { [irq = -1], [port = -1] }
+define	pckbcport {[irq = -1], [port = -1]}
 
-include "dev/wscons/files.wscons"
-include "dev/pckbc/files.pckbc"
+include	"dev/wscons/files.wscons"
+include	"dev/pckbc/files.pckbc"
 
-file    arch/amd64/amd64/wscons_machdep.c wsdisplay
+file	arch/amd64/amd64/wscons_machdep.c	wsdisplay
 
 device	sysbeep
 attach	sysbeep at pcppi
@@ -128,16 +128,16 @@ attach	sysbeep at pcppi
 # Floppy disk controller
 device	fdc {[drive = -1]}
 attach	fdc at isa
-file	dev/isa/fdc.c			fdc needs-flag
+file	dev/isa/fdc.c				fdc needs-flag
 
 device	fd: disk, isa_dma
 attach	fd at fdc
-file	dev/isa/fd.c			fd needs-flag
+file	dev/isa/fd.c				fd needs-flag
 
 #
 # USB
 #
-include "dev/usb/files.usb"
+include	"dev/usb/files.usb"
 
 #
 # device major numbers

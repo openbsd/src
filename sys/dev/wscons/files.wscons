@@ -1,4 +1,4 @@
-# $OpenBSD: files.wscons,v 1.7 2004/03/10 00:31:40 deraadt Exp $
+# $OpenBSD: files.wscons,v 1.8 2005/03/08 20:00:25 tdeval Exp $
 # $NetBSD: files.wscons,v 1.19 1999/12/12 08:17:28 scottr Exp $
 
 #
@@ -39,7 +39,7 @@ file	dev/rcons/raster_op.c			wsrasteremulops
 file	dev/rcons/raster_text.c			wsrasteremulops
 file	dev/wscons/wscons_rinit.c		wsrasteremulops
 file	dev/wscons/wscons_rops.c		wsrasteremulops
-file    dev/wscons/wscons_gallant19.c		wsrasteremulops
+file	dev/wscons/wscons_gallant19.c		wsrasteremulops
 file	dev/wscons/wscons_font8x16.c		wsrasteremulops
 
 pseudo-device	wsmux

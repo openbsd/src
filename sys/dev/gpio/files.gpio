@@ -1,6 +1,6 @@
-# $OpenBSD: files.gpio,v 1.1 2004/06/03 18:08:00 grange Exp $
+# $OpenBSD: files.gpio,v 1.2 2005/03/08 20:00:24 tdeval Exp $
 
-define	gpio { pin, mask }
+define	gpio {pin, mask}
 
 device	gpio: gpio
 attach	gpio at gpiobus

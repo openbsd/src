@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isapnp,v 1.27 2003/05/20 04:22:17 mickey Exp $
+#	$OpenBSD: files.isapnp,v 1.28 2005/03/08 20:00:25 tdeval Exp $
 #	$NetBSD: files.isapnp,v 1.7 1997/10/16 17:16:36 matt Exp $
 #
 # Config file and device description for machine-independent ISAPnP code.
@@ -64,7 +64,7 @@ attach	rt at isapnp with rt_isapnp
 file	dev/isa/rt_isapnp.c		rt_isapnp
 
 # Yamaha OPL3-SA3
-device  ym: audio, isa_dma, ad1848, auconv, midibus
+device	ym: audio, isa_dma, ad1848, auconv, midibus
 attach	ym at isapnp with ym_isapnp
 file	dev/isa/ym.c			ym_isapnp
 file	dev/isa/ym_isapnp.c		ym_isapnp

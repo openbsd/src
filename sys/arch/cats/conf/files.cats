@@ -1,4 +1,4 @@
-# 	$OpenBSD: files.cats,v 1.3 2004/02/23 05:07:54 drahn Exp $
+# 	$OpenBSD: files.cats,v 1.4 2005/03/08 20:00:23 tdeval Exp $
 #	$NetBSD: files.cats,v 1.27 2003/10/21 08:15:40 skrll Exp $
 #
 # CATS-specific configuration info
@@ -22,14 +22,14 @@ include "arch/arm/conf/files.footbridge"
 # Machine-independent ATA drivers
 #
 include "dev/ata/files.ata"
-major {wd = 16}
+major	{wd = 16}
 
 #
 # time of day clock
 #
 device	todclock
 attach	todclock at todservice
-file	arch/arm/footbridge/todclock.c			todclock	needs-count
+file	arch/arm/footbridge/todclock.c			todclock needs-count
 
 # ISA DMA glue
 file	arch/arm/footbridge/isa/isadma_machdep.c	isadma
@@ -59,7 +59,7 @@ file	arch/cats/cats/cats_machdep.c
 
 # library functions
 
-file	arch/arm/arm/disksubr.c			disk
+file	arch/arm/arm/disksubr.c				disk
 
 # ISA Plug 'n Play autoconfiguration glue.
 file	arch/arm/footbridge/isa/isapnp_machdep.c	isapnp
@@ -92,9 +92,9 @@ include "dev/pci/files.pci"
 
 device	pcib: isabus
 attach	pcib at pci
-file	arch/cats/pci/pcib.c			pcib
+file	arch/cats/pci/pcib.c				pcib
 
-file	arch/cats/pci/pciide_machdep.c		pciide
+file	arch/cats/pci/pciide_machdep.c			pciide
 
 # Include USB stuff
 include "dev/usb/files.usb"

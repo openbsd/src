@@ -1,4 +1,4 @@
-#	$OpenBSD: files.tc,v 1.7 2004/09/16 09:14:02 mickey Exp $
+#	$OpenBSD: files.tc,v 1.8 2005/03/08 20:00:25 tdeval Exp $
 #	$NetBSD: files.tc,v 1.26 2001/11/28 10:21:24 lukem Exp $
 #
 # Config file and device description for machine-independent
@@ -17,10 +17,10 @@ file	dev/tc/ioasic_subr.c		ioasic
 #  lance device defined in sys/conf/files
 #  le_dec_subr	attribute defined in sys/dev/dec/files.dec
 
-attach le at ioasic with le_ioasic:	le_dec_subr
+attach	le at ioasic with le_ioasic:	le_dec_subr
 file	dev/tc/if_le_ioasic.c		le_ioasic
 
-attach le at tc with le_tc:		le_dec_subr
+attach	le at tc with le_tc:		le_dec_subr
 file	dev/tc/if_le_tc.c		le_tc
 
 # DEFTA FDDI controller

@@ -1,118 +1,118 @@
-#	$OpenBSD: files.mii,v 1.23 2004/12/01 00:24:38 pvalchev Exp $
+#	$OpenBSD: files.mii,v 1.24 2005/03/08 20:00:25 tdeval Exp $
 #	$NetBSD: files.mii,v 1.13 1998/11/05 00:36:48 thorpej Exp $
 
-file    dev/mii/mii.c				mii
+file	dev/mii/mii.c				mii
 
-define mii_phy
-file dev/mii/mii_physubr.c			mii_phy
+define	mii_phy
+file	dev/mii/mii_physubr.c			mii_phy
 
-define ukphy_subr
-file dev/mii/ukphy_subr.c			ukphy_subr
+define	ukphy_subr
+file	dev/mii/ukphy_subr.c			ukphy_subr
 
-device tlphy: mii_phy
-attach tlphy at mii
-file dev/mii/tlphy.c				tlphy
+device	tlphy: mii_phy
+attach	tlphy at mii
+file	dev/mii/tlphy.c				tlphy
 
-device txphy: mii_phy, ukphy_subr
-attach txphy at mii
-file dev/mii/txphy.c				txphy
+device	txphy: mii_phy, ukphy_subr
+attach	txphy at mii
+file	dev/mii/txphy.c				txphy
 
-device nsphy: mii_phy
-attach nsphy at mii
-file dev/mii/nsphy.c				nsphy
+device	nsphy: mii_phy
+attach	nsphy at mii
+file	dev/mii/nsphy.c				nsphy
 
-device nsphyter: mii_phy
-attach nsphyter at mii
-file dev/mii/nsphyter.c				nsphyter
+device	nsphyter: mii_phy
+attach	nsphyter at mii
+file	dev/mii/nsphyter.c			nsphyter
 
-device gentbi: mii_phy
-attach gentbi at mii
-file dev/mii/gentbi.c				gentbi
+device	gentbi: mii_phy
+attach	gentbi at mii
+file	dev/mii/gentbi.c			gentbi
 
-device qsphy: mii_phy
-attach qsphy at mii
-file dev/mii/qsphy.c				qsphy
+device	qsphy: mii_phy
+attach	qsphy at mii
+file	dev/mii/qsphy.c				qsphy
 
-device inphy: mii_phy
-attach inphy at mii
-file dev/mii/inphy.c				inphy
+device	inphy: mii_phy
+attach	inphy at mii
+file	dev/mii/inphy.c				inphy
 
-device iophy: mii_phy
-attach iophy at mii
-file dev/mii/iophy.c				iophy
+device	iophy: mii_phy
+attach	iophy at mii
+file	dev/mii/iophy.c				iophy
 
-device eephy: mii_phy, ukphy_subr
-attach eephy at mii
-file dev/mii/eephy.c				eephy
+device	eephy: mii_phy, ukphy_subr
+attach	eephy at mii
+file	dev/mii/eephy.c				eephy
 
-device exphy: mii_phy, ukphy_subr
-attach exphy at mii
-file dev/mii/exphy.c				exphy
+device	exphy: mii_phy, ukphy_subr
+attach	exphy at mii
+file	dev/mii/exphy.c				exphy
 
-device rlphy: mii_phy, ukphy_subr
-attach rlphy at mii
-file dev/mii/rlphy.c				rlphy
+device	rlphy: mii_phy, ukphy_subr
+attach	rlphy at mii
+file	dev/mii/rlphy.c				rlphy
 
-device lxtphy: mii_phy, ukphy_subr
-attach lxtphy at mii
-file dev/mii/lxtphy.c				lxtphy
+device	lxtphy: mii_phy, ukphy_subr
+attach	lxtphy at mii
+file	dev/mii/lxtphy.c			lxtphy
 
-device mtdphy: mii_phy, ukphy_subr
-attach mtdphy at mii
-file dev/mii/mtdphy.c				mtdphy
+device	mtdphy: mii_phy, ukphy_subr
+attach	mtdphy at mii
+file	dev/mii/mtdphy.c			mtdphy
 
-device icsphy: mii_phy
-attach icsphy at mii
-file dev/mii/icsphy.c				icsphy
+device	icsphy: mii_phy
+attach	icsphy at mii
+file	dev/mii/icsphy.c			icsphy
 
-device sqphy: mii_phy
-attach sqphy at mii
-file dev/mii/sqphy.c				sqphy
+device	sqphy: mii_phy
+attach	sqphy at mii
+file	dev/mii/sqphy.c				sqphy
 
-device tqphy: mii_phy
-attach tqphy at mii
-file dev/mii/tqphy.c				tqphy
+device	tqphy: mii_phy
+attach	tqphy at mii
+file	dev/mii/tqphy.c				tqphy
 
-device ukphy: mii_phy, ukphy_subr
-attach ukphy at mii
-file dev/mii/ukphy.c				ukphy
+device	ukphy: mii_phy, ukphy_subr
+attach	ukphy at mii
+file	dev/mii/ukphy.c				ukphy
 
-device dcphy: mii_phy
-attach dcphy at mii
-file dev/mii/dcphy.c				dcphy
+device	dcphy: mii_phy
+attach	dcphy at mii
+file	dev/mii/dcphy.c				dcphy
 
-device bmtphy: mii_phy
-attach bmtphy at mii
-file dev/mii/bmtphy.c				bmtphy
+device	bmtphy: mii_phy
+attach	bmtphy at mii
+file	dev/mii/bmtphy.c			bmtphy
 
-device brgphy: mii_phy
-attach brgphy at mii
-file dev/mii/brgphy.c				brgphy
+device	brgphy: mii_phy
+attach	brgphy at mii
+file	dev/mii/brgphy.c			brgphy
 
-device xmphy: mii_phy
-attach xmphy at mii
-file dev/mii/xmphy.c				xmphy
+device	xmphy: mii_phy
+attach	xmphy at mii
+file	dev/mii/xmphy.c				xmphy
 
-device amphy: mii_phy
-attach amphy at mii
-file dev/mii/amphy.c				amphy
+device	amphy: mii_phy
+attach	amphy at mii
+file	dev/mii/amphy.c				amphy
 
-device acphy: mii_phy
-attach acphy at mii
-file dev/mii/acphy.c				acphy
+device	acphy: mii_phy
+attach	acphy at mii
+file	dev/mii/acphy.c				acphy
 
-device nsgphy: mii_phy
-attach nsgphy at mii
-file dev/mii/nsgphy.c				nsgphy
+device	nsgphy: mii_phy
+attach	nsgphy at mii
+file	dev/mii/nsgphy.c			nsgphy
 
-device urlphy: mii_phy
-attach urlphy at mii
-file dev/mii/urlphy.c				urlphy
+device	urlphy: mii_phy
+attach	urlphy at mii
+file	dev/mii/urlphy.c			urlphy
 
-device rgephy: mii_phy
-attach rgephy at mii
-file dev/mii/rgephy.c				rgephy
+device	rgephy: mii_phy
+attach	rgephy at mii
+file	dev/mii/rgephy.c			rgephy
 
-device ciphy: mii_phy
-attach ciphy at mii
-file dev/mii/ciphy.c				ciphy
+device	ciphy: mii_phy
+attach	ciphy at mii
+file	dev/mii/ciphy.c				ciphy

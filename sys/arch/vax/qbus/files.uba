@@ -1,20 +1,20 @@
-#	$OpenBSD: files.uba,v 1.2 2001/05/16 22:15:18 hugh Exp $
+#	$OpenBSD: files.uba,v 1.3 2005/03/08 20:00:24 tdeval Exp $
 #	$NetBSD: files.uba,v 1.6 1999/06/20 18:09:22 ragge Exp $
 #
 # Config file and device description for machine-independent
 # code for devices Digital Equipment Corp. Unibus and Q22 bus.
 # Included by ports that need it.
-device	uba { csr }
+device	uba {csr}
 
 define	qfont
 
 file	arch/vax/qbus/uba.c				uba
 
 # DZ-11 (-compatible) tty device driver.
-device	dz { line = -1 }: tty
+device	dz {line = -1}: tty
 attach	dz at uba with dz_uba
 file	arch/vax/qbus/dz.c				dz needs-flag
-file	arch/vax/qbus/dz_uba.c			dz_uba
+file	arch/vax/qbus/dz_uba.c				dz_uba
 
 # DL-11 at UBA
 device	dl: tty
@@ -36,12 +36,12 @@ file	arch/vax/qbus/uda.c				uda | mtc
 # DEQNA/DELQA Ethernet controller
 device	qe: ifnet, ether
 attach	qe at uba
-file	arch/vax/if/if_qe.c			qe
+file	arch/vax/if/if_qe.c				qe
 
 # DEUNA/DELUA Ethernet controller
 device	de: ifnet, ether
 attach	de at uba
-file	arch/vax/if/if_de.c			de
+file	arch/vax/if/if_de.c				de
 
 # QDSS at UBA
 device	qd: qfont
@@ -49,4 +49,4 @@ attach	qd at uba
 file	arch/vax/qbus/qd.c				qd needs-count
 
 # Fontfile for DEC framebuffers, soon to die in favour for MI fontfiles.
-file	arch/vax/qbus/qfont.c			qfont
+file	arch/vax/qbus/qfont.c				qfont

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sgi,v 1.8 2005/03/05 23:58:43 tdeval Exp $
+#	$OpenBSD: files.sgi,v 1.9 2005/03/08 20:00:24 tdeval Exp $
 #
 # maxpartitions must be first item in files.${ARCH}
 #
@@ -11,20 +11,20 @@ maxusers 2 8 64
 file	arch/sgi/sgi/autoconf.c
 file	arch/sgi/sgi/conf.c
 file	arch/sgi/sgi/machdep.c
-file	arch/sgi/sgi/sginode.c		tgt_origin200 | tgt_origin2000
-file	arch/sgi/dev/wscons_machdep.c	wsdisplay
+file	arch/sgi/sgi/sginode.c			tgt_origin200 | tgt_origin2000
+file	arch/sgi/dev/wscons_machdep.c		wsdisplay
 
 #
 # Media Indepedent Interface (mii)
 #
-include "dev/mii/files.mii"
+include	"dev/mii/files.mii"
 
 #
 #	Machine-independent ATAPI drivers
 #
 
-include "dev/atapiscsi/files.atapiscsi"
-include "dev/ata/files.ata"
+include	"dev/atapiscsi/files.atapiscsi"
+include	"dev/ata/files.ata"
 
 #
 #	System BUS types
@@ -40,7 +40,7 @@ attach	cpu at mainbus
 #
 #	O2 MACE localbus autoconfiguration devices
 #
-define	macebus { [sys = - 1], [base = -1 ], [irq = -1] }
+define	macebus {[sys = - 1], [base = -1], [irq = -1]}
 device	macebus
 attach	macebus at mainbus
 file	arch/sgi/localbus/macebus.c		macebus
@@ -49,7 +49,7 @@ file	arch/sgi/localbus/macectrl.S		macebus
 #
 #	Origin200/Origin2000 XBOW mux bridge
 #
-define	xbowmux { [sys = - 1], [base = -1 ], [irq = -1] }
+define	xbowmux {[sys = - 1], [base = -1], [irq = -1]}
 device	xbowmux
 attach	xbowmux at mainbus
 file	arch/sgi/localbus/xbowmux.c		xbowmux
@@ -71,9 +71,9 @@ include	"scsi/files.scsi"
 major	{sd = 0}
 major	{cd = 3}
 
-include "dev/i2o/files.i2o"
+include	"dev/i2o/files.i2o"
 
-include "dev/pci/files.pci"
+include	"dev/pci/files.pci"
 
 # Clock device
 device	clock
@@ -96,18 +96,18 @@ attach	mec at macebus
 file	arch/sgi/dev/if_mec.c			mec
 
 # Moosehead A/V Board audio
-device  mavb: audio
+device	mavb: audio
 attach	mavb at macebus
 file	arch/sgi/dev/mavb.c			mavb
 
 # Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
+include	"dev/rasops/files.rasops"
+include	"dev/wsfont/files.wsfont"
 
 #
 #  wscons console
 #
-include "dev/wscons/files.wscons"
+include	"dev/wscons/files.wscons"
 
 #
 #	PCI Bus support
@@ -116,13 +116,13 @@ include "dev/wscons/files.wscons"
 #
 # Machine-independent USB drivers
 #
-include "dev/usb/files.usb"
+include	"dev/usb/files.usb"
 
 #
 # Specials.
 #
 # RAM disk for boot
-major {rd = 8}
+major	{rd = 8}
 
 #
 #	Common files
@@ -131,4 +131,3 @@ major {rd = 8}
 file	dev/cninit.c
 file	netinet/in_cksum.c
 file	netns/ns_cksum.c			ns
-

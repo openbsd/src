@@ -1,4 +1,4 @@
-#	$OpenBSD: files.pci,v 1.172 2005/03/05 23:58:44 tdeval Exp $
+#	$OpenBSD: files.pci,v 1.173 2005/03/08 20:00:25 tdeval Exp $
 #	$NetBSD: files.pci,v 1.20 1996/09/24 17:47:15 christos Exp $
 #
 # Config file and device description for machine-independent PCI code.
@@ -87,7 +87,7 @@ attach	eap at pci
 file	dev/pci/eap.c			eap
 
 # ESS Solo-1 PCI AudioDrive
-device	eso { }: audio, auconv, mulaw, midibus
+device	eso {}: audio, auconv, mulaw, midibus
 attach	eso at pci
 file	dev/pci/eso.c			eso
 
@@ -127,10 +127,10 @@ file	dev/pci/maestro.c		maestro
 # ESS Maestro3
 device	esa: audio, auconv, mulaw, ac97
 attach	esa at pci
-file	dev/pci/esa.c		esa
+file	dev/pci/esa.c			esa
 
 # Yamaha YMF Audio
-device	yds { }: audio, auconv, mulaw, ac97, firmload
+device	yds {}: audio, auconv, mulaw, ac97, firmload
 attach	yds at pci
 file	dev/pci/yds.c			yds
 
@@ -204,7 +204,7 @@ attach	ncr at pci
 file	dev/pci/ncr.c			ncr
 
 # common code for siop/esiop pci front end
-define siop_pci_common
+define	siop_pci_common
 file	dev/pci/siop_pci_common.c	siop_pci_common
 
 # Symbios 53c8xx SCSI chips
@@ -425,9 +425,9 @@ attach	an at pci with an_pci
 file	dev/pci/if_an_pci.c		an_pci
 
 # Intel PRO/Wireless 2100
-device  ipw: ifnet, wlan, firmload
-attach  ipw at pci
-file    dev/pci/if_ipw.c                ipw
+device	ipw: ifnet, wlan, firmload
+attach	ipw at pci
+file	dev/pci/if_ipw.c		ipw
 
 # Intel PRO/Wireless 2200BG/2915ABG
 device	iwi: ifnet, wlan, firmload
@@ -521,11 +521,11 @@ file	dev/pci/if_ral_pci.c		ral_pci
 # Sangoma PCI card
 device	san: ifnet, ifmedia
 attach	san at pci
-file dev/pci/if_sandrv.c 	san
-file dev/pci/if_san_common.c 	san
-file dev/pci/if_san_obsd.c 	san
-file dev/pci/if_san_te1.c 	san
-file dev/pci/if_san_xilinx.c 	san
+file	dev/pci/if_sandrv.c 		san
+file	dev/pci/if_san_common.c 	san
+file	dev/pci/if_san_obsd.c 		san
+file	dev/pci/if_san_te1.c 		san
+file	dev/pci/if_san_xilinx.c 	san
 
 # PIIX4 power management controller
 device	piixpm {}

@@ -1,7 +1,7 @@
-#	$OpenBSD: files.dec,v 1.1 2002/05/02 22:56:02 miod Exp $
+#	$OpenBSD: files.dec,v 1.2 2005/03/08 20:00:24 tdeval Exp $
 #	$NetBSD: files.dec,v 1.7 2002/03/13 15:18:22 ad Exp $
 #
-# Config file and device description for  machine-independent
+# Config file and device description for machine-independent
 # code for devices for Digital Equipment Corp. systems.
 # Included by ports that need it.
 
@@ -9,5 +9,5 @@
 # which need it should specify the le_de_subr attribute.
 define	le_dec_subr
 
-#  DMA copy functions.  Lance attachments qhich Decices
+# DMA copy functions.
 file	dev/dec/if_le_dec.c		le_dec_subr

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.88 2004/06/03 18:28:02 grange Exp $
+#	$OpenBSD: files.isa,v 1.89 2005/03/08 20:00:25 tdeval Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -20,8 +20,8 @@ file	dev/isa/isa.c			isa needs-flag
 # ISA DMA capability, if it exists on this ISA bus
 #
 define	isa_dma
-device  isadma
-attach  isadma at isa: isa_dma
+device	isadma
+attach	isadma at isa: isa_dma
 file	dev/isa/isadma.c		isadma needs-flag
 
 #
@@ -133,8 +133,8 @@ attach	mcd at isa
 file	dev/isa/mcd.c			mcd needs-flag
 
 # ISA "wd" (ESDI/IDE/etc.) controllers, ATAPI bus
-attach wdc at isa with wdc_isa: isa_dma
-file   dev/isa/wdc_isa.c                wdc_isa
+attach	wdc at isa with wdc_isa: isa_dma
+file	dev/isa/wdc_isa.c		wdc_isa
 
 # Wangtek- and Archive-compatible tape controller boards
 device	wt: tape, isa_dma
@@ -211,9 +211,9 @@ file	dev/isa/if_ie.c			ie_isa
 
 # Intel i82595-based boards.
 # (Intel EtherExpress PRO/100)
-device  iy: ether, ifnet
+device	iy: ether, ifnet
 attach	iy at isa
-file    dev/isa/if_iy.c			iy
+file	dev/isa/if_iy.c			iy
 
 # Intel EtherExpress PRO/10
 device	ex: ether, ifnet
@@ -262,7 +262,7 @@ attach	mpu at isa with mpu_isa
 file	dev/isa/mpu_isa.c		mpu & midi
 
 # the SoundBlaster DSP, or close likenesses; used by other drivers
-define	sbdsp { }
+define	sbdsp {}
 file	dev/isa/sbdsp.c			sbdsp
 
 # SoundBlaster family
@@ -313,7 +313,7 @@ attach	wss at isa with wss_isa
 file	dev/isa/wss_isa.c		wss & (wss_isa | wss_isapnp) needs-flag
 
 # ESS Technology ES1887/ES888/ES1888
-device	ess { } : audio, isa_dma, mulaw, auconv, midibus
+device	ess {} : audio, isa_dma, mulaw, auconv, midibus
 file	dev/isa/ess.c			ess needs-flag
 
 attach	opl at ess with opl_ess
@@ -361,14 +361,14 @@ attach	rtii at isa
 file	dev/isa/radiotrack2.c		rtii
 
 # PC PPI + TIMER 1 (speaker interface)
-device  pcppi {}
-attach  pcppi at isa
+device	pcppi {}
+attach	pcppi at isa
 file	dev/isa/pcppi.c	pcppi	needs-flag
 device	spkr
 attach	spkr at pcppi
-file	dev/isa/spkr.c		spkr	needs-flag
+file	dev/isa/spkr.c			spkr	needs-flag
 attach	midi at pcppi with midi_pcppi: midisyn
-file	dev/isa/midi_pcppi.c    midi_pcppi
+file	dev/isa/midi_pcppi.c		midi_pcppi
 
 # 8255A-based PC parallel ports
 attach	lpt at isa with lpt_isa
@@ -396,10 +396,10 @@ file	dev/isa/it.c			it
 #
 # PCMCIA PCIC (i82365SL and compatibles):
 #
-#device pcicmaster { [irq = -1], [iomem = -1], [iosiz = 0] }
-#attach pcicmaster at isa
-#device pcic: pcmciabus
-#attach pcic at pcicmaster
-#file dev/isa/pcmcia_pcic.c  pcic | pcicmaster
+#device	pcicmaster {[irq = -1], [iomem = -1], [iosiz = 0]}
+#attach	pcicmaster at isa
+#device	pcic: pcmciabus
+#attach	pcic at pcicmaster
+#file	dev/isa/pcmcia_pcic.c		pcic | pcicmaster
 
-#file dev/isa/pcmcia_isa.c  pcmcia
+#file	dev/isa/pcmcia_isa.c		pcmcia

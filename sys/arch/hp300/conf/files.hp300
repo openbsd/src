@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hp300,v 1.26 2005/01/24 21:36:37 miod Exp $
+#	$OpenBSD: files.hp300,v 1.27 2005/03/08 20:00:23 tdeval Exp $
 #	$NetBSD: files.hp300,v 1.28 1997/05/12 08:23:28 thorpej Exp $
 #
 # hp300-specific configuration info
@@ -12,16 +12,16 @@ maxusers 2 8 64
 # Mainbus
 #
 
-device	mainbus { }
+device	mainbus {}
 attach	mainbus at root
 
 #
 # Internal i/o space
 #
 
-device	intio { }
+device	intio {}
 attach	intio at mainbus
-file	arch/hp300/dev/intio.c		intio
+file	arch/hp300/dev/intio.c			intio
 
 #
 # DIO bus
@@ -29,15 +29,15 @@ file	arch/hp300/dev/intio.c		intio
 
 device	dio {[scode = -1]}
 attach	dio at mainbus
-file	arch/hp300/dev/dio.c		dio
+file	arch/hp300/dev/dio.c			dio
 
 #
 # SGC bus
 #
 
-device	sgc {[ slot = -1]}
+device	sgc {[slot = -1]}
 attach	sgc at mainbus
-file	arch/hp300/dev/sgc.c		sgc	needs-flag
+file	arch/hp300/dev/sgc.c			sgc	needs-flag
 
 #
 # Devices in Internal i/o space
@@ -46,17 +46,17 @@ file	arch/hp300/dev/sgc.c		sgc	needs-flag
 # Apollo Utilility Chip (a.k.a. "Frodo") found on 4xx workstations
 device	frodo {[offset = -1]}
 attach	frodo at intio
-file	arch/hp300/dev/frodo.c		frodo
+file	arch/hp300/dev/frodo.c			frodo
 
 # Apollo Keyboard and mouse
 device	dnkbd
 attach	dnkbd at frodo
-file	arch/hp300/dev/dnkbd.c		dnkbd	needs-flag
+file	arch/hp300/dev/dnkbd.c			dnkbd	needs-flag
 
 # Apollo APCI 8250-like UARTs
 device	apci
 attach	apci at frodo
-file	arch/hp300/dev/apci.c		apci	needs-flag
+file	arch/hp300/dev/apci.c			apci	needs-flag
 
 # "workstation console" routines
 include	"dev/rasops/files.rasops"
@@ -68,31 +68,31 @@ file	arch/hp300/hp300/wscons_machdep.c	wsdisplay
 # Frame buffer devices
 #
 define	diofb
-file	arch/hp300/dev/diofb.c		diofb
+file	arch/hp300/dev/diofb.c			diofb
 
 device	dvbox: wsemuldisplaydev, diofb, rasops8
 attach	dvbox at intio with dvbox_intio
 attach	dvbox at dio with dvbox_dio
-file	arch/hp300/dev/dvbox.c		dvbox	needs-flag
+file	arch/hp300/dev/dvbox.c			dvbox	needs-flag
 
 device	gbox: wsemuldisplaydev, diofb, rasops8
 attach	gbox at intio with gbox_intio
 attach	gbox at dio with gbox_dio
-file	arch/hp300/dev/gbox.c		gbox	needs-flag
+file	arch/hp300/dev/gbox.c			gbox	needs-flag
 
 device	hyper: wsemuldisplaydev, diofb, rasops1
 attach	hyper at dio
-file	arch/hp300/dev/hyper.c		hyper	needs-flag
+file	arch/hp300/dev/hyper.c			hyper	needs-flag
 
 device	rbox: wsemuldisplaydev, diofb, rasops8
 attach	rbox at intio with rbox_intio
 attach	rbox at dio with rbox_dio
-file	arch/hp300/dev/rbox.c		rbox	needs-flag
+file	arch/hp300/dev/rbox.c			rbox	needs-flag
 
 device	topcat: wsemuldisplaydev, diofb, rasops8
 attach	topcat at intio with topcat_intio
 attach	topcat at dio with topcat_dio
-file	arch/hp300/dev/topcat.c		topcat	needs-flag
+file	arch/hp300/dev/topcat.c			topcat	needs-flag
 
 #
 # Other devices on the DIO bus
@@ -101,50 +101,50 @@ file	arch/hp300/dev/topcat.c		topcat	needs-flag
 # DCA serial interface
 device	dca: tty
 attach	dca at dio
-file	arch/hp300/dev/dca.c		dca	needs-flag
+file	arch/hp300/dev/dca.c			dca	needs-flag
 
 # DCM serial interface
 device	dcm: tty
 attach	dcm at dio
-file	arch/hp300/dev/dcm.c		dcm	needs-flag
+file	arch/hp300/dev/dcm.c			dcm	needs-flag
 
 # LANCE ethernet
 attach	le at dio
-file	arch/hp300/dev/if_le.c		le
+file	arch/hp300/dev/if_le.c			le
 
 # HP-IB interfaces
-define	hpibdev { }
+define	hpibdev {}
 
 device	nhpib: hpibdev
 attach	nhpib at dio
-file	arch/hp300/dev/nhpib.c		nhpib
+file	arch/hp300/dev/nhpib.c			nhpib
 
 device	fhpib: hpibdev
 attach	fhpib at dio
-file	arch/hp300/dev/fhpib.c		fhpib
+file	arch/hp300/dev/fhpib.c			fhpib
 
 # HP-IB bus layer
 device	hpibbus {[slave = -1], [punit = -1]}
 attach	hpibbus at hpibdev
-file	arch/hp300/dev/hpib.c		hpibbus
+file	arch/hp300/dev/hpib.c			hpibbus
 
 # HP-IB devices
 device	ct: tape
 attach	ct at hpibbus
-file	arch/hp300/dev/ct.c		ct	needs-flag
+file	arch/hp300/dev/ct.c			ct	needs-flag
 
 device	mt: tape
 attach	mt at hpibbus
-file	arch/hp300/dev/mt.c		mt	needs-flag
+file	arch/hp300/dev/mt.c			mt	needs-flag
 
 device	hd: disk
 attach	hd at hpibbus
-file	arch/hp300/dev/hd.c		hd	needs-flag
+file	arch/hp300/dev/hd.c			hd	needs-flag
 major	{hd = 2}
 
 device	ppi
 attach	ppi at hpibbus
-file	arch/hp300/dev/ppi.c		ppi	needs-flag
+file	arch/hp300/dev/ppi.c			ppi	needs-flag
 
 # RAM disk
 major	{rd = 8}
@@ -154,8 +154,8 @@ include	"scsi/files.scsi"
 
 device	spc: scsi
 attach	spc at dio
-file	arch/hp300/dev/spc.c		spc	needs-flag
-file	arch/hp300/dev/mb89352.c	spc
+file	arch/hp300/dev/spc.c			spc	needs-flag
+file	arch/hp300/dev/mb89352.c		spc
 
 major	{sd = 4}
 major	{cd = 9}
@@ -165,7 +165,7 @@ major	{cd = 9}
 #
 
 attach	sti at sgc with sti_sgc
-file	arch/hp300/dev/sti_sgc.c	sti_sgc
+file	arch/hp300/dev/sti_sgc.c		sti_sgc
 
 #
 # HIL Human Interface Loop devices
@@ -173,7 +173,7 @@ file	arch/hp300/dev/sti_sgc.c	sti_sgc
 include	"dev/hil/files.hil"
 
 attach	hil at intio with hil_intio
-file	arch/hp300/dev/hil_intio.c	hil_intio
+file	arch/hp300/dev/hil_intio.c		hil_intio
 
 #
 # Non-device files

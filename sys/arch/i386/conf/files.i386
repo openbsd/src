@@ -1,4 +1,4 @@
-#	$OpenBSD: files.i386,v 1.131 2005/03/05 23:58:43 tdeval Exp $
+#	$OpenBSD: files.i386,v 1.132 2005/03/08 20:00:23 tdeval Exp $
 #
 # new style config file for i386 architecture
 #
@@ -172,7 +172,7 @@ include "../../../gnu/arch/i386/fpemul/files.fpemul"
 
 # attribute used to represent the "keyboard controller"
 # XXX should be a real device
-define pckbcport { [irq = -1], [port = -1] }
+define pckbcport {[irq = -1], [port = -1]}
 
 # 8250/16[45]50-based "com" ports, optimized for the i386 interrupt system
 device	pccom: tty

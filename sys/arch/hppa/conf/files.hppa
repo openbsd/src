@@ -1,4 +1,4 @@
-#	$OpenBSD: files.hppa,v 1.57 2004/10/29 20:23:35 miod Exp $
+#	$OpenBSD: files.hppa,v 1.58 2005/03/08 20:00:23 tdeval Exp $
 #
 # hppa-specific configuration info
 
@@ -22,9 +22,9 @@ include "dev/mii/files.mii"
 # Machine-independent SCSI drivers
 #
 include "scsi/files.scsi"
-major	{ sd = 4 }
-major	{ st = 5 }
-major	{ cd = 6 }
+major	{sd = 4}
+major	{st = 5}
+major	{cd = 6}
 
 # I2O
 include "dev/i2o/files.i2o"
@@ -75,7 +75,7 @@ include "dev/hil/files.hil"
 # Gonzo System Connect Bus
 #	(GSC, GSC-1X, GSC+, GSC-1.5X, GSC-2X)
 #
-define	gscbus	{ }
+define	gscbus	{}
 
 #
 # Mainbus
@@ -84,57 +84,57 @@ define	gscbus	{ }
 define	gedoens {[offset = -1], [irq = -1]}
 device	mainbus: gedoens
 attach	mainbus at root
-file	arch/hppa/hppa/mainbus.c	mainbus
+file	arch/hppa/hppa/mainbus.c		mainbus
 
 device	pdc
 attach	pdc at gedoens
-file	arch/hppa/dev/pdc.c		pdc
+file	arch/hppa/dev/pdc.c			pdc
 
 device	power
 attach	power at gedoens
-file	arch/hppa/dev/power.c		power needs-flag
+file	arch/hppa/dev/power.c			power needs-flag
 
 device	mem
 attach	mem at gedoens
-file	arch/hppa/dev/mem.c		mem
+file	arch/hppa/dev/mem.c			mem
 
 device	cpu
 attach	cpu at gedoens
-file	arch/hppa/dev/cpu.c		cpu
+file	arch/hppa/dev/cpu.c			cpu
 
 device	fpu
 attach	fpu at gedoens
-file	arch/hppa/dev/fpu.c		fpu
+file	arch/hppa/dev/fpu.c			fpu
 
 # Phantom PseudoBC GSC+ Port
 device	phantomas: gedoens
 attach	phantomas at gedoens
-file	arch/hppa/dev/phantomas.c	phantomas
+file	arch/hppa/dev/phantomas.c		phantomas
 
 # U2/Uturn, Runway to GSC Bus bridge & IOA.
 device	uturn: gedoens
 attach	uturn at gedoens
-file	arch/hppa/dev/uturn.c		uturn
+file	arch/hppa/dev/uturn.c			uturn
 
 # 1FT1-0002, 1FU2-0002
 # as goes w/ 7100LC, 7300LC, 7200 and some of 8000, 8200, 8500
 device	lasi: gscbus
 attach	lasi at gedoens
-file	arch/hppa/dev/lasi.c		lasi
+file	arch/hppa/dev/lasi.c			lasi
 
 # all the older systems
 device	asp: gscbus
 attach	asp at gedoens
-file	arch/hppa/dev/asp.c		asp
+file	arch/hppa/dev/asp.c			asp
 
 # 1FT4-0001, ASIC used on gecko cards
 device	wax: gscbus, isabus, eisabus
 attach	wax at gedoens
-file	arch/hppa/dev/wax.c		wax
+file	arch/hppa/dev/wax.c			wax
 
 device	mongoose: isabus, eisabus
 attach	mongoose at gedoens with mg_gedoens
-file	arch/hppa/dev/mongoose.c	mongoose
+file	arch/hppa/dev/mongoose.c		mongoose
 
 define	dinobus {[offset = -1], [irq = -1]}
 
@@ -142,22 +142,22 @@ define	dinobus {[offset = -1], [irq = -1]}
 # Cujo is a 64-bit data path Dino
 device	dino: pcibus, dinobus
 attach	dino at gedoens
-file	arch/hppa/dev/dino.c		dino
+file	arch/hppa/dev/dino.c			dino
 
 attach	com at dinobus with com_dino
-file	arch/hppa/dev/com_dino.c	com_dino
+file	arch/hppa/dev/com_dino.c		com_dino
 
 # EPIC, Excalibur PCI Interface Chip. Integrated IOA
 # SAGA is a 64-bit data path EPIC
 #device	epic: pcibus
 #attach	epic at gedoens
-#file	arch/hppa/dev/epic.c		epic
+#file	arch/hppa/dev/epic.c			epic
 
 attach	sti at gedoens with sti_gedoens
-file	arch/hppa/dev/sti_sgc.c		sti_gedoens
+file	arch/hppa/dev/sti_sgc.c			sti_gedoens
 
 attach	siop at gedoens with siop_sgc
-file	arch/hppa/dev/siop_sgc.c	siop_sgc
+file	arch/hppa/dev/siop_sgc.c		siop_sgc
 
 ###
 
@@ -171,74 +171,74 @@ major	{rd = 3}
 
 device	gsc {[offset = -1], [irq = -1]}
 attach	gsc at gscbus
-file	arch/hppa/gsc/gscbus.c		gsc
+file	arch/hppa/gsc/gscbus.c			gsc
 
 # com and lpt are both on WD 16C552
 attach	com at gsc with com_gsc
-file	arch/hppa/gsc/com_gsc.c		com_gsc
+file	arch/hppa/gsc/com_gsc.c			com_gsc
 
 attach	lpt at gsc with lpt_gsc
-file	arch/hppa/gsc/lpt_gsc.c		lpt_gsc
+file	arch/hppa/gsc/lpt_gsc.c			lpt_gsc
 
 attach	mongoose at gsc with mg_gsc
-file	arch/hppa/gsc/mongoose_gsc.c	mg_gsc
+file	arch/hppa/gsc/mongoose_gsc.c		mg_gsc
 
 #include "dev/fdc/files.fdc"
-#major	{ fd = 7 }
-#major	{ ft = 8 }
+#major	{fd = 7}
+#major	{ft = 8}
 #attach	fdc at gsc with fdc_gsc
-#file	arch/hppa/gsc/fdc_gsc.c		fdc_gsc
+#file	arch/hppa/gsc/fdc_gsc.c			fdc_gsc
 
 attach	ie at gsc with ie_gsc
-file	arch/hppa/gsc/if_ie_gsc.c	ie_gsc
+file	arch/hppa/gsc/if_ie_gsc.c		ie_gsc
 
 attach	osiop at gsc with osiop_gsc
-file	arch/hppa/gsc/osiop_gsc.c	osiop_gsc
+file	arch/hppa/gsc/osiop_gsc.c		osiop_gsc
 
 attach	oosiop at gsc with oosiop_gsc
-file	arch/hppa/gsc/oosiop_gsc.c	oosiop_gsc
+file	arch/hppa/gsc/oosiop_gsc.c		oosiop_gsc
 
 attach	hil at gsc with hil_gsc
-file	arch/hppa/gsc/hil_gsc.c		hil_gsc
+file	arch/hppa/gsc/hil_gsc.c			hil_gsc
 
 # PSB 2160-N based 8bit mono audio (705, 710, 745i/*, 747i/*)
 device	aone: audio, mulaw, auconv
 attach	aone at gsc
-file	arch/hppa/gsc/aone.c		aone
+file	arch/hppa/gsc/aone.c			aone
 
 # CS4215/AD1849 based 16bit mono/stereo audio iface (most of others not w/ aone)
 # a.k.a. Audio Type 2 (optional beeper)
 device	harmony: audio, mulaw, auconv
 attach	harmony at gsc
-file	arch/hppa/gsc/harmony.c		harmony
+file	arch/hppa/gsc/harmony.c			harmony
 
 # HPA4011A/B w/ TMS380C26PQL, TMS38054FNL
 #device	tms: tokenring
 #attach	tms at gsc
-#file	arch/hppa/gsc/if_tms.c		tms
+#file	arch/hppa/gsc/if_tms.c			tms
 
 # these we don't know yet
 # AMD Supernet2 FDDI ?
 #device	medusa: fddi
 #attach	medusa at gsc
-#file	arch/hppa/gsc/medusa.c		medusa
+#file	arch/hppa/gsc/medusa.c			medusa
 
 # XXX should not be here
 # ANSI/VITA 26-1998 Gbit packet switching network iface
 #device	myri: ether
 #attach	myri at pci
-#file	dev/pci/myri.c			myri
+#file	dev/pci/myri.c				myri
 
 # PS/2 input ports
-#device	gsckbc { [slot = -1] }
+#device	gsckbc {[slot = -1]}
 attach	gsckbc at gsc
-file	arch/hppa/gsc/gsckbc.c		gsckbc
+file	arch/hppa/gsc/gsckbc.c			gsckbc
 
 # PS/2 keyboard
 device	gsckbd: wskbddev
 attach	gsckbd at gsckbc
-file	arch/hppa/gsc/gsckbd.c		gsckbd	needs-flag
-file	arch/hppa/gsc/gsckbdmap.c	gsckbd
+file	arch/hppa/gsc/gsckbd.c			gsckbd	needs-flag
+file	arch/hppa/gsc/gsckbdmap.c		gsckbd
 
 # PS/2 mouse
 include	"dev/pckbc/files.pckbc"

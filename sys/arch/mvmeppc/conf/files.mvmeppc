@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvmeppc,v 1.8 2004/10/08 13:04:36 grange Exp $
+#	$OpenBSD: files.mvmeppc,v 1.9 2005/03/08 20:00:23 tdeval Exp $
 
 #
 # mvmeppc-specific configuration info
@@ -10,7 +10,7 @@ maxusers 2 8 64
 file	dev/cninit.c
 file	arch/mvmeppc/mvmeppc/db_interface.c
 
-file    arch/mvmeppc/dev/bugio.c
+file	arch/mvmeppc/dev/bugio.c
 file	arch/mvmeppc/dev/clock.c
 file	arch/mvmeppc/dev/mem.c
 
@@ -42,17 +42,17 @@ file	arch/mvmeppc/dev/openpic.c
 # Various things that need to be included early...
 
 # Media Independent Interface (mii)
-include "../../../dev/mii/files.mii"
+include	"../../../dev/mii/files.mii"
 
 # I2O
-include "../../../dev/i2o/files.i2o"
+include	"../../../dev/i2o/files.i2o"
 
 #
 # ISA Bus support
 #
 
-include "dev/isa/files.isa"
-include "dev/isa/files.isapnp"
+include	"dev/isa/files.isa"
+include	"dev/isa/files.isapnp"
 
 file	arch/mvmeppc/isa/isa_machdep.c		isa
 
@@ -60,7 +60,7 @@ file	arch/mvmeppc/isa/isa_machdep.c		isa
 # PCI bus support
 #
 
-include "dev/pci/files.pci"
+include	"dev/pci/files.pci"
 
 device	mpcpcibr {} : pcibus
 attach	mpcpcibr at raven
@@ -87,15 +87,15 @@ file	arch/mvmeppc/pci/pcib.c			pcib
 # Block Devices
 #
 
-include "../../../scsi/files.scsi"
+include	"../../../scsi/files.scsi"
 #include "../../../dev/atapiscsi/files.atapiscsi"
 #include "../../../dev/ata/files.ata"
 
-device bugtty: tty
-attach bugtty at mainbus
-file arch/mvmeppc/dev/bugtty.c			bugtty needs-flag
+device	bugtty: tty
+attach	bugtty at mainbus
+file	arch/mvmeppc/dev/bugtty.c		bugtty needs-flag
 
 #major	{wd = 0}
 major	{sd = 2}
 major	{cd = 3}
-major   {rd = 17}
+major	{rd = 17}

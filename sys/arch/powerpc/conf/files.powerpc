@@ -1,7 +1,7 @@
-#	$OpenBSD: files.powerpc,v 1.37 2003/01/09 22:27:10 miod Exp $
+#	$OpenBSD: files.powerpc,v 1.38 2005/03/08 20:00:23 tdeval Exp $
 #
 
-file    arch/powerpc/powerpc/setjmp.S			ddb
+file	arch/powerpc/powerpc/setjmp.S			ddb
 file	arch/powerpc/powerpc/Locore.c
 file	arch/powerpc/powerpc/bcopy.c
 file	arch/powerpc/powerpc/copystr.c

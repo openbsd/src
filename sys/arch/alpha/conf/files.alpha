@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.64 2004/11/04 11:03:44 miod Exp $
+#	$OpenBSD: files.alpha,v 1.65 2005/03/08 20:00:22 tdeval Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -15,93 +15,93 @@ file	arch/alpha/dev/shared_intr.c	alpha_shared_intr | dec_eb164 |
 					dec_1000 | dec_1000a | dec_eb64plus
 
 define	alpha_sgmap
-file	arch/alpha/dev/sgmap_common.c alpha_sgmap | dec_3000_500
+file	arch/alpha/dev/sgmap_common.c		alpha_sgmap | dec_3000_500
 
 #
 # Bus-independent devices
 #
 
-device	mainbus { }			# no locators (yet?)
+device	mainbus {}			# no locators (yet?)
 attach	mainbus at root
 
-device	cpu { }				# not really optional
+device	cpu {}				# not really optional
 attach	cpu at mainbus
-file	arch/alpha/alpha/cpu.c		cpu
+file	arch/alpha/alpha/cpu.c			cpu
 
-major { ccd = 7 }
-major { vnd = 9 }
+major	{ccd = 7}
+major	{vnd = 9}
 
 #
 # Media Independent Interface (mii)
 #
-include "../../../dev/mii/files.mii"
+include	"../../../dev/mii/files.mii"
 
 #
 # Machine-independent SCSI drivers
 #
 
-include "scsi/files.scsi"
-major { st = 2 }
-major { cd = 3 }
-major { sd = 8 }
-major { rd = 6 }
+include	"scsi/files.scsi"
+major	{st = 2}
+major	{cd = 3}
+major	{sd = 8}
+major	{rd = 6}
 
 # I2O
-include "dev/i2o/files.i2o"
+include	"dev/i2o/files.i2o"
 
 # Raster operations
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
+include	"dev/rasops/files.rasops"
+include	"dev/wsfont/files.wsfont"
 
 #
 # "workstation console" routines
 #
 
-include "dev/wscons/files.wscons"
+include	"dev/wscons/files.wscons"
 
 #
 # Bus-independent support for DEC devices
 #
-include "dev/dec/files.dec"
+include	"dev/dec/files.dec"
 
 #
 # TURBOchannel Devices
 #
 
-include "dev/tc/files.tc"
+include	"dev/tc/files.tc"
 
 # TC attachment is MD
 attach	tc at tcbus
 
 device	tcasic: tcbus
 attach	tcasic at mainbus
-file	arch/alpha/tc/tcasic.c		tcasic
-file	arch/alpha/tc/tc_bus_mem.c	tcasic
-file	arch/alpha/tc/tc_dma.c		tcasic
-file	arch/alpha/tc/tc_dma_3000_300.c	tcasic & dec_3000_300
-file	arch/alpha/tc/tc_dma_3000_500.c	tcasic & dec_3000_500
-file	arch/alpha/tc/tc_sgmap.c	tcasic & dec_3000_500
-file	arch/alpha/tc/tc_3000_500.c	tcasic & dec_3000_500
-file	arch/alpha/tc/tc_3000_300.c	tcasic & dec_3000_300
+file	arch/alpha/tc/tcasic.c			tcasic
+file	arch/alpha/tc/tc_bus_mem.c		tcasic
+file	arch/alpha/tc/tc_dma.c			tcasic
+file	arch/alpha/tc/tc_dma_3000_300.c		tcasic & dec_3000_300
+file	arch/alpha/tc/tc_dma_3000_500.c		tcasic & dec_3000_500
+file	arch/alpha/tc/tc_sgmap.c		tcasic & dec_3000_500
+file	arch/alpha/tc/tc_3000_500.c		tcasic & dec_3000_500
+file	arch/alpha/tc/tc_3000_300.c		tcasic & dec_3000_300
 
 # the TURBOchannel IOCTL ASIC
 # IOASIC device and attachment defined in sys/dev/tc/files.tc
-file	arch/alpha/tc/ioasic.c		ioasic
+file	arch/alpha/tc/ioasic.c			ioasic
 
 # PMAG-B CX
 device	cfb: wsemuldisplaydev, wsrasteremulops
 attach	cfb at tc
-file	arch/alpha/tc/cfb.c		cfb		needs-flag
+file	arch/alpha/tc/cfb.c			cfb		needs-flag
 
 # PMAGB-B HX or CXT
 device	sfb: wsemuldisplaydev, wsrasteremulops
 attach	sfb at tc
-file	arch/alpha/tc/sfb.c		sfb		needs-flag
+file	arch/alpha/tc/sfb.c			sfb		needs-flag
 
 # 8530 UARTs
 device	scc
 attach	scc at ioasic
-file	arch/alpha/tc/scc.c		scc		needs-count
+file	arch/alpha/tc/scc.c			scc		needs-count
 
 # TC and baseboard ioasic Lance ethernet are in files.tc
 
@@ -113,48 +113,48 @@ file	arch/alpha/tc/scc.c		scc		needs-count
 # Machine-independent ATAPI drivers
 #
 
-include "dev/atapiscsi/files.atapiscsi"
-include "dev/ata/files.ata"
+include	"dev/atapiscsi/files.atapiscsi"
+include	"dev/ata/files.ata"
 
 # XXX Dummy bus needed for some multi-homed devices specified in files.isa
 define	pcmcia {}
 
-include "dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
-include "dev/isa/files.isa"
-major { wd = 0 }
+include	"dev/pci/files.pci"	# XXX some ISA devs are 'at pci' too.
+include	"dev/isa/files.isa"
+major	{wd = 0}
 
-include "dev/puc/files.puc"
+include	"dev/puc/files.puc"
 
 #
 # ISA Bus devices
 #
 
-file	arch/alpha/isa/isa_machdep.c	isa
+file	arch/alpha/isa/isa_machdep.c		isa
 
-define isadma_bounce
-file arch/alpha/isa/isadma_bounce.c	isadma_bounce & isa_dma
+define	isadma_bounce
+file	arch/alpha/isa/isadma_bounce.c		isadma_bounce & isa_dma
 
-device isabeep
-attach isabeep at pcppi
+device	isabeep
+attach	isabeep at pcppi
 
-include "dev/pckbc/files.pckbc"
+include	"dev/pckbc/files.pckbc"
 
 # Floppy disk controller
 #device	fdc {[drive = -1]}: isa_dma
 device	fdc {[drive = -1]}
 attach	fdc at isa
-file	dev/isa/fdc.c	fdc needs-flag
+file	dev/isa/fdc.c				fdc needs-flag
 
 device	fd: disk, isa_dma
 attach	fd at fdc
-file	dev/isa/fd.c	fd needs-flag
+file	dev/isa/fd.c				fd needs-flag
 major	{fd = 4}
 
 #
 # EISA Bus support
 #
 
-include "dev/eisa/files.eisa"
+include	"dev/eisa/files.eisa"
 
 
 #
@@ -163,35 +163,35 @@ include "dev/eisa/files.eisa"
 
 # include "dev/pci/files.pci" XXX SEE ABOVE
 
-file    arch/alpha/pci/pciide_machdep.c  pci
+file	arch/alpha/pci/pciide_machdep.c		pci
 
 define	alpha_pci_sgmap_pte64
 file	arch/alpha/pci/pci_sgmap_pte64.c	alpha_pci_sgmap_pte64
 
 device	apecs: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	apecs at mainbus
-file	arch/alpha/pci/apecs.c		apecs
-file	arch/alpha/pci/apecs_bus_io.c	apecs
-file	arch/alpha/pci/apecs_bus_mem.c	apecs
-file	arch/alpha/pci/apecs_pci.c	apecs
-file	arch/alpha/pci/apecs_dma.c	apecs
+file	arch/alpha/pci/apecs.c			apecs
+file	arch/alpha/pci/apecs_bus_io.c		apecs
+file	arch/alpha/pci/apecs_bus_mem.c		apecs
+file	arch/alpha/pci/apecs_pci.c		apecs
+file	arch/alpha/pci/apecs_dma.c		apecs
 
 device	lca: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	lca at mainbus
-file	arch/alpha/pci/lca.c		lca
-file	arch/alpha/pci/lca_bus_io.c	lca
-file	arch/alpha/pci/lca_bus_mem.c	lca
-file	arch/alpha/pci/lca_pci.c	lca
-file	arch/alpha/pci/lca_dma.c	lca
+file	arch/alpha/pci/lca.c			lca
+file	arch/alpha/pci/lca_bus_io.c		lca
+file	arch/alpha/pci/lca_bus_mem.c		lca
+file	arch/alpha/pci/lca_pci.c		lca
+file	arch/alpha/pci/lca_dma.c		lca
 
 device	cia: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
 attach	cia at mainbus
-file	arch/alpha/pci/cia.c		cia
-file	arch/alpha/pci/cia_dma.c	cia
-file	arch/alpha/pci/cia_pci.c	cia
-file	arch/alpha/pci/cia_bus_io.c	cia
-file	arch/alpha/pci/cia_bus_mem.c	cia
-file	arch/alpha/pci/cia_bwx_bus_io.c	cia
+file	arch/alpha/pci/cia.c			cia
+file	arch/alpha/pci/cia_dma.c		cia
+file	arch/alpha/pci/cia_pci.c		cia
+file	arch/alpha/pci/cia_bus_io.c		cia
+file	arch/alpha/pci/cia_bus_mem.c		cia
+file	arch/alpha/pci/cia_bwx_bus_io.c		cia
 file	arch/alpha/pci/cia_bwx_bus_mem.c	cia
 
 device	irongate: pcibus, isadma_bounce
@@ -202,16 +202,16 @@ file	arch/alpha/pci/irongate_bus_mem.c	irongate
 file	arch/alpha/pci/irongate_dma.c		irongate
 file	arch/alpha/pci/irongate_pci.c		irongate
 
-device  tsc { }
-attach  tsc at mainbus
-file    arch/alpha/pci/tsc.c            dec_6600
+device	tsc {}
+attach	tsc at mainbus
+file	arch/alpha/pci/tsc.c			dec_6600
 
-device  tsp: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
-attach  tsp at tsc
-file    arch/alpha/pci/tsp_dma.c        tsp
-file    arch/alpha/pci/tsp_pci.c        tsp
-file    arch/alpha/pci/tsp_bus_io.c     tsp
-file    arch/alpha/pci/tsp_bus_mem.c    tsp
+device	tsp: pcibus, alpha_sgmap, alpha_pci_sgmap_pte64
+attach	tsp at tsc
+file	arch/alpha/pci/tsp_dma.c		tsp
+file	arch/alpha/pci/tsp_pci.c		tsp
+file	arch/alpha/pci/tsp_bus_io.c		tsp
+file	arch/alpha/pci/tsp_bus_mem.c		tsp
 
 file	arch/alpha/pci/pci_2100_a50.c		dec_2100_a50
 file	arch/alpha/pci/pci_axppci_33.c		dec_axppci_33
@@ -230,23 +230,23 @@ file	arch/alpha/pci/pci_up1000.c		api_up1000
 # PCI Bus devices
 #
 
-file	arch/alpha/pci/pci_machdep.c	pci
+file	arch/alpha/pci/pci_machdep.c		pci
 
 device	sio: isabus, alpha_shared_intr, cy82c693
 attach	sio at pci
 device	pceb: isabus, eisabus, cy82c693
 attach	pceb at pci
-file	arch/alpha/pci/sio.c		sio | pceb	needs-flag
-file	arch/alpha/pci/sio_pic.c	sio | pceb
+file	arch/alpha/pci/sio.c			sio | pceb	needs-flag
+file	arch/alpha/pci/sio_pic.c		sio | pceb
 
 #
 # ISA PnP
 #
 
-include "../../../dev/isa/files.isapnp"
-file	arch/alpha/isa/isapnp_machdep.c	isapnp
+include	"../../../dev/isa/files.isapnp"
+file	arch/alpha/isa/isapnp_machdep.c		isapnp
 
-attach  com at isapnp with com_isapnp
+attach	com at isapnp with com_isapnp
 
 #
 # Devices that can live on multiple busses
@@ -255,9 +255,9 @@ attach  com at isapnp with com_isapnp
 device	mcclock
 attach	mcclock at ioasic with mcclock_ioasic
 attach	mcclock at isa with mcclock_isa
-file	arch/alpha/alpha/mcclock.c	mcclock
-file	arch/alpha/tc/mcclock_ioasic.c	mcclock_ioasic
-file	arch/alpha/isa/mcclock_isa.c	mcclock_isa
+file	arch/alpha/alpha/mcclock.c		mcclock
+file	arch/alpha/tc/mcclock_ioasic.c		mcclock_ioasic
+file	arch/alpha/isa/mcclock_isa.c		mcclock_isa
 
 #
 # Standard files
@@ -308,18 +308,18 @@ file	arch/alpha/alpha/dec_eb64plus.c		dec_eb64plus	needs-flag
 file	arch/alpha/alpha/dec_kn20aa.c		dec_kn20aa	needs-flag
 file	arch/alpha/alpha/dec_550.c		dec_550		needs-flag
 file	arch/alpha/alpha/dec_1000a.c		dec_1000 | dec_1000a	needs-flag
-file    arch/alpha/alpha/dec_6600.c             dec_6600	needs-flag
+file	arch/alpha/alpha/dec_6600.c		dec_6600	needs-flag
 file	arch/alpha/alpha/api_up1000.c		api_up1000	needs-flag
 
 # OSF/1 Binary Compatibility (COMPAT_OSF1)
-include "compat/osf1/files.osf1"
+include	"compat/osf1/files.osf1"
 file	arch/alpha/alpha/osf1_locore.s		compat_osf1
 
 # NetBSD binary compatibility (COMPAT_NETBSD)
-include "../../../compat/netbsd/files.netbsd"
+include	"../../../compat/netbsd/files.netbsd"
 file	arch/alpha/alpha/netbsd_machdep.c	compat_netbsd
 
 #
 # Machine-independent USB drivers
 #
-include "dev/usb/files.usb"
+include	"dev/usb/files.usb"

@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.62 2005/03/03 09:45:20 miod Exp $
+#	$OpenBSD: files.sparc,v 1.63 2005/03/08 20:00:24 tdeval Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -9,113 +9,113 @@ maxpartitions 16
 
 maxusers 2 8 64
 
-device mainbus {}
-attach mainbus at root
+device	mainbus {}
+attach	mainbus at root
 
-device obio { [addr = -1], [level = -1] }
-attach obio at mainbus
+device	obio {[addr = -1], [level = -1]}
+attach	obio at mainbus
 
-device iommu {}
-attach iommu at mainbus
+device	iommu {}
+attach	iommu at mainbus
 file	arch/sparc/sparc/iommu.c		iommu
 
-device vme {}
-attach vme at iommu
+device	vme {}
+attach	vme at iommu
 
-device vmel { [addr = -1], [level = -1], [vect = -1] }
-attach vmel at mainbus, vme
-device vmes { [addr = -1], [level = -1], [vect = -1] }
-attach vmes at mainbus, vme
+device	vmel {[addr = -1], [level = -1], [vect = -1]}
+attach	vmel at mainbus, vme
+device	vmes {[addr = -1], [level = -1], [vect = -1]}
+attach	vmes at mainbus, vme
 file	arch/sparc/dev/obio.c		obio | vmel | vmes | vme
 
-device auxreg
-attach auxreg at mainbus, obio
+device	auxreg
+attach	auxreg at mainbus, obio
 file	arch/sparc/sparc/auxreg.c		auxreg needs-count
 
-device clock
-attach clock at mainbus, obio
+device	clock
+attach	clock at mainbus, obio
 
-device oclock
-attach oclock at obio
+device	oclock
+attach	oclock at obio
 
-device timer
-attach timer at mainbus, obio
+device	timer
+attach	timer at mainbus, obio
 
-device eeprom
-attach eeprom at obio
+device	eeprom
+attach	eeprom at obio
 file	arch/sparc/sparc/clock.c
 
-device power
-attach power at obio
+device	power
+attach	power at obio
 file	arch/sparc/dev/power.c			power needs-count
 
-device led
-attach led at mainbus, obio
+device	led
+attach	led at mainbus, obio
 file	arch/sparc/dev/led.c			led needs-count
 
-device cpu
-attach cpu at mainbus
+device	cpu
+attach	cpu at mainbus
 file	arch/sparc/sparc/cpu.c
 
-device memreg
-attach memreg at mainbus, obio
+device	memreg
+attach	memreg at mainbus, obio
 file	arch/sparc/sparc/memreg.c
 
-device zs {[channel = -1]}
-attach zs at mainbus, obio
+device	zs {[channel = -1]}
+attach	zs at mainbus, obio
 file	arch/sparc/dev/zs.c			zs needs-flag
 file	arch/sparc/dev/z8530sc.c		zs
 
-device fdc {}
-attach fdc at mainbus, obio
-device fd: disk
-attach fd at fdc
+device	fdc {}
+attach	fdc at mainbus, obio
+device	fd: disk
+attach	fd at fdc
 file	arch/sparc/dev/fd.c			fdc | fd needs-flag
 file	arch/sparc/sparc/bsd_fdintr.s		fdc
 
-device xbox {}
-device sbus { [slot = -1], [offset = -1] }
-attach sbus at mainbus, iommu, sbus, xbox
+device	xbox {}
+device	sbus {[slot = -1], [offset = -1]}
+attach	sbus at mainbus, iommu, sbus, xbox
 file	arch/sparc/dev/sbus.c			sbus
 
 # Sun specific files
-include "../../../dev/sun/files.sun"
+include	"../../../dev/sun/files.sun"
 
 #
 # Console (zs) related stuff
 #
 
-device zstty: tty
-attach zstty at zs
+device	zstty: tty
+attach	zstty at zs
 file	arch/sparc/dev/z8530tty.c		zstty needs-flag
 file	arch/sparc/dev/zs_kgdb.c		kgdb
 
-device zskbd: tty, wskbddev, sunkbd
-attach zskbd at zs
+device	zskbd: tty, wskbddev, sunkbd
+attach	zskbd at zs
 file	arch/sparc/dev/z8530kbd.c		zskbd needs-flag
 
 #
 # Media Independent Interface (mii)
 #
-include "../../../dev/mii/files.mii"
+include	"../../../dev/mii/files.mii"
 
 #
 # Machine-independent SCSI drivers
 #
-include "../../../scsi/files.scsi"
+include	"../../../scsi/files.scsi"
 
-major { sd = 7 }
-major { vnd = 8 }
-major { cd = 18 }
+major	{sd = 7}
+major	{vnd = 8}
+major	{cd = 18}
 major	{rd = 17}
 
-device dma {}
-attach dma at sbus, obio
-device ledma {}
-attach ledma at sbus
+device	dma {}
+attach	dma at sbus, obio
+device	ledma {}
+attach	ledma at sbus
 file	arch/sparc/dev/dma.c		dma | ledma
-device lebuffer {}
-attach lebuffer at sbus
+device	lebuffer {}
+attach	lebuffer at sbus
 file	arch/sparc/dev/lebuffer.c	lebuffer
 
 device	qec {}
@@ -131,29 +131,29 @@ attach	qe at qec
 file	arch/sparc/dev/qe.c		qe
 
 # HappyMeal (hme) ethernet
-device hme: ifnet, ether, mii, ifmedia
-attach hme at sbus
+device	hme: ifnet, ether, mii, ifmedia
+attach	hme at sbus
 file	arch/sparc/dev/hme.c		hme
 
-attach esp at sbus, dma, obio
+attach	esp at sbus, dma, obio
 file	arch/sparc/dev/esp.c		esp
 
-device audioamd: audio, mulaw
-attach audioamd at mainbus, obio, sbus
+device	audioamd: audio, mulaw
+attach	audioamd at mainbus, obio, sbus
 file	arch/sparc/dev/amd7930.c	audio
 file	arch/sparc/sparc/amd7930intr.s	audio
 
-device audiocs: audio, auconv
-attach audiocs at sbus
+device	audiocs: audio, auconv
+attach	audiocs at sbus
 file	arch/sparc/dev/cs4231.c		audiocs
 
 # Framebuffers
 
 file	arch/sparc/dev/fb.c
 
-include "dev/wscons/files.wscons"
-include "dev/rasops/files.rasops"
-include "dev/wsfont/files.wsfont"
+include	"dev/wscons/files.wscons"
+include	"dev/rasops/files.rasops"
+include	"dev/wsfont/files.wsfont"
 
 define	bt_dac
 file	arch/sparc/dev/bt_subr.c	bt_dac
@@ -233,30 +233,30 @@ attach	zx at sbus
 file	arch/sparc/dev/zx.c		zx
 
 # device definition in sys/conf/files
-attach le at sbus, ledma, lebuffer, obio
+attach	le at sbus, ledma, lebuffer, obio
 file	arch/sparc/dev/if_le.c		le
 
-attach ie at obio, vmes, vmel
+attach	ie at obio, vmes, vmel
 file	arch/sparc/dev/if_ie.c		ie
 
-device xdc {[drive = -1]}
-attach xdc at vmel
-device xd: disk
-attach xd at xdc
+device	xdc {[drive = -1]}
+attach	xdc at vmel
+device	xd: disk
+attach	xd at xdc
 file	arch/sparc/dev/xd.c		xd needs-flag
 major	{xd = 10}
 
-device xyc {[drive = -1]}
-attach xyc at vmes
-device xy: disk
-attach xy at xyc
+device	xyc {[drive = -1]}
+attach	xyc at vmes
+device	xy: disk
+attach	xy at xyc
 file	arch/sparc/dev/xy.c		xy needs-flag
 major	{xy = 3}
 
-device si: scsi, ncr5380sbc
-attach si at vmes
-device sw: scsi, ncr5380sbc
-attach sw at obio
+device	si: scsi, ncr5380sbc
+attach	si at vmes
+device	sw: scsi, ncr5380sbc
+attach	sw at obio
 file	arch/sparc/dev/si.c		si | sw
 
 # Efficient Networks, Inc. ATM interface
@@ -312,63 +312,63 @@ file	arch/sparc/sparc/db_disasm.c	ddb
 #
 
 # SVR4 Binary Compatibility (COMPAT_SVR4)
-include "../../../compat/svr4/files.svr4"
+include	"../../../compat/svr4/files.svr4"
 file	arch/sparc/sparc/svr4_machdep.c	compat_svr4
 file	arch/sparc/sparc/sunos_machdep.c compat_sunos
 
 # SunOS Binary Compatibility (COMPAT_SUNOS)
-include "../../../compat/sunos/files.sunos"
+include	"../../../compat/sunos/files.sunos"
 
 # Miscellaneous
 file	netns/ns_cksum.c		ns
 
 # Magma Serial/Parallel boards
-device magma {}
-attach magma at sbus                                 
-device mtty
-attach mtty at magma
-device mbpp
-attach mbpp at magma
-file    arch/sparc/dev/magma.c		magma | mtty | mbpp needs-flag
+device	magma {}
+attach	magma at sbus
+device	mtty
+attach	mtty at magma
+device	mbpp
+attach	mbpp at magma
+file	arch/sparc/dev/magma.c		magma | mtty | mbpp needs-flag
 
-device spif {}
-attach spif at sbus
-device stty
-attach stty at spif
-device sbpp
-attach sbpp at spif
+device	spif {}
+attach	spif at sbus
+device	stty
+attach	stty at spif
+device	sbpp
+attach	sbpp at spif
 file	arch/sparc/dev/spif.c		spif | stty | sbpp needs-flag
 
-device bpp {}
-attach bpp at sbus
-file    arch/sparc/dev/bpp.c		bpp needs-flag
+device	bpp {}
+attach	bpp at sbus
+file	arch/sparc/dev/bpp.c		bpp needs-flag
 
-attach xbox at sbus
+attach	xbox at sbus
 file	arch/sparc/dev/xbox.c		xbox
 
 # sysconfig registers on Force CPU-5V
-device scf {}
-attach scf at mainbus
+device	scf {}
+attach	scf at mainbus
 file	arch/sparc/dev/scf.c		scf needs-flag
 
 # flash memory on Force CPU-5V
-device flash {}
-attach flash at obio
+device	flash {}
+attach	flash at obio
 file	arch/sparc/dev/flash.c		flash needs-flag
 
 # VME/SBus bridge on Force CPU-5V
-device fga {}
-attach fga at iommu
-device fvme { [addr = -1], [level = -1], [vect = -1] }
-attach fvme at fga
+device	fga {}
+attach	fga at iommu
+device	fvme {[addr = -1], [level = -1], [vect = -1]}
+attach	fvme at fga
 file	arch/sparc/dev/fga.c		fga needs-flag
 
-device daadio {}
-attach daadio at fvme
+device	daadio {}
+attach	daadio at fvme
 file	arch/sparc/dev/daadio.c		daadio needs-flag
 
-device tctrl {}
-attach tctrl at obio
+device	tctrl {}
+attach	tctrl at obio
 file	arch/sparc/dev/tctrl.c		tctrl needs-flag
 
 # Prestoserve NVRAM

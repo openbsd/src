@@ -1,7 +1,7 @@
-#	$OpenBSD: files.dec,v 1.1 2001/05/16 22:15:17 hugh Exp $
-#       $NetBSD: files.dec,v 1.4 1999/08/04 07:17:51 nisimura Exp $
+#	$OpenBSD: files.dec,v 1.2 2005/03/08 20:00:24 tdeval Exp $
+#	$NetBSD: files.dec,v 1.4 1999/08/04 07:17:51 nisimura Exp $
 #
-# Config file and device description for  machine-independent
+# Config file and device description for machine-independent
 # code for devices for Digital Equipment Corp. systems.
 # Included by ports that need it.
 
@@ -9,9 +9,9 @@
 # which need it should specify the le_de_subr attribute.
 define	le_dec_subr
 
-#  DMA copy functions.  Lance attachments qhich Decices
+# DMA copy functions.
 file	arch/vax/dec/if_le_dec.c		le_dec_subr
 
-#  LK201 keyboard
-file	arch/vax/dec/lk201_ws.c		lkkbd
-file	arch/vax/dec/wskbdmap_lk201.c	lkkbd
+# LK201 keyboard
+file	arch/vax/dec/lk201_ws.c			lkkbd
+file	arch/vax/dec/wskbdmap_lk201.c		lkkbd
