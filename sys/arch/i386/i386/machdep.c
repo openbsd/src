@@ -1,4 +1,5 @@
-/*	$OpenBSD: machdep.c,v 1.6 1996/02/28 14:38:42 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.7 1996/03/03 03:02:34 mickey Exp $	*/
+/*	$NetBSD: machdep.c,v 1.191 1996/03/01 21:49:49 scottr Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -1105,16 +1106,6 @@ init386(first_avail)
 	splhigh();
 	enable_intr();
 
-#ifdef DDB
-	ddb_init();
-	if (boothowto & RB_KDB)
-		Debugger();
-#endif
-#ifdef KGDB
-	if (boothowto & RB_KDB)
-		kgdb_connect(0);
-#endif
-
 	/*
 	 * Use BIOS values stored in RTC CMOS RAM, since probing
 	 * breaks certain 386 AT relics.
@@ -1155,6 +1146,16 @@ init386(first_avail)
 
 	/* call pmap initialization to make new kernel address space */
 	pmap_bootstrap((vm_offset_t)atdevbase + IOM_SIZE);
+
+#ifdef DDB
+	ddb_init();
+	if (boothowto & RB_KDB)
+		Debugger();
+#endif
+#ifdef KGDB
+	if (boothowto & RB_KDB)
+		kgdb_connect(0);
+#endif
 }
 
 struct queue {
@@ -1165,9 +1166,11 @@ struct queue {
  * insert an element into a queue
  */
 void
-_insque(elem, head)
-	register struct queue *elem, *head;
+_insque(v1, v2)
+	void *v1;
+	void *v2;
 {
+	register struct queue *elem = v1, *head = v2;
 	register struct queue *next;
 
 	next = head->q_next;
@@ -1181,9 +1184,10 @@ _insque(elem, head)
  * remove an element from a queue
  */
 void
-_remque(elem)
-	register struct queue *elem;
+_remque(v)
+	void *v;
 {
+	register struct queue *elem = v;
 	register struct queue *next, *prev;
 
 	next = elem->q_next;
