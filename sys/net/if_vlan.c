@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_vlan.c,v 1.44 2003/12/16 20:33:25 markus Exp $ */
+/*	$OpenBSD: if_vlan.c,v 1.45 2004/02/12 18:07:29 henning Exp $ */
 /*
  * Copyright 1998 Massachusetts Institute of Technology
  *
@@ -80,12 +80,17 @@
 
 extern struct	ifaddr	**ifnet_addrs;
 extern int ifqmaxlen;
+u_long vlan_tagmask;
+
+#define TAG_HASH_SIZE	32
+#define TAG_HASH(tag)	(tag & vlan_tagmask)
+LIST_HEAD(, ifvlan)	*vlan_tagh;
 
 void	vlan_start (struct ifnet *ifp);
 int	vlan_ioctl (struct ifnet *ifp, u_long cmd, caddr_t addr);
 int	vlan_setmulti (struct ifnet *ifp);
 int	vlan_unconfig (struct ifnet *ifp);
-int	vlan_config (struct ifvlan *ifv, struct ifnet *p);
+int	vlan_config (struct ifvlan *, struct ifnet *, u_int16_t);
 void	vlanattach (int count);
 int	vlan_set_promisc (struct ifnet *ifp);
 int	vlan_ether_addmulti(struct ifvlan *, struct ifreq *);
@@ -94,8 +99,6 @@ void	vlan_ether_purgemulti(struct ifvlan *);
 int	vlan_clone_create(struct if_clone *, int);
 int	vlan_clone_destroy(struct ifnet *);
 
-LIST_HEAD(, ifvlan) vlan_list;
-
 struct if_clone vlan_cloner =
     IF_CLONE_INITIALIZER("vlan", vlan_clone_create, vlan_clone_destroy);
 
@@ -103,7 +106,10 @@ struct if_clone vlan_cloner =
 void
 vlanattach(int count)
 {
-	LIST_INIT(&vlan_list);
+	vlan_tagh = hashinit(TAG_HASH_SIZE, M_DEVBUF, M_NOWAIT, &vlan_tagmask);
+	if (vlan_tagh == NULL)
+		panic("vlanattach: hashinit");
+
 	if_clone_attach(&vlan_cloner);
 }
 
@@ -112,7 +118,6 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ifvlan *ifv;
 	struct ifnet *ifp;
-	int s;
 
 	ifv = malloc(sizeof(*ifv), M_DEVBUF, M_NOWAIT);
 	if (!ifv)
@@ -139,10 +144,6 @@ vlan_clone_create(struct if_clone *ifc, int unit)
 	ifp->if_type = IFT_8021_VLAN;
 	ifp->if_hdrlen = EVL_ENCAPLEN;
 
-	s = splnet();
-	LIST_INSERT_HEAD(&vlan_list, ifv, ifv_list);
-	splx(s);
-
 	return (0);
 }
 
@@ -150,11 +151,6 @@ int
 vlan_clone_destroy(struct ifnet *ifp)
 {
 	struct ifvlan *ifv = ifp->if_softc;
-	int s;
-
-	s = splnet();
-	LIST_REMOVE(ifv, ifv_list);
-	splx(s);
 
 	vlan_unconfig(ifp);
 #if NBPFILTER > 0
@@ -277,7 +273,7 @@ vlan_input_tag(struct mbuf *m, u_int16_t t)
 	struct ether_vlan_header vh;
 
 	t = EVL_VLANOFTAG(t);
-	LIST_FOREACH(ifv, &vlan_list, ifv_list) {
+	LIST_FOREACH(ifv, &vlan_tagh[TAG_HASH(t)], ifv_list) {
 		if (m->m_pkthdr.rcvif == ifv->ifv_p && t == ifv->ifv_tag)
 			break;
 	}
@@ -350,7 +346,7 @@ vlan_input(eh, m)
 
 	tag = EVL_VLANOFTAG(ntohs(*mtod(m, u_int16_t *)));
 
-	LIST_FOREACH(ifv, &vlan_list, ifv_list) {
+	LIST_FOREACH(ifv, &vlan_tagh[TAG_HASH(tag)], ifv_list) {
 		if (m->m_pkthdr.rcvif == ifv->ifv_p && tag == ifv->ifv_tag)
 			break;
 	}
@@ -398,10 +394,11 @@ vlan_input(eh, m)
 }
 
 int
-vlan_config(struct ifvlan *ifv, struct ifnet *p)
+vlan_config(struct ifvlan *ifv, struct ifnet *p, u_int16_t tag)
 {
 	struct ifaddr *ifa1, *ifa2;
 	struct sockaddr_dl *sdl1, *sdl2;
+	int s;
 
 	if (p->if_type != IFT_ETHER)
 		return EPROTONOSUPPORT;
@@ -468,6 +465,12 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p)
 	sdl1->sdl_alen = ETHER_ADDR_LEN;
 	bcopy(LLADDR(sdl2), LLADDR(sdl1), ETHER_ADDR_LEN);
 	bcopy(LLADDR(sdl2), ifv->ifv_ac.ac_enaddr, ETHER_ADDR_LEN);
+
+	ifv->ifv_tag = tag;
+	s = splnet();
+	LIST_INSERT_HEAD(&vlan_tagh[TAG_HASH(tag)], ifv, ifv_list);
+	splx(s);
+
 	return 0;
 }
 
@@ -479,6 +482,7 @@ vlan_unconfig(struct ifnet *ifp)
 	struct ifvlan *ifv;
 	struct ifnet *p;
 	struct ifreq *ifr, *ifr_p;
+	int s;
 
 	ifv = ifp->if_softc;
 	p = ifv->ifv_p;
@@ -487,6 +491,10 @@ vlan_unconfig(struct ifnet *ifp)
 
 	if (p == NULL)
 		return 0;
+
+	s = splnet();
+	LIST_REMOVE(ifv, ifv_list);
+	splx(s);
 
 	/*
  	 * Since the interface is being unconfigured, we need to
@@ -614,10 +622,9 @@ vlan_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 			error = ENOENT;
 			break;
 		}
-		error = vlan_config(ifv, pr);
+		error = vlan_config(ifv, pr, vlr.vlr_tag);
 		if (error)
 			break;
-		ifv->ifv_tag = vlr.vlr_tag;
 		ifp->if_flags |= IFF_RUNNING;
 
 		/* Update promiscuous mode, if necessary. */
