@@ -1,4 +1,4 @@
-/*	$OpenBSD: man.c,v 1.20 2002/02/16 21:27:48 millert Exp $	*/
+/*	$OpenBSD: man.c,v 1.21 2002/09/17 19:37:39 deraadt Exp $	*/
 /*	$NetBSD: man.c,v 1.7 1995/09/28 06:05:34 tls Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)man.c	8.17 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: man.c,v 1.20 2002/02/16 21:27:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: man.c,v 1.21 2002/09/17 19:37:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -85,9 +85,7 @@ static void	 usage(void);
 sigset_t	blocksigs;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
@@ -270,17 +268,24 @@ main(argc, argv)
 				if ((ep = malloc(sizeof(ENTRY))) == NULL ||
 				    (ep->s = strdup(buf)) == NULL)
 					err(1, NULL);
-				/* puts it at the end, should be at the top, but then the added
-					entries would be in reverse order, fix later when all are added*/
+				/*
+				 * puts it at the end, should be at the top,
+				 * but then the added entries would be in
+				 * reverse order, fix later when all are added
+				 */
 				TAILQ_INSERT_TAIL(&defp->list, ep, q);
-				if (e_sectp == NULL) 	/* save first added, to-be the new top */
+				if (e_sectp == NULL)
+				 	/* save first added, to-be the new top */
 					e_sectp = ep;
 			}
 		}
 		if (e_sectp != NULL) { /* entries added, fix order */
-			ep->q.tqe_next = defp->list.tqh_first;	/* save original head			*/
-			defp->list.tqh_first = e_sectp;			/* first added entry, new top */
-			*e_sectp->q.tqe_prev = NULL; 				/* terminate list					*/
+			/* save original head */
+			ep->q.tqe_next = defp->list.tqh_first;
+			/* first added entry, new top */
+			defp->list.tqh_first = e_sectp;
+			/* terminate list */
+			*e_sectp->q.tqe_prev = NULL;
 		}
 	}
 	/*
@@ -529,8 +534,7 @@ next:				anyfound = 1;
  *	Build a man page for display.
  */
 static void
-build_page(fmt, pathp)
-	char *fmt, **pathp;
+build_page(char *fmt, char **pathp)
 {
 	static int warned;
 	ENTRY *ep;
@@ -614,8 +618,7 @@ build_page(fmt, pathp)
  *	display how information
  */
 static void
-how(fname)
-	char *fname;
+how(char *fname)
 {
 	FILE *fp;
 
@@ -661,8 +664,7 @@ how(fname)
  *	cat out the file
  */
 static void
-cat(fname)
-	char *fname;
+cat(char *fname)
 {
 	int fd, n;
 	char buf[2048];
@@ -691,8 +693,7 @@ cat(fname)
  *	check the user supplied page information
  */
 static char *
-check_pager(name)
-	char *name;
+check_pager(char *name)
 {
 	char *p, *save;
 
@@ -724,8 +725,7 @@ check_pager(name)
  *	strip out flag argument and jump
  */
 static void
-jump(argv, flag, name)
-	char **argv, *flag, *name;
+jump(char **argv, char *flag, char *name)
 {
 	char **arg;
 
@@ -745,10 +745,9 @@ jump(argv, flag, name)
  *	If signaled, delete the temporary files.
  */
 static void
-onsig(signo)
-	int signo;
+onsig(int signo)
 {
-	(void)cleanup();
+	(void)cleanup();	/* XXX signal race */
 
 	(void)signal(signo, SIG_DFL);
 	(void)kill(getpid(), signo);
@@ -762,7 +761,7 @@ onsig(signo)
  *	Clean up temporary files, show any error messages.
  */
 static int
-cleanup()
+cleanup(void)
 {
 	TAG *intmpp, *missp;
 	ENTRY *ep;
@@ -793,7 +792,7 @@ cleanup()
  *	print usage message and die
  */
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-achw] [-C file] [-M path] [-m path] "
 	    "[-s section] [-S subsection] [section] title ...\n", __progname);

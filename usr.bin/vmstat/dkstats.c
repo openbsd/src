@@ -1,4 +1,4 @@
-/*	$OpenBSD: dkstats.c,v 1.20 2002/08/04 00:51:01 deraadt Exp $	*/
+/*	$OpenBSD: dkstats.c,v 1.21 2002/09/17 19:37:40 deraadt Exp $	*/
 /*	$NetBSD: dkstats.c,v 1.1 1996/05/10 23:19:27 thorpej Exp $	*/
 
 /*
@@ -117,7 +117,7 @@ char		**dr_name;
  * the delta values in the 'cur' structure.
  */
 void
-dkswap()
+dkswap(void)
 {
 	u_int64_t tmp;
 	int	i;
@@ -154,7 +154,7 @@ dkswap()
  * Also collect statistics for tty i/o and cpu ticks.
  */
 void
-dkreadstats()
+dkreadstats(void)
 {
 #if !defined(NOKVM)
 	struct disk	cur_disk, *p;
@@ -230,8 +230,7 @@ dkreadstats()
  * track disk statistics.
  */
 int
-dkinit(select)
-int	select;
+dkinit(int select)
 {
 #if !defined(NOKVM)
 	struct disklist_head disk_head;
@@ -373,9 +372,7 @@ int	select;
  * and the size of the copy passed in `len'.
  */
 static void
-deref_kptr(kptr, ptr, len)
-	void *kptr, *ptr;
-	size_t len;
+deref_kptr(void *kptr, void *ptr, size_t len)
 {
 	char buf[128];
 

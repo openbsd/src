@@ -1,4 +1,4 @@
-/*	$OpenBSD: uname.c,v 1.5 2001/07/12 05:17:27 deraadt Exp $	*/
+/*	$OpenBSD: uname.c,v 1.6 2002/09/17 19:37:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Winning Strategies, Inc.
@@ -32,7 +32,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: uname.c,v 1.5 2001/07/12 05:17:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uname.c,v 1.6 2002/09/17 19:37:40 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -54,9 +54,7 @@ static void usage();
 #define PRINT_PROCESSOR	0x20
 
 int
-main(argc, argv) 
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	struct utsname u;
 	int c;
@@ -148,7 +146,7 @@ main(argc, argv)
 }
 
 static void
-usage()
+usage(void)
 {
 	fprintf(stderr, "usage: uname [-amnprsv]\n");
 	exit(1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: config.c,v 1.2 1996/06/26 05:36:59 deraadt Exp $	*/
+/*	$OpenBSD: config.c,v 1.3 2002/09/17 19:37:39 deraadt Exp $	*/
 /*	$NetBSD: config.c,v 1.7 1995/09/28 06:05:21 tls Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)config.c	8.8 (Berkeley) 1/31/95";
 #else
-static char rcsid[] = "$OpenBSD: config.c,v 1.2 1996/06/26 05:36:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: config.c,v 1.3 2002/09/17 19:37:39 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -68,8 +68,7 @@ struct _head head;
  *	tag2 <-> record <-> record <-> record
  */
 void
-config(fname)
-	char *fname;
+config(char *fname)
 {
 	TAG *tp;
 	ENTRY *ep;
@@ -138,8 +137,7 @@ config(fname)
  *	Add a tag to the list.
  */
 TAG *
-addlist(name)
-	char *name;
+addlist(char *name)
 {
 	TAG *tp;
 
@@ -156,8 +154,7 @@ addlist(name)
  *	Return the linked list of entries for a tag if it exists.
  */
 TAG *
-getlist(name)
-	char *name;
+getlist(char *name)
 {
 	TAG *tp;
 
@@ -168,8 +165,7 @@ getlist(name)
 }
 
 void
-debug(l)
-	char *l;
+debug(char *l)
 {
 	TAG *tp;
 	ENTRY *ep;

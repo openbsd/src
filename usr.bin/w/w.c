@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.37 2002/06/08 22:57:34 angelos Exp $	*/
+/*	$OpenBSD: w.c,v 1.38 2002/09/17 19:37:40 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.37 2002/06/08 22:57:34 angelos Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.38 2002/09/17 19:37:40 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -121,9 +121,7 @@ static struct stat
 static void	 usage(int);
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	extern char *__progname;
 	struct kinfo_proc *kp;
@@ -179,7 +177,8 @@ main(argc, argv)
 	argv += optind;
 
 	if (nlistf == NULL && memf == NULL) {
-		if ((kd = kvm_openfiles(nlistf, memf, NULL, KVM_NO_FILES, errbuf)) == NULL)
+		if ((kd = kvm_openfiles(nlistf, memf, NULL, KVM_NO_FILES,
+		    errbuf)) == NULL)
 			errx(1, "%s", errbuf);
 	} else {
 		if ((kd = kvm_openfiles(nlistf, memf, NULL, O_RDONLY, errbuf)) == NULL)
@@ -347,8 +346,7 @@ main(argc, argv)
 }
 
 static void
-pr_args(kp)
-	struct kinfo_proc *kp;
+pr_args(struct kinfo_proc *kp)
 {
 	char **argv, *str;
 	int left;
@@ -387,9 +385,7 @@ nothing:
 }
 
 static void
-pr_header(nowp, nusers)
-	time_t *nowp;
-	int nusers;
+pr_header(time_t *nowp, int nusers)
 {
 	double avenrun[3];
 	time_t uptime;
@@ -463,8 +459,7 @@ pr_header(nowp, nusers)
 }
 
 static struct stat *
-ttystat(line)
-	char *line;
+ttystat(char *line)
 {
 	static struct stat sb;
 	char ttybuf[sizeof(_PATH_DEV) + UT_LINESIZE];
@@ -478,8 +473,7 @@ ttystat(line)
 }
 
 static void
-usage(wcmd)
-	int wcmd;
+usage(int wcmd)
 {
 	if (wcmd)
 		(void)fprintf(stderr,

@@ -1,5 +1,5 @@
 /*	$NetBSD: vmstat.c,v 1.29.4.1 1996/06/05 00:21:05 cgd Exp $	*/
-/*	$OpenBSD: vmstat.c,v 1.71 2002/09/05 04:05:53 art Exp $	*/
+/*	$OpenBSD: vmstat.c,v 1.72 2002/09/17 19:37:40 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1991, 1993
@@ -158,9 +158,7 @@ extern char *__progname;
 int verbose = 0;
 
 int
-main(argc, argv)
-	int argc;
-	char **argv;
+main(int argc, char *argv[])
 {
 	extern int optind;
 	extern char *optarg;
@@ -299,8 +297,7 @@ main(argc, argv)
 }
 
 char **
-choosedrives(argv)
-	char **argv;
+choosedrives(char **argv)
 {
 	int i;
 
@@ -334,7 +331,7 @@ choosedrives(argv)
 }
 
 time_t
-getuptime()
+getuptime(void)
 {
 	static time_t now;
 	static struct timeval boottime;
@@ -366,9 +363,7 @@ getuptime()
 int	hz, hdrcnt;
 
 void
-dovmstat(interval, reps)
-	u_int interval;
-	int reps;
+dovmstat(u_int interval, int reps)
 {
 	struct vmtotal total;
 	time_t uptime, halfuptime;
@@ -447,7 +442,7 @@ dovmstat(interval, reps)
 }
 
 void
-printhdr()
+printhdr(void)
 {
 	int i;
 
@@ -474,14 +469,14 @@ printhdr()
  * Force a header to be prepended to the next output.
  */
 void
-needhdr()
+needhdr(void)
 {
 
 	hdrcnt = 1;
 }
 
 void
-dotimes()
+dotimes(void)
 {
 	u_int pgintime, rectime;
 	int mib[2];
@@ -514,8 +509,7 @@ dotimes()
 }
 
 int
-pct(top, bot)
-	long top, bot;
+pct(long top, long bot)
 {
 	long ans;
 
@@ -528,7 +522,7 @@ pct(top, bot)
 #define	PCT(top, bot) pct((long)(top), (long)(bot))
 
 void
-dosum()
+dosum(void)
 {
 	struct nchstats nchstats;
 	long nchtotal;
@@ -633,7 +627,7 @@ dosum()
 }
 
 void
-doforkst()
+doforkst(void)
 {
 	struct forkstat fks;
 	size_t size;
@@ -654,15 +648,18 @@ doforkst()
 	(void)printf("%d forks, %d pages, average %.2f\n",
 	    fks.cntfork, fks.sizfork, (double)fks.sizfork / fks.cntfork);
 	(void)printf("%d vforks, %d pages, average %.2f\n",
-	    fks.cntvfork, fks.sizvfork, (double)fks.sizvfork / (fks.cntvfork ? fks.cntvfork : 1));
+	    fks.cntvfork, fks.sizvfork,
+	    (double)fks.sizvfork / (fks.cntvfork ? fks.cntvfork : 1));
 	(void)printf("%d rforks, %d pages, average %.2f\n",
-	    fks.cntrfork, fks.sizrfork, (double)fks.sizrfork / (fks.cntrfork ? fks.cntrfork : 1));
+	    fks.cntrfork, fks.sizrfork,
+	    (double)fks.sizrfork / (fks.cntrfork ? fks.cntrfork : 1));
 	(void)printf("%d kthread creations, %d pages, average %.2f\n",
-	    fks.cntkthread, fks.sizkthread, (double)fks.sizkthread / (fks.cntkthread ? fks.cntkthread : 1));
+	    fks.cntkthread, fks.sizkthread,
+	    (double)fks.sizkthread / (fks.cntkthread ? fks.cntkthread : 1));
 }
 
 void
-dkstats()
+dkstats(void)
 {
 	int dn, state;
 	double etime;
@@ -684,7 +681,7 @@ dkstats()
 }
 
 void
-cpustats()
+cpustats(void)
 {
 	int state;
 	double pct, total;
@@ -708,7 +705,7 @@ cpustats()
 #include <machine/cpu.h>
 #undef _KERNEL
 void
-dointr()
+dointr(void)
 {
 	struct intrhand *intrhand[16], *ihp, ih;
 	u_long inttotal = 0;
@@ -834,7 +831,7 @@ dointr()
 }
 #else
 void
-dointr()
+dointr(void)
 {
 	long *intrcnt, inttotal;
 	time_t uptime;
@@ -891,7 +888,7 @@ dointr()
 char *kmemnames[] = INITKMEMNAMES;
 
 void
-domem()
+domem(void)
 {
 	struct kmembuckets *kp;
 	struct kmemstats *ks;
@@ -1223,10 +1220,7 @@ dopool_kvm(void)
  * kread reads something from the kernel, given its nlist index.
  */
 void
-kread(nlx, addr, size)
-	int nlx;
-	void *addr;
-	size_t size;
+kread(int nlx, void *addr, size_t size)
 {
 	char *sym;
 
@@ -1245,7 +1239,7 @@ kread(nlx, addr, size)
 }
 
 void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr, "usage: %s [-fimst] [-c count] [-M core] "
 	    "[-N system] [-w wait] [disks]\n", __progname);
