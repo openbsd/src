@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.h,v 1.9 2000/12/09 03:06:55 itojun Exp $	*/
+/*	$OpenBSD: route.h,v 1.10 2000/12/09 03:15:25 itojun Exp $	*/
 /*	$NetBSD: route.h,v 1.9 1996/02/13 22:00:49 christos Exp $	*/
 
 /*
@@ -141,12 +141,10 @@ struct ortentry {
 #define RTF_PROTO2	0x4000		/* protocol specific routing flag */
 #define RTF_PROTO1	0x8000		/* protocol specific routing flag */
 
-/*
- * New IPv6 routing flags.
- *
- * PROTO1 and PROTO2 are used, and defined in netinet6/ipv6_var.h.
- */
+#ifndef _KERNEL
+/* obsoleted */
 #define	RTF_TUNNEL	0x100000	/* Tunnelling bit. */
+#endif
 
 /*
  * Routing statistics.
@@ -323,5 +321,4 @@ void	 rtredirect __P((struct sockaddr *, struct sockaddr *,
 int	 rtrequest __P((int, struct sockaddr *,
 			struct sockaddr *, struct sockaddr *, int,
 			struct rtentry **));
-void	 ipv4_tunnelsetup __P((struct rtentry *));
 #endif /* _KERNEL */

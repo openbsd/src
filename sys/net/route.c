@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.20 2000/12/09 03:06:55 itojun Exp $	*/
+/*	$OpenBSD: route.c,v 1.21 2000/12/09 03:15:25 itojun Exp $	*/
 /*	$NetBSD: route.c,v 1.14 1996/02/13 22:00:46 christos Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ okaytoclone(flags, howstrict)
 {
 	if (howstrict == ALL_CLONING)
 		return 1;
-	if (howstrict == ONNET_CLONING && !(flags & (RTF_GATEWAY|RTF_TUNNEL)))
+	if (howstrict == ONNET_CLONING && !(flags & RTF_GATEWAY))
 		return 1;
 	return 0;
 }
@@ -456,7 +456,7 @@ ifa_ifwithroute(flags, dst, gateway)
 			return (NULL);
 		rt->rt_refcnt--;
 		/* The gateway must be local if the same address family. */
-		if (!(flags & RTF_TUNNEL) && (rt->rt_flags & RTF_GATEWAY) && 
+		if ((rt->rt_flags & RTF_GATEWAY) &&
 		    rt_key(rt)->sa_family == dst->sa_family)
 			return (0);
 		if ((ifa = rt->rt_ifa) == NULL)
@@ -572,38 +572,11 @@ if (!rt->rt_rmx.rmx_mtu && !(rt->rt_rmx.rmx_locks & RTV_MTU)) { /* XXX */
 			*ret_nrt = rt;
 			rt->rt_refcnt++;
 		}
-#ifdef INET6
-		/* If we have a v4_in_v4 or a v4_in_v6 tunnel route
-		 * then do some tunnel state (e.g. security state)
-		 * initialization.
-		 *
-		 * Since IPV6 packets flow down this path, we don't
-		 * want it using ipv4_tunnelsetup(rt) (since they
-		 * have their own ipv6_tunnel_parent/child()
-		 * routines which are called ipv6_rtrequest().)
-		 *
-		 * Thus, we check to see if the packet is to a v4
-		 * destination.
-		 */
-		if (dst->sa_family == AF_INET && (rt->rt_flags & RTF_TUNNEL))
-			ipv4_tunnelsetup(rt);
-#endif /* INET6 */
 		break;
 	}
 bad:
 	splx(s);
 	return (error);
-}
-
-/*
- * Set up any tunnel states (e.g. security) information
- * for v4_in_v4 or v4_in_v6 tunnel routes.
- */
-void
-ipv4_tunnelsetup(rt)
-	register struct rtentry *rt;
-{
-	/* XXX */
 }
 
 int
