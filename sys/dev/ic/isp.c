@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp.c,v 1.32 2003/03/03 18:43:51 mjacob Exp $ */
+/* 	$OpenBSD: isp.c,v 1.33 2003/04/23 20:13:07 mickey Exp $ */
 /*
  * Machine and OS Independent (well, as best as possible)
  * code for the Qlogic ISP SCSI adapters.
@@ -4777,7 +4777,7 @@ isp_mbox_continue(struct ispsoftc *isp)
 #define	HIBYT(x)			((x) >> 0x8)
 #define	LOBYT(x)			((x)  & 0xff)
 #define	ISPOPMAP(a, b)			(((a) << 8) | (b))
-static u_int16_t mbpscsi[] = {
+static const u_int16_t mbpscsi[] = {
 	ISPOPMAP(0x01, 0x01),	/* 0x00: MBOX_NO_OP */
 	ISPOPMAP(0x1f, 0x01),	/* 0x01: MBOX_LOAD_RAM */
 	ISPOPMAP(0x03, 0x01),	/* 0x02: MBOX_EXEC_FIRMWARE */
@@ -4973,7 +4973,7 @@ static char *scsi_mbcmd_names[] = {
 };
 #endif
 
-static u_int16_t mbpfc[] = {
+static const u_int16_t mbpfc[] = {
 	ISPOPMAP(0x01, 0x01),	/* 0x00: MBOX_NO_OP */
 	ISPOPMAP(0x1f, 0x01),	/* 0x01: MBOX_LOAD_RAM */
 	ISPOPMAP(0x03, 0x01),	/* 0x02: MBOX_EXEC_FIRMWARE */
@@ -5246,7 +5246,7 @@ static void
 isp_mboxcmd_qnw(struct ispsoftc *isp, mbreg_t *mbp, int nodelay)
 {
 	unsigned int lim, ibits, obits, box, opcode;
-	u_int16_t *mcp;
+	const u_int16_t *mcp;
 
 	if (IS_FC(isp)) {
 		mcp = mbpfc;
@@ -5287,7 +5287,7 @@ isp_mboxcmd(struct ispsoftc *isp, mbreg_t *mbp, int logmask)
 {
 	char *cname, *xname, tname[16], mname[16];
 	unsigned int lim, ibits, obits, box, opcode;
-	u_int16_t *mcp;
+	const u_int16_t *mcp;
 
 	if (IS_FC(isp)) {
 		mcp = mbpfc;
