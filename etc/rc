@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.40 1997/07/25 00:06:02 provos Exp $
+#	$OpenBSD: rc,v 1.41 1997/07/31 02:23:45 downsj Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -192,10 +192,12 @@ if [ -d /var/crash ]; then
 	savecore /var/crash
 fi
 
-				echo -n 'checking quotas:'
-quotacheck -a
-				echo ' done.'
-quotaon -a
+if [ "X${check_quotas}" = X"YES" ]; then
+	echo -n 'checking quotas:'
+	quotacheck -a
+	echo ' done.'
+	quotaon -a
+fi
 
 # build ps databases
 echo 'building databases...'

@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: netstart,v 1.25 1997/07/30 21:35:15 deraadt Exp $
+#	$OpenBSD: netstart,v 1.26 1997/07/31 02:23:46 downsj Exp $
 
 # set these to "NO" to turn them off.  otherwise, they're used as flags
 routed_flags=NO		# for 'normal' use: routed_flags=-q
@@ -25,6 +25,7 @@ nat=NO
 portmap=YES			# almost always needed
 inetd=YES			# almost always needed
 lpd=NO				# printing daemons
+check_quotas=YES		# NO may be desireable in some YP environments
 
 # miscellaneous other flags
 # only used if the appropriate server is marked YES above
