@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_keytab.h,v 1.3 2000/06/17 20:25:55 provos Exp $	*/
+/*	$OpenBSD: tcfs_keytab.h,v 1.4 2000/06/18 16:23:10 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -32,7 +32,7 @@
 struct tcfs_mount;
 
 #define	KEYTABSIZE	20
-#define KEYSIZE		8
+#define KEYSIZE		32
 #define KEYPARTSIZE	(KEYSIZE+KEYSIZE/8)
 
 #define CLEAN		0x00

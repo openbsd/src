@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_cipher_TDES.c,v 1.3 2000/06/17 20:25:54 provos Exp $	*/
+/*	$OpenBSD: tcfs_cipher_TDES.c,v 1.4 2000/06/18 16:23:10 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -28,24 +28,45 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/malloc.h>
+#include <sys/md5k.h>
 
 #include <miscfs/tcfs/tcfs_cipher.h>
 
 #include <crypto/des_locl.h>
 #include <crypto/des.h>
 
+/* EDE Triple-DES with K1, K2 and K3 */
+
 void *
 TDES_init_key (char *key)
 {
         des_key_schedule *ks;
+	char dkey[TDES_KEYSIZE];
+	char digest[16];
+	MD5_CTX ctx;
+	int i;
 
-        ks = (des_key_schedule *)malloc (2 * sizeof (des_key_schedule),
+	
+	/* Fold the bigger key into a Triple-DES suitable one */
+	bcopy (key, dkey, sizeof(dkey));
+	MD5Init(&ctx);
+	MD5Update(&ctx, key, KEYSIZE);
+	MD5Final(digest, &ctx);
+
+	for (i = 0; i < sizeof(dkey); i++)
+	  dkey[i] ^= digest[i % 16];
+
+        ks = (des_key_schedule *)malloc (3 * sizeof (des_key_schedule),
 					 M_FREE, M_NOWAIT);
         if (!ks) 
                 return NULL;
 
-        des_set_key ((des_cblock *)key, ks[0]);
-        des_set_key ((des_cblock *)(key + 8), ks[1]);
+        des_set_key ((des_cblock *) dkey,       ks[0]);
+        des_set_key ((des_cblock *)(dkey + 8),  ks[1]);
+        des_set_key ((des_cblock *)(dkey + 16), ks[2]);
+
+	bzero(dkey, sizeof(dkey));
+	bzero(digest, sizeof(digest));
 
         return (void *)ks;
 }
@@ -69,13 +90,13 @@ TDES_encrypt(char *block, int nb, void *key)
         xi = (u_int32_t *)block;
         tmp = block;
         des_ecb3_encrypt((des_cblock *)tmp, (des_cblock *)tmp,
-			 ks[0],ks[1],ks[0],DES_ENCRYPT);
+			 ks[0], ks[1], ks[2],DES_ENCRYPT);
         tmp += 8;
         for (i = 1;i < nb/8;i++) {
                 *(xi+2) ^= *xi;
                 *(xi+3) ^= *(xi + 1);
                 des_ecb3_encrypt((des_cblock *)tmp, (des_cblock *)tmp,
-				 ks[0], ks[1], ks[0], DES_ENCRYPT);
+				 ks[0], ks[1], ks[2], DES_ENCRYPT);
                 tmp += 8;
                 xi += 2;
         }
@@ -93,13 +114,13 @@ TDES_decrypt(char *block, int nb, void *key)
         tmp = block;
         xo[0] = *xi; xo[1] = *(xi+1);
         des_ecb3_encrypt((des_cblock *)tmp, (des_cblock *)tmp,
-			 ks[0], ks[1], ks[0], DES_DECRYPT);
+			 ks[0], ks[1], ks[2], DES_DECRYPT);
         tmp += 8;
         xi = (u_int32_t *)tmp;
         for (i = 1;i < nb/8; i++) {
                 xa[0] = *xi; xa[1] = *(xi+1);
                 des_ecb3_encrypt((des_cblock *)tmp, (des_cblock *)tmp,
-				 ks[0], ks[1], ks[0], DES_DECRYPT);
+				 ks[0], ks[1], ks[2], DES_DECRYPT);
                 *(xi) ^= xo[0];
                 *(xi+1)^= xo[1];
                 xo[0] = xa[0];  

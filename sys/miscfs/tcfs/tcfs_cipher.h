@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_cipher.h,v 1.3 2000/06/17 20:25:54 provos Exp $	*/
+/*	$OpenBSD: tcfs_cipher.h,v 1.4 2000/06/18 16:23:08 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -97,12 +97,12 @@ void *TDES_init_key(char *);
 void TDES_cleanup_key(void*);
 void TDES_encrypt(char *, int , void*);
 void TDES_decrypt(char *, int , void*);
-#define TDES_KEYSIZE	8
+#define TDES_KEYSIZE	24
 
 void *BLOWFISH_init_key(char *);
 void BLOWFISH_cleanup_key(void*);
 void BLOWFISH_encrypt(char *, int , void*);
 void BLOWFISH_decrypt(char *, int , void*);
-#define BLOWFISH_KEYSIZE	8
+#define BLOWFISH_KEYSIZE	32
 
 #endif /* _TCFS_CIPHER_H_ */

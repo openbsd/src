@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcfs_mount.h,v 1.3 2000/06/17 20:25:55 provos Exp $	*/
+/*	$OpenBSD: tcfs_mount.h,v 1.4 2000/06/18 16:23:10 provos Exp $	*/
 /*
  * Copyright 2000 The TCFS Project at http://tcfs.dia.unisa.it/
  * All rights reserved.
@@ -44,7 +44,7 @@ struct tcfs_status {
 
 struct tcfs_args {
 	char		*target;	/* Target of loopback   */
-	char 		*tcfs_key;	/* chiave 		*/
+	u_char 		tcfs_key[KEYSIZE];
 	int		cipher_num;
 	int		cmd;		/* direttiva		*/
 	uid_t		user;		/* utente		*/
