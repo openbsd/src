@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.13 2000/09/16 13:51:24 espie Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.14 2000/09/17 16:39:18 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -126,6 +126,8 @@ dependency (see the ghostscript port for an example).
 .Sq directory
 is set relative to ${PORTSDIR}.
 Build dependencies are checked at the beginning of the extract stage.
+.It Ev BZIP2
+Name of the bzip2 binary.
 .It Ev CDROM_PACKAGES
 Base location where packages suitable for a CDROM (see
 PERMIT_PACKAGE_CDROM) will be placed
@@ -414,6 +416,8 @@ short description). Default: pkg.${ARCH} or pkg.
 Name of the created package.  Default is ${DISTNAME} for the main package,
 and ${DISTNAME}${SUBPACKAGE} for multi-packages ports.  This is automatically
 altered to include flavors, so it is unwise to base other variables on it.
+.It Ev PKGPATH
+Path to the current port's directory, relative to ${PORTSDIR}. Read-only.
 .It Ev PREFERRED_CIPHERS
 List of cryptographic ciphers to use, in order of preference. Defaults
 is
@@ -442,7 +446,7 @@ Location for scripts related to the current port (default: scripts.${ARCH}
 or scripts).
 .It Ev SEPARATE_BUILD
 Many gnu configure ports can be built in a directory distinct from the
-place they were unpacked.
+place they were unpacked. For some specific ports, this is even mandatory.
 Set to
 .Sq simple
 if this is the case.
@@ -475,17 +479,25 @@ Location for ports system configuration files. Defaults to
 .Pa /etc ,
 should
 never be set to
-.Pat /usr/local/etc .
+.Pa /usr/local/etc .
+.It Ev TAR
+Name of the tar binary.
 .It Ev TEMPLATES
 Base location for the templates used in the
 .Ar readme
 target.
+.It Ev UNZIP
+Name of the unzip binary.
 .It Ev USE_ZIP
 Set to Yes if port needs zip to build properly. This is automatic if
 EXTRACT_ONLY holds files matching *.zip.
 .It Ev USE_BZIP2
 Set to Yes if port needs bzip2 to build properly. This is automatic if
 EXTRACT_ONLY holds files matching *.bzip2.
+.It Ev WRKBUILD
+Subdirectory of ${WRKDIR} where the actual build occurs. Defaults to
+${WRKSRC}, unless SEPARATE_BUILD is involved, in which case it is set
+to an appropriate value.
 .It Ev WRKDIR
 Location where all port activity occurs.  Apart from the actual port, may
 hold all kinds of cookies that checkpoint the port's build.  Read-only.
@@ -500,10 +512,6 @@ Note that WRKDIST may be a symbolic link, if set to ${WRKDIR}.
 Subdirectory of ${WRKDIR} where the actual source is. Base for
 configuration (default: ${WRKDIST})
 Note that WRKSRC may be a symbolic link, if set to ${WRKDIR}.
-.It Ev WRKBUILD
-Subdirectory of ${WRKDIR} where the actual build occurs. Defaults to
-${WRKSRC}, unless SEPARATE_BUILD is involved, in which case it is set
-to an appropriate value.
 .It Ev WRKPKG
 Subdirectory of ${WRKBUILD} where package information gets generated.
 Defaults to ${WKRBUILD}/pkg, do not override unless
@@ -1010,3 +1018,5 @@ improvements.
 .\" Voluntarily undocumented:
 .\" AUTOCONF_ENV: probably not needed anyway, should be internal.
 .\" HAVE_MOTIF, REQUIRE_MOTIF: need to revisit what these should mean.
+.\"
+.\" Todo: OBJMACHINE
