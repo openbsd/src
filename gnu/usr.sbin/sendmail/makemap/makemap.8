@@ -1,4 +1,4 @@
-.\" Copyright (c) 1998-2001 Sendmail, Inc. and its suppliers.
+.\" Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1988, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -8,7 +8,7 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: makemap.8,v 8.29 2001/10/10 03:23:02 ca Exp $
+.\"     $Sendmail: makemap.8,v 8.30 2002/06/27 23:41:04 gshapiro Exp $
 .\"
 .Dd October 10, 2001
 .Dt MAKEMAP 8
@@ -21,6 +21,7 @@
 .Op Fl C Ar file
 .Op Fl N
 .Op Fl c Ar cachesize
+.Op Fl D Ar commentchar
 .Op Fl d
 .Op Fl e
 .Op Fl f
@@ -113,6 +114,10 @@ flag in the sendmail.cf
 line.
 .It Fl c
 Use the specified hash and B-Tree cache size.
+.It Fl D
+Use to specify the character to use to indicate a comment (which is ignored)
+instead of the default of
+.Sq # .
 .It Fl d
 Allow duplicate keys in the map.
 This is only allowed on B-Tree format maps.

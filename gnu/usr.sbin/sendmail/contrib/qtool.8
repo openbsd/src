@@ -6,9 +6,9 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: qtool.8,v 8.17 2002/01/29 21:55:49 ca Exp $
+.\"     $Sendmail: qtool.8,v 8.19 2002/06/27 23:06:16 gshapiro Exp $
 .\"
-.TH QTOOL 8 "$Date: 2002/04/18 00:49:26 $"
+.TH QTOOL 8 "$Date: 2004/06/24 03:59:24 $"
 .SH NAME
 qtool
 \- manipulate sendmail queues
@@ -102,9 +102,6 @@ The size of the control file in bytes.
 \fBcreation_time\fP
 The time when the control file was created.
 .TP
-\fBcurrent_delay\fP
-Current delay for queue delay algorithm if _FFR_QUEUEDELAY is enabled.
-.TP
 \fBdata_file_name\fP
 The data file name (deprecated).
 .TP
@@ -173,11 +170,7 @@ Original recipient (ORCPT= parameter).
 Adjusted priority of message.
 .TP
 \fBquarantine_reason\fP
-Quarantine reason for quarantined (held) envelopes if _FFR_QUARANTINE is
-enabled.
-.TP
-\fBqueue_delay\fP
-Queue delay algorithm if _FFR_QUEUEDELAY is enabled.
+Quarantine reason for quarantined (held) envelopes.
 .TP
 \fBrecipient\fP
 Array of character flags followed by colon and recipient name. Flags:

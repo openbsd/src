@@ -10,7 +10,7 @@ divert(-1)
 #
 
 divert(0)
-VERSIONID(`$Sendmail: access_db.m4,v 8.24 2002/03/06 21:50:25 ca Exp $')
+VERSIONID(`$Sendmail: access_db.m4,v 8.25 2002/06/25 23:11:40 gshapiro Exp $')
 divert(-1)
 
 define(`_ACCESS_TABLE_', `')
@@ -37,5 +37,5 @@ ifelse(defn(`_ARG_'), `', `',
 LOCAL_CONFIG
 # Access list database (for spam stomping)
 Kaccess ifelse(defn(`_ARG_'), `', DATABASE_MAP_TYPE -T`'_ATMPF_ MAIL_SETTINGS_DIR`access',
-	       defn(`_ARG_'), `LDAP', `ldap -T`'_ATMPF_ -1 -v sendmailMTAMapValue -k (&(objectClass=sendmailMTAMapObject)(|(sendmailMTACluster=${sendmailMTACluster})(sendmailMTAHost=$j))(sendmailMTAMapName=access)(sendmailMTAKey=%0))',
+	       defn(`_ARG_'), `LDAP', `ldap -T`'_ATMPF_ -1 -v sendmailMTAMapValue,sendmailMTAMapSearch:FILTER:sendmailMTAMapObject,sendmailMTAMapURL:URL:sendmailMTAMapObject -k (&(objectClass=sendmailMTAMapObject)(|(sendmailMTACluster=${sendmailMTACluster})(sendmailMTAHost=$j))(sendmailMTAMapName=access)(sendmailMTAKey=%0))',
 	       defn(`_NARG_'), `', `_ARG_', `_NARG_')

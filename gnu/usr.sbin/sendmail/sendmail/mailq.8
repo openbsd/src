@@ -9,7 +9,7 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: mailq.1,v 8.19.2.1 2002/09/26 23:03:39 gshapiro Exp $
+.\"     $Sendmail: mailq.1,v 8.20 2002/06/27 22:47:34 gshapiro Exp $
 .\"
 .Dd September 26, 2002
 .Dt MAILQ 8
@@ -58,10 +58,23 @@ Show the mail submission queue specified in
 .Pa /etc/mail/submit.cf
 instead of the MTA queue specified in
 .Pa /etc/mail/sendmail.cf .
+.It Fl qL
+Show the
+.Dq lost
+items in the mail queue instead of the normal queue items.
+.It Fl qQ
+Show the quarantined items in the mail queue instead of the normal queue
+items.
 .It Fl q\fR[\fI!\fR] Ns Cm I Ar substr
 Limit processed jobs to those containing
 .Ar substr
 as a substring of the queue ID or not when
+.Sq \&!
+is specified.
+.It Fl q\fR[\fI!\fR] Ns Cm Q Ar substr
+Limit processed jobs to quarantined jobs containing
+.Ar substr
+as a substring of the quarantine reason or not when
 .Sq \&!
 is specified.
 .It Fl q\fR[\fI!\fR] Ns Cm R Ar substr

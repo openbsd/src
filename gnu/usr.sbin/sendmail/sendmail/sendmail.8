@@ -1,4 +1,4 @@
-.\" Copyright (c) 1998-2002 Sendmail, Inc. and its suppliers.
+.\" Copyright (c) 1998-2003 Sendmail, Inc. and its suppliers.
 .\"	All rights reserved.
 .\" Copyright (c) 1983, 1997 Eric P. Allman.  All rights reserved.
 .\" Copyright (c) 1988, 1991, 1993
@@ -9,7 +9,7 @@
 .\" the sendmail distribution.
 .\"
 .\"
-.\"     $Sendmail: sendmail.8,v 8.51.2.3 2003/12/01 17:02:00 ca Exp $
+.\"     $Sendmail: sendmail.8,v 8.57 2003/12/01 17:02:41 ca Exp $
 .\"
 .Dd December 1, 2003
 .Dt SENDMAIL 8
@@ -136,6 +136,8 @@ Use alternate configuration file.
 .Nm Sendmail
 gives up any enhanced (set-user-ID or set-group-ID) privileges
 if an alternate configuration file is specified.
+.It Fl D Ar logfile
+Send debugging output to the indicated log file instead of stdout.
 .It Xo Fl d Ns Ar category Ns . Ns
 .Ar level
 .Xc
@@ -296,6 +298,14 @@ as a substring of the queue ID or not when
 .Em !\&
 is specified.
 .It Xo Fl q Ns Op Ar \&! Ns
+.Cm Q Ns Ar substr
+.Xc
+Limit processed jobs to quarantined jobs containing
+.Ar substr
+as a substring of the quarantine reason or not when
+.Em !\&
+is specified.
+.It Xo Fl q Ns Op Ar \&! Ns
 .Cm R Ns Ar substr
 .Xc
 Limit processed jobs to those containing
@@ -311,6 +321,11 @@ Limit processed jobs to those containing
 as a substring of the sender or not when
 .Em !\&
 is specified.
+.It Fl Q Op Ar reason
+Quarantine a normal queue items with the given reason or
+unquarantine quarantined queue items if no reason is given.
+This should only be used with some sort of item matching using
+as described above.
 .It Fl R Ar return
 Set the amount of the message to be returned
 if the message bounces.

@@ -1,8 +1,8 @@
-#	$OpenBSD: Makefile,v 1.19 2003/06/12 01:05:14 millert Exp $
+#	$OpenBSD: Makefile,v 1.20 2004/06/24 03:59:24 millert Exp $
 #
 #  Makefile for configuration files.
 #
-#	$Sendmail: Makefile,v 8.56 2001/12/13 23:56:37 gshapiro Exp $
+#	$Sendmail: Makefile,v 8.58 2003/10/20 22:01:00 ca Exp $
 #
 
 #
@@ -14,6 +14,8 @@
 
 M4=	/usr/bin/m4
 CFDIR=	${.CURDIR}/..
+SED=	sed
+ECHO=	echo
 CHMOD=	chmod
 ROMODE=	444
 RM=	rm -f
@@ -23,6 +25,8 @@ RM=	rm -f
 .mc.cf:
 	$(RM) $@
 	( cd ${.CURDIR} && $(M4) ${CFDIR}/m4/cf.m4 ${@:R}.mc > ${.OBJDIR}/$@ )
+	$(ECHO) "### $*.mc ###" >>$@
+	$(SED) -e 's/^/# /' ${.CURDIR}/$*.mc >>$@
 	$(CHMOD) $(ROMODE) $@
 
 ALL=	submit.cf clientproto.cf tcpproto.cf openbsd-localhost.cf \
@@ -76,6 +80,7 @@ M4FILES=\
 	${CFDIR}/feature/bestmx_is_local.m4 \
 	${CFDIR}/feature/bitdomain.m4 \
 	${CFDIR}/feature/blacklist_recipients.m4 \
+	${CFDIR}/feature/conncontrol.m4 \
 	${CFDIR}/feature/compat_check.m4 \
 	${CFDIR}/feature/delay_checks.m4 \
 	${CFDIR}/feature/dnsbl.m4 \
@@ -96,7 +101,6 @@ M4FILES=\
 	${CFDIR}/feature/masquerade_envelope.m4 \
 	${CFDIR}/feature/no_default_msa.m4 \
 	${CFDIR}/feature/nocanonify.m4 \
-	${CFDIR}/feature/nodns.m4 \
 	${CFDIR}/feature/notsticky.m4 \
 	${CFDIR}/feature/nouucp.m4 \
 	${CFDIR}/feature/nullclient.m4 \
@@ -104,6 +108,7 @@ M4FILES=\
 	${CFDIR}/feature/preserve_luser_host.m4 \
 	${CFDIR}/feature/promiscuous_relay.m4 \
 	${CFDIR}/feature/queuegroup.m4 \
+	${CFDIR}/feature/ratecontrol.m4 \
 	${CFDIR}/feature/redirect.m4 \
 	${CFDIR}/feature/relay_based_on_MX.m4 \
 	${CFDIR}/feature/relay_entire_domain.m4 \

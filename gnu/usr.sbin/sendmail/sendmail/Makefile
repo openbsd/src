@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.23 2003/12/30 18:53:09 millert Exp $
+#	$OpenBSD: Makefile,v 1.24 2004/06/24 03:59:26 millert Exp $
 
 PROG=	sendmail
 
@@ -37,10 +37,10 @@ ENVDEF+= -D_FFR_DEAL_WITH_ERROR_SSL
 
 SRCS=	main.c alias.c arpadate.c bf.c collect.c conf.c control.c convtime.c \
 	daemon.c deliver.c domain.c envelope.c err.c headers.c macro.c map.c \
-	mci.c milter.c mime.c parseaddr.c queue.c readcf.c recipient.c \
-	sasl.c savemail.c sfsasl.c shmticklib.c sm_resolve.c srvrsmtp.c stab.c \
-	stats.c sysexits.c timers.c tls.c trace.c udb.c usersmtp.c util.c \
-	version.c
+	mci.c milter.c mime.c parseaddr.c queue.c ratectrl.c readcf.c \
+	recipient.c sasl.c savemail.c sfsasl.c shmticklib.c sm_resolve.c \
+	srvrsmtp.c stab.c stats.c sysexits.c timers.c tls.c trace.c udb.c \
+	usersmtp.c util.c version.c
 MAN=	aliases.5 mailq.8 newaliases.8 sendmail.8
 MLINKS=	sendmail.8 hoststat.1 sendmail.8 purgestat.1
 BINDIR=	/usr/libexec/sendmail
