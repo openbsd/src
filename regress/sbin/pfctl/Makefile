@@ -1,6 +1,6 @@
-# $OpenBSD: Makefile,v 1.13 2002/02/18 13:08:51 art Exp $
+# $OpenBSD: Makefile,v 1.14 2002/06/07 18:36:54 frantzen Exp $
 
-PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13
+PFTESTS=1 2 3 4 5 6 7 8 9 10 11 12 13 14
 PFFAIL=1 2 3 4 5 6 7 8
 
 .for n in ${PFFAIL}
