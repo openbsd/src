@@ -1,4 +1,4 @@
-/*	$OpenBSD: rpc.yppasswdd.c,v 1.17 2004/05/09 03:22:57 deraadt Exp $	*/
+/*	$OpenBSD: rpc.yppasswdd.c,v 1.18 2004/09/14 23:50:25 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -27,7 +27,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: rpc.yppasswdd.c,v 1.17 2004/05/09 03:22:57 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rpc.yppasswdd.c,v 1.18 2004/09/14 23:50:25 deraadt Exp $";
 #endif
 
 #include <sys/types.h>
@@ -53,7 +53,6 @@ void    sig_child(int);
 
 int     noshell, nogecos, nopw, domake;
 char    make_arg[1024] = "make";
-char   *tempname;
 char   *dir;
 
 static void
@@ -143,9 +142,7 @@ yppasswddprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 	union {
 		yppasswd yppasswdproc_update_1_arg;
 	} argument;
-	char   *result;
 	bool_t (*xdr_argument)(XDR *, yppasswd *);
-	bool_t (*xdr_result)(XDR *, int *);
 	char   *(*local)(yppasswd *, struct svc_req *, SVCXPRT *);
 
 	switch (rqstp->rq_proc) {
@@ -154,7 +151,6 @@ yppasswddprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 		return;
 	case YPPASSWDPROC_UPDATE:
 		xdr_argument = xdr_yppasswd;
-		xdr_result = xdr_int;
 		local = (char *(*)(yppasswd *, struct svc_req *,
 		    SVCXPRT *)) yppasswdproc_update_1_svc;
 		break;
@@ -167,10 +163,10 @@ yppasswddprog_1(struct svc_req *rqstp, SVCXPRT *transp)
 		svcerr_decode(transp);
 		return;
 	}
-	result = (*local) (&argument.yppasswdproc_update_1_arg,
-	    rqstp, transp);
+	(*local)(&argument.yppasswdproc_update_1_arg, rqstp, transp);
 }
 
+/* ARGSUSED */
 void
 sig_child(int signo)
 {
