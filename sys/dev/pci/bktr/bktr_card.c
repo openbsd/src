@@ -1,4 +1,4 @@
-/*	$OpenBSD: bktr_card.c,v 1.9 2004/06/28 13:20:14 mickey Exp $	*/
+/*	$OpenBSD: bktr_card.c,v 1.10 2004/10/15 08:59:32 jsg Exp $	*/
 /* $FreeBSD: src/sys/dev/bktr/bktr_card.c,v 1.16 2000/10/31 13:09:56 roger Exp $ */
 
 /*
@@ -354,6 +354,31 @@ static const struct CARDTYPE cards[] = {
 	   { 0x1002, 0x1002, 0x3003, 0x3003, 0x3003 },	/* audio MUX values*/
 	   0x300f },				/* GPIO mask */
 
+	{  CARD_IO_BCTV3,			/* the card id */
+	  "I/O DATA GV-BCTV3/PCI",		/* the 'name' */
+	  NULL,					/* the tuner */
+	  0,					/* the tuner i2c address */
+	  0,					/* dbx is optional */
+	  0,
+	  0,
+	  0,					/* EEProm type */
+	  0,					/* EEProm size */
+	   /* Tuner, Extern, Intern, Mute, Enabled */
+	   { 0x10000, 0, 0x10000, 0, 1 },	/* audio MUX values */
+	   0x10f00 },				/* GPIO mask */
+
+	{  CARD_AOPEN_VA1000,			/* the card id */
+	  "AOpen VA1000",			/* the 'name' */
+	   NULL,				/* the tuner */
+	   0,					/* the tuner i2c address */
+	   0,					/* dbx is optional */
+	   0,
+	   0,
+	   0,					/* EEProm unknown */
+	   0,					/* size unknown */
+	   { 0x02, 0x00, 0x00, 0x00, 1 },	/* audio MUX values */
+	   0x18e0 },				/* GPIO mask */
+
 };
 
 struct bt848_card_sig bt848_card_signature[1]= {
@@ -666,7 +691,8 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
                     goto checkTuner;
                 }
 
-                if ((subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT)
+                if ((subsystem_vendor_id == PCI_VENDOR_LEADTEK)
+                 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT)
 		 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_2)
 		 || (subsystem_vendor_id == PCI_VENDOR_LEADTEK_ALT_3)) {
                     bktr->card = cards[ (card = CARD_LEADTEK) ];
@@ -695,6 +721,19 @@ probeCard( bktr_ptr_t bktr, int verbose, int unit )
 		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
                     goto checkTuner;
                 }
+
+		/*
+		 * Check which card as the GV-BCTV4 and GV-BCTV5 IODATA make
+		 * are somewhat different to the GV-BCTV3.
+		 */
+
+		if (subsystem_vendor_id == PCI_VENDOR_IODATA &&
+		    subsystem_id == PCI_PRODUCT_IODATA_GV_BCTV3) {
+		    bktr->card = cards[ (card = CARD_IO_BCTV3) ];
+		    bktr->card.eepromAddr = eeprom_i2c_address;
+		    bktr->card.eepromSize = (u_char)(256 / EEPROMBLOCKSIZE);
+		    goto checkTuner;
+		}
 
                 /* Vendor is unknown. We will use the standard probe code */
 		/* which may not give best results */
@@ -1110,6 +1149,11 @@ checkTuner:
 	    select_tuner( bktr, PHILIPS_NTSC );
 	    goto checkDBX;
 	    break;
+
+	case CARD_IO_BCTV3:
+	    select_tuner( bktr, ALPS_TSCH5 ); /* ALPS_TSCH6, in fact. */
+	    goto checkDBX;
+ 	    break;
 
 	} /* end switch(card) */
 
