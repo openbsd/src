@@ -1,0 +1,56 @@
+.\"	$OpenBSD: aac.4,v 1.1 2000/11/10 09:39:37 niklas Exp $
+.\"
+.\" Copyright (c) 2000 Michael Shalayeff.  All rights reserved.
+.\"
+.\"
+.Dd November 7, 2000
+.Dt AAC 4
+.Os
+.Sh NAME
+.Nm aac
+.Nd Adaptec RAID driver
+.Sh SYNOPSIS
+.Cd "aac* at pci? dev ? function ?"
+.Cd "scsibus* at aac?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for Adaptec's "FSA" family of raid controllers,
+including the
+.Tn AAC2622 ,
+.Tn AAC364 ,
+.Tn AAC3642 ,
+.Tn Dell PERC 2/Si ,
+.Tn Dell PERC 3/Di ,
+.Tn Dell PERC 3/Si ,
+.Tn Dell PERC 2/QC ,
+.Tn Dell PERC 3/QC and
+.Tn HP NetRaid-4M
+models.
+.Pp
+All the RAID set volume management is done via the card BIOS.
+.Pp
+This driver makes drives and/or RAID sets appear as
+.Xr sd 4 .
+.Sh SEE ALSO
+.Xr intro 4 ,
+.Xr scsi 4 ,
+.Xr sd 4
+.Sh AUTHOR
+The
+.Nm
+driver was written by
+.An Niklas Hallqvist Aq niklas@opensbd.org ,
+inspired by the FreeBSD driver by
+.An Mike Smith Aq msmith@freebsd.org .
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 2.9 .
+.Sh BUGS
+.Pp
+The card provides a mechanism to do online RAID set management,
+unfortunately the protocol is not public.
+.Pp
+Only Dell PERC 3/Si was tested, but others should work.

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pci.4,v 1.19 2000/11/08 20:27:08 deraadt Exp $
+.\"	$OpenBSD: pci.4,v 1.20 2000/11/10 09:39:37 niklas Exp $
 .\"	$NetBSD: pci.4,v 1.29 2000/04/01 00:32:23 tsarna Exp $
 .\"
 .\" Copyright (c) 2000 Theo de Raadt.  All rights reserved.
@@ -105,16 +105,22 @@ interfaces.
 .El
 .Ss RAID and cache controllers
 .Bl -tag -width speaker -offset ind
+.It Xr aac 4
+Adaptec "FSA" family (Adaptec AAC, Dell PERC, HP NetRaid)
+.Tn RAID
+controllers.
 .It Xr dpt 4
-DPT SmartCache/SmartRAID III and IV SCSI interfaces.
+DPT SmartCache/SmartRAID III and IV
+.Tn SCSI
+controllers.
 .It Xr gdt 4
 ICP-Vortex GDT
 .Tn RAID
-interfaces.
+conttrollers.
 .It Xr twe 4
 3ware Escalade
 .Tn RAID
-interfaces.
+controllers.
 .El
 .Ss Network interfaces
 .Bl -tag -width speaker -offset ind

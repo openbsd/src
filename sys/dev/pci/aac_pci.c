@@ -1,0 +1,203 @@
+/*	$OpenBSD: aac_pci.c,v 1.1 2000/11/10 09:39:36 niklas Exp $	*/
+
+/*-
+ * Copyright (c) 2000 Michael Smith
+ * Copyright (c) 2000 BSDi
+ * Copyright (c) 2000 Niklas Hallqvist
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ *
+ *	$FreeBSD: /c/ncvs/src/sys/dev/aac/aac_pci.c,v 1.1 2000/09/13 03:20:34 msmith Exp $
+ */
+
+/*
+ * This driver would not have rewritten for OpenBSD if it was not for the
+ * hardware dontion from Nocom.  I want to thank them for their support.
+ * Of course, credit should go to Mike Smith for the original work he did
+ * in the FreeBSD driver where I found lots of inspiration.
+ * - Niklas Hallqvist
+ */
+
+#include <sys/param.h>
+#include <sys/systm.h>
+#include <sys/device.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
+#include <sys/queue.h>
+
+#include <machine/bus.h>
+#include <machine/endian.h>
+#include <machine/intr.h>
+
+#include <scsi/scsi_all.h>
+#include <scsi/scsiconf.h>
+
+#include <dev/pci/pcidevs.h>
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+
+#include <dev/ic/aacreg.h>
+#include <dev/ic/aacvar.h>
+
+int	aac_pci_probe __P((struct device *, void *, void *));
+void	aac_pci_attach __P((struct device *, struct device *, void *));
+
+struct aac_ident {
+	u_int16_t vendor;
+	u_int16_t device;
+	int	hwif;
+} aac_identifiers[] = {
+	{ PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_2SI, AAC_HWIF_I960RX },
+	{ PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3DI, AAC_HWIF_I960RX },
+	{ PCI_VENDOR_DELL, PCI_PRODUCT_DELL_PERC_3SI, AAC_HWIF_I960RX },
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC2622, AAC_HWIF_I960RX },
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC364, AAC_HWIF_STRONGARM },
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_AAC3642, AAC_HWIF_STRONGARM },
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_2QC, AAC_HWIF_STRONGARM },
+	{ PCI_VENDOR_ADP2, PCI_PRODUCT_ADP2_PERC_3QC, AAC_HWIF_STRONGARM },
+	{ PCI_VENDOR_HP, PCI_PRODUCT_HP_NETRAID_4M, AAC_HWIF_STRONGARM },
+	{ 0, 0, 0 }
+};
+
+struct cfattach aac_pci_ca = {
+	sizeof (struct aac_softc), aac_pci_probe, aac_pci_attach
+};
+
+/*
+ * Determine whether this is one of our supported adapters.
+ */
+int
+aac_pci_probe(parent, match, aux)
+	struct device *parent;
+	void *match;
+	void *aux;
+{
+        struct pci_attach_args *pa = aux;
+	struct aac_ident *m;
+
+	for (m = aac_identifiers; m->vendor != 0; m++)
+		if (m->vendor == PCI_VENDOR(pa->pa_id) &&
+		    m->device == PCI_PRODUCT(pa->pa_id))
+			return (1);
+	return (0);
+}
+
+void
+aac_pci_attach(parent, self, aux)
+        struct device *parent, *self;
+        void *aux;
+{
+	struct pci_attach_args *pa = aux;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	struct aac_softc *sc = (void *)self;
+	u_int16_t command;
+	bus_addr_t membase;
+	bus_size_t memsize;
+	pci_intr_handle_t ih;
+	const char *intrstr;
+	int state = 0;
+	struct aac_ident *m;
+
+	printf(": ");
+
+	/*
+	 * Verify that the adapter is correctly set up in PCI space.
+	 */
+	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	command |= PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
+	command = pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	AAC_DPRINTF(AAC_D_MISC, ("pci command status reg 0x08x "));
+	if (!(command & PCI_COMMAND_MASTER_ENABLE)) {
+		printf("can't enable bus-master feature\n");
+		goto bail_out;
+	}
+	if (!(command & PCI_COMMAND_MEM_ENABLE)) {
+		printf("memory window not available\n");
+		goto bail_out;
+	}
+
+	/*
+	 * Map control/status registers.
+	 */
+	if (pci_mapreg_map(pa, PCI_MAPREG_START,
+	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->sc_memt,
+	    &sc->sc_memh, &membase, &memsize)) {
+		printf("can't find mem space\n");
+		goto bail_out;
+	}
+	state++;
+
+	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin, pa->pa_intrline,
+	    &ih)) {
+		printf("couldn't map interrupt\n");
+		goto bail_out;
+	}
+	intrstr = pci_intr_string(pc, ih);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_BIO, aac_intr, sc,
+	    sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf("couldn't establish interrupt");
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		goto bail_out;
+	}
+	state++;
+	if (intrstr != NULL)
+		printf("%s\n", intrstr);
+
+	sc->sc_dmat = pa->pa_dmat;
+ 
+	for (m = aac_identifiers; m->vendor != 0; m++)
+		if (m->vendor == PCI_VENDOR(pa->pa_id) &&
+		    m->device == PCI_PRODUCT(pa->pa_id)) {
+			sc->sc_hwif = m->hwif;
+			switch(sc->sc_hwif) {
+			case AAC_HWIF_I960RX:
+				AAC_DPRINTF(AAC_D_MISC,
+				    ("set hardware up for i960Rx"));
+				sc->sc_if = aac_rx_interface;
+				break;
+
+			case AAC_HWIF_STRONGARM:
+				AAC_DPRINTF(AAC_D_MISC,
+				    ("set hardware up for StrongARM"));
+				sc->sc_if = aac_sa_interface;
+				break;
+			}
+			break;
+		}
+
+	if (aac_attach(sc))
+		goto bail_out;
+
+	return;
+
+ bail_out:
+	if (state > 1)
+		pci_intr_disestablish(pc, sc->sc_ih);
+	if (state > 0)
+		bus_space_unmap(sc->sc_memt, sc->sc_memh, memsize);
+	return;
+}
