@@ -2591,9 +2591,6 @@ m88k_function_arg_advance (args_so_far, mode, type, named)
     mode = BLKmode;
 
   bytes = (mode != BLKmode) ? GET_MODE_SIZE (mode) : int_size_in_bytes(type);
-  if ((*args_so_far & 1) && (mode == DImode || mode == DFmode
-       || ((type != 0) && TYPE_ALIGN (type) > BITS_PER_WORD)))
-    (*args_so_far)++;
 
   /* as soon as we put a structure of 32 bytes or more on stack, everything
      needs to go on stack, or varargs will lose. */
@@ -2606,6 +2603,10 @@ m88k_function_arg_advance (args_so_far, mode, type, named)
   if (mode == BLKmode
       && (TYPE_ALIGN (type) != BITS_PER_WORD || bytes != UNITS_PER_WORD))
     return;
+
+  if ((*args_so_far & 1) && (mode == DImode || mode == DFmode
+       || ((type != 0) && TYPE_ALIGN (type) > BITS_PER_WORD)))
+    (*args_so_far)++;
 
   (*args_so_far) += (bytes + UNITS_PER_WORD - 1) / UNITS_PER_WORD;
 }
