@@ -1,4 +1,4 @@
-#	$OpenBSD: SUN4M,v 1.59 2004/01/27 01:12:09 mickey Exp $
+#	$OpenBSD: SUN4M,v 1.60 2004/02/29 21:44:12 miod Exp $
 # 	$NetBSD: GENERIC,v 1.28.2.1 1996/07/02 23:55:22 jtc Exp $
 
 # Machine architecture; required by config(8)
@@ -183,6 +183,10 @@ wsdisplay* at agten?
 # Southland Media Systems MGX/MGXPlus framebuffer.
 mgx* at sbus?
 wsdisplay* at mgx?
+
+# Vitec/Connectware/AP&D RasterFlex framebuffer series.
+rfx* at sbus?
+wsdisplay* at rfx?
 
 # Microcontroller found on Tadpole SPARCbook
 tctrl0	at obio0

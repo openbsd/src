@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sparc,v 1.58 2003/06/28 18:12:31 jason Exp $
+#	$OpenBSD: files.sparc,v 1.59 2004/02/29 21:44:12 miod Exp $
 #	$NetBSD: files.sparc,v 1.44 1997/08/31 21:29:16 pk Exp $
 
 # @(#)files.sparc	8.1 (Berkeley) 7/19/93
@@ -227,6 +227,10 @@ file	arch/sparc/dev/zx.c		zx
 device	mgx: wsemuldisplaydev, rasops8, wsemul_sun
 attach	mgx at sbus
 file	arch/sparc/dev/mgx.c		mgx
+
+device	rfx: wsemuldisplaydev, rasops8, wsemul_sun
+attach	rfx at sbus
+file	arch/sparc/dev/rfx.c		rfx
 
 # device definition in sys/conf/files
 attach le at sbus, ledma, lebuffer, obio
