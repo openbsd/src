@@ -1,4 +1,4 @@
-/*	$OpenBSD: ext2fs_vfsops.c,v 1.13 2001/02/20 01:50:12 assar Exp $	*/
+/*	$OpenBSD: ext2fs_vfsops.c,v 1.14 2001/03/04 06:32:41 csapuntz Exp $	*/
 /*	$NetBSD: ext2fs_vfsops.c,v 1.1 1997/06/11 09:34:07 bouyer Exp $	*/
 
 /*
@@ -769,8 +769,6 @@ loop:
 	 * Force stale file system control information to be flushed.
 	 */
 	if (waitfor != MNT_LAZY) {
-		if (ump->um_mountp->mnt_flag & MNT_SOFTDEP)
-			waitfor = MNT_NOWAIT;
 		vn_lock(ump->um_devvp, LK_EXCLUSIVE | LK_RETRY, p);
 		if ((error = VOP_FSYNC(ump->um_devvp, cred, waitfor, p)) != 0)
 			allerror = error;
