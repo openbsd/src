@@ -405,7 +405,6 @@ systracef_close(fp, p)
 
 		systrace_detach(strp);
 		psignal(q, SIGKILL);
-		
 	}
 
 	/* Clean up fork and exit messages */
@@ -1038,22 +1037,23 @@ systrace_detach(struct str_process *strp)
 	
 	DPRINTF(("%s: Trying to detach from %d\n", __FUNCTION__, strp->pid));
 
-	if ((proc = systrace_find(strp)) == NULL) {
+	if ((proc = systrace_find(strp)) != NULL) {
+		CLR(proc->p_flag, P_SYSTRACE);
+		proc->p_systrace = NULL;
+	} else
 		error = ESRCH;
-		goto out;
-	}
 
 	if (ISSET(strp->flags, STR_PROC_WAITANSWER)) {
 		CLR(strp->flags, STR_PROC_WAITANSWER);
 		wakeup(strp);
 	}
 	
-	CLR(proc->p_flag, P_SYSTRACE);
-	proc->p_systrace = NULL;
-
- out:
 	fst = strp->parent;
 	systrace_wakeup(fst);
+
+	if (ISSET(strp->flags, STR_PROC_ONQUEUE))
+		TAILQ_REMOVE(&fst->messages, strp, msg_next);
+
 	TAILQ_REMOVE(&fst->processes, strp, next);
 	if (strp->policy)
 		systrace_closepolicy(fst, strp->policy);
@@ -1229,7 +1229,11 @@ systrace_msg_child(struct fsystrace *fst, struct str_process *strp, pid_t npid)
 	struct str_msg_child *msg_child;
 
 	nstrp = pool_get(&systr_proc_pl, PR_WAITOK);
+	memset(nstrp, 0, sizeof(struct str_process));
 
+	DPRINTF(("%s: %p: pid %d -> pid %d\n", __FUNCTION__,
+		    nstrp, strp->pid, npid));
+	
 	msg = &nstrp->msg;
 	msg_child = &msg->msg_data.msg_child;
 
