@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.20 2004/06/12 22:22:26 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.21 2004/07/21 19:55:30 mickey Exp $ */
 /*	$NetBSD: siop_common.c,v 1.31 2002/09/27 15:37:18 provos Exp $	*/
 
 /*
@@ -268,10 +268,8 @@ siop_setuptables(siop_cmd)
 		*targ_flags &= TARF_DT; /* Save TARF_DT 'cuz we don't set it here */
 		quirks = xs->sc_link->quirks;
 
-#ifndef __hppa__
 		if ((quirks & SDEV_NOTAGS) == 0)
 			*targ_flags |= TARF_TAG;
-#endif
 		if (((quirks & SDEV_NOWIDE) == 0) &&
 		    (sc->features & SF_BUS_WIDE))
 			*targ_flags |= TARF_WIDE;
