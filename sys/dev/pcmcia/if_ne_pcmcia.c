@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ne_pcmcia.c,v 1.64 2002/11/20 15:01:13 fgsch Exp $	*/
+/*	$OpenBSD: if_ne_pcmcia.c,v 1.65 2003/01/02 02:18:27 fgsch Exp $	*/
 /*	$NetBSD: if_ne_pcmcia.c,v 1.17 1998/08/15 19:00:04 thorpej Exp $	*/
 
 /*
@@ -272,6 +272,10 @@ const struct ne2000dev {
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_LINKSYS_ETHERFAST,
       PCMCIA_CIS_DLINK_DE650,
       0, -1, { 0x00, 0xe0, 0x98 } },
+
+    { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_NETGEAR_FA410TXC,
+      PCMCIA_CIS_DLINK_DFE670TXD,
+      0, -1, { 0x00, 0x05, 0x5d } },
 
     { PCMCIA_VENDOR_LINKSYS, PCMCIA_PRODUCT_NETGEAR_FA410TXC,
       PCMCIA_CIS_DLINK_DFE670TXD,
