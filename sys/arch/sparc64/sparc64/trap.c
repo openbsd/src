@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.6 2001/08/25 21:04:38 art Exp $	*/
+/*	$OpenBSD: trap.c,v 1.7 2001/08/31 06:37:19 art Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -1451,7 +1451,7 @@ text_access_fault(tf, type, pc, sfsr)
 
 	uvmexp.traps++;
 	if ((p = curproc) == NULL)	/* safety check */
-		p = &proc0;
+		panic("text_access_fault: no curproc\n");
 	sticks = p->p_sticks;
 
 	tstate = tf->tf_tstate;
@@ -1923,15 +1923,10 @@ syscall(tf, code, pc)
 		callp += code;
 
 #if defined(__arch64__) && !defined(COMPAT_NETBSD32)
-#if 0 /*def DEBUG*/
-#ifdef LKM
-		if ((curproc->p_flag & P_32) == 0)
-#endif
 		{
 			printf("syscall(): 32-bit stack on a 64-bit kernel????\n");
 			Debugger();
 		}
-#endif
 #endif
 
 		i = (long)callp->sy_argsize / sizeof(register32_t);
