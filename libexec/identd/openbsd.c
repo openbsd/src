@@ -4,7 +4,7 @@
  *
  * Please send bug fixes/bug reports to: Peter Eriksson <pen@lysator.liu.se>
  *
- * $Id: openbsd.c,v 1.10 1998/06/10 03:49:42 beck Exp $ 
+ * $Id: openbsd.c,v 1.11 1998/06/10 09:01:51 deraadt Exp $ 
  * This version elminates the kmem search in favour of a kernel sysctl to
  * get the user id associated with a connection - Bob Beck <beck@obtuse.com>
  */
@@ -41,32 +41,32 @@ k_getuid(faddr, fport, laddr, lport, uid)
 	int     lport;
 	int    *uid;
 {
-        struct tcp_ident_mapping tir;
+	struct tcp_ident_mapping tir;
 	struct sockaddr_in *fin, *lin;
 	int mib[] = { CTL_NET, PF_INET, IPPROTO_TCP, TCPCTL_IDENT };
 	int error = 0;
 	int i;
 
-	memset (&tir, 0, sizeof (tir));
+	memset(&tir, 0, sizeof (tir));
 	tir.faddr.sa_len = sizeof (struct sockaddr);
 	tir.laddr.sa_len = sizeof (struct sockaddr);
 	tir.faddr.sa_family = AF_INET;
 	tir.laddr.sa_family = AF_INET;
 	fin = (struct sockaddr_in *) &tir.faddr;
-        lin = (struct sockaddr_in *) &tir.laddr;
+	lin = (struct sockaddr_in *) &tir.laddr;
 	
-	memcpy (&fin->sin_addr, faddr, sizeof (struct in_addr));
-	memcpy (&lin->sin_addr, laddr, sizeof (struct in_addr));
+	memcpy(&fin->sin_addr, faddr, sizeof (struct in_addr));
+	memcpy(&lin->sin_addr, laddr, sizeof (struct in_addr));
 	fin->sin_port = fport;
 	lin->sin_port = lport;
 	i = sizeof (tir);
-	error = sysctl (mib, sizeof (mib) / sizeof (int), &tir, &i, NULL, 0);
+	error = sysctl(mib, sizeof (mib) / sizeof (int), &tir, &i, NULL, 0);
 	if (!error && tir.ruid != -1) {
 		*uid = tir.ruid;
 		return (0);
 	}
 	if (error == -1)
-		syslog (LOG_DEBUG, "sysctl failed (%m)");
+		syslog(LOG_DEBUG, "sysctl failed (%m)");
 
 	return (-1);
 }
