@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_txpreg.h,v 1.29 2001/06/22 20:51:04 jason Exp $ */
+/*	$OpenBSD: if_txpreg.h,v 1.30 2001/06/23 04:18:02 jason Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -299,11 +299,11 @@ struct txp_rx_desc {
 #define	RX_STAT_IPFRAG		0x00000008	/* fragment, ipsec not done */
 #define	RX_STAT_IPSEC		0x00000010	/* ipsec decoded packet */
 #define	RX_STAT_IPCKSUMBAD	0x00000020	/* ip checksum failed */
-#define	RX_STAT_TCPCKSUMBAD	0x00000040	/* tcp checksum failed */
-#define	RX_STAT_UDPCKSUMBAD	0x00000080	/* udp checksum failed */
+#define	RX_STAT_UDPCKSUMBAD	0x00000040	/* udp checksum failed */
+#define	RX_STAT_TCPCKSUMBAD	0x00000080	/* tcp checksum failed */
 #define	RX_STAT_IPCKSUMGOOD	0x00000100	/* ip checksum succeeded */
-#define	RX_STAT_TCPCKSUMGOOD	0x00000200	/* tcp checksum succeeded */
-#define	RX_STAT_UDPCKSUMGOOD	0x00000400	/* udp checksum succeeded */
+#define	RX_STAT_UDPCKSUMGOOD	0x00000200	/* udp checksum succeeded */
+#define	RX_STAT_TCPCKSUMGOOD	0x00000400	/* tcp checksum succeeded */
 
 
 struct txp_rxbuf_desc {
