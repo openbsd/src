@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ast.4,v 1.3 1996/08/08 17:11:19 deraadt Exp $
+.\"	$OpenBSD: ast.4,v 1.4 1996/08/29 12:15:13 deraadt Exp $
 .\"	$NetBSD: ast.4,v 1.7 1996/03/16 00:07:07 thorpej Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -47,10 +47,8 @@
 multiplexing serial communications interface
 .Sh SYNOPSIS
 .Cd "ast0 at isa? port 0x1a0 irq 5"
-.Cd "com2 at ast? slave ?"
-.Cd "com3 at ast? slave ?"
-.Cd "com4 at ast? slave ?"
-.Cd "com5 at ast? slave ?"
+.Cd "ast1 at isa? port 0x2a0 irq 6"
+.Cd "com* at ast? slave ?"
 .Sh DESCRIPTION
 The
 .Nm ast
@@ -81,6 +79,31 @@ specification for the
 device is used to compute the base addresses for the
 .Nm com
 subdevices and the port for the interrupt multiplexing register.
+.Pp
+On a real AST card, the jumpers are as follows:
+.Bl -tag -width xxxxx
+.It SW1-1
+Turn ON for irq 2.  Default is OFF.
+.It SW1-2
+Turn ON for irq 3.  Default is OFF.
+.It SW1-3
+Turn ON for irq 4.  Default is OFF.
+.It SW2-1
+Turn ON for irq 5.  This is ON for the first card, OFF otherwise.
+.It SW2-2
+Turn ON for irq 6.  This is ON for the second card, OFF otherwise.
+.It SW2-3
+Turn ON for irq 7.  Default is OFF.
+.It SW3-1
+`Compatible mode'.  The ast driver needs extended mode, so leave this OFF.
+.It SW3-2
+IO Address.  In extended mode, this should be OFF for the first card at
+0x1a0-0x1a7 and ON for the second card at 0x2a0-0x2a7.
+.It SW3-3
+Interrupt sharing.  Default is OFF.
+.It SW3-4
+Reserved, must be OFF.
+.El
 .Sh FILES
 .Bl -tag -width Pa
 .It Pa /dev/tty0?
