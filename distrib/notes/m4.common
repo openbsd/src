@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.4 1998/12/19 18:32:00 deraadt Exp $
+dnl	$OpenBSD: m4.common,v 1.5 1999/04/11 18:24:14 todd Exp $
 dnl
 dnl simulate an include path with a macro 'includeit'.
 define(`includeit',`sinclude('INCLUDE/`$1)sinclude('INCLUDE/../`$1)')dnl
@@ -13,7 +13,7 @@ dnl                  - empty 2nd arg, for files where only compressed size is
 dnl                    known (aka pc532)
 dnl
 define(`showsize',`ifelse(X$1,X,,X$2,X,,X,X,{:-
-		[ $1 gzipped, $2 uncompressed ]-:})')dnl
+		 [ $1 gzipped, $2 uncompressed ]-:})')dnl
 dnl
 dnl
 dnl  Everybody looks the same on these (or should if they don't)
@@ -60,94 +60,101 @@ dnl
 dnl OpenBSDbase( compressed size, uncompressed size )
 dnl
 define({:-OpenBSDbase-:},
-{:-	base{:--:}OSrev	The OpenBSD/MACHINE OSREV base binary distribution.  You
-		MUST install this distribution set.  It contains the
-		base OpenBSD utilities that are necessary for the
-		system to run and be minimally functional.  It
-		includes shared library support, and excludes
-		everything described below.showsize($1,$2)-:})dnl
+{:-	base{:--:}OSrev	 The OpenBSD/MACHINE OSREV base binary distribution.  You
+		 MUST install this distribution set.  It contains the
+		 base OpenBSD utilities that are necessary for the
+		 system to run and be minimally functional.  It
+		 includes shared library support, and excludes
+		 everything described below.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDcomp( compressed size, uncompressed size )
 dnl
 define({:-OpenBSDcomp-:},
-{:-	comp{:--:}OSrev	The OpenBSD/MACHINE Compiler tools.  All of the tools
-		relating to C, C++, and FORTRAN (yes, there are two!) are
-		supported.  This set includes the system {:-include-:} files
-		(/usr/{:-include-:}), the linker, the compiler tool chain,
-		and the various system libraries (except the shared
-		libraries, which are included as part of the base
-		set).  This set also includes the manual pages for all
-		of the utilities it contains, as well as the system
-		call and library manual pages.showsize($1,$2)-:})dnl
+{:-	comp{:--:}OSrev	 The OpenBSD/MACHINE Compiler tools.  All of the tools
+		 relating to C, C++, and FORTRAN (yes, there are two!) are
+		 supported.  This set includes the system {:-include-:} files
+		 (/usr/{:-include-:}), the linker, the compiler tool chain,
+		 and the various system libraries (except the shared
+		 libraries, which are included as part of the base
+		 set).  This set also includes the manual pages for all
+		 of the utilities it contains, as well as the system
+		 call and library manual pages.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDetc( compressed size, uncompressed size )
 dnl
 define({:-OpenBSDetc-:},
-{:-	etc{:--:}OSrev	This distribution set contains the system configuration
-		files that reside in /etc and in several other places.
-		This set MUST be installed if you are installing the
-		system from scratch, but should NOT be used if you are
-		upgrading.  (If you are upgrading, it's recommended that
-		you get a copy of this set and CAREFULLY upgrade your
-		configuration files by hand.)showsize($1,$2)-:})dnl
+{:-	etc{:--:}OSrev	 This distribution set contains the system configuration
+		 files that reside in /etc and in several other places.
+		 This set MUST be installed if you are installing the
+		 system from scratch, but should NOT be used if you are
+		 upgrading.  (If you are upgrading, it's recommended that
+		 you get a copy of this set and CAREFULLY upgrade your
+		 configuration files by hand.)showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDgame( compressed size, uncompressed size )
 dnl
 define({:-OpenBSDgame-:},
-{:-	game{:--:}OSrev	This set includes the games and their manual pages.showsize($1,$2)-:})dnl
+{:-	game{:--:}OSrev	 This set includes the games and their manual pages.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDman( compressed size, uncompressed size )
 dnl
 define({:-OpenBSDman-:},
-{:-	man{:--:}OSrev	This set includes all of the manual pages for the
-		binaries and other software contained in the base set.
-		Note that it does not {:-include-:} any of the manual pages
-		that are included in the other sets.showsize($1,$2)-:})dnl
+{:-	man{:--:}OSrev	 This set includes all of the manual pages for the
+		 binaries and other software contained in the base set.
+		 Note that it does not {:-include-:} any of the manual pages
+		 that are included in the other sets.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDmisc( compressed size, uncompressed size )
 dnl
 define({:-OpenBSDmisc-:},
-{:-	misc{:--:}OSrev	This set includes the system dictionaries (which are
-		rather large), the typesettable document set, and
-		man pages for other architectures which happen to be
-		installed from the source tree by default.showsize($1,$2)-:})dnl
+{:-	misc{:--:}OSrev	 This set includes the system dictionaries (which are
+		 rather large), the typesettable document set, and
+		 man pages for other architectures which happen to be
+		 installed from the source tree by default.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxbase( compressed size, uncompressed size )
 dnl
 define({:-OpenBSDxbase-:},
-{:-	xbase{:--:}OSrev This set includes the base X distribution.  This includes
-		programs, headers, libraries, configuration files.showsize($1,$2)-:})dnl
+{:-	xbase{:--:}OSrev  This set includes the base X distribution.  This includes
+		 programs, headers, libraries, configuration files.showsize($1,$2)-:})dnl
+dnl
+dnl
+dnl OpenBSDxshare( compressed size, uncompressed size )
+dnl
+define({:-OpenBSDxshare-:},
+{:-	xshare{:--:}OSrev This set includes all text files equivalent between
+		 all architectures.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxfont( compressed size, uncompressed size )
 dnl
 define({:-OpenBSDxfont-:},
-{:-	xfont{:--:}OSrev This set includes all of the X fonts.showsize($1,$2)-:})dnl
+{:-	xfont{:--:}OSrev  This set includes all of the X fonts.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxserv( compressed size, uncompressed size )
 dnl
 define({:-OpenBSDxserv-:},
-{:-	xserv{:--:}OSrev This set includes all of the X servers.showsize($1,$2)-:})dnl
+{:-	xserv{:--:}OSrev  This set includes all of the X servers.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl OpenBSDxlink( compressed size, uncompressed size )
 dnl
 define({:-OpenBSDxlink-:},
-{:-	xlink{:--:}OSrev This set includes the X server link kit.showsize($1,$2)-:})dnl
+{:-	xlink{:--:}OSrev  This set includes the X server link kit.showsize($1,$2)-:})dnl
 dnl
 dnl
 dnl floppy stuff
 dnl
 define({:-OpenBSDfloppy-:},
-{:-		floppy{:--:}OSrev.fs	The MACHINE boot and installation
-				floppy; see below.-:})dnl
+{:-		floppy{:--:}OSrev.fs	 The MACHINE boot and installation
+				 floppy; see below.-:})dnl
 dnl
 define({:-OpenBSDfloppydesc-:},
 {:-In summary, there is one MACHINE floppy image called "floppy{:--:}OSrev.fs" (which
