@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.98 2000/08/03 08:29:55 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.99 2000/08/03 08:31:39 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1917,7 +1917,6 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 	case AF_INET:
 	    NTOHS(ip->ip_len);
 	    NTOHS(ip->ip_off);
-            ip->ip_sum = 0;
 
 	    return ip_output(m, NULL, NULL, IP_ENCAPSULATED | IP_RAWOUTPUT,
 			     NULL, NULL);
