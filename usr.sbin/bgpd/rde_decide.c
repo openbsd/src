@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_decide.c,v 1.15 2004/01/11 21:47:20 claudio Exp $ */
+/*	$OpenBSD: rde_decide.c,v 1.16 2004/01/12 13:33:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -31,7 +31,7 @@
 int	prefix_cmp(struct prefix *, struct prefix *);
 void	up_generate_updates(struct prefix *, struct prefix *);
 int	up_generate_attr(struct rde_peer *, struct update_attr *,
-	    struct attr_flags *);
+	    struct attr_flags *, struct nexthop *);
 int	up_set_prefix(u_char *, int, struct bgpd_addr *, u_int8_t);
 
 /*
@@ -220,12 +220,12 @@ prefix_evaluate(struct prefix *p, struct pt_entry *pte)
 		}
 
 		/*
-		 * XXX send update with remove for pte->active and add for xp
+		 * Send update with remove for pte->active and add for xp
 		 * but remember that xp may be ineligible or NULL.
-		 * do not send an update if the only available path
-		 * has an unreachable nexthop
+		 * Do not send an update if the only available path
+		 * has an unreachable nexthop. This decision has to be made
+		 * by the called functions.
 		 */
-
 		up_generate_updates(xp, pte->active);
 		rde_send_kroute(xp, pte->active);
 
@@ -449,8 +449,8 @@ up_generate_updates(struct prefix *new, struct prefix *old)
 			if (a == NULL)
 				fatal("up_queue_update");
 
-			if (up_generate_attr(peer, a, &new->aspath->flags) ==
-			    -1)
+			if (up_generate_attr(peer, a, &new->aspath->flags,
+			    new->aspath->nexthop) == -1)
 				logit(LOG_CRIT,
 				    "generation of bgp path attributes failed");
 
@@ -472,10 +472,11 @@ u_char	up_attr_buf[4096];
 
 int
 up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
-    struct attr_flags *a)
+    struct attr_flags *a, struct nexthop *nh)
 {
 	struct attr	*oa;
 	u_int32_t	 tmp32;
+	in_addr_t	 nexthop, mask;
 	int		 r;
 	u_int16_t	 len = sizeof(up_attr_buf), wlen = 0;
 
@@ -492,9 +493,46 @@ up_generate_attr(struct rde_peer *peer, struct update_attr *upa,
 	wlen += r; len -= r;
 
 	/* nexthop, already network byte order */
-	/* XXX XXX nexthop fixup */
+	if (peer->conf.ebgp == 0) {
+		/*
+		 * if directly connected use peer->local_addr
+		 * This is only the case for announcements, which we
+		 * currenlty don't handle. It is currently unclear how
+		 * to recognize those routes. The connected flag is not
+		 * enough.
+		 */
+		if (a->nexthop == peer->remote_addr.v4.s_addr)
+			/*
+			 * per rfc: if remote peer address is equal to
+			 * the nexthop set the nexthop to our local address.
+			 * This reduces the risk of routing loops.
+			 */
+			nexthop = peer->local_addr.v4.s_addr;
+		else
+			nexthop = nh->exit_nexthop.v4.s_addr;
+	} else if (peer->conf.distance == 1) {
+		/* ebgp directly connected */
+		if (nh->connected) {
+			mask = 0xffffffff << (32 - nh->nexthop_netlen);
+			mask = htonl(mask);
+			if ((peer->remote_addr.v4.s_addr & mask) ==
+			    (nh->nexthop_net.v4.s_addr & mask))
+				/* nexthop and peer are in the same net */
+				nexthop = nh->exit_nexthop.v4.s_addr;
+			else
+				nexthop = peer->local_addr.v4.s_addr;
+		} else
+			nexthop = peer->local_addr.v4.s_addr;
+	} else 
+		/* ebgp multihop */
+		/*
+		 * XXX for ebgp multihop nh->connected should always be false
+		 * so it should be possible to unify the two ebgp cases.
+		 */
+		nexthop = peer->local_addr.v4.s_addr;
+
 	if ((r = attr_write(up_attr_buf + wlen, len, ATTR_WELL_KNOWN,
-	    ATTR_NEXTHOP, &a->nexthop, 4)) ==	-1)
+	    ATTR_NEXTHOP, &nexthop, 4)) == -1)
 		return (-1);
 	wlen += r; len -= r;
 

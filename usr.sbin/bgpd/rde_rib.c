@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde_rib.c,v 1.21 2004/01/11 22:08:04 henning Exp $ */
+/*	$OpenBSD: rde_rib.c,v 1.22 2004/01/12 13:33:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org>
@@ -1110,6 +1110,10 @@ nexthop_update(struct kroute_nexthop *msg)
 	else
 		memcpy(&nh->true_nexthop, &msg->gateway,
 		    sizeof(nh->true_nexthop));
+
+	nh->nexthop_netlen = msg->kr.prefixlen;
+	nh->nexthop_net.af = AF_INET;
+	nh->nexthop_net.v4.s_addr = msg->kr.prefix;
 
 	nh->connected = msg->connected;
 

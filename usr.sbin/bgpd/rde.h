@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.h,v 1.15 2004/01/11 21:47:20 claudio Exp $ */
+/*	$OpenBSD: rde.h,v 1.16 2004/01/12 13:33:16 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Claudio Jeker <claudio@openbsd.org> and
@@ -155,6 +155,8 @@ struct nexthop {
 	struct aspath_head	path_h;
 	struct bgpd_addr	exit_nexthop;
 	struct bgpd_addr	true_nexthop;
+	struct bgpd_addr	nexthop_net;
+	u_int8_t		nexthop_netlen;
 	u_int8_t		connected;
 };
 
