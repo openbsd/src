@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.47 2001/01/26 20:16:58 mickey Exp $
+	$OpenBSD: pcmciadevs,v 1.48 2001/02/14 17:46:29 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -330,3 +330,4 @@ product EDIMAX NE2000		{ "PCMCIA", "Ethernet", NULL, NULL }
 product CNET NE2000		{ "CNet", "CN40BC&spEthernet", "D", "NE2000" }
 product SHUTTLE IDE_ATAPI	{ "SHUTTLE&spTECHNOLOGY&spLTD.", "PCCARD-IDE/ATAPI&spAdapter", NULL, NULL }
 product ZOOM AIR4000		{ "Zoom", "Air-4000", NULL, NULL }
+product TAMARACK NE2000		{ "TAMARACK", "Ethernet", NULL, NULL }
