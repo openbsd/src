@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec.c,v 1.61 2001/12/16 22:39:09 deraadt Exp $	*/
+/*	$OpenBSD: ipsec.c,v 1.62 2002/01/23 17:12:36 ho Exp $	*/
 /*	$EOM: ipsec.c,v 1.143 2000/12/11 23:57:42 niklas Exp $	*/
 
 /*
@@ -1240,11 +1240,11 @@ ipsec_debug_attribute (u_int16_t type, u_int8_t *value, u_int16_t len,
 
   /* XXX Transient solution.  */
   if (len == 2)
-    sprintf (val, "%d", decode_16 (value));
+    snprintf (val, 20, "%d", decode_16 (value));
   else if (len == 4)
-    sprintf (val, "%d", decode_32 (value));
+    snprintf (val, 20, "%d", decode_32 (value));
   else
-    sprintf (val, "unrepresentable");
+    snprintf (val, 20, "unrepresentable");
 
   LOG_DBG ((LOG_MESSAGE, 50, "Attribute %s value %s",
 	    constant_name (msg->exchange->phase == 1
@@ -1939,8 +1939,7 @@ ipsec_decode_id (u_int8_t *buf, int size, u_int8_t *id, size_t id_len,
 	      snprintf(buf, size, "unparsable ASN1 DN ID");
 	      return;
 	    }
-	  strncpy (buf, addr, size - 1);
-	  buf[size - 1] = '\0';
+	  strlcpy (buf, addr, size);
 	  break;
 #endif
 
@@ -2357,7 +2356,7 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
       util_ntoa (&addrstr, AF_INET, id + ISAKMP_ID_DATA_OFF);
       if (!addrstr)
 	goto fail;
-      sprintf (buf, "ipv4/%s", addrstr);
+      snprintf (buf, size, "ipv4/%s", addrstr);
       break;
 
     case IPSEC_ID_IPV6_ADDR:
@@ -2366,13 +2365,14 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
       util_ntoa (&addrstr, AF_INET6, id + ISAKMP_ID_DATA_OFF);
       if (!addrstr)
 	goto fail;
-      sprintf (buf, "ipv6/%s", addrstr);
+      snprintf (buf, size, "ipv6/%s", addrstr);
       break;
 
     case IPSEC_ID_FQDN:
     case IPSEC_ID_USER_FQDN:
-      strcpy (buf,
-	      GET_ISAKMP_ID_TYPE (id) == IPSEC_ID_FQDN ? "fqdn/" : "ufqdn/");
+      strlcpy (buf,
+	       GET_ISAKMP_ID_TYPE (id) == IPSEC_ID_FQDN ? "fqdn/" : "ufqdn/",
+	       size);
       len = strlen(buf);
 
       memcpy (buf + len, id + ISAKMP_ID_DATA_OFF, id_len);
@@ -2381,7 +2381,7 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
 
 #ifdef USE_X509
     case IPSEC_ID_DER_ASN1_DN:
-      strcpy (buf, "asn1_dn/");
+      strlcpy (buf, "asn1_dn/", size);
       len = strlen(buf);
       addrstr = x509_DN_string (id + ISAKMP_ID_DATA_OFF,
 				id_len - ISAKMP_ID_DATA_OFF);
@@ -2389,7 +2389,7 @@ ipsec_id_string (u_int8_t *id, size_t id_len)
 	goto fail;
       if (size < len + strlen (addrstr) + 1)
 	goto fail;
-      strcpy (buf + len, addrstr);
+      strlcpy (buf + len, addrstr, size - len);
       break;
 #endif
 
