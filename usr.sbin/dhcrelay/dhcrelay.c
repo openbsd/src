@@ -64,7 +64,7 @@ struct server_list {
 int
 main(int argc, char *argv[])
 {
-	int			 ch, quiet = 0, no_daemon = 0;
+	int			 ch, no_daemon = 0;
 	extern char		*__progname;
 	struct servent		*ent;
 	struct server_list	*sp = NULL;
@@ -74,7 +74,7 @@ main(int argc, char *argv[])
 	openlog(__progname, LOG_NDELAY, DHCPD_LOG_FACILITY);
 	setlogmask(LOG_UPTO(LOG_INFO));
 
-	while ((ch = getopt(argc, argv, "di:p:q")) != -1) {
+	while ((ch = getopt(argc, argv, "di:p:")) != -1) {
 		switch (ch) {
 		case 'd':
 			no_daemon = 1;
@@ -90,9 +90,6 @@ main(int argc, char *argv[])
 			break;
 		case 'p':
 			local_port = htons(atoi(optarg));
-			break;
-		case 'q':
-			quiet = 1;
 			break;
 		default:
 			usage();
@@ -130,8 +127,7 @@ main(int argc, char *argv[])
 		argv++;
 	}
 
-	if (!quiet)
-		log_perror = 0;
+	log_perror = 0;
 
 	if (interfaces == NULL)
 		error("no interface given");

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dhcrelay.8,v 1.2 2004/04/13 01:17:49 henning Exp $
+.\"	$OpenBSD: dhcrelay.8,v 1.3 2004/04/13 02:00:50 henning Exp $
 .\"
 .\" Copyright (c) 1997 The Internet Software Consortium.
 .\" All rights reserved.
@@ -45,7 +45,6 @@
 .Sh SYNOPSIS
 .Nm
 .Op Fl d
-.Op Fl q
 .Op Fl p Ar port
 .Fl i Ar interface
 .Ar server0 Op Ar ... serverN
@@ -103,13 +102,6 @@ To force
 to always run as a foreground process, the
 .Fl d
 flag should be specified.
-.Pp
-.Nm
-will normally print its network configuration on startup.
-This can be annoying in a system startup script \- to disable this
-behaviour, specify the
-.Fl q
-flag.
 .Pp
 The name of at least one DHCP server to which DHCP and BOOTP requests
 should be relayed must be specified on the command line.
