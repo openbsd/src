@@ -23,7 +23,7 @@
  */
 
 #include "includes.h"
-RCSID("$OpenBSD: auth2.c,v 1.25 2001/01/08 22:29:05 markus Exp $");
+RCSID("$OpenBSD: auth2.c,v 1.26 2001/01/13 18:21:48 markus Exp $");
 
 #include <openssl/dsa.h>
 #include <openssl/rsa.h>
@@ -116,9 +116,12 @@ do_authentication2()
 	authctxt->success = 0;
 	x_authctxt = authctxt;		/*XXX*/
 
-#ifdef KRB4
-	/* turn off kerberos, not supported by SSH2 */
-	options.kerberos_authentication = 0;
+#ifdef AFS
+	/* If machine has AFS, set process authentication group. */
+	if (k_hasafs()) {
+		k_setpag();
+		k_unlog();
+	}
 #endif
 	dispatch_init(&protocol_error);
 	dispatch_set(SSH2_MSG_SERVICE_REQUEST, &input_service_request);
