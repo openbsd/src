@@ -13,24 +13,18 @@ As well you may be interested in
 		rawrite.exe, ntrw.exe, gzip.exe, and pfdisk.exe; 
 		see installation section, below.
 
-Instead of the single floppy, currently multiple floppies for different
-systems exist. boot.fs is for VI vme board machines, and Motorola Powerstack
-(and possibly other machines) and bootofw.fs is generic and should run on
-any system with openfirmware because it only uses openfirmware for device
-drivers (not recommended for general use).
-This is a bootable install floppy which can be used both to install and to
-upgrade OpenBSD to the current version.  It is also useful for maintenance
-and disaster recovery.  In addition, the "tools/" directory contains some
-utilities that might be useful for the installation.
+For the imac systems, no floppy image is available, for now it
+is necessary to bootstrap the system from an existing BSD or unix system.
 
-Bootable installation/upgrade floppy:
+At this time the bootloader and kernel must initally be loaded from the
+network. A method to boot from cd is not yet available.
 
-	This disk contains a file system, is bootable, and has
-	enough utilities on board to prepare your hard disk drive
-	for OpenBSD and to install the OpenBSD distribution.
+To load the network bootloader and install kernel from the openfirmware
+prompt type "boot enet:,ofwboot /bsd.rd"
 
-	It also holds the utilities needed in order to upgrade a
-	system to the current version of OpenBSD.
+This assumes that that a machine is configured with bootp/tftp/nfs to
+make the kernel and bootloader available.
+
 
 DistributionDescription
 

@@ -8,29 +8,15 @@ Installation is supported from several media types, including:
 	HTTP
 	rsh & restore
 
-Unless it is possible to netboot the machine, you'll need to have
-a CDROM or a floppy disk (1.44Mb required). 
+Unless the machine already has openbsd installed on it, and
+the bootloader can be loaded from local disk the bootloader will
+need to be loaded from the network (netboot) but from there
+the system can be installed from any of the above.
 
-
-If you are using a UN*X-like system to write the floppy image to
-disk, you should use the "dd" command to copy the file system image
-(floppy{:--:}OSrev.fs) directly to the raw floppy disks.  It is suggested that
-you read the dd(1) manual page or ask your system administrator to
-determine the correct set of arguments to use; it will be slightly
-different from system to system, and a comprehensive list of the
-possibilities is beyond the scope of this document.
-
-If you are using DOS to write the floppy image to disk, you should
-use the "rawrite" utility, provided in the "OSREV/tools" directory of
-the OpenBSD distribution.  It will write the file system image
-(floppy.fs) to a disk.
-
-If you are using NT to write the floppy image to disk, you should
-use the "ntrw" utility, provided in the "OSREV/tools" directory of
-the OpenBSD distribution, instead.
-
-Note that when installing, the floppy can be write-protected (i.e.
-read-only).
+While an installation floppy is included in the snapshot it is unlikely
+that it will be very useful due to lack of floppy drive on the imac
+and the reported inabilty to boot from USB floppies on the supported
+version of the hardware.
 
 Obviously, the steps necessary to prepare the distribution sets for
 installation or upgrade depend on which installation medium you

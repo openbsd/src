@@ -19,7 +19,7 @@ system, you should have already completed the section of these notes
 that instructed you on how to prepare your hard disk.  You should know
 the size of the OpenBSD area of the disk and its offset from the
 beginning of the disk.  You will need this information when setting up
-your OpenBSD partitions.  If you BIOS uses translated geometry, you
+your OpenBSD partitions.  If your BIOS uses translated geometry, you
 should use this geometry for the remainder of the install.  This is
 only necessary if you are sharing the disk with other operating systems
 that use the translated geometry.
@@ -33,31 +33,14 @@ question.  If you wish to stop the installation, you may hit Control-C
 at any time, but if you do, you'll have to begin the installation
 process again from scratch.
 
-	Determine which floppy image is appropriate for the system
-	being installed. VI vme boards and MCG machines should use boot.fs,
-	If those do not work, try the bootofw.fs image.  Apple derived
-	hardware, Power Macintosh machines or clones are not supported.
+	At this time the system can primarily only be installed
+	by network loading the bootloader. Once the bootloader
+	is installed on the local harddrive the system can boot
+	from local disk, but currently the bootloader cannot be
+	loaded from CD.
 
-	Boot your machine using the appropriate floppy image.
-	This is done by entering the openfirmware command prompt
-	(possibly system specific mechanism) then booting the floppy
-	with the "boot floppy:\ofwboot" command.  When presented
-	with the boot prompt hit return.  If the boot prompt does
-	not appear in a reasonable amount of time, you either
-	have a bad boot floppy, a hardware problem, or an incompatible
-	OpenFirmware prom (some of these still exist).  Try writing the
-	appropriate floppy image to a different disk, and using that.
-	If it still doesn't work, OpenBSD probably can't be run on your
-	hardware.  This can probably be considered a bug, so you might
-	want to report it.  If you do, please {:-include-:} as many details
-	about your system configuration as you can.
-
-	It will take a while to load the kernel from the floppy,
-	most likely more than a minute.  If some action doesn't
-	eventually happen, or the spinning cursor has stopped and
-	nothing further has happened, either your boot floppy is
-	bad or you are having hardware problems, and should proceed
-	as outlined above.
+	[include directions on where to look up network booting
+	instructions]
 
 	You will then be presented with the OpenBSD kernel boot
 	messages.  You will want to read them, to determine your
@@ -69,7 +52,6 @@ process again from scratch.
 	disk to install on.  If you cannot read the messages as they
 	scroll by, do not worry -- you can get at this information
 	later inside the install program.
-	[openfirmware uses ofdiskX, typically 0 is floppy, 1 is scsi id0]
 
 	While booting, you will probably see several warnings.  You
 	should be warned that no swap space is present, and that
@@ -81,21 +63,13 @@ process again from scratch.
 	this time you should enter the command "install" to start the
 	installation process.
 
-	You will be asked which terminal type to use, you should just
-	hit return to select the default (ofw for vga under ofw drivers)
-	If installing via serial, set it appropriate for the terminal
-	emulator being used.
+	You will be asked which terminal type to use, vt100 will work
+	almost acceptably, however no terminal type quite works correctly)
 
 	The install program will then tell you which disks of that
 	type it can install on, and ask you which it should use.  The
-	name of the disk is typically "sd0" for SCSI drives.  Reply
+	name of the disk is typically "wd0" for IDE drives.  Reply
 	with the name of your disk. 
-
-	[ofw note]
-	If you have a floppy drive on the machine it is [ofdisk0] and
-	then your first scsi disk becomes "ofdisk1".  It helps to
-	watch the floppy drive light; this will tell you if you
-	have accidentally told it to access the wrong drive.
 
 	Next you will have to edit or create a disklabel for the disk
 	OpenBSD is being installed on.  If there are any existing
@@ -121,13 +95,15 @@ process again from scratch.
 	show up as partition 'h', 'i' and so on.  It is recommended that
 	you create separate partitions for /usr and /var, and if you have
 	room for it, also for /home.
+	Currently OpenBSD will not share a disk with any other operating
+	system care should be taken not to overwrite any data on other
+	disks in the system and that no data is on the disk to be used 
+	for OpenBSD/MACHINE
 
 	Note that all OpenBSD partitions in the disk label must have an
 	offset that makes it start within the OpenBSD part of the disk,
 	and a size that keeps it inside of that portion of the disk.  This
-	is within the bounds of the 'c' partition if the disk is not being
-	shared with other operating systems, and within the OpenBSD fdisk
-	partition if the disk is being shared.
+	is within the bounds of the 'c' partition.
 
 	The swap partition (usually 'b') should have a type of "swap", all
 	other native OpenBSD partitions should have a type of "4.2BSD".

@@ -1,68 +1,46 @@
-OpenBSD/MACHINE OSREV runs on ISA (AT-Bus), and PCI buses
-with 603, 603e, 604, 604e processors.
-Only systems with openfirmware are supported.
-The V-I Power-4e vme board.
-Has been tested on various Motorola (MCG) boards:
-	Pro3000, Series E and Series DT.
-	VME16xx, Ultra have not been tested, but should work.
-	Pro4000 may not work due to irq problem with onboard ethernet.
+OpenBSD/MACHINE OSREV runs on iMac and possibly some other G3 Macintosh 
+systems. Older Adb based system are unlikely to work. This is partially
+firmware issues and partially driver issues.
 
-MCG 603 machines will not work with later firmware. A firmware
-incompatibility exists that has not yet been fixed. Some versions
-of earlier openfirmware work fine with 603 family machines.
+Has been tested on iMac  Rev A 233Mhz and Rev C 333Mhz machines,
+Some success has been reported on a PowerBook, however this is
+not well supported.
 
-The minimal configuration is said to require 8M of RAM and 380M of
-disk space, though we do not know of anyone running with a system
-quite this minimal today.  To install the entire system requires much
-more disk space,
+This version will likely not work on any of the B&W G3 or any G4 machines.
+Some code has been rewritten to work better on the B&W G3, but never
+has been retested. Hardware availability is currently limiting development
+on those systems.
 
 Supported devices {:-include-:}:
 
-	Floppy controllers. (only if running full ofw drivers)
-	IDE hard disk controllers. (only if running full ofw drivers)
-	SCSI host adapters: (if supported by ofw)
-		[OPENFIRMWARE SUPPORT]
-		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
-		(ofw may support other scsi devices)
-		[NATIVE SUPPORT]
+	IDE hard disk controllers. iMac supported, other mac onboard possibly.
+	SCSI host adapters:
 		Symbios Logic (NCR) 53C8xx-based PCI SCSI host adapters
 
 	VGA, SVGA Display Adapters. 
-		[OPENFIRMWARE SUPPORT]
-		X does not yet exist.  currently will only function as console
-		[NATIVE SUPPORT]
-		Vga text terminal support is available, not console.
-		No X server avaliable
+		An X Server is not yet available.
+		currently will only function as console
 
 	Serial ports:
-		[OPENFIRMWARE SUPPORT]
-		Only port 0 on the machine is supported and only as console.
-		[NATIVE SUPPORT]
-		com0 and com1 serial ports are supported.
+		None.
 
 	Ethernet adapters:
 		[OPENFIRMWARE SUPPORT]
 		Digital DC21x4x-based PCI Ethernet adapters, including:
 		Znyx ZX34X
-		(ofw may support other devices)
-		[NATIVE SUPPORT]
-		Digital DC21x4x-based PCI Ethernet adapters, including:
-		Znyx ZX34X
-		Znyx ZX314
-		Onboard ethernet for Powerstack family machines.
-		(* Powerstack PRO4000 may not work due to irq problem).
+		Onboard iMac 10-100Mbs Ethernet, 100Mbs untested.
+
 	Tape drives:
-		[OPENFIRMWARE SUPPORT]
-		NONE
-		[NATIVE SUPPORT]
 		SCSI Tape drives
+
 	CD-ROM drives:
-		[OPENFIRMWARE SUPPORT]
-		SCSI CD-ROM drives (act ask harddrives).
-		[NATIVE SUPPORT]
 		SCSI CD-ROM drives
+		Atapi CD-ROM drives
+
 	Mice:
 		NONE
+
 	Sound Cards:
 		NONE
+
 	Miscellaneous:
