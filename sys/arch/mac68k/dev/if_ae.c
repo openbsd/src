@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ae.c,v 1.18 2002/03/14 01:26:35 millert Exp $	*/
+/*	$OpenBSD: if_ae.c,v 1.19 2003/01/27 20:11:39 jason Exp $	*/
 /*	$NetBSD: if_ae.c,v 1.62 1997/04/24 16:52:05 scottr Exp $	*/
 
 /*
@@ -1079,6 +1079,13 @@ ae_put(sc, m, buf)
 		savebyte[1] = 0;
 		bus_space_write_region_2(sc->sc_buft, sc->sc_bufh,
 		    buf, savebyte, 1);
+		buf += 2;
 	}
+	if (totlen < ETHER_MIN_LEN - ETHER_CRC_LEN) {
+		bus_space_set_region_2(sc->sc_buft, sc->sc_bufh, buf, 0,
+		    (ETHER_MIN_LEN - ETHER_CRC_LEN - totlen) >> 1);
+		totlen = ETHERMIN - ETHER_CRC_LEN;
+	}
+
 	return (totlen);
 }
