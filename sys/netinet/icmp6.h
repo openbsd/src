@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp6.h,v 1.23 2002/06/08 21:22:02 itojun Exp $	*/
+/*	$OpenBSD: icmp6.h,v 1.24 2002/06/09 02:11:47 jsyn Exp $	*/
 /*	$KAME: icmp6.h,v 1.71 2002/05/27 04:18:29 itojun Exp $	*/
 
 /*
@@ -506,8 +506,8 @@ struct icmp6errstat {
 struct icmp6stat {
 /* statistics related to icmp6 packets generated */
 	u_quad_t icp6s_error;		/* # of calls to icmp6_error */
-	u_quad_t icp6s_canterror;	/* no error 'cuz old was icmp */
-	u_quad_t icp6s_toofreq;		/* no error 'cuz rate limitation */
+	u_quad_t icp6s_canterror;	/* no error because old was icmp */
+	u_quad_t icp6s_toofreq;		/* no error because rate limitation */
 	u_quad_t icp6s_outhist[256];
 /* statistics related to input message processed */
 	u_quad_t icp6s_badcode;		/* icmp6_code out of range */

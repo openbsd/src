@@ -1,4 +1,4 @@
-/*	$OpenBSD: hd.c,v 1.16 2002/05/30 11:03:52 art Exp $	*/
+/*	$OpenBSD: hd.c,v 1.17 2002/06/09 02:11:47 jsyn Exp $	*/
 /*	$NetBSD: rd.c,v 1.33 1997/07/10 18:14:08 kleink Exp $	*/
 
 /*
@@ -1045,7 +1045,7 @@ hderror(unit)
 	}
 	/*
 	 * Now output a generic message suitable for badsect.
-	 * Note that we don't use harderr cuz it just prints
+	 * Note that we don't use harderr because it just prints
 	 * out b_blkno which is just the beginning block number
 	 * of the transfer, not necessary where the error occurred.
 	 */

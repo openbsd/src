@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.19 2002/03/14 01:26:55 millert Exp $ */
+/*	$OpenBSD: siop.c,v 1.20 2002/06/09 02:11:47 jsyn Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -1373,7 +1373,7 @@ siop_scsicmd(xs)
 					if (error != SID_QUAL_BAD_LU) {
 						/* 
 						 * Allocate enough commands to hold at least max openings
-						 * worth of commands. Do this statically now 'cuz 
+						 * worth of commands. Do this statically now because 
 						 * a) We can't rely on the upper layers to ask for more
 						 * b) Doing it dynamically in siop_startcmd may cause 
 						 *    calls to bus_dma* functions in interrupt context

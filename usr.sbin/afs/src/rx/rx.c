@@ -3027,7 +3027,7 @@ rxi_Start(struct rxevent * event, struct rx_call * call)
 		    int foo; /* XXX - ugly */
 		    /* Send off the prior packet */
 		    /*
-	             * Don't request an ack if it's a short packet, 'cuz the
+	             * Don't request an ack if it's a short packet, because the
 		     * peer will cut down its MTU as a result.
 	             */
 		    if (((lastPacket->header.flags & RX_LAST_PACKET) == 0)) {

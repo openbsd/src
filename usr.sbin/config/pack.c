@@ -1,4 +1,4 @@
-/*	$OpenBSD: pack.c,v 1.11 2002/03/14 16:44:24 mpech Exp $	*/
+/*	$OpenBSD: pack.c,v 1.12 2002/06/09 02:11:47 jsyn Exp $	*/
 /*	$NetBSD: pack.c,v 1.5 1996/08/31 21:15:11 mycroft Exp $	*/
 
 /*
@@ -247,7 +247,7 @@ addparents(src, dst)
 		panic("addparents() i_collapsed");
 
 	/* Collect up list of parents to add. */
-	if (src->i_at == NULL)	/* none, 'cuz "at root" */
+	if (src->i_at == NULL)	/* none, because we are "at root" */
 		return;
 	if (src->i_atdev != NULL) {
 		n = nparents(NULL, src->i_atdev, src->i_atunit);
