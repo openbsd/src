@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshdma.c,v 1.2 2002/03/14 01:26:37 millert Exp $ */
+/*	$OpenBSD: sshdma.c,v 1.3 2002/04/21 23:45:16 miod Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -135,7 +135,7 @@ void *auxp;
 /*XXX*/		sc->sc_dcntl |= (3 << 6);
 
 #if defined(MVME172) || defined(MVME177)  /* No Select timouts on MC68060 */
-	if (cputyp == CPU_172 || cputyp == CPU_172)
+	if (cputyp == CPU_172 || cputyp == CPU_177)
 		sc->sc_ctest7 = SSH_CTEST7_SNOOP | SSH_CTEST7_TT1 | SSH_CTEST7_STD;
 	else
 #endif 
