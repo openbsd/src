@@ -1,4 +1,4 @@
-/*	$OpenBSD: svr4_fcntl.c,v 1.4 1997/01/08 13:04:57 niklas Exp $	 */
+/*	$OpenBSD: svr4_fcntl.c,v 1.5 1997/01/19 00:43:43 niklas Exp $	 */
 /*	$NetBSD: svr4_fcntl.c,v 1.14 1995/10/14 20:24:24 christos Exp $	 */
 
 /*
@@ -48,15 +48,13 @@
 #include <compat/svr4/svr4_util.h>
 #include <compat/svr4/svr4_fcntl.h>
 
-#include <compat/ibcs2/ibcs2_types.h>
-#include <compat/ibcs2/ibcs2_signal.h>
-#include <compat/ibcs2/ibcs2_syscallargs.h>
-
 static u_long svr4_to_bsd_cmd __P((u_long));
 static int svr4_to_bsd_flags __P((int));
 static int bsd_to_svr4_flags __P((int));
 static void bsd_to_svr4_flock __P((struct flock *, struct svr4_flock *));
 static void svr4_to_bsd_flock __P((struct svr4_flock *, struct flock *));
+static void bsd_to_svr3_flock __P((struct flock *, struct svr4_flock_svr3 *));
+static void svr3_to_bsd_flock __P((struct svr4_flock_svr3 *, struct flock *));
 
 static u_long
 svr4_to_bsd_cmd(cmd)
@@ -74,6 +72,7 @@ svr4_to_bsd_cmd(cmd)
 	case SVR4_F_SETFL:
 		return F_SETFL;
 	case SVR4_F_GETLK:
+	case SVR4_F_GETLK_SVR3:
 		return F_GETLK;
 	case SVR4_F_SETLK:
 		return F_SETLK;
@@ -155,7 +154,6 @@ bsd_to_svr4_flock(iflp, oflp)
 	oflp->l_pid = (svr4_pid_t) iflp->l_pid;
 }
 
-
 static void
 svr4_to_bsd_flock(iflp, oflp)
 	struct svr4_flock	*iflp;
@@ -180,7 +178,60 @@ svr4_to_bsd_flock(iflp, oflp)
 	oflp->l_start = (off_t) iflp->l_start;
 	oflp->l_len = (off_t) iflp->l_len;
 	oflp->l_pid = (pid_t) iflp->l_pid;
+}
 
+static void
+bsd_to_svr3_flock(iflp, oflp)
+	struct flock		*iflp;
+	struct svr4_flock_svr3	*oflp;
+{
+	switch (iflp->l_type) {
+	case F_RDLCK:
+		oflp->l_type = SVR4_F_RDLCK;
+		break;
+	case F_WRLCK:
+		oflp->l_type = SVR4_F_WRLCK;
+		break;
+	case F_UNLCK:
+		oflp->l_type = SVR4_F_UNLCK;
+		break;
+	default:
+		oflp->l_type = -1;
+		break;
+	}
+
+	oflp->l_whence = (short) iflp->l_whence;
+	oflp->l_start = (svr4_off_t) iflp->l_start;
+	oflp->l_len = (svr4_off_t) iflp->l_len;
+	oflp->l_sysid = 0;
+	oflp->l_pid = (svr4_pid_t) iflp->l_pid;
+}
+
+
+static void
+svr3_to_bsd_flock(iflp, oflp)
+	struct svr4_flock_svr3	*iflp;
+	struct flock		*oflp;
+{
+	switch (iflp->l_type) {
+	case SVR4_F_RDLCK:
+		oflp->l_type = F_RDLCK;
+		break;
+	case SVR4_F_WRLCK:
+		oflp->l_type = F_WRLCK;
+		break;
+	case SVR4_F_UNLCK:
+		oflp->l_type = F_UNLCK;
+		break;
+	default:
+		oflp->l_type = -1;
+		break;
+	}
+
+	oflp->l_whence = iflp->l_whence;
+	oflp->l_start = (off_t) iflp->l_start;
+	oflp->l_len = (off_t) iflp->l_len;
+	oflp->l_pid = (pid_t) iflp->l_pid;
 }
 
 int
@@ -216,7 +267,6 @@ svr4_sys_open(p, v, retval)
 	return 0;
 }
 
-
 int
 svr4_sys_creat(p, v, retval)
 	register struct proc *p;
@@ -236,7 +286,6 @@ svr4_sys_creat(p, v, retval)
 	return sys_open(p, &cup, retval);
 }
 
-
 int
 svr4_sys_access(p, v, retval)
 	register struct proc *p;
@@ -255,7 +304,6 @@ svr4_sys_access(p, v, retval)
 	return sys_access(p, &cup, retval);
 }
 
-
 int
 svr4_sys_fcntl(p, v, retval)
 	register struct proc *p;
@@ -265,9 +313,6 @@ svr4_sys_fcntl(p, v, retval)
 	struct svr4_sys_fcntl_args	*uap = v;
 	int				error;
 	struct sys_fcntl_args		fa;
-
-	if (SCARG(uap, cmd) == SVR4_F_GETLK_SVR3)
-		return ibcs2_sys_fcntl(p, v, retval);
 
 	SCARG(&fa, fd) = SCARG(uap, fd);
 	SCARG(&fa, cmd) = svr4_to_bsd_cmd(SCARG(uap, cmd));
@@ -293,15 +338,38 @@ svr4_sys_fcntl(p, v, retval)
 		return sys_fcntl(p, &fa, retval);
 
 	case F_GETLK:
+		if (SCARG(uap, cmd) == SVR4_F_GETLK_SVR3)
+		{
+			struct svr4_flock_svr3	ifl;
+			struct flock		*flp;
+			caddr_t			sg = stackgap_init(p->p_emul);
+
+			flp = stackgap_alloc(&sg, sizeof(*flp));
+			error = copyin((caddr_t)SCARG(uap, arg), (caddr_t)&ifl,
+			    sizeof ifl);
+			if (error)
+				return error;
+			svr3_to_bsd_flock(&ifl, flp);
+			SCARG(&fa, fd) = SCARG(uap, fd);
+			SCARG(&fa, cmd) = F_GETLK;
+			SCARG(&fa, arg) = (void *)flp;
+			error = sys_fcntl(p, &fa, retval);
+			if (error)
+				return error;
+			bsd_to_svr3_flock(flp, &ifl);
+			return copyout((caddr_t)&ifl, (caddr_t)SCARG(uap, arg),
+			    sizeof ifl);
+		}
+		/*FALLTHROUGH*/
 	case F_SETLK:
 	case F_SETLKW:
 		{
-			struct svr4_flock	 ifl;
+			struct svr4_flock	ifl;
 			struct flock		*flp, fl;
-			caddr_t sg = stackgap_init(p->p_emul);
+			caddr_t			sg = stackgap_init(p->p_emul);
 
 			flp = stackgap_alloc(&sg, sizeof(struct flock));
-			SCARG(&fa, arg) = (void *) flp;
+			SCARG(&fa, arg) = (void *)flp;
 
 			error = copyin(SCARG(uap, arg), &ifl, sizeof ifl);
 			if (error)
