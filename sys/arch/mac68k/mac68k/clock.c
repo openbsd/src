@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.11 1998/02/13 04:35:51 gene Exp $	*/
+/*	$OpenBSD: clock.c,v 1.12 1998/05/22 05:26:43 gene Exp $	*/
 /*	$NetBSD: clock.c,v 1.36 1997/10/07 03:04:55 scottr Exp $	*/
 
 /*
@@ -408,7 +408,7 @@ resettodr()
 		pram_settime(ugmt_2_pramt(time.tv_sec + macos_gmtbias * 60));
 #ifdef DEBUG
 	else if (clock_debug)
-		printf("NetBSD/mac68k does not trust itself to try and write "
+		printf("OpenBSD/mac68k does not trust itself to try and write "
 		    "to the PRAM on this system.\n");
 #endif
 }
