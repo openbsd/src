@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)amq.c	8.1 (Berkeley) 6/7/93
- *	$Id: amq.c,v 1.1.1.1 1995/10/18 08:47:13 deraadt Exp $
+ *	$Id: amq.c,v 1.2 1996/08/04 15:54:43 deraadt Exp $
  */
 
 /*
@@ -52,7 +52,7 @@ char copyright[] = "\
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "$Id: amq.c,v 1.1.1.1 1995/10/18 08:47:13 deraadt Exp $";
+static char rcsid[] = "$Id: amq.c,v 1.2 1996/08/04 15:54:43 deraadt Exp $";
 static char sccsid[] = "@(#)amq.c	8.1 (Berkeley) 6/7/93";
 #endif /* not lint */
 
@@ -612,27 +612,21 @@ Usage: %s [-h host] [[-f] [-m] [-v] [-s]] | [[-u] directory ...]] |\n\
 static int inetresport(ty)
 int ty;
 {
-	int alport;
 	struct sockaddr_in addr;
 	int sock;
 
 	/* Use internet address family */
+	bzero(&addr, sizeof addr);
 	addr.sin_family = AF_INET;
 	addr.sin_addr.s_addr = INADDR_ANY;
 	if ((sock = socket(AF_INET, ty, 0)) < 0)
 		return -1;
-	for (alport = IPPORT_RESERVED-1; alport > IPPORT_RESERVED/2 + 1; alport--) {
-		addr.sin_port = htons((u_short)alport);
-		if (bind(sock, (struct sockaddr *)&addr, sizeof (addr)) >= 0)
-			return sock;
-		if (errno != EADDRINUSE) {
-			close(sock);
-			return -1;
-		}
+	if (bindresvport(sock, &addr) < 0) {
+		close(sock);
+		errno = EAGAIN;
+		return -1;
 	}
-	close(sock);
-	errno = EAGAIN;
-	return -1;
+	return sock;
 }
 
 /*

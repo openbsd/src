@@ -36,7 +36,7 @@ static char sccsid[] = "@(#)cmds.c	5.1 (Berkeley) 5/11/93";
 #endif /* not lint */
 
 #ifdef sgi
-#ident "$Revision: 1.1.1.1 $"
+#ident "$Revision: 1.2 $"
 #endif
 
 #include "timedc.h"
@@ -482,7 +482,6 @@ tracing(int argc, char *argv[])
 int
 priv_resources()
 {
-	int port;
 	struct sockaddr_in sin;
 
 	sock = socket(AF_INET, SOCK_DGRAM, 0);
@@ -491,19 +490,10 @@ priv_resources()
 		return(-1);
 	}
 
+	bzero(&sin, sizeof sin);
 	sin.sin_family = AF_INET;
-	sin.sin_addr.s_addr = 0;
-	for (port = IPPORT_RESERVED - 1; port > IPPORT_RESERVED / 2; port--) {
-		sin.sin_port = htons((u_short)port);
-		if (bind(sock, (struct sockaddr*)&sin, sizeof (sin)) >= 0)
-			break;
-		if (errno != EADDRINUSE && errno != EADDRNOTAVAIL) {
-			perror("bind");
-			(void) close(sock);
-			return(-1);
-		}
-	}
-	if (port == IPPORT_RESERVED / 2) {
+	sin.sin_addr.s_addr = INADDR_ANY;
+	if (bindresvport(sock, &sin) < 0) {
 		fprintf(stderr, "all reserved ports in use\n");
 		(void) close(sock);
 		return(-1);
