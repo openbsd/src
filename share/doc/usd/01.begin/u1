@@ -1,4 +1,4 @@
-.\"	$OpenBSD: u1,v 1.1 2003/06/26 16:39:51 mickey Exp $
+.\"	$OpenBSD: u1,v 1.2 2003/08/09 09:00:14 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -37,7 +37,6 @@
 .nr PS 9
 .if t .nr VS 11
 .if n .ls 2
-.if t .2C
 .nr PI .25i
 .SH
 INTRODUCTION
@@ -312,7 +311,6 @@ You can often fix this by logging out and logging back in.\(dg
 will often reset a terminal apparently in a strange state because a fullscreen
 editor crashed.
 .FE
-.FE
 Or you can read the description of the command
 .UL stty
 in section 1 of the manual.
@@ -327,10 +325,6 @@ stty \-tabs
 .P2
 and the system will convert each tab into the right number
 of blanks for you.
-If your terminal does have computer-settable tabs,
-the command
-.UL tabs
-will set the stops correctly for you.
 .SH
 Mistakes in Typing
 .PP
@@ -421,7 +415,7 @@ In a few programs, like the text editor,
 stops whatever the program is doing but leaves you in that program.
 Hanging up the phone will stop most programs.\(dd
 .FS
-\(dd If you use the c shell, programs running in the background continue 
+\(dd In most modern shells, programs running in the background continue 
 running even if you hang up.
 .FE
 .SH
@@ -458,24 +452,12 @@ type the command
 .P1
 mail
 .P2
-Your mail will be printed,
-one message at a time,
-most recent message first.\(dd
-.FS
-\(dd The Berkeley mail program lists the headers of some number of unread pieces 
-of mail in the order of their receipt.
-.FE
-After each message,
-.UL mail
-waits for you to say what to do with it.
-The two basic responses are
-.UL d ,
-which deletes the message,
-and
-.UC RETURN ,
-which does not
-(so it will still be there the next time you read your mailbox).
-Other responses are described in the manual.
+The headers of your mail will be printed, in the order of their receipt.
+A message can be read with the
+.UL print
+command,
+or specified directly by number.
+Other commands are described in the manual.
 (Earlier versions of
 .UL mail
 do not process one message at a time,
@@ -490,15 +472,12 @@ mail joe
 now type in the text of the letter
 on as many lines as you like ...
 After the last line of the letter
-type the character ``control-d'',
-that is, hold down ``control'' and type
-a letter ``d''.
+type the character ``.'',
+alone on the last line,
+like so:
+\&.
 .P2
 And that's it.
-The ``control-d'' sequence, often called ``EOF'' for end-of-file, is used throughout 
-the system
-to mark the end of input from a terminal,
-so you might as well get used to it.
 .PP
 For practice, send mail to yourself.
 (This isn't as strange as it might sound \(em
@@ -507,7 +486,7 @@ mail to oneself is a handy reminder mechanism.)
 There are other ways to send mail \(em
 you can send a previously prepared letter,
 and you can mail to a number of people all at once.
-For more details see
+For more details, see
 .UL mail (1).
 (The notation
 .UL mail (1)
@@ -593,7 +572,7 @@ and out''.
 To terminate
 the conversation, each side must
 type a ``control-d'' character alone
-on a line. (``Delete'' also works.)
+on a line.
 When the other person types his ``control-d'',
 you will get the message
 .UL EOF

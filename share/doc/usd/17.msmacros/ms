@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ms,v 1.1 2003/06/26 16:33:36 mickey Exp $
+.\"	$OpenBSD: ms,v 1.2 2003/08/09 09:00:14 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -37,8 +37,8 @@
 .EH 'USD:17-%''Using the \-ms Macros with Troff and Nroff'
 .OH 'Using the \-ms Macros with Troff and Nroff''USD:17-%'
 .\".RP
-....TM 76-1274-16 39199 39199-11
-....ND October 8, 1976
+.\" ....TM 76-1274-16 39199 39199-11
+.\" ....ND October 8, 1976
 .nr CW 2.85i
 .nr GW .3i
 .TL
@@ -49,15 +49,15 @@ Using the \-ms Macros with Troff and Nroff
 .AU "MH 2C-572" 6377
 M. E. Lesk
 .AI
-.MH
-.OK
+.\" .MH
+.\" .OK
 \"Text Formatting
 \"Phototypesetting
 .AB
 This document describes a set of easy-to-use macros
 for preparing documents on the UNIX system.
 Documents may be produced on either the
-phototypesetter or a on a computer terminal,
+phototypesetter or on a computer terminal,
 without changing the input.
 .PP
 The macros provide facilities for paragraphs, sections (optionally
@@ -76,7 +76,7 @@ This manual is a revision of, and replaces,
 ``Typing Documents on UNIX,''
 dated November 22, 1974.
 .AE
-.CS 6 6 12 1 0 8
+.\" .CS 6 6 12 1 0 8
 .bd I 3
 .PP
 .I
@@ -211,7 +211,6 @@ The user who redefines these macros should be careful
 not to change parameters such as point size or font
 without resetting them to default values.
 .PP
-.2C
 .I
 Multi-column formats.
 .R
@@ -632,20 +631,6 @@ places the specified date on the cover sheet and nowhere else.
 Place this line before the title.
 .PP
 .I
-Signature line.
-.R
-You can obtain a signature line by placing
-the command .SG in the document.
-The authors' names will
-be output in place of the .SG line.
-An argument to .SG
-is used
-as a typing identification line, and
-placed after the signatures.
-The .SG command is ignored
-in released paper format.
-.PP
-.I
 Registers.
 .R
 Certain of the registers used by \-ms can
@@ -674,18 +659,20 @@ c c c c
 a l l l.
 Register	Defines	Takes	Default
 		effect
-PS	point size	next para.	10
-VS	line spacing	next para.	12 pts
+PO	page offset	next page	1\(fm\(fm
 LL	line length	next para.	6\(fm\(fm
 LT	title length	next para.	6\(fm\(fm
-PD	para. spacing	next para.	0.3 VS
-PI	para. indent	next para.	5 ens
-FL	footnote length	next FS	11/12 LL
-CW	column width	next 2C	7/15 LL
-GW	intercolumn gap	next 2C	1/15 LL
-PO	page offset	next page	26/27\(fm\(fm
 HM	top margin	next page	1\(fm\(fm
 FM	bottom margin	next page	1\(fm\(fm
+PS	point size	next para.	10 pts
+VS	line spacing	next para.	12 pts
+PI	para. indent	next para.	5 ens
+PD	para. spacing	next para.	0.3 VS
+QI	quote para ind	next para.	5 ens
+FL	footnote length	next FS	*5/6 LL
+FI	footnote indent	next FS	*5/6 LL
+FF	footnote format	next FS	*5/6 LL
+MINGW	min. column wid	next page	2 ens
 .TE
 .ps \n(PS
 .vs \n(VS
@@ -885,7 +872,6 @@ EN	End equation.	R	Return to regular font (usually Roman).
 EQ	Begin equation.	RE	End one level of relative indenting.
 FE	End footnote.	RP	Use released paper format.
 FS	Begin footnote.	RS	Relative indent increased one level.
-		SG	Insert signature line.
 I	Begin italics.	SH	Specify section heading.
 		SM	Change to smaller type size.
 IP	Begin indented paragraph.	TL	Specify title.
@@ -910,7 +896,7 @@ l l l  l l l  l l l  l l.
 Number registers used in \-ms
 :	DW	GW	HM	IQ	LL	NA	OJ	PO	T.	TV
 #T	EF	H1	HT	IR	LT	NC	PD	PQ	TB	VS
-.T	FC	H2	IF	IT	MF	ND	PE	PS	TC	WF
+\&.T	FC	H2	IF	IT	MF	ND	PE	PS	TC	WF
 1T	FL	H3	IK	KI	MM	NF	PF	PX	TD	YE
 AV	FM	H4	IM	L1	MN	NS	PI	RO	TN	YY
 CW	FP	H5	IP	LE	MO	OI	PN	ST	TQ	ZN
@@ -934,9 +920,9 @@ A2	C1	DA	EM	FV	IP	MH	PY	RP	TA	XD
 A3	C2	DE	EN	FY	IZ	MN	QF	RQ	TE	XF
 A4	CA	DS	EQ	HO	KE	MO	R	RS	TH	XK
 .TE
-.(z
-.so fig1.pic
+.\" .(z
+.\".so fig1.pic
 .ce 2
 Figure 1:\ \ Order of Commands in Input
 .ce 0
-.)z
+.\" .)z

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: u0,v 1.1 2003/06/26 16:39:51 mickey Exp $
+.\"	$OpenBSD: u0,v 1.2 2003/08/09 09:00:14 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -34,11 +34,11 @@
 .\"
 .\"	@(#)u0	8.1 (Berkeley) 6/8/93
 .\"
-...TM 78-1273-8
+.\" ...TM 78-1273-8
 .EH 'USD:1-%''UNIX For Beginners'
 .OH 'UNIX For Beginners''USD:1-%'
 .ND October 2, 1978
-...old TM -74-1273-18, October 29, 1974
+.\" ...old TM -74-1273-18, October 29, 1974
 .\".RP
 .TL
 UNIX For Beginners \(em
@@ -46,7 +46,7 @@ Second Edition
 .AU
 Brian W. Kernighan
 .AI
-.MH
+.\" .MH
 .AU
 (Updated for 4.3BSD by Mark Seiden)
 .AB

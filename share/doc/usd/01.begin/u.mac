@@ -1,4 +1,4 @@
-.\"	$OpenBSD: u.mac,v 1.1 2003/06/26 16:39:51 mickey Exp $
+.\"	$OpenBSD: u.mac,v 1.2 2003/08/09 09:00:14 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -54,8 +54,7 @@
 .lg 0
 .if n .ls 1
 .if n .ta 5 10 15 20 25 30 35 40 45 50 55 60
-.if t .ps -\\n(dP
-.if t .vs -\\n(dP
+.if t .ta .3i .6i .9i 1.2i 1.5i 1.8i
 .nr P \\n(.s
 .nr S \\n(.s+1
 .nr s \\n(.s-1

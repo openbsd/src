@@ -1,4 +1,4 @@
-.\"	$OpenBSD: u2,v 1.1 2003/06/26 16:39:51 mickey Exp $
+.\"	$OpenBSD: u2,v 1.2 2003/08/09 09:00:14 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -174,8 +174,8 @@ ls -l
 .P2
 will produce something like
 .P1
--rw-rw-rw-  1 bwk   41 Jul 22 2:56 junk
--rw-rw-rw-  1 bwk   78 Jul 22 2:57 temp
+-rw-rw-rw-  1 bwk  users 41 Jul 22 2:56 junk
+-rw-rw-rw-  1 bwk  users 78 Jul 22 2:57 temp
 .P2
 The date and time are of the last change to the file.
 The 41 and 78 are the number of characters
@@ -184,6 +184,8 @@ The 41 and 78 are the number of characters
 .UL bwk
 is the owner of the file, that is, the person
 who created it.
+.UL users
+is the name of the file's group.
 The
 .UL \-rw\-rw\-rw\- 
 tells who has permission to read and write the file,
@@ -322,11 +324,7 @@ which we will get to in the section on document preparation.
 There are also programs that print files
 on a high-speed printer.
 Look in your manual under
-.UL opr
-and
 .UL lpr .
-Which to use depends on
-what equipment is attached to your machine.
 .SH
 Shuffling Files About
 .PP
@@ -1069,11 +1067,7 @@ The Shell
 We have already mentioned once or twice the mysterious
 ``shell,''
 which is in fact
-.UL sh (1).\(dg
-.FS
-\(dg On Berkeley Unix systems, the usual shell for interactive use is the c shell, 
-.UL csh(1).
-.FE
+.UL sh (1).
 The shell is the program that interprets what you type as
 commands and arguments.
 It also looks after translating

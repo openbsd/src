@@ -1,4 +1,4 @@
-.\"	$OpenBSD: u3,v 1.1 2003/06/26 16:39:51 mickey Exp $
+.\"	$OpenBSD: u3,v 1.2 2003/08/09 09:00:14 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -275,11 +275,6 @@ tr A-Z a-z <input >output
 .PP
 .UL sort
 sorts files in a variety of ways;
-.UL cref
-makes cross-references;
-.UL ptx
-makes a permuted index
-(keyword-in-context listing).
 .UL sed
 provides many of the editing facilities
 of

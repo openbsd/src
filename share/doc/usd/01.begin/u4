@@ -1,4 +1,4 @@
-.\"	$OpenBSD: u4,v 1.1 2003/06/26 16:39:51 mickey Exp $
+.\"	$OpenBSD: u4,v 1.2 2003/08/09 09:00:14 jmc Exp $
 .\"
 .\" Copyright (C) Caldera International Inc.  2001-2002.
 .\" All rights reserved.
@@ -166,7 +166,7 @@ system
 itself
 is written in C,
 as are most of the programs that run on it.
-It is also a easy language to use
+It is also an easy language to use
 once you get started.
 C is introduced and fully described in
 .ul
@@ -230,26 +230,22 @@ and does the minimal amount of recompiling
 to create a consistent updated version.
 .PP
 The debugger
-.UL adb
+.UL gdb
 is useful for digging through the dead bodies
 of C programs,
 but is rather hard to learn to use effectively.
 The most effective debugging tool is still
 careful thought, coupled with judiciously placed
-print statements.\(dg
-.FS
-\(dg The "dbx" debugger, supplied starting with 4.2BSD, has extensive facilities
-for high-level debugging of C programs and is much easier to use than "adb".
-.FE
+print statements.
 .PP
 The C compiler provides a limited instrumentation service,
 so you can find out
 where programs spend their time and what parts are worth optimizing.
 Compile the routines with the
-.UL \-p
+.UL \-pg
 option;
 after the test run, use
-.UL prof
+.UL gprof
 to print an execution profile.
 The command
 .UL time
@@ -275,7 +271,7 @@ Fortran
 tends to produce large and relatively slow-running
 programs.
 Furthermore, supporting software like
-.UL adb ,
+.UL gdb ,
 .UL prof ,
 etc., are all virtually useless with Fortran programs.
 There may also be a Fortran 77 compiler on your system.
