@@ -160,7 +160,7 @@ OpenBSDBootMsgs
 	After all your file systems have been created, the install program
 	will give you an opportunity to configure the network.  The network
 	configuration you enter (if any) can then be used to do the install
-	from another system using NFS, HTTP or FTP, and will also be the
+	from another system using HTTP or FTP, and will also be the
 	configuration used by the system after the installation is complete.
 
 	If you select to configure the network, the install program will

@@ -20,6 +20,4 @@ kernel (bsd.rd) from a HFS paritition on that disk.
 
 OpenBSDXferBareTape(xbase xfont xserv xshare)
 
-OpenBSDXferNFS
-
 OpenBSDXferFFS
