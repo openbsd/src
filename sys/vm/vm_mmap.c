@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_mmap.c,v 1.10 1997/11/14 20:56:08 deraadt Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.11 1998/02/18 23:36:12 deraadt Exp $	*/
 /*	$NetBSD: vm_mmap.c,v 1.47 1996/03/16 23:15:23 christos Exp $	*/
 
 /*
@@ -237,7 +237,13 @@ sys_mmap(p, v, retval)
 			maxprot |= VM_PROT_READ;
 		else if (prot & PROT_READ)
 			return (EACCES);
-		if (flags & MAP_SHARED) {
+
+		if ((flags & MAP_SHARED) != 0 ||
+		    ((flags & (MAP_PRIVATE|MAP_SHARED|MAP_COPY)) == MAP_FILE &&
+		    vp->v_type == VCHR)) {
+			if (fp->f_flag & FWRITE)
+				maxprot |= VM_PROT_WRITE;
+		} else if (flags & MAP_SHARED) {
 			if (fp->f_flag & FWRITE)
 				maxprot |= VM_PROT_WRITE;
 			else if (prot & PROT_WRITE)
