@@ -1,4 +1,4 @@
-.\"	$OpenBSD: fsck.8,v 1.21 2003/03/06 09:47:18 hugh Exp $
+.\"	$OpenBSD: fsck.8,v 1.22 2004/07/28 21:17:22 jmc Exp $
 .\"	$NetBSD: fsck.8,v 1.14 1996/10/03 20:08:29 christos Exp $
 .\"
 .\" Copyright (c) 1996 Christos Zoulas.  All rights reserved.
@@ -36,11 +36,17 @@
 .Nd filesystem consistency check and interactive repair
 .Sh SYNOPSIS
 .Nm fsck
-.Op Fl dvpfny
+.Bk -words
+.Op Fl dfnpvy
 .Op Fl l Ar maxparallel
+.Oo Xo
+.Fl T
+.Ar fstype Ns : Ns Ar fsoptions
+.Oc
+.Xc
 .Op Fl t Ar fstype
-.Op Fl T Ar fstype:fsoptions
 .Ar special | node ...
+.Ek
 .Sh DESCRIPTION
 The
 .Nm
@@ -77,11 +83,22 @@ This is assumed to be the default when dealing with filesystems currently
 mounted writeable.
 .It Fl p
 Enter preen mode.
+.It Xo
+.Fl T
+.Ar fstype Ns : Ns Ar fsoptions
+.Xc
+List of comma separated filesystem specific options for the specified
+filesystem type, in the same format as
+.Xr mount 8 .
 .It Fl t Ar fstype
-Invoke fsck only in the comma separated list of filesystem types.
+Invoke
+.Nm
+only in the comma separated list of filesystem types.
 If the list starts with
 .Dq no ,
-invoke fsck only in the filesystem types that are
+invoke
+.Nm
+only in the filesystem types that are
 .Em not
 specified in
 the list.
@@ -93,10 +110,6 @@ Cause
 to assume
 .Dq yes
 as the answer to all operator questions.
-.It Fl T Ar fstype:fsoptions
-List of comma separated filesystem specific options for the specified
-filesystem type, in the same format as
-.Xr mount 8 .
 .El
 .Sh FILES
 .Bl -tag -width /etc/fstab -compact
