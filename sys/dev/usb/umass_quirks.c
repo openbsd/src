@@ -1,4 +1,4 @@
-/*	$OpenBSD: umass_quirks.c,v 1.10 2004/02/21 00:47:42 krw Exp $	*/
+/*	$OpenBSD: umass_quirks.c,v 1.11 2004/04/10 08:11:21 deraadt Exp $	*/
 /*	$NetBSD: umass_quirks.c,v 1.39 2003/05/08 15:19:47 augustss Exp $	*/
 
 /*
@@ -217,6 +217,14 @@ Static const struct umass_quirk umass_quirks[] = {
 	},
 
 	{ { USB_VENDOR_MINOLTA, USB_PRODUCT_MINOLTA_X },
+	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
+	  UMASS_QUIRK_NO_MAX_LUN,
+	  0,
+	  UMATCH_DEVCLASS_DEVSUBCLASS_DEVPROTO,
+	  NULL, NULL
+	},
+
+	{ { USB_VENDOR_MINOLTA, USB_PRODUCT_MINOLTA_DIMAGEA1 },
 	  UMASS_WPROTO_UNSPEC, UMASS_CPROTO_UNSPEC,
 	  UMASS_QUIRK_NO_MAX_LUN,
 	  0,
