@@ -1,4 +1,4 @@
-#	$OpenBSD: BABY,v 1.36 1998/08/18 23:31:47 deraadt Exp $
+#	$OpenBSD: BABY,v 1.37 1998/08/27 05:56:30 deraadt Exp $
 
 machine		i386		# architecture, used by config; REQUIRED
 
@@ -12,7 +12,7 @@ option		GPL_MATH_EMULATE	# floating point emulation
 # have a broken BIOS, uncomment the following and set the value
 # properly for your system.
 #option		EXTMEM_SIZE=... # size of extended memory
-option		BUFCACHEPERCENT=20
+option		BUFCACHEPERCENT=30
 
 #option		DUMMY_NOPS	# speed hack; recommended
 #option		XSERVER		# diddle with console driver
@@ -209,3 +209,4 @@ pseudo-device	vnd	4		# paging to files
 pseudo-device	ccd	4		# concatenated disk devices
 pseudo-device	enc	4		# encryption device
 pseudo-device	pctr	1
+pseudo-device	ksyms	1		# kernel symbols device
