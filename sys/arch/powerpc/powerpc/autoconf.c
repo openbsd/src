@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 1998/08/22 18:31:52 rahnds Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 1999/11/09 00:20:41 rahnds Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.7 1998/08/22 18:31:52 rahnds Exp $
+ *      $Id: autoconf.c,v 1.8 1999/11/09 00:20:41 rahnds Exp $
  */
 
 /*
@@ -73,6 +73,7 @@ struct device * getdevunit __P((char *, int));
 static struct devmap * findtype __P((char **));
 void makebootdev __P((char *cp));
 int getpno __P((char **));
+void diskconf();
 
 /*
  * The following several variables are related to
@@ -91,6 +92,8 @@ void
 configure()
 {
 	(void)splhigh();	/* To be really sure.. */
+	calc_delayconst();
+
 	/*
 	if(system_type == OFWMACH) {
 		ofrootfound();
@@ -100,9 +103,39 @@ configure()
 		panic("no mainbus found");
 	(void)spl0();
 
+	/*
+	 * We can not know which is our root disk, defer
+	 * until we can checksum blocks to figure it out.
+	 */
+	md_diskconf = diskconf;
+	cold = 0;
+}
+/*
+ * Now that we are fully operational, we can checksum the
+ * disks, and using some heuristics, hopefully are able to
+ * always determine the correct root disk.
+ */
+void
+diskconf()
+{
+	/*
+	 * Configure root, swap, and dump area.  This is
+	 * currently done by running the same checksum
+	 * algorithm over all known disks, as was done in
+	 * /boot.  Then we basically fixup the *dev vars
+	 * from the info we gleaned from this.
+	dkcsumattach();
+	 * - XXX
+	 */
+
+#if 0
+	rootconf();
+#endif
 	setroot();
 	swapconf();
-	cold = 0;
+#if 0
+	dumpconf();
+#endif
 }
 
 /*
@@ -129,12 +162,59 @@ swapconf()
 #endif
 }
 
+/*
+ * Crash dump handling.
+ */
+u_long dumpmag = 0x8fca0101;		/* magic number */
+int dumpsize = 0;			/* size of dump in pages */
+long dumplo = -1;			/* blocks */
+
+/*
+ * This is called by configure to set dumplo and dumpsize.
+ * Dumps always skip the first CLBYTES of disk space
+ * in case there might be a disk label stored there.
+ * If there is extra space, put dump at the end to
+ * reduce the chance that swapping trashes it.
+ */
+#if 0
+void
+dumpconf()
+{
+	int nblks;	/* size of dump area */
+	int maj;
+
+	if (dumpdev == NODEV)
+		return;
+	maj = major(dumpdev);
+	if (maj < 0 || maj >= nblkdev)
+		panic("dumpconf: bad dumpdev=0x%x", dumpdev);
+	if (bdevsw[maj].d_psize == NULL)
+		return;
+	nblks = (*bdevsw[maj].d_psize)(dumpdev);
+	if (nblks <= ctod(1))
+		return;
+
+	dumpsize = btoc(IOM_END + ctob(dumpmem_high));
+
+	/* Always skip the first CLBYTES, in case there is a label there. */
+	if (dumplo < ctod(1))
+		dumplo = ctod(1);
+
+	/* Put dump at end of partition, and make it fit. */
+	if (dumpsize > dtoc(nblks - dumplo))
+		dumpsize = dtoc(nblks - dumplo);
+	if (dumplo < nblks - ctod(dumpsize))
+		dumplo = nblks - ctod(dumpsize);
+}
+#endif
+
 static	struct nam2blk {
 	char *name;
 	int  maj;
 } nam2blk[] = {
+	{ "wd",		0 },	/* 0 = wd */
 	{ "sd",		2 },	/* 2 = sd */
-	{ "ofdisk",	4 },	/* 2 = ofdisk */
+	{ "ofdisk",	4 },	/* 4 = ofdisk */
 };
 
 static int
@@ -468,7 +548,7 @@ findtype(s)
 }
 
 /*
- * Look at the string 'cp' and decode the boot device.
+ * Look at the string 'bp' and decode the boot device.
  * Boot names look like: '/pci/scsi@c/disk@0,0/bsd'
  */
 void

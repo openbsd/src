@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.13 1998/09/27 03:56:00 rahnds Exp $ */
+/*	$OpenBSD: conf.c,v 1.14 1999/11/09 00:20:42 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -40,6 +40,8 @@
 #include <sys/tty.h>
 #include <sys/vnode.h>
 
+#include "wd.h"
+bdev_decl(wd);
 #include "sd.h"
 bdev_decl(sd);
 bdev_decl(sw);
@@ -58,7 +60,7 @@ bdev_decl(vnd);
 bdev_decl(ccd);
 
 struct bdevsw bdevsw[] = {
-	bdev_notdef(),			/* 0 */
+	bdev_disk_init(NWD,wd),		/* 0: ST506/ESDI/IDE disk */
 	bdev_swap_init(1,sw),		/* 1 swap pseudo device */
 	bdev_disk_init(NSD,sd),		/* 2 SCSI Disk */
 	bdev_disk_init(NCD,cd),		/* 3 SCSI CD-ROM */
@@ -128,6 +130,9 @@ cdev_decl(vnd);
 cdev_decl(ccd);
 cdev_decl(rd);  
 
+#include <wd.h>
+cdev_decl(wd);
+
 dev_decl(filedesc,open);
 
 #include "bpfilter.h"
@@ -171,7 +176,7 @@ struct cdevsw cdevsw[] = {
         cdev_disk_init(NSD,sd),         /* 8: SCSI disk */
         cdev_disk_init(NCD,cd),         /* 9: SCSI CD-ROM */
         cdev_notdef(),                  /* 10: SCSI changer */
-        cdev_notdef(),                  /* 11 */
+	cdev_disk_init(NWD,wd),		/* 11: ST506/ESDI/IDE disk */
         cdev_notdef(),                  /* 12 */
 	cdev_disk_init(NOFDISK,ofd),	/* 13 Openfirmware disk */
         cdev_tty_init(NOFCONS,ofc),	/* 14 Openfirmware console */
@@ -261,7 +266,7 @@ static int chrtoblktbl[] = {
 	/*  8 */	2,
 	/*  9 */	NODEV,
 	/* 10 */	NODEV,
-	/* 11 */	NODEV,
+	/* 11 */	0,
 	/* 12 */	NODEV,
 	/* 13 */	4,
 	/* 14 */	NODEV,

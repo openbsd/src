@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.5 1999/10/28 04:28:03 rahnds Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.6 1999/11/09 00:20:42 rahnds Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -170,17 +170,16 @@ OF_finddevice(name)
 }
 
 void
-OF_boot(bootspec)
+OF_rboot(bootspec)
 	char *bootspec;
 {
 	static struct {
 		char *name;
 		int nargs;
 		int nreturns;
-		char *bootspec;
 	} args = {
-		"boot",
-		1,
+		"reset-all",
+		0,
 		0,
 	};
 	int l;
@@ -188,11 +187,20 @@ OF_boot(bootspec)
 	if ((l = strlen(bootspec)) >= NBPG)
 		panic("OF_boot");
 	ofw_stack();
-	ofbcopy(bootspec, OF_buf, l + 1);
-	args.bootspec = OF_buf;
 	openfirmware(&args);
+	/* will attempt exit in OF_boot */
+}
+
+void OF_exit();
+
+void
+OF_boot(bootspec)
+	char *bootspec;
+{
+	OF_rboot(bootspec);
 	printf ("OF_boot returned!");		/* just in case */
-	while (1);
+	OF_exit();
+	while(1);
 }
 
 void

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.26 1999/10/28 04:28:03 rahnds Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.27 1999/11/09 00:20:42 rahnds Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -46,6 +46,7 @@
 #include <sys/reboot.h>
 #include <sys/syscallargs.h>
 #include <sys/syslog.h>
+#include <sys/extent.h>
 #include <sys/systm.h>
 #include <sys/user.h>
 
@@ -84,6 +85,7 @@ extern int cold;
 struct bat battable[16];
 
 int astpending;
+int ppc_malloc_ok = 0;
 
 #ifndef SYS_TYPE
 /* XXX Hardwire it for now */
@@ -98,6 +100,8 @@ char bootpathbuf[512];
 
 struct firmware *fw = NULL;
 
+void ofw_dbg(char *str);
+
 /*
  * We use the page just above the interrupt vector as message buffer
  */
@@ -107,6 +111,17 @@ int msgbufmapped = 1;		/* message buffer is always mapped */
 caddr_t allocsys __P((caddr_t));
 int power4e_get_eth_addr __P((void));
 
+/*
+ * Extent maps to manage I/O. Allocate storage for 8 regions in each,
+ * initially. Later devio_malloc_safe will indicate that it's save to
+ * use malloc() to dynamically allocate region descriptors.
+ */
+static long devio_ex_storage[EXTENT_FIXED_STORAGE_SIZE(8) / sizeof (long)];
+struct extent *devio_ex;
+static int devio_malloc_safe = 0;
+
+/* HACK - XXX */
+int segment8_mapped = 0;
 
 extern int OF_stdout;
 extern int where;
@@ -131,7 +146,6 @@ initppc(startkernel, endkernel, args)
 	extern void consinit __P((void));
 	extern void callback __P((void *));
 	int exc, scratch;
-
 
 	proc0.p_addr = proc0paddr;
 	bzero(proc0.p_addr, sizeof *proc0.p_addr);
@@ -160,9 +174,10 @@ where = 3;
 	battable[0].batl = BATL(0x00000000, BAT_M);
 	battable[0].batu = BATU(0x00000000);
 
+#if 1
 	battable[1].batl = BATL(MPC106_V_ISA_IO_SPACE, BAT_I);
 	battable[1].batu = BATU(MPC106_P_ISA_IO_SPACE);
-#if 0
+	segment8_mapped = 1;
 	if(system_type == POWER4e) {
 		/* Map ISA I/O */
 		addbatmap(MPC106_V_ISA_IO_SPACE, MPC106_P_ISA_IO_SPACE, BAT_I);
@@ -184,9 +199,11 @@ where = 3;
 	__asm__ volatile ("mtdbatl 0,%0; mtdbatu 0,%1"
 		      :: "r"(battable[0].batl), "r"(battable[0].batu));
 
+#if 1
 	__asm__ volatile ("mtdbatl 1,%0; mtdbatu 1,%1"
 		      :: "r"(battable[1].batl), "r"(battable[1].batu));
 	__asm__ volatile ("sync;isync");
+#endif
 	
 	/*
 	 * Set up trap vectors
@@ -232,12 +249,6 @@ where = 3;
 
 	syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 
-	/*
-	 * Now enable translation (and machine checks/recoverable interrupts).
-	 */
-	(fw->vmon)();
-	#if 0
-	#endif
 
 	vm_set_page_size();
 
@@ -245,6 +256,11 @@ where = 3;
 	 * Initialize pmap module.
 	 */
 	pmap_bootstrap(startkernel, endkernel);
+
+	/*
+	 * Now enable translation (and machine checks/recoverable interrupts).
+	 */
+	(fw->vmon)();
 
 	__asm__ volatile ("eieio; mfmsr %0; ori %0,%0,%1; mtmsr %0; sync;isync"
 		      : "=r"(scratch) : "K"(PSL_IR|PSL_DR|PSL_ME|PSL_RI));
@@ -287,6 +303,35 @@ where = 3;
 		}
 	}			
 
+	/*
+	 * Set up extents for pci mappings
+	 * Is this too late?
+	 * 
+	 * what are good start and end values here??
+	 * 0x0 - 0x80000000 mcu bus
+	 * MAP A				MAP B
+	 * 0x80000000 - 0xbfffffff io		0x80000000 - 0xefffffff mem
+	 * 0xc0000000 - 0xffffffff mem		0xf0000000 - 0xffffffff io
+	 * 
+	 * of course bsd uses 0xe and 0xf
+	 * So the BSD PPC memory map will look like this
+	 * 0x0 - 0x80000000 memory (whatever is filled)
+	 * 0x80000000 - 0xdfffffff (pci space, memory or io)
+	 * 0xe0000000 - kernel vm segment
+	 * 0xf0000000 - kernel map segment (user space mapped here)
+	 */
+
+	devio_ex = extent_create("devio", 0x80000000, 0xffffffff, M_DEVBUF,
+		(caddr_t)devio_ex_storage, sizeof(devio_ex_storage),
+		EX_NOCOALESCE|EX_NOWAIT);
+
+	ofwconprobe();
+
+	/*
+	 * Now we can set up the console as mapping is enabled.
+         */
+	consinit();
+
 #if NIPKDB > 0
 	/*
 	 * Now trap to IPKDB
@@ -301,17 +346,15 @@ where = 3;
 #endif
 #endif
 
-	ofwconprobe();
-
-	/*
-	 * Now we can set up the console as mapping is enabled.
-         */
-	consinit();
-
-	/*
 	 * Figure out ethernet address.
 	 */
 	(void)power4e_get_eth_addr();
+
+}
+void ofw_dbg(char *str)
+{
+	int i = strlen (str);
+	OF_write(OF_stdout, str, i);
 }
 
 
@@ -347,14 +390,14 @@ cpu_startup()
 	caddr_t v;
 	vm_offset_t minaddr, maxaddr;
 	int base, residual;
+	v = (caddr_t)proc0paddr + USPACE;
 	
 	proc0.p_addr = proc0paddr;
-	v = (caddr_t)proc0paddr + USPACE;
 
 	printf("%s", version);
 	
 	printf("real mem = %d\n", ctob(physmem));
-	
+
 	/*
 	 * Find out how much space we need, allocate it,
 	 * and then give everything true virtual addresses.
@@ -364,7 +407,7 @@ cpu_startup()
 		panic("startup: no room for tables");
 	if (allocsys(v) - v != sz)
 		panic("startup: table size inconsistency");
-	
+
 	/*
 	 * Now allocate buffers proper.  They are different than the above
 	 * in that they usually occupy more virtual memory than physical.
@@ -404,6 +447,7 @@ cpu_startup()
 	 */
 	phys_map = kmem_suballoc(kernel_map, &minaddr, &maxaddr,
 				 VM_PHYS_SIZE, TRUE);
+	ppc_malloc_ok = 1;
 	
 	/*
 	 * Allocate mbuf pool.
@@ -425,6 +469,7 @@ cpu_startup()
 	printf("using %d buffers containing %d bytes of memory\n",
 	       nbuf, bufpages * CLBYTES);
 	
+	
 	/*
 	 * Set up the buffers.
 	 */
@@ -433,6 +478,7 @@ cpu_startup()
 	/*
 	 * Configure devices.
 	 */
+	devio_malloc_safe = 1;
 	configure();
 	
 	/*
@@ -672,13 +718,6 @@ cpu_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	}
 }
 
-/*
- * Crash dump handling.
- */
-u_long dumpmag = 0x8fca0101;		/* magic number */
-int dumpsize = 0;			/* size of dump in pages */
-long dumplo = -1;			/* blocks */
-
 void
 dumpsys()
 {
@@ -873,6 +912,7 @@ systype(char *name)
 		{ "MOT",	"(PWRSTK) MCG powerstack family", PWRSTK },
 		{ "V-I Power",	"(POWER4e) V-I ppc vme boards ",  POWER4e},
 		{ "iMac",	"(APPL) Apple iMac ",  APPL},
+		{ "PowerMac",	"(APPL) Apple PowerMac ",  APPL},
 		{ NULL,"",0}
 	};
 	for (i = 0; systypes[i].name != NULL; i++) {
@@ -945,6 +985,151 @@ ppc_intr_disable(void)
 	__asm__ volatile("mtmsr %0" :: "r"(dmsr));
 }
 
+/* BUS functions */
+int
+bus_space_map(t, bpa, size, cacheable, bshp)
+	bus_space_tag_t t;
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	int error;
+	
+	if  (POWERPC_BUS_TAG_BASE(t) == 0) {
+		/* if bus has base of 0 fail. */
+		return 1;
+	}
+	bpa += POWERPC_BUS_TAG_BASE(t);
+	if ((error = extent_alloc_region(devio_ex, bpa, size, EX_NOWAIT |
+		(ppc_malloc_ok ? EX_MALLOCOK : 0))))
+	{
+		return error;
+	}
+	if (error  = bus_mem_add_mapping(bpa, size, cacheable, bshp)) {
+		if (extent_free(devio_ex, bpa, size, EX_NOWAIT | 
+			(ppc_malloc_ok ? EX_MALLOCOK : 0)))
+		{
+			printf("bus_space_map: pa 0x%x, size 0x%x\n",
+				bpa, size);
+			printf("bus_space_map: can't free region\n");
+		}
+	}
+	return 0;
+}
+void bus_space_unmap __P((bus_space_tag_t t, bus_space_handle_t bsh,
+			  bus_size_t size));
+void
+bus_space_unmap(t, bsh, size)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t size;
+{
+	bus_addr_t sva;
+	bus_size_t off, len;
+
+	/* should this verify that the proper size is freed? */
+	sva = trunc_page(bsh);
+	off = bsh - sva;
+	len = size+off;
+
+	kmem_free_wakeup(phys_map, sva, len);
+#ifdef DESTROY_MAPPINGS
+	for (; len > 0; len -= NBPG) {
+		pmap_enter(vm_map_pmap(phys_map), vaddr, sva,
+			VM_PROT_READ | VM_PROT_WRITE, TRUE);
+		sva += NBPG;
+		vaddr += NBPG;
+	}
+#endif
+
+}
+
+int
+bus_mem_add_mapping(bpa, size, cacheable, bshp)
+	bus_addr_t bpa;
+	bus_size_t size;
+	int cacheable;
+	bus_space_handle_t *bshp;
+{
+	bus_addr_t vaddr;
+	bus_addr_t spa, epa;
+	bus_size_t off;
+	int len;
+
+	spa = trunc_page(bpa);
+	epa = bpa + size;
+	off = bpa - spa;
+	len = size+off;
+
+	if (epa <= spa) {
+		panic("bus_mem_add_mapping: overflow");
+	}
+	if (ppc_malloc_ok == 0) { 
+		bus_size_t alloc_size;
+
+		/* need to steal vm space before kernel vm is initialized */
+		alloc_size = trunc_page(size + NBPG);
+		ppc_kvm_size -= alloc_size;
+
+		vaddr = VM_MIN_KERNEL_ADDRESS + ppc_kvm_size;
+	} else {
+		vaddr = kmem_alloc_wait(phys_map, len);
+	}
+	*bshp = vaddr + off;
+#ifdef DEBUG_BUS_MEM_ADD_MAPPING
+	printf("mapping %x size %x to %x vbase %x\n", 
+		bpa, size, *bshp, spa);
+#endif
+	for (; len > 0; len -= NBPG) {
+#if 0
+		pmap_enter(vm_map_pmap(phys_map), vaddr, spa,
+#else
+		pmap_enter(pmap_kernel(), vaddr, spa,
+#endif
+			VM_PROT_READ | VM_PROT_WRITE, TRUE, 0/* XXX */);
+		spa += NBPG;
+		vaddr += NBPG;
+	}
+	return 0;
+}
+void *
+mapiodev(pa, len)
+	paddr_t pa;
+	psize_t len;
+{
+	paddr_t spa;
+	vaddr_t vaddr, va;
+	int off;
+	int size;
+
+	spa = trunc_page(pa);
+	off = pa - spa;
+	size = round_page(off+len);
+	va = vaddr = kmem_alloc(phys_map, size);
+
+	if (va == 0) 
+		return NULL;
+
+	if (pa >= 0x80000000 && pa+len < 0x90000000) {
+		extern int segment8_mapped;
+		if (segment8_mapped) {
+			return (void *)pa;
+		}
+	}
+	for (; size > 0; size -= NBPG) {
+#if 0
+		pmap_enter(vm_map_pmap(phys_map), vaddr, spa,
+#else
+		pmap_enter(pmap_kernel(), vaddr, spa,
+#endif
+			VM_PROT_READ | VM_PROT_WRITE, TRUE, 0/* XXX */);
+		spa += NBPG;
+		vaddr += NBPG;
+	}
+	return (void*) (va+off);
+}
+
 /*
  * probably should be ppc_space_copy
  */
@@ -982,9 +1167,13 @@ BUS_SPACE_COPY_N(4,u_int32_t)
 
 #define BUS_SPACE_SET_REGION_N(BYTES,TYPE)				\
 void									\
-__C(bus_space_set_region_,BYTES)(v, h, o, val, c)					\
+__C(bus_space_set_region_,BYTES)(v, h, o, val, c)			\
+	void *v;							\
+	bus_space_handle_t h;						\
+	TYPE val;							\
+	bus_size_t c;							\
 {									\
-	TYPE *src, *dst;						\
+	TYPE *dst;							\
 	int i;								\
 									\
 	dst = (TYPE *) (h+o);						\
@@ -996,3 +1185,86 @@ __C(bus_space_set_region_,BYTES)(v, h, o, val, c)					\
 BUS_SPACE_SET_REGION_N(1,u_int8_t)
 BUS_SPACE_SET_REGION_N(2,u_int16_t)
 BUS_SPACE_SET_REGION_N(4,u_int32_t)
+
+#define BUS_SPACE_READ_RAW_MULTI_N(BYTES,SHIFT,TYPE)			\
+void									\
+__C(bus_space_read_raw_multi_,BYTES)(bst, h, o, dst, size)		\
+	bus_space_tag_t bst;						\
+	bus_space_handle_t h;						\
+	bus_addr_t o;							\
+	TYPE *dst;							\
+	bus_size_t size;						\
+{									\
+	TYPE *src;							\
+	int i;								\
+	int count = size >> SHIFT;					\
+									\
+	src = (TYPE *)(h+o);						\
+	for (i = 0; i < count; i++) {					\
+		dst[i] = *src;						\
+		__asm__("eieio");					\
+	}								\
+}
+BUS_SPACE_READ_RAW_MULTI_N(1,0,u_int8_t)
+BUS_SPACE_READ_RAW_MULTI_N(2,1,u_int16_t)
+BUS_SPACE_READ_RAW_MULTI_N(4,2,u_int32_t)
+
+#define BUS_SPACE_WRITE_RAW_MULTI_N(BYTES,SHIFT,TYPE)			\
+void									\
+__C(bus_space_write_raw_multi_,BYTES)(bst, h, o, src, size)		\
+	bus_space_tag_t bst;						\
+	bus_space_handle_t h;						\
+	bus_addr_t o;							\
+	const TYPE *src;						\
+	bus_size_t size;						\
+{									\
+	int i;								\
+	TYPE *dst;							\
+	int count = size >> SHIFT;					\
+									\
+	dst = (TYPE *)(h+o);						\
+	for (i = 0; i < count; i++) {					\
+		*dst = src[i];						\
+		__asm__("eieio");					\
+	}								\
+}
+
+BUS_SPACE_WRITE_RAW_MULTI_N(1,0,u_int8_t)
+BUS_SPACE_WRITE_RAW_MULTI_N(2,1,u_int16_t)
+BUS_SPACE_WRITE_RAW_MULTI_N(4,2,u_int32_t)
+
+int
+bus_space_subregion(t, bsh, offset, size, nbshp)
+	bus_space_tag_t t;
+	bus_space_handle_t bsh;
+	bus_size_t offset, size;
+	bus_space_handle_t *nbshp;
+{
+	*nbshp = bsh + offset;
+	return (0);
+}
+
+int
+ppc_open_pci_bridge()
+{
+	char *
+	pci_bridges[] = {
+		"/pci",
+		NULL
+	};
+	int handle;
+	int i;
+
+	for (i = 0; pci_bridges[i] != NULL; i++) {
+		handle = OF_open(pci_bridges[i]);
+		if ( handle != -1) {
+			return handle;
+		}
+	}
+	return 0;
+}
+void
+ppc_close_pci_bridge(int handle)
+{
+	OF_close(handle);
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.12 1999/10/28 04:28:03 rahnds Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.13 1999/11/09 00:20:42 rahnds Exp $	*/
 /*	$NetBSD: pmap.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -529,6 +529,8 @@ pmap_page_index(pa)
 	return -1;
 }
 
+vm_offset_t ppc_kvm_size = VM_KERN_ADDR_SIZE_DEF;
+
 /*
  * How much virtual space is available to the kernel?
  */
@@ -540,7 +542,7 @@ pmap_virtual_space(start, end)
 	 * Reserve one segment for kernel virtual memory
 	 */
 	*start = (vm_offset_t)(KERNEL_SR << ADDR_SR_SHFT);
-	*end = *start + SEGMENT_LENGTH;
+	*end = *start + VM_KERN_ADDRESS_SIZE;
 }
 
 /*
@@ -998,7 +1000,7 @@ pmap_enter(pm, va, pa, prot, wired, access_type)
 		pte.pte_lo |= PTE_RW;
 	else
 		pte.pte_lo |= PTE_RO;
-	
+
 	/*
 	 * Now record mapping for later back-translation.
 	 */

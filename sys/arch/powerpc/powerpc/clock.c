@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 1998/08/25 07:46:58 pefo Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 1999/11/09 00:20:41 rahnds Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -37,7 +37,9 @@
 
 #include <machine/pio.h>
 
+#if 0
 #include <powerpc/pci/mpc106reg.h>
+#endif
 
 void resettodr();
 /*
@@ -64,7 +66,7 @@ typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
 
 int power4e_getclock(int *, int *, int *, int *, int *, int *);
 
-clock_read_t *clock_read = power4e_getclock;
+clock_read_t *clock_read = NULL;
 
 static u_long
 chiptotime(int sec, int min, int hour, int day, int mon, int year);
@@ -222,6 +224,17 @@ decr_intr(frame)
 void
 cpu_initclocks()
 {
+	int msr, scratch;
+	asm volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
+		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+	asm volatile ("mftb %0" : "=r"(lasttb));
+	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
+	asm volatile ("mtmsr %0" :: "r"(msr));
+}
+
+void
+calc_delayconst()
+{
 	int qhandle, phandle;
 	char name[32];
 	int msr, scratch;
@@ -241,8 +254,6 @@ cpu_initclocks()
 				      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
 			ns_per_tick = 1000000000 / ticks_per_sec;
 			ticks_per_intr = ticks_per_sec / hz;
-			asm volatile ("mftb %0" : "=r"(lasttb));
-			asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 			asm volatile ("mtmsr %0" :: "r"(msr));
 			break;
 		}
@@ -264,7 +275,7 @@ mftb()
 	u_long scratch;
 	u_quad_t tb;
 	
-	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw %0,%1; bne 1b"
+	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
 	     : "=r"(tb), "=r"(scratch));
 	return tb;
 }
@@ -295,7 +306,7 @@ microtime(tvp)
 }
 
 /*
- * Wait for about n microseconds (at least!).
+ * Wait for about n microseconds (us) (at least!).
  */
 void
 delay(n)
@@ -308,8 +319,11 @@ delay(n)
 	tb += (n * 1000 + ns_per_tick - 1) / ns_per_tick;
 	tbh = tb >> 32;
 	tbl = tb;
-	asm ("1: mftbu %0; cmpw %0,%1; blt 1b; bgt 2f; mftb %0; cmpw %0,%2; blt 1b; 2:"
+	asm ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
+	     " mftb %0; cmplw %0,%2; blt 1b; 2:"
 	     :: "r"(scratch), "r"(tbh), "r"(tbl));
+
+	tb = mftb();
 }
 
 /*
@@ -323,6 +337,7 @@ setstatclockrate(arg)
 }
 
 
+#if 0
 int
 power4e_getclock(sec, min, hour, day, mon, year)
 	int *sec;
@@ -344,3 +359,4 @@ power4e_getclock(sec, min, hour, day, mon, year)
 	outb(clkbase, inb(clkbase) & ~0x40);
 	return(0);
 }
+#endif
