@@ -688,6 +688,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
   struct pfkeyv2_socket *pfkeyv2_socket, *s = NULL;
   void *freeme = NULL, *bckptr = NULL;
   struct tdb sa, *sa2 = NULL;
+  struct flow *flow = NULL;
 
   bzero(headers, sizeof(headers));
   
@@ -867,6 +868,11 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    freeme = NULL;
 	    goto ret;
 	  }
+	  newsa->tdb_flow = sa2->tdb_flow;
+	  newsa->tdb_cur_allocations = sa2->tdb_cur_allocations;
+	  for (flow = newsa->tdb_flow; flow != NULL; flow = flow->flow_next)
+	    flow->flow_sa = newsa;
+	  sa2->tdb_flow = NULL;
 	}
 
 	 tdb_delete(sa2, 0);
@@ -899,7 +905,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	rval = EEXIST;
 	goto ret;
       }
-
       if (((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_state !=
 	  SADB_SASTATE_MATURE) {
 	rval = EINVAL;
@@ -1076,10 +1081,22 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
     case SADB_X_ADDFLOW: /* XXX This is highly INET dependent */
     {
 	struct sockaddr_encap encapdst, encapgw, encapnetmask;
-	struct flow *flow = NULL, *flow2 = NULL;
+	struct flow *flow2 = NULL, *old_flow = NULL, *old_flow2 = NULL;
 	union sockaddr_union *src, *dst, *srcmask, *dstmask;
 	union sockaddr_union alts, altm;
-	u_int8_t sproto = 0, local = 0;
+	u_int8_t sproto = 0, local = 0, replace;
+	struct rtentry *rt;
+
+	/*
+	 * SADB_SAFLAGS_X_REPLACEFLOW set means we should remove any
+	 * potentially conflicting flow while we are adding this new one.
+	 */
+	replace = ((struct sadb_sa *)headers[SADB_EXT_SA])->sadb_sa_flags & 
+	          SADB_SAFLAGS_X_REPLACEFLOW;
+	if (replace && delflag) {
+	    rval = EINVAL;
+	    goto ret;
+	}
 
 	if (!delflag)
 	{
@@ -1113,8 +1130,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	dst->sin.sin_addr.s_addr &= dstmask->sin.sin_addr.s_addr;
 
 	flow = find_global_flow(src, srcmask, dst, dstmask, sproto);
-	if ((delflag && (flow == NULL)) ||
-	    (!delflag && (flow != NULL)))
+	if (!replace &&
+	    ((delflag && (flow == NULL)) || (!delflag && (flow != NULL))))
 	{
 	    rval = delflag ? ESRCH : EEXIST;
 	    goto ret;
@@ -1129,8 +1146,9 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    altm.sin.sin_addr.s_addr = INADDR_BROADCAST;
 
 	    flow2 = find_global_flow(&alts, &altm, dst, dstmask, sproto);
-	    if ((delflag && (flow2 == NULL)) ||
-		(!delflag && (flow2 != NULL)))
+	    if (!replace &&
+		((delflag && (flow2 == NULL)) ||
+		 (!delflag && (flow2 != NULL))))
 	    {
 		rval = delflag ? ESRCH : EEXIST;
 		goto ret;
@@ -1139,6 +1157,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	if (!delflag)
 	{
+	    if (replace)
+	      old_flow = flow;
 	    flow = get_flow();
 	    bcopy(src, &flow->flow_src, src->sa.sa_len);
 	    bcopy(dst, &flow->flow_dst, dst->sa.sa_len);
@@ -1149,6 +1169,8 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 
 	    if (local)
 	    {
+		if (replace)
+		  old_flow2 = flow2;
 		flow2 = get_flow();
 		bcopy(&alts, &flow2->flow_src, alts.sa.sa_len);
 		bcopy(dst, &flow2->flow_dst, dst->sa.sa_len);
@@ -1195,7 +1217,6 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    if (flow->flow_dst.sin.sin_port)
 	      encapnetmask.sen_dport = 0xffff;
 	}
-	
 	/* Add the entry in the routing table */
 	if (delflag)
 	{
@@ -1207,7 +1228,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    delete_flow(flow, flow->flow_sa);
 	    ipsec_in_use--;
 	}
-	else
+	else if (!replace)
 	{
 	    rval = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
 			     (struct sockaddr *) &encapgw,
@@ -1226,7 +1247,38 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 	    ipsec_in_use++;
 	    sa2->tdb_cur_allocations++;
 	}
-	
+	else
+	{
+	    rt = (struct rtentry *) rn_lookup(&encapdst, &encapnetmask, 
+					      rt_tables[PF_KEY]);
+	    if (rt == NULL)
+	    {
+		rval = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
+				 (struct sockaddr *) &encapgw,
+				 (struct sockaddr *) &encapnetmask,
+				 RTF_UP | RTF_GATEWAY | RTF_STATIC,
+				 (struct rtentry **) 0);
+
+		if (rval)
+		{
+		    delete_flow(flow, sa2);
+		    if (flow2)
+		      delete_flow(flow2, sa2);
+		    goto ret;
+		}
+	    }
+	    else if (rt_setgate(rt, rt_key(rt), (struct sockaddr *) &encapgw))
+	    {
+	        rval = ENOMEM;
+		delete_flow(flow, sa2);
+		if (flow2)
+		  delete_flow(flow2, sa2);
+		goto ret;
+	    }
+
+	    sa2->tdb_cur_allocations++;
+	}
+
 	/* If this is a "local" packet flow */
 	if (local)
 	{
@@ -1243,7 +1295,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		delete_flow(flow2, flow2->flow_sa);
 		ipsec_in_use--;
 	    }
-	    else
+	    else if (!replace)
 	    {
 		rval = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
 				 (struct sockaddr *) &encapgw,
@@ -1271,10 +1323,61 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		ipsec_in_use++;
 		sa2->tdb_cur_allocations++;
 	    }
+	    else
+	    {
+	        rt = (struct rtentry *) rn_lookup(&encapdst, &encapnetmask, 
+						  rt_tables[PF_KEY]);
+		if (rt == NULL)
+		{
+		    rval = rtrequest(RTM_ADD, (struct sockaddr *) &encapdst,
+				     (struct sockaddr *) &encapgw,
+				     (struct sockaddr *) &encapnetmask,
+				     RTF_UP | RTF_GATEWAY | RTF_STATIC,
+				     (struct rtentry **) 0);
+
+		    if (rval)
+		    {
+			/*
+			 * XXX We really should try to restore the non-local
+			 * route if we need to abort here but that is getting
+			 * very hairy.  Currently we do half the change and
+			 * return an error, which is not optimal.
+			 */
+
+			if (old_flow)
+			  delete_flow(old_flow, old_flow->flow_sa);
+			delete_flow(flow2, sa2);
+			goto ret;
+		    }
+		}
+		else if (rt_setgate(rt, rt_key(rt),
+				    (struct sockaddr *) &encapgw))
+		{
+		    /*
+		     * XXX See above regarding the cleaning of the
+		     * non-local route.
+		     */
+		    rval = ENOMEM;
+		    if (old_flow)
+		      delete_flow(old_flow, old_flow->flow_sa);
+		    delete_flow(flow2, sa2);
+		    goto ret;
+		}
+
+		sa2->tdb_cur_allocations++;
+	    }
+	}
+
+	if (replace)
+	{
+	    if (old_flow != NULL)
+	      delete_flow(old_flow, old_flow->flow_sa);
+	    if (old_flow2 != NULL)
+	      delete_flow(old_flow2, old_flow2->flow_sa);
 	}
 
 	/* If we are adding flows, check for allocation expirations */
-	if (!delflag) {
+	if (!delflag && !(replace && old_flow != NULL)) {
 	    if ((sa2->tdb_flags & TDBF_ALLOCATIONS) &&
 		(sa2->tdb_cur_allocations > sa2->tdb_exp_allocations)) {
 		/* XXX expiration notification */

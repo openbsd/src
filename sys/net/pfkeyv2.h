@@ -227,11 +227,12 @@ struct sadb_protocol {
 #define SADB_EALG_X_SKIPJACK  5
 #define SADB_EALG_MAX         5
 
-#define SADB_SAFLAGS_PFS         0x01    /* perfect forward secrecy */
-#define SADB_SAFLAGS_X_HALFIV    0x02    /* Used for ESP-old */
-#define SADB_SAFLAGS_X_TUNNEL	 0x04    /* Force tunneling */
-#define SADB_SAFLAGS_X_CHAINDEL  0x08    /* Delete whole SA chain */
-#define SADB_SAFLAGS_X_LOCALFLOW 0x10    /* Add flow with 0.0.0.0 as src */
+#define SADB_SAFLAGS_PFS         	0x01    /* perfect forward secrecy */
+#define SADB_SAFLAGS_X_HALFIV    	0x02    /* Used for ESP-old */
+#define SADB_SAFLAGS_X_TUNNEL	 	0x04    /* Force tunneling */
+#define SADB_SAFLAGS_X_CHAINDEL  	0x08    /* Delete whole SA chain */
+#define SADB_SAFLAGS_X_LOCALFLOW 	0x10    /* Add flow with src=0.0.0.0 */
+#define SADB_SAFLAGS_X_REPLACEFLOW	0x20    /* Replace existing flow */
 
 #define SADB_IDENTTYPE_RESERVED   0
 #define SADB_IDENTTYPE_PREFIX     1
