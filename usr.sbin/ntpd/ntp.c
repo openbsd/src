@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.33 2004/09/18 20:01:38 henning Exp $ */
+/*	$OpenBSD: ntp.c,v 1.34 2004/10/04 11:12:58 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -43,6 +43,7 @@ void	ntp_sighdlr(int);
 int	ntp_dispatch_imsg(void);
 void	peer_add(struct ntp_peer *);
 void	peer_remove(struct ntp_peer *);
+int	offset_compare(const void *, const void *);
 
 void
 ntp_sighdlr(int sig)
@@ -345,23 +346,38 @@ peer_remove(struct ntp_peer *p)
 void
 ntp_adjtime(void)
 {
-	struct ntp_peer	*p;
-	double		 offset_median = 0;
-	int		 offset_cnt = 0;
+	struct ntp_peer	 *p;
+	int		  offset_cnt = 0, i = 0;
+	struct ntp_peer	**peers;
+	double		  offset_median;
 
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
 		if (p->trustlevel < TRUSTLEVEL_BADPEER)
 			continue;
-
 		if (!p->update.good)
 			return;
-
-		offset_median += p->update.offset;
 		offset_cnt++;
 	}
 
+	if ((peers = calloc(offset_cnt, sizeof(struct ntp_peer *))) == NULL)
+		fatal("calloc ntp_adjtime");
+
+	TAILQ_FOREACH(p, &conf->ntp_peers, entry) {
+		if (p->trustlevel < TRUSTLEVEL_BADPEER)
+			continue;
+		peers[i++] = p;
+	}
+
+	qsort(peers, offset_cnt, sizeof(struct ntp_peer *), offset_compare);
+
 	if (offset_cnt > 0) {
-		offset_median /= offset_cnt;
+		if (offset_cnt > 1 && offset_cnt % 2 == 0)
+			offset_median =
+			    (peers[offset_cnt / 2 - 1]->update.offset +
+			    peers[offset_cnt / 2]->update.offset) / 2;
+		else
+			offset_median = peers[offset_cnt / 2]->update.offset;
+
 		imsg_compose(ibuf_main, IMSG_ADJTIME, 0, 0,
 		    &offset_median, sizeof(offset_median));
 
@@ -369,8 +385,27 @@ ntp_adjtime(void)
 		conf->status.leap = LI_NOWARNING;		/* XXX */
 	}
 
+	free(peers);
+
 	TAILQ_FOREACH(p, &conf->ntp_peers, entry)
 		p->update.good = 0;
+}
+
+int
+offset_compare(const void *aa, const void *bb)
+{
+	const struct ntp_peer * const *a;
+	const struct ntp_peer * const *b;
+
+	a = aa;
+	b = bb;
+
+	if ((*a)->update.offset < (*b)->update.offset)
+		return (-1);
+	else if ((*a)->update.offset > (*b)->update.offset)
+		return (1);
+	else
+		return (0);
 }
 
 void
