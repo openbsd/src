@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.6 2004/03/16 08:25:00 jmc Exp $
+dnl	$OpenBSD: install,v 1.7 2004/03/17 06:37:25 mickey Exp $
 dnl lots of texts coming from {mac68k,mvme68k,vax}/install initially
 OpenBSDInstallPrelude
 
@@ -22,8 +22,8 @@ more recent firmware.
 
 Old firmware operation
 
-PDC ROM v1.4 and below are easily recognizable, as they will start with a
-text banner. There are two levels of interactive commands in this version.
+Models such as 7[035]5, 715/33/50/75, 725/50/75 have an older version
+of PDC. There are two levels of interactive commands in this version.
 The first level is a short menu:
 
 	b)   Boot from specified device
@@ -45,10 +45,9 @@ the possible boot choices in a boot device search (``s'' command).
 
 Modern firmware operation
 
-PDC ROM 1.5 and above will start with a small graphics window at the screen
-center (unless you are using a serial console). There is only one interactive
-mode, with a BOOT_ADMIN> prompt, which provides both boot settings and
-commands.
+More recent machines mostly based on the 7100LC, 7200 and 7300LC CPU types
+have a different PDC version.  There is only one interactive mode, with a
+BOOT_ADMIN> prompt, which provides both boot settings and commands.
 
 In this case, you will need to set up either bootpd or dhcpd on the server.
 Assuming a bootp setup, start by editing the /etc/bootptab on the bootserver,
