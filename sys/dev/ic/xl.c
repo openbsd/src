@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.56 2004/09/28 05:14:44 brad Exp $	*/
+/*	$OpenBSD: xl.c,v 1.57 2004/10/02 16:44:23 brad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -2142,7 +2142,6 @@ xl_init(xsc)
 	else
 		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_COAX_STOP);
 
-#if NVLAN > 0
 	/*
 	 * increase packet size to allow reception of 802.1q or ISL packets.
 	 * For the 3c90x chip, set the 'allow large packets' bit in the MAC
@@ -2158,7 +2157,6 @@ xl_init(xsc)
 		macctl |= XL_MACCTRL_ALLOW_LARGE_PACK;
 		CSR_WRITE_1(sc, XL_W3_MAC_CTRL, macctl);
 	}
-#endif
 
 	/* Clear out the stats counters. */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STATS_DISABLE);
