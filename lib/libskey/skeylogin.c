@@ -10,7 +10,7 @@
  *
  * S/Key verification check, lookups, and authentication.
  *
- * $OpenBSD: skeylogin.c,v 1.50 2003/04/28 20:59:13 millert Exp $
+ * $OpenBSD: skeylogin.c,v 1.51 2003/09/21 23:35:24 millert Exp $
  */
 
 #include <sys/param.h>
@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <paths.h>
+#include <poll.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -580,12 +581,10 @@ skey_unlock(struct skey *mp)
 static char *
 tgetline(int fd, char *buf, size_t bufsiz, int timeout)
 {
+	struct pollfd pfd[1];
 	size_t left;
+	char c, *cp;
 	int n;
-	fd_set *readfds = NULL;
-	struct timeval tv;
-	char c;
-	char *cp;
 
 	if (bufsiz == 0)
 		return (NULL);			/* sanity */
@@ -597,27 +596,18 @@ tgetline(int fd, char *buf, size_t bufsiz, int timeout)
 	 * Timeout of <= 0 means no timeout.
 	 */
 	if (timeout > 0) {
-		/* Setup for select(2) */
-		n = howmany(fd + 1, NFDBITS) * sizeof(fd_mask);
-		if ((readfds = (fd_set *) malloc(n)) == NULL)
-			return (NULL);
-		(void) memset(readfds, 0, n);
+		timeout *= 1000;		/* convert to miliseconds */
 
-		/* Set timeout for select */
-		tv.tv_sec = timeout;
-		tv.tv_usec = 0;
-
+		pfd[0].fd = fd;
+		pfd[0].events = POLLIN;
 		while (--left) {
-			FD_SET(fd, readfds);
-
-			/* Make sure there is something to read (or timeout) */
-			while ((n = select(fd + 1, readfds, 0, 0, &tv)) == -1 &&
+			/* Poll until we are ready or we time out */
+			while ((n = poll(pfd, 1, timeout)) == -1 &&
 			    (errno == EINTR || errno == EAGAIN))
 				;
-			if (n == 0) {
-				free(readfds);
-				return (NULL);		/* timeout */
-			}
+			if (n <= 0 ||
+			    (pfd[0].revents & (POLLERR|POLLHUP|POLLNVAL)))
+				break;		/* timeout or error */
 
 			/* Read a character, exit loop on error, EOF or EOL */
 			n = read(fd, &c, 1);
@@ -625,7 +615,6 @@ tgetline(int fd, char *buf, size_t bufsiz, int timeout)
 				break;
 			*cp++ = c;
 		}
-		free(readfds);
 	} else {
 		/* Keep reading until out of space, EOF, error, or newline */
 		while (--left && (n = read(fd, &c, 1)) == 1 && c != '\n' && c != '\r')
