@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.30 2003/07/14 02:03:16 jason Exp $	*/
+/*	$OpenBSD: trap.c,v 1.31 2004/01/10 09:10:07 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.73 2001/08/09 01:03:01 eeh Exp $ */
 
 /*
@@ -303,7 +303,7 @@ const char *trap_type[] = {
 	T, T, T, T, T, T, T, T, /* 128..12f */
 	T, T,			/* 130..131 */
 	"get condition codes",	/* 132 */
-	"set condision codes",	/* 133 */
+	"set condition codes",	/* 133 */
 	T, T, T, T,		/* 134..137 */
 	T, T, T, T, T, T, T, T, /* 138..13f */
 	T, T, T, T, T, T, T, T, /* 140..147 */
@@ -313,7 +313,7 @@ const char *trap_type[] = {
 	T, T, T, T,		/* 160..163 */
 	"SVID syscall64",	/* 164 */
 	"SPARC Intl syscall64",	/* 165 */
-	"OS vedor spec syscall",/* 166 */
+	"OS vendor spec syscall",	/* 166 */
 	"HW OEM syscall",	/* 167 */
 	"ret from deferred trap",	/* 168 */
 };
