@@ -1,4 +1,4 @@
-/*	$OpenBSD: vars.c,v 1.5 2000/01/03 22:27:30 mickey Exp $	*/
+/*	$OpenBSD: vars.c,v 1.6 2001/05/02 16:32:10 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -162,8 +162,10 @@ Xhowto()
 			putchar('-');
 			if (cmd.boothowto & RB_ASKNAME)
 				putchar('a');
+#ifdef notused
 			if (cmd.boothowto & RB_HALT)
 				putchar('b');
+#endif
 			if (cmd.boothowto & RB_CONFIG)
 				putchar('c');
 			if (cmd.boothowto & RB_SINGLE)
@@ -192,9 +194,15 @@ bootparse(i)
 				case 'a':
 					howto |= RB_ASKNAME;
 					break;
+#ifdef notused
+	/*
+	 * one day i get the same nice drink i was having
+	 * and figure out what is it supposed to be used for
+	 */
 				case 'b':
 					howto |= RB_HALT;
 					break;
+#endif
 				case 'c':
 					howto |= RB_CONFIG;
 					break;
@@ -248,7 +256,7 @@ Xenv()
 			}
 		}
 		if (!p)
-			p = environ = alloc(NBPG);
+			p = environ = alloc(4096);
 		sprintf(p, "%s=%s\n",
 			cmd.argv[1], (cmd.argc==3?cmd.argv[2]:""));
 	}
