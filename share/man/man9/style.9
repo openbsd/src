@@ -22,7 +22,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: style.9,v 1.18 2001/06/24 22:03:03 millert Exp $
+.\"	$OpenBSD: style.9,v 1.19 2001/06/24 22:16:11 millert Exp $
 .\"
 .Dd June 18, 2001
 .Dt STYLE 9
@@ -131,13 +131,14 @@ Use of the
 .Li __P
 macro in new code is discouraged, although modifications to existing
 files should be consistent with that file's conventions.
-Only the kernel has a name associated with the types; i.e., in the kernel use:
-.Bd -literal -offset 0i
-void	function(int a);
-.Ed
-and in user land use:
-.Bd -literal -offset 0i
+Prototypes should not have variable names associated with the types; i.e.:
+.Bd -literal -compact -offset 0i
 void	function(int);
+.Ed
+.Pp
+not:
+.Bd -literal -compact -offset 0i
+void	function(int a);
 .Ed
 .Pp
 Prototypes may have an extra space after a tab to enable function names
@@ -146,6 +147,8 @@ to line up:
 static char	*function(int, const char *);
 static void	 usage(void);
 .Ed
+.Pp
+There should be no space between the function name and the argument list.
 .Pp
 Use
 .Li __dead
