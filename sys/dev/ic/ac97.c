@@ -1,4 +1,4 @@
-/*	$OpenBSD: ac97.c,v 1.51 2005/01/31 15:48:19 mickey Exp $	*/
+/*	$OpenBSD: ac97.c,v 1.52 2005/02/16 22:26:39 todd Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Constantine Sapuntzakis
@@ -297,6 +297,7 @@ void ac97_restore_shadow(struct ac97_codec_if *self);
 void ac97_ad198x_init(struct ac97_softc *);
 void ac97_alc655_init(struct ac97_softc *);
 void ac97_cx20468_init(struct ac97_softc *);
+void ac97_cx_init(struct ac97_softc *);
 
 struct ac97_codec_if_vtbl ac97civ = {
 	ac97_mixer_get_port,
@@ -371,6 +372,7 @@ const struct ac97_codecid {
 }, ac97_cx[] = {
 	{ 0x21, 0xff, 0, 0,	"HSD11246" },
 	{ 0x28, 0xf8, 7, 0,	"CX20468",	ac97_cx20468_init },
+	{ 0x30, 0xff, 0, 0,	"CX?????",	ac97_cx_init },
 }, ac97_dt[] = {
 	{ 0x00, 0xff, 0, 0,	"DT0398" },
 }, ac97_em[] = {
@@ -1133,4 +1135,20 @@ ac97_cx20468_init(struct ac97_softc *as)
 	ac97_read(as, AC97_CX_REG_MISC, &misc);
 	ac97_write(as, AC97_CX_REG_MISC,
 	    AC97_CX_SPDIFEN | AC97_CX_COPYRIGHT | AC97_CX_MASK);
+}
+
+void
+ac97_cx_init(struct ac97_softc *as)
+{
+	u_int16_t misc, new;
+
+	ac97_read(as, AC97_CX_REG_MISC, &misc);
+	ac97_write(as, AC97_CX_REG_MISC,
+	    AC97_CX_SPDIFEN | AC97_CX_COPYRIGHT | AC97_CX_MASK);
+
+	ac97_read(as, AC97_REG_POWER, &misc);
+	new = misc | AC97_POWER_EAMP;
+	if (new != misc) {
+		ac97_write(as, AC97_REG_POWER, new);
+	}
 }
