@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.78 2004/01/06 17:38:12 markus Exp $	*/
+/*	$OpenBSD: inet.c,v 1.79 2004/01/13 20:03:28 otto Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.78 2004/01/06 17:38:12 markus Exp $";
+static const char *rcsid = "$OpenBSD: inet.c,v 1.79 2004/01/13 20:03:28 otto Exp $";
 #endif
 #endif /* not lint */
 
@@ -890,18 +890,18 @@ carp_stats(u_long off, char *name)
 #define p2(f, m) if (carpstat.f || sflag <= 1) \
 	printf(m, carpstat.f)
 
-	p(carps_ipackets, "\t%u packet%s received (IPv4)\n");
-	p(carps_ipackets6, "\t%u packet%s received (IPv6)\n");
-	p(carps_badif, "\t\t%u packet%s discarded for bad interface\n");
-	p(carps_hdrops, "\t\t%u packet%s shorter than header\n");
-	p(carps_badsum, "\t\t%u discarded for bad checksum%s\n");
-	p(carps_badver,	"\t\t%u discarded packet%s with a bad version\n");
-	p2(carps_badlen, "\t\t%u discarded because packet too short\n");
-	p2(carps_badauth, "\t\t%u discarded for bad authentication\n");
-	p2(carps_badvhid, "\t\t%u discarded for bad vhid\n");
-	p2(carps_badaddrs, "\t\t%u discarded because of a bad address list\n");
-	p(carps_opackets, "\t%u packet%s sent (IPv4)\n");
-	p(carps_opackets6, "\t%u packet%s sent (IPv6)\n");
+	p(carps_ipackets, "\t%lu packet%s received (IPv4)\n");
+	p(carps_ipackets6, "\t%lu packet%s received (IPv6)\n");
+	p(carps_badif, "\t\t%lu packet%s discarded for bad interface\n");
+	p(carps_hdrops, "\t\t%lu packet%s shorter than header\n");
+	p(carps_badsum, "\t\t%lu discarded for bad checksum%s\n");
+	p(carps_badver,	"\t\t%lu discarded packet%s with a bad version\n");
+	p2(carps_badlen, "\t\t%lu discarded because packet too short\n");
+	p2(carps_badauth, "\t\t%lu discarded for bad authentication\n");
+	p2(carps_badvhid, "\t\t%lu discarded for bad vhid\n");
+	p2(carps_badaddrs, "\t\t%lu discarded because of a bad address list\n");
+	p(carps_opackets, "\t%lu packet%s sent (IPv4)\n");
+	p(carps_opackets6, "\t%lu packet%s sent (IPv6)\n");
 #if notyet
 	p(carps_ostates, "\t\t%s state update%s sent\n");
 #endif
@@ -927,20 +927,20 @@ pfsync_stats(u_long off, char *name)
 #define p2(f, m) if (pfsyncstat.f || sflag <= 1) \
 	printf(m, pfsyncstat.f)
 
-	p(pfsyncs_ipackets, "\t%u packet%s received (IPv4)\n");
-	p(pfsyncs_ipackets6, "\t%u packet%s received (IPv6)\n");
-	p(pfsyncs_badif, "\t\t%u packet%s discarded for bad interface\n");
-	p(pfsyncs_badttl, "\t\t%u packet%s discarded for bad ttl\n");
-	p(pfsyncs_hdrops, "\t\t%u packet%s shorter than header\n");
-	p(pfsyncs_badver,	"\t\t%u discarded packet%s with a bad version\n");
-	p(pfsyncs_badact,	"\t\t%u discarded packet%s with a bad action\n");
-	p2(pfsyncs_badlen, "\t\t%u discarded because packet too short\n");
-	p2(pfsyncs_badauth, "\t\t%u discarded for bad authentication\n");
-	p(pfsyncs_badstate, "\t%u failed state lookup/insert%s\n");
-	p(pfsyncs_opackets, "\t%u packet%s sent (IPv4)\n");
-	p(pfsyncs_opackets6, "\t%u packet%s sent (IPv6)\n");
-	p2(pfsyncs_onomem, "\t\t%u send failed due to mbuf memory error\n");
-	p2(pfsyncs_oerrors, "\t\t%u send error\n");
+	p(pfsyncs_ipackets, "\t%lu packet%s received (IPv4)\n");
+	p(pfsyncs_ipackets6, "\t%lu packet%s received (IPv6)\n");
+	p(pfsyncs_badif, "\t\t%lu packet%s discarded for bad interface\n");
+	p(pfsyncs_badttl, "\t\t%lu packet%s discarded for bad ttl\n");
+	p(pfsyncs_hdrops, "\t\t%lu packet%s shorter than header\n");
+	p(pfsyncs_badver,	"\t\t%lu discarded packet%s with a bad version\n");
+	p(pfsyncs_badact,	"\t\t%lu discarded packet%s with a bad action\n");
+	p2(pfsyncs_badlen, "\t\t%lu discarded because packet too short\n");
+	p2(pfsyncs_badauth, "\t\t%lu discarded for bad authentication\n");
+	p(pfsyncs_badstate, "\t%lu failed state lookup/insert%s\n");
+	p(pfsyncs_opackets, "\t%lu packet%s sent (IPv4)\n");
+	p(pfsyncs_opackets6, "\t%lu packet%s sent (IPv6)\n");
+	p2(pfsyncs_onomem, "\t\t%lu send failed due to mbuf memory error\n");
+	p2(pfsyncs_oerrors, "\t\t%lu send error\n");
 #undef p
 #undef p2
 }
