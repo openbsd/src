@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_auth.c,v 1.29 2000/10/13 13:42:50 niklas Exp $	*/
-/*	$EOM: ike_auth.c,v 1.57 2000/10/13 13:04:16 ho Exp $	*/
+/*	$OpenBSD: ike_auth.c,v 1.30 2000/11/23 12:56:33 niklas Exp $	*/
+/*	$EOM: ike_auth.c,v 1.59 2000/11/21 00:21:31 angelos Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -543,7 +543,7 @@ rsa_sig_decode_hash (struct message *msg)
   struct ipsec_exch *ie = exchange->data;
   struct payload *p;
   void *cert;
-  u_int8_t *rawcert;
+  u_int8_t *rawcert = NULL;
   u_int32_t rawlen;
   RSA *key;
   size_t hashsize = ie->hash->hashsize;
@@ -577,7 +577,8 @@ rsa_sig_decode_hash (struct message *msg)
   if (!handler)
     {
       log_print ("rsa_sig_decode_hash: "
-		 "cert_get (%d) failed", GET_ISAKMP_CERT_ENCODING (p->p));
+		 "cert_get (%d) failed", p != NULL
+		 ? GET_ISAKMP_CERT_ENCODING (p->p) : -1);
       return -1;
     }
 
