@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ste.4,v 1.12 2003/04/07 16:03:32 jmc Exp $
+.\"	$OpenBSD: ste.4,v 1.13 2003/05/05 08:32:31 jmc Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu>. All rights reserved.
@@ -49,12 +49,12 @@ Ethernet controller chip.
 This includes the D-Link DFE-550TX.
 .Pp
 The Sundance ST201 uses bus master DMA and is designed to be a
-3Com Etherlink XL work-alike.
+3Com EtherLink XL work-alike.
 It uses the same DMA descriptor structure and is very similar in operation,
 however its register layout is different.
 The ST201 has a 64-bit multicast hash filter and a single perfect filter
 entry for the station address.
-IT supports both 10 and 100Mbps speeds in either full or half duplex
+It supports both 10 and 100Mbps speeds in either full or half duplex
 using an MII transceiver.
 .Pp
 The

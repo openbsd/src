@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ec.4,v 1.12 2002/09/26 07:55:39 miod Exp $
+.\"	$OpenBSD: ec.4,v 1.13 2003/05/05 08:32:31 jmc Exp $
 .\"     $NetBSD: ec.4,v 1.4 1998/08/09 00:39:02 thorpej Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ and
 .Xr xl 4
 drivers.
 .Pp
-The Etherlink II supports two media types on a single card.
+The EtherLink II supports two media types on a single card.
 All support the AUI media type.
 The other media is either BNC or UTP behind a transceiver.
 Software cannot differentiate between BNC and UTP cards.
@@ -88,7 +88,7 @@ This is not supported.
 .It "ec0: invalid IRQ <n>, must be 3, 4, 5, or 9"
 An IRQ other than the above listed IRQs was specified in the kernel
 configuration file.
-The Etherlink II hardware only supports the above listed IRQs.
+The EtherLink II hardware only supports the above listed IRQs.
 .It "ec0: failed to clear shared memory at offset <off>"
 The memory test was unable to clear the interface's shared memory
 region.
