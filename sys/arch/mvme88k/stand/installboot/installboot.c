@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.7 2003/06/01 17:00:37 deraadt Exp $ */
+/*	$OpenBSD: installboot.c,v 1.8 2003/08/25 23:36:46 tedu Exp $ */
 /*	$NetBSD: installboot.c,v 1.5 1995/11/17 23:23:50 gwr Exp $ */
 
 /*
@@ -297,7 +297,7 @@ int	devfd;
 	struct fs	*fs;
 	char		*buf;
 	daddr_t		blk, *ap;
-	struct dinode	*ip;
+	struct ufs1_dinode	*ip;
 	int		ndb;
 
 	/*
@@ -345,7 +345,7 @@ int	devfd;
 
 	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
 	devread(devfd, buf, blk, fs->fs_bsize, "inode");
-	ip = (struct dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
+	ip = (struct ufs1_dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
 
 	/*
 	 * Have the inode.  Figure out how many blocks we need.

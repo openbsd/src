@@ -1,4 +1,4 @@
-/*	$OpenBSD: installboot.c,v 1.3 2002/03/14 01:26:46 millert Exp $	*/
+/*	$OpenBSD: installboot.c,v 1.4 2003/08/25 23:36:46 tedu Exp $	*/
 /*	$NetBSD: installboot.c,v 1.8 2001/02/19 22:48:59 cgd Exp $ */
 
 /*-
@@ -369,7 +369,7 @@ int	devfd;
 	struct fs	*fs;
 	char		*buf;
 	daddr_t		blk, *ap;
-	struct dinode	*ip;
+	struct ufs1_dinode	*ip;
 	int		ndb;
 
 	/*
@@ -405,7 +405,7 @@ int	devfd;
 
 	blk = fsbtodb(fs, ino_to_fsba(fs, statbuf.st_ino));
 	devread(devfd, buf, blk, fs->fs_bsize, "inode");
-	ip = (struct dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
+	ip = (struct ufs1_dinode *)(buf) + ino_to_fsbo(fs, statbuf.st_ino);
 
 	/*
 	 * Register filesystem block size.
