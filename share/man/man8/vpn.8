@@ -1,4 +1,4 @@
-.\" $OpenBSD: vpn.8,v 1.32 2000/04/22 02:04:23 angelos Exp $
+.\" $OpenBSD: vpn.8,v 1.33 2000/04/22 20:48:46 kjell Exp $
 .\" Copyright 1998 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
 .\"
@@ -85,9 +85,9 @@ being unguessable, it is very important that the keys be chosen using a
 strong random source. One practical method of generating them
 is by using the
 .Xr random 4
-device. To produce 160 bits of randomness, for example, do a:
+device. To produce 160 bits (20 bytes) of randomness, for example, do a:
 .Bd -literal
-   dd if=/dev/urandom bs=1024 count=1 | sha1
+   dd if=/dev/urandom bs=20 count=1 |perl -pe 's/(.)/unpack('H2',)/ges'
 .Ed
 .Pp
 Different cipher types may require different sized keys.
