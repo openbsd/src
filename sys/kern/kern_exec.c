@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_exec.c,v 1.23 1998/07/28 00:13:05 millert Exp $	*/
+/*	$OpenBSD: kern_exec.c,v 1.24 1998/09/23 22:48:08 art Exp $	*/
 /*	$NetBSD: kern_exec.c,v 1.75 1996/02/09 18:59:28 christos Exp $	*/
 
 /*-
@@ -501,7 +501,7 @@ sys_execve(p, v, retval)
 					p->p_fd->fd_ofiles[indx] = NULL;
 					break;
 				}
-				fp->f_flag = FREAD;
+				fp->f_flag = FREAD | (i == 0 ? 0 : FWRITE);
 				fp->f_type = DTYPE_VNODE;
 				fp->f_ops = &vnops;
 				fp->f_data = (caddr_t)nd.ni_vp;
