@@ -1,5 +1,5 @@
-/*	$OpenBSD: pf_key_v2.c,v 1.31 2000/10/09 23:26:59 niklas Exp $	*/
-/*	$EOM: pf_key_v2.c,v 1.48 2000/10/09 23:24:23 niklas Exp $	*/
+/*	$OpenBSD: pf_key_v2.c,v 1.32 2000/10/10 13:34:58 niklas Exp $	*/
+/*	$EOM: pf_key_v2.c,v 1.49 2000/10/10 13:30:26 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -43,6 +43,10 @@
 #include <sys/uio.h>
 #include <net/pfkeyv2.h>
 #include <netinet/in.h>
+#ifdef SADB_X_EXT_FLOW_TYPE
+#include <sys/mbuf.h>
+#include <netinet/ip_ipsp.h>
+#endif
 #include <arpa/inet.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1107,6 +1111,8 @@ pf_key_v2_mask_to_bits (u_int32_t mask)
   return (33 - ffs (~mask + 1)) % 33;
 }
 
+#undef OPENBSD_IPSEC_API_VERSION
+
 #ifndef OPENBSD_IPSEC_API_VERSION
 /*
  * Enable/disable a flow.
@@ -1121,6 +1127,9 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
 #if defined (SADB_X_ADDFLOW) && defined (SADB_X_DELFLOW)
   struct sadb_msg msg;
   struct sadb_sa ssa;
+#ifdef SADB_X_EXT_FLOW_TYPE
+  struct sadb_protocol flowtype;
+#endif
   struct sadb_address *addr = 0;
   struct pf_key_v2_msg *flow = 0, *ret = 0;
   size_t len;
@@ -1129,7 +1138,7 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   struct sadb_x_sa2 ssa2;
 #endif
 
-#ifndef SADB_X_SAFLAGS_INGRESS_FLOW
+#if !defined (SADB_X_SAFLAGS_INGRESS_FLOW) && !defined(SADB_X_EXT_FLOW_TYPE)
   if (ingress)
     return 0;
 #endif
@@ -1174,11 +1183,25 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
   if (ingress)
     ssa.sadb_sa_flags |= SADB_X_SAFLAGS_INGRESS_FLOW;
 #endif
+#ifdef SADB_X_SAFLAGS_REPLACEFLOW
   if (!delete && !ingress)
     ssa.sadb_sa_flags |= SADB_X_SAFLAGS_REPLACEFLOW;
+#endif
 
   if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&ssa, 0) == -1)
     goto cleanup;
+
+#ifdef SADB_X_EXT_FLOW_TYPE
+  /* Setup the flow type extension.  */
+  flowtype.sadb_protocol_exttype = SADB_X_EXT_FLOW_TYPE;
+  flowtype.sadb_protocol_len = sizeof flowtype / PF_KEY_V2_CHUNK;
+  flowtype.sadb_protocol_direction
+    = ingress ? IPSP_DIRECTION_IN : IPSP_DIRECTION_OUT;
+  flowtype.sadb_protocol_proto = FLOW_X_TYPE_REQUIRE;
+
+  if (pf_key_v2_msg_add (flow, (struct sadb_ext *)&flowtype, 0) == -1)
+    goto cleanup;
+#endif
 
   /*
    * Setup the ADDRESS extensions.
@@ -1202,7 +1225,12 @@ pf_key_v2_flow (in_addr_t laddr, in_addr_t lmask, in_addr_t raddr,
       ((struct sockaddr_in *)(addr + 1))->sin_len
 	= sizeof (struct sockaddr_in);
       ((struct sockaddr_in *)(addr + 1))->sin_family = AF_INET;
+#ifdef SADB_X_EXT_FLOW_TYPE
+      ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr
+	= ingress ? src : dst;
+#else
       ((struct sockaddr_in *)(addr + 1))->sin_addr.s_addr = dst;
+#endif
       ((struct sockaddr_in *)(addr + 1))->sin_port = 0;
       if (pf_key_v2_msg_add (flow, (struct sadb_ext *)addr,
 			     PF_KEY_V2_NODE_MALLOCED) == -1)
