@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.138 2004/10/09 19:55:28 brad Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.139 2004/12/17 12:42:02 pascoe Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -35,6 +35,7 @@
 #include "gif.h"
 #include "pf.h"
 #include "vlan.h"
+#include "carp.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -88,6 +89,10 @@
 
 #if NVLAN > 0
 #include <net/if_vlan_var.h>
+#endif
+
+#if NCARP > 0
+#include <netinet/ip_carp.h>
 #endif
 
 #include <net/if_bridge.h>
@@ -1387,7 +1392,12 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 		if (ifl->ifp->if_type != IFT_ETHER)
 			continue;
 		ac = (struct arpcom *)ifl->ifp;
-		if (bcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) == 0) {
+		if (bcmp(ac->ac_enaddr, eh->ether_dhost, ETHER_ADDR_LEN) == 0
+#if NCARP > 0
+		    || (ifl->ifp->if_carp && carp_ourether(ifl->ifp->if_carp,
+			eh, 0) != NULL)
+#endif
+		    ) {
 			if (srcifl->bif_flags & IFBIF_LEARNING)
 				bridge_rtupdate(sc,
 				    (struct ether_addr *)&eh->ether_shost,
@@ -1405,7 +1415,12 @@ bridge_input(struct ifnet *ifp, struct ether_header *eh, struct mbuf *m)
 			}
 			return (m);
 		}
-		if (bcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0) {
+		if (bcmp(ac->ac_enaddr, eh->ether_shost, ETHER_ADDR_LEN) == 0
+#if NCARP > 0
+		    || (ifl->ifp->if_carp && carp_ourether(ifl->ifp->if_carp,
+			eh, 1) != NULL)
+#endif
+		    ) {
 			m_freem(m);
 			return (NULL);
 		}

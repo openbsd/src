@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.85 2004/12/10 22:35:17 mcbride Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.86 2004/12/17 12:42:02 pascoe Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -493,6 +493,14 @@ ether_output(ifp0, m0, dst, rt0)
 		bcopy((caddr_t)ac->ac_enaddr, (caddr_t)eh->ether_shost,
 		    sizeof(eh->ether_shost));
 
+#if NCARP > 0
+	if (ifp->if_carp) {
+		error = carp_fix_lladdr(ifp0, m, dst, NULL);
+		if (error)
+			goto bad;
+	}
+#endif
+
 #if NBRIDGE > 0
 	/*
 	 * Interfaces that are bridge members need special handling
@@ -531,14 +539,6 @@ ether_output(ifp0, m0, dst, rt0)
 			bridge_output(ifp, m, NULL, NULL);
 			return (error);
 		}
-	}
-#endif
-
-#if NCARP > 0
-	if (ifp->if_carp) {
-		error = carp_fix_lladdr(ifp0, m, dst, NULL);
-		if (error)
-			goto bad;
 	}
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.82 2004/12/17 06:47:00 mcbride Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.83 2004/12/17 12:42:01 pascoe Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -1239,19 +1239,43 @@ carp_macmatch6(void *v, struct mbuf *m, struct in6_addr *taddr)
 }
 #endif /* INET6 */
 
+struct ifnet *
+carp_ourether(void *v, struct ether_header *eh, int src)
+{
+	struct carp_if *cif = (struct carp_if *)v;
+	struct carp_softc *vh;
+	u_int8_t *ena;
+
+	if (src)
+		ena = (u_int8_t *)&eh->ether_shost;
+	else
+		ena = (u_int8_t *)&eh->ether_dhost;
+
+	if (ena[0] || ena[1] || ena[2] != 0x5e || ena[3] || ena[4] != 1)
+		return (NULL);
+
+	TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list)
+		if ((vh->sc_ac.ac_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
+		    (IFF_UP|IFF_RUNNING) && vh->sc_state == MASTER &&
+		    !bcmp(ena, vh->sc_ac.ac_enaddr,
+		    ETHER_ADDR_LEN))
+			return (&vh->sc_ac.ac_if);
+
+	return (NULL);
+}
+
 int
 carp_input(struct ether_header *eh, struct mbuf *m)
 {
 	struct carp_if *cif = (struct carp_if *)m->m_pkthdr.rcvif->if_carp;
-	struct carp_softc *vh;
-	u_int8_t *ena = (u_int8_t *)&eh->ether_dhost;
 	struct ifnet *ifp;
 
 	if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
+		struct carp_softc *vh;
 		struct mbuf *m0;
 
 		/*
-		 * XXX Should reall check the list of multicast addresses
+		 * XXX Should really check the list of multicast addresses
 		 * for each CARP interface _before_ copying.
 		 */
 		TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list) {
@@ -1264,20 +1288,11 @@ carp_input(struct ether_header *eh, struct mbuf *m)
 		return (1);
 	}
 
-	if (ena[0] || ena[1] || ena[2] != 0x5e || ena[3] || ena[4] != 1)
+	ifp = carp_ourether(cif, eh, 0);
+	if (ifp == NULL)
 		return (1);
 
-	TAILQ_FOREACH(vh, &cif->vhif_vrs, sc_list)
-		if ((vh->sc_ac.ac_if.if_flags & (IFF_UP|IFF_RUNNING)) ==
-		    (IFF_UP|IFF_RUNNING) && vh->sc_state == MASTER &&
-		    !bcmp(ena, vh->sc_ac.ac_enaddr,
-		    ETHER_ADDR_LEN))
-			break;
-
-	if (vh == NULL)
-		return (1);
-
-	m->m_pkthdr.rcvif = ifp = &vh->sc_ac.ac_if;
+	m->m_pkthdr.rcvif = ifp;
 
 #if NBPFILTER > 0
 	if (ifp->if_bpf) {
