@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.28 2001/06/27 04:05:45 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.29 2001/08/25 16:16:03 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.91 1998/11/11 06:41:25 thorpej Exp $	*/
 
 /*
@@ -937,7 +937,7 @@ Lkbrkpt: | Kernel-mode breakpoint or trace trap. (d0=trap_type)
 	lea	sp@(FR_SIZE),a6		| Save stack pointer
 	movl	a6,sp@(FR_SP)		|  from before trap
 
-	| If were are not on tmpstk switch to it.
+	| If we are not on tmpstk switch to it.
 	| (so debugger can change the stack pointer)
 	movl	a6,d1
 	cmpl	#_ASM_LABEL(tmpstk),d1
@@ -1622,11 +1622,11 @@ Lmotommu7:
  * and TBI*.
  */
 ENTRY(DCIA)
-__DCIA:
+_C_LABEL(_DCIA):
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
 	jne	Lmotommu8		| no, skip
-	/* XXX implement */
+	.word	0xf478			| cpusha dc
 	rts
 Lmotommu8:
 #endif
@@ -1645,7 +1645,7 @@ _C_LABEL(_DCIS):
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
 	jne	Lmotommu9		| no, skip
-	/* XXX implement */
+	.word	0xf478			| cpusha dc
 	rts
 Lmotommu9:
 #endif
@@ -1664,7 +1664,7 @@ _C_LABEL(_DCIU):
 #if defined(M68040)
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040
 	jne	LmotommuA		| no, skip
-	/* XXX implement */
+	.word	0xf478			| cpusha dc
 	rts
 LmotommuA:
 #endif
