@@ -1,4 +1,4 @@
-/*	$OpenBSD: grey.c,v 1.7 2004/03/01 17:03:10 otto Exp $	*/
+/*	$OpenBSD: grey.c,v 1.8 2004/03/05 00:31:05 beck Exp $	*/
 
 /*
  * Copyright (c) 2004 Bob Beck.  All rights reserved.
@@ -106,14 +106,24 @@ configure_pf(char **addrs, int count)
 		return(-1);
 	}
 	for (i = 0; i < count; i++)
-		if (addrs[i] != NULL) {
+		if (addrs[i] != NULL)
 			fprintf(pf, "%s/32\n", addrs[i]);
-			free(addrs[i]);
-			addrs[i] = NULL;
-		}
 	fclose(pf);
 	waitpid(pid, NULL, 0);
 	return(0);
+}
+
+void 
+freewhiteaddr(void)
+{
+	int i;
+
+	if (whitelist != NULL)
+		for (i = 0; i < whitecount; i++) {
+			free(whitelist[i]);
+			whitelist[i] = NULL;
+		}
+	whitecount = 0;
 }
 
 /* validate, then add to list of addrs to whitelist */
@@ -233,11 +243,13 @@ greyscan(char *dbname)
 	db->sync(db, 0);
 	db->close(db);
 	db = NULL;
+	freewhiteaddr();
 	return(0);
  bad:
 	db->sync(db, 0);
 	db->close(db);
 	db = NULL;
+	freewhiteaddr();
 	return(-1);
 }
 
