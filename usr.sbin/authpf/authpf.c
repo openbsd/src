@@ -1,4 +1,4 @@
-/*	$OpenBSD: authpf.c,v 1.52 2003/02/11 20:15:59 henning Exp $	*/
+/*	$OpenBSD: authpf.c,v 1.53 2003/02/19 00:03:22 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 - 2002 Bob Beck (beck@openbsd.org).
@@ -833,7 +833,7 @@ pfctl_set_logif(struct pfctl *pf, char *ifname)
 }
 
 int
-pfctl_set_timeout(struct pfctl *pf, const char *opt, int seconds)
+pfctl_set_timeout(struct pfctl *pf, const char *opt, int seconds, int quiet)
 {
 	fprintf(stderr, "set timeout not supported in authpf\n");
 	return (1);
