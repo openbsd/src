@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.94 2000/06/18 19:10:07 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.95 2000/06/18 19:48:54 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -618,7 +618,7 @@ gettdb(u_int32_t spi, union sockaddr_union *dst, u_int8_t proto)
 
 #if DDB
 void
-tdb_hashstats()
+tdb_hashstats(void)
 {
     int i, cnt, buckets[16];
     struct tdb *tdbp;
