@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.88 2003/12/20 20:08:16 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.89 2004/01/27 16:16:22 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.121 1999/03/26 23:41:29 mycroft Exp $	*/
 
 /*
@@ -515,6 +515,9 @@ identifycpu()
 	const char *t;
 	char mc, *td;
 	int len;
+#ifdef FPSP
+	extern u_long fpvect_tab, fpvect_end, fpsp_tab;
+#endif
 
 	/*
 	 * Map machineid to model name.
@@ -677,6 +680,13 @@ identifycpu()
 	default:
 		break;
 	}
+
+#ifdef FPSP
+	if (cputype == CPU_68040) {
+		bcopy(&fpsp_tab, &fpvect_tab,
+		    (&fpvect_end - &fpvect_tab) * sizeof (fpvect_tab));
+	}
+#endif
 
 	return;
 lose:

@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.109 2003/12/20 20:08:17 miod Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.110 2004/01/27 16:16:27 miod Exp $	*/
 /*	$NetBSD: machdep.c,v 1.207 1998/07/08 04:39:34 thorpej Exp $	*/
 
 /*
@@ -523,6 +523,9 @@ initcpu()
 #ifdef M68040
 	void buserr40(void);
 #endif
+#ifdef FPSP
+	extern u_long fpvect_tab, fpvect_end, fpsp_tab;
+#endif
 
 	switch (cputype) {
 #ifdef M68060
@@ -535,11 +538,16 @@ initcpu()
 	case CPU_68040:
 		vectab[2] = buserr40;
 		vectab[3] = addrerr4060;
+#ifdef FPSP
+		bcopy(&fpsp_tab, &fpvect_tab,
+		    (&fpvect_end - &fpvect_tab) * sizeof (fpvect_tab));
+#endif
 		break;
 #endif
 	default:
 		break;
 	}
+
 	DCIS();
 }
 
