@@ -809,6 +809,7 @@ cryptodev_dsa_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 		goto err;
 	}
 
+	printf("bar\n");
 	memset(&kop, 0, sizeof kop);
 	kop.crk_op = CRK_DSA_SIGN;
 
@@ -849,6 +850,7 @@ cryptodev_dsa_verify(const unsigned char *dgst, int dlen,
 	struct crypt_kop kop;
 	int dsaret = 1;
 
+	printf("foo\n");
 	memset(&kop, 0, sizeof kop);
 	kop.crk_op = CRK_DSA_VERIFY;
 
@@ -1021,14 +1023,10 @@ ENGINE_load_cryptodev(void)
 		}
 	}
 
-#if 0 
-	/* dsa is currently busted. */
 	if (ENGINE_set_DSA(engine, &cryptodev_dsa)) {
 		const DSA_METHOD *meth = DSA_OpenSSL();
-
-		cryptodev_dsa.dsa_do_sign = meth->dsa_do_sign;
-		cryptodev_dsa.dsa_do_verify = meth->dsa_do_verify;   
-		cryptodev_dsa.bn_mod_exp = meth->bn_mod_exp;
+		
+		memcpy(&cryptodev_dsa, meth, sizeof(DSA_METHOD)); 
 		if (cryptodev_asymfeat & CRF_DSA_SIGN) 
 			cryptodev_dsa.dsa_do_sign = cryptodev_dsa_do_sign;   
   	        if (cryptodev_asymfeat & CRF_DSA_VERIFY)
@@ -1036,7 +1034,6 @@ ENGINE_load_cryptodev(void)
   	        if (cryptodev_asymfeat & CRF_MOD_EXP)
 			cryptodev_dsa.bn_mod_exp = cryptodev_dsa_bn_mod_exp;
 	}
-#endif
 		
 
 	if (ENGINE_set_DH(engine, &cryptodev_dh)){
