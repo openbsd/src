@@ -1,4 +1,4 @@
-#	$OpenBSD: files.mvme68k,v 1.6 1996/06/30 17:39:44 deraadt Exp $
+#	$OpenBSD: files.mvme68k,v 1.7 1996/12/11 21:04:59 deraadt Exp $
 
 # config file for mvme68k
 
@@ -137,3 +137,8 @@ file arch/m68k/m68k/db_memrw.c			ddb
 # SunOS Binary Compatibility (COMPAT_SUNOS)
 include	"../../../compat/sunos/files.sunos"
 file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
+
+device wl: tty
+attach wl at vmes
+file arch/mvme68k/dev/wl.c			wl needs-count
+
