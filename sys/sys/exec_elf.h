@@ -1,4 +1,4 @@
-/*	$OpenBSD: exec_elf.h,v 1.14 1999/02/10 08:07:20 deraadt Exp $	*/
+/*	$OpenBSD: exec_elf.h,v 1.15 1999/09/07 21:52:44 kstailey Exp $	*/
 /*
  * Copyright (c) 1995, 1996 Erik Theisen.  All rights reserved.
  *
@@ -35,16 +35,21 @@
 
 #include <machine/types.h>
 
-/*
- * These typedefs need to be handled better -
- *  doesn't work on 64-bit machines.  Note:
- *  there currently isn't a 64-bit ABI.
- */
+typedef u_int8_t	Elf_Byte;
+
 typedef u_int32_t	Elf32_Addr;	/* Unsigned program address */
 typedef u_int32_t	Elf32_Off;	/* Unsigned file offset */
 typedef int32_t		Elf32_Sword;	/* Signed large integer */
 typedef u_int32_t	Elf32_Word;	/* Unsigned large integer */
 typedef u_int16_t	Elf32_Half;	/* Unsigned medium integer */
+
+typedef u_int64_t	Elf64_Addr;
+typedef u_int64_t	Elf64_Off;
+typedef int64_t		Elf64_Sword;
+typedef int32_t		Elf64_Shalf;
+typedef u_int64_t	Elf64_Word;
+typedef u_int32_t	Elf64_Half;
+typedef u_int16_t	Elf64_Quarter;
 
 /* e_ident[] identification indexes */
 #define EI_MAG0		0		/* file ID */
@@ -103,6 +108,23 @@ typedef struct elfhdr{
 					   header string table" entry offset */
 } Elf32_Ehdr;
 
+typedef struct {
+	unsigned char	e_ident[EI_NIDENT];	/* Id bytes */
+	Elf64_Quarter	e_type;			/* file type */
+	Elf64_Quarter	e_machine;		/* machine type */
+	Elf64_Half	e_version;		/* version number */
+	Elf64_Addr	e_entry;		/* entry point */
+	Elf64_Off	e_phoff;		/* Program hdr offset */
+	Elf64_Off	e_shoff;		/* Section hdr offset */
+	Elf64_Half	e_flags;		/* Processor flags */
+	Elf64_Quarter	e_ehsize;		/* sizeof ehdr */
+	Elf64_Quarter	e_phentsize;		/* Program header entry size */
+	Elf64_Quarter	e_phnum;		/* Number of program headers */
+	Elf64_Quarter	e_shentsize;		/* Section header entry size */
+	Elf64_Quarter	e_shnum;		/* Number of section headers */
+	Elf64_Quarter	e_shstrndx;		/* String table index */
+} Elf64_Ehdr;
+
 /* e_type */
 #define ET_NONE		0		/* No file type */
 #define ET_REL		1		/* relocatable file */
@@ -132,7 +154,8 @@ typedef struct elfhdr{
 #define EM_SPARC64	11		/* SPARC v9 64-bit unoffical */
 #define EM_PARISC	15		/* HPPA */
 #define EM_PPC		20		/* PowerPC */
-#define EM_NUM		13		/* number of machine types */
+#define EM_ALPHA	41		/* DEC ALPHA */
+#define EM_NUM		14		/* number of machine types */
 
 /* Version */
 #define EV_NONE		0		/* Invalid */
@@ -153,6 +176,19 @@ typedef struct {
 	Elf32_Word	sh_addralign;	/* address alignment */
 	Elf32_Word	sh_entsize;	/* section entry size */
 } Elf32_Shdr;
+
+typedef struct {
+	Elf64_Half	sh_name;	/* section name */
+	Elf64_Half	sh_type;	/* section type */
+	Elf64_Word	sh_flags;	/* section flags */
+	Elf64_Addr	sh_addr;	/* virtual address */
+	Elf64_Off	sh_offset;	/* file offset */
+	Elf64_Word	sh_size;	/* section size */
+	Elf64_Half	sh_link;	/* link to another */
+	Elf64_Half	sh_info;	/* misc info */
+	Elf64_Word	sh_addralign;	/* memory alignment */
+	Elf64_Word	sh_entsize;	/* table entry size */
+} Elf64_Shdr;
 
 /* Special Section Indexes */
 #define SHN_UNDEF	0		/* undefined */
@@ -223,6 +259,15 @@ typedef struct elf32_sym {
 	Elf32_Half	st_shndx;	/* section header index */
 } Elf32_Sym;
 
+typedef struct {
+	Elf64_Half	st_name;	/* Symbol name index in str table */
+	Elf_Byte	st_info;	/* type / binding attrs */
+	Elf_Byte	st_other;	/* unused */
+	Elf64_Quarter	st_shndx;	/* section index of symbol */
+	Elf64_Word	st_value;	/* value of symbol */
+	Elf64_Word	st_size;	/* size of symbol */
+} Elf64_Sym;
+
 /* Symbol table index */
 #define STN_UNDEF	0		/* undefined */
 
@@ -269,6 +314,21 @@ typedef struct
 #define ELF32_R_TYPE(i)		((unsigned char) (i))
 #define ELF32_R_INFO(s,t) 	(((s) << 8) + (unsigned char)(t))
 
+typedef struct {
+	Elf64_Word	r_offset;	/* where to do it */
+	Elf64_Word	r_info;		/* index & type of relocation */
+} Elf64_Rel;
+
+typedef struct {
+	Elf64_Word	r_offset;	/* where to do it */
+	Elf64_Word	r_info;		/* index & type of relocation */
+	Elf64_Word	r_addend;	/* adjustment value */
+} Elf64_RelA;
+
+#define	ELF64_R_SYM(info)	((info) >> 32)
+#define	ELF64_R_TYPE(info)	((info) & 0xFFFFFFFF)
+#define ELF64_R_INFO(s,t) 	(((s) << 32) + (u_int32_t)(t))
+
 /* Program Header */
 typedef struct {
 	Elf32_Word	p_type;		/* segment type */
@@ -280,6 +340,17 @@ typedef struct {
 	Elf32_Word	p_flags;	/* flags */
 	Elf32_Word	p_align;	/* memory alignment */
 } Elf32_Phdr;
+
+typedef struct {
+	Elf64_Half	p_type;		/* entry type */
+	Elf64_Half	p_flags;	/* flags */
+	Elf64_Off	p_offset;	/* offset */
+	Elf64_Addr	p_vaddr;	/* virtual address */
+	Elf64_Addr	p_paddr;	/* physical address */
+	Elf64_Word	p_filesz;	/* file size */
+	Elf64_Word	p_memsz;	/* memory size */
+	Elf64_Word	p_align;	/* memory & file alignment */
+} Elf64_Phdr;
 
 /* Segment types - p_type */
 #define PT_NULL		0		/* unused */
@@ -301,17 +372,23 @@ typedef struct {
 					/*  specific segment flags */
 
 /* Dynamic structure */
-typedef struct 
-{
+typedef struct {
 	Elf32_Sword	d_tag;		/* controls meaning of d_val */
-	union 
-	{
+	union {
 		Elf32_Word	d_val;	/* Multiple meanings - see d_tag */
 		Elf32_Addr	d_ptr;	/* program virtual address */
 	} d_un;
 } Elf32_Dyn;
 
-extern Elf32_Dyn	_DYNAMIC[];
+extern Elf32_Dyn	_DYNAMIC[];	/* XXX not 64-bit clean */
+
+typedef struct {
+	Elf64_Word	d_tag;		/* controls meaning of d_val */
+	union {
+		Elf64_Addr	d_ptr;
+		Elf64_Word	d_val;
+	} d_un;
+} Elf64_Dyn;
 
 /* Dynamic Array Tags - d_tag */
 #define DT_NULL		0		/* marks end of _DYNAMIC array */
@@ -356,9 +433,14 @@ unsigned int elf_hash(const unsigned char *name);
 #define ELF_AUX_ENTRIES	8		/* Size of aux array passed to loader */
 
 typedef struct {
-	int             au_id;
-	unsigned long   au_v;
-} AuxInfo;
+	Elf32_Sword	au_id;				/* 32-bit id */
+	Elf32_Word	au_v;				/* 32-bit value */
+} AuxInfo; /* XXX needs to be Aux32Info */
+
+typedef struct {
+	Elf64_Shalf	au_id;				/* 32-bit id */
+	Elf64_Word	au_v;				/* 64-bit id */
+} Aux64Info;
 
 enum AuxID {
 	AUX_null = 0,
