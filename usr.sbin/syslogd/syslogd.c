@@ -1,4 +1,4 @@
-/*	$OpenBSD: syslogd.c,v 1.36 2000/09/13 23:10:25 millert Exp $	*/
+/*	$OpenBSD: syslogd.c,v 1.37 2001/01/11 23:39:12 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: syslogd.c,v 1.36 2000/09/13 23:10:25 millert Exp $";
+static char rcsid[] = "$OpenBSD: syslogd.c,v 1.37 2001/01/11 23:39:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -190,8 +190,11 @@ int	InetInuse = 0;		/* non-zero if INET sockets are being used */
 int	finet;			/* Internet datagram socket */
 int	LogPort;		/* port number for INET connections */
 int	Initialized = 0;	/* set when we have initialized ourselves */
+
 int	MarkInterval = 20 * 60;	/* interval between marks in seconds */
 int	MarkSeq = 0;		/* mark sequence number */
+volatile int MarkSet;
+
 int	SecureMode = 1;		/* when true, speak only unix domain socks */
 
 void	cfline __P((char *, struct filed *, char *));
@@ -199,6 +202,7 @@ char   *cvthname __P((struct sockaddr_in *));
 int	decode __P((const char *, CODE *));
 void	die __P((int));
 void	domark __P((int));
+void	markit __P((void));
 void	fprintlog __P((struct filed *, int, char *));
 void	init __P((int));
 void	logerror __P((char *));
@@ -221,11 +225,12 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	int ch, i, fklog, len, linesize;
+	int ch, i, fklog, len, linesize, fdsrmax = 0;
 	struct sockaddr_un sunx, fromunix;
 	struct sockaddr_in sin, frominet;
-	FILE *fp;
+	fd_set *fdsr = NULL;
 	char *p, *line;
+	FILE *fp;
 
 	while ((ch = getopt(argc, argv, "duf:m:p:a:")) != -1)
 		switch (ch) {
@@ -269,7 +274,8 @@ main(argc, argv)
 		setlinebuf(stdout);
 
 	consfile.f_type = F_CONSOLE;
-	(void)strcpy(consfile.f_un.f_fname, ctty);
+	(void)strlcpy(consfile.f_un.f_fname, ctty,
+	    sizeof(consfile.f_un.f_fname));
 	(void)gethostname(LocalHostName, sizeof(LocalHostName));
 	if ((p = strchr(LocalHostName, '.')) != NULL) {
 		*p++ = '\0';
@@ -298,10 +304,11 @@ main(argc, argv)
 
 		memset(&sunx, 0, sizeof(sunx));
 		sunx.sun_family = AF_UNIX;
-		(void)strncpy(sunx.sun_path, funixn[i], sizeof(sunx.sun_path));
+		(void)strlcpy(sunx.sun_path, funixn[i], sizeof(sunx.sun_path));
 		funix[i] = socket(AF_UNIX, SOCK_DGRAM, 0);
 		if (funix[i] < 0 ||
-		    bind(funix[i], (struct sockaddr *)&sunx, SUN_LEN(&sunx)) < 0 ||
+		    bind(funix[i], (struct sockaddr *)&sunx,
+		    SUN_LEN(&sunx)) < 0 ||
 		    chmod(funixn[i], 0666) < 0) {
 			(void) snprintf(line, sizeof line, "cannot create %s",
 			    funixn[i]);
@@ -350,41 +357,45 @@ main(argc, argv)
 	init(0);
 	(void)signal(SIGHUP, init);
 
+	if (fklog != -1 && fklog > fdsrmax)
+		fdsrmax = fklog;
+	if (finet != -1 && finet > fdsrmax)
+		fdsrmax = finet;
+	for (i = 0; i < nfunix; i++) {
+		if (funix[i] != -1 && funix[i] > fdsrmax)
+			fdsrmax = funix[i];
+	}
+
+	fdsr = (fd_set *)calloc(howmany(fdsrmax+1, NFDBITS),
+	    sizeof(fd_mask));
+	if (fdsr == NULL)
+		errx(1, "calloc fd_set");
+
 	for (;;) {
-		fd_set readfds;
-		int nfds = 0;
+		bzero(fdsr, howmany(fdsrmax+1, NFDBITS) *
+		    sizeof(fd_mask));
 
-		FD_ZERO(&readfds);
-		if (fklog != -1) {
-			FD_SET(fklog, &readfds);
-			if (fklog > nfds)
-				nfds = fklog;
-		}
-		if (finet != -1) {
-			FD_SET(finet, &readfds);
-			if (finet > nfds)
-				nfds = finet;
-		}
+		if (fklog != -1)
+			FD_SET(fklog, fdsr);
+		if (finet != -1)
+			FD_SET(finet, fdsr);
 		for (i = 0; i < nfunix; i++) {
-			if (funix[i] != -1) {
-				FD_SET(funix[i], &readfds);
-				if (funix[i] > nfds)
-					nfds = funix[i];
-			}
+			if (funix[i] != -1)
+				FD_SET(funix[i], fdsr);
 		}
 
-		/*dprintf("readfds = %#x\n", readfds);*/
-		nfds = select(nfds+1, &readfds, (fd_set *)NULL,
-		    (fd_set *)NULL, (struct timeval *)NULL);
-		if (nfds == 0)
+		switch (select(fdsrmax+1, fdsr, NULL, NULL, NULL)) {
+		case 0:
 			continue;
-		if (nfds < 0) {
+		case -1:
 			if (errno != EINTR)
 				logerror("select");
+			if (MarkSet)
+				markit();
 			continue;
 		}
-		/*dprintf("got a message (%d, %#x)\n", nfds, readfds);*/
-		if (fklog != -1 && FD_ISSET(fklog, &readfds)) {
+
+		if (fklog != -1 && FD_ISSET(fklog, fdsr)) {
 			i = read(fklog, line, linesize - 1);
 			if (i > 0) {
 				line[i] = '\0';
@@ -394,7 +405,7 @@ main(argc, argv)
 				fklog = -1;
 			}
 		}
-		if (finet != -1 && FD_ISSET(finet, &readfds)) {
+		if (finet != -1 && FD_ISSET(finet, fdsr)) {
 			len = sizeof(frominet);
 			i = recvfrom(finet, line, MAXLINE, 0,
 			    (struct sockaddr *)&frominet, &len);
@@ -409,7 +420,7 @@ main(argc, argv)
 			}
 		} 
 		for (i = 0; i < nfunix; i++) {
-			if (funix[i] != -1 && FD_ISSET(funix[i], &readfds)) {
+			if (funix[i] != -1 && FD_ISSET(funix[i], fdsr)) {
 				len = sizeof(fromunix);
 				len = recvfrom(funix[i], line, MAXLINE, 0,
 				    (struct sockaddr *)&fromunix, &len);
@@ -421,6 +432,8 @@ main(argc, argv)
 			}
 		}
 	}
+	if (fdsr)
+		free(fdsr);
 }
 
 void
@@ -482,8 +495,7 @@ printsys(msg)
 	int c, pri, flags;
 	char *lp, *p, *q, line[MAXLINE + 1];
 
-	(void)strcpy(line, _PATH_UNIX);
-	(void)strcat(line, ": ");
+	snprintf(line, sizeof line, "%s: ", _PATH_UNIX);
 	lp = line + strlen(line);
 	for (p = msg; *p != '\0'; ) {
 		flags = SYNC_FILE | ADDDATE;	/* fsync file after write */
@@ -604,7 +616,7 @@ logmsg(pri, msg, from, flags)
 		if ((flags & MARK) == 0 && msglen == f->f_prevlen &&
 		    !strcmp(msg, f->f_prevline) &&
 		    !strcmp(from, f->f_prevhost)) {
-			(void)strncpy(f->f_lasttime, timestamp, 15);
+			strlcpy(f->f_lasttime, timestamp, 16);
 			f->f_prevcount++;
 			dprintf("msg repeated %d times, %ld sec of %d\n",
 			    f->f_prevcount, (long)(now - f->f_time),
@@ -625,13 +637,12 @@ logmsg(pri, msg, from, flags)
 				fprintlog(f, 0, (char *)NULL);
 			f->f_repeatcount = 0;
 			f->f_prevpri = pri;
-			(void)strncpy(f->f_lasttime, timestamp, 15);
-			(void)strncpy(f->f_prevhost, from,
-					sizeof(f->f_prevhost)-1);
-			f->f_prevhost[sizeof(f->f_prevhost)-1] = '\0';
+			strlcpy(f->f_lasttime, timestamp, 16);
+			strlcpy(f->f_prevhost, from,
+			    sizeof(f->f_prevhost));
 			if (msglen < MAXSVLINE) {
 				f->f_prevlen = msglen;
-				(void)strcpy(f->f_prevline, msg);
+				strlcpy(f->f_prevline, msg, sizeof(f->f_prevline));
 				fprintlog(f, flags, (char *)NULL);
 			} else {
 				f->f_prevline[0] = 0;
@@ -686,8 +697,8 @@ fprintlog(f, flags, msg)
 		v->iov_len = strlen(msg);
 	} else if (f->f_prevcount > 1) {
 		v->iov_base = repbuf;
-		v->iov_len = sprintf(repbuf, "last message repeated %d times",
-		    f->f_prevcount);
+		v->iov_len = snprintf(repbuf, sizeof repbuf,
+		    "last message repeated %d times", f->f_prevcount);
 	} else {
 		v->iov_base = f->f_prevline;
 		v->iov_len = f->f_prevlen;
@@ -798,8 +809,7 @@ wallmsg(f, iov)
 	while (fread((char *)&ut, sizeof(ut), 1, uf) == 1) {
 		if (ut.ut_name[0] == '\0')
 			continue;
-		strncpy(line, ut.ut_line, sizeof(ut.ut_line));
-		line[sizeof(ut.ut_line)] = '\0';
+		strlcpy(line, ut.ut_line, sizeof(line));
 		if (f->f_type == F_WALL) {
 			if ((p = ttymsg(iov, 6, line, TTYMSGTIME)) != NULL) {
 				errno = 0;	/* already in msg */
@@ -875,27 +885,7 @@ void
 domark(signo)
 	int signo;
 {
-	struct filed *f;
-	int save_errno = errno;
-
-	now = time((time_t *)NULL);
-	MarkSeq += TIMERINTVL;
-	if (MarkSeq >= MarkInterval) {
-		logmsg(LOG_INFO, "-- MARK --", LocalHostName, ADDDATE|MARK);
-		MarkSeq = 0;
-	}
-
-	for (f = Files; f; f = f->f_next) {
-		if (f->f_prevcount && now >= REPEATTIME(f)) {
-			dprintf("flush %s: repeated %d times, %d sec.\n",
-			    TypeNames[f->f_type], f->f_prevcount,
-			    repeatinterval[f->f_repeatcount]);
-			fprintlog(f, 0, (char *)NULL);
-			BACKOFF(f);
-		}
-	}
-	(void)alarm(TIMERINTVL);
-	errno = save_errno;
+	MarkSet = 1;
 }
 
 /*
@@ -927,6 +917,7 @@ die(signo)
 	int i;
 
 	Initialized = 0;		/* Don't log SIGCHLDs */
+	alarm(0);
 	for (f = Files; f != NULL; f = f->f_next) {
 		/* flush any pending output */
 		if (f->f_prevcount)
@@ -935,7 +926,7 @@ die(signo)
 	Initialized = was_initialized;
 	if (signo) {
 		dprintf("syslogd: exiting on signal %d\n", signo);
-		(void)sprintf(buf, "exiting on signal %d", signo);
+		(void)snprintf(buf, sizeof buf, "exiting on signal %d", signo);
 		errno = 0;
 		logerror(buf);
 	}
@@ -1004,7 +995,7 @@ init(signo)
 	 *  Foreach line in the conf table, open that file.
 	 */
 	f = NULL;
-	strcpy(prog, "*");
+	strlcpy(prog, "*", sizeof(prog));
 	while (fgets(cline, sizeof(cline), cf) != NULL) {
 		/*
 		 * check for end-of-section, comments, strip off trailing
@@ -1025,7 +1016,7 @@ init(signo)
 			while (isspace(*p))
 				p++;
 			if (!*p) {
-				strcpy(prog, "*");
+				strlcpy(prog, "*", sizeof(prog));
 				continue;
 			}
 			for (i = 0; i < NAME_MAX; i++) {
@@ -1119,7 +1110,7 @@ cfline(line, f, prog)
 	else {
 		f->f_program = calloc(1, strlen(prog)+1);
 		if (f->f_program)
-			strcpy(f->f_program, prog);
+			strlcpy(f->f_program, prog, strlen(prog)+1);
 	}
 
 	/* scan through the list of selectors */
@@ -1192,9 +1183,8 @@ cfline(line, f, prog)
 	case '@':
 		if (!InetInuse)
 			break;
-		(void)strncpy(f->f_un.f_forw.f_hname, ++p,
-		    sizeof(f->f_un.f_forw.f_hname)-1);
-		f->f_un.f_forw.f_hname[sizeof(f->f_un.f_forw.f_hname)-1] = '\0';
+		(void)strlcpy(f->f_un.f_forw.f_hname, ++p,
+		    sizeof(f->f_un.f_forw.f_hname));
 		hp = gethostbyname(f->f_un.f_forw.f_hname);
 		if (hp == NULL) {
 			extern int h_errno;
@@ -1213,7 +1203,7 @@ cfline(line, f, prog)
 		break;
 
 	case '/':
-		(void)strcpy(f->f_un.f_fname, p);
+		(void)strlcpy(f->f_un.f_fname, p, sizeof(f->f_un.f_fname));
 		if ((f->f_file = open(p, O_WRONLY|O_APPEND, 0)) < 0) {
 			f->f_type = F_UNUSED;
 			logerror(p);
@@ -1295,4 +1285,30 @@ decode(name, codetab)
 			return (c->c_val);
 
 	return (-1);
+}
+
+void
+markit(void)
+{
+	struct filed *f;
+
+	now = time((time_t *)NULL);
+	MarkSeq += TIMERINTVL;
+	if (MarkSeq >= MarkInterval) {
+		logmsg(LOG_INFO, "-- MARK --",
+		    LocalHostName, ADDDATE|MARK);
+		MarkSeq = 0;
+	}
+
+	for (f = Files; f; f = f->f_next) {
+		if (f->f_prevcount && now >= REPEATTIME(f)) {
+			dprintf("flush %s: repeated %d times, %d sec.\n",
+			    TypeNames[f->f_type], f->f_prevcount,
+			    repeatinterval[f->f_repeatcount]);
+			fprintlog(f, 0, (char *)NULL);
+			BACKOFF(f);
+		}
+	}
+	MarkSet = 0;
+	(void)alarm(TIMERINTVL);
 }
