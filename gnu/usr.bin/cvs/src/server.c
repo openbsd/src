@@ -1094,6 +1094,7 @@ static void buf_output PROTO((struct buffer *, const char *, int));
 static void buf_output0 PROTO((struct buffer *, const char *));
 static inline void buf_append_char PROTO((struct buffer *, int));
 static int buf_send_output PROTO((struct buffer *));
+static int buf_len PROTO((struct buffer *));
 static int set_nonblock PROTO((struct buffer *));
 static int set_block PROTO((struct buffer *));
 static int buf_send_counted PROTO((struct buffer *));
@@ -1254,6 +1255,29 @@ buf_append_char (buf, ch)
 	buf_output (buf, &b, 1);
     }
 }
+
+/*
+ * Count how many bytes are in the buffer
+ */
+
+static int
+buf_len (buf)
+     struct buffer *buf;
+{
+    struct buffer_data *data;
+    int count = 0;
+
+    if (! buf->output)
+	abort ();
+
+    for (data = buf->data; data; data = data->next)
+    {
+	count += data->size;
+    }
+	
+    return (count);
+}
+
 
 /*
  * Send all the output we've been saving up.  Returns 0 for success or
@@ -2141,7 +2165,7 @@ do_cvs_command (command)
 	    FD_ZERO (&writefds);
 	    if (! buf_empty_p (&outbuf))
 	      FD_SET (STDOUT_FILENO, &writefds);
-	    if (stdout_pipe[0] >= 0)
+	    if (stdout_pipe[0] >= 0 && buf_len (&outbuf) < 256*1024)
 	    {
 		FD_SET (stdout_pipe[0], &readfds);
 	    }
