@@ -1,4 +1,4 @@
-/*	$OpenBSD: reboot.h,v 1.7 1997/01/16 04:19:41 kstailey Exp $	*/
+/*	$OpenBSD: reboot.h,v 1.8 1997/06/22 22:05:58 downsj Exp $	*/
 /*	$NetBSD: reboot.h,v 1.9 1996/04/22 01:23:25 christos Exp $	*/
 
 /*
@@ -42,18 +42,19 @@
  */
 #define	RB_AUTOBOOT	0	/* flags for system auto-booting itself */
 
-#define	RB_ASKNAME	0x001	/* ask for file name to reboot from */
-#define	RB_SINGLE	0x002	/* reboot to single user only */
-#define	RB_NOSYNC	0x004	/* dont sync before reboot */
-#define	RB_HALT		0x008	/* don't reboot, just halt */
-#define	RB_INITNAME	0x010	/* name given for /etc/init (unused) */
-#define	RB_DFLTROOT	0x020	/* use compiled-in rootdev */
-#define	RB_KDB		0x040	/* give control to kernel debugger */
-#define	RB_RDONLY	0x080	/* mount root fs read-only */
-#define	RB_DUMP		0x100	/* dump kernel memory before reboot */
-#define	RB_MINIROOT	0x200	/* mini-root present in memory at boot time */
-#define	RB_CONFIG	0x400	/* change configured devices */
-#define	RB_TIMEBAD	0x800	/* don't call resettodr() in boot() */
+#define	RB_ASKNAME	0x0001	/* ask for file name to reboot from */
+#define	RB_SINGLE	0x0002	/* reboot to single user only */
+#define	RB_NOSYNC	0x0004	/* dont sync before reboot */
+#define	RB_HALT		0x0008	/* don't reboot, just halt */
+#define	RB_INITNAME	0x0010	/* name given for /etc/init (unused) */
+#define	RB_DFLTROOT	0x0020	/* use compiled-in rootdev */
+#define	RB_KDB		0x0040	/* give control to kernel debugger */
+#define	RB_RDONLY	0x0080	/* mount root fs read-only */
+#define	RB_DUMP		0x0100	/* dump kernel memory before reboot */
+#define	RB_MINIROOT	0x0200	/* mini-root present in memory at boot time */
+#define	RB_CONFIG	0x0400	/* change configured devices */
+#define	RB_TIMEBAD	0x0800	/* don't call resettodr() in boot() */
+#define RB_POWERDOWN	0x1000	/* attempt to power down machine */
 
 /*
  * Constants for converting boot-style device number to type,
