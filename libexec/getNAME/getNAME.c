@@ -1,4 +1,5 @@
-/*	$OpenBSD: getNAME.c,v 1.4 1997/11/13 03:56:53 millert Exp $	*/
+/*	$OpenBSD: getNAME.c,v 1.5 1997/11/13 04:15:25 millert Exp $	*/
+/*	$NetBSD: getNAME.c,v 1.7.2.1 1997/11/10 19:54:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1993
@@ -43,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)getNAME.c	8.1 (Berkeley) 6/30/93";
 #else
-static char rcsid[] = "$OpenBSD: getNAME.c,v 1.4 1997/11/13 03:56:53 millert Exp $";
+static char rcsid[] = "$OpenBSD: getNAME.c,v 1.5 1997/11/13 04:15:25 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -51,11 +52,13 @@ static char rcsid[] = "$OpenBSD: getNAME.c,v 1.4 1997/11/13 03:56:53 millert Exp
  * Get name sections from manual pages.
  *	-t	for building toc
  *	-i	for building intro entries
+ *	-w	for querying type of manual source
  *	other	apropos database
  */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <libgen.h>
 
 int tocrc;
 int intro;
@@ -67,17 +70,17 @@ void getfrom __P((char *));
 void split __P((char *, char *));
 void trimln __P((char *));
 void usage __P((void));
+int main __P((int, char *[]));
 
 int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	extern int optind;
 	int ch;
 
 	while ((ch = getopt(argc, argv, "itw")) != -1)
-		switch(ch) {
+		switch (ch) {
 		case 'i':
 			intro = 1;
 			break;
@@ -107,20 +110,18 @@ getfrom(pathname)
 	char *pathname;
 {
 	int i = 0;
-	char *name, *loc;
+	char *name, *loc, *s, *t;
 	char headbuf[BUFSIZ];
 	char linbuf[BUFSIZ];
+	char savebuf[BUFSIZ];
 
 	if (freopen(pathname, "r", stdin) == 0) {
 		perror(pathname);
 		return;
 	}
-	if (name = strrchr(pathname, '/'))
-		name++;
-	else
-		name = pathname;
+	name = basename(pathname);
 	for (;;) {
-		if (fgets(headbuf, sizeof headbuf, stdin) == NULL) {
+		if (fgets(headbuf, sizeof(headbuf), stdin) == NULL) {
 			if (typeflag)
 				printf("%-60s	UNKNOWN\n", pathname);
 			return;
@@ -130,20 +131,15 @@ getfrom(pathname)
 		if ((headbuf[1] == 'T' && headbuf[2] == 'H') ||
 		    (headbuf[1] == 't' && headbuf[2] == 'h'))
 			break;
-		if (headbuf[1] == 'D' && headbuf[2] == 't') {
-			if (typeflag) {
-				printf("%-60s	NEW\n", pathname);
-				return;
-			}
+		if (headbuf[1] == 'D' && headbuf[2] == 't')
 			goto newman;
-		}
 	}
 	if (typeflag) {
 		printf("%-60s	OLD\n", pathname);
 		return;
 	}
 	for (;;) {
-		if (fgets(linbuf, sizeof linbuf, stdin) == NULL)
+		if (fgets(linbuf, sizeof(linbuf), stdin) == NULL)
 			return;
 		if (linbuf[0] != '.')
 			continue;
@@ -155,11 +151,9 @@ getfrom(pathname)
 	trimln(headbuf);
 	if (tocrc)
 		doname(name);
-	if (!tocrc && !intro)
-		printf("%s\t", headbuf);
 	linbuf[0] = '\0';
 	for (;;) {
-		if (fgets(headbuf, sizeof headbuf, stdin) == NULL)
+		if (fgets(headbuf, sizeof(headbuf), stdin) == NULL)
 			break;
 		if (headbuf[0] == '.') {
 			if (headbuf[1] == 'S' && headbuf[2] == 'H')
@@ -168,10 +162,24 @@ getfrom(pathname)
 				break;
 		}
 		if (i != 0)
-			strcat(linbuf, " ");
+			strncat(linbuf, " ", sizeof(linbuf) - 1);
 		i++;
 		trimln(headbuf);
-		strcat(linbuf, headbuf);
+		strncat(linbuf, headbuf, sizeof(linbuf) - 1);
+		/* change the \- into (N) - */
+		if ((s = strstr(linbuf, "\\-")) != NULL) {
+			strcpy(savebuf, s+1);
+			if ((t = strchr(name, '.')) != NULL) {
+				t++;
+				*s++ = '(';
+				while (*t)
+					*s++ = *t++;
+				*s++ = ')';
+				*s++ = ' ';
+				*s++ = '\0';
+			}
+			strncat(linbuf, savebuf, sizeof(linbuf) - strlen(savebuf) - 1);
+		}
 	}
 	if (intro)
 		split(linbuf, name);
@@ -180,8 +188,12 @@ getfrom(pathname)
 	return;
 
 newman:
+	if (typeflag) {
+		printf("%-60s	NEW\n", pathname);
+		return;
+	}
 	for (;;) {
-		if (fgets(linbuf, sizeof linbuf, stdin) == NULL)
+		if (fgets(linbuf, sizeof(linbuf), stdin) == NULL)
 			return;
 		if (linbuf[0] != '.')
 			continue;
@@ -191,18 +203,16 @@ newman:
 	trimln(headbuf);
 	if (tocrc)
 		doname(name);
-	if (!tocrc && !intro)
-		printf(".TH%s\t", &headbuf[3]);
 	linbuf[0] = '\0';
 	for (;;) {
-		if (fgets(headbuf, sizeof headbuf, stdin) == NULL)
+		if (fgets(headbuf, sizeof(headbuf), stdin) == NULL)
 			break;
 		if (headbuf[0] == '.') {
 			if (headbuf[1] == 'S' && headbuf[2] == 'h')
 				break;
 		}
 		if (i != 0)
-			strcat(linbuf, " ");
+			strncat(linbuf, " ", sizeof(linbuf) - 1);
 		i++;
 		trimln(headbuf);
 		for (loc = strchr(headbuf, ' '); loc; loc = strchr(loc, ' '))
@@ -211,7 +221,7 @@ newman:
 			else
 				loc++;
 		if (headbuf[0] != '.') {
-			strcat(linbuf, headbuf);
+			strncat(linbuf, headbuf, sizeof(linbuf) - 1);
 		} else {
 			/*
 			 * Get rid of quotes in macros.
@@ -230,15 +240,23 @@ newman:
 				loc[2] = ')';
 				loc[3] = '\0';
 			}
+
 			/*
 			 * Put dash between names and description.
+			 * Put section and dash between names and description.
 			 */
-			if (headbuf[1] == 'N' && headbuf[2] == 'd')
-				strcat(linbuf, "\\- ");
+			if (headbuf[1] == 'N' && headbuf[2] == 'd') {
+				if ((t = strchr(name, '.')) != NULL) {
+					strncat(linbuf, "(", sizeof(linbuf)-1);
+					strncat(linbuf, t+1, sizeof(linbuf)-1);
+					strncat(linbuf, ") ", sizeof(linbuf)-1);
+				}
+				strncat(linbuf, "- ", sizeof(linbuf) - 1);
+			}
 			/*
 			 * Skip over macro names.
 			 */
-			strcat(linbuf, &headbuf[4]);
+			strncat(linbuf, &headbuf[4], sizeof(linbuf) - 1);
 		}
 	}
 	if (intro)
@@ -340,6 +358,6 @@ again:
 void
 usage()
 {
-	(void)fprintf(stderr, "usage: getNAME [-it] file ...\n");
+	(void)fprintf(stderr, "usage: getNAME [-itw] file ...\n");
 	exit(1);
 }

@@ -1,7 +1,7 @@
-#	from: @(#)Makefile	5.3 (Berkeley) 5/11/90
-#	$Id: Makefile,v 1.1.1.1 1995/10/18 08:43:16 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.2 1997/11/13 04:15:27 millert Exp $
+#	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
 
 PROG=	getNAME
-NOMAN=	noman
+MAN=	getNAME.8
 
 .include <bsd.prog.mk>
