@@ -1,4 +1,4 @@
-#	$Id: Makefile,v 1.6 1996/06/16 11:02:26 deraadt Exp $
+#	$Id: Makefile,v 1.7 1996/07/01 18:09:16 deraadt Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -18,7 +18,13 @@ LIST=		${.CURDIR}/list
 CRUNCHCONF=	${.CURDIR}/${CBIN}.conf
 MTREE=		${.CURDIR}/mtree.conf
 
-all: ${CBIN}
+bsd:
+	cd ${.CURDIR}/../../../../sys/arch/i386/conf && config INST
+	cd ${.CURDIR}/../../../../sys/arch/i386/compile/INST && \
+	    make clean && make depend && make
+	cp ${.CURDIR}/../../../../sys/arch/i386/compile/INST/bsd bsd
+
+all: ${CBIN} bsd
 .ifndef FLOPPY3
 .else
 .endif
