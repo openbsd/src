@@ -1,0 +1,2 @@
+# flags on non-tcp rules are invalid
+pass in all flags S/SA

@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.112 2002/07/05 18:09:50 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.113 2002/07/08 11:46:32 dhartmei Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -1605,6 +1605,10 @@ rule_consistent(struct pf_rule *r)
 	if (r->proto != IPPROTO_TCP && r->proto != IPPROTO_UDP &&
 	    (r->src.port_op || r->dst.port_op)) {
 		yyerror("port only applies to tcp/udp");
+		problems++;
+	}
+	if (r->proto != IPPROTO_TCP && (r->flags || r->flagset)) {
+		yyerror("flags only applies to tcp");
 		problems++;
 	}
 	if (r->proto != IPPROTO_ICMP && r->proto != IPPROTO_ICMPV6 &&
