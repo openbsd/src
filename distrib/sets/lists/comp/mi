@@ -4745,6 +4745,7 @@
 ./usr/share/man/cat9/M_READONLY.0
 ./usr/share/man/cat9/M_TRAILINGSPACE.0
 ./usr/share/man/cat9/UVM_MAPFLAG.0
+./usr/share/man/cat9/VOP_LOOKUP.0
 ./usr/share/man/cat9/abs.0
 ./usr/share/man/cat9/add_audio_randomness.0
 ./usr/share/man/cat9/add_disk_randomness.0

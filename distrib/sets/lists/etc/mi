@@ -137,6 +137,7 @@
 ./var/log/messages
 ./var/log/secure
 ./var/log/sendmail.st
+./var/log/sendmail.st
 ./var/log/wtmp
 ./var/log/xferlog
 ./var/mail/root
