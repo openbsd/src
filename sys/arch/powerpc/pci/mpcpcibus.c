@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpcpcibus.c,v 1.9 1999/01/11 05:11:53 millert Exp $ */
+/*	$OpenBSD: mpcpcibus.c,v 1.10 1999/11/08 23:49:00 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -47,11 +47,14 @@
 #include <machine/autoconf.h>
 #include <machine/bat.h>
 
+#if 0
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
+#endif
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
 
 #include <powerpc/pci/pcibrvar.h>
 #include <powerpc/pci/mpc106reg.h>
@@ -106,20 +109,43 @@ srom_crc32(
     return crc;
 }
 
-
 int
 mpcpcibrmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
 	struct confargs *ca = aux;
+	int handle; 
+	int found = 0;
+	int err;
+	unsigned int val;
 
 	if (strcmp(ca->ca_name, mpcpcibr_cd.cd_name) != 0)
-		return (0);
+		return (found);
 
-	return (1);
+	handle = ppc_open_pci_bridge();
+	if (handle != 0) {
+		err = OF_call_method("config-l@", handle, 1, 1,
+			0x80000000, &val);
+		if (err == 0) {
+			switch (val) {
+			/* supported ppc-pci bridges */
+			case (PCI_VENDOR_MOT | ( PCI_PRODUCT_MOT_MPC105 <<16)):
+			case (PCI_VENDOR_MOT | ( PCI_PRODUCT_MOT_MPC106 <<16)):
+				found = 1;
+				break;
+			default:
+				found = 0;
+			}
+
+		}
+	}
+	ppc_close_pci_bridge(handle);
+
+	return found;
 }
 
+int pci_map_a = 0;
 void
 mpcpcibrattach(parent, self, aux)
 	struct device *parent, *self;
@@ -128,6 +154,8 @@ mpcpcibrattach(parent, self, aux)
 	struct pcibr_softc *sc = (struct pcibr_softc *)self;
 	struct pcibr_config *lcp;
 	struct pcibus_attach_args pba;
+	int map;
+	char *bridge;
 
 	switch(system_type) {
 	case POWER4e:
@@ -157,35 +185,74 @@ mpcpcibrattach(parent, self, aux)
 		lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
 
 		printf(": MPC106, Revision %x.\n",
-				mpc_cfg_read_1(MPC106_PCI_REVID));
-		mpc_cfg_write_2(MPC106_PCI_STAT, 0xff80); /* Reset status */
+				mpc_cfg_read_1(sc->sc_iobus_space, sc->ioh,
+					MPC106_PCI_REVID));
+#if 0
+		mpc_cfg_write_2(sc->sc_iobus_space, sc->ioh,
+			MPC106_PCI_STAT, 0xff80); /* Reset status */
+#endif
+		bridge = "MPC106";
 		break;
 
 	case OFWMACH:
 	case PWRSTK:
+	case APPL:
 		lcp = sc->sc_pcibr = &mpc_config;
-
 		{
-			unsigned int addr;
-			/* need to map 0xf0000000 also but cannot
-			 * because kernel uses that address space
+			int handle; 
+			int err;
+			unsigned int val;
+			handle = ppc_open_pci_bridge();
+			/* if open fails something odd has happened,
+			 * we did this before during probe...
 			 */
-			for (addr =    0xc0000000;
-			     addr >=	  0x80000000;
-			     addr -=   0x10000000)
-			{
-				/* we map it 1-1, cache inibited,
-				 * REALLY wish this could be cacheable
-				 * that is the reason to not use the bat.
-				 */
-				addbatmap(addr, addr, BAT_I);
+			err = OF_call_method("config-l@", handle, 1, 1,
+				0x80000000, &val);
+			if (err == 0) {
+				switch (val) {
+				/* supported ppc-pci bridges */
+				case (PCI_VENDOR_MOT | ( PCI_PRODUCT_MOT_MPC105 <<16)):
+					bridge = "MPC105";
+					break;
+				case (PCI_VENDOR_MOT | ( PCI_PRODUCT_MOT_MPC106 <<16)):
+					bridge = "MPC106";
+					break;
+				default:
+					;
+				}
+
 			}
+			
+			/* read the PICR1 register to find what 
+			 * address map is being used
+			 */
+			err = OF_call_method("config-l@", handle, 1, 1,
+				0x800000a8, &val);
+			if (val & 0x00010000) {
+				map = 1; /* map A */
+				pci_map_a = 1;
+			} else {
+				map = 0; /* map B */
+				pci_map_a = 0;
+			}
+
+			ppc_close_pci_bridge(handle);
 		}
 
-		sc->sc_membus_space.bus_base = MPC106_V_PCI_MEM_SPACE;
-		sc->sc_membus_space.bus_reverse = 1;
-		sc->sc_iobus_space.bus_base = MPC106_V_PCI_IO_SPACE;
-		sc->sc_iobus_space.bus_reverse = 1;
+
+		if (map == 1) {
+			sc->sc_membus_space.bus_base = MPC106_P_PCI_MEM_SPACE;
+			sc->sc_membus_space.bus_reverse = 1;
+			sc->sc_iobus_space.bus_base = MPC106_P_PCI_IO_SPACE;
+			sc->sc_iobus_space.bus_reverse = 1;
+		} else {
+			sc->sc_membus_space.bus_base =
+				MPC106_P_PCI_MEM_SPACE_MAP_B;
+			sc->sc_membus_space.bus_reverse = 1;
+			sc->sc_iobus_space.bus_base =
+				MPC106_P_PCI_IO_SPACE_MAP_B;
+			sc->sc_iobus_space.bus_reverse = 1;
+		}
 
 		lcp->lc_pc.pc_conf_v = lcp;
 		lcp->lc_pc.pc_attach_hook = mpc_attach_hook;
@@ -201,10 +268,27 @@ mpcpcibrattach(parent, self, aux)
 		lcp->lc_pc.pc_intr_string = mpc_intr_string;
 		lcp->lc_pc.pc_intr_establish = mpc_intr_establish;
 		lcp->lc_pc.pc_intr_disestablish = mpc_intr_disestablish;
+		if ( bus_space_map(&(sc->sc_iobus_space), 0, NBPG, 0,
+			&sc->ioh) != 0 )
+		{
+			panic("mpcpcibus: unable to map self\n");
+		}
 
-		printf(": MPC106, Revision %x.\n",
-				mpc_cfg_read_1(MPC106_PCI_REVID));
-		mpc_cfg_write_2(MPC106_PCI_STAT, 0xff80); /* Reset status */
+
+		printf("iospace base %x ioh %x\n", sc->sc_iobus_space.bus_base, 
+			sc->ioh);
+		printf(": %s, Revision %x. ", bridge, 0x999999);
+		if (map == 1) {
+			printf("Using Map A\n");
+		} else  {
+			printf("Using Map B\n");
+		}
+#if 0
+			mpc_cfg_read_1(sc->sc_iobus_space, sc->ioh,
+				MPC106_PCI_REVID));
+		mpc_cfg_write_2(sc->sc_iobus_space, sc->ioh,
+			MPC106_PCI_STAT, 0xff80); /* Reset status */
+#endif
 		break;
 
 	default:
@@ -253,7 +337,7 @@ vtophys(p)
 	else {
 		pa = pmap_extract(vm_map_pmap(phys_map), va);
 	}
-	return(pa | MPC106_PCI_CPUMEM);
+	return(pa | ((pci_map_a == 1) ? MPC106_PCI_CPUMEM : 0 ));
 }
 
 void
@@ -347,6 +431,7 @@ mpc_conf_read(cpv, tag, offset)
 	u_int32_t addr;
 	int device;
 	int s;
+	int handle; 
 
 	if((tag >> 16) != 0)
 		return(~0);
@@ -358,15 +443,20 @@ mpc_conf_read(cpv, tag, offset)
 	device = (tag >> 11) & 0x1f;
 	if(device > 11)
 		return(~0);	/* Outside config space */
+	printf("mpc_conf_read tag %x offset %x: ", tag, offset);
 
 	addr = (0x800 << device) | (tag & 0x380) | offset;
 
+	handle = ppc_open_pci_bridge();
 	s = splhigh();
 
-	/* low 20 bits of address are in the actual address */
-	data = in32rb(MPC106_PCI_CONF_SPACE | addr);
+	OF_call_method("config-l@", handle, 1, 1,
+		0x80000000 | addr, &data);
 
 	splx(s);
+	ppc_close_pci_bridge(handle);
+	printf("data %x\n", data);
+
 	return(data);
 }
 
@@ -380,16 +470,19 @@ mpc_conf_write(cpv, tag, offset, data)
 	u_int32_t addr;
 	int device;
 	int s;
+	int handle; 
+	printf("mpc_conf_write tag %x offset %x data %x\n", tag, offset, data);
 
 	device = (tag >> 11) & 0x1f;
 	addr = (0x800 << device) | (tag & 0x380) | offset;
 
+	handle = ppc_open_pci_bridge();
 	s = splhigh();
 
-	/* low 20 bits of address are in the actual address */
-	out32rb(MPC106_PCI_CONF_SPACE | addr, data);
-
+	OF_call_method("config-l!", handle, 1, 1,
+		0x80000000 | addr, &data);
 	splx(s);
+	ppc_close_pci_bridge(handle);
 }
 
 int
@@ -416,6 +509,8 @@ mpc_intr_map(lcv, bustag, buspin, line, ihp)
                 error = 1;
         }
 
+#if 0
+	/* this hack belongs elsewhere */
 	if(system_type == POWER4e) {
 		pci_decompose_tag(pc, bustag, NULL, &device, NULL);
 		route = in32rb(MPC106_PCI_CONF_SPACE + 0x860);
@@ -457,6 +552,7 @@ mpc_intr_map(lcv, bustag, buspin, line, ihp)
 		isa_outb(0x04d1, lvl >> 8);
 		out32rb(MPC106_PCI_CONF_SPACE + 0x860, route);
 	}
+#endif
 
 	if(!error)
 		*ihp = line;
@@ -483,10 +579,11 @@ mpc_intr_establish(lcv, ih, level, func, arg, name)
 	void *arg;
 	char *name;
 {
-	if (ih == 0 || ih >= ICU_LEN || ih == 2)
-		panic("pci_intr_establish: bogus handle 0x%x", ih);
-
+	printf("mpc_pintr_establish called for [%s]\n", name);
+	/*
 	return isabr_intr_establish(NULL, ih, IST_LEVEL, level, func, arg, name);
+	*/
+	return NULL;
 }
 
 void
@@ -496,16 +593,18 @@ mpc_intr_disestablish(lcv, cookie)
 	/* XXX We should probably do something clever here.... later */
 }
 
+#if 0
 void
 mpc_print_pci_stat()
 {
 	u_int32_t stat;
 
-	stat = mpc_cfg_read_4(MPC106_PCI_CMD);
+	stat = mpc_cfg_read_4(sc->sc_iobus_space, sc->ioh, MPC106_PCI_CMD);
 	printf("pci: status 0x%08x.\n", stat);
-	stat = mpc_cfg_read_2(MPC106_PCI_STAT);
+	stat = mpc_cfg_read_2(sc->sc_iobus_space, sc->ioh, MPC106_PCI_STAT);
 	printf("pci: status 0x%04x.\n", stat);
 }
+#endif
 u_int32_t
 pci_iack()
 {

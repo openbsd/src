@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcibrvar.h,v 1.2 1998/08/06 15:04:03 pefo Exp $ */
+/*	$OpenBSD: pcibrvar.h,v 1.3 1999/11/08 23:49:00 rahnds Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -35,15 +35,17 @@
 struct pcibr_config {
 	bus_space_tag_t lc_iot;
 	bus_space_tag_t lc_memt;
-	struct p4e_pci_chipset lc_pc;
+	struct ppc_pci_chipset lc_pc;
 	int	pci_init_done;
 };
 
 struct pcibr_softc {
 	struct device	sc_dev;
 	struct pcibr_config *sc_pcibr;
-	struct p4e_bus_space sc_membus_space;
-	struct p4e_bus_space sc_iobus_space;
+	struct ppc_bus_space sc_membus_space;
+	struct ppc_bus_space sc_iobus_space;
+	bus_space_handle_t	ioh;
+
 };
 
 
