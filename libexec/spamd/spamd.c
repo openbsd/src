@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.57 2004/03/10 00:33:39 beck Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.58 2004/03/11 18:32:17 beck Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -442,12 +442,8 @@ build_reply(struct con *cp)
 	int off = 0;
 
 	matches = cp->blacklists;
-	if (matches == NULL) {
-		free(cp->obuf);
-		cp->obuf = NULL;
-		cp->osize = 0;
+	if (matches == NULL)
 		goto nomatch;
-	}
 	for (; *matches; matches++) {
 		int used = 0;
 		char *c = cp->obuf + off;
@@ -469,8 +465,12 @@ build_reply(struct con *cp)
 			cp->obuf[off] = '\0';
 		}
 	}
+	return;
 nomatch:
 	/* No match. give generic reply */
+	free(cp->obuf);
+	cp->obuf = NULL;
+	cp->osize = 0;
 	if (cp->blacklists != NULL)
 		asprintf(&cp->obuf,
 		    "%s-Sorry %s\n"
