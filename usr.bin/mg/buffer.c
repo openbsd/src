@@ -1,4 +1,4 @@
-/*	$OpenBSD: buffer.c,v 1.31 2003/06/26 23:04:10 vincent Exp $	*/
+/*	$OpenBSD: buffer.c,v 1.32 2003/08/15 23:23:18 vincent Exp $	*/
 
 /*
  *		Buffer handling.
@@ -434,7 +434,8 @@ bfind(const char *bname, int cflag)
 	if (cflag != TRUE)
 		return NULL;
 
-	if ((bp = malloc(sizeof(BUFFER))) == NULL) {
+	bp = calloc(1, sizeof(BUFFER));
+	if (bp == NULL) {
 		ewprintf("Can't get %d bytes", sizeof(BUFFER));
 		return NULL;
 	}
@@ -495,7 +496,7 @@ bclear(BUFFER *bp)
 	bp->b_flag &= ~BFCHG;	/* Not changed		 */
 	while ((lp = lforw(bp->b_linep)) != bp->b_linep)
 		lfree(lp);
-	bp->b_dotp = bp->b_linep;	/* Fix "."		 */
+	bp->b_dotp = bp->b_linep;	/* Fix dot */
 	bp->b_doto = 0;
 	bp->b_markp = NULL;	/* Invalidate "mark"	 */
 	bp->b_marko = 0;
@@ -512,8 +513,10 @@ showbuffer(BUFFER *bp, MGWIN *wp, int flags)
 	BUFFER *obp;
 	MGWIN  *owp;
 
-	if (wp->w_bufp == bp) {	/* Easy case!	 */
+	if (wp->w_bufp == bp) {	/* Easy case! */
 		wp->w_flag |= flags;
+		wp->w_dotp = bp->b_dotp;
+		wp->w_doto = bp->b_doto;
 		return TRUE;
 	}
 	/* First, dettach the old buffer from the window */

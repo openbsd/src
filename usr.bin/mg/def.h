@@ -1,4 +1,4 @@
-/*	$OpenBSD: def.h,v 1.47 2003/06/26 23:04:10 vincent Exp $	*/
+/*	$OpenBSD: def.h,v 1.48 2003/08/15 23:23:18 vincent Exp $	*/
 
 #include <sys/queue.h>
 
@@ -325,6 +325,8 @@ int	 d_expunge(int, int);
 int	 d_copy(int, int);
 int	 d_del(int, int);
 int	 d_rename(int, int);
+int	 d_shell_command(int, int);
+int	 d_create_directory(int, int);
 
 /* file.c X */
 int	 fileinsert(int, int);

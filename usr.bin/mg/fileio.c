@@ -1,4 +1,4 @@
-/*	$OpenBSD: fileio.c,v 1.37 2003/08/15 23:09:57 vincent Exp $	*/
+/*	$OpenBSD: fileio.c,v 1.38 2003/08/15 23:23:18 vincent Exp $	*/
 
 /*
  *	POSIX fileio.c
@@ -402,7 +402,8 @@ dired_(char *dirname)
 	if (bclear(bp) != TRUE)
 		return NULL;
 	bp->b_flag |= BFREADONLY;
-	if (snprintf(line, sizeof(line), "ls -al %s", dirname) >= sizeof(line)){
+	if (snprintf(line, sizeof(line), "ls -al %s", dirname)
+	    >= sizeof(line)) {
 		ewprintf("Path too long");
 		return NULL;
 	}
@@ -416,17 +417,18 @@ dired_(char *dirname)
 		(void) addline(bp, line);
 	}
 	if (pclose(dirpipe) == -1) {
-		ewprintf("Problem closing pipe to ls");
+		ewprintf("Problem closing pipe to ls : %s",
+		    strerror(errno));
 		return NULL;
 	}
 	bp->b_dotp = lforw(bp->b_linep);	/* go to first line */
 	(void) strlcpy(bp->b_fname, dirname, sizeof bp->b_fname);
-	if ((bp->b_modes[0] = name_mode("dired")) == NULL) {
+	if ((bp->b_modes[1] = name_mode("dired")) == NULL) {
 		bp->b_modes[0] = name_mode("fundamental");
 		ewprintf("Could not find mode dired");
 		return NULL;
 	}
-	bp->b_nmodes = 0;
+	bp->b_nmodes = 1;
 	return bp;
 }
 
@@ -452,7 +454,7 @@ d_makename(LINE *lp, char *fn, int len)
 			return (ABORT);
 	}
 	strlcat(fn, p, len);
-	return lgetc(lp, 2) == 'd';
+	return (lgetc(lp, 2) == 'd') ? TRUE : FALSE;
 }
 #endif				/* NO_DIRED */
 

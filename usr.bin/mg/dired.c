@@ -1,27 +1,114 @@
-/*	$OpenBSD: dired.c,v 1.11 2003/06/26 23:04:10 vincent Exp $	*/
+/*	$OpenBSD: dired.c,v 1.12 2003/08/15 23:23:18 vincent Exp $	*/
 
 /* dired module for mg 2a	 */
 /* by Robert A. Larson		 */
 
 #include "def.h"
 #include "kbd.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+
+#include <signal.h>
+#include <fcntl.h>
+#include <errno.h>
+#include <libgen.h>
 
 #ifndef NO_DIRED
 
 int d_findfile(int, int);
 
-static PF dired_pf[] = {
-	d_findfile,
+static PF dired_cmds_1[] = {
+	forwline,		/* space */
+	d_shell_command,	/* ! */
+	rescan,			/* " */
+	rescan,			/* # */
+	rescan,			/* $ */
+	rescan,			/* % */
+	rescan,			/* & */
+	rescan,			/* ' */
+	rescan,			/* ( */
+	rescan,			/* ) */
+	rescan,			/* * */
+	d_create_directory,	/* + */
 };
 
-static struct KEYMAPE (1 + IMAPEXT) diredmap = {
-	1,
-	1 + IMAPEXT,
+static PF dired_cmds_2[] = {
+	rescan,	/* a */
+	rescan,	/* b */
+	rescan,	/* c */
+	rescan, /* d */
+	d_findfile, /* e */
+	d_findfile, /* f */
+	rescan, /* g */
+	rescan, /* h */
+	rescan, /* i */
+	rescan, /* j */
+	rescan, /* k */
+	rescan, /* l */
+	rescan, /* m */
+	forwline, /* n */
+	d_ffotherwindow, /* o */
+	rescan, /* p */
+	rescan, /* q */
+	rescan, /* r */
+	rescan, /* s */
+	rescan, /* t */
+	rescan, /* u */
+	d_findfile, /* v */
+	rescan, /* w */
+	d_expunge, /* x */
+	rescan, /* y */
+	rescan, /* z */
+};
+
+static PF dired_cmds_3[] = {
+	rescan,	/* A */
+	rescan,	/* B */
+	d_copy,	/* C */
+	d_del,	/* D */
+	rescan,	/* E */
+	rescan, /* F */
+	rescan, /* G */
+	rescan, /* H */
+	rescan, /* I */
+	rescan, /* J */
+	rescan, /* K */
+	rescan, /* L */
+	rescan, /* M */
+	rescan, /* N */
+	rescan, /* O */
+	rescan, /* P */
+	rescan, /* Q */
+	d_rename, /* R */
+	rescan, /* S */
+	rescan, /* T */
+	rescan, /* U */
+	d_findfile, /* V */
+	rescan, /* W */
+	d_expunge, /* X */
+	rescan, /* Y */
+	rescan, /* Z */
+};
+
+static PF dired_pf[] = {
+	d_findfile,	/* ^M */
+	rescan,		/* ^N */
+	d_findfile,	/* ^O */
+};
+  
+static struct KEYMAPE (4 + IMAPEXT) diredmap = {
+	4,
+	4 + IMAPEXT,
 	rescan,
 	{
-		{ CCHR('M'), CCHR('M'), dired_pf, NULL },
+		{ CCHR('M'), CCHR('O'), dired_pf, NULL },
+		{ ' ', '+', dired_cmds_1, NULL },
+		{ 'A', 'Z', dired_cmds_3, NULL },
+		{ 'a', 'z', dired_cmds_2, NULL }
 	}
 };
+
 
 /* ARGSUSED */
 int
@@ -57,7 +144,8 @@ d_otherwindow(int f, int n)
 	MGWIN	*wp;
 
 	dirname[0] = '\0';
-	if (eread("Dired other window: ", dirname, NFILEN, EFNEW | EFCR) == ABORT)
+	if (eread("Dired other window: ", dirname, NFILEN, EFNEW | EFCR)
+	    == ABORT)
 		return ABORT;
 	if ((bp = dired_(dirname)) == NULL)
 		return FALSE;
@@ -129,7 +217,11 @@ d_findfile(int f, int n)
 
 	if ((s = d_makename(curwp->w_dotp, fname, sizeof fname)) == ABORT)
 		return FALSE;
-	if ((bp = (s ? dired_(fname) : findbuffer(fname))) == NULL)
+	if (s == TRUE)
+		bp = dired_(fname);
+	else
+		bp = findbuffer(fname);
+	if (bp == NULL)
 		return FALSE;
 	curbp = bp;
 	if (showbuffer(bp, curwp, WFHARD) != TRUE)
@@ -177,14 +269,15 @@ d_expunge(int f, int n)
 				return FALSE;
 			case FALSE:
 				if (unlink(fname) < 0) {
-					ewprintf("Could not delete '%s'", fname);
+					ewprintf("Could not delete '%s'",
+					    basename(fname));
 					return FALSE;
 				}
 				break;
 			case TRUE:
 				if (rmdir(fname) < 0) {
 					ewprintf("Could not delete directory '%s'",
-					    fname);
+					    basename(fname));
 					return FALSE;
 				}
 				break;
@@ -196,21 +289,32 @@ d_expunge(int f, int n)
 	return TRUE;
 }
 
+
 /* ARGSUSED */
 int
 d_copy(int f, int n)
 {
 	char	frname[NFILEN], toname[NFILEN];
-	int	stat;
+	int	stat, off;
+	BUFFER *bp;
 
 	if (d_makename(curwp->w_dotp, frname, sizeof frname) != FALSE) {
 		ewprintf("Not a file");
 		return FALSE;
 	}
-	if ((stat = eread("Copy %s to: ", toname, NFILEN, EFNEW | EFCR, frname))
-	    != TRUE)
-		return stat;
-	return copy(frname, toname) >= 0;
+	off = strlcpy(toname, curbp->b_fname, sizeof toname);
+	if (off >= sizeof toname - 1) {	/* can't happen, really */
+		ewprintf("too long directory name");
+		return (FALSE);
+	}
+	if ((stat = eread("Copy %s to: ", toname + off, sizeof toname - off,
+	    EFNEW | EFCR, basename(frname))) != TRUE)
+		return (stat);
+	stat = (copy(frname, toname) >= 0) ? TRUE : FALSE;
+	if (stat != TRUE)
+		return (stat);
+	bp = dired_(curbp->b_fname);
+	return (showbuffer(bp, curwp, WFHARD | WFMODE));
 }
 
 /* ARGSUSED */
@@ -218,15 +322,148 @@ int
 d_rename(int f, int n)
 {
 	char	frname[NFILEN], toname[NFILEN];
-	int	stat;
+	int	stat, off;
+	BUFFER *bp;
 
 	if (d_makename(curwp->w_dotp, frname, sizeof frname) != FALSE) {
 		ewprintf("Not a file");
 		return FALSE;
 	}
-	if ((stat = eread("Rename %s to: ", toname, NFILEN, EFNEW | EFCR,
-	    frname)) != TRUE)
+	off = strlcpy(toname, curbp->b_fname, sizeof toname);
+	if (off >= sizeof toname - 1) {	/* can't happen, really */
+		ewprintf("too long directory name");
+		return (FALSE);
+	}
+	if ((stat = eread("Rename %s to: ", toname + off,
+	    sizeof toname - off, EFNEW | EFCR, basename(frname))) != TRUE)
 		return stat;
-	return rename(frname, toname) >= 0;
+	stat = (rename(frname, toname) >= 0) ? TRUE : FALSE;
+	if (stat != TRUE)
+		return (stat);
+	bp = dired_(curbp->b_fname);
+	return (showbuffer(bp, curwp, WFHARD | WFMODE));
 }
 #endif
+
+void
+reaper(int signo __attribute__((unused)))
+{
+	pid_t ret;
+	int status;
+
+	while ((ret = waitpid(-1, &status, WNOHANG)) >= 0)
+		;
+}
+
+/*
+ * Pipe the currently selected file through a shell command.
+ */
+int
+d_shell_command(int f, int n)
+{
+	char command[512], fname[MAXPATHLEN], buf[BUFSIZ], *cp;
+	int infd, fds[2];
+	pid_t pid;
+	struct sigaction olda, newa;
+	BUFFER *bp;
+	MGWIN *wp;
+	FILE *fin;
+
+	bp = bfind("*Shell Command Output*", TRUE);
+	if (bclear(bp) != TRUE)
+		return (ABORT);
+
+	if (d_makename(curwp->w_dotp, fname, sizeof fname) != FALSE) {
+		ewprintf("bad line");
+		return (ABORT);
+	}
+
+	command[0] = '\0';
+	if (eread("! on %s: ", command, sizeof command, 0,
+	    basename(fname)) == ABORT)
+		return (ABORT);
+	infd = open(fname, O_RDONLY);
+	if (infd == -1) {
+		ewprintf("Can't open input file : %s", strerror(errno));
+		return (ABORT);
+	}
+	if (pipe(fds) == -1) {
+		ewprintf("Can't create pipe : %s", strerror(errno));
+		close(infd);
+		return (ABORT);
+	}
+
+	newa.sa_handler = reaper;
+	newa.sa_flags = 0;
+	if (sigaction(SIGCHLD, &newa, &olda) == -1) {
+		close(infd);
+		close(fds[0]);
+		close(fds[1]);
+		return (ABORT);
+	}
+	pid = fork();
+	switch (pid) {
+	case -1:
+		ewprintf("Can't fork");
+		return (ABORT);
+	case 0:
+		close(fds[0]);
+		dup2(infd, STDIN_FILENO);
+		dup2(fds[1], STDOUT_FILENO);
+		dup2(fds[1], STDERR_FILENO);
+		execl("/bin/sh", "sh", "-c", command, (char *)NULL);
+		exit(1);
+	default:
+		close(infd);
+		close(fds[1]);
+		fin = fdopen(fds[0], "r");
+		if (fin == NULL)	/* "r" is surely a valid mode! */
+			panic("can't happen");
+		while (fgets(buf, sizeof buf, fin) != NULL) {
+			cp = strrchr(buf, '\n');
+			if (cp == NULL && !feof(fin)) {	/* too long a line */
+				int c;
+				addlinef(bp, "%s...", buf);
+				while ((c = getc(fin)) != EOF && c != '\n')
+					;
+				continue;
+			} else if (cp)
+				*cp = '\0';
+			addline(bp, buf);
+		}
+		fclose(fin);
+		close(fds[0]);
+		break;
+	}
+	wp = popbuf(bp);
+	if (wp == NULL)
+		return (ABORT);	/* XXX - free the buffer?? */
+	curwp = wp;
+	curbp = wp->w_bufp;
+	if (sigaction(SIGCHLD, &olda, NULL) == -1)
+		ewprintf("Warning, couldn't reset previous signal handler");
+	return (TRUE);
+}
+
+int
+d_create_directory(int f, int n)
+{
+	char tocreate[MAXPATHLEN], off;
+	int stat;
+	BUFFER *bp;
+
+	off = strlcpy(tocreate, curbp->b_fname, sizeof tocreate);
+	if (off >= sizeof tocreate - 1)
+		return (FALSE);
+	if ((stat = ereply("Create directory: ", tocreate + off,
+	    sizeof tocreate - off))
+	    != TRUE)
+		return (stat);
+	if (mkdir(tocreate, 0755) == -1) {
+		ewprintf("Creating directory: %s, %s", strerror(errno),
+		    tocreate);
+		return (ABORT);
+	}
+	bp = dired_(curbp->b_fname);
+	return (showbuffer(bp, curwp, WFHARD | WFMODE));
+}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.19 2002/09/15 13:59:16 vincent Exp $	*/
+/*	$OpenBSD: display.c,v 1.20 2003/08/15 23:23:18 vincent Exp $	*/
 
 /*
  * The functions in this file handle redisplay. The
@@ -346,6 +346,7 @@ vtpute(int c)
 		++vtcol;
 	}
 }
+
 
 /*
  * Erase from the end of the software cursor to the end of the line on which
