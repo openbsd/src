@@ -1,4 +1,4 @@
-/*	$OpenBSD: ntp.c,v 1.14 2003/05/14 18:06:21 itojun Exp $	*/
+/*	$OpenBSD: ntp.c,v 1.15 2004/02/16 21:25:41 jakob Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997 by N.M. Maclaren. All rights reserved.
@@ -101,7 +101,7 @@ struct ntp_data {
 	double	current;
 };
 
-void	ntp_client(const char *, struct timeval *, struct timeval *, int);
+void	ntp_client(const char *, int, struct timeval *, struct timeval *, int);
 int	sync_ntp(int, const struct sockaddr *, double *, double *);
 void	make_packet(struct ntp_data *);
 int	write_packet(int, const struct sockaddr *, struct ntp_data *);
@@ -114,7 +114,7 @@ void	create_timeval(double, struct timeval *, struct timeval *);
 int	corrleaps;
 
 void
-ntp_client(const char *hostname, struct timeval *new,
+ntp_client(const char *hostname, int family, struct timeval *new,
     struct timeval *adjust, int leapflag)
 {
 	struct addrinfo hints, *res0, *res;
@@ -122,7 +122,7 @@ ntp_client(const char *hostname, struct timeval *new,
 	int packets = 0, s, ierror;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_UNSPEC;
+	hints.ai_family = family;
 	hints.ai_socktype = SOCK_DGRAM;
 	ierror = getaddrinfo(hostname, "ntp", &hints, &res0);
 	if (ierror) {

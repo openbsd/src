@@ -1,4 +1,4 @@
-/*	$OpenBSD: rfc868time.c,v 1.5 2002/09/08 12:33:42 jakob Exp $	*/
+/*	$OpenBSD: rfc868time.c,v 1.6 2004/02/16 21:25:41 jakob Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.5 2002/09/08 12:33:42 jakob Exp $";
+static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.6 2004/02/16 21:25:41 jakob Exp $";
 #endif
 #endif				/* lint */
 
@@ -68,7 +68,7 @@ static const char rcsid[] = "$OpenBSD: rfc868time.c,v 1.5 2002/09/08 12:33:42 ja
 
 
 void
-rfc868time_client (const char *hostname, struct timeval *new,
+rfc868time_client (const char *hostname, int family, struct timeval *new,
     struct timeval *adjust, int leapflag)
 {
 	struct addrinfo hints, *res0, *res;
@@ -79,7 +79,7 @@ rfc868time_client (const char *hostname, struct timeval *new,
 	u_int64_t td;
 
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_family = PF_UNSPEC;
+	hints.ai_family = family;
 	hints.ai_socktype = SOCK_STREAM;
 	/* XXX what about rfc868 UDP
 	 * probably not due to the Y2038 issue  -mirabile */

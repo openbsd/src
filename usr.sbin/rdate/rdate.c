@@ -1,4 +1,4 @@
-/*	$OpenBSD: rdate.c,v 1.20 2003/06/26 19:47:10 deraadt Exp $	*/
+/*	$OpenBSD: rdate.c,v 1.21 2004/02/16 21:25:41 jakob Exp $	*/
 /*	$NetBSD: rdate.c,v 1.4 1996/03/16 12:37:45 pk Exp $	*/
 
 /*
@@ -42,11 +42,12 @@
 #if 0
 from: static char rcsid[] = "$NetBSD: rdate.c,v 1.3 1996/02/22 06:59:18 thorpej Exp $";
 #else
-static const char rcsid[] = "$OpenBSD: rdate.c,v 1.20 2003/06/26 19:47:10 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: rdate.c,v 1.21 2004/02/16 21:25:41 jakob Exp $";
 #endif
 #endif				/* lint */
 
 #include <sys/param.h>
+#include <sys/socket.h>
 #include <sys/time.h>
 
 #include <stdio.h>
@@ -63,8 +64,8 @@ static const char rcsid[] = "$OpenBSD: rdate.c,v 1.20 2003/06/26 19:47:10 deraad
 #define logwtmp(a,b,c)
 #endif
 
-void rfc868time_client (const char *, struct timeval *, struct timeval *, int);
-void ntp_client (const char *, struct timeval *, struct timeval *, int);
+void rfc868time_client (const char *, int, struct timeval *, struct timeval *, int);
+void ntp_client (const char *, int, struct timeval *, struct timeval *, int);
 
 extern char    *__progname;
 
@@ -78,6 +79,8 @@ usage(void)
 	(void) fprintf(stderr, "  -s: just set, don't print\n");
 	(void) fprintf(stderr, "  -a: use adjtime instead of instant change\n");
 	(void) fprintf(stderr, "  -v: verbose output\n");
+	(void) fprintf(stderr, "  -4: use IPv4 only\n");
+	(void) fprintf(stderr, "  -6: use IPv6 only\n");
 }
 
 int
@@ -88,11 +91,20 @@ main(int argc, char **argv)
 	char           *hname;
 	extern int      optind;
 	int             c;
+	int		family = PF_UNSPEC;
 
 	struct timeval new, adjust;
 
-	while ((c = getopt(argc, argv, "psancv")) != -1)
+	while ((c = getopt(argc, argv, "46psancv")) != -1)
 		switch (c) {
+		case '4':
+			family = PF_INET;
+			break;
+
+		case '6':
+			family = PF_INET6;
+			break;
+
 		case 'p':
 			pr++;
 			break;
@@ -129,9 +141,9 @@ main(int argc, char **argv)
 	hname = argv[optind];
 
 	if (ntp)
-		ntp_client(hname, &new, &adjust, corrleaps);
+		ntp_client(hname, family, &new, &adjust, corrleaps);
 	else
-		rfc868time_client(hname, &new, &adjust, corrleaps);
+		rfc868time_client(hname, family, &new, &adjust, corrleaps);
 
 	if (!pr) {
 		if (!slidetime) {
