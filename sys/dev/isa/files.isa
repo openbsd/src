@@ -1,4 +1,4 @@
-#	$OpenBSD: files.isa,v 1.80 2002/11/28 22:37:20 mickey Exp $
+#	$OpenBSD: files.isa,v 1.81 2002/11/28 23:24:53 mickey Exp $
 #	$NetBSD: files.isa,v 1.21 1996/05/16 03:45:55 mycroft Exp $
 #
 # Config file and device description for machine-independent ISA code.
@@ -267,9 +267,9 @@ define	mpu
 file	dev/isa/mpu401.c		mpu | midi
 
 # MPU401 generic MIDI UART for dump MPUs like Yamaha SW60XG
-device	ympu: midibus
-attach	ympu at isa with ympu_isa
-file	dev/isa/ympu_isa.c		ympu & midi
+device	mpu: midibus
+attach	mpu at isa with mpu_isa
+file	dev/isa/mpu_isa.c		mpu & midi
 
 # the SoundBlaster DSP, or close likenesses; used by other drivers
 define	sbdsp { }

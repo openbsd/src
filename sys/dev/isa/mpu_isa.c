@@ -1,4 +1,4 @@
-/*	$Id: ympu_isa.c,v 1.1 2002/11/28 22:37:20 mickey Exp $	*/
+/*	$OpenBSD: mpu_isa.c,v 1.1 2002/11/28 23:24:53 mickey Exp $	*/
 
 /*
  * Copyright (c) 2002 Sergey Smitienko. All rights reserved.
@@ -46,35 +46,31 @@
 
 #include <dev/ic/mpuvar.h>
 
-int	ympu_isa_match(struct device *, void *, void *);
-void	ympu_isa_attach(struct device *, struct device *, void *);
-int	ympu_test(bus_space_tag_t, int);
+int	mpu_isa_match(struct device *, void *, void *);
+void	mpu_isa_attach(struct device *, struct device *, void *);
+int	mpu_test(bus_space_tag_t, int);
 
 #ifdef	AUDIO_DEBUG
-#define	DPRINTF(x)	if (ympu_debug) printf x
-int	ympu_debug = 0;
+#define	DPRINTF(x)	if (mpu_debug) printf x
+int	mpu_debug = 0;
 #else
 #define	DPRINTF(x)
 #endif
 
 #define MPU_GETSTATUS(iot, ioh) (bus_space_read_1(iot, ioh, MPU_STATUS))
 
-struct ympu_isa_softc {
+struct mpu_isa_softc {
 	struct device sc_dev;
 
 	struct mpu_softc sc_mpu;
 };
 
-struct	cfdriver ympu_cd = {
-	NULL, "ympu", DV_DULL
-};
-
-struct cfattach ympu_isa_ca = {
-	sizeof(struct ympu_isa_softc), ympu_isa_match, ympu_isa_attach
+struct cfattach mpu_isa_ca = {
+	sizeof(struct mpu_isa_softc), mpu_isa_match, mpu_isa_attach
 };
 
 int
-ympu_test (iot, iobase)
+mpu_test (iot, iobase)
 	bus_space_tag_t iot;
 	int iobase;	/* base port number to try */
 {
@@ -83,11 +79,11 @@ ympu_test (iot, iobase)
 
 	rc = 0;
 	if (bus_space_map(iot, iobase, MPU401_NPORT, 0, &ioh)) {
-		DPRINTF(("ympu_test: can`t map: %x/2\n", iobase));
+		DPRINTF(("mpu_test: can`t map: %x/2\n", iobase));
 		return (0);
 	}
 
-	DPRINTF(("ympu_test: trying: %x\n", iobase));
+	DPRINTF(("mpu_test: trying: %x\n", iobase));
 
 	/*
 	 * The following code is a shameless copy of mpu401.c
@@ -117,13 +113,13 @@ done:
 }
 
 int
-ympu_isa_match(parent, match, aux)
+mpu_isa_match(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
 	struct isa_attach_args *ia = aux;
 
-        if (ympu_test(ia->ia_iot, ia->ia_iobase)) {
+        if (mpu_test(ia->ia_iot, ia->ia_iobase)) {
 		ia->ia_iosize = MPU401_NPORT;
 		return (1);
 	}
@@ -132,11 +128,11 @@ ympu_isa_match(parent, match, aux)
 }
 
 void
-ympu_isa_attach(parent, self, aux)
+mpu_isa_attach(parent, self, aux)
 	struct device *parent, *self;
 	void *aux;
 {
-	struct ympu_isa_softc *sc = (struct ympu_isa_softc *)self;
+	struct mpu_isa_softc *sc = (struct mpu_isa_softc *)self;
 	struct isa_attach_args *ia = aux;
 
 	sc->sc_mpu.iot = ia->ia_iot;
