@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot.8,v 1.20 2000/11/18 11:07:31 aaron Exp $
+.\"	$OpenBSD: boot.8,v 1.21 2000/11/18 11:23:19 aaron Exp $
 .\"
 .\" Copyright (c) 1997-2000 Michael Shalayeff
 .\" All rights reserved.
@@ -83,8 +83,13 @@ Set up a protected mode environment which catches and reports processor
 exceptions and provides a simple protected-mode BIOS interface.
 .It
 Probe for console devices, which includes the (default) PC VGA+Keyboard
-console (pc0) and up to four serial consoles (com0 through com3) connected
-to the serial ports.
+console
+.Pq Li pc0
+and up to four serial consoles
+.Pf ( Li com0
+through
+.Li com3 )
+connected to the serial ports.
 Display messages to the default console about the devices found.
 .It
 Detect memory.
@@ -222,9 +227,14 @@ Debug flag if
 .Nm
 was compiled with DEBUG defined.
 .It Nm device
-Boot device name (ie: fd0a, sd0a).
+Boot device name (i.e.,
+.Li fd0a ,
+.Li sd0a ) .
 .It Nm tty
-Active console device name (ie: com0, com1, pc0)
+Active console device name (i.e.,
+.Li com0 ,
+.Li com1 ,
+.Li pc0 ) .
 .It Nm image
 File name containing the kernel image.
 .El
@@ -250,6 +260,26 @@ The default baudrate is 9600bps.
 .It time
 Displays system time and date.
 .El
+.Sh EXAMPLES
+.Li boot> boot
+.Pp
+Boot the default kernel.
+.Pp
+.Li # echo \&"boot\&" > /etc/boot.conf
+.Pp
+Remove the 5 second pause at boot-time permanently, causing
+.Nm
+to load the kernel immediately without prompting.
+.Pp
+.Li boot> set tty com0
+.Pp
+Use serial console.
+A null modem cable should connect the specified serial port to a terminal.
+Useful for debugging.
+.Pp
+.Li # echo \&"set tty com0\&" > /etc/boot.conf
+.Pp
+Invoke the serial console at every boot.
 .Sh FILES
 .Bl -tag -width /usr/mdec/biosbootxx -compact
 .It Pa /usr/mdec/biosboot
