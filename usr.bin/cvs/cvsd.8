@@ -1,4 +1,4 @@
-.\"	$OpenBSD: cvsd.8,v 1.4 2004/12/02 22:38:30 jmc Exp $
+.\"	$OpenBSD: cvsd.8,v 1.5 2005/01/28 23:43:09 jmc Exp $
 .\"
 .\" Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
 .\"
@@ -46,6 +46,8 @@ It provides a much more secure alternative to the traditional client-server
 model commonly used by
 .Xr cvs 1
 through various mechanisms described below.
+For a general introduction to CVS, see
+.Xr cvsintro 7 .
 .Pp
 On startup,
 .Nm
@@ -125,7 +127,8 @@ Default listening socket for incoming cvs requests.
 .Xr cvs 1 ,
 .Xr rcs 1 ,
 .Xr cvsd.conf 5 ,
-.Xr rcsfile 5
+.Xr rcsfile 5 ,
+.Xr cvsintro 7
 .Sh HISTORY
 The
 .Nm
