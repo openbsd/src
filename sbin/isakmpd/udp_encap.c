@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_encap.c,v 1.3 2004/06/21 23:27:10 ho Exp $	*/
+/*	$OpenBSD: udp_encap.c,v 1.4 2004/07/07 09:13:01 hshoexer Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999, 2001 Niklas Hallqvist.  All rights reserved.
@@ -195,7 +195,7 @@ udp_encap_make(struct sockaddr *laddr)
 	t->transport.flags |= TRANSPORT_LISTEN;
 	return &t->transport;
 
-  err:
+err:
 	if (s >= 0)
 		close (s);
 	if (t) {
@@ -400,7 +400,7 @@ udp_encap_handle_message(struct transport *t)
 		return;
 
 	/* Check NULL-ESP marker.  */
-	if (n < sizeof (u_int32_t) || *(u_int32_t *)buf != 0) {
+	if (n < (ssize_t)sizeof(u_int32_t) || *(u_int32_t *)buf != 0) {
 		/* Should never happen.  */
 		log_print ("udp_encap_handle_message: "
 		    "Null-ESP marker not NULL or short message");
