@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.260 2000/05/30 00:49:08 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.261 2000/05/30 08:27:59 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1505,7 +1505,7 @@
 #define	PCI_PRODUCT_UMC_UM8886A	0x888a		/* UM8886A */
 #define	PCI_PRODUCT_UMC_UM8891A	0x8891		/* UM8891A */
 #define	PCI_PRODUCT_UMC_UM9017F	0x9017		/* UM9017F */
-#define	PCI_PRODUCT_UMC_UM8886F	0xe886		/* PCI-ISA */
+#define	PCI_PRODUCT_UMC_UM8886E_OR_WHAT	0xe886		/* PCI-ISA */
 #define	PCI_PRODUCT_UMC_UM8886N	0xe88a		/* UM8886N */
 #define	PCI_PRODUCT_UMC_UM8891N	0xe891		/* UM8891N */
 

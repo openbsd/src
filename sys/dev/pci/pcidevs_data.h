@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.260 2000/05/30 00:49:08 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.261 2000/05/30 08:27:59 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -4131,7 +4131,7 @@ struct pci_knowndev pci_knowndevs[] = {
 	    "UM9017F",
 	},
 	{
-	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886F,
+	    PCI_VENDOR_UMC, PCI_PRODUCT_UMC_UM8886E_OR_WHAT,
 	    0,
 	    "UMC",
 	    "PCI-ISA",
