@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.50 1998/03/25 07:27:05 beck Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.51 1998/05/19 16:55:26 millert Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -1351,6 +1351,57 @@ mk
 # ./usr/share/nls
 nls
 # ./usr/share/nls
+..
+
+# ./usr/share/sendmail
+sendmail
+
+# ./usr/share/sendmail/cf
+cf
+# ./usr/share/sendmail/cf
+..
+
+# ./usr/share/sendmail/domain
+domain
+# ./usr/share/sendmail/domain
+..
+
+# ./usr/share/sendmail/feature
+feature
+# ./usr/share/sendmail/feature
+..
+
+# ./usr/share/sendmail/hack
+hack
+# ./usr/share/sendmail/hack
+..
+
+# ./usr/share/sendmail/m4
+m4
+# ./usr/share/sendmail/m4
+..
+
+# ./usr/share/sendmail/mailer
+mailer
+# ./usr/share/sendmail/mailer
+..
+
+# ./usr/share/sendmail/ostype
+ostype
+# ./usr/share/sendmail/ostype
+..
+
+# ./usr/share/sendmail/sh
+sh
+# ./usr/share/sendmail/sh
+..
+
+# ./usr/share/sendmail/siteconfig
+siteconfig
+# ./usr/share/sendmail/siteconfig
+..
+
+# ./usr/share/sendmail
 ..
 
 # ./usr/share/skel
