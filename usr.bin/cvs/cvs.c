@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.c,v 1.7 2004/07/30 17:44:48 jfb Exp $	*/
+/*	$OpenBSD: cvs.c,v 1.8 2004/07/30 18:58:56 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -39,6 +39,7 @@
 
 #include "cvs.h"
 #include "log.h"
+#include "file.h"
 
 
 extern char *__progname;
