@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.8 2000/06/20 19:39:36 todd Exp $	*/
+/*	$OpenBSD: an.c,v 1.9 2000/06/20 20:35:14 todd Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -930,8 +930,8 @@ an_ioctl(ifp, command, data)
 			    !(ifp->if_flags & IFF_PROMISC) &&
 			    sc->an_if_flags & IFF_PROMISC) {
 				an_promisc(sc, 0);
-			} else
-				an_init(sc);
+			}
+			an_init(sc);
 		} else {
 			if (ifp->if_flags & IFF_RUNNING)
 				an_stop(sc);
