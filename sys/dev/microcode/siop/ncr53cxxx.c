@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr53cxxx.c,v 1.1 2001/02/15 04:07:59 krw Exp $ */
+/*	$OpenBSD: ncr53cxxx.c,v 1.2 2001/03/01 17:14:27 krw Exp $ */
 /*	$NetBSD: ncr53cxxx.c,v 1.5 2000/10/23 14:51:51 bouyer Exp $	*/
 
 /*
@@ -1305,7 +1305,7 @@ fprintf (listfp, "Move data to register: %02x %d\n", data, reg);
 			    !reserved("carry", tokenix+6)) {
 				errout("Expected 'WITH CARRY'");
 			} else if (op != 6) {
-				errout("'WITH CARRY' only valide with '+'");
+				errout("'WITH CARRY' only valid with '+'");
 			}
 			op = 7;
 		}

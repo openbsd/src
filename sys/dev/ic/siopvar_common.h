@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar_common.h,v 1.1 2001/02/15 04:07:59 krw Exp $ */
+/*	$OpenBSD: siopvar_common.h,v 1.2 2001/03/01 17:14:28 krw Exp $ */
 /*	$NetBSD: siopvar_common.h,v 1.10 2001/01/26 21:58:56 bouyer Exp $	*/
 
 /*
@@ -81,9 +81,9 @@ struct siop_xfer {
 } __attribute__((__packed__));
 
 /*
- * This decribes a command handled by the SCSI controller
- * These are chained in either a free list or a active list
- * We have one queue per target
+ * This describes a command handled by the SCSI controller.
+ * These are chained in either a free list or a active list.
+ * We have one queue per target.
  */
 struct siop_cmd {
 	TAILQ_ENTRY (siop_cmd) next;
@@ -116,7 +116,7 @@ struct siop_cbd {
 #define CMDST_FREE		0 /* cmd slot is free */
 #define CMDST_READY		1 /* cmd slot is waiting for processing */
 #define CMDST_ACTIVE		2 /* cmd slot is being processed */
-#define CMDST_SENSE		3 /* cmd slot is being requesting sense */
+#define CMDST_SENSE		3 /* cmd slot is requesting sense */
 #define CMDST_SENSE_ACTIVE	4 /* request sense active */
 #define CMDST_SENSE_DONE 	5 /* request sense done */
 #define CMDST_DONE		6 /* cmd slot has been processed */

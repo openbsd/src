@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci_common.c,v 1.2 2001/02/20 00:32:30 krw Exp $ */
+/*	$OpenBSD: siop_pci_common.c,v 1.3 2001/03/01 17:14:28 krw Exp $ */
 /*	$NetBSD: siop_pci_common.c,v 1.6 2001/01/10 15:50:20 thorpej Exp $	*/
 
 /*
@@ -199,7 +199,7 @@ siop_pci_attach_common(sc, pa)
 
 	sc->sc_pp = siop_lookup_product(pa->pa_id, PCI_REVISION(pa->pa_class));
 	if (sc->sc_pp == NULL) {
-		printf("sym: broken match/attach!!\n");
+		printf("siop: broken match/attach!\n");
 		return 0;
 	}
 	/* copy interesting infos about the chip */

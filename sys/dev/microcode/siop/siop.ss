@@ -1,4 +1,4 @@
-;	$OpenBSD: siop.ss,v 1.1 2001/02/15 04:07:59 krw Exp $
+;	$OpenBSD: siop.ss,v 1.2 2001/03/01 17:14:27 krw Exp $
 ;	$NetBSD: siop.ss,v 1.12 2000/10/23 14:53:53 bouyer Exp $
 
 ;
@@ -147,7 +147,7 @@ script_sched:
 ; changes the FALSE to TRUE. The select script will change it back to false
 ; once the target is selected.
 ; The RAM could hold 370 slot entry, we limit it to 40. Should be more than
-; enouth.
+; enough.
 script_sched_slot0:
 	JUMP abs_script_sched_slot0, IF FALSE;
 	JUMP abs_script_sched_slot0, IF FALSE;
@@ -201,7 +201,7 @@ reselect:
 	WAIT RESELECT REL(reselect_fail)
 	MOVE SSID & 0x8f to SFBR
 	MOVE SFBR to SCRATCHA0 ; save reselect ID
-; find the rigth param for this target
+; find the right param for this target
 resel_targ0:
 	JUMP abs_targ0, IF 0xff;
 	JUMP abs_targ0, IF 0xff;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siopvar.h,v 1.1 2001/02/15 04:07:58 krw Exp $ */
+/*	$OpenBSD: siopvar.h,v 1.2 2001/03/01 17:14:28 krw Exp $ */
 /*	$NetBSD: siopvar.h,v 1.13 2000/10/23 23:18:11 bouyer Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ struct siop_softc {
 	int sc_currschedslot;		/* current scheduler slot */
 	struct cbd_list cmds;		/* list of command block descriptors */
 	struct cmd_list free_list;	/* cmd descr free list */
-	struct cmd_list urgent_list;	/* hitgh priority cmd descr list */
+	struct cmd_list urgent_list;	/* high priority cmd descr list */
 	struct cmd_list ready_list;	/* cmd descr ready list */
 	struct lunsw_list lunsw_list;	/* lunsw free list */
 	u_int32_t script_free_lo;	/* free ram offset from sc_scriptaddr */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_pci.c,v 1.1 2001/02/15 04:07:58 krw Exp $ */
+/*	$OpenBSD: siop_pci.c,v 1.2 2001/03/01 17:14:28 krw Exp $ */
 /*	$NetBSD: siop_pci.c,v 1.8 2000/05/15 07:53:17 bouyer Exp $	*/
 
 /*
@@ -62,7 +62,7 @@ siop_pci_match(parent, match, aux)
 	struct pci_attach_args *pa = aux;
 	const struct siop_product_desc *pp;
 
-	/* look if it's a known product */
+	/* see if it's a known product */
 	pp = siop_lookup_product(pa->pa_id, PCI_REVISION(pa->pa_class));
 	if (pp)
 		return 1;

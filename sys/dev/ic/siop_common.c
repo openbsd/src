@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop_common.c,v 1.2 2001/02/20 00:32:29 krw Exp $ */
+/*	$OpenBSD: siop_common.c,v 1.3 2001/03/01 17:14:28 krw Exp $ */
 /*	$NetBSD: siop_common.c,v 1.12 2001/02/11 18:04:50 bouyer Exp $	*/
 
 /*
@@ -193,11 +193,11 @@ siop_wdtr_neg(siop_cmd)
 				sc->targets[target]->id |= (SCNTL3_EWS << 24);
 				break;
 			}
-		/* FALLTHROUH */
+		/* FALLTHROUGH */
 		default:
 			/*
- 			 * hum, we got more than what we can handle, shoudn't
-			 * happen. Reject, and stay async
+ 			 * We got more than we can handle, which shouldn't
+			 * happen. Reject, and stay async.
 			 */
 			siop_target->flags &= ~TARF_ISWIDE;
 			siop_target->status = TARST_OK;
@@ -424,7 +424,7 @@ siop_sdp(siop_cmd)
 #endif
 	dbc = bus_space_read_4(sc->sc_rt, sc->sc_rh, SIOP_DBC) & 0x00ffffff;
 	if (siop_cmd->xs->flags & SCSI_DATA_OUT) {
-		/* need to account stale data in FIFO */
+		/* need to account for stale data in FIFO */
 		int dfifo = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_DFIFO);
 		if (sc->features & SF_CHIP_FIFO) {
 			dfifo |= (bus_space_read_1(sc->sc_rt, sc->sc_rh,
@@ -467,7 +467,7 @@ siop_clearfifo(sc)
 	int ctest3 = bus_space_read_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST3);
 
 #ifdef DEBUG_INTR
-	printf("DMA fifo not empty !\n");
+	printf("DMA fifo not empty!\n");
 #endif
 	bus_space_write_1(sc->sc_rt, sc->sc_rh, SIOP_CTEST3,
 	    ctest3 | CTEST3_CLF);
@@ -492,9 +492,9 @@ siop_modechange(sc)
 	int sist0, sist1, stest2, stest4;
 	for (retry = 0; retry < 5; retry++) {
 		/*
-		 * datasheet says to wait 100ms and re-read SIST1,
-		 * to check that DIFFSENSE is srable.
-		 * We may delay() 5 times for  100ms at interrupt time;
+		 * Datasheet says to wait 100ms and re-read SIST1,
+		 * to check that DIFFSENSE is stable.
+		 * We may delay() 5 times for 100ms at interrupt time;
 		 * hopefully this will not happen often.
 		 */
 		delay(100000);

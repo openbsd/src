@@ -1,4 +1,4 @@
-/*	$OpenBSD: siop.c,v 1.3 2001/02/20 05:18:43 krw Exp $ */
+/*	$OpenBSD: siop.c,v 1.4 2001/03/01 17:14:27 krw Exp $ */
 /*	$NetBSD: siop.c,v 1.39 2001/02/11 18:04:49 bouyer Exp $	*/
 
 /*
@@ -71,7 +71,7 @@
 /* number of cmd descriptors per block */
 #define SIOP_NCMDPB (PAGE_SIZE / sizeof(struct siop_xfer))
 
-/* Number of scheduler slot (needs to match script) */
+/* number of scheduler slots (needs to match script) */
 #define SIOP_NSLOTS 40
 
 void	siop_reset __P((struct siop_softc *));
@@ -504,8 +504,8 @@ siop_intr(v)
 				switch (sstat1 & SSTAT1_PHASE_MASK) {
 				case SSTAT1_PHASE_STATUS:
 				/*
-				 * previous phase may be aborted for any reason
-				 * ( for example, the target has less data to
+				 * Previous phase may have aborted for any reason
+				 * (for example, the target has less data to
 				 * transfer than requested). Just go to status
 				 * and the command should terminate.
 				 */
@@ -517,7 +517,7 @@ siop_intr(v)
 					return 1;
 				case SSTAT1_PHASE_MSGIN:
 					/*
-					 * target may be ready to disconnect
+					 * Target may be ready to disconnect.
 					 * Save data pointers just in case.
 					 */
 					INCSTAT(siop_stat_intr_xferdisc);
@@ -585,13 +585,13 @@ siop_intr(v)
 				goto reset;
 			if ((istat & ISTAT_DIP) && (dstat & DSTAT_SIR)) {
 				/*
-				 * we have a script interrupt, it will
+				 * We have a script interrupt. It will
 				 * restart the script.
 				 */
 				goto scintr;
 			}
 			/*
-			 * else we have to restart it ourselve, at the
+			 * Else we have to restart the script ourself, at the
 			 * interrupted instruction.
 			 */
 			bus_space_write_4(sc->sc_rt, sc->sc_rh, SIOP_DSP,
@@ -708,8 +708,8 @@ scintr:
 				int msg, extmsg;
 				if (siop_cmd->siop_tables.msg_out[0] & 0x80) {
 					/*
-					 * message was part of a identify +
-					 * something else. Identify shoudl't
+					 * Message was part of an identify +
+					 * something else. Identify shouldn't
 					 * have been rejected.
 					 */
 					msg = siop_cmd->siop_tables.msg_out[1];
@@ -721,7 +721,7 @@ scintr:
 					    siop_cmd->siop_tables.msg_out[2];
 				}
 				if (msg == MSG_MESSAGE_REJECT) {
-					/* MSG_REJECT  for a MSG_REJECT  !*/
+					/* MSG_REJECT for a MSG_REJECT! */
 					if (xs)
 						sc_print_addr(xs->sc_link);
 					else
@@ -938,9 +938,9 @@ scintr:
 	return 1;
 end:
 	/*
-	 * restart the script now if command completed properly
+	 * Restart the script now if command completed properly.
 	 * Otherwise wait for siop_scsicmd_end(), it may need to put
-	 * a cmd in front of the queue
+	 * a cmd at the front of the queue.
 	 */
 	if (letoh32(siop_cmd->siop_tables.status) == SCSI_OK &&
 	    TAILQ_FIRST(&sc->urgent_list) != NULL)
@@ -990,13 +990,12 @@ siop_scsicmd_end(siop_cmd)
 		struct siop_lun *siop_lun = siop_cmd->siop_target->siop_lun[
 		    xs->sc_link->lun];
 		/*
-		 * device didn't queue the command. We have to
-		 * retry it.
-		 * We insert it in the urgent list, hoping to preserve order.
-		 * But unfortunably, commands already in the scheduler may
-		 * be accepted before this one.
-		 * Also remember the condition, to avoid starting new commands
-		 * for this device before one is done.
+		 * Device didn't queue the command. We have to retry
+		 * it.  We insert it into the urgent list, hoping to
+		 * preserve order.  But unfortunately, commands already
+		 * in the scheduler may be accepted before this one.
+		 * Also remember the condition, to avoid starting new
+		 * commands for this device before one is done.
 		 */
 		INCSTAT(siop_stat_intr_qfull);
 #ifdef SIOP_DEBUG
@@ -1127,9 +1126,9 @@ siop_handle_qtag_reject(siop_cmd)
 }
 
 /*
- * handle a bus reset: reset chip, unqueue all active commands, free all
- * target struct and report loosage to upper layer.
- * As the upper layer may requeue immediatly we have to first store
+ * Handle a bus reset: reset chip, unqueue all active commands, free all
+ * target structs and report losage to upper layer.
+ * As the upper layer may requeue immediately we have to first store
  * all active commands in a temporary queue.
  */
 void
@@ -1141,8 +1140,8 @@ siop_handle_reset(sc)
 	struct siop_lun *siop_lun;
 	int target, lun, tag;
 	/*
-	 * scsi bus reset. reset the chip and restart
-	 * the queue. Need to clean up all active commands
+	 * SCSI bus reset. Reset the chip and restart
+	 * the queue. Need to clean up all active commands.
 	 */
 	printf("%s: scsi bus reset\n", sc->sc_dev.dv_xname);
 	/* stop, reset and restart the chip */
@@ -1424,7 +1423,7 @@ siop_start(sc)
 
 	/*
 	 * The queue management here is a bit tricky: the script always looks
-	 * at the slot from first to last, so if we always use the first 
+	 * at the slots from first to last, so if we always use the first 
 	 * free slot commands can stay at the tail of the queue ~forever.
 	 * The algorithm used here is to restart from the head when we know
 	 * that the queue is empty, and only add commands after the last one.
@@ -1495,7 +1494,7 @@ again:
 				    0x80000000)
 					break;
 			}
-			/* no more free slot, no need to continue */
+			/* no more free slots, no need to continue */
 			if (slot == SIOP_NSLOTS) {
 				goto end;
 			}
@@ -1564,7 +1563,7 @@ again:
 		/* handle timeout */
 		if (siop_cmd->status == CMDST_ACTIVE) {
 			if ((siop_cmd->xs->flags & SCSI_POLL) == 0) {
-				/* start exire timer */
+				/* start expire timer */
 				timeout = (u_int64_t) siop_cmd->xs->timeout *
 				    (u_int64_t)hz / 1000;
 				if (timeout == 0)
@@ -1619,11 +1618,10 @@ siop_timeout(v)
 
 	/* deactivate callout */
 	timeout_del(&siop_cmd->xs->stimeout);
-	/* mark command as being timed out; siop_intr will handle it */
 	/*
-	 * mark command has being timed out and just return;
-	 * the bus reset will generate an interrupt,
-	 * it will be handled in siop_intr()
+	 * Mark command as being timed out and just return. The bus
+	 * reset will generate an interrupt, which will be handled
+	 * in siop_intr().
 	 */
 	siop_cmd->flags |= CMDFL_TIMEOUT;
 	splx(s);
@@ -1926,8 +1924,8 @@ siop_add_dev(sc, target, lun)
 	lunsw = sc->targets[target]->lunsw;
 	if ((lunsw->lunsw_off + lunsw->lunsw_size) < sc->script_free_lo) {
 		/*
-		 * can't extend this slot. Probably not worth trying to deal
-		 * with this case
+		 * Can't extend this slot. Probably not worth trying to deal
+		 * with this case.
 		 */
 #ifdef DEBUG
 		printf("%s:%d:%d: can't allocate a lun sw slot\n",
@@ -1939,9 +1937,9 @@ siop_add_dev(sc, target, lun)
 	ntargets =  (sc->sc_link.adapter_buswidth - 1) - 1 - sc->sc_ntargets;
 
 	/*
-	 * we need 8 bytes for the lun sw additionnal entry, and
+	 * We need 8 bytes for the lun sw additional entry, and
 	 * eventually sizeof(tag_switch) for the tag switch entry.
-	 * Keep enouth free space for the free targets that could be
+	 * Keep enough free space for the free targets that could be
 	 * probed later.
 	 */
 	if (sc->script_free_lo + 2 +
@@ -1950,11 +1948,11 @@ siop_add_dev(sc, target, lun)
 	    sc->script_free_hi - (sizeof(tag_switch) / sizeof(tag_switch[0])) :
 	    sc->script_free_hi)) {
 		/*
-		 * not enouth space, probably not worth dealing with it.
+		 * Not enough space, but probably not worth dealing with it.
 		 * We can hold 13 tagged-queuing capable devices in the 4k RAM.
 		 */
 #ifdef DEBUG
-		printf("%s:%d:%d: not enouth memory for a lun sw slot\n",
+		printf("%s:%d:%d: not enough memory for a lun sw slot\n",
 		    sc->sc_dev.dv_xname, target, lun);
 #endif
 		return;
