@@ -1,4 +1,4 @@
-/*	$OpenBSD: akbdmap.h,v 1.2 2001/09/12 22:57:30 miod Exp $	*/
+/*	$OpenBSD: akbdmap.h,v 1.3 2002/05/08 19:20:11 miod Exp $	*/
 /*	$NetBSD: akbdmap.h,v 1.3 2000/09/01 16:00:39 tsubai Exp $	*/
 
 /*-
@@ -138,35 +138,48 @@ static const keysym_t akbd_keydesc_us[] = {
 static const keysym_t akbd_keydesc_fr[] = {
 /*  pos		normal		shifted		altgr		shift-altgr */
     KC(0),	KS_q,
+    KC(1),	KS_s,		KS_S,		KS_Ograve,
+    KC(4),	KS_h,		KS_H,		KS_Igrave,	KS_Icircumflex,
     KC(6),	KS_w,
     KC(10),	KS_at,		KS_numbersign,
-    KC(12),	KS_a,
-    KC(13),	KS_z,
+    KC(11),	KS_b,		KS_B,		KS_ssharp,
+    KC(12),	KS_a,		KS_A,		KS_ae,		KS_AE,
+    KC(13),	KS_z,		KS_Z,		KS_Acircumflex,	KS_Aring,
+    KC(14),	KS_e,		KS_E,		KS_ecircumflex,	KS_Ecircumflex,
+    KC(15),	KS_r,		KS_R,		KS_registered,	KS_comma,
+    KC(16),	KS_y,		KS_Y,		KS_Uacute,
     KC(18),	KS_ampersand,	KS_1,
-    KC(19),	KS_eacute,	KS_2,		KS_asciitilde,
-    KC(20),	KS_quotedbl,	KS_3,		KS_numbersign,
-    KC(21),	KS_apostrophe,	KS_4,		KS_braceleft,
-    KC(22),	KS_section,	KS_6,		KS_bar,
-    KC(23),	KS_parenleft,	KS_5,		KS_bracketleft,	KS_braceleft,
-    KC(24),	KS_minus,	KS_underscore,	KS_braceright,
-    KC(25),	KS_ccedilla,	KS_9,		KS_asciicircum,
-    KC(26),	KS_egrave,	KS_7,		KS_grave,
-    KC(27),	KS_parenright,	KS_degree,	KS_bracketright, KS_braceright,
-    KC(28),	KS_exclam,	KS_8,		KS_bar,
-    KC(29),	KS_agrave,	KS_0,		KS_at,
-    KC(30),	KS_dollar,	KS_asterisk,
+    KC(19),	KS_eacute,	KS_2,		KS_ediaeresis,
+    KC(20),	KS_quotedbl,	KS_3,
+    KC(21),	KS_apostrophe,	KS_4,
+    KC(22),	KS_section,	KS_6,
+    KC(23),	KS_parenleft,	KS_5,		KS_braceleft,	KS_bracketleft,
+    KC(24),	KS_minus,	KS_underscore,
+    KC(25),	KS_ccedilla,	KS_9,		KS_Ccedilla,	KS_Aacute,
+    KC(26),	KS_egrave,	KS_7,		KS_guillemotleft,
+						KS_guillemotright,
+    KC(27),	KS_parenright,	KS_degree,	KS_braceright,	KS_bracketright,
+    KC(28),	KS_exclam,	KS_8,		KS_exclamdown,	KS_Ucircumflex,
+    KC(29),	KS_agrave,	KS_0,		KS_oslash,	KS_Ooblique,
+    KC(30),	KS_dollar,	KS_asterisk,	KS_cent,	KS_yen,
     KC(33),	KS_dead_circumflex, KS_dead_diaeresis,
-    KC(39),	KS_mu,		KS_percent,
-    KC(41),	KS_m,
-    KC(42),	KS_grave,	KS_sterling,
+						KS_ocircumflex,	KS_Ocircumflex,
+    KC(34),	KS_i,		KS_I,		KS_icircumflex,	KS_idiaeresis,
+    KC(37),	KS_l,		KS_L,		KS_voidSymbol,	KS_bar,
+    KC(38),	KS_j,		KS_J,		KS_Idiaeresis,	KS_Iacute,
+    KC(39),	KS_ugrave,	KS_percent,	KS_Ugrave,
+    KC(40),	KS_k,		KS_K,		KS_Egrave,	KS_Ediaeresis,
+    KC(41),	KS_m,		KS_M,		KS_mu,		KS_Oacute,
+    KC(42),	KS_grave,	KS_sterling,	KS_at,		KS_numbersign,
     KC(43),	KS_semicolon,	KS_period,
     KC(44),	KS_equal,	KS_plus,
-    KC(46),	KS_comma,	KS_question,
-    KC(47),	KS_colon,	KS_slash,	KS_backslash,
+    KC(45),	KS_n,		KS_N,		KS_asciitilde,
+    KC(46),	KS_comma,	KS_question,	KS_voidSymbol,	KS_questiondown,
+    KC(47),	KS_colon,	KS_slash,	KS_voidSymbol,	KS_backslash,
     KC(50),	KS_less,	KS_greater,
     KC(52),	KS_Alt_R,
     KC(55),	KS_Meta_L,				/* Command */
-    KC(58),	KS_Alt_R,				/* Option */
+    KC(58),	KS_Mode_switch,	KS_Multi_key,		/* Option */
 };
 
 #if 0
