@@ -1,4 +1,4 @@
-#	$OpenBSD: services,v 1.29 2001/03/13 08:29:16 jakob Exp $
+#	$OpenBSD: services,v 1.30 2001/04/18 18:30:24 jakob Exp $
 #
 # Network services, Internet style
 #
@@ -32,8 +32,8 @@ telnet		23/tcp
 # 24 - private
 smtp		25/tcp		mail
 # 26 - unassigned
-time		37/tcp		timserver
-time		37/udp		timserver
+time		37/tcp		timeserver
+time		37/udp		timeserver
 rlp		39/udp		resource	# resource location
 nameserver	42/tcp		name		# IEN 116
 whois		43/tcp		nicname
