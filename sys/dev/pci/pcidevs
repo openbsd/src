@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.324 2000/09/22 18:03:52 aaron Exp $
+	$OpenBSD: pcidevs,v 1.325 2000/09/25 20:55:19 aaron Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1093,6 +1093,7 @@ product INTEL 82801AB_SMB       0x2423  82801AB SMBus
 product INTEL 82801AB_ACA       0x2425  82801AB AC-97 Audio
 product INTEL 82801AB_ACM       0x2426  82801AB AC-97 Modem
 product INTEL 82801AB_HPB       0x2428  82801AB Hub-to-PCI
+product INTEL 82562		0x2449	82562
 product INTEL 82371SB_ISA	0x7000	82371SB (Triton II) PCI-ISA
 product INTEL 82371SB_IDE	0x7010	82371SB (Triton II) IDE
 product INTEL 82371USB		0x7020	82371SB (Triton II) USB
