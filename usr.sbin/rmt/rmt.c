@@ -39,7 +39,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rmt.c	5.6 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$Id: rmt.c,v 1.3 1997/01/17 15:46:55 millert Exp $";
+static char rcsid[] = "$Id: rmt.c,v 1.4 1997/06/30 05:54:31 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -122,7 +122,7 @@ top:
 	case 'L':
 		getstring(count); getstring(pos);
 		DEBUG2("rmtd: L %s %s\n", count, pos);
-		rval = lseek(tape, atoi(count), atoi(pos));
+		rval = lseek(tape, strtoq(count, NULL, 0), atoi(pos));
 		if (rval < 0)
 			goto ioerror;
 		goto respond;
