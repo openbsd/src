@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.22 2001/06/23 21:42:23 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.23 2001/06/24 04:20:44 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.55 1999/04/22 04:24:53 chs Exp $	*/
 
 /*
@@ -2234,7 +2234,7 @@ pmap_enter_ptpage(pmap, va)
 		pmap->pm_stab = (st_entry_t *)kmem_alloc(st_map, MAC_STSIZE);
 #endif
 		pmap_extract(pmap_kernel(), (vaddr_t)pmap->pm_stab,
-			(paddr_t *)pmap->pm_stpa);
+			(paddr_t *)&pmap->pm_stpa);
 #if defined(M68040)
 		if (mmutype == MMU_68040) {
 #ifdef DEBUG
