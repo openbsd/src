@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.88 2003/05/29 00:32:59 itojun Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.89 2003/05/30 01:09:16 itojun Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -231,7 +231,9 @@ udp_input(struct mbuf *m, ...)
 			}
 			m_adj(m, len - (m->m_pkthdr.len - iphlen));
 		}
-	} else if (ip6) {
+	}
+#ifdef INET6
+	else if (ip6) {
 		/* jumbograms */
 		if (len == 0 && m->m_pkthdr.len - iphlen > 0xffff)
 			len = m->m_pkthdr.len - iphlen;
@@ -239,7 +241,9 @@ udp_input(struct mbuf *m, ...)
 			udpstat.udps_badlen++;
 			goto bad;
 		}
-	} else /* shouldn't happen */
+	}
+#endif
+	else /* shouldn't happen */
 		goto bad;
 
 	/*
