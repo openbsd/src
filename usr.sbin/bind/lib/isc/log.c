@@ -1232,7 +1232,7 @@ roll_log(isc_logchannel_t *channel) {
 		 * Remove any excess logs on the way to that value.
 		 */
 		while (--greatest >= FILE_VERSIONS(channel)) {
-			sprintf(current, "%s.%d", path, greatest);
+			snprintf(current, sizeof current, "%s.%d", path, greatest);
 			(void)remove(current);
 		}
 
@@ -1252,13 +1252,13 @@ roll_log(isc_logchannel_t *channel) {
 		return (ISC_R_INVALIDFILE);
 
 	for (i = greatest; i > 0; i--) {
-		sprintf(current, "%s.%d", path, i - 1);
-		sprintf(new, "%s.%d", path, i);
+		snprintf(current, sizeof current, "%s.%d", path, i - 1);
+		snprintf(new, sizeof new, "%s.%d", path, i);
 		(void)isc_file_rename(current, new);
 	}
 
 	if (FILE_VERSIONS(channel) != 0) {
-		sprintf(new, "%s.0", path);
+		snprintf(new, sizeof new, "%s.0", path);
 		(void)isc_file_rename(path, new);
 
 	} else if (FILE_VERSIONS(channel) == 0)
