@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_readwrite.c,v 1.15 1999/02/26 03:35:18 art Exp $	*/
+/*	$OpenBSD: ufs_readwrite.c,v 1.16 2000/11/21 21:49:57 provos Exp $	*/
 /*	$NetBSD: ufs_readwrite.c,v 1.9 1996/05/11 18:27:57 mycroft Exp $	*/
 
 /*-
@@ -56,6 +56,11 @@
 #define	WRITE_S			"ffs_write"
 #define MAXFILESIZE		fs->fs_maxfilesize
 #endif
+
+#include <sys/event.h>
+
+#define VN_KNOTE(vp, b) \
+	KNOTE((struct klist *)&vp->v_selectinfo.vsi_selinfo.si_note, (b))
 
 /*
  * Vnode op for reading.
@@ -186,9 +191,10 @@ WRITE(v)
 	struct proc *p;
 	daddr_t lbn;
 	off_t osize;
-	int blkoffset, error, flags, ioflag, resid, size, xfersize;
+	int blkoffset, error, extended, flags, ioflag, resid, size, xfersize;
 	struct timespec ts;
 
+	extended = 0;
 	ioflag = ap->a_ioflag;
 	uio = ap->a_uio;
 	vp = ap->a_vp;
@@ -257,6 +263,7 @@ WRITE(v)
 #else
 			vnode_pager_setsize(vp, (u_long)ip->i_ffs_size);
 #endif
+			extended = 1;
 		}
 #if defined(UVM)
 		(void)uvm_vnp_uncache(vp);
@@ -298,6 +305,8 @@ WRITE(v)
 	 */
 	if (resid > uio->uio_resid && ap->a_cred && ap->a_cred->cr_uid != 0)
 		ip->i_ffs_mode &= ~(ISUID | ISGID);
+	if (resid > uio->uio_resid)
+		VN_KNOTE(vp, NOTE_WRITE | (extended ? NOTE_EXTEND : 0));
 	if (error) {
 		if (ioflag & IO_UNIT) {
 			(void)VOP_TRUNCATE(vp, osize,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_vnops.c,v 1.27 1999/03/09 21:16:28 art Exp $	*/
+/*	$OpenBSD: ufs_vnops.c,v 1.28 2000/11/21 21:49:57 provos Exp $	*/
 /*	$NetBSD: ufs_vnops.c,v 1.18 1996/05/11 18:28:04 mycroft Exp $	*/
 
 /*
@@ -56,6 +56,7 @@
 #include <sys/malloc.h>
 #include <sys/dirent.h>
 #include <sys/lockf.h>
+#include <sys/event.h>
 
 #include <vm/vm.h>
 
@@ -93,6 +94,8 @@ union _qcvt {
 	tmp.val[_QUAD_LOWWORD] = (l); \
 	(q) = tmp.qcvt; \
 }
+#define VN_KNOTE(vp, b) \
+	KNOTE(&vp->v_selectinfo.vsi_selinfo.si_note, (b))
 
 
 /*
@@ -120,9 +123,15 @@ ufs_create(v)
 		struct componentname *a_cnp;
 		struct vattr *a_vap;
 	} */ *ap = v;
-	return
+	int error;
+
+	error =
 	    ufs_makeinode(MAKEIMODE(ap->a_vap->va_type, ap->a_vap->va_mode),
 			  ap->a_dvp, ap->a_vpp, ap->a_cnp);
+	if (error)
+		return (error);
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
+	return (0);
 }
 
 /*
@@ -148,6 +157,7 @@ ufs_mknod(v)
 	     ufs_makeinode(MAKEIMODE(vap->va_type, vap->va_mode),
 			   ap->a_dvp, vpp, ap->a_cnp)) != 0)
 		return (error);
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	ip = VTOI(*vpp);
 	ip->i_flag |= IN_ACCESS | IN_CHANGE | IN_UPDATE;
 	if (vap->va_rdev != VNOVAL) {
@@ -433,6 +443,7 @@ ufs_setattr(v)
 			return (EROFS);
 		error = ufs_chmod(vp, (int)vap->va_mode, cred, p);
 	}
+	VN_KNOTE(vp, NOTE_ATTRIB);
 	return (error);
 }
 
@@ -677,11 +688,14 @@ ufs_remove(v)
 
 	ip = VTOI(vp);
 	if (vp->v_type == VDIR || (ip->i_ffs_flags & (IMMUTABLE | APPEND)) ||
-	    (VTOI(dvp)->i_ffs_flags & APPEND))
+	    (VTOI(dvp)->i_ffs_flags & APPEND)) {
 		error = EPERM;
-	else
-		error = ufs_dirremove(dvp, ip, ap->a_cnp->cn_flags, 0);
-
+		goto out;
+	}
+	error = ufs_dirremove(dvp, ip, ap->a_cnp->cn_flags, 0);
+	VN_KNOTE(vp, NOTE_DELETE);
+	VN_KNOTE(dvp, NOTE_WRITE);
+ out:
 	if (dvp == vp)
 		vrele(vp);
 	else
@@ -756,6 +770,8 @@ ufs_link(v)
 		ip->i_flag |= IN_CHANGE;
 	}
 	FREE(cnp->cn_pnbuf, M_NAMEI);
+	VN_KNOTE(vp, NOTE_LINK);
+	VN_KNOTE(dvp, NOTE_WRITE);
 out1:
 	if (dvp != vp)
 		VOP_UNLOCK(vp, 0, p);
@@ -973,6 +989,7 @@ abortit:
 		oldparent = dp->i_number;
 		doingdirectory = 1;
 	}
+	VN_KNOTE(fdvp, NOTE_WRITE);		/* XXX right place? */
 	/* Why? */
 	vrele(fdvp);
 
@@ -1079,6 +1096,7 @@ abortit:
 			}
 			goto bad;
 		}
+		VN_KNOTE(tdvp, NOTE_WRITE);
 		vput(tdvp);
 	} else {
 		if (xp->i_dev != dp->i_dev || xp->i_dev != ip->i_dev)
@@ -1153,7 +1171,9 @@ abortit:
 			        tcnp->cn_cred, tcnp->cn_proc)) != 0)
 				goto bad;
                 }
+		VN_KNOTE(tdvp, NOTE_WRITE);
 	        vput(tdvp);
+		VN_KNOTE(tvp, NOTE_DELETE);
 		vput(tvp);
 		xp = NULL;
 	}
@@ -1205,6 +1225,7 @@ abortit:
 		error = ufs_dirremove(fdvp, xp, fcnp->cn_flags, 0);
 		xp->i_flag &= ~IN_RENAME;
 	}
+	VN_KNOTE(fvp, NOTE_RENAME);
 	if (dp)
 		vput(fdvp);
 	if (xp)
@@ -1368,6 +1389,7 @@ ufs_mkdir(v)
   
 bad:
         if (error == 0) {
+		VN_KNOTE(dvp, NOTE_WRITE);
                 *ap->a_vpp = tvp;
         } else {
                 dp->i_effnlink--;
@@ -1449,6 +1471,7 @@ ufs_rmdir(v)
 	 */
 	if ((error = ufs_dirremove(dvp, ip, cnp->cn_flags, 1)) != 0)
 		goto out;
+	VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
 	cache_purge(dvp);
         /*
 	 * Truncate inode. The only stuff left in the directory is "." and
@@ -1471,6 +1494,7 @@ ufs_rmdir(v)
 	}
 	cache_purge(vp);
 out:
+	VN_KNOTE(vp, NOTE_DELETE);
         vput(dvp);
 	vput(vp);
 	return (error);
@@ -1498,6 +1522,7 @@ ufs_symlink(v)
 			      vpp, ap->a_cnp);
 	if (error)
 		return (error);
+	VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	vp = *vpp;
 	len = strlen(ap->a_target);
 	if (len < vp->v_mount->mnt_maxsymlinklen) {

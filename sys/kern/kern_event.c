@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_event.c,v 1.5 2000/11/18 22:16:49 provos Exp $	*/
+/*	$OpenBSD: kern_event.c,v 1.6 2000/11/21 21:49:57 provos Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000 Jonathan Lemon <jlemon@FreeBSD.org>
@@ -100,8 +100,8 @@ extern struct filterops so_rwfiltops[];
 extern struct filterops pipe_rwfiltops[];
 #ifdef notyet
 extern struct filterops fifo_rwfiltops[];
-extern struct filterops vn_rwfiltops[];
 #endif
+extern struct filterops vn_rwfiltops[];
 
 struct filterops kq_rwfiltops[] = {
     { 1, filt_kqattach, filt_kqdetach, filt_kqueue },
@@ -111,8 +111,8 @@ struct filterops kq_rwfiltops[] = {
 extern struct filterops sig_filtops;
 #ifdef notyet
 extern struct filterops aio_filtops;
-extern struct filterops vn_filtops;
 #endif
+extern struct filterops vn_filtops;
 
 struct filterops rwtype_filtops =
 	{ 1, filt_rwtypattach, NULL, NULL };
@@ -125,7 +125,7 @@ struct filterops proc_filtops =
  */
 struct filterops *rwtypfilt_sw[] = {
 	NULL,				/* 0 */
-	NULL, /* vn_rwfiltops, */	/* DTYPE_VNODE */
+	vn_rwfiltops,			/* DTYPE_VNODE */
 	so_rwfiltops,			/* DTYPE_SOCKET */
 	pipe_rwfiltops,			/* DTYPE_PIPE */
 	/* fifo_rwfiltops, */		/* DTYPE_FIFO */
@@ -139,7 +139,7 @@ struct filterops *sysfilt_ops[] = {
 	&rwtype_filtops,		/* EVFILT_READ */
 	&rwtype_filtops,		/* EVFILT_WRITE */
 	NULL, /*&aio_filtops,*/		/* EVFILT_AIO */
-	NULL, /*&vn_filtops,*/		/* EVFILT_VNODE */
+	&vn_filtops,			/* EVFILT_VNODE */
 	&proc_filtops,			/* EVFILT_PROC */
 	&sig_filtops,			/* EVFILT_SIGNAL */
 };

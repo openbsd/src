@@ -1,4 +1,4 @@
-/*	$OpenBSD: vnode.h,v 1.25 2000/06/17 17:16:05 provos Exp $	*/
+/*	$OpenBSD: vnode.h,v 1.26 2000/11/21 21:49:56 provos Exp $	*/
 /*	$NetBSD: vnode.h,v 1.38 1996/02/29 20:59:05 cgd Exp $	*/
 
 /*
@@ -38,6 +38,7 @@
 
 #include <sys/queue.h>
 #include <sys/lock.h>
+#include <sys/select.h>
 #ifdef UVM			/* XXX: clean up includes later */
 #include <vm/pglist.h>		/* XXX */
 #include <vm/vm_param.h>	/* XXX */
@@ -126,6 +127,10 @@ struct vnode {
 #endif
 	enum	vtagtype v_tag;			/* type of underlying data */
 	void 	*v_data;			/* private data for fs */
+	struct {
+		struct	simplelock vsi_lock;	/* lock to protect below */
+		struct	selinfo vsi_selinfo;	/* identity of poller(s) */
+	} v_selectinfo;
 };
 #define	v_mountedhere	v_un.vu_mountedhere
 #define	v_socket	v_un.vu_socket
