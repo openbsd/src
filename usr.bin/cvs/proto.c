@@ -1,4 +1,4 @@
-/*	$OpenBSD: proto.c,v 1.4 2004/07/25 18:50:30 jfb Exp $	*/
+/*	$OpenBSD: proto.c,v 1.5 2004/07/26 16:00:10 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -60,6 +60,9 @@
 #include "log.h"
 
 
+#define CVS_MTSTK_MAXDEPTH   16
+
+
 
 extern int   verbosity;
 extern int   cvs_compress;
@@ -72,19 +75,6 @@ extern struct cvsroot *cvs_root;
 
 
 
-/*
- * Local and remote directory used by the `Directory' request.
- */
-char  cvs_ldir[MAXPATHLEN];
-char  cvs_rdir[MAXPATHLEN];
-
-
-
-char *cvs_fcksum = NULL;
-
-mode_t  cvs_lastmode = 0;
-
-
 static int  cvs_resp_validreq  (int, char *);
 static int  cvs_resp_cksum     (int, char *);
 static int  cvs_resp_modtime   (int, char *);
@@ -92,10 +82,12 @@ static int  cvs_resp_m         (int, char *);
 static int  cvs_resp_ok        (int, char *);
 static int  cvs_resp_error     (int, char *);
 static int  cvs_resp_statdir   (int, char *);
+static int  cvs_resp_sticky    (int, char *);
 static int  cvs_resp_newentry  (int, char *);
 static int  cvs_resp_updated   (int, char *);
 static int  cvs_resp_removed   (int, char *);
 static int  cvs_resp_mode      (int, char *);
+static int  cvs_resp_modxpand  (int, char *);
 
 
 
@@ -181,7 +173,14 @@ struct cvs_resp {
 	{ CVS_RESP_CHECKEDIN,  "Checked-in",             cvs_resp_newentry },
 	{ CVS_RESP_MODE,       "Mode",                   cvs_resp_mode     },
 	{ CVS_RESP_MODTIME,    "Mod-time",               cvs_resp_modtime  },
+	{ CVS_RESP_MODXPAND,   "Module-expansion",       cvs_resp_modxpand },
+	{ CVS_RESP_SETSTICKY,  "Set-sticky",             cvs_resp_sticky   },
+	{ CVS_RESP_CLRSTICKY,  "Clear-sticky",           cvs_resp_sticky   },
 };
+
+
+static char *cvs_mt_stack[CVS_MTSTK_MAXDEPTH];
+static u_int cvs_mtstk_depth = 0;
 
 
 #define CVS_NBREQ   (sizeof(cvs_requests)/sizeof(cvs_requests[0]))
@@ -189,6 +188,16 @@ struct cvs_resp {
 
 /* mask of requets supported by server */
 static u_char  cvs_server_validreq[CVS_REQ_MAX + 1];
+
+/*
+ * Local and remote directory used by the `Directory' request.
+ */
+char  cvs_ldir[MAXPATHLEN];
+char  cvs_rdir[MAXPATHLEN];
+
+char *cvs_fcksum = NULL;
+
+mode_t  cvs_lastmode = 0;
 
 
 /*
@@ -485,6 +494,7 @@ cvs_resp_validreq(int type, char *line)
 static int
 cvs_resp_m(int type, char *line)
 {
+	char *cp;
 	FILE *stream;
 
 	stream = NULL;
@@ -500,9 +510,46 @@ cvs_resp_m(int type, char *line)
 		stream = stderr;
 		break;
 	case CVS_RESP_MT:
+		if (*line == '+') {
+			if (cvs_mtstk_depth == CVS_MTSTK_MAXDEPTH) {
+				cvs_log(LP_ERR,
+				    "MT scope stack has reached max depth");
+				return (-1);
+			}
+			cvs_mt_stack[cvs_mtstk_depth++] = strdup(line + 1);
+			if (cvs_mt_stack[cvs_mtstk_depth] == NULL) {
+				cvs_mtstk_depth--;
+				return (-1);
+			}
+		}
+		else if (*line == '-') {
+			if (cvs_mtstk_depth == 0) {
+				cvs_log(LP_ERR, "MT scope stack underflow");
+				return (-1);
+			}
+			else if (strcmp(line,
+			    cvs_mt_stack[cvs_mtstk_depth]) != 0) {
+				cvs_log(LP_ERR, "mismatch in MT scope stack");
+				return (-1);
+			}
+			free(cvs_mt_stack[cvs_mtstk_depth--]);
+		}
+		else {
+			if (strcmp(line, "newline") == 0)
+				putc('\n', stdout);
+			else if (strncmp(line, "fname ", 6) == 0)
+				printf("%s", line + 6);
+			else {
+				/* assume text */
+				cp = strchr(line, ' ');
+				if (cp != NULL)
+					printf("%s", cp + 1);
+			}
+		}
+
 		break;
 	case CVS_RESP_MBINARY:
-		cvs_log(LP_WARN, "MT and Mbinary not supported in client yet");
+		cvs_log(LP_WARN, "Mbinary not supported in client yet");
 		break;
 	}
 
@@ -556,19 +603,37 @@ cvs_resp_statdir(int type, char *line)
 	    CVS_PATH_STATICENTRIES);
 
 	if ((type == CVS_RESP_CLRSTATDIR) &&
-	    (unlink(statpath) == -1)) {
+	    (unlink(statpath) == -1) && (errno != ENOENT)) {
 		cvs_log(LP_ERRNO, "failed to unlink %s file",
 		    CVS_PATH_STATICENTRIES);
 		return (-1);
 	}
 	else if (type == CVS_RESP_SETSTATDIR) {
-		fd = open(statpath, O_CREAT|O_TRUNC|O_WRONLY, 0400); 
+		fd = open(statpath, O_CREAT|O_TRUNC|O_WRONLY, 0400);
 		if (fd == -1) {
 			cvs_log(LP_ERRNO, "failed to create %s file",
 			    CVS_PATH_STATICENTRIES);
 			return (-1);
 		}
 		(void)close(fd);
+
+	}
+
+	return (0);
+}
+
+/*
+ * cvs_resp_sticky()
+ *
+ * Handler for the `Clear-sticky' and `Set-sticky' responses.
+ */
+
+static int
+cvs_resp_sticky(int type, char *line)
+{
+	if (type == CVS_RESP_CLRSTICKY) {
+	}
+	else if (type == CVS_RESP_SETSTICKY) {
 	}
 
 	return (0);
@@ -713,6 +778,19 @@ cvs_resp_mode(int type, char *line)
 	if (cvs_strtomode(line, &cvs_lastmode) < 0) {
 		return (-1);
 	}
+	return (0);
+}
+
+
+/*
+ * cvs_resp_modxpand()
+ *
+ * Handler for the `Module-expansion' response.
+ */
+
+static int
+cvs_resp_modxpand(int type, char *line)
+{
 	return (0);
 }
 
