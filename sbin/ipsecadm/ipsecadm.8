@@ -1,4 +1,4 @@
-.\" $OpenBSD: ipsecadm.8,v 1.24 2000/04/16 17:26:16 aaron Exp $
+.\" $OpenBSD: ipsecadm.8,v 1.25 2000/04/21 17:33:41 deraadt Exp $
 .\"
 .\" Copyright 1997 Niels Provos <provos@physnet.uni-hamburg.de>
 .\" All rights reserved.
@@ -227,17 +227,17 @@ If no command is given
 defaults to new esp mode.
 .Pp
 The modifiers have the following meanings:
-.Bl -tag -width forcetunnel -offset indent
-.It src
+.Bl -tag -width xxxx -offset indent
+.It Fl src
 The source IP address for the SA.
 This is necessary for incoming
 SAs to avoid source address spoofing between mutually
 suspicious hosts that have established SAs with us.
 For outgoing SAs,
 this field is used to fill in the source address when doing tunneling.
-.It dst
+.It Fl dst
 The destination IP address for the SA.
-.It proxy
+.It Fl proxy
 This IP address, if provided, is checked against the inner IP address when
 doing tunneling to a firewall, to prevent source spoofing attacks.
 It is
@@ -248,16 +248,16 @@ firewall B, and through that to host C.
 In that case, the proxy address for
 the incoming SA should be C.
 This option is not necessary for outgoing SAs.
-.It spi
+.It Fl spi
 The Security Parameter Index (SPI).
-.It tunnel
+.It Fl tunnel
 This option has been deprecated.
 The arguments are ignored, and it otherwise has the same effect as the
 .Nm forcetunnel
 option.
-.It newpadding
+.It Fl newpadding
 This option has been deprecated.
-.It forcetunnel
+.It Fl forcetunnel
 Force IP-inside-IP encapsulation before ESP or AH processing is performed for
 outgoing packets.
 The source/destination addresses of the outgoing IP packet
@@ -268,7 +268,7 @@ and
 options.
 Notice that the IPsec stack will perform IP-inside-IP encapsulation
 when deemed necessary, even if this flag has not been set.
-.It enc
+.It Fl enc
 The encryption algorithm to be used with the SA.
 Possible values are:
 .Bl -tag -width skipjack
@@ -298,7 +298,7 @@ However, since it was designed by the NSA
 it is a poor choice.
 .El
 .Pp
-.It auth
+.It Fl auth
 The authentication algorithm to be used with the SA.
 Possible values are:
 .Nm md5
@@ -308,7 +308,7 @@ for both old and new ah and also new esp.
 Also
 .Nm rmd160
 for both new ah and esp.
-.It key
+.It Fl key
 The secret symmetric key used for encryption and authentication.
 The size for
 .Nm des
@@ -331,7 +331,7 @@ It is very important that the key is not guessable.
 One practical way of generating keys is by using the
 .Xr random 4
 device (e.g., dd if=/dev/urandom bs=1024 count=1 | sha1)
-.It authkey
+.It Fl authkey
 The secret key material used for authentication
 if additional authentication in new esp mode is required.
 For old or new ah the key material for authentication is passed with the
@@ -348,16 +348,16 @@ It is very important that the key is not guessable.
 One practical way of generating keys is by using the
 .Xr random 4
 device (e.g., dd if=/dev/urandom bs=1024 count=1 | sha1)
-.It iv
+.It Fl iv
 This option has been deprecated.
 The argument is ignored.
 When applicable, it has the same behaviour as the
 .Nm halfiv
 option.
-.It halfiv
+.It Fl halfiv
 This option causes use of a 4 byte IV in old ESP (as opposed to 8 bytes).
 It may only be used with old ESP.
-.It proto
+.It Fl proto
 The security protocol needed by
 .Nm delspi ,
 .Nm flow ,
@@ -373,15 +373,15 @@ and 4
 .Nm ( IPPROTO_IP ) .
 One can also specify the symbolic names "esp", "ah", and "ip4",
 case insensitive.
-.It chain
+.It Fl chain
 Delete the whole SPI chain, otherwise delete only the SPI given.
-.It dst2
+.It Fl dst2
 The second IP destination address used by
 .Nm group .
-.It spi2
+.It Fl spi2
 The second SPI used by
 .Nm group .
-.It proto2
+.It Fl proto2
 The second security protocol used by
 .Nm group .
 It defaults to
@@ -392,34 +392,34 @@ and 4
 .Nm ( IPPROTO_IP ) .
 One can also specify the symbolic names "esp", "ah", and "ip4",
 case insensitive.
-.It addr
+.It Fl addr
 The source address, source network mask, destination address and destination
 network mask against which packets need to match to use the specified
 Security Association.
 All addresses must be of the same address family
 (IPv4 or IPv6).
-.It transport
+.It Fl transport
 The protocol number which packets need to match to use the specified
 Security Association.
 By default the protocol number is not used for matching.
 Instead of a number, a valid protocol name that appears in
 .Xr protocols 5
 can be used.
-.It sport
+.It Fl sport
 The source port which packets have to match for the flow.
 By default the source port is not used for matching.
 Instead of a number, a valid service name that appears in
 .Xr services 5
 can be used.
-.It dport
+.It Fl dport
 The destination port which packets have to match for the flow.
 By default the source port is not used for matching.
 Instead of a number, a valid service name that appears in
 .Xr services 5
 can be used.
-.It delete
+.It Fl delete
 Instead of creating a flow, an existing flow is deleted.
-.It ingress
+.It Fl ingress
 For
 .Nm flow ,
 create or delete an
@@ -434,7 +434,7 @@ if the sysctl variable
 .El
 .Pp
 is set to any non-zero value.
-.It bypass
+.It Fl bypass
 For
 .Nm flow ,
 create or delete a
@@ -444,23 +444,23 @@ Packets matching this flow will not be processed by IPSec.
 For
 .Nm flush ,
 only flush SAs of type bypass.
-.It ah
+.It Fl ah
 For
 .Nm flush ,
 only flush SAs of type ah.
-.It esp
+.It Fl esp
 For
 .Nm flush ,
 only flush SAs of type esp.
-.It oldah
+.It Fl oldah
 For
 .Nm flush ,
 only flush SAs of type old ah.
-.It oldesp
+.It Fl oldesp
 For
 .Nm flush ,
 only flush SAs of type old esp.
-.It ip4
+.It Fl ip4
 For
 .Nm flush ,
 only flush SAs of type ip4.
