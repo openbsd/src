@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl.c,v 1.12 2001/06/26 00:18:30 jasoni Exp $ */
+/*	$OpenBSD: pfctl.c,v 1.13 2001/06/26 17:46:02 deraadt Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -46,7 +46,6 @@
 
 #include "pfctl_parser.h"
 
-void	 print_error(char *);
 void	 usage(void);
 char	*load_file(char *, size_t *);
 int	 pfctl_enable(int);
@@ -71,13 +70,6 @@ char	*rulesopt;
 char	*showopt;
 
 void
-print_error(char *s)
-{
-	fprintf(stderr, "ERROR: %s: %s\n", s, strerror(errno));
-	return;
-}
-
-void
 usage()
 {
 	extern char *__progname;
@@ -90,8 +82,8 @@ usage()
 char *
 load_file(char *name, size_t *len)
 {
-	char *buf = 0;
 	FILE *file = fopen(name, "r");
+	char *buf = 0;
 
 	*len = 0;
 	if (file == NULL) {
@@ -122,7 +114,7 @@ int
 pfctl_enable(int dev)
 {
 	if (ioctl(dev, DIOCSTART)) {
-		print_error("DIOCSTART");
+		errx(1, "DIOCSTART");
 		return (1);
 	}
 	printf("pf enabled\n");
@@ -133,7 +125,7 @@ int
 pfctl_disable(int dev)
 {
 	if (ioctl(dev, DIOCSTOP)) {
-		print_error("DIOCSTOP");
+		errx(1, "DIOCSTOP");
 		return (1);
 	}
 	printf("pf disabled\n");
@@ -146,10 +138,10 @@ pfctl_clear_rules(int dev)
 	struct pfioc_rule pr;
 
 	if (ioctl(dev, DIOCBEGINRULES, &pr.ticket)) {
-		print_error("DIOCBEGINRULES");
+		errx(1, "DIOCBEGINRULES");
 		return (1);
 	} else if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket)) {
-		print_error("DIOCCOMMITRULES");
+		errx(1, "DIOCCOMMITRULES");
 		return (1);
 	}
 	printf("rules cleared\n");
@@ -163,16 +155,16 @@ pfctl_clear_nat(int dev)
 	struct pfioc_rdr pr;
 
 	if (ioctl(dev, DIOCBEGINNATS, &pn.ticket)) {
-		print_error("DIOCBEGINNATS");
+		errx(1, "DIOCBEGINNATS");
 		return (1);
 	} else if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket)) {
-		print_error("DIOCCOMMITNATS");
+		errx(1, "DIOCCOMMITNATS");
 		return (1);
 	} else if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket)) {
-		print_error("DIOCBEGINRDRS");
+		errx(1, "DIOCBEGINRDRS");
 		return (1);
 	} else if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket)) {
-		print_error("DIOCCOMMITRDRS");
+		errx(1, "DIOCCOMMITRDRS");
 		return (1);
 	}
 	printf("nat cleared\n");
@@ -183,7 +175,7 @@ int
 pfctl_clear_states(int dev)
 {
 	if (ioctl(dev, DIOCCLRSTATES)) {
-		print_error("DIOCCLRSTATES");
+		errx(1, "DIOCCLRSTATES");
 		return (1);
 	}
 	printf("states cleared\n");
@@ -197,14 +189,14 @@ pfctl_show_rules(int dev)
 	u_int32_t nr, mnr;
 
 	if (ioctl(dev, DIOCGETRULES, &pr)) {
-		print_error("DIOCGETRULES");
+		errx(1, "DIOCGETRULES");
 		return (1);
 	}
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
 		if (ioctl(dev, DIOCGETRULE, &pr)) {
-			print_error("DIOCGETRULE");
+			errx(1, "DIOCGETRULE");
 			return (1);
 		}
 		printf("@%u ", nr + 1);
@@ -221,27 +213,27 @@ pfctl_show_nat(int dev)
 	u_int32_t mnr, nr;
 
 	if (ioctl(dev, DIOCGETNATS, &pn)) {
-		print_error("DIOCGETNATS");
+		errx(1, "DIOCGETNATS");
 		return (1);
 	}
 	mnr = pn.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pn.nr = nr;
 		if (ioctl(dev, DIOCGETNAT, &pn)) {
-			print_error("DIOCGETNAT");
+			errx(1, "DIOCGETNAT");
 			return (1);
 		}
 		print_nat(&pn.nat);
 	}
 	if (ioctl(dev, DIOCGETRDRS, &pr)) {
-		print_error("DIOCGETRDRS");
+		errx(1, "DIOCGETRDRS");
 		return (1);
 	}
 	mnr = pr.nr;
 	for (nr = 0; nr < mnr; ++nr) {
 		pr.nr = nr;
 		if (ioctl(dev, DIOCGETRDR, &pr)) {
-			print_error("DIOCGETRDR");
+			errx(1, "DIOCGETRDR");
 			return (1);
 		}
 		print_rdr(&pr.rdr);
@@ -269,7 +261,7 @@ pfctl_show_status(int dev)
 	struct pf_status status;
 
 	if (ioctl(dev, DIOCGETSTATUS, &status)) {
-		print_error("DIOCGETSTATUS");
+		errx(1, "DIOCGETSTATUS");
 		return (1);
 	}
 	print_status(&status);
@@ -288,7 +280,7 @@ pfctl_rules(int dev, char *filename)
 	if (buf == NULL)
 		return (1);
 	if (ioctl(dev, DIOCBEGINRULES, &pr.ticket)) {
-		print_error("DIOCBEGINRULES");
+		errx(1, "DIOCBEGINRULES");
 		free(buf);
 		return (1);
 	}
@@ -301,7 +293,7 @@ pfctl_rules(int dev, char *filename)
 		if (*line && (*line != '#'))
 			if (parse_rule(nr, line, &pr.rule)) {
 				if (ioctl(dev, DIOCADDRULE, &pr)) {
-					print_error("DIOCADDRULE");
+					errx(1, "DIOCADDRULE");
 					free(buf);
 					return (1);
 				}
@@ -310,7 +302,7 @@ pfctl_rules(int dev, char *filename)
 	} while (s < (buf + len));
 	free(buf);
 	if (ioctl(dev, DIOCCOMMITRULES, &pr.ticket)) {
-		print_error("DIOCCOMMITRULES");
+		errx(1, "DIOCCOMMITRULES");
 		return (1);
 	}
 	printf("%u rules loaded\n", n);
@@ -327,7 +319,7 @@ pfctl_nat(int dev, char *filename)
 	unsigned n, nr;
 
 	if (ioctl(dev, DIOCBEGINNATS, &pn.ticket)) {
-		print_error("DIOCBEGINNATS");
+		errx(1, "DIOCBEGINNATS");
 		return (1);
 	}
 	buf = load_file(filename, &len);
@@ -342,7 +334,7 @@ pfctl_nat(int dev, char *filename)
 		if (*line && (*line == 'n'))
 			if (parse_nat(nr, line, &pn.nat)) {
 				if (ioctl(dev, DIOCADDNAT, &pn)) {
-					print_error("DIOCADDNAT");
+					errx(1, "DIOCADDNAT");
 					free(buf);
 					return (1);
 				}
@@ -351,13 +343,13 @@ pfctl_nat(int dev, char *filename)
 	} while (s < (buf + len));
 	free(buf);
 	if (ioctl(dev, DIOCCOMMITNATS, &pn.ticket)) {
-		print_error("DIOCCOMMITNATS");
+		errx(1, "DIOCCOMMITNATS");
 		return (1);
 	}
 	printf("%u nat entries loaded\n", n);
 
 	if (ioctl(dev, DIOCBEGINRDRS, &pr.ticket)) {
-		print_error("DIOCBEGINRDRS");
+		errx(1, "DIOCBEGINRDRS");
 		return 1;
 	}
 	buf = load_file(filename, &len);
@@ -372,7 +364,7 @@ pfctl_nat(int dev, char *filename)
 		if (*line && (*line == 'r'))
 			if (parse_rdr(nr, line, &pr.rdr)) {
 				if (ioctl(dev, DIOCADDRDR, &pr)) {
-					print_error("DIOCADDRDR");
+					errx(1, "DIOCADDRDR");
 					free(buf);
 					return (1);
 				}
@@ -381,7 +373,7 @@ pfctl_nat(int dev, char *filename)
 	} while (s < (buf + len));
 	free(buf);
 	if (ioctl(dev, DIOCCOMMITRDRS, &pr.ticket)) {
-		print_error("DIOCCOMMITRDRS");
+		errx(1, "DIOCCOMMITRDRS");
 		return (1);
 	}
 	printf("%u rdr entries loaded\n", n);
@@ -395,7 +387,7 @@ pfctl_log(int dev, char *ifname)
 
 	strncpy(pi.ifname, ifname, 16);
 	if (ioctl(dev, DIOCSETSTATUSIF, &pi)) {
-		print_error("DIOCSETSTATUSIF");
+		errx(1, "DIOCSETSTATUSIF");
 		return (1);
 	}
 	printf("now logging %s\n", pi.ifname);
@@ -444,8 +436,8 @@ main(int argc, char *argv[])
 	}
 
 	dev = open("/dev/pf", O_RDWR);
-	if (dev < 0) {
-		print_error("open(/dev/pf)");
+	if (dev == -1) {
+		errx(1, "/dev/pf");
 		return (1);
 	}
 
