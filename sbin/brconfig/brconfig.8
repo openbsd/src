@@ -1,4 +1,4 @@
-.\"	$OpenBSD: brconfig.8,v 1.36 2002/06/15 02:27:03 angelos Exp $
+.\"	$OpenBSD: brconfig.8,v 1.37 2002/07/12 17:49:02 jason Exp $
 .\"
 .\" Copyright (c) 1999-2001 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -94,6 +94,7 @@ as a member of the bridge.
 The interface is put into promiscuous mode so
 that it can receive every packet sent on the
 network.
+An interface can be a member of at most one bridge.
 .It Cm delete Ar interface-name
 Remove the interface named by
 .Ar interface-name
