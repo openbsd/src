@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp_sbus.c,v 1.2 2003/06/25 17:39:00 miod Exp $	*/
+/*	$OpenBSD: stp_sbus.c,v 1.3 2004/03/02 23:10:14 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -38,7 +38,8 @@
  */
 
 /*
- * STP4020: SBus/PCMCIA bridge supporting two Type-3 PCMCIA cards.
+ * STP4020: SBus/PCMCIA bridge supporting one Type-3 PCMCIA card, or up to
+ * two Type-1 and Type-2 PCMCIA cards..
  */
 
 #include <sys/param.h>

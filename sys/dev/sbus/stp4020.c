@@ -1,4 +1,4 @@
-/*	$OpenBSD: stp4020.c,v 1.10 2003/06/25 22:49:06 mickey Exp $	*/
+/*	$OpenBSD: stp4020.c,v 1.11 2004/03/02 23:10:18 miod Exp $	*/
 /*	$NetBSD: stp4020.c,v 1.23 2002/06/01 23:51:03 lukem Exp $	*/
 
 /*-
@@ -38,13 +38,13 @@
  */
 
 /*
- * STP4020: SBus/PCMCIA bridge supporting two Type-3 PCMCIA cards.
+ * STP4020: SBus/PCMCIA bridge supporting one Type-3 PCMCIA card, or up to
+ * two Type-1 and Type-2 PCMCIA cards..
  */
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/extent.h>
 #include <sys/proc.h>
 #include <sys/kernel.h>
@@ -76,20 +76,6 @@ int stp4020_debug = 0;
 #define DPRINTF(x)
 #endif
 
-/*
- * Event queue; events detected in an interrupt context go here
- * awaiting attention from our event handling thread.
- */
-struct stp4020_event {
-	SIMPLEQ_ENTRY(stp4020_event) se_q;
-	int	se_type;
-	int	se_sock;
-};
-
-/* Defined event types */
-#define STP4020_EVENT_INSERTION	0
-#define STP4020_EVENT_REMOVAL	1
-
 int	stp4020print(void *, const char *);
 void	stp4020_map_window(struct stp4020_socket *, int, int);
 void	stp4020_calc_speed(int, int, int *, int *);
@@ -111,7 +97,7 @@ void	stp4020_delay(unsigned int);
 void	stp4020_attach_socket(struct stp4020_socket *, int);
 void	stp4020_create_event_thread(void *);
 void	stp4020_event_thread(void *);
-void	stp4020_queue_event(struct stp4020_softc *, int, int);
+void	stp4020_queue_event(struct stp4020_softc *, int);
 
 int	stp4020_chip_mem_alloc(pcmcia_chipset_handle_t, bus_size_t,
 	    struct pcmcia_mem_handle *);
@@ -228,7 +214,7 @@ stpattach_common(struct stp4020_softc *sc, int clockfreq)
 	 * Arrange that a kernel thread be created to handle
 	 * insert/removal events.
 	 */
-	SIMPLEQ_INIT(&sc->events);
+	sc->events = 0;
 	kthread_create_deferred(stp4020_create_event_thread, sc);
 
 	for (i = 0; i < STP4020_NSOCK; i++) {
@@ -290,11 +276,11 @@ stp4020_attach_socket(h, speed)
 
 	/* Get live status bits from ISR0 */
 	v = stp4020_rd_sockctl(h, STP4020_ISR0_IDX);
-	if ((v & (STP4020_ISR0_CD1ST | STP4020_ISR0_CD2ST)) == 0)
-		return;
-
-	pcmcia_card_attach(h->pcmcia);
-	h->flags |= STP4020_SOCKET_BUSY;
+	h->sense = v & (STP4020_ISR0_CD1ST | STP4020_ISR0_CD2ST);
+	if (h->sense != 0) {
+		h->flags |= STP4020_SOCKET_BUSY;
+		pcmcia_card_attach(h->pcmcia);
+	}
 }
 
 
@@ -322,59 +308,68 @@ stp4020_event_thread(arg)
 	void *arg;
 {
 	struct stp4020_softc *sc = arg;
-	struct stp4020_event *e;
-	int s;
+	int s, sense, socket;
 
-	while (1) {
+	for (;;) {
 		struct stp4020_socket *h;
-		int n;
 
 		s = splhigh();
-		if ((e = SIMPLEQ_FIRST(&sc->events)) == NULL) {
+		if ((socket = ffs(sc->events)) == 0) {
 			splx(s);
-			(void)tsleep(&sc->events, PWAIT, "pcicev", 0);
+			(void)tsleep(&sc->events, PWAIT, "stp4020_ev", 0);
 			continue;
 		}
-		SIMPLEQ_REMOVE_HEAD(&sc->events, e, se_q);
+		socket--;
+		sc->events &= ~(1 << socket);
 		splx(s);
 
-		n = e->se_sock;
-		if (n < 0 || n >= STP4020_NSOCK)
-			panic("stp4020_event_thread: wayward socket number %d",
-			    n);
-
-		h = &sc->sc_socks[n];
-		switch (e->se_type) {
-		case STP4020_EVENT_INSERTION:
-			pcmcia_card_attach(h->pcmcia);
-			break;
-		case STP4020_EVENT_REMOVAL:
-			pcmcia_card_detach(h->pcmcia, DETACH_FORCE);
-			break;
-		default:
-			panic("stp4020_event_thread: unknown event type %d",
-			    e->se_type);
+		if (socket < 0 || socket >= STP4020_NSOCK) {
+#ifdef DEBUG
+			printf("stp4020_event_thread: wayward socket number %d\n",
+			    socket);
+#endif
+			continue;
 		}
-		free(e, M_TEMP);
+
+		h = &sc->sc_socks[socket];
+
+		/* Read socket's ISR0 for the interrupt status bits */
+		sense = stp4020_rd_sockctl(h, STP4020_ISR0_IDX) &
+		    (STP4020_ISR0_CD1ST | STP4020_ISR0_CD2ST);
+
+		if (sense > h->sense) {
+			/*
+			 * If at least one more sensor is asserted, this is
+			 * a card insertion.
+			 */
+			h->sense = sense;
+			if ((h->flags & STP4020_SOCKET_BUSY) == 0) {
+				h->flags |= STP4020_SOCKET_BUSY;
+				pcmcia_card_attach(h->pcmcia);
+			}
+		} else if (sense < h->sense) {
+			/*
+			 * If at least one less sensor is asserted, this is
+			 * a card removal.
+			 */
+			h->sense = sense;
+			if (h->flags & STP4020_SOCKET_BUSY) {
+				h->flags &= ~STP4020_SOCKET_BUSY;
+				pcmcia_card_detach(h->pcmcia, DETACH_FORCE);
+			}
+		}
 	}
 }
 
 void
-stp4020_queue_event(sc, sock, event)
+stp4020_queue_event(sc, sock)
 	struct stp4020_softc *sc;
-	int sock, event;
+	int sock;
 {
-	struct stp4020_event *e;
 	int s;
 
-	e = malloc(sizeof(*e), M_TEMP, M_NOWAIT);
-	if (e == NULL)
-		panic("stp4020_queue_event: can't allocate event");
-
-	e->se_type = event;
-	e->se_sock = sock;
 	s = splhigh();
-	SIMPLEQ_INSERT_TAIL(&sc->events, e, se_q);
+	sc->events |= (1 << sock);
 	splx(s);
 	wakeup(&sc->events);
 }
@@ -384,7 +379,7 @@ stp4020_statintr(arg)
 	void *arg;
 {
 	struct stp4020_softc *sc = arg;
-	int i, r = 0;
+	int i, sense, r = 0;
 
 	/*
 	 * Check each socket for pending requests.
@@ -397,6 +392,7 @@ stp4020_statintr(arg)
 
 		/* Read socket's ISR0 for the interrupt status bits */
 		v = stp4020_rd_sockctl(h, STP4020_ISR0_IDX);
+		sense = v & (STP4020_ISR0_CD1ST | STP4020_ISR0_CD2ST);
 
 #ifdef STP4020_DEBUG
 		if (stp4020_debug != 0)
@@ -409,26 +405,24 @@ stp4020_statintr(arg)
 		    STP4020_ISR0_ALL_STATUS_IRQ);
 
 		if ((v & STP4020_ISR0_CDCHG) != 0) {
-			/*
-			 * Card status change detect
-			 */
 			r = 1;
-			if ((v & (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)) ==
-			    (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)) {
-				if ((h->flags & STP4020_SOCKET_BUSY) == 0) {
-					stp4020_queue_event(sc, i,
-					    STP4020_EVENT_INSERTION);
-					h->flags |= STP4020_SOCKET_BUSY;
-				}
-			}
-			if ((v & (STP4020_ISR0_CD1ST|STP4020_ISR0_CD2ST)) ==
-			    0) {
-				if ((h->flags & STP4020_SOCKET_BUSY) != 0) {
-					stp4020_queue_event(sc, i,
-					    STP4020_EVENT_REMOVAL);
-					h->flags &= ~STP4020_SOCKET_BUSY;
-				}
-			}
+
+			/*
+			 * Card detect status changed. In an ideal world,
+			 * both card detect sensors should be set if a card
+			 * is in the slot, and clear if it is not.
+			 *
+			 * Unfortunately, it turns out that we can get the
+			 * notification before both sensors are set (or
+			 * clear).
+			 *
+			 * This can be very funny if only one sensor is set.
+			 * Is this a removal or an insertion operation?
+			 * Defer appropriate action to the worker thread.
+			 */
+			if (sense != h->sense)
+				stp4020_queue_event(sc, i);
+
 		}
 
 		/* informational messages */
@@ -469,14 +463,12 @@ stp4020_statintr(arg)
 		}
 
 		/*
-		 * Not an interrupt flag per se, but interrupts occur when
-		 * it is asserted, at least on sparc.
+		 * Not interrupts flag per se, but interrupts can occur when
+		 * they are asserted, at least during our slot enable routine.
 		 */
-		if ((v & STP4020_ISR0_WAITST) != 0) {
-			DPRINTF(("stp4020[%d]: Wait signal\n",
-			    h->sock));
+		if ((h->flags & STP4020_SOCKET_ENABLING) &&
+		    (v & (STP4020_ISR0_WAITST | STP4020_ISR0_PWRON)))
 			r = 1;
-		}
 	}
 
 	return (r);
@@ -516,13 +508,12 @@ stp4020_iointr(arg)
 			/* Call card handler, if any */
 			if (h->intrhandler != NULL) {
 				/*
-				 * Called without handling of it's requested
-				 * protection level (h->ipl), since we have
-				 * no general queuing mechanism available
-				 * right now and we know for sure we are
-				 * running at a higher protection level
-				 * right now.
+				 * We ought to be at an higher ipl level
+				 * than the callback, since the first
+				 * interrupt of this device is usually
+				 * higher than IPL_CLOCK.
 				 */
+				splassert(h->ipl);
 				(*h->intrhandler)(h->intrarg);
 			}
 		}
@@ -703,6 +694,8 @@ stp4020_chip_socket_enable(pch)
 	struct stp4020_socket *h = (struct stp4020_socket *)pch;
 	int i, v;
 
+	h->flags |= STP4020_SOCKET_ENABLING;
+
 	/* this bit is mostly stolen from pcic_attach_card */
 
 	/* Power down the socket to reset it, clear the card reset pin */
@@ -729,15 +722,13 @@ stp4020_chip_socket_enable(pch)
 
 	v |= STP4020_ICR1_PCIFOE | STP4020_ICR1_VPP1_VCC;
 	stp4020_wr_sockctl(h, STP4020_ICR1_IDX, v);
-	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, 
-	    stp4020_rd_sockctl(h, STP4020_ICR0_IDX) | STP4020_ICR0_RESET);
 
 	/*
 	 * hold RESET at least 20us.
 	 */
+	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, 
+	    stp4020_rd_sockctl(h, STP4020_ICR0_IDX) | STP4020_ICR0_RESET);
 	delay(20);
-
-	/* Clear reset flag */
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX,
 	    stp4020_rd_sockctl(h, STP4020_ICR0_IDX) & ~STP4020_ICR0_RESET);
 
@@ -747,6 +738,11 @@ stp4020_chip_socket_enable(pch)
 	/* Wait for the chip to finish initializing (5 seconds max) */
 	for (i = 10000; i > 0; i--) {
 		v = stp4020_rd_sockctl(h, STP4020_ISR0_IDX);
+		/* If the card has been removed, abort */
+		if ((v & (STP4020_ISR0_CD1ST | STP4020_ISR0_CD2ST)) == 0) {
+			h->flags &= ~STP4020_SOCKET_ENABLING;
+			return;
+		}
 		if ((v & STP4020_ISR0_RDYST) != 0)
 			break;
 		delay(500);
@@ -756,6 +752,7 @@ stp4020_chip_socket_enable(pch)
 		printf("stp4020_chip_socket_enable: not ready: status %b\n",
 		    v, STP4020_ISR0_IOBITS);
 #endif
+		h->flags &= ~STP4020_SOCKET_ENABLING;
 		return;
 	}
 
@@ -774,13 +771,14 @@ stp4020_chip_socket_enable(pch)
 		    h->sc->sc_dev.dv_xname));
 	} else {
 		v &= ~(STP4020_ICR0_IOILVL | STP4020_ICR0_IFTYPE |
-		    STP4020_ICR0_SPKREN | STP4020_ICR0_IOILVL_SB0 |
-		    STP4020_ICR0_IOILVL_SB1 | STP4020_ICR0_SPKREN);
+		    STP4020_ICR0_SPKREN | STP4020_ICR0_IOIE);
 		v |= STP4020_ICR0_IFTYPE_MEM;
 		DPRINTF(("%s: configuring card for MEM ONLY usage\n",
 		    h->sc->sc_dev.dv_xname));
 	}
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
+
+	h->flags &= ~STP4020_SOCKET_ENABLING;
 }
 
 void
@@ -794,7 +792,8 @@ stp4020_chip_socket_disable(pch)
 	 * Disable socket I/O interrupts.
 	 */
 	v = stp4020_rd_sockctl(h, STP4020_ICR0_IDX);
-	v &= ~(STP4020_ICR0_IOIE | STP4020_ICR0_IOILVL);
+	v &= ~(STP4020_ICR0_IOILVL | STP4020_ICR0_IFTYPE |
+	    STP4020_ICR0_SPKREN | STP4020_ICR0_IOIE);
 	stp4020_wr_sockctl(h, STP4020_ICR0_IDX, v);
 
 	/* Power down the socket */
@@ -845,14 +844,14 @@ stp4020_delay(ms)
 	unsigned int ticks;
 
 	/* Convert to ticks */
-	ticks = (ms * hz ) / 1000000;
+	ticks = (ms * hz) / 1000000;
 
 	if (cold || ticks == 0) {
 		delay(ms);
 		return;
 	}
 
-#ifdef DIAGNOSTIC
+#ifdef DEBUG
 	if (ticks > 60 * hz)
 		panic("stp4020: preposterous delay: %u", ticks);
 #endif
