@@ -1,4 +1,4 @@
-/*	$OpenBSD: supmsg.h,v 1.4 1997/04/01 07:35:47 todd Exp $	*/
+/*	$OpenBSD: supmsg.h,v 1.5 2001/04/29 18:14:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -104,13 +104,13 @@
 extern int	server;			/* true if we are the server */
 extern int	protver;		/* protocol version of partner */
 
-#else	MSGSUBR
+#else	/* MSGSUBR */
 
 #ifdef	MSGFILE
 #define	EXTERN
-#else	MSGFILE
+#else	/* MSGFILE */
 #define	EXTERN	extern
-#endif	MSGFILE
+#endif	/* MSGFILE */
 
 /* used in all msg routines */
 EXTERN	int	server;			/* true if we are the server */
@@ -175,4 +175,4 @@ EXTERN	char 	*donereason;		/* set if indicated by doneack */
 
 #undef	EXTERN
 
-#endif	MSGSUBR
+#endif	/* MSGSUBR */

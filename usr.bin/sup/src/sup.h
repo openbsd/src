@@ -1,4 +1,4 @@
-/*	$OpenBSD: sup.h,v 1.4 1997/07/28 09:47:36 deraadt Exp $	*/
+/*	$OpenBSD: sup.h,v 1.5 2001/04/29 18:14:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -107,11 +107,11 @@ extern char scmversion[];		/* string version of scm */
 #define FILESUPDEFAULT	"%s/supfiles/coll.list"
 #define FILESUPTDEFAULT	"%s/supfiles/coll.what"
 #define FILEHOSTS	"%s/supfiles/coll.host"
-#else  EE_XXX
+#else  /* EE_XXX */
 #define FILESUPDEFAULT	"%s/lib/supfiles/coll.list"
 #define FILESUPTDEFAULT	"%s/lib/supfiles/coll.what"
 #define FILEHOSTS	"%s/lib/supfiles/coll.host"
-#endif EE_XXX
+#endif /* EE_XXX */
 #define FILEBKDIR	"%s/BACKUP"
 #define FILEBACKUP	"%s/BACKUP/%s"
 #define FILELAST	"sup/%s/last%s"
@@ -124,9 +124,9 @@ extern char scmversion[];		/* string version of scm */
 #define FILEXPATCH	"%s/sup/xpatch.host"
 #ifdef EE_XXX
 #define FILEDIRS	"%s/supfiles/coll.dir" /* also supscan */
-#else  EE_XXX
+#else  /* EE_XXX */
 #define FILEDIRS	"%s/lib/supfiles/coll.dir" /* also supscan */
-#endif EE_XXX
+#endif /* EE_XXX */
 #define FILECRYPT	"sup/%s/crypt"
 #define FILELOGFILE	"sup/%s/logfile"
 #define FILEPREFIX	"sup/%s/prefix"	/* also supscan */
@@ -144,15 +144,15 @@ extern char scmversion[];		/* string version of scm */
 #ifndef	DEFDIR
 #ifdef EE_XXX
 #define DEFDIR		"/etc"
-#else  EE_XXX
+#else	/* EE_XXX */
 #define DEFDIR		"/usr"
-#endif EE_XXX
-#endif	DEFDIR
+#endif	/* EE_XXX */
+#endif	/* DEFDIR */
 
 /* Default login account for file server */
 #ifndef	DEFUSER
 #define DEFUSER		"anon"
-#endif	DEFUSER
+#endif	/* DEFUSER */
 
 /* subroutine return codes */
 #define SCMOK		(1)		/* routine performed correctly */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: c.h,v 1.2 1996/06/26 05:39:38 deraadt Exp $	*/
+/*	$OpenBSD: c.h,v 1.3 2001/04/29 18:14:09 millert Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -62,20 +62,20 @@
 
 #ifndef	FALSE
 #define FALSE	0
-#endif	FALSE
+#endif
 #ifndef	TRUE
 #define TRUE	1
-#endif	TRUE
+#endif
 
 #define	CERROR		(-1)
 
 #ifndef	bool
 typedef enum	{ false = 0, true = 1 } bool;
-#endif	bool
+#endif
 
 #define	sizeofS(string)	(sizeof(string) - 1)
 #define sizeofA(array)	(sizeof(array)/sizeof(array[0]))
 
 #define caseE(enum_type)	case (int)(enum_type)
 
-#endif	_C_INCLUDE_
+#endif /* _C_INCLUDE_ */
