@@ -1,5 +1,6 @@
 #
-# GENERIC kernel for the distribition simpleroot
+# GENERIC kernel for the distribition simpleroot with root + swap hardcoded
+# to rz0 - required for use with zip drives for instance
 #
 
 machine		pmax			# machine type
@@ -19,8 +20,6 @@ option		"NKMEMCLUSTERS=1024"	# 4k pages in kernel malloc pool
 # timezone stuff
 option		TIMEZONE=0
 option		DST=0			# use daylight savings rules
-# config bsd swap generic support
-option		GENERIC			# required for swap generic
 
 maxusers	64
 
@@ -62,6 +61,7 @@ option		KERNFS			# kernel data-structure filesystem
 #option		UMAPFS			# uid/gid remapping filesystem
 #option		NULLFS			# null layer filesystem
 #option	        UNION			# union filesystem
+#option		LFS			# log-based filesystem (experimental)
 #option		PORTAL			# portal filesystem (experimental)
 # other networking options
 #option		"TCP_COMPAT_42"		# compatibility with 4.2BSD tcp/ip
@@ -78,7 +78,7 @@ option		KERNFS			# kernel data-structure filesystem
 # compat stuff
 #option		COMPAT_ULTRIX		# ultrix compatibility
 
-config		bsd swap generic
+config		bsd root on rz0a swap on rz0b dumps on rz0b
 
 mainbus0	at root
 cpu*		at mainbus0
