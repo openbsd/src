@@ -1,5 +1,5 @@
-/*	$OpenBSD: pkcs.h,v 1.3 1998/11/17 11:10:19 niklas Exp $	*/
-/*	$EOM: pkcs.h,v 1.6 1998/08/20 14:09:03 provos Exp $	*/
+/*	$OpenBSD: pkcs.h,v 1.4 1999/03/24 15:00:05 niklas Exp $	*/
+/*	$EOM: pkcs.h,v 1.7 1999/03/13 17:43:19 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -51,8 +51,12 @@ struct rsa_private_key {
   mpz_t n;		/* Group Modulus */
   mpz_t p;		/* Prime p */
   mpz_t q;		/* Prime q */
+  mpz_t d1;		/* d mod (p - 1) */
+  mpz_t d2;		/* d mod (q - 1) */
   mpz_t e;		/* Public Exponent */
   mpz_t d;		/* Private Exponent */
+  mpz_t qinv;		/* inversion of q modulo p */
+  mpz_t qinv_mul_q;     /* qinv mul q */
 };
 
 struct norm_type;
@@ -68,10 +72,10 @@ int pkcs_private_key_from_asn (struct rsa_private_key *, u_int8_t *,
 			       u_int32_t);
 void pkcs_free_private_key (struct rsa_private_key *);
 
-int pkcs_rsa_encrypt (int, mpz_ptr, mpz_ptr, u_int8_t *, u_int32_t,
-		      u_int8_t **, u_int32_t *);
-int pkcs_rsa_decrypt (int, mpz_ptr, mpz_ptr, u_int8_t *, u_int8_t **,
-		      u_int16_t *);
+int pkcs_rsa_encrypt (int, struct rsa_public_key *, struct rsa_private_key *,
+		u_int8_t *, u_int32_t, u_int8_t **, u_int32_t *);
+int pkcs_rsa_decrypt (int, struct rsa_public_key *, struct rsa_private_key *,
+		u_int8_t *, u_int8_t **, u_int16_t *);
 
 int pkcs_generate_rsa_keypair (struct rsa_public_key *, 
 			       struct rsa_private_key *, u_int32_t);

@@ -1,5 +1,5 @@
-/*	$OpenBSD: asntest.c,v 1.5 1999/03/02 15:27:35 niklas Exp $	*/
-/*	$EOM: asntest.c,v 1.6 1998/10/07 16:40:48 niklas Exp $	*/
+/*	$OpenBSD: asntest.c,v 1.6 1999/03/24 14:57:37 niklas Exp $	*/
+/*	$EOM: asntest.c,v 1.7 1999/03/13 17:43:21 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998 Niels Provos.  All rights reserved.
@@ -138,7 +138,7 @@ main (void)
   memset (&cert, 0, sizeof (cert));
   x509_decode_certificate (buf, asn_get_len (buf), &cert);
 
-  printf ("Encoding Certificiate: ");
+  printf ("Encoding Certificate: ");
   if (!x509_encode_certificate(&cert, &asn, &len))
     printf ("FAILED ");
   else
