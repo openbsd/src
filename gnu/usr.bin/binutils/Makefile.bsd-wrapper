@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.49 2003/02/02 15:20:11 espie Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.50 2003/02/16 15:09:03 espie Exp $
 
 NEW_BINUTILS=alpha mips powerpc hppa sparc64 sparc
 
@@ -14,7 +14,7 @@ PREFIX=/usr
 MANDIR=${PREFIX}/share/man/cat
 .endif
 
-MAN=		binutils/objdump.1
+MAN=		binutils/objdump.1 c++filt.1
 
 .if (${MACHINE_ARCH} != "unknown")
 SUBDIRS+=	gdb mmalloc
@@ -95,6 +95,9 @@ prereq: config.status
 	# needs it instead.
 	sed -e '/^#include "ansidecl.h"/r${.CURDIR}/include/ansidecl.h' -e '//d' \
 		bfd/bfd.h >bfd/mybfd.h
+
+c++filt.1: binutils/cxxfilt.man
+	sed -e 's,@PROGRAM@,c++filt,' <${.CURDIR}/binutils/cxxfilt.man >$@
 
 includes:
 	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \

@@ -16,7 +16,7 @@
 .TP
 .B @PROGRAM@
 .RB "[\|" \-_ | \-\-strip-underscores "\|]"
-.RB "[\|" "\-s {gnu,lucid,arm} " | " \-\-format={gnu,lucid,arm}" "\|]"
+.RB "[\|" "\-s {gnu,lucid,arm,hp,edg} " | " \-\-format={gnu,lucid,arm,hp,edg}" "\|]"
 .RB "[\|" \-\-help "\|]"
 .RB "[\|" \-\-version "\|]"
 .RB "[\|" symbol "...\|]"
@@ -62,15 +62,16 @@ gets the low-level name
 This option removes the leading underscore.
 
 .TP
-.B "\-s {gnu,lucid,arm}"
+.B "\-s {gnu,lucid,arm,hp,edg}"
 .TP
-.B \-\-format={gnu,lucid,arm}
+.B \-\-format={gnu,lucid,arm,hp,edg}
 GNU
 .B nm
-can decode three different methods of mangling, used by different C++
+can decode five different methods of mangling, used by different C++
 compilers.  This option selects which method it uses: the one used by
-the GNU compiler, the one used by the Lucid compiler, or the one
-specified by the C++ Annotated Reference Manual.  The default is the
+the GNU compiler, the one used by the Lucid compiler, the one
+specified by the C++ Annotated Reference Manual, the one used by the HP
+compiler and the one used by the EDG compiler.  The default is the
 GNU style.
 
 .TP
