@@ -1168,6 +1168,8 @@
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/std
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/std/ieee1212reg.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/std/ieee1212var.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/std/sbp2reg.ph
+./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/std/sbp2var.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sun
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sun/disklabel.ph
 ./usr/libdata/perl5/site_perl/powerpc-openbsd/dev/sun/event_var.ph

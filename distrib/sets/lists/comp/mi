@@ -608,6 +608,8 @@
 ./usr/include/dev/std
 ./usr/include/dev/std/ieee1212reg.h
 ./usr/include/dev/std/ieee1212var.h
+./usr/include/dev/std/sbp2reg.h
+./usr/include/dev/std/sbp2var.h
 ./usr/include/dev/sun
 ./usr/include/dev/sun/disklabel.h
 ./usr/include/dev/sun/event_var.h
