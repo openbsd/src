@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: ndc.sh,v 1.5 1997/03/12 14:51:57 downsj Exp $
+#	$OpenBSD: ndc.sh,v 1.6 1998/05/22 19:34:46 millert Exp $
 
 USAGE='echo \
 	"usage: $0 \
@@ -9,15 +9,24 @@ USAGE='echo \
 
 PATH=%DESTSBIN%:/bin:/usr/bin:/usr/ucb:$PATH
 PIDFILE=%PIDDIR%/named.pid
+NAMED_CMD=named
 
 if [ -f $PIDFILE ]
 then
-	PID=`cat $PIDFILE`
-	PS=`%PS% $PID | tail -1 | grep $PID`
-	RUNNING=1
-	[ `echo $PS | wc -w` -ne 0 ] || {
-		PS="named (pid $PID?) not running"
+	PID=`sed 1q $PIDFILE`
+	NAMED_CMD=`tail -1 $PIDFILE`
+	if kill -0 $PID >/dev/null 2>&1; then
+		RUNNING=1
+	else
 		RUNNING=0
+	fi
+	PS=`%PS% $PID | tail -1 | grep $PID`
+	[ `echo $PS | wc -w` -ne 0 ] || {
+		if [ $RUNNING -eq 1 ]; then
+			PS="named (pid $PID) can't get name list"
+		else
+			PS="named (pid $PID?) not running"
+		fi
 	}
 else
 	PS="named (no pid file) not running"
@@ -50,7 +59,7 @@ do
 			continue
 		}
 		rm -f $PIDFILE
-		named && {
+		$NAMED_CMD && {
 			sleep 5
 			echo Name Server Started
 		}
@@ -71,7 +80,7 @@ do
 			kill $PID && sleep 5
 		}
 		rm -f $PIDFILE
-		named && {
+		$NAMED_CMD && {
 			sleep 5
 			echo Name Server Restarted
 		}

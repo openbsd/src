@@ -1,11 +1,11 @@
-/*	$OpenBSD: ns_main.c,v 1.12 1998/05/22 07:09:16 millert Exp $	*/
+/*	$OpenBSD: ns_main.c,v 1.13 1998/05/22 19:34:44 millert Exp $	*/
 
 #if !defined(lint) && !defined(SABER)
 #if 0
 static char sccsid[] = "@(#)ns_main.c	4.55 (Berkeley) 7/1/91";
 static char rcsid[] = "$From: ns_main.c,v 8.26 1998/05/11 04:19:45 vixie Exp $";
 #else
-static char rcsid[] = "$OpenBSD: ns_main.c,v 1.12 1998/05/22 07:09:16 millert Exp $";
+static char rcsid[] = "$OpenBSD: ns_main.c,v 1.13 1998/05/22 19:34:44 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -194,7 +194,7 @@ main(argc, argv, envp)
 	fd_set *tmpmask;
 	struct timeval t, *tp;
 	struct qstream *candidate = QSTREAM_NULL;
-	char **argp;
+	char **argp, *p;
 	char *chroot_dir = NULL;
 	char *user_name = NULL;
 	char *group_name = NULL;
@@ -204,9 +204,11 @@ main(argc, argv, envp)
 	struct passwd *pw;
 #ifdef PID_FIX
 	char oldpid[10];
+	char oldargs[BUFSIZ];
 #endif
 #ifdef WANT_PIDFILE
 	FILE	*fp;			/* file descriptor for pid file */
+	char	*nsargs;
 #endif
 #ifdef IP_OPTIONS
 	struct ipoption ip_opts;
@@ -281,7 +283,7 @@ main(argc, argv, envp)
 					ns_port = htons((u_int16_t)
 							atoi(*++argv));
 					{
-					    char *p = strchr(*argv, '/');
+					    p = strchr(*argv, '/');
 					    if (p) {
 						local_ns_port =
 						    htons((u_int16_t)
@@ -384,7 +386,6 @@ main(argc, argv, envp)
 	 */
 	if (chroot_dir != NULL) {
 		struct stat sb;
-		char *p;
 
 		if (chroot(chroot_dir) < 0) {
 			fprintf(stderr, "chroot %s failed: %s\n", chroot_dir,
@@ -421,19 +422,36 @@ main(argc, argv, envp)
 	ns_udp();
 
 #ifdef WANT_PIDFILE
+	/* build up argument string to stash in pid file */
+	nsargs = malloc(LastArg - Argv[0] + 1);
+	if (nsargs == NULL) {
+		syslog(LOG_ERR,
+		       "building argument string, malloc: %m - exiting");
+		exit(1);
+	}
+	for (p=nsargs, argp=Argv; *argp; argp++) {
+		strcpy(p, *argp);
+		p += strlen(p);
+		*p++ = ' ';
+	}
+	*--p = '\0';
+
 	/* tuck my process id away */
 #ifdef PID_FIX
 	fp = fopen(PidFile, "w");
 	if (fp != NULL) {
 		(void) fgets(oldpid, sizeof(oldpid), fp);
+		(void) fgets(oldargs, sizeof(oldargs), fp);
 		(void) rewind(fp);
 		fprintf(fp, "%ld\n", (long)getpid());
+		fprintf(fp, "%s\n", nsargs);
 		(void) my_fclose(fp);
 	}
 #else /*PID_FIX*/
 	fp = fopen(PidFile, "w");
 	if (fp != NULL) {
 		fprintf(fp, "%d\n", getpid());
+		fprintf(fp, "%s\n", nsargs);
 		(void) my_fclose(fp);
 	}
 #endif /*PID_FIX*/
@@ -492,7 +510,8 @@ main(argc, argv, envp)
 #if defined(WANT_PIDFILE) && defined(PID_FIX)
 			/* put old pid back */
 			if (atoi(oldpid) && (fp = fopen(PidFile, "w"))) {
-				fprintf(fp, "%s", oldpid);
+				fputs(oldpid, fp);
+				fputs(oldargs, fp);
 				(void) my_fclose(fp);
 				_exit(1);
 			}
@@ -670,6 +689,7 @@ main(argc, argv, envp)
 	fp = fopen(PidFile, "w");
 	if (fp != NULL) {
 		fprintf(fp, "%ld\n", (long)getpid());
+		fprintf(fp, "%s\n", nsargs);
 		(void) my_fclose(fp);
 	}
 #endif
