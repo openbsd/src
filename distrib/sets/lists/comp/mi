@@ -2721,6 +2721,7 @@
 ./usr/share/man/cat3/atof.0
 ./usr/share/man/cat3/atoi.0
 ./usr/share/man/cat3/atol.0
+./usr/share/man/cat3/atoll.0
 ./usr/share/man/cat3/attr_get.0
 ./usr/share/man/cat3/attr_off.0
 ./usr/share/man/cat3/attr_on.0
