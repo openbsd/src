@@ -1,4 +1,4 @@
-/*	$OpenBSD: memchr.c,v 1.1 1997/11/04 19:07:58 chuck Exp $	*/
+/*	$OpenBSD: memchr.c,v 1.2 1998/06/27 01:21:03 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -41,7 +41,7 @@
 static char *rcsid = "$NetBSD: memchr.c,v 1.2 1997/10/24 18:10:30 mjacob Exp $";
 #endif /* LIBC_SCCS and not lint */
 
-#ifndef _KERNEL
+#if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <string.h>
 #else
 #include <lib/libkern/libkern.h>
