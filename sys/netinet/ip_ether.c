@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.46 2003/12/03 14:51:05 markus Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.47 2004/11/17 12:06:16 markus Exp $  */
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
  *
@@ -400,7 +400,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		ip6->ip6_nxt = IPPROTO_ETHERIP;
 		ip6->ip6_vfc &= ~IPV6_VERSION_MASK;
 		ip6->ip6_vfc |= IPV6_VERSION;
-		ip6->ip6_plen = htons(m->m_pkthdr.len);
+		ip6->ip6_plen = htons(m->m_pkthdr.len - sizeof(*ip6));
 		ip6->ip6_hlim = ip_defttl;
 		ip6->ip6_dst = tdb->tdb_dst.sin6.sin6_addr;
 		ip6->ip6_src = tdb->tdb_src.sin6.sin6_addr;
