@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.28 2002/12/19 21:29:46 mickey Exp $	*/
+/*	$OpenBSD: print.c,v 1.29 2003/01/05 01:39:24 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.28 2002/12/19 21:29:46 mickey Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.29 2003/01/05 01:39:24 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -558,6 +558,8 @@ getpcpu(k)
 		d = 0.0;		/* avoid IEEE underflow */
 	else
 		d = exp(d);
+	if (d == 1.0)
+		return (0.0);
 	return (100.0 * fxtofl(p->p_pctcpu) /
 		(1.0 - d));
 }
