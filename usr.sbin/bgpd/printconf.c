@@ -1,4 +1,4 @@
-/*	$OpenBSD: printconf.c,v 1.28 2004/08/24 12:42:55 claudio Exp $	*/
+/*	$OpenBSD: printconf.c,v 1.29 2004/08/24 15:50:16 claudio Exp $	*/
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -27,7 +27,7 @@ void		 print_op(enum comp_ops);
 void		 print_set(struct filter_set *);
 void		 print_mainconf(struct bgpd_config *);
 void		 print_network(struct network_config *);
-void		 print_peer(struct peer_config *);
+void		 print_peer(struct peer_config *, struct bgpd_config *);
 const char	*print_auth_alg(u_int8_t);
 const char	*print_enc_alg(u_int8_t);
 void		 print_rule(struct peer *, struct filter_rule *);
@@ -130,12 +130,13 @@ print_network(struct network_config *n)
 }
 
 void
-print_peer(struct peer_config *p)
+print_peer(struct peer_config *p, struct bgpd_config *conf)
 {
 	const char	*tab	= "\t";
 	const char	*nada	= "";
 	const char	*c;
 	char		*method;
+	struct in_addr	 ina;
 
 	if (p->group[0]) {
 		printf("group \"%s\" {\n", p->group);
@@ -177,6 +178,19 @@ print_peer(struct peer_config *p)
 		printf("%s\tannounce default-route\n", c);
 	else
 		printf("%s\tannounce ???\n", c);
+	if (p->enforce_as == ENFORCE_AS_ON)
+		printf("%s\tenforce neighbor-as yes\n", c);
+	else
+		printf("%s\tenforce neighbor-as no\n", c);
+	if (p->reflector_client) {
+		if (conf->clusterid == 0)
+			printf("%s\troute-reflector\n", c);
+		else {
+			ina.s_addr = conf->clusterid;
+			printf("%s\troute-reflector %s\n", c,
+			    inet_ntoa(ina));
+		}
+	}
 
 	if (p->auth.method == AUTH_MD5SIG)
 		printf("%s\ttcp md5sig\n", c);
@@ -392,7 +406,7 @@ print_config(struct bgpd_config *conf, struct network_head *net_l,
 		print_network(&n->net);
 	printf("\n");
 	for (p = peer_l; p != NULL; p = p->next)
-		print_peer(&p->conf);
+		print_peer(&p->conf, conf);
 	printf("\n");
 	TAILQ_FOREACH(r, rules_l, entry)
 		print_rule(peer_l, r);
