@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.74 2001/11/11 07:43:30 deraadt Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.75 2001/11/18 20:55:42 deraadt Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -2530,7 +2530,7 @@ cmd0643_9_chip_map(sc, pa)
                                 sc->sc_wdcdev.cap |= WDC_CAPABILITY_UDMA;
                                 sc->sc_wdcdev.UDMA_cap = 2;
 #endif
-                                /* explicitely disable UDMA */
+                                /* explicitly disable UDMA */
                                 pciide_pci_write(sc->sc_pc, sc->sc_tag,
                                     CMD_UDMATIM(0), 0);
                                 pciide_pci_write(sc->sc_pc, sc->sc_tag,

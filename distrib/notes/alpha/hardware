@@ -360,6 +360,6 @@ Drivers for hardware marked with "[-]" are NOT available in any provided
 kernel image, you will have to recompile your kernel to enable them.
 
 Console frame buffers and keyboards are only supported on systems
-explicitely mentioned above.  On other systems, including all
+explicitly mentioned above.  On other systems, including all
 TurboChannel-based machines, OpenBSD/MACHINE *must* be used with a
 serial console.
