@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gif.c,v 1.9 2000/12/30 21:52:50 angelos Exp $	*/
+/*	$OpenBSD: if_gif.c,v 1.10 2000/12/31 17:21:50 angelos Exp $	*/
 /*	$KAME: if_gif.c,v 1.32 2000/10/07 03:20:55 itojun Exp $	*/
 
 /*
@@ -123,7 +123,10 @@ void
 gif_start(ifp)
         struct ifnet *ifp;
 {
+#ifdef NBRIDGE > 0
         struct sockaddr dst;
+#endif /* NBRIDGE */
+
         struct mbuf *m;
 	int s;
 
@@ -150,7 +153,7 @@ gif_start(ifp)
 		if (ifp->if_bridge == NULL) m_freem(m);
 		else gif_output(ifp, m, &dst, NULL);
 #else
-		m_freem(m)
+		m_freem(m);
 #endif /* NBRIDGE */
 	}
 }
