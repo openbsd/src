@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.15 2004/08/06 07:51:17 espie Exp $
+# $OpenBSD: pkg_create,v 1.16 2004/08/27 16:45:45 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -130,6 +130,7 @@ sub makesum
 	$self->{items} = [];
 	for my $item (@$oldlist) {
 		push @{$self->{items}}, $item;
+		$self->{state}->{cwd} = $item->{cwd} if defined $item->{cwd};
 		$item->compute_checksum($self, $base, $stash);
 	}
 }
