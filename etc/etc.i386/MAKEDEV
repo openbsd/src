@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.68 1999/01/01 23:53:15 niklas Exp $
+#	$OpenBSD: MAKEDEV,v 1.69 1999/01/11 15:14:44 niklas Exp $
 #	$NetBSD: MAKEDEV,v 1.40 1996/03/31 00:50:47 perry Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -45,6 +45,7 @@
 #	vnd*	"file" pseudo-disks
 #	rd*	"ramdisk" pseudo-disks
 #	ccd*	contatenated disk devices
+#	raid*	RAIDframe disk devices
 #
 # Console ports:
 #	ttyC0	pccons or pcvt screen 0
@@ -112,7 +113,8 @@ all)
 	sh MAKEDEV tty00 tty01 tty02 tty03 pty0 pty1 st0 st1 ch0 cd0 cd1
 	sh MAKEDEV ttyc0 ttyc1 ttyc2 ttyc3 ttyc4 ttyc5 ttyc6 ttyc7
 	sh MAKEDEV mcd0 acd0 vnd0 vnd1 lpa0 lpa1 ccd0 ccd1 ccd2 ccd3
-	sh MAKEDEV lpt0 lpt1 lpt2 ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
+	sh MAKEDEV raid0 raid1 raid2 raid3 lpt0 lpt1 lpt2
+	sh MAKEDEV ttyC0 ttyC1 ttyC2 ttyC3 ttyC4 ttyC5
 	sh MAKEDEV ipl tun0 tun1 tun2
 	sh MAKEDEV bpf0 bpf1 bpf2 bpf3 bpf4 bpf5 bpf6 bpf7 bpf8 bpf9
 	sh MAKEDEV speaker lkm mms0 lms0 pms0 audio joy0 joy1 apm local
@@ -265,11 +267,12 @@ fd*)
 	umask 77
 	;;
 
-ccd*|sd*|wd*)
+ccd*|sd*|wd*|raid*)
 	umask 2 ; unit=`expr $i : '.*d\(.*\)'`
 	case $i in
 	ccd*) name=ccd; blk=16; chr=18;;
 	fd*) name=fd; blk=2; chr=9;;
+	raid*) name=raid; blk=19; chr=54;;
 	sd*) name=sd; blk=4; chr=13;;
 	wd*) name=wd; blk=0; chr=3;;
 	esac
