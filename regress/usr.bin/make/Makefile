@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.13 2002/01/01 23:07:13 art Exp $
+# $OpenBSD: Makefile,v 1.14 2002/01/03 01:07:28 art Exp $
 
 # We don't pass t7, t13, t14...
 REGRESSTARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14
@@ -76,6 +76,6 @@ t1.out:
 
 .PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 regress
 
-CLEANFILES+=t1.out z.a a.a a.b
+CLEANFILES+=t1.out z.a a.a a.b goodfile phony
 
 .include <bsd.regress.mk>
