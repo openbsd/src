@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip6_output.c,v 1.46 2001/06/27 03:49:54 angelos Exp $	*/
+/*	$OpenBSD: ip6_output.c,v 1.47 2001/08/21 06:53:36 angelos Exp $	*/
 /*	$KAME: ip6_output.c,v 1.172 2001/03/25 09:55:56 itojun Exp $	*/
 
 /*
@@ -249,22 +249,6 @@ ip6_output(m0, opt, ro, flags, im6o, ifpp)
 			goto freehdrs;
 		}
 	} else {
-		/*
-		 * If the socket has set the bypass flags and SA destination
-		 * matches the IP destination, skip IPsec. This allows
-		 * IKE packets to travel through IPsec tunnels.
-		 */
-		if (inp != NULL && 
-		    inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS &&
-		    inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS &&
-		    inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS &&
-		    sdst.sa.sa_family == AF_INET6 &&
-		    IN6_ARE_ADDR_EQUAL(&sdst.sin6.sin6_addr, &ip6->ip6_dst)) {
-			splx(s);
-		        sproto = 0; /* mark as no-IPsec-needed */
-			goto done_spd;
-		}
-
 		/* Loop detection */
 		for (mtag = m_tag_first(m); mtag != NULL;
 		    mtag = m_tag_next(m, mtag)) {

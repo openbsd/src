@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_output.c,v 1.134 2001/07/17 20:34:50 provos Exp $	*/
+/*	$OpenBSD: ip_output.c,v 1.135 2001/08/21 06:53:36 angelos Exp $	*/
 /*	$NetBSD: ip_output.c,v 1.28 1996/02/13 23:43:07 christos Exp $	*/
 
 /*
@@ -287,24 +287,6 @@ ip_output(m0, va_alist)
 			goto done;
 		}
 	} else {
-		/*
-		 * If the socket has set the bypass flags and SA
-		 * destination matches the IP destination, skip
-		 * IPsec. This allows IKE packets to travel through
-		 * IPsec tunnels.
-		 */
-		if ((inp != NULL) &&
-		    (inp->inp_seclevel[SL_AUTH] == IPSEC_LEVEL_BYPASS) &&
-		    (inp->inp_seclevel[SL_ESP_TRANS] == IPSEC_LEVEL_BYPASS) &&
-		    (inp->inp_seclevel[SL_ESP_NETWORK] == IPSEC_LEVEL_BYPASS)
-		    && (inp->inp_seclevel[SL_IPCOMP] == IPSEC_LEVEL_BYPASS)
-		    && (sdst.sa.sa_family == AF_INET) &&
-		    (sdst.sin.sin_addr.s_addr == ip->ip_dst.s_addr)) {
-			splx(s);
-			sproto = 0; /* mark as no-IPsec-needed */
-			goto done_spd;
-		}
-
 		/* Loop detection */
 		for (mtag = m_tag_first(m); mtag != NULL;
 		    mtag = m_tag_next(m, mtag)) {
