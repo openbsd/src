@@ -1,4 +1,4 @@
-dnl	$OpenBSD: prep,v 1.4 2004/10/03 19:45:46 miod Exp $
+dnl	$OpenBSD: prep,v 1.5 2004/10/23 08:52:49 pefo Exp $
 Before you install your system, you should familiarize yourself with the
 ARCS setup and how to run programs from the Command monitor prompt.
 
@@ -47,3 +47,22 @@ Setting the environment:
 
     Its default value is ``sash'', which is IRIX' standalone
     shell and loader. Set it to ``boot'', the OpenBSD boot loader.
+
+Disk numbering
+
+    SGI numbers their disks 1-n depending on their position in the
+    backplane. For example, on the O2, the slot closest to the CPU
+    is numbered 1 and the next 2 if the CPU is a R5000. On R1x000
+    models, slot 1 is lost due to the larger heatsink on the CPU.
+    Normally the kernel translates the slot numbers to disk numbers
+    by subtracting 1 from the slot number, eg slot 1 becomes sd0.
+    However on an O2 with a R1x000 cpu, 2 is subtracted from the
+    slot number to compensate for the lost slot.
+
+    When the kernel searches for the boot device it uses the ARCBios
+    environment variable OsLoadPartition. Since the disk number in
+    the variable is the absolute number, in contrast to the kernels
+    relative numbers, the kernel will not be able to find the boot
+    device if the disk slots are not filled from the lowest and up.
+    An empty slot before the boot device will confuse the lookup.
+
