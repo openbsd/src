@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.6 2004/07/12 09:22:38 dtucker Exp $ */
+/*	$OpenBSD: log.c,v 1.7 2005/03/31 12:14:01 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -16,11 +16,6 @@
  * OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -28,11 +23,10 @@
 #include <string.h>
 #include <syslog.h>
 #include <time.h>
-#include <unistd.h>
 
 #include "ntpd.h"
 
-int	debug;
+int	 debug;
 
 void	 logit(int, const char *, ...);
 
