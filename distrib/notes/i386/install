@@ -214,12 +214,12 @@ should make a new inst floppy or fsck your existing one (if you can).
 
 		Run the "Extract" command once for each distribution
 		set you wish to install.  For instance, if you wish to
-		install the "base20" distribution set, followed by the
-		"man20" distribution set, and finally the "etc20"
+		install the "base21" distribution set, followed by the
+		"man21" distribution set, and finally the "etc21"
 		distribution set, use the commands:
-			Extract base20
-			Extract man20
-			Extract etc20
+			Extract base21
+			Extract man21
+			Extract etc21
 
 		For each extraction, it will ask you if the extraction
 		should be verbose.  If you reply affirmatively, it
@@ -274,9 +274,9 @@ should make a new inst floppy or fsck your existing one (if you can).
 		hitting return at the prompt.
 
 		Use the "Extract" command to extract the distribution
-		set.  For instance, if you're extracting the "base20"
+		set.  For instance, if you're extracting the "base21"
 		set, use the command:
-			Extract base20
+			Extract base21
 		You will be asked if you wish the extraction to be
 		verbose.  If you reply affirmatively, the name of each
 		file being extracted will be printed.
@@ -394,7 +394,7 @@ should make a new inst floppy or fsck your existing one (if you can).
 	Once you have finished extracting all of the distribution sets
 	that you wish to install, and are back at the "#" prompt, you
 	are ready to configure your system.  The configuration utility
-	expects that you have installed the "base20" and "etc20"
+	expects that you have installed the "base21" and "etc21"
 	distribution sets.  If you have not, you will not be able to
 	run it successfully (nor will you have a functional system, in
 	any case).  To configure your newly-installed OpenBSD system,
