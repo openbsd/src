@@ -1,4 +1,4 @@
-/*	$OpenBSD: mail.local.c,v 1.19 1998/08/15 21:04:34 millert Exp $	*/
+/*	$OpenBSD: mail.local.c,v 1.20 2000/04/21 21:50:00 millert Exp $	*/
 
 /*-
  * Copyright (c) 1996-1998 Theo de Raadt <deraadt@theos.com>
@@ -45,7 +45,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)mail.local.c	5.6 (Berkeley) 6/19/91";
 #else
-static char rcsid[] = "$OpenBSD: mail.local.c,v 1.19 1998/08/15 21:04:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: mail.local.c,v 1.20 2000/04/21 21:50:00 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -140,38 +140,48 @@ store(from)
 	FILE *fp;
 	time_t tval;
 	int fd, eline;
-	char *tn, line[2048];
+	size_t len;
+	char *line, *tbuf;
 
-	if ((tn = strdup(_PATH_LOCTMP)) == NULL)
+	if ((tbuf = strdup(_PATH_LOCTMP)) == NULL)
 		err(FATAL, "unable to allocate memory");
-	if ((fd = mkstemp(tn)) == -1 || !(fp = fdopen(fd, "w+")))
+	if ((fd = mkstemp(tbuf)) == -1 || !(fp = fdopen(fd, "w+")))
 		err(FATAL, "unable to open temporary file");
-	(void)unlink(tn);
-	free(tn);
+	(void)unlink(tbuf);
+	free(tbuf);
 
 	(void)time(&tval);
 	(void)fprintf(fp, "From %s %s", from, ctime(&tval));
 
-	line[0] = '\0';
-	for (eline = 1; fgets(line, sizeof(line), stdin);) {
-		if (line[0] == '\n')
+	for (eline = 1, tbuf = NULL; (line = fgetln(stdin, &len));) {
+		/* We have to NUL-terminate the line since fgetln does not */
+		if (line[len - 1] == '\n')
+			line[len - 1] = '\0';
+		else {
+			/* No trailing newline, so alloc space and copy */
+			if ((tbuf = malloc(len + 1)) == NULL)
+				err(FATAL, "unable to allocate memory");
+			memcpy(tbuf, line, len);
+			tbuf[len++] = '\0';
+			line = tbuf;
+		}
+		if (line[0] == '\0')
 			eline = 1;
 		else {
-			if (eline && line[0] == 'F' && !bcmp(line, "From ", 5))
+			if (eline && line[0] == 'F' && len > 5 &&
+			    !memcmp(line, "From ", 5))
 				(void)putc('>', fp);
 			eline = 0;
 		}
-		(void)fprintf(fp, "%s", line);
+		(void)fprintf(fp, "%s\n", line);
 		if (ferror(fp))
 			break;
 	}
+	if (tbuf)
+		free(tbuf);
 
-	/* If message not newline terminated, need an extra. */
-	if (!strchr(line, '\n'))
-		(void)putc('\n', fp);
 	/* Output a newline; note, empty messages are allowed. */
 	(void)putc('\n', fp);
-
 	(void)fflush(fp);
 	if (ferror(fp))
 		err(FATAL, "temporary file write error");
