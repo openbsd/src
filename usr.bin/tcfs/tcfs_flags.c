@@ -45,19 +45,21 @@ tcfs_getflags(int fd)
 tcfs_flags
 tcfs_setflags(int fd, tcfs_flags x)
 {
-	tcfs_flags r,n;
+	tcfs_flags r, n;
 	r = tcfs_getflags(fd);
 	
 	if (r.flag == -1) {
-		 r.flag = -1;
-		 return r;
+		r.flag = -1;
+		return r;
 	}
 
 	n = x;
-	FI_SET_SP(&n,FI_SPURE(&r));
+	FI_SET_SP(&n, FI_SPURE(&r));
 
-	if (fchflags(fd, n.flag))
-		 r.flag = -1;
+	if (fchflags(fd, n.flag)) {
+		perror("fchflags");
+		r.flag = -1;
+	}
 
 	return r;
 }

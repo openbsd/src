@@ -35,6 +35,9 @@ flags_main(int argc, char *argv[])
 	int fd;
 	tcfs_flags i;
 
+	seteuid(getuid());
+	setuid(getuid());
+
 	if (argc < 3) {
 		fprintf (stderr, "tcfsflags {r,x,g} file\n\n");
 		exit(1);
@@ -66,9 +69,9 @@ flags_main(int argc, char *argv[])
 		break;
 	}					
 
-	i = tcfs_setflags(fd,i);
+	i = tcfs_setflags(fd, i);
 	if (i.flag == -1) {
-		fprintf(stderr,"setflags error\n");
+		fprintf(stderr, "setflags error\n");
 		exit(1);
 	}
 	close(fd);
