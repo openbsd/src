@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.7 1997/07/19 20:54:28 niklas Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.8 1997/07/23 23:31:11 niklas Exp $	*/
 
 /*
  * Copyright (c) 1997 Niklas Hallqvist.  All rights reserverd.
@@ -154,7 +154,7 @@ kdbprinttrap(type, code)
 }
 
 /*
- *  kdb_trap - field a TRACE or BPT trap
+ *  kdb_trap - field a BPT trap
  */
 int
 kdb_trap(type, code, regs)
@@ -180,10 +180,6 @@ kdb_trap(type, code, regs)
 	/* XXX Should switch to kdb`s own stack here. */
 
 	ddb_regs = *regs;
-#if 0
-	db_printf("db_regs at %p\n", regs);
-	ddb_regs.tf_regs[FRAME_SP] = (u_long)regs + FRAME_SIZE*8;
-#endif
 
 	s = splhigh();
 	db_active++;
@@ -267,4 +263,22 @@ next_instr_address(pc, branch)
 	if (!branch)
 		return (pc + sizeof(int));
 	return (branch_taken(*(u_int *)pc, pc, getreg_val, DDB_REGS));
+}
+
+/*
+ * Validate an address for use as a breakpoint.  We cannot let some
+ * addresses have breakpoints as the ddb code itself uses that codepath.
+ * Recursion and kernel stack space exhaustion will follow.
+ */
+int
+db_valid_breakpoint(addr)
+	db_addr_t addr;
+{
+	char *name;
+	db_expr_t offset;
+
+	db_find_sym_and_offset(addr, &name, &offset);
+	if (name && strcmp(name, "alpha_pal_swpipl") == 0)
+		return (0);
+	return (1);
 }
