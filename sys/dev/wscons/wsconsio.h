@@ -1,4 +1,4 @@
-/* $OpenBSD: wsconsio.h,v 1.21 2002/06/11 22:56:48 jason Exp $ */
+/* $OpenBSD: wsconsio.h,v 1.22 2002/07/25 19:01:19 miod Exp $ */
 /* $NetBSD: wsconsio.h,v 1.31.2.1 2000/07/07 09:49:17 hannken Exp $ */
 
 /*
@@ -252,7 +252,8 @@ struct wsmouse_calibcoords {
 #define		WSDISPLAY_TYPE_SB_P9100	22	/* Tadpole SPARCbook P9100 */
 #define		WSDISPLAY_TYPE_EGA	23	/* (generic) EGA */
 #define		WSDISPLAY_TYPE_DCPVR	24	/* Dreamcast PowerVR */
-#define		WSDISPLAY_TYPE_SUNFFB	25	/* Sun UPA FFB */
+#define		WSDISPLAY_TYPE_SUN24	25	/* Sun 24 bit framebuffers */
+#define		WSDISPLAY_TYPE_SUNBW	26	/* Sun black and white fb */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
