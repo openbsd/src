@@ -1,4 +1,4 @@
-.\"	$OpenBSD: route6d.8,v 1.2 1999/12/11 10:41:46 itojun Exp $
+.\"	$OpenBSD: route6d.8,v 1.3 1999/12/11 10:50:30 itojun Exp $
 .\"
 .\" Copyright (c) 1996 WIDE Project. All rights reserved.
 .\"
@@ -231,3 +231,8 @@ Current
 .Nm
 does not reduce the rate of the triggered updates when consecutive updates
 arrive.
+.\"
+.Sh BUGS
+At this moment,
+.Nm
+does not work right due to *BSD differences in socket layer.
