@@ -1,4 +1,4 @@
-/*	$OpenBSD: systm.h,v 1.49 2002/03/14 20:31:31 mickey Exp $	*/
+/*	$OpenBSD: systm.h,v 1.50 2002/05/15 23:17:53 art Exp $	*/
 /*	$NetBSD: systm.h,v 1.50 1996/06/09 04:55:09 briggs Exp $	*/
 
 /*-
@@ -181,6 +181,9 @@ int	snprintf(char *buf, size_t, const char *, ...)
 struct tty;
 void	ttyprintf(struct tty *, const char *, ...)
     __kprintf_attribute__((__format__(__kprintf__,2,3)));
+
+void	splassert_fail(int, int, const char *);
+extern	int splassert_ctl;
 
 void	tablefull(const char *);
 

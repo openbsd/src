@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.64 2002/03/14 20:31:31 mickey Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.65 2002/05/15 23:17:53 art Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -433,6 +433,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen,
 			    &cryptodevallowsoft));
 #endif
+	case KERN_SPLASSERT:
+		return (sysctl_int(oldp, oldlenp, newp, newlen,
+		    &splassert_ctl));
 	default:
 		return (EOPNOTSUPP);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: intr.c,v 1.19 2002/04/30 01:12:28 art Exp $ */
+/*	$OpenBSD: intr.c,v 1.20 2002/05/15 23:17:54 art Exp $ */
 /*	$NetBSD: intr.c,v 1.20 1997/07/29 09:42:03 fair Exp $ */
 
 /*
@@ -364,4 +364,19 @@ intr_fasttrap(level, vec)
 	for (i = 0; i < sizeof(int) * 3; i++, instrp++, tvp++)
 		pmap_writetext(tvp, *instrp);
 	splx(s);
+}
+
+void
+splassert_check(int wantipl, const char *func)
+{
+	int oldipl = (getpsr() & PSR_PIL) >> 8;
+
+	if (oldipl < wantipl) {
+		splassert_fail(wantipl, oldipl, func);
+		/*
+		 * If the splassert_ctl is set to not panic, raise the ipl
+		 * in a feeble attempt to reduce damage.
+		 */
+		setpsr((getpsr() & ~PSR_PIL) | wantipl << 8);
+	}
 }

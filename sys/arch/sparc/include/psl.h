@@ -1,4 +1,4 @@
-/*	$OpenBSD: psl.h,v 1.12 2002/04/30 01:03:04 art Exp $	*/
+/*	$OpenBSD: psl.h,v 1.13 2002/05/15 23:17:54 art Exp $	*/
 /*	$NetBSD: psl.h,v 1.12 1997/03/10 21:49:11 pk Exp $ */
 
 /*
@@ -107,13 +107,11 @@ static __inline int splhigh(void);
 static __inline void splx(int);
 static __inline int getmid(void);
 
-/* SPL asserts */
-#define	splassert(wantipl)	/* nothing */
-
 /*
  * GCC pseudo-functions for manipulating PSR (primarily PIL field).
  */
-static __inline int getpsr()
+static __inline int
+getpsr()
 {
 	int psr;
 
@@ -121,7 +119,8 @@ static __inline int getpsr()
 	return (psr);
 }
 
-static __inline int getmid()
+static __inline int
+getmid()
 {
 	int mid;
 
@@ -129,7 +128,8 @@ static __inline int getmid()
 	return ((mid >> 20) & 0x3);
 }
 
-static __inline void setpsr(newpsr)
+static __inline void
+setpsr(newpsr)
 	int newpsr;
 {
 	__asm __volatile("wr %0,0,%%psr" : : "r" (newpsr));
@@ -138,7 +138,8 @@ static __inline void setpsr(newpsr)
 	__asm __volatile("nop");
 }
 
-static __inline int spl0()
+static __inline int
+spl0()
 {
 	int psr, oldipl;
 
@@ -159,6 +160,23 @@ static __inline int spl0()
 	return (oldipl);
 }
 
+#ifdef DIAGNOSTIC
+/*
+ * Although this function is implemented in MI code, it must be in this MD
+ * header because we don't want this header to include MI includes.
+ */
+void splassert_fail(int, int, const char *);
+extern int splassert_ctl;
+void splassert_check(int, const char *);
+#define splassert(__wantipl) do {			\
+	if (__predict_false(splassert_ctl > 0)) {	\
+		splassert_check(__wantipl, __func__);	\
+	}						\
+} while (0)
+#else
+#define splassert(wantipl) do { /* nada */ } while (0)
+#endif
+
 /*
  * PIL 1 through 14 can use this macro.
  * (spl0 and splhigh are special since they put all 0s or all 1s
@@ -166,7 +184,7 @@ static __inline int spl0()
  */
 #define	SPL(name, newipl) \
 static __inline int name(void); \
- static __inline int name() \
+static __inline int name() \
 { \
 	int psr, oldipl; \
 	__asm __volatile("rd %%psr,%0" : "=r" (psr)); \

@@ -1,4 +1,4 @@
-/*	$OpenBSD: sysctl.h,v 1.48 2002/03/14 19:42:54 mickey Exp $	*/
+/*	$OpenBSD: sysctl.h,v 1.49 2002/05/15 23:17:53 art Exp $	*/
 /*	$NetBSD: sysctl.h,v 1.16 1996/04/09 20:55:36 cgd Exp $	*/
 
 /*
@@ -167,7 +167,8 @@ struct ctlname {
 #define	KERN_SYSVIPC_INFO	51	/* struct: SysV sem/shm/msg info */
 #define KERN_USERCRYPTO		52	/* int: usercrypto */
 #define KERN_CRYPTODEVALLOWSOFT	53	/* int: cryptodevallowsoft */
-#define	KERN_MAXID		54	/* number of valid kern ids */
+#define KERN_SPLASSERT		54	/* int: splassert */
+#define	KERN_MAXID		55	/* number of valid kern ids */
 
 #define	CTL_KERN_NAMES { \
 	{ 0, 0 }, \
@@ -224,6 +225,7 @@ struct ctlname {
 	{ "sysvipc_info", CTLTYPE_INT }, \
 	{ "usercrypto", CTLTYPE_INT }, \
 	{ "cryptodevallowsoft", CTLTYPE_INT }, \
+	{ "splassert", CTLTYPE_INT }, \
 }
 
 /*
