@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypserv_db.c,v 1.17 2002/07/19 02:38:40 deraadt Exp $ */
+/*	$OpenBSD: ypserv_db.c,v 1.18 2003/04/05 10:44:28 avsm Exp $ */
 
 /*
  * Copyright (c) 1994 Mats O Jansson <moj@stacken.kth.se>
@@ -34,7 +34,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.17 2002/07/19 02:38:40 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ypserv_db.c,v 1.18 2003/04/05 10:44:28 avsm Exp $";
 #endif
 
 /*
@@ -400,7 +400,7 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 			    inet_ntoa(*addr_name), host->h_name);
 			if (v - val + strlen(tmpbuf) + 1 > sizeof(val))
 				break;
-			strcpy(v, tmpbuf);
+			strlcpy(v, tmpbuf, sizeof(val)); /* v == val */
 			v = v + strlen(tmpbuf);
 		}
 		result->val.valdat_val = val;
@@ -432,16 +432,10 @@ lookup_host(int nametable, int host_lookup, DBM *db, char *keystr,
 	}
 
 	snprintf(val, sizeof(val), "%s %s", keystr, host->h_name);
-	l = strlen(val);
-	v = val + l;
 	while ((ptr = *(host->h_aliases)) != NULL) {
-		l = strlen(ptr);
-		if ((v - val) + l + 1 > BUFSIZ)
+		strlcat(val, " ", sizeof(val));
+		if (strlcat(val, ptr, sizeof(val)) > sizeof(val))
 			break;
-		strcpy(v, " ");
-		v += 1;
-		strcpy(v, ptr);
-		v += l;
 		host->h_aliases++;
 	}
 	result->val.valdat_val = val;
