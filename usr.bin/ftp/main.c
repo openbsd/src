@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.23 1997/03/14 05:03:45 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.24 1997/03/14 05:36:02 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.18 1997/03/13 06:23:19 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.23 1997/03/14 05:03:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.24 1997/03/14 05:36:02 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -221,6 +221,10 @@ main(argc, argv)
 
 	setttywidth(0);
 	(void)signal(SIGWINCH, setttywidth);
+#ifndef SMALLFTP
+	if (editing)
+		el_set(el, EL_SIGNAL, 1);
+#endif /* !SMALLFTP */
 
 	if (argc > 0) {
 		if (strchr(argv[0], ':') != NULL) {
@@ -373,21 +377,21 @@ cmdscanner(top)
 		makeargv();
 		if (margc == 0)
 			continue;
-#if 0 && !defined(SMALLFTP)	/* XXX: don't want el_parse */
-		/*
-		 * el_parse returns -1 to signal that it's not been handled
-		 * internally.
-		 */
-		if (el_parse(el, margc, margv) != -1)
-			continue;
-#endif /* !SMALLFTP */
 		c = getcmd(margv[0]);
 		if (c == (struct cmd *)-1) {
 			puts("?Ambiguous command.");
 			continue;
 		}
 		if (c == 0) {
-			puts("?Invalid command.");
+#ifndef SMALLFTP
+			/*
+			 * Give editline(3) a shot at unknown commands.
+			 * XXX - bogus commands with a colon in
+			 *       them will not elicit an error.
+			 */
+			if (el_parse(el, margc, margv) != 0)
+#endif /* !SMALLFTP */
+				puts("?Invalid command.");
 			continue;
 		}
 		if (c->c_conn && !connected) {
