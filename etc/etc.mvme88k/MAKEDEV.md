@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV.md,v 1.1 2002/02/08 20:26:36 todd Exp $
+#	$OpenBSD: MAKEDEV.md,v 1.2 2002/02/09 16:59:50 deraadt Exp $
 #	$NetBSD: MAKEDEV,v 1.5 1997/01/01 23:46:23 pk Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -106,7 +106,7 @@ std)
 	mknod ksyms		c 43 0	; chmod 640 ksyms ; chown root.kmem ksyms
 	;;
 
-raminst)
+ramdisk)
 	sh $this std fd st0 ttya rd0
 	sh $this tty00 tty01 tty02 tty03
 	sh $this sd0 sd1 sd2 sd3 

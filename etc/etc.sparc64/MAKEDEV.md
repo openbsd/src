@@ -1,5 +1,5 @@
 vers(__file__,
-	{-$OpenBSD: MAKEDEV.md,v 1.14 2002/02/08 20:26:36 todd Exp $-},
+	{-$OpenBSD: MAKEDEV.md,v 1.15 2002/02/09 16:59:50 deraadt Exp $-},
 etc.MACHINE)dnl
 dnl
 dnl Copyright (c) 2001 Todd T. Fries <todd@OpenBSD.org>
@@ -29,7 +29,7 @@ _TITLE(make)
 __devitem(uperf,uperf,performance counters)dnl
 _mkdev(uperf,uperf,{-M uperf c major_uperf_c 0 664-},664)dnl
 _DEV(all)
-_DEV(floppy)
+_DEV(ramdisk)
 _DEV(std)
 _DEV(loc)
 _TITLE(tap)
@@ -99,8 +99,8 @@ _DEV(uperf,25)
 dnl
 divert(7)dnl
 dnl
-floppy)
-	_recurse std fd0 wd0 wd1 sd0 sd1
+ramdisk)
+	_recurse std fd0 wd0 wd1 sd0 sd1 rd0
 	_recurse st0 cd0 random
 	;;
 

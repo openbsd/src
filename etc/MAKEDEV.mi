@@ -1,6 +1,6 @@
 include(MAKEDEV.sub)dnl
 dnl
-vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.23 2002/02/08 20:26:36 todd Exp $-})dnl
+vers(a,{-$OpenBSD: MAKEDEV.mi,v 1.24 2002/02/09 16:59:50 deraadt Exp $-})dnl
 dnl
 divert(1)dnl
 {-#-}
@@ -201,7 +201,7 @@ _mkdev(all,{-all-},{-dnl
 show_target(all)dnl
 -})dnl
 dnl
-__devitem(floppy,floppy,devices to be put on install floppies)dnl
+__devitem(ramdisk,ramdisk,devices to be put on install floppies)dnl
 __devitem(std,{-std-},standard devices)dnl
 dnl
 dnl
@@ -480,7 +480,7 @@ _mkdev(flo,fd*,
 	M r${nam}a	c $chr $n 640 operator
 	M r${nam}b	c $chr Add($n,1) 640 operator
 	M r${nam}c	c $chr Add($n,2) 640 operator-},664)dnl
-__devitem(aflo,floppy,devices needed for install floppies)dnl
+__devitem(aflo,ramdisk,devices needed for install floppies)dnl
 _mkdev(aflo,fd*,{-case $U in 0|1|2|3)
 	M fd${U}a b major_aflo_b Mult($U,16) 640 operator
 	M fd${U}b b major_aflo_b Add(Mult($U,16),1) 640 operator
