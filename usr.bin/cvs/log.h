@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.h,v 1.5 2004/12/15 06:11:40 jfb Exp $	*/
+/*	$OpenBSD: log.h,v 1.6 2005/02/15 15:29:35 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -61,7 +61,6 @@
 /* filtering methods */
 #define LP_FILTER_SET     0     /* set a filter */
 #define LP_FILTER_UNSET   1     /* remove a filter */
-#define LP_FILTER_TOGGLE  2
 
 int   cvs_log_init    (u_int, u_int);
 void  cvs_log_cleanup (void);

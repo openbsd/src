@@ -1,4 +1,4 @@
-/*	$OpenBSD: log.c,v 1.8 2004/12/15 06:11:40 jfb Exp $	*/
+/*	$OpenBSD: log.c,v 1.9 2005/02/15 15:29:35 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved.
@@ -64,16 +64,18 @@ static int cvs_slpriomap[] = {
 	LOG_ERR,
 };
 
-
-
 static u_int cvs_log_dest = LD_STD;
 static u_int cvs_log_flags = 0;
 
-static u_int cvs_log_filters[LP_MAX + 1];
-#define NB_FILTERS  sizeof(cvs_log_filters)/sizeof(cvs_log_filters[0])
-
-
 static struct syslog_data cvs_sl;
+
+/* filter manipulation macros */
+#define CVS_LOG_FLTRRST()    (cvs_log_filters = 0)
+#define CVS_LOG_FLTRSET(l)   (cvs_log_filters |= (1 << l))
+#define CVS_LOG_FLTRGET(l)   (cvs_log_filters & (1 << l))
+#define CVS_LOG_FLTRCLR(l)   (cvs_log_filters &= ~(1 << l))
+
+static u_int cvs_log_filters;
 
 
 /*
@@ -91,12 +93,12 @@ cvs_log_init(u_int dest, u_int flags)
 	cvs_log_flags = flags;
 
 	/* by default, filter only LP_DEBUG and LP_INFO levels */
-	memset(cvs_log_filters, 0, sizeof(cvs_log_filters));
-	cvs_log_filters[LP_DEBUG] = 1;
-	cvs_log_filters[LP_INFO] = 1;
+	CVS_LOG_FLTRRST();
+	CVS_LOG_FLTRSET(LP_DEBUG);
+	CVS_LOG_FLTRSET(LP_INFO);
 
 	/* traces are enabled with the -t command-line option */
-	cvs_log_filters[LP_TRACE] = 1;
+	CVS_LOG_FLTRSET(LP_TRACE);
 
 	if (dest & LD_SYSLOG) {
 		slopt = 0;
@@ -149,26 +151,16 @@ cvs_log_filter(u_int how, u_int level)
 	switch (how) {
 	case LP_FILTER_SET:
 		if (level == LP_ALL)
-			for (i = 0; i < NB_FILTERS; i++)
-				cvs_log_filters[i] = 1;
+			for (i = 0; i <= LP_MAX; i++)
+				CVS_LOG_FLTRSET(i);
 		else
-			cvs_log_filters[level] = 1;
+			CVS_LOG_FLTRSET(level);
 		break;
 	case LP_FILTER_UNSET:
 		if (level == LP_ALL)
-			for (i = 0; i < NB_FILTERS; i++)
-				cvs_log_filters[i] = 0;
+			CVS_LOG_FLTRRST();
 		else
-			cvs_log_filters[level] = 0;
-		break;
-	case LP_FILTER_TOGGLE:
-		if (level == LP_ALL)
-			for (i = 0; i < NB_FILTERS; i++)
-				cvs_log_filters[i] =
-				    (cvs_log_filters[i] == 0) ? 1 : 0;
-		else
-			cvs_log_filters[level] =
-			    (cvs_log_filters[level] == 0) ? 1 : 0;
+			CVS_LOG_FLTRCLR(level);
 		break;
 	default:
 		return (-1);
@@ -216,7 +208,7 @@ cvs_vlog(u_int level, const char *fmt, va_list vap)
 		return (-1);
 
 	/* apply any filters */
-	if (cvs_log_filters[level] != 0)
+	if (CVS_LOG_FLTRGET(level))
 		return (0);
 
 	if (level == LP_ERRNO)
