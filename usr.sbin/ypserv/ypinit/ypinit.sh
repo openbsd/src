@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$Id: ypinit.sh,v 1.4 1997/04/20 10:00:27 maja Exp $
+#	$Id: ypinit.sh,v 1.5 1997/04/24 18:30:44 deraadt Exp $
 #
 # ypinit.sh - setup an master or slave server.
 #
@@ -107,7 +107,7 @@ fi
 # Check if we have contact with master.
 if [ "${SERVERTYPE}" = "SLAVE" ];
 then
-	COUNT=`${YPWHICH} -d ${DOMAIN} -m 2>/dev/null | grep -i "${MASTER} | wc -l | tr -d " "`
+	COUNT=`${YPWHICH} -d ${DOMAIN} -m 2>/dev/null | grep -i ${MASTER} | wc -l | tr -d " "`
 	if [ "$COUNT" = "0" ]
 	then
 		echo "Can't enumerate maps from ${MASTER}. Please check that it is running." 1>&2
