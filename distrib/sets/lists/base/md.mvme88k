@@ -469,6 +469,8 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/lofnreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/lofnvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/maestro_reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/nofnreg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/nofnvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pciide_natsemi_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pcscpreg.ph

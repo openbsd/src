@@ -433,6 +433,8 @@
 ./usr/include/dev/pci/maestro_reg.h
 ./usr/include/dev/pci/ncrreg.h
 ./usr/include/dev/pci/neoreg.h
+./usr/include/dev/pci/nofnreg.h
+./usr/include/dev/pci/nofnvar.h
 ./usr/include/dev/pci/pccbbreg.h
 ./usr/include/dev/pci/pccbbvar.h
 ./usr/include/dev/pci/pcidevs.h
@@ -2621,6 +2623,7 @@
 ./usr/share/man/cat3/auth_clroptions.0
 ./usr/share/man/cat3/auth_destroy.0
 ./usr/share/man/cat3/auth_getitem.0
+./usr/share/man/cat3/auth_getpwd.0
 ./usr/share/man/cat3/auth_getstate.0
 ./usr/share/man/cat3/auth_getvalue.0
 ./usr/share/man/cat3/auth_mkvalue.0
@@ -3006,6 +3009,9 @@
 ./usr/share/man/cat3/expf.0
 ./usr/share/man/cat3/expm1.0
 ./usr/share/man/cat3/expm1f.0
+./usr/share/man/cat3/extattr.0
+./usr/share/man/cat3/extattr_namespace_to_string.0
+./usr/share/man/cat3/extattr_string_to_namespace.0
 ./usr/share/man/cat3/f.0
 ./usr/share/man/cat3/fabs.0
 ./usr/share/man/cat3/fabsf.0
@@ -3085,7 +3091,13 @@
 ./usr/share/man/cat3/form_userptr.0
 ./usr/share/man/cat3/form_win.0
 ./usr/share/man/cat3/fparseln.0
+./usr/share/man/cat3/fpgetmask.0
+./usr/share/man/cat3/fpgetround.0
+./usr/share/man/cat3/fpgetsticky.0
 ./usr/share/man/cat3/fprintf.0
+./usr/share/man/cat3/fpsetmask.0
+./usr/share/man/cat3/fpsetround.0
+./usr/share/man/cat3/fpsetsticky.0
 ./usr/share/man/cat3/fpurge.0
 ./usr/share/man/cat3/fputc.0
 ./usr/share/man/cat3/fputs.0
@@ -3846,6 +3858,7 @@
 ./usr/share/man/cat3/popen.0
 ./usr/share/man/cat3/pos_form_cursor.0
 ./usr/share/man/cat3/pos_menu_cursor.0
+./usr/share/man/cat3/posix1e.0
 ./usr/share/man/cat3/posix2time.0
 ./usr/share/man/cat3/post_form.0
 ./usr/share/man/cat3/post_menu.0
@@ -4806,6 +4819,8 @@
 ./usr/share/man/cat9/tsleep.0
 ./usr/share/man/cat9/ttyprintf.0
 ./usr/share/man/cat9/tvtohz.0
+./usr/share/man/cat9/uio.0
+./usr/share/man/cat9/uiomove.0
 ./usr/share/man/cat9/untimeout.0
 ./usr/share/man/cat9/uprintf.0
 ./usr/share/man/cat9/uvm.0
