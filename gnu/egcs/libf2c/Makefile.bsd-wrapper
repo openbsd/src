@@ -1,0 +1,156 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/05/26 15:47:00 espie Exp $
+
+EGCS_DIR= $(.CURDIR)/..
+.if defined(OBJMACHINE)
+OBJDIR=	obj.${MACHINE}
+.else
+OBJDIR=	obj
+.endif
+EGCS_OBJDIR!=	if [ -d $(EGCS_DIR)/$(OBJDIR) ]; then \
+			echo $(EGCS_DIR)/$(OBJDIR); \
+		else \
+			echo $(EGCS_DIR); \
+		fi
+
+#SUBDIR=libF77 libI77 libU77
+LIB=g2c
+
+I77_SRCS= backspace.c close.c dfe.c dolio.c due.c endfile.c err.c \
+	fmt.c fmtlib.c iio.c ilnw.c inquire.c lread.c lwrite.c open.c \
+	rdfmt.c rewind.c rsfe.c rsli.c rsne.c sfe.c sue.c typesize.c uio.c \
+	util.c wref.c wrtfmt.c wsfe.c wsle.c wsne.c xwsne.c \
+	ftell_.c
+
+U77_SRCS = gerror_.c perror_.c ierrno_.c itime_.c time_.c \
+	unlink_.c fnum_.c getpid_.c getuid_.c getgid_.c kill_.c rand_.c \
+	srand_.c irand_.c sleep_.c idate_.c ctime_.c etime_.c \
+	dtime_.c isatty_.c ltime_.c fstat_.c stat_.c \
+	lstat_.c access_.c link_.c getlog_.c ttynam_.c getcwd_.c symlnk_.c \
+        vxttime_.c vxtidate_.c gmtime_.c fdate_.c secnds_.c \
+	bes.c dbes.c \
+	chdir_.c chmod_.c lnblnk_.c hostnm_.c rename_.c fgetc_.c fputc_.c \
+	umask_.c sys_clock_.c date_.c second_.c flush1_.c mclock_.c \
+	alarm_.c datetime_.c
+
+DEFS=-DAllow_TYQUAD -DSTDC_HEADERS=1 -D_POSIX_SOURCE=1 -DHAVE_TEMPNAM=1 \
+-DNON_ANSI_RW_MODES=1 -DNO_EOF_CHAR_CHECK=1 -DSkip_f2c_Undefs=1 \
+-DRETSIGTYPE=void -DIEEE_drem=1 -DHAVE_CONFIG_H \
+-IlibU77 -I${.CURDIR}/libI77 -I${.OBJDIR} -I${.CURDIR}
+
+MISC =	F77_aloc.c main.c s_rnge.c abort_.c getarg_.c iargc_.c\
+	getenv_.c signal_.c s_stop.c s_paus.c system_.c cabs.c\
+	derf_.c derfc_.c erf_.c erfc_.c sig_die.c exit_.c setarg.c setsig.c
+POW =	pow_ci.c pow_dd.c pow_di.c pow_hh.c pow_ii.c  pow_ri.c pow_zi.c pow_zz.c \
+	pow_qq.c
+CX =	c_abs.c c_cos.c c_div.c c_exp.c c_log.c c_sin.c c_sqrt.c
+DCX =	z_abs.c z_cos.c z_div.c z_exp.c z_log.c z_sin.c z_sqrt.c
+REAL =	r_abs.c r_acos.c r_asin.c r_atan.c r_atn2.c r_cnjg.c r_cos.c\
+	r_cosh.c r_dim.c r_exp.c r_imag.c r_int.c\
+	r_lg10.c r_log.c r_mod.c r_nint.c r_sign.c\
+	r_sin.c r_sinh.c r_sqrt.c r_tan.c r_tanh.c
+DBL =	d_abs.c d_acos.c d_asin.c d_atan.c d_atn2.c\
+	d_cnjg.c d_cos.c d_cosh.c d_dim.c d_exp.c\
+	d_imag.c d_int.c d_lg10.c d_log.c d_mod.c\
+	d_nint.c d_prod.c d_sign.c d_sin.c d_sinh.c\
+	d_sqrt.c d_tan.c d_tanh.c
+INT =	i_abs.c i_dim.c i_dnnt.c i_indx.c i_len.c i_mod.c i_nint.c i_sign.c
+HALF =	h_abs.c h_dim.c h_dnnt.c h_indx.c h_len.c h_mod.c  h_nint.c h_sign.c
+CMP =	l_ge.c l_gt.c l_le.c l_lt.c hl_ge.c hl_gt.c hl_le.c hl_lt.c
+EFL =	ef1asc_.c ef1cmc_.c
+CHAR =	s_cat.c s_cmp.c s_copy.c
+F90BIT = lbitbits.c lbitshft.c qbitbits.c qbitshft.c
+F77_SRCS=${MISC} ${POW} ${CX} ${DCX} ${REAL} ${DBL} ${INT} \
+${HALF} ${CMP} ${EFL} ${CHAR} ${F90BIT}
+
+VERSION_SRCS=${.OBJDIR}/VersionI.c ${.OBJDIR}/VersionF.c ${.OBJDIR}/VersionU.c
+
+F2CEXT = abort derf derfc ef1asc ef1cmc erf erfc exit getarg getenv iargc \
+	signal system flush ftell fseek access besj0 besj1 besjn besy0 besy1 \
+	besyn chdir chmod ctime date dbesj0 dbesj1 dbesjn dbesy0 dbesy1 dbesyn \
+	dtime etime fdate fgetc fget flush1 fnum fputc fput fstat gerror \
+	getcwd getgid getlog getpid getuid gmtime hostnm idate ierrno irand \
+	isatty itime kill link lnblnk lstat ltime mclock perror rand rename \
+	secnds second sleep srand stat symlnk time ttynam umask unlink \
+	vxtidt vxttim alarm
+
+F2CO=${F2CEXT:S/^/libE77\/L/:S/$/.o/}
+OBJS+=${F2CO}
+F2CPO=${F2CO:.o=.po}
+F2CSO=${F2CO:.o=.so}
+
+${F2CO}: f2cext.c
+	@echo "${COMPILE.c} -D${.TARGET:T:R} $> -o ${.TARGET}"
+	@${COMPILE.c} -D${.TARGET:T:R} $> -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+${F2CPO}: f2cext.c
+	@echo "${COMPILE.c} -p -D${.TARGET:T:R} $> -o ${.TARGET}"
+	@${COMPILE.c} -p -D${.TARGET:T:R} $> -o ${.TARGET}.o
+	@${LD} -X -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+${F2CSO}: f2cext.c
+	@echo "${COMPILE.c} ${PICFLAG} -DPIC -D${.TARGET:T:R} $> -o ${.TARGET}"
+	@${COMPILE.c} ${PICFLAG} -DPIC -D${.TARGET:T:R} $> -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+
+CLEANFILES=${VERSION_SRCS} config.cache config.status config.log Makefile \
+libU77/config.log libU77/config.h libU77/config.status libU77/Makefile \
+libI77/config.log libI77/config.status libI77/Makefile \
+libF77/config.log libF77/config.status libF77/Makefile \
+g2c.h
+
+
+CFLAGS+=${DEFS}
+
+SRCS+= ${I77_SRCS:S/^/libI77\//}
+SRCS+= ${U77_SRCS:S/^/libU77\//}
+SRCS+= ${F77_SRCS:S/^/libF77\//}
+SRCS+= ${VERSION_SRCS}
+
+depend: 
+	cd ${.CURDIR}/../gcc && \
+		make -f Makefile.bsd-wrapper config.status tree-check.h 
+	mkdir -p libE77
+	
+${.OBJDIR}/VersionI.c: libI77/Version.c
+	ln -sf $> $@
+
+${.OBJDIR}/VersionU.c: libU77/Version.c
+	ln -sf $> $@
+
+${.OBJDIR}/VersionF.c: libF77/Version.c
+	ln -sf $> $@
+
+all: config.status
+	
+#	CPPFLAGS=-I${.CURDIR}/../gcc/obj \
+	
+config.status: Makefile.in configure 
+	# fake g771 existence
+	cd $(EGCS_OBJDIR)/gcc && touch f771
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	r=$(EGCS_OBJDIR) \
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	/bin/sh ${.CURDIR}/configure \
+		--prefix=/usr --with-local-prefix=/usr ${CF} \
+		&& touch config.status
+
+includes:
+	install -C -o ${BINOWN} -g ${BINGRP} -m ${NONBINMODE} \
+		${.CURDIR}/f2c.h ${DESTDIR}/usr/include
+
+.if (${MACHINE_ARCH} == "m68k")
+.for _I in libF77/r_nint libF77/d_nint libF77/i_dnnt libF77/i_nint \
+	libF77/h_dnnt libF77/h_nint
+${_I}.so: ${_I}.c
+	@echo "${COMPILE.c} ${PICFLAGS} -O1 -DPIC ${.IMPSRC} -o ${.TARGET}"
+	@${COMPILE.c} ${PICFLAGS} -O1 -DPIC ${.IMPSRC} -o ${.TARGET}.o
+	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
+	@rm -f ${.TARGET}.o
+.endfor
+.endif
+
+.include <bsd.lib.mk>

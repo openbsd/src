@@ -1,0 +1,145 @@
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.1 1999/05/26 15:47:00 espie Exp $
+
+MAN=		cccp.1 gcc.1 
+MLINKS+=	gcc.1 cc.1
+MLINKS+=	cccp.1 cpp.1
+
+.if !defined(BOOTSTRAP)
+MAN+= cp/g++.1 f/g77.1
+MLINKS+=	g++.1 c++.1
+.endif
+
+GPP_INC_DIR=	/usr/include/g++
+GNUCFLAGS=	CFLAGS="${CFLAGS} ${COPTS} -DOPENBSD_NATIVE"
+CLEANFILES=	.gdbinit cp/.gdbinit *.info* bi-parser.c bi-parser.h \
+		c-parse.c c-parse.h c-parse.y cexp.c cp/parse.c cp/parse.h \
+		f/.gdbinit f/*.info* objc-parse.c objc-parse.y target_path
+
+CXX_HEADERS=	${.CURDIR}/cp/inc/typeinfo ${.CURDIR}/cp/inc/exception \
+		${.CURDIR}/cp/inc/new ${.CURDIR}/cp/inc/new.h
+
+.if ${MACHINE} == "arc" || ${MACHINE} == "pmax" || ${MACHINE} == "wgrisc"
+M_ARCH=		mipsel
+.elif ${MACHINE} == "hkmips" || ${MACHINE} == "sgi"
+M_ARCH=		mips
+.else
+M_ARCH=		${MACHINE_ARCH}
+.endif
+
+.if defined(BOOTSTRAP)
+LANGUAGES=--enable-languages=c
+.else
+LANGUAGES=--enable-languages='c,c++,objc,f77' 
+.endif
+
+GCCARCH=	${M_ARCH}-unknown-openbsd`uname -r`
+
+all:	config.status
+# disable the fixincludes mechanism
+	echo "#!/bin/sh" >${.OBJDIR}/fixinc.sh
+	${MAKE} ${GNUCFLAGS} CC=${CC} LDFLAGS=${LDSTATIC} \
+		build_infodir=. all doc
+
+tree-check.h: config.status
+	${MAKE} ${GNUCFLAGS} CC=${CC} LDFLAGS=${LDSTATIC} \
+		build_infodir=. tree-check.h
+
+
+.FORCE:	.IGNORE
+
+.include <bsd.own.mk>
+
+.ifdef GLOBAL_AUTOCONF_CACHE
+CF=	--cache-file=${GLOBAL_AUTOCONF_CACHE}
+.else
+CF=
+.endif
+
+config: .FORCE
+.ifndef GLOBAL_AUTOCONF_CACHE
+	-rm -f config.cache
+.endif
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
+		--prefix=/usr --with-local-prefix=/usr ${CF} \
+		${LANGUAGES} --enable-cpp --disable-nls \
+		--with-gxx-include-dir=${GPP_INC_DIR} ${GCCARCH}
+
+config.status: Makefile.in configure c-parse.in
+	PATH="/bin:/usr/bin:/sbin:/usr/sbin" \
+	INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+	/bin/sh ${.CURDIR}/configure --with-gnu-as --with-gnu-ld \
+		--prefix=/usr --with-local-prefix=/usr ${CF} \
+		${LANGUAGES} --enable-cpp --disable-nls \
+		--with-gxx-include-dir=${GPP_INC_DIR} ${GCCARCH} && touch config.status
+
+includes:
+	@-for i in ${CXX_HEADERS}; do \
+		j=`basename $$i` \
+		cmp -s $$i ${DESTDIR}/${GPP_INC_DIR}/$$j || \
+		    ${INSTALL} ${INSTALL_COPY} -m 444 $$i \
+		    ${DESTDIR}/${GPP_INC_DIR}; \
+	done
+
+.ifdef NOMAN
+maninstall:
+	@echo NOMAN is set
+.endif
+
+# XXX INSTALL_TARGET should be install-normal, more or less
+# the only reason is not so is because our man handling is special
+# (pre-formatted) and also because of cpp, that we install by hand
+# elsewhere, until we get rid of that old `compatibility' script.
+
+target_path: Makefile
+	__target=`sed -n '/^target=/s/target=//p' Makefile`; \
+	__version=`sed -n '/^gcc_version=/s/gcc_version=//p' Makefile`; \
+	echo /usr/lib/gcc-lib/$$__target/$$__version >target_path
+
+install:	maninstall target_path
+	${MAKE} ${GNUCFLAGS} prefix=${DESTDIR}/usr \
+		INSTALL_PROGRAM="${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP}" \
+		infodir=${DESTDIR}/usr/share/info \
+		build_infodir=. \
+		tooldir=/tmp assertdir=/tmp \
+		LIBIBERTY=-liberty \
+		INSTALL_TARGET='install-common $$(INSTALL_HEADERS) \
+		     $$(INSTALL_LIBGCC) install-info \
+		     intl.install lang.install-normal install-driver' \
+		NO_TARGET_GCC=true bindir=${DESTDIR}/usr/bin \
+		install
+	ln -f ${DESTDIR}/usr/bin/gcc ${DESTDIR}/usr/bin/cc
+	chown -R ${BINOWN}.${BINGRP} ${DESTDIR}/usr/lib/gcc-lib
+	chmod -R a+rX ${DESTDIR}/usr/lib/gcc-lib
+#	if [ -e ${DESTDIR}/usr/lib/libf2c.a ]; then \
+#		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/lib/libf2c.a; \
+#		chmod 444 ${DESTDIR}/usr/lib/libf2c.a; \
+#	fi
+	if [ -e ${DESTDIR}/usr/include/f2c.h ]; then \
+		chown ${BINOWN}.${BINGRP} ${DESTDIR}/usr/include/f2c.h; \
+		chmod 444 ${DESTDIR}/usr/include/f2c.h; \
+	fi
+	${INSTALL} ${INSTALL_COPY} ${INSTALL_STRIP} -m 755 xcpp \
+	   ${DESTDIR}/usr/libexec/cpp
+#	ln -fs `cat target-path`/cpp \
+#		${DESTDIR}/usr/libexec
+
+clean cleandir:
+	rm -f ${CLEANFILES}
+	-@if [ -e Makefile ]; then ${MAKE} distclean; fi
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.ifndef NOMAN
+.include <bsd.man.mk>
+.endif
