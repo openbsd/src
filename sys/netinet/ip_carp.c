@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_carp.c,v 1.91 2005/01/06 00:46:58 pascoe Exp $	*/
+/*	$OpenBSD: ip_carp.c,v 1.92 2005/01/06 09:29:21 mcbride Exp $	*/
 
 /*
  * Copyright (c) 2002 Michael Shalayeff. All rights reserved.
@@ -193,11 +193,11 @@ int	carp_set_ifp(struct carp_softc *, struct ifnet *);
 void	carp_set_enaddr(struct carp_softc *);
 void	carp_addr_updated(void *);
 int	carp_set_addr(struct carp_softc *, struct sockaddr_in *);
-int	carp_join_multicast(struct carp_softc *, struct ifnet *);
+int	carp_join_multicast(struct carp_softc *);
 #ifdef INET6
 void	carp_send_na(struct carp_softc *);
 int	carp_set_addr6(struct carp_softc *, struct sockaddr_in6 *);
-int	carp_join_multicast6(struct carp_softc *, struct ifnet *);
+int	carp_join_multicast6(struct carp_softc *);
 #endif
 int     carp_clone_create(struct if_clone *, int);
 int     carp_clone_destroy(struct ifnet *);
@@ -512,7 +512,7 @@ carp6_proto_input(struct mbuf **mp, int *offp, int proto)
 	}
 
 	/* check if received on a valid carp interface */
-	if (m->m_pkthdr.rcvif->if_carp == NULL) {
+	if (m->m_pkthdr.rcvif->if_type != IFT_CARP) {
 		carpstats.carps_badif++;
 		CARP_LOG(sc, ("packet received on non-carp interface: %s",
 		    m->m_pkthdr.rcvif->if_xname));
@@ -562,14 +562,9 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 	struct carp_softc *sc;
 	u_int64_t tmp_counter;
 	struct timeval sc_tv, ch_tv;
-	struct carp_if *cif;
 
-	if (m->m_pkthdr.rcvif->if_type == IFT_CARP)
-		cif = (struct carp_if *) m->m_pkthdr.rcvif->if_carpdev->if_carp;
-	else
-		cif = (struct carp_if *) m->m_pkthdr.rcvif->if_carp;
-
-	TAILQ_FOREACH(sc, &cif->vhif_vrs, sc_list)
+	TAILQ_FOREACH(sc, &((struct carp_if *)
+	    m->m_pkthdr.rcvif->if_carpdev->if_carp)->vhif_vrs, sc_list)
 		if (sc->sc_vhid == ch->carp_vhid)
 			break;
 
@@ -1519,14 +1514,14 @@ carp_set_ifp(struct carp_softc *sc, struct ifnet *ifp)
 
 		/* join multicast groups */
 		if (sc->sc_naddrs < 0 &&
-		    (error = carp_join_multicast(sc, ifp)) != 0) {
+		    (error = carp_join_multicast(sc)) != 0) {
 			if (ncif != NULL)
 				FREE(ncif, M_IFADDR);
 			return (error);
 		}
 
 		if (sc->sc_naddrs6 < 0 &&
-		    (error = carp_join_multicast6(sc, ifp)) != 0) {
+		    (error = carp_join_multicast6(sc)) != 0) {
 			if (ncif != NULL)
 				FREE(ncif, M_IFADDR);
 			carp_multicast_cleanup(sc);
@@ -1646,7 +1641,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 	if (sc->sc_carpdev == NULL)
 		return (EADDRNOTAVAIL);
 
-	if (sc->sc_naddrs == 0 && (error = carp_join_multicast(sc, ifp)) != 0)
+	if (sc->sc_naddrs == 0 && (error = carp_join_multicast(sc)) != 0)
 		return (error);
 
 	sc->sc_naddrs++;
@@ -1669,7 +1664,7 @@ carp_set_addr(struct carp_softc *sc, struct sockaddr_in *sin)
 }
 
 int
-carp_join_multicast(struct carp_softc *sc, struct ifnet *ifp)
+carp_join_multicast(struct carp_softc *sc)
 {
 	struct ip_moptions *imo = &sc->sc_imo, tmpimo;
 	struct in_addr addr;
@@ -1747,7 +1742,7 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 	if (sc->sc_carpdev == NULL)
 		return (EADDRNOTAVAIL);
 
-	if (sc->sc_naddrs6 == 0 && (error = carp_join_multicast6(sc, ifp)) != 0)
+	if (sc->sc_naddrs6 == 0 && (error = carp_join_multicast6(sc)) != 0)
 		return (error);
 
 	sc->sc_naddrs6++;
@@ -1760,47 +1755,40 @@ carp_set_addr6(struct carp_softc *sc, struct sockaddr_in6 *sin6)
 }
 
 int
-carp_join_multicast6(struct carp_softc *sc, struct ifnet *ifp)
+carp_join_multicast6(struct carp_softc *sc)
 {
 	struct in6_multi_mship *imm, *imm2;
 	struct ip6_moptions *im6o = &sc->sc_im6o;
 	struct sockaddr_in6 addr6;
 	int error;
 
-	/*
-	 * For IPv6, we can attach to the physical interface, as
-	 * there will be a link-local address there.
-	 * This way we don't need a link-local address on the
-	 * CARP interface.
-	 */
-
 	/* Join IPv6 CARP multicast group */
 	bzero(&addr6, sizeof(addr6));
 	addr6.sin6_family = AF_INET6;
 	addr6.sin6_len = sizeof(addr6);
 	addr6.sin6_addr.s6_addr16[0] = htons(0xff02);
-	addr6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+	addr6.sin6_addr.s6_addr16[1] = htons(sc->sc_if.if_index);
 	addr6.sin6_addr.s6_addr8[15] = 0x12;
-	if ((imm = in6_joingroup(ifp,
+	if ((imm = in6_joingroup(&sc->sc_if,
 	    &addr6.sin6_addr, &error)) == NULL) {
 		return (error);
 	}
 	/* join solicited multicast address */
 	bzero(&addr6.sin6_addr, sizeof(addr6.sin6_addr));
 	addr6.sin6_addr.s6_addr16[0] = htons(0xff02);
-	addr6.sin6_addr.s6_addr16[1] = htons(ifp->if_index);
+	addr6.sin6_addr.s6_addr16[1] = htons(sc->sc_if.if_index);
 	addr6.sin6_addr.s6_addr32[1] = 0;
 	addr6.sin6_addr.s6_addr32[2] = htonl(1);
 	addr6.sin6_addr.s6_addr32[3] = 0;
 	addr6.sin6_addr.s6_addr8[12] = 0xff;
-	if ((imm2 = in6_joingroup(ifp,
+	if ((imm2 = in6_joingroup(&sc->sc_if,
 	    &addr6.sin6_addr, &error)) == NULL) {
 		in6_leavegroup(imm);
 		return (error);
 	}
 
 	/* apply v6 multicast membership */
-	im6o->im6o_multicast_ifp = sc->sc_carpdev;
+	im6o->im6o_multicast_ifp = &sc->sc_if;
 	if (imm)
 		LIST_INSERT_HEAD(&im6o->im6o_memberships, imm,
 		    i6mm_chain);
