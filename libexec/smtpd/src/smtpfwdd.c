@@ -1,4 +1,4 @@
-/* $OpenBSD: smtpfwdd.c,v 1.7 2001/08/23 14:17:08 aaron Exp $*/
+/* $OpenBSD: smtpfwdd.c,v 1.8 2001/12/30 00:27:14 deraadt Exp $*/
 
 /*
  * smtpfwdd, Obtuse SMTP forward daemon, master process watches spool
@@ -42,7 +42,7 @@
  */
 char *obtuse_copyright =
 "Copyright 1996 - Obtuse Systems Corporation - All rights reserved.";
-char *obtuse_rcsid = "$OpenBSD: smtpfwdd.c,v 1.7 2001/08/23 14:17:08 aaron Exp $";
+char *obtuse_rcsid = "$OpenBSD: smtpfwdd.c,v 1.8 2001/12/30 00:27:14 deraadt Exp $";
 
 #include <stdio.h>
 #include <signal.h>
@@ -645,6 +645,19 @@ forward(char *fname)
 	syslog(LOG_ERR, "Couldn't dup open %s to stdin (%m)", fname);
 	exit(EX_OSERR);
       }
+
+      /*
+       * Open /dev/null as stdout and as stderr so sendmail 8.12.1 (and
+       * above ?) won't complain about missing file descriptors.
+       */
+      if (open("/dev/null", O_WRONLY | O_APPEND) < 0) {
+	syslog(LOG_ERR, "Couldn't open /dev/null as stdout (%m)");
+	exit (EX_OSERR);
+      }
+      if (open("/dev/null", O_RDWR | O_APPEND) < 0) {
+	syslog(LOG_ERR, "Couldn't open /dev/null as stderr (%m)");
+	exit (EX_OSERR);
+      } 
 
       fclose(f);
       closelog();
