@@ -1,4 +1,4 @@
-/*	$Id: make_keypair.c,v 1.1.1.1 1995/12/14 06:52:53 tholo Exp $	*/
+/*	$Id: make_keypair.c,v 1.2 1995/12/29 09:49:55 tholo Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -56,6 +56,8 @@ static char sccsid[] = "@(#)make_keypair.c	8.1 (Berkeley) 6/1/93";
 #include "pathnames.h"
 #include "register_proto.h"
 
+char *progname;
+
 extern void herror();
 void make_key(), usage();
 
@@ -68,6 +70,7 @@ main(argc, argv)
 	int		i;
 	struct sockaddr_in	sin;
 
+	progname = (addr = strrchr(*argv, '/')) ? addr + 1 : *argv;
 	if (argc != 2) {
 		usage(argv[0]);
 		exit(1);
@@ -106,8 +109,7 @@ make_key(addr)
 	char		namebuf[255];
 	int		fd;
 
-	(void)sprintf(namebuf, ".%s%s",
-		CLIENT_KEYFILE,
+	(void)sprintf(namebuf, "%s",
 		inet_ntoa(addr));
 	fd = open(namebuf, O_WRONLY|O_CREAT, 0600);
 	if (fd < 0) {
