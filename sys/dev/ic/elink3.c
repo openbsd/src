@@ -1,4 +1,4 @@
-/*	$OpenBSD: elink3.c,v 1.39 2000/05/29 18:04:07 aaron Exp $	*/
+/*	$OpenBSD: elink3.c,v 1.40 2000/06/29 03:22:31 aaron Exp $	*/
 /*	$NetBSD: elink3.c,v 1.32 1997/05/14 00:22:00 thorpej Exp $	*/
 
 /*
@@ -170,27 +170,26 @@ int ep_mii_readreg		__P((struct device *, int, int));
 void ep_mii_writereg		__P((struct device *, int, int, int));
 void ep_statchg			__P((struct device *));
 
-void    ep_mii_setbit __P((struct ep_softc *, u_int16_t));
-void    ep_mii_clrbit __P((struct ep_softc *, u_int16_t));
-u_int16_t ep_mii_readbit __P((struct ep_softc *, u_int16_t));
-void    ep_mii_sync __P((struct ep_softc *));
-void    ep_mii_sendbits __P((struct ep_softc *, u_int32_t, int));
+void    ep_mii_setbit		__P((struct ep_softc *, u_int16_t));
+void    ep_mii_clrbit		__P((struct ep_softc *, u_int16_t));
+u_int16_t ep_mii_readbit	__P((struct ep_softc *, u_int16_t));
+void    ep_mii_sync		__P((struct ep_softc *));
+void    ep_mii_sendbits		__P((struct ep_softc *, u_int32_t, int));
 
 int epbusyeeprom		__P((struct ep_softc *));
 u_int16_t ep_read_eeprom	__P((struct ep_softc *, u_int16_t));
-static inline void ep_complete_cmd __P((struct ep_softc *sc, u_int cmd,
-    u_int arg));
+
+static inline void ep_reset_cmd __P((struct ep_softc *sc, u_int cmd,u_int arg));
+static inline void ep_finish_reset __P((bus_space_tag_t, bus_space_handle_t));
+static inline void ep_discard_rxtop __P((bus_space_tag_t, bus_space_handle_t));
 static __inline int ep_w1_reg	__P((struct ep_softc *, int));
 
 /*
  * Issue a (reset) command, and be sure it has completed.
- * Used for commands that reset part or all of the  board.
- * On newer hardware we could poll SC_COMMAND_IN_PROGRESS,
- * but older hardware doesn't implement it and we must delay.
- * It's easiest to just delay always.
+ * Used for global reset, TX_RESET, RX_RESET.
  */
 static inline void
-ep_complete_cmd(sc, cmd, arg)
+ep_reset_cmd(sc, cmd, arg)
 	struct ep_softc *sc;
 	u_int cmd, arg;
 {
@@ -198,15 +197,50 @@ ep_complete_cmd(sc, cmd, arg)
 	bus_space_handle_t ioh = sc->sc_ioh;
 
 	bus_space_write_2(iot, ioh, cmd, arg);
+	ep_finish_reset(iot, ioh);
+}
 
-#ifdef notyet
-	/* if this adapter family has S_COMMAND_IN_PROGRESS, use it */
-	while (bus_space_read_2(iot, ioh, EP_STATUS) & S_COMMAND_IN_PROGRESS)
-		;
-	else
-#else
-	DELAY(100000);	/* need at least 1 ms, but be generous. */
-#endif
+/*
+ * Wait for any pending reset to complete.
+ */
+static inline void
+ep_finish_reset(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+{
+	int i;
+
+	for (i = 0; i < 10000; i++) {
+		if ((bus_space_read_2(iot, ioh, EP_STATUS) &
+		    S_COMMAND_IN_PROGRESS) == 0)
+			break;
+		DELAY(10);
+	}
+}
+
+static inline void
+ep_discard_rxtop(iot, ioh)
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+{
+	int i;
+
+	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISCARD_TOP_PACK);
+
+	/*
+	 * Spin for about 1 msec, to avoid forcing a DELAY() between
+	 * every received packet (adding latency and limiting pkt-recv rate).
+	 * On PCI, at 4 30-nsec PCI bus cycles for a read, 8000 iterations
+	 * is about right.
+	 */
+	for (i = 0; i < 8000; i++) {
+		if ((bus_space_read_2(iot, ioh, EP_STATUS) &
+		    S_COMMAND_IN_PROGRESS) == 0)
+			return;
+	}
+
+	/* not fast enough, do DELAY()s */
+	ep_finish_reset(iot, ioh);
 }
 
 /*
@@ -408,8 +442,8 @@ epconfig(sc, chipset, enaddr)
 
 	sc->tx_start_thresh = 20;	/* probably a good starting point. */
 
-	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
-	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
+	ep_reset_cmd(sc, EP_COMMAND, RX_RESET);
+	ep_reset_cmd(sc, EP_COMMAND, TX_RESET);
 }
 
 /*
@@ -550,8 +584,11 @@ epinit(sc)
 	bus_space_handle_t ioh = sc->sc_ioh;
 	int i;
 
-	while (bus_space_read_2(iot, ioh, EP_STATUS) & S_COMMAND_IN_PROGRESS)
-		;
+	/* make sure any pending reset has completed before touching board */
+	ep_finish_reset(iot, ioh);
+
+	/* cancel any pending I/O */
+	epstop(sc);
 
 	if (sc->bustype != EP_BUS_PCI) {
 		GO_WINDOW(0);
@@ -576,8 +613,8 @@ epinit(sc)
 		for (i = 0; i < 6; i++)
 			bus_space_write_1(iot, ioh, EP_W2_RECVMASK_0 + i, 0);
 
-	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
-	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
+	ep_reset_cmd(sc, EP_COMMAND, RX_RESET);
+	ep_reset_cmd(sc, EP_COMMAND, TX_RESET);
 
 	GO_WINDOW(1);		/* Window 1 is operating window */
 	for (i = 0; i < 31; i++)
@@ -683,8 +720,8 @@ ep_roadrunner_mii_enable(sc)
 	delay(1000);
 	bus_space_write_2(iot, ioh, EP_W3_RESET_OPTIONS,
 	    EP_PCI_100BASE_MII|EP_RUNNER_MII_RESET|EP_RUNNER_ENABLE_MII);
-	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
-	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
+	ep_reset_cmd(sc, EP_COMMAND, TX_RESET);
+	ep_reset_cmd(sc, EP_COMMAND, RX_RESET);
 	delay(1000);
 	bus_space_write_2(iot, ioh, EP_W3_RESET_OPTIONS,
 	    EP_PCI_100BASE_MII|EP_RUNNER_ENABLE_MII);
@@ -1200,8 +1237,6 @@ epintr(arg)
 			epstart(&sc->sc_arpcom.ac_if);
 		}
 		if (status & S_CARD_FAILURE) {
-			printf("%s: adapter failure (%x)\n",
-			    sc->sc_dev.dv_xname, status);
 			epreset(sc);
 			return (1);
 		}
@@ -1324,9 +1359,7 @@ again:
 	return;
 
 abort:
-	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISCARD_TOP_PACK);
-	while (bus_space_read_2(iot, ioh, EP_STATUS) & S_COMMAND_IN_PROGRESS)
-		;
+	ep_discard_rxtop(iot, ioh);
 }
 
 struct mbuf *
@@ -1426,9 +1459,7 @@ epget(sc, totlen)
 		mp = &m->m_next;
 	}
 
-	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISCARD_TOP_PACK);
-	while (bus_space_read_2(iot, ioh, EP_STATUS) & S_COMMAND_IN_PROGRESS)
-		;
+	ep_discard_rxtop(iot, ioh);
 
 	splx(sh);
 
@@ -1535,7 +1566,6 @@ epreset(sc)
 	int s;
 
 	s = splnet();
-	epstop(sc);
 	epinit(sc);
 	splx(s);
 }
@@ -1573,14 +1603,13 @@ epstop(sc)
 	}
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISABLE);
-	bus_space_write_2(iot, ioh, EP_COMMAND, RX_DISCARD_TOP_PACK);
-	while (bus_space_read_2(iot, ioh, EP_STATUS) & S_COMMAND_IN_PROGRESS)
-		;
+	ep_discard_rxtop(iot, ioh);
+
 	bus_space_write_2(iot, ioh, EP_COMMAND, TX_DISABLE);
 	bus_space_write_2(iot, ioh, EP_COMMAND, STOP_TRANSCEIVER);
 
-	ep_complete_cmd(sc, EP_COMMAND, RX_RESET);
-	ep_complete_cmd(sc, EP_COMMAND, TX_RESET);
+	ep_reset_cmd(sc, EP_COMMAND, RX_RESET);
+	ep_reset_cmd(sc, EP_COMMAND, TX_RESET);
 
 	bus_space_write_2(iot, ioh, EP_COMMAND, C_INTR_LATCH);
 	bus_space_write_2(iot, ioh, EP_COMMAND, SET_RD_0_MASK);
