@@ -1,3 +1,4 @@
+/*	$OpenBSD: ip_fil.h,v 1.8 1997/02/11 22:23:16 kstailey Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -6,15 +7,11 @@
  * to the original author and the contributors.
  *
  * @(#)ip_fil.h	1.35 6/5/96
- * $OpenBSD: ip_fil.h,v 1.7 1997/02/05 00:53:12 kstailey Exp $
+ * Id: ip_fil.h,v 2.0.1.2 1997/01/10 00:28:15 darrenr Exp 
  */
 
 #ifndef	__IP_FIL_H__
 #define	__IP_FIL_H__
-
-#ifdef _KERNEL
-#define IPFILTER_LOG
-#endif /* _KERNEL */
 
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
@@ -56,9 +53,7 @@
 #define	SIOCFRENB	_IOW('r', 72, u_int)
 #define	SIOCFRSYN	_IOW('r', 73, u_int)
 #define	SIOCFRZST	_IOWR('r', 74, struct friostat)
-#define	SIOCFLNAT	_IOWR('r', 75, int)
-#define	SIOCCNATL	_IOWR('r', 76, int)
-#define	SIOCZRLST	_IOWR('r', 77, struct frentry)
+#define	SIOCZRLST	_IOWR('r', 75, struct frentry)
 #else
 #define	SIOCADAFR	_IOW(r, 60, struct frentry)
 #define	SIOCRMAFR	_IOW(r, 61, struct frentry)
@@ -75,24 +70,22 @@
 #define SIOCFRENB	_IOW(r, 72, u_int)
 #define	SIOCFRSYN	_IOW(r, 73, u_int)
 #define	SIOCFRZST	_IOWR(r, 74, struct friostat)
-#define	SIOCFLNAT	_IOWR(r, 75, int)
-#define	SIOCCNATL	_IOWR(r, 76, int)
-#define	SIOCZRLST	_IOWR(r, 77, struct frentry)
+#define	SIOCZRLST	_IOWR(r, 75, struct frentry)
 #endif
 #define	SIOCADDFR	SIOCADAFR
 #define	SIOCDELFR	SIOCRMAFR
 #define	SIOCINSFR	SIOCINAFR
 
 typedef	struct	fr_ip	{
-	u_char	fi_v:4;
-	u_char	fi_fl:4;
+	u_char	fi_v:4;		/* IP version */
+	u_char	fi_fl:4;	/* packet flags */
 	u_char	fi_tos;
 	u_char	fi_ttl;
 	u_char	fi_p;
 	struct	in_addr	fi_src;
 	struct	in_addr	fi_dst;
-	u_long	fi_optmsk;
-	u_short	fi_secmsk;
+	u_long	fi_optmsk;	/* bitmask composed from IP options */
+	u_short	fi_secmsk;	/* bitmask composed from IP security options */
 	u_short	fi_auth;
 } fr_ip_t;
 
@@ -111,7 +104,7 @@ typedef	struct	fr_info	{
 	u_short	fin_rule;
 	u_short	fin_hlen;
 	u_short	fin_dlen;
-	char	*fin_dp;
+	char	*fin_dp;		/* start of data past IP header */
 	struct	frentry *fin_fr;
 } fr_info_t;
 
@@ -128,12 +121,12 @@ typedef	struct	frentry {
 	struct	ifnet	*fr_ifa;
 	u_long	fr_hits;
 	u_long	fr_bytes;	/* this is only incremented when a packet */
-				/* stops matching on this rule */
+				/* matches this rule and it is the last match*/
 	/*
 	 * Fields after this may not change whilst in the kernel.
 	 */
 	struct	fr_ip	fr_ip;
-	struct	fr_ip	fr_mip;
+	struct	fr_ip	fr_mip;	/* mask structure */
 
 	u_char	fr_tcpfm;	/* tcp flags mask */
 	u_char	fr_tcpf;	/* tcp flags */
@@ -180,18 +173,19 @@ typedef	struct	frentry {
 #define	FR_LOGB		0x00011	/* Log-fail */
 #define	FR_LOGP		0x00012	/* Log-pass */
 #define	FR_LOGBODY	0x00020	/* Log the body */
-#define	FR_LOGFIRST	0x00040
-#define	FR_RETRST	0x00080
-#define	FR_RETICMP	0x00100
+#define	FR_LOGFIRST	0x00040	/* Log the first byte if state held */
+#define	FR_RETRST	0x00080	/* Return TCP RST packet - reset connection */
+#define	FR_RETICMP	0x00100	/* Return ICMP unreachable packet */
 #define	FR_NOMATCH	0x00200
 #define	FR_ACCOUNT	0x00400	/* count packet bytes */
-#define	FR_KEEPFRAG	0x00800
-#define	FR_KEEPSTATE	0x01000
+#define	FR_KEEPFRAG	0x00800	/* keep fragment information */
+#define	FR_KEEPSTATE	0x01000	/* keep `connection' state information */
 #define	FR_INACTIVE	0x02000
-#define	FR_QUICK	0x04000
-#define	FR_FASTROUTE	0x08000
-#define	FR_CALLNOW	0x10000
-#define	FR_DUP		0x20000
+#define	FR_QUICK	0x04000	/* match & stop processing list */
+#define	FR_FASTROUTE	0x08000	/* bypass normal routing */
+#define	FR_CALLNOW	0x10000	/* call another function (fr_func) if matches */
+#define	FR_DUP		0x20000	/* duplicate packet */
+#define	FR_LOGORBLOCK	0x40000	/* block the packet if it can't be logged */
 
 #define	FR_LOGMASK	(FR_LOG|FR_LOGP|FR_LOGB)
 /*
@@ -201,6 +195,7 @@ typedef	struct	frentry {
 #define	FF_LOGBLOCK	0x200000
 #define	FF_LOGNOMATCH	0x400000
 #define	FF_LOGGING	(FF_LOGPASS|FF_LOGBLOCK|FF_LOGNOMATCH)
+#define	FF_BLOCKNONIP	0x800000	/* Solaris2 Only */
 
 #define	FR_NONE 0
 #define	FR_EQUAL 1
@@ -229,6 +224,7 @@ typedef	struct	filterstats {
 	u_long	fr_bads;	/* bad attempts to allocate packet state */
 	u_long	fr_ads;		/* new packet state kept */
 	u_long	fr_chit;	/* cached hit */
+	u_long	fr_pull[2];	/* good and bad pullup attempts */
 #if SOLARIS
 	u_long	fr_bad;		/* bad IP packets to the filter */
 	u_long	fr_notip;	/* packets passed through no on ip queue */
@@ -253,20 +249,25 @@ typedef struct  optlist {
 	int     ol_bit;
 } optlist_t;
 
+/*
+ * Log structure.  Each packet header logged is prepended by one of these,
+ * minimize size to make most effective use of log space which should
+ * (ideally) be a muliple of the most common log entry size.
+ */
 typedef	struct ipl_ci	{
 	u_long	sec;
 	u_long	usec;
 	u_char	hlen;
 	u_char	plen;
-	u_short	rule;
-	u_long	flags:24;			/* XXX FIXME do we care about the extra bytes? */
-#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606)) || \
-    (defined(OpenBSD) && (OpenBSD >= 199606))
-	u_long	filler:8;			/* XXX FIXME do we care? */
-	u_char	ifname[IFNAMSIZ];
+	u_short	rule;		/* assume never more than 64k rules, total */
+#if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603)) || \
+    (defined(OpenBSD) && (OpenBSD >= 199603))
+	u_long	flags;
+	u_char	ifname[IFNAMSIZ];	/* = 32 bytes */
 #else
+	u_long	flags:24;
 	u_long	unit:8;
-	u_char	ifname[4];
+	u_char	ifname[4];	/* = 20 bytes */
 #endif
 } ipl_ci_t;
 
@@ -274,81 +275,27 @@ typedef	struct ipl_ci	{
 #ifndef	ICMP_UNREACH_FILTER_PROHIB
 #define	ICMP_UNREACH_FILTER_PROHIB	13
 #endif
-/*
- * Security Options for Intenet Protocol (IPSO) as defined in RFC 1108.
- *
- * Basic Option
- *
- * 00000001   -   (Reserved 4)
- * 00111101   -   Top Secret
- * 01011010   -   Secret
- * 10010110   -   Confidential
- * 01100110   -   (Reserved 3)
- * 11001100   -   (Reserved 2)
- * 10101011   -   Unclassified
- * 11110001   -   (Reserved 1)
- */
-#define	IPSO_CLASS_RES4		0x01
-#define	IPSO_CLASS_TOPS		0x3d
-#define	IPSO_CLASS_SECR		0x5a
-#define	IPSO_CLASS_CONF		0x96
-#define	IPSO_CLASS_RES3		0x66
-#define	IPSO_CLASS_RES2		0xcc
-#define	IPSO_CLASS_UNCL		0xab
-#define	IPSO_CLASS_RES1		0xf1
-
-#define	IPSO_AUTH_GENSER	0x80
-#define	IPSO_AUTH_ESI		0x40
-#define	IPSO_AUTH_SCI		0x20
-#define	IPSO_AUTH_NSA		0x10
-#define	IPSO_AUTH_DOE		0x08
-#define	IPSO_AUTH_UN		0x06
-#define	IPSO_AUTH_FTE		0x01
-
-/*#define	IPOPT_RR	7 */
-#define	IPOPT_ZSU	10	/* ZSU */
-#define	IPOPT_MTUP	11	/* MTUP */
-#define	IPOPT_MTUR	12	/* MTUR */
-#define	IPOPT_ENCODE	15	/* ENCODE */
-/*#define	IPOPT_TS	68 */
-#define	IPOPT_TR	82	/* TR */
-/*#define	IPOPT_SECURITY	130 */
-/*#define	IPOPT_LSRR	131 */
-#define	IPOPT_E_SEC	133	/* E-SEC */
-#define	IPOPT_CIPSO	134	/* CIPSO */
-/*#define	IPOPT_SATID	136 */
-#ifndef	IPOPT_SID
-# define	IPOPT_SID	IPOPT_SATID
-#endif
-/*#define	IPOPT_SSRR	137 */
-#define	IPOPT_ADDEXT	147	/* ADDEXT */
-#define	IPOPT_VISA	142	/* VISA */
-#define	IPOPT_IMITD	144	/* IMITD */
-#define	IPOPT_EIP	145	/* EIP */
-#define	IPOPT_FINN	205	/* FINN */
 
 #define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
+#define	IPLLOGSIZE	8192
 
+#ifdef _KERNEL
+extern	int	fr_check __P((ip_t *, int, struct ifnet *, int,
+			      struct mbuf **));
+#else
+extern	int	fr_check __P((ip_t *, int, struct ifnet *, int));
+#endif
+extern	int	fr_copytolog(char *, int);
 extern	fr_info_t	frcache[];
+extern	char	*iplh, *iplt;
+extern	char	iplbuf[IPLLOGSIZE];
 
 #ifdef _KERNEL
 
 extern struct frentry *ipfilter[2][2], *ipacct[2][2];
 extern struct filterstats frstats[];
-
-#ifdef IPFILTER_LOG
-extern int	ipllog __P((u_int, ip_t *, fr_info_t *, struct mbuf *));
-#endif
-extern int	send_reset __P((struct tcpiphdr *));
-extern void	ipfr_fastroute __P((struct mbuf *, fr_info_t *, frdest_t *));
 # if	SOLARIS
-extern	int	fr_check();
 extern	int	ipfsync();
-# else /* SOLARIS */
-extern	int	fr_check __P((ip_t *, int, struct ifnet *, int,
-    struct mbuf **));
-# endif /* SOLARIS */
-#else /* _KERNEL */
-extern	int	fr_check __P((ip_t *, int, struct ifnet *, int));
+# endif
 #endif /* _KERNEL */
 #endif	/* __IP_FIL_H__ */

@@ -4,7 +4,7 @@
  * Redistribution and use in source and binary forms are permitted
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
- * $Id: ipt.h,v 1.2 1996/07/18 04:59:25 dm Exp $
+ * $Id: ipt.h,v 1.3 1997/02/11 22:24:00 kstailey Exp $
  */
 
 #include <fcntl.h>

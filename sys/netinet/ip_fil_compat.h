@@ -1,3 +1,4 @@
+/*	$OpenBSD: ip_fil_compat.h,v 1.3 1997/02/11 22:23:18 kstailey Exp $	*/
 /*
  * (C)opyright 1993, 1994, 1995 by Darren Reed.
  *
@@ -5,15 +6,22 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  *
- * @(#)ip_fil_compat.h	1.8 1/14/96
- * $OpenBSD: ip_fil_compat.h,v 1.2 1996/10/08 07:33:26 niklas Exp $
+ * @(#)ip_compat.h	1.8 1/14/96
+ * Id: ip_compat.h,v 2.0.1.4 1997/02/04 14:24:25 darrenr Exp
  */
 
-#ifndef	__IP_COMPAT_H_
-#define	__IP_COMPAT_H__
+#ifndef	__IP_FIL_COMPAT_H_
+#define	__IP_FIL_COMPAT_H__
+
+#ifdef _KERNEL			/* XXX */
+#define IPFILTER_LOG
+#endif /* _KERNEL */
 
 #ifndef	SOLARIS
 #define	SOLARIS	(defined(sun) && (defined(__svr4__) || defined(__SVR4)))
+#endif
+#if	SOLARIS
+#define	MTYPE(m)	((m)->b_datap->db_type)
 #endif
 #define	IPMINLEN(i, h)	((i)->ip_len >= ((i)->ip_hl * 4 + sizeof(struct h)))
 
@@ -25,6 +33,67 @@
 #define	MAX(a,b)	(((a) > (b)) ? (a) : (b))
 #endif
 
+/*
+ * Security Options for Intenet Protocol (IPSO) as defined in RFC 1108.
+ *
+ * Basic Option
+ *
+ * 00000001   -   (Reserved 4)
+ * 00111101   -   Top Secret
+ * 01011010   -   Secret
+ * 10010110   -   Confidential
+ * 01100110   -   (Reserved 3)
+ * 11001100   -   (Reserved 2)
+ * 10101011   -   Unclassified
+ * 11110001   -   (Reserved 1)
+ */
+#define	IPSO_CLASS_RES4		0x01
+#define	IPSO_CLASS_TOPS		0x3d
+#define	IPSO_CLASS_SECR		0x5a
+#define	IPSO_CLASS_CONF		0x96
+#define	IPSO_CLASS_RES3		0x66
+#define	IPSO_CLASS_RES2		0xcc
+#define	IPSO_CLASS_UNCL		0xab
+#define	IPSO_CLASS_RES1		0xf1
+
+#define	IPSO_AUTH_GENSER	0x80
+#define	IPSO_AUTH_ESI		0x40
+#define	IPSO_AUTH_SCI		0x20
+#define	IPSO_AUTH_NSA		0x10
+#define	IPSO_AUTH_DOE		0x08
+#define	IPSO_AUTH_UN		0x06
+#define	IPSO_AUTH_FTE		0x01
+
+/*
+ * IP option #defines
+ */
+/*#define	IPOPT_RR	7 */
+#define	IPOPT_ZSU	10	/* ZSU */
+#define	IPOPT_MTUP	11	/* MTUP */
+#define	IPOPT_MTUR	12	/* MTUR */
+#define	IPOPT_ENCODE	15	/* ENCODE */
+/*#define	IPOPT_TS	68 */
+#define	IPOPT_TR	82	/* TR */
+/*#define	IPOPT_SECURITY	130 */
+/*#define	IPOPT_LSRR	131 */
+#define	IPOPT_E_SEC	133	/* E-SEC */
+#define	IPOPT_CIPSO	134	/* CIPSO */
+/*#define	IPOPT_SATID	136 */
+#ifndef	IPOPT_SID
+# define	IPOPT_SID	IPOPT_SATID
+#endif
+/*#define	IPOPT_SSRR	137 */
+#define	IPOPT_ADDEXT	147	/* ADDEXT */
+#define	IPOPT_VISA	142	/* VISA */
+#define	IPOPT_IMITD	144	/* IMITD */
+#define	IPOPT_EIP	145	/* EIP */
+#define	IPOPT_FINN	205	/* FINN */
+
+
+/*
+ * Build some macros and #defines to enable the same code to compile anywhere
+ * Well, that's the idea, anyway :-)
+ */
 #ifdef _KERNEL
 # if SOLARIS
 #  define	MUTEX_ENTER(x)	mutex_enter(x)
@@ -68,9 +137,11 @@ typedef	struct	qif	{
 	queue_t	*qf_out;
 	void	*qf_wqinfo;
 	void	*qf_rqinfo;
-	char	qf_name[8];
 	int	(*qf_inp)();
 	int	(*qf_outp)();
+	mblk_t	*qf_m;
+	int	qf_len;
+	char	qf_name[8];
 	/*
 	 * in case the ILL has disappeared...
 	 */
@@ -85,10 +156,10 @@ typedef	struct	qif	{
 #    define	htons(x)	(x)
 #    define	htonl(x)	(x)
 #   endif
-#   define	KMALLOC(x)	kmem_alloc((x), KM_SLEEP)
+#   define	KMALLOC(x)	kmem_alloc((x), KM_NOSLEEP)
 #   define	GET_MINOR(x)	getminor(x)
 #  else
-#   define	KMALLOC(x)	new_kmem_alloc((x), KMEM_SLEEP)
+#   define	KMALLOC(x)	new_kmem_alloc((x), KMEM_NOSLEEP)
 #  endif /* __svr4__ */
 # endif /* sun && !linux */
 # ifndef	GET_MINOR
@@ -103,9 +174,18 @@ extern	vm_map_t	kmem_map;
 #  else
 #   include <vm/vm_kern.h>
 #  endif /* __FreeBSD__ */
-#  define	KMALLOC(x)	kmem_alloc(kmem_map, (x))
-#  define	KFREE(x)	kmem_free(kmem_map, (vm_offset_t)(x), \
+/*
+** #  define	KMALLOC(x)	kmem_alloc(kmem_map, (x))
+** #  define	KFREE(x)	kmem_free(kmem_map, (vm_offset_t)(x), \
 					  sizeof(*(x)))
+*/
+#  ifdef	M_PFIL
+#   define	KMALLOC(x)	malloc((x), M_PFIL, M_NOWAIT)
+#   define	KFREE(x)	FREE((x), M_PFIL)
+#  else
+#   define	KMALLOC(x)	malloc((x), M_TEMP, M_NOWAIT)
+#   define	KFREE(x)	FREE((x), M_TEMP)
+#  endif
 #  define	UIOMOVE(a,b,c,d)	uiomove(a,b,d)
 #  define	SLEEP(id, n)	tsleep((id), PPAUSE|PCATCH, n, 0)
 # endif /* BSD */
@@ -118,15 +198,17 @@ extern	vm_map_t	kmem_map;
 #  endif
 # endif
 #else
-# define	MUTEX_ENTER(x)	;
-# define	MUTEX_EXIT(x)	;
-# define	SPLNET(x)	;
-# define	SPLX(x)		;
-# define	KMALLOC(x)	malloc(x)
-# define	KFREE(x)	free(x)
-# define	GETUNIT(x)	(x)
-# define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
-# define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
+# ifndef	linux
+#  define	MUTEX_ENTER(x)	;
+#  define	MUTEX_EXIT(x)	;
+#  define	SPLNET(x)	;
+#  define	SPLX(x)		;
+#  define	KMALLOC(x)	malloc(x)
+#  define	KFREE(x)	free(x)
+#  define	GETUNIT(x)	(x)
+#  define	IRCOPY(a,b,c)	bcopy((a), (b), (c))
+#  define	IWCOPY(a,b,c)	bcopy((a), (b), (c))
+# endif
 #endif /* KERNEL */
 
 #ifdef linux
@@ -134,9 +216,6 @@ extern	vm_map_t	kmem_map;
 # define	ICMP_SOURCEQUENCH	ICMP_SOURCE_QUENCH
 # define	ICMP_TIMXCEED	ICMP_TIME_EXCEEDED
 # define	ICMP_PARAMPROB	ICMP_PARAMETERPROB
-# define	icmp	icmphdr
-# define	icmp_type	type
-# define	icmp_code	code
 
 # define	TH_FIN	0x01
 # define	TH_SYN	0x02
@@ -180,9 +259,60 @@ typedef	struct	{
 	__u8	ip_ttl;
 	__u8	ip_p;
 	__u16	ip_sum;
-	__u32	ip_src;
-	__u32	ip_dst;
+	struct	in_addr	ip_src;
+	struct	in_addr	ip_dst;
 } ip_t;
+
+/*
+ * Structure of an icmp header.
+ */
+struct icmp {
+	u_char	icmp_type;		/* type of message, see below */
+	u_char	icmp_code;		/* type sub code */
+	u_short	icmp_cksum;		/* ones complement cksum of struct */
+	union {
+		u_char ih_pptr;			/* ICMP_PARAMPROB */
+		struct in_addr ih_gwaddr;	/* ICMP_REDIRECT */
+		struct ih_idseq {
+			n_short	icd_id;
+			n_short	icd_seq;
+		} ih_idseq;
+		int ih_void;
+	} icmp_hun;
+# define	icmp_pptr	icmp_hun.ih_pptr
+# define	icmp_gwaddr	icmp_hun.ih_gwaddr
+# define	icmp_id		icmp_hun.ih_idseq.icd_id
+# define	icmp_seq	icmp_hun.ih_idseq.icd_seq
+# define	icmp_void	icmp_hun.ih_void
+	union {
+		struct id_ts {
+			n_time its_otime;
+			n_time its_rtime;
+			n_time its_ttime;
+		} id_ts;
+		struct id_ip  {
+			ip_t idi_ip;
+			/* options and then 64 bits of data */
+		} id_ip;
+		u_long	id_mask;
+		char	id_data[1];
+	} icmp_dun;
+# define	icmp_otime	icmp_dun.id_ts.its_otime
+# define	icmp_rtime	icmp_dun.id_ts.its_rtime
+# define	icmp_ttime	icmp_dun.id_ts.its_ttime
+# define	icmp_ip		icmp_dun.id_ip.idi_ip
+# define	icmp_mask	icmp_dun.id_mask
+# define	icmp_data	icmp_dun.id_data
+};
+
+struct ipovly {
+	caddr_t	ih_next, ih_prev;	/* for protocol sequence q's */
+	u_char	ih_x1;			/* (unused) */
+	u_char	ih_pr;			/* protocol */
+	short	ih_len;			/* protocol length */
+	struct	in_addr ih_src;		/* source internet address */
+	struct	in_addr ih_dst;		/* destination internet address */
+};
 
 # define	SPLX(x)		(void)
 # define	SPLNET(x)	(void)
@@ -210,7 +340,8 @@ typedef	struct	{
 #else
 typedef	struct	tcphdr	tcphdr_t;
 typedef	struct	udphdr	udphdr_t;
+typedef	struct	icmp	icmphdr_t;
 typedef	struct	ip	ip_t;
 #endif /* linux */
 
-#endif	/* __IP_COMPAT_H__ */
+#endif	/* __IP__FIL_COMPAT_H__ */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ip_fil.c,v 1.10 1997/02/11 22:23:12 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -5,29 +6,21 @@
  * provided that this notice is preserved and due credit is given
  * to the original author and the contributors.
  */
-#if 0
-#ifndef	lint
+#if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_fil.c	2.41 6/5/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$OpenBSD: ip_fil.c,v 1.9 1997/02/05 00:53:11 kstailey Exp $";
-#endif
+static	char	rcsid[] = "Id: ip_fil.c,v 2.0.1.5 1997/01/29 13:41:45 darrenr Exp ";
 #endif
 
-#ifndef	linux
-#include <sys/errno.h>
-#include <sys/types.h>
 #include <sys/param.h>
+#include <sys/errno.h>
 #include <sys/file.h>
-#if defined(__OpenBSD__)
-# include <sys/dirent.h>
-#else
-# include <sys/dir.h>
-#endif
 #include <sys/ioctl.h>
-#include <sys/systm.h>
-#include <sys/uio.h>
 #include <sys/mbuf.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/uio.h>
 
 #include <net/if.h>
 #ifdef sun
@@ -43,8 +36,7 @@ static	char	rcsid[] = "$OpenBSD: ip_fil.c,v 1.9 1997/02/05 00:53:11 kstailey Exp
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
-#include <sys/syslog.h>
-#endif
+
 #include "ip_fil_compat.h"
 #include "ip_fil.h"
 #include "ip_frag.h"
@@ -57,7 +49,7 @@ static	char	rcsid[] = "$OpenBSD: ip_fil.c,v 1.9 1997/02/05 00:53:11 kstailey Exp
 extern	fr_flags, fr_active;
 extern	struct	protosw	inetsw[];
 extern	int	(*fr_checkp) __P((ip_t *, int, struct ifnet *, int,
-    struct mbuf **));
+				 struct mbuf **));
 #if	BSD < 199306
 extern	int	ipfr_slowtimer __P((void));
 static	int	(*fr_saveslowtimo) __P((void));
@@ -67,26 +59,36 @@ extern	void	ipfr_slowtimer __P((void));
 static	void	(*fr_saveslowtimo) __P((void));
 #endif
 
+static	void	frzerostats __P((caddr_t));
+
 int	ipl_inited = 0;
 int	ipl_unreach = ICMP_UNREACH_FILTER_PROHIB;
+int	send_reset __P((struct tcpiphdr *));
 
 #ifdef	IPFILTER_LOG
 # define LOGSIZE	8192
-static	char	iplbuf[LOGSIZE];
-static	caddr_t	iplh = iplbuf, iplt = iplbuf;
+int	ipllog __P((u_int, ip_t *, register fr_info_t *, struct mbuf *));
+char	iplbuf[LOGSIZE];
+caddr_t	iplh = iplbuf, iplt = iplbuf;
 static	int	iplused = 0;
 #endif /* IPFILTER_LOG */
-static	int	iplbusy = 0;
 static	int	(*fr_savep) __P((ip_t *, int, struct ifnet *, int,
-    struct mbuf **));
+				struct mbuf **));
+static	void	frflush __P((caddr_t));
+static	int	frrequest __P((int, caddr_t, int));
 
-#if _BSDI_VERSION >= 199510
+#if _BSDI_VERSION >= 199501
 # include <sys/device.h>
 # include <sys/conf.h>
 
 int	iplioctl __P((dev_t, int, caddr_t, int, struct proc *));
-int	iplclose __P((dev_t, int, int, struct proc *));
 int	iplopen __P((dev_t, int, int, struct proc *));
+int	iplclose __P((dev_t, int, int, struct proc *));
+# ifdef IPFILTER_LOG
+int	iplread __P((dev_t, struct uio *, int));
+# else
+#  define iplread	noread
+# endif
 
 struct cfdriver iplcd = {
 	NULL, "ipl", NULL, NULL, DV_DULL, 0
@@ -98,48 +100,41 @@ struct devsw iplsw = {
 	nostrat, nodump, nopsize, 0,
 	nostop
 };
-#else /* _BSDI_VERSION >= 199510 */
+#else /* _BSDI_VERSION >= 199501 */
 
-# ifndef linux
-#  ifdef IPFILTER_LOG
-#   if BSD >= 199306
+# ifdef IPFILTER_LOG
+#  if BSD >= 199306
 int	iplread __P((dev_t, struct uio *, int));
-#   else
-int	iplread __P((dev_t, struct uio *));
-#   endif
 #  else
-#   define iplread	noread
+int	iplread __P((dev_t, struct uio *));
 #  endif
-int	iplclose __P((dev_t, int));
-int	iplopen __P((dev_t, int));
-# endif /* linux */
+# else
+#  define iplread	noread
+# endif
 int	iplioctl __P((dev_t, int, caddr_t, int));
-
-#endif /* _BSDI_VERSION >= 199510 */
+int	iplopen __P((dev_t, int));
+int	iplclose __P((dev_t, int));
+#endif /* _BSDI_VERSION >= 199501 */
 
 int	iplattach __P((void));
 int	ipldetach __P((void));
-void	frzerostats __P((caddr_t));
-void	frflush __P((caddr_t));
-int	frrequest __P((int, caddr_t, int));
-
-#ifndef	IPFILTER_LKM
-void	iplinit __P((void));
-#endif /* !IPFILTER_LKM */
 
 #ifdef	IPFILTER_LKM
 int	iplidentify __P((char *));
 
 int
 iplidentify(s)
-	char *s;
+     char *s;
 {
 	if (strcmp(s, "ipl") == 0)
 		return 1;
 	return 0;
 }
+#else
+void	iplinit __P((void));
 #endif /* IPFILTER_LKM */
 
+void	ipfr_fastroute __P((struct mbuf *, fr_info_t *, frdest_t *));
 
 int
 iplattach()
@@ -148,11 +143,12 @@ iplattach()
 
 	SPLNET(s);
 	if (ipl_inited || (fr_checkp == fr_check)) {
-		printf("ipl: already initialized (%d)\n", iplbusy);
+		printf("IP Filter: already initialized\n");
 		SPLX(s);
 		return EBUSY;
 	}
 	ipl_inited = 1;
+	bzero((char *)nat_table, sizeof(nat_t *) * NAT_SIZE * 2);
 	fr_savep = fr_checkp;
 	fr_checkp = fr_check;
 	fr_saveslowtimo = inetsw[0].pr_slowtimo;
@@ -167,14 +163,10 @@ ipldetach()
 {
 	int s, i = FR_INQUE|FR_OUTQUE;
 
-	if (iplbusy > 1) {
-		printf("iplbusy: %d\n", iplbusy);
-		return EBUSY;
-	}
 	SPLNET(s);
 	if (!ipl_inited)
 	{
-		printf("ipl: not initialized\n");
+		printf("IP Filter: not initialized\n");
 		SPLX(s);
 		return EBUSY;
 	}
@@ -193,9 +185,9 @@ ipldetach()
 }
 
 
-void
+static	void
 frzerostats(data)
-	caddr_t	data;
+     caddr_t	data;
 {
 	struct	friostat	fio;
 
@@ -211,13 +203,13 @@ frzerostats(data)
 	fio.f_acctout[1] = ipacct[1][1];
 	fio.f_active = fr_active;
 	IWCOPY((caddr_t)&fio, data, sizeof(fio));
-	bzero((char *)frstats, sizeof(*frstats));
+	bzero((char *)frstats, sizeof(*frstats) * 2);
 }
 
 
-void
+static void
 frflush(data)
-	caddr_t data;
+     caddr_t data;
 {
 	struct frentry *f, **fp;
 	int flags = *(int *)data, flushed = 0, set = fr_active;
@@ -259,16 +251,16 @@ frflush(data)
  */
 int
 iplioctl(dev, cmd, data, mode
-#if _BSDI_VERSION >= 199510
-    , p)
+#if _BSDI_VERSION >= 199501
+   , p)
 	struct proc *p;
 #else
-    )
+   )
 #endif
-	dev_t dev;
-	int cmd;
-	caddr_t data;
-	int mode;
+     dev_t dev;
+     int cmd;
+     caddr_t data;
+     int mode;
 {
 	int error = 0, s, unit;
 
@@ -399,10 +391,10 @@ iplioctl(dev, cmd, data, mode
 }
 
 
-int
+static int
 frrequest(req, data, set)
-	int req, set;
-	caddr_t data;
+     int req, set;
+     caddr_t data;
 {
 	register frentry_t *fp, *f, **fprev;
 	register frentry_t **ftail;
@@ -511,15 +503,15 @@ frrequest(req, data, set)
  */
 int
 iplopen(dev, flags
-#if _BSDI_VERSION >= 199510
+#if _BSDI_VERSION >= 199501
     , devtype, p)
 	int devtype;
 	struct proc *p;
 #else
     )
 #endif
-	dev_t dev;
-	int flags;
+     dev_t dev;
+     int flags;
 {
 	u_int min = minor(dev);
 
@@ -531,15 +523,15 @@ iplopen(dev, flags
 
 int
 iplclose(dev, flags
-#if _BSDI_VERSION >= 199510
+#if _BSDI_VERSION >= 199501
     , devtype, p)
 	int devtype;
 	struct proc *p;
 #else
     )
 #endif
-	dev_t dev;
-	int flags;
+     dev_t dev;
+     int flags;
 {
 	u_int	min = minor(dev);
 
@@ -558,13 +550,13 @@ iplclose(dev, flags
 #  if BSD >= 199306
 int
 iplread(dev, uio, ioflag)
-	int ioflag;
+     int ioflag;
 #  else
 int
 iplread(dev, uio)
 #  endif
-	dev_t dev;
-	register struct uio *uio;
+     dev_t dev;
+     register struct uio *uio;
 {
 	register int ret, s;
 	register size_t sz, sx;
@@ -572,13 +564,10 @@ iplread(dev, uio)
 
 	if (!uio->uio_resid)
 		return 0;
-	iplbusy++;
 	while (!iplused) {
 		error = SLEEP(iplbuf, "ipl sleep");
-		if (error) {
-			iplbusy--;
+		if (error)
 			return error;
-		}
 	}
 	SPLNET(s);
 
@@ -606,7 +595,6 @@ iplread(dev, uio)
 			iplh = iplt = iplbuf;
 	}
 	SPLX(s);
-	iplbusy--;
 	return ret;
 }
 # endif /* IPFILTER_LOG */
@@ -616,13 +604,12 @@ iplread(dev, uio)
 #ifdef	IPFILTER_LOG
 int
 ipllog(flags, ip, fin, m)
-	u_int flags;
-	ip_t *ip;
-	register fr_info_t *fin;
-	struct mbuf *m;
+     u_int flags;
+     ip_t *ip;
+     register fr_info_t *fin;
+     struct mbuf *m;
 {
 	struct ipl_ci iplci;
-	register size_t tail = 0;
 	register int len, mlen, hlen;
 	struct ifnet *ifp = fin->fin_ifp;
 
@@ -646,7 +633,7 @@ ipllog(flags, ip, fin, m)
 		}
 	}
 
-	mlen = (flags & FR_LOGBODY) ? (MIN(m->m_len, 128) & 0xfa) : 0;
+	mlen = (flags & FR_LOGBODY) ? MIN(ip->ip_len - hlen, 128) : 0;
 	len = hlen + sizeof(iplci) + mlen;
 	if (iplused + len > LOGSIZE)
 		return 0;
@@ -660,11 +647,11 @@ ipllog(flags, ip, fin, m)
 # endif
 	iplci.flags = flags;
 	iplci.hlen = (u_char)hlen;
-	iplci.plen = (flags & FR_LOGBODY) ? (u_char)mlen : 0 ;
+	iplci.plen = (u_char)mlen;
 	iplci.rule = fin->fin_rule;
-# if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199606)) || \
-    (defined(OpenBSD) && (OpenBSD >= 199606))
-	strcpy(iplci.ifname, ifp->if_xname);
+# if (defined(NetBSD) && (NetBSD <= 1991011) && (NetBSD >= 199603)) || \
+	(defined(OpenBSD) && (OpenBSD >= 199603))
+	strncpy(iplci.ifname, ifp->if_xname, IFNAMSIZ);
 # else
 	iplci.unit = (u_char)ifp->if_unit;
 	if ((iplci.ifname[0] = ifp->if_name[0]))
@@ -672,56 +659,17 @@ ipllog(flags, ip, fin, m)
 			if ((iplci.ifname[2] = ifp->if_name[2]))
 				iplci.ifname[3] = ifp->if_name[3];
 # endif
-	if (iplh == iplbuf + LOGSIZE)
-		iplh = iplbuf;
-	tail = (iplh >= iplt) ? (iplbuf + LOGSIZE - iplh) : (iplt - iplh);
+	/*      
+	 * Guaranteed to succeed from above
+	 */     
+	(void) fr_copytolog((char *)&iplci, sizeof(iplci));
 
-	len = MIN(tail, sizeof(iplci));
-
-	/*
-	 * check in both cases where we add stuff to the buffer to see if we
-	 * are going to wrap around at the end.
-	 */
-	bcopy((char *)&iplci, iplh, len);
-	iplh += len;
-	if (len < sizeof(iplci)) {
-		bcopy((char *)&iplci + len, iplbuf, sizeof(iplci) - len);
-		iplh = iplbuf + sizeof(iplci) - len;
-		tail = iplt - iplh;
-	} else
-		tail -= len;
-
-	len = MIN(tail, hlen);
-	bcopy((char *)ip, iplh, len);
-	iplh += len;
-	if (len < hlen) {
-		iplh = iplbuf;
-		bcopy((char *)ip + len, iplh, hlen - len);
-		iplh += hlen - len;
-		tail = iplt - iplh;
-	} else
-		tail -= len;
-
-	if (mlen) {
-		len = MIN(tail, mlen);
-#if BSD < 199103
-		bcopy((char *)m->m_un.mun_dat, iplh, len);
-#else
-		bcopy((char *)m->M_dat.M_databuf, iplh, len);
-#endif
-		iplh += len;
-		if (len < mlen) {
-			iplh = iplbuf;
-#if BSD < 199103
-			bcopy((char *)m->m_un.mun_dat + len, iplh,
-				mlen - len);
-#else
-			bcopy((char *)m->M_dat.M_databuf + len, iplh,
-				mlen - len);
-#endif
-			iplh += mlen - len;
-		}
+	for (len -= sizeof(iplci); m && len > 0; m = m->m_next, len -= hlen) {
+		hlen = MIN(len, m->m_len);
+		if (fr_copytolog(mtod(m, char *), hlen))
+			break;
 	}
+
 	wakeup(iplbuf);
 	return 1;
 }
@@ -733,7 +681,7 @@ ipllog(flags, ip, fin, m)
  */
 int
 send_reset(ti)
-	struct tcpiphdr *ti;
+     struct tcpiphdr *ti;
 {
 	struct tcpiphdr *tp;
 	struct ip *ip;
@@ -796,17 +744,18 @@ send_reset(ti)
 void
 iplinit()
 {
-	/* (void) iplattach(); */
+	(void) iplattach();
 	ip_init();
+	(void) ipldetach();	/* XXX */
 }
 #endif
 
 
 void
 ipfr_fastroute(m0, fin, fdp)
-	struct mbuf *m0;
-	fr_info_t *fin;
-	frdest_t *fdp;
+     struct mbuf *m0;
+     fr_info_t *fin;
+     frdest_t *fdp;
 {
 	register struct ip *ip, *mhip;
 	register struct mbuf *m = m0;
@@ -826,7 +775,8 @@ ipfr_fastroute(m0, fin, fdp)
 	dst = (struct sockaddr_in *)&ro->ro_dst;
 	dst->sin_family = AF_INET;
 	dst->sin_addr = fdp->fd_ip.s_addr ? fdp->fd_ip : ip->ip_dst;
-#if	BSD >= 199306 && !(defined(__NetBSD__) || defined(__OpenBSD__))
+#if	(BSD >= 199306) && !defined(__NetBSD__) && !defined(__bsdi__) \
+	&& !defined(__OpenBSD__)
 # ifdef	RTF_CLONING
 	rtalloc_ign(ro, RTF_CLONING);
 # else
@@ -852,7 +802,15 @@ ipfr_fastroute(m0, fin, fdp)
 	}
 	ro->ro_rt->rt_use++;
 
-	/*	
+	/*
+	 * For input packets which are being "fastrouted", they won't
+	 * go back through output filtering and miss their chance to get
+	 * NAT'd.
+	 */
+	(void) ip_natout(ip, hlen, fin);
+	if (fin->fin_out)
+		ip->ip_sum = 0;
+	/*
 	 * If small enough for interface, can just send directly.
 	 */
 	if (ip->ip_len <= ifp->if_mtu) {

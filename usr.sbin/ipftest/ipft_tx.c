@@ -29,17 +29,18 @@
 #include <netinet/tcp.h>
 #include <netinet/ip_icmp.h>
 #include <netinet/tcpip.h>
+#include <arpa/inet.h>
 #include <net/if.h>
-#include "ip_fil_compat.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
+#include "ip_fil_compat.h"
 #include "ipf.h"
 #include "ipt.h"
 
-#ifndef	lint
+#if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipft_tx.c	1.7 6/5/96 (C) 1993 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_tx.c,v 1.5 1997/01/17 07:14:07 millert Exp $";
+static	char	rcsid[] = "$Id: ipft_tx.c,v 1.6 1997/02/11 22:23:55 kstailey Exp $";
 #endif
 
 extern	int	opts;
@@ -65,7 +66,7 @@ static	u_short	tx_portnum();
  * returns an ip address as a long var as a result of either a DNS lookup or
  * straight inet_addr() call
  */
-u_long	tx_hostnum(host, resolved)
+static	u_long	tx_hostnum(host, resolved)
 char	*host;
 int	*resolved;
 {
@@ -94,7 +95,7 @@ int	*resolved;
  * find the port number given by the name, either from getservbyname() or
  * straight atoi()
  */
-u_short	tx_portnum(name)
+static	u_short	tx_portnum(name)
 char	*name;
 {
 	struct	servent	*sp, *sp2;
@@ -177,11 +178,11 @@ int	cnt, *dir;
  	ip = (struct ip *)buf;
 	*ifn = NULL;
 	while (fgets(line, sizeof(line)-1, tfp)) {
-		if ((s = strchr(line, '\n')))
+		if ((s = index(line, '\n')))
 			*s = '\0';
-		if ((s = strchr(line, '\r')))
+		if ((s = index(line, '\r')))
 			*s = '\0';
-		if ((s = strchr(line, '#')))
+		if ((s = index(line, '#')))
 			*s = '\0';
 		if (!*line)
 			continue;
@@ -264,7 +265,7 @@ int	*out;
 	if (ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP) {
 		char	*last;
 
-		last = strchr(*cpp, ',');
+		last = index(*cpp, ',');
 		if (!last) {
 			fprintf(stderr, "tcp/udp with no source port\n");
 			return 1;
@@ -280,7 +281,7 @@ int	*out;
 	if (ip->ip_p == IPPROTO_TCP || ip->ip_p == IPPROTO_UDP) {
 		char	*last;
 
-		last = strchr(*cpp, ',');
+		last = index(*cpp, ',');
 		if (!last) {
 			fprintf(stderr, "tcp/udp with no destination port\n");
 			return 1;
@@ -296,7 +297,7 @@ int	*out;
 		char	*s, *t;
 
 		for (s = *cpp; *s; s++)
-			if ((t  = strchr(tcp_flagset, *s)))
+			if ((t  = index(tcp_flagset, *s)))
 				tcp->th_flags |= tcp_flags[t - tcp_flagset];
 		if (tcp->th_flags)
 			cpp++;
@@ -310,7 +311,7 @@ int	*out;
 		     s++, i++)
 			if (*s && !strncasecmp(*cpp, *s, strlen(*s))) {
 				ic->icmp_type = i;
-				if ((t = strchr(*cpp, ',')))
+				if ((t = index(*cpp, ',')))
 					ic->icmp_code = atoi(t+1);
 				cpp++;
 				break;

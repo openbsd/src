@@ -32,6 +32,7 @@ etherfind -n -t
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <netinet/in.h>
+#include <arpa/inet.h>
 #include <netinet/in_systm.h>
 #include <netinet/ip_var.h>
 #include <netinet/ip.h>
@@ -41,14 +42,12 @@ etherfind -n -t
 #include <netinet/tcpip.h>
 #include <net/if.h>
 #include <netdb.h>
-#include "ip_fil_compat.h"
-#include "ip_fil.h"
 #include "ipf.h"
 #include "ipt.h"
 
-#ifndef lint
+#if !defined(lint) && defined(LIBC_SCCS)
 static char sccsid[] = "@(#)ipft_ef.c	1.6 2/4/96 (C)1995 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_ef.c,v 1.5 1996/10/08 07:33:34 niklas Exp $";
+static	char	rcsid[] = "$Id: ipft_ef.c,v 1.6 1997/02/11 22:23:48 kstailey Exp $";
 #endif
 
 static	int	etherf_open(), etherf_close(), etherf_readip();
@@ -58,11 +57,6 @@ struct	ipread	etherf = { etherf_open, etherf_close, etherf_readip };
 static	FILE	*efp = NULL;
 static	int	efd = -1;
 
-#ifdef	NEED_INET_ATON
-extern	u_long	inet_aton();
-#else
-#include <arpa/inet.h>
-#endif
 
 static	int	etherf_open(fname)
 char	*fname;

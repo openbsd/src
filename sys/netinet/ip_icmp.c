@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_icmp.c,v 1.5 1996/05/09 14:33:32 mickey Exp $	*/
+/*	$OpenBSD: ip_icmp.c,v 1.6 1997/02/11 22:23:23 kstailey Exp $	*/
 /*	$NetBSD: ip_icmp.c,v 1.19 1996/02/13 23:42:22 christos Exp $	*/
 
 /*
@@ -274,6 +274,9 @@ icmp_input(m, va_alist)
 			case ICMP_UNREACH_ISOLATED:
 			case ICMP_UNREACH_HOST_PROHIB:
 			case ICMP_UNREACH_TOSHOST:
+			case ICMP_UNREACH_FILTER_PROHIB:
+			case ICMP_UNREACH_HOST_PRECEDENCE:
+			case ICMP_UNREACH_PRECEDENCE_CUTOFF:
 				code = PRC_UNREACH_HOST;
 				break;
 

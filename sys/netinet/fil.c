@@ -1,3 +1,4 @@
+/*	$OpenBSD: fil.c,v 1.8 1997/02/11 22:23:08 kstailey Exp $	*/
 /*
  * (C)opyright 1993-1996 by Darren Reed.
  *
@@ -6,9 +7,9 @@
  * to the original author and the contributors.
  */
 #if 0
-#ifndef	lint
+#if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fil.c	1.36 6/5/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$OpenBSD: fil.c,v 1.7 1996/10/24 17:56:20 tholo Exp $";
+static	char	rcsid[] = "Id: fil.c,v 2.0.1.3 1997/01/29 13:38:54 darrenr Exp";
 #endif
 #endif
 
@@ -25,11 +26,6 @@ static	char	rcsid[] = "$OpenBSD: fil.c,v 1.7 1996/10/24 17:56:20 tholo Exp $";
 #endif
 #include <sys/uio.h>
 #if !defined(__SVR4) && !defined(__svr4__)
-# if defined(__OpenBSD__)
-#  include <sys/dirent.h>
-# else
-#  include <sys/dir.h>
-# endif
 # include <sys/mbuf.h>
 #else
 # include <sys/byteorder.h>
@@ -69,7 +65,7 @@ extern	void	debug(), verbose();
 #define	FR_IFDEBUG(ex,second,verb_pr)	if (ex) { debug verb_pr; second; }
 #define	FR_VERBOSE(verb_pr)	verbose verb_pr
 #define	FR_DEBUG(verb_pr)	debug verb_pr
-#define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi)
+#define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, NULL)
 # if SOLARIS
 #  define	bcmp	memcmp
 # endif
@@ -78,23 +74,24 @@ extern	void	debug(), verbose();
 #define	FR_IFDEBUG(ex,second,verb_pr)	;
 #define	FR_VERBOSE(verb_pr)
 #define	FR_DEBUG(verb_pr)
+#define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
+extern	int	send_reset __P((struct tcpiphdr *));
 # if SOLARIS
-extern	int	icmp_error();
-extern	kmutex_t	ipf_mutex;
-# define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi)
+extern	int	icmp_error(), ipfr_fastroute();
+extern	kmutex_t	ipf_mutex, ipl_mutex;
 # else
-# define	FR_SCANLIST(p, ip, fi, m)	fr_scanlist(p, ip, fi, m)
+extern	void	ipfr_fastroute __P((struct mbuf *, fr_info_t *, frdest_t *));
 # endif
 extern	int	ipl_unreach;
+extern	int	ipllog __P((u_int, ip_t *, register fr_info_t *,
+			    struct mbuf *));
 #endif
 
 #if SOLARIS
-# define	IPLLOG(fl, ip, fi, m)		ipllog(fl, ip, fi)
 # define	SEND_RESET(ip, if, q)		send_reset(ip, qif, q)
 # define	ICMP_ERROR(b, ip, t, c, if, src) \
 			icmp_error(b, ip, t, c, if, src)
 #else
-# define	IPLLOG(fl, ip, fi, m)		ipllog(fl, ip, fi, m)
 # define	SEND_RESET(ip, if, q)		send_reset( \
 						    (struct tcpiphdr *)ip)
 # if BSD < 199103
@@ -112,14 +109,10 @@ struct	frentry	*ipfilter[2][2] = { { NULL, NULL }, { NULL, NULL } },
 int	fr_flags = 0, fr_active = 0;
 
 fr_info_t	frcache[2];
- 
+
 void	fr_makefrip __P((int, ip_t *, fr_info_t *));
 int	fr_tcpudpchk __P((frentry_t *, fr_info_t *));
-#if (defined(_KERNEL) || defined(KERNEL)) && !SOLARIS
-int	fr_scanlist __P((int, ip_t *, fr_info_t *, void *));
-#else
-int	fr_scanlist __P((int, ip_t *, fr_info_t *));
-#endif
+int	fr_scanlist __P((int, ip_t *, fr_info_t *, void *m));
 
 /*
  * bit values for identifying presence of individual IP options
@@ -168,9 +161,9 @@ struct	optlist	secopt[8] = {
  */
 void
 fr_makefrip(hlen, ip, fin)
-	int hlen;
-	ip_t *ip;
-	fr_info_t *fin;
+     int hlen;
+     ip_t *ip;
+     fr_info_t *fin;
 {
 	struct optlist *op;
 	tcphdr_t *tcp;
@@ -288,8 +281,8 @@ getports:
  */
 int
 fr_tcpudpchk(fr, fin)
-	frentry_t *fr;
-	fr_info_t *fin;
+     frentry_t *fr;
+     fr_info_t *fin;
 {
 	register u_short po, tup;
 	register char i;
@@ -381,21 +374,18 @@ fr_tcpudpchk(fr, fin)
  * kernel sauce.
  */
 int
-fr_scanlist(pass, ip, fin
-#if (defined(_KERNEL) || defined(KERNEL)) && !SOLARIS
-    , m)
-	void *m;
-#else
-    )
-#endif
-	int pass;
-	ip_t *ip;
-	register fr_info_t *fin;
+fr_scanlist(pass, ip, fin, m)
+     int pass;
+     ip_t *ip;
+     register fr_info_t *fin;
+     void *m;
 {
 	register struct frentry *fr;
 	register fr_ip_t *fi = &fin->fin_fi;
 	int rulen, portcmp = 0, off;
 
+	fr = fin->fin_fr;
+	fin->fin_fr = NULL;
 	fin->fin_rule = 0;
 	off = ip->ip_off & 0x1fff;
 	pass |= (fi->fi_fl << 20);
@@ -403,7 +393,7 @@ fr_scanlist(pass, ip, fin
 	if ((fi->fi_fl & FI_TCPUDP) && (fin->fin_dlen > 3) && !off)
 		portcmp = 1;
 
-	for (rulen = 0, fr = fin->fin_fr; fr; fr = fr->fr_next, rulen++) {
+	for (rulen = 0; fr; fr = fr->fr_next, rulen++) {
 		/*
 		 * In all checks below, a null (zero) value in the
 		 * filter struture is taken to mean a wildcard.
@@ -456,7 +446,8 @@ fr_scanlist(pass, ip, fin
 			if (portcmp) {
 				if (!fr_tcpudpchk(fr, fin))
 					continue;
-			} else if (fr->fr_dcmp || fr->fr_scmp)
+ 			} else if (fr->fr_dcmp || fr->fr_scmp || fr->fr_tcpf ||
+ 				   fr->fr_tcpfm)
 				continue;
 		} else if (fi->fi_p == IPPROTO_ICMP) {
 			if (!off && (fin->fin_dlen > 1)) {
@@ -467,19 +458,19 @@ fr_scanlist(pass, ip, fin
 						 fr->fr_icmpm, fr->fr_icmp));
 					continue;
 				}
-			} else if (fr->fr_icmpm || fr->fr_tcpfm)
+			} else if (fr->fr_icmpm || fr->fr_icmp)
 				continue;
 		}
 		FR_VERBOSE(("*"));
-                /*
-                 * Just log this packet...
-                 */
+		/*
+		 * Just log this packet...
+		 */
 		pass = fr->fr_flags;
 		if ((pass & FR_CALLNOW) && fr->fr_func)
 			pass = (*fr->fr_func)(pass, ip, fin);
 #ifdef  IPFILTER_LOG
 		if ((pass & FR_LOGMASK) == FR_LOG) {
-			if (!IPLLOG(fr->fr_flags, ip, fin, m))
+			if (!ipllog(fr->fr_flags, ip, fin, m))
 				frstats[fin->fin_out].fr_skip++;
 			frstats[fin->fin_out].fr_pkl++;
 		}
@@ -490,28 +481,28 @@ fr_scanlist(pass, ip, fin
 			fr->fr_bytes += ip->ip_len;
 		else
 			fin->fin_icode = fr->fr_icode;
+		fin->fin_rule = rulen;
+		fin->fin_fr = fr;
 		if (pass & FR_QUICK)
 			break;
 	}
-	fin->fin_rule = rulen;
-	fin->fin_fr = fr;
 	return pass;
 }
 
 
 /*
  * frcheck - filter check
- * check using source and destination addresses/pors in a packet whether
+ * check using source and destination addresses/ports in a packet whether
  * or not to pass it on or not.
  */
 int
 fr_check(ip, hlen, ifp, out
 #ifdef _KERNEL
 # if SOLARIS
-    , qif, q, mb)
+    , qif, q, mp)
 	qif_t *qif;
 	queue_t *q;
-	mblk_t *mb;
+	mblk_t **mp;
 # else
     , mp)
 	struct mbuf **mp;
@@ -519,18 +510,18 @@ fr_check(ip, hlen, ifp, out
 #else
     )
 #endif
-	ip_t *ip;
-	int hlen;
-	struct ifnet *ifp;
-	int out;
+     ip_t *ip;
+     int hlen;
+     struct ifnet *ifp;
+     int out;
 {
 	/*
 	 * The above really sucks, but short of writing a diff
 	 */
 	fr_info_t frinfo, *fc;
 	register fr_info_t *fin = &frinfo;
-	frentry_t *fr;
-	int pass;
+	frentry_t *fr = NULL;
+	int pass, changed;
 
 #if !defined(__SVR4) && !defined(__svr4__) && defined(_KERNEL)
 	register struct mbuf *m = *mp;
@@ -541,17 +532,19 @@ fr_check(ip, hlen, ifp, out
 		register int up = MIN(hlen + 8, ip->ip_len);
 
 		if (up > m->m_len) {
-			if ((*mp = m_pullup(m, up)) == 0)
+			if ((*mp = m_pullup(m, up)) == 0) {
+				frstats[out].fr_pull[1]++;
 				return -1;
-			else {
+			} else {
+				frstats[out].fr_pull[0]++;
 				m = *mp;
 				ip = mtod(m, struct ip *);
 			}
 		}
 	}
 #endif
-#if SOLARIS
-	mblk_t *mc = NULL;
+#if SOLARIS && defined(_KERNEL)
+	mblk_t *mc = NULL, *m = qif->qf_m;
 #endif
 	fr_makefrip(hlen, ip, fin);
 	fin->fin_ifp = ifp;
@@ -559,7 +552,7 @@ fr_check(ip, hlen, ifp, out
 
 	MUTEX_ENTER(&ipf_mutex);
 	if (!out) {
-		ip_natin(ip, hlen, fin);
+		changed = ip_natin(ip, hlen, fin);
 		if ((fin->fin_fr = ipacct[0][fr_active]) &&
 		    (FR_SCANLIST(FR_NOMATCH, ip, fin, m) & FR_ACCOUNT))
 			frstats[0].fr_acct++;
@@ -567,13 +560,6 @@ fr_check(ip, hlen, ifp, out
 
 	if ((pass = ipfr_knownfrag(ip, fin))) {
 		if ((pass & FR_KEEPSTATE)) {
-			/*
-			 * XXX I don't know if changing hlen to fin is right,
-			 * but at least that is typesafe.  //niklas@appli.se
-			 *
-			 * old code was:
-			 * if (fr_addstate(ip, hlen, pass) == -1)
-			 */
 			if (fr_addstate(ip, fin, pass) == -1)
 				frstats[out].fr_bads++;
 			else
@@ -611,6 +597,7 @@ fr_check(ip, hlen, ifp, out
 #endif
 			}
 		}
+		fr = fin->fin_fr;
 
 		if ((pass & FR_KEEPFRAG)) {
 			if (fin->fin_fi.fi_fl & FI_FRAG) {
@@ -629,8 +616,6 @@ fr_check(ip, hlen, ifp, out
 		}
 	}
 
-	fr = fin->fin_fr;
-
 	if (fr && fr->fr_func)
 		pass = (*fr->fr_func)(pass, ip, fin);
 
@@ -638,8 +623,10 @@ fr_check(ip, hlen, ifp, out
 		if ((fin->fin_fr = ipacct[1][fr_active]) &&
 		    (FR_SCANLIST(FR_NOMATCH, ip, fin, m) & FR_ACCOUNT))
 			frstats[1].fr_acct++;
-		ip_natout(ip, hlen, fin);
+		fin->fin_fr = NULL;
+		changed = ip_natout(ip, hlen, fin);
 	}
+	fin->fin_fr = fr;
 	MUTEX_EXIT(&ipf_mutex);
 
 #ifdef	IPFILTER_LOG
@@ -660,8 +647,12 @@ fr_check(ip, hlen, ifp, out
 				pass |= FF_LOGBLOCK;
 			frstats[out].fr_bpkl++;
 logit:
-			if (!IPLLOG(pass, ip, fin, m))
+			if (!ipllog(pass, ip, fin, m)) {
 				frstats[out].fr_skip++;
+				if ((pass & (FR_PASS|FR_LOGORBLOCK)) ==
+				    (FR_PASS|FR_LOGORBLOCK))
+					pass ^= FR_PASS|FR_BLOCK;
+			}
 		}
 	}
 #endif /* IPFILTER_LOG */
@@ -710,29 +701,33 @@ logit:
 		frdest_t *fdp = &fr->fr_tif;
 
 		if ((pass & FR_FASTROUTE) ||
-		    (fdp->fd_ifp && fdp->fd_ifp != (struct ifnet *)-1))
+		    (fdp->fd_ifp && fdp->fd_ifp != (struct ifnet *)-1)) {
 			ipfr_fastroute(m, fin, fdp);
+			m = *mp = NULL;
+			pass = 0;
+		}
 		if (mc)
 			ipfr_fastroute(mc, fin, &fr->fr_dif);
 	}
 	if (!(pass & FR_PASS) && m)
 		m_freem(m);
+	return (pass & FR_PASS) ? 0 : -1;
 # else
-	/*
 	if (pass & FR_DUP)
-		mc = dupmsg(mb);
+		mc = dupmsg(m);
 	if (fr) {
 		frdest_t *fdp = &fr->fr_tif;
 
 		if ((pass & FR_FASTROUTE) ||
-		    (fdp->fd_ifp && fdp->fd_ifp != (struct ifnet *)-1))
-			ipfr_fastroute(mb, fin, fdp);
+		    (fdp->fd_ifp && fdp->fd_ifp != (struct ifnet *)-1)) {
+			ipfr_fastroute(qif, ip, m, mp, fin, fdp);
+			m = *mp = NULL;
+		}
 		if (mc)
-			ipfr_fastroute(mc, fin, &fr->fr_dif);
+			ipfr_fastroute(qif, ip, mc, mp, fin, &fr->fr_dif);
 	}
-	*/
+	return (pass & FR_PASS) ? changed : -1;
 # endif
-	return (pass & FR_PASS) ? 0 : -1;
 #else
 	if (pass & FR_NOMATCH)
 		return 1;
@@ -743,9 +738,38 @@ logit:
 }
 
 
-#ifndef	_KERNEL
+#ifdef	IPFILTER_LOG
+# if !(defined(_KERNEL))
 static void ipllog()
 {
 	verbose("l");
+}
+# endif
+
+
+int fr_copytolog(buf, len)
+char *buf;
+int len;
+{
+	int	clen, tail;
+
+	tail = (iplh >= iplt) ? (iplbuf + IPLLOGSIZE - iplh) : (iplt - iplh);
+	clen = MIN(tail, len);
+	bcopy(buf, iplh, clen);
+	len -= clen;
+	tail -= clen;
+	iplh += clen;
+	buf += clen;
+	if (iplh == iplbuf + IPLLOGSIZE) {
+		iplh = iplbuf;
+		tail = iplt - iplh;
+	}
+	if (len && tail) {
+		clen = MIN(tail, len);
+		bcopy(buf, iplh, clen);
+		len -= clen;
+		iplh += clen;
+	}
+	return len;
 }
 #endif

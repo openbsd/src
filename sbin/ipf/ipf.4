@@ -1,6 +1,6 @@
 .TH IPF 4
 .SH NAME
-ipf - packet filtering kernel interface
+ipf \- packet filtering kernel interface
 .SH SYNOPSIS
 #include <sys/ip_fil.h>
 .SH IOCTLS
@@ -26,11 +26,11 @@ However, the full complement is as follows:
 	ioctl(fd, SIOCIPFFL, int *)
 .fi
 .PP
-The variations, SIOCADAFR vs SIOCADIFR, allow operation on the two lists,
+The variations, SIOCADAFR vs. SIOCADIFR, allow operation on the two lists,
 active and inactive, respectively.  All of these ioctl's are implemented
 as being routing ioctls and thus the same rules for the various routing
 ioctls and the file descriptor are employed, mainly being that the fd must
-be that of the device associated with the module (ie /dev/ipl).
+be that of the device associated with the module (i.e., /dev/ipl).
 .LP
 .PP
 The three groups of ioctls above perform adding rules to the end of the

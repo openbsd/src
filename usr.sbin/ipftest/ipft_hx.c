@@ -30,16 +30,15 @@
 #include <netinet/ip_icmp.h>
 #include <netinet/tcpip.h>
 #include <net/if.h>
-#include "ip_fil_compat.h"
 #include <netdb.h>
 #include <arpa/nameser.h>
 #include <resolv.h>
 #include "ipf.h"
 #include "ipt.h"
 
-#ifndef	lint
+#if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipft_hx.c	1.1 3/9/96 (C) 1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipft_hx.c,v 1.3 1997/01/17 07:14:06 millert Exp $";
+static	char	rcsid[] = "$Id: ipft_hx.c,v 1.4 1997/02/11 22:23:50 kstailey Exp $";
 #endif
 
 extern	int	opts;
@@ -91,16 +90,13 @@ int	cnt, *dir;
 	char	line[513];
 
  	ip = (struct ip *)buf;
-	*ifn = NULL;
 	while (fgets(line, sizeof(line)-1, tfp)) {
-		if ((s = strchr(line, '\n'))) {
+		if ((s = index(line, '\n'))) {
 			if (s == line)
 				return (char *)ip - buf;
 			*s = '\0';
 		}
-		if ((s = strchr(line, '\r')))
-			*s = '\0';
-		if ((s = strchr(line, '#')))
+		if ((s = index(line, '#')))
 			*s = '\0';
 		if (!*line)
 			continue;
@@ -108,8 +104,6 @@ int	cnt, *dir;
 			printf("input: %s\n", line);
 			fflush(stdout);
 		}
-		*ifn = NULL;
-		*dir = 0;
 		ip = (struct ip *)readhex(line, (char *)ip);
 	}
 	return -1;

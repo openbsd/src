@@ -1,14 +1,24 @@
-.LP
 .TH ipftest 8
 .SH NAME
-ipftest - test packet filter rules with arbitary input.
+ipftest \- test packet filter rules with arbitary input.
 .SH SYNOPSIS
-ipftest [-vbdPSTEHX] [-I interface] -r <filename> [-i <filename>]
+.B ipftest
+[
+.B \-vbdPSTEHX
+] [
+.B \-I
+interface
+]
+.B \-r
+<filename>
+[
+.B \-i
+<filename>
+]
 .SH DESCRIPTION
-.LP
 .PP
 \fBipftest\fP is provided for the purpose of being able to test a set of
-filter rules without having to put them in place, in operation and procede
+filter rules without having to put them in place, in operation and proceed
 to test their effectiveness.  The hope is that this minimises disruptions
 in providing a secure IP environment.
 .PP
@@ -19,7 +29,7 @@ pass, block or nomatch.  This is intended to give the operator a better
 idea of what is happening with packets passing through their filter
 ruleset.
 .PP
-When used without eiether of \fB-S\fP, \fB-T\fP or \fB-E\fP,
+When used without either of \fB\-S\fP, \fB\-T\fP or \fB\-E\fP,
 \fBipftest\fP uses its own text input format to generate "fake" IP packets.
 The format used is as follows:
 .nf
@@ -41,30 +51,37 @@ are:
 		out on le0 tcp 10.4.12.1,2245 10.1.1.1,23 S
 .fi
 .SH OPTIONS
-.IP -v
+.TP
+.B \-v
 Verbose mode.  This provides more information about which parts of rule
 matching the input packet passes and fails.
-.IP -d
+.TP
+.B \-d
 Turn on filter rule debugging.  Currently, this only shows you what caused
 the rule to not match in the IP header checking (addresses/netmasks, etc).
-.IP -b
+.TP
+.B \-b
 Cause the output to be a brief summary (one-word) of the result of passing
 the packet through the filter; either "pass", "block" or "nomatch".
 This is used in the regression testing.
-.IP -I <interface>
+.TP
+.BR \-I \0<interface>
 Set the interface name (used in rule matching) to be the name supplied.
-This is useful with the \fB-P, -S, -T\fP and \fB-E\fP options, where it is
+This is useful with the \fB\-P, \-S, \-T\fP and \fB\-E\fP options, where it is
 not otherwise possible to associate a packet with an interface.  Normal
 "text packets" can override this setting.
-.IP -P
-The input file specified by \fB-i\fP is a binary file produced using libpcap
-(ie tcpdump version 3).  Packets are read from this file as being input
-(for rule purposes).  An interface maybe specified using \fB-I\fP.
-.IP -S
+.TP
+.B \-P
+The input file specified by \fB\-i\fP is a binary file produced using libpcap
+(i.e., tcpdump version 3).  Packets are read from this file as being input
+(for rule purposes).  An interface maybe specified using \fB\-I\fP.
+.TP
+.B \-S
 The input file is to be in "snoop" format (see RFC 1761).  Packets are read
 from this file and used as input from any interface.  This is perhaps the
 most useful input type, currently.
-.IP -T
+.TP
+.B \-T
 The input file is to be text output from tcpdump.  The text formats which
 are currently supported are those which result from the following tcpdump
 option combinations:
@@ -77,13 +94,16 @@ option combinations:
 		tcpdump -nqte
 .fi
 .LP
-.IP -H
+.TP
+.B \-H
 The input file is to be hex digits, representing the binary makeup of the
 packet.  No length correction is made, if an incorrect length is put in
 the IP header.
-.IP -X
+.TP
+.B \-X
 The input file is composed of text descriptions of IP packets.
-.IP -E
+.TP
+.B \-E
 The input file is to be text output from etherfind.  The text formats which
 are currently supported are those which result from the following etherfind
 option combinations:
@@ -93,9 +113,11 @@ option combinations:
 		etherfind -n -t
 .fi
 .LP
-.IP -i <filename>
-Specify the filename to take input from.  Default is stdin.
-.IP -r <filename>
+.TP
+.BR \-i \0<filename>
+Specify the filename from which to take input.  Default is stdin.
+.TP
+.BR \-r \0<filename>
 Specify the filename from which to read filter rules.
 .SH FILES
 .SH SEE ALSO

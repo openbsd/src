@@ -40,9 +40,9 @@
 #include <paths.h>
 #endif
 
-#ifndef	lint
+#if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)fils.c	1.21 4/20/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: fils.c,v 1.7 1996/10/08 07:33:33 niklas Exp $";
+static	char	rcsid[] = "$Id: fils.c,v 1.8 1997/02/11 22:23:41 kstailey Exp $";
 #endif
 #ifdef	_PATH_UNIX
 #define	VMUNIX	_PATH_UNIX
@@ -124,7 +124,7 @@ char *argv[];
 			opts |= OPT_VERBOSE;
 			break;
 		default :
-			Usage();
+			Usage(argv[0]);
 			break;
 		}
 	}
@@ -203,9 +203,10 @@ struct	friostat	*fp;
 			fp->f_st[0].fr_bpkl, fp->f_st[0].fr_ppkl);
 	PRINTF("output packets logged:\tblocked %lu passed %lu\n",
 			fp->f_st[1].fr_bpkl, fp->f_st[1].fr_ppkl);
-	PRINTF(" packets logged:\tinput %lu-%lu output %lu-%lu\n",
-			fp->f_st[0].fr_pkl, fp->f_st[0].fr_skip,
-			fp->f_st[1].fr_pkl, fp->f_st[1].fr_skip);
+	PRINTF(" packets logged:\tinput %lu output %lu\n",
+			fp->f_st[0].fr_pkl, fp->f_st[1].fr_pkl);
+	PRINTF(" log failures:\t\tinput %lu output %lu\n",
+			fp->f_st[0].fr_skip, fp->f_st[1].fr_skip);
 	PRINTF("fragment state(in):\tkept %lu\tlost %lu\n",
 			fp->f_st[0].fr_nfr, fp->f_st[0].fr_bnfr);
 	PRINTF("fragment state(out):\tkept %lu\tlost %lu\n",
@@ -218,6 +219,10 @@ struct	friostat	*fp;
 			fp->f_st[0].fr_ret, fp->f_st[1].fr_ret);
 	PRINTF("Result cache hits(in):\t%lu\t(out):\t%lu\n",
 			fp->f_st[0].fr_chit, fp->f_st[1].fr_chit);
+	PRINTF("IN Pullups succeeded:\t%lu\tfailed:\t%lu\n",
+			fp->f_st[0].fr_pull[0], fp->f_st[0].fr_pull[1]);
+	PRINTF("OUT Pullups succeeded:\t%lu\tfailed:\t%lu\n",
+			fp->f_st[1].fr_pull[0], fp->f_st[1].fr_pull[1]);
 
 	PRINTF("Packet log flags set: (%#x)\n", frf);
 	if (frf & FF_LOGPASS)
@@ -243,12 +248,11 @@ struct	friostat	*fiop;
 		set = 1 - set;
 	if (opts & OPT_ACCNT) {
 		i = F_AC;
-		if (opts & OPT_INQUE)
-			fp = (struct frentry *)fiop->f_acctin[set];
-		else {
+		if (opts & OPT_OUTQUE) {
 			fp = (struct frentry *)fiop->f_acctout[set];
 			i++;
-		}
+		} else if (opts & OPT_INQUE)
+			fp = (struct frentry *)fiop->f_acctin[set];
 	} else if (opts & OPT_OUTQUE) {
 		i = F_OUT;
 		fp = (struct frentry *)fiop->f_fout[set];
@@ -311,14 +315,16 @@ ips_stat_t *ipsp;
 			if (kmemcpy(&ips, istab[i], sizeof(ips)) == -1)
 				break;
 			PRINTF("%s -> ", inet_ntoa(ips.is_src));
-			PRINTF("%s age %d pass %d pr %d\n",
+			PRINTF("%s age %d pass %d pr %d state %d/%d\n",
 				inet_ntoa(ips.is_dst), ips.is_age,
-				ips.is_pass, ips.is_p);
+				ips.is_pass, ips.is_p, ips.is_state[0],
+				ips.is_state[1]);
 			if (ips.is_p == IPPROTO_TCP)
-				PRINTF("\t%hu -> %hu %lu:%lu %hu\n",
+				PRINTF("\t%hu -> %hu %lu:%lu %hu:%hu\n",
 					ntohs(ips.is_sport),
 					ntohs(ips.is_dport),
-					ips.is_seq, ips.is_ack, ips.is_win);
+					ips.is_seq, ips.is_ack,
+					ips.is_swin, ips.is_dwin);
 			else if (ips.is_p == IPPROTO_UDP)
 				PRINTF("\t%hu -> %hu\n", ntohs(ips.is_sport),
 					ntohs(ips.is_dport));

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ip_frag.c,v 1.7 1997/02/11 22:23:20 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -6,9 +7,9 @@
  * to the original author and the contributors.
  */
 #if 0
-#ifndef	lint
+#if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ip_frag.c	1.11 3/24/96 (C) 1993-1995 Darren Reed";
-static	char	rcsid[] = "$OpenBSD: ip_frag.c,v 1.6 1997/01/18 08:29:20 downsj Exp $";
+static	char	rcsid[] = "Id: ip_frag.c,v 2.0.1.1 1997/01/09 15:14:43 darrenr Exp";
 #endif
 #endif
 
@@ -18,21 +19,16 @@ static	char	rcsid[] = "$OpenBSD: ip_frag.c,v 1.6 1997/01/18 08:29:20 downsj Exp 
 #endif
 #include <sys/errno.h>
 #include <sys/types.h>
-#if defined(_KERNEL) || defined(KERNEL)
-#include <sys/systm.h>
-#endif
 #include <sys/param.h>
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
 #include <sys/protosw.h>
 #include <sys/socket.h>
+#ifdef	_KERNEL
+# include <sys/systm.h>
+#endif
 #if !defined(__SVR4) && !defined(__svr4__)
-# if defined(__OpenBSD__)
-#  include <sys/dirent.h>
-# else
-#  include <sys/dir.h>
-# endif
 # include <sys/mbuf.h>
 #else
 # include <sys/byteorder.h>
@@ -54,7 +50,6 @@ static	char	rcsid[] = "$OpenBSD: ip_frag.c,v 1.6 1997/01/18 08:29:20 downsj Exp 
 #include <netinet/udp.h>
 #include <netinet/tcpip.h>
 #include <netinet/ip_icmp.h>
-#include <sys/syslog.h>
 #include "ip_fil_compat.h"
 #include "ip_fil.h"
 #include "ip_frag.h"
@@ -64,6 +59,7 @@ static	char	rcsid[] = "$OpenBSD: ip_frag.c,v 1.6 1997/01/18 08:29:20 downsj Exp 
 ipfr_t	*ipfr_heads[IPFT_SIZE];
 ipfrstat_t ipfr_stats;
 u_long	ipfr_inuse = 0;
+u_long	fr_ipfrttl = 120;	/* 60 seconds */
 #ifdef _KERNEL
 extern	int	ipfr_timer_id;
 #endif
@@ -138,7 +134,7 @@ ipfr_newfrag(ip, fin, pass)
 	fr->ipfr_prev = NULL;
 	ipfr_heads[idx] = fr;
 	bcopy((char *)&frag.ipfr_src, (char *)&fr->ipfr_src, IPFR_CMPSZ);
-	fr->ipfr_ttl = 120;	/* 60 seconds */
+	fr->ipfr_ttl = fr_ipfrttl;
 	fr->ipfr_pass = pass & ~(FR_LOGFIRST|FR_LOG);
 	fr->ipfr_off = (ip->ip_off & 0x1fff) + (fin->fin_dlen >> 3);
 	*fp = fr;
@@ -235,7 +231,7 @@ ipfr_unload()
 	for (idx = IPFT_SIZE - 1; idx >= 0; idx--)
 		for (fp = &ipfr_heads[idx]; (fr = *fp); ) {
 			*fp = fr->ipfr_next;
-			KFREE(fp);
+			KFREE(fr);
 		}
 	SPLX(s);
 	MUTEX_EXIT(&ipf_frag);
@@ -249,9 +245,9 @@ ipfr_unload()
  */
 # if BSD < 199306
 int
-#else
+# else
 void
-#endif
+# endif
 ipfr_slowtimer()
 {
 	ipfr_t	**fp, *fr;
@@ -273,23 +269,23 @@ ipfr_slowtimer()
 				*fp = fr->ipfr_next;
 				ipfr_stats.ifs_expire++;
 				ipfr_inuse--;
-				KFREE(fp);
+				KFREE(fr);
 			} else
 				fp = &fr->ipfr_next;
 		}
 	SPLX(s);
-#if	SOLARIS
+# if	SOLARIS
 	MUTEX_EXIT(&ipf_frag);
 	fr_timeoutstate();
 	ip_natexpire();
 	ipfr_timer_id = timeout(ipfr_slowtimer, NULL, HZ/2);
-#else
+# else
 	fr_timeoutstate();
 	ip_natexpire();
 	ip_slowtimo();
-#endif
-# if BSD < 199306
+#  if BSD < 199306
 	return 0;
+#  endif
 # endif
 }
 #endif /* defined(_KERNEL) */

@@ -1,3 +1,4 @@
+/*	$OpenBSD: ip_nat.h,v 1.5 1997/02/11 22:23:27 kstailey Exp $	*/
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -6,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * $Id: ip_nat.h,v 1.4 1996/10/08 07:33:29 niklas Exp $
+ * Id: ip_nat.h,v 2.0.1.7 1997/01/30 12:39:41 darrenr Exp
  */
 
 #ifndef	__IP_NAT_H_
@@ -23,6 +24,9 @@
 #define	SIOCGNATL	_IOWR('r', 83, struct natlookup)
 #define SIOCGFRST	_IOR('r', 84, struct ipfrstat)
 #define SIOCGIPST	_IOR('r', 85, struct ips_stat)
+#define	SIOCFLNAT	_IOWR('r', 86, int)
+#define	SIOCCNATL	_IOWR('r', 87, int)
+
 #else
 #define	SIOCADNAT	_IOW(r, 80, struct ipnat)
 #define	SIOCRMNAT	_IOW(r, 81, struct ipnat)
@@ -30,33 +34,41 @@
 #define	SIOCGNATL	_IOWR(r, 83, struct natlookup)
 #define SIOCGFRST	_IOR(r, 84, struct ipfrstat)
 #define SIOCGIPST	_IOR(r, 85, struct ips_stat)
+#define	SIOCFLNAT	_IOWR(r, 86, int)
+#define	SIOCCNATL	_IOWR(r, 87, int)
 #endif
 
 #define	NAT_SIZE	367
 
 typedef	struct	nat	{
-	struct	nat	*nat_next;
-	u_short	nat_use;
-	short	nat_age;
+	int	nat_age;
 	u_long	nat_sumd;
+	u_long	nat_ipsumd;
 	struct	in_addr	nat_inip;
 	struct	in_addr	nat_outip;
 	struct	in_addr	nat_oip;	/* other ip */
 	u_short	nat_oport;	/* other port */
 	u_short	nat_inport;
 	u_short	nat_outport;
+	u_short	nat_use;
+	u_char	nat_state[2];
+	struct	ipnat	*nat_ptr;
+	struct	nat	*nat_next;
+	struct	nat	*nat_hnext[2];
+	struct	nat	**nat_hstart[2];
 } nat_t;
 
 typedef	struct	ipnat	{
 	struct	ipnat	*in_next;
 	void	*in_ifp;
-	u_short	in_flags;
+	u_int	in_space;
+	u_int	in_use;
+	struct	in_addr	in_nextip;
 	u_short	in_pnext;
+	u_short	in_flags;
 	u_short	in_port[2];
 	struct	in_addr	in_in[2];
 	struct	in_addr	in_out[2];
-	struct	in_addr	in_nextip;
-	int	in_space;
 	int	in_redir; /* 0 if it's a mapping, 1 if it's a hard redir */
 	char	in_ifname[IFNAMSIZ];
 } ipnat_t;
@@ -75,7 +87,8 @@ typedef	struct	ipnat	{
 #define	NAT_MAP		0
 #define	NAT_REDIRECT	1
 
-#define	IPN_CMPSIZ	(sizeof(struct in_addr) * 4 + sizeof(u_short) * 2)
+#define	IPN_CMPSIZ	(sizeof(struct in_addr) * 4 + sizeof(u_short) * 3 + \
+			 sizeof(int))
 
 typedef	struct	natlookup {
 	struct	in_addr	nl_inip;
@@ -89,7 +102,7 @@ typedef	struct	natstat	{
 	u_long	ns_added;
 	u_long	ns_expire;
 	u_long	ns_inuse;
-	nat_t	***ns_table;
+	nat_t	**ns_table[2];
 	ipnat_t	*ns_list;
 } natstat_t;
 
@@ -98,12 +111,15 @@ typedef	struct	natstat	{
 #define	IPN_UDP		2
 #define	IPN_TCPUDP	3
 
+extern nat_t *nat_table[2][NAT_SIZE];
 extern int nat_ioctl __P((caddr_t, int, int));
-extern nat_t *nat_lookupoutip __P((ipnat_t *, ip_t *, tcphdr_t *));
-extern nat_t *nat_lookupinip __P((struct in_addr, u_short));
+extern nat_t *nat_outlookup __P((int, struct in_addr, u_short, struct in_addr,
+				 u_short));
+extern nat_t *nat_inlookup __P((int, struct in_addr, u_short, struct in_addr,
+				 u_short));
 extern nat_t *nat_lookupredir __P((natlookup_t *));
-extern void ip_natout __P((ip_t *, int, fr_info_t *));
-extern void ip_natin __P((ip_t *, int, fr_info_t *));
+extern int ip_natout __P((ip_t *, int, fr_info_t *));
+extern int ip_natin __P((ip_t *, int, fr_info_t *));
 extern void ip_natunload __P((void));
 extern void ip_natexpire __P((void));
 #endif /* __IP_NAT_H__ */

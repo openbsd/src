@@ -1,3 +1,4 @@
+/*	$OpenBSD: ip_state.h,v 1.4 1997/02/11 22:23:30 kstailey Exp $	*/
 /*
  * (C)opyright 1995 by Darren Reed.
  *
@@ -6,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_state.h	1.3 1/12/96 (C) 1995 Darren Reed
- * $OpenBSD: ip_state.h,v 1.3 1996/10/08 07:33:30 niklas Exp $
+ * Id: ip_state.h,v 2.0.1.1 1997/01/09 15:14:43 darrenr Exp
  */
 #ifndef	__IP_STATE_H__
 #define	__IP_STATE_H__
@@ -30,7 +31,9 @@ typedef	struct tcpstate {
 	u_short	ts_dport;
 	u_long	ts_seq;
 	u_long	ts_ack;
-	u_short	ts_win;
+	u_short	ts_swin;
+	u_short	ts_dwin;
+	u_char	ts_state[2];
 } tcpstate_t;
 
 typedef struct ipstate {
@@ -40,6 +43,7 @@ typedef struct ipstate {
 	struct	in_addr	is_src;
 	struct	in_addr	is_dst;
 	u_char	is_p;
+	u_char	is_flags;
 	union {
 		icmpstate_t	is_ics;
 		tcpstate_t	is_ts;
@@ -52,10 +56,13 @@ typedef struct ipstate {
 #define	is_udp	is_ps.is_us
 #define	is_seq	is_tcp.ts_seq
 #define	is_ack	is_tcp.ts_ack
-#define	is_win	is_tcp.ts_win
+#define	is_dwin	is_tcp.ts_dwin
+#define	is_swin	is_tcp.ts_swin
 #define	is_sport	is_tcp.ts_sport
 #define	is_dport	is_tcp.ts_dport
+#define	is_state	is_tcp.ts_state
 
+#define	TH_OPENING	(TH_SYN|TH_ACK)
 
 typedef	struct	ips_stat {
 	u_long	iss_hits;
@@ -72,10 +79,11 @@ typedef	struct	ips_stat {
 } ips_stat_t;
 
 extern ips_stat_t *fr_statetstats __P((void));
-extern int	fr_addstate __P((ip_t *, fr_info_t *, u_int));
-extern int	fr_checkstate __P((ip_t *, fr_info_t *));
-extern void	fr_timeoutstate __P((void));
+extern int fr_addstate __P((ip_t *, fr_info_t *, u_int));
+extern int fr_checkstate __P((ip_t *, fr_info_t *));
+extern void fr_timeoutstate __P((void));
+extern void set_tcp_age __P((int *, u_char *, ip_t *, fr_info_t *, int));
 # ifdef	_KERNEL
-extern void	fr_stateunload __P((void));
+extern void fr_stateunload __P((void));
 # endif
 #endif /* __IP_STATE_H__ */

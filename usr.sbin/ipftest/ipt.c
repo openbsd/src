@@ -39,9 +39,9 @@
 #include "ipt.h"
 #include <ctype.h>
 
-#ifndef	lint
+#if !defined(lint) && defined(LIBC_SCCS)
 static	char	sccsid[] = "@(#)ipt.c	1.19 6/3/96 (C) 1993-1996 Darren Reed";
-static	char	rcsid[] = "$Id: ipt.c,v 1.7 1997/01/17 07:14:08 millert Exp $";
+static	char	rcsid[] = "$Id: ipt.c,v 1.8 1997/02/11 22:23:58 kstailey Exp $";
 #endif
 
 extern	int	fr_check();
@@ -131,14 +131,14 @@ char *argv[];
 			/*
 			 * treat both CR and LF as EOL
 			 */
-			if ((s = strchr(line, '\n')))
+			if ((s = index(line, '\n')))
 				*s = '\0';
-			if ((s = strchr(line, '\r')))
+			if ((s = index(line, '\r')))
 				*s = '\0';
 			/*
 			 * # is comment marker, everything after is a ignored
 			 */
-			if ((s = strchr(line, '#')))
+			if ((s = index(line, '#')))
 				*s = '\0';
 
 			if (!*line)
@@ -175,7 +175,7 @@ char *argv[];
 	while ((i = (*r->r_readip)(buf, sizeof(buf), &iface, &dir)) > 0) {
 		ip->ip_off = ntohs(ip->ip_off);
 		ip->ip_len = ntohs(ip->ip_len);
-		switch (fr_check(ip, ip->ip_hl << 2, iface, dir))
+		switch (fr_check(ip, ip->ip_hl << 2, iface, dir)) /* XXX */
 		{
 		case -1 :
 			(void)printf("block");
