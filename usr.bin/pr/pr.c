@@ -1,4 +1,4 @@
-/*	$OpenBSD: pr.c,v 1.15 2002/04/30 01:59:47 deraadt Exp $	*/
+/*	$OpenBSD: pr.c,v 1.16 2003/06/03 02:56:14 millert Exp $	*/
 
 /*-
  * Copyright (c) 1991 Keith Muller.
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -45,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)pr.c	8.1 (Berkeley) 6/6/93"; */
-static char *rcsid = "$OpenBSD: pr.c,v 1.15 2002/04/30 01:59:47 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pr.c,v 1.16 2003/06/03 02:56:14 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

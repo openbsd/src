@@ -1,4 +1,4 @@
-/*	$OpenBSD: mesg.c,v 1.4 1997/07/31 14:56:33 flipk Exp $	*/
+/*	$OpenBSD: mesg.c,v 1.5 2003/06/03 02:56:13 millert Exp $	*/
 /*	$NetBSD: mesg.c,v 1.4 1994/12/23 07:16:32 jtc Exp $	*/
 
 /*
@@ -18,11 +18,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -49,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)mesg.c	8.2 (Berkeley) 1/21/94";
 #endif
-static char rcsid[] = "$OpenBSD: mesg.c,v 1.4 1997/07/31 14:56:33 flipk Exp $";
+static char rcsid[] = "$OpenBSD: mesg.c,v 1.5 2003/06/03 02:56:13 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

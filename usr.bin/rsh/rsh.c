@@ -1,4 +1,4 @@
-/*	$OpenBSD: rsh.c,v 1.31 2003/04/08 22:11:56 millert Exp $	*/
+/*	$OpenBSD: rsh.c,v 1.32 2003/06/03 02:56:15 millert Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1990 The Regents of the University of California.
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -41,7 +37,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rsh.c	5.24 (Berkeley) 7/1/91";*/
-static char rcsid[] = "$OpenBSD: rsh.c,v 1.31 2003/04/08 22:11:56 millert Exp $";
+static char rcsid[] = "$OpenBSD: rsh.c,v 1.32 2003/06/03 02:56:15 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

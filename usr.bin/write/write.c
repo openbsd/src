@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.19 2003/03/13 15:47:12 deraadt Exp $	*/
+/*	$OpenBSD: write.c,v 1.20 2003/06/03 02:56:24 millert Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -47,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.19 2003/03/13 15:47:12 deraadt Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.20 2003/06/03 02:56:24 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>

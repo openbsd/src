@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.52 2003/04/05 17:19:47 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.53 2003/06/03 02:56:08 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.24 1997/08/18 10:20:26 lukem Exp $	*/
 
 /*
@@ -42,11 +42,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -73,7 +69,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: main.c,v 1.52 2003/04/05 17:19:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.53 2003/06/03 02:56:08 millert Exp $";
 #endif
 #endif /* not lint */
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: colcrt.c,v 1.4 2001/11/19 19:02:13 mpech Exp $	*/
+/*	$OpenBSD: colcrt.c,v 1.5 2003/06/03 02:56:07 millert Exp $	*/
 /*	$NetBSD: colcrt.c,v 1.3 1995/03/26 05:31:00 glass Exp $	*/
 
 /*
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)colcrt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: colcrt.c,v 1.4 2001/11/19 19:02:13 mpech Exp $";
+static char rcsid[] = "$OpenBSD: colcrt.c,v 1.5 2003/06/03 02:56:07 millert Exp $";
 #endif
 #endif /* not lint */
 

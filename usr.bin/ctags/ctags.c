@@ -1,4 +1,4 @@
-/*	$OpenBSD: ctags.c,v 1.8 2003/04/25 20:07:09 pvalchev Exp $	*/
+/*	$OpenBSD: ctags.c,v 1.9 2003/06/03 02:56:07 millert Exp $	*/
 /*	$NetBSD: ctags.c,v 1.4 1995/09/02 05:57:23 jtc Exp $	*/
 
 /*
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ctags.c	8.4 (Berkeley) 2/7/95";
 #endif
-static char rcsid[] = "$OpenBSD: ctags.c,v 1.8 2003/04/25 20:07:09 pvalchev Exp $";
+static char rcsid[] = "$OpenBSD: ctags.c,v 1.9 2003/06/03 02:56:07 millert Exp $";
 #endif /* not lint */
 
 #include <err.h>

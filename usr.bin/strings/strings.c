@@ -1,4 +1,4 @@
-/*	$OpenBSD: strings.c,v 1.9 2002/12/08 16:50:07 millert Exp $	*/
+/*	$OpenBSD: strings.c,v 1.10 2003/06/03 02:56:16 millert Exp $	*/
 /*	$NetBSD: strings.c,v 1.7 1995/02/15 15:49:19 jtc Exp $	*/
 
 /*
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)strings.c	8.2 (Berkeley) 1/28/94";
 #endif
-static char rcsid[] = "$OpenBSD: strings.c,v 1.9 2002/12/08 16:50:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: strings.c,v 1.10 2003/06/03 02:56:16 millert Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>

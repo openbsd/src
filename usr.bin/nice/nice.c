@@ -1,4 +1,4 @@
-/*	$OpenBSD: nice.c,v 1.7 2002/06/17 07:06:25 deraadt Exp $	*/
+/*	$OpenBSD: nice.c,v 1.8 2003/06/03 02:56:13 millert Exp $	*/
 /*	$NetBSD: nice.c,v 1.9 1995/08/31 23:30:58 jtc Exp $	*/
 
 /*
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -44,7 +40,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)nice.c	5.4 (Berkeley) 6/1/90";
 #endif
-static char rcsid[] = "$OpenBSD: nice.c,v 1.7 2002/06/17 07:06:25 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: nice.c,v 1.8 2003/06/03 02:56:13 millert Exp $";
 #endif /* not lint */
 
 #include <sys/time.h>

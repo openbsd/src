@@ -1,4 +1,4 @@
-/*	$OpenBSD: cut.c,v 1.9 2002/02/16 21:27:45 millert Exp $	*/
+/*	$OpenBSD: cut.c,v 1.10 2003/06/03 02:56:07 millert Exp $	*/
 /*	$NetBSD: cut.c,v 1.9 1995/09/02 05:59:23 jtc Exp $	*/
 
 /*
@@ -16,11 +16,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -47,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cut.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: cut.c,v 1.9 2002/02/16 21:27:45 millert Exp $";
+static char rcsid[] = "$OpenBSD: cut.c,v 1.10 2003/06/03 02:56:07 millert Exp $";
 #endif /* not lint */
 
 #include <ctype.h>

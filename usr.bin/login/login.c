@@ -1,4 +1,4 @@
-/*	$OpenBSD: login.c,v 1.49 2002/10/16 01:08:56 millert Exp $	*/
+/*	$OpenBSD: login.c,v 1.50 2003/06/03 02:56:10 millert Exp $	*/
 /*	$NetBSD: login.c,v 1.13 1996/05/15 23:50:16 jtc Exp $	*/
 
 /*-
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -77,7 +73,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-static const char rcsid[] = "$OpenBSD: login.c,v 1.49 2002/10/16 01:08:56 millert Exp $";
+static const char rcsid[] = "$OpenBSD: login.c,v 1.50 2003/06/03 02:56:10 millert Exp $";
 #endif /* not lint */
 
 /*

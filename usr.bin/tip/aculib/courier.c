@@ -1,4 +1,4 @@
-/*	$OpenBSD: courier.c,v 1.12 2003/04/04 21:50:00 deraadt Exp $	*/
+/*	$OpenBSD: courier.c,v 1.13 2003/06/03 02:56:18 millert Exp $	*/
 /*	$NetBSD: courier.c,v 1.7 1997/02/11 09:24:16 mrg Exp $	*/
 
 /*
@@ -13,11 +13,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by the University of
- *	California, Berkeley and its contributors.
- * 4. Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: courier.c,v 1.12 2003/04/04 21:50:00 deraadt Exp $";
+static const char rcsid[] = "$OpenBSD: courier.c,v 1.13 2003/06/03 02:56:18 millert Exp $";
 #endif /* not lint */
 
 /*
