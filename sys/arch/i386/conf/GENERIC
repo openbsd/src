@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.192 2000/07/04 11:37:30 fgsch Exp $
+#	$OpenBSD: GENERIC,v 1.193 2000/07/04 11:46:08 fgsch Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -114,7 +114,8 @@ pcmcia*	at pcic? controller ? socket ?
 #urio*	at uhub? port ?
 
 # Handspring Visor
-#uvisor*	at uhub? port ?
+#uvisor*	at uhub? port ? configuration ?
+#ucom*	at uvisor?
 
 # USB Generic driver
 #ugen*	at uhub? port ? configuration ? interface ?
