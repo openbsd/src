@@ -1,5 +1,5 @@
-/*	$OpenBSD: scsiconf.c,v 1.9 1996/05/02 13:17:54 deraadt Exp $	*/
-/*	$NetBSD: scsiconf.c,v 1.56 1996/04/22 01:46:09 christos Exp $	*/
+/*	$OpenBSD: scsiconf.c,v 1.10 1996/05/06 11:33:06 deraadt Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.57 1996/05/02 01:09:01 neil Exp $	*/
 
 /*
  * Copyright (c) 1994 Charles Hannum.  All rights reserved.
@@ -298,6 +298,9 @@ struct scsi_quirk_inquiry_pattern scsi_quirk_patterns[] = {
 	 "TEXEL   ", "CD-ROM          ", "1.06"}, SDEV_NOLUNS},
 	{{T_CDROM, T_REMOV,
 	 "TEXEL   ", "CD-ROM DM-XX24 K", "1.10"}, SDEV_NOLUNS},
+	{{T_CDROM, T_REMOV,  
+	 "ShinaKen", "CD-ROM DM-3x1S", "1.04"}, SDEV_NOLUNS},  
+
 
 	{{T_OPTICAL, T_REMOV,
 	 "EPSON   ", "OMD-5010        ", "3.08"}, SDEV_NOLUNS},
