@@ -1,5 +1,5 @@
-/*	$OpenBSD: ums.c,v 1.12 2002/11/11 02:32:32 nate Exp $ */
-/*	$NetBSD: ums.c,v 1.59 2002/09/23 05:59:01 simonb Exp $	*/
+/*	$OpenBSD: ums.c,v 1.13 2003/05/19 00:37:19 nate Exp $ */
+/*	$NetBSD: ums.c,v 1.60 2003/03/11 16:44:00 augustss Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 /*
- * HID spec: http://www.usb.org/developers/data/devclass/hid1_1.pdf
+ * HID spec: http://www.usb.org/developers/devclass_docs/HID1_11.pdf
  */
 
 #include <sys/param.h>
