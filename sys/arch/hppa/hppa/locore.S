@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.128 2004/04/08 17:14:50 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.129 2004/04/21 22:25:31 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2004 Michael Shalayeff
@@ -1035,6 +1035,9 @@ ENTRY(TLABEL(excpt),0)
 	copy	rp, r1
 	copy	arg0, r8
 	mfctl	cr30, r9
+#if (PCB_FPREGS+U_PCB) != 0
+	ldo	PCB_FPREGS+U_PCB(r9), r9
+#endif
 	.import	fpu_save, code
 	.call
 	bl	fpu_save, rp
@@ -1051,13 +1054,11 @@ ENTRY(TLABEL(excpt),0)
 	ldw	8(r9), r1
 	bb,>=,n r1, 5, excpt_notrap	/* HPPA_FPU_UNMPL not set */
 
-	ldw	0(r9), r1
-	depi	0, HPPA_FPU_T_POS, 1, r1
-	stw	r1, 0(r9)
-	ldw	8(r9), r1
+	ldw	0(r9), r16
+	depi	0, HPPA_FPU_T_POS, 1, r16
 	.import	$fpu_emulate, code
 	b	$fpu_emulate
-	fdc	r0(r9)
+	stw	r16, 0(r9)
 
 excpt_notrap
 	sync
@@ -1127,26 +1128,27 @@ $fpusw_set
 	mfctl	cr30, r9
 	ldw	R%fpu_curpcb(r16), r16
 
-	comb,=,n r16, r9, $fpusw_done
 	comb,=,n r16, r0, $fpusw_nosave
+	comb,=,n r16, r9, $fpusw_done
 
 	copy	arg0, r17
 	copy	rp, r1
-	copy	r16, arg0
+#if (PCB_FPREGS+U_PCB) != 0
+	ldo	PCB_FPREGS+U_PCB(r16), r16
+#endif
 	.import	fpu_save, code
 	.call
 	bl	fpu_save, rp
-	ldo	PCB_FPREGS+U_PCB(arg0), arg0
+	copy	r16, arg0
 	copy	r1, rp
 	copy	r17, arg0
 
 $fpusw_nosave
-
 	/* count switches */
 	ldil	L%fpu_csw, r1
 	ldw	R%fpu_csw(r1), r16
-	ldo	1(r16), r16
 	ldo	31*8+PCB_FPREGS+U_PCB(r9), r17
+	ldo	1(r16), r16
 	stw	r16, R%fpu_csw(r1)
 
 	fldds,ma -8(r17), fr31
