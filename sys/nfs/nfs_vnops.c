@@ -1,4 +1,4 @@
-/*	$OpenBSD: nfs_vnops.c,v 1.19 1997/12/02 16:57:59 csapuntz Exp $	*/
+/*	$OpenBSD: nfs_vnops.c,v 1.20 1998/05/11 05:42:01 deraadt Exp $	*/
 /*	$NetBSD: nfs_vnops.c,v 1.62.4.1 1996/07/08 20:26:52 jtc Exp $	*/
 
 /*
@@ -1959,7 +1959,7 @@ nfs_readdir(v)
 		u_long *cookies;
 		/* XXX - over-estimate - see UFS code for how to do it
 		   right */
-		int ncookies = (uio->uio_iov->iov_base - base) / 12;
+		int ncookies = ((caddr_t)uio->uio_iov->iov_base - base) / 12;
 
 		MALLOC(cookies, u_long *, sizeof(*cookies) * ncookies,
 		       M_TEMP, M_WAITOK);
@@ -1972,7 +1972,7 @@ nfs_readdir(v)
 		 */
 		if (uio->uio_segflg != UIO_SYSSPACE || uio->uio_iovcnt != 1)
 			panic("nfs_readdir: lost in space");
-		while (ncookies-- && base < uio->uio_iov->iov_base) {
+		while (ncookies-- && base < (caddr_t)uio->uio_iov->iov_base) {
 			dp = (struct dirent *) base;
 			if (dp->d_reclen == 0)
 				break;
@@ -1982,8 +1982,8 @@ nfs_readdir(v)
 		}
 
 		*ap->a_ncookies -= ncookies;
-		uio->uio_resid += (uio->uio_iov->iov_base - base);
-		uio->uio_iov->iov_len += (uio->uio_iov->iov_base - base);
+		uio->uio_resid += ((caddr_t)uio->uio_iov->iov_base - base);
+		uio->uio_iov->iov_len += ((caddr_t)uio->uio_iov->iov_base - base);
 		uio->uio_iov->iov_base = base;
 	}
 
@@ -2092,7 +2092,7 @@ nfs_readdirrpc(vp, uiop, cred)
 			left = NFS_READDIRBLKSIZ - blksiz;
 			if ((tlen + DIRHDSIZ) > left) {
 				dp->d_reclen += left;
-				uiop->uio_iov->iov_base += left;
+				(caddr_t)uiop->uio_iov->iov_base += left;
 				uiop->uio_iov->iov_len -= left;
 				uiop->uio_offset += left;
 				uiop->uio_resid -= left;
@@ -2111,13 +2111,13 @@ nfs_readdirrpc(vp, uiop, cred)
 					blksiz = 0;
 				uiop->uio_offset += DIRHDSIZ;
 				uiop->uio_resid -= DIRHDSIZ;
-				uiop->uio_iov->iov_base += DIRHDSIZ;
+				(caddr_t)uiop->uio_iov->iov_base += DIRHDSIZ;
 				uiop->uio_iov->iov_len -= DIRHDSIZ;
 				nfsm_mtouio(uiop, len);
 				cp = uiop->uio_iov->iov_base;
 				tlen -= len;
 				*cp = '\0';	/* null terminate */
-				uiop->uio_iov->iov_base += tlen;
+				(caddr_t)uiop->uio_iov->iov_base += tlen;
 				uiop->uio_iov->iov_len -= tlen;
 				uiop->uio_offset += tlen;
 				uiop->uio_resid -= tlen;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_subr.c,v 1.4 1997/02/24 14:19:56 niklas Exp $	*/
+/*	$OpenBSD: kern_subr.c,v 1.5 1998/05/11 05:41:59 deraadt Exp $	*/
 /*	$NetBSD: kern_subr.c,v 1.15 1996/04/09 17:21:56 ragge Exp $	*/
 
 /*
@@ -130,7 +130,7 @@ again:
 		break;
 
 	case UIO_SYSSPACE:
-		*iov->iov_base = c;
+		*(char *)iov->iov_base = c;
 		break;
 	}
 	iov->iov_base++;
