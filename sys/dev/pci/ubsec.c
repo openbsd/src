@@ -1,4 +1,4 @@
-/*	$OpenBSD: ubsec.c,v 1.87 2002/04/26 05:06:03 jason Exp $	*/
+/*	$OpenBSD: ubsec.c,v 1.88 2002/04/26 05:08:49 jason Exp $	*/
 
 /*
  * Copyright (c) 2000 Jason L. Wright (jason@thought.net)
@@ -1811,7 +1811,7 @@ ubsec_kprocess_modexp(sc, krp)
 	}
 
 	if (ubsec_kcopyin(&krp->krp_param[1], me->me_E.dma_vaddr,
-	    2048 / 8, &len)) {
+	    1024 / 8, &len)) {
 		err = EOPNOTSUPP;
 		goto errout;
 	}
