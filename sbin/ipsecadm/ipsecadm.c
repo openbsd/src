@@ -1,4 +1,4 @@
-/* $OpenBSD: ipsecadm.c,v 1.28 1999/12/20 05:38:22 angelos Exp $ */
+/* $OpenBSD: ipsecadm.c,v 1.29 2000/01/09 22:53:40 angelos Exp $ */
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
  * Angelos D. Keromytis (kermit@csd.uch.gr) and 
@@ -875,10 +875,10 @@ main(int argc, char **argv)
 		    exit(1);
 		}
 
-		sport = svp->s_port;
+		sport = htons(svp->s_port);
 	    }
 	    else
-	      sport = atoi(argv[i+1]);
+	      sport = htons(atoi(argv[i+1]));
 
 	    osrc->sin.sin_port = sport;
 	    osmask->sin.sin_port = 0xffff;
@@ -899,10 +899,10 @@ main(int argc, char **argv)
 			    argv[0], argv[i + 1], transportproto);
 		    exit(1);
 		}
-		dport = svp->s_port;
+		dport = htons(svp->s_port);
 	    }
 	    else
-	      dport = atoi(argv[i + 1]);
+	      dport = htons(atoi(argv[i + 1]));
 
 	    odst->sin.sin_port = dport;
 	    odmask->sin.sin_port = 0xffff;
