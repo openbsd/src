@@ -1,4 +1,4 @@
-/*	$OpenBSD: openpic.c,v 1.15 2004/05/14 18:29:39 miod Exp $	*/
+/*	$OpenBSD: openpic.c,v 1.16 2004/05/15 22:08:04 miod Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -482,7 +482,7 @@ intr_typename(type)
 void
 intr_calculatemasks()
 {
-	int irq, level, levels;
+	int irq, hirq, level, levels;
 	struct intrhand *q;
 	int irqs;
 
@@ -532,18 +532,22 @@ intr_calculatemasks()
 	/* Lastly, determine which IRQs are actually in use. */
 	irqs = 0;
 	for (irq = 0; irq < ICU_LEN; irq++) {
+		hirq = hwirq[irq];
+		if (hirq < 0)
+			continue;
+
 		if (intrhand[irq]) {
 			irqs |= 1 << irq;
 
-			if (hwirq[irq] >= PIC_OFFSET)
-				openpic_enable_irq(hwirq[irq], intrtype[irq]);
+			if (hirq >= PIC_OFFSET)
+				openpic_enable_irq(hirq, intrtype[irq]);
 			else
-				i8259_enable_irq(hwirq[irq], intrtype[irq]);
+				i8259_enable_irq(hirq, intrtype[irq]);
 		} else {
-			if (hwirq[irq] >= PIC_OFFSET)
-				openpic_disable_irq(hwirq[irq]);
+			if (hirq >= PIC_OFFSET)
+				openpic_disable_irq(hirq);
 			else
-				i8259_disable_irq(hwirq[irq]);
+				i8259_disable_irq(hirq);
 		}
 	}
 
@@ -681,20 +685,25 @@ void
 openpic_enable_irq_mask(irq_mask)
 	int irq_mask;
 {
-	int irq;
+	int irq, hirq;
 
-	for (irq = 0; irq <= virq_max; irq++)
+	for (irq = 0; irq <= virq_max; irq++) {
+		hirq = hwirq[irq];
+		if (hirq < 0)
+			continue;
+
 		if (irq_mask & (1 << irq)) {
-			if (hwirq[irq] >= PIC_OFFSET)
-				openpic_enable_irq(hwirq[irq], intrtype[irq]);
+			if (hirq >= PIC_OFFSET)
+				openpic_enable_irq(hirq, intrtype[irq]);
 			else
-				i8259_enable_irq(hwirq[irq], intrtype[irq]);
+				i8259_enable_irq(hirq, intrtype[irq]);
 		} else {
-			if (hwirq[irq] >= PIC_OFFSET)
-				openpic_disable_irq(hwirq[irq]);
+			if (hirq >= PIC_OFFSET)
+				openpic_disable_irq(hirq);
 			else
-				i8259_disable_irq(hwirq[irq]);
+				i8259_disable_irq(hirq);
 		}
+	}
 
 	i8259_set_irq_mask();
 }
@@ -706,11 +715,12 @@ openpic_enable_irq(irq, type)
 {
 	u_int x;
 
+#ifdef DIAGNOSTIC
 	/* skip invalid irqs */
-	if (irq < 0)
-		return;
-	if (irq >= PIC_OFFSET)
-		irq -= PIC_OFFSET;
+	if (irq < PIC_OFFSET)
+		panic("openpic_enable_irq: invalid irq %x", irq);
+#endif
+	irq -= PIC_OFFSET;
 
 	while ((x = openpic_read(OPENPIC_SRC_VECTOR(irq))) & OPENPIC_ACTIVITY) {
 		x = openpic_iack(0);
@@ -769,7 +779,7 @@ i8259_disable_irq(irq)
 #ifdef DIAGNOSTIC
 	/* skip invalid irqs */
 	if (irq < 0 || irq >= PIC_OFFSET)
-		return;
+		panic("i8259_disable_irq: invalid irq %x", irq);
 #endif
 
 	if (irq < 8) {
@@ -789,7 +799,7 @@ i8259_enable_irq(irq, type)
 #ifdef DIAGNOSTIC
 	/* skip invalid irqs */
 	if (irq < 0 || irq >= PIC_OFFSET)
-		return;
+		panic("i8259_enable_irq: invalid irq %x", irq);
 #endif
 
 	if (irq < 8) {
@@ -814,8 +824,9 @@ i8259_eoi(int irq)
 #ifdef DIAGNOSTIC
 	/* skip invalid irqs */
 	if (irq < 0 || irq >= PIC_OFFSET)
-		return;
+		panic("i8259_eoi: invalid irq %x", irq);
 #endif
+
 	if (irq < 8)
 		outb(IO_ICU1, 0x60 | irq);
 	else {
