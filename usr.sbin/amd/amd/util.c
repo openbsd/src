@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)util.c	8.1 (Berkeley) 6/6/93
- *	$Id: util.c,v 1.9 2002/08/05 07:24:26 pvalchev Exp $
+ *	$Id: util.c,v 1.10 2003/03/13 22:08:02 deraadt Exp $
  */
 
 /*
@@ -85,7 +85,7 @@ strealloc(char *p, char *s)
 
 	p = (char *) xrealloc((void *)p, len);
 
-	strcpy(p, s);
+	strlcpy(p, s, len);
 #ifdef DEBUG_MEM
 	malloc_verify();
 #endif /* DEBUG_MEM */

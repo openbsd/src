@@ -1,4 +1,4 @@
-/*	$OpenBSD: afs_ops.c,v 1.9 2002/11/25 18:04:10 pvalchev Exp $	*/
+/*	$OpenBSD: afs_ops.c,v 1.10 2003/03/13 22:08:02 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1990 Jan-Simon Pendry
@@ -186,7 +186,7 @@ mount_toplvl(char *dir, char *opts)
 	 * Most kernels have a name length restriction.
 	 */
 	if (strlen(fs_hostname) >= HOSTNAMESZ)
-		strcpy(fs_hostname + HOSTNAMESZ - 3, "..");
+		strlcpy(fs_hostname + HOSTNAMESZ - 3, "..", 3);
 #endif /* HOSTNAMESZ */
 
 #ifdef NFSMNT_DUMBTIMR
