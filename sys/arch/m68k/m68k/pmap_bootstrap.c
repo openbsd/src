@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap_bootstrap.c,v 1.9 2004/12/30 21:22:20 miod Exp $	*/
+/*	$OpenBSD: pmap_bootstrap.c,v 1.10 2005/01/04 18:38:33 miod Exp $	*/
 
 /* 
  * Copyright (c) 1995 Theo de Raadt
@@ -164,7 +164,7 @@ pmap_bootstrap(nextpa, firstpa)
 	nextpa += kstsize * NBPG;
 	kptpa = nextpa;
 
-	nptpages = RELOC(Sysptsize, int) +
+	nptpages =
 	    (MACHINE_IIOMAPSIZE + MACHINE_EIOMAPSIZE + NPTEPG - 1) / NPTEPG;
 
 	iiopa = nextpa + RELOC(Sysptsize, int) * NBPG;
