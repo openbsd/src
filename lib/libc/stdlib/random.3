@@ -29,7 +29,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\"	$OpenBSD: random.3,v 1.5 1998/02/07 02:16:25 millert Exp $
+.\"	$OpenBSD: random.3,v 1.6 1998/07/05 19:54:25 millert Exp $
 .\"
 .Dd April 19, 1991
 .Dt RANDOM 3
@@ -162,6 +162,7 @@ is called with less than 8 bytes of state information, or if
 detects that the state information has been garbled, error
 messages are printed on the standard error output.
 .Sh SEE ALSO
+.Xr arc4random 3 ,
 .Xr drand48 3 ,
 .Xr rand 3
 .Sh STANDARDS
