@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_command.c,v 1.24 2001/11/28 16:13:29 art Exp $	*/
+/*	$OpenBSD: db_command.c,v 1.25 2002/01/02 22:22:00 miod Exp $	*/
 /*	$NetBSD: db_command.c,v 1.20 1996/03/30 22:30:05 christos Exp $	*/
 
 /* 
@@ -35,6 +35,7 @@
 #include <sys/proc.h>
 #include <sys/reboot.h>
 #include <sys/extent.h>
+#include <sys/pool.h>
 
 #include <uvm/uvm_extern.h>
 #include <machine/db_machdep.h>		/* type definitions */
@@ -330,6 +331,22 @@ db_object_print_cmd(addr, have_addr, count, modif)
 
 /*ARGSUSED*/
 void
+db_page_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+        boolean_t full = FALSE;
+        
+        if (modif[0] == 'f')
+                full = TRUE;
+
+	uvm_page_printit((struct vm_page *) addr, full, db_printf);
+}
+
+/*ARGSUSED*/
+void
 db_extent_print_cmd(addr, have_addr, count, modif)
 	db_expr_t	addr;
 	int		have_addr;
@@ -337,6 +354,28 @@ db_extent_print_cmd(addr, have_addr, count, modif)
 	char *		modif;
 {
 	extent_print_all();
+}
+
+/*ARGSUSED*/
+void
+db_pool_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	pool_printit((struct pool *)addr, modif, db_printf);
+}
+
+/*ARGSUSED*/
+void
+db_uvmexp_print_cmd(addr, have_addr, count, modif)
+	db_expr_t	addr;
+	int		have_addr;
+	db_expr_t	count;
+	char *		modif;
+{
+	uvmexp_print(db_printf);
 }
 
 /*
@@ -351,14 +390,17 @@ struct db_command db_show_all_cmds[] = {
 
 struct db_command db_show_cmds[] = {
 	{ "all",	NULL,			0,	db_show_all_cmds },
-	{ "registers",	db_show_regs,		0,	NULL },
 	{ "breaks",	db_listbreak_cmd, 	0,	NULL },
-	{ "watches",	db_listwatch_cmd, 	0,	NULL },
-	{ "map",	db_map_print_cmd,	0,	NULL },
-	{ "object",	db_object_print_cmd,	0,	NULL },
 	{ "extents",	db_extent_print_cmd,	0,	NULL },
 	{ "malloc",	db_malloc_print_cmd,	0,	NULL },
-	{ NULL,		NULL,			0,	NULL, }
+	{ "map",	db_map_print_cmd,	0,	NULL },
+	{ "object",	db_object_print_cmd,	0,	NULL },
+	{ "page",	db_page_print_cmd,	0,	NULL },
+	{ "pool",	db_pool_print_cmd,	0,	NULL },
+	{ "registers",	db_show_regs,		0,	NULL },
+	{ "uvmexp",	db_uvmexp_print_cmd,	0,	NULL },
+	{ "watches",	db_listwatch_cmd, 	0,	NULL },
+	{ NULL,		NULL,			0,	NULL }
 };
 
 struct db_command db_boot_cmds[] = {
