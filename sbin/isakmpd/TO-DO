@@ -1,4 +1,4 @@
-$OpenBSD: TO-DO,v 1.20 2001/04/12 15:51:33 ho Exp $
+$OpenBSD: TO-DO,v 1.21 2001/06/12 21:53:19 niklas Exp $
 $EOM: TO-DO,v 1.45 2000/04/07 22:47:38 niklas Exp $
 
 This file mixes small nitpicks with large projects to be done.
@@ -139,3 +139,5 @@ This file mixes small nitpicks with large projects to be done.
 * IPv6
 
 * AES in phase 1
+
+* x509_certreq_validate needs implementing.
