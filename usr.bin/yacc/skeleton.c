@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeleton.c,v 1.5 1996/05/20 07:31:54 tholo Exp $	*/
+/*	$OpenBSD: skeleton.c,v 1.6 1996/07/28 02:03:26 deraadt Exp $	*/
 /*	$NetBSD: skeleton.c,v 1.10 1996/03/25 00:36:18 mrg Exp $	*/
 
 /*
@@ -63,7 +63,7 @@ char *banner[] =
 {
     "#ifndef lint",
     "/*static char yysccsid[] = \"from: @(#)yaccpar	1.9 (Berkeley) 02/21/93\";*/",
-    "static char yyrcsid[] = \"$OpenBSD: skeleton.c,v 1.5 1996/05/20 07:31:54 tholo Exp $\";",
+    "static char yyrcsid[] = \"$OpenBSD: skeleton.c,v 1.6 1996/07/28 02:03:26 deraadt Exp $\";",
     "#endif",
     "#include <stdlib.h>",
     "#define YYBYACC 1",
@@ -175,7 +175,7 @@ char *body[] =
     "#if YYDEBUG",
     "    register char *yys;",
     "",
-    "    if (yys = getenv(\"YYDEBUG\"))",
+    "    if ((yys = getenv(\"YYDEBUG\")))",
     "    {",
     "        yyn = *yys;",
     "        if (yyn >= '0' && yyn <= '9')",
