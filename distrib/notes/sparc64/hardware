@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.44 2002/12/26 11:54:54 henning Exp $
+dnl	$OpenBSD: hardware,v 1.45 2002/12/30 06:35:20 fgsch Exp $
 OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- SBUS based workstations:
 		Ultra 1
@@ -126,7 +126,6 @@ Supported devices {:-include-:}:
 		    Dlink DWL520 PCI [A]
 		    Global Sun Technology GL24110P PCI (untested) [A]
 		    Global Sun Technology GL24110P02 PCI [A]
-		    Intersil Mini-PCI [A]
 		    LinkSys WDT11 PCI (a rebadged GL24110P02) [A]
 		    NDC/Sohoware NCP130 PCI [A]
 		    Netgear MA301 PCI [A]
