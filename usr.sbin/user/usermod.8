@@ -1,6 +1,5 @@
-.\" $OpenBSD: usermod.8,v 1.10 2001/08/02 18:37:35 mpech Exp $ */
-.\" $NetBSD: usermod.8,v 1.4 2000/02/28 05:10:57 enami Exp $ */
-.\"
+.\" $OpenBSD: usermod.8,v 1.11 2001/09/18 01:50:44 millert Exp $
+.\" $NetBSD: usermod.8,v 1.10 2001/02/21 12:16:07 agc Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -32,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd April 3, 2001 
+.Dd September 5, 2001
 .Dt USERMOD 8
 .Os
 .Sh NAME
@@ -40,19 +39,20 @@
 .Nd modify user login information
 .Sh SYNOPSIS
 .Nm usermod
+.Op Fl mov
 .Op Fl G Ar secondary-group[,group,...]
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar password-change-secs
-.Op Fl g Ar gid/name/=uid
+.Oo
+.Fl g Ar gid | name | Li =uid
+.Oc
+.Op Fl L Ar login-class
 .Op Fl l Ar new-login
-.Op Fl m
-.Op Fl o
 .Op Fl p Ar password
 .Op Fl s Ar shell
 .Op Fl u Ar uid
-.Op Fl v
 .Ar user
 .Sh DESCRIPTION
 The
@@ -69,24 +69,28 @@ the command line options are processed:
 .It Fl G Ar secondary-group[,group,...]
 are the secondary groups the user will be a member of in the
 .Pa /etc/group
-file. This list of groups will replace any old group memberships.
+file.
 .It Fl c Ar comment
 is the comment field (also, for historical reasons known as the
 GECOS field) which will be added for the user, and typically will include
 the username, and, perhaps, contact information for the user.
 .It Fl d Ar home-directory
-is the home directory which will be created and populated for the user,
-should the -m option be specified.
+Sets the home directory to
+.Ar home-directory
+without populating it; if the
+.Fl m
+option is specified, tries to move the old home directory to
+.Ar home-directory .
 .It Fl e Ar expiry-time
 provides the date at which the account expires. This should be given
 in a standard time format (%c). This is unset by default.
 This value can be preset for all users by using the
 .Ar expire
 field in /etc/usermgmt.conf file - it has the format:
-.Ar expire <expiry-time> .
+.D1 Ic expire Ar expiry-time
 .It Fl f Ar password-change-secs 
 provides the number of seconds since the epoch (UTC) at
-which the current password change expire. This
+which the current password must be changed. This
 can be used to implement password aging.
 A value of
 0 can be used to switch off this feature.
@@ -100,11 +104,13 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar inactive <password-change-secs> .
-.It Fl g Ar gid/name/=uid
+.D1 Ic inactive Ar password-change-secs
+.It Xo
+.Fl g Ar gid | name | Li =uid
+.Xc
 gives the group name or identifier to be used for the new user's primary group.
 If this is
-.Ar "-g=uid" ,
+.Ql =uid ,
 then a uid and gid will be picked which are both unique
 and the same, and a line added to
 .Pa /etc/group
@@ -113,14 +119,47 @@ This value can be preset for all users
 by using the
 .Ar gid
 field in the
-.Xr /usr/share/adduser/defaults
+.Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar group <groupname/groupid/=uid> .
+.br \" XXX Shouldn't be necessary -- mdoc bug? --bjh21
+.Bd -ragged -offset indent -compact
+.Ic group
+.Ar gid | name | Li =uid
+.Ed
+.It Fl L Ar login-class
+This option sets the login class for the user being created.  See
+.Xr login.conf 5
+for more information on user login classes. Thie value can be preset
+for all users by using the
+.Ar class
+field in the
+.Pa /etc/usermgmt.conf
+file - it has the format:
+.br \" XXX skip empty line? - HF
+.Bd -ragged -offset indent -compact
+.Ic class
+.Ar login-class
+.Ed
 .It Fl l Ar new-user
 gives the new user name.
-It must consist of alphanumeric characters, or the characters '.', '-' or '_'.
+It must consist of alphanumeric characters, or the characters
+.Ql \&. ,
+.Ql \&-
+or
+.Ql \&_ .
 .It Fl m
 moves the home directory from its old position to the new one.
+If
+.Fl d
+is not specified, the
+.Ar new-user
+argument of the
+.Fl l
+option is used; one of
+.Fl d
+and
+.Fl l
+is needed.
 .It Fl o
 allows duplicate uids to be given.
 .It Fl p Ar password
@@ -134,16 +173,16 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar password <encrypted-password> .
+.D1 Ic password Ar encrypted-password
 .It Fl s Ar shell
 specifies the login shell for the new user.
 This value can be preset for all users
 by using the
 .Ar shell
 field in the
-.Xr /usr/share/adduser/defaults
+.Pa /etc/usermgmt.conf
 file - it has the format:
-.Ar shell <login-shell> .
+.D1 Ic shell Ar login-shell
 .It Fl u Ar uid
 specifies a new uid for the user.
 Boundaries for this value can be preset for all users
@@ -152,10 +191,23 @@ by using the
 field in the
 .Pa /etc/usermgmt.conf
 file - they have the format:
-.Ar range <starting-uid>..<ending_uid> .
+.br \" XXX
+.Bd -ragged -offset indent -compact
+.Ic range
+.Ar starting-uid Ns Li .. Ns Ar ending_uid
+.Ed
 .It Fl v
 enables verbose mode - explain the commands as they are executed.
 .El
+.Pp
+Once the information has been verified,
+.Nm
+uses
+.Xr pwd_mkdb 8
+to update the user database.  This is run in the background, and,
+at very large sites could take several minutes.  Until this update
+is completed, the password file is unavailable for other updates
+and the new information is not available to programs.
 .Pp
 The
 .Nm
@@ -163,12 +215,12 @@ utility exits 0 on success, and >0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/usermgmt.conf
-.It Pa /etc/skel/.[A-z]*
 .El
 .Sh SEE ALSO
 .Xr chpass 1 ,
 .Xr passwd 5 ,
-.Xr group 5
+.Xr group 5 ,
+.Xr pwd_mkdb 8
 .Sh HISTORY
 The
 .Nm

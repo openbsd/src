@@ -1,4 +1,4 @@
-/* $OpenBSD: usermgmt.h,v 1.2 2000/04/24 22:31:29 jakob Exp $ */
+/* $OpenBSD: usermgmt.h,v 1.3 2001/09/18 01:50:44 millert Exp $ */
 /* $NetBSD: usermgmt.h,v 1.4 1999/12/24 09:08:51 agc Exp $ */
 
 /*
@@ -46,6 +46,6 @@ int userinfo __P((int, char **));
 int groupinfo __P((int, char **));
 #endif
 
-void usermgmt_usage __P((char *));
+__dead void usermgmt_usage __P((const char *));
 
 #endif

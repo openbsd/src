@@ -1,6 +1,5 @@
-.\" $OpenBSD: userinfo.8,v 1.7 2001/08/02 18:37:35 mpech Exp $ */
-.\" $NetBSD: userinfo.8,v 1.2 2000/02/28 05:10:57 enami Exp $ */
-.\"
+.\" $OpenBSD: userinfo.8,v 1.8 2001/09/18 01:50:44 millert Exp $
+.\" $NetBSD: userinfo.8,v 1.4 2000/10/03 19:32:23 bjh21 Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -40,8 +39,7 @@
 .Nd displays user information
 .Sh SYNOPSIS
 .Nm userinfo
-.Op Fl e
-.Op Fl v
+.Op Fl ev
 .Ar user
 .Sh DESCRIPTION
 The
@@ -60,7 +58,9 @@ name or uid is already in use on the system.
 perform any actions in a verbose manner.
 .El
 .Pp
-The user argument may either be a user's name, or a uid.
+The
+.Ar user
+argument may either be a user's name, or a uid.
 .Pp
 The
 .Nm

@@ -1,6 +1,5 @@
-.\" $OpenBSD: user.8,v 1.8 2001/08/02 18:37:35 mpech Exp $ */
-.\" $NetBSD: user.8,v 1.5 2000/02/28 05:10:57 enami Exp $ */
-.\"
+.\" $OpenBSD: user.8,v 1.9 2001/09/18 01:50:44 millert Exp $
+.\" $NetBSD: user.8,v 1.9 2001/06/05 11:31:21 wiz Exp $
 .\"
 .\" Copyright (c) 1999 Alistair G. Crooks.  All rights reserved.
 .\"
@@ -32,7 +31,7 @@
 .\" SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd November 30, 1999
+.Dd September 5, 2001
 .Dt USER 8
 .Os
 .Sh NAME
@@ -40,13 +39,15 @@
 .Nd manage user login information on the system
 .Sh SYNOPSIS
 .Nm user add
-.Op Fl D
+.Fl D
 .Op Fl b Ar base-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-secs
 .Op Fl g Ar gid/name/=uid
+.Op Fl L Ar login-class
 .Op Fl r Ar low..high
 .Nm user add
+.Op Fl mov
 .Op Fl G Ar secondary-group
 .Op Fl b Ar base-dir
 .Op Fl c Ar comment
@@ -55,40 +56,34 @@
 .Op Fl f Ar inactive-secs
 .Op Fl g Ar gid/name/=uid
 .Op Fl k Ar skel-dir
-.Op Fl m
-.Op Fl o
+.Op Fl L Ar login-class
 .Op Fl p Ar password
 .Op Fl r Ar low..high
 .Op Fl s Ar shell
 .Op Fl u Ar uid
-.Op Fl v
 .Ar user
 .Nm user del
-.Op Fl D
+.Fl D
 .Op Fl p Ar preserve-value
 .Nm user del
-.Op Fl p
-.Op Fl r
-.Op Fl v
+.Op Fl prv
 .Ar user
 .Nm user info
-.Op Fl e
-.Op Fl v
+.Op Fl ev
 .Ar user
 .Nm user mod
+.Op Fl mov
 .Op Fl G Ar secondary-group
 .Op Fl c Ar comment
 .Op Fl d Ar home-dir
 .Op Fl e Ar expiry-time
 .Op Fl f Ar inactive-secs
 .Op Fl g Ar gid/name/=uid
+.Op Fl L Ar login-class
 .Op Fl l Ar new-login
-.Op Fl m
-.Op Fl o
 .Op Fl p Ar password
 .Op Fl s Ar shell
 .Op Fl u Ar uid
-.Op Fl v
 .Ar user
 .Sh DESCRIPTION
 The
@@ -109,7 +104,7 @@ utility exits 0 on success, and >0 if an error occurs.
 .Sh FILES
 .Bl -tag -width /etc/usermgmt.conf -compact
 .It Pa /etc/skel/.[A-z]*
-Skelton dot files for new user
+Skeleton files for new user
 .It Pa /etc/usermgmt.conf
 Configuration file for
 .Xr user 8 ,
