@@ -1124,7 +1124,7 @@ host-aout.lo: Makefile
 aout-params.h: gen-aout
 	./gen-aout host > aout-params.h
 gen-aout: $(srcdir)/gen-aout.c Makefile
-	$(CC) -o gen-aout $(CFLAGS) $(LFLAGS) $(srcdir)/gen-aout.c
+	$(CC) -o gen-aout $(CSEARCH) $(CFLAGS) $(LFLAGS) $(srcdir)/gen-aout.c
 
 $(BFD_H): stmp-bfd-h ; @true
 
