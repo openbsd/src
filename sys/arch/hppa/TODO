@@ -22,6 +22,7 @@ hardware manuals (man4.hppa/*):				mickey@
 * siop manual
 * sti manual
 * hil manual
+* add more to lasi and asp (also wax when studied enough)
 
 gcc/egcs/binutils:					espie@ mickey@
 * move to binutils 2.9.1
@@ -34,7 +35,6 @@ kernel (sys/arch/hppa/*):				mickey@
 * several harware problems (ie non-functional drivers)
 * fix kvtop for equ mapped regions virtual_avail < va < io (sti)
 * user-land support (signal stuff)
-* some MI files/changes to integrate into the repo
 * wscons devices (sti, hil/*, pckbc/*) unfinished
 * 7300lc-based machines, 8k-based machines
 * "original snakes" (700,705,710,...) support
@@ -56,7 +56,7 @@ userland (*):						mickey@
 X11 (X11/*):						fries@ mickey@
 * patch is available, nothing to run at tho (;
 
-$OpenBSD: TODO,v 1.6 1999/11/16 16:37:23 mickey Exp $
+$OpenBSD: TODO,v 1.7 2000/01/16 22:28:48 mickey Exp $
 
 --
 	paranoic mickey
