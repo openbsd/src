@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.6 1997/06/19 03:23:03 angelos Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.7 1998/04/25 02:54:44 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: ktrace.c,v 1.6 1997/06/19 03:23:03 angelos Exp $";
+static char *rcsid = "$OpenBSD: ktrace.c,v 1.7 1998/04/25 02:54:44 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -188,7 +188,7 @@ void
 usage()
 {
 	(void)fprintf(stderr,
-"usage:\tktrace [-aCcid] [-f trfile] [-g pgid] [-p pid] [-t [acgn]\n\tktrace [-aCcid] [-f trfile] [-t [acgn] command\n");
+"usage:\tktrace [-aCcid] [-f trfile] [-g pgid] [-p pid] [-t [cenis]\n\tktrace [-aCcid] [-f trfile] [-t [cenis] command\n");
 	exit(1);
 }
 
