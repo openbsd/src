@@ -3,62 +3,55 @@
 # THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
 # generated from:
 #
-#	OpenBSD: etc.pmonmips/MAKEDEV.md,v 1.2 2002/01/08 03:26:03 todd Exp 
-#	OpenBSD: MAKEDEV.mi,v 1.52 2002/10/16 15:48:31 todd Exp 
-#	OpenBSD: MAKEDEV.sub,v 1.7 2002/02/16 01:19:52 deraadt Exp 
+#	OpenBSD: etc.sgi/MAKEDEV.md,v 1.1 2004/08/06 21:58:22 pefo Exp 
+#	OpenBSD: MAKEDEV.common,v 1.10 2004/06/03 18:36:59 grange Exp 
+#	OpenBSD: MAKEDEV.mi,v 1.72 2004/02/16 18:58:53 miod Exp 
+#	OpenBSD: MAKEDEV.sub,v 1.12 2004/02/20 19:13:01 miod Exp 
 #
 #
-# Copyright (c) 2001,2002 Todd T. Fries <todd@OpenBSD.org>
-# All rights reserved.
+# Copyright (c) 2001-2004 Todd T. Fries <todd@OpenBSD.org>
 #
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions
-# are met:
-# 1. Redistributions of source code must retain the above copyright
-#    notice, this list of conditions and the following disclaimer.
-# 2. The name of the author may not be used to endorse or promote products
-#    derived from this software without specific prior written permission.
+# Permission to use, copy, modify, and distribute this software for any
+# purpose with or without fee is hereby granted, provided that the above
+# copyright notice and this permission notice appear in all copies.
 #
-# THIS SOFTWARE IS PROVIDED ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES,
-# INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-# AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL
-# THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
-# EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
-# PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS;
-# OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
-# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR
-# OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
-# ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+# THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+# WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+# MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+# ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+# WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+# ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+# OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 #
 # Device "make" file.  Valid arguments:
 #	all	makes all known devices, including local devices.
 #		Tries to make the ``standard'' number of each type.
-#	std	standard devices
-#	fd	makes fd/* for the fdescfs
-#	local	configuration specific devices
-#	ramdisk	makes all devices for a ramdisk kernel
+#	std	Standard devices
+#	fd	fd/* nodes for fdescfs
+#	local	Configuration specific devices
+#	ramdisk	Ramdisk kernel devices
 # Tapes:
-#	st*	SCSI tapes
+#	st*	SCSI tape drives
 # Disks:
 #	wd*	"winchester" disk drives (ST506, IDE, ESDI, RLL, ...)
-#	sd*	SCSI disks
-#	cd*	SCSI cdrom drives
-#	ch*	SCSI media changer
-#	vnd*	"file" pseudo-disks
+#	sd*	SCSI disks, including flopticals
+#	cd*	ATAPI and SCSI CD-ROM drives
+#	ch*	SCSI media changers
+#	vnd*	"file" pseudo-disk devices
 #	rd*	"rd" pseudo-disks
-#	ccd*	concatenated disk devices
+#	ccd*	Concatenated disk devices
 # Console ports:
 # Terminal ports:
-#	tty0*	NS16x50 serial ports
+#	tty[0-7][0-9a-f]	NS16x50 serial ports
 # Pseudo terminals:
-#	tty*	set of 16 slave psuedo terminals
-#	pty*	set of 16 master pseudo terminals
+#	tty*	Set of 62 slave pseudo terminals
+#	pty*	Set of 62 master pseudo terminals
 # USB devices:
 # Special purpose devices:
 #	bpf*	Berkeley Packet Filter
-#	tun*	network tunnel driver
-#	*random	inkernel random data source
-#	uk*	SCSI Unknown device
+#	tun*	Network tunnel driver
+#	*random	In-kernel random data source
+#	uk*	SCSI unknown devices
 #	ss*	SCSI scanners
 #	pf*	Packet Filter
 PATH=/sbin:/usr/sbin:/bin:/usr/bin
@@ -80,15 +73,32 @@ hex()
 	esac
 }
 
-trunc()
+alph2d()
 {
-	# XXX pdksh can't seem to deal with locally scoped variables
-	# in ${foo#$bar} expansions
-	arg1="$1"
-	arg2="$2"
-	case $3 in
-	l)   echo ${arg2#$arg1} ;;
-	r|*) echo ${arg1#$arg2} ;;
+	local t="$1"  
+	local p="0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	local sub=${p%${t}*}
+	echo ${#sub}
+}
+
+h2d()
+{
+	local s="$1"
+	local f=${s%*[0-9a-f]} n=${s#[0-9a-f]*}
+
+	echo $(($(_h2d $f)*16+ $(_h2d $n) ))
+}
+
+_h2d()
+{
+	case $1 in
+	[0-9]) echo -n $1;;
+	a) echo -n 10;;
+	b) echo -n 11;;
+	c) echo -n 12;;
+	d) echo -n 13;;
+	e) echo -n 14;;
+	f) echo -n 15;;
 	esac
 }
 
@@ -120,7 +130,7 @@ dodisk()
 		M r$1$2$d	c $4 $(($n+$count)) 640
 		let count=count+1
 	done
-	MKlist="$MKlist;chown root.operator $1$2? r$1$2?"
+	MKlist="$MKlist;chown root:operator $1$2? r$1$2?"
 }
 
 dodisk2()
@@ -152,10 +162,10 @@ M() {
 	mklist="$mklist $1"
 	G=${6:-wheel}
 	[ "$7" ] && {
-		MKlist="$MKlist;chown $7.$G $1"
+		MKlist="$MKlist;chown $7:$G $1"
 	} || {
 		case $G in
-		wheel)g=0;;kmem)g=2;;operator)g=5;;tty)g=4;;dialer)g=117;;
+		wheel)g=0;;kmem)g=2;;operator)g=5;;tty)g=4;;dialer)g=117;;_lkm)g=61;;
 		esac
 		[ "${grplist[$g]}" ] && {
 			grplist[$g]="${grplist[$g]} $1"
@@ -230,22 +240,28 @@ pty*)
 		echo bad unit for pty in: $i
 		continue
 	fi
-	set -A tbl p q r s t u v w x y z P Q R S T
-	name=${tbl[$U]}
+	set -A letters p q r s t u v w x y z P Q R S T
+	set -A suffixes 0 1 2 3 4 5 6 7 8 9 a b c d e f g h i j k l m n o p q \
+	    r s t u v w x y z A B C D E F G H I J K L M N O P Q R S T U V W X \
+	    Y Z
+
+	name=${letters[$U]}
 	n=0
-	while [ $n -lt 16 ]
+	while [ $n -lt 62 ]
 	do
-		nam=$name$(hex $n)
-		off=$(($U*16))
+		nam=$name${suffixes[$n]}
+		off=$(($U*62))
 		M tty$nam c 4 $(($off+$n))
 		M pty$nam c 5 $(($off+$n))
 		n=$(($n+1))
 	done
 	;;
 
-tty0*)
-	M tty$U c 17 $U 660 dialer uucp
-	M cua$U c 17 $(($U+128)) 660 dialer uucp
+tty[0-7][0-9a-f])
+	U=${i#tty*}
+	o=$(h2d $U)
+	M tty$U c 17 $o 660 dialer uucp
+	M cua$U c 17 $(($o+128)) 660 dialer uucp
 	;;
 
 rd*)
@@ -254,7 +270,7 @@ rd*)
 
 vnd*)
 	dodisk vnd $U 2 11 $U 0
-	dodisk svnd $U 2 11 $U 128
+	dodisk svnd $U 2 11 $U 2048
 	;;
 
 ch*)
@@ -313,22 +329,6 @@ esac
 done
 }
 R "$@"
-if [ "$os" = "SunOS" ]; then
-	eo=transform
-	transform() {
-		case $mode in
-		600) mask=077;;
-		640) mask=027;;
-		660) mask=007;;
-		644) mask=022;;
-		666) mask=0;;
-		440) mask=227;;
-		esac
-		echo `echo "$@"|sed \
-		    's/mknod -m \([0-9]*\) /umask '$mask';mknod /;s/-m [0-9]* //g;\
-		    s/operator/5/g;s/root.kmem/root.2/g;s/root\./root:/g'`
-	}
-fi
 list="$RMlist"
 for mode in $modes; do
 	list="$list;${mklist[$mode]}"
@@ -337,7 +337,7 @@ for group in $groups; do
 	list="$list;${grplist[$group]}"
 done
 list="$list;$MKlist"
-if [ "$eo" = "echo" -o "$eo" = "transform" ]; then
+if [ "$eo" = "echo" ]; then
 	$eo "$list"
 else
 	echo "$list" | sh
