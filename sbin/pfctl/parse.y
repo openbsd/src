@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.138 2002/08/06 11:25:05 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.139 2002/08/06 13:43:33 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -342,6 +342,7 @@ scrubrule	: SCRUB dir interface fromto nodf minttl maxmss fragcache
 				}
 				memcpy(r.ifname, $3->ifname,
 				    sizeof(r.ifname));
+				free($3);
 			}
 			if ($5)
 				r.rule_flag |= PFRULE_NODF;
