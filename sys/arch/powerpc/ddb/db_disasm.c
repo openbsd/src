@@ -1,9 +1,7 @@
-/*	$NetBSD: db_disasm.c,v 1.8 2001/06/12 05:31:44 simonb Exp $	*/
-/*	$OpenBSD: db_disasm.c,v 1.7 2003/05/08 16:05:32 drahn Exp $	*/
+/*	$OpenBSD: db_disasm.c,v 1.8 2003/05/08 16:11:57 drahn Exp $	*/
 /*
- * Copyright (c) 1996 Dale Rahn. All rights reserved.
+ * Copyright (c) 1996, 2001, 2003 Dale Rahn. All rights reserved.
  *
- *   
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -12,11 +10,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Dale Rahn.
- * 4. The name of the author may not be used to endorse or promote products
- *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
@@ -460,11 +453,17 @@ op_ill(u_int32_t addr, instr_t instr)
 	db_printf("illegal instruction %x\n", instr);
 }
 
+/*
+ * Extracts bits out of an instruction opcode, base indicates the lsb
+ * to keep.
+ * Note that this uses the PowerPC bit number for base, MSb == 0
+ * because all of the documentation is written that way.
+ */
 u_int32_t
 extract_field(u_int32_t value, u_int32_t base, u_int32_t width)
 {
 	u_int32_t mask = (1 << width) - 1;
-	return ((value >> base) & mask);
+	return ((value >> (31 - base)) & mask);
 }
 
 const struct opcode * search_op(const struct opcode *);
@@ -596,14 +595,14 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 	case Opf_A:
 		{
 			u_int A;
-			A = extract_field(instr, 31 - 15, 5);
+			A = extract_field(instr, 15, 5);
 			pstr += sprintf (pstr, "r%d", A);
 		}
 		break;
 	case Opf_A0:
 		{
 			u_int A;
-			A = extract_field(instr, 31 - 15, 5);
+			A = extract_field(instr, 15, 5);
 			if (A != 0) {
 				pstr += sprintf (pstr, "r%d,", A);
 			}
@@ -617,7 +616,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 	case Opf_LI:
 		{
 			u_int LI;
-			LI = extract_field(instr, 31 - 29, 24);
+			LI = extract_field(instr, 29, 24);
 			LI = LI << 2;
 			if (LI & 0x02000000) {
 				LI |= ~0x03ffffff;
@@ -643,14 +642,14 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 	case Opf_B:
 		{
 			u_int B;
-			B = extract_field(instr, 31 - 20, 5);
+			B = extract_field(instr, 20, 5);
 			pstr += sprintf (pstr, "r%d", B);
 		}
 		break;
 	case Opf_BD:
 		{
 			u_int BD;
-			BD = extract_field(instr, 31 - 29, 14);
+			BD = extract_field(instr, 29, 14);
 			BD = BD << 2;
 			if (BD & 0x00008000) {
 				BD &= ~0x00007fff;
@@ -677,8 +676,8 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 	case Opf_BI:
 		{
 			int BO, BI, cr, printcomma = 0;
-			BO = extract_field(instr, 31 - 10, 5);
-			BI = extract_field(instr, 31 - 15, 5);
+			BO = extract_field(instr, 10, 5);
+			BI = extract_field(instr, 15, 5);
 			cr =  (BI >> 2) & 7;
 			if (cr != 0) {
 				pstr += sprintf (pstr, "cr%d", cr);
@@ -698,10 +697,10 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 	case Opf_BO:
 		{
 			int BO,BI;
-			BO = extract_field(instr, 31 - 10, 5);
+			BO = extract_field(instr, 10, 5);
 			pstr += sprintf (pstr ,"%s", db_BO_op[BO]);
 			if ((BO & 4) != 0) {
-				BI = extract_field(instr, 31 - 15, 5);
+				BI = extract_field(instr, 15, 5);
 				pstr += sprintf (pstr ,"%s",
 				    db_BOBI_cond[(BI & 0x3)|
 				    (((BO & 8) >> 1))] );
@@ -714,21 +713,21 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 	case Opf_C:
 		{
 			u_int C;
-			C = extract_field(instr, 31 - 25, 5);
+			C = extract_field(instr, 25, 5);
 			pstr += sprintf (pstr, "r%d, ", C);
 		}
 		break;
 	case Opf_CRM:
 		{
 			u_int CRM;
-			CRM = extract_field(instr, 31 - 19, 8);
+			CRM = extract_field(instr, 19, 8);
 			pstr += sprintf (pstr, "0x%x", CRM);
 		}
 		break;
 	case Opf_FM:
 		{
 			u_int FM;
-			FM = extract_field(instr, 31 - 10, 8);
+			FM = extract_field(instr, 10, 8);
 			pstr += sprintf (pstr, "%d", FM);
 		}
 		break;
@@ -740,21 +739,21 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 	case Opf_MB:
 		{
 			u_int MB;
-			MB = extract_field(instr, 31 - 20, 5);
+			MB = extract_field(instr, 20, 5);
 			pstr += sprintf (pstr, "%d", MB);
 		}
 		break;
 	case Opf_ME:
 		{
 			u_int ME;
-			ME = extract_field(instr, 31 - 25, 5);
+			ME = extract_field(instr, 25, 5);
 			pstr += sprintf (pstr, "%d", ME);
 		}
 		break;
 	case Opf_NB:
 		{
 			u_int NB;
-			NB = extract_field(instr, 31 - 20, 5);
+			NB = extract_field(instr, 20, 5);
 			if (NB == 0 ) {
 				NB=32;
 			}
@@ -776,14 +775,14 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 		{
 			u_int D;
 			/* S and D are the same */
-			D = extract_field(instr, 31 - 10, 5);
+			D = extract_field(instr, 10, 5);
 			pstr += sprintf (pstr, "r%d", D);
 		}
 		break;
 	case Opf_SH:
 		{
 			u_int SH;
-			SH = extract_field(instr, 31 - 20, 5);
+			SH = extract_field(instr, 20, 5);
 			pstr += sprintf (pstr, "%d", SH);
 		}
 		break;
@@ -791,7 +790,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 	case Opf_d:
 		{
 			int32_t IMM;
-			IMM = extract_field(instr, 31 - 31, 16);
+			IMM = extract_field(instr, 31, 16);
 			if (IMM & 0x8000) {
 				IMM |= ~0x7fff;
 			}
@@ -801,56 +800,56 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 	case Opf_UIMM:
 		{
 			u_int32_t IMM;
-			IMM = extract_field(instr, 31 - 31, 16);
+			IMM = extract_field(instr, 31, 16);
 			pstr += sprintf (pstr, "0x%x", IMM);
 		}
 		break;
 	case Opf_SR:
 		{
 			u_int SR;
-			SR = extract_field(instr, 31 - 15, 3);
+			SR = extract_field(instr, 15, 3);
 			pstr += sprintf (pstr, "sr%d", SR);
 		}
 		break;
 	case Opf_TO:
 		{
 			u_int TO;
-			TO = extract_field(instr, 31 - 10, 1);
+			TO = extract_field(instr, 10, 1);
 			pstr += sprintf (pstr, "%d", TO);
 		}
 		break;
 	case Opf_crbA:
 		{
 			u_int crbA;
-			crbA = extract_field(instr, 31 - 15, 5);
+			crbA = extract_field(instr, 15, 5);
 			pstr += sprintf (pstr, "%d", crbA);
 		}
 		break;
 	case Opf_crbB:
 		{
 			u_int crbB;
-			crbB = extract_field(instr, 31 - 20, 5);
+			crbB = extract_field(instr, 20, 5);
 			pstr += sprintf (pstr, "%d", crbB);
 		}
 		break;
 	case Opf_crbD:
 		{
 			u_int crfD;
-			crfD = extract_field(instr, 31 - 8, 3);
+			crfD = extract_field(instr, 8, 3);
 			pstr += sprintf (pstr, "crf%d", crfD);
 		}
 		break;
 	case Opf_crfD:
 		{
 			u_int crfD;
-			crfD = extract_field(instr, 31 - 8, 3);
+			crfD = extract_field(instr, 8, 3);
 			pstr += sprintf (pstr, "crf%d", crfD);
 		}
 		break;
 	case Opf_crfS:
 		{
 			u_int crfS;
-			crfS = extract_field(instr, 31 - 13, 3);
+			crfS = extract_field(instr, 13, 3);
 			pstr += sprintf (pstr, "%d", crfS);
 		}
 		break;
@@ -858,8 +857,8 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 	case Opf_mb:
 		{
 			u_int mb, mbl, mbh;
-			mbl = extract_field(instr, 31 - 25, 4);
-			mbh = extract_field(instr, 31 - 26, 1);
+			mbl = extract_field(instr, 25, 4);
+			mbh = extract_field(instr, 26, 1);
 			mb = mbh << 4 | mbl;
 			pstr += sprintf (pstr, ", %d", mb);
 		}
@@ -867,8 +866,8 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 	case Opf_sh:
 		{
 			u_int sh, shl, shh;
-			shl = extract_field(instr, 31 - 19, 4);
-			shh = extract_field(instr, 31 - 20, 1);
+			shl = extract_field(instr, 19, 4);
+			shh = extract_field(instr, 20, 1);
 			sh = shh << 4 | shl;
 			pstr += sprintf (pstr, ", %d", sh);
 		}
@@ -879,8 +878,8 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			u_int sprl;
 			u_int sprh;
 			char *reg;
-			sprl = extract_field(instr, 31 - 15, 5);
-			sprh = extract_field(instr, 31 - 20, 5);
+			sprl = extract_field(instr, 15, 5);
+			sprh = extract_field(instr, 20, 5);
 			spr = sprh << 5 | sprl;
 
 			/* this table could be written better */
@@ -1000,8 +999,8 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			u_int tbrl;
 			u_int tbrh;
 			char *reg;
-			tbrl = extract_field(instr, 31 - 15, 5);
-			tbrh = extract_field(instr, 31 - 20, 5);
+			tbrl = extract_field(instr, 15, 5);
+			tbrh = extract_field(instr, 20, 5);
 			tbr = tbrh << 5 | tbrl;
 
 			switch (tbr) {
