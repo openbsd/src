@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.4 1997/03/25 21:58:09 deraadt Exp $	*/
+/*	$OpenBSD: script.c,v 1.5 1997/06/20 09:58:03 deraadt Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.4 1997/03/25 21:58:09 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.5 1997/06/20 09:58:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -63,6 +63,8 @@ static char rcsid[] = "$OpenBSD: script.c,v 1.4 1997/03/25 21:58:09 deraadt Exp 
 #include <termios.h>
 #include <tzfile.h>
 #include <unistd.h>
+
+#include <util.h>
 
 FILE	*fscript;
 int	master, slave;
@@ -146,6 +148,7 @@ main(argc, argv)
 	while ((cc = read(STDIN_FILENO, ibuf, BUFSIZ)) > 0)
 		(void)write(master, ibuf, cc);
 	done();
+	exit(0);
 }
 
 void

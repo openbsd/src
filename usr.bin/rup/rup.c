@@ -1,4 +1,4 @@
-/*	$OpenBSD: rup.c,v 1.6 1997/02/01 07:18:28 tholo Exp $	*/
+/*	$OpenBSD: rup.c,v 1.7 1997/06/20 10:05:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,7 +34,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rup.c,v 1.6 1997/02/01 07:18:28 tholo Exp $";
+static char rcsid[] = "$OpenBSD: rup.c,v 1.7 1997/06/20 10:05:56 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -45,6 +45,7 @@ static char rcsid[] = "$OpenBSD: rup.c,v 1.6 1997/02/01 07:18:28 tholo Exp $";
 #include <sys/socket.h>
 #include <netdb.h>
 #include <rpc/rpc.h>
+#include <rpc/pmap_clnt.h>
 #include <arpa/inet.h>
 #include <err.h>
 
@@ -60,6 +61,9 @@ struct host_list {
 	struct host_list *next;
 	struct in_addr addr;
 } *hosts;
+
+void usage __P((void));
+int print_rup_data __P((char *, statstime *host_stat));
 
 int
 search_host(addr)
@@ -110,6 +114,7 @@ enum sort_type {
 };
 enum sort_type sort_type;
 
+int
 compare(d1, d2)
 	struct rup_data *d1;
 	struct rup_data *d2;
@@ -278,7 +283,7 @@ allhosts()
 	}
 
 	clnt_stat = clnt_broadcast(RSTATPROG, RSTATVERS_TIME, RSTATPROC_STATS,
-	    xdr_void, NULL, xdr_statstime, &host_stat, rstat_reply);
+	    xdr_void, NULL, xdr_statstime, (char *)&host_stat, rstat_reply);
 	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT) {
 		fprintf(stderr, "%s: %s", __progname, clnt_sperrno(clnt_stat));
 		exit(1);
@@ -296,7 +301,7 @@ allhosts()
 	}
 }
 
-
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
@@ -337,6 +342,7 @@ main(argc, argv)
 }
 
 
+void
 usage()
 {
 	fprintf(stderr, "Usage: rup [-dhlt] [hosts ...]\n");

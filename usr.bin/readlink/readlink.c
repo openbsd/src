@@ -1,6 +1,7 @@
 #include <sys/syslimits.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <err.h>
 
 int
 main(argc, argv)

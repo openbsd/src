@@ -1,4 +1,4 @@
-/*	$OpenBSD: renice.c,v 1.2 1996/06/26 05:38:27 deraadt Exp $	*/
+/*	$OpenBSD: renice.c,v 1.3 1997/06/20 10:02:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,20 +41,24 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)renice.c	5.3 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: renice.c,v 1.2 1996/06/26 05:38:27 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: renice.c,v 1.3 1997/06/20 10:02:31 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <pwd.h>
+
+int donice __P((int, int, int));
 
 /*
  * Change the priority (nice) of processes
  * or groups of processes which are already
  * running.
  */
+int
 main(argc, argv)
 	char **argv;
 {
@@ -108,6 +112,7 @@ main(argc, argv)
 	exit(errs != 0);
 }
 
+int
 donice(which, who, prio)
 	int which, who, prio;
 {

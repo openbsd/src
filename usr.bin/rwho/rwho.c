@@ -1,4 +1,4 @@
-/*	$OpenBSD: rwho.c,v 1.8 1997/04/13 02:30:34 deraadt Exp $	*/
+/*	$OpenBSD: rwho.c,v 1.9 1997/06/20 10:00:01 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1983 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rwho.c	5.5 (Berkeley) 6/1/90";*/
-static char rcsid[] = "$OpenBSD: rwho.c,v 1.8 1997/04/13 02:30:34 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwho.c,v 1.9 1997/06/20 10:00:01 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -53,6 +53,7 @@ static char rcsid[] = "$OpenBSD: rwho.c,v 1.8 1997/04/13 02:30:34 deraadt Exp $"
 #include <unistd.h>
 #include <stdlib.h>
 #include <vis.h>
+#include <err.h>
 
 DIR	*dirp;
 

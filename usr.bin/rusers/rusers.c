@@ -1,4 +1,4 @@
-/*	$OpenBSD: rusers.c,v 1.5 1997/01/17 07:13:15 millert Exp $	*/
+/*	$OpenBSD: rusers.c,v 1.6 1997/06/20 10:07:01 deraadt Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -29,7 +29,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rusers.c,v 1.5 1997/01/17 07:13:15 millert Exp $";
+static char rcsid[] = "$OpenBSD: rusers.c,v 1.6 1997/06/20 10:07:01 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -39,6 +39,7 @@ static char rcsid[] = "$OpenBSD: rusers.c,v 1.5 1997/01/17 07:13:15 millert Exp 
 #include <stdio.h>
 #include <strings.h>
 #include <rpc/rpc.h>
+#include <rpc/pmap_clnt.h>
 #include <arpa/inet.h>
 #include <utmp.h>
 #include <stdlib.h>
@@ -167,7 +168,7 @@ rusers_reply(char *replyp, struct sockaddr_in *raddrp)
 			    HOST_WIDTH+LINE_WIDTH+1, HOST_WIDTH+LINE_WIDTH+1,
 			    local, date, idle_time, remote);
 		} else
-			printf("%0.8s ",
+			printf("%.8s ",
 			    up->uia_arr[x]->ui_utmp.ut_name);
 	}
 	if (!longopt)
@@ -217,7 +218,7 @@ allhosts(void)
 	bzero((char *)&up, sizeof(up));
 	clnt_stat = clnt_broadcast(RUSERSPROG, RUSERSVERS_IDLE,
 	    RUSERSPROC_NAMES, xdr_void, NULL, xdr_utmpidlearr,
-	    &up, rusers_reply);
+	    (char *)&up, rusers_reply);
 	if (clnt_stat != RPC_SUCCESS && clnt_stat != RPC_TIMEDOUT) {
 		fprintf(stderr, "%s: %s\n", argv0, clnt_sperrno(clnt_stat));
 		exit(1);
