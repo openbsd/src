@@ -273,6 +273,10 @@ deffilep.c ldgram.c ldlex.c
 
 DISTFILES = $(DIST_COMMON) $(SOURCES) $(HEADERS) $(TEXINFOS) $(EXTRA_DIST)
 
+# Target to use for installing unformatted man-pages.  Some systems may not
+# want them installed.
+INSTALL_MAN = install-man
+
 TAR = tar
 GZIP_ENV = --best
 SOURCES = $(ld_new_SOURCES) $(EXTRA_ld_new_SOURCES)
@@ -724,7 +728,7 @@ all-recursive-am: config.h
 install-exec-am: install-exec-local
 install-exec: install-exec-recursive
 
-install-data-am: install-man install-data-local
+install-data-am: $(INSTALL_MAN) install-data-local
 install-data: install-data-recursive
 
 install-am: all-am
