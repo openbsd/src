@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.18 2000/01/25 22:39:57 mickey Exp $	*/
+/*	$OpenBSD: trap.c,v 1.19 2000/02/10 20:29:09 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2000 Michael Shalayeff
@@ -392,6 +392,7 @@ if (kdb_trap (type, va, frame))
 
 	case T_INTERRUPT:
 	case T_INTERRUPT|T_USER:
+		frame->tf_flags |= TFF_INTR;
 		cpu_intr(frame);
 #if 0
 if (kdb_trap (type, va, frame))
