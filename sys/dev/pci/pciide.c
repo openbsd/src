@@ -1,4 +1,4 @@
-/*	$OpenBSD: pciide.c,v 1.77 2002/02/10 04:29:32 chris Exp $	*/
+/*	$OpenBSD: pciide.c,v 1.78 2002/02/16 08:18:57 chris Exp $	*/
 /*	$NetBSD: pciide.c,v 1.127 2001/08/03 01:31:08 tsutsui Exp $	*/
 
 /*
@@ -3477,7 +3477,13 @@ hpt_chip_map(sc, pa)
 		sc->sc_wdcdev.nchannels = 1;
 	} else {
 		sc->sc_wdcdev.nchannels = 2;
-		sc->sc_wdcdev.UDMA_cap = 5;
+		/*
+		 * XXX disable udma5 for now. 
+		 */
+		if (revision == HPT370_REV)
+			sc->sc_wdcdev.UDMA_cap = 4;
+		else
+			sc->sc_wdcdev.UDMA_cap = 5;
 	}
 	for (i = 0; i < sc->sc_wdcdev.nchannels; i++) {
 		cp = &sc->pciide_channels[i];
