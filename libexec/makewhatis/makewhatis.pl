@@ -1,7 +1,7 @@
 #!/usr/bin/perl -w
 # ex:ts=8 sw=4:
 
-# $OpenBSD: makewhatis.pl,v 1.17 2001/03/14 10:57:13 espie Exp $
+# $OpenBSD: makewhatis.pl,v 1.18 2001/03/14 10:58:05 espie Exp $
 #
 # Copyright (c) 2000 Marc Espie.
 # 
@@ -421,6 +421,11 @@ sub handle_formated
 			if defined $subject;
 		    last;
 		} else {
+		    # deal with troff hyphenations
+		    if (defined $subject and $subject =~ m/\xad\s*$/) {
+		    	$subject =~ s/(?:\xad\cH)*\xad\s*$//;
+			s/^\s*//;
+		    }
 		    $subject.=$_;
 		}
 	    }
