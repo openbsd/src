@@ -214,10 +214,13 @@ PRIVATE BOOL initialize NOARGS
 	CTRACE(tfp, "HTNews: NNTPSERVER defined as `%s'\n",
 		    HTNewsHost);
     } else {
-	char server_name[256];
 	FILE* fp = fopen(SERVER_FILE, "r");
 	if (fp) {
-	    if (fscanf(fp, "%s", server_name)==1) {
+	    char server_name[MAXHOSTNAMELEN+1];
+	    if (fgets(server_name, sizeof server_name, fp) != NULL) {
+		char *p = strchr(server_name, '\n');
+		if (p != NULL)
+		    *p = '\0';
 		StrAllocCopy(HTNewsHost, server_name);
 		CTRACE(tfp, "HTNews: File %s defines news host as `%s'\n",
 			    SERVER_FILE, HTNewsHost);
