@@ -1,4 +1,4 @@
-.\" $OpenBSD: wscons.4,v 1.11 2002/09/26 22:09:53 miod Exp $
+.\" $OpenBSD: wscons.4,v 1.12 2003/03/05 16:39:34 miod Exp $
 .\" $NetBSD: wscons.4,v 1.11 2000/04/13 11:14:42 is Exp $
 .\"
 .\" Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@ utility.
 these options allow to run X servers or other programs using low-level
 console driver functions which were written specifically for other
 console drivers to run on
-.Nx
+.Ox
 systems.
 The options are in particular:
 .Bl -tag -width WSDISPLAY_COMPAT_xxxxxxxx
@@ -202,7 +202,7 @@ Allows to get raw XT keyboard scancodes from PC keyboards as needed
 by i386 X servers.
 .It Cd WSDISPLAY_COMPAT_PCVT
 Emulates enough of the
-.Nx
+.Ox
 / i386
 .Dq pcvt
 driver to make X servers work.
@@ -218,7 +218,7 @@ binary emulation.
 .Pp
 Linux/i386 X servers do usually run if the first two options are
 enabled together with the
-.Nx
+.Ox
 Linux binary emulation.
 .Pp
 (To have programs looking for device special files of other console drivers
