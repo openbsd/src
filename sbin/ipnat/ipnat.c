@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipnat.c,v 1.16 1997/06/23 17:02:43 kstailey Exp $	*/
+/*	$OpenBSD: ipnat.c,v 1.17 1997/07/08 13:15:21 kstailey Exp $	*/
 /*
  * (C)opyright 1993,1994,1995 by Darren Reed.
  *
@@ -204,7 +204,7 @@ void *ptr;
 		else
 			printf("%s", inet_ntoa(np->in_in[1]));
 		printf(" -> %s/", inet_ntoa(np->in_out[0]));
-		bits = countbits(ntohl(np->in_out[1].s_addr));
+		bits = countbits(np->in_out[1].s_addr);
 		if (bits != -1)
 			printf("%d ", bits);
 		else
