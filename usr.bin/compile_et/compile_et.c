@@ -1,4 +1,4 @@
-/*	$OpenBSD: compile_et.c,v 1.2 1996/12/11 13:44:56 deraadt Exp $	*/
+/*	$OpenBSD: compile_et.c,v 1.3 1997/06/17 20:28:56 kstailey Exp $	*/
 
 /*
  * Copyright 1986, 1987, 1988
@@ -23,14 +23,14 @@ static const char copyright[] =
     "Copyright 1987,1988 by MIT Student Information Processing Board";
 
 static const char rcsid_compile_et_c[] =
-    "$Id: compile_et.c,v 1.2 1996/12/11 13:44:56 deraadt Exp $";
+    "$Id: compile_et.c,v 1.3 1997/06/17 20:28:56 kstailey Exp $";
 #endif
 
 extern char *gensym();
 extern char *current_token;
 extern int table_number, current;
 char buffer[BUFSIZ];
-char *table_name = (char *)NULL;
+char *table_name = NULL;
 FILE *hfile, *cfile;
 
 /* C library */
@@ -197,7 +197,7 @@ int main (argc, argv) int argc; char **argv; {
     strcpy (p, filename);
     filename = p;
     p = strrchr(filename, '/');
-    if (p == (char *)NULL)
+    if (p == NULL)
 	p = filename;
     else
 	p++;
@@ -222,14 +222,14 @@ int main (argc, argv) int argc; char **argv; {
     }
 
     hfile = fopen(h_file, "w");
-    if (hfile == (FILE *)NULL) {
+    if (hfile == NULL) {
 	perror(h_file);
 	exit(1);
     }
     fprintf (hfile, warning, h_file);
 
     cfile = fopen(c_file, "w");
-    if (cfile == (FILE *)NULL) {
+    if (cfile == NULL) {
 	perror(c_file);
 	exit(1);
     }
@@ -253,7 +253,7 @@ int main (argc, argv) int argc; char **argv; {
     for (cpp = struct_def; *cpp; cpp++)
 	fputs (*cpp, cfile);
     fprintf(cfile,
-	    "static const struct error_table et = { text, %ldL, %d };\n\n",
+	    "static const struct error_table et = { text, %dL, %d };\n\n",
 	    table_number, current);
     fputs("static struct et_list link = { 0, 0 };\n\n",
 	  cfile);
@@ -269,7 +269,7 @@ int main (argc, argv) int argc; char **argv; {
 
     fprintf (hfile, "extern void initialize_%s_error_table ();\n",
 	     table_name);
-    fprintf (hfile, "#define ERROR_TABLE_BASE_%s (%ldL)\n",
+    fprintf (hfile, "#define ERROR_TABLE_BASE_%s (%dL)\n",
 	     table_name, table_number);
     /* compatibility... */
     fprintf (hfile, "\n/* for compatibility with older versions... */\n");
@@ -286,4 +286,6 @@ int yyerror(s) char *s; {
     fputs(s, stderr);
     fprintf(stderr, "\nLine number %d; last token was '%s'\n",
 	    lineno, current_token);
+
+    return 0;
 }
