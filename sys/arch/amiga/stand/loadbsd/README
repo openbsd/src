@@ -1,22 +1,18 @@
-$OpenBSD: README,v 1.1 1997/01/16 09:27:01 niklas Exp $
+$OpenBSD: README,v 1.2 1998/03/29 22:24:50 espie Exp $
 
-This was prepared to compile with gcc 2.7.0 for AmigaOS and 
-libnix 1.0. You don't need ixemul or special directories to run the
-binary, if compiled that way.
+This was prepared to compile with Geek Gadgets' gcc for AmigaOS, with
+or without libnix.  The libnix flavor is stand-alone, but still needs
+AmigaOS 2.0.
 
-With very old versions of gcc, you might need to add +2-. to relative
-offsets in the assembler part, but honestly, I suggest you upgrade your
-assembler (and compiler) instead, even if you know what I'm talking about 
-and how to identify the lines.
+You'll need the (unchanged) getopt.c from src/lib/libc/stdlib, 
+and reboot.h from src/sys/sys too.
 
-You'll need the (unchanged) getopt.c from src/lib/libc/stdlib, too.
-
-With newer libnix or the ADE version of gcc, or when removing the
--noixemul option from CFLAGS, you might need (or want) to delete the 
-sleep() function at the bottom of loadbsd, or getopt.o from the 
-"OBJS =" line of Makefile.
-
-[Sorry, but I didn't dare to risk my gcc installation a few weeks 
- before the release by trying to install ADE]
 
 	Ignatios Souvatzis
+
+New for 2.15.2:
+compiled with most recent Geek gadgets, everything working.
+Looking more closely, the -Z option looks suspiciously untested.
+No new options, but smaller, cleaner, and hopefully easier to compile
+cleanly.    
+	Marc Espie

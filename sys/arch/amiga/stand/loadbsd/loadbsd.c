@@ -1,4 +1,4 @@
-/*	$OpenBSD: loadbsd.c,v 1.10 1997/01/16 09:27:03 niklas Exp $	*/
+/*	$OpenBSD: loadbsd.c,v 1.11 1998/03/29 22:24:52 espie Exp $	*/
 /*	$NetBSD: loadbsd.c,v 1.22 1996/10/13 13:39:52 is Exp $	*/
 
 /*
@@ -38,6 +38,10 @@
 #include <errno.h>
 #include <stdarg.h>
 #include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <string.h>
 #if defined(__NetBSD__) || defined (__OpenBSD__)
 #include <err.h>
 #endif
@@ -51,10 +55,10 @@
 #include <libraries/expansion.h>
 #include <libraries/expansionbase.h>
 
-#include <inline/exec.h>
-#include <inline/expansion.h>
-#include <inline/graphics.h>
-
+#include <proto/exec.h>
+#include <proto/expansion.h>
+#include <proto/graphics.h>
+#include <proto/dos.h>
 /* Get definitions for boothowto */
 #include "reboot.h"
 
@@ -74,6 +78,9 @@ void errx __P((int, const char *, ...));
 void warn __P((const char *, ...));
 void warnx __P((const char *, ...));
 #endif
+
+extern const char _version[];
+extern void open_libraries(void);
 
 /*
  *	Version history:
@@ -120,8 +127,10 @@ void warnx __P((const char *, ...));
  *		architecture-independent bootflag for user-controlled
  *		startup configuration.
  *	2.15.1	Merge of changes from 2.13 -> 2.15
+ *      2.15.2  03/30/98 ME - generic dust-off for amigaos compilation,
+ *              turn on -Wall, clean up warnings. Be sensical about 
+ *              ixemul/libnix issues.
  */
-static const char _version[] = "$VER: LoadBSD 2.15.1 (OpenBSD 04.10.96)";
 
 /*
  * Kernel startup interface version
@@ -177,8 +186,9 @@ long eclock_freq;
 long amiga_flags;
 char *program_name;
 char *kname;
-struct ExpansionBase *ExpansionBase;
-struct GfxBase *GfxBase;
+/* let autoopen do its job */
+extern struct ExpansionBase *ExpansionBase;
+extern struct GfxBase *GfxBase;
 u_char *kp;
 int ksize;
 
@@ -203,10 +213,7 @@ main(argc, argv)
 
 	if (argc < 2)
 		usage();
-	if ((GfxBase = (void *)OpenLibrary(GRAPHICSNAME, 0)) == NULL)
-		err(20, "can't open graphics library");
-	if ((ExpansionBase=(void *)OpenLibrary(EXPANSIONNAME, 0)) == NULL)
-		err(20, "can't open expansion library");
+	open_libraries();
 
 	while ((ch = getopt(argc, argv, "aAbcC:DhI:km:n:ptsSVZ")) != -1) {
 		switch (ch) {
@@ -284,7 +291,7 @@ main(argc, argv)
 	if (e.a_magic != NMAGIC)
 		err(20, "unknown binary");
 
-	for (cd = 0, ncd = 0; cd = FindConfigDev(cd, -1, -1); ncd++)
+	for (cd = 0, ncd = 0; ( cd = FindConfigDev(cd, -1, -1) ); ncd++)
 		;
 	get_cpuid();
 	get_mem_config(&fmem, &fmemsz, &cmemsz);
@@ -312,8 +319,8 @@ main(argc, argv)
 	    MEMF_FAST|MEMF_REVERSE);
 	if (t_flag) {
 		for (i = 0; i < memlist.m_nseg; ++i) {
-			printf("mem segment %d: start=%08lx size=%08lx"
-			    " attribute=%04lx pri=%d\n",
+			printf("mem segment %d: start=%08x size=%08x"
+			    " attribute=%04x pri=%d\n",
 			    i + 1, memlist.m_seg[i].ms_start,
 			    memlist.m_seg[i].ms_size,
 			    memlist.m_seg[i].ms_attrib,
@@ -340,7 +347,7 @@ main(argc, argv)
 	if (boothowto & RB_ASKNAME)
 		printf("Askboot...");
 
-	printf("Using %d%c FASTMEM at 0x%x, %dM CHIPMEM\n",
+	printf("Using %ld%c FASTMEM at 0x%p, %ldM CHIPMEM\n",
 	    (fmemsz & 0xfffff) ? fmemsz >> 10 : fmemsz >> 20,
 	    (fmemsz & 0xfffff) ? 'K' : 'M', fmem, cmemsz >> 20);
 	kvers = (u_short *)(kp + e.a_entry - 2);
@@ -380,17 +387,17 @@ main(argc, argv)
 	*nkcd = ncd;
 
 	kcd = (struct ConfigDev *)(nkcd + 1); 
-	while(cd = FindConfigDev(cd, -1, -1)) {
+	while( (cd = FindConfigDev(cd, -1, -1)) ) {
 		*kcd = *cd;
 		if (((cpuid >> 24) == 0x7d) &&
 		    ((u_long)kcd->cd_BoardAddr < 0x1000000)) {
 			if (t_flag)
-				printf("Transformed Z2 device from %08lx ",
+				printf("Transformed Z2 device from %8p ",
 				    kcd->cd_BoardAddr);
 			kcd->cd_BoardAddr += 0x3000000;
 
 			if (t_flag)
-				printf("to %08lx\n", kcd->cd_BoardAddr);
+				printf("to %8p\n", kcd->cd_BoardAddr);
 		}
 		++kcd;
 	}
@@ -407,7 +414,7 @@ main(argc, argv)
 		 * of kernel image and set start_it.
 		 */
 		if ((void *)kp < fmem) {
-			printf("Kernel at %08lx, Fastmem used at %08lx\n",
+			printf("Kernel at %8p, Fastmem used at %8p\n",
 			    kp, fmem);
 			errx(20, "Can't copy upwards yet.\nDefragment your memory and try again OR try the -p OR try the -Z options.");
 		}
@@ -415,7 +422,7 @@ main(argc, argv)
 		    (char *)startit_end - (char *)startit);
 		CacheClearU();
 		start_it = (void (*)())kp + ksize + 256;
-		printf("*** Loading from %08lx to Fastmem %08lx ***\n",
+		printf("*** Loading from %8p to Fastmem %8p ***\n",
 		    kp, fmem);
 		sleep(2);
 	} else {
@@ -425,12 +432,12 @@ main(argc, argv)
 		 * fits into chipmem.
 		 */
 		if (ksize >= cmemsz) {
-			printf("Kernel size %d exceeds Chip Memory of %d\n",
+			printf("Kernel size %d exceeds Chip Memory of %ld\n",
 			    ksize, cmemsz);
 			err(20, "Insufficient Chip Memory for kernel");
 		}
 		Z_flag = 1;
-		printf("*** Loading from %08lx to Chipmem ***\n");
+		printf("*** Loading from %8p to Chipmem ***\n", kp);
 	}
 
 	/*
@@ -459,7 +466,7 @@ get_mem_config(fmem, fmemsz, cmemsz)
 {
 	struct MemHeader *mh, *nmh;
 	u_int segsz, seg, eseg, nmem, nseg, nsegsz;
-	u_int tseg, tsegsz;
+/*	u_int tseg, tsegsz;	unused */
 	char mempri;
 
 	nmem = 0;
@@ -472,7 +479,7 @@ get_mem_config(fmem, fmemsz, cmemsz)
 	 */
 	Forbid();
 	for (mh  = (void *) SysBase->MemList.lh_Head;
-	    nmh = (void *) mh->mh_Node.ln_Succ; mh = nmh) {
+	    (nmh = (void *) mh->mh_Node.ln_Succ); mh = nmh) {
 
 		nseg = (u_int)mh->mh_Lower;
 		nsegsz = (u_int)mh->mh_Upper - nseg;
@@ -607,9 +614,12 @@ get_mem_config(fmem, fmemsz, cmemsz)
 void
 get_cpuid()
 {
+#if 0
+		/* unused */
 	u_long *rl;
 	struct Resident *rm;
 	struct Node *rn;		/* Resource node entry */
+#endif
 
 	cpuid |= SysBase->AttnFlags;	/* get FPU and CPU flags */
 	if (cpuid & 0xffff0000) {
@@ -626,7 +636,7 @@ get_cpuid()
 		case 4000:
 			return;
 		default:
-			printf("machine Amiga %d is not recognized\n",
+			printf("machine Amiga %ld is not recognized\n",
 			    cpuid >> 16);
 			exit(1);
 		}
@@ -652,12 +662,17 @@ get_cpuid()
 void
 get_eclock()
 {
+#if 0
+	/* XXX not called for, unless you manage to get libnix/ixemul to work under <2.0 */
 	/* Fix for 1.3 startups? */
 	if (SysBase->LibNode.lib_Version > 36)
+#endif
 		eclock_freq = SysBase->ex_EClockFrequency;
+#if 0
 	else
 		eclock_freq = (GfxBase->DisplayFlags & PAL) ?
 		    709379 : 715909;
+#endif
 }
 
 void
@@ -970,13 +985,6 @@ warnx(const char *fmt, ...)
 	va_start(ap, fmt);
 	_Vdomessage(0, 0, 0, fmt, ap);
 	va_end(ap);
-}
-
-
-u_int
-sleep(u_int n)
-{
-	(void)TimeDelay(0L, n, 0L);
 }
 
 
