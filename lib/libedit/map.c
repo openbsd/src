@@ -1,4 +1,4 @@
-/*	$OpenBSD: map.c,v 1.3 1997/03/14 05:12:54 millert Exp $	*/
+/*	$OpenBSD: map.c,v 1.4 1998/08/16 20:24:53 millert Exp $	*/
 /*	$NetBSD: map.c,v 1.3 1997/01/11 06:48:00 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)map.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: map.c,v 1.3 1997/03/14 05:12:54 millert Exp $";
+static char rcsid[] = "$OpenBSD: map.c,v 1.4 1998/08/16 20:24:53 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -1382,14 +1382,18 @@ map_addfunc(el, name, help, func)
     const char *help;
     el_func_t func;
 {
+    void *p;
     int nf = el->el_map.nfunc + 2;
     if (name == NULL || help == NULL || func == NULL)
 	return -1;
 
-    el->el_map.func = (el_func_t *) 
-		el_realloc(el->el_map.func, nf * sizeof(el_func_t));
-    el->el_map.help = (el_bindings_t *)
-		el_realloc(el->el_map.help, nf * sizeof(el_bindings_t));
+    if ((p = el_realloc(el->el_map.func, nf * sizeof(el_func_t))) == NULL)
+	return -1;
+    el->el_map.func = (el_func_t *) p;
+
+    if ((p = el_realloc(el->el_map.help, nf * sizeof(el_bindings_t))) == NULL)
+	return -1;
+    el->el_map.help = (el_bindings_t *) p;
 
     nf = el->el_map.nfunc;
     el->el_map.func[nf] = func;

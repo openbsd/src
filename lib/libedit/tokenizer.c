@@ -1,4 +1,4 @@
-/*	$OpenBSD: tokenizer.c,v 1.3 1997/03/14 05:13:07 millert Exp $	*/
+/*	$OpenBSD: tokenizer.c,v 1.4 1998/08/16 20:24:54 millert Exp $	*/
 /*	$NetBSD: tokenizer.c,v 1.2 1997/01/11 06:48:15 lukem Exp $	*/
 
 /*-
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)tokenizer.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$OpenBSD: tokenizer.c,v 1.3 1997/03/14 05:13:07 millert Exp $";
+static char rcsid[] = "$OpenBSD: tokenizer.c,v 1.4 1998/08/16 20:24:54 millert Exp $";
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -369,9 +369,9 @@ tok_line(tok, line, argc, argv)
 	    size_t size = tok->wmax - tok->wspace + WINCR;
 	    char *s = (char *) tok_realloc(tok->wspace, size);
 	    /*SUPPRESS 22*/
-	    int offs = s - tok->wspace;
+	    int offs;
 
-	    if (offs != 0) {
+	    if (s != NULL && (offs = s - tok->wspace) != 0) {
 		int i;
 		for (i = 0; i < tok->argc; i++)
 		    tok->argv[i] = tok->argv[i] + offs;
@@ -383,10 +383,12 @@ tok_line(tok, line, argc, argv)
 	}
 
 	if (tok->argc >= tok->amax - 4) {
-	    tok->amax += AINCR;
-	    tok->argv = (char **) tok_realloc(tok->argv, 
-					      tok->amax * sizeof(char*));
+	    char **nargv = (char **) tok_realloc(tok->argv, (tok->amax + AINCR)
+						 * sizeof(char*));
+	    if (nargv != NULL) {
+		tok->amax += AINCR;
+		tok->argv = nargv;
+	    }
 	}
-
     }
 }
