@@ -1,4 +1,4 @@
-/*	$OpenBSD: arch.c,v 1.41 2000/11/27 20:35:27 espie Exp $	*/
+/*	$OpenBSD: arch.c,v 1.42 2000/11/27 20:37:16 espie Exp $	*/
 /*	$NetBSD: arch.c,v 1.17 1996/11/06 17:58:59 christos Exp $	*/
 
 /*
@@ -135,7 +135,7 @@
 static char sccsid[] = "@(#)arch.c	8.2 (Berkeley) 1/2/94";
 #else
 UNUSED
-static char rcsid[] = "$OpenBSD: arch.c,v 1.41 2000/11/27 20:35:27 espie Exp $";
+static char rcsid[] = "$OpenBSD: arch.c,v 1.42 2000/11/27 20:37:16 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -843,17 +843,16 @@ ArchSVR4Entry(l, name, size, arch)
  *	the mode should be "r+", if not, it should be "r".
  *
  * Results:
- *	An FILE *, opened for reading and writing, positioned at the
- *	start of the member's struct ar_hdr, or NULL if the member was
- *	nonexistent. The current struct ar_hdr for member.
+ *	A FILE *, opened for reading and writing, positioned right after
+ *	the member's header, or NULL if the member was nonexistent. 
  *
  * Side Effects:
- *	The passed struct ar_hdr structure is filled in.
+ *	Fill the struct ar_hdr pointed by arhPtr.
  *
  *-----------------------------------------------------------------------
  */
 static FILE *
-ArchFindMember (archive, member, arhPtr, mode)
+ArchFindMember(archive, member, arhPtr, mode)
     const char	  *archive;   /* Path to the archive */
     const char	  *member;    /* Name of member. If it is a path, only the
 			       * last component is used. */
@@ -861,125 +860,127 @@ ArchFindMember (archive, member, arhPtr, mode)
     const char	  *mode;      /* The mode for opening the stream */
 {
     FILE *	  arch;	      /* Stream to archive */
-    int		  size;       /* Size of archive member */
     char	  *cp;	      /* Useful character pointer */
     char	  magic[SARMAG];
-    int		  len, tlen;
+    size_t	  len;
 
-    arch = fopen (archive, mode);
-    if (arch == NULL) {
-	return (NULL);
-    }
+#ifdef SVR4ARCHIVES
+    struct SVR4namelist list;
 
-    /*
-     * We use the ARMAG string to make sure this is an archive we
-     * can handle...
-     */
-    if ((fread (magic, SARMAG, 1, arch) != 1) ||
-    	(strncmp (magic, ARMAG, SARMAG) != 0)) {
-	    fclose (arch);
-	    return (NULL);
-    }
+    list.fnametab = NULL;
+#endif
 
-    /*
-     * Because of space constraints and similar things, files are archived
+    arch = fopen(archive, mode);
+    if (arch == NULL)
+	return NULL;
+
+    /* Make sure this is an archive we can handle.  */
+    if (fread(magic, SARMAG, 1, arch) != 1 ||
+	strncmp(magic, ARMAG, SARMAG) != 0) {
+	    fclose(arch);
+	    return NULL;
+     }
+
+    /* Because of space constraints and similar things, files are archived
      * using their final path components, not the entire thing, so we need
      * to point 'member' to the final component, if there is one, to make
-     * the comparisons easier...
-     */
-    cp = strrchr (member, '/');
-    if (cp != (char *) NULL) {
+     * the comparisons easier...  */
+    cp = strrchr(member, '/');
+    if (cp != NULL)
 	member = cp + 1;
-    }
-    len = tlen = strlen (member);
-    if (len > sizeof (arhPtr->ar_name)) {
-	tlen = sizeof (arhPtr->ar_name);
-    }
+    len = strlen(member);
+    if (len >= AR_NAME_SIZE)
+	len = AR_NAME_SIZE;
 
-    while (fread ((char *)arhPtr, sizeof (struct ar_hdr), 1, arch) == 1) {
-	if (strncmp(arhPtr->ar_fmag, ARFMAG, sizeof (arhPtr->ar_fmag) ) != 0) {
-	     /*
-	      * The header is bogus, so the archive is bad
-	      * and there's no way we can recover...
-	      */
-	     fclose (arch);
-	     return (NULL);
-	} else if (strncmp (member, arhPtr->ar_name, tlen) == 0) {
-	    /*
-	     * If the member's name doesn't take up the entire 'name' field,
-	     * we have to be careful of matching prefixes. Names are space-
-	     * padded to the right, so if the character in 'name' at the end
-	     * of the matched string is anything but a space, this isn't the
-	     * member we sought.
-	     */
-	    if (tlen != sizeof(arhPtr->ar_name) && arhPtr->ar_name[tlen] != ' '){
-		goto skip;
-	    } else {
-		/*
-		 * To make life easier, we reposition the file at the start
-		 * of the header we just read before we return the stream.
-		 * In a more general situation, it might be better to leave
-		 * the file at the actual member, rather than its header, but
-		 * not here...
-		 */
-		fseek (arch, -sizeof(struct ar_hdr), SEEK_CUR);
-		return (arch);
-	    }
-	} else
-#ifdef AR_EFMT1
-		/*
-		 * BSD 4.4 extended AR format: #1/<namelen>, with name as the
-		 * first <namelen> bytes of the file
-		 */
-	    if (strncmp(arhPtr->ar_name, AR_EFMT1,
-					sizeof(AR_EFMT1) - 1) == 0 &&
-		isdigit(arhPtr->ar_name[sizeof(AR_EFMT1) - 1])) {
+    /* Error handling is simpler than for read_archive, since we just 
+     * look for a given member.  */
+    while (fread(arhPtr, sizeof(struct ar_hdr), 1, arch) == 1) {
+    	off_t	  	  size;       /* Size of archive member */
+	char 		  *memName;
 
-		unsigned int elen = atoi(&arhPtr->ar_name[sizeof(AR_EFMT1)-1]);
-		char ename[MAXPATHLEN];
-
-		if (elen > MAXPATHLEN) {
-			fclose (arch);
-			return NULL;
-		}
-		if (fread (ename, elen, 1, arch) != 1) {
-			fclose (arch);
-			return NULL;
-		}
-		ename[elen] = '\0';
-		if (DEBUG(ARCH) || DEBUG(MAKE)) {
-		    printf("ArchFind: Extended format entry for %s\n", ename);
-		}
-		if (strncmp(ename, member, len) == 0) {
-			/* Found as extended name */
-			fseek (arch, -sizeof(struct ar_hdr) - elen, SEEK_CUR);
-			return (arch);
-		}
-		fseek (arch, -elen, SEEK_CUR);
-		goto skip;
-	} else
+	if (memcmp(arhPtr->ar_fmag, ARFMAG, sizeof(arhPtr->ar_fmag) ) != 0) 
+	     /* The header is bogus, so the archive is bad.  */
+	     break;
+	memName = arhPtr->ar_name;
+	if (memcmp(member, memName, len) == 0) {
+	    /* If the member's name doesn't take up the entire 'name' field,
+ 	     * we have to be careful of matching prefixes. Names are space-
+ 	     * padded to the right, so if the character in 'name' at the end
+ 	     * of the matched string is anything but a space, this isn't the
+	     * member we sought.  */
+#ifdef SVR4ARCHIVES
+	    if (len < sizeof(arhPtr->ar_name) && memName[len] == '/')
+	    	len++;
 #endif
-	{
-skip:
-	    /*
-	     * This isn't the member we're after, so we need to advance the
-	     * stream's pointer to the start of the next header. Files are
-	     * padded with newlines to an even-byte boundary, so we need to
-	     * extract the size of the file from the 'size' field of the
-	     * header and round it up during the seek.
-	     */
-	    arhPtr->ar_size[sizeof(arhPtr->ar_size)-1] = '\0';
-	    size = (int) strtol(arhPtr->ar_size, NULL, 10);
-	    fseek (arch, (size + 1) & ~1, SEEK_CUR);
+	    if (len == sizeof(arhPtr->ar_name) || 
+	    	memName[len] == ' ') {
+#ifdef SVR4ARCHIVES
+		efree(list.fnametab);
+#endif
+		return arch;
+	    }
 	}
+
+	size = (off_t) field2long(arhPtr->ar_size, sizeof(arhPtr->ar_size));
+
+#ifdef SVR4ARCHIVES
+	    /* svr4 names are slash terminated. Also svr4 extended AR format.
+ 	     */
+	    if (memName[0] == '/') {
+		/* svr4 magic mode.  */
+		memName = ArchSVR4Entry(&list, arhPtr->ar_name, size, arch);
+		if (memName == NULL) 		/* Invalid data */
+		    break;
+		else if (memName == svr4list)	/* List of files entry */
+		    continue;
+		/* Got the entry.  */
+		if (strcmp(memName, member) == 0) {
+		    efree(list.fnametab);
+		    return arch;
+		}
+	    }
+#endif
+
+#ifdef AR_EFMT1
+	/* BSD 4.4 extended AR format: #1/<namelen>, with name as the
+	 * first <namelen> bytes of the file.  */
+	if (memcmp(memName, AR_EFMT1, sizeof(AR_EFMT1) - 1) == 0 &&
+	    isdigit(memName[sizeof(AR_EFMT1) - 1])) {
+	    char	  ename[MAXPATHLEN+1];
+
+	    int elen = atoi(memName + sizeof(AR_EFMT1)-1);
+
+	    if (elen <= 0 || elen > MAXPATHLEN) 
+	    	break;
+	    if (fread(ename, elen, 1, arch) != 1) 
+	    	break;
+	    if (fseek(arch, -elen, SEEK_CUR) != 0)
+	    	break;
+	    ename[elen] = '\0';
+	    if (DEBUG(ARCH) || DEBUG(MAKE)) 
+		printf("ArchFind: Extended format entry for %s\n", ename);
+	    /* Found as extended name.  */
+	    if (strcmp(ename, member) == 0) {
+#ifdef SVR4ARCHIVES
+		efree(list.fnametab);
+#endif
+		return arch;
+		}
+	}
+#endif
+	/* This isn't the member we're after, so we need to advance the
+	 * stream's pointer to the start of the next header.  */
+	if (fseek(arch, (size + 1) & ~1, SEEK_CUR) != 0)
+	    break;
     }
 
-    /*
-     * We've looked everywhere, but the member is not to be found. Close the
-     * archive and return NULL -- an error.
-     */
-    fclose (arch);
-    return (NULL);
+    /* We did not find the member, or we ran into an error while reading
+     * the archive.  */
+#ifdef SVRARCHIVES
+    efree(list.fnametab);
+#endif
+    fclose(arch);
+    return NULL;
 }
 
 static void
@@ -994,7 +995,8 @@ ArchTouch(archive, member)
     if (arch != NULL) {
 	snprintf(arh.ar_date, sizeof(arh.ar_date), "%-12ld", (long)
 	    timestamp2time_t(now));
-	(void)fwrite(&arh, sizeof(struct ar_hdr), 1, arch);
+	if (fseek(arch, -sizeof(struct ar_hdr), SEEK_CUR) == 0)
+	    (void)fwrite(&arh, sizeof(struct ar_hdr), 1, arch);
 	fclose(arch);
     }
 }
@@ -1026,7 +1028,7 @@ Arch_Touch(gn)
  *	sure that the table of contents also is touched.
  *
  * Side Effects:
- *	Both the modification time of the library and of the RANLIBMAG
+ *	The modification time of the library and of the RANLIBMAG
  *	member are set to 'now'.
  *
  *-----------------------------------------------------------------------
@@ -1049,7 +1051,7 @@ Arch_TouchLib(gn)
  *	Return the modification time of a member of an archive.
  *
  * Results:
- *	The modification time (seconds).
+ *	The modification time.
  *
  * Side Effects:
  *	The mtime field of the given node is filled in with the value
