@@ -103,13 +103,25 @@ operation,
 typically needs at least two lines of context.
 .TP
 .B \-a
+.br
+.ns
+.TP
+.B \-\-text
 Treat all files as text and compare them line-by-line, even if they
 do not seem to be text.
 .TP
 .B \-b
+.br
+.ns
+.TP
+.B \-\-ignore\-space\-change
 Ignore changes in amount of white space.
 .TP
 .B \-B
+.br
+.ns
+.TP
+.B \-\-ignore\-blank\-lines
 Ignore changes that just insert or delete blank lines.
 .TP
 .B \-\-brief
@@ -142,11 +154,19 @@ to output a line group containing differing lines from
 both files in if-then-else format.
 .TP
 .B \-d
+.br
+.ns
+.TP
+.B \-\-minimal
 Change the algorithm to perhaps find a smaller set of changes.  This makes
 .I diff
 slower (sometimes much slower).
 .TP
 .BI "\-D " name
+.br
+.ns
+.TP
+.BI \-\-ifdef=name
 Make merged if-then-else format output, conditional on the preprocessor
 macro
 .IR name .
@@ -175,27 +195,33 @@ Expand tabs to spaces in the output, to preserve the alignment of tabs
 in the input files.
 .TP
 .B \-f
+.br
+.ns
+.TP
+.B \-\-forward\-ed
 Make output that looks vaguely like an
 .I ed
 script but has changes
 in the order they appear in the file.
 .TP
 .BI "\-F " regexp
+.br
+.ns
+.TP
+.BI \-\-show\-function\-line=regexp
 In context and unified format, for each hunk of differences, show some
 of the last preceding line that matches
 .IR regexp .
-.TP
-.B \-\-forward\-ed
-Make output that looks vaguely like an
-.B ed
-script but has changes
-in the order they appear in the file.
 .TP
 .B \-h
 This option currently has no effect; it is present for Unix
 compatibility.
 .TP
 .B \-H
+.br
+.ns
+.TP
+.BR \-\-speed\-large\-files
 Use heuristics to speed handling of large files that have numerous
 scattered small changes.
 .TP
@@ -310,6 +336,10 @@ to output a line taken from just the first file in
 if-then-else format.
 .TP
 .B \-p
+.br
+.ns
+.TP
+.B \-\-show\-c\-function
 Show which C function each change is in.
 .TP
 .B \-P
