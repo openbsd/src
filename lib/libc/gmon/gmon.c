@@ -1,4 +1,4 @@
-/*	$NetBSD: gmon.c,v 1.5 1995/11/21 22:23:47 jtc Exp $	*/
+/*	$NetBSD: gmon.c,v 1.5.4.1 1996/06/12 04:20:16 cgd Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)gmon.c	8.1 (Berkeley) 6/4/93";
 #else
-static char rcsid[] = "$NetBSD: gmon.c,v 1.5 1995/11/21 22:23:47 jtc Exp $";
+static char rcsid[] = "$NetBSD: gmon.c,v 1.5.4.1 1996/06/12 04:20:16 cgd Exp $";
 #endif
 #endif
 
@@ -83,7 +83,7 @@ monstartup(lowpc, highpc)
 	p->textsize = p->highpc - p->lowpc;
 	p->kcountsize = p->textsize / HISTFRACTION;
 	p->hashfraction = HASHFRACTION;
-	p->fromssize = p->textsize / HASHFRACTION;
+	p->fromssize = p->textsize / p->hashfraction;
 	p->tolimit = p->textsize * ARCDENSITY / 100;
 	if (p->tolimit < MINARCS)
 		p->tolimit = MINARCS;
