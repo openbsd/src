@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_create,v 1.3 2003/10/31 17:43:20 espie Exp $
+# $OpenBSD: pkg_create,v 1.4 2003/11/04 18:11:42 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -99,6 +99,26 @@ sub makesum
 	}
 }
 
+sub avert_duplicates
+{
+	my ($self) = @_;
+	my $allfiles = {};
+	my $duplicates = 0;
+	for my $item (@{$self->{items}}) {
+		if ($item->IsFile()) {
+			my $n = $item->fullname();
+			if (defined $allfiles->{$n}) {
+				print STDERR "Error in packing-list: duplicate file $n\n";
+				$duplicates++;
+			}
+			$allfiles->{$n} = 1;
+		}
+	}
+	if ($duplicates) {
+		exit(1);
+	}
+}
+
 package main;
 
 our ($opt_p, $opt_f, $opt_c, $opt_d, $opt_v, $opt_i, $opt_k, $opt_r, $opt_D,
@@ -183,6 +203,7 @@ $plist->fromfile($dir.CONTENTS) or die "Can't open packing list";
 
 my $base = $opt_S || '/';
 $plist->makesum($base);
+$plist->avert_duplicates();
 my @cmd = $plist->archive_cmd($dir, $base);
 
 if (defined $opt_i) {
