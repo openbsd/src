@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: cpp.sh,v 1.2 1996/06/26 05:32:24 deraadt Exp $
+#	$OpenBSD: cpp.sh,v 1.3 1998/02/18 15:16:48 niklas Exp $
 
 #
 # Copyright (c) 1990 The Regents of the University of California.
@@ -52,7 +52,11 @@ FOUNDFILES=no
 
 CPP=/usr/libexec/cpp
 if [ ! -x $CPP ]; then
-	CPP=`cc -print-libgcc-file-name | sed -e 's/libgcc\.a/cpp/'`;
+	CPP=`cc -print-search-dirs | sed -ne '/^install: /s/install: \(.*\)/\1cpp/p'`;
+	if [ ! -x $CPP ]; then
+		echo "$0: installation problem: $CPP not found/executable" >&2
+		exit 1
+	fi
 fi
 
 while [ $# -gt 0 ]
