@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.78 1999/07/19 19:47:40 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.79 1999/07/19 20:32:50 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -391,7 +391,6 @@ com/pccom	BRI1500	# Internal Fax Data
 com/pccom	AEI0276	# 56K v.90 Fax Modem (LKT)
 com/pccom	WCI0003	# Fax/Voice/Modem/Speakphone/Asvd
 
-# Ethernet:
 #ep		TCM5090	# 3COM 3c509B		(PNP80F7)
 #ep		TCM5091	# 3COM 3c509B		(PNP80F7)
 #ep		TCM5094 # 3COM 3c509B		(PNP80F7)
@@ -409,23 +408,9 @@ ne		@@@1980	# OvisLink LE-8019R
 we		SMC8416 # SMC EtherEZ
 #ec		TMC5051	# 3Com Fast EtherLink ISA
 
-# Sound:
-#		@H@1001	# ALS100+ (Internal Midi (OPL3) device)
-mpu		@X@1001	# ALS100+ (External Midi (MPU401)
-mpu		AZT2001	# AZT1008 PnP SOUND DEVICE (MPU401 MIDI)
-mpu		CSC0003 # AW35/pro MPU
-#		YMH002F	# OPL3-SAX Sound Board (0x100/8, no irq)
-#		CSC0010	# AW35/Pro CTRL
-mpu		OPT0002	# OPTi Audio 16 MPU401
-gus		GRV0000	# Advanced Gravis InterWave Audio
-#wdc		AZT0500 # AZT1008 PnP SOUND DEVICE (IDE CDROM DISAB)
-#wdc		CTL2011	# Creative SB32 PnP (PNP0600)
-#wdc		YMH002F # OPL3-SA3/X Sound Board
-#joy		ASB16FD	# AdLib NSC 16 PNP (PNPB02F)
-#joy		YMH0022	# OPL3-SA3 Snd System (PNPB02F)
-#pcic		SCM0469	# SCM SwapBox Plug and Play
-#wdc		CSC0004	# CX4237B-SIDE CD (?)
+joy		@P@0001	# Avance Sound Chip
 joy		@P@1001	# ALS100+
+joy		@P@2001	# ALS120
 joy		AZT3001	# AZT1008 PnP SOUND DEVICE (GAME PORT)
 joy		CSC0001	# AW35/Pro gameport
 joy		CSC000F	# CS4236B
@@ -435,12 +420,24 @@ joy		CTL7002	# Creative SB AWE64 PnP
 joy		ESS0001	# ESS ES1869 Plug and Play AudioD
 joy		ESS0005	# ESS ES1878 Plug and Play AudioD
 joy		OPT0001	# OPTi Audio 16
+#joy		ASB16FD	# AdLib NSC 16 PNP (PNPB02F)
+#joy		YMH0022	# OPL3-SA3 Snd System (PNPB02F)
+
+#pcic		SCM0469	# SCM SwapBox Plug and Play
+ess		ESS1868	# ESS ES1868 Plug and Play AudioD
+ess		ESS1869	# ESS ES1869 Plug and Play AudioD
+ess		ESS1878	# ESS ES1878 Plug and Play AudioD
+gus		GRV0000	# Advanced Gravis InterWave Audio
+mpu		@X@1001	# ALS100+ (External Midi (MPU401)
+mpu		AZT2001	# AZT1008 PnP SOUND DEVICE (MPU401 MIDI)
+mpu		CSC0003 # AW35/pro MPU
+mpu		OPT0002	# OPTi Audio 16 MPU401
+sb		@@@0001	# Avance Sound Chip
+sb		@@@2001	# ALS120
 sb		@X@0001	# CMI8330. Audio Adapter
 sb		ADS7150	# AD1815
 sb		ADS7180	# AD1816
 sb		AZT1008	# AZT1008 PnP SOUND DEVICE (AUDIO)
-wss		CSC0000	# AW35/Pro sound emulation (both SB *and* WSS, somewhat weird)
-wss		CSC0100	# On Board Audio Chip
 sb		CTL0001	# Creative ViBRA16C PnP Audio
 sb		CTL0031	# SB AWE32
 sb		CTL0041	# SB16 PnP (CT4131)
@@ -448,15 +445,20 @@ sb		CTL0042	# SB AWE64 Value
 sb		CTL0043	# Creative ViBRA16X PnP
 sb		CTL0044	# SB AWE64 Gold
 sb		CTL0045	# SB AWE64 Value
-ess		ESS1868	# ESS ES1868 Plug and Play AudioD
-ess		ESS1869	# ESS ES1869 Plug and Play AudioD
-ess		ESS1878	# ESS ES1878 Plug and Play AudioD
+sb		GRV0003	# UltraSound Plug & Play SB Compatible A
+wss		CSC0000	# AW35/Pro sound emulation (both SB *and* WSS, somewhat weird)
+wss		CSC0100	# On Board Audio Chip
+wss		CSCA800	# AdLib NSC 16 PNP
 wss		OPT9310	# OPTi Audio 16
 ym		@@@1001 # ALS100+
 ym		YMH0021	# OPL3-SA2 Sound Board
-sb		GRV0003	# UltraSound Plug & Play SB Compatible A
-wss		CSCA800	# AdLib NSC 16 PNP
-sb		@@@0001	# Avance Sound Chip
-joy		@P@0001	# Avance Sound Chip
-sb		@@@2001	# ALS120
-joy		@P@2001	# ALS120
+
+wdc		AZT0500 # AZT1008 PnP SOUND DEVICE (IDE CDROM DISAB)
+wdc		CSC0004	# CX4237B-SIDE CD (?)
+wdc		CTL2011	# Creative SB32 PnP (PNP0600)
+wdc		ESS0002	# ESS ES1868 Plug and Play AudioD
+wdc		YMH002F # OPL3-SA3/X Sound Board
+
+#		@H@1001	# ALS100+ (Internal Midi (OPL3) device)
+#		CSC0010	# AW35/Pro CTRL
+#		YMH002F	# OPL3-SAX Sound Board (0x100/8, no irq)
