@@ -1,4 +1,4 @@
-/*	$OpenBSD: autri.c,v 1.4 2001/12/05 10:00:18 deraadt Exp $	*/
+/*	$OpenBSD: autri.c,v 1.5 2002/01/20 19:56:53 ericj Exp $	*/
 
 /*
  * Copyright (c) 2001 SOMEYA Yoshihiko and KUROSAWA Takahiro.
@@ -171,15 +171,13 @@ struct audio_hw_if autri_hw_if = {
 	autri_mixer_set_port,
 	autri_mixer_get_port,
 	autri_query_devinfo,
-	NULL,
+	autri_malloc,
 	autri_free,
-	NULL,
+	autri_round_buffersize,
 	autri_mappage,
 	autri_get_props,
 	autri_trigger_output,
 	autri_trigger_input,
-	autri_malloc,
-	autri_round_buffersize,
 };
 
 #if NMIDI > 0

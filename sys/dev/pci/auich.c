@@ -1,4 +1,4 @@
-/*	$OpenBSD: auich.c,v 1.21 2001/12/31 04:19:55 mickey Exp $	*/
+/*	$OpenBSD: auich.c,v 1.22 2002/01/20 19:56:53 ericj Exp $	*/
 
 /*
  * Copyright (c) 2000,2001 Michael Shalayeff
@@ -221,9 +221,9 @@ int auich_getdev __P((void *, struct audio_device *));
 int auich_set_port __P((void *, mixer_ctrl_t *));
 int auich_get_port __P((void *, mixer_ctrl_t *));
 int auich_query_devinfo __P((void *, mixer_devinfo_t *));
-void *auich_allocm __P((void *, u_long, int, int));
+void *auich_allocm __P((void *, int, size_t, int, int));
 void auich_freem __P((void *, void *, int));
-u_long auich_round_buffersize __P((void *, u_long));
+size_t auich_round_buffersize __P((void *, int, size_t));
 paddr_t auich_mappage __P((void *, void *, off_t, int));
 int auich_get_props __P((void *));
 int auich_trigger_output __P((void *, void *, void *, int, void (*)(void *),
@@ -816,9 +816,10 @@ auich_query_devinfo(v, dp)
 }
 
 void *
-auich_allocm(v, size, pool, flags)
+auich_allocm(v, direction, size, pool, flags)
 	void *v;
-	u_long size;
+	int direction;
+	size_t size;
 	int pool, flags;
 {
 	struct auich_softc *sc = v;
@@ -900,10 +901,11 @@ auich_freem(v, ptr, pool)
 	free(p, pool);
 }
 
-u_long
-auich_round_buffersize(v, size)
+size_t
+auich_round_buffersize(v, direction, size)
 	void *v;
-	u_long size;
+	int direction;
+	size_t size;
 {
 	if (size > AUICH_DMALIST_MAX * AUICH_DMASEG_MAX)
 		size = AUICH_DMALIST_MAX * AUICH_DMASEG_MAX;

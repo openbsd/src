@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4281.c,v 1.9 2001/10/31 11:00:24 art Exp $ */
+/*	$OpenBSD: cs4281.c,v 1.10 2002/01/20 19:56:53 ericj Exp $ */
 /*	$Tera: cs4281.c,v 1.18 2000/12/27 14:24:45 tacha Exp $	*/
 
 /*
@@ -193,8 +193,8 @@ void cs4281_power		__P((int, void *));
 int cs4281_mixer_set_port	__P((void *, mixer_ctrl_t *));
 int cs4281_mixer_get_port	__P((void *, mixer_ctrl_t *));
 int cs4281_query_devinfo	__P((void *, mixer_devinfo_t *));
-void *cs4281_malloc		__P((void *, u_long, int, int));
-u_long cs4281_round_buffersize	__P((void *, u_long));
+void *cs4281_malloc		__P((void *, int, size_t, int, int));
+size_t cs4281_round_buffersize	__P((void *, int, size_t));
 void cs4281_free		__P((void *, void *, int));
 paddr_t cs4281_mappage		__P((void *, void *, off_t, int));
 
@@ -1359,7 +1359,7 @@ cs4281_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 void *
-cs4281_malloc(void *addr, u_long size, int pool, int flags)
+cs4281_malloc(void *addr, int direction, size_t size, int pool, int flags)
 {
 	struct cs4281_softc *sc;
 	struct cs4281_dma   *p;
@@ -1406,8 +1406,8 @@ cs4281_free(void *addr, void *ptr, int pool)
 	}
 }
 
-u_long
-cs4281_round_buffersize(void *addr, u_long size)
+size_t
+cs4281_round_buffersize(void *addr, int direction, size_t size)
 {
 	/* The real dma buffersize are 4KB for CS4280
 	 * and 64kB/MAX_CHANNELS for CS4281.

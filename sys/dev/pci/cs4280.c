@@ -1,4 +1,4 @@
-/*	$OpenBSD: cs4280.c,v 1.12 2001/12/01 19:15:13 deraadt Exp $	*/
+/*	$OpenBSD: cs4280.c,v 1.13 2002/01/20 19:56:53 ericj Exp $	*/
 /*	$NetBSD: cs4280.c,v 1.5 2000/06/26 04:56:23 simonb Exp $	*/
 
 /*
@@ -211,9 +211,9 @@ int	cs4280_getdev __P((void *, struct audio_device *));
 int	cs4280_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	cs4280_mixer_get_port __P((void *, mixer_ctrl_t *));
 int	cs4280_query_devinfo __P((void *addr, mixer_devinfo_t *dip));
-void   *cs4280_malloc __P((void *, u_long, int, int));
+void   *cs4280_malloc __P((void *, int, size_t, int, int));
 void	cs4280_free __P((void *, void *, int));
-u_long	cs4280_round_buffersize __P((void *, u_long));
+size_t	cs4280_round_buffersize __P((void *, int, size_t));
 paddr_t	cs4280_mappage __P((void *, void *, off_t, int));
 int	cs4280_get_props __P((void *));
 int	cs4280_trigger_output __P((void *, void *, void *, int, void (*)(void *),
@@ -1191,10 +1191,11 @@ cs4280_round_blocksize(hdl, blk)
 	return (blk < CS4280_ICHUNK ? CS4280_ICHUNK : blk & -CS4280_ICHUNK);
 }
 
-u_long
-cs4280_round_buffersize(addr, size)
+size_t
+cs4280_round_buffersize(addr, direction, size)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 {
 	/* although real dma buffer size is 4KB, 
 	 * let the audio.c driver use a larger buffer.
@@ -1390,9 +1391,10 @@ free:
 
 
 void *
-cs4280_malloc(addr, size, pool, flags)
+cs4280_malloc(addr, direction, size, pool, flags)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 	int pool, flags;
 {
 	struct cs4280_softc *sc = addr;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ad1848var.h,v 1.9 2001/10/31 11:00:24 art Exp $	*/
+/*	$OpenBSD: ad1848var.h,v 1.10 2002/01/20 19:56:53 ericj Exp $	*/
 /*	$NetBSD: ad1848var.h,v 1.22 1998/01/19 22:18:26 augustss Exp $	*/
 
 /*
@@ -218,9 +218,9 @@ int	ad1848_set_mic_gain __P((struct ad1848_softc *, struct ad1848_volume *));
 int	ad1848_get_mic_gain __P((struct ad1848_softc *, struct ad1848_volume *));
 void     ad1848_mute_channel __P((struct ad1848_softc *, int device, int mute));
 
-void   *ad1848_malloc __P((void *, unsigned long, int, int));
+void   *ad1848_malloc __P((void *, int, size_t, int, int));
 void	ad1848_free __P((void *, void *, int));
-unsigned long ad1848_round __P((void *, unsigned long));
+size_t	ad1848_round __P((void *, int, size_t));
 paddr_t	ad1848_mappage __P((void *, void *, off_t, int));
 
 int	ad1848_get_props __P((void *));

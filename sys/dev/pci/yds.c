@@ -1,4 +1,4 @@
-/*	$OpenBSD: yds.c,v 1.12 2002/01/06 23:01:40 ericj Exp $	*/
+/*	$OpenBSD: yds.c,v 1.13 2002/01/20 19:56:53 ericj Exp $	*/
 /*	$NetBSD: yds.c,v 1.5 2001/05/21 23:55:04 minoura Exp $	*/
 
 /*
@@ -171,9 +171,9 @@ int	yds_halt_input __P((void *));
 int	yds_getdev __P((void *, struct audio_device *));
 int	yds_mixer_set_port __P((void *, mixer_ctrl_t *));
 int	yds_mixer_get_port __P((void *, mixer_ctrl_t *));
-void   *yds_malloc __P((void *, u_long, int, int));
+void   *yds_malloc __P((void *, int, size_t, int, int));
 void	yds_free __P((void *, void *, int));
-u_long	yds_round_buffersize __P((void *, u_long));
+size_t	yds_round_buffersize __P((void *, int, size_t));
 paddr_t	yds_mappage __P((void *, void *, off_t, int));
 int	yds_get_props __P((void *));
 int	yds_query_devinfo __P((void *addr, mixer_devinfo_t *dip));
@@ -1667,9 +1667,10 @@ yds_get_portnum_by_name(sc, class, device, qualifier)
 }
 
 void *
-yds_malloc(addr, size, pool, flags)
+yds_malloc(addr, direction, size, pool, flags)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 	int pool, flags;
 {
 	struct yds_softc *sc = addr;
@@ -1721,10 +1722,11 @@ yds_find_dma(sc, addr)
 	return p;
 }
 
-u_long
-yds_round_buffersize(addr, size)
+size_t
+yds_round_buffersize(addr, direction, size)
 	void *addr;
-	u_long size;
+	int direction;
+	size_t size;
 {
 	/*
 	 * Buffer size should be at least twice as bigger as a frame.

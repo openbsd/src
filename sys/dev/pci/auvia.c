@@ -1,4 +1,4 @@
-/*	$OpenBSD: auvia.c,v 1.13 2001/11/19 17:47:37 mickey Exp $ */
+/*	$OpenBSD: auvia.c,v 1.14 2002/01/20 19:56:53 ericj Exp $ */
 /*	$NetBSD: auvia.c,v 1.7 2000/11/15 21:06:33 jdolecek Exp $	*/
 
 /*-
@@ -177,15 +177,13 @@ struct audio_hw_if auvia_hw_if = {
 	auvia_set_port,
 	auvia_get_port,
 	auvia_query_devinfo,
-	NULL,
+	auvia_malloc,
 	auvia_free,
-	NULL,
+	auvia_round_buffersize,
 	auvia_mappage,
 	auvia_get_props,
 	auvia_trigger_output,
-	auvia_trigger_input,
-	auvia_malloc,
-	auvia_round_buffersize,
+	auvia_trigger_input
 };
 
 int	auvia_attach_codec(void *, struct ac97_codec_if *);

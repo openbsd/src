@@ -1,4 +1,4 @@
-/*	$OpenBSD: ess.c,v 1.5 2001/10/31 11:00:24 art Exp $	*/
+/*	$OpenBSD: ess.c,v 1.6 2002/01/20 19:56:53 ericj Exp $	*/
 /*	$NetBSD: ess.c,v 1.44.4.1 1999/06/21 01:18:00 thorpej Exp $	*/
 
 /*
@@ -148,9 +148,9 @@ int	ess_getdev __P((void *, struct audio_device *));
 int	ess_set_port __P((void *, mixer_ctrl_t *));
 int	ess_get_port __P((void *, mixer_ctrl_t *));
 
-void   *ess_malloc __P((void *, unsigned long, int, int));
+void   *ess_malloc __P((void *, int, size_t, int, int));
 void	ess_free __P((void *, void *, int));
-unsigned long ess_round_buffersize __P((void *, unsigned long));
+size_t	ess_round_buffersize __P((void *, int, size_t));
 paddr_t	ess_mappage __P((void *, void *, off_t, int));
 
 
@@ -2157,9 +2157,10 @@ ess_query_devinfo(addr, dip)
 }
 
 void *
-ess_malloc(addr, size, pool, flags)
+ess_malloc(addr, direction, size, pool, flags)
 	void *addr;
-	unsigned long size;
+	int direction;
+	size_t size;
 	int pool, flags;
 {
 	struct ess_softc *sc = addr;
@@ -2181,10 +2182,11 @@ ess_free(addr, ptr, pool)
 	isa_free(ptr, pool);
 }
 
-unsigned long
-ess_round_buffersize(addr, size)
+size_t
+ess_round_buffersize(addr, direction, size)
 	void *addr;
-	unsigned long size;
+	int direction;
+	size_t size;
 {
 	if (size > MAX_ISADMA)
 		size = MAX_ISADMA;

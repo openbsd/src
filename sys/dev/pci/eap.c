@@ -1,4 +1,4 @@
-/*      $OpenBSD: eap.c,v 1.15 2001/10/31 11:00:24 art Exp $ */
+/*      $OpenBSD: eap.c,v 1.16 2002/01/20 19:56:53 ericj Exp $ */
 /*	$NetBSD: eap.c,v 1.46 2001/09/03 15:07:37 reinoud Exp $ */
 
 /*
@@ -168,9 +168,9 @@ int	eap1370_mixer_get_port(void *, mixer_ctrl_t *);
 int	eap1371_mixer_set_port(void *, mixer_ctrl_t *);
 int	eap1371_mixer_get_port(void *, mixer_ctrl_t *);
 int	eap1370_query_devinfo(void *, mixer_devinfo_t *);
-void   *eap_malloc(void *, u_long, int, int);
+void   *eap_malloc(void *, int, size_t, int, int);
 void	eap_free(void *, void *, int);
-u_long	eap_round_buffersize(void *, u_long);
+size_t	eap_round_buffersize(void *, int, size_t);
 paddr_t	eap_mappage(void *, void *, off_t, int);
 int	eap_get_props(void *);
 void	eap1370_set_mixer(struct eap_softc *sc, int a, int d);
@@ -1550,7 +1550,7 @@ eap1370_query_devinfo(void *addr, mixer_devinfo_t *dip)
 }
 
 void *
-eap_malloc(void *addr, u_long size, int pool, int flags)
+eap_malloc(void *addr, int direction, size_t size, int pool, int flags)
 {
 	struct eap_softc *sc = addr;
 	struct eap_dma *p;
@@ -1585,8 +1585,8 @@ eap_free(void *addr, void *ptr, int pool)
 	}
 }
 
-u_long
-eap_round_buffersize(void *addr, u_long size)
+size_t
+eap_round_buffersize(void *addr, int direction, size_t size)
 {
 	return (size);
 }

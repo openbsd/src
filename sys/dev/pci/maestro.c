@@ -1,4 +1,4 @@
-/*	$OpenBSD: maestro.c,v 1.12 2001/10/31 11:00:24 art Exp $	*/
+/*	$OpenBSD: maestro.c,v 1.13 2002/01/20 19:56:53 ericj Exp $	*/
 /* $FreeBSD: /c/ncvs/src/sys/dev/sound/pci/maestro.c,v 1.3 2000/11/21 12:22:11 julian Exp $ */
 /*
  * FreeBSD's ESS Agogo/Maestro driver 
@@ -252,15 +252,13 @@ struct audio_hw_if maestro_hw_if = {
 	maestro_set_port,
 	maestro_get_port,
 	maestro_query_devinfo,
-	NULL,
+	maestro_malloc,
 	maestro_free,
-	NULL,
+	maestro_round_buffersize,
 	maestro_mappage,
 	maestro_get_props,
 	maestro_trigger_output,
-	maestro_trigger_input,
-	maestro_malloc,
-	maestro_round_buffersize
+	maestro_trigger_input
 };
 
 struct audio_device maestro_audev = {

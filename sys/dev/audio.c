@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.34 2002/01/10 18:49:07 mickey Exp $	*/
+/*	$OpenBSD: audio.c,v 1.35 2002/01/20 19:56:53 ericj Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -551,14 +551,10 @@ audio_alloc_ring(sc, r, direction, bufsize)
 	ROUNDSIZE(bufsize);
 	if (hw->round_buffersize)
 		bufsize = hw->round_buffersize(hdl, direction, bufsize);
-	else if (hw->round_buffersize_old)
-		bufsize = hw->round_buffersize_old(hdl, bufsize);
 	r->bufsize = bufsize;
 	if (hw->allocm)
 		r->start = hw->allocm(hdl, direction, r->bufsize, M_DEVBUF, 
 		    M_WAITOK);
-	else if (hw->allocm_old)
-		r->start = hw->allocm_old(hdl, r->bufsize, M_DEVBUF, M_WAITOK);
 	else
 		r->start = malloc(bufsize, M_DEVBUF, M_WAITOK);
 	if (r->start == 0)
