@@ -1,4 +1,4 @@
-.\"   $OpenBSD: semop.2,v 1.9 2000/10/18 05:12:11 aaron Exp $
+.\"   $OpenBSD: semop.2,v 1.10 2002/05/31 03:57:17 pjanzen Exp $
 .\"	$NetBSD: semop.2,v 1.1 1995/10/16 23:49:28 jtc Exp $
 .\"
 .\" Copyright (c) 1995 Frank van der Linden
@@ -146,7 +146,7 @@ number of semaphores in the set specified by
 .It Bq Er ENOSPC
 .Dv SEM_UNDO
 was requested, and there is not enough space left in the kernel to
-store the unfo information.
+store the undo information.
 .It Bq Er EAGAIN
 The requested operation can not immediately be performed, and
 .Dv IPC_NOWAIT
