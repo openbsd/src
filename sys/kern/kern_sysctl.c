@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.67 2002/06/08 23:17:22 angelos Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.68 2002/06/08 23:35:35 angelos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -88,6 +88,7 @@ extern struct nchstats nchstats;
 extern int nselcoll, fscale;
 extern struct disklist_head disklist;
 extern fixpt_t ccpu;
+extern  long numvnodes;
 
 int sysctl_diskinit(int, struct proc *);
 int sysctl_proc_args(int *, u_int, void *, size_t *, struct proc *);
@@ -278,6 +279,10 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		return (sysctl_int(oldp, oldlenp, newp, newlen, &maxfiles));
 	case KERN_NFILES:
 		return (sysctl_rdint(oldp, oldlenp, newp, nfiles));
+	case KERN_TTYCOUNT:
+		return (sysctl_rdint(oldp, oldlenp, newp, tty_count));
+	case KERN_NUMVNODES:
+		return (sysctl_rdint(oldp, oldlenp, newp, numvnodes));
 	case KERN_ARGMAX:
 		return (sysctl_rdint(oldp, oldlenp, newp, ARG_MAX));
 	case KERN_NSELCOLL:
