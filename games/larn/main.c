@@ -21,7 +21,7 @@ static char viewflag=0;
 	/*	if viewflag then we have done a 99 stay here and don't showcell in the main loop */
 char restorflag=0;	/* 1 means restore has been done	*/
 static char cmdhelp[] = "\
-Cmd line format: larn [-slicnh] [-o<optsifle>] [-##] [++]\n\
+Cmd line format: larn [-slicnh] [-o<optsfile>] [-##] [++]\n\
   -s   show the scoreboard\n\
   -l   show the logfile (wizard id only)\n\
   -i   show scoreboard with inventories of dead characters\n\
