@@ -1,4 +1,4 @@
-/*	$OpenBSD: tunefs.c,v 1.13 2001/05/18 08:27:57 mickey Exp $	*/
+/*	$OpenBSD: tunefs.c,v 1.14 2001/10/05 14:35:42 jakob Exp $	*/
 /*	$NetBSD: tunefs.c,v 1.10 1995/03/18 15:01:31 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tunefs.c	8.2 (Berkeley) 4/19/94";
 #else
-static char rcsid[] = "$OpenBSD: tunefs.c,v 1.13 2001/05/18 08:27:57 mickey Exp $";
+static char rcsid[] = "$OpenBSD: tunefs.c,v 1.14 2001/10/05 14:35:42 jakob Exp $";
 #endif
 #endif /* not lint */
 
@@ -274,6 +274,7 @@ usage()
 	fprintf(stderr,
 		"Usage: %s tuneup-options special-device\n"
 		"where tuneup-options are:\n"
+		"\t-A modify all backups of the super-block\n"
 		"\t-a maximum contiguous blocks\n"
 		"\t-d rotational delay between contiguous blocks\n"
 		"\t-e maximum blocks per file in a cylinder group\n"

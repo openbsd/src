@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tunefs.8,v 1.16 2001/04/08 19:42:28 aaron Exp $
+.\"	$OpenBSD: tunefs.8,v 1.17 2001/10/05 14:35:42 jakob Exp $
 .\"	$NetBSD: tunefs.8,v 1.8 1995/03/18 15:01:29 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -42,15 +42,21 @@
 .Nd tune up an existing file system
 .Sh SYNOPSIS
 .Nm tunefs
-.Op Fl A
+.Op Fl Ap
 .Op Fl a Ar maxcontig
 .Op Fl d Ar rotdelay
 .Op Fl e Ar maxbpg
+.Op Fl f Ar avgfilesize
+.Bk -words
 .Op Fl m Ar minfree
+.Ek
+.Op Fl n Ar avgfpdir
 .Bk -words
 .Op Fl o Ar optimize_preference
 .Ek
+.Bk -words
 .Op Ar special | Ar filesys
+.Ek
 .Sh DESCRIPTION
 .Nm
 is designed to change the dynamic parameters of a file system
