@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.old.c,v 1.12 1996/06/16 10:24:19 deraadt Exp $	*/
+/*	$OpenBSD: pmap.old.c,v 1.13 1996/09/26 14:04:27 deraadt Exp $	*/
 /*	$NetBSD: pmap.c,v 1.36 1996/05/03 19:42:22 christos Exp $	*/
 
 /*
@@ -1077,17 +1077,53 @@ pmap_enter(pmap, va, pa, prot, wired)
 		enter_stats.user++;
 #endif
 
-	/*
-	 * Page Directory table entry not valid, we need a new PT page
-	 */
 	pte = pmap_pte(pmap, va);
 	if (!pte) {
-		printf("ptdi panic!\n");
-		printf("pte %p pmap %p va %p\n", pte, pmap, va);
-		printf("pmap_pde(pmap, va) %p\n", pmap_pde(pmap, va));
-		printf("pmap_pde_v(pmap_pde(pmap, va) %p\n",
-		    pmap_pde_v(pmap_pde(pmap, va)));
-		panic("ptdi %x", pmap->pm_pdir[PTDPTDI]);
+		/*
+		 * Page Directory table entry not valid, we need a new PT page
+		 *
+		 * we want to vm_fault in a new zero-filled PT page for our
+		 * use.   in order to do this, we want to call vm_fault()
+		 * with the VA of where we want to put the PTE.   but in
+		 * order to call vm_fault() we need to know which vm_map
+		 * we are faulting in.    in the m68k pmap's this is easy
+		 * since all PT pages live in one global vm_map ("pt_map")
+		 * and we have a lot of virtual space we can use for the
+		 * pt_map (since the kernel doesn't have to share its 4GB
+		 * address space with processes).    but in the i386 port
+		 * the kernel must live in the top part of the virtual 
+		 * address space and PT pages live in their process' vm_map
+		 * rather than a global one.    the problem is that we have
+		 * no way of knowing which vm_map is the correct one to 
+		 * fault on.
+		 * 
+		 * XXX: see NetBSD PR#1834 and Mycroft's posting to 
+		 *	tech-kern on 7 Jan 1996.
+		 *
+		 * rather than always calling panic, we try and make an 
+		 * educated guess as to which vm_map to use by using curproc.
+		 * this is a workaround and may not fully solve the problem?
+	 	 */
+
+		struct vm_map *vmap;
+		int rv;
+		vm_offset_t v;
+
+		if (curproc == NULL || curproc->p_vmspace == NULL ||
+		  	pmap != &curproc->p_vmspace->vm_pmap)
+				panic("ptdi %x", pmap->pm_pdir[PTDPTDI]);
+
+		/* our guess about the vm_map was good!  fault it in.  */
+
+		vmap = &curproc->p_vmspace->vm_map;
+		v = trunc_page(vtopte(va));
+		rv = vm_fault(vmap, v, VM_PROT_READ|VM_PROT_WRITE, FALSE);
+		if (rv != KERN_SUCCESS)
+			panic("ptdi2 %x", pmap->pm_pdir[PTDPTDI]);
+		vm_map_pageable(vmap, v, round_page(v+1), FALSE);
+		pte = pmap_pte(pmap, va);
+		if (!pte) 
+			panic("ptdi3 %x", pmap->pm_pdir[PTDPTDI]);
 	}
 #ifdef DEBUG
 	if (pmapdebug & PDB_ENTER)
