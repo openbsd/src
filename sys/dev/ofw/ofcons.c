@@ -1,4 +1,4 @@
-/*	$OpenBSD: ofcons.c,v 1.5 2001/08/08 21:49:15 miod Exp $	*/
+/*	$OpenBSD: ofcons.c,v 1.6 2001/08/21 01:55:50 drahn Exp $	*/
 /*	$NetBSD: ofcons.c,v 1.3 1996/10/13 01:38:11 christos Exp $	*/
 
 /*
@@ -42,6 +42,8 @@
 #include <dev/cons.h>
 
 #include <dev/ofw/openfirm.h>
+
+#include <machine/stdarg.h>
 
 struct ofc_softc {
 	struct device of_dev;
@@ -97,6 +99,26 @@ ofcattach(parent, self, aux)
 	timeout_set(&sc->of_tmo, ofcpoll, sc);
 	printf("\n");
 }
+
+void ofcstart __P((struct tty *));
+int ofcparam __P((struct tty *, struct termios *));
+void ofcpoll __P((void *));
+int ofcopen(dev_t dev, int flag, int mode, struct proc *p);
+int ofcclose(dev_t dev, int flag, int mode, struct proc *p);
+int ofcread(dev_t dev, struct uio *uio, int flag);
+int ofcwrite(dev_t dev, struct uio *uio, int flag);
+int ofcioctl(dev_t dev, u_long cmd, caddr_t data, int flag, struct proc *p);
+struct tty * ofctty(dev_t dev);
+void ofcstop(struct tty *tp, int flag);
+void ofcstart(struct tty *tp);
+int ofcparam(struct tty *tp, struct termios *t);
+void ofcpoll(void *aux);
+void ofccnprobe(struct consdev *cd);
+void ofccninit(struct consdev *cd);
+int ofccngetc(dev_t dev);
+void ofccnputc(dev_t dev, int c);
+void ofccnpollc(dev_t dev, int on);
+void ofprintf(char *fmt, ...);
 
 int
 ofcopen(dev, flag, mode, p)
@@ -215,7 +237,7 @@ ofcstop(tp, flag)
 {
 }
 
-static void
+void
 ofcstart(tp)
 	struct tty *tp;
 {
@@ -249,7 +271,7 @@ ofcstart(tp)
 	splx(s);
 }
 
-static int
+int
 ofcparam(tp, t)
 	struct tty *tp;
 	struct termios *t;
@@ -260,7 +282,7 @@ ofcparam(tp, t)
 	return 0;
 }
 
-static void
+void
 ofcpoll(aux)
 	void *aux;
 {
@@ -360,4 +382,23 @@ ofccnpollc(dev, on)
 			timeout_add(&of->of_tmo, 1);
 		}
 	}
+}
+static char buf[1024];
+
+void
+ofprintf(char *fmt, ...)
+{
+	char *c;
+	va_list ap;
+
+	va_start(ap, fmt);
+
+	vsprintf(buf, fmt, ap);
+
+	c = buf;
+	while (*c != '\0') {
+		ofccnputc(0, *c);
+	}
+
+	va_end(ap);
 }
