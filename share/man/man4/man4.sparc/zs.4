@@ -1,4 +1,4 @@
-.\"	$OpenBSD: zs.4,v 1.3 1998/03/08 03:41:13 jason Exp $
+.\"	$OpenBSD: zs.4,v 1.4 1999/01/21 04:50:07 marc Exp $
 .\"
 .\" Copyright (c) 1998 The OpenBSD Project 
 .\" All rights reserved.
@@ -47,7 +47,11 @@ commands.
 .Sh BUGS
 The 
 .Nm
-driver does not support cua minor devices (yet).
+driver now supports cua minor devices, but with this known deficiency
+in the simultaneous outgoing/incoming aspect of the driver:
+The first outgoing connection succeeds, but second and subsequent
+connections fail, apparently due to a getty hang. The hung getty apparently
+prevents the cua device from being re-opened.
 .Sh SEE ALSO
 .Xr kbd 4 ,
 .Xr ms 4 ,
