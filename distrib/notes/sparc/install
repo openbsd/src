@@ -75,10 +75,10 @@ installation scripts'' below.
 
 Booting from CD-ROM installation media:
 
-	> b sd(,30,0)OSREV/sparc/bsd.rd		# for Sun4 monitors*
+	> b sd(,30,0)OSREV/MACHINE/bsd.rd		# for Sun4 monitors*
 						# (not working currently)
-	ok boot sd(,6,0)OSREV/sparc/bsd.rd	# for version 1 OpenBOOT ROMs
-	ok boot cdrom OSREV/sparc/bsd.rd	# for version 2 OpenBOOT ROMs
+	ok boot sd(,6,0)OSREV/MACHINE/bsd.rd	# for version 1 OpenBOOT ROMs
+	ok boot cdrom OSREV/MACHINE/bsd.rd	# for version 2 OpenBOOT ROMs
 
 If the boot is successful, you will get a loader version message,
 executable sizes and then the Kernel copyright and device probe
@@ -86,7 +86,7 @@ messages.  Boot failure modes are typically a lot of CD-ROM drive
 activity, but no messages or complaints about magic numbers,
 checksums or formats.
 
-Not all sparc systems support bootable CDROMS and the current
+Not all MACHINE systems support bootable CDROMS and the current
 boot image is only known to work on sun4c and sun4m architectures.
 If it does not work, you'll have to create a boot floppy or bootable
 hard disk using the instructions under preparing boot media.
@@ -258,10 +258,10 @@ OpenBSDBootMsgs
 	configure.  For each network interface you select to configure, it
 	will ask for the IP address to use, the symbolic host name to use,
 	the netmask to use and any media flags to set.  This is driver
-	dependent, but for the sparc le(4) driver, the flags usually carry
+	dependent, but for the MACHINE le(4) driver, the flags usually carry
 	meaning:
 
-		auto		Use existing setting (only setup by netboot)
+		autoselect	Use existing setting (default)
 		10baseT		Use UTP (twisted pair) port
 		10base5 	Use AUI port
 
@@ -338,14 +338,7 @@ when running from a serial console, you may wish to adjust the eeprom
 settings for input-device, output-device, screen-#columns, and screen-#rows
 as appropriate.  
 
-If you plan on using the extra serial ports on 4/300 systems, 
-you'll need to make sure you have device nodes for them e.g.:
-  mknod /dev/ttyc c 12 4
-  mknod /dev/ttyd c 12 5
-To use these ports for terminals etc, you will want to add them to
-/etc/ttys.
-
-In order to use 'tip' on OpenBSD/sparc, you'll need to edit /etc/ttys
+In order to use 'tip' on OpenBSD/MACHINE, you'll need to edit /etc/ttys
 and add "local" to the end of the tty configuration line, and run 
 'ttyflags -a' to put your changes into effect.
 
@@ -368,10 +361,10 @@ least the following pieces:
     a kernel, most likely "/bsd"
 
 All these pieces, except "/boot" and the GNU utilities are supplied in
-the OpenBSD/sparc distribution.
+the OpenBSD/MACHINE distribution.
 
 You need to format and partition the disk using SunOS (since
-OpenBSD/sparc uses SunOS disk labels.)  Give yourself adequate
+OpenBSD/MACHINE uses SunOS disk labels.)  Give yourself adequate
 partition sizes.  Here is an example layout:
 
     partition    size   offset	  will be..
@@ -469,7 +462,7 @@ Normally, this file is a symbolic link to an appropriate second-stage
 boot program, which should be located in a place where the TFTP daemon
 can find it (remember, many TFTP daemons run in a chroot'ed environment).
 
-You can find the boot program in `/usr/mdec/boot' in the OpenBSD/sparc
+You can find the boot program in `/usr/mdec/boot' in the OpenBSD/MACHINE
 distribution. Unfortunately, it is necessary to install this file
 differently for sun4 and sun4c clients: the sun4 version needs to have its
 `a.out' header stripped off (otherwise the machine will crash), while the
@@ -484,9 +477,9 @@ Here's an example to illustrate this whole mess:
     else
 	server# set SKIP=0
 	server# set KARCH=SUN4C
-    server# dd if=boot of=/tftpboot/boot.sparc.OpenBSD.$KARCH skip=$SKIP bs=32
+    server# dd if=boot of=/tftpboot/boot.MACHINE.OpenBSD.$KARCH skip=$SKIP bs=32
     server# cd /tftpboot
-    server# ln -s boot.sparc.OpenBSD.$KARCH 8273900B.$KARCH
+    server# ln -s boot.MACHINE.OpenBSD.$KARCH 8273900B.$KARCH
 
 
 After the boot program has been loaded into memory and given control by

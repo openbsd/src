@@ -1,21 +1,36 @@
-OpenBSD/sparc OSREV runs on the following classes of machines:
+OpenBSD/MACHINE OSREV runs on the following classes of machines:
 	- sun4  -- 4/100, 4/200, and 4/300.   (note that support
 		   for the 4/400 processor is incomplete)
 	- sun4c -- SS1, SS1+, SS2, IPC, ELC, IPX, and SLC
-	- sun4m -- Sun Sparc Classic, LX, 4, 5, 10, 20, and 600MP.
-		   Tadpole SPARCbook 3GS and 3GX
-		*** See Notes Below
-	- faithful clones of the above Sun systems (e.g. Integrix, Force)
+	- sun4m -- Sun Sparc Classic, LX, 4, 5, 10, 20, and 600MP
+	- Tadpole SPARCbook 3GS, 3GX and 3XP
+	- Force CPU5V
+	- as well as faithful clones of the above Sun systems, such as:
+		+ Aries Research Inc, Parrot II
+		+ Axil 243, 245, 320 (and possibly other models)
+		+ Opus 5000, 5250
+		+ TWS,SuperCOMPstation-20S
+		+ Tatung micro COMPstation 5, COMPstation LX
+		+ RDI BrideLite and PowerLite
+		+ DTKstation/Classic+
+		+ Transtec SS5/170
 
-OpenBSD/sparc OSREV does NOT run on these machines (yet):
-	- Sun 4/400 --  Lacking support for the I/O cache, and related
-			ethernet problems.
-	- sun4d -- SPARCcenter 2000, SPARCserver 1000,  XDBus and
-			multiprocessor support issues.
-	- sun4u (Ultrasparcs) --  currently no support for 64-bit Sparc
-			architecture extensions.  sun4u will have its own port.
+For sun4m machines, the following Mbus CPU modules are supported:
+	- SM30, SM40, SM41, SM50, SM51, SM51-2, SM61, SM61-2, SM71,
+	  SM81, SM81-2
+	- SM100
+	- Ross RT620/RT625 at 90, 125, 150 or 166 MHz
+
+OpenBSD/MACHINE OSREV does NOT run on these machines (yet):
+	- Sun 4/400
+		Lacking support for the I/O cache, and related
+		ethernet problems.
+	- sun4d -- SPARCcenter 2000, SPARCserver 1000
+		XDBus and multiprocessor support issues.
+	- sun4u (Ultrasparcs)
+		These machines are supported by the OpenBSD/sparc64 port.
 	- clones that are significantly different from the Sun systems 
-			(e.g. Solbourne)
+		(e.g. K-Bus based Solbourne)
 
 The minimal configuration requires 4M of RAM and ~60M of disk space.
 To install the entire system requires much more disk space, and to run
@@ -26,7 +41,7 @@ faster CPU.)  Installation from "ramdisk" kernels requires 8M of RAM.
 
 Supported devices {:-include-:}:
 	sun4c and sun4m SBus video: 
-		cgsix, cgthree, and bwtwo frame buffers
+		cgsix (GX, GX+, TGX, TGX+), cgthree, and bwtwo frame buffers
 
         sun4m on-board machine specific video:
                 TCX, cgfourteen (aka SX), p9100 (Tadpole 3GS, 3GX)
@@ -94,15 +109,6 @@ Hardware the we do NOT currently support, but get many questions about:
         SBus ZX framebuffer (aka Leo)
 	Tadpole onboard PCMCIA and modem
 
-*** Note: sun4m and general sparc caveats
-
-As of the OpenBSD OSREV release there are still a few outstanding problems
-with OpenBSD on some Sparc architectures.  Certain lower end CPU modules are
-known to have problems, in particular the cache-less SM30 and SM40.
-Support for the Viking/SuperSPARC implementations with cache has improved
-dramatically.  Some sun4m machines are lacking useful floppy/audio support
-and the VME bus on the 600MP is unsupported.
-
 The supplied GENERIC kernel is the best attempt at a configuration that
 works on the widest range of machinery (sun4, sun4c, and sun4m).  
 If you have problems with the OpenBSD OSREV kernel in this distribution, 
@@ -118,9 +124,9 @@ UltraSparc (sun4u) or HyperSparc (sun4m) systems would help ensure the
 long-term viability of OpenBSD on Sparc based systems.
 
 Your support in terms of documenting previously unknown problems with
-OpenBSD/sparc, helping debug known problems, implementing missing pieces,
+OpenBSD/MACHINE, helping debug known problems, implementing missing pieces,
 and testing OpenBSD on various architectures is actively encouraged.
 The OpenBSD mailing lists, web-pages and sendbug utility are your best
-tools for helping make OpenBSD/sparc a better release.
+tools for helping make OpenBSD/MACHINE a better release.
 
 
