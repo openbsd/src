@@ -1,6 +1,6 @@
 #if defined(LIBC_SCCS) && !defined(lint) && !defined(NOID)
 static char elsieid[] = "@(#)strftime.c	7.64";
-static char *rcsid = "$OpenBSD: strftime.c,v 1.12 2003/03/13 15:47:34 deraadt Exp $";
+static char *rcsid = "$OpenBSD: strftime.c,v 1.13 2003/06/04 21:47:58 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include "private.h"
@@ -20,11 +20,7 @@ static char *rcsid = "$OpenBSD: strftime.c,v 1.12 2003/03/13 15:47:34 deraadt Ex
 ** 2. Redistributions in binary form must reproduce the above copyright
 **    notice, this list of conditions and the following disclaimer in the
 **    documentation and/or other materials provided with the distribution.
-** 3. All advertising materials mentioning features or use of this software
-**    must display the following acknowledgement:
-**	This product includes software developed by the University of
-**	California, Berkeley and its contributors.
-** 4. Neither the name of the University nor the names of its contributors
+** 3. Neither the name of the University nor the names of its contributors
 **    may be used to endorse or promote products derived from this software
 **    without specific prior written permission.
 **
