@@ -1,0 +1,63 @@
+.\"	$OpenBSD: nsclpcsio.4,v 1.1 2004/01/05 20:13:15 markus Exp $
+.\"
+.\" Copyright (c) 2004 Markus Friedl <markus@openbsd.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd January 5, 2004
+.Dt nsclpcsio 4
+.Os
+.Sh NAME
+.Nm nsclpcsio
+.Nd National Semiconductor PC87366 LPC Super I/O 
+.Sh SYNOPSIS
+.Cd "nsclpcsio? at isa?"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides support for the
+.Tn National Semiconductor PC87366 LPC Super I/O 
+hardware monitor to be used with the
+.Xr sysctl 3
+interface.
+.Pp
+Most supported devices possess 17 sensors:
+.Bl -column "Sensor" "Units" "Typical" -offset indent
+.It Sy "Sensor" Ta Sy "Units" Ta Sy "Typical Use"
+.It Li "TSENS1" Ta "uK" Ta "Remote diode"
+.It Li "TSENS2" Ta "uK" Ta "Remote diode"
+.It Li "TNSC" Ta "uK" Ta "Local diode"
+.It Li "VSENS0" Ta "uV DC" Ta "External source"
+.It Li "VSENS1" Ta "uV DC" Ta "External source"
+.It Li "VSENS2" Ta "uV DC" Ta "External source"
+.It Li "VSENS3" Ta "uV DC" Ta "External source"
+.It Li "VSENS4" Ta "uV DC" Ta "External source"
+.It Li "VSENS5" Ta "uV DC" Ta "External source"
+.It Li "VSENS6" Ta "uV DC" Ta "External source"
+.It Li "VSB" Ta "uV DC" Ta "VSB"
+.It Li "VDD" Ta "uV DC" Ta "VDD"
+.It Li "VBAT" Ta "uV DC" Ta "VBAT"
+.It Li "AVDD" Ta "uV DC" Ta "AVDD"
+.It Li "TS1" Ta "uV DC" Ta "Thermistor"
+.It Li "TS2" Ta "uV DC" Ta "Thermistor"
+.It Li "TS3" Ta "uV DC" Ta "Thermistor"
+.El
+.Pp
+.Sh SEE ALSO
+.Xr sensorsd 8 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Ox 3.5 .
