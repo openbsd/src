@@ -1,4 +1,4 @@
-/*	$OpenBSD: sigreturn.S,v 1.1 2004/01/28 01:44:45 mickey Exp $	*/
+/*	$OpenBSD: sigreturn.S,v 1.2 2004/02/22 21:28:22 miod Exp $	*/
 /*	$NetBSD: __sigreturn14.S,v 1.1 2001/06/19 00:25:06 fvdl Exp $	*/
 
 /*-
@@ -56,5 +56,5 @@
 #endif /* GPROF */
 #endif
 
-SYSCALL(sigreturn)
+OSYSCALL(sigreturn)
 	ret
