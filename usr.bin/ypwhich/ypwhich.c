@@ -1,4 +1,4 @@
-/*	$OpenBSD: ypwhich.c,v 1.14 2002/08/04 00:51:14 deraadt Exp $	*/
+/*	$OpenBSD: ypwhich.c,v 1.15 2003/06/02 04:00:17 deraadt Exp $	*/
 /*	$NetBSD: ypwhich.c,v 1.6 1996/05/13 02:43:48 thorpej Exp $	*/
 
 /*
@@ -13,12 +13,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Theo de Raadt.
- * 4. The name of the author may not be used to endorse or promote
- *    products derived from this software without specific prior written
- *    permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
@@ -34,7 +28,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: ypwhich.c,v 1.14 2002/08/04 00:51:14 deraadt Exp $";
+static char rcsid[] = "$Id: ypwhich.c,v 1.15 2003/06/02 04:00:17 deraadt Exp $";
 #endif
 
 #include <sys/param.h>

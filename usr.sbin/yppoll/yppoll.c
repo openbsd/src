@@ -1,8 +1,8 @@
-/*	$OpenBSD: yppoll.c,v 1.5 2002/07/19 03:16:24 deraadt Exp $ */
+/*	$OpenBSD: yppoll.c,v 1.6 2003/06/02 04:00:17 deraadt Exp $ */
 /*	$NetBSD: yppoll.c,v 1.5 1996/05/13 02:46:36 thorpej Exp $	*/
 
 /*
- * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
+ * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@openbsd.org>
  * Copyright (c) 1992, 1993 John Brezak
  * All rights reserved.
  *
@@ -36,7 +36,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$Id: yppoll.c,v 1.5 2002/07/19 03:16:24 deraadt Exp $";
+static char rcsid[] = "$Id: yppoll.c,v 1.6 2003/06/02 04:00:17 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
