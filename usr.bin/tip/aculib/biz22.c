@@ -1,4 +1,4 @@
-/*	$OpenBSD: biz22.c,v 1.4 1997/04/02 01:47:05 millert Exp $	*/
+/*	$OpenBSD: biz22.c,v 1.5 2001/07/12 05:17:24 deraadt Exp $	*/
 /*	$NetBSD: biz22.c,v 1.6 1997/02/11 09:24:11 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: biz22.c,v 1.4 1997/04/02 01:47:05 millert Exp $";
+static char rcsid[] = "$OpenBSD: biz22.c,v 1.5 2001/07/12 05:17:24 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -97,8 +97,8 @@ biz_dialer(num, mod)
 	if (timeout) {
 		char line[80];
 
-		(void)sprintf(line, "%d second dial timeout",
-			number(value(DIALTIMEOUT)));
+		(void)sprintf(line, "%ld second dial timeout",
+			(long)number(value(DIALTIMEOUT)));
 		logent(value(HOST), num, "biz1022", line);
 	}
 #endif
@@ -123,8 +123,6 @@ biz22f_dialer(num, acu)
 
 biz22_disconnect()
 {
-	int rw = 2;
-
 	write(FD, DISCONNECT_CMD, 4);
 	sleep(2);
 	tcflush(FD, TCIOFLUSH);

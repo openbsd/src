@@ -1,4 +1,4 @@
-/*	$OpenBSD: remote.c,v 1.7 1997/09/07 12:23:59 provos Exp $	*/
+/*	$OpenBSD: remote.c,v 1.8 2001/07/12 05:17:24 deraadt Exp $	*/
 /*	$NetBSD: remote.c,v 1.5 1997/04/20 00:02:45 mellon Exp $	*/
 
 /*
@@ -45,7 +45,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)remote.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: remote.c,v 1.7 1997/09/07 12:23:59 provos Exp $";
+static char rcsid[] = "$OpenBSD: remote.c,v 1.8 2001/07/12 05:17:24 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -82,7 +82,7 @@ getremcap(host)
 	int   stat;
 
 	rempath = getenv("REMOTE");
-	if (rempath != NULL)
+	if (rempath != NULL) {
 		if (*rempath != '/')
 			/* we have an entry */
 			cgetset(rempath);
@@ -90,6 +90,7 @@ getremcap(host)
 			db_array[1] = rempath;
 			db_array[2] = _PATH_REMOTE;
 		}
+	}
 
 	if ((stat = cgetent(&bp, db_array, host)) < 0) {
 		if (DV ||

@@ -1,4 +1,4 @@
-/*	$OpenBSD: odsyntax.c,v 1.3 1997/01/15 23:42:34 millert Exp $	*/
+/*	$OpenBSD: odsyntax.c,v 1.4 2001/07/12 05:17:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,11 +35,12 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)odsyntax.c	5.4 (Berkeley) 3/8/91";*/
-static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.3 1997/01/15 23:42:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: odsyntax.c,v 1.4 2001/07/12 05:17:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <stdio.h>
 #include "hexdump.h"
 
@@ -152,6 +153,7 @@ oldsyntax(argc, argvp)
 #define	ishexdigit(c) \
 	(c >= '0' && c <= '9' || c >= 'a' && c <= 'f' || c >= 'A' && c <= 'F')
 
+void
 odoffset(argc, argvp)
 	int argc;
 	char ***argvp;

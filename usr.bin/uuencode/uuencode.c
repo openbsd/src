@@ -1,4 +1,4 @@
-/*	$OpenBSD: uuencode.c,v 1.2 1996/06/26 05:42:24 deraadt Exp $	*/
+/*	$OpenBSD: uuencode.c,v 1.3 2001/07/12 05:17:28 deraadt Exp $	*/
 /*	$NetBSD: uuencode.c,v 1.7 1994/11/17 07:41:15 jtc Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uuencode.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: uuencode.c,v 1.2 1996/06/26 05:42:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: uuencode.c,v 1.3 2001/07/12 05:17:28 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -120,7 +120,7 @@ encode()
 	register char *p;
 	char buf[80];
 
-	while (n = fread(buf, 1, 45, stdin)) {
+	while ((n = fread(buf, 1, 45, stdin))) {
 		ch = ENC(n);
 		if (putchar(ch) == EOF)
 			break;

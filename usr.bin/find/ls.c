@@ -1,4 +1,4 @@
-/*	$OpenBSD: ls.c,v 1.7 2001/02/05 07:55:36 deraadt Exp $	*/
+/*	$OpenBSD: ls.c,v 1.8 2001/07/12 05:17:03 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)ls.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: ls.c,v 1.7 2001/02/05 07:55:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ls.c,v 1.8 2001/07/12 05:17:03 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -65,7 +65,7 @@ printlong(name, accpath, sb)
 {
 	char modep[15], *user_from_uid(), *group_from_gid();
 
-	(void)printf("%6u %4qd ", sb->st_ino, sb->st_blocks);
+	(void)printf("%6u %4lld ", sb->st_ino, (long long)sb->st_blocks);
 	(void)strmode(sb->st_mode, modep);
 	(void)printf("%s %3u %-*.*s %-*.*s ", modep, sb->st_nlink, 
 	    NAME_WIDTH, UT_NAMESIZE, user_from_uid(sb->st_uid, 0), 
@@ -75,7 +75,7 @@ printlong(name, accpath, sb)
 		(void)printf("%3d, %3d ", major(sb->st_rdev),
 		    minor(sb->st_rdev));
 	else
-		(void)printf("%8qd ", sb->st_size);
+		(void)printf("%8lld ", (long long)sb->st_size);
 	printtime(sb->st_mtime);
 	(void)printf("%s", name);
 	if (S_ISLNK(sb->st_mode))

@@ -1,4 +1,4 @@
-/*	$OpenBSD: subr.c,v 1.6 1999/12/06 00:32:47 deraadt Exp $	*/
+/*	$OpenBSD: subr.c,v 1.7 2001/07/12 05:17:02 deraadt Exp $	*/
 /*	$NetBSD: subr.c,v 1.4 1995/09/10 15:55:15 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)subr.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: subr.c,v 1.6 1999/12/06 00:32:47 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: subr.c,v 1.7 2001/07/12 05:17:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -116,8 +116,8 @@ char *strsave(instring)
  *		(one based)
  */
 int position(string, ch)
-	reg	char	*string;
-	reg	char	ch;
+	char	*string;
+	char	ch;
 {
 	reg	int	i;
 	if (string)
@@ -180,6 +180,7 @@ char	next_lastchar(string)
 		return('\0');
 }
 
+void
 clob_last(string, newstuff)
 	char	*string, newstuff;
 {
@@ -269,29 +270,30 @@ static	char	mod2incomment[] = MOD2INCOMMENT;
 static	char	mod2outcomment[] = MOD2OUTCOMMENT;
 
 struct	lang_desc lang_table[] = {
-	/*INUNKNOWN	0*/	"unknown", cincomment,	coutcomment,
-	/*INCPP		1*/	"cpp",	cincomment,    coutcomment,
-	/*INCC		2*/	"cc",	cincomment,    coutcomment,
-	/*INAS		3*/	"as",	ASINCOMMENT,   newline,
-	/*INLD		4*/	"ld",	cincomment,    coutcomment,
-	/*INLINT	5*/	"lint",	cincomment,    coutcomment,
-	/*INF77		6*/	"f77",	fincomment,    foutcomment,
-	/*INPI		7*/	"pi",	piincomment,   pioutcomment,
-	/*INPC		8*/	"pc",	piincomment,   pioutcomment,
-	/*INFRANZ	9*/	"franz",lispincomment, newline,
-	/*INLISP	10*/	"lisp",	lispincomment, newline,
-	/*INVAXIMA	11*/	"vaxima",lispincomment,newline,
-	/*INRATFOR	12*/	"ratfor",fincomment,   foutcomment,
-	/*INLEX		13*/	"lex",	cincomment,    coutcomment,
-	/*INYACC	14*/	"yacc",	cincomment,    coutcomment,
-	/*INAPL		15*/	"apl",	".lm",	       newline,
-	/*INMAKE	16*/	"make",	ASINCOMMENT,   newline,
-	/*INRI		17*/	"ri",	riincomment,   rioutcomment,
-	/*INTROFF	18*/	"troff",troffincomment,troffoutcomment,
-	/*INMOD2	19*/	"mod2",	mod2incomment, mod2outcomment,
-				0,	0,	     0
+	{ /*INUNKNOWN	0*/	"unknown", cincomment,	coutcomment },
+	{ /*INCPP		1*/	"cpp",	cincomment,    coutcomment },
+	{ /*INCC		2*/	"cc",	cincomment,    coutcomment },
+	{ /*INAS		3*/	"as",	ASINCOMMENT,   newline },
+	{ /*INLD		4*/	"ld",	cincomment,    coutcomment },
+	{ /*INLINT	5*/	"lint",	cincomment,    coutcomment },
+	{ /*INF77		6*/	"f77",	fincomment,    foutcomment },
+	{ /*INPI		7*/	"pi",	piincomment,   pioutcomment },
+	{ /*INPC		8*/	"pc",	piincomment,   pioutcomment },
+	{ /*INFRANZ	9*/	"franz",lispincomment, newline },
+	{ /*INLISP	10*/	"lisp",	lispincomment, newline },
+	{ /*INVAXIMA	11*/	"vaxima",lispincomment,newline },
+	{ /*INRATFOR	12*/	"ratfor",fincomment,   foutcomment },
+	{ /*INLEX		13*/	"lex",	cincomment,    coutcomment },
+	{ /*INYACC	14*/	"yacc",	cincomment,    coutcomment },
+	{ /*INAPL		15*/	"apl",	".lm",	       newline },
+	{ /*INMAKE	16*/	"make",	ASINCOMMENT,   newline },
+	{ /*INRI		17*/	"ri",	riincomment,   rioutcomment },
+	{ /*INTROFF	18*/	"troff",troffincomment,troffoutcomment },
+	{ /*INMOD2	19*/	"mod2",	mod2incomment, mod2outcomment },
+	{ 			0,	0,	      0 }
 };
 
+void
 printerrors(look_at_subclass, errorc, errorv)
 	boolean	look_at_subclass;
 	int	errorc;
@@ -314,6 +316,7 @@ printerrors(look_at_subclass, errorc, errorv)
 	}
 }
 
+void
 wordvprint(fyle, wordc, wordv)
 	FILE	*fyle;
 	int	wordc;
@@ -333,6 +336,7 @@ wordvprint(fyle, wordc, wordv)
  *	Given a string, parse it into a number of words, and build
  *	a wordc wordv combination pointing into it.
  */
+void
 wordvbuild(string, r_wordc, r_wordv)
 	char	*string;
 	int	*r_wordc;
@@ -386,7 +390,7 @@ int wordvcmp(wordv1, wordc, wordv2)
 	for (i = 0; i < wordc; i++){
 		if (wordv1[i] == 0 || wordv2[i] == 0)
 				return(-1);
-		if (back = strcmp(wordv1[i], wordv2[i])){
+		if ((back = strcmp(wordv1[i], wordv2[i]))){
 			return(back);
 		}
 	}

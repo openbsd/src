@@ -1,4 +1,4 @@
-/*	$OpenBSD: touch.c,v 1.7 1999/12/04 00:09:22 deraadt Exp $	*/
+/*	$OpenBSD: touch.c,v 1.8 2001/07/12 05:17:02 deraadt Exp $	*/
 /*	$NetBSD: touch.c,v 1.3 1995/09/02 06:15:54 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)touch.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: touch.c,v 1.7 1999/12/04 00:09:22 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: touch.c,v 1.8 2001/07/12 05:17:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -49,6 +49,7 @@ static char rcsid[] = "$OpenBSD: touch.c,v 1.7 1999/12/04 00:09:22 deraadt Exp $
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "error.h"
 #include "pathnames.h"
 
@@ -61,6 +62,7 @@ static char rcsid[] = "$OpenBSD: touch.c,v 1.7 1999/12/04 00:09:22 deraadt Exp $
 #define	FILEITERATE(fi, lb)	for (fi = lb; fi <= nfiles; fi++)
 int	touchstatus = Q_YES;
 
+void
 findfiles(nerrors, errors, r_nfiles, r_files)
 		int	nerrors;
 	Eptr	*errors;
@@ -148,14 +150,14 @@ char	*class_table[] = {
 
 int	class_count[C_LAST - C_FIRST] = {0};
 
+void
 filenames(nfiles, files)
 	int	nfiles;
 	Eptr	**files;
 {
 	reg	int	fi;
-		char	*sep = " ";
-	extern	char	*class_table[];
-		int	someerrors;
+	char	*sep = " ";
+	int	someerrors;
 
 	/*
 	 *	first, simply dump out errors that
@@ -279,10 +281,12 @@ boolean touchfiles(nfiles, files, r_edargc, r_edargv)
 	}
 }
 
+void
 hackfile(name, files, ix, nerrors)
 	char	*name;
 	Eptr	**files;
 	int	ix;
+	int nerrors;
 {
 	boolean	previewed;
 	int	errordest;	/* where errors go*/
@@ -389,6 +393,7 @@ int settotouch(name)
 	return(dest);
 }
 
+void
 diverterrors(name, dest, files, ix, previewed, nterrors)
 	char	*name;
 	int	dest;
@@ -485,6 +490,7 @@ int oktotouch(filename)
  *	We fill in the initial search string.
  *	We fill in the arguments, and the null.
  */
+void
 execvarg(n_pissed_on, r_argc, r_argv)
 	int	n_pissed_on;
 	int	*r_argc;
@@ -555,6 +561,8 @@ boolean edit(name)
  *	Position to the line (before, after) the line given by place
  */
 char	edbuf[BUFSIZ];
+
+void
 insert(place)
 	int	place;
 {
@@ -566,9 +574,10 @@ insert(place)
 	}
 }
 
+void
 text(p, use_all)
-	reg	Eptr	p;
-		boolean	use_all;
+	Eptr	p;
+	boolean	use_all;
 {
 	int	offset = use_all ? 0 : 2;
 
@@ -585,6 +594,7 @@ text(p, use_all)
  *	write the touched file to its temporary copy,
  *	then bring the temporary in over the local file
  */
+int
 writetouched(overwrite)
 	int	overwrite;
 {
@@ -659,6 +669,7 @@ int mustoverwrite(preciousfile, tmpfile)
 /*
  *	return 0 on catastrophe
  */
+int
 mustwrite(base, n, preciousfile)
 	char	*base;
 	int	n;
@@ -671,7 +682,7 @@ mustwrite(base, n, preciousfile)
 	nwrote = fwrite(base, 1, n, preciousfile);
 	if (nwrote == n)
 		return(1);
-	err(NULL);
+	warn(NULL);
 	switch(inquire(terse
 	    ? "Botch overwriting: retry? "
 	    : "Botch overwriting the source file: retry? ")){
@@ -717,6 +728,7 @@ onintr()
 	/*NOTREACHED*/
 }
 
+void
 errorprint(place, errorp, print_all)
 	FILE	*place;
 	Eptr	errorp;

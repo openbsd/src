@@ -1,4 +1,4 @@
-/*	$OpenBSD: fmt.c,v 1.16 2000/06/25 15:35:42 pjanzen Exp $	*/
+/*	$OpenBSD: fmt.c,v 1.17 2001/07/12 05:17:05 deraadt Exp $	*/
 
 /* Sensible version of fmt
  *
@@ -168,7 +168,7 @@
 
 #ifndef lint
 static const char rcsid[] =
-  "$OpenBSD: fmt.c,v 1.16 2000/06/25 15:35:42 pjanzen Exp $";
+  "$OpenBSD: fmt.c,v 1.17 2001/07/12 05:17:05 deraadt Exp $";
 static const char copyright[] =
   "Copyright (c) 1997 Gareth McCaughan. All rights reserved.\n";
 #endif /* not lint */
@@ -562,7 +562,7 @@ output_word(size_t indent0, size_t indent1, const char *word, size_t length, siz
     if (indent>0) output_indent(indent);
     fwrite(output_buffer, 1, x0, stdout);
     if (x0==0 || (new_x <= max_length && new_x-goal_length <= goal_length-x)) {
-      printf("%*s", pending_spaces, "");
+      printf("%*s", (int)pending_spaces, "");
       goto write_out_word;
     }
     else {

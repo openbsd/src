@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipcs.c,v 1.12 2001/02/14 17:48:01 tholo Exp $	*/
+/*	$OpenBSD: ipcs.c,v 1.13 2001/07/12 05:17:11 deraadt Exp $	*/
 /*	$NetBSD: ipcs.c,v 1.10.6.1 1996/06/07 01:53:47 thorpej Exp $	*/
 
 /*
@@ -42,6 +42,8 @@
 #include <err.h>
 #include <fcntl.h>
 #include <kvm.h>
+#include <pwd.h>
+#include <grp.h>
 #include <limits.h>
 #include <nlist.h>
 #include <paths.h>
@@ -131,7 +133,6 @@ main(argc, argv)
 	int     display = SHMINFO | MSGINFO | SEMINFO;
 	int     option = 0;
 	char   *core = NULL, *namelist = NULL;
-	char	errbuf[_POSIX2_LINE_MAX];
 	int     i;
 
 	while ((i = getopt(argc, argv, "MmQqSsabC:cN:optT")) != -1)
@@ -273,7 +274,7 @@ main(argc, argv)
 					cvt_time(msqptr->msg_rtime, rtime_buf);
 					cvt_time(msqptr->msg_ctime, ctime_buf);
 
-					printf("q %6d %10d %s %8s %8s",
+					printf("q %6d %10ld %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, msqptr->msg_perm),
 					    msqptr->msg_perm.key,
 					    fmt_perm(msqptr->msg_perm.mode),
@@ -286,12 +287,12 @@ main(argc, argv)
 						    group_from_gid(msqptr->msg_perm.cgid, 0));
 
 					if (option & OUTSTANDING)
-						printf(" %6d %6d",
+						printf(" %6lu %6lu",
 						    msqptr->msg_cbytes,
 						    msqptr->msg_qnum);
 
 					if (option & BIGGEST)
-						printf(" %6d",
+						printf(" %6lu",
 						    msqptr->msg_qbytes);
 
 					if (option & PID)
@@ -372,7 +373,7 @@ main(argc, argv)
 					cvt_time(shmptr->shm_dtime, dtime_buf);
 					cvt_time(shmptr->shm_ctime, ctime_buf);
 
-					printf("m %6d %10d %s %8s %8s",
+					printf("m %6d %10ld %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, shmptr->shm_perm),
 					    shmptr->shm_perm.key,
 					    fmt_perm(shmptr->shm_perm.mode),
@@ -469,12 +470,11 @@ main(argc, argv)
 				if ((xsema[i].sem_perm.mode & SEM_ALLOC) != 0) {
 					char    ctime_buf[100], otime_buf[100];
 					struct semid_ds *semaptr = &xsema[i];
-					int     j, value;
 
 					cvt_time(semaptr->sem_otime, otime_buf);
 					cvt_time(semaptr->sem_ctime, ctime_buf);
 
-					printf("s %6d %10d %s %8s %8s",
+					printf("s %6d %10ld %s %8s %8s",
 					    IXSEQ_TO_IPCID(i, semaptr->sem_perm),
 					    semaptr->sem_perm.key,
 					    fmt_perm(semaptr->sem_perm.mode),

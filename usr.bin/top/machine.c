@@ -1,4 +1,4 @@
-/*	$OpenBSD: machine.c,v 1.24 2001/06/03 06:46:47 angelos Exp $	*/
+/*	$OpenBSD: machine.c,v 1.25 2001/07/12 05:17:26 deraadt Exp $	*/
 
 /*
  * top - a top users display for Unix
@@ -47,7 +47,6 @@
 #include <err.h>
 #endif
 
-static int getkval __P((unsigned long, int *, int, char *));
 static int swapmode __P((int *, int *));
 
 #include "top.h"
@@ -94,10 +93,6 @@ char *state_abbrev[] = {
 
 
 static int stathz;
-
-/* these are offsets obtained via nlist and used in the get_ functions */
-
-static unsigned long cp_time_offset;
 
 /* these are for calculating cpu state percentages */
 static long cp_time[CPUSTATES];
@@ -163,8 +158,7 @@ int
 machine_init(statics)
 	struct statics *statics;
 {
-	char    errbuf[_POSIX2_LINE_MAX];
-	int pagesize, i = 0;
+	int pagesize;
 
 	stathz = getstathz();
 	if (stathz == -1)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fstat.c,v 1.30 2001/06/22 22:43:20 pvalchev Exp $	*/
+/*	$OpenBSD: fstat.c,v 1.31 2001/07/12 05:17:06 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)fstat.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$OpenBSD: fstat.c,v 1.30 2001/06/22 22:43:20 pvalchev Exp $";
+static char *rcsid = "$OpenBSD: fstat.c,v 1.31 2001/07/12 05:17:06 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -150,6 +150,8 @@ int ext2fs_filestat __P((struct vnode *, struct filestat *));
 int isofs_filestat __P((struct vnode *, struct filestat *));
 int msdos_filestat __P((struct vnode *, struct filestat *));
 int nfs_filestat __P((struct vnode *, struct filestat *));
+int xfs_filestat __P((struct vnode *, struct filestat *));
+int null_filestat __P((struct vnode *, struct filestat *));
 void dofiles __P((struct kinfo_proc *));
 void getinetproto __P((int));
 void socktrans __P((struct socket *, int));
@@ -460,7 +462,8 @@ vtrans(vp, i, flag, offset)
 		return;
 	}
 	if (nflg)
-		(void)printf(" %2d,%-2d", major(fst.fsid), minor(fst.fsid));
+		(void)printf(" %2ld,%-2ld", (long)major(fst.fsid),
+		    (long)minor(fst.fsid));
 	else
 		(void)printf(" %-8s", getmnton(vn.v_mount));
 	if (nflg)
@@ -489,9 +492,9 @@ vtrans(vp, i, flag, offset)
 		break;
 	}
 	default:
-		printf(" %8qd", fst.size);
+		printf(" %8lld", (long long)fst.size);
 		if (oflg)
-			printf(":%-8qd", offset);
+			printf(":%-8lld", (long long)offset);
 	}
 	if (filename && !fsflg)
 		printf(" %s", filename);

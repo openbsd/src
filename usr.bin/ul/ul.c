@@ -1,4 +1,4 @@
-/*	$OpenBSD: ul.c,v 1.5 2000/03/22 15:38:23 markus Exp $	*/
+/*	$OpenBSD: ul.c,v 1.6 2001/07/12 05:17:27 deraadt Exp $	*/
 /*	$NetBSD: ul.c,v 1.3 1994/12/07 00:28:24 jtc Exp $	*/
 
 /*
@@ -44,12 +44,16 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ul.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: ul.c,v 1.5 2000/03/22 15:38:23 markus Exp $";
+static char rcsid[] = "$OpenBSD: ul.c,v 1.6 2001/07/12 05:17:27 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <curses.h>
+#include <term.h>
 
 #define	IESC	'\033'
 #define	SO	'\016'
@@ -83,9 +87,25 @@ int	halfpos;
 int	upln;
 int	iflag;
 
-int	outchar();
-#define	PRINT(s)	if (s == NULL) /* void */; else tputs(s, 1, outchar)
+int	outchar(int);
+void	initcap(void);
+void	initbuf(void);
+void	mfilter(FILE *);
+void	reverse(void);
+void	fwd(void);
+void	flushln(void);
+void	msetmode(int);
+void	outc(int);
+void	overstrike(void);
+void	iattr(void);
 
+#define	PRINT(s) \
+	do { \
+		if (s) \
+			tputs(s, 1, outchar); \
+	} while (0)
+
+int
 main(argc, argv)
 	int argc;
 	char **argv;
@@ -138,7 +158,7 @@ main(argc, argv)
 			must_overstrike = 1;
 	initbuf();
 	if (optind == argc)
-		filter(stdin);
+		mfilter(stdin);
 	else for (; optind<argc; optind++) {
 		f = fopen(argv[optind],"r");
 		if (f == NULL) {
@@ -146,16 +166,17 @@ main(argc, argv)
 			exit(1);
 		}
 
-		filter(f);
+		mfilter(f);
 		fclose(f);
 	}
 	exit(0);
 }
 
-filter(f)
+void
+mfilter(f)
 	FILE *f;
 {
-	register c;
+	int c;
 
 	while ((c = getc(f)) != EOF && col < MAXBUF) switch(c) {
 
@@ -265,17 +286,17 @@ filter(f)
 		flushln();
 }
 
+void
 flushln()
 {
-	register lastmode;
-	register i;
+	int lastmode, i;
 	int hadmodes = 0;
 
 	lastmode = NORMAL;
 	for (i=0; i<maxcol; i++) {
 		if (obuf[i].c_mode != lastmode) {
 			hadmodes++;
-			setmode(obuf[i].c_mode);
+			msetmode(obuf[i].c_mode);
 			lastmode = obuf[i].c_mode;
 		}
 		if (obuf[i].c_char == '\0') {
@@ -287,7 +308,7 @@ flushln()
 			outc(obuf[i].c_char);
 	}
 	if (lastmode != NORMAL) {
-		setmode(0);
+		msetmode(0);
 	}
 	if (must_overstrike && hadmodes)
 		overstrike();
@@ -304,6 +325,7 @@ flushln()
  * For terminals that can overstrike, overstrike underlines and bolds.
  * We don't do anything with halfline ups and downs, or Greek.
  */
+void
 overstrike()
 {
 	register int i;
@@ -341,6 +363,7 @@ overstrike()
 	}
 }
 
+void
 iattr()
 {
 	register int i;
@@ -364,6 +387,7 @@ iattr()
 	putchar('\n');
 }
 
+void
 initbuf()
 {
 
@@ -373,9 +397,10 @@ initbuf()
 	mode &= ALTSET;
 }
 
+void
 fwd()
 {
-	register oldcol, oldmax;
+	int oldcol, oldmax;
 
 	oldcol = col;
 	oldmax = maxcol;
@@ -384,6 +409,7 @@ fwd()
 	maxcol = oldmax;
 }
 
+void
 reverse()
 {
 	upln++;
@@ -393,6 +419,7 @@ reverse()
 	upln++;
 }
 
+void
 initcap()
 {
 	static char tcapbuf[512];
@@ -446,14 +473,17 @@ initcap()
 	must_use_uc = (UNDER_CHAR && !ENTER_UNDERLINE);
 }
 
+int
 outchar(c)
 	int c;
 {
 	putchar(c & 0177);
+	return (0);
 }
 
 static int curmode = 0;
 
+void
 outc(c)
 	int c;
 {
@@ -464,12 +494,13 @@ outc(c)
 	}
 }
 
-setmode(newmode)
+void
+msetmode(newmode)
 	int newmode;
 {
 	if (!iflag) {
 		if (curmode != NORMAL && newmode != NORMAL)
-			setmode(NORMAL);
+			msetmode(NORMAL);
 		switch (newmode) {
 		case NORMAL:
 			switch(curmode) {

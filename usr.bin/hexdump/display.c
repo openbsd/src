@@ -1,4 +1,4 @@
-/*	$OpenBSD: display.c,v 1.5 1998/12/16 01:28:24 deraadt Exp $	*/
+/*	$OpenBSD: display.c,v 1.6 2001/07/12 05:17:10 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)display.c	5.11 (Berkeley) 3/9/91";*/
-static char rcsid[] = "$OpenBSD: display.c,v 1.5 1998/12/16 01:28:24 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: display.c,v 1.6 2001/07/12 05:17:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -134,6 +134,7 @@ static off_t savaddress;		/* saved address/offset in stream */
 	} \
 }
 
+void
 display()
 {
 	extern FU *endfu;
@@ -145,7 +146,7 @@ display()
 	off_t saveaddress;
 	u_char savech, *savebp, *get();
 
-	while (bp = get())
+	while ((bp = get()))
 	    for (fs = fshead, savebp = bp, saveaddress = address; fs;
 		fs = fs->nextfs, bp = savebp, address = saveaddress)
 		    for (fu = fs->nextfu; fu; fu = fu->nextfu) {
@@ -188,6 +189,7 @@ display()
 	}
 }
 
+void
 bpad(pr)
 	PR *pr;
 {
@@ -202,7 +204,8 @@ bpad(pr)
 	*pr->cchar = 's';
 	for (p1 = pr->fmt; *p1 != '%'; ++p1);
 	for (p2 = ++p1; *p1 && strchr(spec, *p1); ++p1);
-	while (*p2++ = *p1++);
+	while ((*p2++ = *p1++))
+		;
 }
 
 static char **_argv;
@@ -281,6 +284,7 @@ get()
 
 extern off_t skip;			/* bytes to skip */
 
+int
 next(argv)
 	char **argv;
 {
@@ -317,6 +321,7 @@ next(argv)
 	/* NOTREACHED */
 }
 
+void
 doskip(fname, statok)
 	char *fname;
 	int statok;
@@ -356,6 +361,7 @@ emalloc(size)
 	return(p);
 }
 
+void
 nomem()
 {
 	(void)fprintf(stderr, "hexdump: %s.\n", strerror(errno));

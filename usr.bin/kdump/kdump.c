@@ -1,4 +1,4 @@
-/*	$OpenBSD: kdump.c,v 1.10 1999/09/25 19:35:47 kstailey Exp $	*/
+/*	$OpenBSD: kdump.c,v 1.11 2001/07/12 05:17:12 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: kdump.c,v 1.10 1999/09/25 19:35:47 kstailey Exp $";
+static char *rcsid = "$OpenBSD: kdump.c,v 1.11 2001/07/12 05:17:12 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -240,6 +240,7 @@ main(argc, argv)
 	}
 }
 
+int
 fread_tail(buf, size, num)
 	char *buf;
 	int num, size;
@@ -253,6 +254,7 @@ fread_tail(buf, size, num)
 	return (i);
 }
 
+void
 dumpheader(kth)
 	struct ktr_header *kth;
 {
@@ -319,6 +321,7 @@ ioctldecode(cmd)
 		printf(")");
 }
 
+void
 ktrsyscall(ktr)
 	register struct ktr_syscall *ktr;
 {
@@ -492,6 +495,7 @@ ktrgenio(ktr, len)
 	(void)printf("\"\n");
 }
 
+void
 ktrpsig(psig)
 	struct ktr_psig *psig;
 {
@@ -503,6 +507,7 @@ ktrpsig(psig)
 		    (u_long)psig->action, psig->mask, psig->code);
 }
 
+void
 ktrcsw(cs)
 	struct ktr_csw *cs;
 {
@@ -510,6 +515,7 @@ ktrcsw(cs)
 	    cs->user ? "user" : "kernel");
 }
 
+void
 usage()
 {
 
@@ -518,6 +524,7 @@ usage()
 	exit(1);
 }
 
+void
 setemul(name)
 	char *name;
 {

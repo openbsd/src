@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.36 2001/06/26 23:43:59 lebel Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.37 2001/07/12 05:17:07 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.27 1997/08/18 10:20:15 lukem Exp $	*/
 
 /*
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.6 (Berkeley) 10/9/94";
 #else
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.36 2001/06/26 23:43:59 lebel Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.37 2001/07/12 05:17:07 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -2064,9 +2064,9 @@ restart(argc, argv)
 		if (nrestart_point == QUAD_MAX || *ep != '\0')
 			fputs("restart: invalid offset.\n", ttyout);
 		else {
-			fprintf(ttyout, "Restarting at %qd. Execute get, put or"
+			fprintf(ttyout, "Restarting at %lld. Execute get, put or"
 				"append  to initiate transfer\n",
-				nrestart_point);
+				(long long)nrestart_point);
 			restart_point = nrestart_point;
 		}
 	}
@@ -2161,7 +2161,7 @@ sizecmd(argc, argv)
 	}
 	size = remotesize(argv[1], 1);
 	if (size != -1)
-		fprintf(ttyout, "%s\t%qd\n", argv[1], size);
+		fprintf(ttyout, "%s\t%lld\n", argv[1], (long long)size);
 	code = size;
 }
 

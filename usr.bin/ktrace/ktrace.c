@@ -1,4 +1,4 @@
-/*	$OpenBSD: ktrace.c,v 1.9 2000/06/30 16:00:15 millert Exp $	*/
+/*	$OpenBSD: ktrace.c,v 1.10 2001/07/12 05:17:13 deraadt Exp $	*/
 /*	$NetBSD: ktrace.c,v 1.4 1995/08/31 23:01:44 jtc Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)ktrace.c	8.2 (Berkeley) 4/28/95";
 #endif
-static char *rcsid = "$OpenBSD: ktrace.c,v 1.9 2000/06/30 16:00:15 millert Exp $";
+static char *rcsid = "$OpenBSD: ktrace.c,v 1.10 2001/07/12 05:17:13 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -56,6 +56,7 @@ static char *rcsid = "$OpenBSD: ktrace.c,v 1.9 2000/06/30 16:00:15 millert Exp $
 
 #include <err.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 
@@ -64,12 +65,14 @@ static char *rcsid = "$OpenBSD: ktrace.c,v 1.9 2000/06/30 16:00:15 millert Exp $
 void no_ktrace __P((int));
 void usage __P((void));
 
+int
 main(argc, argv)
 	int argc;
 	char **argv;
 {
 	enum { NOTSET, CLEAR, CLEARALL } clear;
-	int append, ch, fd, inherit, ops, pid, pidset, trpoints;
+	int append, ch, fd, inherit, ops, pidset, trpoints;
+	pid_t pid;
 	char *tracefile;
 	mode_t omask;
 	struct stat sb;
@@ -168,6 +171,7 @@ main(argc, argv)
 	exit(0);
 }
 
+int
 rpid(p)
 	char *p;
 {

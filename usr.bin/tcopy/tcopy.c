@@ -1,4 +1,4 @@
-/*	$OpenBSD: tcopy.c,v 1.5 2000/06/30 16:00:22 millert Exp $	*/
+/*	$OpenBSD: tcopy.c,v 1.6 2001/07/12 05:17:21 deraadt Exp $	*/
 /*	$NetBSD: tcopy.c,v 1.5 1997/04/15 07:23:08 lukem Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)tcopy.c	8.3 (Berkeley) 1/23/95";
 #endif
-static char rcsid[] = "$OpenBSD: tcopy.c,v 1.5 2000/06/30 16:00:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: tcopy.c,v 1.6 2001/07/12 05:17:21 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -172,8 +172,8 @@ main(argc, argv)
 					fprintf(msg, "record %ld\n", lastrec);
 			}
 			if (nread != 0)
-				fprintf(msg, "file %d: block size %d: ",
-				    filen, nread);
+				fprintf(msg, "file %d: block size %ld: ",
+				    filen, (long)nread);
 			(void) fflush(stdout);
 			lastrec = record;
 		}
@@ -195,8 +195,8 @@ r1:		guesslen = 0;
 						": %s", strerror(error));
 				    else
 					fprintf(stderr,
-					    "write (%d) != read (%d)\n",
-					    nw, nread);
+					    "write (%d) != read (%ld)\n",
+					    nw, (long)nread);
 				    fprintf(stderr, "copy aborted\n");
 				    exit(5);
 				}
@@ -209,8 +209,8 @@ r1:		guesslen = 0;
 				break;
 			}
 			fprintf(msg,
-			    "file %d: eof after %ld records: %qd bytes\n",
-			    filen, record, size);
+			    "file %d: eof after %ld records: %lld bytes\n",
+			    filen, record, (long long)size);
 			needeof = 1;
 			filen++;
 			tsize += size;
@@ -219,7 +219,7 @@ r1:		guesslen = 0;
 		}
 		lastnread = nread;
 	}
-	fprintf(msg, "total length: %qd bytes\n", tsize);
+	fprintf(msg, "total length: %lld bytes\n", (long long)tsize);
 	(void)signal(SIGINT, oldsig);
 	if (op == COPY || op == COPYVERIFY) {
 		writeop(outp, MTWEOF);
@@ -293,13 +293,14 @@ void
 intr(signo)
 	int signo;
 {
-	if (record)
+	if (record) {
 		if (record - lastrec > 1)
 			fprintf(msg, "records %ld to %ld\n", lastrec, record);
 		else
 			fprintf(msg, "record %ld\n", lastrec);
+	}
 	fprintf(msg, "interrupt at file %d: record %ld\n", filen, record);
-	fprintf(msg, "total length: %qd bytes\n", tsize + size);
+	fprintf(msg, "total length: %lld bytes\n", (long long)(tsize + size));
 	exit(1);
 }
 

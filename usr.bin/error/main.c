@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.5 2000/08/12 02:32:49 aaron Exp $	*/
+/*	$OpenBSD: main.c,v 1.6 2001/07/12 05:17:02 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.3 1995/09/02 06:15:37 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.5 2000/08/12 02:32:49 aaron Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.6 2001/07/12 05:17:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <signal.h>
@@ -53,6 +53,7 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.5 2000/08/12 02:32:49 aaron Exp $";
 #include <ctype.h>
 #include <stdlib.h>
 #include <string.h>
+#include <err.h>
 #include "error.h"
 #include "pathnames.h"
 
@@ -226,8 +227,10 @@ main(argc, argv)
 
 	if (touchfiles(nfiles, files, &ed_argc, &ed_argv) && edit_files)
 		forkvi(ed_argc, ed_argv);
+	exit(0);
 }
 
+void
 forkvi(argc, argv)
 	int	argc;
 	char	**argv;
@@ -254,6 +257,7 @@ forkvi(argc, argv)
 	fprintf(stdout, "Can't find any editors.\n");
 }
 
+void
 try(name, argc, argv)
 	char *name;
 	int argc;

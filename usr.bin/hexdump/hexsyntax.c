@@ -1,4 +1,4 @@
-/*	$OpenBSD: hexsyntax.c,v 1.3 1997/01/15 23:42:34 millert Exp $	*/
+/*	$OpenBSD: hexsyntax.c,v 1.4 2001/07/12 05:17:10 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,15 +35,19 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)hexsyntax.c	5.2 (Berkeley) 5/8/90";*/
-static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.3 1997/01/15 23:42:34 millert Exp $";
+static char rcsid[] = "$OpenBSD: hexsyntax.c,v 1.4 2001/07/12 05:17:10 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <unistd.h>
 #include "hexdump.h"
 
 off_t skip;				/* bytes to skip */
 
+void
 newsyntax(argc, argvp)
 	int argc;
 	char ***argvp;
@@ -125,6 +129,7 @@ newsyntax(argc, argvp)
 	*argvp += optind;
 }
 
+void
 usage()
 {
 	(void)fprintf(stderr,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: colcrt.c,v 1.2 1996/06/26 05:32:12 deraadt Exp $	*/
+/*	$OpenBSD: colcrt.c,v 1.3 2001/07/12 05:16:59 deraadt Exp $	*/
 /*	$NetBSD: colcrt.c,v 1.3 1995/03/26 05:31:00 glass Exp $	*/
 
 /*
@@ -44,11 +44,16 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)colcrt.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: colcrt.c,v 1.2 1996/06/26 05:32:12 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: colcrt.c,v 1.3 2001/07/12 05:16:59 deraadt Exp $";
 #endif
 #endif /* not lint */
 
+#include <sys/types.h>
+#include <unistd.h>
+#include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
+
 /*
  * colcrt - replaces col for crts with new nroff esp. when using tbl.
  * Bill Joy UCB July 14, 1977
@@ -74,11 +79,16 @@ char	printall;
 char	*progname;
 FILE	*f;
 
+void	pflush(int);
+int	plus(char, char);
+void	move(int, int);
+
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register c;
+	register int c;
 	register char *cp, *dp;
 
 	argc--;
@@ -187,19 +197,21 @@ main(argc, argv)
 	exit(0);
 }
 
+int
 plus(c, d)
 	char c, d;
 {
 
-	return (c == '|' && d == '-' || d == '_');
+	return ((c == '|' && d == '-') || d == '_');
 }
 
 int first;
 
+void
 pflush(ol)
 	int ol;
 {
-	register int i, j;
+	register int i;
 	register char *cp;
 	char lastomit;
 	int l;
@@ -230,6 +242,7 @@ pflush(ol)
 	first = 1;
 }
 
+void
 move(l, m)
 	int l, m;
 {

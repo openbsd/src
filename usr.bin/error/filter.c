@@ -1,4 +1,4 @@
-/*	$OpenBSD: filter.c,v 1.5 1999/12/04 00:16:52 deraadt Exp $	*/
+/*	$OpenBSD: filter.c,v 1.6 2001/07/12 05:17:02 deraadt Exp $	*/
 /*	$NetBSD: filter.c,v 1.3 1995/09/02 06:15:28 jtc Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)filter.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: filter.c,v 1.5 1999/12/04 00:16:52 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: filter.c,v 1.6 2001/07/12 05:17:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -63,6 +63,7 @@ int	lexsort();
  *	Read the file ERRORNAME of the names of functions in lint
  *	to ignore complaints about.
  */
+void
 getignored(auxname)
 	char	*auxname;
 {
@@ -163,8 +164,9 @@ int search_ignore(key)
  *	and the linenumber the second.
  *	Return the new categorization of the error class.
  */
-Errorclass discardit(errorp)
-	reg	Eptr	errorp;
+Errorclass
+discardit(errorp)
+	Eptr	errorp;
 {
 		int	language;
 	reg	int	i;

@@ -1,4 +1,4 @@
-/*      $OpenBSD: elf2olf.c,v 1.4 1997/01/15 23:42:46 millert Exp $	*/
+/*      $OpenBSD: elf2olf.c,v 1.5 2001/07/12 05:17:01 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 Erik Theisen.  All rights reserved.
  *
@@ -30,7 +30,7 @@ static char copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.4 1997/01/15 23:42:46 millert Exp $";
+static char rcsid[] = "@(#) $Id: elf2olf.c,v 1.5 2001/07/12 05:17:01 deraadt Exp $";
 #endif
 
 #include <stdlib.h>
@@ -59,6 +59,9 @@ char *os_namev[] = ONAMEV;
 #define word(x,y)((y == ELFDATA2LSB) ? ntohl(htonl(x)) : ntohl(x))
 #define half(x,y)((y == ELFDATA2LSB) ? ntohs(htons(x)) : ntohs(x))
 
+void usage(void);
+void pwarn(char *, char *, int);
+
 int
 main(int argc, char*argv[])
 {
@@ -73,7 +76,7 @@ main(int argc, char*argv[])
     Elf32_Shdr shdr;
     int e;
     
-    if (progname = strrchr(*argv, '/'))
+    if ((progname = strrchr(*argv, '/')))
 	++progname;
     else
 	progname = *argv;
@@ -163,14 +166,14 @@ main(int argc, char*argv[])
 				else if (word(shdr.sh_type, e) == SHT_DYNAMIC)
 				    ehdr.e_ident[OI_DYNAMIC] = ODYNAMIC;
 			    } else
-				warn(progname, *argv, errno);
+				pwarn(progname, *argv, errno);
 			} /* while less than number of section headers */
 
 			/* We're ready to modify */
 			okay = 1;
 
 		    } else /* Bogus section header table seek */
-			warn(progname, *argv, errno);
+			pwarn(progname, *argv, errno);
 
 		} else { /* olf2elf */
 		    ehdr.e_ident[EI_MAG0]    = ELFMAG0;
@@ -184,7 +187,7 @@ main(int argc, char*argv[])
 		    okay = 1;
 		} /* olf2elf */
 	    } else /* Bogus non-ELF file encountered */
-		warn(progname, *argv, ENOEXEC);
+		pwarn(progname, *argv, ENOEXEC);
 
 	    /*
 	     * Do It.
@@ -207,22 +210,23 @@ main(int argc, char*argv[])
 				printf("OLF %s => ELF.\n", *argv);
 			}
 		    } else /* bad write */
-			warn(progname, *argv, errno);	
+			pwarn(progname, *argv, errno);	
 		} else /* bad seek */
-		    warn(progname, *argv, errno);
+		    pwarn(progname, *argv, errno);
 	    } /* okay? */
 	    fsync(fd);
 	    close(fd);
 
 	} else /* couldn't handle file */
-	    warn(progname, *argv, errno);
+	    pwarn(progname, *argv, errno);
     } while (*(++argv) != NULL);
     
 
     return (retval);
 }
 
-warn(name, fname, errval)
+void
+pwarn(name, fname, errval)
     char *name;
     char *fname;
     int errval;
@@ -231,6 +235,7 @@ warn(name, fname, errval)
     retval = 1;
 }
 
+void
 usage()
 {
     register int i;

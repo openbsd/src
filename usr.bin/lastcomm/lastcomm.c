@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.6 1997/06/02 02:39:42 flipk Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.7 2001/07/12 05:17:15 deraadt Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.6 1997/06/02 02:39:42 flipk Exp $";
+static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.7 2001/07/12 05:17:15 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -137,16 +137,17 @@ main(argc, argv)
 		{
 			t = expand(ab.ac_utime) + expand(ab.ac_stime);
 			(void)printf("%-*.*s %-7s %-*.*s %-*.*s %6.2f secs %.16s",
-				fldsiz(acct, ac_comm), fldsiz(acct, ac_comm),
-				ab.ac_comm, flagbits(ab.ac_flag), UT_NAMESIZE,
-				UT_NAMESIZE, user_from_uid(ab.ac_uid, 0),
-				UT_LINESIZE, UT_LINESIZE, getdev(ab.ac_tty),
-				t / (double)AHZ, ctime(&ab.ac_btime));
+			    (int)fldsiz(acct, ac_comm),
+			    (int)fldsiz(acct, ac_comm),
+			    ab.ac_comm, flagbits(ab.ac_flag), UT_NAMESIZE,
+			    UT_NAMESIZE, user_from_uid(ab.ac_uid, 0),
+			    UT_LINESIZE, UT_LINESIZE, getdev(ab.ac_tty),
+			    t / (double)AHZ, ctime(&ab.ac_btime));
 			delta = expand(ab.ac_etime) / (double)AHZ;
-			printf(" (%1.0lf:%02.0lf:%05.2lf)\n",
-				delta / SECSPERHOUR,
-				fmod(delta, SECSPERHOUR) / SECSPERMIN,
-				fmod(delta, SECSPERMIN));
+			printf(" (%1.0lf:%02.0f:%05.2f)\n",
+			    delta / SECSPERHOUR,
+			    fmod(delta, SECSPERHOUR) / SECSPERMIN,
+			    fmod(delta, SECSPERMIN));
 		}
 
 		if (size == 0)

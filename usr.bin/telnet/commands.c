@@ -1,4 +1,4 @@
-/*	$OpenBSD: commands.c,v 1.36 2001/07/09 07:04:54 deraadt Exp $	*/
+/*	$OpenBSD: commands.c,v 1.37 2001/07/12 05:17:22 deraadt Exp $	*/
 /*	$NetBSD: commands.c,v 1.14 1996/03/24 22:03:48 jtk Exp $	*/
 
 /*
@@ -2709,7 +2709,7 @@ help(argc, argv)
 		printf("Commands may be abbreviated.  Commands are:\r\n\r\n");
 		for (c = cmdtab; c->name; c++)
 			if (c->help) {
-				printf("%-*s\t%s\r\n", HELPINDENT, c->name,
+				printf("%-*s\t%s\r\n", (int)HELPINDENT, c->name,
 								    c->help);
 			}
 		return 0;

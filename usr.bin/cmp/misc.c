@@ -1,4 +1,4 @@
-/*      $OpenBSD: misc.c,v 1.2 1996/06/26 05:32:06 deraadt Exp $      */
+/*      $OpenBSD: misc.c,v 1.3 2001/07/12 05:16:58 deraadt Exp $      */
 /*      $NetBSD: misc.c,v 1.2 1995/09/08 03:22:58 tls Exp $      */
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.3 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.2 1996/06/26 05:32:06 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.3 2001/07/12 05:16:58 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -65,7 +65,7 @@ diffmsg(file1, file2, byte, line)
 	off_t byte, line;
 {
 	if (!sflag)
-		(void)printf("%s %s differ: char %qd, line %qd\n",
-		    file1, file2, byte, line);
+		(void)printf("%s %s differ: char %lld, line %lld\n",
+		    file1, file2, (long long)byte, (long long)line);
 	exit(DIFF_EXIT);
 }

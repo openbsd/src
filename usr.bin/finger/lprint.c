@@ -1,4 +1,4 @@
-/*	$OpenBSD: lprint.c,v 1.4 1997/05/30 23:35:52 kstailey Exp $	*/
+/*	$OpenBSD: lprint.c,v 1.5 2001/07/12 05:17:04 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1989 The Regents of the University of California.
@@ -38,7 +38,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)lprint.c	5.13 (Berkeley) 10/31/90";*/
-static char rcsid[] = "$OpenBSD: lprint.c,v 1.4 1997/05/30 23:35:52 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: lprint.c,v 1.5 2001/07/12 05:17:04 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -169,7 +169,7 @@ lprint(pn)
 			delta = gmtime(&w->idletime);
 			if (delta->tm_yday || delta->tm_hour || delta->tm_min) {
 				cpr += printf("%-*s idle ",
-				    maxlen - strlen(w->tty) + 1, ",");
+				    (int)(maxlen - strlen(w->tty) + 1), ",");
 				if (delta->tm_yday > 0) {
 					cpr += printf("%d day%s ",
 					   delta->tm_yday,

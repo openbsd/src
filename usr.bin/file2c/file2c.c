@@ -1,4 +1,4 @@
-/*	$OpenBSD: file2c.c,v 1.1 1996/08/26 07:47:06 downsj Exp $	*/
+/*	$OpenBSD: file2c.c,v 1.2 2001/07/12 05:17:03 deraadt Exp $	*/
 /*
  * ----------------------------------------------------------------------------
  * "THE BEER-WARE LICENSE" (Revision 42):
@@ -19,7 +19,6 @@ main(argc, argv)
     char **argv;
 {
     int i,j,k;
-    char s[10];
 
     if (argc > 1)
         printf("%s\n",argv[1]);

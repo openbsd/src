@@ -1,4 +1,4 @@
-/*	$OpenBSD: last.c,v 1.14 2001/02/06 22:10:09 fgsch Exp $	*/
+/*	$OpenBSD: last.c,v 1.15 2001/07/12 05:17:13 deraadt Exp $	*/
 /*	$NetBSD: last.c,v 1.6 1994/12/24 16:49:02 cgd Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)last.c	8.2 (Berkeley) 4/2/94";
 #endif
-static char rcsid[] = "$OpenBSD: last.c,v 1.14 2001/02/06 22:10:09 fgsch Exp $";
+static char rcsid[] = "$OpenBSD: last.c,v 1.15 2001/07/12 05:17:13 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -288,21 +288,21 @@ wtmp()
 				 */ 
 				if (want(bp, NO)) {
 					if (seconds) {
-				printf("%-*.*s %-*.*s %-*.*s %ld \n",
-						NAME_WIDTH, UT_NAMESIZE,
-						bp->ut_name, UT_LINESIZE,
-						UT_LINESIZE, bp->ut_line,
-						HOST_WIDTH, UT_HOSTSIZE,
-						bp->ut_host, bp->ut_time);
+						printf("%-*.*s %-*.*s %-*.*s %ld \n",
+						    NAME_WIDTH, UT_NAMESIZE,
+						    bp->ut_name, UT_LINESIZE,
+						    UT_LINESIZE, bp->ut_line,
+						    HOST_WIDTH, UT_HOSTSIZE,
+						    bp->ut_host, bp->ut_time);
 					} else {
 						ct = ctime(&bp->ut_time);
-				printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
-						NAME_WIDTH, UT_NAMESIZE,
-						bp->ut_name, UT_LINESIZE,
-						UT_LINESIZE, bp->ut_line,
-						HOST_WIDTH, UT_HOSTSIZE,
-						bp->ut_host, ct, timesize,
-						timesize, ct + 11);
+						printf("%-*.*s  %-*.*s %-*.*s %10.10s %*.*s \n",
+						    NAME_WIDTH, UT_NAMESIZE,
+						    bp->ut_name, UT_LINESIZE,
+						    UT_LINESIZE, bp->ut_line,
+						    HOST_WIDTH, UT_HOSTSIZE,
+						    bp->ut_host, ct, timesize,
+						    timesize, ct + 11);
 					}
 					if (maxrec != -1 && !--maxrec)
 						return;
@@ -436,7 +436,7 @@ want(bp, check)
 {
 	ARG *step;
 
-	if (check)
+	if (check) {
 		/*
 		 * when uucp and ftp log in over a network, the entry in
 		 * the utmp file is the name plus their process id.  See
@@ -446,6 +446,7 @@ want(bp, check)
 			bp->ut_line[3] = '\0';
 		else if (!strncmp(bp->ut_line, "uucp", sizeof("uucp") - 1))
 			bp->ut_line[4] = '\0';
+	}
 
 	if (snaptime) 		/* if snaptime is set, return NO */
 		return (NO);

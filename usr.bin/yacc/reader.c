@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.6 1998/11/24 01:21:29 deraadt Exp $	*/
+/*	$OpenBSD: reader.c,v 1.7 2001/07/12 05:17:33 deraadt Exp $	*/
 
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
@@ -82,6 +82,7 @@ char *name_pool;
 char line_format[] = "#line %d \"%s\"\n";
 
 
+void
 cachec(c)
 int c;
 {
@@ -97,6 +98,7 @@ int c;
 }
 
 
+void
 get_line()
 {
     register FILE *f = input_file;
@@ -161,6 +163,7 @@ dup_line()
 }
 
 
+void
 skip_comment()
 {
     register char *s;
@@ -318,6 +321,7 @@ keyword()
 }
 
 
+void
 copy_ident()
 {
     register int c;

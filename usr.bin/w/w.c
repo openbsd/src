@@ -1,4 +1,4 @@
-/*	$OpenBSD: w.c,v 1.33 2001/05/30 20:57:58 smart Exp $	*/
+/*	$OpenBSD: w.c,v 1.34 2001/07/12 05:17:31 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -43,7 +43,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)w.c	8.4 (Berkeley) 4/16/94";
 #else
-static char *rcsid = "$OpenBSD: w.c,v 1.33 2001/05/30 20:57:58 smart Exp $";
+static char *rcsid = "$OpenBSD: w.c,v 1.34 2001/07/12 05:17:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -305,7 +305,7 @@ main(argc, argv)
 		}
 	}
 			
-	if (!nflag)
+	if (!nflag) {
 		if (gethostname(domain, sizeof(domain) - 1) < 0 ||
 		    (p = strchr(domain, '.')) == 0)
 			domain[0] = '\0';
@@ -313,6 +313,7 @@ main(argc, argv)
 			domain[sizeof(domain) - 1] = '\0';
 			memmove(domain, p, strlen(p) + 1);
 		}
+	}
 
 	for (ep = ehead; ep != NULL; ep = ep->next) {
 		p = *ep->utmp.ut_host ? ep->utmp.ut_host : "-";
@@ -336,7 +337,7 @@ main(argc, argv)
 		}
 		if (x) {
 			(void)snprintf(buf, sizeof(buf), "%s:%.*s", p,
-			    ep->utmp.ut_host + UT_HOSTSIZE - x, x);
+			    (int)(ep->utmp.ut_host + UT_HOSTSIZE - x), x);
 			p = buf;
 		}
 		(void)printf("%-*.*s %-2.2s %-*.*s ",

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uniq.c,v 1.6 2000/06/30 16:00:22 millert Exp $	*/
+/*	$OpenBSD: uniq.c,v 1.7 2001/07/12 05:17:28 deraadt Exp $	*/
 /*	$NetBSD: uniq.c,v 1.7 1995/08/31 22:03:48 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)uniq.c	8.3 (Berkeley) 5/4/95";
 #endif
-static char rcsid[] = "$OpenBSD: uniq.c,v 1.6 2000/06/30 16:00:22 millert Exp $";
+static char rcsid[] = "$OpenBSD: uniq.c,v 1.7 2001/07/12 05:17:28 deraadt Exp $";
 #endif /* not lint */
 
 #include <errno.h>
@@ -221,7 +221,7 @@ obsolete(argv)
 	int len;
 	char *ap, *p, *start;
 
-	while (ap = *++argv) {
+	while ((ap = *++argv)) {
 		/* Return if "--" or not an option of any form. */
 		if (ap[0] != '-') {
 			if (ap[0] != '+')

@@ -1,4 +1,4 @@
-/*	$OpenBSD: input.c,v 1.2 1996/06/26 05:32:43 deraadt Exp $	*/
+/*	$OpenBSD: input.c,v 1.3 2001/07/12 05:17:02 deraadt Exp $	*/
 /*	$NetBSD: input.c,v 1.4 1995/09/10 15:55:13 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: input.c,v 1.2 1996/06/26 05:32:43 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: input.c,v 1.3 2001/07/12 05:17:02 deraadt Exp $";
 #endif /* not lint */
 
 #include <stdio.h>
@@ -71,11 +71,11 @@ Errorclass	mod2();
  *	Eat all of the lines in the input file, attempting to categorize
  *	them by their various flavors
  */
+void
 eaterrors(r_errorc, r_errorv)
 	int	*r_errorc;
 	Eptr	**r_errorv;
 {
-	extern	boolean	piflag;
 	Errorclass	errorclass = C_SYNC;
 	char *line;
 	char *inbuffer;
@@ -123,6 +123,7 @@ eaterrors(r_errorc, r_errorv)
 /*
  *	create a new error entry, given a zero based array and count
  */
+void
 erroradd(errorlength, errorv, errorclass, errorsubclass)
 	int		errorlength;
 	char		**errorv;
@@ -414,6 +415,7 @@ char	*F77_fatal[3] = {"Compiler", "error", "line"};
 char	*F77_error[3] = {"Error", "on", "line"};
 char	*F77_warning[3] = {"Warning", "on", "line"};
 char    *F77_no_ass[3] = {"Error.","No","assembly."};
+int
 f77()
 {
 	char	**nwordv;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.9 2001/07/09 07:04:55 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.10 2001/07/12 05:17:23 deraadt Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.9 2001/07/09 07:04:55 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.10 2001/07/12 05:17:23 deraadt Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -374,11 +374,12 @@ out:
 	stop_t = time(0);
 	fclose(fd);
 	signal(SIGINT, f);
-	if (boolean(value(VERBOSE)))
+	if (boolean(value(VERBOSE))) {
 		if (boolean(value(RAWFTP)))
 			prtime(" chars transferred in ", stop_t-start_t);
 		else
 			prtime(" lines transferred in ", stop_t-start_t);
+	}
 	write(fildes[1], (char *)&ccc, 1);
 	tcsetattr(0, TCSAFLUSH, &term);
 }
@@ -724,7 +725,7 @@ prtime(s, a)
 	char *s;
 	time_t a;
 {
-	register i;
+	register int i;
 	int nums[3];
 
 	for (i = 0; i < 3; i++) {
