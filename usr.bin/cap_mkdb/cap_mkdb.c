@@ -1,4 +1,4 @@
-/*	$OpenBSD: cap_mkdb.c,v 1.12 2003/09/21 22:32:02 millert Exp $	*/
+/*	$OpenBSD: cap_mkdb.c,v 1.13 2003/09/26 21:25:34 tedu Exp $	*/
 /*	$NetBSD: cap_mkdb.c,v 1.5 1995/09/02 05:47:12 jtc Exp $	*/
 
 /*-
@@ -40,7 +40,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)cap_mkdb.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.12 2003/09/21 22:32:02 millert Exp $";
+static char rcsid[] = "$OpenBSD: cap_mkdb.c,v 1.13 2003/09/26 21:25:34 tedu Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -174,9 +174,13 @@ db_build(char **ifiles)
 		 */
 		len = strlen(bp);
 		if (bplen <= len + 2) {
-			bplen += MAX(256, len + 2);
-			if ((data.data = realloc(data.data, bplen)) == NULL)
+			int newbplen = bplen + MAX(256, len + 2);
+			void *newdata;
+
+			if ((newdata = realloc(data.data, newbplen)) == NULL)
 				err(1, NULL);
+			data.data = newdata;
+			bplen = newbplen;
 		}
 
 		/* Find the end of the name field. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: at.c,v 1.39 2003/07/23 16:53:33 mpech Exp $	*/
+/*	$OpenBSD: at.c,v 1.40 2003/09/26 21:26:40 tedu Exp $	*/
 
 /*
  *  at.c : Put file into atrun queue
@@ -42,7 +42,7 @@
 #define TIMESIZE 50		/* Size of buffer passed to strftime() */
 
 #ifndef lint
-static const char rcsid[] = "$OpenBSD: at.c,v 1.39 2003/07/23 16:53:33 mpech Exp $";
+static const char rcsid[] = "$OpenBSD: at.c,v 1.40 2003/09/26 21:26:40 tedu Exp $";
 #endif
 
 /* Variables to remove from the job's environment. */
@@ -476,7 +476,7 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 {
 	struct passwd *pw;
 	struct dirent *dirent;
-	struct atjob **atjobs, *job;
+	struct atjob **atjobs, **newatjobs, *job;
 	struct stat stbuf;
 	time_t runtimer;
 	uid_t *uids;
@@ -577,10 +577,12 @@ list_jobs(int argc, char **argv, int count_only, int csort)
 		job->mode = stbuf.st_mode;
 		job->queue = queue;
 		if (numjobs == maxjobs) {
-			maxjobs *= 2;
-			atjobs = realloc(atjobs, maxjobs * sizeof(job));
-			if (atjobs == NULL)
+			int newjobs = maxjobs * 2;
+			newatjobs = realloc(atjobs, newjobs * sizeof(job));
+			if (newatjobs == NULL)
 				panic("Insufficient virtual memory");
+			atjobs = newatjobs;
+			maxjobs = newjobs;
 		}
 		atjobs[numjobs++] = job;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: apply.c,v 1.15 2003/06/10 22:20:44 deraadt Exp $	*/
+/*	$OpenBSD: apply.c,v 1.16 2003/09/26 21:26:05 tedu Exp $	*/
 /*	$NetBSD: apply.c,v 1.3 1995/03/25 03:38:23 glass Exp $	*/
 
 /*-
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)apply.c	8.4 (Berkeley) 4/4/94";
 #else
-static char rcsid[] = "$OpenBSD: apply.c,v 1.15 2003/06/10 22:20:44 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: apply.c,v 1.16 2003/09/26 21:26:05 tedu Exp $";
 #endif
 #endif /* not lint */
 
@@ -60,6 +60,7 @@ main(int argc, char *argv[])
 {
 	int ch, clen, debug, i, l, magic, n, nargs, rval;
 	char *c, *cmd, *p, *q;
+	const char *c2;
 	size_t len;
 
 	debug = 0;
@@ -167,8 +168,12 @@ main(int argc, char *argv[])
 		 */
 		for (l = strlen(cmd), i = 0; i < nargs; i++)
 			l += strlen(argv[i+1]);
-		if (l > clen && (c = realloc(c, clen = l)) == NULL)
-			err(1, NULL);
+		if (l > clen) {
+			if ((c2 = realloc(c, l)) == NULL)
+				err(1, NULL);
+			c = c2;
+			clen = l;
+		}
 
 		/* Expand command argv references. */
 		for (p = cmd, q = c; *p != '\0'; ++p)
