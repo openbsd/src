@@ -1,4 +1,4 @@
-.\"	$OpenBSD: mquery.2,v 1.5 2003/04/21 11:09:42 mpech Exp $
+.\"	$OpenBSD: mquery.2,v 1.6 2003/04/25 18:59:29 drahn Exp $
 .\"
 .\" Copyright (c) 2003 Artur Grabowski <art@openbsd.org>
 .\" All rights reserved. 
@@ -32,8 +32,8 @@
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
 .Fd #include <sys/mman.h>
-.Ft int
-.Fn mquery "int flags" "void **addr" "size_t size" "int fd" "off_t off"
+.Ft void *
+.Fn mquery "void *addr" "size_t len" "int prot" "int flags" "int fd" "off_t offset"
 .Sh DESCRIPTION
 The
 .Nm mquery
@@ -46,9 +46,8 @@ system call with
 in the flags.
 The
 .Fa addr
-argument should point to a memory location that stores a pointer
-which is used both as an input argument where the caller specifies the
-preferred address and as an output of the resulting hint.
+argument should be a memory location that which the caller specifies the
+preferred address.
 The
 .Fa size
 argument specifies the requested size of the memory area the caller
@@ -67,23 +66,23 @@ argument.
 If set to
 .Dv MAP_FIXED
 the pointer
-.Fa *addr
+.Fa addr
 is used as a fixed hint and
 .Fn mquery
-will return \-1 and set
+will return
+.Dv MAP_FAILED
+and set
 .Va errno
 to
 .Dv ENOMEM
 if there is not
 .Fa size
 bytes free after that address.
-Otherwise it will return 0 and
-.Fa *addr
-will not be changed.
+Otherwise it will return the hint addr.
 If no flags are set
 .Fn mquery
 will use
-.Fa *addr
+.Fa addr
 as a starting point in memory and will search forward to find
 a memory area with
 .Fa size
@@ -95,14 +94,17 @@ and
 arguments.
 When no such area can be found
 .Fn mquery
-will return \-1 and set
+will return 
+and set
 .Va errno
 to indicate the error.
 .Sh RETURN VALUES
 When a memory range satisfying the request is found
 .Fn mquery
-returns 0.
-Otherwise, \-1 is returned and
+returns the available address.
+Otherwise, 
+.Dv MAP_FAILED
+is returned and
 .Va errno
 is set to indicate the error.
 .Sh ERRORS
