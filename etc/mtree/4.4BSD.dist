@@ -1,4 +1,4 @@
-#	$OpenBSD: 4.4BSD.dist,v 1.45 1998/03/09 15:21:27 millert Exp $
+#	$OpenBSD: 4.4BSD.dist,v 1.46 1998/03/14 15:56:43 maja Exp $
 
 /set type=dir uname=root gname=wheel mode=0755
 # .
@@ -394,6 +394,17 @@ special
 
 # ./usr/share/doc
 doc
+
+# ./usr/share/doc/html
+html
+
+# ./usr/share/doc/html/lynx_help
+lynx_html
+# ./usr/share/doc/html/lynx_help
+..
+
+# ./usr/share/doc/html
+..
 
 # ./usr/share/doc/psd
 psd
