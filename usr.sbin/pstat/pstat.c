@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.24 2000/06/16 19:03:48 assar Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.25 2001/02/25 05:33:08 csapuntz Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,12 +44,13 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.24 2000/06/16 19:03:48 assar Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.25 2001/02/25 05:33:08 csapuntz Exp $";
 #endif
 #endif /* not lint */
 
 #include <sys/param.h>
 #include <sys/time.h>
+#include <sys/buf.h>
 #include <sys/vnode.h>
 #include <sys/map.h>
 #include <sys/ucred.h>
@@ -340,17 +341,15 @@ vnode_print(avnode, vp)
 		*fp++ = 'L';
 	if (flag & VXWANT)
 		*fp++ = 'W';
-	if (flag & VBWAIT)
+	if (vp->v_bioflag & VBIOWAIT)
 		*fp++ = 'B';
 	if (flag & VALIASED)
 		*fp++ = 'A';
-	if (flag & VDIROP)
-		*fp++ = 'D';
-	if (flag & VONFREELIST)
+	if (vp->v_bioflag & VBIOONFREELIST)
 		*fp++ = 'F';
 	if (flag & VLOCKSWORK)
 		*fp++ = 'l';
-	if (flag & VONSYNCLIST)
+	if (vp->v_bioflag & VBIOONSYNCLIST)
 		*fp++ = 's';
 	if (flag == 0)
 		*fp++ = '-';
