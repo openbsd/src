@@ -1,4 +1,4 @@
-/*	$OpenBSD: wicontrol.c,v 1.28 2002/04/01 19:50:44 millert Exp $	*/
+/*	$OpenBSD: wicontrol.c,v 1.29 2002/04/01 20:43:08 millert Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -69,7 +69,7 @@
 static const char copyright[] = "@(#) Copyright (c) 1997, 1998, 1999\
 	Bill Paul. All rights reserved.";
 static const char rcsid[] =
-	"@(#) $OpenBSD: wicontrol.c,v 1.28 2002/04/01 19:50:44 millert Exp $";
+	"@(#) $OpenBSD: wicontrol.c,v 1.29 2002/04/01 20:43:08 millert Exp $";
 #endif
 
 void wi_getval(char *, struct wi_req *);
@@ -89,7 +89,8 @@ void wi_printcardid(struct wi_req *, int);
 void wi_dumpstats(char *);
 void wi_dumpstations(char *);
 void usage(void);
-void printb(char *s, unsigned short v, char *bits);
+void printb(char *, unsigned short, char *);
+char *portid(char *);
 
 void
 wi_getval(iface, wreq)
@@ -778,7 +779,10 @@ main(argc, argv)
 	    "a:c:d:e:f:hi:k:lm:n:op:q:r:s:t:v:A:M:S:P:R:T:")) != -1) {
 	        for (p = 0; ch && wi_opt[p].key; p++)
 		        if (ch == wi_opt[p].key) {
-			        wi_opt[p].optarg = optarg;
+				if (ch == 'p' && !isdigit(*optarg))
+					wi_opt[p].optarg = portid(optarg);
+				else
+					wi_opt[p].optarg = optarg;
 				if (ch == 'T')	/* key 1-4/0-3 kludge */
 				        (*optarg)--;
 				dumpinfo = ch = 0;
@@ -786,12 +790,12 @@ main(argc, argv)
 		switch(ch) {
 		case 0:
 		        break;
-		case 'o':
-			dumpstats ++;
-			break;
 		case 'i':
 		        if (!ifspecified)
 			        iface = optarg;
+			break;
+		case 'o':
+			dumpstats++;
 			break;
 		case 'l':
 			dumpstations++;
@@ -813,9 +817,6 @@ main(argc, argv)
 			break;
 		}
 	}
-
-	if (iface == NULL)
-		usage();
 
 	for (p = 0; wi_opt[p].key; p++)
 	        if (wi_opt[p].optarg != NULL)
@@ -867,4 +868,22 @@ printb(s, v, bits)
 		}
 		putchar('>');
 	}
+}
+
+char *
+portid(char *name)
+{
+	char *id;
+
+	if (strcasecmp(name, "bss") == 0)
+		id = "1";
+	else if (strcasecmp(name, "adhoc") == 0 ||
+	    strcasecmp(name, "ad-hoc") == 0)
+		id = "3";
+	else if (strcasecmp(name, "hostap") == 0)
+		id = "6";
+	else
+		errx(1, "unknown port type %s", name);
+
+	return(id);
 }

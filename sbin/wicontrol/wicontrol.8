@@ -1,4 +1,4 @@
-.\"	$OpenBSD: wicontrol.8,v 1.28 2002/04/01 07:00:34 deraadt Exp $
+.\"	$OpenBSD: wicontrol.8,v 1.29 2002/04/01 20:43:08 millert Exp $
 .\"
 .\" Copyright (c) 1997, 1998, 1999
 .\"	Bill Paul <wpaul@ctr.columbia.edu> All rights reserved.
@@ -199,6 +199,12 @@ for a specified interface.
 The legal values for
 .Ar port type
 are 1 (BSS mode), 3 (ad-hoc mode) and 6 (hostap mode).
+The symbolic values
+.Dq bss ,
+.Dq adhoc
+and
+.Dq hostap
+may also be used instead of numeric values.
 In ad-hoc mode, the station can communicate directly with any other
 stations within direct radio range (provided that they are also
 operating in ad-hoc mode).
