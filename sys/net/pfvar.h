@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.60 2002/01/09 11:30:53 dhartmei Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.61 2002/01/11 20:13:11 mickey Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -245,6 +245,7 @@ struct pf_rule {
 struct pf_state_host {
 	struct pf_addr	addr;
 	u_int16_t	port;
+	u_int16_t	pad;
 };
 
 struct pf_state_peer {
@@ -253,6 +254,7 @@ struct pf_state_peer {
 	u_int32_t	seqdiff;	/* Sequence number modulator	*/
 	u_int16_t	max_win;
 	u_int8_t	state;
+	u_int8_t	pad;
 };
 
 struct pf_state {
