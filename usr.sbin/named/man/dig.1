@@ -1,4 +1,4 @@
-.\"	$OpenBSD: dig.1,v 1.18 2000/03/19 17:57:09 aaron Exp $
+.\"	$OpenBSD: dig.1,v 1.19 2000/10/17 19:29:15 aaron Exp $
 .\" $From: dig.1,v 8.2 1997/06/01 20:34:33 vixie Exp $
 .\"
 .\" ++Copyright++ 1993
@@ -97,13 +97,12 @@
 .Op ...
 .Sh DESCRIPTION
 .Nm
-(domain information groper) is a flexible command line tool
-which can be used to gather information from the Domain
-Name System servers.
+(domain information groper) is a flexible command line tool which can be
+used to gather information from the Domain Name System servers.
 .Nm
-has two modes: simple interactive mode
-which makes a single query, and batch which executes a query for
-each in a list of several query lines.
+has two modes: simple interactive mode, which makes a single query,
+and batch mode, which executes a query for each in a list of
+several query lines.
 All query options are accessible from the command line.
 .Pp
 The usual simple use of
@@ -116,11 +115,11 @@ will take the form:
 .Ar query-type
 .Ar query-class
 .Ed
+.Pp
 where:
 .Bl -tag -width "query-class" -offset
 .It Ar server
-may be either a domain name or a dot-notation
-Internet address.
+may be either a domain name or a dot-notation Internet address.
 If this optional field is omitted,
 .Nm
 will attempt to use the default name server for your machine.
@@ -128,18 +127,14 @@ will attempt to use the default name server for your machine.
 .Sy Note:
 If a domain name is specified, this will be resolved
 using the domain name system resolver (i.e., BIND).
-If your system does not support DNS, you may
-.Em have
-to specify a
+If your system does not support DNS, you may have to specify a
 dot-notation address.
-Alternatively, if there is a server
-at your disposal somewhere, all that is required is that
+Alternatively, if there is a server at your disposal somewhere,
+all that is required is that
 .Pa /etc/resolv.conf
-be present and indicate where the default
-name servers reside, so that
+be present and indicate where the default name servers reside, so that
 .Ar server
-itself can be
-resolved.
+itself can be resolved.
 See
 .Xr resolv.conf 5
 for information on
@@ -148,24 +143,19 @@ for information on
 .Sy Warning:
 Changing
 .Pa /etc/resolv.conf
-will affect
-the standard resolver library and potentially several
-programs which use it.) As an option, the user may set the
-environment variable
+will affect the standard resolver library and potentially several
+programs which use it.)
+As an option, the user may set the environment variable
 .Ev LOCALRES
-to name a file which is to
-be used instead of
+to name a file which is to be used instead of
 .Pa /etc/resolv.conf
 .Ev ( LOCALRES
-is specific
-to the
+is specific to the
 .Nm
-resolver and not referenced by the standard
-resolver).
+resolver and not referenced by the standard resolver).
 If the
 .Ev LOCALRES
-variable is not set or the file
-is not readable then
+variable is not set or the file is not readable then
 .Pa /etc/resolv.conf
 will be used.
 .It Ar domain
@@ -173,11 +163,9 @@ is the domain name for which you are requesting information.
 See
 .Sx "OTHER OPTIONS"
 .Fl ( x )
-for a convenient way to specify inverse address
-query.
+for a convenient way to specify inverse address query.
 .It Ar query-type
-is the type of information (DNS query type) that
-you are requesting.
+is the type of information (DNS query type) that you are requesting.
 If omitted, the default is
 .Dq Li a
 (T_A = address).
@@ -214,8 +202,7 @@ any	C_ANY	all/any class information
 .sp 1
 .Sy Note:
 .Dq Li any
-can be used to specify a class and/or a type of
-query.
+can be used to specify a class and/or a type of query.
 .Nm
 will parse the first occurrence of
 .Dq Li any
@@ -226,8 +213,7 @@ To specify
 .Ar query-class
 = C_ANY you must either specify
 .Dq Li any
-twice, or set
-query-class using
+twice, or set query-class using
 .Fl c
 option (see below).
 .El
@@ -235,17 +221,14 @@ option (see below).
 .Bl -tag -width Ar -offset
 .It Cm % Ns ignored-comment
 .Dq Li %
-is used to included an argument that is simply not
-parsed.
+is used to included an argument that is simply not parsed.
 This may be useful if running
 .Nm
-in batch
-mode.
+in batch mode.
 Instead of resolving every
 .Cm @ Ns Ar server-domain-name
-in a list of queries, you can avoid the overhead of doing
-so, and still have the domain name on the command line
-as a reference.
+in a list of queries, you can avoid the overhead of doing so,
+and still have the domain name on the command line as a reference.
 Example:
 .D1 Ic "dig @128.9.0.32 %venera.isi.edu mx isi.edu"
 .\" .It Cm \- Ns dig-option
@@ -260,8 +243,7 @@ Example:
 Convenient form to specify inverse address mapping.
 Instead of
 .D1 Ic "dig 32.0.9.128.in-addr.arpa"
-one can
-simply
+one can simply
 .D1 Ic "dig -x 128.9.0.32"
 .It Fl f Ar file
 File for
@@ -277,16 +259,13 @@ with
 or
 .Ql \en
 are ignored.
-Other options
-may still appear on command line, and will be in
+Other options may still appear on command line, and will be in
 effect for each batch query.
 .It Fl T Ar time
-Time in seconds between start of successive
-queries when running in batch mode.
+Time in seconds between start of successive queries when running in batch mode.
 Can be used to keep two or more batch
 .Nm
-commands running
-roughly in sync.
+commands running roughly in sync.
 Default is zero.
 .It Fl p Ar port
 Port number.
@@ -295,50 +274,39 @@ Default is 53.
 .It Fl P Ns Op Ar ping-string
 After query returns, execute a
 .Xr ping 1
-command
-for response time comparison.
+command for response time comparison.
 This rather inelegantly makes a call to the shell.
 The last three lines of statistics are printed for the command:
 .Dl ping -s server_name 56 3
 If the optional
 .Ar ping-string
-is present, it
-replaces
+is present, it replaces
 .Dq Li "ping \-s"
 in the shell command.
 .It Fl t Ar query-type
 Specify the type of query.
-This may specify either an
-integer value to be included in the type field
-or use the abbreviated mnemonic as discussed
-above (i.e., mx = T_MX).
+This may specify either an integer value to be included in the type field
+or use the abbreviated mnemonic as discussed above (i.e., mx = T_MX).
 .It Fl c Ar query-class
 Specify the class of query.
-This may specify either an
-integer value to be included in the class field
-or use the abbreviated mnemonic as discussed
-above (i.e., in = C_IN).
+This may specify either an integer value to be included in the class field
+or use the abbreviated mnemonic as discussed above (i.e., in = C_IN).
 .It Fl envsav
 This flag specifies that the
 .Nm
-environment
-(defaults, print options, etc.), after
-all of the arguments are parsed, should be saved
-to a file to become the default environment.
-Useful if you do not like the standard set of
-defaults and do not desire to include a
-large number of options each time
+environment (defaults, print options, etc.), after all of the arguments
+are parsed, should be saved to a file to become the default environment.
+Useful if you do not like the standard set of defaults and do not desire
+to include a large number of options each time
 .Nm
 is used.
-The environment consists of resolver state
-variable flags, timeout, and retries as well as
-the flags detailing
+The environment consists of resolver state variable flags, timeout,
+and retries as well as the flags detailing
 .Nm
 output (see below).
 If the shell environment variable
 .Ev LOCALDEF
-is set
-to the name of a file, this is where the default
+is set to the name of a file, this is where the default
 .Nm
 environment is saved.
 If not, the file
@@ -349,56 +317,46 @@ is created in the current working directory.
 .Ev LOCALDEF
 is specific to the
 .Nm
-resolver,
-and will not affect operation of the standard
-resolver library.
+resolver, and will not affect operation of the standard resolver library.
 .sp 1
 Each time
 .Nm
 is executed, it looks for
 .Pa DiG.env
-int the working directory,
-or the file specified by the shell environment variable
+in the working directory, or the file specified by the
+shell environment variable
 .Ev LOCALDEF .
-If the file exists and is readable, then the
-environment is restored from it
-before any arguments are parsed.
+If the file exists and is readable, then the environment is restored
+from it before any arguments are parsed.
 .It Fl envset
-This flag only affects
-batch query runs.
+This flag only affects batch query runs.
 When
 .Fl envset
-is
-specified on a line in a
+is specified on a line in a
 .Nm
 batch file, the
 .Nm
-environment after the arguments are parsed,
-becomes the default environment for the duration of
-the batch file, or until the next line which specifies
+environment after the arguments are parsed, becomes the default environment
+for the duration of the the batch file, or until the next line which specifies
 .Fl envset .
 .It Fl stick | Fl nostick
 These flags only affects batch query runs.
 .Fl stick
 specifies that the
 .Nm
-environment (as read initially
-or set by
+environment (as read initially or set by
 .Fl envset
-switch) is to be restored before each query
-(line) in a
+switch) is to be restored before each query (line) in a
 .Nm
 batch file.
 The default
 .Fl nostick
 means that the
 .Nm
-environment
-does not stick; that is, options specified on a single line
-in a
+environment does not stick; that is, options specified on a single line in a
 .Nm
-batch file will remain in effect for
-subsequent lines (i.e., they are not restored to the
+batch file will remain in effect for subsequent lines
+(i.e., they are not restored to the
 .Dq sticky
 default).
 .\" .El
@@ -406,8 +364,7 @@ default).
 .Op = Ns Ar value
 .Xc
 .Dq Li "+"
-is used to specify an option to be changed in the
-query packet or to change
+is used to specify an option to be changed in the query packet or to change
 .Nm
 output specifics.
 Many of these are the same parameters accepted by
@@ -509,21 +466,26 @@ uses resolver routines
 as well as accessing the
 .Va _res
 structure.
-.Sh FILES
-.Bl -tag -width Pa -compact -offset indent
-.It Pa /etc/resolv.conf
-initial domain name and name server addresses
-.It Pa DiG.env
-default save file for default options
-.El
 .Sh ENVIRONMENT
-.Bl -tag -width Ev -compact -offset indent
+.Bl -tag -width Ev -compact
 .It Ev LOCALRES
 file to use in place of
 .Pa /etc/resolv.conf
 .It Ev LOCALDEF
 default environment file
 .El
+.Sh FILES
+.Bl -tag -width /etc/resolv.conf -compact
+.It Pa /etc/resolv.conf
+initial domain name and name server addresses
+.It Pa DiG.env
+default save file for default options
+.El
+.Sh SEE ALSO
+.Xr resolver 3 ,
+.Xr resolv.conf 5 ,
+.Xr named 8 ,
+.Xr nslookup 8
 .Sh AUTHOR
 Steve Hotz
 hotz@isi.edu
@@ -539,23 +501,16 @@ has a serious case of
 \(em the result of
 considering several potential uses during it's development.
 It would probably benefit from a rigorous diet.
-Similarly, the print flags
-and granularity of the items they specify make evident their
-rather ad hoc genesis.
+Similarly, the print flags and granularity of the items they specify
+make evident their rather ad-hoc genesis.
 .Pp
 .Nm
 does not consistently exit nicely (with appropriate status)
 when a problem occurs somewhere in the resolver.
 .Sy ( Note:
-most of the common
-exit cases are handled).
+most of the common exit cases are handled).
 This is particularly annoying when running in batch mode.
 If the resolver exits abnormally (and is not caught), the entire
 batch aborts; when such an event is trapped,
 .Nm
 simply continues with the next query.
-.Sh SEE ALSO
-.Xr resolver 3 ,
-.Xr resolv.conf 5 ,
-.Xr named 8 ,
-.Xr nslookup 8
