@@ -1,4 +1,4 @@
-/*	$OpenBSD: rde.c,v 1.128 2004/07/28 16:02:14 claudio Exp $ */
+/*	$OpenBSD: rde.c,v 1.129 2004/07/29 17:05:13 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -811,6 +811,7 @@ rde_update_get_prefix(u_char *p, u_int16_t len, struct bgpd_addr *prefix,
 	plen = 1;
 
 	bzero(prefix, sizeof(struct bgpd_addr));
+	addr.a32.s_addr = 0;
 	for (i = 0; i <= 3; i++) {
 		if (pfxlen > i * 8) {
 			if (len - plen < 1)
