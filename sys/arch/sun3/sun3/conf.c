@@ -165,6 +165,7 @@ cdev_decl(bpf);
 cdev_decl(tun);
 
 dev_decl(filedesc,open);
+cdev_decl(random);
 
 
 struct cdevsw	cdevsw[] =
@@ -241,6 +242,7 @@ struct cdevsw	cdevsw[] =
 	cdev_notdef(),			/* 69: /dev/audio */
 	cdev_notdef(),			/* 70: open prom */
 	cdev_notdef(),			/* 71: (sg?) */
+	cdev_init_random(1,random),	/* 72: randomness source */
 };
 int	nchrdev = sizeof(cdevsw) / sizeof(cdevsw[0]);
 
