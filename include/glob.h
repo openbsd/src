@@ -1,4 +1,4 @@
-/*	$OpenBSD: glob.h,v 1.2 1997/09/01 18:40:35 millert Exp $	*/
+/*	$OpenBSD: glob.h,v 1.3 1997/09/01 18:44:23 millert Exp $	*/
 /*	$NetBSD: glob.h,v 1.5 1994/10/26 00:55:56 cgd Exp $	*/
 
 /*
@@ -88,6 +88,7 @@ typedef struct {
 #define	GLOB_ABORTED	(-2)	/* Unignored error. */
 #define	GLOB_NOMATCH	(-3)	/* No match and GLOB_NOCHECK not set. */
 #define	GLOB_NOSYS	(-4)	/* Function not supported. */
+#define GLOB_ABEND	GLOB_ABORTED
 
 __BEGIN_DECLS
 int	glob __P((const char *, int, int (*)(const char *, int), glob_t *));
