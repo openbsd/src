@@ -1,4 +1,4 @@
-/*	$OpenBSD: system.c,v 1.6 1997/08/04 19:25:59 deraadt Exp $	*/
+/*	$OpenBSD: system.c,v 1.7 1998/07/12 08:54:29 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1988 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)system.c	4.5 (Berkeley) 4/26/91";*/
-static char rcsid[] = "$OpenBSD: system.c,v 1.6 1997/08/04 19:25:59 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: system.c,v 1.7 1998/07/12 08:54:29 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -635,7 +635,7 @@ char	*argv[];
 {
     int length;
     struct sockaddr_in server;
-    char sockNAME[100];
+    char sockNAME[200+MAXHOSTNAMELEN];
     static char **whereAPI = 0;
     int fd;
     struct timeval tv;
