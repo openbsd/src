@@ -1,4 +1,4 @@
-.\"	$OpenBSD: chflags.1,v 1.4 2003/07/07 13:20:40 jmc Exp $
+.\"	$OpenBSD: chflags.1,v 1.5 2004/09/28 22:11:40 jmc Exp $
 .\"	$NetBSD: chflags.1,v 1.4 1995/08/31 22:50:22 jtc Exp $
 .\"
 .\" Copyright (c) 1989, 1990, 1993, 1994
@@ -108,10 +108,11 @@ superuser-settable
 and
 .Dq schg
 flags can be set at any time, but may only be cleared when the system is
-running at security level 0 or -1 (insecure or permanently insecure mode,
-respectively).
-The securelevel is normally set to 0, for example, when
-running in single-user mode.
+running at security level 0 or \-1
+(insecure or permanently insecure mode, respectively).
+For more information on setting the system security level,
+see
+.Xr securelevel 7 .
 .Pp
 Symbolic links do not have flags, so unless the
 .Fl H
@@ -146,6 +147,7 @@ utility exits 0 on success or >0 if an error occurred.
 .Xr chflags 2 ,
 .Xr stat 2 ,
 .Xr fts 3 ,
+.Xr securelevel 7 ,
 .Xr symlink 7
 .Sh HISTORY
 The
