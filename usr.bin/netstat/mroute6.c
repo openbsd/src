@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute6.c,v 1.5 2002/06/02 01:30:24 deraadt Exp $	*/
+/*	$OpenBSD: mroute6.c,v 1.6 2003/02/01 01:51:31 deraadt Exp $	*/
 
 /*
  * Copyright (C) 1998 WIDE Project.
@@ -91,21 +91,15 @@
 #define	WID_GRP	(lflag ? 18 : (nflag ? 16 : 18)) /* width of group column */
 
 void
-mroute6pr(mrpaddr, mfcaddr, mifaddr)
-	u_long mrpaddr, mfcaddr, mifaddr;
+mroute6pr(u_long mrpaddr, u_long mfcaddr, u_long mifaddr)
 {
-	u_int mrtproto;
+	int banner_printed, saved_nflag, waitings, i;
 	struct mf6c *mf6ctable[MF6CTBLSIZ], *mfcp;
-	struct mif6 mif6table[MAXMIFS];
-	struct mf6c mfc;
+	struct mif6 mif6table[MAXMIFS], *mifp;
 	struct rtdetq rte, *rtep;
-	struct mif6 *mifp;
-	mifi_t mifi;
-	int i;
-	int banner_printed;
-	int saved_nflag;
-	mifi_t maxmif = 0;
-	int waitings;
+	mifi_t maxmif = 0, mifi;
+	struct mf6c mfc;
+	u_int mrtproto;
 
 	if (mrpaddr == 0) {
 		printf("mroute6pr: symbol not in namelist\n");
@@ -124,7 +118,7 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 
 	default:
 		printf("IPv6 multicast routing protocol %u, unknown\n",
-			mrtproto);
+		    mrtproto);
 		return;
 	}
 
@@ -217,11 +211,10 @@ mroute6pr(mrpaddr, mfcaddr, mifaddr)
 }
 
 void
-mrt6_stats(mrpaddr, mstaddr)
-	u_long mrpaddr, mstaddr;
+mrt6_stats(u_long mrpaddr, u_long mstaddr)
 {
-	u_int mrtproto;
 	struct mrt6stat mrtstat;
+	u_int mrtproto;
 
 	if (mrpaddr == 0) {
 		printf("mrt6_stats: symbol not in namelist\n");
@@ -259,7 +252,7 @@ mrt6_stats(mrpaddr, mstaddr)
 	printf(" %10qu upcall queue overflow%s\n",
 	    mrtstat.mrt6s_upq_ovflw, plural(mrtstat.mrt6s_upq_ovflw));
 	printf(" %10qu upcall%s dropped due to full socket buffer\n",
-	      mrtstat.mrt6s_upq_sockfull, plural(mrtstat.mrt6s_upq_sockfull));
+	    mrtstat.mrt6s_upq_sockfull, plural(mrtstat.mrt6s_upq_sockfull));
 	printf(" %10qu cache cleanup%s\n",
 	    mrtstat.mrt6s_cache_cleanups, plural(mrtstat.mrt6s_cache_cleanups));
 	printf(" %10qu datagram%s with no route for origin\n",

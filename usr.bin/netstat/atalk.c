@@ -1,4 +1,4 @@
-/*	$OpenBSD: atalk.c,v 1.9 2002/07/25 03:58:56 deraadt Exp $	*/
+/*	$OpenBSD: atalk.c,v 1.10 2003/02/01 01:51:31 deraadt Exp $	*/
 /*	$NetBSD: atalk.c,v 1.2 1997/05/22 17:21:26 christos Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from @(#)atalk.c	1.1 (Whistle) 6/6/96";
 #else
-static char rcsid[] = "$OpenBSD: atalk.c,v 1.9 2002/07/25 03:58:56 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: atalk.c,v 1.10 2003/02/01 01:51:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -82,9 +82,7 @@ static char *at_pr_port(struct sockaddr_at *);
  */
 
 static char *
-at_pr_net(sat, numeric)
-	struct sockaddr_at *sat;
-	int numeric;
+at_pr_net(struct sockaddr_at *sat, int numeric)
 {
 	static char mybuf[50];
 
@@ -102,9 +100,7 @@ at_pr_net(sat, numeric)
 }
 
 static char *
-at_pr_host(sat, numeric)
-	struct sockaddr_at *sat;
-	int numeric;
+at_pr_host(struct sockaddr_at *sat, int numeric)
 {
 	static char mybuf[50];
 
@@ -122,8 +118,7 @@ at_pr_host(sat, numeric)
 }
 
 static char *
-at_pr_port(sat)
-	struct sockaddr_at *sat;
+at_pr_port(struct sockaddr_at *sat)
 {
 	static char mybuf[50];
 	struct servent *serv;
@@ -152,13 +147,12 @@ at_pr_port(sat)
 }
 
 static char *
-at_pr_range(sat)
-	struct sockaddr_at *sat;
+at_pr_range(struct sockaddr_at *sat)
 {
 	static char mybuf[50];
 
-	if (sat->sat_range.r_netrange.nr_firstnet
-	    != sat->sat_range.r_netrange.nr_lastnet) {
+	if (sat->sat_range.r_netrange.nr_firstnet !=
+	    sat->sat_range.r_netrange.nr_lastnet) {
 		(void) snprintf(mybuf, sizeof(mybuf), "%d-%d",
 		    ntohs(sat->sat_range.r_netrange.nr_firstnet),
 		    ntohs(sat->sat_range.r_netrange.nr_lastnet));
@@ -177,9 +171,7 @@ at_pr_range(sat)
  *	8 for numeric only
  */
 char *
-atalk_print(sa, what)
-	const struct sockaddr *sa;
-	int what;
+atalk_print(const struct sockaddr *sa, int what)
 {
 	struct sockaddr_at *sat = (struct sockaddr_at *) sa;
 	static char mybuf[50];
@@ -215,10 +207,7 @@ atalk_print(sa, what)
 }
 
 char *
-atalk_print2(sa, mask, what)
-	const struct sockaddr *sa;
-	const struct sockaddr *mask;
-	int what;
+atalk_print2(const struct sockaddr *sa, const struct sockaddr *mask, int what)
 {
 	size_t		n, l;
 	static char     buf[100];
@@ -258,9 +247,7 @@ atalk_print2(sa, mask, what)
 }
 
 void
-atalkprotopr(off, name)
-	u_long off;
-	char  *name;
+atalkprotopr(u_long off, char *name)
 {
 	struct ddpcb    cb;
 	struct ddpcb *prev, *next;
@@ -323,9 +310,7 @@ atalkprotopr(off, name)
  * Dump DDP statistics structure.
  */
 void
-ddp_stats(off, name)
-	u_long off;
-	char *name;
+ddp_stats(u_long off, char *name)
 {
 	struct ddpstat  ddpstat;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx.c,v 1.12 2002/06/09 04:07:10 jsyn Exp $	*/
+/*	$OpenBSD: ipx.c,v 1.13 2003/02/01 01:51:31 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1996 Michael Shalayeff
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ipx.c,v 1.12 2002/06/09 04:07:10 jsyn Exp $";
+static char *rcsid = "$OpenBSD: ipx.c,v 1.13 2003/02/01 01:51:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -78,7 +78,9 @@ struct	spxpcb spxpcb;
 struct	socket sockb;
 
 static char *ipx_prpr(struct ipx_addr *);
+#ifdef IPXERRORMSGS
 static void ipx_erputil(int, int);
+#endif
 
 static	int first = 1;
 
@@ -90,9 +92,7 @@ static	int first = 1;
  */
 
 void
-ipxprotopr(off, name)
-	u_long off;
-	char *name;
+ipxprotopr(u_long off, char *name)
 {
 	struct ipxpcbtable	table;
 	struct ipxpcb	*head, *prev, *next;
@@ -164,9 +164,7 @@ ipxprotopr(off, name)
  * Dump SPX statistics structure.
  */
 void
-spx_stats(off, name)
-	u_long off;
-	char *name;
+spx_stats(u_long off, char *name)
 {
 	struct spx_istat spx_istat;
 #define spxstat spx_istat.newstats
@@ -242,9 +240,7 @@ spx_stats(off, name)
  * Dump IPX statistics structure.
  */
 void
-ipx_stats(off, name)
-	u_long off;
-	char *name;
+ipx_stats(u_long off, char *name)
 {
 	struct ipxstat ipxstat;
 
@@ -263,15 +259,15 @@ static	struct {
 	char *name;
 	char *where;
 } ipx_errnames[] = {
-	{0, "Unspecified Error", " at Destination"},
-	{1, "Bad Checksum", " at Destination"},
-	{2, "No Listener", " at Socket"},
-	{3, "Packet", " Refused due to lack of space at Destination"},
-	{01000, "Unspecified Error", " while gatewayed"},
-	{01001, "Bad Checksum", " while gatewayed"},
-	{01002, "Packet", " forwarded too many times"},
-	{01003, "Packet", " too large to be forwarded"},
-	{-1, 0, 0},
+	{ 0, "Unspecified Error", " at Destination" },
+	{ 1, "Bad Checksum", " at Destination" },
+	{ 2, "No Listener", " at Socket" },
+	{ 3, "Packet", " Refused due to lack of space at Destination" },
+	{ 01000, "Unspecified Error", " while gatewayed" },
+	{ 01001, "Bad Checksum", " while gatewayed" },
+	{ 01002, "Packet", " forwarded too many times" },
+	{ 01003, "Packet", " too large to be forwarded" },
+	{ -1, 0, 0 },
 };
 
 /*
@@ -279,9 +275,7 @@ static	struct {
  */
 /*ARGSUSED*/
 void
-ipxerr_stats(off, name)
-	u_long off;
-	char *name;
+ipxerr_stats(u_long off, char *name)
 {
 	struct ipx_errstat ipx_errstat;
 	int j;
@@ -322,8 +316,7 @@ ipxerr_stats(off, name)
 }
 
 static void
-ipx_erputil(z, c)
-	int z, c;
+ipx_erputil(int z, int c)
 {
 	int j;
 	char codebuf[30];
@@ -349,11 +342,10 @@ ipx_erputil(z, c)
 }
 #endif /* IPXERRORMSGS */
 
-static struct sockaddr_ipx ssipx = {AF_IPX};
+static struct sockaddr_ipx ssipx = { AF_IPX };
 
 static char *
-ipx_prpr(x)
-	struct ipx_addr *x;
+ipx_prpr(struct ipx_addr *x)
 {
 	struct sockaddr_ipx *sipx = &ssipx;
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ns.c,v 1.9 2002/06/09 04:07:10 jsyn Exp $	*/
+/*	$OpenBSD: ns.c,v 1.10 2003/02/01 01:51:31 deraadt Exp $	*/
 /*	$NetBSD: ns.c,v 1.8 1995/10/03 21:42:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)ns.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: ns.c,v 1.9 2002/06/09 04:07:10 jsyn Exp $";
+static char *rcsid = "$OpenBSD: ns.c,v 1.10 2003/02/01 01:51:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,9 +89,7 @@ static	int first = 1;
  */
 
 void
-nsprotopr(off, name)
-	u_long off;
-	char *name;
+nsprotopr(u_long off, char *name)
 {
 	struct nspcb cb;
 	struct nspcb *prev, *next;
@@ -134,16 +132,16 @@ nsprotopr(off, name)
 			if (Aflag)
 				printf("%-8.8s ", "PCB");
 			printf(Aflag ?
-				"%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
-				"%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
-				"Proto", "Recv-Q", "Send-Q",
-				"Local Address", "Foreign Address", "(state)");
+			    "%-5.5s %-6.6s %-6.6s  %-18.18s %-18.18s %s\n" :
+			    "%-5.5s %-6.6s %-6.6s  %-22.22s %-22.22s %s\n",
+			    "Proto", "Recv-Q", "Send-Q",
+			    "Local Address", "Foreign Address", "(state)");
 			first = 0;
 		}
 		if (Aflag)
 			printf("%8lx ", ppcb);
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
-			sockb.so_snd.sb_cc);
+		    sockb.so_snd.sb_cc);
 		printf("  %-22.22s", ns_prpr(&nspcb.nsp_laddr));
 		printf(" %-22.22s", ns_prpr(&nspcb.nsp_faddr));
 		if (isspp) {
@@ -164,9 +162,7 @@ nsprotopr(off, name)
  * Dump SPP statistics structure.
  */
 void
-spp_stats(off, name)
-	u_long off;
-	char *name;
+spp_stats(u_long off, char *name)
 {
 	struct spp_istat spp_istat;
 #define sppstat spp_istat.newstats
@@ -247,9 +243,7 @@ spp_stats(off, name)
  * Dump IDP statistics structure.
  */
 void
-idp_stats(off, name)
-	u_long off;
-	char *name;
+idp_stats(u_long off, char *name)
 {
 	struct idpstat idpstat;
 
@@ -283,9 +277,7 @@ static	struct {
  */
 /*ARGSUSED*/
 void
-nserr_stats(off, name)
-	u_long off;
-	char *name;
+nserr_stats(u_long off, char *name)
 {
 	struct ns_errstat ns_errstat;
 	int j;
@@ -326,12 +318,11 @@ nserr_stats(off, name)
 }
 
 static void
-ns_erputil(z, c)
-	int z, c;
+ns_erputil(int z, int c)
 {
-	int j;
-	char codebuf[30];
 	char *name, *where;
+	char codebuf[30];
+	int j;
 
 	for (j = 0;; j ++) {
 		if ((name = ns_errnames[j].name) == 0)
@@ -355,8 +346,7 @@ ns_erputil(z, c)
 static struct sockaddr_ns ssns = {AF_NS};
 
 static
-char *ns_prpr(x)
-	struct ns_addr *x;
+char *ns_prpr(struct ns_addr *x)
 {
 	struct sockaddr_ns *sns = &ssns;
 

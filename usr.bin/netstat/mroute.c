@@ -1,4 +1,4 @@
-/*	$OpenBSD: mroute.c,v 1.8 2002/06/02 15:49:05 itojun Exp $	*/
+/*	$OpenBSD: mroute.c,v 1.9 2003/02/01 01:51:31 deraadt Exp $	*/
 /*	$NetBSD: mroute.c,v 1.10 1996/05/11 13:51:27 mycroft Exp $	*/
 
 /*
@@ -65,8 +65,7 @@
 #include "netstat.h"
 
 char *
-pktscale(n)
-	u_long n;
+pktscale(u_long n)
 {
 	static char buf[8];
 	char t;
@@ -86,8 +85,7 @@ pktscale(n)
 }
 
 void
-mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
-	u_long mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr;
+mroutepr(u_long mrpaddr, u_long mfchashtbladdr, u_long mfchashaddr, u_long vifaddr)
 {
 	u_int mrtproto;
 	LIST_HEAD(, mfc) *mfchashtbl;
@@ -206,8 +204,7 @@ mroutepr(mrpaddr, mfchashtbladdr, mfchashaddr, vifaddr)
 
 
 void
-mrt_stats(mrpaddr, mstaddr)
-	u_long mrpaddr, mstaddr;
+mrt_stats(u_long mrpaddr, u_long mstaddr)
 {
 	u_int mrtproto;
 	struct mrtstat mrtstat;

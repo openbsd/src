@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.32 2002/06/19 23:40:20 itojun Exp $	*/
+/*	$OpenBSD: if.c,v 1.33 2003/02/01 01:51:31 deraadt Exp $	*/
 /*	$NetBSD: if.c,v 1.16.4.2 1996/06/07 21:46:46 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)if.c	8.2 (Berkeley) 2/21/94";
 #else
-static char *rcsid = "$OpenBSD: if.c,v 1.32 2002/06/19 23:40:20 itojun Exp $";
+static char *rcsid = "$OpenBSD: if.c,v 1.33 2003/02/01 01:51:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -80,9 +80,7 @@ static void catchalarm(int);
  * which is a TAILQ_HEAD.
  */
 void
-intpr(interval, ifnetaddr)
-	int interval;
-	u_long ifnetaddr;
+intpr(int interval, u_long ifnetaddr)
 {
 	struct ifnet ifnet;
 	union {
@@ -95,8 +93,7 @@ intpr(interval, ifnetaddr)
 		struct ipx_ifaddr ipx;
 		struct iso_ifaddr iso;
 	} ifaddr;
-	u_long total;
-	u_long ifaddraddr;
+	u_long total, ifaddraddr;
 	struct sockaddr *sa;
 	struct ifnet_head ifhead;	/* TAILQ_HEAD */
 	char name[IFNAMSIZ];
@@ -120,7 +117,7 @@ intpr(interval, ifnetaddr)
 	ifnetaddr = (u_long)ifhead.tqh_first;
 
 	printf("%-7.7s %-5.5s %-11.11s %-17.17s ",
-	       "Name", "Mtu", "Network", "Address");
+	    "Name", "Mtu", "Network", "Address");
 	if (bflag)
 		printf("%10.10s %10.10s", "Ibytes", "Obytes");
 	else
@@ -394,9 +391,7 @@ volatile sig_atomic_t signalled;	/* set if alarm goes off "early" */
  * First line printed at top of screen is always cumulative.
  */
 static void
-sidewaysintpr(interval, off)
-	unsigned interval;
-	u_long off;
+sidewaysintpr(unsigned int interval, u_long off)
 {
 	struct ifnet ifnet;
 	u_long firstifnet;
@@ -577,8 +572,7 @@ loop:
  * Sets a flag to not wait for the alarm.
  */
 static void
-catchalarm(signo)
-	int signo;
+catchalarm(int signo)
 {
 	signalled = YES;
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.33 2002/08/04 16:52:07 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.34 2003/02/01 01:51:31 deraadt Exp $	*/
 /*	$NetBSD: main.c,v 1.9 1996/05/07 02:55:02 thorpej Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ char copyright[] =
 #if 0
 static char sccsid[] = "from: @(#)main.c	8.4 (Berkeley) 3/1/94";
 #else
-static char *rcsid = "$OpenBSD: main.c,v 1.33 2002/08/04 16:52:07 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.34 2003/02/01 01:51:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -274,9 +274,13 @@ struct protox atalkprotox[] = {
 };
 
 #ifndef INET6
-struct protox *protoprotox[] = { protox, ipxprotox, nsprotox, isoprotox, atalkprotox, NULL };
+struct protox *protoprotox[] = {
+	protox, ipxprotox, nsprotox, isoprotox, atalkprotox, NULL
+};
 #else
-struct protox *protoprotox[] = { protox, ip6protox, ipxprotox, nsprotox, isoprotox, atalkprotox, NULL };
+struct protox *protoprotox[] = {
+	protox, ip6protox, ipxprotox, nsprotox, isoprotox, atalkprotox, NULL
+};
 #endif
 
 static void printproto(struct protox *, char *);
@@ -287,9 +291,7 @@ static struct protox *knownname(char *);
 kvm_t *kvmd;
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	extern char *optarg;
 	extern int optind;
@@ -545,9 +547,7 @@ main(argc, argv)
  * is not in the namelist, ignore this one.
  */
 static void
-printproto(tp, name)
-	struct protox *tp;
-	char *name;
+printproto(struct protox *tp, char *name)
 {
 	void (*pr)();
 	u_long off;
@@ -567,10 +567,7 @@ printproto(tp, name)
  * Read kernel memory, return 0 on success.
  */
 int
-kread(addr, buf, size)
-	u_long addr;
-	char *buf;
-	int size;
+kread(u_long addr, char *buf, int size)
 {
 
 	if (kvm_read(kvmd, addr, buf, size) != size) {
@@ -582,15 +579,13 @@ kread(addr, buf, size)
 }
 
 char *
-plural(n)
-	int n;
+plural(int n)
 {
 	return (n != 1 ? "s" : "");
 }
 
 char *
-plurales(n)
-	int n;
+plurales(int n)
 {
 	return (n != 1 ? "es" : "");
 }
@@ -599,8 +594,7 @@ plurales(n)
  * Find the protox for the given "well-known" name.
  */
 static struct protox *
-knownname(name)
-	char *name;
+knownname(char *name)
 {
 	struct protox **tpp, *tp;
 
@@ -615,8 +609,7 @@ knownname(name)
  * Find the protox corresponding to name.
  */
 static struct protox *
-name2protox(name)
-	char *name;
+name2protox(char *name)
 {
 	struct protox *tp;
 	char **alias;			/* alias from p->aliases */
@@ -643,7 +636,7 @@ name2protox(name)
 }
 
 static void
-usage()
+usage(void)
 {
 	(void)fprintf(stderr,
 "usage: %s [-Aan] [-f address_family] [-M core] [-N system]\n", __progname);

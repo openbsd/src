@@ -1,4 +1,4 @@
-/*	$OpenBSD: inet.c,v 1.62 2002/06/09 04:07:10 jsyn Exp $	*/
+/*	$OpenBSD: inet.c,v 1.63 2003/02/01 01:51:31 deraadt Exp $	*/
 /*	$NetBSD: inet.c,v 1.14 1995/10/03 21:42:37 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)inet.c	8.4 (Berkeley) 4/20/94";
 #else
-static char *rcsid = "$OpenBSD: inet.c,v 1.62 2002/06/09 04:07:10 jsyn Exp $";
+static char *rcsid = "$OpenBSD: inet.c,v 1.63 2003/02/01 01:51:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -95,7 +95,7 @@ struct	socket sockb;
 static void protopr0(u_long, char *, int);
 
 char	*inetname(struct in_addr *);
-void	inetprint(struct in_addr *, int, char *, int);
+void	inetprint(struct in_addr *, in_port_t, char *, int);
 #ifdef INET6
 char	*inet6name(struct in6_addr *);
 void	inet6print(struct in6_addr *, int, char *, int);
@@ -108,28 +108,21 @@ void	inet6print(struct in6_addr *, int, char *, int);
  * -a (all) flag is specified.
  */
 void
-protopr(off, name)
-	u_long off;
-	char *name;
+protopr(u_long off, char *name)
 {
 	protopr0(off, name, AF_INET);
 }
 
 #ifdef INET6
 void
-ip6protopr(off, name)
-	u_long off;
-	char *name;
+ip6protopr(u_long off, char *name)
 {
 	protopr0(off, name, AF_INET6);
 }
 #endif
 
 static void
-protopr0(off, name, af)
-	u_long off;
-	char *name;
-	int af;
+protopr0(u_long off, char *name, int af)
 {
 	struct inpcbtable table;
 	struct inpcb *head, *next, *prev;
@@ -210,20 +203,20 @@ protopr0(off, name, af)
 			name = name0;
 #endif
 		printf("%-5.5s %6ld %6ld ", name, sockb.so_rcv.sb_cc,
-			sockb.so_snd.sb_cc);
+		    sockb.so_snd.sb_cc);
 #ifdef INET6
 		if (inpcb.inp_flags & INP_IPV6) {
 			inet6print(&inpcb.inp_laddr6, (int)inpcb.inp_lport,
-				name, 1);
+			    name, 1);
 			inet6print(&inpcb.inp_faddr6, (int)inpcb.inp_fport,
-				name, 0);
+			    name, 0);
 		} else
 #endif
 		{
 			inetprint(&inpcb.inp_laddr, (int)inpcb.inp_lport,
-				name, 1);
+			    name, 1);
 			inetprint(&inpcb.inp_faddr, (int)inpcb.inp_fport,
-				name, 0);
+			    name, 0);
 		}
 		if (istcp) {
 			if (tcpcb.t_state < 0 || tcpcb.t_state >= TCP_NSTATES)
@@ -239,15 +232,13 @@ protopr0(off, name, af)
  * Dump TCP statistics structure.
  */
 void
-tcp_stats(off, name)
-	u_long off;
-	char *name;
+tcp_stats(u_long off, char *name)
 {
 	struct tcpstat tcpstat;
 
 	if (off == 0)
 		return;
-	printf ("%s:\n", name);
+	printf("%s:\n", name);
 	kread(off, (char *)&tcpstat, sizeof (tcpstat));
 
 #define	p(f, m) if (tcpstat.f || sflag <= 1) \
@@ -338,9 +329,7 @@ tcp_stats(off, name)
  * Dump UDP statistics structure.
  */
 void
-udp_stats(off, name)
-	u_long off;
-	char *name;
+udp_stats(u_long off, char *name)
 {
 	struct udpstat udpstat;
 	u_long delivered;
@@ -381,9 +370,7 @@ udp_stats(off, name)
  * Dump IP statistics structure.
  */
 void
-ip_stats(off, name)
-	u_long off;
-	char *name;
+ip_stats(u_long off, char *name)
 {
 	struct ipstat ipstat;
 
@@ -458,9 +445,7 @@ static	char *icmpnames[] = {
  * Dump ICMP statistics.
  */
 void
-icmp_stats(off, name)
-	u_long off;
-	char *name;
+icmp_stats(u_long off, char *name)
 {
 	struct icmpstat icmpstat;
 	int i, first;
@@ -506,9 +491,7 @@ icmp_stats(off, name)
  * Dump IGMP statistics structure.
  */
 void
-igmp_stats(off, name)
-	u_long off;
-	char *name;
+igmp_stats(u_long off, char *name)
 {
 	struct igmpstat igmpstat;
 
@@ -543,9 +526,7 @@ struct rpcnams {
 };
 
 char *
-getrpcportnam(port, proto)
-	in_port_t port;
-	int proto;
+getrpcportnam(in_port_t port, int proto)
 {
 	struct sockaddr_in server_addr;
 	struct hostent *hp;
@@ -612,11 +593,7 @@ getrpcportnam(port, proto)
  * If the nflag was specified, use numbers instead of names.
  */
 void
-inetprint(in, port, proto, local)
-	struct in_addr *in;
-	in_port_t port;
-	char *proto;
-	int local;
+inetprint(struct in_addr *in, in_port_t port, char *proto, int local)
 {
 	struct servent *sp = 0;
 	char line[80], *cp, *nam;
@@ -646,8 +623,7 @@ inetprint(in, port, proto, local)
  * numeric value, otherwise try for symbolic name.
  */
 char *
-inetname(inp)
-	struct in_addr *inp;
+inetname(struct in_addr *inp)
 {
 	char *cp;
 	static char line[50];
@@ -702,9 +678,7 @@ inetname(inp)
  * Dump AH statistics structure.
  */
 void
-ah_stats(off, name)
-	u_long off;
-	char *name;
+ah_stats(u_long off, char *name)
 {
 	struct ahstat ahstat;
 
@@ -745,9 +719,7 @@ ah_stats(off, name)
  * Dump etherip statistics structure.
  */
 void
-etherip_stats(off, name)
-	u_long off;
-	char *name;
+etherip_stats(u_long off, char *name)
 {
 	struct etheripstat etheripstat;
 
@@ -758,7 +730,6 @@ etherip_stats(off, name)
 
 #define p(f, m) if (etheripstat.f || sflag <= 1) \
 	printf(m, etheripstat.f, plural(etheripstat.f))
-
 
 	p(etherip_hdrops, "\t%u packet%s shorter than header shows\n");
 	p(etherip_qfull, "\t%u packet%s were dropped due to full output queue\n");
@@ -776,9 +747,7 @@ etherip_stats(off, name)
  * Dump ESP statistics structure.
  */
 void
-esp_stats(off, name)
-	u_long off;
-	char *name;
+esp_stats(u_long off, char *name)
 {
 	struct espstat espstat;
 
@@ -817,9 +786,7 @@ esp_stats(off, name)
  * Dump ESP statistics structure.
  */
 void
-ipip_stats(off, name)
-	u_long off;
-	char *name;
+ipip_stats(u_long off, char *name)
 {
 	struct ipipstat ipipstat;
 
@@ -839,8 +806,8 @@ ipip_stats(off, name)
 	p(ipips_qfull, "\t%u packet%s were dropped due to full output queue\n");
 	p(ipips_ibytes, "\t%qu input byte%s\n");
 	p(ipips_obytes, "\t%qu output byte%s\n");
-	p(ipips_family, "\t%u protocol family mismatches\n");
-	p(ipips_unspec, "\t%u attempts to use tunnel with unspecified endpoint(s)\n");
+	p(ipips_family, "\t%u protocol family mismatche%s\n");
+	p(ipips_unspec, "\t%u attempt%s to use tunnel with unspecified endpoint(s)\n");
 #undef p
 }
 
@@ -848,9 +815,7 @@ ipip_stats(off, name)
  * Dump IPCOMP statistics structure.
  */
 void
-ipcomp_stats(off, name)
-	u_long off;
-	char *name;
+ipcomp_stats(u_long off, char *name)
 {
 	struct ipcompstat ipcompstat;
 

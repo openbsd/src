@@ -1,4 +1,4 @@
-/*	$OpenBSD: route.c,v 1.49 2002/09/23 17:48:46 deraadt Exp $	*/
+/*	$OpenBSD: route.c,v 1.50 2003/02/01 01:51:31 deraadt Exp $	*/
 /*	$NetBSD: route.c,v 1.15 1996/05/07 02:55:06 thorpej Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: route.c,v 1.49 2002/09/23 17:48:46 deraadt Exp $";
+static char *rcsid = "$OpenBSD: route.c,v 1.50 2003/02/01 01:51:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -142,8 +142,7 @@ static void encap_print(struct rtentry *);
  * Print routing tables.
  */
 void
-routepr(rtree)
-	u_long rtree;
+routepr(u_long rtree)
 {
 	struct radix_node_head *rnh, head;
 	int i;
@@ -185,8 +184,7 @@ routepr(rtree)
  * Print address family header before a section of the routing table.
  */
 void
-pr_family(af)
-	int af;
+pr_family(int af)
 {
 	char *afname;
 
@@ -248,8 +246,7 @@ pr_family(af)
  * Print header for routing table columns.
  */
 void
-pr_rthdr(af)
-	int af;
+pr_rthdr(int af)
 {
 
 	if (Aflag)
@@ -264,7 +261,7 @@ pr_rthdr(af)
  * Print header for PF_KEY entries.
  */
 void
-pr_encaphdr()
+pr_encaphdr(void)
 {
 	if (Aflag)
 		printf("%-*s ", PLEN, "Address");
@@ -274,8 +271,7 @@ pr_encaphdr()
 }
 
 static struct sockaddr *
-kgetsa(dst)
-	struct sockaddr *dst;
+kgetsa(struct sockaddr *dst)
 {
 
 	kget(dst, pt_u.u_sa);
@@ -285,8 +281,7 @@ kgetsa(dst)
 }
 
 static void
-p_tree(rn)
-	struct radix_node *rn;
+p_tree(struct radix_node *rn)
 {
 
 again:
@@ -341,7 +336,7 @@ p_rtflags(u_char flags)
 char	nbuf[25];
 
 static void
-p_rtnode()
+p_rtnode(void)
 {
 	struct radix_mask *rm = rnode.rn_mklist;
 
@@ -386,7 +381,7 @@ p_rtnode()
 }
 
 static void
-ntreestuff()
+ntreestuff(void)
 {
 	size_t needed;
 	int mib[6];
@@ -419,8 +414,7 @@ ntreestuff()
 }
 
 static void
-np_rtentry(rtm)
-	struct rt_msghdr *rtm;
+np_rtentry(struct rt_msghdr *rtm)
 {
 	struct sockaddr *sa = (struct sockaddr *)(rtm + 1);
 #ifdef notdef
@@ -459,9 +453,7 @@ np_rtentry(rtm)
 }
 
 static void
-p_sockaddr(sa, mask, flags, width)
-	struct sockaddr *sa, *mask;
-	int flags, width;
+p_sockaddr(struct sockaddr *sa, struct sockaddr *mask, int flags, int width)
 {
 	char workbuf[128], *cplim;
 	char *cp = workbuf;
@@ -603,9 +595,7 @@ p_sockaddr(sa, mask, flags, width)
 }
 
 static void
-p_flags(f, format)
-	int f;
-	char *format;
+p_flags(int f, char *format)
 {
 	char name[33], *flags;
 	struct bits *p = bits;
@@ -618,8 +608,7 @@ p_flags(f, format)
 }
 
 static void
-p_rtentry(rt)
-	struct rtentry *rt;
+p_rtentry(struct rtentry *rt)
 {
 	static struct ifnet ifnet, *lastif;
 	struct sockaddr_storage sock1, sock2;
@@ -657,7 +646,7 @@ p_rtentry(rt)
 			lastif = rt->rt_ifp;
 		}
 		printf(" %.16s%s", ifnet.if_xname,
-			rt->rt_nodes[0].rn_dupedkey ? " =>" : "");
+		    rt->rt_nodes[0].rn_dupedkey ? " =>" : "");
 	}
 	putchar('\n');
 	if (vflag) {
@@ -681,8 +670,7 @@ p_rtentry(rt)
 }
 
 char *
-routename(in)
-	in_addr_t in;
+routename(in_addr_t in)
 {
 	char *cp;
 	static char line[MAXHOSTNAMELEN];
@@ -725,8 +713,7 @@ routename(in)
  * The address is assumed to be that of a net or subnet, not a host.
  */
 char *
-netname(in, mask)
-	in_addr_t in, mask;
+netname(in_addr_t in, in_addr_t mask)
 {
 	char *cp = 0;
 	static char line[MAXHOSTNAMELEN];
@@ -758,9 +745,7 @@ netname(in, mask)
 
 #ifdef INET6
 char *
-netname6(sa6, mask)
-	struct sockaddr_in6 *sa6;
-	struct in6_addr *mask;
+netname6(struct sockaddr_in6 *sa6, struct in6_addr *mask)
 {
 	static char line[MAXHOSTNAMELEN + 1];
 	struct sockaddr_in6 sin6;
@@ -856,8 +841,7 @@ netname6(sa6, mask)
 }
 
 char *
-routename6(sa6)
-	struct sockaddr_in6 *sa6;
+routename6(struct sockaddr_in6 *sa6)
 {
 	static char line[NI_MAXHOST];
 #ifdef NI_WITHSCOPEID
@@ -876,8 +860,7 @@ routename6(sa6)
  * Print routing statistics
  */
 void
-rt_stats(off)
-	u_long off;
+rt_stats(u_long off)
 {
 	struct rtstat rtstat;
 
@@ -903,8 +886,7 @@ short ns_nullh[] = {0,0,0};
 short ns_bh[] = {-1,-1,-1};
 
 char *
-ns_print(sa)
-	struct sockaddr *sa;
+ns_print(struct sockaddr *sa)
 {
 	struct sockaddr_ns *sns = (struct sockaddr_ns*)sa;
 	struct ns_addr work;
@@ -952,8 +934,7 @@ ns_print(sa)
 }
 
 char *
-ns_phost(sa)
-	struct sockaddr *sa;
+ns_phost(struct sockaddr *sa)
 {
 	struct sockaddr_ns *sns = (struct sockaddr_ns *)sa;
 	struct sockaddr_ns work;
@@ -974,8 +955,7 @@ u_short ipx_nullh[] = {0,0,0};
 u_short ipx_bh[] = {0xffff,0xffff,0xffff};
 
 char *
-ipx_print(sa)
-	struct sockaddr *sa;
+ipx_print(struct sockaddr *sa)
 {
 	struct sockaddr_ipx *sipx = (struct sockaddr_ipx*)sa;
 	struct ipx_addr work;
@@ -1020,8 +1000,7 @@ ipx_print(sa)
 }
 
 char *
-ipx_phost(sa)
-	struct sockaddr *sa;
+ipx_phost(struct sockaddr *sa)
 {
 	struct sockaddr_ipx *sipx = (struct sockaddr_ipx *)sa;
 	struct sockaddr_ipx work;
@@ -1039,15 +1018,13 @@ ipx_phost(sa)
 }
 
 static void
-encap_print(rt)
-	struct rtentry *rt;
+encap_print(struct rtentry *rt)
 {
 	struct sockaddr_encap sen1, sen2, sen3;
 	struct ipsec_policy ipo;
 
 #ifdef INET6
 	struct sockaddr_in6 s61, s62;
-	char ip6addr[64];
 #endif /* INET6 */
 
 	bcopy(kgetsa(rt_key(rt)), &sen1, sizeof(sen1));
@@ -1138,8 +1115,7 @@ encap_print(rt)
 }
 
 void
-upHex(p0)
-	char *p0;
+upHex(char *p0)
 {
 	char *p = p0;
 

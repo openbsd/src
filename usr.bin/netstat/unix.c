@@ -1,4 +1,4 @@
-/*	$OpenBSD: unix.c,v 1.8 2002/02/16 21:27:50 millert Exp $	*/
+/*	$OpenBSD: unix.c,v 1.9 2003/02/01 01:51:31 deraadt Exp $	*/
 /*	$NetBSD: unix.c,v 1.13 1995/10/03 21:42:48 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)unix.c	8.1 (Berkeley) 6/6/93";
 #else
-static char *rcsid = "$OpenBSD: unix.c,v 1.8 2002/02/16 21:27:50 millert Exp $";
+static char *rcsid = "$OpenBSD: unix.c,v 1.9 2003/02/01 01:51:31 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -73,8 +73,7 @@ static int	nfiles;
 extern	kvm_t *kvmd;
 
 void
-unixpr(off)
-	u_long	off;
+unixpr(u_long off)
 {
 	struct file *fp;
 	struct socket sock, *so = &sock;
@@ -104,9 +103,7 @@ static	char *socktype[] =
     { "#0", "stream", "dgram", "raw", "rdm", "seqpacket" };
 
 static void
-unixdomainpr(so, soaddr)
-	struct socket *so;
-	caddr_t soaddr;
+unixdomainpr(struct socket *so, caddr_t soaddr)
 {
 	struct unpcb unpcb, *unp = &unpcb;
 	struct mbuf mbuf, *m;
