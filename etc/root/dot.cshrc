@@ -2,6 +2,7 @@ umask 022
 alias mail Mail
 set history=1000
 set path=(/sbin /usr/sbin /bin /usr/bin)
+set filec
 
 # directory stuff: cdpath/cd/back
 set cdpath=(/sys /sys/arch /usr/src/{bin,sbin,usr.{bin,sbin},pgrm,lib,libexec,share,contrib,local,devel,games,old,gnu,gnu/{lib,usr.bin,usr.sbin,libexec}})
