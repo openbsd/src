@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.50 2003/01/06 05:57:40 deraadt Exp $
+#	$OpenBSD: MAKEDEV,v 1.51 2003/04/15 20:10:46 jmc Exp $
 #	$NetBSD: MAKEDEV,v 1.30 2000/01/21 12:28:29 tsutsui Exp $
 #
 #	@(#)MAKEDEV	8.1 (Berkeley) 6/9/93
@@ -10,21 +10,21 @@
 #	local	configuration specific devices
 #	all	create a reasonable amount of all files
 # Tapes:
-#	ht*	massbus tm03 & tu??
-#	tm*	unibus tm11 & te10 emulations (e.g. Emulex tc-11)
+#	ht*	MASSBUS TM03 & TU??
+#	tm*	UNIBUS TM11 & TE10 emulations (e.g. Emulex TC-11)
 #	mt*	MSCP tapes (e.g. TU81, TK50)
-#	ts*	unibus ts11
-#	ut*	unibus tu45 emulations (e.g.si 9700)
-#	uu*	tu58 cassettes on dl11 controller
+#	ts*	UNIBUS TS11
+#	ut*	UNIBUS TU45 emulations (e.g.si 9700)
+#	uu*	TU58 cassettes on DL11 controller
 #	st*	SCSI tapes
 # Disks:
-#	hp*	massbus rm??
-#	hk*	unibus rk06 and rk07
-#	up*	other unibus devices (e.g. on Emulex sc-21v controller)
+#	hp*	MASSBUS RM??
+#	hk*	UNIBUS RK06 and RK07
+#	up*	other UNIBUS devices (e.g. on Emulex SC-21V controller)
 #	ra*	MSCP disks (ra??, hd??)
-#	rx*	MSCP floppy disk (rx33/50/...)
-#	rl*	unibus rl02
-#	rb*	730 idc w/ rb80 and/or rb02
+#	rx*	MSCP floppy disk (RX33/50/...)
+#	rl*	UNIBUS RL02
+#	rb*	730 IDC w/ RB80 and/or RB02
 #	ccd*	"concatenated" pseudo-disks
 #	raid*	RAIDframe disk driver
 #	vnd*	"file" pseudo-disks
@@ -33,27 +33,27 @@
 #	cd*	SCSI CD-ROM
 #	hd*	HDC9224 hd disks on VS2000
 # Terminal multiplexors:
-#	dz*	unibus dz11 and dz32
-#	dh*	unibus dh11 and emulations (e.g. Able dmax, Emulex cs-11)
-#	dmf*	unibus dmf32
-#	dhu*    unibus dhu11
-#	dmz*    unibus dmz32
-#	dl*	unibus dl11
+#	dz*	UNIBUS DZ11 and DZ32
+#	dh*	UNIBUS DH11 and emulations (e.g. Able dmax, Emulex CS-11)
+#	dmf*	UNIBUS DMF32
+#	dhu*    UNIBUS DHU11
+#	dmz*    UNIBUS DMZ32
+#	dl*	UNIBUS DL11
 # Pseudo terminals:
 #	pty*	set of 16 master and slave pseudo terminals
 # Printers:
-#	ct*	unibus parallel interface to CAT typesetter
-#	lp*	unibus lp11 parallel interface
-#	va*	unibus varian parallel interface
-#	vp*	unibus versatec parallel interface
+#	ct*	UNIBUS parallel interface to CAT typesetter
+#	lp*	UNIBUS LP11 parallel interface
+#	va*	UNIBUS Varian parallel interface
+#	vp*	UNIBUS Versatec parallel interface
 # Call units:
-#	dn*	unibus dn11 and emulations (e.g. Able Quadracall)
+#	dn*	UNIBUS DN11 and emulations (e.g. Able Quadracall)
 # Special purpose devices:
-#	ik*	unibus interface to ikonas frame buffer
-#	ps*	unibus interface to e&s picture system 2
-#	ad*	unibus interface to data translation a/d converter
-#	np*	unibus ethernet co-processor interface, for downloading.
-#	qv*	qvss (microvax) display
+#	ik*	UNIBUS interface to Ikonas frame buffer
+#	ps*	UNIBUS interface to E&S Picture System 2
+#	ad*	UNIBUS interface to Data Translation A/D converter
+#	np*	UNIBUS Ethernet co-processor interface, for downloading.
+#	qv*	QVSS (MicroVAX) display
 #	lkm	loadable kernel modules
 #	bpf*	berkeley packet filter
 #	tun*	network tunnel device
