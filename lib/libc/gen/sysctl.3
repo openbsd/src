@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sysctl.3,v 1.39 2000/01/19 12:31:21 itojun Exp $
+.\"	$OpenBSD: sysctl.3,v 1.40 2000/01/21 02:25:25 angelos Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -509,7 +509,7 @@ The currently defined protocols and names are:
 .It ip	redirect	integer	yes
 .It ip	ttl	integer	yes
 .It ip	encdebug	integer	yes
-.It ip4	allow	integer	yes
+.It ipip	allow	integer	yes
 .It gre	allow	integer	yes
 .It mobileip	allow	integer	yes
 .It etherip	allow	integer	yes
@@ -667,8 +667,8 @@ Supported values are hmac-md5, hmac-sha1, and hmac-ripemd160.
 If set to any other value, it is left to the key management daemons to
 select an authentiction algorithm for the security association. 
 The default value is hmac-sha1.
-.It Li ip4.allow
-If set to 0, incoming IPv4-in-IPv4 packets will not be processed.
+.It Li ipip.allow
+If set to 0, incoming IP-in-IP packets will not be processed.
 If set to any other value, processing will occur.
 .It Li gre.allow
 If set to 0, incoming GRE packets will not be processed.
