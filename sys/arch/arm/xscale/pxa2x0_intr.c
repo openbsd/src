@@ -1,4 +1,4 @@
-/*	$OpenBSD: pxa2x0_intr.c,v 1.3 2005/01/04 02:08:41 drahn Exp $ */
+/*	$OpenBSD: pxa2x0_intr.c,v 1.4 2005/01/04 23:43:22 drahn Exp $ */
 /*	$NetBSD: pxa2x0_intr.c,v 1.5 2003/07/15 00:24:55 lukem Exp $	*/
 
 /*
@@ -96,16 +96,17 @@ struct intrhand {
 };
 #endif
 
-static struct {
+static struct intrhandler{
 #ifdef MULTIPLE_HANDLERS_ON_ONE_IRQ
 	TAILQ_HEAD(,intrhand) list;
 #else
 	pxa2x0_irq_handler_t func;
 #endif
-	void *cookie;		/* NULL for stackframe */
+	void *arg;		/* NULL for stackframe */
 	/* struct evbnt ev; */
 	char *name;
-} handler[ICU_LEN];
+}
+handler[ICU_LEN];
 
 __volatile int softint_pending;
 __volatile int current_spl_level;
@@ -141,8 +142,10 @@ pxaintc_attach(struct device *parent, struct device *self, void *args)
 	write_icu(SAIPIC_MR, 0);
 
 	for(i = 0; i < sizeof handler / sizeof handler[0]; ++i){
+		handler[i].name = "stray";
 		handler[i].func = stray_interrupt;
-		handler[i].cookie = (void *)(u_int32_t) i;
+		handler[i].arg = (void *)(u_int32_t) i;
+
 		extirq_level[i] = IPL_SERIAL;
 	}
 
@@ -211,8 +214,8 @@ pxa2x0_irq_handler(void *arg)
 #endif
 #ifndef MULTIPLE_HANDLERS_ON_ONE_IRQ
 		(* handler[irqno].func)( 
-			handler[irqno].cookie == 0
-			? frame : handler[irqno].cookie );
+			handler[irqno].arg == 0
+			? frame : handler[irqno].arg );
 #else
 		/* process all handlers for this interrupt.
 		   XXX not yet */
@@ -434,7 +437,7 @@ _setsoftintr(int si)
 
 void *
 pxa2x0_intr_establish(int irqno, int level,
-    int (*func)(void *), void *cookie, char *name)
+    int (*func)(void *), void *arg, char *name)
 {
 	int psw;
 
@@ -443,7 +446,7 @@ pxa2x0_intr_establish(int irqno, int level,
 
 	psw = disable_interrupts(I32_bit);
 
-	handler[irqno].cookie = cookie;
+	handler[irqno].arg = arg;
 	handler[irqno].func = func;
 	handler[irqno].name = name;
 	extirq_level[irqno] = level;
@@ -454,6 +457,30 @@ pxa2x0_intr_establish(int irqno, int level,
 	restore_interrupts(psw);
 
 	return (&handler[irqno]);
+}
+void
+pxa2x0_intr_disestablish(void *cookie)
+{
+	struct intrhandler *lhandler = cookie;
+	int irqno;
+	int psw;
+
+	irqno = lhandler - handler;
+
+	if (irqno < PXA2X0_IRQ_MIN || irqno >= ICU_LEN)
+		panic("intr_disestablish: bogus irq number %d", irqno);
+
+	psw = disable_interrupts(I32_bit);
+
+	handler[irqno].arg = (void *) irqno;
+	handler[irqno].func = stray_interrupt;
+	handler[irqno].name = "stray";
+	extirq_level[irqno] = IPL_SERIAL;
+	pxa2x0_update_intr_masks(irqno, IPL_SERIAL);
+
+	intr_mask = pxa2x0_imask[current_spl_level];
+	
+	restore_interrupts(psw);
 }
 
 /*
