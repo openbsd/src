@@ -87,6 +87,9 @@ extern struct rpcent *getrpcbynumber	__P((int));
 extern struct rpcent *getrpcent		__P((void));
 extern void setrpcent __P((int));
 extern void endrpcent __P((void));
+
+extern int bindresvport __P((int, struct sockaddr_in *));
+
 __END_DECLS
 
 #endif /* !_RPC_RPC_H */
