@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.25 2004/07/14 10:44:03 espie Exp $
+# $OpenBSD: pkg_delete,v 1.26 2004/07/18 12:00:21 espie Exp $
 #
 # Copyright (c) 2003 Marc Espie.
 # 
@@ -141,16 +141,16 @@ sub delete
 			print "deleting symlink: $realname\n";
 		}
 	} else {
-		unless ($self->{nochecksum} or $state->{quick}) {
+		if (! -f $realname) {
+			print "File $realname does not exist\n";
+			return;
+		}
+		unless (defined($self->{link}) or $self->{nochecksum} or $state->{quick}) {
 			if (!defined $self->{md5}) {
 				print "Problem: $name does not have an md5 checksum\n";
 				print "NOT deleting: $realname\n";
 				$self->log_pkgname($state);
 				OpenBSD::Logger::log "rm $state->{destdirname}$name\n";
-				return;
-			}
-			if (! -f $realname) {
-				print "File $realname does not exist\n";
 				return;
 			}
 			my $md5 = OpenBSD::md5::fromfile($realname);
