@@ -1,4 +1,4 @@
-/*	$OpenBSD: diffreg.c,v 1.19 2003/06/26 04:47:30 vincent Exp $	*/
+/*	$OpenBSD: diffreg.c,v 1.20 2003/06/26 04:52:26 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -236,30 +236,31 @@ diffreg(void)
 		done(0);
 	}
 	chrtran = (iflag ? cup2low : clow2low);
-	if ((stb1.st_mode & S_IFMT) == S_IFDIR) {
+	if (strcmp(file1, "-") == 0 && strcmp(file2, "-") == 0) {
+		warnx("can't specify - -");
+		done(0);
+	}
+	if (S_ISDIR(stb1.st_mode)) {
 		file1 = splice(file1, file2);
 		if (stat(file1, &stb1) < 0) {
 			warn("%s", file1);
 			done(0);
 		}
-	} else if ((stb2.st_mode & S_IFMT) == S_IFDIR) {
+	} else if (!S_ISREG(stb1.st_mode) || strcmp(file1, "-") == 0) {
+		file1 = copytemp(file1, 1);
+		if (stat(file1, &stb1) < 0) {
+			warn("%s", file1);
+			done(0);
+		}
+	}
+	if (S_ISDIR(stb2.st_mode)) {
 		file2 = splice(file2, file1);
 		if (stat(file2, &stb2) < 0) {
 			warn("%s", file2);
 			done(0);
 		}
-	} else if ((stb1.st_mode & S_IFMT) != S_IFREG || !strcmp(file1, "-")) {
-		if (!strcmp(file2, "-")) {
-			warnx("can't specify - -");
-			done(0);
-		}
-		file1 = copytemp();
-		if (stat(file1, &stb1) < 0) {
-			warn("%s", file1);
-			done(0);
-		}
-	} else if ((stb2.st_mode & S_IFMT) != S_IFREG || !strcmp(file2, "-")) {
-		file2 = copytemp();
+	} else if (!S_ISREG(stb2.st_mode) || strcmp(file2, "-") == 0) {
+		file2 = copytemp(file2, 2);
 		if (stat(file2, &stb2) < 0) {
 			warn("%s", file2);
 			done(0);
@@ -274,7 +275,8 @@ diffreg(void)
 		fclose(f1);
 		done(0);
 	}
-	if (stb1.st_size != stb2.st_size)
+	if (S_ISREG(stb1.st_mode) && S_ISREG(stb2.st_mode) &&
+	    stb1.st_size != stb2.st_size)
 		goto notsame;
 	for (;;) {
 		i = fread(buf1, 1, BUFSIZ, f1);
@@ -340,29 +342,48 @@ same:
 	done(0);
 }
 
-char *tempfile = _PATH_TMP;
+char *tempfiles[2];
 
 char *
-copytemp(void)
+copytemp(const char *file, int n)
 {
-	char buf[BUFSIZ];
-	int i, f;
+	char buf[BUFSIZ], *tempdir, *tempfile;
+	int i, ifd, ofd;
+
+	if (n != 1 && n != 2)
+		return (NULL);
+
+	if (strcmp(file, "-") == 0)
+		ifd = STDIN_FILENO;
+	else if ((ifd = open(file, O_RDONLY, 0644)) < 0) {
+		warn("%s", file);
+		done(0);
+	}
+
+	if ((tempdir = getenv("TMPDIR")) == NULL)
+		tempdir = _PATH_TMP;
+	if (asprintf(&tempfile, "%s/diff%d.XXXXXXXX", tempdir, n) == -1) {
+		warn(NULL);
+		done(0);
+	}
+	tempfiles[n - 1] = tempfile;
 
 	signal(SIGHUP, done);
 	signal(SIGINT, done);
 	signal(SIGPIPE, done);
 	signal(SIGTERM, done);
-	f = mkstemp(tempfile);
-	if (f < 0) {
+	ofd = mkstemp(tempfile);
+	if (ofd < 0) {
 		warn("%s", tempfile);
 		done(0);
 	}
-	while ((i = read(0, buf, BUFSIZ)) > 0)
-		if (write(f, buf, i) != i) {
+	while ((i = read(ifd, buf, BUFSIZ)) > 0)
+		if (write(ofd, buf, i) != i) {
 			warn("%s", tempfile);
 			done(0);
 		}
-	close(f);
+	close(ifd);
+	close(ofd);
 	return (tempfile);
 }
 

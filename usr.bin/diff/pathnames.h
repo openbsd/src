@@ -29,8 +29,8 @@
  *	@(#)pathnames.h	8.1 (Berkeley) 6/6/93
  */
 
+#include <paths.h>
+
 #define	_PATH_DIFF	"/usr/bin/diff"
 #define	_PATH_DIFFH	"/usr/bin/diffh"
 #define	_PATH_PR	"/usr/bin/pr"
-#undef _PATH_TMP
-#define	_PATH_TMP	"/tmp/dXXXXX"

@@ -1,4 +1,4 @@
-/*	$OpenBSD: diff.c,v 1.12 2003/06/26 00:20:48 tedu Exp $	*/
+/*	$OpenBSD: diff.c,v 1.13 2003/06/26 04:52:26 millert Exp $	*/
 
 /*
  * Copyright (C) Caldera International Inc.  2001-2002.
@@ -84,9 +84,9 @@ char	**diffargv;		/* option list to pass to recursive diffs */
 char	*file1, *file2, *efile1, *efile2;
 struct	stat stb1, stb2;
 
-char diff[] = _PATH_DIFF;
-char diffh[] = _PATH_DIFFH;
-char pr[] = _PATH_PR;
+const char *diff = _PATH_DIFF;
+const char *diffh = _PATH_DIFFH;
+const char *pr = _PATH_PR;
 
 static void noroom(void);
 __dead void usage(void);
@@ -215,8 +215,10 @@ max(int a, int b)
 __dead void
 done(int sig)
 {
-	if (tempfile)
-		unlink(tempfile);
+	if (tempfiles[0])
+		unlink(tempfiles[0]);
+	if (tempfiles[1])
+		unlink(tempfiles[1]);
 	if (sig)
 		_exit(status);
 	exit(status);
