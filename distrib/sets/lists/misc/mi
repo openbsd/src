@@ -314,6 +314,8 @@
 ./usr/share/doc/usd/15.sed/Makefile
 ./usr/share/doc/usd/15.sed/sed
 ./usr/share/doc/usd/16.awk
+./usr/share/doc/usd/16.awk/Makefile
+./usr/share/doc/usd/16.awk/awk
 ./usr/share/doc/usd/17.msmacros
 ./usr/share/doc/usd/17.msmacros/Makefile
 ./usr/share/doc/usd/17.msmacros/fig1.pic
