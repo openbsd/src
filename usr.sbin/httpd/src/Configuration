@@ -159,7 +159,7 @@ Rule SHARED_CHAIN=default
 Rule SOCKS4=no
 Rule SOCKS5=no
 Rule IRIXNIS=no
-Rule IRIXN32=yes
+Rule IRIXN32=no
 Rule PARANOID=no
 
 # The following rules should be set automatically by Configure. However, if
@@ -178,7 +178,7 @@ Rule PARANOID=no
 #  out the Rule. The "default" action is "yes" unless overruled
 #  by OS specifics
 
-Rule WANTHSREGEX=default
+Rule WANTHSREGEX=no
 
 ################################################################
 # Module configuration
@@ -288,7 +288,7 @@ AddModule modules/standard/mod_actions.o
 ## The UserDir module for selecting resource directories by user name
 ## and a common prefix, e.g., /~<user> , /usr/web/<user> , etc.
 
-AddModule modules/standard/mod_userdir.o
+# AddModule modules/standard/mod_userdir.o
 
 ## The proxy module enables the server to act as a proxy for outside
 ## http and ftp services. It's not as complete as it could be yet.
@@ -323,8 +323,8 @@ AddModule modules/standard/mod_auth.o
 ## "gdbm" package if not and possibly adjust EXTRA_LIBS. (This may be
 ## done by Configure at a later date)
 
-# AddModule modules/standard/mod_auth_dbm.o
-# AddModule modules/standard/mod_auth_db.o
+AddModule modules/standard/mod_auth_dbm.o
+AddModule modules/standard/mod_auth_db.o
 
 ## "digest" implements HTTP Digest Authentication rather than the less 
 ## secure Basic Auth used by the other modules.
