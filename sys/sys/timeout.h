@@ -1,4 +1,4 @@
-/*	$OpenBSD: timeout.h,v 1.6 2000/03/23 16:52:26 art Exp $	*/
+/*	$OpenBSD: timeout.h,v 1.7 2001/03/15 16:47:50 csapuntz Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -74,7 +74,7 @@ struct timeout {
 #define TIMEOUT_STATIC		1	/* allocated from static pool */
 #define TIMEOUT_ONQUEUE		2	/* timeout is on the todo queue */
 #define TIMEOUT_INITIALIZED	4	/* timeout is initialized */
-
+#define TIMEOUT_TRIGGERED       8       /* timeout is running or ran */
 void timeout_set __P((struct timeout *, void (*)(void *), void *));
 void timeout_add __P((struct timeout *, int));
 void timeout_del __P((struct timeout *));
@@ -87,6 +87,7 @@ void timeout_del __P((struct timeout *));
  */
 #define timeout_pending(to) ((to)->to_flags & TIMEOUT_ONQUEUE)
 #define timeout_initialized(to) ((to)->to_flags & TIMEOUT_INITIALIZED)
+#define timeout_triggered(to) ((to)->to_flags & TIMEOUT_TRIGGERED)
 
 /*
  * timeout_init - called by the machine dependent code to initialize a static

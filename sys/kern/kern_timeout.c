@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_timeout.c,v 1.6 2001/02/16 13:47:40 espie Exp $	*/
+/*	$OpenBSD: kern_timeout.c,v 1.7 2001/03/15 16:47:50 csapuntz Exp $	*/
 /*
  * Copyright (c) 2000 Artur Grabowski <art@openbsd.org>
  * All rights reserved. 
@@ -134,6 +134,7 @@ timeout_add(new, to_ticks)
 		new->to_flags |= TIMEOUT_ONQUEUE;
 	/* Initialize the time here, it won't change. */
 	new->to_time = to_ticks + ticks;
+	new->to_flags &= ~TIMEOUT_TRIGGERED;
 
 	/*
 	 * Walk the list of pending timeouts and find an entry which
@@ -163,6 +164,7 @@ timeout_del(to)
 		TAILQ_REMOVE(&timeout_todo, to, to_list);
 		to->to_flags &= ~TIMEOUT_ONQUEUE;
 	}
+	to->to_flags &= ~TIMEOUT_TRIGGERED;
 	timeout_list_unlock(s);
 }
 
@@ -199,6 +201,7 @@ softclock()
 
 		TAILQ_REMOVE(&timeout_todo, to, to_list);
 		to->to_flags &= ~TIMEOUT_ONQUEUE;
+		to->to_flags |= TIMEOUT_TRIGGERED;
 
 		fn = to->to_func;
 		arg = to->to_arg;
