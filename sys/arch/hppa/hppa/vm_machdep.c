@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_machdep.c,v 1.5 1999/05/21 17:49:47 mickey Exp $	*/
+/*	$OpenBSD: vm_machdep.c,v 1.6 1999/06/12 18:13:18 mickey Exp $	*/
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ cpu_fork(p1, p2)
 	pcbp = &p2->p_addr->u_pcb;
 	*pcbp = p1->p_addr->u_pcb;
 	/* space is cached for the copy{in,out}'s pleasure */
-	pcbp->pcb_space = p2->p_vmspace->vm_pmap.pmap_space;
+	pcbp->pcb_space = p2->p_vmspace->vm_map.pmap->pmap_space;
 
 #ifdef DIAGNOSTIC
 	if (round_page(sizeof(struct user)) >= USPACE)

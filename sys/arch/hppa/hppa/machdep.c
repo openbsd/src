@@ -1,7 +1,7 @@
-/*	$OpenBSD: machdep.c,v 1.8 1999/05/23 19:11:19 mickey Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.9 1999/06/12 18:13:18 mickey Exp $	*/
 
 /*
- * Copyright (c) 1998 Michael Shalayeff
+ * Copyright (c) 1998,1999 Michael Shalayeff
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,6 +28,8 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * follows are the copyrights of other sources used in this file.
  */
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -143,9 +145,19 @@
 #include <hppa/dev/cpudevs_data.h>
 
 /*
- * Declare these as initialized data so we can patch them.
+ * Patchable buffer cache parameters
  */
-int	nswbuf = 0;
+int nswbuf = 0;
+#ifdef NBUF
+int nbuf = NBUF;
+#else
+int nbuf = 0;
+#endif
+#ifdef BUFPAGES
+int bufpages = BUFPAGES;
+#else
+int bufpages = 0;
+#endif
 
 /*
  * Different kinds of flags used throughout the kernel.
@@ -172,18 +184,19 @@ struct pdc_cache pdc_cache PDC_ALIGNMENT;
 struct pdc_btlb pdc_btlb PDC_ALIGNMENT;
 
 /* the following is used externally (sysctl_hw) */
-char	machine[] = "hppa";
+char	machine[] = MACHINE_ARCH;
 char	cpu_model[128];
 #ifdef COMPAT_HPUX
 int	cpu_model_hpux; /* contains HPUX_SYSCONF_CPU* kind of value */
 #endif
+
 u_int	cpu_ticksnum, cpu_ticksdenom, cpu_hzticks;
 dev_t	bootdev;
 int	totalphysmem, physmem, resvmem, esym;
+
 struct user *proc0paddr;
 struct proc *fpu_curproc;
 int copr_sfu_config;
-int fpcopr_version;
 
 #ifdef TLB_STATS
 struct dtlb_stats dtlb_stats;
@@ -204,13 +217,16 @@ void dumpsys __P((void));
 int bus_mem_add_mapping __P((bus_addr_t bpa, bus_size_t size, int cacheable,
 			     bus_space_handle_t *bshp));
 
+/* wide used hardware params */
+struct pdc_hwtlb pdc_hwtlb PDC_ALIGNMENT;
+struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
+
 void
-hppa_init()
+hppa_init(start)
+	paddr_t start;
 {
-	extern int kernel_text, end;
-	struct pdc_hwtlb pdc_hwtlb PDC_ALIGNMENT;
-	struct pdc_coproc pdc_coproc PDC_ALIGNMENT;
-	vm_offset_t v, vstart, vend;
+	extern int kernel_text;
+	vaddr_t v, vstart, vend;
 	register int pdcerr;
 	int usehpt;
 
@@ -254,88 +270,15 @@ hppa_init()
 	ptlball();
 	fcacheall();
 
-	/* calculate HPT size */
-	hpt_hashsize = PAGE0->imm_max_mem / NBPG;
-	mtctl(hpt_hashsize - 1, CR_HPTMASK);
-
-	/*
-	 * If we want to use the HW TLB support, ensure that it exists.
-	 */
-	if (pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
-	    !pdc_hwtlb.min_size && !pdc_hwtlb.max_size) {
-		printf("WARNING: no HW tlb walker\n");
-		usehpt = 0;
-	} else {
-		usehpt = 1;
-#ifdef DEBUG
-		printf("hwtlb: %u-%u, %u/",
-		       pdc_hwtlb.min_size, pdc_hwtlb.max_size, hpt_hashsize);
-#endif
-		if (hpt_hashsize > pdc_hwtlb.max_size)
-			hpt_hashsize = pdc_hwtlb.max_size;
-		else if (hpt_hashsize < pdc_hwtlb.min_size)
-			hpt_hashsize = pdc_hwtlb.min_size;
-#ifdef DEBUG
-		printf("%u (0x%x)\n", hpt_hashsize,
-		       hpt_hashsize * sizeof(struct hpt_entry));
-#endif
-	}
-	
 	totalphysmem = PAGE0->imm_max_mem / NBPG;
 	resvmem = ((vm_offset_t)&kernel_text) / NBPG;
 
-	vstart = hppa_round_page(&end);
-	vend = VM_MAX_KERNEL_ADDRESS;
-
-	/* we hope this won't fail */
-	hppa_ex = extent_create("mem", 0x0, 0xffffffff, M_DEVBUF,
-				(caddr_t)mem_ex_storage,
-				sizeof(mem_ex_storage),
-				EX_NOCOALESCE|EX_NOWAIT);
-	if (extent_alloc_region(hppa_ex, 0, (vm_offset_t)PAGE0->imm_max_mem,
-				EX_NOWAIT))
-		panic("cannot reserve main memory");
-
-	/*
-	 * Allocate space for system data structures.  We are given
-	 * a starting virtual address and we return a final virtual
-	 * address; along the way we set each data structure pointer.
-	 *
-	 * We call allocsys() with 0 to find out how much space we want,
-	 * allocate that much and fill it with zeroes, and the call
-	 * allocsys() again with the correct base virtual address.
-	 */
-
-	v = vstart;
-#define	valloc(name, type, num)	\
-	    (name) = (type *)v; v = (vm_offset_t)((name)+(num))
-
-#ifdef REAL_CLISTS
-	valloc(cfree, struct cblock, nclist);
-#endif
-	valloc(callout, struct callout, ncallout);
-#ifdef SYSVSHM
-	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
-#endif
-#ifdef SYSVSEM 
-	valloc(sema, struct semid_ds, seminfo.semmni);
-	valloc(sem, struct sem, seminfo.semmns); 
-	/* This is pretty disgusting! */
-	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
-#endif
-#ifdef SYSVMSG
-	valloc(msgpool, char, msginfo.msgmax);
-	valloc(msgmaps, struct msgmap, msginfo.msgseg);
-	valloc(msghdrs, struct msg, msginfo.msgtql);
-	valloc(msqids, struct msqid_ds, msginfo.msgmni);
-#endif
-
+	/* calculate buffer cache size */
 #ifndef BUFCACHEPERCENT
 #define BUFCACHEPERCENT 10
 #endif /* BUFCACHEPERCENT */
-
 	if (bufpages == 0)
-		bufpages = totalphysmem / BUFCACHEPERCENT / CLSIZE;
+		bufpages = totalphysmem / 100 * BUFCACHEPERCENT;
 	if (nbuf == 0) {
 		nbuf = bufpages;
 		if (nbuf < 16)
@@ -353,16 +296,76 @@ hppa_init()
 		bufpages = nbuf * MAXBSIZE / CLBYTES;
 
 	if (nswbuf == 0) {
-		nswbuf = (nbuf / 2) & ~1;	/* force even */
+		nswbuf = (nbuf / 2) &~ 1;
 		if (nswbuf > 256)
-			nswbuf = 256;		/* sanity */
+			nswbuf = 256;
 	}
 
-#ifndef UVM
-	valloc(swbuf, struct buf, nswbuf);
+	/* calculate HPT size */
+	hpt_hashsize = totalphysmem;
+	mtctl(hpt_hashsize - 1, CR_HPTMASK);
+
+	/*
+	 * If we want to use the HW TLB support, ensure that it exists.
+	 */
+	if (pdc_call((iodcio_t)pdc, 0, PDC_TLB, PDC_TLB_INFO, &pdc_hwtlb) &&
+	    !pdc_hwtlb.min_size && !pdc_hwtlb.max_size) {
+		printf("WARNING: no HW tlb walker\n");
+		usehpt = 0;
+	} else {
+		usehpt = 1;
+#ifdef PMAPDEBUG
+		printf("hwtlb: %u-%u, %u/",
+		       pdc_hwtlb.min_size, pdc_hwtlb.max_size, hpt_hashsize);
 #endif
+		if (hpt_hashsize > pdc_hwtlb.max_size)
+			hpt_hashsize = pdc_hwtlb.max_size;
+		else if (hpt_hashsize < pdc_hwtlb.min_size)
+			hpt_hashsize = pdc_hwtlb.min_size;
+#ifdef PMAPDEBUG
+		printf("%u (0x%x)\n", hpt_hashsize,
+		       hpt_hashsize * sizeof(struct hpt_entry));
+#endif
+	}
+	
+	vstart = hppa_round_page(start);
+	vend = VM_MAX_KERNEL_ADDRESS;
+
+	/* we hope this won't fail */
+	hppa_ex = extent_create("mem", 0x0, 0xffffffff, M_DEVBUF,
+				(caddr_t)mem_ex_storage,
+				sizeof(mem_ex_storage),
+				EX_NOCOALESCE|EX_NOWAIT);
+	if (extent_alloc_region(hppa_ex, 0, (vm_offset_t)PAGE0->imm_max_mem,
+				EX_NOWAIT))
+		panic("cannot reserve main memory");
+
+	v = vstart;
+#define	valloc(name, type, num)	(name) = (type *)v; v = (vaddr_t)((name)+(num))
+
+#ifdef REAL_CLISTS
+	valloc(cfree, struct cblock, nclist);
+#endif
+	valloc(callout, struct callout, ncallout);
 	valloc(buf, struct buf, nbuf);
+
+#ifdef SYSVSHM
+	valloc(shmsegs, struct shmid_ds, shminfo.shmmni);
+#endif
+#ifdef SYSVSEM 
+	valloc(sema, struct semid_ds, seminfo.semmni);
+	valloc(sem, struct sem, seminfo.semmns); 
+	/* This is pretty disgusting! */
+	valloc(semu, int, (seminfo.semmnu * seminfo.semusz) / sizeof(int));
+#endif
+#ifdef SYSVMSG
+	valloc(msgpool, char, msginfo.msgmax);
+	valloc(msgmaps, struct msgmap, msginfo.msgseg);
+	valloc(msghdrs, struct msg, msginfo.msgtql);
+	valloc(msqids, struct msqid_ds, msginfo.msgmni);
+#endif
 #undef valloc
+	v = hppa_round_page(v);
 	bzero ((void *)vstart, (v - vstart));
 	vstart = v;
 
@@ -408,11 +411,7 @@ hppa_init()
 	}
         copr_sfu_config = pdc_coproc.ccr_enable;
         mtctl(copr_sfu_config & CCR_MASK, CR_CCR);
-/*
-        fprinit(&fpcopr_version);
-	fpcopr_version = (fpcopr_version & 0x003ff800) >> 11;
-        mtctl(CR_CCR, 0);
-*/
+
         /*
          * Clear the FAULT light (so we know when we get a real one)
          * PDC_COPROC apparently turns it on (for whatever reason).
@@ -522,12 +521,8 @@ cpu_startup()
 			if ((pg = uvm_pagealloc(NULL, 0, NULL)) == NULL)
 				panic("cpu_startup: not enough memory for "
 				      "buffer cache");
-#ifdef PMAP_NEW
-			pmap_kenter_pgs(curbuf, &pg, 1);
-#else
 			pmap_enter(kernel_map->pmap, curbuf,
 				   VM_PAGE_TO_PHYS(pg), VM_PROT_ALL, TRUE);
-#endif
 			curbuf += PAGE_SIZE;
 			curbufsize -= PAGE_SIZE;
 		}
@@ -588,12 +583,6 @@ cpu_startup()
 	}
 	hppa_malloc_ok = 1;
 	configure();
-#if 0
-	/* TODO: map SysCall gateways page once for everybody */
-	pmap_enter_pv(pmap_kernel(), SYSCALLGATE, TLB_GATE_PROT,
-		tlbbtop((paddr_t)&gateway_page),
-		pmap_find_va(HPPA_SID_KERNEL, SYSCALLGATE));
-#endif
 }
 
 /*
@@ -630,7 +619,7 @@ delay(us)
 
 	mfctl(CR_ITMR, start);
 	while (us) {
-		n = min(100, us);
+		n = min(1000, us);
 		end = start + n * cpu_ticksnum / cpu_ticksdenom;
 
 		/* N.B. Interval Timer may wrap around */
@@ -1251,10 +1240,10 @@ setregs(p, pack, stack, retval)
 	tf->tf_sr5 = p->p_addr->u_pcb.pcb_space;
 	tf->tf_sr6 = p->p_addr->u_pcb.pcb_space;
 	tf->tf_sr7 = HPPA_SID_KERNEL;
-	tf->tf_pidr1 = p->p_vmspace->vm_pmap.pmap_pid;
-	tf->tf_pidr2 = p->p_vmspace->vm_pmap.pmap_pid;
-	tf->tf_pidr3 = p->p_vmspace->vm_pmap.pmap_pid;
-	tf->tf_pidr4 = p->p_vmspace->vm_pmap.pmap_pid;
+	tf->tf_pidr1 = p->p_vmspace->vm_map.pmap->pmap_pid;
+	tf->tf_pidr2 = p->p_vmspace->vm_map.pmap->pmap_pid;
+	tf->tf_pidr3 = p->p_vmspace->vm_map.pmap->pmap_pid;
+	tf->tf_pidr4 = p->p_vmspace->vm_map.pmap->pmap_pid;
 
 	retval[1] = 0;
 }
@@ -1270,7 +1259,7 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
-	/* TODO */
+	/* TODO send signal */
 }
 
 int
@@ -1279,7 +1268,7 @@ sys_sigreturn(p, v, retval)
 	void *v;
 	register_t *retval;
 {
-	/* TODO */
+	/* TODO sigreturn */
 	return EINVAL;
 }
 
