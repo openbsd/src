@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.122 2004/01/03 14:08:52 espie Exp $
+#	$OpenBSD: Makefile,v 1.123 2004/01/23 18:21:13 espie Exp $
 #	$NetBSD: Makefile,v 1.59 1996/05/15 21:36:43 jtc Exp $
 
 #	@(#)Makefile	5.45.1.1 (Berkeley) 5/6/91
@@ -6,8 +6,11 @@
 # The ``rm -rf''s used below are safe because rm doesn't follow symbolic
 # links.
 
-# Missing: mp.h
 
+.include <bsd.own.mk>
+USE_GCC3?=No
+
+# Missing: mp.h
 FILES=	a.out.h ar.h assert.h bitstring.h blf.h bm.h bsd_auth.h cast.h \
 	cpio.h ctype.h curses.h db.h dbm.h des.h dirent.h disktab.h \
 	dlfcn.h elf_abi.h err.h fnmatch.h fstab.h fts.h ftw.h getopt.h \
@@ -47,18 +50,24 @@ RDIRS=	../lib/libpthread ../lib/libcompat ../lib/libcurses \
 PRDIRS=
 
 # Directories with an includes target that use Makefile.bsd-wrapper
-WDIRS=	../usr.sbin/httpd ../gnu/egcs/libio ../gnu/egcs/libstdc++ \
-	../gnu/egcs/libf2c ../gnu/egcs/libobjc ../gnu/egcs/gcc \
-	../gnu/usr.bin/binutils
+WDIRS=	../usr.sbin/httpd ../gnu/usr.bin/binutils
 
 # Places using Makefile.bsd-wrapper that needs a prerequisite target met
 # before includes
-PWDIRS=	../usr.sbin/httpd ../gnu/egcs/libf2c ../gnu/usr.bin/binutils
+PWDIRS=	../usr.sbin/httpd ../gnu/usr.bin/binutils
+
+.if ${USE_GCC3:L} == "yes"
+WDIRS+= ../gnu/lib/libstdc++ ../gnu/usr.bin/gcc ../gnu/lib/libobjc
+PWDIRS+= ../gnu/lib/libstdc++
+.else
+WDIRS+= ../gnu/egcs/libio ../gnu/egcs/libstdc++ \
+	../gnu/egcs/libf2c ../gnu/egcs/libobjc ../gnu/egcs/gcc
+PWDIRS+= ../gnu/egcs/libf2c
+.endif
 
 NOOBJ=	noobj
 
 # Change SYS_INCLUDE in bsd.own.mk to "symlinks" if you don't want copies
-.include <bsd.own.mk>
 SYS_INCLUDE?=	copies
 .if ${KERBEROS5:L} == "yes"
 RDIRS+= ../lib/libkrb5 ../lib/libgssapi ../lib/libkadm5srv
