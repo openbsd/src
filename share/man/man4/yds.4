@@ -1,4 +1,4 @@
-.\"	$OpenBSD: yds.4,v 1.6 2004/09/30 19:59:26 mickey Exp $
+.\"	$OpenBSD: yds.4,v 1.7 2004/12/20 12:29:39 deraadt Exp $
 .\"
 .\" Copyright (c) 2001 Aaron Campbell.
 .\" All rights reserved.
@@ -50,6 +50,13 @@ This is needed to make the floppy work on some machines
 but is disabled by default because it is known to break
 .Xr apm 4
 support.
+.Sh FILES
+The driver needs a firmware files which is loaded on
+demand when the device is attached.
+.Pp
+.Bl -tag -width Ds -offset indent -compact
+.It Pa /etc/firmware/yds
+.El
 .Sh SEE ALSO
 .Xr ac97 4 ,
 .Xr audio 4 ,
