@@ -1,4 +1,4 @@
-/*	$OpenBSD: dd.c,v 1.6 1997/08/25 15:24:07 deraadt Exp $	*/
+/*	$OpenBSD: dd.c,v 1.7 1997/11/15 22:10:22 todd Exp $	*/
 /*	$NetBSD: dd.c,v 1.6 1996/02/20 19:29:06 jtc Exp $	*/
 
 /*-
@@ -48,7 +48,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)dd.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: dd.c,v 1.6 1997/08/25 15:24:07 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: dd.c,v 1.7 1997/11/15 22:10:22 todd Exp $";
 #endif
 #endif /* not lint */
 
@@ -319,7 +319,7 @@ dd_in()
 }
 
 /*
- * Cleanup any remaining I/O and flush output.  If necesssary, output file
+ * Cleanup any remaining I/O and flush output.  If necessary, output file
  * is truncated.
  */
 static void
