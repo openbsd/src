@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcb.h,v 1.3 1997/09/21 04:21:16 niklas Exp $	*/
+/*	$OpenBSD: pcb.h,v 1.4 2001/08/31 21:28:11 miod Exp $	*/
 /*	$NetBSD: pcb.h,v 1.9 1996/06/18 16:03:45 gwr Exp $	*/
 
 /*
@@ -44,6 +44,9 @@
  *	from: @(#)pcb.h	8.1 (Berkeley) 6/10/93
  */
 
+#ifndef	_MACHINE_PCB_H_
+#define	_MACHINE_PCB_H_
+
 #include <machine/frame.h>
 
 /*
@@ -66,3 +69,5 @@ struct pcb {
 struct md_coredump {
 	int	md_exec[16];	/* exec structure for core dumps */
 };
+
+#endif	/* _MACHINE_PCB_H_ */
