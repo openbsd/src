@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.36 2003/10/15 17:42:09 mickey Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.37 2003/12/09 14:35:03 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2003 Michael Shalayeff
@@ -41,6 +41,8 @@
  *	@(#)autoconf.c	8.4 (Berkeley) 10/1/93
  */
 
+#include "pci.h"
+
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -56,6 +58,11 @@
 #include <dev/cons.h>
 
 #include <hppa/dev/cpudevs.h>
+
+#if NPCI > 0
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcireg.h>
+#endif
 
 void	setroot(void);
 void	swapconf(void);
@@ -357,6 +364,24 @@ gotdisk:
 	return (dv);
 }
 
+void
+print_devpath(const char *label, struct pz_device *pz)
+{
+	int i;
+
+	printf("%s: ", label);
+
+	for (i = 0; i < 6 && pz->pz_bc[i] >= 0; i++)
+		printf("%s%d", i? "/" : "", pz->pz_bc[i]);
+
+	printf("%s%d.%d", i? "." : "", pz->pz_mod, pz->pz_layers[0]);
+	for (i = 1; i < 6 && pz->pz_layers[i]; i++)
+		printf(".%d", pz->pz_layers[i]);
+
+	printf(" class=%d flags=%b hpa=%p spa=%p io=%p\n", pz->pz_class,
+	    pz->pz_flags, PZF_BITS, pz->pz_hpa, pz->pz_spa, pz->pz_iodc_io);
+}
+
 /*
  * Attempt to find the device from which we were booted.
  * If we can do so, and not instructed not to do so,
@@ -385,6 +410,8 @@ setroot(void)
 	bootdv = &fakerdrootdev;
 #endif
 	part = 0;
+
+	print_devpath("boot path", &PAGE0->mem_boot);
 
 	/*
 	 * If 'swap generic' and we couldn't determine boot device,
@@ -731,6 +758,9 @@ hppa_mod_info(type, sv)
 void
 device_register(struct device *dev, void *aux)
 {
+#if NPCI > 0
+	extern struct cfdriver pci_cd;
+#endif
 	struct confargs *ca = aux;
 	char *basename;
 	static struct device *elder = NULL;
@@ -738,6 +768,27 @@ device_register(struct device *dev, void *aux)
 	if (bootdv != NULL)
 		return;	/* We already have a winner */
 
+#if NPCI > 0
+	if (dev->dv_parent &&
+	    dev->dv_parent->dv_cfdata->cf_driver == &pci_cd) {
+		struct pci_attach_args *pa = aux;
+		pcireg_t addr;
+		int reg;
+
+		for (reg = PCI_MAPREG_START; reg < PCI_MAPREG_END; reg += 4) {
+			addr = pci_conf_read(pa->pa_pc, pa->pa_tag, reg);
+			if (PCI_MAPREG_TYPE(addr) == PCI_MAPREG_TYPE_IO)
+				addr = PCI_MAPREG_IO_ADDR(addr);
+			else
+				addr = PCI_MAPREG_MEM_ADDR(addr);
+
+			if (addr == (pcireg_t)PAGE0->mem_boot.pz_hpa) {
+				elder = dev;
+				break;
+			}
+		}
+	} else
+#endif
 	if (ca->ca_hpa == (hppa_hpa_t)PAGE0->mem_boot.pz_hpa) {
 		/*
 		 * If hpa matches, the only thing we know is that the
