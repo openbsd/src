@@ -220,9 +220,31 @@ static const char *const cmd_usage[] =
 };
 
 static RETSIGTYPE
-main_cleanup ()
+main_cleanup (sig)
+     int sig;
 {
-    exit (1);
+    const char *name;
+
+    switch (sig)
+    {
+	case SIGHUP:
+	    name = "hangup";
+	    break;
+	case SIGINT:
+	    name = "interrupt";
+	    break;
+	case SIGQUIT:
+	    name = "quit";
+	    break;
+	case SIGPIPE:
+	    name = "broken pipe";
+	    break;
+	case SIGTERM:
+	    name = "termination";
+	    break;
+    }
+
+    error (1, 0, "received %s signal", name);
 }
 
 static void
