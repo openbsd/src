@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.184 2003/02/13 10:19:44 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.185 2003/02/14 09:43:18 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -845,7 +845,8 @@ packet that establishes the state is logged.
 .Ar keep state
 and
 .Ar modulate state
-below.) The logged packets are sent to the
+below).
+The logged packets are sent to the
 .Xr pflog 4
 interface.
 This interface is monitored by the
@@ -925,8 +926,7 @@ Surrounding the interface name in parentheses changes this behaviour.
 When the interface name is surrounded by parentheses, the rule is
 automatically updated whenever the interface changes its address.
 The ruleset does not need to be reloaded.
-This is especially
-useful with
+This is especially useful with
 .Ar nat .
 .Pp
 Ports can be specified either by number or by name.
