@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.35 2003/06/02 23:28:11 millert Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.36 2003/06/18 22:47:54 henning Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -1205,8 +1205,14 @@ int
 bpf_allocbufs(d)
 	register struct bpf_d *d;
 {
-	d->bd_fbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK);
-	d->bd_sbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_WAITOK);
+	d->bd_fbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	if (d->bd_fbuf == NULL)
+		return (ENOBUFS);
+	d->bd_sbuf = (caddr_t)malloc(d->bd_bufsize, M_DEVBUF, M_NOWAIT);
+	if (d->bd_sbuf == NULL) {
+		free(d->bd_fbuf, M_DEVBUF);
+		return (ENOBUFS);
+	}
 	d->bd_slen = 0;
 	d->bd_hlen = 0;
 	return (0);
