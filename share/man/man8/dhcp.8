@@ -1,0 +1,86 @@
+.Dd July 8, 1999
+.Dt DHCP 8
+.Os
+.Sh NAME
+.Nm dhcp
+.Nd configuring
+.Ox
+for DHCP
+.Sh DESCRIPTION
+The Dynamic Host Configuration Protocol (DHCP) allows hosts on a TCP/IP network
+to configure one or more network interfaces based on information collected from
+a DHCP server in response to a DHCP request. This mechanism is often used, for
+example, by cable modem and DSL network providers to simplify network
+configurations for their clients/customers.
+.Pp
+Information typically contained within a DHCP response includes an IP
+address for the interface, subnet mask, broadcast address, router (gateway)
+listing, domain name server listing, and the interface's MTU.
+.Pp
+In
+.Ox ,
+DHCP is handled mostly by the
+.Xr dhcpd 8
+daemon, which issues DHCP requests and configures the local network based on
+information gleaned from the replies it receives from a DHCP server.
+.Pp
+To get started, follow these steps:
+.Bl -enum -offset indent
+.It
+Edit
+.Pa /etc/rc.conf
+and set
+.Cm dhcpd_flags="-q" .
+This will cause
+.Ox
+to start the
+.Nm dhcpd
+daemon at boot-time and configure any interfaces with their address family
+set to
+.Dq dhcp .
+.It
+For each interface that is to be configured via DHCP, create a
+.Pa /etc/hostname.XXX
+file (where XXX is the interface's identifier, i.e., ep1) that contains only
+the word
+.Dq dhcp .
+.It
+Ensure a
+.Pa /etc/dhcpd.conf
+file exists. This file is shipped with the system and should not be removed.
+.It
+Ensure the kernel has been compiled with BPF (Berkeley Packet Filter) support
+and at least one
+.Pa /dev/bpf*
+file exists per broadcast network interface that is attached to the system.
+This is almost always the case and should only be considered if all other
+troubleshooting options have failed.
+.El
+.Pp
+See
+.Xr dhcpd 8
+for information on other available options; for example,
+.Fl p ,
+which allows specification of a port to listen on other then the default (67).
+However, most of the flags are only useful for debugging purposes.
+.Sh NOTES
+In addition to
+.Xr dhcpd 8 ,
+the
+.Xr dhclient 8
+program may be used for one-time manual DHCP configurations. See its man page
+for more information.
+.Sh FILES
+.Bl -tag -width /etc/hostname.XXX -compact
+.It Pa /etc/rc.conf
+configuration file where
+.Cm dhcpd_flags
+must be set
+.It Pa /etc/hostname.XXX
+interface-specific configuration files
+.El
+.Sh SEE ALSO
+.Xr dhclient 8 ,
+.Xr dhcpd 8 ,
+.Xr dhcpd.conf 8
+
