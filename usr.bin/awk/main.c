@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1999/04/20 17:31:30 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1999/12/04 00:12:25 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -35,6 +35,8 @@ char	*version = "version 19990416";
 #include "awk.h"
 #include "ytab.h"
 
+#define	MAX_PFILE	20
+
 extern	char	**environ;
 extern	int	nfields;
 extern	char	*__progname;
@@ -47,7 +49,7 @@ extern	int errorflag;	/* non-zero if any syntax errors; set by yyerror */
 int	compile_time = 2;	/* for error printing: */
 				/* 2 = cmdline, 1 = compile, 0 = running */
 
-char	*pfile[20];	/* program filenames from -f's */
+char	*pfile[MAX_PFILE];	/* program filenames from -f's */
 int	npfile = 0;	/* number of filenames */
 int	curpfile = 0;	/* current filename */
 
@@ -82,6 +84,8 @@ int main(int argc, char *argv[])
 		case 'f':	/* next argument is program filename */
 			argc--;
 			argv++;
+			if (npfile >= MAX_PFILE - 1)
+				ERROR "too many -f options" FATAL;
 			if (argc <= 1)
 				ERROR "no program filename" FATAL;
 			pfile[npfile++] = argv[1];
