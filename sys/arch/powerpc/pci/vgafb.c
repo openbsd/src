@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.4 2000/09/19 05:56:51 rahnds Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.5 2000/09/19 06:10:09 rahnds Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -554,7 +554,6 @@ vgafb_putcmap(vc, cm)
 	g = &(vc->vc_cmap_green[index]);
 	b = &(vc->vc_cmap_blue[index]);
 
-	printf("ofh = %x\n", vc->vc_ofh);
 	for (i = 0; i < count; i++) {
 		OF_call_method_1("color!", vc->vc_ofh, 4, *r, *g, *b, index);
 		r++, g++, b++, index++;
