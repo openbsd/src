@@ -88,7 +88,7 @@ command accepts the following options:
 .Bl -tag -width "-a authmode"
 .It Fl a Ar authmode
 This option may be used for specifying what mode should
-be used for authentication.
+be used for Kerberos authentication.
 Note that this option is only useful if
 .Nm telnetd
 has been compiled with support for the
@@ -101,13 +101,13 @@ There are several valid values for
 Turns on authentication debugging code.
 .It user
 Only allow connections when the remote user
-can provide valid authentication information
+can provide valid Kerberos authentication information
 to identify the remote user,
 and is allowed access to the specified account
 without providing a password.
 .It valid
 Only allow connections when the remote user
-can provide valid authentication information
+can provide valid Kerberos authentication information
 to identify the remote user.
 The
 .Xr login 1
@@ -122,7 +122,7 @@ and is thus the same as specifying
 .Fl a
 .Cm valid .
 .It otp
-Only allow authenticated connections (as with
+Only allow Kerberos authenticated connections (as with
 .Fl a
 .Cm user )
 and also logins with one-time passwords (OTPs).  This option will call
@@ -130,17 +130,11 @@ login with an option so that only OTPs are accepted.  The user can of
 course still type secret information at the prompt.
 .It none
 This is the default state.
-Authentication information is not required.
+Kerberos authentication information is not required.
 If no or insufficient authentication information
-is provided, then the
-.Xr login 1
-program will provide the necessary user
-verification.
+is provided, then traditional cleartext passwords will be used.
 .It off
-This disables the authentication code.
-All user verification will happen through the
-.Xr login 1
-program.
+This disables the authentication code, and cleartext password will be used.
 .El
 .It Fl B
 Ignored.
@@ -175,7 +169,6 @@ Has not been implemented yet.
 .It Fl h
 Disables the printing of host-specific information before
 login has been completed.
-.It Fl k
 .It Fl l
 Ignored.
 .It Fl n
@@ -361,7 +354,7 @@ session is shut down.
 .It "WILL ENCRYPT"
 Only sent if
 .Nm telnetd
-is compiled with support for data encryption, and
+Kerberos is enabled, and
 indicates a willingness to decrypt
 the data stream.
 .El
@@ -434,13 +427,13 @@ option can be used to disable this.
 .It "DO AUTHENTICATION"
 Only sent if
 .Nm telnetd
-is compiled with support for authentication, and
+Kerberos authentication is enabled, and
 indicates a willingness to receive authentication
 information for automatic login.
 .It "DO ENCRYPT"
 Only sent if
 .Nm telnetd
-is compiled with support for data encryption, and
+Kerberos is enabled, and
 indicates a willingness to decrypt
 the data stream.
 .El
