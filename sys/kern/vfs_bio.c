@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_bio.c,v 1.24 1999/09/10 22:14:39 art Exp $	*/
+/*	$OpenBSD: vfs_bio.c,v 1.25 1999/12/02 20:55:47 art Exp $	*/
 /*	$NetBSD: vfs_bio.c,v 1.44 1996/06/11 11:15:36 pk Exp $	*/
 
 /*-
@@ -855,11 +855,13 @@ biodone(bp)
 	if (ISSET(bp->b_flags, B_CALL)) {	/* if necessary, call out */
 		CLR(bp->b_flags, B_CALL);	/* but note callout done */
 		(*bp->b_iodone)(bp);
-	} else if (ISSET(bp->b_flags, B_ASYNC))	/* if async, release it */
-		brelse(bp);
-	else {					/* or just wakeup the buffer */
-		CLR(bp->b_flags, B_WANTED);
-		wakeup(bp);
+	} else {
+		if (ISSET(bp->b_flags, B_ASYNC)) {/* if async, release it */
+			brelse(bp);
+		} else {			/* or just wakeup the buffer */
+			CLR(bp->b_flags, B_WANTED);
+			wakeup(bp);
+		}
 	}
 }
 
