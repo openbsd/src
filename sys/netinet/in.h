@@ -1,4 +1,4 @@
-/*	$OpenBSD: in.h,v 1.29 2000/01/07 19:37:09 angelos Exp $	*/
+/*	$OpenBSD: in.h,v 1.30 2000/01/07 21:45:22 angelos Exp $	*/
 /*	$NetBSD: in.h,v 1.20 1996/02/13 23:41:47 christos Exp $	*/
 
 /*
@@ -535,7 +535,7 @@ struct in6_pktinfo {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ 0, 0 }, \
+	{ "gre", CTLTYPE_NODE }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ "esp", CTLTYPE_NODE }, \
@@ -543,7 +543,7 @@ struct in6_pktinfo {
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
-	{ 0, 0 }, \
+	{ "mobileip", CTLTYPE_NODE }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
 	{ 0, 0 }, \
