@@ -1,4 +1,4 @@
-/*	$OpenBSD: board.h,v 1.1.1.1 2004/04/21 15:23:56 aoyama Exp $	*/
+/*	$OpenBSD: board.h,v 1.2 2004/04/29 14:35:22 miod Exp $	*/
 /*
  * Mach Operating System
  * Copyright (c) 1993-1991 Carnegie Mellon University
@@ -195,7 +195,7 @@
 #define BMAP_PALLET2	U(0xC1100000) 	/* color pallet */
 #define BOARD_CHECK_REG	U(0xD0000000) 	/* board check register */
 #define BMAP_CRTC	U(0xD1000000) 	/* CTRC-II */
-#define BMAP_IDENTROM   U(0xD1800000)   /* bitmap-boad identify ROM */
+#define BMAP_IDENTROM   U(0xD1800000)   /* bitmap-board identify ROM */
 #define SCSI_ADDR	U(0xE1000000) 	/* SCSI address */
 #define LANCE_ADDR	U(0xF1000000) 	/* LANCE */
 #define	EXT_IACK_ADDR	0xFFFFFFF7 	/* IACK Space for Extended Board */
