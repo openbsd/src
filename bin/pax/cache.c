@@ -1,4 +1,4 @@
-/*	$OpenBSD: cache.c,v 1.4 1996/09/15 22:34:06 millert Exp $	*/
+/*	$OpenBSD: cache.c,v 1.5 1997/06/03 11:03:03 deraadt Exp $	*/
 /*	$NetBSD: cache.c,v 1.4 1995/03/21 09:07:10 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)cache.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: cache.c,v 1.4 1996/09/15 22:34:06 millert Exp $";
+static char rcsid[] = "$OpenBSD: cache.c,v 1.5 1997/06/03 11:03:03 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -261,7 +261,7 @@ name_uid(uid, frc)
 		if (ptr == NULL)
 			return(pw->pw_name);
 		ptr->uid = uid;
-		(void)strncpy(ptr->name, pw->pw_name, UNMLEN);
+		(void)strncpy(ptr->name, pw->pw_name, UNMLEN-1);
 		ptr->name[UNMLEN-1] = '\0';
 		ptr->valid = VALID;
 	}
@@ -339,7 +339,7 @@ name_gid(gid, frc)
 		if (ptr == NULL)
 			return(gr->gr_name);
 		ptr->gid = gid;
-		(void)strncpy(ptr->name, gr->gr_name, GNMLEN);
+		(void)strncpy(ptr->name, gr->gr_name, GNMLEN-1);
 		ptr->name[GNMLEN-1] = '\0';
 		ptr->valid = VALID;
 	}
@@ -405,7 +405,7 @@ uid_name(name, uid)
 		*uid = pw->pw_uid;
 		return(0);
 	}
-	(void)strncpy(ptr->name, name, UNMLEN);
+	(void)strncpy(ptr->name, name, UNMLEN-1);
 	ptr->name[UNMLEN-1] = '\0';
 	if ((pw = getpwnam(name)) == NULL) {
 		ptr->valid = INVALID;
@@ -475,7 +475,7 @@ gid_name(name, gid)
 		return(0);
 	}
 
-	(void)strncpy(ptr->name, name, GNMLEN);
+	(void)strncpy(ptr->name, name, GNMLEN-1);
 	ptr->name[GNMLEN-1] = '\0';
 	if ((gr = getgrnam(name)) == NULL) {
 		ptr->valid = INVALID;
