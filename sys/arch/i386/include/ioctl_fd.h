@@ -1,5 +1,5 @@
-/*	$OpenBSD: ioctl_fd.h,v 1.1 1996/06/20 07:51:36 downsj Exp $	*/
-/*	$Id: ioctl_fd.h,v 1.1 1996/06/20 07:51:36 downsj Exp $	*/
+/*	$OpenBSD: ioctl_fd.h,v 1.2 1996/06/20 07:56:10 downsj Exp $	*/
+/*	from: ioctl_fd.h,v 1.4 1995/06/29 03:49:32 jtk Exp 	*/
 
 /*
  * Copyright (C) 1992-1994 by Joerg Wunsch, Dresden
