@@ -1,4 +1,4 @@
-/*	$OpenBSD: rcp.c,v 1.21 2001/06/13 08:52:42 markus Exp $	*/
+/*	$OpenBSD: rcp.c,v 1.22 2001/06/13 09:03:18 markus Exp $	*/
 /*	$NetBSD: rcp.c,v 1.9 1995/03/21 08:19:06 cgd Exp $	*/
 
 /*
@@ -192,14 +192,14 @@ main(argc, argv)
 		(void)seteuid(userid);
 		(void)setuid(userid);
 		source(argc, argv);
-		exit(errs);
+		exit(errs != 0);
 	}
 
 	if (tflag) {			/* Receive data. */
 		(void)seteuid(userid);
 		(void)setuid(userid);
 		sink(argc, argv);
-		exit(errs);
+		exit(errs != 0);
 	}
 
 	if (argc < 2)
@@ -229,7 +229,7 @@ main(argc, argv)
 		if (targetshouldbedirectory)
 			verifydir(argv[argc - 1]);
 	}
-	exit(errs);
+	exit(errs != 0);
 }
 
 void
