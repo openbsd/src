@@ -13,7 +13,7 @@
  * 
  */
 
-/* RCSID("$Id: ssh.h,v 1.27 1999/12/01 13:59:15 markus Exp $"); */
+/* RCSID("$Id: ssh.h,v 1.28 1999/12/01 16:54:35 markus Exp $"); */
 
 #ifndef SSH_H
 #define SSH_H
@@ -685,6 +685,7 @@ struct envstring {
 int     auth_krb4(const char *server_user, KTEXT auth, char **client);
 int     krb4_init(uid_t uid);
 void    krb4_cleanup_proc(void *ignore);
+int	auth_krb4_password(struct passwd * pw, const char *password);
 
 #ifdef AFS
 #include <kafs.h>
@@ -702,6 +703,7 @@ int     radix_to_creds(const char *buf, CREDENTIALS * creds);
 #ifdef SKEY
 #include <skey.h>
 char   *skey_fake_keyinfo(char *username);
+int	auth_skey_password(struct passwd * pw, const char *password);
 #endif				/* SKEY */
 
 #endif				/* SSH_H */
