@@ -381,6 +381,8 @@ When all three extra devices are disabled and any changes made, the
 'quit' command will exit the UKC.  The kernel should then boot, and find
 your Elite Ultra on device we1.
 
+<<<<<<< hardware
+=======
 SPECIAL CARE FOR NEWER NOTEBOOK COMPUTERS AND PCMCIA
 
 There is a problem on some newer notebooks with OpenBSD's autoconfiguration
