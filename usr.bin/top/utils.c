@@ -1,4 +1,4 @@
-/*	$OpenBSD: utils.c,v 1.6 2002/07/15 17:20:36 deraadt Exp $	*/
+/*	$OpenBSD: utils.c,v 1.7 2003/04/25 21:40:52 deraadt Exp $	*/
 
 /*
  *  Top users/processes display for Unix
@@ -371,7 +371,7 @@ time_t seconds;
 	snprintf(result, sizeof(result), "%5.1fH",
 		(double)seconds / (double)(60l * 60l));
 
-	/* It is possible that the sprintf took more than 6 characters.
+	/* It is possible that the snprintf took more than 6 characters.
 	   If so, then the "H" appears as result[6].  If not, then there
 	   is a \0 in result[6].  Either way, it is safe to step on.
 	 */
