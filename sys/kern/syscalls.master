@@ -1,4 +1,4 @@
-;	$OpenBSD: syscalls.master,v 1.43 2000/11/16 20:02:17 provos Exp $
+;	$OpenBSD: syscalls.master,v 1.44 2001/03/09 15:11:47 art Exp $
 ;	$NetBSD: syscalls.master,v 1.32 1996/04/23 10:24:21 mycroft Exp $
 
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -530,3 +530,6 @@
 			    const struct kevent *changelist, int nchanges, \
 			    struct kevent *eventlist, int nevents, \
 			    const struct timespec *timeout); }
+271	STD		{ int sys_mlockall(int flags); }
+272	STD		{ int sys_munlockall(void); }
+

@@ -1,4 +1,4 @@
-/*	$OpenBSD: vm_mmap.c,v 1.15 1998/06/02 05:22:27 deraadt Exp $	*/
+/*	$OpenBSD: vm_mmap.c,v 1.16 2001/03/09 15:11:47 art Exp $	*/
 /*	$NetBSD: vm_mmap.c,v 1.47 1996/03/16 23:15:23 christos Exp $	*/
 
 /*
@@ -1024,3 +1024,31 @@ out:
 		return (EINVAL);
 	}
 }
+
+int
+sys_mlockall(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+#if 0
+	struct sys_mlockall_args /* {
+		syscallarg(int) flags;
+	} */ *uap = v;
+#endif
+
+	return (EOPNOTSUPP);
+}
+
+int
+sys_munlockall(p, v, retval)
+	struct proc *p;
+	void *v;
+	register_t *retval;
+{
+
+	return (EOPNOTSUPP);
+}
+
+
+	
