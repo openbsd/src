@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.28 2004/04/19 22:55:50 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.29 2004/08/06 22:31:31 mickey Exp $	*/
 /*	$NetBSD: param.h,v 1.29 1997/03/10 22:50:37 pk Exp $ */
 
 /*
@@ -89,6 +89,7 @@
 
 #define	SSIZE		1		/* initial stack size in pages */
 #define	USPACE		8192
+#define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
 
 /*
  * Constants related to network buffer management.

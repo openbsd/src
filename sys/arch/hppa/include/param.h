@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.23 2004/06/28 14:36:59 mickey Exp $	*/
+/*	$OpenBSD: param.h,v 1.24 2004/08/06 22:31:30 mickey Exp $	*/
 
 /* 
  * Copyright (c) 1988-1994, The University of Utah and
@@ -67,6 +67,7 @@
 #define	SINCR		(1)		/* increment of stack/NBPG */
 
 #define	USPACE		(4 * NBPG)	/* pages for user struct and kstack */
+#define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
 
 #ifndef	MSGBUFSIZE
 #define	MSGBUFSIZE	2*NBPG		/* default message buffer size */

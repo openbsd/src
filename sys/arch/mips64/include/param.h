@@ -1,4 +1,4 @@
-/*      $OpenBSD: param.h,v 1.1 2004/08/06 20:56:02 pefo Exp $ */
+/*      $OpenBSD: param.h,v 1.2 2004/08/06 22:31:31 mickey Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -105,7 +105,7 @@
 #endif
 
 #define USPACE		(UPAGES*NBPG)	/* size of u-area in bytes */
-#define	USPACE_ALIGN	(2*NBPG)
+#define	USPACE_ALIGN	(2*NBPG)	/* u-area alignment 0-none */
 
 #define PMAP_NEW
 

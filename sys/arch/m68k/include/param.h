@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.9 2004/04/19 23:29:03 deraadt Exp $	*/
+/*	$OpenBSD: param.h,v 1.10 2004/08/06 22:31:31 mickey Exp $	*/
 /*	$NetBSD: param.h,v 1.2 1997/06/10 18:21:23 veego Exp $	*/
 
 /*
@@ -92,6 +92,7 @@
 #define UPAGES		2		/* pages of u-area */
 #endif
 #define	USPACE		(UPAGES * NBPG)
+#define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
 
 /*
  * Constants related to network buffer management.

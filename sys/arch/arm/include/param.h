@@ -1,4 +1,4 @@
-/*	$OpenBSD: param.h,v 1.4 2004/05/19 03:17:07 drahn Exp $	*/
+/*	$OpenBSD: param.h,v 1.5 2004/08/06 22:31:30 mickey Exp $	*/
 /*	$NetBSD: param.h,v 1.9 2002/03/24 03:37:23 thorpej Exp $	*/
 
 /*
@@ -57,6 +57,7 @@
 #define SINCR           1               /* increment of stack/NBPG */
 #define UPAGES          2               /* pages of u-area */
 #define USPACE          (UPAGES * PAGE_SIZE) /* total size of u-area */
+#define	USPACE_ALIGN	(0)		/* u-area alignment 0-none */
 
 #ifndef MSGBUFSIZE
 #define MSGBUFSIZE	PAGE_SIZE	/* default message buffer size */
