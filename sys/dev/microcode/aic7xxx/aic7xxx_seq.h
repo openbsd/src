@@ -863,7 +863,7 @@ ahc_patch0_func(struct ahc_softc *ahc)
 	return (0);
 }
 
-typedef int patch_func_t __P((struct ahc_softc *));
+typedef int patch_func_t(struct ahc_softc *);
 struct patch {
 	patch_func_t	*patch_func;
 	u_int32_t	begin	   :10,

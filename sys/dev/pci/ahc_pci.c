@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_pci.c,v 1.30 2002/03/19 02:49:20 millert Exp $	*/
+/*	$OpenBSD: ahc_pci.c,v 1.31 2002/03/19 21:07:25 millert Exp $	*/
 /*	$NetBSD: ahc_pci.c,v 1.9 1996/10/21 22:56:24 thorpej Exp $	*/
 
 /*
@@ -107,44 +107,44 @@
 #define		CACHESIZE	0x0000003ful	/* only 5 bits */
 #define		LATTIME		0x0000ff00ul
 
-int	    ahc_pci_intr __P((struct ahc_softc *ahc));
-static int  ahc_ext_scbram_present __P((struct ahc_softc *ahc));
-static void ahc_ext_scbram_config __P((struct ahc_softc *ahc, int enable,
-													int pcheck, int fast));
-static void ahc_probe_ext_scbram __P((struct ahc_softc *ahc));
-static void check_extport __P((struct ahc_softc *ahc, u_int *sxfrctl1));
-static void configure_termination __P((struct ahc_softc *ahc,
-				       struct seeprom_descriptor *sd,
-				       u_int adapter_control,
-				       u_int *sxfrctl1));
-static void ahc_new_term_detect __P((struct ahc_softc *ahc,
-				     int *enableSEC_low,
-				     int *enableSEC_high,
-				     int *enablePRI_low,
-				     int *enablePRI_high,
-				     int *eeprom_present));
-static void aic787X_cable_detect __P((struct ahc_softc *ahc,
-				      int *internal50_present,
-				      int *internal68_present,
-				      int *externalcable_present,
-				      int *eeprom_present));
-static void aic785X_cable_detect __P((struct ahc_softc *ahc,
-				      int *internal50_present,
-				      int *externalcable_present,
-				      int *eeprom_present));
-static void write_brdctl __P((struct ahc_softc *ahc, u_int8_t value));
-static u_int8_t read_brdctl __P((struct ahc_softc *ahc));
+int	    ahc_pci_intr(struct ahc_softc *ahc);
+static int  ahc_ext_scbram_present(struct ahc_softc *ahc);
+static void ahc_ext_scbram_config(struct ahc_softc *ahc, int enable,
+				  int pcheck, int fast);
+static void ahc_probe_ext_scbram(struct ahc_softc *ahc);
+static void check_extport(struct ahc_softc *ahc, u_int *sxfrctl1);
+static void configure_termination(struct ahc_softc *ahc,
+				  struct seeprom_descriptor *sd,
+				  u_int adapter_control,
+				  u_int *sxfrctl1);
+static void ahc_new_term_detect(struct ahc_softc *ahc,
+				int *enableSEC_low,
+				int *enableSEC_high,
+				int *enablePRI_low,
+				int *enablePRI_high,
+				int *eeprom_present);
+static void aic787X_cable_detect(struct ahc_softc *ahc,
+				 int *internal50_present,
+				 int *internal68_present,
+				 int *externalcable_present,
+				 int *eeprom_present);
+static void aic785X_cable_detect(struct ahc_softc *ahc,
+				 int *internal50_present,
+				 int *externalcable_present,
+				 int *eeprom_present);
+static void write_brdctl(struct ahc_softc *ahc, u_int8_t value);
+static u_int8_t read_brdctl(struct ahc_softc *ahc);
 
-void load_seeprom __P((struct ahc_softc *ahc));
-static int acquire_seeprom __P((struct ahc_softc *ahc,
-				struct seeprom_descriptor *sd));
-static void release_seeprom __P((struct seeprom_descriptor *sd));
-int ahc_probe_scbs __P((struct ahc_softc *ahc));
+void load_seeprom(struct ahc_softc *ahc);
+static int acquire_seeprom(struct ahc_softc *ahc,
+			   struct seeprom_descriptor *sd);
+static void release_seeprom(struct seeprom_descriptor *sd);
+int ahc_probe_scbs(struct ahc_softc *ahc);
 
 static u_char aic3940_count;
 
-int ahc_pci_probe __P((struct device *, void *, void *));
-void ahc_pci_attach __P((struct device *, struct device *, void *));
+int ahc_pci_probe(struct device *, void *, void *);
+void ahc_pci_attach(struct device *, struct device *, void *);
 
 struct cfattach ahc_pci_ca = {
 	sizeof(struct ahc_softc), ahc_pci_probe, ahc_pci_attach

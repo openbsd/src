@@ -54,24 +54,21 @@ static int instruction_ptr;
 static int sram_or_scb_offset;
 static int download_constant_count;
 
-static void process_bitmask __P((int mask_type, symbol_t *sym, int mask));
-static void initialize_symbol __P((symbol_t *symbol));
-static void process_register __P((symbol_t **p_symbol));
-static void format_1_instr __P((int opcode, symbol_ref_t *dest,
-				expression_t *immed, symbol_ref_t *src,
-				int ret));
-static void format_2_instr __P((int opcode, symbol_ref_t *dest,
-				expression_t *places, symbol_ref_t *src,
-				int ret));
-static void format_3_instr __P((int opcode, symbol_ref_t *src,
-				expression_t *immed, symbol_ref_t *address));
-static void test_readable_symbol __P((symbol_t *symbol));
-static void test_writable_symbol __P((symbol_t *symbol));
-static void type_check __P((symbol_t *symbol, expression_t *expression,
-			    int and_op));
-static void make_expression __P((expression_t *immed, int value));
-static void add_conditional __P((symbol_t *symbol));
-static int  is_download_const __P((expression_t *immed));
+static void process_bitmask(int mask_type, symbol_t *sym, int mask);
+static void initialize_symbol(symbol_t *symbol);
+static void process_register(symbol_t **p_symbol);
+static void format_1_instr(int opcode, symbol_ref_t *dest, expression_t *immed,
+			   symbol_ref_t *src, int ret);
+static void format_2_instr(int opcode, symbol_ref_t *dest, expression_t *places,
+			   symbol_ref_t *src, int ret);
+static void format_3_instr(int opcode, symbol_ref_t *src, expression_t *immed,
+			   symbol_ref_t *address);
+static void test_readable_symbol(symbol_t *symbol);
+static void test_writable_symbol(symbol_t *symbol);
+static void type_check(symbol_t *symbol, expression_t *expression, int and_op);
+static void make_expression(expression_t *immed, int value);
+static void add_conditional(symbol_t *symbol);
+static int  is_download_const(expression_t *immed);
 
 #define YYDEBUG 1
 #define SRAM_SYMNAME "SRAM_BASE"

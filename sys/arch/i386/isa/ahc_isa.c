@@ -1,4 +1,4 @@
-/*	$OpenBSD: ahc_isa.c,v 1.8 2002/03/19 02:49:20 millert Exp $	*/
+/*	$OpenBSD: ahc_isa.c,v 1.9 2002/03/19 21:07:25 millert Exp $	*/
 /*	$NetBSD: ahc_isa.c,v 1.5 1996/10/21 22:27:39 thorpej Exp $	*/
 
 /*
@@ -113,13 +113,13 @@
 #define	AHC_ISA_PRIMING_VID(index)	(AHC_ISA_VID + (index))
 #define	AHC_ISA_PRIMING_PID(index)	(AHC_ISA_PID + (index))
 
-int	ahc_isa_irq __P((bus_space_tag_t, bus_space_handle_t));
-int	ahc_isa_idstring __P((bus_space_tag_t, bus_space_handle_t, char *));
-int	ahc_isa_match __P((struct isa_attach_args *, bus_addr_t));
+int	ahc_isa_irq(bus_space_tag_t, bus_space_handle_t);
+int	ahc_isa_idstring(bus_space_tag_t, bus_space_handle_t, char *);
+int	ahc_isa_match(struct isa_attach_args *, bus_addr_t);
 
-int	ahc_isa_probe __P((struct device *, void *, void *));
-void	ahc_isa_attach __P((struct device *, struct device *, void *));
-void	aha2840_load_seeprom __P((struct ahc_softc *ahc));
+int	ahc_isa_probe(struct device *, void *, void *);
+void	ahc_isa_attach(struct device *, struct device *, void *);
+void	aha2840_load_seeprom(struct ahc_softc *ahc);
 
 struct cfattach ahc_isa_ca = {
 	sizeof(struct ahc_softc), ahc_isa_probe, ahc_isa_attach
