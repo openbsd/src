@@ -1,4 +1,4 @@
-/*	$OpenBSD: adutil.c,v 1.8 1997/01/20 15:49:52 niklas Exp $	*/
+/*	$OpenBSD: adutil.c,v 1.9 1997/11/06 17:23:09 csapuntz Exp $	*/
 /*	$NetBSD: adutil.c,v 1.15 1996/10/13 02:52:07 christos Exp $	*/
 
 /*
@@ -56,6 +56,7 @@ adosfs_ahashget(mp, an)
 {
 	struct anodechain *hp;
 	struct anode *ap;
+	struct proc  *p = curproc;
 
 	hp = &VFSTOADOSFS(mp)->anodetab[AHASH(an)];
 
@@ -68,7 +69,7 @@ start_over:
 			tsleep(ap, PINOD, "ahashget", 0);
 			goto start_over;
 		}
-		if (vget(ATOV(ap), 1))
+		if (vget(ATOV(ap), LK_EXCLUSIVE, p))
 			goto start_over;
 		return (ATOV(ap));
 	}

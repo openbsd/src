@@ -1,4 +1,4 @@
-/*	$OpenBSD: advfsops.c,v 1.10 1997/11/06 05:58:01 csapuntz Exp $	*/
+/*	$OpenBSD: advfsops.c,v 1.11 1997/11/06 17:23:09 csapuntz Exp $	*/
 /*	$NetBSD: advfsops.c,v 1.24 1996/12/22 10:10:12 cgd Exp $	*/
 
 /*
@@ -224,7 +224,7 @@ adosfs_mountfs(devvp, mp, p)
         mp->mnt_stat.f_fsid.val[0] = (int32_t)devvp->v_rdev;
         mp->mnt_stat.f_fsid.val[1] = makefstype(MOUNT_ADOSFS);
 	mp->mnt_flag |= MNT_LOCAL;
-	devvp->v_specflags |= SI_MOUNTEDON;
+	devvp->v_specmountpoint = mp;
 
 	/*
 	 * init anode table.
@@ -287,7 +287,7 @@ adosfs_unmount(mp, mntflags, p)
 	if ((error = vflush(mp, NULLVP, flags)) != 0)
 		return (error);
 	amp = VFSTOADOSFS(mp);
-	amp->devvp->v_specflags &= ~SI_MOUNTEDON;
+	amp->devvp->v_specmountpoint = NULL;
 	error = VOP_CLOSE(amp->devvp, FREAD, NOCRED, p);
 	vrele(amp->devvp);
 	if (amp->bitmap)
@@ -738,13 +738,13 @@ adosfs_sync(mp, waitfor, uc, p)
 int
 adosfs_init(struct vfsconf *vfsp)
 {
+	return (0);
 }
 
 /*
  * vfs generic function call table
  */
 struct vfsops adosfs_vfsops = {
-	MOUNT_ADOSFS,
 	adosfs_mount,
 	adosfs_start,
 	adosfs_unmount,

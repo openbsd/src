@@ -1,4 +1,4 @@
-/*	$OpenBSD: advnops.c,v 1.9 1997/11/06 05:58:01 csapuntz Exp $	*/
+/*	$OpenBSD: advnops.c,v 1.10 1997/11/06 17:23:09 csapuntz Exp $	*/
 /*	$NetBSD: advnops.c,v 1.32 1996/10/13 02:52:09 christos Exp $	*/
 
 /*
@@ -736,8 +736,8 @@ adosfs_readdir(v)
 		struct uio *a_uio;
 		struct ucred *a_cred;
 		int *a_eofflag;
-		u_long *a_cookies;
-		int a_ncookies;
+		u_long **a_cookies;
+		int *a_ncookies;
 	} */ *sp = v;
 	int error, useri, chainc, hashi, scanned, uavail;
 	struct adirent ad, *adp;
@@ -869,10 +869,12 @@ adosfs_readdir(v)
 		error = uiomove((caddr_t)adp, sizeof(struct adirent), uio);
 		if (error)
 			break;
+#ifdef FIXME_TO_HAVE_COOKIES
 		if (sp->a_cookies) {
 			*sp->a_cookies++ = (u_long)uoff;
 			sp->a_ncookies--;
 		}
+#endif
 		uoff += sizeof(struct adirent);
 		useri++;
 		uavail--;
@@ -965,10 +967,10 @@ adosfs_inactive(v)
 	advopprint(sp);
 #endif
 
-	VOP_UNLOCK(ap->a_vp, 0, ap->a_p);
+	VOP_UNLOCK(sp->a_vp, 0, sp->a_p);
 
 	if (sp->a_vp->v_usecount == 0 /* && check for file gone? */)
-		vrecycle(sp->a_vp, (struct simplelock *)0, ap->a_p);
+		vrecycle(sp->a_vp, (struct simplelock *)0, sp->a_p);
 
 #ifdef ADOSFS_DIAGNOSTIC
 	printf(" 0)");

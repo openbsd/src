@@ -1,4 +1,4 @@
-/*	$OpenBSD: adlookup.c,v 1.8 1997/11/06 05:58:00 csapuntz Exp $	*/
+/*	$OpenBSD: adlookup.c,v 1.9 1997/11/06 17:23:08 csapuntz Exp $	*/
 /*	$NetBSD: adlookup.c,v 1.17 1996/10/25 23:13:58 cgd Exp $	*/
 
 /*
@@ -125,7 +125,7 @@ adosfs_lookup(v)
 			if (error == 0 && lockp && last)
 				error = vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY, p);
 		} else {
-			error = vget(*vpp, 1);
+			error = vget(*vpp, LK_EXCLUSIVE, p);
 			/* if (lockp == 0 || error || last) */
 			if (lockp == 0 || error || last == 0)
 				VOP_UNLOCK(vdp, 0, p);
