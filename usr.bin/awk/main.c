@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.12 2002/12/19 21:24:28 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.13 2004/12/30 01:52:48 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -23,7 +23,7 @@ ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
 
-const char	*version = "version 20021213";
+const char	*version = "version 20041222";
 
 #define DEBUG
 #include <stdio.h>
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	const char *fs = NULL;
 
 	setlocale(LC_ALL, "");
-
+	setlocale(LC_NUMERIC, "C"); /* for parsing cmdline & prog */
 	cmdname = __progname;
 	if (argc == 1) {
 		fprintf(stderr, "usage: %s [-F fs] [-v var=value] [-safe] "
@@ -153,6 +153,7 @@ int main(int argc, char *argv[])
 	if (!safe)
 		envinit(environ);
 	yyparse();
+	setlocale(LC_NUMERIC, ""); /* back to whatever it is locally */
 	if (fs)
 		*FS = qstring(fs, '\0');
 	   dprintf( ("errorflag=%d\n", errorflag) );

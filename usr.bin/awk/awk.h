@@ -1,4 +1,4 @@
-/*	$OpenBSD: awk.h,v 1.10 2002/12/19 21:24:28 millert Exp $	*/
+/*	$OpenBSD: awk.h,v 1.11 2004/12/30 01:52:48 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -22,6 +22,8 @@ IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
 ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
 THIS SOFTWARE.
 ****************************************************************/
+
+#include <assert.h>
 
 typedef double	Awkfloat;
 
@@ -200,7 +202,7 @@ extern	int	pairstack[], paircnt;
 
 /* structures used by regular expression matching machinery, mostly b.c: */
 
-#define NCHARS	(256+1)		/* 256 handles 8-bit chars; 128 does 7-bit */
+#define NCHARS	(256+3)		/* 256 handles 8-bit chars; 128 does 7-bit */
 				/* watch out in match(), etc. */
 #define NSTATES	32
 

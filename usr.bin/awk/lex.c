@@ -1,4 +1,4 @@
-/*	$OpenBSD: lex.c,v 1.7 2003/07/02 21:04:09 deraadt Exp $	*/
+/*	$OpenBSD: lex.c,v 1.8 2004/12/30 01:52:48 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -157,6 +157,7 @@ int gettok(char **pbuf, int *psz)	/* get next input token */
 		*bp = 0;
 		strtod(buf, &rem);	/* parse the number */
 		unputstr(rem);		/* put rest back for later */
+/* printf("unputstr [%s], buf [%s]\n", rem, buf); */
 		if (rem == buf) {	/* it wasn't a valid number at all */
 			buf[1] = 0;	/* so return one character as token */
 			retc = buf[0];	/* character is its own type */
@@ -192,8 +193,10 @@ int yylex(void)
 		reg = 0;
 		return regexpr();
 	}
+/* printf("top\n"); */
 	for (;;) {
 		c = gettok(&buf, &bufsize);
+/* printf("gettok [%s]\n", buf); */
 		if (c == 0)
 			return 0;
 		if (isalpha(c) || c == '_')
@@ -534,6 +537,8 @@ int regexpr(void)
 		}
 	}
 	*bp = 0;
+	if (c == 0)
+		SYNTAX("non-terminated regular expression %.10s...", buf);
 	yylval.s = tostring(buf);
 	unput('/');
 	RET(REGEXPR);
@@ -553,9 +558,9 @@ int input(void)	/* get next lexical input character */
 	extern char *lexprog;
 
 	if (yysptr > yysbuf)
-		c = *--yysptr;
+		c = (uschar)*--yysptr;
 	else if (lexprog != NULL) {	/* awk '...' */
-		if ((c = *lexprog) != 0)
+		if ((c = (uschar)*lexprog) != 0)
 			lexprog++;
 	} else				/* awk -f ... */
 		c = pgetc();

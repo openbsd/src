@@ -1,4 +1,4 @@
-/*	$OpenBSD: FIXES,v 1.12 2003/11/09 20:13:57 otto Exp $	*/
+/*	$OpenBSD: FIXES,v 1.13 2004/12/30 01:52:48 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -25,6 +25,101 @@ THIS SOFTWARE.
 
 This file lists all bug fixes, changes, etc., made since the AWK book
 was sent to the printers in August, 1987.
+
+Dec 22, 2004:
+	cranked up size of NCHARS; coverity thinks it can be overrun with
+	smaller size, and i think that's right.  added some assertions to b.c
+	to catch places where it might overrun.  the RE code is still fragile.
+
+Dec 5, 2004:
+	fixed a couple of overflow problems with ridiculous field numbers:
+	e.g., print $(2^32-1).  thanks to ruslan ermilov, giorgos keramidas
+	and david o'brien at freebsd.org for patches.  this really should
+	be re-done from scratch.
+
+Nov 21, 2004:
+	fixed another 25-year-old RE bug, in split.  it's another failure
+	to (re-)initialize.  thanks to steve fisher for spotting this and
+	providing a good test case.
+
+Nov 22, 2003:
+	fixed a bug in regular expressions that dates (so help me) from 1977;
+	it's been there from the beginning.  an anchored longest match that
+	was longer than the number of states triggered a failure to initialize
+	the machine properly.  many thanks to moinak ghosh for not only finding
+	this one but for providing a fix, in some of the most mysterious
+	code known to man.
+
+	fixed a storage leak in call() that appears to have been there since
+	1983 or so -- a function without an explicit return that assigns a 
+	string to a parameter leaked a Cell.  thanks to moinak ghosh for 
+	spotting this very subtle one.
+
+Jul 31, 2003:
+	fixed, thanks to andrey chernov and ruslan ermilov, a bug in lex.c
+	that mis-handled the character 255 in input.  (it was being compared
+	to EOF with a signed comparison.)
+
+Jul 29, 2003:
+	fixed (i think) the long-standing botch that included the beginning of
+	line state ^ for RE's in the set of valid characters; this led to a
+	variety of odd problems, including failure to properly match certain
+	regular expressions in non-US locales.  thanks to ruslan for keeping
+	at this one.
+
+Jul 28, 2003:
+	n-th try at getting internationalization right, with thanks to volker
+	kiefel, arnold robbins and ruslan ermilov for advice, though they
+	should not be blamed for the outcome.  according to posix, "."  is the
+	radix character in programs and command line arguments regardless of
+	the locale; otherwise, the locale should prevail for input and output
+	of numbers.  so it's intended to work that way.
+	
+	i have rescinded the attempt to use strcoll in expanding shorthands in
+	regular expressions (cclenter).  its properties are much too
+	surprising; for example [a-c] matches aAbBc in locale en_US but abBcC
+	in locale fr_CA.  i can see how this might arise by implementation
+	but i cannot explain it to a human user.  (this behavior can be seen
+	in gawk as well; we're leaning on the same library.)
+
+	the issue appears to be that strcoll is meant for sorting, where
+	merging upper and lower case may make sense (though note that unix
+	sort does not do this by default either).  it is not appropriate
+	for regular expressions, where the goal is to match specific
+	patterns of characters.  in any case, the notations [:lower:], etc.,
+	are available in awk, and they are more likely to work correctly in
+	most locales.
+
+	a moratorium is hereby declared on internationalization changes.
+	i apologize to friends and colleagues in other parts of the world.
+	i would truly like to get this "right", but i don't know what
+	that is, and i do not want to keep making changes until it's clear.
+
+Jul 4, 2003:
+	fixed bug that permitted non-terminated RE, as in "awk /x".
+
+Jun 1, 2003:
+	subtle change to split: if source is empty, number of elems
+	is always 0 and the array is not set.
+
+Mar 21, 2003:
+	added some parens to isblank, in another attempt to make things
+	internationally portable.
+
+Mar 14, 2003:
+	the internationalization changes, somewhat modified, are now
+	reinstated.  in theory awk will now do character comparisons
+	and case conversions in national language, but "." will always
+	be the decimal point separator on input and output regardless
+	of national language.  isblank(){} has an #ifndef.
+
+	this no longer compiles on windows: LC_MESSAGES isn't defined
+	in vc6++.
+
+	fixed subtle behavior in field and record splitting: if FS is
+	a single character and RS is not empty, \n is NOT a separator.
+	this tortuous reading is found in the awk book; behavior now
+	matches gawk and mawk.
 
 Dec 13, 2002:
 	for the moment, the internationalization changes of nov 29 are

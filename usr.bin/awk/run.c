@@ -1,4 +1,4 @@
-/*	$OpenBSD: run.c,v 1.24 2004/05/08 22:08:51 millert Exp $	*/
+/*	$OpenBSD: run.c,v 1.25 2004/12/30 01:52:48 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -27,6 +27,7 @@ THIS SOFTWARE.
 #include <stdio.h>
 #include <ctype.h>
 #include <setjmp.h>
+#include <limits.h>
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
@@ -225,6 +226,7 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 {
 	static Cell newcopycell = { OCELL, CCOPY, 0, "", 0.0, NUM|STR|DONTFREE };
 	int i, ncall, ndef;
+	int freed = 0; /* handles potential double freeing when fcn & param share a tempcell */
 	Node *x;
 	Cell *args[NARGS], *oargs[NARGS];	/* BUG: fixed size arrays */
 	Cell *y, *z, *fcn;
@@ -302,12 +304,18 @@ Cell *call(Node **a, int n)	/* function call.  very kludgy and fragile */
 		} else if (t != y) {	/* kludge to prevent freeing twice */
 			t->csub = CTEMP;
 			tempfree(t);
+		} else if (t == y && t->csub == CCOPY) {
+			t->csub = CTEMP;
+			tempfree(t);
+			freed = 1;
 		}
 	}
 	tempfree(fcn);
 	if (isexit(y) || isnext(y))
 		return y;
-	tempfree(y);		/* this can free twice! */
+	if (freed == 0) {
+		tempfree(y);	/* don't free twice! */
+	}
 	z = fp->retval;			/* return value */
 	   dprintf( ("%s returns %g |%s| %o\n", s, getfval(z), getsval(z), z->tval) );
 	fp--;
@@ -704,12 +712,16 @@ Cell *gettemp(void)	/* get a tempcell */
 
 Cell *indirect(Node **a, int n)	/* $( a[0] ) */
 {
+	Awkfloat val;
 	Cell *x;
 	int m;
 	char *s;
 
 	x = execute(a[0]);
-	m = (int) getfval(x);
+	val = getfval(x);	/* freebsd: defend against super large field numbers */
+	if ((Awkfloat)INT_MAX < val)
+		FATAL("trying to access out of range field %s", x->nval);
+	m = (int) val;
 	if (m == 0 && !is_number(s = getsval(x)))	/* suspicion! */
 		FATAL("illegal field $(%s), name \"%s\"", s, x->nval);
 		/* BUG: can x->nval ever be null??? */
@@ -1230,7 +1242,7 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 	ap->sval = (char *) makesymtab(NSYMTAB);
 
 	n = 0;
-	if ((*s != '\0' && strlen(fs) > 1) || arg3type == REGEXPR) {	/* reg expr */
+	if (*s != '\0' && (strlen(fs) > 1 || arg3type == REGEXPR)) {	/* reg expr */
 		fa *pfa;
 		if (arg3type == REGEXPR) {	/* it's ready already */
 			pfa = (fa *) a[2];
@@ -1259,6 +1271,8 @@ Cell *split(Node **a, int nnn)	/* split(a[0], a[1], a[2]); a[3] is type */
 					goto spdone;
 				}
 			} while (nematch(pfa,s));
+			pfa->initstat = tempstat; 	/* bwk: has to be here to reset */
+							/* cf gsub and refldbld */
 		}
 		n++;
 		snprintf(num, sizeof num, "%d", n);
@@ -1522,11 +1536,11 @@ Cell *bltin(Node **a, int n)	/* builtin functions. a[0] is type, a[1] is arg lis
 		if (t == FTOUPPER) {
 			for (p = buf; *p; p++)
 				if (islower((uschar) *p))
-					*p = toupper(*p);
+					*p = toupper((uschar)*p);
 		} else {
 			for (p = buf; *p; p++)
 				if (isupper((uschar) *p))
-					*p = tolower(*p);
+					*p = tolower((uschar)*p);
 		}
 		tempfree(x);
 		x = gettemp();

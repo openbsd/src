@@ -1,4 +1,4 @@
-/*	$OpenBSD: b.c,v 1.11 2002/12/19 21:24:28 millert Exp $	*/
+/*	$OpenBSD: b.c,v 1.12 2004/12/30 01:52:48 millert Exp $	*/
 /****************************************************************
 Copyright (C) Lucent Technologies 1997
 All Rights Reserved
@@ -34,7 +34,7 @@ THIS SOFTWARE.
 #include "awk.h"
 #include "ytab.h"
 
-#define	HAT	(NCHARS-2)	/* matches ^ in regular expr */
+#define	HAT	(NCHARS+2)	/* matches ^ in regular expr */
 				/* NCHARS is 2**n */
 #define MAXLIN 22
 
@@ -466,6 +466,7 @@ int match(fa *f, const char *p0)	/* shortest match ? */
 	if (f->out[s])
 		return(1);
 	do {
+		assert(*p < NCHARS);
 		if ((ns = f->gototab[s][*p]) != 0)
 			s = ns;
 		else
@@ -483,7 +484,12 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 	uschar *q;
 	int i, k;
 
-	s = f->reset ? makeinit(f,1) : f->initstat;
+	/* s = f->reset ? makeinit(f,1) : f->initstat; */
+	if (f->reset) {
+		f->initstat = s = makeinit(f,1);
+	} else {
+		s = f->initstat;
+	}
 	patbeg = (char *) p;
 	patlen = -1;
 	do {
@@ -491,6 +497,7 @@ int pmatch(fa *f, const char *p0)	/* longest match, for sub */
 		do {
 			if (f->out[s])		/* final state */
 				patlen = q-p;
+			assert(*q < NCHARS);
 			if ((ns = f->gototab[s][*q]) != 0)
 				s = ns;
 			else
@@ -536,13 +543,19 @@ int nematch(fa *f, const char *p0)	/* non-empty match, for sub */
 	uschar *q;
 	int i, k;
 
-	s = f->reset ? makeinit(f,1) : f->initstat;
+	/* s = f->reset ? makeinit(f,1) : f->initstat; */
+	if (f->reset) {
+		f->initstat = s = makeinit(f,1);
+	} else {
+		s = f->initstat;
+	}
 	patlen = -1;
 	while (*p) {
 		q = p;
 		do {
 			if (f->out[s])		/* final state */
 				patlen = q-p;
+			assert(*q < NCHARS);
 			if ((ns = f->gototab[s][*q]) != 0)
 				s = ns;
 			else
@@ -696,23 +709,42 @@ Node *unary(Node *np)
  * relex(), the expanded character class (prior to range expansion)
  * must be less than twice the size of their full name.
  */
+
+/* Because isblank doesn't show up in any of the header files on any
+ * system i use, it's defined here.  if some other locale has a richer
+ * definition of "blank", define HAS_ISBLANK and provide your own
+ * version.
+ * the parentheses here are an attempt to find a path through the maze
+ * of macro definition and/or function and/or version provided.  thanks
+ * to nelson beebe for the suggestion; let's see if it works everywhere.
+ */
+
+#ifndef HAS_ISBLANK
+
+int (isblank)(int c)
+{
+	return c==' ' || c=='\t';
+}
+
+#endif
+
 struct charclass {
 	const char *cc_name;
 	int cc_namelen;
-	const char *cc_expand;
+	int (*cc_func)(int);
 } charclasses[] = {
-	{ "alnum",	5,	"0-9A-Za-z" },
-	{ "alpha",	5,	"A-Za-z" },
-	{ "blank",	5,	" \t" },
-	{ "cntrl",	5,	"\000-\037\177" },
-	{ "digit",	5,	"0-9" },
-	{ "graph",	5,	"\041-\176" },
-	{ "lower",	5,	"a-z" },
-	{ "print",	5,	" \041-\176" },
-	{ "punct",	5,	"\041-\057\072-\100\133-\140\173-\176" },
-	{ "space",	5,	" \f\n\r\t\v" },
-	{ "upper",	5,	"A-Z" },
-	{ "xdigit",	6,	"0-9A-Fa-f" },
+	{ "alnum",	5,	isalnum },
+	{ "alpha",	5,	isalpha },
+	{ "blank",	5,	isblank },
+	{ "cntrl",	5,	iscntrl },
+	{ "digit",	5,	isdigit },
+	{ "graph",	5,	isgraph },
+	{ "lower",	5,	islower },
+	{ "print",	5,	isprint },
+	{ "punct",	5,	ispunct },
+	{ "space",	5,	isspace },
+	{ "upper",	5,	isupper },
+	{ "xdigit",	6,	isxdigit },
 	{ NULL,		0,	NULL },
 };
 
@@ -725,7 +757,7 @@ int relex(void)		/* lexical analyzer for reparse */
 	static int bufsz = 100;
 	uschar *bp;
 	struct charclass *cc;
-	const uschar *p;
+	int i;
 
 	switch (c = *prestr++) {
 	case '|': return OR;
@@ -774,8 +806,14 @@ int relex(void)		/* lexical analyzer for reparse */
 				if (cc->cc_name != NULL && prestr[1 + cc->cc_namelen] == ':' &&
 				    prestr[2 + cc->cc_namelen] == ']') {
 					prestr += cc->cc_namelen + 3;
-					for (p = (const uschar *) cc->cc_expand; *p; p++)
-						*bp++ = *p;
+					for (i = 0; i < NCHARS; i++) {
+						if (!adjbuf((char **) &buf, &bufsz, bp-buf+1, 100, (char **) &bp, 0))
+						    FATAL("out of space for reg expr %.10s...", lastre);
+						if (cc->cc_func(i)) {
+							*bp++ = i;
+							n++;
+						}
+					}
 				} else
 					*bp++ = c;
 			} else if (c == '\0') {
@@ -800,8 +838,7 @@ int cgoto(fa *f, int s, int c)
 	int i, j, k;
 	int *p, *q;
 
-	if (c < 0 || c > 255)
-		FATAL("can't happen: neg char %d in cgoto", c);
+	assert(c == HAT || c < NCHARS);
 	while (f->accept >= maxsetvec) {	/* guessing here! */
 		maxsetvec *= 4;
 		setvec = (int *) realloc(setvec, maxsetvec * sizeof(int));
