@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.27 2002/09/10 16:31:53 markus Exp $
+# $OpenBSD: Makefile,v 1.28 2002/09/26 11:39:50 markus Exp $
 
 LIB=	crypto
 
@@ -26,6 +26,7 @@ CFLAGS+= -DB_ENDIAN
 
 CFLAGS+= -DOPENSSL_NO_IDEA -DTERMIOS -DANSI_SOURCE -DNO_ERR -DOPENSSL_NO_ASM
 CFLAGS+= -DOPENSSL_NO_RC5 -DOPENSSL_NO_KRB5 -DSO_DLFCN -DHAVE_DLFCN_H 
+CFLAGS+= -DOPENSSL_NO_MDC2
 CFLAGS+= -DNO_WINDOWS_BRAINDEATH
 CFLAGS+= -DOPENSSL_NO_HW_CSWIFT -DOPENSSL_NO_HW_NCIPHER -DOPENSSL_NO_HW_ATALLA
 CFLAGS+= -DOPENSSL_NO_HW_NURON -DOPENSSL_NO_HW_UBSEC -DOPENSSL_NO_HW_AEP
@@ -40,8 +41,8 @@ CFLAGS+= -I${LCRYPTO_SRC}/md5
 SRCS+=	md5_dgst.c md5_one.c 					
 CFLAGS+= -I${LCRYPTO_SRC}/sha
 SRCS+=	sha_dgst.c sha1dgst.c sha_one.c sha1_one.c	
-CFLAGS+= -I${LCRYPTO_SRC}/mdc2
-SRCS+=	mdc2dgst.c mdc2_one.c					
+#CFLAGS+= -I${LCRYPTO_SRC}/mdc2
+#SRCS+=	mdc2dgst.c mdc2_one.c					
 CFLAGS+= -I${LCRYPTO_SRC}/hmac
 SRCS+=	hmac.c							
 CFLAGS+= -I${LCRYPTO_SRC}/ripemd
@@ -113,7 +114,7 @@ SRCS+= bio_md.c e_des.c encode.c m_dss1.c names.c p_sign.c
 SRCS+= bio_ok.c e_des3.c evp_enc.c m_md2.c p_verify.c
 SRCS+= c_all.c evp_err.c evp_acnf.c m_md4.c p5_crpt.c
 SRCS+= c_allc.c evp_key.c m_md5.c p5_crpt2.c
-SRCS+= c_alld.c e_null.c evp_lib.c m_mdc2.c p_dec.c
+SRCS+= c_alld.c e_null.c evp_lib.c p_dec.c
 SRCS+= digest.c e_rc2.c evp_pbe.c m_null.c p_enc.c
 SRCS+= e_aes.c e_rc4.c evp_pkey.c m_ripemd.c p_lib.c
 CFLAGS+= -I${LCRYPTO_SRC}/md4

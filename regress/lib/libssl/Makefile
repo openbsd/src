@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.9 2002/09/02 20:01:43 avsm Exp $
+#	$OpenBSD: Makefile,v 1.10 2002/09/26 11:39:50 markus Exp $
 
 CLEANFILES+= testdsa.key testdsa.pem rsakey.pem rsacert.pem dsa512.pem
 
@@ -14,7 +14,6 @@ ECTEST=		ectest
 EXPTEST=	exptest
 SHATEST=	shatest
 SHA1TEST=	sha1test
-MDC2TEST=	mdc2test
 RMDTEST=	rmdtest
 MD2TEST=	md2test
 MD4TEST=	md4test
@@ -144,11 +143,6 @@ $(RANDTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/rand/${RANDTEST}.c
 	cp ${.CURDIR}/../../../lib/libssl/src/crypto/rand/${RANDTEST}.c ${.OBJDIR}
 $(RANDTEST): ${RANDTEST}.c e_os.h
 	cc -O -o $(RANDTEST) ${RANDTEST}.c -lcrypto
-
-$(MDC2TEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/mdc2/${MDC2TEST}.c
-	cp ${.CURDIR}/../../../lib/libssl/src/crypto/mdc2/${MDC2TEST}.c ${.OBJDIR}
-$(MDC2TEST): ${MDC2TEST}.c e_os.h
-	cc -O -o $(MDC2TEST) ${MDC2TEST}.c -lcrypto
 
 $(RMDTEST).c: ${.CURDIR}/../../../lib/libssl/src/crypto/ripemd/${RMDTEST}.c
 	cp ${.CURDIR}/../../../lib/libssl/src/crypto/ripemd/${RMDTEST}.c ${.OBJDIR}
