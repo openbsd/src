@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_gm.c,v 1.16 2001/07/09 03:30:20 mickey Exp $	*/
+/*	$OpenBSD: if_gm.c,v 1.17 2001/07/10 02:16:11 fgsch Exp $	*/
 /*	$NetBSD: if_gm.c,v 1.2 2000/03/04 11:17:00 tsubai Exp $	*/
 
 /*-
@@ -501,8 +501,7 @@ gmac_rint(sc)
 			bpf_tap(ifp->if_bpf, sc->sc_rxbuf[i], len);
 #endif
 #ifdef __OpenBSD__
-		m_adj(m, sizeof(struct ether_header));
-		ether_input(ifp,(void*) sc->sc_rxbuf[i], m);
+		ether_input_mbuf(ifp, m);
 #else /* !__OpenBSD__ */
 		(*ifp->if_input)(ifp, m);
 #endif /* !__OpenBSD__ */
