@@ -1,4 +1,4 @@
-/*	$OpenBSD: fts.c,v 1.11 1997/09/01 02:44:17 millert Exp $	*/
+/*	$OpenBSD: fts.c,v 1.12 1997/09/20 17:33:45 millert Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fts.c	8.6 (Berkeley) 8/14/94";
 #else
-static char rcsid[] = "$OpenBSD: fts.c,v 1.11 1997/09/01 02:44:17 millert Exp $";
+static char rcsid[] = "$OpenBSD: fts.c,v 1.12 1997/09/20 17:33:45 millert Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -87,6 +87,7 @@ fts_open(argv, options, compar)
 	register FTSENT *p, *root;
 	register int nitems;
 	FTSENT *parent, *tmp;
+	char *a;
 	int len;
 
 	/* Options check. */
@@ -124,6 +125,13 @@ fts_open(argv, options, compar)
 		if ((len = strlen(*argv)) == 0) {
 			errno = ENOENT;
 			goto mem3;
+		}
+
+		/* Strip trailing '/' from paths */
+		a = *argv + len - 1;
+		while (a > *argv && *a == '/') {
+			a--;
+			len--;
 		}
 
 		p = fts_alloc(sp, *argv, len);
