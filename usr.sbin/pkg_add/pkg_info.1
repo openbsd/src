@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pkg_info.1,v 1.5 2004/11/09 10:46:57 espie Exp $
+.\"	$OpenBSD: pkg_info.1,v 1.6 2004/11/10 09:41:16 espie Exp $
 .\"
 .\" FreeBSD install - a package for the installation and maintenance
 .\" of non-core utilities.
@@ -72,24 +72,10 @@ stdout unless turned off using the
 .Fl q
 option.
 .Pp
-If the given
+The given
 .Ar pkg-name
-contains a
-shell meta-character, it will be matched against all installed
-packages using
-.Xr fnmatch 3 .
-.Xr csh 1
-style
-.Dq {,}
-alternates have also been implemented in addition to this.
-Package version numbers can also be matched in a relational manner
-using the
-.Dq >= ,
-.Dq <= ,
-.Dq > ,
-and
-.Dq <
-operators.
+is actually a package specification, as described in
+.Xr packages-specs 7 .
 For example,
 .Ic pkg_info -e 'name>=1.3'
 will match versions 1.3 and later of the

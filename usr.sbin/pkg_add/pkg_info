@@ -1,6 +1,6 @@
 #! /usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_info,v 1.12 2004/11/09 11:16:53 espie Exp $
+# $OpenBSD: pkg_info,v 1.13 2004/11/10 09:41:16 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,7 +20,7 @@ use strict;
 use warnings;
 use OpenBSD::PackageInfo;
 use OpenBSD::PackageName;
-use Getopt::Std;
+use OpenBSD::Getopt;
 
 my $total_size = 0;
 my $pkgs = 0;
@@ -47,8 +47,10 @@ sub get_line
 }
 
 our ($opt_c, $opt_D, $opt_d, $opt_f, $opt_I, $opt_i, $opt_k, $opt_L, $opt_m,
-    $opt_p, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h, $opt_e, $opt_l, 
+    $opt_p, $opt_q, $opt_R, $opt_r, $opt_s, $opt_v, $opt_h, $opt_l, 
     $opt_a, $opt_M, $opt_U);
+my $terse = 0;
+my $exit_code = 0;
 
 sub print_info
 {
@@ -61,7 +63,11 @@ sub print_info
 		$l = 1 if $l <= 0;
 		print $pkg, " "x$l, get_line($dir.COMMENT), "\n";
 	} else {
-		print $opt_p, "Information for ", $pkg, "\n\n" unless $opt_q;
+		if ($terse) {
+			print $opt_p, $pkg, "\n" unless $opt_q;
+		} else {
+			print $opt_p, "Information for ", $pkg, "\n\n" unless $opt_q;
+		}
 		if ($opt_c) {
 			print $opt_p, "Comment:\n" unless $opt_q;
 			printfile($dir.COMMENT);
@@ -140,22 +146,32 @@ sub print_info
 			$plist->write(\*STDOUT);
 			print "\n";
 		}
-		print $opt_p, "\n" unless $opt_q;
+		print $opt_p, "\n" unless $opt_q || $terse;
 	}
 }
 
-getopts('cDdfIikLmpqRrsvheMU:l:a');
+getopts('cDdfIikLmpqRrsvhe:MU:l:a',
+	{'e' =>
+		sub {
+			my $pat = shift;
+			require OpenBSD::PkgSpec;
 
-if (defined $opt_e) {
-	die "Error: -e is not yet supported";
-}
+			my @list = sort(OpenBSD::PkgSpec::match($pat, 
+					    installed_packages()));
+			if (@list == 0) {
+				$exit_code = 1;
+			}
+			push(@ARGV, @list);
+			$terse = 1;
+		}
+	});
 
 if ($opt_D) {
 	$opt_M = 1;
 }
 
 unless ($opt_c || $opt_M || $opt_U || $opt_d || $opt_f || $opt_I || $opt_i ||
-	$opt_k || $opt_L || $opt_m || $opt_p || $opt_R || $opt_r || $opt_s) {
+	$opt_k || $opt_L || $opt_m || $opt_p || $opt_R || $opt_r || $opt_s || $terse) {
 	if (@ARGV == 0) {
 		$opt_I = $opt_a = 1;
 	} else {
@@ -211,3 +227,4 @@ for my $pkg (@ARGV) {
 if ($pkgs > 1) {
 	print "Total size: $total_size\n";
 }
+exit($exit_code);
