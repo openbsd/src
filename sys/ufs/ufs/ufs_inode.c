@@ -1,4 +1,4 @@
-/*	$OpenBSD: ufs_inode.c,v 1.22 2004/07/13 21:04:29 millert Exp $	*/
+/*	$OpenBSD: ufs_inode.c,v 1.23 2004/10/10 14:16:59 pedro Exp $	*/
 /*	$NetBSD: ufs_inode.c,v 1.7 1996/05/11 18:27:52 mycroft Exp $	*/
 
 /*
@@ -99,28 +99,43 @@ ufs_inactive(v)
 	 */
 	if (ip->i_ffs_mode == 0)
 		goto out;
+
 	if (ip->i_ffs_nlink <= 0 && (vp->v_mount->mnt_flag & MNT_RDONLY) == 0) {
 		if (getinoquota(ip) == 0)
 			(void)ufs_quota_free_inode(ip, NOCRED);
 
-		(void) UFS_TRUNCATE(ip, (off_t)0, 0, NOCRED);
+		error = UFS_TRUNCATE(ip, (off_t)0, 0, NOCRED);
+
 		ip->i_ffs_rdev = 0;
 		mode = ip->i_ffs_mode;
 		ip->i_ffs_mode = 0;
 		ip->i_flag |= IN_CHANGE | IN_UPDATE;
+
+		/*
+		 * Setting the mode to zero needs to wait for the inode to be
+		 * written just as does a change to the link count. So, rather
+		 * than creating a new entry point to do the same thing, we
+		 * just use softdep_change_linkcnt().
+		 */
+		if (DOINGSOFTDEP(vp))
+			softdep_change_linkcnt(ip);
+
 		UFS_INODE_FREE(ip, ip->i_number, mode);
 	}
+
 	if (ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_MODIFIED | IN_UPDATE)) {
 		UFS_UPDATE(ip, 0);
 	}
 out:
 	VOP_UNLOCK(vp, 0, p);
+
 	/*
 	 * If we are done with the inode, reclaim it
 	 * so that it can be reused immediately.
 	 */
 	if (ip->i_ffs_mode == 0)
-		vrecycle(vp, (struct simplelock *)0, p);
+		vrecycle(vp, NULL, p);
+
 	return (error);
 }
 
@@ -146,6 +161,7 @@ ufs_reclaim(vp, p)
 	 * Purge old data structures associated with the inode.
 	 */
 	cache_purge(vp);
+
 	if (ip->i_devvp) {
 		vrele(ip->i_devvp);
 	}
