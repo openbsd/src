@@ -1,7 +1,7 @@
-#	$OpenBSD: Makefile.i386,v 1.6 1996/04/18 18:55:36 niklas Exp $
+#	$OpenBSD: Makefile.i386,v 1.7 1996/04/24 10:50:54 niklas Exp $
 #	$NetBSD: Makefile.i386,v 1.66 1996/02/29 20:56:16 cgd Exp $
 
-# Makefile for NetBSD
+# Makefile for OpenBSD
 #
 # This makefile is constructed from a machine description:
 #	config machineid
@@ -125,7 +125,7 @@ newvers: ${SYSTEM_DEP} ${SYSTEM_SWAP_DEP}
 
 
 clean::
-	rm -f eddep *netbsd netbsd.gdb tags *.[io] [a-z]*.s \
+	rm -f eddep *bsd bsd.gdb tags *.[io] [a-z]*.s \
 	    [Ee]rrs linterrs makelinks genassym genassym.o assym.h
 
 lint:
