@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_vnops.c,v 1.10 1999/12/05 08:30:38 art Exp $	*/
+/*	$OpenBSD: ffs_vnops.c,v 1.11 2001/02/23 13:59:11 art Exp $	*/
 /*	$NetBSD: ffs_vnops.c,v 1.7 1996/05/11 18:27:24 mycroft Exp $	*/
 
 /*
@@ -296,10 +296,11 @@ loop2:
 		goto loop2;
 	}
 	if (ap->a_waitfor == MNT_WAIT) {
-                while (vp->v_numoutput) {
-                        vp->v_flag |= VBWAIT;
-                        sleep((caddr_t)&vp->v_numoutput, PRIBIO + 1);
-                }
+		while (vp->v_numoutput) {
+			vp->v_flag |= VBWAIT;
+			tsleep((caddr_t)&vp->v_numoutput, PRIBIO + 1,
+			    "ffsfsync", 0);
+		}
 		/*
 		 * Ensure that any filesystem metatdata associated
 		 * with the vnode has been written.
