@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ti.c,v 1.25 2001/06/27 06:34:49 kjc Exp $	*/
+/*	$OpenBSD: if_ti.c,v 1.26 2001/07/03 02:43:16 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1729,7 +1729,7 @@ void ti_rxeof(sc)
 #if NVLAN > 0
 		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
 			have_tag = 1;
-			vlan_tag = cur_rx->ti_vlan_tag;
+			vlan_tag = cur_rx->ti_vlan_tag & 0xfff;
 		}
 #endif
 
@@ -1979,7 +1979,7 @@ int ti_encap(sc, m_head, txidx)
 #if NVLAN > 0
 			if (ifv != NULL) {
 				f->ti_flags |= TI_BDFLAG_VLAN_TAG;
-				f->ti_vlan_tag = ifv->ifv_tag;
+				f->ti_vlan_tag = ifv->ifv_tag & 0xfff;
 			} else {
 				f->ti_vlan_tag = 0;
 			}
