@@ -1,5 +1,5 @@
-/*	$OpenBSD: adwlib.h,v 1.4 2000/06/29 00:04:31 krw Exp $ */
-/*      $NetBSD: adwlib.h,v 1.13 2000/05/27 18:24:50 dante Exp $        */
+/*	$OpenBSD: adwlib.h,v 1.5 2000/07/22 15:10:13 krw Exp $ */
+/*      $NetBSD: adwlib.h,v 1.14 2000/07/03 18:14:18 dante Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -58,7 +58,7 @@
 
 
 /*
- * --- Adv Library Constants and Macros
+ * --- Adw Library Constants and Macros
  */
 
 #define ADW_LIB_VERSION_MAJOR	5
@@ -72,13 +72,13 @@
 
 
 /*
- * Define Adv Reset Hold Time grater than 25 uSec.
+ * Define Adw Reset Hold Time grater than 25 uSec.
  * See AdwResetSCSIBus() for more info.
  */
 #define ASC_SCSI_RESET_HOLD_TIME_US  60
 
 /*
- * Define Adv EEPROM constants.
+ * Define Adw EEPROM constants.
  */
 
 #define ASC_EEP_DVC_CFG_BEGIN           (0x00)
@@ -209,10 +209,10 @@ typedef struct adw_eeprom
 	u_int16_t	check_sum;		/* 21 EEP check sum */
 	u_int8_t	oem_name[16];		/* 22 OEM name */
 	u_int16_t	dvc_err_code;		/* 30 last device driver error code */
-	u_int16_t	adv_err_code;		/* 31 last uc and Adv Lib error code */
+	u_int16_t	adv_err_code;		/* 31 last uc and Adw Lib error code */
 	u_int16_t	adv_err_addr;		/* 32 last uc error address */
 	u_int16_t	saved_dvc_err_code;	/* 33 saved last dev. driver error code	*/
-	u_int16_t	saved_adv_err_code;	/* 34 saved last uc and Adv Lib error code */
+	u_int16_t	saved_adv_err_code;	/* 34 saved last uc and Adw Lib error code */
 	u_int16_t	saved_adv_err_addr;	/* 35 saved last uc error address 	*/
 	u_int16_t	reserved1[20];		/* 36 - 55 reserved */
 	u_int16_t	cisptr_lsw;		/* 56 CIS PTR LSW */
@@ -425,10 +425,10 @@ typedef struct adw_eeprom
 #define ADW_CTRL_REG_CMD_WR_PCI_CFG_SPACE  0x00C3
 #define ADW_CTRL_REG_CMD_RD_PCI_CFG_SPACE  0x00C2
 
-#define ADV_TICKLE_NOP                      0x00
-#define ADV_TICKLE_A                        0x01
-#define ADV_TICKLE_B                        0x02
-#define ADV_TICKLE_C                        0x03
+#define ADW_TICKLE_NOP                      0x00
+#define ADW_TICKLE_A                        0x01
+#define ADW_TICKLE_B                        0x02
+#define ADW_TICKLE_C                        0x03
 
 #define ADW_SCSI_CTRL_RSTOUT        0x2000
 
@@ -620,7 +620,7 @@ typedef struct adw_eeprom
 
 
 /*
- * Adv Library Status Definitions
+ * Adw Library Status Definitions
  */
 #define ADW_TRUE        1
 #define ADW_FALSE       0
@@ -688,7 +688,7 @@ typedef struct adw_dvc_cfg {
 	u_int8_t	chip_version;	/* chip version */
 	u_int8_t	termination;	/* Term. Ctrl. bits 6-5 of SCSI_CFG1 */
 	u_int16_t	pci_device_id;	/* PCI device code number */
-	u_int16_t	lib_version;	/* Adv Library version number */
+	u_int16_t	lib_version;	/* Adw Library version number */
 	u_int16_t	control_flag;	/* Microcode Control Flag */
 	u_int16_t	mcode_date;	/* Microcode date */
 	u_int16_t	mcode_version;	/* Microcode version */
@@ -757,7 +757,7 @@ typedef struct adw_softc {
 	LIST_HEAD(, scsi_xfer)  sc_queue;
 	struct scsi_xfer	*sc_queuelast;
 
-	int			sc_freeze_dev[ADW_MAX_TID + 1];
+	int			sc_freeze_dev[ADW_MAX_TID+1];
 
 	ADW_CALLBACK	isr_callback;	/* pointer to function, called in AdwISR() */
 	ADW_CALLBACK	async_callback;	/* pointer to function, called in AdwISR() */
@@ -811,7 +811,7 @@ typedef struct adw_scsi_req_q {
 	u_int32_t	data_cnt;	/* Data count. Ucode sets to residual. */
 	u_int32_t	sense_addr;	/* Sense buffer physical address. */
 	u_int32_t	carr_ba;	/* Carrier p-address */
-	u_int8_t	mflag;		/* Adv Library flag field. */
+	u_int8_t	mflag;		/* Adw Library flag field. */
 	u_int8_t	sense_len;	/* Auto-sense length. uCode sets to residual. */
 	u_int8_t	cdb_len;	/* SCSI CDB length. Must <= 16 bytes. */
 	u_int8_t	scsi_cntl;
@@ -827,7 +827,7 @@ typedef struct adw_scsi_req_q {
 	u_int32_t	carr_va;	/* Carrier v-address (unused) */
 	/*
 	 * End of microcode structure - 60 bytes. The rest of the structure
-	 * is used by the Adv Library and ignored by the microcode.
+	 * is used by the Adw Library and ignored by the microcode.
 	 */
 	struct scsi_sense_data *vsense_addr;	/* Sense buffer virtual address. */
 	u_char		*vdata_addr;	/* Data buffer virtual address. */
@@ -945,43 +945,43 @@ typedef struct adw_scsi_req_q {
 	bus_space_write_4((iot), (ioh), (reg_off), (dword))
 
 /* Read byte from LRAM. */
-#define ADW_READ_BYTE_LRAM(iot, ioh, addr, byte) \
-do { \
-	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr)); \
-	(byte) = bus_space_read_1((iot), (ioh), IOPB_RAM_DATA); \
+#define ADW_READ_BYTE_LRAM(iot, ioh, addr, byte)		\
+do {								\
+	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr));	\
+	(byte) = bus_space_read_1((iot), (ioh), IOPB_RAM_DATA);	\
 } while (0)
 
 /* Write byte to LRAM. */
-#define ADW_WRITE_BYTE_LRAM(iot, ioh, addr, byte) \
-do { \
-	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr)); \
-	bus_space_write_1((iot), (ioh), IOPB_RAM_DATA, (byte)); \
+#define ADW_WRITE_BYTE_LRAM(iot, ioh, addr, byte)		\
+do {								\
+	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr));	\
+	bus_space_write_1((iot), (ioh), IOPB_RAM_DATA, (byte));	\
 } while (0)
 
 /* Read word (2 bytes) from LRAM. */
-#define ADW_READ_WORD_LRAM(iot, ioh, addr, word) \
-do { \
-	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr));  \
-	(word) = bus_space_read_2((iot), (ioh), IOPW_RAM_DATA); \
+#define ADW_READ_WORD_LRAM(iot, ioh, addr, word)		\
+do {								\
+	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr));	\
+	(word) = bus_space_read_2((iot), (ioh), IOPW_RAM_DATA);	\
 } while (0)
 
 /* Write word (2 bytes) to LRAM. */
-#define ADW_WRITE_WORD_LRAM(iot, ioh, addr, word) \
-do { \
-	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr)); \
-	bus_space_write_2((iot), (ioh), IOPW_RAM_DATA, (word)); \
+#define ADW_WRITE_WORD_LRAM(iot, ioh, addr, word)		\
+do {								\
+	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr));	\
+	bus_space_write_2((iot), (ioh), IOPW_RAM_DATA, (word));	\
 } while (0)
 
 /* Write double word (4 bytes) to LRAM */
 /* Because of unspecified C language ordering don't use auto-increment. */
-#define ADW_WRITE_DWORD_LRAM(iot, ioh, addr, dword) \
-do { \
-	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr)); \
-	bus_space_write_2((iot), (ioh), IOPW_RAM_DATA, \
-		(ushort) ((dword) & 0xFFFF)); \
-	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr) + 2); \
-	bus_space_write_2((iot), (ioh), IOPW_RAM_DATA, \
-			(ushort) ((dword >> 16) & 0xFFFF)); \
+#define ADW_WRITE_DWORD_LRAM(iot, ioh, addr, dword)			\
+do {									\
+	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr));		\
+	bus_space_write_2((iot), (ioh), IOPW_RAM_DATA,			\
+		(u_int16_t) ((dword) & 0xFFFF));			\
+	bus_space_write_2((iot), (ioh), IOPW_RAM_ADDR, (addr) + 2);	\
+	bus_space_write_2((iot), (ioh), IOPW_RAM_DATA,			\
+		(u_int16_t) ((dword >> 16) & 0xFFFF));			\
 } while (0)
 
 /* Read word (2 bytes) from LRAM assuming that the address is already set. */
@@ -998,9 +998,9 @@ do { \
  * Evaluate to ADW_TRUE if a Condor chip is found the specified port
  * address 'iop_base'. Otherwise evalue to ADW_FALSE.
  */
-#define ADW_FIND_SIGNATURE(iot, ioh) \
-	(((ADW_READ_BYTE_REGISTER((iot), (ioh), IOPB_CHIP_ID_1) == \
-		ADW_CHIP_ID_BYTE) && \
+#define ADW_FIND_SIGNATURE(iot, ioh)					 \
+	(((ADW_READ_BYTE_REGISTER((iot), (ioh), IOPB_CHIP_ID_1) ==	 \
+		ADW_CHIP_ID_BYTE) &&					 \
 		(ADW_READ_WORD_REGISTER((iot), (ioh), IOPW_CHIP_ID_0) == \
 		ADW_CHIP_ID_WORD)) ?  ADW_TRUE : ADW_FALSE)
 
@@ -1047,7 +1047,7 @@ do { \
 #define ADW_SCSI_BIT_ID_TYPE   u_int16_t
 
 /*
- * AdvInitScsiTarget() 'cntl_flag' options.
+ * AdwInitScsiTarget() 'cntl_flag' options.
  */
 #define ADW_SCAN_LUN           0x01
 #define ADW_CAPINFO_NOLUN      0x02

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adw.c,v 1.7 2000/06/29 00:04:31 krw Exp $ */
+/*	$OpenBSD: adw.c,v 1.8 2000/07/22 15:10:13 krw Exp $ */
 /* $NetBSD: adw.c,v 1.23 2000/05/27 18:24:50 dante Exp $	 */
 
 /*
@@ -55,8 +55,6 @@
 #include <machine/intr.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
 
 #include <scsi/scsi_all.h>
 #include <scsi/scsiconf.h>
@@ -1406,10 +1404,13 @@ adw_async_callback(sc, code)
 				sc->sc_dev.dv_xname);
 		break;
 
+#ifdef ADW_DEBUG
 	case ADV_ASYNC_CARRIER_READY_FAILURE:
 		/* Carrier Ready failure. */
+	        /* Warning only - RISC too busy to realize it's been tickled */
 		printf("%s: Carrier Ready failure!\n", sc->sc_dev.dv_xname);
 		break;
+#endif
 
 	default:
 		break;

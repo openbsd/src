@@ -1,4 +1,4 @@
-/*	$OpenBSD: adwmcode.c,v 1.4 2000/06/29 00:04:32 krw Exp $ */
+/*	$OpenBSD: adwmcode.c,v 1.5 2000/07/22 15:10:13 krw Exp $ */
 /*      $NetBSD: adwmcode.c,v 1.5 2000/05/27 18:24:50 dante Exp $        */
 
 /*
@@ -71,8 +71,6 @@
 #include <machine/intr.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
 
 #include "adwmcode.h"
 

@@ -1,5 +1,5 @@
-/*	$OpenBSD: adwlib.c,v 1.9 2000/06/29 00:04:31 krw Exp $ */
-/* $NetBSD: adwlib.c,v 1.17 2000/05/27 18:24:50 dante Exp $        */
+/*	$OpenBSD: adwlib.c,v 1.10 2000/07/22 15:10:13 krw Exp $ */
+/* $NetBSD: adwlib.c,v 1.20 2000/07/04 04:17:03 itojun Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -69,8 +69,6 @@
 #include <dev/pci/pcidevs.h>
 
 #include <vm/vm.h>
-#include <vm/vm_param.h>
-#include <vm/pmap.h>
 
 #include <dev/ic/adwlib.h>
 #include <dev/ic/adwmcode.h>
@@ -1803,7 +1801,7 @@ ADW_SCSI_REQ_Q	*scsiq;
 		 * Tickle the RISC to tell it to read its Command Queue Head
 		 * pointer.
 		 */
-		ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_TICKLE, ADV_TICKLE_A);
+		ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_TICKLE, ADW_TICKLE_A);
 		if (sc->chip_type == ADW_CHIP_ASC3550) {
 			/*
 			 * Clear the tickle value. In the ASC-3550 the RISC flag
@@ -1811,7 +1809,7 @@ ADW_SCSI_REQ_Q	*scsiq;
 			 * value is cleared.
 			 */
 			ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_TICKLE,
-					ADV_TICKLE_NOP);
+					ADW_TICKLE_NOP);
 		}
 	} else if (sc->chip_type == ADW_CHIP_ASC38C1600) {
 		/*
@@ -2036,10 +2034,10 @@ ADW_SOFTC	*sc;
 			if (intrb_code == ADV_ASYNC_CARRIER_READY_FAILURE &&
 				sc->carr_pending_cnt != 0) {
 				ADW_WRITE_BYTE_REGISTER(iot, ioh,
-					IOPB_TICKLE, ADV_TICKLE_A);
+					IOPB_TICKLE, ADW_TICKLE_A);
 				if (sc->chip_type == ADW_CHIP_ASC3550) {
 					ADW_WRITE_BYTE_REGISTER(iot, ioh,
-						IOPB_TICKLE, ADV_TICKLE_NOP);
+						IOPB_TICKLE, ADW_TICKLE_NOP);
 				}
 			}
 		}
@@ -2187,14 +2185,14 @@ u_int32_t       idle_cmd_parameter;
 	/*
 	 * Tickle the RISC to tell it to process the idle command.
 	 */
-	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_TICKLE, ADV_TICKLE_B);
+	ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_TICKLE, ADW_TICKLE_B);
 	if (sc->chip_type == ADW_CHIP_ASC3550) {
 		/*
 		 * Clear the tickle value. In the ASC-3550 the RISC flag
 		 * command 'clr_tickle_b' does not work unless the host
 		 * value is cleared.
 		 */
-		ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_TICKLE, ADV_TICKLE_NOP);
+		ADW_WRITE_BYTE_REGISTER(iot, ioh, IOPB_TICKLE, ADW_TICKLE_NOP);
 	}
 
 	/* Wait for up to 100 millisecond for the idle command to timeout. */
