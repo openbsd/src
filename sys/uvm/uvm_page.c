@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_page.c,v 1.14 2001/03/22 03:05:56 smart Exp $	*/
+/*	$OpenBSD: uvm_page.c,v 1.15 2001/03/22 18:05:33 niklas Exp $	*/
 /*	$NetBSD: uvm_page.c,v 1.24 1999/07/22 22:58:38 thorpej Exp $	*/
 
 /* 
@@ -577,7 +577,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 	struct vm_physseg *ps;
 
 	if (uvmexp.pagesize == 0)
-		panic("vm_page_physload: page size not set!");
+		panic("uvm_page_physload: page size not set!");
 
 	if (free_list >= VM_NFREELIST || free_list < VM_FREELIST_DEFAULT)
 		panic("uvm_page_physload: bad free list %d\n", free_list);
@@ -586,7 +586,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 	 * do we have room?
 	 */
 	if (vm_nphysseg == VM_PHYSSEG_MAX) {
-		printf("vm_page_physload: unable to load physical memory "
+		printf("uvm_page_physload: unable to load physical memory "
 		    "segment\n");
 		printf("\t%d segments allocated, ignoring 0x%lx -> 0x%lx\n",
 		    VM_PHYSSEG_MAX, start, end);
@@ -608,7 +608,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 	 */
 	if (!preload) {
 #if defined(VM_PHYSSEG_NOADD)
-		panic("vm_page_physload: tried to add RAM after vm_mem_init");
+		panic("uvm_page_physload: tried to add RAM after vm_mem_init");
 #else
 		/* XXXCDC: need some sort of lockout for this case */
 		paddr_t paddr;
@@ -616,7 +616,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 		MALLOC(pgs, struct vm_page *, sizeof(struct vm_page) * npages,
 					 M_VMPAGE, M_NOWAIT);
 		if (pgs == NULL) {
-			printf("vm_page_physload: can not malloc vm_page "
+			printf("uvm_page_physload: can not malloc vm_page "
 			    "structs for segment\n");
 			printf("\tignoring 0x%lx -> 0x%lx\n", start, end);
 			return;
@@ -684,7 +684,7 @@ uvm_page_physload(start, end, avail_start, avail_end, free_list)
 
 #else
 
-	panic("vm_page_physload: unknown physseg strategy selected!");
+	panic("uvm_page_physload: unknown physseg strategy selected!");
 
 #endif
 
