@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_wi_hostap.h,v 1.5 2002/04/26 22:19:07 millert Exp $	*/
+/*	$OpenBSD: if_wi_hostap.h,v 1.6 2002/06/08 22:19:47 millert Exp $	*/
 
 /*
  * Copyright (c) 2002
@@ -124,15 +124,12 @@ struct wihap_info {
 struct wi_softc;
 struct wi_frame;
 
-void wihap_mgmt_input		__P((struct wi_softc *, struct wi_frame *,
-				     struct mbuf *));
-int  wihap_data_input		__P((struct wi_softc *, struct wi_frame *,
-				     struct mbuf *));
-int  wihap_check_tx		__P((struct wihap_info *, u_int8_t [],
-				     u_int8_t *));
-void wihap_init			__P((struct wi_softc *));
-void wihap_shutdown		__P((struct wi_softc *));
-int  wihap_ioctl		__P((struct wi_softc *, u_long, caddr_t));
+int	wihap_check_tx(struct wihap_info *, u_int8_t [], u_int8_t *);
+int	wihap_data_input(struct wi_softc *, struct wi_frame *, struct mbuf *);
+int	wihap_ioctl(struct wi_softc *, u_long, caddr_t);
+void	wihap_init(struct wi_softc *);
+void	wihap_mgmt_input(struct wi_softc *, struct wi_frame *, struct mbuf *);
+void	wihap_shutdown(struct wi_softc *);
 
 #endif /* _KERNEL */
 #endif /* __WI_HOSTAP_H__ */
