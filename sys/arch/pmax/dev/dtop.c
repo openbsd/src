@@ -112,7 +112,7 @@ SOFTWARE.
 
 #include <dev/cons.h>
 
-#include <pmax/cpuregs.h>		/* mips cached->uncached */
+#include <machine/cpuregs.h>		/* mips cached->uncached */
 #include <machine/dc7085cons.h>		/*  mdmctl bits same on dtop and dc? */
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>

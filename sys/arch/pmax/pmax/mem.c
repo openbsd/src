@@ -52,7 +52,7 @@
 #include <sys/malloc.h>
 #include <sys/msgbuf.h>
 
-#include <pmax/conf.h>
+#include <machine/conf.h>
 #include <machine/cpu.h>
 
 #include <vm/vm.h>

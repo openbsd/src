@@ -79,7 +79,7 @@
 #include <vm/vm_page.h>
 #include <vm/vm_pageout.h>
 
-#include <pmax/cpuregs.h>
+#include <machine/cpuregs.h>
 #include <machine/locore.h>
 #include <machine/pte.h>
 

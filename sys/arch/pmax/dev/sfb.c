@@ -101,7 +101,7 @@
 #include <pmax/dev/bt459.h>
 #include <pmax/dev/sfbreg.h>
 
-#include <pmax/cpuregs.h>		/* mips cached->uncached */
+#include <machine/cpuregs.h>		/* mips cached->uncached */
 
 #include <pmax/pmax/pmaxtype.h>
 #include <machine/pmioctl.h>

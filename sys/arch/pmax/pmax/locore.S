@@ -61,8 +61,8 @@
 #include <sys/errno.h>
 #include <sys/syscall.h>
 
-#include <pmax/regnum.h>
-#include <pmax/asm.h>
+#include <machine/regnum.h>
+#include <machine/asm.h>
 
 #include <machine/param.h>
 #include <machine/psl.h>

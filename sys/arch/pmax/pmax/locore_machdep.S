@@ -58,7 +58,7 @@
  * DEcstation-specific mips locore code.
  */
 
-#include <pmax/asm.h>
+#include <machine/asm.h>
 
 	.set	noreorder
 

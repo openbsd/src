@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.12 1998/03/05 21:18:19 maja Exp $	*/
+/*	$OpenBSD: trap.c,v 1.13 1998/05/09 21:29:58 millert Exp $	*/
 /*	$NetBSD: trap.c,v 1.50 1996/10/13 21:37:49 jonathan Exp $	*/
 
 /*
@@ -61,7 +61,7 @@
 #endif
 #include <net/netisr.h>
 
-#include <pmax/locore.h>
+#include <machine/locore.h>
 
 #include <machine/trap.h>
 #include <machine/psl.h>

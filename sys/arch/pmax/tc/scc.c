@@ -100,7 +100,7 @@
 #include <pmax/dev/lk201var.h>
 
 #ifdef pmax
-#include <pmax/cpuregs.h>	/* phys to uncached */
+#include <machine/cpuregs.h>	/* phys to uncached */
 #include <pmax/pmax/cons.h>
 #include <pmax/pmax/pmaxtype.h>
 #include <pmax/pmax/maxine.h>

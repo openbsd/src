@@ -62,7 +62,7 @@
 #include <sys/device.h>
 #include <sys/select.h>
 
-#include <pmax/cpuregs.h>
+#include <machine/cpuregs.h>
 #include <machine/pmioctl.h>
 
 #include <machine/fbio.h>

@@ -16,9 +16,8 @@
 #include <sys/param.h>
 #include <sys/systm.h>
 
-#include <pmax/cpu.h>		/* declaration of of cpu_id */
-#include <pmax/locore.h>
 #include <machine/cpu.h>		/* declaration of of cpu_id */
+#include <machine/locore.h>
 
 mips_locore_jumpvec_t mips_locore_jumpvec = {
   NULL, NULL, NULL, NULL,

@@ -84,7 +84,7 @@
 #include <sys/conf.h>
 #include <machine/conf.h>
 
-#include <pmax/cpuregs.h>		/* mips cached->uncached */
+#include <machine/cpuregs.h>		/* mips cached->uncached */
 #include <machine/pmioctl.h>
 
 #include <machine/fbio.h>

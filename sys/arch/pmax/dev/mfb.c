@@ -94,7 +94,7 @@
 #include <dev/tc/tcvar.h>
 #include <machine/autoconf.h>
 
-#include <pmax/cpuregs.h>		/* mips cached->uncached */
+#include <machine/cpuregs.h>		/* mips cached->uncached */
 #include <machine/pmioctl.h>
 #include <machine/fbio.h>
 #include <machine/fbvar.h>
