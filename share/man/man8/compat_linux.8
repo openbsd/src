@@ -38,11 +38,11 @@
 .Sh DESCRIPTION
 OpenBSD supports running Linux binaries. This only applies to i386 systems
 for now. Both the a.out and ELF binary formats are supported. Most programs
-should work, including the ones that use the Linux SVGAlib. Programs that
-will not work include the Linux /proc filesystem (which is different from
-the optional OpenBSD /proc filesystem), and i386-specific calls, such as
-enabling virtual 8086 mode. Currently, sound is not supported for Linux
-binaries (they will probably run, but not produce any sound).
+should work, including the ones that use the Linux SVGAlib. Additionally,
+OSS audio is emulated, so Linux bins can access the native audio
+transparently. Programs that will not work include the Linux /proc filesystem
+(which is different from the optional OpenBSD /proc filesystem), and
+i386-specific calls, such as enabling virtual 8086 mode.
 .Pp
 The Linux compatibility feature is active
 for kernels compiled with the
@@ -326,5 +326,21 @@ some symbloic links in the /emul/linux/dev directory, namely:
 Be warned: the first link mentioned here makes SVGAlib binaries
 work, but may confuse others, so you may have to remove it again at
 some point.
+.Ss Programs using OSS (Linux) audio
+Only the DSP device is emulated, the following link should be created:
+.Pp
+.nf
+/emul/linux/dev/dsp -> /dev/audio
+.fi
+.Pp
+.Ss Other links Linux bins may require
+.Pp
+CD-ROM support requires a link to your cdrom device, similar to:
+.Pp
+.nf
+/emul/linux/dev/cdrom -> /dev/acd0a  (first atapi cdrom)
+/emul/linux/dev/cdrom -> /dev/cd0a   (first scsi cdrom)
+.fi
+.Pp
 .Sh BUGS
 The information about Linux distributions may become outdated.
