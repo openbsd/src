@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.20 2002/03/15 21:44:18 mickey Exp $
+#	$OpenBSD: genassym.cf,v 1.21 2002/04/30 21:04:29 mickey Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -67,11 +67,6 @@ export	VM_MAXUSER_ADDRESS
 export	HPPA_BREAK_KERNEL
 export	HPPA_BREAK_GET_PSW
 export	HPPA_BREAK_SET_PSW
-
-# pte things
-#export	TLB_REF_POS
-export	TLB_GATE_PROT
-#export	TLB_DIRTY_POS
 
 # saved state fields
 struct	trapframe
