@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.41 2003/03/05 00:32:34 miod Exp $
+dnl	$OpenBSD: contents,v 1.42 2003/03/24 11:33:56 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -12,7 +12,9 @@ OpenBSDfloppy
 				this one features most of the cardbus and
 				pcmcia drivers; see below.
 
-OpenBSDcdrom
+		cdrom{:--:}OSrev.fs	The MACHINE boot and installation
+				2.88mb floppy image that contains almost all
+				OpenBSD drivers; see below.
 
 OpenBSDdistsets
 

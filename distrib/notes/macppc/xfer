@@ -1,7 +1,7 @@
-dnl	$OpenBSD: xfer,v 1.6 2002/04/07 22:51:25 miod Exp $
+dnl	$OpenBSD: xfer,v 1.7 2003/03/24 11:33:57 miod Exp $
 Installation is supported from several media types, including:
 
-	CDROM
+	CD-ROM
 	FFS partitions
 	HFS partitions (bootloader/kernel only, using another media for D/L)
 	Tape
@@ -10,7 +10,7 @@ Installation is supported from several media types, including:
 
 OpenBSDXferShortPrelude
 
-OpenBSD now can be booted from a CDROM by holding down the 'c' key
+OpenBSD now can be booted from a CD-ROM by holding down the 'c' key
 during reboot. If ofwboot and bsd.rd are copied to a HFS partition, it
 is possible to boot from those files.  Then install the rest of the files
 from any of the above sources.

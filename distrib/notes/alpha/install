@@ -1,12 +1,13 @@
-dnl	$OpenBSD: install,v 1.21 2002/10/07 20:49:04 miod Exp $
+dnl	$OpenBSD: install,v 1.22 2003/03/24 11:33:56 miod Exp $
 OpenBSDInstallPrelude
 
 dnl XXX document mopbooting from the SRM console.
 dnl XXX check if recent SRM console still can netboot, and if so, if they
 dnl XXX still use mop or a more recent protocol.
-There are several ways to install OpenBSD onto a disk.  The easiest way
-is to boot from the OpenBSD CD-ROM.  You can also use one of the OpenBSD
-installation floppies, if your machine has a floppy drive.
+There are several ways to install OpenBSD onto a disk.  The easiest way is
+to boot from the bootable CD-ROM mini image, then install from your favorite
+source. You can also use one of the OpenBSD installation floppies, if your
+machine has a floppy drive.
 
 Booting from Floppy Disk installation media:
 
@@ -34,11 +35,11 @@ Booting from CD-ROM installation media:
 	insensitive).
 
 	On all MACHINE computers but the TURBOchannel DEC 3000 series,
-	insert the OpenBSD/MACHINE CD and enter
+	insert the OpenBSD/MACHINE CD-ROM and enter
 		boot -fi OSREV/MACHINE/bsd.rd DEVICE
 	where DEVICE is the dka device name.
 
-	On the DEC 3000 series, insert the OpenBSD/MACHINE CD and enter
+	On the DEC 3000 series, insert the OpenBSD/MACHINE CD-ROM and enter
 		boot -fi ALPHA DEVICE
 	where DEVICE is the dka device name.
 	

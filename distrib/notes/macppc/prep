@@ -1,3 +1,4 @@
+dnl	$OpenBSD: prep,v 1.8 2003/03/24 11:33:56 miod Exp $
 To be able to boot the OpenBSD/MACHINE installation program, you will
 need to acquire some limited knowledge of OpenFirmware, the low-level
 process that controls the microprocessor after hardware initialization
@@ -25,7 +26,7 @@ Important Open Firmware command examples:
 
 boot cd:,ofwboot /OSREV/MACHINE/bsd.rd
 		(boot from an appropriately prepared
-		OpenBSD CD in the CD/DVD drive)
+		OpenBSD CD-ROM in the CD/DVD drive)
 
 boot enet:,ofwboot /bsd.rd
 		(netboot from a pre-configured bootp/tftp/nfs
@@ -102,7 +103,7 @@ To boot in MacOS with this setup (works on most supported machines)
 press and hold down the Alt/Option key during reboot, and select which
 (MacOS/MacOS X) partition to boot in the graphical boot selector
 presented. Note that OpenBSD does not currently show up in this boot
-selector except for the installation CD. This works on most machines
+selector except for the installation CD-ROM. This works on most machines
 this has been tested with, but does not work on a Rev C (333MHz) iMac,
 perhaps this feature was added to the Openfirmware ROM after that
 machine.

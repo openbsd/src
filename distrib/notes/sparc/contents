@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.43 2003/02/15 21:22:08 miod Exp $
+dnl	$OpenBSD: contents,v 1.44 2003/03/24 11:33:57 miod Exp $
 TopPart
 
 OpenBSDminiroot
@@ -13,10 +13,12 @@ OpenBSDdistsets
 
 OpenBSDbsd
 
-OpenBSDrd
-
 		bsd.scsi3	A kernel with SCSI target 3 re-mapped as 0
 				and 0 mapped as 3.
+
+OpenBSDrd
+
+OpenBSDcd
 
 		installboot	The OpenBSD/MACHINE boot loader installation
 				program

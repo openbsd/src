@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.15 2002/12/28 02:48:04 miod Exp $
+dnl	$OpenBSD: install,v 1.16 2003/03/24 11:33:56 miod Exp $
 OpenBSDInstallShortPrelude
 
 Before you begin, you should decide if OpenBSD is to be installed
@@ -17,7 +17,7 @@ and reinstalled under MacOS.
 OpenBSDInstallPart2
 
 	At this time, the system can be installed from the supplied
-	CD boot image, by network loading the bootloader or loading
+	CD-ROM boot image, by network loading the bootloader or loading
 	the bootloader and kernel from a HFS partition.
 
 	Once the bootloader is installed on the local hard drive, the

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.27 2002/10/07 19:32:00 miod Exp $
+dnl	$OpenBSD: contents,v 1.28 2003/03/24 11:33:56 miod Exp $
 TopPart
 
 OpenBSDdistsets
@@ -14,7 +14,7 @@ OpenBSDrd
 				disk or from the network.
 
 		SYS_CDBOOT	Raw boot file, used for booting from
-				CDROM.
+				CD-ROM.
 
 DistributionDescription(ten)
 

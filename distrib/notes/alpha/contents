@@ -1,3 +1,4 @@
+dnl	$OpenBSD: contents,v 1.29 2003/03/24 11:33:56 miod Exp $
 TopPart
 
 OpenBSDfloppy
@@ -25,6 +26,8 @@ OpenBSDdistsets
 OpenBSDbsd
 
 OpenBSDrd
+
+OpenBSDcd
 
 OpenBSDfloppydesc(two,Each,s)
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: xfer,v 1.24 2002/04/22 02:19:49 miod Exp $
+dnl	$OpenBSD: xfer,v 1.25 2003/03/24 11:33:56 miod Exp $
 Installation is supported from several media types, including:
 
 	CD-ROM (NOT supported if booting from floppy)
@@ -7,9 +7,8 @@ Installation is supported from several media types, including:
 	FTP
 	HTTP
 
-If you have the OpenBSD CD-ROM distribution (and a CD-ROM drive)
-you can boot from it.  Otherwise, you will need to create a bootable
-floppy disk.
+If you can burn the bootable CD-ROM mini image, you can boot from it.
+Otherwise, you will need to create a bootable floppy disk.
 
 OpenBSDXferFloppyFromDOS
 

@@ -1,10 +1,11 @@
-dnl	$OpenBSD: install,v 1.57 2003/02/15 21:22:08 miod Exp $
+dnl	$OpenBSD: install,v 1.58 2003/03/24 11:33:57 miod Exp $
 OpenBSDInstallPrelude
 
 There are several ways to install OpenBSD onto a disk. The easiest way
 in terms of preliminary setup is to use the OpenBSD miniroot that can
-be booted off your local disk's swap partition.   The normal way is to
-use the OpenBSD installation floppy, or an installation tape.
+be booted off your local disk's swap partition. The normal way is to
+use the OpenBSD CD-ROM, or the bootable CD-ROM mini image, or an
+installation floppy, or an installation tape, depending on your hardware.
 
 If your Sparc is hooked up in a network and you can find a server to
 arrange for a diskless setup, which is a convenient way to install on a
@@ -84,7 +85,7 @@ messages.  Boot failure modes are typically a lot of CD-ROM drive
 activity, but no messages or complaints about magic numbers,
 checksums or formats.
 
-Not all MACHINE systems support bootable CDROMS and the current
+Not all MACHINE systems support bootable CD-ROM and the current
 boot image is only known to work on sun4c and sun4m architectures.
 If it does not work, you'll have to create a boot floppy or bootable
 hard disk using the instructions under preparing boot media.

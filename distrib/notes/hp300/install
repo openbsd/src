@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.23 2002/12/30 11:13:01 miod Exp $
+dnl	$OpenBSD: install,v 1.24 2003/03/24 11:33:56 miod Exp $
 OpenBSDInstallPrelude
 dnl No extra line, this has to stick to the geometry notes paragraph.
 The file `HP-IB.geometry' has geometry information for several HP-IB
@@ -16,11 +16,11 @@ Booting from CD-ROM installation media:
 You can burn a bootable CD-ROM and boot from it.
 To boot from SCSI CD-ROM, simply insert the CD into the drive before power
 up, then during the computer's self-test cycle, press the space bar.
-Shortly, you should see a menu of possible boot options appear.  Select
-the option corresponding to SYS_CDBOOT.
-SYS_CDBOOT will then load and begin loading bsd.rd from the CD; depending
-on your ROM revision and hardware configuration, you may or may not see
-any messages on the console while this happens.
+Shortly, you should see a menu of possible boot options appear. Select the
+option corresponding to SYS_CDBOOT. SYS_CDBOOT will then load and begin
+loading bsd.rd from the CD-ROM; depending on your ROM revision and hardware
+configuration, you may or may not see any messages on the console while this
+happens.
 
 Please note that booting from CD-ROM may not be supported by all models of
 MACHINE.  You will also need a CD-ROM drive which uses 512 byte blocks;

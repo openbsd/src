@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.34 2002/04/09 01:22:22 miod Exp $
+dnl	$OpenBSD: install,v 1.35 2003/03/24 11:33:56 miod Exp $
 OpenBSDInstallPrelude
 
 If OpenBSD will be sharing the disk with DOS or another operating
@@ -12,8 +12,9 @@ only necessary if you are sharing the disk with other operating systems
 that use the translated geometry.
 
 There are several ways to install OpenBSD onto a disk.  The easiest way,
-should your computer support it, is to boot off the CD-ROM.  Otherwise,
-you can boot from a 3.5" 1.44MB floppy disk.
+should your computer support it, is to boot off the OpenBSD CD-ROM, or
+off the bootable CD-ROM mini image.  Otherwise, you can boot from a 3.5"
+1.44MB floppy disk if your machine has a floppy drive.
 
 OpenBSDInstallPart2
 

@@ -1,3 +1,4 @@
+dnl	$OpenBSD: INSTALL,v 1.34 2003/03/24 11:33:51 miod Exp $
 include(INCLUDE/../m4.common)dnl
 INSTALLATION NOTES for OpenBSD/MACHINE OSREV
 
@@ -106,7 +107,7 @@ Getting source code for your OpenBSD System:
 Now that your OpenBSD system is up and running, you probably want to get
 access to source code so that you can recompile pieces of the system.
 
-A few methods are provided.  If you have an OpenBSD CD, the source code
+A few methods are provided.  If you have an OpenBSD CD-ROM, the source code
 is provided.  Otherwise, you can get the pieces over the Internet using
 ANONCVS, CTM or FTP.  For more information, see
 

@@ -1,4 +1,4 @@
-dnl	$OpenBSD: install,v 1.21 2002/10/30 21:37:40 miod Exp $
+dnl	$OpenBSD: install,v 1.22 2003/03/24 11:33:56 miod Exp $
 OpenBSDInstallPrelude
 
 The installation can be broken down into four basic steps:
@@ -128,7 +128,7 @@ the root password using the passwd(1) command.
 
 To set up basic networking, you will need to create or edit the following
 files, all of which are in the /etc directory:
-	myname		the computers name (without domain).
+	myname		the computers name (with a fully-qualified domain name).
 	mygate		the IP address of the default gateway.
 	hostname.if	Configuration of the host adapter (actual name will
 			be something like hostname.sn0 or hostname.ae0, see

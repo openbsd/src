@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.42 2003/03/05 00:32:33 miod Exp $
+dnl	$OpenBSD: m4.common,v 1.43 2003/03/24 11:33:52 miod Exp $
 dnl
 dnl a simple MACHINE->MACHINE_ARCH converter.
 define(`MACHINE_ARCH',
@@ -179,10 +179,11 @@ dnl
 define({:-OpenBSDfloppy-:},
 {:-		floppy{:--:}OSrev.fs	The standard MACHINE boot and installation
 				floppy; see below.-:})dnl
-define({:-OpenBSDcdrom-:},
-{:-		cdrom{:--:}OSrev.fs	The MACHINE boot and installation
-				2.88mb floppy image that contains almost all
-				OpenBSD drivers; see below.-:})dnl
+dnl
+define({:-OpenBSDcd-:},
+{:-		cd{:--:}OSrev.iso	A miniroot filesystem image suitable to be used
+				as a bootable CD-ROM image; otherwise similar
+				to the bsd.rd image above.-:})dnl
 dnl
 dnl OpenBSDfloppydesc(number of floppies, Article, plural)
 dnl
@@ -214,11 +215,6 @@ define({:-OpenBSDrd-:},
 				filesystem contains the installation tools.
 				Used for simple installation from a pre-
 				existing system.-:})dnl
-dnl
-define({:-OpenBSDcd-:},
-{:-		cd{:--:}OSrev.iso	A miniroot filesystem image suitable to be used
-				as a bootable CD image; otherwise similar
-				to the bsd.rd image above.-:})dnl
 dnl
 define({:-OpenBSDminiroot-:},
 {:-		miniroot{:--:}OSrev.fs	A miniroot filesystem image to be used
@@ -475,12 +471,12 @@ define({:-OpenBSDCDROMInstall-:},
 
 		Next you will have to identify the file system type that
 		has been used to create the distribution on the CD-ROM,
-		this can be either FFS or ISO CD9660.  The OpenBSD CD
+		this can be either FFS or ISO CD9660.  The OpenBSD CD-ROM
 		distribution uses the CD9660 format.
 
 		You will also have to provide the relative path to the
-		directory on the CD which holds the distribution, for the
-		MACHINE this is "OSREV/MACHINE".
+		directory on the CD-ROM which holds the distribution, for
+		the MACHINE this is "OSREV/MACHINE".
 
 		For instructions on how to complete the installation from
 		the CD-ROM distribution, see the section named "Common
