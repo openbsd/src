@@ -1,4 +1,4 @@
-/*	$OpenBSD: bgpctl.c,v 1.68 2004/10/26 13:12:22 henning Exp $ */
+/*	$OpenBSD: bgpctl.c,v 1.69 2004/11/02 11:46:17 henning Exp $ */
 
 /*
  * Copyright (c) 2003 Henning Brauer <henning@openbsd.org>
@@ -767,6 +767,9 @@ show_interface_msg(struct imsg *imsg)
 			break;
 		case IFT_ISO88025:
 			ifms_type = IFM_TOKEN;
+			break;
+		case IFT_CARP:
+			ifms_type = IFM_CARP;
 			break;
 		default:
 			ifms_type = 0;
