@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.h,v 1.8 2003/12/26 10:04:49 markus Exp $ */
+/*	$OpenBSD: rijndael.h,v 1.9 2004/02/05 18:55:20 deraadt Exp $ */
 
 /**
  * rijndael-alg-fst.h
@@ -48,5 +48,8 @@ void	 rijndael_set_key(rijndael_ctx *, u_char *, int);
 void	 rijndael_set_key_enc_only(rijndael_ctx *, u_char *, int);
 void	 rijndael_decrypt(rijndael_ctx *, u_char *, u_char *);
 void	 rijndael_encrypt(rijndael_ctx *, u_char *, u_char *);
+
+int	rijndaelKeySetupEnc(unsigned int [], const unsigned char [], int);
+int	rijndaelKeySetupDec(unsigned int [], const unsigned char [], int);
 
 #endif /* __RIJNDAEL_H */

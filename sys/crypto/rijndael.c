@@ -1,4 +1,4 @@
-/*	$OpenBSD: rijndael.c,v 1.13 2003/12/26 10:04:49 markus Exp $ */
+/*	$OpenBSD: rijndael.c,v 1.14 2004/02/05 18:55:20 deraadt Exp $ */
 
 /**
  * rijndael-alg-fst.c
@@ -723,7 +723,7 @@ static const u32 rcon[] = {
  *
  * @return	the number of rounds for the given cipher key size.
  */
-static int rijndaelKeySetupEnc(u32 rk[/*4*(Nr + 1)*/], const u8 cipherKey[], int keyBits) {
+int rijndaelKeySetupEnc(u32 rk[/*4*(Nr + 1)*/], const u8 cipherKey[], int keyBits) {
    	int i = 0;
 	u32 temp;
 
@@ -808,7 +808,7 @@ static int rijndaelKeySetupEnc(u32 rk[/*4*(Nr + 1)*/], const u8 cipherKey[], int
  *
  * @return	the number of rounds for the given cipher key size.
  */
-static int
+int
 rijndaelKeySetupDec(u32 rk[/*4*(Nr + 1)*/], const u8 cipherKey[], int keyBits) {
 	int Nr, i, j;
 	u32 temp;
