@@ -1,4 +1,4 @@
-.\"	$OpenBSD: release.8,v 1.13 2001/02/01 02:24:00 todd Exp $
+.\"	$OpenBSD: release.8,v 1.14 2001/04/24 19:20:35 todd Exp $
 .\"
 .\"	Copyright (c) 2000 Marco S. Hyman
 .\"
@@ -31,9 +31,9 @@ Build a new system.
 .It
 Make and validate the system release.
 .It
-Build and install X11.
+Build and install XF4.
 .It
-Make and validate the X11 release.
+Make and validate the XF4 release.
 .It
 Make the third party packages.
 .El
@@ -88,13 +88,13 @@ tags use the commands:
 .It
 .Li "cd /usr/src && cvs up -r TAG -Pd"
 .It
-.Li "cd X11SRC && cvs up -r TAG -Pd"
+.Li "cd XF4SRC && cvs up -r TAG -Pd"
 .It
 .Li "cd PORTSPATH && cvs up -r TAG -Pd"
 .El
 .Pp
 Replace
-.Va X11SRC
+.Va XF4SRC
 with the path to your
 .Tn X11R6
 sources.
@@ -292,10 +292,10 @@ release.
 The only thing missing is
 .Va X11R6
 (which is covered in the next section).
-.Ss "5. Build and install X11"
+.Ss "5. Build and install XF4"
 .Pp
 The
-.Va X11
+.Va XF4
 tree is primarily
 .Xr imake 1 No Ns -based
 and doesn't contain the
@@ -308,27 +308,27 @@ An alternate build location needs to be selected, large enough to hold the
 .Tn X11R6
 object files, libraries, and binaries.
 Call this location
-.Va X11BLD .
-.Va X11SRC
+.Va XF4BLD .
+.Va XF4SRC
 is the path to your
 .Tn X11R6
 sources.
 Once you've selected
-.Va X11BLD
+.Va XF4BLD
 the build process is:
 .Pp
 .Bl -bullet -offset indent -compact
 .It
 .Li su
 .It
-.Li "test -d X11BLD && mv X11BLD X11BLD- && rm -rf X11BLD- &"
+.Li "test -d XF4BLD && mv XF4BLD XF4BLD- && rm -rf XF4BLD- &"
 .It
-.Li "mkdir -p X11BLD"
+.Li "mkdir -p XF4BLD"
 .It
-.Li "cd X11BLD && lndir X11SRC && nice make DESTDIR=/ build"
+.Li "cd XF4BLD && lndir XF4SRC && nice make build"
 .El
 .Pp
-.Sy Note :
+.Sy Note (only for i386) :
 .Pa XF86Setup ,
 built and installed above, requires version 8.3 of the
 .Pa tcl/tk
@@ -338,8 +338,8 @@ can be found in the ports tree at
 .Pa /usr/ports/lang/tcl/8.3/
 and
 .Pa /usr/ports/x11/tk/8.3/ .
-Version 8.3 is required to build X11.   Version 8.3 may coexist with
-version 8.0.
+Version 8.3 is required to build XF4.
+Version 8.3 may coexist with version 8.0.
 .Pp
 The above method mimics a
 .Ic "make build"
@@ -353,15 +353,15 @@ is created and installed in
 However, the install phase of the build does
 .Em not
 overwrite
-.Pa /var/X11/xdm .
+.Pa /etc/X11/xdm .
 That directory must be installed by hand.   Or you can
-.Ic "cd /var/X11 && mv xdm xdm-"
+.Ic "cd /etc/X11 && mv xdm xdm-"
 before the build and copy any local configuration from
 .Pa xdm-
 to
 .Pa xdm
 after the build.
-.Ss "6. Make and validate the X11 release"
+.Ss "6. Make and validate the XF4 release"
 .Pp
 .Va X11R6
 uses the same
@@ -378,12 +378,12 @@ should not be the same directory used to build the system release.
 It may be the same if you don't care to keep the contents of the
 system release
 .Va DESTDIR .
-(The X11
+(The XF4
 .Va DESTDIR
 needs to be emptied for release checklist processing.)
 .Pp
 The steps to build the release are (assuming you are still root, and still in
-.Va X11BLD ) :
+.Va XF4BLD ) :
 .Pp
 .Bl -bullet -offset indent -compact
 .It
