@@ -1,5 +1,6 @@
-.\" $OpenBSD: bgpd.conf.5,v 1.18 2004/02/25 21:15:01 claudio Exp $
+.\" $OpenBSD: bgpd.conf.5,v 1.19 2004/03/12 17:39:46 claudio Exp $
 .\"
+.\" Copyright (c) 2004 Claudio Jeker <claudio@openbsd.org>
 .\" Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
 .\" Copyright (c) 2002 Daniel Hartmeier <dhartmei@openbsd.org>
 .\"
@@ -29,7 +30,7 @@ in RFC 1771.
 .Sh SECTIONS
 The
 .Nm
-config file is divided into three main sections.
+config file is divided into four main sections.
 .Bl -tag -width xxxx
 .It Cm Macros
 User-defined variables may be defined and used later, simplifying the
@@ -42,6 +43,9 @@ establishes sessions with
 .Ar neighbors .
 The neighbor definition and properties are set in this section, as well as
 grouping neighbors for the ease of configuration.
+.It Cm Filter
+Filter rules for incoming and outgoing
+.Em UPDATES .
 .El
 .Pp
 With the exception of
@@ -185,6 +189,25 @@ Announce the specified network as belonging to our
 .Bd -literal -offset indent
 network 192.168.7.0/24
 .Ed
+.Pp
+It is possible to set default
+.Em AS path attributes
+per
+.Ar network
+statement:
+.Bd -literal -offset indent
+network 192.168.7.0/24 set localpref 220
+.Ed
+.Pp
+See also the
+.Sx ATTRIBUTE SET
+section.
+.It Ar route-collector
+If set to
+.Em yes ,
+the route selection process is turned off.
+The default is
+.Em no .
 .It Ar router-id
 Set the router id to the given IP address which must be local to the
 machine.
@@ -265,8 +288,29 @@ Peer specific dumps are limited to
 .Em all
 and
 .Em updates .
-See also the dump section in
+See also the
+.Em dump
+section in
 .Sx GLOBAL CONFIGURATION .
+.It Ar enforce neighbor-AS
+If set to
+.Em yes ,
+.Em AS paths
+whose
+.Em leftmost AS
+is not equal to the
+.Em remote AS
+of the
+.Em neighbor
+are rejected and a
+.Em NOTIFICATION
+is sent back.
+The default value for
+.Em IBGP
+peers is
+.Em no
+otherwise the default is
+.Em yes .
 .It Ar holdtime
 Set the holdtime in seconds.
 Inherited from the global configuration if not given.
@@ -288,12 +332,27 @@ Normally neighbors that are not in the same AS as the local
 .Ar bgpd
 have to be directly connected to the local machine.
 If this is not the case the
-.Em multihop
+.Ar multihop
 statement defines the maximum hops the neighbor is away.
 .It Ar passive
 Do not attempt to actively open a TCP connection to the neighbor system.
 .It Ar remote-as
 Set the AS number of the remote system.
+.It Ar set
+Set the
+.Em AS path attributes
+to some default per
+.Ar neighbor
+or
+.Ar group
+statement:
+.Bd -literal -offset indent
+set localpref 300
+.Ed
+.Pp
+See also the
+.Sx ATTRIBUTE SET
+section.
 .It Ar tcp md5sig
 Enable TCP MD5 signatures per RFC 2385.
 The shared secret can either be given as a password or hexadecimal key.
@@ -301,6 +360,202 @@ The shared secret can either be given as a password or hexadecimal key.
 tcp md5sig password mekmidasdigoat
 tcp md5sig key deadbeef
 .Ed
+.El
+.Sh FILTER
+.Ar bgpd
+has the ability to
+.Ar allow
+and
+.Ar deny
+.Em UPDATES
+based on
+.Em prefix
+or
+.Em AS path attributes .
+In addition,
+.Em UPDATES
+may also be modified by filter rules.
+.Pp
+For each
+.Em UPDATE
+processed by the filter, the filter rules are evaluated in sequential order,
+from first to last.
+The last matching
+.Ar allow
+or
+.Ar deny
+rule decides what action is taken.
+.Pp
+The following actions can be used in the filter:
+.Bl -tag -width xxxxxxxx
+.It Ar deny
+The
+.Em UPDATE
+is blocked.
+.It Ar allow
+The
+.Em UPDATE
+is passed.
+.It Ar match
+Apply only the filter attribute set without influencing the action to be taken.
+.El
+.Sh PARAMETERS
+The rule parameters specify the
+.Em UPDATES
+to which a rule applies.
+An
+.Em UPDATE
+always comes from, or goes to, one neighbor.
+Most parameters are optional.
+If a parameter is specified, the rule only applies to packets with
+matching attributes.
+.Bl -tag -width xxxxxxxx
+.It Ar quick
+If an
+.Em UPDATE
+matches a rule which has the
+.Ar quick
+option set, this rule is considered the last matching rule, and evaluation
+of subsequent rules is skipped.
+.It Ar from No or Ar to
+This rule applies to incoming or outgoing
+.Em UPDATES .
+Either one or the other must be specified.
+.It Ar any
+.It Ar <address>
+.It Ar group <descr>
+This rule applies only to
+.Em UPDATES
+comming from, or going to, this particular neighbor.
+Neighbors can be matched against their address, the group description,
+or the token
+.Ar any
+can be used to match any neighbor.
+.It Ar prefix <address>/<len>
+This rule applies only to
+.Em UPDATES
+for the specified prefix.
+.It Ar prefixlen <desc>
+This rule applies only to
+.Em UPDATES
+for prefixes where the prefixlen matches.
+Ranges of prefix length are specified by using these operators:
+.Bd -literal -offset indent
+=	(equal)
+!=	(unequal)
+<	(less than)
+<=	(less than or equal)
+>	(greater than)
+>=	(greater than or equal)
+-	(range including boundaries)
+><	(except range)
+.Ed
+.Pp
+>< and -
+are binary operators (they take two arguments).
+For instance:
+.Bl -tag -width Fl
+.It Ar prefixlen 8-12
+means
+.Sq all prefix lengths >= 8 and <= 12 ,
+hence the CIDR netmasks 8, 9, 10, 11 and 12.
+.It Ar prefixlen 8><12
+means
+.Sq all prefix lengths < 8 and > 12 ,
+hence the CIDR netmasks 0-7 and 13-32.
+.El
+.Pp
+.Ar prefixlen
+can be used together with
+.Ar prefix .
+.Pp
+This will match all prefixes in the 10.0.0.0/8 netblock with netmasks longer
+than 16:
+.Bd -literal -offset indent
+prefix 10.0.0.0/8 prefixlen > 16
+.Ed
+.Pp
+The following two examples are alike:
+.Bd -literal -offset indent
+prefix 10.0.0.0/8
+prefix 10.0.0.0/8 prefixlen = 8
+.Ed
+.Pp
+.It Ar <astype> <asnum>
+This rule applies only to
+.Em UPDATES
+where the
+.Em AS path
+matches.
+The
+.Ar <asnum>
+is matched against a part of the
+.Em AS path
+specified by the
+.Ar <astype> .
+.Ar <astype>
+is one of the following operators:
+.Bd -literal -offset indent
+AS		(any part)
+source-AS	(rightmost AS number)
+transit-AS	(all but the rightmost AS number)
+.Ed
+.Pp
+.It Ar community <as>:<num>
+This rule applies only to
+.Em UPDATES
+where the community path attribute is present and matches.
+Both
+.Ar <as>
+and
+.Ar <num>
+may be set to
+.Sq *
+to do an
+.Dq anymatch .
+.It Ar set
+All matching rules can set the
+.Em AS path attributes
+to some default.
+The set of every matching rule is applied, not only the last matching one.
+See also the following section.
+.El
+.Sh ATTRIBUTE SET
+.Em AS path attributes
+can be modified with
+.Ar set .
+.Pp
+.Ar set
+can be used on
+.Ar network
+statements, in
+.Ar neighbor
+or
+.Ar group
+blocks and on
+filter rules.
+Attribute sets can be expressed as list.
+.Pp
+The following attributes can be modified:
+.Bl -tag -width xxxxxxxx
+.It Ar localpref
+Set the
+.Em LOCAL_PREF
+.Em AS path attribute .
+.It Ar med
+Set the
+.Em MULTI_EXIT_DISC
+.Em AS path attribute .
+.It Ar nexthop
+Set the
+.Em NEXTHOP
+.Em AS path attribute
+to a different nexthop address.
+.It Ar prepend-self
+Prepend the local
+.Em AS
+multiple times to the
+.Em AS path .
 .El
 .Sh FILES
 .Bl -tag -width "/etc/bgpd.conf" -compact
