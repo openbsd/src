@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_mmap.c,v 1.54 2004/05/07 22:47:47 tedu Exp $	*/
+/*	$OpenBSD: uvm_mmap.c,v 1.55 2005/01/15 06:54:51 otto Exp $	*/
 /*	$NetBSD: uvm_mmap.c,v 1.49 2001/02/18 21:19:08 chs Exp $	*/
 
 /*
@@ -421,9 +421,11 @@ sys_mmap(p, v, retval)
 	pageoff = (pos & PAGE_MASK);
 	pos  -= pageoff;
 	size += pageoff;			/* add offset */
-	size = (vsize_t) round_page(size);	/* round up */
-	if ((ssize_t) size < 0)
-		return (EINVAL);			/* don't allow wrap */
+	if (size != 0) {
+		size = (vsize_t) round_page(size);	/* round up */
+		if (size == 0)
+			return (ENOMEM);		/* don't allow wrap */
+	}
 
 	/*
 	 * now check (MAP_FIXED) or get (!MAP_FIXED) the "addr" 
