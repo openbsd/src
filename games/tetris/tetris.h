@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.h,v 1.6 2002/02/16 21:27:12 millert Exp $	*/
+/*	$OpenBSD: tetris.h,v 1.7 2002/07/26 20:19:22 mickey Exp $	*/
 /*	$NetBSD: tetris.h,v 1.2 1995/04/22 07:42:48 cgd Exp $	*/
 
 /*-
@@ -127,6 +127,7 @@ extern int	Rows, Cols;	/* current screen size */
  */
 struct shape {
 	int	rot;	/* index of rotated version of this shape */
+	int	rotc;	/* -- " -- in classic version  */
 	int	off[3];	/* offsets to other blots if center is at (0,0) */
 };
 
@@ -174,6 +175,7 @@ extern gid_t	gid, egid;
 
 extern char	key_msg[100];
 extern int	showpreview;
+extern int	classic;
 
 int	fits_in(struct shape *, int);
 void	place(struct shape *, int, int);

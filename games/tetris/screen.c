@@ -1,4 +1,4 @@
-/*	$OpenBSD: screen.c,v 1.8 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: screen.c,v 1.9 2002/07/26 20:19:22 mickey Exp $	*/
 /*	$NetBSD: screen.c,v 1.4 1995/04/29 01:11:36 mycroft Exp $	*/
 
 /*-
@@ -179,6 +179,8 @@ scr_init()
 		for (p = tcstrings; p->tcaddr; p++)
 			*p->tcaddr = tgetstr(p->tcname, &fill);
 	}
+	if (classic)
+		SOstr = SEstr = NULL;
 	{
 		struct tcninfo *p;
 
@@ -412,7 +414,7 @@ scr_update()
 		if (SOstr)
 			putpad(SOstr);
 		moveto(r, 2 * c);
-		putstr(SOstr ? "  " : "XX");
+		putstr(SOstr ? "  " : "[]");
 		for (i = 0; i < 3; i++) {
 			t = c + r * B_COLS;
 			t += nextshape->off[i];
@@ -421,7 +423,7 @@ scr_update()
 			tc = t % B_COLS;
 
 			moveto(tr, 2*tc);
-			putstr(SOstr ? "  " : "XX");
+			putstr(SOstr ? "  " : "[]");
 		}
 		putpad(SEstr);
 	}
@@ -448,7 +450,7 @@ scr_update()
 				}
 				putstr("  ");
 			} else
-				putstr(so ? "XX" : "  ");
+				putstr(so ? "[]" : "  ");
 			ccol = i + 1;
 			/*
 			 * Look ahead a bit, to avoid extra motion if

@@ -1,4 +1,4 @@
-/*	$OpenBSD: tetris.c,v 1.12 2002/05/31 04:21:30 pjanzen Exp $	*/
+/*	$OpenBSD: tetris.c,v 1.13 2002/07/26 20:19:22 mickey Exp $	*/
 /*	$NetBSD: tetris.c,v 1.2 1995/04/22 07:42:47 cgd Exp $	*/
 
 /*-
@@ -73,7 +73,7 @@ long	fallrate;
 int	score;
 gid_t	gid, egid;
 char	key_msg[100];
-int	showpreview;
+int	showpreview, classic;
 
 static void	elide(void);
 static void	setup_board(void);
@@ -134,7 +134,7 @@ randshape()
 	tmp = &shapes[random() % 7];
 	j = random() % 4;
 	for (i = 0; i < j; i++)
-		tmp = &shapes[tmp->rot];
+		tmp = &shapes[classic? tmp->rotc : tmp->rot];
 	return (tmp);
 }
 	
@@ -156,9 +156,17 @@ main(argc, argv)
 	egid = getegid();
 	setegid(gid);
 
-	showpreview = 0;
-	while ((ch = getopt(argc, argv, "hk:l:ps")) != -1)
+	classic = showpreview = 0;
+	while ((ch = getopt(argc, argv, "chk:l:ps")) != -1)
 		switch(ch) {
+		case 'c':
+			/*
+			 * this means:
+			 *	- rotate the other way;
+			 *	- no reverse video.
+			 */
+			classic = 1;
+			break;
 		case 'k':
 			if (strlen(keys = optarg) != 6)
 				usage();
@@ -285,7 +293,8 @@ main(argc, argv)
 		}
 		if (c == keys[1]) {
 			/* turn */
-			struct shape *new = &shapes[curshape->rot];
+			struct shape *new = &shapes[
+			    classic? curshape->rotc : curshape->rot];
 
 			if (fits_in(new, pos))
 				curshape = new;
