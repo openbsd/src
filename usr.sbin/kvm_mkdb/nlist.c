@@ -33,8 +33,11 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)nlist.c	8.1 (Berkeley) 6/6/93";*/
-static char *rcsid = "$Id: nlist.c,v 1.1.1.1 1995/10/18 08:47:39 deraadt Exp $";
+static char *rcsid = "$Id: nlist.c,v 1.2 1996/05/17 20:04:55 pefo Exp $";
 #endif /* not lint */
+
+#define DO_AOUT			/* always do a.out */
+#define	DO_ELF			/* and elf too */
 
 #include <sys/param.h>
 
@@ -52,6 +55,14 @@ static char *rcsid = "$Id: nlist.c,v 1.1.1.1 1995/10/18 08:47:39 deraadt Exp $";
 
 #include "extern.h"
 
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <sys/file.h>
+
+#ifdef DO_ELF
+#include <elf_abi.h>
+#endif
+
 typedef struct nlist NLIST;
 #define	_strx	n_un.n_strx
 #define	_name	n_un.n_name
@@ -62,8 +73,10 @@ static void badread __P((int, char *));
 
 static char *kfile;
 
-void
-create_knlist(name, db)
+#if defined(DO_AOUT)
+
+int
+__aout_knlist(name, db)
 	char *name;
 	DB *db;
 {
@@ -82,11 +95,12 @@ create_knlist(name, db)
 	/* Read in exec structure. */
 	nr = read(fd, &ebuf, sizeof(struct exec));
 	if (nr != sizeof(struct exec))
-		badfmt("no exec header");
+		return(-1);
 
 	/* Check magic number and symbol count. */
 	if (N_BADMAG(ebuf))
-		badfmt("bad magic number");
+		return(-1);
+
 	if (!ebuf.a_syms)
 		badfmt("stripped");
 
@@ -174,7 +188,173 @@ create_knlist(name, db)
 		}
 	}
 	(void)fclose(fp);
+	return(0);
 }
+
+#endif
+
+#ifdef DO_ELF
+int
+__elf_knlist(name, db)
+	char *name;
+	DB *db;
+{
+	register struct nlist *p;
+	register caddr_t strtab;
+	register off_t symstroff, symoff;
+	register u_long symsize;
+	register u_long kernvma, kernoffs;
+	register int cc, i;
+	Elf32_Sym sbuf;
+	Elf32_Sym *s;
+	size_t symstrsize;
+	char *shstr, buf[1024];
+	Elf32_Ehdr eh;
+	Elf32_Shdr *sh = NULL;
+	struct stat st;
+	DBT data, key;
+	NLIST nbuf;
+	FILE *fp;
+
+	kfile = name;
+	if ((fp = fopen(name, "r")) < 0)
+		err(1, "%s", name);
+
+	if (fseek(fp, (off_t)0, SEEK_SET) == -1 ||
+	    fread(&eh, sizeof(eh), 1, fp) != 1 ||
+	    !IS_ELF(eh))
+		return(-1);
+
+	sh = (Elf32_Shdr *)malloc(sizeof(Elf32_Shdr) * eh.e_shnum);
+
+	if (fseek (fp, eh.e_shoff, SEEK_SET) < 0)
+		badfmt("no exec header");
+
+	if (fread(sh, sizeof(Elf32_Shdr) * eh.e_shnum, 1, fp) != 1)
+		badfmt("no exec header");
+
+	shstr = (char *)malloc(sh[eh.e_shstrndx].sh_size);
+	if (fseek (fp, sh[eh.e_shstrndx].sh_offset, SEEK_SET) < 0)
+		badfmt("corrupt file");
+	if (fread(shstr, sh[eh.e_shstrndx].sh_size, 1, fp) != 1)
+		badfmt("corrupt file");
+
+	for (i = 0; i < eh.e_shnum; i++) {
+		if (strcmp (shstr + sh[i].sh_name, ".strtab") == 0) {
+			symstroff = sh[i].sh_offset;
+			symstrsize = sh[i].sh_size;
+		}
+		else if (strcmp (shstr + sh[i].sh_name, ".symtab") == 0) {
+			symoff = sh[i].sh_offset;
+			symsize = sh[i].sh_size;
+		}
+		else if (strcmp (shstr + sh[i].sh_name, ".text") == 0) {
+			kernvma = sh[i].sh_addr;
+			kernoffs = sh[i].sh_offset;
+		}
+	}
+
+	
+	/* Check for files too large to mmap. */
+	/* XXX is this really possible? */
+	if (symstrsize > SIZE_T_MAX) {
+		badfmt("corrupt file");
+	}
+	/*
+	 * Map string table into our address space.  This gives us
+	 * an easy way to randomly access all the strings, without
+	 * making the memory allocation permanent as with malloc/free
+	 * (i.e., munmap will return it to the system).
+	 */
+	strtab = mmap(NULL, (size_t)symstrsize, PROT_READ, 0, fileno(fp), symstroff);
+	if (strtab == (char *)-1)
+		badfmt("corrupt file");
+
+	if (fseek(fp, symoff, SEEK_SET) == -1)
+		badfmt("corrupt file");
+
+	data.data = (u_char *)&nbuf;
+	data.size = sizeof(NLIST);
+
+	/* Read each symbol and enter it into the database. */
+	while (symsize > 0) {
+		symsize -= sizeof(Elf32_Sym);
+		if (fread((char *)&sbuf, sizeof(sbuf), 1, fp) != 1) {
+			if (feof(fp))
+				badfmt("corrupted symbol table");
+			err(1, "%s", name);
+		}
+		if (!sbuf.st_name)
+			continue;
+
+		nbuf.n_value = sbuf.st_value;
+
+		/*XXX type conversion is pretty rude... */
+		switch(ELF32_ST_TYPE(sbuf.st_info)) {
+		case STT_NOTYPE:
+			nbuf.n_type = N_UNDF;
+			break;
+		case STT_FUNC:
+			nbuf.n_type = N_TEXT;
+			break;
+		case STT_OBJECT:
+			nbuf.n_type = N_DATA;
+			break;
+		}
+		if(ELF32_ST_BIND(sbuf.st_info) == STB_LOCAL)
+			nbuf.n_type = N_EXT;
+
+		if(eh.e_machine == EM_MIPS) {
+			*buf = '_';
+			strcpy(buf+1,strtab + sbuf.st_name);
+			key.data = (u_char *)buf;
+		}
+		else {
+			key.data = (u_char *)(strtab + sbuf.st_name);
+		}
+		key.size = strlen((char *)key.data);
+		if (db->put(db, &key, &data, 0))
+			err(1, "record enter");
+
+		if (strcmp((char *)key.data, VRS_SYM) == 0) {
+			long cur_off, voff;
+			/*
+			 * Calculate offset to the version string in the
+			 * file.  kernvma is where the kernel is really
+			 * loaded; kernoffs is where in the file it starts.
+			 */
+			voff = nbuf.n_value - kernvma + kernoffs;
+			cur_off = ftell(fp);
+			if (fseek(fp, voff, SEEK_SET) == -1)
+				badfmt("corrupted string table");
+
+			/*
+			 * Read version string up to, and including newline.
+			 * This code assumes that a newline terminates the
+			 * version line.
+			 */
+			if (fgets(buf, sizeof(buf), fp) == NULL)
+				badfmt("corrupted string table");
+
+			key.data = (u_char *)VRS_KEY;
+			key.size = sizeof(VRS_KEY) - 1;
+			data.data = (u_char *)buf;
+			data.size = strlen(buf);
+			if (db->put(db, &key, &data, 0))
+				err(1, "record enter");
+
+			/* Restore to original values. */
+			data.data = (u_char *)&nbuf;
+			data.size = sizeof(NLIST);
+			if (fseek(fp, cur_off, SEEK_SET) == -1)
+				badfmt("corrupted string table");
+		}
+	}
+	munmap(strtab, symstrsize);
+	(void)fclose(fp);
+	return(0);
+}
+#endif /* DO_ELF */
 
 static void
 badread(nr, p)
@@ -184,4 +364,29 @@ badread(nr, p)
 	if (nr < 0)
 		err(1, "%s", kfile);
 	badfmt(p);
+}
+
+static struct knlist_handlers {
+	int	(*fn) __P((char *name, DB *db));
+} nlist_fn[] = {
+#ifdef DO_AOUT
+	{ __aout_knlist },
+#endif
+#ifdef DO_ELF
+	{ __elf_knlist },
+#endif
+};
+
+void
+create_knlist(name, db)
+	char *name;
+	DB *db;
+{
+	int n, i;
+
+	for (i = 0; i < sizeof(nlist_fn)/sizeof(nlist_fn[0]); i++) {
+		n = (nlist_fn[i].fn)(name, db);
+		if (n != -1)
+			break;
+	}
 }

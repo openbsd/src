@@ -58,7 +58,7 @@ static char rcsid[] = "$NetBSD: nlist.c,v 1.6 1995/09/29 04:19:59 cgd Exp $";
 #include <sys/exec_ecoff.h>
 #endif
 #ifdef DO_ELF
-#include <sys/exec_elf.h>
+#include <elf_abi.h>
 #endif
 #include <stdio.h>
 #include <string.h>
@@ -262,7 +262,130 @@ __elf_fdnlist(fd, list)
 	register int fd;
 	register struct nlist *list;
 {
-	return (-1);
+	register struct nlist *p;
+	register caddr_t strtab;
+	register off_t symstroff, symoff;
+	register u_long symsize;
+	register int nent, cc, i;
+	Elf32_Sym sbuf[1024];
+	Elf32_Sym *s;
+	size_t symstrsize;
+	char *shstr;
+	Elf32_Ehdr eh;
+	Elf32_Shdr *sh = NULL;
+	struct stat st;
+
+	if (lseek(fd, (off_t)0, SEEK_SET) == -1 ||
+	    read(fd, &eh, sizeof(eh)) != sizeof(eh) ||
+	    !IS_ELF(eh) ||
+	    fstat(fd, &st) < 0)
+		return (-1);
+
+	sh = (Elf32_Shdr *)malloc(sizeof(Elf32_Shdr) * eh.e_shnum);
+
+	if (lseek (fd, eh.e_shoff, SEEK_SET) < 0)
+		return(-1);
+
+	if (read(fd, sh, sizeof(Elf32_Shdr) * eh.e_shnum) <
+	    sizeof(Elf32_Shdr) * eh.e_shnum)
+		return (-1);
+
+	shstr = (char *)malloc(sh[eh.e_shstrndx].sh_size);
+	if (lseek (fd, sh[eh.e_shstrndx].sh_offset, SEEK_SET) < 0)
+		return(-1);
+	if (read(fd, shstr, sh[eh.e_shstrndx].sh_size) <
+	    sh[eh.e_shstrndx].sh_size)
+		return(-1);
+
+	for (i = 0; i < eh.e_shnum; i++) {
+		if (strcmp (shstr + sh[i].sh_name, ".strtab") == 0) {
+			symstroff = sh[i].sh_offset;
+			symstrsize = sh[i].sh_size;
+		}
+		else if (strcmp (shstr + sh[i].sh_name, ".symtab") == 0) {
+			symoff = sh[i].sh_offset;
+			symsize = sh[i].sh_size;
+		}
+	}
+	
+	/* Check for files too large to mmap. */
+	/* XXX is this really possible? */
+	if (symstrsize > SIZE_T_MAX) {
+		errno = EFBIG;
+		return (-1);
+	}
+	/*
+	 * Map string table into our address space.  This gives us
+	 * an easy way to randomly access all the strings, without
+	 * making the memory allocation permanent as with malloc/free
+	 * (i.e., munmap will return it to the system).
+	 */
+	strtab = mmap(NULL, (size_t)symstrsize, PROT_READ, 0, fd, symstroff);
+	if (strtab == (char *)-1)
+		return (-1);
+	/*
+	 * clean out any left-over information for all valid entries.
+	 * Type and value defined to be 0 if not found; historical
+	 * versions cleared other and desc as well.  Also figure out
+	 * the largest string length so don't read any more of the
+	 * string table than we have to.
+	 *
+	 * XXX clearing anything other than n_type and n_value violates
+	 * the semantics given in the man page.
+	 */
+	nent = 0;
+	for (p = list; !ISLAST(p); ++p) {
+		p->n_type = 0;
+		p->n_other = 0;
+		p->n_desc = 0;
+		p->n_value = 0;
+		++nent;
+	}
+	if (lseek(fd, symoff, SEEK_SET) == -1)
+		return (-1);
+
+	while (symsize > 0) {
+		cc = MIN(symsize, sizeof(sbuf));
+		if (read(fd, sbuf, cc) != cc)
+			break;
+		symsize -= cc;
+		for (s = sbuf; cc > 0; ++s, cc -= sizeof(*s)) {
+			register int soff = s->st_name;
+
+			if (soff == 0)
+				continue;
+			for (p = list; !ISLAST(p); p++) {
+				if (!strcmp(&strtab[soff],
+				    eh.e_machine == EM_MIPS ?
+				    p->n_un.n_name+1 :
+				    p->n_un.n_name)) {
+					p->n_value = s->st_value;
+
+		/*XXX type conversion is pretty rude... */
+					switch(ELF32_ST_TYPE(s->st_info)) {
+					case STT_NOTYPE:
+						p->n_type = N_UNDF;
+						break;
+					case STT_FUNC:
+						p->n_type = N_TEXT;
+						break;
+					case STT_OBJECT:
+						p->n_type = N_DATA;
+						break;
+					}
+					if(ELF32_ST_BIND(s->st_info) == STB_LOCAL)
+						p->n_type = N_EXT;
+					p->n_desc = 0;
+					p->n_other = 0;
+					if (--nent <= 0)
+						break;
+				}
+			}
+		}
+	}
+	munmap(strtab, symstrsize);
+
+	return (nent);
 }
 #endif /* DO_ELF */
 
