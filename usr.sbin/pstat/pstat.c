@@ -1,4 +1,4 @@
-/*	$OpenBSD: pstat.c,v 1.15 1997/09/18 08:59:54 deraadt Exp $	*/
+/*	$OpenBSD: pstat.c,v 1.16 1997/11/09 22:03:29 millert Exp $	*/
 /*	$NetBSD: pstat.c,v 1.27 1996/10/23 22:50:06 cgd Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 from: static char sccsid[] = "@(#)pstat.c	8.9 (Berkeley) 2/16/94";
 #else
-static char *rcsid = "$OpenBSD: pstat.c,v 1.15 1997/09/18 08:59:54 deraadt Exp $";
+static char *rcsid = "$OpenBSD: pstat.c,v 1.16 1997/11/09 22:03:29 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -391,10 +391,14 @@ ufs_print(vp)
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
 	flag = ip->i_flag;
+#if 0
 	if (flag & IN_LOCKED)
 		*flags++ = 'L';
 	if (flag & IN_WANTED)
 		*flags++ = 'W';
+	if (flag & IN_LWAIT)
+		*flags++ = 'Z';
+#endif
 	if (flag & IN_RENAME)
 		*flags++ = 'R';
 	if (flag & IN_UPDATE)
@@ -409,8 +413,6 @@ ufs_print(vp)
 		*flags++ = 'S';
 	if (flag & IN_EXLOCK)
 		*flags++ = 'E';
-	if (flag & IN_LWAIT)
-		*flags++ = 'Z';
 	if (flag == 0)
 		*flags++ = '-';
 	*flags = '\0';
@@ -447,10 +449,14 @@ ext2fs_print(vp)
 
 	KGETRET(VTOI(vp), &inode, sizeof(struct inode), "vnode's inode");
 	flag = ip->i_flag;
+#if 0
 	if (flag & IN_LOCKED)
 		*flags++ = 'L';
 	if (flag & IN_WANTED)
 		*flags++ = 'W';
+	if (flag & IN_LWAIT)
+		*flags++ = 'Z';
+#endif
 	if (flag & IN_RENAME)
 		*flags++ = 'R';
 	if (flag & IN_UPDATE)
@@ -465,8 +471,6 @@ ext2fs_print(vp)
 		*flags++ = 'S';
 	if (flag & IN_EXLOCK)
 		*flags++ = 'E';
-	if (flag & IN_LWAIT)
-		*flags++ = 'Z';
 	if (flag == 0)
 		*flags++ = '-';
 	*flags = '\0';
