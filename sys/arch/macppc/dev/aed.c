@@ -1,4 +1,4 @@
-/*	$OpenBSD: aed.c,v 1.5 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: aed.c,v 1.6 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: aed.c,v 1.5 2000/03/23 06:40:33 thorpej Exp $	*/
 
 /*
@@ -188,7 +188,7 @@ aed_emulate_mouse(event)
 			aed_handoff(&new_event);
 		}
 	} else if (emulmodkey_down) {
-		switch (event->u.k.key) {
+		switch(event->u.k.key) {
 #ifdef ALTXBUTTONS
 		case ADBK_KEYDOWN(ADBK_1):
 			aed_sc->sc_buttons |= 1;	/* left down */

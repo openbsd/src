@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafbvar.h,v 1.8 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: vgafbvar.h,v 1.9 2002/09/15 09:01:59 deraadt Exp $	*/
 /*	$NetBSD: vgavar.h,v 1.2 1996/11/23 06:06:43 cgd Exp $	*/
 
 /*
@@ -55,7 +55,7 @@ struct vgafb_config {
 		    caddr_t, int, struct proc *);
 	paddr_t	(*vc_mmap)(void *, off_t, int);
 
-	struct rasops_info    dc_rinfo;	/* raster display data*/
+	struct rasops_info    dc_rinfo;       /* raster display data*/
 
 	bus_addr_t	membase;
 	bus_size_t	memsize;

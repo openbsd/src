@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmparam.h,v 1.10 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: vmparam.h,v 1.11 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: vmparam.h,v 1.1 1996/09/30 16:34:38 ws Exp $	*/
 
 /*-
@@ -62,7 +62,7 @@
  * Size of shared memory map
  */
 #ifndef	SHMMAXPGS
-#define	SHMMAXPGS	4096
+#define	SHMMAXPGS       4096
 #endif
 
 /*
@@ -79,7 +79,7 @@
  * It is related to human patience and other factors which don't really
  * change over time.
  */
-#define	MAXSLP		20
+#define	MAXSLP 		20
 
 /*
  * Would like to have MAX addresses = 0, but this doesn't (currently) work

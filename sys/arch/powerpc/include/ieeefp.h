@@ -1,5 +1,5 @@
-/*	$OpenBSD: ieeefp.h,v 1.5 2002/09/15 02:02:44 deraadt Exp $	*/
-/*
+/*	$OpenBSD: ieeefp.h,v 1.6 2002/09/15 09:01:59 deraadt Exp $	*/
+/* 
  * Written by J.T. Conklin, Apr 6, 1995
  * Public domain.
  */

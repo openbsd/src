@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bm.c,v 1.12 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: if_bm.c,v 1.13 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: if_bm.c,v 1.1 1999/01/01 01:27:52 tsubai Exp $	*/
 
 /*-
@@ -285,23 +285,23 @@ bmac_attach(parent, self, aux)
 	sc->sc_rxbuf_pa = sc->sc_txbuf_pa + BMAC_BUFLEN * BMAC_TXBUFS;
 
 	printf(" irq %d,%d: address %s\n", ca->ca_intr[0], ca->ca_intr[2],
-	    ether_sprintf(laddr));
+		ether_sprintf(laddr));
 
 	mac_intr_establish(parent, ca->ca_intr[0], IST_LEVEL, IPL_NET,
-	    bmac_intr, sc, "bmac intr");
+		bmac_intr, sc, "bmac intr");
 #ifdef WHY_IS_THIS_XXXX
 	mac_intr_establish(parent, ca->ca_intr[1], IST_LEVEL, IPL_NET,
-	    bmac_tx_intr, sc, "bmac_tx");
+		bmac_tx_intr, sc, "bmac_tx");
 #endif /* WHY_IS_THIS_XXXX */
 	mac_intr_establish(parent, ca->ca_intr[2], IST_LEVEL, IPL_NET,
-	    bmac_rint, sc, "bmac rint");
+		bmac_rint, sc, "bmac rint");
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_ioctl = bmac_ioctl;
 	ifp->if_start = bmac_start;
 	ifp->if_flags =
-	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+		IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
 	ifp->if_watchdog = bmac_watchdog;
 	IFQ_SET_READY(&ifp->if_snd);
 
@@ -312,7 +312,7 @@ bmac_attach(parent, self, aux)
 
 	ifmedia_init(&mii->mii_media, 0, bmac_mediachange, bmac_mediastatus);
 	mii_attach(&sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
-	    MII_OFFSET_ANY, 0);
+		      MII_OFFSET_ANY, 0);
 
 	/* Choose a default media. */
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
@@ -441,7 +441,7 @@ bmac_init(sc)
 	bmac_write_reg(sc, MADD2, *p);
 
 	bmac_write_reg(sc, RXCFG,
-	    RxCRCEnable | RxHashFilterEnable | RxRejectOwnPackets);
+		RxCRCEnable | RxHashFilterEnable | RxRejectOwnPackets);
 
 	if (ifp->if_flags & IFF_PROMISC)
 		bmac_set_bits(sc, RXCFG, RxPromiscEnable);
@@ -489,12 +489,12 @@ bmac_init_dma(sc)
 
 	for (i = 0; i < BMAC_RXBUFS; i++) {
 		DBDMA_BUILD(cmd, DBDMA_CMD_IN_LAST, 0, BMAC_BUFLEN,
-		    sc->sc_rxbuf_pa + BMAC_BUFLEN * i,
-		    DBDMA_INT_ALWAYS, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+			sc->sc_rxbuf_pa + BMAC_BUFLEN * i,
+			DBDMA_INT_ALWAYS, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 		cmd++;
 	}
 	DBDMA_BUILD(cmd, DBDMA_CMD_NOP, 0, 0, 0,
-	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
+		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_ALWAYS);
 	dbdma_st32(&cmd->d_cmddep, sc->sc_rxdbdma->d_paddr);
 
 	sc->sc_rxlast = 0;
@@ -599,7 +599,7 @@ bmac_rint(v)
 		datalen = count - resid;		/* 2 == framelen */
 		if (datalen < sizeof(struct ether_header)) {
 			printf("%s: short packet len = %d\n",
-			    ifp->if_xname, datalen);
+				ifp->if_xname, datalen);
 			goto next;
 		}
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_STOP, 0, 0, 0, 0);
@@ -633,7 +633,7 @@ bmac_rint(v)
 
 next:
 		DBDMA_BUILD_CMD(cmd, DBDMA_CMD_IN_LAST, 0, DBDMA_INT_ALWAYS,
-		    DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+			DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 
 		cmd->d_status = 0;
 		cmd->d_resid = 0;
@@ -731,10 +731,10 @@ bmac_transmit_packet(sc, pa, len)
 	dbdma_command_t *cmd = sc->sc_txcmd;
 
 	DBDMA_BUILD(cmd, DBDMA_CMD_OUT_LAST, 0, len, pa,
-	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 	cmd++;
 	DBDMA_BUILD(cmd, DBDMA_CMD_STOP, 0, 0, 0,
-	    DBDMA_INT_ALWAYS, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+		DBDMA_INT_ALWAYS, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 
 	dbdma_start(sc->sc_txdma, sc->sc_txdbdma);
 }
@@ -1103,7 +1103,7 @@ bmac_mii_statchg(dev)
 
 #ifdef BMAC_DEBUG
 	printf("bmac_mii_statchg 0x%x\n",
-	    IFM_OPTIONS(sc->sc_mii.mii_media_active));
+		IFM_OPTIONS(sc->sc_mii.mii_media_active));
 #endif
 }
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.53 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: trap.c,v 1.54 2002/09/15 09:01:59 deraadt Exp $	*/
 /*	$NetBSD: trap.c,v 1.3 1996/10/13 03:31:37 christos Exp $	*/
 
 /*
@@ -259,7 +259,7 @@ trap(frame)
 	}
 
 	switch (type) {
-	case EXC_TRC|EXC_USER:
+	case EXC_TRC|EXC_USER:		
 		{
 			sv.sival_int = frame->srr0;
 			trapsignal(p, SIGTRAP, type, TRAP_TRACE, sv);
@@ -289,14 +289,14 @@ trap(frame)
 			vm_offset_t va;
 			int ftype;
 			faultbuf *fb;
-
+			
 			map = kernel_map;
 			va = frame->dar;
 			if ((va >> ADDR_SR_SHIFT) == USER_SR) {
 				sr_t user_sr;
-
+				
 				asm ("mfsr %0, %1"
-				    : "=r"(user_sr) : "K"(USER_SR));
+				     : "=r"(user_sr) : "K"(USER_SR));
 				va &= ADDR_PIDX | ADDR_POFF;
 				va |= user_sr << ADDR_SR_SHIFT;
 				map = &p->p_vmspace->vm_map;
@@ -327,9 +327,10 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 	case EXC_DSI|EXC_USER:
 		{
 			int ftype, vftype;
-
+			
 			if (pte_spill_v(p->p_vmspace->vm_map.pmap,
-			    frame->dar, frame->dsisr, 0)) {
+				frame->dar, frame->dsisr, 0))
+			{
 				/* fault handled by spill handler */
 				break;
 			}
@@ -340,7 +341,7 @@ printf("kern dsi on addr %x iar %x\n", frame->dar, frame->srr0);
 			} else
 				vftype = ftype = VM_PROT_READ;
 			if (uvm_fault(&p->p_vmspace->vm_map,
-			    trunc_page(frame->dar), 0, ftype) == 0) {
+				     trunc_page(frame->dar), 0, ftype) == 0) {
 				break;
 			}
 #if 0
@@ -356,15 +357,16 @@ printf("dsi on addr %x iar %x lr %x\n", frame->dar, frame->srr0,frame->lr);
 	case EXC_ISI|EXC_USER:
 		{
 			int ftype;
-
+			
 			if (pte_spill_v(p->p_vmspace->vm_map.pmap,
-			    frame->srr0, 0, 1)) {
+				frame->srr0, 0, 1))
+			{
 				/* fault handled by spill handler */
 				break;
 			}
 			ftype = VM_PROT_READ | VM_PROT_EXECUTE;
 			if (uvm_fault(&p->p_vmspace->vm_map,
-			    trunc_page(frame->srr0), 0, ftype) == 0) {
+				     trunc_page(frame->srr0), 0, ftype) == 0) {
 				break;
 			}
 		}
@@ -385,15 +387,15 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 			register_t *params, rval[2];
 			int nsys, n;
 			register_t args[10];
-
+			
 			uvmexp.syscalls++;
-
+			
 			nsys = p->p_emul->e_nsysent;
 			callp = p->p_emul->e_sysent;
-
+			
 			code = frame->fixreg[0];
 			params = frame->fixreg + FIRSTARG;
-
+			
 			switch (code) {
 			case SYS_syscall:
 				/*
@@ -447,6 +449,7 @@ printf("isi iar %x lr %x\n", frame->srr0, frame->lr);
 			scdebug_call(p, code, params);
 #endif
 
+			
 #if NSYSTRACE > 0
 			if (ISSET(p->p_flag, P_SYSTRACE))
 				error = systrace_redirect(code, p, params,
@@ -481,8 +484,8 @@ syscall_bad:
 				break;
 			}
 #ifdef SYSCALL_DEBUG
-			scdebug_ret(p, code, error, rval);
-#endif
+        scdebug_ret(p, code, error, rval); 
+#endif  
 #ifdef	KTRACE
 			if (KTRPOINT(p, KTR_SYSRET))
 				ktrsysret(p, code, error, rval[0]);
@@ -498,7 +501,7 @@ syscall_bad:
 		break;
 
 	case EXC_ALI|EXC_USER:
-		/* alignment exception
+		/* alignment exception 
 		 * we check to see if this can be fixed up
 		 * by the code that fixes the typical gcc misaligned code
 		 * then kill the process if not.
@@ -513,7 +516,7 @@ syscall_bad:
 		break;
 
 	default:
-
+	
 brain_damage:
 /*
 mpc_print_pci_stat();
@@ -539,11 +542,11 @@ mpc_print_pci_stat();
 		char *errstr[8];
 		int errnum = 0;
 
-		if (frame->srr1 & (1<<(31-11))) {
+		if (frame->srr1 & (1<<(31-11))) { 
 			/* floating point enabled program exception */
 			errstr[errnum] = "floating point";
 			errnum++;
-		}
+		} 
 		if (frame->srr1 & (1<<(31-12))) {
 			/* illegal instruction program exception */
 			errstr[errnum] = "illegal instruction";
@@ -574,7 +577,7 @@ mpc_print_pci_stat();
 		}
 #if 0
 printf("pgm iar %x srr1 %x\n", frame->srr0, frame->srr1);
-{
+{ 
 int i;
 for (i = 0; i < errnum; i++) {
 	printf("\t[%s]\n", errstr[i]);
@@ -601,7 +604,7 @@ for (i = 0; i < errnum; i++) {
 	 * if we do not handle it, kill the process with illegal instruction.
 	 */
 	case EXC_PERF|EXC_USER:
-#ifdef ALTIVEC
+#ifdef ALTIVEC 
 	case EXC_VEC|EXC_USER:
 		if (ppc_vecproc) {
 			save_vec(ppc_vecproc);
@@ -714,7 +717,7 @@ badaddr(addr, len)
 		curpcb->pcb_onfault = oldh;
 		return EFAULT;
 	}
-	switch (len) {
+	switch(len) {
 	case 4:
 		v = *((volatile u_int32_t *)addr);
 		break;

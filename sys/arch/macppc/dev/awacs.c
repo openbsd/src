@@ -1,4 +1,4 @@
-/*	$OpenBSD: awacs.c,v 1.10 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: awacs.c,v 1.11 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: awacs.c,v 1.4 2001/02/26 21:07:51 wiz Exp $	*/
 
 /*-
@@ -102,7 +102,7 @@ int awacs_set_params(void *, int, int, struct audio_params *,
 			 struct audio_params *);
 int awacs_round_blocksize(void *, int);
 int awacs_trigger_output(void *, void *, void *, int, void (*)(void *),
-			    void *, struct audio_params *);
+			     void *, struct audio_params *);
 int awacs_trigger_input(void *, void *, void *, int, void (*)(void *),
 			    void *, struct audio_params *);
 int awacs_halt_output(void *);
@@ -582,7 +582,7 @@ awacs_set_params(h, setmode, usemode, play, rec)
 	}
 
 	for (mode = AUMODE_RECORD; mode != -1;
-	    mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
+	     mode = mode == AUMODE_RECORD ? AUMODE_PLAY : -1) {
 		if ((setmode & mode) == 0)
 			continue;
 
@@ -752,7 +752,7 @@ awacs_set_port(h, mc)
 		/* no change necessary? */
 		if (mc->un.mask == sc->sc_record_source)
 			return 0;
-		switch (mc->un.mask) {
+		switch(mc->un.mask) {
 		case 1<<0: /* CD */
 			sc->sc_codecctl0 &= ~AWACS_INPUT_MASK;
 			sc->sc_codecctl0 |= AWACS_INPUT_CD;

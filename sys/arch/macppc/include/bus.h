@@ -1,4 +1,4 @@
-/*	$OpenBSD: bus.h,v 1.7 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: bus.h,v 1.8 2002/09/15 09:01:58 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1997 Per Fogelstrom.  All rights reserved.
@@ -82,7 +82,7 @@ static __inline CAT3(u_int,m,_t)					      \
 CAT(bus_space_read_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
      bus_addr_t ba)							      \
 {									      \
-    if (bst->bus_reverse)						      \
+    if(bst->bus_reverse)						      \
 	return CAT3(in,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)));      \
     else								      \
 	return CAT(in,m)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)));	      \
@@ -99,7 +99,7 @@ static __inline void							      \
 CAT(bus_space_write_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,	      \
      bus_addr_t ba, CAT3(u_int,m,_t) x)					      \
 {									      \
-    if (bst->bus_reverse)						      \
+    if(bst->bus_reverse)						      \
 	CAT3(out,m,rb)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)), x);	      \
     else								      \
 	CAT(out,m)((volatile CAT3(u_int,m,_t) *)(bsh + (ba)), x);	      \
@@ -112,7 +112,7 @@ bus_space_write(4,32)
 #define	bus_space_write_8	!!! bus_space_write_8 unimplemented !!!
 
 #define bus_space_read_multi(n, m)					      \
-static __inline void							      \
+static __inline void						       	      \
 CAT(bus_space_read_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,     \
     bus_size_t ba, CAT3(u_int,m,_t) *buf, bus_size_t cnt)		      \
 {									      \
@@ -130,7 +130,7 @@ bus_space_read_multi(4,32)
 #define	bus_space_write_multi_8	!!! bus_space_write_multi_8 not implemented !!!
 
 #define bus_space_write_multi(n, m)					      \
-static __inline void							      \
+static __inline void								      \
 CAT(bus_space_write_multi_,n)(bus_space_tag_t bst, bus_space_handle_t bsh,    \
     bus_size_t ba, const CAT3(u_int,m,_t) *buf, bus_size_t cnt)		      \
 {									      \
@@ -476,8 +476,8 @@ bus_space_copy_4(void *v, bus_space_handle_t h1, bus_space_handle_t h2,
 #define BUS_SPACE_BARRIER_READ  0x01		/* force read barrier */ 
 #define BUS_SPACE_BARRIER_WRITE 0x02		/* force write barrier */
 /* Compatibility defines */
-#define BUS_BARRIER_READ	BUS_SPACE_BARRIER_READ
-#define BUS_BARRIER_WRITE	BUS_SPACE_BARRIER_WRITE
+#define BUS_BARRIER_READ        BUS_SPACE_BARRIER_READ
+#define BUS_BARRIER_WRITE       BUS_SPACE_BARRIER_WRITE
 
 
 #define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
@@ -489,7 +489,7 @@ bus_space_copy_4(void *v, bus_space_handle_t h1, bus_space_handle_t h2,
 #define	BUS_DMA_BUS2		0x020
 #define	BUS_DMA_BUS3		0x040
 #define	BUS_DMA_BUS4		0x080
-#define BUS_DMA_READ		0x100	/* mapping is device -> memory only */
+#define BUS_DMA_READ            0x100	/* mapping is device -> memory only */
 #define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
 #define	BUS_DMA_STREAMING	0x400	/* hint: sequential, unidirectional */
 

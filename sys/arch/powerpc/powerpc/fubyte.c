@@ -1,4 +1,4 @@
-/*	$OpenBSD: fubyte.c,v 1.4 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: fubyte.c,v 1.5 2002/09/15 09:01:59 deraadt Exp $	*/
 /*	$NetBSD: fubyte.c,v 1.1 1996/09/30 16:34:45 ws Exp $	*/
 
 /*-
@@ -43,7 +43,7 @@ fubyte(addr)
 	void *addr;
 {
 	unsigned char c;
-
+	
 	if (copyin(addr,&c,sizeof(c)))
 		return -1;
 	return c;

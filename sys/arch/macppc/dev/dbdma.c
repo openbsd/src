@@ -1,4 +1,4 @@
-/*	$OpenBSD: dbdma.c,v 1.5 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: dbdma.c,v 1.6 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: dbdma.c,v 1.2 1998/08/21 16:13:28 tsubai Exp $	*/
 
 /*
@@ -43,9 +43,12 @@ dbdma_start(dmap, dt)
 
 	DBDMA_ST4_ENDIAN(&dmap->d_intselect, DBDMA_CLEAR_CNTRL((0xffff)));
 	DBDMA_ST4_ENDIAN(&dmap->d_control, DBDMA_CLEAR_CNTRL((
-	    DBDMA_CNTRL_ACTIVE | DBDMA_CNTRL_DEAD |
-	    DBDMA_CNTRL_WAKE | DBDMA_CNTRL_FLUSH |
-	    DBDMA_CNTRL_PAUSE | DBDMA_CNTRL_RUN)));
+	    DBDMA_CNTRL_ACTIVE |
+	    DBDMA_CNTRL_DEAD |
+	    DBDMA_CNTRL_WAKE |
+	    DBDMA_CNTRL_FLUSH |
+	    DBDMA_CNTRL_PAUSE |
+	    DBDMA_CNTRL_RUN)));
 
 	/* XXX time-bind it? */
 	do {
@@ -57,8 +60,8 @@ dbdma_start(dmap, dt)
 	DBDMA_ST4_ENDIAN(&dmap->d_cmdptrlo, addr);
 
 	DBDMA_ST4_ENDIAN(&dmap->d_control,
-	    DBDMA_SET_CNTRL(DBDMA_CNTRL_RUN|DBDMA_CNTRL_WAKE)|
-	    DBDMA_CLEAR_CNTRL(DBDMA_CNTRL_PAUSE|DBDMA_CNTRL_DEAD) );
+		DBDMA_SET_CNTRL(DBDMA_CNTRL_RUN|DBDMA_CNTRL_WAKE)|
+		DBDMA_CLEAR_CNTRL(DBDMA_CNTRL_PAUSE|DBDMA_CNTRL_DEAD) );
 }
 
 void
@@ -66,11 +69,10 @@ dbdma_stop(dmap)
 	dbdma_regmap_t *dmap;
 {
 	DBDMA_ST4_ENDIAN(&dmap->d_control, DBDMA_CLEAR_CNTRL(DBDMA_CNTRL_RUN) |
-	    DBDMA_SET_CNTRL(DBDMA_CNTRL_FLUSH));
+			  DBDMA_SET_CNTRL(DBDMA_CNTRL_FLUSH));
 
 	while (DBDMA_LD4_ENDIAN(&dmap->d_status) &
-	    (DBDMA_CNTRL_ACTIVE|DBDMA_CNTRL_FLUSH))
-		;
+		(DBDMA_CNTRL_ACTIVE|DBDMA_CNTRL_FLUSH));
 }
 
 void
@@ -80,8 +82,7 @@ dbdma_flush(dmap)
 	DBDMA_ST4_ENDIAN(&dmap->d_control, DBDMA_SET_CNTRL(DBDMA_CNTRL_FLUSH));
 
 	/* XXX time-bind it? */
-	while (DBDMA_LD4_ENDIAN(&dmap->d_status) & (DBDMA_CNTRL_FLUSH))
-		;
+	while (DBDMA_LD4_ENDIAN(&dmap->d_status) & (DBDMA_CNTRL_FLUSH));
 }
 
 void
@@ -89,14 +90,15 @@ dbdma_reset(dmap)
 	dbdma_regmap_t *dmap;
 {
 	DBDMA_ST4_ENDIAN(&dmap->d_control,
-	    DBDMA_CLEAR_CNTRL((DBDMA_CNTRL_ACTIVE |
-	    DBDMA_CNTRL_DEAD | DBDMA_CNTRL_WAKE |
-	    DBDMA_CNTRL_FLUSH | DBDMA_CNTRL_PAUSE |
-	    DBDMA_CNTRL_RUN)));
+			 DBDMA_CLEAR_CNTRL( (DBDMA_CNTRL_ACTIVE	|
+					     DBDMA_CNTRL_DEAD	|
+					     DBDMA_CNTRL_WAKE	|
+					     DBDMA_CNTRL_FLUSH	|
+					     DBDMA_CNTRL_PAUSE	|
+					     DBDMA_CNTRL_RUN      )));
 
 	/* XXX time-bind it? */
-	while (DBDMA_LD4_ENDIAN(&dmap->d_status) & DBDMA_CNTRL_RUN)
-		;
+	while (DBDMA_LD4_ENDIAN(&dmap->d_status) & DBDMA_CNTRL_RUN);
 }
 
 void
@@ -104,8 +106,8 @@ dbdma_continue(dmap)
 	dbdma_regmap_t *dmap;
 {
 	DBDMA_ST4_ENDIAN(&dmap->d_control,
-	    DBDMA_SET_CNTRL(DBDMA_CNTRL_RUN | DBDMA_CNTRL_WAKE) |
-	    DBDMA_CLEAR_CNTRL(DBDMA_CNTRL_PAUSE | DBDMA_CNTRL_DEAD));
+		DBDMA_SET_CNTRL(DBDMA_CNTRL_RUN | DBDMA_CNTRL_WAKE) |
+		DBDMA_CLEAR_CNTRL(DBDMA_CNTRL_PAUSE | DBDMA_CNTRL_DEAD));
 }
 
 void
@@ -115,8 +117,7 @@ dbdma_pause(dmap)
 	DBDMA_ST4_ENDIAN(&dmap->d_control,DBDMA_SET_CNTRL(DBDMA_CNTRL_PAUSE));
 
 	/* XXX time-bind it? */
-	while (DBDMA_LD4_ENDIAN(&dmap->d_status) & DBDMA_CNTRL_ACTIVE)
-		;
+	while (DBDMA_LD4_ENDIAN(&dmap->d_status) & DBDMA_CNTRL_ACTIVE);
 }
 
 dbdma_t

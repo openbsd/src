@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.18 2002/09/15 02:02:43 deraadt Exp $ */
+/*	$OpenBSD: conf.c,v 1.19 2002/09/15 09:01:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -170,7 +170,7 @@ struct cdevsw cdevsw[] = {
 	cdev_bpftun_init(NBPFILTER,bpf),/* 22: berkeley packet filter */
 	cdev_bpftun_init(NTUN,tun),	/* 23: network tunnel */
 	cdev_lkm_init(NLKM,lkm),	/* 24: loadable module driver */
-	cdev_apm_init(NAPM,apm),	/* 25: APM interface */
+        cdev_apm_init(NAPM,apm),	/* 25: APM interface */
 	cdev_notdef(),			/* 26 */
 	cdev_notdef(),			/* 27 */
 	cdev_notdef(),			/* 28 */

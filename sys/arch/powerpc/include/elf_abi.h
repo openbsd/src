@@ -1,8 +1,8 @@
-/*	$OpenBSD: elf_abi.h,v 1.2 2002/09/15 02:02:44 deraadt Exp $ */
+/*	$OpenBSD: elf_abi.h,v 1.3 2002/09/15 09:01:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 1996 Per Fogelstrom
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -37,7 +37,7 @@
 
 /* From MIPS ABI supplemental */
 
-/* Architecture dependent Segment types - p_type */
+/* Architecture dependent Segment types - p_type */ 
 /* ??NONE?? */
 
 /* Architecture dependent d_tag field for Elf32_Dyn.  */

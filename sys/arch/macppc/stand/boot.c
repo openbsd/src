@@ -1,4 +1,4 @@
-/*	$OpenBSD: boot.c,v 1.7 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: boot.c,v 1.8 2002/09/15 09:01:59 deraadt Exp $	*/
 /*	$NetBSD: boot.c,v 1.1 1997/04/16 20:29:17 thorpej Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #include <lib/libsa/stand.h>
 #include <lib/libsa/loadfile.h>
 
+
 #include <machine/cpu.h>
 
 #include <macppc/stand/ofdev.h>
@@ -70,7 +71,7 @@ prom2boot(dev)
 	char *dev;
 {
 	char *cp, *lp = 0;
-
+	
 	for (cp = dev; *cp; cp++)
 		if (*cp == ':')
 			lp = cp;
@@ -108,7 +109,7 @@ parseargs(str, howtop)
 	}
 	if (!*cp)
 		return;
-
+	
 	*cp++ = 0;
 	while (*cp) {
 		switch (*cp++) {
@@ -174,15 +175,15 @@ main()
 	u_int32_t entry;
 	void *ssym, *esym;
 	int fd;
-
+	
 	printf("\n>> OpenBSD/macppc Boot\n");
 
 	/*
 	 * Get the boot arguments from Openfirmware
 	 */
-	if ((chosen = OF_finddevice("/chosen")) == -1 ||
-	    OF_getprop(chosen, "bootpath", bootdev, sizeof bootdev) < 0 ||
-	    OF_getprop(chosen, "bootargs", bootline, sizeof bootline) < 0) {
+	if ((chosen = OF_finddevice("/chosen")) == -1
+	    || OF_getprop(chosen, "bootpath", bootdev, sizeof bootdev) < 0
+	    || OF_getprop(chosen, "bootargs", bootline, sizeof bootline) < 0) {
 		printf("Invalid Openfirmware environment\n");
 		exit();
 	}

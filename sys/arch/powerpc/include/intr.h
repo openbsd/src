@@ -1,8 +1,8 @@
-/*	$OpenBSD: intr.h,v 1.20 2002/09/15 02:02:44 deraadt Exp $ */
+/*	$OpenBSD: intr.h,v 1.21 2002/09/15 09:01:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -93,7 +93,7 @@ splx(int newcpl)
 {
 	__asm__ volatile("":::"memory");	/* reorder protect */
 	cpl = newcpl;
-	if (ipending & ~newcpl)
+	if(ipending & ~newcpl)
 		do_pending_int();
 	__asm__ volatile("":::"memory");	/* reorder protect */
 }
@@ -106,7 +106,7 @@ spllower(int newcpl)
 	__asm__ volatile("":::"memory");	/* reorder protect */
 	oldcpl = cpl;
 	cpl = newcpl;
-	if (ipending & ~newcpl)
+	if(ipending & ~newcpl)
 		do_pending_int();
 	__asm__ volatile("":::"memory");	/* reorder protect */
 	return(oldcpl);
@@ -158,11 +158,11 @@ set_sint(int pending)
 struct intrhand {
 	struct	intrhand *ih_next;
 	int	(*ih_fun)(void *);
-	void	*ih_arg;
-	u_long	ih_count;
-	int	ih_level;
-	int	ih_irq;
-	char	*ih_what;
+	void    *ih_arg;
+	u_long  ih_count;
+	int     ih_level;
+	int     ih_irq;
+	char    *ih_what;
 };
 extern int ppc_configed_intr_cnt;
 #define MAX_PRECONF_INTR 16

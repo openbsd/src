@@ -1,4 +1,4 @@
-/*	$OpenBSD: zs.c,v 1.8 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: zs.c,v 1.9 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: zs.c,v 1.17 2001/06/19 13:42:15 wiz Exp $	*/
 
 /*
@@ -365,12 +365,12 @@ zsc_attach(parent, self, aux)
 		 * We used to disable chip interrupts here, but we now
 		 * do that in zscnprobe, just in case MacOS left the chip on.
 		 */
-
+		
 		xcs->cs_chip = 0;
-
+		
 		/* Stash away a copy of the final H/W flags. */
 		xcs->cs_hwflags = zsc_args.hwflags;
-
+		
 		/*
 		 * Look for a child driver for this channel.
 		 * The child attach will setup the hardware.
@@ -480,7 +480,8 @@ zshard(arg)
 		if (zsc == NULL)
 			continue;
 		rval |= zsc_intr_hard(zsc);
-		if (zsc->zsc_cs[0]->cs_softreq) {
+		if (zsc->zsc_cs[0]->cs_softreq)
+		{
 			/* zsc_req_softint(zsc); */
 			/* We are at splzs here, so no need to lock. */
 			if (zssoftpending == 0) {
@@ -919,7 +920,7 @@ zs_enable(cs)
 	cs->enabled = 1;
 	return(0);
 }
-
+ 
 void
 zs_disable(cs)
 	struct zs_chanstate *cs;
@@ -1143,7 +1144,7 @@ zs_abort(struct zs_chanstate *channel)
 void
 zscnpollc(dev, on)
         dev_t dev;
-	int on;
+	int on;  
 {
 	/*
 	 * Need to tell zs driver to acknowledge all interrupts or we get

@@ -1,9 +1,9 @@
 /*	$NetBSD: db_disasm.c,v 1.8 2001/06/12 05:31:44 simonb Exp $	*/
-/*	$OpenBSD: db_disasm.c,v 1.3 2002/09/15 02:02:44 deraadt Exp $	*/
-
+/*	$OpenBSD: db_disasm.c,v 1.4 2002/09/15 09:01:59 deraadt Exp $	*/
 /*
  * Copyright (c) 1996 Dale Rahn. All rights reserved.
  *
+ *   
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -28,7 +28,7 @@
  * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- */
+ */  
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -123,7 +123,7 @@ struct db_field {
 	{ "sh",		Opf_sh },
 	{ "spr",	Opf_spr },
 	{ "tbr",	Opf_tbr },
-	{ NULL,		0 }
+	{ NULL,	 	0 }
 };
 
 struct opcode {
@@ -149,7 +149,7 @@ op_class_func op_cl_x3e, op_cl_x3f;
 op_class_func *opcodes_base[] = {
 /*x00*/	op_ill,		op_ill,		op_base,	op_ill,
 /*x04*/	op_ill,		op_ill,		op_ill,		op_base,
-/*x08*/	op_base,	op_base,	op_base,	op_base,
+/*x08*/	op_base,	op_base,	op_base,	op_base,	
 /*x0C*/ op_base,	op_base,	op_base/*XXX*/,	op_base/*XXX*/,
 /*x10*/ op_base,	op_base,	op_base,	op_cl_x13,
 /*x14*/	op_base,	op_base,	op_ill,		op_base,
@@ -168,11 +168,11 @@ op_class_func *opcodes_base[] = {
 
 /* This table could be modified to make significant the "reserved" fields
  * of the opcodes, But I didn't feel like it when typing in the table,
- * I would recommend that this table be looked over for errors,
+ * I would recommend that this table be looked over for errors, 
  * This was derived from the table in Appendix A.2 of (Mot part # MPCFPE/AD)
  * PowerPC Microprocessor Family: The Programming Environments
  */
-
+	
 const struct opcode opcodes[] = {
 	{ "tdi",	0xfc000000, 0x08000000, " %{TO},%{A},%{SIMM}" },
 	{ "twi",	0xfc000000, 0x0c000000, " %{TO},%{A},%{SIMM}" },
@@ -557,7 +557,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 		{
 			u_int A;
 			A = extract_field(instr, 31 - 15, 5);
-			pstr += sprintf(pstr, "r%d", A);
+			pstr += sprintf (pstr, "r%d", A);
 		}
 		break;
 	case Opf_A0:
@@ -565,13 +565,13 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			u_int A;
 			A = extract_field(instr, 31 - 15, 5);
 			if (A != 0) {
-				pstr += sprintf(pstr, "r%d,", A);
+				pstr += sprintf (pstr, "r%d,", A);
 			}
 		}
 		break;
 	case Opf_AA:
 		if (instr & 0x2) {
-			pstr += sprintf(pstr,"a");
+			pstr += sprintf (pstr,"a");
 		}
 		break;
 	case Opf_LI:
@@ -589,14 +589,14 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			db_find_sym_and_offset(LI, &name, &offset);
 			if (name) {
 				if (offset == 0) {
-				pstr += sprintf(pstr, "0x%x (%s)", addr + LI,
+				pstr += sprintf (pstr, "0x%x (%s)", addr + LI,
 					name);
 				} else {
-				pstr += sprintf(pstr, "0x%x (%s+0x%x)", addr + LI,
+				pstr += sprintf (pstr, "0x%x (%s+0x%x)", addr + LI,
 					name, offset);
 				}
 			} else {
-				pstr += sprintf(pstr, "0x%x", addr + LI);
+				pstr += sprintf (pstr, "0x%x", addr + LI);
 			}
 		}
 		break;
@@ -604,7 +604,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 		{
 			u_int B;
 			B = extract_field(instr, 31 - 20, 5);
-			pstr += sprintf(pstr, "r%d", B);
+			pstr += sprintf (pstr, "r%d", B);
 		}
 		break;
 	case Opf_BD:
@@ -622,14 +622,14 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			db_find_sym_and_offset(BD, &name, &offset);
 			if (name) {
 				if (offset == 0) {
-				pstr += sprintf(pstr, "0x%x (%s)", addr + BD,
+				pstr += sprintf (pstr, "0x%x (%s)", addr + BD,
 					name);
 				} else {
-				pstr += sprintf(pstr, "0x%x (%s+0x%x)", addr + BD,
+				pstr += sprintf (pstr, "0x%x (%s+0x%x)", addr + BD,
 					name, offset);
 				}
 			} else {
-				pstr += sprintf(pstr, "0x%x", addr + BD);
+				pstr += sprintf (pstr, "0x%x", addr + BD);
 			}
 		}
 		break;
@@ -638,7 +638,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			u_int BI;
 			BI = extract_field(instr, 31 - 10, 5);
 			if (BI != 0) {
-			pstr += sprintf(pstr, "%d,", BI);
+			pstr += sprintf (pstr, "%d,", BI);
 			}
 		}
 		break;
@@ -647,7 +647,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			u_int BI;
 			BI = extract_field(instr, 31 - 10, 5);
 			if (BI != 0) {
-			pstr += sprintf(pstr, "%d", BI);
+			pstr += sprintf (pstr, "%d", BI);
 			}
 		}
 		break;
@@ -655,10 +655,10 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 		{
 			int BO,BI;
 			BO = extract_field(instr, 31 - 10, 5);
-			pstr += sprintf(pstr ,"%s", db_BO_op[BO]);
+			pstr += sprintf (pstr ,"%s", db_BO_op[BO]);
 			if (BO < 8) {
 				BI = extract_field(instr, 31 - 10, 5);
-				pstr += sprintf(pstr ,"%s",
+				pstr += sprintf (pstr ,"%s",
 				    db_BOBI_cond[(BI & 0x3)|((BO & 1) << 2)]);
 
 			}
@@ -668,40 +668,40 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 		{
 			u_int C;
 			C = extract_field(instr, 31 - 25, 5);
-			pstr += sprintf(pstr, "r%d, ", C);
+			pstr += sprintf (pstr, "r%d, ", C);
 		}
 		break;
 	case Opf_CRM:
 		{
 			u_int CRM;
 			CRM = extract_field(instr, 31 - 19, 8);
-			pstr += sprintf(pstr, "0x%x", CRM);
+			pstr += sprintf (pstr, "0x%x", CRM);
 		}
 		break;
 	case Opf_FM:
 		{
 			u_int FM;
 			FM = extract_field(instr, 31 - 10, 8);
-			pstr += sprintf(pstr, "%d", FM);
+			pstr += sprintf (pstr, "%d", FM);
 		}
 		break;
 	case Opf_LK:
 		if (instr & 0x1) {
-			pstr += sprintf(pstr,"l");
+			pstr += sprintf (pstr,"l");
 		}
 		break;
 	case Opf_MB:
 		{
 			u_int MB;
 			MB = extract_field(instr, 31 - 20, 5);
-			pstr += sprintf(pstr, "%d", MB);
+			pstr += sprintf (pstr, "%d", MB);
 		}
 		break;
 	case Opf_ME:
 		{
 			u_int ME;
 			ME = extract_field(instr, 31 - 25, 5);
-			pstr += sprintf(pstr, "%d", ME);
+			pstr += sprintf (pstr, "%d", ME);
 		}
 		break;
 	case Opf_NB:
@@ -711,7 +711,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			if (NB == 0 ) {
 				NB=32;
 			}
-			pstr += sprintf(pstr, "%d", NB);
+			pstr += sprintf (pstr, "%d", NB);
 		}
 		break;
 	case Opf_OE:
@@ -730,14 +730,14 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			u_int D;
 			/* S and D are the same */
 			D = extract_field(instr, 31 - 10, 5);
-			pstr += sprintf(pstr, "r%d", D);
+			pstr += sprintf (pstr, "r%d", D);
 		}
 		break;
 	case Opf_SH:
 		{
 			u_int SH;
 			SH = extract_field(instr, 31 - 20, 5);
-			pstr += sprintf(pstr, "%d", SH);
+			pstr += sprintf (pstr, "%d", SH);
 		}
 		break;
 	case Opf_SIMM:
@@ -748,63 +748,63 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			if (IMM & 0x8000) {
 				IMM |= ~0x7fff;
 			}
-			pstr += sprintf(pstr, "%d", IMM);
+			pstr += sprintf (pstr, "%d", IMM);
 		}
 		break;
 	case Opf_UIMM:
 		{
 			u_int32_t IMM;
 			IMM = extract_field(instr, 31 - 31, 16);
-			pstr += sprintf(pstr, "0x%x", IMM);
+			pstr += sprintf (pstr, "0x%x", IMM);
 		}
 		break;
 	case Opf_SR:
 		{
 			u_int SR;
 			SR = extract_field(instr, 31 - 15, 3);
-			pstr += sprintf(pstr, "sr%d", SR);
+			pstr += sprintf (pstr, "sr%d", SR);
 		}
 		break;
 	case Opf_TO:
 		{
 			u_int TO;
 			TO = extract_field(instr, 31 - 10, 1);
-			pstr += sprintf(pstr, "%d", TO);
+			pstr += sprintf (pstr, "%d", TO);
 		}
 		break;
 	case Opf_crbA:
 		{
 			u_int crbA;
 			crbA = extract_field(instr, 31 - 15, 5);
-			pstr += sprintf(pstr, "%d", crbA);
+			pstr += sprintf (pstr, "%d", crbA);
 		}
 		break;
 	case Opf_crbB:
 		{
 			u_int crbB;
 			crbB = extract_field(instr, 31 - 20, 5);
-			pstr += sprintf(pstr, "%d", crbB);
+			pstr += sprintf (pstr, "%d", crbB);
 		}
 		break;
 	case Opf_crbD:
 		{
 			u_int crfD;
 			crfD = extract_field(instr, 31 - 8, 3);
-			pstr += sprintf(pstr, "crf%d", crfD);
+			pstr += sprintf (pstr, "crf%d", crfD);
 		}
 		break;
 	case Opf_crfD:
 		{
 			u_int crfD;
 			crfD = extract_field(instr, 31 - 8, 3);
-			pstr += sprintf(pstr, "crf%d", crfD);
+			pstr += sprintf (pstr, "crf%d", crfD);
 		}
 		break;
 	case Opf_crfS:
 		{
 			u_int crfS;
 			crfS = extract_field(instr, 31 - 13, 3);
-			pstr += sprintf(pstr, "%d", crfS);
+			pstr += sprintf (pstr, "%d", crfS);
 		}
 		break;
 		break;
@@ -814,7 +814,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			mbl = extract_field(instr, 31 - 25, 4);
 			mbh = extract_field(instr, 31 - 26, 1);
 			mb = mbh << 4 | mbl;
-			pstr += sprintf(pstr, ", %d", mb);
+			pstr += sprintf (pstr, ", %d", mb);
 		}
 		break;
 	case Opf_sh:
@@ -823,7 +823,7 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 			shl = extract_field(instr, 31 - 19, 4);
 			shh = extract_field(instr, 31 - 20, 1);
 			sh = shh << 4 | shl;
-			pstr += sprintf(pstr, ", %d", sh);
+			pstr += sprintf (pstr, ", %d", sh);
 		}
 		break;
 	case Opf_spr:
@@ -838,112 +838,112 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 
 			/* this table could be written better */
 			switch (spr) {
-			case	1:
+			case 	1:
 				reg = "xer";
 				break;
-			case	8:
+			case 	8:
 				reg = "lr";
 				break;
-			case	9:
+			case 	9:
 				reg = "ctr";
 				break;
-			case	18:
+			case 	18:
 				reg = "dsisr";
 				break;
-			case	19:
+			case 	19:
 				reg = "dar";
 				break;
-			case	22:
+			case 	22:
 				reg = "dec";
 				break;
-			case	25:
+			case 	25:
 				reg = "sdr1";
 				break;
-			case	26:
+			case 	26:
 				reg = "srr0";
 				break;
-			case	27:
+			case 	27:
 				reg = "srr1";
 				break;
-			case	272:
+			case 	272:
 				reg = "SPRG0";
 				break;
-			case	273:
+			case 	273:
 				reg = "SPRG1";
 				break;
-			case	274:
+			case 	274:
 				reg = "SPRG3";
 				break;
-			case	275:
+			case 	275:
 				reg = "SPRG3";
 				break;
-			case	280:
+			case 	280:
 				reg = "asr";
 				break;
-			case	282:
+			case 	282:
 				reg = "aer";
 				break;
-			case	287:
+			case 	287:
 				reg = "pvr";
 				break;
-			case	528:
+			case 	528:
 				reg = "ibat0u";
 				break;
-			case	529:
+			case 	529:
 				reg = "ibat0l";
 				break;
-			case	530:
+			case 	530:
 				reg = "ibat1u";
 				break;
-			case	531:
+			case 	531:
 				reg = "ibat1l";
 				break;
-			case	532:
+			case 	532:
 				reg = "ibat2u";
 				break;
-			case	533:
+			case 	533:
 				reg = "ibat2l";
 				break;
-			case	534:
+			case 	534:
 				reg = "ibat3u";
 				break;
-			case	535:
+			case 	535:
 				reg = "ibat3l";
 				break;
-			case	536:
+			case 	536:
 				reg = "dbat0u";
 				break;
-			case	537:
+			case 	537:
 				reg = "dbat0l";
 				break;
-			case	538:
+			case 	538:
 				reg = "dbat1u";
 				break;
-			case	539:
+			case 	539:
 				reg = "dbat1l";
 				break;
-			case	540:
+			case 	540:
 				reg = "dbat2u";
 				break;
-			case	541:
+			case 	541:
 				reg = "dbat2l";
 				break;
-			case	542:
+			case 	542:
 				reg = "dbat3u";
 				break;
-			case	543:
+			case 	543:
 				reg = "dbat3l";
 				break;
-			case	1013:
+			case 	1013:
 				reg = "dabr";
 				break;
 			default:
 				reg = 0;
 			}
 			if (reg == 0) {
-				pstr += sprintf(pstr, "spr%d", spr);
+				pstr += sprintf (pstr, "spr%d", spr);
 			} else {
-				pstr += sprintf(pstr, "%s", reg);
+				pstr += sprintf (pstr, "%s", reg);
 			}
 		}
 		break;
@@ -968,9 +968,9 @@ disasm_process_field(u_int32_t addr, instr_t instr, char **ppfmt, char **ppoutpu
 				reg = 0;
 			}
 			if (reg == 0) {
-				pstr += sprintf(pstr, "tbr%d", tbr);
+				pstr += sprintf (pstr, "tbr%d", tbr);
 			} else {
-				pstr += sprintf(pstr, "%s", reg);
+				pstr += sprintf (pstr, "%s", reg);
 			}
 		}
 		break;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: openfirm.c,v 1.3 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: openfirm.c,v 1.4 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: openfirm.c,v 1.1 1996/09/30 16:34:52 ws Exp $	*/
 
 /*
@@ -236,10 +236,9 @@ OF_boot(bootspec)
 	char *bootspec;
 {
 	OF_rboot(bootspec);
-	printf("OF_boot returned!");		/* just in case */
+	printf ("OF_boot returned!");		/* just in case */
 	OF_exit();
-	while (1)
-		;
+	while(1);
 }
 
 void
@@ -257,25 +256,24 @@ OF_exit()
 
 	ofw_stack();
 	openfirmware(&args);
-	panic("OF_exit returned!");		/* just in case */
-	while (1)
-		;
+	panic ("OF_exit returned!");		/* just in case */
+	while (1);
 }
 
 /* XXX What is the reason to have this instead of bcopy/memcpy? */
 void
 ofbcopy(src, dst, len)
-	const void *src;    
-	void *dst;
-	size_t len;
+        const void *src;    
+        void *dst;         
+        size_t len;
 {
-	const char *sp = src;
-	char *dp = dst;
+        const char *sp = src;
+        char *dp = dst;
 
-	if (src == dst)
-		return; 
-		
-	while (len-- > 0)
-		*dp++ = *sp++;
+        if (src == dst)
+                return; 
+                
+        while (len-- > 0)                     
+                *dp++ = *sp++;
 }
 

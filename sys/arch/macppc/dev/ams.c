@@ -1,4 +1,4 @@
-/*	$OpenBSD: ams.c,v 1.5 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: ams.c,v 1.6 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: ams.c,v 1.11 2000/12/19 03:13:40 tsubai Exp $	*/
 
 /*
@@ -503,7 +503,7 @@ ms_processevent(event, sc)
 				buttons &= ~button_bit;
 		/* Extended Protocol (up to 6 more buttons) */
 		for (mask = 0x80; i < max_byte;
-		    i += (mask == 0x80), button_bit <<= 1) {
+		     i += (mask == 0x80), button_bit <<= 1) {
 			/* 0 when button down */
 			if (!(event->bytes[i] & mask))
 				buttons |= button_bit;
@@ -522,8 +522,8 @@ ms_processevent(event, sc)
 
 	if (sc->sc_wsmousedev)
 		wsmouse_input(sc->sc_wsmousedev, new_event.u.m.buttons,
-		    new_event.u.m.dx, -new_event.u.m.dy, 0,
-		    WSMOUSE_INPUT_DELTA);
+			      new_event.u.m.dx, -new_event.u.m.dy, 0,
+			      WSMOUSE_INPUT_DELTA);
 #if NAED > 0
 	aed_input(&new_event);
 #endif

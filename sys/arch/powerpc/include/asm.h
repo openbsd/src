@@ -1,4 +1,4 @@
-/*	$OpenBSD: asm.h,v 1.6 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: asm.h,v 1.7 2002/09/15 09:01:59 deraadt Exp $	*/
 /*	$NetBSD: asm.h,v 1.1 1996/09/30 16:34:20 ws Exp $	*/
 
 /*
@@ -91,7 +91,7 @@ _TMP_LABEL(y):; \
 	addis 11, 11, _TMP_LABEL(y)@ha; \
 	stw 0, 4(1); \
 	addi 0, 11,_TMP_LABEL(y)@l; \
-	bl _mcount;
+	bl _mcount; 
 #else
 # define _PROF_PROLOGUE(y)
 #endif

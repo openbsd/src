@@ -1,4 +1,4 @@
-/*	$OpenBSD: netif_of.c,v 1.2 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: netif_of.c,v 1.3 2002/09/15 09:01:59 deraadt Exp $	*/
 /*	$NetBSD: netif_of.c,v 1.1 1997/04/16 20:29:19 thorpej Exp $	*/
 
 /*
@@ -82,7 +82,7 @@ netif_open(machdep_hint)
 	struct iodesc *io;
 	int fd, error;
 	char addr[32];
-
+	
 #ifdef	NETIF_DEBUG
 	printf("netif_open...");
 #endif
@@ -99,12 +99,12 @@ netif_open(machdep_hint)
 
 	netif_of.nif_devdata = op;
 	io->io_netif = &netif_of;
-
+	
 	/* Put our ethernet address in io->myea */
 	OF_getprop(OF_instance_to_package(op->handle),
-	    "local-mac-address", io->myea, sizeof io->myea) == -1 &&
+		   "local-mac-address", io->myea, sizeof io->myea) == -1 &&
 	OF_getprop(OF_instance_to_package(op->handle),
-	    "mac-address", io->myea, sizeof io->myea);
+		   "mac-address", io->myea, sizeof io->myea);
 
 #ifdef	NETIF_DEBUG
 	printf("OK\n");
@@ -163,7 +163,7 @@ netif_put(desc, pkt, len)
 		struct ether_header *eh;
 
 		printf("netif_put: desc=0x%x pkt=0x%x len=%d\n",
-		    desc, pkt, len);
+		       desc, pkt, len);
 		eh = pkt;
 		printf("dst: %s ", ether_sprintf(eh->ether_dhost));
 		printf("src: %s ", ether_sprintf(eh->ether_shost));
@@ -211,7 +211,7 @@ netif_get(desc, pkt, maxlen, timo)
 
 #ifdef	NETIF_DEBUG
 	printf("netif_get: pkt=0x%x, maxlen=%d, tmo=%d\n",
-	    pkt, maxlen, timo);
+	       pkt, maxlen, timo);
 #endif
 
 	tmo_ms = timo * 1000;
@@ -220,7 +220,7 @@ netif_get(desc, pkt, maxlen, timo)
 	do {
 		len = OF_read(op->handle, pkt, maxlen);
 	} while ((len == -2 || len == 0) &&
-	    ((OF_milliseconds() - tick0) < tmo_ms));
+		 ((OF_milliseconds() - tick0) < tmo_ms));
 
 #ifdef	NETIF_DEBUG
 	printf("netif_get: received len=%d\n", len);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.h,v 1.30 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: pmap.h,v 1.31 2002/09/15 09:01:59 deraadt Exp $	*/
 /*	$NetBSD: pmap.h,v 1.1 1996/09/30 16:34:29 ws Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ typedef u_int sr_t;
 #define SR_NOEXEC	0x10000000
 #define	SR_VSID		0x00ffffff
 /*
- * bit
+ * bit 
  *   3  2 2  2    2 1  1 1  1 1            0
  *   1  8 7  4    0 9  6 5  2 1            0
  *  |XXXX|XXXX XXXX|XXXX XXXX|XXXX XXXX XXXX
@@ -63,20 +63,20 @@ typedef u_int sr_t;
 /* V->P mapping data */
 #define VP_SR_SIZE	16
 #define VP_SR_MASK	(VP_SR_SIZE-1)
-#define VP_SR_POS	28
+#define VP_SR_POS 	28
 #define VP_IDX1_SIZE	256
 #define VP_IDX1_MASK	(VP_IDX1_SIZE-1)
-#define VP_IDX1_POS	20
+#define VP_IDX1_POS 	20
 #define VP_IDX2_SIZE	256
 #define VP_IDX2_MASK	(VP_IDX2_SIZE-1)
-#define VP_IDX2_POS	12
+#define VP_IDX2_POS 	12
 
 void pmap_kenter_cache( vaddr_t va, paddr_t pa, vm_prot_t prot, int cacheable);
 
 /* cache flags */
-#define PMAP_CACHE_DEFAULT	0	/* WB cache managed mem, devices not */
-#define PMAP_CACHE_CI		1	/* cache inhibit */
-#define PMAP_CACHE_WT		2	/* writethru */
+#define PMAP_CACHE_DEFAULT	0 	/* WB cache managed mem, devices not */
+#define PMAP_CACHE_CI		1 	/* cache inhibit */
+#define PMAP_CACHE_WT		2 	/* writethru */
 #define PMAP_CACHE_WB		3	/* writeback */
 
 /*
@@ -110,7 +110,7 @@ boolean_t pteclrbits(paddr_t pa, u_int mask, u_int clear);
 #define	pmap_phys_address(x)		(x)
 #define pmap_update(pmap)	/* nothing (yet) */
 
-#define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
+#define pmap_resident_count(pmap)       ((pmap)->pm_stats.resident_count) 
 
 /*
  * Alternate mapping methods for pool.

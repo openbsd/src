@@ -1,4 +1,4 @@
-/*	$OpenBSD: clock.c,v 1.4 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: clock.c,v 1.5 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: clock.c,v 1.1 1996/09/30 16:34:40 ws Exp $	*/
 
 /*
@@ -58,12 +58,12 @@ static volatile u_long lasttb;
 /*
  * BCD to decimal and decimal to BCD.
  */
-#define FROMBCD(x)	(((x) >> 4) * 10 + ((x) & 0xf))
-#define TOBCD(x)	(((x) / 10 * 16) + ((x) % 10))
+#define FROMBCD(x)      (((x) >> 4) * 10 + ((x) & 0xf))
+#define TOBCD(x)        (((x) / 10 * 16) + ((x) % 10))
 
-#define SECDAY		(24 * 60 * 60)
-#define SECYR		(SECDAY * 365)
-#define LEAPYEAR(y)	(((y) & 3) == 0)
+#define SECDAY          (24 * 60 * 60)
+#define SECYR           (SECDAY * 365)
+#define LEAPYEAR(y)     (((y) & 3) == 0)
 #define YEAR0		1900
 
 typedef int (clock_read_t)(int *sec, int *min, int *hour, int *day,
@@ -97,17 +97,17 @@ inittodr(base)
 
 	int badbase = 0, waszero = base == 0;
 
-	if (base < 5 * SECYR) {
-		/*
-		 * If base is 0, assume filesystem time is just unknown
-		 * instead of preposterous. Don't bark.
-		 */
-		if (base != 0)
-			printf("WARNING: preposterous time in file system\n");
-		/* not going to use it anyway, if the chip is readable */
-		base = 21*SECYR + 186*SECDAY + SECDAY/2;
-		badbase = 1;
-	}
+        if (base < 5 * SECYR) {
+                /*
+                 * If base is 0, assume filesystem time is just unknown
+                 * instead of preposterous. Don't bark.
+                 */
+                if (base != 0)
+                        printf("WARNING: preposterous time in file system\n");
+                /* not going to use it anyway, if the chip is readable */
+                base = 21*SECYR + 186*SECDAY + SECDAY/2;
+                badbase = 1;
+        }
 
 	if (clock_read != NULL ) {
 		(*clock_read)( &sec, &min, &hour, &day, &mon, &year);
@@ -163,7 +163,7 @@ const short dayyr[12] =
 
 static u_long
 chiptotime(sec, min, hour, day, mon, year)
-	int sec, min, hour, day, mon, year;
+        int sec, min, hour, day, mon, year;
 {
 	int days, yr;
 		
@@ -249,7 +249,7 @@ decr_intr(frame)
 		 * Reenable interrupts
 		 */
 		asm volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
-		    : "=r"(msr) : "K"(PSL_EE));
+			      : "=r"(msr) : "K"(PSL_EE));
 		
 		/*
 		 * Do standard timer interrupt stuff.
@@ -269,7 +269,7 @@ cpu_initclocks()
 {
 	int msr, scratch;
 	asm volatile ("mfmsr %0; andi. %1, %0, %2; mtmsr %1"
-	    : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
 	asm volatile ("mftb %0" : "=r"(lasttb));
 	asm volatile ("mtdec %0" :: "r"(ticks_per_intr));
 	asm volatile ("mtmsr %0" :: "r"(msr));
@@ -286,10 +286,10 @@ calc_delayconst()
 	 * Get this info during autoconf?				XXX
 	 */
 	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
-		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0 &&
-		    !strcmp(name, "cpu") &&
-		    OF_getprop(qhandle, "timebase-frequency",
-		    &ticks_per_sec, sizeof ticks_per_sec) >= 0) {
+		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
+		    && !strcmp(name, "cpu")
+		    && OF_getprop(qhandle, "timebase-frequency",
+		    & ticks_per_sec, sizeof ticks_per_sec) >= 0) {
 			/*
 			 * Should check for correct CPU here?		XXX
 			 */
@@ -320,7 +320,7 @@ mftb()
 	u_quad_t tb;
 	
 	asm ("1: mftbu %0; mftb %0+1; mftbu %1; cmpw 0,%0,%1; bne 1b"
-	    : "=r"(tb), "=r"(scratch));
+	     : "=r"(tb), "=r"(scratch));
 	return tb;
 }
 
@@ -336,7 +336,7 @@ microtime(tvp)
 	int msr, scratch;
 	
 	asm volatile ("mfmsr %0; andi. %1,%0,%2; mtmsr %1"
-	    : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
+		      : "=r"(msr), "=r"(scratch) : "K"((u_short)~PSL_EE));
 	asm ("mftb %0" : "=r"(tb));
 	ticks = (tb - lasttb) * ns_per_tick;
 	*tvp = time;
@@ -364,8 +364,8 @@ delay(n)
 	tbh = tb >> 32;
 	tbl = tb;
 	asm ("1: mftbu %0; cmplw %0,%1; blt 1b; bgt 2f;"
-	    " mftb %0; cmplw %0,%2; blt 1b; 2:"
-	    :: "r"(scratch), "r"(tbh), "r"(tbl));
+	     " mftb %0; cmplw %0,%2; blt 1b; 2:"
+	     :: "r"(scratch), "r"(tbh), "r"(tbl));
 
 	tb = mftb();
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: Locore.c,v 1.6 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: Locore.c,v 1.7 2002/09/15 09:01:59 deraadt Exp $	*/
 /*	$NetBSD: Locore.c,v 1.1 1997/04/16 20:29:11 thorpej Exp $	*/
 
 /*
@@ -52,28 +52,28 @@ asm("
 bat_init:
 
 	mfmsr   8
-	li	0,0
-	mtmsr	0
-	isync
+        li      0,0
+        mtmsr   0
+        isync
 
-	mtibatu 0,0
-	mtibatu 1,0
-	mtibatu 2,0
-	mtibatu 3,0
-	mtdbatu 0,0
-	mtdbatu 1,0
-	mtdbatu 2,0
-	mtdbatu 3,0
+        mtibatu 0,0
+        mtibatu 1,0
+        mtibatu 2,0
+        mtibatu 3,0
+        mtdbatu 0,0
+        mtdbatu 1,0
+        mtdbatu 2,0
+        mtdbatu 3,0
 
-	li	9,0x12		/* BATL(0, BAT_M, BAT_PP_RW) */
-	mtibatl 0,9
-	mtdbatl 0,9
-	li	9,0x1ffe	/* BATU(0, BAT_BL_256M, BAT_Vs) */
-	mtibatu 0,9
-	mtdbatu 0,9
-	isync
+        li      9,0x12          /* BATL(0, BAT_M, BAT_PP_RW) */
+        mtibatl 0,9
+        mtdbatl 0,9
+        li      9,0x1ffe        /* BATU(0, BAT_BL_256M, BAT_Vs) */
+        mtibatu 0,9
+        mtdbatu 0,9
+        isync
 
-	mtmsr	8
+        mtmsr   8
 	isync
 	blr
 ");
@@ -142,8 +142,7 @@ _rtt()
 	};
 
 	openfirmware(&args);
-	while (1)
-		;			/* just in case */
+	while (1);			/* just in case */
 }
 
 int
@@ -160,8 +159,8 @@ OF_finddevice(name)
 		"finddevice",
 		1,
 		1,
-	};
-
+	};	
+	
 	args.device = name;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -183,7 +182,7 @@ OF_instance_to_package(ihandle)
 		1,
 		1,
 	};
-
+	
 	args.ihandle = ihandle;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -211,7 +210,7 @@ OF_getprop(handle, prop, buf, buflen)
 		4,
 		1,
 	};
-
+	
 	args.phandle = handle;
 	args.prop = prop;
 	args.buf = buf;
@@ -243,7 +242,7 @@ OF_setprop(handle, prop, buf, len)
 		4,
 		1,
 	};
-
+	
 	args.phandle = handle;
 	args.prop = prop;
 	args.buf = buf;
@@ -269,7 +268,7 @@ OF_open(dname)
 		1,
 		1,
 	};
-
+	
 	args.dname = dname;
 	if (openfirmware(&args) == -1)
 		return -1;
@@ -290,7 +289,7 @@ OF_close(handle)
 		1,
 		0,
 	};
-
+	
 	args.handle = handle;
 	openfirmware(&args);
 }
@@ -369,7 +368,7 @@ OF_seek(handle, pos)
 		3,
 		1,
 	};
-
+	
 	args.handle = handle;
 	args.poshi = (int)(pos >> 32);
 	args.poslo = (int)pos;
@@ -435,7 +434,7 @@ OF_release(virt, size)
 		2,
 		0,
 	};
-
+	
 	args.virt = virt;
 	args.size = size;
 	openfirmware(&args);
@@ -454,7 +453,7 @@ OF_milliseconds()
 		0,
 		1,
 	};
-
+	
 	openfirmware(&args);
 	return args.ms;
 }
@@ -556,12 +555,11 @@ static void
 setup()
 {
 	int chosen;
-
+	
 	if ((chosen = OF_finddevice("/chosen")) == -1)
 		_rtt();
-	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) !=
-	    sizeof(stdin) ||
-	    OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
+	if (OF_getprop(chosen, "stdin", &stdin, sizeof(stdin)) != sizeof(stdin)
+	    || OF_getprop(chosen, "stdout", &stdout, sizeof(stdout)) !=
 	    sizeof(stdout))
 		_rtt();
 	if (stdout == 0) {

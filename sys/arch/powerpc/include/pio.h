@@ -1,8 +1,8 @@
-/*	$OpenBSD: pio.h,v 1.8 2002/09/15 02:02:44 deraadt Exp $ */
+/*	$OpenBSD: pio.h,v 1.9 2002/09/15 09:01:59 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom, Opsycon AB and RTMX Inc, USA.
- *
+ * 
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
@@ -163,16 +163,15 @@ __flash_led(bits, count)
 {
 	int i, v = 0;
 
-	if (bits == 0) {
-		v = 1;
-		bits = 3;
+	if(bits == 0) {
+		v = 1; bits = 3;
 	}
 	bits &= 3;
 	count += count;
 	v |= (*(volatile u_int8_t *)(MPC106_V_ISA_IO_SPACE + 0x01f4)) & ~3;
-	while (count--) {
+	while(count--) {
 		v ^= bits;
-		for (i = 100000; i > 0; i--)
+		for(i = 100000; i > 0; i--)
 			*(volatile u_int8_t *)(MPC106_V_ISA_IO_SPACE + 0x01f4) = v;
 	}
 	*(u_int8_t *)(MPC106_V_ISA_IO_SPACE + 0x01f4) &= ~3;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: macobio.c,v 1.6 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: macobio.c,v 1.7 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: obio.c,v 1.6 1999/05/01 10:36:08 tsubai Exp $	*/
 
 /*-
@@ -132,11 +132,12 @@ macobio_attach(parent, self, aux)
 		node = OF_finddevice("mac-io");
 		if (node == -1)
 			node = OF_finddevice("/pci/mac-io");
-		if (OF_getprop(node, "assigned-addresses", reg,
-		    sizeof(reg)) == (sizeof (reg[0]) * 5)) {
+		if (OF_getprop(node, "assigned-addresses", reg, sizeof(reg))
+			== (sizeof (reg[0]) * 5))
+		{
 			/* always ??? */
 			heathrow_FCR = mapiodev(reg[2] + HEATHROW_FCR_OFFSET,
-			    4);
+				4);
 		}
 		break;
 	case PCI_PRODUCT_APPLE_KEYLARGO:
@@ -144,10 +145,12 @@ macobio_attach(parent, self, aux)
 		node = OF_finddevice("mac-io");
 		if (node == -1)
 			node = OF_finddevice("/pci/mac-io");
-		if (OF_getprop(node, "assigned-addresses", reg,
-		    sizeof(reg)) == (sizeof (reg[0]) * 5)) {
-			sc->obiomem = mapiodev(reg[2], 0x100);
+		if (OF_getprop(node, "assigned-addresses", reg, sizeof(reg))
+			== (sizeof (reg[0]) * 5))
+		{
+			 sc->obiomem = mapiodev(reg[2], 0x100);
 		}
+
 		break;
 	default:
 		printf(": unknown macobio controller\n");
@@ -200,10 +203,10 @@ macobio_attach(parent, self, aux)
 
 		ca.ca_nreg  = OF_getprop(child, "reg", reg, sizeof(reg));
 		ca.ca_nintr = OF_getprop(child, "AAPL,interrupts", intr,
-		    sizeof(intr));
+				sizeof(intr));
 		if (ca.ca_nintr == -1)
 			ca.ca_nintr = OF_getprop(child, "interrupts", intr,
-			    sizeof(intr));
+					sizeof(intr));
 
 		ca.ca_reg = reg;
 		ca.ca_intr = intr;
@@ -268,7 +271,7 @@ mac_intr_establish(lcv, irq, type, level, ih_fun, ih_arg, name)
 	char *name;
 {
 	return (*mac_intr_establish_func)(lcv, irq, type, level, ih_fun,
-	    ih_arg, name);
+		ih_arg, name);
 }
 void
 mac_intr_disestablish(lcp, arg)
@@ -288,7 +291,7 @@ macobio_modem_power(int enable)
 		val = in32rb(sc->obiomem + 0x40);
 		if (enable)
 			val = val & ~((u_int32_t)1<<25);
-		else
+		else 
 			val = val | ((u_int32_t)1<<25);
 		out32rb(sc->obiomem + 0x40, val);
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: adb_direct.c,v 1.6 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: adb_direct.c,v 1.7 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: adb_direct.c,v 1.14 2000/06/08 22:10:45 tsubai Exp $	*/
 
 /*
@@ -36,25 +36,25 @@
  * to clean it up as much as I would like.
  * But it works, so I'm happy. :-) jpw
  */
-
+ 
 /*
  * TO DO:
  *  - We could reduce the time spent in the adb_intr_* routines
- *    by having them save the incoming and outgoing data directly
+ *    by having them save the incoming and outgoing data directly 
  *    in the adbInbound and adbOutbound queues, as it would reduce
  *    the number of times we need to copy the data around. It
  *    would also make the code more readable and easier to follow.
- *  - (Related to above) Use the header part of adbCommand to
+ *  - (Related to above) Use the header part of adbCommand to 
  *    reduce the number of copies we have to do of the data.
  *  - (Related to above) Actually implement the adbOutbound queue.
  *    This is fairly easy once you switch all the intr routines
  *    over to using adbCommand structs directly.
  *  - There is a bug in the state machine of adb_intr_cuda
  *    code that causes hangs, especially on 030 machines, probably
- *    because of some timing issues. Because I have been unable to
- *    determine the exact cause of this bug, I used the timeout function
- *    to check for and recover from this condition. If anyone finds
- *    the actual cause of this bug, the calls to timeout and the
+ *    because of some timing issues. Because I have been unable to 
+ *    determine the exact cause of this bug, I used the timeout function 
+ *    to check for and recover from this condition. If anyone finds 
+ *    the actual cause of this bug, the calls to timeout and the 
  *    adb_cuda_tickle routine can be removed.
  */
 
@@ -154,7 +154,7 @@ struct adbCmdHoldEntry {
 };
 
 /*
- * Eventually used for two separate queues, the queue between
+ * Eventually used for two separate queues, the queue between 
  * the upper and lower halves, and the outgoing packet queue.
  * TO DO: adbCommand can replace all of adbCmdHoldEntry eventually
  */
@@ -364,7 +364,7 @@ switch_start:
 			 */
 			/* set up data for adb_pass_up */
 			memcpy(packet.data, adbInputBuffer, adbInputBuffer[0] + 1);
-
+				
 			if ((adbWaiting == 1) &&
 			    (adbInputBuffer[4] == adbWaitingCmd) &&
 			    ((adbInputBuffer[2] == 0x00) ||
@@ -596,8 +596,8 @@ send_adb_cuda(u_char * in, u_char * buffer, void *compRout, void *data, int
 
 	if ((s & (1 << 18)) || adb_polling) /* XXX were VIA1 interrupts blocked ? */
 		/* poll until byte done */
-		while ((adbActionState != ADB_ACTION_IDLE) ||
-		    (ADB_INTR_IS_ON) || (adbWaiting == 1))
+		while ((adbActionState != ADB_ACTION_IDLE) || (ADB_INTR_IS_ON)
+		    || (adbWaiting == 1))
 			if (ADB_SR_INTR_IS_ON) {	/* wait for "interrupt" */
 				adb_intr_cuda();	/* process it */
 				adb_soft_intr();
@@ -627,7 +627,7 @@ adb_intr(void *arg)
 }
 
 
-/*
+/* 
  * adb_pass_up is called by the interrupt-time routines.
  * It takes the raw packet data that was received from the
  * device and puts it into the queue that the upper half
@@ -635,7 +635,7 @@ adb_intr(void *arg)
  * will eventually call the upper half routine (adb_soft_intr).
  *
  * If in->unsol is 0, then this is either the notification
- * that the packet was sent (on a LISTEN, for example), or the
+ * that the packet was sent (on a LISTEN, for example), or the 
  * response from the device (on a TALK). The completion routine
  * is called only if the user specified one.
  *
@@ -730,14 +730,14 @@ adb_pass_up(struct adbCommand *in)
 	}
 
 #ifdef ADB_DEBUG
-	if (adb_debug && in->data[1] == 2)
+	if (adb_debug && in->data[1] == 2) 
 		printf_intr("adb: caught error\n");
 #endif
 
 	/* copy the packet data over */
 	/*
 	 * TO DO: If the *_intr routines fed their incoming data
-	 * directly into an adbCommand struct, which is passed to
+	 * directly into an adbCommand struct, which is passed to 
 	 * this routine, then we could eliminate this copy.
 	 */
 	memcpy(adbInbound[adbInTail].data + 1, in->data + start + 1, len);
@@ -792,7 +792,7 @@ adb_soft_intr(void)
 		comprout = adbInbound[adbInHead].compRout;
 		compdata = adbInbound[adbInHead].compData;
 		cmd = adbInbound[adbInHead].cmd;
-
+	
 		/* copy over data to data area if it's valid */
 		/*
 		 * Note that for unsol packets we don't want to copy the
@@ -1006,7 +1006,7 @@ adb_reinit(void)
 	 * responds at that address. Then move the last device that was moved
 	 * back to the original address. Do this for the remaining addresses
 	 * that we determined were in use.
-	 *
+	 * 
 	 * When finished, do this entire process over again with the updated
 	 * list of in use addresses. Do this until no new devices have been
 	 * found in 20 passes though the in use address list. (This probably
@@ -1292,7 +1292,7 @@ adb_op_sync(Ptr buffer, Ptr compRout, Ptr data, short command)
  * This function is used by the adb_op_sync routine so it knows when the
  * function is done.
  */
-void
+void 
 adb_op_comprout(buffer, compdata, cmd)
 	caddr_t buffer, compdata;
 	int cmd;
@@ -1302,7 +1302,7 @@ adb_op_comprout(buffer, compdata, cmd)
 	*p = 1;
 }
 
-void
+void 
 adb_setup_hw_type(void)
 {
 	switch (adbHardware) {
@@ -1319,8 +1319,8 @@ adb_setup_hw_type(void)
 		panic("unknown adb hardware");
 	}
 }
-
-int
+	
+int 
 count_adbs(void)
 {
 	int i;
@@ -1335,7 +1335,7 @@ count_adbs(void)
 	return found;
 }
 
-int
+int 
 get_ind_adb_info(ADBDataBlock * info, int index)
 {
 	if ((index < 1) || (index > 15))	/* check range 1-15 */
@@ -1357,7 +1357,7 @@ get_ind_adb_info(ADBDataBlock * info, int index)
 	return (ADBDevTable[index].currentAddr);
 }
 
-int
+int 
 get_adb_info(ADBDataBlock * info, int adbAddr)
 {
 	int i;
@@ -1377,7 +1377,7 @@ get_adb_info(ADBDataBlock * info, int adbAddr)
 	return (-1);		/* not found */
 }
 
-int
+int 
 set_adb_info(ADBSetInfoBlock * info, int adbAddr)
 {
 	int i;
@@ -1399,7 +1399,7 @@ set_adb_info(ADBSetInfoBlock * info, int adbAddr)
 
 /* caller should really use machine-independant version: getPramTime */
 /* this version does pseudo-adb access only */
-int
+int 
 adb_read_date_time(unsigned long *time)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
@@ -1449,7 +1449,7 @@ adb_read_date_time(unsigned long *time)
 
 /* caller should really use machine-independant version: setPramTime */
 /* this version does pseudo-adb access only */
-int
+int 
 adb_set_date_time(unsigned long time)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
@@ -1487,7 +1487,7 @@ adb_set_date_time(unsigned long time)
 }
 
 
-int
+int 
 adb_poweroff(void)
 {
 	u_char output[ADB_MAX_MSG_LENGTH];
@@ -1524,31 +1524,31 @@ adb_poweroff(void)
 	}
 }
 
-int
+int 
 CountADBs(void)
 {
 	return (count_adbs());
 }
 
-void
+void 
 ADBReInit(void)
 {
 	adb_reinit();
 }
 
-int
+int 
 GetIndADB(ADBDataBlock * info, int index)
 {
 	return (get_ind_adb_info(info, index));
 }
 
-int
+int 
 GetADBInfo(ADBDataBlock * info, int adbAddr)
 {
 	return (get_adb_info(info, adbAddr));
 }
 
-int
+int 
 SetADBInfo(ADBSetInfoBlock * info, int adbAddr)
 {
 	return (set_adb_info(info, adbAddr));
@@ -1595,7 +1595,7 @@ adb_restart()
 		output[1] = 0x01;	/* to pram/rtc/soft-power device */
 		output[2] = 0x11;	/* restart */
 		result = send_adb_cuda((u_char *)output, (u_char *)0,
-		    (void *)0, (void *)0, (int)0);
+				       (void *)0, (void *)0, (int)0);
 		if (result != 0)	/* exit if not sent */
 			return;
 		while (1);		/* not return */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: wdc_obio.c,v 1.7 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: wdc_obio.c,v 1.8 2002/09/15 09:01:58 deraadt Exp $	*/
 /*	$NetBSD: wdc_obio.c,v 1.15 2001/07/25 20:26:33 bouyer Exp $	*/
 
 /*-
@@ -180,23 +180,24 @@ wdc_obio_attach(parent, self, aux)
 
 	if (bus_space_map(chp->cmd_iot, cmdbase, cmdsize, 0, &chp->cmd_ioh) ||
 	    bus_space_subregion(chp->cmd_iot, chp->cmd_ioh,
-	    /* WDC_AUXREG_OFFSET<<4 */ 0x160, 1, &chp->ctl_ioh)) {
+			/* WDC_AUXREG_OFFSET<<4 */ 0x160, 1, &chp->ctl_ioh))
+	{
 		printf("%s: couldn't map registers\n",
-		    sc->sc_wdcdev.sc_dev.dv_xname);
+			sc->sc_wdcdev.sc_dev.dv_xname);
 		return;
 	}
 	chp->data32iot = chp->cmd_iot;
 	chp->data32ioh = chp->cmd_ioh;
 
 	mac_intr_establish(parent, intr, IST_LEVEL, IPL_BIO, wdcintr, chp,
-	    "wdc_obio");
+		"wdc_obio");
 
 	sc->sc_wdcdev.set_modes = wdc_obio_adjust_timing;
 	if (use_dma) {
 		sc->sc_dbdma = dbdma_alloc(sc->sc_dmat, WDC_DMALIST_MAX + 1);
 		sc->sc_dmacmd = sc->sc_dbdma->d_addr;
 		sc->sc_dmareg = mapiodev(ca->ca_baseaddr + ca->ca_reg[2],
-		    ca->ca_reg[3]);
+					 ca->ca_reg[3]);
 		sc->sc_wdcdev.cap |= WDC_CAPABILITY_DMA;
 		sc->sc_wdcdev.DMA_cap = 2;
 		if (strcmp(ca->ca_name, "ata-4") == 0) {
@@ -327,7 +328,8 @@ wdc_obio_adjust_timing(chp)
 			inact_tick = DMA_REC_MIN;
 		half_tick = 0;	/* XXX */
 		/* mask: 0xfffff800 */
-		conf |= (half_tick << 21) |
+		conf |=
+		    (half_tick << 21) |
 		    (inact_tick << 16) | (act_tick << 11);
 	}
 	bus_space_write_4(chp->cmd_iot, chp->cmd_ioh, CONFIG_REG, conf);
@@ -451,7 +453,7 @@ wdc_obio_dma_init(v, channel, drive, databuf, datalen, read)
 	}
 
 	DBDMA_BUILD(cmdp, DBDMA_CMD_STOP, 0, 0, 0,
-	    DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
+		DBDMA_INT_NEVER, DBDMA_WAIT_NEVER, DBDMA_BRANCH_NEVER);
 
 	return 0;
 }
@@ -490,8 +492,7 @@ wdc_obio_read_reg(chp, reg)
 {
 #ifdef DIAGNOSTIC
 	if (reg & _WDC_WRONLY) {
-		printf("wdc_obio_read_reg: reading from a write-only register %d\n",
-		    reg);
+		printf ("wdc_obio_read_reg: reading from a write-only register %d\n", reg);
 	}
 #endif
 
@@ -512,8 +513,7 @@ wdc_obio_write_reg(chp, reg, val)
 {
 #ifdef DIAGNOSTIC
 	if (reg & _WDC_RDONLY) {
-		printf("wdc_obio_write_reg: writing to a read-only register %d\n",
-		    reg);
+		printf ("wdc_obio_write_reg: writing to a read-only register %d\n", reg);
 	}
 #endif
 

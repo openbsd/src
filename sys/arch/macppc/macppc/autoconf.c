@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.7 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.8 2002/09/15 09:01:58 deraadt Exp $	*/
 /*
  * Copyright (c) 1996, 1997 Per Fogelstrom
  * Copyright (c) 1995 Theo de Raadt
@@ -41,7 +41,7 @@
  * from: Utah Hdr: autoconf.c 1.31 91/01/21
  *
  *	from: @(#)autoconf.c	8.1 (Berkeley) 6/10/93
- *      $Id: autoconf.c,v 1.7 2002/09/15 02:02:43 deraadt Exp $
+ *      $Id: autoconf.c,v 1.8 2002/09/15 09:01:58 deraadt Exp $
  */
 
 /*
@@ -68,9 +68,9 @@ void	swapconf(void);
 extern void	dumpconf(void);
 int	findblkmajor(struct device *);
 char	*findblkname(int);
-static	struct device *getdisk(char *, int, int, dev_t *);
+static	struct device * getdisk(char *, int, int, dev_t *);
 struct	device * getdevunit(char *, int);
-static	struct devmap *findtype(char **);
+static	struct devmap * findtype(char **);
 void	makebootdev(char *cp);
 int	getpno(char **);
 void	diskconf(void);
@@ -89,12 +89,12 @@ struct device *bootdv = NULL;
  *  This is done at boot time.
  */
 void
-cpu_configure(void)
+cpu_configure()
 {
 	(void)splhigh();	/* To be really sure.. */
 	calc_delayconst();
 
-	if (config_rootfound("mainbus", "mainbus") == 0)
+	if(config_rootfound("mainbus", "mainbus") == 0)
 		panic("no mainbus found");
 	(void)spl0();
 
@@ -105,14 +105,13 @@ cpu_configure(void)
 	md_diskconf = diskconf;
 	cold = 0;
 }
-
 /*
  * Now that we are fully operational, we can checksum the
  * disks, and using some heuristics, hopefully are able to
  * always determine the correct root disk.
  */
 void
-diskconf(void)
+diskconf()
 {
 	/*
 	 * Configure root, swap, and dump area.  This is
@@ -138,7 +137,7 @@ diskconf(void)
  * Configure swap space and related parameters.
  */
 void
-swapconf(void)
+swapconf()
 {
 	register struct swdevt *swp;
 	register int nblks;
@@ -146,7 +145,7 @@ swapconf(void)
 	for (swp = swdevt; swp->sw_dev != NODEV; swp++) {
 		if (bdevsw[major(swp->sw_dev)].d_psize) {
 			nblks =
-			    (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
+			  (*bdevsw[major(swp->sw_dev)].d_psize)(swp->sw_dev);
 			if (nblks != -1 &&
 			    (swp->sw_nblks == 0 || swp->sw_nblks > nblks))
 				swp->sw_nblks = nblks;
@@ -174,7 +173,7 @@ long dumplo = -1;			/* blocks */
  */
 #if 0
 void
-dumpconf(void)
+dumpconf()
 {
 	int nblks;	/* size of dump area */
 	int maj;
@@ -215,7 +214,8 @@ static	struct nam2blk {
 };
 
 int
-findblkmajor(struct device *dv)
+findblkmajor(dv)
+	struct device *dv;
 {
 	char *name = dv->dv_xname;
 	int i;
@@ -223,22 +223,26 @@ findblkmajor(struct device *dv)
 	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); ++i)
 		if (strncmp(name, nam2blk[i].name, strlen(nam2blk[i].name)) == 0)
 			return (nam2blk[i].maj);
-	return (-1);
+	 return (-1);
 }
 
 char *
-findblkname(int maj)
+findblkname(maj)
+	int maj;
 {
 	int i;
 
 	for (i = 0; i < sizeof(nam2blk)/sizeof(nam2blk[0]); i++)
 		if (nam2blk[i].maj == maj)
 			return (nam2blk[i].name);
-	return (NULL);
+	 return (NULL);
 }
 
 static struct device *
-getdisk(char *str, int len, int defpart, dev_t *devp)
+getdisk(str, len, defpart, devp)
+	char *str;
+	int len, defpart;
+	dev_t *devp;
 {
 	register struct device *dv;
 
@@ -250,7 +254,7 @@ getdisk(char *str, int len, int defpart, dev_t *devp)
 				printf(" %s[a-p]", dv->dv_xname);
 #ifdef NFSCLIENT
 			if (dv->dv_class == DV_IFNET)
-				printf(" %s", dv->dv_xname);
+				printf(" %s", dv->dv_xname); 
 #endif
 		}
 		printf("\n");
@@ -259,7 +263,10 @@ getdisk(char *str, int len, int defpart, dev_t *devp)
 }
 
 struct device *
-parsedisk(char *str, int len, int defpart, dev_t *devp)
+parsedisk(str, len, defpart, devp)
+	char *str;
+	int len, defpart;
+	dev_t *devp;
 {
 	register struct device *dv;
 	register char *cp, c;
@@ -303,7 +310,7 @@ parsedisk(char *str, int len, int defpart, dev_t *devp)
  * change rootdev to correspond to the load device.
  */
 void
-setroot(void)
+setroot()
 {
 	int  majdev, mindev, unit, part, len;
 	dev_t temp;
@@ -319,7 +326,7 @@ setroot(void)
 	printf("bootpath: '%s'\n", bootpath);
 
 	makebootdev(bootpath);
-	if (boothowto & RB_DFLTROOT)
+	if(boothowto & RB_DFLTROOT)
 		return;		/* Boot compiled in */
 
 	/*
@@ -339,13 +346,15 @@ setroot(void)
 	}
 
 	/* Lookup boot device from boot if not set by configuration */
-	if (bootdv == NULL)
+	if(bootdv == NULL) {
 		bootdv = parsedisk(bootdev, strlen(bootdev), 0, &temp);
-	if (bootdv == NULL) {
+	}
+	if(bootdv == NULL) {
 		printf("boot device: lookup '%s' failed.\n", bootdev);
 		boothowto |= RB_ASKNAME; /* Don't Panic :-) */
 		/* boothowto |= RB_SINGLE; */
-	} else {
+	}
+	else {
 		printf("boot device: %s.\n", bootdv->dv_xname);
 	}
 
@@ -353,8 +362,10 @@ setroot(void)
 		for (;;) {
 			printf("root device ");
 			if (bootdv != NULL)
-				printf("(default %s%c)", bootdv->dv_xname,
-				    bootdv->dv_class == DV_DISK ? 'a' : ' ');
+				 printf("(default %s%c)",
+					bootdv->dv_xname,
+					bootdv->dv_class == DV_DISK
+						? 'a' : ' ');
 			printf(": ");
 			len = getsn(buf, sizeof(buf));
 			if (len == 0 && bootdv != NULL) {
@@ -380,9 +391,9 @@ setroot(void)
 		 * because swap must be on same device as root, for
 		 * network devices this is easy.
 		 */
-		if (bootdv->dv_class == DV_IFNET)
+		if (bootdv->dv_class == DV_IFNET) {
 			goto gotswap;
-
+		}
 		for (;;) {
 			printf("swap device ");
 			if (bootdv != NULL)
@@ -421,7 +432,8 @@ gotswap:
 		dumpdev = nswapdev;
 		swdevt[0].sw_dev = nswapdev;
 		swdevt[1].sw_dev = NODEV;
-	} else if (mountroot == NULL) {
+	}
+	else if(mountroot == NULL) {
 		/*
 		 * `swap generic': Use the device the ROM told us to use.
 		 */
@@ -438,10 +450,11 @@ gotswap:
 			rootdev = MAKEDISKDEV(majdev, bootdv->dv_unit, 0);
 			nswapdev = MAKEDISKDEV(majdev, bootdv->dv_unit, 1);
 			dumpdev = nswapdev;
-		} else {
+		}
+		else {
 			/*
 			 *  Root and Swap are on net.
-			 */
+			 */	
 			nswapdev = dumpdev = NODEV;
 		}
 		swdevt[0].sw_dev = nswapdev;
@@ -504,7 +517,9 @@ gotswap:
  * find a device matching "name" and unit number
  */
 struct device *
-getdevunit(char *name, int unit)
+getdevunit(name, unit)
+	char *name;
+	int unit;
 {
 	struct device *dev = alldevs.tqh_first;
 	char num[10], fullname[16];
@@ -539,7 +554,8 @@ struct devmap {
 #define	T_DISK	0x21
 
 static struct devmap *
-findtype(char **s)
+findtype(s)
+	char **s;
 {
 	static struct devmap devmap[] = {
 		{ "/pci@",	NULL, T_BUS },
@@ -559,16 +575,15 @@ findtype(char **s)
 	struct devmap *dp = &devmap[0];
 
 	while (dp->att) {
-		if (strncmp(*s, dp->att, strlen(dp->att)) == 0) {
+		if (strncmp (*s, dp->att, strlen(dp->att)) == 0) {
 			*s += strlen(dp->att);
 			break;
 		}
 		dp++;
 	}
-#if 0
-	if (dp->att == NULL)
+	if (dp->att == NULL) {
 		printf("string [%s] not found\n", *s);
-#endif
+	}
 	return(dp);
 }
 
@@ -579,7 +594,8 @@ findtype(char **s)
  *                       '/pci/mac-io/ide/disk/bsd
  */
 void
-makebootdev(char *bp)
+makebootdev(bp)
+	char *bp;
 {
 	int	unit;
 	char   *dev, *cp;
@@ -587,17 +603,18 @@ makebootdev(char *bp)
 
 	cp = bp;
 	do {
-		while (*cp && *cp != '/')
+		while(*cp && *cp != '/') {
 			cp++;
+		}
 		dp = findtype(&cp);
 		if (!dp->att) {
 			printf("Warning: boot device unrecognized: %s\n", bp);
 			return;
 		}
-	} while ((dp->type & T_IFACE) == 0);
+	} while((dp->type & T_IFACE) == 0);
 
 	dev = dp->dev;
-	while (*cp && *cp != '/')
+	while(*cp && *cp != '/')
 		cp++;
 	dp = findtype(&cp);
 	if (!dp->att || dp->type != T_DISK) {
@@ -609,12 +626,13 @@ makebootdev(char *bp)
 }
 
 int
-getpno(char **cp)
+getpno(cp)
+	char **cp;
 {
 	int val = 0;
 	char *cx = *cp;
 
-	while (*cx && *cx >= '0' && *cx <= '9') {
+	while(*cx && *cx >= '0' && *cx <= '9') {
 		val = val * 10 + *cx - '0';
 		cx++;
 	}

@@ -1,4 +1,4 @@
-/*	$OpenBSD: rbus_machdep.c,v 1.2 2002/09/15 02:02:44 deraadt Exp $ */
+/*	$OpenBSD: rbus_machdep.c,v 1.3 2002/09/15 09:01:58 deraadt Exp $ */
 /*	$NetBSD: rbus_machdep.c,v 1.2 1999/10/15 06:43:06 haya Exp $	*/
 
 /*
@@ -59,8 +59,8 @@ void macppc_cardbus_init(pci_chipset_tag_t pc, pcitag_t tag);
 
 rbus_tag_t
 rbus_pccbb_parent_mem(self, pa)
-	struct device *self;
-	struct pci_attach_args *pa;
+     struct device *self;
+     struct pci_attach_args *pa;
 {
 	bus_addr_t start;
 	bus_size_t size;
@@ -69,8 +69,8 @@ rbus_pccbb_parent_mem(self, pa)
 	macppc_cardbus_init(pa->pa_pc, pa->pa_tag);
 
 	size = RBUS_MEM_SIZE;
-	if ((ex = pciaddr_search(PCIADDR_SEARCH_MEM, self, &start,
-	    size)) == NULL) {
+	if ((ex = pciaddr_search(PCIADDR_SEARCH_MEM, self, &start, size)) == NULL)
+	{
 		/* XXX */
 		printf("failed\n");
 	}
@@ -95,14 +95,15 @@ rbus_pccbb_parent_io(self, pa)
 
 
 	size = RBUS_IO_SIZE;
-	if ((ex = pciaddr_search(PCIADDR_SEARCH_IO, self, &start,
-	    size)) == NULL) {
+	if ((ex = pciaddr_search(PCIADDR_SEARCH_IO, self, &start, size)) == NULL)
+	{
 		/* XXX */
 		printf("failed\n");
 	}
 
 	return rbus_new_root_share(pa->pa_iot, ex, start, size, 0);
 }
+
 
 /*
  * Big ugly hack to enable bridge/fix interrupts

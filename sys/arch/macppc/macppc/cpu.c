@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.c,v 1.9 2002/09/15 02:02:43 deraadt Exp $ */
+/*	$OpenBSD: cpu.c,v 1.10 2002/09/15 09:01:58 deraadt Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -141,7 +141,7 @@ cpuattach(parent, dev, aux)
 	case MPC7450:
 		if ((pvr & 0xf) < 3)
 			snprintf(cpu_model, sizeof(cpu_model), "7450");
-		else
+		 else
 			snprintf(cpu_model, sizeof(cpu_model), "7451");
 		break;
 	case MPC7455:
@@ -159,18 +159,20 @@ cpuattach(parent, dev, aux)
 	/* This should only be executed on openfirmware systems... */
 
 	for (qhandle = OF_peer(0); qhandle; qhandle = phandle) {
-		if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0 &&
-		    !strcmp(name, "cpu") &&
-		    OF_getprop(qhandle, "clock-frequency", &clock_freq,
-		    sizeof clock_freq ) >= 0)
+                if (OF_getprop(qhandle, "device_type", name, sizeof name) >= 0
+                    && !strcmp(name, "cpu")
+                    && OF_getprop(qhandle, "clock-frequency",
+                                  &clock_freq , sizeof clock_freq ) >= 0)
+		{
 			break;
-		if ((phandle = OF_child(qhandle)))
-			continue;
-		while (qhandle) {
-			if ((phandle = OF_peer(qhandle)))
-				break;
-			qhandle = OF_parent(qhandle);
 		}
+                if ((phandle = OF_child(qhandle)))
+                        continue;
+                while (qhandle) {
+                        if ((phandle = OF_peer(qhandle)))
+                                break;
+                        qhandle = OF_parent(qhandle);
+                }
 	}
 
 	if (clock_freq != 0) {
@@ -192,16 +194,18 @@ cpuattach(parent, dev, aux)
 	case MPC7455:
 		/* select DOZE mode */
 		hid0 &= ~(HID0_NAP | HID0_SLEEP);
-		hid0 |= HID0_DOZE | HID0_DPM;
+		hid0 |= HID0_DOZE | HID0_DPM; 
 	}
 	asm ("mtspr %0,1008" : "=r" (hid0));
 
-	/* if processor is G3 or G4, configure l2 cache */
-	if ((cpu == MPC750) || (cpu == MPC7400) || (cpu == IBM750FX) ||
-	    (cpu == MPC7410) || (cpu == MPC7450) || (cpu == MPC7455)) {
+	/* if processor is G3 or G4, configure l2 cache */ 
+	if ( (cpu == MPC750) || (cpu == MPC7400) || (cpu == IBM750FX)
+	    || (cpu == MPC7410) || (cpu == MPC7450) || (cpu == MPC7455)) {
 		config_l2cr(cpu);
 	}
 	printf("\n");
+
+
 }
 
 #define L2CR 1017
@@ -272,7 +276,7 @@ config_l2cr(int cpu)
 		do {
 			asm volatile ("mfspr %0, 1017" : "=r"(x));
 		} while (x & L2CR_L2IP);
-
+				      
 		/* Enable L2 cache. */
 		l2cr &= ~L2CR_L2I;
 		l2cr |= L2CR_L2E;
@@ -300,7 +304,7 @@ config_l2cr(int cpu)
 			case L2SIZ_512K:
 				printf(": 512KB");
 				break;
-			case L2SIZ_1M:
+			case L2SIZ_1M:  
 				printf(": 1MB");
 				break;
 			default:
@@ -322,10 +326,11 @@ config_l2cr(int cpu)
 		default:
 			printf(" unknown type");
 		}
-
+		
 		if (l2cr & L2CR_L2PE)
-			printf(" with parity");
+			printf(" with parity");  
 #endif
 	} else
 		printf(": L2 cache not enabled");
+		
 }

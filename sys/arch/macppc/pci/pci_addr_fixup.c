@@ -1,4 +1,4 @@
-/*	$OpenBSD: pci_addr_fixup.c,v 1.2 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: pci_addr_fixup.c,v 1.3 2002/09/15 09:01:59 deraadt Exp $	*/
 /*	$NetBSD: pci_addr_fixup.c,v 1.7 2000/08/03 20:10:45 nathanw Exp $	*/
 
 /*-
@@ -85,22 +85,22 @@ pci_addr_fixup(sc, pc, maxbus)
 	pci_chipset_tag_t pc;
 	int maxbus;
 {
-	const char *verbose_header =
+	const char *verbose_header = 
 		"[%s]-----------------------\n"
 		"  device vendor product\n"
 		"  register space address    size\n"
 		"--------------------------------------------\n";
-	const char *verbose_footer =
+	const char *verbose_footer = 
 		"--------------------------[%3d devices bogus]\n";
 
 	sc->extent_mem = extent_create("PCI I/O memory space",
-	    sc->sc_membus_space.bus_base,
+	    sc->sc_membus_space.bus_base, 
 	    sc->sc_membus_space.bus_base + sc->sc_membus_space.bus_size,
 	    M_DEVBUF, 0, 0, EX_NOWAIT);
 	KASSERT(sc->extent_mem);
 	sc->extent_port = extent_create("PCI I/O port space",
 #if 1
-	    sc->sc_iobus_space.bus_base,
+	    sc->sc_iobus_space.bus_base, 
 	    sc->sc_iobus_space.bus_base + sc->sc_iobus_space.bus_size,
 #else
 	    PCIADDR_PORT_START, PCIADDR_PORT_END,
@@ -108,7 +108,7 @@ pci_addr_fixup(sc, pc, maxbus)
 	    M_DEVBUF, 0, 0, EX_NOWAIT);
 	KASSERT(sc->extent_port);
 
-	/*
+	/* 
 	 * 1. check & reserve system BIOS setting.
 	 */
 	PCIBIOS_PRINTV((verbose_header, "System BIOS Setting"));
@@ -118,25 +118,23 @@ pci_addr_fixup(sc, pc, maxbus)
 	{
 		struct extent_region *rp;
 		struct extent *ex = sc->extent_mem;
-
 		for (rp = LIST_FIRST(&ex->ex_regions);
-		    rp; rp = LIST_NEXT(rp, er_link))
-			;
+		    rp; rp = LIST_NEXT(rp, er_link)) {
+		}
 	}
 	{
 		struct extent_region *rp;
 		struct extent *ex = sc->extent_port;
-
 		for (rp = LIST_FIRST(&ex->ex_regions);
-		    rp; rp = LIST_NEXT(rp, er_link))
-			;
+		    rp; rp = LIST_NEXT(rp, er_link)) {
+		}
 	}
 
 	if (sc->nbogus == 0)
 		return; /* no need to fixup */
 
-	/*
-	 * 4. do fixup
+	/* 
+	 * 4. do fixup 
 	 */
 	PCIBIOS_PRINTV((verbose_header, "PCIBIOS fixup stage"));
 	sc->nbogus = 0;
@@ -153,7 +151,7 @@ pciaddr_resource_reserve(sc, pc, tag)
 {
 	if (pcibr_flags & PCIBR_VERBOSE)
 		pciaddr_print_devid(pc, tag);
-	pciaddr_resource_manage(sc, pc, tag, pciaddr_do_resource_reserve);
+	pciaddr_resource_manage(sc, pc, tag, pciaddr_do_resource_reserve);	
 }
 
 void
@@ -186,7 +184,7 @@ pciaddr_resource_manage(sc, pc, tag, func)
 		printf("WARNING: unknown PCI device header.\n");
 		sc->nbogus++;
 		return;
-	case 0:
+	case 0: 
 		reg_start = PCI_MAPREG_START;
 		reg_end   = PCI_MAPREG_END;
 		break;
@@ -200,7 +198,7 @@ pciaddr_resource_manage(sc, pc, tag, func)
 		break;
 	}
 	error = 0;
-
+    
 	for (mapreg = reg_start; mapreg < reg_end; mapreg += width) {
 		/* inquire PCI device bus space requirement */
 		val = pci_conf_read(pc, tag, mapreg);
@@ -208,22 +206,22 @@ pciaddr_resource_manage(sc, pc, tag, func)
 
 		mask = pci_conf_read(pc, tag, mapreg);
 		pci_conf_write(pc, tag, mapreg, val);
-
+	
 		type = PCI_MAPREG_TYPE(val);
 		width = 4;
 		if (type == PCI_MAPREG_TYPE_MEM) {
-			if (PCI_MAPREG_MEM_TYPE(val) ==
+			if (PCI_MAPREG_MEM_TYPE(val) == 
 			    PCI_MAPREG_MEM_TYPE_64BIT) {
 				/* XXX We could examine the upper 32 bits
-				 * XXX of the BAR here, but we are totally
-				 * XXX unprepared to handle a non-zero value,
-				 * XXX either here or anywhere else in
-				 * XXX i386-land.
+				 * XXX of the BAR here, but we are totally 
+				 * XXX unprepared to handle a non-zero value, 
+				 * XXX either here or anywhere else in 
+				 * XXX i386-land. 
 				 * XXX So just arrange to not look at the
 				 * XXX upper 32 bits, lest we misinterpret
-				 * XXX it as a 32-bit BAR set to zero.
+				 * XXX it as a 32-bit BAR set to zero. 
 				 */
-				width = 8;
+			    width = 8;
 			}
 			addr = PCI_MAPREG_MEM_ADDR(val);
 			size = PCI_MAPREG_MEM_SIZE(mask);
@@ -231,33 +229,33 @@ pciaddr_resource_manage(sc, pc, tag, func)
 		} else {
 			/* XXX some devices give 32bit value */
 			addr = (PCI_MAPREG_IO_ADDR(val) & PCIADDR_PORT_END) |
-			    sc->sc_iobus_space.bus_base,
+			    sc->sc_iobus_space.bus_base, 
 
 			size = PCI_MAPREG_IO_SIZE(mask);
 			ex = sc->extent_port;
 		}
-
+	
 		if (!size) /* unused register */
 			continue;
 
 		/* reservation/allocation phase */
 		error += (*func) (sc, pc, tag, mapreg, ex, type, &addr, size);
 
-		PCIBIOS_PRINTV(("\t%02xh %s 0x%08x 0x%08x\n",
-		    mapreg, type ? "port" : "mem ",
-		    (unsigned int)addr, (unsigned int)size));
+		PCIBIOS_PRINTV(("\t%02xh %s 0x%08x 0x%08x\n", 
+				mapreg, type ? "port" : "mem ", 
+				(unsigned int)addr, (unsigned int)size));
 	}
-
+    
 	/* enable/disable PCI device */
-	val = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);
+	val = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);	
 	if (error == 0)
 		val |= (PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-		    PCI_COMMAND_MASTER_ENABLE);
+			PCI_COMMAND_MASTER_ENABLE);
 	else
 		val &= ~(PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE |
-		     PCI_COMMAND_MASTER_ENABLE);
+			 PCI_COMMAND_MASTER_ENABLE);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, val);
-
+    
 	if (error)
 		sc->nbogus++;
 
@@ -276,14 +274,14 @@ pciaddr_do_resource_allocate(sc, pc, tag, mapreg, ex, type, addr, size)
 {
 	bus_addr_t start;
 	int error;
-
+	
 	if (*addr) /* no need to allocate */
 		return (0);
 
 	/* XXX Don't allocate if device is AGP device to avoid conflict. */
-	if (pciaddr_device_is_agp(pc, tag))
+	if (pciaddr_device_is_agp(pc, tag)) 
 		return (0);
-
+	
 	start = (type == PCI_MAPREG_TYPE_MEM ? sc->sc_membus_space.bus_base
 		: sc->sc_iobus_space.bus_base);
 	if (start < ex->ex_start || start + size - 1 >= ex->ex_end) {
@@ -300,7 +298,8 @@ pciaddr_do_resource_allocate(sc, pc, tag, mapreg, ex, type, addr, size)
 	/* write new address to PCI device configuration header */
 	pci_conf_write(pc, tag, mapreg, *addr);
 	/* check */
-	if (!pcibr_flags & PCIBR_VERBOSE) {
+	if (!pcibr_flags & PCIBR_VERBOSE)
+	{
 		printf("pci_addr_fixup: ");
 		pciaddr_print_devid(pc, tag);
 	}
@@ -355,13 +354,13 @@ pciaddr_print_devid(pc, tag)
 	pci_chipset_tag_t pc;
 	pcitag_t tag;
 {
-	int bus, device, function;
+	int bus, device, function;	
 	pcireg_t id;
-
+	
 	id = pci_conf_read(pc, tag, PCI_ID_REG);
 	pci_decompose_tag(pc, tag, &bus, &device, &function);
-	printf("%03d:%02d:%d %04x:%04x\n", bus, device, function,
-	    PCI_VENDOR(id), PCI_PRODUCT(id));
+	printf("%03d:%02d:%d %04x:%04x\n", bus, device, function, 
+	       PCI_VENDOR(id), PCI_PRODUCT(id));
 }
 
 int
@@ -382,7 +381,7 @@ pciaddr_device_is_agp(pc, tag)
 			    off != 0;
 			    off = PCI_CAPLIST_NEXT(rval) ) {
 				rval = pci_conf_read(pc, tag, off);
-				if (PCI_CAPLIST_CAP(rval) == PCI_CAP_AGP)
+				if (PCI_CAPLIST_CAP(rval) == PCI_CAP_AGP) 
 					return (1);
 			}
 		}
@@ -474,7 +473,7 @@ pci_device_foreach(sc, pc, maxbus, func)
 			bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
 			if (PCI_HDRTYPE_MULTIFN(bhlcr) ||
 			    (qd != NULL &&
-			    (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
+			     (qd->quirks & PCI_QUIRK_MULTIFUNCTION) != 0))
 				nfuncs = 8;
 			else
 				nfuncs = 1;

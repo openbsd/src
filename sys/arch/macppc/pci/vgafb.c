@@ -1,4 +1,4 @@
-/*	$OpenBSD: vgafb.c,v 1.18 2002/09/15 02:02:44 deraadt Exp $	*/
+/*	$OpenBSD: vgafb.c,v 1.19 2002/09/15 09:01:59 deraadt Exp $	*/
 /*	$NetBSD: vga.c,v 1.3 1996/12/02 22:24:54 cgd Exp $	*/
 
 /*
@@ -54,7 +54,7 @@ struct cfdriver vgafb_cd = {
 	NULL, "vgafb", DV_DULL,
 };
 
-void vgafb_setcolor(struct vgafb_config *vc, unsigned int index,
+void vgafb_setcolor(struct vgafb_config *vc, unsigned int index, 
 		    u_int8_t r, u_int8_t g, u_int8_t b);
 void vgafb_restore_default_colors(struct vgafb_config *vc);
 
@@ -67,7 +67,7 @@ struct vgafb_devconfig vgafb_console_dc;
 
 struct wsscreen_descr vgafb_stdscreen = {
 	"std",
-	0, 0,	/* will be filled in -- XXX shouldn't, it's global */
+	0, 0,   /* will be filled in -- XXX shouldn't, it's global */
 	0,
 	0, 0,
 	WSSCREEN_UNDERLINE | WSSCREEN_HILIT |
@@ -77,7 +77,7 @@ const struct wsscreen_descr *vgafb_scrlist[] = {
 	&vgafb_stdscreen,
 	/* XXX other formats, graphics screen? */
 };
-
+   
 struct wsscreen_list vgafb_screenlist = {
 	sizeof(vgafb_scrlist) / sizeof(struct wsscreen_descr *), vgafb_scrlist
 };
@@ -156,27 +156,27 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 	u_int32_t iobase, membase, mmiobase;
 	size_t iosize, memsize, mmiosize;
 {
-	vc->vc_iot = iot;
-	vc->vc_memt = memt;
+        vc->vc_iot = iot;
+        vc->vc_memt = memt;
 	vc->vc_paddr = membase;
 
 	if (iosize != 0) {
-		if (bus_space_map(vc->vc_iot, iobase+0x3b0, 0xc, 0, &vc->vc_ioh_b))
-			panic("vgafb_common_setup: couldn't map io b");
-		if (bus_space_map(vc->vc_iot, iobase+0x3c0, 0x10, 0, &vc->vc_ioh_c))
-			panic("vgafb_common_setup: couldn't map io c");
-		if (bus_space_map(vc->vc_iot, iobase+0x3d0, 0x10, 0, &vc->vc_ioh_d))
-			panic("vgafb_common_setup: couldn't map io d");
+           if (bus_space_map(vc->vc_iot, iobase+0x3b0, 0xc, 0, &vc->vc_ioh_b))
+		panic("vgafb_common_setup: couldn't map io b");
+           if (bus_space_map(vc->vc_iot, iobase+0x3c0, 0x10, 0, &vc->vc_ioh_c))
+		panic("vgafb_common_setup: couldn't map io c");
+           if (bus_space_map(vc->vc_iot, iobase+0x3d0, 0x10, 0, &vc->vc_ioh_d))
+		panic("vgafb_common_setup: couldn't map io d");
 	}
 	if (mmiosize != 0) {
-		if (bus_space_map(vc->vc_memt, mmiobase, mmiosize, 0, &vc->vc_mmioh))
-			panic("vgafb_common_setup: couldn't map mmio");
+           if (bus_space_map(vc->vc_memt, mmiobase, mmiosize, 0, &vc->vc_mmioh))
+		panic("vgafb_common_setup: couldn't map mmio");
 	}
 
 	/* memsize should only be visible region for console */
 	memsize = cons_height * cons_linebytes;
-	if (bus_space_map(vc->vc_memt, membase, memsize, 1, &vc->vc_memh))
-		panic("vgafb_common_setup: couldn't map memory");
+        if (bus_space_map(vc->vc_memt, membase, memsize, 1, &vc->vc_memh))
+		panic("vgafb_common_setup: couldn't map memory"); 
 	cons_display_mem_h = vc->vc_memh;
 	vc->vc_ofh = cons_display_ofh;
 
@@ -191,14 +191,14 @@ vgafb_common_setup(iot, memt, vc, iobase, iosize, membase, memsize, mmiobase, mm
 	vc->vc_at = 0x00 | 0xf;			/* black bg|white fg */
 	vc->vc_so_at = 0x00 | 0xf | 0x80;	/* black bg|white fg|blink */
 
-	if (cons_depth == 8) {
+	if (cons_depth == 8) { 
 		vgafb_restore_default_colors(vc);
 	}
 }
 
 void
 vgafb_restore_default_colors(struct vgafb_config *vc)
-{
+{ 
 	int i;
 
 	for (i = 0; i < 256; i++) {
@@ -217,7 +217,7 @@ vgafb_wsdisplay_attach(parent, vc, console)
 {
 	struct wsemuldisplaydev_attach_args aa;
 
-	aa.console = console;
+        aa.console = console;
 	aa.scrdata = &vgafb_screenlist;
 	aa.accessops = &vgafb_accessops;
 	aa.accesscookie = vc;
@@ -229,8 +229,8 @@ vgafb_wsdisplay_attach(parent, vc, console)
 		vc->vc_backlight_on = WSDISPLAYIO_VIDEO_OFF;
 		vgafb_burn(vc, WSDISPLAYIO_VIDEO_ON, 0);	/* paranoia */
 	}
-
-	config_found(parent, &aa, wsemuldisplaydevprint);
+ 
+        config_found(parent, &aa, wsemuldisplaydevprint);
 }
 
 int
@@ -269,12 +269,12 @@ vgafb_ioctl(v, cmd, data, flag, p)
 	case WSDISPLAYIO_SMODE:
 		/* track the state of the display,
 		 * if returning to WSDISPLAYIO_MODE_EMUL
-		 * restore the last palette, workaround for
+		 * restore the last palette, workaround for 
 		 * bad accellerated X servers that does not restore
 		 * the correct palette.
 		 */
 
-		if (cons_depth == 8) {
+		if (cons_depth == 8) { 
 			vgafb_restore_default_colors(vc);
 		}
 
@@ -317,7 +317,7 @@ vgafb_ioctl(v, cmd, data, flag, p)
 			if (cons_backlight_available != 0) {
 				vgafb_burn(vc,
 				    dp->curval ? WSDISPLAYIO_VIDEO_ON :
-				    WSDISPLAYIO_VIDEO_OFF, 0);
+				      WSDISPLAYIO_VIDEO_OFF, 0);
 				return 0;
 			} else
 				return -1;
@@ -335,9 +335,9 @@ vgafb_ioctl(v, cmd, data, flag, p)
 	default:
 		return -1; /* not supported yet */
 	}
-
-	/* XXX */
-	return -1;
+	
+        /* XXX */
+        return -1;
 }
 
 paddr_t
@@ -352,7 +352,7 @@ vgafb_mmap(v, offset, prot)
 	/* memsize... */
 	if (offset >= 0x00000 && offset < vc->memsize)
 		h = vc->vc_paddr + offset;
-	/* XXX the following are probably wrong. we want physical addresses
+	/* XXX the following are probably wrong. we want physical addresses 
 	   here, not virtual ones */
 	else if (offset >= 0x10000000 && offset < 0x10040000 )
 		/* 256KB of iohb */
@@ -402,7 +402,7 @@ vgafb_cnprobe(cp)
 	if (cons_displaytype != 1) {
 		cp->cn_pri = CN_DEAD;
 		return;
-	}
+	} 
 
 	cp->cn_pri = CN_INTERNAL;
 }
@@ -413,10 +413,10 @@ vgafb_cnattach(iot, memt, pc, bus, device, function)
 	bus_space_tag_t iot, memt;
 	int bus, device, function;
 {
-	long defattr;
+        long defattr;
 
 	struct vgafb_devconfig *dc = &vgafb_console_dc;
-	struct rasops_info *ri = &dc->dc_rinfo;
+        struct rasops_info *ri = &dc->dc_rinfo;
 
 	ri->ri_flg = RI_CENTER;
 	ri->ri_depth = cons_depth;
@@ -443,7 +443,7 @@ struct {
 } vgafb_color[256];
 
 void
-vgafb_setcolor(vc, index, r, g, b)
+vgafb_setcolor(vc, index, r, g, b) 
 	struct vgafb_config *vc;
 	unsigned int index;
 	u_int8_t r, g, b;

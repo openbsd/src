@@ -1,4 +1,4 @@
-/*	$OpenBSD: apm.c,v 1.6 2002/09/15 02:02:43 deraadt Exp $	*/
+/*	$OpenBSD: apm.c,v 1.7 2002/09/15 09:01:58 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexander Guy.  All rights reserved.
@@ -117,7 +117,7 @@ apmmatch(parent, match, aux)
 	struct device *parent;
 	void *match, *aux;
 {
-	struct adb_attach_args *aa = (void *)aux;
+	struct adb_attach_args *aa = (void *)aux;		
 	if (aa->origaddr != ADBADDR_APM ||
 	    aa->handler_id != ADBADDR_APM ||
 	    aa->adbaddr != ADBADDR_APM)
@@ -236,7 +236,7 @@ apmioctl(dev, cmd, data, flag, p)
 			error = EBADF;
 	case APM_IOC_SUSPEND:
 		if ((flag & FWRITE) == 0)
-			error = EBADF;
+			error = EBADF;			
 		break;
 	case APM_IOC_PRN_CTL:
 		if ((flag & FWRITE) == 0)
@@ -267,7 +267,7 @@ apmioctl(dev, cmd, data, flag, p)
 			error = EBADF;
 		break;
 	case APM_IOC_GETPOWER:
-		power = (struct apm_power_info *)data;
+	        power = (struct apm_power_info *)data;
 
 		pm_battery_info(0, &batt);
 
@@ -292,7 +292,7 @@ apmioctl(dev, cmd, data, flag, p)
 			    batt.draw) / 60;
 			power->battery_state = APM_BATT_CHARGING;
 		} else {
-			power->minutes_left =
+			power->minutes_left = 
 			    ((batt.cur_charge * 3600) / (-batt.draw)) / 60;
 
 			/* XXX - Arbitrary */
@@ -306,7 +306,7 @@ apmioctl(dev, cmd, data, flag, p)
 		}
 
 		break;
-
+		
 	default:
 		error = ENOTTY;
 	}
