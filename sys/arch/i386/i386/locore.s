@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.51 2000/06/05 11:02:54 art Exp $	*/
+/*	$OpenBSD: locore.s,v 1.52 2000/06/16 19:11:25 millert Exp $	*/
 /*	$NetBSD: locore.s,v 1.145 1996/05/03 19:41:19 christos Exp $	*/
 
 /*-
@@ -899,15 +899,6 @@ ENTRY(memcpy)
 	xchg	8(%esp),%ecx
 	movl	%ecx,4(%esp)
 	jmp	_bcopy
-
-/*
- * Emulate memcmp() by swapping the first two arguments and calling bcmp()
- */
-ENTRY(memcmp)
-	movl	4(%esp),%ecx
-	xchg	8(%esp),%ecx
-	movl	%ecx,4(%esp)
-	jmp	_bcmp
 
 /*****************************************************************************/
 
