@@ -1,0 +1,118 @@
+.\"	$OpenBSD: gai_strerror.3,v 1.1 2004/12/06 10:46:35 jmc Exp $
+.\"
+.\" Copyright (c) 1983, 1987, 1991, 1993
+.\"	The Regents of the University of California.  All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\" 3. Neither the name of the University nor the names of its contributors
+.\"    may be used to endorse or promote products derived from this software
+.\"    without specific prior written permission.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE REGENTS AND CONTRIBUTORS ``AS IS'' AND
+.\" ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+.\" IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+.\" ARE DISCLAIMED.  IN NO EVENT SHALL THE REGENTS OR CONTRIBUTORS BE LIABLE
+.\" FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+.\" DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+.\" OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+.\" HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+.\" LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd December 3, 2004
+.Dt GAI_STRERROR 3
+.Os
+.\"
+.Sh NAME
+.Nm gai_strerror
+.Nd return EAI_xxx error message
+.\"
+.Sh SYNOPSIS
+.Fd #include <sys/types.h>
+.Fd #include <sys/socket.h>
+.Fd #include <netdb.h>
+.Ft "char *"
+.Fn gai_strerror "int ecode"
+.\"
+.Sh DESCRIPTION
+To aid applications in printing error messages based on the
+.Dv EAI_xxx
+codes returned by
+.Xr getaddrinfo 3
+and
+.Xr getnameinfo 3 ,
+.Fn gai_strerror
+is defined.
+The argument is one of the
+.Dv EAI_xxx
+values detailed below
+and the return value points to a string describing the error.
+If the argument is not one of the
+.Dv EAI_xxx
+values,
+the function still returns a pointer to a string whose contents
+indicate an unknown error.
+.Pp
+The error return status from
+.Xr getaddrinfo 3
+and
+.Xr getnameinfo 3
+is zero on success and non-zero on errors.
+Non-zero error codes are defined in
+.Aq Pa netdb.h ,
+and are as follows:
+.Pp
+.Bl -tag -width "EAI_ADDRFAMILYXX" -offset indent -compact
+.It Dv EAI_ADDRFAMILY
+Address family for
+.Fa nodename
+not supported.
+.It Dv EAI_AGAIN
+Temporary failure in name resolution.
+.It Dv EAI_BADFLAGS
+Invalid value for
+.Fa ai_flags .
+.It Dv EAI_BADHINTS
+Invalid value for hints.
+.It Dv EAI_FAIL
+Non-recoverable failure in name resolution.
+.It Dv EAI_FAMILY
+.Fa ai_family
+not supported.
+.It Dv EAI_MEMORY
+Memory allocation failure.
+.It Dv EAI_NODATA
+No address associated with
+.Fa nodename .
+.It Dv EAI_NONAME
+.Fa nodename
+nor
+.Fa servname
+provided, or not known.
+.It Dv EAI_PROTOCOL
+Resolved protocol is unknown.
+.It Dv EAI_SERVICE
+.Fa servname
+not supported for
+.Fa ai_socktype .
+.It Dv EAI_SOCKTYPE
+.Fa ai_socktype
+not supported.
+.It Dv EAI_SYSTEM
+System error returned in
+.Va errno .
+.El
+.\"
+.Sh SEE ALSO
+.Xr getaddrinfo 3 ,
+.Xr getnameinfo 3
+.Sh HISTORY
+The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.

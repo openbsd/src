@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getaddrinfo.3,v 1.28 2004/04/14 10:06:03 jmc Exp $
+.\"	$OpenBSD: getaddrinfo.3,v 1.29 2004/12/06 10:46:35 jmc Exp $
 .\"	$KAME: getaddrinfo.3,v 1.29 2001/02/12 09:24:45 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -36,8 +36,7 @@
 .\"
 .Sh NAME
 .Nm getaddrinfo ,
-.Nm freeaddrinfo ,
-.Nm gai_strerror
+.Nm freeaddrinfo
 .Nd nodename-to-address translation in protocol-independent manner
 .\"
 .Sh SYNOPSIS
@@ -49,8 +48,6 @@
 "const struct addrinfo *hints" "struct addrinfo **res"
 .Ft void
 .Fn freeaddrinfo "struct addrinfo *ai"
-.Ft "char *"
-.Fn gai_strerror "int ecode"
 .\"
 .Sh DESCRIPTION
 The
@@ -61,6 +58,67 @@ It performs the functionality of
 and
 .Xr getservbyname 3 ,
 but in a more sophisticated manner.
+.Pp
+All of the information returned by
+.Fn getaddrinfo
+is dynamically allocated:
+the
+.Li addrinfo
+structures, the socket address structures, and canonical node name
+strings pointed to by the addrinfo structures.
+To return this information to the system the function
+.Fn freeaddrinfo
+is called.
+The
+.Fa addrinfo
+structure pointed to by the
+.Fa ai
+argument is freed,
+along with any dynamic storage pointed to by the structure.
+This operation is repeated until a
+.Dv NULL
+.Fa ai_next
+pointer is encountered.
+.Pp
+To aid applications in printing error messages based on the
+.Dv EAI_xxx
+codes returned by
+.Fn getaddrinfo ,
+.Fn gai_strerror
+is defined.
+See
+.Xr gai_strerror 3
+for more information.
+.Pp
+The implementation allows experimental numeric IPv6 address notation with
+scope identifier.
+By appending the percent character and scope identifier to addresses,
+you can fill the
+.Li sin6_scope_id
+field for addresses.
+This would make management of scoped address easier,
+and allows cut-and-paste input of scoped address.
+.Pp
+At this moment the code supports only link-local addresses with the format.
+Scope identifier is hardcoded to the name of the hardware interface associated
+with the link
+.Po
+such as
+.Li ne0
+.Pc .
+An example is
+.Dq Li fe80::1%ne0 ,
+which means
+.Do
+.Li fe80::1
+on the link associated with the
+.Li ne0
+interface
+.Dc .
+.Pp
+The IPv6 implementation is still very experimental and non-standard.
+The current implementation assumes a one-to-one relationship between
+the interface and link, which is not necessarily true from the specification.
 .Pp
 The
 .Li addrinfo
@@ -168,7 +226,7 @@ structure the three members
 and
 .Fa ai_protocol
 are the corresponding arguments for a call to the
-.Fn socket
+.Xr socket 2
 function.
 In each
 .Li addrinfo
@@ -179,15 +237,17 @@ specified by the
 .Fa ai_addrlen
 member.
 .Pp
+The
+.Fa ai_flags
+argument can be set to any of the following values, OR'd together:
+.Bl -tag -width "AI_NUMERICHOSTXX"
+.It AI_PASSIVE
 If the
 .Dv AI_PASSIVE
-bit is set in the
-.Fa ai_flags
-member of the
-.Fa hints
-structure, then the caller plans to use the returned socket address
+bit is set,
+the caller plans to use the returned socket address
 structure in a call to
-.Fn bind .
+.Xr bind 2 .
 In this case, if the
 .Fa nodename
 argument is a null pointer, then the IP address portion of the socket
@@ -199,73 +259,64 @@ for an IPv6 address.
 .Pp
 If the
 .Dv AI_PASSIVE
-bit is not set in the
-.Fa ai_flags
-member of the
-.Fa hints
-structure, then the returned socket address structure will be ready for a
+bit is not set,
+the returned socket address structure will be ready for a
 call to
-.Fn connect
+.Xr connect 2
 .Pq for a connection-oriented protocol
 or either
-.Fn connect ,
-.Fn sendto ,
+.Xr connect 2 ,
+.Xr sendto 2 ,
 or
-.Fn sendmsg
+.Xr sendmsg 2
 .Pq for a connectionless protocol .
 In this case, if the
 .Fa nodename
 argument is a null pointer, then the IP address portion of the
 socket address structure will be set to the loopback address.
-.Pp
+.It AI_CANONNAME
 If the
 .Dv AI_CANONNAME
-bit is set in the
-.Fa ai_flags
-member of the
-.Fa hints
-structure, then upon successful return the
+bit is set,
+then upon successful return the
 .Fa ai_canonname
 member of the first
 .Li addrinfo
 structure in the linked list will point to a NUL-terminated string
 containing the canonical name of the specified
 .Fa nodename .
-.Pp
+.It AI_NUMERICHOST
 If the
 .Dv AI_NUMERICHOST
-bit is set in the
-.Fa ai_flags
-member of the
-.Fa hints
-structure, then a non-null
+bit is set,
+then a non-null
 .Fa nodename
 string must be a numeric host address string.
 Otherwise an error of
 .Dv EAI_NONAME
 is returned.
-This flag prevents any type of name resolution service (e.g., the DNS)
+This flag prevents any type of name resolution service,
+such as DNS,
 from being called.
-.Pp
+.It AI_NUMERICSERV
 If the
 .Dv AI_NUMERICSERV
-bit is set in the
-.Fa ai_flags
-member of the
-.Fa hints
-structure, then a non-null
+bit is set,
+then a non-null
 .Fa servname
 string must be a numeric port string.
 Otherwise an error of
 .Dv EAI_NONAME
 is returned.
-This flag prevents any type of name resolution service (e.g., the NIS)
+This flag prevents any type of name resolution service,
+such as NIS,
 from being called.
+.El
 .Pp
 The arguments to
 .Fn getaddrinfo
-must sufficiently be consistent and unambiguous.
-Here are pitfall cases you may encounter:
+must be sufficiently consistent and unambiguous.
+Issues to watch out for are:
 .Bl -bullet
 .It
 .Fn getaddrinfo
@@ -322,72 +373,13 @@ does not identify any socket type, and
 .Fn getaddrinfo
 is not allowed to glob the argument in such case.
 .El
-.Pp
-All of the information returned by
-.Fn getaddrinfo
-is dynamically allocated:
-the
-.Li addrinfo
-structures, the socket address structures, and canonical node name
-strings pointed to by the addrinfo structures.
-To return this information to the system the function
-.Fn freeaddrinfo
-is called.
-The
-.Fa addrinfo
-structure pointed to by the
-.Fa ai argument
-is freed, along with any dynamic storage pointed to by the structure.
-This operation is repeated until a
-.Dv NULL
-.Fa ai_next
-pointer is encountered.
-.Pp
-To aid applications in printing error messages based on the
-.Dv EAI_xxx
-codes returned by
-.Fn getaddrinfo ,
-.Fn gai_strerror
-is defined.
-The argument is one of the
-.Dv EAI_xxx
-values defined earlier and the return value points to a string describing
-the error.
-If the argument is not one of the
-.Dv EAI_xxx
-values, the function still returns a pointer to a string whose contents
-indicate an unknown error.
 .\"
-.Ss Extension for scoped IPv6 address
-The implementation allows experimental numeric IPv6 address notation with
-scope identifier.
-By appending the percent character and scope identifier to addresses,
-you can fill the
-.Li sin6_scope_id
-field for addresses.
-This would make management of scoped address easier,
-and allows cut-and-paste input of scoped address.
-.Pp
-At this moment the code supports only link-local addresses with the format.
-Scope identifier is hardcoded to the name of the hardware interface associated
-with the link.
-.Po
-such as
-.Li ne0
-.Pc .
-An example is
-.Dq Li fe80::1%ne0 ,
-which means
-.Do
-.Li fe80::1
-on the link associated with the
-.Li ne0
-interface
-.Dc .
-.Pp
-The implementation is still very experimental and non-standard.
-The current implementation assumes a one-to-one relationship between
-the interface and link, which is not necessarily true from the specification.
+.Sh RETURN VALUES
+.Fn getaddrinfo
+returns zero on success, and non-zero on errors.
+See
+.Xr gai_strerror 3
+for a description of the non-zero error codes.
 .\"
 .Sh EXAMPLES
 The following code tries to connect to
@@ -489,60 +481,8 @@ if (nsock == 0) {
 freeaddrinfo(res0);
 .Ed
 .\"
-.Sh DIAGNOSTICS
-Error return status from
-.Fn getaddrinfo
-is zero on success and non-zero on errors.
-Non-zero error codes are defined in
-.Aq Pa netdb.h ,
-and as follows:
-.Pp
-.Bl -tag -width EAI_ADDRFAMILY -compact
-.It Dv EAI_ADDRFAMILY
-Address family for
-.Fa nodename
-not supported.
-.It Dv EAI_AGAIN
-Temporary failure in name resolution.
-.It Dv EAI_BADFLAGS
-Invalid value for
-.Fa ai_flags .
-.It Dv EAI_FAIL
-Non-recoverable failure in name resolution.
-.It Dv EAI_FAMILY
-.Fa ai_family
-not supported.
-.It Dv EAI_MEMORY
-Memory allocation failure.
-.It Dv EAI_NODATA
-No address associated with
-.Fa nodename .
-.It Dv EAI_NONAME
-.Fa nodename
-nor
-.Fa servname
-provided, or not known.
-.It Dv EAI_SERVICE
-.Fa servname
-not supported for
-.Fa ai_socktype .
-.It Dv EAI_SOCKTYPE
-.Fa ai_socktype
-not supported.
-.It Dv EAI_SYSTEM
-System error returned in
-.Va errno .
-.El
-.Pp
-If called with proper argument,
-.Fn gai_strerror
-returns a pointer to a string describing the given error code.
-If the argument is not one of the
-.Dv EAI_xxx
-values, the function still returns a pointer to a string whose contents
-indicate an unknown error.
-.\"
 .Sh SEE ALSO
+.Xr gai_strerror 3 ,
 .Xr gethostbyname 3 ,
 .Xr getnameinfo 3 ,
 .Xr getservbyname 3 ,
@@ -589,5 +529,3 @@ The implementation first appeared in WIDE Hydrangea IPv6 protocol stack kit.
 .\"
 .Sh BUGS
 The current implementation is not thread-safe.
-.Pp
-The text was shamelessly copied from RFC 2553.

@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.34 2004/10/26 17:20:36 espie Exp $
+#	$OpenBSD: Makefile.inc,v 1.35 2004/12/06 10:46:35 jmc Exp $
 
 # net sources
 .PATH: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net ${LIBCSRCDIR}/net
@@ -28,12 +28,12 @@ SRCS+=	ip6opt.c rthdr.c vars6.c
 
 .include "${LIBCSRCDIR}/arch/${MACHINE_ARCH}/net/Makefile.inc"
 
-MAN+=	byteorder.3 ethers.3 getaddrinfo.3 gethostbyname.3 getifaddrs.3 \
-	getnameinfo.3 getnetent.3 getprotoent.3 getservent.3 inet.3 \
-	if_indextoname.3 inet_net.3 link_addr.3 ns.3 ipx.3 \
-	rcmd.3 rcmdsh.3 resolver.3 net_addrcmp.3 \
-	inet6_option_space.3 inet6_rthdr_space.3 \
-	getrrsetbyname.3
+MAN+=	byteorder.3 ethers.3 gai_strerror.3 getaddrinfo.3 gethostbyname.3 \
+	getifaddrs.3 getnameinfo.3 getnetent.3 getprotoent.3 \
+	getrrsetbyname.3 getservent.3 if_indextoname.3 inet.3 \
+	inet_net.3 inet6_option_space.3 inet6_rthdr_space.3 \
+	ipx.3 link_addr.3 net_addrcmp.3 ns.3 \
+	rcmd.3 rcmdsh.3 resolver.3
 
 MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 ntohs.3 byteorder.3 htobe16.3 byteorder.3 htobe32.3 \
@@ -44,7 +44,7 @@ MLINKS+=byteorder.3 htonl.3 byteorder.3 htons.3 byteorder.3 ntohl.3 \
 	byteorder.3 swap64.3
 MLINKS+=ethers.3 ether_aton.3 ethers.3 ether_hostton.3 ethers.3 ether_line.3 \
 	ethers.3 ether_ntoa.3 ethers.3 ether_ntohost.3 ethers.3 ether_addr.3
-MLINKS+= getaddrinfo.3 freeaddrinfo.3 getaddrinfo.3 gai_strerror.3
+MLINKS+=getaddrinfo.3 freeaddrinfo.3
 MLINKS+=gethostbyname.3 endhostent.3 gethostbyname.3 gethostbyaddr.3 \
 	gethostbyname.3 sethostent.3 gethostbyname.3 gethostent.3 \
 	gethostbyname.3 herror.3 gethostbyname.3 gethostbyname2.3 \

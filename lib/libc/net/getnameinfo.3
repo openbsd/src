@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getnameinfo.3,v 1.27 2003/08/28 10:16:38 jmc Exp $
+.\"	$OpenBSD: getnameinfo.3,v 1.28 2004/12/06 10:46:35 jmc Exp $
 .\"	$KAME: getnameinfo.3,v 1.20 2001/01/05 13:37:37 itojun Exp $
 .\"
 .\" Copyright (c) 1983, 1987, 1991, 1993
@@ -64,6 +64,24 @@ strings for both in buffers provided by the caller.
 The function indicates successful completion by a zero return value;
 a non-zero return value indicates failure.
 .Pp
+To aid applications in printing error messages based on the
+.Dv EAI_xxx
+codes returned by
+.Fn getnameinfo ,
+.Fn gai_strerror
+is defined.
+See
+.Xr gai_strerror 3
+for more information.
+.Pp
+The implementation allows experimental numeric IPv6 address notation with
+scope identifier.
+IPv6 link-local address will appear as a string like
+.Dq Li fe80::1%ne0 .
+Refer to
+.Xr getaddrinfo 3
+for the notation.
+.Pp
 The first argument,
 .Fa sa ,
 points to either a
@@ -106,7 +124,7 @@ maximum size of either a fully-qualified domain name or a service name.
 Therefore to aid the application in allocating buffers for these two
 returned strings the following constants are defined in
 .Aq Pa netdb.h :
-.Bd -literal -offset
+.Bd -literal -offset indent
 #define NI_MAXHOST    MAXHOSTNAMELEN
 #define NI_MAXSERV    32
 .Ed
@@ -122,30 +140,41 @@ Assigned Numbers RFC.
 The final argument is a
 .Fa flag
 that changes the default actions of this function.
+The flags are defined in
+.Aq Pa netdb.h
+and are as follows:
+.Bl -tag -width "NI_NUMERICHOSTXX"
+.It Dv NI_NOFQDN
 By default the fully-qualified domain name (FQDN) for the host is
-looked up in the DNS and returned.
+looked up using DNS and returned.
 If the flag bit
 .Dv NI_NOFQDN
 is set, only the nodename portion of the FQDN is returned for local hosts.
-.Pp
+.It Dv NI_NUMERICHOST
 If the
 .Fa flag
 bit
 .Dv NI_NUMERICHOST
-is set, or if the host's name cannot be located in the DNS,
+is set, or if the host's name cannot be located using DNS,
 the numeric form of the host's address is returned instead of its name
 .Po
 e.g., by calling
-.Fn inet_ntop
+.Xr inet_ntop 3
 instead of
-.Fn gethostbyaddr
+.Xr gethostbyaddr 3
 .Pc .
+The two
+.Dv NI_NUMERICxxx
+flags are required to support the
+.Fl n
+flag that many commands provide.
+.It Dv NI_NAMEREQD
 If the
 .Fa flag
 bit
 .Dv NI_NAMEREQD
-is set, an error is returned if the host's name cannot be located in the DNS.
-.Pp
+is set, an error is returned if the host's name cannot be located using DNS.
+.It Dv NI_NUMERICSERV
 If the flag bit
 .Dv NI_NUMERICSERV
 is set, the numeric form of the service address is returned
@@ -156,35 +185,29 @@ The two
 flags are required to support the
 .Fl n
 flag that many commands provide.
-.Pp
+.It Dv NI_DGRAM
 A fifth flag bit,
 .Dv NI_DGRAM ,
 specifies that the service is a datagram service, and causes
-.Fn getservbyport
+.Xr getservbyport 3
 to be called with a second argument of
 .Qq udp
 instead of its default of
 .Qq tcp .
 This is required for the few ports (512-514)
 that have different services for UDP and TCP.
-.Pp
-These
-.Dv NI_xxx
-flags are defined in
-.Aq Pa netdb.h .
+.El
 .\"
-.Ss Extension for scoped IPv6 address
-The implementation allows experimental numeric IPv6 address notation with
-scope identifier.
-IPv6 link-local address will appear as a string like
-.Dq Li fe80::1%ne0 .
-Refer to
-.Xr getaddrinfo 3
-for the notation.
+.Sh RETURN VALUES
+.Fn getnameinfo
+returns zero on success, and non-zero on errors.
+See
+.Xr gai_strerror 3
+for a description of the non-zero error codes.
 .\"
 .Sh EXAMPLES
 The following code tries to get a numeric hostname, and service name,
-for given socket address.
+for a given socket address.
 Observe that there is no hardcoded reference to a particular address family.
 .Bd -literal -offset indent
 struct sockaddr *sa;	/* input */
@@ -198,7 +221,7 @@ if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), sbuf,
 printf("host=%s, serv=%s\en", hbuf, sbuf);
 .Ed
 .Pp
-The following version checks if the socket address has reverse address mapping.
+The following version checks if the socket address has reverse address mapping:
 .Bd -literal -offset indent
 struct sockaddr *sa;	/* input */
 char hbuf[NI_MAXHOST];
@@ -211,34 +234,8 @@ if (getnameinfo(sa, sa->sa_len, hbuf, sizeof(hbuf), NULL, 0,
 printf("host=%s\en", hbuf);
 .Ed
 .\"
-.Sh DIAGNOSTICS
-The function indicates successful completion by a zero return value;
-a non-zero return value indicates failure.
-Error codes are as below:
-.Bl -tag -width Er
-.It Dv EAI_AGAIN
-The name could not be resolved at this time.
-Future attempts may succeed.
-.It Dv EAI_BADFLAGS
-The flags had an invalid value.
-.It Dv EAI_FAIL
-A non-recoverable error occurred.
-.It Dv EAI_FAMILY
-The address family was not recognized or the address length was invalid
-for the specified family.
-.It Dv EAI_MEMORY
-There was a memory allocation failure.
-.It Dv EAI_NONAME
-The name does not resolve for the supplied parameters.
-.Dv NI_NAMEREQD
-is set and the host's name cannot be located,
-or both nodename and servname were null.
-.It Dv EAI_SYSTEM
-A system error occurred.
-The error code can be found in errno.
-.El
-.\"
 .Sh SEE ALSO
+.Xr gai_strerror 3 ,
 .Xr getaddrinfo 3 ,
 .Xr gethostbyaddr 3 ,
 .Xr getservbyport 3 ,
@@ -339,8 +336,6 @@ if (error == 0) {
 .\"
 .Sh BUGS
 The current implementation is not thread-safe.
-.Pp
-The text was shamelessly copied from RFC 2553.
 .Pp
 .Ox
 intentionally uses a different
