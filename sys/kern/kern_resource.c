@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_resource.c,v 1.4 1996/06/20 10:54:36 deraadt Exp $	*/
+/*	$OpenBSD: kern_resource.c,v 1.5 1996/07/02 09:23:19 deraadt Exp $	*/
 /*	$NetBSD: kern_resource.c,v 1.34.4.1 1996/06/13 23:31:14 jtc Exp $	*/
 
 /*-
@@ -334,7 +334,8 @@ calcru(p, up, sp, ip)
 	register struct timeval *ip;
 {
 	register u_quad_t u, st, ut, it, tot;
-	register u_long sec, usec;
+	register u_long sec;
+	register long usec;
 	register int s;
 	struct timeval tv;
 
