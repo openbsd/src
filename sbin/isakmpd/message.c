@@ -1,4 +1,4 @@
-/* $OpenBSD: message.c,v 1.93 2005/01/29 16:59:45 hshoexer Exp $	 */
+/* $OpenBSD: message.c,v 1.94 2005/02/22 21:42:14 hshoexer Exp $	 */
 /* $EOM: message.c,v 1.156 2000/10/10 12:36:39 provos Exp $	 */
 
 /*
@@ -1745,9 +1745,14 @@ message_send_delete(struct sa *sa)
 	args.u.d.nspis = 1;
 	for (proto = TAILQ_FIRST(&sa->protos); proto;
 	    proto = TAILQ_NEXT(proto, link)) {
+		if (proto->proto == ISAKMP_PROTO_ISAKMP) {
+			args.spi_sz = ISAKMP_HDR_COOKIES_LEN;
+			args.u.d.spis = sa->cookies;
+		} else {
+			args.spi_sz = proto->spi_sz[1];
+			args.u.d.spis = proto->spi[1];
+		}
 		args.proto = proto->proto;
-		args.spi_sz = proto->spi_sz[1];
-		args.u.d.spis = proto->spi[1];
 		exchange_establish_p2(isakmp_sa, ISAKMP_EXCH_INFO, 0, &args,
 		    0, 0);
 	}
