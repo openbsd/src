@@ -1,3 +1,5 @@
+/*	$OpenBSD: gifconfig.c,v 1.2 1999/12/21 08:48:06 itojun Exp $	*/
+
 /*
  * Copyright (c) 1983, 1993
  *	The Regents of the University of California.  All rights reserved.
