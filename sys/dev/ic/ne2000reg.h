@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000reg.h,v 1.1 1998/09/22 06:38:04 fgsch Exp $	*/
+/*	$OpenBSD: ne2000reg.h,v 1.2 2000/05/30 14:31:39 fgsch Exp $	*/
 /*	$NetBSD: ne2000reg.h,v 1.2 1997/10/14 22:54:11 thorpej Exp $	*/
 
 /*
@@ -29,5 +29,16 @@
  */
 #define	NE2000_ASIC_DATA	0x00	/* remote DMA/data register */
 #define	NE2000_ASIC_RESET	0x0f	/* reset on read */
+
+/*
+ * Offset of NODE ID in SRAM memory of ASIX AX88190.
+ */
+#define	NE2000_AX88190_NODEID_OFFSET	0x400
+
+/*
+ * Offset of LAN IOBASE0 and IOBASE1, and its size.
+ */
+#define	NE2000_AX88190_LAN_IOBASE	0x3ca
+#define	NE2000_AX88190_LAN_IOSIZE	4
 
 #endif /* _DEV_IC_NE2000REG_H_ */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: ne2000var.h,v 1.3 1999/03/26 06:34:27 fgsch Exp $	*/
+/*	$OpenBSD: ne2000var.h,v 1.4 2000/05/30 14:31:39 fgsch Exp $	*/
 /*	$NetBSD: ne2000var.h,v 1.2 1997/10/14 22:54:12 thorpej Exp $	*/
 
 /*-
@@ -53,9 +53,15 @@ struct ne2000_softc {
 /* sc_type */
 #define	NE2000_TYPE_NE1000	1
 #define	NE2000_TYPE_NE2000	2
-#define NE2000_TYPE_DL10019	3
+#define	NE2000_TYPE_DL10019	3
+#define	NE2000_TYPE_AX88190	4
 
-void	ne2000_attach __P((struct ne2000_softc *, u_int8_t *,
+#define	NE2000_USE_WORD(sc)				\
+	(((sc)->sc_type == NE2000_TYPE_NE2000) ||	\
+	((sc)->sc_type == NE2000_TYPE_DL10019) ||	\
+	((sc)->sc_type == NE2000_TYPE_AX88190))
+
+int	ne2000_attach __P((struct ne2000_softc *, u_int8_t *,
 	    int *, int, int));
 int	ne2000_detect __P((struct ne2000_softc *));
 
