@@ -45,17 +45,17 @@
 .Sh SYNOPSIS
 .Nm vnconfig Fl c
 .Op Fl v
-.Ar special_file
+.Ar rawdev
 .Ar regular_file
 .Nm vnconfig Fl u
 .Op Fl v
-.Ar special_file
+.Ar rawdev
 .Sh DESCRIPTION
 The
 .Nm vnconfig
 command configures vnode pseudo disk devices.
 It will associate the special file 
-.Ar special_file
+.Ar rawdev
 with the regular file
 .Ar regular_file
 allowing the latter to be accessed as though it were a disk.
@@ -67,7 +67,7 @@ Options indicate an action to be performed:
 .It Fl c
 Configures the device.
 If successful, references to
-.Ar special_file
+.Ar rawdev
 will access the contents of
 .Ar regular_file .
 .It Fl u
@@ -86,16 +86,15 @@ is assumed.
 .El
 .Sh EXAMPLES
 .Pp
-.Dl vnconfig /dev/vnd0c /tmp/diskimage
+.Dl vnconfig vnd0 /tmp/diskimage
 .Pp
 Configures the vnode disk
-.Pa vnd0c .
+.Pa vnd0
+(ie. all of it's partitions become useable).
 .Pp
-.Dl vnconfig -u /dev/vnd0c
+.Dl vnconfig -u vnd0
 .Pp
-Unconfigures the
-.Pa vnd0c
-device.
+Unconfigures the same device.
 .Sh BUGS
 This command should really be named
 .Nm vndconfig .
