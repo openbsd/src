@@ -1,7 +1,7 @@
-/*	$OpenBSD: main.c,v 1.6 1998/04/07 04:17:47 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.7 1998/04/07 04:18:45 deraadt Exp $	*/
 
 #ifndef lint
-static char *rcsid = "$OpenBSD: main.c,v 1.6 1998/04/07 04:17:47 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.7 1998/04/07 04:18:45 deraadt Exp $";
 #endif
 
 /*
@@ -132,7 +132,7 @@ main(int argc, char **argv)
 	}
 	/* If no packages, yelp */
 	if (!ch)
-	  usage(prog_name, "Missing package name(s)");
+	  usage(prog_name, NULL);
 	else if (ch > 1 && AddMode == MASTER)
 	  usage(prog_name,
 		"Only one package name may be specified with master mode");
