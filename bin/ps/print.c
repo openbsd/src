@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.36 2004/12/20 15:10:46 aaron Exp $	*/
+/*	$OpenBSD: print.c,v 1.37 2005/01/14 16:44:14 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.36 2004/12/20 15:10:46 aaron Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.37 2005/01/14 16:44:14 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -143,6 +143,7 @@ command(const struct kinfo_proc2 *kp, VARENT *ve)
 			}
 			if (argv == NULL || argv[0] == '\0' ||
 			    strcmp(cmdpart(argv[0]), kp->p_comm)) {
+				fmt_putc(' ', &left);
 				fmt_putc('(', &left);
 				fmt_puts(kp->p_comm, &left);
 				fmt_putc(')', &left);
