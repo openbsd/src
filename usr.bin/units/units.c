@@ -1,4 +1,4 @@
-/*	$OpenBSD: units.c,v 1.6 1999/06/13 16:34:21 pjanzen Exp $	*/
+/*	$OpenBSD: units.c,v 1.7 2001/01/17 19:29:49 deraadt Exp $	*/
 /*	$NetBSD: units.c,v 1.6 1996/04/06 06:01:03 thorpej Exp $	*/
 
 /*
@@ -43,7 +43,7 @@ char *powerstring = "^";
 struct {
 	char *uname;
 	char *uval;
-}      unittable[MAXUNITS];
+} unittable[MAXUNITS];
 
 struct unittype {
 	char *numerator[MAXSUBUNITS];
@@ -54,7 +54,7 @@ struct unittype {
 struct {
 	char *prefixname;
 	char *prefixval;
-}      prefixtable[MAXPREFIXES];
+} prefixtable[MAXPREFIXES];
 
 
 char *NULLUNIT = "";
@@ -74,12 +74,11 @@ dupstr(char *str)
 {
 	char *ret;
 
-	ret = malloc(strlen(str) + 1);
+	ret = strdup(str);
 	if (!ret) {
 		fprintf(stderr, "Memory allocation error\n");
 		exit(3);
 	}
-	strcpy(ret, str);
 	return (ret);
 }
 
@@ -443,8 +442,7 @@ lookupunit(char *unit)
 		copy[strlen(copy) - 1] = '\0';
 		for (i = 0; i < unitcount; i++) {
 			if (!strcmp(unittable[i].uname, copy)) {
-				strncpy(buffer, copy, sizeof(buffer) - 1);
-				buffer[sizeof(buffer) - 1] = '\0';
+				strlcpy(buffer, copy, sizeof(buffer));
 				free(copy);
 				return buffer;
 			}
@@ -456,8 +454,7 @@ lookupunit(char *unit)
 		copy[strlen(copy) - 1] = 0;
 		for (i = 0; i < unitcount; i++) {
 			if (!strcmp(unittable[i].uname, copy)) {
-				strncpy(buffer, copy, sizeof(buffer) - 1);
-				buffer[sizeof(buffer) - 1] = '\0';
+				strlcpy(buffer, copy, sizeof(buffer));
 				free(copy);
 				return buffer;
 			}
@@ -466,8 +463,7 @@ lookupunit(char *unit)
 			copy[strlen(copy) - 1] = 0;
 			for (i = 0; i < unitcount; i++) {
 				if (!strcmp(unittable[i].uname, copy)) {
-					strncpy(buffer, copy, sizeof(buffer) - 1);
-					buffer[sizeof(buffer) - 1] = '\0';
+					strlcpy(buffer, copy, sizeof(buffer));
 					free(copy);
 					return buffer;
 				}
@@ -669,10 +665,8 @@ main(int argc, char **argv)
 	readunits(userfile);
 
 	if (optind == argc - 2) {
-		strncpy(havestr, argv[optind], sizeof(havestr) - 1);
-		havestr[sizeof(havestr) - 1] = '\0';
-		strncpy(wantstr, argv[optind + 1], sizeof(wantstr) - 1);
-		wantstr[sizeof(wantstr) - 1] = '\0';
+		strlcpy(havestr, argv[optind], sizeof(havestr));
+		strlcpy(wantstr, argv[optind + 1], sizeof(wantstr));
 		initializeunit(&have);
 		addunit(&have, havestr, 0);
 		completereduce(&have);
