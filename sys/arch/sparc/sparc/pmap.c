@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.58 2000/01/14 21:24:26 art Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.59 2000/01/14 22:18:28 art Exp $	*/
 /*	$NetBSD: pmap.c,v 1.118 1998/05/19 19:00:18 thorpej Exp $ */
 
 /*
@@ -530,10 +530,11 @@ static u_long segfixmask = 0xffffffff; /* all bits valid to start */
 #if defined(SUN4M)
 #define getpte4m(va)		lda((va & 0xFFFFF000) | ASI_SRMMUFP_L3, \
 				    ASI_SRMMUFP)
-static __inline void setpgt4m __P((int *, int));
-void	setpte4m __P((vaddr_t va, int pte));
-void	setptesw4m __P((struct pmap *pm, vaddr_t va, int pte));
-u_int	getptesw4m __P((struct pmap *pm, vaddr_t va));
+u_int	*getptep4m __P((struct pmap *, vaddr_t));
+static __inline void	setpgt4m __P((int *, int));
+static __inline void	setptesw4m __P((struct pmap *pm, vaddr_t va, int pte));
+static __inline u_int	getptesw4m __P((struct pmap *pm, vaddr_t va));
+__inline void	setpte4m __P((vaddr_t va, int pte));
 #endif
 
 #if defined(SUN4) || defined(SUN4C)
@@ -696,6 +697,42 @@ VA2PA(addr)
 }
 
 /*
+ * Get the pointer to the pte for the given (pmap, va).
+ *
+ * Assumes level 3 mapping (for now).
+ */
+u_int *
+getptep4m(pm, va)
+        struct pmap *pm;
+        vaddr_t va;
+{
+        struct regmap *rm;
+        struct segmap *sm;
+        int vr, vs;
+        vr = VA_VREG(va);
+        vs = VA_VSEG(va);
+
+        rm = &pm->pm_regmap[vr];
+#ifdef notyet
+        if ((rm->rg_seg_ptps[vs] & SRMMU_TETYPE) == SRMMU_TEPTE)
+                return &rm->rg_seg_ptps[vs];
+#endif
+        sm = &rm->rg_segmap[vs];
+        return &sm->sg_pte[VA_SUN4M_VPG(va)];
+}
+
+/*
+ * Set the pte at "ptep" to "pte".
+ */
+static __inline void
+setpgt4m(ptep, pte)
+	int *ptep;
+	int pte;
+{
+	swap(ptep, pte);
+}
+
+/*
  * Get the page table entry (PTE) for va by looking it up in the software
  * page tables. These are the same tables that are used by the MMU; this
  * routine allows easy access to the page tables even if the context
@@ -707,34 +744,12 @@ VA2PA(addr)
  * Note also that this routine only works if a kernel mapping has been
  * installed for the given page!
  */
-__inline u_int
-getptesw4m(pm, va)		/* Assumes L3 mapping! */
+static __inline u_int
+getptesw4m(pm, va)
 	struct pmap *pm;
 	vaddr_t va;
 {
-	struct regmap *rm;
-	struct segmap *sm;
-
-	rm = &pm->pm_regmap[VA_VREG(va)];
-#ifdef DEBUG
-	if (rm == NULL)
-		panic("getptesw4m: no regmap entry");
-#endif
-	sm = &rm->rg_segmap[VA_VSEG(va)];
-#ifdef DEBUG
-	if (sm == NULL)
-		panic("getptesw4m: no segmap");
-#endif
-	return (sm->sg_pte[VA_SUN4M_VPG(va)]); 	/* return pte */
-}
-
-
-static __inline void
-setpgt4m(ptep, pte)
-	int *ptep;
-	int pte;
-{
-	swap(ptep, pte);
+	return *getptep4m(pm, va);
 }
 
 /*
@@ -743,28 +758,13 @@ setpgt4m(ptep, pte)
  * thus should _not_ be called if the pte translation could be in the TLB.
  * In this case, use setpte4m().
  */
-__inline void
+static __inline void
 setptesw4m(pm, va, pte)
 	struct pmap *pm;
 	vaddr_t va;
 	int pte;
 {
-	struct regmap *rm;
-	struct segmap *sm;
-
-	rm = &pm->pm_regmap[VA_VREG(va)];
-
-#ifdef DEBUG
-	if (pm->pm_regmap == NULL || rm == NULL)
-		panic("setptesw4m: no regmap entry");
-#endif
-	sm = &rm->rg_segmap[VA_VSEG(va)];
-
-#ifdef DEBUG
-	if (rm->rg_segmap == NULL || sm == NULL || sm->sg_pte == NULL)
-		panic("setptesw4m: no segmap for va %p", (caddr_t)va);
-#endif
-	setpgt4m(sm->sg_pte + VA_SUN4M_VPG(va), pte);
+	setpgt4m(getptep4m(pm, va), pte);
 }
 
 /* Set the page table entry for va to pte. */
@@ -774,32 +774,13 @@ setpte4m(va, pte)
 	int pte;
 {
 	struct pmap *pm;
-	struct regmap *rm;
-	struct segmap *sm;
-	union ctxinfo *c;
+	int *ptep;
 
-	c = &cpuinfo.ctxinfo[getcontext4m()];
-	pm = c->c_pmap;
+	pm = cpuinfo.ctxinfo[getcontext4m()].c_pmap;
 
-	/* Note: inline version of setptesw4m() */
-#ifdef DEBUG
-	if (pm->pm_regmap == NULL)
-		panic("setpte4m: no regmap entry");
-#endif
-	rm = &pm->pm_regmap[VA_VREG(va)];
-	sm = &rm->rg_segmap[VA_VSEG(va)];
-
-#ifdef DEBUG
-	if (rm == NULL || rm->rg_segmap == NULL)
-		panic("setpte4m: no segmap for va %p (rp=%p)",
-			(caddr_t)va, (caddr_t)rm);   
-
-	if (sm == NULL || sm->sg_pte == NULL)
-		panic("setpte4m: no pte for va %p (rp=%p, sp=%p)",
-			(caddr_t)va, rm, sm);
-#endif
+	ptep = getptep4m(pm, va);
 	tlb_flush_page(va);
-	setpgt4m(sm->sg_pte + VA_SUN4M_VPG(va), pte);
+	setpgt4m(ptep, pte);
 }
 
 #endif /* 4m only */
