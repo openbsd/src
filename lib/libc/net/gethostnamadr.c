@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.37 1999/09/03 18:12:31 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.38 1999/12/11 08:32:20 itojun Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -843,6 +843,11 @@ _gethtent()
 	} else {
 		goto again;
 	}
+	/* if this is not something we're looking for, skip it. */
+	if (host.h_addrtype != af)
+		goto again;
+	if (host.h_length != len)
+		goto again;
 	h_addr_ptrs[0] = (char *)host_addr;
 	h_addr_ptrs[1] = NULL;
 	host.h_addr_list = h_addr_ptrs;
@@ -919,6 +924,9 @@ _gethtbyaddr(addr, len, af)
 	int len, af;
 {
 	register struct hostent *p;
+
+	host.h_length = len;
+	host.h_addrtype = af;
 
 	_sethtent(0);
 	while ((p = _gethtent()))
