@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_ioctl.c,v 1.95 2003/12/19 16:12:43 henning Exp $ */
+/*	$OpenBSD: pf_ioctl.c,v 1.96 2003/12/22 10:10:06 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -800,7 +800,7 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			pf_status.debug = debug;
 			pf_status.stateid = stateid;
 			pf_status.hostid = hostid;
-			pf_status.states = src_nodes;
+			pf_status.src_nodes = src_nodes;
 			pf_status.since = time.tv_sec;
 			if (status_ifp != NULL)
 				strlcpy(pf_status.ifname,
