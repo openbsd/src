@@ -1,4 +1,4 @@
-dnl	$OpenBSD: hardware,v 1.26 2004/02/07 21:58:14 miod Exp $
+dnl	$OpenBSD: hardware,v 1.27 2004/03/11 10:17:39 xsa Exp $
 OpenBSD/MACHINE OSREV runs on iMac, G4 Power Macintosh, G4 Cube as well
 as PowerBook and iBook machines.
 
@@ -9,7 +9,7 @@ OpenBSD/MACHINE has been tested on iMac Revs A-C as well as on iMac DV(+)
 machines, Power Macintosh G4 systems (single and dual processor), as well as
 the G4 Cube, B&W G3 and LCD iMac.
 
-For portables, PowerBook G3, PowerBook G4 (12", 15", 17), iBook and iBook2
+For portables, PowerBook G3, PowerBook G4 (12", 15", 17"), iBook and iBook2
 have been tested.  Note that power saving features on portables are very
 limited, limited power management features are available, suspend/sleep
 is not supported.  However battery level and status charging/AC
@@ -64,7 +64,7 @@ Supported devices {:-include-:}:
 		HME PCI Fast Ethernet (hme)
 		HME PCI Quad Fast Ethernet (hme)
 		Onboard Older iMac 10-100Mbs (bm) Ethernet
-		Onboard G4/PowerBook/Newer iMac (gm) ethernet
+		Onboard G4/PowerBook/Newer iMac (gem) ethernet
 		Intel i8255x-based (except the i82556) PCI adapters (fxp),
 		including:
 			Intel EtherExpress PRO/10+
