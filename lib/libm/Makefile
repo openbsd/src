@@ -1,5 +1,5 @@
 #  $NetBSD: Makefile,v 1.28 1995/11/20 22:06:19 jtc Exp $
-#  $OpenBSD: Makefile,v 1.5 1996/09/30 18:52:39 maja Exp $
+#  $OpenBSD: Makefile,v 1.6 1996/10/25 00:03:05 downsj Exp $
 #
 #  @(#)Makefile 5.1beta 93/09/24 
 # 
@@ -44,15 +44,14 @@
 # 
 
 .if (${MACHINE_ARCH} == "i386")
-# Uncomment the following lines if you have a i387 (or i486 or Pentium)
-#.PATH:	${.CURDIR}/arch/i387
-#ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
-#	    e_remainder.S e_remainderf.S e_scalb.S e_sqrt.S e_sqrtf.S \
-#	    s_atan.S s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
-#	    s_cos.S s_cosf.S s_finite.S s_finitef.S s_floor.S s_floorf.S \
-#	    s_ilogb.S s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
-#	    s_rint.S s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
-#	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S
+.PATH:	${.CURDIR}/arch/i387
+ARCH_SRCS = e_acos.S e_asin.S e_atan2.S e_exp.S e_fmod.S e_log.S e_log10.S \
+	    e_remainder.S e_remainderf.S e_scalb.S e_sqrt.S e_sqrtf.S \
+	    s_atan.S s_atanf.S s_ceil.S s_ceilf.S s_copysign.S s_copysignf.S \
+	    s_cos.S s_cosf.S s_finite.S s_finitef.S s_floor.S s_floorf.S \
+	    s_ilogb.S s_ilogbf.S s_log1p.S s_log1pf.S s_logb.S s_logbf.S \
+	    s_rint.S s_rintf.S s_scalbn.S s_scalbnf.S s_significand.S \
+	    s_significandf.S s_sin.S s_sinf.S s_tan.S s_tanf.S
 .elif (${MACHINE_ARCH} == "m68k")
 .PATH:	${.CURDIR}/arch/mc68881
 ARCH_SRCS = e_acos.S e_asin.S e_atanh.S e_cosh.S e_exp.S e_log.S e_log10.S \
@@ -135,6 +134,14 @@ MAN+=	acos.3 acosh.3 asin.3 asinh.3 atan.3 atan2.3 atanh.3 ceil.3 \
 	cos.3 cosh.3 erf.3 exp.3 fabs.3 floor.3 fmod.3 hypot.3 ieee.3 \
 	ieee_test.3 j0.3 lgamma.3 math.3 rint.3 sin.3 sinh.3 sqrt.3 \
 	tan.3 tanh.3
+
+.if (${MACHINE_ARCH} == "i386")
+LINKS=	/usr/lib/libm.a /usr/lib/libm_i387.a
+LINKS+=	/usr/lib/libm_p.a /usr/lib/libm_i387_p.a
+LINKS+= /usr/lib/libm.so.${SHLIB_MAJOR}.${SHLIB_MINOR} \
+	/usr/lib/libm_i387.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+LINKS+= /usr/lib/libm_pic.a /usr/lib/libm_i387_pic.a
+.endif
 
 MLINKS+=erf.3 erfc.3
 MLINKS+=exp.3 expm1.3 exp.3 log.3 exp.3 log10.3 exp.3 log1p.3 exp.3 pow.3
