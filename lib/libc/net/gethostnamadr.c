@@ -151,7 +151,10 @@ getanswer(answer, anslen, iquery)
 			}
 			cp += n + QFIXEDSZ;
 			host.h_name = bp;
-			n = strlen(bp) + 1;
+			n = strlen(bp);
+			if (n >= MAXHOSTNAMELEN)
+				host.h_name[MAXHOSTNAMELEN-1] = '\0';
+			n++;
 			bp += n;
 			buflen -= n;
 		} else
@@ -200,6 +203,9 @@ getanswer(answer, anslen, iquery)
 				break;
 			cp += n;
 			host.h_name = bp;
+			n = strlen(host.h_name);
+			if (n >= MAXHOSTNAMELEN)
+				host.h_name[MAXHOSTNAMELEN-1] = '\0';
 			return(&host);
 		}
 		if (iquery || type != T_A)  {
@@ -226,6 +232,8 @@ getanswer(answer, anslen, iquery)
 			host.h_addrtype = (class == C_IN) ? AF_INET : AF_UNSPEC;
 			if (!iquery) {
 				host.h_name = bp;
+				if (strlen(bp) >= MAXHOSTNAMELEN)
+					host.h_name[MAXHOSTNAMELEN-1] = '\0';
 				bp += strlen(bp) + 1;
 			}
 		}
@@ -240,6 +248,8 @@ getanswer(answer, anslen, iquery)
 			break;
 		}
 		bcopy(cp, *hap++ = bp, n);
+		if (n >= MAXHOSTNAMELEN)
+			bp[MAXHOSTNAMELEN-1] = '\0';
 		bp +=n;
 		cp += n;
 		haveanswer++;
