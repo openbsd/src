@@ -1,4 +1,4 @@
-/*	$OpenBSD: spamd.c,v 1.44 2003/09/24 01:14:48 deraadt Exp $	*/
+/*	$OpenBSD: spamd.c,v 1.45 2003/09/24 01:14:59 deraadt Exp $	*/
 
 /*
  * Copyright (c) 2002 Theo de Raadt.  All rights reserved.
@@ -866,7 +866,8 @@ main(int argc, char *argv[])
 	    sizeof(one)) == -1)
 		return (-1);
 
-	if (window && setsockopt(s, SOL_SOCKET, SO_RCVBUF, &window, sizeof(window)) == -1) {
+	if (window && setsockopt(s, SOL_SOCKET, SO_RCVBUF, &window,
+	    sizeof(window)) == -1) {
 		syslog(LOG_ERR, "setsockopt: %s", strerror(errno));
 		return (-1);
 	}
