@@ -1,5 +1,5 @@
 /*	$NetBSD: if_sn.c,v 1.7 1997/03/20 17:47:51 scottr Exp $	*/
-/*	$OpenBSD: if_sn.c,v 1.18 1997/04/10 02:35:02 briggs Exp $	*/
+/*	$OpenBSD: if_sn.c,v 1.19 1997/04/10 03:15:59 briggs Exp $	*/
 
 /*
  * National Semiconductor  SONIC Driver
@@ -131,9 +131,9 @@ snsetup(sc)
 	 * Put the pup in reset mode (sninit() will fix it later),
 	 * stop the timer, disable all interrupts and clear any interrupts.
 	 */
-	NIC_PUT(sc, SNR_CR, CR_RST);
-	wbflush();
 	NIC_PUT(sc, SNR_CR, CR_STP);
+	wbflush();
+	NIC_PUT(sc, SNR_CR, CR_RST);
 	wbflush();
 	NIC_PUT(sc, SNR_IMR, 0);
 	wbflush();

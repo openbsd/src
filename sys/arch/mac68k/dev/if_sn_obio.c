@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_sn_obio.c,v 1.10 1997/04/07 13:03:17 briggs Exp $	*/
+/*	$OpenBSD: if_sn_obio.c,v 1.11 1997/04/10 03:16:00 briggs Exp $	*/
 
 /*
  * Copyright (C) 1997 Allen Briggs
@@ -214,15 +214,17 @@ sn_obio_getaddr_kludge(sc)
 	int			i, ors=0;
 
 	/* Shut down NIC */
-	NIC_PUT(sc, SNR_CR, CR_RST);
-	wbflush();
 	NIC_PUT(sc, SNR_CR, CR_STP);
+	wbflush();
+	NIC_PUT(sc, SNR_CR, CR_RST);
 	wbflush();
 	NIC_PUT(sc, SNR_IMR, 0);
 	wbflush();
 	NIC_PUT(sc, SNR_ISR, ISR_ALL);
 	wbflush();
 
+	NIC_PUT(sc, SNR_CR, CR_RST);
+	wbflush();
 	NIC_PUT(sc, SNR_CEP, 15); /* For some reason, Apple fills top first. */
 	wbflush();
 	i = NIC_GET(sc, SNR_CAP2);
