@@ -1,4 +1,4 @@
-.\" $OpenBSD: bsd.port.mk.5,v 1.33 2001/04/12 10:26:58 avsm Exp $
+.\" $OpenBSD: bsd.port.mk.5,v 1.34 2001/04/15 18:28:56 espie Exp $
 .\"
 .\" Copyright (c) 2000 Marc Espie
 .\"
@@ -1213,19 +1213,18 @@ MULTI_PACKAGES only affects the actual package building step (and the
 describe step, since a MULTI_PACKAGES port will produce several
 descriptions).
 .Pp
-Apart from the main package, created by default, each element of
-MULTI_PACKAGES triggers a recursive make package, with SUBPACKAGE set to the
-right value.
+If MULTI_PACKAGES is set, each element of MULTI_PACKAGES triggers a
+recursive make package, with SUBPACKAGE set to the right value.
 For instance, if MULTI_PACKAGES=-lib -server,
 make package will work as follows:
 .Pp
 .Bl -bullet -compact
 .It
+Run make package SUBPACKAGE=,
+.It
 Run make package SUBPACKAGE=-lib,
 .It
 Run make package SUBPACKAGE=-server,
-.It
-Build the main package, by running make package SUBPACKAGE=''
 .El
 .Pp
 The port's Makefile can test the value of SUBPACKAGE to specialize
@@ -1234,11 +1233,6 @@ All packing information is derived from
 templates with SUBPACKAGE appended.
 In the preceding example, the packing-list template for pkgname-foo
 must be in PLIST-foo.
-.Pp
-It is currently not possible to have a subpackage depend on the main
-package, except by inserting an explicit
-.Li "@pkgdep"
-command into the packing-list.
 .Sh THE GENERATION OF PACKING INFORMATION
 Starting after
 .Ox 2.7
