@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_interface.c,v 1.6 1997/01/13 11:51:13 niklas Exp $	*/
+/*	$OpenBSD: db_interface.c,v 1.7 1997/01/19 03:58:35 briggs Exp $	*/
 /*	$NetBSD: db_interface.c,v 1.22 1996/10/13 03:19:20 christos Exp $	*/
 
 /* 
@@ -150,6 +150,6 @@ kdbprinttrap(type, code)
 void
 Debugger()
 {
-	asm ("trap #15");
+	__asm ("trap #15");
 }
 
