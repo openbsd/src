@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket2.c,v 1.21 2001/11/27 15:51:36 provos Exp $	*/
+/*	$OpenBSD: uipc_socket2.c,v 1.22 2001/11/27 22:53:19 provos Exp $	*/
 /*	$NetBSD: uipc_socket2.c,v 1.11 1996/02/04 02:17:55 christos Exp $	*/
 
 /*
@@ -149,6 +149,8 @@ soisdisconnected(so)
  * then we allocate a new structure, properly linked into the
  * data structure of the original socket, and return this.
  * Connstatus may be 0, or SS_ISCONFIRMING, or SS_ISCONNECTED.
+ *
+ * Must be called at splsoftnet()
  */
 struct socket *
 sonewconn(head, connstatus)
@@ -160,7 +162,7 @@ sonewconn(head, connstatus)
 
 	if (head->so_qlen + head->so_q0len > head->so_qlimit * 3)
 		return ((struct socket *)0);
-	MALLOC(so, struct socket *, sizeof(*so), M_SOCKET, M_DONTWAIT);
+	so = pool_get(&socket_pool, PR_NOWAIT);
 	if (so == NULL)
 		return ((struct socket *)0);
 	bzero((caddr_t)so, sizeof(*so));
@@ -180,7 +182,7 @@ sonewconn(head, connstatus)
 	if ((*so->so_proto->pr_usrreq)(so, PRU_ATTACH,
 	    (struct mbuf *)0, (struct mbuf *)0, (struct mbuf *)0)) {
 		(void) soqremque(so, soqueue);
-		(void) free((caddr_t)so, M_SOCKET);
+		pool_put(&socket_pool, so);
 		return ((struct socket *)0);
 	}
 	if (connstatus) {

@@ -1,4 +1,4 @@
-/*	$OpenBSD: uipc_socket.c,v 1.37 2001/11/27 17:55:39 provos Exp $	*/
+/*	$OpenBSD: uipc_socket.c,v 1.38 2001/11/27 22:53:19 provos Exp $	*/
 /*	$NetBSD: uipc_socket.c,v 1.21 1996/02/04 02:17:52 christos Exp $	*/
 
 /*
@@ -50,6 +50,7 @@
 #include <sys/socketvar.h>
 #include <sys/signalvar.h>
 #include <sys/resourcevar.h>
+#include <sys/pool.h>
 
 void 	filt_sordetach(struct knote *kn);
 int 	filt_soread(struct knote *kn, long hint);
@@ -72,6 +73,16 @@ struct filterops sowrite_filtops =
 int	somaxconn = SOMAXCONN;
 int	sominconn = SOMINCONN;
 
+struct pool socket_pool;
+
+void
+soinit(void)
+{
+
+	pool_init(&socket_pool, sizeof(struct socket), 0, 0, 0,
+	    "sockpl", 0, NULL, NULL, M_SOCKET);
+}
+
 /*
  * Socket operation routines.
  * These routines are called by the routines in
@@ -88,9 +99,9 @@ socreate(dom, aso, type, proto)
 	int proto;
 {
 	struct proc *p = curproc;		/* XXX */
-	register struct protosw *prp;
-	register struct socket *so;
-	register int error;
+	struct protosw *prp;
+	struct socket *so;
+	int error, s;
 
 	if (proto)
 		prp = pffindproto(dom, proto, type);
@@ -100,7 +111,8 @@ socreate(dom, aso, type, proto)
 		return (EPROTONOSUPPORT);
 	if (prp->pr_type != type)
 		return (EPROTOTYPE);
-	MALLOC(so, struct socket *, sizeof(*so), M_SOCKET, M_WAIT);
+	s = splsoftnet();
+	so = pool_get(&socket_pool, PR_WAITOK);
 	bzero((caddr_t)so, sizeof(*so));
 	TAILQ_INIT(&so->so_q0);
 	TAILQ_INIT(&so->so_q);
@@ -115,6 +127,7 @@ socreate(dom, aso, type, proto)
 	if (error) {
 		so->so_state |= SS_NOFDREF;
 		sofree(so);
+		splx(s);
 		return (error);
 	}
 #ifdef COMPAT_SUNOS
@@ -124,6 +137,7 @@ socreate(dom, aso, type, proto)
 			so->so_options |= SO_BROADCAST;
 	}
 #endif
+	splx(s);
 	*aso = so;
 	return (0);
 }
@@ -164,6 +178,10 @@ solisten(so, backlog)
 	return (0);
 }
 
+/*
+ *  Must be called at splsoftnet()
+ */
+
 void
 sofree(so)
 	register struct socket *so;
@@ -182,7 +200,7 @@ sofree(so)
 	}
 	sbrelease(&so->so_snd);
 	sorflush(so);
-	FREE(so, M_SOCKET);
+	pool_put(&socket_pool, so);
 }
 
 /*

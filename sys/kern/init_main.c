@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.85 2001/11/27 05:27:11 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.86 2001/11/27 22:53:19 provos Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -61,6 +61,7 @@
 #include <sys/conf.h>
 #include <sys/buf.h>
 #include <sys/device.h>
+#include <sys/socketvar.h>
 #include <sys/protosw.h>
 #include <sys/reboot.h>
 #include <sys/user.h>
@@ -209,6 +210,9 @@ main(framep)
 	 * allocate mbufs or mbuf clusters during autoconfiguration.
 	 */
 	mbinit();
+
+	/* Initalize sockets. */
+	soinit();
 
 	/*
 	 * Initialize timeouts.
