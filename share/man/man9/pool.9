@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pool.9,v 1.26 2003/12/30 21:27:44 jmc Exp $
+.\"	$OpenBSD: pool.9,v 1.27 2003/12/31 00:38:27 jmc Exp $
 .\"	$NetBSD: pool.9,v 1.18 2001/06/21 11:59:01 wiz Exp $
 .\"
 .\" Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -244,14 +244,9 @@ A pointer to a pool item previously obtained by
 .Ss PRIMING A POOL
 .Fn pool_prime
 adds items to the pool.
-Storage space for the items is either allocated by using the page allocation
+Storage space for the items is allocated by using the page allocation
 routine specified to
-.Fn pool_init ,
-or provided to
-.Fn pool_prime
-by the caller through the
-.Fa storage
-parameter.
+.Fn pool_init .
 .Pp
 .Fn pool_prime
 .Bl -tag -offset indent -width "nitems"
