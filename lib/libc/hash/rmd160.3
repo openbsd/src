@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rmd160.3,v 1.12 2000/04/18 03:01:29 aaron Exp $
+.\"	$OpenBSD: rmd160.3,v 1.13 2000/12/21 17:34:33 aaron Exp $
 .\"
 .\" Copyright (c) 1997 Todd C. Miller <Todd.Miller@courtesan.com>
 .\" All rights reserved.
@@ -172,7 +172,7 @@ RMD160Final(results, &rmd);
 printf("0x");
 for (n = 0; n < 20; n++)
 	printf("%02x", results[n]);
-putchar('\\n');
+putchar('\en');
 .Ed
 .Pp
 Alternately, the helper functions could be used in the following way:
