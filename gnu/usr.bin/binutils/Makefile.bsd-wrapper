@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.bsd-wrapper,v 1.62 2004/12/27 21:11:07 kettenis Exp $
+#	$OpenBSD: Makefile.bsd-wrapper,v 1.63 2005/01/15 19:54:04 kettenis Exp $
 
 NEW_BINUTILS=amd64 alpha arm hppa i386 mips64 powerpc sparc sparc64
 
@@ -12,8 +12,6 @@ USING_NEW_BINUTILS=no
 
 SUBDIRS=
 CONF_SUBDIRS=
-ALL_X11_MODULES=
-INSTALL_X11_MODULES=
 
 .if ${USING_NEW_BINUTILS} == "yes"
 CONF_SUBDIRS+=	opcodes bfd
@@ -23,8 +21,6 @@ INST_SUBDIRS+=	opcodes bfd
 CONF_SUBDIRS+=	opcodes bfd
 SUBDIRS+=	opcodes bfd
 .endif
-ALL_X11_MODULES=
-INSTALL_X11_MODULES=
 
 # This allows moving the whole binutils installation around for 
 # testing purposes
@@ -39,9 +35,6 @@ CONF_SUBDIRS+=	gdb
 SUBDIRS+=	gdb
 INST_SUBDIRS+=	gdb
 MAN+=		gdb/gdb.1
-ALL_X11_MODULES+=all-gdb
-INSTALL_X11_MODULES+=install-gdb
-
 
 .if ${USING_NEW_BINUTILS} == "yes"
 SUBDIRS+=	binutils ld gas
@@ -82,7 +75,6 @@ all:	config.status
 	    BSDSRCDIR=${BSDSRCDIR} \
 	    ALL_MODULES="${ALL_MODULES}" \
 	    ALL_HOST_MODULES='${ALL_HOST_MODULES}' \
-	    ALL_X11_MODULES="${ALL_X11_MODULES}" \
 	    INFO_HOST_MODULES='${INFO_HOST_MODULES}' all info
 .if ${USING_NEW_BINUTILS} != "yes"
 	cd ${.OBJDIR}/binutils && \
@@ -126,7 +118,6 @@ config.status: do-config
 # Need to pass SUBDIRS because of install-info
 install: maninstall
 	SUBDIRS='${INST_SUBDIRS}' ${MAKE} DESTDIR='${DESTDIR}' \
-	    INSTALL_X11_MODULES="${INSTALL_X11_MODULES}" \
 	    INSTALL_MAN= \
 	    scriptdir=${PREFIX}/libdata \
 	    tooldir=${PREFIX} \
