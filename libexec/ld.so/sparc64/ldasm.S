@@ -1,4 +1,4 @@
-/*	$OpenBSD: ldasm.S,v 1.1 2001/09/21 14:52:45 jason Exp $	*/
+/*	$OpenBSD: ldasm.S,v 1.2 2001/09/23 00:14:56 drahn Exp $	*/
 /*	$NetBSD: rtld_start.S,v 1.5 2001/08/14 22:17:48 eeh Exp $	*/
 	
 /*
@@ -131,21 +131,21 @@ _dl_start:
 	 * We have two separate entry points to the runtime linker.
 	 * I'm implementing this following the SPARC v9 ABI spec.
 	 *
-	 * _rtld_bind_start_0(x, y) is called from .PLT0, and is used for
+	 * _dl_bind_start_0(x, y) is called from .PLT0, and is used for
 	 * PLT entries above 32768.
 	 *
-	 * _rtld_bind_start_1(x, y) is called from .PLT1, and is used for
+	 * _dl_bind_start_1(x, y) is called from .PLT1, and is used for
 	 * PLT entries below 32768.
 	 *
 	 * The first two entries of PLT2 contain the xword object pointer.
 	 *
 	 * These routines are called with two longword arguments, 
 	 * x and y.  To calculate the address of the entry,
-	 * _rtld_bind_start_1(x, y) does:
+	 * _dl_bind_start_1(x, y) does:
 	 *
 	 *	n = x >> 15;
 	 *
-	 * and _rtld_bind_start_0(x, y) does:
+	 * and _dl_bind_start_0(x, y) does:
 	 *
 	 *	i = x - y + 1048596;
 	 *	n = 32768 + (i/5120)*160 + (i%5120)/24;
@@ -154,15 +154,15 @@ _dl_start:
 	 * done in the PLT entry.
 	 */
 
-	/* NOTE: _rtld_bind_start_0 is untested.  Hence the debug stuff */
+	/* NOTE: _dl_bind_start_0 is untested.  Hence the debug stuff */
 	
 	.section	".text"
 	.align	4
-	.global	_rtld_bind_start_0
-	.type	_rtld_bind_start_0,@function
-_rtld_bind_start_0:	# (x, y)
+	.global	_dl_bind_start_0
+	.type	_dl_bind_start_0,@function
+_dl_bind_start_0:	# (x, y)
 #if 0
-	call	_rtld_bind_start_0_stub
+	call	_dl_bind_start_0_stub
 	 ldx     [%o1 + (10*4)], %l7
 	mov	%o0, %l5
 	
@@ -170,7 +170,7 @@ _rtld_bind_start_0:	# (x, y)
 	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
 	sllx	%l5, 3, %o1		/*  So multiply by 24. */
 	
-	call	_rtld_bind
+	call	_dl_bind
 	 mov	%l7, %o0
 #else
 	sethi	%hi(1048596), %l1
@@ -198,7 +198,7 @@ _rtld_bind_start_0:	# (x, y)
 	add	%l6, %l5, %l5		/*  is 3 longwords or 24 bytes. */
 	sllx	%l5, 3, %l5		/*  So multiply by 24. */
 	
-	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
+	call	_dl_bind		/* Call _dl_bind(obj, offset) */
 	 mov	%l5, %o1
 
 	jmp	%o0			/* return value == function address */
@@ -207,9 +207,9 @@ _rtld_bind_start_0:	# (x, y)
 	
 	.section	".text"
 	.align	4
-	.global	_rtld_bind_start_1
-	.type	_rtld_bind_start_1,@function
-_rtld_bind_start_1:	# (x, y)
+	.global	_dl_bind_start_1
+	.type	_dl_bind_start_1,@function
+_dl_bind_start_1:	# (x, y)
 	srax	%o0, 15, %o2		/* %o0 is the index to our PLT slot */
 	
 	sllx	%o2, 1, %o3		/* Each element is an Elf_Rela which */
@@ -218,7 +218,7 @@ _rtld_bind_start_1:	# (x, y)
 	
 	ldx	[%o1 + 8], %o0		/* The object pointer is at [%o1 + 8] */
 	
-	call	_rtld_bind		/* Call _rtld_bind(obj, offset) */
+	call	_dl_bind		/* Call _dl_bind(obj, offset) */
 	 mov	%o2, %o1
 
 	jmp	%o0			/* return value == function address */
@@ -303,6 +303,17 @@ _dl_getuid:
 	.type _dl_mmap,@function
 _dl_mmap:
 	mov SYS_mmap | SYSCALL_G2RFLAG, %g1	! calling sys_mmap
+	add %o7, 8, %g2				! just return on sucess
+	t ST_SYSCALL				! off to wonderland
+	retl
+	 sub %g0, %o0, %o0			! error: result = -errno
+
+	.section ".text"
+	.align 4
+	.global _dl_munmap
+	.type _dl_munmap,@function
+_dl_munmap:
+	mov SYS_munmap | SYSCALL_G2RFLAG, %g1	! calling sys_mmap
 	add %o7, 8, %g2				! just return on sucess
 	t ST_SYSCALL				! off to wonderland
 	retl

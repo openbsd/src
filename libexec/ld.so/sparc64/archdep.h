@@ -1,4 +1,4 @@
-/*	$OpenBSD: archdep.h,v 1.1 2001/09/21 14:57:43 jason Exp $ */
+/*	$OpenBSD: archdep.h,v 1.2 2001/09/23 00:14:56 drahn Exp $ */
 
 /*
  * Copyright (c) 1998 Per Fogelstrom, Opsycon AB
@@ -128,19 +128,21 @@ _dl_strchr(const char *p, const int c)
 static inline void
 RELOC_RELA(Elf64_Rela *r, const Elf64_Sym *s, Elf64_Addr *p, unsigned long v)
 {
-#error "haven't fixed for sparc64 yet..."
 	extern Elf_Addr  _GLOBAL_OFFSET_TABLE_[];
 
-	if (ELF64_R_TYPE(r->r_info) == RELOC_RELATIVE) {
+	if (ELF64_R_TYPE(r->r_info) == R_SPARC_RELATIVE) {
 		if ((caddr_t)p < (caddr_t)_GLOBAL_OFFSET_TABLE_ ||
 		    (caddr_t)p >= (caddr_t)&_DYNAMIC)
 			*p += (Elf_Addr)v;
-	} else if (ELF64_R_TYPE(r->r_info) == RELOC_JMP_SLOT) {
+	} else if (ELF64_R_TYPE(r->r_info) == R_SPARC_JMP_SLOT) {
 		Elf64_Addr val = v + s->st_value + r->r_addend -
 			(Elf64_Addr)(p);
 		*p = val;
+		/*
+		 * need instruction cache flush? - XXX
 		__asm __volatile("imb" : : : "memory");
-	} else if (ELF64_R_TYPE(r->r_info) == RELOC_GLOB_DAT) {
+		*/
+	} else if (ELF64_R_TYPE(r->r_info) == R_SPARC_64) {
 		*p = v + s->st_value + r->r_addend;
 	} else {
 		_dl_printf("unknown bootstrap relocation\n");
