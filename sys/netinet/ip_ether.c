@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ether.c,v 1.29 2001/06/19 00:48:22 deraadt Exp $  */
+/*	$OpenBSD: ip_ether.c,v 1.30 2001/06/23 16:15:56 fgsch Exp $  */
 
 /*
  * The author of this code is Angelos D. Keromytis (kermit@adk.gr)
@@ -370,8 +370,7 @@ etherip_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		ipo->ip_tos = 0;
 		ipo->ip_off = 0;
 		ipo->ip_sum = 0;
-		ipo->ip_id = ip_randomid();
-		HTONS(ipo->ip_id);
+		ipo->ip_id = htons(ip_randomid());
 
 		/* 
 		 * We should be keeping tunnel soft-state and send back

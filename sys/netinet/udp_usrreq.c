@@ -1,4 +1,4 @@
-/*	$OpenBSD: udp_usrreq.c,v 1.68 2001/06/23 07:14:32 angelos Exp $	*/
+/*	$OpenBSD: udp_usrreq.c,v 1.69 2001/06/23 16:15:56 fgsch Exp $	*/
 /*	$NetBSD: udp_usrreq.c,v 1.28 1996/03/16 23:54:03 christos Exp $	*/
 
 /*
@@ -528,7 +528,6 @@ udp_input(m, va_alist)
 #endif /* INET6 */
 			{
 				*ip = save_ip;
-				HTONS(ip->ip_id);
 				uh->uh_sum = savesum;
 				icmp_error(m, ICMP_UNREACH, ICMP_UNREACH_PORT,
 					0, 0);

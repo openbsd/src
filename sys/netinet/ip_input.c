@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_input.c,v 1.79 2001/06/23 05:55:40 angelos Exp $	*/
+/*	$OpenBSD: ip_input.c,v 1.80 2001/06/23 16:15:56 fgsch Exp $	*/
 /*	$NetBSD: ip_input.c,v 1.30 1996/03/16 23:53:58 christos Exp $	*/
 
 /*
@@ -352,7 +352,6 @@ ipv4_input(m)
 		ipstat.ips_badlen++;
 		goto bad;
 	}
-	NTOHS(ip->ip_id);
 	NTOHS(ip->ip_off);
 
 	/*
@@ -417,13 +416,11 @@ ipv4_input(m)
 			 * as expected when ip_mforward() is called from
 			 * ip_output().)
 			 */
-			ip->ip_id = htons(ip->ip_id);
 			if (ip_mforward(m, m->m_pkthdr.rcvif) != 0) {
 				ipstat.ips_cantforward++;
 				m_freem(m);
 				return;
 			}
-			ip->ip_id = ntohs(ip->ip_id);
 
 			/*
 			 * The process-level routing demon needs to receive
@@ -1129,7 +1126,6 @@ ip_dooptions(m)
 	return (0);
 bad:
 	ip->ip_len -= ip->ip_hl << 2;   /* XXX icmp_error adds in hdr length */
-	HTONS(ip->ip_id);
 	icmp_error(m, type, code, 0, 0);
 	ipstat.ips_badoptions++;
 	return (1);
@@ -1379,7 +1375,6 @@ ip_forward(m, srcrt)
 		m_freem(m);
 		return;
 	}
-	HTONS(ip->ip_id);
 	if (ip->ip_ttl <= IPTTLDEC) {
 		icmp_error(m, ICMP_TIMXCEED, ICMP_TIMXCEED_INTRANS, dest, 0);
 		return;

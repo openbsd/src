@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.59 2001/06/08 03:13:14 angelos Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.60 2001/06/23 16:15:56 fgsch Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -212,14 +212,13 @@ ah_massage_headers(struct mbuf **m0, int proto, int skip, int alg, int out)
 	    ip->ip_sum = 0;
 
 	    /*
-	     * On input, fix ip_len and ip_id, which have been byte-swapped
-	     * at ip_intr()
+	     * On input, fix ip_len which has been byte-swapped
+	     * at ip_input()
 	     */
 	    if (!out)
 	    {
 		ip->ip_len += skip;
 		HTONS(ip->ip_len);
-		HTONS(ip->ip_id);
 
 	        if ((alg == CRYPTO_MD5_KPDK) || (alg == CRYPTO_SHA1_KPDK))
 	          ip->ip_off = htons(ip->ip_off & IP_DF);

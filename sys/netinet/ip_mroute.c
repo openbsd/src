@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.20 2000/11/10 15:33:10 provos Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.21 2001/06/23 16:15:56 fgsch Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -1417,8 +1417,7 @@ encap_send(ip, vifp, m)
 	 */
 	ip_copy = mtod(mb_copy, struct ip *);
 	*ip_copy = multicast_encap_iphdr;
-	ip_copy->ip_id = ip_randomid();
-	HTONS(ip_copy->ip_id);
+	ip_copy->ip_id = htons(ip_randomid());
 	ip_copy->ip_len = len;
 	ip_copy->ip_src = vifp->v_lcl_addr;
 	ip_copy->ip_dst = vifp->v_rmt_addr;
