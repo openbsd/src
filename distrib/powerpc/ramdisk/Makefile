@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.4 1998/09/09 04:32:57 rahnds Exp $
+#	$OpenBSD: Makefile,v 1.5 1998/09/22 02:54:57 rahnds Exp $
 
 TOP=		${.CURDIR}/..
 
@@ -111,7 +111,7 @@ do_files:
 
 clean cleandir:
 	/bin/rm -f core ${IMAGE} ${CBIN} ${CBIN}.conf ${CBIN}.mk ${CBIN}.cache \
-	*.o *.lo *.c bsd ${BSD_RD} ${BSDOFW_RD} ${BSDMIX_RD} ${BSD_RD}.elf \
+	*.o *.lo *.c bsd bsdmix bsdofw ${BSD_RD} ${BSDOFW_RD} ${BSDMIX_RD} \
 	rdsetroot
 
 beforeinstall:
