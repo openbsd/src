@@ -1,4 +1,4 @@
-/* 	$OpenBSD: isp_openbsd.c,v 1.5 1999/11/22 22:34:30 mjacob Exp $ */
+/* 	$OpenBSD: isp_openbsd.c,v 1.6 1999/12/16 05:25:39 mjacob Exp $ */
 /*
  * Platform (OpenBSD) dependent common attachment code for Qlogic adapters.
  *
@@ -53,6 +53,7 @@ static int32_t ispcmd_slow __P((ISP_SCSI_XFER_T *));
 static int32_t ispcmd __P((ISP_SCSI_XFER_T *));
 
 static struct scsi_device isp_dev = { NULL, NULL, NULL, NULL };
+
 static int isp_poll __P((struct ispsoftc *, ISP_SCSI_XFER_T *, int));
 static void isp_watch __P((void *));
 static void isp_command_requeue(void *);
@@ -70,35 +71,45 @@ void
 isp_attach(isp)
 	struct ispsoftc *isp;
 {
+	struct scsi_link *lptr = &isp->isp_osinfo._link[0];
 	isp->isp_osinfo._adapter.scsi_minphys = ispminphys;
 
 	isp->isp_state = ISP_RUNSTATE;
-	/*
-	 * OpenBSD will lose on the 1240 support because you don't
-	 * get multiple SCSI busses per adapter instance.
-	 */
-#if	0
-	isp->isp_osinfo._link.channel = SCSI_CHANNEL_ONLY_ONE;
-#endif
-	isp->isp_osinfo._link.adapter_softc = isp;
-	isp->isp_osinfo._link.device = &isp_dev;
-	isp->isp_osinfo._link.adapter = &isp->isp_osinfo._adapter;
-	isp->isp_osinfo._link.openings = isp->isp_maxcmds;
-	isp->isp_osinfo.wqf = isp->isp_osinfo.wqt = NULL; /* XXX 2nd Bus? */
 
+	/*
+	 * We only manage a single wait queues for dual bus controllers.
+	 * This is arguably broken.
+	 */
+	isp->isp_osinfo.wqf = isp->isp_osinfo.wqt = NULL;
+
+	lptr->adapter_softc = isp;
+	lptr->device = &isp_dev;
+	lptr->adapter = &isp->isp_osinfo._adapter;
+	lptr->openings = isp->isp_maxcmds;
 	if (IS_FC(isp)) {
 		isp->isp_osinfo._adapter.scsi_cmd = ispcmd;
-		isp->isp_osinfo._link.adapter_buswidth = MAX_FC_TARG;
+		lptr->adapter_buswidth = MAX_FC_TARG;
 		/* We can set max lun width here */
 		/* loopid set below */
 	} else {
 		sdparam *sdp = isp->isp_param;
 		isp->isp_osinfo._adapter.scsi_cmd = ispcmd_slow;
-		isp->isp_osinfo._link.adapter_buswidth = MAX_TARGETS;
+		lptr->adapter_buswidth = MAX_TARGETS;
 		/* We can set max lun width here */
-		isp->isp_osinfo._link.adapter_target =
-			sdp->isp_initiator_id;
+		lptr->adapter_target = sdp->isp_initiator_id;
 		isp->isp_osinfo.discovered[0] = 1 << sdp->isp_initiator_id;
+		if (IS_DUALBUS(isp)) {
+			struct scsi_link *lptrb = &isp->isp_osinfo._link[1];
+			lptrb->adapter_softc = isp;
+			lptrb->device = &isp_dev;
+			lptrb->adapter = &isp->isp_osinfo._adapter;
+			lptrb->openings = isp->isp_maxcmds;
+			lptrb->adapter_buswidth = MAX_TARGETS;
+			lptrb->adapter_target = sdp->isp_initiator_id;
+			lptrb->flags = SDEV_2NDBUS;
+			isp->isp_osinfo.discovered[1] =
+			    1 << (sdp+1)->isp_initiator_id;
+		}
 	}
 
 	/*
@@ -113,16 +124,16 @@ isp_attach(isp)
 	if (IS_SCSI(isp)) {
 		int bus = 0;
 		(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
-		if (IS_12X0(isp)) {
+		if (IS_DUALBUS(isp)) {
 			bus++;
 			(void) isp_control(isp, ISPCTL_RESET_BUS, &bus);
 		}
 		/*
 		 * wait for the bus to settle.
 		 */
-		printf("%s: waiting 2 seconds for bus reset settling\n",
+		printf("%s: waiting 4 seconds for bus reset settling\n",
 		    isp->isp_name);
-		delay(2 * 1000000);
+		delay(4 * 1000000);
 	} else {
 		int i, j;
 		fcparam *fcp = isp->isp_param;
@@ -155,7 +166,7 @@ isp_attach(isp)
 				break;
 			}
 		}
-		isp->isp_osinfo._link.adapter_target = fcp->isp_loopid;
+		lptr->adapter_target = fcp->isp_loopid;
 	}
 
 	/*
@@ -169,7 +180,11 @@ isp_attach(isp)
 	/*
 	 * And attach children (if any).
 	 */
-	config_found((void *)isp, &isp->isp_osinfo._link, scsiprint);
+	config_found((void *)isp, lptr, scsiprint);
+	if (IS_DUALBUS(isp)) {
+		lptr++;
+		config_found((void *)isp, lptr, scsiprint);
+	}
 }
 
 /*
@@ -215,13 +230,18 @@ ispcmd_slow(xs)
 	}
 
 	f = DPARM_DEFAULT;
-	if (xs->sc_link->quirks & SDEV_NOSYNCWIDE) {
+	if (xs->sc_link->quirks & SDEV_NOSYNC) {
 		f ^= DPARM_SYNC;
-		f ^= DPARM_WIDE;
 #ifdef	DEBUG
 	} else {
 		printf("%s: channel %d target %d can do SYNC xfers\n",
 		    isp->isp_name, chan, tgt);
+#endif
+	}
+	if (xs->sc_link->quirks & SDEV_NOWIDE) {
+		f ^= DPARM_WIDE;
+#ifdef	DEBUG
+	} else {
 		printf("%s: channel %d target %d can do WIDE xfers\n",
 		    isp->isp_name, chan, tgt);
 #endif
@@ -241,7 +261,7 @@ ispcmd_slow(xs)
 	 */
 	sdp->isp_devparam[tgt].dev_flags = f;
 	sdp->isp_devparam[tgt].dev_update = 1;
-	isp->isp_update |= 1 << chan;
+	isp->isp_update |= (1 << chan);
 
 	/*
 	 * Now check to see whether we can get out of this checking mode now.
@@ -301,6 +321,7 @@ ispcmd(xs)
 	 * Check for queue blockage...
 	 */
 	if (isp->isp_osinfo.blocked) {
+		IDPRINTF(2, ("%s: blocked\n", isp->isp_name));
 		if (xs->flags & SCSI_POLL) {
 			xs->error = XS_DRIVER_STUFFUP;
 			splx(s);
@@ -555,12 +576,13 @@ isp_async(isp, cmd, arg)
 		tgt = *((int *) arg);
 		bus = (tgt >> 16) & 0xffff;
 		tgt &= 0xffff;
+		sdp += bus;
 
 		flags = sdp->isp_devparam[tgt].cur_dflags;
 		period = sdp->isp_devparam[tgt].cur_period;
 		if ((flags & DPARM_SYNC) && period &&
 		    (sdp->isp_devparam[tgt].cur_offset) != 0) {
-			if (sdp->isp_lvdmode) {
+			if (sdp->isp_lvdmode || period < 0xc) {
 				switch (period) {
 				case 0xa:
 					mhz = 40;
