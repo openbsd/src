@@ -1,4 +1,4 @@
-#	$OpenBSD: inter.phone,v 1.9 2001/07/13 22:26:24 mickey Exp $
+#	$OpenBSD: inter.phone,v 1.10 2001/07/13 22:30:34 mickey Exp $
 #	@(#)inter.phone	8.1 (Berkeley) 6/9/93
 #	$FreeBSD-Id: inter.phone,v 1.15 1997/02/22 13:56:06 peter Exp $
 #
@@ -409,7 +409,50 @@
 373:65:Anenji Nojus:Moldova
 373:70:Maksimovka:Moldova
 373:76:Paskanai:Moldova
-374:::Armenia
+374:2:Erevan:Armenia
+374:31:Charentsavan:Armenia
+374:33:Bagramian:Armenia
+374:35:Tsaxkadsor:Armenia
+374:3800:Axuriuan:Armenia
+374:41:Vedi:Armenia
+374:42:Maralik:Armenia
+374:43:Ashtarak:Armenia
+374:44:Artik:Armenia
+374:45:Artashat:Armenia
+374:46:Exegnadsor:Armenia
+374:47:Armavir:Armenia
+374:480:Tsaxkahovit:Armenia
+374:490:Talin:Armenia
+374:510:Amasia:Armenia
+374:520:Aparan:Armenia
+374:53:Ashotsk:Armenia
+374:54:Tashir:Armenia
+374:5500:Spitak:Armenia
+374:560:Stepanavan:Armenia
+374:57:Vanadsor:Armenia
+374:58:Vardenis:Armenia
+374:59:Echmiadzin:Armenia
+374:61:Kotaik:Armenia
+374:62:Masis:Armenia
+374:63:Ijevan:Armenia
+374:64:Kamo:Armenia
+374:65:Krasnoselsk:Armenia
+374:66:Noemberian:Armenia
+374:67:Hrasdan:Armenia
+374:68:Nairi:Armenia
+374:69:Gjumri:Armenia
+374:71:Taush:Armenia
+374:720:Dilijan:Armenia
+374:73:Tumanian:Armenia
+374:74:Martuni:Armenia
+374:750:Sisian:Armenia
+374:760:Sevan:Armenia
+374:77:Jermuk:Armenia
+374:78:Ararat:Armenia
+374:79:Vaik:Armenia
+374:91:Goris:Armenia
+374:92:Kapan:Armenia
+374:930:Megri:Armenia
 375:17:Minsk:Belarus
 376:::Andorra
 378:549::San Marino
