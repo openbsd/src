@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.289 2002/01/24 22:37:58 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.290 2002/02/10 23:58:02 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -12,7 +12,7 @@ option		I386_CPU	# CPU classes; at least one is REQUIRED
 option		I486_CPU
 option		I586_CPU
 option		I686_CPU
-option		GPL_MATH_EMULATE	# floating point emulation. required.
+option		GPL_MATH_EMULATE	# floating point emulation.
 
 option		USER_PCICONF	# user-space PCI configuration
 
