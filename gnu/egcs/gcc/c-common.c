@@ -58,7 +58,7 @@ enum attrs {A_PACKED, A_NOCOMMON, A_COMMON, A_NORETURN, A_CONST, A_T_UNION,
 	    A_SENTINEL };
 
 enum format_type { printf_format_type, scanf_format_type,
-		   strftime_format_type };
+		   strftime_format_type, syslog_format_type };
 
 static void declare_hidden_char_array	PROTO((const char *, const char *));
 static void add_attribute		PROTO((enum attrs, const char *,
@@ -766,6 +766,8 @@ decl_attributes (node, attributes, prefix_attributes)
 		
 		if (!strcmp (p, "printf") || !strcmp (p, "__printf__"))
 		  format_type = printf_format_type;
+		else if (!strcmp (p, "syslog") || !strcmp (p, "__syslog__"))
+		  format_type = syslog_format_type;
 		else if (!strcmp (p, "scanf") || !strcmp (p, "__scanf__"))
 		  format_type = scanf_format_type;
 		else if (!strcmp (p, "strftime")
@@ -1850,7 +1852,8 @@ check_format_info (info, params)
 		}
 	    }
 	}
-      else if (info->format_type == printf_format_type)
+      else if ((info->format_type == printf_format_type) || 
+      	(info->format_type == syslog_format_type))
 	{
 	  /* See if we have a number followed by a dollar sign.  If we do,
 	     it is an operand number, so set PARAMS to that operand.  */
@@ -2029,7 +2032,8 @@ check_format_info (info, params)
 	}
       /* The m, C, and S formats are GNU extensions.  */
       if (pedantic && info->format_type != strftime_format_type
-	  && (format_char == 'm' || format_char == 'C' || format_char == 'S'))
+	  && ((format_char == 'm' && info->format_type != syslog_format_type)
+	       || format_char == 'C' || format_char == 'S'))
 	warning ("ANSI C does not support the `%c' format", format_char);
       /* ??? The a and A formats are C9X extensions, and should be allowed
 	 when a C9X option is added.  */
@@ -2040,6 +2044,7 @@ check_format_info (info, params)
       switch (info->format_type)
 	{
 	case printf_format_type:
+	case syslog_format_type:
 	  fci = print_char_table;
 	  break;
 	case scanf_format_type:
@@ -2183,7 +2188,8 @@ check_format_info (info, params)
       /* See if this is an attempt to write into a const type with
 	 scanf or with printf "%n".  */
       if ((info->format_type == scanf_format_type
-	   || (info->format_type == printf_format_type
+	   || ((info->format_type == printf_format_type || 
+	       info->format_type == syslog_format_type)
 	       && format_char == 'n'))
 	  && i == fci->pointer_count + aflag
 	  && wanted_type != 0
