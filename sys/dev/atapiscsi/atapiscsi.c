@@ -1,4 +1,4 @@
-/*      $OpenBSD: atapiscsi.c,v 1.45 2001/06/25 22:31:29 csapuntz Exp $     */
+/*      $OpenBSD: atapiscsi.c,v 1.46 2001/07/02 04:58:52 ho Exp $     */
 
 /*
  * This code is derived from code with the copyright below.
@@ -314,7 +314,7 @@ wdc_atapi_send_cmd(sc_xfer)
 	int s, ret;
 
 	WDCDEBUG_PRINT(("wdc_atapi_send_cmd %s:%d:%d\n",
-	    chp->wdc->sc_dev.dv_xname, chp->channel, drive), DEBUG_XFERS);
+	    chp->wdc->sc_dev.dv_xname, chp->channel, as->drive), DEBUG_XFERS);
 
 	if (sc_xfer->sc_link->target != 0) {
 		sc_xfer->error = XS_DRIVER_STUFFUP;
