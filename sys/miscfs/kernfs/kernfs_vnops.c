@@ -1,4 +1,4 @@
-/*	$OpenBSD: kernfs_vnops.c,v 1.3 1996/04/21 22:28:14 deraadt Exp $	*/
+/*	$OpenBSD: kernfs_vnops.c,v 1.4 1996/06/20 14:30:09 mickey Exp $	*/
 /*	$NetBSD: kernfs_vnops.c,v 1.43 1996/03/16 23:52:47 christos Exp $	*/
 
 /*
@@ -65,8 +65,15 @@
 #define	UIO_MX 32
 
 #define	READ_MODE	(S_IRUSR|S_IRGRP|S_IROTH)
-#define	WRITE_MODE	(S_IWUSR|S_IRUSR|S_IRGRP|S_IROTH)
+#define	WRITE_MODE	(S_IWUSR|READ_MODE)
 #define DIR_MODE	(S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH)
+
+static int	byteorder = BYTE_ORDER;
+static int	posix = _POSIX_VERSION;
+static int	osrev = BSD;
+static int	ncpu = 1;	/* XXX */
+extern char machine[], cpu_model[];
+extern char ostype[], osrelease[];
 
 struct kern_target {
 	u_char kt_type;
@@ -81,6 +88,8 @@ struct kern_target {
 #define KTT_AVENRUN	53
 #define KTT_DEVICE	71
 #define	KTT_MSGBUF	89
+#define KTT_USERMEM	91
+#define KTT_DOMAIN	95
 	u_char kt_tag;
 	u_char kt_vtype;
 	mode_t kt_mode;
@@ -91,19 +100,29 @@ struct kern_target {
      { DT_DIR, N("."),         0,            KTT_NULL,     VDIR, DIR_MODE   },
      { DT_DIR, N(".."),        0,            KTT_NULL,     VDIR, DIR_MODE   },
      { DT_REG, N("boottime"),  &boottime.tv_sec, KTT_INT,  VREG, READ_MODE  },
+     { DT_REG, N("byteorder"), &byteorder,   KTT_INT,      VREG, READ_MODE  },
      { DT_REG, N("copyright"), copyright,    KTT_STRING,   VREG, READ_MODE  },
      { DT_REG, N("hostname"),  0,            KTT_HOSTNAME, VREG, WRITE_MODE },
+     { DT_REG, N("domainname"),0,            KTT_DOMAIN,   VREG, WRITE_MODE },
      { DT_REG, N("hz"),        &hz,          KTT_INT,      VREG, READ_MODE  },
      { DT_REG, N("loadavg"),   0,            KTT_AVENRUN,  VREG, READ_MODE  },
+     { DT_REG, N("machine"),   machine,      KTT_STRING,   VREG, READ_MODE  },
+     { DT_REG, N("model"),     cpu_model,    KTT_STRING,   VREG, READ_MODE  },
      { DT_REG, N("msgbuf"),    0,	     KTT_MSGBUF,   VREG, READ_MODE  },
+     { DT_REG, N("ncpu"),      &ncpu,        KTT_INT,      VREG, READ_MODE  },
+     { DT_REG, N("ostype"),    &ostype,      KTT_STRING,   VREG, READ_MODE  },
+     { DT_REG, N("osrelease"), &osrelease,   KTT_STRING,   VREG, READ_MODE  },
+     { DT_REG, N("osrev"),     &osrev,       KTT_INT,      VREG, READ_MODE  },
      { DT_REG, N("pagesize"),  &cnt.v_page_size, KTT_INT,  VREG, READ_MODE  },
      { DT_REG, N("physmem"),   &physmem,     KTT_INT,      VREG, READ_MODE  },
+     { DT_REG, N("posix"),     &posix,       KTT_INT,      VREG, READ_MODE  },
 #if 0
      { DT_DIR, N("root"),      0,            KTT_NULL,     VDIR, DIR_MODE   },
 #endif
      { DT_BLK, N("rootdev"),   &rootdev,     KTT_DEVICE,   VBLK, READ_MODE  },
      { DT_CHR, N("rrootdev"),  &rrootdev,    KTT_DEVICE,   VCHR, READ_MODE  },
      { DT_REG, N("time"),      0,            KTT_TIME,     VREG, READ_MODE  },
+     { DT_REG, N("usermem"),   0,            KTT_USERMEM,  VREG, READ_MODE  },
      { DT_REG, N("version"),   version,      KTT_STRING,   VREG, READ_MODE  },
 #undef N
 };
@@ -262,11 +281,28 @@ kernfs_xread(kt, off, bufp, len)
 		break;
 	}
 
+	case KTT_DOMAIN: {
+		char *cp = domainname;
+		int xlen = domainnamelen;
+
+		if (xlen >= (len-2))
+			return (EINVAL);
+
+		bcopy(cp, *bufp, xlen);
+		(*bufp)[xlen] = '\n';
+		(*bufp)[xlen+1] = '\0';
+		break;
+	}
+
 	case KTT_AVENRUN:
 		averunnable.fscale = FSCALE;
 		sprintf(*bufp, "%d %d %d %ld\n",
 		    averunnable.ldavg[0], averunnable.ldavg[1],
 		    averunnable.ldavg[2], averunnable.fscale);
+		break;
+
+	case KTT_USERMEM:
+		sprintf(*bufp, "%lu\n", ctob(physmem - cnt.v_wire_count));
 		break;
 
 	default:
@@ -288,6 +324,14 @@ kernfs_xwrite(kt, buf, len)
 {
 
 	switch (kt->kt_tag) {
+	case KTT_DOMAIN:
+		if (buf[len-1] == '\n')
+			--len;
+		bcopy(buf, domainname, len);
+		domainname[len] = '\0';
+		domainnamelen = len;
+		return (0);
+
 	case KTT_HOSTNAME:
 		if (buf[len-1] == '\n')
 			--len;
