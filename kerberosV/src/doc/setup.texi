@@ -31,7 +31,8 @@ To setup a realm you will first have to create a configuration file:
 @file{/etc/kerberosV/krb5.conf}. The @file{krb5.conf} file can contain many
 configuration options, some of which are described here.
 
-There is a sample @file{krb5.conf} supplied with the distribution.
+There is a sample @file{krb5.conf} supplied in
+@file{/etc/kerberosV/krb5.conf.sample}.
 
 The configuration file is a hierarchical structure consisting of
 sections, each containing a list of bindings (either variable
@@ -142,7 +143,7 @@ Verifying password - Password:
 Now start the KDC and try getting a ticket.
 
 @example
-# kdc &
+# /usr/libexec/kdc &
 # kinit me
 me@@MY.REALMS's Password:
 # klist
@@ -153,7 +154,10 @@ Credentials cache: /tmp/krb5cc_0
 Aug 25 07:25:55  Aug 25 17:25:55  krbtgt/MY.REALM@@MY.REALM
 @end example
 
-If you are curious you can use the @samp{dump} command to list all the
+You can start the KDC automatically at boot by enabling it in
+@file{/etc/rc.conf}.
+
+If you are curious you can use the @samp{dump} command of kadmin to list all the
 entries in the database.  It should look something similar to the
 following example (note that the entries here are truncated for
 typographical reasons):
@@ -191,66 +195,19 @@ Version  Type             Principal
 @node Serving Kerberos 4/524/kaserver, Remote administration, keytabs, Setting up a realm
 @section Serving Kerberos 4/524/kaserver
 
-Heimdal can be configured to support 524, Kerberos 4 or kaserver. All
-theses services are default turned off. Kerberos 4 support also
-depends on if Kerberos 4 support is compiled in with heimdal.
-
-@subsection 524
-
-524 is a service that allows the kdc to convert Kerberos 5 tickets to
-Kerberos 4 tickets for backward compatibility. See also Using 2b
-tokens with AFS in @xref{Things in search for a better place}.
-
-524 can be turned on by adding this to the configuration file
-
-@example
-[kdc]
-	enable-524 = yes
-@end example
-
-@subsection Kerberos 4
-
-Kerberos 4 is the predecessor to to Kerberos 5. It only support single
-DES. You should only enable Kerberos 4 support if you have a need for
-for compatibility with an installed base of Kerberos 4 clients/servers.
-
-Kerberos 4 can be turned on by adding this to the configuration file
-
-@example
-[kdc]
-	enable-kerberos4 = yes
-@end example
-
-@subsection kaserver
-
-Kaserver is a Kerberos 4 that is used in AFS, the protocol have some
-features over plain Kerberos 4, but like kerberos 4 only use single
-DES too.
-
-You should only enable Kerberos 4 support if you have a need for for
-compatibility with an installed base of AFS machines.
-
-Kaserver can be turned on by adding this to the configuration file
-
-@example
-[kdc]
-	enable-kaserver = yes
-@end example
+Support for Kerberos 4 has been removed in OpenBSD.
 
 @node Remote administration, Password changing, Serving Kerberos 4/524/kaserver, Setting up a realm
 @section Remote administration
 
-The administration server, @samp{kadmind}, can be started by
-@samp{inetd} (which isn't recommended) or run as a normal daemon. If you
-want to start it from @samp{inetd} you should add a line similar to the
-one below to your @file{/etc/inetd.conf}.
+The admin, @file{kadmin} is started automatically at boot by enabling it in
+@file{/etc/rc.conf}.
 
-@example
-kerberos-adm stream     tcp     nowait  root /usr/heimdal/libexec/kadmind kadmind
-@end example
+For testing purposes, you can start it manually by running:
 
-You might need to add @samp{kerberos-adm} to your @file{/etc/services}
-as 749/tcp.
+@smallexample
+# /usr/libexec/kadmind &
+@end smallexample
 
 Access to the admin server is controlled by an acl-file, (default
 @file{/var/heimdal/kadmind.acl}.) The lines in the access file, has the
@@ -291,11 +248,8 @@ mille/admin@@E.KTH.SE	change-password	*@@E.KTH.SE
 @node Password changing, Testing clients and servers, Remote administration, Setting up a realm
 @section Password changing
 
-To allow users to change their passwords, you should run @samp{kpasswdd}.
-It is not run from @samp{inetd}.
-
-You might need to add @samp{kpasswd} to your @file{/etc/services} as
-464/udp.
+To allow users to change their passwords, @samp{kpasswdd} is started
+automatically at boot if the master KDC is enabled in @file{/etc/rc.conf}.
 
 @subsection Password quality assurance
 
