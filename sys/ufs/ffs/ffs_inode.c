@@ -1,4 +1,4 @@
-/*	$OpenBSD: ffs_inode.c,v 1.3 1996/05/22 11:47:18 deraadt Exp $	*/
+/*	$OpenBSD: ffs_inode.c,v 1.4 1996/11/05 03:30:12 tholo Exp $	*/
 /*	$NetBSD: ffs_inode.c,v 1.10 1996/05/11 18:27:19 mycroft Exp $	*/
 
 /*
@@ -459,16 +459,20 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 	}
 
 	bap = (daddr_t *)bp->b_data;
-	MALLOC(copy, daddr_t *, fs->fs_bsize, M_TEMP, M_WAITOK);
-	bcopy((caddr_t)bap, (caddr_t)copy, (u_int)fs->fs_bsize);
-	bzero((caddr_t)&bap[last + 1],
-	  (u_int)(NINDIR(fs) - (last + 1)) * sizeof (daddr_t));
-	if (last == -1)
-		bp->b_flags |= B_INVAL;
-	error = bwrite(bp);
-	if (error)
-		allerror = error;
-	bap = copy;
+	if (lastbn != -1) {
+		MALLOC(copy, daddr_t *, fs->fs_bsize, M_TEMP, M_WAITOK);
+		bcopy((caddr_t)bap, (caddr_t)copy, (u_int)fs->fs_bsize);
+		bzero((caddr_t)&bap[last + 1],
+		    (u_int)(NINDIR(fs) - (last + 1)) * sizeof (daddr_t));
+		if ((vp->v_mount->mnt_flag & MNT_ASYNC) == 0) {
+			error = bwrite(bp);
+			if (error)
+				allerror = error;
+		} else {
+			bawrite(bp);
+		}
+		bap = copy;
+	}
 
 	/*
 	 * Recursively free totally unused blocks.
@@ -504,7 +508,13 @@ ffs_indirtrunc(ip, lbn, dbn, lastbn, level, countp)
 			blocksreleased += blkcount;
 		}
 	}
-	FREE(copy, M_TEMP);
+	if (lastbn != -1) {
+		FREE(copy, M_TEMP);
+	} else {
+		bp->b_flags |= B_INVAL;
+		brelse(bp);
+	}
+		
 	*countp = blocksreleased;
 	return (allerror);
 }
