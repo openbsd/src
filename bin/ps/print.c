@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.13 1997/11/30 05:41:23 deraadt Exp $	*/
+/*	$OpenBSD: print.c,v 1.14 1997/11/30 05:43:12 deraadt Exp $	*/
 /*	$NetBSD: print.c,v 1.27 1995/09/29 21:58:12 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)print.c	8.6 (Berkeley) 4/16/94";
 #else
-static char rcsid[] = "$OpenBSD: print.c,v 1.13 1997/11/30 05:41:23 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: print.c,v 1.14 1997/11/30 05:43:12 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,8 @@ extern kvm_t *kd;
 extern int needenv, needcomm, commandonly;
 
 static char *cmdpart __P((char *));
+
+#define	min(a,b)	((a) < (b) ? (a) : (b))
 
 static char *
 cmdpart(arg0)
