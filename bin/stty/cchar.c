@@ -1,4 +1,4 @@
-/*	$OpenBSD: cchar.c,v 1.3 1996/06/23 14:21:50 deraadt Exp $	*/
+/*	$OpenBSD: cchar.c,v 1.4 1996/08/02 12:09:45 deraadt Exp $	*/
 /*	$NetBSD: cchar.c,v 1.10 1996/05/07 18:20:05 jtc Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cchar.c	8.5 (Berkeley) 4/2/94";
 #else
-static char rcsid[] = "$OpenBSD: cchar.c,v 1.3 1996/06/23 14:21:50 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cchar.c,v 1.4 1996/08/02 12:09:45 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -126,11 +126,6 @@ csearch(argvp, ip)
 		ip->t.c_cc[cp->sub] = _POSIX_VDISABLE;
 	else if (cp->sub == VMIN || cp->sub == VTIME) {
 		val = strtol(arg, &ep, 10);
-		if (val == _POSIX_VDISABLE) {
-			warnx("value of %ld would disable the option -- %s",
-			    val, name);
-			usage();
-		}
 		if (val > UCHAR_MAX) {
 			warnx("maximum option value is %d -- %s",
 			    UCHAR_MAX, name);
