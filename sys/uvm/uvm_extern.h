@@ -1,4 +1,4 @@
-/*	$OpenBSD: uvm_extern.h,v 1.22 2001/08/12 21:00:14 mickey Exp $	*/
+/*	$OpenBSD: uvm_extern.h,v 1.23 2001/08/12 22:41:15 mickey Exp $	*/
 /*	$NetBSD: uvm_extern.h,v 1.42 2000/06/08 05:52:34 thorpej Exp $	*/
 
 /*
@@ -195,6 +195,7 @@ struct ucred;
 struct uio;
 struct uvm_object;
 struct vm_anon;
+struct vm_aref;
 struct vmspace;
 struct pmap;
 struct vnode;
