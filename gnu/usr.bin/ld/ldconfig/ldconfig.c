@@ -27,7 +27,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- *	$Id: ldconfig.c,v 1.1.1.1 1995/10/18 08:40:56 deraadt Exp $
+ *	$Id: ldconfig.c,v 1.2 1996/01/12 19:56:20 deraadt Exp $
  */
 
 #include <sys/param.h>
@@ -73,6 +73,7 @@ struct shlib_list {
 };
 
 static struct shlib_list	*shlib_head = NULL, **shlib_tail = &shlib_head;
+static char			*dir_list;
 
 static void	enter __P((char *, char *, char *, int *, int));
 static int	dodir __P((char *, int));
@@ -109,6 +110,9 @@ char	*argv[];
 		}
 	}
 
+	dir_list = xmalloc(1);
+	*dir_list = '\0';
+
 	if (justread || merge) {
 		if ((rval = readhints()) != 0)
 			return rval;
@@ -124,8 +128,13 @@ char	*argv[];
 	for (i = 0; i < n_search_dirs; i++)
 		rval |= dodir(search_dirs[i], 1);
 
-	for (i = optind; i < argc; i++)
+	for (i = optind; i < argc; i++) {
+		/* Check for duplicates? */
+		char *cp = concat(dir_list, *dir_list?":":"", argv[i]);
+		free(dir_list);
+		dir_list = cp;
 		rval |= dodir(argv[i], 0);
+	}
 
 	rval |= buildhints();
 
@@ -254,7 +263,9 @@ int	vmajor, vminor;
 		k = (((k << 1) + (k >> 14)) ^ (*cp++)) & 0x3fff;
 
 	k = (((k << 1) + (k >> 14)) ^ (vmajor*257)) & 0x3fff;
+#if 0
 	k = (((k << 1) + (k >> 14)) ^ (vminor*167)) & 0x3fff;
+#endif
 
 	return k;
 }
@@ -280,11 +291,13 @@ buildhints()
 
 	/* Fill hints file header */
 	hdr.hh_magic = HH_MAGIC;
-	hdr.hh_version = LD_HINTS_VERSION_1;
+	hdr.hh_version = LD_HINTS_VERSION_2;
 	hdr.hh_nbucket = 1 * nhints;
 	n = hdr.hh_nbucket * sizeof(struct hints_bucket);
 	hdr.hh_hashtab = sizeof(struct hints_header);
 	hdr.hh_strtab = hdr.hh_hashtab + n;
+	hdr.hh_dirlist = strtab_sz;
+	strtab_sz += 1 + strlen(dir_list);
 	hdr.hh_strtab_sz = strtab_sz;
 	hdr.hh_ehints = hdr.hh_strtab + hdr.hh_strtab_sz;
 
@@ -337,6 +350,15 @@ buildhints()
 		/* Copy versions */
 		bcopy(shp->dewey, bp->hi_dewey, sizeof(bp->hi_dewey));
 		bp->hi_ndewey = shp->ndewey;
+	}
+
+	/* Copy search directories */
+	strcpy(strtab + str_index, dir_list);
+	str_index += 1 + strlen(dir_list);
+
+	/* Sanity check */
+	if (str_index != strtab_sz) {
+		errx(1, "str_index(%d) != strtab_sz(%d)", str_index, strtab_sz);
 	}
 
 	tmpfile = concat(_PATH_LD_HINTS, ".XXXXXX", "");
@@ -416,7 +438,7 @@ readhints()
 		return -1;
 	}
 
-	if (hdr->hh_version != LD_HINTS_VERSION_1) {
+	if (hdr->hh_version != LD_HINTS_VERSION_2) {
 		warnx("Unsupported version: %d", hdr->hh_version);
 		return -1;
 	}
@@ -459,6 +481,7 @@ readhints()
 		*shlib_tail = shp;
 		shlib_tail = &shp->next;
 	}
+	dir_list = strdup(strtab + hdr->hh_dirlist);
 
 	return 0;
 }
@@ -470,6 +493,7 @@ listhints()
 	int			i;
 
 	printf("%s:\n", _PATH_LD_HINTS);
+	printf("\tsearch directories: %s\n", dir_list);
 
 	for (i = 0, shp = shlib_head; shp; i++, shp = shp->next)
 		printf("\t%d:-l%s.%d.%d => %s\n",
