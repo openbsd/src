@@ -1,4 +1,4 @@
-/*	$OpenBSD: cvs.h,v 1.27 2004/08/13 02:56:37 jfb Exp $	*/
+/*	$OpenBSD: cvs.h,v 1.28 2004/08/13 12:47:54 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -163,7 +163,8 @@ struct cvsroot {
 #define CVS_HIST_TAG      'T'
 
 
-#define CVS_ENT_DUMMYTIME  "dummy timestamp"
+#define CVS_DATE_DUMMY  "dummy timestamp"
+#define CVS_DATE_DMSEC  (time_t)-1
 
 #define CVS_ENT_NONE    0
 #define CVS_ENT_FILE    1
@@ -180,7 +181,6 @@ struct cvs_ent {
 	u_int    ce_type;
 	char    *ce_name;
 	RCSNUM  *ce_rev;
-	char    *ce_timestamp;
 	time_t   ce_mtime;
 	char    *ce_opts;
 	char    *ce_tag;
@@ -281,8 +281,12 @@ int              cvs_hist_append  (CVSHIST *, struct cvs_hent *);
 
 
 /* from util.c */
+
+#define CVS_DATE_CTIME  0
+#define CVS_DATE_RFC822 1
+
 int    cvs_readrepo   (const char *, char *, size_t);
-time_t cvs_datesec    (const char *);
+time_t cvs_datesec    (const char *, int, int);
 int    cvs_modetostr  (mode_t, char *, size_t);
 int    cvs_strtomode  (const char *, mode_t *);
 int    cvs_splitpath  (const char *, char *, size_t, char **);

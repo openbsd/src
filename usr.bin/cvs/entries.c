@@ -1,4 +1,4 @@
-/*	$OpenBSD: entries.c,v 1.12 2004/08/12 18:33:47 jfb Exp $	*/
+/*	$OpenBSD: entries.c,v 1.13 2004/08/13 12:47:54 jfb Exp $	*/
 /*
  * Copyright (c) 2004 Jean-Francois Brousseau <jfb@openbsd.org>
  * All rights reserved. 
@@ -366,7 +366,7 @@ cvs_ent_parse(const char *entry)
 
 	if (entp->ce_type == CVS_ENT_FILE) {
 		rcsnum_aton(fields[2], NULL, entp->ce_rev);
-		entp->ce_timestamp = fields[3];
+		entp->ce_mtime = cvs_datesec(fields[3], CVS_DATE_CTIME, 0);
 		entp->ce_opts = fields[4];
 		entp->ce_tag = fields[5];
 	}
@@ -436,7 +436,8 @@ cvs_ent_getent(const char *path)
 int
 cvs_ent_write(CVSENTRIES *ef)
 {
-	char revbuf[64];
+	size_t len;
+	char revbuf[64], timebuf[32];
 	struct cvs_ent *ent;
 
 	if (ef->cef_file == NULL)
@@ -452,8 +453,12 @@ cvs_ent_write(CVSENTRIES *ef)
 			putc('D', ef->cef_file);
 
 		rcsnum_tostr(ent->ce_rev, revbuf, sizeof(revbuf));
+		ctime_r(&(ent->ce_mtime), timebuf);
+		len = strlen(timebuf);
+		if ((len > 0) && (timebuf[len - 1] == '\n'))
+			timebuf[--len] = '\0';
 		fprintf(ef->cef_file, "/%s/%s/%s/%s/%s\n", ent->ce_name,
-		    revbuf, ent->ce_timestamp, "", "");
+		    revbuf, timebuf, "", "");
 	}
 
 	/* terminating line */
