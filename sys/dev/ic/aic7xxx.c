@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.c,v 1.40 2000/01/07 23:08:17 gibbs Exp $
- * $OpenBSD: aic7xxx.c,v 1.37 2002/03/19 21:07:25 millert Exp $
+ * $OpenBSD: aic7xxx.c,v 1.38 2002/03/26 00:56:10 krw Exp $
  */
 /*
  * A few notes on features of the driver.
@@ -1472,7 +1472,6 @@ ahc_set_tags(ahc, devinfo, enable)
 		tstate->tagenable |= devinfo->target_mask;
 	else {
 		tstate->tagenable &= ~devinfo->target_mask;
-		tstate->tagdisable |= devinfo->target_mask;
 	}
 }
 
@@ -2402,7 +2401,7 @@ ahc_handle_scsiint(ahc, intstat)
 			u_int tag;
 
 			tag = SCB_LIST_NULL;
-			if ((scb->hscb->control & MSG_SIMPLE_Q_TAG) != 0)
+			if ((scb->hscb->control & TAG_ENB) != 0)
 				tag = scb->hscb->tag;
 
 			ahc_abort_scbs(ahc, SCB_TARGET(scb), SCB_CHANNEL(scb),
@@ -2639,7 +2638,7 @@ ahc_handle_msg_reject(ahc, devinfo)
 			       "Using asynchronous transfers\n",
 			       ahc_name(ahc),
 			       devinfo->channel, devinfo->target);
-	} else if ((scb->hscb->control & MSG_SIMPLE_Q_TAG) != 0) {
+	} else if ((scb->hscb->control & TAG_ENB) != 0) {
 		if (bootverbose)
 			printf("%s:%c:%d: refuses tagged commands.  Performing "
 			       "non-tagged I/O\n", ahc_name(ahc),
@@ -2653,7 +2652,7 @@ ahc_handle_msg_reject(ahc, devinfo)
 		 */
 		ahc_outb(ahc, SCB_CONTROL, ahc_inb(ahc, SCB_CONTROL)
 					  & ~MSG_SIMPLE_Q_TAG);
-	 	scb->hscb->control &= ~MSG_SIMPLE_Q_TAG;
+	 	scb->hscb->control &= ~TAG_ENB;
 		ahc_outb(ahc, MSG_OUT, MSG_IDENTIFYFLAG);
 		ahc_outb(ahc, SCSISIGO, ahc_inb(ahc, SCSISIGO) | ATNO);
 
@@ -3521,8 +3520,10 @@ ahc_done(ahc, scb)
 		ahc_list_insert_head(ahc, xs);
 		splx(s);
 	} else {
+		if (((xs->flags & SCSI_POLL) != 0) &&
+		    (xs->error == XS_NOERROR))
+			ahc_check_tags(ahc, xs);
 		xs->flags |= ITSDONE;
-		ahc_check_tags(ahc, xs);
 		scsi_done(xs);
 	}
 
@@ -3851,7 +3852,6 @@ ahc_init(ahc)
 		tstate->ultraenb = ultraenb;
 		tstate->discenable = discenable;
 		tstate->tagenable = 0; /* Wait until the XPT says its okay */
-		tstate->tagdisable = 0;
 	}
 	ahc->user_discenable = discenable;
 	ahc->user_tagenable = tagenable;
@@ -4194,7 +4194,7 @@ get_scb:
 	timeout_set(&xs->stimeout, ahc_timeout, scb);
 
 	if (ahc_istagged_device(ahc, xs, 0))
-		scb->hscb->control |= MSG_SIMPLE_Q_TAG;
+		scb->hscb->control |= TAG_ENB;
 	else
 		ahc_busy_tcl(ahc, scb);
 
@@ -5802,57 +5802,40 @@ ahc_check_tags(ahc, xs)
 struct ahc_softc *ahc;
 struct scsi_xfer *xs;
 {
-	struct scsi_inquiry_data *inq;
 	struct ahc_devinfo devinfo;
-	struct tmode_tstate *tstate;
-	int target_id, our_id;
-	char channel;
-
-	if (xs->cmd->opcode != INQUIRY || xs->error != XS_NOERROR)
-		return;
 
 	if (xs->sc_link->quirks & SDEV_NOTAGS)
 		return;
 
-	target_id = xs->sc_link->target;
-	our_id = SIM_SCSI_ID(ahc, xs->sc_link);
-	channel = SIM_CHANNEL(ahc, xs->sc_link);
+	if (ahc_istagged_device(ahc, xs, 1))
+ 		return;
 
-	(void)ahc_fetch_transinfo(ahc, channel, our_id, target_id, &tstate);
-	ahc_compile_devinfo(&devinfo, our_id, target_id,
-	    xs->sc_link->lun, channel, ROLE_INITIATOR);
+	ahc_compile_devinfo(&devinfo,
+	    SIM_SCSI_ID(ahc, xs->sc_link),
+	    xs->sc_link->target,
+	    xs->sc_link->lun,
+	    SIM_CHANNEL(ahc, xs->sc_link),
+	    ROLE_INITIATOR);
 
-	if (tstate->tagdisable & devinfo.target_mask)
-		return;
+	ahc_set_tags(ahc, &devinfo, TRUE);
 
-	/*
-	 * Sneak a look at the results of the SCSI Inquiry
-	 * command and see if we can do Tagged queing.  This
-	 * should really be done by the higher level drivers.
-	 */
-	inq = (struct scsi_inquiry_data *)xs->data;
-	if ((inq->flags & SID_CmdQue) && !(ahc_istagged_device(ahc, xs, 1))) {
-#ifdef AHC_DEBUG 
-		printf("%s: target %d using tagged queuing\n",
-			ahc_name(ahc), xs->sc_link->target);
-#endif 
-		ahc_set_tags(ahc, &devinfo, TRUE);
+	printf("%s: target %d using tagged queuing\n",
+	    ahc_name(ahc), xs->sc_link->target);
 
-		if (ahc->scb_data->maxhscbs >= 16 ||
-		    (ahc->flags & AHC_PAGESCBS)) {
-			/* Default to 16 tags */
-			xs->sc_link->openings += 14;
-		} else {
-			/*
-			 * Default to 4 tags on whimpy
-			 * cards that don't have much SCB
-			 * space and can't page.  This prevents
-			 * a single device from hogging all
-			 * slots.  We should really have a better
-			 * way of providing fairness.
-			 */
-			xs->sc_link->openings += 2;
-		}
+	if (ahc->scb_data->maxhscbs >= 16 ||
+	    (ahc->flags & AHC_PAGESCBS)) {
+		/* Default to 16 tags */
+		xs->sc_link->openings += 14;
+	} else {
+		/*	
+		 * Default to 4 tags on whimpy
+		 * cards that don't have much SCB
+		 * space and can't page.  This prevents
+		 * a single device from hogging all
+		 * slots.  We should really have a better
+		 * way of providing fairness.
+		 */
+		xs->sc_link->openings += 2;
 	}
 }
 
