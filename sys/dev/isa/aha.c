@@ -1,4 +1,4 @@
-/*	$OpenBSD: aha.c,v 1.34 1999/08/19 07:40:14 deraadt Exp $	*/
+/*	$OpenBSD: aha.c,v 1.35 2000/04/19 02:17:49 niklas Exp $	*/
 /*	$NetBSD: aha.c,v 1.11 1996/05/12 23:51:23 mycroft Exp $	*/
 
 #undef AHADIAG
@@ -122,8 +122,8 @@ struct aha_softc {
 	char sc_model[18],
 	     sc_firmware[4];
 
-	struct aha_mbx sc_mbx;		/* all the mailboxes */
-#define	wmbx	(&sc->sc_mbx)
+	struct aha_mbx *sc_mbx;		/* all the mailboxes */
+#define	wmbx	(sc->sc_mbx)
 	struct aha_ccb *sc_ccbhash[CCB_HASH_SIZE];
 	TAILQ_HEAD(, aha_ccb) sc_free_ccb, sc_waiting_ccb;
 	int sc_numccbs, sc_mbofull;
@@ -1007,7 +1007,6 @@ aha_init(sc)
 	struct aha_devices devices;
 	struct aha_setup setup;
 	struct aha_mailbox mailbox;
-	struct isadma_seg mbx_phys[1];
 	int i;
 
 	/*
@@ -1078,6 +1077,18 @@ aha_init(sc)
 	/*
 	 * Set up initial mail box for round-robin operation.
 	 */
+
+	/* XXX KLUDGE!  Should use bus_dmamem_alloc when busified.  */
+#ifdef UVM
+	wmbx = (struct aha_mbx *)uvm_pagealloc_contig(sizeof(struct aha_mbx),
+	    0, 0xffffff, PAGE_SIZE);
+#else
+	wmbx = (struct aha_mbx *)vm_pagealloc_contig(sizeof(struct aha_mbx),
+	    0, 0xffffff, PAGE_SIZE);
+#endif
+	if (wmbx == NULL)
+		panic("aha_init: could not allocate mailbox");
+
 	for (i = 0; i < AHA_MBX_SIZE; i++) {
 		wmbx->mbo[i].cmd = AHA_MBO_FREE;
 		wmbx->mbi[i].stat = AHA_MBI_FREE;
@@ -1089,10 +1100,7 @@ aha_init(sc)
 	/* Initialize mail box. */
 	mailbox.cmd.opcode = AHA_MBX_INIT;
 	mailbox.cmd.nmbx = AHA_MBX_SIZE;
-	if (isadma_map((caddr_t)(wmbx), sizeof(struct aha_mbx),
-	    mbx_phys, ISADMA_MAP_CONTIG) != 1)
-		panic("aha_init: cannot map mail box");
-	ltophys(mbx_phys[0].addr, mailbox.cmd.addr);
+	ltophys(vtophys(wmbx), mailbox.cmd.addr);
 	aha_cmd(iobase, sc, sizeof(mailbox.cmd), (u_char *)&mailbox.cmd,
 	    0, (u_char *)0);
 }
