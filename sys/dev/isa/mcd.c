@@ -1,4 +1,4 @@
-/*	$OpenBSD: mcd.c,v 1.12 1996/05/26 00:27:25 deraadt Exp $ */
+/*	$OpenBSD: mcd.c,v 1.13 1996/05/27 07:57:34 deraadt Exp $ */
 /*	$NetBSD: mcd.c,v 1.49 1996/05/12 23:53:11 mycroft Exp $	*/
 
 /*
@@ -118,6 +118,7 @@ struct mcd_softc {
 
 	char	*type;
 	u_char	readcmd;
+	u_char	attached;
 	int	flags;
 #define	MCDF_LOCKED	0x01
 #define	MCDF_WANTED	0x02
@@ -819,6 +820,7 @@ mcdprobe(parent, match, aux)
 		break;
 	}
 
+	sc->attached = 1;
 	ia->ia_iosize = 4;
 	ia->ia_msize = 0;
 	return 1;
@@ -870,7 +872,7 @@ mcd_getresult(sc, res)
 	if ((x = mcd_getreply(sc)) < 0) {
 		if (sc->debug)
 			printf(" timeout\n");
-		else
+		else if (sc->attached)
 			printf("%s: timeout in getresult\n", sc->sc_dev.dv_xname);
 		return EIO;
 	}
