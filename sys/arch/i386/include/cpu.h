@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.50 2003/07/07 03:07:18 tedu Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.51 2003/07/28 21:15:28 jason Exp $	*/
 /*	$NetBSD: cpu.h,v 1.35 1996/05/05 19:29:26 christos Exp $	*/
 
 /*-
@@ -187,7 +187,7 @@ void	rtcdrain(void *);
 void	npxdrop(void);
 void	npxsave(void);
 
-#if defined(MATH_EMULATE) || defined(GPL_MATH_EMULATE)
+#if defined(GPL_MATH_EMULATE)
 /* math_emulate.c */
 int	math_emulate(struct trapframe *);
 #endif
