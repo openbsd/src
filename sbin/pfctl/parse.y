@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.y,v 1.336 2003/03/06 12:50:40 henning Exp $	*/
+/*	$OpenBSD: parse.y,v 1.337 2003/03/08 14:52:17 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -3136,6 +3136,7 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
     struct node_queue_bw bwspec)
 {
 	struct node_queue	*n;
+	struct pf_altq		 pa;
 	u_int8_t		 added = 0;
 	u_int8_t		 found = 0;
 
@@ -3149,16 +3150,18 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 			/* found ourselve in queues */
 			found++;
 
-			if (a->scheduler != ALTQT_NONE &&
-			    a->scheduler != tqueue->scheduler) {
+			memcpy(&pa, a, sizeof(struct pf_altq));
+
+			if (pa.scheduler != ALTQT_NONE &&
+			    pa.scheduler != tqueue->scheduler) {
 				yyerror("exactly one scheduler type per "
 				    "interface allowed");
 				return (1);
 			}
-			a->scheduler = tqueue->scheduler;
+			pa.scheduler = tqueue->scheduler;
 
 			/* scheduler dependent error checking */
-			switch (a->scheduler) {
+			switch (pa.scheduler) {
 			case ALTQT_PRIQ:
 				if (nqueues != NULL) {
 					yyerror("priq queues cannot have "
@@ -3198,16 +3201,16 @@ expand_queue(struct pf_altq *a, struct node_queue *nqueues,
 					queues->tail = n;
 				}
 			);
-			if (strlcpy(a->ifname, tqueue->ifname,
-			    sizeof(a->ifname)) >= sizeof(a->ifname))
+			if (strlcpy(pa.ifname, tqueue->ifname,
+			    sizeof(pa.ifname)) >= sizeof(pa.ifname))
 				errx(1, "expand_queue: strlcpy");
-			if (strlcpy(a->parent, tqueue->parent,
-			    sizeof(a->parent)) >= sizeof(a->parent))
+			if (strlcpy(pa.parent, tqueue->parent,
+			    sizeof(pa.parent)) >= sizeof(pa.parent))
 				errx(1, "expand_queue: strlcpy");
 
-			if (!eval_pfqueue(pf, a, bwspec.bw_absolute,
+			if (!eval_pfqueue(pf, &pa, bwspec.bw_absolute,
 			    bwspec.bw_percent))
-				if (!pfctl_add_altq(pf, a))
+				if (!pfctl_add_altq(pf, &pa))
 					added++;
 		}
 	);
