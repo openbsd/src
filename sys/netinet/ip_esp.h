@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.h,v 1.13 1997/09/30 03:29:50 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp.h,v 1.14 1997/11/04 09:11:10 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -9,7 +9,11 @@
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
  * by Angelos D. Keromytis, kermit@forthnet.gr.
  *
- * Copyright (C) 1995, 1996, 1997 by John Ioannidis and Angelos D. Keromytis.
+ * Additional transforms and features in 1997 by Angelos D. Keromytis and
+ * Niels Provos.
+ *
+ * Copyright (C) 1995, 1996, 1997 by John Ioannidis, Angelos D. Keromytis
+ * and Niels Provos.
  *	
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
@@ -33,21 +37,49 @@
 #endif
 
 #include <netinet/ip_sha1.h>
+#include <netinet/ip_blf.h>
+#include <netinet/ip_cast.h>
 
 /* IV lengths */
 #define ESP_DES_IVS		8
 #define ESP_3DES_IVS		8
+#define ESP_BLF_IVS             8
+#define ESP_CAST_IVS            8
 
 #define ESP_MAX_IVS		ESP_3DES_IVS
 
 /* Block sizes -- it is assumed that they're powers of 2 */
 #define ESP_DES_BLKS		8
 #define ESP_3DES_BLKS		8
+#define ESP_BLF_BLKS            8
+#define ESP_CAST_BLKS           8
+
+#define ESP_MAX_BLKS            ESP_3DES_BLKS
 
 /* Various defines for the "new" ESP */
 #define ESP_NEW_ALEN		12	/* 96bits authenticator */
 #define ESP_NEW_IPAD_VAL	0x36
 #define	ESP_NEW_OPAD_VAL	0x5C
+
+struct esp_hash {
+    int type;
+    char *name;
+    u_int16_t hashsize; 
+    u_int16_t ctxsize;
+    void (*Init)(void *);
+    void (*Update)(void *, u_int8_t *, u_int16_t);
+    void (*Final)(u_int8_t *, void *);
+};
+
+struct esp_xform {
+    int type;
+    char *name;
+    u_int16_t blocksize, ivsize;
+    u_int16_t minkey, maxkey;
+    u_int32_t ivmask;           /* Or all possible modes, zero iv = 1 */ 
+    void (*encrypt)(void *, u_int8_t *);
+    void (*decrypt)(void *, u_int8_t *);
+};
 
 struct esp_old
 {
@@ -84,6 +116,7 @@ struct esp_old_xdata
 {
     u_int32_t   edx_enc_algorithm;
     int32_t     edx_ivlen;      /* 4 or 8 */
+    struct esp_xform *edx_xform;
     union
     {
 	u_int8_t  Iv[ESP_3DES_IVS]; /* that's enough space */
@@ -117,7 +150,8 @@ struct esp_new_xencap
     u_int32_t   edx_enc_algorithm;
     u_int32_t   edx_hash_algorithm;
     u_int32_t	edx_ivlen;	/* 0 or 8 */
-    u_int32_t	edx_keylen;
+    u_int16_t	edx_confkeylen;
+    u_int16_t	edx_authkeylen;
     int32_t	edx_wnd;
     u_int32_t   edx_flags;
     u_int8_t	edx_data[1];	/* IV + key material */
@@ -138,6 +172,8 @@ struct esp_new_xdata
     u_int32_t   edx_bitmap;
     u_int32_t   edx_flags;
     u_int32_t   edx_initial;	/* initial replay value */
+    struct esp_hash *edx_hash;
+    struct esp_xform *edx_xform;
     union
     {
 	u_int8_t  Iv[ESP_MAX_IVS]; /* that's enough space */
@@ -148,26 +184,27 @@ struct esp_new_xdata
     {
 	u_int8_t  Rk[3][8];
 	u_int32_t Eks[3][16][2];
+	blf_ctx   Bks;
+	cast_key  Cks;
     }Xu;
     union
     {
-	struct
-	{
-    	    MD5_CTX	edx_ictx;
-    	    MD5_CTX	edx_octx;
-	} MD5stuff;
-	struct
-	{
-	    SHA1_CTX	edx_ictx;
-	    SHA1_CTX 	edx_octx;
-	} SHA1stuff;   
-    } Hashes;
+  	MD5_CTX	 edx_MD5_ictx;
+        SHA1_CTX edx_SHA1_ictx;
+    } edx_ictx;
+    union 
+    {
+    	MD5_CTX	 edx_MD5_octx;
+	SHA1_CTX edx_SHA1_octx;
+    } edx_octx;
 };
 
-#define edx_md5_ictx	Hashes.MD5stuff.edx_ictx
-#define edx_md5_octx	Hashes.MD5stuff.edx_octx
-#define edx_sha1_ictx	Hashes.SHA1stuff.edx_ictx
-#define edx_sha1_octx	Hashes.SHA1stuff.edx_octx
+#define edx_bks         Xu.Bks
+#define edx_cks         Xu.Cks
+#define edx_md5_ictx	edx_ictx.edx_MD5_ictx
+#define edx_md5_octx	edx_octx.edx_MD5_octx
+#define edx_sha1_ictx	edx_ictx.edx_SHA1_ictx
+#define edx_sha1_octx	edx_octx.edx_SHA1_octx
 
 #define ESP_OLD_FLENGTH		12
 #define ESP_NEW_FLENGTH         16

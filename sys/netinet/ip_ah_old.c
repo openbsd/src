@@ -8,7 +8,11 @@
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
  * by Angelos D. Keromytis, kermit@forthnet.gr.
  *
- * Copyright (C) 1995, 1996, 1997 by John Ioannidis and Angelos D. Keromytis.
+ * Additional transforms and features in 1997 by Angelos D. Keromytis and
+ * Niels Provos.
+ *
+ * Copyright (C) 1995, 1996, 1997 by John Ioannidis, Angelos D. Keromytis
+ * and Niels Provos.
  *	
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
@@ -61,6 +65,23 @@
 
 extern void encap_sendnotify(int, struct tdb *);
 
+struct ah_hash ah_old_hash[] = {
+     { ALG_AUTH_MD5, "Keyed MD5", 
+       AH_MD5_ALEN,
+       sizeof(MD5_CTX),
+       (void (*)(void *))MD5Init, 
+       (void (*)(void *, u_int8_t *, u_int16_t))MD5Update, 
+       (void (*)(u_int8_t *, void *))MD5Final 
+     },
+     { ALG_AUTH_SHA1, "Keyed SHA1",
+       AH_SHA1_ALEN,
+       sizeof(SHA1_CTX),
+       (void (*)(void *))SHA1Init, 
+       (void (*)(void *, u_int8_t *, u_int16_t))SHA1Update, 
+       (void (*)(u_int8_t *, void *))SHA1Final 
+     }
+};
+
 /*
  * ah_old_attach() is called from the transformation initialization code.
  */
@@ -86,6 +107,8 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     struct ah_old_xencap xenc;
     struct ah_old_xdata *xd;
     struct encap_msghdr *em;
+    struct ah_hash *thash;
+    int i;
 
     if (m->m_len < ENCAP_MSG_FIXED_LEN)
     {
@@ -111,23 +134,23 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     m_copydata(m, EMT_SETSPI_FLEN, AH_OLD_XENCAP_LEN, (caddr_t) &xenc);
 
     /* Check whether the hash algorithm is supported */
-    switch (xenc.amx_hash_algorithm)
+    for (i=sizeof(ah_old_hash)/sizeof(struct ah_hash)-1; i >= 0; i--) 
+	if (xenc.amx_hash_algorithm == ah_old_hash[i].type)
+	      break;
+    if (i < 0) 
     {
-	case ALG_AUTH_MD5:
-	case ALG_AUTH_SHA1:
-#ifdef ENCDEBUG
-	    if (encdebug)
-	      printf("ah_old_init(): initialized TDB with hash algorithm %d\n",
-		     xenc.amx_hash_algorithm);
-#endif /* ENCDEBUG */
-	    break;
-
-	default:
-	    if (encdebug)
-	      log(LOG_WARNING, "ah_old_init(): unsupported authentication algorithm %d specified\n", xenc.amx_hash_algorithm);
-	    m_freem(m);
-	    return EINVAL;
+	if (encdebug)
+	  log(LOG_WARNING, "ah_old_init(): unsupported authentication algorithm %d specified\n",
+	      xenc.amx_hash_algorithm);
+	m_freem(m);
+	return EINVAL;
     }
+#ifdef ENCDEBUG
+    if (encdebug)
+      printf("ah_old_init(): initalized TDB with hash algorithm %d: %s\n",
+	     xenc.amx_hash_algorithm, ah_old_hash[i].name);
+#endif /* ENCDEBUG */
+    thash = &ah_old_hash[i];
 
     if (xenc.amx_keylen + EMT_SETSPI_FLEN + AH_OLD_XENCAP_LEN != em->em_msglen)
     {
@@ -156,26 +179,18 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 
     xd->amx_keylen = xenc.amx_keylen;
     xd->amx_hash_algorithm = xenc.amx_hash_algorithm;
+    xd->amx_hash = thash;
+
+    /* Pass name of auth algorithm for kernfs */
+    tdbp->tdb_authname = xd->amx_hash->name;
 
     /* Copy the key material */
     m_copydata(m, EMT_SETSPI_FLEN + AH_OLD_XENCAP_LEN, xd->amx_keylen,
 	       (caddr_t) xd->amx_key);
 
-    /* Save us some time in processing */
-    switch (xd->amx_hash_algorithm)
-    {
-	case ALG_AUTH_MD5:
-	    MD5Init(&(xd->amx_md5_ctx));
-	    MD5Update(&(xd->amx_md5_ctx), xd->amx_key, xd->amx_keylen);
-	    MD5Final(NULL, &(xd->amx_md5_ctx));
-	    break;
-
-	case ALG_AUTH_SHA1:
-	    SHA1Init(&(xd->amx_sha1_ctx));
-	    SHA1Update(&(xd->amx_sha1_ctx), xd->amx_key, xd->amx_keylen);
-	    SHA1Final(NULL, &(xd->amx_sha1_ctx));
-	    break;
-    }
+    xd->amx_hash->Init(&(xd->amx_ctx));
+    xd->amx_hash->Update(&(xd->amx_ctx), xd->amx_key, xd->amx_keylen);
+    xd->amx_hash->Final(NULL, &(xd->amx_ctx));
 
     bzero(ipseczeroes, IPSEC_ZEROES_SIZE);	/* paranoid */
 
@@ -211,8 +226,10 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     struct ifnet *rcvif;
     int ohlen, len, count, off, alen;
     struct mbuf *m0;
-    MD5_CTX md5ctx; 
-    SHA1_CTX sha1ctx;
+    union {
+	 MD5_CTX md5ctx; 
+	 SHA1_CTX sha1ctx;
+    } ctx;
     u_int8_t optval;
     u_char buffer[40];
 
@@ -220,24 +237,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 
     xd = (struct ah_old_xdata *) tdb->tdb_xdata;
 
-    switch (xd->amx_hash_algorithm)
-    {
-	case ALG_AUTH_MD5:
-	    alen = AH_MD5_ALEN;
-	    break;
-
-	case ALG_AUTH_SHA1:
-	    alen = AH_SHA1_ALEN;
-	    break;
-
-	default:
-	    if (encdebug)
-	      log(LOG_ALERT,
-		  "ah_old_input(): unsupported algorithm %d in SA %x/%08x\n",
-		  xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
-	    m_freem(m);
-	    return NULL;
-    }
+    alen = xd->amx_hash->hashsize;
 
     ohlen = sizeof(struct ip) + AH_OLD_FLENGTH + alen;
 
@@ -295,18 +295,8 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     ipo.ip_ttl = 0;
     ipo.ip_sum = 0;
 
-    switch (xd->amx_hash_algorithm)
-    {
-	case ALG_AUTH_MD5:
-	    md5ctx = xd->amx_md5_ctx;
-	    MD5Update(&md5ctx, (unsigned char *) &ipo, sizeof(struct ip));
-	    break;
-
-	case ALG_AUTH_SHA1:
-	    sha1ctx = xd->amx_sha1_ctx;
-	    SHA1Update(&sha1ctx, (unsigned char *) &ipo, sizeof(struct ip));
-	    break;
-    }
+    bcopy(&(xd->amx_ctx), &ctx, xd->amx_hash->ctxsize);
+    xd->amx_hash->Update(&ctx, (unsigned char *) &ipo, sizeof(struct ip));
 
     /* Options */
     if ((ip->ip_hl << 2) > sizeof(struct ip))
@@ -316,31 +306,13 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 	  switch (optval)
 	  {
 	      case IPOPT_EOL:
-		  switch (xd->amx_hash_algorithm)
-		  {
-		      case ALG_AUTH_MD5:
-			  MD5Update(&md5ctx, ipseczeroes, 1);
-			  break;
-
-		      case ALG_AUTH_SHA1:
-			  SHA1Update(&sha1ctx, ipseczeroes, 1);
-			  break;
-		  }
+		  xd->amx_hash->Update(&ctx, ipseczeroes, 1);
 
 		  off = ip->ip_hl << 2;
 		  break;
 
 	      case IPOPT_NOP:
-		  switch (xd->amx_hash_algorithm)
-                  {
-                      case ALG_AUTH_MD5:
-                          MD5Update(&md5ctx, ipseczeroes, 1);
-                          break;
-
-                      case ALG_AUTH_SHA1:
-                          SHA1Update(&sha1ctx, ipseczeroes, 1);
-                          break;
-                  }
+		  xd->amx_hash->Update(&ctx, ipseczeroes, 1);
 
 		  off++;
 		  break;
@@ -350,16 +322,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 	      case 134:
 		  optval = ((u_int8_t *) ip)[off + 1];
 
-		  switch (xd->amx_hash_algorithm)
-                  {
-                      case ALG_AUTH_MD5:
-                          MD5Update(&md5ctx, (u_int8_t *) ip + off, optval);
-                          break;
-
-                      case ALG_AUTH_SHA1:
-                          SHA1Update(&sha1ctx, (u_int8_t *) ip + off, optval);
-                          break;
-                  }
+		  xd->amx_hash->Update(&ctx, (u_int8_t *) ip + off, optval);
 
 		  off += optval;
 		  break;
@@ -367,16 +330,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 	      default:
 		  optval = ((u_int8_t *) ip)[off + 1];
 
-		  switch (xd->amx_hash_algorithm)
-                  {
-                      case ALG_AUTH_MD5:
-                          MD5Update(&md5ctx, ipseczeroes, optval);
-                          break;
-
-                      case ALG_AUTH_SHA1:
-                          SHA1Update(&sha1ctx, ipseczeroes, optval);
-                          break;
-                  }
+		  xd->amx_hash->Update(&ctx, ipseczeroes, optval);
 
 		  off += optval;
 		  break;
@@ -384,18 +338,8 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
       }
     
     
-    switch (xd->amx_hash_algorithm)
-    {
-        case ALG_AUTH_MD5:
-            MD5Update(&md5ctx, (unsigned char *) ah, AH_OLD_FLENGTH);
-	    MD5Update(&md5ctx, ipseczeroes, AH_MD5_ALEN);
-            break;
-
-        case ALG_AUTH_SHA1:
-            SHA1Update(&sha1ctx, (unsigned char *) ah, AH_OLD_FLENGTH);
-	    SHA1Update(&sha1ctx, ipseczeroes, AH_SHA1_ALEN);
-            break;
-    }
+    xd->amx_hash->Update(&ctx, (unsigned char *) ah, AH_OLD_FLENGTH);
+    xd->amx_hash->Update(&ctx, ipseczeroes, AH_MD5_ALEN);
 
     /*
      * Code shamelessly stolen from m_copydata
@@ -423,33 +367,15 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 
 	count = min(m0->m_len - off, len);
 
-	switch (xd->amx_hash_algorithm)
-	{
-	    case ALG_AUTH_MD5:
-		MD5Update(&md5ctx, mtod(m0, unsigned char *) + off, count);
-		break;
-
-	    case ALG_AUTH_SHA1:
-		SHA1Update(&sha1ctx, mtod(m0, unsigned char *) + off, count);
-	}
+	xd->amx_hash->Update(&ctx, mtod(m0, unsigned char *) + off, count);
 
 	len -= count;
 	off = 0;
 	m0 = m0->m_next;
     }
 
-    switch (xd->amx_hash_algorithm)
-    {
-	case ALG_AUTH_MD5:
-	    MD5Update(&md5ctx, (unsigned char *) xd->amx_key, xd->amx_keylen);
-	    MD5Final((unsigned char *) (aho->ah_data), &md5ctx);
-	    break;
-
-	case ALG_AUTH_SHA1:
-	    SHA1Update(&sha1ctx, (unsigned char *) xd->amx_key, xd->amx_keylen);
-	    SHA1Final((unsigned char *) (aho->ah_data), &sha1ctx);
-	    break;
-    }
+    xd->amx_hash->Update(&ctx, (unsigned char *) xd->amx_key, xd->amx_keylen);
+    xd->amx_hash->Final((unsigned char *) (aho->ah_data), &ctx);
 
     if (bcmp(aho->ah_data, ah->ah_data, alen))
     {
@@ -531,8 +457,10 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     struct ah_old *ah, aho;
     register int len, off, count;
     register struct mbuf *m0;
-    MD5_CTX md5ctx;
-    SHA1_CTX sha1ctx;
+    union {
+	 MD5_CTX md5ctx;
+	 SHA1_CTX sha1ctx;
+    } ctx;
     int ilen, ohlen, alen;
     u_int8_t optval;
     u_char opts[40];
@@ -569,24 +497,7 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	ip = mtod(m, struct ip *);
     }
 
-    switch (xd->amx_hash_algorithm)
-    {
-	case ALG_AUTH_MD5:
-	    alen = AH_MD5_ALEN;
-	    break;
-
-	case ALG_AUTH_SHA1:
-	    alen = AH_SHA1_ALEN;
-	    break;
-
-	default:
-	    if (encdebug)
-	      log(LOG_ALERT,
-                  "ah_old_output(): unsupported algorithm %d in SA %x/%08x\n",
-                  xd->amx_hash_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
-            m_freem(m);
-            return NULL;
-    }
+    alen = xd->amx_hash->hashsize;
 
     /* Save the options */
     m_copydata(m, sizeof(struct ip), (ip->ip_hl << 2) - sizeof(struct ip),
@@ -613,18 +524,8 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     aho.ah_rv = 0;
     aho.ah_spi = tdb->tdb_spi;
 
-    switch (xd->amx_hash_algorithm)
-    {
-	case ALG_AUTH_MD5:
-	    md5ctx = xd->amx_md5_ctx;
-	    MD5Update(&md5ctx, (unsigned char *) &ipo, sizeof(struct ip));
-	    break;
-
-	case ALG_AUTH_SHA1:
-	    sha1ctx = xd->amx_sha1_ctx;
-	    SHA1Update(&sha1ctx, (unsigned char *) &ipo, sizeof(struct ip));
-	    break;
-    }
+    bcopy(&(xd->amx_ctx), &ctx, xd->amx_hash->ctxsize);
+    xd->amx_hash->Update(&ctx, (unsigned char *) &ipo, sizeof(struct ip));
 
     /* Options */
     if ((ip->ip_hl << 2) > sizeof(struct ip))
@@ -634,31 +535,13 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	  switch (optval)
 	  {
               case IPOPT_EOL:
-                  switch (xd->amx_hash_algorithm)
-                  {
-                      case ALG_AUTH_MD5:
-                          MD5Update(&md5ctx, ipseczeroes, 1);
-                          break;
-
-                      case ALG_AUTH_SHA1:
-                          SHA1Update(&sha1ctx, ipseczeroes, 1);
-                          break;
-                  }
+		  xd->amx_hash->Update(&ctx, ipseczeroes, 1);
 
                   off = ip->ip_hl << 2;
                   break;
 
               case IPOPT_NOP:
-                  switch (xd->amx_hash_algorithm)
-                  {
-                      case ALG_AUTH_MD5:
-                          MD5Update(&md5ctx, ipseczeroes, 1);
-                          break;
-
-                      case ALG_AUTH_SHA1:
-                          SHA1Update(&sha1ctx, ipseczeroes, 1);
-                          break;
-                  }
+		  xd->amx_hash->Update(&ctx, ipseczeroes, 1);
 
                   off++;
                   break;
@@ -668,16 +551,7 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
               case 134:
                   optval = ((u_int8_t *) ip)[off + 1];
 
-                  switch (xd->amx_hash_algorithm)
-                  {
-                      case ALG_AUTH_MD5:
-                          MD5Update(&md5ctx, (u_int8_t *) ip + off, optval);
-                          break;
-
-                      case ALG_AUTH_SHA1:
-                          SHA1Update(&sha1ctx, (u_int8_t *) ip + off, optval);
-                          break;
-                  }
+		  xd->amx_hash->Update(&ctx, (u_int8_t *) ip + off, optval);
 
                   off += optval;
                   break;
@@ -685,34 +559,15 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
               default:
                   optval = ((u_int8_t *) ip)[off + 1];
 
-                  switch (xd->amx_hash_algorithm)
-                  {
-                      case ALG_AUTH_MD5:
-                          MD5Update(&md5ctx, ipseczeroes, optval);
-                          break;
-
-                      case ALG_AUTH_SHA1:
-                          SHA1Update(&sha1ctx, ipseczeroes, optval);
-                          break;
-                  }
+		  xd->amx_hash->Update(&ctx, ipseczeroes, optval);
 
                   off += optval;
                   break;
           }
       }
 
-    switch (xd->amx_hash_algorithm)
-    {
-	case ALG_AUTH_MD5:
-	    MD5Update(&md5ctx, (unsigned char *) &aho, AH_OLD_FLENGTH);
-            MD5Update(&md5ctx, ipseczeroes, alen);
-            break;
-
-	case ALG_AUTH_SHA1:
-	    SHA1Update(&sha1ctx, (unsigned char *) &aho, AH_OLD_FLENGTH);
-	    SHA1Update(&sha1ctx, ipseczeroes, alen);
-	    break;
-    }
+    xd->amx_hash->Update(&ctx, (unsigned char *) &aho, AH_OLD_FLENGTH);
+    xd->amx_hash->Update(&ctx, ipseczeroes, alen);
 
     /* Skip the IP header and any options */
     off = ip->ip_hl << 2;
@@ -730,32 +585,14 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	  panic("ah_old_output(): m_copydata()");
 	count = min(m0->m_len - off, len);
 
-	switch (xd->amx_hash_algorithm)
-	{
-	    case ALG_AUTH_MD5:
-		MD5Update(&md5ctx, mtod(m0, unsigned char *) + off, count);
-		break;
-
-	    case ALG_AUTH_SHA1:
-		SHA1Update(&sha1ctx, mtod(m0, unsigned char *) + off, count);
-		break;
-	}
+	xd->amx_hash->Update(&ctx, mtod(m0, unsigned char *) + off, count);
 
 	len -= count;
 	off = 0;
 	m0 = m0->m_next;
     }
 
-    switch (xd->amx_hash_algorithm)
-    {
-	case ALG_AUTH_MD5:
-	    MD5Update(&md5ctx, (unsigned char *) xd->amx_key, xd->amx_keylen);
-	    break;
-
-	case ALG_AUTH_SHA1:
-	    SHA1Update(&sha1ctx, (unsigned char *) xd->amx_key, xd->amx_keylen);
-	    break;
-    }
+    xd->amx_hash->Update(&ctx, (unsigned char *) xd->amx_key, xd->amx_keylen);
 
     ipo.ip_tos = ip->ip_tos;
     ipo.ip_id = ip->ip_id;
@@ -795,16 +632,7 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     m_copyback(m, sizeof(struct ip), (ip->ip_hl << 2) - sizeof(struct ip),
 	       (caddr_t) opts);
 
-    switch (xd->amx_hash_algorithm)
-    {
-	case ALG_AUTH_MD5:
-	    MD5Final(ah->ah_data, &md5ctx);
-	    break;
-
-	case ALG_AUTH_SHA1:
-	    SHA1Final(ah->ah_data, &sha1ctx);
-	    break;
-    }
+    xd->amx_hash->Final(ah->ah_data, &ctx);
 
     *mp = m;
 

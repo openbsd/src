@@ -1,4 +1,5 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.22 1997/10/02 02:31:06 deraadt Exp $	*/
+
+/*	$OpenBSD: ip_ipsp.c,v 1.23 1997/11/04 09:11:15 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -9,7 +10,11 @@
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
  * by Angelos D. Keromytis, kermit@forthnet.gr.
  *
- * Copyright (C) 1995, 1996, 1997 by John Ioannidis and Angelos D. Keromytis.
+ * Additional transforms and features in 1997 by Angelos D. Keromytis and
+ * Niels Provos.
+ *
+ * Copyright (C) 1995, 1996, 1997 by John Ioannidis, Angelos D. Keromytis
+ * and Niels Provos.
  *	
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
@@ -560,6 +565,13 @@ ipsp_kern(int off, char **bufp, int len)
 			   tdb->tdb_xform->xf_name);
 	    else
 	      l += sprintf(buffer + l, "\txform = <(null)>\n");
+
+	    if (tdb->tdb_confname)
+	      l += sprintf(buffer + l, "\t\tencryption = <%s>\n",
+			   tdb->tdb_confname);
+	    if (tdb->tdb_authname)
+	      l += sprintf(buffer + l, "\t\tauthentication = <%s>\n",
+			   tdb->tdb_authname);
 
 	    l += sprintf(buffer + l, "\tOSrc = %s", inet_ntoa(tdb->tdb_osrc));
 	    

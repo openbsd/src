@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.9 1997/10/02 02:31:05 deraadt Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.10 1997/11/04 09:11:13 provos Exp $	*/
 
 /*
  * The author of this code is John Ioannidis, ji@tla.org,
@@ -9,7 +9,11 @@
  * Ported to OpenBSD and NetBSD, with additional transforms, in December 1996,
  * by Angelos D. Keromytis, kermit@forthnet.gr.
  *
- * Copyright (C) 1995, 1996, 1997 by John Ioannidis and Angelos D. Keromytis.
+ * Additional transforms and features in 1997 by Angelos D. Keromytis and
+ * Niels Provos.
+ *
+ * Copyright (C) 1995, 1996, 1997 by John Ioannidis, Angelos D. Keromytis
+ * and Niels Provos.
  *	
  * Permission to use, copy, and modify this software without fee
  * is hereby granted, provided that this entire notice is included in
@@ -67,6 +71,58 @@ extern void des_set_key(caddr_t, caddr_t);
 
 extern encap_sendnotify(int, struct tdb *);
 
+static void des1_encrypt(void *, u_int8_t *);
+static void des3_encrypt(void *, u_int8_t *);
+static void des1_decrypt(void *, u_int8_t *);
+static void des3_decrypt(void *, u_int8_t *);
+
+struct esp_xform esp_old_xform[] = {
+     { ALG_ENC_DES, "Data Encryption Standard (DES)",
+       ESP_DES_BLKS, ESP_DES_IVS,
+       8, 8, 8 | 4,
+       des1_encrypt,
+       des1_decrypt 
+     },
+     { ALG_ENC_3DES, "Tripple DES (3DES)",
+       ESP_3DES_BLKS, ESP_3DES_IVS,
+       24, 24, 8 | 4,
+       des3_encrypt,
+       des3_decrypt 
+     }
+};
+
+static void
+des1_encrypt(void *pxd, u_int8_t *blk)
+{
+     struct esp_old_xdata *xd = pxd;
+     des_ecb_encrypt(blk, blk, (caddr_t) (xd->edx_eks[0]), 1);
+}
+
+static void
+des1_decrypt(void *pxd, u_int8_t *blk)
+{
+     struct esp_old_xdata *xd = pxd;
+     des_ecb_encrypt(blk, blk, (caddr_t) (xd->edx_eks[0]), 0);
+}
+
+static void
+des3_encrypt(void *pxd, u_int8_t *blk)
+{
+     struct esp_old_xdata *xd = pxd;
+     des_ecb3_encrypt(blk, blk, (caddr_t) (xd->edx_eks[2]),
+		      (caddr_t) (xd->edx_eks[1]),
+		      (caddr_t) (xd->edx_eks[0]), 1);
+}
+
+static void
+des3_decrypt(void *pxd, u_int8_t *blk)
+{
+     struct esp_old_xdata *xd = pxd;
+     des_ecb3_encrypt(blk, blk, (caddr_t) (xd->edx_eks[2]),
+		      (caddr_t) (xd->edx_eks[1]),
+		      (caddr_t) (xd->edx_eks[0]), 0);
+}
+
 int
 esp_old_attach()
 {
@@ -89,7 +145,9 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     struct esp_old_xdata *xd;
     struct esp_old_xencap xenc;
     struct encap_msghdr *em;
+    struct esp_xform *txform;
     u_int32_t rk[6];
+    int i;
 
     if (m->m_len < ENCAP_MSG_FIXED_LEN)
     {
@@ -115,22 +173,22 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     m_copydata(m, EMT_SETSPI_FLEN, ESP_OLD_XENCAP_LEN, (caddr_t) &xenc);
 
     /* Check whether the encryption algorithm is supported */
-    switch (xenc.edx_enc_algorithm)
+    for (i=sizeof(esp_old_xform)/sizeof(struct esp_xform)-1; i >= 0; i--) 
+	if (xenc.edx_enc_algorithm == esp_old_xform[i].type)
+	      break;
+    if (i < 0) 
     {
-        case ALG_ENC_DES:
-        case ALG_ENC_3DES:
-#ifdef ENCDEBUG
-            if (encdebug)
-              printf("esp_old_init(): initialized TDB with enc algorithm %d\n",
-                     xenc.edx_enc_algorithm);
-#endif /* ENCDEBUG */
-            break;
-
-        default:
-	    if (encdebug)
-              log(LOG_WARNING, "esp_old_init(): unsupported encryption algorithm %d specified\n", xenc.edx_enc_algorithm);
-            return EINVAL;
+	if (encdebug)
+	  log(LOG_WARNING, "esp_old_init(): unsupported encryption algorithm %d specified\n", xenc.edx_enc_algorithm);
+        return EINVAL;
     }
+
+    txform = &esp_old_xform[i];
+#ifdef ENCDEBUG
+    if (encdebug)
+      printf("esp_old_init(): initialized TDB with enc algorithm %d: %s\n",
+	     xenc.edx_enc_algorithm, esp_old_xform[i].name);
+#endif /* ENCDEBUG */
 
     if (xenc.edx_ivlen + xenc.edx_keylen + EMT_SETSPI_FLEN +
 	ESP_OLD_XENCAP_LEN != em->em_msglen)
@@ -140,45 +198,25 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	return EINVAL;
     }
 
-    switch (xenc.edx_enc_algorithm)
+    /* Check the IV length */
+    if (((xenc.edx_ivlen == 0) && !(txform->ivmask&1)) ||
+	((xenc.edx_ivlen != 0) && (
+	     !(xenc.edx_ivlen & txform->ivmask) ||
+	     (xenc.edx_ivlen & (xenc.edx_ivlen-1)))))
     {
-	case ALG_ENC_DES:
-	    if ((xenc.edx_ivlen != 4) && (xenc.edx_ivlen != 8))
-	    {
-		if (encdebug)
-	       	  log(LOG_WARNING, "esp_old_init(): unsupported IV length %d\n",
-		      xenc.edx_ivlen);
-		return EINVAL;
-	    }
+	if (encdebug)
+	  log(LOG_WARNING, "esp_old_init(): unsupported IV length %d\n",
+	      xenc.edx_ivlen);
+	return EINVAL;
+    }
 
-	    if (xenc.edx_keylen != 8)
-	    {
-		if (encdebug)
-		  log(LOG_WARNING, "esp_old_init(): bad key length\n",
-		      xenc.edx_keylen);
-		return EINVAL;
-	    }
-
-	    break;
-
-	case ALG_ENC_3DES:
-            if ((xenc.edx_ivlen != 4) && (xenc.edx_ivlen != 8))
-            {
-		if (encdebug)
-                  log(LOG_WARNING, "esp_old_init(): unsupported IV length %d\n",
-                      xenc.edx_ivlen);
-                return EINVAL;
-            }
-
-            if (xenc.edx_keylen != 24)
-            {
-		if (encdebug)
-                  log(LOG_WARNING, "esp_old_init(): bad key length\n",
-                      xenc.edx_keylen);
-                return EINVAL;
-            }
-
-            break;
+    /* Check the key length */
+    if (xenc.edx_keylen < txform->minkey || xenc.edx_keylen > txform->maxkey)
+    {
+	if (encdebug)
+	  log(LOG_WARNING, "esp_old_init(): bad key length %d\n",
+	      xenc.edx_keylen);
+	return EINVAL;
     }
 
     MALLOC(tdbp->tdb_xdata, caddr_t, sizeof(struct esp_old_xdata),
@@ -199,7 +237,11 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     tdbp->tdb_xform = xsp;
 
     xd->edx_ivlen = xenc.edx_ivlen;
+    xd->edx_xform = txform;
     xd->edx_enc_algorithm = xenc.edx_enc_algorithm;
+
+    /* Pass name of enc algorithm for kernfs */
+    tdbp->tdb_confname = xd->edx_xform->name;
 
     /* Copy the IV */
     m_copydata(m, EMT_SETSPI_FLEN + ESP_OLD_XENCAP_LEN, xd->edx_ivlen,
@@ -258,24 +300,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 
     xd = (struct esp_old_xdata *) tdb->tdb_xdata;
 
-    switch (xd->edx_enc_algorithm)
-    {
-	case ALG_ENC_DES:
-	    blks = ESP_DES_BLKS;
-	    break;
-
-	case ALG_ENC_3DES:
-	    blks = ESP_3DES_BLKS;
-	    break;
-
-	default:
-	    if (encdebug)
-              log(LOG_ALERT,
-                  "esp_old_input(): unsupported algorithm %d in SA %x/%08x\n",
-                  xd->edx_enc_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
-            m_freem(m);
-            return NULL;
-    }
+    blks = xd->edx_xform->blocksize;
 
     rcvif = m->m_pkthdr.rcvif;
     if (rcvif == NULL)
@@ -405,18 +430,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 
 	if (i == blks)
 	{
-	    switch (xd->edx_enc_algorithm)
-	    {
-		case ALG_ENC_DES:
-	    	    des_ecb_encrypt(blk, blk, (caddr_t) (xd->edx_eks[0]), 0);
-		    break;
-
-		case ALG_ENC_3DES:
-		    des_ecb3_encrypt(blk, blk, (caddr_t) (xd->edx_eks[2]),
-                             	     (caddr_t) (xd->edx_eks[1]),
-                             	     (caddr_t) (xd->edx_eks[0]), 0);
-		    break;
-	    }
+	    xd->edx_xform->decrypt(xd, blk);
 
 	    for (i = 0; i < blks; i++)
 	    {
@@ -539,24 +553,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
     xd = (struct esp_old_xdata *) tdb->tdb_xdata;
 
-    switch (xd->edx_enc_algorithm)
-    {
-        case ALG_ENC_DES:
-            blks = ESP_DES_BLKS;
-            break;
-
-        case ALG_ENC_3DES:
-            blks = ESP_3DES_BLKS;
-            break;
-
-        default:
-	    if (encdebug)
-              log(LOG_ALERT,
-                  "esp_old_output(): unsupported algorithm %d in SA %x/%08x\n",
-                  xd->edx_enc_algorithm, tdb->tdb_dst, ntohl(tdb->tdb_spi));
-            m_freem(m);
-            return NULL;
-    }
+    blks = xd->edx_xform->blocksize;
 
     espstat.esps_output++;
 
@@ -670,18 +667,7 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 
 	if (i == blks)
 	{
-	    switch (xd->edx_enc_algorithm)
-	    {
-		case ALG_ENC_DES:
-	    	    des_ecb_encrypt(blk, blk, (caddr_t) (xd->edx_eks[0]), 1);
-		    break;
-
-		case ALG_ENC_3DES:
-                    des_ecb3_encrypt(blk, blk, (caddr_t) (xd->edx_eks[0]),
-                            	     (caddr_t) (xd->edx_eks[1]),
-                             	     (caddr_t) (xd->edx_eks[2]), 1);
-		    break;
-	    }
+	    xd->edx_xform->encrypt(xd, blk);
 
 	    for (i = 0; i < blks; i++)
 	    {
