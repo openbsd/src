@@ -1,4 +1,4 @@
-#	$OpenBSD: files.alpha,v 1.10 1997/03/25 08:00:43 niklas Exp $
+#	$OpenBSD: files.alpha,v 1.11 1997/04/13 04:52:33 millert Exp $
 #	$NetBSD: files.alpha,v 1.32 1996/11/25 04:03:21 cgd Exp $
 #
 # alpha-specific configuration info
@@ -169,7 +169,8 @@ file	arch/alpha/isa/vga_isa.c	vga_isa		needs-flag
 device	ed: ether, ifnet
 attach	ed at isa with ed_isa
 attach	ed at pcmcia with ed_pcmcia
-file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia) needs-flag
+attach	ed at pci with ed_pci
+file	dev/isa/if_ed.c			ed & (ed_isa | ed_pcmcia | ed_pci) needs-flag
 
 #
 # EISA Bus support

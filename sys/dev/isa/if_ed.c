@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ed.c,v 1.27 1997/03/20 23:59:58 niklas Exp $	*/
+/*	$OpenBSD: if_ed.c,v 1.28 1997/04/13 04:52:31 millert Exp $	*/
 /*	$NetBSD: if_ed.c,v 1.105 1996/10/21 22:40:45 thorpej Exp $	*/
 
 /*
@@ -166,6 +166,11 @@ struct cfdriver ed_cd = {
 #define	ETHER_MIN_LEN	64
 #define ETHER_MAX_LEN	1518
 #define	ETHER_ADDR_LEN	6
+
+#define	NIC_PUT(t, bah, nic, reg, val)	\
+	bus_space_write_1((t), (bah), ((nic) + (reg)), (val))
+#define	NIC_GET(t, bah, nic, reg)	\
+	bus_space_read_1((t), (bah), ((nic) + (reg)))
 
 #if NED_PCMCIA > 0 
 #include <dev/pcmcia/pcmciavar.h>
@@ -362,10 +367,171 @@ ed_pcmcia_detach(self)
 
 #endif
 
-#define	NIC_PUT(t, bah, nic, reg, val)	\
-	bus_space_write_1((t), (bah), ((nic) + (reg)), (val))
-#define	NIC_GET(t, bah, nic, reg)	\
-	bus_space_read_1((t), (bah), ((nic) + (reg)))
+#if NED_PCI > 0 
+
+#include <dev/pci/pcireg.h>
+#include <dev/pci/pcivar.h>
+#include <dev/pci/pcidevs.h>
+
+#define PCI_PRODUCT_NE2000	0x8029
+#define PCI_CBIO		0x10	/* Configuration Base IO Address */
+
+int	ed_pci_match __P((struct device *, void *, void *));
+void	ed_pci_attach __P((struct device *, struct device *, void *));
+
+struct cfattach ed_pci_ca = {
+	sizeof(struct ed_softc), ed_pci_match, ed_pci_attach
+};
+
+int
+ed_pci_match(parent, match, aux)
+	struct device *parent;
+	void *match, *aux;
+{
+	struct pci_attach_args *pa = aux;
+
+	/* We don't check the vendor here since many make NE2000 clones */
+	if (PCI_PRODUCT(pa->pa_id) != PCI_PRODUCT_NE2000)
+		return (0);
+
+	return (1);
+}
+
+/*
+ * XXX - Note that we pretend this is a 16bit card until the rest
+ * of the driver can deal with a 32bit bus (isa16bit -> bus_width)
+ */
+void
+ed_pci_attach(parent, self, aux)
+	struct device *parent, *self;
+	void *aux;
+{
+	struct ed_softc *sc = (void *)self;
+	struct pci_attach_args *pa = aux;
+	pci_chipset_tag_t pc = pa->pa_pc;
+	pci_intr_handle_t ih;
+	bus_space_tag_t iot;
+	bus_space_handle_t ioh;
+	bus_addr_t iobase;
+	bus_size_t iosize, asicbase, nicbase;
+	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	u_char romdata[32], tmp;
+	const char *intrstr;
+	int i;
+
+	iot = pa->pa_iot;
+
+	if (pci_io_find(pc, pa->pa_tag, PCI_CBIO, &iobase, &iosize)) {
+		printf("%s: can't find I/O base\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	if (bus_space_map(iot, iobase, iosize, 0, &ioh)) {
+		printf("%s: can't map I/O space\n", sc->sc_dev.dv_xname);
+		return;
+	}
+
+	printf(": NE2000 compatible PCI ethernet controller");
+
+	sc->asic_base = asicbase = ED_NOVELL_ASIC_OFFSET;
+	sc->nic_base = nicbase = ED_NOVELL_NIC_OFFSET;
+	sc->vendor = ED_VENDOR_NOVELL;
+	sc->mem_shared = 0;
+	sc->cr_proto = ED_CR_RD2;
+	sc->type = ED_TYPE_NE2000;
+	sc->type_str = "NE2000";
+
+	/* Reset the board. */
+	tmp = bus_space_read_1(iot, ioh, asicbase + ED_NOVELL_RESET);
+
+	/* Put the board into 16-bit mode (XXX - someday do 32-bit) */
+	sc->isa16bit = 1;
+	NIC_PUT(iot, ioh, nicbase, ED_P0_DCR,
+	    ED_DCR_WTS | ED_DCR_FT1 | ED_DCR_LS);
+	NIC_PUT(iot, ioh, nicbase, ED_P0_PSTART, 16384 >> ED_PAGE_SHIFT);
+	NIC_PUT(iot, ioh, nicbase, ED_P0_PSTOP, 32768 >> ED_PAGE_SHIFT);
+
+	/*
+	 * NIC memory doesn't start at zero on an NE board.
+	 * The start address (and size) is tied to the bus width.
+	 * XXX - these should be 32K but the driver doesn't grok > 16bit
+	 */
+	sc->mem_size = 16384;		/* XXX - should be 8K x bus width */
+	sc->mem_start = 16384;		/*     - and this as well */
+	sc->mem_end = sc->mem_start + sc->mem_size;
+	sc->tx_page_start = sc->mem_size >> ED_PAGE_SHIFT;
+	sc->txb_cnt = sc->mem_size / 8192;
+	sc->rec_page_start = sc->tx_page_start + sc->txb_cnt * ED_TXBUF_SIZE;
+	sc->rec_page_stop = sc->tx_page_start + (sc->mem_size >> ED_PAGE_SHIFT);
+	sc->mem_ring =
+	    sc->mem_start + ((sc->txb_cnt * ED_TXBUF_SIZE) << ED_PAGE_SHIFT);
+	sc->sc_delaybah = 0;			/* unused */
+	sc->sc_iot = iot;
+	sc->sc_ioh = ioh;
+
+	/* Get ethernet address (XXX - size field should be "8 * buswidth") */
+	ed_pio_readmem(sc, 0, romdata, sizeof(romdata));
+	/* XXX - change to (i * buswidth) when driver does 32bit */
+	for (i = 0; i < ETHER_ADDR_LEN; i++)
+		sc->sc_arpcom.ac_enaddr[i] = romdata[i * 2];
+
+	/* Clear any pending interrupts that might have occurred above. */
+	NIC_PUT(iot, ioh, nicbase, ED_P0_ISR, 0xff);
+
+	/* Set interface to stopped condition (reset). */
+	edstop(sc);
+
+	/* Initialize ifnet structure. */
+	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
+	ifp->if_softc = sc;
+	ifp->if_start = edstart;
+	ifp->if_ioctl = edioctl;
+	ifp->if_watchdog = edwatchdog;
+	ifp->if_flags =
+	    IFF_BROADCAST | IFF_SIMPLEX | IFF_NOTRAILERS | IFF_MULTICAST;
+
+	/* Attach the interface. */
+	if ((sc->spec_flags & ED_REATTACH) == 0)
+		if_attach(ifp);
+	ether_ifattach(ifp);
+
+	/* Print additional info when attached. */
+	printf("\n%s: address %s, ", sc->sc_dev.dv_xname,
+	    ether_sprintf(sc->sc_arpcom.ac_enaddr));
+
+	if (sc->type_str)
+		printf("type %s ", sc->type_str);
+	else
+		printf("type unknown (0x%x) ", sc->type);
+	printf("%s\n", sc->isa16bit ? "(16-bit)" : "(8-bit)");	/* XXX */
+
+#if NBPFILTER > 0
+        if ((sc->spec_flags & ED_REATTACH) == 0)
+		bpfattach(&ifp->if_bpf, ifp, DLT_EN10MB,
+		    sizeof(struct ether_header));
+#endif
+
+	/* Map and establish the interrupt. */
+	if (pci_intr_map(pc, pa->pa_intrtag, pa->pa_intrpin,
+	    pa->pa_intrline, &ih)) {
+		printf("%s: couldn't map interrupt\n", sc->sc_dev.dv_xname);
+		return;
+	}
+	intrstr = pci_intr_string(pc, ih);
+	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET, edintr,
+	    sc, sc->sc_dev.dv_xname);
+	if (sc->sc_ih == NULL) {
+		printf("%s: couldn't establish interrupt",
+		    sc->sc_dev.dv_xname);
+		if (intrstr != NULL)
+			printf(" at %s", intrstr);
+		printf("\n");
+		return;
+	}
+	printf("%s: interrupting at %s\n", sc->sc_dev.dv_xname, intrstr);
+}
+
+#endif
 
 /*
  * Determine if the device is present.
