@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.9 2001/05/22 23:38:34 angelos Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.10 2001/05/27 00:39:43 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -340,11 +340,11 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb, struct tdb *tdb2)
      * packet.
      */
     if ((tdb->tdb_flags & TDBF_SKIPCRYPTO) == 0)
-      mtag = m_tag_get(PACKET_TAG_IPSEC_DONE, sizeof(struct tdb_ident),
+      mtag = m_tag_get(PACKET_TAG_IPSEC_OUT_DONE, sizeof(struct tdb_ident),
 		       M_NOWAIT);
     else
-      mtag = m_tag_get(PACKET_TAG_IPSEC_NEEDED, sizeof(struct tdb_ident),
-		       M_NOWAIT);
+      mtag = m_tag_get(PACKET_TAG_IPSEC_OUT_CRYPTO_NEEDED,
+		       sizeof(struct tdb_ident), M_NOWAIT);
 
     if (mtag == NULL)
     {
