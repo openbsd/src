@@ -1,4 +1,4 @@
-/*	$OpenBSD: vfs_syscalls_43.c,v 1.2 1996/04/18 21:21:36 niklas Exp $	*/
+/*	$OpenBSD: vfs_syscalls_43.c,v 1.3 1996/09/06 10:37:48 niklas Exp $	*/
 /*	$NetBSD: vfs_syscalls_43.c,v 1.4 1996/03/14 19:31:52 christos Exp $	*/
 
 /*
@@ -62,6 +62,10 @@
 
 #include <sys/mount.h>
 #include <sys/syscallargs.h>
+
+#include <vm/vm.h>
+
+#include <sys/pipe.h>
 
 static void cvtstat __P((struct stat *, struct ostat *));
 
@@ -222,6 +226,12 @@ compat_43_sys_fstat(p, v, retval)
 	case DTYPE_SOCKET:
 		error = soo_stat((struct socket *)fp->f_data, &ub);
 		break;
+
+#ifndef OLD_PIPE
+	case DTYPE_PIPE:
+		error = pipe_stat((struct pipe *)fp->f_data, &ub);
+		break;
+#endif
 
 	default:
 		panic("ofstat");
