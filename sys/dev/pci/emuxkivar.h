@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxkivar.h,v 1.5 2003/02/18 14:32:13 jmc Exp $	*/
+/*	$OpenBSD: emuxkivar.h,v 1.6 2003/04/26 08:01:42 jmc Exp $	*/
 /*	$NetBSD: emuxkivar.h,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@
 #define	EMU_SUBSYS_APS		0x40011102
 
 /*
- * dma memory managment
+ * dma memory management
  */
 
 struct dmamem {
@@ -78,7 +78,7 @@ struct dmamem {
 #define	EMU_DMAMEM_NSEG	1
 
 /*
- * Emu10k1 memory managment
+ * Emu10k1 memory management
  */
 
 struct emuxki_mem {

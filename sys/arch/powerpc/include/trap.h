@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.h,v 1.5 2001/11/13 14:31:52 drahn Exp $	*/
+/*	$OpenBSD: trap.h,v 1.6 2003/04/26 08:01:42 jmc Exp $	*/
 /*	$NetBSD: trap.h,v 1.1 1996/09/30 16:34:35 ws Exp $	*/
 
 /*
@@ -50,7 +50,7 @@
 #define	EXC_PERF	0x0f00		/* Performance Monitoring */
 #define	EXC_VEC		0x0f20		/* AltiVec Unavailable */
 #define	EXC_BPT		0x1300		/* Instruction Breakpoint */
-#define	EXC_SMI		0x1400		/* System Managment Interrupt */
+#define	EXC_SMI		0x1400		/* System Management Interrupt */
 
 /* And these are only on the 603: */
 #define	EXC_IMISS	0x1000		/* Instruction translation miss */

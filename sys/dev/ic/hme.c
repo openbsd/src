@@ -1,4 +1,4 @@
-/*	$OpenBSD: hme.c,v 1.26 2003/03/05 20:46:26 jason Exp $	*/
+/*	$OpenBSD: hme.c,v 1.27 2003/04/26 08:01:42 jmc Exp $	*/
 /*	$NetBSD: hme.c,v 1.21 2001/07/07 15:59:37 thorpej Exp $	*/
 
 /*-
@@ -146,7 +146,7 @@ hme_config(sc)
 	 *	sc_erx		(Receiver Unit registers)
 	 *	sc_etx		(Transmitter Unit registers)
 	 *	sc_mac		(MAC registers)
-	 *	sc_mif		(Managment Interface registers)
+	 *	sc_mif		(Management Interface registers)
 	 *
 	 * the maximum bus burst size:
 	 *	sc_burst

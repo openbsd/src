@@ -1,4 +1,4 @@
-/*	$OpenBSD: emuxki.c,v 1.12 2003/02/18 14:32:13 jmc Exp $	*/
+/*	$OpenBSD: emuxki.c,v 1.13 2003/04/26 08:01:42 jmc Exp $	*/
 /*	$NetBSD: emuxki.c,v 1.1 2001/10/17 18:39:41 jdolecek Exp $	*/
 
 /*-
@@ -829,7 +829,7 @@ emuxki_shutdown(struct emuxki_softc *sc)
 	emuxki_dmamem_free(sc->ptb, M_DEVBUF);
 }
 
-/* Emu10k1 Memory managment */
+/* Emu10k1 Memory management */
 
 struct emuxki_mem *
 emuxki_mem_new(struct emuxki_softc *sc, int ptbidx,
@@ -917,7 +917,7 @@ emuxki_rmem_alloc(struct emuxki_softc *sc, size_t size, int type, int flags)
 }
 
 /*
- * emuxki_channel_* : Channel managment functions
+ * emuxki_channel_* : Channel management functions
  * emuxki_chanparms_* : Channel parameters modification functions
  */
 
@@ -1173,7 +1173,7 @@ emuxki_channel_stop(struct emuxki_channel *chan)
 }
 
 /*
- * Voices managment
+ * Voices management
  * emuxki_voice_dataloc : use(play or rec) independant dataloc union helpers
  * emuxki_voice_channel_* : play part of dataloc union helpers
  * emuxki_voice_recsrc_* : rec part of dataloc union helpers
