@@ -1,10 +1,11 @@
-/* $OpenBSD: siginfo.c,v 1.4 2002/10/09 03:02:33 marc Exp $ */
+/* $OpenBSD: siginfo.c,v 1.5 2002/10/12 03:37:45 marc Exp $ */
 /* PUBLIC DOMAIN Oct 2002 <marc@snafu.org> */
 
-/* test SA_SIGINFO support.   Also check that SA_RESETHAND does the right
-   thing.  */
+/*
+ * test SA_SIGINFO support.   Also check that SA_RESETHAND does the right
+ * thing.
+ */
 
-#include <assert.h>
 #include <signal.h>
 #include <stdio.h>
 
