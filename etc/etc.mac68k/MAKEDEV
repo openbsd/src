@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: MAKEDEV,v 1.17 1997/09/07 20:29:12 dgregor Exp $
+#	$OpenBSD: MAKEDEV,v 1.18 1997/09/16 02:14:10 deraadt Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -72,8 +72,13 @@ add ()
 hex ()
 {
 	case $1 in
-	[0-9])  echo -n $1 ;;
-	1[0-5]) echo -n -e "\\$(( $1 + 131 ))" ;;
+		[0-9])  echo -n $1 ;;
+		10) echo -n a;;
+		11) echo -n b;;
+		12) echo -n c;;
+		13) echo -n d;;
+		14) echo -n e;;
+		15) echo -n f;;
 	esac
 }
 
