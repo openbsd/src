@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtwvar.h,v 1.6 2005/02/14 12:49:29 jsg Exp $	*/
+/*	$OpenBSD: rtwvar.h,v 1.7 2005/02/19 03:33:30 jsg Exp $	*/
 /* $NetBSD: rtwvar.h,v 1.10 2004/12/26 22:37:57 mycroft Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -59,8 +59,9 @@
 #define	RTW_DEBUG_PHYBITIO	0x040000
 #define	RTW_DEBUG_TIMEOUT	0x080000
 #define	RTW_DEBUG_BUGS		0x100000
-#define RTW_DEBUG_BEACON	0x200000
-#define	RTW_DEBUG_MAX		0x3fffff
+#define	RTW_DEBUG_BEACON	0x200000
+#define	RTW_DEBUG_LED		0x400000
+#define	RTW_DEBUG_MAX		0x7fffff
 
 extern int rtw_debug;
 #define RTW_DPRINTF(__flags, __x)	\
@@ -72,15 +73,6 @@ extern int rtw_debug;
 #define RTW_DPRINTF(__flags, __x)
 #define	DPRINTF(__sc, __flags, __x)
 #endif /* RTW_DEBUG */
-
-#if 0
-enum rtw_rftype {
-	RTW_RFTYPE_INTERSIL = 0,
-	RTW_RFTYPE_RFMD,
-	RTW_RFTYPE_PHILIPS,
-	RTW_RFTYPE_MAXIM
-};
-#endif
 
 enum rtw_locale {
 	RTW_LOCALE_USA = 0,
@@ -345,6 +337,29 @@ struct rtw_sa2400 {
 
 typedef void (*rtw_pwrstate_t)(struct rtw_regs *, enum rtw_pwrstate, int, int);
 
+union rtw_keys {
+	u_int8_t	rk_keys[4][16];
+	u_int32_t	rk_words[16];
+};
+
+#define	RTW_LED_SLOW_TICKS	MAX(1, hz/2)
+#define	RTW_LED_FAST_TICKS	MAX(1, hz/10)
+
+struct rtw_led_state {
+#define	RTW_LED0	0x1
+#define	RTW_LED1	0x2
+	u_int8_t	ls_slowblink:2;
+	u_int8_t	ls_actblink:2;
+	u_int8_t	ls_default:2;
+	u_int8_t	ls_state;
+	u_int8_t	ls_event;
+#define	RTW_LED_S_RX	0x1
+#define	RTW_LED_S_TX	0x2
+#define	RTW_LED_S_SLOW	0x4
+	struct timeout	ls_slow_ch;
+	struct timeout	ls_fast_ch;
+};
+
 struct rtw_softc {
 	struct device		sc_dev;
 	struct ieee80211com	sc_ic;
@@ -352,9 +367,6 @@ struct rtw_softc {
 	bus_dma_tag_t		sc_dmat;
 	u_int32_t		sc_flags;
 
-#if 0
-	enum rtw_rftype		sc_rftype;
-#endif
 	enum rtw_attach_state	sc_attach_state;
 	enum rtw_rfchipid	sc_rfchipid;
 	enum rtw_locale		sc_locale;
@@ -418,8 +430,10 @@ struct rtw_softc {
 		struct rtw_tx_radiotap_header	tap;
 		u_int8_t			pad[64];
 	} sc_txtapu;
+	union rtw_keys		sc_keys;
 	int			sc_txkey;
 	struct ifqueue		sc_beaconq;
+	struct rtw_led_state	sc_led_state;
 	int			sc_hwverid;
 };
 

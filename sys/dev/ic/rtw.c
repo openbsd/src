@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtw.c,v 1.17 2005/02/17 18:28:05 reyk Exp $	*/
+/*	$OpenBSD: rtw.c,v 1.18 2005/02/19 03:33:30 jsg Exp $	*/
 /* $NetBSD: rtw.c,v 1.29 2004/12/27 19:49:16 dyoung Exp $ */
 /*-
  * Copyright (c) 2004, 2005 David Young.  All rights reserved.
@@ -211,6 +211,12 @@ struct mbuf *rtw_80211_dequeue(struct rtw_softc *, struct ifqueue *, int,
 void rtw_recv_beacon(struct rtw_softc *, struct mbuf *,
     struct ieee80211_node *, int, int, uint32_t);
 
+void rtw_led_attach(struct rtw_softc *);
+void rtw_led_init(struct rtw_regs *);
+void rtw_led_slowblink(void *);
+void rtw_led_fastblink(void *);
+void rtw_led_set(struct rtw_led_state *, struct rtw_regs *, int);
+void rtw_led_newstate(struct rtw_softc *, enum ieee80211_state);
 
 #ifdef RTW_DEBUG
 void rtw_print_txdesc(struct rtw_softc *, const char *,
@@ -1378,6 +1384,9 @@ rtw_intr_rx(struct rtw_softc *sc, u_int16_t isr)
 		m->m_flags |= M_HASFCS;
 
 		wh = mtod(m, struct ieee80211_frame *);
+
+		if (!IS_BEACON(wh->i_fc[0]))
+			sc->sc_led_state.ls_event |= RTW_LED_S_RX;
 		/* TBD use _MAR, _BAR, _PAR flags as hints to _find_rxnode? */
 		ni = ieee80211_find_rxnode(&sc->sc_ic, wh);
 
@@ -2525,6 +2534,167 @@ out:
 	return rc;
 }
 
+void
+rtw_led_init(struct rtw_regs *regs)
+{
+	u_int8_t cfg0, cfg1;
+
+	rtw_set_access(regs, RTW_ACCESS_CONFIG);
+
+	cfg0 = RTW_READ8(regs, RTW_CONFIG0);
+	cfg0 |= RTW_CONFIG0_LEDGPOEN;
+	RTW_WRITE8(regs, RTW_CONFIG0, cfg0);
+
+	cfg1 = RTW_READ8(regs, RTW_CONFIG1);
+	RTW_DPRINTF(RTW_DEBUG_LED,
+	    ("%s: read %" PRIx8 " from reg[CONFIG1]\n", __func__, cfg1));
+
+	cfg1 &= ~RTW_CONFIG1_LEDS_MASK;
+	cfg1 |= RTW_CONFIG1_LEDS_TX_RX;
+	RTW_WRITE8(regs, RTW_CONFIG1, cfg1);
+
+	rtw_set_access(regs, RTW_ACCESS_NONE);
+}
+
+/* 
+ * IEEE80211_S_INIT: 		LED1 off
+ *
+ * IEEE80211_S_AUTH,
+ * IEEE80211_S_ASSOC,
+ * IEEE80211_S_SCAN: 		LED1 blinks @ 1 Hz, blinks at 5Hz for tx/rx
+ *
+ * IEEE80211_S_RUN: 		LED1 on, blinks @ 5Hz for tx/rx
+ */
+void
+rtw_led_newstate(struct rtw_softc *sc, enum ieee80211_state nstate)
+{
+	struct rtw_led_state *ls;
+
+	ls = &sc->sc_led_state;
+
+	switch (nstate) {
+	case IEEE80211_S_INIT:
+		rtw_led_init(&sc->sc_regs);
+		timeout_del(&ls->ls_slow_ch);
+		timeout_del(&ls->ls_fast_ch);
+		ls->ls_slowblink = 0;
+		ls->ls_actblink = 0;
+		ls->ls_default = 0;
+		break;
+	case IEEE80211_S_SCAN:
+		timeout_add(&ls->ls_slow_ch, RTW_LED_SLOW_TICKS);
+		timeout_add(&ls->ls_fast_ch, RTW_LED_FAST_TICKS);
+		/*FALLTHROUGH*/
+	case IEEE80211_S_AUTH:
+	case IEEE80211_S_ASSOC:
+		ls->ls_default = RTW_LED1;
+		ls->ls_actblink = RTW_LED1;
+		ls->ls_slowblink = RTW_LED1;
+		break;
+	case IEEE80211_S_RUN:
+		ls->ls_slowblink = 0;
+		break;
+	}
+	rtw_led_set(ls, &sc->sc_regs, sc->sc_hwverid);
+}
+
+void
+rtw_led_set(struct rtw_led_state *ls, struct rtw_regs *regs, int hwverid)
+{
+	u_int8_t led_condition;
+	bus_size_t ofs;
+	u_int8_t mask, newval, val;
+
+	led_condition = ls->ls_default;
+
+	if (ls->ls_state & RTW_LED_S_SLOW)
+		led_condition ^= ls->ls_slowblink;
+	if (ls->ls_state & (RTW_LED_S_RX|RTW_LED_S_TX))
+		led_condition ^= ls->ls_actblink;
+
+	RTW_DPRINTF(RTW_DEBUG_LED,
+	    ("%s: LED condition %" PRIx8 "\n", __func__, led_condition));
+
+	switch (hwverid) {
+	default:
+	case 'F':
+		ofs = RTW_PSR;
+		newval = mask = RTW_PSR_LEDGPO0 | RTW_PSR_LEDGPO1;
+		if (led_condition & RTW_LED0)
+			newval &= ~RTW_PSR_LEDGPO0;
+		if (led_condition & RTW_LED1)
+			newval &= ~RTW_PSR_LEDGPO1;
+		break;
+	case 'D':
+		ofs = RTW_9346CR;
+		mask = RTW_9346CR_EEM_MASK | RTW_9346CR_EEDI | RTW_9346CR_EECS;
+		newval = RTW_9346CR_EEM_PROGRAM;
+		if (led_condition & RTW_LED0)
+			newval |= RTW_9346CR_EEDI;
+		if (led_condition & RTW_LED1)
+			newval |= RTW_9346CR_EECS;
+		break;
+	}
+	val = RTW_READ8(regs, ofs);
+	RTW_DPRINTF(RTW_DEBUG_LED,
+	    ("%s: read %" PRIx8 " from reg[%#02x]\n", __func__, val, ofs));
+	val &= ~mask;
+	val |= newval;
+	RTW_WRITE8(regs, ofs, val);
+	RTW_DPRINTF(RTW_DEBUG_LED,
+	    ("%s: wrote %" PRIx8 " to reg[%#02x]\n", __func__, val, ofs));
+	RTW_SYNC(regs, ofs, ofs);
+}
+
+void
+rtw_led_fastblink(void *arg)
+{
+	int ostate, s;
+	struct rtw_softc *sc = (struct rtw_softc *)arg;
+	struct rtw_led_state *ls = &sc->sc_led_state;
+
+	s = splnet();
+	ostate = ls->ls_state;
+	ls->ls_state ^= ls->ls_event;
+
+	if ((ls->ls_event & RTW_LED_S_TX) == 0)
+		ls->ls_state &= ~RTW_LED_S_TX;
+
+	if ((ls->ls_event & RTW_LED_S_RX) == 0)
+		ls->ls_state &= ~RTW_LED_S_RX;
+
+	ls->ls_event = 0;
+
+	if (ostate != ls->ls_state)
+		rtw_led_set(ls, &sc->sc_regs, sc->sc_hwverid);
+	splx(s);
+
+	timeout_add(&ls->ls_fast_ch, RTW_LED_FAST_TICKS);
+}
+
+void
+rtw_led_slowblink(void *arg)
+{
+	int s;
+	struct rtw_softc *sc = (struct rtw_softc *)arg;
+	struct rtw_led_state *ls = &sc->sc_led_state;
+
+	s = splnet();
+	ls->ls_state ^= RTW_LED_S_SLOW;
+	rtw_led_set(ls, &sc->sc_regs, sc->sc_hwverid);
+	splx(s);
+	timeout_add(&ls->ls_slow_ch, RTW_LED_SLOW_TICKS);
+}
+
+void
+rtw_led_attach(struct rtw_softc *sc)
+{
+	struct rtw_led_state *ls = &sc->sc_led_state;
+
+	timeout_set(&ls->ls_fast_ch, rtw_led_fastblink, sc);
+	timeout_set(&ls->ls_slow_ch, rtw_led_slowblink, sc);
+}
+
 int
 rtw_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
@@ -2980,6 +3150,7 @@ rtw_start(struct ifnet *ifp)
 		SIMPLEQ_INSERT_TAIL(&tsb->tsb_dirtyq, ts, ts_q);
 
 		if (tsb != &sc->sc_txsoft_blk[RTW_TXPRIBCN]) {
+			sc->sc_led_state.ls_event |= RTW_LED_S_TX;
 			tsb->tsb_tx_timer = 5;
 			ifp->if_timer = 1;
 		}
@@ -3114,6 +3285,8 @@ rtw_newstate(struct ieee80211com *ic, enum ieee80211_state nstate, int arg)
 	int error;
 
 	ostate = ic->ic_state;
+
+	rtw_led_newstate(sc, nstate);
 
 	if (nstate == IEEE80211_S_INIT) {
 		timeout_del(&sc->sc_scan_to);
@@ -3713,6 +3886,8 @@ rtw_attach(struct rtw_softc *sc)
 	IFQ_SET_READY(&sc->sc_if.if_snd);
 
 	rtw_set80211props(&sc->sc_ic);
+
+	rtw_led_attach(sc);
 
 	/*
 	 * Call MI attach routines.
