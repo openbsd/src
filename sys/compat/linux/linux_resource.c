@@ -1,4 +1,4 @@
-/*	$OpenBSD: linux_resource.c,v 1.1 2000/06/07 13:35:02 niklas Exp $	*/
+/*	$OpenBSD: linux_resource.c,v 1.2 2000/06/16 21:47:12 provos Exp $	*/
 
 /*
  * Copyright (c) 2000 Niklas Hallqvist
@@ -46,8 +46,6 @@
 #include <compat/linux/linux_resource.h>
 #include <compat/linux/linux_signal.h>
 #include <compat/linux/linux_syscallargs.h>
-
-#define	MIN(a,b) (((a)<(b))?(a):(b))
 
 /* linux_resource.c */
 int	linux_to_bsd_rlimit __P((u_int));

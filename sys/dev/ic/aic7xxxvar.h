@@ -31,19 +31,11 @@
  * SUCH DAMAGE.
  *
  * $FreeBSD: src/sys/dev/aic7xxx/aic7xxx.h,v 1.15 2000/01/07 23:08:18 gibbs Exp $
- * $OpenBSD: aic7xxxvar.h,v 1.11 2000/03/22 02:48:47 smurph Exp $
+ * $OpenBSD: aic7xxxvar.h,v 1.12 2000/06/16 21:47:13 provos Exp $
  */
 
 #ifndef _AIC7XXXVAR_H_
 #define _AIC7XXXVAR_H_
-
-#ifndef MAX
-#define MAX(a,b) (((a) > (b)) ? (a) : (b))
-#endif
-
-#ifndef MIN
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
-#endif
 
 #ifndef FALSE
 #define FALSE 0

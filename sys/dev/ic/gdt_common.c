@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_common.c,v 1.5 2000/03/01 22:38:51 niklas Exp $	*/
+/*	$OpenBSD: gdt_common.c,v 1.6 2000/06/16 21:47:13 provos Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -52,8 +52,6 @@
 
 #include <dev/ic/gdtreg.h>
 #include <dev/ic/gdtvar.h>
-
-#define MIN(x, y) (((x) < (y)) ? (x) : (y))
 
 int	gdt_async_event __P((struct gdt_softc *, int));
 void	gdt_chain __P((struct gdt_softc *));

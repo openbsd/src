@@ -1,4 +1,4 @@
-/*	$OpenBSD: init_main.c,v 1.53 2000/06/05 11:02:50 art Exp $	*/
+/*	$OpenBSD: init_main.c,v 1.54 2000/06/16 21:47:14 provos Exp $	*/
 /*	$NetBSD: init_main.c,v 1.84.4.1 1996/06/02 09:08:06 mrg Exp $	*/
 
 /*
@@ -103,10 +103,6 @@
 
 #if defined(NFSSERVER) || defined(NFSCLIENT)
 extern void nfs_init __P((void));
-#endif
-
-#ifndef MIN
-#define MIN(a,b)	(((a)<(b))?(a):(b))
 #endif
 
 char	copyright[] =

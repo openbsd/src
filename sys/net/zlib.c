@@ -1,4 +1,4 @@
-/*	$OpenBSD: zlib.c,v 1.7 1997/02/24 13:34:06 niklas Exp $	*/
+/*	$OpenBSD: zlib.c,v 1.8 2000/06/16 21:47:14 provos Exp $	*/
 /*	$NetBSD: zlib.c,v 1.2 1996/03/16 23:55:40 christos Exp $	*/
 
 /*
@@ -33,6 +33,7 @@
 
 #include "zlib.h"
 
+#include <sys/param.h>
 #include <sys/types.h>
 #ifdef _STANDALONE
 #include <stand.h>
@@ -1672,7 +1673,6 @@ local void send_bits(s, value, length)
 #endif /* DEBUG_ZLIB */
 
 
-#define MAX(a,b) (a >= b ? a : b)
 /* the arguments must not have side effects */
 
 /* ===========================================================================

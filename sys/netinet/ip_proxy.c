@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_proxy.c,v 1.9 2000/04/05 05:35:27 kjell Exp $	*/
+/*	$OpenBSD: ip_proxy.c,v 1.10 2000/06/16 21:47:16 provos Exp $	*/
 
 /*
  * Copyright (C) 1997-1998 by Darren Reed.
@@ -78,11 +78,6 @@ static const char rcsid[] = "@(#)$IPFilter: ip_proxy.c,v 2.2.2.4 2000/03/15 13:5
 #include <netinet/ip_state.h>
 #if (__FreeBSD_version >= 300000)
 # include <sys/malloc.h>
-#endif
-
-
-#ifndef MIN
-#define MIN(a,b)        (((a)<(b))?(a):(b))
 #endif
 
 static ap_session_t *appr_new_session __P((aproxy_t *, ip_t *,

@@ -1,4 +1,4 @@
-/*	$OpenBSD: malloc.c,v 1.2 1996/03/04 10:37:12 mickey Exp $	*/
+/*	$OpenBSD: malloc.c,v 1.3 2000/06/16 21:47:18 provos Exp $	*/
 /*	$NetBSD: malloc.c,v 1.4 1994/06/29 06:41:10 cgd Exp $	*/
 
 /*
@@ -45,8 +45,6 @@ char *s;
 		fflush(stdout);
 	ENDDEBUG
 }
-
-#define MIN(x,y) ((x<y)?x:y)
 
 char *Malloc(x)
 int x;

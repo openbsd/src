@@ -1,4 +1,4 @@
-/*	$OpenBSD: nd6.c,v 1.16 2000/05/19 13:55:17 itojun Exp $	*/
+/*	$OpenBSD: nd6.c,v 1.17 2000/06/16 21:47:17 provos Exp $	*/
 /*	$KAME: nd6.c,v 1.63 2000/05/17 12:35:59 jinmei Exp $	*/
 
 /*
@@ -182,7 +182,6 @@ void
 nd6_setmtu(ifp)
 	struct ifnet *ifp;
 {
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
 	struct nd_ifinfo *ndi = &nd_ifinfo[ifp->if_index];
 	u_long oldmaxmtu = ndi->maxmtu;
 	u_long oldlinkmtu = ndi->linkmtu;

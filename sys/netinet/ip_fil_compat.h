@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_fil_compat.h,v 1.16 2000/05/01 06:16:47 kjell Exp $	*/
+/*	$OpenBSD: ip_fil_compat.h,v 1.17 2000/06/16 21:47:16 provos Exp $	*/
 
 /*
  * Copyright (C) 1993-1998 by Darren Reed.
@@ -148,10 +148,6 @@ typedef unsigned int    u_32_t;
 typedef unsigned long   u_32_t;
 # endif
 #endif /* __NetBSD__ || __OpenBSD__ || __FreeBSD__ || __sgi */
-
-#ifndef	MAX
-#define	MAX(a,b)	(((a) > (b)) ? (a) : (b))
-#endif
 
 /*
  * Security Options for Intenet Protocol (IPSO) as defined in RFC 1108.
