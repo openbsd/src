@@ -1,4 +1,4 @@
-/*	$OpenBSD: imsg.c,v 1.28 2004/07/05 02:13:44 henning Exp $ */
+/*	$OpenBSD: imsg.c,v 1.29 2004/08/11 10:10:28 claudio Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -81,7 +81,7 @@ imsg_read(struct imsgbuf *ibuf)
 			ifd->fd = fd;
 			TAILQ_INSERT_TAIL(&ibuf->fds, ifd, entry);
 		} else
-			log_warn("imsg_read: got unexpected ctl data lvel %d"
+			log_warn("imsg_read: got unexpected ctl data level %d "
 			    "type %d", cmsg->cmsg_level, cmsg->cmsg_type);
 	}
 
