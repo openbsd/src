@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$OpenBSD: install.sub,v 1.57 1998/03/23 05:33:38 deraadt Exp $
+#	$OpenBSD: install.sub,v 1.58 1998/03/24 06:38:56 millert Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -231,7 +231,7 @@ ftp_list_files() {
 	_pass=$1; shift
 	_dir=$1; shift
 
-	ftp -V -n $_host  <<__ptf
+	ftp ${_ftp_active} -V -n $_host  <<__ptf
 user $_user $_pass
 cd $_dir
 ls
@@ -330,11 +330,17 @@ boot program (especially on a PC with multiple disk controllers).
 Available disks are:
 
 __getrootdisk_1
+	local _defdsk;
+
 	_DKDEVS=`md_get_diskdevs`
+	_defdsk=`echo $_DKDEVS | cutlast`
+	if [ "${_defdsk}" != "${_DKDEVS}" ]; then
+		_defdsk=""
+	fi
 	echo	"$_DKDEVS"
 	echo	""
-	echo -n	"Which disk is the root disk? "
-	getresp ""
+	echo -n	"Which disk is the root disk? [${_defdsk}]"
+	getresp "${_defdsk}"
 	if isin $resp $_DKDEVS ; then
 		ROOTDISK="$resp"
 	else
@@ -420,6 +426,9 @@ marked with [X] have been succesfully configured):
 __configurenetwork_1
 
 			for _ifs in $_IFS; do
+				if [ "X${_ouranswer}" = "X" ]; then
+					_ouranswer=$_ifs
+				fi
 				if isin $_ifs $_ifsdone ; then
 					echo -n "	[X] "
 				else
@@ -642,6 +651,7 @@ install_url() {
 	local _failed_files
 	local _osetsdone
 	local _url_type
+	local _url_base
 
 	# Is this an ftp or http install?
 	_url_type=$1; shift
@@ -721,23 +731,36 @@ install_url() {
 			_ftp_server_password=root@`hostname`.${FQDN}
 		fi
 
-		if [ "X${ftp_proxy}" = X"" ]; then
-			# Get login name
-			resp=""		# force one iteration
-			while [ "X${resp}" = X"" ]; do
-				echo -n "Login? [${_ftp_server_login}] "
-				getresp "${_ftp_server_login}"
-				_ftp_server_login=$resp 
-			done
+		# Get login name
+		resp=""		# force one iteration
+		while [ "X${resp}" = X"" ]; do
+			echo -n "Login? [${_ftp_server_login}] "
+			getresp "${_ftp_server_login}"
+			_ftp_server_login=$resp 
+		done
 
-			# Get password
+		# Get password unless anonymous
+		if [ ${_ftp_server_login} != "anonymous" ]; then
 			resp=""		# force one iteration
 			while [ "X${resp}" = X"" ]; do
-				echo -n "Password? [${_ftp_server_password}] "
+				echo -n "Password (will not echo): "
+				stty -echo
 				getresp "${_ftp_server_password}"
+				stty echo
+				echo ""
 				_ftp_server_password=$resp
 			done
+		else
+			# only used by ftp_list_files()
+			_ftp_server_password=root@`hostname`.${FQDN}
 		fi
+	fi
+
+	# Build up the base url since it is so nasty...
+	if [ "${_url_type}" = "ftp" -a "${_ftp_server_login}" != "anonymous" ]; then
+		eval _url_base=${_url_type}://${_ftp_server_login}:${_ftp_server_password}@\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
+	else
+		eval _url_base=${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir
 	fi
 
 	# Get list of files from the server.
@@ -747,7 +770,7 @@ install_url() {
 	else
 		# Assumes index file is "index.txt" for http (or proxy)
 		# We can't use index.html since the format is server-dependent
-		_file_list=`eval ftp -o - -V ${_url_type}://\\$_${_url_type}_server_ip/\\$_${_url_type}_server_dir/index.txt | sed 's///'`
+		_file_list=`ftp -o - -V ${_url_base}/index.txt | sed 's///'`
 	fi
 
 	_sets=""
@@ -805,8 +828,8 @@ install_url() {
 "files avilable at \$_${_url_type}_server_ip:\$_${_url_type}_server_dir.\\\\n"\
 "When you are done selecting files, enter 'done'.\\\\n"\
 "Some of these sets are required for your ${MODE} and some are optional --\\\\n"\
-"You will want at least the base and bsd sets.\\\\n"
-"Consult the intallation notes if you are not sure which sets are required!\\\\n"\
+"You will want at least the base and bsd sets.\\\\n"\
+"Consult the intallation notes if you are not sure which sets are required!\\\\n"
 	_osetsdone="$_setsdone"
 	while : ; do
 		echo ""
@@ -850,7 +873,7 @@ install_url() {
 		# Ensure file exists
 		if ! isin $_f $_file_list ; then
 			eval echo "File \$_${_url_type}_server_dir/$_f does not exist.  Check to make"
-			echo "sure you entered the information properly."
+			echo "sure you entered the information properly or enter 'list' for a file list."
 			continue
 		fi
 
@@ -883,17 +906,9 @@ install_url() {
 		for _f in $_get_files ; do
 			echo ""
 			if [ "X${_f}" = "X${_kernel}" ]; then
-				if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
-					( cd /mnt ; ftp ${_ftp_active} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} )
-				else
-					( cd /mnt ; eval ftp -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} )
-				fi
+				( cd /mnt ; ftp ${_ftp_active} -V ${_url_base}/${_f} )
 			else
-				if [ "${_url_type}" = "ftp" -a "X${ftp_proxy}" = X"" ]; then
-					( cd /mnt ; ftp -o - ${_ftp_active} -V ftp://${_ftp_server_login}:${_ftp_server_password}@${_ftp_server_ip}/${_ftp_server_dir}/${_f} | tar zxvpf - )
-				else
-					( cd /mnt ; eval ftp -o - -V ${_url_type}://\$_${_url_type}_server_ip/\$_${_url_type}_server_dir/${_f} | tar zxvpf - )
-				fi
+				( cd /mnt ; ftp ${_ftp_active} -o - -V ${_url_base}/${_f} | tar zxvpf - )
 			fi
 			if [ $? -ne 0 ]; then
 				# Mark xfer as having failed,.
@@ -1574,7 +1589,7 @@ __install_sets_1
 
 You still do not have a /bsd in your filesystem (ie. the kernel), which
 seems to indicate that you are still missing important distribution files.
-So please continue installing..
+So please continue installing...
 __install_sets_2
 			resp=""
 		fi
@@ -1583,7 +1598,7 @@ __install_sets_2
 
 You still do not have a /bin/cat in your filesystem (ie. a sample random file
 which you probably want). This seems to indicate that you are still missing
-important distribution files. So please continue installing..
+important distribution files. So please continue installing...
 __install_sets_3
 			resp=""
 		fi
