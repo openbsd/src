@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.81 2003/12/16 03:37:37 millert Exp $     */
+/*      $OpenBSD: wdc.c,v 1.82 2004/01/23 20:48:33 grange Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -650,9 +650,10 @@ wdcprobe(chp)
 		st1 = CHP_READ_REG(chp, wdr_status);
 		WDC_LOG_STATUS(chp, st1);
 
-		WDCDEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
+		WDCDEBUG_PRINT(("%s:%d: before reset, st0=0x%b, st1=0x%b\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-		    chp->channel, st0, st1), DEBUG_PROBE);
+		    chp->channel, st0, WDCS_BITS, st1, WDCS_BITS),
+		    DEBUG_PROBE);
 
 		if ((st0 & 0x7f) == 0x7f || st0 == WDSD_IBM)
 			ret_value &= ~0x01;
@@ -689,10 +690,11 @@ wdcprobe(chp)
 		ch = CHP_READ_REG(chp, wdr_cyl_hi);
 		WDC_LOG_REG(chp, wdr_cyl_lo, (ch << 8) | cl);
 
-		WDCDEBUG_PRINT(("%s:%d:%d: after reset, st=0x%x, sc=0x%x"
+		WDCDEBUG_PRINT(("%s:%d:%d: after reset, st=0x%b, sc=0x%x"
 		    " sn=0x%x cl=0x%x ch=0x%x\n",
 		    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe",
-		    chp->channel, drive, st0, sc, sn, cl, ch), DEBUG_PROBE);
+		    chp->channel, drive, st0, WDCS_BITS, sc, sn, cl, ch),
+		    DEBUG_PROBE);
 		/*
 		 * This is a simplification of the test in the ATAPI
 		 * spec since not all drives seem to set the other regs
@@ -1111,10 +1113,11 @@ __wdcwait_reset(chp, drv_mask)
 	if (st1 & WDCS_BSY)
 		drv_mask &= ~0x02;
 end:
-	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%x, er0=0x%x, "
-	    "st1=0x%x, er1=0x%x, reset time=%d msec\n",
+	WDCDEBUG_PRINT(("%s:%d: wdcwait_reset() end, st0=0x%b, er0=0x%x, "
+	    "st1=0x%b, er1=0x%x, reset time=%d msec\n",
 	    chp->wdc ? chp->wdc->sc_dev.dv_xname : "wdcprobe", chp->channel,
-	    st0, er0, st1, er1, timeout * WDCDELAY / 1000), DEBUG_PROBE);
+	    st0, WDCS_BITS, er0, st1, WDCS_BITS, er1,
+	    timeout * WDCDELAY / 1000), DEBUG_PROBE);
 
 	return drv_mask;
 }
@@ -1150,8 +1153,8 @@ wdc_wait_for_status(chp, mask, bits, timeout)
 		if ((status & WDCS_BSY) == 0 && (status & mask) == bits)
 			break;
 		if (++time > timeout) {
-			WDCDEBUG_PRINT(("wdcwait: timeout, status 0x%x "
-			    "error 0x%x\n", status,
+			WDCDEBUG_PRINT(("wdcwait: timeout, status 0x%b "
+			    "error 0x%x\n", status, WDCS_BITS,
 			    CHP_READ_REG(chp, wdr_error)),
 			    DEBUG_STATUSX | DEBUG_STATUS);
 			return -1;

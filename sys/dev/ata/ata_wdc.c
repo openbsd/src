@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata_wdc.c,v 1.25 2004/01/15 21:37:57 grange Exp $	*/
+/*      $OpenBSD: ata_wdc.c,v 1.26 2004/01/23 20:48:33 grange Exp $	*/
 /*	$NetBSD: ata_wdc.c,v 1.21 1999/08/09 09:43:11 bouyer Exp $	*/
 
 /*
@@ -355,9 +355,10 @@ again:
 	if ((ata_bio->flags & ATA_READ) == 0) {
 		if (wait_for_drq(chp, ata_delay) != 0) {
 			printf("%s:%d:%d: timeout waiting for DRQ, "
-			    "st=0x%02x, err=0x%02x\n",
+			    "st=0x%b, err=0x%02x\n",
 			    chp->wdc->sc_dev.dv_xname, chp->channel,
-			    xfer->drive, chp->ch_status, chp->ch_error);
+			    xfer->drive, chp->ch_status, WDCS_BITS,
+			    chp->ch_error);
 			if (wdc_ata_err(drvp, ata_bio) != WDC_ATA_ERR)
 				ata_bio->error = TIMEOUT;
 			wdc_ata_bio_done(chp, xfer);
@@ -387,9 +388,9 @@ intr:	/* Wait for IRQ (either real or polled) */
 	}
 	return;
 timeout:
-	printf("%s:%d:%d: not ready, st=0x%02x, err=0x%02x\n",
+	printf("%s:%d:%d: not ready, st=0x%b, err=0x%02x\n",
 	    chp->wdc->sc_dev.dv_xname, chp->channel, xfer->drive,
-	    chp->ch_status, chp->ch_error);
+	    chp->ch_status, WDCS_BITS, chp->ch_error);
 	if (wdc_ata_err(drvp, ata_bio) != WDC_ATA_ERR)
 		ata_bio->error = TIMEOUT;
 	wdc_ata_bio_done(chp, xfer);
@@ -448,9 +449,9 @@ wdc_ata_bio_intr(struct channel_softc *chp, struct wdc_xfer *xfer, int irq)
 		}
 		if (chp->ch_status & WDCS_DRQ) {
 			if (drv_err != WDC_ATA_ERR) {
-				printf("%s:%d:%d: intr with DRQ (st=0x%x)\n",
+				printf("%s:%d:%d: intr with DRQ (st=0x%b)\n",
 				    chp->wdc->sc_dev.dv_xname, chp->channel,
-				    xfer->drive, chp->ch_status);
+				    xfer->drive, chp->ch_status, WDCS_BITS);
 				ata_bio->error = TIMEOUT;
 				drv_err = WDC_ATA_ERR;
 			}

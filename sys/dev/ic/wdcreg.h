@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdcreg.h,v 1.10 2003/10/16 14:15:41 grange Exp $     */
+/*      $OpenBSD: wdcreg.h,v 1.11 2004/01/23 20:48:33 grange Exp $     */
 /*	$NetBSD: wdcreg.h,v 1.22 1999/03/07 14:02:54 bouyer Exp $	*/
 
 /*-
@@ -53,7 +53,7 @@
 #define WDCS_CORR	0x04	/* corrected data */
 #define WDCS_IDX	0x02	/* index */
 #define WDCS_ERR	0x01	/* error */
-#define WDCS_BITS	"\020\010bsy\007drdy\006dwf\005dsc\004drq\003corr\002idx\001err"
+#define WDCS_BITS	"\020\010BSY\007DRDY\006DWF\005DSC\004DRQ\003CORR\002IDX\001ERR"
 
 /*
  * Error bits.
