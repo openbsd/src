@@ -1,4 +1,4 @@
-/*	$OpenBSD: db_access.c,v 1.3 1996/03/11 11:15:52 mickey Exp $	*/
+/*	$OpenBSD: db_access.c,v 1.4 1996/04/17 05:29:35 mickey Exp $	*/
 
 /* 
  * Mach Operating System
@@ -44,9 +44,10 @@
 
 int db_extend[] = {	/* table for sign-extending */
 	0,
-	0xFFFFFF80,
-	0xFFFF8000,
-	0xFF800000
+	(int)0xFFFFFF80,
+	(int)0xFFFF8000,
+	(int)0xFF800000,
+	(int)0x80000000
 };
 
 db_expr_t
