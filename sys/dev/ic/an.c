@@ -1,4 +1,4 @@
-/*	$OpenBSD: an.c,v 1.14 2001/04/16 00:40:40 tholo Exp $	*/
+/*	$OpenBSD: an.c,v 1.15 2001/04/17 04:34:08 aaron Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -220,7 +220,7 @@ an_attach(sc)
 	bcopy((char *)&sc->an_caps.an_oemaddr,
 	   (char *)&sc->arpcom.ac_enaddr, ETHER_ADDR_LEN);
 
-	printf(": address: %6s\n", ether_sprintf(sc->arpcom.ac_enaddr));
+	printf(": address %6s\n", ether_sprintf(sc->arpcom.ac_enaddr));
 
 	bcopy(sc->sc_dev.dv_xname, ifp->if_xname, IFNAMSIZ);
 	ifp->if_softc = sc;
