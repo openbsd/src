@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.4 1996/06/26 05:40:04 deraadt Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.5 1997/06/23 22:21:45 millert Exp $	*/
 /*	$NetBSD: cmds.c,v 1.4 1996/05/10 23:16:32 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: cmds.c,v 1.4 1996/06/26 05:40:04 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: cmds.c,v 1.5 1997/06/23 22:21:45 millert Exp $";
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -158,7 +158,7 @@ lookup(name)
 	longest = 0;
 	nmatches = 0;
 	found = (struct cmdtab *) 0;
-	for (c = cmdtab; p = c->c_name; c++) {
+	for (c = cmdtab; (p = c->c_name); c++) {
 		for (q = name; *q == *p++; q++)
 			if (*q == 0)		/* exact match? */
 				return (c);

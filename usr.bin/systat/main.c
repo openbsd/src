@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.10 1997/06/16 19:10:15 kstailey Exp $	*/
+/*	$OpenBSD: main.c,v 1.11 1997/06/23 22:21:47 millert Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.10 1997/06/16 19:10:15 kstailey Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.11 1997/06/23 22:21:47 millert Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -52,9 +52,11 @@ static char rcsid[] = "$OpenBSD: main.c,v 1.10 1997/06/16 19:10:15 kstailey Exp 
 #include <err.h>
 #include <nlist.h>
 #include <signal.h>
+#include <ctype.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <stdlib.h>
 #include <limits.h>
 
 #include "systat.h"
@@ -83,11 +85,11 @@ char    c;
 char    *namp;
 char    hostname[MAXHOSTNAMELEN];
 WINDOW  *wnd;
-int     CMDLINE;
+long	CMDLINE;
 
 static	WINDOW *wload;			/* one line window for load average */
 
-static void usage();
+static void usage __P((void));
 
 int
 main(argc, argv)

@@ -1,4 +1,4 @@
-/*	$OpenBSD: swap.c,v 1.8 1997/04/01 18:11:58 deraadt Exp $	*/
+/*	$OpenBSD: swap.c,v 1.9 1997/06/23 22:21:49 millert Exp $	*/
 /*	$NetBSD: swap.c,v 1.5 1996/05/10 23:16:38 thorpej Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)swap.c	8.3 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: swap.c,v 1.8 1997/04/01 18:11:58 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: swap.c,v 1.9 1997/06/23 22:21:49 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -78,7 +78,7 @@ struct nlist syms[] = {
 #define VM_NSWDEV	4
 	{ "_dmmax" },	/* maximum size of a swap block */
 #define VM_DMMAX	5
-	0
+	{ 0 }
 };
 
 static int nswap, nswdev, dmmax, nswapmap;
@@ -116,6 +116,7 @@ closeswap(w)
 	delwin(w);
 }
 
+int
 initswap()
 {
 	int i;
@@ -226,7 +227,7 @@ labelswap()
 void
 showswap()
 {
-	int col, row, div, i, j, avail, npfree, used, xsize, xfree;
+	int col, div, i, j, avail, npfree, used, xsize, xfree;
 
 	div = blocksize / 512;
 	avail = npfree = 0;

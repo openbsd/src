@@ -1,4 +1,4 @@
-/*	$OpenBSD: extern.h,v 1.3 1996/06/26 05:40:06 deraadt Exp $	*/
+/*	$OpenBSD: extern.h,v 1.4 1997/06/23 22:21:46 millert Exp $	*/
 /*	$NetBSD: extern.h,v 1.3 1996/05/10 23:16:34 thorpej Exp $	*/
 
 /*-
@@ -51,7 +51,7 @@ extern float	*dk_mspw;
 extern kvm_t	*kd;
 extern long	ntext, textp;
 extern int	*dk_select;
-extern int	CMDLINE;
+extern long	CMDLINE;
 extern int	dk_ndrive;
 extern int	hz, stathz;
 extern int	naptime, col;

@@ -1,4 +1,4 @@
-/*	$OpenBSD: netstat.c,v 1.6 1997/01/17 07:13:26 millert Exp $	*/
+/*	$OpenBSD: netstat.c,v 1.7 1997/06/23 22:21:48 millert Exp $	*/
 /*	$NetBSD: netstat.c,v 1.3 1995/06/18 23:53:07 cgd Exp $	*/
 
 /*-
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)netstat.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: netstat.c,v 1.6 1997/01/17 07:13:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: netstat.c,v 1.7 1997/06/23 22:21:48 millert Exp $";
 #endif /* not lint */
 
 /*
@@ -68,6 +68,7 @@ static char rcsid[] = "$OpenBSD: netstat.c,v 1.6 1997/01/17 07:13:26 millert Exp
 #include <netinet/tcp_debug.h>
 #include <netinet/udp.h>
 #include <netinet/udp_var.h>
+#include <arpa/inet.h>
 
 #include <netdb.h>
 #include <stdlib.h>
