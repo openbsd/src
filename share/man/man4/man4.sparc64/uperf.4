@@ -1,4 +1,4 @@
-.\"     $OpenBSD: uperf.4,v 1.2 2002/02/19 06:59:13 jason Exp $
+.\"     $OpenBSD: uperf.4,v 1.3 2002/04/04 20:23:13 jason Exp $
 .\"
 .\" Copyright (c) 2002 Jason L. Wright (jason@thought.net)
 .\" All rights reserved.
@@ -173,7 +173,7 @@ fields specify the source to be set for the respective counter.
 .Pq Li "struct uperf_io"
 Clear the counters specified in
 .Fa cnt_flags .
-.It Dv UPIO_CLRCNT
+.It Dv UPIO_GETCNT
 .Pq Li "struct uperf_io"
 Retrieve the value for the counters specified in
 .Fa cnt_flags .
