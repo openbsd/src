@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipx_var.h,v 1.3 1996/11/25 08:20:02 mickey Exp $	*/
+/*	$OpenBSD: ipx_var.h,v 1.4 2000/01/11 19:52:16 fgsch Exp $	*/
 
 /*-
  *
@@ -47,11 +47,17 @@
  * IPX Kernel Structures and Variables
  */
 struct	ipxstat {
-	int	ipxs_badsum;		/* checksum bad */
-	int	ipxs_tooshort;		/* packet too short */
-	int	ipxs_toosmall;		/* not enough data */
-	int	ipxs_badhlen;		/* ip header length < data size */
-	int	ipxs_badlen;		/* ip length < ip header length */
+	u_long  ipxs_total;             /* total packets received */
+	u_long  ipxs_badsum;            /* checksum bad */
+	u_long  ipxs_tooshort;          /* packet too short */
+	u_long  ipxs_toosmall;          /* not enough data */
+	u_long  ipxs_forward;           /* packets forwarded */
+	u_long  ipxs_cantforward;       /* packets rcvd for unreachable dest */
+	u_long  ipxs_delivered;         /* datagrams delivered to upper level*/
+	u_long  ipxs_localout;          /* total ipx packets generated here */
+	u_long  ipxs_odropped;          /* lost packets due to nobufs, etc. */
+	u_long  ipxs_noroute;           /* packets discarded due to no route */
+	u_long  ipxs_mtutoosmall;       /* the interface mtu is too small */
 };
 
 /*
