@@ -1,4 +1,4 @@
-.\"	$OpenBSD: afterboot.8,v 1.87 2003/11/06 12:22:10 jmc Exp $
+.\"	$OpenBSD: afterboot.8,v 1.88 2003/12/05 23:55:07 jmc Exp $
 .\"
 .\" Copyright (c) 1997 Marshall M. Midden
 .\" All rights reserved.
@@ -140,25 +140,11 @@ Set the time zone to Atlantic Standard Time:
 The file
 .Pa /etc/rc.conf
 is used to configure the system daemons.
-Administrators should make changes to the default settings by creating a
+Administrators should make changes to the default settings by editing a
 separate file,
-.Pa /etc/rc.conf.local .
-There are two possible strategies:
-Copy
-.Pa /etc/rc.conf
-to
 .Pa /etc/rc.conf.local
-and directly edit the local file.
-Note: the last thing
-.Pa /etc/rc.conf
-does is source the local file.
-If you copy this file directly you
-.Em must
-remove the final line from
-.Pa /etc/rc.conf.local .
-A second possibility is to start with an empty
-.Pa /etc/rc.conf.local ,
-and add in values as desired.
+.Pq this may need to be created from scratch .
+Values can then be added in as desired.
 .Ss Check hostname
 Use the
 .Ic hostname
