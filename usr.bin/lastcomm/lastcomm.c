@@ -1,4 +1,4 @@
-/*	$OpenBSD: lastcomm.c,v 1.4 1997/01/15 23:42:41 millert Exp $	*/
+/*	$OpenBSD: lastcomm.c,v 1.5 1997/03/03 03:25:10 flipk Exp $	*/
 /*	$NetBSD: lastcomm.c,v 1.9 1995/10/22 01:43:42 ghudson Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)lastcomm.c	8.2 (Berkeley) 4/29/95";
 #endif
-static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.4 1997/01/15 23:42:41 millert Exp $";
+static char rcsid[] = "$OpenBSD: lastcomm.c,v 1.5 1997/03/03 03:25:10 flipk Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -128,8 +128,6 @@ main(argc, argv)
 		if (fseek(fp, 2 * -(long)sizeof(struct acct), SEEK_CUR) == -1)
 			err(1, "%s", acctfile);
 
-		if (size == 0)
-			break;
 		size -= sizeof(struct acct);
 
 		if (ab.ac_comm[0] == '\0') {
@@ -154,6 +152,9 @@ main(argc, argv)
 		    delta / SECSPERHOUR,
 		    fmod(delta, SECSPERHOUR) / SECSPERMIN,
 		    fmod(delta, SECSPERMIN));
+
+		if (size == 0)
+			break;
 	}
 	exit(0);
 }
