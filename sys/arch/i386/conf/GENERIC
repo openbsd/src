@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.65 1998/04/26 21:07:06 provos Exp $
+#	$OpenBSD: GENERIC,v 1.66 1998/06/02 18:46:33 deraadt Exp $
 #	$NetBSD: GENERIC,v 1.48 1996/05/20 18:17:23 mrg Exp $
 #
 #	GENERIC -- everything that's currently supported
@@ -195,6 +195,7 @@ audio*  at wss?
 
 # Joystick driver. Probe is a little strange; add only if you have one.
 #joy0	at isa? port 0x201
+joy*	at isapnp?
 
 pseudo-device	pctr	1
 #option DEBUG_ISAPNP
