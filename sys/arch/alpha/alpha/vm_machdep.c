@@ -1,4 +1,4 @@
-/* $OpenBSD: vm_machdep.c,v 1.19 2001/03/21 10:15:05 art Exp $ */
+/* $OpenBSD: vm_machdep.c,v 1.20 2001/04/13 03:07:29 art Exp $ */
 /* $NetBSD: vm_machdep.c,v 1.55 2000/03/29 03:49:48 simonb Exp $ */
 
 /*
@@ -238,6 +238,7 @@ cpu_fork(p1, p2, stack, stacksize)
 		    (u_int64_t)p2;			/* s2: arg */
 		up->u_pcb.pcb_context[7] =
 		    (u_int64_t)switch_trampoline;	/* ra: assembly magic */
+		up->u_pcb.pcb_context[8] = ALPHA_PSL_IPL_0; /* ps: IPL */
 	}
 }
 
