@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.9 2004/12/19 14:09:53 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.10 2004/12/28 13:54:13 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -73,7 +73,16 @@ sub conflicts_with
 sub register($$)
 {
 	my ($plist, $state) = @_;
+	if (!defined $plist->{conflicts}) {
+		$plist->{conflicts} = OpenBSD::PkgCfl->make_conflict_list($plist);
+	}
 	$state->{conflict_list}->{$plist->pkgname()} = $plist->{conflicts};
+}
+
+sub unregister($$)
+{
+	my ($plist, $state) = @_;
+	delete $state->{conflict_list}->{$plist->pkgname()};
 }
 
 sub fill_conflict_lists($)
@@ -101,6 +110,9 @@ sub find($$)
 	}
 	while (my ($name, $l) = each %{$state->{conflict_list}}) {
 		next if $name eq $pkgname;
+		if (!defined $l) {
+			die "Error: $name has no definition\n";
+		}
 		if ($l->conflicts_with($pkgname)) {
 			push(@bad, $name);
 		}
