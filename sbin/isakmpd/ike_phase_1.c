@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_phase_1.c,v 1.20 2000/10/16 23:27:13 niklas Exp $	*/
-/*	$EOM: ike_phase_1.c,v 1.29 2000/10/14 18:50:04 angelos Exp $	*/
+/*	$OpenBSD: ike_phase_1.c,v 1.21 2000/12/12 01:45:45 niklas Exp $	*/
+/*	$EOM: ike_phase_1.c,v 1.31 2000/12/11 23:47:56 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -791,6 +791,9 @@ ike_phase_1_send_ID (struct message *msg)
 
   if (exchange->name)
     my_id = conf_get_str (exchange->name, "ID");
+
+  if (!my_id)
+    my_id = conf_get_str ("General", "Default-phase-1-ID");
 
   sz = my_id ? ipsec_id_size (my_id, &id_type) : sizeof (in_addr_t);
   if (sz == -1)
