@@ -39,7 +39,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)rwhod.c	8.1 (Berkeley) 6/6/93";*/
-static char rcsid[] = "$OpenBSD: rwhod.c,v 1.23 2002/05/30 19:09:05 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rwhod.c,v 1.24 2002/07/14 03:52:35 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -114,8 +114,7 @@ int	 Sendto(int, const void *, size_t, int, const struct sockaddr *,
 char	*interval(int, char *);
 
 void
-hup(signo)
-	int signo;
+hup(int signo)
 {
 	gothup = 1;
 }
@@ -128,9 +127,7 @@ usage(void)
 }
 
 int
-main(argc, argv)
-	int argc;
-	char *argv[];
+main(int argc, char *argv[])
 {
 	struct timeval start, next, delta, now;
 	struct sockaddr_in sin;
@@ -234,8 +231,7 @@ main(argc, argv)
 }
 
 void
-handleread(s)
-	int s;
+handleread(int s)
 {
 	struct sockaddr_in from;
 	struct stat st;
@@ -315,8 +311,7 @@ handleread(s)
  * to be created.  Sorry, but blanks aren't allowed.
  */
 int
-verify(p)
-	char *p;
+verify(char *p)
 {
 	char c;
 
@@ -349,7 +344,7 @@ struct	utmp *utmp;
 int	alarmcount;
 
 void
-timer()
+timer(void)
 {
 	struct neighbor *np;
 	struct whoent *we = mywd.wd_we, *wlast;
@@ -437,7 +432,7 @@ printf("sending cc = %d\n", cc);
 }
 
 void
-getboottime()
+getboottime(void)
 {
 	int mib[2];
 	size_t size;
@@ -454,8 +449,7 @@ getboottime()
 }
 
 void
-quit(msg)
-	char *msg;
+quit(char *msg)
 {
 	syslog(LOG_ERR, "%s", msg);
 	exit(1);
@@ -466,9 +460,7 @@ quit(msg)
 #define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 void
-rt_xaddrs(cp, cplim, rtinfo)
-	caddr_t cp, cplim;
-	struct rt_addrinfo *rtinfo;
+rt_xaddrs(caddr_t cp, caddr_t cplim, struct rt_addrinfo *rtinfo)
 {
 	struct sockaddr *sa;
 	int i;
@@ -487,8 +479,7 @@ rt_xaddrs(cp, cplim, rtinfo)
  * networks which deserve status information.
  */
 int
-configure(s)
-	int s;
+configure(int s)
 {
 	struct neighbor *np;
 	struct if_msghdr *ifm;
@@ -563,13 +554,8 @@ configure(s)
 }
 
 int
-Sendto(s, buf, cc, flags, to, tolen)
-	int s;
-	const void *buf;
-	size_t cc;
-	int flags;
-	const struct sockaddr *to;
-	socklen_t tolen;
+Sendto(int s, const void *buf, size_t cc, int flags,
+    const struct sockaddr *to, socklen_t tolen)
 {
 	struct whod *w = (struct whod *)buf;
 	struct whoent *we;
@@ -612,9 +598,7 @@ Sendto(s, buf, cc, flags, to, tolen)
 }
 
 char *
-interval(time, updown)
-	int time;
-	char *updown;
+interval(int time, char *updown)
 {
 	static char resbuf[32];
 	int days, hours, minutes;
