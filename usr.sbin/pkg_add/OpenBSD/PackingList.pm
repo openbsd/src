@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PackingList.pm,v 1.26 2004/09/24 08:49:27 espie Exp $
+# $OpenBSD: PackingList.pm,v 1.27 2004/10/11 14:11:42 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -146,34 +146,6 @@ sub write
 	}
 }
 
-sub visit
-{
-	my ($self, $method, @l) = @_;
-
-	if (defined $self->{cvstags}) {
-		for my $item (@{$self->{cvstags}}) {
-			$item->$method(@l);
-		}
-	}
-
-	for my $special (OpenBSD::PackageInfo::info_names()) {
-		$self->{$special}->$method(@l, 0) if defined $self->{$special};
-	}
-
-	for my $unique_item (qw(name no-default-conflict manual-installation extrainfo arch)) {
-		$self->{$unique_item}->$method(@l) if defined $self->{$unique_item};
-	}
-	for my $listname (qw(modules pkgcfl conflict pkgdep newdepend libdepend groups users items)) {
-		if (defined $self->{$listname}) {
-			for my $item (@{$self->{$listname}}) {
-				$item->$method(@l);
-			}
-		}
-	}
-	for my $special (OpenBSD::PackageInfo::info_names()) {
-		$self->{$special}->$method(@l, 1) if defined $self->{$special};
-	}
-}
 
 sub fromfile
 {
@@ -237,6 +209,57 @@ sub pkgbase($)
 		return $self->{localbase}->{name};
 	} else {
 		return '/usr/local';
+	}
+}
+
+
+{
+    package OpenBSD::PackingList::Visitor;
+    sub new
+    {
+	    my $class = shift;
+	    bless {list=>[], pass=>1}, $class;
+    }
+
+    sub revisit
+    {
+	    my ($self, $item) = @_;
+	    push(@{$self->{list}}, $item);
+    }
+}
+
+sub visit
+{
+	my ($self, $method, @l) = @_;
+
+	my $visitor = new OpenBSD::PackingList::Visitor;
+
+	push(@l, $visitor);
+
+	if (defined $self->{cvstags}) {
+		for my $item (@{$self->{cvstags}}) {
+			$item->$method(@l);
+		}
+	}
+
+	for my $unique_item (qw(name no-default-conflict manual-installation extrainfo arch)) {
+		$self->{$unique_item}->$method(@l) if defined $self->{$unique_item};
+	}
+
+	for my $special (OpenBSD::PackageInfo::info_names()) {
+		$self->{$special}->$method(@l) if defined $self->{$special};
+	}
+
+	for my $listname (qw(modules pkgcfl conflict pkgdep newdepend libdepend groups users items)) {
+		if (defined $self->{$listname}) {
+			for my $item (@{$self->{$listname}}) {
+				$item->$method(@l);
+			}
+		}
+	}
+	$visitor->{pass} = 2;
+	while (my $item = shift @{$visitor->{list}}) {
+		$item->method(@l);
 	}
 }
 
