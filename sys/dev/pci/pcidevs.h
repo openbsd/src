@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.281 2000/07/13 01:10:44 deraadt Exp 
+ *		OpenBSD: pcidevs,v 1.282 2000/07/13 22:22:48 deraadt Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -929,8 +929,7 @@
 
 /* Diamond products */
 #define	PCI_PRODUCT_DIAMOND_VIPER	0x9001		/* Viper/PCI */
-#define	PCI_PRODUCT_DIAMOND_MONSTER	0x0001		/* Monster */
-
+#define	PCI_PRODUCT_DIAMOND2_MONSTER	0x0001		/* Monster */
 #define	PCI_PRODUCT_DIAMOND2_MX300	0x0002		/* Monster Sound MX300 */
 
 /* Distributed Processing Technology products */
