@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.c,v 1.8 1998/05/18 21:11:00 provos Exp $	*/
+/*	$OpenBSD: ip_mroute.c,v 1.9 1998/07/03 07:05:08 deraadt Exp $	*/
 /*	$NetBSD: ip_mroute.c,v 1.27 1996/05/07 02:40:50 thorpej Exp $	*/
 
 /*
@@ -1213,7 +1213,7 @@ ip_mdq(m, ifp, rt)
     register struct ip  *ip = mtod(m, struct ip *);
     register vifi_t vifi;
     register struct vif *vifp;
-    register int plen = ntohs(ip->ip_len);
+    register int plen = ip->ip_len;
 
 /*
  * Macro to send packet on vif.  Since RSVP packets don't get counted on
