@@ -1,4 +1,4 @@
-#	$OpenBSD: pnpdevs,v 1.28 1998/11/12 21:37:37 deraadt Exp $
+#	$OpenBSD: pnpdevs,v 1.29 1998/11/12 21:42:31 deraadt Exp $
 
 #
 # NOTE: All `com' devices also need pccom identifiers.
@@ -391,5 +391,8 @@ we	SMC8416 #SMC EtherEZ
 joy	@P@1001	#ALS100+
 joy	ESS0001	#ESS ES1869 Plug and Play AudioD
 joy	CTL7002	#Creative SB AWE64 PnP
+sb	CSC0000	#CS4236
 joy	CSC0001	#CS4236
+sb	CTL0043	#Creative ViBRA16X PnP
+ym	YMH0021	#OPL3-SA2 Sound Board
 ne	@@@1980	#OvisLink LE-8019R
