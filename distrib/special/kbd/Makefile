@@ -1,9 +1,9 @@
-#	$OpenBSD: Makefile,v 1.4 2002/11/23 23:53:22 miod Exp $
+#	$OpenBSD: Makefile,v 1.5 2004/02/07 20:57:58 deraadt Exp $
 
 .if (${MACHINE} == "alpha") || (${MACHINE} == "hppa") || \
     (${MACHINE} == "i386") || (${MACHINE} == "macppc") || \
     (${MACHINE} == "sparc") || (${MACHINE} == "sparc64") || \
-    (${MACHINE} == "vax")
+    (${MACHINE} == "vax") || (${MACHINE_ARCH} == "x86_64")
 PROG=	kbd
 COPTS+=	-Os
 
