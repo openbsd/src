@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.c,v 1.13 2001/12/15 02:12:26 kjell Exp $	*/
+/*	$OpenBSD: mbr.c,v 1.14 2002/01/04 08:35:06 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -107,8 +107,6 @@ MBR_parse(disk, mbr_buf, offset, reloff, mbr)
 	memcpy(mbr->code, mbr_buf, MBR_CODE_SIZE);
 	mbr->offset = offset;
 	mbr->reloffset = reloff;
-	mbr->nt_serial = getlong(&mbr_buf[MBR_NTSER_OFF]);
-	mbr->spare = getshort(&mbr_buf[MBR_SPARE_OFF]);
 	mbr->signature = getshort(&mbr_buf[MBR_SIG_OFF]);
 
 	for (i = 0; i < NDOSPART; i++)
@@ -124,8 +122,6 @@ MBR_make(mbr, mbr_buf)
 	int i;
 
 	memcpy(mbr_buf, mbr->code, MBR_CODE_SIZE);
-	putlong(&mbr_buf[MBR_NTSER_OFF], mbr->nt_serial);
-	putshort(&mbr_buf[MBR_SPARE_OFF], mbr->spare);
 	putshort(&mbr_buf[MBR_SIG_OFF], mbr->signature);
 
 	for (i = 0; i < NDOSPART; i++)
@@ -140,8 +136,8 @@ MBR_print(mbr)
 	int i;
 
 	/* Header */
-	printf("Signatures: 0x%X,0x%X\n",
-	    (int)mbr->signature, (int)mbr->nt_serial);
+	printf("Signature: 0x%X\n",
+	    (int)mbr->signature);
 	PRT_print(0, NULL);
 
 	/* Entries */

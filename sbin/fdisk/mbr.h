@@ -1,4 +1,4 @@
-/*	$OpenBSD: mbr.h,v 1.7 2001/12/15 02:12:26 kjell Exp $	*/
+/*	$OpenBSD: mbr.h,v 1.8 2002/01/04 08:35:06 kjell Exp $	*/
 
 /*
  * Copyright (c) 1997 Tobias Weingartner
@@ -36,11 +36,9 @@
 #include "part.h"
 
 /* Various constants */
-#define MBR_CODE_SIZE 0x1B8
+#define MBR_CODE_SIZE 0x1BE
 #define MBR_PART_SIZE	0x10
 #define MBR_PART_OFF 0x1BE
-#define MBR_NTSER_OFF 0x1B8
-#define MBR_SPARE_OFF 0x1BC		/* Spare short, not used */
 #define MBR_SIG_OFF 0x1FE
 
 
@@ -49,8 +47,6 @@ typedef struct _mbr_t {
 	off_t reloffset;
 	off_t offset;
 	unsigned char code[MBR_CODE_SIZE];
-	unsigned long nt_serial;
-	unsigned short spare;
 	prt_t part[NDOSPART];
 	unsigned short signature;
 } mbr_t;
