@@ -1,4 +1,4 @@
-/*	$OpenBSD: ebus.c,v 1.3 2001/09/15 07:00:12 jason Exp $	*/
+/*	$OpenBSD: ebus.c,v 1.4 2001/10/01 16:55:57 jason Exp $	*/
 /*	$NetBSD: ebus.c,v 1.24 2001/07/25 03:49:54 eeh Exp $	*/
 
 /*
@@ -171,15 +171,14 @@ ebus_attach(parent, self, aux)
 	struct ebus_attach_args eba;
 	struct ebus_interrupt_map_mask *immp;
 	int node, nmapmask, error;
-	char devinfo[256];
 
 	printf("\n");
 
-	pci_devinfo(pa->pa_id, pa->pa_class, 0, devinfo);
-	printf("%s: %s, revision 0x%02x\n", self->dv_xname, devinfo,
-	    PCI_REVISION(pa->pa_class));
-
-	sc->sc_parent = (struct psycho_softc *)parent;
+	/*
+	 * The "parent" of an ebus is the pci layer, in this case we
+	 * really want the grandparent.
+	 */
+	sc->sc_parent = (struct psycho_softc *)parent->dv_parent;
 	sc->sc_memtag = pa->pa_memt;
 	sc->sc_iotag = pa->pa_iot;
 	sc->sc_childbustag = ebus_alloc_bus_tag(sc, PCI_MEMORY_BUS_SPACE);
@@ -409,7 +408,6 @@ ebus_alloc_bus_tag(sc, type)
 	return (bt);
 }
 
-/* XXX? */
 bus_dma_tag_t
 ebus_alloc_dma_tag(sc, pdt)
 	struct ebus_softc *sc;
@@ -440,6 +438,7 @@ ebus_alloc_dma_tag(sc, pdt)
 	dt->_dmamem_unmap = ebus_dmamem_unmap;
 	PCOPY(_dmamem_mmap);
 #undef	PCOPY
+	sc->sc_dmatag = dt;
 	return (dt);
 }
 
