@@ -482,6 +482,7 @@ main(argc, argv)
 		u_long lastaddr = 0;
 		int got_there = 0;
 		int unreachable = 0;
+		int timeout = 0;
 
 		Printf("%2d ", ttl);
 		for (probe = 0; probe < nprobes; ++probe) {
@@ -544,12 +545,14 @@ main(argc, argv)
 					break;
 				}
 			}
-			if (cc == 0)
+			if (cc == 0) {
 				Printf(" *");
+				timeout++;
+			}
 			(void) fflush(stdout);
 		}
 		putchar('\n');
-		if (got_there || unreachable >= nprobes)
+		if (got_there || (unreachable && (unreachable + timeout) >= nprobes))
 			exit(0);
 	}
 }
