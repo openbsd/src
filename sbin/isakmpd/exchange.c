@@ -1,4 +1,4 @@
-/*	$OpenBSD: exchange.c,v 1.75 2003/01/09 02:34:43 ho Exp $	*/
+/*	$OpenBSD: exchange.c,v 1.76 2003/01/09 02:50:00 ho Exp $	*/
 /*	$EOM: exchange.c,v 1.143 2000/12/04 00:02:25 angelos Exp $	*/
 
 /*
@@ -715,6 +715,7 @@ exchange_add_finalization (struct exchange *exchange,
   exchange->finalize_arg = node;
 }
 
+#ifdef USE_ISAKMP_CFG
 static void
 exchange_establish_transaction (struct exchange *exchange, void *arg, int fail)
 {
@@ -729,6 +730,7 @@ exchange_establish_transaction (struct exchange *exchange, void *arg, int fail)
 
   free (node);
 }
+#endif /* USE_ISAKMP_CFG */
 
 /* Establish a phase 1 exchange.  */
 void
@@ -739,8 +741,10 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 {
   struct exchange *exchange;
   struct message *msg;
+#ifdef USE_ISAKMP_CFG
   struct conf_list *flags;
   struct conf_list_node *flag;
+#endif
   char *tag = 0;
   char *str;
 
@@ -811,6 +815,7 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
   if (!exchange->policy && name)
     exchange->policy = CONF_DFLT_TAG_PHASE1_CONFIG;
 
+#ifdef USE_ISAKMP_CFG
   if (name)
     {
       flags = conf_get_list (name, "Flags");
@@ -843,6 +848,8 @@ exchange_establish_p1 (struct transport *t, u_int8_t type, u_int32_t doi,
 	  conf_free_list (flags);
 	}
     }
+#endif /* USE_ISAKMP_CFG */
+
   exchange_add_finalization (exchange, finalize, arg);
   cookie_gen (t, exchange, exchange->cookies, ISAKMP_HDR_ICOOKIE_LEN);
   exchange_enter (exchange);
@@ -1012,8 +1019,10 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
   struct transport *t = msg->transport;
   struct exchange *exchange;
   struct sockaddr *dst;
+#ifdef USE_ISAKMP_CFG
   struct conf_list *flags;
   struct conf_list_node *flag;
+#endif
   char *name = 0, *policy = 0, *str;
   u_int32_t want_doi;
   u_int8_t type;
@@ -1116,6 +1125,7 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
     }
   exchange->policy = policy;
 
+#ifdef USE_ISAKMP_CFG
   if (name)
     {
       flags = conf_get_list (name, "Flags");
@@ -1147,6 +1157,8 @@ exchange_setup_p1 (struct message *msg, u_int32_t doi)
 	  conf_free_list (flags);
 	}
     }
+#endif
+
   cookie_gen (msg->transport, exchange,
 	      exchange->cookies + ISAKMP_HDR_ICOOKIE_LEN,
 	      ISAKMP_HDR_RCOOKIE_LEN);
