@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: ELBERETH,v 1.9 1997/06/23 18:20:09 kstailey Exp $
+#	$OpenBSD: ELBERETH,v 1.10 1997/08/06 19:31:14 kstailey Exp $
 #
 #
 #	ELBERETH -- 166MHz Pentium PCI
@@ -12,7 +12,6 @@ makeoptions     CC="cc -Werror"
 option		I586_CPU	# CPU classes; at least one is REQUIRED
 
 option		XSERVER		# diddle with console driver
-#option		INSECURE	# insecure; allow /dev/mem writing for X
 
 maxusers	16		# estimated number of users
 option		TIMEZONE=300	# time zone to adjust RTC time by
