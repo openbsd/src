@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: regexec.c,v 1.9 2004/10/17 17:58:54 otto Exp $";
+static char rcsid[] = "$OpenBSD: regexec.c,v 1.10 2004/11/30 17:04:23 otto Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -137,14 +137,6 @@ static char rcsid[] = "$OpenBSD: regexec.c,v 1.9 2004/10/17 17:58:54 otto Exp $"
 
 /*
  - regexec - interface for matching
- = extern int regexec(const regex_t *, const char *, size_t, \
- =					regmatch_t [], int);
- = #define	REG_NOTBOL	00001
- = #define	REG_NOTEOL	00002
- = #define	REG_STARTEND	00004
- = #define	REG_TRACE	00400	// tracing of execution
- = #define	REG_LARGE	01000	// force large representation
- = #define	REG_BACKR	02000	// force use of backref code
  *
  * We put this here so we can exploit knowledge of the state representation
  * when choosing which matcher to call.  Also, by this point the matchers
