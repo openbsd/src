@@ -1,4 +1,4 @@
-/*	$OpenBSD: screenblank.c,v 1.5 1998/06/03 17:00:09 deraadt Exp $	*/
+/*	$OpenBSD: screenblank.c,v 1.6 1998/10/16 14:14:42 jason Exp $	*/
 /*	$NetBSD: screenblank.c,v 1.2 1996/02/28 01:18:34 thorpej Exp $	*/
 
 /*-
@@ -265,6 +265,8 @@ change_state(state)
 		if (dsp->ds_isfb == 0)
 			continue;
 		if ((fd = open(dsp->ds_path, O_RDWR, 0)) < 0) {
+			if (errno == ENXIO)
+				exit(1);
 			warn("open: %s", dsp->ds_path);
 			continue;
 		}
