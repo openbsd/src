@@ -1,4 +1,4 @@
-.\"	$OpenBSD: rdate.8,v 1.19 2002/09/08 12:33:42 jakob Exp $
+.\"	$OpenBSD: rdate.8,v 1.20 2002/10/15 17:08:05 jakob Exp $
 .\"	$NetBSD: rdate.8,v 1.4 1996/04/08 20:55:17 jtc Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
@@ -58,8 +58,8 @@ Use SNTP (RFC1361) instead of the RFC868 time protocol.
 .It Fl c
 Correct leap seconds.
 Sometimes required when synchronizing to an NTP server.
-If using the RFC868 protocol, use only if the server does not correctly
-account for leap seconds.
+When synchronizing using the RFC868 protocol, use this option only if the
+server does not correctly account for leap seconds.
 You can determine if you need this parameter if you sync against an NTP
 server (with this parameter) or (recommended) check with a local radio
 controlled watch or phone service.
