@@ -98,6 +98,8 @@ toohard:
 	added[0] = 0;
 	while ((c = *cp++) != '\0') {
 		if (c != '%') {
+			if (dp >= &result[MAXRETURNSIZE])
+				goto toohard;
 			*dp++ = c;
 			continue;
 		}
@@ -118,14 +120,20 @@ toohard:
 			/* fall into... */
 
 		case '3':
+			if (dp >= &result[MAXRETURNSIZE])
+				goto toohard;
 			*dp++ = (which / 100) | '0';
 			which %= 100;
 			/* fall into... */
 
 		case '2':
 two:	
+			if (dp >= &result[MAXRETURNSIZE])
+				goto toohard;
 			*dp++ = which / 10 | '0';
 one:
+			if (dp >= &result[MAXRETURNSIZE])
+				goto toohard;
 			*dp++ = which % 10 | '0';
 swap:
 			oncol = 1 - oncol;
@@ -173,10 +181,14 @@ setwhich:
 					 * to be the successor of tab.
 					 */
 					do {
+						if (strlen(added) + 1 >= sizeof(added))
+							goto toohard;
 						strcat(added, oncol ? (BC ? BC : "\b") : UP);
 						which++;
 					} while (which == '\n');
 			}
+			if (dp >= &result[MAXRETURNSIZE])
+				goto toohard;
 			*dp++ = which;
 			goto swap;
 
@@ -191,6 +203,8 @@ setwhich:
 			continue;
 
 		case '%':
+			if (dp >= &result[MAXRETURNSIZE])
+				goto toohard;
 			*dp++ = c;
 			continue;
 
@@ -210,6 +224,8 @@ setwhich:
 			goto toohard;
 		}
 	}
-	strncpy(dp, added, sizeof (result) - (dp - result) - 1);
+	if (dp - result + strlen(added) >= MAXRETURNSIZE - 1)
+		goto toohard;
+	strcpy(dp, added);
 	return (result);
 }

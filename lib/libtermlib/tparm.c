@@ -1,4 +1,4 @@
-/*	$OpenBSD: tparm.c,v 1.3 1996/09/16 02:41:53 tholo Exp $	*/
+/*	$OpenBSD: tparm.c,v 1.4 1997/03/28 00:39:08 tholo Exp $	*/
 
 /*
  * Copyright (c) 1996 SigmaSoft, Th. Lockert <tholo@sigmasoft.com>
@@ -31,7 +31,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: tparm.c,v 1.3 1996/09/16 02:41:53 tholo Exp $";
+static char rcsid[] = "$OpenBSD: tparm.c,v 1.4 1997/03/28 00:39:08 tholo Exp $";
 #endif
 
 #include <stdio.h>
@@ -50,7 +50,8 @@ static char rcsid[] = "$OpenBSD: tparm.c,v 1.3 1996/09/16 02:41:53 tholo Exp $";
 
 #define	MAX(a, b)	((a) < (b) ? (b) : (a))
 
-#define	STKSIZ	32
+#define	STKSIZ		32
+#define	MAXRETURNSIZE	256
 
 static __inline void push __P((int));
 static __inline int popnum __P((void));
@@ -93,6 +94,7 @@ _tparm(str, buf, ap)
 {
     int param[10], variable[26];
     int pops, num, i, level;
+    char scratch[64];
     char *bufp, len;
     const char *p;
 
@@ -135,15 +137,23 @@ _tparm(str, buf, ap)
     bufp = buf;
 
     while (*str) {
-	if (*str != '%')
+	if (*str != '%') {
+	    if (bufp >= buf + MAXRETURNSIZE)
+		goto overflow;
 	    *bufp++ = *str;
+	}
 	else {
 	    switch (*++str) {
 		case '%':
+		    if (bufp >= buf + MAXRETURNSIZE)
+			goto overflow;
 		    *bufp++ = '%';
 		    break;
 		case 'd':
-		    sprintf(bufp, "%d", popnum());
+		    sprintf(scratch, "%d", popnum());
+		    if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
+			goto overflow;
+		    strcpy(bufp, scratch);
 		    bufp += strlen(bufp);
 		    break;
 		case '0':
@@ -151,45 +161,67 @@ _tparm(str, buf, ap)
 		    if (len == '2' || len == '3') {
 			if (*++str == 'd') {
 			    if (len == '2')
-				sprintf(bufp, "%02d", popnum());
+				sprintf(scratch, "%02d", popnum());
 			    else
-				sprintf(bufp, "%03d", popnum());
+				sprintf(scratch, "%03d", popnum());
+			    if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
+				goto overflow;
+			    strcpy(bufp, scratch);
 			    bufp += strlen(bufp);
 			}
 			else if (*str == 'x') {
 			    if (len == '2')
-				sprintf(bufp, "%02x", popnum());
+				sprintf(scratch, "%02x", popnum());
 			    else
-				sprintf(bufp, "%03x", popnum());
+				sprintf(scratch, "%03x", popnum());
+			    if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
+				goto overflow;
+			    strcpy(bufp, scratch);
 			    bufp += strlen(bufp);
 			}
 		    }
 		    break;
 		case '2':
 		    if (*++str == 'd') {
-			sprintf(bufp, "%2d", popnum());
+			sprintf(scratch, "%2d", popnum());
+			if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
+			    goto overflow;
+			strcpy(bufp, scratch);
 			bufp += strlen(bufp);
 		    }
 		    else if (*str == 'x') {
-			sprintf(bufp, "%2x", popnum());
+			sprintf(scratch, "%2x", popnum());
+			if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
+			    goto overflow;
+			strcpy(bufp, scratch);
 			bufp += strlen(bufp);
 		    }
 		    break;
 		case '3':
 		    if (*++str == 'd') {
-			sprintf(bufp, "%3d", popnum());
+			sprintf(scratch, "%3d", popnum());
+			if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
+			    goto overflow;
+			strcpy(bufp, scratch);
 			bufp += strlen(bufp);
 		    }
 		    else if (*str == 'x') {
-			sprintf(bufp, "%3x", popnum());
+			sprintf(scratch, "%3x", popnum());
+			if (bufp + strlen(scratch) >= buf + MAXRETURNSIZE)
+			    goto overflow;
+			strcpy(bufp, scratch);
 			bufp += strlen(bufp);
 		    }
 		    break;
 		case 'c':
+		    if (bufp >= buf + MAXRETURNSIZE)
+			goto overflow;
 		    *bufp++ = (char)popnum();
 		    break;
 		case 's':
-		    strcpy(bufp, popstr());
+		    if (bufp + strlen(p = popstr()) >= buf + MAXRETURNSIZE)
+			goto overflow;
+		    strcpy(bufp, p);
 		    bufp += strlen(bufp);
 		    break;
 		case 'p':
@@ -324,7 +356,12 @@ _tparm(str, buf, ap)
 	    str++;
     }
 
+    if (bufp >= buf + MAXRETURNSIZE)
+	goto overflow;
     *bufp = '\0';
+    return(buf);
+overflow:
+    strcpy(buf, "OVERFLOW!");
     return(buf);
 }
 
@@ -336,7 +373,7 @@ tparm(va_alist)
      va_dcl
 #endif
 {
-    static char buf[256];
+    static char buf[MAXRETURNSIZE];
     va_list ap;
     char *p;
 #if !__STDC__
