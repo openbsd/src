@@ -1,4 +1,4 @@
-#	$OpenBSD: files,v 1.285 2003/12/24 22:40:15 krw Exp $
+#	$OpenBSD: files,v 1.286 2003/12/28 17:16:28 tedu Exp $
 #	$NetBSD: files,v 1.87 1996/05/19 17:17:50 jonathan Exp $
 
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
@@ -532,6 +532,7 @@ file kern/kern_lock.c
 file kern/kern_lkm.c			lkm
 file kern/kern_malloc.c
 file kern/kern_malloc_debug.c		malloc_debug
+file kern/kern_rwlock.c
 file kern/kern_physio.c
 file kern/kern_proc.c
 file kern/kern_prot.c
@@ -822,6 +823,7 @@ file ufs/ffs/ffs_softdep.c		ffs_softupdates
 file ufs/mfs/mfs_vfsops.c		mfs
 file ufs/mfs/mfs_vnops.c		mfs
 file ufs/ufs/ufs_bmap.c			ffs | mfs | ext2fs
+file ufs/ufs/ufs_dirhash.c		ufs_dirhash & (ffs | mfs)
 file ufs/ufs/ufs_extattr.c		ffs | mfs
 file ufs/ufs/ufs_ihash.c		ffs | mfs | ext2fs
 file ufs/ufs/ufs_inode.c		ffs | mfs | ext2fs
