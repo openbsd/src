@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.167 2005/01/14 02:25:12 espie Exp $
+# $OpenBSD: pkg_add,v 1.168 2005/01/22 13:00:35 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -811,7 +811,7 @@ if (defined $state->{dirs_to_rm} or defined $state->{users_to_rm} or
 	defined $state->{groups_to_rm}) {
 	require OpenBSD::SharedItems;
 
-	OpenBSD::SharedItems::cleanup($state);
+	OpenBSD::SharedItems::cleanup($state) unless $state->{not};
 }
 
 if ($state->{beverbose}) {
