@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.192 2004/02/10 17:53:37 henning Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.193 2004/03/10 17:48:48 henning Exp $ */
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -1299,17 +1299,21 @@ host_if(const char *s, int mask)
 			flags |= PFI_AFLAG_PEER;
 		else if (!strcmp(p+1, "0"))
 			flags |= PFI_AFLAG_NOALIAS;
-		else
+		else {
+			free(ps);
 			return (NULL);
+		}
 		*p = '\0';
 	}
 	if (flags & (flags - 1) & PFI_AFLAG_MODEMASK) { /* Yep! */
 		fprintf(stderr, "illegal combination of interface modifiers\n");
+		free(ps);
 		return (NULL);
 	}
 	if ((flags & (PFI_AFLAG_NETWORK|PFI_AFLAG_BROADCAST)) && mask > -1) {
 		fprintf(stderr, "network or broadcast lookup, but "
 		    "extra netmask given\n");
+		free(ps);
 		return (NULL);
 	}
 	if (ifa_exists(ps, 1) || !strncmp(ps, "self", IFNAMSIZ)) {
