@@ -1,4 +1,4 @@
-.\"	$OpenBSD: arp.4,v 1.17 2003/08/08 10:13:33 jmc Exp $
+.\"	$OpenBSD: arp.4,v 1.18 2003/11/19 09:43:42 jmc Exp $
 .\"	$NetBSD: arp.4,v 1.2 1995/03/01 11:50:56 chopps Exp $
 .\"
 .\" Copyright (c) 1985, 1986, 1988, 1994
@@ -101,26 +101,44 @@ ARP watches passively for hosts impersonating the local host (i.e., a host
 which responds to an ARP mapping request for the local host's address).
 .Sh DIAGNOSTICS
 .Bl -diag
-.It "duplicate IP address %x!! sent from ethernet address: %x:%x:%x:%x:%x:%x."
+.It "duplicate IP address %x!! sent from ethernet address: %x:%x:%x:%x:%x:%x"
 ARP has discovered another host on the local network which responds to
 mapping requests for its own Internet address with a different Ethernet
 address, generally indicating that two hosts are attempting to use the
 same Internet address.
-.Pp
-.It "arp info overwritten for %x!! by %x:%x:%x:%x:%x:%x on %x."
+.It "arp info overwritten for %x!! by %x:%x:%x:%x:%x:%x on %x"
 An existing route has been overwritten with a new Ethernet address, for
 example when the other host has changed Ethernet cards.
 If the route
 previously was static/non-expiring, the new route will expire normally.
-.Pp
-.It "arp: attempt to overwrite permanent entry for %x!! by %x:%x:%x:%x:%x:%x on %x."
+.It "arp: attempt to overwrite permanent entry for %x!! by %x:%x:%x:%x:%x:%x on %x"
 As above, but the existing route had been manually set up as permanent.
 The routing information is not modified.
-.Pp
-.It "arp: attempt to overwrite entry for %x!! on %x by %x:%x:%x:%x:%x:%x on %x."
+.It "arp: attempt to overwrite entry for %x!! on %x by %x:%x:%x:%x:%x:%x on %x"
 ARP has noticed an attempt to overwrite a host's routing entry on one
 interface with a routing entry for a different interface.
 The routing information is not modified.
+.It "arp: received reply to broadcast or multicast address"
+ARP received a response which is a broadcast or multicast address.
+This might indicate an ARP spoofing attempt.
+.It "arp: ether address is broadcast for IP address %s!"
+ARP requested information for a host, and received an answer indicating that
+the host's Ethernet address is the Ethernet broadcast address.
+This indicates a misconfigured or broken device.
+.It "arp: ether address is multicast for IP address %s!"
+ARP requested information for a host, and received an answer indicating that
+the host's Ethernet address is the Ethernet multicast address.
+This indicates a misconfigured or broken device.
+.It "arp: attempt to add entry for %s on %s by %s on %s"
+This usually indicates there is more than one interface
+connected to the same hub,
+or that the networks have somehow been short-circuited
+(e.g. IPs that should have been present on interface one
+are present on interface two).
+.It "arplookup: unable to enter address for %s"
+An IP received on the interface does not match the network/netmask
+of the interface.
+This indicates a netmask problem.
 .El
 .Sh SEE ALSO
 .Xr inet 4 ,
@@ -128,7 +146,7 @@ The routing information is not modified.
 .Xr arp 8 ,
 .Xr ifconfig 8 ,
 .Xr route 8
-.sp
+.Pp
 .Rs
 .%A Plummer, D.
 .%B "An Ethernet Address Resolution Protocol"
