@@ -1,4 +1,4 @@
-	$OpenBSD: pcmciadevs,v 1.80 2001/12/20 04:16:10 fgsch Exp $
+	$OpenBSD: pcmciadevs,v 1.81 2002/01/04 16:24:49 mickey Exp $
 /* $NetBSD: pcmciadevs,v 1.13 1998/08/17 23:10:12 thorpej Exp $ */
 
 /*
@@ -64,6 +64,7 @@ vendor SIMPLETECH		0x014d	Simple Technology
 vendor SYMBOL2			0x014d	Symbol
 vendor LUCENT			0x0156	Lucent
 vendor AIRONET			0x015f	Aironet Wireless Communications
+vendor ERICSSON			0x016b	Ericsson
 vendor PSION			0x016c	Psion
 vendor COMPAQ2			0x0183	Compaq
 vendor KINGSTON			0x0186	Kingston
@@ -260,6 +261,9 @@ product PANASONIC KME		0x2604 Panasonic CD-R/RW Interface
 /* Proxim */
 product PROXIM ROAMABOUT_2400FH	0x1058 Digital RoamAbout 2400FH
 product PROXIM RANGELAN2_7401	0x1158 Proxim RangeLAN2 7401
+
+/* Ericsson */
+product	ERICSSON WIRELESSLAN	0x0001 DSSS Wireless LAN PC Card
 
 /* Psion */
 product PSION GOLDCARD		0x0020 Psion Goldcard
