@@ -733,9 +733,9 @@ i[34567]86-*-openbsd2* | i[34567]86-*-openbsd3.[012])
 	;;
 i[34567]86-*-openbsd*)
 	# needed to unconfuse gdb
-	tm_file="${tm_file} exec-stack.h"
 	tmake_file="t-libc-ok t-openbsd i386/t-openbsd"
 	tm_file="i386/i386.h i386/att.h svr4.h i386/openbsdelf.h i386/perform.h"
+	tm_file="${tm_file} exec-stack.h"
 	gas=yes
 	gnu_ld=yes
 	stabs=yes
