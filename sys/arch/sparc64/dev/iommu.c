@@ -1,4 +1,4 @@
-/*	$OpenBSD: iommu.c,v 1.32 2003/06/11 04:00:11 henric Exp $	*/
+/*	$OpenBSD: iommu.c,v 1.33 2003/12/04 21:13:37 miod Exp $	*/
 /*	$NetBSD: iommu.c,v 1.47 2002/02/08 20:03:45 eeh Exp $	*/
 
 /*
@@ -259,7 +259,7 @@ iommu_reset(struct iommu_state *is)
 }
 
 /*
- * Inititalize one STC.
+ * Initialize one STC.
  */
 void
 strbuf_reset(struct strbuf_ctl *sb)

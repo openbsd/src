@@ -1,4 +1,4 @@
-/* $OpenBSD: isp_tpublic.h,v 1.7 2003/10/21 18:58:49 jmc Exp $ */
+/* $OpenBSD: isp_tpublic.h,v 1.8 2003/12/04 21:13:37 miod Exp $ */
 /*
  * Qlogic ISP Host Adapter Public Target Interface Structures && Routines
  *---------------------------------------
@@ -43,7 +43,7 @@
 #endif
 typedef struct {
 	void *		nt_hba;			/* HBA tag */
-	u_int64_t	nt_iid;			/* inititator id */
+	u_int64_t	nt_iid;			/* initiator id */
 	u_int64_t	nt_tgt;			/* target id */
 	u_int64_t	nt_lun;			/* logical unit */
 	u_int8_t	nt_bus;			/* bus */

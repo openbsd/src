@@ -1,5 +1,5 @@
 /*	$NetBSD: bus.h,v 1.1 2001/06/06 17:37:37 matt Exp $	*/
-/*	$OpenBSD: bus_mi.h,v 1.6 2003/11/25 21:16:44 drahn Exp $	*/
+/*	$OpenBSD: bus_mi.h,v 1.7 2003/12/04 21:13:37 miod Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -1090,7 +1090,7 @@ struct powerpc_bus_dma_tag {
  */
 struct powerpc_bus_dmamap {
 	/*
-	 * PRIVATE MEMBERS: not for use my machine-independent code.
+	 * PRIVATE MEMBERS: not for use by machine-independent code.
 	 */
 	bus_size_t	_dm_size;	/* largest DMA transfer mappable */
 	int		_dm_segcnt;	/* number of segs this map can map */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: isakmp_cfg.c,v 1.25 2003/06/10 16:41:29 deraadt Exp $	*/
+/*	$OpenBSD: isakmp_cfg.c,v 1.26 2003/12/04 21:13:35 miod Exp $	*/
 
 /*
  * Copyright (c) 2001 Niklas Hallqvist.  All rights reserved.
@@ -114,7 +114,7 @@ cfg_initiator_send_ATTR (struct message *msg)
 	return -1;
     }
 
-  /* We inititated of this exchange, check isakmp_sa for other side.  */
+  /* We initiated this exchange, check isakmp_sa for other side.  */
   if (isakmp_sa->initiator)
     id_string = ipsec_id_string (isakmp_sa->id_r, isakmp_sa->id_r_len);
   else

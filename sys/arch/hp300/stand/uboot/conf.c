@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.4 2003/06/02 23:27:46 millert Exp $	*/
+/*	$OpenBSD: conf.c,v 1.5 2003/12/04 21:13:37 miod Exp $	*/
 /*	$NetBSD: conf.c,v 1.12 1996/10/14 07:29:15 thorpej Exp $	*/
 
 /*
@@ -157,7 +157,7 @@ int	nfsys = 1;		/* default; changed per device type. */
 
 
 /*
- * Inititalize controllers
+ * Initialize controllers
  * 
  * XXX this should be a table
  */
