@@ -1,11 +1,11 @@
 ./sbin/kbd
 ./sbin/wsconsctl
-./usr/lib/gcc-lib/hppa-unknown-openbsd3.2
-./usr/lib/gcc-lib/hppa-unknown-openbsd3.2/2.95.3
-./usr/lib/gcc-lib/hppa-unknown-openbsd3.2/2.95.3/collect2
-./usr/lib/gcc-lib/hppa-unknown-openbsd3.2/2.95.3/cpp0
-./usr/lib/gcc-lib/hppa-unknown-openbsd3.2/2.95.3/include
-./usr/lib/gcc-lib/hppa-unknown-openbsd3.2/2.95.3/specs
+./usr/lib/gcc-lib/hppa-unknown-openbsd3.3
+./usr/lib/gcc-lib/hppa-unknown-openbsd3.3/2.95.3
+./usr/lib/gcc-lib/hppa-unknown-openbsd3.3/2.95.3/collect2
+./usr/lib/gcc-lib/hppa-unknown-openbsd3.3/2.95.3/cpp0
+./usr/lib/gcc-lib/hppa-unknown-openbsd3.3/2.95.3/include
+./usr/lib/gcc-lib/hppa-unknown-openbsd3.3/2.95.3/specs
 ./usr/libdata/perl5/hppa-openbsd
 ./usr/libdata/perl5/hppa-openbsd/5.8.0
 ./usr/libdata/perl5/hppa-openbsd/5.8.0/.packlist
@@ -946,6 +946,7 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/pciide_cy693_reg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/pciide_hpt_reg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/pciide_natsemi_reg.ph
+./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/pciide_nforce_reg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/pciide_pdc202xx_reg.ph
 ./usr/libdata/perl5/site_perl/hppa-openbsd/dev/pci/pciide_piix_reg.ph

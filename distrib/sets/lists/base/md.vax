@@ -2,12 +2,12 @@
 ./sbin/kbd
 ./sbin/ldconfig
 ./usr/bin/ldd
-./usr/lib/gcc-lib/vax-unknown-openbsd3.2
-./usr/lib/gcc-lib/vax-unknown-openbsd3.2/2.95.3
-./usr/lib/gcc-lib/vax-unknown-openbsd3.2/2.95.3/collect2
-./usr/lib/gcc-lib/vax-unknown-openbsd3.2/2.95.3/cpp0
-./usr/lib/gcc-lib/vax-unknown-openbsd3.2/2.95.3/include
-./usr/lib/gcc-lib/vax-unknown-openbsd3.2/2.95.3/specs
+./usr/lib/gcc-lib/vax-unknown-openbsd3.3
+./usr/lib/gcc-lib/vax-unknown-openbsd3.3/2.95.3
+./usr/lib/gcc-lib/vax-unknown-openbsd3.3/2.95.3/collect2
+./usr/lib/gcc-lib/vax-unknown-openbsd3.3/2.95.3/cpp0
+./usr/lib/gcc-lib/vax-unknown-openbsd3.3/2.95.3/include
+./usr/lib/gcc-lib/vax-unknown-openbsd3.3/2.95.3/specs
 ./usr/libdata/perl5/site_perl/vax-openbsd
 ./usr/libdata/perl5/site_perl/vax-openbsd/_h2ph_pre.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/a.out.ph
@@ -455,6 +455,7 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pciide_cy693_reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pciide_hpt_reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pciide_natsemi_reg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pciide_nforce_reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pciide_pdc202xx_reg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/pci/pciide_piix_reg.ph

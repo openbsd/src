@@ -2,10 +2,10 @@
 ./usr/bin/ldd
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/cpp
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/specs
-./usr/lib/gcc-lib/m88k-unknown-openbsd3.2
-./usr/lib/gcc-lib/m88k-unknown-openbsd3.2/2.95.1
-./usr/lib/gcc-lib/m88k-unknown-openbsd3.2/2.95.1/include
-./usr/lib/gcc-lib/m88k-unknown-openbsd3.2/2.95.1/include/objc
+./usr/lib/gcc-lib/m88k-unknown-openbsd3.3
+./usr/lib/gcc-lib/m88k-unknown-openbsd3.3/2.95.1
+./usr/lib/gcc-lib/m88k-unknown-openbsd3.3/2.95.1/include
+./usr/lib/gcc-lib/m88k-unknown-openbsd3.3/2.95.1/include/objc
 ./usr/lib/perl5/m88k-openbsd
 ./usr/lib/perl5/m88k-openbsd/5.00404
 ./usr/lib/perl5/m88k-openbsd/5.00404/CORE
@@ -488,6 +488,7 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/nofnreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/nofnvar.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pciide_natsemi_reg.ph
+./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pciide_nforce_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/pcscpreg.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/dev/pci/plx9060reg.ph
@@ -655,10 +656,10 @@
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_param.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/uvm/uvm_pmap.ph
 ./usr/libdata/perl5/site_perl/m88k-openbsd/xfs/afssysdefs.ph
-./usr/m88k-unknown-openbsd3.2
-./usr/m88k-unknown-openbsd3.2/bin
-./usr/m88k-unknown-openbsd3.2/lib
-./usr/m88k-unknown-openbsd3.2/lib/ldscripts
+./usr/m88k-unknown-openbsd3.3
+./usr/m88k-unknown-openbsd3.3/bin
+./usr/m88k-unknown-openbsd3.3/lib
+./usr/m88k-unknown-openbsd3.3/lib/ldscripts
 ./usr/mdec/bootsd
 ./usr/mdec/bootst
 ./usr/mdec/bootxx

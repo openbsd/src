@@ -26,12 +26,12 @@
 ./usr/lib/apache/modules/mod_unique_id.so
 ./usr/lib/apache/modules/mod_usertrack.so
 ./usr/lib/apache/modules/mod_vhost_alias.so
-./usr/lib/gcc-lib/alpha-unknown-openbsd3.2
-./usr/lib/gcc-lib/alpha-unknown-openbsd3.2/2.95.3
-./usr/lib/gcc-lib/alpha-unknown-openbsd3.2/2.95.3/collect2
-./usr/lib/gcc-lib/alpha-unknown-openbsd3.2/2.95.3/cpp0
-./usr/lib/gcc-lib/alpha-unknown-openbsd3.2/2.95.3/include
-./usr/lib/gcc-lib/alpha-unknown-openbsd3.2/2.95.3/specs
+./usr/lib/gcc-lib/alpha-unknown-openbsd3.3
+./usr/lib/gcc-lib/alpha-unknown-openbsd3.3/2.95.3
+./usr/lib/gcc-lib/alpha-unknown-openbsd3.3/2.95.3/collect2
+./usr/lib/gcc-lib/alpha-unknown-openbsd3.3/2.95.3/cpp0
+./usr/lib/gcc-lib/alpha-unknown-openbsd3.3/2.95.3/include
+./usr/lib/gcc-lib/alpha-unknown-openbsd3.3/2.95.3/specs
 ./usr/lib/lib45.so.2.0
 ./usr/lib/libacl.so.6.0
 ./usr/lib/libasn1.so.3.0
@@ -1081,6 +1081,7 @@
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/pciide_cy693_reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/pciide_hpt_reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/pciide_natsemi_reg.ph
+./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/pciide_nforce_reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/pciide_opti_reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/pciide_pdc202xx_reg.ph
 ./usr/libdata/perl5/site_perl/alpha-openbsd/dev/pci/pciide_piix_reg.ph
