@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.55 2003/09/18 20:09:07 sturm Exp $
+#	$OpenBSD: special,v 1.56 2003/10/08 20:30:04 grange Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -68,6 +68,7 @@ rc.shutdown	type=file mode=0644 uname=root gname=wheel
 resolv.conf	type=file mode=0644 uname=root gname=wheel optional
 resolv.conf.tail type=file mode=0644 uname=root gname=wheel optional
 security	type=file mode=0644 uname=root gname=wheel
+sensorsd.conf	type=file mode=0644 uname=root gname=wheel
 shells		type=file mode=0644 uname=root gname=wheel
 skey		type=dir mode=01730 uname=root gname=auth optional
 ..	#skey
