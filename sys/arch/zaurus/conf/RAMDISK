@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.18 2005/01/26 06:34:53 uwe Exp $
+#	$OpenBSD: RAMDISK,v 1.19 2005/02/01 15:41:24 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -48,8 +48,8 @@ maxusers	32
 
 # CPU options
 options 	CPU_XSCALE_PXA2X0	# Support the XScale core
-options 	XSCALE_CACHE_WRITE_THROUGH
-#options 	XSCALE_CACHE_WRITE_BACK
+#options 	XSCALE_CACHE_WRITE_THROUGH
+options 	XSCALE_CACHE_WRITE_BACK
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
 #option WSDISPLAY_COMPAT_USL		# VT handling

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.25 2005/01/28 17:14:31 drahn Exp $
+#	$OpenBSD: GENERIC,v 1.26 2005/02/01 15:41:24 drahn Exp $
 #
 # GENERIC machine description file
 #
@@ -41,8 +41,8 @@ maxusers	32
 
 # CPU options
 options 	CPU_XSCALE_PXA2X0	# Support the XScale core
-options 	XSCALE_CACHE_WRITE_THROUGH
-#options 	XSCALE_CACHE_WRITE_BACK
+#options 	XSCALE_CACHE_WRITE_THROUGH
+options 	XSCALE_CACHE_WRITE_BACK
 makeoptions	CPUFLAGS="-mcpu=xscale"
 
 option WSDISPLAY_COMPAT_USL		# VT handling

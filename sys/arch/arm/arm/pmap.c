@@ -1,4 +1,4 @@
-/*	$OpenBSD: pmap.c,v 1.4 2004/12/30 23:40:08 drahn Exp $	*/
+/*	$OpenBSD: pmap.c,v 1.5 2005/02/01 15:41:24 drahn Exp $	*/
 /*	$NetBSD: pmap.c,v 1.147 2004/01/18 13:03:50 scw Exp $	*/
 
 /*
@@ -4865,6 +4865,8 @@ pmap_pte_init_xscale(void)
 	__asm __volatile("mrc p15, 0, %0, c1, c0, 1" : "=r" (auxctl));
 	auxctl &= ~XSCALE_AUXCTL_P;
 	__asm __volatile("mcr p15, 0, %0, c1, c0, 1" : : "r" (auxctl));
+
+	pmap_needs_pte_sync = 1;
 }
 
 /*
