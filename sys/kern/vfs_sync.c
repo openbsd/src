@@ -1,4 +1,4 @@
-/*       $OpenBSD: vfs_sync.c,v 1.5 1998/11/12 04:36:32 csapuntz Exp $  */
+/*       $OpenBSD: vfs_sync.c,v 1.6 1999/12/05 05:17:38 art Exp $  */
 
 
 /*
@@ -243,38 +243,38 @@ struct vnodeopv_desc sync_vnodeop_opv_desc =
  */
 int
 vfs_allocate_syncvnode(mp)
-      struct mount *mp;
+	struct mount *mp;
 {
-      struct vnode *vp;
-      static long start, incr, next;
-      int error;
+	struct vnode *vp;
+	static long start, incr, next;
+	int error;
 
-      /* Allocate a new vnode */
-      if ((error = getnewvnode(VT_VFS, mp, sync_vnodeop_p, &vp)) != 0) {
-              mp->mnt_syncer = NULL;
-              return (error);
-      }
-      vp->v_writecount = 1;
-      vp->v_type = VNON;
-      /*
-       * Place the vnode onto the syncer worklist. We attempt to
-       * scatter them about on the list so that they will go off
-       * at evenly distributed times even if all the filesystems
-       * are mounted at once.
-       */
-      next += incr;
-      if (next == 0 || next > syncer_maxdelay) {
-              start /= 2;
-              incr /= 2;
-              if (start == 0) {
-                      start = syncer_maxdelay / 2;
-                      incr = syncer_maxdelay;
-              }
-              next = start;
-      }
-      vn_syncer_add_to_worklist(vp, next);
-      mp->mnt_syncer = vp;
-      return (0);
+	/* Allocate a new vnode */
+	if ((error = getnewvnode(VT_VFS, mp, sync_vnodeop_p, &vp)) != 0) {
+		mp->mnt_syncer = NULL;
+		return (error);
+	}
+	vp->v_writecount = 1;
+	vp->v_type = VNON;
+	/*
+	 * Place the vnode onto the syncer worklist. We attempt to
+	 * scatter them about on the list so that they will go off
+	 * at evenly distributed times even if all the filesystems
+	 * are mounted at once.
+	 */
+	next += incr;
+	if (next == 0 || next > syncer_maxdelay) {
+		start /= 2;
+		incr /= 2;
+		if (start == 0) {
+			start = syncer_maxdelay / 2;
+			incr = syncer_maxdelay;
+		}
+		next = start;
+	}
+	vn_syncer_add_to_worklist(vp, next);
+	mp->mnt_syncer = vp;
+	return (0);
 }
 
 /*
@@ -284,43 +284,42 @@ int
 sync_fsync(v)
 	void *v;
 {
-      struct vop_fsync_args /* {
-              struct vnode *a_vp;
-              struct ucred *a_cred;
-              int a_waitfor;
-              struct proc *a_p;
-      } */ *ap = v;
+	struct vop_fsync_args /* {
+		struct vnode *a_vp;
+		struct ucred *a_cred;
+		int a_waitfor;
+		struct proc *a_p;
+	} */ *ap = v;
+	struct vnode *syncvp = ap->a_vp;
+	struct mount *mp = syncvp->v_mount;
+	int asyncflag;
 
-      struct vnode *syncvp = ap->a_vp;
-      struct mount *mp = syncvp->v_mount;
-      int asyncflag;
+	/*
+	 * We only need to do something if this is a lazy evaluation.
+	 */
+	if (ap->a_waitfor != MNT_LAZY)
+		return (0);
 
-      /*
-       * We only need to do something if this is a lazy evaluation.
-       */
-      if (ap->a_waitfor != MNT_LAZY)
-              return (0);
+	/*
+	 * Move ourselves to the back of the sync list.
+	 */
+	LIST_REMOVE(syncvp, v_synclist);
+	vn_syncer_add_to_worklist(syncvp, syncdelay);
 
-      /*
-       * Move ourselves to the back of the sync list.
-       */
-      LIST_REMOVE(syncvp, v_synclist);
-      vn_syncer_add_to_worklist(syncvp, syncdelay);
-
-      /*
-       * Walk the list of vnodes pushing all that are dirty and
-       * not already on the sync list.
-       */
-      simple_lock(&mountlist_slock);
-      if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, ap->a_p) == 0) {
-              asyncflag = mp->mnt_flag & MNT_ASYNC;
-              mp->mnt_flag &= ~MNT_ASYNC;
-              VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_p);
-              if (asyncflag)
-                      mp->mnt_flag |= MNT_ASYNC;
-              vfs_unbusy(mp, ap->a_p);
-      }
-      return (0);
+	/*
+	 * Walk the list of vnodes pushing all that are dirty and
+	 * not already on the sync list.
+	 */
+	simple_lock(&mountlist_slock);
+	if (vfs_busy(mp, LK_NOWAIT, &mountlist_slock, ap->a_p) == 0) {
+		asyncflag = mp->mnt_flag & MNT_ASYNC;
+		mp->mnt_flag &= ~MNT_ASYNC;
+		VFS_SYNC(mp, MNT_LAZY, ap->a_cred, ap->a_p);
+		if (asyncflag)
+			mp->mnt_flag |= MNT_ASYNC;
+		vfs_unbusy(mp, ap->a_p);
+	}
+	return (0);
 }
 
 /*
@@ -329,22 +328,21 @@ sync_fsync(v)
 int
 sync_inactive(v)
 	void *v;
-	
 {
-      struct vop_inactive_args /* {
-               struct vnode *a_vp;
-               struct proc *a_p;
-      } */ *ap = v;
+	struct vop_inactive_args /* {
+		struct vnode *a_vp;
+		struct proc *a_p;
+	} */ *ap = v;
 
-      struct vnode *vp = ap->a_vp;
+	struct vnode *vp = ap->a_vp;
 
-      if (vp->v_usecount == 0)
-              return (0);
-      vp->v_mount->mnt_syncer = NULL;
-      LIST_REMOVE(vp, v_synclist);
-      vp->v_writecount = 0;
-      vput(vp);
-      return (0);
+	if (vp->v_usecount == 0)
+		return (0);
+	vp->v_mount->mnt_syncer = NULL;
+	LIST_REMOVE(vp, v_synclist);
+	vp->v_writecount = 0;
+	vput(vp);
+	return (0);
 }
 
 /*
