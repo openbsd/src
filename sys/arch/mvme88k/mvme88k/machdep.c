@@ -1,4 +1,4 @@
-/* $OpenBSD: machdep.c,v 1.132 2004/01/13 21:27:05 miod Exp $	*/
+/* $OpenBSD: machdep.c,v 1.133 2004/01/14 11:49:49 miod Exp $	*/
 /*
  * Copyright (c) 1998, 1999, 2000, 2001 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -53,17 +53,13 @@
 #include <sys/buf.h>
 #include <sys/reboot.h>
 #include <sys/conf.h>
-#include <sys/file.h>
-#include <sys/timeout.h>
 #include <sys/malloc.h>
-#include <sys/mbuf.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
 #include <sys/syscallargs.h>
 #ifdef SYSVMSG
 #include <sys/msg.h>
 #endif
-#include <sys/ioctl.h>
 #include <sys/exec.h>
 #include <sys/sysctl.h>
 #include <sys/errno.h>
@@ -94,9 +90,12 @@
 
 #include <uvm/uvm_extern.h>
 
+#ifdef MVME188
 #include <mvme88k/dev/sysconreg.h>
-#include <mvme88k/dev/pcctworeg.h>
+#endif
+#ifdef MVME197
 #include <mvme88k/dev/busswreg.h>
+#endif
 
 #include "ksyms.h"
 #if DDB
