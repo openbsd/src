@@ -1,4 +1,4 @@
-/*	$OpenBSD: xl.c,v 1.16 2000/10/16 17:08:07 aaron Exp $	*/
+/*	$OpenBSD: xl.c,v 1.17 2000/10/19 16:33:51 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -106,6 +106,7 @@
  */
 
 #include "bpfilter.h"
+#include "vlan.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2026,6 +2027,12 @@ void xl_init(xsc)
 		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_COAX_START);
 	else
 		CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_COAX_STOP);
+
+#if NVLAN > 0
+	/* Set max packet size to handle VLAN frames, only on 3c905B */
+	if (sc->xl_type == XL_TYPE_905B)
+		CSR_WRITE_2(sc, XL_W3_MAX_PKT_SIZE, 1514 + 4);
+#endif
 
 	/* Clear out the stats counters. */
 	CSR_WRITE_2(sc, XL_COMMAND, XL_CMD_STATS_DISABLE);

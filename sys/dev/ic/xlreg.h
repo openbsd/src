@@ -1,4 +1,4 @@
-/*	$OpenBSD: xlreg.h,v 1.6 2000/09/29 05:28:29 aaron Exp $	*/
+/*	$OpenBSD: xlreg.h,v 1.7 2000/10/19 16:33:52 jason Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -254,6 +254,7 @@
  * Window 3 (fifo management)
  */
 #define XL_W3_INTERNAL_CFG	0x00
+#define XL_W3_MAX_PKT_SIZE	0x04		/* 3C905B only */
 #define XL_W3_RESET_OPT		0x08
 #define XL_W3_FREE_TX		0x0C
 #define XL_W3_FREE_RX		0x0A
