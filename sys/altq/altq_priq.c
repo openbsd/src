@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_priq.c,v 1.14 2003/03/31 12:35:45 henning Exp $	*/
+/*	$OpenBSD: altq_priq.c,v 1.15 2003/04/02 16:17:42 henning Exp $	*/
 /*	$KAME: altq_priq.c,v 1.1 2000/10/18 09:15:23 kjc Exp $	*/
 /*
  * Copyright (C) 2000
@@ -149,9 +149,6 @@ priq_add_queue(struct pf_altq *a)
 	    a->pq_u.priq_opts.flags, a->qid);
 	if (cl == NULL)
 		return (ENOMEM);
-
-	/* return handle to user space. */
-	a->qid = cl->cl_handle;
 
 	return (0);
 }
