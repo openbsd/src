@@ -1,7 +1,7 @@
 #	from: @(#)Makefile	5.9 (Berkeley) 7/1/91
-#	$Id: Makefile,v 1.3 1997/09/22 05:12:27 millert Exp $
+#	$Id: Makefile,v 1.4 1999/07/09 21:41:46 hugh Exp $
 
-SUBDIR=	man1 man3 man4 man5 man7 man8 man9
+SUBDIR=	man1 man3 man4 man5 man6 man7 man8 man9
 
 afterinstall:
 	${INSTALL} -c -o ${BINOWN} -g ${BINGRP} -m 444 makewhatis.sed \
