@@ -1,4 +1,4 @@
-/*	$OpenBSD: msdosfs_denode.c,v 1.12 1998/08/21 22:36:11 csapuntz Exp $	*/
+/*	$OpenBSD: msdosfs_denode.c,v 1.13 1998/08/21 22:40:02 csapuntz Exp $	*/
 /*	$NetBSD: msdosfs_denode.c,v 1.23 1997/10/17 11:23:58 ws Exp $	*/
 
 /*-
@@ -121,8 +121,8 @@ msdosfs_hashins(dep)
 	struct denode **depp, *deq;
 
 	depp = &dehashtbl[DEHASH(dep->de_dev, dep->de_dirclust,
-	    dep->de_diroffset)];
-
+				 dep->de_diroffset)];
+	
 	for (deq = *depp; deq; deq = deq->de_next) {
 		if (dep->de_dirclust == deq->de_dirclust &&
 		    dep->de_diroffset == deq->de_diroffset &&
@@ -147,7 +147,7 @@ msdosfs_hashrem(dep)
 	struct denode *deq;
 
 	if (dep->de_prev == NULL)
-	  return;
+		return;
 
 	if ((deq = dep->de_next) != NULL)
 		deq->de_prev = dep->de_prev;
@@ -251,7 +251,7 @@ retry:
 
 	if (error) {
 		vput (nvp);
-
+		
 		if (error == EEXIST)
 			goto retry;
 
