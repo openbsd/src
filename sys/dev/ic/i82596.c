@@ -1,4 +1,4 @@
-/*	$OpenBSD: i82596.c,v 1.16 2002/11/01 19:56:13 mickey Exp $	*/
+/*	$OpenBSD: i82596.c,v 1.17 2002/12/11 19:35:51 mickey Exp $	*/
 /*	$NetBSD: i82586.c,v 1.18 1998/08/15 04:42:42 mycroft Exp $	*/
 
 /*-
@@ -351,9 +351,9 @@ i82596_cmd_wait(sc)
 	struct ie_softc *sc;
 {
 	/* spin on i82596 command acknowledge; wait at most 0.9 (!) seconds */
-	register int i, off;
+	int i, off;
 
-	for (i = 0; i < 90000; i++) {
+	for (i = 0; i < 180000; i++) {
 		/* Read the command word */
 		off = IE_SCB_CMD(sc->scb);
 		bus_space_barrier(sc->bt, sc->bh, off, 2,
@@ -366,7 +366,7 @@ i82596_cmd_wait(sc)
 #endif
 			return (0);
 		}
-		delay(10);
+		DELAY(5);
 	}
 
 	printf("i82596_cmd_wait: timo(%ssync): scb status: %b\n",
@@ -393,7 +393,7 @@ i82596_start_cmd(sc, cmd, iecmdbuf, mask, async)
 	int mask;
 	int async;
 {
-	register int i, off;
+	int i, off;
 
 #ifdef I82596_DEBUG
 	if (sc->sc_debug & IED_CMDS)
@@ -428,7 +428,7 @@ i82596_start_cmd(sc, cmd, iecmdbuf, mask, async)
 		 * According to the packet driver, the minimum timeout
 		 * should be .369 seconds.
 		 */
-		for (i = 0; i < 36900; i++) {
+		for (i = 0; i < 73800; i++) {
 			/* Read the command status */
 			off = IE_CMD_COMMON_STATUS(iecmdbuf);
 			bus_space_barrier(sc->bt, sc->bh, off, 2,
@@ -443,7 +443,7 @@ i82596_start_cmd(sc, cmd, iecmdbuf, mask, async)
 #endif
 				return (0);
 			}
-			delay(10);
+			DELAY(5);
 		}
 
 	} else {
@@ -509,9 +509,6 @@ i82596_intr(v)
 
 loop:
 	/* Ack interrupts FIRST in case we receive more during the ISR. */
-#if 0
-	ie_ack(sc, status & IE_ST_WHENCE);
-#endif
 	i82596_start_cmd(sc, status & IE_ST_WHENCE, 0, 0, 1);
 
 	if (status & (IE_ST_FR | IE_ST_RNR)) {
@@ -624,7 +621,6 @@ i82596_rint(sc, scbstatus)
 			printf("%s: rint: frame(%d) busy; status=%x\n",
 				sc->sc_dev.dv_xname, i, status, IE_ST_BITS);
 #endif
-
 
 		/*
 		 * Advance the RFD list, since we're done with
@@ -1218,7 +1214,6 @@ i82596_start(ifp)
 	struct mbuf *m0, *m;
 	int	buffer, head, xbase;
 	u_short	len;
-	int	s;
 
 #ifdef I82596_DEBUG
 	if (sc->sc_debug & IED_ENQ)
@@ -1299,13 +1294,9 @@ i82596_start(ifp)
 		sc->ie_bus_write24(sc, IE_XBD_BUF(xbase, head),
 				       sc->sc_maddr + IE_XBUF_ADDR(sc, head));
 
-		s = splnet();
 		/* Start the first packet transmitting. */
-		if (sc->xmit_busy == 0)
+		if (sc->xmit_busy++ == 0)
 			i82596_xmit(sc);
-
-		sc->xmit_busy++;
-		splx(s);
 	}
 }
 
@@ -1334,7 +1325,7 @@ i82596_proberam(sc)
 
 	(sc->chan_attn) (sc);
 
-	delay(100);		/* wait a while... */
+	DELAY(100);		/* wait a while... */
 
 	/* Read back the ISCP `busy' bit; it should be clear by now */
 	off = IE_ISCP_BUSY(sc->iscp);
@@ -1375,7 +1366,7 @@ i82596_reset(sc, hard)
 	if (hard && sc->hwreset)
 		(sc->hwreset)(sc, IE_CARD_RESET);
 
-	delay(100);
+	DELAY(100);
 	ie_ack(sc, IE_ST_WHENCE);
 
 	if ((sc->sc_arpcom.ac_if.if_flags & IFF_UP) != 0) {
