@@ -163,7 +163,8 @@ struct sadb_protocol {
                               (x) == SADB_X_SATYPE_AH_OLD ? IPPROTO_AH :\
                                 (x) == SADB_SATYPE_ESP ? IPPROTO_ESP :\
                                   (x) == SADB_X_SATYPE_ESP_OLD ? IPPROTO_ESP :\
-                                    IPPROTO_IPIP )
+                                    (x) == SADB_X_SATYPE_BYPASS ? IPPROTO_IP :\
+                                      IPPROTO_IPIP )
 
 #define SADB_EXT_RESERVED             0
 #define SADB_EXT_SA                   1
@@ -202,7 +203,8 @@ struct sadb_protocol {
 #define SADB_X_SATYPE_ESP_OLD		 8
 #define SADB_X_SATYPE_IPIP		 9
 #define SADB_X_SATYPE_TCPSIGNATURE	10
-#define SADB_SATYPE_MAX			10
+#define SADB_X_SATYPE_BYPASS		11
+#define SADB_SATYPE_MAX			11
 
 #define SADB_SASTATE_LARVAL   0
 #define SADB_SASTATE_MATURE   1
