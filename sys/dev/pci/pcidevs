@@ -1,4 +1,4 @@
-	$OpenBSD: pcidevs,v 1.470 2001/11/29 17:10:57 mickey Exp $
+	$OpenBSD: pcidevs,v 1.471 2001/12/01 07:45:53 mickey Exp $
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
 /*
@@ -1107,6 +1107,7 @@ product DIAMOND VIPER		0x9001	Viper/PCI
 product DPT SC_RAID		0xa400	SmartCache/Raid
 product DPT I960_PPB		0xa500	PCI-PCI bridge
 product DPT RAID_I2O		0xa501	SmartRAID (I2O)
+product DPT 2005S		0xa511	SmartRAID 2005S
 product DPT MEMCTLR		0x1012	Memory Controller
 
 /* Dolphin products */
