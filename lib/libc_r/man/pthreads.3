@@ -1,4 +1,4 @@
-.\" $OpenBSD: pthreads.3,v 1.6 1999/07/09 13:35:24 aaron Exp $
+.\" $OpenBSD: pthreads.3,v 1.7 2000/01/06 07:10:16 d Exp $
 .\" David Leonard <d@openbsd.org>, 1998. Public domain.
 .Dd August 17, 1998
 .Dt PTHREADS 3
@@ -15,24 +15,26 @@ is shared among all of the threads in the process.
 .Pp
 In
 .Ox ,
-threads are implemented in a user-level library
-.Pa ( libc_r )
-that replaces the standard C library
-.Pa ( libc ) .
-This replacement is currently achieved by specifying the
-.Fl pthread
-flag to
-.Xr cc 1
-for each compilation unit, and for linking.
-(But see the section on
-.Sx BUGS . )
+threads are implemented in a user-level library.
+A program using these routines must be linked with the
+.Fl lpthread
+option.
 .Pp
 The
 .Dv SIGINFO
 signal can be sent to a threaded process to have the library show the state of
 all of its threads. The information is sent to the process'
-.Pa /dev/tty .
+controlling tty and descrbes each thread's 
+ID, 
+state (see
+.Sx Thread states ) , 
+current priority,
+flags (see
+.Sx Thread flags )
+and name (as set by
+.Xr pthread_set_name_np 3 ) .
 .Pp
+.Ss Thread states
 Threads can be in one of these states:
 .Bl -tag -offset indent -width Dv -compact
 .It cond_wait
@@ -72,6 +74,9 @@ Executing
 .It mutex_wait
 Executing
 .Xr pthread_mutex_lock 3 .
+.It poll_wait
+Executing
+.Xr poll 2 .
 .It running
 Scheduled for, or engaged in, program execution.
 .It select_wait
@@ -98,6 +103,31 @@ Executing
 .Xr wait4 2
 or similar.
 .El
+.Ss Thread flags
+The meaning of thread flags are as follows:
+.Bl -tag -offset indent -width 3en -compact
+.It p
+Private, system thread (e.g. the garbage collector).
+.It E
+Thread is exiting.
+.It C
+Thread has an cancellation pending (see
+.Xr pthread_cancel 3 ) .
+.It c
+Thread is at a cancellation point.
+.It t
+Thread is being traced.
+.El
+The other flags refer to thread attributes:
+.Bl -tag -offset indent -width 3en -compact
+.It d
+Thread has been detached (see
+.Xr pthread_detach 3 ) .
+.It i
+Thread inherits scheduler properties.
+.It f
+Thread will save floating point context.
+.El
 .Ss Scheduling algorithm
 The scheduling algorithm used by the user-level thread library is
 roughly as follows:
@@ -119,6 +149,23 @@ the largest remaining time slice.
 When all threads are blocked, the process also blocks.
 When there are no threads remaining,
 the process terminates with an exit code of zero.
+.Ss Thread stacks
+Each thread has (or should have) a different stack, whether it be provided by a
+user attribute, or provided automatically by the system.
+If a thread overflows its stack, unpredictable results may occur.
+System-allocated stacks (including that of the initial thread) 
+are typically allocated in such a way that a
+.Dv SIGSEGV
+signal is deliverred to the process when a stack overflows.
+.Pp
+Signals handlers are normally  run on the stack of the currently executing 
+thread.
+Hence, if you want to handle the
+.Dv SIGSEGV
+signal, you should make use of
+.Xr sigaltstack 3
+or
+.Xr sigprocmask 3 .
 .Sh SEE ALSO
 .Xr pthread_cleanup_pop 3 ,
 .Xr pthread_cleanup_push 3 ,
@@ -164,16 +211,6 @@ John Birrell
 wrote the majority of the user level thread library.
 .\" David Leonard did a fair bit too, but is far too modest.
 .Sh BUGS
-Having to pass the
-.Fl pthread
-flag to
-.Xr cc 1
-for every compilation unit and linking is an awful kludge.
-Future releases will most likely depreceate this flag,
-and instead only use
-.Fl l Ns Pa pthread
-during linking.
-.Pp
 The library contains of a scheduler that uses the
 process virtual interval timer to pre-empt running threads.
 This means that using
@@ -181,11 +218,3 @@ This means that using
 to alter the process virtual timer will have undefined effects. The
 .Dv SIGVTALRM
 will never be delivered to threads in a process.
-.Pp
-Due to the
-type definition of
-.Ft fd_set
-and the internal reliance on
-.Xr select 2 ,
-threaded processes may be arbitrarily limited in the number of file descriptors
-that they can collectively have open.
