@@ -1,4 +1,4 @@
-/*	$OpenBSD: cpu.h,v 1.2 2001/08/18 15:27:30 art Exp $	*/
+/*	$OpenBSD: cpu.h,v 1.3 2001/08/18 20:20:09 art Exp $	*/
 /*	$NetBSD: cpu.h,v 1.28 2001/06/14 22:56:58 thorpej Exp $ */
 
 /*
@@ -69,7 +69,7 @@
 #include <machine/intr.h>
 #include <sparc64/sparc64/intreg.h>
 
-#include <sys/sched.h>
+/*#include <sys/sched.h> */
 
 /*
  * CPU states.
@@ -205,7 +205,7 @@ int	want_ast;
  * or after the current trap/syscall if in system mode.
  */
 int	want_resched;		/* resched() was called */
-#define	need_resched(ci)	(want_resched = 1, want_ast = 1)
+#define	need_resched()		(want_resched = 1, want_ast = 1)
 
 /*
  * Give a profiling tick to the current process when the user profiling
