@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ip4.c,v 1.43 1999/12/21 20:26:13 provos Exp $	*/
+/*	$OpenBSD: ip_ip4.c,v 1.44 1999/12/24 20:02:44 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -390,7 +390,7 @@ ipe4_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 		ip4stat.ip4s_unspec++;
 		m_freem(m);
 		*mp = NULL;
-		return ENOBUFS;
+		return EINVAL;
 	    }
 
 	    M_PREPEND(m, sizeof(struct ip), M_DONTWAIT);
