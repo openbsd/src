@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.56 2001/04/08 05:00:27 drahn Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.57 2001/05/02 06:02:45 drahn Exp $	*/
 /*	$NetBSD: machdep.c,v 1.4 1996/10/16 19:33:11 ws Exp $	*/
 
 /*
@@ -587,17 +587,6 @@ cpu_startup()
 	 */
 	devio_malloc_safe = 1;
 	configure();
-	
-	/*
-	 * Now allow hardware interrupts.
-	 */
-	{
-		int msr;
-		
-		splhigh();
-		__asm__ volatile ("mfmsr %0; ori %0, %0, %1; mtmsr %0"
-			      : "=r"(msr) : "K"(PSL_EE));
-	}
 }
 	
 

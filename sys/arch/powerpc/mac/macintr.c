@@ -1,4 +1,4 @@
-/*	$OpenBSD: macintr.c,v 1.7 2001/04/08 05:00:26 drahn Exp $	*/
+/*	$OpenBSD: macintr.c,v 1.8 2001/05/02 06:02:46 drahn Exp $	*/
 
 /*-
  * Copyright (c) 1995 Per Fogelstrom
@@ -179,6 +179,8 @@ macintr_attach(parent, self, aux)
 
 	mac_intr_establish(parent, 0x14, IST_LEVEL, IPL_HIGH,
 		prog_switch, (void *)0x14, "prog button");
+
+	ppc_intr_enable(1);
 
 	printf("\n");
 }
