@@ -74,7 +74,7 @@ MDEFINES = bindir='$(bindir)' mandir='$(mandir)' manext='$(manext)' \
 	prefix='$(prefix)' binprefix='$(binprefix)' \
 	manprefix='$(manprefix)' infodir='$(infodir)' CFLAGS='$(CFLAGS)' \
 	CC='$(CC)' ALLOCA='$(ALLOCA)' LDFLAGS='$(LDFLAGS)' \
-	DEFAULT_INFOPATH='$(DEFAULT_INFOPATH)'
+	DEFAULT_INFOPATH='$(DEFAULT_INFOPATH)' INSTALL_MAN='$(INSTALL_MAN)'
 
 all: sub-all texinfo
 
@@ -133,8 +133,10 @@ texclean:
 
 realclean: distclean
 
-texinfo: sub-all
+texinfo: makeinfo/makeinfo texinfo.texi
 	./makeinfo/makeinfo -I$(srcdir) texinfo.texi
+
+makeinfo/makeinfo: sub-all
 
 texinfo.dvi:
 	PATH="$(srcdir)/util:$${PATH}" TEXINPUTS="$(srcdir):$(common):$${TEXINPUTS}" texi2dvi $(srcdir)/texinfo.texi

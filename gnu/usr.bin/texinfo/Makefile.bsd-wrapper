@@ -1,0 +1,36 @@
+#	$Id: Makefile.bsd-wrapper,v 1.1 1995/12/22 18:12:36 niklas Exp $
+
+MAN=		info/info.1
+SUBDIRS=	libtxi makeinfo info util
+FSFMAKE=	${MAKE} SUBDIRS="$(SUBDIRS)"
+
+all:	config.status
+	${FSFMAKE}
+
+.FORCE:	.IGNORE
+
+config: .FORCE
+	/bin/sh ${.CURDIR}/configure --prefix=/usr
+
+config.status:
+	/bin/sh ${.CURDIR}/configure --prefix=/usr
+
+install:	maninstall
+	${FSFMAKE} prefix=${DESTDIR}/usr infodir=${DESTDIR}/usr/share/info \
+		   mandir= INSTALL_MAN= install
+
+clean cleandir:
+	-@if [ -e Makefile ]; then ${FSFMAKE} distclean; fi
+
+depend:
+	# Nothing here so far...
+
+lint:
+	# Nothing here so far...
+
+tags:
+	# Nothing here so far...
+
+.include <bsd.obj.mk>
+.include <bsd.subdir.mk>
+.include <bsd.man.mk>
