@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.28 2000/02/28 23:41:28 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.29 2000/04/10 13:34:54 jason Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Jason L. Wright (jason@thought.net)
@@ -302,13 +302,15 @@ bridge_ioctl(ifp, cmd, data)
 					break;
 			}
 		}
-		else if (ifs->if_type == IFT_ENC) {
 #if NENC > 0
+		else if (ifs->if_type == IFT_ENC) {
 			/* Can't bind enc0 to a bridge */
-			if (ifs->if_softc == &encif[0])
-				return EINVAL;
-#endif /* NENC */
+			if (ifs->if_softc == &encif[0]) {
+				error = EINVAL;
+				break;
+			}
 		}
+#endif /* NENC */
 		else {
 			error = EINVAL;
 			break;
