@@ -1927,13 +1927,19 @@ Lbootnot040:
 
 not147:
 	movl	#0xfff40000,a0		| MVME16x: "struct vme2reg *"
-	movl	a0@(60),d0
+	movl	a0@(0x60),d0
 	movl	d0,d1
 	andl	#0x40000000,d1		| is VME2_TCTL_SCON set?
 	beq	1f			| not SCON. may not use SRESET.
 	orw	#0x00800000,d0		| ok, assert VME2_TCTL_SRST
-	movl	d0,a0@(60)
+	movl	d0,a0@(0x60)
 1:
+	| lets try the local bus reset
+	movl	#0xfff40000,a0		| MVME16x: "struct vme2reg *"
+	movl	a0@(0x104),d0
+	orw	#0x00000080,d0
+	movl	d0,a0@(0x104)
+	| lets try jumping off to rom.
 	movl	#0xff800000,a0		| if we get here, SRESET did not work.
 	movl	a0@(4),a0		| try jumping directly to the ROM.
 	jsr	a0@
