@@ -1,5 +1,5 @@
-$OpenBSD: TO-DO,v 1.15 1999/07/17 21:48:51 niklas Exp $
-$EOM: TO-DO,v 1.41 1999/07/16 09:21:16 niklas Exp $
+$OpenBSD: TO-DO,v 1.16 1999/07/18 09:33:06 niklas Exp $
+$EOM: TO-DO,v 1.42 1999/07/18 09:12:57 niklas Exp $
 
 This file is pretty lame as it should really contain a lot more given that
 the program is far from ready in any area.
@@ -119,3 +119,19 @@ the program is far from ready in any area.
 
 * See to the commit bit will never be used in phase 1.  Give INVALID-FLAGS
   if seeing it.
+
+* Can we do the X.509 stuff optional for systems without libcrypto?
+
+* Base mode.
+
+* IKECFG
+
+* XAUTH framework.
+
+* PKCS#11
+
+* XAUTH hybrid frame work.
+
+* Specify extra certificates to send somehow.
+
+* Handle CERTs anywhere in an exchange.
