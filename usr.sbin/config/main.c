@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.21 2001/12/05 10:11:23 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.22 2001/12/11 23:47:00 miod Exp $	*/
 /*	$NetBSD: main.c,v 1.22 1997/02/02 21:12:33 thorpej Exp $	*/
 
 /*
@@ -169,8 +169,14 @@ main(argc, argv)
 	if (argc > 1 || (eflag && argv[0] == NULL))
 		usage();
 
-	if (eflag)
+	if (eflag) {
+#ifdef MAKE_BOOTSTRAP
+		fprintf(stderr, "config: UKC not available in this binary\n");
+		exit(1);
+#else
 		return (ukc(argv[0], outfile, uflag, fflag));
+#endif
+	}
 
 	conffile = (argc == 1) ? argv[0] : "CONFIG";
 	if (firstfile(conffile)) {
