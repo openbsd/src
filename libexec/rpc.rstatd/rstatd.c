@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstatd.c,v 1.6 2001/07/08 21:18:10 deraadt Exp $	*/
+/*	$OpenBSD: rstatd.c,v 1.7 2001/11/18 23:45:39 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1993, John Brezak
@@ -34,19 +34,27 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: rstatd.c,v 1.6 2001/07/08 21:18:10 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: rstatd.c,v 1.7 2001/11/18 23:45:39 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdio.h>
-#include <rpc/rpc.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include <signal.h>
 #include <syslog.h>
+#include <errno.h>
 #include <stdlib.h>
+#include <rpc/rpc.h>
 #include <rpcsvc/rstat.h>
 
-extern void rstat_service();
+extern int __svc_fdsetsize;
+extern fd_set *__svc_fdset;
+extern void svc_getreqset2 __P((fd_set *, int));
+extern void rstat_service(struct svc_req *, SVCXPRT *);
+
+void my_svc_run(void);
 
 int from_inetd = 1;     /* started from inetd ? */
 int closedown = 20;	/* how long to wait before going dormant */
@@ -65,11 +73,9 @@ main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	SVCXPRT *transp;
-	int sock = 0;
-	int proto = 0;
+	int sock = 0, proto = 0, fromlen;
 	struct sockaddr_in from;
-	int fromlen;
+	SVCXPRT *transp;
 
 	if (argc == 2)
 		closedown = atoi(argv[1]);
@@ -118,7 +124,49 @@ main(argc, argv)
 		exit(1);
 	}
 
-	svc_run();
+	my_svc_run();
 	syslog(LOG_ERR, "svc_run returned");
 	exit(1);
+}
+
+void
+my_svc_run()
+{
+	extern volatile sig_atomic_t wantupdatestat;
+	extern void updatestat(void);
+	fd_set *fds;
+
+	for (;;) {
+		if (wantupdatestat) {
+			updatestat();
+			wantupdatestat = 0;
+		}
+
+		if (__svc_fdset) {
+			int bytes = howmany(__svc_fdsetsize, NFDBITS) *
+			    sizeof(fd_mask);
+			fds = (fd_set *)malloc(bytes);  /* XXX */
+			memcpy(fds, __svc_fdset, bytes);
+		} else
+			fds = NULL;
+		switch (select(svc_maxfd+1, fds, 0, 0, (struct timeval *)0)) {
+		case -1:
+			if (errno == EINTR) {
+				if (fds)
+					free(fds);
+				continue;
+			}
+			perror("svc_run: - select failed");
+			if (fds)
+				free(fds);
+			return;
+		case 0:
+			if (fds)
+				free(fds);
+			continue;
+		default:
+			svc_getreqset2(fds, svc_maxfd+1);
+			free(fds);
+		}
+	}
 }

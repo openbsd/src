@@ -1,4 +1,4 @@
-/*	$OpenBSD: rstat_proc.c,v 1.19 2001/11/06 19:18:30 art Exp $	*/
+/*	$OpenBSD: rstat_proc.c,v 1.20 2001/11/18 23:45:39 deraadt Exp $	*/
 
 /*
  * Sun RPC is a product of Sun Microsystems, Inc. and is provided for
@@ -31,7 +31,7 @@
 #ifndef lint
 /*static char sccsid[] = "from: @(#)rpc.rstatd.c 1.1 86/09/25 Copyr 1984 Sun Micro";*/
 /*static char sccsid[] = "from: @(#)rstat_proc.c	2.2 88/08/01 4.0 RPCSRC";*/
-static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.19 2001/11/06 19:18:30 art Exp $";
+static char rcsid[] = "$OpenBSD: rstat_proc.c,v 1.20 2001/11/18 23:45:39 deraadt Exp $";
 #endif
 
 /*
@@ -87,9 +87,11 @@ union {
 	struct statstime s3;
 } stats_all;
 
-int stats_service();
-void updatestat(int);
-void setup(void);
+void	updatestat(void);
+void	updatestatsig(int sig);
+void	setup(void);
+
+volatile sig_atomic_t wantupdatestat;
 
 static int stat_is_init = 0;
 
@@ -102,8 +104,8 @@ stat_init()
 {
 	stat_is_init = 1;
 	setup();
-	updatestat(0);
-	(void) signal(SIGALRM, updatestat);	/* XXX huge signal race */
+	updatestat();
+	(void) signal(SIGALRM, updatestatsig);
 	alarm(1);
 }
 
@@ -171,7 +173,13 @@ rstatproc_havedisk_1_svc(arg, rqstp)
 }
 
 void
-updatestat(int sig)
+updatestatsig(int sig)
+{
+	wantupdatestat = 1;
+}
+
+void
+updatestat()
 {
 	int i, mib[2], save_errno = errno;
 	struct uvmexp uvmexp;
