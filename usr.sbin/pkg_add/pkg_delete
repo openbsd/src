@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_delete,v 1.69 2004/11/09 11:11:01 espie Exp $
+# $OpenBSD: pkg_delete,v 1.70 2004/11/11 10:47:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -54,9 +54,6 @@ if (defined $opt_d) {
 	Fatal "Option d is obsolete";
 }
 
-if ($opt_x) {
-	OpenBSD::ProgressMeter::enable();
-}
 if ($opt_f) {
 	%forced = map {($_, 1)} split(/,/, $opt_f);
 }
@@ -77,6 +74,10 @@ $state->{beverbose} = $opt_n || ($opt_v >= 2);
 $state->{extra} = $opt_c;
 $state->{dont_run_scripts} = $opt_I;
 $ENV{'PKG_DELETE_EXTRA'} = $state->{extra} ? "Yes" : "No";
+
+if ($opt_x && $state->{beverbose}) {
+	OpenBSD::ProgressMeter::enable();
+}
 
 # First, resolve pkg names
 

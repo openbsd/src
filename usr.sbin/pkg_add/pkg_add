@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.98 2004/11/09 11:02:42 espie Exp $
+# $OpenBSD: pkg_add,v 1.99 2004/11/11 10:47:26 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -539,10 +539,13 @@ sub really_add($$)
 		require OpenBSD::RequiredBy;
 		require OpenBSD::Update;
 
+		print "Adjusting dependencies for $pkgname\n" 
+		    if $state->{beverbose};
 		my $d = OpenBSD::RequiredBy->new($pkgname);
 		for my $dep (@{$plist->{replacing}->{wantlist}}) {
-			$d->add($dep);
-			OpenBSD::Update::adjust_dependency($dep, $plist->{replacing}->pkgname(), $pkgname);
+			print "\t$dep\n" if $state->{beverbose};
+			$d->add($dep) unless $state->{not};
+			OpenBSD::Update::adjust_dependency($dep, $plist->{replacing}->pkgname(), $pkgname) unless $state->{not};
 		}
 	}
 }
@@ -642,10 +645,6 @@ if ($opt_P) {
 	    Fatal "bad option: -P $opt_P";
 	}
 }
-if ($opt_x) {
-	OpenBSD::ProgressMeter::enable();
-}
-
 $opt_L = '/usr/local' unless defined $opt_L;
 
 my $state = new OpenBSD::Error;
@@ -686,6 +685,10 @@ $state->{dont_run_scripts} = $opt_I;
 $state->{very_verbose} = $opt_v >= 2;
 $state->{verbose} = $opt_v;
 $state->{beverbose} = $opt_n || ($opt_v >= 2);
+
+if ($opt_x && !$state->{beverbose}) {
+	OpenBSD::ProgressMeter::enable();
+}
 
 fill_conflict_lists($state);
 my @todo = (@ARGV);

@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: Update.pm,v 1.19 2004/11/11 10:23:53 espie Exp $
+# $OpenBSD: Update.pm,v 1.20 2004/11/11 10:47:26 espie Exp $
 #
 # Copyright (c) 2004 Marc Espie <espie@openbsd.org>
 #
@@ -77,8 +77,9 @@ sub extract
 
 	print "extracting $tempname\n" if $state->{very_verbose};
 	$file->{name} = $tempname;
-	$file->create();
 	$self->{tempname} = $tempname;
+	return if $state->{not};
+	$file->create();
 }
 
 package OpenBSD::PackingElement::Dir;
@@ -179,13 +180,16 @@ sub can_do
 	$state->{libs_to_check} = [];
 	my $plist = OpenBSD::PackingList->fromfile(installed_info($toreplace).CONTENTS);
 	$plist->visit('can_update', $state);
+	if ($state->{okay} == 0) {
+		print "Old package contains impossible to update elements\n";
+	}
 	if (-f $$r) {
 		$wantlist = $r->list();
 		my $done_wanted = {};
 		for my $wanting (@$wantlist) {
 			next if defined $done_wanted->{$wanting};
 			$done_wanted->{$wanting} = 1;
-			print "Verifying dependencies still match for $wanting\n";
+			print "Verifying dependencies still match for $wanting\n" if $state->{verbose};
 			my $p2 = OpenBSD::PackingList->fromfile(installed_info($wanting).CONTENTS,
 			    \&OpenBSD::PackingList::DependOnly);
 			$p2->visit('validate_depend', $state, $wanting, $toreplace, $replacement);
@@ -233,9 +237,12 @@ sub split_libs
 
 sub walk_depends_closure
 {
-	my ($start, $name) = @_;
+	my ($start, $name, $state) = @_;
 	my @todo = ($start);
 	my $done = {};
+
+	print "Packages that depend on those shared libraries:\n" 
+	    if $state->{beverbose};
 
 	my $write = OpenBSD::RequiredBy->new($name);
 
@@ -247,11 +254,12 @@ sub walk_depends_closure
 			for my $pkg2 (@$list) {
 				next if $done->{$pkg2};
 				push(@todo, $pkg2);
-				$write->add($pkg2);
+				print "\t$pkg2\n" if $state->{beverbose};
+				$write->add($pkg2) unless $state->{not};
 				my $contents = installed_info($pkg2).CONTENTS;
 				my $plist = OpenBSD::PackingList->fromfile($contents);
 				OpenBSD::PackingElement::PkgDep->add($plist, $name);
-				$plist->tofile($contents);
+				$plist->tofile($contents) unless $state->{not};
 				$done->{$pkg2} = 1;
 			}
 		}
@@ -268,23 +276,30 @@ sub save_old_libraries
 	my $libs = {};
 	my $p = {};
 
+	print "Looking for changes in shared libraries\n" 
+	    if $state->{beverbose};
 	$old_plist->visit('mark_lib', $libs, $p);
 	$new_plist->visit('unmark_lib', $libs, $p);
 
+	print "Libraries to keep: ", join(",", sort(keys %$libs)), "\n" 
+	    if $state->{beverbose};
 	if (%$libs) {
 		my $stub_list = split_libs($old_plist, $libs);
 		my $stub_name = $stub_list->pkgname();
 		my $dest = installed_info($stub_name);
-		mkdir($dest);
-		my $oldname = $old_plist->pkgname();
-		open my $comment, '>', $dest.COMMENT;
-		print $comment "Stub libraries for $oldname";
-		close $comment;
-		link($dest.COMMENT, $dest.DESC);
-		$stub_list->tofile($dest.CONTENTS);
-		$old_plist->tofile(installed_info($oldname).CONTENTS);
+		print "Keeping them in $stub_name\n" if $state->{beverbose};
+		unless ($state->{not}) {
+			mkdir($dest);
+			my $oldname = $old_plist->pkgname();
+			open my $comment, '>', $dest.COMMENT;
+			print $comment "Stub libraries for $oldname";
+			close $comment;
+			link($dest.COMMENT, $dest.DESC);
+			$stub_list->tofile($dest.CONTENTS);
+			$old_plist->tofile(installed_info($oldname).CONTENTS);
+		}
 
-		walk_depends_closure($old_plist->pkgname(), $stub_name);
+		walk_depends_closure($old_plist->pkgname(), $stub_name, $state);
 	}
 }
 
