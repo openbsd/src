@@ -1,4 +1,4 @@
-/*	$OpenBSD: stdlib.h,v 1.4 1997/09/21 10:45:53 niklas Exp $	*/
+/*	$OpenBSD: stdlib.h,v 1.5 1997/12/09 13:32:36 deraadt Exp $	*/
 /*	$NetBSD: stdlib.h,v 1.25 1995/12/27 21:19:08 jtc Exp $	*/
 
 /*-
@@ -194,7 +194,7 @@ void	 srand48 __P((long));
 
 u_int32_t arc4random __P((void));
 void	arc4random_stir __P((void));
-void	arc4random_addrandom __P((u_char *, int));
+void	arc4random_addrandom __P((unsigned char *, int));
 #endif /* !_ANSI_SOURCE && !_POSIX_SOURCE */
 
 __END_DECLS
