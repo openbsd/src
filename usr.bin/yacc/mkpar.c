@@ -1,4 +1,4 @@
-/*	$OpenBSD: mkpar.c,v 1.11 2003/06/19 16:34:53 pvalchev Exp $	*/
+/*	$OpenBSD: mkpar.c,v 1.12 2004/08/08 20:13:13 deraadt Exp $	*/
 /*	$NetBSD: mkpar.c,v 1.4 1996/03/19 03:21:39 jtc Exp $	*/
 
 /*
@@ -356,7 +356,7 @@ sole_reduction(int stateno)
     action *p;
 
     count = 0;
-    ruleno = 0; 
+    ruleno = 0;
     for (p = parser[stateno]; p; p = p->next)
     {
 	if (p->action_code == SHIFT && p->suppressed == 0)
@@ -386,7 +386,7 @@ defreds(void)
     for (i = 0; i < nstates; i++)
 	defred[i] = sole_reduction(i);
 }
- 
+
 void
 free_action_row(action *p)
 {

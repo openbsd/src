@@ -1,4 +1,4 @@
-/*	$OpenBSD: reader.c,v 1.16 2004/01/06 05:35:26 deraadt Exp $	*/
+/*	$OpenBSD: reader.c,v 1.17 2004/08/08 20:13:13 deraadt Exp $	*/
 /*	$NetBSD: reader.c,v 1.5 1996/03/19 03:21:43 jtc Exp $	*/
 
 /*
@@ -83,7 +83,7 @@ int keyword(void);
 void copy_ident(void);
 void copy_text(void);
 void copy_union(void);
-int hexval(int); 
+int hexval(int);
 bucket * get_literal(void);
 int is_reserved(char *);
 bucket * get_name(void);
@@ -756,7 +756,7 @@ get_literal(void)
     n = cinc;
     s = MALLOC(n);
     if (s == 0) no_space();
-    
+
     for (i = 0; i < n; ++i)
 	s[i] = cache[i];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: output.c,v 1.12 2004/01/06 05:35:26 deraadt Exp $	*/
+/*	$OpenBSD: output.c,v 1.13 2004/08/08 20:13:13 deraadt Exp $	*/
 /*	$NetBSD: output.c,v 1.4 1996/03/19 03:21:41 jtc Exp $	*/
 
 /*
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)output.c	5.7 (Berkeley) 5/24/93";
 #else
-static char rcsid[] = "$OpenBSD: output.c,v 1.12 2004/01/06 05:35:26 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: output.c,v 1.13 2004/08/08 20:13:13 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,6 @@ output_rule_data(void)
     int i;
     int j;
 
- 
     fprintf(output_file,
 	"#if defined(__cplusplus) || defined(__STDC__)\n"
 	"const short %slhs[] =\n"
