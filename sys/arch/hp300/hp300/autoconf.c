@@ -1,4 +1,4 @@
-/*	$OpenBSD: autoconf.c,v 1.31 2005/01/16 17:43:04 millert Exp $	*/
+/*	$OpenBSD: autoconf.c,v 1.32 2005/02/22 22:11:45 miod Exp $	*/
 /*	$NetBSD: autoconf.c,v 1.45 1999/04/10 17:31:02 kleink Exp $	*/
 
 /*
@@ -165,6 +165,7 @@ ddlist_t	dev_data_list;	  	/* all dev_datas */
 ddlist_t	dev_data_list_hpib;	/* hpib controller dev_datas */
 ddlist_t	dev_data_list_scsi;	/* scsi controller dev_datas */
 
+void	diskconf(void);
 void	setroot(void);
 void	swapconf(void);
 void	findbootdev(void);
@@ -275,16 +276,23 @@ cpu_configure()
 		}
 	}
 
+	md_diskconf = diskconf;
+
+	cold = 0;
+}
+
+void
+diskconf()
+{
+
 	setroot();
 	swapconf();
 
 	/*
-	 * Set bootdev based on how we mounted root.
+	 * Set bootdev based on the device we booted from.
 	 * This is given to the boot program when we reboot.
 	 */
 	setbootdev();
-
-	cold = 0;
 }
 
 /**********************************************************************
