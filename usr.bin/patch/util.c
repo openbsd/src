@@ -1,7 +1,7 @@
-/*	$OpenBSD: util.c,v 1.5 1999/01/03 05:33:48 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.6 1999/01/11 00:16:32 marc Exp $	*/
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.5 1999/01/03 05:33:48 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.6 1999/01/11 00:16:32 marc Exp $";
 #endif /* not lint */
 
 #include "EXTERN.h"
@@ -418,7 +418,7 @@ int assume_exists;
 	char *filebase = basename(name);
 	char *filedir = dirname(name);
 
-#define try(f, a1, a2, a3) (Snprintf(tmpbuf, sizeof tmpbuf, f, a1, a2), stat(tmpbuf, &filestat) == 0)
+#define try(f, a1, a2, a3) (Snprintf(tmpbuf, sizeof tmpbuf, f, a1, a2, a3), stat(tmpbuf, &filestat) == 0)
 	if (   try("%s/RCS/%s%s", filedir, filebase, RCSSUFFIX)
 	    || try("%s/RCS/%s%s", filedir, filebase,        "")
 	    || try(    "%s/%s%s", filedir, filebase, RCSSUFFIX)
