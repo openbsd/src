@@ -1,4 +1,4 @@
-/*	$OpenBSD: sd.c,v 1.12 1997/07/13 09:48:00 downsj Exp $	*/
+/*	$OpenBSD: sd.c,v 1.13 1998/03/06 22:52:42 millert Exp $	*/
 /*	$NetBSD: sd.c,v 1.34 1997/07/10 18:14:10 kleink Exp $	*/
 
 /*
@@ -150,11 +150,15 @@ sdgetgeom(sc)
 		struct scsi_modesense_hdr	header;
 		struct scsi_geometry		geom;
 	} sensebuf;
-	struct scsi_fmt_cdb modesense_geom = {
-		6,
-		{ CMD_MODE_SENSE, 0, 0x04, 0, sizeof(sensebuf), 0 }
-	};
+	struct scsi_fmt_cdb modesense_geom;
 	int ctlr, slave, unit;
+
+	/* XXX - if we try to do this in the declaration gcc uses memset() */
+	bzero(&modesense_geom, sizeof(modesense_geom));
+	modesense_geom.len = 6;
+	modesense_geom.cdb[0] = CMD_MODE_SENSE;
+	modesense_geom.cdb[2] = 0x04;
+	modesense_geom.cdb[4] = sizeof(sensebuf);
 
 	ctlr = sc->sc_dev.dv_parent->dv_unit;
 	slave = sc->sc_target;
