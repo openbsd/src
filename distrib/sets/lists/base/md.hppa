@@ -1857,6 +1857,8 @@
 ./usr/libdata/perl5/site_perl/hppa-openbsd/zlib.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/esareg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/pci/esavar.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/rtreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/rtvar.ph
 ./usr/local/libdata/perl5/site_perl/hppa-openbsd
 ./usr/mdec/boot
 ./usr/mdec/bootxx

@@ -730,6 +730,8 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/pcppivar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/pnpdevs.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/pssreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/rtreg.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/rtvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/sbdspvar.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/sbreg.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/dev/isa/sbvar.ph

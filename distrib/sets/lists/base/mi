@@ -1437,6 +1437,7 @@
 ./usr/share/calendar/calendar.holiday
 ./usr/share/calendar/calendar.judaic
 ./usr/share/calendar/calendar.music
+./usr/share/calendar/calendar.openbsd
 ./usr/share/calendar/calendar.pagan
 ./usr/share/calendar/calendar.russian
 ./usr/share/calendar/calendar.usholiday

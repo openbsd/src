@@ -736,6 +736,8 @@
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/pcppivar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/pnpdevs.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/pssreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/rtreg.ph
+./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/rtvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/sbdspvar.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/sbreg.ph
 ./usr/libdata/perl5/site_perl/i386-openbsd/dev/isa/sbvar.ph

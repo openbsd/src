@@ -332,6 +332,8 @@
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/pcppivar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/pnpdevs.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/pssreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/rtreg.ph
+./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/rtvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/sbdspvar.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/sbreg.ph
 ./usr/libdata/perl5/site_perl/vax-openbsd/dev/isa/sbvar.ph
