@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.217 2000/02/11 03:50:10 jason Exp 
+ *		OpenBSD: pcidevs,v 1.218 2000/02/11 05:59:58 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -2341,6 +2341,18 @@ struct pci_knowndev pci_knowndevs[] = {
 	    0,
 	    "Netgear",
 	    "GA620",
+	},
+	{
+	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_CMI8338A,
+	    0,
+	    "C-Media Electronics Inc.",
+	    "CMI8338A Audio",
+	},
+	{
+	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_CMI8338B,
+	    0,
+	    "C-Media Electronics Inc.",
+	    "CMI8338B Audio",
 	},
 	{
 	    PCI_VENDOR_CMI, PCI_PRODUCT_CMI_CMI8738,

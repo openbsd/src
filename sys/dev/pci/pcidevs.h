@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.217 2000/02/11 03:50:10 jason Exp 
+ *		OpenBSD: pcidevs,v 1.218 2000/02/11 05:59:58 mickey Exp 
  */
 
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
@@ -1107,6 +1107,8 @@
 #define	PCI_PRODUCT_NETGEAR_GA620	0x620a		/* GA620 */
 
 /* C-Media Electronics Inc */
+#define	PCI_PRODUCT_CMI_CMI8338A	0x0100		/* CMI8338A Audio */
+#define	PCI_PRODUCT_CMI_CMI8338B	0x0101		/* CMI8338B Audio */
 #define	PCI_PRODUCT_CMI_CMI8738	0x0111		/* CMI8738/C3DX Audio */
 
 /* NetVin */
