@@ -697,7 +697,7 @@ check_mounted(const char *fname, mode_t mode)
 
     if (!(n = getmntinfo(&mp, MNT_NOWAIT)))
 	err(1, "getmntinfo");
-    len = strlen(_PATH_DEV);
+    len = sizeof(_PATH_DEV) - 1;
     s1 = fname;
     if (!strncmp(s1, _PATH_DEV, len))
 	s1 += len;

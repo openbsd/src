@@ -16,7 +16,7 @@
  * IMPLIED WARRANTIES, INCLUDING, WITHOUT LIMITATION, THE IMPLIED
  * WARRANTIES OF MERCHANTIBILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  *
- *  $OpenBSD: physical.c,v 1.31 2001/08/19 23:22:18 brian Exp $
+ *  $OpenBSD: physical.c,v 1.32 2002/02/21 07:32:55 fgsch Exp $
  *
  */
 
@@ -593,7 +593,7 @@ iov2physical(struct datalink *dl, struct iovec *iov, int *niov, int maxiov,
   p->desc.Write = physical_DescriptorWrite;
   p->type = PHYS_DIRECT;
   p->dl = dl;
-  len = strlen(_PATH_DEV);
+  len = sizeof(_PATH_DEV) - 1;
   p->out = NULL;
   p->connect_count = 1;
 
@@ -953,7 +953,7 @@ physical_DeleteQueue(struct physical *p)
 void
 physical_SetDevice(struct physical *p, const char *name)
 {
-  int len = strlen(_PATH_DEV);
+  int len = sizeof(_PATH_DEV) - 1;
 
   if (name != p->name.full) {
     strncpy(p->name.full, name, sizeof p->name.full - 1);

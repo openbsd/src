@@ -1,4 +1,4 @@
-/*	$OpenBSD: write.c,v 1.15 2002/02/16 21:27:59 millert Exp $	*/
+/*	$OpenBSD: write.c,v 1.16 2002/02/21 07:32:55 fgsch Exp $	*/
 /*	$NetBSD: write.c,v 1.5 1995/08/31 21:48:32 jtc Exp $	*/
 
 /*
@@ -47,7 +47,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)write.c	8.2 (Berkeley) 4/27/95";
 #endif
-static char *rcsid = "$OpenBSD: write.c,v 1.15 2002/02/16 21:27:59 millert Exp $";
+static char *rcsid = "$OpenBSD: write.c,v 1.16 2002/02/21 07:32:55 fgsch Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -111,8 +111,8 @@ main(argc, argv)
 		do_write(tty, mytty, myuid);
 		break;
 	case 3:
-		if (!strncmp(argv[2], _PATH_DEV, strlen(_PATH_DEV)))
-			argv[2] += strlen(_PATH_DEV);
+		if (!strncmp(argv[2], _PATH_DEV, sizeof(_PATH_DEV) - 1))
+			argv[2] += sizeof(_PATH_DEV) - 1;
 		if (utmp_chk(argv[1], argv[2]))
 			errx(1, "%s is not logged in on %s",
 			    argv[1], argv[2]);

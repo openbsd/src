@@ -1074,8 +1074,8 @@ clean_ttyname (char *tty)
 {
   char *res = tty;
 
-  if (strncmp (res, _PATH_DEV, strlen(_PATH_DEV)) == 0)
-    res += strlen(_PATH_DEV);
+  if (strncmp (res, _PATH_DEV, sizeof(_PATH_DEV) - 1) == 0)
+    res += sizeof(_PATH_DEV) - 1;
   if (strncmp (res, "pty/", 4) == 0)
     res += 4;
   if (strncmp (res, "ptym/", 5) == 0)
