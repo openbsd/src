@@ -132,7 +132,7 @@ void	noattach __P((struct device *parent, struct device *self, void *aux));
 /* placeholder definitions for new-style scsi bus/disk/tape drivers */
 
 struct cfattach oldscsibus_ca = { 0, nomatch, noattach };
-struct cfdriver oldscsibus_cd = {NULL, "", DV_DULL };
+struct cfdriver oldscsibus_cd = {NULL, "oldscsibus", DV_DULL };
 
 struct cfattach rz_ca = { 0, nomatch, noattach };
 struct cfdriver rz_cd	= { NULL, "rz", DV_DULL };
