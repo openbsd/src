@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.13 1997/10/16 10:40:09 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.14 1997/10/16 10:42:45 deraadt Exp $
 
 PROG=	disklabel
 SRCS=	disklabel.c dkcksum.c editor.c manual.c
@@ -6,6 +6,7 @@ DPADD=	${LIBUTIL}
 LDADD=	-lutil
 MAN=	disklabel.5 disklabel.8
 
+CLEANFILES+=manual.c
 manual.c:	${.OBJDIR}/disklabel.cat8
 	(echo 'char manpage[] = "\\'; \
 	sed -e 's/$$/\\n\\/' ${.OBJDIR}/disklabel.cat8; \

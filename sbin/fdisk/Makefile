@@ -1,5 +1,5 @@
 #
-#	$OpenBSD: Makefile,v 1.7 1997/10/16 10:35:05 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.8 1997/10/16 10:42:44 deraadt Exp $
 #
 # Copyright (c) 1997 Tobias Weingartner
 # All rights reserved.
@@ -36,6 +36,7 @@ DPADD=	${LIBUTIL}
 LDADD=	-lutil
 MAN=	fdisk.8
 
+CLEANFILES+=manual.c
 manual.c:	${.OBJDIR}/fdisk.cat8
 	(echo 'char manpage[] = "\\'; \
 	sed -e 's/$$/\\n\\/' ${.OBJDIR}/fdisk.cat8; \
