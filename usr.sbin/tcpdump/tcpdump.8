@@ -1,4 +1,4 @@
-.\"	$OpenBSD: tcpdump.8,v 1.35 2003/06/12 12:59:53 jmc Exp $
+.\"	$OpenBSD: tcpdump.8,v 1.36 2003/07/14 13:46:14 jmc Exp $
 .\"
 .\" Copyright (c) 1987, 1988, 1989, 1990, 1991, 1992, 1994, 1995, 1996
 .\"	The Regents of the University of California.  All rights reserved.
@@ -420,7 +420,7 @@ which is equivalent to:
 .Bd -ragged -offset indent
 .Cm ether proto
 .Ar ip
-.Cm Cm and host
+.Cm and host
 .Ar host
 .Pp
 .Ed
@@ -1530,7 +1530,6 @@ requests and replies are printed as:
 .Ar dst Ns . Ns Ar xid :
 .Ns Ar reply stat len op results
 .Ed
-.Pp
 .Bd -literal -offset indent
 sushi.6709 > wrl.nfs: 112 readlink fh 21,24/10.73165
 wrl.nfs > sushi.6709: reply ok 40 readlink "../var"
@@ -1647,7 +1646,7 @@ If a reply does not closely follow the
 corresponding request, it might not be parsable.
 .Pp
 .Tn Em KIP AppleTalk
-.Em Pq Tn DDP No in Tn UDP
+.Pq Tn DDP No in Tn UDP
 .Pp
 AppleTalk
 .Tn DDP
@@ -1738,7 +1737,7 @@ and packet size.
 .Pp
 .Tn NBP
 packets are formatted like the following examples:
-.Bd -literal -offet indent
+.Bd -literal
 icsd-net.112.220 > jssmag.2: nbp-lkup 190: "=:LaserWriter@*"
 jssmag.209.2 > icsd-net.112.220: nbp-reply 190: "RM1140:LaserWriter@*" 250
 techpit.2 > icsd-net.112.220: nbp-reply 190: "techpit:LaserWriter@*" 186
