@@ -35,7 +35,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getcap.c,v 1.3 1996/09/15 09:31:00 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getcap.c,v 1.4 1997/02/01 04:35:33 deraadt Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/types.h>
@@ -241,7 +241,7 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 		 */
 
 		if (fd >= 0) {
-			(void)lseek(fd, (off_t)0, L_SET);
+			(void)lseek(fd, (off_t)0, SEEK_SET);
 			myfd = 0;
 		} else {
 			(void)snprintf(pbuf, sizeof(pbuf), "%s.db", *db_p);
@@ -382,8 +382,10 @@ getent(cap, len, db_array, fd, name, depth, nfield)
 			break;
 	}
 
-	if (!foundit)
+	if (!foundit) {
+		free(record);
 		return (-1);
+	}
 
 	/*
 	 * Got the capability record, but now we have to expand all tc=name
