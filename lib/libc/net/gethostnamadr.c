@@ -52,7 +52,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.7 1996/08/19 08:28:40 tholo Exp $";
+static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.8 1996/09/15 10:09:12 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -70,6 +70,7 @@ static char rcsid[] = "$OpenBSD: gethostnamadr.c,v 1.7 1996/08/19 08:28:40 tholo
 #include <rpc/rpc.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
+#include "ypinternal.h"
 #endif
 
 #define	MAXALIASES	35

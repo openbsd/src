@@ -33,7 +33,7 @@
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: getpwent.c,v 1.4 1996/09/15 09:31:02 tholo Exp $";
+static char rcsid[] = "$OpenBSD: getpwent.c,v 1.5 1996/09/15 10:09:11 tholo Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/param.h>
@@ -54,6 +54,7 @@ static char rcsid[] = "$OpenBSD: getpwent.c,v 1.4 1996/09/15 09:31:02 tholo Exp 
 #include <rpc/rpc.h>
 #include <rpcsvc/yp.h>
 #include <rpcsvc/ypclnt.h>
+#include "ypinternal.h"
 #endif
 
 static struct passwd _pw_passwd;	/* password structure */
