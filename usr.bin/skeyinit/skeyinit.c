@@ -1,4 +1,4 @@
-/*	$OpenBSD: skeyinit.c,v 1.38 2002/06/07 21:35:26 millert Exp $	*/
+/*	$OpenBSD: skeyinit.c,v 1.39 2002/06/07 21:53:43 millert Exp $	*/
 
 /* OpenBSD S/Key (skeyinit.c)
  *
@@ -53,6 +53,7 @@ main(int argc, char **argv)
 	char	seed[SKEY_MAX_SEED_LEN + 1];
 	char    buf[256], key[SKEY_BINKEY_SIZE], filename[PATH_MAX], *ht;
 	char    lastc, me[UT_NAMESIZE + 1], *p, *auth_type;
+	u_int32_t noise;
 	struct skey skey;
 	struct passwd *pp;
 
@@ -60,7 +61,7 @@ main(int argc, char **argv)
 	defaultsetup = 1;
 	ht = auth_type = NULL;
 
-	/* Build up a default seed based on the hostname and time */
+	/* Build up a default seed based on the hostname and some noise */
 	if (gethostname(hostname, sizeof(hostname)) < 0)
 		err(1, "gethostname");
 	for (i = 0, p = seed; hostname[i] && i < SKEY_NAMELEN; i++) {
@@ -70,6 +71,11 @@ main(int argc, char **argv)
 			*p++ = hostname[i];
 		} else if (isdigit(hostname[i]))
 			*p++ = hostname[i];
+	}
+	noise = arc4random();
+	for (i = 0; i < 5; i++) {
+		*p++ = (noise % 10) + '0';
+		noise /= 10;
 	}
 	*p = '\0';
 
