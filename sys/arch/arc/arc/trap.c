@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.17 1998/03/25 11:51:36 pefo Exp $	*/
+/*	$OpenBSD: trap.c,v 1.18 1998/09/15 10:58:54 pefo Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,6 @@
 
 #include <machine/trap.h>
 #include <machine/psl.h>
-#include <machine/reg.h>
 #include <machine/cpu.h>
 #include <machine/pio.h>
 #include <machine/intr.h>
@@ -70,6 +69,7 @@
 #include <machine/pmap.h>
 #include <machine/mips_opcode.h>
 #include <machine/frame.h>
+#include <machine/regnum.h>
 
 #include <vm/vm.h>
 #include <vm/vm_kern.h>
@@ -224,8 +224,8 @@ struct trapdebug {		/* trap history buffer for debugging */
 
 void trapDump __P((char *));
 
-void stacktrace __P((int *));
-void logstacktrace __P((int *));
+void stacktrace __P((struct trap_frame *));
+void logstacktrace __P((struct trap_frame *));
 int  kdbpeek __P((int *));
 #if defined(DDB)
 int  kdb_trap __P((int, db_regs_t *));
@@ -238,17 +238,18 @@ extern void MipsTLBMiss __P((void));
 
 extern const struct callback *callv;
 extern u_long intrcnt[];
-extern void MipsSwitchFPState __P((struct proc *, int *));
+extern void MipsSwitchFPState __P((struct proc *, struct trap_frame *));
 extern void MipsFPTrap __P((u_int, u_int, u_int));
 extern void arpintr __P((void));
 extern void ipintr __P((void));
 extern void pppintr __P((void));
 
-u_int trap __P((u_int, u_int, u_int, u_int, struct trap_frame));
-void interrupt __P((u_int, u_int, u_int, u_int, u_int));
-void softintr __P((u_int, u_int));
+u_int trap __P((struct trap_frame *));
+void child_return __P((struct proc *p));
+void interrupt __P((struct trap_frame *));
+void softintr __P((u_int));
 int cpu_singlestep __P((struct proc *));
-u_int MipsEmulateBranch __P((int *, int, int, u_int));
+u_int MipsEmulateBranch __P((struct trap_frame *, int, int, u_int));
 
 /*
  * Handle an exception.
@@ -258,12 +259,8 @@ u_int MipsEmulateBranch __P((int *, int, int, u_int));
  * ((struct pcb *)UADDR)->pcb_onfault is set, otherwise, return old pc.
  */
 u_int
-trap(statusReg, causeReg, vadr, pc, f)
-	u_int statusReg;	/* status register at time of the exception */
-	u_int causeReg;		/* cause register at time of exception */
-	u_int vadr;		/* address (if any) the fault occured on */
-	u_int pc;		/* program counter where to continue */
-	struct trap_frame f;
+trap(trapframe)
+	struct trap_frame *trapframe;
 {
 	int type, i;
 	unsigned ucode = 0;
@@ -275,20 +272,20 @@ trap(statusReg, causeReg, vadr, pc, f)
 	union sigval sv;
 
 #if defined(DDB) || defined(DEBUG)
-	trp->status = statusReg;
-	trp->cause = causeReg;
-	trp->vadr = vadr;
-	trp->pc = pc;
-	trp->ra = !USERMODE(statusReg) ? f.reg[PC] :
-		p->p_md.md_regs[RA];
-	trp->sp = (int)&f;
+	trp->status = trapframe->sr;
+	trp->cause = trapframe->cause;
+	trp->vadr = trapframe->badvaddr;
+	trp->pc = trapframe->pc;
+	trp->ra = !USERMODE(trapframe->sr) ? trapframe->pc :
+		p->p_md.md_regs->ra;
+	trp->sp = (u_int)trapframe;
 	trp->code = 0;
 	if (++trp == &trapdebug[TRAPSIZE])
 		trp = trapdebug;
 #endif
 
-	type = (causeReg & CR_EXC_CODE) >> CR_EXC_CODE_SHIFT;
-	if (USERMODE(statusReg)) {
+	type = (trapframe->cause & CR_EXC_CODE) >> CR_EXC_CODE_SHIFT;
+	if (USERMODE(trapframe->sr)) {
 		type |= T_USER;
 		sticks = p->p_sticks;
 	}
@@ -297,32 +294,32 @@ trap(statusReg, causeReg, vadr, pc, f)
 	 * Enable hardware interrupts if they were on before.
 	 * We only respond to software interrupts when returning to user mode.
 	 */
-	if (statusReg & SR_INT_ENAB)
-		splx((statusReg & HARD_INT_MASK) | SR_INT_ENAB);
+	if (trapframe->sr & SR_INT_ENAB)
+		splx((trapframe->sr & HARD_INT_MASK) | SR_INT_ENAB);
 
 	switch (type) {
 	case T_TLB_MOD:
 		/* check for kernel address */
-		if ((int)vadr < 0) {
+		if ((int)trapframe->badvaddr < 0) {
 			pt_entry_t *pte;
 			unsigned int entry;
 			vm_offset_t pa;
 
-			pte = kvtopte(vadr);
+			pte = kvtopte(trapframe->badvaddr);
 			entry = pte->pt_entry;
 #ifdef DIAGNOSTIC
 			if (!(entry & PG_V) || (entry & PG_M))
 				panic("trap: ktlbmod: invalid pte");
 #endif
-			if (pmap_is_page_ro(pmap_kernel(), mips_trunc_page(vadr), entry)) {
+			if (pmap_is_page_ro(pmap_kernel(), mips_trunc_page(trapframe->badvaddr), entry)) {
 				/* write to read only page in the kernel */
 				ftype = VM_PROT_WRITE;
 				goto kernel_fault;
 			}
 			entry |= PG_M;
 			pte->pt_entry = entry;
-			vadr &= ~PGOFSET;
-			R4K_TLBUpdate(vadr, entry);
+			trapframe->badvaddr &= ~PGOFSET;
+			R4K_TLBUpdate(trapframe->badvaddr, entry);
 			pa = pfn_to_vad(entry);
 #ifdef ATTR
 			pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
@@ -331,7 +328,7 @@ trap(statusReg, causeReg, vadr, pc, f)
 				panic("trap: ktlbmod: unmanaged page");
 			PHYS_TO_VM_PAGE(pa)->flags &= ~PG_CLEAN;
 #endif
-			return (pc);
+			return (trapframe->pc);
 		}
 		/* FALLTHROUGH */
 
@@ -342,24 +339,24 @@ trap(statusReg, causeReg, vadr, pc, f)
 		vm_offset_t pa;
 		pmap_t pmap = &p->p_vmspace->vm_pmap;
 
-		if (!(pte = pmap_segmap(pmap, vadr)))
+		if (!(pte = pmap_segmap(pmap, trapframe->badvaddr)))
 			panic("trap: utlbmod: invalid segmap");
-		pte += (vadr >> PGSHIFT) & (NPTEPG - 1);
+		pte += (trapframe->badvaddr >> PGSHIFT) & (NPTEPG - 1);
 		entry = pte->pt_entry;
 #ifdef DIAGNOSTIC
 		if (!(entry & PG_V) || (entry & PG_M)) {
 			panic("trap: utlbmod: invalid pte");
 		}
 #endif
-		if (pmap_is_page_ro(pmap, (vm_offset_t)mips_trunc_page(vadr), entry)) {
+		if (pmap_is_page_ro(pmap, (vm_offset_t)mips_trunc_page(trapframe->badvaddr), entry)) {
 			/* write to read only page */
 			ftype = VM_PROT_WRITE;
 			goto dofault;
 		}
 		entry |= PG_M;
 		pte->pt_entry = entry;
-		vadr = (vadr & ~PGOFSET) | (pmap->pm_tlbpid << VMTLB_PID_SHIFT);
-		R4K_TLBUpdate(vadr, entry);
+		trapframe->badvaddr = (trapframe->badvaddr & ~PGOFSET) | (pmap->pm_tlbpid << VMTLB_PID_SHIFT);
+		R4K_TLBUpdate(trapframe->badvaddr, entry);
 		pa = pfn_to_vad(entry);
 #ifdef ATTR
 		pmap_attributes[atop(pa)] |= PMAP_ATTR_MOD;
@@ -369,8 +366,8 @@ trap(statusReg, causeReg, vadr, pc, f)
 		}
 		PHYS_TO_VM_PAGE(pa)->flags &= ~PG_CLEAN;
 #endif
-		if (!USERMODE(statusReg))
-			return (pc);
+		if (!USERMODE(trapframe->sr))
+			return (trapframe->pc);
 		goto out;
 	    }
 
@@ -378,15 +375,15 @@ trap(statusReg, causeReg, vadr, pc, f)
 	case T_TLB_ST_MISS:
 		ftype = (type == T_TLB_ST_MISS) ? VM_PROT_WRITE : VM_PROT_READ;
 		/* check for kernel address */
-		if ((int)vadr < 0) {
+		if ((int)trapframe->badvaddr < 0) {
 			vm_offset_t va;
 			int rv;
 
 		kernel_fault:
-			va = trunc_page((vm_offset_t)vadr);
+			va = trunc_page((vm_offset_t)trapframe->badvaddr);
 			rv = vm_fault(kernel_map, va, ftype, FALSE);
 			if (rv == KERN_SUCCESS)
-				return (pc);
+				return (trapframe->pc);
 			if ((i = ((struct pcb *)UADDR)->pcb_onfault) != 0) {
 				((struct pcb *)UADDR)->pcb_onfault = 0;
 				return (onfault_table[i]);
@@ -419,11 +416,11 @@ trap(statusReg, causeReg, vadr, pc, f)
 
 		vm = p->p_vmspace;
 		map = &vm->vm_map;
-		va = trunc_page((vm_offset_t)vadr);
+		va = trunc_page((vm_offset_t)trapframe->badvaddr);
 		rv = vm_fault(map, va, ftype, FALSE);
 #ifdef VMFAULT_TRACE
 		printf("vm_fault(%x (pmap %x), %x (%x), %x, %d) -> %x at pc %x\n",
-		       map, &vm->vm_pmap, va, vadr, ftype, FALSE, rv, pc);
+		    map, &vm->vm_pmap, va, trapframe->badvaddr, ftype, FALSE, rv, trapframe->pc);
 #endif
 		/*
 		 * If this was a stack access we keep track of the maximum
@@ -443,11 +440,11 @@ trap(statusReg, causeReg, vadr, pc, f)
 				rv = KERN_INVALID_ADDRESS;
 		}
 		if (rv == KERN_SUCCESS) {
-			if (!USERMODE(statusReg))
-				return (pc);
+			if (!USERMODE(trapframe->sr))
+				return (trapframe->pc);
 			goto out;
 		}
-		if (!USERMODE(statusReg)) {
+		if (!USERMODE(trapframe->sr)) {
 			if ((i = ((struct pcb *)UADDR)->pcb_onfault) != 0) {
 				((struct pcb *)UADDR)->pcb_onfault = 0;
 				return (onfault_table[i]);
@@ -475,7 +472,7 @@ trap(statusReg, causeReg, vadr, pc, f)
 
 	case T_SYSCALL+T_USER:
 	    {
-		int *locr0 = p->p_md.md_regs;
+		struct trap_frame *locr0 = p->p_md.md_regs;
 		struct sysent *callp;
 		unsigned int code;
 		int numsys;
@@ -486,37 +483,37 @@ trap(statusReg, causeReg, vadr, pc, f)
 
 		cnt.v_syscall++;
 		/* compute next PC after syscall instruction */
-		if ((int)causeReg < 0) {	/* Check BD bit */
-			locr0[PC] = MipsEmulateBranch(locr0, pc, 0, 0);
+		if ((int)trapframe->cause < 0) {	/* Check BD bit */
+			locr0->pc = MipsEmulateBranch(locr0, trapframe->pc, 0, 0);
 		}
 		else {
-			locr0[PC] += 4;
+			locr0->pc += 4;
 		}
 		callp = p->p_emul->e_sysent;
 		numsys = p->p_emul->e_nsysent;
-		code = locr0[V0];
+		code = locr0->v0;
 		switch (code) {
 		case SYS_syscall:
 			/*
 			 * Code is first argument, followed by actual args.
 			 */
-			code = locr0[A0];
+			code = locr0->a0;
 			if (code >= numsys)
 				callp += p->p_emul->e_nosys; /* (illegal) */
 			else
 				callp += code;
 			i = callp->sy_argsize / sizeof(int);
-			args.i[0] = locr0[A1];
-			args.i[1] = locr0[A2];
-			args.i[2] = locr0[A3];
+			args.i[0] = locr0->a1;
+			args.i[1] = locr0->a2;
+			args.i[2] = locr0->a3;
 			if (i > 3) {
-				i = copyin((caddr_t)(locr0[SP] +
+				i = copyin((caddr_t)(locr0->sp +
 						4 * sizeof(int)),
 					(caddr_t)&args.i[3],
 					(u_int)(i - 3) * sizeof(int));
 				if (i) {
-					locr0[V0] = i;
-					locr0[A3] = 1;
+					locr0->v0 = i;
+					locr0->a3 = 1;
 #ifdef SYSCALL_DEBUG
 					scdebug_call(p, code, args.i);
 #endif
@@ -536,22 +533,27 @@ trap(statusReg, causeReg, vadr, pc, f)
 			 * Like syscall, but code is a quad, so as to maintain
 			 * quad alignment for the rest of the arguments.
 			 */
-			code = locr0[A0 + _QUAD_LOWWORD];
+			if(_QUAD_LOWWORD == 0) {
+				code = locr0->a0;
+			}
+			else {
+				code = locr0->a1;
+			}
 			if (code >= numsys)
 				callp += p->p_emul->e_nosys; /* (illegal) */
 			else
 				callp += code; 
 			i = callp->sy_argsize / sizeof(int);
-			args.i[0] = locr0[A2];
-			args.i[1] = locr0[A3];
+			args.i[0] = locr0->a2;
+			args.i[1] = locr0->a3;
 			if (i > 2) {
-				i = copyin((caddr_t)(locr0[SP] +
+				i = copyin((caddr_t)(locr0->sp +
 						4 * sizeof(int)),
 					(caddr_t)&args.i[2],
 					(u_int)(i - 2) * sizeof(int));
 				if (i) {
-					locr0[V0] = i;
-					locr0[A3] = 1;
+					locr0->v0 = i;
+					locr0->a3 = 1;
 #ifdef SYSCALL_DEBUG
 					scdebug_call(p, code, args.i);
 #endif
@@ -572,18 +574,18 @@ trap(statusReg, causeReg, vadr, pc, f)
 			else
 				callp += code;
 			i = callp->sy_narg;
-			args.i[0] = locr0[A0];
-			args.i[1] = locr0[A1];
-			args.i[2] = locr0[A2];
-			args.i[3] = locr0[A3];
+			args.i[0] = locr0->a0;
+			args.i[1] = locr0->a1;
+			args.i[2] = locr0->a2;
+			args.i[3] = locr0->a3;
 			if (i > 4) {
-				i = copyin((caddr_t)(locr0[SP] +
+				i = copyin((caddr_t)(locr0->sp +
 						4 * sizeof(int)),
 					(caddr_t)&args.i[4],
 					(u_int)(i - 4) * sizeof(int));
 				if (i) {
-					locr0[V0] = i;
-					locr0[A3] = 1;
+					locr0->v0 = i;
+					locr0->a3 = 1;
 #ifdef SYSCALL_DEBUG
 					scdebug_call(p, code, args.i);
 #endif
@@ -605,7 +607,7 @@ trap(statusReg, causeReg, vadr, pc, f)
 			ktrsyscall(p->p_tracep, code, callp->sy_argsize, args.i);
 #endif
 		rval[0] = 0;
-		rval[1] = locr0[V1];
+		rval[1] = locr0->v1;
 #if defined(DDB) || defined(DEBUG)
 		if (trp == trapdebug)
 			trapdebug[TRAPSIZE - 1].code = code;
@@ -622,11 +624,11 @@ trap(statusReg, causeReg, vadr, pc, f)
 #if defined(DDB) || defined(DEBUG)
 		{ int s;
 		s = splhigh();
-		trp->status = statusReg;
-		trp->cause = causeReg;
-		trp->vadr = locr0[SP];
-		trp->pc = locr0[PC];
-		trp->ra = locr0[RA];
+		trp->status = trapframe->sr;
+		trp->cause = trapframe->cause;
+		trp->vadr = locr0->sp;
+		trp->pc = locr0->pc;
+		trp->ra = locr0->ra;
 		trp->code = -code;
 		if (++trp == &trapdebug[TRAPSIZE])
 			trp = trapdebug;
@@ -635,21 +637,21 @@ trap(statusReg, causeReg, vadr, pc, f)
 #endif
 		switch (i) {
 		case 0:
-			locr0[V0] = rval[0];
-			locr0[V1] = rval[1];
-			locr0[A3] = 0;
+			locr0->v0 = rval[0];
+			locr0->v1 = rval[1];
+			locr0->a3 = 0;
 			break;
 
 		case ERESTART:
-			locr0[PC] = pc;
+			locr0->pc = trapframe->pc;
 			break;
 
 		case EJUSTRETURN:
 			break;	/* nothing to do */
 
 		default:
-			locr0[V0] = i;
-			locr0[A3] = 1;
+			locr0->v0 = i;
+			locr0->a3 = 1;
 		}
 		if(code == SYS_ptrace)
 			R4K_FlushCache();
@@ -666,8 +668,8 @@ trap(statusReg, causeReg, vadr, pc, f)
 
 #ifdef DDB
 	case T_BREAK:
-		kdb_trap(type, &f);
-		return(f.reg[PC]);
+		kdb_trap(type, trapframe);
+		return(trapframe->pc);
 #endif
 
 	case T_BREAK+T_USER:
@@ -677,15 +679,15 @@ trap(statusReg, causeReg, vadr, pc, f)
 		struct iovec iov;
 
 		/* compute address of break instruction */
-		va = pc;
-		if ((int)causeReg < 0)
+		va = trapframe->pc;
+		if ((int)trapframe->cause < 0)
 			va += 4;
 
 		/* read break instruction */
 		instr = fuiword((caddr_t)va);
 #if 0
 		printf("trap: %s (%d) breakpoint %x at %x: (adr %x ins %x)\n",
-			p->p_comm, p->p_pid, instr, pc,
+			p->p_comm, p->p_pid, instr, trapframe->pc,
 			p->p_md.md_ss_addr, p->p_md.md_ss_instr); /* XXX */
 #endif
 		if (p->p_md.md_ss_addr != va || instr != BREAK_SSTEP) {
@@ -725,14 +727,14 @@ trap(statusReg, causeReg, vadr, pc, f)
 		break;
 
 	case T_COP_UNUSABLE+T_USER:
-		if ((causeReg & CR_COP_ERR) != 0x10000000) {
+		if ((trapframe->cause & CR_COP_ERR) != 0x10000000) {
 			i = SIGILL;	/* only FPU instructions allowed */
 			typ = ILL_ILLOPC;
 			break;
 		}
 		MipsSwitchFPState(machFPCurProcPtr, p->p_md.md_regs);
 		machFPCurProcPtr = p;
-		p->p_md.md_regs[PS] |= SR_COP_1_BIT;
+		p->p_md.md_regs->sr |= SR_COP_1_BIT;
 		p->p_md.md_flags |= MDP_FPUSED;
 		goto out;
 
@@ -741,12 +743,12 @@ trap(statusReg, causeReg, vadr, pc, f)
 		trapDump("fpintr");
 #else
 		printf("FPU Trap: PC %x CR %x SR %x\n",
-			pc, causeReg, statusReg);
+			trapframe->pc, trapframe->cause, trapframe->sr);
 		goto err;
 #endif
 
 	case T_FPE+T_USER:
-		MipsFPTrap(statusReg, causeReg, pc);
+		MipsFPTrap(trapframe->sr, trapframe->cause, trapframe->pc);
 		goto out;
 
 	case T_OVFLOW+T_USER:
@@ -766,15 +768,15 @@ trap(statusReg, causeReg, vadr, pc, f)
 	default:
 	err:
 #ifdef DEBUG
-		stacktrace(!USERMODE(statusReg) ? f.reg : p->p_md.md_regs);
+		stacktrace(!USERMODE(trapframe->sr) ? &f : p->p_md.md_regs);
 		trapDump("trap");
 #endif
 		panic("trap");
 	}
-	p->p_md.md_regs[PC] = pc;
-	p->p_md.md_regs[CAUSE] = causeReg;
-	p->p_md.md_regs[BADVADDR] = vadr;
-	sv.sival_int = vadr;
+	p->p_md.md_regs->pc = trapframe->pc;
+	p->p_md.md_regs->cause = trapframe->cause;
+	p->p_md.md_regs->badvaddr = trapframe->badvaddr;
+	sv.sival_int = trapframe->badvaddr;
 	trapsignal(p, i, ucode, typ, sv);
 out:
 	/*
@@ -811,11 +813,64 @@ out:
 	if (p->p_flag & P_PROFIL) {
 		extern int psratio;
 
-		addupc_task(p, pc, (int)(p->p_sticks - sticks) * psratio);
+		addupc_task(p, trapframe->pc, (int)(p->p_sticks - sticks) * psratio);
 	}
 
 	curpriority = p->p_priority;
-	return (pc);
+	return (trapframe->pc);
+}
+
+void
+child_return(p)
+	struct proc *p;
+{
+	struct trap_frame *trapframe;
+	int i;
+
+	trapframe = p->p_md.md_regs;
+	trapframe->v0 = 0;
+	trapframe->v1 = 1;
+	trapframe->a3 = 0;
+
+	/* take pending signals */
+	while ((i = CURSIG(p)) != 0)
+		postsig(i);
+	p->p_priority = p->p_usrpri;
+	astpending = 0;
+	if (want_resched) {
+		int s;
+
+		/*
+		 * Since we are curproc, clock will normally just change
+		 * our priority without moving us from one queue to another
+		 * (since the running process is not on a queue.)
+		 * If that happened after we put ourselves on the run queue
+		 * but before we switched, we might not be on the queue
+		 * indicated by our priority.
+		 */
+		s = splstatclock();
+		setrunqueue(p);
+		p->p_stats->p_ru.ru_nivcsw++;
+		mi_switch();
+		splx(s);
+		while ((i = CURSIG(p)) != 0)
+			postsig(i);
+	}
+
+#if 0 /* Need sticks */
+	if (p->p_flag & P_PROFIL) {
+		extern int psratio;
+
+		addupc_task(p, trapframe->pc, (int)(p->p_sticks - sticks) * psratio);
+	}
+#endif
+
+	curpriority = p->p_priority;
+
+#ifdef KTRACE
+	if (KTRPOINT(p, KTR_SYSRET))
+		ktrsysret(p->p_tracep, SYS_fork, 0, 0);
+#endif 
 }
 
 /*
@@ -823,50 +878,54 @@ out:
  * Called from MipsKernIntr() or MipsUserIntr()
  * Note: curproc might be NULL.
  */
+int iofvcount = 0;
+
 void
-interrupt(statusReg, causeReg, what, pc, args)
-	u_int statusReg;	/* status register at time of the exception */
-	u_int causeReg;		/* cause register at time of exception */
-	u_int what;
-	u_int pc;		/* program counter where to continue */
-	u_int args;
+interrupt(trapframe)
+	struct trap_frame *trapframe;
 {
 	unsigned mask;
+	unsigned cause;
 	int i;
 	struct clockframe cf;
 
 	cnt.v_trap++;
 #if defined(DDB) || defined(DEBUG)
-	trp->status = statusReg;
-	trp->cause = causeReg;
+	trp->status = trapframe->sr;
+	trp->cause = trapframe->cause;
 	trp->vadr = 0;
-	trp->pc = pc;
+	trp->pc = trapframe->pc;
 	trp->ra = 0;
-	trp->sp = (int)&args;
+	trp->sp = (int)trapframe;
 	trp->code = 0;
 	if (++trp == &trapdebug[TRAPSIZE])
 		trp = trapdebug;
 #endif
 
 	cnt.v_intr++;
-	mask = causeReg & statusReg;	/* pending interrupts & enable mask */
-	cf.pc = pc;
-	cf.sr = statusReg;
-	cf.cr = causeReg;
+	mask = trapframe->cause & trapframe->sr;	/* pending interrupts & enable mask */
+	cf.pc = trapframe->pc;
+	cf.sr = trapframe->sr;
+	cf.cr = trapframe->cause;
 
+if(iofvcount++ > 100) {
+trapDump("int overflow");
+Debugger();
+}
 	/*
 	 *  Check off all enabled interrupts. Called interrupt routine
 	 *  returns mask of interrupts to reenable.
 	 */
+	cause = trapframe->cause;
 	for(i = 0; i < 8; i++) {
 		if(cpu_int_tab[i].int_mask & mask) {
-			causeReg &= (*cpu_int_tab[i].int_hand)(mask, &cf);
+			cause &= (*cpu_int_tab[i].int_hand)(mask, &cf);
 		}
 	}
 	/*
 	 *  Reenable all non served hardware levels.
 	 */
-	splx((statusReg & ~causeReg & HARD_INT_MASK) | SR_INT_ENAB);
+	splx((trapframe->sr & ~cause & HARD_INT_MASK) | SR_INT_ENAB);
 
 
 	if (mask & SOFT_INT_MASK_0) {
@@ -878,7 +937,7 @@ interrupt(statusReg, causeReg, what, pc, args)
 	 *  Process network interrupt if we trapped or will very soon
 	 */
 	if ((mask & SOFT_INT_MASK_1) ||
-	    (netisr && (statusReg & SOFT_INT_MASK_1))) {
+	    (netisr && (trapframe->sr & SOFT_INT_MASK_1))) {
 		clearsoftnet();
 		cnt.v_soft++;
 		intrcnt[1]++;
@@ -972,9 +1031,8 @@ set_intr(mask, int_hand, prio)
  * This is very similar to the tail of trap().
  */
 void
-softintr(statusReg, pc)
+softintr(statusReg)
 	unsigned statusReg;	/* status register at time of the exception */
-	unsigned pc;		/* program counter where to continue */
 {
 	struct proc *p = curproc;
 	int sig;
@@ -1078,8 +1136,8 @@ arc_errintr()
  * Return the resulting PC as if the branch was executed.
  */
 unsigned
-MipsEmulateBranch(regsPtr, instPC, fpcCSR, instptr)
-	int *regsPtr;
+MipsEmulateBranch(framePtr, instPC, fpcCSR, instptr)
+	struct trap_frame *framePtr;
 	int instPC;
 	int fpcCSR;
 	u_int instptr;
@@ -1087,6 +1145,7 @@ MipsEmulateBranch(regsPtr, instPC, fpcCSR, instptr)
 	InstFmt inst;
 	unsigned retAddr;
 	int condition;
+	register_t *regsPtr = (register_t *)framePtr;
 
 #define GetBranchDest(InstPtr, inst) \
 	((unsigned)InstPtr + 4 + ((short)inst.IType.imm << 2))
@@ -1216,7 +1275,7 @@ cpu_singlestep(p)
 	struct proc *p;
 {
 	unsigned va;
-	int *locr0 = p->p_md.md_regs;
+	struct trap_frame *locr0 = p->p_md.md_regs;
 	int i;
 	int bpinstr = BREAK_SSTEP;
 	int curinstr;
@@ -1230,7 +1289,7 @@ cpu_singlestep(p)
 	iov.iov_len = sizeof(int); 
 	uio.uio_iov = &iov;
 	uio.uio_iovcnt = 1; 
-	uio.uio_offset = (off_t)locr0[PC];
+	uio.uio_offset = (off_t)locr0->pc;
 	uio.uio_resid = sizeof(int);
 	uio.uio_segflg = UIO_SYSSPACE;
 	uio.uio_rw = UIO_READ;
@@ -1239,10 +1298,10 @@ cpu_singlestep(p)
 
 	/* compute next address after current location */
 	if(curinstr != 0) {
-		va = MipsEmulateBranch(locr0, locr0[PC], locr0[FSR], curinstr);
+		va = MipsEmulateBranch(locr0, locr0->pc, locr0->fsr, curinstr);
 	}
 	else {
-		va = locr0[PC] + 4;
+		va = locr0->pc + 4;
 	}
 	if (p->p_md.md_ss_addr) {
 		printf("SS %s (%d): breakpoint already set at %x (va %x)\n",
@@ -1294,28 +1353,28 @@ cpu_singlestep(p)
 
 /* forward */
 char *fn_name(unsigned addr);
-void stacktrace_subr __P((int *, int (*)(const char*, ...)));
+void stacktrace_subr __P((struct trap_frame *, int (*)(const char*, ...)));
 
 /*
  * Print a stack backtrace.
  */
 void
 stacktrace(regs)
-	int *regs;
+	struct trap_frame *regs;
 {
 	stacktrace_subr(regs, printf);
 }
 
 void
 logstacktrace(regs)
-	int *regs;
+	struct trap_frame *regs;
 {
 	stacktrace_subr(regs, addlog);
 }
 
 void
 stacktrace_subr(regs, printfn)
-	int *regs;
+	struct trap_frame *regs;
 	int (*printfn) __P((const char*, ...));
 {
 	unsigned pc, sp, fp, ra, va, subr;
@@ -1327,14 +1386,14 @@ stacktrace_subr(regs, printfn)
 	unsigned int frames =  0;
 
 	/* get initial values from the exception frame */
-	sp = regs[SP];
-	pc = regs[PC];
-	fp = regs[S8];
-	ra = regs[RA];		/* May be a 'leaf' function */
-	a0 = regs[A0];
-	a1 = regs[A1];
-	a2 = regs[A2];
-	a3 = regs[A3];
+	sp = regs->sp;
+	pc = regs->pc;
+	fp = regs->s8;
+	ra = regs->ra;		/* May be a 'leaf' function */
+	a0 = regs->a0;
+	a1 = regs->a1;
+	a2 = regs->a2;
+	a3 = regs->a3;
 
 /* Jump here when done with a frame, to start a new one */
 loop:
@@ -1361,15 +1420,15 @@ specialframe:
 	if (pc >= (unsigned)MipsKernIntr && pc < (unsigned)MipsUserIntr) {
 		(*printfn)("MipsKernIntr+%x: (%x, %x ,%x) -------\n",
 		       pc-(unsigned)MipsKernIntr, a0, a1, a2);
-		regs = (int *)(sp + STAND_ARG_SIZE);
-		a0 = kdbpeek(&regs[A0]);
-		a1 = kdbpeek(&regs[A1]);
-		a2 = kdbpeek(&regs[A2]);
-		a3 = kdbpeek(&regs[A3]);
+		regs = (struct trap_frame *)(sp + STAND_ARG_SIZE);
+		a0 = kdbpeek(&regs->a0);
+		a1 = kdbpeek(&regs->a1);
+		a2 = kdbpeek(&regs->a2);
+		a3 = kdbpeek(&regs->a3);
 
-		pc = kdbpeek(&regs[PC]); /* exc_pc - pc at time of exception */
-		ra = kdbpeek(&regs[RA]); /* ra at time of exception */
-		sp = kdbpeek(&regs[SP]);
+		pc = kdbpeek(&regs->pc); /* exc_pc - pc at time of exception */
+		ra = kdbpeek(&regs->ra); /* ra at time of exception */
+		sp = kdbpeek(&regs->sp);
 		goto specialframe;
 	}
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.17 1998/03/25 11:42:08 pefo Exp $	*/
+/*	$OpenBSD: locore.S,v 1.18 1998/09/15 10:58:53 pefo Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -50,7 +50,7 @@
  *	v 1.1 89/07/10 14:27:41 nelson Exp  SPRITE (DECWRL)
  *
  *	from: @(#)locore.s	8.5 (Berkeley) 1/4/94
- *	$Id: locore.S,v 1.17 1998/03/25 11:42:08 pefo Exp $
+ *	$Id: locore.S,v 1.18 1998/09/15 10:58:53 pefo Exp $
  */
 
 /*
@@ -70,7 +70,7 @@
 
 #include "assym.h"
 
-	.set	noreorder
+	.set	noreorder		# Noreorder is default style!
 
 /*
  * Amount to take off of the stack for the benefit of the debugger.
@@ -105,10 +105,14 @@ start:
 	sw	t1, fpu_id			# save FPU ID register
 	jal	main				# main(regs)
 	move	a0, zero
+	PANIC("Startup failed!")
 /*
- * proc[1] == /etc/init now running here.
- * Restore user registers and return.
+ * Setup for and return to user.
  */
+LEAF(proc_trampoline)
+	jal	s0
+	move	a0,s1			# set up for return to user.
+
 	.set	noat
 	li	v0, SR_EXL
 	mtc0	v0, COP_0_STATUS_REG	# set exeption level bit.
@@ -121,7 +125,7 @@ start:
 	lw	AT, UADDR+U_PCB_REGS+(AST * 4)
 	lw	v0, UADDR+U_PCB_REGS+(V0 * 4)
 	dmtc0	a0, COP_0_EXC_PC	# set return address
-	li	a0, PSL_USERSET
+	lw	a0, UADDR+U_PCB_REGS+(SR * 4)
 	mtc0	a0, COP_0_STATUS_REG	# switch to user mode (when eret...)
 	lw	v1, UADDR+U_PCB_REGS+(V1 * 4)
 	lw	a0, UADDR+U_PCB_REGS+(A0 * 4)
@@ -152,6 +156,7 @@ start:
 	lw	t9, UADDR+U_PCB_REGS+(T9 * 4)
 	eret
 	.set	at
+END(proc_trampoline)
 
 /*
  * Primitives
@@ -1060,16 +1065,10 @@ SlowFault:
 	SAVE_REG(AT, AST, sp)		;\
 	SAVE_REG(v0, V0, sp)		;\
 	SAVE_REG(v1, V1, sp)		;\
-	mflo	v0			;\
-	mfhi	v1			;\
 	SAVE_REG(a0, A0, sp)		;\
 	SAVE_REG(a1, A1, sp)		;\
 	SAVE_REG(a2, A2, sp)		;\
 	SAVE_REG(a3, A3, sp)		;\
-	mfc0	a0, COP_0_STATUS_REG	;\
-	mfc0	a1, COP_0_CAUSE_REG	;\
-	mfc0	a2, COP_0_BAD_VADDR	;\
-	mfc0	a3, COP_0_EXC_PC	;\
 	SAVE_REG(t0, T0, sp)		;\
 	SAVE_REG(t1, T1, sp)		;\
 	SAVE_REG(t2, T2, sp)		;\
@@ -1080,6 +1079,12 @@ SlowFault:
 	SAVE_REG(t7, T7, sp)		;\
 	SAVE_REG(t8, T8, sp)		;\
 	SAVE_REG(t9, T9, sp)		;\
+	mflo	v0			;\
+	mfhi	v1			;\
+	mfc0	a0, COP_0_STATUS_REG	;\
+	mfc0	a1, COP_0_CAUSE_REG	;\
+	mfc0	a2, COP_0_BAD_VADDR	;\
+	mfc0	a3, COP_0_EXC_PC	;\
 	SAVE_REG(v0, MULLO, sp)		;\
 	SAVE_REG(v1, MULHI, sp)		;\
 	SAVE_REG(a0, SR, sp)		;\
@@ -1089,6 +1094,7 @@ SlowFault:
 	SAVE_REG(a3, PC, sp)		;\
 	addu	v0, sp, KERN_EXC_FRAME_SIZE ;\
 	SAVE_REG(v0, SP, sp)		;\
+	addu	a0, sp, STAND_ARG_SIZE	;\
 	mtc0	zero,COP_0_STATUS_REG
 
 #ifdef DDB
@@ -1156,7 +1162,7 @@ NNON_LEAF(MipsKernGenException, KERN_EXC_FRAME_SIZE, ra)
 	SAVE_CPU
 	SAVE_CPU_DDB
 /*
- *  Call the exception handler.
+ *  Call the exception handler. a0 points at the saved frame.
  */
 	jal	trap
 	sw	a3, STAND_RA_OFFSET + KERN_REG_SIZE(sp)		# for debugging
@@ -1228,13 +1234,16 @@ NNON_LEAF(MipsUserGenException, STAND_FRAME_SIZE, ra)
 	sw	v0, UADDR+U_PCB_REGS+(MULLO * 4)
 	sw	v1, UADDR+U_PCB_REGS+(MULHI * 4)
 	sw	a0, UADDR+U_PCB_REGS+(SR * 4)
-	la	gp, _gp				# switch to kernel GP
+	sw	a1, UADDR+U_PCB_REGS+(CAUSE * 4)
+	sw	a2, UADDR+U_PCB_REGS+(BADVADDR * 4)
 	sw	a3, UADDR+U_PCB_REGS+(PC * 4)
 	sw	a3, STAND_RA_OFFSET(sp)		# for debugging
+	la	gp, _gp				# switch to kernel GP
 	.set	at
 # Turn off fpu and enter kernel mode
 	and	t0, a0, ~(SR_COP_1_BIT | SR_EXL | SR_KSU_MASK | SR_INT_ENAB)
 	.set	noat
+	li	a0, UADDR+U_PCB_REGS
 /*
  * Call the exception handler.
  */
@@ -1388,6 +1397,7 @@ NNON_LEAF(MipsUserIntr, STAND_FRAME_SIZE, ra)
 	sw	v0, UADDR+U_PCB_REGS+(MULLO * 4)
 	sw	v1, UADDR+U_PCB_REGS+(MULHI * 4)
 	sw	a0, UADDR+U_PCB_REGS+(SR * 4)
+	sw	a1, UADDR+U_PCB_REGS+(CAUSE * 4)
 	sw	a3, UADDR+U_PCB_REGS+(PC * 4)
 	la	gp, _gp				# switch to kernel GP
 # Turn off fpu and enter kernel mode
@@ -1395,6 +1405,7 @@ NNON_LEAF(MipsUserIntr, STAND_FRAME_SIZE, ra)
 	and	t0, a0, ~(SR_COP_1_BIT | SR_EXL | SR_INT_ENAB | SR_KSU_MASK)
 	.set	noat
 	mtc0	t0, COP_0_STATUS_REG
+	li	a0, UADDR+U_PCB_REGS
 /*
  * Call the interrupt handler.
  */
@@ -2921,10 +2932,10 @@ END(R4K_HitFlushDCache)
  *
  * R4K_InvalidateDCache --
  *
- *	void R4K_FlushDCache(addr, len)
+ *	void R4K_InvalidateDCache(addr, len)
  *		vm_offset_t addr, len;
  *
- *	Flush data cache for range of addr to addr + len - 1.
+ *	Invalidate data cache for range of addr to addr + len - 1.
  *	The address can be any valid address as long as no TLB misses occur.
  *	(Be sure to use cached K0SEG kernel addresses or mapped addresses)
  * Results:
@@ -2938,14 +2949,18 @@ END(R4K_HitFlushDCache)
 LEAF(R4K_InvalidateDCache)
 	addu	a1, a1, a0			# compute ending address
 1:
-	cache	0x11, 8194(a0)
-	addu	a0, a0, 4
+	cache	0x11, 0(a0)
+	cache	0x11, 32(a0)
+	cache	0x11, 64(a0)
+	cache	0x11, 96(a0)
 	bne	a0, a1, 1b
-	cache	0x11, -4(a0)
+	addu	a0, a0, 128
 
 	j	ra
 	nop
 END(R4K_InvalidateDCache)
+
+
 
 #if defined(DDB) || defined(DEBUG)
 LEAF(kdbpeek)

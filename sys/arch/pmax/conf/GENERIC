@@ -44,8 +44,8 @@ option		SYSVSHM			# sysv shared memory
 # ktrace support
 option		KTRACE			# ktrace(1) support
 # debugging stuff
-#option		DIAGNOSTIC		# extra kernel debugging checks
-#option		DEBUG			# extra kernel debugging support
+option		DIAGNOSTIC		# extra kernel debugging checks
+option		DEBUG			# extra kernel debugging support
 #option		KGDB			# support for kernel gdb
 #option		"KGDBRATE=19200"	# kernel gdb port rate (default 9600)
 #option		"KGDBDEV=15*256+0"	# device for kernel gdb

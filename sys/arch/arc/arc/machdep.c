@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.32 1998/03/25 11:48:14 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.33 1998/09/15 10:58:54 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.32 1998/03/25 11:48:14 pefo Exp $
+ *      $Id: machdep.c,v 1.33 1998/09/15 10:58:54 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -82,12 +82,13 @@
 
 #include <machine/pte.h>
 #include <machine/cpu.h>
-#include <machine/reg.h>
+#include <machine/frame.h>
 #include <machine/pio.h>
 #include <machine/psl.h>
 #include <machine/bus.h>
 #include <machine/autoconf.h>
 #include <machine/memconf.h>
+#include <machine/regnum.h>
 
 #include <sys/exec_ecoff.h>
 
@@ -158,7 +159,6 @@ void dumpconf __P((void));
 
 static void tlb_init_pica __P((void));
 static void tlb_init_tyne __P((void));
-static int get_simm_size __P((int *, int));
 static char *getenv __P((char *env));
 static void get_eth_hw_addr __P((char *));
 static int atoi __P((char *, int));
@@ -252,23 +252,26 @@ mips_init(argc, argv, envv)
 
 			/* Make this more fancy when more comes in here */
 		environment = envv;
-#if 0
-		system_type = ALGOR_P4032;
-		strcpy(cpu_model, "Algorithmics P-4032");
-		arc_bus_io.bus_sparse1 = 2;
-		arc_bus_io.bus_sparse2 = 1;
-		arc_bus_io.bus_sparse4 = 0;
-		arc_bus_io.bus_sparse8 = 0;
-		CONADDR = P4032_COM1;
-#else
-		system_type = ALGOR_P5064;
-		strcpy(cpu_model, "Algorithmics P-5064");
-		arc_bus_io.bus_sparse1 = 0;
-		arc_bus_io.bus_sparse2 = 0;
-		arc_bus_io.bus_sparse4 = 0;
-		arc_bus_io.bus_sparse8 = 0;
-		CONADDR = P5064_COM1;
-#endif
+
+		cp = getenv("boardtype");
+		if(cp && strncasecmp("P-4032", cp, 6) == 0) {
+			system_type = ALGOR_P4032;
+			strcpy(cpu_model, "Algorithmics P-4032");
+			arc_bus_io.bus_sparse1 = 2;
+			arc_bus_io.bus_sparse2 = 1;
+			arc_bus_io.bus_sparse4 = 0;
+			arc_bus_io.bus_sparse8 = 0;
+			CONADDR = P4032_COM1;
+		}
+		else { /* Default to P-5064 */
+			system_type = ALGOR_P5064;
+			strcpy(cpu_model, "Algorithmics P-5064");
+			arc_bus_io.bus_sparse1 = 0;
+			arc_bus_io.bus_sparse2 = 0;
+			arc_bus_io.bus_sparse4 = 0;
+			arc_bus_io.bus_sparse8 = 0;
+			CONADDR = P5064_COM1;
+		}
 
 		mem_layout[0].mem_start = 0;
 		mem_layout[0].mem_size = mips_trunc_page(CACHED_TO_PHYS(kernel_text));
@@ -276,22 +279,13 @@ mips_init(argc, argv, envv)
 		if(getenv("memsize") != 0) {
 			i = atoi(getenv("memsize"), 10);
 			i = 1024 * 1024 * i;
-			mem_layout[1].mem_size = i - (int)(CACHED_TO_PHYS(sysend));
-			physmem = i;
 		}
 		else {
-			i = get_simm_size((int *)0, 128*1024*1024);
-			mem_layout[1].mem_size = i - (int)(CACHED_TO_PHYS(sysend));
-			physmem = i;
-/*XXX Ouch!!! */
-			mem_layout[2].mem_start = i;
-			mem_layout[2].mem_size = get_simm_size((int *)(i), 0);
-			physmem += mem_layout[2].mem_size;
-			mem_layout[3].mem_start = i+i/2;
-			mem_layout[3].mem_size = get_simm_size((int *)(i+i/2), 0);
-			physmem += mem_layout[3].mem_size;
+			i = 1024 * 1024 * 16;  /* Reasonable default */
 		}
-/*XXX*/
+		mem_layout[1].mem_size = i - (int)(CACHED_TO_PHYS(sysend));
+		physmem = i;
+
 		argv[0] = getenv("bootdev");
 		if(argv[0] == 0)
 			argv[0] = "unknown";
@@ -398,7 +392,7 @@ mips_init(argc, argv, envv)
 	sysend = (caddr_t)(((int)sysend + 3) & -4);
 	start = sysend;
 	curproc->p_addr = proc0paddr = (struct user *)sysend;
-	curproc->p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
+	curproc->p_md.md_regs = (struct trap_frame *)&proc0paddr->u_pcb.pcb_regs;
 	firstaddr = CACHED_TO_PHYS(sysend);
 	for (i = 0; i < UPAGES; i+=2) {
 		tlb.tlb_mask = PG_SIZE_4K;
@@ -420,7 +414,7 @@ mips_init(argc, argv, envv)
 	 * This could be used for an idle process.
 	 */
 	nullproc.p_addr = (struct user *)sysend;
-	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
+	nullproc.p_md.md_regs = (struct trap_frame *)&nullproc.p_addr->u_pcb.pcb_regs;
 	bcopy("nullproc", nullproc.p_comm, sizeof("nullproc"));
 	firstaddr = CACHED_TO_PHYS(sysend);
 	for (i = 0; i < UPAGES; i+=2) {
@@ -619,86 +613,6 @@ tlb_init_tyne()
 	tlb.tlb_lo1 = PG_G;
 	R4K_TLBWriteIndexed(4, &tlb);
 
-}
-
-/*
- * Simple routine to figure out SIMM module size.
- * This code is a real hack and can surely be improved on... :-)
- */
-static int
-get_simm_size(fadr, max)
-	int *fadr;
-	int max;
-{
-	int msave;
-	int msize;
-	int ssize;
-	static int a1 = 0, a2 = 0;
-	static int s1 = 0, s2 = 0;
-
-	if(!max) {
-		if(a1 == (int)fadr)
-			return(s1);
-		else if(a2 == (int)fadr)
-			return(s2);
-		else
-			return(0);
-	}
-	fadr = (int *)PHYS_TO_UNCACHED(CACHED_TO_PHYS((int)fadr));
-
-	msize = max - 0x400000;
-	ssize = msize - 0x400000;
-
-	/* Find bank size of last module */
-	while(ssize >= 0) {
-		msave = fadr[ssize / 4];
-		fadr[ssize / 4] = 0xC0DEB00F;
-		if(fadr[msize /4 ] == 0xC0DEB00F) {
-			fadr[ssize / 4] = msave;
-			if(fadr[msize/4] == msave) {
-				break;	/* Wrap around */
-			}
-		}
-		fadr[ssize / 4] = msave;
-		ssize -= 0x400000;
-	}
-	msize = msize - ssize;
-	if(msize == max)
-		return(msize);	/* well it never wrapped... */
-
-	msave = fadr[0];
-	fadr[0] = 0xC0DEB00F;
-	if(fadr[msize / 4] == 0xC0DEB00F) {
-		fadr[0] = msave;
-		if(fadr[msize / 4] == msave)
-			return(msize);	/* First module wrap = size */
-	}
-
-	/* Ooops! Two not equal modules. Find size of first + second */
-	s1 = s2 = msize;
-	ssize = 0;
-	while(ssize < max) {
-		msave = fadr[ssize / 4];
-		fadr[ssize / 4] = 0xC0DEB00F;
-		if(fadr[msize /4 ] == 0xC0DEB00F) {
-			fadr[ssize / 4] = msave;
-			if(fadr[msize/4] == msave) {
-				break;	/* Found end of module 1 */
-			}
-		}
-		fadr[ssize / 4] = msave;
-		ssize += s2;
-		msize += s2;
-	}
-
-	/* Is second bank dual sided? */
-	fadr[(ssize+ssize/2)/4] = ~fadr[ssize];
-	if(fadr[(ssize+ssize/2)/4] != fadr[ssize]) {
-		a2 = ssize+ssize/2;
-	}
-	a1 = ssize;
-
-	return(ssize);
 }
 
 /*
@@ -904,11 +818,11 @@ setregs(p, pack, stack, retval)
 {
 	extern struct proc *machFPCurProcPtr;
 
-	bzero((caddr_t)p->p_md.md_regs, (FSR + 1) * sizeof(int));
-	p->p_md.md_regs[SP] = stack;
-	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
-	p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall req */
-	p->p_md.md_regs[PS] = PSL_USERSET;
+	bzero((caddr_t)p->p_md.md_regs, sizeof(struct trap_frame));
+	p->p_md.md_regs->sp = stack;
+	p->p_md.md_regs->pc = pack->ep_entry & ~3;
+	p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall req */
+	p->p_md.md_regs->sr = PSL_USERSET;
 	p->p_md.md_flags &= ~MDP_FPUSED;
 	if (machFPCurProcPtr == p)
 		machFPCurProcPtr = (struct proc *)0;
@@ -947,10 +861,10 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
-	register struct proc *p = curproc;
-	register struct sigframe *fp;
-	register int *regs;
-	register struct sigacts *psp = p->p_sigacts;
+	struct proc *p = curproc;
+	struct sigframe *fp;
+	struct trap_frame *regs;
+	struct sigacts *psp = p->p_sigacts;
 	int oonstack, fsize;
 	struct sigcontext ksc;
 	extern char sigcode[], esigcode[];
@@ -974,7 +888,7 @@ sendsig(catcher, sig, mask, code, type, val)
 					 psp->ps_sigstk.ss_size - fsize);
 		psp->ps_sigstk.ss_flags |= SA_ONSTACK;
 	} else
-		fp = (struct sigframe *)(regs[SP] - fsize);
+		fp = (struct sigframe *)(regs->sp - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
@@ -988,11 +902,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	ksc.sc_onstack = oonstack;
 	ksc.sc_mask = mask;
-	ksc.sc_pc = regs[PC];
-	ksc.mullo = regs[MULLO];
-	ksc.mulhi = regs[MULHI];
-	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
-	bcopy((caddr_t)&regs[1], (caddr_t)&ksc.sc_regs[1],
+	ksc.sc_pc = regs->pc;
+	ksc.mullo = regs->mullo;
+	ksc.mulhi = regs->mulhi;
+	ksc.sc_regs[0] = 0xACEDBADE;		/* magic number */
+	bcopy((caddr_t)&regs->ast, (caddr_t)&ksc.sc_regs[1],
 		sizeof(ksc.sc_regs) - sizeof(int));
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
@@ -1001,7 +915,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		/* if FPU has current state, save it first */
 		if (p == machFPCurProcPtr)
 			MipsSaveCurFPState(p);
-		bcopy((caddr_t)&p->p_md.md_regs[F0], (caddr_t)ksc.sc_fpregs,
+		bcopy((caddr_t)&p->p_md.md_regs->f0, (caddr_t)ksc.sc_fpregs,
 			sizeof(ksc.sc_fpregs));
 	}
 
@@ -1030,18 +944,18 @@ bail:
 	/* 
 	 * Build the argument list for the signal handler.
 	 */
-	regs[A0] = sig;
-	regs[A1] = (psp->ps_siginfo & sigmask(sig)) ? (int)&fp->sf_si : NULL;
-	regs[A2] = (int)&fp->sf_sc;
-	regs[A3] = (int)catcher;
+	regs->a0 = sig;
+	regs->a1 = (psp->ps_siginfo & sigmask(sig)) ? (int)&fp->sf_si : NULL;
+	regs->a2 = (int)&fp->sf_sc;
+	regs->a3 = (int)catcher;
 
-	regs[PC] = (int)catcher;
-	regs[T9] = (int)catcher;
-	regs[SP] = (int)fp;
+	regs->pc = (int)catcher;
+	regs->t9 = (int)catcher;
+	regs->sp = (int)fp;
 	/*
 	 * Signal trampoline code is at base of user stack.
 	 */
-	regs[RA] = (int)PS_STRINGS - (esigcode - sigcode);
+	regs->ra = (int)PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    ((sigdebug & SDB_KSTACK) && (p->p_pid == sigpid)))
@@ -1070,8 +984,8 @@ sys_sigreturn(p, v, retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	register struct sigcontext *scp;
-	register int *regs;
+	struct sigcontext *scp;
+	struct trap_frame *regs;
 	struct sigcontext ksc;
 	int error;
 
@@ -1091,7 +1005,7 @@ sys_sigreturn(p, v, retval)
 		if (!(sigdebug & SDB_FOLLOW))
 			printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 		printf("  old sp %x ra %x pc %x\n",
-			regs[SP], regs[RA], regs[PC]);
+			regs->sp, regs->ra, regs->pc);
 		printf("  new sp %x ra %x pc %x err %d z %x\n",
 			ksc.sc_regs[SP], ksc.sc_regs[RA], ksc.sc_regs[PC],
 			error, ksc.sc_regs[ZERO]);
@@ -1107,13 +1021,13 @@ sys_sigreturn(p, v, retval)
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SA_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	regs[PC] = scp->sc_pc;
-	regs[MULLO] = scp->mullo;
-	regs[MULHI] = scp->mulhi;
-	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs[1],
+	regs->pc = scp->sc_pc;
+	regs->mullo = scp->mullo;
+	regs->mulhi = scp->mulhi;
+	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs->ast,
 		sizeof(scp->sc_regs) - sizeof(int));
 	if (scp->sc_fpused)
-		bcopy((caddr_t)scp->sc_fpregs, (caddr_t)&p->p_md.md_regs[F0],
+		bcopy((caddr_t)scp->sc_fpregs, (caddr_t)&p->p_md.md_regs->f0,
 			sizeof(scp->sc_fpregs));
 	return (EJUSTRETURN);
 }
@@ -1155,6 +1069,10 @@ boot(howto)
 	(void) splhigh();		/* extreme priority */
 	if (howto & RB_HALT) {
 		printf("System halted.\n");
+		if(system_type == ALGOR_P5064 && howto & RB_POWERDOWN) {
+			printf("Shutting off!\n");
+			*(int *)(0xbffa000c) = 1;
+		}
 		while(1); /* Forever */
 	}
 	else {

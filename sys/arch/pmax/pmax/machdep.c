@@ -79,7 +79,8 @@
 #include <vm/vm_kern.h>
 
 #include <machine/cpu.h>
-#include <machine/reg.h>
+#include <machine/regnum.h>
+#include <machine/frame.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/dc7085cons.h>
@@ -347,7 +348,7 @@ mach_init(argc, argv, code, cv)
 	 */
 	start = v;
 	curproc->p_addr = proc0paddr = (struct user *)v;
-	curproc->p_md.md_regs = proc0paddr->u_pcb.pcb_regs;
+	curproc->p_md.md_regs = &proc0paddr->u_pcb.pcb_regs;
 	firstaddr = MIPS_KSEG0_TO_PHYS(v);
 	for (i = 0; i < UPAGES; i++) {
 		MachTLBWriteIndexed(i,
@@ -364,7 +365,7 @@ mach_init(argc, argv, code, cv)
 	 * This could be used for an idle process.
 	 */
 	nullproc.p_addr = (struct user *)v;
-	nullproc.p_md.md_regs = nullproc.p_addr->u_pcb.pcb_regs;
+	nullproc.p_md.md_regs = &nullproc.p_addr->u_pcb.pcb_regs;
 	bcopy("nullproc", nullproc.p_comm, sizeof("nullproc"));
 	for (i = 0; i < UPAGES; i++) {
 		nullproc.p_md.md_upte[i] = firstaddr | PG_V | PG_M;
@@ -946,10 +947,10 @@ setregs(p, pack, stack, retval)
 	extern struct proc *machFPCurProcPtr;
 
 	bzero((caddr_t)p->p_md.md_regs, (FSR + 1) * sizeof(int));
-	p->p_md.md_regs[SP] = stack;
-	p->p_md.md_regs[PC] = pack->ep_entry & ~3;
-        p->p_md.md_regs[T9] = pack->ep_entry & ~3; /* abicall requirement */
-	p->p_md.md_regs[PS] = PSL_USERSET;
+	p->p_md.md_regs->sp = stack;
+	p->p_md.md_regs->pc = pack->ep_entry & ~3;
+        p->p_md.md_regs->t9 = pack->ep_entry & ~3; /* abicall requirement */
+	p->p_md.md_regs->sr = PSL_USERSET;
 	p->p_md.md_flags & ~MDP_FPUSED;
 	if (machFPCurProcPtr == p)
 		machFPCurProcPtr = (struct proc *)0;
@@ -987,9 +988,9 @@ sendsig(catcher, sig, mask, code, type, val)
 	int type;
 	union sigval val;
 {
-	register struct proc *p = curproc;
-	register struct sigframe *fp;
-	register int *regs;
+	struct proc *p = curproc;
+	struct sigframe *fp;
+	struct trap_frame *regs;
 	register struct sigacts *psp = p->p_sigacts;
 	int oonstack, fsize;
 	struct sigcontext ksc;
@@ -1014,7 +1015,7 @@ sendsig(catcher, sig, mask, code, type, val)
 					 psp->ps_sigstk.ss_size - fsize);
 		psp->ps_sigstk.ss_flags |= SS_ONSTACK;
 	} else
-		fp = (struct sigframe *)(regs[SP] - fsize);
+		fp = (struct sigframe *)(regs->sp - fsize);
 	if ((unsigned)fp <= USRSTACK - ctob(p->p_vmspace->vm_ssize)) 
 		(void)grow(p, (unsigned)fp);
 #ifdef DEBUG
@@ -1028,11 +1029,11 @@ sendsig(catcher, sig, mask, code, type, val)
 	 */
 	ksc.sc_onstack = oonstack;
 	ksc.sc_mask = mask;
-	ksc.sc_pc = regs[PC];
-	ksc.mullo = regs [MULLO];
-	ksc.mulhi = regs [MULHI];
+	ksc.sc_pc = regs->pc;
+	ksc.mullo = regs->mullo;
+	ksc.mulhi = regs->mulhi;
 	ksc.sc_regs[ZERO] = 0xACEDBADE;		/* magic number */
-	bcopy((caddr_t)&regs[1], (caddr_t)&ksc.sc_regs[1],
+	bcopy((caddr_t)&regs->ast, (caddr_t)&ksc.sc_regs[1],
 		sizeof(ksc.sc_regs) - sizeof(int));
 	ksc.sc_fpused = p->p_md.md_flags & MDP_FPUSED;
 	if (ksc.sc_fpused) {
@@ -1041,7 +1042,7 @@ sendsig(catcher, sig, mask, code, type, val)
 		/* if FPU has current state, save it first */
 		if (p == machFPCurProcPtr)
 			MachSaveCurFPState(p);
-		bcopy((caddr_t)&p->p_md.md_regs[F0], (caddr_t)ksc.sc_fpregs,
+		bcopy((caddr_t)&p->p_md.md_regs->f0, (caddr_t)ksc.sc_fpregs,
 			sizeof(ksc.sc_fpregs));
 	}
 
@@ -1070,18 +1071,18 @@ bail:
 	/* 
 	 * Build the argument list for the signal handler.
 	 */
-	regs[A0] = sig;
-	regs[A1] = (psp->ps_siginfo & sigmask(sig)) ? (int)&fp->sf_si : NULL;
-	regs[A2] = (int)&fp->sf_sc;
-	regs[A3] = (int)catcher;
+	regs->a0 = sig;
+	regs->a1 = (psp->ps_siginfo & sigmask(sig)) ? (int)&fp->sf_si : NULL;
+	regs->a2 = (int)&fp->sf_sc;
+	regs->a3 = (int)catcher;
 
-	regs[PC] = (int)catcher;
-	regs[T9] = (int)catcher;
-	regs[SP] = (int)fp;
+	regs->pc = (int)catcher;
+	regs->t9 = (int)catcher;
+	regs->sp = (int)fp;
 	/*
 	 * Signal trampoline code is at base of user stack.
 	 */
-	regs[RA] = (int)PS_STRINGS - (esigcode - sigcode);
+	regs->ra = (int)PS_STRINGS - (esigcode - sigcode);
 #ifdef DEBUG
 	if ((sigdebug & SDB_FOLLOW) ||
 	    (sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -1110,8 +1111,8 @@ sys_sigreturn(p, v, retval)
 	struct sys_sigreturn_args /* {
 		syscallarg(struct sigcontext *) sigcntxp;
 	} */ *uap = v;
-	register struct sigcontext *scp;
-	register int *regs;
+	struct sigcontext *scp;
+	struct trap_frame *regs;
 	struct sigcontext ksc;
 	int error;
 
@@ -1131,7 +1132,7 @@ sys_sigreturn(p, v, retval)
 		if (!(sigdebug & SDB_FOLLOW))
 			printf("sigreturn: pid %d, scp %x\n", p->p_pid, scp);
 		printf("  old sp %x ra %x pc %x\n",
-			regs[SP], regs[RA], regs[PC]);
+			regs->sp, regs->ra, regs->pc);
 		printf("  new sp %x ra %x pc %x err %d z %x\n",
 			ksc.sc_regs[SP], ksc.sc_regs[RA], ksc.sc_regs[PC],
 			error, ksc.sc_regs[ZERO]);
@@ -1147,13 +1148,13 @@ sys_sigreturn(p, v, retval)
 	else
 		p->p_sigacts->ps_sigstk.ss_flags &= ~SS_ONSTACK;
 	p->p_sigmask = scp->sc_mask &~ sigcantmask;
-	regs[PC] = scp->sc_pc;
-	regs[MULLO] = scp->mullo;
-	regs[MULHI] = scp->mulhi;
-	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs[1],
+	regs->pc = scp->sc_pc;
+	regs->mullo = scp->mullo;
+	regs->mulhi = scp->mulhi;
+	bcopy((caddr_t)&scp->sc_regs[1], (caddr_t)&regs->ast,
 		sizeof(scp->sc_regs) - sizeof(int));
 	if (scp->sc_fpused)
-		bcopy((caddr_t)scp->sc_fpregs, (caddr_t)&p->p_md.md_regs[F0],
+		bcopy((caddr_t)scp->sc_fpregs, (caddr_t)&p->p_md.md_regs->f0,
 			sizeof(scp->sc_fpregs));
 	return (EJUSTRETURN);
 }

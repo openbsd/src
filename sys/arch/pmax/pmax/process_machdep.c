@@ -113,7 +113,7 @@ process_set_pc(p, addr)
 	struct proc *p;
 	caddr_t addr;
 {
-	p->p_md.md_regs[PC] = (int)addr;
+	p->p_md.md_regs->pc = (int)addr;
 	return (0);
 }
 
