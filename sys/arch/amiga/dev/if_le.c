@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le.c,v 1.15 1995/09/29 13:51:56 chopps Exp $	*/
+/*	$NetBSD: if_le.c,v 1.16 1995/12/27 07:09:37 chopps Exp $	*/
 
 /*-
  * Copyright (c) 1995 Charles M. Hannum.  All rights reserved.
@@ -63,6 +63,7 @@
 #include <amiga/dev/zbusvar.h>
 #include <amiga/dev/if_levar.h>
 #include <dev/ic/am7990reg.h>
+#define LE_NEED_BUF_CONTIG
 #include <dev/ic/am7990var.h>
 
 /* offsets for:	   ID,   REGS,    MEM */
@@ -183,51 +184,6 @@ leattach(parent, self, aux)
 	sc->sc_isr.isr_arg = sc;
 	sc->sc_isr.isr_ipl = 2;
 	add_isr(&sc->sc_isr);
-}
-
-/*
- * Routines for accessing the transmit and receive buffers.
- */
-
-void
-copytobuf_contig(sc, from, boff, len)
-	struct le_softc *sc;
-	caddr_t from;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/*
-	 * Just call bcopy() to do the work.
-	 */
-	bcopy(from, buf + boff, len);
-}
-
-void
-copyfrombuf_contig(sc, to, boff, len)
-	struct le_softc *sc;
-	caddr_t to;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/*
-	 * Just call bcopy() to do the work.
-	 */
-	bcopy(buf + boff, to, len);
-}
-
-void
-zerobuf_contig(sc, boff, len)
-	struct le_softc *sc;
-	int boff, len;
-{
-	volatile caddr_t buf = sc->sc_mem;
-
-	/*
-	 * Just call bzero() to do the work.
-	 */
-	bzero(buf + boff, len);
 }
 
 #include <dev/ic/am7990.c>
