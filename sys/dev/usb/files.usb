@@ -1,4 +1,4 @@
-#	$OpenBSD: files.usb,v 1.26 2002/06/11 06:42:17 nate Exp $
+#	$OpenBSD: files.usb,v 1.27 2002/06/11 07:49:56 nate Exp $
 #	$NetBSD: files.usb,v 1.16 2000/02/14 20:29:54 augustss Exp $
 #
 # Config file and device description for machine-independent USB code.
@@ -33,6 +33,12 @@ file	dev/usb/ezload.c		ezload
 device	uaudio: audio, auconv, mulaw
 attach	uaudio at uhub
 file	dev/usb/uaudio.c		uaudio
+
+# MIDI devices
+device	umidi: midibus
+attach	umidi at uhub
+file	dev/usb/umidi.c			umidi
+file	dev/usb/umidi_quirks.c		umidi
 
 # Modem and com serial port
 device	ucom
