@@ -287,6 +287,7 @@ main(argc, argv)
 			die(0);
 		}
 		memset(&sin, 0, sizeof(sin));
+		sin.sin_len = sizeof(sin);
 		sin.sin_family = AF_INET;
 		sin.sin_port = LogPort = sp->s_port;
 		if (bind(finet, (struct sockaddr *)&sin, sizeof(sin)) < 0) {
@@ -647,13 +648,7 @@ fprintlog(f, flags, msg)
 		if (sendto(finet, line, l, 0,
 		    (struct sockaddr *)&f->f_un.f_forw.f_addr,
 		    sizeof(f->f_un.f_forw.f_addr)) != l) {
-			int e = errno;
-			if (f->f_file >= 0) {
-				(void)close(f->f_file);
-				f->f_file = -1;
-			}
 			f->f_type = F_UNUSED;
-			errno = e;
 			logerror("sendto");
 		}
 		break;
@@ -905,8 +900,9 @@ init(signo)
 		case F_FILE:
 		case F_TTY:
 		case F_CONSOLE:
-		case F_FORW:
 			(void)close(f->f_file);
+			break;
+		case F_FORW:
 			break;
 		}
 		next = f->f_next;
@@ -1086,10 +1082,12 @@ cfline(line, f)
 			break;
 		}
 		memset(&f->f_un.f_forw.f_addr, 0,
-			 sizeof(f->f_un.f_forw.f_addr));
+		    sizeof(f->f_un.f_forw.f_addr));
+		f->f_un.f_forw.f_addr.sin_len = sizeof(f->f_un.f_forw.f_addr);
 		f->f_un.f_forw.f_addr.sin_family = AF_INET;
 		f->f_un.f_forw.f_addr.sin_port = LogPort;
-		memmove(&f->f_un.f_forw.f_addr.sin_addr, hp->h_addr, hp->h_length);
+		memmove(&f->f_un.f_forw.f_addr.sin_addr, hp->h_addr,
+		    hp->h_length);
 		f->f_type = F_FORW;
 		break;
 
