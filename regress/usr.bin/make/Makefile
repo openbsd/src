@@ -1,7 +1,7 @@
-# $OpenBSD: Makefile,v 1.14 2002/01/03 01:07:28 art Exp $
+# $OpenBSD: Makefile,v 1.15 2002/02/26 16:54:47 espie Exp $
 
 # We don't pass t7, t13, t14...
-REGRESSTARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14
+REGRESSTARGETS=t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15
 
 MALLOC_OPTIONS?=AZJ
 t1: t1.out
@@ -68,14 +68,18 @@ t13:
 t14:
 	if cd ${.CURDIR} && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk14 2>/dev/null; then false; fi
 
+t15:
+	touch t15file
+	cd ${.CURDIR} && ulimit -t 2 && env -i PATH=${PATH} MALLOC_OPTIONS=${MALLOC_OPTIONS} ${MAKE} -r -f mk15 2>/dev/null
+
 z.a:
 	touch $@
 
 t1.out:
 	echo MACHINE_ARCH=${MACHINE_ARCH} >$@
 
-.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 regress
+.PHONY: t1 t2 t3 t4 t5 t6 t7 t8 t9 t10 t11 t12 t13 t14 t15 regress
 
-CLEANFILES+=t1.out z.a a.a a.b goodfile phony
+CLEANFILES+=t1.out z.a a.a a.b goodfile phony t15file
 
 .include <bsd.regress.mk>

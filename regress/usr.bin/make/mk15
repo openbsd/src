@@ -1,0 +1,7 @@
+# $OpenBSD: mk15,v 1.1 2002/02/26 16:54:47 espie Exp $
+# See PR 2311
+
+t15file.zoinx: ${@F:R}
+	echo $@
+
+.PHONY: t15file.zoinx
