@@ -1,4 +1,4 @@
-/*	$OpenBSD: sel_subs.c,v 1.6 1997/07/25 18:58:36 mickey Exp $	*/
+/*	$OpenBSD: sel_subs.c,v 1.7 1997/08/17 23:05:09 millert Exp $	*/
 /*	$NetBSD: sel_subs.c,v 1.5 1995/03/21 09:07:42 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)sel_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.6 1997/07/25 18:58:36 mickey Exp $";
+static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.7 1997/08/17 23:05:09 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -54,7 +54,6 @@ static char rcsid[] = "$OpenBSD: sel_subs.c,v 1.6 1997/07/25 18:58:36 mickey Exp
 #include <grp.h>
 #include <stdio.h>
 #include <string.h>
-#include <strings.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include "pax.h"
