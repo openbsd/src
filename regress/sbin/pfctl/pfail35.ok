@@ -1,4 +1,2 @@
 stdin:4: linkshare already specified
-pfctl: should have one default queue on lo0
-pfctl: errors in altq config
 altq on lo0 hfsc bandwidth 10Mb tbrsize 1824 queue { eins }
