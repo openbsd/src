@@ -1,4 +1,4 @@
-/*	$OpenBSD: su.c,v 1.29 1997/06/29 11:10:35 provos Exp $	*/
+/*	$OpenBSD: su.c,v 1.30 1997/09/11 11:21:55 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)su.c	5.26 (Berkeley) 7/6/91";*/
-static char rcsid[] = "$OpenBSD: su.c,v 1.29 1997/06/29 11:10:35 provos Exp $";
+static char rcsid[] = "$OpenBSD: su.c,v 1.30 1997/09/11 11:21:55 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -67,6 +67,8 @@ static char rcsid[] = "$OpenBSD: su.c,v 1.29 1997/06/29 11:10:35 provos Exp $";
 #include <des.h>
 #include <kerberosIV/krb.h>
 #include <netdb.h>
+
+int kerberos __P((char *username, char *user, int uid));
 
 #define	ARGSTR	"-Kflm"
 
@@ -218,7 +220,7 @@ badlogin:
 		iscsh = NO;
 	}
 
-	if (p = strrchr(shell, '/'))
+	if ((p = strrchr(shell, '/')))
 		avshell = p+1;
 	else
 		avshell = shell;
@@ -319,12 +321,13 @@ ontty()
 	static char buf[MAXPATHLEN + 4];
 
 	buf[0] = 0;
-	if (p = ttyname(STDERR_FILENO))
+	if ((p = ttyname(STDERR_FILENO)))
 		snprintf(buf, sizeof(buf), " on %s", p);
 	return (buf);
 }
 
 #ifdef KERBEROS
+int
 kerberos(username, user, uid)
 	char *username, *user;
 	int uid;
@@ -332,7 +335,6 @@ kerberos(username, user, uid)
 	KTEXT_ST ticket;
 	AUTH_DAT authdata;
 	struct hostent *hp;
-	register char *p;
 	int kerno;
 	in_addr_t faddr;
 	char hostname[MAXHOSTNAMELEN], savehost[MAXHOSTNAMELEN];

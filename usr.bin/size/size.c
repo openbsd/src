@@ -1,4 +1,4 @@
-/*	$OpenBSD: size.c,v 1.7 1997/08/23 01:59:21 mickey Exp $	*/
+/*	$OpenBSD: size.c,v 1.8 1997/09/11 11:21:52 deraadt Exp $	*/
 /*	$NetBSD: size.c,v 1.7 1996/01/14 23:07:12 pk Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)size.c	8.2 (Berkeley) 12/9/93";
 #endif
-static char rcsid[] = "$OpenBSD: size.c,v 1.7 1997/08/23 01:59:21 mickey Exp $";
+static char rcsid[] = "$OpenBSD: size.c,v 1.8 1997/09/11 11:21:52 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -55,6 +55,8 @@ static char rcsid[] = "$OpenBSD: size.c,v 1.7 1997/08/23 01:59:21 mickey Exp $";
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
+#include <ctype.h>
 #include <err.h>
 
 unsigned long total_text, total_data, total_bss, total_total;
@@ -63,6 +65,7 @@ int print_totals = 0;
 
 int	process_file __P((int, char *));
 int	show_archive __P((int, char *, FILE *));
+int	show_objfile __P((int, char *, FILE *));
 int	show_object __P((int, char *, FILE *));
 void	*emalloc __P((size_t));
 void	*erealloc __P((void *, size_t));
@@ -320,7 +323,7 @@ emalloc(size)
 	char *p;
 
 	/* NOSTRICT */
-	if (p = malloc(size))
+	if ((p = malloc(size)))
 		return(p);
 	err(1, NULL);
 }
@@ -331,7 +334,7 @@ erealloc(p, size)
 	size_t size;
 {
 	/* NOSTRICT */
-	if (p = realloc(p, size))
+	if ((p = realloc(p, size)))
 		return(p);
 	err(1, NULL);
 }

@@ -1,4 +1,4 @@
-/*	$OpenBSD: strip.c,v 1.8 1997/04/03 19:33:50 mickey Exp $	*/
+/*	$OpenBSD: strip.c,v 1.9 1997/09/11 11:21:54 deraadt Exp $	*/
 
 /*
  * Copyright (c) 1988 Regents of the University of California.
@@ -41,7 +41,7 @@ char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)strip.c	5.8 (Berkeley) 11/6/91";*/
-static char rcsid[] = "$OpenBSD: strip.c,v 1.8 1997/04/03 19:33:50 mickey Exp $";
+static char rcsid[] = "$OpenBSD: strip.c,v 1.9 1997/09/11 11:21:54 deraadt Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -68,11 +68,12 @@ void usage __P((void));
 
 int xflag = 0;
         
+int
 main(argc, argv)
 	int argc;
 	char *argv[];
 {
-	register int fd, nb;
+	register int fd;
 	EXEC *ep;
 	struct stat sb;
 	int (*sfcn)__P((const char *, int, EXEC *, struct stat *));
@@ -97,7 +98,7 @@ main(argc, argv)
 
 	errors = 0;
 #define	ERROR(x) errors |= 1; warnx("%s: %s", fn, strerror(x)); continue;
-	while (fn = *argv++) {
+	while ((fn = *argv++)) {
 		if ((fd = open(fn, O_RDWR)) < 0) {
 			ERROR(errno);
 		}
