@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ipsp.c,v 1.117 2001/05/27 05:16:32 angelos Exp $	*/
+/*	$OpenBSD: ip_ipsp.c,v 1.118 2001/05/29 01:03:00 angelos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -1247,4 +1247,30 @@ ipsp_reffree(struct ipsec_ref *ipr)
 #endif
     if (--ipr->ref_count <= 0)
       FREE(ipr, ipr->ref_malloctype);
+}
+
+/* Mark a TDB as TDBF_SKIPCRYPTO. */
+void
+ipsp_skipcrypto_mark(struct tdb_ident *tdbi)
+{
+    struct tdb *tdb;
+    int s = spltdb();
+ 
+    tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+    if (tdb != NULL)
+      tdb->tdb_flags |= TDBF_SKIPCRYPTO;
+    splx(s);
+}
+
+/* Unmark a TDB as TDBF_SKIPCRYPTO. */
+void
+ipsp_skipcrypto_unmark(struct tdb_ident *tdbi)
+{
+    struct tdb *tdb;
+    int s = spltdb();
+ 
+    tdb = gettdb(tdbi->spi, &tdbi->dst, tdbi->proto);
+    if (tdb != NULL)
+      tdb->tdb_flags &= ~TDBF_SKIPCRYPTO;
+    splx(s);
 }
