@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.h,v 1.10 1998/05/18 21:10:28 provos Exp $	*/
+/*	$OpenBSD: in_pcb.h,v 1.11 1999/01/07 05:44:32 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.h,v 1.14 1996/02/13 23:42:00 christos Exp $	*/
 
 /*
@@ -130,4 +130,5 @@ void	 in_pcbrehash __P((struct inpcb *));
 void	 in_rtchange __P((struct inpcb *, int));
 void	 in_setpeeraddr __P((struct inpcb *, struct mbuf *));
 void	 in_setsockaddr __P((struct inpcb *, struct mbuf *));
+int	 in_baddynamic __P((u_int16_t, u_int16_t));
 #endif

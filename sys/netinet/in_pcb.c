@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_pcb.c,v 1.24 1998/05/18 21:10:27 provos Exp $	*/
+/*	$OpenBSD: in_pcb.c,v 1.25 1999/01/07 05:44:31 deraadt Exp $	*/
 /*	$NetBSD: in_pcb.c,v 1.25 1996/02/13 23:41:53 christos Exp $	*/
 
 /*
@@ -84,8 +84,6 @@ int ipport_hilastauto = IPPORT_HILASTAUTO;	/* 44999 */
 #define	INPCBHASH(table, faddr, fport, laddr, lport) \
 	&(table)->inpt_hashtbl[(ntohl((faddr)->s_addr) + ntohs((fport)) + ntohs((lport))) & (table->inpt_hash)]
 
-static int baddynamic __P((u_int16_t, u_int16_t));
-
 void
 in_pcbinit(table, hashsize)
 	struct inpcbtable *table;
@@ -102,8 +100,8 @@ struct baddynamicports baddynamicports;
 /*
  * Check if the specified port is invalid for dynamic allocation.
  */
-static int
-baddynamic(port, proto)
+int
+in_baddynamic(port, proto)
 	u_int16_t port;
 	u_int16_t proto;
 {
@@ -112,12 +110,12 @@ baddynamic(port, proto)
 		return(0);
 
 	switch (proto) {
-		case IPPROTO_TCP:
-			return (DP_ISSET(baddynamicports.tcp, port));
-		case IPPROTO_UDP:
-			return (DP_ISSET(baddynamicports.udp, port));
-		default:
-			return (0);
+	case IPPROTO_TCP:
+		return (DP_ISSET(baddynamicports.tcp, port));
+	case IPPROTO_UDP:
+		return (DP_ISSET(baddynamicports.udp, port));
+	default:
+		return (0);
 	}
 }
 
@@ -270,7 +268,7 @@ portloop:
 				if (*lastport > first || *lastport < last)
 					*lastport = first;
 				lport = htons(*lastport);
-			} while (baddynamic(*lastport, so->so_proto->pr_protocol) ||
+			} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
 			    in_pcblookup(table, zeroin_addr, 0,
 			    inp->inp_laddr, lport, wild));
 		} else {
@@ -297,7 +295,7 @@ portloop:
 				if (*lastport < first || *lastport > last)
 					*lastport = first;
 				lport = htons(*lastport);
-			} while (baddynamic(*lastport, so->so_proto->pr_protocol) ||
+			} while (in_baddynamic(*lastport, so->so_proto->pr_protocol) ||
 			    in_pcblookup(table, zeroin_addr, 0,
 			    inp->inp_laddr, lport, wild));
 		}

@@ -131,10 +131,6 @@ extern int ipport_hifirstauto;
 extern int ipport_hilastauto;
 #endif /* __OpenBSD__ */
 
-#if __OpenBSD__
-int in_baddynamic __P((u_int16_t, u_int16_t));
-#endif /* __OpenBSD__ */
-
 /*
  * Keep separate inet6ctlerrmap, because I may remap some of these.
  * I also put it here, because, quite frankly, it belongs here, not in
