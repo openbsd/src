@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile,v 1.24 1997/06/04 07:44:59 grr Exp $
+#	$OpenBSD: Makefile,v 1.25 1997/06/15 06:53:02 mickey Exp $
 #	$NetBSD: Makefile,v 1.22.4.2 1996/07/18 00:51:10 jtc Exp $
 
 MAN=	audio.4 acd.4 ahc.4 bpf.4 ccd.4 cd.4 ch.4 clnp.4 cltp.4 ddb.4 drum.4 \
@@ -9,6 +9,7 @@ MAN=	audio.4 acd.4 ahc.4 bpf.4 ccd.4 cd.4 ch.4 clnp.4 cltp.4 ddb.4 drum.4 \
 MLINKS+=fd.4 stderr.4 fd.4 stdin.4 fd.4 stdout.4
 MLINKS+=netintro.4 networking.4
 MLINKS+=random.4 srandom.4 random.4 urandom.4 random.4 prandom.4 
+MLINKS+=random.4 arandom.4
 MLINKS+=scsi.4 scsibus.4
 MLINKS+=tty.4 cua.4
 MLINKS+=vnd.4 svnd.4
