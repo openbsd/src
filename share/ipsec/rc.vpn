@@ -1,7 +1,7 @@
 #!/bin/sh
 
 #
-#    $OpenBSD: rc.vpn,v 1.3 1999/08/28 12:10:37 ho Exp $
+#    $OpenBSD: rc.vpn,v 1.4 1999/11/23 11:09:59 ho Exp $
 #
 # Richard Reiner, Ph.D., FSC Internet Corp.
 # rreiner@fscinternet.com
@@ -12,7 +12,7 @@
 # rc.vpn -- configure IPSec in tunnel mode for a mesh of N local and
 #           M remote networks. (N x M mesh)
 #
-# For this to work, you will need to have these enabled (in /etc/sysct.conf):
+# For this to work, you will need to have these enabled (in /etc/sysctl.conf):
 #   'sysctl -w net.inet.ip.forwarding=1'   (IP packet routing)
 #   'sysctl -w net.inet.esp.enable=1'      (IPsec ESP protocol)
 
