@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.s,v 1.39 2004/11/30 01:44:22 martin Exp $	*/
+/*	$OpenBSD: locore.s,v 1.40 2004/12/01 21:20:17 miod Exp $	*/
 /*	$NetBSD: locore.s,v 1.103 1998/07/09 06:02:50 scottr Exp $	*/
 
 /*
@@ -1465,7 +1465,6 @@ LmotommuC:
  * as we need to check for our emulated software interrupts.
  */
 
-ALTENTRY(splnone, _spl0)
 ENTRY(spl0)
 	moveq	#0,d0
 	movw	sr,d0			| get old SR for return
