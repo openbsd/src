@@ -705,6 +705,8 @@ extern char *note_insn_name[];
 #define INLINE_REGNO_POINTER_FLAG(RTX) ((RTX)->fld[17].rtstr)
 #define INLINE_REGNO_POINTER_ALIGN(RTX) ((RTX)->fld[18].rtstr)
 #define PARMREG_STACK_LOC(RTX) ((RTX)->fld[19].rtvec)
+#define NONLOCAL_GOTO_LABELS(RTX) ((RTX)->fld[20].rtx)
+#define NONLOCAL_GOTO_LABELS_TRAN(RTX) ((RTX)->fld[21].rtx)
 
 /* In FUNCTION_FLAGS we save some variables computed when emitting the code
    for the function and which must be `or'ed into the current flag values when
@@ -937,7 +939,8 @@ extern rtx gen_label_rtx		PROTO((void));
 extern rtx gen_inline_header_rtx	PROTO((rtx, rtx, int, int, int, int,
 					       int, int, rtx, rtx, int, int,
 					       rtvec, rtx,
-					       rtvec, char *, char *, rtvec));
+					       rtvec, char *, char *, rtvec,
+					       rtx));
 extern rtx gen_lowpart_common		PROTO((enum machine_mode, rtx));
 extern rtx gen_lowpart			PROTO((enum machine_mode, rtx));
 extern rtx gen_lowpart_if_possible	PROTO((enum machine_mode, rtx));
