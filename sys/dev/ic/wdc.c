@@ -1,4 +1,4 @@
-/*      $OpenBSD: wdc.c,v 1.5 1999/07/22 22:42:47 deraadt Exp $     */
+/*      $OpenBSD: wdc.c,v 1.6 1999/07/23 08:04:27 deraadt Exp $     */
 /*	$NetBSD: wdc.c,v 1.68 1999/06/23 19:00:17 bouyer Exp $ */
 
 
@@ -862,8 +862,11 @@ wdc_probe_caps(drvp)
 		for (i = 7; i >= 0; i--) {
 			if ((params.atap_piomode_supp & (1 << i)) == 0)
 				continue;
-			if (i > 4)
+			if (i > 4) {
+				printf("\n");
 				return;
+			}
+
 			/*
 			 * See if mode is accepted.
 			 * If the controller can't set its PIO mode,
@@ -895,6 +898,7 @@ wdc_probe_caps(drvp)
 			 * We didn't find a valid PIO mode.
 			 * Assume the values returned for DMA are buggy too
 			 */
+			printf("\n");
 			return;
 		}
 		drvp->drive_flags |= DRIVE_MODE;
