@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah_old.c,v 1.14 1998/05/18 21:10:34 provos Exp $	*/
+/*	$OpenBSD: ip_ah_old.c,v 1.15 1998/06/03 09:50:19 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -70,6 +70,12 @@
 #include <netinet/ip_ah.h>
 #include <sys/syslog.h>
 
+#ifdef ENCDEBUG
+#define DPRINTF(x)	if (encdebug) printf x
+#else
+#define DPRINTF(x)
+#endif
+
 extern void encap_sendnotify(int, struct tdb *, void *);
 
 struct ah_hash ah_old_hash[] = {
@@ -96,10 +102,7 @@ struct ah_hash ah_old_hash[] = {
 int
 ah_old_attach()
 {
-#ifdef ENCDEBUG
-    if (encdebug)
-      printf("ah_old_attach(): setting up\n");
-#endif /* ENCDEBUG */
+    DPRINTF(("ah_old_attach(): setting up\n"));
     return 0;
 }
 
@@ -121,10 +124,7 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     {
         if ((m = m_pullup(m, ENCAP_MSG_FIXED_LEN)) == NULL)
         {
-#ifdef ENCDEBUG
-            if (encdebug)
-              printf("ah_old_init(): m_pullup failed\n");
-#endif /* ENCDEBUG */
+            DPRINTF(("ah_old_init(): m_pullup failed\n"));
             return ENOBUFS;
         }
     }
@@ -152,11 +152,8 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	m_freem(m);
 	return EINVAL;
     }
-#ifdef ENCDEBUG
-    if (encdebug)
-      printf("ah_old_init(): initalized TDB with hash algorithm %d: %s\n",
-	     xenc.amx_hash_algorithm, ah_old_hash[i].name);
-#endif /* ENCDEBUG */
+    DPRINTF(("ah_old_init(): initalized TDB with hash algorithm %d: %s\n",
+	     xenc.amx_hash_algorithm, ah_old_hash[i].name));
     thash = &ah_old_hash[i];
 
     if (xenc.amx_keylen + EMT_SETSPI_FLEN + AH_OLD_XENCAP_LEN != em->em_msglen)
@@ -171,10 +168,7 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	   xenc.amx_keylen, M_XDATA, M_WAITOK);
     if (tdbp->tdb_xdata == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("ah_old_init(): MALLOC() failed\n");
-#endif /* ENCDEBUG */
+	DPRINTF(("ah_old_init(): MALLOC() failed\n"));
       	return ENOBUFS;
     }
 
@@ -211,10 +205,7 @@ ah_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 int
 ah_old_zeroize(struct tdb *tdbp)
 {
-#ifdef ENCDEBUG
-    if (encdebug)
-      printf("ah_old_zeroize(): freeing memory\n");
-#endif /* ENCDEBUG */
+    DPRINTF(("ah_old_zeroize(): freeing memory\n"));
     if (tdbp->tdb_xdata)
     {
     	FREE(tdbp->tdb_xdata, M_XDATA);
@@ -255,10 +246,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
     {
 	if ((m = m_pullup(m, ohlen)) == NULL)
 	{
-#ifdef ENCDEBUG
-	    if (encdebug)
-	      printf("ah_old_input(): m_pullup() failed\n");
-#endif /* ENCDEBUG */
+	    DPRINTF(("ah_old_input(): m_pullup() failed\n"));
 	    ahstat.ahs_hdrops++;
 	    return NULL;
 	}
@@ -271,10 +259,7 @@ ah_old_input(struct mbuf *m, struct tdb *tdb)
 	if ((m = m_pullup(m, ohlen - sizeof (struct ip) +
 			  (ip->ip_hl << 2))) == NULL)
 	{
-#ifdef ENCDEBUG
-	    if (encdebug)
-	      printf("ah_old_input(): m_pullup() failed\n");
-#endif /* ENCDEBUG */
+	    DPRINTF(("ah_old_input(): m_pullup() failed\n"));
 	    ahstat.ahs_hdrops++;
 	    return NULL;
 	}
@@ -472,11 +457,8 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     m = m_pullup(m, sizeof(struct ip));
     if (m == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("ah_old_output(): m_pullup() failed, SA %x/%08x\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+	DPRINTF(("ah_old_output(): m_pullup() failed, SA %x/%08x\n",
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
       	return ENOBUFS;
     }
 
@@ -488,11 +470,8 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     {
 	if ((m = m_pullup(m, ip->ip_hl << 2)) == NULL)
 	{
-#ifdef ENCDEBUG
-	    if (encdebug)
-	      printf("ah_old_output(): m_pullup() failed, SA &x/%08x\n",
-		     tdb->tdb_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+	    DPRINTF(("ah_old_output(): m_pullup() failed, SA &x/%08x\n",
+		     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 	    ahstat.ahs_hdrops++;
 	    return NULL;
 	}
@@ -606,20 +585,14 @@ ah_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     M_PREPEND(m, ohlen, M_DONTWAIT);
     if (m == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("ah_old_output(): M_PREPEND() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+	DPRINTF(("ah_old_output(): M_PREPEND() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
         return ENOBUFS;
     }
 
     m = m_pullup(m, ohlen + (ipo.ip_hl << 2));
     if (m == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("ah_old_output(): m_pullup() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+	DPRINTF(("ah_old_output(): m_pullup() failed for packet from %x to %x, spi %08x\n", ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
         return ENOBUFS;
     }
 

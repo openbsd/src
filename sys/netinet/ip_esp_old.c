@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp_old.c,v 1.17 1998/05/18 21:10:45 provos Exp $	*/
+/*	$OpenBSD: ip_esp_old.c,v 1.18 1998/06/03 09:50:22 provos Exp $	*/
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -71,6 +71,12 @@
 #include <dev/rndvar.h>
 #include <sys/syslog.h>
 
+#ifdef ENCDEBUG
+#define DPRINTF(x)	if (encdebug) printf x
+#else
+#define DPRINTF(x)
+#endif
+
 extern void des_ecb3_encrypt(caddr_t, caddr_t, caddr_t, caddr_t, caddr_t, int);
 extern void des_ecb_encrypt(caddr_t, caddr_t, caddr_t, int);
 extern void des_set_key(caddr_t, caddr_t);
@@ -132,10 +138,7 @@ des3_decrypt(void *pxd, u_int8_t *blk)
 int
 esp_old_attach()
 {
-#ifdef ENCDEBUG
-    if (encdebug)
-      printf("esp_old_attach(): setting up\n");
-#endif /* ENCDEBUG */
+    DPRINTF(("esp_old_attach(): setting up\n"));
     return 0;
 }
 
@@ -159,10 +162,7 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     {
 	if ((m = m_pullup(m, ENCAP_MSG_FIXED_LEN)) == NULL)
 	{
-#ifdef ENCDEBUG
-	    if (encdebug)
-	      printf("esp_old_init(): m_pullup failed\n");
-#endif /* ENCDEBUG */
+	    DPRINTF(("esp_old_init(): m_pullup failed\n"));
 	    return ENOBUFS;
 	}
     }
@@ -190,11 +190,8 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
     }
 
     txform = &esp_old_xform[i];
-#ifdef ENCDEBUG
-    if (encdebug)
-      printf("esp_old_init(): initialized TDB with enc algorithm %d: %s\n",
-	     xenc.edx_enc_algorithm, esp_old_xform[i].name);
-#endif /* ENCDEBUG */
+    DPRINTF(("esp_old_init(): initialized TDB with enc algorithm %d: %s\n",
+	     xenc.edx_enc_algorithm, esp_old_xform[i].name));
 
     if (xenc.edx_ivlen + xenc.edx_keylen + EMT_SETSPI_FLEN +
 	ESP_OLD_XENCAP_LEN != em->em_msglen)
@@ -229,10 +226,7 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 	   M_XDATA, M_WAITOK);
     if (tdbp->tdb_xdata == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("esp_old_init(): MALLOC() failed\n");
-#endif /* ENCDEBUG */
+	DPRINTF(("esp_old_init(): MALLOC() failed\n"));
       	return ENOBUFS;
     }
 
@@ -281,10 +275,7 @@ esp_old_init(struct tdb *tdbp, struct xformsw *xsp, struct mbuf *m)
 int
 esp_old_zeroize(struct tdb *tdbp)
 {
-#ifdef ENCDEBUG
-    if (encdebug)
-      printf("esp_old_zeroize(): freeing memory\n");
-#endif /* ENCDEBUG */
+    DPRINTF(("esp_old_zeroize(): freeing memory\n"));
     if (tdbp->tdb_xdata)
     {
        	FREE(tdbp->tdb_xdata, M_XDATA);
@@ -315,10 +306,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     {
 	if ((m = m_pullup(m, sizeof(struct ip))) == NULL)
 	{
-#ifdef ENCDEBUG
-	    if (encdebug)
-	      printf("esp_old_input(): m_pullup() failed\n");
-#endif /* ENCDEBUG */
+	    DPRINTF(("esp_old_input(): m_pullup() failed\n"));
 	    espstat.esps_hdrops++;
 	    return NULL;
 	}
@@ -332,10 +320,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     {
 	if ((m = m_pullup(m, ohlen + blks)) == NULL)
 	{
-#ifdef ENCDEBUG
-            if (encdebug)
-              printf("esp_old_input(): m_pullup() failed\n");
-#endif /* ENCDEBUG */
+            DPRINTF(("esp_old_input(): m_pullup() failed\n"));
             espstat.esps_hdrops++;
             return NULL;
 	}
@@ -352,10 +337,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	   xd->edx_ivlen;
     if ((plen & (blks - 1)) || (plen <= 0))
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("esp_old_input(): payload not a multiple of %d octets for packet from %x to %x, spi %08x\n", blks, ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+	DPRINTF(("esp_old_input(): payload not a multiple of %d octets for packet from %x to %x, spi %08x\n", blks, ipo.ip_src, ipo.ip_dst, ntohl(tdb->tdb_spi)));
 	espstat.esps_badilen++;
 	m_freem(m);
 	return NULL;
@@ -429,11 +411,8 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	    {
 		if ((mi = m_pullup(mi, blks - rest)) == NULL)
 		{
-#ifdef ENCDEBUG
-		    if (encdebug)
-			printf("esp_old_input(): m_pullup() failed, SA %x/%08x\n",
-			       tdb->tdb_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+		    DPRINTF(("esp_old_input(): m_pullup() failed, SA %x/%08x\n",
+			     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 		    espstat.esps_hdrops++;
 		    return NULL;
 		}
@@ -507,10 +486,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
     if (blk[6] + 2 > m->m_pkthdr.len - (ip->ip_hl << 2) - sizeof(u_int32_t) -
 	xd->edx_ivlen)
     {
-#ifdef ENCDEBUG
-        if (encdebug)
-	  printf("esp_old_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[6], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+	DPRINTF(("esp_old_input(): invalid padding length %d for packet from %x to %x, SA %x/%08x\n", blk[6], ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 	espstat.esps_badilen++;
 	m_freem(m);
 	return NULL;
@@ -524,10 +500,7 @@ esp_old_input(struct mbuf *m, struct tdb *tdb)
 	m = m_pullup(m, (ipo.ip_hl << 2));
 	if (m == NULL)
 	{
-#ifdef ENCDEBUG
-	    if (encdebug)
-	      printf("esp_old_input(): m_pullup() failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+	    DPRINTF(("esp_old_input(): m_pullup() failed for packet from %x to %x, SA %x/%08x\n", ipo.ip_src, ipo.ip_dst, tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 	    return NULL;
 	}
     }
@@ -611,11 +584,8 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     m = m_pullup(m, sizeof(struct ip));
     if (m == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("esp_old_output(): m_pullup() failed for SA %x/%08x\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+        DPRINTF(("esp_old_output(): m_pullup() failed for SA %x/%08x\n",
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
         return ENOBUFS;
     }
 
@@ -631,11 +601,8 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	m = m_pullup(m, iphlen);
 	if (m == NULL)
         {
-#ifdef ENCDEBUG
-	    if (encdebug)
-	      printf("esp_old_output(): m_pullup() failed for SA %x/%08x\n",
-		     tdb->tdb_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+	    DPRINTF(("esp_old_output(): m_pullup() failed for SA %x/%08x\n",
+		     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 	    return ENOBUFS;
 	}
 
@@ -658,11 +625,8 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     pad = (u_char *) m_pad(m, padding);
     if (pad == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("esp_old_output(): m_pad() failed for SA %x/%08x\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+	DPRINTF(("esp_old_output(): m_pad() failed for SA %x/%08x\n",
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
       	return ENOBUFS;
     }
 
@@ -720,11 +684,8 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
 	    {
 		if ((mi = m_pullup(mi, blks - rest)) == NULL)
 		{
-#ifdef ENCDEBUG
-		    if (encdebug)
-			printf("esp_old_output(): m_pullup() failed, SA %x/%08x\n",
-			       tdb->tdb_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+		    DPRINTF(("esp_old_output(): m_pullup() failed, SA %x/%08x\n",
+			     tdb->tdb_dst, ntohl(tdb->tdb_spi)));
 		    return ENOBUFS;
 		}
 	    }
@@ -776,22 +737,16 @@ esp_old_output(struct mbuf *m, struct sockaddr_encap *gw, struct tdb *tdb,
     M_PREPEND(m, ohlen, M_DONTWAIT);
     if (m == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("esp_old_output(): M_PREPEND failed, SA %x/%08x\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+	DPRINTF(("esp_old_output(): M_PREPEND failed, SA %x/%08x\n",
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
         return ENOBUFS;
     }
 
     m = m_pullup(m, iphlen + ohlen);
     if (m == NULL)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("esp_old_output(): m_pullup() failed, SA %x/%08x\n",
-		 tdb->tdb_dst, ntohl(tdb->tdb_spi));
-#endif /* ENCDEBUG */
+        DPRINTF(("esp_old_output(): m_pullup() failed, SA %x/%08x\n",
+		 tdb->tdb_dst, ntohl(tdb->tdb_spi)));
         return ENOBUFS;
     }
 
@@ -886,10 +841,7 @@ m_pad(struct mbuf *m, int n)
 	
     if (n <= 0)			/* no stupid arguments */
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("m_pad(): pad length invalid (%d)\n", n);
-#endif /* ENCDEBUG */
+	DPRINTF(("m_pad(): pad length invalid (%d)\n", n));
         return NULL;
     }
 
@@ -906,11 +858,8 @@ m_pad(struct mbuf *m, int n)
 
     if (m0->m_len != len)
     {
-#ifdef ENCDEBUG
-	if (encdebug)
-	  printf("m_pad(): length mismatch (should be %d instead of %d)\n",
-		 m->m_pkthdr.len, m->m_pkthdr.len + m0->m_len - len);
-#endif /* ENCDEBUG */
+	DPRINTF(("m_pad(): length mismatch (should be %d instead of %d)\n",
+		 m->m_pkthdr.len, m->m_pkthdr.len + m0->m_len - len));
 	m_freem(m);
 	return NULL;
     }
@@ -926,10 +875,7 @@ m_pad(struct mbuf *m, int n)
 	if (m1 == 0)
 	{
 	    m_freem(m0);
-#ifdef ENCDEBUG
-	    if (encdebug)
-	      printf("m_pad(): cannot append\n");
-#endif /* ENCDEBUG */
+	    DPRINTF(("m_pad(): cannot append\n"));
 	    return NULL;
 	}
 
