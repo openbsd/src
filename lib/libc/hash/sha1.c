@@ -1,4 +1,4 @@
-/*	$OpenBSD: sha1.c,v 1.5 1997/07/10 22:52:59 millert Exp $	*/
+/*	$OpenBSD: sha1.c,v 1.6 1997/07/11 04:17:10 millert Exp $	*/
 
 /*
  * SHA-1 in C
@@ -18,7 +18,7 @@
 
 #include <sys/param.h>
 #include <string.h>
-#include "sha1.h"
+#include <sha1.h>
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 
