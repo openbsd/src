@@ -1,4 +1,4 @@
-/*	$OpenBSD: ifconfig.c,v 1.100 2004/05/29 17:54:46 jcs Exp $	*/
+/*	$OpenBSD: ifconfig.c,v 1.101 2004/06/21 23:41:53 millert Exp $	*/
 /*	$NetBSD: ifconfig.c,v 1.40 1997/10/01 02:19:43 enami Exp $	*/
 
 /*
@@ -77,7 +77,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)ifconfig.c	8.2 (Berkeley) 2/16/94";
 #else
-static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.100 2004/05/29 17:54:46 jcs Exp $";
+static const char rcsid[] = "$OpenBSD: ifconfig.c,v 1.101 2004/06/21 23:41:53 millert Exp $";
 #endif
 #endif /* not lint */
 
@@ -1274,7 +1274,7 @@ ieee80211_status(void)
 		len = nwid.i_len;
 		if (len > IEEE80211_NWID_LEN)
 			len = IEEE80211_NWID_LEN;
-		fputs("\tnwid ", stdout);
+		fputs("\tnwid: ", stdout);
 		print_string(nwid.i_nwid, nwid.i_len);
 		putchar('\n');
 	}
@@ -1283,7 +1283,7 @@ ieee80211_status(void)
 	(void)strlcpy(nwkey.i_name, name, sizeof(nwkey.i_name));
 	if (ioctl(s, SIOCG80211NWKEY, (caddr_t)&nwkey) == 0 &&
 	    nwkey.i_wepon > 0) {
-		fputs("\tnwkey ", stdout);
+		fputs("\tnwkey: ", stdout);
 		/* try to retrieve WEP keys */
 		for (i = 0; i < IEEE80211_WEP_NKID; i++) {
 			nwkey.i_key[i].i_keydat = keybuf[i];
@@ -1337,7 +1337,7 @@ ieee80211_status(void)
 	memset(&power, 0, sizeof(power));
 	(void)strlcpy(power.i_name, name, sizeof(power.i_name));
 	if (ioctl(s, SIOCG80211POWER, &power) == 0) {
-		fputs("\tpowersave ", stdout);
+		fputs("\tpowersave: ", stdout);
 		if (power.i_enabled)
 			printf("on (%dms sleep)\n", power.i_maxsleep);
 		else
