@@ -1,4 +1,4 @@
-.\"	$OpenBSD: boot_mac68k.8,v 1.4 1996/07/10 03:52:55 ccappuc Exp $
+.\"	$OpenBSD: boot_mac68k.8,v 1.5 1998/02/26 16:32:40 gene Exp $
 .\"	$NetBSD: boot_mac68k.8,v 1.1 1995/07/02 02:09:52 briggs Exp $
 .\"
 .\" Copyright (c) 1990, 1991 The Regents of the University of California.
@@ -49,7 +49,7 @@ system bootstrapping procedures
 .Sh DESCRIPTION
 .Sy Power fail and crash recovery.
 Normally, the
-.Tn OpenBSD
+.Ox
 kernel on the mac68k architecture is booted from the native operating
 system by means of an application program.  When the kernel takes over,
 it initializes itself and proceeds to boot the system.  An automatic
@@ -60,8 +60,8 @@ to shut the system down is with the
 command.
 .Pp
 If the system crashes, it will enter the kernel debugger,
-.Xr ddb 8
-,if it is configured in the kernel.  If the debugger is not present,
+.Xr ddb 8 ,
+if it is configured in the kernel.  If the debugger is not present,
 or the debugger is exited, the system will attempt a dump to the
 configured dump device (which will be automatically recovered with
 .Xr savecore 8
@@ -71,10 +71,10 @@ or not), the system will attempt a reboot.
 On most mac68k machines with "soft-power" after the IIcx, the power
 switch can be physically rotated and locked in the 'on' position.
 The native OS can be configured to automatically start the
-.Tn OpenBSD
+.Ox
 boot program.  Additionally, the OpenBSD boot program can be configured
 to boot
-.Tn OpenBSD
+.Ox
 without intervention.  When a system is so configured, it can crash
 or lose power and reboot back to a fully multi-user state without
 any intervention.
@@ -105,7 +105,7 @@ respectively) may be used for this.
 .Pp
 It is sometimes useful to boot a kernel that resides in a folder
 in native OS rather than from the usual location in the
-.Tn OpenBSD
+.Ox
 file system.  A radio button is supplied for this purpose.  Note that
 some programs will not run properly if the kernel is not found as
 .Ar /bsd
@@ -118,7 +118,7 @@ file system.
 system kernel
 .El
 .Sh SEE ALSO
-.Xr ddb 8
-.Xr savecore 8
-.Xr shutdown 8
-.Xr ttys 5
+.Xr ddb 8 ,
+.Xr savecore 8 ,
+.Xr shutdown 8 ,
+.Xr ttys 5 
