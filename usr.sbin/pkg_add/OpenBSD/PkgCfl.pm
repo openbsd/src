@@ -1,5 +1,5 @@
 # ex:ts=8 sw=4:
-# $OpenBSD: PkgCfl.pm,v 1.6 2004/10/05 19:52:44 espie Exp $
+# $OpenBSD: PkgCfl.pm,v 1.7 2004/10/11 09:44:06 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -20,6 +20,7 @@ use warnings;
 
 package OpenBSD::PkgCfl;
 use OpenBSD::PackageName;
+use OpenBSD::PkgSpec;
 
 sub glob2re
 {
@@ -37,8 +38,8 @@ sub make_conflict_list($)
 	my $l = [];
 
 	unless (defined $plist->{'no-default-conflict'}) {
-		my $stem = (OpenBSD::PackageName::splitname $plist->pkgname())[0];
-		push(@$l, sub { OpenBSD::PackageName::pkgspec_match($stem."-*", @_); });
+		my $stem = OpenBSD::PackageName::splitstem($plist->pkgname());
+		push(@$l, sub { OpenBSD::PkgSpec::match($stem."-*", @_); });
 	}
 	if (defined $plist->{pkgcfl}) {
 		for my $cfl (@{$plist->{pkgcfl}}) {
@@ -48,7 +49,7 @@ sub make_conflict_list($)
 	}
 	if (defined $plist->{conflict}) {
 		for my $cfl (@{$plist->{conflict}}) {
-		    push(@$l, sub { OpenBSD::PackageName::pkgspec_match($cfl->{name}, @_); });
+		    push(@$l, sub { OpenBSD::PkgSpec::match($cfl->{name}, @_); });
 		}
 	}
 	bless $l, $class;

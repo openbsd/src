@@ -1,7 +1,7 @@
 #! /usr/bin/perl
 
 # ex:ts=8 sw=4:
-# $OpenBSD: pkg_add,v 1.62 2004/10/11 09:13:20 espie Exp $
+# $OpenBSD: pkg_add,v 1.63 2004/10/11 09:44:06 espie Exp $
 #
 # Copyright (c) 2003-2004 Marc Espie <espie@openbsd.org>
 #
@@ -25,6 +25,7 @@ use OpenBSD::PackageInfo;
 use OpenBSD::PackageLocator;
 use OpenBSD::PackageName;
 use OpenBSD::PkgCfl;
+use OpenBSD::PkgSpec;
 use OpenBSD::Vstat;
 use Getopt::Std;
 use OpenBSD::Error;
@@ -396,8 +397,8 @@ sub pre_add($$)
 	
 	if ($pkg ne '-') {
 		print "$operation $pkg\n";
-		$pkgname1 = OpenBSD::PackageName->new($pkg);
-		return undef unless can_install($pkgname1->{pkgname});
+		$pkgname1 = OpenBSD::PackageName::url2pkgname($pkg);
+		return undef unless can_install($pkgname1);
 	}
 
 	my $handle = OpenBSD::PackageLocator->find($pkg);
@@ -419,16 +420,16 @@ sub pre_add($$)
 		$errors++;
 		return undef;
 	}
-	my $pkgname = OpenBSD::PackageName->new($plist->pkgname());
+	my $pkgname = $plist->pkgname();
 	if (defined $pkgname1) {
-		if ($pkgname->{pkgname} ne $pkgname1->{pkgname}) {
+		if ($pkgname ne $pkgname1) {
 			print "Package name is not consistent ???\n";
 			$errors++;
 			return undef;
 		}
 	} else {
-		print $operation, " ", $pkgname->{pkgname}, "\n";
-		return undef unless can_install($pkgname->{pkgname});
+		print "$operation $pkgname\n";
+		return undef unless can_install($pkgname);
 	}
 	# second handling of conflicts
 	my $l = OpenBSD::PkgCfl->make_conflict_list($plist);
@@ -460,7 +461,7 @@ sub solve_dependencies
 	}
 	for my $dep (@{$plist->{newdepend}}, @{$plist->{libdepend}}) {
 	    next if defined $dep->{name} and $dep->{name} ne $plist->pkgname();
-	    my @candidates = OpenBSD::PackageName::pkgspec_match($dep->{pattern}, installed_packages());
+	    my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, installed_packages());
 	    if (@candidates >= 1) {
 		    push(@$to_register, $candidates[0]);
 	    } else {
@@ -471,13 +472,13 @@ sub solve_dependencies
 			}
 		}
 	    	# try against list of packages to install
-	    	my @candidates = OpenBSD::PackageName::pkgspec_match($dep->{pattern}, keys %{$to_install});
+	    	my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, keys %{$to_install});
 		if (@candidates >= 1) {
 		    push(@deps, $to_install->{$candidates[0]});
 		    push(@$to_register, $candidates[0]);
 		} else {
 		    # try with list of packages
-		    my @candidates = OpenBSD::PackageName::pkgspec_match($dep->{pattern}, OpenBSD::PackageLocator::available());
+		    my @candidates = OpenBSD::PkgSpec::match($dep->{pattern}, OpenBSD::PackageLocator::available());
 		    # one single choice
 		    if (@candidates == 1) {
 			push(@deps, $candidates[0]);
