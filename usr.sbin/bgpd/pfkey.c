@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfkey.c,v 1.13 2004/01/30 23:12:51 henning Exp $ */
+/*	$OpenBSD: pfkey.c,v 1.14 2004/03/15 16:00:59 henning Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -63,31 +63,39 @@ pfkey_send(int sd, uint8_t mtype, struct bgpd_addr *src,
 
 	/* we need clean sockaddr... no ports set */
 	bzero(&ssrc, sizeof(ssrc));
-	if (src->af == AF_INET) {
+	switch (src->af) {
+	case AF_INET:
 		((struct sockaddr_in *)&ssrc)->sin_addr = src->v4;
 		ssrc.ss_len = sizeof(struct sockaddr_in);
 		ssrc.ss_family = AF_INET;
-	} else if (src->af == AF_INET6) {
+		break;
+	case AF_INET6:
 		memcpy(&((struct sockaddr_in6 *)&ssrc)->sin6_addr,
 		    &src->v6, sizeof(struct in6_addr));
 		ssrc.ss_len = sizeof(struct sockaddr_in6);
 		ssrc.ss_family = AF_INET6;
-	} else {
+		break;
+	default:
 		return (-1);
+		/* not reached */
 	}
 
 	bzero(&sdst, sizeof(sdst));
-	if (dst->af == AF_INET) {
+	switch (dst->af) {
+	case AF_INET:
 		((struct sockaddr_in *)&sdst)->sin_addr = dst->v4;
 		sdst.ss_len = sizeof(struct sockaddr_in);
 		sdst.ss_family = AF_INET;
-	} else if (dst->af == AF_INET6) {
+		break;
+	case AF_INET6:
 		memcpy(&((struct sockaddr_in6 *)&sdst)->sin6_addr,
 		    &dst->v6, sizeof(struct in6_addr));
 		sdst.ss_len = sizeof(struct sockaddr_in6);
 		sdst.ss_family = AF_INET6;
-	} else {
+		break;
+	default:
 		return (-1);
+		/* not reached */
 	}
 
 	bzero(&smsg, sizeof(smsg));
