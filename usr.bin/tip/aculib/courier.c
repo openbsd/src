@@ -1,4 +1,4 @@
-/*	$NetBSD: courier.c,v 1.4 1994/12/08 09:31:35 jtc Exp $	*/
+/*	$NetBSD: courier.c,v 1.5 1995/10/29 00:49:50 pk Exp $	*/
 
 /*
  * Copyright (c) 1986, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)courier.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: courier.c,v 1.4 1994/12/08 09:31:35 jtc Exp $";
+static char rcsid[] = "$NetBSD: courier.c,v 1.5 1995/10/29 00:49:50 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -45,6 +45,7 @@ static char rcsid[] = "$NetBSD: courier.c,v 1.4 1994/12/08 09:31:35 jtc Exp $";
  * Derived from Hayes driver.
  */
 #include "tip.h"
+#include <sys/ioctl.h>
 #include <stdio.h>
 
 #define	MAXRETRY	5
@@ -63,12 +64,15 @@ cour_dialer(num, acu)
 #ifdef ACULOG
 	char line[80];
 #endif
+	struct termios cntrl;
 	static int cour_connect(), cour_swallow();
 
 	if (boolean(value(VERBOSE)))
 		printf("Using \"%s\"\n", acu);
 
-	ioctl(FD, TIOCHPCL, 0);
+	tcgetattr(FD, &cntrl);
+	cntrl.c_cflag |= HUPCL;
+	tcsetattr(FD, TCSAFLUSH, &cntrl);
 	/*
 	 * Get in synch.
 	 */
@@ -86,7 +90,7 @@ badsynch:
 	if (boolean(value(VERBOSE)))
 		cour_verbose_read();
 #endif
-	ioctl(FD, TIOCFLUSH, 0);	/* flush any clutter */
+	tcflush(FD, TCIOFLUSH);
 	cour_write(FD, "AT C1 E0 H0 Q0 X6 V1\r", 21);
 	if (!cour_swallow("\r\nOK\r\n"))
 		goto badsynch;
@@ -186,7 +190,6 @@ cour_connect()
 {
 	char c;
 	int nc, nl, n;
-	struct sgttyb sb;
 	char dialer_buf[64];
 	struct baud_msg *bm;
 	sig_t f;
@@ -225,15 +228,12 @@ again:
 			for (bm = baud_msg ; bm->msg ; bm++)
 				if (strcmp(bm->msg,
 				    dialer_buf+sizeof("CONNECT")-1) == 0) {
-					if (ioctl(FD, TIOCGETP, &sb) < 0) {
-						perror("TIOCGETP");
-						goto error;
-					}
-					sb.sg_ispeed = sb.sg_ospeed = bm->baud;
-					if (ioctl(FD, TIOCSETP, &sb) < 0) {
-						perror("TIOCSETP");
-						goto error;
-					}
+					struct termios	cntrl;
+
+					tcgetattr(FD, &cntrl);
+					cfsetospeed(&cntrl, bm->baud);
+					cfsetispeed(&cntrl, bm->baud);
+					tcsetattr(FD, TCSAFLUSH, &cntrl);
 					signal(SIGALRM, f);
 #ifdef DEBUG
 					if (boolean(value(VERBOSE)))
@@ -268,7 +268,7 @@ coursync()
 	char buf[40];
 
 	while (already++ < MAXRETRY) {
-		ioctl(FD, TIOCFLUSH, 0);	/* flush any clutter */
+		tcflush(FD, TCIOFLUSH);
 		cour_write(FD, "\rAT Z\r", 6);	/* reset modem */
 		bzero(buf, sizeof(buf));
 		sleep(1);
@@ -307,18 +307,15 @@ int fd;
 char *cp;
 int n;
 {
-	struct sgttyb sb;
 #ifdef notdef
 	if (boolean(value(VERBOSE)))
 		write(1, cp, n);
 #endif
-	ioctl(fd, TIOCGETP, &sb);
-	ioctl(fd, TIOCSETP, &sb);
+	tcdrain(fd);
 	cour_nap();
 	for ( ; n-- ; cp++) {
 		write(fd, cp, 1);
-		ioctl(fd, TIOCGETP, &sb);
-		ioctl(fd, TIOCSETP, &sb);
+		tcdrain(fd);
 		cour_nap();
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: ventel.c,v 1.3 1994/12/08 09:31:52 jtc Exp $	*/
+/*	$NetBSD: ventel.c,v 1.4 1995/10/29 00:50:04 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)ventel.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: ventel.c,v 1.3 1994/12/08 09:31:52 jtc Exp $";
+static char rcsid[] = "$NetBSD: ventel.c,v 1.4 1995/10/29 00:50:04 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -45,6 +45,8 @@ static char rcsid[] = "$NetBSD: ventel.c,v 1.3 1994/12/08 09:31:52 jtc Exp $";
  * The Ventel is expected to be strapped for local echo (just like uucp)
  */
 #include "tip.h"
+#include <termios.h>
+#include <sys/ioctl.h>
 
 #define	MAXRETRY	5
 
@@ -71,6 +73,7 @@ ven_dialer(num, acu)
 	char *msg, *index(), line[80];
 	static int gobble(), vensync();
 	static void echo();
+	struct termios	cntrl;
 
 	/*
 	 * Get in synch with a couple of carriage returns
@@ -85,7 +88,9 @@ ven_dialer(num, acu)
 	if (boolean(value(VERBOSE)))
 		printf("\ndialing...");
 	fflush(stdout);
-	ioctl(FD, TIOCHPCL, 0);
+	tcgetattr(FD, &cntrl);
+	cntrl.c_cflag |= HUPCL;
+	tcsetattr(FD, TCSANOW, &cntrl);
 	echo("#k$\r$\n$D$I$A$L$:$ ");
 	for (cp = num; *cp; cp++) {
 		delay(1, 10);
@@ -96,7 +101,7 @@ ven_dialer(num, acu)
 	gobble('\n', line);
 	if (gobble('\n', line))
 		connected = gobble('!', line);
-	ioctl(FD, TIOCFLUSH);
+	tcflush(FD, TCIOFLUSH);
 #ifdef ACULOG
 	if (timeout) {
 		sprintf(line, "%d second dial timeout",

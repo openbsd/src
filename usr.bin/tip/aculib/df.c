@@ -1,4 +1,4 @@
-/*	$NetBSD: df.c,v 1.3 1994/12/08 09:31:38 jtc Exp $	*/
+/*	$NetBSD: df.c,v 1.4 1995/10/29 00:49:51 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)df.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: df.c,v 1.3 1994/12/08 09:31:38 jtc Exp $";
+static char rcsid[] = "$NetBSD: df.c,v 1.4 1995/10/29 00:49:51 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -68,11 +68,13 @@ df_dialer(num, acu, df03)
 	int df03;
 {
 	register int f = FD;
-	struct sgttyb buf;
+	struct termios cntrl;
 	int speed = 0, rw = 2;
 	char c = '\0';
 
-	ioctl(f, TIOCHPCL, 0);		/* make sure it hangs up when done */
+	tcgetattr(f, &cntrl);
+	cntrl.c_cflag |= HUPCL;
+	tcsetattr(f, TCSANOW, &cntrl);
 	if (setjmp(Sjbuf)) {
 		printf("connection timed out\r\n");
 		df_disconnect();
@@ -85,11 +87,12 @@ df_dialer(num, acu, df03)
 	if (df03) {
 		int st = TIOCM_ST;	/* secondary Transmit flag */
 
-		ioctl(f, TIOCGETP, &buf);
-		if (buf.sg_ospeed != B1200) {	/* must dial at 1200 baud */
-			speed = buf.sg_ospeed;
-			buf.sg_ospeed = buf.sg_ispeed = B1200;
-			ioctl(f, TIOCSETP, &buf);
+		tcgetattr(f, &cntrl);
+		speed = cfgetospeed(&cntrl);
+		if (speed != B1200) {	/* must dial at 1200 baud */
+			cfsetospeed(&cntrl, B1200);
+			cfsetispeed(&cntrl, B1200);
+			tcsetattr(f, TCSAFLUSH, &cntrl);
 			ioctl(f, TIOCMBIC, &st); /* clear ST for 300 baud */
 		} else
 			ioctl(f, TIOCMBIS, &st); /* set ST for 1200 baud */
@@ -97,16 +100,17 @@ df_dialer(num, acu, df03)
 #endif
 	signal(SIGALRM, timeout);
 	alarm(5 * strlen(num) + 10);
-	ioctl(f, TIOCFLUSH, &rw);
+	tcflush(f, TCIOFLUSH);
 	write(f, "\001", 1);
 	sleep(1);
 	write(f, "\002", 1);
 	write(f, num, strlen(num));
 	read(f, &c, 1);
 #ifdef TIOCMSET
-	if (df03 && speed) {
-		buf.sg_ispeed = buf.sg_ospeed = speed;
-		ioctl(f, TIOCSETP, &buf);
+	if (df03 && speed != B1200) {
+		cfsetospeed(&cntrl, speed);
+		cfsetispeed(&cntrl, speed);
+		tcsetattr(f, TCSAFLUSH, &cntrl);
 	}
 #endif
 	return (c == 'A');
@@ -118,7 +122,7 @@ df_disconnect()
 
 	write(FD, "\001", 1);
 	sleep(1);
-	ioctl(FD, TIOCFLUSH, &rw);
+	tcflush(FD, TCIOFLUSH);
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: biz31.c,v 1.3 1994/12/08 09:31:33 jtc Exp $	*/
+/*	$NetBSD: biz31.c,v 1.4 1995/10/29 00:49:48 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)biz31.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: biz31.c,v 1.3 1994/12/08 09:31:33 jtc Exp $";
+static char rcsid[] = "$NetBSD: biz31.c,v 1.4 1995/10/29 00:49:48 pk Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -123,7 +123,7 @@ biz31_disconnect()
 
 	write(FD, DISCONNECT_CMD, 4);
 	sleep(2);
-	ioctl(FD, TIOCFLUSH);
+	tcflush(FD, TCIOFLUSH);
 }
 
 biz31_abort()
@@ -231,7 +231,7 @@ bizsync(fd)
 
 retry:
 	if (ioctl(fd, IOCTL, (caddr_t)&b) >= 0 && chars(b) > 0)
-		ioctl(fd, TIOCFLUSH);
+		tcflush(FD, TCIOFLUSH);
 	write(fd, "\rp>\r", 4);
 	sleep(1);
 	if (ioctl(fd, IOCTL, (caddr_t)&b) >= 0) {

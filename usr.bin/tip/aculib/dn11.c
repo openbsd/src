@@ -1,4 +1,4 @@
-/*	$NetBSD: dn11.c,v 1.3 1994/12/08 09:31:40 jtc Exp $	*/
+/*	$NetBSD: dn11.c,v 1.4 1995/10/29 00:49:53 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)dn11.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: dn11.c,v 1.3 1994/12/08 09:31:40 jtc Exp $";
+static char rcsid[] = "$NetBSD: dn11.c,v 1.4 1995/10/29 00:49:53 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -57,6 +57,7 @@ dn_dialer(num, acu)
 	char *p, *q, phone[40];
 	int lt, nw, connected = 1;
 	register int timelim;
+	struct termios cntrl;
 
 	if (boolean(value(VERBOSE)))
 		printf("\nstarting call...");
@@ -100,7 +101,9 @@ dn_dialer(num, acu)
 		return (0);
 	}
 	alarm(0);
-	ioctl(dn, TIOCHPCL, 0);
+	tcgetattr(dn, &cntrl);
+	cntrl.c_cflag |= HUPCL;
+	tcsetattr(dn, TCSANOW, &cntrl);
 	signal(SIGALRM, SIG_DFL);
 	while ((nw = wait(&lt)) != child && nw != -1)
 		;

@@ -1,4 +1,4 @@
-/*	$NetBSD: biz22.c,v 1.3 1994/12/08 09:31:31 jtc Exp $	*/
+/*	$NetBSD: biz22.c,v 1.4 1995/10/29 00:49:47 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)biz22.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: biz22.c,v 1.3 1994/12/08 09:31:31 jtc Exp $";
+static char rcsid[] = "$NetBSD: biz22.c,v 1.4 1995/10/29 00:49:47 pk Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -127,7 +127,7 @@ biz22_disconnect()
 
 	write(FD, DISCONNECT_CMD, 4);
 	sleep(2);
-	ioctl(FD, TIOCFLUSH, &rw);
+	tcflush(FD, TCIOFLUSH);
 }
 
 biz22_abort()

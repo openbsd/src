@@ -1,4 +1,4 @@
-/*	$NetBSD: tip.h,v 1.3 1994/12/08 09:31:10 jtc Exp $	*/
+/*	$NetBSD: tip.h,v 1.4 1995/10/29 00:49:43 pk Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -45,7 +45,7 @@
 #include <sys/file.h>
 #include <sys/time.h>
 
-#include <sgtty.h>
+#include <termios.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -241,12 +241,9 @@ extern value_t	vtable[];	/* variable table */
 #define NOFILE	((FILE *)NULL)
 #define NOPWD	((struct passwd *)0)
 
-struct sgttyb	arg;		/* current mode of local terminal */
-struct sgttyb	defarg;		/* initial mode of local terminal */
-struct tchars	tchars;		/* current state of terminal */
-struct tchars	defchars;	/* initial state of terminal */
-struct ltchars	ltchars;	/* current local characters of terminal */
-struct ltchars	deflchars;	/* initial local characters of terminal */
+struct termios	term;		/* current mode of terminal */
+struct termios	defterm;	/* initial mode of terminal */
+struct termios	defchars;	/* current mode with initial chars */
 
 FILE	*fscript;		/* FILE for scripting */
 
@@ -265,6 +262,8 @@ int	intflag;		/* recognized interrupt */
 int	stoprompt;		/* for interrupting a prompt session */
 int	timedout;		/* ~> transfer timedout */
 int	cumode;			/* simulating the "cu" program */
+int	bits8;			/* terminal is is 8-bit mode */
+#define STRIP_PAR	(bits8 ? 0377 : 0177)
 
 char	fname[80];		/* file name buffer for ~< */
 char	copyname[80];		/* file name buffer for ~> */

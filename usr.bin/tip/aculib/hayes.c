@@ -1,4 +1,4 @@
-/*	$NetBSD: hayes.c,v 1.3 1994/12/08 09:31:42 jtc Exp $	*/
+/*	$NetBSD: hayes.c,v 1.4 1995/10/29 00:49:54 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)hayes.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: hayes.c,v 1.3 1994/12/08 09:31:42 jtc Exp $";
+static char rcsid[] = "$NetBSD: hayes.c,v 1.4 1995/10/29 00:49:54 pk Exp $";
 #endif /* not lint */
 
 /*
@@ -65,6 +65,9 @@ static char rcsid[] = "$NetBSD: hayes.c,v 1.3 1994/12/08 09:31:42 jtc Exp $";
  */
 #include "tip.h"
 
+#include <termios.h>
+#include <sys/ioctl.h>
+
 #define	min(a,b)	((a < b) ? a : b)
 
 static	void sigALRM();
@@ -87,6 +90,7 @@ hay_dialer(num, acu)
 	register char *cp;
 	register int connected = 0;
 	char dummy;
+	struct termios cntrl;
 #ifdef ACULOG
 	char line[80];
 #endif
@@ -95,8 +99,10 @@ hay_dialer(num, acu)
 	if (boolean(value(VERBOSE)))
 		printf("\ndialing...");
 	fflush(stdout);
-	ioctl(FD, TIOCHPCL, 0);
-	ioctl(FD, TIOCFLUSH, 0);	/* get rid of garbage */
+	tcgetattr(FD, &cntrl);
+	cntrl.c_cflag |= HUPCL;
+	tcsetattr(FD, TCSANOW, &cntrl);
+	tcflush(FD, TCIOFLUSH);
 	write(FD, "ATv0\r", 5);	/* tell modem to use short status codes */
 	gobble("\r");
 	gobble("\r");
@@ -117,7 +123,7 @@ hay_dialer(num, acu)
 		state = FAILED;
 		return (connected);	/* lets get out of here.. */
 	}
-	ioctl(FD, TIOCFLUSH, 0);
+	tcflush(FD, TCIOFLUSH);
 #ifdef ACULOG
 	if (timeout) {
 		sprintf(line, "%d second dial timeout",
@@ -245,11 +251,11 @@ goodbye()
 	int len, rlen;
 	char c;
 
-	ioctl(FD, TIOCFLUSH, &len);	/* get rid of trash */
+	tcflush(FD, TCIOFLUSH);
 	if (hay_sync()) {
 		sleep(1);
 #ifndef DEBUG
-		ioctl(FD, TIOCFLUSH, 0);
+		tcflush(FD, TCIOFLUSH);
 #endif
 		write(FD, "ATH0\r", 5);		/* insurance */
 #ifndef DEBUG
@@ -277,7 +283,7 @@ goodbye()
 		printf("read (%d): %s\r\n", rlen, dumbuf);
 #endif
 	}
-	ioctl(FD, TIOCFLUSH, 0);	/* clear the input buffer */
+	tcflush(FD, TCIOFLUSH);
 	ioctl(FD, TIOCCDTR, 0);		/* clear DTR (insurance) */
 	close(FD);
 }

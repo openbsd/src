@@ -1,4 +1,4 @@
-/*	$NetBSD: tipout.c,v 1.3 1994/12/08 09:31:12 jtc Exp $	*/
+/*	$NetBSD: tipout.c,v 1.4 1995/10/29 00:49:45 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)tipout.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: tipout.c,v 1.3 1994/12/08 09:31:12 jtc Exp $";
+static char rcsid[] = "$NetBSD: tipout.c,v 1.4 1995/10/29 00:49:45 pk Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -147,7 +147,7 @@ tipout()
 #define	ALLSIGS	sigmask(SIGEMT)|sigmask(SIGTERM)|sigmask(SIGIOT)|sigmask(SIGSYS)
 		omask = sigblock(ALLSIGS);
 		for (cp = buf; cp < buf + cnt; cp++)
-			*cp &= 0177;
+			*cp &= STRIP_PAR;
 		write(1, buf, cnt);
 		if (boolean(value(SCRIPT)) && fscript != NULL) {
 			if (!boolean(value(BEAUTIFY))) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: v831.c,v 1.3 1994/12/08 09:31:50 jtc Exp $	*/
+/*	$NetBSD: v831.c,v 1.4 1995/10/29 00:50:02 pk Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,13 +37,14 @@
 #if 0
 static char sccsid[] = "@(#)v831.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$NetBSD: v831.c,v 1.3 1994/12/08 09:31:50 jtc Exp $";
+static char rcsid[] = "$NetBSD: v831.c,v 1.4 1995/10/29 00:50:02 pk Exp $";
 #endif /* not lint */
 
 /*
  * Routines for dialing up on Vadic 831
  */
 #include "tip.h"
+#include <termios.h>
 
 int	v831_abort();
 static	void alarmtr();
@@ -106,9 +107,6 @@ v831_dialer(num, acu)
                 return (0);
         }
         alarm(0);
-#ifdef notdef
-        ioctl(AC, TIOCHPCL, 0);
-#endif
         signal(SIGALRM, SIG_DFL);
         while ((pid = wait(&status)) != child && pid != -1)
                 ;
@@ -132,7 +130,7 @@ alarmtr()
  */
 v831_disconnect()
 {
-        struct sgttyb cntrl;
+	struct termios	cntrl;
 
         sleep(2);
 #ifdef DEBUG
@@ -140,10 +138,11 @@ v831_disconnect()
 #endif
         if (FD > 0) {
                 ioctl(FD, TIOCCDTR, 0);
-                ioctl(FD, TIOCGETP, &cntrl);
-                cntrl.sg_ispeed = cntrl.sg_ospeed = 0;
-                ioctl(FD, TIOCSETP, &cntrl);
-                ioctl(FD, TIOCNXCL, (struct sgttyb *)NULL);
+		tcgetattr(FD, &cntrl);
+		cfsetospeed(&cntrl, 0);
+		cfsetispeed(&cntrl, 0);
+		tcsetattr(FD, TCSAFLUSH, &cntrl);
+                ioctl(FD, TIOCNXCL, NULL);
         }
         close(FD);
 }
@@ -158,7 +157,7 @@ v831_abort()
         if (child > 0)
                 kill(child, SIGKILL);
         if (AC > 0)
-                ioctl(FD, TIOCNXCL, (struct sgttyb *)NULL);
+                ioctl(FD, TIOCNXCL, NULL);
                 close(AC);
         if (FD > 0)
                 ioctl(FD, TIOCCDTR, 0);
@@ -190,7 +189,7 @@ dialit(phonenum, acu)
 	char *acu;
 {
         register struct vaconfig *vp;
-	struct sgttyb cntrl;
+	struct termios cntrl;
         char c;
         int i, two = 2;
 	static char *sanitize();
@@ -208,11 +207,13 @@ dialit(phonenum, acu)
 		printf("Unable to locate dialer (%s)\n", acu);
 		return ('K');
 	}
-        ioctl(AC, TIOCGETP, &cntrl);
-        cntrl.sg_ispeed = cntrl.sg_ospeed = B2400;
-        cntrl.sg_flags = RAW | EVENP | ODDP;
-        ioctl(AC, TIOCSETP, &cntrl);
-	ioctl(AC, TIOCFLUSH, &two);
+	tcgetattr(AC, &cntrl);
+	cfsetospeed(&cntrl, B2400);
+	cfsetispeed(&cntrl, B2400);
+	cntrl.c_cflag |= PARODD | PARENB;
+	cntrl.c_lflag &= ~(ISIG | ICANON);
+	tcsetattr(AC, TCSANOW, &cntrl);
+	tcflush(AC, TCIOFLUSH);
         pc(STX);
 	pc(vp->vc_rack);
 	pc(vp->vc_modem);
