@@ -1266,6 +1266,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 		      delete_flow(flow2, sa2);
 		    goto ret;
 		}
+		ipsec_in_use++;
 	    }
 	    else if (rt_setgate(rt, rt_key(rt), (struct sockaddr *) &encapgw))
 	    {
@@ -1349,6 +1350,7 @@ pfkeyv2_send(struct socket *socket, void *message, int len)
 			delete_flow(flow2, sa2);
 			goto ret;
 		    }
+	            ipsec_in_use++;
 		}
 		else if (rt_setgate(rt, rt_key(rt),
 				    (struct sockaddr *) &encapgw))
