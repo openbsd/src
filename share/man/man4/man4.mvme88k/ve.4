@@ -1,4 +1,4 @@
-.\"	$OpenBSD: ve.4,v 1.2 2003/08/08 09:29:24 miod Exp $
+.\"	$OpenBSD: ve.4,v 1.3 2003/12/26 21:03:34 miod Exp $
 .\"
 .\" Copyright (c) 2003 Paul Weissmann
 .\" All rights reserved.
@@ -25,12 +25,12 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd May 14, 2003
+.Dd December 26, 2003
 .Dt VE 4 mvme88k
 .Os
 .Sh NAME
 .Nm ve
-.Nd MVME376 Ethernet I/O adapter
+.Nd MVME376 Ethernet Communications Controller
 .Sh SYNOPSIS
 .Cd "ve0 at vmes0 addr 0xffff1200 ipl 1 len 0x100"
 .Cd "ve1 at vmes0 addr 0xffff1400 ipl 1 len 0x100"
@@ -54,28 +54,40 @@ interface employs the address resolution protocol described in
 to dynamically map between Internet and
 .Tn Ethernet
 addresses on the local network.
+.Sh HARDWARE CONFIGURATION
+The card's base address
+.Po
+matching the
+.Em addr
+locator on the configuration line
+.Pc
+is defined through two sets of DIP switches,
+.Dq SW1
+and
+.Dq SW2 ,
+located in the middle of the board, near the space between the two
+VME connectors.
 .Pp
-Depending on the version of the board, the type of the Ethernet connector
-varies. In most cases either an BNC or AUI connector is provided.
-.Pp
-By default, the system will select the media type automatically, but the
-.Xr ifconfig 8
-command can be used to force the media selection.
-The media types are shown below:
-.Bl -tag -width "media autoselect" -offset indent
-.It media autoselect
-Attempt to autoselect the media type (default)
-.It media 10base5
-Use the AUI connector
-.It media 10base2
-Use the BNC connector
+The only supported configurations are:
+.Bl -column "xxxxxxxx" "xxxxxxxx" "0xffffffff"
+.It Li SW1 Ta SW2 Ta Address Ta Configuration
+.It " "
+.It Li "UUU_UU_U" Ta "U__U____" Ta "0xffff1200" Ta "1st board"
+.It Li "UUU_U_UU" Ta "U__U_U__" Ta "0xffff1400" Ta "2nd board"
+.It Li "UUU_U__U" Ta "U__UU___" Ta "0xffff1600" Ta "3rd board"
+.It Li "U_U_U_UU" Ta "U__UUU__" Ta "0xffff5400" Ta "4th board"
+.It Li "U_U_U__U" Ta "U_U_____" Ta "0xffff5600" Ta "5th board"
+.It Li "_U_UU_UU" Ta "U_U__U__" Ta "0xffffa400" Ta "6th board"
 .El
 .Sh SEE ALSO
 .Xr arp 4 ,
-.Xr ifmedia 4 ,
 .Xr inet 4 ,
 .Xr intro 4 ,
 .Xr netintro 4 ,
 .Xr vme 4 ,
 .Xr hostname.if 5 ,
 .Xr ifconfig 8
+.Sh BUGS
+The
+.Nm
+driver currently does not support the last three board address settings.
