@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpt_openbsd.c,v 1.7 2004/03/19 02:47:36 krw Exp $	*/
+/*	$OpenBSD: mpt_openbsd.c,v 1.8 2004/04/11 12:56:05 marco Exp $	*/
 /*	$NetBSD: mpt_netbsd.c,v 1.7 2003/07/14 15:47:11 lukem Exp $	*/
 
 /*
@@ -139,7 +139,10 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed)
 {
 	fCONFIG_PAGE_SCSI_DEVICE_0 page0;
 	fCONFIG_PAGE_SCSI_DEVICE_1 page1;
+        struct scsi_inquiry scsi_cmd;
 	uint8_t tp;
+	int error;
+	struct scsi_inquiry_data inqbuf;
 
 	if (mpt->verbose > 1) {
 		mpt_prt(mpt, "Entering PPR");
@@ -244,11 +247,26 @@ mpt_ppr(mpt_softc_t *mpt, struct scsi_link *sc_link, int speed)
 		    mpt->mpt_dev_page1[sc_link->target].Configuration);
 	}
 
-	/* use TUR for PPR, use another command if there is a NO_TUR quirk */
-	/* FIXME */
-	scsi_test_unit_ready(sc_link, TEST_READY_RETRIES_DEFAULT,
-		scsi_autoconf | SCSI_IGNORE_ILLEGAL_REQUEST |
-		SCSI_IGNORE_NOT_READY | SCSI_IGNORE_MEDIA_CHANGE);
+	/* 
+	 * use INQUIRY for PPR two reasons:
+	 * 1) actually transfer data at requested speed
+	 * 2) no need to test for TUR QUIRK
+	 */
+	bzero(&scsi_cmd, sizeof scsi_cmd);
+	scsi_cmd.opcode = INQUIRY;
+	bzero(&inqbuf, sizeof inqbuf);
+	/*
+	 * Ask only for a minimal amount of data, since we only want to
+	 * test data xfer not read all the INQUIRY data.
+	 */
+	scsi_cmd.length = SID_INQUIRY_HDR + SID_SCSI2_ALEN;
+	error = scsi_scsi_cmd(sc_link, (struct scsi_generic *)&scsi_cmd,
+		sizeof(scsi_cmd), (u_char *)&inqbuf, scsi_cmd.length, 0, 10000, NULL,
+		SCSI_DATA_IN);
+	if (error) {
+		mpt_prt(mpt, "Invalid INQUIRY on target: %d\n", sc_link->target);
+		return 0;
+	}
 
 	/* read page 0 back to figure out if the PPR worked */
         page0 = mpt->mpt_dev_page0[sc_link->target];
@@ -357,6 +375,8 @@ mpt_run_ppr(mpt_softc_t *mpt)
 				sc_link = ((struct scsibus_softc *)dev)->sc_link[target][0];
 				if ((sc_link != NULL)) {
 				/* got a device! run PPR */
+					/* FIXME: skip CPU devices since they can
+					 * crash at U320 speeds */
 					/*if (device == cpu) {
 						continue;
 					}*/
