@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: parse.c,v 1.5 2004/02/07 13:59:45 henning Exp $	*/
 
 /* Common parser code for dhcpd and dhclient. */
 
@@ -618,15 +618,15 @@ parse_date(FILE *cfile)
 
 	/* Guess the time value... */
 	guess = ((((((365 * (tm.tm_year - 70) +	/* Days in years since '70 */
-		      (tm.tm_year - 69) / 4 +	/* Leap days since '70 */
-		      (tm.tm_mon		/* Days in months this year */
-		       ? months[tm.tm_mon - 1]
-		       : 0) +
-		      (tm.tm_mon > 1 &&		/* Leap day this year */
-		       !((tm.tm_year - 72) & 3)) +
-		      tm.tm_mday - 1) * 24) +	/* Day of month */
+		    (tm.tm_year - 69) / 4 +	/* Leap days since '70 */
+		    (tm.tm_mon			/* Days in months this year */
+		    ? months[tm.tm_mon - 1]
+		    : 0) +
+		    (tm.tm_mon > 1 &&		/* Leap day this year */
+		    !((tm.tm_year - 72) & 3)) +
+		    tm.tm_mday - 1) * 24) +	/* Day of month */
 		    tm.tm_hour) * 60) +
-		  tm.tm_min) * 60) + tm.tm_sec;
+		    tm.tm_min) * 60) + tm.tm_sec;
 
 	/*
 	 * This guess could be wrong because of leap seconds or other

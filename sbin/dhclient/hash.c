@@ -1,4 +1,4 @@
-/*	$OpenBSD: hash.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: hash.c,v 1.5 2004/02/07 13:59:45 henning Exp $	*/
 
 /* Routines for manipulating hash tables... */
 
@@ -130,7 +130,7 @@ delete_hash_entry(struct hash_table *table, unsigned char *name, int len)
 }
 
 unsigned char *
-hash_lookup (struct hash_table *table, unsigned char *name, int len)
+hash_lookup(struct hash_table *table, unsigned char *name, int len)
 {
 	int hashno;
 	struct hash_bucket *bp;

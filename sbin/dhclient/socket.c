@@ -1,4 +1,4 @@
-/*	$OpenBSD: socket.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: socket.c,v 1.5 2004/02/07 13:59:45 henning Exp $	*/
 
 /* BSD socket interface code... */
 
@@ -110,7 +110,7 @@ if_register_fallback(struct interface_info *info)
 		    info->name,
 		    (info->shared_network ? "/" : ""),
 		    (info->shared_network ?
-		        info->shared_network -> name : ""));
+		    info->shared_network -> name : ""));
 }
 
 ssize_t

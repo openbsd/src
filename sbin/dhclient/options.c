@@ -1,4 +1,4 @@
-/*	$OpenBSD: options.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: options.c,v 1.5 2004/02/07 13:59:45 henning Exp $	*/
 
 /* DHCP options parsing and reassembly. */
 
@@ -152,7 +152,7 @@ parse_option_buffer(struct packet *packet,
 		if (!packet->options[code].data) {
 			if (!(t = dmalloc(len + 1, "parse_option_buffer")))
 				error("Can't allocate storage for option %s.",
-				       dhcp_options[code].name);
+				    dhcp_options[code].name);
 			/*
 			 * Copy and NUL-terminate the option (in case
 			 * it's an ASCII string.
@@ -218,7 +218,7 @@ cons_options(struct packet *inpacket, struct dhcp_packet *outpacket,
 	    inpacket &&
 	    inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].data &&
 	    (inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].len >=
-	        sizeof(u_int16_t)))
+	    sizeof(u_int16_t)))
 		mms = getUShort(
 		    inpacket->options[DHO_DHCP_MAX_MESSAGE_SIZE].data);
 
@@ -566,7 +566,7 @@ pretty_print_option(unsigned int code, unsigned char *data, int len,
 	/* Cycle through the array (or hunk) printing the data. */
 	for (i = 0; i < numhunk; i++) {
 		for (j = 0; j < numelem; j++) {
-		        int opcount;
+			int opcount;
 			switch (fmtbuf[j]) {
 			case 't':
 				if (emit_quotes) {

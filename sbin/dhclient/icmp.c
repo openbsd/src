@@ -1,4 +1,4 @@
-/*	$OpenBSD: icmp.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: icmp.c,v 1.5 2004/02/07 13:59:45 henning Exp $	*/
 
 /*
  * ICMP Protocol engine - for sending out pings and receiving responses.
@@ -78,14 +78,14 @@ icmp_startup(int routep, void (*handler)(struct iaddr, u_int8_t *, int))
 	/* Make sure it does routing... */
 	state = 0;
 	if (setsockopt(icmp_protocol_fd, SOL_SOCKET, SO_DONTROUTE,
-	   (char *)&state, sizeof(state)) < 0)
+	    (char *)&state, sizeof(state)) < 0)
 		error("Unable to disable SO_DONTROUTE on ICMP socket: %m");
 
 	add_protocol("icmp", icmp_protocol_fd, icmp_echoreply, (void *)handler);
 }
 
 int
-icmp_echorequest (struct iaddr *addr)
+icmp_echorequest(struct iaddr *addr)
 {
 	struct sockaddr_in to;
 	struct icmp icmp;
@@ -105,8 +105,8 @@ icmp_echorequest (struct iaddr *addr)
 	icmp.icmp_cksum = 0;
 	icmp.icmp_seq = 0;
 #ifdef PTRSIZE_64BIT
-	icmp.icmp_id = ((u_int32_t)(u_int64_t)addr) ^
-  			(u_int32_t)(((u_int64_t)addr) >> 32);
+	icmp.icmp_id =
+	    ((u_int32_t)(u_int64_t)addr) ^ (u_int32_t)(((u_int64_t)addr) >> 32);
 #else
 	icmp.icmp_id = (u_int32_t)addr;
 #endif

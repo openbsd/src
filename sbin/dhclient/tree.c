@@ -1,4 +1,4 @@
-/*	$OpenBSD: tree.c,v 1.4 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: tree.c,v 1.5 2004/02/07 13:59:45 henning Exp $	*/
 
 /* Routines for manipulating parse trees... */
 
@@ -295,8 +295,8 @@ do_host_lookup(int *bufix, unsigned char **bufp, int *bufcount,
 	if (cur_time <= dns->timeout) {
 #ifdef DEBUG_EVAL
 		debug("easy copy: %x %d %x",
-		       dns->data, dns->data_len,
-		       dns->data ? *(int *)(dns->data) : 0);
+		    dns->data, dns->data_len,
+		    dns->data ? *(int *)(dns->data) : 0);
 #endif
 		do_data_copy(bufix, bufp, bufcount,
 		    dns->data, dns->data_len);
@@ -309,7 +309,7 @@ do_host_lookup(int *bufix, unsigned char **bufp, int *bufcount,
 	/* Otherwise, look it up... */
 	h = gethostbyname(dns->hostname);
 	if (h == NULL) {
-		switch(h_errno) {
+		switch (h_errno) {
 		case HOST_NOT_FOUND:
 			warn("%s: host unknown.", dns->hostname);
 			break;

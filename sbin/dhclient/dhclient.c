@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhclient.c,v 1.6 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: dhclient.c,v 1.7 2004/02/07 13:59:45 henning Exp $	*/
 
 /* DHCP Client. */
 
@@ -56,20 +56,20 @@
 
 #include "dhcpd.h"
 
-#define PERIOD 0x2e
-#define hyphenchar(c) ((c) == 0x2d)
-#define bslashchar(c) ((c) == 0x5c)
-#define periodchar(c) ((c) == PERIOD)
-#define asterchar(c) ((c) == 0x2a)
-#define alphachar(c) (((c) >= 0x41 && (c) <= 0x5a) \
-                  || ((c) >= 0x61 && (c) <= 0x7a))
-#define digitchar(c) ((c) >= 0x30 && (c) <= 0x39)
+#define	PERIOD 0x2e
+#define	hyphenchar(c) ((c) == 0x2d)
+#define	bslashchar(c) ((c) == 0x5c)
+#define	periodchar(c) ((c) == PERIOD)
+#define	asterchar(c) ((c) == 0x2a)
+#define	alphachar(c) (((c) >= 0x41 && (c) <= 0x5a) || \
+	    ((c) >= 0x61 && (c) <= 0x7a))
+#define	digitchar(c) ((c) >= 0x30 && (c) <= 0x39)
 
-#define borderchar(c) (alphachar(c) || digitchar(c))
-#define middlechar(c) (borderchar(c) || hyphenchar(c))
-#define domainchar(c) ((c) > 0x20 && (c) < 0x7f)
+#define	borderchar(c) (alphachar(c) || digitchar(c))
+#define	middlechar(c) (borderchar(c) || hyphenchar(c))
+#define	domainchar(c) ((c) > 0x20 && (c) < 0x7f)
 
-#define CLIENT_PATH "PATH=/usr/bin:/usr/sbin:/bin:/sbin"
+#define	CLIENT_PATH "PATH=/usr/bin:/usr/sbin:/bin:/sbin"
 
 TIME cur_time;
 TIME default_lease_time = 43200; /* 12 hours... */
@@ -127,16 +127,16 @@ isours(u_int16_t index)
 {
 	struct interface_info *ip;
 
-	for(ip = interfaces; ip; ip = ip->next) {
+	for (ip = interfaces; ip; ip = ip->next)
 		if (index == ip->index)
 			return (ip);
-	}
+
 	return (NULL);
 }
 
-#define ROUNDUP(a) \
-        ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
-#define ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
+#define	ROUNDUP(a) \
+	    ((a) > 0 ? (1 + (((a) - 1) | (sizeof(long) - 1))) : sizeof(long))
+#define	ADVANCE(x, n) (x += ROUNDUP((n)->sa_len))
 
 int
 findproto(char *cp, int n)
@@ -271,21 +271,21 @@ main(int argc, char *argv[])
 			unknown_ok = 0;
 		} else if (!strcmp(argv[i], "-1")) {
 			onetry = 1;
- 		} else if (argv[i][0] == '-') {
- 		    usage(s);
- 		} else {
- 		    struct interface_info *tmp =
- 			dmalloc(sizeof(*tmp), "specified_interface");
- 		    if (!tmp)
- 			error("Insufficient memory to %s %s",
- 			    "record interface", argv[i]);
- 		    memset(tmp, 0, sizeof(*tmp));
- 		    strlcpy(tmp->name, argv[i], IFNAMSIZ);
- 		    tmp->next = interfaces;
- 		    tmp->flags = INTERFACE_REQUESTED;
+		} else if (argv[i][0] == '-') {
+			usage(s);
+		} else {
+		    struct interface_info *tmp =
+			dmalloc(sizeof(*tmp), "specified_interface");
+		    if (!tmp)
+			error("Insufficient memory to %s %s",
+			    "record interface", argv[i]);
+		    memset(tmp, 0, sizeof(*tmp));
+		    strlcpy(tmp->name, argv[i], IFNAMSIZ);
+		    tmp->next = interfaces;
+		    tmp->flags = INTERFACE_REQUESTED;
 		    interfaces_requested = 1;
- 		    interfaces = tmp;
- 		}
+		    interfaces = tmp;
+		}
 	}
 
 	if (quiet)
@@ -375,7 +375,7 @@ main(int argc, char *argv[])
 	   Not much entropy, but we're booting, so we're not likely to
 	   find anything better. */
 	seed = 0; /* Unfortunately, what's on the stack isn't random. :') */
-	for(ip = interfaces; ip; ip = ip->next) {
+	for (ip = interfaces; ip; ip = ip->next) {
 		int junk;
 		memcpy(&junk, &ip->hw_address.haddr[ip->hw_address.hlen -
 		    sizeof(seed)], sizeof(seed));
@@ -384,7 +384,7 @@ main(int argc, char *argv[])
 	srandom(seed + cur_time);
 
 	/* Start a configuration state machine for each interface. */
-	for(ip = interfaces; ip; ip = ip->next) {
+	for (ip = interfaces; ip; ip = ip->next) {
 		ip->client->state = S_INIT;
 		state_reboot(ip);
 	}
@@ -1169,9 +1169,8 @@ again:
 	ip->client->secs = ip->client->packet.secs;
 
 	note("DHCPDISCOVER on %s to %s port %d interval %d",
-	      ip->name,
-	      inet_ntoa(sockaddr_broadcast.sin_addr),
-	      ntohs(sockaddr_broadcast.sin_port), ip->client->interval);
+	    ip->name, inet_ntoa(sockaddr_broadcast.sin_addr),
+	    ntohs(sockaddr_broadcast.sin_port), ip->client->interval);
 
 	/* Send out a packet. */
 	result = send_packet(ip, NULL, &ip->client->packet,
@@ -1691,12 +1690,12 @@ make_decline(struct interface_info *ip, struct client_lease *lease)
 
 	/* Send back the server identifier... */
 	i = DHO_DHCP_SERVER_IDENTIFIER;
-        options[i] = &server_id_tree;
-        options[i]->value = lease->options[i].data;
-        options[i]->len = lease->options[i].len;
-        options[i]->buf_size = lease->options[i].len;
-        options[i]->timeout = 0xFFFFFFFF;
-        options[i]->tree = NULL;
+	options[i] = &server_id_tree;
+	options[i]->value = lease->options[i].data;
+	options[i]->len = lease->options[i].len;
+	options[i]->buf_size = lease->options[i].len;
+	options[i]->timeout = 0xFFFFFFFF;
+	options[i]->tree = NULL;
 
 	/* Send back the address we're declining. */
 	i = DHO_DHCP_REQUESTED_ADDRESS;
@@ -1775,12 +1774,12 @@ make_release(struct interface_info *ip, struct client_lease *lease)
 
 	/* Send back the server identifier... */
 	i = DHO_DHCP_SERVER_IDENTIFIER;
-        options[i] = &server_id_tree;
-        options[i]->value = lease->options[i].data;
-        options[i]->len = lease->options[i].len;
-        options[i]->buf_size = lease->options[i].len;
-        options[i]->timeout = 0xFFFFFFFF;
-        options[i]->tree = NULL;
+	options[i] = &server_id_tree;
+	options[i]->value = lease->options[i].data;
+	options[i]->len = lease->options[i].len;
+	options[i]->buf_size = lease->options[i].len;
+	options[i]->timeout = 0xFFFFFFFF;
+	options[i]->tree = NULL;
 
 	/* Set up the option buffer... */
 	ip->client->packet_length = cons_options(NULL, &ip->client->packet, 0,
@@ -1810,7 +1809,7 @@ make_release(struct interface_info *ip, struct client_lease *lease)
 #ifdef DEBUG_PACKET
 	dump_packet(sendpkt);
 	dump_raw((unsigned char *)ip->client->packet,
-		  ip->client->packet_length);
+	    ip->client->packet_length);
 #endif
 }
 
@@ -1943,11 +1942,11 @@ script_init(struct interface_info *ip, char *reason, struct string_list *medium)
 			ip->client->scriptEnv =
 			    malloc(ip->client->scriptEnvsize * sizeof(char *));
 		if (ip->client->scriptEnv == NULL)
-			error("script_init: no memory for environment initialization");
+			error("script_init: no memory for environment");
 
 		ip->client->scriptEnv[0]=strdup(CLIENT_PATH);
 		if (ip->client->scriptEnv[0] == NULL)
-			error("script_init: no memory for environment initialization");
+			error("script_init: no memory for environment");
 
 		ip->client->scriptEnv[1] = NULL;
 
@@ -2014,14 +2013,14 @@ script_write_params(struct interface_info *ip, char *prefix,
 
 		if (ip->client->config->defaults[i].len) {
 			if (lease->options[i].len) {
-				switch(
+				switch (
 				    ip->client->config->default_actions[i]) {
 				case ACTION_DEFAULT:
 					dp = lease->options[i].data;
 					len = lease->options[i].len;
 					break;
 				case ACTION_SUPERSEDE:
-				      supersede:
+supersede:
 					dp = ip->client->
 						config->defaults[i].data;
 					len = ip->client->
@@ -2029,12 +2028,12 @@ script_write_params(struct interface_info *ip, char *prefix,
 					break;
 				case ACTION_PREPEND:
 					len = ip->client->
-					       config->defaults[i].len +
-					       lease->options[i].len;
+					    config->defaults[i].len +
+					    lease->options[i].len;
 					if (len > sizeof(dbuf)) {
 						warn("no space to %s %s",
-						      "prepend option",
-						      dhcp_options[i].name);
+						    "prepend option",
+						    dhcp_options[i].name);
 						goto supersede;
 					}
 					dp = dbuf;
@@ -2051,12 +2050,12 @@ script_write_params(struct interface_info *ip, char *prefix,
 					break;
 				case ACTION_APPEND:
 					len = ip->client->
-					       config->defaults[i].len +
-					       lease->options[i].len;
+					    config->defaults[i].len +
+					    lease->options[i].len;
 					if (len > sizeof(dbuf)) {
 						warn("no space to %s %s",
-						      "append option",
-						      dhcp_options[i].name);
+						    "append option",
+						    dhcp_options[i].name);
 						goto supersede;
 					}
 					dp = dbuf;
@@ -2165,7 +2164,7 @@ script_set_env(struct client_state *client, const char *prefix,
 			char **newscriptEnv;
 			int newscriptEnvsize = client->scriptEnvsize + 50;
 			newscriptEnv = realloc(client->scriptEnv,
-		          newscriptEnvsize);
+			    newscriptEnvsize);
 			if (newscriptEnv == NULL) {
 				free(client->scriptEnv);
 				client->scriptEnv = NULL;
@@ -2180,13 +2179,13 @@ script_set_env(struct client_state *client, const char *prefix,
 		client->scriptEnv[i + 1] = NULL;
 	}
 	/* Allocate space and format the variable in the appropriate slot. */
-	client->scriptEnv[i] = malloc(strlen(prefix) + strlen(name) + 1
-          + strlen(value) + 1);
+	client->scriptEnv[i] = malloc(strlen(prefix) + strlen(name) + 1 +
+	    strlen(value) + 1);
 	if (client->scriptEnv[i] == NULL)
 		error("script_set_env: no memory for variable assignment");
 
-	snprintf(client->scriptEnv[i], strlen(prefix) +  strlen(name)
-	  + 1 + strlen(value) + 1, "%s%s=%s", prefix, name, value);
+	snprintf(client->scriptEnv[i], strlen(prefix) + strlen(name) +
+	    1 + strlen(value) + 1, "%s%s=%s", prefix, name, value);
 }
 
 void
@@ -2248,9 +2247,9 @@ go_daemon(void)
 	pid = setsid();
 
 	/* Close standard I/O descriptors. */
-        close(0);
-        close(1);
-        close(2);
+	close(0);
+	close(1);
+	close(2);
 
 	write_client_pid_file();
 }
@@ -2291,7 +2290,7 @@ check_option(struct client_lease *l, int option)
 	sbuf = option_as_string(option, l->options[option].data,
 	    l->options[option].len);
 
-	switch(option) {
+	switch (option) {
 	case DHO_SUBNET_MASK :
 	case DHO_TIME_SERVERS :
 	case DHO_NAME_SERVERS :
@@ -2373,10 +2372,10 @@ check_option(struct client_lease *l, int option)
 	case DHO_DHCP_USER_CLASS_ID :
 	case DHO_END :
 		/* do nothing */
-		return(1);
+		return (1);
 	default:
 		warn("unknown dhcp option value 0x%x", option);
-		return(unknown_ok);
+		return (unknown_ok);
 	}
 }
 
@@ -2420,11 +2419,11 @@ ipv4addrs(char * buf)
 		while (periodchar(*buf) || digitchar(*buf))
 			buf++;
 		if (*buf == '\0')
-			return(count);
+			return (count);
 		while (*buf ==  ' ')
 			buf++;
 	}
-	return(0);
+	return (0);
 }
 
 

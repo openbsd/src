@@ -1,4 +1,4 @@
-/*	$OpenBSD: osdep.h,v 1.4 2004/02/04 12:16:56 henning Exp $	*/
+/*	$OpenBSD: osdep.h,v 1.5 2004/02/07 13:59:45 henning Exp $	*/
 
 /* Operating system dependencies... */
 
@@ -123,8 +123,8 @@ extern int h_errno;
    Currently, all low-level packet interfaces use BSD sockets as a
    fallback. */
 
-#if defined (USE_BPF_SEND) || defined (USE_NIT_SEND) || \
-    defined (USE_DLPI_SEND) || defined (USE_UPF_SEND) || defined (USE_LPF_SEND)
+#if defined(USE_BPF_SEND) || defined(USE_NIT_SEND) || \
+    defined(USE_DLPI_SEND) || defined(USE_UPF_SEND) || defined(USE_LPF_SEND)
 #  define USE_SOCKET_FALLBACK
 #  define USE_FALLBACK
 #endif
@@ -135,9 +135,9 @@ extern int h_errno;
    and need to be able to assemble packets, add the USE_XXX_SEND
    definition for your interface to the list tested below. */
 
-#if defined (USE_RAW_SEND) || defined (USE_BPF_SEND) || \
-		defined (USE_NIT_SEND) || defined (USE_UPF_SEND) || \
-		defined (USE_DLPI_SEND) || defined (USE_LPF_SEND)
+#if defined(USE_RAW_SEND) || defined(USE_BPF_SEND) || \
+    defined(USE_NIT_SEND) || defined(USE_UPF_SEND) || \
+    defined(USE_DLPI_SEND) || defined(USE_LPF_SEND)
 #  define PACKET_ASSEMBLY
 #endif
 
@@ -147,11 +147,10 @@ extern int h_errno;
    and need to be able to decode raw packets, add the USE_XXX_RECEIVE
    definition for your interface to the list tested below. */
 
-#if defined (USE_RAW_RECEIVE) || defined (USE_BPF_SEND) || \
-		defined (USE_NIT_RECEIVE) || defined (USE_UPF_RECEIVE) || \
-		defined (USE_DLPI_RECEIVE) || \
-    defined (USE_LPF_SEND) || \
-    (defined (USE_SOCKET_SEND) && defined (SO_BINDTODEVICE))
+#if defined(USE_RAW_RECEIVE) || defined(USE_BPF_SEND) || \
+    defined(USE_NIT_RECEIVE) || defined(USE_UPF_RECEIVE) || \
+    defined(USE_DLPI_RECEIVE) || defined(USE_LPF_SEND) || \
+    (defined(USE_SOCKET_SEND) && defined(SO_BINDTODEVICE))
 #  define PACKET_DECODING
 #endif
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: dhcp.h,v 1.3 2004/02/07 13:26:35 henning Exp $	*/
+/*	$OpenBSD: dhcp.h,v 1.4 2004/02/07 13:59:45 henning Exp $	*/
 
 /* Protocol structures... */
 
@@ -55,7 +55,7 @@
 #define DHCP_MIN_LEN            548
 
 struct dhcp_packet {
-  	u_int8_t  op;		/* Message opcode/type */
+	u_int8_t  op;		/* Message opcode/type */
 	u_int8_t  htype;	/* Hardware addr type (see net/if_types.h) */
 	u_int8_t  hlen;		/* Hardware addr length */
 	u_int8_t  hops;		/* Number of relay agent hops from client */
