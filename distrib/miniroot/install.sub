@@ -1,4 +1,4 @@
-#	$OpenBSD: install.sub,v 1.337 2004/03/23 02:39:39 krw Exp $
+#	$OpenBSD: install.sub,v 1.338 2004/04/12 22:55:11 krw Exp $
 #	$NetBSD: install.sub,v 1.5.2.8 1996/09/02 23:25:02 pk Exp $
 #
 # Copyright (c) 1997-2004 Todd Miller, Theo de Raadt, Ken Westerback
@@ -484,25 +484,54 @@ __EOT
 	resp=$_selected
 }
 
-configure_all_interfaces() {
-	local _IFDEVS=$IFDEVS _ifs
+configure_ifs() {
+	local _IFDEVS=$IFDEVS _ifs _name _media _hn
 
 	while : ; do
-		_IFDEVS=`rmel "$_ifs" $_IFDEVS`
-
-		ask_which "interface" "do you wish to initialize" "$_IFDEVS" "" \
-		    "No more interfaces to initialize"
+		ask_which "interface" "do you wish to initialize" "$_IFDEVS" \
+			"" "No more interfaces to initialize"
 		[[ $resp == done ]] && break
 
 		_ifs=$resp
-		configure_ifs $_ifs || _ifs=
+		_hn=/tmp/hostname.$_ifs 
+
+		# Get symbolic name - will be used in DHCP requests.
+		ask "Symbolic (host) name for $_ifs?" "$(hostname -s)"
+		_name=$resp
+
+		# Get and apply media options.
+		_media=$(ifconfig -m $_ifs | grep "media ")
+		if [[ -n $_media ]]; then
+			cat << __EOT
+The media options for $_ifs are currently
+$(ifconfig -m $_ifs | sed -n '/supported/D;/media:/p')
+__EOT
+			ask_yn "Do you want to change the media options?"
+			case $resp in
+			y)	cat << __EOT
+Supported media options for $_ifs are:
+$_media
+__EOT
+				ask "Media options for $_ifs?"
+				_media=$resp
+				ifconfig $_ifs $_media || return 1
+				;;
+			n)	_media=
+				;;
+			esac
+		fi
+
+		rm -f $_hn
+		v4_config "$_ifs" "$_media" "$_name" "$_hn"
+
+		[[ -f $_hn ]] && _IFDEVS=$(rmel "$_ifs" $_IFDEVS)
 	done
 }
 
 # Output '<UP | DOWN> [<addr> <netmask> <rest of inet line>]'.
 #
 # $1 == interface
-inet_info() {
+v4_info() {
 	ifconfig $1 inet | sed -n '
 		1s/.*<UP,.*/UP/p
 		1s/.*<.*/DOWN/p
@@ -542,7 +571,7 @@ __EOT
 
 	dhclient $_ifs
 
-	set -- $(inet_info $_ifs)
+	set -- $(v4_info $_ifs)
 
 	if [[ $1 == UP && $2 == "0.0.0.0" ]]; then
 		ifconfig $_ifs delete down
@@ -559,67 +588,58 @@ __EOT
 	return 0
 }
 
-configure_ifs() {
-	local _ifs=$1 _addr _mask _name _prompt _media _config
+v4_config() {
+	local _ifs=$1 _media=$2 _name=$3 _hn=$4 _prompt
 
-	set -- $(inet_info $_ifs)
-	[[ $1 == UP ]] && ifconfig $_ifs delete down
-	[[ -n $2 && $2 != "0.0.0.0" ]] && { _addr=$2; _mask=$3; }
+	set -- $(v4_info $_ifs)
+	if [[ -n $2 ]]; then
+		ifconfig $_ifs inet $2 delete
+		[[ $2 != "0.0.0.0" ]] && { _addr=$2; _mask=$3; }
+	fi	
 
-	# Get symbolic name - will be used in DHCP requests.
-	ask "Symbolic (host) name for $_ifs?" "$(hostname -s)"
-	_name=$resp
-
-	# Get and apply media options.
-	_media=$(ifconfig -m $_ifs | grep "media ")
-	if [[ -n $_media ]]; then
-		cat << __EOT
-The default media for $_ifs is
-$(ifconfig -m $_ifs | sed -n '/supported/D;/media:/p')
-__EOT
-		ask_yn "Do you want to change the default media?"
-		case $resp in
-		y)	cat << __EOT
-Supported media options for $_ifs are:
-$_media
-__EOT
-			ask "Media options for $_ifs?"
-			_media=$resp
-			ifconfig $_ifs $_media down || return 1
-			;;
-		n)	_media=
-			;;
-		esac
-	fi
-
-	# Get address and mask.
-	_prompt="IP address for ${_ifs}?"
-	[[ -x /sbin/dhclient ]] && _prompt="$_prompt (or 'dhcp')"
-
+	[[ -x /sbin/dhclient ]] && _prompt=" or 'dhcp'"
+	_prompt="IPv4 address for $_ifs? (or 'none'$_prompt)"
+	
 	ask_until "$_prompt" "$_addr"
 	case $resp in
+	none)	;;
 	dhcp)	if [[ ! -x /sbin/dhclient ]]; then
-			echo "DHCP not supported - no /sbin/dhclient found."
-			return 1
+			echo "DHCP not possible - no /sbin/dhclient."
+		elif dhcp_request $_ifs "$_name" || dhcp_request $_ifs ; then
+			addhostent "127.0.0.1" "$_name"
+			echo "dhcp NONE NONE NONE $_media" > $_hn
 		fi
-		dhcp_request $_ifs "$_name" || dhcp_request $_ifs || return 1
-		_config="dhcp NONE NONE"
-		# Fake address for the hosts file.
-		_addr=127.0.0.1
 		;;
 	*)	_addr=$resp
 		ask_until "Netmask?" "${_mask:=255.255.255.0}"
-		_mask=$resp
-		ifconfig $_ifs inet $_addr netmask $_mask $_media up || return 1
-		_config="inet $_addr $_mask"
+		if ifconfig $_ifs inet $_addr netmask $resp up ; then
+			addhostent "$_addr" "$_name"
+			echo "inet $_addr $resp NONE $_media" > $_hn
+		fi
 		;;
 	esac
+}
 
-	# Save configuration information.
-	echo "$_config NONE $_media" > /tmp/hostname.$_ifs
-	addhostent $_addr $_name
-	return 0
- }
+v4_defroute() {
+	local _dr _prompt=" or 'none'"
+
+	[[ -x /sbin/dhclient ]] && _prompt=", 'dhcp'$_prompt"
+	_prompt="Default IPv4 route? (IPv4 address$_prompt)"
+
+	_dr=$(route -n show -inet | sed -ne '/^default */{s///; s/ .*//; p;}')
+	[[ -f /tmp/dhclient.conf ]] && _dr=dhcp
+
+	while : ; do
+		ask_until "$_prompt" "$_dr"
+		case $resp in
+		none|dhcp) break ;;
+		esac
+		route delete -inet default > /dev/null 2>&1
+		route -n add -inet -host default "$resp" && { echo "$resp" >/tmp/mygate ; break ; }
+		# Put the old default route back. The new one did not work.
+		route -n add -inet -host default $_dr >/dev/null 2>&1
+	done
+}
 
 # Returns true if $1 contains only alphanumerics
 isalphanumeric() {
@@ -1560,13 +1580,13 @@ get_fqdn() {
 }
 
 donetconfig() {
-	local _dn _ns _dr
+	local _dn _ns
 
 	[[ -n $DIDNET ]] && return
 
 	DIDNET=y
 
-	configure_all_interfaces
+	configure_ifs
 
 	# As dhclient will populate /etc/resolv.conf, a symbolic link to
 	# /tmp/resolv.conf.shadow, mv any such file to /tmp/resolv.conf
@@ -1600,19 +1620,8 @@ donetconfig() {
 		[[ $resp == y ]] && cp /tmp/resolv.conf /tmp/resolv.conf.shadow
 	fi
 
-	# Get/Confirm the default route.
-	_dr=$(route -n show | sed -ne '/^default */{s///; s/ .*//; p;}')
-	[[ -f /tmp/dhclient.conf ]] && _dr=dhcp
-	while : ; do
-		ask_until "Default route? (IP address, 'dhcp' or 'none')" "$_dr"
-		case $resp in
-		none|dhcp) break ;;
-		esac
-		route delete default > /dev/null 2>&1
-		route -n add -host default "$resp" && { echo "$resp" >/tmp/mygate ; break ; }
-		# Put the old default route back. The new one did not work.
-		route -n add -host default $_dr >/dev/null 2>&1
-	done
+	# Get/Confirm an IPv4 default route if an IPv4 address was configured.
+	[[ -n $(ifconfig -a | sed -ne '/[ 	]inet .* broadcast /p') ]] && v4_defroute
 
 	edit_tmp_file hosts
 	manual_net_cfg
