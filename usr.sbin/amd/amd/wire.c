@@ -36,7 +36,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)wire.c	8.1 (Berkeley) 6/6/93
- *	$Id: wire.c,v 1.4 1998/03/20 03:04:00 angelos Exp $
+ *	$Id: wire.c,v 1.5 2000/02/21 02:03:18 itojun Exp $
  */
 
 /*
@@ -136,7 +136,7 @@ char *getwire()
 	 */
 	for (cp = buf; cp < cplim; cp += size(ifr)) {
 		addrlist *al;
-		ifr = (struct ifreq *) cp;
+		memcpy(&ifr, cp, sizeof(ifr));
 
 		if (ifr->ifr_addr.sa_family != AF_INET)
 			continue;
