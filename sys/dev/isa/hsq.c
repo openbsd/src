@@ -1,4 +1,4 @@
-/*	$OpenBSD: hsq.c,v 1.2 2002/03/14 01:26:56 millert Exp $	*/
+/*	$OpenBSD: hsq.c,v 1.3 2003/06/02 19:37:56 deraadt Exp $	*/
 
 /*-
  * Copyright (c) 1999 Denis A. Doroshenko. All rights reserved.
@@ -16,14 +16,6 @@
  *    copyright notice,  this list  of  conditions  and the following
  *    disclaimer in the documentation and/or other materials provided
  *    with the distribution.
- * 3. All  advertising materials  mentioning features  or use of this
- *    software must display the following acknowledgement:
- *
- *    This product includes software developed by Denis A. Doroshenko
- *
- * 4. Neither the name of the author nor the names of its contributors
- *    may be used  to endorse or  promote products  derived from this
- *    software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY  THE AUTHOR ``AS IS'' AND ANY EXPRESS
  * OR IMPLIED WARRANTIES, INCLUDING,  BUT NOT LIMITED TO, THE IMPLIED
