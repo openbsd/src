@@ -1,4 +1,4 @@
-/*	$OpenBSD: theo.c,v 1.68 2004/08/06 02:33:34 art Exp $	*/
+/*	$OpenBSD: theo.c,v 1.69 2004/08/06 03:02:14 marco Exp $	*/
 /*
  * Copyright (c) 2002 Artur Grabowski <art@openbsd.org>
  * All rights reserved.
@@ -150,7 +150,8 @@ static const char *talk[] = {
 	"You're not allowed to have an opinion.",
 	"tweep tweep tweep",
 	"Quite frankly, SSE's alignment requirement is the most utterly retarded idea since eating your own shit.",
-	"Holy verbose prom startup Batman."
+	"Holy verbose prom startup Batman.",
+	"Do you think you are exempt from COMPILING BEFORE YOU COMMIT"
 };
 
 static const int ntalk = sizeof(talk)/sizeof(talk[0]);
