@@ -14,8 +14,7 @@ this.  You can:
    and tested version of the application for your hardware.
 
 If you purchased the OpenBSD CD-ROM you already have several popular
-``packages'', the ``ports'' collection, and some of the ``ports''
-source file releases.
+``packages'', and the ``ports'' collection.
 
  NOTE:	Some important packages which are not permitted on the CD (due to
 	patents) are available on our FTP servers.  In 	particular, we
@@ -24,14 +23,12 @@ source file releases.
 		ssh-usa-1.2.27.tgz	ssh-intl-1.2.27.tgz
 		pgp-usa-2.6.3.tgz	pgp-intl-2.6.3.tgz
 
-	You are STRONGLY urged to install one of the above ssh packages and
-	use ssh instead of telnet, rlogin, or rsh.  See below for
-	instructions on installing packages using ftp.
-
 Instructions for installing applications from the various sources using
 the different installation methods follow.  If emacs is to be installed
 it should be installed first as it creates the ``info'' directory file
 that may be modified by other applications.
+
+You should also refer to the packages(7) manual page.
 
 Installing applications from the CD-ROM package collection:
 
@@ -136,9 +133,7 @@ Installing applications from the CD-ROM ports collection:
 
 	The CD-ROM ``ports'' collection is a set of Makefiles, patches,
 	and other files used to control the building and installation
-	of an application from source files.  The source files come
-	from archives which are also, for the most part, on the
-	OpenBSD CD-ROM.
+	of an application from source files.  
 
 	Creating an application from sources can require a lot of
 	disk space, sometimes 50 megabytes or more.  The first step is
@@ -149,25 +144,22 @@ Installing applications from the CD-ROM ports collection:
 	To build an application you must:
 
 	1) become the superuser (root)
-	2) mount CD-ROM number 2 on the directory /cdrom.  This is
-	   necessary to find the application source files.
+	2) have network access, or obtain the actual source files by
+	   some other means.
 	3) cd to the ports directory containing the port you wish
 	   to build.  To build samba, for example, where you'd
 	   previously copied the ports files into the /usr/ports
 	   directory: cd /usr/ports/net/samba
-	4) make FETCH_SYMLINK_DISTFILES=YES
-	5) make FETCH_SYMLINK_DISTFILES=YES install
-	6) make FETCH_SYMLINK_DISTFILES=YES clean
-
-	The FETCH_SYMLINK_DISTFILES=YES parameter tells make not to copy
-	the application's distribution sources from the cdrom to your hard
-	disk, but instead create a symbolic link pointing to the CD-ROM.
-	This is done to conserve disk space.
+	4) make
+	5) make install
+	6) make clean
 
 Installing applications from the OpenBSD ports collection:
 
 	See http://www.openbsd.org/ports.html for current instructions
 	on obtaining and installing OpenBSD ports.
+
+	You should also refer to the ports(7) manual page.
 
 Installing other applications:
 
