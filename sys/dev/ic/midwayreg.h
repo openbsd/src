@@ -1,5 +1,4 @@
-/*	$OpenBSD: midwayreg.h,v 1.1 1996/06/21 15:27:20 chuck Exp $	*/
-/*	(sync'd to midwayreg.h 1.4)	*/
+/*	$OpenBSD: midwayreg.h,v 1.2 1996/06/26 04:07:02 chuck Exp $	*/
 
 /*
  * m i d w a y r e g . h
@@ -255,7 +254,8 @@ typedef caddr_t bus_mem_addr_t;
  * recv buffer desc. (1 u_int32_t at start of buffer)
  */
 
-#define MID_RBD_SIZE	4
+#define MID_RBD_SIZE	4			/* RBD size */
+#define MID_CHDR_SIZE	4			/* on aal0, cell header size */
 #define MID_RBD_ID(X)	((X) & 0xfe000000)	/* get ID */
 #define MID_RBD_STDID	0x36000000		/* standard ID */
 #define MID_RBD_CLP	0x01000000		/* CLP: cell loss priority */

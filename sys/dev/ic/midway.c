@@ -1,5 +1,5 @@
-/*	$OpenBSD: midway.c,v 1.2 1996/06/21 21:36:32 chuck Exp $	*/
-/*	(sync'd to midway.c 1.51)	*/
+/*	$OpenBSD: midway.c,v 1.3 1996/06/26 04:06:59 chuck Exp $	*/
+/*	(sync'd to midway.c 1.52)	*/
 
 /*
  *
@@ -322,7 +322,7 @@ STATIC	void en_loadvc __P((struct en_softc *, int));
 STATIC	void en_mfix __P((struct en_softc *, struct mbuf *));
 STATIC	struct mbuf *en_mget __P((struct en_softc *, u_int, u_int *));
 STATIC	void en_reset __P((struct en_softc *));
-STATIC	int en_rxctl __P((struct en_softc *, struct atm_pseudohdr *, int));
+STATIC	int en_rxctl __P((struct en_softc *, struct atm_pseudoioctl *, int));
 STATIC	void en_txdma __P((struct en_softc *, int));
 STATIC	void en_txlaunch __P((struct en_softc *, int, struct en_launch *));
 STATIC	void en_service __P((struct en_softc *));
@@ -866,18 +866,18 @@ caddr_t data;
     struct en_softc *sc = (struct en_softc *) ifp->if_softc;
     struct ifaddr *ifa = (struct ifaddr *) data;
     struct ifreq *ifr = (struct ifreq *) data;
-    struct atm_pseudohdr *aph = (struct atm_pseudohdr *)data;
+    struct atm_pseudoioctl *api = (struct atm_pseudoioctl *)data;
     int s, error = 0;
 
     s = splnet();
 
     switch (cmd) {
 	case SIOCATMENA:		/* enable circuit for recv */
-		error = en_rxctl(sc, aph, 1);
+		error = en_rxctl(sc, api, 1);
 		break;
 
 	case SIOCATMDIS: 		/* disable circuit for recv */
-		error = en_rxctl(sc, aph, 0);
+		error = en_rxctl(sc, api, 0);
 		break;
 
 	case SIOCSIFADDR: 
@@ -937,25 +937,25 @@ caddr_t data;
  * en_rxctl: turn on and off VCs for recv.
  */
 
-STATIC int en_rxctl(sc, ph, on)
+STATIC int en_rxctl(sc, pi, on)
 
 struct en_softc *sc;
-struct atm_pseudohdr *ph;
+struct atm_pseudoioctl *pi;
 int on;
 
 {
   u_int s, vci, flags, slot;
   u_int32_t oldmode, newmode;
 
-  vci = ATM_PH_VCI(ph);
-  flags = ATM_PH_FLAGS(ph);
+  vci = ATM_PH_VCI(&pi->aph);
+  flags = ATM_PH_FLAGS(&pi->aph);
 
 #ifdef EN_DEBUG
   printf("%s: %s vpi=%d, vci=%d, flags=%d\n", sc->sc_dev.dv_xname,
-	(on) ? "enable" : "disable", ATM_PH_VPI(ph), vci, flags);
+	(on) ? "enable" : "disable", ATM_PH_VPI(&pi->aph), vci, flags);
 #endif
 
-  if (ATM_PH_VPI(ph) || vci >= MID_N_VC)
+  if (ATM_PH_VPI(&pi->aph) || vci >= MID_N_VC)
     return(EINVAL);
 
   /*
@@ -978,6 +978,7 @@ int on;
     sc->rxslot[slot].atm_vci = vci;
     sc->rxslot[slot].atm_flags = flags;
     sc->rxslot[slot].oth_flags = 0;
+    sc->rxslot[slot].rxso = pi->asock;
     if (sc->rxslot[slot].indma.ifq_head || sc->rxslot[slot].q.ifq_head)
       panic("en_rxctl: left over mbufs on enable");
     en_loadvc(sc, vci);		/* does debug printf for us */
@@ -2228,14 +2229,14 @@ same_vci:
     aal5 = (sc->rxslot[slot].atm_flags & ATM_PH_AAL5);
     llc = (aal5 && (sc->rxslot[slot].atm_flags & ATM_PH_LLCSNAP)) ? 1 : 0;
     rbd = EN_READ(sc, cur);
-    if (MID_RBD_ID(rbd) != MID_RBD_STDID)
+    if (MID_RBD_ID(rbd) != MID_RBD_STDID) 
       panic("en_service: id mismatch\n");
 
     if (rbd & MID_RBD_T) {
       mlen = 0;			/* we've got trash */
       fill = MID_RBD_SIZE;
     } else if (!aal5) {
-      mlen = MID_ATMDATASZ + MID_RBD_SIZE; /* 1 atm cell (ick!) */
+      mlen = MID_RBD_SIZE + MID_CHDR_SIZE + MID_ATMDATASZ; /* 1 cell (ick!) */
       fill = 0;
     } else {
       tlen = (MID_RBD_CNT(rbd) * MID_ATMDATASZ) + MID_RBD_SIZE;
@@ -2448,10 +2449,14 @@ same_vci:
   }
 
   /* skip the end */
-  if (fill) {
+  if (fill || dma != cur) {
 #ifdef EN_DEBUG
-      printf("%s: rx%d: vci%d: skipping %d bytes of fill\n",
+      if (fill)
+        printf("%s: rx%d: vci%d: skipping %d bytes of fill\n",
 		sc->sc_dev.dv_xname, slot, vci, fill);
+      else
+        printf("%s: rx%d: vci%d: syncing chip from 0x%x to 0x%x [cur]\n",
+		sc->sc_dev.dv_xname, slot, vci, dma, cur);
 #endif
     EN_WRAPADD(start, stop, cur, fill);
     EN_DRQADDEND(sc, WORD_IDX(start,cur), vci, MIDDMA_JK, 0, mlen, slot);
@@ -2459,14 +2464,19 @@ same_vci:
   }
 
   /*
-   * done, make sure to remove the RBD from the mbuf before passing it up.
+   * done, remove stuff we don't want to pass up:
+   *   raw mode (boodi mode): pass everything up for later processing
+   *   aal5: remove RBD
+   *   aal0: remove RBD + cell header
    */
 
 done:
-  if (m) {
-    m->m_len -= MID_RBD_SIZE;		/* RBD chop! */
-    m->m_pkthdr.len -= MID_RBD_SIZE;	/* XXXCDC not on BOODI mode */
-    m->m_data += MID_RBD_SIZE;
+  if (!raw && m) {
+    cnt = MID_RBD_SIZE;
+    if (!aal5) cnt += MID_CHDR_SIZE;
+    m->m_len -= cnt;				/* chop! */
+    m->m_pkthdr.len -= cnt;
+    m->m_data += cnt;
   }
   IF_ENQUEUE(&sc->rxslot[slot].indma, m);
   sc->rxslot[slot].cur = cur;		/* update master copy of 'cur' */
