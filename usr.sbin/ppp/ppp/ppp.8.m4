@@ -25,7 +25,7 @@ changecom(,)dnl
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.\" $OpenBSD: ppp.8.m4,v 1.20 2004/12/17 10:32:12 jmc Exp $
+.\" $OpenBSD: ppp.8.m4,v 1.21 2005/02/19 09:09:16 mbalmer Exp $
 .\"
 .Dd September 20, 1995
 .Dt PPP 8
@@ -3310,7 +3310,7 @@ of the currently existing line modes.
 The given
 .Ar command
 is executed in the background with the following words replaced:
-.Bl -tag -width COMPILATIONDATE
+.Bl -tag -width IPV6PACKETSOUT
 .It Li AUTHNAME
 This is replaced with the local
 .Ar authname
@@ -3318,10 +3318,6 @@ value.
 See the
 .Ic set authname
 command below.
-.It Li COMPILATIONDATE
-This is replaced with the date on which
-.Nm
-was compiled.
 .It Li DNS0 & DNS1
 These are replaced with the primary and secondary nameserver IP numbers.
 If nameservers are negotiated by IPCP, the values of these macros will change.
