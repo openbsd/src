@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sha2.3,v 1.4 2003/06/17 21:56:23 millert Exp $
+.\"	$OpenBSD: sha2.3,v 1.5 2003/10/03 13:57:39 jmc Exp $
 .\"
 .\" Copyright (c) 2003 Todd C. Miller <Todd.Miller@courtesan.com>
 .\"
@@ -85,8 +85,8 @@ bits as input.
 The SHA2 functions are considered to be more secure than the
 .Xr sha1 3
 functions with which they share a similar interface.
-The 256, 384, and 512 bit versions of SHA2 share the same interface.
-For brevity, only the 256 bit variants are described below.
+The 256, 384, and 512-bit versions of SHA2 share the same interface.
+For brevity, only the 256-bit variants are described below.
 .Pp
 The
 .Fn SHA256_Init
@@ -130,7 +130,7 @@ function calculates the digest for a file and returns the result via
 .Fn SHA256_End .
 If
 .Fn SHA256_File
-is unable to open the file a NULL pointer is returned.
+is unable to open the file, a NULL pointer is returned.
 .Pp
 The
 .Fn SHA256_Data
@@ -146,7 +146,7 @@ and
 functions the
 .Ar buf
 parameter should either be a string large enough to hold the resulting digest
-(e.g.
+(e.g.\&
 .Ev SHA256_DIGEST_STRING_LENGTH ,
 .Ev SHA384_DIGEST_STRING_LENGTH
 or
@@ -159,8 +159,10 @@ and should be freed using
 .Xr free 3
 when it is no longer needed.
 .Sh EXAMPLES
-The follow code fragment will calculate the digest for
-the string "abc" which is ``0xa9993e36476816aba3e25717850c26c9cd0d89d''.
+The following code fragment will calculate the SHA-256 digest for the string
+.Qq abc ,
+which is
+.Dq 0xba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad .
 .Bd -literal -offset indent
 SHA256_CTX ctx;
 u_int8_t results[SHA256_DIGEST_LENGTH];
@@ -201,7 +203,7 @@ printf("0x%s\en", SHA256_Data(buf, strlen(buf), output));
 The SHA2 functions appeared in
 .Ox 3.4 .
 .Sh AUTHORS
-This implementation of the SHA fucntions was written by Aaron D. Gifford.
+This implementation of the SHA functions was written by Aaron D. Gifford.
 .Pp
 The
 .Fn SHA256_End ,
