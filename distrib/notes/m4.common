@@ -1,5 +1,5 @@
 dnl
-dnl	$OpenBSD: m4.common,v 1.61 2004/06/22 00:42:11 matthieu Exp $
+dnl	$OpenBSD: m4.common,v 1.62 2004/08/10 19:34:38 miod Exp $
 dnl
 dnl Copyright (c) 2004 Todd T. Fries <todd@OpenBSD.org>
 dnl
@@ -235,6 +235,11 @@ dnl
 define({:-OpenBSDbsd-:},
 {:-	bsd		A stock GENERIC MACHINE kernel which will be
 			installed on your system during the install.-:})dnl
+dnl
+define({:-OpenBSDbsdmp-:},
+{:-	bsd.mp		A stock GENERIC.MP MACHINE kernel, with support for
+			multiprocessor machines, which can be used instead
+			of the GENERIC kernel after the install.-:})dnl
 dnl
 define({:-OpenBSDrd-:},
 {:-	bsd.rd		A compressed RAMDISK kernel; the embedded

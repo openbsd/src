@@ -1,4 +1,4 @@
-dnl	$OpenBSD: contents,v 1.12 2004/07/28 05:28:23 miod Exp $
+dnl	$OpenBSD: contents,v 1.13 2004/08/10 19:34:40 miod Exp $
 TopPart
 
 dnl uncomment as stuff becomes available
@@ -21,6 +21,8 @@ dnl			PCMCIA drivers; see below.
 OpenBSDdistsets
 
 OpenBSDbsd
+
+OpenBSDbsdmp
 
 OpenBSDrd
 
