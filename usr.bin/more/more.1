@@ -1,4 +1,4 @@
-.\"	$OpenBSD: more.1,v 1.5 1996/10/14 09:00:58 etheisen Exp $
+.\"	$OpenBSD: more.1,v 1.6 1996/10/14 09:26:47 etheisen Exp $
 .\" Copyright (c) 1980 The Regents of the University of California.
 .\" All rights reserved.
 .\"
@@ -57,8 +57,8 @@ more, page \- file perusal filter for crt viewing
 .I  More
 is a filter which allows examination of a continuous text
 one screenful at a time on a soft-copy terminal.
-It normally pauses after each screenful, printing --More--
-at the bottom of the screen.
+It normally pauses after each screenful, printing the current file name
+at the bottom of the screen or --More-- if input is from a pipe.
 If the user then types a carriage return, one more line is displayed.
 If the user hits a space,
 another screenful is displayed.  Other possibilities are enumerated later.
@@ -217,7 +217,9 @@ editor will be used.
 If
 .I more
 is reading from a file, rather than a pipe, then a percentage is displayed
-along with the --More-- prompt.
+along with the current
+.I filename
+prompt.
 This gives the fraction of the file (in characters, not lines) that has been
 read so far.
 .PP
@@ -336,12 +338,13 @@ Up to the time when the command character itself is given,
 the user may hit the line kill character to cancel the numerical
 argument being formed.
 In addition, the user may hit the erase character to redisplay the
---More--(xx%) message.
+filename (xx%) message.
 .PP
 At any time when output is being sent to the terminal, the user can
 hit the quit key (normally control\-\\).
 .I More
-will stop sending output, and will display the usual --More--
+will stop sending output, and will display the usual
+.I filename
 prompt.
 The user may then enter one of the above commands in the normal manner.
 Unfortunately, some output is lost when this is done, due to the
