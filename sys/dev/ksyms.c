@@ -1,4 +1,4 @@
-/*	$OpenBSD: ksyms.c,v 1.9 2001/09/17 05:16:05 jason Exp $	*/
+/*	$OpenBSD: ksyms.c,v 1.10 2001/11/01 12:13:47 art Exp $	*/
 /*
  * Copyright (c) 1998 Todd C. Miller <Todd.Miller@courtesan.com>
  * Copyright (c) 2001 Artur Grabowski <art@openbsd.org>
@@ -224,10 +224,11 @@ ksymsread(dev, uio, flags)
 
 /* XXX - not yet */
 #if 0
-int
+paddr_t
 ksymsmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	vaddr_t va;
 	paddr_t pa;

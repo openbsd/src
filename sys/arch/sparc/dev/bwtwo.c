@@ -1,4 +1,4 @@
-/*	$OpenBSD: bwtwo.c,v 1.17 2001/08/17 13:52:28 mickey Exp $	*/
+/*	$OpenBSD: bwtwo.c,v 1.18 2001/11/01 12:13:46 art Exp $	*/
 /*	$NetBSD: bwtwo.c,v 1.33 1997/05/24 20:16:02 pk Exp $ */
 
 /*
@@ -444,10 +444,11 @@ bwtwounblank(dev)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-int
+paddr_t
 bwtwommap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	register struct bwtwo_softc *sc = bwtwo_cd.cd_devs[minor(dev)];
 

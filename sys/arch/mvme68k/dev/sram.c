@@ -1,4 +1,4 @@
-/*	$OpenBSD: sram.c,v 1.5 1997/11/20 17:02:31 etheisen Exp $ */
+/*	$OpenBSD: sram.c,v 1.6 2001/11/01 12:13:46 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -217,10 +217,11 @@ sramwrite(dev, uio, flags)
 	return (memdevrw(sc->sc_vaddr, sc->sc_len, uio, flags));
 }
 
-int
+paddr_t
 srammmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	int unit = minor(dev);
 	struct sramsoftc *sc = (struct sramsoftc *) sram_cd.cd_devs[unit];

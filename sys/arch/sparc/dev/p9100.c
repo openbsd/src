@@ -1,4 +1,4 @@
-/*	$OpenBSD: p9100.c,v 1.4 2001/08/17 13:52:29 mickey Exp $	*/
+/*	$OpenBSD: p9100.c,v 1.5 2001/11/01 12:13:46 art Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -449,10 +449,11 @@ p9100loadcmap(sc, start, ncolors)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-int
+paddr_t
 p9100mmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct p9100_softc *sc = pnozz_cd.cd_devs[minor(dev)];
 

@@ -1,4 +1,4 @@
-/* $OpenBSD: mem.c,v 1.13 2001/01/20 20:29:53 art Exp $ */
+/* $OpenBSD: mem.c,v 1.14 2001/11/01 12:13:45 art Exp $ */
 /* $NetBSD: mem.c,v 1.26 2000/03/29 03:48:20 simonb Exp $ */
 
 /*
@@ -193,10 +193,10 @@ kmemphys:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off;			/* XXX */
+	off_t off;
 	int prot;
 {
 	/*

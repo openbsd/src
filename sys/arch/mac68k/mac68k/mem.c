@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.14 2001/07/25 13:25:32 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.15 2001/11/01 12:13:46 art Exp $	*/
 /*	$NetBSD: mem.c,v 1.22 1999/03/27 00:30:07 mycroft Exp $	*/
 
 /*
@@ -211,10 +211,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	/*
 	 * /dev/mem is the only one that makes sense through this

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fb.c,v 1.16 2001/09/08 18:02:29 jason Exp $	*/
+/*	$OpenBSD: fb.c,v 1.17 2001/11/01 12:13:46 art Exp $	*/
 /*	$NetBSD: fb.c,v 1.23 1997/07/07 23:30:22 pk Exp $ */
 
 /*
@@ -181,12 +181,13 @@ fbioctl(dev, cmd, data, flags, p)
 	return (devfb->fb_driver->fbd_ioctl)(dev, cmd, data, flags, p);
 }
 
-int
+paddr_t
 fbmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
-	int (*map)__P((dev_t, int, int)) = devfb->fb_driver->fbd_mmap;
+	paddr_t (*map)__P((dev_t, off_t, int)) = devfb->fb_driver->fbd_mmap;
 
 	if (map == NULL)
 		return (-1);

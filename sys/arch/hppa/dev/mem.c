@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.5 2001/05/05 20:56:36 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.6 2001/11/01 12:13:46 art Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -277,10 +277,11 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;  
+	off_t off;
+	int prot;  
 {
 	if (minor(dev) != 0)
 		return (-1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.14 2001/09/11 20:05:24 miod Exp $	*/
+/*	$OpenBSD: grf.c,v 1.15 2001/11/01 12:13:46 art Exp $	*/
 /*	$NetBSD: grf.c,v 1.30 1998/08/20 08:33:41 kleink Exp $	*/
 
 /*
@@ -301,10 +301,11 @@ grfselect(dev, rw, p)
 }
 
 /*ARGSUSED*/
-int
+paddr_t
 grfmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	struct grf_softc *sc = grf_cd.cd_devs[GRFUNIT(dev)];
 

@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.47 2001/05/16 05:07:48 millert Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.48 2001/11/01 12:13:46 art Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -1890,10 +1890,10 @@ loop:
 	goto top;
 }
 
-int
+paddr_t
 pcmmap(dev, offset, nprot)
 	dev_t dev;
-	int offset;
+	off_t offset;
 	int nprot;
 {
 

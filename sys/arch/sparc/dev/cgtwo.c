@@ -1,4 +1,4 @@
-/*	$OpenBSD: cgtwo.c,v 1.16 2001/09/16 00:42:44 millert Exp $	*/
+/*	$OpenBSD: cgtwo.c,v 1.17 2001/11/01 12:13:46 art Exp $	*/
 /*	$NetBSD: cgtwo.c,v 1.22 1997/05/24 20:16:12 pk Exp $ */
 
 /*
@@ -415,10 +415,11 @@ cgtwoputcmap(sc, cmap)
  * Return the address that would map the given device at the given
  * offset, allowing for the given protection, or return -1 for error.
  */
-int
+paddr_t
 cgtwommap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	register struct cgtwo_softc *sc = cgtwo_cd.cd_devs[minor(dev)];
 

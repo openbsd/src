@@ -1,4 +1,4 @@
-/*	$OpenBSD: audio.c,v 1.30 2001/10/31 11:00:24 art Exp $	*/
+/*	$OpenBSD: audio.c,v 1.31 2001/11/01 12:13:46 art Exp $	*/
 /*	$NetBSD: audio.c,v 1.105 1998/09/27 16:43:56 christos Exp $	*/
 
 /*
@@ -789,10 +789,11 @@ audioselect(dev, events, p)
 	return (error);
 }
 
-int
+paddr_t
 audiommap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
         int unit = AUDIOUNIT(dev);
         struct audio_softc *sc;

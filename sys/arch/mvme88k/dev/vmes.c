@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.5 2001/08/26 02:37:07 miod Exp $ */
+/*	$OpenBSD: vmes.c,v 1.6 2001/11/01 12:13:46 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -65,7 +65,7 @@ int vmesclose __P((dev_t, int, int));
 int vmesioctl __P((dev_t, int, caddr_t, int, struct proc *));
 int vmesread __P((dev_t, struct uio *, int));
 int vmeswrite __P((dev_t, struct uio *, int));
-int vmesmmap __P((dev_t, int, int));
+paddr_t vmesmmap __P((dev_t, off_t, int));
 
 int
 vmesmatch(parent, cf, args)
@@ -161,10 +161,11 @@ vmeswrite(dev, uio, flags)
 	return (vmerw(sc->sc_vme, uio, flags, BUS_VMES));
 }
 
-int
+paddr_t
 vmesmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	int unit = minor(dev);
 	struct vmessoftc *sc = (struct vmessoftc *) vmes_cd.cd_devs[unit];

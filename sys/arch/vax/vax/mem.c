@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.8 2001/05/05 20:56:57 art Exp $	*/
+/*	$OpenBSD: mem.c,v 1.9 2001/11/01 12:13:46 art Exp $	*/
 /*	$NetBSD: mem.c,v 1.15 1999/03/24 05:51:17 mrg Exp $	*/
 
 /*
@@ -64,7 +64,7 @@ caddr_t zeropage;
 int	mmopen __P((dev_t, int, int));
 int	mmclose __P((dev_t, int, int));
 int	mmrw __P((dev_t, struct uio *, int));
-int	mmmmap __P((dev_t, int, int));
+paddr_t	mmmmap __P((dev_t, off_t, int));
 
 
 /*ARGSUSED*/
@@ -172,10 +172,11 @@ mmrw(dev, uio, flags)
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 
 	return (-1);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grf.c,v 1.11 2001/09/11 20:05:20 miod Exp $	*/
+/*	$OpenBSD: grf.c,v 1.12 2001/11/01 12:13:45 art Exp $	*/
 /*	$NetBSD: grf.c,v 1.32 1996/12/23 09:10:01 veego Exp $	*/
 
 /*
@@ -314,10 +314,11 @@ grfselect(dev, rw, p)
  * map the contents of a graphics display card into process' 
  * memory space.
  */
-int
+paddr_t
 grfmmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off
+	int prot;
 {
 	struct grf_softc *gp;
 	struct grfinfo *gi;

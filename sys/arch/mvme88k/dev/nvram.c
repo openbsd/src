@@ -1,4 +1,4 @@
-/*	$OpenBSD: nvram.c,v 1.11 2001/08/26 02:37:07 miod Exp $ */
+/*	$OpenBSD: nvram.c,v 1.12 2001/11/01 12:13:46 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -82,7 +82,7 @@ int nvramioctl __P((dev_t dev, int cmd, caddr_t data, int flag,
     struct proc *p));
 int nvramread __P((dev_t dev, struct uio *uio, int flags));
 int nvramwrite __P((dev_t dev, struct uio *uio, int flags));
-int nvrammmap __P((dev_t dev, int off, int prot));
+paddr_t nvrammmap __P((dev_t dev, off_t off, int prot));
 
 u_long chiptotime __P((int, int, int, int, int, int));
 
@@ -487,10 +487,11 @@ nvramwrite(dev, uio, flags)
  * will also be mmap'd, due to NBPG being 4K. On the MVME147 the NVRAM
  * repeats, so userland gets two copies back-to-back.
  */
-int
+paddr_t
 nvrammmap(dev, off, prot)
 	dev_t dev;
-	int off, prot;
+	off_t off;
+	int prot;
 {
 	int unit = minor(dev);
 	struct nvramsoftc *sc = (struct nvramsoftc *) nvram_cd.cd_devs[unit];

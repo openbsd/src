@@ -1,4 +1,4 @@
-/*	$OpenBSD: mem.c,v 1.11 2001/08/26 14:31:12 miod Exp $ */
+/*	$OpenBSD: mem.c,v 1.12 2001/11/01 12:13:46 art Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,7 @@ caddr_t zeropage;
 int mmopen __P((dev_t, int, int));
 int mmclose __P((dev_t, int, int));
 int mmrw __P((dev_t, struct uio *, int));
-int mmmmap __P((dev_t, int, int));
+paddr_t mmmmap __P((dev_t, off_t, int));
 int mmioctl __P((dev_t, u_long, caddr_t, int, struct proc *));
 
 /*ARGSUSED*/
@@ -217,10 +217,11 @@ unlock:
 	return (error);
 }
 
-int
+paddr_t
 mmmmap(dev, off, prot)
         dev_t dev;
-        int off, prot;
+        off_t off;
+	int prot;
 {
 	return (-1);
 }

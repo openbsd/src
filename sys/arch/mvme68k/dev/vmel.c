@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmel.c,v 1.5 1996/12/11 21:04:14 deraadt Exp $ */
+/*	$OpenBSD: vmel.c,v 1.6 2001/11/01 12:13:46 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -155,10 +155,10 @@ vmelwrite(dev, uio, flags)
 	return (vmerw(sc->sc_vme, uio, flags, BUS_VMEL));
 }
 
-int
+paddr_t
 vmelmmap(dev, off, prot)
 	dev_t dev;
-	int off;
+	off_t off;
 	int prot;
 {
 	int unit = minor(dev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: grfvar.h,v 1.8 1997/05/01 03:36:51 briggs Exp $	*/
+/*	$OpenBSD: grfvar.h,v 1.9 2001/11/01 12:13:46 art Exp $	*/
 /*	$NetBSD: grfvar.h,v 1.11 1996/08/04 06:03:58 scottr Exp $	*/
 
 /*
@@ -144,7 +144,7 @@ int	grfopen __P((dev_t dev, int flag, int mode, struct proc *p));
 int	grfclose __P((dev_t dev, int flag, int mode, struct proc *p));
 int	grfioctl __P((dev_t, int, caddr_t, int, struct proc *p));
 int	grfselect __P((dev_t dev, int rw, struct proc *p));
-int	grfmmap __P((dev_t dev, int off, int prot));
+paddr_t	grfmmap __P((dev_t dev, off_t off, int prot));
 int	grfon __P((dev_t dev));
 int	grfoff __P((dev_t dev));
 int	grfaddr __P((struct grf_softc *gp, register int off));

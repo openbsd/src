@@ -1,4 +1,4 @@
-/*	$OpenBSD: vmes.c,v 1.6 1997/02/05 15:50:56 deraadt Exp $ */
+/*	$OpenBSD: vmes.c,v 1.7 2001/11/01 12:13:46 art Exp $ */
 
 /*
  * Copyright (c) 1995 Theo de Raadt
@@ -155,10 +155,10 @@ vmeswrite(dev, uio, flags)
 	return (vmerw(sc->sc_vme, uio, flags, BUS_VMES));
 }
 
-int
+paddr_t
 vmesmmap(dev, off, prot)
 	dev_t dev;
-	int off;
+	off_t off;
 	int prot;
 {
 	int unit = minor(dev);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: fbvar.h,v 1.3 1997/08/08 08:26:18 downsj Exp $	*/
+/*	$OpenBSD: fbvar.h,v 1.4 2001/11/01 12:13:46 art Exp $	*/
 /*	$NetBSD: fbvar.h,v 1.9 1997/07/07 23:31:30 pk Exp $ */
 
 /*
@@ -60,7 +60,7 @@ struct fbdriver {
 	int	(*fbd_open) __P((dev_t, int, int, struct proc *));
 	int	(*fbd_close) __P((dev_t, int, int, struct proc *));
 	int	(*fbd_ioctl) __P((dev_t, u_long, caddr_t, int, struct proc *));
-	int	(*fbd_mmap) __P((dev_t, int, int));
+	paddr_t	(*fbd_mmap) __P((dev_t, off_t, int));
 #ifdef notyet
 	void	(*fbd_wrrop)();		/* `write region' rasterop */
 	void	(*fbd_cprop)();		/* `copy region' rasterop */

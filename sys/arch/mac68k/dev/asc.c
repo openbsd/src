@@ -1,4 +1,4 @@
-/*	$OpenBSD: asc.c,v 1.11 2001/08/23 08:17:40 miod Exp $	*/
+/*	$OpenBSD: asc.c,v 1.12 2001/11/01 12:13:46 art Exp $	*/
 /*	$NetBSD: asc.c,v 1.20 1997/02/24 05:47:33 scottr Exp $	*/
 
 /*
@@ -272,10 +272,10 @@ ascselect(dev, rw, p)
 	return (0);
 }
 
-int
+paddr_t
 ascmmap(dev, off, prot)
 	dev_t dev;
-	int off;
+	off_t off;
 	int prot;
 {
 	int unit = ASCUNIT(dev);
