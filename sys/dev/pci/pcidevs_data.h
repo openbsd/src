@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.563 2002/11/16 01:05:35 nate Exp 
+ *		OpenBSD: pcidevs,v 1.564 2002/11/17 19:27:11 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -4267,8 +4267,8 @@ static const struct pci_known_product pci_known_products[] = {
 	    "CSB5 PCI Bridge",
 	},
 	{
-	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_unknown,
-	    "unknown SouthBridge",
+	    PCI_VENDOR_RCC, PCI_PRODUCT_RCC_ISA,
+	    "PCI/ISA Bridge",
 	},
 	{
 	    PCI_VENDOR_PICOPOWER, PCI_PRODUCT_PICOPOWER_PT80C826,

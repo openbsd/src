@@ -2,7 +2,7 @@
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		OpenBSD: pcidevs,v 1.563 2002/11/16 01:05:35 nate Exp 
+ *		OpenBSD: pcidevs,v 1.564 2002/11/17 19:27:11 jason Exp 
  */
 /*	$NetBSD: pcidevs,v 1.30 1997/06/24 06:20:24 thorpej Exp $ 	*/
 
@@ -1927,7 +1927,7 @@
 #define	PCI_PRODUCT_RCC_CSB5_IDE	0x0212		/* CSB5 IDE */
 #define	PCI_PRODUCT_RCC_USB	0x0220		/* OSB4/CSB5 USB */
 #define	PCI_PRODUCT_RCC_CSB5BRIDGE	0x0225		/* CSB5 PCI Bridge */
-#define	PCI_PRODUCT_RCC_unknown	0x0230		/* unknown SouthBridge */
+#define	PCI_PRODUCT_RCC_ISA	0x0230		/* PCI/ISA Bridge */
 
 /* Picopower */
 #define	PCI_PRODUCT_PICOPOWER_PT80C826	0x0000		/* PT80C826 */
