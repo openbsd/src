@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.17 1998/03/30 06:59:36 deraadt Exp $	*/
+/*	$OpenBSD: util.c,v 1.18 1998/04/26 17:52:15 deraadt Exp $	*/
 /*	$NetBSD: util.c,v 1.12 1997/08/18 10:20:27 lukem Exp $	*/
 
 /*
@@ -35,7 +35,7 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.17 1998/03/30 06:59:36 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.18 1998/04/26 17:52:15 deraadt Exp $";
 #endif /* not lint */
 
 /*
@@ -268,6 +268,7 @@ tryagain:
 			fprintf(ttyout, "Name (%s:%s): ", host, myname);
 		else
 			fprintf(ttyout, "Name (%s): ", host);
+		*tmp = '\0';
 		(void)fgets(tmp, sizeof(tmp) - 1, stdin);
 		tmp[strlen(tmp) - 1] = '\0';
 		if (*tmp == '\0')
