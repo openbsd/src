@@ -1,5 +1,5 @@
-/*	$OpenBSD: bpf.h,v 1.2 1996/03/03 21:07:02 niklas Exp $	*/
-/*	$NetBSD: bpf.h,v 1.13 1996/02/13 21:59:58 christos Exp $	*/
+/*	$OpenBSD: bpf.h,v 1.3 1996/05/07 13:40:26 deraadt Exp $	*/
+/*	$NetBSD: bpf.h,v 1.14 1996/05/02 00:57:28 cgd Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -145,9 +145,18 @@ struct bpf_hdr {
  * Because the structure above is not a multiple of 4 bytes, some compilers
  * will insist on inserting padding; hence, sizeof(struct bpf_hdr) won't work.
  * Only the kernel needs to know about it; applications use bh_hdrlen.
+ * XXX To save a few bytes on 32-bit machines, we avoid end-of-struct
+ * XXX padding by using the size of the header data elements.  This is
+ * XXX fail-safe: on new machines, we just use the 'safe' sizeof.
  */
 #ifdef _KERNEL
+#if defined(__arm32__) || defined(__i386__) || defined(__m68k__) || \
+    defined(__mips__) || defined(__ns32k__) || defined(__sparc__) || \
+    defined(__vax__)
 #define SIZEOF_BPF_HDR 18
+#else
+#define SIZEOF_BPF_HDR sizeof(struct bpf_hdr)
+#endif
 #endif
 
 /*
