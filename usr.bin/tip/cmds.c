@@ -1,4 +1,4 @@
-/*	$OpenBSD: cmds.c,v 1.20 2004/11/07 09:48:08 otto Exp $	*/
+/*	$OpenBSD: cmds.c,v 1.21 2005/03/11 22:16:16 otto Exp $	*/
 /*	$NetBSD: cmds.c,v 1.7 1997/02/11 09:24:03 mrg Exp $	*/
 
 /*
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)cmds.c	8.1 (Berkeley) 6/6/93";
 #endif
-static const char rcsid[] = "$OpenBSD: cmds.c,v 1.20 2004/11/07 09:48:08 otto Exp $";
+static const char rcsid[] = "$OpenBSD: cmds.c,v 1.21 2005/03/11 22:16:16 otto Exp $";
 #endif /* not lint */
 
 #include "tip.h"
@@ -112,7 +112,7 @@ cu_take(char cc)
 		printf("\r\n%s: cannot create\r\n", argv[1]);
 		return;
 	}
-	(void)snprintf(line, sizeof(line), "cat %s;echo \01", argv[0]);
+	(void)snprintf(line, sizeof(line), "cat %s;echo ''|tr '\\012' '\\01'", argv[0]);
 	transfer(line, fd, "\01");
 }
 
@@ -134,6 +134,12 @@ transfer(buf, fd, eofchars)
 	time_t start;
 	sig_t f;
 	char r;
+
+	if (number(value(FRAMESIZE)) > BUFSIZ || number(value(FRAMESIZE)) < 1) {
+		printf("framesize must be >= 1 and <= %d\r\n", BUFSIZ);
+		close(fd);
+		return;
+	}
 
 	parwrite(FD, buf, size(buf));
 	quit = 0;
@@ -642,6 +648,7 @@ tipabort(msg)
 	char *msg;
 {
 
+	signal(SIGTERM, SIG_IGN);
 	kill(tipout_pid, SIGTERM);
 	disconnect(msg);
 	if (msg != NOSTR)
