@@ -1,4 +1,4 @@
-/*	$OpenBSD: kern_sysctl.c,v 1.36 2000/06/18 17:59:55 niklas Exp $	*/
+/*	$OpenBSD: kern_sysctl.c,v 1.37 2001/01/04 06:04:42 angelos Exp $	*/
 /*	$NetBSD: kern_sysctl.c,v 1.17 1996/05/20 17:49:05 mrg Exp $	*/
 
 /*-
@@ -234,7 +234,8 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 	extern int usermount, nosuidcoredump;
 
 	/* all sysctl names at this level are terminal */
-	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF))
+	if (namelen != 1 && !(name[0] == KERN_PROC || name[0] == KERN_PROF ||
+			      name[0] == KERN_MALLOCSTATS))
 		return (ENOTDIR);		/* overloaded */
 
 	switch (name[0]) {
@@ -358,6 +359,9 @@ kern_sysctl(name, namelen, oldp, oldlenp, newp, newlen, p)
 		if (!msgbufp || msgbufp->msg_magic != MSG_MAGIC)
 			return (ENXIO);
 		return (sysctl_rdint(oldp, oldlenp, newp, msgbufp->msg_bufs));
+	case KERN_MALLOCSTATS:
+		return (sysctl_malloc(name + 1, namelen - 1, oldp, oldlenp,
+		    newp, newlen));
 	default:
 		return (EOPNOTSUPP);
 	}
@@ -499,6 +503,54 @@ sysctl_rdint(oldp, oldlenp, newp, val)
 	*oldlenp = sizeof(int);
 	if (oldp)
 		error = copyout((caddr_t)&val, oldp, sizeof(int));
+	return (error);
+}
+
+/*
+ * Validate parameters and get old / set new parameters
+ * for an integer-valued sysctl function.
+ */
+int
+sysctl_quad(oldp, oldlenp, newp, newlen, valp)
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	size_t newlen;
+	int64_t *valp;
+{
+	int error = 0;
+
+	if (oldp && *oldlenp < sizeof(int64_t))
+		return (ENOMEM);
+	if (newp && newlen != sizeof(int64_t))
+		return (EINVAL);
+	*oldlenp = sizeof(int64_t);
+	if (oldp)
+		error = copyout(valp, oldp, sizeof(int64_t));
+	if (error == 0 && newp)
+		error = copyin(newp, valp, sizeof(int64_t));
+	return (error);
+}
+
+/*
+ * As above, but read-only.
+ */
+int
+sysctl_rdquad(oldp, oldlenp, newp, val)
+	void *oldp;
+	size_t *oldlenp;
+	void *newp;
+	int64_t val;
+{
+	int error = 0;
+
+	if (oldp && *oldlenp < sizeof(int64_t))
+		return (ENOMEM);
+	if (newp)
+		return (EPERM);
+	*oldlenp = sizeof(int64_t);
+	if (oldp)
+		error = copyout((caddr_t)&val, oldp, sizeof(int64_t));
 	return (error);
 }
 
