@@ -1,4 +1,4 @@
-/*	$OpenBSD: disklabel.c,v 1.5 1996/05/17 15:32:58 mickey Exp $	*/
+/*	$OpenBSD: disklabel.c,v 1.6 1996/05/18 19:06:38 pefo Exp $	*/
 /*	$NetBSD: disklabel.c,v 1.30 1996/03/14 19:49:24 ghudson Exp $	*/
 
 /*
@@ -427,6 +427,8 @@ writelabel(f, boot, lp)
 			}
 			sectoffset = 0;
 		}
+
+#if NUMBOOT > 0
 		/*
 		 * If we are not installing a boot program
 		 * we must read the current bootarea so we don't
@@ -446,6 +448,7 @@ writelabel(f, boot, lp)
 			}
 			*lp =tlab;
 		}
+#endif
 #endif
 
 		/*
