@@ -1,4 +1,4 @@
-.\"	$OpenBSD: bindresvport.3,v 1.4 1996/10/21 03:49:53 deraadt Exp $
+.\"	$OpenBSD: bindresvport.3,v 1.5 1997/07/01 05:57:45 millert Exp $
 .\"
 .Dd November 22, 1987
 .Dt BINDRESVPORT 3
@@ -8,7 +8,7 @@
 .Nd bind a socket to a privileged IP port
 .Sh SYNOPSIS
 .Fd #include <sys/types.h>
-.Fd include <netinet/in.h>
+.Fd #include <netinet/in.h>
 .Ft int
 .Fn bindresvport "int sd" "struct sockaddr_in **sin"
 .Sh DESCRIPTION
