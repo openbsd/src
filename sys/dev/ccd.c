@@ -1,4 +1,4 @@
-/*	$OpenBSD: ccd.c,v 1.34 1998/02/06 22:17:16 deraadt Exp $	*/
+/*	$OpenBSD: ccd.c,v 1.35 1998/03/10 20:43:17 millert Exp $	*/
 /*	$NetBSD: ccd.c,v 1.33 1996/05/05 04:21:14 thorpej Exp $	*/
 
 /*-
@@ -915,6 +915,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 		nbp->b_blkno = cbn + cboff;
 		nbp->b_vp = ci->ci_vp;
 		nbp->b_bcount = bcount;
+		LIST_INIT(&nbp->b_dep);
 
 		/*
 		 * context for ccdiodone
@@ -955,6 +956,7 @@ ccdbuffer(cs, bp, bn, addr, bcount, cbpp, old_io)
 			cbp->cb_flags = CBF_MIRROR | (old_io ? CBF_OLD : 0);
 			cbp->cb_buf.b_dev = ci2->ci_dev;	/* XXX */
 			cbp->cb_buf.b_vp = ci2->ci_vp;
+			LIST_INIT(&cbp->cb_buf.b_dep);
 			cbp->cb_comp = ci2 - cs->sc_cinfo;
 			cbpp[1] = cbp;
 		}
