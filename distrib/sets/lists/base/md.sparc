@@ -2,8 +2,6 @@
 ./sbin/ldconfig
 ./usr/bin/c++filt
 ./usr/bin/ldd
-./usr/include/readline
-./usr/include/sparc
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
 ./usr/lib/apache/modules/mod_auth_db.so

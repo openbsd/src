@@ -9,6 +9,8 @@
 ./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
+./usr/include/machine
+./usr/include/mvmeppc
 ./usr/include/mvmeppc/ansi.h
 ./usr/include/mvmeppc/asm.h
 ./usr/include/mvmeppc/autoconf.h
@@ -56,10 +58,8 @@
 ./usr/include/mvmeppc/vmparam.h
 ./usr/include/mvmeppc/vuid_event.h
 ./usr/include/mvmeppc/wsconsio.h
+./usr/include/powerpc
 ./usr/include/powerpc/internal_types.h
-./usr/include/readline/chardefs.h
-./usr/include/readline/keymaps.h
-./usr/include/readline/readline.h
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o

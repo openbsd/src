@@ -4,6 +4,7 @@
 ./usr/bin/objcopy
 ./usr/bin/objdump
 ./usr/bin/readelf
+./usr/include/alpha
 ./usr/include/alpha/alpha_cpu.h
 ./usr/include/alpha/ansi.h
 ./usr/include/alpha/aout_machdep.h
@@ -67,9 +68,7 @@
 ./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
-./usr/include/readline/chardefs.h
-./usr/include/readline/keymaps.h
-./usr/include/readline/readline.h
+./usr/include/machine
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o

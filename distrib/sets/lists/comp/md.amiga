@@ -1,5 +1,6 @@
 ./usr/bin/gdb
 ./usr/bin/objdump
+./usr/include/amiga
 ./usr/include/amiga/ansi.h
 ./usr/include/amiga/asm.h
 ./usr/include/amiga/bus.h
@@ -45,6 +46,7 @@
 ./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
+./usr/include/m68k
 ./usr/include/m68k/ansi.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
@@ -80,9 +82,7 @@
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
-./usr/include/readline/chardefs.h
-./usr/include/readline/keymaps.h
-./usr/include/readline/readline.h
+./usr/include/machine
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/cc1
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/cc1obj

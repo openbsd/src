@@ -6,6 +6,7 @@
 ./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
+./usr/include/m68k
 ./usr/include/m68k/ansi.h
 ./usr/include/m68k/asm.h
 ./usr/include/m68k/asm_single.h
@@ -41,6 +42,7 @@
 ./usr/include/m68k/trap.h
 ./usr/include/m68k/types.h
 ./usr/include/m68k/varargs.h
+./usr/include/mac68k
 ./usr/include/mac68k/adbsys.h
 ./usr/include/mac68k/ansi.h
 ./usr/include/mac68k/asm.h
@@ -86,10 +88,7 @@
 ./usr/include/mac68k/viareg.h
 ./usr/include/mac68k/vmparam.h
 ./usr/include/mac68k/z8530var.h
-./usr/include/readline
-./usr/include/readline/chardefs.h
-./usr/include/readline/keymaps.h
-./usr/include/readline/readline.h
+./usr/include/machine
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/cc1
 ./usr/lib/gcc-lib/m68k-unknown-openbsd3.1/2.95.3/cc1obj

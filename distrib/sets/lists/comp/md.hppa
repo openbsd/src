@@ -8,6 +8,7 @@
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h
+./usr/include/hppa
 ./usr/include/hppa/ansi.h
 ./usr/include/hppa/aout_machdep.h
 ./usr/include/hppa/asm.h
@@ -64,9 +65,7 @@
 ./usr/include/hppa/wsconsio.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
-./usr/include/readline/chardefs.h
-./usr/include/readline/keymaps.h
-./usr/include/readline/readline.h
+./usr/include/machine
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o

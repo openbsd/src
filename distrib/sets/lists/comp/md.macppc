@@ -9,6 +9,8 @@
 ./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
+./usr/include/machine
+./usr/include/macppc
 ./usr/include/macppc/adbsys.h
 ./usr/include/macppc/ansi.h
 ./usr/include/macppc/apmvar.h
@@ -62,6 +64,7 @@
 ./usr/include/macppc/vuid_event.h
 ./usr/include/macppc/wsconsio.h
 ./usr/include/macppc/z8530var.h
+./usr/include/powerpc
 ./usr/include/powerpc/ansi.h
 ./usr/include/powerpc/asm.h
 ./usr/include/powerpc/bat.h
@@ -103,9 +106,6 @@
 ./usr/include/powerpc/varargs.h
 ./usr/include/powerpc/vuid_event.h
 ./usr/include/powerpc/wsconsio.h
-./usr/include/readline/chardefs.h
-./usr/include/readline/keymaps.h
-./usr/include/readline/readline.h
 ./usr/lib/crtbegin.o
 ./usr/lib/crtbeginS.o
 ./usr/lib/crtend.o

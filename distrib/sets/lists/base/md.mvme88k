@@ -1,8 +1,6 @@
 ./sbin/ldconfig
 ./usr/bin/c++filt
 ./usr/bin/ldd
-./usr/include/m88k
-./usr/include/readline
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/cpp
 ./usr/lib/gcc-lib/m88k-unknown-openbsd2.5/2.8.1/specs
 ./usr/lib/gcc-lib/m88k-unknown-openbsd3.1

@@ -4,6 +4,7 @@
 ./usr/include/bfd.h
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h
+./usr/include/i386
 ./usr/include/i386/ansi.h
 ./usr/include/i386/apmvar.h
 ./usr/include/i386/asm.h
@@ -62,10 +63,7 @@
 ./usr/include/i386/vmparam.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
-./usr/include/readline
-./usr/include/readline/chardefs.h
-./usr/include/readline/keymaps.h
-./usr/include/readline/readline.h
+./usr/include/machine
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.1/2.95.3/SYSCALLS.c.X
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.1/2.95.3/cc1
 ./usr/lib/gcc-lib/i386-unknown-openbsd3.1/2.95.3/cc1obj

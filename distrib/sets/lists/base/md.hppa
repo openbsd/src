@@ -2,8 +2,6 @@
 ./sbin/kbd
 ./sbin/wsconsctl
 ./usr/bin/c++filt
-./usr/include/hppa
-./usr/include/readline
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3
 ./usr/lib/gcc-lib/hppa-unknown-openbsd3.1/2.95.3/collect2

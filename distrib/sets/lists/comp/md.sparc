@@ -6,9 +6,8 @@
 ./usr/include/dlfcn.h
 ./usr/include/ieeefp.h
 ./usr/include/link.h
-./usr/include/readline/chardefs.h
-./usr/include/readline/keymaps.h
-./usr/include/readline/readline.h
+./usr/include/machine
+./usr/include/sparc
 ./usr/include/sparc/ansi.h
 ./usr/include/sparc/asm.h
 ./usr/include/sparc/autoconf.h

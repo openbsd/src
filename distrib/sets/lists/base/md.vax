@@ -3,7 +3,6 @@
 ./sbin/ldconfig
 ./usr/bin/c++filt
 ./usr/bin/ldd
-./usr/include/vax
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.1
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.1/2.95.3
 ./usr/lib/gcc-lib/vax-unknown-openbsd3.1/2.95.3/collect2

@@ -5,10 +5,8 @@
 ./usr/include/bfdlink.h
 ./usr/include/dlfcn.h
 ./usr/include/link.h
-./usr/include/readline
-./usr/include/readline/chardefs.h
-./usr/include/readline/keymaps.h
-./usr/include/readline/readline.h
+./usr/include/machine
+./usr/include/vax
 ./usr/include/vax/ansi.h
 ./usr/include/vax/aout_machdep.h
 ./usr/include/vax/asm.h

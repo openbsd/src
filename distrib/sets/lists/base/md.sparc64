@@ -3,7 +3,6 @@
 ./sbin/wsconsctl
 ./usr/bin/c++filt
 ./usr/bin/ldd
-./usr/include/readline
 ./usr/lib/apache/modules/libproxy.so
 ./usr/lib/apache/modules/mod_auth_anon.so
 ./usr/lib/apache/modules/mod_auth_db.so
