@@ -1,4 +1,4 @@
-/*	$OpenBSD: printjob.c,v 1.37 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: printjob.c,v 1.38 2004/04/13 23:23:02 millert Exp $	*/
 /*	$NetBSD: printjob.c,v 1.31 2002/01/21 14:42:30 wiz Exp $	*/
 
 /*
@@ -104,7 +104,7 @@ static int	 tof;		/* true if at top of form */
 static char	class[32];		/* classification field */
 static char	fromhost[MAXHOSTNAMELEN]; /* user's host machine */
 				/* indentation size in static characters */
-static char	indent[10] = "-i0"; 
+static char	indent[10] = "-i0";
 static char	jobname[NAME_MAX];	/* job or file name */
 static char	length[10] = "-l";	/* page length in lines */
 static char	logname[MAXLOGNAME];	/* user's login name */
@@ -567,7 +567,7 @@ print(int format, char *file)
 		(void)write(ofd, FF, strlen(FF));
 		tof = 1;
 	}
-	if (IF == NULL && (format == 'f' || format == 'l')) {
+	if (IF == NULL && (format == 'f' || format == 'l' || format == 'o')) {
 		tof = 0;
 		while ((n = read(fi, buf, BUFSIZ)) > 0)
 			if (write(ofd, buf, n) != n) {
@@ -611,14 +611,6 @@ print(int format, char *file)
 			return(ERROR);
 		}
 		fi = p[0];			/* use pipe for input */
-	case 'o':       /* print postscript file */
-		/*
-		 * For now, treat this as a plain-text file, and assume
-		 * the standard LPF_INPUT filter will recognize that it
-		 * is postscript and know what to do with it.  These
-		 * 'o'-file requests could come from MacOS X systems.
-		 */
-		/* FALLTHROUGH */
 	case 'f':	/* print plain text file */
 		prog = IF;
 		av[1] = width;
@@ -626,6 +618,17 @@ print(int format, char *file)
 		av[3] = indent;
 		n = 4;
 		break;
+	case 'o':       /* print postscript file */
+		/*
+		 * Treat this as a "plain file with control characters", and
+		 * assume the standard LPF_INPUT filter will recognize that
+		 * the data is postscript and know what to do with it.  These
+		 * 'o'-file requests could come from MacOS 10.1 systems.
+		 * (later versions of MacOS 10 will explicitly use 'l')
+		 * A postscript file can contain binary data, which is why 'l'
+		 * is somewhat more appropriate than 'f'.
+		 */
+		/* FALLTHROUGH */
 	case 'l':	/* like 'f' but pass control characters */
 		prog = IF;
 		av[1] = "-c";
