@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.lib.mk,v 1.5 1996/03/05 11:12:41 mickey Exp $
+#	$OpenBSD: bsd.lib.mk,v 1.6 1996/05/25 09:03:43 pefo Exp $
 #	$NetBSD: bsd.lib.mk,v 1.67 1996/01/17 20:39:26 mycroft Exp $
 #	@(#)bsd.lib.mk	5.26 (Berkeley) 5/2/91
 
@@ -83,7 +83,7 @@ SHLIB_MINOR != . ${.CURDIR}/shlib_version ; echo $$minor
 	@${LD} -x -r ${.TARGET}.o -o ${.TARGET}
 	@rm -f ${.TARGET}.o
 
-.if !defined(PICFLAG)
+.if !defined(PICFLAG) && (${MACHINE_ARCH} != "mips")
 PICFLAG=-fpic
 .endif
 
@@ -94,7 +94,9 @@ _LIBS=lib${LIB}.a
 .endif
 
 .if !defined(NOPIC)
+.if (${MACHINE_ARCH} != "mips")
 _LIBS+=lib${LIB}_pic.a
+.endif
 .if defined(SHLIB_MAJOR) && defined(SHLIB_MINOR)
 _LIBS+=lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 .endif
@@ -128,11 +130,19 @@ lib${LIB}_pic.a:: ${SOBJS}
 	@${AR} cq lib${LIB}_pic.a `lorder ${SOBJS} | tsort -q`
 	${RANLIB} lib${LIB}_pic.a
 
+.if (${MACHINE_ARCH} != "mips") 
 lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}_pic.a ${DPADD}
 	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
 	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
 	$(LD) -x -Bshareable -Bforcearchive \
 	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}_pic.a ${LDADD}
+.else
+lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}: lib${LIB}.a ${DPADD}
+	@echo building shared ${LIB} library \(version ${SHLIB_MAJOR}.${SHLIB_MINOR}\)
+	@rm -f lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR}
+	$(LD) -x -shared --whole-archive -soname lib${LIB}.so.${SHLIB_MAJOR} \
+	    -o lib${LIB}.so.${SHLIB_MAJOR}.${SHLIB_MINOR} lib${LIB}.a ${LDADD}
+.endif
 
 LOBJS+=	${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 # the following looks XXX to me... -- cgd
@@ -179,7 +189,7 @@ realinstall:
 	${RANLIB} -t ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 	chmod ${LIBMODE} ${DESTDIR}${LIBDIR}/lib${LIB}_p.a
 .endif
-.if !defined(NOPIC)
+.if !defined(NOPIC) && (${MACHINE_ARCH} != "mips") 
 #	ranlib lib${LIB}_pic.a
 	install ${COPY} -o ${LIBOWN} -g ${LIBGRP} -m 600 \
 	    lib${LIB}_pic.a ${DESTDIR}${LIBDIR}

@@ -1,4 +1,4 @@
-#	$OpenBSD: bsd.own.mk,v 1.7 1996/04/22 01:28:35 deraadt Exp $
+#	$OpenBSD: bsd.own.mk,v 1.8 1996/05/25 09:03:44 pefo Exp $
 #	$NetBSD: bsd.own.mk,v 1.24 1996/04/13 02:08:09 thorpej Exp $
 
 .if defined(MAKECONF) && exists(${MAKECONF})
@@ -65,7 +65,7 @@ STRIP?=		-s
 
 # don't try to generate PIC versions of libraries on machines
 # which don't support PIC.
-.if (${MACHINE_ARCH} == "mips") || (${MACHINE_ARCH} == "alpha") || \
+.if (${MACHINE_ARCH} == "alpha") || \
     (${MACHINE_ARCH} == "vax")
 NOPIC=
 .endif
