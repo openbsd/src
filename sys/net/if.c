@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.c,v 1.19 1999/07/04 20:39:28 deraadt Exp $	*/
+/*	$OpenBSD: if.c,v 1.20 1999/08/08 00:43:00 niklas Exp $	*/
 /*	$NetBSD: if.c,v 1.35 1996/05/07 05:26:04 thorpej Exp $	*/
 
 /*
@@ -36,6 +36,9 @@
  *	@(#)if.c	8.3 (Berkeley) 1/4/94
  */
 
+#include "bpfilter.h"
+#include "bridge.h"
+
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
@@ -50,8 +53,34 @@
 #include <net/if_dl.h>
 #include <net/if_types.h>
 #include <net/radix.h>
+#include <net/route.h>
 
-static void if_attachsetup __P((struct ifnet *));
+#ifdef INET
+#include <netinet/in.h>
+#include <netinet/in_var.h>
+#include <netinet/if_ether.h>
+#include <netinet/igmp.h>
+#ifdef MROUTING
+#include <netinet/ip_mrouting.h>
+#endif
+#endif
+
+#ifdef IPFILTER
+#include <netinet/ip_fil_compat.h>
+#include <netinet/ip_fil.h>
+#include <netinet/ip_nat.h>
+#endif
+
+#if NBPFILTER > 0
+#include <net/bpf.h>
+#endif
+
+#if NBRIDGE > 0
+#include <net/if_bridge.h>
+#endif
+
+void	if_attachsetup __P((struct ifnet *));
+int	if_detach_rtdelete __P((struct radix_node *, void *));
 
 int	ifqmaxlen = IFQ_MAXLEN;
 void	if_slowtimo __P((void *arg));
@@ -80,7 +109,7 @@ struct ifaddr **ifnet_addrs;
  * Attach an interface to the
  * list of "active" interfaces.
  */
-static void
+void
 if_attachsetup(ifp)
 	struct ifnet *ifp;
 {
@@ -154,6 +183,101 @@ if_attach(ifp)
 	TAILQ_INIT(&ifp->if_addrlist);
 	TAILQ_INSERT_TAIL(&ifnet, ifp, if_list);
 	if_attachsetup(ifp);
+}
+
+/*
+ * Delete a route if it has a specific interface for output.
+ * This function complies to the rn_walktree callback API.
+ */
+int
+if_detach_rtdelete(rn, vifp)
+	struct radix_node *rn;
+	void *vifp;
+{
+	struct ifnet *ifp = vifp;
+	struct rtentry *rt = (struct rtentry *)rn;
+
+	if (rt->rt_ifp == ifp)
+		rtrequest(RTM_DELETE, rt_key(rt), rt->rt_gateway, rt_mask(rt),
+		    0, NULL);
+
+	/*
+	 * XXX There should be no need to check for rt_ifa belonging to this
+	 * interface, because then rt_ifp is set, right?
+	 */
+
+	return (0);
+}
+
+/*
+ * Detach an interface from everything in the kernel.  Also deallocate
+ * private resources.
+ * XXX So far only the INET protocol family has been looked over
+ * wrt resource usage that needs to be decoupled.
+ */
+void
+if_detach(ifp)
+	struct ifnet *ifp;
+{
+	struct ifaddr *ifa;
+	int i, s = splimp();
+	struct radix_node_head *rnh;
+
+#if NBRIDGE > 0
+	/* Remove the interface from any bridge it is part of.  */
+	if (ifp->if_bridge)
+		bridge_ifdetach(ifp);
+#endif
+
+#if NBPFILTER > 0
+	/* If there is a bpf device attached, detach from it.  */
+	if (ifp->if_bpf)
+		bpfdetach(ifp);
+#endif
+
+	/*
+	 * Find and remove all routes which is using this interface.
+	 * XXX Factor out into a route.c function?
+	 */
+	for (i = 1; i <= AF_MAX; i++) {
+		rnh = rt_tables[i];
+		if (rnh)
+			(*rnh->rnh_walktree)(rnh, if_detach_rtdelete, ifp);
+	}
+
+#ifdef INET
+	rti_delete(ifp);
+	myip_ifp = NULL;
+#ifdef MROUTING
+	vif_delete(ifp);
+#endif
+#endif
+
+#ifdef IPFILTER
+	/* XXX More ipf & ipnat cleanup needed.  */
+	nat_ifdetach(ifp);
+#endif
+
+	/*
+	 * XXX transient ifp refs?  inpcb.ip_moptions.imo_multicast_ifp?
+	 * Other network stacks than INET?
+	 */
+
+	/* Remove the interface from the list of all interfaces.  */
+	TAILQ_REMOVE(&ifnet, ifp, if_list);
+
+	/* Deallocate private resources.  */
+	for (ifa = TAILQ_FIRST(&ifp->if_addrlist); ifa;
+	    ifa = TAILQ_FIRST(&ifp->if_addrlist)) {
+		TAILQ_REMOVE(&ifp->if_addrlist, ifa, ifa_list);
+#ifdef INET
+		if (ifa->ifa_addr->sa_family == AF_INET)
+			TAILQ_REMOVE(&in_ifaddr, (struct in_ifaddr *)ifa,
+			    ia_list);
+#endif
+		free(ifa, M_IFADDR);
+	}
+	splx(s);
 }
 
 /*
@@ -305,8 +429,6 @@ ifaof_ifpforaddr(addr, ifp)
 	}
 	return (ifa_maybe);
 }
-
-#include <net/route.h>
 
 /*
  * Default action when installing a route with a Link Level gateway.

@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.16 1999/05/26 19:26:11 brad Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.17 1999/08/08 00:43:00 niklas Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -52,6 +52,7 @@
 #include <sys/ioctl.h>
 #include <sys/map.h>
 #include <sys/conf.h>
+#include <sys/vnode.h>
 
 #include <sys/file.h>
 #if defined(sparc) && BSD < 199103
@@ -1346,6 +1347,49 @@ bpfattach(driverp, ifp, dlt, hdrlen)
 #if 0
 	printf("bpf: %s attached\n", ifp->if_xname);
 #endif
+}
+
+/* Detach an interface from its attached bpf device.  */
+void
+bpfdetach(ifp)
+	struct ifnet *ifp;
+{
+	struct bpf_if *bp, *nbp, **pbp = &bpf_iflist;
+	struct bpf_d *bd;
+	int maj, mn;
+
+	for (bp = bpf_iflist; bp; bp = nbp) {
+		nbp= bp->bif_next;
+		if (bp->bif_ifp == ifp) {
+			*pbp = nbp;
+
+			/* Locate the major number. */
+			for (maj = 0; maj < nchrdev; maj++)
+				if (cdevsw[maj].d_open == bpfopen)
+					break;
+
+			for (bd = bp->bif_dlist; bd; bd = bp->bif_dlist)
+				/*
+				 * Locate the minor number and nuke the vnode
+				 * for any open instance.
+				 */
+				for (mn = 0; mn < NBPFILTER; mn++)
+					if (&bpf_dtab[mn] == bd) {
+						vdevgone(maj, mn, mn, VCHR);
+						break;
+					}
+
+#if BSD < 199103
+			if (bp == &bpf_ifs[bpfifno - 1])
+				bpfifno--;
+			else
+				printf("bpfdetach: leaked one bpf\n");
+#else
+			free(bp, M_DEVBUF);
+#endif
+		}
+		pbp = &bp->bif_next;
+	}
 }
 
 #if BSD >= 199103

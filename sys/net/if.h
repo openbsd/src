@@ -1,4 +1,4 @@
-/*	$OpenBSD: if.h,v 1.12 1999/06/23 21:55:28 cmetz Exp $	*/
+/*	$OpenBSD: if.h,v 1.13 1999/08/08 00:43:00 niklas Exp $	*/
 /*	$NetBSD: if.h,v 1.23 1996/05/07 02:40:27 thorpej Exp $	*/
 
 /*
@@ -355,6 +355,7 @@ struct	if_nameindex *if_nameindex __P((void));
 struct ifnet_head ifnet;
 
 void	ether_ifattach __P((struct ifnet *));
+void	ether_ifdetach __P((struct ifnet *));
 int	ether_ioctl __P((struct ifnet *, struct arpcom *, u_long, caddr_t));
 void	ether_input __P((struct ifnet *, struct ether_header *, struct mbuf *));
 int	ether_output __P((struct ifnet *,
@@ -364,6 +365,7 @@ char	*ether_sprintf __P((u_char *));
 void	if_attach __P((struct ifnet *));
 void	if_attachtail __P((struct ifnet *));
 void	if_attachhead __P((struct ifnet *));
+void	if_detach __P((struct ifnet *));
 void	if_down __P((struct ifnet *));
 void	if_qflush __P((struct ifqueue *));
 void	if_slowtimo __P((void *));

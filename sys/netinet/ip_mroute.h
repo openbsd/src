@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_mroute.h,v 1.3 1999/04/20 20:06:12 niklas Exp $	*/
+/*	$OpenBSD: ip_mroute.h,v 1.4 1999/08/08 00:43:00 niklas Exp $	*/
 /*	$NetBSD: ip_mroute.h,v 1.10 1996/02/13 23:42:55 christos Exp $	*/
 
 /*
@@ -210,21 +210,22 @@ struct pkt_queue {
 	struct	  ip *pkt_ip;		/* pointer to ip header */
 };
   
-int ip_mrouter_set __P((int, struct socket *, struct mbuf **));
-int ip_mrouter_get __P((int, struct socket *, struct mbuf **));
-int mrt_ioctl __P((u_long, caddr_t));
-int ip_mrouter_done __P((void));
-void reset_vif __P((struct vif *));
+int	ip_mrouter_set __P((int, struct socket *, struct mbuf **));
+int	ip_mrouter_get __P((int, struct socket *, struct mbuf **));
+int	mrt_ioctl __P((u_long, caddr_t));
+int	ip_mrouter_done __P((void));
+void	reset_vif __P((struct vif *));
+void	vif_delete __P((struct ifnet *));
 #ifdef RSVP_ISI
-int ip_mforward __P((struct mbuf *, struct ifnet *, struct ip_moptions *));
-int legal_vif_num __P((int));
-int ip_rsvp_vif_init __P((struct socket *, struct mbuf *));
-int ip_rsvp_vif_done __P((struct socket *, struct mbuf *));
-void ip_rsvp_force_done __P((struct socket *));
-void rsvp_input __P((struct mbuf *, struct ifnet *));
+int	ip_mforward __P((struct mbuf *, struct ifnet *, struct ip_moptions *));
+int	legal_vif_num __P((int));
+int	ip_rsvp_vif_init __P((struct socket *, struct mbuf *));
+int	ip_rsvp_vif_done __P((struct socket *, struct mbuf *));
+void	ip_rsvp_force_done __P((struct socket *));
+void	rsvp_input __P((struct mbuf *, struct ifnet *));
 #else
-int ip_mforward __P((struct mbuf *, struct ifnet *));
+int	ip_mforward __P((struct mbuf *, struct ifnet *));
 #endif
-void ipip_input __P((struct mbuf *, ...));
+void	ipip_input __P((struct mbuf *, ...));
 
 #endif /* _KERNEL */

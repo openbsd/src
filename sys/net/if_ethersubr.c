@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_ethersubr.c,v 1.28 1999/02/26 17:01:32 jason Exp $	*/
+/*	$OpenBSD: if_ethersubr.c,v 1.29 1999/08/08 00:43:00 niklas Exp $	*/
 /*	$NetBSD: if_ethersubr.c,v 1.19 1996/05/07 02:40:30 thorpej Exp $	*/
 
 /*
@@ -806,6 +806,20 @@ ether_ifattach(ifp)
 			break;
 		}
 	LIST_INIT(&((struct arpcom *)ifp)->ac_multiaddrs);
+}
+
+void
+ether_ifdetach(ifp)
+	struct ifnet *ifp;
+{
+	struct arpcom *ac = (struct arpcom *)ifp;
+	struct ether_multi *enm;
+
+	for (enm = LIST_FIRST(&ac->ac_multiaddrs); enm;
+	    enm = LIST_FIRST(&ac->ac_multiaddrs)) {
+		LIST_REMOVE(enm, enm_list);
+		free(enm, M_IFMADDR);
+	}
 }
 
 u_char	ether_ipmulticast_min[6] = { 0x01, 0x00, 0x5e, 0x00, 0x00, 0x00 };

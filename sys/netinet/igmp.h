@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.h,v 1.2 1997/02/24 14:06:34 niklas Exp $	*/
+/*	$OpenBSD: igmp.h,v 1.3 1999/08/08 00:43:00 niklas Exp $	*/
 /*	$NetBSD: igmp.h,v 1.6 1995/05/31 06:08:21 mycroft Exp $	*/
 
 /*
@@ -91,3 +91,7 @@ struct igmp {
  * Revert to v2 if we haven't heard from the router in this amount of time.
  */
 #define	IGMP_AGE_THRESHOLD	540
+
+#ifdef _KERNEL
+void	rti_delete __P((struct ifnet *));
+#endif

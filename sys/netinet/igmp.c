@@ -1,4 +1,4 @@
-/*	$OpenBSD: igmp.c,v 1.4 1998/05/18 21:10:24 provos Exp $	*/
+/*	$OpenBSD: igmp.c,v 1.5 1999/08/08 00:43:00 niklas Exp $	*/
 /*	$NetBSD: igmp.c,v 1.15 1996/02/13 23:41:25 christos Exp $	*/
 
 /*
@@ -95,6 +95,22 @@ rti_find(ifp)
 	rti->rti_next = rti_head;
 	rti_head = rti;
 	return (rti);
+}
+
+void
+rti_delete(ifp)
+	struct ifnet *ifp;
+{
+	struct router_info *rti, **prti = &rti_head;
+
+	for (rti = rti_head; rti != 0; rti = rti->rti_next) {
+		if (rti->rti_ifp == ifp) {
+			*prti = rti->rti_next;
+			free(rti, M_MRTABLE);
+			break;
+		}
+		prti = &rti->rti_next;
+	}
 }
 
 void

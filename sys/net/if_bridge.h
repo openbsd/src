@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.h,v 1.6 1999/03/19 22:47:33 jason Exp $	*/
+/*	$OpenBSD: if_bridge.h,v 1.7 1999/08/08 00:43:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -101,8 +101,9 @@ struct ifbcachetoreq {
 
 
 #ifdef _KERNEL
-struct mbuf *	bridge_input	__P((struct ifnet *, struct ether_header *,
+void	bridge_ifdetach __P((struct ifnet *));
+struct mbuf *bridge_input __P((struct ifnet *, struct ether_header *,
     struct mbuf *));
-int		bridge_output	__P((struct ifnet *, struct mbuf *,
-    struct sockaddr *, struct rtentry *rt));
+int	bridge_output __P((struct ifnet *, struct mbuf *, struct sockaddr *,
+    struct rtentry *rt));
 #endif /* _KERNEL */

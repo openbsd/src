@@ -1,4 +1,4 @@
-/*       $OpenBSD: ip_nat.h,v 1.11 1999/02/05 05:58:53 deraadt Exp $       */
+/*       $OpenBSD: ip_nat.h,v 1.12 1999/08/08 00:43:00 niklas Exp $       */
 /*
  * Copyright (C) 1995-1998 by Darren Reed.
  *
@@ -7,7 +7,7 @@
  * to the original author and the contributors.
  *
  * @(#)ip_nat.h	1.5 2/4/96
- * $Id: ip_nat.h,v 1.11 1999/02/05 05:58:53 deraadt Exp $
+ * $Id: ip_nat.h,v 1.12 1999/08/08 00:43:00 niklas Exp $
  */
 
 #ifndef	__IP_NAT_H__
@@ -162,6 +162,7 @@ extern	int	nat_ioctl __P((caddr_t, u_long, int));
 #else
 extern	int	nat_ioctl __P((caddr_t, int, int));
 #endif
+extern	void	nat_ifdetach __P((struct ifnet *));
 extern	nat_t	*nat_new __P((ipnat_t *, ip_t *, fr_info_t *, u_short, int));
 extern	nat_t	*nat_outlookup __P((void *, int, struct in_addr, u_short,
 				 struct in_addr, u_short));

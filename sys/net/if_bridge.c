@@ -1,4 +1,4 @@
-/*	$OpenBSD: if_bridge.c,v 1.12 1999/07/24 19:11:13 jason Exp $	*/
+/*	$OpenBSD: if_bridge.c,v 1.13 1999/08/08 00:43:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999 Jason L. Wright (jason@thought.net)
@@ -440,6 +440,24 @@ bridge_ioctl(ifp, cmd, data)
 	}
 	splx(s);
 	return (error);
+}
+
+/* Detach an interface from a bridge.  */
+void
+bridge_ifdetach(ifp)
+	struct ifnet *ifp;
+{
+	struct bridge_softc *bsc = (struct bridge_softc *)ifp->if_bridge;
+	struct bridge_iflist *bif;
+
+	for (bif = LIST_FIRST(&bsc->sc_iflist); bif;
+	    bif = LIST_NEXT(bif, next))
+		if (bif->ifp == ifp) {
+			LIST_REMOVE(bif, next);
+			bridge_rtdelete(bsc, ifp);
+			free(bif, M_DEVBUF);
+			break;
+		}
 }
 
 int
