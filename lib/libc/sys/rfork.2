@@ -1,0 +1,155 @@
+.\"
+.\" This manual page is taken directly from Plan9, and modified to
+.\" describe the actual OpenBSD implimentation. Permission for
+.\" use of this page comes from Rob Pike <rob@plan9.att.com>.
+.\"
+.TH FORK 2
+.SH NAME
+fork, rfork \- manipulate process resources
+.SH SYNOPSIS
+.B #include <u.h>
+.br
+.B #include <libc.h>
+.PP
+.nf
+.B
+int fork(void)
+.PP
+.B
+int rfork(int flags)
+.fi
+.SH DESCRIPTION
+Forking is the only way new processes are created.
+The
+.I flags
+argument to
+.I rfork
+selects which resources of the
+invoking process (parent) are shared
+by the new process (child) or initialized to
+their default values.
+The resources include
+the file name space,
+the open file descriptor table (which, when shared, permits processes
+to open and close files for other processes),
+the set of environment variables
+(see
+.IR env (3)),
+the note group
+(the set of processes that receive notes written to a member's
+.B notepg
+file; see
+.IR proc (3)),
+and open files.
+.I Flags
+is the logical OR of some subset of
+.TF RFCNAMEG
+.TP
+.B RFPROC
+If set a new process is created; otherwise changes affect the
+current process.
+.TP
+.B RFNOWAIT
+If set, the child process will be dissociated from the parent. Upon
+exit the child will leave no
+.B Waitmsg
+(see
+.IR wait (2))
+for the parent to collect.
+.TP
+.B RFNAMEG
+If set, the new process inherits a copy of the parent's name space;
+otherwise the new process shares the parent's name space.
+The tag space for
+.IR rendezvous (2)
+is considered part of the name space.
+Is mutually exclusive with
+.BR RFCNAMEG .
+.TP
+.B RFCNAMEG
+If set, the new process starts with a clean name space. A new
+name space must be built from a mount of an open file descriptor.
+Is mutually exclusive with
+.BR RFNAMEG .
+.TP
+.B RFENVG
+If set, the environment variables are copied;
+otherwise the two processes share environment variables.
+Is mutually exclusive with
+.BR RFCENVG .
+.TP
+.B RFCENVG
+If set, the new process starts with an empty environment.
+Is mutually exclusive with
+.BR RFENVG .
+.TP
+.B RFNOTEG
+Each process is a member of a group of processes that all
+receive notes when a note is written to any of their
+.B notepg
+files (see
+.IR proc (3)).
+The group of a new process is by default the same as its parent, but if
+.B RFNOTEG
+is set (regardless of
+.BR RFPROC ),
+the process becomes the first in a new group, isolated from
+previous processes.
+.TP
+.B RFFDG
+If set, the invoker's file descriptor table (see
+.IR intro (2))
+is copied; otherwise the two processes share a
+single table.
+.TP
+.B RFCFDG
+If set, the new process starts with a clean file descriptor table.
+Is mutually exclusive with
+.BR RFFDG .
+.TP
+.B RFMEM
+If set, the kernel will mark segments of type
+.B data 
+and
+.B bss 
+as shared. The child
+will then inherit all the shared segments the parent process owns. Other segment
+types will be unaffected.  Subsequent forks by the parent will then
+propagate the shared data and bss between children.  The stack segment
+is always split.  May be set only with
+.BR RFPROC .
+.PD
+.PP
+File descriptors in a shared file descriptor table are kept
+open until either they are explicitly closed
+or all processes sharing the table exit.
+.PP
+If
+.B RFPROC
+is set, the
+value returned in the parent process
+is the process id
+of the child process; the value returned in the child is zero.
+Without
+.BR RFPROC ,
+the return value is zero.
+Process ids range from 1 to the maximum integer
+.RB ( int )
+value.
+.I Rfork
+will sleep, if necessary, until required process resources are available.
+.PP
+.I Fork
+is just a call of
+.BR rfork(RFFDG|RFPROC) .
+.SH SOURCE
+.B /sys/src/libc/9syscall
+.br
+.B /sys/src/libc/9sys/fork.c
+.SH SEE ALSO
+.IR intro (2),
+.IR proc (3),
+.SH DIAGNOSTICS
+These functions set
+.IR errstr .
+
