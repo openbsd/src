@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf_print_state.c,v 1.37 2003/12/31 11:18:24 cedric Exp $	*/
+/*	$OpenBSD: pf_print_state.c,v 1.38 2004/01/26 23:11:36 henning Exp $	*/
 
 /*
  * Copyright (c) 2001 Daniel Hartmeier
@@ -100,7 +100,10 @@ print_addr(struct pf_addr_wrap *addr, sa_family_t af, int verbose)
 		printf("?");
 		return;
 	}
-	if (! PF_AZERO(&addr->v.a.mask, af)) {
+
+	/* mask if not _both_ address and mask are zero */
+	if (!(PF_AZERO(&addr->v.a.addr, AF_INET6) &&
+	    PF_AZERO(&addr->v.a.mask, AF_INET6))) {
 		int bits = unmask(&addr->v.a.mask, af);
 
 		if (bits != (af == AF_INET ? 32 : 128))
