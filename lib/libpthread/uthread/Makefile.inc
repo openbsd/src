@@ -1,10 +1,10 @@
-# $OpenBSD: Makefile.inc,v 1.9 1999/11/25 07:01:30 d Exp $
+# $OpenBSD: Makefile.inc,v 1.10 2000/01/06 07:12:08 d Exp $
 # $FreeBSD: Makefile.inc,v 1.19 1999/08/28 00:03:19 peter Exp $
 
 # uthread sources
-.PATH: ${.CURDIR}/uthread
+.PATH: ${LIBC_RSRCDIR}/uthread
 
-CFLAGS += -I${.CURDIR}/arch/${MACHINE_ARCH}
+CFLAGS += -I${LIBC_RSRCDIR}/arch/${MACHINE_ARCH}
 
 SRCS+= \
 	uthread_accept.c \
