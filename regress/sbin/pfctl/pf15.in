@@ -1,3 +1,4 @@
+no scrub on lo0 from 192.168.1.1 to 10.1.2.3
 scrub in on lo0 from any to any no-df
 scrub in log on lo0 from any to any min-ttl 25
 scrub on lo0 from any to any max-mss 224

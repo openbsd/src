@@ -1,3 +1,4 @@
+no scrub on lo0 inet from 192.168.1.1 to 10.1.2.3
 scrub in on lo0 all no-df fragment reassemble
 scrub in log on lo0 all min-ttl 25 fragment reassemble
 scrub on lo0 all max-mss 224 fragment reassemble

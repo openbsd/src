@@ -1,3 +1,4 @@
+no scrub on lo0 inet proto tcp from 192.168.1.1 port 1024 to any port 80
 scrub proto tcp
 scrub proto tcp all
 scrub proto tcp from any to any
