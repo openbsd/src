@@ -1,4 +1,4 @@
-#	$OpenBSD: Makefile.inc,v 1.69 2004/02/13 22:15:29 tedu Exp $
+#	$OpenBSD: Makefile.inc,v 1.70 2004/09/16 08:37:46 deraadt Exp $
 #	$NetBSD: Makefile.inc,v 1.35 1995/10/16 23:49:07 jtc Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/17/93
 
@@ -11,7 +11,7 @@ SRCS+=	Ovfork.S brk.S cerror.S exect.S fork.S rfork.S \
 	sigsuspend.S syscall.S
 
 LSRCS+=	Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
-	Lint_sbrk.c \
+	Lint_rfork.c Lint_sbrk.c \
 	Lint_sigpending.c Lint_sigprocmask.c Lint_sigreturn.c \
 	Lint_sigsuspend.c Lint_syscall.c
 DPSRCS+= Lint_Ovfork.c Lint_brk.c Lint_exect.c Lint_fork.c \
@@ -184,8 +184,8 @@ ${PSEUDO_NOERR}: ${LIBCSRCDIR}/arch/${MACHINE_ARCH}/SYS.h /usr/include/sys/sysca
 # Lint stubs for all automatically-generated assembly stubs (GENERATED)
 #LSRCS+=	LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
 #DPSRCS+= LintSysNormal.c LintSysNoerr.c LintSysPseudoNoerr.c
-LSRCS+=	LintSysNormal.c
-DPSRCS+= LintSysNormal.c
+LSRCS+=	LintSysNormal.c LintSysPseudoNoerr.c
+DPSRCS+= LintSysNormal.c LintSysPseudoNoerr.c
 
 CLEANFILES+= LintSysNormal.c LintSysNoerr.c LintSysPseudo.c
 
@@ -205,7 +205,7 @@ LintSysPseudoNoerr.c: ${LIBCSRCDIR}/sys/makelintstub.sh \
     ${DESTDIR}/usr/include/sys/syscall.h
 	@echo creating ${.TARGET}
 	@sh ${LIBCSRCDIR}/sys/makelintstub.sh -o ${.TARGET} -p \
-	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDONOERR}
+	    -s ${DESTDIR}/usr/include/sys/syscall.h ${PSEUDO_NOERR}
 
 MAN+=	accept.2 access.2 acct.2 adjtime.2 bind.2 brk.2 chdir.2 chflags.2 \
 	chmod.2 chown.2 chroot.2 clock_gettime.2 close.2 closefrom.2 connect.2 \
