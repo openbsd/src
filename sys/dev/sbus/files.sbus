@@ -1,4 +1,4 @@
-#	$OpenBSD: files.sbus,v 1.24 2004/06/20 18:15:25 miod Exp $
+#	$OpenBSD: files.sbus,v 1.25 2004/06/20 20:49:57 miod Exp $
 #	$NetBSD: files.sbus,v 1.16 2000/12/08 17:29:12 martin Exp $
 #
 # Config file and device description for machine-independent SBUS code.
@@ -67,6 +67,10 @@ file	dev/sbus/cgthree.c		cgthree
 device	zx: wsemuldisplaydev, rasops32, wsemul_sun
 attach	zx at sbus
 file	dev/sbus/zx.c			zx
+
+device	rfx: wsemuldisplaydev, rasops8, wsemul_sun
+attach	rfx at sbus
+file	dev/sbus/rfx.c			rfx
 
 device	magma {}
 attach	magma at sbus
