@@ -1,2 +1,3 @@
+COPTS=to override
 a:
 	@echo COPTS=${COPTS}

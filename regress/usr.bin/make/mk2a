@@ -1,0 +1,2 @@
+a:
+	@cd ${.CURDIR} && make -f mk2b
