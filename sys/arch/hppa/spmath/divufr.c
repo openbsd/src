@@ -1,4 +1,4 @@
-/*	$OpenBSD: divufr.c,v 1.3 1998/07/02 19:05:16 mickey Exp $	*/
+/*	$OpenBSD: divufr.c,v 1.4 1998/07/02 19:10:52 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -40,7 +40,7 @@
  */
 
 
-#include "../spmath/md.h"
+#include "md.h"
 
 void
 divufr(opnd1,opnd2,result)

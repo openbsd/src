@@ -1,4 +1,4 @@
-/*	$OpenBSD: divsir.c,v 1.3 1998/07/02 19:05:13 mickey Exp $	*/
+/*	$OpenBSD: divsir.c,v 1.4 1998/07/02 19:10:50 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -40,7 +40,7 @@
  */
 
 
-#include "../spmath/md.h"
+#include "md.h"
 
 void
 divsir(opnd1,opnd2,result)

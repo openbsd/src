@@ -1,4 +1,4 @@
-/*	$OpenBSD: mpyscv.c,v 1.3 1998/07/02 19:05:44 mickey Exp $	*/
+/*	$OpenBSD: mpyscv.c,v 1.4 1998/07/02 19:10:57 mickey Exp $	*/
 
 /*
  * Copyright 1996 1995 by Open Software Foundation, Inc.   
@@ -40,7 +40,7 @@
  */
 
 
-#include "../spmath/md.h"
+#include "md.h"
 
 void
 mpyscv(opnd1,opnd2,result)
