@@ -23,7 +23,7 @@ documentation and/or software.
  */
 
 #if defined(LIBC_SCCS) && !defined(lint)
-static char rcsid[] = "$OpenBSD: md5c.c,v 1.14 2002/12/23 04:33:31 millert Exp $";
+static char rcsid[] = "$OpenBSD: md5c.c,v 1.15 2002/12/23 21:10:22 drahn Exp $";
 #endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
@@ -127,10 +127,11 @@ Encode(void *out, const void *in, size_t len)
   a multiple of 4.
  */
 static void
-Decode(u_int32_t *output, const u_char *input, size_t len)
+Decode(void *out, const void *in, size_t len)
 {
   u_int32_t *output = out;
   const unsigned char *input = in;
+  size_t i, j;
 
   for (i = 0, j = 0; j < len; i++, j += 4)
     output[i] = ((u_int32_t)input[j]) | (((u_int32_t)input[j+1]) << 8) |
