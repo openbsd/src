@@ -1,4 +1,4 @@
-/*	$OpenBSD: show.c,v 1.7 1998/09/21 08:31:46 deraadt Exp $	*/
+/*	$OpenBSD: show.c,v 1.8 1999/02/24 22:56:02 angelos Exp $	*/
 /*	$NetBSD: show.c,v 1.1 1996/11/15 18:01:41 gwr Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-static char *rcsid = "$OpenBSD: show.c,v 1.7 1998/09/21 08:31:46 deraadt Exp $";
+static char *rcsid = "$OpenBSD: show.c,v 1.8 1999/02/24 22:56:02 angelos Exp $";
 #endif
 #endif /* not lint */
 
@@ -53,7 +53,7 @@ static char *rcsid = "$OpenBSD: show.c,v 1.7 1998/09/21 08:31:46 deraadt Exp $";
 #include <net/route.h>
 #include <netinet/in.h>
 #include <netns/ns.h>
-#include <net/encap.h>
+#include <netinet/ip_ipsp.h>
 #include <arpa/inet.h>
 
 #include <sys/sysctl.h>
@@ -196,12 +196,12 @@ p_rtentry(rtm)
 	if (old_af != af) {
 		old_af = af;
 		pr_family(af);
-		if (af != AF_ENCAP)
+		if (af != PF_KEY)
 			pr_rthdr();
 		else
 			pr_encaphdr();
 	}
-	if (af == AF_ENCAP) {
+	if (af == PF_KEY) {
 		encap_print(rtm);
 		return;
 	}
@@ -219,7 +219,7 @@ p_rtentry(rtm)
 }
 
 /*                    
- * Print header for AF_ENCAP entries.
+ * Print header for PF_KEY entries.
  */                              
 void                  
 pr_encaphdr()             
@@ -254,7 +254,7 @@ pr_family(af)
 	case AF_CCITT:
 		afname = "X.25";
 		break;
-	case AF_ENCAP:
+	case PF_KEY:
 		afname = "IPsec";
 		break;
 	case AF_APPLETALK:
