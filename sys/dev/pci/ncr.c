@@ -1,4 +1,4 @@
-/*	$OpenBSD: ncr.c,v 1.38 1998/05/23 03:14:24 millert Exp $	*/
+/*	$OpenBSD: ncr.c,v 1.39 1998/07/16 07:06:05 millert Exp $	*/
 /*	$NetBSD: ncr.c,v 1.63 1997/09/23 02:39:15 perry Exp $	*/
 
 /**************************************************************************
@@ -146,8 +146,8 @@
 /*
 **    Number of targets supported by the driver.
 **    n permits target numbers 0..n-1.
-**    Default is 7, meaning targets #0..#6.
-**    #7 .. is myself.
+**    Default is 16, meaning targets #0..#15.
+**    #7 is the host adapter.
 */
 
 #define MAX_TARGET  (16)
@@ -170,7 +170,7 @@
 **    The calculation below is actually quite silly ...
 */
 
-#define MAX_START   (MAX_TARGET + 7 * SCSI_NCR_DFLT_TAGS)
+#define MAX_START   (MAX_TARGET + (MAX_TARGET - 1) * SCSI_NCR_DFLT_TAGS)
 
 /*
 **    The maximum number of segments a transfer is split into.
@@ -1465,7 +1465,7 @@ static	void	ncr_attach	(pcici_t tag, int unit);
 
 #if 0
 static char ident[] =
-	"\n$OpenBSD: ncr.c,v 1.38 1998/05/23 03:14:24 millert Exp $\n";
+	"\n$OpenBSD: ncr.c,v 1.39 1998/07/16 07:06:05 millert Exp $\n";
 #endif
 
 static const u_long	ncr_version = NCR_VERSION	* 11
@@ -7281,7 +7281,8 @@ static	void ncr_alloc_ccb (ncb_p np, u_long target, u_long lun)
 	**	can use more than one ccb.
 	*/
 
-	if (np->actccbs >= MAX_START-2) return;
+	if (np->actccbs >= MAX_START-2)
+		return;
 	if (lp->actccbs && (lp->actccbs >= lp->reqccbs))
 		return;
 
