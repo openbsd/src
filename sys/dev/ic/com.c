@@ -1,4 +1,4 @@
-/*	$OpenBSD: com.c,v 1.32 1997/03/12 20:17:37 pefo Exp $	*/
+/*	$OpenBSD: com.c,v 1.33 1997/03/17 08:11:11 pefo Exp $	*/
 /*	$NetBSD: com.c,v 1.82.4.1 1996/06/02 09:08:00 mrg Exp $	*/
 
 /*-
@@ -1433,9 +1433,7 @@ ohfudge:
  */
 #include <dev/cons.h>
 
-#if NCOM_PICA
-#include <arc/arc/arctype.h>
-	extern int cputype;
+#if NCOM_LOCALBUS
 #undef CONADDR
 	extern int CONADDR;
 #endif
@@ -1452,6 +1450,11 @@ comcnprobe(cp)
 #endif
 	bus_space_handle_t ioh;
 	int found;
+
+	if(CONADDR == 0) {
+		cp->cn_pri = CN_DEAD;
+		return;
+	}
 
 	comconsiot = iot;
 	if (bus_space_map(iot, CONADDR, COM_NPORTS, 0, &ioh)) {

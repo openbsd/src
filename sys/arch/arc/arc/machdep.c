@@ -1,4 +1,4 @@
-/*	$OpenBSD: machdep.c,v 1.21 1997/03/12 19:16:43 pefo Exp $	*/
+/*	$OpenBSD: machdep.c,v 1.22 1997/03/17 08:11:12 pefo Exp $	*/
 /*
  * Copyright (c) 1988 University of Utah.
  * Copyright (c) 1992, 1993
@@ -38,7 +38,7 @@
  * SUCH DAMAGE.
  *
  *	from: @(#)machdep.c	8.3 (Berkeley) 1/12/94
- *      $Id: machdep.c,v 1.21 1997/03/12 19:16:43 pefo Exp $
+ *      $Id: machdep.c,v 1.22 1997/03/17 08:11:12 pefo Exp $
  */
 
 /* from: Utah Hdr: machdep.c 1.63 91/04/24 */
@@ -96,10 +96,12 @@
 #include <arc/dti/desktech.h>
 #include <arc/algor/algor.h>
 
+#if 0
 #include <asc.h>
 
 #if NASC > 0
 #include <arc/dev/ascreg.h>
+#endif
 #endif
 
 extern struct consdev *cn_tab;
@@ -147,6 +149,7 @@ int	(*Mach_splstatclock)() = splhigh;
 
 static void tlb_init_pica();
 static void tlb_init_tyne();
+static int get_simm_size(int *fadr, int max);
 
 
 /*
@@ -225,14 +228,14 @@ mips_init(argc, argv, code)
 		strcpy(cpu_model, "Deskstation rPC44");
 		arc_bus.isa_io_base = 0xb0000000;		/*XXX*/
 		arc_bus.isa_mem_base = 0xa0000000;		/*XXX*/
-		CONADDR = 0xa0000000+0x3f8;	/* Standard PC Com0 address */
+		CONADDR = 0; /* Don't screew the mouse... */
 		break;
 
 	case DESKSTATION_TYNE:
 		strcpy(cpu_model, "Deskstation Tyne");
 		arc_bus.isa_io_base = TYNE_V_ISA_IO;
 		arc_bus.isa_mem_base = TYNE_V_ISA_MEM;
-		CONADDR = TYNE_V_ISA_MEM+0x3f8;	/* Standard PC Com0 address */
+		CONADDR = 0; /* Don't screew the mouse... */
 		break;
 
 	case -1:	/* Not identified as an ARC system. We have a couple */
@@ -253,8 +256,9 @@ mips_init(argc, argv, code)
 		mem_layout[0].mem_start = 0;
 		mem_layout[0].mem_size = mips_trunc_page(CACHED_TO_PHYS(kernel_start));
 		mem_layout[1].mem_start = CACHED_TO_PHYS((int)sysend);
-		mem_layout[1].mem_size = 0x800000 - (int)(CACHED_TO_PHYS(sysend));
-		physmem = 8192 * 1024;
+		i = get_simm_size((int *)0, 128*1024*1024);
+		mem_layout[1].mem_size = i - (int)(CACHED_TO_PHYS(sysend));
+		physmem = i;
 #if 0
 		mem_layout[2].mem_start = 0x800000;
 		mem_layout[2].mem_size = 0x1000000;
@@ -494,8 +498,6 @@ mips_init(argc, argv, code)
 	 * Clear allocated memory.
 	 */
 	bzero(start, sysend - start);
-consinit();
-mdbpanic();
 
 	/*
 	 * Initialize the virtual memory system.
@@ -568,6 +570,41 @@ tlb_init_tyne()
 	tlb.tlb_lo1 = PG_G;
 	R4K_TLBWriteIndexed(4, &tlb);
 
+}
+
+/*
+ * Simple routine to figure out SIMM module size.
+ */
+static int
+get_simm_size(fadr, max)
+	int *fadr;
+	int max;
+{
+	int msave;
+	int msize;
+
+	fadr = (int *)PHYS_TO_UNCACHED(CACHED_TO_PHYS((int)fadr));
+
+	msize = 1024*1024;
+
+	while(max >= msize) {
+		msave = fadr[0];
+		fadr[0] = 0xC0DEB00F;
+		if(fadr[msize/4] == 0xC0DEB00F) {
+			fadr[0] = msave;
+			if(fadr[msize/4] == msave) {
+				break;	/* Wrap around */
+			}
+		}
+		fadr[0] = msave;
+		msize += msize;
+	}
+	if(msize <= max) {
+		return(msize);
+	}
+	else {
+		return(-1);
+	}
 }
 
 /*
