@@ -51,6 +51,7 @@ static char rcsid[] = "$NetBSD: io.c,v 1.3 1995/04/24 12:21:37 cgd Exp $";
 #include "hdr.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 
 getin(wrd1,wrd2)			/* get command from user	*/
