@@ -1,4 +1,4 @@
-/*	$OpenBSD: process.c,v 1.7 2000/07/04 22:00:07 aaron Exp $ */
+/*	$OpenBSD: process.c,v 1.8 2000/07/04 23:46:23 maja Exp $ */
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$OpenBSD: process.c,v 1.7 2000/07/04 22:00:07 aaron Exp $";
+static char rcsid[] = "$OpenBSD: process.c,v 1.8 2000/07/04 23:46:23 maja Exp $";
 #endif
 
 #include "os.h"
@@ -267,7 +267,7 @@ mopStartLoad(dst, src, dl_rpr, trans)
 	dllist[slot].a_lseek   = 0;
 
 	dllist[slot].count     = 0;
-	if (dllist[slot].dl_bsz >= 1492)
+	if ((dllist[slot].dl_bsz >= 1492) || (dllist[slot].dl_bsz == 0))
 		dllist[slot].dl_bsz = 1492;
 	if (dllist[slot].dl_bsz == 1030)	/* VS/uVAX 2000 needs this */
 		dllist[slot].dl_bsz = 1000;
