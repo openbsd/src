@@ -1,4 +1,4 @@
-/*	$OpenBSD: altq_red.c,v 1.10 2003/01/07 00:29:28 cloder Exp $	*/
+/*	$OpenBSD: altq_red.c,v 1.11 2003/05/12 00:50:12 henning Exp $	*/
 /*	$KAME: altq_red.c,v 1.10 2002/04/03 05:38:51 kjc Exp $	*/
 
 /*
@@ -155,9 +155,8 @@ static int default_inv_pmax = INV_P_MAX;
  * red support routines
  */
 red_t *
-red_alloc(weight, inv_pmax, th_min, th_max, flags, pkttime)
-	int	 weight, inv_pmax, th_min, th_max;
-	int	 flags, pkttime;
+red_alloc(int weight, int inv_pmax, int th_min, int th_max, int flags,
+   int pkttime)
 {
 	red_t	*rp;
 	int	 w, i;
@@ -242,17 +241,14 @@ red_alloc(weight, inv_pmax, th_min, th_max, flags, pkttime)
 }
 
 void
-red_destroy(rp)
-	red_t *rp;
+red_destroy(red_t *rp)
 {
 	wtab_destroy(rp->red_wtab);
 	FREE(rp, M_DEVBUF);
 }
 
 void
-red_getstats(rp, sp)
-	red_t *rp;
-	struct redstats *sp;
+red_getstats(red_t *rp, struct redstats *sp)
 {
 	sp->q_avg		= rp->red_avg >> rp->red_wshift;
 	sp->xmit_cnt		= rp->red_stats.xmit_cnt;
@@ -263,11 +259,8 @@ red_getstats(rp, sp)
 }
 
 int
-red_addq(rp, q, m, pktattr)
-	red_t *rp;
-	class_queue_t *q;
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
+red_addq(red_t *rp, class_queue_t *q, struct mbuf *m,
+    struct altq_pktattr *pktattr)
 {
 	int avg, droptype;
 	int n;
@@ -396,12 +389,9 @@ red_addq(rp, q, m, pktattr)
  * becomes 1 when (count >= (2 / prob))).
  */
 int
-drop_early(fp_len, fp_probd, count)
-	int fp_len;	/* (avg - TH_MIN) in fixed-point */
-	int fp_probd;	/* (2 * (TH_MAX-TH_MIN) / pmax) in fixed-point */
-	int count;	/* how many successive undropped packets */
+drop_early(int fp_len, int fp_probd, int count)
 {
-	int d;		/* denominator of drop-probability */
+	int	d;		/* denominator of drop-probability */
 
 	d = fp_probd - count * fp_len;
 	if (d <= 0)
@@ -427,16 +417,13 @@ drop_early(fp_len, fp_probd, count)
  *    returns 1 if successfully marked, 0 otherwise.
  */
 int
-mark_ecn(m, pktattr, flags)
-	struct mbuf *m;
-	struct altq_pktattr *pktattr;
-	int flags;
+mark_ecn(struct mbuf *m, struct altq_pktattr *pktattr, int flags)
 {
-	struct mbuf *m0;
-	struct m_tag *t;
-	struct altq_tag *at;
-	void *hdr;
-	int af;
+	struct mbuf	*m0;
+	struct m_tag	*t;
+	struct altq_tag	*at;
+	void		*hdr;
+	int		 af;
 
 	t = m_tag_find(m, PACKET_TAG_PF_QID, NULL);
 	if (t == NULL)
@@ -554,11 +541,10 @@ red_getq(rp, q)
 static struct wtab *wtab_list = NULL;	/* pointer to wtab list */
 
 struct wtab *
-wtab_alloc(weight)
-	int weight;
+wtab_alloc(int weight)
 {
-	struct wtab *w;
-	int i;
+	struct wtab	*w;
+	int		 i;
 
 	for (w = wtab_list; w != NULL; w = w->w_next)
 		if (w->w_weight == weight) {
@@ -587,10 +573,9 @@ wtab_alloc(weight)
 }
 
 int
-wtab_destroy(w)
-	struct wtab *w;
+wtab_destroy(struct wtab *w)
 {
-	struct wtab *prev;
+	struct wtab	*prev;
 
 	if (--w->w_refcount > 0)
 		return (0);
@@ -608,9 +593,7 @@ wtab_destroy(w)
 }
 
 int32_t
-pow_w(w, n)
-	struct wtab *w;
-	int n;
+pow_w(struct wtab *w, int n)
 {
 	int	i, bit;
 	int32_t	val;
