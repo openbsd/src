@@ -1,4 +1,4 @@
-/*      $OpenBSD: ata.c,v 1.10 2001/03/25 13:11:55 csapuntz Exp $      */
+/*      $OpenBSD: ata.c,v 1.11 2001/07/09 20:10:40 csapuntz Exp $      */
 /*      $NetBSD: ata.c,v 1.9 1999/04/15 09:41:09 bouyer Exp $      */
 /*
  * Copyright (c) 1998 Manuel Bouyer.  All rights reserved.
@@ -115,7 +115,7 @@ ata_get_params(drvp, flags, prms)
 		   it is sent a command */  
 		if (try == 0 && (drvp->drive_flags & DRIVE_ATA) &&
 		    (wdc_c.flags & AT_TIMEOU) &&
-		    !(chp->ch_flags & WDCS_BSY)) {
+		    !(chp->ch_status & WDCS_BSY)) {
 			WDCDEBUG_PRINT(("Retrying IDENTIFY\n"), DEBUG_PROBE);
 			try++;
 			goto again;
