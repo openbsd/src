@@ -1,4 +1,4 @@
-/*	$OpenBSD: atapi.h,v 1.4 1996/07/22 03:35:42 downsj Exp $	*/
+/*	$OpenBSD: atapi.h,v 1.5 1996/08/06 22:41:02 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -91,8 +91,8 @@ struct atapi_read_cd_capacity {
  * Volume size info.
  */
 struct atapi_read_cd_capacity_data {
-	u_long	size;		/* Volume size in blocks */
-	u_long	blksize;	/* Block size in bytes */
+	u_int32_t	size;		/* Volume size in blocks */
+	u_int32_t	blksize;	/* Block size in bytes */
 };
 
 /*

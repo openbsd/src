@@ -1,4 +1,4 @@
-/*	$OpenBSD: acd.c,v 1.6 1996/07/22 03:35:41 downsj Exp $	*/
+/*	$OpenBSD: acd.c,v 1.7 1996/08/06 22:41:00 downsj Exp $	*/
 
 /*
  * Copyright (c) 1996 Manuel Bouyer.  All rights reserved.
@@ -85,6 +85,7 @@ struct acd_softc {
 #define	CDF_WANTED	0x02
 #define	CDF_WLABEL	0x04		/* label is writable */
 #define	CDF_LABELLING	0x08		/* writing label */
+#define CDF_NOTREADY	0x10		/* not ready at boot */
 	struct	at_dev_link *ad_link;	/* contains our drive number, etc ... */
 	struct	atapi_mode_data mode_page;	/* drive capabilities */
 
@@ -190,7 +191,8 @@ acdattach(parent, self, aux)
 	if (atapi_test_unit_ready(sa, A_POLLED | A_SILENT) != 0) {
 		/* To clear media change, etc ...*/
 		delay(1000);
-		(void)atapi_test_unit_ready(sa, A_POLLED | A_SILENT);
+		if (atapi_test_unit_ready(sa, A_POLLED | A_SILENT) != 0)
+			acd->flags |= CDF_NOTREADY;
 	}
 
 	if (acd_get_mode(acd, &acd->mode_page, ATAPI_CAP_PAGE, CAPPAGESIZE,
@@ -278,7 +280,14 @@ acdopen(dev, flag, fmt)
 
 	ad_link = acd->ad_link;
 
-	if ((error = atapi_test_unit_ready(ad_link, 0)) != 0) {
+	error = atapi_test_unit_ready(ad_link, A_SILENT);
+	if ((error != 0) && (acd->flags & CDF_NOTREADY)) {
+		/* Do it again. */
+		delay(1000);
+		error = atapi_test_unit_ready(ad_link, A_SILENT);
+	}
+
+	if (error != 0) {
 		if (error != UNIT_ATTENTION)
 			return EIO;
 		if ((ad_link->flags & ADEV_OPEN) != 0)
