@@ -1218,7 +1218,6 @@
 ./usr/share/man/man4/alpha
 ./usr/share/man/man4/powerpc
 ./usr/share/man/man4/pmax
-./usr/share/man/cat8/mount_afs.0
 ./usr/share/man/cat8/mount_xfs.0
 ./usr/share/man/cat4/ifmedia.0
 ./usr/share/man/cat4/powerpc
@@ -1231,3 +1230,19 @@
 ./usr/share/man/cat4/adv.0
 ./usr/share/man/cat4/ss.0
 ./usr/share/man/cat4/sparc/qe.0
+./usr/include/dev/ic/rtl80x9reg.h
+./usr/include/dev/ic/rtl80x9var.h
+./usr/include/dev/mii/icsphyreg.h
+./usr/include/dev/mii/lxtphyreg.h
+./usr/include/dev/mii/sqphyreg.h
+./usr/include/dev/pci/if_rlreg.h
+./usr/share/man/cat4/exphy.0
+./usr/share/man/cat4/icsphy.0
+./usr/share/man/cat4/inphy.0
+./usr/share/man/cat4/lxtphy.0
+./usr/share/man/cat4/mii.0
+./usr/share/man/cat4/nsphy.0
+./usr/share/man/cat4/qsphy.0
+./usr/share/man/cat4/rl.0
+./usr/share/man/cat4/sqphy.0
+./usr/share/man/cat4/tlphy.0
