@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.9 1996/11/06 02:01:08 deraadt Exp $	*/
+/*	$OpenBSD: conf.c,v 1.10 1996/11/11 19:43:27 kstailey Exp $	*/
 /*	$NetBSD: conf.c,v 1.16 1996/10/18 21:26:57 cgd Exp $	*/
 
 /*-
@@ -46,15 +46,12 @@
 
 bdev_decl(sw);
 #include "st.h"
-bdev_decl(st);
 #include "cd.h"
-bdev_decl(cd);
 #include "sd.h"
-bdev_decl(sd);
+#include "ss.h"
+#include "uk.h"
 #include "vnd.h"
-bdev_decl(vnd);
 #include "ccd.h"
-bdev_decl(ccd);
 #include "rd.h"
 bdev_decl(rd);
 
@@ -91,33 +88,15 @@ int	nblkdev = sizeof (bdevsw) / sizeof (bdevsw[0]);
 	dev_init(c,n,write), dev_init(c,n,ioctl), (dev_type_stop((*))) enodev, \
 	0, seltrue, (dev_type_mmap((*))) enodev }
 
-cdev_decl(cn);
-cdev_decl(ctty);
 #define	mmread  mmrw
 #define	mmwrite mmrw
 cdev_decl(mm);
 cdev_decl(sw);
-cdev_decl(random);
 #include "pty.h"
-#define	ptstty		ptytty
-#define	ptsioctl	ptyioctl
-cdev_decl(pts);
-#define	ptctty		ptytty
-#define	ptcioctl	ptyioctl
-cdev_decl(ptc);
-cdev_decl(log);
 #include "tun.h"
-cdev_decl(tun);
-cdev_decl(sd);
-cdev_decl(vnd);
-cdev_decl(ccd);
 dev_type_open(filedescopen);
 #include "bpfilter.h"
-cdev_decl(bpf);
-cdev_decl(st);
-cdev_decl(cd);
 #include "ch.h"
-cdev_decl(ch);
 #include "scc.h"
 cdev_decl(scc);
 #include "audio.h"
@@ -131,10 +110,7 @@ cdev_decl(ms);
 #include "lpt.h"
 cdev_decl(lpt);
 cdev_decl(rd);
-#include "ss.h"
-cdev_decl(ss);
-#include "uk.h"
-cdev_decl(uk);
+
 
 cdev_decl(prom);			/* XXX XXX XXX */
 
