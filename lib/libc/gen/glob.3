@@ -1,4 +1,4 @@
-.\"	$OpenBSD: glob.3,v 1.6 1998/01/31 17:06:27 millert Exp $
+.\"	$OpenBSD: glob.3,v 1.7 1998/02/03 18:25:55 millert Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993, 1994
 .\"	The Regents of the University of California.  All rights reserved.
@@ -185,14 +185,15 @@ consisting of only
 with the number of total pathnames is set to 1, and the number of matched
 pathnames set to 0.
 .It Dv GLOB_NOESCAPE
-By default,
-.Fn glob
-uses the backslash
+Normally, every occurrence of a backslash
 .Pq Ql \e
-character for quoting: every occurrence of
-a backslash followed by a character in the pattern is replaced by that
-character, avoiding any special interpretation of the character.
-This option disables that behavior.
+followed by a character in
+.Fa pattern
+is replaced by that character.
+This is done to negate any special meaning for the character.
+If the
+.Dv GLOB_NOESCAPE
+flag is set, a backslash character is treated as an ordinary character.
 .It Dv GLOB_NOSORT
 By default, the pathnames are sorted in ascending
 .Tn ASCII
@@ -254,10 +255,8 @@ is provided to simplify implementing the historic
 .Xr csh 1
 globbing behavior and should probably not be used anywhere else.
 .It Dv GLOB_QUOTE
-This option has no effect as using the backslash
-.Pq Ql \e
-character for quoting is now the default.  It is included only
-for compatibility with older sources.
+This option has no effect and is included for backwards
+compatibility with older sources.
 .It Dv GLOB_TILDE
 Expand patterns that start with
 .Ql ~
