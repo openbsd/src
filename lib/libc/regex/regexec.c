@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)regexec.c	8.3 (Berkeley) 3/20/94";
 #else
-static char rcsid[] = "$OpenBSD: regexec.c,v 1.6 1997/04/28 20:45:01 millert Exp $";
+static char rcsid[] = "$OpenBSD: regexec.c,v 1.7 1997/04/30 05:51:10 tholo Exp $";
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -62,8 +62,6 @@ static char rcsid[] = "$OpenBSD: regexec.c,v 1.6 1997/04/28 20:45:01 millert Exp
 
 #include "utils.h"
 #include "regex2.h"
-
-static int nope = 0;	/* for use in asserts; shuts lint up */
 
 /* macros for manipulating states, small version */
 #define	states	long
