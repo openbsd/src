@@ -1,5 +1,5 @@
-$OpenBSD: README,v 1.12 1999/05/02 19:18:07 niklas Exp $
-$EOM: README,v 1.22 1999/05/02 13:39:37 niklas Exp $
+$OpenBSD: README,v 1.13 1999/06/02 06:31:08 niklas Exp $
+$EOM: README,v 1.24 1999/05/25 07:52:00 niklas Exp $
 
 This is isakmpd, a BSD-licensed ISAKMP/Oakley (a.k.a. IKE)
 implementation.  It's written by Niklas Hallqvist and Niels Provos,
@@ -46,7 +46,11 @@ VPN-east.conf file (found in the isakmpd/samples directory).
 If you are root you can try to run without -n -p5000 thus getting it to
 talk to your IPSec stack and use the standard port 500 instead.
 
-Read log.[ch] and ui.c to see how to alter the debugging levels.
+The logging classes are Miscellaneous = 0, Transports = 1, Messages = 2,
+Crypto = 3, Timers = 4, System Dependencies = 5, Security Associations = 6,
+and Exchanges = 7.  The debug levels increase in verbosity from 0 (off) to
+99 (max). Read log.[ch] and ui.c to see how to alter the debugging levels.
+
 Now you have setup your daemon and can watch incoming negotiations.
 But how do you get such?  Either use http://isakmp-test.ssh.fi/,
 there's an excellent service, just waiting for you.  Or you can try to
