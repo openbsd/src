@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.h,v 1.2 1996/07/31 17:44:22 deraadt Exp $	*/
+/*	$OpenBSD: util.h,v 1.3 1996/12/03 01:05:36 downsj Exp $	*/
 /*	$NetBSD: util.h,v 1.2 1996/05/16 07:00:22 thorpej Exp $	*/
 
 /*-
@@ -61,17 +61,18 @@ int	pw_lock __P((int retries));
 int	pw_mkdb __P((void));
 int	pw_abort __P((void));
 void	pw_init __P((void));
-void	pw_edit __P((int notsetuid, const char *filename));
+void	pw_edit __P((int, const char *));
 void	pw_prompt __P((void));
-void	pw_copy __P((int ffd, int tfd, struct passwd *pw));
-int	pw_scan __P((char *bp, struct passwd *pw, int *flags));
-void	pw_error __P((const char *name, int err, int eval));
+void	pw_copy __P((int, int, struct passwd *));
+int	pw_scan __P((char *, struct passwd *, int *));
+void	pw_error __P((const char *, int, int));
 int	openpty __P((int *, int *, char *, struct termios *,
 		     struct winsize *));
 pid_t	forkpty __P((int *, char *, struct termios *, struct winsize *));
 int	getmaxpartitions __P((void));
 int	getrawpartition __P((void));
-void	login_fbtab __P((char *tty, uid_t uid, gid_t gid));
+void	login_fbtab __P((char *, uid_t, gid_t));
+char   *readlabelfs __P((char *));
 __END_DECLS
 
 #endif /* !_UTIL_H_ */
