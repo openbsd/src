@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.95 2002/10/14 09:21:34 henning Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.96 2002/10/14 12:59:40 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -285,8 +285,8 @@ IPv6 packets are not defragmented.
 .It Em binat
 A
 .Em binat
-rule specifies a bidirectional mapping between an external IP address
-and an internal IP address.
+rule specifies a bidirectional mapping between an external IP netblock
+and an internal IP netblock.
 .It Em nat
 A
 .Em nat
@@ -1092,7 +1092,8 @@ nat_rule       = [ "no" ] "nat" "on" ifspec  [ af ] [ protospec ] hosts
 
 binat_rule     = [ "no" ] "binat" "on" interface-name [ af ]
 		 [ "proto" ( proto-name | proto-number ) ]
-		 "from" address "to" ipspec [ "->" address ] .
+		 "from" address [ "/" mask-bits ] "to" ipspec
+		 [ "->" address [ "/" mask-bits ] ] .
 
 rdr_rule       = [ "no" ] "rdr" "on" ifspec [ af ] [ protospec ]
 		 "from" ipspec "to" ipspec [ portspec ]
