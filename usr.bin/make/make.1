@@ -1,4 +1,4 @@
-.\"	$OpenBSD: make.1,v 1.19 1999/06/05 01:21:33 aaron Exp $
+.\"	$OpenBSD: make.1,v 1.20 1999/09/25 14:44:00 espie Exp $
 .\"	$NetBSD: make.1,v 1.18 1997/03/10 21:19:53 christos Exp $
 .\"
 .\" Copyright (c) 1990, 1993
@@ -575,6 +575,10 @@ The colon may be escaped with a backslash
 Replaces each word in the variable with its suffix.
 .It Cm H
 Replaces each word in the variable with everything but the last component.
+.It Cm L
+Replaces each word in the variable with its lower case equivalent.
+.It Cm U
+Replaces each word in the variable with its upper case equivalent.
 .It Cm M Ns Ar pattern
 Select only those words that match the rest of the modifier.
 The standard shell wildcard characters

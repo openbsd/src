@@ -1,4 +1,4 @@
-/*	$OpenBSD: var.c,v 1.10 1998/12/05 00:06:29 espie Exp $	*/
+/*	$OpenBSD: var.c,v 1.11 1999/09/25 14:44:00 espie Exp $	*/
 /*	$NetBSD: var.c,v 1.18 1997/03/18 19:24:46 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: var.c,v 1.10 1998/12/05 00:06:29 espie Exp $";
+static char rcsid[] = "$OpenBSD: var.c,v 1.11 1999/09/25 14:44:00 espie Exp $";
 #endif
 #endif /* not lint */
 
@@ -610,6 +610,74 @@ Var_Value (name, ctxt, frp)
     } else {
 	return ((char *) NULL);
     }
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * VarUppercase --
+ *	Place the Upper cased word in the given buffer.
+ *
+ * Results:
+ *	TRUE if characters were added to the buffer (a space needs to be
+ *	added to the buffer before the next word).
+ *
+ * Side Effects:
+ *	The word is added to the buffer.
+ *
+ *-----------------------------------------------------------------------
+ */
+static Boolean
+VarUppercase (word, addSpace, buf, dummy)
+    char    	  *word;    	/* Word to Upper Case */
+    Boolean 	  addSpace; 	/* True if need to add a space to the buffer
+				 * before sticking in the head */
+    Buffer  	  buf;	    	/* Buffer in which to store it */
+    ClientData	  dummy;
+{
+    size_t len = strlen(word);
+
+    if (addSpace) {
+	Buf_AddByte (buf, (Byte)' ');
+    }
+
+    while (len--) {
+    	Buf_AddByte (buf, toupper(*word++));
+    }
+    return (TRUE);
+}
+
+/*-
+ *-----------------------------------------------------------------------
+ * VarLowercase --
+ *	Place the Lower cased word in the given buffer.
+ *
+ * Results:
+ *	TRUE if characters were added to the buffer (a space needs to be
+ *	added to the buffer before the next word).
+ *
+ * Side Effects:
+ *	The word is added to the buffer.
+ *
+ *-----------------------------------------------------------------------
+ */
+static Boolean
+VarLowercase (word, addSpace, buf, dummy)
+    char    	  *word;    	/* Word to Lower Case */
+    Boolean 	  addSpace; 	/* True if need to add a space to the buffer
+				 * before sticking in the head */
+    Buffer  	  buf;	    	/* Buffer in which to store it */
+    ClientData	  dummy;
+{
+    size_t len = strlen(word);
+
+    if (addSpace) {
+	Buf_AddByte (buf, (Byte)' ');
+    }
+
+    while (len--) {
+    	Buf_AddByte (buf, tolower(*word++));
+    }
+    return (TRUE);
 }
 
 /*-
@@ -1893,6 +1961,22 @@ Var_Parse (str, ctxt, err, lengthPtr, freePtr)
 		case 'R':
 		    if (tstr[1] == endc || tstr[1] == ':') {
 			newStr = VarModify (str, VarRoot, (ClientData)0);
+			cp = tstr + 1;
+			termc = *cp;
+			break;
+		    }
+		    /*FALLTHRU*/
+		case 'U':
+		    if (tstr[1] == endc || tstr[1] == ':') {
+			newStr = VarModify (str, VarUppercase, (ClientData)0);
+			cp = tstr + 1;
+			termc = *cp;
+			break;
+		    }
+		    /*FALLTHRU*/
+		case 'L':
+		    if (tstr[1] == endc || tstr[1] == ':') {
+			newStr = VarModify (str, VarLowercase, (ClientData)0);
 			cp = tstr + 1;
 			termc = *cp;
 			break;
