@@ -1,4 +1,4 @@
-/*	$OpenBSD: utilities.c,v 1.3 1997/06/14 04:17:00 downsj Exp $	*/
+/*	$OpenBSD: utilities.c,v 1.4 1997/06/25 18:40:43 kstailey Exp $	*/
 /*	$NetBSD: utilities.c,v 1.1 1997/06/11 11:22:02 bouyer Exp $	*/
 
 /*
@@ -42,7 +42,7 @@ static char sccsid[] = "@(#)utilities.c	8.1 (Berkeley) 6/5/93";
 #if 0
 static char rcsid[] = "$NetBSD: utilities.c,v 1.1 1997/06/11 11:22:02 bouyer Exp $";
 #else
-static char rcsid[] = "$OpenBSD: utilities.c,v 1.3 1997/06/14 04:17:00 downsj Exp $";
+static char rcsid[] = "$OpenBSD: utilities.c,v 1.4 1997/06/25 18:40:43 kstailey Exp $";
 #endif
 #endif
 #endif /* not lint */
@@ -132,7 +132,7 @@ bufinit()
 	long bufcnt, i;
 	char *bufp;
 
-	pbp = pdirbp = (struct bufarea *)0;
+	pbp = pdirbp = NULL;
 	bufhead.b_next = bufhead.b_prev = &bufhead;
 	bufcnt = MAXBUFSPACE / sblock.e2fs_bsize;
 	if (bufcnt < MINBUFS)
@@ -271,7 +271,7 @@ ckfini(markclean)
 	}
 	if (bufhead.b_size != cnt)
 		errexit("Panic: lost %d buffers\n", bufhead.b_size - cnt);
-	pbp = pdirbp = (struct bufarea *)0;
+	pbp = pdirbp = NULL;
 	if (markclean && (sblock.e2fs.e2fs_state & E2FS_ISCLEAN) == 0) {
 		/*
 		 * Mark the file system as clean, and sync the superblock.
