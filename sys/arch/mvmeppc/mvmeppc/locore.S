@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.7 2004/06/24 22:35:56 drahn Exp $	*/
+/*	$OpenBSD: locore.S,v 1.8 2004/11/16 17:08:09 miod Exp $	*/
 /*	$NetBSD: locore.S,v 1.2 1996/10/16 19:33:09 ws Exp $	*/
 
 /*
@@ -227,6 +227,9 @@ _C_LABEL(sw1):
 
 	lis	4,_C_LABEL(curproc)@ha
 	stw	31,_C_LABEL(curproc)@l(4)	/* record new process */
+
+	li	%r3,SONPROC
+	stb	%r3,P_STAT(%r31)
 
 	mfmsr	3
 	ori	3,3,PSL_EE		/* Now we can interrupt again */

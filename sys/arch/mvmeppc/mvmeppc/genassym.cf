@@ -1,4 +1,4 @@
-#	$OpenBSD: genassym.cf,v 1.7 2004/06/24 22:35:56 drahn Exp $
+#	$OpenBSD: genassym.cf,v 1.8 2004/11/16 17:08:09 miod Exp $
 #
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -70,3 +70,6 @@ struct	proc
 member	p_forw
 member	p_back
 member	p_addr
+member	p_stat
+
+export	SONPROC
