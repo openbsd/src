@@ -1,4 +1,4 @@
-.\"	$OpenBSD: getgid.2,v 1.11 2003/06/02 20:18:39 millert Exp $
+.\"	$OpenBSD: getgid.2,v 1.12 2003/10/17 09:24:13 jmc Exp $
 .\"	$NetBSD: getgid.2,v 1.5 1995/02/27 12:32:53 cgd Exp $
 .\"
 .\" Copyright (c) 1983, 1991, 1993
@@ -68,9 +68,12 @@ and
 functions are always successful, and no return value is reserved to
 indicate an error.
 .Sh SEE ALSO
+.Xr getegid 2 ,
 .Xr getuid 2 ,
 .Xr setgid 2 ,
-.Xr setregid 2
+.Xr setgroups 2 ,
+.Xr setregid 2 ,
+.Xr setreuid 2
 .Sh STANDARDS
 The
 .Fn getgid
