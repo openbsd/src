@@ -1,4 +1,4 @@
-/*	$OpenBSD: gdt_pci.c,v 1.14 2002/03/14 01:26:58 millert Exp $	*/
+/*	$OpenBSD: gdt_pci.c,v 1.15 2002/06/06 19:33:00 niklas Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000 Niklas Hallqvist.  All rights reserved.
@@ -156,10 +156,11 @@ gdt_pci_probe(parent, match, aux)
         struct pci_attach_args *pa = aux;
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_VORTEX &&
-	    PCI_PRODUCT(pa->pa_id) >= 0x100 && PCI_PRODUCT(pa->pa_id) <= 0x2ff)
+	    PCI_PRODUCT(pa->pa_id) >= 0x100 && PCI_PRODUCT(pa->pa_id) <= 0x300)
 		return (1);
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_INTEL &&
-	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_GDT_RAID2)
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_GDT_RAID1 ||
+	    PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_INTEL_GDT_RAID2))
 		return (1);
 	return (0);
 }
