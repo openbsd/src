@@ -1,4 +1,4 @@
-/*	$OpenBSD: in_gif.c,v 1.15 2001/04/06 04:42:08 csapuntz Exp $	*/
+/*	$OpenBSD: in_gif.c,v 1.16 2001/04/14 00:30:58 angelos Exp $	*/
 /*	$KAME: in_gif.c,v 1.50 2001/01/22 07:27:16 itojun Exp $	*/
 
 /*
@@ -159,7 +159,7 @@ in_gif_output(ifp, family, m, rt)
 
 	/* encapsulate into IPv4 packet */
 	mp = NULL;
-	error = ipip_output(m, &tdb, &mp, hlen, poff);
+	error = ipip_output(m, &tdb, &mp, hlen, poff, NULL);
 	if (error)
 		return error;
 	else if (mp == NULL)

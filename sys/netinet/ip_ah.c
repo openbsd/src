@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_ah.c,v 1.49 2001/04/06 04:42:08 csapuntz Exp $ */
+/*	$OpenBSD: ip_ah.c,v 1.50 2001/04/14 00:30:58 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -607,6 +607,7 @@ ah_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
     /* Allocate IPsec-specific opaque crypto info */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
 	   M_XDATA, M_NOWAIT);
+    bzero(tc, sizeof(struct tdb_crypto));
     if (tc == NULL)
     {
 	m_freem(m);
@@ -848,7 +849,7 @@ ah_input_cb(void *op)
  */
 int
 ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
-	  int protoff)
+	  int protoff, struct tdb *tdb2)
 {
     struct auth_hash *ahx = (struct auth_hash *) tdb->tdb_authalgxform;
     struct cryptodesc *crda;
@@ -1047,6 +1048,7 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     /* Allocate IPsec-specific opaque crypto info */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto), M_XDATA,
 	   M_NOWAIT);
+    bzero(tc, sizeof(struct tdb_crypto));
     if (tc == NULL)
     {
 	m_freem(m);
@@ -1129,6 +1131,13 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     tc->tc_proto = tdb->tdb_sproto;
     bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
 
+    if (tdb2)
+    {
+	tc->tc_spi2 = tdb2->tdb_spi;
+	tc->tc_proto2 = tdb2->tdb_sproto;
+	bcopy(&tdb2->tdb_dst, &tc->tc_dst2, sizeof(union sockaddr_union));
+    }
+
     return crypto_dispatch(crp);
 }
 
@@ -1138,10 +1147,10 @@ ah_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 int
 ah_output_cb(void *op)
 {
+    struct tdb *tdb, *tdb2 = NULL;
     int skip, protoff, error;
     struct tdb_crypto *tc;
     struct cryptop *crp;
-    struct tdb *tdb;
     caddr_t ptr = 0;
     struct mbuf *m;
     int err, s;
@@ -1156,6 +1165,9 @@ ah_output_cb(void *op)
     s = spltdb();
 
     tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
+    if (tc->tc_spi2)
+      tdb2 = gettdb(tc->tc_spi2, &tc->tc_dst2, tc->tc_proto2);
+
     FREE(tc, M_XDATA);
     if (tdb == NULL)
     {
@@ -1198,7 +1210,7 @@ ah_output_cb(void *op)
     FREE(ptr, M_XDATA);
     crypto_freereq(crp);
 
-    err =  ipsp_process_done(m, tdb);
+    err =  ipsp_process_done(m, tdb, tdb2);
     splx(s);
     return err;
 

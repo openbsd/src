@@ -1,4 +1,4 @@
-/*	$OpenBSD: ipsec_output.c,v 1.5 2001/04/06 04:42:08 csapuntz Exp $ */
+/*	$OpenBSD: ipsec_output.c,v 1.6 2001/04/14 00:30:59 angelos Exp $ */
 
 /*
  * The author of this code is Angelos D. Keromytis (angelos@cis.upenn.edu)
@@ -63,7 +63,8 @@
  * place.
  */
 int
-ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
+ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready,
+		    struct tdb *tdb2)
 {
     int i, off, error;
     struct mbuf *mp;
@@ -219,7 +220,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 #endif /* INET6 */
 
 	    /* Encapsulate -- the last two arguments are unused */
-	    error = ipip_output(m, tdb, &mp, 0, 0);
+	    error = ipip_output(m, tdb, &mp, 0, 0, NULL);
 	    if ((mp == NULL) && (!error))
 	      error = EFAULT;
 	    if (error)
@@ -239,7 +240,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 
 	/* We may be done with this TDB */
 	if (tdb->tdb_xform->xf_type == XF_IP4)
-	  return ipsp_process_done(m, tdb);
+	  return ipsp_process_done(m, tdb, tdb2);
     }
     else
     {
@@ -248,7 +249,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
 	 * encapsulation header, move on.
 	 */
 	if (tdb->tdb_xform->xf_type == XF_IP4)
-	  return ipsp_process_done(m, tdb);
+	  return ipsp_process_done(m, tdb, tdb2);
     }
 
     /* Extract some information off the headers */
@@ -272,7 +273,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
     }
 
     /* Invoke the IPsec transform */
-    return (*(tdb->tdb_xform->xf_output))(m, tdb, NULL, i, off);
+    return (*(tdb->tdb_xform->xf_output))(m, tdb, NULL, i, off, tdb2);
 }
 
 /*
@@ -280,7 +281,7 @@ ipsp_process_packet(struct mbuf *m, struct tdb *tdb, int af, int tunalready)
  * or do further processing, as necessary.
  */
 int
-ipsp_process_done(struct mbuf *m, struct tdb *tdb)
+ipsp_process_done(struct mbuf *m, struct tdb *tdb, struct tdb *tdb2)
 {
 #ifdef INET
     struct ip *ip;
@@ -333,8 +334,12 @@ ipsp_process_done(struct mbuf *m, struct tdb *tdb)
 
     /* If there's another (bundled) TDB to apply, do so */
     if (tdb->tdb_onext)
-      return ipsp_process_packet(m, tdb->tdb_onext,
-				 tdb->tdb_onext->tdb_dst.sa.sa_family, 0);
+      return ipsp_process_packet(m, tdb->tdb_onext, tdb->tdb_dst.sa.sa_family,
+				 0, tdb2);
+
+    /* Otherwise, if there's a secondary TDB to apply, do so */
+    if (tdb2)
+      return ipsp_process_packet(m, tdb2, tdb->tdb_dst.sa.sa_family, 0, NULL);
 
     /*
      * We're done with IPsec processing, transmit the packet using the

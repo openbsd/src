@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.55 2001/04/06 04:42:08 csapuntz Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.56 2001/04/14 00:30:59 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -381,6 +381,7 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
     /* Get IPsec-specific opaque pointer */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
            M_XDATA, M_NOWAIT);
+    bzero(tc, sizeof(struct tdb_crypto));
     if (tc == NULL)
     {
 	m_freem(m);
@@ -422,7 +423,6 @@ esp_input(struct mbuf *m, struct tdb *tdb, int skip, int protoff)
     else
     {
         crde = crp->crp_desc;
-        tc->tc_ptr = 0;
     }
 
     /* Crypto operation descriptor */
@@ -687,7 +687,7 @@ esp_input_cb(void *op)
  */
 int
 esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
-	   int protoff)
+	   int protoff, struct tdb *tdb2)
 {
     struct enc_xform *espx = (struct enc_xform *) tdb->tdb_encalgxform;
     struct auth_hash *esph = (struct auth_hash *) tdb->tdb_authalgxform;
@@ -948,6 +948,7 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
     /* IPsec-specific opaque crypto info */
     MALLOC(tc, struct tdb_crypto *, sizeof(struct tdb_crypto),
            M_XDATA, M_NOWAIT);
+    bzero(tc, sizeof(struct tdb_crypto));
     if (tc == NULL)
     {
 	m_freem(m);
@@ -959,8 +960,14 @@ esp_output(struct mbuf *m, struct tdb *tdb, struct mbuf **mp, int skip,
 
     tc->tc_spi = tdb->tdb_spi;
     tc->tc_proto = tdb->tdb_sproto;
-    tc->tc_ptr = 0;
     bcopy(&tdb->tdb_dst, &tc->tc_dst, sizeof(union sockaddr_union));
+
+    if (tdb2)
+    {
+	tc->tc_spi2 = tdb2->tdb_spi;
+	tc->tc_proto2 = tdb2->tdb_sproto;
+	bcopy(&tdb2->tdb_dst, &tc->tc_dst2, sizeof(union sockaddr_union));
+    }
 
     /* Crypto operation descriptor */
     crp->crp_ilen = m->m_pkthdr.len; /* Total input length */
@@ -993,8 +1000,8 @@ int
 esp_output_cb(void *op)
 {
     struct cryptop *crp = (struct cryptop *) op;
+    struct tdb *tdb, *tdb2 = NULL;
     struct tdb_crypto *tc;
-    struct tdb *tdb;
     struct mbuf *m;
     int error, s;
 
@@ -1004,6 +1011,9 @@ esp_output_cb(void *op)
     s = spltdb();
 
     tdb = gettdb(tc->tc_spi, &tc->tc_dst, tc->tc_proto);
+    if (tc->tc_spi2)
+      tdb2 = gettdb(tc->tc_spi2, &tc->tc_dst2, tc->tc_proto2);
+
     FREE(tc, M_XDATA);
     if (tdb == NULL)
     {
@@ -1053,7 +1063,7 @@ esp_output_cb(void *op)
 		 tdb->tdb_iv);
 
     /* Call the IPsec input callback */
-    error = ipsp_process_done(m, tdb);
+    error = ipsp_process_done(m, tdb, tdb2);
     splx(s);
     return error;
 
