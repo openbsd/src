@@ -28,13 +28,14 @@
  */
 
 #ifndef LINT
-static char rcsid[] = "$Id: makedbm.c,v 1.1 1995/11/01 16:56:24 deraadt Exp $";
+static char rcsid[] = "$Id: makedbm.c,v 1.2 1996/01/20 00:33:34 chuck Exp $";
 #endif
 
 #include <stdio.h>
 #include <fcntl.h>
 #include <ctype.h>
 #include <sys/stat.h>
+#include <sys/param.h>
 #include <unistd.h>
 #include <strings.h>
 #include <sys/errno.h>
@@ -91,23 +92,19 @@ add_record(db, str1, str2, check)
         int     status;
 
 	key.dptr = str1;
-	key.dsize = strlen(str1) + 1;
+	key.dsize = strlen(str1);
 	
 	if (check) {
 	        val = ypdb_fetch(db,key);
 
-		if (val.dptr == NULL) {
-			val.dptr  = str2;
-			val.dsize = strlen(str2) + 1;
-			status = ypdb_store(db, key, val, YPDB_INSERT);
-		} else {
-			status = 0;
-		}
-	} else {
-	        val.dptr  = str2;
-		val.dsize = strlen(str2) + 1;
-		status = ypdb_store(db, key, val, YPDB_INSERT);
+		if (val.dptr != NULL)
+			return;		/* already there */
+		
 	}
+
+        val.dptr  = str2;
+	val.dsize = strlen(str2);
+	status = ypdb_store(db, key, val, YPDB_INSERT);
 	
 	if (status != 0) {
 		printf("%s: problem storing %s %s\n",ProgramName,str1,str2);
@@ -120,7 +117,7 @@ file_date(filename)
 	char	*filename;
 {
 	struct	stat finfo;
-	static	char datestr[10];
+	static	char datestr[11];
 	int	status;
 	
 	if (strcmp(filename,"-") == 0) {
@@ -156,8 +153,8 @@ list_database(database)
 	while (key.dptr != NULL) {
 	        val = ypdb_fetch(db,key);
 		printf("%*.*s %*.*s\n",
-		       key.dsize - 1,key.dsize - 1,key.dptr,
-		       val.dsize - 1,val.dsize - 1,val.dptr);
+		       key.dsize, key.dsize, key.dptr,
+		       val.dsize, val.dsize, val.dptr);
 		key = ypdb_nextkey(db);
 	}
 	  
@@ -177,15 +174,16 @@ create_database(infile,database,
 	int	bflag, lflag, sflag;        
 {
 	FILE	*data_file;
-	char	data_line[4096];
-	char	myname[255];
+	char	data_line[4096]; /* XXX: DB bsize = 4096 in ypdb.c */
+	char	myname[MAXHOSTNAMELEN];
 	int	line_no = 0;
 	int	len;
-	int	i,j;
 	char	*p,*k,*v;
+	char	*slash;
 	DBM	*new_db;
 	static	char mapname[] = "ypdbXXXXXX";
-	char	db_mapname[255],db_outfile[255],db_tempname[255];
+	char	db_mapname[MAXPATHLEN],db_outfile[MAXPATHLEN],
+		db_tempname[MAXPATHLEN];
 	char	empty_str[] = "";
 	
 	if (strcmp(infile,"-") == 0) {
@@ -199,25 +197,34 @@ create_database(infile,database,
 		}
 	}
 	
-	j = 0;
-	for (i=0; i<strlen(database); i++) {
-		if (database[i] == '/') {
-			j = i;
-		}
-	};
-	
-	for (i=0; i<j; i++) 
-		db_tempname[i] = database[i];
-	
-	if (i != 0)
-		db_tempname[i++] = '/';
-	
-	for (j=0; j<strlen(mapname); j++) {
-		db_tempname[i+j] = mapname[j];
-		db_tempname[i+j+1] = '\0';
+	if (strlen(database) + strlen(YPDB_SUFFIX) > MAXPATHLEN) {
+		fprintf(stderr,"%s: %s: file name too long\n",
+			ProgramName, database);
+		exit(1);
 	}
-	
+	snprintf(db_outfile, sizeof(db_outfile), "%s%s", database, YPDB_SUFFIX);
+
+	slash = rindex(database, '/');
+	if (slash != NULL) 
+		slash[1] = 0; 			/* truncate to dir */
+	else
+		*database = 0;			/* elminate */
+
+	/* note: database is now directory where map goes ! */
+
+	if (strlen(database) + strlen(mapname) 
+			+ strlen(YPDB_SUFFIX) > MAXPATHLEN) {
+		fprintf(stderr,"%s: %s: directory name too long\n",
+			ProgramName, database);
+		exit(1);
+	}
+
+	snprintf(db_tempname, sizeof(db_tempname), "%s%s", database,
+		mapname);
 	mktemp(db_tempname);
+	snprintf(db_mapname, sizeof(db_mapname), "%s%s", db_tempname,
+		YPDB_SUFFIX);
+
 	new_db = ypdb_open(db_tempname, O_RDWR|O_CREAT, 0444);
 	
 	while (read_line(data_file,data_line,sizeof(data_line))) {
@@ -288,9 +295,12 @@ create_database(infile,database,
 	}
 
 	ypdb_close(new_db);
-	sprintf(db_mapname,"%s%s",db_tempname,YPDB_SUFFIX);
-	sprintf(db_outfile,"%s%s",database,YPDB_SUFFIX);
-	rename(db_mapname,db_outfile);
+	if (rename(db_mapname,db_outfile) < 0) {
+		perror("rename");
+		fprintf(stderr,"rename %s -> %s failed!\n", db_mapname,
+			db_outfile);
+		exit(1);
+	}
 	
 }
 
@@ -391,5 +401,3 @@ main (argc,argv)
 	return(0);
 	
 }
-
-
