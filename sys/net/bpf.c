@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.10 1997/08/31 20:42:29 deraadt Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.11 1997/09/05 20:17:30 deraadt Exp $	*/
 /*	$NetBSD: bpf.c,v 1.33 1997/02/21 23:59:35 thorpej Exp $	*/
 
 /*
@@ -438,6 +438,9 @@ bpfread(dev, uio, ioflag)
 	register struct bpf_d *d = &bpf_dtab[minor(dev)];
 	int error;
 	int s;
+
+	if (d->bd_bif == 0)
+		return (ENXIO);
 
 	/*
 	 * Restrict application to use a buffer the same size as
