@@ -1,4 +1,4 @@
-#	$OpenBSD: rc,v 1.187 2001/12/30 16:34:50 markus Exp $
+#	$OpenBSD: rc,v 1.188 2002/01/08 12:04:43 tholo Exp $
 
 # System startup script run by init on autoboot
 # or after single-user.
@@ -302,7 +302,7 @@ swapctl -A -t noblk
 # /var/crash should be a directory or a symbolic link
 # to the crash directory if core dumps are to be saved.
 if [ -d /var/crash ]; then
-	savecore /var/crash
+	savecore ${savecore_flags} /var/crash
 fi
 
 if [ "X${afs}" = X"YES" -a -c ${afs_device} -a -d ${afs_mount_point} ]; then
