@@ -1,4 +1,4 @@
-/*	$OpenBSD: rtld_machine.c,v 1.11 2002/12/18 19:20:02 drahn Exp $ */
+/*	$OpenBSD: rtld_machine.c,v 1.12 2002/12/18 19:21:01 drahn Exp $ */
 
 /*
  * Copyright (c) 1999 Dale Rahn
@@ -359,26 +359,18 @@ _dl_bind(elf_object_t *object, Elf_Word reloff)
 	if (object->plt_addr != NULL && object->plt_size != 0) {
 		sigfillset(&nmask);
 		_dl_sigprocmask(SIG_BLOCK, &nmask, &omask);
-#if 0
-		_dl_mprotect((void*)object->plt_addr, object->plt_size,
-		    PROT_READ|PROT_WRITE|PROT_EXEC); 
-#else
+		/* mprotect the actual modified region, not the whole plt */
 		_dl_mprotect((void*)addr,sizeof (Elf_Addr) * 3,
 		    PROT_READ|PROT_WRITE|PROT_EXEC); 
-#endif
 	}
 
 	_dl_reloc_plt(addr, value);
 
 	/* if PLT is (to be protected, change back to RO/X */
 	if (object->plt_addr != NULL && object->plt_size != 0) {
-#if 0
-		_dl_mprotect((void*)object->plt_addr, object->plt_size,
-		    PROT_READ|PROT_EXEC);
-#else
+		/* mprotect the actual modified region, not the whole plt */
 		_dl_mprotect((void*)addr,sizeof (Elf_Addr) * 3,
 		    PROT_READ|PROT_EXEC); 
-#endif
 		_dl_sigprocmask(SIG_SETMASK, &omask, NULL);
 	}
 
