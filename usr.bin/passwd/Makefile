@@ -1,9 +1,10 @@
-#	$OpenBSD: Makefile,v 1.18 1998/03/09 09:00:42 deraadt Exp $
+#	$OpenBSD: Makefile,v 1.19 2000/08/01 22:27:50 provos Exp $
 
 .include <bsd.own.mk>
 
 PROG=	passwd
-SRCS=	local_passwd.c yp_passwd.c passwd.c pwd_gensalt.c getpwent.c
+SRCS=	local_passwd.c yp_passwd.c passwd.c pwd_gensalt.c getpwent.c \
+	pwd_check.c
 .PATH:  ${.CURDIR}/../../lib/libc/gen
 DPADD+= ${LIBRPCSVC} ${LIBUTIL}
 LDADD+= -lrpcsvc -lutil

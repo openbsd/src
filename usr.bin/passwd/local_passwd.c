@@ -1,4 +1,4 @@
-/*	$OpenBSD: local_passwd.c,v 1.10 1998/07/13 02:15:00 deraadt Exp $	*/
+/*	$OpenBSD: local_passwd.c,v 1.11 2000/08/01 22:27:51 provos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /*static char sccsid[] = "from: @(#)local_passwd.c	5.5 (Berkeley) 5/6/91";*/
-static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.10 1998/07/13 02:15:00 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.11 2000/08/01 22:27:51 provos Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -51,7 +51,9 @@ static char rcsid[] = "$OpenBSD: local_passwd.c,v 1.10 1998/07/13 02:15:00 deraa
 #include <util.h>
 
 static uid_t uid;
-
+extern int pwd_gensalt __P(( char *, int, struct passwd *, char));
+extern int pwd_check __P((struct passwd *, char *));
+extern int pwd_gettries __P((struct passwd *));
 
 int
 local_passwd(uname)
@@ -85,7 +87,7 @@ local_passwd(uname)
 			err(1, "can't open passwd temp file");
 	}
 	pfd = open(_PATH_MASTERPASSWD, O_RDONLY, 0);
-	if (pfd < 0)
+	if (pfd < 0 || fcntl(pfd, F_SETFD, 1) == -1)
 		pw_error(_PATH_MASTERPASSWD, 1, 1);
 
 	/*
@@ -107,9 +109,8 @@ getnewpasswd(pw)
 	register struct passwd *pw;
 {
 	register char *p, *t;
-	int tries;
+	int tries, pwd_tries;
 	char buf[_PASSWORD_LEN+1], salt[_PASSWORD_LEN], *crypt(), *getpass();
-	int pwd_gensalt __P(( char *, int, struct passwd *, char));
 
 	(void)printf("Changing local password for %s.\n", pw->pw_name);
 
@@ -119,6 +120,8 @@ getnewpasswd(pw)
 		errno = EACCES;
 		pw_error(NULL, 1, 1);
 	}
+	
+	pwd_tries = pwd_gettries(pw);
 
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
@@ -130,15 +133,10 @@ getnewpasswd(pw)
 			printf("That password collides with a system feature. Choose another.\n");
 			continue;
 		}
-		if (strlen(p) <= 5 && ++tries < 2) {
-			(void)printf("Please enter a longer password.\n");
+		
+		if ((tries++ < pwd_tries || pwd_tries == 0) 
+		    && pwd_check(pw, p) == 0)
 			continue;
-		}
-		for (t = p; *t && islower(*t); ++t);
-		if (!*t && ++tries < 2) {
-			(void)printf("Please don't use an all-lower case password.\nUnusual capitalization, control characters or digits are suggested.\n");
-			continue;
-		}
 		strncpy(buf, p, sizeof buf-1);
 		buf[sizeof buf-1] = '\0';
 		if (!strcmp(buf, getpass("Retype new password:")))

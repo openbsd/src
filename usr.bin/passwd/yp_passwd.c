@@ -1,4 +1,4 @@
-/*	$OpenBSD: yp_passwd.c,v 1.13 2000/06/30 16:00:20 millert Exp $	*/
+/*	$OpenBSD: yp_passwd.c,v 1.14 2000/08/01 22:27:51 provos Exp $	*/
 
 /*
  * Copyright (c) 1988 The Regents of the University of California.
@@ -34,7 +34,7 @@
  */
 #ifndef lint
 /*static char sccsid[] = "from: @(#)yp_passwd.c	1.0 2/2/93";*/
-static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.13 2000/06/30 16:00:20 millert Exp $";
+static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.14 2000/08/01 22:27:51 provos Exp $";
 #endif /* not lint */
 
 #ifdef	YP
@@ -59,6 +59,10 @@ static char rcsid[] = "$OpenBSD: yp_passwd.c,v 1.13 2000/06/30 16:00:20 millert 
 #ifndef _PASSWORD_LEN
 #define _PASSWORD_LEN PASS_MAX
 #endif
+
+extern	int pwd_gensalt __P(( char *, int, struct passwd *, char));
+extern	int pwd_check __P((struct passwd *, char *));
+extern	int pwd_gettries __P((struct passwd *));
 
 static char *getnewpasswd();
 static struct passwd *ypgetpwnam();
@@ -181,9 +185,8 @@ getnewpasswd(pw, old_pass)
 {
 	static char buf[_PASSWORD_LEN+1];
 	register char *p, *t;
-	int tries;
+	int tries, pwd_tries;
 	char salt[_PASSWORD_LEN], *crypt(), *getpass();
-	int pwd_gensalt __P(( char *, int, struct passwd *, char));
 	
 	printf("Changing YP password for %s.\n", pw->pw_name);
 
@@ -201,6 +204,8 @@ getnewpasswd(pw, old_pass)
 		*old_pass = strdup(p);
 	}
 
+	pwd_tries = pwd_gettries(pw);
+
 	for (buf[0] = '\0', tries = 0;;) {
 		p = getpass("New password:");
 		if (!*p) {
@@ -211,16 +216,9 @@ getnewpasswd(pw, old_pass)
 			printf("That password collides with a system feature. Choose another.\n");
 			continue;
 		}
-		if (strlen(p) <= 5 && ++tries < 2) {
-			printf("Please enter a longer password.\n");
+		if ((tries++ < pwd_tries || pwd_tries == 0) 
+		    && pwd_check(pw, p) == 0)
 			continue;
-		}
-		for (t = p; *t && islower(*t); ++t)
-			;
-		if (!*t && ++tries < 2) {
-			printf("Please don't use an all-lower case password.\nUnusual capitalization, control characters or digits are suggested.\n");
-			continue;
-		}
 		strncpy(buf, p, sizeof buf-1);
 		buf[sizeof buf-1] = '\0';
 		if (!strcmp(buf, getpass("Retype new password:")))
