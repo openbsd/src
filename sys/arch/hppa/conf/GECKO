@@ -1,4 +1,4 @@
-#	$OpenBSD: GECKO,v 1.2 1998/12/29 22:53:49 mickey Exp $
+#	$OpenBSD: GECKO,v 1.3 1999/02/25 16:35:17 mickey Exp $
 #
 # HP 9000/712/{60,80,80i,100} boxens
 #
@@ -8,13 +8,10 @@ machine hppa
 
 include	"../../../conf/GENERIC"
 
-# Need to set locally
 maxusers	16
 
-# Support for various CPU types
 option		HP7100LC
-
-#option		FPEMUL
+#option		FPEMUL		# has FPU onboard
 
 #option		NS		# XNS
 #option		NSIP		# XNS tunneling over IP
@@ -25,32 +22,41 @@ option		HP7100LC
 #option		CCITT,LLC,HDLC	# X.25
 
 #option	 	COMPAT_HPUX	# HP-UX binary compatibility
+#option		COMPAT_OSF1	# OSF1 binary compatibility
+#option		COMPAT_LINUX	# Mach/Linux binary compatibility
 
 config	bsd swap generic
 
-mainbus0	at root	# root "bus"
+mainbus0	at root		# root "bus"
 
 mem0	at mainbus0
-cpu0	at mainbus0
-pdc0	at mainbus0
+pdc0	at mainbus0		# PDC/IODC wrapper for boot console
+cpu0	at mainbus0 #irq 31	# HP PA7100LC processor
+lasi*	at mainbus0 irq 28	# LASI host adapter (LSI ???)
+sti0	at mainbus0 		# STI graphics
+#sti1	at mainbus0 		# STI graphics (add-in card)
 
-sti*	at mainbus0	# STI graphics
-wscons*	at sti?
-
-lasi*	at mainbus0	# LASI host adapter (LSI ???)
-gsc*	at lasi?	# internal i/o space
-
+# internal I/O space
+gsc*	at lasi?
 com0	at gsc? irq 5	# serial ports
-com1	at gsc?	irq 6	# serial ports
+#com1	at gsc?	irq 6?	# serial ports (add-in card)
 lpt*	at gsc?	irq 7	# LPT centronics iface
-ie*	at gsc?	irq 8	# 82C596 ether
-siop*	at gsc?	irq 9	# NCR 53C710
+ie0	at gsc?	irq 8	# 82C596 ether
+#ie1	at gsc?	irq 10?	# 82C596 ether (add-in card)
+siop0	at gsc?	irq 9	# NCR 53C710
 scsibus* at siop?
-#atwo*	at gsc?	irq 13	# Audio Type 2 (CS4216)
-#pcppi*	at gsc? irq 27	# PS/2 kbd and mouse
-#pckbd*	at pcppi?	# PS/2 keyboard
-#pms*	at pcppi?	# PS/2 mouse
+#atwo*	at gsc?	irq 13	# Audio Type 2 (CS4215)
+#audio*	at atwo?
+pckbc0	at gsc? irq 27
+pckbd0	at pckbc0	# PS/2 keyboard
+pms0	at pckbc0	# PS/2 mouse
 fdc0	at gsc?	irq ?	# PC floppy controller (WD37C65C)
+
+# MI devices
+wsdisplay*	at sti?
+wskbd*		at pckbd?
+#wsmouse*	at pms?
+
 option	FD_DEBUG
 fd0	at fdc0	drive 0	# floppy drives
 

@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.1 1999/02/20 20:26:19 mickey Exp $
+#	$OpenBSD: GENERIC,v 1.2 1999/02/25 16:36:08 mickey Exp $
 #
 # Generic kernel config (all that is supportted)
 #
@@ -9,13 +9,16 @@ include "/sys/conf/GENERIC"
 maxusers	8
 
 # Support for various CPU types
+option	HP7000		# PCX-S
 option	HP7100
-option	HP7100LC
+option	HP7150		# PCX-T
+option	HP7100LC	# PCX-L
 option	HP7200
-#option	HP7300
-#option	HP8000
-#option	HP8200
-#option	HP8300
+option	HP7250		# PCX-T*
+#option	HP7300LC	# PCX-L2
+#option	HP8000		# PCX-U  (in 32bit mode)
+#option	HP8200		# PCX-U+ (in 32bit mode)
+#option	HP8500		# PCX-W  (in 32bit mode)
 
 option		FPEMUL
 option		USELEDS		# blink w/ 'em
@@ -72,15 +75,15 @@ ie0	at gsc? irq 8	# 82C5[89]6 ether
 #siop0	at gsc? irq 9	# NCR 53C7xx
 #siop1	at gsc? irq 3	# NCR 53C7xx (Fast/Wide)
 #scsibus* at siop?
-#aone*	at gsc? irq 13	# Audio Type 1 (???)
+#aone*	at gsc? irq 13	# Audio Type 1 (PSB 2160-N)
 #audio* at aone?
-#atwo*	at gsc?	irq 13	# Audio Type 2 (CS4216)
+#atwo*	at gsc?	irq 13	# Audio Type 2 (CS4215)
 #audio* at atwo?
 pckbc*	at gsc? irq 27
 pckbd*	at pckbc?	# PS/2 keyboard
 #pms*	at pckbc?	# PS/2 mouse
-fdc*	at gsc?		# PC floppy controller (WD37C65C)
-option	FD_DEBUG
+#fdc*	at gsc?		# PC floppy controller (WD37C65C)
+#option	FD_DEBUG
 
 # EISA devices
 #vga*	at eisa? slot ?
