@@ -1,4 +1,4 @@
-/*	$OpenBSD: lpd.c,v 1.40 2003/09/03 20:23:26 tedu Exp $ */
+/*	$OpenBSD: lpd.c,v 1.41 2003/09/26 06:01:42 pvalchev Exp $ */
 /*	$NetBSD: lpd.c,v 1.33 2002/01/21 14:42:29 wiz Exp $	*/
 
 /*
@@ -41,7 +41,7 @@ static const char copyright[] =
 #if 0
 static const char sccsid[] = "@(#)lpd.c	8.7 (Berkeley) 5/10/95";
 #else
-static const char rcsid[] = "$OpenBSD: lpd.c,v 1.40 2003/09/03 20:23:26 tedu Exp $";
+static const char rcsid[] = "$OpenBSD: lpd.c,v 1.41 2003/09/26 06:01:42 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -171,11 +171,23 @@ main(int argc, char **argv)
 		switch (i) {
 		case 'b':
 			if (blist_addrs >= blist_size) {
-				blist_size += sizeof(char *) * 4;
-				if (blist == NULL)
+				if (blist == NULL) {
+					blist_size += sizeof(char *) * 4;
 					blist = malloc(blist_size);
-				else
-					blist = realloc(blist, blist_size);
+				}
+				else {
+					char **newblist;
+					int newblist_size = blist_size +
+					    sizeof(char *) * 4;
+					newblist = realloc(blist, newblist_size);
+					if (newblist == NULL) {
+						free(blist);
+						blist_size = 0;
+						blist = NULL;
+					}
+					blist = newblist;
+					blist_size = newblist_size;
+				}
 				if (blist == NULL)
 					err(1, "cant allocate bind addr list");
 			}

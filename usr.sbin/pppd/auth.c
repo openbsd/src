@@ -1,4 +1,4 @@
-/*	$OpenBSD: auth.c,v 1.29 2003/04/16 07:44:04 tedu Exp $	*/
+/*	$OpenBSD: auth.c,v 1.30 2003/09/26 06:01:42 pvalchev Exp $	*/
 
 /*
  * auth.c - PPP authentication and phase control.
@@ -77,7 +77,7 @@
 #if 0
 static char rcsid[] = "Id: auth.c,v 1.37 1998/03/26 04:46:03 paulus Exp $";
 #else
-static char rcsid[] = "$OpenBSD: auth.c,v 1.29 2003/04/16 07:44:04 tedu Exp $";
+static char rcsid[] = "$OpenBSD: auth.c,v 1.30 2003/09/26 06:01:42 pvalchev Exp $";
 #endif
 #endif
 
@@ -765,10 +765,16 @@ static int pam_conv (int num_msg,
 
     for (count = 0; count < num_msg; count++)
       {
-	size += sizeof (struct pam_response);
-	reply = realloc (reply, size); /* ANSI: is malloc() if reply==NULL */
-	if (!reply)
+	struct pam_response *newreply;
+	int newsize = size + sizeof (struct pam_response);
+	newreply = realloc (reply, newsize); /* ANSI: is malloc() if reply==NULL */
+	if (!newreply) {
+	    free(reply);
+	    reply = NULL;
 	    return PAM_CONV_ERR;
+	}
+	reply = newreply;
+	size = newsize;
 
 	switch (msg[count]->msg_style)
 	  {

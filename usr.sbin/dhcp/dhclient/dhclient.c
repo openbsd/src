@@ -2149,11 +2149,18 @@ void script_set_env (client, prefix, name, value)
 	} else {
 		/* New variable.  Expand if necessary. */
 		if (i >= client->scriptEnvsize - 1) {
-			client->scriptEnvsize += 50;
-			client->scriptEnv = realloc(client->scriptEnv,
-		          client->scriptEnvsize);
-			if (client->scriptEnv == NULL)
+			char **newscriptEnv;
+			int newscriptEnvsize = client->scriptEnvsize + 50;
+			newscriptEnv = realloc(client->scriptEnv,
+		          newscriptEnvsize);
+			if (newscriptEnv == NULL) {
+				free(client->scriptEnv);
+				client->scriptEnv = NULL;
+				client->scriptEnvsize = 0;
 				error("script_set_env: no memory for variable");
+			}
+			client->scriptEnv = newscriptEnv;
+			client->scriptEnvsize = newscriptEnvsize;
 		}
 		/* need to set the NULL pointer at end of array beyond
 		   the new slot. */

@@ -1,4 +1,4 @@
-/*	$OpenBSD: common.c,v 1.25 2003/06/02 23:36:53 millert Exp $	*/
+/*	$OpenBSD: common.c,v 1.26 2003/09/26 06:01:41 pvalchev Exp $	*/
 /*	$NetBSD: common.c,v 1.21 2000/08/09 14:28:50 itojun Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 #if 0
 static const char sccsid[] = "@(#)common.c	8.5 (Berkeley) 4/28/95";
 #else
-static const char rcsid[] = "$OpenBSD: common.c,v 1.25 2003/06/02 23:36:53 millert Exp $";
+static const char rcsid[] = "$OpenBSD: common.c,v 1.26 2003/09/26 06:01:41 pvalchev Exp $";
 #endif
 #endif /* not lint */
 
@@ -281,11 +281,17 @@ getq(struct queue ***namelist)
 		 * realloc the maximum size.
 		 */
 		if (++nitems > arraysz) {
-			arraysz *= 2;
-			queue = (struct queue **)realloc(queue,
-				arraysz * sizeof(struct queue *));
-			if (queue == NULL)
+			struct queue **newqueue;
+			size_t newarraysz = arraysz * 2;
+			newqueue = (struct queue **)realloc(queue,
+				newarraysz * sizeof(struct queue *));
+			if (newqueue == NULL) {
+				free(queue);
+				queue = NULL;
 				goto errdone;
+			}
+			queue = newqueue;
+			arraysz = newarraysz;
 		}
 		queue[nitems-1] = q;
 	}
