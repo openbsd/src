@@ -24,7 +24,7 @@
 .\" ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.\"	$Id: apmd.8,v 1.12 2001/03/22 01:14:06 angelos Exp $
+.\"	$Id: apmd.8,v 1.13 2001/03/22 04:51:13 angelos Exp $
 .\"
 .Dd March 24, 1996
 .Dt APMD 8
@@ -166,12 +166,14 @@ mode.
 The resume program is run after resuming from a stand-by or
 suspended state.
 The powerup and powerdown programs are run after the power status (AC
-connected or not) changes.
+connected or not) changes, as well as after a resume.
 .Sh FILES
 .Pa /etc/apm/suspend ,
-.Pa /etc/apm/standby
+.Pa /etc/apm/standby ,
+.Pa /etc/apm/resume ,
+.Pa /etc/apm/powerup
 and
-.Pa /etc/apm/resume
+.Pa /etc/apm/powerdown
 are the files that contain the host's customized actions.
 Each file must be an executable binary or shell script suitable
 for execution by the
@@ -183,8 +185,10 @@ may determine which transition is in progress by examining its
 which is set to one of
 .Ar suspend ,
 .Ar standby ,
-or
-.Ar resume .
+.Ar resume ,
+.Ar powerup
+and
+.Ar powerdown .
 .Pp
 .Pa /var/run/apmdev
 is the default UNIX-domain socket used for communication with
