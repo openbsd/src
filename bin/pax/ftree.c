@@ -1,4 +1,4 @@
-/*	$OpenBSD: ftree.c,v 1.8 1997/09/01 18:29:49 deraadt Exp $	*/
+/*	$OpenBSD: ftree.c,v 1.9 1998/06/09 07:28:41 deraadt Exp $	*/
 /*	$NetBSD: ftree.c,v 1.4 1995/03/21 09:07:21 cgd Exp $	*/
 
 /*-
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)ftree.c	8.2 (Berkeley) 4/18/94";
 #else
-static char rcsid[] = "$OpenBSD: ftree.c,v 1.8 1997/09/01 18:29:49 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: ftree.c,v 1.9 1998/06/09 07:28:41 deraadt Exp $";
 #endif
 #endif /* not lint */
 
@@ -535,7 +535,7 @@ next_file(arcn)
 			}
 			/*
 			 * set link name length, watch out readlink does not
-			 * allways null terminate the link path
+			 * always NUL terminate the link path
 			 */
 			arcn->ln_name[cnt] = '\0';
 			arcn->ln_nlen = cnt;
