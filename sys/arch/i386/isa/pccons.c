@@ -1,4 +1,4 @@
-/*	$OpenBSD: pccons.c,v 1.27 1996/09/01 19:40:56 deraadt Exp $	*/
+/*	$OpenBSD: pccons.c,v 1.28 1996/09/06 08:40:48 mickey Exp $	*/
 /*	$NetBSD: pccons.c,v 1.99.4.1 1996/06/04 20:03:53 cgd Exp $	*/
 
 /*-
@@ -70,11 +70,6 @@
 #include <dev/isa/isavar.h>
 #include <i386/isa/isa_machdep.h>
 #include <i386/isa/kbdreg.h>
-
-#include "random.h"
-#if NRANDOM > 0
-#include <dev/rndvar.h>
-#endif
 
 #define	XFREE86_BUG_COMPAT
 

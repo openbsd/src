@@ -1,4 +1,4 @@
-/*	$OpenBSD: pcvt_kbd.c,v 1.8 1996/08/29 09:26:10 deraadt Exp $	*/
+/*	$OpenBSD: pcvt_kbd.c,v 1.9 1996/09/06 08:40:49 mickey Exp $	*/
 
 /*
  * Copyright (c) 1992, 1995 Hellmuth Michaelis and Joerg Wunsch.
@@ -77,10 +77,6 @@
 #if NVT > 0
 
 #include "pcvt_hdr.h"		/* global include */
-#include "random.h"
-#if	NRANDOM > 0
-#include <dev/rndvar.h>
-#endif
 
 static void fkey1(void), fkey2(void),  fkey3(void),  fkey4(void);
 static void fkey5(void), fkey6(void),  fkey7(void),  fkey8(void);
@@ -1023,9 +1019,6 @@ loop:
 		PCVT_KBD_DELAY();		/* 7 us delay */
 		dt = inb(CONTROLLER_DATA);	/* yes, get data */
 
-#if	NRANDOM > 0
-		add_keyboard_randomness(dt)
-#endif
 #endif /* !PCVT_KBD_FIFO */
 
 		/*
