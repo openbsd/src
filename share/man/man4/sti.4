@@ -1,4 +1,4 @@
-.\"	$OpenBSD: sti.4,v 1.8 2003/04/02 08:01:59 jmc Exp $
+.\"	$OpenBSD: sti.4,v 1.9 2003/04/02 21:56:49 mickey Exp $
 .\"
 .\" Copyright (c) 2001 Michael Shalayeff
 .\" All rights reserved.
@@ -37,6 +37,7 @@
 .Nd HP Standard Text Interface
 .Sh SYNOPSIS
 .Cd "sti*	at mainbus0 irq ?"
+.Cd "sti*	at phantomas0 irq ?"
 .\" .Cd "sti*	at pci? device ? function ?"
 .Cd "wsdisplay*	at sti? console ?"
 .Sh DESCRIPTION
@@ -220,6 +221,7 @@ Colour frame buffer support.
 .El
 .Sh SEE ALSO
 .Xr intro 4 ,
+.Xr phantomas 4 ,
 .Xr wsdisplay 4
 .Pp
 "Standard Text Interface For Graphics Devices",

@@ -1,4 +1,4 @@
-.\"	$OpenBSD: phantomas.4,v 1.3 2003/03/05 19:50:48 jmc Exp $
+.\"	$OpenBSD: phantomas.4,v 1.4 2003/04/02 21:56:49 mickey Exp $
 .\"
 .\" Copyright (c) 2002 Michael Shalayeff
 .\" All rights reserved.
@@ -34,14 +34,17 @@
 .Nd Phantom PseudoBC GSC+ Port
 .Sh SYNOPSIS
 .Cd "phantomas0 at mainbus?"
+.Cd "sti* at phantomas?"
 .Cd "lasi* at phantomas?"
 .Cd "dino* at phantomas?"
 .Sh INTRODUCTION
-Phantom bus convertor used to connect
+Phantom bus convertor used to connect an
+.Xr sti 4
+graphics, a
 .Xr lasi 4
 bus host adapter for
 .Xr gsc 4
-and PCI bridge
+and a PCI bridge
 .Xr dino 4
 to the system bus, where
 .Xr cpu 4
