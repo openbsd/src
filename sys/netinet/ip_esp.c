@@ -1,4 +1,4 @@
-/*	$OpenBSD: ip_esp.c,v 1.35 2000/03/25 04:57:51 angelos Exp $ */
+/*	$OpenBSD: ip_esp.c,v 1.36 2000/03/28 07:04:02 angelos Exp $ */
 
 /*
  * The authors of this code are John Ioannidis (ji@tla.org),
@@ -110,43 +110,46 @@ esp_init(struct tdb *tdbp, struct xformsw *xsp, struct ipsecinit *ii)
     struct auth_hash *thash = NULL;
     struct cryptoini cria, crie;
 
-    switch (ii->ii_encalg)
+    if (ii->ii_encalg)
     {
-	case SADB_EALG_DESCBC:
-	    txform = &enc_xform_des;
-	    break;
+	switch (ii->ii_encalg)
+	{
+	    case SADB_EALG_DESCBC:
+		txform = &enc_xform_des;
+		break;
 
-	case SADB_EALG_3DESCBC:
-	    txform = &enc_xform_3des;
-	    break;
+	    case SADB_EALG_3DESCBC:
+		txform = &enc_xform_3des;
+		break;
 
-	case SADB_X_EALG_BLF:
-	    txform = &enc_xform_blf;
-	    break;
+	    case SADB_X_EALG_BLF:
+		txform = &enc_xform_blf;
+		break;
 
-	case SADB_X_EALG_CAST:
-	    txform = &enc_xform_cast5;
-	    break;
+	    case SADB_X_EALG_CAST:
+		txform = &enc_xform_cast5;
+		break;
 
-	case SADB_X_EALG_SKIPJACK:
-	    txform = &enc_xform_skipjack;
-	    break;
+	    case SADB_X_EALG_SKIPJACK:
+		txform = &enc_xform_skipjack;
+		break;
 
-	default:
-	    DPRINTF(("esp_init(): unsupported encryption algorithm %d specified\n", ii->ii_encalg));
+	    default:
+		DPRINTF(("esp_init(): unsupported encryption algorithm %d specified\n", ii->ii_encalg));
+		return EINVAL;
+	}
+
+	if (ii->ii_enckeylen < txform->minkey)
+	{
+	    DPRINTF(("esp_init(): keylength %d too small (min length is %d) for algorithm %s\n", ii->ii_enckeylen, txform->minkey, txform->name));
 	    return EINVAL;
-    }
-
-    if (ii->ii_enckeylen < txform->minkey)
-    {
-	DPRINTF(("esp_init(): keylength %d too small (min length is %d) for algorithm %s\n", ii->ii_enckeylen, txform->minkey, txform->name));
-	return EINVAL;
-    }
+	}
     
-    if (ii->ii_enckeylen > txform->maxkey)
-    {
-	DPRINTF(("esp_init(): keylength %d too large (max length is %d) for algorithm %s\n", ii->ii_enckeylen, txform->maxkey, txform->name));
-	return EINVAL;
+	if (ii->ii_enckeylen > txform->maxkey)
+	{
+	    DPRINTF(("esp_init(): keylength %d too large (max length is %d) for algorithm %s\n", ii->ii_enckeylen, txform->maxkey, txform->name));
+	    return EINVAL;
+	}
     }
 
     if (ii->ii_authalg)
