@@ -1,4 +1,4 @@
-/*	$OpenBSD: psycho.c,v 1.34 2003/06/02 12:22:32 henric Exp $	*/
+/*	$OpenBSD: psycho.c,v 1.35 2003/06/04 23:26:12 henric Exp $	*/
 /*	$NetBSD: psycho.c,v 1.39 2001/10/07 20:30:41 eeh Exp $	*/
 
 /*
@@ -113,6 +113,8 @@ int psycho_dmamap_load_raw(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
     bus_dma_segment_t *, int, bus_size_t, int);
 void psycho_dmamap_sync(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t, bus_addr_t,
     bus_size_t, int);
+void psycho_sabre_dvmamap_sync(bus_dma_tag_t, bus_dma_tag_t, bus_dmamap_t,
+    bus_size_t, bus_size_t, int);
 int psycho_dmamem_alloc(bus_dma_tag_t, bus_dma_tag_t, bus_size_t, bus_size_t, bus_size_t,
     bus_dma_segment_t *, int, int *, int);
 void psycho_dmamem_free(bus_dma_tag_t, bus_dma_tag_t, bus_dma_segment_t *, int);
@@ -924,7 +926,10 @@ psycho_alloc_dma_tag(struct psycho_pbm *pp)
 	dt->_dmamap_load = psycho_dmamap_load;
 	dt->_dmamap_load_raw = psycho_dmamap_load_raw;
 	dt->_dmamap_unload = psycho_dmamap_unload;
-	dt->_dmamap_sync = psycho_dmamap_sync;
+	if (sc->sc_mode == PSYCHO_MODE_PSYCHO)
+		dt->_dmamap_sync = psycho_dmamap_sync;
+	else
+		dt->_dmamap_sync = psycho_sabre_dvmamap_sync;
 	dt->_dmamem_alloc = psycho_dmamem_alloc;
 	dt->_dmamem_free = psycho_dmamem_free;
 	dt->_dmamem_map = psycho_dmamem_map;
@@ -1280,6 +1285,20 @@ psycho_dmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map, bus_addr
 		iommu_dvmamap_sync(t0, sc->sc_is, map, offset, len, ops);
 		(*t->_dmamap_sync)(t, t0, map, offset, len, ops);
 	}
+}
+
+void
+psycho_sabre_dvmamap_sync(bus_dma_tag_t t, bus_dma_tag_t t0, bus_dmamap_t map,
+    bus_size_t offset, bus_size_t len, int ops)
+{
+	struct psycho_pbm *pp = t->_cookie;
+	struct psycho_softc *sc = pp->pp_sc;
+
+	if (ops & BUS_DMASYNC_POSTREAD)
+		psycho_psychoreg_read(sc, pci_dma_write_sync);
+
+	if (ops & (BUS_DMASYNC_POSTREAD | BUS_DMASYNC_PREWRITE))
+		membar(MemIssue);
 }
 
 int
