@@ -1,4 +1,4 @@
-/*	$OpenBSD: client.c,v 1.7 2004/07/05 22:12:53 henning Exp $ */
+/*	$OpenBSD: client.c,v 1.8 2004/07/06 17:40:32 naddy Exp $ */
 
 /*
  * Copyright (c) 2003, 2004 Henning Brauer <henning@openbsd.org>
@@ -57,6 +57,8 @@ client_peer_init(struct ntp_peer *p)
 	p->query->msg.status = MODE_CLIENT | (NTP_VERSION << 3);
 	p->state = STATE_NONE;
 	p->next = time(NULL);
+	p->shift = 0;
+	p->valid = 0;
 
 	return (0);
 }
