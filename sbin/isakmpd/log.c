@@ -1,4 +1,4 @@
-/* $OpenBSD: log.c,v 1.49 2004/08/08 19:11:06 deraadt Exp $	 */
+/* $OpenBSD: log.c,v 1.50 2004/11/08 11:59:37 hshoexer Exp $	 */
 /* $EOM: log.c,v 1.30 2000/09/29 08:19:23 niklas Exp $	 */
 
 /*
@@ -670,7 +670,7 @@ udp_cksum(struct packhdr *hdr, const struct udphdr *u, u_int16_t *d)
 	for (i = 0; i < hdrlen; i += 2)
 		sum += phu.pa[i / 2];
 
-	sp = (u_int16_t *) u;
+	sp = (const u_int16_t *)u;
 	for (i = 0; i < (int)sizeof(struct udphdr); i += 2)
 		sum += *sp++;
 
@@ -700,7 +700,7 @@ in_cksum(const u_int16_t *w, int len)
 		nleft -= 2;
 	}
 	if (nleft == 1)
-		sum += htons(*(u_char *) w << 8);
+		sum += htons(*(const u_char *)w << 8);
 
 	sum = (sum >> 16) + (sum & 0xffff);	/* add hi 16 to low 16 */
 	sum += (sum >> 16);	/* add carry */
