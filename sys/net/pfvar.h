@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfvar.h,v 1.31 2001/07/06 21:19:56 chris Exp $ */
+/*	$OpenBSD: pfvar.h,v 1.32 2001/07/09 10:30:56 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -124,8 +124,11 @@ struct pf_nat {
 	u_int32_t	 saddr;
 	u_int32_t	 smask;
 	u_int32_t	 daddr;
+	u_int32_t	 dmask;
+	u_int32_t	 raddr;
 	u_int8_t	 proto;
-	u_int8_t	 not;
+	u_int8_t	 snot;
+	u_int8_t	 dnot;
 	u_int8_t	 ifnot;
 };
 
@@ -133,6 +136,8 @@ struct pf_rdr {
 	char		 ifname[IFNAMSIZ];
 	struct ifnet	*ifp;
 	TAILQ_ENTRY(pf_rdr)	entries;
+	u_int32_t	 saddr;
+	u_int32_t	 smask;
 	u_int32_t	 daddr;
 	u_int32_t	 dmask;
 	u_int32_t	 raddr;
@@ -140,7 +145,8 @@ struct pf_rdr {
 	u_int16_t	 dport2;
 	u_int16_t	 rport;
 	u_int8_t	 proto;
-	u_int8_t	 not;
+	u_int8_t	 snot;
+	u_int8_t	 dnot;
 	u_int8_t	 ifnot;
 	u_int8_t	 opts;
 };

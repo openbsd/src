@@ -1,4 +1,4 @@
-/*	$OpenBSD: pfctl_parser.c,v 1.28 2001/07/06 21:19:54 chris Exp $ */
+/*	$OpenBSD: pfctl_parser.c,v 1.29 2001/07/09 10:30:58 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -263,27 +263,48 @@ void
 print_nat(struct pf_nat *n)
 {
 	printf("nat ");
-	if (n->ifnot)
-		printf("! ");
-	printf("%s ", n->ifname);
-	if (n->not)
-		printf("! ");
-	print_addr(n->saddr);
-	if (n->smask != 0xFFFFFFFF) {
-		printf("/");
-		print_addr(n->smask);
+	if (n->ifname[0]) {
+		printf("on ");
+		if (n->ifnot)
+			printf("! ");
+		printf("%s ", n->ifname);
 	}
-	printf(" -> ");
-	print_addr(n->daddr);
+	printf("from ");
+	if (n->saddr || n->smask) {
+		if (n->snot)
+			printf("! ");
+		print_addr(n->saddr);
+		if (n->smask != 0xFFFFFFFF) {
+			printf("/");
+			print_addr(n->smask);
+		}
+		printf(" ");
+	} else
+		printf("any ");
+	printf("to ");
+	if (n->daddr || n->dmask) {
+		if (n->dnot)
+			printf("! ");
+		print_addr(n->daddr);
+		if (n->dmask != 0xFFFFFFFF) {
+			printf("/");
+			print_addr(n->dmask);
+		}
+		printf(" ");
+	} else
+		printf("any ");
+	printf("-> ");
+	print_addr(n->raddr);
+	printf(" ");
 	switch (n->proto) {
 	case IPPROTO_TCP:
-		printf(" proto tcp");
+		printf("proto tcp");
 		break;
 	case IPPROTO_UDP:
-		printf(" proto udp");
+		printf("proto udp");
 		break;
 	case IPPROTO_ICMP:
-		printf(" proto icmp");
+		printf("proto icmp");
 		break;
 	}
 	printf("\n");
@@ -293,30 +314,52 @@ void
 print_rdr(struct pf_rdr *r)
 {
 	printf("rdr ");
-	if (r->ifnot)
-		printf("! ");
-	printf("%s ", r->ifname);
-	if (r->not)
-		printf("! ");
-	print_addr(r->daddr);
-	if (r->dmask != 0xFFFFFFFF) {
-		printf("/");
-		print_addr(r->dmask);
+	if (r->ifname[0]) {
+		printf("on ");
+		if (r->ifnot)
+			printf("! ");
+		printf("%s ", r->ifname);
 	}
-	printf(" port %u", ntohs(r->dport));
+	printf("from ");
+	if (r->saddr || r->smask) {
+		if (r->snot)
+			printf("! ");
+		print_addr(r->saddr);
+		if (r->smask != 0xFFFFFFFF) {
+			printf("/");
+			print_addr(r->smask);
+		}
+		printf(" ");
+	} else
+		printf("any ");
+	printf("to ");
+	if (r->daddr || r->dmask) {
+		if (r->dnot)
+			printf("! ");
+		print_addr(r->daddr);
+		if (r->dmask != 0xFFFFFFFF) {
+			printf("/");
+			print_addr(r->dmask);
+		}
+		printf(" ");
+	} else
+		printf("any ");
+	printf("port %u", ntohs(r->dport));
 	if (r->opts & PF_DPORT_RANGE)
 		printf(":%u", ntohs(r->dport2));
 	printf(" -> ");
 	print_addr(r->raddr);
-	printf(" port %u", ntohs(r->rport));
+	printf(" ");
+	printf("port %u", ntohs(r->rport));
 	if (r->opts & PF_RPORT_RANGE)
 		printf(":*");
+	printf(" ");
 	switch (r->proto) {
 	case IPPROTO_TCP:
-		printf(" proto tcp");
+		printf("proto tcp");
 		break;
 	case IPPROTO_UDP:
-		printf(" proto udp");
+		printf("proto udp");
 		break;
 	}
 	printf("\n");
@@ -982,29 +1025,66 @@ parse_nat(int n, char *l, struct pf_nat *nat)
 	}
 	w = next_word(&l);
 
-	/* if */
-	if (!strcmp(w, "!")) {
-		nat->ifnot = 1;
+	/* interface */
+	if (!strcmp(w, "on")) {
+		w = next_word(&l);
+		if (!strcmp(w, "!")) {
+			nat->ifnot = 1;
+			w = next_word(&l);
+		}
+		strncpy(nat->ifname, w, 16);
 		w = next_word(&l);
 	}
-	strncpy(nat->ifname, w, 16);
-	w = next_word(&l);
 
-	/* internal addr/mask */
-	if (!strcmp(w, "!")) {
-		nat->not = 1;
-		w = next_word(&l);
-	}
-	nat->saddr = next_addr(&w);
-	if (!*w)
-		nat->smask = 0xFFFFFFFF;
-	else if (*w == '/')
-		nat->smask = rule_mask(next_number(&w));
-	else {
-		error(n, "expected /, got '%c'\n", *w);
+	/* source addr/mask */
+	if (strcmp(w, "from")) {
+		error(n, "expected from, got %s\n", w);
 		return (0);
 	}
 	w = next_word(&l);
+	if (!strcmp(w, "any"))
+		w = next_word(&l);
+	else {
+		if (!strcmp(w, "!")) {
+			nat->snot = 1;
+			w = next_word(&l);
+		}
+		nat->saddr = next_addr(&w);
+		if (!*w)
+			nat->smask = 0xFFFFFFFF;
+		else if (*w == '/')
+			nat->smask = rule_mask(next_number(&w));
+		else {
+			error(n, "expected /, get '%c'\n", *w);
+			return (0);
+		}
+		w = next_word(&l);
+	}
+
+	/* destination addr/mask */
+	if (strcmp(w, "to")) {
+		error(n, "expected to, got %s\n", w);
+		return (0);
+	}
+	w = next_word(&l);
+	if (!strcmp(w, "any"))
+		w = next_word(&l);
+	else {
+		if (!strcmp(w, "!")) {
+			nat->dnot = 1;
+			w = next_word(&l);
+		}
+		nat->daddr = next_addr(&w);
+		if (!*w)
+			nat->dmask = 0xFFFFFFFF;
+		else if (*w == '/')
+			nat->dmask = rule_mask(next_number(&w));
+		else {
+			error(n, "expected /, get '%c'\n", *w);
+			return (0);
+		}
+		w = next_word(&l);
+	}
 
 	/* -> */
 	if (strcmp(w, "->")) {
@@ -1014,7 +1094,7 @@ parse_nat(int n, char *l, struct pf_nat *nat)
 	w = next_word(&l);
 
 	/* external addr */
-	nat->daddr = next_addr(&w);
+	nat->raddr = next_addr(&w);
 	w = next_word(&l);
 
 	/* proto */
@@ -1057,31 +1137,68 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 	}
 	w = next_word(&l);
 
-	/* if */
-	if (!strcmp(w, "!")) {
-		rdr->ifnot = 1;
+	/* interface */
+	if (!strcmp(w, "on")) {
+		w = next_word(&l);
+		if (!strcmp(w, "!")) {
+			rdr->ifnot = 1;
+			w = next_word(&l);
+		}
+		strncpy(rdr->ifname, w, 16);
 		w = next_word(&l);
 	}
-	strncpy(rdr->ifname, w, 16);
-	w = next_word(&l);
 
-	/* external addr/mask */
-	if (!strcmp(w, "!")) {
-		rdr->not = 1;
-		w = next_word(&l);
-	}
-	rdr->daddr = next_addr(&w);
-	if (!*w)
-		rdr->dmask = 0xFFFFFFFF;
-	else if (*w == '/')
-		rdr->dmask = rule_mask(next_number(&w));
-	else {
-		error(n, "expected /, got '%c'\n", *w);
+	/* source addr/mask */
+	if (strcmp(w, "from")) {
+		error(n, "expected from, got %s\n", w);
 		return (0);
 	}
 	w = next_word(&l);
+	if (!strcmp(w, "any"))
+		w = next_word(&l);
+	else {
+		if (!strcmp(w, "!")) {
+			rdr->snot = 1;
+			w = next_word(&l);
+		}
+		rdr->saddr = next_addr(&w);
+		if (!*w)
+			rdr->smask = 0xFFFFFFFF;
+		else if (*w == '/')
+			rdr->smask = rule_mask(next_number(&w));
+		else {
+			error(n, "expected /, get '%c'\n", *w);
+			return (0);
+		}
+		w = next_word(&l);
+	}
 
-	/* external port */
+	/* external addr/mask */
+	if (strcmp(w, "to")) {
+		error(n, "expected to, got %s\n", w);
+		return (0);
+	}
+	w = next_word(&l);
+	if (!strcmp(w, "any"))
+		w = next_word(&l);
+	else {
+		if (!strcmp(w, "!")) {
+			rdr->dnot = 1;
+			w = next_word(&l);
+		}
+		rdr->daddr = next_addr(&w);
+		if (!*w)
+			rdr->dmask = 0xFFFFFFFF;
+		else if (*w == '/')
+			rdr->dmask = rule_mask(next_number(&w));
+		else {
+			error(n, "expected /, get '%c'\n", *w);
+			return (0);
+		}
+		w = next_word(&l);
+	}
+
+	/* external port (range) */
 	if (strcmp(w, "port")) {
 		error(n, "expected port, got %s\n", w);
 		return (0);
@@ -1097,7 +1214,6 @@ parse_rdr(int n, char *l, struct pf_rdr *rdr)
 		rdr->dport2 = htons(next_number(&s));
 		rdr->opts |= PF_DPORT_RANGE;
 	}
-
 	w = next_word(&l);
 
 	/* -> */

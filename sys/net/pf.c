@@ -1,4 +1,4 @@
-/*	$OpenBSD: pf.c,v 1.106 2001/07/07 01:56:09 marc Exp $ */
+/*	$OpenBSD: pf.c,v 1.107 2001/07/09 10:30:57 dhartmei Exp $ */
 
 /*
  * Copyright (c) 2001, Daniel Hartmeier
@@ -176,9 +176,10 @@ int			 pf_match_addr(u_int8_t, u_int32_t, u_int32_t,
 int			 pf_match_port(u_int8_t, u_int16_t, u_int16_t,
 			    u_int16_t);
 u_int16_t		 pf_map_port_range(struct pf_rdr *, u_int16_t);
-struct pf_nat		*pf_get_nat(struct ifnet *, u_int8_t, u_int32_t);
+struct pf_nat		*pf_get_nat(struct ifnet *, u_int8_t, u_int32_t,
+			    u_int32_t);
 struct pf_rdr		*pf_get_rdr(struct ifnet *, u_int8_t, u_int32_t,
-			    u_int16_t);
+			    u_int32_t, u_int16_t);
 int			 pf_test_tcp(int, struct ifnet *, struct mbuf *,
 			    int, int, struct ip *, struct tcphdr *);
 int			 pf_test_udp(int, struct ifnet *, struct mbuf *,
@@ -797,7 +798,8 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 				error = EINVAL;
 				break;
 			}
-		}
+		} else
+			rule->ifp = NULL;
 		TAILQ_INSERT_TAIL(pf_rules_inactive, rule, entries);
 		break;
 	}
@@ -898,12 +900,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(&pn->nat, nat, sizeof(struct pf_nat));
-		nat->ifp = ifunit(nat->ifname);
-		if (nat->ifp == NULL) {
-			pool_put(&pf_nat_pl, nat);
-			error = EINVAL;
-			break;
-		}
+		if (nat->ifname[0]) {
+			nat->ifp = ifunit(nat->ifname);
+			if (nat->ifp == NULL) {
+				pool_put(&pf_nat_pl, nat);
+				error = EINVAL;
+				break;
+			}
+		} else
+			nat->ifp = NULL;
 		TAILQ_INSERT_TAIL(pf_nats_inactive, nat, entries);
 		break;
 	}
@@ -999,12 +1004,15 @@ pfioctl(dev_t dev, u_long cmd, caddr_t addr, int flags, struct proc *p)
 			break;
 		}
 		bcopy(&pr->rdr, rdr, sizeof(struct pf_rdr));
-		rdr->ifp = ifunit(rdr->ifname);
-		if (rdr->ifp == NULL) {
-			pool_put(&pf_rdr_pl, rdr);
-			error = EINVAL;
-			break;
-		}
+		if (rdr->ifname[0]) {
+			rdr->ifp = ifunit(rdr->ifname);
+			if (rdr->ifp == NULL) {
+				pool_put(&pf_rdr_pl, rdr);
+				error = EINVAL;
+				break;
+			}
+		} else
+			rdr->ifp = NULL;
 		TAILQ_INSERT_TAIL(pf_rdrs_inactive, rdr, entries);
 		break;
 	}
@@ -1389,16 +1397,17 @@ pf_match_port(u_int8_t op, u_int16_t a1, u_int16_t a2, u_int16_t p)
 }
 
 struct pf_nat *
-pf_get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
+pf_get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t saddr, u_int32_t daddr)
 {
 	struct pf_nat *n, *nm = NULL;
 
 	n = TAILQ_FIRST(pf_nats_active);
 	while (n && nm == NULL) {
-		if (((n->ifp == ifp && !n->ifnot) ||
+		if (((n->ifp == NULL) || (n->ifp == ifp && !n->ifnot) ||
 		    (n->ifp != ifp && n->ifnot)) &&
 		    (!n->proto || n->proto == proto) &&
-		    pf_match_addr(n->not, n->saddr, n->smask, addr))
+		    pf_match_addr(n->snot, n->saddr, n->smask, saddr) &&
+		    pf_match_addr(n->dnot, n->daddr, n->dmask, daddr))
 			nm = n;
 		else
 			n = TAILQ_NEXT(n, entries);
@@ -1407,18 +1416,20 @@ pf_get_nat(struct ifnet *ifp, u_int8_t proto, u_int32_t addr)
 }
 
 struct pf_rdr *
-pf_get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t addr, u_int16_t port)
+pf_get_rdr(struct ifnet *ifp, u_int8_t proto, u_int32_t saddr, u_int32_t daddr,
+    u_int16_t dport)
 {
 	struct pf_rdr *r, *rm = NULL;
 
 	r = TAILQ_FIRST(pf_rdrs_active);
 	while (r && rm == NULL) {
-		if (((r->ifp == ifp && !r->ifnot) ||
+		if (((r->ifp == NULL) || (r->ifp == ifp && !r->ifnot) ||
 		    (r->ifp != ifp && r->ifnot)) &&
 		    (!r->proto || r->proto == proto) &&
-		    pf_match_addr(r->not, r->daddr, r->dmask, addr) &&
-		    (ntohs(port) >= ntohs(r->dport)) && 
-		    (ntohs(port) <= ntohs(r->dport2)))
+		    pf_match_addr(r->snot, r->saddr, r->smask, saddr) &&
+		    pf_match_addr(r->dnot, r->daddr, r->dmask, daddr) &&
+		    (ntohs(dport) >= ntohs(r->dport)) && 
+		    (ntohs(dport) <= ntohs(r->dport2)))
 			rm = r;
 		else
 			r = TAILQ_NEXT(r, entries);
@@ -1467,18 +1478,18 @@ pf_test_tcp(int direction, struct ifnet *ifp, struct mbuf *m,
 	if (direction == PF_OUT) {
 		/* check outgoing packet for NAT */
 		if ((nat = pf_get_nat(ifp, IPPROTO_TCP,
-		    h->ip_src.s_addr)) != NULL) {
+		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
 			baddr = h->ip_src.s_addr;
 			bport = th->th_sport;
 			pf_change_ap(&h->ip_src.s_addr, &th->th_sport,
-			    &h->ip_sum, &th->th_sum, nat->daddr,
+			    &h->ip_sum, &th->th_sum, nat->raddr,
 			    htons(pf_next_port_tcp));
 			rewrite++;
 		}
 	} else {
 		/* check incoming packet for RDR */
-		if ((rdr = pf_get_rdr(ifp, IPPROTO_TCP, h->ip_dst.s_addr,
-		    th->th_dport)) != NULL) {
+		if ((rdr = pf_get_rdr(ifp, IPPROTO_TCP, h->ip_src.s_addr,
+		    h->ip_dst.s_addr, th->th_dport)) != NULL) {
 			baddr = h->ip_dst.s_addr;
 			bport = th->th_dport;
 			if (rdr->opts & PF_RPORT_RANGE)
@@ -1621,19 +1632,19 @@ pf_test_udp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for NAT */
-		if ((nat = pf_get_nat(ifp, IPPROTO_UDP, h->ip_src.s_addr)) !=
-		    NULL) {
+		if ((nat = pf_get_nat(ifp, IPPROTO_UDP,
+		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
 			baddr = h->ip_src.s_addr;
 			bport = uh->uh_sport;
 			pf_change_ap(&h->ip_src.s_addr, &uh->uh_sport,
-			    &h->ip_sum, &uh->uh_sum, nat->daddr,
+			    &h->ip_sum, &uh->uh_sum, nat->raddr,
 			    htons(pf_next_port_udp));
 			rewrite++;
 		}
 	} else {
 		/* check incoming packet for RDR */
-		if ((rdr = pf_get_rdr(ifp, IPPROTO_UDP, h->ip_dst.s_addr,
-		    uh->uh_dport)) != NULL) {
+		if ((rdr = pf_get_rdr(ifp, IPPROTO_UDP, h->ip_src.s_addr,
+		    h->ip_dst.s_addr, uh->uh_dport)) != NULL) {
 			baddr = h->ip_dst.s_addr;
 			bport = uh->uh_dport;
 			if (rdr->opts & PF_RPORT_RANGE)
@@ -1764,10 +1775,10 @@ pf_test_icmp(int direction, struct ifnet *ifp, struct mbuf *m,
 
 	if (direction == PF_OUT) {
 		/* check outgoing packet for NAT */
-		if ((nat = pf_get_nat(ifp, IPPROTO_ICMP, h->ip_src.s_addr)) !=
-		    NULL) {
+		if ((nat = pf_get_nat(ifp, IPPROTO_ICMP,
+		    h->ip_src.s_addr, h->ip_dst.s_addr)) != NULL) {
 			baddr = h->ip_src.s_addr;
-			pf_change_a(&h->ip_src.s_addr, &h->ip_sum, nat->daddr);
+			pf_change_a(&h->ip_src.s_addr, &h->ip_sum, nat->raddr);
 		}
 	}
 
