@@ -30,7 +30,7 @@
 
 #if defined(LIBC_SCCS)
 	.text
-	.string "$OpenBSD: setjmp.S,v 1.3 2003/01/02 15:14:07 miod Exp $\0"
+	.string "$OpenBSD: setjmp.S,v 1.4 2003/01/04 00:13:11 miod Exp $\0"
 #endif /* LIBC_SCCS */
 
 #include "SYS.h"
@@ -59,6 +59,8 @@
 
 #include <machine/setjmp.h>
 
+#define	SETJMP_SIG	0x5824
+
 /*
 int setjmp(jmp_buf env);
  */
@@ -84,28 +86,28 @@ ENTRY(setjmp)
 	st	r31,r2,76
 	st	r0,r2,80	/* mark environment as NOT returned (0x0) */
 	or	r4,r0,0		/* clear r4 */
-	or	r4,r0,SETJMP_TYPE1	/* r4 now contains setjmp type */
+	or	r4,r0,SETJMP_SIG	/* r4 now contains setjmp type */
 	st	r4,r2,84	/* setjmp type to _setjmp */
 	or	r15,r1,0	/* store return address in r15 */
 	or	r14,r2,0	/* store address of env in r14 */
 	bsr.n	_C_LABEL(sigblock) /* r2 = sigblock(0) */
-	or	r2,r0,0
+	 or	r2,r0,0
 	st	r2,r14,4	/* save signal set in offset 4 of env */
 	jmp.n	r15		/* return 0 */
-	or	r2,r0,0
+	 or	r2,r0,0
 
 /*
 void longjmp(jmp_buf env, int retval);
  */
 ENTRY(longjmp)
-	cmp	r4,r2,0x0	/* check for bad envnvironment buffer address. */
+	cmp	r4,r2,r0	/* check for bad environment buffer address. */
 	bb1	eq,r4,2f	/* if == 0, abort. */
 	ld	r4,r2,80	/* check if environment buffer has */
-	cmp	r4,r4,0x0	/* already returned. */
+	cmp	r4,r4,r0	/* already returned. */
 	bb1	ne,r4,2f	/* if != 0, abort. */
 	ld	r4,r2,84	/* check setjmp type. */
-	cmp	r4,r4,SETJMP_TYPE1	/* should be SETJMP_TYPE1 */
-	bb1	ne,r4,2f	/* if != SETJMP_TYPE1, abort. */
+	cmp	r4,r4,SETJMP_SIG	/* should be SETJMP_SIG */
+	bb1	ne,r4,2f	/* if != SETJMP_SIG, abort. */
 	
 	subu	r31,r31,32	/* get a temporary stack */
 	ld	r14,r2,8	/* restore registers from the environment buffer */
@@ -128,7 +130,7 @@ ENTRY(longjmp)
 	st	r2,r31,24	/* save r2 on stack (environment) */
 	st	r3,r31,28	/* save r3 on stack (return val) */
 	bsr.n	_C_LABEL(sigsetmask) /* restore the signal set */
-	ld	r2,r2,4
+	 ld	r2,r2,4
 	ld	r2,r31,24	/* restore r2 from stack */
 	ld	r3,r31,28	/* restore r3 from stack */
 	ld	r30,r2,72	/* restore r30 */
@@ -136,14 +138,12 @@ ENTRY(longjmp)
 	or	r4,r0,1
 	st	r4,r2,80	/* mark environment buffer as returned */
 	ld	r1,r2,0		/* restore r1 */
-	cmp	r2,r3,0		/* test retval for 0 */
-	bb0	eq,r2,1f	/* if != 0, it's ok. */
-	jmp.n	r1		/* and jump to it */
-	or	r2,r0,r3	/* but first return r3 value */
-1:	jmp.n	r1
-	or	r2,r0,1		/* return non-zero value. */
-2:
-	subu	r31,r31,32	/* get a temporary stack */
+	bcnd.n	ne0,r3,1f
+	 or	r2,r3,r0
+	or	r2,r0,1		/* never return zero! */
+1:	jmp	r1
+
+2:	subu	r31,r31,32	/* get a temporary stack */
 	st	r1,r31,20	/* save r1 on stack (return address) */
 	bsr	_C_LABEL(longjmperror)
 	bsr	_C_LABEL(abort)	/* NO RETURN */
