@@ -1,4 +1,4 @@
-#	$OpenBSD: GENERIC,v 1.52 2004/04/18 02:26:42 pvalchev Exp $g
+#	$OpenBSD: GENERIC,v 1.53 2004/05/10 21:29:53 drahn Exp $g
 #
 # PPC GENERIC config file
 #
@@ -156,6 +156,8 @@ scsibus*	at iopsp?
 scsibus*	at siop?
 #scsibus*	at fwscsi?
 
+mediabay*	at macobio?
+wdc*		at mediabay?
 wdc*		at macobio?
 wd*		at wdc? drive ? flags 0x0000
 wd*		at pciide? drive ? flags 0x0000

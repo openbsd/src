@@ -1,4 +1,4 @@
-#	$OpenBSD: RAMDISK,v 1.28 2004/03/30 19:34:31 deraadt Exp $
+#	$OpenBSD: RAMDISK,v 1.29 2004/05/10 21:29:53 drahn Exp $
 #
 # PPC GENERIC config file
 #
@@ -115,6 +115,8 @@ scsibus*	at ahc?
 #scsibus*	at mesh?
 #scsibus*	at pcscp?
 
+mediabay*	at macobio?
+wdc*		at mediabay?
 wdc*		at macobio?
 wd*		at wdc? drive ? flags 0x0000
 wd*		at pciide? channel ? drive ?
