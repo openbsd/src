@@ -1,4 +1,4 @@
-/*	$OpenBSD: bpf.c,v 1.1 2004/04/13 23:41:48 henning Exp $	*/
+/*	$OpenBSD: bpf.c,v 1.2 2004/04/15 23:17:19 henning Exp $	*/
 
 /* BPF socket interface code, originally contributed by Archie Cobbs. */
 
@@ -175,7 +175,7 @@ if_register_receive(struct interface_info *info)
 	 * XXX: changes to filter program may require changes to the
 	 * insn number(s) used below!
 	 */
-	dhcp_bpf_filter[8].k = LOCAL_PORT;
+	dhcp_bpf_filter[8].k = ntohs(local_port);
 
 	if (ioctl(info->rfdesc, BIOCSETF, &p) < 0)
 		error("Can't install packet filter program: %m");
