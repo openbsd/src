@@ -1,4 +1,4 @@
-.\"	$OpenBSD: pf.conf.5,v 1.123 2002/11/26 19:13:05 deraadt Exp $
+.\"	$OpenBSD: pf.conf.5,v 1.124 2002/11/26 19:20:12 henning Exp $
 .\"
 .\" Copyright (c) 2002, Daniel Hartmeier
 .\" All rights reserved.
@@ -408,7 +408,7 @@ queues, plus one child queue:
 .Bd -literal
     queue qname1 bandwidth 50% cbq(default ecn) { qname1a }
     queue  qname1a bandwidth 1Mb cbq(borrow)
-    queue qname2 bandwidth 1000 priority 3
+    queue qname2 bandwidth 1000b priority 3
 .Ed
 .Pp
 Please note that child queues must not exceed the bandwidth definition
