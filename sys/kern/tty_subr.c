@@ -1,4 +1,4 @@
-/*	$OpenBSD: tty_subr.c,v 1.3 1996/06/05 22:56:43 deraadt Exp $	*/
+/*	$OpenBSD: tty_subr.c,v 1.4 1996/06/06 09:52:07 deraadt Exp $	*/
 /*	$NetBSD: tty_subr.c,v 1.13 1996/02/09 19:00:43 christos Exp $	*/
 
 /*
@@ -549,9 +549,13 @@ catq(from, to)
 	struct clist *from, *to;
 {
 	int c;
+	int s;
 
-	if (from->c_cc == 0)	/* nothing to move */
+	s = spltty();
+	if (from->c_cc == 0) {	/* nothing to move */
+		splx(s);
 		return;
+	}
 
 	/*
 	 * if `to' queue is empty and the queues are the same max size,
@@ -563,7 +567,10 @@ catq(from, to)
 		tmp = *from;
 		*from = *to;
 		*to = tmp;
+		splx(s);
+		return;
 	}
+	splx(s);
 
 	while ((c = getc(from)) != -1)
 		putc(c, to);
