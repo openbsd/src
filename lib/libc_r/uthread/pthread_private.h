@@ -31,7 +31,7 @@
  *
  * Private thread definitions for the uthread kernel.
  *
- * $OpenBSD: pthread_private.h,v 1.9 1999/01/08 05:44:53 d Exp $
+ * $OpenBSD: pthread_private.h,v 1.10 1999/01/10 22:32:23 d Exp $
  *
  */
 
@@ -462,7 +462,8 @@ struct pthread {
  */
 
 /* Kernel thread structure used when there are no running threads: */
-extern struct pthread   * volatile _thread_kern_thread;
+extern struct pthread   volatile _thread_kern_thread;
+extern struct pthread   * volatile _thread_kern_threadp;
 
 /* Ptr to the thread structure for the running thread: */
 extern struct pthread   * volatile _thread_run;
