@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.75 2002/08/03 19:07:53 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.76 2002/08/03 20:07:58 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998-2002 Michael Shalayeff
@@ -2345,12 +2345,12 @@ EXIT(microtime)
 ENTRY(setrunqueue,0)
 #ifdef DIAGNOSTIC
 	ldw	P_BACK(arg0), t1
-	comb,<>,n r0, t1, $setrunqueue_panic
+	comb,<>,n r0, t1, Lsetrunqueue_panic
 	ldw	P_WCHAN(arg0), t1
-	comb,<>,n r0, t1, $setrunqueue_panic
+	comb,<>,n r0, t1, Lsetrunqueue_panic
 	ldb	P_STAT(arg0), t1
-	comib,=,n SRUN, t1, $setrunqueue_ok
-$setrunqueue_panic
+	comib,=,n SRUN, t1, Lsetrunqueue_ok
+Lsetrunqueue_panic
 	copy	arg0, arg1
 	ldil	L%panic, r1
 	ldil	L%Lsrqpstr, arg0
@@ -2363,7 +2363,7 @@ $setrunqueue_panic
 Lsrqpstr
 	.asciz	"setrunqueue(%p)"
 	.align	8
-$setrunqueue_ok
+Lsetrunqueue_ok
 #endif
 
 	ldb	P_PRIORITY(arg0), t2
@@ -2371,34 +2371,17 @@ $setrunqueue_ok
 	extru	t2, 29, 5, t1
 	ldo	R%qs(t4), t4
 	sh3add	t1, t4, t4
-	ldil	L%whichqs, t2
-	ldw	R%whichqs(t2), t3
-	mtctl	t1, sar
-	vdepi	1, 1, t3
-
-#if 0
-	/* this actually trashes all the regs we use, be advised ;) */
-	copy	t1, arg1
-	copy	t4, arg2
-	ldil	L%printf, r1
-	ldil	L%Lsrqfmt, arg0
-	ldo	R%printf(r1), r1
-	ldo	R%Lsrqfmt(arg0), arg0
-	.call
-	blr	%r0, rp
-	bv,n	%r0(r1)
-	nop
-#endif
+	ldil	L%whichqs, arg3
 	ldw	P_BACK(t4), t2
 	stw	t4, P_FORW(arg0)
 	stw	arg0, P_BACK(t4)
+	ldw	R%whichqs(arg3), t3
 	stw	arg0, P_FORW(t2)
+	mtctl	t1, sar
 	stw	t2, P_BACK(arg0)
+	vdepi	1, 1, t3
 	bv	0(rp)
-	stw	t3, R%whichqs(t2)
-Lsrqfmt
-	.asciz	"setrunqueue: bit=%x, qs=%p\n"
-	.align	8
+	stw	t3, R%whichqs(arg3)
 EXIT(setrunqueue)
 
 /*
@@ -2414,6 +2397,8 @@ ENTRY(remrunqueue,0)
 	ldw	R%whichqs(t2), t3
 
 #ifdef DIAGNOSTIC
+	ldb	P_STAT(arg0), t1
+	comib,=,n SRUN, t1, Lremrunqueue_panic
 	bvb,<,n	t3, remrunqueue_ok
 
 Lremrunqueue_panic
@@ -2436,12 +2421,11 @@ remrunqueue_ok
 	stw	r0, P_BACK(arg0)
 	ldw	P_FORW(arg0), arg0
 	stw	arg0, P_FORW(t4)
-	stw	t4, P_BACK(arg0)
 	vdepi	0, 1, t3
 	sub,<>	t4, arg0, r0
 	stw	t3, R%whichqs(t2)
 	bv	0(rp)
-	nop
+	stw	t4, P_BACK(arg0)
 EXIT(remrunqueue)
 
 /*
