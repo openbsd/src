@@ -1,4 +1,4 @@
-.\" $OpenBSD: ral.4,v 1.21 2005/03/17 08:35:59 jmc Exp $
+.\" $OpenBSD: ral.4,v 1.22 2005/03/17 09:11:24 damien Exp $
 .\"
 .\" Copyright (c) 2005
 .\"	Damien Bergamini <damien.bergamini@free.fr>
@@ -32,15 +32,15 @@ driver supports PCI/CardBus wireless adapters based on the Ralink RT2500
 chipset
 and the
 .Nm ural
-driver supports USB 2.0 wireless adapters based on the Ralink RT2570
+driver supports USB 2.0 wireless adapters based on the Ralink RT2500USB
 chipset.
 The two drivers are similar and will be merged into one in the future.
 .Pp
-The RT2500 chipset consists of two integrated chips, a RT2560 MAC/BBP and a
-radio transceiver (the model of which depends on the card revision).
+The RT2500 chipset consists of two integrated chips, a RT2560 or RT2570 MAC/BBP
+and a radio transceiver (the model of which depends on the card revision).
 .Pp
-The RT2522, RT2523, RT2524, RT2525, and RT2525e radio transceivers operate in
-the 2.4GHz band (802.11b/g) whereas the RT5222 is a dual-band radio
+The RT2522, RT2523, RT2524, RT2525, RT2526 and RT2525e radio transceivers
+operate in the 2.4GHz band (802.11b/g) whereas the RT5222 is a dual-band radio
 transceiver that can operate in the 2.4GHz and 5.2GHz bands (802.11a).
 .Pp
 The transmit speed is user-selectable or can be adapted automatically by the
@@ -388,3 +388,8 @@ PCI
 adapters seem to strictly require a system supporting PCI 2.2 or greater and
 will likely not work in systems based on older revisions of the PCI
 specification.
+.Pp
+The
+.Nm ural
+driver does not support IBSS mode and automatic adaptation of the transmit
+speed.
