@@ -1,4 +1,4 @@
-/* $OpenBSD: wskbd.c,v 1.25 2001/09/26 01:21:37 jcs Exp $ */
+/* $OpenBSD: wskbd.c,v 1.26 2001/09/30 05:49:58 mickey Exp $ */
 /* $NetBSD: wskbd.c,v 1.38 2000/03/23 07:01:47 thorpej Exp $ */
 
 /*
@@ -197,6 +197,7 @@ struct wskbd_softc {
 #define MOD_COMMAND		(1 << 12)
 #define MOD_COMMAND1		(1 << 13)
 #define MOD_COMMAND2		(1 << 14)
+#define MOD_MODELOCK		(1 << 15)
 
 #define MOD_ANYSHIFT		(MOD_SHIFT_L | MOD_SHIFT_R | MOD_SHIFTLOCK)
 #define MOD_ANYCONTROL		(MOD_CONTROL_L | MOD_CONTROL_R)
@@ -1464,7 +1465,7 @@ wskbd_translate(id, type, value)
 		id->t_modifiers &= ~(MOD_SHIFT_L | MOD_SHIFT_R
 				| MOD_CONTROL_L | MOD_CONTROL_R
 				| MOD_META_L | MOD_META_R
-				| MOD_MODESHIFT
+				| MOD_MODESHIFT | MOD_MODELOCK
 				| MOD_COMMAND | MOD_COMMAND1 | MOD_COMMAND2);
 		update_leds(id);
 		return (0);
@@ -1527,6 +1528,10 @@ wskbd_translate(id, type, value)
 		update_modifier(id, type, 0, MOD_MODESHIFT);
 		break;
 
+	case KS_Mode_Lock:
+		update_modifier(id, type, 1, MOD_MODELOCK);
+		break;
+
 	case KS_Num_Lock:
 		update_modifier(id, type, 1, MOD_NUMLOCK);
 		break;
@@ -1564,7 +1569,8 @@ wskbd_translate(id, type, value)
 	}
 
 	/* Get the keysym */
-	if (id->t_modifiers & MOD_MODESHIFT)
+	if (id->t_modifiers & (MOD_MODESHIFT|MOD_MODELOCK) &&
+	    !MOD_ONESET(id, MOD_ANYCONTROL))
 		group = & kp->group2[0];
 	else
 		group = & kp->group1[0];

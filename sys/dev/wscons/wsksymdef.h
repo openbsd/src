@@ -1,4 +1,4 @@
-/*	$OpenBSD: wsksymdef.h,v 1.14 2001/09/04 21:28:54 mickey Exp $	*/
+/*	$OpenBSD: wsksymdef.h,v 1.15 2001/09/30 05:49:58 mickey Exp $	*/
 /*	$NetBSD: wsksymdef.h,v 1.34.4.1 2000/07/07 09:49:54 hannken Exp $ */
 
 /*-
@@ -381,6 +381,7 @@
 #define KS_Henkan_Mode		0xf114	/* Start/Stop Conversion */
 #define KS_Henkan		0xf115	/* Alias for Henkan_Mode */
 #define KS_Muhenkan		0xf116	/* Cancel Conversion */
+#define KS_Mode_Lock		0xf117
 
 /*
  * Group 2 (keypad) character in low byte
