@@ -1299,7 +1299,9 @@
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/ansi.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/asm.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/autoconf.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/bugio.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/cdefs.ph
+./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/conf.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/cpu.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/db_machdep.ph
 ./usr/libdata/perl5/site_perl/m68k-openbsd/mvme68k/disklabel.ph

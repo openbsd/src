@@ -44,7 +44,9 @@
 ./usr/include/mvme68k/ansi.h
 ./usr/include/mvme68k/asm.h
 ./usr/include/mvme68k/autoconf.h
+./usr/include/mvme68k/bugio.h
 ./usr/include/mvme68k/cdefs.h
+./usr/include/mvme68k/conf.h
 ./usr/include/mvme68k/cpu.h
 ./usr/include/mvme68k/db_machdep.h
 ./usr/include/mvme68k/disklabel.h
