@@ -1,5 +1,5 @@
-/*	$OpenBSD: ike_quick_mode.c,v 1.21 1999/08/26 22:30:21 niklas Exp $	*/
-/*	$EOM: ike_quick_mode.c,v 1.97 1999/08/26 11:21:50 niklas Exp $	*/
+/*	$OpenBSD: ike_quick_mode.c,v 1.22 1999/10/01 14:07:16 niklas Exp $	*/
+/*	$EOM: ike_quick_mode.c,v 1.100 1999/10/01 13:44:21 niklas Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Niklas Hallqvist.  All rights reserved.
@@ -128,9 +128,10 @@ check_policy (struct exchange *exchange, struct sa *sa, struct sa *isakmp_sa)
     {
     case ISAKMP_CERTENC_NONE:
       /* For shared keys, just duplicate the passphrase.  */
-      principal = strdup (isakmp_sa->recv_cert);
+      principal = calloc (isakmp_sa->recv_certlen + 1, sizeof (char));
       if (principal == NULL)
 	return 0;
+      memcpy (principal, isakmp_sa->recv_cert, isakmp_sa->recv_certlen);
       break;
 
     case ISAKMP_CERTENC_X509_SIG:
@@ -1203,8 +1204,18 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
     {
       for (proto = TAILQ_FIRST (&sa->protos); proto;
 	   proto = TAILQ_NEXT (proto, link))
-	/* XXX we need to have some attributes per proto, not all per SA.  */
-	ipsec_decode_transform (msg, sa, proto, proto->chosen->p);
+	{
+	  /* XXX we need to have some attributes per proto, not all per SA.  */
+	  ipsec_decode_transform (msg, sa, proto, proto->chosen->p);
+	  if (proto->proto == IPSEC_PROTO_IPSEC_AH
+	      && !((struct ipsec_proto *)proto->data)->auth)
+	    {
+	      log_print ("responder_recv_HASH_SA_NONCE: "
+			 "AH proposed without an algorithm attribute");
+	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
+	      goto next_sa;
+	    }
+	}
 
       isa = sa->data;
 
@@ -1213,6 +1224,8 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	{
 	  if (!isa->group_desc)
 	    {
+	      log_print ("responder_recv_HASH_SA_NONCE: "
+			 "KEY_EXCH payload without a group desc. attribute");
 	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
 	      continue;
 	    }
@@ -1222,6 +1235,8 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 	    group_desc = isa->group_desc;
 	  else if (group_desc != isa->group_desc)
 	    {
+	      log_print ("responder_recv_HASH_SA_NONCE: "
+			 "differing group descriptions in one QM");
 	      message_drop (msg, ISAKMP_NOTIFY_NO_PROPOSAL_CHOSEN, 0, 1, 0);
 	      continue;
 	    }
@@ -1229,6 +1244,8 @@ responder_recv_HASH_SA_NONCE (struct message *msg)
 
       /* At least one SA was accepted.  */
       retval = 0;
+
+    next_sa:
     }
 
   if (kep)
