@@ -1,4 +1,4 @@
-#	$OpenBSD: special,v 1.4 1996/06/02 21:16:35 tholo Exp $
+#	$OpenBSD: special,v 1.5 1996/12/06 16:47:15 millert Exp $
 #	$NetBSD: special,v 1.4 1996/05/08 21:30:18 pk Exp $
 #	@(#)special	8.2 (Berkeley) 1/23/94
 #
@@ -67,12 +67,6 @@ sbin		type=dir mode=0755 uname=root gname=wheel ignore
 usr		type=dir mode=0755 uname=root gname=wheel
 bin		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/bin
-contrib		type=dir mode=0755 uname=root gname=wheel
-bin		type=dir mode=0755 uname=root gname=wheel ignore
-..	#usr/contrib/bin
-lib		type=dir mode=0755 uname=root gname=wheel ignore
-..	#usr/contrib/lib
-..	#usr/contrib
 games		type=dir mode=0755 uname=root gname=wheel
 hide		type=dir mode=0700 uname=games gname=wheel ignore
 ..	#usr/games/hide
@@ -91,18 +85,6 @@ bin		type=dir mode=0755 uname=root gname=wheel ignore
 lib		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/local/lib
 ..	#usr/local
-new		type=dir mode=0755 uname=root gname=wheel
-bin		type=dir mode=0755 uname=root gname=wheel ignore
-..	#usr/new/bin
-lib		type=dir mode=0755 uname=root gname=wheel ignore
-..	#usr/new/lib
-..	#usr/new
-old		type=dir mode=0755 uname=root gname=wheel
-bin		type=dir mode=0755 uname=root gname=wheel ignore
-..	#usr/old/bin
-lib		type=dir mode=0755 uname=root gname=wheel ignore
-..	#usr/old/lib
-..	#usr/old
 sbin		type=dir mode=0755 uname=root gname=wheel ignore
 ..	#usr/sbin
 share		type=dir mode=0755 uname=root gname=wheel ignore
