@@ -1,4 +1,4 @@
-/*	$OpenBSD: server.c,v 1.8 1997/02/09 19:24:59 deraadt Exp $	*/
+/*	$OpenBSD: server.c,v 1.9 1997/07/25 21:05:37 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)server.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: server.c,v 1.8 1997/02/09 19:24:59 deraadt Exp $";
+static char *rcsid = "$OpenBSD: server.c,v 1.9 1997/07/25 21:05:37 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/wait.h>
@@ -1398,14 +1398,14 @@ dospecial(cmd)
 		ack();
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 log(FILE *fp, const char *fmt, ...)
 #else
 log(fp, fmt, va_alist)
@@ -1415,7 +1415,7 @@ log(fp, fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -1431,7 +1431,7 @@ log(fp, fmt, va_alist)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 error(const char *fmt, ...)
 #else
 error(fmt, va_alist)
@@ -1441,7 +1441,7 @@ error(fmt, va_alist)
 {
 	static FILE *fp;
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -1470,7 +1470,7 @@ error(fmt, va_alist)
 }
 
 void
-#if __STDC__
+#ifdef __STDC__
 fatal(const char *fmt, ...)
 #else
 fatal(fmt, va_alist)
@@ -1480,7 +1480,7 @@ fatal(fmt, va_alist)
 {
 	static FILE *fp;
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
@@ -1568,7 +1568,7 @@ cleanup(signo)
 }
 
 static void
-#if __STDC__
+#ifdef __STDC__
 note(const char *fmt, ...)
 #else
 note(fmt, va_alist)
@@ -1578,7 +1578,7 @@ note(fmt, va_alist)
 {
 	static char buf[BUFSIZ];
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

@@ -1,4 +1,4 @@
-/*	$OpenBSD: time.h,v 1.2 1996/06/26 05:39:58 deraadt Exp $	*/
+/*	$OpenBSD: time.h,v 1.3 1997/07/25 21:05:43 mickey Exp $	*/
 
 /*
  * Copyright (c) 1991 Carnegie Mellon University
@@ -69,7 +69,7 @@ struct tm {
 	char	*tm_zone;	/* timezone abbreviation */
 };
 
-#if __STDC__ || c_plusplus
+#if defined(__STDC__) || defined(c_plusplus)
 extern struct tm *gmtime(const time_t *);
 extern struct tm *localtime(const time_t *);
 extern time_t mktime(const struct tm *);

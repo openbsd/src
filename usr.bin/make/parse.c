@@ -1,4 +1,4 @@
-/*	$OpenBSD: parse.c,v 1.14 1997/04/28 01:52:40 millert Exp $	*/
+/*	$OpenBSD: parse.c,v 1.15 1997/07/25 21:05:35 mickey Exp $	*/
 /*	$NetBSD: parse.c,v 1.29 1997/03/10 21:20:04 christos Exp $	*/
 
 /*
@@ -43,7 +43,7 @@
 #if 0
 static char sccsid[] = "@(#)parse.c	8.3 (Berkeley) 3/19/94";
 #else
-static char rcsid[] = "$OpenBSD: parse.c,v 1.14 1997/04/28 01:52:40 millert Exp $";
+static char rcsid[] = "$OpenBSD: parse.c,v 1.15 1997/07/25 21:05:35 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -89,7 +89,7 @@ static char rcsid[] = "$OpenBSD: parse.c,v 1.14 1997/04/28 01:52:40 millert Exp 
  *	Parse_MainName	    	    Returns a Lst of the main target to create.
  */
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
@@ -310,7 +310,7 @@ ParseFindKeyword (str)
  */
 /* VARARGS */
 void
-#if __STDC__
+#ifdef __STDC__
 Parse_Error(int type, char *fmt, ...)
 #else
 Parse_Error(va_alist)
@@ -318,7 +318,7 @@ Parse_Error(va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	int type;		/* Error type (PARSE_WARNING, PARSE_FATAL) */

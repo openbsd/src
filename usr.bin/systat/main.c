@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.11 1997/06/23 22:21:47 millert Exp $	*/
+/*	$OpenBSD: main.c,v 1.12 1997/07/25 21:05:44 mickey Exp $	*/
 /*	$NetBSD: main.c,v 1.8 1996/05/10 23:16:36 thorpej Exp $	*/
 
 /*-
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: main.c,v 1.11 1997/06/23 22:21:47 millert Exp $";
+static char rcsid[] = "$OpenBSD: main.c,v 1.12 1997/07/25 21:05:44 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -280,13 +280,13 @@ die(signo)
 	exit(0);
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
-#if __STDC__
+#ifdef __STDC__
 void
 error(const char *fmt, ...)
 #else
@@ -299,7 +299,7 @@ error(fmt, va_alist)
 	va_list ap;
 	char buf[255];
 	int oy, ox;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

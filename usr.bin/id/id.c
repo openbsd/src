@@ -1,4 +1,4 @@
-/*	$OpenBSD: id.c,v 1.4 1997/06/30 06:22:18 deraadt Exp $	*/
+/*	$OpenBSD: id.c,v 1.5 1997/07/25 21:05:27 mickey Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /*static char sccsid[] = "@(#)id.c	8.3 (Berkeley) 4/28/95";*/
-static char rcsid[] = "$OpenBSD: id.c,v 1.4 1997/06/30 06:22:18 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: id.c,v 1.5 1997/07/25 21:05:27 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -315,14 +315,14 @@ who(u)
 	/* NOTREACHED */
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 err(const char *fmt, ...)
 #else
 err(fmt, va_alist)
@@ -331,7 +331,7 @@ err(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

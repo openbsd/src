@@ -1,4 +1,4 @@
-/*	$OpenBSD: util.c,v 1.6 1997/04/01 07:28:26 millert Exp $	*/
+/*	$OpenBSD: util.c,v 1.7 1997/07/25 21:05:36 mickey Exp $	*/
 /*	$NetBSD: util.c,v 1.10 1996/12/31 17:56:04 christos Exp $	*/
 
 /*
@@ -6,14 +6,14 @@
  */
 
 #ifndef lint
-static char rcsid[] = "$OpenBSD: util.c,v 1.6 1997/04/01 07:28:26 millert Exp $";
+static char rcsid[] = "$OpenBSD: util.c,v 1.7 1997/07/25 21:05:36 mickey Exp $";
 #endif
 
 #include <stdio.h>
 #include "make.h"
 #include <sys/param.h>
 
-#if !__STDC__
+#ifndef __STDC__
 # ifndef const
 #  define const
 # endif

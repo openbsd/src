@@ -1,4 +1,4 @@
-/*	$OpenBSD: print.c,v 1.3 1997/02/09 23:58:32 millert Exp $	*/
+/*	$OpenBSD: print.c,v 1.4 1997/07/25 21:05:26 mickey Exp $	*/
 
 /*
  * print.c - debugging printout routines
@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
-#if __STDC__
+#ifdef __STDC__
 # include <stdarg.h>
 #else
 # include <varargs.h>
@@ -41,7 +41,7 @@
 #include "file.h"
 
 #ifndef lint
-static char *moduleid = "$OpenBSD: print.c,v 1.3 1997/02/09 23:58:32 millert Exp $";
+static char *moduleid = "$OpenBSD: print.c,v 1.4 1997/07/25 21:05:26 mickey Exp $";
 #endif  /* lint */
 
 #define SZOF(a)	(sizeof(a) / sizeof(a[0]))
@@ -123,7 +123,7 @@ ckfputs(str, fil)
 
 /*VARARGS*/
 void
-#if __STDC__
+#ifdef __STDC__
 ckfprintf(FILE *f, const char *fmt, ...)
 #else
 ckfprintf(va_alist)
@@ -131,7 +131,7 @@ ckfprintf(va_alist)
 #endif
 {
 	va_list va;
-#if __STDC__
+#ifdef __STDC__
 	va_start(va, fmt);
 #else
 	FILE *f;
@@ -151,7 +151,7 @@ ckfprintf(va_alist)
  */
 /*VARARGS*/
 void
-#if __STDC__
+#ifdef __STDC__
 error(const char *f, ...)
 #else
 error(va_alist)
@@ -159,7 +159,7 @@ error(va_alist)
 #endif
 {
 	va_list va;
-#if __STDC__
+#ifdef __STDC__
 	va_start(va, f);
 #else
 	const char *f;
@@ -178,7 +178,7 @@ error(va_alist)
 
 /*VARARGS*/
 void
-#if __STDC__
+#ifdef __STDC__
 magwarn(const char *f, ...)
 #else
 magwarn(va_alist)
@@ -186,7 +186,7 @@ magwarn(va_alist)
 #endif
 {
 	va_list va;
-#if __STDC__
+#ifdef __STDC__
 	va_start(va, f);
 #else
 	const char *f;

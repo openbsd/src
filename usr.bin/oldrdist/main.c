@@ -1,4 +1,4 @@
-/*	$OpenBSD: main.c,v 1.7 1997/04/04 18:41:31 deraadt Exp $	*/
+/*	$OpenBSD: main.c,v 1.8 1997/07/25 21:05:36 mickey Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ static char copyright[] =
 
 #ifndef lint
 /* from: static char sccsid[] = "@(#)main.c	8.1 (Berkeley) 6/9/93"; */
-static char *rcsid = "$OpenBSD: main.c,v 1.7 1997/04/04 18:41:31 deraadt Exp $";
+static char *rcsid = "$OpenBSD: main.c,v 1.8 1997/07/25 21:05:36 mickey Exp $";
 #endif /* not lint */
 
 #include "defs.h"
@@ -307,14 +307,14 @@ prnames(nl)
 	printf(")\n");
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 warn(const char *fmt, ...)
 #else
 warn(fmt, va_alist)
@@ -324,7 +324,7 @@ warn(fmt, va_alist)
 {
 	extern int yylineno;
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

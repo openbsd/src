@@ -1,4 +1,4 @@
-/*	$OpenBSD: misc.c,v 1.4 1996/07/01 20:40:28 deraadt Exp $	*/
+/*	$OpenBSD: misc.c,v 1.5 1997/07/25 21:05:32 mickey Exp $	*/
 /*	$NetBSD: misc.c,v 1.6 1995/09/28 05:37:41 tls Exp $	*/
 
 /*
@@ -41,7 +41,7 @@
 #if 0
 static char sccsid[] = "@(#)misc.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: misc.c,v 1.4 1996/07/01 20:40:28 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: misc.c,v 1.5 1997/07/25 21:05:32 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -243,14 +243,14 @@ usage()
 	exit(1);
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 oops(const char *fmt, ...)
 #else
 oops(fmt, va_alist)
@@ -259,7 +259,7 @@ oops(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

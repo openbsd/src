@@ -1,4 +1,4 @@
-/*	$OpenBSD: aux.c,v 1.7 1997/07/14 00:24:24 millert Exp $	*/
+/*	$OpenBSD: aux.c,v 1.8 1997/07/25 21:05:33 mickey Exp $	*/
 /*	$NetBSD: aux.c,v 1.5 1997/05/13 06:15:52 mikel Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)aux.c	8.1 (Berkeley) 6/6/93";
 #else
-static char rcsid[] = "$OpenBSD: aux.c,v 1.7 1997/07/14 00:24:24 millert Exp $";
+static char rcsid[] = "$OpenBSD: aux.c,v 1.8 1997/07/25 21:05:33 mickey Exp $";
 #endif
 #endif /* not lint */
 
@@ -91,14 +91,14 @@ save2str(str, old)
 /*
  * Announce a fatal error and die.
  */
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 panic(const char *fmt, ...)
 #else
 panic(fmt, va_alist)
@@ -107,7 +107,7 @@ panic(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);

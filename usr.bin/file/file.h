@@ -1,4 +1,4 @@
-/*	$OpenBSD: file.h,v 1.3 1997/02/09 23:58:23 millert Exp $	*/
+/*	$OpenBSD: file.h,v 1.4 1997/07/25 21:05:26 mickey Exp $	*/
 
 /*
  * file.h - definitions for file(1) program
@@ -81,7 +81,7 @@ struct magic {
 #include <stdio.h>	/* Include that here, to make sure __P gets defined */
 
 #ifndef __P
-# if __STDC__ || __cplusplus
+# ifdef __STDC__ || __cplusplus
 #  define __P(a) a
 # else
 #  define __P(a) ()

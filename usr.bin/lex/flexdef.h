@@ -1,4 +1,4 @@
-/*	$OpenBSD: flexdef.h,v 1.3 1996/07/13 22:21:59 millert Exp $	*/
+/*	$OpenBSD: flexdef.h,v 1.4 1997/07/25 21:05:28 mickey Exp $	*/
 
 /* flexdef - definitions file for flex */
 
@@ -28,7 +28,7 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
-/* @(#) $Header: /home/cvs/src/usr.bin/lex/flexdef.h,v 1.3 1996/07/13 22:21:59 millert Exp $ (LBL) */
+/* @(#) $Header: /home/cvs/src/usr.bin/lex/flexdef.h,v 1.4 1997/07/25 21:05:28 mickey Exp $ (LBL) */
 
 #include <stdio.h>
 #include <ctype.h>
@@ -82,7 +82,7 @@
 #endif
 
 #ifndef PROTO
-#if __STDC__
+#ifdef __STDC__
 #define PROTO(proto) proto
 #else
 #define PROTO(proto) ()

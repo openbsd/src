@@ -1,4 +1,4 @@
-/*	$OpenBSD: script.c,v 1.5 1997/06/20 09:58:03 deraadt Exp $	*/
+/*	$OpenBSD: script.c,v 1.6 1997/07/25 21:05:40 mickey Exp $	*/
 /*	$NetBSD: script.c,v 1.3 1994/12/21 08:55:43 jtc Exp $	*/
 
 /*
@@ -44,7 +44,7 @@ static char copyright[] =
 #if 0
 static char sccsid[] = "@(#)script.c	8.1 (Berkeley) 6/6/93";
 #endif
-static char rcsid[] = "$OpenBSD: script.c,v 1.5 1997/06/20 09:58:03 deraadt Exp $";
+static char rcsid[] = "$OpenBSD: script.c,v 1.6 1997/07/25 21:05:40 mickey Exp $";
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -247,14 +247,14 @@ done()
 	exit(0);
 }
 
-#if __STDC__
+#ifdef __STDC__
 #include <stdarg.h>
 #else
 #include <varargs.h>
 #endif
 
 void
-#if __STDC__
+#ifdef __STDC__
 err(const char *fmt, ...)
 #else
 err(fmt, va_alist)
@@ -263,7 +263,7 @@ err(fmt, va_alist)
 #endif
 {
 	va_list ap;
-#if __STDC__
+#ifdef __STDC__
 	va_start(ap, fmt);
 #else
 	va_start(ap);
