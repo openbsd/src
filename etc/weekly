@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$OpenBSD: weekly,v 1.10 1999/09/19 23:15:28 alex Exp $
+#	$OpenBSD: weekly,v 1.11 2001/07/27 07:24:40 fgsch Exp $
 #
 
 PATH=/bin:/sbin:/usr/sbin:/usr/bin:/usr/libexec
@@ -10,12 +10,6 @@ if [ -f /etc/weekly.local ];then
 	echo ""
 	echo "Running weekly.local:"
 	. /etc/weekly.local
-fi
-
-if [ -f /usr/lib/uucp/clean.weekly ]; then
-	echo ""
-	echo "Cleaning up UUCP:"
-	echo /usr/lib/uucp/clean.weekly | su daemon
 fi
 
 echo ""
