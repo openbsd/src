@@ -1,4 +1,4 @@
-/*	$OpenBSD: dz_uba.c,v 1.4 2002/03/14 01:26:48 millert Exp $	*/
+/*	$OpenBSD: dz_uba.c,v 1.5 2004/07/09 15:57:16 deraadt Exp $	*/
 /*	$NetBSD: dz_uba.c,v 1.11 2000/06/04 06:17:02 matt Exp $ */
 /*
  * Copyright (c) 1998 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -134,6 +134,13 @@ dz_uba_attach(parent, self, aux)
 	uba_intr_establish(ua->ua_icookie, ua->ua_cvec - 4,
 	    dzrint, sc, &sc->sc_rintrcnt);
 	uba_reset_establish(dzreset, self);
+
+	sc->sc_rcvec = ua->ua_cvec - 4;
+	evcount_attach(&sc->sc_rintrcnt, sc->sc_dev.dv_xname,
+	    (void *)&sc->sc_rcvec, &evcount_intr);
+	sc->sc_tcvec = ua->ua_cvec;
+	evcount_attach(&sc->sc_tintrcnt, sc->sc_dev.dv_xname,
+	    (void *)&sc->sc_tcvec, &evcount_intr);
 
 	dzattach(sc);
 }
