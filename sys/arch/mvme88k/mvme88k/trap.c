@@ -1,4 +1,4 @@
-/*	$OpenBSD: trap.c,v 1.62 2003/12/24 15:30:13 miod Exp $	*/
+/*	$OpenBSD: trap.c,v 1.63 2004/01/02 23:45:03 miod Exp $	*/
 /*
  * Copyright (c) 1998 Steve Murphree, Jr.
  * Copyright (c) 1996 Nivas Madhur
@@ -953,16 +953,16 @@ m88110_user_fault:
 			}
 		} else {
 			/* instruction faults */
+			if (frame->isr &
+			    (CMMU_ISR_BE | CMMU_ISR_SP | CMMU_ISR_TBE)) {
+				/* bus error, supervisor protection */
+				result = EACCES;
+			} else
 			if (frame->isr & (CMMU_ISR_SI | CMMU_ISR_PI)) {
 				/* segment or page fault */
 				result = uvm_fault(map, va, VM_FAULT_INVALID, ftype);
 				if (result == EACCES)
 					result = EFAULT;
-			} else
-			if (frame->isr &
-			    (CMMU_ISR_BE | CMMU_ISR_SP | CMMU_ISR_TBE)) {
-				/* bus error, supervisor protection */
-				result = EACCES;
 			} else {
 #ifdef DEBUG
 				printf("unexpected instr fault dsr %x\n",
