@@ -1,4 +1,4 @@
-/*	$OpenBSD: conf.c,v 1.3 2001/06/27 06:56:29 kjc Exp $ */
+/*	$OpenBSD: conf.c,v 1.4 2001/06/27 23:36:14 angelos Exp $ */
 
 /*
  * Copyright (c) 1997 Per Fogelstrom
@@ -195,7 +195,7 @@ struct cdevsw cdevsw[] = {
         cdev_lkm_dummy(),               /* 36 */
         cdev_lkm_dummy(),               /* 37 */
         cdev_lkm_dummy(),               /* 38 */
-        cdev_gen_ipf(NIPF,pf),          /* 39: packet filter */
+        cdev_gen_ipf(NPF,pf),          /* 39: packet filter */
         cdev_random_init(1,random),     /* 40: random data source */
 	cdev_uk_init(NUK,uk),		/* 41: unknown SCSI */
 	cdev_ss_init(NSS,ss),           /* 42: SCSI scanner */
