@@ -328,6 +328,8 @@ em_attach(struct device *parent, struct device *self, void *aux)
 	memcpy((char *)&sc->arpcom.ac_enaddr, sc->hw.mac_addr,
 	       ETH_LENGTH_OF_ADDRESS);
 
+	printf(", address: %s\n", ether_sprintf(sc->arpcom.ac_enaddr));
+
 	/* Setup OS specific network interface */
 	em_setup_interface(sc);
 
@@ -1305,7 +1307,7 @@ em_allocate_pci_resources(struct em_softc * sc)
                 printf("\n");
 		return (ENXIO);
         }
-        printf(": %s\n", intrstr);
+        printf(": %s", intrstr);
 		
 	sc->hw.back = &sc->osdep;
 
