@@ -1,4 +1,4 @@
-/*	$OpenBSD: locore.S,v 1.10 1999/06/12 17:35:10 mickey Exp $	*/
+/*	$OpenBSD: locore.S,v 1.11 1999/06/18 05:19:52 mickey Exp $	*/
 
 /*
  * Copyright (c) 1998,1999 Michael Shalayeff
@@ -627,7 +627,7 @@ TLABEL(emu)
 	comb,=,n r0, t1, $fpusw_nosave
 
 	ldw	p_addr(t1), t3
-	ldo	TF_FPREGS+pcb_tf+u_pcb(t3), t3
+	ldo	pcb_fpregs+u_pcb(t3), t3
 
 	fstds,ma fr0 , 8(t3)	/* fr0 must be saved first */
 	fstds,ma fr1 , 8(t3)
@@ -665,7 +665,7 @@ TLABEL(emu)
 $fpusw_nosave
 
 	ldw	p_addr(t2), t3
-	ldo	31*8+TF_FPREGS+pcb_tf+u_pcb(t3), t3
+	ldo	31*8+pcb_fpregs+u_pcb(t3), t3
 
 	fldds,ma -8(t3), fr31
 	fldds,ma -8(t3), fr30

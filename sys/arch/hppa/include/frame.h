@@ -1,4 +1,4 @@
-/*	$OpenBSD: frame.h,v 1.5 1999/04/20 19:49:35 mickey Exp $	*/
+/*	$OpenBSD: frame.h,v 1.6 1999/06/18 05:19:59 mickey Exp $	*/
 
 /*
  * Copyright (c) 1999 Michael Shalayeff
@@ -127,7 +127,7 @@ struct trapframe {
 	u_int	tf_vtop;	/* cr25 */
 	u_int	tf_tr2;		/* cr26 */
 
-	u_int64_t tf_fpregs[HPPA_NFPREGS];
+	u_int	tf_pad[5];	/* pad to 256 bytes */
 };
 #endif /* !_LOCORE */
 
